@@ -15,19 +15,20 @@ make more configurable (select caches per game?)
 
 #define S16_NUMCACHE 8
 
-static data16_t* fd1094_cpuregion; // the CPU region with encrypted code
+static unsigned char *fd1094_key; // the memory region containing key
+static data16_t *fd1094_cpuregion; // the CPU region with encrypted code
 static UINT32  fd1094_cpuregionsize; // the size of this region in bytes
 
 static data16_t* fd1094_userregion; // a user region where the current decrypted state is put and executed from
 static data16_t* fd1094_cacheregion[S16_NUMCACHE]; // a cache region where S16_NUMCACHE states are stored to improve performance
-static int fd1904_cached_states[S16_NUMCACHE]; // array of cached state numbers
-static int fd1904_current_cacheposition; // current position in cache array
+static int fd1094_cached_states[S16_NUMCACHE]; // array of cached state numbers
+static int fd1094_current_cacheposition; // current position in cache array
 
 /* this function checks the cache to see if the current state is cached,
    if it is then it copies the cached data to the user region where code is
    executed from, if its not cached then it gets decrypted to the current
    cache position using the functions in fd1094.c */
-void fd1904_setstate_and_decrypt(int state)
+void fd1094_setstate_and_decrypt(int state)
 {
 	int i;
 	UINT32 addr;
@@ -35,12 +36,12 @@ void fd1904_setstate_and_decrypt(int state)
 	cpunum_set_info_int(0, CPUINFO_INT_REGISTER + M68K_PREF_ADDR, 0x0010);	// force a flush of the prefetch cache
 
 	/* set the FD1094 state ready to decrypt.. */
-	state = fd1094_set_state(state);
+	state = fd1094_set_state(fd1094_key,state);
 
 	/* first check the cache, if its cached we don't need to decrypt it, just copy */
 	for (i=0;i<S16_NUMCACHE;i++)
 	{
-		if (fd1904_cached_states[i] == state)
+		if (fd1094_cached_states[i] == state)
 		{
 			/* copy cached state */
 			fd1094_userregion=fd1094_cacheregion[i];
@@ -54,26 +55,26 @@ void fd1904_setstate_and_decrypt(int state)
 // printf("new state %04x\n",state);
 
 	/* mark it as cached (because it will be once we decrypt it) */
-	fd1904_cached_states[fd1904_current_cacheposition]=state;
+	fd1094_cached_states[fd1094_current_cacheposition]=state;
 
 	for (addr=0;addr<fd1094_cpuregionsize/2;addr++)
 	{
 		UINT16 dat;
-		dat = fd1094_decode(addr,fd1094_cpuregion[addr]);
-		fd1094_cacheregion[fd1904_current_cacheposition][addr]=dat;
+		dat = fd1094_decode(addr,fd1094_cpuregion[addr],fd1094_key,0);
+		fd1094_cacheregion[fd1094_current_cacheposition][addr]=dat;
 	}
 
 	/* copy newly decrypted data to user region */
-	fd1094_userregion=fd1094_cacheregion[fd1904_current_cacheposition];
+	fd1094_userregion=fd1094_cacheregion[fd1094_current_cacheposition];
 	memory_set_opcode_base(0,fd1094_userregion);
 	m68k_set_encrypted_opcode_range(0,0,fd1094_cpuregionsize);
 
-	fd1904_current_cacheposition++;
+	fd1094_current_cacheposition++;
 
-	if (fd1904_current_cacheposition>=S16_NUMCACHE)
+	if (fd1094_current_cacheposition>=S16_NUMCACHE)
 	{
 		printf("out of cache, performance may suffer, incrase S16_NUMCACHE!\n");
-		fd1904_current_cacheposition=0;
+		fd1094_current_cacheposition=0;
 	}
 }
 
@@ -82,20 +83,20 @@ void fd1094_cmp_callback(unsigned int val, int reg)
 {
 	if ((val & 0x0000ffff) == 0x0000ffff) // ?
 	{
-		fd1904_setstate_and_decrypt((val & 0xffff0000) >> 16);
+		fd1094_setstate_and_decrypt((val & 0xffff0000) >> 16);
 	}
 }
 
 /* Callback when the FD1094 enters interrupt code */
 int fd1094_int_callback (int irq)
 {
-	fd1904_setstate_and_decrypt(FD1094_STATE_IRQ);
+	fd1094_setstate_and_decrypt(FD1094_STATE_IRQ);
 	return (0x60+irq*4)/4; // vector address
 }
 
 void fd1094_rte_callback (void)
 {
-	fd1904_setstate_and_decrypt(FD1094_STATE_RTE);
+	fd1094_setstate_and_decrypt(FD1094_STATE_RTE);
 }
 
 
@@ -104,17 +105,19 @@ void fd1094_kludge_reset_values(void)
 {
 	int i;
 
-	fd1094_set_state(FD1094_STATE_VECTOR);
-
 	for (i = 0;i < 4;i++)
-		fd1094_userregion[i] = fd1094_decode(i,fd1094_cpuregion[i]);
+		fd1094_userregion[i] = fd1094_decode(i,fd1094_cpuregion[i],fd1094_key,1);
 }
 
 
 /* function, to be called from MACHINE_INIT (every reset) */
 void fd1094_machine_init(void)
 {
-	fd1904_setstate_and_decrypt(FD1094_STATE_RESET);
+	/* punt if no key; this allows us to be called even for non-FD1094 games */
+	if (!fd1094_key)
+		return;
+
+	fd1094_setstate_and_decrypt(FD1094_STATE_RESET);
 	fd1094_kludge_reset_values();
 
 	cpunum_set_info_fct(0, CPUINFO_PTR_M68K_CMPILD_CALLBACK, (genf *)fd1094_cmp_callback);
@@ -123,29 +126,26 @@ void fd1094_machine_init(void)
 }
 
 /* startup function, to be called from DRIVER_INIT (once on startup) */
-void fd1094_driver_init(UINT16 cpunum)
+void fd1094_driver_init(void)
 {
 	int i;
 
 	fd1094_cpuregion = (data16_t*)memory_region(REGION_CPU1);
 	fd1094_cpuregionsize = memory_region_length(REGION_CPU1);
+	fd1094_key = memory_region(REGION_USER1);
 
-//	fd1094_userregion = auto_malloc(fd1094_cpuregionsize);
+	/* punt if no key; this allows us to be called even for non-FD1094 games */
+	if (!fd1094_key)
+		return;
 
 	for (i=0;i<S16_NUMCACHE;i++)
 	{
 		fd1094_cacheregion[i]=auto_malloc(fd1094_cpuregionsize);
 	}
 
-	fd1094_init(cpunum);
-
-	/* can this be done in driver_init? */
-	memory_set_opcode_base(0,fd1094_userregion);
-	m68k_set_encrypted_opcode_range(0,0,fd1094_cpuregionsize);
-
 	/* flush the cached state array */
 	for (i=0;i<S16_NUMCACHE;i++)
-		fd1904_cached_states[i] = -1;
+		fd1094_cached_states[i] = -1;
 
-	fd1904_current_cacheposition = 0;
+	fd1094_current_cacheposition = 0;
 }

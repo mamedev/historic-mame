@@ -1,6 +1,6 @@
 /***************************************************************************
 
-  Street Fighter 1
+  Street Fighter
 
   driver by Olivier Galibert
 
@@ -16,17 +16,17 @@ TODO:
 #include "cpu/m68000/m68000.h"
 
 
-extern data16_t *sf1_objectram,*sf1_videoram;
-extern int sf1_deltaxb;
-extern int sf1_deltaxm;
-extern int sf1_active;
+extern data16_t *sf_objectram,*sf_videoram;
+extern int sf_deltaxb;
+extern int sf_deltaxm;
+extern int sf_active;
 
-WRITE16_HANDLER( sf1_bg_scroll_w );
-WRITE16_HANDLER( sf1_fg_scroll_w );
-WRITE16_HANDLER( sf1_videoram_w );
-WRITE16_HANDLER( sf1_gfxctrl_w );
-VIDEO_START( sf1 );
-VIDEO_UPDATE( sf1 );
+WRITE16_HANDLER( sf_bg_scroll_w );
+WRITE16_HANDLER( sf_fg_scroll_w );
+WRITE16_HANDLER( sf_videoram_w );
+WRITE16_HANDLER( sf_gfxctrl_w );
+VIDEO_START( sf );
+VIDEO_UPDATE( sf );
 
 
 static READ16_HANDLER( dummy_r )
@@ -35,7 +35,7 @@ static READ16_HANDLER( dummy_r )
 }
 
 
-static WRITE16_HANDLER( sf1_coin_w )
+static WRITE16_HANDLER( sf_coin_w )
 {
 	if (ACCESSING_LSB)
 	{
@@ -122,8 +122,8 @@ static WRITE16_HANDLER( protection_w )
 			program_write_word(0xffc00c, 0xc0);
 			program_write_word(0xffc00e, 0);
 
-			sf1_fg_scroll_w(0, d1, 0);
-			sf1_bg_scroll_w(0, d2, 0);
+			sf_fg_scroll_w(0, d1, 0);
+			sf_bg_scroll_w(0, d2, 0);
 			break;
 		}
 	case 4:
@@ -143,7 +143,7 @@ static WRITE16_HANDLER( protection_w )
 				}
 				program_write_word(0xffc682, d1);
 				program_write_word(0xffc00e, off);
-				sf1_bg_scroll_w(0, d1, 0);
+				sf_bg_scroll_w(0, d1, 0);
 			}
 			break;
 		}
@@ -238,16 +238,16 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x04ffff) AM_WRITE(MWA16_ROM)
-	AM_RANGE(0x800000, 0x800fff) AM_WRITE(sf1_videoram_w) AM_BASE(&sf1_videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0x800000, 0x800fff) AM_WRITE(sf_videoram_w) AM_BASE(&sf_videoram) AM_SIZE(&videoram_size)
 	AM_RANGE(0xb00000, 0xb007ff) AM_WRITE(paletteram16_xxxxRRRRGGGGBBBB_word_w) AM_BASE(&paletteram16)
-	AM_RANGE(0xc00010, 0xc00011) AM_WRITE(sf1_coin_w)
-	AM_RANGE(0xc00014, 0xc00015) AM_WRITE(sf1_fg_scroll_w)
-	AM_RANGE(0xc00018, 0xc00019) AM_WRITE(sf1_bg_scroll_w)
-	AM_RANGE(0xc0001a, 0xc0001b) AM_WRITE(sf1_gfxctrl_w)
+	AM_RANGE(0xc00010, 0xc00011) AM_WRITE(sf_coin_w)
+	AM_RANGE(0xc00014, 0xc00015) AM_WRITE(sf_fg_scroll_w)
+	AM_RANGE(0xc00018, 0xc00019) AM_WRITE(sf_bg_scroll_w)
+	AM_RANGE(0xc0001a, 0xc0001b) AM_WRITE(sf_gfxctrl_w)
 	AM_RANGE(0xc0001c, 0xc0001d) AM_WRITE(soundcmd_w)
 	AM_RANGE(0xc0001e, 0xc0001f) AM_WRITE(protection_w)
 	AM_RANGE(0xff8000, 0xffdfff) AM_WRITE(MWA16_RAM)
-	AM_RANGE(0xffe000, 0xffffff) AM_WRITE(MWA16_RAM) AM_BASE(&sf1_objectram)
+	AM_RANGE(0xffe000, 0xffffff) AM_WRITE(MWA16_RAM) AM_BASE(&sf_objectram)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
@@ -288,7 +288,7 @@ ADDRESS_MAP_END
 
 
 
-INPUT_PORTS_START( sf1 )
+INPUT_PORTS_START( sf )
 	PORT_START
 	PORT_DIPNAME( 0x0007, 0x0007, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( 4C_1C ) )
@@ -466,7 +466,7 @@ INPUT_PORTS_START( sf1 )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( sf1us )
+INPUT_PORTS_START( sfus )
 	PORT_START
 	PORT_DIPNAME( 0x0007, 0x0007, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( 4C_1C ) )
@@ -604,7 +604,7 @@ INPUT_PORTS_START( sf1us )
 	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_BUTTON5 ) PORT_PLAYER(2)
 INPUT_PORTS_END
 
-INPUT_PORTS_START( sf1jp )
+INPUT_PORTS_START( sfjp )
 	PORT_START
 	PORT_DIPNAME( 0x0007, 0x0007, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( 4C_1C ) )
@@ -820,7 +820,7 @@ static struct MSM5205interface msm5205_interface =
 	{ 100, 100 }
 };
 
-static MACHINE_DRIVER_START( sf1 )
+static MACHINE_DRIVER_START( sf )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", M68000, 8000000)	/* 8 MHz ? (xtal is 16MHz) */
@@ -847,8 +847,8 @@ static MACHINE_DRIVER_START( sf1 )
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(1024)
 
-	MDRV_VIDEO_START(sf1)
-	MDRV_VIDEO_UPDATE(sf1)
+	MDRV_VIDEO_START(sf)
+	MDRV_VIDEO_UPDATE(sf)
 
 	/* sound hardware */
 	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
@@ -857,34 +857,34 @@ static MACHINE_DRIVER_START( sf1 )
 MACHINE_DRIVER_END
 
 
-static MACHINE_DRIVER_START( sf1us )
+static MACHINE_DRIVER_START( sfus )
 
 	/* basic machine hardware */
-	MDRV_IMPORT_FROM(sf1)
+	MDRV_IMPORT_FROM(sf)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_PROGRAM_MAP(readmemus,writemem)
 MACHINE_DRIVER_END
 
 
-static MACHINE_DRIVER_START( sf1jp )
+static MACHINE_DRIVER_START( sfjp )
 
 	/* basic machine hardware */
-	MDRV_IMPORT_FROM(sf1)
+	MDRV_IMPORT_FROM(sf)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_PROGRAM_MAP(readmemjp,writemem)
 MACHINE_DRIVER_END
 
 
-static MACHINE_DRIVER_START( sf1p )
+static MACHINE_DRIVER_START( sfp )
 
 	/* basic machine hardware */
-	MDRV_IMPORT_FROM(sf1)
+	MDRV_IMPORT_FROM(sf)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)
 MACHINE_DRIVER_END
 
 
-ROM_START( sf1 )
+ROM_START( sf )
 	ROM_REGION( 0x60000, REGION_CPU1, 0 )
 	ROM_LOAD16_BYTE("sfe-19", 0x00000, 0x10000, CRC(8346c3ca) SHA1(404e26d210e453ef0f03b092d70c770106eed1d1) )
 	ROM_LOAD16_BYTE("sfe-22", 0x00001, 0x10000, CRC(3a4bfaa8) SHA1(6a6fc8d967838eca7d2973de987bb350c25628d5) )
@@ -948,7 +948,7 @@ ROM_START( sf1 )
 	ROM_LOAD( "mmi-7603.13h", 0x0300, 0x0020, CRC(06bcda53) SHA1(fa69b77697bb12aa6012d82ef5b504d3a1d20232) )	/* unknown */
 ROM_END
 
-ROM_START( sf1us )
+ROM_START( sfus )
 	ROM_REGION( 0x60000, REGION_CPU1, 0 )
 	ROM_LOAD16_BYTE("sfd-19", 0x00000, 0x10000, CRC(faaf6255) SHA1(f6d0186c6109780839576c141fc6b557c170c182) )
 	ROM_LOAD16_BYTE("sfd-22", 0x00001, 0x10000, CRC(e1fe3519) SHA1(5c59343a8acaaa4f36636d8e28a4ca7854110dad) )
@@ -1012,7 +1012,7 @@ ROM_START( sf1us )
 	ROM_LOAD( "mmi-7603.13h", 0x0300, 0x0020, CRC(06bcda53) SHA1(fa69b77697bb12aa6012d82ef5b504d3a1d20232) )	/* unknown */
 ROM_END
 
-ROM_START( sf1jp )
+ROM_START( sfjp )
 	ROM_REGION( 0x60000, REGION_CPU1, 0 )
 	ROM_LOAD16_BYTE("sf-19.bin", 0x00000, 0x10000, CRC(116027d7) SHA1(6bcb117ee415aff4d8ea962d4eff4088ca94c251) )
 	ROM_LOAD16_BYTE("sf-22.bin", 0x00001, 0x10000, CRC(d3cbd09e) SHA1(7274c603100132102de09e10d2129cfeb6c06369) )
@@ -1076,7 +1076,7 @@ ROM_START( sf1jp )
 	ROM_LOAD( "mmi-7603.13h", 0x0300, 0x0020, CRC(06bcda53) SHA1(fa69b77697bb12aa6012d82ef5b504d3a1d20232) )	/* unknown */
 ROM_END
 
-ROM_START( sf1p )
+ROM_START( sfp )
 	ROM_REGION( 0x60000, REGION_CPU1, 0 )
 	ROM_LOAD16_BYTE("prg8.2a", 0x00000, 0x20000, CRC(d48d06a3) SHA1(d899771c66c1e7a5caa11f67a1122adb6f0f4d28) )
 	ROM_LOAD16_BYTE("prg0.2c", 0x00001, 0x20000, CRC(e8606c1a) SHA1(be94203cba733e337993e6f386ff5ce1e76d8913) )
@@ -1135,7 +1135,7 @@ ROM_END
 
 
 
-GAME( 1987, sf1,   0,   sf1,   sf1,   0, ROT0, "Capcom", "Street Fighter (World)" )
-GAME( 1987, sf1us, sf1, sf1us, sf1us, 0, ROT0, "Capcom", "Street Fighter (US)" )
-GAME( 1987, sf1jp, sf1, sf1jp, sf1jp, 0, ROT0, "Capcom", "Street Fighter (Japan)" )
-GAME( 1987, sf1p,  sf1, sf1p,  sf1,   0, ROT0, "Capcom", "Street Fighter (prototype)" )
+GAME( 1987, sf,   0,   sf,   sf,   0, ROT0, "Capcom", "Street Fighter (World)" )
+GAME( 1987, sfus, sf, sfus, sfus, 0, ROT0, "Capcom", "Street Fighter (US)" )
+GAME( 1987, sfjp, sf, sfjp, sfjp, 0, ROT0, "Capcom", "Street Fighter (Japan)" )
+GAME( 1987, sfp,  sf, sfp,  sf,   0, ROT0, "Capcom", "Street Fighter (prototype)" )

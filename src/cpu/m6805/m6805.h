@@ -23,7 +23,9 @@ extern void m6805_get_info(UINT32 state, union cpuinfo *info);
 #define M68705_CC					M6805_CC
 #define M68705_IRQ_STATE			M6805_IRQ_STATE
 
+#define M68705_INT_MASK				0x03
 #define M68705_IRQ_LINE				M6805_IRQ_LINE
+#define M68705_INT_TIMER			0x01
 
 extern void m68705_get_info(UINT32 state, union cpuinfo *info);
 #endif

@@ -5,6 +5,8 @@ Atari Drag Race Driver
 ***************************************************************************/
 
 #include "driver.h"
+#include "dragrace.h"
+
 
 extern VIDEO_START( dragrace );
 extern VIDEO_UPDATE( dragrace );
@@ -78,21 +80,21 @@ static void dragrace_update_misc_flags(void)
 	set_led_status(0, dragrace_misc_flags & 0x00008000);
 	set_led_status(1, dragrace_misc_flags & 0x80000000);
 
-	discrete_sound_w(0x06,  ~dragrace_misc_flags & 0x0000001f);		// Speed1 data*
-	discrete_sound_w(0x04, (dragrace_misc_flags & 0x00000020) ? 1: 0);	// Explosion1 enable
-	discrete_sound_w(0x00, (dragrace_misc_flags & 0x00000040) ? 1: 0);	// Screech1 enable
-	discrete_sound_w(0x0a, (dragrace_misc_flags & 0x00000200) ? 1: 0);	// KLEXPL1 enable
-	discrete_sound_w(0x08, (dragrace_misc_flags & 0x00000800) ? 1: 0);	// Motor1 enable
+	discrete_sound_w(DRAGRACE_MOTOR1_DATA,  ~dragrace_misc_flags & 0x0000001f);		// Speed1 data*
+	discrete_sound_w(DRAGRACE_EXPLODE1_EN, (dragrace_misc_flags & 0x00000020) ? 1: 0);	// Explosion1 enable
+	discrete_sound_w(DRAGRACE_SCREECH1_EN, (dragrace_misc_flags & 0x00000040) ? 1: 0);	// Screech1 enable
+	discrete_sound_w(DRAGRACE_KLEXPL1_EN, (dragrace_misc_flags & 0x00000200) ? 1: 0);	// KLEXPL1 enable
+	discrete_sound_w(DRAGRACE_MOTOR1_EN, (dragrace_misc_flags & 0x00000800) ? 1: 0);	// Motor1 enable
 
-	discrete_sound_w(0x07, (~dragrace_misc_flags & 0x001f0000) >> 0x10);	// Speed2 data*
-	discrete_sound_w(0x05, (dragrace_misc_flags & 0x00200000) ? 1: 0);	// Explosion2 enable
-	discrete_sound_w(0x01, (dragrace_misc_flags & 0x00400000) ? 1: 0);	// Screech2 enable
-	discrete_sound_w(0x0b, (dragrace_misc_flags & 0x02000000) ? 1: 0);	// KLEXPL2 enable
-	discrete_sound_w(0x09, (dragrace_misc_flags & 0x08000000) ? 1: 0);	// Motor2 enable
+	discrete_sound_w(DRAGRACE_MOTOR2_DATA, (~dragrace_misc_flags & 0x001f0000) >> 0x10);	// Speed2 data*
+	discrete_sound_w(DRAGRACE_EXPLODE2_EN, (dragrace_misc_flags & 0x00200000) ? 1: 0);	// Explosion2 enable
+	discrete_sound_w(DRAGRACE_SCREECH2_EN, (dragrace_misc_flags & 0x00400000) ? 1: 0);	// Screech2 enable
+	discrete_sound_w(DRAGRACE_KLEXPL2_EN, (dragrace_misc_flags & 0x02000000) ? 1: 0);	// KLEXPL2 enable
+	discrete_sound_w(DRAGRACE_MOTOR2_EN, (dragrace_misc_flags & 0x08000000) ? 1: 0);	// Motor2 enable
 
-	discrete_sound_w(0x0c, (dragrace_misc_flags & 0x00001000) ? 1: 0);	// Attract enable
-	discrete_sound_w(0x02, (dragrace_misc_flags & 0x00002000) ? 1: 0);	// LoTone enable
-	discrete_sound_w(0x03, (dragrace_misc_flags & 0x20000000) ? 1: 0);	// HiTone enable
+	discrete_sound_w(DRAGRACE_ATTRACT_EN, (dragrace_misc_flags & 0x00001000) ? 1: 0);	// Attract enable
+	discrete_sound_w(DRAGRACE_LOTONE_EN, (dragrace_misc_flags & 0x00002000) ? 1: 0);	// LoTone enable
+	discrete_sound_w(DRAGRACE_HITONE_EN, (dragrace_misc_flags & 0x20000000) ? 1: 0);	// HiTone enable
 }
 
 WRITE8_HANDLER( dragrace_misc_w )
@@ -326,205 +328,6 @@ static PALETTE_INIT( dragrace )
 }
 
 
-/************************************************************************/
-/* dragrace Sound System Analog emulation                                  */
-/************************************************************************/
-
-const struct discrete_lfsr_desc dragrace_lfsr = {
-	16,			/* Bit Length */
-	0,			/* Reset Value */
-	0,			/* Use Bit 0 as XOR input 0 */
-	14,			/* Use Bit 14 as XOR input 1 */
-	DISC_LFSR_XNOR,		/* Feedback stage1 is XNOR */
-	DISC_LFSR_OR,		/* Feedback stage2 is just stage 1 output OR with external feed */
-	DISC_LFSR_REPLACE,	/* Feedback stage3 replaces the shifted register contents */
-	0x000001,		/* Everything is shifted into the first bit only */
-	0,			/* Output is already inverted by XNOR */
-	15			/* Output bit */
-};
-
-/* Nodes - Inputs */
-#define DRAGRACE_SCREECH1_EN	NODE_01
-#define DRAGRACE_SCREECH2_EN	NODE_02
-#define DRAGRACE_LOTONE_EN	NODE_03
-#define DRAGRACE_HITONE_EN	NODE_04
-#define DRAGRACE_EXPLODE1_EN	NODE_05
-#define DRAGRACE_EXPLODE2_EN	NODE_06
-#define DRAGRACE_MOTOR1_DATA	NODE_07
-#define DRAGRACE_MOTOR2_DATA	NODE_08
-#define DRAGRACE_MOTOR1_EN	NODE_80
-#define DRAGRACE_MOTOR2_EN	NODE_81
-#define DRAGRACE_KLEXPL1_EN	NODE_82
-#define DRAGRACE_KLEXPL2_EN	NODE_83
-#define DRAGRACE_ATTRACT_EN	NODE_09
-/* Nodes - Sounds */
-#define DRAGRACE_NOISE		NODE_10
-#define DRAGRACE_SCREECH1_SND	NODE_11
-#define DRAGRACE_SCREECH2_SND	NODE_12
-#define DRAGRACE_LOTONE_SND	NODE_13
-#define DRAGRACE_HITONE_SND	NODE_14
-#define DRAGRACE_TONE_SND	NODE_15
-#define DRAGRACE_EXPLODE1_SND	NODE_16
-#define DRAGRACE_EXPLODE2_SND	NODE_17
-#define DRAGRACE_MOTOR1_SND	NODE_18
-#define DRAGRACE_MOTOR2_SND	NODE_19
-
-static DISCRETE_SOUND_START(dragrace_sound_interface)
-	/************************************************/
-	/* dragrace  Effects Relataive Gain Table       */
-	/*                                              */
-	/* Effect  V-ampIn  Gain ratio        Relative  */
-	/* LoTone   3.8     10/32               593.8   */
-	/* HiTone   3.8     10/32               593.8   */
-	/* Screech  3.8     10/330               57.6   */
-	/* Motor    3.8     10/32.67            581.6   */
-	/* Explode  5.0     10/25              1000.0   */
-	/************************************************/
-
-
-	/************************************************/
-	/* Input register mapping for dragrace          */
-	/************************************************/
-	/*                    NODE           ADDR  MASK    INIT */
-	DISCRETE_INPUT(DRAGRACE_SCREECH1_EN, 0x00, 0x000f, 0.0)
-	DISCRETE_INPUT(DRAGRACE_SCREECH2_EN, 0x01, 0x000f, 0.0)
-	DISCRETE_INPUT(DRAGRACE_LOTONE_EN,   0x02, 0x000f, 0.0)
-	DISCRETE_INPUT(DRAGRACE_HITONE_EN,   0x03, 0x000f, 0.0)
-	DISCRETE_INPUT(DRAGRACE_EXPLODE1_EN, 0x04, 0x000f, 0.0)
-	DISCRETE_INPUT(DRAGRACE_EXPLODE2_EN, 0x05, 0x000f, 0.0)
-	DISCRETE_INPUT(DRAGRACE_MOTOR1_DATA, 0x06, 0x000f, 0.0)
-	DISCRETE_INPUT(DRAGRACE_MOTOR2_DATA, 0x07, 0x000f, 0.0)
-	DISCRETE_INPUT(DRAGRACE_MOTOR1_EN,   0x08, 0x000f, 0.0)
-	DISCRETE_INPUT(DRAGRACE_MOTOR2_EN,   0x09, 0x000f, 0.0)
-	DISCRETE_INPUT(DRAGRACE_KLEXPL1_EN,  0x0a, 0x000f, 0.0)
-	DISCRETE_INPUT(DRAGRACE_KLEXPL2_EN,  0x0b, 0x000f, 0.0)
-	DISCRETE_INPUT(DRAGRACE_ATTRACT_EN,  0x0c, 0x000f, 0.0)
-
-	/************************************************/
-	/* Motor sound circuit is based on a 556 VCO    */
-	/* with the input frequency set by the MotorSND */
-	/* latch (4 bit). This freqency is then used to */
-	/* driver a modulo 12 counter, with div6, 4 & 3 */
-	/* summed as the output of the circuit.         */
-	/* VCO Output is Sq wave = 27-382Hz             */
-	/*  F1 freq - (Div6)                            */
-	/*  F2 freq = (Div4)                            */
-	/*  F3 freq = (Div3) 33.3% duty, 33.3 deg phase */
-	/* To generate the frequency we take the freq.  */
-	/* diff. and /15 to get all the steps between   */
-	/* 0 - 15.  Then add the low frequency and send */
-	/* that value to a squarewave generator.        */
-	/* Also as the frequency changes, it ramps due  */
-	/* to a 2.2uf capacitor on the R-ladder.        */
-	/* Note the VCO freq. is controlled by a 250k   */
-	/* pot.  The freq. used here is for the pot set */
-	/* to 125k.  The low freq is allways the same.  */
-	/* This adjusts the high end.                   */
-	/* 0k = 214Hz.   250k = 4416Hz                  */
-	/* NOTE: freqs are ripped from Sprint for now.  */
-	/************************************************/
-	DISCRETE_RCFILTER(NODE_20, 1, DRAGRACE_MOTOR1_DATA, 119898, 2.2e-6)
-	DISCRETE_ADJUSTMENT(NODE_21, 1, (214.0-27.0)/12/31, (4416.0-27.0)/12/31, DISC_LOGADJ, 7)
-	DISCRETE_MULTIPLY(NODE_22, 1, NODE_20, NODE_21)
-
-	DISCRETE_MULTADD(NODE_23, 1, NODE_22, 2, 27.0/6)	/* F1 = /12*2 = /6 */
-	DISCRETE_SQUAREWAVE(NODE_24, 1, NODE_23, (581.6/3), 50.0, 0, 0)
-	DISCRETE_RCFILTER(NODE_25, 1, NODE_24, 10000, 1e-7)
-
-	DISCRETE_MULTADD(NODE_26, 1, NODE_22, 3, 27.0/4)	/* F2 = /12*3 = /4 */
-	DISCRETE_SQUAREWAVE(NODE_27, 1, NODE_26, (581.6/3), 50.0, 0, 0)
-	DISCRETE_RCFILTER(NODE_28, 1, NODE_27, 10000, 1e-7)
-
-	DISCRETE_MULTADD(NODE_29, 1, NODE_22, 4, 27.0/3)	/* F3 = /12*4 = /3 */
-	DISCRETE_SQUAREWAVE(NODE_30, 1, NODE_29, (581.6/3), 100.0/3, 0, 360.0/3)
-	DISCRETE_RCFILTER(NODE_31, 1, NODE_30, 10000, 1e-7)
-
-	DISCRETE_ADDER3(DRAGRACE_MOTOR1_SND, DRAGRACE_MOTOR1_EN, NODE_25, NODE_28, NODE_31)
-
-	/************************************************/
-	/* Car2 motor sound is basically the same as    */
-	/* Car1.  But I shifted the frequencies up for  */
-	/* it to sound different from car1.             */
-	/************************************************/
-	DISCRETE_RCFILTER(NODE_40, 1, DRAGRACE_MOTOR2_DATA, 119898, 2.2e-6)
-	DISCRETE_ADJUSTMENT(NODE_41, 1, (214.0-27.0)/12/31, (4416.0-27.0)/12/31, DISC_LOGADJ, 8)
-	DISCRETE_MULTIPLY(NODE_42, 1, NODE_40, NODE_41)
-
-	DISCRETE_MULTADD(NODE_43, 1, NODE_42, 2, 27.0/6)	/* F1 = /12*2 = /6 */
-	DISCRETE_SQUAREWAVE(NODE_44, 1, NODE_43, (581.6/3), 50.0, 0, 0)
-	DISCRETE_RCFILTER(NODE_45, 1, NODE_44, 10000, 1e-7)
-
-	DISCRETE_MULTADD(NODE_46, 1, NODE_42, 3, 27.0/4)	/* F2 = /12*3 = /4 */
-	DISCRETE_SQUAREWAVE(NODE_47, 1, NODE_46, (581.6/3), 50.0, 0, 0)
-	DISCRETE_RCFILTER(NODE_48, 1, NODE_47, 10000, 1e-7)
-
-	DISCRETE_MULTADD(NODE_49, 1, NODE_42, 4, 27.0/3)	/* F3 = /12*4 = /3 */
-	DISCRETE_SQUAREWAVE(NODE_50, 1, NODE_49, (581.6/3), 100.0/3, 0, 360.0/3)
-	DISCRETE_RCFILTER(NODE_51, 1, NODE_50, 10000, 1e-7)
-
-	DISCRETE_ADDER3(DRAGRACE_MOTOR2_SND, DRAGRACE_MOTOR2_EN, NODE_45, NODE_48, NODE_51)
-
-	/************************************************/
-	/* Explosion circuit is built around a noise    */
-	/* generator built from 2 shift registers that  */
-	/* are clocked by the 1V signal.                */
-	/* 1V = HSYNC/2                                 */
-	/*    = 15750/2                                 */
-	/* Output is integrated to apply decay.         */
-	/************************************************/
-	DISCRETE_LFSR_NOISE(DRAGRACE_NOISE, 1, DRAGRACE_ATTRACT_EN, 15750.0/2, 1.0, 0, 0, &dragrace_lfsr)
-
-	DISCRETE_RAMP(NODE_61, DRAGRACE_EXPLODE1_EN, DRAGRACE_EXPLODE1_EN, (1000.0-0.0)/1, 1000.0, 0.0, 1000.0)
-	DISCRETE_MULTIPLY(NODE_62, 1, DRAGRACE_NOISE, NODE_61)
-	DISCRETE_RCFILTER(DRAGRACE_EXPLODE1_SND, DRAGRACE_KLEXPL1_EN, NODE_62, 1500, 2.2e-7)
-
-	DISCRETE_RAMP(NODE_66, DRAGRACE_EXPLODE2_EN, DRAGRACE_EXPLODE2_EN, (1000.0-0.0)/1, 1000.0, 0.0, 1000.0)
-	DISCRETE_MULTIPLY(NODE_67, 1, DRAGRACE_NOISE, NODE_66)
-	DISCRETE_RCFILTER(DRAGRACE_EXPLODE2_SND, DRAGRACE_KLEXPL2_EN, NODE_67, 1500, 2.2e-7)
-
-	/************************************************/
-	/* Skid circuits takes the noise output from    */
-	/* the crash circuit and applies +ve feedback   */
-	/* to cause oscillation. There is also an RC    */
-	/* filter on the input to the feedback cct.     */
-	/* RC is 1K & 10uF                              */
-	/* Feedback cct is modelled by using the RC out */
-	/* as the frequency input on a VCO,             */
-	/* breadboarded freq range as:                  */
-	/*  0 = 940Hz, 34% duty                         */
-	/*  1 = 630Hz, 29% duty                         */
-	/*  the duty variance is so small we ignore it  */
-	/************************************************/
-	DISCRETE_INVERT(NODE_70, DRAGRACE_NOISE)
-	DISCRETE_MULTADD(NODE_71, 1, NODE_70, 940.0-630.0, ((940.0-630.0)/2)+630.0)
-	DISCRETE_RCFILTER(NODE_72, 1, NODE_71, 1000, 1e-5)
-	DISCRETE_SQUAREWAVE(NODE_73, 1, NODE_72, 407.8, 31.5, 0, 0.0)
-	DISCRETE_ONOFF(DRAGRACE_SCREECH1_SND, DRAGRACE_SCREECH1_EN, NODE_73)
-	DISCRETE_ONOFF(DRAGRACE_SCREECH2_SND, DRAGRACE_SCREECH2_EN, NODE_73)
-
-	/************************************************/
-	/* LoTone = 32V = 15750Hz/2/32                  */
-	/* HiTone =  4V = 15750Hz/2/4                   */
-	/************************************************/
-	DISCRETE_SQUAREWFIX(DRAGRACE_LOTONE_SND, DRAGRACE_LOTONE_EN, 15750.0/2/32,  593.8, 50.0, 0, 0.0)
-	DISCRETE_SQUAREWFIX(DRAGRACE_HITONE_SND, DRAGRACE_HITONE_EN, 15750.0/2/4,   593.8, 50.0, 0, 0.0)
-	DISCRETE_ADDER2(DRAGRACE_TONE_SND, 1, DRAGRACE_LOTONE_SND, DRAGRACE_HITONE_SND)
-
-	/************************************************/
-	/* Combine all 5 sound sources.                 */
-	/* Add some final gain to get to a good sound   */
-	/* level.                                       */
-	/************************************************/
-	DISCRETE_ADDER4(NODE_90, DRAGRACE_ATTRACT_EN, DRAGRACE_TONE_SND, DRAGRACE_MOTOR1_SND, DRAGRACE_EXPLODE1_SND, DRAGRACE_SCREECH1_SND)
-	DISCRETE_ADDER4(NODE_91, DRAGRACE_ATTRACT_EN, DRAGRACE_TONE_SND, DRAGRACE_MOTOR2_SND, DRAGRACE_EXPLODE2_SND, DRAGRACE_SCREECH2_SND)
-	DISCRETE_GAIN(NODE_92, NODE_90, 65534.0/(593.8+581.6+1000.0+57.6))
-	DISCRETE_GAIN(NODE_93, NODE_91, 65534.0/(593.8+581.6+1000.0+57.6))
-
-	DISCRETE_OUTPUT(NODE_92, MIXER(100,MIXER_PAN_LEFT))
-	DISCRETE_OUTPUT(NODE_93, MIXER(100,MIXER_PAN_RIGHT))
-DISCRETE_SOUND_END
-
-
 static MACHINE_DRIVER_START( dragrace )
 
 	/* basic machine hardware */
@@ -549,7 +352,7 @@ static MACHINE_DRIVER_START( dragrace )
 
 	/* sound hardware */
 	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD_TAG("discrete", DISCRETE, dragrace_sound_interface)
+	MDRV_SOUND_ADD_TAG("discrete", DISCRETE, dragrace_discrete_interface)
 MACHINE_DRIVER_END
 
 

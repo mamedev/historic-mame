@@ -36,7 +36,7 @@ Dig Dug II              58XX  56XX  ----  ----
 Motos                   56XX  56XX  ----  ----
 Gaplus                  56XX  58XX  62XX  ----
 Gaplus (alt.)           58XX  56XX  62XX  ----
-Libble Rabble           58XX  56XX? 56XX? ----
+Libble Rabble           58XX  56XX  56XX  ----
 Toy Pop                 58XX  56XX  56XX  ----
 
 
@@ -88,7 +88,6 @@ For the 54XX, see sound/namco54.c
 
 Namco custom I/O chips 56XX and 58XX
 (plus an unknown one used only by Pac & Pal - could be "57XX", I guess).
-(56XX mode 7 is used only by liblrabl, it could be a different chip as well)
 
 These chips work together with a 16XX, that interfaces them with the buffer
 RAM. Each chip uses 16 nibbles of memory; the 16XX supports up to 4 chips,

@@ -553,7 +553,7 @@ static void transform_point(void)
 	next_fn();
 }
 
-static void fcos(void)
+static void fcos_m1(void)
 {
     INT16 a = fifoin_pop();
 	logerror("TGP fcos %d (%x)\n", a, activecpu_get_pc());
@@ -561,7 +561,7 @@ static void fcos(void)
 	next_fn();
 }
 
-static void fsin(void)
+static void fsin_m1(void)
 {
     INT16 a = fifoin_pop();
 	logerror("TGP fsin %d (%x)\n", a, activecpu_get_pc());
@@ -569,7 +569,7 @@ static void fsin(void)
 	next_fn();
 }
 
-static void fcosm(void)
+static void fcosm_m1(void)
 {
     INT16 a = fifoin_pop();
 	float b = fifoin_pop_f();
@@ -578,7 +578,7 @@ static void fcosm(void)
 	next_fn();
 }
 
-static void fsinm(void)
+static void fsinm_m1(void)
 {
     INT16 a = fifoin_pop();
 	float b = fifoin_pop_f();
@@ -1571,10 +1571,10 @@ static struct function ftab_vf[] = {
 	{  22, matrix_rotz,     1 },
 	{  24, f24, 1 },
 	{  26, transform_point, 3 },
-	{  27, fsin,            1 },
-	{  28, fcos,            1 },
-	{  29, fsinm,           2 },
-	{  30, fcosm,           2 },
+	{  27, fsin_m1,         1 },
+	{  28, fcos_m1,         1 },
+	{  29, fsinm_m1,        2 },
+	{  30, fcosm_m1,        2 },
 	{  31, distance3,       6 },
 	{  36, acc_set,         1 },
 	{  37, acc_get,         0 },
@@ -1652,10 +1652,10 @@ static struct function ftab_swa[] = {
 	{  22, matrix_rotz,     1 },
 	{  24, f24_swa,   7 },
 	{  26, transform_point, 3 },
-	{  27, fsin,            1 },
-	{  28, fcos,            1 },
-	{  29, fsinm,           2 },
-	{  30, fcosm,           2 },
+	{  27, fsin_m1,         1 },
+	{  28, fcos_m1,         1 },
+	{  29, fsinm_m1,        2 },
+	{  30, fcosm_m1,        2 },
 	{  31, distance3,       6 },
 	{  34, ftoi,            1 },
 	{  35, itof,            1 },

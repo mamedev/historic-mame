@@ -21,10 +21,10 @@ WRITE8_HANDLER( atarifb_out1_w )
 {
 	CTRLD = data;
 
-	discrete_sound_w(0,  data & 0x01);		// Whistle
-	discrete_sound_w(2,  data & 0x02);		// Hit
-	discrete_sound_w(3, (data & 0x10) ? 0 : 1);	// Attract
-	discrete_sound_w(4,  data & 0x04);		// Noise Enable / Kicker
+	discrete_sound_w(ATARIFB_WHISTLE_EN,  data & 0x01);		// Whistle
+	discrete_sound_w(ATARIFB_HIT_EN,  data & 0x02);			// Hit
+	discrete_sound_w(ATARIFB_ATTRACT_EN, data & 0x10);		// Attract
+	discrete_sound_w(ATARIFB_NOISE_EN,  data & 0x04);		// Noise Enable / Kicker
 
 	if (GAME_IS_SOCCER)
 	{
@@ -41,7 +41,7 @@ WRITE8_HANDLER( atarifb_out1_w )
 
 	if (GAME_IS_FOOTBALL4)
 		coin_counter_w (1, data & 0x80);
-	
+
 	if (GAME_IS_BASEBALL)
 	{
 		if (data & 0x80)
@@ -62,7 +62,7 @@ WRITE8_HANDLER( atarifb_out1_w )
 
 WRITE8_HANDLER( atarifb_out2_w )
 {
-	discrete_sound_w(1, data & 0x0f);	// Crowd
+	discrete_sound_w(ATARIFB_CROWD_DATA, data & 0x0f);	// Crowd
 
 	coin_counter_w (0, data & 0x10);
 

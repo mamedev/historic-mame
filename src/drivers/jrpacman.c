@@ -103,58 +103,6 @@
 #include "jrpacman.h"
 
 
-static UINT8 speedcheat = 0;	/* a well known hack allows to make JrPac Man run at four times */
-				/* his usual speed. When we start the emulation, we check if the */
-				/* hack can be applied, and set this flag accordingly. */
-
-
-
-/*************************************
- *
- *	Machine init
- *
- *************************************/
-
-static MACHINE_INIT( jrpacman )
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	/* check if the loaded set of ROMs allows the Pac Man speed hack */
-	if (RAM[0x180b] == 0xbe || RAM[0x180b] == 0x01)
-		speedcheat = 1;
-	else speedcheat = 0;
-}
-
-
-
-/*************************************
- *
- *	Interrupts
- *
- *************************************/
-
-static INTERRUPT_GEN( jrpacman_interrupt )
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	/* speed up cheat */
-	if (speedcheat)
-	{
-		if (readinputportbytag("FAKE") & 1)	/* check status of the fake dip switch */
-		{
-			/* activate the cheat */
-			RAM[0x180b] = 0x01;
-		}
-		else
-		{
-			/* remove the cheat */
-			RAM[0x180b] = 0xbe;
-		}
-	}
-	irq0_line_hold();
-}
-
-
 
 /*************************************
  *
@@ -162,24 +110,16 @@ static INTERRUPT_GEN( jrpacman_interrupt )
  *
  *************************************/
 
-static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0x4000, 0x4fff) AM_READ(MRA8_RAM)	/* including video and color RAM */
+static ADDRESS_MAP_START( main_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_ROM
+	AM_RANGE(0x4000, 0x47ff) AM_READWRITE(MRA8_RAM, jrpacman_videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0x4800, 0x4fef) AM_RAM
+	AM_RANGE(0x4ff0, 0x4fff) AM_RAM AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
 	AM_RANGE(0x5000, 0x503f) AM_READ(input_port_0_r)	/* IN0 */
-	AM_RANGE(0x5040, 0x507f) AM_READ(input_port_1_r)	/* IN1 */
-	AM_RANGE(0x5080, 0x50bf) AM_READ(input_port_2_r)	/* DSW1 */
-	AM_RANGE(0x8000, 0xdfff) AM_READ(MRA8_ROM)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0x4000, 0x47ff) AM_WRITE(jrpacman_videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
-	AM_RANGE(0x4800, 0x4fef) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0x4ff0, 0x4fff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
 	AM_RANGE(0x5000, 0x5000) AM_WRITE(interrupt_enable_w)
 	AM_RANGE(0x5001, 0x5001) AM_WRITE(pengo_sound_enable_w)
 	AM_RANGE(0x5003, 0x5003) AM_WRITE(jrpacman_flipscreen_w)
+	AM_RANGE(0x5040, 0x507f) AM_READ(input_port_1_r)	/* IN1 */
 	AM_RANGE(0x5040, 0x505f) AM_WRITE(pengo_sound_w) AM_BASE(&pengo_soundregs)
 	AM_RANGE(0x5060, 0x506f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram_2)
 	AM_RANGE(0x5070, 0x5070) AM_WRITE(jrpacman_palettebank_w) AM_BASE(&jrpacman_palettebank)
@@ -187,20 +127,14 @@ static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x5073, 0x5073) AM_WRITE(MWA8_RAM) AM_BASE(&jrpacman_bgpriority)
 	AM_RANGE(0x5074, 0x5074) AM_WRITE(jrpacman_charbank_w) AM_BASE(&jrpacman_charbank)
 	AM_RANGE(0x5075, 0x5075) AM_WRITE(MWA8_RAM) AM_BASE(&jrpacman_spritebank)
+	AM_RANGE(0x5080, 0x50bf) AM_READ(input_port_2_r)	/* DSW1 */
 	AM_RANGE(0x5080, 0x5080) AM_WRITE(MWA8_RAM) AM_BASE(&jrpacman_scroll)
 	AM_RANGE(0x50c0, 0x50c0) AM_WRITE(MWA8_NOP)
-	AM_RANGE(0x8000, 0xdfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0xdfff) AM_ROM
 ADDRESS_MAP_END
 
 
-
-/*************************************
- *
- *	Main CPU port handlers
- *
- *************************************/
-
-static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
+static ADDRESS_MAP_START( port_map, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0, 0) AM_WRITE(interrupt_vector_w)
 ADDRESS_MAP_END
 
@@ -259,13 +193,6 @@ INPUT_PORTS_START( jrpacman )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-
-	PORT_START_TAG("FAKE")
-	/* This fake input port is used to get the status of the fire button */
-	/* and activate the speedup cheat if it is. */
-	PORT_BIT(   0x01, 0x00, IPT_DIPSWITCH_NAME ) PORT_NAME("Increase Game Speed (Cheat)") PORT_CODE(KEYCODE_LCONTROL) PORT_CODE(JOYCODE_1_BUTTON1) PORT_CODE(MOUSECODE_1_BUTTON1)
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )//This is a hack, surely?
-	PORT_DIPSETTING(    0x01, DEF_STR( On ) )//Better as a cheat.dat cheat?
 INPUT_PORTS_END
 
 
@@ -337,14 +264,12 @@ static MACHINE_DRIVER_START( jrpacman )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 18432000/6)	/* 3.072 MHz */
-	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
-	MDRV_CPU_IO_MAP(0,writeport)
-	MDRV_CPU_VBLANK_INT(jrpacman_interrupt,1)
+	MDRV_CPU_PROGRAM_MAP(main_map,0)
+	MDRV_CPU_IO_MAP(port_map,0)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60.606060)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
-	
-	MDRV_MACHINE_INIT(jrpacman)
 	
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -411,7 +336,7 @@ static DRIVER_INIT( jrpacman )
 	/* each memory region to obtain the decrypted bytes. */
 	/* Decryption table provided by David Caldwell (david@indigita.com) */
 	/* For an accurate reproduction of the encryption, see jrcrypt.c */
-	struct {
+	static const struct {
 	    int count;
 	    int value;
 	} table[] =
@@ -438,21 +363,13 @@ static DRIVER_INIT( jrpacman )
 		{ 0x0031, 0x01 },{ 0x005C, 0x00 },{ 0x0005, 0x01 },{ 0x604E, 0x00 },
 	    { 0,0 }
 	};
-	int i,j,A;
+
 	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	A = 0;
-	i = 0;
-	while (table[i].count)
-	{
-		for (j = 0;j < table[i].count;j++)
-		{
-			RAM[A] ^= table[i].value;
-			A++;
-		}
-		i++;
-	}
+	int i, j, A;
+	
+	for (i = A = 0; table[i].count; i++)
+		for (j = 0; j < table[i].count; j++)
+			RAM[A++] ^= table[i].value;
 }
 
 

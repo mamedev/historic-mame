@@ -135,18 +135,14 @@ CPU 3
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-
-
 /* vidhrdw/bublbobl.c */
-extern unsigned char *bublbobl_objectram;
+extern UINT8 *bublbobl_objectram;
 extern size_t bublbobl_objectram_size;
 VIDEO_UPDATE( bublbobl );
 
 /* machine/bublbobl.c */
-extern unsigned char *bublbobl_sharedram1,*bublbobl_sharedram2;
-READ8_HANDLER( bublbobl_sharedram1_r );
+extern UINT8 *bublbobl_sharedram2;
 READ8_HANDLER( bublbobl_sharedram2_r );
-WRITE8_HANDLER( bublbobl_sharedram1_w );
 WRITE8_HANDLER( bublbobl_sharedram2_w );
 INTERRUPT_GEN( bublbobl_m68705_interrupt );
 READ8_HANDLER( bublbobl_68705_portA_r );
@@ -164,176 +160,113 @@ WRITE8_HANDLER( bublbobl_sound_command_w );
 WRITE8_HANDLER( bublbobl_sh_nmi_disable_w );
 WRITE8_HANDLER( bublbobl_sh_nmi_enable_w );
 
+/* Memory Maps */
 
-
-static ADDRESS_MAP_START( bublbobl_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK1)
-	AM_RANGE(0xc000, 0xdfff) AM_READ(MRA8_RAM)
-	AM_RANGE(0xe000, 0xf7ff) AM_READ(bublbobl_sharedram1_r)
-	AM_RANGE(0xf800, 0xf9ff) AM_READ(paletteram_r)
-	AM_RANGE(0xfc00, 0xffff) AM_READ(bublbobl_sharedram2_r)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( bublbobl_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0xc000, 0xdcff) AM_WRITE(MWA8_RAM) AM_BASE(&videoram) AM_SIZE(&videoram_size)
-	AM_RANGE(0xdd00, 0xdfff) AM_WRITE(MWA8_RAM) AM_BASE(&bublbobl_objectram) AM_SIZE(&bublbobl_objectram_size)
-	AM_RANGE(0xe000, 0xf7ff) AM_WRITE(bublbobl_sharedram1_w) AM_BASE(&bublbobl_sharedram1)
-	AM_RANGE(0xf800, 0xf9ff) AM_WRITE(paletteram_RRRRGGGGBBBBxxxx_swap_w) AM_BASE(&paletteram)
+static ADDRESS_MAP_START( master_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_ROM
+	AM_RANGE(0x8000, 0xbfff) AM_ROMBANK(1)
+	AM_RANGE(0xc000, 0xdcff) AM_RAM AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0xdd00, 0xdfff) AM_RAM AM_BASE(&bublbobl_objectram) AM_SIZE(&bublbobl_objectram_size)
+	AM_RANGE(0xe000, 0xf7ff) AM_RAM AM_SHARE(1)
+	AM_RANGE(0xf800, 0xf9ff) AM_RAM AM_WRITE(paletteram_RRRRGGGGBBBBxxxx_swap_w) AM_BASE(&paletteram)
 	AM_RANGE(0xfa00, 0xfa00) AM_WRITE(bublbobl_sound_command_w)
-//	AM_RANGE(0xfa03, 0xfa03) clocks reset to sound cpu
+	AM_RANGE(0xfa03, 0xfa03) AM_WRITENOP // sound cpu reset
 	AM_RANGE(0xfa80, 0xfa80) AM_WRITE(watchdog_reset_w)
-	AM_RANGE(0xfb00, 0xfb00) AM_WRITE(bublbobl_nmitrigger_w)	/* not used by Bubble Bobble, only by Tokio */
 	AM_RANGE(0xfb40, 0xfb40) AM_WRITE(bublbobl_bankswitch_w)
-	AM_RANGE(0xfc00, 0xffff) AM_WRITE(bublbobl_sharedram2_w) AM_BASE(&bublbobl_sharedram2)
+	AM_RANGE(0xfc00, 0xffff) AM_READWRITE(bublbobl_sharedram2_r, bublbobl_sharedram2_w) AM_BASE(&bublbobl_sharedram2)
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( m68705_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+static ADDRESS_MAP_START( slave_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_ROM
+	AM_RANGE(0xe000, 0xf7ff) AM_RAM AM_SHARE(1)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( sound_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_ROM
+	AM_RANGE(0x8000, 0x8fff) AM_RAM
+	AM_RANGE(0x9000, 0x9000) AM_READWRITE(YM2203_status_port_0_r, YM2203_control_port_0_w)
+	AM_RANGE(0x9001, 0x9001) AM_READWRITE(YM2203_read_port_0_r, YM2203_write_port_0_w)
+	AM_RANGE(0xa000, 0xa000) AM_READWRITE(YM3526_status_port_0_r, YM3526_control_port_0_w)
+	AM_RANGE(0xa001, 0xa001) AM_WRITE(YM3526_write_port_0_w)
+	AM_RANGE(0xb000, 0xb000) AM_READ(soundlatch_r) AM_WRITENOP // message for main cpu
+	AM_RANGE(0xb001, 0xb001) AM_READNOP AM_WRITE(bublbobl_sh_nmi_enable_w) 	// bit 0: message pending for main cpu, bit 1: message pending for sound cpu
+	AM_RANGE(0xb002, 0xb002) AM_WRITE(bublbobl_sh_nmi_disable_w)
+	AM_RANGE(0xe000, 0xefff) AM_ROM	// space for diagnostic ROM?
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( mcu_map, ADDRESS_SPACE_PROGRAM, 8 )
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(11) )
-	AM_RANGE(0x0000, 0x0000) AM_READ(bublbobl_68705_portA_r)
-	AM_RANGE(0x0001, 0x0001) AM_READ(bublbobl_68705_portB_r)
-	AM_RANGE(0x0002, 0x0002) AM_READ(input_port_0_r)	/* COIN */
-	AM_RANGE(0x0010, 0x007f) AM_READ(MRA8_RAM)
-	AM_RANGE(0x0080, 0x07ff) AM_READ(MRA8_ROM)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( m68705_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	ADDRESS_MAP_FLAGS( AMEF_ABITS(11) )
-	AM_RANGE(0x0000, 0x0000) AM_WRITE(bublbobl_68705_portA_w)
-	AM_RANGE(0x0001, 0x0001) AM_WRITE(bublbobl_68705_portB_w)
-	AM_RANGE(0x0004, 0x0004) AM_WRITE(bublbobl_68705_ddrA_w)
-	AM_RANGE(0x0005, 0x0005) AM_WRITE(bublbobl_68705_ddrB_w)
-	AM_RANGE(0x0010, 0x007f) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0x0080, 0x07ff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x000, 0x000) AM_READWRITE(bublbobl_68705_portA_r, bublbobl_68705_portA_w)
+	AM_RANGE(0x001, 0x001) AM_READWRITE(bublbobl_68705_portB_r, bublbobl_68705_portB_w)
+	AM_RANGE(0x002, 0x002) AM_READ(input_port_0_r)	// COIN
+	AM_RANGE(0x004, 0x004) AM_WRITE(bublbobl_68705_ddrA_w)
+	AM_RANGE(0x005, 0x005) AM_WRITE(bublbobl_68705_ddrB_w)
+	AM_RANGE(0x006, 0x006) AM_WRITENOP // ???
+	AM_RANGE(0x010, 0x07f) AM_RAM
+	AM_RANGE(0x080, 0x7ff) AM_ROM
 ADDRESS_MAP_END
 
 
-static ADDRESS_MAP_START( boblbobl_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK1)
-	AM_RANGE(0xc000, 0xdfff) AM_READ(MRA8_RAM)
-	AM_RANGE(0xe000, 0xf7ff) AM_READ(bublbobl_sharedram1_r)
-	AM_RANGE(0xf800, 0xf9ff) AM_READ(paletteram_r)
-	AM_RANGE(0xfc00, 0xfcff) AM_READ(bublbobl_sharedram2_r)
-	AM_RANGE(0xfd00, 0xfeff) AM_READ(MRA8_RAM)
+static ADDRESS_MAP_START( bootleg_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_ROM
+	AM_RANGE(0x8000, 0xbfff) AM_ROMBANK(1)
+	AM_RANGE(0xc000, 0xdcff) AM_RAM AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0xdd00, 0xdfff) AM_RAM AM_BASE(&bublbobl_objectram) AM_SIZE(&bublbobl_objectram_size)
+	AM_RANGE(0xe000, 0xf7ff) AM_RAM AM_SHARE(1)
+	AM_RANGE(0xf800, 0xf9ff) AM_RAM AM_WRITE(paletteram_RRRRGGGGBBBBxxxx_swap_w) AM_BASE(&paletteram)
+	AM_RANGE(0xfa00, 0xfa00) AM_WRITE(bublbobl_sound_command_w)
+	AM_RANGE(0xfa03, 0xfa03) AM_WRITENOP // sound cpu reset
+	AM_RANGE(0xfa80, 0xfa80) AM_WRITENOP // ???
+	AM_RANGE(0xfb40, 0xfb40) AM_WRITE(bublbobl_bankswitch_w)
+	AM_RANGE(0xfc00, 0xfcff) AM_READWRITE(bublbobl_sharedram2_r, bublbobl_sharedram2_w) AM_BASE(&bublbobl_sharedram2)
+	AM_RANGE(0xfd00, 0xfeff) AM_RAM
 	AM_RANGE(0xff00, 0xff00) AM_READ(input_port_0_r)
 	AM_RANGE(0xff01, 0xff01) AM_READ(input_port_1_r)
 	AM_RANGE(0xff02, 0xff02) AM_READ(input_port_2_r)
 	AM_RANGE(0xff03, 0xff03) AM_READ(input_port_3_r)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( boblbobl_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0xc000, 0xdcff) AM_WRITE(MWA8_RAM) AM_BASE(&videoram) AM_SIZE(&videoram_size)
-	AM_RANGE(0xdd00, 0xdfff) AM_WRITE(MWA8_RAM) AM_BASE(&bublbobl_objectram) AM_SIZE(&bublbobl_objectram_size)
-	AM_RANGE(0xe000, 0xf7ff) AM_WRITE(bublbobl_sharedram1_w) AM_BASE(&bublbobl_sharedram1)
-	AM_RANGE(0xf800, 0xf9ff) AM_WRITE(paletteram_RRRRGGGGBBBBxxxx_swap_w) AM_BASE(&paletteram)
-	AM_RANGE(0xfa00, 0xfa00) AM_WRITE(bublbobl_sound_command_w)
-	AM_RANGE(0xfa80, 0xfa80) AM_WRITE(MWA8_NOP)
-	AM_RANGE(0xfb00, 0xfb00) AM_WRITE(bublbobl_nmitrigger_w)	/* not used by Bubble Bobble, only by Tokio */
-	AM_RANGE(0xfb40, 0xfb40) AM_WRITE(bublbobl_bankswitch_w)
-	AM_RANGE(0xfc00, 0xfcff) AM_WRITE(bublbobl_sharedram2_w) AM_BASE(&bublbobl_sharedram2)
-	AM_RANGE(0xfd00, 0xfeff) AM_WRITE(MWA8_RAM)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( bublbobl_readmem2, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0xe000, 0xf7ff) AM_READ(bublbobl_sharedram1_r)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( bublbobl_writemem2, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0xe000, 0xf7ff) AM_WRITE(bublbobl_sharedram1_w)
+	AM_RANGE(0xff94, 0xff94) AM_WRITENOP // ???
+	AM_RANGE(0xff98, 0xff98) AM_WRITENOP // ???
 ADDRESS_MAP_END
 
 
-static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0x8000, 0x8fff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x9000, 0x9000) AM_READ(YM2203_status_port_0_r)
-	AM_RANGE(0x9001, 0x9001) AM_READ(YM2203_read_port_0_r)
-	AM_RANGE(0xa000, 0xa000) AM_READ(YM3526_status_port_0_r)
-	AM_RANGE(0xb000, 0xb000) AM_READ(soundlatch_r)
-	AM_RANGE(0xb001, 0xb001) AM_READ(MRA8_NOP)	/* bit 0: message pending for main cpu */
-									/* bit 1: message pending for sound cpu */
-	AM_RANGE(0xe000, 0xefff) AM_READ(MRA8_ROM)	/* space for diagnostic ROM? */
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0x8000, 0x8fff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0x9000, 0x9000) AM_WRITE(YM2203_control_port_0_w)
-	AM_RANGE(0x9001, 0x9001) AM_WRITE(YM2203_write_port_0_w)
-	AM_RANGE(0xa000, 0xa000) AM_WRITE(YM3526_control_port_0_w)
-	AM_RANGE(0xa001, 0xa001) AM_WRITE(YM3526_write_port_0_w)
-	AM_RANGE(0xb000, 0xb000) AM_WRITE(MWA8_NOP)	/* message for main cpu */
-	AM_RANGE(0xb001, 0xb001) AM_WRITE(bublbobl_sh_nmi_enable_w)
-	AM_RANGE(0xb002, 0xb002) AM_WRITE(bublbobl_sh_nmi_disable_w)
-	AM_RANGE(0xe000, 0xefff) AM_WRITE(MWA8_ROM)	/* space for diagnostic ROM? */
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( tokio_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK1)
-	AM_RANGE(0xc000, 0xdfff) AM_READ(MRA8_RAM)
-	AM_RANGE(0xe000, 0xf7ff) AM_READ(bublbobl_sharedram1_r)
-	AM_RANGE(0xf800, 0xf9ff) AM_READ(paletteram_r)
+static ADDRESS_MAP_START( tokio_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_ROM
+	AM_RANGE(0x8000, 0xbfff) AM_ROMBANK(1)
+	AM_RANGE(0xc000, 0xdcff) AM_RAM AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0xdd00, 0xdfff) AM_RAM AM_BASE(&bublbobl_objectram) AM_SIZE(&bublbobl_objectram_size)
+	AM_RANGE(0xe000, 0xf7ff) AM_RAM AM_SHARE(1)
+	AM_RANGE(0xf800, 0xf9ff) AM_RAM AM_WRITE(paletteram_RRRRGGGGBBBBxxxx_swap_w) AM_BASE(&paletteram)
+	AM_RANGE(0xfa00, 0xfa00) AM_WRITENOP // ???
 	AM_RANGE(0xfa03, 0xfa03) AM_READ(input_port_0_r)
 	AM_RANGE(0xfa04, 0xfa04) AM_READ(input_port_1_r)
 	AM_RANGE(0xfa05, 0xfa05) AM_READ(input_port_2_r)
 	AM_RANGE(0xfa06, 0xfa06) AM_READ(input_port_3_r)
 	AM_RANGE(0xfa07, 0xfa07) AM_READ(input_port_4_r)
-	AM_RANGE(0xfe00, 0xfe00) AM_READ(tokio_fake_r)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( tokio_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0xc000, 0xdcff) AM_WRITE(MWA8_RAM) AM_BASE(&videoram) AM_SIZE(&videoram_size)
-	AM_RANGE(0xdd00, 0xdfff) AM_WRITE(MWA8_RAM) AM_BASE(&bublbobl_objectram) AM_SIZE(&bublbobl_objectram_size)
-	AM_RANGE(0xe000, 0xf7ff) AM_WRITE(bublbobl_sharedram1_w) AM_BASE(&bublbobl_sharedram1)
-	AM_RANGE(0xf800, 0xf9ff) AM_WRITE(paletteram_RRRRGGGGBBBBxxxx_swap_w) AM_BASE(&paletteram)
-	AM_RANGE(0xfa00, 0xfa00) AM_WRITE(MWA8_NOP)
 	AM_RANGE(0xfa80, 0xfa80) AM_WRITE(tokio_bankswitch_w)
 	AM_RANGE(0xfb00, 0xfb00) AM_WRITE(tokio_videoctrl_w)
 	AM_RANGE(0xfb80, 0xfb80) AM_WRITE(bublbobl_nmitrigger_w)
-	AM_RANGE(0xfc00, 0xfc00) AM_WRITE(bublbobl_sound_command_w)
-	AM_RANGE(0xfe00, 0xfe00) AM_WRITE(MWA8_NOP) /* ??? */
+	AM_RANGE(0xfc00, 0xfc00) AM_READNOP AM_WRITE(bublbobl_sound_command_w) // ???
+	AM_RANGE(0xfe00, 0xfe00) AM_READ(tokio_fake_r) AM_WRITENOP // ???
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( tokio_readmem2, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0x8000, 0x97ff) AM_READ(bublbobl_sharedram1_r)
+static ADDRESS_MAP_START( tokio_slave_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_ROM
+	AM_RANGE(0x8000, 0x97ff) AM_RAM AM_SHARE(1)
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( tokio_writemem2, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0x8000, 0x97ff) AM_WRITE(bublbobl_sharedram1_w)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( tokio_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0x8000, 0x8fff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x9000, 0x9000) AM_READ(soundlatch_r)
-//	AM_RANGE(0x9800, 0x9800) AM_READ(MRA8_NOP)	/* ??? */
-	AM_RANGE(0xb000, 0xb000) AM_READ(YM2203_status_port_0_r)
-	AM_RANGE(0xb001, 0xb001) AM_READ(YM2203_read_port_0_r)
-	AM_RANGE(0xe000, 0xefff) AM_READ(MRA8_ROM)	/* space for diagnostic ROM? */
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( tokio_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0x8000, 0x8fff) AM_WRITE(MWA8_RAM)
-//	AM_RANGE(0x9000, 0x9000) AM_WRITE(MWA8_NOP)	/* ??? */
+static ADDRESS_MAP_START( tokio_sound_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_ROM
+	AM_RANGE(0x8000, 0x8fff) AM_RAM
+	AM_RANGE(0x9000, 0x9000) AM_READ(soundlatch_r) AM_WRITENOP	// ???
+	AM_RANGE(0x9800, 0x9800) AM_READNOP	// ???
 	AM_RANGE(0xa000, 0xa000) AM_WRITE(bublbobl_sh_nmi_disable_w)
 	AM_RANGE(0xa800, 0xa800) AM_WRITE(bublbobl_sh_nmi_enable_w)
-	AM_RANGE(0xb000, 0xb000) AM_WRITE(YM2203_control_port_0_w)
-	AM_RANGE(0xb001, 0xb001) AM_WRITE(YM2203_write_port_0_w)
-	AM_RANGE(0xe000, 0xefff) AM_WRITE(MWA8_ROM)	/* space for diagnostic ROM? */
+	AM_RANGE(0xb000, 0xb000) AM_READWRITE(YM2203_status_port_0_r, YM2203_control_port_0_w)
+	AM_RANGE(0xb001, 0xb001) AM_READWRITE(YM2203_read_port_0_r, YM2203_write_port_0_w)
+	AM_RANGE(0xe000, 0xefff) AM_ROM	// space for diagnostic ROM?
 ADDRESS_MAP_END
 
-
+/* Input Ports */
 
 INPUT_PORTS_START( bublbobl )
 	PORT_START_TAG("IN0")
@@ -350,9 +283,7 @@ INPUT_PORTS_START( bublbobl )
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_BIT(0x04, 		0x04, IPT_DIPSWITCH_NAME ) PORT_NAME( "Service Mode (Japanese only)") PORT_CODE(KEYCODE_F2) PORT_TOGGLE
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_SERVICE( 0x04, IP_ACTIVE_LOW ) // works only in Japanese mode
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
@@ -370,14 +301,14 @@ INPUT_PORTS_START( bublbobl )
 	PORT_START_TAG("DSW1")
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Easy ) )
-	PORT_DIPSETTING(    0x03, DEF_STR( Medium ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( Normal ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Hard ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Very_Hard ) )
 	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x08, "20000 80000" )
-	PORT_DIPSETTING(    0x0c, "30000 100000" )
-	PORT_DIPSETTING(    0x04, "40000 200000" )
-	PORT_DIPSETTING(    0x00, "50000 250000" )
+	PORT_DIPSETTING(    0x08, "20K 80K" )
+	PORT_DIPSETTING(    0x0c, "30K 100K" )
+	PORT_DIPSETTING(    0x04, "40K 200K" )
+	PORT_DIPSETTING(    0x00, "50K 250K" )
 	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x10, "1" )
 	PORT_DIPSETTING(    0x00, "2" )
@@ -391,7 +322,7 @@ INPUT_PORTS_START( bublbobl )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START_TAG("IN1")
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_2WAY
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  ) PORT_2WAY
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_2WAY
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -401,7 +332,7 @@ INPUT_PORTS_START( bublbobl )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START_TAG("IN2")
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_2WAY PORT_PLAYER(2)
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  ) PORT_2WAY PORT_PLAYER(2)
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_2WAY PORT_PLAYER(2)
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -419,9 +350,7 @@ INPUT_PORTS_START( boblbobl )
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_BIT(0x04, 		0x04, IPT_DIPSWITCH_NAME ) PORT_NAME( "Service Mode (Japanese only)") PORT_CODE(KEYCODE_F2) PORT_TOGGLE
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_SERVICE( 0x04, IP_ACTIVE_LOW ) // works only in Japanese mode
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
@@ -439,14 +368,14 @@ INPUT_PORTS_START( boblbobl )
 	PORT_START_TAG("DSW1")
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Easy ) )
-	PORT_DIPSETTING(    0x03, DEF_STR( Medium ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( Normal ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Hard ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Very_Hard ) )
 	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x08, "20000 80000" )
-	PORT_DIPSETTING(    0x0c, "30000 100000" )
-	PORT_DIPSETTING(    0x04, "40000 200000" )
-	PORT_DIPSETTING(    0x00, "50000 250000" )
+	PORT_DIPSETTING(    0x08, "20K 80K" )
+	PORT_DIPSETTING(    0x0c, "30K 100K" )
+	PORT_DIPSETTING(    0x04, "40K 200K" )
+	PORT_DIPSETTING(    0x00, "50K 250K" )
 	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x10, "1" )
 	PORT_DIPSETTING(    0x00, "2" )
@@ -459,7 +388,7 @@ INPUT_PORTS_START( boblbobl )
 	PORT_DIPSETTING(    0xc0, DEF_STR( Very_High ) )
 
 	PORT_START_TAG("IN0")
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_2WAY
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  ) PORT_2WAY
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_2WAY
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN1 )
@@ -469,9 +398,9 @@ INPUT_PORTS_START( boblbobl )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START_TAG("IN1")
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_2WAY PORT_PLAYER(2)
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  ) PORT_2WAY PORT_PLAYER(2)
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_2WAY PORT_PLAYER(2)
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_TILT ) /* ?????*/
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_TILT ) // ???
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
@@ -505,14 +434,14 @@ INPUT_PORTS_START( sboblbob )
 	PORT_START_TAG("DSW1")
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Easy ) )
-	PORT_DIPSETTING(    0x03, DEF_STR( Medium ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( Normal ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Hard ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Very_Hard ) )
 	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x08, "20000 80000" )
-	PORT_DIPSETTING(    0x0c, "30000 100000" )
-	PORT_DIPSETTING(    0x04, "40000 200000" )
-	PORT_DIPSETTING(    0x00, "50000 250000" )
+	PORT_DIPSETTING(    0x08, "20K 80K" )
+	PORT_DIPSETTING(    0x0c, "30K 100K" )
+	PORT_DIPSETTING(    0x04, "40K 200K" )
+	PORT_DIPSETTING(    0x00, "50K 250K" )
 	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x10, "1" )
 	PORT_DIPSETTING(    0x00, "2" )
@@ -525,7 +454,7 @@ INPUT_PORTS_START( sboblbob )
 	PORT_DIPSETTING(    0xc0, DEF_STR( Very_High ) )
 
 	PORT_START_TAG("IN0")
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_2WAY
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  ) PORT_2WAY
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_2WAY
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN1 )
@@ -535,9 +464,9 @@ INPUT_PORTS_START( sboblbob )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START_TAG("IN1")
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_2WAY PORT_PLAYER(2)
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  ) PORT_2WAY PORT_PLAYER(2)
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_2WAY PORT_PLAYER(2)
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_TILT ) /* ?????*/
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_TILT ) // ???
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
@@ -571,14 +500,14 @@ INPUT_PORTS_START( tokio )
 	PORT_START_TAG("DSW1")
 	PORT_DIPNAME( 0x03, 0x02, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x03, DEF_STR( Easy ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Medium ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Normal ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Hard ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Very_Hard ) )
 	PORT_DIPNAME( 0x0c, 0x08, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x0C, "100000 400000" )
-	PORT_DIPSETTING(    0x08, "200000 400000" )
-	PORT_DIPSETTING(    0x04, "300000 400000" )
-	PORT_DIPSETTING(    0x00, "400000 400000" )
+	PORT_DIPSETTING(    0x0C, "100K 400K" )
+	PORT_DIPSETTING(    0x08, "200K 400K" )
+	PORT_DIPSETTING(    0x04, "300K 400K" )
+	PORT_DIPSETTING(    0x00, "400K 400K" )
 	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x30, "3" )
 	PORT_DIPSETTING(    0x20, "4" )
@@ -602,31 +531,31 @@ INPUT_PORTS_START( tokio )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START_TAG("IN1")
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_2WAY
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  ) PORT_2WAY
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_2WAY
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_2WAY
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_2WAY
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  ) PORT_2WAY
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    ) PORT_2WAY
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START_TAG("IN2")
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_2WAY PORT_COCKTAIL
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  ) PORT_2WAY PORT_COCKTAIL
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_2WAY PORT_COCKTAIL
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_2WAY PORT_COCKTAIL
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_2WAY PORT_COCKTAIL
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  ) PORT_2WAY PORT_COCKTAIL
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    ) PORT_2WAY PORT_COCKTAIL
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_COCKTAIL
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_COCKTAIL
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
-
+/* Graphics Layout */
 
 static struct GfxLayout charlayout =
 {
-	8,8,	/* the characters are 8x8 pixels */
+	8, 8,	/* the characters are 8x8 pixels */
 	256*8*8,	/* 256 chars per bank * 8 banks per ROM pair * 8 ROM pairs */
 	4,	/* 4 bits per pixel */
 	{ 0, 4, 8*0x8000*8, 8*0x8000*8+4 },
@@ -635,27 +564,31 @@ static struct GfxLayout charlayout =
 	16*8	/* every char takes 16 bytes in two ROMs */
 };
 
+/* Graphics Decode Information */
+
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	/* read all graphics into one big graphics region */
 	{ REGION_GFX1, 0x00000, &charlayout, 0, 16 },
-	{ -1 }	/* end of array */
+	{ -1 }
 };
 
+#define MAIN_XTAL 	24000000
+#define HSYNC 		MAIN_XTAL / 4 / 384
+#define VSYNC		HSYNC / 264
+#define VBLANK		1 / VSYNC * (40 / 264)
 
+/* Sound Interfaces */
 
-#define MAIN_XTAL 24000000
-
-/* handler called by the 2203 emulator when the internal timers cause an IRQ */
+// handler called by the 2203 emulator when the internal timers cause an IRQ
 static void irqhandler(int irq)
 {
-	cpunum_set_input_line(2,0,irq ? ASSERT_LINE : CLEAR_LINE);
+	cpunum_set_input_line(2, 0, irq ? ASSERT_LINE : CLEAR_LINE);
 }
 
 static struct YM2203interface ym2203_interface =
 {
-	1,			/* 1 chip */
-	MAIN_XTAL/8,	/* 3 MHz */
+	1,				// 1 chip
+	MAIN_XTAL/8,	// 3 MHz
 	{ YM2203_VOL(25,25) },
 	{ 0 },
 	{ 0 },
@@ -664,19 +597,17 @@ static struct YM2203interface ym2203_interface =
 	{ irqhandler }
 };
 
-
 static struct YM3526interface ym3526_interface =
 {
-	1,			/* 1 chip (no more supported) */
-	MAIN_XTAL/8,	/* 3 MHz */
-	{ 50 }		/* volume */
+	1,				// 1 chip (no more supported)
+	MAIN_XTAL/8,	// 3 MHz
+	{ 50 }			// volume
 };
-
 
 static struct YM2203interface tokio_ym2203_interface =
 {
-	1,		/* 1 chip */
-	MAIN_XTAL/8,	/* 3 MHz */
+	1,				// 1 chip
+	MAIN_XTAL/8,	// 3 MHz
 	{ YM2203_VOL(100,20) },
 	{ 0 },
 	{ 0 },
@@ -685,34 +616,30 @@ static struct YM2203interface tokio_ym2203_interface =
 	{ irqhandler }
 };
 
-
+/* Machine Drivers */
 
 static MACHINE_DRIVER_START( bublbobl )
+	// basic machine hardware
+	MDRV_CPU_ADD_TAG("main", Z80, MAIN_XTAL/4)	// 6 MHz
+	MDRV_CPU_PROGRAM_MAP(master_map, 0)
 
-	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80, MAIN_XTAL/4)	/* 6 MHz */
-	MDRV_CPU_PROGRAM_MAP(bublbobl_readmem,bublbobl_writemem)
-
-	MDRV_CPU_ADD(Z80, MAIN_XTAL/4)	/* 6 MHz */
-	MDRV_CPU_PROGRAM_MAP(bublbobl_readmem2,bublbobl_writemem2)
-	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+	MDRV_CPU_ADD(Z80, MAIN_XTAL/4)	// 6 MHz
+	MDRV_CPU_PROGRAM_MAP(slave_map, 0)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold, 1)
 
 	MDRV_CPU_ADD(Z80, MAIN_XTAL/8)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3 MHz */
-	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
-								/* IRQs are triggered by the YM2203 */
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	// 3 MHz
+	MDRV_CPU_PROGRAM_MAP(sound_map, 0) // IRQs are triggered by the YM2203
 
-	MDRV_CPU_ADD(M68705,4000000/2)	/* xtal is 4MHz, I think it's divided by 2 internally */
-	MDRV_CPU_PROGRAM_MAP(m68705_readmem,m68705_writemem)
-	MDRV_CPU_VBLANK_INT(bublbobl_m68705_interrupt,2)	/* ??? should come from the same */
-					/* clock which latches the INT pin on the second Z80 */
+	MDRV_CPU_ADD_TAG("mcu", M68705, 4000000/2)	// xtal is 4MHz, I think it's divided by 2 internally
+	MDRV_CPU_PROGRAM_MAP(mcu_map, 0)
+	MDRV_CPU_VBLANK_INT(bublbobl_m68705_interrupt, 2) // ??? should come from the same clock which latches the INT pin on the second Z80
 
-	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
-	MDRV_INTERLEAVE(100)	/* 100 CPU slices per frame - an high value to ensure proper */
-							/* synchronization of the CPUs */
+	MDRV_FRAMES_PER_SECOND(VSYNC)	// 59.185606 Hz
+	MDRV_VBLANK_DURATION(VBLANK) 	// 2560 µs
+	MDRV_INTERLEAVE(100) // 100 CPU slices per frame - a high value to ensure proper synchronization of the CPUs
 
-	/* video hardware */
+	// video hardware
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(32*8, 32*8)
 	MDRV_VISIBLE_AREA(0, 32*8-1, 2*8, 30*8-1)
@@ -721,68 +648,41 @@ static MACHINE_DRIVER_START( bublbobl )
 
 	MDRV_VIDEO_UPDATE(bublbobl)
 
-	/* sound hardware */
+	// sound hardware
 	MDRV_SOUND_ADD(YM2203, ym2203_interface)
 	MDRV_SOUND_ADD(YM3526, ym3526_interface)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( boblbobl )
+	MDRV_IMPORT_FROM(bublbobl)
 
-	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80, MAIN_XTAL/4)	/* 6 MHz */
-	MDRV_CPU_PROGRAM_MAP(boblbobl_readmem,boblbobl_writemem)
-	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)	/* interrupt mode 1, unlike Bubble Bobble */
+	// basic machine hardware
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_PROGRAM_MAP(bootleg_map, 0)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold, 1)	// interrupt mode 1, unlike Bubble Bobble
 
-	MDRV_CPU_ADD(Z80, MAIN_XTAL/4)	/* 6 MHz */
-	MDRV_CPU_PROGRAM_MAP(bublbobl_readmem2,bublbobl_writemem2)
-	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
-
-	MDRV_CPU_ADD(Z80, MAIN_XTAL/8)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3 MHz */
-	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
-								/* IRQs are triggered by the YM2203 */
-	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
-	MDRV_INTERLEAVE(100)	/* 100 CPU slices per frame - an high value to ensure proper */
-							/* synchronization of the CPUs */
-
-	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(32*8, 32*8)
-	MDRV_VISIBLE_AREA(0, 32*8-1, 2*8, 30*8-1)
-	MDRV_GFXDECODE(gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(256)
-
-	MDRV_VIDEO_UPDATE(bublbobl)
-
-	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
-	MDRV_SOUND_ADD(YM3526, ym3526_interface)
+	MDRV_CPU_REMOVE("mcu")
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( tokio )
+	// basic machine hardware
+	MDRV_CPU_ADD(Z80, MAIN_XTAL/4)	// 6 MHz
+	MDRV_CPU_PROGRAM_MAP(tokio_map, 0)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold, 1)
 
-	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80, MAIN_XTAL/4)	/* 6 MHz */
-	MDRV_CPU_PROGRAM_MAP(tokio_readmem,tokio_writemem)
-	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
-
-	MDRV_CPU_ADD(Z80, MAIN_XTAL/4)	/* 6 MHz */
-	MDRV_CPU_PROGRAM_MAP(tokio_readmem2,tokio_writemem2)
-	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+	MDRV_CPU_ADD(Z80, MAIN_XTAL/4)	// 6 MHz
+	MDRV_CPU_PROGRAM_MAP(tokio_slave_map, 0)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold, 1)
 
 	MDRV_CPU_ADD(Z80, MAIN_XTAL/8)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3 MHz */
-	MDRV_CPU_PROGRAM_MAP(tokio_sound_readmem,tokio_sound_writemem)
-						/* NMIs are triggered by the main CPU */
-						/* IRQs are triggered by the YM2203 */
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	// 3 MHz
+	MDRV_CPU_PROGRAM_MAP(tokio_sound_map, 0) // NMIs are triggered by the main CPU, IRQs are triggered by the YM2203
 
-	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION) /* frames/second, vblank duration */
-	MDRV_INTERLEAVE(100)	/* 100 CPU slices per frame - an high value to ensure proper */
-							/* synchronization of the CPUs */
+	MDRV_FRAMES_PER_SECOND(VSYNC)	// 59.185606 Hz
+	MDRV_VBLANK_DURATION(VBLANK) 	// 2560 µs
+	MDRV_INTERLEAVE(100) // 100 CPU slices per frame - a high value to ensure proper synchronization of the CPUs
 
-	/* video hardware */
+	// video hardware
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(32*8, 32*8)
 	MDRV_VISIBLE_AREA(0, 32*8-1, 2*8, 30*8-1)
@@ -791,16 +691,11 @@ static MACHINE_DRIVER_START( tokio )
 
 	MDRV_VIDEO_UPDATE(bublbobl)
 
-	/* sound hardware */
+	// sound hardware
 	MDRV_SOUND_ADD(YM2203, tokio_ym2203_interface)
 MACHINE_DRIVER_END
 
-
-/***************************************************************************
-
-  Game driver(s)
-
-***************************************************************************/
+/* ROMs */
 
 ROM_START( bublbobl )
 	ROM_REGION( 0x30000, REGION_CPU1, 0 )
@@ -1055,21 +950,20 @@ ROM_START( tokiob )
 	ROM_LOAD( "a71-25.bin",   0x0000, 0x0100, CRC(2d0f8545) SHA1(089c31e2f614145ef2743164f7b52ae35bc06808) )	/* video timing */
 ROM_END
 
-
+/* Driver Initialization */
 
 static DRIVER_INIT( bublbobl )
 {
-	unsigned char *ROM = memory_region(REGION_CPU1);
+	UINT8 *ROM = memory_region(REGION_CPU1);
 
 	/* in Bubble Bobble, bank 0 has code falling from 7fff to 8000, */
 	/* so I have to copy it there because bank switching wouldn't catch it */
-	memcpy(ROM+0x08000,ROM+0x10000,0x4000);
+	memcpy(ROM + 0x08000, ROM + 0x10000, 0x4000);
 }
-
 
 static DRIVER_INIT( boblbobl )
 {
-#define MOD_PAGE(page,addr,data) memory_region(REGION_CPU1)[addr-0x8000+0x10000+0x4000*page] = data;
+	#define MOD_PAGE(page,addr,data) memory_region(REGION_CPU1)[addr-0x8000+0x10000+0x4000*page] = data;
     /* these shouldn't be necessary, surely - this is a bootleg ROM
      * with the protection removed - so what are all these JP's to
      * 0xa288 doing?  and why does the emulator fail the ROM checks?
@@ -1083,7 +977,6 @@ static DRIVER_INIT( boblbobl )
 	init_bublbobl();
 }
 
-
 static DRIVER_INIT( tokio )
 {
 	extern int bublbobl_video_enable;
@@ -1093,11 +986,12 @@ static DRIVER_INIT( tokio )
 	bublbobl_video_enable = 1;
 }
 
+/* Game Drivers */
 
-GAME( 1986, bublbobl, 0,        bublbobl, bublbobl, bublbobl, ROT0,  "Taito Corporation", "Bubble Bobble" )
-GAME( 1986, bublbobr, bublbobl, bublbobl, bublbobl, bublbobl, ROT0,  "Taito America Corporation (Romstar license)", "Bubble Bobble (US with mode select)" )
-GAME( 1986, bubbobr1, bublbobl, bublbobl, bublbobl, bublbobl, ROT0,  "Taito America Corporation (Romstar license)", "Bubble Bobble (US)" )
+GAMEX(1986, bublbobl, 0,        bublbobl, bublbobl, bublbobl, ROT0,  "Taito Corporation", "Bubble Bobble", GAME_IMPERFECT_GRAPHICS | GAME_UNEMULATED_PROTECTION )
+GAMEX(1986, bublbobr, bublbobl, bublbobl, bublbobl, bublbobl, ROT0,  "Taito America Corporation (Romstar license)", "Bubble Bobble (US with mode select)", GAME_IMPERFECT_GRAPHICS | GAME_UNEMULATED_PROTECTION )
+GAMEX(1986, bubbobr1, bublbobl, bublbobl, bublbobl, bublbobl, ROT0,  "Taito America Corporation (Romstar license)", "Bubble Bobble (US)", GAME_IMPERFECT_GRAPHICS | GAME_UNEMULATED_PROTECTION )
 GAME( 1986, boblbobl, bublbobl, boblbobl, boblbobl, boblbobl, ROT0,  "bootleg", "Bobble Bobble" )
 GAME( 1986, sboblbob, bublbobl, boblbobl, sboblbob, bublbobl, ROT0,  "bootleg", "Super Bobble Bobble" )
 GAMEX(1986, tokio,    0,        tokio,    tokio,    tokio,    ROT90, "Taito", "Tokio / Scramble Formation", GAME_NOT_WORKING )
-GAME( 1986, tokiob,   tokio,    tokio,    tokio,    tokio,    ROT90, "bootleg", "Tokio / Scramble Formation (bootleg)" )
+GAMEX(1986, tokiob,   tokio,    tokio,    tokio,    tokio,    ROT90, "bootleg", "Tokio / Scramble Formation (bootleg)", GAME_IMPERFECT_SOUND )

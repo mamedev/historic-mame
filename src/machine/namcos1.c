@@ -1,42 +1,34 @@
 #include "driver.h"
 #include "state.h"
 #include "vidhrdw/generic.h"
+#include "sound/ym2151.h"
 #include "machine/random.h"
 
-#define NEW_TIMER 0 /* CPU slice optimize with new timer system */
-
 #define NAMCOS1_MAX_BANK 0x400
-
-#define USE_MTRANDOM 1
 
 /* from vidhrdw */
 READ8_HANDLER( namcos1_videoram_r );
 WRITE8_HANDLER( namcos1_videoram_w );
 READ8_HANDLER( namcos1_paletteram_r );
 WRITE8_HANDLER( namcos1_paletteram_w );
-WRITE8_HANDLER( namcos1_videocontrol_w );
+READ8_HANDLER( namcos1_spriteram_r );
+WRITE8_HANDLER( namcos1_spriteram_w );
 extern void namcos1_set_scroll_offsets( const int *bgx, const int *bgy, int negative, int optimize );
 extern void namcos1_set_sprite_offsets( int x, int y );
 
-#define NAMCOS1_MAX_KEY 0x100
-static unsigned char key[NAMCOS1_MAX_KEY];
+static data8_t *namcos1_triram;
+static data8_t *s1ram;
 
-static unsigned char *s1ram;
-
-static int namcos1_cpu1_banklatch;
-static int namcos1_reset = 0;
-
-static int berabohm_input_counter;
-int namcos1_game_id = 0;
 
 /*******************************************************************************
 *                                                                              *
-*   BANK area handling                                                          *
+*   BANK area handling                                                         *
 *                                                                              *
 *******************************************************************************/
 
 /* Bank handler definitions */
-typedef struct {
+typedef struct
+{
 	read8_handler bank_handler_r;
 	write8_handler bank_handler_w;
 	int           bank_offset;
@@ -114,571 +106,461 @@ static const write8_handler io_bank_handler_w[16] =
 };
 
 
-/*******************************************************************************
-*                                                                              *
-*   Key emulation (CUS136) Rev1 (Pacmania & Galaga 88)                         *
-*                                                                              *
-*******************************************************************************/
 
-static int key_id;
-static int key_id_query;
-
-static READ8_HANDLER( rev1_key_r ) {
-	//logerror("CPU #%d PC %08x: keychip read %04X=%02x\n",cpu_getactivecpu(),activecpu_get_pc(),offset,key[offset]);
-	if(offset >= NAMCOS1_MAX_KEY)
-	{
-		logerror("CPU #%d PC %08x: unmapped keychip read %04x\n",cpu_getactivecpu(),activecpu_get_pc(),offset);
-		return 0;
-	}
-	return key[offset];
-}
-
-static WRITE8_HANDLER( rev1_key_w ) {
-	static unsigned short divider, divide_32 = 0;
-	//logerror("CPU #%d PC %08x: keychip write %04X=%02x\n",cpu_getactivecpu(),activecpu_get_pc(),offset,data);
-	if(offset >= NAMCOS1_MAX_KEY)
-	{
-		logerror("CPU #%d PC %08x: unmapped keychip write %04x=%04x\n",cpu_getactivecpu(),activecpu_get_pc(),offset,data);
-		return;
-	}
-
-	key[offset] = data;
-
-	switch ( offset )
-	{
-	case 0x01:
-		divider = ( key[0] << 8 ) + key[1];
-		break;
-	case 0x03:
-		{
-			static unsigned short d;
-			unsigned short  v1, v2;
-			unsigned long   l=0;
-
-			if ( divide_32 )
-				l = d << 16;
-
-			d = ( key[2] << 8 ) + key[3];
-
-			if ( divider == 0 ) {
-				v1 = 0xffff;
-				v2 = 0;
-			} else {
-				if ( divide_32 ) {
-					l |= d;
-
-					v1 = l / divider;
-					v2 = l % divider;
-				} else {
-					v1 = d / divider;
-					v2 = d % divider;
-				}
-			}
-
-			key[2] = v1 >> 8;
-			key[3] = v1;
-			key[0] = v2 >> 8;
-			key[1] = v2;
-		}
-		break;
-	case 0x04:
-		if ( key[4] == key_id_query ) /* get key number */
-			key[4] = key_id;
-
-		if ( key[4] == 0x0c )
-			divide_32 = 1;
-		else
-			divide_32 = 0;
-		break;
-	}
-}
-
-/*******************************************************************************
-*                                                                              *
-*   Key emulation (CUS136) Rev2 (Dragon Spirit, Blazer, World Court)           *
-*                                                                              *
-*******************************************************************************/
-
-static READ8_HANDLER( rev2_key_r )
+static WRITE8_HANDLER( namcos1_3dcs_w )
 {
-	//logerror("CPU #%d PC %08x: keychip read %04X=%02x\n",cpu_getactivecpu(),activecpu_get_pc(),offset,key[offset]);
-	if(offset >= NAMCOS1_MAX_KEY)
-	{
-		logerror("CPU #%d PC %08x: unmapped keychip read %04x\n",cpu_getactivecpu(),activecpu_get_pc(),offset);
-		return 0;
-	}
-	return key[offset];
+	if (offset & 1)	usrintf_showmessage("LEFT");
+	else			usrintf_showmessage("RIGHT");
 }
 
-static WRITE8_HANDLER( rev2_key_w )
+
+
+static int key_id,key_reg,key_rng,key_swap4_arg,key_swap4,key_bottom4,key_top4;
+static data8_t key[8];
+
+
+static READ8_HANDLER( no_key_r )
 {
-	//logerror("CPU #%d PC %08x: keychip write %04X=%02x\n",cpu_getactivecpu(),activecpu_get_pc(),offset,data);
-	if(offset >= NAMCOS1_MAX_KEY)
-	{
-		logerror("CPU #%d PC %08x: unmapped keychip write %04x=%04x\n",cpu_getactivecpu(),activecpu_get_pc(),offset,data);
-		return;
-	}
-	key[offset] = data;
-
-	switch(offset)
-	{
-	case 0x00:
-		if ( data == 1 )
-		{
-			/* fetch key ID */
-			key[3] = key_id;
-			return;
-		}
-		break;
-	case 0x02:
-		/* $f2 = Dragon Spirit, $b7 = Blazer , $35($d9) = worldcourt */
-		if ( key[3] == 0xf2 || key[3] == 0xb7 || key[3] == 0x35 )
-		{
-			switch( key[0] )
-			{
-				case 0x10: key[0] = 0x05; key[1] = 0x00; key[2] = 0xc6; break;
-				case 0x12: key[0] = 0x09; key[1] = 0x00; key[2] = 0x96; break;
-				case 0x15: key[0] = 0x0a; key[1] = 0x00; key[2] = 0x8f; break;
-				case 0x22: key[0] = 0x14; key[1] = 0x00; key[2] = 0x39; break;
-				case 0x32: key[0] = 0x31; key[1] = 0x00; key[2] = 0x12; break;
-				case 0x3d: key[0] = 0x35; key[1] = 0x00; key[2] = 0x27; break;
-				case 0x54: key[0] = 0x10; key[1] = 0x00; key[2] = 0x03; break;
-				case 0x58: key[0] = 0x49; key[1] = 0x00; key[2] = 0x23; break;
-				case 0x7b: key[0] = 0x48; key[1] = 0x00; key[2] = 0xd4; break;
-				case 0xc7: key[0] = 0xbf; key[1] = 0x00; key[2] = 0xe8; break;
-			}
-			return;
-		}
-		break;
-	case 0x03:
-		/* $c2 = Dragon Spirit, $b6 = Blazer */
-		if ( key[3] == 0xc2 || key[3] == 0xb6 ) {
-			key[3] = 0x36;
-			return;
-		}
-		/* $d9 = World court */
-		if ( key[3] == 0xd9 )
-		{
-			key[3] = 0x35;
-			return;
-		}
-		break;
-	case 0x3f:  /* Splatter House */
-		key[0x3f] = 0xb5;
-		key[0x36] = 0xb5;
-		return;
-	}
-	/* ?? */
-	if ( key[3] == 0x01 ) {
-		if ( key[0] == 0x40 && key[1] == 0x04 && key[2] == 0x00 ) {
-			key[1] = 0x00; key[2] = 0x10;
-			return;
-		}
-	}
-}
-
-/*******************************************************************************
-*                                                                              *
-*   Key emulation (CUS136) for Dangerous Seed                                  *
-*                                                                              *
-*******************************************************************************/
-
-static READ8_HANDLER( dangseed_key_r ) {
-	//logerror("CPU #%d PC %08x: keychip read %04X=%02x\n",cpu_getactivecpu(),activecpu_get_pc(),offset,key[offset]);
-	if(offset >= NAMCOS1_MAX_KEY)
-	{
-		logerror("CPU #%d PC %08x: unmapped keychip read %04x\n",cpu_getactivecpu(),activecpu_get_pc(),offset);
-		return 0;
-	}
-	return key[offset];
-}
-
-static WRITE8_HANDLER( dangseed_key_w ) {
-	int i;
-	//logerror("CPU #%d PC %08x: keychip write %04X=%02x\n",cpu_getactivecpu(),activecpu_get_pc(),offset,data);
-	if(offset >= NAMCOS1_MAX_KEY)
-	{
-		logerror("CPU #%d PC %08x: unmapped keychip write %04x=%04x\n",cpu_getactivecpu(),activecpu_get_pc(),offset,data);
-		return;
-	}
-
-	key[offset] = data;
-
-	switch ( offset )
-	{
-		case 0x50:
-			for ( i = 0; i < 0x50; i++ ) {
-				key[i] = ( data >> ( ( i >> 4 ) & 0x0f ) ) & 0x0f;
-				key[i] |= ( i & 0x0f ) << 4;
-			}
-			break;
-
-		case 0x57:
-			key[3] = key_id;
-			break;
-	}
-}
-
-/*******************************************************************************
-*                                                                              *
-*   Key emulation (CUS136) for Dragon Spirit                                   *
-*                                                                              *
-*******************************************************************************/
-
-static READ8_HANDLER( dspirit_key_r )
-{
-	//logerror("CPU #%d PC %08x: keychip read %04X=%02x\n",cpu_getactivecpu(),activecpu_get_pc(),offset,key[offset]);
-	if(offset >= NAMCOS1_MAX_KEY)
-	{
-		logerror("CPU #%d PC %08x: unmapped keychip read %04x\n",cpu_getactivecpu(),activecpu_get_pc(),offset);
-		return 0;
-	}
-	return key[offset];
-}
-
-static WRITE8_HANDLER( dspirit_key_w )
-{
-	static unsigned short divisor;
-	//logerror("CPU #%d PC %08x: keychip write %04X=%02x\n",cpu_getactivecpu(),activecpu_get_pc(),offset,data);
-	if(offset >= NAMCOS1_MAX_KEY)
-	{
-		logerror("CPU #%d PC %08x: unmapped keychip write %04x=%04x\n",cpu_getactivecpu(),activecpu_get_pc(),offset,data);
-		return;
-	}
-	key[offset] = data;
-
-	switch(offset)
-	{
-	case 0x00:
-		if ( data == 1 )
-		{
-			/* fetch key ID */
-			key[3] = key_id;
-		} else
-			divisor = data;
-		break;
-
-	case 0x01:
-		if ( key[3] == 0x01 ) { /* division gets resolved on latch to $1 */
-			unsigned short d, v1, v2;
-
-			d = ( key[1] << 8 ) + key[2];
-
-			if ( divisor == 0 ) {
-				v1 = 0xffff;
-				v2 = 0;
-			} else {
-				v1 = d / divisor;
-				v2 = d % divisor;
-			}
-
-			key[0] = v2 & 0xff;
-			key[1] = v1 >> 8;
-			key[2] = v1 & 0xff;
-
-			return;
-		}
-
-		if ( key[3] != 0xf2 ) { /* if its an invalid mode, clear regs */
-			key[0] = 0;
-			key[1] = 0;
-			key[2] = 0;
-		}
-		break;
-	case 0x02:
-		if ( key[3] == 0xf2 ) { /* division gets resolved on latch to $2 */
-			unsigned short d, v1, v2;
-
-			d = ( key[1] << 8 ) + key[2];
-
-			if ( divisor == 0 ) {
-				v1 = 0xffff;
-				v2 = 0;
-			} else {
-				v1 = d / divisor;
-				v2 = d % divisor;
-			}
-
-			key[0] = v2 & 0xff;
-			key[1] = v1 >> 8;
-			key[2] = v1 & 0xff;
-
-			return;
-		}
-
-		if ( key[3] != 0x01 ) { /* if its an invalid mode, clear regs */
-			key[0] = 0;
-			key[1] = 0;
-			key[2] = 0;
-		}
-		break;
-	case 0x03:
-		if ( key[3] != 0xf2 && key[3] != 0x01 ) /* if the mode is unknown return the id on $3 */
-			key[3] = key_id;
-		break;
-	}
-}
-
-/*******************************************************************************
-*                                                                              *
-*   Key emulation (CUS136) for Blazer                                          *
-*                                                                              *
-*******************************************************************************/
-
-static READ8_HANDLER( blazer_key_r )
-{
-	logerror("CPU #%d PC %08x: keychip read %04X=%02x\n",cpu_getactivecpu(),activecpu_get_pc(),offset,key[offset]);
-	if(offset >= NAMCOS1_MAX_KEY)
-	{
-		logerror("CPU #%d PC %08x: unmapped keychip read %04x\n",cpu_getactivecpu(),activecpu_get_pc(),offset);
-		return 0;
-	}
-	return key[offset];
-}
-
-static WRITE8_HANDLER( blazer_key_w )
-{
-	static unsigned short divisor;
-	logerror("CPU #%d PC %08x: keychip write %04X=%02x\n",cpu_getactivecpu(),activecpu_get_pc(),offset,data);
-	if(offset >= NAMCOS1_MAX_KEY)
-	{
-		logerror("CPU #%d PC %08x: unmapped keychip write %04x=%04x\n",cpu_getactivecpu(),activecpu_get_pc(),offset,data);
-		return;
-	}
-	key[offset] = data;
-
-	switch(offset)
-	{
-	case 0x00:
-		if ( data == 1 )
-		{
-			/* fetch key ID */
-			key[3] = key_id;
-		} else
-			divisor = data;
-		break;
-
-	case 0x01:
-		if ( key[3] != 0xb7 ) { /* if its an invalid mode, clear regs */
-			key[0] = 0;
-			key[1] = 0;
-			key[2] = 0;
-		}
-		break;
-
-	case 0x02:
-		if ( key[3] == 0xb7 ) { /* division gets resolved on latch to $2 */
-			unsigned short d, v1, v2;
-
-			d = ( key[1] << 8 ) + key[2];
-
-			if ( divisor == 0 ) {
-				v1 = 0xffff;
-				v2 = 0;
-			} else {
-				v1 = d / divisor;
-				v2 = d % divisor;
-			}
-
-			key[0] = v2 & 0xff;
-			key[1] = v1 >> 8;
-			key[2] = v1 & 0xff;
-
-			return;
-		}
-
-		/* if its an invalid mode, clear regs */
-		key[0] = 0;
-		key[1] = 0;
-		key[2] = 0;
-		break;
-	case 0x03:
-		if ( key[3] != 0xb7 ) { /* if the mode is unknown return the id on $3 */
-			key[3] = key_id;
-		}
-		break;
-	}
-}
-
-/*******************************************************************************
-*                                                                              *
-*   Key emulation (CUS136) for World Stadium                                   *
-*                                                                              *
-*******************************************************************************/
-
-static READ8_HANDLER( ws_key_r ) {
-	//logerror("CPU #%d PC %08x: keychip read %04X=%02x\n",cpu_getactivecpu(),activecpu_get_pc(),offset,key[offset]);
-	if(offset >= NAMCOS1_MAX_KEY)
-	{
-		logerror("CPU #%d PC %08x: unmapped keychip read %04x\n",cpu_getactivecpu(),activecpu_get_pc(),offset);
-		return 0;
-	}
-	return key[offset];
-}
-
-static WRITE8_HANDLER( ws_key_w ) {
-	static unsigned short divider;
-	//logerror("CPU #%d PC %08x: keychip write %04X=%02x\n",cpu_getactivecpu(),activecpu_get_pc(),offset,data);
-	if(offset >= NAMCOS1_MAX_KEY)
-	{
-		logerror("CPU #%d PC %08x: unmapped keychip write %04x=%04x\n",cpu_getactivecpu(),activecpu_get_pc(),offset,data);
-		return;
-	}
-
-	key[offset] = data;
-
-	switch ( offset )
-	{
-	case 0x01:
-		divider = ( key[0] << 8 ) + key[1];
-		break;
-	case 0x03:
-		{
-			static unsigned short d;
-			unsigned short  v1, v2;
-
-			d = ( key[2] << 8 ) + key[3];
-
-			if ( divider == 0 ) {
-				v1 = 0xffff;
-				v2 = 0;
-			} else {
-				v1 = d / divider;
-				v2 = d % divider;
-			}
-
-			key[2] = v1 >> 8;
-			key[3] = v1;
-			key[0] = v2 >> 8;
-			key[1] = v2;
-		}
-		break;
-	case 0x04:
-		key[4] = key_id;
-		break;
-	}
-}
-
-/*******************************************************************************
-*                                                                              *
-*   Key emulation (CUS181) for SplatterHouse                                   *
-*                                                                              *
-*******************************************************************************/
-
-#ifdef USE_MTRANDOM
-
-// Courtesy of Shawn J. Cokus, University of Washington
-
-typedef unsigned long uint32;
-
-#define N              (624)                 // length of state vector
-#define M              (397)                 // a period parameter
-#define K              (0x9908B0DFU)         // a magic constant
-#define hiBit(u)       ((u) & 0x80000000U)   // mask all but highest   bit of u
-#define loBit(u)       ((u) & 0x00000001U)   // mask all but lowest    bit of u
-#define loBits(u)      ((u) & 0x7FFFFFFFU)   // mask     the highest   bit of u
-#define mixBits(u, v)  (hiBit(u)|loBits(v))  // move hi bit of u to hi bit of v
-
-static uint32   state[N+1];     // state vector + 1 extra to not violate ANSI C
-static uint32   *next;          // next random value is computed from here
-static int      left = -1;      // can *next++ this many times before reloading
-
-static void seedMT(uint32 seed)
-{
-	register uint32 x = (seed | 1U) & 0xFFFFFFFFU, *s = state;
-	register int    j;
-
-	for(left=0, *s++=x, j=N; --j;
-		*s++ = (x*=69069U) & 0xFFFFFFFFU);
-}
-
-static uint32 reloadMT(void)
-{
-	register uint32 *p0=state, *p2=state+2, *pM=state+M, s0, s1;
-	register int    j;
-
-	if(left < -1)
-		seedMT(4357U);
-
-	left=N-1, next=state+1;
-
-	for(s0=state[0], s1=state[1], j=N-M+1; --j; s0=s1, s1=*p2++)
-		*p0++ = *pM++ ^ (mixBits(s0, s1) >> 1) ^ (loBit(s1) ? K : 0U);
-
-	for(pM=state, j=M; --j; s0=s1, s1=*p2++)
-		*p0++ = *pM++ ^ (mixBits(s0, s1) >> 1) ^ (loBit(s1) ? K : 0U);
-
-	s1=state[0], *p0 = *pM ^ (mixBits(s0, s1) >> 1) ^ (loBit(s1) ? K : 0U);
-	s1 ^= (s1 >> 11);
-	s1 ^= (s1 <<  7) & 0x9D2C5680U;
-	s1 ^= (s1 << 15) & 0xEFC60000U;
-	return(s1 ^ (s1 >> 18));
-}
-
-INLINE uint32 randomMT(void)
-{
-	uint32 y;
-
-	if(--left < 0)
-		return(reloadMT());
-
-	y  = *next++;
-	y ^= (y >> 11);
-	y ^= (y <<  7) & 0x9D2C5680U;
-	y ^= (y << 15) & 0xEFC60000U;
-	return(y ^ (y >> 18));
-}
-
-#endif
-
-static READ8_HANDLER( splatter_key_r ) {
-
-	unsigned long data;
-
-	//logerror("CPU #%d PC %08x: keychip read %04X=%02x\n",cpu_getactivecpu(),activecpu_get_pc(),offset,key[offset]);
-
-	switch( ( offset >> 4 ) & 0x07 ) {
-		case 0x00:
-		case 0x06:
-			return 0xff;
-			break;
-
-		case 0x01:
-		case 0x02:
-		case 0x05:
-		case 0x07:
-			return ( ( offset & 0x0f ) << 4 ) | 0x0f;
-			break;
-
-		case 0x03:
-			return 0xb5;
-			break;
-
-		case 0x04:
-			{
-#ifdef USE_MTRANDOM
-				data = randomMT() & 0xff;
-#else
-				data = mame_rand() & 0xff;
-#endif
-				if ( offset >= 0x1000 )
-					data |= 0x80;
-				if ( offset >= 0x2000 )
-					data |= 0x04;
-
-				return (data);
-			}
-			break;
-	}
-
-	/* make compiler happy */
+	usrintf_showmessage("CPU #%d PC %08x: keychip read %04x\n",cpu_getactivecpu(),activecpu_get_pc(),offset);
 	return 0;
 }
 
-static WRITE8_HANDLER( splatter_key_w ) {
-	//logerror("CPU #%d PC %08x: keychip write %04X=%02x\n",cpu_getactivecpu(),activecpu_get_pc(),offset,data);
-	/* ignored */
+static WRITE8_HANDLER( no_key_w )
+{
+	usrintf_showmessage("CPU #%d PC %08x: keychip write %04x=%02x\n",cpu_getactivecpu(),activecpu_get_pc(),offset,data);
 }
+
+
+/*****************************************************************************
+
+  Key custom type 1 (CUS136, CUS143, CUS144)
+
+  16/8 bit division + key no.
+
+*****************************************************************************/
+
+/*
+the startup checks are the same in the three games using this kind of chip,
+apart from the [operating mode?] values written.
+
+dspirit: (CUS136)
+CPU #0 PC da06: keychip write 0000=01 [maybe to initialize chip?]
+CPU #0 PC da09: keychip read 0003     [return key no.]
+CPU #0 PC da14: keychip write 0003=f2 [operating mode?]
+CPU #0 PC da1d: keychip write 0000=xx [ \ operands]
+CPU #0 PC da22: keychip write 0001=xx [    "    " ]
+CPU #0 PC da22: keychip write 0002=xx [    "    " ]
+CPU #0 PC da25: keychip read 0001     [   division result (verified to be correct)]
+CPU #0 PC da25: keychip read 0002     [    "           "  (verified to be correct)]
+CPU #0 PC da28: keychip read 0000     [ /  "           "  (verified to be correct)]
+CPU #0 PC daf6: keychip write 0003=c2 [operating mode?]
+CPU #0 PC dafa: keychip write 0002=00-ff [???????]
+CPU #0 PC db00: keychip read 0003     [???? - stored in 0001]
+CPU #0 PC db07: keychip write 0001=82-ff [ \ ???????]
+CPU #0 PC db07: keychip write 0002=8d    [ / ???????]
+CPU #0 PC db0d: keychip read 0003     [???? - stored in 0002]
+CPU #0 PC db14: keychip read 0001     [ \ ???????]
+CPU #0 PC db14: keychip read 0002     [   ???????]
+CPU #0 PC db17: keychip write 0001=xx [   ???????]
+CPU #0 PC db17: keychip write 0002=xx [ / ???????]
+CPU #0 PC db1d: keychip read 0001     [???? - stored in 0003]
+CPU #0 PC db1d: keychip read 0002     [???? - stored in 0004]
+CPU #0 PC db24: keychip write 0003=f2 [operating mode?]
+---- end of common checks
+CPU #0 PC 8191: keychip write 0003=01 [????]
+CPU #0 PC 8196: keychip write 0000=40 [ \ operands]
+CPU #0 PC 819c: keychip write 0002=00 [    "    " ]
+CPU #0 PC 819f: keychip write 0001=04 [    "    " ]
+CPU #0 PC 81a2: keychip read 0001     [   division result (verified to be correct)]
+CPU #0 PC 81a2: keychip read 0002     [ /  "           "  (verified to be correct)]
+if division result is wrong, reads again key no. from 03, and doesn't crash if it's correct
+
+wldcourt: (CUS143)
+CPU #0 PC db0a: keychip write 0000=01 [maybe to initialize chip?]
+CPU #0 PC db0d: keychip read 0003	  [return key no.]
+CPU #0 PC db18: keychip write 0003=d9 [operating mode?]
+CPU #0 PC db21: keychip write 0000=xx [ \ operands]
+CPU #0 PC db26: keychip write 0001=xx [    "    " ]
+CPU #0 PC db26: keychip write 0002=xx [    "    " ]
+CPU #0 PC db29: keychip read 0001	  [   division result (verified to be correct)]
+CPU #0 PC db29: keychip read 0002	  [    "           "  (verified to be correct)]
+CPU #0 PC db2c: keychip read 0000	  [ /  "           "  (verified to be correct)]
+CPU #0 PC dbfa: keychip write 0003=db [operating mode?]
+CPU #0 PC dbfe: keychip write 0002=00-ff [???????]
+CPU #0 PC dc04: keychip read 0003     [???? - stored in 0001]
+CPU #0 PC dc0b: keychip write 0001=82-ff [ \ ???????]
+CPU #0 PC dc0b: keychip write 0002=8d    [ / ???????]
+CPU #0 PC dc11: keychip read 0003	  [???? - stored in 0002]
+CPU #0 PC dc18: keychip read 0001	  [ \ ???????]
+CPU #0 PC dc18: keychip read 0002	  [   ???????]
+CPU #0 PC dc1b: keychip write 0001=xx [   ???????]
+CPU #0 PC dc1b: keychip write 0002=xx [ / ???????]
+CPU #0 PC dc21: keychip read 0001	  [???? - stored in 0003]
+CPU #0 PC dc21: keychip read 0002	  [???? - stored in 0004]
+CPU #0 PC dc28: keychip write 0003=d9 [operating mode?]
+---- end of common checks
+CPU #0 PC e31c: keychip read 0003     [return key no.]
+
+blazer: (CUS144)
+CPU #0 PC da0b: keychip write 0000=01 [maybe to initialize chip?]
+CPU #0 PC da0e: keychip read 0003	  [return key no.]
+CPU #0 PC da19: keychip write 0003=b7 [operating mode?]
+CPU #0 PC da22: keychip write 0000=12 [ \ operands]
+CPU #0 PC da27: keychip write 0001=0a [    "    " ]
+CPU #0 PC da27: keychip write 0002=95 [    "    " ]
+CPU #0 PC da2a: keychip read 0001	  [   division result (verified to be correct)]
+CPU #0 PC da2a: keychip read 0002	  [    "           "  (verified to be correct)]
+CPU #0 PC da2d: keychip read 0000	  [ /  "           "  (verified to be correct)]
+CPU #0 PC dafb: keychip write 0003=b6 [operating mode?]
+CPU #0 PC daff: keychip write 0002=00-ff [???????]
+CPU #0 PC db05: keychip read 0003	  [???? - stored in 0001]
+CPU #0 PC db0c: keychip write 0001=82-ff [ \ ???????]
+CPU #0 PC db0c: keychip write 0002=8d    [ / ???????]
+CPU #0 PC db12: keychip read 0003	  [???? - stored in 0002]
+CPU #0 PC db19: keychip read 0001	  [ \ ???????]
+CPU #0 PC db19: keychip read 0002	  [   ???????]
+CPU #0 PC db1c: keychip write 0001=xx [   ???????]
+CPU #0 PC db1c: keychip write 0002=xx [ / ???????]
+CPU #0 PC db22: keychip read 0001	  [???? - stored in 0003]
+CPU #0 PC db22: keychip read 0002	  [???? - stored in 0004]
+CPU #0 PC db29: keychip write 0003=b7 [operating mode?]
+---- end of common checks
+
+puzlclub:
+CPU #0 PC e017: keychip write 0003=35 [they probably used RAM instead of a key chip for this prototype]
+CPU #0 PC e3d4: keychip read 0003     [AND #$37 = key no.]
+*/
+static READ8_HANDLER( key_type1_r )
+{
+//	logerror("CPU #%d PC %04x: keychip read %04x\n",cpu_getactivecpu(),activecpu_get_pc(),offset);
+
+	if (offset < 3)
+	{
+		int d = key[0];
+		int n = (key[1] << 8) | key[2];
+		int q,r;
+
+		if (d)
+		{
+			q = n / d;
+			r = n % d;
+		}
+		else
+		{
+			q = 0xffff;
+			r = 0x00;
+		}
+
+		if (offset == 0) return r;
+		if (offset == 1) return q >> 8;
+		if (offset == 2) return q & 0xff;
+	}
+	else if (offset == 3)
+		return key_id;
+
+	return 0;
+}
+
+static WRITE8_HANDLER( key_type1_w )
+{
+//	logerror("CPU #%d PC %04x: keychip write %04x=%02x\n",cpu_getactivecpu(),activecpu_get_pc(),offset,data);
+
+	if (offset < 4)
+		key[offset] = data;
+}
+
+
+/*****************************************************************************
+
+  Key custom type 2 (CUS151 - CUS155)
+
+  16/16 bit division + key no.
+
+*****************************************************************************/
+
+/*
+pacmania: (CUS151)
+CPU #0 PC dac2: keychip write 0004=4b [operating mode?]
+CPU #0 PC dac5: keychip read 0004     [AND #$37 = key no.]
+CPU #0 PC dad9: keychip write 0000=xx
+CPU #0 PC dad9: keychip write 0001=xx
+CPU #0 PC dae0: keychip write 0002=xx
+CPU #0 PC dae0: keychip write 0003=xx
+CPU #0 PC dae4: keychip read 0000
+CPU #0 PC dae4: keychip read 0001
+CPU #0 PC daed: keychip read 0002
+CPU #0 PC daed: keychip read 0003
+CPU #1 PC f188: keychip write 0004=4b [operating mode?]
+CPU #1 PC f2d0: keychip write 0000=01
+CPU #1 PC f2d0: keychip write 0001=aa
+CPU #1 PC f30d: keychip write 0002=xx
+CPU #1 PC f30d: keychip write 0003=xx
+CPU #1 PC f310: keychip read 0003
+CPU #1 PC f55d: keychip write 0000=00
+CPU #1 PC f55d: keychip write 0001=10
+CPU #1 PC f562: keychip write 0004=4b [operating mode?]
+CPU #1 PC f5d3: keychip write 0002=xx
+CPU #1 PC f5d3: keychip write 0003=xx
+CPU #1 PC f5d6: keychip read 0003
+CPU #1 PC f5ef: keychip read 0001
+CPU #1 PC cbc6: keychip write 0000=00
+CPU #1 PC cbc6: keychip write 0001=02
+CPU #1 PC cbdd: keychip write 0002=xx
+CPU #1 PC cbdd: keychip write 0003=xx
+CPU #1 PC cbe8: keychip read 0002
+CPU #1 PC cbe8: keychip read 0003
+
+mmaze: (CUS152)
+CPU #0 PC 60f3: keychip write 0004=5b
+CPU #0 PC 60fe: keychip write 0000=00
+CPU #0 PC 60fe: keychip write 0001=01
+CPU #0 PC 6101: keychip write 0002=00
+CPU #0 PC 6101: keychip write 0003=01
+CPU #0 PC 6104: keychip read 0004
+CPU #0 PC 61ae: keychip write 0000=00
+CPU #0 PC 61ae: keychip write 0001=33
+CPU #0 PC 61b1: keychip write 0002=02
+CPU #0 PC 61b1: keychip write 0003=00
+CPU #0 PC 61b4: keychip read 0002
+CPU #0 PC 61b4: keychip read 0003
+CPU #0 PC 68fa: keychip write 0000=01
+CPU #0 PC 68fa: keychip write 0001=00
+CPU #0 PC 68fd: keychip write 0002=00
+CPU #0 PC 68fd: keychip write 0003=00
+CPU #0 PC 6900: keychip read 0002
+CPU #0 PC 6900: keychip read 0003
+CPU #0 PC bf6c: keychip write 0000=00
+CPU #0 PC bf6c: keychip write 0001=20
+CPU #0 PC bf6f: keychip write 0002=00
+CPU #0 PC bf6f: keychip write 0003=00
+CPU #0 PC bf72: keychip read 0002
+CPU #0 PC bf72: keychip read 0003
+CPU #0 PC 9576: keychip write 0000=00
+CPU #0 PC 9576: keychip write 0001=14
+CPU #0 PC 9579: keychip write 0002=00
+CPU #0 PC 9579: keychip write 0003=00
+CPU #0 PC 957c: keychip read 0002
+CPU #0 PC 957c: keychip read 0003
+CPU #0 PC 6538: keychip write 0000=00
+CPU #0 PC 6538: keychip write 0001=15
+CPU #0 PC 653b: keychip write 0002=00
+CPU #0 PC 653b: keychip write 0003=01
+CPU #0 PC 653e: keychip read 0002
+CPU #0 PC 653e: keychip read 0003
+
+galaga88: (CUS153)
+CPU #0 PC db02: keychip write 0004=2d [operating mode?]
+CPU #0 PC db05: keychip read 0004	  [AND #$7F = key no.]
+CPU #0 PC db17: keychip write 0000=xx
+CPU #0 PC db17: keychip write 0001=xx
+CPU #0 PC db1e: keychip write 0002=xx
+CPU #0 PC db1e: keychip write 0003=xx
+CPU #0 PC db22: keychip read 0000
+CPU #0 PC db22: keychip read 0001
+CPU #0 PC db2b: keychip read 0002
+CPU #0 PC db2b: keychip read 0003
+CPU #0 PC e136: keychip write 0004=0c
+
+ws: (CUS154)
+CPU #0 PC e052: keychip write 0004=d3 [operating mode?]
+CPU #0 PC e82a: keychip read 0004     [AND #$3F = key no.]
+
+bakutotu: (CUS155)
+CPU #0 PC db38: keychip write 0004=03 [operating mode?]
+CPU #0 PC db3b: keychip read 0004	  [AND #$37 = key no.]
+CPU #0 PC db4f: keychip write 0000=xx
+CPU #0 PC db4f: keychip write 0001=xx
+CPU #0 PC db56: keychip write 0002=xx
+CPU #0 PC db56: keychip write 0003=xx
+CPU #0 PC db5a: keychip read 0000
+CPU #0 PC db5a: keychip read 0001
+CPU #0 PC db63: keychip read 0002
+CPU #0 PC db63: keychip read 0003
+CPU #0 PC db70: keychip write 0004=0b
+CPU #0 PC db77: keychip write 0000=ff
+CPU #0 PC db77: keychip write 0001=ff
+CPU #0 PC db7e: keychip write 0002=ff
+CPU #0 PC db7e: keychip write 0003=ff
+CPU #0 PC db82: keychip read 0000
+CPU #0 PC db82: keychip read 0001
+CPU #0 PC db8b: keychip read 0002
+CPU #0 PC db8b: keychip read 0003
+CPU #0 PC db95: keychip write 0004=03
+CPU #0 PC e552: keychip read 0004     [AND #$3F = key no.]
+CPU #0 PC e560: keychip write 0000=00
+CPU #0 PC e560: keychip write 0001=73
+CPU #0 PC e566: keychip write 0002=a4
+CPU #0 PC e566: keychip write 0003=83
+CPU #0 PC e569: keychip read 0002
+CPU #0 PC e569: keychip read 0003
+CPU #0 PC e574: keychip read 0000
+CPU #0 PC e574: keychip read 0001
+
+*/
+
+static READ8_HANDLER( key_type2_r )
+{
+//	logerror("CPU #%d PC %04x: keychip read %04x\n",cpu_getactivecpu(),activecpu_get_pc(),offset);
+
+	if (offset < 4)
+	{
+		int d = (key[0] << 8) | key[1];
+		int n = (key[2] << 8) | key[3];
+		int q,r;
+
+		if (d)
+		{
+			q = n / d;
+			r = n % d;
+		}
+		else
+		{
+			q = 0xffff;
+			r = 0x00;
+		}
+
+		if (offset == 0) return r >> 8;
+		if (offset == 1) return r & 0xff;
+		if (offset == 2) return q >> 8;
+		if (offset == 3) return q & 0xff;
+	}
+	else if (offset == 4)
+		return key_id;
+
+	return 0;
+}
+
+static WRITE8_HANDLER( key_type2_w )
+{
+//	logerror("CPU #%d PC %04x: keychip write %04x=%02x\n",cpu_getactivecpu(),activecpu_get_pc(),offset,data);
+
+	if (offset < 5)
+		key[offset] = data;
+}
+
+
+/*****************************************************************************
+
+  Key custom type 3 (CUS181 - CUS185, CUS308 - CUS311)
+
+  Nibble swapper + rng + key no.
+
+*****************************************************************************/
+
+/*
+splatter: (CUS181)
+CPU #0 PC cd66: keychip write 003f=01 [maybe to initialize chip?]
+CPU #0 PC cd78: keychip read 004f     [rng]
+CPU #0 PC cd91: keychip read 003f     [key no.]
+CPU #0 PC f90c: keychip read 0036     [key no.]
+CPU #0 PC f91f: keychip read 0036     [key no.]
+
+rompers: (CUS182)
+CPU #0 PC b891: keychip read 0070     [key no.]
+
+blastoff: (CUS183)
+CPU #0 PC db4f: keychip read 0000     [key no.]
+CPU #0 PC db55: keychip read 0070     [rng?]
+CPU #0 PC db57: keychip write 0030=xx [ARG for 58]
+CPU #0 PC db60: keychip write 0858=xx [debug leftover?]
+CPU #0 PC db67: keychip read 0858     [debug leftover?]
+CPU #0 PC db69: keychip read 0058     [ARG >> 4) | (ARG << 4]
+CPU #0 PC e01a: keychip read 0000     [key no.]
+CPU #0 PC e021: keychip read 0070     [rng?]
+CPU #0 PC e024: keychip write 0030=xx [arg for 58]
+CPU #0 PC e037: keychip read 0058     [ARG >> 4) | (ARG << 4]
+CPU #0 PC 6989: keychip read 0000     [ignored]
+CPU #0 PC 6989: keychip read 0001     [ignored]
+
+ws89: (CUS184)
+CPU #0 PC e050: keychip read 0020     [key no.]
+CPU #0 PC e835: keychip read 0020     [key no.]
+
+tankfrce: (CUS185)
+CPU #0 PC c441: keychip read 0057     [key no.]
+CPU #0 PC c444: keychip write 0017=b9 [ARG for 2b]
+CPU #0 PC c447: keychip read 002b     [0xb0 | (ARG & 0x0f)]
+CPU #0 PC f700: keychip read 0050     [key no.]
+
+dangseed: (CUS308)
+CPU #0 PC c628: keychip read 0067     [key no.]
+CPU #0 PC c62b: keychip write 0057=34 [ARG for 03]
+CPU #0 PC c62e: keychip read 0003     [0x30 | (ARG & 0x0f)]
+CPU #1 PC feb8: keychip write 0050=xx [ARG for 41 and 01]
+CPU #1 PC febb: keychip read 0041     [0x10 | (ARG >> 4)]   used for stars display
+CPU #1 PC fec0: keychip read 0001     [0x10 | (ARG & 0x0f)] used for stars display
+CPU #1 PC f74d: keychip write 0050=xx [ARG for 40 and 00]
+CPU #1 PC f750: keychip read 0040     [0x00 | (ARG >> 4)]   used for score display
+CPU #1 PC f755: keychip read 0000     [0x00 | (ARG & 0x0f)] used for score display
+CPU #1 PC c310: keychip write 0050=xx [ARG for 00]
+CPU #1 PC c31e: keychip read 0000     [0x00 | (ARG & 0x0f)] used for credits display
+
+pistoldm: (CUS309)
+CPU #0 PC c84a: keychip read 0017     [key no.]
+CPU #0 PC c84d: keychip write 0007=35 [ARG for 43]
+CPU #0 PC c850: keychip read 0043     [0x30 | (ARG & 0x0f)]
+CPU #0 PC cdef: keychip read 0020     [rng] used for several random events
+
+ws90: (CUS310)
+CPU #0 PC c82f: keychip read 0047     [key no.]
+CPU #0 PC c832: keychip write 007f=36 [ARG for 33]
+CPU #0 PC c835: keychip read 0033     [0x30 | (ARG & 0x0f)]
+CPU #0 PC e828: keychip read 0040     [key no.]
+
+soukobdx: (CUS311)
+CPU #0 PC ca90: keychip read 0027     [key no.]
+CPU #0 PC ca93: keychip write 0007=37 [ARG for 43]
+CPU #0 PC ca96: keychip read 0043     [0x30 | (ARG & 0x0f)]
+CPU #0 PC e45a: keychip read 0030     [discarded]
+*/
+
+static READ8_HANDLER( key_type3_r )
+{
+	int op;
+
+//	logerror("CPU #%d PC %04x: keychip read %04x\n",cpu_getactivecpu(),activecpu_get_pc(),offset);
+
+	/* I need to handle blastoff's read from 0858. The game previously writes to 0858,
+	   using it as temporary storage, so maybe it expects to act as RAM, however
+	   it happens to work correctly also using the standard handling for 0058.
+	   The schematics don't show A11 being used, so I go for this handling.
+	  */
+	op = (offset & 0x70) >> 4;
+
+	if (op == key_reg)		return key_id;
+	if (op == key_rng)		return mame_rand();
+	if (op == key_swap4)	return (key[key_swap4_arg] << 4) | (key[key_swap4_arg] >> 4);
+	if (op == key_bottom4)	return (offset << 4) | (key[key_swap4_arg] & 0x0f);
+	if (op == key_top4)		return (offset << 4) | (key[key_swap4_arg] >> 4);
+
+	usrintf_showmessage("CPU #%d PC %08x: keychip read %04x",cpu_getactivecpu(),activecpu_get_pc(),offset);
+
+	return 0;
+}
+
+static WRITE8_HANDLER( key_type3_w )
+{
+//	logerror("CPU #%d PC %04x: keychip write %04x=%02x\n",cpu_getactivecpu(),activecpu_get_pc(),offset,data);
+
+	key[(offset & 0x70) >> 4] = data;
+}
+
+
+
+/*******************************************************************************
+*                                                                              *
+*   Sound banking emulation (CUS121)                                           *
+*                                                                              *
+*******************************************************************************/
+
+WRITE8_HANDLER( namcos1_sound_bankswitch_w )
+{
+	data8_t *rom = memory_region(REGION_CPU3) + 0xc000;
+
+	int bank = (data & 0x70) >> 4;
+	cpu_setbank(17,rom + 0x4000 * bank);
+}
+
 
 
 /*******************************************************************************
@@ -687,50 +569,95 @@ static WRITE8_HANDLER( splatter_key_w ) {
 *                                                                              *
 *******************************************************************************/
 
+static int mcu_patch_data;
+static int namcos1_reset = 0;
+
+WRITE8_HANDLER( namcos1_cpu_control_w )
+{
+//	logerror("reset control pc=%04x %02x\n",activecpu_get_pc(),data);
+	if ((data & 1) ^ namcos1_reset)
+	{
+		mcu_patch_data = 0;
+		namcos1_reset = data & 1;
+	}
+
+	cpunum_set_input_line(1, INPUT_LINE_RESET, (data & 1) ? CLEAR_LINE : ASSERT_LINE);
+	cpunum_set_input_line(2, INPUT_LINE_RESET, (data & 1) ? CLEAR_LINE : ASSERT_LINE);
+	cpunum_set_input_line(3, INPUT_LINE_RESET, (data & 1) ? CLEAR_LINE : ASSERT_LINE);
+}
+
+
+
+WRITE8_HANDLER( namcos1_watchdog_w )
+{
+	static int wdog;
+
+	wdog |= 1 << (cpu_getactivecpu());
+	if (wdog == 7 || !namcos1_reset)
+	{
+		wdog = 0;
+		watchdog_reset_w(0,0);
+	}
+}
+
+
+
 static READ8_HANDLER( soundram_r )
 {
-	if(offset<0x100)
-		return namcos1_wavedata_r(offset);
-	if(offset<0x140)
-		return namcos1_sound_r(offset-0x100);
+	if (offset < 0x1000)
+	{
+		offset &= 0x3ff;
 
-	/* shared ram */
-	return namco_wavedata[offset];
+		/* CUS 30 */
+		return namcos1_cus30_r(offset);
+	}
+	else
+	{
+		offset &= 0x7ff;
+
+		/* shared ram */
+		return namcos1_triram[offset];
+	}
 }
 
 static WRITE8_HANDLER( soundram_w )
 {
-	if(offset<0x100)
+	if (offset < 0x1000)
 	{
-		namcos1_wavedata_w(offset,data);
-		return;
-	}
-	if(offset<0x140)
-	{
-		namcos1_sound_w(offset-0x100,data);
-		return;
-	}
-	/* shared ram */
-	namco_wavedata[offset] = data;
+		offset &= 0x3ff;
 
-	//if(offset>=0x1000)
-	//  logerror("CPU #%d PC %04x: write shared ram %04x=%02x\n",cpu_getactivecpu(),activecpu_get_pc(),offset,data);
+		/* CUS 30 */
+		namcos1_cus30_w(offset,data);
+	}
+	else
+	{
+		offset &= 0x7ff;
+
+		/* shared ram */
+		namcos1_triram[offset] = data;
+		return;
+	}
 }
 
 /* ROM handlers */
 
-static WRITE8_HANDLER( rom_w ) {
+static WRITE8_HANDLER( rom_w )
+{
 	logerror("CPU #%d PC %04x: warning - write %02x to rom address %04x\n",cpu_getactivecpu(),activecpu_get_pc(),data,offset);
 }
 
 /* error handlers */
-static READ8_HANDLER( unknown_r ) {
+static READ8_HANDLER( unknown_r )
+{
 	logerror("CPU #%d PC %04x: warning - read from unknown chip\n",cpu_getactivecpu(),activecpu_get_pc() );
+//	usrintf_showmessage("CPU #%d PC %04x: read from unknown chip",cpu_getactivecpu(),activecpu_get_pc() );
 	return 0;
 }
 
-static WRITE8_HANDLER( unknown_w ) {
+static WRITE8_HANDLER( unknown_w )
+{
 	logerror("CPU #%d PC %04x: warning - wrote to unknown chip\n",cpu_getactivecpu(),activecpu_get_pc() );
+//	usrintf_showmessage("CPU #%d PC %04x: wrote to unknown chip",cpu_getactivecpu(),activecpu_get_pc() );
 }
 
 /* Main bankswitching routine */
@@ -738,7 +665,7 @@ static void set_bank(int banknum, bankhandler *handler)
 {
 	int bankstart = (banknum & 7) * 0x2000;
 	int cpunum = (banknum >> 3) & 1;
-	
+
 	/* for BANK handlers , memory direct and OP-code base */
 	cpu_setbank(banknum + 1, handler->bank_pointer);
 
@@ -753,7 +680,7 @@ static void set_bank(int banknum, bankhandler *handler)
 		if (!namcos1_active_bank[banknum].bank_handler_r)
 			memory_install_read8_handler(cpunum, ADDRESS_SPACE_PROGRAM, bankstart, bankstart + 0x1fff, 0, 0, io_bank_handler_r[banknum]);
 	}
-			
+
 	/* write handlers (except for the 0xe000-0xffff range) */
 	if (bankstart != 0xe000)
 	{
@@ -769,161 +696,54 @@ static void set_bank(int banknum, bankhandler *handler)
 		}
 	}
 
-	/* Remember this bank handler */				
+	/* Remember this bank handler */
 	namcos1_active_bank[banknum] = *handler;
 }
 
 void namcos1_bankswitch(int cpu, offs_t offset, data8_t data)
 {
-	static int chip = 0;
+	static int chip[16];
+	int bank = (cpu*8) + (( offset >> 9) & 0x07);
 
-	if ( offset & 1 ) {
-		int bank = (cpu*8) + ( ( offset >> 9 ) & 0x07 );
-
-		chip &= 0x0300;
-		chip |= ( data & 0xff );
-
-		set_bank(bank, &namcos1_bank_element[chip]);
-
-		/* unmapped bank warning */
-		if( namcos1_active_bank[bank].bank_handler_r == unknown_r)
-		{
-			logerror("CPU #%d PC %04x:warning unknown chip selected bank %x=$%04x\n", cpu , activecpu_get_pc(), bank , chip );
-		}
-
-		/* renew pc base */
-	//change_pc(activecpu_get_pc());
-	} else {
-		chip &= 0x00ff;
-		chip |= ( data & 0xff ) << 8;
+	if (offset & 1)
+	{
+		chip[bank] &= 0x0300;
+		chip[bank] |= (data & 0xff);
 	}
+	else
+	{
+		chip[bank] &= 0x00ff;
+		chip[bank] |= (data & 0x03) << 8;
+	}
+
+	set_bank(bank, &namcos1_bank_element[chip[bank]]);
+
+	/* unmapped bank warning */
+	if( namcos1_active_bank[bank].bank_handler_r == unknown_r)
+	{
+		logerror("CPU #%d PC %04x:warning unknown chip selected bank %x=$%04x\n", cpu , activecpu_get_pc(), bank , chip[bank] );
+//			if (chip) usrintf_showmessage("CPU #%d PC %04x:unknown chip selected bank %x=$%04x", cpu , activecpu_get_pc(), bank , chip[bank] );
+	}
+
+	/* renew pc base */
+//	change_pc(activecpu_get_pc());
 }
 
-WRITE8_HANDLER( namcos1_bankswitch_w ) {
+WRITE8_HANDLER( namcos1_bankswitch_w )
+{
+//	logerror("cpu %d: namcos1_bankswitch_w offset %04x data %02x\n",cpu_getactivecpu(),offset,data);
+
 	namcos1_bankswitch(cpu_getactivecpu(), offset, data);
 }
 
 /* Sub cpu set start bank port */
 WRITE8_HANDLER( namcos1_subcpu_bank_w )
 {
-	//logerror("cpu1 bank selected %02x=%02x\n",offset,data);
-	namcos1_cpu1_banklatch = (namcos1_cpu1_banklatch&0x300)|data;
-	/* Prepare code for Cpu 1 */
-	namcos1_bankswitch( 1, 0x0e00, namcos1_cpu1_banklatch>>8  );
-	namcos1_bankswitch( 1, 0x0e01, namcos1_cpu1_banklatch&0xff);
-	/* cpunum_set_input_line(1, INPUT_LINE_RESET, PULSE_LINE); */
+//	logerror("namcos1_subcpu_bank_w offset %04x data %02x\n",offset,data);
 
-}
-
-/*******************************************************************************
-*                                                                              *
-*   63701 MCU emulation (CUS64)                                                *
-*                                                                              *
-*******************************************************************************/
-
-static int mcu_patch_data;
-
-WRITE8_HANDLER( namcos1_cpu_control_w )
-{
-	//logerror("reset control pc=%04x %02x\n",activecpu_get_pc(),data);
-	if( (data&1)^namcos1_reset)
-	{
-		namcos1_reset = data&1;
-		if (namcos1_reset)
-		{
-			cpunum_set_input_line(1, INPUT_LINE_RESET, CLEAR_LINE);
-			cpunum_set_input_line(2, INPUT_LINE_RESET, CLEAR_LINE);
-			cpunum_set_input_line(3, INPUT_LINE_RESET, CLEAR_LINE);
-			mcu_patch_data = 0;
-		}
-		else
-		{
-			cpunum_set_input_line(1, INPUT_LINE_RESET, ASSERT_LINE);
-			cpunum_set_input_line(2, INPUT_LINE_RESET, ASSERT_LINE);
-			cpunum_set_input_line(3, INPUT_LINE_RESET, ASSERT_LINE);
-		}
-	}
-}
-
-/*******************************************************************************
-*                                                                              *
-*   Sound banking emulation (CUS121)                                           *
-*                                                                              *
-*******************************************************************************/
-
-WRITE8_HANDLER( namcos1_sound_bankswitch_w )
-{
-	unsigned char *RAM = memory_region(REGION_CPU3);
-	int bank = ( data >> 4 ) & 0x07;
-
-	cpu_setbank( 17, &RAM[ 0x0c000 + ( 0x4000 * bank ) ] );
-}
-
-/*******************************************************************************
-*                                                                              *
-*   CPU idling spinlock routine                                                *
-*                                                                              *
-*******************************************************************************/
-static unsigned char *sound_spinlock_ram;
-static int sound_spinlock_pc;
-
-/* sound cpu */
-static READ8_HANDLER( namcos1_sound_spinlock_r )
-{
-	if(activecpu_get_pc()==sound_spinlock_pc && *sound_spinlock_ram == 0)
-		cpu_spinuntil_int();
-	return *sound_spinlock_ram;
-}
-
-/*******************************************************************************
-*                                                                              *
-*   MCU banking emulation and patch                                            *
-*                                                                              *
-*******************************************************************************/
-
-/* mcu banked rom area select */
-WRITE8_HANDLER( namcos1_mcu_bankswitch_w )
-{
-	int addr;
-	/* bit 2-7 : chip select line of ROM chip */
-	switch(data&0xfc)
-	{
-	case 0xf8: addr = 0x10000; break; /* bit 2 : ROM 0 */
-	case 0xf4: addr = 0x30000; break; /* bit 3 : ROM 1 */
-	case 0xec: addr = 0x50000; break; /* bit 4 : ROM 2 */
-	case 0xdc: addr = 0x70000; break; /* bit 5 : ROM 3 */
-	case 0xbc: addr = 0x90000; break; /* bit 6 : ROM 4 */
-	case 0x7c: addr = 0xb0000; break; /* bit 7 : ROM 5 */
-	default:   addr = 0x100000; /* illegal */
-	}
-	/* bit 0-1 : address line A15-A16 */
-	addr += (data&3)*0x8000;
-	if( addr >= memory_region_length(REGION_CPU4))
-	{
-		logerror("unmapped mcu bank selected pc=%04x bank=%02x\n",activecpu_get_pc(),data);
-		addr = 0x4000;
-	}
-	cpu_setbank( 20, memory_region(REGION_CPU4)+addr );
-}
-
-/* This point is very obscure, but i havent found any better way yet. */
-/* Works with all games so far.                                       */
-
-/* patch points of memory address */
-/* CPU0/1 bank[17f][1000] */
-/* CPU2   [7000]      */
-/* CPU3   [c000]      */
-
-/* This memory point should be set $A6 by anywhere, but         */
-/* I found set $A6 only initialize in MCU                       */
-/* This patch kill write this data by MCU case $A6 to xx(clear) */
-
-WRITE8_HANDLER( namcos1_mcu_patch_w )
-{
-	//logerror("mcu C000 write pc=%04x data=%02x\n",activecpu_get_pc(),data);
-	if(mcu_patch_data == 0xa6) return;
-	mcu_patch_data = data;
-	namco_wavedata[0x1000+offset] = data;
+	/* Prepare code for CPU 1 */
+	namcos1_bankswitch( 1, 0x0e00, 0x03 );
+	namcos1_bankswitch( 1, 0x0e01, data );
 }
 
 /*******************************************************************************
@@ -947,61 +767,73 @@ static void namcos1_install_bank(int start,int end,read8_handler hr,write8_handl
 	}
 }
 
-static void namcos1_install_rom_bank(int start,int end,int size,int offset)
-{
-	unsigned char *BROM = memory_region(REGION_USER1);
-	int step = size/0x2000;
-	while(start < end)
-	{
-		namcos1_install_bank(start,start+step-1,0,rom_w,0,&BROM[offset]);
-		start += step;
-	}
-}
+
 
 static void namcos1_build_banks(read8_handler key_r,write8_handler key_w)
 {
 	int i;
 
-	/* S1 RAM pointer set */
-	s1ram = memory_region(REGION_USER2);
+	/**** kludge alert ****/
+	data8_t *dummyrom = auto_malloc(0x2000);
+
+	/* when the games want to reset because the test switch has been flipped (or
+	   because the protection checks failed!) they just set the top bits of bank #7
+	   to 0, effectively crashing and waiting for the watchdog to kick in.
+	   To avoid crashes in MAME, I prepare a dummy ROM containing just BRA -2 so
+	   the program doesn't start executing code in unmapped areas.
+	   Conveniently, the opcode for BRA -2 is 20 FE, and FE 20 FE is LDU $20FE,
+	   so misaligned entry points get immediatly corrected. */
+	for (i = 0;i < 0x2000;i+=2)
+	{
+		dummyrom[i]   = 0x20;
+		dummyrom[i+1] = 0xfe;
+	}
+	/* also provide a valid IRQ vector */
+	dummyrom[0x1ff8] = 0xff;
+	dummyrom[0x1ff9] = 0x00;
 
 	/* clear all banks to unknown area */
-	for(i=0;i<NAMCOS1_MAX_BANK;i++)
-		namcos1_install_bank(i,i,unknown_r,unknown_w,0,0);
+	for(i = 0;i < NAMCOS1_MAX_BANK;i++)
+		namcos1_install_bank(i,i,0,unknown_w,0,dummyrom);
+	/**** end of kludge alert ****/
 
+
+	/* 3D glasses */
+	namcos1_install_bank(0x160,0x160,0,namcos1_3dcs_w,0,0);
 	/* RAM 6 banks - palette */
-	namcos1_install_bank(0x170,0x172,namcos1_paletteram_r,namcos1_paletteram_w,0,s1ram);
-	/* RAM 6 banks - work ram */
-	namcos1_install_bank(0x173,0x173,0,0,0,&s1ram[0x6000]);
+	namcos1_install_bank(0x170,0x173,namcos1_paletteram_r,namcos1_paletteram_w,0,0);
 	/* RAM 5 banks - videoram */
 	namcos1_install_bank(0x178,0x17b,namcos1_videoram_r,namcos1_videoram_w,0,0);
-	/* key chip bank (rev1_key_w / rev2_key_w ) */
+	/* key chip bank */
 	namcos1_install_bank(0x17c,0x17c,key_r,key_w,0,0);
 	/* RAM 7 banks - display control, playfields, sprites */
-	namcos1_install_bank(0x17e,0x17e,0,namcos1_videocontrol_w,0,&s1ram[0x8000]);
+	namcos1_install_bank(0x17e,0x17e,namcos1_spriteram_r,namcos1_spriteram_w,0,0);
 	/* RAM 1 shared ram, PSG device */
-	namcos1_install_bank(0x17f,0x17f,soundram_r,soundram_w,0,namco_wavedata);
+	namcos1_install_bank(0x17f,0x17f,soundram_r,soundram_w,0,0);
 	/* RAM 3 banks */
-	namcos1_install_bank(0x180,0x183,0,0,0,&s1ram[0xc000]);
-	/* PRG0 */
-	namcos1_install_rom_bank(0x200,0x23f,0x20000 , 0xe0000);
-	/* PRG1 */
-	namcos1_install_rom_bank(0x240,0x27f,0x20000 , 0xc0000);
-	/* PRG2 */
-	namcos1_install_rom_bank(0x280,0x2bf,0x20000 , 0xa0000);
-	/* PRG3 */
-	namcos1_install_rom_bank(0x2c0,0x2ff,0x20000 , 0x80000);
-	/* PRG4 */
-	namcos1_install_rom_bank(0x300,0x33f,0x20000 , 0x60000);
-	/* PRG5 */
-	namcos1_install_rom_bank(0x340,0x37f,0x20000 , 0x40000);
-	/* PRG6 */
-	namcos1_install_rom_bank(0x380,0x3bf,0x20000 , 0x20000);
-	/* PRG7 */
-	namcos1_install_rom_bank(0x3c0,0x3ff,0x20000 , 0x00000);
+	namcos1_install_bank(0x180,0x183,0,0,0,s1ram);
+
+	/* PRG0-PRG7 */
+	{
+		data8_t *rom = memory_region(REGION_USER1);
+
+		namcos1_install_bank(0x200,0x3ff,0,rom_w,0,rom);
+
+		/* bit 16 of the address is inverted for PRG7 (and bits 17,18 just not connected) */
+		for (i = 0x380000;i < 0x400000;i++)
+		{
+			if ((i & 0x010000) == 0)
+			{
+				data8_t t = rom[i];
+				rom[i] = rom[i + 0x010000];
+				rom[i + 0x010000] = t;
+			}
+		}
+	}
 }
 
-MACHINE_INIT( namcos1 ) {
+MACHINE_INIT( namcos1 )
+{
 	static bankhandler unknown_handler = { unknown_r, unknown_w, 0, NULL };
 	int bank;
 
@@ -1009,325 +841,264 @@ MACHINE_INIT( namcos1 ) {
 	for (bank = 0; bank < 2*8 ; bank++)
 		set_bank(bank, &unknown_handler);
 
-	/* Prepare code for Cpu 0 */
+	/* Default MMU setup for Cpu 0 */
+	namcos1_bankswitch(0, 0x0000, 0x01 ); /* bank0 = 0x180(RAM) - evidence: wldcourt */
+	namcos1_bankswitch(0, 0x0001, 0x80 );
+	namcos1_bankswitch(0, 0x0200, 0x01 ); /* bank1 = 0x180(RAM) - evidence: berabohm */
+	namcos1_bankswitch(0, 0x0201, 0x80 );
+
 	namcos1_bankswitch(0, 0x0e00, 0x03 ); /* bank7 = 0x3ff(PRG7) */
 	namcos1_bankswitch(0, 0x0e01, 0xff );
 
-	/* Prepare code for Cpu 1 */
-	namcos1_bankswitch(1, 0x0e00, 0x03);
+	/* Default MMU setup for Cpu 1 */
+	namcos1_bankswitch(1, 0x0000, 0x01 ); /* bank0 = 0x180(RAM) - evidence: wldcourt */
+	namcos1_bankswitch(1, 0x0001, 0x80 );
+
+	namcos1_bankswitch(1, 0x0e00, 0x03); /* bank7 = 0x3ff(PRG7) */
 	namcos1_bankswitch(1, 0x0e01, 0xff);
 
-	namcos1_cpu1_banklatch = 0x03ff;
-
-	/* Point mcu & sound shared RAM to destination */
-	{
-		unsigned char *RAM = namco_wavedata + 0x1000; /* Ram 1, bank 1, offset 0x1000 */
-		cpu_setbank( 18, RAM );
-		cpu_setbank( 19, RAM );
-	}
-
-	/* In case we had some cpu's suspended, resume them now */
+	/* stop all CPUs */
 	cpunum_set_input_line(1, INPUT_LINE_RESET, ASSERT_LINE);
 	cpunum_set_input_line(2, INPUT_LINE_RESET, ASSERT_LINE);
 	cpunum_set_input_line(3, INPUT_LINE_RESET, ASSERT_LINE);
 
-	namcos1_reset = 0;
 	/* mcu patch data clear */
 	mcu_patch_data = 0;
-
-	berabohm_input_counter = 4; /* for berabohm pressure sensitive buttons */
-
-	/* Register volatile user memory immediately after CPU-4's memory space for save state */
-	state_save_register_UINT8 ("memory", cpu_gettotalcpu(), "REGION_USER2", memory_region(REGION_USER2), 0x14000);
+	namcos1_reset = 0;
 }
+
+
+
+/*******************************************************************************
+*                                                                              *
+*   63701 MCU emulation (CUS64)                                                *
+*                                                                              *
+*******************************************************************************/
+
+/*******************************************************************************
+*                                                                              *
+*   MCU banking emulation and patch                                            *
+*                                                                              *
+*******************************************************************************/
+
+/* mcu banked rom area select */
+WRITE8_HANDLER( namcos1_mcu_bankswitch_w )
+{
+	int addr;
+
+	/* bit 2-7 : chip select line of ROM chip */
+	switch (data & 0xfc)
+	{
+		case 0xf8: addr = 0x10000; data ^= 2; break;	/* bit 2 : ROM 0 (bit 1 is inverted in that case) */
+		case 0xf4: addr = 0x30000; break;				/* bit 3 : ROM 1 */
+		case 0xec: addr = 0x50000; break;				/* bit 4 : ROM 2 */
+		case 0xdc: addr = 0x70000; break;				/* bit 5 : ROM 3 */
+		case 0xbc: addr = 0x90000; break;				/* bit 6 : ROM 4 */
+		case 0x7c: addr = 0xb0000; break;				/* bit 7 : ROM 5 */
+		default:   addr = 0x10000; break;				/* illegal */
+	}
+
+	/* bit 0-1 : address line A15-A16 */
+	addr += (data & 3) * 0x8000;
+
+	cpu_setbank(20, memory_region(REGION_CPU4) + addr);
+}
+
+
+
+/* This point is very obscure, but i havent found any better way yet. */
+/* Works with all games so far.                                       */
+
+/* patch points of memory address */
+/* CPU0/1 bank[17f][1000] */
+/* CPU2   [7000]      */
+/* CPU3   [c000]      */
+
+/* This memory point should be set $A6 by anywhere, but         */
+/* I found set $A6 only initialize in MCU                       */
+/* This patch kill write this data by MCU case $A6 to xx(clear) */
+
+WRITE8_HANDLER( namcos1_mcu_patch_w )
+{
+	//logerror("mcu C000 write pc=%04x data=%02x\n",activecpu_get_pc(),data);
+	if (mcu_patch_data == 0xa6) return;
+	mcu_patch_data = data;
+	namcos1_triram[0] = data;
+}
+
+
 
 /*******************************************************************************
 *                                                                              *
 *   driver specific initialize routine                                         *
 *                                                                              *
 *******************************************************************************/
-struct namcos1_slice_timer
-{
-	int sync_cpu;   /* synchronus cpu attribute */
-	int sliceHz;    /* slice cycle              */
-	int delayHz;    /* delay>=0 : delay cycle   */
-					/* delay<0  : slide cycle   */
-};
-
 struct namcos1_specific
 {
 	/* keychip */
-	int key_id_query , key_id;
 	read8_handler key_r;
 	write8_handler key_w;
-	/* cpu slice timer */
-	const struct namcos1_slice_timer *slice_timer;
+	int key_id;
+	int key_reg1;
+	int key_reg2;
+	int key_reg3;
+	int key_reg4;
+	int key_reg5;
+	int key_reg6;
 };
 
 static void namcos1_driver_init(const struct namcos1_specific *specific )
 {
+	const struct namcos1_specific no_key =
+	{
+		no_key_r,no_key_w
+	};
+
+	if (!specific) specific = &no_key;
+
 	/* keychip id */
-	key_id_query = specific->key_id_query;
-	key_id       = specific->key_id;
+	key_id        = specific->key_id;
+	/* for key type 3 */
+	key_reg       = specific->key_reg1;
+	key_rng       = specific->key_reg2;
+	key_swap4_arg = specific->key_reg3;
+	key_swap4     = specific->key_reg4;
+	key_bottom4   = specific->key_reg5;
+	key_top4      = specific->key_reg6;
+
+	/* S1 RAM pointer set */
+	s1ram = auto_malloc(0x8000);
+	namcos1_triram = auto_malloc(0x800);
+
+	/* Register volatile user memory for save state */
+	state_save_register_UINT8 ("memory", cpu_gettotalcpu(), "s1ram", s1ram, 0x8000);
+	state_save_register_UINT8 ("memory", cpu_gettotalcpu(), "triram", namcos1_triram, 0x800);
+
+	/* Point mcu & sound shared RAM to destination */
+	cpu_setbank( 18, namcos1_triram );
+	cpu_setbank( 19, namcos1_triram );
 
 	/* build bank elements */
 	namcos1_build_banks(specific->key_r,specific->key_w);
-
-	/* sound cpu speedup optimize (auto detect) */
-	{
-		unsigned char *RAM = memory_region(REGION_CPU3); /* sound cpu */
-		int addr,flag_ptr;
-
-		for(addr=0xd000;addr<0xd0ff;addr++)
-		{
-			if(RAM[addr+0]==0xb6 &&   /* lda xxxx */
-			   RAM[addr+3]==0x27 &&   /* BEQ addr */
-			   RAM[addr+4]==0xfb )
-			{
-				flag_ptr = RAM[addr+1]*256 + RAM[addr+2];
-				if(flag_ptr>0x5140 && flag_ptr<0x5400)
-				{
-					sound_spinlock_pc   = addr+3;
-					sound_spinlock_ram  = memory_install_read8_handler(2, ADDRESS_SPACE_PROGRAM, flag_ptr, flag_ptr, 0, 0, namcos1_sound_spinlock_r);
-					logerror("Set sound cpu spinlock : pc=%04x , addr = %04x\n",sound_spinlock_pc,flag_ptr);
-					break;
-				}
-			}
-		}
-	}
-#if NEW_TIMER
-	/* all cpu's does not need synchronization to all timers */
-	cpu_set_full_synchronize(SYNC_NO_CPU);
-	{
-		const struct namcos1_slice_timer *slice = specific->slice_timer;
-		while(slice->sync_cpu != SYNC_NO_CPU)
-		{
-			/* start CPU slice timer */
-			cpu_start_extend_time_slice(slice->sync_cpu,
-				TIME_IN_HZ(slice->delayHz),TIME_IN_HZ(slice->sliceHz) );
-			slice++;
-		}
-	}
-#else
-	/* compatible with old timer system */
-	timer_pulse(TIME_IN_HZ(60*25),0,0);
-#endif
 }
 
-#if NEW_TIMER
-/* normaly CPU slice optimize */
-/* slice order is 0:2:1:x:0:3:1:x */
-static const struct namcos1_slice_timer normal_slice[]={
-	{ SYNC_2CPU(0,1),60*20,-60*20*2 },  /* CPU 0,1 20/vblank , slide slice */
-	{ SYNC_2CPU(2,3),60*5,-(60*5*2+60*20*4) },  /* CPU 2,3 10/vblank */
-	{ SYNC_NO_CPU }
-};
-#else
-static const struct namcos1_slice_timer normal_slice[]={{0}};
-#endif
 
 /*******************************************************************************
 *   Shadowland / Youkai Douchuuki specific                                     *
 *******************************************************************************/
 DRIVER_INIT( shadowld )
 {
-	const struct namcos1_specific shadowld_specific=
-	{
-		0x00,0x00,              /* key query , key id */
-		rev1_key_r,rev1_key_w,  /* key handler */
-		normal_slice,           /* CPU slice normal */
-	};
-	namcos1_driver_init(&shadowld_specific);
-	namcos1_game_id = 0x0487;
+	namcos1_driver_init(NULL);
 }
 
 /*******************************************************************************
-*   Dragon Spirit specific                                                     *
+*   Dragon Spirit specific (CUS136)                                            *
 *******************************************************************************/
 DRIVER_INIT( dspirit )
 {
 	const struct namcos1_specific dspirit_specific=
 	{
-		0x00,0x36,                      /* key query , key id */
-		dspirit_key_r,dspirit_key_w,    /* key handler */
-		normal_slice,                   /* CPU slice normal */
+		key_type1_r,key_type1_w, 0x36
 	};
 	namcos1_driver_init(&dspirit_specific);
-	namcos1_game_id = 0x0136;
 }
 
 /*******************************************************************************
-*   Quester specific                                                           *
+*   World Court specific (CUS143)                                              *
 *******************************************************************************/
-DRIVER_INIT( quester )
+DRIVER_INIT( wldcourt )
 {
-	const struct namcos1_specific quester_specific=
+	const struct namcos1_specific worldcourt_specific=
 	{
-		0x00,0x00,              /* key query , key id */
-		rev1_key_r,rev1_key_w,  /* key handler */
-		normal_slice,           /* CPU slice normal */
+		key_type1_r,key_type1_w, 0x35
 	};
-	namcos1_driver_init(&quester_specific);
-	namcos1_game_id = 0x0987;
+	namcos1_driver_init(&worldcourt_specific);
 }
 
 /*******************************************************************************
-*   Blazer specific                                                            *
+*   Blazer specific (CUS144)                                                   *
 *******************************************************************************/
 DRIVER_INIT( blazer )
 {
 	const struct namcos1_specific blazer_specific=
 	{
-		0x00,0x13,                  /* key query , key id */
-		blazer_key_r,blazer_key_w,  /* key handler */
-		normal_slice,               /* CPU slice normal */
+		key_type1_r,key_type1_w, 0x13
 	};
 	namcos1_driver_init(&blazer_specific);
-	namcos1_game_id = 0x0787;
 }
 
 /*******************************************************************************
-*   Pac-Mania / Pac-Mania (Japan) specific                                     *
+*   Puzzle Club specific                                                       *
+*******************************************************************************/
+DRIVER_INIT( puzlclub )
+{
+	const struct namcos1_specific puzlclub_specific=
+	{
+		key_type1_r,key_type1_w, 0x35
+	};
+	namcos1_driver_init(&puzlclub_specific);
+}
+
+/*******************************************************************************
+*   Pac-Mania specific (CUS151)                                                *
 *******************************************************************************/
 DRIVER_INIT( pacmania )
 {
 	const struct namcos1_specific pacmania_specific=
 	{
-		0x4b,0x12,              /* key query , key id */
-		rev1_key_r,rev1_key_w,  /* key handler */
-		normal_slice,           /* CPU slice normal */
+		key_type2_r,key_type2_w, 0x12
 	};
 	namcos1_driver_init(&pacmania_specific);
-	namcos1_game_id = 0x0151;
 }
 
 /*******************************************************************************
-*   Galaga '88 / Galaga '88 (Japan) specific                                   *
-*******************************************************************************/
-DRIVER_INIT( galaga88 )
-{
-	const struct namcos1_specific galaga88_specific=
-	{
-		0x2d,0x31,              /* key query , key id */
-		rev1_key_r,rev1_key_w,  /* key handler */
-		normal_slice,           /* CPU slice normal */
-	};
-	namcos1_driver_init(&galaga88_specific);
-	namcos1_game_id = 0x0153;
-}
-
-/*******************************************************************************
-*   World Stadium specific                                                     *
-*******************************************************************************/
-DRIVER_INIT( ws )
-{
-	const struct namcos1_specific ws_specific=
-	{
-		0xd3,0x07,              /* key query , key id */
-		ws_key_r,ws_key_w,      /* key handler */
-		normal_slice,           /* CPU slice normal */
-	};
-	namcos1_driver_init(&ws_specific);
-	namcos1_game_id = 0x0154;
-}
-
-/*******************************************************************************
-*   Beraboh Man specific                                                       *
-*******************************************************************************/
-static READ8_HANDLER( berabohm_buttons_r )
-{
-	int res;
-
-
-	if (offset == 0)
-	{
-		if (berabohm_input_counter == 0) res = readinputport(0);
-		else
-		{
-			static int counter[4];
-
-			res = readinputport(4 + (berabohm_input_counter-1));
-			if (res & 0x80)
-			{
-				if (counter[berabohm_input_counter-1] >= 0)
-//                  res = 0x40 | counter[berabohm_input_counter-1]; I can't get max power with this...
-					res = 0x40 | (counter[berabohm_input_counter-1]>>1);
-				else
-				{
-					if (res & 0x40) res = 0x40;
-					else res = 0x00;
-				}
-			}
-			else if (res & 0x40)
-			{
-				if (counter[berabohm_input_counter-1] < 0x3f)
-				{
-					counter[berabohm_input_counter-1]++;
-					res = 0x00;
-				}
-				else res = 0x7f;
-			}
-			else
-				counter[berabohm_input_counter-1] = -1;
-		}
-		berabohm_input_counter = (berabohm_input_counter+1) % 5;
-	}
-	else
-	{
-		static int clk;
-
-		res = 0;
-		clk++;
-		if (clk & 1) res |= 0x40;
-		else if (berabohm_input_counter == 4) res |= 0x10;
-
-		res |= (readinputport(1) & 0x8f);
-	}
-
-	return res;
-}
-DRIVER_INIT( berabohm )
-{
-	const struct namcos1_specific berabohm_specific=
-	{
-		0x00,0x00,              /* key query , key id */
-		rev1_key_r,rev1_key_w,  /* key handler */
-		normal_slice,           /* CPU slice normal */
-	};
-	namcos1_driver_init(&berabohm_specific);
-	memory_install_read8_handler(3, ADDRESS_SPACE_PROGRAM, 0x1400, 0x1401, 0, 0, berabohm_buttons_r);
-	namcos1_game_id = 0x0588;
-}
-
-/*******************************************************************************
-*   Alice in Wonderland / Marchen Maze specific                                *
+*   Alice in Wonderland / Marchen Maze specific (CUS152)                       *
 *******************************************************************************/
 DRIVER_INIT( alice )
 {
 	const struct namcos1_specific alice_specific=
 	{
-		0x5b,0x25,              /* key query , key id */
-		rev1_key_r,rev1_key_w,  /* key handler */
-		normal_slice,           /* CPU slice normal */
+		key_type2_r,key_type2_w, 0x25
 	};
 	namcos1_driver_init(&alice_specific);
-	namcos1_game_id = 0x0152;
 }
 
 /*******************************************************************************
-*   Bakutotsu Kijuutei specific                                                *
+*   Galaga '88 specific (CUS153)                                               *
+*******************************************************************************/
+DRIVER_INIT( galaga88 )
+{
+	const struct namcos1_specific galaga88_specific=
+	{
+		key_type2_r,key_type2_w, 0x31
+	};
+	namcos1_driver_init(&galaga88_specific);
+}
+
+/*******************************************************************************
+*   World Stadium specific (CUS154)                                            *
+*******************************************************************************/
+DRIVER_INIT( ws )
+{
+	const struct namcos1_specific ws_specific=
+	{
+		key_type2_r,key_type2_w, 0x07
+	};
+	namcos1_driver_init(&ws_specific);
+}
+
+/*******************************************************************************
+*   Bakutotsu Kijuutei specific (CUS155)                                       *
 *******************************************************************************/
 DRIVER_INIT( bakutotu )
 {
 	const struct namcos1_specific bakutotu_specific=
 	{
-		0x03,0x22,              /* key query , key id */
-		rev1_key_r,rev1_key_w,  /* key handler */
-		normal_slice,           /* CPU slice normal */
+		key_type2_r,key_type2_w, 0x22
 	};
 	namcos1_driver_init(&bakutotu_specific);
-	namcos1_game_id = 0x0155;
 
+#if 0
 	// resolves CPU deadlocks caused by sloppy coding(see driver\namcos1.c)
 	{
 		data8_t target[8] = {0x34,0x37,0x35,0x37,0x96,0x00,0x2e,0xed};
@@ -1350,208 +1121,308 @@ DRIVER_INIT( bakutotu )
 				srcptr = scanptr + 1;
 		}
 	}
+#endif
 }
 
 /*******************************************************************************
-*   World Court specific                                                       *
-*******************************************************************************/
-DRIVER_INIT( wldcourt )
-{
-	const struct namcos1_specific worldcourt_specific=
-	{
-		0x00,0x35,              /* key query , key id */
-		rev2_key_r,rev2_key_w,  /* key handler */
-		normal_slice,           /* CPU slice normal */
-	};
-	namcos1_driver_init(&worldcourt_specific);
-	namcos1_game_id = 0x0143;
-}
-
-/*******************************************************************************
-*   Splatter House specific                                                    *
+*   Splatter House specific (CUS181)                                           *
 *******************************************************************************/
 DRIVER_INIT( splatter )
 {
 	const struct namcos1_specific splatter_specific=
 	{
-		0x00,0x00,                      /* key query , key id */
-		splatter_key_r,splatter_key_w,  /* key handler */
-		normal_slice,                   /* CPU slice normal */
+		key_type3_r,key_type3_w, 181, 3, 4,-1,-1,-1,-1
 	};
 
 	namcos1_driver_init(&splatter_specific);
-	namcos1_game_id = 0x0181;
-
-#ifdef USE_MTRANDOM
-	seedMT(mame_rand());
-#endif
-
 }
 
 /*******************************************************************************
-*   Face Off specific                                                          *
-*******************************************************************************/
-DRIVER_INIT( faceoff )
-{
-	const struct namcos1_specific faceoff_specific=
-	{
-		0x00,0x00,              /* key query , key id */
-		rev1_key_r,rev1_key_w,  /* key handler */
-		normal_slice,           /* CPU slice normal */
-	};
-	namcos1_driver_init(&faceoff_specific);
-	namcos1_game_id = 0x1288;
-}
-
-/*******************************************************************************
-*   Rompers specific                                                           *
+*   Rompers specific (CUS182)                                                  *
 *******************************************************************************/
 DRIVER_INIT( rompers )
 {
 	const struct namcos1_specific rompers_specific=
 	{
-		0x00,0x00,              /* key query , key id */
-		rev1_key_r,rev1_key_w,  /* key handler */
-		normal_slice,           /* CPU slice normal */
+		key_type3_r,key_type3_w, 182, 7,-1,-1,-1,-1,-1
 	};
 	namcos1_driver_init(&rompers_specific);
-	key[0x70] = 0xb6;
-	namcos1_game_id = 0x0182;
 }
 
 /*******************************************************************************
-*   Blast Off specific                                                         *
+*   Blast Off specific (CUS183)                                                *
 *******************************************************************************/
 DRIVER_INIT( blastoff )
 {
 	const struct namcos1_specific blastoff_specific=
 	{
-		0x00,0x00,              /* key query , key id */
-		rev1_key_r,rev1_key_w,  /* key handler */
-		normal_slice,           /* CPU slice normal */
+		key_type3_r,key_type3_w, 183, 0, 7, 3, 5,-1,-1
 	};
 	namcos1_driver_init(&blastoff_specific);
-	key[0] = 0xb7;
-	namcos1_game_id = 0x0183;
 }
 
 /*******************************************************************************
-*   World Stadium '89 specific                                                 *
+*   World Stadium '89 specific (CUS184)                                        *
 *******************************************************************************/
 DRIVER_INIT( ws89 )
 {
 	const struct namcos1_specific ws89_specific=
 	{
-		0x00,0x00,              /* key query , key id */
-		rev1_key_r,rev1_key_w,  /* key handler */
-		normal_slice,           /* CPU slice normal */
+		key_type3_r,key_type3_w, 184, 2,-1,-1,-1,-1,-1
 	};
 	namcos1_driver_init(&ws89_specific);
-
-	key[0x20] = 0xb8;
-	namcos1_game_id = 0x0184;
 }
 
 /*******************************************************************************
-*   Dangerous Seed specific                                                    *
-*******************************************************************************/
-DRIVER_INIT( dangseed )
-{
-	const struct namcos1_specific dangseed_specific=
-	{
-		0x00,0x34,                      /* key query , key id */
-		dangseed_key_r,dangseed_key_w,  /* key handler */
-		normal_slice,                   /* CPU slice normal */
-	};
-	namcos1_driver_init(&dangseed_specific);
-	namcos1_game_id = 0x0308;
-}
-
-/*******************************************************************************
-*   World Stadium '90 specific                                                 *
-*******************************************************************************/
-DRIVER_INIT( ws90 )
-{
-	const struct namcos1_specific ws90_specific=
-	{
-		0x00,0x00,              /* key query , key id */
-		rev1_key_r,rev1_key_w,  /* key handler */
-		normal_slice,           /* CPU slice normal */
-	};
-	namcos1_driver_init(&ws90_specific);
-
-	key[0x47] = 0x36;
-	key[0x40] = 0x36;
-	namcos1_game_id = 0x0310;
-}
-
-/*******************************************************************************
-*   Pistol Daimyo no Bouken specific                                           *
-*******************************************************************************/
-DRIVER_INIT( pistoldm )
-{
-	const struct namcos1_specific pistoldm_specific=
-	{
-		0x00,0x00,              /* key query , key id */
-		rev1_key_r,rev1_key_w,  /* key handler */
-		normal_slice,           /* CPU slice normal */
-	};
-	namcos1_driver_init(&pistoldm_specific);
-	//key[0x17] = ;
-	//key[0x07] = ;
-	key[0x43] = 0x35;
-	namcos1_game_id = 0x0309;
-}
-
-/*******************************************************************************
-*   Souko Ban DX specific                                                      *
-*******************************************************************************/
-DRIVER_INIT( soukobdx )
-{
-	const struct namcos1_specific soukobdx_specific=
-	{
-		0x00,0x00,              /* key query , key id */
-		rev1_key_r,rev1_key_w,  /* key handler */
-		normal_slice,           /* CPU slice normal */
-	};
-	namcos1_driver_init(&soukobdx_specific);
-	//key[0x27] = ;
-	//key[0x07] = ;
-	key[0x43] = 0x37;
-	namcos1_game_id = 0x0311;
-}
-
-/*******************************************************************************
-*   Puzzle Club specific                                                       *
-*******************************************************************************/
-DRIVER_INIT( puzlclub )
-{
-	const struct namcos1_specific puzlclub_specific=
-	{
-		0x00,0x00,              /* key query , key id */
-		rev1_key_r,rev1_key_w,  /* key handler */
-		normal_slice,           /* CPU slice normal */
-	};
-	namcos1_driver_init(&puzlclub_specific);
-	key[0x03] = 0x35;
-	namcos1_game_id = 0xff90;
-}
-
-/*******************************************************************************
-*   Tank Force specific                                                        *
+*   Tank Force specific (CUS185)                                               *
 *******************************************************************************/
 DRIVER_INIT( tankfrce )
 {
 	const struct namcos1_specific tankfrce_specific=
 	{
-		0x00,0x00,              /* key query , key id */
-		rev1_key_r,rev1_key_w,  /* key handler */
-		normal_slice,           /* CPU slice normal */
+		key_type3_r,key_type3_w, 185, 5,-1, 1,-1, 2,-1
 	};
 	namcos1_driver_init(&tankfrce_specific);
-	//key[0x57] = ;
-	//key[0x17] = ;
-	key[0x2b] = 0xb9;
-	key[0x50] = 0xb9;
-	namcos1_game_id = 0x0185;
+}
+
+/*******************************************************************************
+*   Dangerous Seed specific (CUS308)                                           *
+*******************************************************************************/
+DRIVER_INIT( dangseed )
+{
+	const struct namcos1_specific dangseed_specific=
+	{
+		key_type3_r,key_type3_w, 308, 6,-1, 5,-1, 0, 4
+	};
+	namcos1_driver_init(&dangseed_specific);
+}
+
+/*******************************************************************************
+*   Pistol Daimyo no Bouken specific (CUS309)                                  *
+*******************************************************************************/
+DRIVER_INIT( pistoldm )
+{
+	const struct namcos1_specific pistoldm_specific=
+	{
+		key_type3_r,key_type3_w, 309, 1, 2, 0,-1, 4,-1
+	};
+	namcos1_driver_init(&pistoldm_specific);
+}
+
+/*******************************************************************************
+*   World Stadium '90 specific (CUS310)                                        *
+*******************************************************************************/
+DRIVER_INIT( ws90 )
+{
+	const struct namcos1_specific ws90_specific=
+	{
+		key_type3_r,key_type3_w, 310, 4,-1, 7,-1, 3,-1
+	};
+	namcos1_driver_init(&ws90_specific);
+}
+
+/*******************************************************************************
+*   Souko Ban DX specific (CUS311)                                             *
+*******************************************************************************/
+DRIVER_INIT( soukobdx )
+{
+	const struct namcos1_specific soukobdx_specific=
+	{
+		key_type3_r,key_type3_w, 311, 2, 3/*?*/, 0,-1, 4,-1
+	};
+	namcos1_driver_init(&soukobdx_specific);
+}
+
+
+
+/*******************************************************************************
+*   Quester specific                                                           *
+*******************************************************************************/
+static READ8_HANDLER( quester_paddle_r )
+{
+	static int qnum=0, qstrobe=0;
+
+	if (offset == 0)
+	{
+		int ret;
+
+		if (!qnum)
+			ret = (readinputportbytag("CONTROL0")&0x90) | qstrobe | (readinputportbytag("PADDLE0")&0x0f);
+		else
+			ret = (readinputportbytag("CONTROL0")&0x90) | qstrobe | (readinputportbytag("PADDLE1")&0x0f);
+
+		qstrobe ^= 0x40;
+
+		return ret;
+	}
+	else
+	{
+		int ret;
+
+		if (!qnum)
+			ret = (readinputportbytag("CONTROL1")&0x90) | qnum | (readinputportbytag("PADDLE0")>>4);
+		else
+			ret = (readinputportbytag("CONTROL1")&0x90) | qnum | (readinputportbytag("PADDLE1")>>4);
+
+		if (!qstrobe) qnum ^= 0x20;
+
+		return ret;
+	}
+}
+
+DRIVER_INIT( quester )
+{
+	namcos1_driver_init(NULL);
+	memory_install_read8_handler(3, ADDRESS_SPACE_PROGRAM, 0x1400, 0x1401, 0, 0, quester_paddle_r);
+}
+
+
+
+/*******************************************************************************
+*   Beraboh Man specific                                                       *
+*******************************************************************************/
+
+static READ8_HANDLER( berabohm_buttons_r )
+{
+	int res;
+	static int input_count, strobe, strobe_count;
+
+
+	if (offset == 0)
+	{
+		int inp = input_count;
+
+		if (inp == 4) res = readinputportbytag("CONTROL0");
+		else
+		{
+			char portname[4];
+
+#ifdef PRESSURE_SENSITIVE
+			static int counter[4];
+
+			sprintf(portname,"IN%d",inp);	/* IN0-IN3 */
+			res = readinputportbytag(portname);
+			if (res & 0x80)
+			{
+				if (counter[inp] >= 0)
+					res = 0x40 | counter[inp];
+				else
+				{
+					if (res & 0x40) res = 0x40;
+					else res = 0x00;
+				}
+			}
+			else if (res & 0x40)
+			{
+				if (counter[inp] < 0x3f)
+				{
+					counter[inp] += 4;
+					res = 0x00;
+				}
+				else res = 0x7f;
+			}
+			else
+				counter[inp] = -1;
+#else
+			sprintf(portname,"IN%d",inp);	/* IN0-IN3 */
+			res = readinputportbytag(portname);
+			if (res & 1) res = 0x7f;		/* weak */
+			else if (res & 2) res = 0x48;	/* medium */
+			else if (res & 4) res = 0x40;	/* strong */
+#endif
+		}
+
+		return res;
+	}
+	else
+	{
+		res = readinputportbytag("CONTROL1") & 0x8f;
+
+		/* the strobe cannot happen too often, otherwise the MCU will waste too
+		   much time reading the inputs and won't have enough cycles to play two
+		   digital sounds at once. This value is enough to read all inputs at least
+		   once per frame */
+		if (++strobe_count > 4)
+		{
+			strobe_count = 0;
+			strobe ^= 0x40;
+			if (strobe == 0)
+			{
+				input_count = (input_count + 1) % 5;
+				if (input_count == 3) res |= 0x10;
+			}
+		}
+
+		res |= strobe;
+
+		return res;
+	}
+}
+
+DRIVER_INIT( berabohm )
+{
+	namcos1_driver_init(NULL);
+	memory_install_read8_handler(3, ADDRESS_SPACE_PROGRAM, 0x1400, 0x1401, 0, 0, berabohm_buttons_r);
+}
+
+
+
+/*******************************************************************************
+*   Face Off specific                                                          *
+*******************************************************************************/
+
+static READ8_HANDLER( faceoff_inputs_r )
+{
+	int res;
+	static int input_count, strobe_count, stored_input[2];
+
+	if (offset == 0)
+	{
+		res = (readinputportbytag("CONTROL0") & 0x80) | stored_input[0];
+
+		return res;
+	}
+	else
+	{
+		res = readinputportbytag("CONTROL1") & 0x80;
+
+		/* the strobe cannot happen too often, otherwise the MCU will waste too
+		   much time reading the inputs and won't have enough cycles to play two
+		   digital sounds at once. This value is enough to read all inputs at least
+		   once per frame */
+		if (++strobe_count > 8)
+		{
+			strobe_count = 0;
+
+			res |= input_count;
+
+			switch (input_count)
+			{
+				case 0:
+					stored_input[0] = readinputportbytag("IN0") & 0x1f;
+					stored_input[1] = (readinputportbytag("IN3") & 0x07) << 3;
+
+				case 3:
+					stored_input[0] = readinputportbytag("IN2") & 0x1f;
+
+				case 4:
+					stored_input[0] = readinputportbytag("IN1") & 0x1f;
+					stored_input[1] = readinputportbytag("IN3") & 0x18;
+			}
+
+			input_count = (input_count + 1) & 7;
+		}
+		else
+		{
+			res |= 0x40 | stored_input[1];
+		}
+
+		return res;
+	}
+}
+
+DRIVER_INIT( faceoff )
+{
+	namcos1_driver_init(NULL);
+	memory_install_read8_handler(3, ADDRESS_SPACE_PROGRAM, 0x1400, 0x1401, 0, 0, faceoff_inputs_r);
 }

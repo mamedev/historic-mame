@@ -386,7 +386,7 @@ static void hng64_draw3d( struct mame_bitmap *bitmap, const struct rectangle *cl
 
 		for (i = 0; i < 0x80; i += 0x08)
 		{
-			float left, right, top, bottom, near, far ;
+			float left, right, top, bottom, near_, far_ ;
 			UINT8 *threeDRoms ;
 			UINT8 *threeDPointer ;
 			UINT32 threeDOffset ;
@@ -420,8 +420,8 @@ static void hng64_draw3d( struct mame_bitmap *bitmap, const struct rectangle *cl
 				right  = uToF((workingList[i+5] & 0xffff0000) >> 16) ;
 				top    = uToF((workingList[i+6] & 0xffff0000) >> 16) ;
 				bottom = uToF( workingList[i+6] & 0x0000ffff) ;
-				near   = uToF((workingList[i+3] & 0xffff0000) >> 16) ;
-				far    = uToF( workingList[i+3] & 0x0000ffff) ;
+				near_   = uToF((workingList[i+3] & 0xffff0000) >> 16) ;
+				far_    = uToF( workingList[i+3] & 0x0000ffff) ;
 
 				// It's almost .always. these values in fatfurwa...
 				// 0.070313    0.000000 [0]		(scaled by 128)
@@ -433,24 +433,24 @@ static void hng64_draw3d( struct mame_bitmap *bitmap, const struct rectangle *cl
 				// 0.875000   -0.875000 [6]
 				// 0.000000    0.000000 [7]
 
-				projectionMatrix[0]  = (2.0f*near)/(right-left) ;
+				projectionMatrix[0]  = (2.0f*near_)/(right-left) ;
 				projectionMatrix[1]  = 0.0f ;
 				projectionMatrix[2]  = 0.0f ;
 				projectionMatrix[3]  = 0.0f ;
 
 				projectionMatrix[4]  = 0.0f ;
-				projectionMatrix[5]  = (2.0f*near)/(top-bottom) ;
+				projectionMatrix[5]  = (2.0f*near_)/(top-bottom) ;
 				projectionMatrix[6]  = 0.0f ;
 				projectionMatrix[7]  = 0.0f ;
 
 				projectionMatrix[8]  = (right+left)/(right-left) ;
 				projectionMatrix[9]  = (top+bottom)/(top-bottom) ;
-				projectionMatrix[10] = -((far+near)/(far-near)) ;
+				projectionMatrix[10] = -((far_+near_)/(far_-near_)) ;
 				projectionMatrix[11] = -1.0f ;
 
 				projectionMatrix[12] = 0.0f ;
 				projectionMatrix[13] = 0.0f ;
-				projectionMatrix[14] = -((2.0f*far*near)/(far-near)) ;
+				projectionMatrix[14] = -((2.0f*far_*near_)/(far_-near_)) ;
 				projectionMatrix[15] = 0.0f ;
 
 				/*

@@ -2533,10 +2533,10 @@ void z180_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_STR_REGISTER + Z180_R: 			sprintf(info->s = cpuintrf_temp_str(), "R   :%02X", (Z180.R & 0x7f) | (Z180.R2 & 0x80)); break;
 		case CPUINFO_STR_REGISTER + Z180_I: 			sprintf(info->s = cpuintrf_temp_str(), "I   :%02X", Z180.I); break;
 		case CPUINFO_STR_REGISTER + Z180_IL:			sprintf(info->s = cpuintrf_temp_str(), "IL  :%02X", Z180.io[Z180_IL-Z180_CNTLA0]); break;
-		case CPUINFO_STR_REGISTER + Z180_AF2:			sprintf(info->s = cpuintrf_temp_str(), "AF'%04X", Z180.AF2.w.l); break;
-		case CPUINFO_STR_REGISTER + Z180_BC2:			sprintf(info->s = cpuintrf_temp_str(), "BC'%04X", Z180.BC2.w.l); break;
-		case CPUINFO_STR_REGISTER + Z180_DE2:			sprintf(info->s = cpuintrf_temp_str(), "DE'%04X", Z180.DE2.w.l); break;
-		case CPUINFO_STR_REGISTER + Z180_HL2:			sprintf(info->s = cpuintrf_temp_str(), "HL'%04X", Z180.HL2.w.l); break;
+		case CPUINFO_STR_REGISTER + Z180_AF2:			sprintf(info->s = cpuintrf_temp_str(), "AF2:%04X", Z180.AF2.w.l); break;
+		case CPUINFO_STR_REGISTER + Z180_BC2:			sprintf(info->s = cpuintrf_temp_str(), "BC2:%04X", Z180.BC2.w.l); break;
+		case CPUINFO_STR_REGISTER + Z180_DE2:			sprintf(info->s = cpuintrf_temp_str(), "DE2:%04X", Z180.DE2.w.l); break;
+		case CPUINFO_STR_REGISTER + Z180_HL2:			sprintf(info->s = cpuintrf_temp_str(), "HL2:%04X", Z180.HL2.w.l); break;
 		case CPUINFO_STR_REGISTER + Z180_IM:			sprintf(info->s = cpuintrf_temp_str(), "IM  :%X", Z180.IM); break;
 		case CPUINFO_STR_REGISTER + Z180_IFF1:			sprintf(info->s = cpuintrf_temp_str(), "IFF1:%X", Z180.IFF1); break;
 		case CPUINFO_STR_REGISTER + Z180_IFF2:			sprintf(info->s = cpuintrf_temp_str(), "IFF2:%X", Z180.IFF2); break;

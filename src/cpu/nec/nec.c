@@ -94,6 +94,8 @@ typedef struct
 	UINT32	pending_irq;
 	UINT32	nmi_state;
 	UINT32	irq_state;
+	UINT8	no_interrupt;
+
 	int     (*irq_callback)(int irqline);
 } nec_Regs;
 
@@ -120,8 +122,6 @@ char seg_prefix;		/* prefix segment indicator */
 #include "necea.h"
 #include "necmodrm.h"
 
-static int no_interrupt;
-
 static UINT8 parity_table[256];
 
 /***************************************************************************/
@@ -133,7 +133,6 @@ static void nec_reset (void *param)
 
 	memset( &I, 0, sizeof(I) );
 
-	no_interrupt=0;
 	I.sregs[CS] = 0xffff;
 
 	CHANGE_PC;
@@ -277,7 +276,7 @@ OP( 0x13, i_adc_r16w ) { DEF_r16w;	src+=CF;	ADDW;	RegWord(ModRM)=dst;			CLKR(15,
 OP( 0x14, i_adc_ald8 ) { DEF_ald8;	src+=CF;	ADDB;	I.regs.b[AL]=dst;			CLKS(4,4,2);				}
 OP( 0x15, i_adc_axd16) { DEF_axd16;	src+=CF;	ADDW;	I.regs.w[AW]=dst;			CLKS(4,4,2);				}
 OP( 0x16, i_push_ss  ) { PUSH(I.sregs[SS]);		CLKS(12,8,3);	}
-OP( 0x17, i_pop_ss   ) { POP(I.sregs[SS]);		CLKS(12,8,5);	no_interrupt=1; }
+OP( 0x17, i_pop_ss   ) { POP(I.sregs[SS]);		CLKS(12,8,5);	I.no_interrupt=1; }
 
 OP( 0x18, i_sbb_br8  ) { DEF_br8;	src+=CF;	SUBB;	PutbackRMByte(ModRM,dst);	CLKM(2,2,2,16,13,7); 		}
 OP( 0x19, i_sbb_wr16 ) { DEF_wr16;	src+=CF;	SUBW;	PutbackRMWord(ModRM,dst);	CLKR(24,24,11,24,16,7,2,EA);}
@@ -553,12 +552,12 @@ OP( 0x8e, i_mov_sregw ) { UINT16 src; GetModRM; src = GetRMWord(ModRM); CLKR(15,
 	    case 0x18: I.sregs[DS] = src; break; /* mov ds,ew */
 		default:   logerror("%06x: Mov Sreg - Invalid register\n",activecpu_get_pc());
     }
-	no_interrupt=1;
+	I.no_interrupt=1;
 }
 OP( 0x8f, i_popw ) { UINT16 tmp; GetModRM; POP(tmp); PutRMWord(ModRM,tmp); nec_ICount-=21; }
 OP( 0x90, i_nop  ) { CLK(3);
 	/* Cycle skip for idle loops (0: NOP  1:  JMP 0) */
-	if (no_interrupt==0 && nec_ICount>0 && (PEEKOP((I.sregs[CS]<<4)+I.ip))==0xeb && (PEEK((I.sregs[CS]<<4)+I.ip+1))==0xfd)
+	if (I.no_interrupt==0 && nec_ICount>0 && (I.pending_irq==0) && (PEEKOP((I.sregs[CS]<<4)+I.ip))==0xeb && (PEEK((I.sregs[CS]<<4)+I.ip+1))==0xfd)
 		nec_ICount%=15;
 }
 OP( 0x91, i_xchg_axcx ) { XchgAWReg(CW); CLK(3); }
@@ -764,7 +763,7 @@ OP( 0xe8, i_call_d16 ) { UINT32 tmp; FETCHWORD(tmp); PUSH(I.ip); I.ip = (WORD)(I
 OP( 0xe9, i_jmp_d16  ) { UINT32 tmp; FETCHWORD(tmp); I.ip = (WORD)(I.ip+(INT16)tmp); CHANGE_PC; nec_ICount-=15; }
 OP( 0xea, i_jmp_far  ) { UINT32 tmp,tmp1; FETCHWORD(tmp); FETCHWORD(tmp1); I.sregs[CS] = (WORD)tmp1; 	I.ip = (WORD)tmp; CHANGE_PC; nec_ICount-=27;  }
 OP( 0xeb, i_jmp_d8   ) { int tmp = (int)((INT8)FETCH); nec_ICount-=12;
-	if (tmp==-2 && no_interrupt==0 && nec_ICount>0) nec_ICount%=12; /* cycle skip */
+	if (tmp==-2 && I.no_interrupt==0 && (I.pending_irq==0) && nec_ICount>0) nec_ICount%=12; /* cycle skip */
 	I.ip = (WORD)(I.ip+tmp);
 }
 OP( 0xec, i_inaldx   ) { I.regs.b[AL] = read_port(I.regs.w[DW]); CLKS(8,8,5);}
@@ -772,7 +771,7 @@ OP( 0xed, i_inaxdx   ) { UINT32 port = I.regs.w[DW];	I.regs.b[AL] = read_port(po
 OP( 0xee, i_outdxal  ) { write_port(I.regs.w[DW], I.regs.b[AL]); CLKS(8,8,3);	}
 OP( 0xef, i_outdxax  ) { UINT32 port = I.regs.w[DW];	write_port(port, I.regs.b[AL]);	write_port(port+1, I.regs.b[AH]); CLKW(12,12,5,12,8,3,port); }
 
-OP( 0xf0, i_lock     ) { logerror("%06x: Warning - BUSLOCK\n",activecpu_get_pc()); no_interrupt=1; CLK(2); }
+OP( 0xf0, i_lock     ) { logerror("%06x: Warning - BUSLOCK\n",activecpu_get_pc()); I.no_interrupt=1; CLK(2); }
 OP( 0xf2, i_repne    ) { UINT32 next = FETCHOP; UINT16 c = I.regs.w[CW];
     switch(next) { /* Segments */
 	    case 0x26:	seg_prefix=TRUE;	prefix_base=I.sregs[ES]<<4;	next = FETCHOP;	CLK(2); break;
@@ -988,17 +987,18 @@ int v20_execute(int cycles)
 	cpu_type=V20;
 
 	while(nec_ICount>0) {
-//		if (I.pending_irq) {
-		if (I.IF && I.pending_irq) {	// NS010718 fix interrupt request loss
-			/* No interrupt allowed between last instruction and this one */
-			if (no_interrupt==1)
-				no_interrupt=-1;	// NS010726 use intermediate flag to properly handle cycle skip optimizations
-			else
-			{
-				no_interrupt=0;
+		/* Dispatch IRQ */
+		if (I.pending_irq && I.no_interrupt==0)
+		{
+			if (I.pending_irq & NMI_IRQ)
 				external_int();
-			}
+			else if (I.IF)
+				external_int();
 		}
+
+		/* No interrupt allowed between last instruction and this one */
+		if (I.no_interrupt)
+			I.no_interrupt--;
 
 		CALL_MAME_DEBUG;
 		nec_instruction[FETCHOP]();
@@ -1014,17 +1014,18 @@ int v30_execute(int cycles) {
 	cpu_type=V30;
 
 	while(nec_ICount>0) {
-//		if (I.pending_irq) {
-		if (I.IF && I.pending_irq) {	// NS010718 fix interrupt request loss
-			/* No interrupt allowed between last instruction and this one */
-			if (no_interrupt==1)
-				no_interrupt=-1;	// NS010726 use intermediate flag to properly handle cycle skip optimizations
-			else
-			{
-				no_interrupt=0;
+		/* Dispatch IRQ */
+		if (I.pending_irq && I.no_interrupt==0)
+		{
+			if (I.pending_irq & NMI_IRQ)
 				external_int();
-			}
+			else if (I.IF)
+				external_int();
 		}
+
+		/* No interrupt allowed between last instruction and this one */
+		if (I.no_interrupt)
+			I.no_interrupt--;
 
 		CALL_MAME_DEBUG;
 		nec_instruction[FETCHOP]();
@@ -1041,17 +1042,18 @@ int v33_execute(int cycles)
 	cpu_type=V33;
 
 	while(nec_ICount>0) {
-//		if (I.pending_irq) {
-		if (I.IF && I.pending_irq) {	// NS010718 fix interrupt request loss
-			/* No interrupt allowed between last instruction and this one */
-			if (no_interrupt==1)
-				no_interrupt=-1;	// NS010726 use intermediate flag to properly handle cycle skip optimizations
-			else
-			{
-				no_interrupt=0;
+		/* Dispatch IRQ */
+		if (I.pending_irq && I.no_interrupt==0)
+		{
+			if (I.pending_irq & NMI_IRQ)
 				external_int();
-			}
+			else if (I.IF)
+				external_int();
 		}
+
+		/* No interrupt allowed between last instruction and this one */
+		if (I.no_interrupt)
+			I.no_interrupt--;
 
 		CALL_MAME_DEBUG;
 		nec_instruction[FETCHOP]();
@@ -1076,6 +1078,7 @@ static void nec_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_INPUT_STATE + INPUT_LINE_NMI:	set_irq_line(INPUT_LINE_NMI, info->i);	break;
 
 		case CPUINFO_INT_PC:
+		case CPUINFO_INT_REGISTER + NEC_PC:
 			if( info->i - (I.sregs[CS]<<4) < 0x10000 )
 			{
 				I.ip = info->i - (I.sregs[CS]<<4);
@@ -1156,7 +1159,8 @@ void nec_get_info(UINT32 state, union cpuinfo *info)
 
 		case CPUINFO_INT_PREVIOUSPC:					/* not supported */						break;
 
-		case CPUINFO_INT_PC:							info->i = ((I.sregs[CS]<<4) + I.ip);	break;
+		case CPUINFO_INT_PC:
+		case CPUINFO_INT_REGISTER + NEC_PC:				info->i = ((I.sregs[CS]<<4) + I.ip);	break;
 		case CPUINFO_INT_REGISTER + NEC_IP:				info->i = I.ip;							break;
 		case CPUINFO_INT_SP:							info->i = (I.sregs[SS]<<4) + I.regs.w[SP]; break;
 		case CPUINFO_INT_REGISTER + NEC_SP:				info->i = I.regs.w[SP];					break;
@@ -1218,6 +1222,7 @@ void nec_get_info(UINT32 state, union cpuinfo *info)
                 flags & 0x0001 ? 'C':'.');
             break;
 
+        case CPUINFO_STR_REGISTER + NEC_PC:				sprintf(info->s = cpuintrf_temp_str(), "PC:%04X", (I.sregs[CS]<<4) + I.ip); break;
         case CPUINFO_STR_REGISTER + NEC_IP:				sprintf(info->s = cpuintrf_temp_str(), "IP:%04X", I.ip); break;
         case CPUINFO_STR_REGISTER + NEC_SP:				sprintf(info->s = cpuintrf_temp_str(), "SP:%04X", I.regs.w[SP]); break;
         case CPUINFO_STR_REGISTER + NEC_FLAGS:			sprintf(info->s = cpuintrf_temp_str(), "F:%04X", CompressFlags()); break;

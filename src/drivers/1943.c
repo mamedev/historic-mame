@@ -1,125 +1,135 @@
+/***************************************************************************
+
+	1943: The Battle of Midway
+	Capcom
+
+	driver by Paul Leaman
+
+	Games supported:
+		* 1943: The Battle of Midway (US)
+		* 1943: Midway Kaisen (Japan)
+		* 1943 Kai: Midway Kaisen (Japan)
+		
+***************************************************************************/
+
 /*
 
-TODO: 1943 is almost identical to GunSmoke (one more scrolling playfield). We
-      should merge the two drivers.
+	TODO:
+	
+	- use priority PROM for drawing sprites
+
 */
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
 
+extern UINT8 *c1943_scrollx;
+extern UINT8 *c1943_scrolly;
+extern UINT8 *c1943_bgscrollx;
 
+extern WRITE8_HANDLER( c1943_c804_w );
+extern WRITE8_HANDLER( c1943_d806_w );
+extern WRITE8_HANDLER( c1943_videoram_w );
+extern WRITE8_HANDLER( c1943_colorram_w );
 
-extern unsigned char *c1943_scrollx;
-extern unsigned char *c1943_scrolly;
-extern unsigned char *c1943_bgscrolly;
-WRITE8_HANDLER( c1943_c804_w );	/* in vidhrdw/c1943.c */
-WRITE8_HANDLER( c1943_d806_w );	/* in vidhrdw/c1943.c */
-PALETTE_INIT( 1943 );
-VIDEO_UPDATE( 1943 );
-VIDEO_START( 1943 );
+extern PALETTE_INIT( 1943 );
+extern VIDEO_START( 1943 );
+extern VIDEO_UPDATE( 1943 );
 
+/* Read/Write Handlers */
 
-
-/* this is a protection check. The game crashes (thru a jump to 0x8000) */
-/* if a read from this address doesn't return the value it expects. */
 static READ8_HANDLER( c1943_protection_r )
 {
+	/* 
+		This is a protection check. The game crashes (thru a jump to 0x8000)
+	    if a read from this address doesn't return the value it expects. 
+	*/
+
 	int data = activecpu_get_reg(Z80_BC) >> 8;
-	logerror("protection read, PC: %04x Result:%02x\n",activecpu_get_pc(),data);
+//	logerror("protection read, PC: %04x Result:%02x\n",activecpu_get_pc(),data);
 	return data;
 }
 
+/* Memory Maps */
 
-
-static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK1)
-	AM_RANGE(0xd000, 0xd7ff) AM_READ(MRA8_RAM)
+static ADDRESS_MAP_START( c1943_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_ROM
+	AM_RANGE(0x8000, 0xbfff) AM_ROMBANK(1)
 	AM_RANGE(0xc000, 0xc000) AM_READ(input_port_0_r)
 	AM_RANGE(0xc001, 0xc001) AM_READ(input_port_1_r)
 	AM_RANGE(0xc002, 0xc002) AM_READ(input_port_2_r)
 	AM_RANGE(0xc003, 0xc003) AM_READ(input_port_3_r)
 	AM_RANGE(0xc004, 0xc004) AM_READ(input_port_4_r)
 	AM_RANGE(0xc007, 0xc007) AM_READ(c1943_protection_r)
-	AM_RANGE(0xe000, 0xffff) AM_READ(MRA8_RAM)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
 	AM_RANGE(0xc800, 0xc800) AM_WRITE(soundlatch_w)
-	AM_RANGE(0xc804, 0xc804) AM_WRITE(c1943_c804_w)	/* ROM bank switch, screen flip */
+	AM_RANGE(0xc804, 0xc804) AM_WRITE(c1943_c804_w)	// ROM bank switch, screen flip
 	AM_RANGE(0xc806, 0xc806) AM_WRITE(watchdog_reset_w)
-	AM_RANGE(0xc807, 0xc807) AM_WRITE(MWA8_NOP) 	/* protection chip write (we don't emulate it) */
-	AM_RANGE(0xd000, 0xd3ff) AM_WRITE(videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
-	AM_RANGE(0xd400, 0xd7ff) AM_WRITE(colorram_w) AM_BASE(&colorram)
-	AM_RANGE(0xd800, 0xd801) AM_WRITE(MWA8_RAM) AM_BASE(&c1943_scrolly)
-	AM_RANGE(0xd802, 0xd802) AM_WRITE(MWA8_RAM) AM_BASE(&c1943_scrollx)
-	AM_RANGE(0xd803, 0xd804) AM_WRITE(MWA8_RAM) AM_BASE(&c1943_bgscrolly)
-	AM_RANGE(0xd806, 0xd806) AM_WRITE(c1943_d806_w)	/* sprites, bg1, bg2 enable */
-	AM_RANGE(0xe000, 0xefff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0xf000, 0xffff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0xc807, 0xc807) AM_WRITENOP // ???
+	AM_RANGE(0xd000, 0xd3ff) AM_RAM AM_WRITE(c1943_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0xd400, 0xd7ff) AM_RAM AM_WRITE(c1943_colorram_w) AM_BASE(&colorram)
+	AM_RANGE(0xd800, 0xd801) AM_RAM AM_BASE(&c1943_scrollx)
+	AM_RANGE(0xd802, 0xd802) AM_RAM AM_BASE(&c1943_scrolly)
+	AM_RANGE(0xd803, 0xd804) AM_RAM AM_BASE(&c1943_bgscrollx)
+	AM_RANGE(0xd806, 0xd806) AM_WRITE(c1943_d806_w)	// sprites, bg1, bg2 enable
+	AM_RANGE(0xd808, 0xd808) AM_WRITENOP // ???
+	AM_RANGE(0xd868, 0xd868) AM_WRITENOP // ???
+	AM_RANGE(0xd888, 0xd888) AM_WRITENOP // ???
+	AM_RANGE(0xd8a8, 0xd8a8) AM_WRITENOP // ???
+	AM_RANGE(0xe000, 0xefff) AM_RAM
+	AM_RANGE(0xf000, 0xffff) AM_RAM AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
 ADDRESS_MAP_END
 
-
-static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0xc000, 0xc7ff) AM_READ(MRA8_RAM)
+static ADDRESS_MAP_START( sound_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_ROM
+	AM_RANGE(0xc000, 0xc7ff) AM_RAM
 	AM_RANGE(0xc800, 0xc800) AM_READ(soundlatch_r)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(MWA8_RAM)
 	AM_RANGE(0xe000, 0xe000) AM_WRITE(YM2203_control_port_0_w)
 	AM_RANGE(0xe001, 0xe001) AM_WRITE(YM2203_write_port_0_w)
 	AM_RANGE(0xe002, 0xe002) AM_WRITE(YM2203_control_port_1_w)
 	AM_RANGE(0xe003, 0xe003) AM_WRITE(YM2203_write_port_1_w)
 ADDRESS_MAP_END
 
-
+/* Input Ports */
 
 INPUT_PORTS_START( 1943 )
 	PORT_START_TAG("IN0")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* actually, this is VBLANK */
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SPECIAL )	// VBLANK
+	PORT_BIT( 0x30, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
 
 	PORT_START_TAG("IN1")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  ) PORT_8WAY
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  ) PORT_8WAY
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    ) PORT_8WAY
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* Button 3, probably unused */
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START_TAG("IN2")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    ) PORT_8WAY PORT_PLAYER(2)
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* Button 3, probably unused */
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START_TAG("DSW0")
-	PORT_DIPNAME( 0x0f, 0x0f, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x0f, "1 (Easiest)" )
+	PORT_DIPNAME( 0x0f, 0x08, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x0f, "1 (Easy)" )
 	PORT_DIPSETTING(    0x0e, "2" )
 	PORT_DIPSETTING(    0x0d, "3" )
 	PORT_DIPSETTING(    0x0c, "4" )
 	PORT_DIPSETTING(    0x0b, "5" )
 	PORT_DIPSETTING(    0x0a, "6" )
 	PORT_DIPSETTING(    0x09, "7" )
-	PORT_DIPSETTING(    0x08, "8" )
+	PORT_DIPSETTING(    0x08, "8 (Normal)" )
 	PORT_DIPSETTING(    0x07, "9" )
 	PORT_DIPSETTING(    0x06, "10" )
 	PORT_DIPSETTING(    0x05, "11" )
@@ -127,10 +137,10 @@ INPUT_PORTS_START( 1943 )
 	PORT_DIPSETTING(    0x03, "13" )
 	PORT_DIPSETTING(    0x02, "14" )
 	PORT_DIPSETTING(    0x01, "15" )
-	PORT_DIPSETTING(    0x00, "16 (Hardest)" )
-	PORT_DIPNAME( 0x10, 0x10, "2 Players Game" )
-	PORT_DIPSETTING(    0x00, "1 Credit" )
-	PORT_DIPSETTING(    0x10, "2 Credits" )
+	PORT_DIPSETTING(    0x00, "16 (Difficult)" )
+	PORT_DIPNAME( 0x10, 0x10, "2 Player Game" )
+	PORT_DIPSETTING(    0x00, "1 Credit/2 Players" )
+	PORT_DIPSETTING(    0x10, "2 Credits/2 Players" )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ))
 	PORT_DIPSETTING(    0x00, DEF_STR( On ))
@@ -166,7 +176,7 @@ INPUT_PORTS_START( 1943 )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 INPUT_PORTS_END
 
-
+/* Graphics Layouts */
 
 static struct GfxLayout charlayout =
 {
@@ -178,19 +188,8 @@ static struct GfxLayout charlayout =
 	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16 },
 	16*8	/* every char takes 16 consecutive bytes */
 };
-static struct GfxLayout spritelayout =
-{
-	16,16,	/* 16*16 sprites */
-	2048,	/* 2048 sprites */
-	4,	/* 4 bits per pixel */
-	{ 2048*64*8+4, 2048*64*8+0, 4, 0 },
-	{ 0, 1, 2, 3, 8+0, 8+1, 8+2, 8+3,
-			32*8+0, 32*8+1, 32*8+2, 32*8+3, 33*8+0, 33*8+1, 33*8+2, 33*8+3 },
-	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
-			8*16, 9*16, 10*16, 11*16, 12*16, 13*16, 14*16, 15*16 },
-	64*8	/* every sprite takes 64 consecutive bytes */
-};
-static struct GfxLayout fgtilelayout =
+
+static struct GfxLayout tilelayout =
 {
 	32,32,  /* 32*32 tiles */
 	512,    /* 512 tiles */
@@ -206,6 +205,7 @@ static struct GfxLayout fgtilelayout =
 			24*16, 25*16, 26*16, 27*16, 28*16, 29*16, 30*16, 31*16 },
 	256*8	/* every tile takes 256 consecutive bytes */
 };
+
 static struct GfxLayout bgtilelayout =
 {
 	32,32,  /* 32*32 tiles */
@@ -223,23 +223,36 @@ static struct GfxLayout bgtilelayout =
 	256*8	/* every tile takes 256 consecutive bytes */
 };
 
+static struct GfxLayout spritelayout =
+{
+	16,16,	/* 16*16 sprites */
+	2048,	/* 2048 sprites */
+	4,      /* 4 bits per pixel */
+	{ 2048*64*8+4, 2048*64*8+0, 4, 0 },
+	{ 0, 1, 2, 3, 8+0, 8+1, 8+2, 8+3,
+			32*8+0, 32*8+1, 32*8+2, 32*8+3, 33*8+0, 33*8+1, 33*8+2, 33*8+3 },
+	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
+			8*16, 9*16, 10*16, 11*16, 12*16, 13*16, 14*16, 15*16 },
+	64*8	/* every sprite takes 64 consecutive bytes */
+};
 
+/* Graphics Decode Info */
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,                  0, 32 },
-	{ REGION_GFX2, 0, &fgtilelayout,             32*4, 16 },
+	{ REGION_GFX2, 0, &tilelayout,               32*4, 16 },
 	{ REGION_GFX3, 0, &bgtilelayout,       32*4+16*16, 16 },
 	{ REGION_GFX4, 0, &spritelayout, 32*4+16*16+16*16, 16 },
-	{ -1 } /* end of array */
+	{ -1 }
 };
 
-
+/* Sound Interfaces */
 
 static struct YM2203interface ym2203_interface =
 {
-	2,			/* 2 chips */
-	1500000,	/* 1.5 MHz */
+	2,			// 2 chips
+	1500000,	// 1.5 MHz
 	{ YM2203_VOL(10,15), YM2203_VOL(10,15) },
 	{ 0 },
 	{ 0 },
@@ -247,24 +260,23 @@ static struct YM2203interface ym2203_interface =
 	{ 0 }
 };
 
-
+/* Machine Driver */
 
 static MACHINE_DRIVER_START( 1943 )
+	// basic machine hardware
+	MDRV_CPU_ADD(Z80, 6000000)	// 6 MHz
+	MDRV_CPU_PROGRAM_MAP(c1943_map, 0)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold, 1)
 
-	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80, 6000000)	/* 6 MHz */
-	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
-	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
-
-	MDRV_CPU_ADD(Z80, 3000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3 MHz */
-	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
-	MDRV_CPU_VBLANK_INT(irq0_line_hold,4)
+	MDRV_CPU_ADD(Z80, 3000000)	// 3 MHz
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_PROGRAM_MAP(sound_map, 0)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold, 4)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	/* video hardware */
+	// video hardware
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(32*8, 32*8)
 	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
@@ -276,17 +288,11 @@ static MACHINE_DRIVER_START( 1943 )
 	MDRV_VIDEO_START(1943)
 	MDRV_VIDEO_UPDATE(1943)
 
-	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	// sound hardware
+	MDRV_SOUND_ADD_TAG("ym2203", YM2203, ym2203_interface)
 MACHINE_DRIVER_END
 
-
-
-/***************************************************************************
-
-  Game driver(s)
-
-***************************************************************************/
+/* ROMs */
 
 ROM_START( 1943 )
 	ROM_REGION( 0x30000, REGION_CPU1, 0 )	/* 64k for code + 128k for the banked ROMs images */
@@ -453,8 +459,8 @@ ROM_START( 1943kai )
 	ROM_LOAD( "bmprom.06",    0x0b00, 0x0100, CRC(0eaf5158) SHA1(bafd4108708f66cd7b280e47152b108f3e254fc9) )	/* video timing (not used) */
 ROM_END
 
+/* Game Drivers */
 
-
-GAME( 1987, 1943,    0,    1943, 1943, 0, ROT270, "Capcom", "1943 - The Battle of Midway (US)" )
-GAME( 1987, 1943j,   1943, 1943, 1943, 0, ROT270, "Capcom", "1943 - The Battle of Midway (Japan)" )
-GAME( 1987, 1943kai, 0,    1943, 1943, 0, ROT270, "Capcom", "1943 Kai - Midway Kaisen" )
+GAME( 1987, 1943,     0,        1943,     1943,     0, ROT270, "Capcom", "1943: The Battle of Midway (US)" )
+GAME( 1987, 1943j,    1943,     1943,     1943,     0, ROT270, "Capcom", "1943: Midway Kaisen (Japan)" )
+GAME( 1987, 1943kai,  0,        1943,     1943,     0, ROT270, "Capcom", "1943 Kai: Midway Kaisen (Japan)" )

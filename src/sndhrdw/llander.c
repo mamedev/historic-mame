@@ -17,9 +17,9 @@
 #define LLANDER_EXPLOD_EN	NODE_04
 #define LLANDER_NOISE_RESET	NODE_05
 
-#define LLANDER_NOISE			NODE_10
-#define LLANDER_TONE_3K_SND		NODE_11
-#define LLANDER_TONE_6K_SND		NODE_12
+#define LLANDER_NOISE				NODE_10
+#define LLANDER_TONE_3K_SND			NODE_11
+#define LLANDER_TONE_6K_SND			NODE_12
 #define LLANDER_THRUST_EXPLOD_SND	NODE_13
 
 const struct discrete_lfsr_desc llander_lfsr={
@@ -35,7 +35,7 @@ const struct discrete_lfsr_desc llander_lfsr={
 	14			/* Output bit */
 };
 
-DISCRETE_SOUND_START(llander_sound_interface)
+DISCRETE_SOUND_START(llander_discrete_interface)
 	/************************************************/
 	/* llander Effects Relataive Gain Table         */
 	/*                                              */
@@ -48,12 +48,12 @@ DISCRETE_SOUND_START(llander_sound_interface)
 	/*        the filter stage.                     */
 	/************************************************/
 
-	/*                        NODE            ADDR  MASK    GAIN      OFFSET  INIT */
-	DISCRETE_INPUTX     (LLANDER_THRUST_DATA,  0,  0x0007,  600.0/7,   0,      0)
-	DISCRETE_INPUT      (LLANDER_TONE3K_EN,    1,  0x0007,                     0)
-	DISCRETE_INPUT      (LLANDER_TONE6K_EN,    2,  0x0007,                     0)
-	DISCRETE_INPUT      (LLANDER_EXPLOD_EN,    3,  0x0007,                     0)
-	DISCRETE_INPUT_PULSE(LLANDER_NOISE_RESET,  4,  0x0007,                     1)
+	/*                        NODE             GAIN      OFFSET  INIT */
+	DISCRETE_INPUTX_DATA(LLANDER_THRUST_DATA,  600.0/7,   0,      0)
+	DISCRETE_INPUT_LOGIC(LLANDER_TONE3K_EN)
+	DISCRETE_INPUT_LOGIC(LLANDER_TONE6K_EN)
+	DISCRETE_INPUT_LOGIC(LLANDER_EXPLOD_EN)
+	DISCRETE_INPUT_PULSE(LLANDER_NOISE_RESET, 1)
 
 	DISCRETE_LFSR_NOISE(NODE_20, 1, LLANDER_NOISE_RESET, 12000, 1, 0, 0, &llander_lfsr)	// 12KHz Noise source for thrust
 	DISCRETE_RCFILTER(LLANDER_NOISE, 1, NODE_20, 2247, 1e-6)
@@ -73,20 +73,20 @@ DISCRETE_SOUND_START(llander_sound_interface)
 	DISCRETE_ADDER3(NODE_90, 1, LLANDER_TONE_3K_SND, LLANDER_TONE_6K_SND, LLANDER_THRUST_EXPLOD_SND)	// Mix all four sound sources
 	DISCRETE_GAIN(NODE_91, NODE_90, 65534.0/(9.2+9.2+600+1000))
 
-	DISCRETE_OUTPUT(NODE_91, 100)															// Take the output from the mixer
+	DISCRETE_OUTPUT(NODE_91, 100)		// Take the output from the mixer
 DISCRETE_SOUND_END
 
 WRITE8_HANDLER( llander_snd_reset_w )
 {
 	/* Resets the LFSR that is used for the white noise generator       */
-	discrete_sound_w(4, 0);				/* Reset */
+	discrete_sound_w(LLANDER_NOISE_RESET, 0);				/* Reset */
 }
 
 WRITE8_HANDLER( llander_sounds_w )
 {
-	discrete_sound_w(0,data&0x07);		/* Thrust volume */
-	discrete_sound_w(1,data&0x10);		/* Tone 3KHz enable */
-	discrete_sound_w(2,data&0x20);		/* Tone 6KHz enable */
-	discrete_sound_w(3,data&0x08);		/* Explosion */
+	discrete_sound_w(LLANDER_THRUST_DATA, data & 0x07);		/* Thrust volume */
+	discrete_sound_w(LLANDER_TONE3K_EN, data & 0x10);		/* Tone 3KHz enable */
+	discrete_sound_w(LLANDER_TONE6K_EN, data & 0x20);		/* Tone 6KHz enable */
+	discrete_sound_w(LLANDER_EXPLOD_EN, data & 0x08);		/* Explosion */
 }
 

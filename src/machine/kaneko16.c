@@ -9,15 +9,21 @@
 #include "driver.h"
 #include "machine/random.h"
 
-data16_t *mcu_ram; /* for calc3 and toybox */
+#include "kanekotb.h"	// TOYBOX MCU trojaning results
+
+data16_t *mcu_ram;
 
 /***************************************************************************
 								Gals Panic (set 2)
 								Gals Panic (set 3)
 								Sand Scorpion
+								Bonk's Adventure
 ***************************************************************************/
 
-/* see notes about this "calculator" implementation in drivers\galpanic.c */
+/*
+	- see notes about this "calculator" implementation in drivers\galpanic.c
+	- bonkadv only uses Random Number and XY Overlap Collision bit
+*/
 
 static struct {
 	UINT16 x1p, y1p, x1s, y1s;
@@ -98,12 +104,11 @@ WRITE16_HANDLER(galpanib_calc_w)
 
 
 /***************************************************************************
-
 								CALC3 MCU:
 
-					Shogun Warriors / Fujiyama Buster
+								Shogun Warriors
+								Fujiyama Buster
 								B.Rap Boys
-
 ***************************************************************************/
 /*
 ---------------------------------------------------------------------------
@@ -337,13 +342,12 @@ First code snippet provided by the MCU:
 
 
 /***************************************************************************
-
 								TOYBOX MCU:
 
+								Bonk's Adventure
 								Blood Warrior
-							Great 1000 Miles Rally
-									...
-
+								Great 1000 Miles Rally
+								...
 ***************************************************************************/
 /*
 ---------------------------------------------------------------------------
@@ -406,6 +410,7 @@ TODO: look at this one since this remark is only driver-based.
 
 void toybox_mcu_run(void);
 void bloodwar_mcu_run(void);
+void bonkadv_mcu_run(void);
 void gtmr_mcu_run(void);
 
 static data16_t toybox_mcu_com[4];
@@ -443,6 +448,16 @@ extern const struct GameDriver driver_gtmr2a;
 
 void toybox_mcu_run(void)
 {
+	if ( (Machine->gamedrv == &driver_bloodwar) )
+	{
+		bloodwar_mcu_run();
+	}
+	else
+	if ( (Machine->gamedrv == &driver_bonkadv) )
+	{
+		bonkadv_mcu_run();
+	}
+	else
 	if ( (Machine->gamedrv == &driver_gtmr)    ||
 		 (Machine->gamedrv == &driver_gtmre)   ||
 		 (Machine->gamedrv == &driver_gtmrusa) ||
@@ -450,12 +465,6 @@ void toybox_mcu_run(void)
 		 (Machine->gamedrv == &driver_gtmr2a) )
 	{
 		gtmr_mcu_run();
-	}
-	else
-	if ( (Machine->gamedrv == &driver_bloodwar) ||
-		 (Machine->gamedrv == &driver_bonkadv) )
-	{
-		bloodwar_mcu_run();
 	}
 }
 
@@ -495,19 +504,14 @@ void bloodwar_mcu_run(void)
 
 		case 0x02:	// Read from NVRAM
 		{
-			if (!strcmp(Machine->gamedrv->name,"bonkadv"))
-				memcpy(&mcu_ram[mcu_offset],memory_region(REGION_USER1),128);
-			else
+			mame_file *f;
+			if ((f = mame_fopen(Machine->gamedrv->name,0,FILETYPE_NVRAM,0)) != 0)
 			{
-				mame_file *f;
-				if ((f = mame_fopen(Machine->gamedrv->name,0,FILETYPE_NVRAM,0)) != 0)
-				{
-					mame_fread(f,&mcu_ram[mcu_offset], 128);
-					mame_fclose(f);
-				}
-				else
-					memcpy(&mcu_ram[mcu_offset],memory_region(REGION_USER1),128);
+				mame_fread(f,&mcu_ram[mcu_offset], 128);
+				mame_fclose(f);
 			}
+			else
+				memcpy(&mcu_ram[mcu_offset],memory_region(REGION_USER1),128);
 		}
 		break;
 
@@ -608,6 +612,115 @@ void bloodwar_mcu_run(void)
 
 		default:
 			logerror("UNKNOWN COMMAND\n");
+		break;
+	}
+}
+
+/***************************************************************************
+								Bonk's Adventure
+***************************************************************************/
+
+void bonkadv_mcu_run(void)
+{
+	data16_t mcu_command	=	mcu_ram[0x0010/2];
+	data16_t mcu_offset		=	mcu_ram[0x0012/2] / 2;
+	data16_t mcu_data		=	mcu_ram[0x0014/2];
+
+	switch (mcu_command >> 8)
+	{
+
+		case 0x02:	// Read from NVRAM
+		{
+			memcpy(&mcu_ram[mcu_offset],memory_region(REGION_USER1),128);
+
+			// update eeprom checksum (bytesum) according (fake) dsw region
+			{
+				int i;
+				data8_t *mcu_ram8 = (data8_t *)&mcu_ram[mcu_offset];
+			
+				mcu_ram8[BYTE_XOR_BE(40)] = readinputport(5);	// set new region
+				mcu_ram8[BYTE_XOR_BE(127)] = 0x00;				// clear checksum
+				for (i=0; i<127; i++)						// recompute
+					mcu_ram8[BYTE_XOR_BE(127)] += mcu_ram8[BYTE_XOR_BE(i)];
+			}
+			logerror("PC=%06X : MCU executed command: %04X %04X (load NVRAM settings)\n",activecpu_get_pc(),mcu_command,mcu_offset*2);
+		}
+		break;
+
+		case 0x42:	// Write to NVRAM
+		{
+			mame_file *f;
+			if ((f = mame_fopen(Machine->gamedrv->name,0,FILETYPE_NVRAM,1)) != 0)
+			{
+				mame_fwrite(f,&mcu_ram[mcu_offset], 128);
+				mame_fclose(f);
+			}
+			logerror("PC=%06X : MCU executed command: %04X %04X (save NVRAM settings)\n",activecpu_get_pc(),mcu_command,mcu_offset*2);
+		}
+		break;
+
+		case 0x43:	// Read Factory Default Settings ?
+		break;
+
+		case 0x03:	// DSW
+		{
+			mcu_ram[mcu_offset] = readinputport(4);
+			logerror("PC=%06X : MCU executed command: %04X %04X (read DSW)\n",activecpu_get_pc(),mcu_command,mcu_offset*2);
+		}
+		break;
+
+		case 0x04:	// Protection
+		{
+			logerror("PC=%06X : MCU executed command: %04X %04X %04X",activecpu_get_pc(),mcu_command,mcu_offset*2,mcu_data);
+
+			switch(mcu_data)
+			{
+				// static, in this order, at boot/reset
+				case 0x34: memcpy(&mcu_ram[mcu_offset],bonkadv_mcu_4_34,sizeof(bonkadv_mcu_4_34)); logerror("\n"); break;
+				case 0x30: memcpy(&mcu_ram[mcu_offset],bonkadv_mcu_4_30,sizeof(bonkadv_mcu_4_30)); logerror("\n"); break;
+				case 0x31: memcpy(&mcu_ram[mcu_offset],bonkadv_mcu_4_31,sizeof(bonkadv_mcu_4_31)); logerror("\n"); break;
+				case 0x32: memcpy(&mcu_ram[mcu_offset],bonkadv_mcu_4_32,sizeof(bonkadv_mcu_4_32)); logerror("\n"); break;
+				case 0x33: memcpy(&mcu_ram[mcu_offset],bonkadv_mcu_4_33,sizeof(bonkadv_mcu_4_33)); logerror("\n"); break;
+
+				// dynamic, per-level (29), in level order
+				case 0x00: memcpy(&mcu_ram[mcu_offset],bonkadv_mcu_4_00,sizeof(bonkadv_mcu_4_00)); logerror("\n"); break;
+				case 0x02: memcpy(&mcu_ram[mcu_offset],bonkadv_mcu_4_02,sizeof(bonkadv_mcu_4_02)); logerror("\n"); break;
+				case 0x01: memcpy(&mcu_ram[mcu_offset],bonkadv_mcu_4_01,sizeof(bonkadv_mcu_4_01)); logerror("\n"); break;
+				case 0x05: memcpy(&mcu_ram[mcu_offset],bonkadv_mcu_4_05,sizeof(bonkadv_mcu_4_05)); logerror("\n"); break;
+				case 0x07: memcpy(&mcu_ram[mcu_offset],bonkadv_mcu_4_07,sizeof(bonkadv_mcu_4_07)); logerror("\n"); break;
+				case 0x06: memcpy(&mcu_ram[mcu_offset],bonkadv_mcu_4_06,sizeof(bonkadv_mcu_4_06)); logerror("\n"); break;
+				case 0x09: memcpy(&mcu_ram[mcu_offset],bonkadv_mcu_4_09,sizeof(bonkadv_mcu_4_09)); logerror("\n"); break;
+				case 0x0D: memcpy(&mcu_ram[mcu_offset],bonkadv_mcu_4_0D,sizeof(bonkadv_mcu_4_0D)); logerror("\n"); break;
+				case 0x03: memcpy(&mcu_ram[mcu_offset],bonkadv_mcu_4_03,sizeof(bonkadv_mcu_4_03)); logerror("\n"); break;
+				case 0x08: memcpy(&mcu_ram[mcu_offset],bonkadv_mcu_4_08,sizeof(bonkadv_mcu_4_08)); logerror("\n"); break;
+				case 0x04: memcpy(&mcu_ram[mcu_offset],bonkadv_mcu_4_04,sizeof(bonkadv_mcu_4_04)); logerror("\n"); break;
+				case 0x0C: memcpy(&mcu_ram[mcu_offset],bonkadv_mcu_4_0C,sizeof(bonkadv_mcu_4_0C)); logerror("\n"); break;
+				case 0x0A: memcpy(&mcu_ram[mcu_offset],bonkadv_mcu_4_0A,sizeof(bonkadv_mcu_4_0A)); logerror("\n"); break;
+				case 0x0B: memcpy(&mcu_ram[mcu_offset],bonkadv_mcu_4_0B,sizeof(bonkadv_mcu_4_0B)); logerror("\n"); break;
+				case 0x10: memcpy(&mcu_ram[mcu_offset],bonkadv_mcu_4_10,sizeof(bonkadv_mcu_4_10)); logerror("\n"); break;
+				case 0x0E: memcpy(&mcu_ram[mcu_offset],bonkadv_mcu_4_0E,sizeof(bonkadv_mcu_4_0E)); logerror("\n"); break;
+				case 0x13: memcpy(&mcu_ram[mcu_offset],bonkadv_mcu_4_13,sizeof(bonkadv_mcu_4_13)); logerror("\n"); break;
+				case 0x0F: memcpy(&mcu_ram[mcu_offset],bonkadv_mcu_4_0F,sizeof(bonkadv_mcu_4_0F)); logerror("\n"); break;
+				case 0x11: memcpy(&mcu_ram[mcu_offset],bonkadv_mcu_4_11,sizeof(bonkadv_mcu_4_11)); logerror("\n"); break;
+				case 0x14: memcpy(&mcu_ram[mcu_offset],bonkadv_mcu_4_14,sizeof(bonkadv_mcu_4_14)); logerror("\n"); break;
+				case 0x12: memcpy(&mcu_ram[mcu_offset],bonkadv_mcu_4_12,sizeof(bonkadv_mcu_4_12)); logerror("\n"); break;
+				case 0x17: memcpy(&mcu_ram[mcu_offset],bonkadv_mcu_4_17,sizeof(bonkadv_mcu_4_17)); logerror("\n"); break;
+				case 0x1A: memcpy(&mcu_ram[mcu_offset],bonkadv_mcu_4_1A,sizeof(bonkadv_mcu_4_1A)); logerror("\n"); break;
+				case 0x15: memcpy(&mcu_ram[mcu_offset],bonkadv_mcu_4_15,sizeof(bonkadv_mcu_4_15)); logerror("\n"); break;
+				case 0x18: memcpy(&mcu_ram[mcu_offset],bonkadv_mcu_4_18,sizeof(bonkadv_mcu_4_18)); logerror("\n"); break;
+				case 0x16: memcpy(&mcu_ram[mcu_offset],bonkadv_mcu_4_16,sizeof(bonkadv_mcu_4_16)); logerror("\n"); break;
+				case 0x19: memcpy(&mcu_ram[mcu_offset],bonkadv_mcu_4_19,sizeof(bonkadv_mcu_4_19)); logerror("\n"); break;
+				case 0x1B: memcpy(&mcu_ram[mcu_offset],bonkadv_mcu_4_1B,sizeof(bonkadv_mcu_4_1B)); logerror("\n"); break;
+				case 0x1C: memcpy(&mcu_ram[mcu_offset],bonkadv_mcu_4_1C,sizeof(bonkadv_mcu_4_1C)); logerror("\n"); break;
+
+				default:
+					logerror(" (UNKNOWN PARAMETER %02X)\n",mcu_data);
+			}
+		}
+		break;
+
+		default:
+			logerror("PC=%06X : MCU executed command: %04X %04X %04X (UNKNOWN COMMAND)\n",activecpu_get_pc(),mcu_command,mcu_offset*2,mcu_data);
 		break;
 	}
 }

@@ -13,25 +13,12 @@
 #include "machine/random.h"
 #include "vidhrdw/generic.h"
 
-
-static data32_t hyperstone_iram[0x1000];
-
-static WRITE32_HANDLER( hyperstone_iram_w )
-{
-	COMBINE_DATA(&hyperstone_iram[offset&0xfff]);
-}
-
-static READ32_HANDLER( hyperstone_iram_r )
-{
-	return hyperstone_iram[offset&0xfff];
-}
 static data32_t *vram;
 
 static ADDRESS_MAP_START( dgpix_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x00000000, 0x00ffffff) AM_RAM
 	AM_RANGE(0x40000000, 0x400fffff) AM_RAM AM_BASE(&vram)
 	AM_RANGE(0x80000000, 0x801fffff) AM_RAM
-	AM_RANGE(0xc0000000, 0xdfffffff) AM_READ(hyperstone_iram_r) AM_WRITE(hyperstone_iram_w)
 	AM_RANGE(0xe0000000, 0xe1f00003) AM_RAM
 	AM_RANGE(0xe1f80000, 0xe1f8ffff) AM_RAM
 	AM_RANGE(0xffc00000, 0xffffffff) AM_READ(MRA32_BANK1)
@@ -111,7 +98,7 @@ static INTERRUPT_GEN( test_interrupts )
 
 
 static MACHINE_DRIVER_START( dgpix )
-	MDRV_CPU_ADD(E132XS, 100000000)		 /* ?? */
+	MDRV_CPU_ADD(E132XT, 100000000)		 /* ?? */
 	MDRV_CPU_PROGRAM_MAP(dgpix_map,0)
 	MDRV_CPU_IO_MAP(io_map,0)
 	MDRV_CPU_VBLANK_INT(test_interrupts, 2)

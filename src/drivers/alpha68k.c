@@ -1786,7 +1786,7 @@ static struct GfxLayout sting_layout1 =
 	8,8,    /* 8*8 chars */
 	1024,
 	3,      /* 3 bits per pixel */
-	{ 4, 4+(0x8000*8), 0+(0x10000*4) },
+	{ 4, 0+(0x10000*4), 4+(0x8000*8) },
 	{ 8*8+3, 8*8+2, 8*8+1, 8*8+0, 3, 2, 1, 0 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	16*8    /* every char takes 16 consecutive bytes */
@@ -2362,6 +2362,9 @@ ROM_START( sstingry )
 	ROM_LOAD( "ss_01.rom",       0x0000,  0x4000, CRC(fef09a92) SHA1(77b6aded1eed1bd5e6ffb25b56b62b10b7b9a304) )
 	ROM_LOAD( "ss_02.rom",       0x4000,  0x4000, CRC(ab4e8c01) SHA1(d96e7f97945fff48fb7b4661fdb575ac7ff77445) )
 
+	ROM_REGION( 0x0400, REGION_CPU3, 0 )	  /* 8748 MCU code */
+	ROM_LOAD( "d8748.bin",       0x0000, 0x0400, CRC(7fcbfc30) SHA1(6d087a3d44e475b6c8260a5134952097f26459b7) )
+
 	ROM_REGION( 0x60000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "ss_12.rom",       0x00000, 0x4000, CRC(74caa9e9) SHA1(9f0874b2fcdf45acb941bd56b44bf2b9b08641e9) )
 	ROM_LOAD( "ss_08.rom",       0x08000, 0x4000, CRC(32368925) SHA1(af26f73d33936410063de3164ec80f45bed487c7) )
@@ -2374,13 +2377,8 @@ ROM_START( sstingry )
 	ROM_LOAD( "ic92",            0x0000, 0x0100, CRC(e7ce1179) SHA1(36835c46c1c3f820df39c59c16c362db07b32dc9) )
 	ROM_LOAD( "ic93",            0x0100, 0x0100, CRC(9af8a375) SHA1(abb8b094a2df41acea688f87004207dc35233db5) )
 	ROM_LOAD( "ic91",            0x0200, 0x0100, CRC(c3965079) SHA1(6b1f22afd2a849f0003ddcad344079e8043681f9) )
-//AT
-	ROM_LOAD( "clut_hi.rom",     0x0300, 0x0100, NO_DUMP ) // CLUT high nibble(missing)
-	ROM_LOAD( "clut_lo.rom",     0x0400, 0x0100, NO_DUMP ) // CLUT low nibble(missing)
-
-	ROM_REGION( 0x0400, REGION_USER1, 0 )
-	ROM_LOAD( "ic5.5",           0x0000, 0x0400, NO_DUMP ) // color remap table(bad dump?)
-//ZT
+	ROM_LOAD( "ssprom2.bin",     0x0300, 0x0100, CRC(c2205b71) SHA1(a7db60ac7d559fe53a35264fab17f1d5e48d3f10) )
+	ROM_LOAD( "ssprom1.bin",     0x0400, 0x0100, CRC(1003186c) SHA1(e50b60036d6b32a4d524c92d35c4d9901ee7ec0e) )
 ROM_END
 
 ROM_START( kyros )
@@ -3242,7 +3240,7 @@ static DRIVER_INIT( tnexspce )
 
 /******************************************************************************/
 
-GAMEX(1986, sstingry, 0,        sstingry,      sstingry, sstingry, ROT90, "Alpha Denshi Co.",   "Super Stingray", GAME_WRONG_COLORS )
+GAME( 1986, sstingry, 0,        sstingry,      sstingry, sstingry, ROT90, "Alpha Denshi Co.",   "Super Stingray" )
 GAME( 1987, kyros,    0,        kyros,         kyros,    kyros,    ROT90, "World Games Inc",    "Kyros" )
 GAME( 1986, kyrosj,   kyros,    kyros,         kyros,    kyros,    ROT90, "Alpha Denshi Co.",   "Kyros No Yakata (Japan)" )
 GAMEX(1987, jongbou,  0,        jongbou,       jongbou,  jongbou,  ROT90, "SNK",                "Mahjong Block Jongbou (Japan)", GAME_NOT_WORKING )

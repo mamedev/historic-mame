@@ -95,8 +95,6 @@ extern void m6803_get_info(UINT32 state, union cpuinfo *info);
 
 #define M6803_PORT1 0x100
 #define M6803_PORT2 0x101
-READ8_HANDLER( m6803_internal_registers_r );
-WRITE8_HANDLER( m6803_internal_registers_w );
 #endif
 
 /****************************************************************************

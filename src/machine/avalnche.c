@@ -30,16 +30,18 @@ READ8_HANDLER( avalnche_input_r )
 
 WRITE8_HANDLER( avalnche_output_w )
 {
+	int bit = data & 0x01;
+
 	switch (offset & 0x07)
 	{
 		case 0x00:		/* 1 CREDIT LAMP */
-	        set_led_status(0,data & 0x01);
+	        set_led_status(0, bit);
 			break;
 		case 0x01:		/* ATTRACT */
-			discrete_sound_w(4, (~data) & 0x01);
+			discrete_sound_w(AVALNCHE_ATTRACT_EN, bit);
 			break;
 		case 0x02:		/* VIDEO INVERT */
-			if (data & 0x01)
+			if (bit)
 			{
 				palette_set_color(0,0,0,0);
 				palette_set_color(1,255,255,255);
@@ -51,19 +53,19 @@ WRITE8_HANDLER( avalnche_output_w )
 			}
 			break;
 		case 0x03:		/* 2 CREDIT LAMP */
-	        set_led_status(1,data & 0x01);
+	        set_led_status(1, bit);
 			break;
 		case 0x04:		/* AUD0 */
-			discrete_sound_w(0, data & 0x01);
+			discrete_sound_w(AVALNCHE_AUD0_EN, bit);
 			break;
 		case 0x05:		/* AUD1 */
-			discrete_sound_w(1, data & 0x01);
+			discrete_sound_w(AVALNCHE_AUD1_EN, bit);
 			break;
 		case 0x06:		/* AUD2 */
-			discrete_sound_w(2, data & 0x01);
+			discrete_sound_w(AVALNCHE_AUD2_EN, bit);
 			break;
 		case 0x07:		/* START LAMP (Serve button) */
-	        set_led_status(2,data & 0x01);
+	        set_led_status(2, bit);
 			break;
 	}
 }
@@ -74,7 +76,7 @@ WRITE8_HANDLER( avalnche_output_w )
 
 WRITE8_HANDLER( avalnche_noise_amplitude_w )
 {
-	discrete_sound_w(3, data & 0x3f);
+	discrete_sound_w(AVALNCHE_SOUNDLVL_DATA, data & 0x3f);
 }
 
 INTERRUPT_GEN( avalnche_interrupt )

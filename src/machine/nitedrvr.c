@@ -8,32 +8,13 @@
 #include "vidhrdw/generic.h"
 #include "nitedrvr.h"
 
-unsigned char *nitedrvr_ram;
-
-int nitedrvr_gear = 1;
-int nitedrvr_track = 0;
-
-static int nitedrvr_steering_buf = 0;
-static int nitedrvr_steering_val = 0x00;
-static int nitedrvr_crash_en = 0x00;
+static int nitedrvr_gear = 1;
+static int nitedrvr_track;
+static int nitedrvr_steering_buf;
+static int nitedrvr_steering_val;
+static int nitedrvr_crash_en;
 static int nitedrvr_crash_data = 0x0f;
-static int nitedrvr_crash_data_en = 0x00;	// IC D8
-
-/***************************************************************************
-nitedrvr_ram_r
-***************************************************************************/
-READ8_HANDLER( nitedrvr_ram_r )
-{
-	return nitedrvr_ram[offset];
-}
-
-/***************************************************************************
-nitedrvr_ram_w
-***************************************************************************/
-WRITE8_HANDLER( nitedrvr_ram_w )
-{
-	nitedrvr_ram[offset]=data;
-}
+static int nitedrvr_crash_data_en;	// IC D8
 
 /***************************************************************************
 Steering
@@ -50,7 +31,7 @@ static int nitedrvr_steering(void)
 	int this_val;
 	int delta;
 
-	this_val=input_port_5_r(0);
+	this_val = readinputport(5);
 
 	delta=this_val-last_val;
 	last_val=this_val;
@@ -82,13 +63,13 @@ nitedrvr_steering_reset
 ***************************************************************************/
 READ8_HANDLER( nitedrvr_steering_reset_r )
 {
-	nitedrvr_steering_val=0x00;
+	nitedrvr_steering_val = 0;
 	return 0;
 }
 
 WRITE8_HANDLER( nitedrvr_steering_reset_w )
 {
-	nitedrvr_steering_val=0x00;
+	nitedrvr_steering_val = 0;
 }
 
 
@@ -124,7 +105,7 @@ READ8_HANDLER( nitedrvr_in0_r )
 {
 	int gear;
 
-	gear=input_port_2_r(0);
+	gear = readinputport(2);
 	if (gear & 0x10)				nitedrvr_gear=1;
 	else if (gear & 0x20)			nitedrvr_gear=2;
 	else if (gear & 0x40)			nitedrvr_gear=3;
@@ -133,16 +114,16 @@ READ8_HANDLER( nitedrvr_in0_r )
 	switch (offset & 0x03)
 	{
 		case 0x00:						/* No remapping necessary */
-			return input_port_0_r(0);
+			return readinputport(0);
 		case 0x01:						/* No remapping necessary */
-			return input_port_1_r(0);
+			return readinputport(1);
 		case 0x02:						/* Remap our gear shift */
 			if (nitedrvr_gear==1)		return 0xE0;
 			else if (nitedrvr_gear==2)	return 0xD0;
 			else if (nitedrvr_gear==3)	return 0xB0;
 			else						return 0x70;
 		case 0x03:						/* Remap our steering */
-			return (input_port_3_r(0) | nitedrvr_steering());
+			return (readinputport(3) | nitedrvr_steering());
 		default:
 			return 0xFF;
 	}
@@ -187,7 +168,7 @@ READ8_HANDLER( nitedrvr_in1_r )
 
 	ac_line=(ac_line+1) % 3;
 
-	port=input_port_4_r(0);
+	port = readinputport(4);
 	if (port & 0x10)				nitedrvr_track=0;
 	else if (port & 0x20)			nitedrvr_track=1;
 	else if (port & 0x40)			nitedrvr_track=2;
@@ -230,9 +211,9 @@ D5 = SKID2
 ***************************************************************************/
 WRITE8_HANDLER( nitedrvr_out0_w )
 {
-	discrete_sound_w(3, (~data) & 0x0f);		// Motor freq data*
-	discrete_sound_w(1, (data & 0x10) ? 1 : 0);	// Skid1 enable
-	discrete_sound_w(2, (data & 0x20) ? 1 : 0);	// Skid2 enable
+	discrete_sound_w(NITEDRVR_MOTOR_DATA, data & 0x0f);	// Motor freq data
+	discrete_sound_w(NITEDRVR_SKID1_EN, data & 0x10);	// Skid1 enable
+	discrete_sound_w(NITEDRVR_SKID2_EN, data & 0x20);	// Skid2 enable
 }
 
 /***************************************************************************
@@ -250,8 +231,8 @@ WRITE8_HANDLER( nitedrvr_out1_w )
 	set_led_status(0,data & 0x10);
 
 	nitedrvr_crash_en = data & 0x01;
-	discrete_sound_w(4, nitedrvr_crash_en);		// Crash enable
-	discrete_sound_w(5, (data & 0x02) ? 0 : 1);	// Attract enable (sound disable)
+	discrete_sound_w(NITEDRVR_CRASH_EN, nitedrvr_crash_en);	// Crash enable
+	discrete_sound_w(NITEDRVR_ATTRACT_EN, data & 0x02);		// Attract enable (sound disable)
 
 	if (!nitedrvr_crash_en)
 	{
@@ -262,7 +243,7 @@ WRITE8_HANDLER( nitedrvr_out1_w )
 		palette_set_color(1,0x00,0x00,0x00); /* BLACK */
 		palette_set_color(0,0xff,0xff,0xff); /* WHITE */
 	}
-	discrete_sound_w(0, nitedrvr_crash_data_en ? nitedrvr_crash_data : 0);	// Crash Volume
+	discrete_sound_w(NITEDRVR_BANG_DATA, nitedrvr_crash_data_en ? nitedrvr_crash_data : 0);	// Crash Volume
 }
 
 
@@ -271,7 +252,7 @@ void nitedrvr_crash_toggle(int dummy)
 	if (nitedrvr_crash_en && nitedrvr_crash_data_en)
 	{
 		nitedrvr_crash_data--;
-		discrete_sound_w(0, nitedrvr_crash_data);	// Crash Volume
+		discrete_sound_w(NITEDRVR_BANG_DATA, nitedrvr_crash_data);	// Crash Volume
 		if (!nitedrvr_crash_data) nitedrvr_crash_data_en = 0;	// Done counting?
 		if (nitedrvr_crash_data & 0x01)
 		{
@@ -286,5 +267,4 @@ void nitedrvr_crash_toggle(int dummy)
 			palette_set_color(1,0xff,0xff,0xff); /* WHITE */
 		}
 	}
-		
 }

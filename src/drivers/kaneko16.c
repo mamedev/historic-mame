@@ -150,6 +150,23 @@ static MACHINE_INIT( bloodwar )
 	toybox_mcu_init();
 }
 
+static MACHINE_INIT( bonkadv )
+{
+	kaneko16_priority.tile[0] = 3;
+	kaneko16_priority.tile[1] = 2;
+	kaneko16_priority.tile[2] = 1;
+	kaneko16_priority.tile[3] = 0;
+
+	kaneko16_priority.sprite[0] = 0x0000;	// above all
+	kaneko16_priority.sprite[1] = 0x0000;	// above all
+	kaneko16_priority.sprite[2] = 0x0000;	// above all
+	kaneko16_priority.sprite[3] = 0x0000;	// above all
+
+	kaneko16_sprite_type = 1;
+
+	toybox_mcu_init();
+}
+
 static MACHINE_INIT( bakubrkr )
 {
 	machine_init_kaneko16();
@@ -543,16 +560,16 @@ static ADDRESS_MAP_START( bloodwar, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x2d0000, 0x2d0001) AM_WRITE(toybox_mcu_com3_w)
 	AM_RANGE(0x300000, 0x30ffff) AM_READWRITE(MRA16_RAM, paletteram16_xGGGGGRRRRRBBBBB_word_w) AM_BASE(&paletteram16)	// Palette
 	AM_RANGE(0x400000, 0x401fff) AM_RAM AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)					// Sprites
-	AM_RANGE(0x500000, 0x500fff) AM_READWRITE(MRA16_RAM, kaneko16_vram_3_w) AM_BASE(&kaneko16_vram_3)	// Layers 1
-	AM_RANGE(0x501000, 0x501fff) AM_READWRITE(MRA16_RAM, kaneko16_vram_2_w) AM_BASE(&kaneko16_vram_2)	//
-	AM_RANGE(0x502000, 0x502fff) AM_RAM AM_BASE(&kaneko16_vscroll_3)									//
-	AM_RANGE(0x503000, 0x503fff) AM_RAM AM_BASE(&kaneko16_vscroll_2)									//
-	AM_RANGE(0x580000, 0x580fff) AM_READWRITE(MRA16_RAM, kaneko16_vram_1_w) AM_BASE(&kaneko16_vram_1)	// Layers 0
-	AM_RANGE(0x581000, 0x581fff) AM_READWRITE(MRA16_RAM, kaneko16_vram_0_w) AM_BASE(&kaneko16_vram_0)	//
-	AM_RANGE(0x582000, 0x582fff) AM_RAM AM_BASE(&kaneko16_vscroll_1)									//
-	AM_RANGE(0x583000, 0x583fff) AM_RAM AM_BASE(&kaneko16_vscroll_0)									//
-	AM_RANGE(0x600000, 0x60001f) AM_READWRITE(MRA16_RAM, kaneko16_layers_1_regs_w) AM_BASE(&kaneko16_layers_1_regs)	// Layers 1 Regs
-	AM_RANGE(0x680000, 0x68001f) AM_READWRITE(MRA16_RAM, kaneko16_layers_0_regs_w) AM_BASE(&kaneko16_layers_0_regs)	// Layers 0 Regs
+	AM_RANGE(0x500000, 0x500fff) AM_READWRITE(MRA16_RAM, kaneko16_vram_1_w) AM_BASE(&kaneko16_vram_1)	// Layers 0
+	AM_RANGE(0x501000, 0x501fff) AM_READWRITE(MRA16_RAM, kaneko16_vram_0_w) AM_BASE(&kaneko16_vram_0)	//
+	AM_RANGE(0x502000, 0x502fff) AM_RAM AM_BASE(&kaneko16_vscroll_1)									//
+	AM_RANGE(0x503000, 0x503fff) AM_RAM AM_BASE(&kaneko16_vscroll_0)									//
+	AM_RANGE(0x580000, 0x580fff) AM_READWRITE(MRA16_RAM, kaneko16_vram_3_w) AM_BASE(&kaneko16_vram_3)	// Layers 1
+	AM_RANGE(0x581000, 0x581fff) AM_READWRITE(MRA16_RAM, kaneko16_vram_2_w) AM_BASE(&kaneko16_vram_2)	//
+	AM_RANGE(0x582000, 0x582fff) AM_RAM AM_BASE(&kaneko16_vscroll_3)									//
+	AM_RANGE(0x583000, 0x583fff) AM_RAM AM_BASE(&kaneko16_vscroll_2)									//
+	AM_RANGE(0x600000, 0x60001f) AM_READWRITE(MRA16_RAM, kaneko16_layers_0_regs_w) AM_BASE(&kaneko16_layers_0_regs)	// Layers 0 Regs
+	AM_RANGE(0x680000, 0x68001f) AM_READWRITE(MRA16_RAM, kaneko16_layers_1_regs_w) AM_BASE(&kaneko16_layers_1_regs)	// Layers 1 Regs
 	AM_RANGE(0x700000, 0x70001f) AM_READWRITE(MRA16_RAM, kaneko16_sprites_regs_w) AM_BASE(&kaneko16_sprites_regs)	// Sprites Regs
 	AM_RANGE(0x800000, 0x800001) AM_READWRITE(OKIM6295_status_0_lsb_r, OKIM6295_data_0_lsb_w)
 	AM_RANGE(0x880000, 0x880001) AM_READWRITE(OKIM6295_status_1_lsb_r, OKIM6295_data_1_lsb_w)
@@ -567,6 +584,73 @@ static ADDRESS_MAP_START( bloodwar, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0xd00000, 0xd00001) AM_READ(MRA16_NOP)			// ? (bit 0)
 	AM_RANGE(0xe00000, 0xe00001) AM_WRITE(bloodwar_oki_0_bank_w)
 	AM_RANGE(0xe80000, 0xe80001) AM_WRITE(bloodwar_oki_1_bank_w)
+ADDRESS_MAP_END
+
+
+/***************************************************************************
+								Bonk's Adventure
+***************************************************************************/
+
+static int bonkadv_oki_0_bank[16] = {
+	0x00000,0x00000,0x00000,0x00000, // 1 chunk of 0x40000 (0x30000-0x40000 is garbage?)
+	0x40000,0x50000,0x60000,0x70000, // then chunks of 0x10000
+	0x80000,0x90000,0xa0000,0xb0000,
+	0xc0000,0xd0000,0xe0000,0xf0000
+};
+
+static WRITE16_HANDLER( bonkadv_oki_0_bank_w )
+{
+	if (ACCESSING_LSB)
+	{
+		OKIM6295_set_bank_base(0, bonkadv_oki_0_bank[data & 0xf] );
+		logerror("CPU #0 PC %06X : OKI0  bank %08X\n",activecpu_get_pc(),data);
+	}
+}
+
+static WRITE16_HANDLER( bonkadv_oki_1_bank_w )
+{
+	if (ACCESSING_LSB)
+	{
+		OKIM6295_set_bank_base(1, 0x40000 * data );
+		logerror("CPU #0 PC %06X : OKI1  bank %08X\n",activecpu_get_pc(),data);
+	}
+}
+
+
+static ADDRESS_MAP_START( bonkadv, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_ROM		// ROM
+	AM_RANGE(0x100000, 0x10ffff) AM_RAM		// Work RAM
+	AM_RANGE(0x200000, 0x20ffff) AM_RAM AM_BASE(&mcu_ram)		// Shared With MCU
+	AM_RANGE(0x2a0000, 0x2a0001) AM_WRITE(toybox_mcu_com0_w)	// To MCU ?
+	AM_RANGE(0x2b0000, 0x2b0001) AM_WRITE(toybox_mcu_com1_w)
+	AM_RANGE(0x2c0000, 0x2c0001) AM_WRITE(toybox_mcu_com2_w)
+	AM_RANGE(0x2d0000, 0x2d0001) AM_WRITE(toybox_mcu_com3_w)
+	AM_RANGE(0x300000, 0x30ffff) AM_READWRITE(MRA16_RAM, paletteram16_xGGGGGRRRRRBBBBB_word_w) AM_BASE(&paletteram16)	// Palette
+	AM_RANGE(0x400000, 0x401fff) AM_RAM AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)					// Sprites
+	AM_RANGE(0x500000, 0x500fff) AM_READWRITE(MRA16_RAM, kaneko16_vram_1_w) AM_BASE(&kaneko16_vram_1)	// Layers 0
+	AM_RANGE(0x501000, 0x501fff) AM_READWRITE(MRA16_RAM, kaneko16_vram_0_w) AM_BASE(&kaneko16_vram_0)	//
+	AM_RANGE(0x502000, 0x502fff) AM_RAM AM_BASE(&kaneko16_vscroll_1)									//
+	AM_RANGE(0x503000, 0x503fff) AM_RAM AM_BASE(&kaneko16_vscroll_0)									//
+	AM_RANGE(0x580000, 0x580fff) AM_READWRITE(MRA16_RAM, kaneko16_vram_3_w) AM_BASE(&kaneko16_vram_3)	// Layers 1
+	AM_RANGE(0x581000, 0x581fff) AM_READWRITE(MRA16_RAM, kaneko16_vram_2_w) AM_BASE(&kaneko16_vram_2)	//
+	AM_RANGE(0x582000, 0x582fff) AM_RAM AM_BASE(&kaneko16_vscroll_3)									//
+	AM_RANGE(0x583000, 0x583fff) AM_RAM AM_BASE(&kaneko16_vscroll_2)									//
+	AM_RANGE(0x600000, 0x60001f) AM_READWRITE(MRA16_RAM, kaneko16_layers_0_regs_w) AM_BASE(&kaneko16_layers_0_regs)	// Layers 0 Regs
+	AM_RANGE(0x680000, 0x68001f) AM_READWRITE(MRA16_RAM, kaneko16_layers_1_regs_w) AM_BASE(&kaneko16_layers_1_regs)	// Layers 1 Regs
+	AM_RANGE(0x700000, 0x70001f) AM_READWRITE(MRA16_RAM, kaneko16_sprites_regs_w) AM_BASE(&kaneko16_sprites_regs)	// Sprites Regs
+	AM_RANGE(0x800000, 0x800001) AM_READWRITE(OKIM6295_status_0_lsb_r, OKIM6295_data_0_lsb_w)
+	AM_RANGE(0x880000, 0x880001) AM_READWRITE(OKIM6295_status_1_lsb_r, OKIM6295_data_1_lsb_w)
+	AM_RANGE(0x900000, 0x900015) AM_READWRITE(galpanib_calc_r,galpanib_calc_w)
+	AM_RANGE(0xa00000, 0xa00001) AM_READWRITE(watchdog_reset16_r, watchdog_reset16_w)	// Watchdog
+	AM_RANGE(0xb00000, 0xb00001) AM_READ(input_port_0_word_r)	// Inputs
+	AM_RANGE(0xb00002, 0xb00003) AM_READ(input_port_1_word_r)	//
+	AM_RANGE(0xb00004, 0xb00005) AM_READ(input_port_2_word_r)	//
+	AM_RANGE(0xb00006, 0xb00007) AM_READ(input_port_3_word_r)	//
+	AM_RANGE(0xb80000, 0xb80001) AM_WRITE(bloodwar_coin_lockout_w)	// Coin Lockout
+	AM_RANGE(0xc00000, 0xc00001) AM_WRITE(MWA16_NOP)		// ? ($68a,$7ee)
+	AM_RANGE(0xd00000, 0xd00001) AM_READ(MRA16_NOP)			// ? (bit 0) possibly MCU status
+	AM_RANGE(0xe00000, 0xe00001) AM_WRITE(bonkadv_oki_0_bank_w)
+	AM_RANGE(0xe80000, 0xe80001) AM_WRITE(bonkadv_oki_1_bank_w)
 ADDRESS_MAP_END
 
 
@@ -1485,10 +1569,10 @@ INPUT_PORTS_START( bonkadv )
 	PORT_DIPNAME( 0x0200, 0x0200, DEF_STR( Free_Play ) )
 	PORT_DIPSETTING(      0x0200, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0400, 0x0000, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(      0x0400, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0800, 0x0800, "Reserved" ) /* Reserved / Ticket dispenser */
+	PORT_DIPNAME( 0x0400, 0x0400, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0400, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0800, 0x0800, "Ticket dispenser" ) /* "Reserved" for Japan/Europe */
 	PORT_DIPSETTING(      0x0800, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 	PORT_DIPNAME( 0x1000, 0x0000, "Title Level Display" )
@@ -1501,8 +1585,15 @@ INPUT_PORTS_START( bonkadv )
 	PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 	PORT_SERVICE( 0x8000, IP_ACTIVE_LOW )
-INPUT_PORTS_END
 
+	PORT_START	// IN5 - fake DSW for EEPROM Region
+	PORT_DIPNAME( 0xff, 0x01, DEF_STR( Region ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Japan ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Europe ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( USA ) )
+	PORT_DIPSETTING(    0x03, "China" )
+	PORT_DIPSETTING(    0x04, "Korea" )
+INPUT_PORTS_END
 
 
 /***************************************************************************
@@ -2281,9 +2372,10 @@ static MACHINE_DRIVER_START( bonkadv )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(gtmr)
 	MDRV_CPU_MODIFY("gtmr")
-	MDRV_CPU_PROGRAM_MAP(bloodwar,0)
-	MDRV_MACHINE_INIT( bloodwar )
-	MDRV_NVRAM_HANDLER(93C46)
+	MDRV_CPU_PROGRAM_MAP(bonkadv,0)
+
+	MDRV_MACHINE_INIT( bonkadv )
+
 MACHINE_DRIVER_END
 
 /***************************************************************************
@@ -2851,10 +2943,10 @@ ROM_START( bloodwar )
 	ROM_LOAD16_BYTE( "21400221.27", 0x1d00001, 0x080000, CRC(90682117) SHA1(93d2036c17bcb4021fb3edbc9e08595059d6295d) )
 
 	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )	/* Tiles (scrambled) */
-	ROM_LOAD( "3010226.55", 0x000000, 0x100000, CRC(fcf215de) SHA1(83015f10e62b917efd6e3edfbd45fb8f9b35db2b) )
+	ROM_LOAD( "3000225.51", 0x000000, 0x100000, CRC(fbc3c08a) SHA1(0ba52b381e7a10fb1513244b394438b440950af3) )
 
 	ROM_REGION( 0x100000, REGION_GFX3, ROMREGION_DISPOSE )	/* Tiles (scrambled) */
-	ROM_LOAD( "3000225.51", 0x000000, 0x100000, CRC(fbc3c08a) SHA1(0ba52b381e7a10fb1513244b394438b440950af3) )
+	ROM_LOAD( "3010226.55", 0x000000, 0x100000, CRC(fcf215de) SHA1(83015f10e62b917efd6e3edfbd45fb8f9b35db2b) )
 
 	ROM_REGION( 0x100000, REGION_SOUND1, 0 )	/* Samples */
 	ROM_LOAD( "101f0223.101", 0x000000, 0x100000, CRC(295f3c93) SHA1(558698f1d04b23dd2a73e2eae5ecce598defb228) )
@@ -3694,28 +3786,28 @@ ROM_START( bonkadv )
 	ROM_REGION( 0x020000, REGION_CPU2, 0 )			/* MCU Code */
 	ROM_LOAD( "mcu.124",			 0x000000, 0x020000, CRC(9d4e2724) SHA1(9dd43703265e39f876877020a0ac3875de6faa8d) )
 
-	ROM_REGION( 0x700000, REGION_GFX1, ROMREGION_DISPOSE )	/* Sprites */
+	ROM_REGION( 0x500000, REGION_GFX1, ROMREGION_DISPOSE )	/* Sprites */
 	ROM_LOAD( "pc100101.37",		 0x000000, 0x200000, CRC(c96e7c10) SHA1(607cc7745abc3ff820047e8a00060ece61646623) )
-	ROM_LOAD( "pc300103.38",		 0x200000, 0x200000, CRC(07692b89) SHA1(ee8175ed90c860bd61ea0f4b7982e6edb4d78bed) )
-	ROM_LOAD( "pc200102.40",		 0x400000, 0x200000, CRC(4268a831) SHA1(1d6a23e74802ceded59bed2814f0826bdcb87fb7) )
-	ROM_LOAD16_BYTE( "pc600106.42",  0x600000, 0x080000, CRC(25877026) SHA1(96814d97e9f9284f98c35edfe5e76677ac50dd97) )
-	ROM_LOAD16_BYTE( "pc700107.43",  0x600001, 0x080000, CRC(bfe21c44) SHA1(9900a6fe4182b720a90d64d368bd0fd08bf936a8) )
+	ROM_LOAD( "pc200102.40",		 0x200000, 0x100000, CRC(c2b7a26a) SHA1(1c8783442e0ccf30c5640866c5493f1dc1dd48f8) )
+	ROM_LOAD( "pc300103.38",		 0x300000, 0x100000, CRC(51ee162c) SHA1(b33afc7d1e9f55f191e08472e8c51ca931b0389d) )
+	ROM_LOAD16_BYTE( "pc600106.42",  0x400000, 0x080000, CRC(25877026) SHA1(96814d97e9f9284f98c35edfe5e76677ac50dd97) )
+	ROM_LOAD16_BYTE( "pc700107.43",  0x400001, 0x080000, CRC(bfe21c44) SHA1(9900a6fe4182b720a90d64d368bd0fd08bf936a8) )
 
 	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )	/* Tiles (scrambled) */
-	ROM_LOAD( "pc500105.55",		 0x000000, 0x200000, CRC(edd0da94) SHA1(17a1ad957bb12a07010beec74c3e1b59cc0ab397) )
+	ROM_LOAD( "pc400104.51",		 0x000000, 0x100000, CRC(3b176f84) SHA1(0ad6fd5f03d275165490881173bafcb0a94762eb) )
 
 	ROM_REGION( 0x200000, REGION_GFX3, ROMREGION_DISPOSE )	/* Tiles (scrambled) */
-	ROM_LOAD( "pc400104.51",		 0x000000, 0x200000, CRC(3ad3af0f) SHA1(5ac4def8b1a42c13369d3505fa8e1f52f9451cd4) )
+	ROM_LOAD( "pc500105.55",		 0x000000, 0x100000, CRC(bebb3edc) SHA1(e0fed4307316deaeb811ec29f5022adeaf577a95) )
 
-	ROM_REGION( 0x200000, REGION_SOUND1, 0 )	/* Samples */
-	ROM_LOAD( "pc601106.99",		 0x000000, 0x100000, CRC(a893651c) SHA1(d221ce89f19a76be497724f6c16fab82c8a52661) )
-	ROM_LOAD( "pc602107.100",		 0x100000, 0x100000, CRC(0fbb23aa) SHA1(69b620375c65246317d7105fbc414f3c36e02b2c) )
+	ROM_REGION( 0x100000, REGION_SOUND1, 0 )	/* Samples */
+	ROM_LOAD( "pc604109.101",		 0x000000, 0x100000, CRC(76025530) SHA1(e0c8192d783057798eea084aa3e87938f6e01cb7) )
 
-	ROM_REGION( 0x200000, REGION_SOUND2, 0 )	/* Samples */
+	ROM_REGION( 0x300000, REGION_SOUND2, 0 )	/* Samples */
 	ROM_LOAD( "pc603108.102",		 0x000000, 0x100000, CRC(58458985) SHA1(9a846d604ba901eb2a59d2b6cd9c42e3b43adb6a) )
-	ROM_LOAD( "pc604109.101",		 0x100000, 0x100000, CRC(76025530) SHA1(e0c8192d783057798eea084aa3e87938f6e01cb7) )
+	ROM_LOAD( "pc602107.100",		 0x100000, 0x100000, CRC(0fbb23aa) SHA1(69b620375c65246317d7105fbc414f3c36e02b2c) )
+	ROM_LOAD( "pc601106.99",		 0x200000, 0x100000, CRC(a893651c) SHA1(d221ce89f19a76be497724f6c16fab82c8a52661) )
 
-	ROM_REGION16_BE( 0x0080, REGION_USER1, 0 )			/* EEPROM */
+	ROM_REGION16_BE( 0x0080, REGION_USER1, 0 )	/* EEPROM */
 	ROM_LOAD16_WORD( "eeprom.126",  0x0000, 0x0080, CRC(d04adc84) SHA1(85415062867605587b09a646ead4700014ebcb5c) )
 ROM_END
 
@@ -3749,4 +3841,4 @@ GAMEX(1992, shogwarr, 0,        shogwarr, shogwarr, shogwarr, ROT0,  "Kaneko", "
 GAMEX(1992, fjbuster, shogwarr, shogwarr, shogwarr, shogwarr, ROT0,  "Kaneko", "Fujiyama Buster (Japan)", GAME_NOT_WORKING )
 GAMEX(1992, brapboys, 0,        shogwarr, shogwarr, 0,        ROT0,  "Kaneko", "B.Rap Boys",              GAME_NOT_WORKING )
 GAMEX(1994, bloodwar, 0,        bloodwar, bloodwar, kaneko16, ROT0,  "Kaneko", "Blood Warrior",           GAME_NOT_WORKING )
-GAMEX(1994, bonkadv,  0,        bonkadv , bonkadv,  kaneko16, ROT0,  "Kaneko", "Bonk's Adventure",         GAME_NOT_WORKING )
+GAMEX(1994, bonkadv,  0,        bonkadv , bonkadv,  kaneko16, ROT0,  "Kaneko", "Bonk's Adventure",        GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )

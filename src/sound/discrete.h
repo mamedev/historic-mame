@@ -43,34 +43,33 @@
  *  | SQUARE |       Enable| SINEWAVE |                 |       |
  *  | WAVE   |-+---------->|  2000Hz  |---------------->|       |
  *  |        | |           |          |                 | ADDER |-->OUT
- *  | NODE01 | |           |  NODE02  |                 |       |
+ *  | NODE11 | |           |  NODE12  |                 |       |
  *  '--------' |           '----------'              .->|       |
- *             |                                     |  |NODE06 |
- *             |  .------.   .------.   .---------.  |  '-------'
- *             |  |      |   |      |   |         |  |       ^
- *             |  | INV  |Ena| ADD  |Ena| SINEWVE |  |       |
- *             '->| ERT  |-->| ER2  |-->| 4000Hz  |--'  .-------.
- *                |      |ble|      |ble|         |     |       |
- *                |NODE03|   |NODE04|   | NODE05  |     | INPUT |
- *                '------'   '------'   '---------'     |       |
- *                                                      |NODE07 |
+ *             |                                     |  |NODE20 |
+ *             |  .------.              .---------.  |  '-------'
+ *             |  |Logic |              |         |  |       ^
+ *             |  | INV  |       Enable | SINEWVE |  |       |
+ *             '->| ERT  |------------->| 4000Hz  |--'  .-------.
+ *                |      |              |         |     |       |
+ *                |NODE13|              | NODE14  |     | INPUT |
+ *                '------'              '---------'     |       |
+ *                                                      |NODE01 |
  *                                                      '-------'
  *
  * This should give you an alternating two tone sound switching
  * between the 2000Hz and 4000Hz sine waves at the frequency of the
  * square wave, with the memory mapped enable signal mapped onto NODE07
- * so discrete_sound_w(NODE_06,1) will enable the sound, and
- * discrete_sound_w(NODE_06,0) will disable the sound.
+ * so discrete_sound_w(NODE_01,1) will enable the sound, and
+ * discrete_sound_w(NODE_01,0) will disable the sound.
  *
  *  DISCRETE_SOUND_START(test_interface)
- *      DISCRETE_SQUAREWAVE(NODE_01,1,0.5,1,50,0,0)
- *      DISCRETE_SINEWAVE(NODE_02,NODE_01,2000,10000,0,0)
- *      DISCRETE_INVERT(NODE_03,NODE_01)
- *      DISCRETE_ADDER2(NODE_04,1,NODE_03,1)
- *      DISCRETE_SINEWAVE(NODE_05,NODE_04,4000,10000,0,0)
- *      DISCRETE_ADDER2(NODE_06,NODE_07,NODE_02,NODE_05)
- *      DISCRETE_INPUT(NODE_07,1)
- *      DISCRETE_OUTPUT(NODE_06,100)
+ *      DISCRETE_INPUT_LOGIC(NODE_01)
+ *      DISCRETE_SQUAREWFIX(NODE_11, 1, 0.5, 1, 50, 1.0/2, 0)	// Output 0:1
+ *      DISCRETE_SINEWAVE(NODE_12, NODE_11, 2000, 10000, 0, 0)
+ *      DISCRETE_LOGIC_INVERT(NODE_13, 1, NODE_11)
+ *      DISCRETE_SINEWAVE(NODE_14, NODE_13, 4000, 10000, 0, 0)
+ *      DISCRETE_ADDER2(NODE_20, NODE_01, NODE_12, NODE_14)
+ *      DISCRETE_OUTPUT(NODE_20, 100)
  *  DISCRETE_SOUND_END
  *
  * To aid simulation speed it is preferable to use the enable/disable
@@ -89,6 +88,13 @@
  *
  * Node numbers NODE_01 to NODE_299 are defined at present.
  *
+ * It is recomended to put all Inputs at the start of the interface.
+ * That way they are updated first.
+ *
+ * Each sound effects final node should come after all nodes that
+ * create it.  The final mixing of all sound effects should come
+ * at the end of the interface.
+ *
  ***********************************************************************
  *
  * LIST OF CURRENTLY IMPLEMENTED DISCRETE BLOCKS
@@ -100,9 +106,13 @@
  * DISCRETE_ADJUSTMENT(NODE,ENAB,MIN,MAX,LOGLIN,PORT)
  * DISCRETE_ADJUSTMENTX(NODE,ENAB,MIN,MAX,LOGLIN,PORT,PMIN,PMAX)
  * DISCRETE_CONSTANT(NODE,CONST0)
- * DISCRETE_INPUT(NODE,ADDR,MASK,INIT0)
- * DISCRETE_INPUTX(NODE,ADDR,MASK,GAIN,OFFSET,INIT0)
- * DISCRETE_INPUT_PULSE(NODE,INIT0,ADDR,MASK)
+ * DISCRETE_INPUT_DATA(NODE)
+ * DISCRETE_INPUTX_DATA(NODE,GAIN,OFFSET,INIT)
+ * DISCRETE_INPUT_LOGIC(NODE)
+ * DISCRETE_INPUTX_LOGIC(NODE,GAIN,OFFSET,INIT)
+ * DISCRETE_INPUT_NOT(NODE)
+ * DISCRETE_INPUTX_NOT(NODE,GAIN,OFFSET,INIT)
+ * DISCRETE_INPUT_PULSE(NODE,INIT)
  *
  * DISCRETE_COUNTER(NODE,ENAB,RESET,CLK,MAX,DIR,INIT0,CLKTYPE)
  * DISCRETE_COUNTER_FIX(NODE,ENAB,RESET,FREQ,MAX,DIR,INIT0)
@@ -152,7 +162,6 @@
  * DISCRETE_MIXER6(NODE,ENAB,IN0,IN1,IN2,IN3,IN4,IN5,INFO)
  * DISCRETE_MIXER7(NODE,ENAB,IN0,IN1,IN2,IN3,IN4,IN5,IN6,INFO)
  * DISCRETE_MIXER8(NODE,ENAB,IN0,IN1,IN2,IN3,IN4,IN5,IN6,IN7,INFO)
- * DISCRETE_MIXER(NODE,ENAB,IN0,IN1,IN2,IN3,IN4,IN5,IN6,IN7,IN8,INFO)
  * DISCRETE_OP_AMP_TRIG_VCA(NODE,TRG0,TRG1,TRG2,IN0,IN1,INFO)
  *
  * DISCRETE_LOGIC_INVERT(NODE,ENAB,INP0)
@@ -184,6 +193,7 @@
  * DISCRETE_RCFILTER_VREF(NODE,ENAB,IN0,RVAL,CVAL,VREF)
  *
  * DISCRETE_555_ASTABLE(NODE,RESET,AMPL,R1,R2,C,CTRLV,TYPE)
+ * DISCRETE_555_MSTABLE(NODE,RESET,TRIG,R,C,OPTIONS)
  * DISCRETE_555_CC(NODE,RESET,VIN,R,C,RBIAS,RGND,RDIS,OPTIONS)
  * DISCRETE_566(NODE,ENAB,VMOD,R,C,OPTIONS)
  *
@@ -244,8 +254,13 @@
  *
  ***********************************************************************
  *
- * DISCRETE INPUT - Single output node, initialised at compile time and
- *                variable via memory based interface
+ * DISCRETE_INPUT_DATA  - accepts 8-bit data.  Value at reset is 0.
+ * DISCRETE_INPUT_LOGIC - 0 if data=0; 1 if data=1.  Value at reset is 0.
+ * DISCRETE_INPUT_NOT   - 0 if data=1; 1 if data=0.  Value at reset is 1.
+ *
+ * DISCRETE_INPUTX_xx   - same as above, but will modify the value by the
+ *                        given GAIN and OFFSET.  At reset the value will
+ *                        be INIT modified by GAIN and OFFSET.
  *
  * DISCRETE_INPUT_PULSE - Same as normal input node but the netlist
  *                        node output returns to INIT after a single
@@ -255,31 +270,21 @@
  *
  *                            .----------.
  *                      -----\|          |
- *        Memory Mapped ===== | INPUT(A) |---->   Netlist node
+ *     discrete_sound_w  data | INPUT(A) |---->   Netlist node
  *            Write     -----/|          |
  *                            '----------'
  *
  *  Declaration syntax
  *
- *     DISCRETE_INPUT(name of node, initial value, addr, addrmask)
+ *     DISCRETE_INPUT_DATA  (name of node)
+ *     DISCRETE_INPUT_LOGIC (name of node)
+ *     DISCRETE_INPUT_NOT   (name of node)
+ *     DISCRETE_INPUTX_DATA (name of node, gain, offset, initial value)
+ *     DISCRETE_INPUTX_LOGIC(name of node, gain, offset, initial value)
+ *     DISCRETE_INPUTX_NOT  (name of node, gain, offset, initial value)
+ *     DISCRETE_INPUT_PULSE (name of node, default value)
  *
- *  Example config line
- *
- *     DISCRETE_INPUT(NODE_02, 100,0x0000,0x000f)
- *
- *  Define a memory mapped input node called NODE_02 that has an
- *  initial value of 100. It is memory mapped into location 0x0000,
- *  0x0010, 0x0020 etc all the way to 0x0ff0. The exact size of memory
- *  space is defined by DSS_INPUT_SPACE in file disc_inp.c
- *
- *  The incoming address is first logicalled AND with the the ADDRMASK
- *  and then compared to the address, if there is a match on the write
- *  then the node is written to.
- *
- *  The memory space for discrete sound is 4096 locations (0x1000)
- *  the addr/addrmask values are used to setup a lookup table.
- *
- *  Can be written to with:    discrete_sound_w(0x0000, data);
+ *  Can be written to with:    discrete_sound_w(NODE_xx, data);
  *
  ***********************************************************************
  =======================================================================
@@ -734,17 +739,21 @@
  *
  *     discrete_schmitt_osc_desc = {rIn, rFeedback, c, trshRise, trshFall, vGate, options}
  *
+ *  Note: trshRise, trshFall, vGate can be replaced with one of these common types:
+ *        DEFAULT_7414_VALUES or DEFAULT_74LS14_VALUES  (the LS makes a difference)
+ *    eg: {rIn, rFeedback, c, DEFAULT_7414_VALUES, options}
+ *
  *  Where:
  *     trshRise is the voltage level that triggers the gate input to go high (vGate) on rise.
  *     trshFall is the voltage level that triggers the gate input to go low (0V) on fall.
  *     vGate    is the ouput high voltage of the gate that gets fedback through rFeedback.
  *
  *  Input Options:
- *     DISC_SCHMITT_OSC_IN_IS_LOGIC
+ *     DISC_SCHMITT_OSC_IN_IS_LOGIC (DEFAULT)
  *     DISC_SCHMITT_OSC_IN_IS_VOLTAGE
  *
  *  Enable Options: (ORed with input options)
- *     DISC_SCHMITT_OSC_ENAB_IS_AND
+ *     DISC_SCHMITT_OSC_ENAB_IS_AND (DEFAULT)
  *     DISC_SCHMITT_OSC_ENAB_IS_NAND
  *     DISC_SCHMITT_OSC_ENAB_IS_OR
  *     DISC_SCHMITT_OSC_ENAB_IS_NOR
@@ -1027,12 +1036,14 @@
  *
  *  Types:
  *
- *     DISC_ONESHOT_FEDGE    0x00 - trigger on falling edge
+ *     DISC_ONESHOT_FEDGE    0x00 - trigger on falling edge (DEFAULT)
  *     DISC_ONESHOT_REDGE    0x01 - trigger on rising edge
- *     DISC_ONESHOT_NORETRIG 0x00 - non-retriggerable
+ *
+ *     DISC_ONESHOT_NORETRIG 0x00 - non-retriggerable (DEFAULT)
  *     DISC_ONESHOT_RETRIG   0x02 - retriggerable
+ *
  *     DISC_OUT_ACTIVE_LOW   0x04 - output active low
- *     DISC_OUT_ACTIVE_HIGH  0x00 - output active high
+ *     DISC_OUT_ACTIVE_HIGH  0x00 - output active high (DEFAULT)
  *
  *  NOTE: A width of 0 seconds will output a pulse of 1 sample.
  *        This is usefull for a guaranteed minimun pulse, regardless
@@ -1862,15 +1873,15 @@
  *
  *  Declaration syntax
  *
- *     DISCRETE_NE555(name of node,
- *                    reset node (or value),
- *                    R1 node (or value) in ohms,
- *                    R2 node (or value) in ohms,
- *                    C node (or value) in farads,
- *                    Control Voltage node (or value),
- *                    address of discrete_555_astbl_desc structure)
+ *     DISCRETE_555_ASTABLE(name of node,
+ *                          reset node (or value),
+ *                          R1 node (or value) in ohms,
+ *                          R2 node (or value) in ohms,
+ *                          C node (or value) in farads,
+ *                          Control Voltage node (or value),
+ *                          address of discrete_555_desc structure)
  *
- *    discrete_555_astbl_desc =
+ *    discrete_555_desc =
  *    {
  *        options,        // bit mapped options
  *        v555,           // B+ voltage of 555
@@ -1879,12 +1890,20 @@
  *        trigger555      // normally 1/3 of v555
  *    }
  *
+ * The last 3 options of discrete_555_desc can use the following defaults
+ * unless otherwise needed.
+ *     DEFAULT_555_V_LOGIC_1, DEFAULT_555_THRESHOLD, DEFAULT_555_TRIGGER
+ * or all 3 combined as:
+ *     DEFAULT_555_VALUES
+ *
+ * eg. {DISC_555_OUT_DC | DISC_555_OUT_SQW, 12, DEFAULT_555_VALUES}
+ *
  *  Output Types:
- *     DISC_555_OUT_DC - Output is actual DC.
+ *     DISC_555_OUT_DC - Output is actual DC. (DEFAULT)
  *     DISC_555_OUT_AC - A cheat to make the waveform AC.
  *
  *  Waveform Types: (ORed with output types)
- *     DISC_555_OUT_SQW       - Output is Squarewave.  0 or v555high.
+ *     DISC_555_OUT_SQW       - Output is Squarewave.  0 or v555high. (DEFAULT)
  *     DISC_555_OUT_CAP       - Output is Timing Capacitor 'C' voltage.
  *     DISC_555_OUT_CAP_CLAMP - During a sample period, the high/low
  *                              threshold may be reached, causing the
@@ -1902,7 +1921,62 @@
  *                              This option may be removed soon, as the
  *                              filters help clear things up.
  *
- * EXAMPLES: see Hit Me
+ *  other options - DISCRETE_555_ASTABLE only:
+ *     DISC_555_ASTABLE_HAS_FAST_CHARGE_DIODE - diode used to bypass rDischarge
+ *                                              when charging for quicker charge.
+ *
+ * EXAMPLES: see Hit Me, Canyon Bomber, Sky Diver
+ *
+ ***********************************************************************
+ *
+ * DISCRETE_555_MSTABLE - NE555 Chip simulation (monostable mode)
+ *                      - Triggered on falling edge.
+ *
+ *                          v555
+ *                           |
+ *                 .---------+
+ *                 |         |
+ *                 Z         |
+ *               R Z     .---------.
+ *                 |     |  Vcc    |
+ *                 +-----|Discharge|
+ *                 |     |         |
+ *                 |     |   555   |
+ *                 |     |      Out|---> Netlist Node
+ *                 |     |         |
+ *                 +-----|Threshold|
+ *                 |     |         |
+ *                 |     |  Trigger|--------< Trigger
+ *                 |     |       CV|---.
+ *                 |     |  Reset  |   |
+ *                 |     '---------'  --- not
+ *                ---         |       --- needed
+ *              C ---         |        |
+ *                 |          ^       gnd
+ *                gnd       Reset
+ *
+ *  Declaration syntax
+ *
+ *     DISCRETE_555_MSTABLE(name of node,
+ *                          reset node (or value),
+ *                          Trigger node,
+ *                          R node (or value) in ohms,
+ *                          C node (or value) in farads,
+ *                          address of discrete_555_desc structure)
+ *
+ *  Trigger Types
+ *     DISC_555_TRIGGER_IS_LOGIC   - Input is (0 or !0) logic (DEFAULT)
+ *     DISC_555_TRIGGER_IS_VOLTAGE - Input is actual voltage.
+ *                                   Voltage must drop below
+ *                                   trigger555 to activate.
+ *
+ *  Output Types: (ORed with trigger types)
+ *     See DISCRETE_555_ASTABLE for description.
+ *
+ *  Waveform Types: (ORed with trigger types)
+ *     See DISCRETE_555_ASTABLE for description.
+ *
+ * EXAMPLES: see Frogs
  *
  ***********************************************************************
  *
@@ -1931,7 +2005,7 @@
  *                 |      |                ^
  *                gnd    gnd             Reset
  *
- * Notes: R sets the current and should never be 0 (short).
+ * Notes: R sets the current and should NEVER be 0 (short).
  *        The current follows the voltage I=Vin/R and charges C.
  *        rBias, rDischarge and rGnd should be 0 if not used.
  *        Reset is active low for the module.
@@ -2010,11 +2084,11 @@
  *     discrete_566_desc = {options, vPlus, vNeg}
  *
  *  Output Types:
- *     DISC_566_OUT_DC - Output is actual DC.
+ *     DISC_566_OUT_DC - Output is actual DC. (DEFAULT)
  *     DISC_566_OUT_AC - A cheat to make the waveform AC.
  *
  *  Waveform Types:
- *     DISC_566_OUT_SQUARE   - Pin 3 Square Wave Output
+ *     DISC_566_OUT_SQUARE   - Pin 3 Square Wave Output (DEFAULT)
  *     DISC_566_OUT_TRIANGLE - Pin 4 Triangle Wave Output
  *     DISC_566_OUT_LOGIC    - Internal Flip/Flop Output
  *
@@ -2068,8 +2142,10 @@
  *
  *************************************/
 
-#define DISC_LOGADJ						1.0
-#define DISC_LINADJ						0.0
+#define DEFAULT_TTL_V_LOGIC_1	3.4
+
+#define DISC_LOGADJ				1.0
+#define DISC_LINADJ				0.0
 
 /* DISCRETE_COMP_ADDER types */
 #define DISC_COMP_P_CAPACITOR			0x00
@@ -2175,6 +2251,9 @@ enum
 #define DISC_555_OUT_DC					0x00
 #define DISC_555_OUT_AC					0x01
 
+#define DISC_555_TRIGGER_IS_LOGIC		0x00
+#define DISC_555_TRIGGER_IS_VOLTAGE		0x40
+
 #define DISC_555_OUT_SQW				0x00	/* Squarewave */
 #define DISC_555_OUT_CAP				0x10	/* Cap charge waveform */
 #define DISC_555_OUT_CAP_CLAMP			0x20	/* When outputting the cap voltage, it is forced
@@ -2183,6 +2262,8 @@ enum
 
 #define DISC_555_OUT_MASK				0x30	/* Bits that define output type.
 												 * Used only internally in module. */
+
+#define DISC_555_ASTABLE_HAS_FAST_CHARGE_DIODE		0x80
 
 /* 566 output flags */
 #define DISC_566_OUT_DC					0x00
@@ -2206,7 +2287,6 @@ enum
 #define DISC_OUT_ACTIVE_HIGH			0x00
 
 
-
 /*************************************
  *
  *	The discrete sound blocks as
@@ -2224,7 +2304,6 @@ struct discrete_sound_block
 	const void *	custom;							/* Custom function specific initialisation data */
 	const char *	name;							/* Node Name */
 };
-
 
 
 /*************************************
@@ -2251,16 +2330,23 @@ struct discrete_module
  *
  *************************************/
 
+struct r_node
+{
+	double			r;					/* resistance of this node */
+	int				r_is_variable;		/* TRUE if the resistance varies */
+};
+
 struct node_description
 {
-	int				node;							/* The nodes index number in the node list */
-	struct discrete_module module;					/* Copy of the nodes module info */
-	double			output;							/* The nodes last output value */
+	int				node;							/* The node's index number in the node list */
+	struct	discrete_module module;					/* Copy of the node's module info */
+	double			output;							/* The node's last output value */
+	struct r_node	node_r;							/* info about the node's resistance */
 
 	int				active_inputs;					/* Number of active inputs on this node type */
-	struct node_description *
-					input_node[DISCRETE_MAX_INPUTS];/* Either pointer to input node OR NULL in which case use the input value */
-	double			input[DISCRETE_MAX_INPUTS];		/* Input values for this node */
+	int				input_is_node;					/* Bit Flags.  1 in bit location means input_is_node */
+	const double *	input[DISCRETE_MAX_INPUTS];		/* Addresses of Input values */
+	const struct r_node * input_r[DISCRETE_MAX_INPUTS];	/* Addresses of Input resistance info */
 
 	void *			context;						/* Contextual information specific to this node type */
 	const char *	name;							/* Text name string for identification/debug */
@@ -2309,6 +2395,11 @@ struct discrete_op_amp_osc_info
 	double	c;
 	double	vP;		// Op amp B+
 };
+
+
+#define DEFAULT_7414_VALUES 	1.7, 0.9, 3.4
+
+#define DEFAULT_74LS14_VALUES 	1.6, 0.8, 3.4
 
 struct discrete_schmitt_osc_desc
 {
@@ -2415,7 +2506,12 @@ struct discrete_op_amp_filt_info
 };
 
 
-struct discrete_555_astbl_desc
+#define DEFAULT_555_HIGH		-1
+#define DEFAULT_555_THRESHOLD	-1
+#define DEFAULT_555_TRIGGER		-1
+#define DEFAULT_555_VALUES		DEFAULT_555_HIGH, DEFAULT_555_THRESHOLD, DEFAULT_555_TRIGGER
+
+struct discrete_555_desc
 {
 	int		options;		// bit mapped options
 	double	v555;			// B+ voltage of 555
@@ -2525,8 +2621,11 @@ enum
 	/* from disc_inp.c */
 	DSS_ADJUSTMENT,		/* Adjustment node */
 	DSS_CONSTANT,		/* Constant node */
-	DSS_INPUT,			/* Memory mapped input node */
-	DSS_INPUT_PULSE,	/* Memory mapped input node, single pulsed version */
+	/* Do not change or add to the next 4 without also modifying disc_inp.c */
+	DSS_INPUT_DATA,		/* Input node */
+	DSS_INPUT_LOGIC,	/* Input node */
+	DSS_INPUT_NOT,		/* Input node */
+	DSS_INPUT_PULSE,	/* Input node, single pulsed version */
 
 	/* from disc_wav.c */
 	/* generic modules */
@@ -2561,6 +2660,7 @@ enum
 	DST_LOGIC_XOR,
 	DST_LOGIC_NXOR,
 	DST_LOGIC_DFF,
+	DST_MULTIPLEX,		/* 1 of x multiplexer */
 	DST_ONESHOT,		/* One-shot pulse generator */
 	DST_RAMP,			/* Ramp up/down simulation */
 	DST_SAMPHOLD,		/* Sample & hold transform */
@@ -2598,7 +2698,7 @@ enum
 	DSD_566,			/* NE566 Emulation */
 
 	/* Custom */
-//	DST_CUSTOM,			/* whatever you want someday */
+	DST_CUSTOM,			/* whatever you want someday */
 
 	/* Output Node -- this must be the last entry in this enum! */
 	DSO_OUTPUT			/* The final output node */
@@ -2614,15 +2714,19 @@ enum
  *************************************/
 
 #define DISCRETE_SOUND_START(STRUCTURENAME) struct discrete_sound_block STRUCTURENAME[] = {
-#define DISCRETE_SOUND_END                                              { NODE_00, DSS_NULL        , 0, { NODE_NC }, { 0 } ,NULL  ,"End Marker" }  };
+#define DISCRETE_SOUND_END                                              { NODE_00, DSS_NULL     , 0, { NODE_NC }, { 0 } ,NULL  ,"End Marker" }  };
 
 /* from disc_inp.c */
 #define DISCRETE_ADJUSTMENT(NODE,ENAB,MIN,MAX,LOGLIN,PORT)              { NODE, DSS_ADJUSTMENT  , 7, { ENAB,NODE_NC,NODE_NC,NODE_NC,NODE_NC,NODE_NC,NODE_NC }, { ENAB,MIN,MAX,LOGLIN,PORT,0   ,100  }, NULL  , NULL  },
 #define DISCRETE_ADJUSTMENTX(NODE,ENAB,MIN,MAX,LOGLIN,PORT,PMIN,PMAX)   { NODE, DSS_ADJUSTMENT  , 7, { ENAB,NODE_NC,NODE_NC,NODE_NC,NODE_NC,NODE_NC,NODE_NC }, { ENAB,MIN,MAX,LOGLIN,PORT,PMIN,PMAX }, NULL  , NULL  },
 #define DISCRETE_CONSTANT(NODE,CONST)                                   { NODE, DSS_CONSTANT    , 1, { NODE_NC }, { CONST } ,NULL  ,"Constant" },
-#define DISCRETE_INPUT(NODE,ADDR,MASK,INIT0)                            { NODE, DSS_INPUT       , 6, { NODE_NC,NODE_NC,NODE_NC,NODE_NC,NODE_NC,NODE_NC }, { INIT0,ADDR,MASK,1   ,0     ,INIT0 }, NULL, "Input" },
-#define DISCRETE_INPUTX(NODE,ADDR,MASK,GAIN,OFFSET,INIT0)               { NODE, DSS_INPUT       , 6, { NODE_NC,NODE_NC,NODE_NC,NODE_NC,NODE_NC,NODE_NC }, { INIT0,ADDR,MASK,GAIN,OFFSET,INIT0 }, NULL, "InputX" },
-#define DISCRETE_INPUT_PULSE(NODE,ADDR,MASK,INIT0)                      { NODE, DSS_INPUT_PULSE , 6, { NODE_NC,NODE_NC,NODE_NC,NODE_NC,NODE_NC,NODE_NC }, { INIT0,ADDR,MASK,1   ,0     ,INIT0 }, NULL, "Input Pulse" },
+#define DISCRETE_INPUT_DATA(NODE)                                       { NODE, DSS_INPUT_DATA  , 3, { NODE_NC,NODE_NC,NODE_NC }, { 1,0,0 }, NULL, "Input Data" },
+#define DISCRETE_INPUTX_DATA(NODE,GAIN,OFFSET,INIT)                     { NODE, DSS_INPUT_DATA  , 3, { NODE_NC,NODE_NC,NODE_NC }, { GAIN,OFFSET,INIT }, NULL, "InputX Data" },
+#define DISCRETE_INPUT_LOGIC(NODE)                                      { NODE, DSS_INPUT_LOGIC , 3, { NODE_NC,NODE_NC,NODE_NC }, { 1,0,0 }, NULL, "Input Logic" },
+#define DISCRETE_INPUTX_LOGIC(NODE,GAIN,OFFSET,INIT)                    { NODE, DSS_INPUT_LOGIC , 3, { NODE_NC,NODE_NC,NODE_NC }, { GAIN,OFFSET,INIT }, NULL, "InputX Logic" },
+#define DISCRETE_INPUT_NOT(NODE)                                        { NODE, DSS_INPUT_NOT   , 3, { NODE_NC,NODE_NC,NODE_NC }, { 1,0,0 }, NULL, "Input Not" },
+#define DISCRETE_INPUTX_NOT(NODE,GAIN,OFFSET,INIT)                      { NODE, DSS_INPUT_NOT   , 3, { NODE_NC,NODE_NC,NODE_NC }, { GAIN,OFFSET,INIT }, NULL, "InputX Not" },
+#define DISCRETE_INPUT_PULSE(NODE,INIT)                                 { NODE, DSS_INPUT_PULSE , 3, { NODE_NC,NODE_NC,NODE_NC }, { 1,0,INIT }, NULL, "Input Pulse" },
 
 /* from disc_wav.c */
 /* generic modules */
@@ -2653,7 +2757,7 @@ enum
 #define DISCRETE_CLAMP(NODE,ENAB,INP0,MIN,MAX,CLAMP)                    { NODE, DST_CLAMP       , 5, { ENAB,INP0,MIN,MAX,CLAMP }, { ENAB,INP0,MIN,MAX,CLAMP }, NULL, "Signal Clamp" },
 #define DISCRETE_DIVIDE(NODE,ENAB,INP0,INP1)                            { NODE, DST_DIVIDE      , 3, { ENAB,INP0,INP1 }, { ENAB,INP0,INP1 }, NULL, "Divider" },
 #define DISCRETE_GAIN(NODE,INP0,GAIN)                                   { NODE, DST_GAIN        , 4, { NODE_NC,INP0,NODE_NC,NODE_NC }, { 1,INP0,GAIN,0 }, NULL, "Gain" },
-#define DISCRETE_INVERT(NODE,INP0)                                      { NODE, DST_GAIN        , 4, { NODE_NC,INP0,NODE_NC,NODE_NC }, { 1,0,-1,0 }, NULL, "Inverter" },
+#define DISCRETE_INVERT(NODE,INP0)                                      { NODE, DST_GAIN        , 4, { NODE_NC,INP0,NODE_NC,NODE_NC }, { 1,INP0,-1,0 }, NULL, "Inverter" },
 #define DISCRETE_LOGIC_INVERT(NODE,ENAB,INP0)                           { NODE, DST_LOGIC_INV   , 2, { ENAB,INP0 }, { ENAB,INP0 }, NULL, "Logic Invertor" },
 #define DISCRETE_LOGIC_AND(NODE,ENAB,INP0,INP1)                         { NODE, DST_LOGIC_AND   , 5, { ENAB,INP0,INP1,NODE_NC,NODE_NC }, { ENAB,INP0,INP1,1.0,1.0 }, NULL, "Logic AND (2inp)" },
 #define DISCRETE_LOGIC_AND3(NODE,ENAB,INP0,INP1,INP2)                   { NODE, DST_LOGIC_AND   , 5, { ENAB,INP0,INP1,INP2,NODE_NC }, { ENAB,INP0,INP1,INP2,1.0 }, NULL, "Logic AND (3inp)" },
@@ -2670,6 +2774,9 @@ enum
 #define DISCRETE_LOGIC_XOR(NODE,ENAB,INP0,INP1)                         { NODE, DST_LOGIC_XOR   , 3, { ENAB,INP0,INP1 }, { ENAB,INP0,INP1 }, NULL, "Logic XOR (2inp)" },
 #define DISCRETE_LOGIC_NXOR(NODE,ENAB,INP0,INP1)                        { NODE, DST_LOGIC_NXOR  , 3, { ENAB,INP0,INP1 }, { ENAB,INP0,INP1 }, NULL, "Logic NXOR (2inp)" },
 #define DISCRETE_LOGIC_DFLIPFLOP(NODE,ENAB,RESET,SET,CLK,INP)           { NODE, DST_LOGIC_DFF   , 5, { ENAB,RESET,SET,CLK,INP }, { ENAB,RESET,SET,CLK,INP }, NULL, "Logic DFlipFlop" },
+#define DISCRETE_MULTIPLEX2(NODE,ENAB,ADDR,INP0,INP1)                   { NODE, DST_MULTIPLEX   , 4, { ENAB,ADDR,INP0,INP1 }, { ENAB,ADDR,INP0,INP1 }, NULL, "1 of 2 Multiplexer" },
+#define DISCRETE_MULTIPLEX4(NODE,ENAB,ADDR,INP0,INP1,INP2,INP3)         { NODE, DST_MULTIPLEX   , 6, { ENAB,ADDR,INP0,INP1,INP2,INP3 }, { ENAB,ADDR,INP0,INP1,INP2,INP3 }, NULL, "1 of 4 Multiplexer" },
+#define DISCRETE_MULTIPLEX8(NODE,ENAB,ADDR,INP0,INP1,INP2,INP3,INP4,INP5,INP6,INP7) { NODE, DST_MULTIPLEX, 10, { ENAB,ADDR,INP0,INP1,INP2,INP3,INP4,INP5,INP6,INP7 }, { ENAB,ADDR,INP0,INP1,INP2,INP3,INP4,INP5,INP6,INP7 }, NULL, "1 of 8 Multiplexer" },
 #define DISCRETE_MULTIPLY(NODE,ENAB,INP0,INP1)                          { NODE, DST_GAIN        , 4, { ENAB,INP0,INP1,NODE_NC }, { ENAB,INP0,INP1,0 }, NULL, "Multiplier" },
 #define DISCRETE_MULTADD(NODE,ENAB,INP0,INP1,INP2)                      { NODE, DST_GAIN        , 4, { ENAB,INP0,INP1,INP2 }, { ENAB,INP0,INP1,INP2 }, NULL, "Multiply/Add" },
 #define DISCRETE_ONESHOT(NODE,TRIG,AMPL,WIDTH,TYPE)                     { NODE, DST_ONESHOT     , 5, { NODE_NC,TRIG,AMPL,WIDTH,NODE_NC }, { 0,TRIG,AMPL,WIDTH,TYPE }, NULL, "One Shot" },
@@ -2714,8 +2821,14 @@ enum
 #define DISCRETE_RCFILTERN(NODE,ENAB,INP0,RVAL,CVAL)                    { NODE, DST_RCFILTERN   , 4, { ENAB,INP0,NODE_NC,NODE_NC }, { ENAB,INP0,RVAL,CVAL }, NULL, "RC Filter (New Type)" },
 
 /* from disc_dev.c */
+/* generic modules */
+#define DISCRETE_CUSTOM1(NODE,ENAB,IN0,CALL)                            { NODE, DST_CUSTOM      , 2, { ENAB,IN0 }, { ENAB,IN0 }, CALL, "1 input custom module" },
+#define DISCRETE_CUSTOM2(NODE,ENAB,IN0,IN1,CALL)                        { NODE, DST_CUSTOM      , 3, { ENAB,IN0,IN1 }, { ENAB,IN0,IN1 }, CALL, "2 input custom module" },
+#define DISCRETE_CUSTOM3(NODE,ENAB,IN0,IN1,IN2,CALL)                    { NODE, DST_CUSTOM      , 4, { ENAB,IN0,IN1,IN2 }, { ENAB,IN0,IN1,IN2 }, CALL, "3 input custom module" },
+#define DISCRETE_CUSTOM4(NODE,ENAB,IN0,IN1,IN2,IN3,CALL)                { NODE, DST_CUSTOM      , 5, { ENAB,IN0,IN1,IN2,IN3 }, { ENAB,IN0,IN1,IN2,IN3 }, CALL, "4 input custom module" },
 /* Component specific */
-#define DISCRETE_555_ASTABLE(NODE,RESET,R1,R2,C,CTRLV,OPTIONS)          { NODE, DSD_555_ASTBL   , 5, { RESET,R1,R2,C,CTRLV }, { RESET,R1,R2,C,CTRLV }, OPTIONS, "555 Astable" },
+#define DISCRETE_555_ASTABLE(NODE,RESET,R1,R2,C,OPTIONS)                { NODE, DSD_555_ASTBL   , 5, { RESET,R1,R2,C,NODE_NC }, { RESET,R1,R2,C,-1 }, OPTIONS, "555 Astable" },
+#define DISCRETE_555_ASTABLE_CV(NODE,RESET,R1,R2,C,CTRLV,OPTIONS)       { NODE, DSD_555_ASTBL   , 5, { RESET,R1,R2,C,CTRLV }, { RESET,R1,R2,C,CTRLV }, OPTIONS, "555 Astable with CV" },
 #define DISCRETE_555_MSTABLE(NODE,RESET,TRIG,R,C,OPTIONS)               { NODE, DSD_555_MSTBL   , 4, { RESET,TRIG,R,C }, { RESET,TRIG,R,C }, OPTIONS, "555 Monostable" },
 #define DISCRETE_555_CC(NODE,RESET,VIN,R,C,RBIAS,RGND,RDIS,OPTIONS)     { NODE, DSD_555_CC      , 7, { RESET,VIN,R,C,RBIAS,RGND,RDIS }, { RESET,VIN,R,C,RBIAS,RGND,RDIS }, OPTIONS, "555 Constant Current VCO" },
 #define DISCRETE_566(NODE,ENAB,VMOD,R,C,OPTIONS)                        { NODE, DSD_566         , 4, { ENAB,VMOD,R,C }, { ENAB,VMOD,R,C }, OPTIONS, "566" },

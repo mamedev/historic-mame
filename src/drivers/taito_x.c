@@ -1225,6 +1225,27 @@ ROM_START( superman )
 	ROM_LOAD( "e18_01.bin", 0x00000, 0x80000, CRC(3cf99786) SHA1(f6febf9bda87ca04f0a5890d0e8001c26dfa6c81) )
 ROM_END
 
+ROM_START( suprmanj )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 )     /* 512k for 68000 code */
+	ROM_LOAD16_BYTE( "a10_09.bin", 0x00000, 0x20000, CRC(640f1d58) SHA1(e768d32eae1dba39c23189996fbd5454c8627809) )
+	ROM_LOAD16_BYTE( "a05_07.bin", 0x00001, 0x20000, CRC(fddb9953) SHA1(8b562712810a5a72f4647f1ba1314a1be2e249e7) )
+	ROM_LOAD16_BYTE( "a08_08.bin", 0x40000, 0x20000, CRC(79fc028e) SHA1(bf42b3f84dcad8fd9085c702a78dc895cc12d670) )
+	ROM_LOAD16_BYTE( "b61-06.a3",  0x40001, 0x20000, CRC(714a0b68) SHA1(b0b42c55d2404c7c193eb8cab3bd92e321947845) )
+
+	ROM_REGION( 0x1c000, REGION_CPU2, 0 )     /* 64k for Z80 code */
+	ROM_LOAD( "d18_10.bin", 0x00000, 0x4000, CRC(6efe79e8) SHA1(7a76efaaeab71473f4b0b23a89141f203488ce1d) )
+	ROM_CONTINUE(           0x10000, 0xc000 ) /* banked stuff */
+
+	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "f01_14.bin", 0x000000, 0x80000, CRC(89368c3e) SHA1(8d227439ab321fd5d432d860544daea0e78ce588) ) /* Plane 0, 1 */
+	ROM_LOAD( "h01_15.bin", 0x080000, 0x80000, CRC(910cc4f9) SHA1(9ecfa84123a8f9d048f0a689647e92f25af73899) )
+	ROM_LOAD( "j01_16.bin", 0x100000, 0x80000, CRC(3622ed2f) SHA1(03f4383f6ff8b5f1e26bc6bbef2fb1855d3bb93f) ) /* Plane 2, 3 */
+	ROM_LOAD( "k01_17.bin", 0x180000, 0x80000, CRC(c34f27e0) SHA1(07ee02c18ce29f35e8ae87d0c1ed80b726c246a6) )
+
+	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* ADPCM samples */
+	ROM_LOAD( "e18_01.bin", 0x00000, 0x80000, CRC(3cf99786) SHA1(f6febf9bda87ca04f0a5890d0e8001c26dfa6c81) )
+ROM_END
+
 ROM_START( twinhawk )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 )     /* 256k for 68000 code */
 	ROM_LOAD16_BYTE( "b87-11.bin", 0x00000, 0x20000, CRC(fc84a399) SHA1(6e5552b7ee433bee74f8936a8e583b5f81b5f2b2) )
@@ -1355,6 +1376,7 @@ DRIVER_INIT( kyustrkr )
 }
 
 GAME( 1988, superman, 0,        superman, superman, taitox,   ROT0,   "Taito Corporation", "Superman" )
+GAME( 1988, suprmanj, superman, superman, superman, taitox,   ROT0,   "Taito Corporation", "Superman (Japan)" )
 GAME( 1989, twinhawk, 0,        daisenpu, twinhawk, taitox,   ROT270, "Taito Corporation Japan", "Twin Hawk (World)" )
 GAME( 1989, twinhwku, twinhawk, daisenpu, twinhwku, taitox,   ROT270, "Taito America Corporation", "Twin Hawk (US)" )
 GAME( 1989, daisenpu, twinhawk, daisenpu, daisenpu, taitox,   ROT270, "Taito Corporation", "Daisenpu (Japan)" )

@@ -595,7 +595,8 @@ static void i386_set_info(UINT32 state, union cpuinfo *info)
 	switch (state)
 	{
 		/* --- the following bits of info are set as 64-bit signed integers --- */
-		case CPUINFO_INT_PC:							I.pc = info->i;break;
+		case CPUINFO_INT_PC:
+		case CPUINFO_INT_REGISTER + I386_PC:			I.pc = info->i;break;
 		case CPUINFO_INT_REGISTER + I386_EIP:			I.eip = info->i; CHANGE_PC(I.eip); break;
 		case CPUINFO_INT_REGISTER + I386_EAX:			REG32(EAX) = info->i; break;
 		case CPUINFO_INT_REGISTER + I386_EBX:			REG32(EBX) = info->i; break;
@@ -662,7 +663,8 @@ void i386_get_info(UINT32 state, union cpuinfo *info)
 
 		case CPUINFO_INT_PREVIOUSPC:				/* not implemented */					break;
 
-		case CPUINFO_INT_PC:					info->i = I.pc; break;
+		case CPUINFO_INT_PC:
+		case CPUINFO_INT_REGISTER + I386_PC:			info->i = I.pc; break;
 		case CPUINFO_INT_REGISTER + I386_EIP:			info->i = I.eip; break;
 		case CPUINFO_INT_REGISTER + I386_EAX:			info->i = REG32(EAX); break;
 		case CPUINFO_INT_REGISTER + I386_EBX:			info->i = REG32(EBX); break;
@@ -718,6 +720,7 @@ void i386_get_info(UINT32 state, union cpuinfo *info)
 
 		case CPUINFO_STR_FLAGS:	   				sprintf(info->s = cpuintrf_temp_str(), "%08X", get_flags()); break; 
 
+		case CPUINFO_STR_REGISTER + I386_PC:			sprintf(info->s = cpuintrf_temp_str(), "PC: %08X", I.pc); break;
 		case CPUINFO_STR_REGISTER + I386_EIP:			sprintf(info->s = cpuintrf_temp_str(), "EIP: %08X", I.eip); break;
 		case CPUINFO_STR_REGISTER + I386_EAX:			sprintf(info->s = cpuintrf_temp_str(), "EAX: %08X", I.reg.d[EAX]); break;
 		case CPUINFO_STR_REGISTER + I386_EBX:			sprintf(info->s = cpuintrf_temp_str(), "EBX: %08X", I.reg.d[EBX]); break;

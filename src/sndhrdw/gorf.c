@@ -135,11 +135,10 @@ READ8_HANDLER( gorf_speech_r )
     int Phoneme,Intonation;
     int i = 0;
 
-	int data;
+	UINT8 data = offset >> 8;
+	offset &= 0xff;
 
     totalword_ptr = totalword;
-
-	data = activecpu_get_reg(Z80_BC) >> 8;
 
     Phoneme = data & 0x3F;
     Intonation = data >> 6;

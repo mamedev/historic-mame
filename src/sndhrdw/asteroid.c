@@ -1,7 +1,6 @@
 /*****************************************************************************
  *
- * Asteroids Analog Sound system interface into discrete sound emulation
- * input mapping system.
+ * Asteroids Analog Sound system interface
  *
  *****************************************************************************/
 
@@ -26,29 +25,30 @@ const struct discrete_lfsr_desc asteroid_lfsr={
 	16			/* Output bit is feedback bit */
 };
 
-#define	ASTEROID_THUMP_EN		NODE_01
-#define	ASTEROID_THUMP_FREQ		NODE_02
-#define ASTEROID_THUMP_DUTY		NODE_03
-#define	ASTEROID_SAUCER_SEL		NODE_04
-#define	ASTEROID_SAUCER_SND_EN		NODE_05
-#define	ASTEROID_SAUCER_FIRE_EN		NODE_06
-#define	ASTEROID_SHIP_FIRE_EN		NODE_07
-#define	ASTEROID_THRUST_EN		NODE_08
-#define	ASTEROID_LIFE_EN		NODE_09
-#define ASTEROID_EXPLODE_DATA		NODE_10
-#define ASTEROID_EXPLODE_PITCH		NODE_11
-#define ASTEROID_NOISE_RESET		NODE_12
+#define	ASTEROID_SAUCER_SND_EN		NODE_01
+#define	ASTEROID_SAUCER_FIRE_EN		NODE_02
+#define	ASTEROID_SAUCER_SEL			NODE_03
+#define	ASTEROID_THRUST_EN			NODE_04
+#define	ASTEROID_SHIP_FIRE_EN		NODE_05
+#define	ASTEROID_LIFE_EN			NODE_06
+#define ASTEROID_NOISE_RESET		NODE_07
 
-#define ASTEROID_NOISE			NODE_20
-#define ASTEROID_THUMP_SND		NODE_21
-#define ASTEROID_SAUCER_SND		NODE_22
-#define ASTEROID_LIFE_SND		NODE_23
+#define	ASTEROID_THUMP_EN			NODE_08
+#define	ASTEROID_THUMP_FREQ			NODE_09
+#define ASTEROID_THUMP_DUTY			NODE_10
+#define ASTEROID_EXPLODE_DATA		NODE_11
+#define ASTEROID_EXPLODE_PITCH		NODE_12
+
+#define ASTEROID_NOISE				NODE_20
+#define ASTEROID_THUMP_SND			NODE_21
+#define ASTEROID_SAUCER_SND			NODE_22
+#define ASTEROID_LIFE_SND			NODE_23
 #define ASTEROID_SAUCER_FIRE_SND	NODE_24
 #define ASTEROID_SHIP_FIRE_SND		NODE_25
 #define ASTEROID_EXPLODE_SND		NODE_26
-#define ASTEROID_THRUST_SND		NODE_27
+#define ASTEROID_THRUST_SND			NODE_27
 
-DISCRETE_SOUND_START(asteroid_sound_interface)
+DISCRETE_SOUND_START(asteroid_discrete_interface)
 	/************************************************/
 	/* Asteroid Effects Relataive Gain Table        */
 	/*                                              */
@@ -71,21 +71,21 @@ DISCRETE_SOUND_START(asteroid_sound_interface)
 	/* registers on the schematics                  */
 	/* Address values are also arbitary in here.    */
 	/************************************************/
-	/*                        NODE                ADDR  MASK    GAIN        OFFSET  INIT */
-	DISCRETE_INPUT      (ASTEROID_SAUCER_SND_EN,  0x00,0x003f,                       0)
-	DISCRETE_INPUT      (ASTEROID_SAUCER_FIRE_EN, 0x01,0x003f,                       0)
-	DISCRETE_INPUT      (ASTEROID_SAUCER_SEL,     0x02,0x003f,                       0)
-	DISCRETE_INPUT      (ASTEROID_THRUST_EN,      0x03,0x003f,                       0)
-	DISCRETE_INPUT      (ASTEROID_SHIP_FIRE_EN,   0x04,0x003f,                       0)
-	DISCRETE_INPUT      (ASTEROID_LIFE_EN,        0x05,0x003f,                       0)
-	DISCRETE_INPUT_PULSE(ASTEROID_NOISE_RESET,    0x06,0x003f,                       1)
+	/*                        NODE                 GAIN        OFFSET  INIT */
+	DISCRETE_INPUT_LOGIC (ASTEROID_SAUCER_SND_EN)
+	DISCRETE_INPUT_LOGIC (ASTEROID_SAUCER_FIRE_EN)
+	DISCRETE_INPUT_LOGIC (ASTEROID_SAUCER_SEL)
+	DISCRETE_INPUT_LOGIC (ASTEROID_THRUST_EN)
+	DISCRETE_INPUT_LOGIC (ASTEROID_SHIP_FIRE_EN)
+	DISCRETE_INPUT_LOGIC (ASTEROID_LIFE_EN)
+	DISCRETE_INPUT_PULSE (ASTEROID_NOISE_RESET, 1)
 
-	DISCRETE_INPUT      (ASTEROID_THUMP_EN,       0x10,0x003f,                       0)
-	DISCRETE_INPUTX     (ASTEROID_THUMP_FREQ,     0x11,0x003f,   70.0/15.0,  20.0,   0)
-	DISCRETE_INPUTX     (ASTEROID_THUMP_DUTY,     0x12,0x003f,   55.0/15.0,  33.0,   0)
+	DISCRETE_INPUT_LOGIC (ASTEROID_THUMP_EN)
+	DISCRETE_INPUTX_DATA (ASTEROID_THUMP_FREQ,     70.0/15.0,  20.0,   0)
+	DISCRETE_INPUTX_DATA (ASTEROID_THUMP_DUTY,     55.0/15.0,  33.0,   0)
 
-	DISCRETE_INPUTX     (ASTEROID_EXPLODE_DATA,   0x20,0x003f, 1000.0/15.0,   0.0,   0)
-	DISCRETE_INPUT      (ASTEROID_EXPLODE_PITCH,  0x21,0x003f,                      12)
+	DISCRETE_INPUTX_DATA (ASTEROID_EXPLODE_DATA, 1000.0/15.0,   0.0,   0)
+	DISCRETE_INPUTX_DATA (ASTEROID_EXPLODE_PITCH, 1,            0,     12)
 
 	/************************************************/
 	/* Thump circuit is based on a VCO with the     */
@@ -203,7 +203,7 @@ DISCRETE_SOUND_START(asteroid_sound_interface)
 DISCRETE_SOUND_END
 
 
-DISCRETE_SOUND_START(astdelux_sound_interface)
+DISCRETE_SOUND_START(astdelux_discrete_interface)
 	/************************************************/
 	/* Asteroid delux sound hardware is mostly done */
 	/* in the Pokey chip except for the thrust and  */
@@ -213,12 +213,12 @@ DISCRETE_SOUND_START(astdelux_sound_interface)
 	/*                                              */
 	/* Note that the thrust enable signal is invert */
 	/************************************************/
-	/*                         NODE                ADDR  MASK    GAIN        OFFSET  INIT */
-	DISCRETE_INPUT       (ASTEROID_THRUST_EN,      0x03,0x003f,                       0)
-	DISCRETE_INPUT_PULSE (ASTEROID_NOISE_RESET,    0x06,0x003f,                       1)
+	/*                         NODE                GAIN        OFFSET  INIT */
+	DISCRETE_INPUT_LOGIC (ASTEROID_THRUST_EN)
+	DISCRETE_INPUT_PULSE (ASTEROID_NOISE_RESET, 1)
 
-	DISCRETE_INPUTX      (ASTEROID_EXPLODE_DATA,   0x20,0x003f, 1000.0/15.0,   0.0,   0)
-	DISCRETE_INPUT       (ASTEROID_EXPLODE_PITCH,  0x21,0x003f,                      12)
+	DISCRETE_INPUTX_DATA (ASTEROID_EXPLODE_DATA, 1000.0/15.0,   0.0,   0)
+	DISCRETE_INPUTX_DATA (ASTEROID_EXPLODE_PITCH, 1,            0,     12)
 
 	/************************************************/
 	/* Thrust noise is a gated noise source         */
@@ -269,7 +269,7 @@ DISCRETE_SOUND_END
 
 WRITE8_HANDLER( asteroid_explode_w )
 {
-	discrete_sound_w(0x20,(data&0x3c)>>2);				// Volume
+	discrete_sound_w(ASTEROID_EXPLODE_DATA,(data&0x3c)>>2);				// Volume
 	/* We will modify the pitch data to send the divider value. */
 	switch ((data&0xc0))
 	{
@@ -286,29 +286,28 @@ WRITE8_HANDLER( asteroid_explode_w )
 			data = 5;
 			break;
 	}
-	discrete_sound_w(0x21, data);
+	discrete_sound_w(ASTEROID_EXPLODE_PITCH, data);
 }
 
 WRITE8_HANDLER( asteroid_thump_w )
 {
-	discrete_sound_w(0x10,data&0x10);		//Thump enable
-	discrete_sound_w(0x11,(data&0x0f)^0x0f);	//Thump frequency
-	discrete_sound_w(0x12,data&0x0f);		//Thump duty
+	discrete_sound_w(ASTEROID_THUMP_EN, data & 0x10);			//Thump enable
+	discrete_sound_w(ASTEROID_THUMP_FREQ, (data&0x0f)^0x0f);	//Thump frequency
+	discrete_sound_w(ASTEROID_THUMP_DUTY, data&0x0f);			//Thump duty
 }
 
 WRITE8_HANDLER( asteroid_sounds_w )
 {
-	discrete_sound_w(0x00+offset,(data&0x80)?1:0);
+	discrete_sound_w(ASTEROID_SAUCER_SND_EN + offset, data & 0x80);
 }
 
 WRITE8_HANDLER( astdelux_sounds_w )
 {
 	/* Only ever activates the thrusters in Astdelux */
-//	discrete_sound_w(0x03,(data&0x80)?0:1);
-	discrete_sound_w(0x03,(data&0x80)?1:0);
+	discrete_sound_w(ASTEROID_THRUST_EN, data & 0x80);
 }
 
 WRITE8_HANDLER( asteroid_noise_reset_w )
 {
-	discrete_sound_w(6, 0);
+	discrete_sound_w(ASTEROID_NOISE_RESET, 0);
 }

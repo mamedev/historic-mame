@@ -586,6 +586,46 @@ ROM_START( brkthruj )
 	ROM_LOAD( "brkthru.5",    0x8000, 0x8000, CRC(c309435f) SHA1(82914004c2b169a7c31aa49af83a699ebbc7b33f) )
 ROM_END
 
+ROM_START( forcebrk )
+	ROM_REGION( 0x20000, REGION_CPU1, 0 )     /* 64k for main CPU + 64k for banked ROMs */
+	ROM_LOAD( "1",            0x04000, 0x4000, CRC(09bd60ee) SHA1(9591a4c89bb69d5615a5d6b29c47e6b17350c007) )
+	ROM_LOAD( "2",            0x08000, 0x8000, CRC(f2b2cd1c) SHA1(dafccc74310876bc1c88de7f3c86f93ed8a0eb62) )
+	ROM_LOAD( "forcebrk4",    0x10000, 0x8000, CRC(b4838c19) SHA1(b32f183ee042872a6eb6689aab219108d37829e4) )
+	ROM_LOAD( "brkthru.3",    0x18000, 0x8000, CRC(2f2c40c2) SHA1(fcb78941453520a3a07f272127dae7c2cc1999ea) )
+
+	ROM_REGION( 0x02000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "12",           0x00000, 0x2000, CRC(3d9a7003) SHA1(2e5de982eb75ac75312fb29bb4cb2ed12ec0fd56) )	/* characters */
+
+	ROM_REGION( 0x20000, REGION_GFX2, ROMREGION_DISPOSE )
+	/* background */
+	/* we do a lot of scatter loading here, to place the data in a format */
+	/* which can be decoded by MAME's standard functions */
+	ROM_LOAD( "brkthru.7",    0x00000, 0x4000, CRC(920cc56a) SHA1(c75806691073f1f3bd54dcaca4c14155ecf4471d) )	/* bitplanes 1,2 for bank 1,2 */
+	ROM_CONTINUE(             0x08000, 0x4000 )				/* bitplanes 1,2 for bank 3,4 */
+	ROM_LOAD( "forcebrk6",    0x10000, 0x4000, CRC(08bca16a) SHA1(d5dcf5cf68a5090f467c076abb1b9cf0baffe272) )	/* bitplanes 1,2 for bank 5,6 */
+	ROM_CONTINUE(             0x18000, 0x4000 )				/* bitplanes 1,2 for bank 7,8 */
+	ROM_LOAD( "forcebrk8",    0x04000, 0x1000, CRC(a3a1131e) SHA1(e0b73c8b2c8ea6b31418bc642830875c5985f800) )	/* bitplane 3 for bank 1,2 */
+	ROM_CONTINUE(             0x06000, 0x1000 )
+	ROM_CONTINUE(             0x0c000, 0x1000 )				/* bitplane 3 for bank 3,4 */
+	ROM_CONTINUE(             0x0e000, 0x1000 )
+	ROM_CONTINUE(             0x14000, 0x1000 )				/* bitplane 3 for bank 5,6 */
+	ROM_CONTINUE(             0x16000, 0x1000 )
+	ROM_CONTINUE(             0x1c000, 0x1000 )				/* bitplane 3 for bank 7,8 */
+	ROM_CONTINUE(             0x1e000, 0x1000 )
+
+	ROM_REGION( 0x18000, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_LOAD( "brkthru.9",    0x00000, 0x8000, CRC(f54e50a7) SHA1(eccf4d859c26944271ec6586644b4730a72851fd) )	/* sprites */
+	ROM_LOAD( "brkthru.10",   0x08000, 0x8000, CRC(fd156945) SHA1(a0575a4164217e63317886176ab7e59d255fc771) )
+	ROM_LOAD( "brkthru.11",   0x10000, 0x8000, CRC(c152a99b) SHA1(f96133aa01219eda357b9e906bd9577dbfe359c0) )
+
+	ROM_REGION( 0x0200, REGION_PROMS, 0 )
+	ROM_LOAD( "brkthru.13",   0x0000, 0x0100, CRC(aae44269) SHA1(7c66aeb93577104109d264ee8b848254256c81eb) ) /* red and green component */
+	ROM_LOAD( "brkthru.14",   0x0100, 0x0100, CRC(f2d4822a) SHA1(f535e91b87ff01f2a73662856fd3f72907ca62e9) ) /* blue component */
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64K for sound CPU */
+	ROM_LOAD( "brkthru.5",    0x8000, 0x8000, CRC(c309435f) SHA1(82914004c2b169a7c31aa49af83a699ebbc7b33f) )
+ROM_END
+
 ROM_START( darwin )
 	ROM_REGION( 0x20000, REGION_CPU1, 0 )     /* 64k for main CPU + 64k for banked ROMs */
 	ROM_LOAD( "darw_04.rom",  0x04000, 0x4000, CRC(0eabf21c) SHA1(ccad6b30fe9361e8a21b8aaf8116aa85f9e6bb19) )
@@ -630,4 +670,5 @@ ROM_END
 
 GAME( 1986, brkthru,  0,       brkthru, brkthru,  0, ROT0,   "Data East USA", "Break Thru (US)" )
 GAME( 1986, brkthruj, brkthru, brkthru, brkthruj, 0, ROT0,   "Data East Corporation", "Kyohkoh-Toppa (Japan)" )
+GAME( 1986, forcebrk, brkthru, brkthru, brkthruj, 0, ROT0,   "Data East Corporation", "Force Break (Japan)" )
 GAME( 1986, darwin,   0,       darwin,  darwin,   0, ROT270, "Data East Corporation", "Darwin 4078 (Japan)" )

@@ -260,6 +260,9 @@ void cpu_triggerint(int cpunum);
 /* burn CPU cycles until a timer trigger */
 void cpu_spinuntil_trigger(int trigger);
 
+/* burn specified CPU cycles until a timer trigger */
+void cpunum_spinuntil_trigger( int cpunum, int trigger );
+
 /* yield our timeslice until a timer trigger */
 void cpu_yielduntil_trigger(int trigger);
 

@@ -133,12 +133,9 @@ static UINT8 mips_reg_layout[] =
 	MIPS_CP2CR20, MIPS_CP2CR21, -1,
 	MIPS_CP2CR22, MIPS_CP2CR23, -1,
 	MIPS_CP2CR24, MIPS_CP2CR25, -1,
-#if 0
-/* the debugger interface is limited to 127 & the kludge no longer works */
 	MIPS_CP2CR26, MIPS_CP2CR27, -1,
 	MIPS_CP2CR28, MIPS_CP2CR29, -1,
 	MIPS_CP2CR30, MIPS_CP2CR31,
-#endif
 	0
 };
 

@@ -2661,6 +2661,16 @@ ROM_START( plotting )
 	ROM_LOAD( "plot08.bin", 0x10000, 0x10000, CRC(fb5f3ca4) SHA1(0c335acceea50133a6899f9e368cff5f61b55a96) )
 ROM_END
 
+ROM_START( plottina )
+	ROM_REGION( 0x20000, REGION_CPU1, 0 )
+	ROM_LOAD( "ic10",       0x00000, 0x10000, CRC(be240921) SHA1(f29f3a49b563f24aa6e3187ac4da1a8100cb02b5) )
+	ROM_RELOAD(             0x10000, 0x10000 )
+
+	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "ic8",        0x10000, 0x10000, CRC(55b8e294) SHA1(14405638f751adfadb022bf7a0123a3972d4a617) )
+	ROM_LOAD( "ic9",        0x00000, 0x10000, CRC(0713a387) SHA1(0fc1242ce02a56279fa1d5270c905bba7cdcd072) )
+ROM_END
+
 ROM_START( puzznic )
 	ROM_REGION( 0x30000, REGION_CPU1, 0 )
 	ROM_LOAD( "u11.rom",  0x00000, 0x20000, CRC(a4150b6c) SHA1(27719b8993735532cd59f4ed5693ff3143ee2336) )
@@ -2812,7 +2822,8 @@ GAME( 1988, kurikint, 0,        kurikint, kurikint, 0,        ROT0,   "Taito Cor
 GAME( 1988, kurikinu, kurikint, kurikint, kurikinj, 0,        ROT0,   "Taito America Corporation", "Kuri Kinton (US)" )
 GAME( 1988, kurikinj, kurikint, kurikint, kurikinj, 0,        ROT0,   "Taito Corporation", "Kuri Kinton (Japan)" )
 GAME( 1988, kurikina, kurikint, kurikina, kurikina, 0,        ROT0,   "Taito Corporation Japan", "Kuri Kinton (World, prototype?)" )
-GAME( 1989, plotting, 0,        plotting, plotting, plotting, ROT0,   "Taito Corporation Japan", "Plotting (World)" )
+GAME( 1989, plotting, 0,        plotting, plotting, plotting, ROT0,   "Taito Corporation Japan", "Plotting (World set 1)" )
+GAME( 1989, plottina, plotting, plotting, plotting, 0,		  ROT0,   "Taito Corporation Japan", "Plotting (World set 2)" )
 GAME( 1989, puzznic,  0,        puzznic,  puzznic,  0,        ROT0,   "Taito Corporation", "Puzznic (Japan)" )
 GAME( 1990, horshoes, 0,        horshoes, horshoes, 0,        ROT270, "Taito America Corporation", "American Horseshoes (US)" )
 GAME( 1990, palamed,  0,        palamed,  palamed,  0,        ROT0,   "Taito Corporation", "Palamedes (Japan)" )

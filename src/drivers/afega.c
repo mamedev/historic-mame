@@ -560,7 +560,7 @@ static struct YM2151interface afega_ym2151_intf =
 static struct OKIM6295interface afega_m6295_intf =
 {
 	1,
-	{ 8000 },	/* ? */
+	{ 1000000/132 },	/* ? */
 	{ REGION_SOUND1 },
 	{ 70 }
 };
@@ -585,15 +585,15 @@ INTERRUPT_GEN( interrupt_afega )
 static MACHINE_DRIVER_START( stagger1 )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(M68000,10000000)	/* 3.072 MHz */
+	MDRV_CPU_ADD(M68000,12000000)
 	MDRV_CPU_PROGRAM_MAP(afega,0)
 	MDRV_CPU_VBLANK_INT(interrupt_afega,2)
 
-	MDRV_CPU_ADD(Z80, 3000000)
+	MDRV_CPU_ADD(Z80, 4000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ? */
 	MDRV_CPU_PROGRAM_MAP(afega_sound_cpu,0)
 
-	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_FRAMES_PER_SECOND(56)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
@@ -905,6 +905,103 @@ ROM_START( bubl2000 )
 	ROM_LOAD( "rom02.95", 0x00000, 0x40000, CRC(859a86e5) SHA1(7b51964227411a40aac54b9cd9ff64f091bdf2b0) )
 ROM_END
 
+
+/*
+
+Hot Bubble
+Afega, 199?
+
+PCB Layout
+----------
+
+Bottom Board
+
+|------------------------------------------|
+| BS902  BS901   Z80                  4MHz |
+|                                          |
+|        6116    6295                      |
+|                                   62256  |
+|      6116                         62256  |
+|      6116                                |
+|J           6116           |------------| |
+|A           6116           |   68000    | |
+|M                          |------------| |
+|M  DSW2   6264                            |
+|A         6264                            |
+|                                          |
+|         |-------|                        |
+|         |       |                        |
+|         |       |                        |
+| DSW1    |       |     62256   62256      |
+|         |-------|                        |
+|              6116     62256   62256      |
+|12MHz         6116                        |
+|------------------------------------------|
+Notes:
+      68000 - running at 12.000MHz
+      Z80   - running at 4.000MHz
+      62256 - 32K x8 SRAM
+      6264  - 8K x8 SRAM
+      6116  - 2K x8 SRAM
+      BS901 - YM2151, running at 4.000MHz
+      BS902 - YM3012
+      6295  - OKI MSM6295 running at 1.000MHz [4/4], sample rate = 1000000 / 132
+      *     - Unknown QFP208
+      VSync - 56.2Hz (measured on 68000 IPL1)
+
+Top Board
+
+|---------------------------|
+|                           |
+|   S1     S2        T1     |
+|                           |
+|   CR5    CR7       C1     |
+|                           |
+|   CR6   +CR8       C2     |
+|                           |
+|          BR1       BR3    |
+|                           |
+|         +BR2      +BR4    |
+|                           |
+|  CR1     CR3     |------| |
+|                  |  *   | |
+|  CR2    +CR4     |      | |
+|                  |------| |
+|---------------------------|
+Notes:
+      * - Unknown PLCC68 IC
+      + - Not populated
+
+*/
+
+ROM_START( hotbubl )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 )		/* 68000 Code */
+	ROM_LOAD16_BYTE( "c1.uc1",  0x00001, 0x40000, CRC(7bb240e9) SHA1(99048fa275182c3da3bfb0dedd790f4b5858bd92) )
+	ROM_LOAD16_BYTE( "c2.uc9",  0x00000, 0x40000, CRC(7917b95d) SHA1(0344bae9c373c5943e7693720e5e531bc2e0d7ee) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )		/* Z80 Code */
+	ROM_LOAD( "s1.uc14", 0x00000, 0x10000, CRC(5d8cf28e) SHA1(2a440bf5136f95af137b6688e566a14e65be94b1) ) /* same as the other games on this driver */
+
+	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )	/* Sprites, 16x16x4 */
+	ROM_LOAD16_BYTE( "br1.uc3",  0x000000, 0x080000, CRC(6fc18de4) SHA1(57b4823fc41637780f64eadd1ddf61db531a2599) )
+	ROM_LOAD16_BYTE( "br3.uc10", 0x000001, 0x080000, CRC(bb677240) SHA1(d7a26bcd33d491cee441edda6d092a1d08308b0e) )
+
+	ROM_REGION( 0x300000, REGION_GFX2, ROMREGION_DISPOSE )	/* Layer 0, 16x16x8 */
+	ROM_LOAD( "cr6.uc16",  0x100000, 0x080000, CRC(99d6523c) SHA1(0b628585d749e175d5a4dc600af1ba9cb936bfeb) )
+	ROM_LOAD( "cr7.uc19",  0x080000, 0x080000, CRC(a89d9ce4) SHA1(5965b2b4b67bc91bc0e7474e593c7e1953b75adc) )
+	ROM_LOAD( "cr5.uc15",  0x000000, 0x080000, CRC(65bd5159) SHA1(627ccc0ab131e643c3c52ee9bb41c7a85153c35e) )
+
+	ROM_LOAD( "cr2.uc7",  0x280000, 0x080000, CRC(27ad6fc8) SHA1(00b1a5c5e1a245590b300b9baf71585d41813e3e) )
+	ROM_LOAD( "cr3.uc12", 0x200000, 0x080000, CRC(c841a4f6) SHA1(9b0ee5623c87a0cfc63d3741a65d399bd6593f18) )
+	ROM_LOAD( "cr1.uc6",  0x180000, 0x080000, CRC(fc9101d2) SHA1(1d5b8484264b6d73fe032946096a469226cce901) )
+
+	ROM_REGION( 0x10000, REGION_GFX3, ROMREGION_DISPOSE )	/* Layer 1, 8x8x4 */
+	ROM_LOAD( "t1.uc2",  0x00000, 0x10000, CRC(ce683a93) SHA1(aeee2671051f1badf2255375cd7c5fa847d1746c) )
+
+	ROM_REGION( 0x40000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_LOAD( "s2.uc18", 0x00000, 0x40000, CRC(401c980f) SHA1(e47710c47cfeecce3ccf87f845b219a9c9f21ee3) )
+ROM_END
+
 static DRIVER_INIT( bubl2000 )
 {
 	decryptcode( 23, 22, 21, 20, 19, 18, 13, 14, 15, 16, 17, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0 );
@@ -988,5 +1085,6 @@ ROM_END
 GAMEX( 1998, stagger1, 0,        stagger1, stagger1, 0,        ROT270, "Afega", "Stagger I (Japan)",                GAME_NOT_WORKING )
 GAMEX( 1997, redhawk,  stagger1, stagger1, stagger1, redhawk,  ROT270, "Afega", "Red Hawk (US)", GAME_NOT_WORKING )
 GAMEX( 1998, grdnstrm, 0,        grdnstrm, grdnstrm, grdnstrm, ROT270, "Afega", "Sen Jin - Guardian Storm (Korea)", GAME_NOT_WORKING )
-GAMEX( 1998, bubl2000, 0,        bubl2000, bubl2000, bubl2000, ROT0,   "Tuning", "Bubble 2000", GAME_IMPERFECT_GRAPHICS )
+GAME ( 1998, bubl2000, 0,        bubl2000, bubl2000, bubl2000, ROT0,   "Tuning", "Bubble 2000" ) // on a tuning board (bootleg?)
+GAME ( 1998, hotbubl,  bubl2000, bubl2000, bubl2000, bubl2000, ROT0,   "Pandora", "Hot Bubble" ) // on an afega board ..
 GAMEX( 2001, firehawk, 0,        firehawk, firehawk, 0,        ORIENTATION_FLIP_Y, "ESD", "Fire Hawk", GAME_NOT_WORKING )

@@ -1,24 +1,16 @@
-/***************************************************************************
-
-  vidhrdw.c
-
-  Functions to emulate the video hardware of the machine.
-
-***************************************************************************/
-
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
+#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
+#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
 
+UINT8 *gunsmoke_scrollx;
+UINT8 *gunsmoke_scrolly;
 
-unsigned char *gunsmoke_bg_scrolly;
-unsigned char *gunsmoke_bg_scrollx;
-static int chon,objon,bgon;
+static int chon, objon, bgon;
 static int sprite3bank;
 
-static struct mame_bitmap * bgbitmap;
-static unsigned char bgmap[9][9][2];
-
+static struct tilemap *bg_tilemap, *fg_tilemap;
 
 /***************************************************************************
 
@@ -37,32 +29,33 @@ static unsigned char bgmap[9][9][2];
 PALETTE_INIT( gunsmoke )
 {
 	int i;
-	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
-	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
 
-
-	for (i = 0;i < Machine->drv->total_colors;i++)
+	for (i = 0; i < Machine->drv->total_colors; i++)
 	{
-		int bit0,bit1,bit2,bit3,r,g,b;
-
+		int bit0, bit1, bit2, bit3, r, g, b;
 
 		bit0 = (color_prom[0] >> 0) & 0x01;
 		bit1 = (color_prom[0] >> 1) & 0x01;
 		bit2 = (color_prom[0] >> 2) & 0x01;
 		bit3 = (color_prom[0] >> 3) & 0x01;
+		
 		r = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		
 		bit0 = (color_prom[Machine->drv->total_colors] >> 0) & 0x01;
 		bit1 = (color_prom[Machine->drv->total_colors] >> 1) & 0x01;
 		bit2 = (color_prom[Machine->drv->total_colors] >> 2) & 0x01;
 		bit3 = (color_prom[Machine->drv->total_colors] >> 3) & 0x01;
+		
 		g = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		
 		bit0 = (color_prom[2*Machine->drv->total_colors] >> 0) & 0x01;
 		bit1 = (color_prom[2*Machine->drv->total_colors] >> 1) & 0x01;
 		bit2 = (color_prom[2*Machine->drv->total_colors] >> 2) & 0x01;
 		bit3 = (color_prom[2*Machine->drv->total_colors] >> 3) & 0x01;
+		
 		b = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 
-		palette_set_color(i,r,g,b);
+		palette_set_color(i, r, g, b);
 		color_prom++;
 	}
 
@@ -91,36 +84,36 @@ PALETTE_INIT( gunsmoke )
 	color_prom += TOTAL_COLORS(2);
 }
 
-
-
-VIDEO_START( gunsmoke )
+WRITE8_HANDLER( gunsmoke_videoram_w )
 {
-	if ((bgbitmap = auto_bitmap_alloc(9*32,9*32)) == 0)
-		return 1;
-
-	if (video_start_generic() == 1)
-		return 1;
-
-	memset (bgmap, 0xff, sizeof (bgmap));
-
-	return 0;
+	if (videoram[offset] != data)
+	{
+		videoram[offset] = data;
+		tilemap_mark_tile_dirty(fg_tilemap, offset);
+	}
 }
 
-
+WRITE8_HANDLER( gunsmoke_colorram_w )
+{
+	if (colorram[offset] != data)
+	{
+		colorram[offset] = data;
+		tilemap_mark_tile_dirty(fg_tilemap, offset);
+	}
+}
 
 WRITE8_HANDLER( gunsmoke_c804_w )
 {
 	int bankaddress;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
+	UINT8 *RAM = memory_region(REGION_CPU1);
 
 	/* bits 0 and 1 are for coin counters */
-	coin_counter_w(1,data & 1);
-	coin_counter_w(0,data & 2);
+	coin_counter_w(1, data & 0x01);
+	coin_counter_w(0, data & 0x02);
 
 	/* bits 2 and 3 select the ROM bank */
 	bankaddress = 0x10000 + (data & 0x0c) * 0x1000;
-	cpu_setbank(1,&RAM[bankaddress]);
+	cpu_setbank(1, &RAM[bankaddress]);
 
 	/* bit 5 resets the sound CPU? - we ignore it */
 
@@ -130,8 +123,6 @@ WRITE8_HANDLER( gunsmoke_c804_w )
 	/* bit 7 enables characters? */
 	chon = data & 0x80;
 }
-
-
 
 WRITE8_HANDLER( gunsmoke_d806_w )
 {
@@ -145,155 +136,88 @@ WRITE8_HANDLER( gunsmoke_d806_w )
 	objon = data & 0x20;
 }
 
+static void get_bg_tile_info(int tile_index)
+{
+	UINT8 *tilerom = memory_region(REGION_GFX4);
 
+	int offs = tile_index * 2;
+	int attr = tilerom[offs + 1];
+	int code = tilerom[offs] + ((attr & 0x01) << 8);
+	int color = (attr & 0x3c) >> 2;
+	int flags = TILE_FLIPYX((attr & 0xc0) >> 6);
 
-/***************************************************************************
+	SET_TILE_INFO(1, code, color, flags)
+}
 
-  Draw the game screen in the given mame_bitmap.
-  Do NOT call osd_update_display() from this function, it will be called by
-  the main emulation engine.
+static void get_fg_tile_info(int tile_index)
+{
+	int attr = colorram[tile_index];
+	int code = videoram[tile_index] + ((attr & 0xe0) << 2);
+	int color = attr & 0x1f;
 
-***************************************************************************/
+	SET_TILE_INFO(0, code, color, 0)
+}
+
+VIDEO_START( gunsmoke )
+{
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_cols, 
+		TILEMAP_OPAQUE, 32, 32, 2048, 8);
+
+	if ( !bg_tilemap )
+		return 1;
+
+	fg_tilemap = tilemap_create(get_fg_tile_info, tilemap_scan_rows, 
+		TILEMAP_TRANSPARENT, 8, 8, 32, 32);
+
+	if ( !fg_tilemap )
+		return 1;
+
+	tilemap_set_transparent_pen(fg_tilemap, 0);
+
+	return 0;
+}
+
+static void gunsmoke_draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+{
+	int offs;
+
+	for (offs = spriteram_size - 32; offs >= 0; offs -= 32)
+	{
+		int attr = spriteram[offs + 1];
+		int bank = (attr & 0xc0) >> 6;
+		int code = spriteram[offs];
+		int color = attr & 0x0f;
+		int flipx = 0;
+		int flipy = attr & 0x10;
+		int sx = spriteram[offs + 3] - ((attr & 0x20) << 3);
+		int sy = spriteram[offs + 2];
+
+		if (bank == 3) bank += sprite3bank;
+		code += 256 * bank;
+
+		if (flip_screen)
+		{
+			sx = 240 - sx;
+			sy = 240 - sy;
+			flipx = !flipx;
+			flipy = !flipy;
+		}
+
+		drawgfx(bitmap, Machine->gfx[2], code, color, flipx, flipy,
+			sx, sy, cliprect, TRANSPARENCY_PEN, 0);
+	}
+}
+
 VIDEO_UPDATE( gunsmoke )
 {
-	int offs,sx,sy;
-	int bg_scrolly, bg_scrollx;
-	unsigned char *p=memory_region(REGION_GFX4);
-	int top,left;
-
-
-	if (get_vh_global_attribute_changed())
-		memset (bgmap, 0xff, sizeof (bgmap));
-
+	tilemap_set_scrollx(bg_tilemap, 0, gunsmoke_scrollx[0] + 256 * gunsmoke_scrollx[1]);
+	tilemap_set_scrolly(bg_tilemap, 0, gunsmoke_scrolly[0]);
 
 	if (bgon)
-	{
-		bg_scrolly = gunsmoke_bg_scrolly[0] + 256 * gunsmoke_bg_scrolly[1];
-		bg_scrollx = gunsmoke_bg_scrollx[0];
-		offs = 16 * ((bg_scrolly>>5)+8)+2*(bg_scrollx>>5) ;
-		if (bg_scrollx & 0x80) offs -= 0x10;
-
-		top = 8 - (bg_scrolly>>5) % 9;
-		left = (bg_scrollx>>5) % 9;
-
-		bg_scrolly&=0x1f;
-		bg_scrollx&=0x1f;
-
-		for (sy = 0;sy <9;sy++)
-		{
-			int ty = (sy + top) % 9;
-			offs &= 0x7fff; /* Enforce limits (for top of scroll) */
-
-			for (sx = 0;sx < 9;sx++)
-			{
-				int offset;
-				int tx = (sx + left) % 9;
-				unsigned char *map = &bgmap[ty][tx][0];
-				offset=offs+(sx*2);
-
-				if (p[offset] != map[0] || p[offset+1] != map[1])
-				{
-					int code,col,flipx,flipy;
-
-					map[0] = p[offset];
-					map[1] = p[offset+1];
-
-					code = p[offset] + 256*(p[offset+1] & 1);
-					col = (p[offset+1] & 0x3c) >> 2;
-
-					flipx = p[offset+1] & 0x40;
-					flipy = p[offset+1] & 0x80;
-
-					if (flip_screen)
-					{
-						tx = 8 - tx;
-						ty = 8 - ty;
-						flipx = !flipx;
-						flipy = !flipy;
-					}
-
-					drawgfx(bgbitmap,Machine->gfx[1],
-							code,col,
-							flipx,flipy,
-							(8-ty)*32, tx*32,
-							0,TRANSPARENCY_NONE,0);
-				}
-			}
-			offs-=0x10;
-		}
-
-		{
-			int xscroll,yscroll;
-
-			xscroll = (top*32-bg_scrolly);
-			yscroll = -(left*32+bg_scrollx);
-
-			if (flip_screen)
-			{
-				xscroll = 256 - xscroll;
-				yscroll = 256 - yscroll;
-			}
-
-			copyscrollbitmap(bitmap,bgbitmap,1,&xscroll,1,&yscroll,&Machine->visible_area,TRANSPARENCY_NONE,0);
-		}
-	}
+		tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
 	else
-		fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
+		fillbitmap(bitmap, get_black_pen(), cliprect);
 
-
-
-	if (objon)
-	{
-		/* Draw the sprites. */
-		for (offs = spriteram_size - 32;offs >= 0;offs -= 32)
-		{
-			int bank,flipx,flipy;
-
-
-			bank = (spriteram[offs + 1] & 0xc0) >> 6;
-			if (bank == 3) bank += sprite3bank;
-
-			sx = spriteram[offs + 3] - ((spriteram[offs + 1] & 0x20) << 3);
- 			sy = spriteram[offs + 2];
-			flipx = 0;
-			flipy = spriteram[offs + 1] & 0x10;
-			if (flip_screen)
-			{
-				sx = 240 - sx;
-				sy = 240 - sy;
-				flipx = !flipx;
-				flipy = !flipy;
-			}
-
-			drawgfx(bitmap,Machine->gfx[2],
-					spriteram[offs] + 256 * bank,
-					spriteram[offs + 1] & 0x0f,
-					flipx,flipy,
-					sx,sy,
-					&Machine->visible_area,TRANSPARENCY_PEN,0);
-		}
-	}
-
-
-	if (chon)
-	{
-		/* draw the frontmost playfield. They are characters, but draw them as sprites */
-		for (offs = videoram_size - 1;offs >= 0;offs--)
-		{
-			sx = offs % 32;
-			sy = offs / 32;
-			if (flip_screen)
-			{
-				sx = 31 - sx;
-				sy = 31 - sy;
-			}
-
-			drawgfx(bitmap,Machine->gfx[0],
-					videoram[offs] + ((colorram[offs] & 0xc0) << 2),
-					colorram[offs] & 0x1f,
-					!flip_screen,!flip_screen,
-					8*sx,8*sy,
-					&Machine->visible_area,TRANSPARENCY_COLOR,79);
-		}
-	}
+	if (objon) gunsmoke_draw_sprites(bitmap, cliprect);
+	if (chon)  tilemap_draw(bitmap, cliprect, fg_tilemap, 0, 0);
 }

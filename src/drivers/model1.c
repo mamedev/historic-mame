@@ -385,7 +385,7 @@ static struct YM2612interface m1_ym3438_interface =
 	{ 0 },	{ 0 },	{ 0 },	{ 0 }
 };
 
-INPUT_PORTS_START( vf1 )
+INPUT_PORTS_START( vf )
 	PORT_START_TAG("AN0")  /* Unused analog port 0 */
 	PORT_START_TAG("AN1")  /* Unused analog port 1 */
 	PORT_START_TAG("AN2")  /* Unused analog port 2 */
@@ -548,7 +548,7 @@ INPUT_PORTS_START( swa )
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
-ROM_START( vf1 )
+ROM_START( vf )
 	ROM_REGION( 0x1400000, REGION_CPU1, 0 ) /* v60 code */
 	ROM_LOAD16_BYTE( "epr-16082.14", 0x200000, 0x80000, CRC(b23f22ee) SHA1(9fd5b5a5974703a60a54de3d2bce4301bfc0e533) )
 	ROM_LOAD16_BYTE( "epr-16083.15", 0x200001, 0x80000, CRC(d12c77f8) SHA1(b4aeba8d5f1ab4aec024391407a2cb58ce2e94b0) )
@@ -848,7 +848,7 @@ static MACHINE_DRIVER_START( model1 )
 	MDRV_SOUND_ADD(MULTIPCM, m1_multipcm_interface)
 MACHINE_DRIVER_END
 
-GAMEX( 1993, vf1,      0, model1, vf1,      0, ROT0, "Sega", "Virtua Fighter", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1993, vf,      0, model1, vf,      0, ROT0, "Sega", "Virtua Fighter", GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1992, vr,       0, model1, vr,       0, ROT0, "Sega", "Virtua Racing", GAME_NOT_WORKING )
 GAMEX( 1993, vformula, vr, model1, vr,       0, ROT0, "Sega", "Virtua Formula", GAME_NOT_WORKING )
 GAMEX( 1993, swa,      0, model1, swa,      0, ROT0, "Sega", "Star Wars Arcade", GAME_NOT_WORKING|GAME_NO_SOUND )

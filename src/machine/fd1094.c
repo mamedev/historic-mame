@@ -1,58 +1,165 @@
+/*****************************************************************************
+
+FD1094 encryption
+
+
+The FD1094 is a custom CPU based on the 68000, which runs encrypted code.
+The decryption key is stored in 8KB of battery-backed RAM; when the battery
+dies, the CPU can no longer decrypt the program code and the game stops
+working (though the CPU itself still works - it just uses a wrong decryption
+key).
+
+Being a 68000, the encryption works on 16-bit words. Only words fetched from
+program space are decrypted; words fetched from data space are not affected.
+
+The decryption can logically be split in two parts. The first part consists
+of a series of conditional XORs and bitswaps, controlled by the decryption
+key, which will be described in the next paragraph. The second part does a
+couple more XORs which don't depend on the key, followed by the replacement
+of several values with FFFF. This last step is done to prevent usage of any
+PC-relative opcode, which would easily allow an intruder to dump decrypted
+values from program space. The FFFF replacement may affect either ~300 values
+or ~5000, depending on the decryption key.
+
+The main part of the decryption can itself be subdivided in four consecutive
+steps. The first one is executed only if bit 15 of the encrypted value is 1;
+the second one only if bit 14 of the _current_ value is 1; the third one only
+if bit 13 of the current value is 1; the fourth one is always executed. The
+first three steps consist of a few conditional XORs and a final conditional
+bitswap; the fourth one consists of a fixed XOR and a few conditional
+bitswaps. There is, however, a special case: if bits 15, 14 and 13 of the
+encrypted value are all 0, none of the above steps are executed, replaced by
+a single fixed bitswap.
+
+In the end, the decryption of a value at a given address is controlled by 32
+boolean variables; 8 of them change at every address (repeating after 0x2000
+words), and constitute the main key which is stored in the battery-backed
+RAM; the other 24 don't change with the address, and depend solely on bytes
+1, 2, and 3 of the battery-backed RAM, modified by the "state" which the CPU
+is in.
+
+The CPU can be in one of 256 possible states. The 8 bits of the state modify
+the 24 bits of the global key in a fixed way, which isn't affected by the
+battery-backed RAM.
+On reset, the CPU goes in state 0x00. The state can then be modified by the
+program, executing the instruction
+CMPI.L	#$00xxFFFF, D0
+where xx is the state.
+When an interrupt happens, the CPU enters "irq mode", forcing a specific
+state, which is stored in byte 0 of the battery-backed RAM. Irq mode can also
+be selected by the program with the instruction
+CMPI.L	#$0200FFFF, D0
+When RTE is executed, the CPU leaves irq mode, restoring the previous state.
+This can also be done by the program with the instruction
+CMPI.L	#$0300FFFF, D0
+
+Since bytes 0-3 of the battery-backed RAM are used to store the irq state and
+the global key, they have a double use: this one, and the normal 8-bit key
+that changes at every address. To prevent that double use, the CPU fetches
+the 8-bit key from a different place when decrypting words 0-3, but this only
+happens after wrapping around at least once; when decrypting the first four
+words of memory, which correspond the the initial SP and initial PC vectors,
+the 8-bit key is taken from bytes 0-3 of RAM. Instead, when fetching the
+vectors, the global key is handled differently, to prevent double use of
+those bytes. But this special handling of the global key doesn't apply to
+normal operations: reading words 1-3 from program space results in bytes 1-3
+of RAM being used both for the 8-bit key and for the 24-bit global key.
+
+
+
+There is still some uncertainty about the exact assignment of global key bits.
+
+key[1]
+------
+key_0b invert;	\ bits 7,5 always 1 for now (but 0 in a bad CPU)
+global_xor0;	/
+key_5b invert;	bit 6 always same as bit 4 for now (but not in a bad CPU)
+key_2b invert;	bit 4 always same as bit 6 for now (but not in a bad CPU)
+key_1b invert;	bit 3 always 1 for now (but 0 in a bad CPU)
+global_xor1;	bit 2
+key_0c invert;	bit 1
+global_swap2;	bit 0
+
+key[2]
+------
+key_1a invert;	bit 7 always 1 for now (but 0 in a bad CPU)
+key_6b invert;	bit 6 always 1 for now (but 0 in a bad CPU)
+global_swap0a;	bit 5
+key_7a invert;	bit 4
+key_4a invert;	bit 3
+global_swap0b;	bit 2
+key_6a invert;	bit 1
+key_3a invert;	bit 0
+
+key[3]
+------
+key_2a invert;	\ bits 7,5 always 1 for now (but 0 in a bad CPU)
+key_5a_invert;	/
+global_swap3;	bit 6 always 1 for now (but 0 in a bad CPU)
+global_swap1;	bit 4
+key_3b invert;	bit 3
+global_swap4;	bit 2
+key_0a invert;	bit 1
+key_4b invert;	bit 0
+
+
+summary of global keys:
+-----------------------
+0049      10101000 11110101 11100011
+0053      11111111 11111111 11111111
+0056      10101111 11111110 11101000
+0058-02C  10101111 11110101 11111000
+0058-05C  10101110 11111001 11110010
+0068      10101111 11111001 11110101
+0084      10101111 11110101 11100000
+0085      10101111 11110100 11110111
+0089      10101111 11110100 11100010
+0091      10101111 11110100 11100100
+0092      10101111 11110100 11100011
+0093      10101111 11110100 11100010
+0096      10101111 11110100 11101010
+0118      10101110 11111100 11111000
+0120      10101110 11111100 11100010
+0122      10101110 11111011 11111011
+0124A     11111001 11101010 11110100
+0125A     11111001 11110000 11101111
+0127A     10101110 11111000 11111001
+0129      11111111 11100011 11101011
+0130      11111111 11100011 11101100
+0143      11111101 11111101 11101101
+0146      11111011 11100101 11101110
+0157      11111000 11101011 11110101
+0158      11111000 11110000 11110000
+0159      11111000 11101011 11110101
+0162      11111110 11110001 11110000
+0163      11111110 11110010 11110000
+0165      10101101 11110100 11100110
+0166      10101101 11110100 11101110
+0176      10101100 11111100 11110001
+0181A     11111001 11001000 11101110
+0186      10101100 11111000 11111110
+unknown   11111111 11110110 10111110 (Shinobi 16A, part no. unreadable, could be dead)
+dead      00001111 00001111 00001111 (Alien Storm CPU with no battery)
+bad       11100000 10101011 10111001 (flaky 317-0049)
+
+*****************************************************************************/
+
 #include "driver.h"
 #include "fd1094.h"
 
 
 /*
-FC587133    00001000    317-0053    Sonic Boom
-AF590500    00000500    317-0085    Wonder Boy III
-AF590500    00000500    317-0089    Wonder Boy III
-AF59AE58    00000410    317-0091    Tetris (tetrisj set)
-AF598685    00000410    317-0092    Tetris (S16B)
-AF59C784    00000410    317-0093    Tetris (S16A)
-AF5987A0    00000406    317-0096    Dynamite Dux
-A184A196    00000400    317-0122    Golden Axe
-8DDC9960    00001A40    317-0127A   Flash Point
-55334735    00000400    317-0129    E-Swat
-5533BC59    00000400    317-0130    E-Swat
-FC58BC59    00000400    317-0146    Alien Storm (2P ver.)
-AF59EBCD    00000416    317-0176    Clutch Hitter
-8DDCC381    00000408    317-0186    D.D. Crew
+317-0162 CPU also needs to mask:
+0x107a,
+0x127a,
+0x147a,
+0x167a,
+0x187a,
+0x1a7a,
+0x1c7a,
+0x1e7a,
+this only happens with 317-0162 so far; I assume it is a fault in the CPU.
 */
-
-typedef struct
-{
-	int global_invert;
-	int global_keyFa_invert;
-	int global_keyFb_invert;
-	int global_keyFc_invert;	// when converting tables, remember to xor this with Fa_invert
-	int global_xor0;
-	int global_xor1;
-	int global_swap0a;
-	int global_swap0b;
-	int global_swap1;
-	int global_swap2;
-	int global_swap3;
-	int global_swap4;
-	int vector[4];	// vector[0] is also the irq state
-} gk;
-
-
-static gk global_key_0053 = { 0x06,0,0,0,1,1,1,1,1,1,1,1 ,{0x00,0xff, 0x0000,0x1000} };	// could be 0x00,0xfe
-static gk global_key_0085 = { 0x25,1,0,0,1,1,1,1,1,1,1,1 ,{0x26,0,    0x0000,0x0500} };
-static gk global_key_0089 = { 0x05,1,0,0,1,1,1,1,0,1,1,0 ,{0x52,0xaf, 0x0000,0x0500} };
-static gk global_key_0091 = { 0x45,1,0,0,1,1,1,1,0,1,1,1 ,{0x68,0xaf, 0x0000,0x0410} };
-static gk global_key_0092 = { 0x25,1,0,0,1,1,1,1,0,1,1,0 ,{0x10,0xaf, 0x0000,0x0410} };
-static gk global_key_0093 = { 0x05,1,0,0,1,1,1,1,0,1,1,0 ,{0x25,0xaf, 0x0000,0x0410} };
-static gk global_key_0096 = { 0x09,1,0,0,1,1,1,1,0,1,1,0 ,{0x21,0xaf, 0x0000,0x0410} };
-static gk global_key_0130 = { 0x46,0,1,0,1,1,1,0,0,1,1,1 ,{0xec,0xff, 0x0000,0x0400} };	// could be 0xec,0xfe
-static gk global_key_0146 = { 0x06,1,1,0,1,0,1,1,0,1,1,1 ,{0x10,0xfb, 0x0000,0x0400} };	// could be 0x10,0xfa
-static gk global_key_0186 = { 0x29,1,0,0,1,1,1,0,1,0,1,1 ,{0x5f,0xac, 0x0000,0x0408} };
-
-
-
-#include "fd1094ky.c"
-
-
 static int masked_opcodes[] =
 {
 	0x013a,0x033a,0x053a,0x073a,0x083a,0x093a,0x0b3a,0x0d3a,0x0f3a,
@@ -168,92 +275,70 @@ static int final_decrypt(int i,int moreffff)
 }
 
 
-static int vector_fetch;
-static int *global_vector;
-static int global_invert,global_key_invert;
-static int global_xor0,global_xor1;
-static int global_swap0a,global_swap0b,global_swap1,global_swap2,global_swap3,global_swap4;
-static int global_keyFa_invert,global_keyFb_invert,global_keyFc_invert;
-
-#define FFFFKEY(key,addr)	((key[(addr) / 0x20] >> ((addr) & 0x1f)) & 1)
-
 /* note: address is the word offset (physical address / 2) */
-static int decode(int address,int val,int *main_key,int *ffff_key)
+static int decode(int address,int val,unsigned char *main_key,int gkey1,int gkey2,int gkey3,int vector_fetch)
 {
-	int addr,mainkey,key_F,key_Fa,key_Fb,key_Fc;
+	int mainkey,key_F,key_6a,key_7a,key_6b;
 	int key_0a,key_0b,key_0c;
-	int key_1a,key_1b,key_2a,key_2b,key_3a,key_3b,key_3c,key_4a,key_4b,key_5a,key_5b;
+	int key_1a,key_1b,key_2a,key_2b,key_3a,key_3b,key_4a,key_4b,key_5a,key_5b;
+	int global_xor0,global_xor1;
+	int global_swap0a,global_swap1,global_swap2,global_swap3,global_swap4;
+	int global_swap0b;
 
+
+	/* for address xx0000-xx0006 (but only if >= 000008), use key xx2000-xx2006 */
+	if ((address & 0x0ffc) == 0 && address >= 4)
+		mainkey = main_key[(address & 0x1fff) | 0x1000];
+	else
+		mainkey = main_key[address & 0x1fff];
+
+	if (address & 0x1000)	key_F = BIT(mainkey,7);
+	else					key_F = BIT(mainkey,6);
+
+	/* the CPU has been verified to produce different results when fetching opcodes
+	   from 0000-0006 than when fetching the inital SP and PC on reset. */
 	if (vector_fetch)
 	{
-		if (address >= 2)
-			return global_vector[address & 3];
-
-		addr = address & 3;
-		mainkey = global_vector[addr];
-
-		key_F  = 0;
-		key_Fa = BIT(mainkey,6) ^ 1;
-		key_Fb = BIT(mainkey,7) ^ 1;
-	}
-	else
-	{
-		/* for address 0000-0006, use key 2000-2006 */
-		addr = (address & 0x0ffc) ? (address & 0x1fff) : ((address & 0x1fff) | 0x1000);
-		mainkey = main_key[addr];
-
-		key_F  = FFFFKEY(ffff_key,address & 0x1fff);
-
-		/*
-		key_Fa and key_Fb are derived from key_F, but with a twist.
-
-		For addresses 0008-1ffe:
-		key_Fa = key_F (optionally inverted)
-		key_Fb = 0 or 1 (fixed)
-
-		For addresses 2008-2ffe:
-		key_Fb and key_Fa are swapped, and optionally inverted (both at the same time)
-
-		For addresses 0000-0006 and 2000-2006:
-		bit 13 of the address is not used, key_Fa and key_Fb are the same in the two cases.
-		key_Fa is the same as for 0008-1ffe, while key_Fb is the same as for 2008-3ffe.
-		Note that key_F may be different at 000x and 200x! But key_Fa and key_Fb will use the value
-		of the corresponding address (key_Fa 000x, key_Fb 200x).
-		Essentially, 0000-0006 is the same as 0008-1ffe for key_Fa, while it is a special case for key_Fb;
-		and 2000-2006 is the same as 2008-3ffe for key_Fb, while it is a special case for key_Fa.
-		*/
-		key_Fa = FFFFKEY(ffff_key,addr & 0x0fff);
-		key_Fb = FFFFKEY(ffff_key,addr | 0x1000);
-		if (addr & 0x0ffc)
-		{
-			if (addr & 0x1000)	key_Fa = 1;
-			else				key_Fb = 1;
-		}
+		if (address <= 3) gkey3 = 0x00;	// supposed to always be the case
+		if (address <= 2) gkey2 = 0x00;
+		if (address <= 1) gkey1 = 0x00;
+		if (address <= 1) key_F = 0;
 	}
 
-	key_Fc = key_Fa ^ global_keyFc_invert;
-	key_Fa ^= global_keyFa_invert;
-	key_Fb ^= global_keyFb_invert;
+	global_xor0         = 1^BIT(gkey1,5);	// could be bit 7
+	global_xor1         = 1^BIT(gkey1,2);
+	global_swap2        = 1^BIT(gkey1,0);
 
-	key_0a = BIT(mainkey,0) ^ 1 ^ BIT(global_key_invert,0);
-	key_0b = BIT(mainkey,0) ^ 1 ^ BIT(global_invert,6);
-	key_0c = BIT(mainkey,0) ^ 1 ^ BIT(global_invert,7);
+	global_swap0a       = 1^BIT(gkey2,5);
+	global_swap0b       = 1^BIT(gkey2,2);
 
-	key_1a = BIT(mainkey,1) ^ 1 ^ BIT(global_key_invert,1);
-	key_1b = BIT(mainkey,1) ^ 1 ^ BIT(global_invert,4);
+	global_swap3        = 1^BIT(gkey3,6);
+	global_swap1        = 1^BIT(gkey3,4);
+	global_swap4        = 1^BIT(gkey3,2);
 
-	key_2a = BIT(mainkey,2) ^ 1 ^ BIT(global_key_invert,2);
-	key_2b = BIT(mainkey,2) ^ 1 ^ BIT(global_invert,1);
+	key_0a = BIT(mainkey,0) ^ BIT(gkey3,1);
+	key_0b = BIT(mainkey,0) ^ BIT(gkey1,7);	// could be bit 5
+	key_0c = BIT(mainkey,0) ^ BIT(gkey1,1);
 
-	key_3a = BIT(mainkey,3) ^ 1 ^ BIT(global_key_invert,3);
-	key_3b = BIT(mainkey,3) ^ 1 ^ BIT(global_invert,2);
-	key_3c = BIT(mainkey,3) ^ 1 ^ BIT(global_invert,3);
+	key_1a = BIT(mainkey,1) ^ BIT(gkey2,7);
+	key_1b = BIT(mainkey,1) ^ BIT(gkey1,3);
 
-	key_4a = BIT(mainkey,4) ^ 1 ^ BIT(global_key_invert,4);
-	key_4b = BIT(mainkey,4) ^ 1 ^ BIT(global_invert,5);
+	key_2a = BIT(mainkey,2) ^ BIT(gkey3,7);	// could be bit 5
+	key_2b = BIT(mainkey,2) ^ BIT(gkey1,4);
 
-	key_5a = BIT(mainkey,5) ^ 1 ^ BIT(global_key_invert,5);
-	key_5b = BIT(mainkey,5) ^ 1 ^ BIT(global_invert,0);
+	key_3a = BIT(mainkey,3) ^ BIT(gkey2,0);
+	key_3b = BIT(mainkey,3) ^ BIT(gkey3,3);
+
+	key_4a = BIT(mainkey,4) ^ BIT(gkey2,3);
+	key_4b = BIT(mainkey,4) ^ BIT(gkey3,0);
+
+	key_5a = BIT(mainkey,5) ^ BIT(gkey3,5);	// could be bit 7
+	key_5b = BIT(mainkey,5) ^ BIT(gkey1,6);
+
+	key_6a = BIT(mainkey,6) ^ BIT(gkey2,1);
+	key_6b = BIT(mainkey,6) ^ BIT(gkey2,6);
+
+	key_7a = BIT(mainkey,7) ^ BIT(gkey2,4);
 
 
 	if ((val & 0xe000) == 0x0000)
@@ -262,206 +347,145 @@ static int decode(int address,int val,int *main_key,int *ffff_key)
 	{
 		if (val & 0x8000)
 		{
-			if (global_xor1)			if (~val & 0x0008) val ^= 0x2410;
-										if ( val & 0x0004) val ^= 0x0022;
-			if (key_1b)					if (~val & 0x1000) val ^= 0x0848;
-			if (global_swap2 && key_0c)	val ^= 0x4101;
-			val ^= 0x5686;
-			if (key_2b)	val = BITSWAP16(val, 15,12,10,13, 3, 9, 0,14, 6, 5, 7,11, 8, 1, 4, 2);
-			else		val = BITSWAP16(val, 15, 9,10,13, 3,12, 0,14, 6, 5, 2,11, 8, 1, 4, 7);
+			if (!global_xor1)	if (~val & 0x0008)	val ^= 0x2410;										// 13,10,4
+								if (~val & 0x0004)	val ^= 0x0022;										// 5,1
+			if (!key_1b)		if (~val & 0x1000)	val ^= 0x0848;										// 11,6,3
+			if (!global_swap2)	if (!key_0c)		val ^= 0x4101;										// 14,8,0
+			if (!key_2b)		val = BITSWAP16(val, 15,14,13, 9,11,10,12, 8, 2, 6, 5, 4, 3, 7, 1, 0);	// 12,9,7,2
+
+			val = 0x6561 ^ BITSWAP16(val, 15, 9,10,13, 3,12, 0,14, 6, 5, 2,11, 8, 1, 4, 7);
 		}
 		if (val & 0x4000)
 		{
-			if (global_xor0)		if (val & 0x0800) val ^= 0x9048;
-			if (key_3a)				if (val & 0x0004) val ^= 0x0202;
-			if (key_Fa)				if (val & 0x0400) val ^= 0x0004;
-			if (key_0a && key_5b)	val ^= 0x08a1;
-			val ^= 0x02ed;
-			if (global_swap0b)	val = BITSWAP16(val, 10,14, 7, 0, 4, 6, 8, 2, 1,15, 3,11,12,13, 5, 9);
-			else				val = BITSWAP16(val, 13,14, 7, 0, 8, 6, 4, 2, 1,15, 3,11,12,10, 5, 9);
+			if (!global_xor0)	if (val & 0x0800)	val ^= 0x9048;										// 15,12,6,3
+			if (!key_3a)		if (val & 0x0004)	val ^= 0x0202;										// 9,1
+			if (!key_6a)		if (val & 0x0400)	val ^= 0x0004;										// 2
+			if (!key_5b)		if (!key_0b)		val ^= 0x08a1;										// 11,7,5,0
+			if (!global_swap0b)	val = BITSWAP16(val, 15,14,10,12,11,13, 9, 4, 7, 6, 5, 8, 3, 2, 1, 0);	// 13,10,8,4
+
+			val = 0x3523 ^ BITSWAP16(val, 13,14, 7, 0, 8, 6, 4, 2, 1,15, 3,11,12,10, 5, 9);
 		}
 		if (val & 0x2000)
 		{
-			if (key_4a)					if (val & 0x0100) val ^= 0x4210;
-			if (key_1a)					if (val & 0x0040) val ^= 0x0080;
-			if (key_Fb)					if (val & 0x0001) val ^= 0x110a;
-			if (key_0b && key_4b)		val ^= 0x0040;
-			if (global_swap0a && key_Fc)	val ^= 0x0404;
-			val ^= 0x55d2;
-			if (key_5b)	val = BITSWAP16(val, 10, 2,13, 7, 8, 5, 3,14, 6, 0, 1,15, 9, 4,11,12);
-			else		val = BITSWAP16(val, 10, 2,13, 7, 8, 0, 3,14, 6,15, 1,11, 9, 4, 5,12);
+			if (!key_4a)		if (val & 0x0100)	val ^= 0x4210;										// 14,9,4
+			if (!key_1a)		if (val & 0x0040)	val ^= 0x0080;										// 7
+			if (!key_7a)		if (val & 0x0001)	val ^= 0x110a;										// 12,8,3,1
+			if (!key_4b)		if (!key_0a)		val ^= 0x0040;										// 6
+			if (!global_swap0a)	if (!key_6b)		val ^= 0x0404;										// 10,2
+			if (!key_5b)		val = BITSWAP16(val,  0,14,13,12,15,10, 9, 8, 7, 6,11, 4, 3, 2, 1, 5);	// 15,11,5,0
+
+			val = 0x99a5 ^ BITSWAP16(val, 10, 2,13, 7, 8, 0, 3,14, 6,15, 1,11, 9, 4, 5,12);
 		}
 
-		val ^= 0x1fbf;
+		val = 0x87ff ^ BITSWAP16(val,  5,15,13,14, 6, 0, 9,10, 4,11, 1, 2,12, 3, 7, 8);
 
-		if (key_3c)			val = BITSWAP16(val, 15,14,13,12,11,10, 2, 8, 7, 6, 5, 4, 3, 9, 1, 0);	// 9-2
-		if (global_swap4)	val = BITSWAP16(val, 15,14,13,12, 5, 1, 9, 8, 7, 6,11, 4, 3, 2,10, 0);	// 10-1, 11-5
-		if (key_3b)			val = BITSWAP16(val, 15,14,13, 7,11,10, 9, 8,12, 6, 5, 4, 3, 2, 1, 0);	// 12-7
-		if (global_swap3)	val = BITSWAP16(val, 13,14,15,12,11,10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0);	// 13-15
-		if (key_2a)			val = BITSWAP16(val, 14,15,13,12,11,10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0);	// (current) 14-15
+		if (!global_swap4)	val = BITSWAP16(val,  6,14,13,12,11,10, 9, 5, 7,15, 8, 4, 3, 2, 1, 0);	// 15-6, 8-5
+		if (!global_swap3)	val = BITSWAP16(val, 15,12,14,13,11,10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0);	// 12-13-14
+		if (!global_swap2)	val = BITSWAP16(val, 15,14,13,12,11, 2, 9, 8,10, 6, 5, 4, 3, 0, 1, 7);	// 10-2-0-7
+		if (!key_3b)		val = BITSWAP16(val, 15,14,13,12,11,10, 4, 8, 7, 6, 5, 9, 1, 2, 3, 0);	// 9-4, 3-1
 
-		if (global_swap2)	val = BITSWAP16(val,  5,15,13,14, 6, 3, 9,10, 0,11, 1, 2,12, 8, 7, 4);
-		else				val = BITSWAP16(val,  5,15,13,14, 6, 0, 9,10, 4,11, 1, 2,12, 3, 7, 8);
-
-		if (global_swap1)	val = BITSWAP16(val, 15,14,13,12, 9, 8,11,10, 7, 6, 5, 4, 3, 2, 1, 0);	// (current) 11...8
-		if (key_5a)			val = BITSWAP16(val, 15,14,13,12,11,10, 9, 8, 4, 5, 7, 6, 3, 2, 1, 0);	// (current) 7...4
-		if (global_swap0a)	val = BITSWAP16(val, 15,14,13,12,11,10, 9, 8, 7, 6, 5, 4, 0, 1, 2, 3);	// (current) 3...0
+		if (!key_2a)		val = BITSWAP16(val, 15,12,13,14,11,10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0);	// 14-12
+		if (!global_swap1)	val = BITSWAP16(val, 15,14,13,12, 9, 8,11,10, 7, 6, 5, 4, 3, 2, 1, 0);	// 11...8
+		if (!key_5a)		val = BITSWAP16(val, 15,14,13,12,11,10, 9, 8, 4, 5, 7, 6, 3, 2, 1, 0);	// 7...4
+		if (!global_swap0a)	val = BITSWAP16(val, 15,14,13,12,11,10, 9, 8, 7, 6, 5, 4, 0, 3, 2, 1);	// 3...0
 	}
+
 	return final_decrypt(val,key_F);
 }
 
 
-static int stored_state,in_irq;
+static int global_key1,global_key2,global_key3;
 
-static int set_state(gk *key,int state)
+int fd1094_decode(int address,int val,unsigned char *key,int vector_fetch)
 {
-	if (state == FD1094_STATE_VECTOR)
+	if (!key) return 0;
+
+	return decode(address,val,key,global_key1,global_key2,global_key3,vector_fetch);
+}
+
+int fd1094_set_state(unsigned char *key,int state)
+{
+	static int selected_state,irq_mode;
+
+	if (!key) return 0;
+
+	switch (state & 0x300)
 	{
-		vector_fetch = 1;
-		global_vector = key->vector;
+		case 0x0000:				// 0x00xx: select state xx
+			selected_state = state & 0xff;
+			break;
 
-		global_key_invert = 0;
-		global_invert = 0;
-		global_keyFa_invert = 0;
-		global_keyFb_invert = 0;
-		global_keyFc_invert = 0;
-		global_xor0 = 0;
-		global_xor1 = 0;
-		global_swap0a = 0;
-		global_swap0b = 0;
-		global_swap1 = 0;
-		global_swap2 = 0;
-		global_swap3 = 0;
-		global_swap4 = 0;
+		case FD1094_STATE_RESET:	// 0x01xx: select state xx and exit irq mode
+			selected_state = state & 0xff;
+			irq_mode = 0;
+			break;
 
-		return 0;
+		case FD1094_STATE_IRQ:		// 0x02xx: enter irq mode
+			irq_mode = 1;
+			break;
+
+		case FD1094_STATE_RTE:		// 0x03xx: exit irq mode
+			irq_mode = 0;
+			break;
 	}
+
+	if (irq_mode)
+		state = key[0];
 	else
-		vector_fetch = 0;
+		state = selected_state;
 
-	state &= 0x3ff;
-
-	if (state == 0x0000)	// not sure about this, but it is correct in irq state
-	{
-		if (in_irq) state = key->vector[0];
-	}
-	else if (state == FD1094_STATE_RESET)	// 0x0100: not sure about this
-	{
-		in_irq = 0;	// should I?
-		state = 0x00;
-		stored_state = state;
-	}
-	else if (state == FD1094_STATE_IRQ)		// 0x0200: go in irq state
-	{
-		in_irq = 1;
-		state = key->vector[0];
-	}
-	else if (state == FD1094_STATE_RTE)		// 0x0300: recover stored state
-	{
-		in_irq = 0;
-		state = stored_state;
-	}
-	else
-		stored_state = state;
-
-	global_key_invert = 0;
-	global_invert = key->global_invert;
-	global_keyFa_invert = key->global_keyFa_invert;
-	global_keyFb_invert = key->global_keyFb_invert;
-	global_keyFc_invert = key->global_keyFc_invert;
-	global_xor0 = key->global_xor0;
-	global_xor1 = key->global_xor1;
-	global_swap0a = key->global_swap0a;
-	global_swap0b = key->global_swap0b;
-	global_swap1 = key->global_swap1;
-	global_swap2 = key->global_swap2;
-	global_swap3 = key->global_swap3;
-	global_swap4 = key->global_swap4;
+	global_key1 = key[1];
+	global_key2 = key[2];
+	global_key3 = key[3];
 
 	if (state & 0x0001)
 	{
-		global_key_invert ^= 0x06;	// key_1a, key_2a
-		global_xor1 ^= 1;
+		global_key1 ^= 0x04;	// global_xor1
+		global_key2 ^= 0x80;	// key_1a invert
+		global_key3 ^= 0x80;	// key_2a invert - could be 0x20
 	}
 	if (state & 0x0002)
 	{
-		global_invert ^= 0xa0;		// key_4b, key_0c
-		global_keyFb_invert ^= 1;	// key_Fb
-		global_swap2 ^= 1;
+		global_key1 ^= 0x01;	// global_swap2
+		global_key2 ^= 0x10;	// key_7a invert
+		global_key3 ^= 0x01;	// key_4b invert
 	}
 	if (state & 0x0004)
 	{
-		global_key_invert ^= 0x01;	// key_0a
-		global_keyFc_invert ^= 1;	// key_Fc
-		global_swap4 ^= 1;
+		global_key1 ^= 0x80;	// key_0b invert - could be 0x20
+		global_key2 ^= 0x40;	// key_6b invert
+		global_key3 ^= 0x04;	// global_swap4
 	}
 	if (state & 0x0008)
 	{
-		global_key_invert ^= 0x20;	// key_5a
-		global_keyFa_invert ^= 1;	// key_Fa
-		global_xor0 ^= 1;
+		global_key1 ^= 0x20;	// global_xor0   - could be 0x80
+		global_key2 ^= 0x02;	// key_6a invert
+		global_key3 ^= 0x20;	// key_5a invert - could be 0x80
 	}
 	if (state & 0x0010)
 	{
-		global_key_invert ^= 0x10;	// key_4a
-		global_invert ^= 0x81;		// key_5b, key_0c
+		global_key1 ^= 0x02;	// key_0c invert
+		global_key1 ^= 0x40;	// key_5b invert
+		global_key2 ^= 0x08;	// key_4a invert
 	}
 	if (state & 0x0020)
 	{
-		global_invert ^= 0x1c;		// key_1b, key_3b, key_3c
-		global_swap1 ^= 1;
+		global_key1 ^= 0x08;	// key_1b invert
+		global_key3 ^= 0x08;	// key_3b invert
+		global_key3 ^= 0x10;	// global_swap1
 	}
 	if (state & 0x0040)
 	{
-		global_invert ^= 0x06;		// key_2b, key_3b
-		global_swap0a ^= 1;
-		global_swap0b ^= 1;
+		global_key1 ^= 0x10;	// key_2b invert
+		global_key2 ^= 0x20;	// global_swap0a
+		global_key2 ^= 0x04;	// global_swap0b
 	}
 	if (state & 0x0080)
 	{
-		global_key_invert ^= 0x0c;	// key_2a, key_3a
-		global_invert ^= 0x40;		// key_0b
-		global_swap3 ^= 1;
+		global_key2 ^= 0x01;	// key_3a invert
+		global_key3 ^= 0x02;	// key_0a invert
+		global_key3 ^= 0x40;	// global_swap3
 	}
 
 	return state & 0xff;
-}
-
-
-
-static int cpunum;
-static gk *global_key_ptr;
-static int *key_ptr,*key_ffff_ptr;
-
-void fd1094_init(int cpu_number)
-{
-	stored_state = 0x00;
-	in_irq = 0;
-	cpunum = cpu_number;
-
-	switch (cpunum)
-	{
-		default:     printf("unknown CPU number %04x\n",cpu_number);
-		case 0x0053: global_key_ptr = &global_key_0053;	key_ptr = key_0053; key_ffff_ptr = key_0053_ffff; break;
-		case 0x0085: global_key_ptr = &global_key_0085;	key_ptr = key_0085; key_ffff_ptr = key_0085_ffff; break;
-		case 0x0089: global_key_ptr = &global_key_0089;	key_ptr = key_0089; key_ffff_ptr = key_0089_ffff; break;
-		case 0x0091: global_key_ptr = &global_key_0091;	key_ptr = key_0091; key_ffff_ptr = key_0091_ffff; break;
-		case 0x0092: global_key_ptr = &global_key_0092;	key_ptr = key_0092; key_ffff_ptr = key_0092_ffff; break;
-		// 0093 has the same main key as 0089
-		case 0x0093: global_key_ptr = &global_key_0093;	key_ptr = key_0089; key_ffff_ptr = key_0093_ffff; break;
-		case 0x0096: global_key_ptr = &global_key_0096;	key_ptr = key_0096; key_ffff_ptr = key_0096_ffff; break;
-		case 0x0130: global_key_ptr = &global_key_0130;	key_ptr = key_0130; key_ffff_ptr = key_0130_ffff; break;
-		case 0x0146: global_key_ptr = &global_key_0146;	key_ptr = key_0146; key_ffff_ptr = key_0146_ffff; break;
-		case 0x0186: global_key_ptr = &global_key_0186;	key_ptr = key_0186; key_ffff_ptr = key_0186_ffff; break;
-	}
-}
-
-int fd1094_set_state(int state)
-{
-	return set_state(global_key_ptr,state);
-}
-
-int fd1094_decode(int address,int val)
-{
-	return decode(address,val,key_ptr,key_ffff_ptr);
 }

@@ -199,6 +199,7 @@ Gun Frontier
 There are mask sprites used on the waterfall in the first round
 of attract demo, however it's not clear what they should mask since
 there don't seem to be sprites below them. Shadow maybe?
+(BM161104 - Fixed)
 
 
 Pulirula
@@ -220,6 +221,7 @@ Sprite emulation issues may be responsible for minor glitches on the
 Missing two blend effects: there's a sun sprite underneath tilemaps
 in round 1; and the boss sprite crosses under the tilemaps at start
 of round 5 finale.
+(BM161104 - Fixed)
 
 
 Yesnoj
@@ -241,7 +243,7 @@ Quiz Crayon 2
 There should be a highlight circle around the player while it moves on the
 map. This is done by a sprite which doesn't have priority over the
 background. This is probably the same thing as the waterfall in Gun Frontier.
-
+(BM161104 - Fixed)
 
 Driftout
 --------

@@ -105,7 +105,6 @@ TODO:
 #include "vidhrdw/generic.h"
 #include "cpu/m6800/m6800.h"
 
-static data8_t *sharedram;
 extern data8_t *baraduke_textram, *spriteram, *baraduke_videoram, *baraduke_spriteram;
 
 /* from vidhrdw/baraduke.c */
@@ -165,15 +164,6 @@ static WRITE8_HANDLER( baraduke_lamps_w )
 	set_led_status(1,data & 0x10);
 }
 
-READ8_HANDLER( baraduke_sharedram_r )
-{
-	return sharedram[offset];
-}
-WRITE8_HANDLER( baraduke_sharedram_w )
-{
-	sharedram[offset] = data;
-}
-
 static WRITE8_HANDLER( baraduke_irq_ack_w )
 {
 	cpunum_set_input_line(0, 0, CLEAR_LINE);
@@ -184,10 +174,7 @@ static WRITE8_HANDLER( baraduke_irq_ack_w )
 static ADDRESS_MAP_START( baraduke_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x1fff) AM_READWRITE(baraduke_spriteram_r,baraduke_spriteram_w) AM_BASE(&baraduke_spriteram)	/* Sprite RAM */
 	AM_RANGE(0x2000, 0x3fff) AM_READWRITE(baraduke_videoram_r,baraduke_videoram_w) AM_BASE(&baraduke_videoram)	/* Video RAM */
-
-	AM_RANGE(0x4000, 0x40ff) AM_READWRITE(namcos1_wavedata_r,namcos1_wavedata_w)		/* PSG device, shared RAM */
-	AM_RANGE(0x4000, 0x43ff) AM_READWRITE(baraduke_sharedram_r,baraduke_sharedram_w) AM_BASE(&sharedram)/* shared RAM with the MCU */
-
+	AM_RANGE(0x4000, 0x43ff) AM_READWRITE(namcos1_cus30_r,namcos1_cus30_w)		/* PSG device, shared RAM */
 	AM_RANGE(0x4800, 0x4fff) AM_READWRITE(baraduke_textram_r,baraduke_textram_w) AM_BASE(&baraduke_textram)/* video RAM (text layer) */
 	AM_RANGE(0x8000, 0x8000) AM_WRITE(watchdog_reset_w)			/* watchdog reset */
 	AM_RANGE(0x8800, 0x8800) AM_WRITE(baraduke_irq_ack_w)		/* irq acknowledge */
@@ -206,12 +193,8 @@ READ8_HANDLER( soundkludge_r )
 static ADDRESS_MAP_START( mcu_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x001f) AM_READWRITE(hd63701_internal_registers_r,hd63701_internal_registers_w)/* internal registers */
 	AM_RANGE(0x0080, 0x00ff) AM_RAM								/* built in RAM */
-
-	AM_RANGE(0x1000, 0x10ff) AM_READWRITE(namcos1_wavedata_r,namcos1_wavedata_w) AM_BASE(&namco_wavedata)/* PSG device, shared RAM */
 	AM_RANGE(0x1105, 0x1105) AM_READ(soundkludge_r)				/* cures speech */
-	AM_RANGE(0x1100, 0x113f) AM_READWRITE(MRA8_RAM,namcos1_sound_w) AM_BASE(&namco_soundregs)/* PSG device */
-	AM_RANGE(0x1000, 0x13ff) AM_READWRITE(baraduke_sharedram_r,baraduke_sharedram_w)	/* shared RAM with the 6809 */
-
+	AM_RANGE(0x1000, 0x13ff) AM_READWRITE(namcos1_cus30_r,namcos1_cus30_w) AM_BASE(&namco_wavedata)/* PSG device, shared RAM */
 	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_ROM)					/* MCU external ROM */
 	AM_RANGE(0x8000, 0x8000) AM_WRITE(MWA8_NOP)					/* watchdog reset? */
 	AM_RANGE(0x8800, 0x8800) AM_WRITE(MWA8_NOP)					/* irq acknoledge? */

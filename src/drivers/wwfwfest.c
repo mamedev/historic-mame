@@ -444,6 +444,11 @@ static MACHINE_DRIVER_START( wwfwfest )
 	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
 MACHINE_DRIVER_END
 
+static MACHINE_DRIVER_START( wwfwfstb )
+	MDRV_IMPORT_FROM(wwfwfest)
+	MDRV_VIDEO_START(wwfwfstb)
+MACHINE_DRIVER_END
+
 /*******************************************************************************
  Rom Loaders / Game Drivers
 ********************************************************************************
@@ -537,6 +542,37 @@ ROM_START( wwfwfsta )
 	ROM_LOAD( "wf_02.rom",    0x00000, 0x40000, CRC(82ed7155) SHA1(b338e1150ffe3277c11d4d6e801a7d3bd7c58492) ) /* 2,3 */
 ROM_END
 
+ROM_START( wwfwfstb )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 ) /* Main CPU  (68000) */
+	ROM_LOAD16_BYTE( "3",      0x00000, 0x40000, CRC(ea73369c) SHA1(be614a342f9014251810fa30ec56fec03f7c8ef3) )
+	ROM_LOAD16_BYTE( "2",      0x00001, 0x40000, CRC(632bb3a4) SHA1(9c04fed5aeefc683810cfbd9b3318e155ed9813f) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* Sound CPU (Z80)  */
+	ROM_LOAD( "1",             0x00000, 0x10000, CRC(d9e8cda2) SHA1(754c73cd341d51ffd35cdb62155a3f061416c9ba) )
+
+	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* ADPCM samples */
+	ROM_LOAD( "wf_73a.rom",    0x00000, 0x80000, CRC(6c522edb) SHA1(8005d59c94160638ba2ea7caf4e991fff03003d5) )
+
+	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE ) /* FG0 Tiles (8x8) */
+	ROM_LOAD( "4",             0x00000, 0x20000, CRC(520ef575) SHA1(99a5e9b94e9234851c6b504d58939ad84e0d6589) )
+
+	ROM_REGION( 0x800000, REGION_GFX2, ROMREGION_DISPOSE ) /* SPR Tiles (16x16) */
+	ROM_LOAD( "wf_09.rom",    0x000000, 0x100000, CRC(e395cf1d) SHA1(241f98145e295993c9b6a44dc087a9b61fbc9a6f) ) /* Tiles 0 */
+	ROM_LOAD( "wf_08.rom",    0x100000, 0x100000, CRC(b5a97465) SHA1(08d82c29a5c02b83fdbd0bad649b74eb35ab7e54) ) /* Tiles 1 */
+	ROM_LOAD( "wf_11.rom",    0x200000, 0x100000, CRC(2ce545e8) SHA1(82173e58a8476a6fe9d2c990fce1f71af117a0ea) ) /* Tiles 0 */
+	ROM_LOAD( "wf_10.rom",    0x300000, 0x100000, CRC(00edb66a) SHA1(926606d1923936b6e75391b1ab03b369d9822d13) ) /* Tiles 1 */
+	ROM_LOAD( "wf_12.rom",    0x400000, 0x100000, CRC(79956cf8) SHA1(52207263620a6b6dde66d3f8749b772577899ea5) ) /* Tiles 0 */
+	ROM_LOAD( "wf_13.rom",    0x500000, 0x100000, CRC(74d774c3) SHA1(a723ac5d481bf91b12e17652fbb2d869c886dec0) ) /* Tiles 1 */
+	ROM_LOAD( "wf_15.rom",    0x600000, 0x100000, CRC(dd387289) SHA1(2cad42d4e7cd1a49346f844058ae18c38bc686a8) ) /* Tiles 0 */
+	ROM_LOAD( "wf_14.rom",    0x700000, 0x100000, CRC(44abe127) SHA1(c723e1dea117534e976d2d383e634faf073cd57b) ) /* Tiles 1 */
+
+	ROM_REGION( 0x80000, REGION_GFX3, ROMREGION_DISPOSE ) /* BG0 / BG1 Tiles (16x16) */
+	ROM_LOAD16_BYTE( "5",     0x40000, 0x20000, CRC(35e4d6eb) SHA1(d2a12bde268bc0734e6806ff5302b8c3dcc17280) ) /* 0 */
+	ROM_LOAD16_BYTE( "6",     0x40001, 0x20000, CRC(a054a5b2) SHA1(d6ed5d5a20acb7cdbaee8e3f520873650529c0ae) ) /* 1 */
+	ROM_LOAD16_BYTE( "7",     0x00000, 0x20000, CRC(101f0136) SHA1(2ccd641e49cdd3f5243ebe8c52c492842d62f5b8) ) /* 2 */
+	ROM_LOAD16_BYTE( "8",     0x00001, 0x20000, CRC(7b2ecba7) SHA1(1ed2451132448930ac4afcdc67ca14e3e922863e) ) /* 3 */
+ROM_END
+
 ROM_START( wwfwfstj )
 	ROM_REGION( 0x80000, REGION_CPU1, 0 ) /* Main CPU  (68000) */
 	ROM_LOAD16_BYTE( "31j13-0.bin", 0x00001, 0x40000, CRC(2147780d) SHA1(9a7a5db06117f3780e084d3f0c7b642ff8a9db55) )
@@ -566,6 +602,7 @@ ROM_START( wwfwfstj )
 	ROM_LOAD( "wf_02.rom",    0x00000, 0x40000, CRC(82ed7155) SHA1(b338e1150ffe3277c11d4d6e801a7d3bd7c58492) ) /* 2,3 */
 ROM_END
 
-GAME( 1991, wwfwfest, 0,        wwfwfest, wwfwfest, 0, ROT0, "Technos Japan", "WWF WrestleFest (US)" )
+GAME( 1991, wwfwfest, 0,        wwfwfest, wwfwfest, 0, ROT0, "Technos Japan", "WWF WrestleFest (US set 1)" )
 GAME( 1991, wwfwfsta, wwfwfest, wwfwfest, wwfwfest, 0, ROT0, "Technos Japan (Tecmo license)", "WWF WrestleFest (US Tecmo)" )
+GAME( 1991, wwfwfstb, wwfwfest, wwfwfstb, wwfwfest, 0, ROT0, "bootleg", "WWF WrestleFest (US bootleg)" )
 GAME( 1991, wwfwfstj, wwfwfest, wwfwfest, wwfwfest, 0, ROT0, "Technos Japan", "WWF WrestleFest (Japan)" )

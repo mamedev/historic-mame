@@ -216,7 +216,7 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( pclubys )
 	PORT_START
-	PORT_DIPNAME( 0x0001, 0x0001, "1" )
+	PORT_DIPNAME( 0x0001, 0x0001, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(      0x0001, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 	PORT_DIPNAME( 0x0002, 0x0002, DEF_STR( Demo_Sounds ) )
@@ -239,7 +239,7 @@ INPUT_PORTS_START( pclubys )
 	PORT_DIPSETTING(      0x00c0, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(      0x0080, DEF_STR( 1C_2C ) )
 	PORT_SERVICE( 0x0100, IP_ACTIVE_LOW )
-	PORT_DIPNAME( 0x0200, 0x0200, "2" )
+	PORT_DIPNAME( 0x0200, 0x0200, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(      0x0200, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 	PORT_DIPNAME( 0x0400, 0x0400, DEF_STR( Unknown ) )
@@ -612,7 +612,7 @@ ROM_END
 DRIVER_INIT( nmg5 )
 {
 	/* hardcoded sprites priority */
-	sprite_pri = auto_malloc(1);
+	sprite_pri = auto_malloc(2);
 	*sprite_pri = 7;
 }
 

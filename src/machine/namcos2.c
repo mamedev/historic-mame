@@ -564,39 +564,18 @@ void namcos2_68k_master_posirq( int scanline )
 static int
 GetPosIRQScanline( void )
 {
-	int scanline;
 	switch( namcos2_gametype )
 	{
-		case NAMCOS2_FOUR_TRAX:
-		scanline = 160;
-		break;
-
-		case NAMCOS2_SUZUKA_8_HOURS_2:
-		case NAMCOS2_SUZUKA_8_HOURS:
-		scanline = 56;
-		break;
-
-		case NAMCOS2_LUCKY_AND_WILD:
-		scanline = 40;
-		break;
-
-		case NAMCOS2_FINEST_HOUR:
-		scanline = 192;
-		break;
-
-		case NAMCOS2_BURNING_FORCE:
-		scanline = 24; /* ? */
-		break;
-
+		case NAMCOS21_AIRCOMBAT:
+		case NAMCOS21_STARBLADE:
 		case NAMCOS21_CYBERSLED:
-		scanline = 16; /* ? */
-		break;
+		case NAMCOS21_SOLVALOU:
+		case NAMCOS21_WINRUN91:
+		return 16; /* ? */
 
-		default: /* Final Lap */
-		scanline = 64;
-		break;
+		default:
+		return namcos2_GetPosIrqScanline();
 	}
-	return scanline;
 }
 
 INTERRUPT_GEN( namcos2_68k_master_vblank )

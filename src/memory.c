@@ -91,6 +91,7 @@
 #include "driver.h"
 #include "osd_cpu.h"
 #include "state.h"
+#include "debugcpu.h"
 
 #include <stdarg.h>
 
@@ -153,6 +154,12 @@
 #define INV_SPACE_SHIFT(s,a)	(((s)->ashift < 0) ? ((a) >> -(s)->ashift) : ((a) << (s)->ashift))
 
 #define SUBTABLE_PTR(tabledata, entry) (&(tabledata)->table[(1 << LEVEL1_BITS) + (((entry) - SUBTABLE_BASE) << LEVEL2_BITS)])
+
+#if defined(MAME_DEBUG) && defined(NEW_DEBUGGER)
+#define CHECK_WATCHPOINTS(a,b,c,d,e,f) if (*watchpoint_count > 0) debug_check_watchpoints(a, b, c, d, e, f)
+#else
+#define CHECK_WATCHPOINTS(a,b,c,d,e,f)
+#endif
 
 
 /*-------------------------------------------------
@@ -265,8 +272,14 @@ static int					cur_context;					/* current CPU context */
 
 static opbase_handler		opbasefunc;						/* opcode base override */
 
+static int					debugger_access;				/* treat accesses as coming from the debugger */
+
 static struct cpu_data_t	cpudata[MAX_CPU];				/* data gathered for each CPU */
 static struct bank_data_t 	bankdata[MAX_BANKS + 1];		/* data gathered for each bank */
+
+#if defined(MAME_DEBUG) && defined(NEW_DEBUGGER)
+static const int *			watchpoint_count;				/* pointer to the count of watchpoints */
+#endif
 
 static struct data_accessors_t memory_accessors[ADDRESS_SPACES][4][2] =
 {
@@ -496,6 +509,10 @@ void memory_set_context(int activecpu)
 	}
 
 	opbasefunc = cpudata[activecpu].opbase;
+
+#if defined(MAME_DEBUG) && defined(NEW_DEBUGGER)
+	watchpoint_count = debug_watchpoint_count_ptr(activecpu);
+#endif
 }
 
 
@@ -673,6 +690,16 @@ void memory_set_bankptr(int banknum, void *base)
 
 
 /*-------------------------------------------------
+	memory_set_bankptr - set the base of a bank
+-------------------------------------------------*/
+
+void memory_set_debugger_access(int debugger)
+{
+	debugger_access = debugger;
+}
+
+
+/*-------------------------------------------------
 	memory_install_readX_handler - install dynamic
 	read handler for X-bit case
 -------------------------------------------------*/
@@ -749,8 +776,8 @@ data64_t *memory_install_write64_handler(int cpunum, int spacenum, offs_t start,
 
 
 /*-------------------------------------------------
-	memory_install_readX_matchmask_handler - 
-	install dynamic match/mask read handler for 
+	memory_install_readX_matchmask_handler -
+	install dynamic match/mask read handler for
 	X-bit case
 -------------------------------------------------*/
 
@@ -788,8 +815,8 @@ data64_t *memory_install_read64_matchmask_handler(int cpunum, int spacenum, offs
 
 
 /*-------------------------------------------------
-	memory_install_writeX_matchmask_handler - 
-	install dynamic match/mask write handler for 
+	memory_install_writeX_matchmask_handler -
+	install dynamic match/mask write handler for
 	X-bit case
 -------------------------------------------------*/
 
@@ -947,7 +974,7 @@ static int init_addrspace(UINT8 cpunum, UINT8 spacenum)
 		/* make pointers to the standard and adjusted maps */
 		space->map = map;
 		space->adjmap = &map[MAX_ADDRESS_MAP_SIZE * 2];
-		
+
 		/* start by constructing the internal CPU map */
 		if (internal_map)
 			map = (*internal_map)(map);
@@ -1144,9 +1171,11 @@ static int populate_memory(void)
 
 static void install_mem_handler(struct addrspace_data_t *space, int iswrite, int databits, int ismatchmask, offs_t start, offs_t end, offs_t mask, offs_t mirror, genf *handler, int isfixed)
 {
+	offs_t lmirrorbit[LEVEL1_BITS], lmirrorbits, hmirrorbit[LEVEL2_BITS], hmirrorbits, lmirrorcount, hmirrorcount;
 	struct table_data_t *tabledata = iswrite ? &space->write : &space->read;
-	offs_t mirrorbit[32], mirrorbits, mirrorcount, original_mask = mask;
-	UINT8 idx;
+	UINT8 idx;//, prev_entry = STATIC_INVALID;
+//	int cur_index, prev_index = 0;
+	offs_t original_mask = mask;
 	int i;
 
 	/* sanity check */
@@ -1190,28 +1219,56 @@ static void install_mem_handler(struct addrspace_data_t *space, int iswrite, int
 	}
 
 	/* determine the mirror bits */
-	mirrorbits = 0;
-	for (i = 0; i < 32; i++)
+	hmirrorbits = lmirrorbits = 0;
+	for (i = 0; i < LEVEL1_BITS; i++)
 		if (mirror & (1 << i))
-			mirrorbit[mirrorbits++] = 1 << i;
+			lmirrorbit[lmirrorbits++] = 1 << i;
+	for (i = LEVEL1_BITS; i < 32; i++)
+		if (mirror & (1 << i))
+			hmirrorbit[hmirrorbits++] = 1 << i;
 
 	/* get the final handler index */
 	idx = get_handler_index(tabledata->handlers, handler, start, end, mask);
 
-	/* loop over mirrors */
-	for (mirrorcount = 0; mirrorcount < (1 << mirrorbits); mirrorcount++)
+	/* loop over mirrors in the level 2 table */
+	for (hmirrorcount = 0; hmirrorcount < (1 << hmirrorbits); hmirrorcount++)
 	{
 		/* compute the base of this mirror */
-		offs_t mirrorbase = 0;
-		for (i = 0; i < mirrorbits; i++)
-			if (mirrorcount & (1 << i))
-				mirrorbase |= mirrorbit[i];
+		offs_t hmirrorbase = 0;
+		for (i = 0; i < hmirrorbits; i++)
+			if (hmirrorcount & (1 << i))
+				hmirrorbase |= hmirrorbit[i];
 
-		/* populate the tables */
-		if (!ismatchmask)
-			populate_table_range(space, iswrite, start + mirrorbase, end + mirrorbase, idx);
-		else
-			populate_table_match(space, iswrite, start + mirrorbase, end + mirrorbase, idx);
+		/* if this is not our first time through, and the level 2 entry matches the previous
+		   level 2 entry, just do a quick map and get out */
+/*		cur_index = LEVEL1_INDEX(start + hmirrorbase);
+		if (hmirrorcount != 0 && prev_entry == tabledata->table[cur_index])
+		{
+			if (prev_entry >= SUBTABLE_BASE)
+				release_subtable(tabledata, prev_entry);
+			if (tabledata->table[prev_index] >= SUBTABLE_BASE)
+				tabledata->subtable[tabledata->table[prev_index] - SUBTABLE_BASE].usecount++;
+			tabledata->table[cur_index] = tabledata->table[prev_index];
+			continue;
+		}
+		prev_index = cur_index;
+		prev_entry = tabledata->table[cur_index];
+*/
+		/* loop over mirrors in the level 1 table */
+		for (lmirrorcount = 0; lmirrorcount < (1 << lmirrorbits); lmirrorcount++)
+		{
+			/* compute the base of this mirror */
+			offs_t lmirrorbase = hmirrorbase;
+			for (i = 0; i < lmirrorbits; i++)
+				if (lmirrorcount & (1 << i))
+					lmirrorbase |= lmirrorbit[i];
+
+			/* populate the tables */
+			if (!ismatchmask)
+				populate_table_range(space, iswrite, start + lmirrorbase, end + lmirrorbase, idx);
+			else
+				populate_table_match(space, iswrite, start + lmirrorbase, end + lmirrorbase, idx);
+		}
 	}
 
 	/* if this is being installed to a live CPU, update the context */
@@ -1973,33 +2030,35 @@ static void *memory_find_base(int cpunum, int spacenum, int readwrite, offs_t of
 	READBYTE - generic byte-sized read handler
 -------------------------------------------------*/
 
-#define READBYTE8(name,space)															\
+#define READBYTE8(name,spacenum)														\
 data8_t name(offs_t address)															\
 {																						\
 	UINT32 entry;																		\
 	MEMREADSTART();																		\
-	PERFORM_LOOKUP(readlookup,space,~0);												\
+	PERFORM_LOOKUP(readlookup,address_space[spacenum],~0);								\
+	CHECK_WATCHPOINTS(cur_context, spacenum, WATCHPOINT_READ, address, 1, 0);			\
 																						\
 	/* handle banks inline */															\
-	address = (address - space.readhandlers[entry].offset) & space.readhandlers[entry].mask;\
+	address = (address - address_space[spacenum].readhandlers[entry].offset) & address_space[spacenum].readhandlers[entry].mask;\
 	if (entry <= STATIC_RAM)															\
 		MEMREADEND(bank_ptr[entry][address]);											\
 																						\
 	/* fall back to the handler */														\
 	else																				\
-		MEMREADEND((*space.readhandlers[entry].handler.read.handler8)(address));		\
+		MEMREADEND((*address_space[spacenum].readhandlers[entry].handler.read.handler8)(address));\
 	return 0;																			\
 }																						\
 
-#define READBYTE(name,space,xormacro,handlertype,ignorebits,shiftbytes,masktype)		\
+#define READBYTE(name,spacenum,xormacro,handlertype,ignorebits,shiftbytes,masktype)		\
 data8_t name(offs_t address)															\
 {																						\
 	UINT32 entry;																		\
 	MEMREADSTART();																		\
-	PERFORM_LOOKUP(readlookup,space,~0);												\
+	PERFORM_LOOKUP(readlookup,address_space[spacenum],~0);								\
+	CHECK_WATCHPOINTS(cur_context, spacenum, WATCHPOINT_READ, address, 1, 0);			\
 																						\
 	/* handle banks inline */															\
-	address = (address - space.readhandlers[entry].offset) & space.readhandlers[entry].mask;\
+	address = (address - address_space[spacenum].readhandlers[entry].offset) & address_space[spacenum].readhandlers[entry].mask;\
 	if (entry <= STATIC_RAM)															\
 		MEMREADEND(bank_ptr[entry][xormacro(address)]);									\
 																						\
@@ -2007,7 +2066,7 @@ data8_t name(offs_t address)															\
 	else																				\
 	{																					\
 		int shift = 8 * (shiftbytes);													\
-		MEMREADEND((*space.readhandlers[entry].handler.read.handlertype)(address >> (ignorebits), ~((masktype)0xff << shift)) >> shift);		\
+		MEMREADEND((*address_space[spacenum].readhandlers[entry].handler.read.handlertype)(address >> (ignorebits), ~((masktype)0xff << shift)) >> shift);\
 	}																					\
 	return 0;																			\
 }																						\
@@ -2025,33 +2084,35 @@ data8_t name(offs_t address)															\
 	(16-bit, 32-bit and 64-bit aligned only!)
 -------------------------------------------------*/
 
-#define READWORD16(name,space)															\
+#define READWORD16(name,spacenum)														\
 data16_t name(offs_t address)															\
 {																						\
 	UINT32 entry;																		\
 	MEMREADSTART();																		\
-	PERFORM_LOOKUP(readlookup,space,~1);												\
+	PERFORM_LOOKUP(readlookup,address_space[spacenum],~1);								\
+	CHECK_WATCHPOINTS(cur_context, spacenum, WATCHPOINT_READ, address, 2, 0);			\
 																						\
 	/* handle banks inline */															\
-	address = (address - space.readhandlers[entry].offset) & space.readhandlers[entry].mask;\
+	address = (address - address_space[spacenum].readhandlers[entry].offset) & address_space[spacenum].readhandlers[entry].mask;\
 	if (entry <= STATIC_RAM)															\
 		MEMREADEND(*(data16_t *)&bank_ptr[entry][address]);								\
 																						\
 	/* fall back to the handler */														\
 	else																				\
-		MEMREADEND((*space.readhandlers[entry].handler.read.handler16)(address >> 1,0));\
+		MEMREADEND((*address_space[spacenum].readhandlers[entry].handler.read.handler16)(address >> 1,0));\
 	return 0;																			\
 }																						\
 
-#define READWORD(name,space,xormacro,handlertype,ignorebits,shiftbytes,masktype)		\
+#define READWORD(name,spacenum,xormacro,handlertype,ignorebits,shiftbytes,masktype)		\
 data16_t name(offs_t address)															\
 {																						\
 	UINT32 entry;																		\
 	MEMREADSTART();																		\
-	PERFORM_LOOKUP(readlookup,space,~1);												\
+	PERFORM_LOOKUP(readlookup,address_space[spacenum],~1);								\
+	CHECK_WATCHPOINTS(cur_context, spacenum, WATCHPOINT_READ, address, 2, 0);			\
 																						\
 	/* handle banks inline */															\
-	address = (address - space.readhandlers[entry].offset) & space.readhandlers[entry].mask;\
+	address = (address - address_space[spacenum].readhandlers[entry].offset) & address_space[spacenum].readhandlers[entry].mask;\
 	if (entry <= STATIC_RAM)															\
 		MEMREADEND(*(data16_t *)&bank_ptr[entry][xormacro(address)]);					\
 																						\
@@ -2059,7 +2120,7 @@ data16_t name(offs_t address)															\
 	else																				\
 	{																					\
 		int shift = 8 * (shiftbytes);													\
-		MEMREADEND((*space.readhandlers[entry].handler.read.handlertype)(address >> (ignorebits), ~((masktype)0xffff << shift)) >> shift);	\
+		MEMREADEND((*address_space[spacenum].readhandlers[entry].handler.read.handlertype)(address >> (ignorebits), ~((masktype)0xffff << shift)) >> shift);\
 	}																					\
 	return 0;																			\
 }																						\
@@ -2075,33 +2136,35 @@ data16_t name(offs_t address)															\
 	(32-bit and 64-bit aligned only!)
 -------------------------------------------------*/
 
-#define READDWORD32(name,space)															\
+#define READDWORD32(name,spacenum)														\
 data32_t name(offs_t address)															\
 {																						\
 	UINT32 entry;																		\
 	MEMREADSTART();																		\
-	PERFORM_LOOKUP(readlookup,space,~3);												\
+	PERFORM_LOOKUP(readlookup,address_space[spacenum],~3);								\
+	CHECK_WATCHPOINTS(cur_context, spacenum, WATCHPOINT_READ, address, 4, 0);			\
 																						\
 	/* handle banks inline */															\
-	address = (address - space.readhandlers[entry].offset) & space.readhandlers[entry].mask;\
+	address = (address - address_space[spacenum].readhandlers[entry].offset) & address_space[spacenum].readhandlers[entry].mask;\
 	if (entry <= STATIC_RAM)															\
 		MEMREADEND(*(data32_t *)&bank_ptr[entry][address]);								\
 																						\
 	/* fall back to the handler */														\
 	else																				\
-		MEMREADEND((*space.readhandlers[entry].handler.read.handler32)(address >> 2,0));\
+		MEMREADEND((*address_space[spacenum].readhandlers[entry].handler.read.handler32)(address >> 2,0));\
 	return 0;																			\
 }																						\
 
-#define READDWORD(name,space,xormacro,handlertype,ignorebits,shiftbytes,masktype)		\
+#define READDWORD(name,spacenum,xormacro,handlertype,ignorebits,shiftbytes,masktype)	\
 data32_t name(offs_t address)															\
 {																						\
 	UINT32 entry;																		\
 	MEMREADSTART();																		\
-	PERFORM_LOOKUP(readlookup,space,~3);												\
+	PERFORM_LOOKUP(readlookup,address_space[spacenum],~3);								\
+	CHECK_WATCHPOINTS(cur_context, spacenum, WATCHPOINT_READ, address, 4, 0);			\
 																						\
 	/* handle banks inline */															\
-	address = (address - space.readhandlers[entry].offset) & space.readhandlers[entry].mask;\
+	address = (address - address_space[spacenum].readhandlers[entry].offset) & address_space[spacenum].readhandlers[entry].mask;\
 	if (entry <= STATIC_RAM)															\
 		MEMREADEND(*(data32_t *)&bank_ptr[entry][xormacro(address)]);					\
 																						\
@@ -2109,7 +2172,7 @@ data32_t name(offs_t address)															\
 	else																				\
 	{																					\
 		int shift = 8 * (shiftbytes);													\
-		MEMREADEND((*space.readhandlers[entry].handler.read.handlertype)(address >> (ignorebits), ~((masktype)0xffffffff << shift)) >> shift);\
+		MEMREADEND((*address_space[spacenum].readhandlers[entry].handler.read.handlertype)(address >> (ignorebits), ~((masktype)0xffffffff << shift)) >> shift);\
 	}																					\
 	return 0;																			\
 }																						\
@@ -2123,21 +2186,22 @@ data32_t name(offs_t address)															\
 	(64-bit aligned only!)
 -------------------------------------------------*/
 
-#define READQWORD64(name,space)															\
+#define READQWORD64(name,spacenum)														\
 data64_t name(offs_t address)															\
 {																						\
 	UINT32 entry;																		\
 	MEMREADSTART();																		\
-	PERFORM_LOOKUP(readlookup,space,~7);												\
+	PERFORM_LOOKUP(readlookup,address_space[spacenum],~7);								\
+	CHECK_WATCHPOINTS(cur_context, spacenum, WATCHPOINT_READ, address, 8, 0);			\
 																						\
 	/* handle banks inline */															\
-	address = (address - space.readhandlers[entry].offset) & space.readhandlers[entry].mask;\
+	address = (address - address_space[spacenum].readhandlers[entry].offset) & address_space[spacenum].readhandlers[entry].mask;\
 	if (entry <= STATIC_RAM)															\
 		MEMREADEND(*(data64_t *)&bank_ptr[entry][address]);								\
 																						\
 	/* fall back to the handler */														\
 	else																				\
-		MEMREADEND((*space.readhandlers[entry].handler.read.handler64)(address >> 3,0));\
+		MEMREADEND((*address_space[spacenum].readhandlers[entry].handler.read.handler64)(address >> 3,0));\
 	return 0;																			\
 }																						\
 
@@ -2146,32 +2210,34 @@ data64_t name(offs_t address)															\
 	WRITEBYTE - generic byte-sized write handler
 -------------------------------------------------*/
 
-#define WRITEBYTE8(name,space)															\
+#define WRITEBYTE8(name,spacenum)														\
 void name(offs_t address, data8_t data)													\
 {																						\
 	UINT32 entry;																		\
 	MEMWRITESTART();																	\
-	PERFORM_LOOKUP(writelookup,space,~0);												\
+	PERFORM_LOOKUP(writelookup,address_space[spacenum],~0);								\
+	CHECK_WATCHPOINTS(cur_context, spacenum, WATCHPOINT_WRITE, address, 1, data);		\
 																						\
 	/* handle banks inline */															\
-	address = (address - space.writehandlers[entry].offset) & space.writehandlers[entry].mask;\
+	address = (address - address_space[spacenum].writehandlers[entry].offset) & address_space[spacenum].writehandlers[entry].mask;\
 	if (entry <= STATIC_RAM)															\
 		MEMWRITEEND(bank_ptr[entry][address] = data);									\
 																						\
 	/* fall back to the handler */														\
 	else																				\
-		MEMWRITEEND((*space.writehandlers[entry].handler.write.handler8)(address, data));\
+		MEMWRITEEND((*address_space[spacenum].writehandlers[entry].handler.write.handler8)(address, data));\
 }																						\
 
-#define WRITEBYTE(name,space,xormacro,handlertype,ignorebits,shiftbytes,masktype)		\
+#define WRITEBYTE(name,spacenum,xormacro,handlertype,ignorebits,shiftbytes,masktype)	\
 void name(offs_t address, data8_t data)													\
 {																						\
 	UINT32 entry;																		\
 	MEMWRITESTART();																	\
-	PERFORM_LOOKUP(writelookup,space,~0);												\
+	PERFORM_LOOKUP(writelookup,address_space[spacenum],~0);								\
+	CHECK_WATCHPOINTS(cur_context, spacenum, WATCHPOINT_WRITE, address, 1, data);		\
 																						\
 	/* handle banks inline */															\
-	address = (address - space.writehandlers[entry].offset) & space.writehandlers[entry].mask;\
+	address = (address - address_space[spacenum].writehandlers[entry].offset) & address_space[spacenum].writehandlers[entry].mask;\
 	if (entry <= STATIC_RAM)															\
 		MEMWRITEEND(bank_ptr[entry][xormacro(address)] = data);							\
 																						\
@@ -2179,7 +2245,7 @@ void name(offs_t address, data8_t data)													\
 	else																				\
 	{																					\
 		int shift = 8 * (shiftbytes);													\
-		MEMWRITEEND((*space.writehandlers[entry].handler.write.handlertype)(address >> (ignorebits), (masktype)data << shift, ~((masktype)0xff << shift)));\
+		MEMWRITEEND((*address_space[spacenum].writehandlers[entry].handler.write.handlertype)(address >> (ignorebits), (masktype)data << shift, ~((masktype)0xff << shift)));\
 	}																					\
 }																						\
 
@@ -2196,32 +2262,34 @@ void name(offs_t address, data8_t data)													\
 	(16-bit, 32-bit and 64-bit aligned only!)
 -------------------------------------------------*/
 
-#define WRITEWORD16(name,space)															\
+#define WRITEWORD16(name,spacenum)														\
 void name(offs_t address, data16_t data)												\
 {																						\
 	UINT32 entry;																		\
 	MEMWRITESTART();																	\
-	PERFORM_LOOKUP(writelookup,space,~1);												\
+	PERFORM_LOOKUP(writelookup,address_space[spacenum],~1);								\
+	CHECK_WATCHPOINTS(cur_context, spacenum, WATCHPOINT_WRITE, address, 2, data);		\
 																						\
 	/* handle banks inline */															\
-	address = (address - space.writehandlers[entry].offset) & space.writehandlers[entry].mask;\
+	address = (address - address_space[spacenum].writehandlers[entry].offset) & address_space[spacenum].writehandlers[entry].mask;\
 	if (entry <= STATIC_RAM)															\
 		MEMWRITEEND(*(data16_t *)&bank_ptr[entry][address] = data);						\
 																						\
 	/* fall back to the handler */														\
 	else																				\
-		MEMWRITEEND((*space.writehandlers[entry].handler.write.handler16)(address >> 1, data, 0));\
+		MEMWRITEEND((*address_space[spacenum].writehandlers[entry].handler.write.handler16)(address >> 1, data, 0));\
 }																						\
 
-#define WRITEWORD(name,space,xormacro,handlertype,ignorebits,shiftbytes,masktype)		\
+#define WRITEWORD(name,spacenum,xormacro,handlertype,ignorebits,shiftbytes,masktype)	\
 void name(offs_t address, data16_t data)												\
 {																						\
 	UINT32 entry;																		\
 	MEMWRITESTART();																	\
-	PERFORM_LOOKUP(writelookup,space,~1);												\
+	PERFORM_LOOKUP(writelookup,address_space[spacenum],~1);								\
+	CHECK_WATCHPOINTS(cur_context, spacenum, WATCHPOINT_WRITE, address, 2, data);		\
 																						\
 	/* handle banks inline */															\
-	address = (address - space.writehandlers[entry].offset) & space.writehandlers[entry].mask;\
+	address = (address - address_space[spacenum].writehandlers[entry].offset) & address_space[spacenum].writehandlers[entry].mask;\
 	if (entry <= STATIC_RAM)															\
 		MEMWRITEEND(*(data16_t *)&bank_ptr[entry][xormacro(address)] = data);			\
 																						\
@@ -2229,7 +2297,7 @@ void name(offs_t address, data16_t data)												\
 	else																				\
 	{																					\
 		int shift = 8 * (shiftbytes);													\
-		MEMWRITEEND((*space.writehandlers[entry].handler.write.handlertype)(address >> (ignorebits), (masktype)data << shift, ~((masktype)0xffff << shift)));\
+		MEMWRITEEND((*address_space[spacenum].writehandlers[entry].handler.write.handlertype)(address >> (ignorebits), (masktype)data << shift, ~((masktype)0xffff << shift)));\
 	}																					\
 }																						\
 
@@ -2244,32 +2312,34 @@ void name(offs_t address, data16_t data)												\
 	(32-bit and 64-bit aligned only!)
 -------------------------------------------------*/
 
-#define WRITEDWORD32(name,space)														\
+#define WRITEDWORD32(name,spacenum)														\
 void name(offs_t address, data32_t data)												\
 {																						\
 	UINT32 entry;																		\
 	MEMWRITESTART();																	\
-	PERFORM_LOOKUP(writelookup,space,~3);												\
+	PERFORM_LOOKUP(writelookup,address_space[spacenum],~3);								\
+	CHECK_WATCHPOINTS(cur_context, spacenum, WATCHPOINT_WRITE, address, 4, data);		\
 																						\
 	/* handle banks inline */															\
-	address = (address - space.writehandlers[entry].offset) & space.writehandlers[entry].mask;\
+	address = (address - address_space[spacenum].writehandlers[entry].offset) & address_space[spacenum].writehandlers[entry].mask;\
 	if (entry <= STATIC_RAM)															\
 		MEMWRITEEND(*(data32_t *)&bank_ptr[entry][address] = data);						\
 																						\
 	/* fall back to the handler */														\
 	else																				\
-		MEMWRITEEND((*space.writehandlers[entry].handler.write.handler32)(address >> 2, data, 0));\
+		MEMWRITEEND((*address_space[spacenum].writehandlers[entry].handler.write.handler32)(address >> 2, data, 0));\
 }																						\
 
-#define WRITEDWORD(name,space,xormacro,handlertype,ignorebits,shiftbytes,masktype)		\
+#define WRITEDWORD(name,spacenum,xormacro,handlertype,ignorebits,shiftbytes,masktype)	\
 void name(offs_t address, data32_t data)												\
 {																						\
 	UINT32 entry;																		\
 	MEMWRITESTART();																	\
-	PERFORM_LOOKUP(writelookup,space,~3);												\
+	PERFORM_LOOKUP(writelookup,address_space[spacenum],~3);								\
+	CHECK_WATCHPOINTS(cur_context, spacenum, WATCHPOINT_WRITE, address, 4, data);		\
 																						\
 	/* handle banks inline */															\
-	address = (address - space.writehandlers[entry].offset) & space.writehandlers[entry].mask;\
+	address = (address - address_space[spacenum].writehandlers[entry].offset) & address_space[spacenum].writehandlers[entry].mask;\
 	if (entry <= STATIC_RAM)															\
 		MEMWRITEEND(*(data32_t *)&bank_ptr[entry][xormacro(address)] = data);			\
 																						\
@@ -2277,7 +2347,7 @@ void name(offs_t address, data32_t data)												\
 	else																				\
 	{																					\
 		int shift = 8 * (shiftbytes);													\
-		MEMWRITEEND((*space.writehandlers[entry].handler.write.handlertype)(address >> (ignorebits), (masktype)data << shift, ~((masktype)0xffffffff << shift)));\
+		MEMWRITEEND((*address_space[spacenum].writehandlers[entry].handler.write.handlertype)(address >> (ignorebits), (masktype)data << shift, ~((masktype)0xffffffff << shift)));\
 	}																					\
 }																						\
 
@@ -2290,21 +2360,22 @@ void name(offs_t address, data32_t data)												\
 	(64-bit aligned only!)
 -------------------------------------------------*/
 
-#define WRITEQWORD64(name,space)														\
+#define WRITEQWORD64(name,spacenum)														\
 void name(offs_t address, data64_t data)												\
 {																						\
 	UINT32 entry;																		\
 	MEMWRITESTART();																	\
-	PERFORM_LOOKUP(writelookup,space,~7);												\
+	PERFORM_LOOKUP(writelookup,address_space[spacenum],~7);								\
+	CHECK_WATCHPOINTS(cur_context, spacenum, WATCHPOINT_WRITE, address, 8, data);		\
 																						\
 	/* handle banks inline */															\
-	address = (address - space.writehandlers[entry].offset) & space.writehandlers[entry].mask;\
+	address = (address - address_space[spacenum].writehandlers[entry].offset) & address_space[spacenum].writehandlers[entry].mask;\
 	if (entry <= STATIC_RAM)															\
 		MEMWRITEEND(*(data64_t *)&bank_ptr[entry][address] = data);						\
 																						\
 	/* fall back to the handler */														\
 	else																				\
-		MEMWRITEEND((*space.writehandlers[entry].handler.write.handler64)(address >> 3, data, 0));\
+		MEMWRITEEND((*address_space[spacenum].writehandlers[entry].handler.write.handler64)(address >> 3, data, 0));\
 }																						\
 
 
@@ -2312,150 +2383,150 @@ void name(offs_t address, data64_t data)												\
 	Program memory handlers
 -------------------------------------------------*/
 
-     READBYTE8(program_read_byte_8,      address_space[ADDRESS_SPACE_PROGRAM])
-    WRITEBYTE8(program_write_byte_8,     address_space[ADDRESS_SPACE_PROGRAM])
+     READBYTE8(program_read_byte_8,      ADDRESS_SPACE_PROGRAM)
+    WRITEBYTE8(program_write_byte_8,     ADDRESS_SPACE_PROGRAM)
 
-  READBYTE16BE(program_read_byte_16be,   address_space[ADDRESS_SPACE_PROGRAM])
-    READWORD16(program_read_word_16be,   address_space[ADDRESS_SPACE_PROGRAM])
- WRITEBYTE16BE(program_write_byte_16be,  address_space[ADDRESS_SPACE_PROGRAM])
-   WRITEWORD16(program_write_word_16be,  address_space[ADDRESS_SPACE_PROGRAM])
+  READBYTE16BE(program_read_byte_16be,   ADDRESS_SPACE_PROGRAM)
+    READWORD16(program_read_word_16be,   ADDRESS_SPACE_PROGRAM)
+ WRITEBYTE16BE(program_write_byte_16be,  ADDRESS_SPACE_PROGRAM)
+   WRITEWORD16(program_write_word_16be,  ADDRESS_SPACE_PROGRAM)
 
-  READBYTE16LE(program_read_byte_16le,   address_space[ADDRESS_SPACE_PROGRAM])
-    READWORD16(program_read_word_16le,   address_space[ADDRESS_SPACE_PROGRAM])
- WRITEBYTE16LE(program_write_byte_16le,  address_space[ADDRESS_SPACE_PROGRAM])
-   WRITEWORD16(program_write_word_16le,  address_space[ADDRESS_SPACE_PROGRAM])
+  READBYTE16LE(program_read_byte_16le,   ADDRESS_SPACE_PROGRAM)
+    READWORD16(program_read_word_16le,   ADDRESS_SPACE_PROGRAM)
+ WRITEBYTE16LE(program_write_byte_16le,  ADDRESS_SPACE_PROGRAM)
+   WRITEWORD16(program_write_word_16le,  ADDRESS_SPACE_PROGRAM)
 
-  READBYTE32BE(program_read_byte_32be,   address_space[ADDRESS_SPACE_PROGRAM])
-  READWORD32BE(program_read_word_32be,   address_space[ADDRESS_SPACE_PROGRAM])
-   READDWORD32(program_read_dword_32be,  address_space[ADDRESS_SPACE_PROGRAM])
- WRITEBYTE32BE(program_write_byte_32be,  address_space[ADDRESS_SPACE_PROGRAM])
- WRITEWORD32BE(program_write_word_32be,  address_space[ADDRESS_SPACE_PROGRAM])
-  WRITEDWORD32(program_write_dword_32be, address_space[ADDRESS_SPACE_PROGRAM])
+  READBYTE32BE(program_read_byte_32be,   ADDRESS_SPACE_PROGRAM)
+  READWORD32BE(program_read_word_32be,   ADDRESS_SPACE_PROGRAM)
+   READDWORD32(program_read_dword_32be,  ADDRESS_SPACE_PROGRAM)
+ WRITEBYTE32BE(program_write_byte_32be,  ADDRESS_SPACE_PROGRAM)
+ WRITEWORD32BE(program_write_word_32be,  ADDRESS_SPACE_PROGRAM)
+  WRITEDWORD32(program_write_dword_32be, ADDRESS_SPACE_PROGRAM)
 
-  READBYTE32LE(program_read_byte_32le,   address_space[ADDRESS_SPACE_PROGRAM])
-  READWORD32LE(program_read_word_32le,   address_space[ADDRESS_SPACE_PROGRAM])
-   READDWORD32(program_read_dword_32le,  address_space[ADDRESS_SPACE_PROGRAM])
- WRITEBYTE32LE(program_write_byte_32le,  address_space[ADDRESS_SPACE_PROGRAM])
- WRITEWORD32LE(program_write_word_32le,  address_space[ADDRESS_SPACE_PROGRAM])
-  WRITEDWORD32(program_write_dword_32le, address_space[ADDRESS_SPACE_PROGRAM])
+  READBYTE32LE(program_read_byte_32le,   ADDRESS_SPACE_PROGRAM)
+  READWORD32LE(program_read_word_32le,   ADDRESS_SPACE_PROGRAM)
+   READDWORD32(program_read_dword_32le,  ADDRESS_SPACE_PROGRAM)
+ WRITEBYTE32LE(program_write_byte_32le,  ADDRESS_SPACE_PROGRAM)
+ WRITEWORD32LE(program_write_word_32le,  ADDRESS_SPACE_PROGRAM)
+  WRITEDWORD32(program_write_dword_32le, ADDRESS_SPACE_PROGRAM)
 
-  READBYTE64BE(program_read_byte_64be,   address_space[ADDRESS_SPACE_PROGRAM])
-  READWORD64BE(program_read_word_64be,   address_space[ADDRESS_SPACE_PROGRAM])
- READDWORD64BE(program_read_dword_64be,  address_space[ADDRESS_SPACE_PROGRAM])
-   READQWORD64(program_read_qword_64be,  address_space[ADDRESS_SPACE_PROGRAM])
- WRITEBYTE64BE(program_write_byte_64be,  address_space[ADDRESS_SPACE_PROGRAM])
- WRITEWORD64BE(program_write_word_64be,  address_space[ADDRESS_SPACE_PROGRAM])
-WRITEDWORD64BE(program_write_dword_64be, address_space[ADDRESS_SPACE_PROGRAM])
-  WRITEQWORD64(program_write_qword_64be, address_space[ADDRESS_SPACE_PROGRAM])
+  READBYTE64BE(program_read_byte_64be,   ADDRESS_SPACE_PROGRAM)
+  READWORD64BE(program_read_word_64be,   ADDRESS_SPACE_PROGRAM)
+ READDWORD64BE(program_read_dword_64be,  ADDRESS_SPACE_PROGRAM)
+   READQWORD64(program_read_qword_64be,  ADDRESS_SPACE_PROGRAM)
+ WRITEBYTE64BE(program_write_byte_64be,  ADDRESS_SPACE_PROGRAM)
+ WRITEWORD64BE(program_write_word_64be,  ADDRESS_SPACE_PROGRAM)
+WRITEDWORD64BE(program_write_dword_64be, ADDRESS_SPACE_PROGRAM)
+  WRITEQWORD64(program_write_qword_64be, ADDRESS_SPACE_PROGRAM)
 
-  READBYTE64LE(program_read_byte_64le,   address_space[ADDRESS_SPACE_PROGRAM])
-  READWORD64LE(program_read_word_64le,   address_space[ADDRESS_SPACE_PROGRAM])
- READDWORD64LE(program_read_dword_64le,  address_space[ADDRESS_SPACE_PROGRAM])
-   READQWORD64(program_read_qword_64le,  address_space[ADDRESS_SPACE_PROGRAM])
- WRITEBYTE64LE(program_write_byte_64le,  address_space[ADDRESS_SPACE_PROGRAM])
- WRITEWORD64LE(program_write_word_64le,  address_space[ADDRESS_SPACE_PROGRAM])
-WRITEDWORD64LE(program_write_dword_64le, address_space[ADDRESS_SPACE_PROGRAM])
-  WRITEQWORD64(program_write_qword_64le, address_space[ADDRESS_SPACE_PROGRAM])
+  READBYTE64LE(program_read_byte_64le,   ADDRESS_SPACE_PROGRAM)
+  READWORD64LE(program_read_word_64le,   ADDRESS_SPACE_PROGRAM)
+ READDWORD64LE(program_read_dword_64le,  ADDRESS_SPACE_PROGRAM)
+   READQWORD64(program_read_qword_64le,  ADDRESS_SPACE_PROGRAM)
+ WRITEBYTE64LE(program_write_byte_64le,  ADDRESS_SPACE_PROGRAM)
+ WRITEWORD64LE(program_write_word_64le,  ADDRESS_SPACE_PROGRAM)
+WRITEDWORD64LE(program_write_dword_64le, ADDRESS_SPACE_PROGRAM)
+  WRITEQWORD64(program_write_qword_64le, ADDRESS_SPACE_PROGRAM)
 
 
 /*-------------------------------------------------
 	Data memory handlers
 -------------------------------------------------*/
 
-     READBYTE8(data_read_byte_8,      address_space[ADDRESS_SPACE_DATA])
-    WRITEBYTE8(data_write_byte_8,     address_space[ADDRESS_SPACE_DATA])
+     READBYTE8(data_read_byte_8,      ADDRESS_SPACE_DATA)
+    WRITEBYTE8(data_write_byte_8,     ADDRESS_SPACE_DATA)
 
-  READBYTE16BE(data_read_byte_16be,   address_space[ADDRESS_SPACE_DATA])
-    READWORD16(data_read_word_16be,   address_space[ADDRESS_SPACE_DATA])
- WRITEBYTE16BE(data_write_byte_16be,  address_space[ADDRESS_SPACE_DATA])
-   WRITEWORD16(data_write_word_16be,  address_space[ADDRESS_SPACE_DATA])
+  READBYTE16BE(data_read_byte_16be,   ADDRESS_SPACE_DATA)
+    READWORD16(data_read_word_16be,   ADDRESS_SPACE_DATA)
+ WRITEBYTE16BE(data_write_byte_16be,  ADDRESS_SPACE_DATA)
+   WRITEWORD16(data_write_word_16be,  ADDRESS_SPACE_DATA)
 
-  READBYTE16LE(data_read_byte_16le,   address_space[ADDRESS_SPACE_DATA])
-    READWORD16(data_read_word_16le,   address_space[ADDRESS_SPACE_DATA])
- WRITEBYTE16LE(data_write_byte_16le,  address_space[ADDRESS_SPACE_DATA])
-   WRITEWORD16(data_write_word_16le,  address_space[ADDRESS_SPACE_DATA])
+  READBYTE16LE(data_read_byte_16le,   ADDRESS_SPACE_DATA)
+    READWORD16(data_read_word_16le,   ADDRESS_SPACE_DATA)
+ WRITEBYTE16LE(data_write_byte_16le,  ADDRESS_SPACE_DATA)
+   WRITEWORD16(data_write_word_16le,  ADDRESS_SPACE_DATA)
 
-  READBYTE32BE(data_read_byte_32be,   address_space[ADDRESS_SPACE_DATA])
-  READWORD32BE(data_read_word_32be,   address_space[ADDRESS_SPACE_DATA])
-   READDWORD32(data_read_dword_32be,  address_space[ADDRESS_SPACE_DATA])
- WRITEBYTE32BE(data_write_byte_32be,  address_space[ADDRESS_SPACE_DATA])
- WRITEWORD32BE(data_write_word_32be,  address_space[ADDRESS_SPACE_DATA])
-  WRITEDWORD32(data_write_dword_32be, address_space[ADDRESS_SPACE_DATA])
+  READBYTE32BE(data_read_byte_32be,   ADDRESS_SPACE_DATA)
+  READWORD32BE(data_read_word_32be,   ADDRESS_SPACE_DATA)
+   READDWORD32(data_read_dword_32be,  ADDRESS_SPACE_DATA)
+ WRITEBYTE32BE(data_write_byte_32be,  ADDRESS_SPACE_DATA)
+ WRITEWORD32BE(data_write_word_32be,  ADDRESS_SPACE_DATA)
+  WRITEDWORD32(data_write_dword_32be, ADDRESS_SPACE_DATA)
 
-  READBYTE32LE(data_read_byte_32le,   address_space[ADDRESS_SPACE_DATA])
-  READWORD32LE(data_read_word_32le,   address_space[ADDRESS_SPACE_DATA])
-   READDWORD32(data_read_dword_32le,  address_space[ADDRESS_SPACE_DATA])
- WRITEBYTE32LE(data_write_byte_32le,  address_space[ADDRESS_SPACE_DATA])
- WRITEWORD32LE(data_write_word_32le,  address_space[ADDRESS_SPACE_DATA])
-  WRITEDWORD32(data_write_dword_32le, address_space[ADDRESS_SPACE_DATA])
+  READBYTE32LE(data_read_byte_32le,   ADDRESS_SPACE_DATA)
+  READWORD32LE(data_read_word_32le,   ADDRESS_SPACE_DATA)
+   READDWORD32(data_read_dword_32le,  ADDRESS_SPACE_DATA)
+ WRITEBYTE32LE(data_write_byte_32le,  ADDRESS_SPACE_DATA)
+ WRITEWORD32LE(data_write_word_32le,  ADDRESS_SPACE_DATA)
+  WRITEDWORD32(data_write_dword_32le, ADDRESS_SPACE_DATA)
 
-  READBYTE64BE(data_read_byte_64be,   address_space[ADDRESS_SPACE_DATA])
-  READWORD64BE(data_read_word_64be,   address_space[ADDRESS_SPACE_DATA])
- READDWORD64BE(data_read_dword_64be,  address_space[ADDRESS_SPACE_DATA])
-   READQWORD64(data_read_qword_64be,  address_space[ADDRESS_SPACE_DATA])
- WRITEBYTE64BE(data_write_byte_64be,  address_space[ADDRESS_SPACE_DATA])
- WRITEWORD64BE(data_write_word_64be,  address_space[ADDRESS_SPACE_DATA])
-WRITEDWORD64BE(data_write_dword_64be, address_space[ADDRESS_SPACE_DATA])
-  WRITEQWORD64(data_write_qword_64be, address_space[ADDRESS_SPACE_DATA])
+  READBYTE64BE(data_read_byte_64be,   ADDRESS_SPACE_DATA)
+  READWORD64BE(data_read_word_64be,   ADDRESS_SPACE_DATA)
+ READDWORD64BE(data_read_dword_64be,  ADDRESS_SPACE_DATA)
+   READQWORD64(data_read_qword_64be,  ADDRESS_SPACE_DATA)
+ WRITEBYTE64BE(data_write_byte_64be,  ADDRESS_SPACE_DATA)
+ WRITEWORD64BE(data_write_word_64be,  ADDRESS_SPACE_DATA)
+WRITEDWORD64BE(data_write_dword_64be, ADDRESS_SPACE_DATA)
+  WRITEQWORD64(data_write_qword_64be, ADDRESS_SPACE_DATA)
 
-  READBYTE64LE(data_read_byte_64le,   address_space[ADDRESS_SPACE_DATA])
-  READWORD64LE(data_read_word_64le,   address_space[ADDRESS_SPACE_DATA])
- READDWORD64LE(data_read_dword_64le,  address_space[ADDRESS_SPACE_DATA])
-   READQWORD64(data_read_qword_64le,  address_space[ADDRESS_SPACE_DATA])
- WRITEBYTE64LE(data_write_byte_64le,  address_space[ADDRESS_SPACE_DATA])
- WRITEWORD64LE(data_write_word_64le,  address_space[ADDRESS_SPACE_DATA])
-WRITEDWORD64LE(data_write_dword_64le, address_space[ADDRESS_SPACE_DATA])
-  WRITEQWORD64(data_write_qword_64le, address_space[ADDRESS_SPACE_DATA])
+  READBYTE64LE(data_read_byte_64le,   ADDRESS_SPACE_DATA)
+  READWORD64LE(data_read_word_64le,   ADDRESS_SPACE_DATA)
+ READDWORD64LE(data_read_dword_64le,  ADDRESS_SPACE_DATA)
+   READQWORD64(data_read_qword_64le,  ADDRESS_SPACE_DATA)
+ WRITEBYTE64LE(data_write_byte_64le,  ADDRESS_SPACE_DATA)
+ WRITEWORD64LE(data_write_word_64le,  ADDRESS_SPACE_DATA)
+WRITEDWORD64LE(data_write_dword_64le, ADDRESS_SPACE_DATA)
+  WRITEQWORD64(data_write_qword_64le, ADDRESS_SPACE_DATA)
 
 
 /*-------------------------------------------------
 	I/O memory handlers
 -------------------------------------------------*/
 
-     READBYTE8(io_read_byte_8,      address_space[ADDRESS_SPACE_IO])
-    WRITEBYTE8(io_write_byte_8,     address_space[ADDRESS_SPACE_IO])
+     READBYTE8(io_read_byte_8,      ADDRESS_SPACE_IO)
+    WRITEBYTE8(io_write_byte_8,     ADDRESS_SPACE_IO)
 
-  READBYTE16BE(io_read_byte_16be,   address_space[ADDRESS_SPACE_IO])
-    READWORD16(io_read_word_16be,   address_space[ADDRESS_SPACE_IO])
- WRITEBYTE16BE(io_write_byte_16be,  address_space[ADDRESS_SPACE_IO])
-   WRITEWORD16(io_write_word_16be,  address_space[ADDRESS_SPACE_IO])
+  READBYTE16BE(io_read_byte_16be,   ADDRESS_SPACE_IO)
+    READWORD16(io_read_word_16be,   ADDRESS_SPACE_IO)
+ WRITEBYTE16BE(io_write_byte_16be,  ADDRESS_SPACE_IO)
+   WRITEWORD16(io_write_word_16be,  ADDRESS_SPACE_IO)
 
-  READBYTE16LE(io_read_byte_16le,   address_space[ADDRESS_SPACE_IO])
-    READWORD16(io_read_word_16le,   address_space[ADDRESS_SPACE_IO])
- WRITEBYTE16LE(io_write_byte_16le,  address_space[ADDRESS_SPACE_IO])
-   WRITEWORD16(io_write_word_16le,  address_space[ADDRESS_SPACE_IO])
+  READBYTE16LE(io_read_byte_16le,   ADDRESS_SPACE_IO)
+    READWORD16(io_read_word_16le,   ADDRESS_SPACE_IO)
+ WRITEBYTE16LE(io_write_byte_16le,  ADDRESS_SPACE_IO)
+   WRITEWORD16(io_write_word_16le,  ADDRESS_SPACE_IO)
 
-  READBYTE32BE(io_read_byte_32be,   address_space[ADDRESS_SPACE_IO])
-  READWORD32BE(io_read_word_32be,   address_space[ADDRESS_SPACE_IO])
-   READDWORD32(io_read_dword_32be,  address_space[ADDRESS_SPACE_IO])
- WRITEBYTE32BE(io_write_byte_32be,  address_space[ADDRESS_SPACE_IO])
- WRITEWORD32BE(io_write_word_32be,  address_space[ADDRESS_SPACE_IO])
-  WRITEDWORD32(io_write_dword_32be, address_space[ADDRESS_SPACE_IO])
+  READBYTE32BE(io_read_byte_32be,   ADDRESS_SPACE_IO)
+  READWORD32BE(io_read_word_32be,   ADDRESS_SPACE_IO)
+   READDWORD32(io_read_dword_32be,  ADDRESS_SPACE_IO)
+ WRITEBYTE32BE(io_write_byte_32be,  ADDRESS_SPACE_IO)
+ WRITEWORD32BE(io_write_word_32be,  ADDRESS_SPACE_IO)
+  WRITEDWORD32(io_write_dword_32be, ADDRESS_SPACE_IO)
 
-  READBYTE32LE(io_read_byte_32le,   address_space[ADDRESS_SPACE_IO])
-  READWORD32LE(io_read_word_32le,   address_space[ADDRESS_SPACE_IO])
-   READDWORD32(io_read_dword_32le,  address_space[ADDRESS_SPACE_IO])
- WRITEBYTE32LE(io_write_byte_32le,  address_space[ADDRESS_SPACE_IO])
- WRITEWORD32LE(io_write_word_32le,  address_space[ADDRESS_SPACE_IO])
-  WRITEDWORD32(io_write_dword_32le, address_space[ADDRESS_SPACE_IO])
+  READBYTE32LE(io_read_byte_32le,   ADDRESS_SPACE_IO)
+  READWORD32LE(io_read_word_32le,   ADDRESS_SPACE_IO)
+   READDWORD32(io_read_dword_32le,  ADDRESS_SPACE_IO)
+ WRITEBYTE32LE(io_write_byte_32le,  ADDRESS_SPACE_IO)
+ WRITEWORD32LE(io_write_word_32le,  ADDRESS_SPACE_IO)
+  WRITEDWORD32(io_write_dword_32le, ADDRESS_SPACE_IO)
 
-  READBYTE64BE(io_read_byte_64be,   address_space[ADDRESS_SPACE_IO])
-  READWORD64BE(io_read_word_64be,   address_space[ADDRESS_SPACE_IO])
- READDWORD64BE(io_read_dword_64be,  address_space[ADDRESS_SPACE_IO])
-   READQWORD64(io_read_qword_64be,  address_space[ADDRESS_SPACE_IO])
- WRITEBYTE64BE(io_write_byte_64be,  address_space[ADDRESS_SPACE_IO])
- WRITEWORD64BE(io_write_word_64be,  address_space[ADDRESS_SPACE_IO])
-WRITEDWORD64BE(io_write_dword_64be, address_space[ADDRESS_SPACE_IO])
-  WRITEQWORD64(io_write_qword_64be, address_space[ADDRESS_SPACE_IO])
+  READBYTE64BE(io_read_byte_64be,   ADDRESS_SPACE_IO)
+  READWORD64BE(io_read_word_64be,   ADDRESS_SPACE_IO)
+ READDWORD64BE(io_read_dword_64be,  ADDRESS_SPACE_IO)
+   READQWORD64(io_read_qword_64be,  ADDRESS_SPACE_IO)
+ WRITEBYTE64BE(io_write_byte_64be,  ADDRESS_SPACE_IO)
+ WRITEWORD64BE(io_write_word_64be,  ADDRESS_SPACE_IO)
+WRITEDWORD64BE(io_write_dword_64be, ADDRESS_SPACE_IO)
+  WRITEQWORD64(io_write_qword_64be, ADDRESS_SPACE_IO)
 
-  READBYTE64LE(io_read_byte_64le,   address_space[ADDRESS_SPACE_IO])
-  READWORD64LE(io_read_word_64le,   address_space[ADDRESS_SPACE_IO])
- READDWORD64LE(io_read_dword_64le,  address_space[ADDRESS_SPACE_IO])
-   READQWORD64(io_read_qword_64le,  address_space[ADDRESS_SPACE_IO])
- WRITEBYTE64LE(io_write_byte_64le,  address_space[ADDRESS_SPACE_IO])
- WRITEWORD64LE(io_write_word_64le,  address_space[ADDRESS_SPACE_IO])
-WRITEDWORD64LE(io_write_dword_64le, address_space[ADDRESS_SPACE_IO])
-  WRITEQWORD64(io_write_qword_64le, address_space[ADDRESS_SPACE_IO])
+  READBYTE64LE(io_read_byte_64le,   ADDRESS_SPACE_IO)
+  READWORD64LE(io_read_word_64le,   ADDRESS_SPACE_IO)
+ READDWORD64LE(io_read_dword_64le,  ADDRESS_SPACE_IO)
+   READQWORD64(io_read_qword_64le,  ADDRESS_SPACE_IO)
+ WRITEBYTE64LE(io_write_byte_64le,  ADDRESS_SPACE_IO)
+ WRITEWORD64LE(io_write_word_64le,  ADDRESS_SPACE_IO)
+WRITEDWORD64LE(io_write_dword_64le, ADDRESS_SPACE_IO)
+  WRITEQWORD64(io_write_qword_64le, ADDRESS_SPACE_IO)
 
 
 /*-------------------------------------------------
@@ -2517,116 +2588,116 @@ data64_t cpu_readop_arg64_safe(offs_t offset)
 
 static READ8_HANDLER( mrh8_unmap_program )
 {
-	logerror("cpu #%d (PC=%08X): unmapped program memory byte read from %08X\n", cpu_getactivecpu(), activecpu_get_pc(), INV_SPACE_SHIFT(&cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_PROGRAM], offset));
+	if (!debugger_access) logerror("cpu #%d (PC=%08X): unmapped program memory byte read from %08X\n", cpu_getactivecpu(), activecpu_get_pc(), INV_SPACE_SHIFT(&cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_PROGRAM], offset));
 	return cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_PROGRAM].unmap;
 }
 static READ16_HANDLER( mrh16_unmap_program )
 {
-	logerror("cpu #%d (PC=%08X): unmapped program memory word read from %08X & %04X\n", cpu_getactivecpu(), activecpu_get_pc(), INV_SPACE_SHIFT(&cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_PROGRAM], offset*2), mem_mask ^ 0xffff);
+	if (!debugger_access) logerror("cpu #%d (PC=%08X): unmapped program memory word read from %08X & %04X\n", cpu_getactivecpu(), activecpu_get_pc(), INV_SPACE_SHIFT(&cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_PROGRAM], offset*2), mem_mask ^ 0xffff);
 	return cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_PROGRAM].unmap;
 }
 static READ32_HANDLER( mrh32_unmap_program )
 {
-	logerror("cpu #%d (PC=%08X): unmapped program memory dword read from %08X & %08X\n", cpu_getactivecpu(), activecpu_get_pc(), INV_SPACE_SHIFT(&cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_PROGRAM], offset*4), mem_mask ^ 0xffffffff);
+	if (!debugger_access) logerror("cpu #%d (PC=%08X): unmapped program memory dword read from %08X & %08X\n", cpu_getactivecpu(), activecpu_get_pc(), INV_SPACE_SHIFT(&cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_PROGRAM], offset*4), mem_mask ^ 0xffffffff);
 	return cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_PROGRAM].unmap;
 }
 static READ64_HANDLER( mrh64_unmap_program )
 {
-	logerror("cpu #%d (PC=%08X): unmapped program memory qword read from %08X & %08X%08X\n", cpu_getactivecpu(), activecpu_get_pc(), INV_SPACE_SHIFT(&cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_PROGRAM], offset*8), (int)(mem_mask >> 32) ^ 0xffffffff, (int)(mem_mask & 0xffffffff) ^ 0xffffffff);
+	if (!debugger_access) logerror("cpu #%d (PC=%08X): unmapped program memory qword read from %08X & %08X%08X\n", cpu_getactivecpu(), activecpu_get_pc(), INV_SPACE_SHIFT(&cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_PROGRAM], offset*8), (int)(mem_mask >> 32) ^ 0xffffffff, (int)(mem_mask & 0xffffffff) ^ 0xffffffff);
 	return cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_PROGRAM].unmap;
 }
 
 static WRITE8_HANDLER( mwh8_unmap_program )
 {
-	logerror("cpu #%d (PC=%08X): unmapped program memory byte write to %08X = %02X\n", cpu_getactivecpu(), activecpu_get_pc(), INV_SPACE_SHIFT(&cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_PROGRAM], offset), data);
+	if (!debugger_access) logerror("cpu #%d (PC=%08X): unmapped program memory byte write to %08X = %02X\n", cpu_getactivecpu(), activecpu_get_pc(), INV_SPACE_SHIFT(&cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_PROGRAM], offset), data);
 }
 static WRITE16_HANDLER( mwh16_unmap_program )
 {
-	logerror("cpu #%d (PC=%08X): unmapped program memory word write to %08X = %04X & %04X\n", cpu_getactivecpu(), activecpu_get_pc(), INV_SPACE_SHIFT(&cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_PROGRAM], offset*2), data, mem_mask ^ 0xffff);
+	if (!debugger_access) logerror("cpu #%d (PC=%08X): unmapped program memory word write to %08X = %04X & %04X\n", cpu_getactivecpu(), activecpu_get_pc(), INV_SPACE_SHIFT(&cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_PROGRAM], offset*2), data, mem_mask ^ 0xffff);
 }
 static WRITE32_HANDLER( mwh32_unmap_program )
 {
-	logerror("cpu #%d (PC=%08X): unmapped program memory dword write to %08X = %08X & %08X\n", cpu_getactivecpu(), activecpu_get_pc(), INV_SPACE_SHIFT(&cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_PROGRAM], offset*4), data, mem_mask ^ 0xffffffff);
+	if (!debugger_access) logerror("cpu #%d (PC=%08X): unmapped program memory dword write to %08X = %08X & %08X\n", cpu_getactivecpu(), activecpu_get_pc(), INV_SPACE_SHIFT(&cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_PROGRAM], offset*4), data, mem_mask ^ 0xffffffff);
 }
 static WRITE64_HANDLER( mwh64_unmap_program )
 {
-	logerror("cpu #%d (PC=%08X): unmapped program memory qword write to %08X = %08X%08X & %08X%08X\n", cpu_getactivecpu(), activecpu_get_pc(), INV_SPACE_SHIFT(&cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_PROGRAM], offset*8), (int)(data >> 32), (int)(data & 0xffffffff), (int)(mem_mask >> 32) ^ 0xffffffff, (int)(mem_mask & 0xffffffff) ^ 0xffffffff);
+	if (!debugger_access) logerror("cpu #%d (PC=%08X): unmapped program memory qword write to %08X = %08X%08X & %08X%08X\n", cpu_getactivecpu(), activecpu_get_pc(), INV_SPACE_SHIFT(&cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_PROGRAM], offset*8), (int)(data >> 32), (int)(data & 0xffffffff), (int)(mem_mask >> 32) ^ 0xffffffff, (int)(mem_mask & 0xffffffff) ^ 0xffffffff);
 }
 
 static READ8_HANDLER( mrh8_unmap_data )
 {
-	logerror("cpu #%d (PC=%08X): unmapped data memory byte read from %08X\n", cpu_getactivecpu(), activecpu_get_pc(), INV_SPACE_SHIFT(&cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_DATA], offset));
+	if (!debugger_access) logerror("cpu #%d (PC=%08X): unmapped data memory byte read from %08X\n", cpu_getactivecpu(), activecpu_get_pc(), INV_SPACE_SHIFT(&cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_DATA], offset));
 	return cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_DATA].unmap;
 }
 static READ16_HANDLER( mrh16_unmap_data )
 {
-	logerror("cpu #%d (PC=%08X): unmapped data memory word read from %08X & %04X\n", cpu_getactivecpu(), activecpu_get_pc(), INV_SPACE_SHIFT(&cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_DATA], offset*2), mem_mask ^ 0xffff);
+	if (!debugger_access) logerror("cpu #%d (PC=%08X): unmapped data memory word read from %08X & %04X\n", cpu_getactivecpu(), activecpu_get_pc(), INV_SPACE_SHIFT(&cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_DATA], offset*2), mem_mask ^ 0xffff);
 	return cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_DATA].unmap;
 }
 static READ32_HANDLER( mrh32_unmap_data )
 {
-	logerror("cpu #%d (PC=%08X): unmapped data memory dword read from %08X & %08X\n", cpu_getactivecpu(), activecpu_get_pc(), INV_SPACE_SHIFT(&cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_DATA], offset*4), mem_mask ^ 0xffffffff);
+	if (!debugger_access) logerror("cpu #%d (PC=%08X): unmapped data memory dword read from %08X & %08X\n", cpu_getactivecpu(), activecpu_get_pc(), INV_SPACE_SHIFT(&cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_DATA], offset*4), mem_mask ^ 0xffffffff);
 	return cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_DATA].unmap;
 }
 static READ64_HANDLER( mrh64_unmap_data )
 {
-	logerror("cpu #%d (PC=%08X): unmapped data memory qword read from %08X & %08X%08X\n", cpu_getactivecpu(), activecpu_get_pc(), INV_SPACE_SHIFT(&cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_DATA], offset*8), (int)(mem_mask >> 32) ^ 0xffffffff, (int)(mem_mask & 0xffffffff) ^ 0xffffffff);
+	if (!debugger_access) logerror("cpu #%d (PC=%08X): unmapped data memory qword read from %08X & %08X%08X\n", cpu_getactivecpu(), activecpu_get_pc(), INV_SPACE_SHIFT(&cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_DATA], offset*8), (int)(mem_mask >> 32) ^ 0xffffffff, (int)(mem_mask & 0xffffffff) ^ 0xffffffff);
 	return cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_DATA].unmap;
 }
 
 static WRITE8_HANDLER( mwh8_unmap_data )
 {
-	logerror("cpu #%d (PC=%08X): unmapped data memory byte write to %08X = %02X\n", cpu_getactivecpu(), activecpu_get_pc(), INV_SPACE_SHIFT(&cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_DATA], offset), data);
+	if (!debugger_access) logerror("cpu #%d (PC=%08X): unmapped data memory byte write to %08X = %02X\n", cpu_getactivecpu(), activecpu_get_pc(), INV_SPACE_SHIFT(&cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_DATA], offset), data);
 }
 static WRITE16_HANDLER( mwh16_unmap_data )
 {
-	logerror("cpu #%d (PC=%08X): unmapped data memory word write to %08X = %04X & %04X\n", cpu_getactivecpu(), activecpu_get_pc(), INV_SPACE_SHIFT(&cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_DATA], offset*2), data, mem_mask ^ 0xffff);
+	if (!debugger_access) logerror("cpu #%d (PC=%08X): unmapped data memory word write to %08X = %04X & %04X\n", cpu_getactivecpu(), activecpu_get_pc(), INV_SPACE_SHIFT(&cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_DATA], offset*2), data, mem_mask ^ 0xffff);
 }
 static WRITE32_HANDLER( mwh32_unmap_data )
 {
-	logerror("cpu #%d (PC=%08X): unmapped data memory dword write to %08X = %08X & %08X\n", cpu_getactivecpu(), activecpu_get_pc(), INV_SPACE_SHIFT(&cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_DATA], offset*4), data, mem_mask ^ 0xffffffff);
+	if (!debugger_access) logerror("cpu #%d (PC=%08X): unmapped data memory dword write to %08X = %08X & %08X\n", cpu_getactivecpu(), activecpu_get_pc(), INV_SPACE_SHIFT(&cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_DATA], offset*4), data, mem_mask ^ 0xffffffff);
 }
 static WRITE64_HANDLER( mwh64_unmap_data )
 {
-	logerror("cpu #%d (PC=%08X): unmapped data memory qword write to %08X = %08X%08X & %08X%08X\n", cpu_getactivecpu(), activecpu_get_pc(), INV_SPACE_SHIFT(&cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_DATA], offset*8), (int)(data >> 32), (int)(data & 0xffffffff), (int)(mem_mask >> 32) ^ 0xffffffff, (int)(mem_mask & 0xffffffff) ^ 0xffffffff);
+	if (!debugger_access) logerror("cpu #%d (PC=%08X): unmapped data memory qword write to %08X = %08X%08X & %08X%08X\n", cpu_getactivecpu(), activecpu_get_pc(), INV_SPACE_SHIFT(&cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_DATA], offset*8), (int)(data >> 32), (int)(data & 0xffffffff), (int)(mem_mask >> 32) ^ 0xffffffff, (int)(mem_mask & 0xffffffff) ^ 0xffffffff);
 }
 
 static READ8_HANDLER( mrh8_unmap_io )
 {
-	logerror("cpu #%d (PC=%08X): unmapped I/O byte read from %08X\n", cpu_getactivecpu(), activecpu_get_pc(), INV_SPACE_SHIFT(&cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_IO], offset));
+	if (!debugger_access) logerror("cpu #%d (PC=%08X): unmapped I/O byte read from %08X\n", cpu_getactivecpu(), activecpu_get_pc(), INV_SPACE_SHIFT(&cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_IO], offset));
 	return cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_IO].unmap;
 }
 static READ16_HANDLER( mrh16_unmap_io )
 {
-	logerror("cpu #%d (PC=%08X): unmapped I/O word read from %08X & %04X\n", cpu_getactivecpu(), activecpu_get_pc(), INV_SPACE_SHIFT(&cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_IO], offset*2), mem_mask ^ 0xffff);
+	if (!debugger_access) logerror("cpu #%d (PC=%08X): unmapped I/O word read from %08X & %04X\n", cpu_getactivecpu(), activecpu_get_pc(), INV_SPACE_SHIFT(&cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_IO], offset*2), mem_mask ^ 0xffff);
 	return cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_IO].unmap;
 }
 static READ32_HANDLER( mrh32_unmap_io )
 {
-	logerror("cpu #%d (PC=%08X): unmapped I/O dword read from %08X & %08X\n", cpu_getactivecpu(), activecpu_get_pc(), INV_SPACE_SHIFT(&cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_IO], offset*4), mem_mask ^ 0xffffffff);
+	if (!debugger_access) logerror("cpu #%d (PC=%08X): unmapped I/O dword read from %08X & %08X\n", cpu_getactivecpu(), activecpu_get_pc(), INV_SPACE_SHIFT(&cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_IO], offset*4), mem_mask ^ 0xffffffff);
 	return cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_IO].unmap;
 }
 static READ64_HANDLER( mrh64_unmap_io )
 {
-	logerror("cpu #%d (PC=%08X): unmapped I/O qword read from %08X & %08X%08X\n", cpu_getactivecpu(), activecpu_get_pc(), INV_SPACE_SHIFT(&cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_IO], offset*8), (int)(mem_mask >> 32) ^ 0xffffffff, (int)(mem_mask & 0xffffffff) ^ 0xffffffff);
+	if (!debugger_access) logerror("cpu #%d (PC=%08X): unmapped I/O qword read from %08X & %08X%08X\n", cpu_getactivecpu(), activecpu_get_pc(), INV_SPACE_SHIFT(&cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_IO], offset*8), (int)(mem_mask >> 32) ^ 0xffffffff, (int)(mem_mask & 0xffffffff) ^ 0xffffffff);
 	return cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_IO].unmap;
 }
 
 static WRITE8_HANDLER( mwh8_unmap_io )
 {
-	logerror("cpu #%d (PC=%08X): unmapped I/O byte write to %08X = %02X\n", cpu_getactivecpu(), activecpu_get_pc(), INV_SPACE_SHIFT(&cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_IO], offset), data);
+	if (!debugger_access) logerror("cpu #%d (PC=%08X): unmapped I/O byte write to %08X = %02X\n", cpu_getactivecpu(), activecpu_get_pc(), INV_SPACE_SHIFT(&cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_IO], offset), data);
 }
 static WRITE16_HANDLER( mwh16_unmap_io )
 {
-	logerror("cpu #%d (PC=%08X): unmapped I/O word write to %08X = %04X & %04X\n", cpu_getactivecpu(), activecpu_get_pc(), INV_SPACE_SHIFT(&cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_IO], offset*2), data, mem_mask ^ 0xffff);
+	if (!debugger_access) logerror("cpu #%d (PC=%08X): unmapped I/O word write to %08X = %04X & %04X\n", cpu_getactivecpu(), activecpu_get_pc(), INV_SPACE_SHIFT(&cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_IO], offset*2), data, mem_mask ^ 0xffff);
 }
 static WRITE32_HANDLER( mwh32_unmap_io )
 {
-	logerror("cpu #%d (PC=%08X): unmapped I/O dword write to %08X = %08X & %08X\n", cpu_getactivecpu(), activecpu_get_pc(), INV_SPACE_SHIFT(&cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_IO], offset*4), data, mem_mask ^ 0xffffffff);
+	if (!debugger_access) logerror("cpu #%d (PC=%08X): unmapped I/O dword write to %08X = %08X & %08X\n", cpu_getactivecpu(), activecpu_get_pc(), INV_SPACE_SHIFT(&cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_IO], offset*4), data, mem_mask ^ 0xffffffff);
 }
 static WRITE64_HANDLER( mwh64_unmap_io )
 {
-	logerror("cpu #%d (PC=%08X): unmapped I/O qword write to %08X = %08X%08X & %08X%08X\n", cpu_getactivecpu(), activecpu_get_pc(), INV_SPACE_SHIFT(&cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_IO], offset*8), (int)(data >> 32), (int)(data & 0xffffffff), (int)(mem_mask >> 32) ^ 0xffffffff, (int)(mem_mask & 0xffffffff) ^ 0xffffffff);
+	if (!debugger_access) logerror("cpu #%d (PC=%08X): unmapped I/O qword write to %08X = %08X%08X & %08X%08X\n", cpu_getactivecpu(), activecpu_get_pc(), INV_SPACE_SHIFT(&cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_IO], offset*8), (int)(data >> 32), (int)(data & 0xffffffff), (int)(mem_mask >> 32) ^ 0xffffffff, (int)(mem_mask & 0xffffffff) ^ 0xffffffff);
 }
 
 
@@ -2634,22 +2705,22 @@ static WRITE64_HANDLER( mwh64_unmap_io )
 	no-op memory handlers
 -------------------------------------------------*/
 
-static READ8_HANDLER( mrh8_nop_program )    { return cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_PROGRAM].unmap; }
+static READ8_HANDLER( mrh8_nop_program )   { return cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_PROGRAM].unmap; }
 static READ16_HANDLER( mrh16_nop_program ) { return cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_PROGRAM].unmap; }
 static READ32_HANDLER( mrh32_nop_program ) { return cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_PROGRAM].unmap; }
 static READ64_HANDLER( mrh64_nop_program ) { return cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_PROGRAM].unmap; }
 
-static READ8_HANDLER( mrh8_nop_data )       { return cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_DATA].unmap; }
+static READ8_HANDLER( mrh8_nop_data )      { return cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_DATA].unmap; }
 static READ16_HANDLER( mrh16_nop_data )    { return cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_DATA].unmap; }
 static READ32_HANDLER( mrh32_nop_data )    { return cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_DATA].unmap; }
 static READ64_HANDLER( mrh64_nop_data )    { return cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_DATA].unmap; }
 
-static READ8_HANDLER( mrh8_nop_io )         { return cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_IO].unmap; }
+static READ8_HANDLER( mrh8_nop_io )        { return cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_IO].unmap; }
 static READ16_HANDLER( mrh16_nop_io )      { return cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_IO].unmap; }
 static READ32_HANDLER( mrh32_nop_io )      { return cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_IO].unmap; }
 static READ64_HANDLER( mrh64_nop_io )      { return cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_IO].unmap; }
 
-static WRITE8_HANDLER( mwh8_nop )           {  }
+static WRITE8_HANDLER( mwh8_nop )          {  }
 static WRITE16_HANDLER( mwh16_nop )        {  }
 static WRITE32_HANDLER( mwh32_nop )        {  }
 static WRITE64_HANDLER( mwh64_nop )        {  }
@@ -2659,7 +2730,7 @@ static WRITE64_HANDLER( mwh64_nop )        {  }
 	other static handlers
 -------------------------------------------------*/
 
-static WRITE8_HANDLER( mwh8_ramrom )    { bank_ptr[STATIC_RAM][offset] = bank_ptr[STATIC_RAM][offset + (opcode_base - opcode_arg_base)] = data; }
+static WRITE8_HANDLER( mwh8_ramrom )   { bank_ptr[STATIC_RAM][offset] = bank_ptr[STATIC_RAM][offset + (opcode_base - opcode_arg_base)] = data; }
 static WRITE16_HANDLER( mwh16_ramrom ) { COMBINE_DATA(&bank_ptr[STATIC_RAM][offset*2]); COMBINE_DATA(&bank_ptr[0][offset*2 + (opcode_base - opcode_arg_base)]); }
 static WRITE32_HANDLER( mwh32_ramrom ) { COMBINE_DATA(&bank_ptr[STATIC_RAM][offset*4]); COMBINE_DATA(&bank_ptr[0][offset*4 + (opcode_base - opcode_arg_base)]); }
 static WRITE64_HANDLER( mwh64_ramrom ) { COMBINE_DATA(&bank_ptr[STATIC_RAM][offset*8]); COMBINE_DATA(&bank_ptr[0][offset*8 + (opcode_base - opcode_arg_base)]); }

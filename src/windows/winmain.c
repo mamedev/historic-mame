@@ -220,8 +220,7 @@ int main(int argc, char **argv)
 
 	// restore the original LED state and close keyboard handle
 	stop_led();
-
-	win_process_events();
+	win_process_events(0);
 
 	// close errorlog, input and playback
 	cli_frontend_exit();

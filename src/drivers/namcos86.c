@@ -140,6 +140,13 @@ Notes:
 
 TODO:
 ----
+- In wndrmomo, enemies coming out from the ground cut "holes" from the crowd in
+  the foreground. This is because the crowd sprites have higher priority, but
+  come earlier in the sprite list, so now that sprite/tilemap orthogonality is
+  implemented, crowd is obscured by sprites following it, which are obscured
+  by the tilemap. Reverting to the previous behaviour, removing orthogonality,
+  would of course fix the problem, but I'm quite sure it wouldn't be correct.
+
 - The two unknown writes for the MCU are probably watchdog reset and irq acknowledge,
   but they don't seem to work as expected. During the first few frames they are
   written out of order and hooking them up in the usual way causes the MCU to
@@ -191,13 +198,6 @@ WRITE8_HANDLER( rthunder_backcolor_w );
 WRITE8_HANDLER( rthunder_tilebank_select_w );
 READ8_HANDLER( rthunder_spriteram_r );
 WRITE8_HANDLER( rthunder_spriteram_w );
-
-
-/* shared memory area with the mcu */
-static unsigned char *shared1;
-static READ8_HANDLER( shared1_r ) { return shared1[offset]; }
-static WRITE8_HANDLER( shared1_w ) { shared1[offset] = data; }
-
 
 
 static WRITE8_HANDLER( bankswitch1_w )
@@ -355,9 +355,7 @@ static ADDRESS_MAP_START( cpu1_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x1fff) AM_READWRITE(rthunder_videoram1_r,rthunder_videoram1_w) AM_BASE(&rthunder_videoram1)
 	AM_RANGE(0x2000, 0x3fff) AM_READWRITE(rthunder_videoram2_r,rthunder_videoram2_w) AM_BASE(&rthunder_videoram2)
 
-	AM_RANGE(0x4000, 0x40ff) AM_READWRITE(namcos1_wavedata_r,namcos1_wavedata_w) AM_BASE(&namco_wavedata) /* PSG device, shared RAM */
-	AM_RANGE(0x4100, 0x413f) AM_READWRITE(namcos1_sound_r,namcos1_sound_w) AM_BASE(&namco_soundregs) /* PSG device, shared RAM */
-	AM_RANGE(0x4000, 0x43ff) AM_READWRITE(shared1_r,shared1_w) AM_BASE(&shared1)
+	AM_RANGE(0x4000, 0x43ff) AM_READWRITE(namcos1_cus30_r,namcos1_cus30_w) AM_BASE(&namco_wavedata) /* PSG device, shared RAM */
 
 	AM_RANGE(0x4000, 0x5fff) AM_READWRITE(rthunder_spriteram_r,rthunder_spriteram_w)
 
@@ -413,9 +411,7 @@ CPU2_MEMORY( wndrmomo, 0x2000, 0x4000, 0x6000, UNUSED, UNUSED, 0xc000, 0xc800 )
 static ADDRESS_MAP_START( NAME##_mcu_map, ADDRESS_SPACE_PROGRAM, 8 )					\
 	AM_RANGE(0x0000, 0x001f) AM_READWRITE(hd63701_internal_registers_r,hd63701_internal_registers_w)	\
 	AM_RANGE(0x0080, 0x00ff) AM_RAM														\
-	AM_RANGE(0x1000, 0x10ff) AM_READWRITE(namcos1_wavedata_r,namcos1_wavedata_w) /* PSG device, shared RAM */	\
-	AM_RANGE(0x1100, 0x113f) AM_READWRITE(namcos1_sound_r,namcos1_sound_w) /* PSG device, shared RAM */	\
-	AM_RANGE(0x1000, 0x13ff) AM_READWRITE(shared1_r,shared1_w)											\
+	AM_RANGE(0x1000, 0x13ff) AM_READWRITE(namcos1_cus30_r,namcos1_cus30_w) /* PSG device, shared RAM */	\
 	AM_RANGE(0x1400, 0x1fff) AM_RAM														\
 	AM_RANGE(ADDR_INPUT+0x00, ADDR_INPUT+0x01) AM_READ(YM2151_status_port_0_r)			\
 	AM_RANGE(ADDR_INPUT+0x00, ADDR_INPUT+0x00) AM_WRITE(YM2151_register_port_0_w)		\
@@ -1028,15 +1024,19 @@ static struct GfxLayout tilelayout =
 
 static struct GfxLayout spritelayout =
 {
-	16,16,
+	32,32,
 	RGN_FRAC(1,1),
 	4,
 	{ 0, 1, 2, 3 },
 	{ 0*4, 1*4, 2*4, 3*4, 4*4, 5*4, 6*4, 7*4,
-			8*4, 9*4, 10*4, 11*4, 12*4, 13*4, 14*4, 15*4 },
+			8*4, 9*4, 10*4, 11*4, 12*4, 13*4, 14*4, 15*4,
+			16*64+0*4, 16*64+1*4, 16*64+2*4, 16*64+3*4, 16*64+4*4, 16*64+5*4, 16*64+6*4, 16*64+7*4,
+			16*64+8*4, 16*64+9*4, 16*64+10*4, 16*64+11*4, 16*64+12*4, 16*64+13*4, 16*64+14*4, 16*64+15*4 },
 	{ 0*64, 1*64, 2*64, 3*64, 4*64, 5*64, 6*64, 7*64,
-			8*64, 9*64, 10*64, 11*64, 12*64, 13*64, 14*64, 15*64 },
-	16*64
+			8*64, 9*64, 10*64, 11*64, 12*64, 13*64, 14*64, 15*64,
+			32*64, 33*64, 34*64, 35*64, 36*64, 37*64, 38*64, 39*64,
+			40*64, 41*64, 42*64, 43*64, 44*64, 45*64, 46*64, 47*64 },
+	64*64
 };
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
@@ -1060,7 +1060,7 @@ static struct YM2151interface ym2151_interface =
 
 static struct namco_interface namco_interface =
 {
-	49152000/2048, 		/* 24000Hz */
+	49152000/2048,	/* 24kHz */
 	8,		/* number of voices */
 	50,     /* playback volume */
 	-1,		/* memory region */
@@ -1101,7 +1101,7 @@ static MACHINE_DRIVER_START( hopmappy )
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(64*8, 32*8)
-	MDRV_VISIBLE_AREA(0*8, 36*8-1, 2*8, 30*8-1)
+	MDRV_VISIBLE_AREA(3 + 8*8, 3 + 44*8-1, 2*8, 30*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(512)
 	MDRV_COLORTABLE_LENGTH(4096)
@@ -1617,4 +1617,4 @@ GAME( 1986, roishtar, 0,        roishtar, roishtar, namco86, ROT0,   "Namco", "T
 GAME( 1986, genpeitd, 0,        genpeitd, genpeitd, namco86, ROT0,   "Namco", "Genpei ToumaDen" )
 GAME( 1986, rthunder, 0,        rthunder, rthunder, namco86, ROT0,   "Namco", "Rolling Thunder (new version)" )
 GAME( 1986, rthundro, rthunder, rthunder, rthundro, namco86, ROT0,   "Namco", "Rolling Thunder (old version)" )
-GAME( 1987, wndrmomo, 0,        wndrmomo, wndrmomo, namco86, ROT0,   "Namco", "Wonder Momo" )
+GAMEX(1987, wndrmomo, 0,        wndrmomo, wndrmomo, namco86, ROT0,   "Namco", "Wonder Momo", GAME_IMPERFECT_GRAPHICS )

@@ -46,7 +46,7 @@
 #define WRMEM(a,v)	(program_write_byte(a,v))
 INLINE data8_t RDSPC(int space, offs_t addr)
 {
-	switch (ALIGN)
+	switch (activecpu_databus_width(space)/8)
 	{
 		case 1:
 			return (*address_space[space].accessors->read_byte)(addr);
@@ -2350,7 +2350,7 @@ static unsigned dasm_line( unsigned pc, int times )
 	static char buffer[127+1];
 
 	while( times-- > 0 )
-		pc += activecpu_dasm( buffer, pc );
+		pc += activecpu_dasm( buffer, pc ) & DASMFLAG_LENGTHMASK;
 	pc = lshift( rshift(pc) & AMASK );
 
 	return pc;
@@ -2631,7 +2631,7 @@ static unsigned dump_dasm( unsigned pc )
 
 			DBGDASM.dst_ea_value = INVALID;
 			DBGDASM.src_ea_value = INVALID;
-			pc_next = pc + activecpu_dasm( dasm, pc );
+			pc_next = pc + (activecpu_dasm( dasm, pc ) & DASMFLAG_LENGTHMASK);
 
 			if( DBGDASM.pc_cur == pc )
 				win_set_title( win, "%s", get_ea_info(pc) );
@@ -2869,12 +2869,12 @@ static void dump_mem( int which, int set_title )
 			win_set_title( WIN_MEM(active_cpu,which), name_memory(DBGMEM[which].base) );
 	}
 
-	switch( DBGMEM[which].mode )
-	{
-	case MODE_HEX_UINT8:  dump_mem_hex( which, len_addr, 2 ); break;
-	case MODE_HEX_UINT16: dump_mem_hex( which, len_addr, 4 ); break;
-	case MODE_HEX_UINT32: dump_mem_hex( which, len_addr, 8 ); break;
-	}
+//	switch( DBGMEM[which].mode )
+//	{
+//	case MODE_HEX_UINT8:  dump_mem_hex( which, len_addr, 2 ); break;
+	/*case MODE_HEX_UINT16:*/ dump_mem_hex( which, len_addr, 4 );// break;
+//	case MODE_HEX_UINT32: dump_mem_hex( which, len_addr, 8 ); break;
+//	}
 }
 
 /**************************************************************************
@@ -3941,7 +3941,7 @@ static void cmd_dasm_to_file( void )
 	{
 		unsigned p = rshift(pc);
 		unsigned s;
-		size = activecpu_dasm( buffer, pc );
+		size = activecpu_dasm( buffer, pc ) & DASMFLAG_LENGTHMASK;
 		s = rshift(size);
 
 		fprintf(file, "%0*X: ", width, pc );

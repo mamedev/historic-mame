@@ -18,6 +18,9 @@ known issues:
 	- sprite/tilemap orthogonality needed
 	- bad road colors in Final Lap and Suzuka series
 
+	Finest Hour:
+	- roz plane colors are bad in-game
+
 	Final Lap:
 	- sprite size bit is bogus during splash screen
 
@@ -26,6 +29,7 @@ known issues:
 	- uses unaligned 32x32 sprites, which aren't handled correctly in vidhrdw/namcos2.c yet
 
 	Four Trax
+	- some graphics glitches (POSIRQ-related?)
 	- sprite banking (for rear view mirror) isn't working
 
 	Suzuka 8 Hours II
@@ -33,9 +37,6 @@ known issues:
 
 	Legend of Valkyrie
 	- gives ADSMISS error on startup
-
-	Dragon Saber
-	- has garbage ROZ layer spinning in the background of lava level (see attract mode)
 
 	Bubble Trouble (Golly Ghost II)
 	- not dumped
@@ -644,6 +645,7 @@ ADDRESS_MAP_END
 /*************************************************************/
 
 static ADDRESS_MAP_START( common_finallap_am, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x300000, 0x33ffff) AM_READ(namcos2_flap_prot_r)
 	NAMCOS2_68K_DEFAULT_CPU_BOARD_AM
 	AM_RANGE(0x800000, 0x80ffff) AM_READ(namcos2_sprite_ram_r) AM_WRITE(namcos2_sprite_ram_w) AM_BASE(&namcos2_sprite_ram)
 	AM_RANGE(0x840000, 0x840001) AM_READ(namcos2_gfx_ctrl_r) AM_WRITE(namcos2_gfx_ctrl_w)
@@ -652,7 +654,6 @@ static ADDRESS_MAP_START( common_finallap_am, ADDRESS_SPACE_PROGRAM, 16 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( master_finallap_am, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x300000, 0x33ffff) AM_READ(namcos2_flap_prot_r)
 	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM) AM_WRITE(MWA16_ROM)
 	AM_RANGE(0x100000, 0x10ffff) AM_READ(NAMCOS2_68K_MASTER_RAM_R) AM_WRITE(NAMCOS2_68K_MASTER_RAM_W)
 	AM_RANGE(0x180000, 0x183fff) AM_READ(NAMCOS2_68K_EEPROM_R) AM_WRITE(NAMCOS2_68K_EEPROM_W) AM_BASE(&namcos2_eeprom) AM_SIZE(&namcos2_eeprom_size)
@@ -660,7 +661,6 @@ static ADDRESS_MAP_START( master_finallap_am, ADDRESS_SPACE_PROGRAM, 16 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( slave_finallap_am, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x300000, 0x33ffff) AM_READ(namcos2_flap_prot_r)
 	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM) AM_WRITE(MWA16_ROM)
 	AM_RANGE(0x100000, 0x13ffff) AM_READ(NAMCOS2_68K_SLAVE_RAM_R) AM_WRITE(NAMCOS2_68K_SLAVE_RAM_W)
 	AM_RANGE(0x1c0000, 0x1fffff) AM_READ(namcos2_68k_slave_C148_r) AM_WRITE(namcos2_68k_slave_C148_w)
@@ -695,7 +695,7 @@ static ADDRESS_MAP_START( common_metlhawk_am, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0xc00000, 0xc03fff) AM_READ(namcos2_sprite_ram_r) AM_WRITE(namcos2_sprite_ram_w) AM_BASE(&namcos2_sprite_ram)
 	AM_RANGE(0xc40000, 0xc4ffff) AM_READ(namco_rozvideoram16_r) AM_WRITE(namco_rozvideoram16_w)
 	AM_RANGE(0xd00000, 0xd0001f) AM_READ(namco_rozcontrol16_r) AM_WRITE(namco_rozcontrol16_w)
-	AM_RANGE(0xe00000, 0xe00001) AM_READ(namcos2_gfx_ctrl_r) AM_WRITE(namcos2_gfx_ctrl_w)
+	AM_RANGE(0xe00000, 0xe00001) AM_READ(namcos2_gfx_ctrl_r) AM_WRITE(namcos2_gfx_ctrl_w) /* ??? */
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( master_metlhawk_am, ADDRESS_SPACE_PROGRAM, 16 )
@@ -1513,7 +1513,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ REGION_GFX1, 0x000000, &obj_layout,  0*256, 16 },
 	{ REGION_GFX1, 0x200000, &obj_layout,  0*256, 16 },
 	{ REGION_GFX2, 0x000000, &chr_layout, 16*256, 16 },
-	{ REGION_GFX3, 0x000000, &roz_layout,  0*256, 16 },
+	{ REGION_GFX3, 0x000000, &roz_layout,  0*256, 16  },
 	{ -1 }
 };
 
@@ -1523,7 +1523,7 @@ static struct GfxDecodeInfo finallap_gfxdecodeinfo[] =
 	{ REGION_GFX1, 0x200000, &obj_layout,  0*256, 16 },
 	{ REGION_GFX2, 0x000000, &chr_layout, 16*256, 16 },
 	{ -1 }
-};
+}; 
 
 static struct GfxDecodeInfo sgunner_gfxdecodeinfo[] =
 {
@@ -4159,13 +4159,15 @@ DRIVER_INIT( marvland ){
 	namcos2_gametype=NAMCOS2_MARVEL_LAND;
 }
 
-DRIVER_INIT( metlhawk ){
+DRIVER_INIT( metlhawk )
+{
 	/* unscramble sprites */
 	int i, j, k, l;
 	unsigned char *data = memory_region(REGION_GFX1);
 	for(i=0; i<0x200000; i+=32*32)
 	{
 		for(j=0; j<32*32; j+=32*4)
+		{
 			for(k=0; k<32; k+=4)
 			{
 				unsigned char v;
@@ -4197,9 +4199,10 @@ DRIVER_INIT( metlhawk ){
 					v = data[a+l+32];
 					data[a+l+32] = data[a+l+32*3];
 					data[a+l+32*3] = v;
-				}
-			}
-	}
+				} /* next l */
+			} /* next k */
+		} /* next j */
+	} /* next i */
 	/* 90 degrees prepare a turned character */
 	for(i=0; i<0x200000; i+=32*32)
 	{
@@ -4208,12 +4211,11 @@ DRIVER_INIT( metlhawk ){
 			for(k=0; k<32; k++)
 			{
 				data[0x200000+i+j*32+k] = data[i+j+k*32];
-			}
-		}
-	}
+			} /* next k */
+		} /* next j */
+	} /* next i */
 	namcos2_gametype=NAMCOS2_METAL_HAWK;
-}
-
+} /* metlhawk */
 
 DRIVER_INIT( mirninja ){
 	namcos2_gametype=NAMCOS2_MIRAI_NINJA;
@@ -4301,17 +4303,17 @@ GAMEX(1987, finalapd, finallap, finallap, finallap, finallap, ROT0,   "Namco", "
 GAMEX(1987, finalapc, finallap, finallap, finallap, finallap, ROT0,   "Namco", "Final Lap (Rev C)", GAME_IMPERFECT_GRAPHICS )
 GAMEX(1987, finlapjc, finallap, finallap, finallap, finallap, ROT0,   "Namco", "Final Lap (Japan - Rev C)", GAME_IMPERFECT_GRAPHICS )
 GAMEX(1987, finlapjb, finallap, finallap, finallap, finallap, ROT0,   "Namco", "Final Lap (Japan - Rev B)", GAME_IMPERFECT_GRAPHICS )
-GAME( 1988, assault,  0,        default2,  assault,  assault , ROT90,  "Namco", "Assault" )		/* adjusted */
-GAME( 1988, assaultj, assault,  default2,  assault,  assaultj, ROT90,  "Namco", "Assault (Japan)" )		/* adjusted */
-GAME( 1988, assaultp, assault,  default2,  assault,  assaultp, ROT90,  "Namco", "Assault Plus (Japan)" )	/* adjusted */
+GAME( 1988, assault,  0,        default2, assault,  assault , ROT90,  "Namco", "Assault" )		/* adjusted */
+GAME( 1988, assaultj, assault,  default2, assault,  assaultj, ROT90,  "Namco", "Assault (Japan)" )		/* adjusted */
+GAME( 1988, assaultp, assault,  default2, assault,  assaultp, ROT90,  "Namco", "Assault Plus (Japan)" )	/* adjusted */
 GAME( 1988, metlhawk, 0,        metlhawk, metlhawk, metlhawk, ROT90,  "Namco", "Metal Hawk (Japan)")
 GAME( 1988, ordyne,   0,        default,  default,  ordyne,   ROT180, "Namco", "Ordyne (Japan)" )
 GAME( 1988, mirninja, 0,        default,  default,  mirninja, ROT0,   "Namco", "Mirai Ninja (Japan)" )
-GAME( 1988, phelios,  0,        default2,  default,  phelios , ROT90,  "Namco", "Phelios (Japan)" )		/* adjusted */
-GAME( 1989, dirtfoxj, 0,        default2,  dirtfox,  dirtfoxj, ROT90,  "Namco", "Dirt Fox (Japan)" )	/* adjusted */
+GAME( 1988, phelios,  0,        default2, default,  phelios , ROT90,  "Namco", "Phelios (Japan)" )		/* adjusted */
+GAME( 1989, dirtfoxj, 0,        default2, dirtfox,  dirtfoxj, ROT90,  "Namco", "Dirt Fox (Japan)" )	/* adjusted */
 GAMEX(1989, fourtrax, 0,        finallap, fourtrax, fourtrax, ROT0,   "Namco", "Four Trax", GAME_IMPERFECT_GRAPHICS )
 GAME( 1989, valkyrie, 0,        default,  default,  valkyrie, ROT90,  "Namco", "Valkyrie No Densetsu (Japan)" )
-GAME( 1989, finehour, 0,        default2,  default,  finehour, ROT0,   "Namco", "Finest Hour (Japan)" )		/* adjusted */
+GAME( 1989, finehour, 0,        default2, default,  finehour, ROT0,   "Namco", "Finest Hour (Japan)" )		/* adjusted */
 GAME( 1989, burnforc, 0,        default,  default,  burnforc, ROT0,   "Namco", "Burning Force (Japan)" )
 GAME( 1989, marvland, 0,        default,  default,  marvland, ROT0,   "Namco", "Marvel Land (US)" )
 GAME( 1989, marvlanj, marvland, default,  default,  marvlanj, ROT0,   "Namco", "Marvel Land (Japan)" )
@@ -4332,7 +4334,7 @@ GAME( 1991, cosmogng, 0,        default,  default,  cosmogng, ROT90,  "Namco", "
 GAME( 1991, cosmognj, cosmogng, default,  default,  cosmogng, ROT90,  "Namco", "Cosmo Gang the Video (Japan)" )
 GAMEX(1992, finalap3, 0,        finallap, finalap3, finalap3, ROT0,   "Namco", "Final Lap 3 (Japan set 1)", GAME_NOT_WORKING|GAME_IMPERFECT_GRAPHICS  )
 GAMEX(1992, finalp3a, finalap3, finallap, finalap3, finalap3, ROT0,   "Namco", "Final Lap 3 (World)", GAME_NOT_WORKING|GAME_IMPERFECT_GRAPHICS  )
-GAMEX(1992, luckywld, 0,        luckywld, luckywld, luckywld, ROT0,   "Namco", "Lucky & Wild",GAME_IMPERFECT_GRAPHICS )
+GAME( 1992, luckywld, 0,        luckywld, luckywld, luckywld, ROT0,   "Namco", "Lucky & Wild" )
 GAMEX(1992, suzuka8h, 0,        luckywld, suzuka,   suzuka8h, ROT0,   "Namco", "Suzuka 8 Hours (World?)", GAME_IMPERFECT_GRAPHICS )
 GAMEX(1992, suzuk8hj, suzuka8h, luckywld, suzuka,   suzuka8h, ROT0,   "Namco", "Suzuka 8 Hours (Japan)", GAME_IMPERFECT_GRAPHICS  )
 GAME( 1992, sws,      0,        default,  default,  sws,      ROT0,   "Namco", "Super World Stadium (Japan)" )

@@ -1,5 +1,18 @@
 /***************************************************************************
 
+	Gun.Smoke
+	Capcom
+
+	driver by Paul Leaman
+
+	Games supported:
+		* Gun.Smoke (World)
+		* Gun.Smoke (Japan)
+		* Gun.Smoke (US set 1)
+		* Gun.Smoke (US set 2)
+		
+****************************************************************************
+
   GUNSMOKE
   ========
 
@@ -14,8 +27,7 @@ Stephh's notes (based on the games Z80 code and some tests) :
     (at 0x08dc in 'gunsmoka' and at 0x08d2 in the other sets).
     To do so, once the game has booted (after the "notice" screen),
     turn the "service" mode Dip Switch ON, and change Dip Switches
-    DSW 1-0 to 1-3 (which are used by coinage). You can also set
-    GUNSMOKE_HACK to 1 and change the fake "Starting Level" Dip Switch.
+    DSW 1-0 to 1-3 (which are used by coinage).
   - About the ingame bug at the end of level 2 : enemy's energy
     (stored at 0xf790) is in fact not infinite, but it turns back to
     0xff, so when it reaches 0 again, the boss is dead.
@@ -39,7 +51,7 @@ Stephh's notes (based on the games Z80 code and some tests) :
     You can enter 3 chars for your initials.
 
 
-4) 'gunsmoku'
+4) 'gunsmoka'
 
   - US version licenced to Romstar.
     You can enter 3 chars for your initials.
@@ -57,148 +69,115 @@ Stephh's notes (based on the games Z80 code and some tests) :
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
+extern UINT8 *gunsmoke_scrollx;
+extern UINT8 *gunsmoke_scrolly;
 
-#define GUNSMOKE_HACK	0
+extern WRITE8_HANDLER( gunsmoke_c804_w );
+extern WRITE8_HANDLER( gunsmoke_d806_w );
+extern WRITE8_HANDLER( gunsmoke_videoram_w );
+extern WRITE8_HANDLER( gunsmoke_colorram_w );
 
+extern PALETTE_INIT( gunsmoke );
+extern VIDEO_START( gunsmoke );
+extern VIDEO_UPDATE( gunsmoke );
 
-READ8_HANDLER( gunsmoke_bankedrom_r );
-extern MACHINE_INIT( gunsmoke );
+/* Read/Write Handlers */
 
-extern unsigned char *gunsmoke_bg_scrollx;
-extern unsigned char *gunsmoke_bg_scrolly;
-
-WRITE8_HANDLER( gunsmoke_c804_w );	/* in vidhrdw/c1943.c */
-WRITE8_HANDLER( gunsmoke_d806_w );	/* in vidhrdw/c1943.c */
-PALETTE_INIT( gunsmoke );
-VIDEO_UPDATE( gunsmoke );
-VIDEO_START( gunsmoke );
-
-
-#if GUNSMOKE_HACK
-static READ8_HANDLER( gunsmoke_input_r )
+static READ8_HANDLER( gunsmoke_protection_r )
 {
-	if ((activecpu_get_pc() == 0x0173) || (activecpu_get_pc() == 0x0181))	// to get correct coinage
-		return (readinputport(4));
-
-	if ((readinputport(3) & 0x80) == 0x00)	// "debug mode" ?
-		return ((readinputport(4) & 0xc0) | (readinputport(5) & 0x3f));
-	else
-		return (readinputport(4));
-}
-#endif
-
-
-static READ8_HANDLER( gunsmoke_unknown_r )
-{
-    static int gunsmoke_fixed_data[]={ 0xff, 0x00, 0x00 };
     /*
-    The routine at 0x0e69 tries to read data starting at 0xc4c9.
-    If this value is zero, it interprets the next two bytes as a
-    jump address.
-
-    This was resulting in a reboot which happens at the end of level 3
-    if you go too far to the right of the screen when fighting the level boss.
-
-    A non-zero for the first byte seems to be harmless  (although it may not be
-    the correct behaviour).
-
-    This could be some devious protection or it could be a bug in the
-    arcade game.  It's hard to tell without pulling the code apart.
+	    The routine at 0x0e69 tries to read data starting at 0xc4c9.
+	    If this value is zero, it interprets the next two bytes as a
+	    jump address.
+	
+	    This was resulting in a reboot which happens at the end of level 3
+	    if you go too far to the right of the screen when fighting the level boss.
+	
+	    A non-zero for the first byte seems to be harmless  
+	    (although it may not be the correct behaviour).
+	
+	    This could be some devious protection or it could be a bug in the
+	    arcade game.  It's hard to tell without pulling the code apart.
     */
+
+	static int gunsmoke_fixed_data[] = { 0xff, 0x00, 0x00 };
+
     return gunsmoke_fixed_data[offset];
 }
 
+/* Memory Maps */
 
-
-static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK1)
+static ADDRESS_MAP_START( gunsmoke_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_ROM
+	AM_RANGE(0x8000, 0xbfff) AM_ROMBANK(1)
 	AM_RANGE(0xc000, 0xc000) AM_READ(input_port_0_r)
 	AM_RANGE(0xc001, 0xc001) AM_READ(input_port_1_r)
 	AM_RANGE(0xc002, 0xc002) AM_READ(input_port_2_r)
 	AM_RANGE(0xc003, 0xc003) AM_READ(input_port_3_r)
-#if GUNSMOKE_HACK
-	AM_RANGE(0xc004, 0xc004) AM_READ(gunsmoke_input_r)
-#else
 	AM_RANGE(0xc004, 0xc004) AM_READ(input_port_4_r)
-#endif
-	AM_RANGE(0xc4c9, 0xc4cb) AM_READ(gunsmoke_unknown_r)
-	AM_RANGE(0xd000, 0xd3ff) AM_READ(videoram_r)
-	AM_RANGE(0xd400, 0xd7ff) AM_READ(colorram_r)
-	AM_RANGE(0xe000, 0xffff) AM_READ(MRA8_RAM) /* Work + sprite RAM */
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc4c9, 0xc4cb) AM_READ(gunsmoke_protection_r)
 	AM_RANGE(0xc800, 0xc800) AM_WRITE(soundlatch_w)
-	AM_RANGE(0xc804, 0xc804) AM_WRITE(gunsmoke_c804_w)	/* ROM bank switch, screen flip */
-	AM_RANGE(0xc806, 0xc806) AM_WRITE(MWA8_NOP) /* Watchdog ?? */
-	AM_RANGE(0xd000, 0xd3ff) AM_WRITE(videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
-	AM_RANGE(0xd400, 0xd7ff) AM_WRITE(colorram_w) AM_BASE(&colorram)
-	AM_RANGE(0xd800, 0xd801) AM_WRITE(MWA8_RAM) AM_BASE(&gunsmoke_bg_scrolly)
-	AM_RANGE(0xd802, 0xd802) AM_WRITE(MWA8_RAM) AM_BASE(&gunsmoke_bg_scrollx)
-	AM_RANGE(0xd806, 0xd806) AM_WRITE(gunsmoke_d806_w)	/* sprites and bg enable */
-	AM_RANGE(0xe000, 0xefff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0xf000, 0xffff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0xc804, 0xc804) AM_WRITE(gunsmoke_c804_w)	// ROM bank switch, screen flip
+	AM_RANGE(0xc806, 0xc806) AM_WRITE(watchdog_reset_w)
+	AM_RANGE(0xd000, 0xd3ff) AM_RAM AM_WRITE(gunsmoke_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0xd400, 0xd7ff) AM_RAM AM_WRITE(gunsmoke_colorram_w) AM_BASE(&colorram)
+	AM_RANGE(0xd800, 0xd801) AM_RAM AM_BASE(&gunsmoke_scrollx)
+	AM_RANGE(0xd802, 0xd802) AM_RAM AM_BASE(&gunsmoke_scrolly)
+	AM_RANGE(0xd806, 0xd806) AM_WRITE(gunsmoke_d806_w)	// sprites and bg enable
+	AM_RANGE(0xe000, 0xefff) AM_RAM
+	AM_RANGE(0xf000, 0xffff) AM_RAM AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
 ADDRESS_MAP_END
 
-
-
-static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0xc000, 0xc7ff) AM_READ(MRA8_RAM)
+static ADDRESS_MAP_START( sound_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_ROM
+	AM_RANGE(0xc000, 0xc7ff) AM_RAM
 	AM_RANGE(0xc800, 0xc800) AM_READ(soundlatch_r)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0xc000, 0xdfff) AM_WRITE(MWA8_RAM)
 	AM_RANGE(0xe000, 0xe000) AM_WRITE(YM2203_control_port_0_w)
 	AM_RANGE(0xe001, 0xe001) AM_WRITE(YM2203_write_port_0_w)
 	AM_RANGE(0xe002, 0xe002) AM_WRITE(YM2203_control_port_1_w)
 	AM_RANGE(0xe003, 0xe003) AM_WRITE(YM2203_write_port_1_w)
 ADDRESS_MAP_END
 
-
+/* Input Ports */
 
 INPUT_PORTS_START( gunsmoke )
-	PORT_START	/* IN0 */
+	PORT_START_TAG("IN0")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SPECIAL )	// VBLANK
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SERVICE1 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 
-	PORT_START	/* IN1 */
+	PORT_START_TAG("IN1")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  ) PORT_8WAY
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  ) PORT_8WAY
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    ) PORT_8WAY
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START	/* IN2 */
+	PORT_START_TAG("IN2")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_COCKTAIL
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_COCKTAIL
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_COCKTAIL
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_COCKTAIL
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  ) PORT_8WAY PORT_COCKTAIL
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  ) PORT_8WAY PORT_COCKTAIL
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    ) PORT_8WAY PORT_COCKTAIL
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_COCKTAIL
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_COCKTAIL
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_COCKTAIL
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START	/* DSW0 */
+	PORT_START_TAG("DSW0")
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x01, "30k, 80k then every 80k" )
-	PORT_DIPSETTING(    0x03, "30k, 100k then every 100k" )
-	PORT_DIPSETTING(    0x00, "30k, 100k then every 150k" )
-	PORT_DIPSETTING(    0x02, "30k and 100K only")
-	PORT_DIPNAME( 0x04, 0x04, "Demonstration" )
+	PORT_DIPSETTING(    0x01, "30K 80K 80K+" )
+	PORT_DIPSETTING(    0x03, "30K 100K 100K+" )
+	PORT_DIPSETTING(    0x00, "30K 100K 150K+" )
+	PORT_DIPSETTING(    0x02, "30K 100K")
+	PORT_DIPNAME( 0x04, 0x04, "Demo" )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
 	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Cabinet ) )
@@ -212,9 +191,9 @@ INPUT_PORTS_START( gunsmoke )
 	PORT_DIPNAME( 0x40, 0x40, "Freeze" )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )				// Also "debug mode"
+	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )	// Also "debug mode"
 
-	PORT_START      /* DSW1 */
+	PORT_START_TAG("DSW1")
 	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Coin_B ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 4C_1C ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( 3C_1C ) )
@@ -239,140 +218,19 @@ INPUT_PORTS_START( gunsmoke )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
-
-	PORT_START      /* Fake DSW */
-	PORT_DIPNAME( 0x0f, 0x0f, "Starting Level" )
-	PORT_DIPSETTING(    0x0f, "Demonstration" )
-	PORT_DIPSETTING(    0x0e, "Level 1" )
-	PORT_DIPSETTING(    0x0d, "Level 2" )
-	PORT_DIPSETTING(    0x0c, "Level 3" )
-	PORT_DIPSETTING(    0x0b, "Level 4" )
-	PORT_DIPSETTING(    0x0a, "Level 5" )
-	PORT_DIPSETTING(    0x09, "Level 6" )
-	PORT_DIPSETTING(    0x08, "Level 7" )
-	PORT_DIPSETTING(    0x07, "Level 8" )
-	PORT_DIPSETTING(    0x06, "Level 9" )
-	PORT_DIPSETTING(    0x05, "Level 10" )
-	PORT_DIPSETTING(    0x04, "Ending message" )
-//	PORT_DIPSETTING(    0x03, "Demonstration" )
-//	PORT_DIPSETTING(    0x02, "Demonstration" )
-//	PORT_DIPSETTING(    0x01, "Demonstration" )
-//	PORT_DIPSETTING(    0x00, "Invalid Level" )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( No ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
-/* Same as 'gunsmoke', but "Lives" Dip Switch instead of "Demonstration" Dip Switch */
-/* And swapped starting levels 3 and 6 in the fake Dip Switch */
 INPUT_PORTS_START( gunsmoka )
-	PORT_START	/* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SERVICE1 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_INCLUDE(gunsmoke)
 
-	PORT_START	/* IN1 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
-
-	PORT_START	/* IN2 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_COCKTAIL
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_COCKTAIL
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_COCKTAIL
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_COCKTAIL
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_COCKTAIL
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_COCKTAIL
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_COCKTAIL
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
-
-	PORT_START	/* DSW0 */
-	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x01, "30k, 80k then every 80k" )
-	PORT_DIPSETTING(    0x03, "30k, 100k then every 100k" )
-	PORT_DIPSETTING(    0x00, "30k, 100k then every 150k" )
-	PORT_DIPSETTING(    0x02, "30k and 100K only")
+	// Same as 'gunsmoke', but "Lives" Dip Switch instead of "Demonstration" Dip Switch
+	PORT_MODIFY("DSW0")
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x04, "3" )
 	PORT_DIPSETTING(    0x00, "5" )
-	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Cocktail ) )
-	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Easy ) )
-	PORT_DIPSETTING(    0x30, DEF_STR( Normal ) )
-	PORT_DIPSETTING(    0x10, "Difficult" )
-	PORT_DIPSETTING(    0x00, "Very Difficult" )
-	PORT_DIPNAME( 0x40, 0x40, "Freeze" )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )				// Also "debug mode"
-
-	PORT_START      /* DSW1 */
-	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 4C_1C ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x07, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x06, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x05, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( 1C_4C ) )
-	PORT_DIPSETTING(    0x03, DEF_STR( 1C_6C ) )
-	PORT_DIPNAME( 0x38, 0x38, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 4C_1C ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x38, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x30, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x28, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( 1C_4C ) )
-	PORT_DIPSETTING(    0x18, DEF_STR( 1C_6C ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Allow_Continue ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
-
-	PORT_START      /* Fake DSW */
-	PORT_DIPNAME( 0x0f, 0x0f, "Starting Level" )
-	PORT_DIPSETTING(    0x0f, "Demonstration" )
-	PORT_DIPSETTING(    0x0e, "Level 1" )
-	PORT_DIPSETTING(    0x0d, "Level 2" )
-	PORT_DIPSETTING(    0x09, "Level 3" )
-	PORT_DIPSETTING(    0x0b, "Level 4" )
-	PORT_DIPSETTING(    0x0a, "Level 5" )
-	PORT_DIPSETTING(    0x0c, "Level 6" )
-	PORT_DIPSETTING(    0x08, "Level 7" )
-	PORT_DIPSETTING(    0x07, "Level 8" )
-	PORT_DIPSETTING(    0x06, "Level 9" )
-	PORT_DIPSETTING(    0x05, "Level 10" )
-	PORT_DIPSETTING(    0x04, "Ending message" )
-//	PORT_DIPSETTING(    0x03, "Demonstration" )
-//	PORT_DIPSETTING(    0x02, "Demonstration" )
-//	PORT_DIPSETTING(    0x01, "Demonstration" )
-//	PORT_DIPSETTING(    0x00, "Invalid Level" )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( No ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
+/* Graphics Layouts */
 
 static struct GfxLayout charlayout =
 {
@@ -380,21 +238,9 @@ static struct GfxLayout charlayout =
 	1024,	/* 1024 characters */
 	2,	/* 2 bits per pixel */
 	{ 4, 0 },
-	{ 0, 1, 2, 3, 8+0, 8+1, 8+2, 8+3 },
-	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16 },
+	{ 8+3, 8+2, 8+1, 8+0, 3, 2, 1, 0 },
+	{ 7*16, 6*16, 5*16, 4*16, 3*16, 2*16, 1*16, 0*16 },
 	16*8	/* every char takes 16 consecutive bytes */
-};
-static struct GfxLayout spritelayout =
-{
-	16,16,	/* 16*16 sprites */
-	2048,	/* 2048 sprites */
-	4,      /* 4 bits per pixel */
-	{ 2048*64*8+4, 2048*64*8+0, 4, 0 },
-	{ 0, 1, 2, 3, 8+0, 8+1, 8+2, 8+3,
-			32*8+0, 32*8+1, 32*8+2, 32*8+3, 33*8+0, 33*8+1, 33*8+2, 33*8+3 },
-	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
-			8*16, 9*16, 10*16, 11*16, 12*16, 13*16, 14*16, 15*16 },
-	64*8	/* every sprite takes 64 consecutive bytes */
 };
 
 static struct GfxLayout tilelayout =
@@ -414,21 +260,35 @@ static struct GfxLayout tilelayout =
 	256*8	/* every tile takes 256 consecutive bytes */
 };
 
+static struct GfxLayout spritelayout =
+{
+	16,16,	/* 16*16 sprites */
+	2048,	/* 2048 sprites */
+	4,      /* 4 bits per pixel */
+	{ 2048*64*8+4, 2048*64*8+0, 4, 0 },
+	{ 0, 1, 2, 3, 8+0, 8+1, 8+2, 8+3,
+			32*8+0, 32*8+1, 32*8+2, 32*8+3, 33*8+0, 33*8+1, 33*8+2, 33*8+3 },
+	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
+			8*16, 9*16, 10*16, 11*16, 12*16, 13*16, 14*16, 15*16 },
+	64*8	/* every sprite takes 64 consecutive bytes */
+};
+
+/* Graphics Decode Info */
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,            0, 32 },
-	{ REGION_GFX2, 0, &tilelayout,         32*4, 16 }, /* Tiles */
-	{ REGION_GFX3, 0, &spritelayout, 32*4+16*16, 16 }, /* Sprites */
-	{ -1 } /* end of array */
+	{ REGION_GFX2, 0, &tilelayout,         32*4, 16 },
+	{ REGION_GFX3, 0, &spritelayout, 32*4+16*16, 16 },
+	{ -1 }
 };
 
-
+/* Sound Interfaces */
 
 static struct YM2203interface ym2203_interface =
 {
-	2,			/* 2 chips */
-	1500000,	/* 1.5 MHz (?) */
+	2,			// 2 chips
+	1500000,	// 1.5 MHz
 	{ YM2203_VOL(14,22), YM2203_VOL(14,22) },
 	{ 0 },
 	{ 0 },
@@ -436,24 +296,23 @@ static struct YM2203interface ym2203_interface =
 	{ 0 }
 };
 
-
+/* Machine Driver */
 
 static MACHINE_DRIVER_START( gunsmoke )
+	// basic machine hardware
+	MDRV_CPU_ADD(Z80, 4000000)	// 4 MHz
+	MDRV_CPU_PROGRAM_MAP(gunsmoke_map, 0)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold, 1)
 
-	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80, 4000000)        /* 4 MHz (?) */
-	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
-	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
-
-	MDRV_CPU_ADD(Z80, 3000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3 MHz (?) */
-	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
-	MDRV_CPU_VBLANK_INT(irq0_line_hold,4)
+	MDRV_CPU_ADD(Z80, 3000000)	// 3 MHz
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_PROGRAM_MAP(sound_map, 0)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold, 4)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	/* video hardware */
+	// video hardware
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(32*8, 32*8)
 	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
@@ -465,17 +324,11 @@ static MACHINE_DRIVER_START( gunsmoke )
 	MDRV_VIDEO_START(gunsmoke)
 	MDRV_VIDEO_UPDATE(gunsmoke)
 
-	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	// sound hardware
+	MDRV_SOUND_ADD_TAG("ym2203", YM2203, ym2203_interface)
 MACHINE_DRIVER_END
 
-
-
-/***************************************************************************
-
-  Game driver(s)
-
-***************************************************************************/
+/* ROMs */
 
 ROM_START( gunsmoke )
 	ROM_REGION( 0x20000, REGION_CPU1, 0 )     /* 2*64k for code */
@@ -669,6 +522,7 @@ ROM_START( gunsmoka )
 	ROM_LOAD( "01f_g-05.bin", 0x0900, 0x0100, CRC(25c90c2a) SHA1(42893572bab757ec01e181fc418cb911638d37e0) )	/* priority? (not used) */
 ROM_END
 
+/* Game Drivers */
 
 GAME( 1985, gunsmoke, 0,        gunsmoke, gunsmoke, 0, ROT270, "Capcom", "Gun.Smoke (World)" )
 GAME( 1985, gunsmokj, gunsmoke, gunsmoke, gunsmoke, 0, ROT270, "Capcom", "Gun.Smoke (Japan)" )

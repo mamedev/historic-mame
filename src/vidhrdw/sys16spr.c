@@ -35,6 +35,8 @@ Changes:
 #include "driver.h"
 #include "system16.h"
 
+UINT8 sprite_banks_used[16];
+
 int sys16_sprite_shinobi( struct sys16_sprite_attributes *sprite, const UINT16 *source, int bJustGetColor ){
 /* standard sprite hardware (Shinobi, Altered Beast, Golden Axe
 	0	YYYYYYYY	YYYYYYYY	top, bottom (screen coordinates)
@@ -83,6 +85,7 @@ int sys16_sprite_shinobi( struct sys16_sprite_attributes *sprite, const UINT16 *
 		sprite->zoomy = zoomy;
 		sprite->pitch = source[2]&0xff;
 		sprite->gfx = ( source[3] + (sys16_obj_bank[(attributes>>8)&0xf]<<(16+sys16_wwfix)) ) << 1; //*
+		sprite_banks_used[(attributes>>8)&0xf] = 1;
 	}
 	return 0;
 }
@@ -132,6 +135,7 @@ int sys16_sprite_passshot( struct sys16_sprite_attributes *sprite, const UINT16 
 		sprite->x = xpos;
 		sprite->y = top+2; //*
 		sprite->zoomx = sprite->zoomy = zoom;
+		sprite_banks_used[bank] = 1;
 	}
 	return 0;
 }
@@ -178,6 +182,7 @@ int sys16_sprite_fantzone( struct sys16_sprite_attributes *sprite, const UINT16 
 		if( pal==0x3f ) sprite->flags|= SYS16_SPR_SHADOW;
 #endif
 		sprite->gfx = ( (gfx &0x3ffff) + (bank<<17) )/2;
+		sprite_banks_used[bank] = 1;
 	}
 	return 0;
 }
@@ -237,6 +242,7 @@ int sys16_sprite_quartet2( struct sys16_sprite_attributes *sprite, const UINT16 
 			if( pal==0x3f ) sprite->flags|= SYS16_SPR_SHADOW; // shadow sprite
 #endif
 			sprite->gfx = ((gfx &0x3ffff) + (sys16_obj_bank[bank] << 17))/2;
+			sprite_banks_used[bank] = 1;
 		}
 	}
 	return 0;
@@ -292,6 +298,7 @@ int sys16_sprite_hangon( struct sys16_sprite_attributes *sprite, const UINT16 *s
 		sprite->zoomx = zoomx;
 		sprite->zoomy = zoomy;
 		sprite->gfx = ((gfx &0x3ffff) + (sys16_obj_bank[bank] << 17))/2;
+		sprite_banks_used[bank] = 1;
 	}
 	return 0;
 }
@@ -337,6 +344,7 @@ int sys16_sprite_sharrier( struct sys16_sprite_attributes *sprite, const UINT16 
 		}
 #endif
 		sprite->gfx = ((bank<<15)|(source[3]&0x7fff))*4;// + (sys16_obj_bank[bank] << 17);
+		sprite_banks_used[bank] = 1;
 	}
 	return 0;
 }
@@ -388,6 +396,7 @@ int sys16_sprite_outrun( struct sys16_sprite_attributes *sprite, const UINT16 *s
 			sprite->shadow_pen=10;
 		}
 #endif
+		sprite_banks_used[bank] = 1;
 	}
 	return 0;
 }
@@ -432,6 +441,7 @@ int sys16_sprite_aburner( struct sys16_sprite_attributes *sprite, const UINT16 *
 		sprite->zoomx = zoomx;
 		sprite->zoomy = zoomy;
 		sprite->gfx = gfx;
+		sprite_banks_used[bank] = 1;
 	}
 	return 0;
 }

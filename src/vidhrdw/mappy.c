@@ -420,6 +420,27 @@ void mappy_draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cli
 }
 
 
+/*
+sprite format:
+
+spriteram
+0   xxxxxxxx  tile number
+1   --xxxxxx  color
+
+spriteram_2
+0   xxxxxxxx  Y position
+1   xxxxxxxx  X position
+
+spriteram_3
+0   xx------  tile number LSB
+0   --xx----  Y size (16, 8, 32, 4?)
+0   ----xx--  X size (16, 8, 32, 4?)
+0   ------x-  Y flip
+0   -------x  X flip
+1   ------x-  disable
+1   -------x  X position MSB
+*/
+
 static void phozon_draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
 {
 	int offs;

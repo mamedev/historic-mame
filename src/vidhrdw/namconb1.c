@@ -163,20 +163,28 @@ static void
 video_update_common( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int bROZ )
 {
 	int pri;
-
 	handle_mcu();
 	namconb1_install_palette();
 
-	fillbitmap( bitmap, get_black_pen(), cliprect );
-
-	for( pri=0; pri<16; pri++ )
+	if( bROZ )
 	{
-		if( bROZ )
+		for( pri=0; pri<16; pri++ )
 		{
 			namco_roz_draw( bitmap,cliprect,pri );
+			if( (pri&1)==0 )
+			{
+				namco_tilemap_draw( bitmap, cliprect, pri/2 );
+			}
+			namco_obj_draw( bitmap, cliprect, pri );
 		}
-		namco_tilemap_draw( bitmap, cliprect, pri );
-		namco_obj_draw( bitmap, cliprect, pri );
+	}
+	else
+	{
+		for( pri=0; pri<8; pri++ )
+		{
+			namco_tilemap_draw( bitmap, cliprect, pri );
+			namco_obj_draw( bitmap, cliprect, pri );
+		}
 	}
 } /* video_update_common */
 
@@ -185,8 +193,24 @@ video_update_common( struct mame_bitmap *bitmap, const struct rectangle *cliprec
 VIDEO_UPDATE( namconb1 )
 {
 	int beamx,beamy;
+	/* compute window for custom screen blanking */
+	struct rectangle clip;
+	//004a 016a 0021 0101 0144 0020 (nebulas ray)
+	data32_t xclip = paletteram32[0x1800/4];
+	data32_t yclip = paletteram32[0x1804/4];
+	clip.min_x = (xclip>>16)    - 0x4a;
+	clip.max_x = (xclip&0xffff) - 0x4a - 1;
+	clip.min_y = (yclip>>16)    - 0x21;
+	clip.max_y = (yclip&0xffff) - 0x21 - 1;
+	/* intersect with master clip rectangle */
+	if( clip.min_x < cliprect->min_x ){ clip.min_x = cliprect->min_x; }
+	if( clip.min_y < cliprect->min_y ){ clip.min_y = cliprect->min_y; }
+	if( clip.max_x > cliprect->max_x ){ clip.max_x = cliprect->max_x; }
+	if( clip.max_y > cliprect->max_y ){ clip.max_y = cliprect->max_y; }
 
-	video_update_common( bitmap, cliprect, 0 );
+	fillbitmap( bitmap, get_black_pen(), cliprect );
+
+	video_update_common( bitmap, &clip, 0 );
 
 	if( namcos2_gametype == NAMCONB1_GUNBULET )
 	{
@@ -203,8 +227,7 @@ VIDEO_UPDATE( namconb1 )
 static int
 NB1objcode2tile( int code )
 {
-	int bank;
-	bank = nth_word32( namconb1_spritebank32, code>>11 );
+	int bank = nth_word32( namconb1_spritebank32, code>>11 );
 	return (code&0x7ff) + bank*0x800;
 }
 
@@ -224,6 +247,7 @@ VIDEO_UPDATE( namconb2 )
 {
 	/* compute window for custom screen blanking */
 	struct rectangle clip;
+	//004a016a 00210101 01440020
 	data32_t xclip = paletteram32[0x1800/4];
 	data32_t yclip = paletteram32[0x1804/4];
 	clip.min_x = (xclip>>16)    - 0x4b;

@@ -12,11 +12,6 @@ Atari Fire Truck + Super Bug + Monte Carlo driver
 #define FIRETRK_CPU_CLOCK_750KZ		(12096000 /16)
 
 
-/* from src\sndhrdw\ataridis.c */
-extern struct discrete_sound_block firetrk_sound_interface[];
-extern struct discrete_sound_block superbug_sound_interface[];
-extern struct discrete_sound_block montecar_sound_interface[];
-
 int firetrk_game;
 
 static int last_service;
@@ -80,7 +75,7 @@ static INTERRUPT_GEN( firetrk_interrupt )
 			return;
 	}
 	else
-		discrete_sound_w(7, 0);	/* Super Bug - ASR */
+		discrete_sound_w(SUPERBUG_ASR_EN, 0);	/* Super Bug - ASR */
 
 	/* NMI interrupts are disabled during service mode in firetrk and montecar */
 	/* they never make it here if in service mode */
@@ -134,7 +129,7 @@ static void frame_callback(int dummy)
 	if (GAME_IS_FIRETRUCK)
 	{
 		/* map horn button onto discrete sound emulation */
-		discrete_sound_w(1, readinputport(7));
+		discrete_sound_w(FIRETRUCK_HORN_EN, readinputport(7));
 	}
 
 	/* update gear shift */
@@ -171,8 +166,8 @@ static void write_output(UINT8 flags)
 
 		attract = flags & 0x10;
 
-		discrete_sound_w(5, (flags & 0x80) ? 1 : 0);	/* Bell Sound */
-		discrete_sound_w(6, (flags & 0x10) ? 1 : 0);	/* Attract */
+		discrete_sound_w(FIRETRUCK_BELL_EN, flags & 0x80);	/* Bell Sound */
+		discrete_sound_w(FIRETRUCK_ATTRACT_EN, flags & 0x10);	/* Attract */
 
 		coin_lockout_w(0, !attract);
 		coin_lockout_w(1, !attract);
@@ -192,7 +187,7 @@ static void write_output(UINT8 flags)
 		set_led_status(0, flags & 0x01);
 		set_led_status(1, flags & 0x08);
 
-		discrete_sound_w(6, (flags & 0x02) ? 1 : 0);	/* Attract */
+		discrete_sound_w(SUPERBUG_ATTRACT_EN, flags & 0x02);	/* Attract */
 
 		coin_lockout_w(0, !attract);
 		coin_lockout_w(1, !attract);
@@ -214,7 +209,7 @@ static void write_output(UINT8 flags)
 		set_led_status(0, !(flags & 0x01));
 		set_led_status(1, !(flags & 0x02));
 
-		discrete_sound_w(6, (flags & 0x04) ? 1 : 0);	/* Attract */
+		discrete_sound_w(MONTECAR_ATTRACT_INV, flags & 0x04);	/* Attract */
 
 		coin_counter_w(0, flags & 0x80);
 		coin_counter_w(1, flags & 0x40);
@@ -478,52 +473,6 @@ static WRITE8_HANDLER( firetrk_crash_reset_w )
 }
 
 
-static WRITE8_HANDLER( firetrk_skid_reset_w )
-{
-	if (GAME_IS_FIRETRUCK || GAME_IS_SUPERBUG)
-	{
-		firetrk_skid[0] = 0;
-		firetrk_skid[1] = 0;
-	}
-
-	discrete_sound_w(4, 1);
-}
-
-
-static WRITE8_HANDLER( firetrk_crash_snd_w )
-{
-	/* invert data here to make life easier on the sound system */
-	discrete_sound_w(3, ((~data) >> 4)& 0x0f);
-}
-
-
-static WRITE8_HANDLER( firetrk_skid_snd_w )
-{
-	discrete_sound_w(4, 0);
-}
-
-
-static WRITE8_HANDLER( firetrk_motor_snd_w )
-{
-	if (GAME_IS_FIRETRUCK || GAME_IS_MONTECARLO)
-	{
-		discrete_sound_w(2, data / 16);		/* Fire Truck - Siren frequency */
-							/* Monte Carlo - Drone Motor frequency */
-	}
-
-	if (GAME_IS_SUPERBUG)
-		discrete_sound_w(0, (~data) & 0x0f);    /* motor frequency */
-	else
-		discrete_sound_w(0, data & 0x0f);    /* motor frequency */
-}
-
-
-static WRITE8_HANDLER( firetrk_xtndply_w )
-{
-	discrete_sound_w(7, !(data & 1));
-}
-
-
 static WRITE8_HANDLER( firetrk_out_w )
 {
 	if (GAME_IS_FIRETRUCK || GAME_IS_MONTECARLO)
@@ -536,26 +485,6 @@ static WRITE8_HANDLER( firetrk_out_w )
 	}
 }
 
-
-static WRITE8_HANDLER( firetrk_out2_w )
-{
-	firetrk_set_flash(data & 0x80);
-
-	if (GAME_IS_MONTECARLO)
-	{
-		discrete_sound_w(7, !(data & 0x10));	/* Beep */
-		discrete_sound_w(5, data & 0x0f);	/* Drone Motor Volume */
-	}
-}
-
-
-static WRITE8_HANDLER( firetrk_asr_w )
-{
-	if (GAME_IS_SUPERBUG)
-	{
-		discrete_sound_w(7, 1);	/* ASR */
-	}
-}
 
 
 static ADDRESS_MAP_START( firetrk_map, ADDRESS_SPACE_PROGRAM, 8 )
@@ -1152,7 +1081,7 @@ static MACHINE_DRIVER_START( firetrk )
 	MDRV_VIDEO_UPDATE(firetrk)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD_TAG("discrete", DISCRETE, firetrk_sound_interface)
+	MDRV_SOUND_ADD_TAG("discrete", DISCRETE, firetrk_discrete_interface)
 MACHINE_DRIVER_END
 
 
@@ -1171,7 +1100,7 @@ static MACHINE_DRIVER_START( superbug )
 	MDRV_COLORTABLE_LENGTH(28)
 
 	/* sound hardware */
-	MDRV_SOUND_REPLACE("discrete", DISCRETE, superbug_sound_interface)
+	MDRV_SOUND_REPLACE("discrete", DISCRETE, superbug_discrete_interface)
 MACHINE_DRIVER_END
 
 
@@ -1190,7 +1119,7 @@ static MACHINE_DRIVER_START( montecar )
 	MDRV_COLORTABLE_LENGTH(46)
 
 	/* sound hardware */
-	MDRV_SOUND_REPLACE("discrete", DISCRETE, montecar_sound_interface)
+	MDRV_SOUND_REPLACE("discrete", DISCRETE, montecar_discrete_interface)
 MACHINE_DRIVER_END
 
 

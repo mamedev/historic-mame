@@ -22,13 +22,11 @@ WRITE8_HANDLER( polepos_sound_w );
 void mappy_sound_enable(int enable);
 WRITE8_HANDLER( namco_15xx_w );
 
-WRITE8_HANDLER( namcos1_sound_w );
-WRITE8_HANDLER( namcos1_wavedata_w );
-READ8_HANDLER( namcos1_sound_r );
-READ8_HANDLER( namcos1_wavedata_r );
+WRITE8_HANDLER( namcos1_cus30_w );	/* wavedata + sound registers + RAM */
+READ8_HANDLER( namcos1_cus30_r );
 
-extern unsigned char *namco_soundregs;
-extern unsigned char *namco_wavedata;
+extern data8_t *namco_soundregs;
+extern data8_t *namco_wavedata;
 
 #define pengo_soundregs namco_soundregs
 #define polepos_soundregs namco_soundregs

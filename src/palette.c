@@ -806,7 +806,7 @@ void palette_update_display(struct mame_display *display)
 	}
 
 	/* debugger always has a palette */
-#ifdef MAME_DEBUG
+#if defined(MAME_DEBUG) && !defined(NEW_DEBUGGER)
 	display->debug_palette = debugger_palette;
 	display->debug_palette_entries = DEBUGGER_TOTAL_COLORS;
 #endif

@@ -464,6 +464,7 @@ static void i86_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_INPUT_STATE + INPUT_LINE_NMI:	set_irq_line(INPUT_LINE_NMI, info->i);	break;
 
 		case CPUINFO_INT_PC:
+		case CPUINFO_INT_REGISTER + I86_PC:
 			if (info->i - I.base[CS] >= 0x10000)
 			{
 				I.base[CS] = info->i & 0xffff0;
@@ -540,7 +541,8 @@ void i86_get_info(UINT32 state, union cpuinfo *info)
 
 		case CPUINFO_INT_PREVIOUSPC:					info->i = I.prevpc;						break;
 
-		case CPUINFO_INT_PC:							info->i = I.pc;							break;
+		case CPUINFO_INT_PC:
+		case CPUINFO_INT_REGISTER + I86_PC:				info->i = I.pc;							break;
 		case CPUINFO_INT_REGISTER + I86_IP:				info->i = I.pc - I.base[CS];			break;		
 		case CPUINFO_INT_SP:							info->i = I.base[SS] + I.regs.w[SP];	break;
 		case CPUINFO_INT_REGISTER + I86_SP:				info->i = I.regs.w[SP];					break;
@@ -601,6 +603,7 @@ void i86_get_info(UINT32 state, union cpuinfo *info)
 					I.flags & 0x0001 ? 'C' : '.');
 			break;
 
+		case CPUINFO_STR_REGISTER + I86_PC: 			sprintf(info->s = cpuintrf_temp_str(), "PC:%04X", I.pc); break;
 		case CPUINFO_STR_REGISTER + I86_IP: 			sprintf(info->s = cpuintrf_temp_str(), "IP: %04X", I.pc - I.base[CS]); break;
 		case CPUINFO_STR_REGISTER + I86_SP: 			sprintf(info->s = cpuintrf_temp_str(), "SP: %04X", I.regs.w[SP]);  break;
 		case CPUINFO_STR_REGISTER + I86_FLAGS:			sprintf(info->s = cpuintrf_temp_str(), "F:%04X", I.flags);         break;

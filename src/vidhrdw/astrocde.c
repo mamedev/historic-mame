@@ -21,7 +21,7 @@
 static UINT8 interrupt_enable;
 static UINT8 interrupt_vector;
 
-unsigned char *wow_videoram;
+UINT8 *wow_videoram;
 static int magic_expand_color, magic_control, magic_expand_count, magic_shift_leftover;
 static int collision;
 
@@ -47,10 +47,13 @@ static int BackgroundData,VerticalBlank;
 
 static int sparkle[MAX_INT_PER_FRAME][4];	/* sparkle[line][0] is star enable */
 
+static void (*astrocde_update_line)(struct mame_bitmap *bitmap,int line);
+static void wow_update_line(struct mame_bitmap *bitmap,int line);
+static void profpac_update_line(struct mame_bitmap *bitmap,int line);
 
-void wow_update_line(struct mame_bitmap *bitmap,int line);
-
-
+/* This is the handler for reading the display memory */
+/* It is switched at init time for different games */
+read8_handler astrocde_videoram_r;
 
 PALETTE_INIT( astrocde )
 {
@@ -155,13 +158,13 @@ WRITE8_HANDLER( astrocde_interrupt_enable_w )
 		  	GorfDelay = NextScanInt - 1;
 		}
 
-#ifdef MAME_DEBUG
+#ifdef VERBOSE
 		logerror("Gorf Delay set to %02x\n",GorfDelay);
 #endif
 
 	}
 
-#ifdef MAME_DEBUG
+#ifdef VERBOSE
 	logerror("Interrupt Flag set to %02x\n",InterruptFlag);
 #endif
 }
@@ -170,7 +173,7 @@ WRITE8_HANDLER( astrocde_interrupt_w )
 {
 	/* A write to 0F triggers an interrupt at that scanline */
 
-#ifdef MAME_DEBUG
+#ifdef VERBOSE
 	logerror("Scanline interrupt set to %02x\n",data);
 #endif
 
@@ -182,7 +185,7 @@ static void interrupt_common(void)
 	int i,next;
 
 	if (!osd_skip_this_frame())
-		wow_update_line(Machine->scrbitmap,CurrentScan);
+		astrocde_update_line(Machine->scrbitmap,CurrentScan);
 
 	next = (CurrentScan + 1) % MAX_INT_PER_FRAME;
 	for (i = 0;i < 8;i++)
@@ -217,9 +220,13 @@ INTERRUPT_GEN( gorf_interrupt )
 	cpunum_set_input_line(0,0,CLEAR_LINE);
 
 	if (interrupt_enable && (InterruptFlag & 0x10) && (CurrentScan==GorfDelay))
-		cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, interrupt_vector & 0xf0);
-	else if (interrupt_enable && (InterruptFlag & 0x08) && (CurrentScan == NextScanInt))
-		cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, interrupt_vector);
+	{
+		cpunum_set_input_line_and_vector(0, 0, PULSE_LINE, interrupt_vector & 0xf0);
+	}
+	else if ((InterruptFlag & 0x08) && (CurrentScan == NextScanInt))
+	{
+		cpunum_set_input_line_and_vector(0, 0, PULSE_LINE, interrupt_vector);
+	}
 }
 
 /* ======================================================================= */
@@ -272,7 +279,7 @@ WRITE8_HANDLER( astrocde_colour_register_w )
 {
 	colors[CurrentScan][offset] = data;
 
-#ifdef MAME_DEBUG
+#ifdef VERBOSE
 	logerror("colors %01x set to %02x\n",offset,data);
 #endif
 }
@@ -287,18 +294,161 @@ WRITE8_HANDLER( astrocde_colour_block_w )
 }
 
 
+READ8_HANDLER( wow_videoram_r )
+{
+	return wow_videoram[offset];
+}
+
 WRITE8_HANDLER( wow_videoram_w )
 {
-	if ((offset < 0x4000) && (wow_videoram[offset] != data))
+	wow_videoram[offset] = data;
+}
+
+static UINT16 profpac_color_mapping[4];
+
+UINT16 profpac_map_colors(UINT8 data)
+{
+	UINT16 temp = 0x0000;
+	temp |= profpac_color_mapping[data>>6] << 12;
+	temp |= profpac_color_mapping[(data>>4)&0x03] << 8;
+	temp |= profpac_color_mapping[(data>>2)&0x03] << 4;
+	temp |= profpac_color_mapping[data&0x03];
+	return temp;
+}
+
+static UINT8 profpac_read_page = 0;
+static UINT8 profpac_write_page = 0;
+static UINT8 profpac_visible_page = 0;
+
+WRITE8_HANDLER( profpac_page_select_w )
+{
+	profpac_read_page = data&3;
+	profpac_write_page = (data>>2)&3;
+	profpac_visible_page = (data>>4)&3;
+}
+
+static UINT8 profpac_read_half = 0;
+static UINT8 profpac_write_mode = 0;
+
+READ8_HANDLER( profpac_intercept_r )
+{
+	/* TBD */
+	return 0;
+}
+
+static UINT16 *profpac_videoram = 0;
+static UINT8 profpac_vw = 0;
+static UINT8 profpac_cw = 0;
+
+WRITE8_HANDLER( profpac_screenram_ctrl_w )
+{
+	switch (offset)
 	{
-		wow_videoram[offset] = data;
+		UINT8 r, g, b;
+
+		case 0: /* port 0xC0 - red component */
+			palette_get_color( (data>>4)&0x0f, &r, &g, &b);
+			palette_set_color( (data>>4)&0x0f, (data&0x0f)*0x11, g, b );
+		break;
+		case 1: /* port 0xC1 - green component */
+			palette_get_color( (data>>4)&0x0f, &r, &g, &b);
+			palette_set_color( (data>>4)&0x0f, r, (data&0x0f)*0x11, b );
+		break;
+		case 2: /* port 0xC2 - blue component */
+			palette_get_color( (data>>4)&0x0f, &r, &g, &b);
+			palette_set_color( (data>>4)&0x0f, r, g, (data&0x0f)*0x11 );
+		break;
+		case 3: /* port 0xC3 - set 2bpp to 4bpp mapping */
+			profpac_color_mapping[(data>>4)&0x03] = data&0x0f;
+		break;
+		case 4: /* port 0xC4 - which half to read on a memory access */
+			profpac_vw = data&0x0f; /* refresh write enable lines TBD */
+			profpac_read_half = (data>>4)&1;
+		break;
+		case 5: /* port 0xC5 */
+			profpac_cw = data&0x0f; /* bitplane write enable lines */
+			profpac_write_mode = (data>>4)&0x03;
+		break;
 	}
 }
 
+READ8_HANDLER( profpac_videoram_r )
+{
+	UINT16 temp = profpac_videoram[profpac_read_page*0x4000 + offset];
+
+	if (profpac_read_half == 0)
+		return ((temp>>6)&0xc0) + ((temp>>4)&0x30) + ((temp>>2)&0x0c) + (temp&0x03);
+	else
+		return ((temp>>8)&0xc0) + ((temp>>6)&0x30) + ((temp>>4)&0x0c) + ((temp>>2)&0x03);
+}
+
+WRITE8_HANDLER( profpac_videoram_w )
+{
+	UINT16 address = profpac_write_page*0x4000 + offset;
+	UINT16 current_value = profpac_videoram[address];
+	UINT16 new_value = profpac_map_colors(data);
+	UINT16 composite_value = profpac_map_colors(data);
+
+	const UINT16 mask_table[16] =
+	{
+		0x0000, 0x1111, 0x2222, 0x3333, 0x4444, 0x5555, 0x6666, 0x7777,
+		0x8888, 0x9999, 0xaaaa, 0xbbbb, 0xcccc, 0xdddd, 0xeeee, 0xffff
+	};
+
+	composite_value = 0;
+	switch(profpac_write_mode)
+	{
+		case 0: /* normal write */
+			composite_value = new_value;
+			break;
+		case 1: /* xor write */
+			composite_value = current_value ^ new_value;
+			break;
+		case 2: /* overlay write */
+			composite_value = 0;
+			if ((new_value&0xf000) != 0x0000)
+				composite_value |= (profpac_color_mapping[data>>6] << 12);
+			else
+				composite_value |= (current_value&0xf000);
+			if ((new_value&0x0f00) != 0x0000)
+				composite_value |= (profpac_color_mapping[(data>>4)&0x03] << 8);
+			else
+				composite_value |= (current_value&0x0f00);
+			if ((new_value&0x00f0) != 0x0000)
+				composite_value |= (profpac_color_mapping[(data>>2)&0x03] << 4);
+			else
+				composite_value |= (current_value&0x00f0);
+			if ((new_value&0x000f) != 0x0000)
+				composite_value |= (profpac_color_mapping[data&0x03]);
+			else
+				composite_value |= (current_value&0x000f);
+			break;
+		case 3: /* underlay write */
+			if ((current_value&0xf000) == 0x0000)
+				composite_value |= (profpac_color_mapping[data>>6] << 12);
+			else
+				composite_value |= (current_value&0xf000);
+			if ((current_value&0x0f00) == 0x0000)
+				composite_value |= (profpac_color_mapping[(data>>4)&0x03] << 8);
+			else
+				composite_value |= (current_value&0x0f00);
+			if ((current_value&0x00f0) == 0x0000)
+				composite_value |= (profpac_color_mapping[(data>>2)&0x03] << 4);
+			else
+				composite_value |= (current_value&0x00f0);
+			if ((current_value&0x000f) == 0x0000)
+				composite_value |= (profpac_color_mapping[data&0x03]);
+			else
+				composite_value |= (current_value&0x000f);
+			break;
+	}
+	profpac_videoram[address] = composite_value & mask_table[profpac_cw];
+	profpac_videoram[address] |= current_value & ~mask_table[profpac_cw];
+}
 
 WRITE8_HANDLER( astrocde_magic_expand_color_w )
 {
-#ifdef MAME_DEBUG
+#ifdef VERBOSE
 //	logerror("%04x: magic_expand_color = %02x\n",activecpu_get_pc(),data);
 #endif
 
@@ -308,7 +458,7 @@ WRITE8_HANDLER( astrocde_magic_expand_color_w )
 
 WRITE8_HANDLER( astrocde_magic_control_w )
 {
-#ifdef MAME_DEBUG
+#ifdef VERBOSE
 //	logerror("%04x: magic_control = %02x\n",activecpu_get_pc(),data);
 #endif
 
@@ -325,7 +475,7 @@ WRITE8_HANDLER( astrocde_magic_control_w )
 static void copywithflip(int offset,int data)
 {
 	int shift,data1;
-
+	UINT8 old_data;
 
 	if (magic_control & 0x40)	/* copy backwards */
 	{
@@ -370,17 +520,25 @@ static void copywithflip(int offset,int data)
 
 	if (magic_control & 0x30)
 	{
-		/* TODO: the collision detection should be made */
-		/* independently for each of the four pixels    */
+		old_data = program_read_byte(0x4000+offset);
+		collision &= 0x0f;
 
-		if (data && wow_videoram[offset])
-			collision |= 0xff;
-		else collision &= 0x0f;
+		if (data | old_data)
+		{
+			if ((data & 0x03) && (old_data & 0x03))
+				collision |= 0x88;
+			if ((data & 0x0c) && (old_data & 0x0c))
+				collision |= 0x44;
+			if ((data & 0x30) && (old_data & 0x30))
+				collision |= 0x22;
+			if ((data & 0xc0) && (old_data & 0xc0))
+				collision |= 0x11;
+		}
 	}
 
-	if (magic_control & 0x20) data ^= wow_videoram[offset];	/* draw in XOR mode */
-	else if (magic_control & 0x10) data |= wow_videoram[offset];	/* draw in OR mode */
-	wow_videoram_w(offset,data);
+	if (magic_control & 0x20) data ^= program_read_byte(0x4000+offset);	/* draw in XOR mode */
+	else if (magic_control & 0x10) data |= program_read_byte(0x4000+offset);;	/* draw in OR mode */
+	program_write_byte(0x4000+offset,data);
 }
 
 
@@ -422,8 +580,6 @@ WRITE8_HANDLER( astrocde_pattern_board_w )
 	static int dest;
 	static int length;	/* row length */
 	static int loops;	/* rows to copy - 1 */
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
 
 	switch (offset)
 	{
@@ -454,7 +610,7 @@ WRITE8_HANDLER( astrocde_pattern_board_w )
 	{
 		int i,j;
 
-#ifdef MAME_DEBUG
+#ifdef VERBOSE
 //		logerror("%04x: blit src %04x mode %02x skip %d dest %04x length %d loops %d\n",
 //			activecpu_get_pc(),src,mode,skip,dest,length,loops);
 #endif
@@ -470,9 +626,9 @@ WRITE8_HANDLER( astrocde_pattern_board_w )
 				if (!(mode & 0x08) || j < length)
 				{
 					if (mode & 0x01)			/* Direction */
-						RAM[src]=RAM[dest];
+						program_write_byte(src,program_read_byte(dest));
 					else
-						if (dest >= 0) program_write_byte(dest,RAM[src]);	/* ASG 971005 */
+						if (dest >= 0) program_write_byte(dest,program_read_byte(src));	/* ASG 971005 */
 				}
 				/* close out writes in case of shift... I think this is wrong */
 				else if (j == length)
@@ -609,11 +765,10 @@ static void init_star_field(void)
  *
  */
 
-READ8_HANDLER( gorf_io_r )
+READ8_HANDLER( gorf_io_1_r )
 {
-	int data;
-
-	data = (activecpu_get_reg(Z80_BC) >> 8) & 0x0f;
+	UINT8 data = offset >> 8;
+	offset &= 0xff;
 
 	offset = (offset << 3) + (data >> 1);
 	data = ~data & 0x01;
@@ -626,21 +781,39 @@ READ8_HANDLER( gorf_io_r )
 	case 0x03: sparkle[CurrentScan][1] = data; break;
 	case 0x04: sparkle[CurrentScan][2] = data; break;
 	case 0x05: sparkle[CurrentScan][3] = data; break;
-	case 0x08: artwork_show("lamp0", !data); break;
-	case 0x09: artwork_show("lamp1", !data); break;
-	case 0x0a: artwork_show("lamp2", !data); break;
-	case 0x0b: artwork_show("lamp3", !data); break;
-	case 0x0c: artwork_show("lamp4", !data); break;
-	case 0x0d: artwork_show("lamp5", !data); break;
-#ifdef MAME_DEBUG
+#ifdef VERBOSE
 	default:
-		logerror("%04x: Latch IO %02x set to %d\n",activecpu_get_pc(),offset,data);
+		logerror("%04x: Latch IO1 %02x set to %d\n",activecpu_get_pc(),offset,data);
 #endif
 	}
 
 	return 0;
 }
 
+READ8_HANDLER( gorf_io_2_r )
+{
+	UINT8 data = offset >> 8;
+	offset &= 0xff;
+
+	offset = (offset << 3) + (data >> 1);
+	data = ~data & 0x01;
+
+	switch (offset)
+	{
+	case 0x00: artwork_show("lamp0", !data); break;
+	case 0x01: artwork_show("lamp1", !data); break;
+	case 0x02: artwork_show("lamp2", !data); break;
+	case 0x03: artwork_show("lamp3", !data); break;
+	case 0x04: artwork_show("lamp4", !data); break;
+	case 0x05: artwork_show("lamp5", !data); break;
+#ifdef VERBOSE
+	default:
+		logerror("%04x: Latch IO2 %02x set to %d\n",activecpu_get_pc(),offset,data);
+#endif
+	}
+
+	return 0;
+}
 
 /* Wizard of Wor Special Registers
  *
@@ -663,9 +836,8 @@ READ8_HANDLER( gorf_io_r )
 
 READ8_HANDLER( wow_io_r )
 {
-	int data;
-
-	data = (activecpu_get_reg(Z80_AF) >> 8) & 0x0f;
+	UINT8 data = offset >> 8;
+	offset &= 0xff;
 
 	offset = (offset << 3) + (data >> 1);
 	data = ~data & 0x01;
@@ -681,7 +853,7 @@ READ8_HANDLER( wow_io_r )
 		case 7: coin_counter_w(2,data); break;
 	}
 
-#ifdef MAME_DEBUG
+#ifdef VERBOSE
 	logerror("%04x: Latch IO %02x set to %d\n",activecpu_get_pc(),offset,data);
 #endif
 
@@ -692,6 +864,9 @@ READ8_HANDLER( wow_io_r )
 
 VIDEO_START( astrocde )
 {
+	astrocde_videoram_r = wow_videoram_r;
+	astrocde_update_line = wow_update_line;
+
 	rng = auto_malloc(RNG_PERIOD * sizeof(rng[0]));
 	star = auto_malloc(SCREEN_WIDTH * MAX_LINES * sizeof(star[0]));
 
@@ -716,8 +891,6 @@ VIDEO_START( astrocde_stars )
 	return res;
 }
 
-
-
 /****************************************************************************/
 
 void wow_update_line(struct mame_bitmap *bitmap,int line)
@@ -740,7 +913,7 @@ void wow_update_line(struct mame_bitmap *bitmap,int line)
 	for (i = 0; i < 80; i++, memloc++)
 	{
 		if (line < VerticalBlank)
-			data = wow_videoram[memloc];
+			data = astrocde_videoram_r(memloc);
 		else
 			data = BackgroundData;
 
@@ -785,6 +958,36 @@ void wow_update_line(struct mame_bitmap *bitmap,int line)
 	draw_scanline8(bitmap, 0, line, 80*4+3, scanline, Machine->pens, -1);
 }
 
+VIDEO_START( profpac )
+{
+	profpac_videoram = auto_malloc(0x4000* 4 * sizeof(UINT16));
+
+	astrocde_videoram_r = profpac_videoram_r;
+	astrocde_update_line = profpac_update_line;
+
+	CurrentScan = 0;
+
+	return 0;
+}
+
+void profpac_update_line(struct mame_bitmap *bitmap,int line)
+{
+	int i,j;
+	UINT8 scanline[80*4];
+
+	if (line >= MAX_LINES) return;
+
+	for(i=0;i<80;i++)
+	{
+		for(j=0;j<4;j++)
+		{
+			scanline[i*4+j] =
+				profpac_videoram[profpac_visible_page*0x4000+i+line*80]>>((3-j)*4)&0x0f;
+		}
+	}
+
+	draw_scanline8(bitmap, 0, line, 80*4, scanline, Machine->pens, -1);
+}
 
 
 VIDEO_UPDATE( astrocde )
@@ -793,6 +996,14 @@ VIDEO_UPDATE( astrocde )
 
 	for (i = 0;i < MAX_LINES;i++)
 		wow_update_line(bitmap,i);
+}
+
+VIDEO_UPDATE( profpac )
+{
+	int i;
+
+	for (i = 0;i < MAX_LINES;i++)
+		profpac_update_line(bitmap,i);
 }
 
 VIDEO_UPDATE( seawolf2 )
@@ -829,4 +1040,41 @@ VIDEO_UPDATE( seawolf2 )
 			draw_crosshair(bitmap,centre,33,&Machine->visible_area);
 		}
 	}
+}
+
+READ8_HANDLER( robby_io_r )
+{
+	UINT8 data = (offset >> 8)&1;
+	offset = (offset >> 9)&7;
+
+	switch(offset)
+	{
+	case 0x00: coin_counter_w(0,data); break;
+	case 0x01: coin_counter_w(1,data); break;
+	case 0x02: coin_counter_w(2,data); break;
+	case 0x06: set_led_status(0,data); break;
+	case 0x07: set_led_status(1,data); break;
+	}
+	return 0;
+	logerror("robby_io_r(): %d %d\n",offset,data);
+}
+
+READ8_HANDLER( profpac_io_1_r )
+{
+	if(offset & 0x0100) coin_counter_w(0,1); else coin_counter_w(0,0);
+	if(offset & 0x0200) coin_counter_w(1,1); else coin_counter_w(1,0);
+	if(offset & 0x0400) set_led_status(0,1); else set_led_status(0,0);
+	if(offset & 0x0800) set_led_status(1,1); else set_led_status(1,0);
+	return 0;
+}
+
+READ8_HANDLER( profpac_io_2_r )
+{
+	if(offset & 0x0100) artwork_show("left lamp A", 1); else artwork_show("left lamp A", 0);
+	if(offset & 0x0200) artwork_show("left lamp B", 1); else artwork_show("left lamp B", 0);
+	if(offset & 0x0400) artwork_show("left lamp C", 1); else artwork_show("left lamp C", 0);
+	if(offset & 0x1000) artwork_show("right lamp A", 1); else artwork_show("right lamp A", 0);
+	if(offset & 0x2000) artwork_show("right lamp B", 1); else artwork_show("right lamp B", 0);
+	if(offset & 0x4000) artwork_show("right lamp C", 1); else artwork_show("right lamp C", 0);
+	return 0;
 }

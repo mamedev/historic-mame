@@ -20,6 +20,10 @@
 #include "window.h"
 #include "rc.h"
 
+#ifndef NEW_DEBUGGER
+#include "debugwin.h"
+#endif
+
 #ifdef MESS
 #include "menu.h"
 #endif
@@ -928,9 +932,11 @@ void osd_update_video_and_audio(struct mame_display *display)
 		sound_update_refresh_rate(display->game_refresh_rate);
 	}
 
+#ifndef NEW_DEBUGGER
 	// if the debugger focus changed, update it
 	if (display->changed_flags & DEBUG_FOCUS_CHANGED)
-		win_set_debugger_focus(display->debug_focus);
+		debugwin_set_focus(display->debug_focus);
+#endif
 
 	// if the game palette has changed, update it
 	if (palette_lookups_invalid || (display->changed_flags & GAME_PALETTE_CHANGED))
@@ -947,12 +953,14 @@ void osd_update_video_and_audio(struct mame_display *display)
 			render_frame(display->game_bitmap, &updatebounds, NULL);
 	}
 
+#ifndef NEW_DEBUGGER
 	// update the debugger
 	if (display->changed_flags & DEBUG_BITMAP_CHANGED)
 	{
-		win_update_debug_window(display->debug_bitmap, display->debug_palette);
+		debugwin_update_windows(display->debug_bitmap, display->debug_palette);
 		debugger_was_visible = 1;
 	}
+#endif
 
 	// if the LEDs have changed, update them
 	if (display->changed_flags & LED_STATE_CHANGED)
@@ -965,7 +973,7 @@ void osd_update_video_and_audio(struct mame_display *display)
 	check_inputs();
 
 	// poll the joystick values here
-	win_process_events();
+	win_process_events(1);
 	win_poll_input();
 }
 

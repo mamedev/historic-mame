@@ -16,36 +16,24 @@ OKI M6295 sound ROM dump is bad.
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-data8_t *bg_paletteram,*missb2_bgvram;
+UINT8 *bg_paletteram, *missb2_bgvram;
 
 /* vidhrdw/bublbobl.c */
-extern unsigned char *bublbobl_objectram;
+extern UINT8 *bublbobl_objectram;
 extern size_t bublbobl_objectram_size;
-VIDEO_UPDATE( bublbobl );
 
 /* machine/bublbobl.c */
-extern unsigned char *bublbobl_sharedram1,*bublbobl_sharedram2;
-READ8_HANDLER( bublbobl_sharedram1_r );
+extern UINT8 *bublbobl_sharedram2;
 READ8_HANDLER( bublbobl_sharedram2_r );
-WRITE8_HANDLER( bublbobl_sharedram1_w );
 WRITE8_HANDLER( bublbobl_sharedram2_w );
-INTERRUPT_GEN( bublbobl_m68705_interrupt );
-READ8_HANDLER( bublbobl_68705_portA_r );
-WRITE8_HANDLER( bublbobl_68705_portA_w );
-WRITE8_HANDLER( bublbobl_68705_ddrA_w );
-READ8_HANDLER( bublbobl_68705_portB_r );
-WRITE8_HANDLER( bublbobl_68705_portB_w );
-WRITE8_HANDLER( bublbobl_68705_ddrB_w );
 WRITE8_HANDLER( bublbobl_bankswitch_w );
-WRITE8_HANDLER( tokio_bankswitch_w );
-WRITE8_HANDLER( tokio_videoctrl_w );
 WRITE8_HANDLER( bublbobl_nmitrigger_w );
-READ8_HANDLER( tokio_fake_r );
 WRITE8_HANDLER( bublbobl_sound_command_w );
 WRITE8_HANDLER( bublbobl_sh_nmi_disable_w );
 WRITE8_HANDLER( bublbobl_sh_nmi_enable_w );
 extern int bublbobl_video_enable;
 
+/* Video Hardware */
 
 VIDEO_UPDATE( missb2 )
 {
@@ -157,115 +145,77 @@ INLINE void bg_changecolor_RRRRGGGGBBBBxxxx(pen_t color,int data)
 	palette_set_color(color+256,r,g,b);
 }
 
-WRITE8_HANDLER( bg_paletteram_RRRRGGGGBBBBxxxx_swap_w )
+static WRITE8_HANDLER( bg_paletteram_RRRRGGGGBBBBxxxx_swap_w )
 {
 	bg_paletteram[offset] = data;
 	bg_changecolor_RRRRGGGGBBBBxxxx(offset / 2,bg_paletteram[offset | 1] | (bg_paletteram[offset & ~1] << 8));
 }
 
-WRITE8_HANDLER( bg_bank_w )
+static WRITE8_HANDLER( missb2_bg_bank_w )
 {
 	int bankaddress;
-	unsigned char *RAM = memory_region(REGION_CPU2);
+	UINT8 *RAM = memory_region(REGION_CPU2);
 
-	/*I don't know how this is really connected,bit 1 is always high afaik...*/
+	// I don't know how this is really connected,bit 1 is always high afaik...
 	bankaddress = ((data & 2) ? 0x1000 : 0x0000) | ((data & 1) ? 0x4000 : 0x0000) | (0x8000);
-	cpu_setbank(2,&RAM[bankaddress]);
+	cpu_setbank(2, &RAM[bankaddress]);
 }
 
+/* Memory Maps */
 
-static INTERRUPT_GEN( missb2_interrupt )
-{
-	cpunum_set_input_line(2,0,HOLD_LINE);
-}
-
-
-
-static ADDRESS_MAP_START( missb2_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK1)
-	AM_RANGE(0xc000, 0xdfff) AM_READ(MRA8_RAM)
-	AM_RANGE(0xe000, 0xf7ff) AM_READ(bublbobl_sharedram1_r)
-	AM_RANGE(0xf800, 0xf9ff) AM_READ(MRA8_RAM)
-	AM_RANGE(0xfc00, 0xfcff) AM_READ(bublbobl_sharedram2_r)
-	AM_RANGE(0xfe00, 0xfe03) AM_READ(MRA8_RAM)	// ?
-	AM_RANGE(0xfe80, 0xfe83) AM_READ(MRA8_RAM)	// ?
+static ADDRESS_MAP_START( master_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_ROM
+	AM_RANGE(0x8000, 0xbfff) AM_ROMBANK(1)
+	AM_RANGE(0xc000, 0xdcff) AM_RAM AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0xdd00, 0xdfff) AM_RAM AM_BASE(&bublbobl_objectram) AM_SIZE(&bublbobl_objectram_size)
+	AM_RANGE(0xe000, 0xf7ff) AM_RAM AM_SHARE(1)
+	AM_RANGE(0xf800, 0xf9ff) AM_RAM AM_WRITE(paletteram_RRRRGGGGBBBBxxxx_swap_w) AM_BASE(&paletteram)
+	AM_RANGE(0xfa00, 0xfa00) AM_WRITE(bublbobl_sound_command_w)
+	AM_RANGE(0xfa03, 0xfa03) AM_WRITENOP // sound cpu reset
+	AM_RANGE(0xfa80, 0xfa80) AM_WRITENOP
+	AM_RANGE(0xfb40, 0xfb40) AM_WRITE(bublbobl_bankswitch_w)
+	AM_RANGE(0xfc00, 0xfcff) AM_READWRITE(bublbobl_sharedram2_r, bublbobl_sharedram2_w) AM_BASE(&bublbobl_sharedram2)
+	AM_RANGE(0xfd00, 0xfdff) AM_RAM			// ???
+	AM_RANGE(0xfe00, 0xfe03) AM_RAM			// ???
+	AM_RANGE(0xfe80, 0xfe83) AM_RAM			// ???
 	AM_RANGE(0xff00, 0xff00) AM_READ(input_port_0_r)
 	AM_RANGE(0xff01, 0xff01) AM_READ(input_port_1_r)
 	AM_RANGE(0xff02, 0xff02) AM_READ(input_port_2_r)
 	AM_RANGE(0xff03, 0xff03) AM_READ(input_port_3_r)
-	AM_RANGE(0xfd00, 0xfdff) AM_READ(MRA8_RAM)	// ?
+	AM_RANGE(0xff94, 0xff94) AM_WRITENOP	// ???
+	AM_RANGE(0xff98, 0xff98) AM_WRITENOP	// ???
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( missb2_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0xc000, 0xdcff) AM_WRITE(MWA8_RAM) AM_BASE(&videoram) AM_SIZE(&videoram_size)
-	AM_RANGE(0xdd00, 0xdfff) AM_WRITE(MWA8_RAM) AM_BASE(&bublbobl_objectram) AM_SIZE(&bublbobl_objectram_size)
-	AM_RANGE(0xe000, 0xf7ff) AM_WRITE(bublbobl_sharedram1_w) AM_BASE(&bublbobl_sharedram1)
-	AM_RANGE(0xf800, 0xf9ff) AM_WRITE(paletteram_RRRRGGGGBBBBxxxx_swap_w) AM_BASE(&paletteram)
-	AM_RANGE(0xfa00, 0xfa00) AM_WRITE(bublbobl_sound_command_w)
-	AM_RANGE(0xfa80, 0xfa80) AM_WRITE(MWA8_NOP)
-	AM_RANGE(0xfb00, 0xfb00) AM_WRITE(bublbobl_nmitrigger_w)	/* not used by Bubble Bobble, only by Tokio */
-	AM_RANGE(0xfb40, 0xfb40) AM_WRITE(bublbobl_bankswitch_w)
-	AM_RANGE(0xfc00, 0xfcff) AM_WRITE(bublbobl_sharedram2_w) AM_BASE(&bublbobl_sharedram2)
-	AM_RANGE(0xfd00, 0xfdff) AM_WRITE(MWA8_RAM)	// ?
-	AM_RANGE(0xfe00, 0xfe03) AM_WRITE(MWA8_RAM)	// ?
-	AM_RANGE(0xfe80, 0xfe83) AM_WRITE(MWA8_RAM)	// ?
-	AM_RANGE(0xff94, 0xff94) AM_WRITE(MWA8_NOP)	// ?
+static ADDRESS_MAP_START( slave_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_ROM
+	AM_RANGE(0x9000, 0xafff) AM_ROMBANK(2)	// ROM data for the background palette ram
+	AM_RANGE(0xb000, 0xb1ff) AM_ROM			// banked ???
+	AM_RANGE(0xc000, 0xc1ff) AM_RAM AM_WRITE(bg_paletteram_RRRRGGGGBBBBxxxx_swap_w) AM_BASE(&bg_paletteram)
+	AM_RANGE(0xc800, 0xcfff) AM_RAM			// main ???
+	AM_RANGE(0xd000, 0xd000) AM_WRITE(missb2_bg_bank_w)
+	AM_RANGE(0xd002, 0xd002) AM_WRITENOP
+	AM_RANGE(0xd003, 0xd003) AM_RAM AM_BASE(&missb2_bgvram)
+	AM_RANGE(0xe000, 0xf7ff) AM_RAM AM_SHARE(1)
 ADDRESS_MAP_END
 
+// Looks like the original bublbobl code modified to support the OKI M6295.
 
-static ADDRESS_MAP_START( missb2_readmem2, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
-
-	AM_RANGE(0x9000, 0xafff) AM_READ(MRA8_BANK2)	/* ROM data for the background palette ram*/
-	AM_RANGE(0xb000, 0xb1ff) AM_READ(MRA8_ROM)		// ? banked ?
-
-	AM_RANGE(0xc800, 0xcfff) AM_READ(MRA8_RAM)	/* main? */
-	AM_RANGE(0xe000, 0xf7ff) AM_READ(bublbobl_sharedram1_r)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( missb2_writemem2, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0xc000, 0xc1ff) AM_WRITE(bg_paletteram_RRRRGGGGBBBBxxxx_swap_w) AM_BASE(&bg_paletteram)
-	AM_RANGE(0xc800, 0xcfff) AM_WRITE(MWA8_RAM)	/* main? */
-
-	AM_RANGE(0xd000, 0xd000) AM_WRITE(bg_bank_w)
-	AM_RANGE(0xd002, 0xd002) AM_WRITE(MWA8_NOP)
-	AM_RANGE(0xd003, 0xd003) AM_WRITE(MWA8_RAM) AM_BASE(&missb2_bgvram)
-	AM_RANGE(0xe000, 0xf7ff) AM_WRITE(bublbobl_sharedram1_w)
-ADDRESS_MAP_END
-
-
-/* Looks like the original bublbobl code modified to support the OKI M6295. */
-
-static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0x8000, 0x8fff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x9000, 0x9000) AM_READ(OKIM6295_status_0_r)
-	AM_RANGE(0xa000, 0xa000) AM_READ(YM3526_status_port_0_r)
-	AM_RANGE(0xb000, 0xb000) AM_READ(soundlatch_r)
-	AM_RANGE(0xb001, 0xb001) AM_READ(MRA8_NOP)	/* bit 0: message pending for main cpu */
-											/* bit 1: message pending for sound cpu */
-	AM_RANGE(0xe000, 0xefff) AM_READ(MRA8_ROM)	/* space for diagnostic ROM? */
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0x8000, 0x8fff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0x9000, 0x9000) AM_WRITE(OKIM6295_data_0_w)
-	AM_RANGE(0xa000, 0xa000) AM_WRITE(YM3526_control_port_0_w)
+static ADDRESS_MAP_START( sound_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_ROM
+	AM_RANGE(0x8000, 0x8fff) AM_RAM
+	AM_RANGE(0x9000, 0x9000) AM_READWRITE(OKIM6295_status_0_r, OKIM6295_data_0_w)
+	AM_RANGE(0xa000, 0xa000) AM_READWRITE(YM3526_status_port_0_r, YM3526_control_port_0_w)
 	AM_RANGE(0xa001, 0xa001) AM_WRITE(YM3526_write_port_0_w)
-	AM_RANGE(0xb000, 0xb000) AM_WRITE(MWA8_NOP)	/* message for main cpu */
-	AM_RANGE(0xb001, 0xb001) AM_WRITE(bublbobl_sh_nmi_enable_w)
+	AM_RANGE(0xb000, 0xb000) AM_READ(soundlatch_r) AM_WRITENOP // message for main cpu
+	AM_RANGE(0xb001, 0xb001) AM_READNOP AM_WRITE(bublbobl_sh_nmi_enable_w)	// bit 0: message pending for main cpu, bit 1: message pending for sound cpu
 	AM_RANGE(0xb002, 0xb002) AM_WRITE(bublbobl_sh_nmi_disable_w)
-	AM_RANGE(0xe000, 0xefff) AM_WRITE(MWA8_ROM)	/* space for diagnostic ROM? */
+	AM_RANGE(0xe000, 0xefff) AM_ROM			// space for diagnostic ROM?
 ADDRESS_MAP_END
 
-
+/* Input Ports */
 
 INPUT_PORTS_START( missb2 )
-	PORT_START      /* DSW0 */
+	PORT_START_TAG("DSW0")
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Language ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( English ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Japanese ) )
@@ -287,17 +237,17 @@ INPUT_PORTS_START( missb2 )
 	PORT_DIPSETTING(    0x00, DEF_STR( 2C_3C ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( 1C_2C ) )
 
-	PORT_START      /* DSW1 */
+	PORT_START_TAG("DSW1")
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Easy ) )
 	PORT_DIPSETTING(    0x03, DEF_STR( Medium ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Hard ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
 	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x08, "20000 80000" )
-	PORT_DIPSETTING(    0x0c, "30000 100000" )
-	PORT_DIPSETTING(    0x04, "40000 200000" )
-	PORT_DIPSETTING(    0x00, "50000 250000" )
+	PORT_DIPSETTING(    0x08, "20K 80K" )
+	PORT_DIPSETTING(    0x0c, "30K 100K" )
+	PORT_DIPSETTING(    0x04, "40K 200K" )
+	PORT_DIPSETTING(    0x00, "50K 250K" )
 	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x10, "1" )
 	PORT_DIPSETTING(    0x00, "2" )
@@ -309,8 +259,8 @@ INPUT_PORTS_START( missb2 )
 	PORT_DIPSETTING(    0x80, DEF_STR( High ) )
 	PORT_DIPSETTING(    0xc0, DEF_STR( Very_High ) )
 
-	PORT_START      /* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_2WAY
+	PORT_START_TAG("IN0")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  ) PORT_2WAY
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_2WAY
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN1 )
@@ -319,10 +269,10 @@ INPUT_PORTS_START( missb2 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START      /* IN1 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_2WAY PORT_PLAYER(2)
+	PORT_START_TAG("IN1")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  ) PORT_2WAY PORT_PLAYER(2)
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_2WAY PORT_PLAYER(2)
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_TILT ) /* ?????*/
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_TILT ) // ???
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
@@ -330,7 +280,7 @@ INPUT_PORTS_START( missb2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
-
+/* Graphics Layouts */
 
 static struct GfxLayout charlayout =
 {
@@ -342,10 +292,6 @@ static struct GfxLayout charlayout =
 	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16 },
 	16*8
 };
-
-
-
-
 
 static struct GfxLayout bglayout =
 {
@@ -391,17 +337,21 @@ static struct GfxLayout bglayout =
 	256*128
 };
 
+/* Graphics Decode Information */
+
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x00000, &charlayout, 0, 1 },
-	{ REGION_GFX2, 0x00000, &bglayout, 0, 2 },
-	{ -1 }	/* end of array */
+	{ REGION_GFX2, 0x00000, &bglayout,   0, 2 },
+	{ -1 }
 };
 
-// ?? not sure for this
-#define MAIN_XTAL 24000000
 
-/* Handler called by the 3526 emulator when the internal timers cause an IRQ */
+#define MAIN_XTAL 24000000	// not sure about this
+
+/* Sound Interfaces */
+
+// Handler called by the 3526 emulator when the internal timers cause an IRQ
 static void irqhandler(int irq)
 {
 	logerror("YM3526 firing an IRQ\n");
@@ -410,46 +360,50 @@ static void irqhandler(int irq)
 
 static struct YM3526interface ym3526_interface =
 {
-	1,				/* 1 chip (no more supported) */
-	MAIN_XTAL/8,	/* 3 MHz */
-	{ 50 },			/* volume */
+	1,				// 1 chip (no more supported)
+	MAIN_XTAL/8,	// 3 MHz
+	{ 50 },			// volume
 	{ irqhandler }
 };
 
-
 static struct OKIM6295interface okim6295_interface =
 {
-	1,					/* 1 chip */
-	{ 8000 },			/* ? frequency */
-	{ REGION_SOUND1 },	/* memory region */
+	1,					// 1 chip
+	{ 8000 },			// ??? frequency
+	{ REGION_SOUND1 },	// memory region
 	{ 100 }
 };
 
+/* Interrupt Generator */
 
+static INTERRUPT_GEN( missb2_interrupt )
+{
+	cpunum_set_input_line(2, 0, HOLD_LINE);
+}
+
+/* Machine Driver */
 
 static MACHINE_DRIVER_START( missb2 )
+	// basic machine hardware
+	MDRV_CPU_ADD(Z80, MAIN_XTAL/4)	// 6 MHz
+	MDRV_CPU_PROGRAM_MAP(master_map, 0)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold, 1)
 
-	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80, MAIN_XTAL/4)	/* 6 MHz */
-	MDRV_CPU_PROGRAM_MAP(missb2_readmem,missb2_writemem)
-	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
-
-	MDRV_CPU_ADD(Z80, MAIN_XTAL/4)	/* 6 MHz */
-	MDRV_CPU_PROGRAM_MAP(missb2_readmem2,missb2_writemem2)
-	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+	MDRV_CPU_ADD(Z80, MAIN_XTAL/4)	// 6 MHz
+	MDRV_CPU_PROGRAM_MAP(slave_map, 0)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold, 1)
 
 	MDRV_CPU_ADD(Z80, MAIN_XTAL/8)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3 MHz */
-	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
-//	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
-	MDRV_CPU_VBLANK_INT(missb2_interrupt,1)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	// 3 MHz
+	MDRV_CPU_PROGRAM_MAP(sound_map, 0)
+//	MDRV_CPU_VBLANK_INT(irq0_line_hold, 1)
+	MDRV_CPU_VBLANK_INT(missb2_interrupt, 1)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
-	MDRV_INTERLEAVE(100)	/* 100 CPU slices per frame - an high value to ensure proper */
-							/* synchronization of the CPUs */
+	MDRV_INTERLEAVE(100) // 100 CPU slices per frame - a high value to ensure proper synchronization of the CPUs
 
-	/* video hardware */
+	// video hardware
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(32*8, 32*8)
 	MDRV_VISIBLE_AREA(0, 32*8-1, 2*8, 30*8-1)
@@ -458,12 +412,12 @@ static MACHINE_DRIVER_START( missb2 )
 
 	MDRV_VIDEO_UPDATE(missb2)
 
-	/* sound hardware */
+	// sound hardware
 	MDRV_SOUND_ADD(YM3526, ym3526_interface)
 	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
 MACHINE_DRIVER_END
 
-
+/* ROMs */
 
 ROM_START( missb2 )
 	ROM_REGION( 0x30000, REGION_CPU1, 0 )
@@ -497,14 +451,18 @@ ROM_START( missb2 )
 	ROM_LOAD( "a71-25.bin",  0x0000, 0x0100, CRC(2d0f8545) SHA1(089c31e2f614145ef2743164f7b52ae35bc06808) )	/* video timing - taken from bublbobl */
 ROM_END
 
+/* Driver Initialization */
+
 static DRIVER_INIT( missb2 )
 {
-	unsigned char *ROM = memory_region(REGION_CPU1);
+	UINT8 *ROM = memory_region(REGION_CPU1);
 
-	/* in Bubble Bobble, bank 0 has code falling from 7fff to 8000, */
-	/* so I have to copy it there because bank switching wouldn't catch it */
+	/* in Bubble Bobble, bank 0 has code falling from 7fff to 8000,
+	   so I have to copy it there because bank switching wouldn't catch it */
 	memcpy(ROM+0x08000,ROM+0x10000,0x4000);
 
 }
+
+/* Game Drivers */
 
 GAMEX( 1996, missb2, bublbobl, missb2, missb2, missb2, ROT0,  "Alpha Co", "Miss Bubble 2", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )

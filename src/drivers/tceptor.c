@@ -43,7 +43,6 @@ extern data16_t *tceptor_sprite_ram;
 static data8_t *m6502_a_shared_ram;
 static data8_t *m6502_b_shared_ram;
 static data8_t *m68k_shared_ram;
-static data8_t *mcu_shared_ram;
 
 static int m6809_irq_enable;
 static int m68k_irq_enable;
@@ -92,17 +91,6 @@ static WRITE16_HANDLER( m68k_shared_word_w )
 {
 	if (ACCESSING_LSB16)
 		m68k_shared_ram[offset] = data & 0xff;
-}
-
-
-static READ8_HANDLER( mcu_shared_r )
-{
-	return mcu_shared_ram[offset];
-}
-
-static WRITE8_HANDLER( mcu_shared_w )
-{
-	mcu_shared_ram[offset] = data;
 }
 
 
@@ -231,8 +219,7 @@ static ADDRESS_MAP_START( m6809_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x1800, 0x1bff) AM_READ(tceptor_tile_ram_r)
 	AM_RANGE(0x1c00, 0x1fff) AM_READ(tceptor_tile_attr_r)
 	AM_RANGE(0x2000, 0x3fff) AM_READ(tceptor_bg_ram_r)		// background (VIEW RAM)
-	AM_RANGE(0x4000, 0x40ff) AM_READ(namcos1_wavedata_r)
-	AM_RANGE(0x4000, 0x43ff) AM_READ(mcu_shared_r)
+	AM_RANGE(0x4000, 0x43ff) AM_READ(namcos1_cus30_r)
 	AM_RANGE(0x4f00, 0x4f00) AM_READ(MRA8_NOP)			// unknown
 	AM_RANGE(0x4f01, 0x4f01) AM_READ(input_port_4_r)		// analog input (accel)
 	AM_RANGE(0x4f02, 0x4f02) AM_READ(input_port_5_r)		// analog input (left/right)
@@ -248,8 +235,7 @@ static ADDRESS_MAP_START( m6809_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x1800, 0x1bff) AM_WRITE(tceptor_tile_ram_w) AM_BASE(&tceptor_tile_ram)
 	AM_RANGE(0x1c00, 0x1fff) AM_WRITE(tceptor_tile_attr_w) AM_BASE(&tceptor_tile_attr)
 	AM_RANGE(0x2000, 0x3fff) AM_WRITE(tceptor_bg_ram_w) AM_BASE(&tceptor_bg_ram)	// background (VIEW RAM)
-	AM_RANGE(0x4000, 0x40ff) AM_WRITE(namcos1_wavedata_w)
-	AM_RANGE(0x4000, 0x43ff) AM_WRITE(mcu_shared_w)
+	AM_RANGE(0x4000, 0x43ff) AM_WRITE(namcos1_cus30_w)
 	AM_RANGE(0x4800, 0x4800) AM_WRITE(MWA8_NOP)			// 3D scope left/right?
 	AM_RANGE(0x4f00, 0x4f03) AM_WRITE(MWA8_NOP)			// analog input control?
 	AM_RANGE(0x5000, 0x5006) AM_WRITE(tceptor_bg_scroll_w)	// bg scroll
@@ -320,8 +306,7 @@ ADDRESS_MAP_END
 static ADDRESS_MAP_START( mcu_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x001f) AM_READ(hd63701_internal_registers_r)
 	AM_RANGE(0x0080, 0x00ff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x1000, 0x10ff) AM_READ(namcos1_wavedata_r)
-	AM_RANGE(0x1000, 0x13ff) AM_READ(mcu_shared_r)
+	AM_RANGE(0x1000, 0x13ff) AM_READ(namcos1_cus30_r)
 	AM_RANGE(0x1400, 0x154d) AM_READ(MRA8_RAM)
 	AM_RANGE(0x17c0, 0x17ff) AM_READ(MRA8_RAM)
 	AM_RANGE(0x2000, 0x20ff) AM_READ(m6502_a_shared_r)
@@ -338,9 +323,7 @@ ADDRESS_MAP_END
 static ADDRESS_MAP_START( mcu_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x001f) AM_WRITE(hd63701_internal_registers_w)
 	AM_RANGE(0x0080, 0x00ff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0x1000, 0x10ff) AM_WRITE(namcos1_wavedata_w) AM_BASE(&namco_wavedata)
-	AM_RANGE(0x1100, 0x113f) AM_WRITE(namcos1_sound_w) AM_BASE(&namco_soundregs)
-	AM_RANGE(0x1000, 0x13ff) AM_WRITE(mcu_shared_w) AM_BASE(&mcu_shared_ram)
+	AM_RANGE(0x1000, 0x13ff) AM_WRITE(namcos1_cus30_w) AM_BASE(&namco_wavedata)
 	AM_RANGE(0x1400, 0x154d) AM_WRITE(MWA8_RAM)
 	AM_RANGE(0x17c0, 0x17ff) AM_WRITE(MWA8_RAM)
 	AM_RANGE(0x2000, 0x20ff) AM_WRITE(m6502_a_shared_w)
@@ -419,7 +402,7 @@ INPUT_PORTS_START( tceptor )
 	PORT_BIT(  0xff, 0x7f, IPT_AD_STICK_X ) PORT_MINMAX(0x00,0xfe) PORT_SENSITIVITY(100) PORT_KEYDELTA(16)
 
 	PORT_START	/* ADC08090 - 8 CHANNEL ANALOG - CHANNEL 3 */
-	PORT_BIT(  0xff, 0x7f, IPT_AD_STICK_Y ) PORT_MINMAX(0x00,0xfe) PORT_SENSITIVITY(100) PORT_KEYDELTA(16) 
+	PORT_BIT(  0xff, 0x7f, IPT_AD_STICK_Y ) PORT_MINMAX(0x00,0xfe) PORT_SENSITIVITY(100) PORT_KEYDELTA(16)
 INPUT_PORTS_END
 
 INPUT_PORTS_START( tceptor2 )
@@ -592,7 +575,7 @@ static MACHINE_DRIVER_START( tceptor )
 	/* sound hardware */
 	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
 	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(NAMCO, namco_interface)
+	MDRV_SOUND_ADD(NAMCO_CUS30, namco_interface)
 	MDRV_SOUND_ADD(DAC, dac_interface)
 MACHINE_DRIVER_END
 

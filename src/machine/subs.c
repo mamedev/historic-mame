@@ -184,34 +184,3 @@ WRITE8_HANDLER( subs_lamp2_w )
 {
 	set_led_status(1,~offset & 1);
 }
-
-/***************************************************************************
-sub sound functions
-***************************************************************************/
-
-WRITE8_HANDLER( subs_sonar2_w )
-{
-	discrete_sound_w(1, offset & 0x01);
-}
-
-WRITE8_HANDLER( subs_sonar1_w )
-{
-	discrete_sound_w(0, offset & 0x01);
-}
-
-WRITE8_HANDLER( subs_crash_w )
-{
-	discrete_sound_w(4, ~offset & 0x01);
-}
-
-WRITE8_HANDLER( subs_explode_w )
-{
-	discrete_sound_w(5, ~offset & 0x01);
-}
-
-WRITE8_HANDLER( subs_noise_reset_w )
-{
-	/* Pulse noise reset */
-	discrete_sound_w(6, 0);
-}
-

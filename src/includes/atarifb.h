@@ -9,6 +9,13 @@
 #define GAME_IS_BASEBALL   (atarifb_game == 3)
 #define GAME_IS_SOCCER     (atarifb_game == 4)
 
+/* Discrete Sound Input Nodes */
+#define ATARIFB_WHISTLE_EN		NODE_01
+#define ATARIFB_CROWD_DATA		NODE_02
+#define ATARIFB_ATTRACT_EN		NODE_03
+#define ATARIFB_NOISE_EN		NODE_04
+#define ATARIFB_HIT_EN			NODE_05
+
 
 /*----------- defined in drivers/atarifb.c -----------*/
 
@@ -25,6 +32,12 @@ READ8_HANDLER( atarifb_in0_r );
 READ8_HANDLER( atarifb_in2_r );
 READ8_HANDLER( atarifb4_in0_r );
 READ8_HANDLER( atarifb4_in2_r );
+
+
+/*----------- defined in sndhrdw/atarifb.c -----------*/
+
+extern struct discrete_sound_block atarifb_discrete_interface[];
+extern struct discrete_sound_block abaseb_discrete_interface[];
 
 
 /*----------- defined in vidhrdw/atarifb.c -----------*/

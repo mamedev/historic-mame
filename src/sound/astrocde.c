@@ -7,10 +7,10 @@
 
 	 First Release:
 	 	09/20/98
-
-	 Issues:
-	 	Noise generators need work
-		Can do lots of speed optimizations
+	 Updated 11/2004
+	 	Fixed noise generator bug
+	 	Changed to stream system
+	 	Fixed out of bounds memory access bug
 
 ***********************************************************/
 
@@ -24,13 +24,7 @@
 
 static const struct astrocade_interface *intf;
 
-static int emulation_rate;
 static int div_by_N_factor;
-static int buffer_len;
-
-static INT16 *astrocade_buffer[MAX_ASTROCADE_CHIPS];
-
-static int sample_pos[MAX_ASTROCADE_CHIPS];
 
 static int current_count_A[MAX_ASTROCADE_CHIPS];
 static int current_count_B[MAX_ASTROCADE_CHIPS];
@@ -49,7 +43,7 @@ static int current_size_C[MAX_ASTROCADE_CHIPS];
 static int current_size_V[MAX_ASTROCADE_CHIPS];
 static int current_size_N[MAX_ASTROCADE_CHIPS];
 
-static int channel;
+static int stream;
 
 /* Registers */
 
@@ -67,102 +61,125 @@ static int noise_am[MAX_ASTROCADE_CHIPS];
 static int vol_noise4[MAX_ASTROCADE_CHIPS];
 static int vol_noise8[MAX_ASTROCADE_CHIPS];
 
-static int randbyte = 0;
-static int randbit = 1;
+static int randbyte[MAX_ASTROCADE_CHIPS];
+static int randbit[MAX_ASTROCADE_CHIPS];
 
-static void astrocade_update(int num, int newpos)
+static void astrocade_update(int param, INT16 **buffer, int num_samples)
 {
-	INT16 *buffer = astrocade_buffer[num];
+	int num;
+	INT16 *bufptr;
+	int count;
+	int data, data16, noise_plus_osc, vib_plus_osc;
 
-	int pos = sample_pos[num];
-	int i, data, data16, noise_plus_osc, vib_plus_osc;
-
-	for(i=pos; i<newpos; i++)
+	/* For each chip */
+	for (num=0; num < intf->num ;num++)
 	{
-		if (current_count_N[i] == 0)
-		{
-			randbyte = rand() & 0xff;
-		}
+		bufptr = buffer[num];
+		count = num_samples;
 
-		current_size_V[num] = 32768*vibrato_speed[num]/div_by_N_factor;
-
-		if (!mux[num])
+		/* For each sample */
+		while(count>0)
 		{
-			if (current_state_V[num] == -1)
-				vib_plus_osc = (master_osc[num]-vibrato[num])&0xff;
+			/* Update current output value */
+
+			if (current_count_N[num] == 0)
+			{
+				randbyte[num] = rand() & 0xff;
+			}
+
+			current_size_V[num] = 32768*vibrato_speed[num]/div_by_N_factor;
+
+			if (!mux[num])
+			{
+				if (current_state_V[num] == -1)
+					vib_plus_osc = (master_osc[num]-vibrato[num])&0xff;
+				else
+					vib_plus_osc = master_osc[num];
+				current_size_A[num] = vib_plus_osc*freq_A[num]/div_by_N_factor;
+				current_size_B[num] = vib_plus_osc*freq_B[num]/div_by_N_factor;
+				current_size_C[num] = vib_plus_osc*freq_C[num]/div_by_N_factor;
+			}
 			else
-				vib_plus_osc = master_osc[num];
-			current_size_A[num] = vib_plus_osc*freq_A[num]/div_by_N_factor;
-			current_size_B[num] = vib_plus_osc*freq_B[num]/div_by_N_factor;
-			current_size_C[num] = vib_plus_osc*freq_C[num]/div_by_N_factor;
-		}
-		else
-		{
-			noise_plus_osc = ((master_osc[num]-(vol_noise8[num]&randbyte)))&0xff;
-			current_size_A[num] = noise_plus_osc*freq_A[num]/div_by_N_factor;
-			current_size_B[num] = noise_plus_osc*freq_B[num]/div_by_N_factor;
-			current_size_C[num] = noise_plus_osc*freq_C[num]/div_by_N_factor;
-			current_size_N[num] = 2*noise_plus_osc/div_by_N_factor;
-		}
+			{
+				noise_plus_osc = ((master_osc[num]-(vol_noise8[num]&randbyte[num])))&0xff;
+				current_size_A[num] = noise_plus_osc*freq_A[num]/div_by_N_factor;
+				current_size_B[num] = noise_plus_osc*freq_B[num]/div_by_N_factor;
+				current_size_C[num] = noise_plus_osc*freq_C[num]/div_by_N_factor;
+				current_size_N[num] = 2*noise_plus_osc/div_by_N_factor;
+			}
 
-		data = (current_state_A[num]*vol_A[num] +
-			    current_state_B[num]*vol_B[num] +
-			    current_state_C[num]*vol_C[num]);
+			data = (current_state_A[num]*vol_A[num] +
+					current_state_B[num]*vol_B[num] +
+					current_state_C[num]*vol_C[num]);
 
-		if (noise_am[num])
-		{
-			randbit = rand() & 1;
-			data = data + randbit*vol_noise4[num];
+			if (noise_am[num])
+			{
+				randbit[num] = rand() & 1;
+				data = data + randbit[num]*vol_noise4[num];
+			}
+
+			/* Put it in the buffer */
+
+			data16 = data<<8;
+			*bufptr = data16;
+			bufptr++;
+
+			/* Update the state of the chip */
+
+			if (current_count_A[num] >= current_size_A[num])
+			{
+				current_state_A[num] = -current_state_A[num];
+				current_count_A[num] = 0;
+			}
+			else
+				current_count_A[num]++;
+
+			if (current_count_B[num] >= current_size_B[num])
+			{
+				current_state_B[num] = -current_state_B[num];
+				current_count_B[num] = 0;
+			}
+			else
+				current_count_B[num]++;
+
+			if (current_count_C[num] >= current_size_C[num])
+			{
+				current_state_C[num] = -current_state_C[num];
+				current_count_C[num] = 0;
+			}
+			else
+				current_count_C[num]++;
+
+			if (current_count_V[num] >= current_size_V[num])
+			{
+				current_state_V[num] = -current_state_V[num];
+				current_count_V[num] = 0;
+			}
+			else
+				current_count_V[num]++;
+
+			if (current_count_N[num] >= current_size_N[num])
+			{
+				current_count_N[num] = 0;
+			}
+			else
+				current_count_N[num]++;
+
+			count--;
 		}
-
-		data16 = data<<8;
-		buffer[pos++] = data16;
-
-		if (current_count_A[num] >= current_size_A[num])
-		{
-			current_state_A[num] = -current_state_A[num];
-			current_count_A[num] = 0;
-		}
-		else
-			current_count_A[num]++;
-
-		if (current_count_B[num] >= current_size_B[num])
-		{
-			current_state_B[num] = -current_state_B[num];
-			current_count_B[num] = 0;
-		}
-		else
-			current_count_B[num]++;
-
-		if (current_count_C[num] >= current_size_C[num])
-		{
-			current_state_C[num] = -current_state_C[num];
-			current_count_C[num] = 0;
-		}
-		else
-			current_count_C[num]++;
-
-		if (current_count_V[num] >= current_size_V[num])
-		{
-			current_state_V[num] = -current_state_V[num];
-			current_count_V[num] = 0;
-		}
-		else
-			current_count_V[num]++;
-
-		if (current_count_N[num] >= current_size_N[num])
-		{
-			current_count_N[num] = 0;
-		}
-		else
-			current_count_N[num]++;
 	}
-	sample_pos[num]    = pos;
+}
+
+static void astrocade_update_one(int ch, INT16 *buffer, int length)
+{
+	astrocade_update(ch, &buffer, length);
 }
 
 int astrocade_sh_start(const struct MachineSound *msound)
 {
 	int i;
+	const char *names[2] = { "ASTROCADE1", "ASTROCADE2" };
+	int default_mixing_levels[2];
 
 	intf = msound->sound_interface;
 
@@ -171,22 +188,31 @@ int astrocade_sh_start(const struct MachineSound *msound)
 		return 0;
 	}
 
-	buffer_len = Machine->sample_rate / Machine->drv->frames_per_second;
+	div_by_N_factor = intf->baseclock/Machine->sample_rate;
 
-	emulation_rate = buffer_len * Machine->drv->frames_per_second;
-	div_by_N_factor = intf->baseclock/emulation_rate;
+	default_mixing_levels[0] = intf->mixing_level[0];
+	default_mixing_levels[1] = intf->mixing_level[1];
 
-	channel = mixer_allocate_channels(intf->num,intf->volume);
-	/* reserve buffer */
+	if (intf->num == 1)
+	{
+		stream = stream_init(names[0],default_mixing_levels[0],
+				Machine->sample_rate,
+				0,astrocade_update_one);
+	}
+	else
+	{
+		stream = stream_init_multi(intf->num,names,default_mixing_levels,
+				Machine->sample_rate,
+				0,astrocade_update);
+	}
+
+	if (stream == -1)
+		return 1;
+
+	/* init states */
 	for (i = 0;i < intf->num;i++)
 	{
-		if ((astrocade_buffer[i] = malloc(sizeof(INT16)*buffer_len)) == 0)
-		{
-			while (--i >= 0) free(astrocade_buffer[i]);
-			return 1;
-		}
 		/* reset state */
-		sample_pos[i] = 0;
 		current_count_A[i] = 0;
 		current_count_B[i] = 0;
 		current_count_C[i] = 0;
@@ -196,26 +222,19 @@ int astrocade_sh_start(const struct MachineSound *msound)
 		current_state_B[i] = 1;
 		current_state_C[i] = 1;
 		current_state_V[i] = 1;
+		randbyte[i] = 0;
+		randbit[i] = 1;
 	}
 
 	return 0;
 }
 
-void astrocade_sh_stop(void)
-{
-	int i;
-
-	for (i = 0;i < intf->num;i++){
-		free(astrocade_buffer[i]);
-	}
-}
-
 void astrocade_sound_w(int num, int offset, int data)
 {
-	int i, bvalue, temp_vib;
+	int i, temp_vib;
 
 	/* update */
-	astrocade_update(num,sound_scalebufferpos(buffer_len));
+	stream_update(stream,0);
 
 	switch(offset)
 	{
@@ -289,15 +308,17 @@ void astrocade_sound_w(int num, int offset, int data)
 			logerror("Noise Vol (4):                         %02x\n",vol_noise4[num]);
 #endif
 		break;
-
-		case 8:  /* Sound Block Transfer */
-
-			bvalue = (activecpu_get_reg(Z80_BC) >> 8) & 0x07;
-
-			astrocade_sound_w(num, bvalue, data);
-
-		break;
 	}
+}
+
+WRITE8_HANDLER( astrocade_soundblock1_w )
+{
+	astrocade_sound_w(0, (offset>>8)&7, data);
+}
+
+WRITE8_HANDLER( astrocade_soundblock2_w )
+{
+	astrocade_sound_w(1, (offset>>8)&7, data);
 }
 
 WRITE8_HANDLER( astrocade_sound1_w )
@@ -311,18 +332,3 @@ WRITE8_HANDLER( astrocade_sound2_w )
 }
 
 
-void astrocade_sh_update(void)
-{
-	int num;
-
-	if (Machine->sample_rate == 0 ) return;
-
-	for (num = 0;num < intf->num;num++)
-	{
-		astrocade_update(num, buffer_len);
-		/* reset position , step , count */
-		sample_pos[num] = 0;
-		/* play sound */
-		mixer_play_streamed_sample_16(channel+num,astrocade_buffer[num],2*buffer_len,emulation_rate);
-	}
-}

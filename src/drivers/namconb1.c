@@ -269,7 +269,6 @@ GFX:                Custom 145     ( 80 pin PQFP)
                     Custom 187     (120 pin PQFP)
                     Custom 169     (120 pin PQFP)
 */
-
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "namconb1.h"
@@ -306,7 +305,7 @@ static void namconb2_TriggerPOSIRQ( int scanline )
 	int irqlevel = GetCPURegister(0x02);
 	force_partial_update(scanline);
 	cpunum_set_input_line(0, irqlevel, PULSE_LINE);
-}
+} /* namconb2_TriggerPOSIRQ */
 
 static INTERRUPT_GEN( namconb2_interrupt )
 {
@@ -351,7 +350,7 @@ static INTERRUPT_GEN( namconb2_interrupt )
 	{
 		timer_set( cpu_getscanlinetime(scanline), scanline, namconb2_TriggerPOSIRQ );
 	}
-}
+} /* namconb2_interrupt */
 static INTERRUPT_GEN( namconb1_interrupt )
 {
 	/**
@@ -447,6 +446,10 @@ static NVRAM_HANDLER( namconb1 )
 
 static DRIVER_INIT( nebulray )
 {
+	UINT8 *pMem = (UINT8 *)memory_region(NAMCONB1_TILEMASKREGION);
+	size_t numBytes = (0xfe7-0xe6f)*8;
+	memset( &pMem[0xe6f*8], 0, numBytes );
+
 	namcos2_gametype = NAMCONB1_NEBULRAY;
 } /* nebulray */
 
@@ -585,7 +588,7 @@ static READ32_HANDLER( custom_key_r )
 
 	logerror( "custom_key_r(%d); pc=%08x\n", offset, activecpu_get_pc() );
 	return 0;
-}
+} /* custom_key_r */
 
 /***************************************************************/
 
@@ -609,7 +612,7 @@ static struct GfxLayout obj_layout =
 		0x8*128,0x9*128,0xa*128,0xb*128,0xc*128,0xd*128,0xe*128,0xf*128
 	},
 	16*128
-};
+}; /* obj_layout */
 
 static struct GfxLayout tile_layout =
 {
@@ -620,7 +623,7 @@ static struct GfxLayout tile_layout =
 	{ 0*8,1*8,2*8,3*8,4*8,5*8,6*8,7*8 },
 	{ 0*64,1*64,2*64,3*64,4*64,5*64,6*64,7*64 },
 	8*64
-};
+}; /* tile_layout */
 
 static struct GfxLayout roz_layout =
 {
@@ -633,14 +636,14 @@ static struct GfxLayout roz_layout =
 		0*128,1*128,2*128,3*128,4*128,5*128,6*128,7*128,8*128,9*128,10*128,11*128,12*128,13*128,14*128,15*128
 	},
 	16*128
-};
+}; /* roz_layout */
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	{ NAMCONB1_TILEGFXREGION,	0, &tile_layout,	0x1000, 0x10 },
 	{ NAMCONB1_SPRITEGFXREGION,	0, &obj_layout,		0x0000, 0x10 },
 	{ -1 }
-};
+}; /* gfxdecodeinfo */
 
 static struct GfxDecodeInfo gfxdecodeinfo2[] =
 {
@@ -648,7 +651,7 @@ static struct GfxDecodeInfo gfxdecodeinfo2[] =
 	{ NAMCONB1_SPRITEGFXREGION,	0, &obj_layout,		0x0000, 0x10 },
 	{ NAMCONB1_ROTGFXREGION,	0, &roz_layout,		0x1800, 0x08 },
 	{ -1 }
-};
+}; /* gfxdecodeinfo2 */
 
 /***************************************************************/
 
@@ -664,13 +667,13 @@ static READ32_HANDLER( gunbulet_gun_r )
 	case 6: case 7: result = (UINT8)(0x26+readinputport(4)*288/314); break; /* X (p1) */
 	}
 	return result<<24;
-}
+} /* gunbulet_gun_r */
 
 static
 READ32_HANDLER( randgen_r )
 {
 	return mame_rand();
-}
+} /* randgen_r */
 
 static
 WRITE32_HANDLER( srand_w )
@@ -679,7 +682,7 @@ WRITE32_HANDLER( srand_w )
 	 * Used to seed the hardware random number generator.
 	 * We don't yet know the algorithm that is used, so for now this is a NOP.
 	 */
-}
+} /* srand_w */
 
 static ADDRESS_MAP_START( namconb1_am, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA32_ROM) AM_WRITE(MWA32_ROM)

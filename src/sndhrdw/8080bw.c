@@ -46,7 +46,6 @@ static WRITE8_HANDLER( boothill_sh_port3_w );
 static WRITE8_HANDLER( boothill_sh_port5_w );
 
 static WRITE8_HANDLER( clowns_sh_port7_w );
-extern struct Samplesinterface circus_samples_interface;
 
 static WRITE8_HANDLER( seawolf_sh_port5_w );
 
@@ -403,8 +402,8 @@ static WRITE8_HANDLER( ballbomb_sh_port5_w )
 
 /*******************************************************/
 /*                                                     */
-/* Taito "Polaris"		                       */
-/*                                                     */
+/* Taito "Polaris"		                               */
+/* D.R.                                                */
 /*******************************************************/
 
 const struct discrete_lfsr_desc polaris_lfsr={
@@ -489,8 +488,6 @@ const struct discrete_mixer_desc polaris_mixer_vr4_desc =
 		{0, CAP_U(1), 0,0,0,0,0,0},
 		0, RES_K(50), CAP_U(.05), CAP_U(1), 0, 40000};
 
-DISCRETE_SOUND_START(polaris_sound_interface)
-
 /* Nodes - Inputs */
 #define POLARIS_MUSIC_DATA		NODE_01
 #define POLARIS_SX0_EN			NODE_02
@@ -519,40 +516,28 @@ DISCRETE_SOUND_START(polaris_sound_interface)
 #define POLARIS_ADJ_VR2			NODE_24
 #define POLARIS_ADJ_VR3			NODE_25
 
+DISCRETE_SOUND_START(polaris_discrete_interface)
+
 	/************************************************/
 	/* Polaris sound system: 8 Sound Sources        */
 	/*                                              */
 	/* Relative volumes are adjustable              */
-	/*                                              */
-	/*  Discrete sound mapping via:                 */
-	/*     discrete_sound_w($register,value)        */
-	/*  $00 - Music Data                            */
-	/*  $01 - SX0                                   */
-	/*  $02 - SX1                                   */
-	/*  $03 - SX2                                   */
-	/*  $04 - SX3                                   */
-	/*  $05 - SX5                                   */
-	/*  $06 - SX6                                   */
-	/*  $07 - SX7                                   */
-	/*  $08 - SX9                                   */
-	/*  $09 - SX10                                  */
 	/*                                              */
 	/************************************************/
 
 	/************************************************/
 	/* Input register mapping for polaris           */
 	/************************************************/
-	/*               NODE                ADDR  MASK    INIT */
-	DISCRETE_INPUT(POLARIS_MUSIC_DATA  , 0x00, 0x000f, 0.0)
-	DISCRETE_INPUT(POLARIS_SX0_EN      , 0x01, 0x000f, 0.0)
-	DISCRETE_INPUT(POLARIS_SX1_EN      , 0x02, 0x000f, 0.0)
-	DISCRETE_INPUT(POLARIS_SX2_EN      , 0x03, 0x000f, 0.0)
-	DISCRETE_INPUT(POLARIS_SX3_EN      , 0x04, 0x000f, 0.0)
-	DISCRETE_INPUT(POLARIS_SX5_EN      , 0x05, 0x000f, 0.0)
-	DISCRETE_INPUT(POLARIS_SX6_EN      , 0x06, 0x000f, 0.0)
-	DISCRETE_INPUT(POLARIS_SX7_EN      , 0x07, 0x000f, 0.0)
-	DISCRETE_INPUT(POLARIS_SX9_EN      , 0x08, 0x000f, 0.0)
-	DISCRETE_INPUT(POLARIS_SX10_EN     , 0x09, 0x000f, 0.0)
+	DISCRETE_INPUT_DATA (POLARIS_MUSIC_DATA)
+	DISCRETE_INPUT_LOGIC(POLARIS_SX0_EN)
+	DISCRETE_INPUT_LOGIC(POLARIS_SX1_EN)
+	DISCRETE_INPUT_LOGIC(POLARIS_SX2_EN)
+	DISCRETE_INPUT_LOGIC(POLARIS_SX3_EN)
+	DISCRETE_INPUT_LOGIC(POLARIS_SX5_EN)
+	DISCRETE_INPUT_LOGIC(POLARIS_SX6_EN)
+	DISCRETE_INPUT_LOGIC(POLARIS_SX7_EN)
+	DISCRETE_INPUT_LOGIC(POLARIS_SX9_EN)
+	DISCRETE_INPUT_LOGIC(POLARIS_SX10_EN)
 
 	/* We will cheat and just use the controls to scale the amplitude. */
 	/* It is the same as taking the (0 to 50k)/50k */
@@ -736,27 +721,27 @@ MACHINE_INIT( polaris )
 
 static WRITE8_HANDLER( polaris_sh_port2_w )
 {
-	discrete_sound_w(0, data & 0xff);
+	discrete_sound_w(POLARIS_MUSIC_DATA, data);
 }
 
 static WRITE8_HANDLER( polaris_sh_port4_w )
 {
 	/* 0x01 - SX0 - Shot */
-	discrete_sound_w(1, data & 0x01);
+	discrete_sound_w(POLARIS_SX0_EN, data & 0x01);
 
 	/* 0x02 - SX1 - Ship Hit (Sub) */
-	discrete_sound_w(2, (data & 0x02) >> 1);
+	discrete_sound_w(POLARIS_SX1_EN, data & 0x02);
 
 	/* 0x04 - SX2 - Ship */
-	discrete_sound_w(3, (data & 0x04) >> 2 );
+	discrete_sound_w(POLARIS_SX2_EN, data & 0x04);
 
 	/* 0x08 - SX3 - Explosion */
-	discrete_sound_w(4, (data & 0x08) >> 3);
+	discrete_sound_w(POLARIS_SX3_EN, data & 0x08);
 
 	/* 0x10 - SX4 */
 
 	/* 0x20 - SX5 - Sound Enable */
-	discrete_sound_w(5, (data & 0x20) >> 5);
+	discrete_sound_w(POLARIS_SX5_EN, data & 0x20);
 }
 
 static WRITE8_HANDLER( polaris_sh_port6_w )
@@ -766,16 +751,16 @@ static WRITE8_HANDLER( polaris_sh_port6_w )
 	c8080bw_flip_screen_w(data & 0x20);  /* SX11 */
 
 	/* 0x01 - SX6 - Plane Down */
-	discrete_sound_w(6, (data & 0x01) );
+	discrete_sound_w(POLARIS_SX6_EN, data & 0x01);
 
 	/* 0x02 - SX7 - Plane Up */
-	discrete_sound_w(7, (data & 0x02) >> 1 );
+	discrete_sound_w(POLARIS_SX7_EN, data & 0x02);
 
 	/* 0x08 - SX9 - Hit */
-	discrete_sound_w(9, (data & 0x08) >> 3);
+	discrete_sound_w(POLARIS_SX9_EN, data & 0x08);
 
 	/* 0x10 - SX10 - Hit */
-	discrete_sound_w(9, (data & 0x10) >> 4);
+	discrete_sound_w(POLARIS_SX10_EN, data & 0x10);
 }
 
 

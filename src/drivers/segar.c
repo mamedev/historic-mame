@@ -123,6 +123,83 @@ static READ8_HANDLER( segar_ports_r )
 	return 0;
 }
 
+/***************************************************************************
+
+  The Sega game spaceod stores the INP and DIP switches in a very mangled 
+  format that's not directly useable by MAME.  This function mangles them
+  into a format that can be used.
+
+  MAME format:
+  Port 0 -  INP0-8  INP0-7  INP0-6  INP0-5
+  Port 1 -  INP1-8  INP1-7  INP1-6  INP1-5
+  Port 2 -  INP2-8  INP2-7  INP2-6  INP2-5
+  Port 3 -  INP3-8  INP3-7  INP3-6  INP3-5
+  Port 4 -  INP4-8  INP4-7  INP4-6  INP4-5  INP2-4  INP2-3  INP2-2  INP2-1
+  Port 6 -  DIP1-8  DIP1-7  DIP1-6  DIP1-5  DIP1-4  DIP1-3  DIP1-2  DIP1-1
+  Port 7 -  DIP2-8  DIP2-7  DIP2-6  DIP2-5  DIP2-4  DIP2-3  DIP2-2  DIP2-1
+  
+  Original format (cocktail):
+  Port 0 -  INP0-8  INP0-7  INP0-6  INP0-5  DIP1-8  DIP1-4  DIP2-8  DIP2-4
+  Port 1 -  INP1-8  INP1-7  INP1-6  INP1-5  DIP1-7  DIP1-3  DIP2-7  DIP2-3
+  Port 2 -  INP2-8  INP2-7  INP2-6  INP2-5  DIP1-6  DIP1-2  DIP2-6  DIP2-2
+  Port 3 -  INP3-8  INP3-7  INP3-6  INP3-5  DIP1-5  DIP1-1  DIP2-5  DIP2-1
+  Port 4 -  INP4-8  INP4-7  INP4-6  INP4-5  INP4-4  INP4-3  INP4-2  INP4-1 
+
+  Original format (upright):
+  Port 0 -  INP0-8  INP0-7  INP0-6 (INP4-4) DIP1-8  DIP1-4  DIP2-8  DIP2-4
+  Port 1 -  INP1-8  INP1-7  INP1-6  INP1-5  DIP1-7  DIP1-3  DIP2-7  DIP2-3
+  Port 2 -  INP2-8  INP2-7 (INP4-6) INP2-5  DIP1-6  DIP1-2  DIP2-6  DIP2-2
+  Port 3 -  INP3-8  INP3-7 (INP4-5) INP3-5  DIP1-5  DIP1-1  DIP2-5  DIP2-1
+  Port 4 -  INP4-8  INP4-7  INP4-6  INP4-5  INP4-4  INP4-3  INP4-1  INP4-2 
+
+***************************************************************************/
+
+static READ8_HANDLER( spaceod_ports_r )
+{
+	int dip1 = input_port_6_r(offset);
+	int dip2 = input_port_7_r(offset);
+	int inp4 = input_port_4_r(offset);
+	int upright = dip1 & 0x20;
+
+	switch (offset)
+	{
+		case 0:
+			return ((upright ? (input_port_0_r(0) & 0xE0) | ((~inp4 & 0x08)<<1) :
+							   (input_port_0_r(0) & 0xF0)) |
+					((dip2 & 0x08)>>3) |
+					((dip2 & 0x80)>>6) |
+					((dip1 & 0x08)>>1) |
+					((dip1 & 0x80)>>4));
+
+		case 1:
+			return ((input_port_1_r(0) & 0xF0) |
+					((dip2 & 0x04)>>2) |
+					((dip2 & 0x40)>>5) |
+					((dip1 & 0x04)>>0) |
+					((dip1 & 0x40)>>3));
+		case 2:
+			return ((upright ? (input_port_2_r(0) & 0xD0) | (~inp4 & 0x20) :
+							   (input_port_2_r(0) & 0xF0)) |
+					((dip2 & 0x02)>>1) |
+					((dip2 & 0x20)>>4) |
+					((dip1 & 0x02)<<1) |
+					((dip1 & 0x20)>>2));
+		case 3:
+			return ((upright ? (input_port_3_r(0) & 0xD0) | ((~inp4 & 0x10)<<1) :
+							   (input_port_3_r(0) & 0xF0)) |
+					((dip2 & 0x01)>>0) |
+					((dip2 & 0x10)>>3) |
+					((dip1 & 0x01)<<2) |
+					((dip1 & 0x10)>>1));
+		case 4:
+			return (upright ? ((inp4 & 0x0FC) | ((inp4 & 0x02)>>1) | ((inp4 & 0x01)<<1)) :
+                               (inp4));
+	}
+
+	return 0;
+}
+
+
 
 
 /*************************************
@@ -212,6 +289,11 @@ static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x0e, 0x0e) AM_READ(monsterb_audio_8255_r)
 	AM_RANGE(0x81, 0x81) AM_READ(input_port_8_r)     /* only used by Sindbad Mystery */
 	AM_RANGE(0xf8, 0xfc) AM_READ(segar_ports_r)
+ADDRESS_MAP_END
+
+
+static ADDRESS_MAP_START( spaceod_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0xf8, 0xfc) AM_READ(spaceod_ports_r)
 ADDRESS_MAP_END
 
 
@@ -586,30 +668,44 @@ SEGAR_COMMON2A
 INPUT_PORTS_END
 
 
+// The port mapping in spaceod is different for upright vs. cocktail.  Use 
+// the cocktail mapping by default to gain access to all inputs, and remap
+// the inputs for upright in spaceod_ports_r()
+
 INPUT_PORTS_START( spaceod )
-SEGAR_COMMON1
+	PORT_START_TAG("IN0")\
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 ) PORT_IMPULSE(3)
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 ) PORT_IMPULSE(3)
+	
+	PORT_START_TAG("IN1")
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_COCKTAIL PORT_PLAYER(2)
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START_TAG("IN2")
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT(0x20, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_NAME("Bomb")
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_COCKTAIL PORT_PLAYER(2)
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_COCKTAIL PORT_PLAYER(2)
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_COCKTAIL PORT_PLAYER(2)
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START_TAG("IN3")
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_COCKTAIL PORT_PLAYER(2)
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_COCKTAIL PORT_PLAYER(2)
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START_TAG("IN4")
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_8WAY
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_8WAY
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ) PORT_8WAY
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT) PORT_COCKTAIL
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT) PORT_COCKTAIL
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_COCKTAIL PORT_PLAYER(1)
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_COCKTAIL PORT_PLAYER(1)
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_COCKTAIL PORT_PLAYER(1)
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_8WAY PORT_COCKTAIL PORT_PLAYER(1)
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_COCKTAIL PORT_PLAYER(1)
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 ) PORT_COCKTAIL PORT_PLAYER(1)
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	PORT_START_TAG("FAKE1")
 	/* This fake input port is used to get the status of the F2 key, */
@@ -1016,6 +1112,8 @@ static MACHINE_DRIVER_START( spaceod )
 
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(segar)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_IO_MAP(spaceod_readport,writeport)
 
 	/* video hardware */
 	MDRV_GFXDECODE(spaceod_gfxdecodeinfo)
@@ -1592,7 +1690,7 @@ GAME( 1981, astrob2a, astrob,  astrob,   astrob2,  astrob,   ROT270, "Sega", "As
 GAMEX(1981, astrob1,  astrob,  astrob,   astrob1,  astrob,   ROT270, "Sega", "Astro Blaster (version 1)", GAME_NOT_WORKING )
 GAMEX(1981, 005,      0,       005,      005,      005,      ROT270, "Sega", "005", GAME_NO_SOUND )
 GAME( 1982, monsterb, 0,       monsterb, monsterb, monsterb, ROT270, "Sega", "Monster Bash" )
-GAME( 1982, monster2, monsterb,monsterb, monsterb, monster2, ROT270, "Sega", "Monster Bash (2 board version)" )
+GAMEX(1982, monster2, monsterb,monsterb, monsterb, monster2, ROT270, "Sega", "Monster Bash (2 board version)", GAME_NOT_WORKING )
 GAME( 1981, spaceod,  0,       spaceod,  spaceod,  spaceod,  ROT270, "Sega", "Space Odyssey" )
 GAMEX(1983, pignewt,  0,       pignewt,  pignewt,  pignewt,  ROT270, "Sega", "Pig Newton (version C)", GAME_NO_SOUND )
 GAMEX(1983, pignewta, pignewt, pignewt,  pignewta, pignewt,  ROT270, "Sega", "Pig Newton (version A)", GAME_NO_SOUND )

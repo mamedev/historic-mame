@@ -571,7 +571,167 @@ ROM_START( galaxygn )
 	ROMX_LOAD( "gg30.bin", 0x180002, 0x10000, CRC(ded7cacf) SHA1(adbfaa8f46e5ce8df264d5b5a201d75ca2b3dbeb) , ROM_SKIP(2) )
 ROM_END
 
+/* Born to Fight */
+
+/*
+Born To Fight
+?, ?
+
+PCB Layout
+----------
+
+Bottom Board
+
+|-------------------------------------------------------------------|
+|     PAL                                                           |
+|-|   PAL    PAL                     4464    4464                   |
+| |          PAL          PAL                                       |
+| |          PAL   PAL               4464    4464                   |
+| |                                                                 |
+| |CN1                    PAL        4464    4464    2018           |
+| |                PAL    PAL                                       |
+| |                                  4464    4464    2018         |-|
+|-|                      |---------|                  |---------| | |
+|                        |I.G.1BB  |                  |I.G.1BB  | | |
+|J                       |48844758V|                  |48844758V| | |
+|A                       |         |                  |         | | |
+|M                       |         |                  |         | | |CN2
+|M                       |---------|                  |---------| | |
+|A             16MHz                                              |-|
+|                                PAL        PAL      PAL            |
+|    |----------|                PAL                                |
+|    |D70108C-8 |                                                   |
+|    |----------|                                                   |
+|                                                                   |
+|          1.BIN                            62256                   |
+|          2.BIN  PAL                       62256     2063          |
+|DSW1      3.BIN  2018                                              |
+|DSW2      62256  PAL                       PAL       PAL       PAL |
+|-------------------------------------------------------------------|
+Notes:
+      D701080C-8 - NEC D70108C-8 V20 CPU, running at 8.000MHz [16/2]
+      I.G.1BB    - PLCC84 FPGA, PCB labelled 'INGA 1' & 'INGA 2'
+      2018       - 2K x8 SRAM (DIP24)
+      2063       - 8K x8 SRAM (DIP28)
+      62256      - 32K x8 SRAM (DIP28)
+      4464       - 64K x4 DRAM (DIP18)
+      CN1/2      - Flat cable connectors joining bottom board to top board
+      VSync      - 54Hz
+
+Top Board
+
+|--------------------------------------------------------|
+|  VOL                                                   |
+|-|                                                      |
+| |                                                      |
+| |   8088              6.BIN   22.BIN  38.BIN   54.BIN  |
+| |                     7.BIN   23.BIN  39.BIN   55.BIN  |
+| |   5.BIN             8.BIN   24.BIN  40.BIN   56.BIN  |
+| |   6116              9.BIN   25.BIN  41.BIN   57.BIN  |
+| |                     10.BIN  26.BIN  42.BIN   58.BIN |-|
+| |               PAL   11.BIN  27.BIN  43.BIN   59.BIN | |
+|-|                     12.BIN  28.BIN  44.BIN   60.BIN | |
+|     6116              13.BIN  29.BIN  45.BIN   61.BIN | |
+|                       14.BIN  30.BIN  46.BIN   62.BIN | |
+|                       15.BIN  31.BIN  47.BIN   63.BIN | |
+|          PAL    M5205 16.BIN    *       *        *    | |
+|PAL                    17.BIN    *       *        *    | |
+|          PAL    M5205   *       *       *        *    |-|
+|                         *       *       *        *     |
+|          M5205  PAL     *       *       *        *     |
+|18.432MHz                *       *       *        *     |
+|          M5205  PAL                                    |
+|                                                        |
+|          PAL                                           |
+|--------------------------------------------------------|
+Notes:
+      8088 - AMD P8088-2 CPU, running at 6.144MHz [18.432/3]
+      M5205- OKI M5205 running at 384kHz [18.432/48]. Sample rate = 384000 / 48
+      *    - Unpopulated positions for ROMs
+
+*/
+
+ROM_START( borntofi )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* V20 */
+	ROM_LOAD( "3.bin", 0x10000, 0x10000, CRC(5f07f4a2) SHA1(240864d1d5d9e26d229bc21aa39ee03f4bd25814) )
+	ROM_LOAD( "2.bin", 0x20000, 0x10000, CRC(5d2b3395) SHA1(ac87f352f380b67802c26232824663063549ac7b) )
+	ROM_LOAD( "1.bin", 0x60000, 0x10000, CRC(0a5e2f32) SHA1(5167a85329e5ea35c686af85e44d62227cf5800e) )
+	ROM_COPY( REGION_CPU1, 0x60000, 0x70000, 0x10000 )
+	ROM_COPY( REGION_CPU1, 0x60000, 0xf0000, 0x10000 )
+
+	ROM_REGION( 0x100000, REGION_CPU2, 0 ) /* 8088 */
+	ROM_LOAD( "5.bin", 0x00000, 0x08000, CRC(b5d587ce) SHA1(07687abd264ec80a6eb473cb3f3ab97ec6b365a2) )
+
+	ROM_REGION( 0x100000, REGION_SOUND1, 0 ) /* m5205 samples */
+	ROM_LOAD( "6.bin",  0x00000, 0x10000, CRC(731c523b) SHA1(b649a838ce70d5af607f8b9faf8b012e2ff1104b) )
+	ROM_LOAD( "7.bin",  0x10000, 0x10000, CRC(a0cbdf10) SHA1(d33c157aceb52683db36d2f666f1e2d952654633) )
+	ROM_LOAD( "8.bin",  0x20000, 0x10000, CRC(82fa8592) SHA1(81510160d645a3496131255c11c94fe47bb75988) )
+	ROM_LOAD( "9.bin",  0x30000, 0x10000, CRC(dca5d205) SHA1(01c212fc0dbf9cd1ad0c633288925add853640a1) )
+	ROM_LOAD( "10.bin", 0x40000, 0x10000, CRC(0ecd5714) SHA1(4dbc840f9b2707e28cb0e03220a51ad8d9268fe7) )
+	ROM_LOAD( "11.bin", 0x50000, 0x10000, CRC(4fd86d07) SHA1(025ecaf7c51882286e2d25ab1636ad79dfe3250d) )
+	ROM_LOAD( "12.bin", 0x60000, 0x10000, CRC(cb81236e) SHA1(96423a41e851900ad764e7ec9fbe9a9e34d188ef) )
+	ROM_LOAD( "13.bin", 0x70000, 0x10000, CRC(cfcc4bdb) SHA1(b7e1bf189ac964958254e6e8cb7c466b6e7b473f) )
+	ROM_LOAD( "14.bin", 0x80000, 0x10000, CRC(c6fa0707) SHA1(831b27f24fee641c30ffd39723a24e7a9a966dc6) )
+	ROM_LOAD( "15.bin", 0x90000, 0x10000, CRC(101cbd6b) SHA1(22668f362499f7ae017d9334f426ac644498e0b7) )
+	ROM_LOAD( "16.bin", 0xa0000, 0x10000, CRC(edab01a9) SHA1(ce9c6b48807c9b312067b27928d27b4532319c60) )
+	ROM_LOAD( "17.bin", 0xb0000, 0x10000, CRC(ea361ea5) SHA1(a2b38a250ab477226da5d56bd07ea3b2f3aa9625) )
+//	ROM_LOAD( "18.bin", 0xc0000, 0x10000, CRC(1) SHA1(1) ) // unpopulated
+//	ROM_LOAD( "19.bin", 0xd0000, 0x10000, CRC(1) SHA1(1) ) // unpopulated
+//	ROM_LOAD( "20.bin", 0xe0000, 0x10000, CRC(1) SHA1(1) ) // unpopulated
+//	ROM_LOAD( "21.bin", 0xf0000, 0x10000, CRC(1) SHA1(1) ) // unpopulated
+
+	ROM_REGION( 0x300000, REGION_GFX1,0 ) /*gfx */
+	ROMX_LOAD( "22.bin",  0x000002, 0x10000, CRC(a3afc57f) SHA1(2713fa4b6ad571748f47d25c72a0d40d80f8fcf6), ROM_SKIP(2) )
+	ROMX_LOAD( "38.bin",  0x000001, 0x10000, CRC(1c64d329) SHA1(6bb82143de07548b90bc7ba70d12fd0959e56545), ROM_SKIP(2) )
+	ROMX_LOAD( "54.bin",  0x000000, 0x10000, CRC(56209405) SHA1(e1f5fd709cde965c400f94837a34d5b414e0118e), ROM_SKIP(2) )
+	ROMX_LOAD( "23.bin",  0x030002, 0x10000, CRC(df385140) SHA1(202ef05ffad58ae9be2b264208188722154ec022), ROM_SKIP(2) )
+	ROMX_LOAD( "39.bin",  0x030001, 0x10000, CRC(7f789bdb) SHA1(c4220a60d8c11d77037c1f4bfc12254ee024e375), ROM_SKIP(2) )
+	ROMX_LOAD( "55.bin",  0x030000, 0x10000, CRC(93f82275) SHA1(132372c2301b57ed2ad47d7e7684f3caa455dc3f), ROM_SKIP(2) )
+	ROMX_LOAD( "24.bin",  0x060002, 0x10000, CRC(becc5891) SHA1(0aeb6f2d2d39dd237ef5929674de62bbe0f6e2e6), ROM_SKIP(2) )
+	ROMX_LOAD( "40.bin",  0x060001, 0x10000, CRC(707a6ddd) SHA1(30ae010bb2bd41b847790d1612a0702bc0c8b646), ROM_SKIP(2) )
+	ROMX_LOAD( "56.bin",  0x060000, 0x10000, CRC(a4e8c94a) SHA1(2514097d449a7883c6442a8d42376bfcc1a87e93), ROM_SKIP(2) )
+	ROMX_LOAD( "25.bin",  0x090002, 0x10000, CRC(500d4d3b) SHA1(54a448e5e784633513b94fdd4ad79e66b5210108), ROM_SKIP(2) )
+	ROMX_LOAD( "41.bin",  0x090001, 0x10000, CRC(e3bf2b57) SHA1(04619e9de339f4fb5269336ebd2a6749e402243e), ROM_SKIP(2) )
+	ROMX_LOAD( "57.bin",  0x090000, 0x10000, CRC(b8d57360) SHA1(5133a5db3d8ee05662662d19b31f0045e833ed42), ROM_SKIP(2) )
+	ROMX_LOAD( "26.bin",  0x0c0002, 0x10000, CRC(13801b0e) SHA1(7f830af2d9bf5201c321637ea2400c6b42948ebd), ROM_SKIP(2) )
+	ROMX_LOAD( "42.bin",  0x0c0001, 0x10000, CRC(4725835e) SHA1(d60108aa5e7cd7434dd07a5d0553be56c591f4b1), ROM_SKIP(2) )
+	ROMX_LOAD( "58.bin",  0x0c0000, 0x10000, CRC(391f220a) SHA1(66de5034b31f99e99005e224ee2e60cf870f1bcb), ROM_SKIP(2) )
+	ROMX_LOAD( "27.bin",  0x0f0002, 0x10000, CRC(d8a47ed9) SHA1(4f5f68c35d198f1fdbbcf288bf25c548876ba823), ROM_SKIP(2) )
+	ROMX_LOAD( "43.bin",  0x0f0001, 0x10000, CRC(815be7ea) SHA1(478cabf2a683be14e75cbe1b1d63aae521469315), ROM_SKIP(2) )
+	ROMX_LOAD( "59.bin",  0x0f0000, 0x10000, CRC(7966e68f) SHA1(13608b781ae10e96eb2802479e082b87f55c3ec1), ROM_SKIP(2) )
+	ROMX_LOAD( "28.bin",  0x120002, 0x10000, CRC(e8846d67) SHA1(f3b155836a2f96a3b0b0dfb2034212def0b1dc92), ROM_SKIP(2) )
+	ROMX_LOAD( "44.bin",  0x120001, 0x10000, CRC(c5d29821) SHA1(ce45e2e039f3ee7965cc9354a98c77f3db83b950), ROM_SKIP(2) )
+	ROMX_LOAD( "60.bin",  0x120000, 0x10000, CRC(47d2a385) SHA1(0b275abe7811972ac475c2dff2e99f2a1f951ee5), ROM_SKIP(2) )
+	ROMX_LOAD( "29.bin",  0x150002, 0x10000, CRC(169cba64) SHA1(d881c1cd802da5929688fdaae8c63e581e396dd7), ROM_SKIP(2) )
+	ROMX_LOAD( "45.bin",  0x150001, 0x10000, CRC(1a58b8d0) SHA1(c1002e16581face369a11e4308596ba419d82c4d), ROM_SKIP(2) )
+	ROMX_LOAD( "61.bin",  0x150000, 0x10000, CRC(f20b88b3) SHA1(f6b4f0a6cf0cdc6bab9f0a580a866477a0925a28), ROM_SKIP(2) )
+	ROMX_LOAD( "30.bin",  0x180002, 0x10000, CRC(15529cdd) SHA1(7b80d820476fefb51434870bd9fc4955de1a7323), ROM_SKIP(2) )
+	ROMX_LOAD( "46.bin",  0x180001, 0x10000, CRC(2f145546) SHA1(10677effd27ee8702be488fe1485582da465aaf8), ROM_SKIP(2) )
+	ROMX_LOAD( "62.bin",  0x180000, 0x10000, CRC(5bbc0154) SHA1(0c7b144cd2be1f8bcd5316093d6f9f0071746593), ROM_SKIP(2) )
+	ROMX_LOAD( "31.bin",  0x1b0002, 0x10000, CRC(1446ddc5) SHA1(7bd2ae336514d939c71bdf52a72e710e28d14bd9), ROM_SKIP(2) )
+	ROMX_LOAD( "47.bin",  0x1b0001, 0x10000, CRC(b3147a84) SHA1(dfb9c8293a477697017f5632e203c9fb88cadc81), ROM_SKIP(2) )
+	ROMX_LOAD( "63.bin",  0x1b0000, 0x10000, CRC(5f530559) SHA1(d1d3edc2082985ccec9fe8ca0b27810623cb5b89), ROM_SKIP(2) )
+//	ROMX_LOAD( "32.bin",  0x1e0002, 0x10000, CRC(1) SHA1(1), ROM_SKIP(2) ) // unpopulated
+//	ROMX_LOAD( "48.bin",  0x1e0001, 0x10000, CRC(1) SHA1(1), ROM_SKIP(2) ) // unpopulated
+//	ROMX_LOAD( "64.bin",  0x1e0000, 0x10000, CRC(1) SHA1(1), ROM_SKIP(2) ) // unpopulated
+//	ROMX_LOAD( "33.bin",  0x210002, 0x10000, CRC(1) SHA1(1), ROM_SKIP(2) ) // unpopulated
+//	ROMX_LOAD( "49.bin",  0x210001, 0x10000, CRC(1) SHA1(1), ROM_SKIP(2) ) // unpopulated
+//	ROMX_LOAD( "65.bin",  0x210000, 0x10000, CRC(1) SHA1(1), ROM_SKIP(2) ) // unpopulated
+//	ROMX_LOAD( "34.bin",  0x240002, 0x10000, CRC(1) SHA1(1), ROM_SKIP(2) ) // unpopulated
+//	ROMX_LOAD( "50.bin",  0x240001, 0x10000, CRC(1) SHA1(1), ROM_SKIP(2) ) // unpopulated
+//	ROMX_LOAD( "66.bin",  0x240000, 0x10000, CRC(1) SHA1(1), ROM_SKIP(2) ) // unpopulated
+//	ROMX_LOAD( "35.bin",  0x270002, 0x10000, CRC(1) SHA1(1), ROM_SKIP(2) ) // unpopulated
+//	ROMX_LOAD( "51.bin",  0x270001, 0x10000, CRC(1) SHA1(1), ROM_SKIP(2) ) // unpopulated
+//	ROMX_LOAD( "67.bin",  0x270000, 0x10000, CRC(1) SHA1(1), ROM_SKIP(2) ) // unpopulated
+//	ROMX_LOAD( "36.bin",  0x2a0002, 0x10000, CRC(1) SHA1(1), ROM_SKIP(2) ) // unpopulated
+//	ROMX_LOAD( "52.bin",  0x2a0001, 0x10000, CRC(1) SHA1(1), ROM_SKIP(2) ) // unpopulated
+//	ROMX_LOAD( "68.bin",  0x2a0000, 0x10000, CRC(1) SHA1(1), ROM_SKIP(2) ) // unpopulated
+//	ROMX_LOAD( "37.bin",  0x2d0002, 0x10000, CRC(1) SHA1(1), ROM_SKIP(2) ) // unpopulated
+//	ROMX_LOAD( "53.bin",  0x2d0001, 0x10000, CRC(1) SHA1(1), ROM_SKIP(2) ) // unpopulated
+//	ROMX_LOAD( "69.bin",  0x2d0000, 0x10000, CRC(1) SHA1(1), ROM_SKIP(2) ) // unpopulated
+ROM_END
+
 GAME( 19??, fantland, 0,        fantland, fantland, 0, ROT0,  "Electronic Devices Italy", "Fantasy Land (set 1)"   )
 GAME( 19??, fantlnda, fantland, fantland, fantland, 0, ROT0,  "Electronic Devices Italy", "Fantasy Land (set 2)"   )
 GAME( 1989, galaxygn, 0,        galaxygn, galaxygn, 0, ROT90, "Electronic Devices Italy", "Galaxy Gunners" )
-
+GAMEX(199?, borntofi,  0,        galaxygn, galaxygn, 0, ROT0, "Electronic Devices?", "Born To Fight", GAME_NO_SOUND|GAME_NOT_WORKING )

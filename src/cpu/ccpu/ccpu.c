@@ -138,16 +138,17 @@ static void ccpu_set_context(void *src)
 **	INITIALIZATION AND SHUTDOWN
 **#################################################################################################*/
 
-static void ccpu_init(void)
-{
-}
-
-
 static UINT8 read_jmi(void)
 {
 	/* this routine is called when there is no external input */
 	/* and the JMI jumper is present */
 	return TEST_MI();
+}
+
+
+static void ccpu_init(void)
+{
+	ccpu.external_input = read_jmi;
 }
 
 

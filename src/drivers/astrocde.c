@@ -5,7 +5,14 @@ Bally Astrocade style games
 driver by Nicola Salmoria, Mike Coates, Frank Palazzolo
 
 TODO:
-- support stereo sound in Gorf (and maybe others, Wow has 3 speakers)
+	add rotate support
+	profpac intercept register - self test
+	profpac_vm - self test
+	look into NVRAM loading problems in robby and profpac
+	try 10-pin deluxe roms?
+	finish looking at noise gen bug
+	optimize sound code
+	dig into gorf timing hacks
 
 Notes:
 - In seawolf2, service mode dip switch turns on memory test. Reset with 2 pressed
@@ -64,59 +71,7 @@ OUT:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-
-extern unsigned char *wow_videoram;
-
-extern const char *wow_sample_names[];
-extern const char *gorf_sample_names[];
-
-PALETTE_INIT( astrocde );
-READ8_HANDLER( wow_intercept_r );
-WRITE8_HANDLER( wow_videoram_w );
-WRITE8_HANDLER( astrocde_magic_expand_color_w );
-WRITE8_HANDLER( astrocde_magic_control_w );
-WRITE8_HANDLER( wow_magicram_w );
-WRITE8_HANDLER( astrocde_pattern_board_w );
-VIDEO_UPDATE( astrocde );
-READ8_HANDLER( wow_video_retrace_r );
-
-WRITE8_HANDLER( astrocde_interrupt_vector_w );
-WRITE8_HANDLER( astrocde_interrupt_enable_w );
-WRITE8_HANDLER( astrocde_interrupt_w );
-INTERRUPT_GEN( wow_interrupt );
-
-READ8_HANDLER( seawolf2_controller1_r );
-READ8_HANDLER( seawolf2_controller2_r );
-VIDEO_UPDATE( seawolf2 );
-
-INTERRUPT_GEN( gorf_interrupt );
-READ8_HANDLER( gorf_timer_r );
-READ8_HANDLER( gorf_io_r );
-
-VIDEO_START( astrocde );
-VIDEO_START( astrocde_stars );
-
-int  wow_sh_start(const struct MachineSound *msound);
-void wow_sh_update(void);
-
-READ8_HANDLER( wow_speech_r );
-READ8_HANDLER( wow_port_2_r );
-READ8_HANDLER( wow_io_r );
-
-int  gorf_sh_start(const struct MachineSound *msound);
-void gorf_sh_update(void);
-READ8_HANDLER( gorf_speech_r );
-READ8_HANDLER( gorf_port_2_r );
-WRITE8_HANDLER( gorf_sound_control_a_w );
-
-WRITE8_HANDLER( astrocde_mode_w );
-WRITE8_HANDLER( astrocde_vertical_blank_w );
-WRITE8_HANDLER( astrocde_colour_register_w );
-WRITE8_HANDLER( astrocde_colour_split_w );
-WRITE8_HANDLER( astrocde_colour_block_w );
-
-WRITE8_HANDLER( ebases_trackball_select_w );
-READ8_HANDLER( ebases_trackball_r );
+#include "includes/astrocde.h"
 
 static int game_on = 0;
 
@@ -198,74 +153,100 @@ static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xd000, 0xdfff) AM_WRITE(MWA8_RAM)
 ADDRESS_MAP_END
 
+static ADDRESS_MAP_START( wow_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x7fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x8000, 0xcfff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xd000, 0xd3ff) AM_READ(wow_protected_ram_r)
+	AM_RANGE(0xd400, 0xdfff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( wow_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_WRITE(wow_magicram_w)
+	AM_RANGE(0x4000, 0x7fff) AM_WRITE(wow_videoram_w) AM_BASE(&wow_videoram) AM_SIZE(&videoram_size)	/* ASG */
+	AM_RANGE(0x8000, 0xcfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xd000, 0xd3ff) AM_WRITE(wow_protected_ram_w) AM_BASE(&wow_protected_ram) AM_SIZE(&wow_protected_ram_size)
+	AM_RANGE(0xd400, 0xdfff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
+
 static ADDRESS_MAP_START( robby_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
 	AM_RANGE(0x4000, 0x7fff) AM_READ(MRA8_RAM)
 	AM_RANGE(0x8000, 0xdfff) AM_READ(MRA8_ROM)
-	AM_RANGE(0xe000, 0xffff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe000, 0xe7ff) AM_READ(robby_nvram_r)
+	AM_RANGE(0xe800, 0xffff) AM_READ(MRA8_RAM)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( robby_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x3fff) AM_WRITE(wow_magicram_w)
 	AM_RANGE(0x4000, 0x7fff) AM_WRITE(wow_videoram_w) AM_BASE(&wow_videoram) AM_SIZE(&videoram_size)
 	AM_RANGE(0x8000, 0xdfff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0xe000, 0xffff) AM_WRITE(MWA8_RAM)
+  	AM_RANGE(0xe000, 0xe7ff) AM_WRITE(robby_nvram_w)
+  	AM_RANGE(0xe800, 0xffff) AM_WRITE(MWA8_RAM)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( profpac_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0x8000, 0xdfff) AM_READ(MRA8_ROM)
-	AM_RANGE(0xe000, 0xffff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x4000, 0x7fff) AM_READ(MRA8_BANK1)
+	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK2)
+	AM_RANGE(0xc000, 0xdfff) AM_READ(MRA8_ROM)
+  	AM_RANGE(0xe000, 0xe7ff) AM_READ(profpac_nvram_r)
+	AM_RANGE(0xe800, 0xffff) AM_READ(MRA8_RAM)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( profpac_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x3fff) AM_WRITE(wow_magicram_w)
-	AM_RANGE(0x4000, 0x7fff) AM_WRITE(wow_videoram_w) AM_BASE(&wow_videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0x4000, 0x7fff) AM_WRITE(profpac_videoram_w)
 	AM_RANGE(0x8000, 0xdfff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0xe000, 0xffff) AM_WRITE(MWA8_RAM)
+  	AM_RANGE(0xe000, 0xe7ff) AM_WRITE(profpac_nvram_w)
+  	AM_RANGE(0xe800, 0xffff) AM_WRITE(MWA8_RAM)
+
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
-	AM_RANGE(0x08, 0x08) AM_READ(wow_intercept_r)
-	AM_RANGE(0x0e, 0x0e) AM_READ(wow_video_retrace_r)
-	AM_RANGE(0x10, 0x10) AM_READ(input_port_0_r)
-	AM_RANGE(0x11, 0x11) AM_READ(input_port_1_r)
-  	AM_RANGE(0x12, 0x12) AM_READ(input_port_2_r)
-	AM_RANGE(0x13, 0x13) AM_READ(input_port_3_r)
+	AM_RANGE(0x08, 0x08) AM_MIRROR(0xff00) AM_READ(wow_intercept_r)
+	AM_RANGE(0x0e, 0x0e) AM_MIRROR(0xff00) AM_READ(wow_video_retrace_r)
+	AM_RANGE(0x10, 0x10) AM_MIRROR(0xff00) AM_READ(input_port_0_r)
+	AM_RANGE(0x11, 0x11) AM_MIRROR(0xff00) AM_READ(input_port_1_r)
+  	AM_RANGE(0x12, 0x12) AM_MIRROR(0xff00) AM_READ(input_port_2_r)
+	AM_RANGE(0x13, 0x13) AM_MIRROR(0xff00) AM_READ(input_port_3_r)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( seawolf2_writeport, ADDRESS_SPACE_IO, 8 )
-	AM_RANGE(0x00, 0x07) AM_WRITE(astrocde_colour_register_w)
-	AM_RANGE(0x08, 0x08) AM_WRITE(astrocde_mode_w)
-	AM_RANGE(0x09, 0x09) AM_WRITE(astrocde_colour_split_w)
-	AM_RANGE(0x0a, 0x0a) AM_WRITE(astrocde_vertical_blank_w)
-	AM_RANGE(0x0b, 0x0b) AM_WRITE(astrocde_colour_block_w)
-	AM_RANGE(0x0c, 0x0c) AM_WRITE(astrocde_magic_control_w)
-	AM_RANGE(0x0d, 0x0d) AM_WRITE(astrocde_interrupt_vector_w)
-	AM_RANGE(0x0e, 0x0e) AM_WRITE(astrocde_interrupt_enable_w)
-	AM_RANGE(0x0f, 0x0f) AM_WRITE(astrocde_interrupt_w)
-	AM_RANGE(0x19, 0x19) AM_WRITE(astrocde_magic_expand_color_w)
-	AM_RANGE(0x40, 0x40) AM_WRITE(seawolf2_sound_1_w) /* analog sound */
-	AM_RANGE(0x41, 0x41) AM_WRITE(seawolf2_sound_2_w) /* analog sound */
-	AM_RANGE(0x42, 0x43) AM_WRITE(seawolf2_lamps_w)	/* cabinet lamps */
+	AM_RANGE(0x00, 0x07) AM_MIRROR(0xff00) AM_WRITE(astrocde_colour_register_w)
+	AM_RANGE(0x08, 0x08) AM_MIRROR(0xff00) AM_WRITE(astrocde_mode_w)
+	AM_RANGE(0x09, 0x09) AM_MIRROR(0xff00) AM_WRITE(astrocde_colour_split_w)
+	AM_RANGE(0x0a, 0x0a) AM_MIRROR(0xff00) AM_WRITE(astrocde_vertical_blank_w)
+	AM_RANGE(0x0b, 0x0b) AM_MIRROR(0xff00) AM_WRITE(astrocde_colour_block_w)
+	AM_RANGE(0x0c, 0x0c) AM_MIRROR(0xff00) AM_WRITE(astrocde_magic_control_w)
+	AM_RANGE(0x0d, 0x0d) AM_MIRROR(0xff00) AM_WRITE(astrocde_interrupt_vector_w)
+	AM_RANGE(0x0e, 0x0e) AM_MIRROR(0xff00) AM_WRITE(astrocde_interrupt_enable_w)
+	AM_RANGE(0x0f, 0x0f) AM_MIRROR(0xff00) AM_WRITE(astrocde_interrupt_w)
+	AM_RANGE(0x19, 0x19) AM_MIRROR(0xff00) AM_WRITE(astrocde_magic_expand_color_w)
+	AM_RANGE(0x40, 0x40) AM_MIRROR(0xff00) AM_WRITE(seawolf2_sound_1_w) /* analog sound */
+	AM_RANGE(0x41, 0x41) AM_MIRROR(0xff00) AM_WRITE(seawolf2_sound_2_w) /* analog sound */
+	AM_RANGE(0x42, 0x43) AM_MIRROR(0xff00) AM_WRITE(seawolf2_lamps_w)	/* cabinet lamps */
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
-	AM_RANGE(0x00, 0x07) AM_WRITE(astrocde_colour_register_w)
-	AM_RANGE(0x08, 0x08) AM_WRITE(astrocde_mode_w)
-	AM_RANGE(0x09, 0x09) AM_WRITE(astrocde_colour_split_w)
-	AM_RANGE(0x0a, 0x0a) AM_WRITE(astrocde_vertical_blank_w)
-	AM_RANGE(0x0b, 0x0b) AM_WRITE(astrocde_colour_block_w)
-	AM_RANGE(0x0c, 0x0c) AM_WRITE(astrocde_magic_control_w)
-	AM_RANGE(0x0d, 0x0d) AM_WRITE(astrocde_interrupt_vector_w)
-	AM_RANGE(0x0e, 0x0e) AM_WRITE(astrocde_interrupt_enable_w)
-	AM_RANGE(0x0f, 0x0f) AM_WRITE(astrocde_interrupt_w)
-	AM_RANGE(0x10, 0x18) AM_WRITE(astrocade_sound1_w)
-	AM_RANGE(0x19, 0x19) AM_WRITE(astrocde_magic_expand_color_w)
-	AM_RANGE(0x50, 0x58) AM_WRITE(astrocade_sound2_w)
-	AM_RANGE(0x5b, 0x5b) AM_WRITE(MWA8_NOP) /* speech board ? Wow always sets this to a5*/
-	AM_RANGE(0x78, 0x7e) AM_WRITE(astrocde_pattern_board_w)
-/*	AM_RANGE(0xf8, 0xff) AM_WRITE(MWA8_NOP) */ /* Gorf uses these */
+	AM_RANGE(0x00, 0x07) AM_MIRROR(0xff00) AM_WRITE(astrocde_colour_register_w)
+	AM_RANGE(0x08, 0x08) AM_MIRROR(0xff00) AM_WRITE(astrocde_mode_w)
+	AM_RANGE(0x09, 0x09) AM_MIRROR(0xff00) AM_WRITE(astrocde_colour_split_w)
+	AM_RANGE(0x0a, 0x0a) AM_MIRROR(0xff00) AM_WRITE(astrocde_vertical_blank_w)
+	AM_RANGE(0x0b, 0x0b) AM_MIRROR(0xff00) AM_WRITE(astrocde_colour_block_w)
+	AM_RANGE(0x0c, 0x0c) AM_MIRROR(0xff00) AM_WRITE(astrocde_magic_control_w)
+	AM_RANGE(0x0d, 0x0d) AM_MIRROR(0xff00) AM_WRITE(astrocde_interrupt_vector_w)
+	AM_RANGE(0x0e, 0x0e) AM_MIRROR(0xff00) AM_WRITE(astrocde_interrupt_enable_w)
+	AM_RANGE(0x0f, 0x0f) AM_MIRROR(0xff00) AM_WRITE(astrocde_interrupt_w)
+	AM_RANGE(0x10, 0x17) AM_MIRROR(0xff00) AM_WRITE(astrocade_sound1_w)
+	AM_SPACE(0x18, 0xff) AM_WRITE(astrocade_soundblock1_w)
+	AM_RANGE(0x19, 0x19) AM_MIRROR(0xff00) AM_WRITE(astrocde_magic_expand_color_w)
+
+	/* These two are not part of seawolf2 or ebases */
+	AM_RANGE(0xa55b, 0xa55b) AM_WRITE(wow_ramwrite_enable_w) /* ram write enable */
+	AM_RANGE(0x78, 0x7e) AM_MIRROR(0xff00) AM_WRITE(astrocde_pattern_board_w)
+
+/*	AM_RANGE(0xf8, 0xff) AM_MIRROR(0xff00) AM_WRITE(MWA8_NOP) */ /* Gorf uses these */
 ADDRESS_MAP_END
 
 
@@ -615,6 +596,55 @@ INPUT_PORTS_START( robby )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( profpac )
+	PORT_START /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_TILT )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2) //LA
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)//LB
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2) //LC
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 ) //RA
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 ) //RB
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 ) //RC
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START /* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START /* Dip Switch */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x02, 0x00, "Reset on powerup" )
+	PORT_DIPSETTING(    0x02, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x04, 0x00, "Halt on error" )
+	PORT_DIPSETTING(    0x04, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x08, 0x00, "Beep" )
+	PORT_DIPSETTING(    0x08, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x10, 0x10, "ROM" )
+	PORT_DIPSETTING(    0x10, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0xe0, 0xe0, DEF_STR( Unknown ) )
+INPUT_PORTS_END
 
 
 static const char *seawolf_sample_names[] =
@@ -638,31 +668,43 @@ struct Samplesinterface seawolf2_samples_interface =
 static struct Samplesinterface wow_samples_interface =
 {
 	8,	/* 8 channels */
-	25,	/* volume */
+	MIXER(25,MIXER_PAN_CENTER),	/* volume */
 	wow_sample_names
 };
 
 static struct Samplesinterface gorf_samples_interface =
 {
 	8,	/* 8 channels */
-	25,	/* volume */
+	MIXER(25,MIXER_PAN_LEFT),	/* volume */
 	gorf_sample_names
 };
 
+/* Speech is on the center speaker */
+static struct astrocade_interface wow_2chip_interface =
+{
+	2,			/* Number of chips */
+	1789773,	/* Clock speed */
+	{MIXER(100,MIXER_PAN_RIGHT),MIXER(100,MIXER_PAN_LEFT)}			/* Volume */
+};
+
+/* For Gorf, Left is actually Upper Speaker, */
+/*          Right is actually Lower Speaker, */
+/*   and speech is mixed into Upper Speaker */
 static struct astrocade_interface astrocade_2chip_interface =
 {
 	2,			/* Number of chips */
 	1789773,	/* Clock speed */
-	{255,255}			/* Volume */
+	{MIXER(100,MIXER_PAN_LEFT),MIXER(100,MIXER_PAN_RIGHT)}			/* Volume */
 };
 
 static struct astrocade_interface astrocade_1chip_interface =
 {
 	1,			/* Number of chips */
 	1789773,	/* Clock speed */
-	{255}			/* Volume */
+	{100}			/* Volume */
 };
 
+/* For speech */
 static struct CustomSound_interface gorf_custom_interface =
 {
 	gorf_sh_start,
@@ -670,6 +712,7 @@ static struct CustomSound_interface gorf_custom_interface =
 	gorf_sh_update
 };
 
+/* For speech */
 static struct CustomSound_interface wow_custom_interface =
 {
 	wow_sh_start,
@@ -684,6 +727,7 @@ static MACHINE_DRIVER_START( seawolf2 )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 1789773)	/* 1.789 MHz */
+	MDRV_CPU_FLAGS(CPU_16BIT_PORT)
 	MDRV_CPU_PROGRAM_MAP(seawolf2_readmem,seawolf2_writemem)
 	MDRV_CPU_IO_MAP(readport,seawolf2_writeport)
 	MDRV_CPU_VBLANK_INT(wow_interrupt,256)
@@ -709,7 +753,8 @@ static MACHINE_DRIVER_START( spacezap )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 1789773)	/* 1.789 MHz */
-	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_FLAGS(CPU_16BIT_PORT)
+	MDRV_CPU_PROGRAM_MAP(wow_readmem,wow_writemem)
 	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_VBLANK_INT(wow_interrupt,256)
 
@@ -727,13 +772,14 @@ static MACHINE_DRIVER_START( spacezap )
 	MDRV_VIDEO_UPDATE(astrocde)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(ASTROCADE, astrocade_2chip_interface)
+	MDRV_SOUND_ADD(ASTROCADE, astrocade_1chip_interface)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( ebases )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 1789773)	/* 1.789 MHz */
+	MDRV_CPU_FLAGS(CPU_16BIT_PORT)
 	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_VBLANK_INT(wow_interrupt,256)
@@ -759,7 +805,8 @@ static MACHINE_DRIVER_START( wow )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 1789773)	/* 1.789 MHz */
-	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_FLAGS(CPU_16BIT_PORT)
+	MDRV_CPU_PROGRAM_MAP(wow_readmem,wow_writemem)
 	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_VBLANK_INT(wow_interrupt,256)
 
@@ -777,6 +824,7 @@ static MACHINE_DRIVER_START( wow )
 	MDRV_VIDEO_UPDATE(astrocde)
 
 	/* sound hardware */
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
 	MDRV_SOUND_ADD(ASTROCADE, astrocade_2chip_interface)
 	MDRV_SOUND_ADD(SAMPLES, wow_samples_interface)
 	MDRV_SOUND_ADD(CUSTOM, wow_custom_interface)
@@ -786,7 +834,8 @@ static MACHINE_DRIVER_START( gorf )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 1789773)	/* 1.789 MHz */
-	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_FLAGS(CPU_16BIT_PORT)
+	MDRV_CPU_PROGRAM_MAP(wow_readmem,wow_writemem)
 	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_VBLANK_INT(gorf_interrupt,256)
 
@@ -807,7 +856,8 @@ static MACHINE_DRIVER_START( gorf )
 	MDRV_VIDEO_UPDATE(astrocde)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(ASTROCADE, astrocade_2chip_interface)
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(ASTROCADE, wow_2chip_interface)
 	MDRV_SOUND_ADD(SAMPLES, gorf_samples_interface)
 	MDRV_SOUND_ADD(CUSTOM, gorf_custom_interface)
 MACHINE_DRIVER_END
@@ -816,6 +866,7 @@ static MACHINE_DRIVER_START( robby )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 1789773)	/* 1.789 MHz */
+	MDRV_CPU_FLAGS(CPU_16BIT_PORT)
 	MDRV_CPU_PROGRAM_MAP(robby_readmem,robby_writemem)
 	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_VBLANK_INT(wow_interrupt,256)
@@ -823,6 +874,8 @@ static MACHINE_DRIVER_START( robby )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
+	MDRV_NVRAM_HANDLER(robby_nvram)
+
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(320, 204)
@@ -834,6 +887,7 @@ static MACHINE_DRIVER_START( robby )
 	MDRV_VIDEO_UPDATE(astrocde)
 
 	/* sound hardware */
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
 	MDRV_SOUND_ADD(ASTROCADE, astrocade_2chip_interface)
 MACHINE_DRIVER_END
 
@@ -841,12 +895,15 @@ static MACHINE_DRIVER_START( profpac )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 1789773)	/* 1.789 MHz */
+	MDRV_CPU_FLAGS(CPU_16BIT_PORT)
 	MDRV_CPU_PROGRAM_MAP(profpac_readmem,profpac_writemem)
 	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_VBLANK_INT(wow_interrupt,256)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_NVRAM_HANDLER(robby_nvram)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -855,10 +912,11 @@ static MACHINE_DRIVER_START( profpac )
 	MDRV_PALETTE_LENGTH(256)
 
 	MDRV_PALETTE_INIT(astrocde)
-	MDRV_VIDEO_START(astrocde)
-	MDRV_VIDEO_UPDATE(astrocde)
+	MDRV_VIDEO_START(profpac)
+	MDRV_VIDEO_UPDATE(profpac)
 
 	/* sound hardware */
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
 	MDRV_SOUND_ADD(ASTROCADE, astrocade_2chip_interface)
 MACHINE_DRIVER_END
 
@@ -939,67 +997,96 @@ ROM_START( robby )
 ROM_END
 
 ROM_START( profpac )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )
+	ROM_REGION( 0x20000, REGION_CPU1, 0 )
 	ROM_LOAD( "pps1",         0x0000, 0x2000, CRC(a244a62d) SHA1(f7a9606ce6d66c3e6d210cc25572904aeab2b6c8) )
 	ROM_LOAD( "pps2",         0x2000, 0x2000, CRC(8a9a6653) SHA1(b730b24088dcfddbe954670ff9212b7383c923f6) )
-	ROM_LOAD( "pps7",         0x8000, 0x2000, CRC(f9c26aba) SHA1(201b930cca9669114ffc97978cade69587e34a0f) )
-	ROM_LOAD( "pps8",         0xa000, 0x2000, CRC(4d201e41) SHA1(786b30cd7a7db55bdde05909d7a1a7f122b6e546) )
+	ROM_LOAD( "pps3",         0x8000, 0x2000, CRC(15717fd8) SHA1(ffbb156f417d20478117b39de28a15680993b528) )
+	ROM_LOAD( "pps4",         0xa000, 0x2000, CRC(36540598) SHA1(33c797c690801afded45091d822347e1ecc72b54) )
 	ROM_LOAD( "pps9",         0xc000, 0x2000, CRC(17a0b418) SHA1(8b7ed84090dbc5181deef6f55ec755c05d4c0d5e) )
+	ROM_LOAD( "pps5",         0x14000, 0x2000, CRC(8dc89a59) SHA1(fb4d3ba40697425d69ee19bfdcf00aea1df5fa80) )
+	ROM_LOAD( "pps6",         0x16000, 0x2000, CRC(5a2186c3) SHA1(f706cef6518b7d839377aa8a7c75fdeed4985c57) )
+	ROM_LOAD( "pps7",         0x18000, 0x2000, CRC(f9c26aba) SHA1(201b930cca9669114ffc97978cade69587e34a0f) )
+	ROM_LOAD( "pps8",         0x1a000, 0x2000, CRC(4d201e41) SHA1(786b30cd7a7db55bdde05909d7a1a7f122b6e546) )
 
-	ROM_REGION( 0x04000, REGION_USER1, 0 )
-	ROM_LOAD( "pps3",         0x0000, 0x2000, CRC(15717fd8) SHA1(ffbb156f417d20478117b39de28a15680993b528) )
-	ROM_LOAD( "pps4",         0x0000, 0x2000, CRC(36540598) SHA1(33c797c690801afded45091d822347e1ecc72b54) )
-	ROM_LOAD( "pps5",         0x0000, 0x2000, CRC(8dc89a59) SHA1(fb4d3ba40697425d69ee19bfdcf00aea1df5fa80) )
-	ROM_LOAD( "pps6",         0x0000, 0x2000, CRC(5a2186c3) SHA1(f706cef6518b7d839377aa8a7c75fdeed4985c57) )
-	ROM_LOAD( "ppq1",         0x0000, 0x4000, CRC(dddc2ccc) SHA1(d81caaa639f63d971a0d3199b9da6359211edf3d) )
-	ROM_LOAD( "ppq2",         0x0000, 0x4000, CRC(33bbcabe) SHA1(f9455868c70f479ede0e0621f21f69da165d9b7a) )
-	ROM_LOAD( "ppq3",         0x0000, 0x4000, CRC(3534d895) SHA1(24fb14c6b31b7f27e0737605cfbf963d29dd3fc5) )
-	ROM_LOAD( "ppq4",         0x0000, 0x4000, CRC(17e3581d) SHA1(92d2391e4c8aef46cc8e92b8cf9a8ec9a1b5ff68) )
-	ROM_LOAD( "ppq5",         0x0000, 0x4000, CRC(80882a93) SHA1(d5d6afaadb022b109c14c3911eceb0769204df6c) )
-	ROM_LOAD( "ppq6",         0x0000, 0x4000, CRC(e5ddaee5) SHA1(45b4925709da6790676319268398f6cfcf12794b) )
-	ROM_LOAD( "ppq7",         0x0000, 0x4000, CRC(c029cd34) SHA1(f2f09fdb13920012a6a43958b640d7a06c0c8e69) )
-	ROM_LOAD( "ppq8",         0x0000, 0x4000, CRC(fb3a1ac9) SHA1(e8fe02c85e90320680a14ad560204d5c235730ad) )
-	ROM_LOAD( "ppq9",         0x0000, 0x4000, CRC(5e944488) SHA1(2f03f799c319309b5ebf9a5299891d1824398ba5) )
-	ROM_LOAD( "ppq10",        0x0000, 0x4000, CRC(ed72a81f) SHA1(db991b93001d2da16b398ee8e9b01b8f0dfe5740) )
-	ROM_LOAD( "ppq11",        0x0000, 0x4000, CRC(98295020) SHA1(7f68a8b89117b7ab8724869401a861fe7cff28d9) )
-	ROM_LOAD( "ppq12",        0x0000, 0x4000, CRC(e01a8dbe) SHA1(c7052bf9ce9d2006dda5ddc07ad164d0119b86ea) )
-	ROM_LOAD( "ppq13",        0x0000, 0x4000, CRC(87165d4f) SHA1(d47655300c8747698a46f30deb65fe762073e869) )
-	ROM_LOAD( "ppq14",        0x0000, 0x4000, CRC(ecb861de) SHA1(73d28a79b76795d3016dd608f9ab3d255f40e477) )
+	/* Each of these can get mapped from 0x4000-0x7fff */
+	ROM_REGION( 0x38000, REGION_USER1, 0 )
+	ROM_LOAD( "ppq1",         0x00000, 0x4000, CRC(dddc2ccc) SHA1(d81caaa639f63d971a0d3199b9da6359211edf3d) )
+	ROM_LOAD( "ppq2",         0x04000, 0x4000, CRC(33bbcabe) SHA1(f9455868c70f479ede0e0621f21f69da165d9b7a) )
+	ROM_LOAD( "ppq3",         0x08000, 0x4000, CRC(3534d895) SHA1(24fb14c6b31b7f27e0737605cfbf963d29dd3fc5) )
+	ROM_LOAD( "ppq4",         0x0c000, 0x4000, CRC(17e3581d) SHA1(92d2391e4c8aef46cc8e92b8cf9a8ec9a1b5ff68) )
+	ROM_LOAD( "ppq5",         0x10000, 0x4000, CRC(80882a93) SHA1(d5d6afaadb022b109c14c3911eceb0769204df6c) )
+	ROM_LOAD( "ppq6",         0x14000, 0x4000, CRC(e5ddaee5) SHA1(45b4925709da6790676319268398f6cfcf12794b) )
+	ROM_LOAD( "ppq7",         0x18000, 0x4000, CRC(c029cd34) SHA1(f2f09fdb13920012a6a43958b640d7a06c0c8e69) )
+	ROM_LOAD( "ppq8",         0x1c000, 0x4000, CRC(fb3a1ac9) SHA1(e8fe02c85e90320680a14ad560204d5c235730ad) )
+	ROM_LOAD( "ppq9",         0x20000, 0x4000, CRC(5e944488) SHA1(2f03f799c319309b5ebf9a5299891d1824398ba5) )
+	ROM_LOAD( "ppq10",        0x24000, 0x4000, CRC(ed72a81f) SHA1(db991b93001d2da16b398ee8e9b01b8f0dfe5740) )
+	ROM_LOAD( "ppq11",        0x28000, 0x4000, CRC(98295020) SHA1(7f68a8b89117b7ab8724869401a861fe7cff28d9) )
+	ROM_LOAD( "ppq12",        0x2c000, 0x4000, CRC(e01a8dbe) SHA1(c7052bf9ce9d2006dda5ddc07ad164d0119b86ea) )
+	ROM_LOAD( "ppq13",        0x30000, 0x4000, CRC(87165d4f) SHA1(d47655300c8747698a46f30deb65fe762073e869) )
+	ROM_LOAD( "ppq14",        0x34000, 0x4000, CRC(ecb861de) SHA1(73d28a79b76795d3016dd608f9ab3d255f40e477) )
 ROM_END
 
 
 
 static DRIVER_INIT( seawolf2 )
 {
-	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x10, 0x10, 0, 0, seawolf2_controller2_r);
-	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x11, 0x11, 0, 0, seawolf2_controller1_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x10, 0x10, 0, 0xff00, seawolf2_controller2_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x11, 0x11, 0, 0xff00, seawolf2_controller1_r);
 }
 static DRIVER_INIT( ebases )
 {
-	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x13, 0x13, 0, 0, ebases_trackball_r);
-	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x28, 0x28, 0, 0, ebases_trackball_select_w);
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x13, 0x13, 0, 0xff00, ebases_trackball_r);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x20, 0x20, 0, 0xff00, ebases_io_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x28, 0x28, 0, 0xff00, ebases_trackball_select_w);
 }
 static DRIVER_INIT( wow )
 {
-	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x12, 0x12, 0, 0, wow_port_2_r);
-	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x15, 0x15, 0, 0, wow_io_r);
-	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x17, 0x17, 0, 0, wow_speech_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x12, 0x12, 0, 0xff00, wow_port_2_r);
+	memory_install_read8_matchmask_handler(0, ADDRESS_SPACE_IO, 0x15, 0xff, 0, 0, wow_io_r);
+	memory_install_read8_matchmask_handler(0, ADDRESS_SPACE_IO, 0x17, 0xff, 0, 0, wow_speech_r);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x50, 0x57, 0, 0xff00, astrocade_sound2_w);
+	memory_install_write8_matchmask_handler(0, ADDRESS_SPACE_IO, 0x58, 0xff, 0, 0, astrocade_soundblock2_w);
+}
+static DRIVER_INIT( spacezap )
+{
+	memory_install_read8_matchmask_handler(0, ADDRESS_SPACE_IO, 0x13, 0xff, 0, 0, spacezap_io_r);
 }
 static DRIVER_INIT( gorf )
 {
+	/* This is part of the timing/interrupt hack stuff */
 	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xd0a5, 0xd0a5, 0, 0, gorf_timer_r);
 
-	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x12, 0x12, 0, 0, gorf_port_2_r);
-	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x15, 0x16, 0, 0, gorf_io_r);
-	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x17, 0x17, 0, 0, gorf_speech_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x12, 0x12, 0, 0xff00, gorf_port_2_r);
+	memory_install_read8_matchmask_handler(0, ADDRESS_SPACE_IO, 0x15, 0xff, 0, 0, gorf_io_1_r);
+	memory_install_read8_matchmask_handler(0, ADDRESS_SPACE_IO, 0x16, 0xff, 0, 0, gorf_io_2_r);
+	memory_install_read8_matchmask_handler(0, ADDRESS_SPACE_IO, 0x17, 0xff, 0, 0, gorf_speech_r);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x50, 0x57, 0, 0xff00, astrocade_sound2_w);
+	memory_install_write8_matchmask_handler(0, ADDRESS_SPACE_IO, 0x58, 0xff, 0, 0, astrocade_soundblock2_w);
+}
+static DRIVER_INIT( robby )
+{
+	memory_install_read8_matchmask_handler(0, ADDRESS_SPACE_IO, 0x15, 0xff, 0, 0, robby_io_r);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x50, 0x57, 0, 0xff00, astrocade_sound2_w);
+	memory_install_write8_matchmask_handler(0, ADDRESS_SPACE_IO, 0x58, 0xff, 0, 0, astrocade_soundblock2_w);
+}
+static DRIVER_INIT( profpac )
+{
+	memory_install_read8_matchmask_handler(0, ADDRESS_SPACE_IO, 0x14, 0xff, 0, 0, profpac_io_1_r);
+	memory_install_read8_matchmask_handler(0, ADDRESS_SPACE_IO, 0x15, 0xff, 0, 0, profpac_io_2_r);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x50, 0x57, 0, 0xff00, astrocade_sound2_w);
+	memory_install_write8_matchmask_handler(0, ADDRESS_SPACE_IO, 0x58, 0xff, 0, 0, astrocade_soundblock2_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0xbf, 0xbf, 0, 0xff00, profpac_page_select_w);
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0xc3, 0xc3, 0, 0xff00, profpac_intercept_r );
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0xc0, 0xc5, 0, 0xff00, profpac_screenram_ctrl_w );
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0xf3, 0xf3, 0, 0xff00, profpac_banksw_w);
 }
 
-
+/* GAME(YEAR,NAME,PARENT,MACHINE,INPUT,INIT,MONITOR,COMPANY,FULLNAME) */
 GAMEX(1978, seawolf2, 0,    seawolf2, seawolf2, seawolf2, ROT0,   "Midway", "Sea Wolf II", GAME_IMPERFECT_SOUND )
-GAME( 1980, spacezap, 0,    spacezap, spacezap, 0,        ROT0,   "Midway", "Space Zap" )
+GAME( 1980, spacezap, 0,    spacezap, spacezap, spacezap, ROT0,   "Midway", "Space Zap" )
 GAME( 1980, ebases,   0,    ebases,   ebases,   ebases,   ROT0,   "Midway", "Extra Bases" )
 GAME( 1980, wow,      0,    wow,      wow,      wow,      ROT0,   "Midway", "Wizard of Wor" )
 GAME( 1981, gorf,     0,    gorf,     gorf,     gorf,     ROT270, "Midway", "Gorf" )
 GAME( 1981, gorfpgm1, gorf, gorf,     gorf,     gorf,     ROT270, "Midway", "Gorf (Program 1)" )
-GAME( 1981, robby,    0,    robby,    robby,    0,        ROT0,   "Bally Midway", "Robby Roto" )
-GAMEX( 1983,profpac,  0,    profpac,  gorf,     0,        ROT0,   "Bally Midway", "Professor PacMan", GAME_NOT_WORKING )
+GAME( 1981, robby,    0,    robby,    robby,    robby,    ROT0,   "Bally Midway", "Robby Roto" )
+GAME( 1983, profpac,  0,    profpac,  profpac,  profpac,  ROT0,   "Bally Midway", "Professor PacMan" )

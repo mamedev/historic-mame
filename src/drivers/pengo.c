@@ -409,28 +409,28 @@ ROM_END
 
 ROM_START( pengo4 )
 	ROM_REGION( 2*0x10000, REGION_CPU1, 0 )     /* 64k for code + 64k for decrypted opcodes */
-	ROM_LOAD( "epr-1738.bin",   0x0000, 0x1000, CRC(68ba25ea) SHA1(ce937831b7b210b4a625514bd4e6b3a7a36d008e) )
-	ROM_LOAD( "epr-1739.bin",   0x1000, 0x1000, CRC(41e7b5b3) SHA1(d512d41ee3f5716070250e7ab63342e4fbf92875) )
-	ROM_LOAD( "epr-1740.bin",   0x2000, 0x1000, CRC(27f05f59) SHA1(c0d40328a7dff34f6b84c991d9c88b240e55b4f3) )
-	ROM_LOAD( "epr-1741.bin",   0x3000, 0x1000, CRC(27d93ec1) SHA1(925e59878342af58106d5b11ebb6c86cbb69ae91) )
-	ROM_LOAD( "epr-1742.bin",   0x4000, 0x1000, CRC(b72084ec) SHA1(c0508951c2ad8dc31481be8b3bfee2063e3fb0d7) )
-	ROM_LOAD( "epr-1743.bin",   0x5000, 0x1000, CRC(770570cf) SHA1(43ead8236f53d39041ffc21bdeef10b3a77ce7f2) )
-	ROM_LOAD( "epr-1744.bin",   0x6000, 0x1000, CRC(af7b12c4) SHA1(207ed466546f40ca60a38031b83aef61446902e2) )
-	ROM_LOAD( "epr-1745.bin",   0x7000, 0x1000, CRC(507e18b9) SHA1(e169e4c9c6350fb5e4020222dbcaa6f5ce41849c) )
+	ROM_LOAD( "ep1738.8",     0x0000, 0x1000, CRC(68ba25ea) SHA1(ce937831b7b210b4a625514bd4e6b3a7a36d008e) )
+	ROM_LOAD( "ep1739.7",     0x1000, 0x1000, CRC(41e7b5b3) SHA1(d512d41ee3f5716070250e7ab63342e4fbf92875) )
+	ROM_LOAD( "ep1740.15",    0x2000, 0x1000, CRC(27f05f59) SHA1(c0d40328a7dff34f6b84c991d9c88b240e55b4f3) )
+	ROM_LOAD( "ep1741.14",    0x3000, 0x1000, CRC(27d93ec1) SHA1(925e59878342af58106d5b11ebb6c86cbb69ae91) )
+	ROM_LOAD( "ep1742.21",    0x4000, 0x1000, CRC(b72084ec) SHA1(c0508951c2ad8dc31481be8b3bfee2063e3fb0d7) )
+	ROM_LOAD( "ep1743.20",    0x5000, 0x1000, CRC(770570cf) SHA1(43ead8236f53d39041ffc21bdeef10b3a77ce7f2) )
+	ROM_LOAD( "ep1744.32",    0x6000, 0x1000, CRC(af7b12c4) SHA1(207ed466546f40ca60a38031b83aef61446902e2) )
+	ROM_LOAD( "ep1745.31",    0x7000, 0x1000, CRC(507e18b9) SHA1(e169e4c9c6350fb5e4020222dbcaa6f5ce41849c) )
 
 	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "ep1640.92",      0x0000, 0x2000, CRC(d7eec6cd) SHA1(e542bcc28f292be9a0a29d949de726e0b55e654a) )
+	ROM_LOAD( "ep1640.92",    0x0000, 0x2000, CRC(d7eec6cd) SHA1(e542bcc28f292be9a0a29d949de726e0b55e654a) )
 
 	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "ep1695.105",     0x0000, 0x2000, CRC(5bfd26e9) SHA1(bdec535e486b43a8f5550334beff423eeace10b2) )
+	ROM_LOAD( "ep1695.105",   0x0000, 0x2000, CRC(5bfd26e9) SHA1(bdec535e486b43a8f5550334beff423eeace10b2) )
 
 	ROM_REGION( 0x0420, REGION_PROMS, 0 )
-	ROM_LOAD( "pr1633.78",      0x0000, 0x0020, CRC(3a5844ec) SHA1(680eab0e1204c9b74adc11588461651b474021bb) )
-	ROM_LOAD( "pr1634.88",      0x0020, 0x0400, CRC(766b139b) SHA1(3fcd66610fcaee814953a115bf5e04788923181f) )
+	ROM_LOAD( "pr1633.78",    0x0000, 0x0020, CRC(3a5844ec) SHA1(680eab0e1204c9b74adc11588461651b474021bb) )
+	ROM_LOAD( "pr1634.88",    0x0020, 0x0400, CRC(766b139b) SHA1(3fcd66610fcaee814953a115bf5e04788923181f) )
 
 	ROM_REGION( 0x0200, REGION_SOUND1, 0 )	/* sound PROMs */
-	ROM_LOAD( "pr1635.51",      0x0000, 0x0100, CRC(c29dea27) SHA1(563c9770028fe39188e62630711589d6ed242a66) )
-	ROM_LOAD( "pr1636.70",      0x0100, 0x0100, CRC(77245b66) SHA1(0c4d0bee858b97632411c440bea6948a74759746) )	/* timing - not used */
+	ROM_LOAD( "pr1635.51",    0x0000, 0x0100, CRC(c29dea27) SHA1(563c9770028fe39188e62630711589d6ed242a66) )
+	ROM_LOAD( "pr1636.70",    0x0100, 0x0100, CRC(77245b66) SHA1(0c4d0bee858b97632411c440bea6948a74759746) )	/* timing - not used */
 ROM_END
 
 
@@ -475,6 +475,33 @@ ROM_START( penta )
 
 	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "ep1695.105",		0x0000, 0x2000, CRC(5bfd26e9) SHA1(bdec535e486b43a8f5550334beff423eeace10b2) )
+
+	ROM_REGION( 0x0420, REGION_PROMS, 0 )
+	ROM_LOAD( "pr1633.78",		0x0000, 0x0020, CRC(3a5844ec) SHA1(680eab0e1204c9b74adc11588461651b474021bb) )
+	ROM_LOAD( "pr1634.88",		0x0020, 0x0400, CRC(766b139b) SHA1(3fcd66610fcaee814953a115bf5e04788923181f) )
+
+	ROM_REGION( 0x0200, REGION_SOUND1, 0 )	/* sound PROMs */
+	ROM_LOAD( "pr1635.51",		0x0000, 0x0100, CRC(c29dea27) SHA1(563c9770028fe39188e62630711589d6ed242a66) )
+	ROM_LOAD( "pr1636.70",		0x0100, 0x0100, CRC(77245b66) SHA1(0c4d0bee858b97632411c440bea6948a74759746) )	/* timing - not used */
+ROM_END
+
+
+ROM_START( jrpacmbl )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "jrpacpe-05.ic8",   0x0000, 0x1000, CRC(98049df4) SHA1(4ea022c8664dd9ec185f9d5990a548e867e5071f) )
+	ROM_LOAD( "jrpacpe-01.ic7",   0x1000, 0x1000, CRC(b7a5cef8) SHA1(c315970f0dd698a1036df12502e3fe3ec7f81d53) )
+	ROM_LOAD( "jrpacpe-06.ic6",   0x2000, 0x1000, CRC(ecf39785) SHA1(9e47f29f4cadb5d8fd3790c7e16c653fc0a96a88) )
+	ROM_LOAD( "jrpacpe-02.ic5",   0x3000, 0x1000, CRC(c090145c) SHA1(918d32267379b99f898fdcd987b3a65f9ec4f088) )
+	ROM_LOAD( "jrpacpe-07.ic4",   0x4000, 0x1000, CRC(659b9956) SHA1(5576d4d95ced804e8abdd870662574bfdd6df18f) )
+	ROM_LOAD( "jrpacpe-03.ic3",   0x5000, 0x1000, CRC(0ebcfac9) SHA1(4da01169768e35601e04df7004ae7496f08a709a) )
+	ROM_LOAD( "jrpacpe-08.ic2",   0x6000, 0x1000, CRC(0624ffd6) SHA1(8209ab633242f2c8952a5afe2b7cd399bab08f0a) )
+	ROM_LOAD( "jrpacpe-04.ic1",   0x7000, 0x1000, CRC(d3a8448c) SHA1(f58aed6ebdb45ed38613b336a517b87745831e24) )
+
+	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "jrpacpe-09.ic92",  0x0000, 0x2000, CRC(2128d9b4) SHA1(b6f64423ae6ee3765050f7b85b4490b5eed95215) )
+
+	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "jrpacpe-10.ic105", 0x0000, 0x2000, CRC(73477193) SHA1(f00a488958ea0438642d345693787bdf771219ad) )
 
 	ROM_REGION( 0x0420, REGION_PROMS, 0 )
 	ROM_LOAD( "pr1633.78",		0x0000, 0x0020, CRC(3a5844ec) SHA1(680eab0e1204c9b74adc11588461651b474021bb) )
@@ -574,6 +601,14 @@ static DRIVER_INIT( penta )
 	}
 }
 
+static WRITE8_HANDLER( jrpacmbl_scroll_w )
+{
+}
+
+static DRIVER_INIT( jrpacmbl )
+{
+	memory_install_write8_handler ( 0, ADDRESS_SPACE_PROGRAM, 0x9030, 0x9030, 0, 0, jrpacmbl_scroll_w );
+}
 
 
 /*************************************
@@ -582,10 +617,11 @@ static DRIVER_INIT( penta )
  *
  *************************************/
 
-GAME( 1982, pengo,   0,     pengo, pengo, pengo, ROT90, "Sega", "Pengo (set 1 rev c)" )
-GAME( 1982, pengo2,  pengo, pengo, pengo, pengo, ROT90, "Sega", "Pengo (set 2)" )
-GAME( 1982, pengo2u, pengo, pengo, pengo, 0,     ROT90, "Sega", "Pengo (set 2 not encrypted)" )
-GAME( 1982, pengo3u, pengo, pengo, pengo, 0,     ROT90, "Sega", "Pengo (set 3 not encrypted)" )
-GAME( 1982, pengo4,  pengo, pengo, pengo, pengo, ROT90, "Sega", "Pengo (set 4)" )
-GAME( 1982, pengob,  pengo, pengo, pengo, penta, ROT90, "bootleg", "Pengo (bootleg)" )
-GAME( 1982, penta,   pengo, pengo, pengo, penta, ROT90, "bootleg", "Penta" )
+GAME( 1982, pengo,    0,     pengo, pengo, pengo,    ROT90, "Sega", "Pengo (set 1 rev c)" )
+GAME( 1982, pengo2,   pengo, pengo, pengo, pengo,    ROT90, "Sega", "Pengo (set 2)" )
+GAME( 1982, pengo2u,  pengo, pengo, pengo, 0,        ROT90, "Sega", "Pengo (set 2 not encrypted)" )
+GAME( 1982, pengo3u,  pengo, pengo, pengo, 0,        ROT90, "Sega", "Pengo (set 3 not encrypted)" )
+GAME( 1982, pengo4,   pengo, pengo, pengo, pengo,    ROT90, "Sega", "Pengo (set 4)" )
+GAME( 1982, pengob,   pengo, pengo, pengo, penta,    ROT90, "bootleg", "Pengo (bootleg)" )
+GAME( 1982, penta,    pengo, pengo, pengo, penta,    ROT90, "bootleg", "Penta" )
+GAME( 1983, jrpacmbl, pengo, pengo, pengo, jrpacmbl, ROT90, "bootleg", "Jr. Pac-Man (Pengo hardware)" )

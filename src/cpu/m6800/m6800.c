@@ -1358,6 +1358,19 @@ static offs_t m6803_dasm(char *buffer, offs_t pc)
 }
 #endif
 
+#if (HAS_M6803)
+
+static READ8_HANDLER( m6803_internal_registers_r );
+static WRITE8_HANDLER( m6803_internal_registers_w );
+
+static ADDRESS_MAP_START(m6803_mem, ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x0000, 0x001f) AM_READWRITE(m6803_internal_registers_r, m6803_internal_registers_w)
+	AM_RANGE(0x0020, 0x007f) AM_NOP        /* unused */
+	AM_RANGE(0x0080, 0x00ff) AM_RAM        /* 6803 internal RAM */ 
+ADDRESS_MAP_END
+
+#endif
+
 /****************************************************************************
  * M6808 almost (fully?) equal to the M6800
  ****************************************************************************/
@@ -2039,7 +2052,7 @@ static offs_t nsc8105_dasm(char *buffer, offs_t pc)
 
 #if (HAS_M6803||HAS_HD63701)
 
-READ8_HANDLER( m6803_internal_registers_r )
+static READ8_HANDLER( m6803_internal_registers_r )
 {
 	switch (offset)
 	{
@@ -2122,7 +2135,7 @@ READ8_HANDLER( m6803_internal_registers_r )
 	}
 }
 
-WRITE8_HANDLER( m6803_internal_registers_w )
+static WRITE8_HANDLER( m6803_internal_registers_w )
 {
 	static int latch09;
 
@@ -2432,6 +2445,8 @@ void m6803_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_INIT:							info->init = m6803_init;				break;
 		case CPUINFO_PTR_EXECUTE:						info->execute = m6803_execute;			break;
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = m6803_dasm;			break;
+
+		case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_PROGRAM: info->internal_map = construct_map_m6803_mem; break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "M6803"); break;

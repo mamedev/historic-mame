@@ -168,23 +168,3 @@ WRITE8_HANDLER( bsktball_led2_w )
 {
 	set_led_status(1,offset & 0x01);
 }
-
-
-/***************************************************************************
-Sound handlers
-***************************************************************************/
-WRITE8_HANDLER( bsktball_bounce_w )
-{
-	discrete_sound_w(1, data & 0x0f);	// Crowd
-	discrete_sound_w(2, (data & 0x10) ? 1 : 0);	// Bounce
-}
-
-WRITE8_HANDLER( bsktball_note_w )
-{
-	discrete_sound_w(0, (~data) & 0xff);	// Note
-}
-
-WRITE8_HANDLER( bsktball_noise_reset_w )
-{
-	discrete_sound_w(3,(~offset) & 0x01);
-}

@@ -15,6 +15,7 @@
 */
 
 #include "driver.h"
+#include "hitme.h"
 
 static struct tilemap *hitme_tilemap;
 static mame_time timeout_time;
@@ -74,10 +75,10 @@ static VIDEO_UPDATE(hitme)
 	/* the dot clock runs at the standard horizontal frequency * 320+16 clocks per scanline */
 	double dot_freq = 15750 * 336;
 	/* the number of pixels is the duration times the frequency */
-	int width_pixels = width_duration * dot_freq; 
+	int width_pixels = width_duration * dot_freq;
 	int x, y, xx, inv;
 	offs_t offs = 0;
-	
+
 	/* start by drawing the tilemap */
 	tilemap_draw(bitmap,cliprect,hitme_tilemap,0,0);
 
@@ -90,7 +91,7 @@ static VIDEO_UPDATE(hitme)
 			/* if the high bit is set, reset the oneshot */
 			if (hitme_vidram[y*40+x] & 0x80)
 				inv = width_pixels;
-			
+
 			/* invert pixels until we run out */
 			for (xx = 0; xx < 8 && inv; xx++, inv--)
 			{
@@ -175,7 +176,7 @@ static READ8_HANDLER( hitme_port_3_r )
 
 static WRITE8_HANDLER( output_port_0_w )
 {
-	/* 
+	/*
 		Note: We compute the timeout time on a write here. Unfortunately, the situation is
 		kind of weird, because the discrete sound system is also affected by this timeout.
 		In fact, it is very important that our timing calculation timeout AFTER the sound
@@ -185,16 +186,16 @@ static WRITE8_HANDLER( output_port_0_w )
 	double resistance = raw_game_speed * 25000 / 100;
 	mame_time duration = make_mame_time(0, MAX_SUBSECONDS * 0.45 * 6.8e-6 * resistance * (data+1));
 	timeout_time = add_mame_times(mame_timer_get_time(), duration);
-	
-	discrete_sound_w(0, data);
-	discrete_sound_w(1, 1);
+
+	discrete_sound_w(HITME_DOWNCOUNT_VAL, data);
+	discrete_sound_w(HITME_OUT0, 1);
 }
 
 
 static WRITE8_HANDLER( output_port_1_w )
 {
-	discrete_sound_w(2, data);
-	discrete_sound_w(3, 1);
+	discrete_sound_w(HITME_ENABLE_VAL, data);
+	discrete_sound_w(HITME_OUT1, 1);
 }
 
 
@@ -290,92 +291,6 @@ static struct GfxDecodeInfo barricad_gfxdecodeinfo[] =
 
 
 
-/*************************************
- *
- *	Sound configurations
- *
- *************************************/
-
-const struct discrete_555_astbl_desc desc_hitme_555 =
-{
-	DISC_555_OUT_SQW | DISC_555_OUT_DC,
-	5,				// B+ voltage of 555
-	5.0 - 1.7,		// High output voltage of 555 (Usually v555 - 1.7)
-	5.0 * 2.0 /3.0,	// normally 2/3 of v555
-	5.0 / 3.0		// normally 1/3 of v555
-};
-
-static struct discrete_comp_adder_table desc_hitme_adder =
-{
-	DISC_COMP_P_CAPACITOR, 0, 5,
-	{
-		0.100e-6,	// C19
-		0.022e-6,	// C18
-		0.033e-6,	// C17
-		0.010e-6, 	// C16
-		0.005e-6 	// C15
-	}
-};
-
-/* Nodes - Inputs */
-#define HITME_DOWNCOUNT_VAL		NODE_01
-#define HITME_OUT0				NODE_02
-#define HITME_ENABLE_VAL		NODE_03
-#define HITME_OUT1				NODE_04
-#define HITME_GAME_SPEED		NODE_05
-
-/* Nodes - Sounds */
-#define HITME_FINAL_SND			NODE_90
-
-
-static DISCRETE_SOUND_START(hitme_sound_interface)
-
-	/* These are the inputs; PULSE-type inputs are used for oneshot latching signals */
-	DISCRETE_INPUT		(HITME_DOWNCOUNT_VAL,0x00,0x000f,0.0)
-	DISCRETE_INPUT_PULSE(HITME_OUT0 		,0x01,0x000f,0.0)
-	DISCRETE_INPUT		(HITME_ENABLE_VAL   ,0x02,0x000f,0.0)
-	DISCRETE_INPUT_PULSE(HITME_OUT1			,0x03,0x000f,0.0)
-
- 	/* This represents the resistor at R3, which controls the speed of the sound effects */
-	DISCRETE_ADJUSTMENT(HITME_GAME_SPEED,1,0.0,25000.0,DISC_LINADJ,6)
-
-	/* The clock for the main downcounter is a "404", or LS123 retriggerable multivibrator.
-	 * It is clocked by IPH2 (8.945MHz/16 = 559kHz), then triggers a pulse which is adjustable
-	 * via the resistor R3. When the pulse is finished, it immediately retriggers itself to
-	 * form a clock. The length of the clock pulse is 0.45*R*C, where R is the variable R3
-	 * resistor value, and C is 6.8uF. Thus the frequency of the resulting wave is
-	 * 1.0/(0.45*R*C). We compute that frequency and use a standard 50% duty cycle square wave.
-	 * This is because the "off time" of the clock is very small (559kHz), and we will miss
-	 * edges if we model it perfectly accurately. */
-	DISCRETE_TRANSFORM3(NODE_16,1,1,0.45*6.8e-6,HITME_GAME_SPEED,"012*/")
-	DISCRETE_SQUAREWAVE(NODE_17,1,NODE_16,1,50,0.5,0)
-
-	/* There are 2 cascaded 4-bit downcounters (2R = low, 2P = high), effectively 
-	 * making an 8-bit downcounter, clocked by the clock from the 404 chip.
-	 * The initial count is latched by writing OUT0. */
-	DISCRETE_COUNTER(NODE_20,1,HITME_OUT0,NODE_17,255,0,HITME_DOWNCOUNT_VAL,0)
-	/* When the counter rolls over from 0->255, we clock a D-type flipflop at 2N. */
-	DISCRETE_TRANSFORM2(NODE_21,1,NODE_20,255,"01=!")
-
-	/* This flipflop represents the latch at 1L. It is clocked when OUT1 is written and latches
-	 * the value from the processor. When the downcounter above rolls over, it clears the latch. */
-	DISCRETE_LOGIC_DFLIPFLOP(NODE_22,1,NODE_21,1,HITME_OUT1,HITME_ENABLE_VAL)
-
-	/* The output of the latch goes through a series of various capacitors in parallel.	*/
-	DISCRETE_COMP_ADDER(NODE_23,1,NODE_22,&desc_hitme_adder)
-
-	/* The combined capacitance is input to a 555 timer in astable mode. */
-	DISCRETE_555_ASTABLE(NODE_24,1,22e3,39e3,NODE_23,NODE_NC,&desc_hitme_555)
-
-	/* The output of the 555 timer is fed through a simple CR filter in the amp stage. */
-	DISCRETE_CRFILTER(NODE_25,1,NODE_24,1e3,50e-6)
-
-	/* We scale the final output of 3.3 to 16-bit range and output it at full volume */
-	DISCRETE_GAIN(HITME_FINAL_SND,NODE_25,32000.0/3.3)
-	DISCRETE_OUTPUT(HITME_FINAL_SND,100)
-DISCRETE_SOUND_END
-
-
 
 /*************************************
  *
@@ -405,7 +320,7 @@ static MACHINE_DRIVER_START( hitme )
 	MDRV_VIDEO_UPDATE(hitme)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD_TAG("discrete", DISCRETE, hitme_sound_interface)
+	MDRV_SOUND_ADD_TAG("discrete", DISCRETE, hitme_discrete_interface)
 MACHINE_DRIVER_END
 
 

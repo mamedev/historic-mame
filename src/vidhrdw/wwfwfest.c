@@ -13,6 +13,7 @@ static struct tilemap *fg0_tilemap, *bg0_tilemap, *bg1_tilemap;
 int wwfwfest_pri;
 int wwfwfest_bg0_scrollx, wwfwfest_bg0_scrolly, wwfwfest_bg1_scrollx, wwfwfest_bg1_scrolly;
 data16_t *wwfwfest_fg0_videoram, *wwfwfest_bg0_videoram, *wwfwfest_bg1_videoram;
+static int sprite_xoff, bg0_dx, bg1_dx[2];
 
 /*******************************************************************************
  Write Handlers
@@ -184,6 +185,7 @@ static void wwfwfest_drawsprites( struct mame_bitmap *bitmap, const struct recta
 		if (enable)	{
 			xpos = +(source[5] & 0x00ff) | (source[1] & 0x0004) << 6;
 			if (xpos>512-16) xpos -=512;
+			xpos += sprite_xoff;
 			ypos = (source[0] & 0x00ff) | (source[1] & 0x0002) << 7;
 			ypos = (256 - ypos) & 0x1ff;
 			ypos -= 16 ;
@@ -197,7 +199,7 @@ static void wwfwfest_drawsprites( struct mame_bitmap *bitmap, const struct recta
 			if (flip_screen) {
 				if (flipy) flipy=0; else flipy=1;
 				if (flipx) flipx=0; else flipx=1;
-				ypos=240-ypos;
+				ypos=240-ypos-sprite_xoff;
 				xpos=304-xpos;
 			}
 
@@ -240,6 +242,20 @@ VIDEO_START( wwfwfest )
 	tilemap_set_transparent_pen(bg1_tilemap,0);
 	tilemap_set_transparent_pen(bg0_tilemap,0);
 
+	sprite_xoff = bg0_dx = bg1_dx[0] = bg1_dx[1] = 0;
+
+	return 0;
+}
+
+VIDEO_START( wwfwfstb )
+{
+	if(video_start_wwfwfest())
+		return 1;
+
+	sprite_xoff = 2;
+	bg0_dx = bg1_dx[0] = -4;
+	bg1_dx[1] = -2;
+
 	return 0;
 }
 
@@ -247,14 +263,14 @@ VIDEO_UPDATE( wwfwfest )
 {
 	if (wwfwfest_pri == 0x0078) {
 		tilemap_set_scrolly( bg0_tilemap, 0, wwfwfest_bg0_scrolly  );
-		tilemap_set_scrollx( bg0_tilemap, 0, wwfwfest_bg0_scrollx  );
+		tilemap_set_scrollx( bg0_tilemap, 0, wwfwfest_bg0_scrollx  + bg0_dx);
 		tilemap_set_scrolly( bg1_tilemap, 0, wwfwfest_bg1_scrolly  );
-		tilemap_set_scrollx( bg1_tilemap, 0, wwfwfest_bg1_scrollx  );
+		tilemap_set_scrollx( bg1_tilemap, 0, wwfwfest_bg1_scrollx  + bg1_dx[0]);
 	} else {
 		tilemap_set_scrolly( bg1_tilemap, 0, wwfwfest_bg0_scrolly  );
-		tilemap_set_scrollx( bg1_tilemap, 0, wwfwfest_bg0_scrollx  );
+		tilemap_set_scrollx( bg1_tilemap, 0, wwfwfest_bg0_scrollx  + bg1_dx[1]);
 		tilemap_set_scrolly( bg0_tilemap, 0, wwfwfest_bg1_scrolly  );
-		tilemap_set_scrollx( bg0_tilemap, 0, wwfwfest_bg1_scrollx  );
+		tilemap_set_scrollx( bg0_tilemap, 0, wwfwfest_bg1_scrollx  + bg0_dx);
 	}
 
 	/* todo : which bits of pri are significant to the order */

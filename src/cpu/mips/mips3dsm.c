@@ -102,10 +102,11 @@ INLINE char *signed_16bit(INT16 val)
 	return temp;
 }
 
-static void dasm_cop0(UINT32 pc, UINT32 op, char *buffer)
+static UINT32 dasm_cop0(UINT32 pc, UINT32 op, char *buffer)
 {
 	int rt = (op >> 16) & 31;
 	int rd = (op >> 11) & 31;
+	UINT32 flags = 0;
 
 	switch ((op >> 21) & 31)
 	{
@@ -147,16 +148,17 @@ static void dasm_cop0(UINT32 pc, UINT32 op, char *buffer)
 				case 0x02:	sprintf(buffer, "tlbwi");											break;
 				case 0x06:	sprintf(buffer, "tlbwr");											break;
 				case 0x08:	sprintf(buffer, "tlbp");											break;
-				case 0x10:	sprintf(buffer, "rfe");												break;
+				case 0x10:	sprintf(buffer, "rfe");	flags = DASMFLAG_STEP_OUT;					break;
 				case 0x18:	sprintf(buffer, "eret [invalid]");									break;
 				default:	sprintf(buffer, "cop0  $%07x", op & 0x01ffffff);					break;
 			}
 			break;
 		default:	sprintf(buffer, "dc.l   $%08x [invalid]", op);								break;
 	}
+	return flags;
 }
 
-static void dasm_cop1(UINT32 pc, UINT32 op, char *buffer)
+static UINT32 dasm_cop1(UINT32 pc, UINT32 op, char *buffer)
 {
 	static const char *format_table[] =
 	{
@@ -169,6 +171,7 @@ static void dasm_cop1(UINT32 pc, UINT32 op, char *buffer)
 	int fd = (op >> 6) & 31;
 	int rt = (op >> 16) & 31;
 	int rd = (op >> 11) & 31;
+	UINT32 flags = 0;
 
 	switch ((op >> 21) & 31)
 	{
@@ -183,8 +186,8 @@ static void dasm_cop1(UINT32 pc, UINT32 op, char *buffer)
 			{
 				case 0x00:	sprintf(buffer, "bc1f   $%08x,%d", pc + 4 + ((INT16)op << 2), (op >> 18) & 7);		break;
 				case 0x01:	sprintf(buffer, "bc1t   $%08x,%d", pc + 4 + ((INT16)op << 2), (op >> 18) & 7);		break;
-				case 0x02:	sprintf(buffer, "bc1fl  $%08x,%d", pc + 4 + ((INT16)op << 2), (op >> 18) & 7);		break;
-				case 0x03:	sprintf(buffer, "bc1tl  $%08x,%d", pc + 4 + ((INT16)op << 2), (op >> 18) & 7);		break;
+				case 0x02:	sprintf(buffer, "bc1fl  $%08x,%d", pc + 4 + ((INT16)op << 2), (op >> 18) & 7); flags = DASMFLAG_STEP_OVER | DASMFLAG_STEP_OVER_EXTRA(1); break;
+				case 0x03:	sprintf(buffer, "bc1tl  $%08x,%d", pc + 4 + ((INT16)op << 2), (op >> 18) & 7); flags = DASMFLAG_STEP_OVER | DASMFLAG_STEP_OVER_EXTRA(1); break;
 			}
 			break;
 		default:	/* COP */
@@ -235,9 +238,10 @@ static void dasm_cop1(UINT32 pc, UINT32 op, char *buffer)
 			}
 			break;
 	}
+	return flags;
 }
 
-static void dasm_cop1x(UINT32 pc, UINT32 op, char *buffer)
+static UINT32 dasm_cop1x(UINT32 pc, UINT32 op, char *buffer)
 {
 	static const char *format3_table[] =
 	{
@@ -251,6 +255,7 @@ static void dasm_cop1x(UINT32 pc, UINT32 op, char *buffer)
 	int rs = (op >> 21) & 31;
 	int rt = (op >> 16) & 31;
 	int rd = (op >> 11) & 31;
+	UINT32 flags = 0;
 
 	switch (op & 0x3f)
 	{
@@ -293,12 +298,14 @@ static void dasm_cop1x(UINT32 pc, UINT32 op, char *buffer)
 		case 0x3f:	sprintf(buffer, "nmsub.%s %s,%s,%s,%s", fmt3, cpreg[1][fd], cpreg[1][fr], cpreg[1][fs], cpreg[1][ft]); break;
 		default:	sprintf(buffer, "cop1   $%07x", op & 0x01ffffff);									break;
 	}
+	return flags;
 }
 
-static void dasm_cop2(UINT32 pc, UINT32 op, char *buffer)
+static UINT32 dasm_cop2(UINT32 pc, UINT32 op, char *buffer)
 {
 	int rt = (op >> 16) & 31;
 	int rd = (op >> 11) & 31;
+	UINT32 flags = 0;
 
 	switch ((op >> 21) & 31)
 	{
@@ -338,6 +345,7 @@ static void dasm_cop2(UINT32 pc, UINT32 op, char *buffer)
 			break;
 		default:	sprintf(buffer, "dc.l   $%08x [invalid]", op);									break;
 	}
+	return flags;
 }
 
 unsigned dasmmips3(char *buffer, unsigned pc)
@@ -347,6 +355,7 @@ unsigned dasmmips3(char *buffer, unsigned pc)
 	int rt = (op >> 16) & 31;
 	int rd = (op >> 11) & 31;
 	int shift = (op >> 6) & 31;
+	UINT32 flags = 0;
 
 	switch (op >> 26)
 	{
@@ -363,16 +372,16 @@ unsigned dasmmips3(char *buffer, unsigned pc)
 				case 0x04:	sprintf(buffer, "sllv   %s,%s,%s", reg[rd], reg[rt], reg[rs]);			break;
 				case 0x06:	sprintf(buffer, "srlv   %s,%s,%s", reg[rd], reg[rt], reg[rs]);			break;
 				case 0x07:	sprintf(buffer, "srav   %s,%s,%s", reg[rd], reg[rt], reg[rs]);			break;
-				case 0x08:	sprintf(buffer, "jr     %s", reg[rs]);									break;
+				case 0x08:	sprintf(buffer, "jr     %s", reg[rs]); if (rs == 31) flags = DASMFLAG_STEP_OUT; break;
 				case 0x09:	if (rd == 31)
 							sprintf(buffer, "jalr   %s", reg[rs]);
 							else
-							sprintf(buffer, "jalr   %s,%s", reg[rs], reg[rd]);						break;
+							sprintf(buffer, "jalr   %s,%s", reg[rs], reg[rd]); flags = DASMFLAG_STEP_OVER | DASMFLAG_STEP_OVER_EXTRA(1); break;
 				case 0x0a:	sprintf(buffer, "movz   %s,%s,%s", reg[rd], reg[rs], reg[rt]);			break;
 				case 0x0b:	sprintf(buffer, "movn   %s,%s,%s", reg[rd], reg[rs], reg[rt]);			break;
-				case 0x0c:	sprintf(buffer, "syscall");												break;
-				case 0x0d:	sprintf(buffer, "break");												break;
-				case 0x0f:	sprintf(buffer, "sync");												break;
+				case 0x0c:	sprintf(buffer, "syscall");	flags = DASMFLAG_STEP_OVER;					break;
+				case 0x0d:	sprintf(buffer, "break"); flags = DASMFLAG_STEP_OVER;					break;
+				case 0x0f:	sprintf(buffer, "sync"); flags = DASMFLAG_STEP_OVER;					break;
 				case 0x10:	sprintf(buffer, "mfhi   %s", reg[rd]);									break;
 				case 0x11:	sprintf(buffer, "mthi   %s", reg[rs]);									break;
 				case 0x12:	sprintf(buffer, "mflo   %s", reg[rd]);									break;
@@ -402,12 +411,12 @@ unsigned dasmmips3(char *buffer, unsigned pc)
 				case 0x2d:	sprintf(buffer, "daddu  %s,%s,%s", reg[rd], reg[rs], reg[rt]);			break;
 				case 0x2e:	sprintf(buffer, "dsub   %s,%s,%s", reg[rd], reg[rs], reg[rt]);			break;
 				case 0x2f:	sprintf(buffer, "dsubu  %s,%s,%s", reg[rd], reg[rs], reg[rt]);			break;
-				case 0x30:	sprintf(buffer, "tge    %s,%s", reg[rs], reg[rt]);						break;
-				case 0x31:	sprintf(buffer, "tgeu   %s,%s", reg[rs], reg[rt]);						break;
-				case 0x32:	sprintf(buffer, "tlt    %s,%s", reg[rs], reg[rt]);						break;
-				case 0x33:	sprintf(buffer, "tltu   %s,%s", reg[rs], reg[rt]);						break;
-				case 0x34:	sprintf(buffer, "teq    %s,%s", reg[rs], reg[rt]);						break;
-				case 0x36:	sprintf(buffer, "tne    %s,%s", reg[rs], reg[rt]);						break;
+				case 0x30:	sprintf(buffer, "tge    %s,%s", reg[rs], reg[rt]); flags = DASMFLAG_STEP_OVER; break;
+				case 0x31:	sprintf(buffer, "tgeu   %s,%s", reg[rs], reg[rt]); flags = DASMFLAG_STEP_OVER; break;
+				case 0x32:	sprintf(buffer, "tlt    %s,%s", reg[rs], reg[rt]); flags = DASMFLAG_STEP_OVER; break;
+				case 0x33:	sprintf(buffer, "tltu   %s,%s", reg[rs], reg[rt]); flags = DASMFLAG_STEP_OVER; break;
+				case 0x34:	sprintf(buffer, "teq    %s,%s", reg[rs], reg[rt]); flags = DASMFLAG_STEP_OVER; break;
+				case 0x36:	sprintf(buffer, "tne    %s,%s", reg[rs], reg[rt]) ;flags = DASMFLAG_STEP_OVER; break;
 				case 0x38:	sprintf(buffer, "dsll   %s,%s,%d", reg[rd], reg[rt], shift);			break;
 				case 0x3a:	sprintf(buffer, "dsrl   %s,%s,%d", reg[rd], reg[rt], shift);			break;
 				case 0x3b:	sprintf(buffer, "dsra   %s,%s,%d", reg[rd], reg[rt], shift);			break;
@@ -425,22 +434,22 @@ unsigned dasmmips3(char *buffer, unsigned pc)
 				case 0x01:	sprintf(buffer, "bgez   %s,$%08x", reg[rs], pc + 4 + ((INT16)op << 2));	break;
 				case 0x02:	sprintf(buffer, "bltzl  %s,$%08x", reg[rs], pc + 4 + ((INT16)op << 2));	break;
 				case 0x03:	sprintf(buffer, "bgezl  %s,$%08x", reg[rs], pc + 4 + ((INT16)op << 2));	break;
-				case 0x08:	sprintf(buffer, "tgei   %s,%s", reg[rs], signed_16bit(op));				break;
-				case 0x09:	sprintf(buffer, "tgeiu  %s,%s", reg[rs], signed_16bit(op));				break;
-				case 0x0a:	sprintf(buffer, "tlti   %s,%s", reg[rs], signed_16bit(op));				break;
-				case 0x0b:	sprintf(buffer, "tltiu  %s,%s", reg[rs], signed_16bit(op));				break;
-				case 0x0c:	sprintf(buffer, "teqi   %s,%s", reg[rs], signed_16bit(op));				break;
-				case 0x0e:	sprintf(buffer, "tnei   %s,%s", reg[rs], signed_16bit(op));				break;
-				case 0x10:	sprintf(buffer, "bltzal %s,$%08x", reg[rs], pc + 4 + ((INT16)op << 2));	break;
-				case 0x11:	sprintf(buffer, "bgezal %s,$%08x", reg[rs], pc + 4 + ((INT16)op << 2));	break;
-				case 0x12:	sprintf(buffer, "bltzall %s,$%08x", reg[rs], pc + 4 + ((INT16)op << 2));break;
-				case 0x13:	sprintf(buffer, "bgezall %s,$%08x", reg[rs], pc + 4 + ((INT16)op << 2));break;
+				case 0x08:	sprintf(buffer, "tgei   %s,%s", reg[rs], signed_16bit(op)); flags = DASMFLAG_STEP_OVER; break;
+				case 0x09:	sprintf(buffer, "tgeiu  %s,%s", reg[rs], signed_16bit(op)); flags = DASMFLAG_STEP_OVER; break;
+				case 0x0a:	sprintf(buffer, "tlti   %s,%s", reg[rs], signed_16bit(op)); flags = DASMFLAG_STEP_OVER; break;
+				case 0x0b:	sprintf(buffer, "tltiu  %s,%s", reg[rs], signed_16bit(op)); flags = DASMFLAG_STEP_OVER; break;
+				case 0x0c:	sprintf(buffer, "teqi   %s,%s", reg[rs], signed_16bit(op)); flags = DASMFLAG_STEP_OVER; break;
+				case 0x0e:	sprintf(buffer, "tnei   %s,%s", reg[rs], signed_16bit(op)); flags = DASMFLAG_STEP_OVER; break;
+				case 0x10:	sprintf(buffer, "bltzal %s,$%08x", reg[rs], pc + 4 + ((INT16)op << 2)); flags = DASMFLAG_STEP_OVER | DASMFLAG_STEP_OVER_EXTRA(1); break;
+				case 0x11:	sprintf(buffer, "bgezal %s,$%08x", reg[rs], pc + 4 + ((INT16)op << 2)); flags = DASMFLAG_STEP_OVER | DASMFLAG_STEP_OVER_EXTRA(1); break;
+				case 0x12:	sprintf(buffer, "bltzall %s,$%08x", reg[rs], pc + 4 + ((INT16)op << 2)); flags = DASMFLAG_STEP_OVER | DASMFLAG_STEP_OVER_EXTRA(1); break;
+				case 0x13:	sprintf(buffer, "bgezall %s,$%08x", reg[rs], pc + 4 + ((INT16)op << 2)); flags = DASMFLAG_STEP_OVER | DASMFLAG_STEP_OVER_EXTRA(1); break;
 				default:	sprintf(buffer, "dc.l   $%08x [invalid]", op);							break;
 			}
 			break;
 
 		case 0x02:	sprintf(buffer, "j      $%08x", (pc & 0xf0000000) | ((op & 0x0fffffff) << 2));	break;
-		case 0x03:	sprintf(buffer, "jal    $%08x", (pc & 0xf0000000) | ((op & 0x0fffffff) << 2));	break;
+		case 0x03:	sprintf(buffer, "jal    $%08x", (pc & 0xf0000000) | ((op & 0x0fffffff) << 2)); flags = DASMFLAG_STEP_OVER | DASMFLAG_STEP_OVER_EXTRA(1); break;
 		case 0x04:	if (rs == 0 && rt == 0)
 					sprintf(buffer, "b      $%08x", pc + 4 + ((INT16)op << 2));
 					else
@@ -456,10 +465,10 @@ unsigned dasmmips3(char *buffer, unsigned pc)
 		case 0x0d:	sprintf(buffer, "ori    %s,%s,$%04x", reg[rt], reg[rs], (UINT16)op);			break;
 		case 0x0e:	sprintf(buffer, "xori   %s,%s,$%04x", reg[rt], reg[rs], (UINT16)op);			break;
 		case 0x0f:	sprintf(buffer, "lui    %s,$%04x", reg[rt], (UINT16)op);						break;
-		case 0x10:	dasm_cop0(pc, op, buffer);														break;
-		case 0x11:	dasm_cop1(pc, op, buffer);														break;
-		case 0x12:	dasm_cop2(pc, op, buffer);														break;
-		case 0x13:	dasm_cop1x(pc, op, buffer);														break;
+		case 0x10:	flags = dasm_cop0(pc, op, buffer);												break;
+		case 0x11:	flags = dasm_cop1(pc, op, buffer);												break;
+		case 0x12:	flags = dasm_cop2(pc, op, buffer);												break;
+		case 0x13:	flags = dasm_cop1x(pc, op, buffer);												break;
 		case 0x14:	sprintf(buffer, "beql   %s,%s,$%08x", reg[rs], reg[rt], pc + 4 + ((INT16)op << 2));break;
 		case 0x15:	sprintf(buffer, "bnel   %s,%s,$%08x", reg[rs], reg[rt], pc + 4 + ((INT16)op << 2));break;
 		case 0x16:	sprintf(buffer, "blezl  %s,%s,$%08x", reg[rs], reg[rt], pc + 4 + ((INT16)op << 2));break;
@@ -501,5 +510,5 @@ unsigned dasmmips3(char *buffer, unsigned pc)
 		case 0x3f:	sprintf(buffer, "sd     %s,%s(%s)", reg[rt], signed_16bit(op), reg[rs]);		break;
 		default:	sprintf(buffer, "dc.l   $%08x [invalid]", op);									break;
 	}
-	return 4;
+	return 4 | flags | DASMFLAG_SUPPORTED;
 }

@@ -741,7 +741,7 @@ static int vh_open(void)
 	if (Machine->uifont == NULL)
 		goto cant_build_uifont;
 
-#ifdef MAME_DEBUG
+#if defined(MAME_DEBUG) && !defined(NEW_DEBUGGER)
 	/* if the debugger is enabled, initialize its bitmap and font */
 	if (mame_debug)
 	{
@@ -781,7 +781,7 @@ static int vh_open(void)
 
 cant_init_palette:
 
-#ifdef MAME_DEBUG
+#if defined(MAME_DEBUG) && !defined(NEW_DEBUGGER)
 cant_build_debugger_font:
 cant_create_debug_bitmap:
 #endif
@@ -1216,7 +1216,7 @@ void update_video_and_audio(void)
 {
 	int skipped_it = osd_skip_this_frame();
 
-#ifdef MAME_DEBUG
+#if defined(MAME_DEBUG) && !defined(NEW_DEBUGGER)
 	debug_trace_delay = 0;
 #endif
 
@@ -1247,7 +1247,7 @@ void update_video_and_audio(void)
 			current_display.changed_flags |= VECTOR_PIXELS_CHANGED;
 		}
 
-#ifdef MAME_DEBUG
+#if defined(MAME_DEBUG) && !defined(NEW_DEBUGGER)
 	/* set the debugger bitmap */
 	current_display.debug_bitmap = Machine->debug_bitmap;
 	if (debugger_bitmap_changed)
@@ -1857,7 +1857,7 @@ int mame_validitychecks(void)
 						/* check to make sure that this CPU core has the necessities filled out */
 						const struct cpu_interface *cpuintrf;
 						union cpuinfo info;
-						const INT8 *reg;
+						const UINT8 *reg;
 						int incomplete_cpu_core = 0;
 						static const int required_info[] =
 						{
@@ -1876,12 +1876,12 @@ int mame_validitychecks(void)
 
 						memset(&info, 0, sizeof(info));
 						cpuintrf->get_info(CPUINFO_PTR_REGISTER_LAYOUT, &info);
-						reg = (const INT8 *) info.p;
+						reg = (const UINT8 *) info.p;
 						if (reg)
 						{
 							for (j = 0; reg[j]; j++)
 							{
-								if (reg[j] != -1)
+								if (reg[j] != (UINT8)-1)
 								{
 									memset(&info, 0, sizeof(info));
 									cpuintrf->get_info(CPUINFO_STR_REGISTER + reg[j], &info);

@@ -732,6 +732,54 @@ static ADDRESS_MAP_START( nyanpani_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x311000, 0x311fff) AM_WRITE(MWA16_RAM)			/* not used */
 ADDRESS_MAP_END
 
+
+static ADDRESS_MAP_START( hcrash_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x00ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x040000, 0x05ffff) AM_READ(MRA16_ROM)	/* ROM */
+	AM_RANGE(0x120000, 0x12ffff) AM_READ(nemesis_characterram_word_r)
+	AM_RANGE(0x090000, 0x091fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x100000, 0x100fff) AM_READ(nemesis_videoram1b_word_r)
+	AM_RANGE(0x101000, 0x101fff) AM_READ(nemesis_videoram1f_word_r)
+	AM_RANGE(0x102000, 0x102fff) AM_READ(nemesis_videoram2b_word_r)
+	AM_RANGE(0x103000, 0x103fff) AM_READ(nemesis_videoram2f_word_r)
+	AM_RANGE(0x080000, 0x083fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x190000, 0x1903ff) AM_READ(gx400_xscroll1_word_r)
+	AM_RANGE(0x190400, 0x1907ff) AM_READ(gx400_xscroll2_word_r)
+	AM_RANGE(0x190800, 0x190eff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x190f00, 0x190f7f) AM_READ(gx400_yscroll1_word_r)
+	AM_RANGE(0x190f80, 0x190fff) AM_READ(gx400_yscroll2_word_r)
+	AM_RANGE(0x191000, 0x191fff) AM_READ(MRA16_RAM)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( hcrash_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x00ffff) AM_WRITE(MWA16_ROM)	/* ROM */
+	AM_RANGE(0x040000, 0x05ffff) AM_WRITE(MWA16_ROM)	/* ROM */
+	AM_RANGE(0x050000, 0x0503ff) AM_WRITE(MWA16_RAM) AM_BASE(&nemesis_xscroll1)
+	AM_RANGE(0x050400, 0x0507ff) AM_WRITE(MWA16_RAM) AM_BASE(&nemesis_xscroll2)
+	AM_RANGE(0x050800, 0x050bff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x050c00, 0x050fff) AM_WRITE(MWA16_RAM) AM_BASE(&nemesis_yscroll)
+	AM_RANGE(0x051000, 0x051fff) AM_RAM //AM_WRITE(MWA16_NOP)		/* used, but written to with 0's */
+	AM_RANGE(0x090000, 0x091fff) AM_WRITE(salamander_palette_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x100000, 0x100fff) AM_WRITE(nemesis_videoram1b_word_w) AM_BASE(&nemesis_videoram1b)	/* VRAM 1 */
+	AM_RANGE(0x101000, 0x101fff) AM_WRITE(nemesis_videoram1f_word_w) AM_BASE(&nemesis_videoram1f)	/* VRAM 1 */
+	AM_RANGE(0x102000, 0x102fff) AM_WRITE(nemesis_videoram2b_word_w) AM_BASE(&nemesis_videoram2b)	/* VRAM 2 */
+	AM_RANGE(0x103000, 0x103fff) AM_WRITE(nemesis_videoram2f_word_w) AM_BASE(&nemesis_videoram2f)	/* VRAM 2 */
+	AM_RANGE(0x120000, 0x12ffff) AM_WRITE(nemesis_characterram_word_w) AM_BASE(&nemesis_characterram) AM_SIZE(&nemesis_characterram_size)
+	AM_RANGE(0x180000, 0x180fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)		/* more sprite ram ??? */
+	AM_RANGE(0x190000, 0x1903ff) AM_WRITE(gx400_xscroll1_word_w) AM_BASE(&nemesis_xscroll1)
+	AM_RANGE(0x190400, 0x1907ff) AM_WRITE(gx400_xscroll2_word_w) AM_BASE(&nemesis_xscroll2)
+	AM_RANGE(0x190800, 0x190eff) AM_WRITE(MWA16_RAM)			/* not used */
+	AM_RANGE(0x190f00, 0x190f7f) AM_WRITE(gx400_yscroll1_word_w) AM_BASE(&nemesis_yscroll1)
+	AM_RANGE(0x190f80, 0x190fff) AM_WRITE(gx400_yscroll2_word_w) AM_BASE(&nemesis_yscroll2)
+	AM_RANGE(0x191000, 0x191fff) AM_WRITE(MWA16_RAM)			/* not used */
+//	AM_RANGE(0x05c000, 0x05c001) AM_WRITE(nemesis_soundlatch_word_w)
+	AM_RANGE(0x05c800, 0x05c801) AM_WRITE(watchdog_reset16_w)	/* probably */
+	AM_RANGE(0x0A0000, 0x0A0001) AM_WRITE(nemesis_irq_enable_word_w)          /* irq enable? */
+	AM_RANGE(0x0c0008, 0x0c0009) AM_WRITE(gx400_irq2_enable_word_w)          /* irq enable? */
+	AM_RANGE(0x080000, 0x083fff) AM_WRITE(MWA16_RAM)
+ADDRESS_MAP_END
+
+
 static READ8_HANDLER( wd_r )
 {
 	static int a=1;
@@ -2314,6 +2362,39 @@ static MACHINE_DRIVER_START( rf2_gx400 )
 	MDRV_SOUND_ADD(VLM5030, gx400_vlm5030_interface)
 MACHINE_DRIVER_END
 
+static MACHINE_DRIVER_START( hcrash )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000,18432000/2)         /* 9.216 MHz? */
+	MDRV_CPU_PROGRAM_MAP(hcrash_readmem,hcrash_writemem)
+	MDRV_CPU_VBLANK_INT(nemesis_interrupt,1)
+//	MDRV_CPU_VBLANK_INT(konamigt_interrupt,2)
+
+//	MDRV_CPU_ADD(Z80,14318180/4)
+//	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)        /* 3.579545 MHz */
+//	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND((18432000.0/4)/(288*264))		/* 60.606060 Hz */
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(nemesis)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048)
+
+	MDRV_VIDEO_START(nemesis)
+	MDRV_VIDEO_UPDATE(nemesis)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SOUND_ADD(K005289, k005289_interface)
+MACHINE_DRIVER_END
+
+
 /***************************************************************************
 
   Game driver(s)
@@ -2585,6 +2666,31 @@ ROM_START( nyanpani )
 	ROM_LOAD(      "712b01.1k",   0x00000, 0x80000, CRC(f65b5d95) SHA1(12701be68629844720cd16af857ce38ef06af61c) )
 ROM_END
 
+/*
+It's marked GX790 on one side (CPU board) and GX400 (video
+board) on the other.
+
+-- not really much work done on this one yet ;-)
+
+*/
+
+ROM_START( hcrash )
+	ROM_REGION( 0x140000, REGION_CPU1, 0 )    /* 64k for code */
+	ROM_LOAD16_BYTE( "790-d03.t9",   0x000000, 0x08000, CRC(10177dce) SHA1(e46f75e3206eff5299e08e5258e67b68efc4c20c) )
+	ROM_LOAD16_BYTE( "790-d06.t7",   0x000001, 0x08000, CRC(fca5ab3e) SHA1(2ad335cf25a86fe38c190e2e0fe101ea161eb81d) )
+	ROM_LOAD16_BYTE( "790-c02.s9",   0x040000, 0x10000, CRC(8ae6318f) SHA1(b3205df1103a69eef34c5207e567a27a5fee5660) )
+	ROM_LOAD16_BYTE( "790-c05.s7",   0x040001, 0x10000, CRC(c214f77b) SHA1(c5754c3da2a3820d8d06f8ff171be6c2aea92ecc) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )    /* 64k for sound */
+
+	ROM_REGION( 0x80000, REGION_SOUND1, 0 )    /* ? data */
+
+	ROM_REGION( 0x80000, REGION_SOUND2, 0 )    /* 007232 data */
+
+	ROM_LOAD( "790-c08.j4",   0x000000, 0x08000, CRC(cfb844bc) SHA1(43b7adb6093e707212204118087ef4f79b0dbc1f) )
+	ROM_LOAD( "790-c09.n2",   0x000000, 0x08000, CRC(a68a8cce) SHA1(a54966b9cbbe37b2be6a2276ee09c81452d9c0ca) )
+	ROM_LOAD( "790-c01.m10",  0x000000, 0x20000, CRC(07976bc3) SHA1(9341ac6084fbbe17c4e7bbefade9a3f1dec3f132) )
+ROM_END
 
 
 GAME( 1985, nemesis,  0,        nemesis,       nemesis,  0, ROT0,   "Konami", "Nemesis" )
@@ -2603,3 +2709,4 @@ GAMEX(1987, citybomb, 0,        citybomb,      citybomb, 0, ROT270, "Konami", "C
 GAMEX(1987, citybmrj, citybomb, citybomb,      citybomb, 0, ROT270, "Konami", "City Bomber (Japan)", GAME_NO_COCKTAIL )
 GAMEX(1988, kittenk,  0,        nyanpani,      nyanpani, 0, ROT0,   "Konami", "Kitten Kaboodle", GAME_NO_COCKTAIL )
 GAMEX(1988, nyanpani, kittenk,  nyanpani,      nyanpani, 0, ROT0,   "Konami", "Nyan Nyan Panic (Japan)", GAME_NO_COCKTAIL )
+GAMEX(1985, hcrash,   0,        hcrash ,       nemesis,  0, ROT0,   "Konami", "Hyper Crash", GAME_NOT_WORKING)

@@ -244,3 +244,5 @@ READ8_HANDLER( namcos2_mcu_port_d_r );
 READ8_HANDLER( namcos2_input_port_0_r );
 READ8_HANDLER( namcos2_input_port_10_r );
 READ8_HANDLER( namcos2_input_port_12_r );
+
+int namcos2_GetPosIrqScanline( void );

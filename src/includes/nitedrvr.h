@@ -4,12 +4,18 @@
 
 *************************************************************************/
 
+/* Discrete Sound Input Nodes */
+#define NITEDRVR_BANG_DATA	NODE_01
+#define NITEDRVR_SKID1_EN	NODE_02
+#define NITEDRVR_SKID2_EN	NODE_03
+#define NITEDRVR_MOTOR_DATA	NODE_04
+#define NITEDRVR_CRASH_EN	NODE_05
+#define NITEDRVR_ATTRACT_EN	NODE_06
+
+
 /*----------- defined in machine/nitedrvr.c -----------*/
 
 extern unsigned char *nitedrvr_ram;
-
-extern int nitedrvr_gear;
-extern int nitedrvr_track;
 
 READ8_HANDLER( nitedrvr_in0_r );
 READ8_HANDLER( nitedrvr_in1_r );
@@ -21,6 +27,12 @@ WRITE8_HANDLER( nitedrvr_out1_w );
 WRITE8_HANDLER( nitedrvr_ram_w );
 
 void nitedrvr_crash_toggle(int dummy);
+
+
+/*----------- defined in sndhrdw/nitedrvr.c -----------*/
+
+extern struct discrete_sound_block nitedrvr_discrete_interface[];
+
 
 /*----------- defined in vidhrdw/nitedrvr.c -----------*/
 

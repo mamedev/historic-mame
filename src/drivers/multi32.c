@@ -1361,9 +1361,9 @@ ROM_END
 
 ROM_START( titlefu )
 	ROM_REGION( 0x200000, REGION_CPU1, 0 ) /* v60 code */
-	ROM_LOAD32_WORD( "epr15386.37", 0x000000, 0x40000, BAD_DUMP CRC(7ceaf15d) SHA1(0295ac248e5814fbe7caecb346ccbcaf8abf67dc) )
+	ROM_LOAD32_WORD( "epr15386.37", 0x000000, 0x40000, CRC(e36e2516) SHA1(b6a73d6136ff8a13831b6db0fbc8a585f2acf254) )
 	ROM_RELOAD(                      0x080000, 0x040000 )
-	ROM_LOAD32_WORD( "epr15387.40", 0x000002, 0x40000, BAD_DUMP CRC(aaf3cb03) SHA1(2956ee95b038fd08933174e16f84617c043034c3) )
+	ROM_LOAD32_WORD( "epr15387.40", 0x000002, 0x40000, CRC(e63406d3) SHA1(cd105862b2267d1d3af588cda70e6e4c1cca1da2) )
 	ROM_RELOAD(                      0x080002, 0x040000 )
 
 	ROM_REGION( 0x30000, REGION_CPU2, 0 ) /* sound CPU */
@@ -1434,8 +1434,6 @@ GAMEX( 1992, orunners,     0,        multi32, orunners, orunners, ROT0, "Sega", 
 GAMEX( 1994, harddunk,     0,        multi32, harddunk, harddunk, ROT0, "Sega", "Hard Dunk (World)", GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1994, harddunj,     harddunk, multi32, harddunk, harddunk, ROT0, "Sega", "Hard Dunk (Japan)", GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1992, scross,       0,        scross,  scross,   orunners, ROT0, "Sega", "Stadium Cross (World)", GAME_IMPERFECT_GRAPHICS )
-
 GAMEX( 1992, titlef,       0,      multi32, titlef,   titlef,   ROT0, "Sega", "Title Fight (World)", GAME_IMPERFECT_GRAPHICS )
-GAMEX( 199?, titlefu,      titlef, multi32, titlef,   titlef,   ROT0, "Sega", "Title Fight (US, bad dump?)", GAME_NOT_WORKING ) // doesn't boot (needs v60 fixing, modeler has a hack in the cpu core but maybe its a workaround for a bad dump)
-
+GAMEX( 1992, titlefu,      titlef, multi32, titlef,   titlef,   ROT0, "Sega", "Title Fight (US)", GAME_IMPERFECT_GRAPHICS )
 

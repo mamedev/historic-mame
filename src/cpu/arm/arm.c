@@ -1235,7 +1235,8 @@ static void arm_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + ARM32_SR13:	arm.sArmRegister[eR13_SVC] = info->i;			break;
 		case CPUINFO_INT_REGISTER + ARM32_SR14:	arm.sArmRegister[eR14_SVC] = info->i;			break;
 
-		case CPUINFO_INT_PC:					R15 = (R15&~ADDRESS_MASK)|info->i;				break;
+		case CPUINFO_INT_PC:
+		case CPUINFO_INT_REGISTER + ARM32_PC:	R15 = (R15&~ADDRESS_MASK)|info->i;				break;
 		case CPUINFO_INT_SP:					SetRegister(13,info->i);						break;
 
 		/* --- the following bits of info are set as pointers to data or functions --- */
@@ -1278,7 +1279,8 @@ void arm_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_INPUT_STATE + ARM_FIRQ_LINE:	info->i = arm.pendingFiq;				break;
 
 		case CPUINFO_INT_PREVIOUSPC:					info->i = 0;	/* not implemented */	break;
-		case CPUINFO_INT_PC:							info->i = arm.sArmRegister[15]&ADDRESS_MASK; break;
+		case CPUINFO_INT_PC:							
+		case CPUINFO_INT_REGISTER + ARM32_PC:			info->i = arm.sArmRegister[15]&ADDRESS_MASK; break;
 		case CPUINFO_INT_SP:							info->i = GetRegister(13);				break;
 
 		case CPUINFO_INT_REGISTER + ARM32_R0:			info->i = arm.sArmRegister[ 0];			break;
@@ -1357,6 +1359,7 @@ void arm_get_info(UINT32 state, union cpuinfo *info)
 			}
 			break;
 
+		case CPUINFO_STR_REGISTER + ARM32_PC: sprintf( info->s = cpuintrf_temp_str(), "PC  :%08x", arm.sArmRegister[15]&ADDRESS_MASK );  break;
 		case CPUINFO_STR_REGISTER + ARM32_R0: sprintf( info->s = cpuintrf_temp_str(), "R0  :%08x", arm.sArmRegister[ 0] );  break;
 		case CPUINFO_STR_REGISTER + ARM32_R1: sprintf( info->s = cpuintrf_temp_str(), "R1  :%08x", arm.sArmRegister[ 1] );  break;
 		case CPUINFO_STR_REGISTER + ARM32_R2: sprintf( info->s = cpuintrf_temp_str(), "R2  :%08x", arm.sArmRegister[ 2] );  break;

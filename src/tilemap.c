@@ -372,7 +372,7 @@ static void pio( void *dest, const void *source, int count, UINT8 *pri, UINT32 p
 	if (pcode)
 		for( i=0; i<count; i++ )
 		{
-			pri[i] |= pcode;
+			pri[i] = (pri[i] & (pcode >> 8)) | pcode;
 		}
 }
 
@@ -385,7 +385,7 @@ static void pit( void *dest, const void *source, const UINT8 *pMask, int mask, i
 		{
 			if( (pMask[i]&mask)==value )
 			{
-				pri[i] |= pcode;
+				pri[i] = (pri[i] & (pcode >> 8)) | pcode;
 			}
 		}
 }
@@ -399,7 +399,7 @@ static void pdo16( UINT16 *dest, const UINT16 *source, int count, UINT8 *pri, UI
 	memcpy( dest,source,count*sizeof(UINT16) );
 	for( i=0; i<count; i++ )
 	{
-		pri[i] |= pcode;
+		pri[i] = (pri[i] & (pcode >> 8)) | pcode;
 	}
 }
 #endif
@@ -412,7 +412,7 @@ static void pdo16pal( UINT16 *dest, const UINT16 *source, int count, UINT8 *pri,
 	for( i=0; i<count; i++ )
 	{
 		dest[i] = source[i] + pal;
-		pri[i] |= pcode;
+		pri[i] = (pri[i] & (pcode >> 8)) | pcode;
 	}
 }
 #endif
@@ -431,7 +431,7 @@ static void pdo15( UINT16 *dest, const UINT16 *source, int count, UINT8 *pri, UI
 	for( i=0; i<count; i++ )
 	{
 		dest[i] = clut[source[i]];
-		pri[i] |= pcode;
+		pri[i] = (pri[i] & (pcode >> 8)) | pcode;
 	}
 }
 
@@ -443,7 +443,7 @@ static void pdo32( UINT32 *dest, const UINT16 *source, int count, UINT8 *pri, UI
 	for( i=0; i<count; i++ )
 	{
 		dest[i] = clut[source[i]];
-		pri[i] |= pcode;
+		pri[i] = (pri[i] & (pcode >> 8)) | pcode;
 	}
 }
 #endif
@@ -491,7 +491,7 @@ static void pdt16( UINT16 *dest, const UINT16 *source, const UINT8 *pMask, int m
 		if( (pMask[i]&mask)==value )
 		{
 			dest[i] = source[i];
-			pri[i] |= pcode;
+			pri[i] = (pri[i] & (pcode >> 8)) | pcode;
 		}
 	}
 }
@@ -508,7 +508,7 @@ static void pdt16pal( UINT16 *dest, const UINT16 *source, const UINT8 *pMask, in
 		if( (pMask[i]&mask)==value )
 		{
 			dest[i] = source[i] + pal;
-			pri[i] |= pcode;
+			pri[i] = (pri[i] & (pcode >> 8)) | pcode;
 		}
 	}
 }
@@ -536,7 +536,7 @@ static void pdt15( UINT16 *dest, const UINT16 *source, const UINT8 *pMask, int m
 		if( (pMask[i]&mask)==value )
 		{
 			dest[i] = clut[source[i]];
-			pri[i] |= pcode;
+			pri[i] = (pri[i] & (pcode >> 8)) | pcode;
 		}
 	}
 }
@@ -551,7 +551,7 @@ static void pdt32( UINT32 *dest, const UINT16 *source, const UINT8 *pMask, int m
 		if( (pMask[i]&mask)==value )
 		{
 			dest[i] = clut[source[i]];
-			pri[i] |= pcode;
+			pri[i] = (pri[i] & (pcode >> 8)) | pcode;
 		}
 	}
 }
@@ -589,7 +589,7 @@ static void pbo15( UINT16 *dest, const UINT16 *source, int count, UINT8 *pri, UI
 	for( i=0; i<count; i++ )
 	{
 		dest[i] = alpha_blend16(dest[i], clut[source[i]]);
-		pri[i] |= pcode;
+		pri[i] = (pri[i] & (pcode >> 8)) | pcode;
 	}
 }
 
@@ -601,7 +601,7 @@ static void pbo32( UINT32 *dest, const UINT16 *source, int count, UINT8 *pri, UI
 	for( i=0; i<count; i++ )
 	{
 		dest[i] = alpha_blend32(dest[i], clut[source[i]]);
-		pri[i] |= pcode;
+		pri[i] = (pri[i] & (pcode >> 8)) | pcode;
 	}
 }
 #endif
@@ -639,7 +639,7 @@ static void pbt15( UINT16 *dest, const UINT16 *source, const UINT8 *pMask, int m
 		if( (pMask[i]&mask)==value )
 		{
 			dest[i] = alpha_blend16(dest[i], clut[source[i]]);
-			pri[i] |= pcode;
+			pri[i] = (pri[i] & (pcode >> 8)) | pcode;
 		}
 	}
 }
@@ -654,7 +654,7 @@ static void pbt32( UINT32 *dest, const UINT16 *source, const UINT8 *pMask, int m
 		if( (pMask[i]&mask)==value )
 		{
 			dest[i] = alpha_blend32(dest[i], clut[source[i]]);
-			pri[i] |= pcode;
+			pri[i] = (pri[i] & (pcode >> 8)) | pcode;
 		}
 	}
 }
@@ -1205,6 +1205,11 @@ void tilemap_set_palette_offset( struct tilemap *tilemap, int offset )
 
 void tilemap_draw( struct mame_bitmap *dest, const struct rectangle *cliprect, struct tilemap *tilemap, UINT32 flags, UINT32 priority )
 {
+	tilemap_draw_primask( dest, cliprect, tilemap, flags, priority, 0xff );
+}
+
+void tilemap_draw_primask( struct mame_bitmap *dest, const struct rectangle *cliprect, struct tilemap *tilemap, UINT32 flags, UINT32 priority, UINT32 priority_mask )
+{
 	tilemap_draw_func drawfunc = pick_draw_func(dest);
 	int xpos,ypos,mask,value;
 	int rows, cols;
@@ -1368,7 +1373,7 @@ profiler_mark(PROFILER_TILEMAP_DRAW);
 			}
 		}
 
-		blit.tilemap_priority_code = (priority & 0xffff) | (tilemap->palette_offset << 16);
+		blit.tilemap_priority_code = (priority & 0xff) | ((priority_mask & 0xff) << 8) | (tilemap->palette_offset << 16);
 
 		if( rows == 1 && cols == 1 )
 		{ /* XY scrolling playfield */
@@ -1548,6 +1553,14 @@ void tilemap_draw_roz( struct mame_bitmap *dest,const struct rectangle *cliprect
 		int wraparound,
 		UINT32 flags, UINT32 priority )
 {
+	tilemap_draw_roz_primask( dest,cliprect,tilemap,startx,starty,incxx,incxy,incyx,incyy,wraparound,flags,priority, 0xff );
+}
+
+void tilemap_draw_roz_primask( struct mame_bitmap *dest,const struct rectangle *cliprect,struct tilemap *tilemap,
+		UINT32 startx,UINT32 starty,int incxx,int incxy,int incyx,int incyy,
+		int wraparound,
+		UINT32 flags, UINT32 priority, UINT32 priority_mask )
+{
 	if( (incxx == 1<<16) && !incxy & !incyx && (incyy == 1<<16) && wraparound )
 	{
 		tilemap_set_scrollx( tilemap, 0, startx >> 16 );
@@ -1604,7 +1617,7 @@ profiler_mark(PROFILER_TILEMAP_DRAW_ROZ);
 				}
 
 				copyroz_core32BPP(dest,tilemap,startx,starty,incxx,incxy,incyx,incyy,
-					wraparound,cliprect,mask,value,priority,tilemap->palette_offset);
+					wraparound,cliprect,mask,value,priority,priority_mask,tilemap->palette_offset);
 				break;
 
 			case 15:
@@ -1614,7 +1627,7 @@ profiler_mark(PROFILER_TILEMAP_DRAW_ROZ);
 					blit.draw_masked = (blitmask_t)pdt15;
 
 				copyroz_core16BPP(dest,tilemap,startx,starty,incxx,incxy,incyx,incyy,
-					wraparound,cliprect,mask,value,priority,tilemap->palette_offset);
+					wraparound,cliprect,mask,value,priority,priority_mask,tilemap->palette_offset);
 				break;
 
 			case 16:
@@ -1626,7 +1639,7 @@ profiler_mark(PROFILER_TILEMAP_DRAW_ROZ);
 					blit.draw_masked = (blitmask_t)pdt16np;
 
 				copyroz_core16BPP(dest,tilemap,startx,starty,incxx,incxy,incyx,incyy,
-					wraparound,cliprect,mask,value,priority,tilemap->palette_offset);
+					wraparound,cliprect,mask,value,priority,priority_mask,tilemap->palette_offset);
 				break;
 
 			default:
@@ -1743,13 +1756,13 @@ void tilemap_nb_draw( struct mame_bitmap *dest, UINT32 number, UINT32 scrollx, U
 	{																	\
 		clut = &Machine->remapped_colortable[priority >> 16] ;			\
 		*dest = alpha_blend32(*dest, clut[INPUT_VAL]);					\
-		*pri |= priority;												\
+		*pri = (*pri & priority_mask) | priority;						\
 	}																	\
 	else if (blit.draw_masked == (blitmask_t)pdt32)						\
 	{																	\
 		clut = &Machine->remapped_colortable[priority >> 16] ;			\
 		*dest = clut[INPUT_VAL] ;										\
-		*pri |= priority;												\
+		*pri = (*pri & priority_mask) | priority;						\
 	}																	\
 	else if (blit.draw_masked == (blitmask_t)npbt32)					\
 	{																	\
@@ -1767,23 +1780,23 @@ void tilemap_nb_draw( struct mame_bitmap *dest, UINT32 number, UINT32 scrollx, U
 	{																	\
 		clut = &Machine->remapped_colortable[priority >> 16] ;			\
 		*dest = alpha_blend16(*dest, clut[INPUT_VAL]) ;					\
-		*pri |= priority;												\
+		*pri = (*pri & priority_mask) | priority;						\
 	}																	\
 	else if (blit.draw_masked == (blitmask_t)pdt15)						\
 	{																	\
 		clut = &Machine->remapped_colortable[priority >> 16] ;			\
 		*dest = clut[INPUT_VAL] ;										\
-		*pri |= priority;												\
+		*pri = (*pri & priority_mask) | priority;						\
 	}																	\
 	else if (blit.draw_masked == (blitmask_t)pdt16pal)					\
 	{																	\
 		*dest = (INPUT_VAL) + (priority >> 16) ;						\
-		*pri |= priority;												\
+		*pri = (*pri & priority_mask) | priority;						\
 	}																	\
 	else if (blit.draw_masked == (blitmask_t)pdt16)						\
 	{																	\
 		*dest = INPUT_VAL ;												\
-		*pri |= priority;												\
+		*pri = (*pri & priority_mask) | priority;						\
 	}																	\
 	else if (blit.draw_masked == (blitmask_t)pdt16np)					\
 	{																	\
@@ -1796,7 +1809,7 @@ DECLARE(copyroz_core,(struct mame_bitmap *bitmap,struct tilemap *tilemap,
 		UINT32 startx,UINT32 starty,int incxx,int incxy,int incyx,int incyy,int wraparound,
 		const struct rectangle *clip,
 		int mask,int value,
-		UINT32 priority,UINT32 palette_offset),
+		UINT32 priority,UINT32 priority_mask,UINT32 palette_offset),
 {
 	UINT32 cx;
 	UINT32 cy;

@@ -42,6 +42,7 @@ typedef struct {				/* opcode structure */
    UINT8	size;				/* access size */
    UINT8	access; 			/* access mode */
    UINT8	numcycles;			/* number of cycles - not used */
+   unsigned flags;				/* disassembly flags */
 } opcodeinfo;
 
 /* 6309 ADDRESSING MODES */
@@ -102,7 +103,7 @@ static opcodeinfo pg1opcodes[] =
 	{ 0x13,0,"SYNC",    INH, 0,        0,            4},
 	{ 0x14,0,"SEXW",    INH, 0,        0,            4},
 	{ 0x16,2,"LBRA",    LREL,EA_INT16, EA_REL_PC,    5},
-	{ 0x17,2,"LBSR",    LREL,EA_INT16, EA_REL_PC,    9},
+	{ 0x17,2,"LBSR",    LREL,EA_INT16, EA_REL_PC,    9, DASMFLAG_STEP_OVER},
 	{ 0x19,0,"DAA",     INH, 0,        0,            2},
 	{ 0x1a,1,"ORCC",    IMM, 0,        0,            3},
 	{ 0x1c,1,"ANDCC",   IMM, 0,        0,            3},
@@ -212,7 +213,7 @@ static opcodeinfo pg1opcodes[] =
 	{ 0x8A,1,"ORA",     IMM, EA_UINT8, EA_VALUE,     2},
 	{ 0x8B,1,"ADDA",    IMM, EA_UINT8, EA_VALUE,     2},
 	{ 0x8C,2,"CMPX",    IMM, EA_UINT16,EA_VALUE,     4},
-	{ 0x8D,1,"BSR",     REL, EA_INT8,  EA_REL_PC,    7},
+	{ 0x8D,1,"BSR",     REL, EA_INT8,  EA_REL_PC,    7, DASMFLAG_STEP_OVER},
 	{ 0x8E,2,"LDX",     IMM, EA_UINT16,EA_VALUE,     3},
 
 	{ 0x90,1,"SUBA",    DIR, EA_UINT8, EA_ZPG_RD,    4},
@@ -228,7 +229,7 @@ static opcodeinfo pg1opcodes[] =
 	{ 0x9A,1,"ORA",     DIR, EA_UINT8, EA_ZPG_RD,    4},
 	{ 0x9B,1,"ADDA",    DIR, EA_UINT8, EA_ZPG_RD,    4},
 	{ 0x9C,1,"CMPX",    DIR, EA_UINT16,EA_ZPG_RD,    6},
-	{ 0x9D,1,"JSR",     DIR, EA_UINT8, EA_ABS_PC,    7},
+	{ 0x9D,1,"JSR",     DIR, EA_UINT8, EA_ABS_PC,    7, DASMFLAG_STEP_OVER},
 	{ 0x9E,1,"LDX",     DIR, EA_UINT16,EA_ZPG_RD,    5},
 	{ 0x9F,1,"STX",     DIR, EA_UINT16,EA_ZPG_WR,    5},
 
@@ -245,7 +246,7 @@ static opcodeinfo pg1opcodes[] =
 	{ 0xAA,1,"ORA",     IND, EA_UINT8, EA_MEM_RD,    4},
 	{ 0xAB,1,"ADDA",    IND, EA_UINT8, EA_MEM_RD,    4},
 	{ 0xAC,1,"CMPX",    IND, EA_UINT16,EA_MEM_RD,    6},
-	{ 0xAD,1,"JSR",     IND, EA_UINT8, EA_ABS_PC,    7},
+	{ 0xAD,1,"JSR",     IND, EA_UINT8, EA_ABS_PC,    7, DASMFLAG_STEP_OVER},
 	{ 0xAE,1,"LDX",     IND, EA_UINT16,EA_MEM_RD,    5},
 	{ 0xAF,1,"STX",     IND, EA_UINT16,EA_MEM_WR,    5},
 
@@ -262,7 +263,7 @@ static opcodeinfo pg1opcodes[] =
 	{ 0xBA,2,"ORA",     EXT, EA_UINT8, EA_MEM_RD,    5},
 	{ 0xBB,2,"ADDA",    EXT, EA_UINT8, EA_MEM_RD,    5},
 	{ 0xBC,2,"CMPX",    EXT, EA_UINT16,EA_MEM_RD,    7},
-	{ 0xBD,2,"JSR",     EXT, EA_UINT8, EA_ABS_PC,    8},
+	{ 0xBD,2,"JSR",     EXT, EA_UINT8, EA_ABS_PC,    8, DASMFLAG_STEP_OVER},
 	{ 0xBE,2,"LDX",     EXT, EA_UINT16,EA_MEM_RD,    6},
 	{ 0xBF,2,"STX",     EXT, EA_UINT16,EA_MEM_WR,    6},
 
@@ -651,6 +652,7 @@ unsigned Dasm6309 (char *buffer, unsigned pc)
 	int rel, pb, offset, reg, pb2;
 	unsigned ea = 0;
 	int p = 0;
+	unsigned flags;
 
 	*buffer = '\0';
 
@@ -677,6 +679,7 @@ unsigned Dasm6309 (char *buffer, unsigned pc)
 				mode = pgpointers[page][k].mode;
 				size = pgpointers[page][k].size;
 				access = pgpointers[page][k].access;
+				flags = pgpointers[page][k].flags;
 				buffer += sprintf (buffer, "%-6s", pgpointers[page][k].name);
 			 }
 			 else
@@ -693,6 +696,7 @@ unsigned Dasm6309 (char *buffer, unsigned pc)
 			mode = pg1opcodes[i].mode;
 			size = pg1opcodes[i].size;
 			access = pg1opcodes[i].access;
+			flags = pg1opcodes[i].flags;
 			buffer += sprintf (buffer, "%-6s", pg1opcodes[i].name);
 		}
 	}
@@ -1090,7 +1094,7 @@ unsigned Dasm6309 (char *buffer, unsigned pc)
 		break;
 	}
 
-	return p;
+	return p | flags | DASMFLAG_SUPPORTED;
 }
 
 #endif

@@ -2,37 +2,101 @@
 #define E132XS_H
 
 /* Functions */
-extern void e132xs_get_info(UINT32 state, union cpuinfo *info);
 
-#ifdef MAME_DEBUG
-extern unsigned dasm_e132xs(char *buffer, unsigned pc, unsigned h_flag);
+#if (HAS_E116T)
+void e116t_get_info(UINT32 state, union cpuinfo *info);
 #endif
 
+#if (HAS_E116XT)
+void e116xt_get_info(UINT32 state, union cpuinfo *info);
+#endif
+
+#if (HAS_E116XS)
+void e116xs_get_info(UINT32 state, union cpuinfo *info);
+#endif
+
+#if (HAS_E116XSR)
+void e116xsr_get_info(UINT32 state, union cpuinfo *info);
+#endif
+
+#if (HAS_E132N)
+void e132n_get_info(UINT32 state, union cpuinfo *info);
+#endif
+
+#if (HAS_E132T)
+void e132t_get_info(UINT32 state, union cpuinfo *info);
+#endif
+
+#if (HAS_E132XN)
+void e132xn_get_info(UINT32 state, union cpuinfo *info);
+#endif
+
+#if (HAS_E132XT)
+void e132xt_get_info(UINT32 state, union cpuinfo *info);
+#endif
+
+#if (HAS_E132XS)
+void e132xs_get_info(UINT32 state, union cpuinfo *info);
+#endif
+
+#if (HAS_E132XSR)
+void e132xsr_get_info(UINT32 state, union cpuinfo *info);
+#endif
+
+#if (HAS_GMS30C2116)
+void gms30c2116_get_info(UINT32 state, union cpuinfo *info);
+#endif
+
+#if (HAS_GMS30C2132)
+void gms30c2132_get_info(UINT32 state, union cpuinfo *info);
+#endif
+
+#if (HAS_GMS30C2216)
+void gms30c2216_get_info(UINT32 state, union cpuinfo *info);
+#endif
+
+#if (HAS_GMS30C2232)
+void gms30c2232_get_info(UINT32 state, union cpuinfo *info);
+#endif
+
+#ifdef MAME_DEBUG
+extern unsigned dasm_hyperstone(char *buffer, unsigned pc, unsigned h_flag, int private_fp);
+#endif
+
+extern data8_t  (*hyp_cpu_read_byte)(offs_t address);
+extern data16_t (*hyp_cpu_read_half_word)(offs_t address);
+extern data32_t (*hyp_cpu_read_word)(offs_t address);
+extern data32_t (*hyp_cpu_read_io_word)(offs_t address);
+extern void (*hyp_cpu_write_byte)(offs_t address, data8_t data);
+extern void (*hyp_cpu_write_half_word)(offs_t address, data16_t data);
+extern void (*hyp_cpu_write_word)(offs_t address, data32_t data);
+extern void (*hyp_cpu_write_io_word)(offs_t address, data32_t data);
+int hyp_type_16bit;
 
 /* Memory access */
 /* read byte */
-#define READ_B(addr)           (program_read_byte_32be(addr))
+#define READ_B(addr)           ((*hyp_cpu_read_byte)(addr))
 /* read half-word */
-#define READ_HW(addr)          (program_read_word_32be((addr) & ~1))
+#define READ_HW(addr)          ((*hyp_cpu_read_half_word)((addr) & ~1))
 /* read word */
-#define READ_W(addr)           (program_read_dword_32be((addr) & ~3))
+#define READ_W(addr)           ((*hyp_cpu_read_word)((addr) & ~3))
 
 /* write byte */
-#define WRITE_B(addr, data)    (program_write_byte_32be(addr, data))
+#define WRITE_B(addr, data)    ((*hyp_cpu_write_byte)(addr, data))
 /* write half-word */
-#define WRITE_HW(addr, data)   (program_write_word_32be((addr) & ~1, data))
+#define WRITE_HW(addr, data)   ((*hyp_cpu_write_half_word)((addr) & ~1, data))
 /* write word */
-#define WRITE_W(addr, data)    (program_write_dword_32be((addr) & ~3, data))
+#define WRITE_W(addr, data)    ((*hyp_cpu_write_word)((addr) & ~3, data))
 
 
 /* I/O access */
 /* read word */
-#define IO_READ_W(addr)        (io_read_dword_32be(((addr) >> 11) & 0x7ffc))
+#define IO_READ_W(addr)        ((*hyp_cpu_read_io_word)(((addr) >> 11) & 0x7ffc))
 /* write word */
-#define IO_WRITE_W(addr, data) (io_write_dword_32be(((addr) >> 11) & 0x7ffc, data))
+#define IO_WRITE_W(addr, data) ((*hyp_cpu_write_io_word)(((addr) >> 11) & 0x7ffc, data))
 
 
-#define READ_OP(addr)	       READ_HW(addr)
+#define READ_OP(addr)	       (cpu_readop16(hyp_type_16bit ? addr: WORD_XOR_BE(addr)))
 
 
 /* Registers Number	*/

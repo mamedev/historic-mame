@@ -1,7 +1,5 @@
 /* video hardware for Namco System II */
 
-//todo: screen blank, posirq
-
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "namcos2.h"
@@ -33,7 +31,7 @@ TilemapCB( data16_t code, int *tile, int *mask )
 		*tile = (code&0x07ff)|((code&0xc000)>>3)|((code&0x3800)<<2);
 		break;
 	}
-}
+} /* TilemapCB */
 
 /**
  * namcos2_gfx_ctrl selects a bank of 128 sprites within spriteram
@@ -43,6 +41,7 @@ TilemapCB( data16_t code, int *tile, int *mask )
  *
  * -xxx ---- ---- ---- roz priority
  * ---- xxxx ---- ---- roz palette
+ * ---- ---- xxxx ---- always zero?
  * ---- ---- ---- xxxx sprite bank
  */
 static data16_t namcos2_gfx_ctrl;
@@ -50,25 +49,25 @@ static data16_t namcos2_gfx_ctrl;
 READ16_HANDLER( namcos2_gfx_ctrl_r )
 {
 	return namcos2_gfx_ctrl;
-}
+} /* namcos2_gfx_ctrl_r */
 
 WRITE16_HANDLER( namcos2_gfx_ctrl_w )
 {
 	COMBINE_DATA(&namcos2_gfx_ctrl);
-}
+} /* namcos2_gfx_ctrl_w */
 
 static void get_tile_info_roz(int tile_index)
 {
 	int tile = namcos2_68k_roz_ram[tile_index];
 	SET_TILE_INFO(3,tile,0/*color*/,0)
-}
+} /* get_tile_info_roz */
 
 struct RozParam
 {
-	UINT32 /*left, top,*/ size;
+	UINT32 size;
 	UINT32 startx,starty;
 	int incxx,incxy,incyx,incyy;
-	int color;//,priority;
+	int color;
 	int wrap;
 };
 
@@ -144,7 +143,7 @@ DrawROZ(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 	const int xoffset = 38,yoffset = 0;
 	struct RozParam rozParam;
 
-	rozParam.color = namcos2_gfx_ctrl & 0x0f00;
+	rozParam.color = (namcos2_gfx_ctrl & 0x0f00);
 	rozParam.incxx  = (INT16)namcos2_68k_roz_ctrl[0];
 	rozParam.incxy  = (INT16)namcos2_68k_roz_ctrl[1];
 	rozParam.incyx  = (INT16)namcos2_68k_roz_ctrl[2];
@@ -153,6 +152,7 @@ DrawROZ(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 	rozParam.starty = (INT16)namcos2_68k_roz_ctrl[5];
 	rozParam.size = 2048;
 	rozParam.wrap = 1;
+
 
 	switch( namcos2_68k_roz_ctrl[7] )
 	{
@@ -188,18 +188,6 @@ DrawROZ(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 	DrawRozHelper( bitmap, tilemap_roz, cliprect, &rozParam );
 }
 
-/**
- *	ROZ - Rotate & Zoom memory function handlers
- *
- *	0 - inc xx
- *	2 - inc xy
- *	4 - inc yx
- *	6 - inc yy
- *	8 - start x
- *	A	start y
- *	C - ??
- *	E - ??
- */
 READ16_HANDLER(namcos2_68k_roz_ctrl_r)
 {
 	return namcos2_68k_roz_ctrl[offset];
@@ -217,11 +205,16 @@ READ16_HANDLER( namcos2_68k_roz_ram_r )
 
 WRITE16_HANDLER( namcos2_68k_roz_ram_w )
 {
+//	extern int debug_key_pressed;
 	data16_t oldword = namcos2_68k_roz_ram[offset];
 	COMBINE_DATA(&namcos2_68k_roz_ram[offset]);
 	if (oldword != namcos2_68k_roz_ram[offset])
 	{
 		tilemap_mark_tile_dirty(tilemap_roz,offset);
+//		if( code_pressed(KEYCODE_Q) )
+//		{
+//			debug_key_pressed = 1;
+//		}
 	}
 }
 
@@ -229,28 +222,57 @@ WRITE16_HANDLER( namcos2_68k_roz_ram_w )
 
 READ16_HANDLER( namcos2_68k_video_palette_r )
 {
-	offset*=2;
-	/* 0x3000 offset is control registers */
-	if( (offset & 0xf000) == 0x3000 )
+	if( (offset&0x1800) == 0x1800 )
 	{
-		/* Palette chip control registers */
-		offset&=0x001f;
-		switch( offset ){
-			case 0x1a:
-			case 0x1e:
-				return 0xff;
-				break;
-			default:
-				break;
-		}
+		offset &= 0x180f;
+		if( offset == 0x180d ) return 0xff;
+		if( offset == 0x180f ) return 0xff;
 	}
-	return namcos2_68k_palette_ram[(offset/2)&0x7fff];
-}
+	return namcos2_68k_palette_ram[offset];
+} /* namcos2_68k_video_palette_r */
 
 WRITE16_HANDLER( namcos2_68k_video_palette_w )
 {
-	COMBINE_DATA(&namcos2_68k_palette_ram[offset]);
+	if( (offset&0x1800) == 0x1800 )
+	{
+		offset &= 0x180f;
+		if( ACCESSING_LSB )
+		{
+			namcos2_68k_palette_ram[offset] = data;
+		}
+		else
+		{
+			namcos2_68k_palette_ram[offset] = data>>8;
+		}
+	}
+	else
+	{
+		COMBINE_DATA(&namcos2_68k_palette_ram[offset]);
+	}
+} /* namcos2_68k_video_palette_w */
+
+static data16_t
+GetPaletteRegister( int which )
+{
+	const data16_t *source = &namcos2_68k_palette_ram[0x3000/2];
+	return ((source[which*2]&0xff)<<8) | (source[which*2+1]&0xff);
 }
+
+int
+namcos2_GetPosIrqScanline( void )
+{
+	/* PaleteRegister(4)? used by Finest Hour; pc=0x356e */
+	int scanline = GetPaletteRegister(5) - 34;
+	if( scanline<0 )
+	{
+		scanline = 0;
+	}
+	else if( scanline > Machine->scrbitmap->height )
+	{
+		scanline = Machine->scrbitmap->height;
+	}
+	return scanline;
+} /* namcos2_GetPosIrqScanline */
 
 static void
 UpdatePalette( void )
@@ -300,215 +322,6 @@ READ16_HANDLER( namcos2_sprite_ram_r )
 {
 	return namcos2_sprite_ram[offset];
 }
-
-static void
-DrawSpritesDefault( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int pri, int pri_mask )
-{
-	int pri_shift = (pri_mask==0xf)?0:1;
-	struct GfxElement gfx;
-	int sprn,flipy,flipx,ypos,xpos,sizex,sizey,scalex,scaley;
-	int offset,offset0,offset2,offset4,offset6;
-	int loop,spr_region;
-
-	offset=(namcos2_gfx_ctrl & 0x000f) * (128*4);
-
-	for(loop=0;loop < 128;loop++)
-	{
-		/****************************************
-		* Sprite data is 8 byte packed format   *
-		*                                       *
-		* Offset 0,1                            *
-		*   Sprite Y position           D00-D08 *
-		*   Sprite Size 16/32           D09     *
-		*   Sprite Size Y               D10-D15 *
-		*                                       *
-		* Offset 2,3                            *
-		*   Sprite Quadrant             D00-D01 *
-		*   Sprite Number               D02-D12 *
-		*   Sprite ROM Bank select      D13     *
-		*   Sprite flip X               D14     *
-		*   Sprite flip Y               D15     *
-		*                                       *
-		* Offset 4,5                            *
-		*   Sprite X position           D00-D10 *
-		*                                       *
-		* Offset 6,7                            *
-		*   Sprite priority             D00-D02 *
-		*   Sprite colour index         D04-D07 *
-		*   Sprite Size X               D10-D15 *
-		*                                       *
-		****************************************/
-
-		offset0 = namcos2_sprite_ram[offset+(loop*4)+0];
-		offset2 = namcos2_sprite_ram[offset+(loop*4)+1];
-		offset4 = namcos2_sprite_ram[offset+(loop*4)+2];
-		offset6 = namcos2_sprite_ram[offset+(loop*4)+3];
-
-		/* Fetch sprite size registers */
-
-		sizey=((offset0>>10)&0x3f)+1;
-		sizex=(offset6>>10)&0x3f;
-
-		if((offset0&0x0200)==0) sizex>>=1;
-
-		if((sizey-1) && sizex && ((offset6<<pri_shift)&0xf)==pri)
-		{
-			int color = (offset6>>4)&0x000f;
-
-			sprn=(offset2>>2)&0x7ff;
-			spr_region=(offset2&0x2000)?1:0;
-
-			ypos=(0x1ff-(offset0&0x01ff))-0x50+0x02;
-			xpos=(offset4&0x03ff)-0x50+0x07;
-
-			flipy=offset2&0x8000;
-			flipx=offset2&0x4000;
-
-			scalex = (sizex<<16)/((offset0&0x0200)?0x20:0x10);
-			scaley = (sizey<<16)/((offset0&0x0200)?0x20:0x10);
-
-			if(scalex && scaley)
-			{
-				gfx = *Machine->gfx[spr_region];
-
-				if( (offset0&0x0200)==0 )
-				{
-					gfx.width = 16;
-					gfx.height = 16;
-					if( offset2&0x0001 ) gfx.gfxdata += 16;
-					if( offset2&0x0002 ) gfx.gfxdata += 16*gfx.line_modulo;
-				}
-
-				drawgfxzoom(bitmap,&gfx,
-					sprn,
-					color,
-					flipx,flipy,
-					xpos,ypos,
-					cliprect,
-					(color==0x0f ? TRANSPARENCY_PEN_TABLE : TRANSPARENCY_PEN),0xff,
-					scalex,scaley);
-			}
-		}
-	}
-} /* DrawSpritesDefault */
-
-static void
-DrawSpritesMetalHawk( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int pri )
-{
-	/**
-	 * word#0
-	 *	xxxxxx---------- ysize
-	 *	------x--------- sprite tile size
-	 *	-------xxxxxxxxx screeny
-	 *
-	 * word#1
-	 *	--x------------- bank
-	 *	----xxxxxxxxxxxx tile
-	 *
-	 * word#3				2->3 by N
-	 *	xxxxxx---------- xsize
-	 *	------xxxxxxxxxx screenx
-	 *
-	 * word#6
-	 *	--------------xx unknown
-	 *	-------------x-- flipy
-	 *	------------x--- unknown
-	 *
-	 * word#7
-	 *	------------xxxx unknown
-	 *	--------xxxx---- color
-	 *	x--------------- unknown
-	 */
-	const data16_t *pSource = namcos2_sprite_ram;
-	struct rectangle rect;
-	int loop;
-	for(loop=0;loop < 128;loop++)
-	{
-		int ypos = pSource[0];
-		int tile = pSource[1];
-		int xpos = pSource[3];
-
-		int flags = pSource[6];
-		int attrs = pSource[7];
-		int sizey=((ypos>>10)&0x3f)+1;
-		int sizex=(xpos>>10)&0x3f;
-		int sprn=(tile>>2)&0x7ff;
-
-		if( tile&0x2000 ) sprn&=0x3ff; else sprn|=0x400;
-		if((sizey-1) && sizex && ((attrs>>1)&7)==pri )
-		{
-			int bSmallSprite =
-				(sprn>=0x208 && sprn<=0x20F)||
-				(sprn>=0x3BC && sprn<=0x3BF)||
-				(sprn>=0x688 && sprn<=0x68B)||
-				(sprn>=0x6D8 && sprn<=0x6D9)||
-				(sprn>=0x6EA && sprn<=0x6EB); // very stupid...
-
-			int color = (attrs>>4)&0xf;
-			int sx = (xpos&0x03ff)-0x50+0x07;
-			int sy = (0x1ff-(ypos&0x01ff))-0x50+0x02;
-			int flipx = flags&2;
-			int flipy = flags&4;
-			int scalex = (sizex<<16)/(bSmallSprite?0x10:0x20);
-			int scaley = (sizey<<16)/(bSmallSprite?0x10:0x20);
-
-			// 90 degrees use a turned character
-			if( (flags&0x01) ) {
-				sprn |= 0x800;
-			}
-
-			// little zoom fix...
-			if( !bSmallSprite ) {
-				if( sizex < 0x20 ) {
-					sx -= (0x20-sizex)/0x8;
-				}
-				if( sizey < 0x20 ) {
-					sy += (0x20-sizey)/0xC;
-				}
-			}
-
-			/* Set the clipping rect to mask off the other portion of the sprite */
-			rect.min_x=sx;
-			rect.max_x=sx+(sizex-1);
-			rect.min_y=sy;
-			rect.max_y=sy+(sizey-1);
-
-			if (cliprect->min_x > rect.min_x) rect.min_x = cliprect->min_x;
-			if (cliprect->max_x < rect.max_x) rect.max_x = cliprect->max_x;
-			if (cliprect->min_y > rect.min_y) rect.min_y = cliprect->min_y;
-			if (cliprect->max_y < rect.max_y) rect.max_y = cliprect->max_y;
-
-			if( bSmallSprite )
-			{
-				sizex = 16;
-				sizey = 16;
-				scalex = 1<<16;
-				scaley = 1<<16;
-
-				sx -= (tile&1)?16:0;
-				sy -= (tile&2)?16:0;
-
-				rect.min_x=sx;
-				rect.max_x=sx+(sizex-1);
-				rect.min_y=sy;
-				rect.max_y=sy+(sizey-1);
-				rect.min_x += (tile&1)?16:0;
-				rect.max_x += (tile&1)?16:0;
-				rect.min_y += (tile&2)?16:0;
-				rect.max_y += (tile&2)?16:0;
-			}
-			drawgfxzoom(
-				bitmap,Machine->gfx[0],
-				sprn, color,
-				flipx,flipy,
-				sx,sy,
-				&rect,
-				TRANSPARENCY_PEN,0xff,
-				scalex, scaley );
-		}
-		pSource += 8;
-	}
-} /* DrawSpritesMetalHawk */
 
 /**************************************************************************/
 
@@ -568,27 +381,46 @@ VIDEO_START( namcos2 )
 	return -1;
 }
 
+static void
+ApplyClip( struct rectangle *clip, const struct rectangle *cliprect )
+{
+	clip->min_x = GetPaletteRegister(0) - 0x4a;
+	clip->max_x = GetPaletteRegister(1) - 0x4a - 1;
+	clip->min_y = GetPaletteRegister(2) - 0x21;
+	clip->max_y = GetPaletteRegister(3) - 0x21 - 1;
+	/* intersect with master clip rectangle */
+	if( clip->min_x < cliprect->min_x ){ clip->min_x = cliprect->min_x; }
+	if( clip->min_y < cliprect->min_y ){ clip->min_y = cliprect->min_y; }
+	if( clip->max_x > cliprect->max_x ){ clip->max_x = cliprect->max_x; }
+	if( clip->max_y > cliprect->max_y ){ clip->max_y = cliprect->max_y; }
+} /* ApplyClip */
+
 VIDEO_UPDATE( namcos2_default )
 {
+	struct rectangle clip;
 	int pri;
 
 	UpdatePalette();
+	fillbitmap( bitmap, get_black_pen(), cliprect );
+	ApplyClip( &clip, cliprect );
 
-	fillbitmap(bitmap,get_black_pen(),cliprect);
-
-	/* enable ROZ layer only if it has priority > 0 */
+	/* HACK: enable ROZ layer only if it has priority > 0 */
 	tilemap_set_enable(tilemap_roz,(namcos2_gfx_ctrl & 0x7000) ? 1 : 0);
 
 	for( pri=0; pri<16; pri++ )
 	{
-		namco_tilemap_draw( bitmap, cliprect, pri );
-		if( pri>=1 && ((namcos2_gfx_ctrl & 0x7000) >> 12)*2==pri )
+		if( (pri&1)==0 )
 		{
-			DrawROZ(bitmap,cliprect);
+			namco_tilemap_draw( bitmap, &clip, pri/2 );
+
+			if( ((namcos2_gfx_ctrl & 0x7000) >> 12)==pri/2 )
+			{
+				DrawROZ(bitmap,&clip);
+			}
+			namcos2_draw_sprites( bitmap, &clip, pri/2, namcos2_gfx_ctrl );
 		}
-		DrawSpritesDefault( bitmap, cliprect, pri, 0x7 );
 	}
-	DrawCrossshair( bitmap,cliprect );
+	DrawCrossshair( bitmap,&clip );
 } /* namcos2_default */
 
 /**************************************************************************/
@@ -606,19 +438,23 @@ VIDEO_START( finallap )
 
 VIDEO_UPDATE( finallap )
 {
+	struct rectangle clip;
 	int pri;
 
 	UpdatePalette();
-
-	fillbitmap(bitmap,Machine->pens[0],cliprect);
+	fillbitmap( bitmap, get_black_pen(), cliprect );
+	ApplyClip( &clip, cliprect );
 
 	for( pri=0; pri<16; pri++ )
 	{
-		namco_tilemap_draw( bitmap, cliprect, pri );
-		namco_road_draw( bitmap,cliprect,pri );
-		DrawSpritesDefault( bitmap,cliprect,pri,0x000f );
+		if( (pri&1)==0 )
+		{
+			namco_tilemap_draw( bitmap, &clip, pri/2 );
+		}
+		namco_road_draw( bitmap,&clip,pri );
+		namcos2_draw_sprites( bitmap,&clip,pri,namcos2_gfx_ctrl );
 	}
-}
+} /* finallap */
 
 /**************************************************************************/
 
@@ -642,23 +478,27 @@ VIDEO_START( luckywld )
 
 VIDEO_UPDATE( luckywld )
 {
+	struct rectangle clip;
 	int pri;
 
 	UpdatePalette();
-
-	fillbitmap(bitmap,Machine->pens[0],cliprect);
+	fillbitmap( bitmap, get_black_pen(), cliprect );
+	ApplyClip( &clip, cliprect );
 
 	for( pri=0; pri<16; pri++ )
 	{
-		namco_tilemap_draw( bitmap, cliprect, pri );
-		namco_road_draw( bitmap,cliprect,pri );
+		if( (pri&1)==0 )
+		{
+			namco_tilemap_draw( bitmap, &clip, pri/2 );
+		}
+		namco_road_draw( bitmap,&clip,pri );
 		if( namcos2_gametype==NAMCOS2_LUCKY_AND_WILD )
 		{
-			namco_roz_draw( bitmap, cliprect, pri );
+			namco_roz_draw( bitmap, &clip, pri );
 		}
-		namco_obj_draw( bitmap, cliprect, pri );
+		namco_obj_draw( bitmap, &clip, pri );
 	}
-	DrawCrossshair( bitmap,cliprect );
+	DrawCrossshair( bitmap,&clip );
 } /* luckywld */
 
 /**************************************************************************/
@@ -675,18 +515,22 @@ VIDEO_START( sgunner )
 
 VIDEO_UPDATE( sgunner )
 {
+	struct rectangle clip;
 	int pri;
 
 	UpdatePalette();
-
-	fillbitmap(bitmap,Machine->pens[0],cliprect);
+	fillbitmap( bitmap, get_black_pen(), cliprect );
+	ApplyClip( &clip, cliprect );
 
 	for( pri=0; pri<16; pri++ )
 	{
-		namco_tilemap_draw( bitmap, cliprect, pri );
-		namco_obj_draw( bitmap, cliprect, pri );
+		if( (pri&1)==0 )
+		{
+			namco_tilemap_draw( bitmap, &clip, pri/2 );
+		}
+		namco_obj_draw( bitmap, &clip, pri );
 	}
-	DrawCrossshair( bitmap,cliprect );
+	DrawCrossshair( bitmap,&clip );
 }
 
 /**************************************************************************/
@@ -703,16 +547,20 @@ VIDEO_START( metlhawk )
 
 VIDEO_UPDATE( metlhawk )
 {
+	struct rectangle clip;
 	int pri;
 
 	UpdatePalette();
-
-	fillbitmap(bitmap,Machine->pens[0],cliprect);
+	fillbitmap( bitmap, get_black_pen(), cliprect );
+	ApplyClip( &clip, cliprect );
 
 	for( pri=0; pri<16; pri++ )
 	{
-		namco_tilemap_draw( bitmap, cliprect, pri );
-		namco_roz_draw( bitmap, cliprect, pri );
-		DrawSpritesMetalHawk( bitmap,cliprect,pri );
+		if( (pri&1)==0 )
+		{
+			namco_tilemap_draw( bitmap, &clip, pri/2 );
+		}
+		namco_roz_draw( bitmap, &clip, pri );
+		namcos2_draw_sprites_metalhawk( bitmap,&clip,pri );
 	}
 }

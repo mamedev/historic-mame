@@ -334,14 +334,13 @@ one has priority, but I'm not sure of that either.
 It seems the chip accepts three inputs from three different sources, and
 each one of them can declare to have four different priority levels.
 
-000 unknown. Could it be related to highlight/shadow effects in qcrayon2
-    and gunfront?
+000 Top two bits indicate special blend mode (see taito_f2.c).  Other bits unused?
 001 in games with a roz layer, this is the roz palette bank (bottom 6 bits
     affect roz color, top 2 bits affect priority)
 002 unknown
 003 unknown
 
-004 ----xxxx \       priority level 0 (unused? usually 0, pulirula sets it to F in some places)
+004 ----xxxx \       priority level 0 (usually FG1 if present)
     xxxx---- | Input priority level 1 (usually FG0)
 005 ----xxxx |   #1  priority level 2 (usually BG0)
     xxxx---- /       priority level 3 (usually BG1)

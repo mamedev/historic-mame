@@ -13,22 +13,15 @@
 #include "machine/random.h"
 
 
-unsigned char *bublbobl_sharedram1,*bublbobl_sharedram2;
+UINT8 *bublbobl_sharedram2;
 extern int bublbobl_video_enable;
 
 
-READ8_HANDLER( bublbobl_sharedram1_r )
-{
-	return bublbobl_sharedram1[offset];
-}
 READ8_HANDLER( bublbobl_sharedram2_r )
 {
 	return bublbobl_sharedram2[offset];
 }
-WRITE8_HANDLER( bublbobl_sharedram1_w )
-{
-	bublbobl_sharedram1[offset] = data;
-}
+
 WRITE8_HANDLER( bublbobl_sharedram2_w )
 {
 	bublbobl_sharedram2[offset] = data;
@@ -38,7 +31,7 @@ WRITE8_HANDLER( bublbobl_sharedram2_w )
 
 WRITE8_HANDLER( bublbobl_bankswitch_w )
 {
-	unsigned char *ROM = memory_region(REGION_CPU1);
+	UINT8 *ROM = memory_region(REGION_CPU1);
 
 	/* bits 0-2 select ROM bank */
 	cpu_setbank(1,&ROM[0x10000 + 0x4000 * ((data ^ 4) & 7)]);
@@ -58,7 +51,7 @@ WRITE8_HANDLER( bublbobl_bankswitch_w )
 
 WRITE8_HANDLER( tokio_bankswitch_w )
 {
-	unsigned char *ROM = memory_region(REGION_CPU1);
+	UINT8 *ROM = memory_region(REGION_CPU1);
 
 	/* bits 0-2 select ROM bank */
 	cpu_setbank(1,&ROM[0x10000 + 0x4000 * (data & 7)]);
@@ -135,7 +128,7 @@ INTERRUPT_GEN( bublbobl_m68705_interrupt )
 
 
 
-static unsigned char portA_in,portA_out,ddrA;
+static UINT8 portA_in,portA_out,ddrA;
 
 READ8_HANDLER( bublbobl_68705_portA_r )
 {
@@ -175,7 +168,7 @@ WRITE8_HANDLER( bublbobl_68705_ddrA_w )
  *  7   W  not used?
  */
 
-static unsigned char portB_in,portB_out,ddrB;
+static UINT8 portB_in,portB_out,ddrB;
 
 READ8_HANDLER( bublbobl_68705_portB_r )
 {

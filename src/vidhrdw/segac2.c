@@ -55,7 +55,7 @@ static void vdp_dma_68k(void);
 static void vdp_dma_fill(int);
 static void vdp_dma_copy(void);
 
-static void drawline(UINT16 *bitmap, int line, int solid);
+static void drawline(UINT16 *bitmap, int line, int bgfill);
 static void get_scroll_tiles(int line, int scrollnum, UINT32 scrollbase, UINT32 *tiles, int *offset);
 static void get_window_tiles(int line, UINT32 scrollbase, UINT32 *tiles);
 static void drawline_tiles(UINT32 *tiles, UINT16 *bmap, int pri, int offset, int lclip, int rclip);
@@ -267,9 +267,9 @@ int start_system18_vdp(void)
 	if (video_start_segac2())
 		return 1;
 
-	segac2_sp_palbase = 0x800;
-	segac2_bg_palbase = 0x800;
-	segac2_pal_offs = 0x800;
+	segac2_sp_palbase = 0x1800;
+	segac2_bg_palbase = 0x1800;
+	segac2_pal_offs = 0x1800;
 
 	display_enable = 1;
 
@@ -352,7 +352,7 @@ if (code_pressed(KEYCODE_D)) segac2_sp_palbase ^= 0x100;
 
 	/* generate the final screen */
 	for (y = cliprect->min_y; y <= cliprect->max_y; y++)
-		drawline((UINT16 *)bitmap->line[y], y,1);
+		drawline((UINT16 *)bitmap->line[y], y, 0);
 
 	segac2_bg_palbase = old_bg;
 	segac2_sp_palbase = old_sp;
@@ -379,7 +379,7 @@ if (code_pressed(KEYCODE_D)) segac2_sp_palbase ^= 0x100;
 
 	/* generate the final screen */
 	for (y = cliprect->min_y+192; y <= cliprect->max_y; y++)
-		drawline((UINT16 *)bitmap->line[y], y-192,1);
+		drawline((UINT16 *)bitmap->line[y], y-192, 0);
 
 	segac2_bg_palbase = old_bg;
 	segac2_sp_palbase = old_sp;
@@ -413,7 +413,7 @@ if (code_pressed(KEYCODE_D)) segac2_sp_palbase ^= 0x100;
 	/* generate the final screen - control which screen is
 	   shown by a keystroke for now */
 	for (y = cliprect->min_y; y <= cliprect->max_y; y++)
-		drawline((UINT16 *)bitmap->line[y], y,1);
+		drawline((UINT16 *)bitmap->line[y], y, 0);
 
 	update_megaplay_video_normal(bitmap, cliprect);
 
@@ -424,15 +424,17 @@ if (code_pressed(KEYCODE_D)) segac2_sp_palbase ^= 0x100;
 
 void update_system18_vdp( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
 {
-	int old_bg = segac2_bg_palbase, old_sp = segac2_sp_palbase;
+	int old_bg = segac2_bg_palbase, old_sp = segac2_sp_palbase, old_bgcol = bgcol;
 	int y;
 
 	/* generate the final screen */
+	bgcol = 0xffff - segac2_palbank;
 	for (y = cliprect->min_y; y <= cliprect->max_y; y++)
-		drawline((UINT16 *)bitmap->line[y], y,0);
+		drawline((UINT16 *)bitmap->line[y], y, 0xffff);
 
 	segac2_bg_palbase = old_bg;
 	segac2_sp_palbase = old_sp;
+	bgcol = old_bgcol;
 }
 
 /******************************************************************************
@@ -951,21 +953,20 @@ static int vdp_getvscroll(int plane, int column)
 
 ******************************************************************************/
 
-static void drawline(UINT16 *bitmap, int line, int solid)
+static void drawline(UINT16 *bitmap, int line, int bgfill)
 {
 	int lowsprites, highsprites, link;
 	UINT32 scrolla_tiles[41], scrollb_tiles[41], window_tiles[41];
 	int scrolla_offset, scrollb_offset;
 	UINT8 *lowlist[81], *highlist[81];
-	int bgcolor = bgcol + segac2_palbank;
+	int bgcolor = bgfill ? bgfill : (bgcol + segac2_palbank);
 	int window_lclip, window_rclip;
 	int scrolla_lclip, scrolla_rclip;
 	int column, sprite;
 
 	/* clear to the background color */
-	if (solid) /* we don't want to do this on system18! */
-		for (column = 0; column < BITMAP_WIDTH; column++)
-			bitmap[column] = bgcolor;
+	for (column = 0; column < BITMAP_WIDTH; column++)
+		bitmap[column] = bgcolor;
 
 	/* if display is disabled, stop */
 	if (!(segac2_vdp_regs[1] & 0x40) || !display_enable)

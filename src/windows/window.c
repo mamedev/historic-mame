@@ -37,7 +37,11 @@
 #include "blit.h"
 #include "mamedbg.h"
 #include "input.h"
-#include "../window.h"
+#include "../debug/window.h"
+
+#ifdef NEW_DEBUGGER
+#include "debugwin.h"
+#endif
 
 #ifdef MESS
 #include "menu.h"
@@ -158,8 +162,6 @@ static int win_use_directx;
 // DIB bitmap data
 static UINT8 video_dib_info_data[sizeof(BITMAPINFO) + 256 * sizeof(RGBQUAD)];
 static BITMAPINFO *video_dib_info = (BITMAPINFO *)video_dib_info_data;
-static UINT8 debug_dib_info_data[sizeof(BITMAPINFO) + 256 * sizeof(RGBQUAD)];
-static BITMAPINFO *debug_dib_info = (BITMAPINFO *)debug_dib_info_data;
 static UINT8 *converted_bitmap;
 
 // video bounds
@@ -180,8 +182,13 @@ static RECT non_fullscreen_bounds;
 static RECT non_maximized_bounds;
 
 // debugger
-static int debug_focus;
 static int in_background;
+
+#ifndef NEW_DEBUGGER
+static int debug_focus;
+static UINT8 debug_dib_info_data[sizeof(BITMAPINFO) + 256 * sizeof(RGBQUAD)];
+static BITMAPINFO *debug_dib_info = (BITMAPINFO *)debug_dib_info_data;
+#endif
 
 // effects table
 static struct win_effect_data effect_table[] =
@@ -213,9 +220,10 @@ static void draw_video_contents(HDC dc, struct mame_bitmap *bitmap, const struct
 
 static void dib_draw_window(HDC dc, struct mame_bitmap *bitmap, const struct rectangle *bounds, void *vector_dirty_pixels, int update);
 
-static int create_debug_window(void);
-static void draw_debug_contents(HDC dc, struct mame_bitmap *bitmap, const rgb_t *palette);
+#ifndef NEW_DEBUGGER
 static LRESULT CALLBACK debug_window_proc(HWND wnd, UINT message, WPARAM wparam, LPARAM lparam);
+static void draw_debug_contents(HDC dc, struct mame_bitmap *bitmap, const rgb_t *palette);
+#endif
 
 
 
@@ -423,6 +431,12 @@ int win_init_window(void)
 	static int classes_created = 0;
 	TCHAR title[256];
 	HMENU menu = NULL;
+	
+#ifdef MAME_DEBUG
+	// if we are in debug mode, never go full screen
+	if (options.mame_debug)
+		win_window_mode = 1;
+#endif
 
 	// disable win_old_scanlines if a win_blit_effect is active
 	if (win_blit_effect != 0)
@@ -452,18 +466,6 @@ int win_init_window(void)
 		// register the class; fail if we can't
 		if (!RegisterClass(&wc))
 			return 1;
-
-		// possibly register the debug window class
-		if (options.mame_debug)
-		{
-			wc.lpszClassName 	= TEXT("MAMEDebug");
-			wc.lpfnWndProc		= debug_window_proc;
-
-			// register the class; fail if we can't
-			if (!RegisterClass(&wc))
-				return 1;
-		}
-		classes_created = 1;
 	}
 
 	// make the window title
@@ -483,7 +485,7 @@ int win_init_window(void)
 
 	// possibly create the debug window, but don't show it yet
 	if (options.mame_debug)
-		if (create_debug_window())
+		if (debugwin_init_windows())
 			return 1;
 
 	// update system menu
@@ -545,9 +547,6 @@ int win_create_window(int width, int height, int depth, int attributes, double a
 		video_dib_info->bmiColors[i].rgbBlue		= i;
 		video_dib_info->bmiColors[i].rgbReserved	= i;
 	}
-
-	// copy that same data into the debug DIB info
-	memcpy(debug_dib_info_data, video_dib_info_data, sizeof(debug_dib_info_data));
 
 	win_default_constraints = 0;
 
@@ -1263,6 +1262,12 @@ void win_toggle_maximize(int force_maximize)
 
 void win_toggle_full_screen(void)
 {
+#ifdef MAME_DEBUG
+	// if we are in debug mode, never go full screen
+	if (options.mame_debug)
+		return;
+#endif
+
 	// rip down DirectDraw
 	if (win_use_directx)
 	{
@@ -1278,8 +1283,8 @@ void win_toggle_full_screen(void)
 
 	// hide the window
 	ShowWindow(win_video_window, SW_HIDE);
-	if (win_window_mode && win_debug_window)
-		ShowWindow(win_debug_window, SW_HIDE);
+	if (win_window_mode)
+		debugwin_show(SW_HIDE);
 
 	// toggle the window mode
 	win_window_mode = !win_window_mode;
@@ -1327,8 +1332,8 @@ void win_toggle_full_screen(void)
 
 	// show and adjust the window
 	ShowWindow(win_video_window, SW_SHOW);
-	if (win_window_mode && win_debug_window)
-		ShowWindow(win_debug_window, SW_SHOW);
+	if (win_window_mode)
+		debugwin_show(SW_SHOW);
 
 	// reinit
 	if (win_use_directx)
@@ -1405,7 +1410,7 @@ void win_process_events_periodic(void)
 	cycles_t curr = osd_cycles();
 	if (curr - last_event_check < osd_cycles_per_second() / 8)
 		return;
-	win_process_events();
+	win_process_events(1);
 }
 
 
@@ -1414,9 +1419,19 @@ void win_process_events_periodic(void)
 //	win_process_events
 //============================================================
 
-int win_process_events(void)
+int win_process_events(int ingame)
 {
+	int is_debugger_visible = 0;
 	MSG message;
+
+	// if we're running, disable some parts of the debugger
+#if defined(MAME_DEBUG) && defined(NEW_DEBUGGER)
+	if (ingame)
+	{
+		is_debugger_visible = (options.mame_debug && debugwin_is_debugger_visible());
+		debugwin_update_during_game();
+	}
+#endif
 
 	// remember the last time we did this
 	last_event_check = osd_cycles();
@@ -1424,6 +1439,8 @@ int win_process_events(void)
 	// loop over all messages in the queue
 	while (PeekMessage(&message, NULL, 0, 0, PM_REMOVE))
 	{
+		int dispatch = 1;
+
 		switch (message.message)
 		{
 			// special case for quit
@@ -1439,38 +1456,48 @@ int win_process_events(void)
 			case WM_KEYDOWN:
 			case WM_CHAR:
 #endif
+				dispatch = is_debugger_visible;
 				break;
 
 			case WM_LBUTTONDOWN:
 				input_mouse_button_down(0,GET_X_LPARAM(message.lParam),GET_Y_LPARAM(message.lParam));
+				dispatch = is_debugger_visible;
 				break;
 			case WM_RBUTTONDOWN:
 				input_mouse_button_down(1,GET_X_LPARAM(message.lParam),GET_Y_LPARAM(message.lParam));
+				dispatch = is_debugger_visible;
 				break;
 			case WM_MBUTTONDOWN:
 				input_mouse_button_down(2,GET_X_LPARAM(message.lParam),GET_Y_LPARAM(message.lParam));
+				dispatch = is_debugger_visible;
 				break;
 			case WM_XBUTTONDOWN:
 				input_mouse_button_down(3,GET_X_LPARAM(message.lParam),GET_Y_LPARAM(message.lParam));
+				dispatch = is_debugger_visible;
 				break;
 			case WM_LBUTTONUP:
 				input_mouse_button_up(0);
+				dispatch = is_debugger_visible;
 				break;
 			case WM_RBUTTONUP:
 				input_mouse_button_up(1);
+				dispatch = is_debugger_visible;
 				break;
 			case WM_MBUTTONUP:
 				input_mouse_button_up(2);
+				dispatch = is_debugger_visible;
 				break;
 			case WM_XBUTTONUP:
 				input_mouse_button_up(3);
+				dispatch = is_debugger_visible;
 				break;
+		}
 
-			// process everything else
-			default:
-				TranslateMessage(&message);
-				DispatchMessage(&message);
-				break;
+		// dispatch if necessary
+		if (dispatch)
+		{
+			TranslateMessage(&message);
+			DispatchMessage(&message);
 		}
 	}
 
@@ -1711,15 +1738,60 @@ void win_compute_multipliers(const RECT *rect, int *xmult, int *ymult)
 
 
 
+#ifndef NEW_DEBUGGER
 //============================================================
-//	create_debug_window
+//	debugwin_init_windows
 //============================================================
 
-static int create_debug_window(void)
+int debugwin_init_windows(void)
 {
 #ifdef MAME_DEBUG
+	static int class_registered;
 	RECT bounds, work_bounds;
 	TCHAR title[256];
+	int i;
+
+	if (!class_registered)
+	{
+		WNDCLASS wc = { 0 };
+
+		// initialize the description of the window class
+		wc.lpszClassName 	= TEXT("MAMEDebug");
+		wc.hInstance 		= GetModuleHandle(NULL);
+		wc.lpfnWndProc		= debug_window_proc;
+		wc.hCursor			= LoadCursor(NULL, IDC_ARROW);
+		wc.hIcon			= LoadIcon(NULL, IDI_APPLICATION);
+		wc.lpszMenuName		= NULL;
+		wc.hbrBackground	= NULL;
+		wc.style			= 0;
+		wc.cbClsExtra		= 0;
+		wc.cbWndExtra		= 0;
+
+		// register the class; fail if we can't
+		if (!RegisterClass(&wc))
+			return 1;
+		
+		class_registered = 1;
+	}
+
+	// fill in the bitmap info header
+	debug_dib_info->bmiHeader.biSize			= sizeof(debug_dib_info->bmiHeader);
+	debug_dib_info->bmiHeader.biPlanes			= 1;
+	debug_dib_info->bmiHeader.biCompression		= BI_RGB;
+	debug_dib_info->bmiHeader.biSizeImage		= 0;
+	debug_dib_info->bmiHeader.biXPelsPerMeter	= 0;
+	debug_dib_info->bmiHeader.biYPelsPerMeter	= 0;
+	debug_dib_info->bmiHeader.biClrUsed			= 0;
+	debug_dib_info->bmiHeader.biClrImportant	= 0;
+
+	// initialize the palette to a gray ramp
+	for (i = 0; i < 255; i++)
+	{
+		debug_dib_info->bmiColors[i].rgbRed			= i;
+		debug_dib_info->bmiColors[i].rgbGreen		= i;
+		debug_dib_info->bmiColors[i].rgbBlue		= i;
+		debug_dib_info->bmiColors[i].rgbReserved	= i;
+	}
 
 	sprintf(title, "Debug: %s [%s]", Machine->gamedrv->description, Machine->gamedrv->name);
 
@@ -1748,10 +1820,10 @@ static int create_debug_window(void)
 
 
 //============================================================
-//	win_update_debug_window
+//	debugwin_update_windows
 //============================================================
 
-void win_update_debug_window(struct mame_bitmap *bitmap, const rgb_t *palette)
+void debugwin_update_windows(struct mame_bitmap *bitmap, const rgb_t *palette)
 {
 #ifdef MAME_DEBUG
 	// get the client DC and draw to it
@@ -1869,10 +1941,22 @@ static LRESULT CALLBACK debug_window_proc(HWND wnd, UINT message, WPARAM wparam,
 
 
 //============================================================
-//	win_set_debugger_focus
+//	debugwin_show
 //============================================================
 
-void win_set_debugger_focus(int focus)
+void debugwin_show(int type)
+{	
+	if (win_debug_window)
+		ShowWindow(win_debug_window, type);
+}
+
+
+
+//============================================================
+//	debugwin_set_focus
+//============================================================
+
+void debugwin_set_focus(int focus)
 {
 	static int temp_afs, temp_fs, temp_throttle;
 
@@ -1903,7 +1987,7 @@ void win_set_debugger_focus(int focus)
 		SetForegroundWindow(win_debug_window);
 
 		// force an update
-		win_update_debug_window(NULL, NULL);
+		debugwin_update_windows(NULL, NULL);
 	}
 
 	// if not focuessed, bring the game frontmost
@@ -1921,3 +2005,4 @@ void win_set_debugger_focus(int focus)
 		SetForegroundWindow(win_video_window);
 	}
 }
+#endif

@@ -14,8 +14,8 @@
 //============================================================
 
 #define osd_pend	osd_pend
-#define pdo16		osd_pdo16
-#define pdt16		osd_pdt16
+//#define pdo16		osd_pdo16
+//#define pdt16		osd_pdt16
 #define pdt16np		osd_pdt16np
 
 

@@ -41,8 +41,9 @@ Notes:
 #include "driver.h"
 
 static struct tilemap *bg_tilemap, *mlow_tilemap, *mhigh_tilemap, *tx_tilemap;
-static data16_t *bg_videoram, *mlow_videoram, *mhigh_videoram, *tx_videoram, *spriteram;
+static data16_t *bg_videoram, *mlow_videoram, *mhigh_videoram, *tx_videoram, *spriteram, *sprites_buffer;
 static data16_t *bg_scrollram, *mlow_scrollram, *mhigh_scrollram, *vidattrram;
+static data16_t *mwarr_ram;
 
 static WRITE16_HANDLER( bg_videoram_w )
 {
@@ -81,6 +82,59 @@ static WRITE16_HANDLER( oki1_bank_w )
 	OKIM6295_set_bank_base(1, 0x40000 * (data & 3));
 }
 
+static WRITE16_HANDLER( sprites_commands_w )
+{
+	static int which = 0;
+
+	if( which )
+	{
+		int i;
+
+		switch(data)
+		{
+		case 0:
+			/* clear sprites on screen */
+			for( i = 0; i < 0x800; i++)
+			{
+				sprites_buffer[i] = 0;
+			}
+			which = 0;
+			break;
+
+		default:
+			logerror("used unknown sprites command %02X\n",data);
+		case 0xf:
+			/* refresh sprites on screen */
+			for( i = 0; i < 0x800; i++)
+			{
+				sprites_buffer[i] = spriteram[i];
+			}
+			break;
+
+		case 0xd:
+			/* keep sprites on screen */
+			break;
+		}
+	}
+
+	which ^= 1;
+}
+
+static WRITE16_HANDLER( mwarr_brightness_w )
+{
+	int i;
+	double brightness;
+
+	COMBINE_DATA(&mwarr_ram[0x14/2]);
+
+	brightness = (double)(data & 0xff);
+	for (i=0;i<0x800;i++)
+	{
+		palette_set_brightness(i, brightness/255);
+	}
+}
+
+
 static ADDRESS_MAP_START( mwarr_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x0fffff) AM_ROM
 	AM_RANGE(0x100000, 0x1007ff) AM_RAM AM_WRITE(bg_videoram_w) AM_BASE(&bg_videoram)
@@ -97,7 +151,9 @@ static ADDRESS_MAP_START( mwarr_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x110002, 0x110003) AM_READ(input_port_1_word_r)
 	AM_RANGE(0x110004, 0x110005) AM_READ(input_port_2_word_r)
 	AM_RANGE(0x110010, 0x110011) AM_WRITE(oki1_bank_w)
-	AM_RANGE(0x110000, 0x11ffff) AM_RAM
+	AM_RANGE(0x110014, 0x110015) AM_WRITE(mwarr_brightness_w)
+	AM_RANGE(0x110016, 0x110017) AM_WRITE(sprites_commands_w)
+	AM_RANGE(0x110000, 0x11ffff) AM_RAM AM_BASE(&mwarr_ram)
 	AM_RANGE(0x180000, 0x180001) AM_READWRITE(OKIM6295_status_0_lsb_r, OKIM6295_data_0_lsb_w)
 	AM_RANGE(0x190000, 0x190001) AM_READWRITE(OKIM6295_status_1_lsb_r, OKIM6295_data_1_lsb_w)
 ADDRESS_MAP_END
@@ -156,7 +212,7 @@ INPUT_PORTS_START( mwarr )
 	PORT_DIPSETTING(      0x0000, DEF_STR( 5C_1C ) )
 	PORT_DIPSETTING(      0x0100, DEF_STR( 4C_1C ) )
 	PORT_DIPSETTING(      0x0200, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(      0x0300, DEF_STR( 2C_1C ) )	
+	PORT_DIPSETTING(      0x0300, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(      0x0700, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(      0x0600, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(      0x0500, DEF_STR( 1C_3C ) )
@@ -165,7 +221,7 @@ INPUT_PORTS_START( mwarr )
 	PORT_DIPSETTING(      0x0000, DEF_STR( 5C_1C ) )
 	PORT_DIPSETTING(      0x0800, DEF_STR( 4C_1C ) )
 	PORT_DIPSETTING(      0x1000, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(      0x1800, DEF_STR( 2C_1C ) )	
+	PORT_DIPSETTING(      0x1800, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(      0x3800, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(      0x3000, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(      0x2800, DEF_STR( 1C_3C ) )
@@ -173,7 +229,7 @@ INPUT_PORTS_START( mwarr )
 	PORT_DIPNAME( 0x4000, 0x0000, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(      0x4000, DEF_STR( No ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Yes ) )
-	PORT_SERVICE( 0x8000, IP_ACTIVE_LOW )
+	PORT_SERVICE_NO_TOGGLE( 0x8000, IP_ACTIVE_LOW )
 INPUT_PORTS_END
 
 static struct GfxLayout mwarr_tile8_layout =
@@ -275,7 +331,9 @@ VIDEO_START( mwarr )
 	mhigh_tilemap = tilemap_create(get_mhigh_tile_info,tilemap_scan_cols,TILEMAP_TRANSPARENT, 16, 16,64,16);
 	tx_tilemap    = tilemap_create(get_tx_tile_info,   tilemap_scan_rows,TILEMAP_TRANSPARENT,  8,  8,64,32);
 
-	if(!bg_tilemap || !mlow_tilemap || !tx_tilemap)
+	sprites_buffer = auto_malloc(sizeof(data16_t) * 0x800);
+
+	if(!bg_tilemap || !mlow_tilemap || !tx_tilemap || !sprites_buffer)
 		return 1;
 
 	tilemap_set_transparent_pen(mlow_tilemap,0);
@@ -291,8 +349,8 @@ VIDEO_START( mwarr )
 
 static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
 {
-	const UINT16 *source = spriteram+0x800-4;
-	const UINT16 *finish = spriteram;
+	const UINT16 *source = sprites_buffer+0x800-4;
+	const UINT16 *finish = sprites_buffer;
 	const struct GfxElement *gfx = Machine->gfx[0];
 	int x, y, color, flipx, dy, pri, pri_mask, i;
 
@@ -306,7 +364,7 @@ static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cl
 
 			color = source[1] & 0x000f;
 			flipx = source[1] & 0x0200;
-			
+
 			dy = (source[0] & 0xf000)>>12;
 
 			pri		 =	((source[1] & 0x3c00)>>10);	// Priority (1 = Low)
@@ -368,7 +426,7 @@ VIDEO_UPDATE( mwarr )
 	if(vidattrram[6] & 1)
 	{
 		for(i=0;i<256;i++)
-			tilemap_set_scrollx(bg_tilemap, i, bg_scrollram[i]+21);
+			tilemap_set_scrollx(bg_tilemap, i, bg_scrollram[i]+20);
 	}
 	else
 	{
@@ -402,13 +460,13 @@ VIDEO_UPDATE( mwarr )
 	tilemap_set_scrolly(mlow_tilemap,  0, vidattrram[2]+1);
 	tilemap_set_scrolly(mhigh_tilemap, 0, vidattrram[3]+1);
 
-	tilemap_set_scrollx(tx_tilemap, 0, vidattrram[0]+19);
+	tilemap_set_scrollx(tx_tilemap, 0, vidattrram[0]+16);
 	tilemap_set_scrolly(tx_tilemap, 0, vidattrram[4]+1);
 
-	tilemap_draw(bitmap,cliprect,bg_tilemap,   0,1);
-	tilemap_draw(bitmap,cliprect,mlow_tilemap, 0,2);
-	tilemap_draw(bitmap,cliprect,mhigh_tilemap,0,4);
-	tilemap_draw(bitmap,cliprect,tx_tilemap,   0,8);
+	tilemap_draw(bitmap,cliprect,bg_tilemap,   0,0x01);
+	tilemap_draw(bitmap,cliprect,mlow_tilemap, 0,0x02);
+	tilemap_draw(bitmap,cliprect,mhigh_tilemap,0,0x04);
+	tilemap_draw(bitmap,cliprect,tx_tilemap,   0,0x10);
 	draw_sprites(bitmap,cliprect);
 }
 

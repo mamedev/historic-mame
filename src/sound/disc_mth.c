@@ -119,11 +119,17 @@ struct dst_tvca_op_amp_context
  * input[4]    - Channel3 input value
  *
  ************************************************************************/
+#define DST_ADDER__ENABLE	(*(node->input[0]))
+#define DST_ADDER__IN0		(*(node->input[1]))
+#define DST_ADDER__IN1		(*(node->input[2]))
+#define DST_ADDER__IN2		(*(node->input[3]))
+#define DST_ADDER__IN3		(*(node->input[4]))
+
 void dst_adder_step(struct node_description *node)
 {
-	if(node->input[0])
+	if(DST_ADDER__ENABLE)
 	{
-		node->output=node->input[1] + node->input[2] + node->input[3] + node->input[4];
+		node->output = DST_ADDER__IN0 + DST_ADDER__IN1 + DST_ADDER__IN2 + DST_ADDER__IN3;
 	}
 	else
 	{
@@ -143,12 +149,15 @@ void dst_adder_step(struct node_description *node)
  *
  * Mar 2004, D Renaud.
  ************************************************************************/
+#define DST_COMP_ADDER__ENABLE	(*(node->input[0]))
+#define DST_COMP_ADDER__SELECT	(int)(*(node->input[1]))
+
 void dst_comp_adder_step(struct node_description *node)
 {
 	const struct	discrete_comp_adder_table *info = node->custom;
 	int bit;
 
-	if(node->input[0])
+	if(DST_COMP_ADDER__ENABLE)
 	{
 		switch (info->type)
 		{
@@ -156,14 +165,14 @@ void dst_comp_adder_step(struct node_description *node)
 				node->output = info->cDefault;
 				for(bit=0; bit < info->length; bit++)
 				{
-					if ((int)node->input[1] & (1 << bit)) node->output += info->c[bit];
+					if (DST_COMP_ADDER__SELECT & (1 << bit)) node->output += info->c[bit];
 				}
 				break;
 			case DISC_COMP_P_RESISTOR:
 				node->output = info->cDefault ? 1.0 / info->cDefault : 0;
 				for(bit=0; bit < info->length; bit++)
 				{
-					if ((int)node->input[1] & (1 << bit)) node->output += 1.0 / info->c[bit];
+					if (DST_COMP_ADDER__SELECT & (1 << bit)) node->output += 1.0 / info->c[bit];
 				}
 				if (node->output != 0) node->output = 1.0 / node->output;
 				break;
@@ -184,22 +193,26 @@ void dst_comp_adder_step(struct node_description *node)
  * input[1]    - Input value
  * input[2]    - Minimum value
  * input[3]    - Maximum value
- * input[4]    - Clamp when disabled
+ * input[4]    - Clamp output when disabled
  *
  ************************************************************************/
+#define DST_CLAMP__ENABLE	(*(node->input[0]))
+#define DST_CLAMP__IN		(*(node->input[1]))
+#define DST_CLAMP__MIN		(*(node->input[2]))
+#define DST_CLAMP__MAX		(*(node->input[3]))
+#define DST_CLAMP__CLAMP	(*(node->input[4]))
+
 void dst_clamp_step(struct node_description *node)
 {
-//	struct dss_ramp_context *context = node->context;
-
-	if(node->input[0])
+	if(DST_CLAMP__ENABLE)
 	{
-		if(node->input[1] < node->input[2]) node->output=node->input[2];
-		else if(node->input[1] > node->input[3]) node->output=node->input[3];
-		else node->output=node->input[1];
+		if(DST_CLAMP__IN < DST_CLAMP__MIN) node->output = DST_CLAMP__MIN;
+		else if(DST_CLAMP__IN > DST_CLAMP__MAX) node->output = DST_CLAMP__MAX;
+		else node->output= DST_CLAMP__IN;
 	}
 	else
 	{
-		node->output=node->input[4];
+		node->output = DST_CLAMP__CLAMP;
 	}
 }
 
@@ -216,9 +229,9 @@ void dst_clamp_step(struct node_description *node)
  *
  * Mar 2004, D Renaud.
  ************************************************************************/
-#define DSTDACR1_ENABLE		node->input[0]
-#define DSTDACR1_DATA		(int)node->input[1]
-#define DSTDACR1_VON		node->input[2]
+#define DST_DAC_R1__ENABLE		(*(node->input[0]))
+#define DST_DAC_R1__DATA		(int)(*(node->input[1]))
+#define DST_DAC_R1__VON			(*(node->input[2]))
 
 void dst_dac_r1_step(struct node_description *node)
 {
@@ -231,14 +244,14 @@ void dst_dac_r1_step(struct node_description *node)
 
 	i = context->iBias;
 
-	if (DSTDACR1_ENABLE)
+	if (DST_DAC_R1__ENABLE)
 	{
 		for (bit=0; bit < info->ladderLength; bit++)
 		{
 			/* Add up currents of ON circuits per Millman. */
 			/* Off, being 0V and having no current, can be ignored. */
-			if (DSTDACR1_DATA & (1 << bit))
-				i += DSTDACR1_VON / info->r[bit];
+			if (DST_DAC_R1__DATA & (1 << bit))
+				i += DST_DAC_R1__VON / info->r[bit];
 		}
 
 		v = i * context->rTotal;
@@ -322,18 +335,22 @@ void dst_dac_r1_reset(struct node_description *node)
  * input[2]    - Divisor
  *
  ************************************************************************/
+#define DST_DIVIDE__ENABLE	(*(node->input[0]))
+#define DST_DIVIDE__IN		(*(node->input[1]))
+#define DST_DIVIDE__DIV		(*(node->input[2]))
+
 void dst_divide_step(struct node_description *node)
 {
-	if(node->input[0])
+	if(DST_DIVIDE__ENABLE)
 	{
-		if(node->input[2]==0)
+		if(DST_DIVIDE__DIV == 0)
 		{
 			node->output=DBL_MAX;	/* Max out but don't break */
-			discrete_log("dst_divider_step() - Divide by Zero attempted.");
+			discrete_log("dst_divider_step() - Divide by Zero attempted in NODE_%02d.\n",node->node-NODE_START);
 		}
 		else
 		{
-			node->output=node->input[1] / node->input[2];
+			node->output= DST_DIVIDE__IN / DST_DIVIDE__DIV;
 		}
 	}
 	else
@@ -353,12 +370,17 @@ void dst_divide_step(struct node_description *node)
  * input[3]    - Final addition offset
  *
  ************************************************************************/
+#define DST_GAIN__ENABLE	(*(node->input[0]))
+#define DST_GAIN__IN		(*(node->input[1]))
+#define DST_GAIN__GAIN		(*(node->input[2]))
+#define DST_GAIN__OFFSET	(*(node->input[3]))
+
 void dst_gain_step(struct node_description *node)
 {
-	if(node->input[0])
+	if(DST_GAIN__ENABLE)
 	{
-		node->output=node->input[1] * node->input[2];
-		node->output+=node->input[3];
+		node->output = DST_GAIN__IN * DST_GAIN__GAIN;
+		node->output += DST_GAIN__OFFSET;
 	}
 	else
 	{
@@ -378,8 +400,8 @@ void dst_gain_step(struct node_description *node)
  *
  * Mar 2004, D Renaud.
  ************************************************************************/
-#define DST_INTEGRATE_TRG0	node->input[0]
-#define DST_INTEGRATE_TRG1	node->input[1]
+#define DST_INTEGRATE__TRG0	(*(node->input[0]))
+#define DST_INTEGRATE__TRG1	(*(node->input[1]))
 
 int dst_trigger_function(int trig0, int trig1, int trig2, int function)
 {
@@ -428,13 +450,13 @@ void dst_integrate_step(struct node_description *node)
 	{
 		case DISC_INTEGRATE_OP_AMP_1 | DISC_OP_AMP_IS_NORTON:
 			iNeg = context->vMaxIn / info->r1;
-			iPos = (DST_INTEGRATE_TRG0 - OP_AMP_NORTON_VBE) / info->r2;
+			iPos = (DST_INTEGRATE__TRG0 - OP_AMP_NORTON_VBE) / info->r2;
 			if (iPos < 0) iPos = 0;
 			break;
 
 		case DISC_INTEGRATE_OP_AMP_2 | DISC_OP_AMP_IS_NORTON:
-			trig0 = (int)DST_INTEGRATE_TRG0;
-			trig1 = (int)DST_INTEGRATE_TRG1;
+			trig0 = (int)DST_INTEGRATE__TRG0;
+			trig1 = (int)DST_INTEGRATE__TRG1;
 			iNeg = dst_trigger_function(trig0, trig1, 0, info->f0) ? context->vMaxInD / info->r1 : 0;
 			iPos =  dst_trigger_function(trig0, trig1, 0, info->f1) ? context->vMaxIn / info->r2 : 0;
 			iPos +=  dst_trigger_function(trig0, trig1, 0, info->f2) ? context->vMaxInD / info->r3 : 0;
@@ -466,11 +488,14 @@ void dst_integrate_reset(struct node_description *node)
  * input[1]    - input[0] value
  *
  ************************************************************************/
+#define DST_LOGIC_INV__ENABLE	(*(node->input[0]))
+#define DST_LOGIC_INV__IN		(*(node->input[1]))
+
 void dst_logic_inv_step(struct node_description *node)
 {
-	if(node->input[0])
+	if(DST_LOGIC_INV__ENABLE)
 	{
-		node->output=(node->input[1])?0.0:1.0;
+		node->output = DST_LOGIC_INV__IN ? 0.0 : 1.0;
 	}
 	else
 	{
@@ -489,11 +514,17 @@ void dst_logic_inv_step(struct node_description *node)
  * input[4]    - input[3] value
  *
  ************************************************************************/
+#define DST_LOGIC_AND__ENABLE	(*(node->input[0]))
+#define DST_LOGIC_AND__IN0		(*(node->input[1]))
+#define DST_LOGIC_AND__IN1		(*(node->input[2]))
+#define DST_LOGIC_AND__IN2		(*(node->input[3]))
+#define DST_LOGIC_AND__IN3		(*(node->input[4]))
+
 void dst_logic_and_step(struct node_description *node)
 {
-	if(node->input[0])
+	if(DST_LOGIC_AND__ENABLE)
 	{
-		node->output=(node->input[1] && node->input[2] && node->input[3] && node->input[4])?1.0:0.0;
+		node->output= (DST_LOGIC_AND__IN0 && DST_LOGIC_AND__IN1 && DST_LOGIC_AND__IN2 && DST_LOGIC_AND__IN3)? 1.0 : 0.0;
 	}
 	else
 	{
@@ -512,11 +543,17 @@ void dst_logic_and_step(struct node_description *node)
  * input[4]    - input[3] value
  *
  ************************************************************************/
+#define DST_LOGIC_NAND__ENABLE	(*(node->input[0]))
+#define DST_LOGIC_NAND__IN0		(*(node->input[1]))
+#define DST_LOGIC_NAND__IN1		(*(node->input[2]))
+#define DST_LOGIC_NAND__IN2		(*(node->input[3]))
+#define DST_LOGIC_NAND__IN3		(*(node->input[4]))
+
 void dst_logic_nand_step(struct node_description *node)
 {
-	if(node->input[0])
+	if(DST_LOGIC_NAND__ENABLE)
 	{
-		node->output=(node->input[1] && node->input[2] && node->input[3] && node->input[4])?0.0:1.0;
+		node->output= (DST_LOGIC_NAND__IN0 && DST_LOGIC_NAND__IN1 && DST_LOGIC_NAND__IN2 && DST_LOGIC_NAND__IN3)? 0.0 : 1.0;
 	}
 	else
 	{
@@ -535,11 +572,17 @@ void dst_logic_nand_step(struct node_description *node)
  * input[4]    - input[3] value
  *
  ************************************************************************/
+#define DST_LOGIC_OR__ENABLE	(*(node->input[0]))
+#define DST_LOGIC_OR__IN0		(*(node->input[1]))
+#define DST_LOGIC_OR__IN1		(*(node->input[2]))
+#define DST_LOGIC_OR__IN2		(*(node->input[3]))
+#define DST_LOGIC_OR__IN3		(*(node->input[4]))
+
 void dst_logic_or_step(struct node_description *node)
 {
-	if(node->input[0])
+	if(DST_LOGIC_OR__ENABLE)
 	{
-		node->output=(node->input[1] || node->input[2] || node->input[3] || node->input[4])?1.0:0.0;
+		node->output = (DST_LOGIC_OR__IN0 || DST_LOGIC_OR__IN1 || DST_LOGIC_OR__IN2 || DST_LOGIC_OR__IN3) ? 1.0 : 0.0;
 	}
 	else
 	{
@@ -558,11 +601,17 @@ void dst_logic_or_step(struct node_description *node)
  * input[4]    - input[3] value
  *
  ************************************************************************/
+#define DST_LOGIC_NOR__ENABLE	(*(node->input[0]))
+#define DST_LOGIC_NOR__IN0		(*(node->input[1]))
+#define DST_LOGIC_NOR__IN1		(*(node->input[2]))
+#define DST_LOGIC_NOR__IN2		(*(node->input[3]))
+#define DST_LOGIC_NOR__IN3		(*(node->input[4]))
+
 void dst_logic_nor_step(struct node_description *node)
 {
-	if(node->input[0])
+	if(DST_LOGIC_NOR__ENABLE)
 	{
-		node->output=(node->input[1] || node->input[2] || node->input[3] || node->input[4])?0.0:1.0;
+		node->output = (DST_LOGIC_NOR__IN0 || DST_LOGIC_NOR__IN1 || DST_LOGIC_NOR__IN2 || DST_LOGIC_NOR__IN3) ? 0.0 : 1.0;
 	}
 	else
 	{
@@ -579,11 +628,15 @@ void dst_logic_nor_step(struct node_description *node)
  * input[2]    - input[1] value
  *
  ************************************************************************/
+#define DST_LOGIC_XOR__ENABLE	(*(node->input[0]))
+#define DST_LOGIC_XOR__IN0		(*(node->input[1]))
+#define DST_LOGIC_XOR__IN1		(*(node->input[2]))
+
 void dst_logic_xor_step(struct node_description *node)
 {
-	if(node->input[0])
+	if(DST_LOGIC_XOR__ENABLE)
 	{
-		node->output=((node->input[1] && !node->input[2]) || (!node->input[1] && node->input[2]))?1.0:0.0;
+		node->output=((DST_LOGIC_XOR__IN0 && !DST_LOGIC_XOR__IN1) || (!DST_LOGIC_XOR__IN0 && DST_LOGIC_XOR__IN1)) ? 1.0 : 0.0;
 	}
 	else
 	{
@@ -600,11 +653,15 @@ void dst_logic_xor_step(struct node_description *node)
  * input[2]    - input[1] value
  *
  ************************************************************************/
+#define DST_LOGIC_XNOR__ENABLE	(*(node->input[0]))
+#define DST_LOGIC_XNOR__IN0		(*(node->input[1]))
+#define DST_LOGIC_XNOR__IN1		(*(node->input[2]))
+
 void dst_logic_nxor_step(struct node_description *node)
 {
-	if(node->input[0])
+	if(DST_LOGIC_XNOR__ENABLE)
 	{
-		node->output=((node->input[1] && !node->input[2]) || (!node->input[1] && node->input[2]))?0.0:1.0;
+		node->output=((DST_LOGIC_XNOR__IN0 && !DST_LOGIC_XNOR__IN1) || (!DST_LOGIC_XNOR__IN0 && DST_LOGIC_XNOR__IN1)) ? 0.0 : 1.0;
 	}
 	else
 	{
@@ -624,34 +681,32 @@ void dst_logic_nxor_step(struct node_description *node)
  * input[4]    - data
  *
  ************************************************************************/
-#define DST_LOGIC_DFF_ENABLE	node->input[0]
-#define DST_LOGIC_DFF_RESET		!node->input[1]
-#define DST_LOGIC_DFF_SET		!node->input[2]
-#define DST_LOGIC_DFF_CLOCK		(int)node->input[3]
-#define DST_LOGIC_DFF_DATA 		node->input[4]
+#define DST_LOGIC_DFF__ENABLE	 (*(node->input[0]))
+#define DST_LOGIC_DFF__RESET	!(*(node->input[1]))
+#define DST_LOGIC_DFF__SET		!(*(node->input[2]))
+#define DST_LOGIC_DFF__CLOCK	(int)(*(node->input[3]))
+#define DST_LOGIC_DFF__DATA 	 (*(node->input[4]))
 
 void dst_logic_dff_step(struct node_description *node)
 {
 	struct dst_dflipflop_context *context = node->context;
 
-	if (DST_LOGIC_DFF_ENABLE)
+	if (DST_LOGIC_DFF__ENABLE)
 	{
-//logerror("lc=%d, nc=%d\n",context->lastClk,DST_LOGIC_DFF_CLOCK);
-		if (DST_LOGIC_DFF_RESET)
+		if (DST_LOGIC_DFF__RESET)
 			node->output = 0;
-		else if (DST_LOGIC_DFF_SET)
+		else if (DST_LOGIC_DFF__SET)
 			node->output = 1;
-		else if (!context->lastClk && DST_LOGIC_DFF_CLOCK)
+		else if (!context->lastClk && DST_LOGIC_DFF__CLOCK)
 {
-logerror("latched\n");
-			node->output = DST_LOGIC_DFF_DATA;
+			node->output = DST_LOGIC_DFF__DATA;
 }
 	}
 	else
 	{
 		node->output=0.0;
 	}
-	context->lastClk = DST_LOGIC_DFF_CLOCK;
+	context->lastClk = DST_LOGIC_DFF__CLOCK;
 }
 
 void dst_logic_dff_reset(struct node_description *node)
@@ -711,7 +766,8 @@ void dst_logic_dff_reset(struct node_description *node)
  * The voltage is then modified by an inverting amp formula.
  * v = vRef + (rF/rI) * (vRef - (i * r))
  */
-#define DSTMIXER_ENABLE		node->input[0]
+#define DST_MIXER__ENABLE		(*(node->input[0]))
+#define DST_MIXER__IN(bit)		(*(node->input[bit + 1]))
 
 void dst_mixer_step(struct node_description *node)
 {
@@ -722,7 +778,7 @@ void dst_mixer_step(struct node_description *node)
 	double	i = 0;		// total current of inputs
 	int	bit, connected;
 
-	if (DSTMIXER_ENABLE)
+	if (DST_MIXER__ENABLE)
 	{
 		rTotal = context->rTotal;
 
@@ -730,7 +786,7 @@ void dst_mixer_step(struct node_description *node)
 		{
 			rTemp = info->r[bit];
 			connected = 1;
-			vTemp = node->input[bit + 1];
+			vTemp = DST_MIXER__IN(bit);
 
 			if (info->rNode[bit])
 			{
@@ -916,15 +972,21 @@ void dst_mixer_reset(struct node_description *node)
  *
  * Complete re-write Jan 2004, D Renaud.
  ************************************************************************/
+#define DST_ONESHOT__RESET	(*(node->input[0]))
+#define DST_ONESHOT__TRIG	(*(node->input[1]))
+#define DST_ONESHOT__AMP	(*(node->input[2]))
+#define DST_ONESHOT__WIDTH	(*(node->input[3]))
+#define DST_ONESHOT__TYPE	(int)(*(node->input[4]))
+
 void dst_oneshot_step(struct node_description *node)
 {
 	struct dst_oneshot_context *context = node->context;
-	int trigger = node->input[1] && node->input[1];
+	int trigger = (DST_ONESHOT__TRIG != 0);
 
 	/* If the state is triggered we will need to countdown later */
 	int doCount = context->state;
 
-	if (node->input[0])
+	if (DST_ONESHOT__RESET)
 	{
 		/* Hold in Reset */
 		node->output = 0;
@@ -939,22 +1001,22 @@ void dst_oneshot_step(struct node_description *node)
 			context->lastTrig = trigger;
 
 			/* Is it the proper edge trigger */
-			if (((int)(node->input[4]) & DISC_ONESHOT_REDGE) ? trigger : !trigger)
+			if ((DST_ONESHOT__TYPE & DISC_ONESHOT_REDGE) ? trigger : !trigger)
 			{
 				if (!context->state)
 				{
 					/* We have first trigger */
 					context->state = 1;
-					node->output = ((int)(node->input[4]) & DISC_OUT_ACTIVE_LOW) ? 0 : node->input[2];
-					context->countdown = node->input[3];
+					node->output = (DST_ONESHOT__TYPE & DISC_OUT_ACTIVE_LOW) ? 0 : DST_ONESHOT__AMP;
+					context->countdown = DST_ONESHOT__WIDTH;
 				}
 				else
 				{
 					/* See if we retrigger */
-					if ((int)(node->input[4]) & DISC_ONESHOT_RETRIG)
+					if (DST_ONESHOT__TYPE & DISC_ONESHOT_RETRIG)
 					{
 						/* Retrigger */
-						context->countdown = node->input[3];
+						context->countdown = DST_ONESHOT__WIDTH;
 						doCount = 0;
 					}
 				}
@@ -966,7 +1028,7 @@ void dst_oneshot_step(struct node_description *node)
 			context->countdown -= context->stepsize;
 			if(context->countdown <= 0.0)
 			{
-				node->output = ((int)(node->input[4]) & DISC_OUT_ACTIVE_LOW) ? node->input[2] : 0;
+				node->output = (DST_ONESHOT__TYPE & DISC_OUT_ACTIVE_LOW) ? DST_ONESHOT__AMP : 0;
 				context->countdown = 0;
 				context->state = 0;
 			}
@@ -983,7 +1045,7 @@ void dst_oneshot_reset(struct node_description *node)
 	context->state = 0;
 
  	context->lastTrig = 0;
- 	node->output = ((int)(node->input[4]) & DISC_OUT_ACTIVE_LOW) ? node->input[2] : 0;
+ 	node->output = (DST_ONESHOT__TYPE & DISC_OUT_ACTIVE_LOW) ? DST_ONESHOT__AMP : 0;
 }
 
 
@@ -999,31 +1061,37 @@ void dst_oneshot_reset(struct node_description *node)
  * input[5]    - Clamp value when disabled
  *
  ************************************************************************/
+#define DST_RAMP__ENABLE	(*(node->input[0]))
+#define DST_RAMP__DIR		(*(node->input[1]))
+#define DST_RAMP__GRAD		(*(node->input[2]))
+#define DST_RAMP__START		(*(node->input[3]))
+#define DST_RAMP__END		(*(node->input[4]))
+#define DST_RAMP__CLAMP		(*(node->input[5]))
 
 void dst_ramp_step(struct node_description *node)
 {
 	struct dss_ramp_context *context = node->context;
 
-	if(node->input[0])
+	if(DST_RAMP__ENABLE)
 	{
 		if (!context->last_en)
 		{
 			context->last_en = 1;
-			node->output = node->input[3];
+			node->output = DST_RAMP__START;
 		}
-		if(context->dir ? node->input[1] : !node->input[1]) node->output+=context->step;
+		if(context->dir ? DST_RAMP__DIR : !DST_RAMP__DIR) node->output+=context->step;
 		else node->output-=context->step;
 		/* Clamp to min/max */
-		if(context->dir ? (node->output < node->input[3])
-				: (node->output > node->input[3])) node->output=node->input[3];
-		if(context->dir ? (node->output > node->input[4])
-				: (node->output < node->input[4])) node->output=node->input[4];
+		if(context->dir ? (node->output < DST_RAMP__START)
+				: (node->output > DST_RAMP__START)) node->output=DST_RAMP__START;
+		if(context->dir ? (node->output > DST_RAMP__END)
+				: (node->output < DST_RAMP__END)) node->output=DST_RAMP__END;
 	}
 	else
 	{
 		context->last_en = 0;
 		// Disabled so clamp to output
-		node->output=node->input[5];
+		node->output=DST_RAMP__CLAMP;
 	}
 }
 
@@ -1031,9 +1099,9 @@ void dst_ramp_reset(struct node_description *node)
 {
 	struct dss_ramp_context *context = node->context;
 
-	node->output=node->input[5];
-	context->step = node->input[2] / Machine->sample_rate;
-	context->dir = ((node->input[4] - node->input[3]) == abs(node->input[4] - node->input[3]));
+	node->output=DST_RAMP__CLAMP;
+	context->step = DST_RAMP__GRAD / Machine->sample_rate;
+	context->dir = ((DST_RAMP__END - DST_RAMP__START) == abs(DST_RAMP__END - DST_RAMP__START));
 	context->last_en = 0;
 }
 
@@ -1048,29 +1116,34 @@ void dst_ramp_reset(struct node_description *node)
  * input[3]    - clock type
  *
  ************************************************************************/
+#define DST_SAMPHOLD__ENABLE	(*(node->input[0]))
+#define DST_SAMPHOLD__IN0		(*(node->input[1]))
+#define DST_SAMPHOLD__CLOCK		(*(node->input[2]))
+#define DST_SAMPHOLD__TYPE		(*(node->input[3]))
+
 void dst_samphold_step(struct node_description *node)
 {
 	struct dst_samphold_context *context = node->context;
 
-	if(node->input[0])
+	if(DST_SAMPHOLD__ENABLE)
 	{
 		switch(context->clocktype)
 		{
 			case DISC_SAMPHOLD_REDGE:
 				/* Clock the whole time the input is rising */
-				if(node->input[2] > context->lastinput) node->output=node->input[1];
+				if(DST_SAMPHOLD__CLOCK > context->lastinput) node->output=DST_SAMPHOLD__IN0;
 				break;
 			case DISC_SAMPHOLD_FEDGE:
 				/* Clock the whole time the input is falling */
-				if(node->input[2] < context->lastinput) node->output=node->input[1];
+				if(DST_SAMPHOLD__CLOCK < context->lastinput) node->output=DST_SAMPHOLD__IN0;
 				break;
 			case DISC_SAMPHOLD_HLATCH:
 				/* Output follows input if clock != 0 */
-				if(node->input[2]) node->output=node->input[1];
+				if(DST_SAMPHOLD__CLOCK) node->output=DST_SAMPHOLD__IN0;
 				break;
 			case DISC_SAMPHOLD_LLATCH:
 				/* Output follows input if clock == 0 */
-				if(node->input[2]==0) node->output=node->input[1];
+				if(DST_SAMPHOLD__CLOCK==0) node->output=DST_SAMPHOLD__IN0;
 				break;
 			default:
 				discrete_log("dst_samphold_step - Invalid clocktype passed");
@@ -1082,7 +1155,7 @@ void dst_samphold_step(struct node_description *node)
 		node->output=0;
 	}
 	/* Save the last value */
-	context->lastinput=node->input[2];
+	context->lastinput=DST_SAMPHOLD__CLOCK;
 }
 
 void dst_samphold_reset(struct node_description *node)
@@ -1092,7 +1165,7 @@ void dst_samphold_reset(struct node_description *node)
 	node->output=0;
 	context->lastinput=-1;
 	/* Only stored in here to speed up and save casting in the step function */
-	context->clocktype=(int)node->input[3];
+	context->clocktype=(int)DST_SAMPHOLD__TYPE;
 	dst_samphold_step(node);
 }
 
@@ -1107,12 +1180,17 @@ void dst_samphold_reset(struct node_description *node)
  * input[3]    - input[1]
  *
  ************************************************************************/
+#define DSS_SWITCH__ENABLE	(*(node->input[0]))
+#define DSS_SWITCH__SWITCH	(*(node->input[1]))
+#define DSS_SWITCH__IN0		(*(node->input[2]))
+#define DSS_SWITCH__IN1		(*(node->input[3]))
+
 void dst_switch_step(struct node_description *node)
 {
-	if(node->input[0])
+	if(DSS_SWITCH__ENABLE)
 	{
 		/* Input 1 switches between input[0]/input[2] */
-		node->output=(node->input[1])?node->input[3]:node->input[2];
+		node->output=DSS_SWITCH__SWITCH ? DSS_SWITCH__IN1 : DSS_SWITCH__IN0;
 	}
 	else
 	{
@@ -1133,6 +1211,12 @@ void dst_switch_step(struct node_description *node)
  * input[5]    - Channel4 input value
  *
  ************************************************************************/
+#define DST_TRANSFORM__ENABLE	(*(node->input[0]))
+#define DST_TRANSFORM__IN0		(*(node->input[1]))
+#define DST_TRANSFORM__IN1		(*(node->input[2]))
+#define DST_TRANSFORM__IN2		(*(node->input[3]))
+#define DST_TRANSFORM__IN3		(*(node->input[4]))
+#define DST_TRANSFORM__IN4		(*(node->input[5]))
 
 #define MAX_TRANS_STACK	16
 
@@ -1154,7 +1238,7 @@ double dst_transform_push(double *stack,int *pointer,double value)
 
 void dst_transform_step(struct node_description *node)
 {
-	if(node->input[0])
+	if(DST_TRANSFORM__ENABLE)
 	{
 		double trans_stack[MAX_TRANS_STACK];
 		double result,number1,number2;
@@ -1238,19 +1322,19 @@ void dst_transform_step(struct node_description *node)
 					dst_transform_push(trans_stack,&trans_stack_ptr,result);
 					break;
 				case '0':
-					dst_transform_push(trans_stack,&trans_stack_ptr,node->input[1]);
+					dst_transform_push(trans_stack,&trans_stack_ptr,DST_TRANSFORM__IN0);
 					break;
 				case '1':
-					dst_transform_push(trans_stack,&trans_stack_ptr,node->input[2]);
+					dst_transform_push(trans_stack,&trans_stack_ptr,DST_TRANSFORM__IN1);
 					break;
 				case '2':
-					dst_transform_push(trans_stack,&trans_stack_ptr,node->input[3]);
+					dst_transform_push(trans_stack,&trans_stack_ptr,DST_TRANSFORM__IN2);
 					break;
 				case '3':
-					dst_transform_push(trans_stack,&trans_stack_ptr,node->input[4]);
+					dst_transform_push(trans_stack,&trans_stack_ptr,DST_TRANSFORM__IN3);
 					break;
 				case '4':
-					dst_transform_push(trans_stack,&trans_stack_ptr,node->input[5]);
+					dst_transform_push(trans_stack,&trans_stack_ptr,DST_TRANSFORM__IN4);
 					break;
 				default:
 					discrete_log("dst_transform_step - Invalid function type/variable passed");
@@ -1281,11 +1365,11 @@ void dst_transform_step(struct node_description *node)
  *
  * Mar 2004, D Renaud.
  ************************************************************************/
-#define DST_TVCA_OP_AMP_TRG0	node->input[0]
-#define DST_TVCA_OP_AMP_TRG1	node->input[1]
-#define DST_TVCA_OP_AMP_TRG2	node->input[2]
-#define DST_TVCA_OP_AMP_INP0	node->input[3]
-#define DST_TVCA_OP_AMP_INP1	node->input[4]
+#define DST_TVCA_OP_AMP__TRG0	(*(node->input[0]))
+#define DST_TVCA_OP_AMP__TRG1	(*(node->input[1]))
+#define DST_TVCA_OP_AMP__TRG2	(*(node->input[2]))
+#define DST_TVCA_OP_AMP__INP0	(*(node->input[3]))
+#define DST_TVCA_OP_AMP__INP1	(*(node->input[4]))
 
 void dst_tvca_op_amp_step(struct node_description *node)
 {
@@ -1299,15 +1383,15 @@ void dst_tvca_op_amp_step(struct node_description *node)
 	double	iPos = 0;	// current into + input
 	double	iOut = 0;	// current at output
 
-	trig0 = (int)DST_TVCA_OP_AMP_TRG0;
-	trig1 = (int)DST_TVCA_OP_AMP_TRG1;
-	trig2 = (int)DST_TVCA_OP_AMP_TRG2;
+	trig0 = (int)DST_TVCA_OP_AMP__TRG0;
+	trig1 = (int)DST_TVCA_OP_AMP__TRG1;
+	trig2 = (int)DST_TVCA_OP_AMP__TRG2;
 	f3 = dst_trigger_function(trig0, trig1, trig2, info->f3);
 
 	if ((info->r2 != 0) && dst_trigger_function(trig0, trig1, trig2, info->f0))
 		{
 			/* r2 is present, so we assume Input 0 is connected and valid. */
-			i2 = (DST_TVCA_OP_AMP_INP0 - OP_AMP_NORTON_VBE) / info->r2;
+			i2 = (DST_TVCA_OP_AMP__INP0 - OP_AMP_NORTON_VBE) / info->r2;
 			if ( i2 < 0) i2 = 0;
 		}
 
@@ -1315,7 +1399,7 @@ void dst_tvca_op_amp_step(struct node_description *node)
 		{
 			/* r2 is present, so we assume Input 1 is connected and valid. */
 			/* Function F1 is not grounding the circuit. */
-			i3 = (DST_TVCA_OP_AMP_INP1 - OP_AMP_NORTON_VBE) / info->r3;
+			i3 = (DST_TVCA_OP_AMP__INP1 - OP_AMP_NORTON_VBE) / info->r3;
 			if ( i3 < 0) i3 = 0;
 		}
 

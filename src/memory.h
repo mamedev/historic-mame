@@ -925,6 +925,9 @@ void *		memory_get_write_ptr(int cpunum, int spacenum, offs_t offset);
 void		memory_set_bankptr(int banknum, void *base);
 
 /* ----- dynamic address space mapping ----- */
+void		memory_set_debugger_access(int debugger);
+
+/* ----- dynamic address space mapping ----- */
 data8_t *	memory_install_read8_handler  (int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, read8_handler handler);
 data16_t *	memory_install_read16_handler (int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, read16_handler handler);
 data32_t *	memory_install_read32_handler (int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, read32_handler handler);
@@ -942,7 +945,6 @@ data8_t *	memory_install_write8_matchmask_handler (int cpunum, int spacenum, off
 data16_t *	memory_install_write16_matchmask_handler(int cpunum, int spacenum, offs_t matchval, offs_t maskval, offs_t mask, offs_t mirror, write16_handler handler);
 data32_t *	memory_install_write32_matchmask_handler(int cpunum, int spacenum, offs_t matchval, offs_t maskval, offs_t mask, offs_t mirror, write32_handler handler);
 data64_t *	memory_install_write64_matchmask_handler(int cpunum, int spacenum, offs_t matchval, offs_t maskval, offs_t mask, offs_t mirror, write64_handler handler);
-
 
 
 /***************************************************************************

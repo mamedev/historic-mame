@@ -7,7 +7,7 @@
 **************************************************************************/
 
 #include "driver.h"
-
+#include "includes/astrocde.h"
 
 READ8_HANDLER( gorf_timer_r )
 {
@@ -80,6 +80,164 @@ WRITE8_HANDLER( ebases_trackball_select_w )
 READ8_HANDLER( ebases_trackball_r )
 {
 	int ret = readinputport(3 + ebases_trackball_select);
+#ifdef VERBOSE
 	logerror("Port %d = %d\n", ebases_trackball_select, ret);
+#endif
 	return ret;
 }
+
+static UINT8 ram_write_enable = 0;
+UINT8 *wow_protected_ram;
+size_t wow_protected_ram_size;
+
+WRITE8_HANDLER( wow_ramwrite_enable_w )
+{
+	ram_write_enable = 1;
+}
+
+READ8_HANDLER( wow_protected_ram_r )
+{
+	ram_write_enable = 0;
+	return wow_protected_ram[offset];
+}
+
+/* protection is disabled by strapping of X33 */
+WRITE8_HANDLER( wow_protected_ram_w )
+{
+#if 0
+	if (offset < 0x400)
+	{
+		if (ram_write_enable)
+#endif
+			wow_protected_ram[offset] = data;
+#if 0
+	}
+	else
+	{
+		wow_protected_ram[offset] = data;
+	}
+#endif
+	ram_write_enable = 0;
+}
+
+#define NVRAM_SIZE 0x800
+static UINT8 nvram[NVRAM_SIZE];
+
+READ8_HANDLER( robby_nvram_r )
+{
+	ram_write_enable = 0;
+	return nvram[offset];
+}
+
+WRITE8_HANDLER( robby_nvram_w )
+{
+	if (offset < 0x400)
+	{
+		if (ram_write_enable)
+		{
+			nvram[offset] = data;
+		}
+	}
+	else
+	{
+		nvram[offset] = data;
+	}
+
+	ram_write_enable = 0;
+}
+
+READ8_HANDLER( profpac_nvram_r )
+{
+	ram_write_enable = 0;
+	return nvram[offset];
+}
+
+WRITE8_HANDLER( profpac_nvram_w )
+{
+	if (offset < 0x200)
+	{
+		if (ram_write_enable)
+		{
+			nvram[offset] = data;
+		}
+	}
+	else
+	{
+		nvram[offset] = data;
+	}
+	ram_write_enable = 0;
+}
+
+NVRAM_HANDLER( robby_nvram )
+{
+	if (read_or_write)
+		mame_fwrite(file,nvram,NVRAM_SIZE);
+	else if (file)
+		mame_fread(file,nvram,NVRAM_SIZE);
+	else
+		memset(nvram,0,NVRAM_SIZE);
+}
+
+READ8_HANDLER( profpac_blank_r )
+{
+	return 0xff;
+}
+
+WRITE8_HANDLER( profpac_banksw_w )
+{
+	/* Note: There is a jumper which could map them from 0xa8-0xb6 instead */
+	if (data >= 0x80) /* 0x80-0xa7 maps x1-x40 */
+	{
+		if (data < 0x8e)
+		{
+			/* 640K eprom board bank handling */
+			int bankoffset = (data-0x80) * 0x4000;
+			memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x7fff, 0, 0, MRA8_BANK1);
+			cpu_setbank(1, memory_region(REGION_USER1) + bankoffset);
+		}
+		else
+		{
+			memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x7fff, 0, 0, profpac_blank_r);
+		}
+		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0xbfff, 0, 0, MRA8_BANK2);
+		cpu_setbank(2, memory_region(REGION_CPU1) + 0x8000);
+	}
+	else
+	{
+		data &= 0xe0;
+		if (data == 0x00)
+		{
+			memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x7fff, 0, 0, astrocde_videoram_r);
+			memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0xbfff, 0, 0, MRA8_BANK2);
+			cpu_setbank(2, memory_region(REGION_CPU1) + 0x8000);
+		}
+		else if (data == 0x20)
+		{
+			memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x7fff, 0, 0, MRA8_BANK1);
+			memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0xbfff, 0, 0, MRA8_BANK2);
+			cpu_setbank(1, memory_region(REGION_CPU1) + 0x14000);
+			cpu_setbank(2, memory_region(REGION_CPU1) + 0x18000);
+		}
+		else
+		{
+			memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x7fff, 0, 0, profpac_blank_r);
+			memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0xbfff, 0, 0, profpac_blank_r);
+		}
+	}
+}
+
+READ8_HANDLER( spacezap_io_r )
+{
+	UINT8 cc1 = (offset>>8)&1;
+	UINT8 cc2 = (offset>>9)&1;
+
+	coin_counter_w(0,cc1);
+	coin_counter_w(1,cc2);
+	return input_port_3_r(offset & 0xff);
+}
+
+WRITE8_HANDLER( ebases_io_w )
+{
+	coin_counter_w(0,data&1);
+}
+

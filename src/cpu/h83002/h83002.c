@@ -3280,8 +3280,8 @@ void h8_3002_get_info(UINT32 state, union cpuinfo *info)
 	case CPUINFO_INT_CONTEXT_SIZE:        info->i           = sizeof(h83002_state); break;
 	case CPUINFO_PTR_REGISTER_LAYOUT:     info->p = h8_reg_layout;		    break;
 	case CPUINFO_PTR_WINDOW_LAYOUT:	      info->p = h8_win_layout;		    break;
-	case CPUINFO_INT_MIN_INSTRUCTION_BYTES: info->i = 2;
-	case CPUINFO_INT_MAX_INSTRUCTION_BYTES: info->i = 4;
+	case CPUINFO_INT_MIN_INSTRUCTION_BYTES: info->i = 2;					break;
+	case CPUINFO_INT_MAX_INSTRUCTION_BYTES: info->i = 4;					break;
 
 		// Bus sizes
 	case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 16; break;
@@ -3335,9 +3335,6 @@ void h8_3002_get_info(UINT32 state, union cpuinfo *info)
 	case CPUINFO_STR_REGISTER + H8_E5:     sprintf(info->s = cpuintrf_temp_str(), "E5   :%08x", h8.regs[5]); break;
 	case CPUINFO_STR_REGISTER + H8_E6:     sprintf(info->s = cpuintrf_temp_str(), "E6   :%08x", h8.regs[6]); break;
 	case CPUINFO_STR_REGISTER + H8_E7:     sprintf(info->s = cpuintrf_temp_str(), "SP   :%08x", h8.regs[7]); break;
-
-	default:
-		osd_die("h8_3002_get_info unknown request %x\n", state);
 	}
 }
 

@@ -76,6 +76,9 @@ void z180_get_info(UINT32 state, union cpuinfo *info);
 #if (HAS_I8X41)
 #include "cpu/i8x41/i8x41.h"
 #endif
+#if (HAS_I8051 || HAS_I8052 || HAS_I8751 || HAS_I8751 )
+#include "cpu/i8051/i8051.h"
+#endif
 #if (HAS_M6800 || HAS_M6801 || HAS_M6802 || HAS_M6803 || HAS_M6808 || HAS_HD63701)
 #include "cpu/m6800/m6800.h"
 #endif
@@ -175,7 +178,7 @@ void adsp2181_get_info(UINT32 state, union cpuinfo *info);
 #if (HAS_SPC700)
 #include "cpu/spc700/spc700.h"
 #endif
-#if (HAS_E132XS)
+#if (HAS_E116T || HAS_E116XT || HAS_E116XS || HAS_E116XSR || HAS_E132N || HAS_E132T || HAS_E132XN || HAS_E132XT || HAS_E132XS || HAS_E132XSR || HAS_GMS30C2116 || HAS_GMS30C2132 || HAS_GMS30C2216 || HAS_GMS30C2232)
 #include "cpu/e132xs/e132xs.h"
 #endif
 #if (HAS_I386)
@@ -222,6 +225,9 @@ void adsp2181_get_info(UINT32 state, union cpuinfo *info);
 #endif
 #if (HAS_SC61860)
 #include "cpu/sc61860/sc61860.h"
+#endif
+#if (HAS_TX0_64KW || HAS_TX0_8KW)
+#include "cpu/pdp1/tx0.h"
 #endif
 #if (HAS_Z80GB)
 #include "cpu/z80gb/z80gb.h"
@@ -443,6 +449,18 @@ const struct
 #if (HAS_I8X41)
 	{ CPU_I8X41, i8x41_get_info },
 #endif
+#if (HAS_I8051)
+	{ CPU_I8051, i8051_get_info },
+#endif
+#if (HAS_I8052)
+	{ CPU_I8052, i8052_get_info },
+#endif
+#if (HAS_I8751)
+	{ CPU_I8751, i8751_get_info },
+#endif
+#if (HAS_I8751)
+	{ CPU_I8752, i8752_get_info },
+#endif
 #if (HAS_M6800)
 	{ CPU_M6800, m6800_get_info },
 #endif
@@ -645,8 +663,47 @@ const struct
 #if (HAS_SPC700)
 	{ CPU_SPC700, spc700_get_info },
 #endif
+#if (HAS_E116T)
+	{ CPU_E116T, e116t_get_info },
+#endif
+#if (HAS_E116XT)
+	{ CPU_E116XT, e116xt_get_info },
+#endif
+#if (HAS_E116XS)
+	{ CPU_E116XS, e116xs_get_info },
+#endif
+#if (HAS_E116XSR)
+	{ CPU_E116XSR, e116xsr_get_info },
+#endif
+#if (HAS_E132N)
+	{ CPU_E132N, e132n_get_info },
+#endif
+#if (HAS_E132T)
+	{ CPU_E132T, e132t_get_info },
+#endif
+#if (HAS_E132XN)
+	{ CPU_E132XN, e132xn_get_info },
+#endif
+#if (HAS_E132XT)
+	{ CPU_E132XT, e132xt_get_info },
+#endif
 #if (HAS_E132XS)
 	{ CPU_E132XS, e132xs_get_info },
+#endif
+#if (HAS_E132XSR)
+	{ CPU_E132XSR, e132xsr_get_info },
+#endif
+#if (HAS_GMS30C2116)
+	{ CPU_GMS30C2116, gms30c2116_get_info },
+#endif
+#if (HAS_GMS30C2132)
+	{ CPU_GMS30C2132, gms30c2132_get_info },
+#endif
+#if (HAS_GMS30C2216)
+	{ CPU_GMS30C2216, gms30c2216_get_info },
+#endif
+#if (HAS_GMS30C2232)
+	{ CPU_GMS30C2232, gms30c2232_get_info },
 #endif
 #if (HAS_I386)
 	{ CPU_I386, i386_get_info },
@@ -691,6 +748,12 @@ const struct
 #endif
 #if (HAS_SC61860)
 	{ CPU_SC61860, sc61860_get_info },
+#endif
+#if (HAS_TX0_64KW)
+	{ CPU_TX0_64KW, tx0_64kw_get_info },
+#endif
+#if (HAS_TX0_8KW)
+	{ CPU_TX0_8KW, tx0_8kw_get_info },
 #endif
 #if (HAS_Z80GB)
 	{ CPU_Z80GB, z80gb_get_info },

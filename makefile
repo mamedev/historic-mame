@@ -26,6 +26,9 @@ endif
 # uncomment next line to use DRC MIPS3 engine
 X86_MIPS3_DRC = 1
 
+# uncomment next line to use the new multiwindow debugger
+NEW_DEBUGGER = 1
+
 # uncomment next line to use cygwin compiler
 # COMPILESYSTEM_CYGWIN	= 1
 
@@ -100,8 +103,11 @@ OBJ = obj/$(NAME)
 EMULATOR = $(NAME)$(EXE)
 
 DEFS = -DX86_ASM -DLSB_FIRST -DINLINE="static __inline__" -Dasm=__asm__ -DCRLF=3
+ifdef NEW_DEBUGGER
+DEFS += -DNEW_DEBUGGER
+endif
 
-CFLAGS = -std=gnu99 -Isrc -Isrc/includes -Isrc/$(MAMEOS) -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000
+CFLAGS = -std=gnu99 -Isrc -Isrc/includes -Isrc/debug -Isrc/$(MAMEOS) -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000
 
 ifdef SYMBOLS
 CFLAGS += -O0 -Werror -Wall -Wno-unused -g
@@ -145,7 +151,7 @@ MAPFLAGS =
 endif
 
 OBJDIRS = obj $(OBJ) $(OBJ)/cpu $(OBJ)/sound $(OBJ)/$(MAMEOS) \
-	$(OBJ)/drivers $(OBJ)/machine $(OBJ)/vidhrdw $(OBJ)/sndhrdw
+	$(OBJ)/drivers $(OBJ)/machine $(OBJ)/vidhrdw $(OBJ)/sndhrdw $(OBJ)/debug
 ifdef MESS
 OBJDIRS += $(OBJ)/mess $(OBJ)/mess/systems $(OBJ)/mess/machine \
 	$(OBJ)/mess/vidhrdw $(OBJ)/mess/sndhrdw $(OBJ)/mess/tools

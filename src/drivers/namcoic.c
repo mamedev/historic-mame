@@ -8,7 +8,19 @@
 
 static struct
 {
-	data16_t control[0x20];
+	data16_t control[0x40/2];
+	/**
+	 * [0x1] 0x02/2 tilemap#0.scrollx
+	 * [0x3] 0x06/2 tilemap#0.scrolly
+	 * [0x5] 0x0a/2 tilemap#1.scrollx
+	 * [0x7] 0x0e/2 tilemap#1.scrolly
+	 * [0x9] 0x12/2 tilemap#2.scrollx
+	 * [0xb] 0x16/2 tilemap#2.scrolly
+	 * [0xd] 0x1a/2 tilemap#3.scrollx
+	 * [0xf] 0x1e/2 tilemap#3.scrolly
+	 * 0x20/2 priority
+	 * 0x30/2 color
+	 */
 	struct tilemap *tilemap[6];
 	data16_t *videoram;
 	int gfxbank;
@@ -86,7 +98,8 @@ namco_tilemap_draw( struct mame_bitmap *bitmap, const struct rectangle *cliprect
 	int i;
 	for( i=0; i<6; i++ )
 	{
-		if( (mTilemapInfo.control[0x20/2+i]&0x7)*2 == pri )
+		/* note: priority is only in range 0..7, but Point Blank uses 0xf to hide a layer */
+		if( (mTilemapInfo.control[0x20/2+i]&0xf) == pri )
 		{
 			int color = mTilemapInfo.control[0x30/2+i] & 0x07;
 			tilemap_set_palette_offset( mTilemapInfo.tilemap[i], color*256 );
@@ -256,7 +269,6 @@ WRITE32_HANDLER( namco_tilemapvideoram32_le_w )
 
 /**************************************************************************************/
 
-
 static void zdrawgfxzoom(
 		struct mame_bitmap *dest_bmp,const struct GfxElement *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
@@ -351,7 +363,7 @@ static void zdrawgfxzoom(
 									{
 										if( pri[x]<=zpos )
 										{
-											if( c==0xfe && shadow_offset )
+											if( color == 0xf && c==0xfe && shadow_offset )
 											{
 												dest[x] |= shadow_offset;
 											}
@@ -373,6 +385,223 @@ static void zdrawgfxzoom(
 		}
 	}
 } /* zdrawgfxzoom */
+
+void
+namcos2_draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int pri, int control )
+{
+	int offset = (control & 0x000f) * (128*4);
+	int loop;
+	if( pri==0 )
+	{
+		fillbitmap( priority_bitmap, 0, cliprect );
+	}
+	for( loop=0; loop < 128; loop++ )
+	{
+		/****************************************
+		* word#0
+		*   Sprite Y position           D00-D08
+		*   Sprite Size 16/32           D09
+		*   Sprite Size Y               D10-D15
+		*
+		* word#1
+		*   Sprite Quadrant             D00-D01
+		*   Sprite Number               D02-D12
+		*   Sprite ROM Bank select      D13
+		*   Sprite flip X               D14
+		*   Sprite flip Y               D15
+		*
+		* word#2
+		*   Sprite X position           D00-D10
+		*
+		* word#3
+		*   Sprite priority             D00-D02
+		*   Sprite colour index         D04-D07
+		*   Sprite Size X               D10-D15
+		*/
+		int word3 = namcos2_sprite_ram[offset+(loop*4)+3];
+		if( (word3&0xf)==pri )
+		{
+			int word0 = namcos2_sprite_ram[offset+(loop*4)+0];
+			int word1 = namcos2_sprite_ram[offset+(loop*4)+1];
+			int offset4 = namcos2_sprite_ram[offset+(loop*4)+2];
+
+			int sizey=((word0>>10)&0x3f)+1;
+			int sizex=(word3>>10)&0x3f;
+
+			if((word0&0x0200)==0) sizex>>=1;
+
+			if((sizey-1) && sizex )
+			{
+				int color  = (word3>>4)&0x000f;
+				int sprn   = (word1>>2)&0x7ff;
+				int rgn    = (word1&0x2000)?1:0;
+				int ypos   = (0x1ff-(word0&0x01ff))-0x50+0x02;
+				int xpos   = (offset4&0x03ff)-0x50+0x07;
+				int flipy  = word1&0x8000;
+				int flipx  = word1&0x4000;
+				int scalex = (sizex<<16)/((word0&0x0200)?0x20:0x10);
+				int scaley = (sizey<<16)/((word0&0x0200)?0x20:0x10);
+				if(scalex && scaley)
+				{
+					struct GfxElement gfx = *Machine->gfx[rgn];
+					if( (word0&0x0200)==0 )
+					{
+						gfx.width = 16;
+						gfx.height = 16;
+						if( word1&0x0001 ) gfx.gfxdata += 16;
+						if( word1&0x0002 ) gfx.gfxdata += 16*gfx.line_modulo;
+					}
+					zdrawgfxzoom(
+						bitmap,
+						&gfx,
+						sprn,
+						color,
+						flipx,flipy,
+						xpos,ypos,
+						cliprect,
+						TRANSPARENCY_PEN,0xff,
+						//(color==0x0f ? TRANSPARENCY_PEN_TABLE : TRANSPARENCY_PEN),0xff,
+						scalex,scaley,
+						loop );
+				}
+			}
+		}
+	}
+} /* namcos2_draw_sprites */
+
+void
+namcos2_draw_sprites_metalhawk( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int pri )
+{
+	/**
+	 * word#0
+	 *	xxxxxx---------- ysize
+	 *	------x--------- sprite tile size
+	 *	-------xxxxxxxxx screeny
+	 *
+	 * word#1
+	 *	--x------------- bank
+	 *	----xxxxxxxxxxxx tile
+	 *
+	 * word#2 (unused)
+	 *
+	 * word#3
+	 *	xxxxxx---------- xsize
+	 *	------xxxxxxxxxx screenx
+	 *
+	 * word#4 (unused)
+	 * word#5 (unused)
+	 *
+	 * word#6 (orientation)
+	 *	---------------x rot90
+	 *	--------------x- flipx
+	 *	-------------x-- flipy
+	 *	------------x--- tile size
+	 *
+	 * word#7
+	 *	------------xxxx priority
+	 *	--------xxxx---- color
+	 *	x--------------- unknown
+	 */
+	const data16_t *pSource = namcos2_sprite_ram;
+	struct rectangle rect;
+	int loop;
+	if( pri==0 )
+	{
+		fillbitmap( priority_bitmap, 0, cliprect );
+	}
+	for( loop=0; loop < 128; loop++ )
+	{
+		int ypos  = pSource[0];
+		int tile  = pSource[1];
+		int xpos  = pSource[3];
+		int flags = pSource[6];
+		int attrs = pSource[7];
+		int sizey = ((ypos>>10)&0x3f)+1;
+		int sizex = (xpos>>10)&0x3f;
+		int sprn  = (tile>>2)&0x7ff;
+
+		if( tile&0x2000 )
+		{
+			sprn&=0x3ff;
+		}
+		else
+		{
+			sprn|=0x400;
+		}
+
+		if( (sizey-1) && sizex && (attrs&0xf)==pri )
+		{
+			int bBigSprite = (flags&8);
+			int color = (attrs>>4)&0xf;
+			int sx = (xpos&0x03ff)-0x50+0x07;
+			int sy = (0x1ff-(ypos&0x01ff))-0x50+0x02;
+			int flipx = flags&2;
+			int flipy = flags&4;
+			int scalex = (sizex<<16)/(bBigSprite?0x20:0x10);
+			int scaley = (sizey<<16)/(bBigSprite?0x20:0x10);
+
+			if( (flags&0x01) )
+			{ /* swap xy */
+				sprn |= 0x800;
+			}
+
+			if( bBigSprite )
+			{
+				if( sizex < 0x20 )
+				{
+					sx -= (0x20-sizex)/0x8;
+				}
+				if( sizey < 0x20 )
+				{
+					sy += (0x20-sizey)/0xC;
+				}
+			}
+
+			/* Set the clipping rect to mask off the other portion of the sprite */
+			rect.min_x=sx;
+			rect.max_x=sx+(sizex-1);
+			rect.min_y=sy;
+			rect.max_y=sy+(sizey-1);
+
+			if (cliprect->min_x > rect.min_x) rect.min_x = cliprect->min_x;
+			if (cliprect->max_x < rect.max_x) rect.max_x = cliprect->max_x;
+			if (cliprect->min_y > rect.min_y) rect.min_y = cliprect->min_y;
+			if (cliprect->max_y < rect.max_y) rect.max_y = cliprect->max_y;
+
+			if( !bBigSprite )
+			{
+				sizex = 16;
+				sizey = 16;
+				scalex = 1<<16;
+				scaley = 1<<16;
+
+				sx -= (tile&1)?16:0;
+				sy -= (tile&2)?16:0;
+
+				rect.min_x=sx;
+				rect.max_x=sx+(sizex-1);
+				rect.min_y=sy;
+				rect.max_y=sy+(sizey-1);
+				rect.min_x += (tile&1)?16:0;
+				rect.max_x += (tile&1)?16:0;
+				rect.min_y += (tile&2)?16:0;
+				rect.max_y += (tile&2)?16:0;
+			}
+			zdrawgfxzoom(
+				bitmap,Machine->gfx[0],
+				sprn, color,
+				flipx,flipy,
+				sx,sy,
+				&rect,
+				TRANSPARENCY_PEN,0xff,
+				scalex, scaley,
+				loop );
+		}
+		pSource += 8;
+	}
+} /* namcos2_draw_sprites_metalhawk */
+
+/**************************************************************************************/
 
 static data16_t mSpritePos[4];
 
@@ -666,6 +895,10 @@ namco_obj_init( int gfxbank, int palXOR, int (*codeToTile)( int code ) )
 		mpCodeToTile = DefaultCodeToTile;
 	}
 	spriteram16 = auto_malloc(0x20000);
+	if( spriteram16 )
+	{
+		memset( spriteram16, 0, 0x20000 ); /* needed for Nebulas Ray */
+	}
 	memset( mSpritePos,0x00,sizeof(mSpritePos) );
 } /* namcosC355_init */
 
@@ -1404,10 +1637,8 @@ namco_road_draw( struct mame_bitmap *bitmap, const struct rectangle *cliprect, i
 
 	for( i=cliprect->min_y; i<=cliprect->max_y; i++ )
 	{
-		UINT16 *pDest = bitmap->line[i];
 		int screenx	= mpRoadRAM[0x1fa00/2+i+15];
-
-		if( pri == ((screenx&0xe000)>>13) )
+		if( pri == ((screenx&0xf000)>>12) )
 		{
 			unsigned zoomx	= mpRoadRAM[0x1fe00/2+i+15]&0x3ff;
 			if( zoomx )
@@ -1415,56 +1646,64 @@ namco_road_draw( struct mame_bitmap *bitmap, const struct rectangle *cliprect, i
 				unsigned sourcey = mpRoadRAM[0x1fc00/2+i+15]+yscroll;
 				const UINT16 *pSourceGfx = pSourceBitmap->line[sourcey&(ROAD_TILEMAP_HEIGHT-1)];
 				unsigned dsourcex = (ROAD_TILEMAP_WIDTH<<16)/zoomx;
-				unsigned sourcex = 0;
-				int numpixels = (44*ROAD_TILE_SIZE<<16)/dsourcex;
-
-				/* draw this scanline */
-				screenx &= 0x0fff; /* mask off priority bits */
-				if( screenx&0x0800 )
+				if( dsourcex )
 				{
-					/* sign extend */
-					screenx -= 0x1000;
-				}
+					UINT16 *pDest = bitmap->line[i];
+					unsigned sourcex = 0;
+					int numpixels = (44*ROAD_TILE_SIZE<<16)/dsourcex;
+					int clipPixels;
 
-				/* adjust the horizontal placement */
-				screenx -= 64; /*needs adjustment to left*/
-
-				if( screenx<0 )
-				{ /* crop left */
-					numpixels += screenx;
-					sourcex -= dsourcex*screenx;
-					screenx = 0;
-				}
-
-				if( screenx + numpixels > bitmap->width )
-				{ /* crop right */
-					numpixels = bitmap->width - screenx;
-				}
-
-				/* BUT: support transparent color for Thunder Ceptor */
-				if (mbRoadNeedTransparent)
-				{
-					while( numpixels-- > 0 )
+					screenx &= 0x0fff; /* mask off priority bits */
+					if( screenx&0x0800 )
 					{
-						int pen = pSourceGfx[sourcex>>16];
-						/* TBA: work out palette mapping for Final Lap, Suzuka */
-						if (pen != mRoadTransparentColor)
-							pDest[screenx] = pen;
-						screenx++;
-						sourcex += dsourcex;
+						/* sign extend */
+						screenx |= ~0x7ff;
 					}
-				}
-				else
-				{
-					while( numpixels-- > 0 )
+
+					/* adjust the horizontal placement */
+					screenx -= 64; /*needs adjustment to left*/
+
+					clipPixels = cliprect->min_x - screenx;
+					if( clipPixels>0 )
+					{ /* crop left */
+						numpixels -= clipPixels;
+						sourcex += dsourcex*clipPixels;
+						screenx = cliprect->min_x;
+					}
+
+					clipPixels = (screenx+numpixels) - (cliprect->max_x+1);
+					if( clipPixels>0 )
+					{ /* crop right */
+						numpixels -= clipPixels;
+					}
+
+					/* TBA: work out palette mapping for Final Lap, Suzuka */
+
+					/* BUT: support transparent color for Thunder Ceptor */
+					if( mbRoadNeedTransparent )
 					{
-						int pen = pSourceGfx[sourcex>>16];
-						/* TBA: work out palette mapping for Final Lap, Suzuka */
-						pDest[screenx++] = pen;
-						sourcex += dsourcex;
+						while( numpixels-- > 0 )
+						{
+							int pen = pSourceGfx[sourcex>>16];
+							if (pen != mRoadTransparentColor)
+							{
+								pDest[screenx] = pen;
+							}
+							screenx++;
+							sourcex += dsourcex;
+						}
 					}
-				}
-			}
-		}
-	}
+					else
+					{
+						while( numpixels-- > 0 )
+						{
+							int pen = pSourceGfx[sourcex>>16];
+							pDest[screenx++] = pen;
+							sourcex += dsourcex;
+						}
+					}
+				} /* dsourcex!=0 */
+			} /* zoomx!=0 */
+		} /* priority */
+	} /* next scanline */
 } /* namco_road_draw */

@@ -1,21 +1,24 @@
-#include "driver.h"
-#include "machine/scudsp.h"
+/*************************************************************************
+System Control Unit - DSP emulator version 0.05
 
-/*SCU DSP functions */
-/*V0.04*/
+Written by Angelo Salese & Mariusz Wojcieszek
 
-/* 
-280304: Mariusz Wojcieszek
+Changelog:
+041114: Angelo Salese
+- Finished flags in ALU opcodes
+- SR opcode: MSB does not change.
+
+040328: Mariusz Wojcieszek
 - rewritten ALU and MUL operations using signed arithmetics
 - improved DMA
 - fixed MOV ALH,x
 
-031211: (Mariusz Wojcieszek changes)
-- result of ALU command is stored into ALU register 
+031211: Mariusz Wojcieszek
+- result of ALU command is stored into ALU register
 - X-Bus command: MOV [s],X can be executed in parallel to other X-Bus commands
 - Y-Bus command: MOV [s],Y can be executed in parallel to other Y-Bus commands
-- Jump and LPS/BTM support: 
-	jump addresses are absolute, 
+- Jump and LPS/BTM support:
+	jump addresses are absolute,
 	prefetched instructions are executed before jump is taken
 - after each instruction, X and Y is multiplied and contents are loaded into MUL register
 - fixed RL8
@@ -25,10 +28,13 @@
 - overworked disassembler
 
  TODO:
-- make vfremix work...
-- ALU commands: complete the flags
 - Disassembler: complete it
-*/
+- (Maybe) Convert this to cpu structure
+- Add control flags
+
+*************************************************************************/
+#include "driver.h"
+#include "machine/scudsp.h"
 
 /*DSP macros*/
 #define PRF ((stv_scu[32] & 0x04000000) >> 26)
@@ -48,6 +54,7 @@
 #define SET_C(_val) (stv_scu[32] = ((stv_scu[32] & ~0x00100000) | ((_val) ? 0x00100000 : 0)))
 #define SET_S(_val) (stv_scu[32] = ((stv_scu[32] & ~0x00400000) | ((_val) ? 0x00400000 : 0)))
 #define SET_Z(_val) (stv_scu[32] = ((stv_scu[32] & ~0x00200000) | ((_val) ? 0x00200000 : 0)))
+#define SET_V(_val) (stv_scu[32] = ((stv_scu[32] & ~0x00080000) | ((_val) ? 0x00080000 : 0)))
 
 typedef union {
 	INT32  si;
@@ -314,22 +321,22 @@ void dsp_ram_addr_ctrl(UINT32 data)
 void dsp_ram_addr_w(UINT32 data)
 {
 #ifdef DEBUG_DSP
-    if ( log_file == NULL ) 
+    if ( log_file == NULL )
     {
         log_file = fopen( "dsp.log", "a" );
     }
     fprintf( log_file, "DSP: Writing mem %02X %04X\n", dsp_reg.ra & 0xff, data );
-#endif    
+#endif
 	dsp_set_dest_mem_reg( (dsp_reg.ra & 0xc0) >> 6, data );
 }
 
 UINT32 dsp_ram_addr_r()
 {
     UINT32 data;
-    
+
     data = dsp_get_source_mem_value( ((dsp_reg.ra & 0xc0) >> 6) + 4 );
 #ifdef DEBUG_DSP
-    if ( log_file == NULL ) 
+    if ( log_file == NULL )
     {
         log_file = fopen( "dsp.log", "a" );
     }
@@ -374,16 +381,16 @@ static void dsp_operation(void)
 			dsp_reg.alu = i3;
 			SET_Z(i3 == 0);
 			SET_S(i3 < 0);
-			SET_C(0); 
-			/* TODO: C, V flag */
+			SET_C(i3 & 0x100000000);
+			SET_V(((i3) ^ (dsp_reg.acl.si)) & ((i3) ^ (dsp_reg.pl.si)) & 0x80000000);
 			break;
 		case 0x5:	/* SUB */
 			i3 = dsp_reg.acl.si - dsp_reg.pl.si;
 			dsp_reg.alu = i3;
 			SET_Z(i3 == 0);
-			SET_C(0);
+			SET_C(i3 & 0x100000000);
 			SET_S(i3 < 0);
-			/* TODO: C,V flag */
+			SET_V(((dsp_reg.pl.si) ^ (dsp_reg.acl.si)) & ((dsp_reg.pl.si) ^ (i3)) & 0x80000000);
 			break;
 		case 0x6:	/* AD2 */
 			i1 = COMBINE_64_32_32((INT32)dsp_reg.ph.si,dsp_reg.pl.si);
@@ -391,14 +398,14 @@ static void dsp_operation(void)
 			dsp_reg.alu = i1 + i2;
 			SET_Z(dsp_reg.alu == 0);
 			SET_S(dsp_reg.alu < 0);
-			SET_C(0);
-			/* TODO: V flag */
+			SET_C((dsp_reg.alu) & 0x1000000000000);
+			SET_V(((dsp_reg.alu) ^ (i1)) & ((dsp_reg.alu) ^ (i2)) & 0x800000000000);
 			break;
 		case 0x7:	/* ??? */
 			/* Unrecognized opcode */
 			break;
 		case 0x8:	/* SR */
-			i3 = dsp_reg.acl.si >> 1;
+			i3 = (dsp_reg.acl.si >> 1) | (dsp_reg.acl.si & 0x80000000);/*MSB does not change*/
 			dsp_reg.alu = i3;
 			SET_Z(i3 == 0);
 			SET_S(i3 < 0);
@@ -571,13 +578,13 @@ static void dsp_dma( void )
 		transfer_cnt &= 0xff;
 #ifdef DEBUG_DSP
         fprintf( log_file, "/*DSP DMA D0,[RAM%d],%d add=%d*/\n", dsp_mem, transfer_cnt, add );
-#endif			
+#endif
 		for ( counter = 0; counter < transfer_cnt ; counter++ )
 		{
 		    data = program_read_dword(source );
 #ifdef DEBUG_DSP
             fprintf( log_file, "%08X, %08X,\n", source, data );
-#endif            		    
+#endif
 			dsp_set_dest_dma_mem( dsp_mem, data, counter );
 			source += add;
 		}
@@ -596,7 +603,7 @@ static void dsp_dma( void )
 		transfer_cnt &= 0xff;
 #ifdef DEBUG_DSP
     fprintf( log_file, "/*DSP DMA [RAM%d],D0,%d\tadd=%d,source=%08X*/\n", dsp_mem, transfer_cnt, add, source );
-#endif					
+#endif
 		for ( counter = 0; counter < transfer_cnt; counter++ )
 		{
 			program_write_dword(dest, program_read_word(dsp_get_mem_source_dma( dsp_mem, counter ) ) );
@@ -671,7 +678,7 @@ static void dsp_loop( void )
 static void dsp_dump_mem( FILE *f )
 {
     UINT16 i;
-    
+
 	fprintf( f, "\n/*MEM 0*/\n{" );
 	for ( i = 0; i < 0x40; i++ )
 	{
@@ -712,8 +719,8 @@ void dsp_execute_program()
         fprintf( log_file, "%02X\t%08X\t%s\n", i, dsp_reg.internal_prg[ i ], dasm_buffer );
 	}
 	dsp_dump_mem( log_file );
-#endif	
-	
+#endif
+
 	update_mul = 0;
 	do
 	{
@@ -730,7 +737,7 @@ void dsp_execute_program()
 
 		dsp_dasm_opcode( opcode, dasm_buffer );
 
-		switch( (opcode & 0xc0000000) >> 30 ) 
+		switch( (opcode & 0xc0000000) >> 30 )
 		{
 		case 0x00: /* 00 */
 			dsp_operation();
@@ -765,16 +772,16 @@ void dsp_execute_program()
 			dsp_reg.mul = (INT64)dsp_reg.rx.si * (INT64)dsp_reg.ry.si;
 			update_mul = 0;
 		}
-		
+
 		cycles_run++;
 
 	} while( cont );
-#ifdef DEBUG_DSP	
+#ifdef DEBUG_DSP
 	dsp_dump_mem( log_file );
-	fprintf( log_file, "\nRun %d cycles\n\n", cycles_run );	
+	fprintf( log_file, "\nRun %d cycles\n\n", cycles_run );
 	fclose( log_file );
 	log_file = NULL;
-#endif	
+#endif
 }
 
 
@@ -782,7 +789,7 @@ void dsp_execute_program()
 /***********************************************************************
 
     SCU DSP Disassembler
-    
+
 ************************************************************************/
 const char* ALU_Commands[] =
 {
@@ -801,7 +808,7 @@ const char* ALU_Commands[] =
 	"???",	/* 1100 */
 	"???",	/* 1101 */
 	"???",	/* 1110 */
-	"RL8",	/* 1111 */	
+	"RL8",	/* 1111 */
 };
 
 const char* X_Commands[] =
@@ -822,7 +829,7 @@ const char* Y_Commands[] =
 	"MOV %s,Y",		/* 100 */
 };
 
-const char* D1_Commands[] = 
+const char* D1_Commands[] =
 {
 	"",					/* 00 */
 	"MOV %I8,%d",		/* 01 */
@@ -917,7 +924,7 @@ const char* DMA_Command[] =
 
 void	dsp_dasm_prefix( const char* format, char* buffer, UINT32 *data )
 {
-	
+
 	for ( ; *format; format++ )
 	{
 		if ( *format == '%' )
@@ -1004,7 +1011,7 @@ void	dsp_dasm_prefix( const char* format, char* buffer, UINT32 *data )
 				case 'M':
 					strcpy( buffer, DestDMAMemory[ *data ] );
 					break;
-					
+
 			}
 			data++;
 			buffer += strlen( buffer );
@@ -1048,7 +1055,7 @@ void	dsp_dasm_operation( UINT32 op, char *buffer )
 	dsp_dasm_prefix( X_Commands[ (op & 0x1800000) >> 23 ], temp_buffer,  data );
 	sprintf( my_buffer, "%-10s", temp_buffer );
 	my_buffer += strlen( my_buffer );
-	
+
 	/* Y-Bus */
 	data[0] = (op & 0x1C000 ) >> 14 ;
 	if ( op & 0x80000 )
@@ -1061,13 +1068,13 @@ void	dsp_dasm_operation( UINT32 op, char *buffer )
 	}
 	sprintf( my_buffer, "%-10s", temp_buffer );
 	my_buffer += strlen( my_buffer );
-	
+
 	dsp_dasm_prefix( Y_Commands[ (op & 0x60000) >> 17 ], temp_buffer,  data );
 	sprintf( my_buffer, "%-10s", temp_buffer );
 	my_buffer += strlen( my_buffer );
 
 	/* D1-Bus */
-	switch( (op & 0x3000) >> 12 ) 
+	switch( (op & 0x3000) >> 12 )
 	{
 	case 0x1:
 		data[0] = (op & 0xFF);
@@ -1152,7 +1159,7 @@ void dsp_dasm_dma( UINT32 op, char* buffer )
 
 void dsp_dasm_opcode( UINT32 op, char *buffer )
 {
-	switch( (op & 0xc0000000) >> 30 ) 
+	switch( (op & 0xc0000000) >> 30 )
 	{
 	case 0x00: /* 00 */
 		dsp_dasm_operation( op, buffer );

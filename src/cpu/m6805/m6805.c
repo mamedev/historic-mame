@@ -288,6 +288,39 @@ INLINE void WM16( UINT32 Addr, PAIR *p )
 	WM( Addr, p->b.l );
 }
 
+#if (HAS_M68705)
+
+/* Generate interrupt - m68705 version */
+static void m68705_Interrupt(void)
+{
+	if( (m6805.pending_interrupts & ((1<<M6805_IRQ_LINE)|M68705_INT_MASK)) != 0 ) 
+	{
+		if ( (CC & IFLAG) == 0 ) 
+		{
+			PUSHWORD(m6805.pc);
+			PUSHBYTE(m6805.x);
+			PUSHBYTE(m6805.a);
+			PUSHBYTE(m6805.cc);
+			SEI;
+			if (m6805.irq_callback)
+				(*m6805.irq_callback)(0);
+
+			if ((m6805.pending_interrupts & (1<<M68705_IRQ_LINE)) != 0 )
+			{
+				m6805.pending_interrupts &= ~(1<<M68705_IRQ_LINE);
+				RM16( 0xfffa, &pPC);
+			}
+			else if((m6805.pending_interrupts&(1<<M68705_INT_TIMER))!=0)
+			{
+				m6805.pending_interrupts &= ~(1<<M68705_INT_TIMER);
+				RM16( 0xfff8, &pPC);
+			}
+		}
+		m6805_ICount -= 11;
+	}
+}
+#endif 
+
 /* Generate interrupts */
 static void Interrupt(void)
 {
@@ -477,7 +510,18 @@ int m6805_execute(int cycles)
 	do
 	{
 		if (m6805.pending_interrupts != 0)
-			Interrupt();
+		{
+#if (HAS_M68705)
+			if (SUBTYPE==SUBTYPE_M68705)
+			{
+				m68705_Interrupt();
+			}
+			else
+#endif
+			{
+				Interrupt();
+			}
+		}
 
 		CALL_MAME_DEBUG;
 
@@ -778,6 +822,14 @@ void m68705_reset(void *param)
 	m6805.subtype = SUBTYPE_M68705;
 	RM16( 0xfffe, &m6805.pc );
 }
+
+void m68705_set_irq_line(int irqline, int state)
+{
+	if (m6805.irq_state[irqline] == state ) return;
+	m6805.irq_state[irqline] = state;
+	if (state != CLEAR_LINE) m6805.pending_interrupts |= 1<<irqline;
+}
+
 #endif
 
 /****************************************************************************
@@ -945,12 +997,28 @@ void m6805_get_info(UINT32 state, union cpuinfo *info)
 /**************************************************************************
  * CPU-specific set_info
  **************************************************************************/
+static void m68705_set_info(UINT32 state, union cpuinfo *info)
+{
+	switch(state)
+	{
+		/* --- the following bits of info are set as 64-bit signed integers --- */
+		case CPUINFO_INT_INPUT_STATE + M68705_INT_TIMER:	m68705_set_irq_line(M68705_INT_TIMER, info->i); break;
+
+		default:
+			m6805_set_info(state,info);
+			break;
+	}
+}
 
 void m68705_get_info(UINT32 state, union cpuinfo *info)
 {
 	switch (state)
 	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case CPUINFO_INT_INPUT_STATE + M68705_INT_TIMER:	info->i = m6805.irq_state[M68705_INT_TIMER]; break;
+	
 		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case CPUINFO_PTR_SET_INFO:						info->setinfo = m68705_set_info;		break;
 		case CPUINFO_PTR_INIT:							info->init = m68705_init;				break;
 		case CPUINFO_PTR_RESET:							info->reset = m68705_reset;				break;
 

@@ -4,7 +4,7 @@
 
 	Rogha Armour Attack			(c) 1991 Data East Corporation
 	Wizard Fire					(c) 1992 Data East Corporation
-	Nitro Ball					(c) 1992 Data East Corporation
+	Nitro Ball/Gun Ball			(c) 1992 Data East Corporation
 	Schmeiser Robo				(c) 1993 Hot B
 
 	This hardware is capable of alpha-blending on sprites and playfields
@@ -14,6 +14,8 @@
 
 	Todo:  Rohga protection emulation is still incomplete.  Game only works
 	up to level 5 and the priority register does not seem to be written.
+
+	Todo:  Priority errors in Nitro Ball
 
 	Schmeiser Robo runs on a slightly modified Rohga pcb.
 
@@ -63,6 +65,45 @@
 				SR004 - SR010: 8M Mask (42 pin 16 bit)
 				SR011, SR012 : 4M Mask (32 pin 8 bit)
 				HB00031E     : MB7116 (512 bytes x 4 bit) PROM near chip 113
+
+	Gun Ball PCB Layout
+	---------------------
+
+	DE-0358-3
+	|---------------------------------------------------|
+	|62256   62256  |---|  PAL           |---|    CN3   |
+	|JC00    JC01   |59 |  PAL           |146| DSW1 DSW2|
+	|JC02    JC03   |---|  PAL           |---|          |
+	|JC04-3  JC05-3        PAL                          |
+	|                                                   |
+	|MAV-00  JC06 |----|                 |-----|        |
+	|MAV-01  JC07 | 56 |                 | 113 |        |
+	|             |----|     6264        |     |       J|
+	|                        6264        |-----|       A|
+	|             |----|     6264                      M|
+	|MAV-02 MAV-03| 74 |     6264                      M|
+	|             |----|     PAL                       A|
+	|             |----|     JN-00          M6295#2     |
+	|MAV-04 MAV-05| 52 | |---|       MAV-11       JP7   |
+	|             |----| | 71|       MAV-10 M6295#1  CN2|
+	|MAV-06 MAV-07       |---|       JC08               |
+	|             |----|       |----|LH5168  YM3012     |
+	|             | 52 | |---| |6280|         VOL1 VOL2 |
+	|             |----| | 71| |----|YM2151             |
+	|MAV-08 MAV-09  28MHz|---|   32.220MHz      TA8205  |
+	|---------------------------------------------------|
+
+	Notes:
+				68000 clock   : 14.000MHz [28/2]
+				HuC6280 clock : 8.050MHz [32.200/4]
+				YM2151 clock  : 3.577777778MHz [32.200/9]
+				M6295#1 clock : 1.00625MHz [32.200/32], Sample Rate = 1006250 / 132
+				M6295#2 clock : 2.0125MHz  [32.200/16], Sample Rate = 2012500 / 132
+				CN2           : Connector for stereo sound out
+				VOL1, VOL2    : Volume pot for left/right speakers. In Mono mode, only right volume is used.
+				JP7           : Jumper to set mono/stereo output
+				JN-00         : Fujitsu MB7116 PROM
+				VSync         : 58kHz
 
 ***************************************************************************/
 
@@ -515,37 +556,41 @@ INPUT_PORTS_START( nitrobal )
 	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0080, 0x0080, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x0080, 0x0080, "Always 2 coins to Start" )
 	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0100, 0x0100, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0100, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0200, 0x0200, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0200, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0400, 0x0800, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0800, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0800, 0x0400, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0800, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x0300, 0x0300, DEF_STR( Lives ) )
+	PORT_DIPSETTING(      0x0100, "1" )
+	PORT_DIPSETTING(      0x0000, "2" )
+	PORT_DIPSETTING(      0x0300, "3" )
+	PORT_DIPSETTING(      0x0200, "4" )
+	PORT_DIPNAME( 0x0c00, 0x0c00, "Difficulty?"  )
+	PORT_DIPSETTING(      0x0800, DEF_STR( Easy ) )
+	PORT_DIPSETTING(      0x0c00, DEF_STR( Normal ) )
+	PORT_DIPSETTING(      0x0400, DEF_STR( Hard ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Hardest ) )
+	PORT_DIPNAME( 0x1000, 0x1000, "Split Coin Chutes" )
 	PORT_DIPSETTING(      0x1000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x2000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Players) )
+	PORT_DIPSETTING(      0x2000, "2" )
+	PORT_DIPSETTING(      0x0000, "3" )
+	PORT_DIPNAME( 0x4000, 0x4000, "Shot Button to Start" )
 	PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 	PORT_DIPNAME( 0x8000, 0x0000, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 
-	PORT_START /* There's an unused(?) connector on the pcb which presumably is this */
-	PORT_BIT( 0x7f, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SERVICE2 )
+	PORT_START 
+	PORT_BIT( 0x1, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(3)
+	PORT_BIT( 0x2, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(3)
+	PORT_BIT( 0x4, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(3)
+	PORT_BIT( 0x8, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(3)
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(3)
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(3)
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN3 )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( schmeisr )
@@ -1168,6 +1213,54 @@ ROM_START( nitrobal )
 
 	ROM_REGION(0x80000, REGION_SOUND2, 0 ) /* Oki samples */
 	ROM_LOAD( "mav11.r19",  0x00000,  0x80000,  CRC(ef513908) SHA1(72db6c704071d7a784b3768c256fc51087e9e93c) )
+
+	ROM_REGION( 1024, REGION_PROMS, 0 )
+	ROM_LOAD( "jn-00.17l", 0x00000,  0x400,  CRC(6ac77b84) SHA1(9e1e2cabdb20b819e592a0f07d15658062227fa4) )	/* Priority (unused) */	
+ROM_END
+
+ROM_START( gunball )
+	ROM_REGION(0x200000, REGION_CPU1, 0 ) /* 68000 code */
+	ROM_LOAD16_BYTE( "jc01.3d",     0x000000, 0x20000, CRC(61bfa998) SHA1(bee57cf5f1759d68948d27a2aaa817c4fc1e5e5a) )
+	ROM_LOAD16_BYTE( "jc00.3b",     0x000001, 0x20000, CRC(73ba8f74) SHA1(7bb27e6f81c6ff79fe391faf6e05114a6cd85a5b) )
+	ROM_LOAD16_BYTE( "jc03.5d",     0x040000, 0x20000, CRC(19231612) SHA1(fc9e4a2fd09d4a27631260261bb138bc134e0882) )
+	ROM_LOAD16_BYTE( "jc02.5b",     0x040001, 0x20000, CRC(a254f34c) SHA1(25ff595eccd6fc2734fefdcda5d35c65112506c4) )
+	ROM_LOAD16_BYTE( "jc05-3.6d",   0x080000, 0x40000, CRC(f750a709) SHA1(d339bbac2be95e2947f1195816e4d147e1d38a8f) )
+	ROM_LOAD16_BYTE( "jc04-3.6b",   0x080001, 0x40000, CRC(ad711767) SHA1(b5df0fa521ff08ddf5b6203b73a7cb8c6d3121b8) )
+	/* Two empty rom slots at d7, b7 */
+
+	ROM_REGION(0x10000, REGION_CPU2, 0 ) /* Sound CPU */
+	ROM_LOAD( "jl08.r20",  0x00000,  0x10000,  CRC(93d93fe1) SHA1(efc618724251d23a23b3019d475f7739a7e88751) )
+
+	ROM_REGION( 0x020000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD16_BYTE( "jl06.d10",  0x00000,  0x10000,  CRC(91cf668e) SHA1(fc153eaa09777f79369037a139470ad1118e8d7e) ) /* Chars */
+	ROM_LOAD16_BYTE( "jl07.d12",  0x00001,  0x10000,  CRC(e61d0e42) SHA1(80d6ada356c721b0be826554ec6731dbbc19e0ab) )
+
+	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "mav00.b10", 0x00000, 0x80000,  CRC(34785d97) SHA1(094f881cd699d1b9fd079778f20f8c9d83283e6e) ) /* Tiles */
+	ROM_LOAD( "mav01.b12", 0x80000, 0x80000,  CRC(8b531b16) SHA1(f734286f4510b2c09dc2d6d2b8c8da9dc4424287) )
+
+	ROM_REGION( 0x200000, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_LOAD( "mav02.b16", 0x000000, 0x100000,  CRC(20723bf7) SHA1(b3491d98ff415701fec2b58d85f99c743d71b013) ) /* Tiles */
+	ROM_LOAD( "mav03.e16", 0x100000, 0x100000,  CRC(ef6195f0) SHA1(491bc030519c78b84396f7f8a21df9daf8acc140) )
+
+	ROM_REGION( 0x300000, REGION_GFX4, ROMREGION_DISPOSE )
+	ROM_LOAD16_BYTE( "mav05.e19", 0x000000, 0x100000,  CRC(d92d769c) SHA1(8012e7f2b9a7cbccde8da90025647443beb6c47c) ) /* Sprites #1 */
+	ROM_LOAD16_BYTE( "mav04.b19", 0x000001, 0x100000,  CRC(8ba48385) SHA1(926ae1e0e99b8e022b6798ceb29dd080cfc1bada) )
+	ROM_LOAD16_BYTE( "mav07.e20", 0x200000, 0x080000,  CRC(5fc10ccd) SHA1(7debcf223802d5c2ea3d29d39850c8756c863b31) )
+	ROM_LOAD16_BYTE( "mav06.b20", 0x200001, 0x080000,  CRC(ae6201a5) SHA1(c0ae87fa96d12377c5522cb8adfed03373ab3757) )
+
+	ROM_REGION( 0x80000, REGION_GFX5, ROMREGION_DISPOSE )
+	ROM_LOAD16_BYTE( "mav09.e23", 0x000000, 0x040000,  CRC(1ce7b51a) SHA1(17ed8f34bf6d057e0504e72e95f448d5923aa82e) ) /* Sprites #2 */
+	ROM_LOAD16_BYTE( "mav08.b23", 0x000001, 0x040000,  CRC(64966576) SHA1(40c14c0f62eef0317abfb7192505e0337fb5cde5) )
+
+	ROM_REGION(0x80000, REGION_SOUND1, 0 ) /* Oki samples */
+	ROM_LOAD( "mav10.r17",  0x00000,  0x80000,  CRC(8ad734b0) SHA1(768b9f54bbf4b54591cafecb7a27960da919ce84) )
+
+	ROM_REGION(0x80000, REGION_SOUND2, 0 ) /* Oki samples */
+	ROM_LOAD( "mav11.r19",  0x00000,  0x80000,  CRC(ef513908) SHA1(72db6c704071d7a784b3768c256fc51087e9e93c) )
+
+	ROM_REGION( 1024, REGION_PROMS, 0 )
+	ROM_LOAD( "jn-00.17l", 0x00000,  0x400,  CRC(6ac77b84) SHA1(9e1e2cabdb20b819e592a0f07d15658062227fa4) )	/* Priority (unused) */
 ROM_END
 
 ROM_START( schmeisr )
@@ -1248,4 +1341,5 @@ GAMEX(1991, rohgau,   rohga,   rohga,    rohga,    rohga,    ROT0,   "Data East 
 GAME( 1992, wizdfire, 0,       wizdfire, wizdfire, wizdfire, ROT0,   "Data East Corporation", "Wizard Fire (US v1.1)" )
 GAME( 1992, darksel2, wizdfire,wizdfire, wizdfire, wizdfire, ROT0,   "Data East Corporation", "Dark Seal 2 (Japan v2.1)" )
 GAME( 1992, nitrobal, 0,       nitrobal, nitrobal, nitrobal, ROT270, "Data East Corporation", "Nitro Ball (US)" )
+GAME( 1992, gunball,  nitrobal,nitrobal, nitrobal, nitrobal, ROT270, "Data East Corporation", "Gun Ball (Japan)" )
 GAMEX(1993, schmeisr, 0,       schmeisr, schmeisr, schmeisr, ROT0,   "Hot B",                 "Schmeiser Robo", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )

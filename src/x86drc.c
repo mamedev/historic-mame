@@ -350,7 +350,7 @@ void drc_append_call_debugger(struct drccore *drc)
 	struct linkdata link;
 	_cmp_m32abs_imm(&mame_debug, 0);								// cmp	[mame_debug],0
 	_jcc_short_link(COND_E, &link);									// je	skip
-	drc_append_save_call_restore(drc, (void *)MAME_Debug, 0);		// save volatiles
+	drc_append_save_call_restore(drc, (genf *)MAME_Debug, 0);		// save volatiles
 	_resolve_link(&link);
 #endif
 }

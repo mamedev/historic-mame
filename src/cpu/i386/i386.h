@@ -61,7 +61,8 @@ typedef enum { EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI } DREGS;
 
 enum
 {
-	I386_EAX = 1,
+	I386_PC = 0,
+	I386_EAX,
 	I386_ECX,
 	I386_EDX,
 	I386_EBX,

@@ -54,8 +54,6 @@
 #include "vidhrdw/generic.h"
 #include "cpu/i8039/i8039.h"
 
-extern struct Samplesinterface circus_samples_interface;
-
 
 /* gmissile and m4 need the RAM mirror */
 
@@ -2032,7 +2030,7 @@ static MACHINE_DRIVER_START( polaris )
 	MDRV_VISIBLE_AREA(1*8, 31*8-1, 4*8, 32*8-1)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD_TAG("disc", DISCRETE, polaris_sound_interface)
+	MDRV_SOUND_ADD_TAG("discrete", DISCRETE, polaris_discrete_interface)
 MACHINE_DRIVER_END
 
 
@@ -2871,7 +2869,7 @@ INPUT_PORTS_START( jspecter )
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Difficulty ) ) //Bug reports imply this is a toggle switch, confirm?
 	PORT_DIPSETTING(    0x80, DEF_STR( Easy ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Hard ) )
-	
+
 	PORT_START_TAG("DSW0")
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "3" )

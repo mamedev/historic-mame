@@ -32,7 +32,7 @@ seems a similar board to hotblocks
 
 same TPC1020 AFN-084C chip
 same 24c02 eeprom
-V30 instead of I88 * currently we use i88 because v30 won't boot?
+V30 instead of I88
 AY3-8910 instead of YM2149 (compatible)
 
 video is not banked in this case instead palette data is sent to the ports
@@ -41,7 +41,6 @@ strange palette format.
 todo:
 hook up eeprom
 takes a long time to boot (eeprom?)
-doesn't boot at all with correct cpu ?!
 
 
 Electronic Devices was printed on rom labels
@@ -53,63 +52,45 @@ Electronic Devices was printed on rom labels
 
 static data8_t *twins_videoram;
 static data16_t *twins_pal;
-static int port4_dat;
 static UINT16 paloff = 0;
 
-/* port 4 eeprom? */
+/* port 4 is eeprom */
 static READ8_HANDLER( twins_port4_r )
 {
-	return port4_dat;//0xff;// rand();
+	return 0xff;
 }
 
 static WRITE8_HANDLER( twins_port4_w )
 {
-	port4_dat = data;
 }
 
 static WRITE8_HANDLER( port6_pal0_w )
 {
-	twins_pal[paloff] = (twins_pal[paloff]&0xff00)|(data<<0);
+	twins_pal[paloff] = (twins_pal[paloff] & 0xff00) | data;
 }
 
 static WRITE8_HANDLER( port7_pal1_w )
 {
-	twins_pal[paloff] = (twins_pal[paloff]&0x00ff)|(data<<8);
-	paloff++;
+	twins_pal[paloff] = (twins_pal[paloff] & 0x00ff) | (data<<8);
+	paloff = (paloff + 1) & 0xff;
+	
 }
 
 /* ??? weird ..*/
 static WRITE8_HANDLER( porte_paloff0_w )
 {
-//	if (data!=0) printf("paloff0 data %02x\n",data);
-//	paloff = (paloff & 0x00ff) | (data<<8);
-
-
 	paloff = 0;
 }
 
+/* ??? weird ..*/
 static WRITE8_HANDLER( portf_paloff1_w )
 {
-//	if (data!=0) printf("paloff1 data %02x\n",data);
-//	paloff = (paloff & 0xff00) | data;
 	paloff = 0;
-}
-
-
-
-static READ8_HANDLER( twins_video_read )
-{
-	return twins_videoram[offset];
-}
-
-static WRITE8_HANDLER( twins_video_write )
-{
-	twins_videoram[offset]=data;
 }
 
 static ADDRESS_MAP_START( twins_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x00000, 0x0ffff) AM_RAM
-	AM_RANGE(0x10000, 0x1ffff) AM_READ(twins_video_read) AM_WRITE(twins_video_write) AM_BASE(&twins_videoram) //AM_RAM
+	AM_RANGE(0x10000, 0x1ffff) AM_RAM AM_BASE(&twins_videoram) 
 	AM_RANGE(0x20000, 0xfffff) AM_ROM
 ADDRESS_MAP_END
 
@@ -125,7 +106,7 @@ ADDRESS_MAP_END
 
 VIDEO_START(twins)
 {
-	twins_pal=auto_malloc(0x20000);
+	twins_pal = auto_malloc(0x100*2);
 	return 0;
 }
 
@@ -137,7 +118,7 @@ VIDEO_UPDATE(twins)
 
 	fillbitmap(bitmap, get_black_pen(), 0);
 
-	for (i=0;i<0x8000;i++)
+	for (i=0;i<0x100;i++)
 	{
 		int dat,r,g,b;
 		dat = twins_pal[i];
@@ -151,7 +132,6 @@ VIDEO_UPDATE(twins)
 		b = (dat>>10) & 0x1f;
 		b = BITSWAP8(b,7,6,5,0,1,2,3,4);
 
-
 		palette_set_color(i, r*8,g*8,b*8);
 	}
 
@@ -160,7 +140,7 @@ VIDEO_UPDATE(twins)
 	{
 		for(x=0;x<xxx;x++)
 		{
-			/*if(twins_videoport&0x40)*/plot_pixel(bitmap, x,y, twins_videoram[count]);
+			plot_pixel(bitmap, x,y, twins_videoram[count]);
 			count++;
 		}
 	}
@@ -190,16 +170,11 @@ INPUT_PORTS_START(twins)
 INPUT_PORTS_END
 
 
-static INTERRUPT_GEN( twins_irq )
-{
-	cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
-}
-
 static struct AY8910interface ay8910_interface =
 {
-	1, /* number of chips */
+	1,
 	2000000, /* 2 MHz */
-	{ 50 },
+	{ 100 },
 	{ input_port_0_r },
 	{ input_port_1_r },
 	{ 0 },
@@ -208,20 +183,19 @@ static struct AY8910interface ay8910_interface =
 
 static MACHINE_DRIVER_START( twins )
 	/* basic machine hardware */
-	MDRV_CPU_ADD(I88/*V30*/, 8000000)  // should be v30 but it won't boot?
+	MDRV_CPU_ADD(V30, 8000000)
 	MDRV_CPU_PROGRAM_MAP(twins_map, 0)
 	MDRV_CPU_IO_MAP(twins_io,0)
-	MDRV_CPU_VBLANK_INT(twins_irq,1)
-//	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
-	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_FRAMES_PER_SECOND(50)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(320,256)
 	MDRV_VISIBLE_AREA(0, 320-1, 0, 200-1)
-	MDRV_PALETTE_LENGTH(0x8000)
+	MDRV_PALETTE_LENGTH(0x100)
 
 	MDRV_VIDEO_START(twins)
 	MDRV_VIDEO_UPDATE(twins)
@@ -236,4 +210,4 @@ ROM_START( twins )
 	ROM_LOAD16_BYTE( "2.bin", 0x000001, 0x080000, CRC(8a5392f4) SHA1(e6a2ecdb775138a87d27aa4ad267bdec33c26baa) )
 ROM_END
 
-GAME( 1994, twins,    0,        twins, twins, 0, ROT0,  "Electronic Devices", "Twins" )
+GAME( 1994, twins, 0, twins, twins, 0, ROT0, "Electronic Devices", "Twins" )

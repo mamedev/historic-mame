@@ -9,6 +9,8 @@ extern data16_t *stlforce_bg_scrollram, *stlforce_mlow_scrollram, *stlforce_mhig
 
 extern data16_t *stlforce_spriteram;
 
+int stlforce_sprxoffs;
+
 /* background, appears to be the bottom layer */
 
 static void get_stlforce_bg_tile_info(int tile_index)
@@ -129,7 +131,7 @@ static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cl
 					 num,
 					 64+attr,
 					 0,0,
-					 xpos,ypos,
+					 xpos+stlforce_sprxoffs,ypos,
 					 cliprect,
 					 TRANSPARENCY_PEN,0 );
 		}
@@ -144,12 +146,12 @@ VIDEO_UPDATE( stlforce )
 	if(stlforce_vidattrram[6] & 1)
 	{
 		for(i=0;i<256;i++)
-			tilemap_set_scrollx(stlforce_bg_tilemap, i, stlforce_bg_scrollram[i]+8);
+			tilemap_set_scrollx(stlforce_bg_tilemap, i, stlforce_bg_scrollram[i]+9); //+9 for twinbrat
 	}
 	else
 	{
 		for(i=0;i<256;i++)
-			tilemap_set_scrollx(stlforce_bg_tilemap, i, stlforce_bg_scrollram[0]+8);
+			tilemap_set_scrollx(stlforce_bg_tilemap, i, stlforce_bg_scrollram[0]+9); //+9 for twinbrat
 	}
 
 	if(stlforce_vidattrram[6] & 4)

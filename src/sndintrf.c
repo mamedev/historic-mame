@@ -703,8 +703,8 @@ struct snd_interface sndintf[] =
 		ASTROCADE_num,
 		ASTROCADE_clock,
 		astrocade_sh_start,
-		astrocade_sh_stop,
-		astrocade_sh_update,
+		0,
+		0,
 		0
 	},
 #endif

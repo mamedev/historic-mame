@@ -53,8 +53,8 @@ typedef struct
 
 
 /* globals available to everyone */
-unsigned char *namco_soundregs;
-unsigned char *namco_wavedata;
+data8_t *namco_soundregs;
+data8_t *namco_wavedata;
 
 /* data about the sound system */
 static sound_channel channel_list[MAX_VOICES];
@@ -664,11 +664,12 @@ WRITE8_HANDLER( namco_15xx_w )
 	0x3c		ch 0	noise sw
 */
 
-WRITE8_HANDLER( namcos1_sound_w )
+static WRITE8_HANDLER( namcos1_sound_w )
 {
 	sound_channel *voice;
 	int ch;
 	int nssw;
+
 
 	/* verify the offset */
 	if (offset > 63)
@@ -676,6 +677,8 @@ WRITE8_HANDLER( namcos1_sound_w )
 		logerror("NAMCOS1 sound: Attempting to write past the 64 registers segment\n");
 		return;
 	}
+
+	namco_soundregs = namco_wavedata + 0x100;
 
 	if (namco_soundregs[offset] == data)
 		return;
@@ -719,26 +722,28 @@ WRITE8_HANDLER( namcos1_sound_w )
 	}
 }
 
-READ8_HANDLER( namcos1_sound_r )
+WRITE8_HANDLER( namcos1_cus30_w )
 {
-	return namco_soundregs[offset];
-}
-
-WRITE8_HANDLER( namcos1_wavedata_w )
-{
-	if (namco_wavedata[offset] != data)
+	if (offset < 0x100)
 	{
-		/* update the streams */
-		stream_update(stream,0);
+		if (namco_wavedata[offset] != data)
+		{
+			/* update the streams */
+			stream_update(stream,0);
 
-		namco_wavedata[offset] = data;
+			namco_wavedata[offset] = data;
 
-		/* update the decoded waveform table */
-		update_namco_waveform(offset, data);
+			/* update the decoded waveform table */
+			update_namco_waveform(offset, data);
+		}
 	}
+	else if (offset < 0x140)
+		namcos1_sound_w(offset - 0x100,data);
+	else
+		namco_wavedata[offset] = data;
 }
 
-READ8_HANDLER( namcos1_wavedata_r )
+READ8_HANDLER( namcos1_cus30_r )
 {
 	return namco_wavedata[offset];
 }

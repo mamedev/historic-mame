@@ -10,8 +10,8 @@
 #include "generic.h"
 
 
-unsigned char *c1942_fgvideoram;
-unsigned char *c1942_bgvideoram;
+UINT8 *c1942_fgvideoram;
+UINT8 *c1942_bgvideoram;
 
 static int c1942_palette_bank;
 static struct tilemap *fg_tilemap, *bg_tilemap;
@@ -174,7 +174,7 @@ WRITE8_HANDLER( c1942_palette_bank_w )
 
 WRITE8_HANDLER( c1942_scroll_w )
 {
-	static unsigned char scroll[2];
+	static UINT8 scroll[2];
 
 	scroll[offset] = data;
 	tilemap_set_scrollx(bg_tilemap,0,scroll[0] | (scroll[1] << 8));

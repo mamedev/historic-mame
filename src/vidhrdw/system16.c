@@ -98,6 +98,13 @@ extern void update_system18_vdp( struct mame_bitmap *bitmap, const struct rectan
 extern void start_system18_vdp(void);
 extern READ16_HANDLER( segac2_vdp_r );
 extern WRITE16_HANDLER( segac2_vdp_w );
+data16_t sys18_ddcrew_bankregs[0x20];
+
+
+#define SHOW_BANKS	0
+#if SHOW_BANKS
+extern UINT8 sprite_banks_used[];
+#endif
 
 
 /*
@@ -250,7 +257,6 @@ static void draw_sprite( //*
 	unsigned pen, data;
 
 	priority = 1<<priority;
-	if (!strcmp(Machine->gamedrv->name,"sonicbom")) flipy^=0x80; // temp hack until we fix drawing
 
 	if( flipy ){
 		dy = -1;
@@ -850,7 +856,8 @@ VIDEO_START( system16 ){
 		0x8,0x9,0xa,0xb,
 		0xc,0xd,0xe,0xf
 	};
-	sys16_obj_bank = bank_default;
+	if (!sys16_obj_bank)
+		sys16_obj_bank = bank_default;
 
 	/* Normal colors */
 	compute_resistor_weights(0, 255, -1.0,
@@ -923,10 +930,9 @@ VIDEO_START( system16 ){
 		sys16_refreshenable = 1;
 
 		/* common defaults */
-		sys16_update_proc = 0;
 		sys16_spritesystem = sys16_sprite_shinobi;
-		sys16_sprxoffset = -0xb8;
-		sys16_textmode = 0;
+		if (!sys16_sprxoffset)
+			sys16_sprxoffset = -0xb8;
 		sys16_bgxoffset = 0;
 		sys16_bg_priority_mode=0;
 		sys16_fg_priority_mode=0;
@@ -985,10 +991,19 @@ VIDEO_START( hangon ){
 	return 0;
 }
 
-VIDEO_START( system18 ){
+
+VIDEO_START( system18old ){
+	int i;
+
 	sys16_bg1_trans=1;
 
 	start_system18_vdp();
+
+	/* clear these registers to -1 so that writes of 0 get picked up */
+	for (i=0;i<0x20;i++)
+	{
+		sys18_ddcrew_bankregs[i]=-1;
+	}
 
 	background2 = tilemap_create(
 		get_bg2_tile_info,
@@ -1003,6 +1018,10 @@ VIDEO_START( system18 ){
 		TILEMAP_TRANSPARENT,
 		8,8,
 		64*2,32*2 );
+
+
+
+
 
 	if( background2 && foreground2 ){
 		if( video_start_system16()==0 ){
@@ -1189,7 +1208,15 @@ static void sys18_vh_screenrefresh_helper( void ){
 }
 
 VIDEO_UPDATE( system16 ){
-	if (!sys16_refreshenable) return;
+	if (!sys16_refreshenable)
+	{
+		fillbitmap(bitmap, 0, cliprect);
+		return;
+	}
+
+#if SHOW_BANKS
+	memset(sprite_banks_used, 0, 16);
+#endif
 
 	if( sys16_update_proc ) sys16_update_proc();
 	update_page();
@@ -1211,10 +1238,94 @@ VIDEO_UPDATE( system16 ){
 	tilemap_draw( bitmap,cliprect, text_layer, 0, 0xf );
 
 	draw_sprites( bitmap,cliprect,0 );
+
+#if SHOW_BANKS
+	usrintf_showmessage("Banks: %c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",
+		sprite_banks_used[0] ? '0' : ' ',
+		sprite_banks_used[1] ? '1' : ' ',
+		sprite_banks_used[2] ? '2' : ' ',
+		sprite_banks_used[3] ? '3' : ' ',
+		sprite_banks_used[4] ? '4' : ' ',
+		sprite_banks_used[5] ? '5' : ' ',
+		sprite_banks_used[6] ? '6' : ' ',
+		sprite_banks_used[7] ? '7' : ' ',
+		sprite_banks_used[8] ? '8' : ' ',
+		sprite_banks_used[9] ? '9' : ' ',
+		sprite_banks_used[10] ? 'A' : ' ',
+		sprite_banks_used[11] ? 'B' : ' ',
+		sprite_banks_used[12] ? 'C' : ' ',
+		sprite_banks_used[13] ? 'D' : ' ',
+		sprite_banks_used[14] ? 'E' : ' ',
+		sprite_banks_used[15] ? 'F' : ' ');
+#endif
 }
 
-VIDEO_UPDATE( system18 ){
-	if (!sys16_refreshenable) return;
+static struct GfxLayout decodecharlayout =
+{
+	8,8,
+	0x2000, // can't use rgn_frac with dynamic decode
+	3,
+	{ 0x20000*8, 0x10000*8, 0x00000*8 },
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
+	8*8
+};
+
+/* extra rom banking, decode on the fly instead of messing around in the sprite draw functions.. used by cltchitr and ddcrew.*/
+WRITE16_HANDLER( sys18_extrombank_w )
+{
+	data16_t old=sys18_ddcrew_bankregs[offset];
+	COMBINE_DATA(&sys18_ddcrew_bankregs[offset]);
+
+	if (sys18_ddcrew_bankregs[offset]!=old)
+	{
+		if (offset>7) // sprite banking
+		{
+			data8_t* sprite_region = memory_region(REGION_GFX2);
+			data8_t* sprite_dataregion = memory_region(REGION_GFX4);
+
+			offset&=7;
+
+			memcpy(&sprite_region[offset*0x40000],&sprite_dataregion[(data&0x1f)*0x40000],0x40000);
+
+		}
+		else // tile banking
+		{
+			data8_t* tile_region = memory_region(REGION_GFX1);
+			data8_t* tile_dataregion = memory_region(REGION_GFX3);
+			size_t tile_dataregionsize = memory_region_length(REGION_GFX3)/3;
+			int numchar;
+
+			offset&=7;
+
+			memcpy(&tile_region[0x00000+0x2000*offset],&tile_dataregion[tile_dataregionsize*0+(0x2000*(data&0x1f))],0x2000);
+			memcpy(&tile_region[0x10000+0x2000*offset],&tile_dataregion[tile_dataregionsize*1+(0x2000*(data&0x1f))],0x2000);
+			memcpy(&tile_region[0x20000+0x2000*offset],&tile_dataregion[tile_dataregionsize*2+(0x2000*(data&0x1f))],0x2000);
+
+
+			for (numchar = 0x400*offset; numchar < 0x400*offset+0x400;numchar++)
+				decodechar(Machine->gfx[0],numchar,
+					(UINT8 *)tile_region,&decodecharlayout);
+
+
+			tilemap_mark_all_tiles_dirty (background);
+			tilemap_mark_all_tiles_dirty (foreground);
+			tilemap_mark_all_tiles_dirty (text_layer);
+
+		}
+
+
+	}
+}
+
+VIDEO_UPDATE( system18old ){
+	if (!sys16_refreshenable)
+	{
+		/* should it REALLY not clear the bitmap? ddcrew vdp gfx look ugly if i don't do it like this */
+		fillbitmap(bitmap,get_black_pen(),cliprect);
+		return;
+	}
+
 	if( sys16_update_proc ) sys16_update_proc();
 	update_page();
 	sys18_vh_screenrefresh_helper(); /* set scroll registers */
@@ -1230,6 +1341,7 @@ VIDEO_UPDATE( system18 ){
 	tilemap_draw( bitmap,cliprect, background, TILEMAP_IGNORE_TRANSPARENCY | 2, 0 );	//??
 
 	if (!strcmp(Machine->gamedrv->name,"astorm"))  update_system18_vdp(bitmap,cliprect); // kludge: render vdp here for astorm
+	/* ASTORM also draws some sprites with the vdp, needs to be higher priority..*/
 
 //	sprite_draw(sprite_list,3);
 	tilemap_draw( bitmap,cliprect, background, 1, 0x1 );
@@ -1249,8 +1361,32 @@ VIDEO_UPDATE( system18 ){
 //	sprite_draw(sprite_list,0);
 	tilemap_draw( bitmap,cliprect, text_layer, 0, 0xf );
 
+	if (!strcmp(Machine->gamedrv->name,"cltchitr"))  update_system18_vdp(bitmap,cliprect); // kludge: render vdp here for clthitr, draws the ball in game!
+	if (!strcmp(Machine->gamedrv->name,"cltchtrj"))  update_system18_vdp(bitmap,cliprect); // kludge: render vdp here for clthitr, draws the ball in game!
+//	if (!strcmp(Machine->gamedrv->name,"astorm"))  update_system18_vdp(bitmap,cliprect); // kludge: render vdp here for astorm
 
 	draw_sprites( bitmap,cliprect, 0 );
+/*
+usrintf_showmessage("%04x %04x %04x %04x %04x %04x %04x %04x |||||||||||| %04x %04x %04x %04x %04x %04x %04x %04x"
+ ,sys18_ddcrew_bankregs[0x0]
+ ,sys18_ddcrew_bankregs[0x1]
+ ,sys18_ddcrew_bankregs[0x2]
+ ,sys18_ddcrew_bankregs[0x3]
+ ,sys18_ddcrew_bankregs[0x4]
+ ,sys18_ddcrew_bankregs[0x5]
+ ,sys18_ddcrew_bankregs[0x6]
+ ,sys18_ddcrew_bankregs[0x7]
+ ,sys18_ddcrew_bankregs[0x8]
+ ,sys18_ddcrew_bankregs[0x9]
+ ,sys18_ddcrew_bankregs[0xa]
+ ,sys18_ddcrew_bankregs[0xb]
+ ,sys18_ddcrew_bankregs[0xc]
+ ,sys18_ddcrew_bankregs[0xd]
+ ,sys18_ddcrew_bankregs[0xe]
+ ,sys18_ddcrew_bankregs[0xf]
+ );
+*/
+
 }
 
 
@@ -1960,6 +2096,35 @@ VIDEO_UPDATE( aburner ){
 	/* hand, scores */
 	tilemap_draw( bitmap,cliprect, foreground, 0, 7 );
 	tilemap_draw( bitmap,cliprect, foreground, 1, 7 );
+
+	tilemap_draw( bitmap,cliprect, text_layer, 0, 7 );
+	draw_sprites( bitmap,cliprect, 2 );
+
+//	debug_draw( bitmap,cliprect, 8,8,sys16_roadram[0x1000] );
+}
+
+VIDEO_UPDATE( gprider ){
+	sys16_aburner_vh_screenrefresh_helper();
+	update_page();
+
+	fillbitmap(priority_bitmap,0,cliprect);
+
+	aburner_draw_road( bitmap,cliprect );
+
+//	tilemap_draw( bitmap,cliprect, background2, 0, 7 );
+//	tilemap_draw( bitmap,cliprect, background2, 1, 7 );
+
+	/* speed indicator, high score header */
+	tilemap_draw( bitmap,cliprect, background, 0, 0 );
+	tilemap_draw( bitmap,cliprect, background, 1, 0 );
+
+	/* radar view */
+	tilemap_draw( bitmap,cliprect, foreground2, 0, 0 );
+	tilemap_draw( bitmap,cliprect, foreground2, 1, 0 );
+
+	/* hand, scores */
+	tilemap_draw( bitmap,cliprect, foreground, 0, 0 );
+	tilemap_draw( bitmap,cliprect, foreground, 1, 0 );
 
 	tilemap_draw( bitmap,cliprect, text_layer, 0, 7 );
 	draw_sprites( bitmap,cliprect, 2 );

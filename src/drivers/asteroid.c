@@ -8,8 +8,6 @@
 		* Lunar Lander
 
 	Known bugs:
-		* sound emu isn't perfect - sometimes explosions don't register in Asteroids
-		* the low background thrust in Lunar Lander isn't emulated
 		* the ERROR message in Asteroids Deluxe self test is related to a pokey problem
 
 ****************************************************************************
@@ -627,7 +625,7 @@ static MACHINE_DRIVER_START( asteroid )
 	MDRV_VIDEO_UPDATE(vector)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD_TAG("disc", DISCRETE, asteroid_sound_interface)
+	MDRV_SOUND_ADD_TAG("disc", DISCRETE, asteroid_discrete_interface)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( asterock )
@@ -635,7 +633,7 @@ static MACHINE_DRIVER_START( asterock )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(asteroid)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_VBLANK_INT(asterock_interrupt,4)	/* 250 Hz */	
+	MDRV_CPU_VBLANK_INT(asterock_interrupt,4)	/* 250 Hz */
 MACHINE_DRIVER_END
 
 
@@ -649,7 +647,7 @@ static MACHINE_DRIVER_START( astdelux )
 	MDRV_NVRAM_HANDLER(atari_vg)
 
 	/* sound hardware */
-	MDRV_SOUND_REPLACE("disc", DISCRETE, astdelux_sound_interface)
+	MDRV_SOUND_REPLACE("disc", DISCRETE, astdelux_discrete_interface)
 	MDRV_SOUND_ADD(POKEY, pokey_interface)
 MACHINE_DRIVER_END
 
@@ -673,7 +671,7 @@ static MACHINE_DRIVER_START( llander )
 	MDRV_VIDEO_UPDATE(vector)
 
 	/* sound hardware */
-	MDRV_SOUND_REPLACE("disc", DISCRETE, llander_sound_interface)
+	MDRV_SOUND_REPLACE("disc", DISCRETE, llander_discrete_interface)
 MACHINE_DRIVER_END
 
 
@@ -725,6 +723,16 @@ ROM_START( asterock )
 	/* Vector ROM */
 	ROM_LOAD( "sidamas.0",    0x5000, 0x0400, CRC(6bd2053f) SHA1(790f2858f44bbb1854e2d9d549e29f4815c4665b) )
 	ROM_LOAD( "sidamas.1",    0x5400, 0x0400, CRC(231ce201) SHA1(710f4c19864d725ba1c9ea447a97e84001a679f7) )
+ROM_END
+
+
+ROM_START( meteorts )
+	ROM_REGION( 0x8000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "m0_c1.bin",    0x6800, 0x0800, CRC(dff88688) SHA1(7f4148a580fb6f605499c99e7dde7068eca1651a) )
+	ROM_LOAD( "m1_f1.bin",    0x7000, 0x0800, CRC(e53c28a9) SHA1(d9f081e73511ec43377f0c6457747f15a470d4dc) )
+	ROM_LOAD( "m2_j1.bin",    0x7800, 0x0800, CRC(64bd0408) SHA1(141d053cb4cce3fece98293136928b527d3ade0f) )
+	/* Vector ROM */
+	ROM_LOAD( "mv_np3.bin",   0x5000, 0x0800, CRC(11d1c4ae) SHA1(433c2c05b92094bbe102c356d7f1a907db13da67) )
 ROM_END
 
 
@@ -824,8 +832,8 @@ GAME( 1979, asteroid, 0,        asteroid, asteroid, 0,        ROT0, "Atari", "As
 GAME( 1979, asteroi1, asteroid, asteroid, asteroid, 0,        ROT0, "Atari", "Asteroids (rev 1)" )
 GAME( 1979, asteroib, asteroid, asteroid, asteroib, asteroib, ROT0, "bootleg", "Asteroids (bootleg on Lunar Lander hardware)" )
 GAME( 1979, asterock, asteroid, asterock, asterock, asterock, ROT0, "Sidam", "Asterock" )
+GAME( 1979, meteorts, asteroid, asteroid, asteroid, 0,        ROT0, "VGG",   "Meteorites" )
 GAME( 1980, astdelux, 0,        astdelux, astdelux, astdelux, ROT0, "Atari", "Asteroids Deluxe (rev 2)" )
 GAME( 1980, astdelu1, astdelux, astdelux, astdelux, astdelux, ROT0, "Atari", "Asteroids Deluxe (rev 1)" )
 GAME( 1979, llander,  0,        llander,  llander,  0,        ROT0, "Atari", "Lunar Lander (rev 2)" )
 GAME( 1979, llander1, llander,  llander,  llander1, 0,        ROT0, "Atari", "Lunar Lander (rev 1)" )
-

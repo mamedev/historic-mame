@@ -72,6 +72,7 @@ write:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/i8039/i8039.h"
+#include "vicdual.h"
 
 
 
@@ -278,6 +279,9 @@ INPUT_PORTS_START( frogs )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_VBLANK )
 	PORT_BIT( 0x7e, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* probably unused */
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 ) PORT_IMPULSE(30) /* PORT_RESETCPU */
+
+	PORT_START_TAG("IN2")
+	PORT_ADJUSTER( 80, "Zip Volume" )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( sspacaho )
@@ -1175,16 +1179,6 @@ static MACHINE_DRIVER_START( 4ports )
 MACHINE_DRIVER_END
 
 
-static MACHINE_DRIVER_START( safari )
-
-	/* basic machine hardware */
-	MDRV_IMPORT_FROM(2ports)
-	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_PROGRAM_MAP(safari_map,0)
-	MDRV_CPU_IO_MAP(readport_safari,writeport)
-MACHINE_DRIVER_END
-
-
 static MACHINE_DRIVER_START( depthch )
 
 	/* basic machine hardware */
@@ -1192,6 +1186,21 @@ static MACHINE_DRIVER_START( depthch )
 
 	/* sound hardware */
 	MDRV_SOUND_ADD(SAMPLES, samples_interface_depthch)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( frogs )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(2ports)
+
+	/* sound hardware */
+// defined in src\includes\vicdual.h
+#ifndef FROGS_USE_SAMPLES
+	MDRV_SOUND_ADD(DISCRETE, frogs_discrete_interface)
+#else
+	MDRV_SOUND_ADD(SAMPLES, frogs_samples_interface)
+#endif
 MACHINE_DRIVER_END
 
 
@@ -1222,6 +1231,16 @@ static MACHINE_DRIVER_START( pulsar )
 
 	/* sound hardware */
 	MDRV_SOUND_ADD(SAMPLES, samples_interface_pulsar)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( safari )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(2ports)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_PROGRAM_MAP(safari_map,0)
+	MDRV_CPU_IO_MAP(readport_safari,writeport)
 MACHINE_DRIVER_END
 
 
@@ -1847,6 +1866,9 @@ static DRIVER_INIT( safari )
 static DRIVER_INIT( frogs )
 {
 	coin_port = 1; coin_bit = 0x80;
+
+	/* install sound port */
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x02, 0x02, 0, 0, frogs_sh_port2_w);
 }
 
 static DRIVER_INIT( sspaceat )
@@ -1960,7 +1982,7 @@ GAME( 1977, depthch,  0,        depthch,  depthch,  depthch,   ROT0,   "Gremlin"
 GAME( 1977, depthv1,  depthch,  depthch,  depthch,  depthch,   ROT0,   "Gremlin", "Depthcharge (older)" )
 GAME( 1977, subhunt,  depthch,  depthch,  depthch,  depthch,   ROT0,   "Taito", "Sub Hunter" )
 GAMEX(1977, safari,   0,        safari,   safari,   safari,    ROT0,   "Gremlin", "Safari", GAME_NO_SOUND )
-GAMEX(1978, frogs,    0,        2ports,   frogs,    frogs,     ROT0,   "Gremlin", "Frogs", GAME_NO_SOUND )
+GAMEX(1978, frogs,    0,        frogs,    frogs,    frogs,     ROT0,   "Gremlin", "Frogs", GAME_IMPERFECT_SOUND )
 GAMEX(1979, sspaceat, 0,        3ports,   sspaceat, sspaceat,  ROT270, "Sega", "Space Attack (upright set 1)", GAME_NO_SOUND )
 GAMEX(1979, sspacat2, sspaceat, 3ports,   sspaceat, sspaceat,  ROT270, "Sega", "Space Attack (upright set 2)", GAME_NO_SOUND )
 GAMEX(1979, sspacat3, sspaceat, 3ports,   sspaceat, sspaceat,  ROT270, "Sega", "Space Attack (upright set 3)", GAME_NO_SOUND )

@@ -111,7 +111,7 @@
 #include "streams.h"
 
 #define MAX_UPD7759 2
-#define DRQ_FREQUENCY 40000
+#define DRQ_FREQUENCY 20000
 #define SILENCE_FREQUENCY 1000
 
 static struct {

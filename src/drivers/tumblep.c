@@ -7,6 +7,7 @@
   Jump Kids	            (c) 1993 Comad
   Fancy World           (c) 1995 Unico
   Hatch Catch			(c) 1995 SemiCom
+  B.C. Story            (c) 1997 SemiCom
   Jumping Pop			(c) 2001 ESD
 
   Bootleg sound is not quite correct yet (Nothing on bootleg 2).
@@ -18,7 +19,8 @@
   the Sound CPU code, there's one unknown ROM.
 
   Sometimes a garbage sprite gets left after the SemiCom logo in Hatch
-  Catch
+  Catch - other semicom games on different hw do this too, might just
+  be a bug in their code
 
   Emulation by Bryan McPhail, mish@tendril.co.uk
   Jumping Pop sound emulation by R. Belmont
@@ -165,6 +167,7 @@ VIDEO_UPDATE( tumblepb );
 VIDEO_UPDATE( jumpkids );
 VIDEO_UPDATE( fncywld );
 VIDEO_UPDATE( jumppop );
+VIDEO_UPDATE( semicom );
 
 WRITE16_HANDLER( tumblep_pf1_data_w );
 WRITE16_HANDLER( tumblep_pf2_data_w );
@@ -172,6 +175,8 @@ WRITE16_HANDLER( fncywld_pf1_data_w );
 WRITE16_HANDLER( fncywld_pf2_data_w );
 WRITE16_HANDLER( tumblep_control_0_w );
 WRITE16_HANDLER( semicom_soundcmd_w );
+
+extern WRITE16_HANDLER( bcstory_tilebank_w );
 
 extern data16_t *tumblep_pf1_data,*tumblep_pf2_data;
 data16_t* tumblep_mainram;
@@ -337,6 +342,7 @@ ADDRESS_MAP_END
 static ADDRESS_MAP_START( htchctch_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM)
 	AM_RANGE(0x100000, 0x100001) AM_WRITE(semicom_soundcmd_w)
+	AM_RANGE(0x100002, 0x100003) AM_WRITE(bcstory_tilebank_w)
 	AM_RANGE(0x120000, 0x123fff) AM_WRITE(MWA16_RAM) AM_BASE(&tumblep_mainram)
 	AM_RANGE(0x140000, 0x1407ff) AM_WRITE(paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16)
 	AM_RANGE(0x160000, 0x160fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size) /* Bootleg sprite buffer */
@@ -345,11 +351,7 @@ static ADDRESS_MAP_START( htchctch_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x300000, 0x30000f) AM_WRITE(tumblep_control_0_w)
 	AM_RANGE(0x320000, 0x320fff) AM_WRITE(tumblep_pf1_data_w) AM_BASE(&tumblep_pf1_data)
 	AM_RANGE(0x322000, 0x322fff) AM_WRITE(tumblep_pf2_data_w) AM_BASE(&tumblep_pf2_data)
-//	AM_RANGE(0x340000, 0x3401ff) AM_WRITE(MWA16_NOP) /* Unused row scroll */
 	AM_RANGE(0x341000, 0x342fff) AM_WRITE(MWA16_RAM) // extra ram?
-//	AM_RANGE(0x340400, 0x34047f) AM_WRITE(MWA16_NOP) /* Unused col scroll */
-//	AM_RANGE(0x342000, 0x3421ff) AM_WRITE(MWA16_NOP)
-//	AM_RANGE(0x342400, 0x34247f) AM_WRITE(MWA16_NOP)
 ADDRESS_MAP_END
 
 
@@ -881,6 +883,88 @@ INPUT_PORTS_START( jumppop )
 */
 INPUT_PORTS_END
 
+INPUT_PORTS_START( bcstory )
+	PORT_START	/* Player 1 controls */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1)
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(1)
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(1)
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
+
+	PORT_START	/* Player 2 controls */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2)
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
+
+	PORT_START	/* Credits */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_VBLANK )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* Dip switch bank 1 */
+	PORT_SERVICE( 0x01, IP_ACTIVE_LOW )
+	PORT_DIPNAME( 0x0e, 0x0e, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x04, "Level 1" )
+	PORT_DIPSETTING(    0x08, "Level 2" )
+	PORT_DIPSETTING(    0x00, "Level 3" )
+	PORT_DIPSETTING(    0x0e, "Level 4" )
+	PORT_DIPSETTING(    0x06, "Level 5" )
+	PORT_DIPSETTING(    0x0a, "Level 6" )
+	PORT_DIPSETTING(    0x02, "Level 7" )
+	PORT_DIPSETTING(    0x0c, "Level 8" )
+	PORT_DIPNAME( 0x70, 0x70, "Coin Mode" ) // coin - finishme
+	PORT_DIPSETTING(    0x00, "0" )
+	PORT_DIPSETTING(    0x10, "1" )
+	PORT_DIPSETTING(    0x20, "2" )
+	PORT_DIPSETTING(    0x30, "3" )
+	PORT_DIPSETTING(    0x40, "4" )
+	PORT_DIPSETTING(    0x50, "5" )
+	PORT_DIPSETTING(    0x60, "6" )
+	PORT_DIPSETTING(    0x70, "7" )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START	/* Dip switch bank 2 */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Free_Play) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x00, "Event Free (Allow Event Selection)" )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, "Control Type" )
+	PORT_DIPSETTING(    0x40, "Joystick + Buttons" )
+	PORT_DIPSETTING(    0x00, "Buttons Only" )
+	PORT_DIPNAME( 0x80, 0x80, "Test Mode (Easy Event Select)" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+INPUT_PORTS_END
+
 /******************************************************************************/
 
 static struct GfxLayout tcharlayout =
@@ -1192,7 +1276,7 @@ static MACHINE_DRIVER_START( htchctch )
 	MDRV_PALETTE_LENGTH(1024)
 
 	MDRV_VIDEO_START(tumblep)
-	MDRV_VIDEO_UPDATE(jumpkids)
+	MDRV_VIDEO_UPDATE(semicom)
 
 	/* sound hardware - same as hyperpac */
 	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
@@ -1394,15 +1478,13 @@ ROM_START( htchctch )
 
 ROM_END
 
-/* BC Story
-protected like hatch catch .. but different code .. we don't have it
-also might be bad dumps, rom data is in a strange order */
+/* BC Story */
 
 ROM_START( bcstry )
 	ROM_REGION( 0x80000, REGION_CPU1, 0 ) /* 68000 Code */
-	ROM_LOAD16_BYTE( "bcstry_u.35",  0x20001, 0x20000, CRC(d25b80a4) SHA1(6ea1c28cf508b856e93a06063e634a09291cb32c) )
+	ROM_LOAD16_BYTE( "bcstry_u.35",  0x40001, 0x20000, CRC(d25b80a4) SHA1(6ea1c28cf508b856e93a06063e634a09291cb32c) )
 	ROM_CONTINUE ( 0x00001, 0x20000)
-	ROM_LOAD16_BYTE( "bcstry_u.62",  0x20000, 0x20000, CRC(7f7aa244) SHA1(ee9bb2bf22d16f06d7935168e2bd09296fba3abc) )
+	ROM_LOAD16_BYTE( "bcstry_u.62",  0x40000, 0x20000, CRC(7f7aa244) SHA1(ee9bb2bf22d16f06d7935168e2bd09296fba3abc) )
 	ROM_CONTINUE ( 0x00000, 0x20000)
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* Z80 Code */
@@ -1423,30 +1505,42 @@ ROM_START( bcstry )
 	ROM_REGION( 0x040000, REGION_SOUND1, 0 ) /* Samples */
 	ROM_LOAD( "bcstry_u.64", 0x00000, 0x40000, CRC(23f0e0fe) SHA1(a8c3cbb6378797db353ca2873e73ff157a6f8a3c) )
 
-	/* order / region of these not verified but each rom is probably 4 plane of 4bpp gfx .. */
-	ROM_REGION( 0x200000, REGION_GFX1, 0 ) /* Sprites */
-	ROM_LOAD16_BYTE( "bcstry_u.109", 0x000001, 0x80000, CRC(eb04d37a) SHA1(818dc7aafac577920d94c65e47d965dc0474d92c) ) // c
-	ROM_LOAD16_BYTE( "bcstry_u.110", 0x000000, 0x80000, CRC(1bfe65c3) SHA1(27dec16b271866ff336d8b25d352977ca80c35bf) ) // c
-	ROM_LOAD16_BYTE( "bcstry_u.111", 0x100001, 0x80000, CRC(c8bf3a3c) SHA1(604fc57c4d3a581016aa2516236c568488d23c77) ) // c
-	ROM_LOAD16_BYTE( "bcstry_u.113", 0x100000, 0x80000, CRC(746ecdd7) SHA1(afb6dbc0fb94e7ce96a9b219f5f7cd3721d1c1c4) ) // c
+	ROM_REGION( 0x200000, REGION_GFX1, 0 ) /* Tiles */
+	ROM_LOAD16_BYTE( "bcstry_u.109", 0x000000, 0x20000, CRC(eb04d37a) SHA1(818dc7aafac577920d94c65e47d965dc0474d92c) ) // tiles a plane 0
+	ROM_CONTINUE ( 0x100000,0x20000) // tiles a plane 1
+	ROM_CONTINUE ( 0x040000,0x20000) // tiles b plane 0
+	ROM_CONTINUE ( 0x140000,0x20000) // tiles b plane 1
+	ROM_LOAD16_BYTE( "bcstry_u.113", 0x000001, 0x20000, CRC(746ecdd7) SHA1(afb6dbc0fb94e7ce96a9b219f5f7cd3721d1c1c4) ) // tiles a plane 2
+	ROM_CONTINUE ( 0x100001,0x20000) // tiles a plane 3
+	ROM_CONTINUE ( 0x040001,0x20000) // tiles b plane 2
+	ROM_CONTINUE ( 0x140001,0x20000) // tiles b plane 3
+	ROM_LOAD16_BYTE( "bcstry_u.110", 0x080000, 0x20000, CRC(1bfe65c3) SHA1(27dec16b271866ff336d8b25d352977ca80c35bf) ) // tiles c plane 0
+	ROM_CONTINUE ( 0x180000,0x20000) // tiles c plane 1
+	ROM_CONTINUE ( 0x0c0000,0x20000) // tiles d plane 0
+	ROM_CONTINUE ( 0x1c0000,0x20000) // tiles d plane 1
+	ROM_LOAD16_BYTE( "bcstry_u.111", 0x080001, 0x20000, CRC(c8bf3a3c) SHA1(604fc57c4d3a581016aa2516236c568488d23c77) ) // tiles c plane 2
+	ROM_CONTINUE ( 0x180001,0x20000) // tiles c plane 3
+	ROM_CONTINUE ( 0x0c0001,0x20000) // tiles d plane 2
+	ROM_CONTINUE ( 0x1c0001,0x20000) // tiles d plane 3
 
-	ROM_REGION( 0x400000, REGION_GFX2, ROMREGION_DISPOSE ) /* GFX */
-	ROM_LOAD16_BYTE( "bcstry_u.100", 0x000001, 0x80000, CRC(8c11cbed) SHA1(e04e53af4fe732bf9d20a9ae5c2a90b576ee0b83) ) // b
-	ROM_LOAD16_BYTE( "bcstry_u.104", 0x000000, 0x80000, CRC(377c0c71) SHA1(77efa9530b1c311d93c84dd8452701414f740269) ) // b
-	ROM_LOAD16_BYTE( "bcstry_u.106", 0x200001, 0x80000, CRC(5219bcbf) SHA1(4b88eab7ffc2dc1de451ae4ee52f1536e179ea13) ) // b
-	ROM_LOAD16_BYTE( "bcstry_u.108", 0x200000, 0x80000, CRC(442307ed) SHA1(71b7f19af64d9961f0f9205b86b4b0ebc13fddda) ) // b
-	ROM_LOAD16_BYTE( "bcstry_u.99",  0x100001, 0x80000, CRC(cdb1af87) SHA1(df1fbda5c7ce4fbd64d6db9eb80946e06119f096) ) // a
-	ROM_LOAD16_BYTE( "bcstry_u.102", 0x100000, 0x80000, CRC(71b40ece) SHA1(1a13dfd7615a6f61851897ebcb10fa69bc8ae525) ) // a
-	ROM_LOAD16_BYTE( "bcstry_u.105", 0x300001, 0x80000, CRC(8166b596) SHA1(cbf6f5cec5f6991bb1d4ec0ea03cd617ff38fc3b) ) // a
-	ROM_LOAD16_BYTE( "bcstry_u.107", 0x300000, 0x80000, CRC(ab3c923a) SHA1(aaca1d2ed7b53e0933e0bd94a19458dd1598f204) ) // a
+	ROM_REGION( 0x400000, REGION_GFX2, ROMREGION_DISPOSE ) /* Sprites */
+	ROM_LOAD16_BYTE( "bcstry_u.100", 0x000000, 0x80000, CRC(8c11cbed) SHA1(e04e53af4fe732bf9d20a9ae5c2a90b576ee0b83) ) // b
+	ROM_LOAD16_BYTE( "bcstry_u.106", 0x000001, 0x80000, CRC(5219bcbf) SHA1(4b88eab7ffc2dc1de451ae4ee52f1536e179ea13) ) // b
+	ROM_LOAD16_BYTE( "bcstry_u.99",  0x100000, 0x80000, CRC(cdb1af87) SHA1(df1fbda5c7ce4fbd64d6db9eb80946e06119f096) ) // a
+	ROM_LOAD16_BYTE( "bcstry_u.105", 0x100001, 0x80000, CRC(8166b596) SHA1(cbf6f5cec5f6991bb1d4ec0ea03cd617ff38fc3b) ) // a
+	ROM_LOAD16_BYTE( "bcstry_u.104", 0x200000, 0x80000, CRC(377c0c71) SHA1(77efa9530b1c311d93c84dd8452701414f740269) ) // b
+	ROM_LOAD16_BYTE( "bcstry_u.108", 0x200001, 0x80000, CRC(442307ed) SHA1(71b7f19af64d9961f0f9205b86b4b0ebc13fddda) ) // b
+	ROM_LOAD16_BYTE( "bcstry_u.102", 0x300000, 0x80000, CRC(71b40ece) SHA1(1a13dfd7615a6f61851897ebcb10fa69bc8ae525) ) // a
+	ROM_LOAD16_BYTE( "bcstry_u.107", 0x300001, 0x80000, CRC(ab3c923a) SHA1(aaca1d2ed7b53e0933e0bd94a19458dd1598f204) ) // a
 ROM_END
 
 ROM_START( bcstrya )
 	ROM_REGION( 0x80000, REGION_CPU1, 0 ) /* 68000 Code */
-	ROM_LOAD16_BYTE( "prg1.ic35",  0x20001, 0x20000, CRC(2c55100a) SHA1(bc98a0015c99ef84ebd3fc3f7b7a3bdfd700e1da) )
+	ROM_LOAD16_BYTE( "prg1.ic35",  0x40001, 0x20000, CRC(2c55100a) SHA1(bc98a0015c99ef84ebd3fc3f7b7a3bdfd700e1da) )
 	ROM_CONTINUE ( 0x00001, 0x20000)
-	ROM_LOAD16_BYTE( "prg2.ic62",  0x20000, 0x20000, CRC(f54c0a96) SHA1(79a3635792a23f47fc914d1d5e118b5a643ca100) )
+	ROM_LOAD16_BYTE( "prg2.ic62",  0x40000, 0x20000, CRC(f54c0a96) SHA1(79a3635792a23f47fc914d1d5e118b5a643ca100) )
 	ROM_CONTINUE ( 0x00000, 0x20000)
+
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* Z80 Code */
 	ROM_LOAD( "bcstry_u.21", 0x04000, 0x4000 , CRC(3ba072d4) SHA1(8b64d3ab4c63132f2f77b2cf38a88eea1a8f11e0) )
 	ROM_CONTINUE( 0x0000, 0x4000 )
@@ -1464,22 +1558,33 @@ ROM_START( bcstrya )
 	ROM_REGION( 0x040000, REGION_SOUND1, 0 ) /* Samples */
 	ROM_LOAD( "bcstry_u.64", 0x00000, 0x40000, CRC(23f0e0fe) SHA1(a8c3cbb6378797db353ca2873e73ff157a6f8a3c) )
 
-	/* order / region of these not verified but each rom is probably 4 plane of 4bpp gfx .. */
-	ROM_REGION( 0x200000, REGION_GFX1, 0 ) /* Sprites */
-	ROM_LOAD16_BYTE( "bcstry_u.109", 0x000001, 0x80000, CRC(eb04d37a) SHA1(818dc7aafac577920d94c65e47d965dc0474d92c) ) // c
-	ROM_LOAD16_BYTE( "bcstry_u.110", 0x000000, 0x80000, CRC(1bfe65c3) SHA1(27dec16b271866ff336d8b25d352977ca80c35bf) ) // c
-	ROM_LOAD16_BYTE( "bcstry_u.111", 0x100001, 0x80000, CRC(c8bf3a3c) SHA1(604fc57c4d3a581016aa2516236c568488d23c77) ) // c
-	ROM_LOAD16_BYTE( "bcstry_u.113", 0x100000, 0x80000, CRC(746ecdd7) SHA1(afb6dbc0fb94e7ce96a9b219f5f7cd3721d1c1c4) ) // c
+	ROM_REGION( 0x200000, REGION_GFX1, 0 ) /* Tiles */
+	ROM_LOAD16_BYTE( "bcstry_u.109", 0x000000, 0x20000, CRC(eb04d37a) SHA1(818dc7aafac577920d94c65e47d965dc0474d92c) ) // tiles a plane 0
+	ROM_CONTINUE ( 0x100000,0x20000) // tiles a plane 1
+	ROM_CONTINUE ( 0x040000,0x20000) // tiles b plane 0
+	ROM_CONTINUE ( 0x140000,0x20000) // tiles b plane 1
+	ROM_LOAD16_BYTE( "bcstry_u.113", 0x000001, 0x20000, CRC(746ecdd7) SHA1(afb6dbc0fb94e7ce96a9b219f5f7cd3721d1c1c4) ) // tiles a plane 2
+	ROM_CONTINUE ( 0x100001,0x20000) // tiles a plane 3
+	ROM_CONTINUE ( 0x040001,0x20000) // tiles b plane 2
+	ROM_CONTINUE ( 0x140001,0x20000) // tiles b plane 3
+	ROM_LOAD16_BYTE( "bcstry_u.110", 0x080000, 0x20000, CRC(1bfe65c3) SHA1(27dec16b271866ff336d8b25d352977ca80c35bf) ) // tiles c plane 0
+	ROM_CONTINUE ( 0x180000,0x20000) // tiles c plane 1
+	ROM_CONTINUE ( 0x0c0000,0x20000) // tiles d plane 0
+	ROM_CONTINUE ( 0x1c0000,0x20000) // tiles d plane 1
+	ROM_LOAD16_BYTE( "bcstry_u.111", 0x080001, 0x20000, CRC(c8bf3a3c) SHA1(604fc57c4d3a581016aa2516236c568488d23c77) ) // tiles c plane 2
+	ROM_CONTINUE ( 0x180001,0x20000) // tiles c plane 3
+	ROM_CONTINUE ( 0x0c0001,0x20000) // tiles d plane 2
+	ROM_CONTINUE ( 0x1c0001,0x20000) // tiles d plane 3
 
-	ROM_REGION( 0x400000, REGION_GFX2, ROMREGION_DISPOSE ) /* GFX */
-	ROM_LOAD16_BYTE( "bcstry_u.100", 0x000001, 0x80000, CRC(8c11cbed) SHA1(e04e53af4fe732bf9d20a9ae5c2a90b576ee0b83) ) // b
-	ROM_LOAD16_BYTE( "bcstry_u.104", 0x000000, 0x80000, CRC(377c0c71) SHA1(77efa9530b1c311d93c84dd8452701414f740269) ) // b
-	ROM_LOAD16_BYTE( "bcstry_u.106", 0x200001, 0x80000, CRC(5219bcbf) SHA1(4b88eab7ffc2dc1de451ae4ee52f1536e179ea13) ) // b
-	ROM_LOAD16_BYTE( "bcstry_u.108", 0x200000, 0x80000, CRC(442307ed) SHA1(71b7f19af64d9961f0f9205b86b4b0ebc13fddda) ) // b
-	ROM_LOAD16_BYTE( "bcstry_u.99",  0x100001, 0x80000, CRC(cdb1af87) SHA1(df1fbda5c7ce4fbd64d6db9eb80946e06119f096) ) // a
-	ROM_LOAD16_BYTE( "bcstry_u.102", 0x100000, 0x80000, CRC(71b40ece) SHA1(1a13dfd7615a6f61851897ebcb10fa69bc8ae525) ) // a
-	ROM_LOAD16_BYTE( "bcstry_u.105", 0x300001, 0x80000, CRC(8166b596) SHA1(cbf6f5cec5f6991bb1d4ec0ea03cd617ff38fc3b) ) // a
-	ROM_LOAD16_BYTE( "bcstry_u.107", 0x300000, 0x80000, CRC(ab3c923a) SHA1(aaca1d2ed7b53e0933e0bd94a19458dd1598f204) ) // a
+	ROM_REGION( 0x400000, REGION_GFX2, ROMREGION_DISPOSE ) /* Sprites */
+	ROM_LOAD16_BYTE( "bcstry_u.100", 0x000000, 0x80000, CRC(8c11cbed) SHA1(e04e53af4fe732bf9d20a9ae5c2a90b576ee0b83) ) // b
+	ROM_LOAD16_BYTE( "bcstry_u.106", 0x000001, 0x80000, CRC(5219bcbf) SHA1(4b88eab7ffc2dc1de451ae4ee52f1536e179ea13) ) // b
+	ROM_LOAD16_BYTE( "bcstry_u.99",  0x100000, 0x80000, CRC(cdb1af87) SHA1(df1fbda5c7ce4fbd64d6db9eb80946e06119f096) ) // a
+	ROM_LOAD16_BYTE( "bcstry_u.105", 0x100001, 0x80000, CRC(8166b596) SHA1(cbf6f5cec5f6991bb1d4ec0ea03cd617ff38fc3b) ) // a
+	ROM_LOAD16_BYTE( "bcstry_u.104", 0x200000, 0x80000, CRC(377c0c71) SHA1(77efa9530b1c311d93c84dd8452701414f740269) ) // b
+	ROM_LOAD16_BYTE( "bcstry_u.108", 0x200001, 0x80000, CRC(442307ed) SHA1(71b7f19af64d9961f0f9205b86b4b0ebc13fddda) ) // b
+	ROM_LOAD16_BYTE( "bcstry_u.102", 0x300000, 0x80000, CRC(71b40ece) SHA1(1a13dfd7615a6f61851897ebcb10fa69bc8ae525) ) // a
+	ROM_LOAD16_BYTE( "bcstry_u.107", 0x300001, 0x80000, CRC(ab3c923a) SHA1(aaca1d2ed7b53e0933e0bd94a19458dd1598f204) ) // a
 ROM_END
 
 
@@ -1630,6 +1735,22 @@ static DRIVER_INIT( fncywld )
 
 	tumblepb_gfx1_decrypt();
 }
+
+
+static READ16_HANDLER( bcstory_1a0_read )
+{
+//	printf("bcstory_io %06x\n",activecpu_get_pc());
+	if (activecpu_get_pc()==0x0560) return 0x1a0;
+	else return readinputport(2);
+}
+
+static DRIVER_INIT ( bcstory )
+{
+	tumblepb_gfx1_decrypt();
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x180008, 0x180009, 0, 0, bcstory_1a0_read ); // io should be here??
+}
+
+
 
 static DRIVER_INIT( htchctch )
 {
@@ -1894,6 +2015,6 @@ GAMEX(1991, tumblep2, tumblep, tumblepb,  tumblep,  tumblepb, ROT0, "bootleg", "
 GAMEX(1993, jumpkids, 0,       jumpkids,  tumblep,  jumpkids, ROT0, "Comad", "Jump Kids", GAME_NO_SOUND )
 GAME (1996, fncywld,  0,       fncywld,   fncywld,  fncywld,  ROT0, "Unico", "Fancy World - Earth of Crisis" ) // game says 1996, testmode 1995?
 GAME (1995, htchctch, 0,       htchctch,  htchctch, htchctch, ROT0, "SemiCom", "Hatch Catch" )
-GAMEX(1997, bcstry,   0,       htchctch,  htchctch, htchctch, ROT0, "SemiCom", "BC Story (set 1)", GAME_NOT_WORKING)
-GAMEX(1997, bcstrya,  bcstry,  htchctch,  htchctch, htchctch, ROT0, "SemiCom", "BC Story (set 2)", GAME_NOT_WORKING)
+GAMEX(1997, bcstry,   0,       htchctch,  bcstory,  bcstory,  ROT0, "SemiCom", "B.C. Story (set 1)", GAME_IMPERFECT_GRAPHICS)
+GAMEX(1997, bcstrya,  bcstry,  htchctch,  bcstory,  bcstory,  ROT0, "SemiCom", "B.C. Story (set 2)", GAME_IMPERFECT_GRAPHICS)
 GAME (2001, jumppop,  0,       jumppop,   jumppop,  0, ORIENTATION_FLIP_X, "ESD", "Jumping Pop" )

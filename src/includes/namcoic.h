@@ -109,6 +109,13 @@ READ32_HANDLER( namco_tilemapcontrol32_le_r );
 WRITE32_HANDLER( namco_tilemapcontrol32_le_w );
 
 /***********************************************************************************/
+
+/* Namco System II Sprite Rendering */
+void namcos2_draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int pri, int control );
+
+void namcos2_draw_sprites_metalhawk( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int pri );
+
+/***********************************************************************************/
 /* C355 Motion Object Emulation */
 
 /* for palXOR, supply either 0x0 (normal) or 0xf (palette mapping reversed) */

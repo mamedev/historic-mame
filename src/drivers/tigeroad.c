@@ -679,6 +679,45 @@ ROM_START( toramich )
 	ROM_LOAD( "trprom.bin",   0x0000, 0x0100, CRC(ec80ae36) SHA1(397ec8fc1b106c8b8d4bf6798aa429e8768a101a) )	/* priority (not used) */
 ROM_END
 
+ROM_START( tigerodb )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 ) /* 256K for 68000 code */
+	ROM_LOAD16_BYTE( "tgrroad.3",    0x00000, 0x10000, CRC(14c87e07) SHA1(31363b56dd9d387f3ebd7ca1c209148c389ec1aa) )
+	ROM_LOAD16_BYTE( "tgrroad.5",    0x00001, 0x10000, CRC(0904254c) SHA1(9ce7b8a699bc21618032db9b0c5494242ad77a6b) )
+	ROM_LOAD16_BYTE( "tgrroad.2",    0x20000, 0x10000, CRC(cedb1f46) SHA1(bc2d5730ff809fb0f38327d72485d472ab9da54d) )
+	ROM_LOAD16_BYTE( "tgrroad.4",    0x20001, 0x10000, CRC(e117f0b1) SHA1(ed0050247789bedaeb213c3d7c2d2cdb239bb4b4) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* audio CPU */
+	ROM_LOAD( "tru05.bin",    0x0000, 0x8000, CRC(f9a7c9bf) SHA1(4d37c71aa6523ac21c6e8b23f9957e75ec4304bf) )
+
+	/* no samples player in the English version */
+
+	ROM_REGION( 0x008000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "tr01.bin",     0x00000, 0x08000, CRC(74a9f08c) SHA1(458958c8d9a2af5df88bb24c9c5bcbd37d6856bc) ) /* 8x8 text */
+
+	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "tr-01a.bin",   0x00000, 0x20000, CRC(a8aa2e59) SHA1(792f50d688a4ffb574e41257816bc304d41f0458) ) /* tiles */
+	ROM_LOAD( "tr-04a.bin",   0x20000, 0x20000, CRC(8863a63c) SHA1(11bfce5b09c5b8a781c658f035d5658c3710d189) )
+	ROM_LOAD( "tr-02a.bin",   0x40000, 0x20000, CRC(1a2c5f89) SHA1(2a2aa2f1e2a0cdd4bbdb25236e49c7cc573db9e9) )
+	ROM_LOAD( "tr05.bin",     0x60000, 0x20000, CRC(5bf453b3) SHA1(5eef151974c6b818a17756549d24a702e1f3a859) )
+	ROM_LOAD( "tr-03a.bin",   0x80000, 0x20000, CRC(1e0537ea) SHA1(bc65f7104d5f7728b68b3dcb45151c41fc30aa0d) )
+	ROM_LOAD( "tr-06a.bin",   0xa0000, 0x20000, CRC(b636c23a) SHA1(417e289745996bd00114df6ade591e702265d3a5) )
+	ROM_LOAD( "tr-07a.bin",   0xc0000, 0x20000, CRC(5f907d4d) SHA1(1820c5c6e0b078db9c64655c7983ea115ad81036) )
+	ROM_LOAD( "tgrroad.17",   0xe0000, 0x10000, CRC(3f7539cc) SHA1(ca3ef1fabcb0c7abd7bc211ba128d2433e3dbf26) )
+	ROM_LOAD( "tgrroad.18",   0xf0000, 0x10000, CRC(e2e053cb) SHA1(eb9432140fc167dec5d3273112933201be2be1b3) )
+
+	ROM_REGION( 0x080000, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_LOAD( "tr-09a.bin",   0x00000, 0x20000, CRC(3d98ad1e) SHA1(f12cdf50e1708ddae092b9784d4319a7d5f092bc) ) /* sprites */
+	ROM_LOAD( "tr-10a.bin",   0x20000, 0x20000, CRC(8f6f03d7) SHA1(08a02cfb373040ea5ffbf5604f68df92a1338bb0) )
+	ROM_LOAD( "tr-11a.bin",   0x40000, 0x20000, CRC(cd9152e5) SHA1(6df3c43c0c41289890296c2b2aeca915dfdae3b0) )
+	ROM_LOAD( "tr-12a.bin",   0x60000, 0x20000, CRC(7d8a99d0) SHA1(af8221cfd2ce9aa3bf296981fb7fddd1e9ef4599) )
+
+	ROM_REGION( 0x08000, REGION_GFX4, 0 )	/* background tilemaps */
+	ROM_LOAD( "tr13.bin",     0x0000, 0x8000, CRC(a79be1eb) SHA1(4191ccd48f7650930f9a4c2be0790239d7420bb1) )
+
+	ROM_REGION( 0x0100, REGION_PROMS, 0 )
+	ROM_LOAD( "trprom.bin",   0x0000, 0x0100, CRC(ec80ae36) SHA1(397ec8fc1b106c8b8d4bf6798aa429e8768a101a) )	/* priority (not used) */
+ROM_END
+
 ROM_START( f1dream )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 ) /* 256K for 68000 code */
 	ROM_LOAD16_BYTE( "06j_02.bin",   0x00000, 0x20000, CRC(3c2ec697) SHA1(bccb431ad92455484420f91770e91db6d69b09ec) )
@@ -761,6 +800,7 @@ DRIVER_INIT( f1dream )
 
 GAME ( 1987, tigeroad, 0,        tigeroad, tigeroad, tigeroad, ROT0, "Capcom (Romstar license)", "Tiger Road (US)" )
 GAME ( 1987, toramich, tigeroad, toramich, toramich, tigeroad, ROT0, "Capcom", "Tora-he no Michi (Japan)" )
+GAME ( 1987, tigerodb, tigeroad, tigeroad, tigeroad, tigeroad, ROT0, "bootleg", "Tiger Road (US bootleg)" )
 
 /* F1 Dream has an Intel 8751 microcontroller for protection */
 GAME ( 1988, f1dream,  0,        tigeroad, f1dream,  f1dream,  ROT0, "Capcom (Romstar license)", "F-1 Dream" )

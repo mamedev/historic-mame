@@ -141,8 +141,10 @@ struct discrete_module module_list[] =
 	/* from disc_inp.c */
 	{ DSS_ADJUSTMENT  ,"DSS_ADJUSTMENT"  ,sizeof(struct dss_adjustment_context)  ,dss_adjustment_reset  ,dss_adjustment_step  },
 	{ DSS_CONSTANT    ,"DSS_CONSTANT"    ,0                                      ,NULL                  ,dss_constant_step    },
-	{ DSS_INPUT       ,"DSS_INPUT"       ,0                                      ,dss_input_reset       ,dss_input_step       },
-	{ DSS_INPUT_PULSE ,"DSS_INPUT_PULSE" ,0                                      ,dss_input_reset       ,dss_input_pulse_step },
+	{ DSS_INPUT_DATA  ,"DSS_INPUT_DATA"  ,sizeof(struct dss_input_context)       ,dss_input_reset       ,dss_input_step       },
+	{ DSS_INPUT_LOGIC ,"DSS_INPUT_LOGIC" ,sizeof(struct dss_input_context)       ,dss_input_reset       ,dss_input_step       },
+	{ DSS_INPUT_NOT   ,"DSS_INPUT_NOT"   ,sizeof(struct dss_input_context)       ,dss_input_reset       ,dss_input_step       },
+	{ DSS_INPUT_PULSE ,"DSS_INPUT_PULSE" ,sizeof(struct dss_input_context)       ,dss_input_reset       ,dss_input_pulse_step },
 
 	/* from disc_wav.c */
 	/* Generic modules */
@@ -177,6 +179,7 @@ struct discrete_module module_list[] =
 	{ DST_LOGIC_XOR   ,"DST_LOGIC_XOR"   ,0                                      ,NULL                  ,dst_logic_xor_step   },
 	{ DST_LOGIC_NXOR  ,"DST_LOGIC_NXOR"  ,0                                      ,NULL                  ,dst_logic_nxor_step  },
 	{ DST_LOGIC_DFF   ,"DST_LOGIC_DFF"   ,sizeof(struct dst_dflipflop_context)   ,dst_logic_dff_reset   ,dst_logic_dff_step   },
+	{ DST_MULTIPLEX   ,"DST_MULTIPLEX"   ,0                                      ,NULL                  ,NULL                 },
 	{ DST_ONESHOT     ,"DST_ONESHOT"     ,sizeof(struct dst_oneshot_context)     ,dst_oneshot_reset     ,dst_oneshot_step     },
 	{ DST_RAMP        ,"DST_RAMP"        ,sizeof(struct dss_ramp_context)        ,dst_ramp_reset        ,dst_ramp_step        },
 	{ DST_SAMPHOLD    ,"DST_SAMPHOLD"    ,sizeof(struct dst_samphold_context)    ,dst_samphold_reset    ,dst_samphold_step    },
@@ -196,7 +199,7 @@ struct discrete_module module_list[] =
 	{ DST_FILTER2     ,"DST_FILTER2"     ,sizeof(struct dss_filter2_context)     ,dst_filter2_reset     ,dst_filter2_step     },
 	/* Component specific modules */
 	{ DST_CRFILTER    ,"DST_CRFILTER"    ,sizeof(struct dst_rcfilter_context)    ,dst_crfilter_reset    ,dst_crfilter_step    },
-	{ DST_OP_AMP_FILT ,"DST_OP_AMP_FILT" ,sizeof(struct dst_op_amp_filt_context),dst_op_amp_filt_reset ,dst_op_amp_filt_step  },
+	{ DST_OP_AMP_FILT ,"DST_OP_AMP_FILT" ,sizeof(struct dst_op_amp_filt_context) ,dst_op_amp_filt_reset ,dst_op_amp_filt_step },
 	{ DST_RCDISC      ,"DST_RCDISC"      ,sizeof(struct dst_rcdisc_context)      ,dst_rcdisc_reset      ,dst_rcdisc_step      },
 	{ DST_RCDISC2     ,"DST_RCDISC2"     ,sizeof(struct dst_rcdisc_context)      ,dst_rcdisc2_reset     ,dst_rcdisc2_step     },
 	{ DST_RCFILTER    ,"DST_RCFILTER"    ,sizeof(struct dst_rcfilter_context)    ,dst_rcfilter_reset    ,dst_rcfilter_step    },
@@ -206,9 +209,11 @@ struct discrete_module module_list[] =
 	{ DST_RCDISC2N    ,"DST_RCDISC2N"    ,sizeof(struct dss_rcdisc2_context)     ,dst_rcdisc2N_reset    ,dst_rcdisc2N_step    },
 
 	/* from disc_dev.c */
+	/* generic modules */
+	{ DST_CUSTOM      ,"DST_CUSTOM"      ,0                                      ,NULL                  ,dst_transform_step   },
 	/* Component specific modules */
 	{ DSD_555_ASTBL   ,"DSD_555_ASTBL"   ,sizeof(struct dsd_555_astbl_context)   ,dsd_555_astbl_reset   ,dsd_555_astbl_step   },
-	{ DSD_555_MSTBL   ,"DSD_555_MSTBL"   ,0                                      ,NULL                  ,NULL                 },
+	{ DSD_555_MSTBL   ,"DSD_555_MSTBL"   ,sizeof(struct dsd_555_mstbl_context)   ,dsd_555_mstbl_reset   ,dsd_555_mstbl_step   },
 	{ DSD_555_CC      ,"DSD_555_CC"      ,sizeof(struct dsd_555_cc_context)      ,dsd_555_cc_reset      ,dsd_555_cc_step      },
 	{ DSD_566         ,"DSD_566"         ,sizeof(struct dsd_566_context)         ,dsd_566_reset         ,dsd_566_step         },
 
@@ -226,6 +231,7 @@ struct discrete_module module_list[] =
 
 struct node_description *discrete_find_node(int node)
 {
+	if (node < NODE_START || node > NODE_END) return NULL;
 	return indexed_node[node - NODE_START];
 }
 
@@ -263,7 +269,7 @@ int discrete_sh_start(const struct MachineSound *msound)
 
 		/* make sure the node type is valid */
 		if (intf[node_count].type > DSO_OUTPUT)
-			osd_die("discrete_sh_start() - Invalid function type on NODE_%03d\n", intf[node_count].node - NODE_START);
+			osd_die("discrete_sh_start() - Invalid function type on NODE_%02d\n", intf[node_count].node - NODE_START);
 	}
 	node_count++;
 	discrete_log("discrete_sh_start() - Sanity check counted %d nodes", node_count);
@@ -285,12 +291,6 @@ int discrete_sh_start(const struct MachineSound *msound)
 	if (!indexed_node)
 		osd_die("discrete_sh_start() - Out of memory allocating indexed_node\n");
 	memset(indexed_node, 0, DISCRETE_MAX_NODES * sizeof(indexed_node[0]));
-
-	/* allocate memory to hold the input map */
-	dss_input_map = auto_malloc(DSS_INPUT_SPACE * sizeof(dss_input_map[0]));
-	if (!dss_input_map)
-		osd_die("discrete_sh_start() - Out of memory allocating dss_input_map\n");
-	memset(dss_input_map, 0, DSS_INPUT_SPACE * sizeof(dss_input_map[0]));
 
 	/* initialize the node data */
 	init_nodes(intf);
@@ -358,20 +358,12 @@ void discrete_sh_update(void)
 
 void discrete_sh_reset(void)
 {
-	int nodenum, inputnum;
+	int nodenum;
 
 	/* loop over all nodes */
 	for (nodenum = 0; nodenum < node_count; nodenum++)
 	{
 		struct node_description *node = running_order[nodenum];
-
-		/* propogate any node inputs before resetting */
-		for (inputnum = 0; inputnum < node->active_inputs; inputnum++)
-		{
-			struct node_description *inputnode = node->input_node[inputnum];
-			if (inputnode && inputnode->node != NODE_NC)
-				node->input[inputnum] = inputnode->output;
-		}
 
 		/* if the node has a reset function, call it */
 		if (node->module.reset)
@@ -393,7 +385,7 @@ void discrete_sh_reset(void)
 
 static void discrete_stream_update(int ch, INT16 **buffer, int length)
 {
-	int samplenum, nodenum, inputnum, outputnum;
+	int samplenum, nodenum, outputnum;
 
 	/* Now we must do length iterations of the node list, one output for each step */
 	for (samplenum = 0; samplenum < length; samplenum++)
@@ -403,14 +395,6 @@ static void discrete_stream_update(int ch, INT16 **buffer, int length)
 		{
 			struct node_description *node = running_order[nodenum];
 
-			/* propogate any node inputs before resetting */
-			for (inputnum = 0; inputnum < node->active_inputs; inputnum++)
-			{
-				struct node_description *inputnode = node->input_node[inputnum];
-				if (inputnode && inputnode->node != NODE_NC)
-					node->input[inputnum] = inputnode->output;
-			}
-
 			/* Now step the node */
 			if (node->module.step)
 				(*node->module.step)(node);
@@ -419,7 +403,7 @@ static void discrete_stream_update(int ch, INT16 **buffer, int length)
 		/* Now put the output into the buffers */
 		for (outputnum = 0; outputnum < discrete_outputs; outputnum++)
 		{
-			double val = output_node[outputnum]->input[0];
+			double val = *output_node[outputnum]->input[0];
 			buffer[outputnum][samplenum] = (val < -32768) ? -32768 : (val > 32767) ? 32767 : val;
 		}
 	}
@@ -469,7 +453,7 @@ static void init_nodes(struct discrete_sound_block *block_list)
 		else
 		{
 			if (indexed_node[block->node - NODE_START])
-				osd_die("init_nodes() - Duplicate entries for NODE_%03d\n", block->node - NODE_START);
+				osd_die("init_nodes() - Duplicate entries for NODE_%02d\n", block->node - NODE_START);
 			indexed_node[block->node - NODE_START] = node;
 		}
 
@@ -478,7 +462,7 @@ static void init_nodes(struct discrete_sound_block *block_list)
 			if (module_list[modulenum].type == block->type)
 				break;
 		if (module_list[modulenum].type != block->type)
-			osd_die("init_nodes() - Unable to find discrete module typer %d for NODE_%03d\n", block->type, block->node - NODE_START);
+			osd_die("init_nodes() - Unable to find discrete module type %d for NODE_%02d\n", block->type, block->node - NODE_START);
 
 		/* static inits */
 		node->node = block->node;
@@ -488,8 +472,8 @@ static void init_nodes(struct discrete_sound_block *block_list)
 		node->active_inputs = block->active_inputs;
 		for (inputnum = 0; inputnum < DISCRETE_MAX_INPUTS; inputnum++)
 		{
-			node->input_node[inputnum] = NULL;
-			node->input[inputnum] = block->initial[inputnum];
+			node->input[inputnum] = &(block->initial[inputnum]);
+			node->input_r[inputnum] = NULL;
 		}
 
 		node->context = NULL;
@@ -501,7 +485,7 @@ static void init_nodes(struct discrete_sound_block *block_list)
 		{
 			node->context = auto_malloc(node->module.contextsize);
 			if (!node->context)
-				osd_die("init_nodes() - Out of memory allocating memory for NODE_%03d\n", node->node - NODE_START);
+				osd_die("init_nodes() - Out of memory allocating memory for NODE_%02d\n", node->node - NODE_START);
 			memset(node->context, 0, node->module.contextsize);
 		}
 	}
@@ -535,11 +519,15 @@ static void find_input_nodes(struct discrete_sound_block *block_list)
 			int inputnode = block->input_node[inputnum];
 
 			/* if this input is node-based, find the node in the indexed list */
-			if (inputnode >= NODE_START && inputnode <= NODE_END)
+			if ((inputnode > NODE_START) && (inputnode <= NODE_END))
 			{
 				if (!indexed_node[inputnode - NODE_START])
-					osd_die("discrete_sh_start - Node NODE_%03d referenced a non existant node NODE_%03d\n", node->node - NODE_START, inputnode - NODE_START);
-				node->input_node[inputnum] = indexed_node[inputnode - NODE_START];
+					osd_die("discrete_sh_start - Node NODE_%02d referenced a non existant node NODE_%02d\n", node->node - NODE_START, inputnode - NODE_START);
+
+				struct node_description *node_ref = indexed_node[inputnode - NODE_START];
+				node->input[inputnum] = &(node_ref->output);	// Link referenced node out to input
+				node->input_r[inputnum] = &(node_ref->node_r);	// Link referenced node r to input r
+				node->input_is_node |= 1 << inputnum;			// Bit flag if input is node
 			}
 		}
 	}
@@ -568,7 +556,7 @@ static void setup_output_nodes(void)
 		channel_names[outputnum] = &channel_name_data[outputnum][0];
 
 		/* set the initial volume */
-		channel_vol[outputnum] = output_node[outputnum]->input[1];
+		channel_vol[outputnum] = *(output_node[outputnum]->input[1]);
 
 		/* create a logging file */
 		if (DISCRETE_WAVELOG)

@@ -57,9 +57,9 @@ struct dst_op_amp_filt_context
 
 struct dst_rcdisc_context
 {
-        int state;
-        double t;           // time
-        double step;
+	int state;
+	double t;           // time
+	double step;
 	double exponent0;
 	double exponent1;
 };
@@ -82,19 +82,24 @@ struct dst_rcfilter_context
  * input[4]    - Voltage reference. Usually 0V.
  *
  ************************************************************************/
+#define DST_CRFILTER__ENABLE	(*(node->input[0]))
+#define DST_CRFILTER__IN		(*(node->input[1]))
+#define DST_CRFILTER__R			(*(node->input[2]))
+#define DST_CRFILTER__C			(*(node->input[3]))
+#define DST_CRFILTER__VREF		(*(node->input[4]))
 
 void dst_crfilter_step(struct node_description *node)
 {
 	struct dst_rcfilter_context *context = node->context;
 
-	if(node->input[0])
+	if(DST_CRFILTER__ENABLE)
 	{
-		context->vCap += ((node->input[1] - node->input[4]) - context->vCap) * context->exponent;
-		node->output = node->input[1] - context->vCap;
+		context->vCap += ((DST_CRFILTER__IN - DST_CRFILTER__VREF) - context->vCap) * context->exponent;
+		node->output = DST_CRFILTER__IN - context->vCap;
 	}
 	else
 	{
-		node->output=0;
+		node->output = 0;
 	}
 }
 
@@ -102,10 +107,10 @@ void dst_crfilter_reset(struct node_description *node)
 {
 	struct dst_rcfilter_context *context = node->context;
 
-	context->exponent = -1.0 / (node->input[2] * node->input[3] * Machine->sample_rate);
+	context->exponent = -1.0 / (DST_CRFILTER__R * DST_CRFILTER__C * Machine->sample_rate);
 	context->exponent = 1.0 - exp(context->exponent);
 	context->vCap = 0;
-	node->output = node->input[1];
+	node->output = DST_CRFILTER__IN;
 }
 
 
@@ -119,6 +124,10 @@ void dst_crfilter_reset(struct node_description *node)
  * input[3]    - Filter type (initialization only)
  *
  ************************************************************************/
+#define DST_FILTER1__ENABLE	(*(node->input[0]))
+#define DST_FILTER1__IN		(*(node->input[1]))
+#define DST_FILTER1__FREQ	(*(node->input[2]))
+#define DST_FILTER1__TYPE	(*(node->input[3]))
 
 static void calculate_filter1_coefficients(double fc, double type,
                                            double *a1, double *b0, double *b1)
@@ -152,14 +161,14 @@ void dst_filter1_step(struct node_description *node)
 	struct dss_filter1_context *context = node->context;
 	double gain = 1.0;
 
-	if (node->input[0] == 0.0)
+	if (DST_FILTER1__ENABLE == 0.0)
 	{
 		gain = 0.0;
 	}
 
-	node->output = -context->a1*context->y1 + context->b0*gain*node->input[1] + context->b1*context->x1;
+	node->output = -context->a1*context->y1 + context->b0*gain*DST_FILTER1__IN + context->b1*context->x1;
 
-	context->x1 = gain*node->input[1];
+	context->x1 = gain*DST_FILTER1__IN;
 	context->y1 = node->output;
 }
 
@@ -167,7 +176,7 @@ void dst_filter1_reset(struct node_description *node)
 {
 	struct dss_filter1_context *context = node->context;
 
-	calculate_filter1_coefficients(node->input[2], node->input[3], &context->a1, &context->b0, &context->b1);
+	calculate_filter1_coefficients(DST_FILTER1__FREQ, DST_FILTER1__TYPE, &context->a1, &context->b0, &context->b1);
 	node->output=0;
 }
 
@@ -183,6 +192,11 @@ void dst_filter1_reset(struct node_description *node)
  * input[4]    - Filter type (initialization only)
  *
  ************************************************************************/
+#define DST_FILTER2__ENABLE	(*(node->input[0]))
+#define DST_FILTER2__IN		(*(node->input[1]))
+#define DST_FILTER2__FREQ	(*(node->input[2]))
+#define DST_FILTER2__DAMP	(*(node->input[3]))
+#define DST_FILTER2__TYPE	(*(node->input[4]))
 
 static void calculate_filter2_coefficients(double fc, double d, double type,
                                            double *a1, double *a2,
@@ -231,16 +245,16 @@ void dst_filter2_step(struct node_description *node)
 	struct dss_filter2_context *context = node->context;
 	double gain = 1.0;
 
-	if (node->input[0] == 0.0)
+	if (DST_FILTER2__ENABLE == 0.0)
 	{
 		gain = 0.0;
 	}
 
 	node->output = -context->a1*context->y1 - context->a2*context->y2 +
-	                context->b0*gain*node->input[1] + context->b1*context->x1 + context->b2*context->x2;
+	                context->b0*gain*DST_FILTER2__IN + context->b1*context->x1 + context->b2*context->x2;
 
 	context->x2 = context->x1;
-	context->x1 = gain*node->input[1];
+	context->x1 = gain * DST_FILTER2__IN;
 	context->y2 = context->y1;
 	context->y1 = node->output;
 }
@@ -249,7 +263,7 @@ void dst_filter2_reset(struct node_description *node)
 {
 	struct dss_filter2_context *context = node->context;
 
-	calculate_filter2_coefficients(node->input[2], node->input[3], node->input[4],
+	calculate_filter2_coefficients(DST_FILTER2__FREQ, DST_FILTER2__DAMP, DST_FILTER2__TYPE,
 								   &context->a1, &context->a2,
 								   &context->b0, &context->b1, &context->b2);
 	node->output=0;
@@ -269,10 +283,10 @@ void dst_filter2_reset(struct node_description *node)
  *
  * Mar 2004, D Renaud.
  ************************************************************************/
-#define DST_OP_AMP_FILT_ENABLE	node->input[0]
-#define DST_OP_AMP_FILT_INP1	node->input[1]
-#define DST_OP_AMP_FILT_INP2	node->input[2]
-#define DST_OP_AMP_FILT_TYPE	node->input[3]
+#define DST_OP_AMP_FILT__ENABLE	(*(node->input[0]))
+#define DST_OP_AMP_FILT__INP1	(*(node->input[1]))
+#define DST_OP_AMP_FILT__INP2	(*(node->input[2]))
+#define DST_OP_AMP_FILT__TYPE	(*(node->input[3]))
 
 void dst_op_amp_filt_step(struct node_description *node)
 {
@@ -281,20 +295,20 @@ void dst_op_amp_filt_step(struct node_description *node)
 
 	double i, v, vMid;
 
-	if (DST_OP_AMP_FILT_ENABLE)
+	if (DST_OP_AMP_FILT__ENABLE)
 	{
 		if (context->is_norton)
 		{
-			v = DST_OP_AMP_FILT_INP1 - context->vRef;
+			v = DST_OP_AMP_FILT__INP1 - context->vRef;
 			if (v < 0) v = 0;
 		}
 		else
 		{
 			/* Millman the input voltages. */
 			i = context->iFixed;
-			i += (DST_OP_AMP_FILT_INP1 - context->vRef) / info->r1;
+			i += (DST_OP_AMP_FILT__INP1 - context->vRef) / info->r1;
 			if (info->r2 != 0)
-				i += (DST_OP_AMP_FILT_INP2 - context->vRef) / info->r2;
+				i += (DST_OP_AMP_FILT__INP2 - context->vRef) / info->r2;
 			v = i * context->rTotal;
 		}
 
@@ -457,8 +471,8 @@ void dst_op_amp_filt_reset(struct node_description *node)
 	struct dst_op_amp_filt_context *context = node->context;
 
 	/* Convert the passed filter type into an int for easy use. */
-	context->type = (int)DST_OP_AMP_FILT_TYPE & DISC_OP_AMP_FILTER_TYPE_MASK;
-	context->is_norton = (int)DST_OP_AMP_FILT_TYPE & DISC_OP_AMP_IS_NORTON;
+	context->type = (int)DST_OP_AMP_FILT__TYPE & DISC_OP_AMP_FILTER_TYPE_MASK;
+	context->is_norton = (int)DST_OP_AMP_FILT__TYPE & DISC_OP_AMP_IS_NORTON;
 
 	/* Remove this when DISC_OP_AMP_FILTER_IS_BAND_PASS_1M works. */
 	if (context->type == DISC_OP_AMP_FILTER_IS_BAND_PASS_1M) context->type = DISC_OP_AMP_FILTER_IS_BAND_PASS_1;
@@ -561,6 +575,10 @@ void dst_op_amp_filt_reset(struct node_description *node)
  * input[3]    - Capacitor Value (initialization only)
  *
  ************************************************************************/
+#define DST_RCDISC__ENABLE	(*(node->input[0]))
+#define DST_RCDISC__IN		(*(node->input[1]))
+#define DST_RCDISC__R		(*(node->input[2]))
+#define DST_RCDISC__C		(*(node->input[3]))
 
 void dst_rcdisc_step(struct node_description *node)
 {
@@ -568,7 +586,7 @@ void dst_rcdisc_step(struct node_description *node)
 
 	switch (context->state) {
 		case 0:     /* waiting for trigger  */
-			if(node->input[0]) {
+			if(DST_RCDISC__ENABLE) {
 				context->state = 1;
 				context->t = 0;
 			}
@@ -576,8 +594,8 @@ void dst_rcdisc_step(struct node_description *node)
 			break;
 
 		case 1:
-			if (node->input[0]) {
-				node->output=node->input[1] * exp(context->t / context->exponent0);
+			if (DST_RCDISC__ENABLE) {
+				node->output = DST_RCDISC__IN * exp(context->t / context->exponent0);
 				context->t += context->step;
                 } else {
 					context->state = 0;
@@ -594,7 +612,7 @@ void dst_rcdisc_reset(struct node_description *node)
 	context->state = 0;
 	context->t = 0;
 	context->step = 1.0 / Machine->sample_rate;
-	context->exponent0=-1.0 * node->input[2]*node->input[3];
+	context->exponent0=-1.0 * DST_RCDISC__R * DST_RCDISC__C;
 }
 
 
@@ -611,18 +629,24 @@ void dst_rcdisc_reset(struct node_description *node)
  * input[5]    - Capacitor Value (initialization only)
  *
  ************************************************************************/
+#define DST_RCDISC2__ENABLE	(*(node->input[0]))
+#define DST_RCDISC2__IN0	(*(node->input[1]))
+#define DST_RCDISC2__R0		(*(node->input[2]))
+#define DST_RCDISC2__IN1	(*(node->input[3]))
+#define DST_RCDISC2__R1		(*(node->input[4]))
+#define DST_RCDISC2__C		(*(node->input[5]))
 
 void dst_rcdisc2_step(struct node_description *node)
 {
 	double diff;
 	struct dst_rcdisc_context *context = node->context;
 
-	/* Works differently to other as we always on, no enable */
+	/* Works differently to other as we are always on, no enable */
 	/* exponential based in difference between input/output   */
 
-	diff = ((node->input[0]==0)?node->input[1]:node->input[3])-node->output;
-	diff = diff -(diff * exp(context->step / ((node->input[0]==0)?context->exponent0:context->exponent1)));
-	node->output+=diff;
+	diff = ((DST_RCDISC2__ENABLE == 0) ? DST_RCDISC2__IN0 : DST_RCDISC2__IN1) - node->output;
+	diff = diff - (diff * exp(context->step / ((DST_RCDISC2__ENABLE == 0) ? context->exponent0 : context->exponent1)));
+	node->output += diff;
 }
 
 void dst_rcdisc2_reset(struct node_description *node)
@@ -634,8 +658,8 @@ void dst_rcdisc2_reset(struct node_description *node)
 	context->state = 0;
 	context->t = 0;
 	context->step = 1.0 / Machine->sample_rate;
-	context->exponent0=-1.0 * node->input[2]*node->input[5];
-	context->exponent1=-1.0 * node->input[4]*node->input[5];
+	context->exponent0=-1.0 * DST_RCDISC2__R0 * DST_RCDISC2__C;
+	context->exponent1=-1.0 * DST_RCDISC2__R1 * DST_RCDISC2__C;
 }
 
 
@@ -650,11 +674,11 @@ void dst_rcdisc2_reset(struct node_description *node)
  * input[4]    - Voltage reference. Usually 0V.
  *
  ************************************************************************/
-#define DST_RCFILTER_ENABLE	node->input[0]
-#define DST_RCFILTER_VIN	node->input[1]
-#define DST_RCFILTER_R		node->input[2]
-#define DST_RCFILTER_C		node->input[3]
-#define DST_RCFILTER_VREF	node->input[4]
+#define DST_RCFILTER__ENABLE	(*(node->input[0]))
+#define DST_RCFILTER__VIN		(*(node->input[1]))
+#define DST_RCFILTER__R			(*(node->input[2]))
+#define DST_RCFILTER__C			(*(node->input[3]))
+#define DST_RCFILTER__VREF		(*(node->input[4]))
 
 void dst_rcfilter_step(struct node_description *node)
 {
@@ -664,10 +688,10 @@ void dst_rcfilter_step(struct node_description *node)
 	/* Next Value = PREV + (INPUT_VALUE - PREV)*(1-(EXP(-TIMEDELTA/RC)))    */
 	/************************************************************************/
 
-	if(DST_RCFILTER_ENABLE)
+	if(DST_RCFILTER__ENABLE)
 	{
-		context->vCap += ((DST_RCFILTER_VIN - DST_RCFILTER_VREF - context->vCap) * context->exponent);
-		node->output = context->vCap + DST_RCFILTER_VREF;
+		context->vCap += ((DST_RCFILTER__VIN - DST_RCFILTER__VREF - context->vCap) * context->exponent);
+		node->output = context->vCap + DST_RCFILTER__VREF;
 	}
 	else
 	{
@@ -679,7 +703,7 @@ void dst_rcfilter_reset(struct node_description *node)
 {
 	struct dst_rcfilter_context *context = node->context;
 
-	context->exponent = -1.0 / (DST_RCFILTER_R * DST_RCFILTER_C * Machine->sample_rate);
+	context->exponent = -1.0 / (DST_RCFILTER__R * DST_RCFILTER__C * Machine->sample_rate);
 	context->exponent = 1.0 - exp(context->exponent);
 	context->vCap = 0;
 	node->output = 0;
@@ -699,16 +723,23 @@ void dst_rcfilter_reset(struct node_description *node)
  * input[3]    - Capacitor Value (initialization only)
  *
  ************************************************************************/
+#define DST_RCFILTERN__ENABLE	(*(node->input[0]))
+#define DST_RCFILTERN__IN		(*(node->input[1]))
+#define DST_RCFILTERN__R		(*(node->input[2]))
+#define DST_RCFILTERN__C		(*(node->input[3]))
 
 void dst_rcfilterN_reset(struct node_description *node)
 {
-	double f=1.0/(2*M_PI*node->input[2]*node->input[3]);
+//	double f=1.0/(2*M_PI* DST_RCFILTERN__R * DST_RCFILTERN__C);
 
-	node->input[2] = f;
-	node->input[3] = DISC_FILTER_LOWPASS;
+// !!!!!!!!!!!!!! CAN'T CHEAT LIKE THIS !!!!!!!!!!!!!!!!
+// Put this stuff in a context
+//
+//	node->input[2] = f;
+//	node->input[3] = DISC_FILTER_LOWPASS;
 
 	/* Use first order filter */
-	return dst_filter1_reset(node);
+	dst_filter1_reset(node);
 }
 
 
@@ -723,16 +754,23 @@ void dst_rcfilterN_reset(struct node_description *node)
  * input[3]    - Capacitor Value (initialization only)
  *
  ************************************************************************/
+#define DST_RCDISCN__ENABLE	(*(node->input[0]))
+#define DST_RCDISCN__IN		(*(node->input[1]))
+#define DST_RCDISCN__R		(*(node->input[2]))
+#define DST_RCDISCN__C		(*(node->input[3]))
 
 void dst_rcdiscN_reset(struct node_description *node)
 {
-	double f=1.0/(2*M_PI*node->input[2]*node->input[3]);
+//	double f=1.0/(2*M_PI* DST_RCDISCN__R * DST_RCDISCN__C);
 
-	node->input[2] = f;
-	node->input[3] = DISC_FILTER_LOWPASS;
+// !!!!!!!!!!!!!! CAN'T CHEAT LIKE THIS !!!!!!!!!!!!!!!!
+// Put this stuff in a context
+//
+//	node->input[2] = f;
+//	node->input[3] = DISC_FILTER_LOWPASS;
 
 	/* Use first order filter */
-	return dst_filter1_reset(node);
+	dst_filter1_reset(node);
 }
 
 void dst_rcdiscN_step(struct node_description *node)
@@ -740,19 +778,19 @@ void dst_rcdiscN_step(struct node_description *node)
 	struct dss_filter1_context *context = node->context;
 	double gain = 1.0;
 
-	if (node->input[0] == 0.0)
+	if (DST_RCDISCN__ENABLE == 0.0)
 	{
 		gain = 0.0;
 	}
 
 	/* A rise in the input signal results in an instant charge, */
 	/* else discharge through the RC to zero */
-	if (gain*node->input[1] > context->x1)
-		node->output = gain*node->input[1];
+	if (gain* DST_RCDISCN__IN > context->x1)
+		node->output = gain* DST_RCDISCN__IN;
 	else
 		node->output = -context->a1*context->y1;
 
-	context->x1 = gain*node->input[1];
+	context->x1 = gain* DST_RCDISCN__IN;
 	context->y1 = node->output;
 }
 
@@ -770,6 +808,12 @@ void dst_rcdiscN_step(struct node_description *node)
  * input[5]    - Capacitor Value (initialization only)
  *
  ************************************************************************/
+#define DST_RCDISC2N__ENABLE	(*(node->input[0]))
+#define DST_RCDISC2N__IN0		(*(node->input[1]))
+#define DST_RCDISC2N__R0		(*(node->input[2]))
+#define DST_RCDISC2N__IN1		(*(node->input[3]))
+#define DST_RCDISC2N__R1		(*(node->input[4]))
+#define DST_RCDISC2N__C			(*(node->input[5]))
 
 struct dss_rcdisc2_context
 {
@@ -782,9 +826,9 @@ struct dss_rcdisc2_context
 void dst_rcdisc2N_step(struct node_description *node)
 {
 	struct dss_rcdisc2_context *context = node->context;
-	double input = ((node->input[0]==0)?node->input[1]:node->input[3]);
+	double input = ((DST_RCDISC2N__ENABLE == 0) ? DST_RCDISC2N__IN0 : DST_RCDISC2N__IN1);
 
-	if (node->input[0] == 0)
+	if (DST_RCDISC2N__ENABLE == 0)
 		node->output = -context->a1_0*context->y1 + context->b0_0*input + context->b1_0*context->x1;
 	else
 		node->output = -context->a1_1*context->y1 + context->b0_1*input + context->b1_1*context->x1;
@@ -798,8 +842,8 @@ void dst_rcdisc2N_reset(struct node_description *node)
 	struct dss_rcdisc2_context *context = node->context;
 	double f1,f2;
 
-	f1=1.0/(2*M_PI*node->input[2]*node->input[5]);
-	f2=1.0/(2*M_PI*node->input[4]*node->input[5]);
+	f1=1.0/(2*M_PI* DST_RCDISC2N__R0 * DST_RCDISC2N__C);
+	f2=1.0/(2*M_PI* DST_RCDISC2N__R1 * DST_RCDISC2N__C);
 
 	calculate_filter1_coefficients(f1, DISC_FILTER_LOWPASS, &context->a1_0, &context->b0_0, &context->b1_0);
 	calculate_filter1_coefficients(f2, DISC_FILTER_LOWPASS, &context->a1_1, &context->b0_1, &context->b1_1);

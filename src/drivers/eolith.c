@@ -13,25 +13,13 @@
 
 #include "driver.h"
 
-static data32_t hyperstone_iram[0x1000];
 static data32_t *eo_vram;
-
-static WRITE32_HANDLER( hyperstone_iram_w )
-{
-	COMBINE_DATA(&hyperstone_iram[offset&0xfff]);
-}
-
-static READ32_HANDLER( hyperstone_iram_r )
-{
-	return hyperstone_iram[offset&0xfff];
-}
 
 static ADDRESS_MAP_START( eolith_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x00000000, 0x00ffffff) AM_RAM
 	AM_RANGE(0x40000000, 0x40ffffff) AM_RAM
 	AM_RANGE(0x80000000, 0x807fffff) AM_RAM
 	AM_RANGE(0x90000000, 0x907fffff) AM_RAM AM_BASE(&eo_vram)
-	AM_RANGE(0xc0000000, 0xdfffffff) AM_READ(hyperstone_iram_r) AM_WRITE(hyperstone_iram_w)
 	AM_RANGE(0xfc000000, 0xfccfffff) AM_RAM //racoon
 	AM_RANGE(0xfd000000, 0xfff7ffff) AM_READ(MRA32_BANK2)
 	AM_RANGE(0xfff80000, 0xffffffff) AM_READ(MRA32_BANK1)
@@ -61,7 +49,7 @@ static INTERRUPT_GEN( test_interrupts )
 }
 
 static MACHINE_DRIVER_START( eolith )
-	MDRV_CPU_ADD(E132XS,10000000*5)		 /* ?? */
+	MDRV_CPU_ADD(E132N,10000000*5)		 /* ?? */
 	MDRV_CPU_PROGRAM_MAP(eolith_map,0)
 	MDRV_CPU_VBLANK_INT(test_interrupts, 8)
 

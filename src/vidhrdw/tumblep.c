@@ -21,6 +21,7 @@ data16_t *tumblep_pf1_data,*tumblep_pf2_data;
 static struct tilemap *pf1_tilemap,*pf1_alt_tilemap,*pf2_tilemap,*pf2_alt_tilemap;
 static int flipscreen;
 extern data16_t* jumppop_control;
+static data16_t bcstory_tilebank;
 
 /******************************************************************************/
 
@@ -94,7 +95,7 @@ static void jumpkids_drawsprites(struct mame_bitmap *bitmap,const struct rectang
 	{
 		int x,y,sprite,colour,multi,fx,fy,inc,flash,mult;
 
-		sprite = spriteram16[offs+1] & 0x3fff;
+		sprite = spriteram16[offs+1] & 0x7fff;
 		if (!sprite) continue;
 
 		y = spriteram16[offs];
@@ -140,7 +141,7 @@ static void jumpkids_drawsprites(struct mame_bitmap *bitmap,const struct rectang
 					sprite - multi * inc,
 					colour,
 					fx,fy,
-					x,y + mult * multi,
+					x-1,y + mult * multi, // x-1 for bcstory .. realign other layers?
 					cliprect,TRANSPARENCY_PEN,0);
 
 			multi--;
@@ -212,6 +213,14 @@ static void fncywld_drawsprites(struct mame_bitmap *bitmap,const struct rectangl
 
 /******************************************************************************/
 
+WRITE16_HANDLER( bcstory_tilebank_w )
+{
+	bcstory_tilebank = data;
+	tilemap_mark_all_tiles_dirty(pf1_tilemap);
+	tilemap_mark_all_tiles_dirty(pf1_alt_tilemap);
+	tilemap_mark_all_tiles_dirty(pf2_tilemap);
+}
+
 WRITE16_HANDLER( tumblep_pf1_data_w )
 {
 	data16_t oldword=tumblep_pf1_data[offset];
@@ -277,7 +286,7 @@ INLINE void get_bg_tile_info(int tile_index,int gfx_bank,data16_t *gfx_base)
 
 	SET_TILE_INFO(
 			gfx_bank,
-			data & 0x0fff,
+			(data & 0x0fff)|(bcstory_tilebank>>2),
 			data >> 12,
 			0)
 }
@@ -291,7 +300,7 @@ static void get_fg_tile_info(int tile_index)
 
 	SET_TILE_INFO(
 			0,
-			data & 0x0fff,
+			(data & 0x0fff)|bcstory_tilebank,
 			data >> 12,
 			0)
 }
@@ -381,6 +390,7 @@ VIDEO_START( tumblep )
 
 	tilemap_set_transparent_pen(pf1_tilemap,0);
 	tilemap_set_transparent_pen(pf1_alt_tilemap,0);
+	bcstory_tilebank = 0;
 
 	return 0;
 }
@@ -396,6 +406,7 @@ VIDEO_START( fncywld )
 
 	tilemap_set_transparent_pen(pf1_tilemap,15);
 	tilemap_set_transparent_pen(pf1_alt_tilemap,15);
+	bcstory_tilebank = 0;
 
 	return 0;
 }
@@ -410,11 +421,11 @@ VIDEO_START( jumppop )
 	tilemap_set_transparent_pen(pf1_tilemap,0);
 	tilemap_set_transparent_pen(pf1_alt_tilemap,0);
 
-
 	tilemap_set_flip(pf1_tilemap, TILEMAP_FLIPX);
 	tilemap_set_flip(pf1_alt_tilemap, TILEMAP_FLIPX);
 	tilemap_set_flip(pf2_tilemap, TILEMAP_FLIPX);
 	tilemap_set_flip(pf2_alt_tilemap, TILEMAP_FLIPX);
+	bcstory_tilebank = 0;
 
 	return 0;
 }
@@ -492,6 +503,31 @@ VIDEO_UPDATE( jumpkids )
 		tilemap_draw(bitmap,cliprect,pf1_alt_tilemap,0,0);
 	jumpkids_drawsprites(bitmap,cliprect);
 }
+
+VIDEO_UPDATE( semicom )
+{
+	int offs,offs2;
+
+	flipscreen=tumblep_control_0[0]&0x80;
+	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
+	if (flipscreen) offs=1; else offs=8;
+	if (flipscreen) offs2=-3; else offs2=8;
+
+	tilemap_set_scrollx( pf1_tilemap,0, tumblep_control_0[1]+offs2 );
+	tilemap_set_scrolly( pf1_tilemap,0, tumblep_control_0[2] );
+	tilemap_set_scrollx( pf1_alt_tilemap,0, tumblep_control_0[1]+offs2 );
+	tilemap_set_scrolly( pf1_alt_tilemap,0, tumblep_control_0[2] );
+	tilemap_set_scrollx( pf2_tilemap,0, tumblep_control_0[3]+offs );
+	tilemap_set_scrolly( pf2_tilemap,0, tumblep_control_0[4] );
+
+	tilemap_draw(bitmap,cliprect,pf2_tilemap,0,0);
+	if (tumblep_control_0[6]&0x80)
+		tilemap_draw(bitmap,cliprect,pf1_tilemap,0,0);
+	else
+		tilemap_draw(bitmap,cliprect,pf1_alt_tilemap,0,0);
+	jumpkids_drawsprites(bitmap,cliprect);
+}
+
 
 VIDEO_UPDATE( fncywld )
 {

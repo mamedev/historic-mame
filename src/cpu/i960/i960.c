@@ -1422,14 +1422,15 @@ static int i960_execute(int cycles)
 			case 0x0: // atanr
 				i960_icount -= 267;
 				t1f = get_1_rif(opcode);
-				set_rif(opcode, atan(t1f));
+				t2f = get_2_rif(opcode);
+				set_rif(opcode, atan2(t2f, t1f));
 				break;
 
 			case 0x1: // logepr
 				i960_icount -= 400;
 				t1f = get_1_rif(opcode);
 				t2f = get_2_rif(opcode);
-				set_rif(opcode, t1f*log(t2f+1.0)/log(2.0));
+				set_rif(opcode, t2f*log(t1f+1.0)/log(2.0));
 				break;
 
 			case 0x3: // remr

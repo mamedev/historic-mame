@@ -41,13 +41,11 @@ static UINT8 subroc3d_select;
 /* Nodes - Sounds */
 #define FIRETRUCK_NOISE			NODE_20
 
-const struct discrete_555_astbl_desc turbo_alarm_555 =
+const struct discrete_555_desc turbo_alarm_555 =
 {
 	DISC_555_OUT_SQW | DISC_555_OUT_DC,
 	5,				// B+ voltage of 555
-	5.0 - 1.7,		// High output voltage of 555 (Usually v555 - 1.7)
-	5.0 * 2.0 /3.0,	// normally 2/3 of v555
-	5.0 / 3.0		// normally 1/3 of v555
+	DEFAULT_555_VALUES,
 };
 
 DISCRETE_SOUND_START(turbo_sound_interface)
@@ -71,9 +69,9 @@ DISCRETE_SOUND_START(turbo_sound_interface)
 	/************************************************/
 	/* Alarm sounds                                 */
 	/************************************************/
-	
+
 	// 5-5-5 counter provides the input clock
-	DISCRETE_555_ASTABLE(NODE_50,1,470,120,0.1e-6,NODE_NC,&turbo_alarm_555)
+	DISCRETE_555_ASTABLE(NODE_50,1,470,120,0.1e-6,&turbo_alarm_555)
 	// which clocks a 74393 dual 4-bit counter, clocked on the falling edge
 	DISCRETE_COUNTER(NODE_51,1,0,NODE_50,15,1,0,0)
 	// the high bit of this counter
@@ -87,7 +85,7 @@ DISCRETE_SOUND_START(turbo_sound_interface)
 	DISCRETE_TRANSFORM2(NODE_61,1,NODE_53,1,"01&")
 	// via a NAND
 	DISCRETE_LOGIC_NAND(NODE_62,1,NODE_60,NODE_61)
-	
+
 	// trig2 triggers a LS123 retriggerable multivibrator
 	DISCRETE_ONESHOT(NODE_65,TURBO_TRIG2_INV,5.0,(0.33e-9)*47*10e6,DISC_ONESHOT_FEDGE|DISC_ONESHOT_RETRIG|DISC_OUT_ACTIVE_HIGH)
 	// which interacts with bit 3 of the first counter via a NAND
@@ -106,14 +104,14 @@ DISCRETE_SOUND_START(turbo_sound_interface)
 	DISCRETE_TRANSFORM3(NODE_76,1,NODE_51,2,1,"01/2&")
 	// via a NAND
 	DISCRETE_LOGIC_NAND(NODE_77,1,NODE_75,NODE_76)
-	
+
 	// everything is effectively NANDed together
 	DISCRETE_LOGIC_NAND4(NODE_80,1,NODE_62,NODE_66,NODE_72,NODE_77)
 
 /*
 
 	the rest of the circuit looks like this:
-	
+
 	                  +5V            +12V                                +---+
 	                   ^              ^   +--------+               1K    v   |
 	                   |              |   | |\     |           +---NNN--NNN--+

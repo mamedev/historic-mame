@@ -11,7 +11,7 @@
 		* Zarzon
 		* Vanguard
 		* Fantasy					G-202
-		* Pioneer Balloon			G-204
+		* Pioneer Balloon				G-204
 		* Nibbler					G-208
 
 ****************************************************************************
@@ -112,7 +112,8 @@ Interrupts: VBlank causes an IRQ. Coin insertion causes a NMI.
 
 	- sasuke/satansat/vanguard discrete sound
 	- vanguard/fantasy speech (hd38880/hd38882 emulation)
-	- music volume control
+	- music freq (Satan of Saturn and clone)
+	- correct music waveform/volume control
 	- clean up dips/inputs for all games
 	- correct ROM names
 	- fantasy is German? (the continue text is in German)
@@ -120,8 +121,15 @@ Interrupts: VBlank causes an IRQ. Coin insertion causes a NMI.
 */
 
 #include "driver.h"
+#include "cpu/m6502/m6502.h"
 #include "vidhrdw/generic.h"
 #include "vidhrdw/crtc6845.h"
+#include "machine/random.h"
+
+#ifndef M_LN2
+#define M_LN2		0.69314718055994530942
+#endif
+
 
 /* vidhrdw */
 
@@ -149,15 +157,59 @@ extern VIDEO_START( satansat );
 
 /* sndhrdw */
 
+extern const char *sasuke_sample_names[];
 extern const char *vanguard_sample_names[];
+extern const char *fantasy_sample_names[];
 
 extern WRITE8_HANDLER( sasuke_sound_w );
 extern WRITE8_HANDLER( satansat_sound_w );
 extern WRITE8_HANDLER( vanguard_sound_w );
+extern WRITE8_HANDLER( vanguard_speech_w );
 extern WRITE8_HANDLER( fantasy_sound_w );
+extern WRITE8_HANDLER( fantasy_speech_w );
 
 int rockola_sh_start(const struct MachineSound *msound);
-void rockola_sh_update(void);
+void rockola_set_music_clock(double clock_time);
+void rockola_set_music_freq(int freq);
+int rockola_music0_playing(void);
+
+
+/* binary counter (1.4MHz update) */
+static data8_t sasuke_counter;
+static void *sasuke_timer;
+
+static void sasuke_update_counter(int param)
+{
+	sasuke_counter += 0x10;
+}
+
+static void sasuke_start_counter(void)
+{
+	sasuke_counter = 0;
+
+	sasuke_timer = timer_alloc(sasuke_update_counter);
+	timer_adjust(sasuke_timer, TIME_NOW, 0, TIME_IN_HZ(11289000/8));	// 1.4 MHz
+}
+
+
+/* IN1 + music0 playing */
+static READ8_HANDLER( sasuke_port_1_r )
+{
+	return readinputport(1) | (rockola_music0_playing() ? 0x80 : 0x00);
+}
+
+/* IN2 + binary counter */
+static READ8_HANDLER( sasuke_port_3_r )
+{
+	return readinputport(3) | sasuke_counter;
+}
+
+/* IN2 + music0 playing */
+static READ8_HANDLER( vanguard_port_3_r )
+{
+	return readinputport(3) | (rockola_music0_playing() ? 0x10 : 0x00);
+}
+
 
 /* Memory Maps */
 
@@ -169,14 +221,14 @@ static ADDRESS_MAP_START( sasuke_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x1000, 0x1fff) AM_RAM AM_WRITE(rockola_charram_w) AM_BASE(&rockola_charram)
 	AM_RANGE(0x3000, 0x3000) AM_WRITE(crtc6845_address_w)
 	AM_RANGE(0x3001, 0x3001) AM_WRITE(crtc6845_register_w)
-	AM_RANGE(0x4000, 0x97ff) AM_ROM
+	AM_RANGE(0x4000, 0x8fff) AM_ROM
 	AM_RANGE(0xb000, 0xb001) AM_WRITE(sasuke_sound_w)
 	AM_RANGE(0xb002, 0xb002) AM_WRITE(satansat_b002_w)	/* flip screen & irq enable */
 	AM_RANGE(0xb003, 0xb003) AM_WRITE(satansat_backcolor_w)
-	AM_RANGE(0xb004, 0xb004) AM_READ(input_port_0_r) // IN0
-	AM_RANGE(0xb005, 0xb005) AM_READ(input_port_1_r) // IN1
-	AM_RANGE(0xb006, 0xb006) AM_READ(input_port_2_r) /* DSW */
-	AM_RANGE(0xb007, 0xb007) AM_READ(input_port_3_r) // IN2
+	AM_RANGE(0xb004, 0xb004) AM_READ(input_port_0_r)	// IN0
+	AM_RANGE(0xb005, 0xb005) AM_READ(sasuke_port_1_r)	// IN1 + music0 playing
+	AM_RANGE(0xb006, 0xb006) AM_READ(input_port_2_r)	/* DSW */
+	AM_RANGE(0xb007, 0xb007) AM_READ(sasuke_port_3_r)	// IN2 + binary counter
 	AM_RANGE(0xf800, 0xffff) AM_ROM
 ADDRESS_MAP_END
 
@@ -192,10 +244,10 @@ static ADDRESS_MAP_START( satansat_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xb000, 0xb001) AM_WRITE(satansat_sound_w)
 	AM_RANGE(0xb002, 0xb002) AM_WRITE(satansat_b002_w)	/* flip screen & irq enable */
 	AM_RANGE(0xb003, 0xb003) AM_WRITE(satansat_backcolor_w)
-	AM_RANGE(0xb004, 0xb004) AM_READ(input_port_0_r) // IN0
-	AM_RANGE(0xb005, 0xb005) AM_READ(input_port_1_r) // IN1
-	AM_RANGE(0xb006, 0xb006) AM_READ(input_port_2_r) /* DSW */
-	AM_RANGE(0xb007, 0xb007) AM_READ(input_port_3_r) // IN2
+	AM_RANGE(0xb004, 0xb004) AM_READ(input_port_0_r)	// IN0
+	AM_RANGE(0xb005, 0xb005) AM_READ(sasuke_port_1_r)	// IN1 + music0 playing
+	AM_RANGE(0xb006, 0xb006) AM_READ(input_port_2_r)	/* DSW */
+	AM_RANGE(0xb007, 0xb007) AM_READ(sasuke_port_3_r)	// IN2 + binary counter
 	AM_RANGE(0xf800, 0xffff) AM_ROM
 ADDRESS_MAP_END
 
@@ -212,10 +264,10 @@ static ADDRESS_MAP_START( vanguard_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x3104, 0x3104) AM_READ(input_port_0_r)	// IN0
 	AM_RANGE(0x3105, 0x3105) AM_READ(input_port_1_r)	// IN1
 	AM_RANGE(0x3106, 0x3106) AM_READ(input_port_2_r)	/* DSW */
-	AM_RANGE(0x3107, 0x3107) AM_READ(input_port_3_r)	// IN2
+	AM_RANGE(0x3107, 0x3107) AM_READ(vanguard_port_3_r)	// IN2 + music0 playing
 	AM_RANGE(0x3200, 0x3200) AM_WRITE(rockola_scrollx_w)
 	AM_RANGE(0x3300, 0x3300) AM_WRITE(rockola_scrolly_w)
-	AM_RANGE(0x3400, 0x3400) AM_WRITENOP // speech
+	AM_RANGE(0x3400, 0x3400) AM_WRITE(vanguard_speech_w)	// speech
 	AM_RANGE(0x4000, 0xbfff) AM_ROM
 	AM_RANGE(0xf000, 0xffff) AM_ROM	/* for the reset / interrupt vectors */
 ADDRESS_MAP_END
@@ -235,6 +287,7 @@ static ADDRESS_MAP_START( fantasy_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x2107, 0x2107) AM_READ(input_port_3_r)	// IN2
 	AM_RANGE(0x2200, 0x2200) AM_WRITE(rockola_scrollx_w)
 	AM_RANGE(0x2300, 0x2300) AM_WRITE(rockola_scrolly_w)
+	AM_RANGE(0x2400, 0x2400) AM_WRITE(fantasy_speech_w)	// speech
 	AM_RANGE(0x3000, 0xbfff) AM_ROM
 	AM_RANGE(0xf000, 0xffff) AM_ROM
 ADDRESS_MAP_END
@@ -262,23 +315,23 @@ ADDRESS_MAP_END
 
 /* Derived from Zarzon. Might not reflect the actual hardware. */
 INPUT_PORTS_START( sasuke )
-    PORT_START  // IN0
-    PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_2WAY
-    PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_2WAY
-    PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON1 )
-    PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_2WAY PORT_COCKTAIL
-    PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_2WAY PORT_COCKTAIL
-    PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_COCKTAIL
-    PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START1 )
-    PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_START  // IN0
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_2WAY
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_2WAY
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_2WAY PORT_COCKTAIL
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_2WAY PORT_COCKTAIL
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_COCKTAIL
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_START2 )
 
 	PORT_START	// IN1
-    PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-    PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-    PORT_BIT( 0x7C, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-    PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x7C, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_SPECIAL )	/* music0 playing */
 
-    PORT_START  /* DSW */
+	PORT_START  /* DSW */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Upright ))
 	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
@@ -305,28 +358,28 @@ INPUT_PORTS_START( sasuke )
 
 	PORT_START  // IN2
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 ) PORT_IMPULSE(1)
-	PORT_BIT( 0x0e, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* connected to a counter - random number generator? */
+	PORT_BIT( 0x0e, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* NC */
+	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_SPECIAL )	/* connected to a binary counter */
 INPUT_PORTS_END
 
 INPUT_PORTS_START( satansat )
-    PORT_START  // IN0
-    PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_2WAY
-    PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_2WAY
-    PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON1 )
-    PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_2WAY PORT_COCKTAIL
-    PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_2WAY PORT_COCKTAIL
-    PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_COCKTAIL
-    PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON2 )
-    PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON2 ) PORT_COCKTAIL
+	PORT_START  // IN0
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_2WAY
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_2WAY
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_2WAY PORT_COCKTAIL
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_2WAY PORT_COCKTAIL
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_COCKTAIL
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON2 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON2 ) PORT_COCKTAIL
 
 	PORT_START	// IN1
-    PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
-    PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
-    PORT_BIT( 0x7C, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-    PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x7C, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_SPECIAL )	/* music0 playing */
 
-    PORT_START  /* DSW */
+	PORT_START  /* DSW */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Upright ))
 	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
@@ -352,8 +405,8 @@ INPUT_PORTS_START( satansat )
 
 	PORT_START  // IN2
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 ) PORT_IMPULSE(1)
-	PORT_BIT( 0x0e, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* connected to a counter - random number generator? */
+	PORT_BIT( 0x0e, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* NC */
+	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_SPECIAL )	/* connected to a binary counter */
 INPUT_PORTS_END
 
 INPUT_PORTS_START( vanguard )
@@ -412,7 +465,7 @@ INPUT_PORTS_START( vanguard )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN1 ) PORT_IMPULSE(1)
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_SPECIAL )	/* music0 playing */
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START2 )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_START1 )
@@ -639,22 +692,22 @@ static struct GfxLayout charlayout_memory =
 
 static struct GfxDecodeInfo sasuke_gfxdecodeinfo[] =
 {
-    { 0,           0x1000, &swapcharlayout,		0, 4 },	/* the game dynamically modifies this */
-    { REGION_GFX1, 0x0000, &swapcharlayout,	  4*4, 4 },
+	{ 0,           0x1000, &swapcharlayout,      0, 4 },	/* the game dynamically modifies this */
+	{ REGION_GFX1, 0x0000, &swapcharlayout,    4*4, 4 },
 	{ -1 }
 };
 
 static struct GfxDecodeInfo satansat_gfxdecodeinfo[] =
 {
-    { 0,           0x1000, &charlayout_memory,	0, 4 },	/* the game dynamically modifies this */
-    { REGION_GFX1, 0x0000, &charlayout,		  4*4, 4 },
+	{ 0,           0x1000, &charlayout_memory,   0, 4 },	/* the game dynamically modifies this */
+	{ REGION_GFX1, 0x0000, &charlayout,        4*4, 4 },
 	{ -1 }
 };
 
 static struct GfxDecodeInfo vanguard_gfxdecodeinfo[] =
 {
-	{ 0,           0x1000, &charlayout_memory,	0, 8 },	/* the game dynamically modifies this */
-	{ REGION_GFX1, 0x0000, &charlayout,		  8*4, 8 },
+	{ 0,           0x1000, &charlayout_memory,   0, 8 },	/* the game dynamically modifies this */
+	{ REGION_GFX1, 0x0000, &charlayout,        8*4, 8 },
 	{ -1 }
 };
 
@@ -664,60 +717,101 @@ static struct CustomSound_interface custom_interface =
 {
 	rockola_sh_start,
 	0,
-	rockola_sh_update
+	0
+};
+
+static struct Samplesinterface sasuke_samples_interface =
+{
+	4,	/* 4 channels */
+	12,	/* volume */
+	sasuke_sample_names
 };
 
 static struct Samplesinterface vanguard_samples_interface =
 {
-	8,	/* 8 channels */
+	3,	/* 3 channel */
 	25,	/* volume */
 	vanguard_sample_names
 };
 
+static struct Samplesinterface fantasy_samples_interface =
+{
+	1,	/* 1 channel */
+	25,	/* volume */
+	fantasy_sample_names
+};
+
+
+static struct SN76477interface sasuke_sn76477_intf =
+{
+	3,							/* 3 chips (ic48, ic51, ic52) */
+	{ 50,		50,		50 },	/* mixing level   pin  description */
+	{ RES_K(470),	RES_K(340),	RES_K(330) },		/*  4  noise_res	 */
+	{ RES_K(150),	RES_K(47),	RES_K(47) },		/*  5  filter_res	 */
+	{ CAP_P(4700),	CAP_P(100),	CAP_P(100) },		/*  6  filter_cap	 */
+	{ RES_K(22),	RES_K(470),	RES_K(1) },		/*  7  decay_res	 */
+	{ CAP_U(10),	CAP_U(4.7),	0 /* NC */ },		/*  8  attack_decay_cap	 */
+	{ RES_K(10),	RES_K(10),	RES_K(1) },		/* 10  attack_res	 */
+	{ RES_K(100),	RES_K(100),	RES_K(100) },		/* 11  amplitude_res	 */
+	{ RES_K(47),	RES_K(47),	RES_K(47) },		/* 12  feedback_res 	 */
+	{ 0 /* NC */,	0 /* NC */,	0 /* NC */ },		/* 16  vco_voltage	 */
+	{ 0 /* NC */,	CAP_P(220),	CAP_P(1000) },		/* 17  vco_cap		 */
+	{ 0 /* NC */,	RES_K(1000),	RES_K(1000) },		/* 18  vco_res		 */
+	{ 0 /* NC */,	0 /* NC */,	0 /* NC */ },		/* 19  pitch_voltage	 */
+	{ RES_K(10),	RES_K(220),	RES_K(10) },		/* 20  slf_res		 */
+	{ 0 /* NC */,	0 /* NC */,	CAP_U(1) },		/* 21  slf_cap		 */
+	{ CAP_U(2.2),	CAP_U(22),	CAP_U(2.2) },		/* 23  oneshot_cap	 */
+	{ RES_K(100),	RES_K(47),	RES_K(150) },		/* 24  oneshot_res	 */
+
+	// ic48		GND: 2,22,26,27,28	+5V: 1,15,25
+	// ic51		GND: 2,26,27		+5V: 1,15,22,25,28
+	// ic52		GND: 2,22,27,28		+5V: 1,15,25,26
+};
+
 static struct SN76477interface satansat_sn76477_intf =
 {
-	1,			/* 1 chip */
-	{ 100 },	/* mixing level   pin description */
-	{ RES_K(470) },	/*	4  noise_res		 */
-	{ RES_M(1.5) },	/*	5  filter_res		 */
-	{ CAP_P(220) },	/*	6  filter_cap		 */
-	{ 0 },			/*	7  decay_res		 */
-	{ 0 },			/*	8  attack_decay_cap  */
-	{ 0 },			/* 10  attack_res		 */
-	{ RES_K(47) },	/* 11  amplitude_res	 */
-	{ RES_K(47) },	/* 12  feedback_res 	 */
-	{ 0 },			/* 16  vco_voltage		 */
-	{ 0 },			/* 17  vco_cap			 */
-	{ 0 },			/* 18  vco_res			 */
-	{ 0 },			/* 19  pitch_voltage	 */
-	{ 0 },			/* 20  slf_res			 */
-	{ 0 },			/* 21  slf_cap			 */
-	{ 0 },			/* 23  oneshot_cap		 */
-	{ 0 }			/* 24  oneshot_res		 */
+	1,					/* 1 chip */
+	{ 100 },		/* mixing level   pin description */
+	{ RES_K(470) },				/*  4  noise_res	 */
+	{ RES_M(1.5) },				/*  5  filter_res	 */
+	{ CAP_P(220) },				/*  6  filter_cap	 */
+	{ 0 },					/*  7  decay_res	 */
+	{ 0 },					/*  8  attack_decay_cap	 */
+	{ 0 },					/* 10  attack_res	 */
+	{ RES_K(47) },				/* 11  amplitude_res	 */
+	{ RES_K(47) },				/* 12  feedback_res 	 */
+	{ 0 },					/* 16  vco_voltage	 */
+	{ 0 },					/* 17  vco_cap		 */
+	{ 0 },					/* 18  vco_res		 */
+	{ 0 },					/* 19  pitch_voltage	 */
+	{ 0 },					/* 20  slf_res		 */
+	{ 0 },					/* 21  slf_cap		 */
+	{ 0 },					/* 23  oneshot_cap	 */
+	{ 0 }					/* 24  oneshot_res	 */
 
 	// ???		GND: 2,26,27		+5V: 15,25
 };
 
 static struct SN76477interface vanguard_sn76477_intf =
 {
-	2,	/* 2 chips */
-	{ 100,			100 },	/* mixing level   pin description */
-	{ RES_K(470),	RES_K(10) },	/*	4  noise_res		 */
-	{ RES_M(1.5),	RES_K(30) },	/*	5  filter_res		 */
-	{ CAP_P(220),	0 },			/*	6  filter_cap		 */
-	{ 0,			0 },			/*	7  decay_res		 */
-	{ 0,			0 },			/*	8  attack_decay_cap  */
-	{ 0,			0 },			/* 10  attack_res		 */
-	{ RES_K(47),	RES_K(47) },	/* 11  amplitude_res	 */
-	{ RES_K(4.7),	RES_K(4.7) },	/* 12  feedback_res 	 */
-	{ 0,			0 },			/* 16  vco_voltage		 */
-	{ 0,			0 },			/* 17  vco_cap			 */
-	{ 0,			0 },			/* 18  vco_res			 */
-	{ 0,			0 },			/* 19  pitch_voltage	 */
-	{ 0,			0 },			/* 20  slf_res			 */
-	{ 0,			0 },			/* 21  slf_cap			 */
-	{ 0,			0 },			/* 23  oneshot_cap		 */
-	{ 0,			0 }				/* 24  oneshot_res		 */
+	2,					/* 2 chips */
+	{ 50,		25 },	/* mixing level   pin description */
+	{ RES_K(470),	RES_K(10) },		/*  4  noise_res	 */
+	{ RES_M(1.5),	RES_K(30) },		/*  5  filter_res	 */
+	{ CAP_P(220),	0 },			/*  6  filter_cap	 */
+	{ 0,			0 },		/*  7  decay_res	 */
+	{ 0,			0 },		/*  8  attack_decay_cap  */
+	{ 0,			0 },		/* 10  attack_res	 */
+	{ RES_K(47),	RES_K(47) },		/* 11  amplitude_res	 */
+	{ RES_K(4.7),	RES_K(4.7) },		/* 12  feedback_res 	 */
+	{ 0,			0 },		/* 16  vco_voltage	 */
+	{ 0,			0 },		/* 17  vco_cap		 */
+	{ 0,			0 },		/* 18  vco_res		 */
+	{ 0,			0 },		/* 19  pitch_voltage	 */
+	{ 0,			0 },		/* 20  slf_res		 */
+	{ 0,			0 },		/* 21  slf_cap		 */
+	{ 0,			0 },		/* 23  oneshot_cap	 */
+	{ 0,			0 }		/* 24  oneshot_res	 */
 
 	// SHOT A	GND: 2,9,26,27	+5V: 15,25
 	// SHOT B	GND: 1,2,26,27	+5V: 15,25,28
@@ -725,24 +819,24 @@ static struct SN76477interface vanguard_sn76477_intf =
 
 static struct SN76477interface fantasy_sn76477_intf =
 {
-	1,			/* 1 chip */
+	1,				/* 1 chip */
 	{ 100 },	/* mixing level   pin description */
-	{ RES_K(470) },	/*	4  noise_res		 */
-	{ RES_M(1.5) },	/*	5  filter_res		 */
-	{ CAP_P(220) },	/*	6  filter_cap		 */
-	{ 0 },			/*	7  decay_res		 */
-	{ 0 },			/*	8  attack_decay_cap  */
-	{ 0 },			/* 10  attack_res		 */
-	{ RES_K(470) },	/* 11  amplitude_res	 */
-	{ RES_K(4.7) },	/* 12  feedback_res 	 */
-	{ 0 },			/* 16  vco_voltage		 */
-	{ 0 },			/* 17  vco_cap			 */
-	{ 0 },			/* 18  vco_res			 */
-	{ 0 },			/* 19  pitch_voltage	 */
-	{ 0 },			/* 20  slf_res			 */
-	{ 0 },			/* 21  slf_cap			 */
-	{ 0 },			/* 23  oneshot_cap		 */
-	{ 0 }			/* 24  oneshot_res		 */
+	{ RES_K(470) },			/*  4  noise_res	 */
+	{ RES_M(1.5) },			/*  5  filter_res	 */
+	{ CAP_P(220) },			/*  6  filter_cap	 */
+	{ 0 },				/*  7  decay_res	 */
+	{ 0 },				/*  8  attack_decay_cap  */
+	{ 0 },				/* 10  attack_res	 */
+	{ RES_K(470) },			/* 11  amplitude_res	 */
+	{ RES_K(4.7) },			/* 12  feedback_res 	 */
+	{ 0 },				/* 16  vco_voltage	 */
+	{ 0 },				/* 17  vco_cap		 */
+	{ 0 },				/* 18  vco_res		 */
+	{ 0 },				/* 19  pitch_voltage	 */
+	{ 0 },				/* 20  slf_res		 */
+	{ 0 },				/* 21  slf_cap		 */
+	{ 0 },				/* 23  oneshot_cap	 */
+	{ 0 }				/* 24  oneshot_res	 */
 
 	// BOMB		GND:	2,9,26,27		+5V: 15,25
 };
@@ -753,43 +847,91 @@ static INTERRUPT_GEN( satansat_interrupt )
 {
 	if (cpu_getiloops() != 0)
 	{
+		data8_t val = readinputport(3);
+
+		coin_counter_w(0, val & 1);
+
 		/* user asks to insert coin: generate a NMI interrupt. */
-		if (readinputport(3) & 0x01)
+		if (val & 0x01)
 			cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
 	}
 	else
-		cpunum_set_input_line(0, 0, HOLD_LINE);	/* one IRQ per frame */
+		cpunum_set_input_line(0, M6502_IRQ_LINE, HOLD_LINE);	/* one IRQ per frame */
 }
 
 static INTERRUPT_GEN( rockola_interrupt )
 {
 	if (cpu_getiloops() != 0)
 	{
+		data8_t val = readinputport(3);
+
+		coin_counter_w(0, val & 1);
+		coin_counter_w(1, val & 2);
+
 		/* user asks to insert coin: generate a NMI interrupt. */
-		if (readinputport(3) & 0x03)
+		if (val & 0x03)
 			cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
 	}
 	else
-		cpunum_set_input_line(0, 0, HOLD_LINE);	/* one IRQ per frame */
+		cpunum_set_input_line(0, M6502_IRQ_LINE, HOLD_LINE);	/* one IRQ per frame */
 }
 
 /* Machine Initialization */
 
 static MACHINE_INIT( sasuke )
 {
-	// TODO: SN76477 init here
+	//rockola_set_music_clock(M_LN2 * (RES_K(1) + RES_K(10) * 2) * CAP_U(1));
+	// adjusted
+	rockola_set_music_clock(1 / 72.1);
+
+	// adjusted
+	rockola_set_music_freq(38000);
+
+	// ic48
+	SN76477_envelope_1_w(0, 1);	// pin 1
+	SN76477_envelope_2_w(0, 0);	// pin 28
+	SN76477_vco_w(0, 0);		// pin 22
+	SN76477_mixer_a_w(0, 0);	// pin 26
+	SN76477_mixer_b_w(0, 1);	// pin 25
+	SN76477_mixer_c_w(0, 0);	// pin 27
+
+	// ic51
+	SN76477_envelope_1_w(1, 1);	// pin 1
+	SN76477_envelope_2_w(1, 1);	// pin 28
+	SN76477_vco_w(1, 1);		// pin 22
+	SN76477_mixer_a_w(1, 0);	// pin 26
+	SN76477_mixer_b_w(1, 1);	// pin 25
+	SN76477_mixer_c_w(1, 0);	// pin 27
+
+	// ic52
+	SN76477_envelope_1_w(2, 1);	// pin 1
+	SN76477_envelope_2_w(2, 0);	// pin 28
+	SN76477_vco_w(2, 0);		// pin 22
+	SN76477_mixer_a_w(2, 1);	// pin 26
+	SN76477_mixer_b_w(2, 1);	// pin 25
+	SN76477_mixer_c_w(2, 0);	// pin 27
+
+	sasuke_start_counter();
 }
 
 static MACHINE_INIT( satansat )
 {
+	// same as sasuke
+	rockola_set_music_freq(38000);
+
 	// ???
 	SN76477_mixer_a_w(0, 0);
 	SN76477_mixer_b_w(0, 1);
 	SN76477_mixer_c_w(0, 0);
+
+	sasuke_start_counter();
 }
 
 static MACHINE_INIT( vanguard )
 {
+	// 41.6 Hz update (measured)
+	rockola_set_music_clock(1 / 41.6);
+
 	// SHOT A
 	SN76477_mixer_a_w(0, 0);
 	SN76477_mixer_b_w(0, 1);
@@ -811,6 +953,14 @@ static MACHINE_INIT( fantasy )
 	SN76477_mixer_c_w(0, 0);
 }
 
+static MACHINE_INIT( pballoon )
+{
+	// 40.3 Hz update (measured)
+	rockola_set_music_clock(1 / 40.3);
+
+	machine_init_fantasy();
+}
+
 /* Machine Drivers */
 
 static MACHINE_DRIVER_START( sasuke )
@@ -819,7 +969,7 @@ static MACHINE_DRIVER_START( sasuke )
 	MDRV_CPU_PROGRAM_MAP(sasuke_map, 0)
 	MDRV_CPU_VBLANK_INT(satansat_interrupt, 2)
 
-	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_FRAMES_PER_SECOND((11289000.0 / 16) / (45 * 32 * 8))
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	MDRV_MACHINE_INIT(sasuke)
@@ -837,7 +987,9 @@ static MACHINE_DRIVER_START( sasuke )
 	MDRV_VIDEO_UPDATE(rockola)
 
 	// sound hardware
-	// is fully discrete
+	MDRV_SOUND_ADD(CUSTOM, custom_interface)
+	MDRV_SOUND_ADD_TAG("samples", SAMPLES, sasuke_samples_interface)
+	MDRV_SOUND_ADD_TAG("SN76477", SN76477, sasuke_sn76477_intf)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( satansat )
@@ -852,18 +1004,18 @@ static MACHINE_DRIVER_START( satansat )
 	MDRV_GFXDECODE(satansat_gfxdecodeinfo)
 
 	// sound hardware
-	MDRV_SOUND_ADD(SAMPLES, vanguard_samples_interface)
-	MDRV_SOUND_ADD(CUSTOM, custom_interface)
-	MDRV_SOUND_ADD(SN76477, satansat_sn76477_intf)
+	MDRV_SOUND_REPLACE("samples", SAMPLES, vanguard_samples_interface)
+	MDRV_SOUND_REPLACE("SN76477", SN76477, satansat_sn76477_intf)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( vanguard )
 	// basic machine hardware
-	MDRV_CPU_ADD_TAG("main", M6502, 11289000/8)	// 1.4 MHz
+	//MDRV_CPU_ADD_TAG("main", M6502, 11289000/8)	// 1.4 MHz
+	MDRV_CPU_ADD_TAG("main", M6502, 930000)		// adjusted
 	MDRV_CPU_PROGRAM_MAP(vanguard_map, 0)
 	MDRV_CPU_VBLANK_INT(rockola_interrupt, 2)
 
-	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_FRAMES_PER_SECOND((11289000.0 / 16) / (45 * 32 * 8))
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	MDRV_MACHINE_INIT(vanguard)
@@ -881,8 +1033,8 @@ static MACHINE_DRIVER_START( vanguard )
 	MDRV_VIDEO_UPDATE(rockola)
 
 	// sound hardware
-	MDRV_SOUND_ADD_TAG("samples", SAMPLES, vanguard_samples_interface)
 	MDRV_SOUND_ADD(CUSTOM, custom_interface)
+	MDRV_SOUND_ADD_TAG("samples", SAMPLES, vanguard_samples_interface)
 	MDRV_SOUND_ADD_TAG("SN76477", SN76477, vanguard_sn76477_intf)
 MACHINE_DRIVER_END
 
@@ -895,15 +1047,25 @@ static MACHINE_DRIVER_START( fantasy )
 	MDRV_MACHINE_INIT(fantasy)
 
 	// sound hardware
-	MDRV_SOUND_REMOVE("samples")
+	MDRV_SOUND_REPLACE("samples", SAMPLES, fantasy_samples_interface)
 	MDRV_SOUND_REPLACE("SN76477", SN76477, fantasy_sn76477_intf)
+MACHINE_DRIVER_END
+
+static MACHINE_DRIVER_START( nibbler )
+	// basic machine hardware
+	MDRV_IMPORT_FROM(fantasy)
+
+	// sound hardware
+	MDRV_SOUND_REMOVE("samples")
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( pballoon )
 	// basic machine hardware
-	MDRV_IMPORT_FROM(fantasy)
+	MDRV_IMPORT_FROM(nibbler)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_PROGRAM_MAP(pballoon_map, 0)
+
+	MDRV_MACHINE_INIT(pballoon)
 
 	// video hardware
 	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
@@ -924,7 +1086,6 @@ ROM_START( sasuke )
 	ROM_RELOAD(               0xf800, 0x0800 ) /* for the reset/interrupt vectors */
 	ROM_LOAD( "sc9",          0x8000, 0x0800, CRC(d6ff889a) SHA1(1eea0366205dd0d9bffb5d093f259edc1d51cbe0) )
 	ROM_LOAD( "sc10",         0x8800, 0x0800, CRC(19df6b9a) SHA1(95e904251c39dcef227a4c125fc573e958ee78b7) )
-	ROM_LOAD( "sc11",         0x9000, 0x0800, CRC(24a0e121) SHA1(e3cde355309de6678026d595955297258f069946) )
 
 	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "mcs_c",        0x0000, 0x0800, CRC(aff9743d) SHA1(a968a193ca551d92f79e09d1761dd2ccebc76eee) )
@@ -933,7 +1094,8 @@ ROM_START( sasuke )
 	ROM_REGION( 0x0020, REGION_PROMS, 0 )
 	ROM_LOAD( "sasuke.clr",   0x0000, 0x0020, CRC(b70f34c1) SHA1(890cfbb25e14112713ba7900b9cd56554a8bc1ec) )
 
-	/* no sound ROMs - the sound section is entirely analog */
+	ROM_REGION( 0x1000, REGION_SOUND1, 0 )  /* sound data for Vanguard-style audio section */
+	ROM_LOAD( "sc11",         0x0000, 0x0800, CRC(24a0e121) SHA1(e3cde355309de6678026d595955297258f069946) )
 ROM_END
 
 ROM_START( satansat )
@@ -958,7 +1120,7 @@ ROM_START( satansat )
 	ROM_REGION( 0x0020, REGION_PROMS, 0 )
 	ROM_LOAD( "zarz138.03",   0x0000, 0x0020, CRC(5dd6933a) SHA1(417d827d9e47b6db01fecc2164e5ef332d4cd70e) )
 
-    ROM_REGION( 0x1000, REGION_SOUND1, 0 )  /* sound data for Vanguard-style audio section */
+	ROM_REGION( 0x1000, REGION_SOUND1, 0 )  /* sound data for Vanguard-style audio section */
 	ROM_LOAD( "ss12",         0x0000, 0x0800, CRC(dee01f24) SHA1(92c8545226a31412239dad4aa2715b51264ad22e) )
 	ROM_LOAD( "zarz134.54",   0x0800, 0x0800, CRC(580934d2) SHA1(c1c7eba56bca2a0ea6a68c0245b071a3308f92bd) )
 ROM_END
@@ -985,7 +1147,7 @@ ROM_START( zarzon )
 	ROM_REGION( 0x0020, REGION_PROMS, 0 )
 	ROM_LOAD( "zarz138.03",   0x0000, 0x0020, CRC(5dd6933a) SHA1(417d827d9e47b6db01fecc2164e5ef332d4cd70e) )
 
-    ROM_REGION( 0x1000, REGION_SOUND1, 0 )  /* sound data for Vanguard-style audio section */
+	ROM_REGION( 0x1000, REGION_SOUND1, 0 )  /* sound data for Vanguard-style audio section */
 	ROM_LOAD( "zarz133.53",   0x0000, 0x0800, CRC(b253cf78) SHA1(56a73b22ed2866222c407a3e9b51b8e0c92cf2aa) )
 	ROM_LOAD( "zarz134.54",   0x0800, 0x0800, CRC(580934d2) SHA1(c1c7eba56bca2a0ea6a68c0245b071a3308f92bd) )
 ROM_END
@@ -1014,10 +1176,11 @@ ROM_START( vanguard )
 	ROM_LOAD( "sk4_ic51.bin", 0x0000, 0x0800, CRC(d2a64006) SHA1(3f20b59ce1954f65535cd5603ca9271586428e35) )  /* sound ROM 1 */
 	ROM_LOAD( "sk4_ic52.bin", 0x0800, 0x0800, CRC(cc4a0b6f) SHA1(251b24d60083d516c4ba686d75b41e04d10f7198) )  /* sound ROM 2 */
 
-	ROM_REGION( 0x1800, REGION_SOUND2, 0 )	/* space for the speech ROMs (not supported) */
-	ROM_LOAD( "sk6_ic07.bin", 0x0000, 0x0800, CRC(2b7cbae9) SHA1(3d44a0232d7c94d8170cc06e90cc30bd57c99202) )
-	ROM_LOAD( "sk6_ic08.bin", 0x0800, 0x0800, CRC(3b7e9d7c) SHA1(d9033188068b2aaa1502c89cf09f955eded8fa7a) )
-	ROM_LOAD( "sk6_ic11.bin", 0x1000, 0x0800, CRC(c36df041) SHA1(8b51934229b961180d1edb99be3a4d337d37f66f) )
+	ROM_REGION( 0x5800, REGION_SOUND2, 0 )	/* space for the speech ROMs (not supported) */
+	//ROM_LOAD( "hd38882.bin",  0x0000, 0x4000, NO_DUMP )	/* HD38882 internal ROM */
+	ROM_LOAD( "sk6_ic07.bin", 0x4000, 0x0800, CRC(2b7cbae9) SHA1(3d44a0232d7c94d8170cc06e90cc30bd57c99202) )
+	ROM_LOAD( "sk6_ic08.bin", 0x4800, 0x0800, CRC(3b7e9d7c) SHA1(d9033188068b2aaa1502c89cf09f955eded8fa7a) )
+	ROM_LOAD( "sk6_ic11.bin", 0x5000, 0x0800, CRC(c36df041) SHA1(8b51934229b961180d1edb99be3a4d337d37f66f) )
 ROM_END
 
 ROM_START( vangrdce )
@@ -1044,106 +1207,141 @@ ROM_START( vangrdce )
 	ROM_LOAD( "sk4_ic51.bin", 0x0000, 0x0800, NO_DUMP CRC(d2a64006) SHA1(3f20b59ce1954f65535cd5603ca9271586428e35) )  /* missing, using the SNK one */
 	ROM_LOAD( "sk4_ic52.bin", 0x0800, 0x0800, NO_DUMP CRC(cc4a0b6f) SHA1(251b24d60083d516c4ba686d75b41e04d10f7198) )  /* missing, using the SNK one */
 
-	ROM_REGION( 0x1800, REGION_SOUND2, 0 )	/* space for the speech ROMs (not supported) */
-	ROM_LOAD( "sk6_ic07.bin", 0x0000, 0x0800, CRC(2b7cbae9) SHA1(3d44a0232d7c94d8170cc06e90cc30bd57c99202) )
-	ROM_LOAD( "sk6_ic08.bin", 0x0800, 0x0800, CRC(3b7e9d7c) SHA1(d9033188068b2aaa1502c89cf09f955eded8fa7a) )
-	ROM_LOAD( "sk6_ic11.bin", 0x1000, 0x0800, CRC(c36df041) SHA1(8b51934229b961180d1edb99be3a4d337d37f66f) )
+	ROM_REGION( 0x5800, REGION_SOUND2, 0 )	/* space for the speech ROMs (not supported) */
+	//ROM_LOAD( "hd38882.bin",  0x0000, 0x4000, NO_DUMP )	/* HD38882 internal ROM */
+	ROM_LOAD( "sk6_ic07.bin", 0x4000, 0x0800, CRC(2b7cbae9) SHA1(3d44a0232d7c94d8170cc06e90cc30bd57c99202) )
+	ROM_LOAD( "sk6_ic08.bin", 0x4800, 0x0800, CRC(3b7e9d7c) SHA1(d9033188068b2aaa1502c89cf09f955eded8fa7a) )
+	ROM_LOAD( "sk6_ic11.bin", 0x5000, 0x0800, CRC(c36df041) SHA1(8b51934229b961180d1edb99be3a4d337d37f66f) )
+ROM_END
+
+ROM_START( vanguarj )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "sk4_ic07.bin", 0x4000, 0x1000, CRC(6a29e354) SHA1(ff953962ebc14a28cfc96f8e269cb1e1c188ed8a) )
+	ROM_LOAD( "sk4_ic08.bin", 0x5000, 0x1000, CRC(302bba54) SHA1(1944f229481328a0635fafda65054106f42a532a) )
+	ROM_LOAD( "sk4_ic09.bin", 0x6000, 0x1000, CRC(424755f6) SHA1(b4762b40c7ed70d4b90319a1a30983a41a096afb) )
+	ROM_LOAD( "vgj4ic10.bin", 0x7000, 0x1000, CRC(0a91a5d1) SHA1(bef435e431e31179eb22a4c18ca1dedf6a4a0ab0) )
+	ROM_LOAD( "vgj5ic13.bin", 0x8000, 0x1000, CRC(06601a40) SHA1(d1efcf75edf3892fe59d63e524f4880ffce67965) )
+	ROM_RELOAD(               0xf000, 0x1000 )	/* for the reset and interrupt vectors */
+	ROM_LOAD( "sk4_ic14.bin", 0x9000, 0x1000, CRC(0d5b47d0) SHA1(922621c23f33fe756cb6baa12e5465c4e64f2dda) )
+	ROM_LOAD( "sk4_ic15.bin", 0xa000, 0x1000, CRC(8549b8f8) SHA1(375bc6f7e15564d5cf7e00c44e2651793c56d6ca) )
+	ROM_LOAD( "sk4_ic16.bin", 0xb000, 0x1000, CRC(062e0be2) SHA1(45aaf315a62f37460e32d3ba99caaacf4c994810) )
+
+	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "sk5_ic50.bin", 0x0000, 0x0800, CRC(e7d4315b) SHA1(b99e4ea07292a0eabaa6098037c92a5678627cec) )
+	ROM_LOAD( "sk5_ic51.bin", 0x0800, 0x0800, CRC(96e87858) SHA1(4e9ccb055919c8acf5837e062857647d5363af60) )
+
+	ROM_REGION( 0x0040, REGION_PROMS, 0 )
+	ROM_LOAD( "sk5_ic7.bin",  0x0000, 0x0020, CRC(ad782a73) SHA1(ddf44f74a20f10ed976c434a885857dade1f86d7) ) /* foreground colors */
+	ROM_LOAD( "sk5_ic6.bin",  0x0020, 0x0020, CRC(7dc9d450) SHA1(9b2d1dfb3270a562d14bd54bfb3405a9095becc0) ) /* background colors */
+
+	ROM_REGION( 0x1000, REGION_SOUND1, 0 )	/* sound ROMs */
+	ROM_LOAD( "sk4_ic51.bin", 0x0000, 0x0800, CRC(d2a64006) SHA1(3f20b59ce1954f65535cd5603ca9271586428e35) )  /* sound ROM 1 */
+	ROM_LOAD( "sk4_ic52.bin", 0x0800, 0x0800, CRC(cc4a0b6f) SHA1(251b24d60083d516c4ba686d75b41e04d10f7198) )  /* sound ROM 2 */
+
+	ROM_REGION( 0x5800, REGION_SOUND2, 0 )	/* space for the speech ROMs (not supported) */
+	//ROM_LOAD( "hd38882.bin",  0x0000, 0x4000, NO_DUMP )	/* HD38882 internal ROM */
+	ROM_LOAD( "sk6_ic07.bin", 0x4000, 0x0800, CRC(2b7cbae9) SHA1(3d44a0232d7c94d8170cc06e90cc30bd57c99202) )
+	ROM_LOAD( "sk6_ic08.bin", 0x4800, 0x0800, CRC(3b7e9d7c) SHA1(d9033188068b2aaa1502c89cf09f955eded8fa7a) )
+	ROM_LOAD( "sk6_ic11.bin", 0x5000, 0x0800, CRC(c36df041) SHA1(8b51934229b961180d1edb99be3a4d337d37f66f) )
 ROM_END
 
 ROM_START( fantasyu )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "ic12.cpu",        0x3000, 0x1000, CRC(22cb2249) SHA1(6c43e3fa9638b6d2e069199968923e470bd5d18b) )
-	ROM_LOAD( "ic07.cpu",        0x4000, 0x1000, CRC(0e2880b6) SHA1(666d6942864eb7a90178b3b6e2b0eb23aa3c967f) )
-	ROM_LOAD( "ic08.cpu",        0x5000, 0x1000, CRC(4c331317) SHA1(800850f4e8bcfbbade54eb9e47a53941f8798641) )
-	ROM_LOAD( "ic09.cpu",        0x6000, 0x1000, CRC(6ac1dbfc) SHA1(b9c7bf8d3b085db0b53646b5639c09f9ced2b1fe) )
-	ROM_LOAD( "ic10.cpu",        0x7000, 0x1000, CRC(c796a406) SHA1(1b7f5f307a81b481a3e7791128a01d4c1a20c4bf) )
-	ROM_LOAD( "ic14.cpu",        0x8000, 0x1000, CRC(6f1f0698) SHA1(05bd114dcd08c990d897518a8ea7965bc82279bf) )
-	ROM_RELOAD(                  0xf000, 0x1000 )	/* for the reset and interrupt vectors */
-	ROM_LOAD( "ic15.cpu",        0x9000, 0x1000, CRC(5534d57e) SHA1(e564a3325766423b47de18d6adb61760cbbf88be) )
-	ROM_LOAD( "ic16.cpu",        0xa000, 0x1000, CRC(6c2aeb6e) SHA1(fd0b913a663bf2a5f45fc3d342d7575a9c7dae46) )
-	ROM_LOAD( "ic17.cpu",        0xb000, 0x1000, CRC(f6aa5de1) SHA1(ca53cf66cc6cdb21a60760102f35a5b0745ce09b) )
+	ROM_LOAD( "ic12.cpu",     0x3000, 0x1000, CRC(22cb2249) SHA1(6c43e3fa9638b6d2e069199968923e470bd5d18b) )
+	ROM_LOAD( "ic07.cpu",     0x4000, 0x1000, CRC(0e2880b6) SHA1(666d6942864eb7a90178b3b6e2b0eb23aa3c967f) )
+	ROM_LOAD( "ic08.cpu",     0x5000, 0x1000, CRC(4c331317) SHA1(800850f4e8bcfbbade54eb9e47a53941f8798641) )
+	ROM_LOAD( "ic09.cpu",     0x6000, 0x1000, CRC(6ac1dbfc) SHA1(b9c7bf8d3b085db0b53646b5639c09f9ced2b1fe) )
+	ROM_LOAD( "ic10.cpu",     0x7000, 0x1000, CRC(c796a406) SHA1(1b7f5f307a81b481a3e7791128a01d4c1a20c4bf) )
+	ROM_LOAD( "ic14.cpu",     0x8000, 0x1000, CRC(6f1f0698) SHA1(05bd114dcd08c990d897518a8ea7965bc82279bf) )
+	ROM_RELOAD(               0xf000, 0x1000 )	/* for the reset and interrupt vectors */
+	ROM_LOAD( "ic15.cpu",     0x9000, 0x1000, CRC(5534d57e) SHA1(e564a3325766423b47de18d6adb61760cbbf88be) )
+	ROM_LOAD( "ic16.cpu",     0xa000, 0x1000, CRC(6c2aeb6e) SHA1(fd0b913a663bf2a5f45fc3d342d7575a9c7dae46) )
+	ROM_LOAD( "ic17.cpu",     0xb000, 0x1000, CRC(f6aa5de1) SHA1(ca53cf66cc6cdb21a60760102f35a5b0745ce09b) )
 
 	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "fs10ic50.bin",    0x0000, 0x1000, CRC(86a801c3) SHA1(c040b5807c25823072f7e8ceab57b95d4bed89fe) )
-	ROM_LOAD( "fs11ic51.bin",    0x1000, 0x1000, CRC(9dfff71c) SHA1(7a7c017170f2ea903a730a4e5ab69db379a4fc61) )
+	ROM_LOAD( "fs10ic50.bin", 0x0000, 0x1000, CRC(86a801c3) SHA1(c040b5807c25823072f7e8ceab57b95d4bed89fe) )
+	ROM_LOAD( "fs11ic51.bin", 0x1000, 0x1000, CRC(9dfff71c) SHA1(7a7c017170f2ea903a730a4e5ab69db379a4fc61) )
 
 	ROM_REGION( 0x0040, REGION_PROMS, 0 )
-	ROM_LOAD( "fantasy.ic7",     0x0000, 0x0020, CRC(361a5e99) SHA1(b9777ce658549c03971bd476482d5cc0be27d3a9) ) /* foreground colors */
-	ROM_LOAD( "fantasy.ic6",     0x0020, 0x0020, CRC(33d974f7) SHA1(a6f6a531dec3f454b477bfdda8e213e9cad42748) ) /* background colors */
+	ROM_LOAD( "fantasy.ic7",  0x0000, 0x0020, CRC(361a5e99) SHA1(b9777ce658549c03971bd476482d5cc0be27d3a9) ) /* foreground colors */
+	ROM_LOAD( "fantasy.ic6",  0x0020, 0x0020, CRC(33d974f7) SHA1(a6f6a531dec3f454b477bfdda8e213e9cad42748) ) /* background colors */
 
 	ROM_REGION( 0x1800, REGION_SOUND1, 0 )	/* sound ROMs */
-	ROM_LOAD( "fs_b_51.bin",     0x0000, 0x0800, CRC(48094ec5) SHA1(7d6118133bc1eb8ebc5d8a95d10ef842daffef89) )
-	ROM_LOAD( "fs_a_52.bin",     0x0800, 0x0800, CRC(1d0316e8) SHA1(6a3ab289b5fefef8663514bd1d5817c70fe58882) )
-	ROM_LOAD( "fs_c_53.bin",     0x1000, 0x0800, CRC(49fd4ae8) SHA1(96ff1267c0ffab1e8a0769fa869516e2546ab640) )
+	ROM_LOAD( "fs_b_51.bin",  0x0000, 0x0800, CRC(48094ec5) SHA1(7d6118133bc1eb8ebc5d8a95d10ef842daffef89) )
+	ROM_LOAD( "fs_a_52.bin",  0x0800, 0x0800, CRC(1d0316e8) SHA1(6a3ab289b5fefef8663514bd1d5817c70fe58882) )
+	ROM_LOAD( "fs_c_53.bin",  0x1000, 0x0800, CRC(49fd4ae8) SHA1(96ff1267c0ffab1e8a0769fa869516e2546ab640) )
 
-	ROM_REGION( 0x1800, REGION_SOUND2, 0 )	/* space for the speech ROMs (not supported) */
-	ROM_LOAD( "fs_d_7.bin",      0x0000, 0x0800, CRC(a7ef4cc6) SHA1(8df71cb18fcfe9a2f592f83bc01cf2314ae30e32) )
-	ROM_LOAD( "fs_e_8.bin",      0x0800, 0x0800, CRC(19b8fb3e) SHA1(271c76f68866c28bc6755238a71970d5f7c81ecb) )
-	ROM_LOAD( "fs_f_11.bin",     0x1000, 0x0800, CRC(3a352e1f) SHA1(af880ce3daed0877d454421bd08c86ff71f6bf72) )
+	ROM_REGION( 0x5800, REGION_SOUND2, 0 )	/* space for the speech ROMs (not supported) */
+	//ROM_LOAD( "hd38882.bin",  0x0000, 0x4000, NO_DUMP )	/* HD38882 internal ROM */
+	ROM_LOAD( "fs_d_7.bin",   0x4000, 0x0800, CRC(a7ef4cc6) SHA1(8df71cb18fcfe9a2f592f83bc01cf2314ae30e32) )
+	ROM_LOAD( "fs_e_8.bin",   0x4800, 0x0800, CRC(19b8fb3e) SHA1(271c76f68866c28bc6755238a71970d5f7c81ecb) )
+	ROM_LOAD( "fs_f_11.bin",  0x5000, 0x0800, CRC(3a352e1f) SHA1(af880ce3daed0877d454421bd08c86ff71f6bf72) )
 ROM_END
 
 ROM_START( fantasy )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "5.12",            0x3000, 0x1000, CRC(0968ab50) SHA1(f09d03a171349895c5cb69e684901be63d272b32) )
-	ROM_LOAD( "1.7",             0x4000, 0x1000, CRC(de83000e) SHA1(ede1dda46406b4d340f1efea3bc85b2227af9e1d) )
-	ROM_LOAD( "2.8",             0x5000, 0x1000, CRC(90499b5a) SHA1(81a9d93a5655d2ff9504036bc764d8bb81e1470d) )
-	ROM_LOAD( "3.9",             0x6000, 0x1000, CRC(6fbffeb6) SHA1(b36aeaf095da4957103c8921957ff4be658eddf5) )
-	ROM_LOAD( "4.10",            0x7000, 0x1000, CRC(02e85884) SHA1(71fa6eb375fc417f92c049ec5118818b9ad48468) )
-	ROM_LOAD( "ic14.cpu",        0x8000, 0x1000, CRC(6f1f0698) SHA1(05bd114dcd08c990d897518a8ea7965bc82279bf) )
-	ROM_RELOAD(                  0xf000, 0x1000 )	/* for the reset and interrupt vectors */
-	ROM_LOAD( "ic15.cpu",        0x9000, 0x1000, CRC(5534d57e) SHA1(e564a3325766423b47de18d6adb61760cbbf88be) )
-	ROM_LOAD( "8.16",            0xa000, 0x1000, CRC(371129fe) SHA1(c21759222aebcc9ea1292e367a41ac43a4dd3554) )
-	ROM_LOAD( "9.17",            0xb000, 0x1000, CRC(56a7c8b8) SHA1(6c417644851c7b4b5291d9c5b2c808ff4a1ad048) )
+	ROM_LOAD( "5.12",         0x3000, 0x1000, CRC(0968ab50) SHA1(f09d03a171349895c5cb69e684901be63d272b32) )
+	ROM_LOAD( "1.7",          0x4000, 0x1000, CRC(de83000e) SHA1(ede1dda46406b4d340f1efea3bc85b2227af9e1d) )
+	ROM_LOAD( "2.8",          0x5000, 0x1000, CRC(90499b5a) SHA1(81a9d93a5655d2ff9504036bc764d8bb81e1470d) )
+	ROM_LOAD( "3.9",          0x6000, 0x1000, CRC(6fbffeb6) SHA1(b36aeaf095da4957103c8921957ff4be658eddf5) )
+	ROM_LOAD( "4.10",         0x7000, 0x1000, CRC(02e85884) SHA1(71fa6eb375fc417f92c049ec5118818b9ad48468) )
+	ROM_LOAD( "ic14.cpu",     0x8000, 0x1000, CRC(6f1f0698) SHA1(05bd114dcd08c990d897518a8ea7965bc82279bf) )
+	ROM_RELOAD(               0xf000, 0x1000 )	/* for the reset and interrupt vectors */
+	ROM_LOAD( "ic15.cpu",     0x9000, 0x1000, CRC(5534d57e) SHA1(e564a3325766423b47de18d6adb61760cbbf88be) )
+	ROM_LOAD( "8.16",         0xa000, 0x1000, CRC(371129fe) SHA1(c21759222aebcc9ea1292e367a41ac43a4dd3554) )
+	ROM_LOAD( "9.17",         0xb000, 0x1000, CRC(56a7c8b8) SHA1(6c417644851c7b4b5291d9c5b2c808ff4a1ad048) )
 
 	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "fs10ic50.bin",    0x0000, 0x1000, CRC(86a801c3) SHA1(c040b5807c25823072f7e8ceab57b95d4bed89fe) )
-	ROM_LOAD( "fs11ic51.bin",    0x1000, 0x1000, CRC(9dfff71c) SHA1(7a7c017170f2ea903a730a4e5ab69db379a4fc61) )
+	ROM_LOAD( "fs10ic50.bin", 0x0000, 0x1000, CRC(86a801c3) SHA1(c040b5807c25823072f7e8ceab57b95d4bed89fe) )
+	ROM_LOAD( "fs11ic51.bin", 0x1000, 0x1000, CRC(9dfff71c) SHA1(7a7c017170f2ea903a730a4e5ab69db379a4fc61) )
 
 	ROM_REGION( 0x0040, REGION_PROMS, 0 )
-	ROM_LOAD( "fantasy.ic7",     0x0000, 0x0020, CRC(361a5e99) SHA1(b9777ce658549c03971bd476482d5cc0be27d3a9) ) /* foreground colors */
-	ROM_LOAD( "fantasy.ic6",     0x0020, 0x0020, CRC(33d974f7) SHA1(a6f6a531dec3f454b477bfdda8e213e9cad42748) ) /* background colors */
+	ROM_LOAD( "fantasy.ic7",  0x0000, 0x0020, CRC(361a5e99) SHA1(b9777ce658549c03971bd476482d5cc0be27d3a9) ) /* foreground colors */
+	ROM_LOAD( "fantasy.ic6",  0x0020, 0x0020, CRC(33d974f7) SHA1(a6f6a531dec3f454b477bfdda8e213e9cad42748) ) /* background colors */
 
 	ROM_REGION( 0x1800, REGION_SOUND1, 0 )	/* sound ROMs */
-	ROM_LOAD( "fs_b_51.bin",     0x0000, 0x0800, CRC(48094ec5) SHA1(7d6118133bc1eb8ebc5d8a95d10ef842daffef89) )
-	ROM_LOAD( "fs_a_52.bin",     0x0800, 0x0800, CRC(1d0316e8) SHA1(6a3ab289b5fefef8663514bd1d5817c70fe58882) )
-	ROM_LOAD( "fs_c_53.bin",     0x1000, 0x0800, CRC(49fd4ae8) SHA1(96ff1267c0ffab1e8a0769fa869516e2546ab640) )
+	ROM_LOAD( "fs_b_51.bin",  0x0000, 0x0800, CRC(48094ec5) SHA1(7d6118133bc1eb8ebc5d8a95d10ef842daffef89) )
+	ROM_LOAD( "fs_a_52.bin",  0x0800, 0x0800, CRC(1d0316e8) SHA1(6a3ab289b5fefef8663514bd1d5817c70fe58882) )
+	ROM_LOAD( "fs_c_53.bin",  0x1000, 0x0800, CRC(49fd4ae8) SHA1(96ff1267c0ffab1e8a0769fa869516e2546ab640) )
 
-	ROM_REGION( 0x1800, REGION_SOUND2, 0 )	/* space for the speech ROMs (not supported) */
-	ROM_LOAD( "fs_d_7.bin",      0x0000, 0x0800, CRC(a7ef4cc6) SHA1(8df71cb18fcfe9a2f592f83bc01cf2314ae30e32) )
-	ROM_LOAD( "fs_e_8.bin",      0x0800, 0x0800, CRC(19b8fb3e) SHA1(271c76f68866c28bc6755238a71970d5f7c81ecb) )
-	ROM_LOAD( "fs_f_11.bin",     0x1000, 0x0800, CRC(3a352e1f) SHA1(af880ce3daed0877d454421bd08c86ff71f6bf72) )
+	ROM_REGION( 0x5800, REGION_SOUND2, 0 )	/* space for the speech ROMs (not supported) */
+	//ROM_LOAD( "hd38882.bin",  0x0000, 0x4000, NO_DUMP )	/* HD38882 internal ROM */
+	ROM_LOAD( "fs_d_7.bin",   0x4000, 0x0800, CRC(a7ef4cc6) SHA1(8df71cb18fcfe9a2f592f83bc01cf2314ae30e32) )
+	ROM_LOAD( "fs_e_8.bin",   0x4800, 0x0800, CRC(19b8fb3e) SHA1(271c76f68866c28bc6755238a71970d5f7c81ecb) )
+	ROM_LOAD( "fs_f_11.bin",  0x5000, 0x0800, CRC(3a352e1f) SHA1(af880ce3daed0877d454421bd08c86ff71f6bf72) )
 ROM_END
 
 ROM_START( fantasyj )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "fs5jic12.bin",    0x3000, 0x1000, CRC(dd1eac89) SHA1(d63078d4666e3c6db0c9b3f8b45ef81606ed5a4f) )
-	ROM_LOAD( "fs1jic7.bin",     0x4000, 0x1000, CRC(7b8115ae) SHA1(6274f937c57ab9cbb7c6283022b81f70dad7c232) )
-	ROM_LOAD( "fs2jic8.bin",     0x5000, 0x1000, CRC(61531dd1) SHA1(f3bc405bafc8ced6c6fce93ad2ad20ff6aa603e8) )
-	ROM_LOAD( "fs3jic9.bin",     0x6000, 0x1000, CRC(36a12617) SHA1(dd74abb4cbaeb1a56ee466043997187ebe933612) )
-	ROM_LOAD( "fs4jic10.bin",    0x7000, 0x1000, CRC(dbf7c347) SHA1(1bb3f924a7e1ec74ef68e237a0f68d62ce78532c) )
-	ROM_LOAD( "fs6jic14.bin",    0x8000, 0x1000, CRC(bf59a33a) SHA1(bdbdd03199758069b904fdf0455193682c4d457f) )
-	ROM_RELOAD(                  0xf000, 0x1000 )	/* for the reset and interrupt vectors */
-	ROM_LOAD( "fs7jic15.bin",    0x9000, 0x1000, CRC(cc18428e) SHA1(c7c0a031434cf9ce3c450b0c5dc2b154b08d19cf) )
-	ROM_LOAD( "fs8jic16.bin",    0xa000, 0x1000, CRC(ae5bf727) SHA1(3c5eaaba3971f57a5687945a614dd0d6c9e007d6) )
-	ROM_LOAD( "fs9jic17.bin",    0xb000, 0x1000, CRC(fa6903e2) SHA1(a5b9b7309ecaaeaba76e45610d5ab80415ecbdd0) )
+	ROM_LOAD( "fs5jic12.bin", 0x3000, 0x1000, CRC(dd1eac89) SHA1(d63078d4666e3c6db0c9b3f8b45ef81606ed5a4f) )
+	ROM_LOAD( "fs1jic7.bin",  0x4000, 0x1000, CRC(7b8115ae) SHA1(6274f937c57ab9cbb7c6283022b81f70dad7c232) )
+	ROM_LOAD( "fs2jic8.bin",  0x5000, 0x1000, CRC(61531dd1) SHA1(f3bc405bafc8ced6c6fce93ad2ad20ff6aa603e8) )
+	ROM_LOAD( "fs3jic9.bin",  0x6000, 0x1000, CRC(36a12617) SHA1(dd74abb4cbaeb1a56ee466043997187ebe933612) )
+	ROM_LOAD( "fs4jic10.bin", 0x7000, 0x1000, CRC(dbf7c347) SHA1(1bb3f924a7e1ec74ef68e237a0f68d62ce78532c) )
+	ROM_LOAD( "fs6jic14.bin", 0x8000, 0x1000, CRC(bf59a33a) SHA1(bdbdd03199758069b904fdf0455193682c4d457f) )
+	ROM_RELOAD(               0xf000, 0x1000 )	/* for the reset and interrupt vectors */
+	ROM_LOAD( "fs7jic15.bin", 0x9000, 0x1000, CRC(cc18428e) SHA1(c7c0a031434cf9ce3c450b0c5dc2b154b08d19cf) )
+	ROM_LOAD( "fs8jic16.bin", 0xa000, 0x1000, CRC(ae5bf727) SHA1(3c5eaaba3971f57a5687945a614dd0d6c9e007d6) )
+	ROM_LOAD( "fs9jic17.bin", 0xb000, 0x1000, CRC(fa6903e2) SHA1(a5b9b7309ecaaeaba76e45610d5ab80415ecbdd0) )
 
 	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "fs10ic50.bin",    0x0000, 0x1000, CRC(86a801c3) SHA1(c040b5807c25823072f7e8ceab57b95d4bed89fe) )
-	ROM_LOAD( "fs11ic51.bin",    0x1000, 0x1000, CRC(9dfff71c) SHA1(7a7c017170f2ea903a730a4e5ab69db379a4fc61) )
+	ROM_LOAD( "fs10ic50.bin", 0x0000, 0x1000, CRC(86a801c3) SHA1(c040b5807c25823072f7e8ceab57b95d4bed89fe) )
+	ROM_LOAD( "fs11ic51.bin", 0x1000, 0x1000, CRC(9dfff71c) SHA1(7a7c017170f2ea903a730a4e5ab69db379a4fc61) )
 
 	ROM_REGION( 0x0040, REGION_PROMS, 0 )
-	ROM_LOAD( "prom-8.bpr",      0x0000, 0x0020, CRC(1aa9285a) SHA1(d503aa76ca0cf032c7b1c962abc59677c41a2c62) ) /* foreground colors */
-	ROM_LOAD( "prom-7.bpr",      0x0020, 0x0020, CRC(7a6f7dc3) SHA1(e15d898275d1cd205cc2d28f7dd9df653594039e) ) /* background colors */
+	ROM_LOAD( "prom-8.bpr",   0x0000, 0x0020, CRC(1aa9285a) SHA1(d503aa76ca0cf032c7b1c962abc59677c41a2c62) ) /* foreground colors */
+	ROM_LOAD( "prom-7.bpr",   0x0020, 0x0020, CRC(7a6f7dc3) SHA1(e15d898275d1cd205cc2d28f7dd9df653594039e) ) /* background colors */
 
 	ROM_REGION( 0x1800, REGION_SOUND1, 0 )	/* sound ROMs */
-	ROM_LOAD( "fs_b_51.bin",     0x0000, 0x0800, CRC(48094ec5) SHA1(7d6118133bc1eb8ebc5d8a95d10ef842daffef89) )
-	ROM_LOAD( "fs_a_52.bin",     0x0800, 0x0800, CRC(1d0316e8) SHA1(6a3ab289b5fefef8663514bd1d5817c70fe58882) )
-	ROM_LOAD( "fs_c_53.bin",     0x1000, 0x0800, CRC(49fd4ae8) SHA1(96ff1267c0ffab1e8a0769fa869516e2546ab640) )
+	ROM_LOAD( "fs_b_51.bin",  0x0000, 0x0800, CRC(48094ec5) SHA1(7d6118133bc1eb8ebc5d8a95d10ef842daffef89) )
+	ROM_LOAD( "fs_a_52.bin",  0x0800, 0x0800, CRC(1d0316e8) SHA1(6a3ab289b5fefef8663514bd1d5817c70fe58882) )
+	ROM_LOAD( "fs_c_53.bin",  0x1000, 0x0800, CRC(49fd4ae8) SHA1(96ff1267c0ffab1e8a0769fa869516e2546ab640) )
 
-	ROM_REGION( 0x1800, REGION_SOUND2, 0 )	/* space for the speech ROMs (not supported) */
-	ROM_LOAD( "fs_d_7.bin",      0x0000, 0x0800, CRC(a7ef4cc6) SHA1(8df71cb18fcfe9a2f592f83bc01cf2314ae30e32) )
-	ROM_LOAD( "fs_e_8.bin",      0x0800, 0x0800, CRC(19b8fb3e) SHA1(271c76f68866c28bc6755238a71970d5f7c81ecb) )
-	ROM_LOAD( "fs_f_11.bin",     0x1000, 0x0800, CRC(3a352e1f) SHA1(af880ce3daed0877d454421bd08c86ff71f6bf72) )
+	ROM_REGION( 0x5800, REGION_SOUND2, 0 )	/* space for the speech ROMs (not supported) */
+	//ROM_LOAD( "hd38882.bin",  0x0000, 0x4000, NO_DUMP )	/* HD38882 internal ROM */
+	ROM_LOAD( "fs_d_7.bin",   0x4000, 0x0800, CRC(a7ef4cc6) SHA1(8df71cb18fcfe9a2f592f83bc01cf2314ae30e32) )
+	ROM_LOAD( "fs_e_8.bin",   0x4800, 0x0800, CRC(19b8fb3e) SHA1(271c76f68866c28bc6755238a71970d5f7c81ecb) )
+	ROM_LOAD( "fs_f_11.bin",  0x5000, 0x0800, CRC(3a352e1f) SHA1(af880ce3daed0877d454421bd08c86ff71f6bf72) )
 ROM_END
 
 ROM_START( pballoon )
@@ -1227,12 +1425,12 @@ ROM_END
 
 ROM_START( nibblerb )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "50-144.012", 	0x3000, 0x1000, CRC(68af8f4b) SHA1(be6ddd3a9abb05563c927b1ec54dbaab44b65492) )
-	ROM_LOAD( "50-140.007", 	0x4000, 0x1000, CRC(c18b3009) SHA1(c3703d0300f5f1546417ecdc27ab747d9c7eb267) )
-	ROM_LOAD( "50-141.008", 	0x5000, 0x1000, CRC(b50fd79c) SHA1(cd9847bf8d570ca9411d1bbcbccb3c94220349f9) )
-	ROM_LOAD( "ic9",        	0x6000, 0x1000, CRC(a599df10) SHA1(68ee8b5199ec24409fcbb40c887a1eec44c68dcf) ) // 50-142.009
-	ROM_LOAD( "ic10",       	0x7000, 0x1000, CRC(a6b5abe5) SHA1(a0f228dac801a54dfa1947d6b2f6b4e3d005e0b2) ) // 50-143.010
-	ROM_LOAD( "50-145.014", 	0x8000, 0x1000, CRC(29ea246a) SHA1(bf1afbddbea5ab7e93e5ac69c6445749dd65ed3b) )
+	ROM_LOAD( "50-144.012",     0x3000, 0x1000, CRC(68af8f4b) SHA1(be6ddd3a9abb05563c927b1ec54dbaab44b65492) )
+	ROM_LOAD( "50-140.007",     0x4000, 0x1000, CRC(c18b3009) SHA1(c3703d0300f5f1546417ecdc27ab747d9c7eb267) )
+	ROM_LOAD( "50-141.008",     0x5000, 0x1000, CRC(b50fd79c) SHA1(cd9847bf8d570ca9411d1bbcbccb3c94220349f9) )
+	ROM_LOAD( "ic9",            0x6000, 0x1000, CRC(a599df10) SHA1(68ee8b5199ec24409fcbb40c887a1eec44c68dcf) ) // 50-142.009
+	ROM_LOAD( "ic10",           0x7000, 0x1000, CRC(a6b5abe5) SHA1(a0f228dac801a54dfa1947d6b2f6b4e3d005e0b2) ) // 50-143.010
+	ROM_LOAD( "50-145.014",     0x8000, 0x1000, CRC(29ea246a) SHA1(bf1afbddbea5ab7e93e5ac69c6445749dd65ed3b) )
 	ROM_RELOAD(                 0xf000, 0x1000 )	/* for the reset and interrupt vectors */
 	ROM_LOAD( "g-0960-54.ic15", 0x9000, 0x1000, CRC(7205fb8d) SHA1(bc341bc11a383aa8b8dd7b2be851907a3ec56f8b) ) // 50-146.015
 	ROM_LOAD( "g-0960-55.ic16", 0xa000, 0x1000, CRC(4bb39815) SHA1(1755c28d7d300524ab839aedcc744254544e9c19) ) // 50-147.016
@@ -1254,12 +1452,12 @@ ROM_END
 
 ROM_START( nibblero )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "50-144g.012", 	0x3000, 0x1000, CRC(1093f525) SHA1(6a63372300765acdbac1d2e30fd73af7773de80f) )
-	ROM_LOAD( "50-140g.007", 	0x4000, 0x1000, CRC(848651dd) SHA1(a5aafbcca42baca8d0d5d28546733aefc778ba99) )
-	ROM_LOAD( "50-141.008", 	0x5000, 0x1000, CRC(b50fd79c) SHA1(cd9847bf8d570ca9411d1bbcbccb3c94220349f9) )
-	ROM_LOAD( "ic9",        	0x6000, 0x1000, CRC(a599df10) SHA1(68ee8b5199ec24409fcbb40c887a1eec44c68dcf) )
-	ROM_LOAD( "ic10",       	0x7000, 0x1000, CRC(a6b5abe5) SHA1(a0f228dac801a54dfa1947d6b2f6b4e3d005e0b2) )
-	ROM_LOAD( "50-145.014", 	0x8000, 0x1000, CRC(29ea246a) SHA1(bf1afbddbea5ab7e93e5ac69c6445749dd65ed3b) )
+	ROM_LOAD( "50-144g.012",    0x3000, 0x1000, CRC(1093f525) SHA1(6a63372300765acdbac1d2e30fd73af7773de80f) )
+	ROM_LOAD( "50-140g.007",    0x4000, 0x1000, CRC(848651dd) SHA1(a5aafbcca42baca8d0d5d28546733aefc778ba99) )
+	ROM_LOAD( "50-141.008",     0x5000, 0x1000, CRC(b50fd79c) SHA1(cd9847bf8d570ca9411d1bbcbccb3c94220349f9) )
+	ROM_LOAD( "ic9",            0x6000, 0x1000, CRC(a599df10) SHA1(68ee8b5199ec24409fcbb40c887a1eec44c68dcf) )
+	ROM_LOAD( "ic10",           0x7000, 0x1000, CRC(a6b5abe5) SHA1(a0f228dac801a54dfa1947d6b2f6b4e3d005e0b2) )
+	ROM_LOAD( "50-145.014",     0x8000, 0x1000, CRC(29ea246a) SHA1(bf1afbddbea5ab7e93e5ac69c6445749dd65ed3b) )
 	ROM_RELOAD(                 0xf000, 0x1000 )	/* for the reset and interrupt vectors */
 	ROM_LOAD( "g-0960-54.ic15", 0x9000, 0x1000, CRC(7205fb8d) SHA1(bc341bc11a383aa8b8dd7b2be851907a3ec56f8b) )
 	ROM_LOAD( "g-0960-55.ic16", 0xa000, 0x1000, CRC(4bb39815) SHA1(1755c28d7d300524ab839aedcc744254544e9c19) )
@@ -1281,16 +1479,17 @@ ROM_END
 
 /* Game Drivers */
 
-GAMEX( 1980, sasuke,   0,        sasuke,   sasuke,   0, ROT90, "SNK", "Sasuke vs. Commander", GAME_NO_SOUND )
+GAME( 1980, sasuke,   0,        sasuke,   sasuke,   0, ROT90, "SNK", "Sasuke vs. Commander" )
 GAMEX( 1981, satansat, 0,        satansat, satansat, 0, ROT90, "SNK", "Satan of Saturn", GAME_IMPERFECT_SOUND )
 GAMEX( 1981, zarzon,   satansat, satansat, satansat, 0, ROT90, "[SNK] (Taito America license)", "Zarzon", GAME_IMPERFECT_SOUND )
-GAMEX( 1981, vanguard, 0,        vanguard, vanguard, 0, ROT90, "SNK", "Vanguard (SNK)", GAME_IMPERFECT_SOUND )
-GAMEX( 1981, vangrdce, vanguard, vanguard, vanguard, 0, ROT90, "SNK (Centuri license)", "Vanguard (Centuri)", GAME_IMPERFECT_SOUND )
-GAMEX( 1981, fantasy,  0,        fantasy,  fantasy,  0, ROT90, "SNK", "Fantasy (World)", GAME_IMPERFECT_SOUND )
-GAMEX( 1981, fantasyu, fantasy,  fantasy,  fantasy,  0, ROT90, "[SNK] (Rock-Ola license)", "Fantasy (US)", GAME_IMPERFECT_SOUND )
-GAMEX( 1981, fantasyj, fantasy,  fantasy,  fantasy,  0, ROT90, "SNK", "Fantasy (Japan)", GAME_IMPERFECT_SOUND )
-GAMEX( 1982, pballoon, 0,        pballoon, pballoon, 0, ROT90, "SNK", "Pioneer Balloon", GAME_IMPERFECT_SOUND )
-GAMEX( 1982, nibbler,  0,        fantasy,  nibbler,  0, ROT90, "Rock-Ola", "Nibbler (set 1)", GAME_IMPERFECT_SOUND )
-GAMEX( 1982, nibblera, nibbler,  fantasy,  nibbler,  0, ROT90, "Rock-Ola", "Nibbler (set 2)", GAME_IMPERFECT_SOUND )
-GAMEX( 1982, nibblerb, nibbler,  fantasy,  nibbler,  0, ROT90, "Rock-Ola", "Nibbler (set 3)", GAME_IMPERFECT_SOUND )
-GAMEX( 1983, nibblero, nibbler,  fantasy,  nibbler,  0, ROT90, "Olympia",  "Nibbler (Olympia)", GAME_IMPERFECT_SOUND )
+GAME( 1981, vanguard, 0,        vanguard, vanguard, 0, ROT90, "SNK", "Vanguard (SNK)" )
+GAME( 1981, vangrdce, vanguard, vanguard, vanguard, 0, ROT90, "SNK (Centuri license)", "Vanguard (Centuri)" )
+GAME( 1981, vanguarj,  vanguard, vanguard, vanguard, 0, ROT90, "SNK", "Vanguard (Japan)" )
+GAME( 1981, fantasy,  0,        fantasy,  fantasy,  0, ROT90, "SNK", "Fantasy (World)" )
+GAME( 1981, fantasyu, fantasy,  fantasy,  fantasy,  0, ROT90, "[SNK] (Rock-Ola license)", "Fantasy (US)" )
+GAME( 1981, fantasyj, fantasy,  fantasy,  fantasy,  0, ROT90, "SNK", "Fantasy (Japan)" )
+GAME( 1982, pballoon, 0,        pballoon, pballoon, 0, ROT90, "SNK", "Pioneer Balloon" )
+GAME( 1982, nibbler,  0,        nibbler,  nibbler,  0, ROT90, "Rock-Ola", "Nibbler (set 1)" )
+GAME( 1982, nibblera, nibbler,  nibbler,  nibbler,  0, ROT90, "Rock-Ola", "Nibbler (set 2)" )
+GAME( 1982, nibblerb, nibbler,  nibbler,  nibbler,  0, ROT90, "Rock-Ola", "Nibbler (set 3)" )
+GAME( 1983, nibblero, nibbler,  nibbler,  nibbler,  0, ROT90, "Olympia",  "Nibbler (Olympia)" )

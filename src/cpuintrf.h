@@ -59,6 +59,10 @@ enum
 	CPU_I8048,
 	CPU_N7751,
 	CPU_I8X41,
+	CPU_I8051,
+	CPU_I8052,
+	CPU_I8751,
+	CPU_I8752,
 	CPU_M6800,
 	CPU_M6801,
 	CPU_M6802,
@@ -132,7 +136,20 @@ enum
 	CPU_PIC16C58,
 	CPU_G65816,
 	CPU_SPC700,
+	CPU_E116T,
+	CPU_E116XT,
+	CPU_E116XS,
+	CPU_E116XSR,
+	CPU_E132N,
+	CPU_E132T,
+	CPU_E132XN,
+	CPU_E132XT,
 	CPU_E132XS,
+	CPU_E132XSR,
+	CPU_GMS30C2116,
+	CPU_GMS30C2132,
+	CPU_GMS30C2216,
+	CPU_GMS30C2232,
 	CPU_I386,
 	CPU_I960,
 	CPU_H83002,
@@ -149,6 +166,8 @@ enum
 	CPU_PDP1,
 	CPU_SATURN,
 	CPU_SC61860,
+	CPU_TX0_64KW,
+	CPU_TX0_8KW,
 	CPU_Z80GB,
 	CPU_TMS7000,
 	CPU_TMS7000_EXL,
@@ -189,11 +208,11 @@ enum
 	INPUT_LINE_IRQ8 = 8,
 	INPUT_LINE_IRQ9 = 9,
 	INPUT_LINE_NMI = MAX_INPUT_LINES - 3,
-	
+
 	/* special input lines that are implemented in the core */
 	INPUT_LINE_RESET = MAX_INPUT_LINES - 2,
 	INPUT_LINE_HALT = MAX_INPUT_LINES - 1,
-	
+
 	/* output lines */
 	MAX_OUTPUT_LINES = 32
 };
@@ -265,6 +284,7 @@ enum
 	CPUINFO_PTR_WINDOW_LAYOUT,							/* R/O: struct debug_window_layout *layout */
 	CPUINFO_PTR_INTERNAL_MEMORY_MAP,					/* R/O: construct_map_t map */
 	CPUINFO_PTR_INTERNAL_MEMORY_MAP_LAST = CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACES - 1,
+	CPUINFO_PTR_DEBUG_REGISTER_LIST,					/* R/O: int *list: list of registers for NEW_DEBUGGER */
 
 	CPUINFO_PTR_CPU_SPECIFIC = 0x18000,					/* R/W: CPU-specific values start here */
 
@@ -330,6 +350,16 @@ enum
 	CPU_IS_LE = 0,				/* emulated CPU is little endian */
 	CPU_IS_BE					/* emulated CPU is big endian */
 };
+
+
+/* disassembler constants */
+#define DASMFLAG_SUPPORTED		0x80000000	/* are disassembly flags supported? */
+#define DASMFLAG_STEP_OUT		0x40000000	/* this instruction should be the end of a step out sequence */
+#define DASMFLAG_STEP_OVER		0x20000000	/* this instruction should be stepped over by setting a breakpoint afterwards */
+#define DASMFLAG_OVERINSTMASK	0x18000000	/* number of extra instructions to skip when stepping over */
+#define DASMFLAG_OVERINSTSHIFT	27			/* bits to shift after masking to get the value */
+#define DASMFLAG_LENGTHMASK 	0x0000ffff	/* the low 16-bits contain the actual length */
+#define DASMFLAG_STEP_OVER_EXTRA(x)			((x) << DASMFLAG_OVERINSTSHIFT)
 
 
 
@@ -451,6 +481,7 @@ const char *activecpu_dump_state(void);
 #define activecpu_irq_callback()				activecpu_get_info_fct(CPUINFO_PTR_IRQ_CALLBACK)
 #define activecpu_register_layout()				activecpu_get_info_ptr(CPUINFO_PTR_REGISTER_LAYOUT)
 #define activecpu_window_layout()				activecpu_get_info_ptr(CPUINFO_PTR_WINDOW_LAYOUT)
+#define activecpu_debug_register_list()			activecpu_get_info_ptr(CPUINFO_PTR_DEBUG_REGISTER_LIST)
 #define activecpu_name()						activecpu_get_info_string(CPUINFO_STR_NAME)
 #define activecpu_core_family()					activecpu_get_info_string(CPUINFO_STR_CORE_FAMILY)
 #define activecpu_core_version()				activecpu_get_info_string(CPUINFO_STR_CORE_VERSION)
@@ -527,6 +558,7 @@ const char *cpunum_dump_state(int cpunum);
 #define cpunum_irq_callback(cpunum)				cpunum_get_info_fct(cpunum, CPUINFO_PTR_IRQ_CALLBACK)
 #define cpunum_register_layout(cpunum)			cpunum_get_info_ptr(cpunum, CPUINFO_PTR_REGISTER_LAYOUT)
 #define cpunum_window_layout(cpunum)			cpunum_get_info_ptr(cpunum, CPUINFO_PTR_WINDOW_LAYOUT)
+#define cpunum_debug_register_list(cpunum)		cpunum_get_info_ptr(cpunum, CPUINFO_PTR_DEBUG_REGISTER_LIST)
 #define cpunum_name(cpunum)						cpunum_get_info_string(cpunum, CPUINFO_STR_NAME)
 #define cpunum_core_family(cpunum)				cpunum_get_info_string(cpunum, CPUINFO_STR_CORE_FAMILY)
 #define cpunum_core_version(cpunum)				cpunum_get_info_string(cpunum, CPUINFO_STR_CORE_VERSION)
@@ -569,6 +601,7 @@ const char *cputype_get_info_string(int cputype, UINT32 state);
 #define cputype_irq_callback(cputype)			cputype_get_info_fct(cputype, CPUINFO_PTR_IRQ_CALLBACK)
 #define cputype_register_layout(cputype)		cputype_get_info_ptr(cputype, CPUINFO_PTR_REGISTER_LAYOUT)
 #define cputype_window_layout(cputype)			cputype_get_info_ptr(cputype, CPUINFO_PTR_WINDOW_LAYOUT)
+#define cputype_debug_register_list(cputype)	cputype_get_info_ptr(cputype, CPUINFO_PTR_DEBUG_REGISTER_LIST)
 #define cputype_name(cputype)					cputype_get_info_string(cputype, CPUINFO_STR_NAME)
 #define cputype_core_family(cputype)			cputype_get_info_string(cputype, CPUINFO_STR_CORE_FAMILY)
 #define cputype_core_version(cputype)			cputype_get_info_string(cputype, CPUINFO_STR_CORE_VERSION)

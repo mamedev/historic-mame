@@ -1,3 +1,48 @@
+/******************** NEW STUFF *******************/
+
+#include "vidhrdw/segaic16.h"
+
+/* from vidhrdw/segas16a.c */
+VIDEO_START( system16a );
+VIDEO_UPDATE( system16a );
+
+void system16a_set_draw_enable(int enable);
+void system16a_set_screen_flip(int flip);
+
+WRITE16_HANDLER( system16a_textram_w );
+
+
+/* from vidhrdw/segas16b.c */
+VIDEO_START( system16b );
+VIDEO_START( timscanr );
+VIDEO_UPDATE( system16b );
+
+void system16b_set_draw_enable(int enable);
+void system16b_set_screen_flip(int flip);
+void system16b_configure_sprite_banks(int use_default);
+void system16b_set_tile_bank(int which, int bank);
+
+WRITE16_HANDLER( system16b_textram_w );
+
+
+/* from vidhrdw/segas18.c */
+VIDEO_START( system18 );
+VIDEO_UPDATE( system18 );
+
+void system18_set_draw_enable(int enable);
+void system18_set_screen_flip(int flip);
+void system18_set_tile_bank(int which, int bank);
+void system18_set_grayscale(int enable);
+void system18_set_vdp_enable(int eanble);
+void system18_set_vdp_mixing(int mixing);
+void system18_set_sprite_bank(int which, int bank);
+
+WRITE16_HANDLER( system18_textram_w );
+
+
+
+/******************** OLD STUFF *******************/
+
 #define SYS16_SPR_FLIPX						0x01
 #define SYS16_SPR_VISIBLE					0x04
 #define SYS16_SPR_DRAW_TO_LEFT				0x08
@@ -239,8 +284,8 @@ extern VIDEO_START( aburner );
 extern VIDEO_UPDATE( aburner );
 
 /* system18 video hardware */
-extern VIDEO_START( system18 );
-extern VIDEO_UPDATE( system18 );
+extern VIDEO_START( system18old );
+extern VIDEO_UPDATE( system18old );
 
 /* video driver constants (vary with game) */
 extern int sys16_gr_bitmap_width;

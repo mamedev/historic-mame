@@ -362,6 +362,50 @@ else
 CPUDEFS += -DHAS_I8X41=0
 endif
 
+CPU=$(strip $(findstring I8051@,$(CPUS)))
+ifneq ($(CPU),)
+OBJDIRS += $(OBJ)/cpu/i8051
+CPUDEFS += -DHAS_I8051=1
+CPUOBJS += $(OBJ)/cpu/i8051/i8051.o
+DBGOBJS += $(OBJ)/cpu/i8051/8051dasm.o
+$(OBJ)/cpu/i8051/i8051.o: i8051.c i8051.h i8051ops.c
+else
+CPUDEFS += -DHAS_I8051=0
+endif
+
+CPU=$(strip $(findstring I8052@,$(CPUS)))
+ifneq ($(CPU),)
+OBJDIRS += $(OBJ)/cpu/i8051
+CPUDEFS += -DHAS_I8052=1
+CPUOBJS += $(OBJ)/cpu/i8051/i8051.o
+DBGOBJS += $(OBJ)/cpu/i8051/8051dasm.o
+$(OBJ)/cpu/i8051/i8051.o: i8051.c i8051.h i8051ops.c
+else
+CPUDEFS += -DHAS_I8052=0
+endif
+
+CPU=$(strip $(findstring I8751@,$(CPUS)))
+ifneq ($(CPU),)
+OBJDIRS += $(OBJ)/cpu/i8051
+CPUDEFS += -DHAS_I8751=1
+CPUOBJS += $(OBJ)/cpu/i8051/i8051.o
+DBGOBJS += $(OBJ)/cpu/i8051/8051dasm.o
+$(OBJ)/cpu/i8051/i8051.o: i8051.c i8051.h i8051ops.c
+else
+CPUDEFS += -DHAS_I8751=0
+endif
+
+CPU=$(strip $(findstring I8752@,$(CPUS)))
+ifneq ($(CPU),)
+OBJDIRS += $(OBJ)/cpu/i8051
+CPUDEFS += -DHAS_I8752=1
+CPUOBJS += $(OBJ)/cpu/i8051/i8051.o
+DBGOBJS += $(OBJ)/cpu/i8051/8051dasm.o
+$(OBJ)/cpu/i8051/i8051.o: i8051.c i8051.h i8051ops.c
+else
+CPUDEFS += -DHAS_I8752=0
+endif
+
 CPU=$(strip $(findstring M6800@,$(CPUS)))
 ifneq ($(CPU),)
 OBJDIRS += $(OBJ)/cpu/m6800
@@ -1167,6 +1211,94 @@ else
 CPUDEFS += -DHAS_SPC700=0
 endif
 
+CPU=$(strip $(findstring E116T@,$(CPUS)))
+ifneq ($(CPU),)
+OBJDIRS += $(OBJ)/cpu/e132xs
+CPUDEFS += -DHAS_E116T=1
+CPUOBJS += $(OBJ)/cpu/e132xs/e132xs.o
+DBGOBJS += $(OBJ)/cpu/e132xs/32xsdasm.o
+$(OBJ)/cpu/e132xs/e132xs.o: e132xs.c e132xs.h
+else
+CPUDEFS += -DHAS_E116T=0
+endif
+
+CPU=$(strip $(findstring E116XT@,$(CPUS)))
+ifneq ($(CPU),)
+OBJDIRS += $(OBJ)/cpu/e132xs
+CPUDEFS += -DHAS_E116XT=1
+CPUOBJS += $(OBJ)/cpu/e132xs/e132xs.o
+DBGOBJS += $(OBJ)/cpu/e132xs/32xsdasm.o
+$(OBJ)/cpu/e132xs/e132xs.o: e132xs.c e132xs.h
+else
+CPUDEFS += -DHAS_E116XT=0
+endif
+
+CPU=$(strip $(findstring E116XS@,$(CPUS)))
+ifneq ($(CPU),)
+OBJDIRS += $(OBJ)/cpu/e132xs
+CPUDEFS += -DHAS_E116XS=1
+CPUOBJS += $(OBJ)/cpu/e132xs/e132xs.o
+DBGOBJS += $(OBJ)/cpu/e132xs/32xsdasm.o
+$(OBJ)/cpu/e132xs/e132xs.o: e132xs.c e132xs.h
+else
+CPUDEFS += -DHAS_E116XS=0
+endif
+
+CPU=$(strip $(findstring E116XSR@,$(CPUS)))
+ifneq ($(CPU),)
+OBJDIRS += $(OBJ)/cpu/e132xs
+CPUDEFS += -DHAS_E116XSR=1
+CPUOBJS += $(OBJ)/cpu/e132xs/e132xs.o
+DBGOBJS += $(OBJ)/cpu/e132xs/32xsdasm.o
+$(OBJ)/cpu/e132xs/e132xs.o: e132xs.c e132xs.h
+else
+CPUDEFS += -DHAS_E116XSR=0
+endif
+
+CPU=$(strip $(findstring E132N@,$(CPUS)))
+ifneq ($(CPU),)
+OBJDIRS += $(OBJ)/cpu/e132xs
+CPUDEFS += -DHAS_E132N=1
+CPUOBJS += $(OBJ)/cpu/e132xs/e132xs.o
+DBGOBJS += $(OBJ)/cpu/e132xs/32xsdasm.o
+$(OBJ)/cpu/e132xs/e132xs.o: e132xs.c e132xs.h
+else
+CPUDEFS += -DHAS_E132N=0
+endif
+
+CPU=$(strip $(findstring E132T@,$(CPUS)))
+ifneq ($(CPU),)
+OBJDIRS += $(OBJ)/cpu/e132xs
+CPUDEFS += -DHAS_E132T=1
+CPUOBJS += $(OBJ)/cpu/e132xs/e132xs.o
+DBGOBJS += $(OBJ)/cpu/e132xs/32xsdasm.o
+$(OBJ)/cpu/e132xs/e132xs.o: e132xs.c e132xs.h
+else
+CPUDEFS += -DHAS_E132T=0
+endif
+
+CPU=$(strip $(findstring E132XN@,$(CPUS)))
+ifneq ($(CPU),)
+OBJDIRS += $(OBJ)/cpu/e132xs
+CPUDEFS += -DHAS_E132XN=1
+CPUOBJS += $(OBJ)/cpu/e132xs/e132xs.o
+DBGOBJS += $(OBJ)/cpu/e132xs/32xsdasm.o
+$(OBJ)/cpu/e132xs/e132xs.o: e132xs.c e132xs.h
+else
+CPUDEFS += -DHAS_E132XN=0
+endif
+
+CPU=$(strip $(findstring E132XT@,$(CPUS)))
+ifneq ($(CPU),)
+OBJDIRS += $(OBJ)/cpu/e132xs
+CPUDEFS += -DHAS_E132XT=1
+CPUOBJS += $(OBJ)/cpu/e132xs/e132xs.o
+DBGOBJS += $(OBJ)/cpu/e132xs/32xsdasm.o
+$(OBJ)/cpu/e132xs/e132xs.o: e132xs.c e132xs.h
+else
+CPUDEFS += -DHAS_E132XT=0
+endif
+
 CPU=$(strip $(findstring E132XS@,$(CPUS)))
 ifneq ($(CPU),)
 OBJDIRS += $(OBJ)/cpu/e132xs
@@ -1176,6 +1308,61 @@ DBGOBJS += $(OBJ)/cpu/e132xs/32xsdasm.o
 $(OBJ)/cpu/e132xs/e132xs.o: e132xs.c e132xs.h
 else
 CPUDEFS += -DHAS_E132XS=0
+endif
+
+CPU=$(strip $(findstring E132XSR@,$(CPUS)))
+ifneq ($(CPU),)
+OBJDIRS += $(OBJ)/cpu/e132xs
+CPUDEFS += -DHAS_E132XSR=1
+CPUOBJS += $(OBJ)/cpu/e132xs/e132xs.o
+DBGOBJS += $(OBJ)/cpu/e132xs/32xsdasm.o
+$(OBJ)/cpu/e132xs/e132xs.o: e132xs.c e132xs.h
+else
+CPUDEFS += -DHAS_E132XSR=0
+endif
+
+CPU=$(strip $(findstring GMS30C2116@,$(CPUS)))
+ifneq ($(CPU),)
+OBJDIRS += $(OBJ)/cpu/e132xs
+CPUDEFS += -DHAS_GMS30C2116=1
+CPUOBJS += $(OBJ)/cpu/e132xs/e132xs.o
+DBGOBJS += $(OBJ)/cpu/e132xs/32xsdasm.o
+$(OBJ)/cpu/e132xs/e132xs.o: e132xs.c e132xs.h
+else
+CPUDEFS += -DHAS_GMS30C2116=0
+endif
+
+CPU=$(strip $(findstring GMS30C2132@,$(CPUS)))
+ifneq ($(CPU),)
+OBJDIRS += $(OBJ)/cpu/e132xs
+CPUDEFS += -DHAS_GMS30C2132=1
+CPUOBJS += $(OBJ)/cpu/e132xs/e132xs.o
+DBGOBJS += $(OBJ)/cpu/e132xs/32xsdasm.o
+$(OBJ)/cpu/e132xs/e132xs.o: e132xs.c e132xs.h
+else
+CPUDEFS += -DHAS_GMS30C2132=0
+endif
+
+CPU=$(strip $(findstring GMS30C2216@,$(CPUS)))
+ifneq ($(CPU),)
+OBJDIRS += $(OBJ)/cpu/e132xs
+CPUDEFS += -DHAS_GMS30C2216=1
+CPUOBJS += $(OBJ)/cpu/e132xs/e132xs.o
+DBGOBJS += $(OBJ)/cpu/e132xs/32xsdasm.o
+$(OBJ)/cpu/e132xs/e132xs.o: e132xs.c e132xs.h
+else
+CPUDEFS += -DHAS_GMS30C2216=0
+endif
+
+CPU=$(strip $(findstring GMS30C2232@,$(CPUS)))
+ifneq ($(CPU),)
+OBJDIRS += $(OBJ)/cpu/e132xs
+CPUDEFS += -DHAS_GMS30C2232=1
+CPUOBJS += $(OBJ)/cpu/e132xs/e132xs.o
+DBGOBJS += $(OBJ)/cpu/e132xs/32xsdasm.o
+$(OBJ)/cpu/e132xs/e132xs.o: e132xs.c e132xs.h
+else
+CPUDEFS += -DHAS_GMS30C2232=0
 endif
 
 CPU=$(strip $(findstring I960@,$(CPUS)))

@@ -24,10 +24,10 @@ MACHINE_INIT( skydiver )
 	skydiver_lamp_k_w(0, 0);
 	skydiver_lamp_y_w(0, 0);
 	skydiver_lamp_d_w(0, 0);
-	skydiver_lamp_i_w(0, 0);
-	skydiver_lamp_v_w(0, 0);
-	skydiver_lamp_e_w(0, 0);
-	skydiver_lamp_r_w(0, 0);
+	artwork_show("lampi", 0);
+	artwork_show("lampv", 0);
+	artwork_show("lampe", 0);
+	artwork_show("lampr", 0);
 	skydiver_width_w(0, 0);
 	skydiver_coin_lockout_w(0, 0);
 }
@@ -131,24 +131,36 @@ WRITE8_HANDLER( skydiver_lamp_d_w )
 	artwork_show("lampd", offset);
 }
 
-WRITE8_HANDLER( skydiver_lamp_i_w )
+WRITE8_HANDLER( skydiver_2000_201F_w )
 {
-	artwork_show("lampi", offset);
-}
+	int bit = offset & 0x01;
 
-WRITE8_HANDLER( skydiver_lamp_v_w )
-{
-	artwork_show("lampv", offset);
-}
+	watchdog_reset_w(0,0);
 
-WRITE8_HANDLER( skydiver_lamp_e_w )
-{
-	artwork_show("lampe", offset);
-}
-
-WRITE8_HANDLER( skydiver_lamp_r_w )
-{
-	artwork_show("lampr", offset);
+	switch (offset & 0x0e)
+	{
+		case (0x02):
+			artwork_show("lampi", bit);
+			break;
+		case (0x04):
+			artwork_show("lampv", bit);
+			break;
+		case (0x06):
+			artwork_show("lampe", bit);
+			break;
+		case (0x08):
+			artwork_show("lampr", bit);
+			break;
+		case (0x0a):
+			discrete_sound_w(SKYDIVER_OCT1_EN, bit);
+			break;
+		case (0x0c):
+			discrete_sound_w(SKYDIVER_OCT2_EN, bit);
+			break;
+		case (0x0e):
+			discrete_sound_w(SKYDIVER_NOISE_RST, bit);
+			break;
+	}
 }
 
 
@@ -202,4 +214,3 @@ VIDEO_UPDATE( skydiver )
 
 	draw_sprites(bitmap, cliprect);
 }
-

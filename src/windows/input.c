@@ -20,7 +20,7 @@
 #include "window.h"
 #include "rc.h"
 #include "input.h"
-
+#include "debugwin.h"
 
 
 //============================================================
@@ -1231,9 +1231,11 @@ void win_poll_input(void)
 	// update the lagged keyboard
 	updatekeyboard();
 
+#ifndef NEW_DEBUGGER
 	// if the debugger is up and visible, don't bother with the rest
 	if (win_debug_window != NULL && IsWindowVisible(win_debug_window))
 		return;
+#endif
 
 	// poll all joysticks
 	for (i = 0; i < joystick_count; i++)
@@ -1357,6 +1359,12 @@ static int is_key_pressed(os_code_t keycode)
 			_getch();
 		return result;
 	}
+
+#if defined(MAME_DEBUG) && defined(NEW_DEBUGGER)
+	// if the debugger is visible and we don't have focus, the key is not pressed
+	if (debugwin_is_debugger_visible() && GetFocus() != win_video_window)
+		return 0;
+#endif
 
 	// otherwise, just return the current keystate
 	if (steadykey)
@@ -1782,7 +1790,7 @@ static INT32 get_joycode_value(os_code_t joycode)
 
 				if (!use_joystick)
 					return 0;
-				val = (INT64)val * (INT64)(ANALOG_VALUE_MAX - ANALOG_VALUE_MIN) / (INT64)(top - bottom) + ANALOG_VALUE_MIN;
+				val = (INT64)(val - bottom) * (INT64)(ANALOG_VALUE_MAX - ANALOG_VALUE_MIN) / (INT64)(top - bottom) + ANALOG_VALUE_MIN;
 				if (val < ANALOG_VALUE_MIN) val = ANALOG_VALUE_MIN;
 				if (val > ANALOG_VALUE_MAX) val = ANALOG_VALUE_MAX;
 				return val;

@@ -36,6 +36,7 @@ typedef struct {                /* opcode structure */
    UINT8	size;				/* access size */
    UINT8	access; 			/* access mode */
    UINT8	numcycles;			/* number of cycles - not used */
+   unsigned flags;				/* disassembly flags */
 } opcodeinfo;
 
 /* 6809 ADDRESSING MODES */
@@ -96,7 +97,7 @@ static opcodeinfo pg1opcodes[NUMPG1OPS] =
 	{ 18,0,"NOP",     INH, 0,        0,            2},
 	{ 19,0,"SYNC",    INH, 0,        0,            4},
 	{ 22,2,"LBRA",    LREL,EA_INT16, EA_REL_PC,    5},
-	{ 23,2,"LBSR",    LREL,EA_INT16, EA_REL_PC,    9},
+	{ 23,2,"LBSR",    LREL,EA_INT16, EA_REL_PC,    9, DASMFLAG_STEP_OVER},
 	{ 25,0,"DAA",     INH, 0,        0,            2},
 	{ 26,1,"ORCC",    IMM, 0,        0,            3},
 	{ 28,1,"ANDCC",   IMM, 0,        0,            3},
@@ -198,7 +199,7 @@ static opcodeinfo pg1opcodes[NUMPG1OPS] =
 	{138,1,"ORA",     IMM, EA_UINT8, EA_VALUE,     2},
 	{139,1,"ADDA",    IMM, EA_UINT8, EA_VALUE,     2},
 	{140,2,"CMPX",    IMM, EA_UINT16,EA_VALUE,     4},
-	{141,1,"BSR",     REL, EA_INT8,  EA_REL_PC,    7},
+	{141,1,"BSR",     REL, EA_INT8,  EA_REL_PC,    7, DASMFLAG_STEP_OVER},
 	{142,2,"LDX",     IMM, EA_UINT16,EA_VALUE,     3},
 
 	{144,1,"SUBA",    DIR, EA_UINT8, EA_ZPG_RD,    4},
@@ -214,7 +215,7 @@ static opcodeinfo pg1opcodes[NUMPG1OPS] =
 	{154,1,"ORA",     DIR, EA_UINT8, EA_ZPG_RD,    4},
 	{155,1,"ADDA",    DIR, EA_UINT8, EA_ZPG_RD,    4},
 	{156,1,"CMPX",    DIR, EA_UINT16,EA_ZPG_RD,    6},
-	{157,1,"JSR",     DIR, EA_UINT8, EA_ABS_PC,    7},
+	{157,1,"JSR",     DIR, EA_UINT8, EA_ABS_PC,    7, DASMFLAG_STEP_OVER},
 	{158,1,"LDX",     DIR, EA_UINT16,EA_ZPG_RD,    5},
 	{159,1,"STX",     DIR, EA_UINT16,EA_ZPG_WR,    5},
 
@@ -231,7 +232,7 @@ static opcodeinfo pg1opcodes[NUMPG1OPS] =
 	{170,1,"ORA",     IND, EA_UINT8, EA_MEM_RD,    4},
 	{171,1,"ADDA",    IND, EA_UINT8, EA_MEM_RD,    4},
 	{172,1,"CMPX",    IND, EA_UINT16,EA_MEM_RD,    6},
-	{173,1,"JSR",     IND, EA_UINT8, EA_ABS_PC,    7},
+	{173,1,"JSR",     IND, EA_UINT8, EA_ABS_PC,    7, DASMFLAG_STEP_OVER},
 	{174,1,"LDX",     IND, EA_UINT16,EA_MEM_RD,    5},
 	{175,1,"STX",     IND, EA_UINT16,EA_MEM_WR,    5},
 
@@ -248,7 +249,7 @@ static opcodeinfo pg1opcodes[NUMPG1OPS] =
 	{186,2,"ORA",     EXT, EA_UINT8, EA_MEM_RD,    5},
 	{187,2,"ADDA",    EXT, EA_UINT8, EA_MEM_RD,    5},
 	{188,2,"CMPX",    EXT, EA_UINT16,EA_MEM_RD,    7},
-	{189,2,"JSR",     EXT, EA_UINT8, EA_ABS_PC,    8},
+	{189,2,"JSR",     EXT, EA_UINT8, EA_ABS_PC,    8, DASMFLAG_STEP_OVER},
 	{190,2,"LDX",     EXT, EA_UINT16,EA_MEM_RD,    6},
 	{191,2,"STX",     EXT, EA_UINT16,EA_MEM_WR,    6},
 
@@ -408,6 +409,7 @@ unsigned Dasm6809 (char *buffer, unsigned pc)
 	int rel, pb, offset, reg, pb2;
 	unsigned ea = 0;
     int p = 0;
+	unsigned flags;
 
 	*buffer = '\0';
 
@@ -434,6 +436,7 @@ unsigned Dasm6809 (char *buffer, unsigned pc)
 				mode = pgpointers[page][k].mode;
 				size = pgpointers[page][k].size;
 				access = pgpointers[page][k].access;
+				flags = pgpointers[page][k].flags;
 				buffer += sprintf (buffer, "%-6s", pgpointers[page][k].name);
 			 }
 			 else
@@ -450,6 +453,7 @@ unsigned Dasm6809 (char *buffer, unsigned pc)
 			mode = pg1opcodes[i].mode;
 			size = pg1opcodes[i].size;
 			access = pg1opcodes[i].access;
+			flags = pg1opcodes[i].flags;
 			buffer += sprintf (buffer, "%-6s", pg1opcodes[i].name);
 		}
 	}
@@ -718,7 +722,7 @@ unsigned Dasm6809 (char *buffer, unsigned pc)
 		break;
 	}
 
-	return p;
+	return p | flags | DASMFLAG_SUPPORTED;
 }
 
 #endif
