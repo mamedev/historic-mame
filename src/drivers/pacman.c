@@ -1,14 +1,12 @@
 /***************************************************************************
 
-Crush Roller memory map (preliminary)
-
-This is basically the same hardware as Pac Man, but dip switches behave
-differently.
+Pac Man memory map (preliminary)
 
 0000-3fff ROM
 4000-43ff Video RAM
 4400-47ff Color RAM
 4c00-4fff RAM
+8000-9fff ROM (Ms Pac Man only)
 
 memory mapped ports:
 
@@ -23,7 +21,7 @@ read:
  * bit 7 : CREDIT
  * bit 6 : COIN 2
  * bit 5 : COIN 1
- * bit 4 : COCKTAIL or UPRIGHT cabinet (0 = UPRIGHT)
+ * bit 4 : RACK TEST
  * bit 3 : DOWN player 1
  * bit 2 : RIGHT player 1
  * bit 1 : LEFT player 1
@@ -31,10 +29,10 @@ read:
  *
 *
  * IN1 (all bits are inverted)
- * bit 7 : ??
+ * bit 7 : COCKTAIL or UPRIGHT cabinet (1 = UPRIGHT)
  * bit 6 : START 2
  * bit 5 : START 1
- * bit 4 : ??
+ * bit 4 : TEST SWITCH (not Crush Roller)
  * bit 3 : DOWN player 2 (TABLE only)
  * bit 2 : RIGHT player 2 (TABLE only)
  * bit 1 : LEFT player 2 (TABLE only)
@@ -42,13 +40,14 @@ read:
  *
 *
  * DSW1 (all bits are inverted)
- * bit 7 :  ??
+ * bit 7 :  (PacMan only) selects the names for the ghosts
+ *          1 = Normal 0 = Alternate
  * bit 6 :  difficulty level
- *                       1 = Normal  0 = Harder
- * bit 5 : Teleport holes 0 = on 1 = off
- * bit 4 : First pattern difficulty 1 = easy 0 = hard
+ *          1 = Normal  0 = Harder
+ * bit 5 :\ bonus pac at xx000 pts
+ * bit 4 :/ 00 = 10000  01 = 15000  10 = 20000  11 = none
  * bit 3 :\ nr of lives
- * bit 2 :/ 00 = 3  01 = 4  10 = 5  11 = 6
+ * bit 2 :/ 00 = 1  01 = 2  10 = 3  11 = 5
  * bit 1 :\ play mode
  * bit 0 :/ 00 = free play   01 = 1 coin 1 credit
  *          10 = 1 coin 2 credits   11 = 2 coins 1 credit
@@ -81,12 +80,18 @@ write:
 5062-506d Sprite coordinates, x/y pairs for 6 sprites
 50c0      Watchdog reset
 
+I/O ports:
+OUT on port $0 sets the interrupt vector
+
 ***************************************************************************/
 
 #include "driver.h"
 #include "machine.h"
 #include "common.h"
 
+
+extern int pacman_init_machine(const char *gamename);
+extern int pacman_interrupt(void);
 
 extern unsigned char *pengo_videoram;
 extern unsigned char *pengo_colorram;
@@ -95,6 +100,7 @@ extern unsigned char *pengo_spritepos;
 extern unsigned char *pengo_soundregs;
 extern void pengo_videoram_w(int offset,int data);
 extern void pengo_colorram_w(int offset,int data);
+extern void pacman_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 extern int pengo_vh_start(void);
 extern void pengo_vh_stop(void);
 extern void pengo_vh_screenrefresh(struct osd_bitmap *bitmap);
@@ -105,7 +111,7 @@ extern void pengo_sh_update(void);
 
 
 
-static struct MemoryReadAddress readmem[] =
+static struct MemoryReadAddress pacman_readmem[] =
 {
 	{ 0x4c00, 0x4fff, MRA_RAM },	/* includeing sprite codes at 4ff0-4fff */
 	{ 0x4000, 0x47ff, MRA_RAM },	/* video and color RAM */
@@ -115,8 +121,19 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x5080, 0x50bf, input_port_2_r },	/* DSW1 */
 	{ -1 }	/* end of table */
 };
+static struct MemoryReadAddress mspacman_readmem[] =
+{
+	{ 0x4c00, 0x4fff, MRA_RAM },	/* includeing sprite codes at 4ff0-4fff */
+	{ 0x4000, 0x47ff, MRA_RAM },	/* video and color RAM */
+	{ 0x0000, 0x3fff, MRA_ROM },
+	{ 0x8000, 0x9fff, MRA_ROM },
+	{ 0x5000, 0x503f, input_port_0_r },	/* IN0 */
+	{ 0x5040, 0x507f, input_port_1_r },	/* IN1 */
+	{ 0x5080, 0x50bf, input_port_2_r },	/* DSW1 */
+	{ -1 }	/* end of table */
+};
 
-static struct MemoryWriteAddress writemem[] =
+static struct MemoryWriteAddress pacman_writemem[] =
 {
 	{ 0x4c00, 0x4fef, MWA_RAM },
 	{ 0x4000, 0x43ff, pengo_videoram_w, &pengo_videoram },
@@ -124,11 +141,37 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x5040, 0x505f, pengo_sound_w, &pengo_soundregs },
 	{ 0x4ff0, 0x4fff, MWA_RAM, &pengo_spritecode},
 	{ 0x5060, 0x506f, MWA_RAM, &pengo_spritepos },
+	{ 0xc000, 0xc3ff, pengo_videoram_w },	/* mirror address for video ram, */
+	{ 0xc400, 0xc7ef, pengo_colorram_w },	/* used to display HIGH SCORE and CREDITS */
 	{ 0x5000, 0x5000, interrupt_enable_w },
 	{ 0x50c0, 0x50c0, MWA_NOP },
 	{ 0x5001, 0x5001, pengo_sound_enable_w },
 	{ 0x5002, 0x5007, MWA_NOP },
 	{ 0x0000, 0x3fff, MWA_ROM },
+	{ -1 }	/* end of table */
+};
+static struct MemoryWriteAddress mspacman_writemem[] =
+{
+	{ 0x4c00, 0x4fef, MWA_RAM },
+	{ 0x4000, 0x43ff, pengo_videoram_w, &pengo_videoram },
+	{ 0x4400, 0x47ff, pengo_colorram_w, &pengo_colorram },
+	{ 0x5040, 0x505f, pengo_sound_w, &pengo_soundregs },
+	{ 0x4ff0, 0x4fff, MWA_RAM, &pengo_spritecode},
+	{ 0x5060, 0x506f, MWA_RAM, &pengo_spritepos },
+	{ 0xc000, 0xc3ff, pengo_videoram_w },	/* mirror address for video ram, */
+	{ 0xc400, 0xc7ef, pengo_colorram_w },	/* used to display HIGH SCORE and CREDITS */
+	{ 0x5000, 0x5000, interrupt_enable_w },
+	{ 0x50c0, 0x50c0, MWA_NOP },
+	{ 0x5001, 0x5001, pengo_sound_enable_w },
+	{ 0x5002, 0x5007, MWA_NOP },
+	{ 0x0000, 0x3fff, MWA_ROM },
+	{ 0x8000, 0x9fff, MWA_ROM },
+	{ -1 }	/* end of table */
+};
+
+static struct IOWritePort writeport[] =
+{
+	{ 0, 0, interrupt_vector_w },
 	{ -1 }	/* end of table */
 };
 
@@ -137,19 +180,19 @@ static struct MemoryWriteAddress writemem[] =
 static struct InputPort input_ports[] =
 {
 	{	/* IN0 */
-		0xef,	/* standup cabinet */
+		0xff,
 		{ OSD_KEY_UP, OSD_KEY_LEFT, OSD_KEY_RIGHT, OSD_KEY_DOWN,
-				0, 0, 0, OSD_KEY_3 },
+				OSD_KEY_F1, 0, 0, OSD_KEY_3 },
 		{ OSD_JOY_UP, OSD_JOY_LEFT, OSD_JOY_RIGHT, OSD_JOY_DOWN,
 				0, 0, 0, 0 }
 	},
 	{	/* IN1 */
 		0xff,
-		{ 0, 0, 0, 0, 0, OSD_KEY_1, OSD_KEY_2, 0 },
+		{ 0, 0, 0, 0, OSD_KEY_F2, OSD_KEY_1, OSD_KEY_2, 0 },
 		{ 0, 0, 0, 0, 0, 0, 0, 0 }
 	},
 	{	/* DSW1 */
-		0xf1,
+		0xe9,
 		{ 0, 0, 0, 0, 0, 0, 0, 0 },
 		{ 0, 0, 0, 0, 0, 0, 0, 0 }
 	},
@@ -158,11 +201,19 @@ static struct InputPort input_ports[] =
 
 
 
-static struct DSW dsw[] =
+static struct DSW pacdsw[] =
 {
-	{ 2, 0x0c, "LIVES", { "3", "4", "5", "6" }, },
-	{ 2, 0x20, "TELEPORT HOLES", { "ON", "OFF" }, 1 },
-	{ 2, 0x10, "FIRST PATTERN", { "HARD", "EASY" }, 1 },
+	{ 2, 0x0c, "LIVES", { "1", "2", "3", "5" } },
+	{ 2, 0x30, "BONUS", { "10000", "15000", "20000", "NONE" } },
+	{ 2, 0x40, "DIFFICULTY", { "HARD", "NORMAL" }, 1 },
+	{ 2, 0x80, "GHOST NAMES", { "ALTERNATE", "NORMAL" }, 1 },
+	{ -1 }
+};
+static struct DSW mspacdsw[] =
+{
+	{ 2, 0x0c, "LIVES", { "1", "2", "3", "5" } },
+	{ 2, 0x30, "BONUS", { "10000", "15000", "20000", "NONE" } },
+	{ 2, 0x40, "DIFFICULTY", { "HARD", "NORMAL" }, 1 },
 	{ -1 }
 };
 
@@ -173,7 +224,7 @@ static struct GfxLayout charlayout =
 	8,8,	/* 8*8 characters */
 	256,	/* 256 characters */
 	2,	/* 2 bits per pixel */
-	{ 0, 4 },	/* the two bitplanes for 4 pixels are packed into one byte */
+	{ 0, 4},	/* the two bitplanes for 4 pixels are packed into one byte */
 	{ 7*8, 6*8, 5*8, 4*8, 3*8, 2*8, 1*8, 0*8 }, /* characters are rotated 90 degrees */
 	{ 8*8+0, 8*8+1, 8*8+2, 8*8+3, 0, 1, 2, 3 },	/* bits are packed in groups of four */
 	16*8	/* every char takes 16 bytes */
@@ -202,67 +253,19 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-static unsigned char palette[] =
+static unsigned char color_prom[] =
 {
-	0x00,0x00,0x00,	/* BLACK */
-	0xdb,0x00,0x00,	/* RED */
-	0xdb,0x92,0x49,	/* BROWN */
-	0xff,0xb6,0xdb,	/* PINK */
-	0x00,0x00,0x00,	/* UNUSED */
-	0x00,0xdb,0xdb,	/* CYAN */
-	0x49,0xb6,0xdb,	/* DKCYAN */
-	0xff,0xb6,0x49,	/* DKORANGE */
-	0x88,0x88,0x88,	/* UNUSED */
-	0xdb,0xdb,0x00,	/* YELLOW */
-	0xff,0x00,0xdb,	/* UNUSED */
-	0x24,0x24,0xdb,	/* BLUE */
-	0x00,0xdb,0x00,	/* GREEN */
-	0x49,0xb6,0x92,	/* DKGREEN */
-	0xff,0xb6,0x92,	/* LTORANGE */
-	0xdb,0xdb,0xdb	/* GREY */
-};
-
-enum {BLACK,RED,BROWN,PINK,UNUSED1,CYAN,DKCYAN,DKORANGE,
-		UNUSED2,YELLOW,UNUSED3,BLUE,GREEN,DKGREEN,LTORANGE,GREY};
-
-#define WALLS 11
-#define GROUND 15
-#define CAR CYAN
-
-static unsigned char colortable[] =
-{
-	BLACK,2,WALLS,4,	/* squasher */
-	BLACK,GREY,BLUE,RED,	/* brush */
-	BLACK,GROUND,WALLS,PINK,	/* 2nd level paint */
-	BLACK,GROUND,WALLS,GROUND,	/* background, text, maze */
-	BLACK,GROUND,WALLS,DKORANGE,	/* 3rd level paint */
-	BLACK,1,BLUE,CYAN,	/* monster 2 */
-	BLACK,GROUND,WALLS,GREEN,	/* 1st level paint */
-	BLACK,1,BLUE,YELLOW,	/* monster 1 / cat */
-	5,5,5,5,
-	BLACK,WALLS,RED,YELLOW,	/* squashed cat, closed barn (sprite), mouse */
-	10,10,10,10,
-	BLACK,BROWN,CAR,RED,	/* driver's head */
-	BLACK,13,CAR,RED,	/* car door */
-	0,CAR,WALLS,YELLOW,	/* car */
-	14,14,14,14,
-	BLACK,RED,GREEN,GREY,	/* bird */
-	7,BLACK,9,10,	/* squashed monster */
-	2,2,2,2,
-	1,1,1,1,
-	3,3,3,3,
-	BLACK,RED,YELLOW,13,	/* bird */
-	0,6,7,8,	/* evil cat (I think) */
-	6,6,6,6,
-	7,7,7,7,
-	15,15,15,15,
-	0,GROUND,4,WALLS,	/* barn */
-	10,GROUND,4,WALLS,	/* closed barn */
-	BLACK,WALLS,CYAN,YELLOW,	/* big cat */
-	BLACK,WALLS,GREEN,GREY,	/* tree */
-	BLACK,WALLS,DKORANGE,YELLOW,	/* cat, bird's head */
-	9,BROWN,WALLS,12,	/* under cat gone */
-	9,BROWN,WALLS,12,	/* under cat */
+	/* palette */
+	0x00,0x07,0x66,0xEF,0x00,0xF8,0xEA,0x6F,0x00,0x3F,0x00,0xC9,0x38,0xAA,0xAF,0xF6,
+	/* color lookup table */
+	0x00,0x00,0x00,0x00,0x00,0x0F,0x0B,0x01,0x00,0x00,0x00,0x00,0x00,0x0F,0x0B,0x03,
+	0x00,0x00,0x00,0x00,0x00,0x0F,0x0B,0x05,0x00,0x00,0x00,0x00,0x00,0x0F,0x0B,0x07,
+	0x00,0x00,0x00,0x00,0x00,0x0B,0x01,0x09,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x0F,0x00,0x0E,0x00,0x01,0x0C,0x0F,
+	0x00,0x0E,0x00,0x0B,0x00,0x0C,0x0B,0x0E,0x00,0x0C,0x0F,0x01,0x00,0x00,0x00,0x00,
+	0x00,0x01,0x02,0x0F,0x00,0x07,0x0C,0x02,0x00,0x09,0x06,0x0F,0x00,0x0D,0x0C,0x0F,
+	0x00,0x05,0x03,0x09,0x00,0x0F,0x0B,0x00,0x00,0x0E,0x00,0x0B,0x00,0x0E,0x00,0x0B,
+	0x00,0x00,0x00,0x00,0x00,0x0F,0x0E,0x01,0x00,0x0F,0x0B,0x0E,0x00,0x0E,0x00,0x0F
 };
 
 
@@ -297,24 +300,57 @@ static unsigned char samples[8*32] =
 
 
 
-const struct MachineDriver crush_driver =
+const struct MachineDriver pacman_driver =
 {
 	/* basic machine hardware */
-	3072000,	/* 3.072 Mhz. Is this correct for Crush Roller? */
+	3072000,	/* 3.072 Mhz */
 	60,
-	readmem,writemem,0,0,
-	input_ports,dsw,
-	0,
-	interrupt,
+	pacman_readmem,pacman_writemem,0,writeport,
+	input_ports,pacdsw,
+	pacman_init_machine,
+	pacman_interrupt,
 
 	/* video hardware */
 	224,288,
 	gfxdecodeinfo,
-	sizeof(palette)/3,sizeof(colortable),
-	0,0,palette,colortable,
-	0,'A',
+	16,4*32,
+	color_prom,pacman_vh_convert_color_prom,0,0,
+	'0','A',
 	0x0f,0x09,
-	8*11,8*19,0x01,
+	8*11,8*20,0x01,
+	0,
+	pengo_vh_start,
+	pengo_vh_stop,
+	pengo_vh_screenrefresh,
+
+	/* sound hardware */
+	samples,
+	0,
+	0,
+	0,
+	pengo_sh_update
+};
+
+
+
+const struct MachineDriver mspacman_driver =
+{
+	/* basic machine hardware */
+	3072000,	/* 3.072 Mhz */
+	60,
+	mspacman_readmem,mspacman_writemem,0,0,
+	input_ports,mspacdsw,
+	pacman_init_machine,
+	pacman_interrupt,
+
+	/* video hardware */
+	224,288,
+	gfxdecodeinfo,
+	16,4*32,
+	color_prom,pacman_vh_convert_color_prom,0,0,
+	'0','A',
+	0x0f,0x09,
+	8*11,8*20,0x01,
 	0,
 	pengo_vh_start,
 	pengo_vh_stop,

@@ -140,7 +140,7 @@ static struct InputPort input_ports[] =
 	{	/* IN0 */
 		0xff,
 		{ OSD_KEY_3, 0, 0, OSD_KEY_F2,
-				0, OSD_KEY_1, OSD_KEY_2, OSD_KEY_F },
+				0, OSD_KEY_1, OSD_KEY_2, OSD_KEY_B },
 		{ 0, 0, 0, 0, 0, 0, 0, 0 }
 	},
 	{	/* IN1 */

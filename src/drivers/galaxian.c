@@ -80,6 +80,7 @@ extern unsigned char *mooncrst_bulletsram;
 extern void mooncrst_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 extern void mooncrst_videoram_w(int offset,int data);
 extern void mooncrst_attributes_w(int offset,int data);
+extern void mooncrst_stars_w(int offset,int data);
 extern void pisces_gfxbank_w(int offset,int data);
 extern int mooncrst_vh_start(void);
 extern void mooncrst_vh_stop(void);
@@ -130,6 +131,7 @@ static struct MemoryWriteAddress galaxian_writemem[] =
 	{ 0x5860, 0x5880, MWA_RAM, &mooncrst_bulletsram },
 	{ 0x7001, 0x7001, interrupt_enable_w },
 	{ 0x7800, 0x7800, mooncrst_sound_freq_w },
+	{ 0x7004, 0x7004, mooncrst_stars_w },
 	{ 0x0000, 0x27ff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
@@ -142,6 +144,7 @@ static struct MemoryWriteAddress pisces_writemem[] =
 	{ 0x7001, 0x7001, interrupt_enable_w },
 	{ 0x6002, 0x6002, pisces_gfxbank_w },
 	{ 0x7800, 0x7800, mooncrst_sound_freq_w },
+	{ 0x7004, 0x7004, mooncrst_stars_w },
 	{ 0x0000, 0x2fff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
@@ -154,6 +157,7 @@ static struct MemoryWriteAddress japirem_writemem[] =
 	{ 0x7001, 0x7001, interrupt_enable_w },
 	{ 0x7800, 0x7800, mooncrst_sound_freq_w },
 	{ 0x6002, 0x6002, pisces_gfxbank_w },
+	{ 0x7004, 0x7004, mooncrst_stars_w },
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
@@ -294,19 +298,33 @@ static struct GfxLayout pisces_spritelayout =
 			8*8+0, 8*8+1, 8*8+2, 8*8+3, 8*8+4, 8*8+5, 8*8+6, 8*8+7 },
 	32*8	/* every sprite takes 32 consecutive bytes */
 };
+/* there's nothing here, this is just a placeholder to let the video hardware */
+/* pick the color table */
+static struct GfxLayout starslayout =
+{
+	0,0,
+	0,
+	1,	/* 1 star = 1 color */
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	0
+};
 
 
 
 static struct GfxDecodeInfo galaxian_gfxdecodeinfo[] =
 {
-	{ 0x10000, &galaxian_charlayout,     0, 8 },
-	{ 0x10000, &galaxian_spritelayout,   0, 8 },
+	{ 0x10000, &galaxian_charlayout,    0,  8 },
+	{ 0x10000, &galaxian_spritelayout,  0,  8 },
+	{ 0,       &starslayout,           32, 64 },
 	{ -1 } /* end of array */
 };
 static struct GfxDecodeInfo pisces_gfxdecodeinfo[] =
 {
-	{ 0x10000, &pisces_charlayout,     0, 8 },
-	{ 0x10000, &pisces_spritelayout,   0, 8 },
+	{ 0x10000, &pisces_charlayout,    0,  8 },
+	{ 0x10000, &pisces_spritelayout,  0,  8 },
+	{ 0,       &starslayout,         32, 64 },
 	{ -1 } /* end of array */
 };
 
@@ -352,7 +370,7 @@ const struct MachineDriver galaxian_driver =
 	/* video hardware */
 	256,256,
 	galaxian_gfxdecodeinfo,
-	32,32,
+	32+64,32+64,	/* 32 for the characters, 64 for the stars */
 	galaxian_color_prom,mooncrst_vh_convert_color_prom,0,0,
 	0,17,
 	0x00,0x01,
@@ -385,7 +403,7 @@ const struct MachineDriver pisces_driver =
 	/* video hardware */
 	256,256,
 	pisces_gfxdecodeinfo,
-	32,32,
+	32+64,32+64,	/* 32 for the characters, 64 for the stars */
 	galaxian_color_prom,mooncrst_vh_convert_color_prom,0,0,
 	0,17,
 	0x00,0x01,
@@ -418,7 +436,7 @@ const struct MachineDriver japirem_driver =
 	/* video hardware */
 	256,256,
 	pisces_gfxdecodeinfo,
-	32,32,
+	32+64,32+64,	/* 32 for the characters, 64 for the stars */
 	japirem_color_prom,mooncrst_vh_convert_color_prom,0,0,
 	0,17,
 	0x07,0x02,
@@ -451,7 +469,7 @@ const struct MachineDriver warofbug_driver =
 	/* video hardware */
 	256,256,
 	galaxian_gfxdecodeinfo,
-	32,32,
+	32+64,32+64,	/* 32 for the characters, 64 for the stars */
 	japirem_color_prom,mooncrst_vh_convert_color_prom,0,0,
 	0,17,
 	0x00,0x01,

@@ -1,70 +1,5 @@
 /***************************************************************************
 
-Galaxian memory map
-
-Compiled from information provided by friends and Uncles on RGVAC.
-
-            AAAAAA
-            111111AAAAAAAAAA     DDDDDDDD   Schem   function
-HEX         5432109876543210 R/W 76543210   name
-
-0000-27FF                                           Game ROM
-5000-57FF   01010AAAAAAAAAAA R/W DDDDDDDD   !Vram   Character ram
-5800-583F   01011AAAAAAAAAAA R/W DDDDDDDD   !OBJRAM Screen attributes
-5840-585F   01011AAAAAAAAAAA R/W DDDDDDDD   !OBJRAM Sprites
-5860-5FFF   01011AAAAAAAAAAA R/W DDDDDDDD   !OBJRAM Bullets
-
-6000        0110000000000000 R   -------D   !SW0    coin1
-6000        0110000000000000 R   ------D-   !SW0    coin2
-6000        0110000000000000 R   -----D--   !SW0    p1 left
-6000        0110000000000000 R   ----D---   !SW0    p1 right
-6000        0110000000000000 R   ---D----   !SW0    p1shoot
-6000        0110000000000000 R   --D-----   !SW0    table ??
-6000        0110000000000000 R   -D------   !SW0    test
-6000        0110000000000000 R   D-------   !SW0    service
-
-6000        0110000000000001 W   -------D   !DRIVER lamp 1 ??
-6001        0110000000000001 W   -------D   !DRIVER lamp 2 ??
-6002        0110000000000010 W   -------D   !DRIVER lamp 3 ??
-6003        0110000000000011 W   -------D   !DRIVER coin control
-6004        0110000000000100 W   -------D   !DRIVER Background lfo freq bit0
-6005        0110000000000101 W   -------D   !DRIVER Background lfo freq bit1
-6006        0110000000000110 W   -------D   !DRIVER Background lfo freq bit2
-6007        0110000000000111 W   -------D   !DRIVER Background lfo freq bit3
-
-6800        0110100000000000 R   -------D   !SW1    1p start
-6800        0110100000000000 R   ------D-   !SW1    2p start
-6800        0110100000000000 R   -----D--   !SW1    p2 left
-6800        0110100000000000 R   ----D---   !SW1    p2 right
-6800        0110100000000000 R   ---D----   !SW1    p2 shoot
-6800        0110100000000000 R   --D-----   !SW1    no used
-6800        0110100000000000 R   -D------   !SW1    dip sw1
-6800        0110100000000000 R   D-------   !SW1    dip sw2
-
-6800        0110100000000000 W   -------D   !SOUND  reset background F1
-                                                    (1=reset ?)
-6801        0110100000000001 W   -------D   !SOUND  reset background F2
-6802        0110100000000010 W   -------D   !SOUND  reset background F3
-6803        0110100000000011 W   -------D   !SOUND  Noise on/off
-6804        0110100000000100 W   -------D   !SOUND  not used
-6805        0110100000000101 W   -------D   !SOUND  shoot on/off
-6806        0110100000000110 W   -------D   !SOUND  Vol of f1
-6807        0110100000000111 W   -------D   !SOUND  Vol of f2
-
-7000        0111000000000000 R   -------D   !DIPSW  dip sw 3
-7000        0111000000000000 R   ------D-   !DIPSW  dip sw 4
-7000        0111000000000000 R   -----D--   !DIPSW  dip sw 5
-7000        0111000000000000 R   ----D---   !DIPSW  dip s2 6
-
-7001        0111000000000001 W   -------D   9Nregen NMIon
-7004        0111000000000100 W   -------D   9Nregen stars on
-7006        0111000000000110 W   -------D   9Nregen hflip
-7007        0111000000000111 W   -------D   9Nregen vflip
-
-Note: 9n reg,other bits  used on moon cresta for extra graphics rom control.
-
-7800        0111100000000000 R   --------   !wdr    watchdog reset
-7800        0111100000000000 W   DDDDDDDD   !pitch  Sound Fx base frequency
 
 ***************************************************************************/
 
@@ -172,6 +107,18 @@ static struct GfxLayout spritelayout =
 			8*8+0, 8*8+1, 8*8+2, 8*8+3, 8*8+4, 8*8+5, 8*8+6, 8*8+7 },
 	32*8	/* every sprite takes 32 consecutive bytes */
 };
+/* there's nothing here, this is just a placeholder to let the video hardware */
+/* pick the color table */
+static struct GfxLayout starslayout =
+{
+	0,0,
+	0,
+	1,	/* 1 star = 1 color */
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	0
+};
 
 
 
@@ -179,6 +126,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	{ 0x10000, &charlayout,     0, 8 },
 	{ 0x10000, &spritelayout,   0, 8 },
+	{ 0,       &starslayout,   32, 64 },
 	{ -1 } /* end of array */
 };
 
@@ -186,6 +134,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static unsigned char palette[] =
 {
+	/* characters */
     0*4, 0*4, 0*4,                    // TE1
     20*4, 20*4, 20*4,                 // TE2
     40*4, 40*4, 40*4,                 // TE3
@@ -203,12 +152,94 @@ static unsigned char palette[] =
     0*4, 0*4, 40*4,                   // TEF
     63*4, 20*4, 63*4,                 // TEG
     63*4, 0*4, 63*4,                  // TEH
+	0,0,0,
+	0,0,0,
+	0,0,0,
+	0,0,0,
+	0,0,0,
+	0,0,0,
+	0,0,0,
+	0,0,0,
+	0,0,0,
+	0,0,0,
+	0,0,0,
+	0,0,0,
+	0,0,0,
+	0,0,0,
+	0,0,0,
+
+	/* stars */
+	0x00,0x00,0x00,
+	0x88,0x00,0x00,
+	0xcc,0x00,0x00,
+	0xff,0x00,0x00,
+	0x00,0x88,0x00,
+	0x88,0x88,0x00,
+	0xcc,0x88,0x00,
+	0xff,0x88,0x00,
+	0x00,0xcc,0x00,
+	0x88,0xcc,0x00,
+	0xcc,0xcc,0x00,
+	0xff,0xcc,0x00,
+	0x00,0xff,0x00,
+	0x88,0xff,0x00,
+	0xcc,0xff,0x00,
+	0xff,0xff,0x00,
+	0x00,0x00,0x88,
+	0x88,0x00,0x88,
+	0xcc,0x00,0x88,
+	0xff,0x00,0x88,
+	0x00,0x88,0x88,
+	0x88,0x88,0x88,
+	0xcc,0x88,0x88,
+	0xff,0x88,0x88,
+	0x00,0xcc,0x88,
+	0x88,0xcc,0x88,
+	0xcc,0xcc,0x88,
+	0xff,0xcc,0x88,
+	0x00,0xff,0x88,
+	0x88,0xff,0x88,
+	0xcc,0xff,0x88,
+	0xff,0xff,0x88,
+	0x00,0x00,0xcc,
+	0x88,0x00,0xcc,
+	0xcc,0x00,0xcc,
+	0xff,0x00,0xcc,
+	0x00,0x88,0xcc,
+	0x88,0x88,0xcc,
+	0xcc,0x88,0xcc,
+	0xff,0x88,0xcc,
+	0x00,0xcc,0xcc,
+	0x88,0xcc,0xcc,
+	0xcc,0xcc,0xcc,
+	0xff,0xcc,0xcc,
+	0x00,0xff,0xcc,
+	0x88,0xff,0xcc,
+	0xcc,0xff,0xcc,
+	0xff,0xff,0xcc,
+	0x00,0x00,0xff,
+	0x88,0x00,0xff,
+	0xcc,0x00,0xff,
+	0xff,0x00,0xff,
+	0x00,0x88,0xff,
+	0x88,0x88,0xff,
+	0xcc,0x88,0xff,
+	0xff,0x88,0xff,
+	0x00,0xcc,0xff,
+	0x88,0xcc,0xff,
+	0xcc,0xcc,0xff,
+	0xff,0xcc,0xff,
+	0x00,0xff,0xff,
+	0x88,0xff,0xff,
+	0xcc,0xff,0xff,
+	0xff,0xff,0xff
 };
 
 enum { TE1,TE2,TE3,TE4,TE5,TE6,TE7,TE8,TE9,TEA,TEB,TEC,TED,TEE,TEF,TEG,TEH };
 
 static unsigned char colortable[] =
 {
+	/* characters */
     TE1, TE2, TE3, TE5,         // white text
     TE1, TE8, TE9, TEA,         //
     TE1, TEB, TEC, TEA,         // green text
@@ -217,6 +248,12 @@ static unsigned char colortable[] =
     TE1, TE6, TE7, TED,         //
     TE1, TE8, TEG, TE4,         //
     TE1, TE5, TEA, TEH,         // explosion
+
+	/* stars */
+	0x20,0x21,0x22,0x23,0x24,0x25,0x26,0x27,0x28,0x29,0x2a,0x2b,0x2c,0x2d,0x2e,0x2f,
+	0x30,0x31,0x32,0x33,0x34,0x35,0x36,0x37,0x38,0x39,0x3a,0x3b,0x3c,0x3d,0x3e,0x3f,
+	0x40,0x41,0x42,0x43,0x44,0x45,0x46,0x47,0x48,0x49,0x4a,0x4b,0x4c,0x4d,0x4e,0x4f,
+	0x50,0x51,0x52,0x53,0x54,0x55,0x56,0x57,0x58,0x59,0x5a,0x5b,0x5c,0x5d,0x5e,0x5f
 };
 
 

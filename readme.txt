@@ -26,10 +26,15 @@ Wizard of Wor               Partially        Maybe             No
 The Adventures of Robby Roto         not implemented yet
 Galaxians                      Yes            Yes           Limited
 Pisces                         Yes            Yes           Limited
-"Japanese Irem game"           Yes            Yes           Limited
+"Japanese Irem game"           Yes             No           Limited
 War of the Bugs                Yes             No           Limited
 Moon Cresta                    Yes             No           Limited
 The End                        Yes             No              No
+Scramble                       Yes             No              No
+Frogger                        Yes             No              No
+Amidar                         Yes             No              No
+Turtles                        Yes             No              No
+Rally X                   Yes (slowdowns)      No              No
 
 
 
@@ -68,6 +73,7 @@ Special thanks to Brad Thomas (bradt@nol.net) and Gary Shepherdson for the
    extensive information on Donkey Kong and Donkey Kong Jr.
 Info on Bagman, Galaxians, Moon Cresta and many other games taken from Arcade
    Emulator by Robert Anschuetz.
+Many thanks to Jim Hernandez for the information on Wizard of Wor hardware.
 Thanks to Dave W. for all his help.
 
 
@@ -297,7 +303,7 @@ Known issues:
   Understanding how the thing works without the schematics is tricky. There
   are no memory mapped ports, everything is done via IN and OUT instructions.
   As of now, it is somewhat playable but there are several faults.
-
+- No background stars, no fade in/fade out.
 
 
 The Adventures of Robby Roto ("robby")
@@ -324,9 +330,8 @@ one. The dip switch menu might display wrong settings.
   Galaxians Part 4 ("galap4")
   Galaxians Turbo ("galturbo")
 
-Knowns issues:
+Known issues:
 - Only one sound channel is emulated, and I'm not sure it's correct
-- No star background
 - What does dip switch 6 do?
 
 
@@ -339,9 +344,8 @@ This runs on a modified Galaxians board.
 Arrows  Move around
 CTRL    Fire
 
-Knowns issues:
+Known issues:
 - Only one sound channel is emulated, and I'm not sure it's correct
-- No star background
 - What do the dip switches do?
 
 
@@ -354,9 +358,11 @@ This runs on a modified Galaxians board.
 Arrows  Move around
 CTRL    Fire
 
-Knowns issues:
+Clones supported:
+  Uniwars ("uniwars")
+
+Known issues:
 - Only one sound channel is emulated, and I'm not sure it's correct
-- No star background
 - What does dip switch 6 do?
 
 
@@ -369,9 +375,8 @@ This runs on the same hardware as Galaxians.
 Arrows  Move around
 CTRL    Fire
 
-Knowns issues:
+Known issues:
 - Only one sound channel is emulated, and I'm not sure it's correct
-- No star background (is it used?)
 - What do the dip switches do?
 
 
@@ -384,9 +389,8 @@ This runs on a hardware very similar to Galaxians.
 Arrows  Move around
 CTRL    Fire
 
-Knowns issues:
+Known issues:
 - Only one sound channel is emulated, and I'm not sure it's correct
-- No star background
 - What do the dip switches do?
 
 
@@ -399,6 +403,71 @@ This runs on a hardware very similar to Galaxians.
 Arrows  Move around
 CTRL    Fire
 
-Knowns issues:
+Known issues:
 - I haven't yet had time to check what the various input bits and dip switches
   do. Two players are not supported.
+- Is this game supposed to have background stars?
+
+
+
+Scramble ("scramble")
+---------------------
+
+The video hardware is very similar to Galaxians, main differences being that
+bullets are not vertical lines and the star background doesn't scroll.
+
+Arrows  Move around
+CTRL    Fire
+ALT     Bomb
+
+Known issues:
+- The background stars don't blink. Maybe it should also be clipped to the top
+  and bottom of the screen?
+- Two players mode doesn't work
+
+
+
+Frogger ("frogger")
+-------------------
+
+Arrows  Move around
+
+Clones supported:
+  bootleg version, which runs on a modified Scramble board ("froggers")
+
+
+
+Amidar ("amidar")
+-----------------
+
+Arrows  Move around
+CTRL    Jump
+
+Known issues:
+- What do the dip switches do?
+
+
+
+Turtles ("turtles")
+-------------------
+
+This runs on the same hardware as Amidar
+
+Arrows  Move around
+CTRL    Bomb
+
+Known issues:
+- What do the dip switches do? I'm obviously missing something, becasue the
+  game plays in unlimited lives mode.
+
+
+
+Rally X ("rallyx")
+------------------
+
+Arrows  Move around
+CTRL    Smoke
+F2      Test
+
+Known issues:
+- Graphic glitches, slowdowns, small screen

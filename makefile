@@ -6,19 +6,23 @@ CFLAGS = -Isrc -Isrc/z80 -fstrength-reduce -funroll-loops -fomit-frame-pointer -
 #CFLAGS = -pg -Isrc -Isrc/z80 -fstrength-reduce -funroll-loops -O3 -m486 -Wall
 LIBS   = -lalleg
 OBJS   = obj/mame.o obj/common.o obj/machine.o obj/driver.o obj/osdepend.o \
-         obj/pacman/machine.o obj/pacman/vidhrdw.o obj/pacman/driver.o \
-		 obj/crush/driver.o \
-         obj/pengo/vidhrdw.o obj/pengo/sndhrdw.o obj/pengo/driver.o \
-         obj/ladybug/machine.o obj/ladybug/vidhrdw.o obj/ladybug/sndhrdw.o obj/ladybug/driver.o \
-         obj/mrdo/machine.o obj/mrdo/vidhrdw.o obj/mrdo/driver.o \
-         obj/cclimber/vidhrdw.o obj/cclimber/sndhrdw.o obj/cclimber/driver.o \
-         obj/ckong/vidhrdw.o obj/ckong/driver.o \
-         obj/dkong/vidhrdw.o obj/dkong/driver.o \
-         obj/bagman/machine.o obj/bagman/vidhrdw.o obj/bagman/driver.o \
-         obj/wow/vidhrdw.o obj/wow/driver.o \
-         obj/galaxian/driver.o \
-         obj/mooncrst/vidhrdw.o obj/mooncrst/sndhrdw.o obj/mooncrst/driver.o \
-         obj/theend/driver.o \
+         obj/machine/pacman.o obj/vidhrdw/pacman.o obj/drivers/pacman.o \
+		 obj/drivers/crush.o \
+         obj/vidhrdw/pengo.o obj/sndhrdw/pengo.o obj/drivers/pengo.o \
+         obj/machine/ladybug.o obj/vidhrdw/ladybug.o obj/sndhrdw/ladybug.o obj/drivers/ladybug.o \
+         obj/machine/mrdo.o obj/vidhrdw/mrdo.o obj/drivers/mrdo.o \
+         obj/vidhrdw/cclimber.o obj/sndhrdw/cclimber.o obj/drivers/cclimber.o \
+         obj/vidhrdw/ckong.o obj/drivers/ckong.o \
+         obj/vidhrdw/dkong.o obj/drivers/dkong.o \
+         obj/machine/bagman.o obj/vidhrdw/bagman.o obj/drivers/bagman.o \
+         obj/vidhrdw/wow.o obj/drivers/wow.o \
+         obj/drivers/galaxian.o \
+         obj/vidhrdw/mooncrst.o obj/sndhrdw/mooncrst.o obj/drivers/mooncrst.o \
+         obj/drivers/theend.o \
+         obj/vidhrdw/frogger.o obj/drivers/frogger.o \
+         obj/machine/scramble.o obj/vidhrdw/scramble.o obj/drivers/scramble.o \
+         obj/vidhrdw/amidar.o obj/drivers/amidar.o \
+         obj/vidhrdw/rallyx.o obj/drivers/rallyx.o \
          obj/Z80/Z80.o
 
 VPATH = src src/z80
@@ -36,24 +40,15 @@ obj/%.o: src/%.c common.h machine.h driver.h
 	 $(CC) $(DEFS) $(CFLAGS) -o $@ -c $<
 
 # dependencies
-obj/cclimber/sndhrdw.o:  src/cclimber/psg.c src/cclimber/psg.h
+obj/sndhrdw/cclimber.o:  src/sndhrdw/psg.c src/sndhrdw/psg.h
 obj/Z80/Z80.o:  Z80.c Z80.h Z80Codes.h Z80IO.h Z80DAA.h
 
 
 clean:
 	del obj\*.o
 	del obj\Z80\*.o
-	del obj\pacman\*.o
-	del obj\crush\*.o
-	del obj\pengo\*.o
-	del obj\ladybug\*.o
-	del obj\mrdo\*.o
-	del obj\cclimber\*.o
-	del obj\ckong\*.o
-	del obj\dkong\*.o
-	del obj\bagman\*.o
-	del obj\wow\*.o
-	del obj\galaxian\*.o
-	del obj\mooncrst\*.o
-	del obj\theend\*.o
+	del obj\drivers\*.o
+	del obj\machine\*.o
+	del obj\vidhrdw\*.o
+	del obj\sndhrdw\*.o
 	del mame.exe

@@ -20,15 +20,11 @@
 #define VIDEO_RAM_SIZE 0x400
 
 
-unsigned char *mooncrst_videoram;
-unsigned char *mooncrst_attributesram;
-unsigned char *mooncrst_spriteram;
-unsigned char *mooncrst_bulletsram;
+unsigned char *frogger_videoram;
+unsigned char *frogger_attributesram;
+unsigned char *frogger_spriteram;
 static unsigned char dirtybuffer[VIDEO_RAM_SIZE];	/* keep track of modified portions of the screen */
 											/* to speed up video refresh */
-
-static int gfx_extend;	/* used by Moon Cresta only */
-static int gfx_bank;	/* used by Pisces and "japirem" only */
 
 static struct osd_bitmap *tmpbitmap;
 
@@ -46,7 +42,7 @@ static struct rectangle visiblearea =
 
   Convert the color PROMs into a more useable format.
 
-  Moon Cresta has one 32 bytes palette PROM, connected to the RGB output
+  Frogger has one 32 bytes palette PROM, connected to the RGB output
   this way:
 
   bit 7 -- 220 ohm resistor  -- BLUE
@@ -58,8 +54,12 @@ static struct rectangle visiblearea =
         -- 470 ohm resistor  -- RED
   bit 0 -- 1  kohm resistor  -- RED
 
+  Additionally, there is a bit which is 1 in the upper 136 lines of the
+  display; it is connected to blue through a 470 ohm resistor. It is used
+  to make the river blue instead of black.
+
 ***************************************************************************/
-void mooncrst_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
+void frogger_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
 {
 	int i;
 
@@ -83,19 +83,31 @@ void mooncrst_vh_convert_color_prom(unsigned char *palette, unsigned char *color
 		palette[3*i + 2] = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 	}
 
-	for (i = 0;i < 4 * 32;i++)
-		colortable[i] = i;
+	/* use an otherwise unused pen for the river background */
+	palette[3*4] = 0;
+	palette[3*4 + 1] = 0;
+	palette[3*4 + 2] = 0x47;
+
+	/* normal */
+	for (i = 0;i < 4 * 8;i++)
+	{
+		if (i & 3) colortable[i] = i;
+		else colortable[i] = 0;
+	}
+	/* blue background (river) */
+	for (i = 4 * 8;i < 4 * 16;i++)
+	{
+		if (i & 3) colortable[i] = i - 4*8;
+		else colortable[i] = 4;
+	}
 }
 
 
 
-int mooncrst_vh_start(void)
+int frogger_vh_start(void)
 {
 	int i;
 
-
-	gfx_extend = 0;
-	gfx_bank = 0;
 
 	if ((tmpbitmap = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 		return 1;
@@ -114,28 +126,28 @@ int mooncrst_vh_start(void)
   Stop the video hardware emulation.
 
 ***************************************************************************/
-void mooncrst_vh_stop(void)
+void frogger_vh_stop(void)
 {
 	osd_free_bitmap(tmpbitmap);
 }
 
 
 
-void mooncrst_videoram_w(int offset,int data)
+void frogger_videoram_w(int offset,int data)
 {
-	if (mooncrst_videoram[offset] != data)
+	if (frogger_videoram[offset] != data)
 	{
 		dirtybuffer[offset] = 1;
 
-		mooncrst_videoram[offset] = data;
+		frogger_videoram[offset] = data;
 	}
 }
 
 
 
-void mooncrst_attributes_w(int offset,int data)
+void frogger_attributes_w(int offset,int data)
 {
-	if ((offset & 1) && mooncrst_attributesram[offset] != data)
+	if ((offset & 1) && frogger_attributesram[offset] != data)
 	{
 		int i;
 
@@ -144,22 +156,7 @@ void mooncrst_attributes_w(int offset,int data)
 			dirtybuffer[i] = 1;
 	}
 
-	mooncrst_attributesram[offset] = data;
-}
-
-
-
-void mooncrst_gfxextend_w(int offset,int data)
-{
-	if (data) gfx_extend |= (1 << offset);
-	else gfx_extend &= ~(1 << offset);
-}
-
-
-
-void pisces_gfxbank_w(int offset,int data)
-{
-	gfx_bank = data & 1;
+	frogger_attributesram[offset] = data;
 }
 
 
@@ -171,7 +168,7 @@ void pisces_gfxbank_w(int offset,int data)
   the main emulation engine.
 
 ***************************************************************************/
-void mooncrst_vh_screenrefresh(struct osd_bitmap *bitmap)
+void frogger_vh_screenrefresh(struct osd_bitmap *bitmap)
 {
 	int i,offs;
 
@@ -183,7 +180,6 @@ void mooncrst_vh_screenrefresh(struct osd_bitmap *bitmap)
 		if (dirtybuffer[offs])
 		{
 			int sx,sy;
-			int charnum;
 
 
 			dirtybuffer[offs] = 0;
@@ -191,13 +187,9 @@ void mooncrst_vh_screenrefresh(struct osd_bitmap *bitmap)
 			sx = (31 - offs / 32);
 			sy = (offs % 32);
 
-			charnum = mooncrst_videoram[offs];
-			if ((gfx_extend & 4) && (charnum & 0xc0) == 0x80)
-				charnum = (charnum & 0x3f) | (gfx_extend << 6);
-
 			drawgfx(tmpbitmap,Machine->gfx[0],
-					charnum + 256 * gfx_bank,
-					mooncrst_attributesram[2 * sy + 1],
+					frogger_videoram[offs],
+					frogger_attributesram[2 * sy + 1] + (sy < 17 ? 8 : 0),
 					0,0,8*sx,8*sy,
 					0,TRANSPARENCY_NONE,0);
 		}
@@ -205,46 +197,30 @@ void mooncrst_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 
 	/* copy the temporary bitmap to the screen */
-	for (i = 0;i < 32*8;i++)
 	{
-		int scroll;
+		struct rectangle clip;
 
 
-/// TODO: clip to visible area
-		scroll = mooncrst_attributesram[2 * (i / 8)];
-		if (scroll)
+		clip.min_x = visiblearea.min_x;
+		clip.max_x = visiblearea.max_x;
+
+		for (i = 0;i < 32 * 8;i += 8)
 		{
-			memcpy(bitmap->line[i],tmpbitmap->line[i] + 256 - scroll,scroll);
-			memcpy(bitmap->line[i] + scroll,tmpbitmap->line[i],256 - scroll);
-		}
-		else memcpy(bitmap->line[i],tmpbitmap->line[i],256);
-	}
-
-	/* Draw the bullets */
-	for (offs = 0; offs < 4*8; offs += 4)
-	{
-		int x,y;
+			int scroll;
 
 
-		int color = Machine->gfx[0]->colortable[(offs < 4*6) ?
-				4*Machine->drv->white_text+3 : 4*Machine->drv->yellow_text+3];
+			scroll = frogger_attributesram[2 * (i / 8)];
+			scroll = ((scroll << 4) & 0xf0) | ((scroll >> 4) & 0x0f);
 
-		x = mooncrst_bulletsram[offs + 1];
-
-		if (x != 0 && x != 255)
-		{
-			y = 256 - mooncrst_bulletsram[offs + 3] - 4;
-
-			if (y >= 0)
+			clip.min_y = i;
+			clip.max_y = i + 7;
+			if (scroll)
 			{
-				int j;
-
-
-				for (j = 0; j < 3; j++)
-				{
-					bitmap->line[y+j][x] = color;
-				}
+				copybitmap(bitmap,tmpbitmap,0,0,scroll,0,&clip,TRANSPARENCY_NONE,0);
+				copybitmap(bitmap,tmpbitmap,0,0,scroll - 256,0,&clip,TRANSPARENCY_NONE,0);
 			}
+			else
+				copybitmap(bitmap,tmpbitmap,0,0,0,0,&clip,TRANSPARENCY_NONE,0);
 		}
 	}
 
@@ -252,20 +228,19 @@ void mooncrst_vh_screenrefresh(struct osd_bitmap *bitmap)
 	/* Draw the sprites */
 	for (offs = 0;offs < 4*8;offs += 4)
 	{
-		if (mooncrst_spriteram[offs + 3] >= 16)	/* ???? */
+		if (frogger_spriteram[offs + 3] != 0)
 		{
-			int spritenum;
+			int x;
 
 
-			spritenum = mooncrst_spriteram[offs + 1] & 0x3f;
-			if ((gfx_extend & 4) && (spritenum & 0x30) == 0x20)
-				spritenum = (spritenum & 0x0f) | (gfx_extend << 4);
+			x = frogger_spriteram[offs];
+			x = ((x << 4) & 0xf0) | ((x >> 4) & 0x0f);
 
 			drawgfx(bitmap,Machine->gfx[1],
-					spritenum + 64 * gfx_bank,
-					mooncrst_spriteram[offs + 2],
-					mooncrst_spriteram[offs + 1] & 0x80,mooncrst_spriteram[offs + 1] & 0x40,
-					mooncrst_spriteram[offs],mooncrst_spriteram[offs + 3],
+					frogger_spriteram[offs + 1] & 0x3f,
+					frogger_spriteram[offs + 2],
+					frogger_spriteram[offs + 1] & 0x80,frogger_spriteram[offs + 1] & 0x40,
+					x,frogger_spriteram[offs + 3],
 					&visiblearea,TRANSPARENCY_PEN,0);
 		}
 	}

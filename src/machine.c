@@ -374,7 +374,7 @@ int nmi_interrupt(void)
   Perform a memory read. This function is called by the CPU emulation.
 
 ***************************************************************************/
-unsigned Z80_RDMEM (dword A)
+unsigned Z80_RDMEM(dword A)
 {
 	const struct MemoryReadAddress *mra;
 
@@ -384,19 +384,12 @@ unsigned Z80_RDMEM (dword A)
 	{
 		if (A >= mra->start && A <= mra->end)
 		{
-			switch ((int)mra->handler)
-			{
-				case MRA_NOP:
-					return 0;
-					break;
-				case MRA_RAM:
-				case MRA_ROM:
-					return RAM[A];
-					break;
-				default:
-					return (*mra->handler)(A - mra->start);
-					break;
-			}
+			int (*handler)() = mra->handler;
+
+
+			if (handler == MRA_NOP) return 0;
+			else if (handler == MRA_RAM || handler == MRA_ROM) return RAM[A];
+			else return (*handler)(A - mra->start);
 		}
 
 		mra++;
@@ -413,7 +406,7 @@ unsigned Z80_RDMEM (dword A)
   Perform a memory write. This function is called by the CPU emulation.
 
 ***************************************************************************/
-void Z80_WRMEM (dword A,byte V)
+void Z80_WRMEM(dword A,byte V)
 {
 	const struct MemoryWriteAddress *mwa;
 
@@ -423,20 +416,16 @@ void Z80_WRMEM (dword A,byte V)
 	{
 		if (A >= mwa->start && A <= mwa->end)
 		{
-			switch ((int)mwa->handler)
+			void (*handler)() = mwa->handler;
+
+
+			if (handler == MWA_NOP) return;
+			else if (handler == MWA_RAM) RAM[A] = V;
+			else if (handler == MWA_ROM)
 			{
-				case MWA_NOP:
-					break;
-				case MWA_RAM:
-					RAM[A] = V;
-					break;
-				case MRA_ROM:
-					if (errorlog) fprintf(errorlog,"%04x: warning - write %02x to ROM address %04x\n",Z80_GetPC(),V,A);
-					break;
-				default:
-					(*mwa->handler)(A - mwa->start,V);
-					break;
+				if (errorlog) fprintf(errorlog,"%04x: warning - write %02x to ROM address %04x\n",Z80_GetPC(),V,A);
 			}
+			else (*handler)(A - mwa->start,V);
 
 			return;
 		}
@@ -552,10 +541,11 @@ int Z80_Interrupt(void)
 
 		osd_update_display();
 
+		osd_poll_joystick();
+
 		/* now wait until it's time to trigger the interrupt */
 		do
 		{
-			osd_poll_joystick();
 			curr = uclock();
 		} while ((curr - prev) < (frameskip+1) * UCLOCKS_PER_SEC/drv->frames_per_second);
 
@@ -579,14 +569,11 @@ void Z80_Out(byte Port,byte Value)
 		{
 			if (Port >= iowp->start && Port <= iowp->end)
 			{
-				switch ((int)iowp->handler)
-				{
-					case IOWP_NOP:
-						break;
-					default:
-						(*iowp->handler)(Port - iowp->start,Value);
-						break;
-				}
+				void (*handler)() = iowp->handler;
+
+
+				if (handler == IOWP_NOP) return;
+				else (*handler)(Port - iowp->start,Value);
 
 				return;
 			}
@@ -612,15 +599,11 @@ byte Z80_In(byte Port)
 		{
 			if (Port >= iorp->start && Port <= iorp->end)
 			{
-				switch ((int)iorp->handler)
-				{
-					case IORP_NOP:
-						return 0;
-						break;
-					default:
-						return (*iorp->handler)(Port - iorp->start);
-						break;
-				}
+				int (*handler)() = iorp->handler;
+
+
+				if (handler == IORP_NOP) return 0;
+				else return (*handler)(Port - iorp->start);
 			}
 
 			iorp++;

@@ -18,6 +18,12 @@ extern struct MachineDriver japirem_driver;
 extern struct MachineDriver warofbug_driver;
 extern struct MachineDriver mooncrst_driver;
 extern struct MachineDriver theend_driver;
+extern struct MachineDriver frogger_driver;
+extern struct MachineDriver scramble_driver;
+extern struct MachineDriver amidar_driver;
+extern struct MachineDriver turtles_driver;
+extern struct MachineDriver rallyx_driver;
+
 
 
 static struct RomModule pacman_rom[] =
@@ -597,6 +603,27 @@ static struct RomModule japirem_rom[] =
 
 
 
+static struct RomModule uniwars_rom[] =
+{
+	/* code */
+	{ "u1",  0x00000, 0x0800 },
+	{ "u2",  0x00800, 0x0800 },
+	{ "u3",  0x01000, 0x0800 },
+	{ "u4",  0x01800, 0x0800 },
+	{ "u5",  0x02000, 0x0800 },
+	{ "u6",  0x02800, 0x0800 },
+	{ "u7",  0x03000, 0x0800 },
+	{ "u8",  0x03800, 0x0800 },
+	/* gfx */
+	{ "u9",  0x10000, 0x0800 },
+	{ "u11", 0x10800, 0x0800 },
+	{ "u10", 0x11000, 0x0800 },
+	{ "u12", 0x11800, 0x0800 },
+	{ 0, 0, 0 }	/* end of table */
+};
+
+
+
 static struct RomModule mooncrst_rom[] =
 {
 	/* code */
@@ -637,6 +664,102 @@ static struct RomModule theend_rom[] =
 
 
 
+static struct RomModule scramble_rom[] =
+{
+	/* code */
+	{ "2c", 0x00000, 0x0800 },
+	{ "2e", 0x00800, 0x0800 },
+	{ "2f", 0x01000, 0x0800 },
+	{ "2h", 0x01800, 0x0800 },
+	{ "2j", 0x02000, 0x0800 },
+	{ "2l", 0x02800, 0x0800 },
+	{ "2m", 0x03000, 0x0800 },
+	{ "2p", 0x03800, 0x0800 },
+	/* gfx */
+	{ "5f", 0x10000, 0x0800 },
+	{ "5h", 0x10800, 0x0800 },
+	{ 0, 0, 0 }	/* end of table */
+};
+
+
+
+static struct RomModule frogger_rom[] =
+{
+	/* code */
+	{ "frogger.ic5", 0x00000, 0x1000 },
+	{ "frogger.ic6", 0x01000, 0x1000 },
+	{ "frogger.ic7", 0x02000, 0x1000 },
+	{ "frogger.ic8", 0x03000, 0x1000 },
+	/* gfx */
+	{ "frogger.606", 0x10000, 0x0800 },
+	{ "frogger.607", 0x10800, 0x0800 },
+	{ 0, 0, 0 }	/* end of table */
+};
+
+
+
+static struct RomModule froggers_rom[] =
+{
+	/* code */
+	{ "vid_d2.bin", 0x00000, 0x0800 },
+	{ "vid_e2.bin", 0x00800, 0x0800 },
+	{ "vid_f2.bin", 0x01000, 0x0800 },
+	{ "vid_h2.bin", 0x01800, 0x0800 },
+	{ "vid_j2.bin", 0x02000, 0x0800 },
+	{ "vid_l2.bin", 0x02800, 0x0800 },
+	/* gfx */
+	{ "vid_f5.bin", 0x10000, 0x0800 },
+	{ "vid_h5.bin", 0x10800, 0x0800 },
+	{ 0, 0, 0 }	/* end of table */
+};
+
+
+
+static struct RomModule amidar_rom[] =
+{
+	/* code */
+	{ "amidar.2c", 0x00000, 0x1000 },
+	{ "amidar.2e", 0x01000, 0x1000 },
+	{ "amidar.2f", 0x02000, 0x1000 },
+	{ "amidar.2h", 0x03000, 0x1000 },
+	/* gfx */
+	{ "amidar.5f", 0x10000, 0x0800 },
+	{ "amidar.5h", 0x10800, 0x0800 },
+	{ 0, 0, 0 }	/* end of table */
+};
+
+
+
+static struct RomModule turtles_rom[] =
+{
+	/* code */
+	{ "turt_vid.2c", 0x00000, 0x1000 },
+	{ "turt_vid.2e", 0x01000, 0x1000 },
+	{ "turt_vid.2f", 0x02000, 0x1000 },
+	{ "turt_vid.2h", 0x03000, 0x1000 },
+	{ "turt_vid.2j", 0x04000, 0x1000 },
+	/* gfx */
+	{ "turt_vid.5f", 0x10000, 0x0800 },
+	{ "turt_vid.5h", 0x10800, 0x0800 },
+	{ 0, 0, 0 }	/* end of table */
+};
+
+
+
+static struct RomModule rallyx_rom[] =
+{
+	/* code */
+	{ "%s.1b", 0x00000, 0x1000 },
+	{ "%s.1e", 0x01000, 0x1000 },
+	{ "%s.1h", 0x02000, 0x1000 },
+	{ "%s.1k", 0x03000, 0x1000 },
+	/* gfx */
+	{ "%s.8e", 0x10000, 0x1000 },
+	{ 0, 0, 0 }	/* end of table */
+};
+
+
+
 struct GameDriver drivers[] =
 {
 	{ "pacman",   pacman_rom,   0,               &pacman_driver },
@@ -670,8 +793,15 @@ struct GameDriver drivers[] =
 	{ "galturbo", galnamco_rom, 0,               &galaxian_driver },
 	{ "pisces",   pisces_rom,   0,               &pisces_driver },
 	{ "japirem",  japirem_rom,  0,               &japirem_driver },
+	{ "uniwars",  uniwars_rom,  0,               &japirem_driver },
 	{ "warofbug", galaxian_rom, 0,               &warofbug_driver },
 	{ "mooncrst", mooncrst_rom, 0,               &mooncrst_driver },
 	{ "theend",   theend_rom,   0,               &theend_driver },
+	{ "scramble", scramble_rom, 0,               &scramble_driver },
+	{ "frogger",  frogger_rom,  0,               &frogger_driver },
+	{ "froggers", froggers_rom, 0,               &scramble_driver },
+	{ "amidar",   amidar_rom,   0,               &amidar_driver },
+	{ "turtles",  turtles_rom,  0,               &turtles_driver },
+	{ "rallyx",   rallyx_rom,   0,               &rallyx_driver },
 	{ 0	}	/* end of array */
 };

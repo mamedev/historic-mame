@@ -7,12 +7,12 @@
 
 
 
+#define SOUND_CLOCK 1536000 /* 1.536 Mhz */
+
+
 void mooncrst_sound_freq_w(int offset,int data)
 {
-	if (data && data != 0xff) osd_adjust_sample(0,24000/(256-data)*32,255);
-/*
-	if (data && data != 0xff) osd_adjust_sample(0,(data*8)*32,255);
-*/
+	if (data && data != 0xff) osd_adjust_sample(0,(SOUND_CLOCK/16)/(256-data)*32,255);
 	else osd_adjust_sample(0,1000,0);
 }
 
