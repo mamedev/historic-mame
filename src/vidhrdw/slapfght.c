@@ -39,8 +39,7 @@ extern int slapfight_scroll_char_y;
 ***************************************************************************/
 void slapfight_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
-	int i,j,used;
-	unsigned char allocated[3*256];
+	int i,used;
 
 	memset(palette,0,3 * Machine->drv->total_colors);
 

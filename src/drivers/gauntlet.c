@@ -114,70 +114,46 @@ Program ROM (48K bytes)                   4000-FFFF   R    D0-D7
 
 
 #include "driver.h"
+#include "machine/atarigen.h"
 #include "vidhrdw/generic.h"
 #include "sndhrdw/pokyintf.h"
 #include "sndhrdw/5220intf.h"
 #include "sndhrdw/2151intf.h"
 
 
-extern int gauntlet_spriteram_size;
-extern int gauntlet_playfieldram_size;
-extern int gauntlet_alpharam_size;
-extern int gauntlet_paletteram_size;
-int gauntlet_eeprom_size;
-
-extern unsigned char *gauntlet_eeprom;
-extern unsigned char *gauntlet_slapstic_base;
-extern unsigned char *gauntlet_playfieldram;
-extern unsigned char *gauntlet_spriteram;
-extern unsigned char *gauntlet_alpharam;
-extern unsigned char *gauntlet_paletteram;
-extern unsigned char *gauntlet_vscroll;
-extern unsigned char *gauntlet_hscroll;
-extern unsigned char *gauntlet_bank3;
 extern unsigned char *gauntlet_speed_check;
 
 int gauntlet_control_r (int offset);
 int gauntlet_io_r (int offset);
-int gauntlet_eeprom_r (int offset);
-int gauntlet_slapstic_r (int offset);
 int gauntlet_68010_speedup_r (int offset);
 int gauntlet_6502_speedup_r (int offset);
-int gauntlet_6502_sound_r (int offset);
 int gauntlet_6502_switch_r (int offset);
-int gauntlet_ym2151_r (int offset);
 int gauntlet_playfieldram_r (int offset);
 int gauntlet_alpharam_r (int offset);
 int gauntlet_vscroll_r (int offset);
 int gauntlet_paletteram_r (int offset);
 
 void gauntlet_io_w (int offset, int data);
-void gauntlet_eeprom_w (int offset, int data);
-void gauntlet_eeprom_enable_w (int offset, int data);
-void gauntlet_sound_w (int offset, int data);
-void gauntlet_slapstic_w (int offset, int data);
 void gauntlet_68010_speedup_w (int offset, int data);
-void gauntlet_6502_sound_w (int offset, int data);
 void gauntlet_6502_mix_w (int offset, int data);
 void gauntlet_sound_ctl_w (int offset, int data);
-void gauntlet_ym2151_w (int offset, int data);
 void gauntlet_tms_w (int offset, int data);
 void gauntlet_playfieldram_w (int offset, int data);
 void gauntlet_alpharam_w (int offset, int data);
 void gauntlet_vscroll_w (int offset, int data);
 void gauntlet_paletteram_w (int offset, int data);
 
-int gauntlet_interrupt(void);
-int gauntlet_sound_interrupt(void);
+int gauntlet_interrupt (void);
+int gauntlet_sound_interrupt (void);
 
-void gauntlet_init_machine(void);
-void gaunt2p_init_machine(void);
-void gauntlet2_init_machine(void);
+void gauntlet_init_machine (void);
+void gaunt2p_init_machine (void);
+void gauntlet2_init_machine (void);
 
-int gauntlet_vh_start(void);
-void gauntlet_vh_stop(void);
+int gauntlet_vh_start (void);
+void gauntlet_vh_stop (void);
 
-void gauntlet_vh_screenrefresh(struct osd_bitmap *bitmap);
+void gauntlet_vh_screenrefresh (struct osd_bitmap *bitmap);
 
 
 /*************************************
@@ -189,21 +165,21 @@ void gauntlet_vh_screenrefresh(struct osd_bitmap *bitmap);
 static struct MemoryReadAddress gauntlet_readmem[] =
 {
 	{ 0x000000, 0x037fff, MRA_ROM },
-	{ 0x038000, 0x03ffff, gauntlet_slapstic_r, &gauntlet_slapstic_base },
+	{ 0x038000, 0x03ffff, atarigen_slapstic_r, &atarigen_slapstic },
 	{ 0x040000, 0x07ffff, MRA_ROM },
 	{ 0x800000, 0x801fff, MRA_BANK1 },
-	{ 0x802000, 0x802fff, gauntlet_eeprom_r, &gauntlet_eeprom, &gauntlet_eeprom_size },
+	{ 0x802000, 0x802fff, atarigen_eeprom_r, &atarigen_eeprom, &atarigen_eeprom_size },
 	{ 0x803000, 0x803007, gauntlet_control_r },
 	{ 0x803008, 0x80300f, gauntlet_io_r },
-	{ 0x900000, 0x901fff, gauntlet_playfieldram_r, &gauntlet_playfieldram, &gauntlet_playfieldram_size },
-	{ 0x902000, 0x903fff, MRA_BANK4, &gauntlet_spriteram, &gauntlet_spriteram_size },
+	{ 0x900000, 0x901fff, gauntlet_playfieldram_r, &atarigen_playfieldram, &atarigen_playfieldram_size },
+	{ 0x902000, 0x903fff, MRA_BANK4, &atarigen_spriteram, &atarigen_spriteram_size },
 	{ 0x904000, 0x904003, gauntlet_68010_speedup_r, &gauntlet_speed_check },
 	{ 0x904004, 0x904fff, MRA_BANK2 },
-	{ 0x905f6c, 0x905f6f, gauntlet_vscroll_r, &gauntlet_vscroll },
-	{ 0x905000, 0x905eff, gauntlet_alpharam_r, &gauntlet_alpharam, &gauntlet_alpharam_size },
-	{ 0x905f00, 0x905fff, MRA_BANK3, &gauntlet_bank3 },
-	{ 0x910000, 0x9107ff, gauntlet_paletteram_r, &gauntlet_paletteram, &gauntlet_paletteram_size },
-	{ 0x930000, 0x930003, MRA_BANK5, &gauntlet_hscroll },
+	{ 0x905f6c, 0x905f6f, gauntlet_vscroll_r, &atarigen_vscroll },
+	{ 0x905000, 0x905eff, gauntlet_alpharam_r, &atarigen_alpharam, &atarigen_alpharam_size },
+	{ 0x905f00, 0x905fff, MRA_BANK3 },
+	{ 0x910000, 0x9107ff, gauntlet_paletteram_r, &atarigen_paletteram, &atarigen_paletteram_size },
+	{ 0x930000, 0x930003, MRA_BANK5, &atarigen_hscroll },
 	{ -1 }  /* end of table */
 };
 
@@ -211,15 +187,15 @@ static struct MemoryReadAddress gauntlet_readmem[] =
 static struct MemoryWriteAddress gauntlet_writemem[] =
 {
 	{ 0x000000, 0x037fff, MWA_ROM },
-	{ 0x038000, 0x03ffff, gauntlet_slapstic_w },
+	{ 0x038000, 0x03ffff, atarigen_slapstic_w },
 	{ 0x040000, 0x07ffff, MWA_ROM },
 	{ 0x800000, 0x801fff, MWA_BANK1 },
-	{ 0x802000, 0x802fff, gauntlet_eeprom_w },
+	{ 0x802000, 0x802fff, atarigen_eeprom_w },
 	{ 0x803100, 0x803103, MWA_NOP },
 	{ 0x803120, 0x80312f, gauntlet_io_w },
 	{ 0x803140, 0x803143, MWA_NOP },
-	{ 0x803150, 0x803153, gauntlet_eeprom_enable_w },
-	{ 0x803170, 0x803173, gauntlet_sound_w },
+	{ 0x803150, 0x803153, atarigen_eeprom_enable_w },
+	{ 0x803170, 0x803173, atarigen_sound_w },
 	{ 0x900000, 0x901fff, gauntlet_playfieldram_w },
 	{ 0x902000, 0x903fff, MWA_BANK4 },
 	{ 0x904000, 0x904003, gauntlet_68010_speedup_w },
@@ -244,7 +220,7 @@ static struct MemoryReadAddress gauntlet_sound_readmem[] =
 {
 	{ 0x0211, 0x0211, gauntlet_6502_speedup_r },
 	{ 0x0000, 0x0fff, MRA_RAM },
-	{ 0x1010, 0x101f, gauntlet_6502_sound_r },
+	{ 0x1010, 0x101f, atarigen_6502_sound_r },
 	{ 0x1020, 0x102f, input_port_4_r },
 	{ 0x1030, 0x103f, gauntlet_6502_switch_r },
 	{ 0x1800, 0x180f, pokey1_r },
@@ -258,7 +234,7 @@ static struct MemoryReadAddress gauntlet_sound_readmem[] =
 static struct MemoryWriteAddress gauntlet_sound_writemem[] =
 {
 	{ 0x0000, 0x0fff, MWA_RAM },
-	{ 0x1000, 0x100f, gauntlet_6502_sound_w },
+	{ 0x1000, 0x100f, atarigen_6502_sound_w },
 	{ 0x1020, 0x102f, MWA_NOP/*gauntlet_6502_mix_w*/ },
 	{ 0x1030, 0x103f, gauntlet_sound_ctl_w },
 	{ 0x1800, 0x180f, pokey1_w },
@@ -327,13 +303,13 @@ INPUT_PORTS_START( gauntlet_ports )
 	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* DSW */
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW,  IPT_VBLANK )
-	PORT_BIT( 0x30, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_BITX(    0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Self Test", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_BIT( 0x07, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BITX(    0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
 	PORT_DIPSETTING(    0x08, "Off")
 	PORT_DIPSETTING(    0x00, "On")
-	PORT_BIT( 0x07, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x30, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW,  IPT_VBLANK )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
 
 	PORT_START	/* Fake! */
 	PORT_DIPNAME( 0x03, 0x00, "Player 1 Plays", IP_KEY_NONE )
@@ -394,7 +370,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct POKEYinterface pokey_interface =
 {
 	1,	/* 1 chip */
-	1500000,	/* 1.5 MHz??? */
+	1789790,	/* 1.5 MHz??? */
 	128,
 	POKEY_DEFAULT_GAIN,
 	NO_CLIP,
@@ -423,7 +399,7 @@ static struct TMS5220interface tms5220_interface =
 static struct YM2151interface ym2151_interface =
 {
 	1,			/* 1 chip */
-	3582071,	/* seems to be the standard */
+	3579580,	/* seems to be the standard */
 	{ 255 },
 	{ 0 }
 };
@@ -442,21 +418,21 @@ static struct MachineDriver gauntlet_machine_driver =
 	{
 		{
 			CPU_M68000,
-			7159000,
+			7159160,
 			0,
 			gauntlet_readmem,gauntlet_writemem,0,0,
 			gauntlet_interrupt,1
 		},
 		{
 			CPU_M6502,
-			1966080,		/* Clocked by the 2H signal; best guess = (64*8)*(32*8)*60fps/4 = 1.966MHz */
+			1789790,
 			2,
 			gauntlet_sound_readmem,gauntlet_sound_writemem,0,0,
 			0,0,
 			gauntlet_sound_interrupt,250
 		},
 	},
-	60, 2000,	/* frames per second, vblank duration */
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	10,
 	gauntlet_init_machine,
 
@@ -466,7 +442,7 @@ static struct MachineDriver gauntlet_machine_driver =
 	256,1024,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_16BIT | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
 	gauntlet_vh_start,
 	gauntlet_vh_stop,
@@ -497,21 +473,21 @@ static struct MachineDriver gaunt2p_machine_driver =
 	{
 		{
 			CPU_M68000,
-			7159000,
+			7159160,
 			0,
 			gauntlet_readmem,gauntlet_writemem,0,0,
 			gauntlet_interrupt,1
 		},
 		{
 			CPU_M6502,
-			1966080,		/* Clocked by the 2H signal; best guess = (64*8)*(32*8)*60fps/4 = 1.966MHz */
+			1789790,		/* Clocked by the 2H signal; best guess = (64*8)*(32*8)*60fps/4 = 1.966MHz */
 			2,
 			gauntlet_sound_readmem,gauntlet_sound_writemem,0,0,
 			0,0,
 			gauntlet_sound_interrupt,250
 		},
 	},
-	60, 2000,	/* frames per second, vblank duration */
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	10,
 	gaunt2p_init_machine,
 
@@ -521,7 +497,7 @@ static struct MachineDriver gaunt2p_machine_driver =
 	256,1024,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_16BIT | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
 	gauntlet_vh_start,
 	gauntlet_vh_stop,
@@ -552,21 +528,21 @@ static struct MachineDriver gauntlet2_machine_driver =
 	{
 		{
 			CPU_M68000,
-			7159000,
+			7159160,
 			0,
 			gauntlet_readmem,gauntlet_writemem,0,0,
 			gauntlet_interrupt,1
 		},
 		{
 			CPU_M6502,
-			1966080,		/* Clocked by the 2H signal; best guess = (64*8)*(32*8)*60fps/4 = 1.966MHz */
+			1789790,		/* Clocked by the 2H signal; best guess = (64*8)*(32*8)*60fps/4 = 1.966MHz */
 			2,
 			gauntlet_sound_readmem,gauntlet_sound_writemem,0,0,
 			0,0,
 			gauntlet_sound_interrupt,250
 		},
 	},
-	60, 2000,	/* frames per second, vblank duration */
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	10,
 	gauntlet2_init_machine,
 
@@ -576,7 +552,7 @@ static struct MachineDriver gauntlet2_machine_driver =
 	256,1024,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_16BIT | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
 	gauntlet_vh_start,
 	gauntlet_vh_stop,
@@ -599,60 +575,6 @@ static struct MachineDriver gauntlet2_machine_driver =
 		}
 	}
 };
-
-
-
-/*************************************
- *
- *		High score save/load
- *
- *************************************/
-
-static int gauntlet_hiload (void)
-{
-   void *f;
-
-	f = osd_fopen (Machine->gamedrv->name, 0, OSD_FILETYPE_HIGHSCORE, 0);
-   if (f)
-   {
-		osd_fread (f, gauntlet_eeprom, gauntlet_eeprom_size);
-		osd_fclose (f);
-   }
-   else
-   	memset (gauntlet_eeprom, 0xff, gauntlet_eeprom_size);
-
-   return 1;
-}
-
-
-static int gauntlet2_hiload (void)
-{
-   void *f;
-
-	f = osd_fopen (Machine->gamedrv->name, 0, OSD_FILETYPE_HIGHSCORE, 0);
-   if (f)
-   {
-		osd_fread (f, gauntlet_eeprom, gauntlet_eeprom_size);
-		osd_fclose (f);
-   }
-   else
-   	memset (gauntlet_eeprom, 0xff, gauntlet_eeprom_size);
-
-   return 1;
-}
-
-
-static void hisave (void)
-{
-   void *f;
-
-	f = osd_fopen (Machine->gamedrv->name, 0, OSD_FILETYPE_HIGHSCORE, 1);
-   if (f)
-   {
-      osd_fwrite (f, gauntlet_eeprom, gauntlet_eeprom_size);
-      osd_fclose (f);
-   }
-}
 
 
 
@@ -866,7 +788,7 @@ struct GameDriver gauntlet_driver =
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,
-	gauntlet_hiload, hisave
+	atarigen_hiload, atarigen_hisave
 };
 
 
@@ -887,7 +809,7 @@ struct GameDriver gauntir1_driver =
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,
-	gauntlet_hiload, hisave
+	atarigen_hiload, atarigen_hisave
 };
 
 
@@ -908,7 +830,7 @@ struct GameDriver gauntir2_driver =
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,
-	gauntlet_hiload, hisave
+	atarigen_hiload, atarigen_hisave
 };
 
 
@@ -929,7 +851,7 @@ struct GameDriver gaunt2p_driver =
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,
-	gauntlet_hiload, hisave
+	atarigen_hiload, atarigen_hisave
 };
 
 
@@ -950,5 +872,5 @@ struct GameDriver gaunt2_driver =
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,
-	gauntlet2_hiload, hisave
+	atarigen_hiload, atarigen_hisave
 };

@@ -15,7 +15,7 @@ Motion Object RAM                  C09800-C09FFF  R/W  D0-D15
 
 Color RAM Playfield                C10000-C101FF  R/W  D0-D15
 Color RAM Motion Object            C10200-C103FF  R/W  D0-D15
-Color RAM Playfield                C10400-C105FF  R/W  D0-D15
+Color RAM Alpha                    C10400-C105FF  R/W  D0-D15
 Color RAM Extra?                   C10600-C107FF  R/W  D0-D15
 
 ???? (Dip switches?)               FF6000         R
@@ -85,55 +85,35 @@ Static Program ROM (48K bytes)            4000-FFFF   R    D0-D7
 
 
 #include "driver.h"
+#include "machine/atarigen.h"
 #include "vidhrdw/generic.h"
 #include "sndhrdw/pokyintf.h"
 #include "sndhrdw/5220intf.h"
 #include "sndhrdw/2151intf.h"
 
 
-extern int toobin_spriteram_size;
-extern int toobin_playfieldram_size;
-extern int toobin_alpharam_size;
-extern int toobin_paletteram_size;
-int toobin_eeprom_size;
-
-extern unsigned char *toobin_eeprom;
 extern unsigned char *toobin_interrupt_scan;
 extern unsigned char *toobin_intensity;
-extern unsigned char *toobin_playfieldram;
-extern unsigned char *toobin_spriteram;
-extern unsigned char *toobin_alpharam;
-extern unsigned char *toobin_paletteram;
-extern unsigned char *toobin_vscroll;
-extern unsigned char *toobin_hscroll;
 extern unsigned char *toobin_moslip;
 
 int toobin_io_r (int offset);
-int toobin_eeprom_r (int offset);
-int toobin_6502_sound_r (int offset);
 int toobin_6502_switch_r (int offset);
 int toobin_playfieldram_r (int offset);
-int toobin_paletteram_r (int offset);
 int toobin_sound_r (int offset);
 int toobin_controls_r (int offset);
 
-void toobin_eeprom_w (int offset, int data);
-void toobin_eeprom_enable_w (int offset, int data);
 void toobin_interrupt_scan_w (int offset, int data);
 void toobin_interrupt_ack_w (int offset, int data);
+void toobin_sound_reset_w (int offset, int data);
 void toobin_intensity_w (int offset, int data);
 void toobin_moslip_w (int offset, int data);
-void toobin_sound_w (int offset, int data);
-void toobin_sound_reset_w (int offset, int data);
-void toobin_6502_sound_w (int offset, int data);
 void toobin_6502_bank_w (int offset, int data);
 void toobin_playfieldram_w (int offset, int data);
-void toobin_paletteram_w (int offset, int data);
 
 int toobin_interrupt (void);
 int toobin_sound_interrupt (void);
 
-void toobin_init_machine(void);
+void toobin_init_machine (void);
 
 int toobin_vh_start (void);
 void toobin_vh_stop (void);
@@ -149,15 +129,15 @@ void toobin_vh_screenrefresh (struct osd_bitmap *bitmap);
 static struct MemoryReadAddress toobin_readmem[] =
 {
 	{ 0x000000, 0x07ffff, MRA_ROM },
-	{ 0xc00000, 0xc07fff, toobin_playfieldram_r, &toobin_playfieldram, &toobin_playfieldram_size },
-	{ 0xc08000, 0xc097ff, MRA_BANK2, &toobin_alpharam, &toobin_alpharam_size },
-	{ 0xc09800, 0xc09fff, MRA_BANK3, &toobin_spriteram, &toobin_spriteram_size },
-	{ 0xc10000, 0xc107ff, toobin_paletteram_r, &toobin_paletteram, &toobin_paletteram_size },
+	{ 0xc00000, 0xc07fff, toobin_playfieldram_r, &atarigen_playfieldram, &atarigen_playfieldram_size },
+	{ 0xc08000, 0xc097ff, MRA_BANK2, &atarigen_alpharam, &atarigen_alpharam_size },
+	{ 0xc09800, 0xc09fff, MRA_BANK3, &atarigen_spriteram, &atarigen_spriteram_size },
+	{ 0xc10000, 0xc107ff, MRA_BANK6, &atarigen_paletteram, &atarigen_paletteram_size },
 	{ 0xff6000, 0xff6003, MRA_NOP },		/* who knows? read at controls time */
 	{ 0xff8800, 0xff8803, toobin_controls_r },
 	{ 0xff9000, 0xff9003, toobin_io_r },
-	{ 0xff9800, 0xff9803, toobin_sound_r },
-	{ 0xffa000, 0xffafff, toobin_eeprom_r, &toobin_eeprom, &toobin_eeprom_size },
+	{ 0xff9800, 0xff9803, atarigen_sound_r },
+	{ 0xffa000, 0xffafff, atarigen_eeprom_r, &atarigen_eeprom, &atarigen_eeprom_size },
 	{ 0xffc000, 0xffffff, MRA_BANK1 },
 	{ -1 }  /* end of table */
 };
@@ -169,18 +149,18 @@ static struct MemoryWriteAddress toobin_writemem[] =
 	{ 0xc00000, 0xc07fff, toobin_playfieldram_w },
 	{ 0xc08000, 0xc097ff, MWA_BANK2 },
 	{ 0xc09800, 0xc09fff, MWA_BANK3 },
-	{ 0xc10000, 0xc107ff, toobin_paletteram_w },
+	{ 0xc10000, 0xc107ff, MWA_BANK6 },
 	{ 0xff8000, 0xff8003, watchdog_reset_w },
-	{ 0xff8100, 0xff8103, toobin_sound_w },
+	{ 0xff8100, 0xff8103, atarigen_sound_w },
 	{ 0xff8300, 0xff8303, toobin_intensity_w, &toobin_intensity },
 	{ 0xff8340, 0xff8343, toobin_interrupt_scan_w, &toobin_interrupt_scan },
 	{ 0xff8380, 0xff8383, toobin_moslip_w, &toobin_moslip },
 	{ 0xff83c0, 0xff83c3, toobin_interrupt_ack_w },
 	{ 0xff8400, 0xff8403, toobin_sound_reset_w },
-	{ 0xff8500, 0xff8503, toobin_eeprom_enable_w },
-	{ 0xff8600, 0xff8603, MWA_BANK4, &toobin_hscroll },
-	{ 0xff8700, 0xff8703, MWA_BANK5, &toobin_vscroll },
-	{ 0xffa000, 0xffafff, toobin_eeprom_w },
+	{ 0xff8500, 0xff8503, atarigen_eeprom_enable_w },
+	{ 0xff8600, 0xff8603, MWA_BANK4, &atarigen_hscroll },
+	{ 0xff8700, 0xff8703, MWA_BANK5, &atarigen_vscroll },
+	{ 0xffa000, 0xffafff, atarigen_eeprom_w },
 	{ 0xffc000, 0xffffff, MWA_BANK1 },
 	{ -1 }  /* end of table */
 };
@@ -197,7 +177,7 @@ static struct MemoryReadAddress toobin_sound_readmem[] =
 {
 	{ 0x0000, 0x1fff, MRA_RAM },
 	{ 0x2000, 0x2001, YM2151_status_port_0_r },
-	{ 0x280a, 0x280a, toobin_6502_sound_r },
+	{ 0x280a, 0x280a, atarigen_6502_sound_r },
 	{ 0x280c, 0x280c, toobin_6502_switch_r },
 	{ 0x280e, 0x280e, MRA_NOP },
 	{ 0x2c00, 0x2c0f, pokey1_r },
@@ -213,7 +193,7 @@ static struct MemoryWriteAddress toobin_sound_writemem[] =
 	{ 0x2000, 0x2000, YM2151_register_port_0_w },
 	{ 0x2001, 0x2001, YM2151_data_port_0_w },
 	{ 0x2a00, 0x2a00, MWA_NOP },
-	{ 0x2a02, 0x2a02, toobin_6502_sound_w },
+	{ 0x2a02, 0x2a02, atarigen_6502_sound_w },
 	{ 0x2a04, 0x2a04, toobin_6502_bank_w },
 	{ 0x2a06, 0x2a06, MWA_NOP },
 	{ 0x2c00, 0x2c0f, pokey1_w },
@@ -330,7 +310,7 @@ static struct GfxDecodeInfo toobin_gfxdecodeinfo[] =
 
 static struct POKEYinterface pokey_interface =
 {
-	2,	/* 2 chips */
+	1,	/* 1 chip */
 	1789790,	/* ? */
 	128,
 	POKEY_DEFAULT_GAIN,
@@ -352,7 +332,7 @@ static struct POKEYinterface pokey_interface =
 static struct YM2151interface ym2151_interface =
 {
 	1,			/* 1 chip */
-	3580000,	/* 3.58 MHZ ? */
+	3579580,	/* 3.58 MHZ ? */
 	{ 255 },
 	{ 0 }
 };
@@ -371,14 +351,14 @@ static struct MachineDriver toobin_machine_driver =
 	{
 		{
 			CPU_M68000,
-			8000000,		/* 8 Mhz? (there is a 32 Mhz crystal) */
+			7159160,
 			0,
 			toobin_readmem,toobin_writemem,0,0,
 			toobin_interrupt,1
 		},
 		{
 			CPU_M6502,
-			1966080,		/* Clocked by the 2H signal; best guess = (64*8)*(32*8)*60fps/4 = 1.966MHz */
+			1789790,
 			2,
 			toobin_sound_readmem,toobin_sound_writemem,0,0,
 			0,0,
@@ -392,7 +372,7 @@ static struct MachineDriver toobin_machine_driver =
 	/* video hardware */
 	64*8, 48*8, { 0*8, 64*8-1, 0*8, 48*8-1 },
 	toobin_gfxdecodeinfo,
-	256, 1024,
+	256,1024,
 	0,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
@@ -414,43 +394,6 @@ static struct MachineDriver toobin_machine_driver =
 		}
 	}
 };
-
-
-
-/*************************************
- *
- *		High score save/load
- *
- *************************************/
-
-static int hiload (void)
-{
-   void *f;
-
-	f = osd_fopen (Machine->gamedrv->name, 0, OSD_FILETYPE_HIGHSCORE, 0);
-   if (f)
-   {
-		osd_fread (f, toobin_eeprom, toobin_eeprom_size);
-		osd_fclose (f);
-   }
-   else
-   	memset (toobin_eeprom, 0xff, toobin_eeprom_size);
-
-   return 1;
-}
-
-
-static void hisave (void)
-{
-   void *f;
-
-	f = osd_fopen (Machine->gamedrv->name, 0, OSD_FILETYPE_HIGHSCORE, 1);
-   if (f)
-   {
-      osd_fwrite (f, toobin_eeprom, toobin_eeprom_size);
-      osd_fclose (f);
-   }
-}
 
 
 
@@ -536,5 +479,5 @@ struct GameDriver toobin_driver =
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_ROTATE_270,
-	hiload, hisave
+	atarigen_hiload, atarigen_hisave
 };

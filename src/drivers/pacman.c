@@ -6,7 +6,8 @@ Pac Man memory map (preliminary)
 4000-43ff Video RAM
 4400-47ff Color RAM
 4c00-4fff RAM
-8000-9fff ROM (Ms Pac Man only)
+8000-9fff ROM (Ms Pac Man and Pon Poko only)
+a000-bfff ROM (Pon Poko only)
 
 memory mapped ports:
 
@@ -75,7 +76,7 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x5000, 0x503f, input_port_0_r },	/* IN0 */
 	{ 0x5040, 0x507f, input_port_1_r },	/* IN1 */
 	{ 0x5080, 0x50bf, input_port_2_r },	/* DSW */
-	{ 0x8000, 0x9fff, MRA_ROM },	/* Ms. Pac Man only */
+	{ 0x8000, 0xbfff, MRA_ROM },	/* Ms. Pac Man / Pon Poko only */
 	{ -1 }	/* end of table */
 };
 
@@ -95,7 +96,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x5040, 0x505f, pengo_sound_w, &pengo_soundregs },
 	{ 0x5060, 0x506f, MWA_RAM, &spriteram_2 },
 	{ 0x50c0, 0x50c0, watchdog_reset_w },
-	{ 0x8000, 0x9fff, MWA_ROM },	/* Ms. Pac Man only */
+	{ 0x8000, 0xbfff, MWA_ROM },	/* Ms. Pac Man / Pon Poko only */
 	{ 0xc000, 0xc3ff, videoram00_w },	/* mirror address for video ram, */
 	{ 0xc400, 0xc7ef, videoram01_w },	/* used to display HIGH SCORE and CREDITS */
 	{ -1 }	/* end of table */
@@ -521,7 +522,6 @@ ROM_START( mspacatk_rom )
 	ROM_LOAD( "5f",    0x1000, 0x1000, 0x26da1654 )
 ROM_END
 
-
 ROM_START( crush_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "CR1", 0x0000, 0x0800, 0x00f93d3d )
@@ -538,6 +538,22 @@ ROM_START( crush_rom )
 	ROM_LOAD( "CRC", 0x0800, 0x0800, 0x09082f80 )
 	ROM_LOAD( "CRB", 0x1000, 0x0800, 0x80f4e38a )
 	ROM_LOAD( "CRD", 0x1800, 0x0800, 0x49c458f6 )
+ROM_END
+
+ROM_START( ponpoko_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "ppoko1.bin", 0x0000, 0x1000, 0x31c72f35 )
+	ROM_LOAD( "ppoko2.bin", 0x1000, 0x1000, 0xcd981984 )
+	ROM_LOAD( "ppoko3.bin", 0x2000, 0x1000, 0xeba2e5ba )
+	ROM_LOAD( "ppoko4.bin", 0x3000, 0x1000, 0x4c240e52 )
+	ROM_LOAD( "ppoko5.bin", 0x8000, 0x1000, 0xe4781ed8 )
+	ROM_LOAD( "ppoko6.bin", 0x9000, 0x1000, 0x2cd69040 )
+	ROM_LOAD( "ppoko7.bin", 0xa000, 0x1000, 0xcc5420c8 )
+	ROM_LOAD( "ppoko8.bin", 0xb000, 0x1000, 0xe09979bf )
+
+	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "ppoko9.bin",  0x0000, 0x1000, 0x5b359d43 )
+	ROM_LOAD( "ppoko10.bin", 0x1000, 0x1000, 0xe3fe3e40 )
 ROM_END
 
 
@@ -962,4 +978,24 @@ struct GameDriver crush_driver =
 	ORIENTATION_ROTATE_90,
 
 	crush_hiload, crush_hisave
+};
+
+struct GameDriver ponpoko_driver =
+{
+	"Pon Poko",
+	"ponpoko",
+	"Allard van der Bas (original code)\nNicola Salmoria (MAME driver)",
+	&machine_driver,
+
+	ponpoko_rom,
+	0, 0,
+	0,
+	sound_prom,	/* sound_prom */
+
+	pacman_input_ports,
+
+	pacman_color_prom, 0, 0,	/* wrong! */
+	ORIENTATION_DEFAULT,
+
+	0, 0
 };

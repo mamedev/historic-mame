@@ -90,7 +90,7 @@ void nitedrvr_vh_screenrefresh(struct osd_bitmap *bitmap)
 		bx = nitedrvr_hvc[roadway];
 		by = nitedrvr_hvc[roadway + 16];
 		ex = bx + ((nitedrvr_hvc[roadway + 32] & 0xF0) >> 4);
-		ey = by + (nitedrvr_hvc[roadway + 32] & 0x0F);
+		ey = by + (16 - (nitedrvr_hvc[roadway + 32] & 0x0F));
 
 		nitedrvr_draw_block(bitmap,bx,by,ex,ey);
 	}

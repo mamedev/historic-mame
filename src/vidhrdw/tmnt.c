@@ -395,7 +395,7 @@ static void tmnt_drawsprites(struct osd_bitmap *bitmap)
 	{
 		for (offs = spriteram_size - 8;offs >= 0;offs -= 8)
 		{
-			int sx,sy,col,data,code,size,w,h,x,y,count,subcount,flipx,flipy;
+			int sx,sy,col,code,size,w,h,x,y,subcount,flipx,flipy;
 			/* sprites can be grouped up to 8x8. The draw order is
 				 0  1  4  5 16 17 20 21
 				 2  3  6  7 18 19 22 23
@@ -549,7 +549,7 @@ static void punkshot_drawsprites(struct osd_bitmap *bitmap,int priority)
 	{
 		for (offs = spriteram_size - 8;offs >= 0;offs -= 8)
 		{
-			int sx,sy,col,data,code,size,w,h,x,y,count,flipx,flipy;
+			int sx,sy,col,code,size,w,h,x,y,flipx,flipy;
 			/* sprites can be grouped up to 8x8. The draw order is
 				 0  1  4  5 16 17 20 21
 				 2  3  6  7 18 19 22 23

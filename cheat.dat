@@ -673,17 +673,13 @@ cosmicmo:0:21FF:4:0:Infinite Lives
 frenzy:0:400C:5:0:Infinite Lives
 spectar:0:00C1:8:0:Infinite Lives PL1
 targ:0:00C1:8:0:Infinite Lives PL1
-
-; Gunsmoke (Romstar)
 gunsmrom:0:E041:6:0:Infinite Boots (Speed)
 gunsmrom:0:E042:6:0:Infinite Bullets (Shot Speed)
 gunsmrom:0:E043:6:0:Infinite Rifles (Range)
-
 sidearms:0:F20B:3:0:Player 1 infinite lives
 sidearms:0:F40B:3:0:Player 2 infinite lives
 sidearms:0:F20B:80:0:Player 1 inmunity
 sidearms:0:F40B:80:0:Player 2 inmunity
-
 silkworm:0:D531:3:0:Heli infinite lives
 silkworm:0:D578:D:0:Heli inmunity
 silkworm:0:D577:A9:0:Killer heli
@@ -692,14 +688,10 @@ silkworm:0:D555:3:0:Jeep infinite lives
 silkworm:0:D5A8:D:0:Jeep inmunity
 silkworm:0:D5A7:A9:0:Killer jeep
 silkworm:0:D56B:F:0:Jeep starts with auto+double shot
-
 jedi:0:0013:3:0:Infinite Lives
-
 punchout:0:D022:70:0:Invulnerability
 punchout:0:D048:1A:0:KO Power
-
 trojan:0:C078:00:0:Infinite Energy
-
 marble2:0:400082:FF:0:Infinite Time
 indytemp:0:40062E:6:0:Infinite Lives
 
@@ -709,10 +701,94 @@ indytemp:0:400CD4:0:0:All Children Rescued
 
 roadrunn:0:401591:5:0:No missed birdseed
 roadrunn:0:400C8C:3:0:Infinite lives
-
 gundealr:0:EDB5:FF:0:Winning Score (1 of 2)
 gundealr:0:ED5F:FF:0:Winning Score (2 of 2)
 gundealr:0:ECAB:34:0:End Level
-
 tazmania:0:852F:A:0:Infinite Bombs
 tazmania:0:8529:5:0:Infinite Lives
+wbdeluxe:0:C302:3:0:Infinite Lives
+rbtapper:0:E4A7:3:0:Infinite Lives
+rbtapper:0:E4A8:C:0:Level Skip
+hippodrm:0:FF8011:4:0:Level Skip
+hippodrm:0:FF800D:0:0:Enemy has more energy
+;All of these cheats apply to both players.
+circusc:0:2200:7:0:Infinte lives
+;There is no need to disable this cheat while playing.
+circusc:0:227C:7:0:Infinite time
+;Apply these cheats before you hit start.  They must be turned off
+;after you start or you'll repeat the level over and over.
+circusc:0:2201:1:0:Start on level 2
+circusc:0:2201:2:0:Start on level 3
+circusc:0:2201:3:0:Start on level 4
+circusc:0:2201:4:0:Start on level 5
+circusc:0:2201:5:0:Start on level 6
+circusc:0:2201:6:0:Start on hidden level 7
+arkanoid:0:ED76:3:0:Infinite Lives PL1
+hustler:0:81C0:1:0:Infinite Lives PL1
+wbdeluxe:0:C302:3:0:Infinite Lives PL1
+wbdeluxe:0:C46A:18:0:Infinite Timer PL1
+wiz:0:C064:3:0:Infinite Lives PL1
+sdungeon:0:86E6:5:0:Infinite Lives
+blktiger:0:F3AD:2:0:Infinite Energy
+blktiger:0:F3AC:5:0:Level 5 Weapon
+brkthru:0:040F:2:0:Infinite Lives
+yiear:0:5430:5:0:Infinite Lives
+gunsmoke:0:E037:1:0:Always have horse
+gyrussce:0:930E:1:0:Double Laser
+gunsmoke:0:E041:5:0:Max Speed
+gunsmoke:0:E042:5:0:Max Bullets
+gunsmoke:0:E043:5:0:Max Rifle
+pbaction:0:C15B:5:0:Infinite Lives
+willow:0:FF8362:5:0:Infinite Health
+willow:0:FF83C7:25:0:Infinite Time
+shadoww:0:61E8E:5:0:Infinite Lives
+shadoww:0:61EC3:F:0:Infinite Energy
+midres:0:102177:5:0:Infinite Lives
+midres:0:10217D:6:0:Always 6 keys
+midres:0:102180:1:0:Always have auto fire
+shadoww:0:61E89:98:0:Infinite Time
+karnov:0:60066:2:0:Infinite Lives
+karnov:0:6007B:96:0:Infinite Time
+hbarrel:0:FF804D:29:0:Infinite Lives
+hbarrel:0:FF804D:29:0:Infinite Lives
+rygar:0:C0A0:3:0:Infinite Lives
+rygar:0:C0AA:64:0:Infinite Time
+hippodrm:0:FF8032:10:0:Invincibility
+strider:0:FF0CE8:81:0:infinite Energy
+strider:0:FF8B8B:5:0:Infinite Lives
+strider:0:FF8B8B:5:0:Infinite Lives
+willow:0:FF8362:5:0:Infinite Health
+willow:0:FF83C7:25:0:Infinite Time
+shadoww:0:61E8E:5:0:Infinite Lives
+shadoww:0:61EC3:F:0:Infinite Energy
+midres:0:102177:5:0:Infinite Lives
+midres:0:10217D:6:0:Always 6 keys
+midres:0:102180:1:0:Always have auto fire
+shadoww:0:61E89:98:0:Infinite Time
+karnov:0:60066:2:0:Infinite Lives
+karnov:0:6007B:96:0:Infinite Time
+hbarrel:0:FF804D:29:0:Infinite Lives
+hbarrel:0:FF804D:29:0:Infinite Lives
+rygar:0:C0A0:3:0:Infinite Lives
+rygar:0:C0AA:64:0:Infinite Time
+hippodrm:0:FF8032:10:0:Invincibility
+strider:0:FF0CE8:81:0:infinite Energy
+strider:0:FF8B8B:5:0:Infinite Lives
+strider:0:FF8B8B:5:0:Infinite Lives
+willow:0:FF8362:5:0:Infinite Health
+willow:0:FF83C7:25:0:Infinite Time
+shadoww:0:61E8E:5:0:Infinite Lives
+shadoww:0:61EC3:F:0:Infinite Energy
+midres:0:102177:5:0:Infinite Lives
+midres:0:10217D:6:0:Always 6 keys
+midres:0:102180:1:0:Always have auto fire
+shadoww:0:61E89:98:0:Infinite Time
+karnov:0:60066:2:0:Infinite Lives
+karnov:0:6007B:96:0:Infinite Time
+hbarrel:0:FF804D:29:0:Infinite Lives
+hbarrel:0:FF804D:29:0:Infinite Lives
+rygar:0:C0A0:3:0:Infinite Lives
+rygar:0:C0AA:64:0:Infinite Time
+hippodrm:0:FF8032:10:0:Invincibility
+strider:0:FF0CE8:81:0:infinite Energy
+strider:0:FF8B8B:5:0:Infinite Lives

@@ -1986,9 +1986,6 @@ static unsigned cycles_ed[256]=
   0,0,0,0,0,0,0,0
 };
 
-static void no_op_xx(void) {
-++R.PC.W.l; }
-
 static opcode_fn opcode_dd_cb[256]=
 {
  rlc_xix_b  ,rlc_xix_c	,rlc_xix_d  ,rlc_xix_e	,rlc_xix_h  ,rlc_xix_l	,rlc_xix  ,rlc_xix_a,

@@ -257,7 +257,7 @@ static struct MachineDriver machine_driver =
 		}
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 	/* video hardware */
 	32*8, 32*8,

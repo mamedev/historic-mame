@@ -157,7 +157,7 @@ static unsigned char palette[] =
 	0x80,0x80,0x80, /* LT GREY - for MAME text only */
 };
 
-static unsigned char colortable[] =
+static unsigned short colortable[] =
 {
 	0x00, 0x01,
 	0x01, 0x00,
@@ -183,7 +183,7 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 0*8, 32*8-1 },
 	gfxdecodeinfo,
-	sizeof(palette)/3,sizeof(colortable),
+	sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
 	0,
 
 	VIDEO_TYPE_RASTER,

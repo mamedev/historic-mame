@@ -31,7 +31,6 @@ static struct osd_bitmap *tmpbitmap2;
 static struct osd_bitmap *tmpbitmap3;
 static unsigned char lwings_paletteram_dirty[0x40];
 
-
 /***************************************************************************
 
   Start the video hardware emulation.
@@ -84,8 +83,8 @@ int lwings_vh_start(void)
 ***************************************************************************/
 void lwings_vh_stop(void)
 {
-	osd_free_bitmap(tmpbitmap2);
-	free(dirtybuffer2);
+        osd_free_bitmap(tmpbitmap2);
+        free(dirtybuffer2);
         free(dirtybuffer3);
         free(dirtybuffer4);
 	generic_vh_stop();
@@ -238,17 +237,20 @@ void lwings_vh_screenrefresh(struct osd_bitmap *bitmap)
 		0x02 X flip
 		0x01 X MSB
 		*/
-		code = spriteram[offs];
-		code += (spriteram[offs + 1] & 0xc0) << 2;
 		sx = spriteram[offs + 3] - 0x100 * (spriteram[offs + 1] & 0x01);
 		sy = spriteram[offs + 2];
+                if (sx && sy)
+                {
+                        code = spriteram[offs];
+                        code += (spriteram[offs + 1] & 0xc0) << 2;
 
-		drawgfx(bitmap,Machine->gfx[2],
+                        drawgfx(bitmap,Machine->gfx[2],
 				code,
 				(spriteram[offs + 1] & 0x38) >> 3,
 				spriteram[offs + 1] & 0x02,spriteram[offs + 1] & 0x04,
 				sx,sy,
 				&Machine->drv->visible_area,TRANSPARENCY_PEN,15);
+                }
 	}
 
 	/* draw the frontmost playfield. They are characters, but draw them as sprites */
@@ -444,14 +446,14 @@ void trojan_vh_screenrefresh(struct osd_bitmap *bitmap)
                       for (sx=0; sx<0x11; sx++)
                       {
                           int code, colour;
-                          int offset=offsy + ((2 * (offsx+sx))&0x3f);
+                          int offset=offsy + ((2*(offsx+sx)) & 0x3f);
                           code = *(p+offset);
                           colour = *(p+offset+1);
                           drawgfx(tmpbitmap3, Machine->gfx[3],
                                    code+((colour&0x80)<<1),
                                    colour & 0x07,
-                                   0,
-                                   0,
+                                   colour&0x10,
+                                   colour&0x20,
                                    16 * sx,16 * sy,
                                    0,TRANSPARENCY_NONE,0);
                       }
@@ -483,22 +485,28 @@ void trojan_vh_screenrefresh(struct osd_bitmap *bitmap)
                 0x02 colour
 		0x01 X MSB
 		*/
-		code = spriteram[offs];
+
                 attrib = spriteram[offs + 1];
-
-                if( attrib&0x40 ) code += 256;
-                if( attrib&0x80 ) code += 256*4;
-                if( attrib&0x20 ) code += 256*2;
-
                 sx = spriteram[offs + 3] - 0x100 * (attrib & 0x01);
 		sy = spriteram[offs + 2];
 
-		drawgfx(bitmap,Machine->gfx[2],
+                if (sx && sy)
+                {
+                        code = spriteram[offs];
+
+
+                        if( attrib&0x40 ) code += 256;
+                        if( attrib&0x80 ) code += 256*4;
+                        if( attrib&0x20 ) code += 256*2;
+
+
+                        drawgfx(bitmap,Machine->gfx[2],
 				code,
                                 (attrib & 0x0e) >> 1,
                                 attrib & 0x10,1,
 				sx,sy,
 				&Machine->drv->visible_area,TRANSPARENCY_PEN,15);
+                }
 	}
 
         trojan_render_foreground( bitmap, scrollx, scrolly, 1 );

@@ -7,6 +7,7 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "machine/atarigen.h"
 #include "vidhrdw/generic.h"
 
 
@@ -63,19 +64,8 @@
  *
  *************************************/
 
-unsigned char *atarisys1_playfieldram;
-unsigned char *atarisys1_spriteram;
-unsigned char *atarisys1_alpharam;
-unsigned char *atarisys1_paletteram;
-unsigned char *atarisys1_vscroll;
-unsigned char *atarisys1_hscroll;
 unsigned char *atarisys1_bankselect;
 unsigned char *atarisys1_prioritycolor;
-
-int atarisys1_playfieldram_size;
-int atarisys1_spriteram_size;
-int atarisys1_alpharam_size;
-int atarisys1_paletteram_size;
 
 
 
@@ -99,8 +89,6 @@ static int *pflookup, *molookup;
 static int *pfmapped;
 static int pfbank;
 
-static int playfield_count[32];
-static int last_map[16], this_map[16];
 static int sprite_map_shift, pf_map_shift;
 static int hipri_color0;
 
@@ -111,9 +99,6 @@ static void *int3_timer[YDIM];
 static void *int3off_timer;
 static int int3_state;
 
-static const int intensity_table[16] =
-	{ 0x00, 0x30, 0x40, 0x50, 0x60, 0x70, 0x80, 0x90, 0xa0, 0xb0, 0xc0, 0xd0, 0xe0, 0xf0, 0x100, 0x110 };
-
 
 
 /*************************************
@@ -123,20 +108,11 @@ static const int intensity_table[16] =
  *************************************/
 
 void atarisys1_vh_stop (void);
-void atarisys1_sound_reset (void);
 void atarisys1_update_display_list (int scanline);
 
+#if SYSTEM1_DEBUG
 static int atarisys1_debug (void);
-
-
-/***************************************************************************
-
-  System 1 doesn't have a color PROM. It uses 1024 words of RAM to
-  dynamically create the palette. Each word defines one color (5 bits
-  per pixel). However, more than 256 colors is rarely used, so the
-  video system has a dynamic palette mapping function
-
-***************************************************************************/
+#endif
 
 
 /*************************************
@@ -151,20 +127,20 @@ int atarisys1_vh_start(void)
 
 	/* allocate dirty buffers */
 	if (!pfmapped)
-		pfmapped = calloc (atarisys1_playfieldram_size / 2 * sizeof (int) +
-		                   atarisys1_paletteram_size / 2 +
-		                   atarisys1_spriteram_size / 8 / 8 +
-		                   atarisys1_spriteram_size * sizeof (short) +
+		pfmapped = calloc (atarigen_playfieldram_size / 2 * sizeof (int) +
+		                   atarigen_paletteram_size / 2 +
+		                   atarigen_spriteram_size / 8 / 8 +
+		                   atarigen_spriteram_size * sizeof (short) +
 		                   YDIM * sizeof (int), 1);
 	if (!pfmapped)
 	{
 		atarisys1_vh_stop ();
 		return 1;
 	}
-	colordirty = (unsigned char *)(pfmapped + atarisys1_playfieldram_size / 2);
-	spritevisit = (unsigned char *)(colordirty + atarisys1_paletteram_size / 2);
-	displaylist = (unsigned short *)(spritevisit + atarisys1_spriteram_size / 8 / 8);
-	scrolllist = (unsigned int *)(displaylist + atarisys1_spriteram_size);
+	colordirty = (unsigned char *)(pfmapped + atarigen_playfieldram_size / 2);
+	spritevisit = (unsigned char *)(colordirty + atarigen_paletteram_size / 2);
+	displaylist = (unsigned short *)(spritevisit + atarigen_spriteram_size / 8 / 8);
+	scrolllist = (unsigned int *)(displaylist + atarigen_spriteram_size);
 
 	/* allocate bitmaps */
 	if (!playfieldbitmap)
@@ -192,13 +168,12 @@ int atarisys1_vh_start(void)
 	memset (int3_timer, 0, sizeof (int3_timer));
 	int3_state = 0;
 
-	/* reset the color counter */
-	memset (playfield_count, 0, sizeof (playfield_count));
-	playfield_count[LCOLOR (pflookup[0])] = 64 * 64;
-
 	/* initialize the pre-mapped playfield */
-	for (i = atarisys1_playfieldram_size / 2; i >= 0; i--)
+	for (i = atarigen_playfieldram_size / 2; i >= 0; i--)
 		pfmapped[i] = pflookup[0] | LDIRTYFLAG;
+
+	/* initialize the palette remapping */
+	atarigen_init_remap (COLOR_PALETTE_4444);
 
 	return 0;
 }
@@ -560,7 +535,7 @@ void atarisys1_bankselect_w (int offset, int data)
 	if (diff & 0x80)
 	{
 		if (data & 0x80)
-			atarisys1_sound_reset ();
+			atarigen_sound_reset ();
 		else
 			cpu_halt (1, 0);
 	}
@@ -576,15 +551,11 @@ void atarisys1_bankselect_w (int offset, int data)
 		/* set the new bank globally */
 		pfbank = (newword & 0x04) ? 0x80 : 0x00;
 
-		/* reset the color counters */
-		memset (playfield_count, 0, sizeof (playfield_count));
-
 		/* and remap the entire playfield */
-		for (i = atarisys1_playfieldram_size / 2, pf = pfmapped; i >= 0; i--)
+		for (i = atarigen_playfieldram_size / 2, pf = pfmapped; i >= 0; i--)
 		{
-			int val = READ_WORD (&atarisys1_playfieldram[i * 2]);
+			int val = READ_WORD (&atarigen_playfieldram[i * 2]);
 			int map = pflookup[pfbank | ((val >> 8) & 0x7f)] | (val & 0xff) | ((val & 0x8000) << 9) | LDIRTYFLAG;
-			playfield_count[LCOLOR (map)] += 1;
 			*pf++ = map;
 		}
 	}
@@ -619,14 +590,14 @@ void atarisys1_prioritycolor_w (int offset, int data)
 
 void atarisys1_hscroll_w (int offset, int data)
 {
-	int oldword = READ_WORD (&atarisys1_hscroll[offset]);
+	int oldword = READ_WORD (&atarigen_hscroll[offset]);
 	int newword = COMBINE_WORD (oldword, data);
 
-	WRITE_WORD (&atarisys1_hscroll[offset], newword);
+	WRITE_WORD (&atarigen_hscroll[offset], newword);
 
 	if (!offset && (oldword & 0x1ff) != (newword & 0x1ff))
 	{
-		int scrollval = ((oldword & 0x1ff) << 12) + (READ_WORD (&atarisys1_vscroll[0]) & 0x1ff);
+		int scrollval = ((oldword & 0x1ff) << 12) + (READ_WORD (&atarigen_vscroll[0]) & 0x1ff);
 		int i, end = cpu_getscanline ();
 
 		if (end > YDIM)
@@ -648,14 +619,14 @@ void atarisys1_hscroll_w (int offset, int data)
 
 void atarisys1_vscroll_w (int offset, int data)
 {
-	int oldword = READ_WORD (&atarisys1_vscroll[offset]);
+	int oldword = READ_WORD (&atarigen_vscroll[offset]);
 	int newword = COMBINE_WORD (oldword, data);
 
-	WRITE_WORD (&atarisys1_vscroll[offset], newword);
+	WRITE_WORD (&atarigen_vscroll[offset], newword);
 
 	if (!offset && (oldword & 0x1ff) != (newword & 0x1ff))
 	{
-		int scrollval = ((READ_WORD (&atarisys1_hscroll[0]) & 0x1ff) << 12) + (oldword & 0x1ff);
+		int scrollval = ((READ_WORD (&atarigen_hscroll[0]) & 0x1ff) << 12) + (oldword & 0x1ff);
 		int i, end = cpu_getscanline ();
 
 		if (end > YDIM)
@@ -677,29 +648,25 @@ void atarisys1_vscroll_w (int offset, int data)
 
 int atarisys1_playfieldram_r (int offset)
 {
-	return READ_WORD (&atarisys1_playfieldram[offset]);
+	return READ_WORD (&atarigen_playfieldram[offset]);
 }
 
 
 void atarisys1_playfieldram_w (int offset, int data)
 {
-	int oldword = READ_WORD (&atarisys1_playfieldram[offset]);
+	int oldword = READ_WORD (&atarigen_playfieldram[offset]);
 	int newword = COMBINE_WORD (oldword, data);
 
 	if (oldword != newword)
 	{
 		int map, oldmap;
 
-		WRITE_WORD (&atarisys1_playfieldram[offset], newword);
+		WRITE_WORD (&atarigen_playfieldram[offset], newword);
 
 		/* remap it now and mark it dirty in the process */
 		map = pflookup[pfbank | ((newword >> 8) & 0x7f)] | (newword & 0xff) | ((newword & 0x8000) << 9) | LDIRTYFLAG;
 		oldmap = pfmapped[offset / 2];
 		pfmapped[offset / 2] = map;
-
-		/* update the color counts */
-		playfield_count[LCOLOR (oldmap)] -= 1;
-		playfield_count[LCOLOR (map)] += 1;
 	}
 }
 
@@ -713,21 +680,21 @@ void atarisys1_playfieldram_w (int offset, int data)
 
 int atarisys1_spriteram_r (int offset)
 {
-	return READ_WORD (&atarisys1_spriteram[offset]);
+	return READ_WORD (&atarigen_spriteram[offset]);
 }
 
 
 void atarisys1_spriteram_w (int offset, int data)
 {
-	int oldword = READ_WORD (&atarisys1_spriteram[offset]);
+	int oldword = READ_WORD (&atarigen_spriteram[offset]);
 	int newword = COMBINE_WORD (oldword, data);
 
 	if (oldword != newword)
 	{
-		WRITE_WORD (&atarisys1_spriteram[offset], newword);
+		WRITE_WORD (&atarigen_spriteram[offset], newword);
 
 		/* if modifying a timer, beware */
-		if (((offset & 0x180) == 0x000 && READ_WORD (&atarisys1_spriteram[offset | 0x080]) == 0xffff) ||
+		if (((offset & 0x180) == 0x000 && READ_WORD (&atarigen_spriteram[offset | 0x080]) == 0xffff) ||
 		    ((offset & 0x180) == 0x080 && newword == 0xffff))
 		{
 			/* if the timer is in the active bank, update the display list */
@@ -750,18 +717,18 @@ void atarisys1_spriteram_w (int offset, int data)
 
 int atarisys1_paletteram_r (int offset)
 {
-	return READ_WORD (&atarisys1_paletteram[offset]);
+	return READ_WORD (&atarigen_paletteram[offset]);
 }
 
 
 void atarisys1_paletteram_w (int offset, int data)
 {
-	int oldword = READ_WORD (&atarisys1_paletteram[offset]);
+	int oldword = READ_WORD (&atarigen_paletteram[offset]);
 	int newword = COMBINE_WORD (oldword, data);
 
 	if (oldword != newword)
 	{
-		WRITE_WORD (&atarisys1_paletteram[offset], newword);
+		WRITE_WORD (&atarigen_paletteram[offset], newword);
 		colordirty[offset / 2] = 1;
 	}
 }
@@ -825,6 +792,8 @@ void atarisys1_update_display_list (int scanline)
 	int link = 0, match = 0, i;
 	char timer[YDIM];
 
+	scanline++;
+
 	/* if the last list entries were on the same scanline, overwrite them */
 	if (lastd)
 	{
@@ -835,13 +804,13 @@ void atarisys1_update_display_list (int scanline)
 	}
 
 	/* visit all the sprites and copy their data into the display list */
-	memset (spritevisit, 0, atarisys1_spriteram_size / 8 / 8);
+	memset (spritevisit, 0, atarigen_spriteram_size / 8 / 8);
 	memset (timer, 0, sizeof (timer));
 	while (!spritevisit[link])
 	{
-		int data1 = READ_WORD (&atarisys1_spriteram[bank + link * 2 + 0x000]);
-		int data2 = READ_WORD (&atarisys1_spriteram[bank + link * 2 + 0x080]);
-		int data3 = READ_WORD (&atarisys1_spriteram[bank + link * 2 + 0x100]);
+		int data1 = READ_WORD (&atarigen_spriteram[bank + link * 2 + 0x000]);
+		int data2 = READ_WORD (&atarigen_spriteram[bank + link * 2 + 0x080]);
+		int data3 = READ_WORD (&atarigen_spriteram[bank + link * 2 + 0x100]);
 
 		/* a picture of 0xffff is really an interrupt - gross! */
 		if (data2 == 0xffff)
@@ -873,7 +842,7 @@ void atarisys1_update_display_list (int scanline)
 
 		/* link to the next object */
 		spritevisit[link] = 1;
-		link = READ_WORD (&atarisys1_spriteram[bank + link * 2 + 0x180]) & 0x3f;
+		link = READ_WORD (&atarigen_spriteram[bank + link * 2 + 0x180]) & 0x3f;
 	}
 
 	/* if we didn't match the last set of entries, update the counters */
@@ -922,57 +891,20 @@ void atarisys1_begin_frame (int param)
 static int xscroll, yscroll;
 
 
-/*************************************
- *
- *		Refresh helpers
- *
- *************************************/
-
-static inline void remap_color (int color)
-{
-	int i, j;
-
-	/* first see if there is a match from last frame */
-	for (i = 0; i < 16; i++)
-		if (last_map[i] == color && this_map[i] < 0)
-		{
-			this_map[i] = color;
-			return;
-		}
-
-	/* if not, pick a blank entry from last frame and use it */
-	for (i = 0; i < 16; i++)
-		if (last_map[i] < 0 && this_map[i] < 0)
-		{
-			this_map[i] = color;
-
-			/* and update the colortable appropriately */
-			for (j = 0; j < 16; j++)
-				Machine->colortable[color * 16 + j] = Machine->pens[i * 16 + j];
-			return;
-		}
-
-	/* if all else fails, pick a blank entry from this frame and use it */
-	for (i = 0; i < 16; i++)
-		if (this_map[i] < 0)
-		{
-			this_map[i] = color;
-
-			/* and update the colortable appropriately */
-			for (j = 0; j < 16; j++)
-				Machine->colortable[color * 16 + j] = Machine->pens[i * 16 + j];
-			return;
-		}
-}
-
-
 /*
  *   playfield redraw function
  */
 
-inline void redraw_playfield_chunk (struct osd_bitmap *bitmap, int xpos, int ypos, int w, int h, int transparency, int transparency_color, int check_color)
+inline void redraw_playfield_chunk (struct osd_bitmap *bitmap, int xpos, int ypos, int w, int h, int transparency, int transparency_color, int type)
 {
+	struct rectangle clip;
 	int y, x;
+
+	/* make a clip */
+	clip.min_x = xpos;
+	clip.max_x = xpos + w * 8 - 1;
+	clip.min_y = ypos;
+	clip.max_y = ypos + h * 8 - 1;
 
 	/* round the positions */
 	xpos = (xpos - xscroll) / 8;
@@ -998,9 +930,18 @@ inline void redraw_playfield_chunk (struct osd_bitmap *bitmap, int xpos, int ypo
 				int color = LCOLOR (data);
 
 				/* draw */
-				if (check_color < 0 || color == check_color)
+				if (type == -1)
 					drawgfx (bitmap, Machine->gfx[LBANK (data)], LPICT (data), color, LFLIP (data), 0,
-							sx, sy, &Machine->drv->visible_area, transparency, transparency_color);
+							sx, sy, &clip, transparency, transparency_color);
+				else if (type == -2)
+				{
+					if (color == (16 >> pf_map_shift))
+						drawgfx (bitmap, Machine->gfx[LBANK (data)], LPICT (data), color, LFLIP (data), 0,
+								sx, sy, &clip, transparency, transparency_color);
+				}
+				else
+					drawgfx (bitmap, Machine->gfx[LBANK (data)], LPICT (data), type, LFLIP (data), 0,
+							sx, sy, &clip, transparency, transparency_color);
 			}
 		}
 	}
@@ -1016,10 +957,10 @@ inline void redraw_playfield_chunk (struct osd_bitmap *bitmap, int xpos, int ypo
 
 void atarisys1_vh_screenrefresh (struct osd_bitmap *bitmap)
 {
-	int x, y, sx, sy, xoffs, yoffs, offs, hipri_pen = -1, i;
+	int sprite_map[32], alpha_map[32], playfield_count[32], transmap;
 	int pcolor = READ_WORD (&atarisys1_prioritycolor[0]) & 0xff;
 	int redraw_list[1024], *redraw = redraw_list;
-	int sprite_map[16], alpha_map[16];
+	int x, y, sx, sy, xoffs, yoffs, offs, i;
 
 
 	/*
@@ -1037,22 +978,7 @@ void atarisys1_vh_screenrefresh (struct osd_bitmap *bitmap)
 	/*
 	 *---------------------------------------------------------------------------------
 	 *
-	 *   Step 1: give the playfield first pick of colors
-	 *
-	 *---------------------------------------------------------------------------------
-	 */
-	for (i = 0; i < 16; i++)
-	{
-		last_map[i] = this_map[i];
-		this_map[i] = playfield_count[(i + 16) >> pf_map_shift] ? i + 32 : -1;
-		sprite_map[i] = alpha_map[i] = 0;
-	}
-
-
-	/*
-	 *---------------------------------------------------------------------------------
-	 *
-	 *   Step 2: load the scroll values from the start of the previous frame
+	 *   Step 1: load the scroll values from the start of the previous frame
 	 *
 	 *---------------------------------------------------------------------------------
 	 */
@@ -1063,8 +989,8 @@ void atarisys1_vh_screenrefresh (struct osd_bitmap *bitmap)
 	}
 	else
 	{
-		xscroll = READ_WORD (&atarisys1_hscroll[0]);
-		yscroll = READ_WORD (&atarisys1_vscroll[0]);
+		xscroll = READ_WORD (&atarigen_hscroll[0]);
+		yscroll = READ_WORD (&atarigen_vscroll[0]);
 	}
 
 	xscroll = -(xscroll & 0x1ff);
@@ -1077,7 +1003,7 @@ void atarisys1_vh_screenrefresh (struct osd_bitmap *bitmap)
 	/*
 	 *---------------------------------------------------------------------------------
 	 *
-	 *   Step 3: update the offscreen version of the visible area of the playfield
+	 *   Step 2: update the offscreen version of the visible area of the playfield
 	 *
 	 *---------------------------------------------------------------------------------
 	 *
@@ -1093,6 +1019,10 @@ void atarisys1_vh_screenrefresh (struct osd_bitmap *bitmap)
 	 *
 	 *---------------------------------------------------------------------------------
 	 */
+	for (i = 0; i < 32; i++)
+		sprite_map[i] = alpha_map[i] = playfield_count[i] = 0;
+	transmap = 0;
+
 	for (y = yoffs + YCHARS + 1; y >= yoffs; y--)
 	{
 		sy = y & 63;
@@ -1104,6 +1034,8 @@ void atarisys1_vh_screenrefresh (struct osd_bitmap *bitmap)
 			offs = sy * 64 + sx;
 			data = pfmapped[offs];
 
+			playfield_count[LCOLOR (data)] = 1;
+
 			if (LDIRTY (data))
 			{
 				int bank = LBANK (data);
@@ -1114,6 +1046,18 @@ void atarisys1_vh_screenrefresh (struct osd_bitmap *bitmap)
 			}
 		}
 	}
+
+
+	/*
+	 *---------------------------------------------------------------------------------
+	 *
+	 *   Step 3: give the playfield first pick of colors
+	 *
+	 *---------------------------------------------------------------------------------
+	 */
+	atarigen_alloc_fixed_colors (playfield_count + (16 >> pf_map_shift), 0x200, 16 << pf_map_shift, 16 >> pf_map_shift);
+	for (i = 0; i < 16; i++)
+		Machine->colortable[0x400 + i] = Machine->pens[atarigen_special_color];
 
 
 	/*
@@ -1261,13 +1205,10 @@ void atarisys1_vh_screenrefresh (struct osd_bitmap *bitmap)
 
 						/* if this sprite's color has not been used yet this frame, grab it */
 						/* note that by doing it here, we don't map sprites that aren't visible */
+						if (!sprite_map[color])
 						{
-							int temp = color >> sprite_map_shift;
-							if (!sprite_map[temp])
-							{
-								remap_color (temp + 16);
-								sprite_map[temp] = 1;
-							}
+							atarigen_alloc_dynamic_colors (0x100 + (16 >> sprite_map_shift) * color + 1, (16 >> sprite_map_shift) - 1);
+							sprite_map[color] = 1;
 						}
 
 						/* draw the sprite */
@@ -1280,12 +1221,11 @@ void atarisys1_vh_screenrefresh (struct osd_bitmap *bitmap)
 
 			/*
 			 *
-			 *      case 2: high priority playfield
+			 *      case 2: translucency
 			 *
 			 */
 			else
 			{
-				int through_color = Machine->gfx[bank]->total_colors - 1;
 				struct rectangle tclip;
 
 				/* wrap and clip the X coordinate */
@@ -1294,6 +1234,13 @@ void atarisys1_vh_screenrefresh (struct osd_bitmap *bitmap)
 				{
 					/* wrap the Y coordinate */
 					if (ypos >= YDIM) ypos -= 0x200;
+
+					/* remap the translucent colors */
+					if (!transmap)
+					{
+						atarigen_alloc_dynamic_colors (0x300, 0x10 >> sprite_map_shift);
+						transmap = 1;
+					}
 
 					/* loop over the height */
 					for (y = 0, sy = ypos; y < vsize; y++, sy += 8, pict++)
@@ -1304,54 +1251,18 @@ void atarisys1_vh_screenrefresh (struct osd_bitmap *bitmap)
 						else if (sy >= YDIM)
 							break;
 
-						/* if this sprite's color has not been used yet this frame, grab it */
-						/* note that by doing it here, we don't map sprites that aren't visible */
-						{
-							int temp = color >> sprite_map_shift;
-							if (!sprite_map[temp])
-							{
-								remap_color (temp + 16);
-								sprite_map[temp] = 1;
-							}
-						}
-
-						/* if the hipri_pen is invalid, find a new one */
-						if (hipri_pen < 0 || this_map[hipri_pen] >= 0)
-						{
-							int i, pen;
-
-							/* find an unused slice of the palette */
-							for (i = 15; i > 0; i--)
-								if (this_map[i] < 0)
-								{
-									hipri_pen = i;
-									break;
-								}
-
-							/* then set the colortable up for it */
-							pen = Machine->pens[hipri_pen * 16];
-							for (i = 1024 + 1; i < 1024 + 64; i++)
-								Machine->colortable[i] = pen;
-						}
-
 						/* draw the sprite in bright pink on the real bitmap */
 						drawgfx (bitmap, Machine->gfx[bank],
-								LPICT (lookup) | (pict & 0xff), through_color,
+								LPICT (lookup) | (pict & 0xff), 0x30 << sprite_map_shift,
 								hflip, 0, xpos, sy, &clip, TRANSPARENCY_PEN, 0);
 
 						/* also draw the sprite normally on the temp bitmap */
-						if (!hipri_color0)
-							drawgfx (tempbitmap, Machine->gfx[bank],
-									LPICT (lookup) | (pict & 0xff), color,
-									hflip, 0, xpos, sy, &clip, TRANSPARENCY_NONE, 0);
+						drawgfx (tempbitmap, Machine->gfx[bank],
+								LPICT (lookup) | (pict & 0xff), 0x20 << sprite_map_shift,
+								hflip, 0, xpos, sy, &clip, TRANSPARENCY_NONE, 0);
 					}
-				}
 
-				/* now redraw the playfield tiles over top of the sprite */
-				if (hipri_color0)
-					redraw_playfield_chunk (bitmap, xpos, ypos, 1, vsize, TRANSPARENCY_THROUGH, hipri_pen * 16, -1);
-				else
-				{
+					/* now redraw the playfield tiles over top of the sprite */
 					redraw_playfield_chunk (tempbitmap, xpos, ypos, 1, vsize, TRANSPARENCY_PEN, 0, -1);
 
 					/* finally, copy this chunk to the real bitmap */
@@ -1363,7 +1274,7 @@ void atarisys1_vh_screenrefresh (struct osd_bitmap *bitmap)
 					tclip.max_y = ypos + vsize * 8 - 1;
 					if (tclip.min_y < clip.min_y) tclip.min_y = clip.min_y;
 					if (tclip.max_y > clip.max_y) tclip.max_y = clip.max_y;
-					copybitmap (bitmap, tempbitmap, 0, 0, 0, 0, &tclip, TRANSPARENCY_THROUGH, hipri_pen * 16);
+					copybitmap (bitmap, tempbitmap, 0, 0, 0, 0, &tclip, TRANSPARENCY_THROUGH, atarigen_special_color);
 				}
 			}
 		}
@@ -1386,7 +1297,7 @@ void atarisys1_vh_screenrefresh (struct osd_bitmap *bitmap)
 			int ypos = (val >> 14) & 0x1ff;
 			int h = val & 0x1f;
 
-			redraw_playfield_chunk (bitmap, xpos, ypos, 1, h, TRANSPARENCY_PENS, ~pcolor, 16 >> pf_map_shift);
+			redraw_playfield_chunk (bitmap, xpos, ypos, 1, h, TRANSPARENCY_PENS, ~pcolor, -2);
 		}
 	}
 
@@ -1413,7 +1324,7 @@ void atarisys1_vh_screenrefresh (struct osd_bitmap *bitmap)
 	{
 		for (sx = 0, offs = sy*64; sx < XCHARS; sx++, offs++)
 		{
-			int data = READ_WORD (&atarisys1_alpharam[offs*2]);
+			int data = READ_WORD (&atarigen_alpharam[offs*2]);
 			int pict = (data & 0x3ff);
 
 			if (pict || (data & 0x2000))
@@ -1422,10 +1333,10 @@ void atarisys1_vh_screenrefresh (struct osd_bitmap *bitmap)
 
 				/* if this character's color has not been used yet this frame, grab it */
 				/* note that by doing it here, we don't map characters that aren't visible */
-				if (!alpha_map[color / 4])
+				if (!alpha_map[color])
 				{
-					remap_color (color / 4);
-					alpha_map[color / 4] = 1;
+					atarigen_alloc_dynamic_colors (4 * color, 4);
+					alpha_map[color] = 1;
 				}
 
 				drawgfx (bitmap, Machine->gfx[0],
@@ -1446,27 +1357,7 @@ void atarisys1_vh_screenrefresh (struct osd_bitmap *bitmap)
 	 *
 	 *---------------------------------------------------------------------------------
 	 */
-	for (i = 0; i < 16; i++)
-		if (this_map[i] >= 0)
-		{
-			int index = this_map[i] * 16, pal = i * 16, j;
-
-			/* modify the pens if this set is dirty or different than last frame */
-			for (j = 0; j < 16; j++)
-				if (colordirty[index + j] || this_map[i] != last_map[i])
-				{
-					int palette = READ_WORD (&atarisys1_paletteram[(index + j) * 2]);
-
-					int inten = intensity_table[(palette >> 12) & 15];
-					int red = (((palette >> 8) & 15) * inten) >> 4;
-					int green = (((palette >> 4) & 15) * inten) >> 4;
-					int blue = ((palette & 15) * inten) >> 4;
-
-					palette_change_color(pal + j, red, green, blue);
-
-					colordirty[index + j] = 0;
-				}
-		}
+	atarigen_update_colors (-1);
 }
 
 
@@ -1481,7 +1372,7 @@ void roadblst_vh_screenrefresh (struct osd_bitmap *bitmap)
 {
 	int pcolor = READ_WORD (&atarisys1_prioritycolor[0]) & 0xff;
 	int redraw_list[1024], *redraw = redraw_list;
-	int y, sx, sy, offs, hipri_pen = -1;
+	int y, sx, sy, offs;
 	unsigned char smalldirty[32];
 
 
@@ -1505,11 +1396,13 @@ void roadblst_vh_screenrefresh (struct osd_bitmap *bitmap)
 	 *---------------------------------------------------------------------------------
 	 */
 	memset (smalldirty, 0, sizeof (smalldirty));
-	for (offs = atarisys1_paletteram_size - 2; offs >= 0; offs -= 2)
+	for (offs = atarigen_paletteram_size - 2; offs >= 0; offs -= 2)
 	{
 		if (colordirty[offs / 2])
 		{
-			int palette = READ_WORD (&atarisys1_paletteram[offs]);
+			static const int intensity_table[16] =
+				{ 0x00, 0x30, 0x40, 0x50, 0x60, 0x70, 0x80, 0x90, 0xa0, 0xb0, 0xc0, 0xd0, 0xe0, 0xf0, 0x100, 0x110 };
+			int palette = READ_WORD (&atarigen_paletteram[offs]);
 			int inten = intensity_table[(palette >> 12) & 15];
 			int red = (((palette >> 8) & 15) * inten) >> 4;
 			int green = (((palette >> 4) & 15) * inten) >> 4;
@@ -1593,8 +1486,8 @@ void roadblst_vh_screenrefresh (struct osd_bitmap *bitmap)
 		unsigned int *scroll = scrolllist;
 
 		/* finish the scrolling list from the previous frame */
-		xscroll = READ_WORD (&atarisys1_hscroll[0]);
-		yscroll = READ_WORD (&atarisys1_vscroll[0]);
+		xscroll = READ_WORD (&atarigen_hscroll[0]);
+		yscroll = READ_WORD (&atarigen_vscroll[0]);
 		offs = ((xscroll & 0x1ff) << 12) + (yscroll & 0x1ff);
 		for (y = scrolllist_end; y < YDIM; y++)
 			scrolllist[y] = offs;
@@ -1827,7 +1720,7 @@ void roadblst_vh_screenrefresh (struct osd_bitmap *bitmap)
 	{
 		for (sx = 0, offs = sy*64; sx < XCHARS; sx++, offs++)
 		{
-			int data = READ_WORD (&atarisys1_alpharam[offs*2]);
+			int data = READ_WORD (&atarigen_alpharam[offs*2]);
 			int pict = (data & 0x3ff);
 
 			if (pict || (data & 0x2000))
@@ -1853,9 +1746,29 @@ void roadblst_vh_screenrefresh (struct osd_bitmap *bitmap)
  *
  *************************************/
 
+#if SYSTEM1_DEBUG
 static int atarisys1_debug (void)
 {
+	static int lasttrans[0x200];
 	int hidebank = -1;
+
+	if (memcmp (lasttrans, &atarigen_paletteram[0x600], 0x200))
+	{
+		static FILE *trans;
+		int i;
+
+		if (!trans) trans = fopen ("trans.log", "w");
+		if (trans)
+		{
+			fprintf (trans, "\n\nTrans Palette:\n");
+			for (i = 0x300; i < 0x400; i++)
+			{
+				fprintf (trans, "%04X ", READ_WORD (&atarigen_paletteram[i*2]));
+				if ((i & 15) == 15) fprintf (trans, "\n");
+			}
+		}
+		memcpy (lasttrans, &atarigen_paletteram[0x600], 0x200);
+	}
 
 	if (osd_key_pressed (OSD_KEY_Q)) hidebank = 0;
 	if (osd_key_pressed (OSD_KEY_W)) hidebank = 1;
@@ -1890,28 +1803,28 @@ static int atarisys1_debug (void)
 		fprintf (f, "\n\nAlpha Palette:\n");
 		for (i = 0x000; i < 0x100; i++)
 		{
-			fprintf (f, "%04X ", READ_WORD (&atarisys1_paletteram[i*2]));
+			fprintf (f, "%04X ", READ_WORD (&atarigen_paletteram[i*2]));
 			if ((i & 15) == 15) fprintf (f, "\n");
 		}
 
 		fprintf (f, "\n\nMotion Object Palette:\n");
 		for (i = 0x100; i < 0x200; i++)
 		{
-			fprintf (f, "%04X ", READ_WORD (&atarisys1_paletteram[i*2]));
+			fprintf (f, "%04X ", READ_WORD (&atarigen_paletteram[i*2]));
 			if ((i & 15) == 15) fprintf (f, "\n");
 		}
 
 		fprintf (f, "\n\nPlayfield Palette:\n");
 		for (i = 0x200; i < 0x300; i++)
 		{
-			fprintf (f, "%04X ", READ_WORD (&atarisys1_paletteram[i*2]));
+			fprintf (f, "%04X ", READ_WORD (&atarigen_paletteram[i*2]));
 			if ((i & 15) == 15) fprintf (f, "\n");
 		}
 
 		fprintf (f, "\n\nTrans Palette:\n");
-		for (i = 0x300; i < 0x320; i++)
+		for (i = 0x300; i < 0x400; i++)
 		{
-			fprintf (f, "%04X ", READ_WORD (&atarisys1_paletteram[i*2]));
+			fprintf (f, "%04X ", READ_WORD (&atarigen_paletteram[i*2]));
 			if ((i & 15) == 15) fprintf (f, "\n");
 		}
 
@@ -1922,17 +1835,17 @@ static int atarisys1_debug (void)
 		{
 			fprintf (f, "   Object %02X:  P=%04X  X=%04X  Y=%04X  L=%04X\n",
 					i,
-					READ_WORD (&atarisys1_spriteram[bank+0x080+i*2]),
-					READ_WORD (&atarisys1_spriteram[bank+0x100+i*2]),
-					READ_WORD (&atarisys1_spriteram[bank+0x000+i*2]),
-					READ_WORD (&atarisys1_spriteram[bank+0x180+i*2])
+					READ_WORD (&atarigen_spriteram[bank+0x080+i*2]),
+					READ_WORD (&atarigen_spriteram[bank+0x100+i*2]),
+					READ_WORD (&atarigen_spriteram[bank+0x000+i*2]),
+					READ_WORD (&atarigen_spriteram[bank+0x180+i*2])
 			);
 		}
 
 		fprintf (f, "\n\nPlayfield dump\n");
-		for (i = 0; i < atarisys1_playfieldram_size / 2; i++)
+		for (i = 0; i < atarigen_playfieldram_size / 2; i++)
 		{
-			fprintf (f, "%04X ", READ_WORD (&atarisys1_playfieldram[i*2]));
+			fprintf (f, "%04X ", READ_WORD (&atarigen_playfieldram[i*2]));
 			if ((i & 63) == 63) fprintf (f, "\n");
 		}
 
@@ -1941,3 +1854,4 @@ static int atarisys1_debug (void)
 
 	return hidebank;
 }
+#endif

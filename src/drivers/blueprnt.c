@@ -98,7 +98,7 @@ void blueprnt_sound_command_w(int offset,int data)
 static void blueprnt_coin_w (int offset, int data)
 {
 	static int lastval;
-	
+
 	if (lastval == data) return;
 	coin_counter_w (0, data & 0x01);
 	coin_counter_w (1, data & 0x02);
@@ -294,7 +294,7 @@ static unsigned char palette[] =
 };
 
 
-static unsigned char colortable[] =
+static unsigned short colortable[] =
 {
 	0,0,0,0,
 	0,7,1,4,
@@ -349,7 +349,7 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	sizeof(palette)/3,sizeof(colortable),
+	sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
 	0,
 
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,

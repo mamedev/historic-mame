@@ -38,7 +38,7 @@
  *		        <register|value>    the first register is edited.  If only the
  *		                            first parameter is given, it will edit
  *		                            <register>.
- *		-  WPX	<address>			Set a Watchpoint for the currently active cpu
+ *		-  BPW	<address>			Set a Watchpoint for the currently active cpu
  *		-  WC						Clear Watchpoint for the currently active cpu
  *
  *		During memory editing, it is possible to search for a string by
@@ -541,7 +541,7 @@ static int ClearBreakPoint(char *param)
 }
 
 /* EHC 980506 */
-/* WPX <addr> */
+/* BPW <addr> */
 static int SetWatchPoint(char *param)
 {
 	int	i,nCorrectParams = 0;

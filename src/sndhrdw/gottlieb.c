@@ -4,79 +4,79 @@
 
 
 
-/* note: pinball "thwok" sound is command 0x0d */
 void gottlieb_sh_w(int offset,int data)
 {
-	int command = 255-data;
-
-
-	if (command)
+	if (data != 0xff)
 	{
-		soundlatch_w(offset,command);
+		if (Machine->gamedrv->samplenames)
+		{
+			/* if we have loaded samples, we must be Q*Bert */
+			switch(data ^ 0xff)
+			{
+				case 0x12:
+					/* play a sample here (until Votrax speech is emulated) */
+					sample_start (0, 0, 0);
+					break;
+
+				case 0x14:
+					/* play a sample here (until Votrax speech is emulated) */
+					sample_start (0, 1, 0);
+					break;
+
+				case 0x16:
+					/* play a sample here (until Votrax speech is emulated) */
+					sample_start (0, 2, 0);
+					break;
+
+				case 0x11:
+					/* play a sample here (until Votrax speech is emulated) */
+					sample_start (0, 3, 0);
+					break;
+			}
+		}
+
+		soundlatch_w(offset,data);
 		cpu_cause_interrupt(1,INT_IRQ);
-	}
-}
-
-void qbert_sh_w(int offset,int data)
-{
-	int command = 255-data;
-
-
-	switch(command)
-	{ /* now with all 4 samples ;) */
-		case 0x12:      /* JB 980110 */
-			/* play a sample here (until Votrax speech is emulated) */
-			sample_start (0, 0, 0);
-			break;
-
-		case 0x16:
-			/* play a sample here (until Votrax speech is emulated) */
-			sample_start (0, 2, 0);
-			break;
-
-		case 0x14:
-			/* play a sample here (until Votrax speech is emulated) */
-			sample_start (0, 1, 0);
-			break;
-
-		case 0x11:
-			/* play a sample here (until Votrax speech is emulated) */
-			sample_start (0, 3, 0);
-			break;
-	}
-
-	gottlieb_sh_w(offset,data);
-}
-
-void gottlieb_sh2_w(int offset,int command)
-{
-    if (command)
-	{
-		soundlatch_w(offset,command);
-		cpu_cause_interrupt(1,INT_IRQ);
+		/* only the second sound board revision has the third CPU */
+		cpu_cause_interrupt(2,INT_IRQ);
 	}
 }
 
 
-void gottlieb_amplitude_DAC_w(int offset,int data)
+
+/* callback for the timer */
+void gottlieb_nmi_generate(int param)
 {
-	DAC_data_w (offset, data);
+	cpu_cause_interrupt(1,INT_NMI);
 }
 
-
-int gottlieb_sound_expansion_socket_r(int offset)
+static const char *PhonemeTable[65] =
 {
-    return 0;
-}
+ "EH3","EH2","EH1","PA0","DT" ,"A1" ,"A2" ,"ZH",
+ "AH2","I3" ,"I2" ,"I1" ,"M"  ,"N"  ,"B"  ,"V",
+ "CH" ,"SH" ,"Z"  ,"AW1","NG" ,"AH1","OO1","OO",
+ "L"  ,"K"  ,"J"  ,"H"  ,"G"  ,"F"  ,"D"  ,"S",
+ "A"  ,"AY" ,"Y1" ,"UH3","AH" ,"P"  ,"O"  ,"I",
+ "U"  ,"Y"  ,"T"  ,"R"  ,"E"  ,"W"  ,"AE" ,"AE1",
+ "AW2","UH2","UH1","UH" ,"O2" ,"O1" ,"IU" ,"U1",
+ "THV","TH" ,"ER" ,"EH" ,"E1" ,"AW" ,"PA1","STOP",
+ 0
+};
 
 void gottlieb_speech_w(int offset, int data)
-{}
+{
+	data ^= 255;
+
+if (errorlog) fprintf(errorlog,"Votrax: intonation %d, phoneme %02x %s\n",data >> 6,data & 0x3f,PhonemeTable[data & 0x3f]);
+
+	/* generate a NMI after a while to make the CPU continue to send data */
+	timer_set(TIME_IN_USEC(50),0,gottlieb_nmi_generate);
+}
 
 void gottlieb_speech_clock_DAC_w(int offset, int data)
 {}
 
-void gottlieb_sound_expansion_socket_w(int offset, int data)
-{}
+
 
     /* partial decoding takes place to minimize chip count in a 6502+6532
        system, so both page 0 (direct page) and 1 (stack) access the same
@@ -105,7 +105,7 @@ int gottlieb_riot_r(int offset)
 {
     switch (offset&0x1f) {
 	case 0: /* port A */
-		return soundlatch_r(offset);
+		return soundlatch_r(offset) ^ 0xff;	/* invert command */
 	case 2: /* port B */
 		return 0x40;    /* say that PB6 is 1 (test SW1 not pressed) */
 	case 5: /* interrupt register */
@@ -118,4 +118,90 @@ int gottlieb_riot_r(int offset)
 void gottlieb_riot_w(int offset, int data)
 {
     riot_regs[offset&0x1f]=data;
+}
+
+
+
+
+static int psg_latch,nmi_enable;
+static void *nmi_timer;
+
+int stooges_sound_input_r(int offset)
+{
+	/* bits 4 & 5 are (probably) two dip switches. Unused? */
+	/* bit 6 is the test switch. When 0, the CPU plays a pulsing tone. */
+	/* bit 7 is (probably) a ready signal from the speech processor */
+	/* other bits probably unused (future expansion) */
+
+	return 0xc0;
+}
+
+void stooges_8910_latch_w(int offset,int data)
+{
+	psg_latch = data;
+}
+
+void stooges_sound_control_w(int offset,int data)
+{
+	static int last;
+
+
+	/* bit 0 = NMI enable */
+	nmi_enable = data & 1;
+
+	/* bit 1 toggles regularly, maybe it's a clock to some chip. After toggling */
+	/* it, the code checks bit 6 of 6000 and produces a tone if it is set. */
+
+	/* bit 2 = psg latch clock; high then low to make the chip read it */
+	if ((last & 0x04) == 0x04 && (data & 0x04) == 0x00)
+	{
+		/* bit 3 = chip */
+		if (data & 0x08)
+		{
+			/* bit 4 = register select */
+			if (data & 0x10)
+				AY8910_control_port_0_w(0,psg_latch);
+			else
+				AY8910_write_port_0_w(0,psg_latch);
+		}
+		else
+		{
+			/* bit 4 = register select */
+			if (data & 0x10)
+				AY8910_control_port_1_w(0,psg_latch);
+			else
+				AY8910_write_port_1_w(0,psg_latch);
+		}
+	}
+
+	/* bit 5 seems to be unused */
+
+	/* bit 6 = speech chip (?) latch clock; high then low to make the chip read it */
+	if ((last & 0x40) == 0x40 && (data & 0x40) == 0x00)
+	{
+	}
+
+	/* bit 7 is always on apart from just after boot */
+
+	last = data & 0x44;
+}
+
+/* callback for the timer */
+void stooges_nmi_generate(int param)
+{
+	if (nmi_enable) cpu_cause_interrupt(2,INT_NMI);
+}
+
+void stooges_sound_timer_w(int offset,int data)
+{
+	double freq;
+
+
+	/* base clock is 250kHz divided by 256 */
+	freq = TIME_IN_HZ(250000.0/256/(256-data));
+
+	if (nmi_timer)
+		timer_reset(nmi_timer,freq);
+	else
+		nmi_timer = timer_pulse(freq,0,stooges_nmi_generate);
 }

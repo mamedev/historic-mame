@@ -70,7 +70,7 @@ OBJS   = obj/mame.o obj/common.o obj/usrintrf.o obj/driver.o \
          obj/vidhrdw/phoenix.o obj/sndhrdw/phoenix.o obj/drivers/phoenix.o \
          obj/sndhrdw/pleiads.o \
          obj/machine/carnival.o obj/vidhrdw/carnival.o obj/sndhrdw/carnival.o obj/drivers/carnival.o \
-         obj/machine/invaders.o obj/vidhrdw/invaders.o obj/sndhrdw/invaders.o obj/drivers/invaders.o \
+         obj/machine/8080bw.o obj/vidhrdw/8080bw.o obj/sndhrdw/8080bw.o obj/drivers/8080bw.o \
          obj/vidhrdw/mario.o obj/sndhrdw/mario.o obj/drivers/mario.o \
          obj/vidhrdw/zaxxon.o obj/sndhrdw/zaxxon.o obj/drivers/zaxxon.o \
          obj/vidhrdw/congo.o obj/sndhrdw/congo.o obj/drivers/congo.o \
@@ -86,9 +86,7 @@ OBJS   = obj/mame.o obj/common.o obj/usrintrf.o obj/driver.o \
          obj/vidhrdw/gberet.o obj/drivers/gberet.o \
          obj/vidhrdw/exidy.o obj/drivers/exidy.o \
 		 obj/sndhrdw/targ.o \
-         obj/machine/gottlieb.o obj/vidhrdw/gottlieb.o obj/sndhrdw/gottlieb.o \
-         obj/drivers/reactor.o obj/drivers/qbert.o obj/drivers/krull.o \
-         obj/drivers/qbertqub.o obj/drivers/mplanets.o obj/drivers/3stooges.o \
+         obj/vidhrdw/gottlieb.o obj/sndhrdw/gottlieb.o obj/drivers/gottlieb.o \
          obj/machine/taito.o obj/vidhrdw/taito.o obj/drivers/taito.o \
          obj/machine/panic.o obj/vidhrdw/panic.o obj/drivers/panic.o \
          obj/machine/arabian.o obj/vidhrdw/arabian.o obj/drivers/arabian.o \
@@ -111,6 +109,7 @@ OBJS   = obj/mame.o obj/common.o obj/usrintrf.o obj/driver.o \
          obj/machine/mystston.o obj/vidhrdw/mystston.o obj/drivers/mystston.o \
          obj/vidhrdw/matmania.o obj/drivers/matmania.o \
          obj/vidhrdw/tutankhm.o obj/drivers/tutankhm.o \
+         obj/drivers/junofrst.o \
          obj/machine/spacefb.o obj/vidhrdw/spacefb.o obj/drivers/spacefb.o \
          obj/machine/mappy.o obj/vidhrdw/mappy.o obj/drivers/mappy.o \
          obj/vidhrdw/ccastles.o obj/drivers/ccastles.o \
@@ -163,7 +162,9 @@ OBJS   = obj/mame.o obj/common.o obj/usrintrf.o obj/driver.o \
          obj/machine/arkanoid.o obj/vidhrdw/arkanoid.o obj/drivers/arkanoid.o \
          obj/machine/slapstic.o \
          obj/machine/gauntlet.o obj/vidhrdw/gauntlet.o obj/drivers/gauntlet.o \
+         obj/vidhrdw/klax.o obj/drivers/klax.o \
          obj/machine/atarisy1.o obj/vidhrdw/atarisy1.o obj/drivers/atarisy1.o \
+		 obj/machine/atarigen.o \
          obj/machine/foodf.o obj/vidhrdw/foodf.o obj/drivers/foodf.o \
          obj/vidhrdw/circus.o obj/drivers/circus.o \
          obj/machine/konami.o obj/vidhrdw/trackfld.o obj/sndhrdw/trackfld.o obj/drivers/trackfld.o \
@@ -185,7 +186,6 @@ OBJS   = obj/mame.o obj/common.o obj/usrintrf.o obj/driver.o \
          obj/machine/jedi.o obj/vidhrdw/jedi.o obj/sndhrdw/jedi.o obj/drivers/jedi.o \
          obj/vidhrdw/gameplan.o obj/drivers/gameplan.o \
          obj/machine/dominos.o obj/vidhrdw/dominos.o obj/drivers/dominos.o \
-         obj/vidhrdw/jumpcoas.o obj/drivers/jumpcoas.o \
          obj/vidhrdw/tankbatt.o obj/drivers/tankbatt.o \
          obj/machine/rainbow.o obj/drivers/rainbow.o \
          obj/vidhrdw/nitedrvr.o obj/machine/nitedrvr.o obj/drivers/nitedrvr.o \
@@ -221,6 +221,15 @@ OBJS   = obj/mame.o obj/common.o obj/usrintrf.o obj/driver.o \
          obj/vidhrdw/zarzon.o obj/drivers/zarzon.o \
          obj/vidhrdw/xain.o obj/drivers/xain.o \
          obj/machine/slapfght.o obj/vidhrdw/slapfght.o obj/drivers/slapfght.o \
+         obj/vidhrdw/hexa.o obj/drivers/hexa.o \
+         obj/vidhrdw/shootout.o obj/drivers/shootout.o \
+         obj/vidhrdw/ddragon.o obj/drivers/ddragon.o \
+         obj/vidhrdw/aeroboto.o obj/drivers/aeroboto.o \
+         obj/machine/system16.o obj/vidhrdw/shinobi.o \
+         obj/drivers/shinobi.o obj/drivers/altbeast.o obj/drivers/goldnaxe.o \
+         obj/vidhrdw/safari.o obj/drivers/safari.o \
+         obj/vidhrdw/redalert.o obj/drivers/redalert.o \
+         obj/machine/irobot.o obj/vidhrdw/irobot.o obj/drivers/irobot.o \
          obj/Z80/Z80.o obj/M6502/M6502.o obj/I86/I86.o obj/I8039/I8039.o \
 		 obj/M6809/m6809.o obj/M6808/m6808.o obj/M6805/m6805.o \
          obj/M68000/opcode0.o obj/M68000/opcode1.o obj/M68000/opcode2.o obj/M68000/opcode3.o obj/M68000/opcode4.o obj/M68000/opcode5.o \

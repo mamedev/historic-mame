@@ -292,7 +292,7 @@ static unsigned char palette[] =
         0xff,0xff,0xff, /* WHITE - track, text, white car */
 };
 
-static unsigned char colortable[] =
+static unsigned short colortable[] =
 {
         0x01, 0x00, /* Black playfield */
         0x01, 0x03, /* White playfield */
@@ -322,7 +322,7 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
         32*8, 32*8, { 0*8, 32*8-1, 0*8, 32*8-1 }, /* it's actually 32x28, but we'll leave room for our gear indicator */
 	gfxdecodeinfo,
-	sizeof(palette)/3,sizeof(colortable),
+	sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
         0,
 
         VIDEO_TYPE_RASTER,
@@ -358,7 +358,7 @@ static struct MachineDriver sprint1_machine_driver =
 	/* video hardware */
         32*8, 32*8, { 0*8, 32*8-1, 0*8, 32*8-1 }, /* it's actually 32x28, but we'll leave room for our gear indicator */
 	gfxdecodeinfo,
-	sizeof(palette)/3,sizeof(colortable),
+	sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
         0,
 
         VIDEO_TYPE_RASTER,

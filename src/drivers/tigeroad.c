@@ -27,43 +27,21 @@ Memory Overview:
 #include "Z80/Z80.h"
 
 
-extern int tigerroad_base_bank, tigerroad_scrollx, tigerroad_scrolly;
+extern int tigeroad_base_bank;
+extern unsigned char *tigeroad_scrollram;
 
-void tigerroad_vh_screenrefresh(struct osd_bitmap *bitmap);
-
-int tigerroad_vh_start (void);
-
-void tigerroad_vh_stop (void);
-
-void tigerroad_SetPaletteEntry( int offset, int data );
+void tigeroad_scrollram_w(int offset,int data);
+void tigeroad_vh_screenrefresh(struct osd_bitmap *bitmap);
+void tigeroad_SetPaletteEntry( int offset, int data );
 
 
-static int tigeroad_spriteram_r(int offset){ return READ_WORD (&spriteram[offset]); }
-static void tigeroad_spriteram_w(int offset, int data){ COMBINE_WORD_MEM (&spriteram[offset], data); }
+static unsigned char *tigeroad_paletteram;
 
-static int tigeroad_videoram_r(int offset){ return READ_WORD (&videoram[offset]); }
-static void tigeroad_videoram_w(int offset, int data){ COMBINE_WORD_MEM (&videoram[offset], data); }
-
-static int tigeroad_scrollram_r( int offset ){
-	switch( offset ){
-		case 0: return tigerroad_scrollx;
-		case 2: return tigerroad_scrolly;
-	}
-	return 0;
-}
-
-static void tigeroad_scrollram_w( int offset, int data ){
-	switch( offset ){
-		case 0: tigerroad_scrollx = data; break;
-		case 2: tigerroad_scrolly = data; break;
-	}
-}
-
-static int tigeroad_colorram_r( int offset ){ return READ_WORD (&colorram[offset]); }
-static void tigeroad_colorram_w( int offset, int data );
-static void tigeroad_colorram_w( int offset, int data ){
-	data = COMBINE_WORD_MEM (&colorram[offset], data );
-	tigerroad_SetPaletteEntry( offset, data );
+static int tigeroad_paletteram_r( int offset ){ return READ_WORD (&tigeroad_paletteram[offset]); }
+static void tigeroad_paletteram_w( int offset, int data );
+static void tigeroad_paletteram_w( int offset, int data ){
+	data = COMBINE_WORD_MEM (&tigeroad_paletteram[offset], data );
+	tigeroad_SetPaletteEntry( offset, data );
 }
 
 static void tigeroad_control_w( int offset, int data )
@@ -71,7 +49,7 @@ static void tigeroad_control_w( int offset, int data )
 	switch( offset )
 	{
 		case 0:
-			tigerroad_base_bank = (data>>8)&0xF;
+			tigeroad_base_bank = (data>>8)&0xF;
 			break;
 		case 2:
 			soundlatch_w(offset,(data >> 8) & 0xff);
@@ -94,7 +72,7 @@ static int tigeroad_input_r (int offset){
 	return 0x00;
 }
 
-int tigerroad_interrupt(void){
+int tigeroad_interrupt(void){
 	return 2;
 }
 
@@ -104,24 +82,26 @@ int tigerroad_interrupt(void){
 static struct MemoryReadAddress readmem[] =
 {
 	{ 0x000000, 0x03ffff, MRA_ROM },
-	{ 0xfe0800, 0xfe3fff, tigeroad_spriteram_r, &spriteram, &spriteram_size },
+	{ 0xfe0800, 0xfe0cff, MRA_BANK1 },
+	{ 0xfe0d00, 0xfe1807, MRA_BANK2 },
 	{ 0xfe4000, 0xfe4007, tigeroad_input_r },
-	{ 0xfec000, 0xfec7ff, tigeroad_videoram_r, &videoram, &videoram_size },
-	{ 0xfe8000, 0xfe800f, tigeroad_scrollram_r },
-	{ 0xff8200, 0xffbfff, tigeroad_colorram_r, &colorram },
-	{ 0xffc000, 0xffffff, MRA_BANK1 },
+	{ 0xfec000, 0xfec7ff, MRA_BANK3 },
+	{ 0xff8200, 0xffbfff, tigeroad_paletteram_r },
+	{ 0xffc000, 0xffffff, MRA_BANK5 },
 	{ -1 }  /* end of table */
 };
 
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x000000, 0x03ffff, MWA_ROM },
-	{ 0xfe0800, 0xfe3fff, tigeroad_spriteram_w },
+	{ 0xfe0800, 0xfe0cff, MWA_BANK1, &spriteram, &spriteram_size },
+	{ 0xfe0d00, 0xfe1807, MWA_BANK2 },	/* still part of OBJ RAM */
 	{ 0xfe4000, 0xfe4003, tigeroad_control_w },
-	{ 0xfec000, 0xfec7ff, tigeroad_videoram_w },
-	{ 0xfe8000, 0xfe800f, tigeroad_scrollram_w },
-	{ 0xff8200, 0xffbfff, tigeroad_colorram_w },
-	{ 0xffc000, 0xffffff, MWA_BANK1 },
+	{ 0xfec000, 0xfec7ff, MWA_BANK3, &videoram, &videoram_size },
+	{ 0xfe8000, 0xfe8003, MWA_BANK4, &tigeroad_scrollram },
+	{ 0xfe800c, 0xfe800f, MWA_NOP },	/* fe800e = watchdog or IRQ acknowledge */
+	{ 0xff8200, 0xffbfff, tigeroad_paletteram_w, &tigeroad_paletteram },
+	{ 0xffc000, 0xffffff, MWA_BANK5 },
 	{ -1 }  /* end of table */
 };
 
@@ -147,7 +127,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 };
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( tigeroad_input_ports )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
@@ -231,6 +211,91 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPSETTING(    0x80, "Yes" )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( f1dream_input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
+
+	PORT_START	/* dipswitch A */
+	PORT_DIPNAME( 0x07, 0x07, "Coin B", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "4 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x01, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x02, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x07, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x06, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x05, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0x04, "1 Coin/4 Credits" )
+	PORT_DIPSETTING(    0x03, "1 Coin/6 Credits" )
+	PORT_DIPNAME( 0x38, 0x38, "Coin A", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "4 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x08, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x10, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x38, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x30, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x28, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0x20, "1 Coin/4 Credits" )
+	PORT_DIPSETTING(    0x18, "1 Coin/6 Credits" )
+	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x40, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x80, 0x80, "Flip Screen", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "Off")
+	PORT_DIPSETTING(    0x00, "On" )
+
+	PORT_START /* dipswitch B */
+	PORT_DIPNAME( 0x03, 0x03, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x03, "3" )
+	PORT_DIPSETTING(    0x02, "4" )
+	PORT_DIPSETTING(    0x01, "5" )
+	PORT_DIPSETTING(    0x00, "7" )
+	PORT_DIPNAME( 0x04, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright")
+	PORT_DIPSETTING(    0x04, "Cocktail")
+	PORT_DIPNAME( 0x18, 0x18, "F1 Up Point", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x18, "12" )
+	PORT_DIPSETTING(    0x10, "16" )
+	PORT_DIPSETTING(    0x08, "18" )
+	PORT_DIPSETTING(    0x00, "20" )
+	PORT_DIPNAME( 0x20, 0x20, "Difficulty", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x20, "Normal" )
+	PORT_DIPSETTING(    0x00, "Difficult" )
+	PORT_DIPNAME( 0x40, 0x00, "Version", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "International" )
+	PORT_DIPSETTING(    0x40, "Japan" )
+	PORT_DIPNAME( 0x80, 0x80, "Allow Continue", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "No" )
+	PORT_DIPSETTING(    0x80, "Yes" )
+INPUT_PORTS_END
+
 
 
 static struct GfxLayout text_layout =
@@ -247,16 +312,16 @@ static struct GfxLayout text_layout =
 static struct GfxLayout tile_layout =
 {
 	32,32,	/* tile size */
-	256*8,	/* number of tiles */
+	2048,	/* number of tiles */
 	4,		/* bits per pixel */
 
-	{ 0x80000*8+4, 0x80000*8, 4, 0 },
+	{ 2048*256*8+4, 2048*256*8+0, 4, 0 },
 
 	{ /* x offsets */
 		0, 1, 2, 3, 8+0, 8+1, 8+2, 8+3,
 		64*8+0, 64*8+1, 64*8+2, 64*8+3, 64*8+8+0, 64*8+8+1, 64*8+8+2, 64*8+8+3,
-		64*8*2+0, 64*8*2+1, 64*8*2+2, 64*8*2+3,	64*8*2+ 8+0, 64*8*2+ 8+1, 64*8*2+ 8+2, 64*8*2+ 8+3,
-		64*8*3+0, 64*8*3+1, 64*8*3+2, 64*8*3+3,	64*8*3+8+0, 64*8*3+8+1, 64*8*3+8+2, 64*8*3+8+3,
+		2*64*8+0, 2*64*8+1, 2*64*8+2, 2*64*8+3,	2*64*8+8+0, 2*64*8+8+1, 2*64*8+8+2, 2*64*8+8+3,
+		3*64*8+0, 3*64*8+1, 3*64*8+2, 3*64*8+3,	3*64*8+8+0, 3*64*8+8+1, 3*64*8+8+2, 3*64*8+8+3,
 	},
 
 	{ /* y offsets */
@@ -266,7 +331,7 @@ static struct GfxLayout tile_layout =
 		24*16, 25*16, 26*16, 27*16, 28*16, 29*16, 30*16, 31*16
 	},
 
-	64*32
+	256*8
 };
 
 static struct GfxLayout sprite_layout =
@@ -274,16 +339,16 @@ static struct GfxLayout sprite_layout =
 	16,16,	/* tile size */
 	4096,	/* number of tiles */
 	4,		/* bits per pixel */
-	{ 0x020000*8*3, 0x020000*8*2, 0x020000*8*1,0x020000*8*0 }, /* plane offsets */
+	{ 3*4096*32*8, 2*4096*32*8, 1*4096*32*8, 0*4096*32*8 }, /* plane offsets */
 	{ /* x offsets */
 		0, 1, 2, 3, 4, 5, 6, 7,
-		128+0, 128+1, 128+2, 128+3, 128+4, 128+5, 128+6, 128+7
+		16*8+0, 16*8+1, 16*8+2, 16*8+3, 16*8+4, 16*8+5, 16*8+6, 16*8+7
 	},
 	{ /* y offsets */
 		0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
 		8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8
 	},
-	256
+	32*8
 };
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
@@ -324,7 +389,7 @@ static struct MachineDriver machine_driver =
 			6000000, /* ? Main clock is 24MHz */
 			0,
 			readmem,writemem,0,0,
-			tigerroad_interrupt,1
+			tigeroad_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
@@ -348,9 +413,9 @@ static struct MachineDriver machine_driver =
 
 	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_16BIT,
 	0,
-	tigerroad_vh_start,
-	tigerroad_vh_stop,
-	tigerroad_vh_screenrefresh,
+	0,
+	0,
+	tigeroad_vh_screenrefresh,
 
 	/* sound hardware */
 	0,0,0,0,
@@ -362,32 +427,73 @@ static struct MachineDriver machine_driver =
 	}
 };
 
-ROM_START( tigerroad_rom )
+
+
+/***************************************************************************
+
+  Game driver(s)
+
+***************************************************************************/
+
+ROM_START( tigeroad_rom )
 	ROM_REGION(0x40000)	/* 256K for 68000 code */
-	ROM_LOAD_ODD(  "tru04.bin", 0x00000, 0x20000, 0x048f38b5 )
 	ROM_LOAD_EVEN( "tru02.bin", 0x00000, 0x20000, 0xab4a273e )
+	ROM_LOAD_ODD(  "tru04.bin", 0x00000, 0x20000, 0x048f38b5 )
 
 	ROM_REGION(0x188000) /* temporary space for graphics */
-	ROM_LOAD("tr-01a.bin",	0x000000, 0x20000, 0x1059094b )	/* tiles */
-	ROM_LOAD("tr-04a.bin",	0x020000, 0x20000, 0xc22b045b )
-	ROM_LOAD("tr-02a.bin",	0x040000, 0x20000, 0xe36c6358 )
-	ROM_LOAD("tr05.bin",	0x060000, 0x20000, 0x63f7aa59 )
-	ROM_LOAD("tr-03a.bin",	0x080000, 0x20000, 0x08193fc5 )
-	ROM_LOAD("tr-06a.bin",	0x0A0000, 0x20000, 0x4f61a23d )
-	ROM_LOAD("tr-07a.bin",	0x0C0000, 0x20000, 0x4742c952 )
-	ROM_LOAD("tr08.bin",	0x0E0000, 0x20000, 0x01e5018f )
-	ROM_LOAD("tr-09a.bin",	0x100000, 0x20000, 0xaccdc4d9 )	/* sprites */
-	ROM_LOAD("tr-10a.bin",	0x120000, 0x20000, 0x370e3954 )
-	ROM_LOAD("tr-11a.bin",	0x140000, 0x20000, 0x35a273f2 )
-	ROM_LOAD("tr-12a.bin",	0x160000, 0x20000, 0x81bf63fd )
-	ROM_LOAD("tr01.bin",	0x180000, 0x08000, 0x35379305 )	/* 8x8 text */
+	ROM_LOAD( "tr-01a.bin",	0x000000, 0x20000, 0x1059094b )	/* tiles */
+	ROM_LOAD( "tr-04a.bin",	0x020000, 0x20000, 0xc22b045b )
+	ROM_LOAD( "tr-02a.bin",	0x040000, 0x20000, 0xe36c6358 )
+	ROM_LOAD( "tr05.bin",	0x060000, 0x20000, 0x63f7aa59 )
+	ROM_LOAD( "tr-03a.bin",	0x080000, 0x20000, 0x08193fc5 )
+	ROM_LOAD( "tr-06a.bin",	0x0A0000, 0x20000, 0x4f61a23d )
+	ROM_LOAD( "tr-07a.bin",	0x0C0000, 0x20000, 0x4742c952 )
+	ROM_LOAD( "tr08.bin",	0x0E0000, 0x20000, 0x01e5018f )
+	ROM_LOAD( "tr-09a.bin",	0x100000, 0x20000, 0xaccdc4d9 )	/* sprites */
+	ROM_LOAD( "tr-10a.bin",	0x120000, 0x20000, 0x370e3954 )
+	ROM_LOAD( "tr-11a.bin",	0x140000, 0x20000, 0x35a273f2 )
+	ROM_LOAD( "tr-12a.bin",	0x160000, 0x20000, 0x81bf63fd )
+	ROM_LOAD( "tr01.bin",	0x180000, 0x08000, 0x35379305 )	/* 8x8 text */
 
 	ROM_REGION( 0x08000 ) /* tilemap for background */
-	ROM_LOAD( "tr13.bin", 	0x00000, 0x08000, 0x8ad0fd92 )
+	ROM_LOAD( "tr13.bin", 	0x0000, 0x8000, 0x8ad0fd92 )
 
 	ROM_REGION( 0x10000 ) /* audio CPU */
-	ROM_LOAD( "tru05.bin", 	0x00000, 0x08000, 0xe626a5ba )
+	ROM_LOAD( "tru05.bin", 	0x0000, 0x8000, 0xe626a5ba )
 ROM_END
+
+ROM_START( f1dream_rom )
+	ROM_REGION(0x40000)	/* 256K for 68000 code */
+	ROM_LOAD_EVEN( "06J_02.BIN", 0x00000, 0x20000, 0xac0763ef )
+	ROM_LOAD_ODD(  "06K_03.BIN", 0x00000, 0x20000, 0x36a428e0 )
+
+	ROM_REGION(0x188000) /* temporary space for graphics */
+	ROM_LOAD( "03F_12.BIN", 0x000000, 0x10000, 0x5f701456 ) /* tiles */
+	ROM_LOAD( "01F_10.BIN", 0x010000, 0x10000, 0x261acd8e )
+	ROM_LOAD( "03H_14.BIN", 0x020000, 0x10000, 0x63efd7e3 )
+	/* 30000-7ffff empty */
+	ROM_LOAD( "02F_11.BIN", 0x080000, 0x10000, 0x58a9d7e5 )
+	ROM_LOAD( "17F_09.BIN", 0x090000, 0x10000, 0x5b4c3df2 )
+	ROM_LOAD( "02H_13.BIN", 0x0a0000, 0x10000, 0x182c26ec )
+	/* b0000-fffff empty */
+	ROM_LOAD( "03B_06.BIN", 0x100000, 0x10000, 0xe4b736d3 ) /* sprites */
+	/* 110000-11ffff empty */
+	ROM_LOAD( "02B_05.BIN", 0x120000, 0x10000, 0x60e146cb )
+	/* 130000-13ffff empty */
+	ROM_LOAD( "03D_08.BIN", 0x140000, 0x10000, 0x973b3539 )
+	/* 150000-15ffff empty */
+	ROM_LOAD( "02D_07.BIN", 0x160000, 0x10000, 0x65018a53 )
+	/* 170000-17ffff empty */
+	ROM_LOAD( "10D_01.BIN", 0x180000, 0x08000, 0x442b0f59 ) /* 8x8 text */
+
+	ROM_REGION( 0x08000 ) /* tilemap for background */
+	ROM_LOAD( "07L_15.BIN", 0x0000, 0x8000, 0x96e677fc )
+
+	ROM_REGION( 0x10000 ) /* audio CPU */
+	ROM_LOAD( "12K_04.BIN", 0x0000, 0x8000, 0x4ff5c621 )
+ROM_END
+
+
 
 struct GameDriver tigeroad_driver =
 {
@@ -396,10 +502,28 @@ struct GameDriver tigeroad_driver =
 	"Phil Stroffolino (MAME driver)\nTim Lindquist",
 	&machine_driver,
 
-	tigerroad_rom,
+	tigeroad_rom,
 	0,0,0,0,
 
-	input_ports,
+	tigeroad_input_ports,
+
+	0, 0, 0,   /* colors, palette, colortable */
+	ORIENTATION_DEFAULT,
+	0, 0
+};
+
+/* F1 Dream has an Intel 8751 microcontroller for protection */
+struct GameDriver f1dream_driver =
+{
+	"F1 Dream",
+	"f1dream",
+	"Paul Leaman\nPhil Stroffolino (MAME driver)\nTim Lindquist",
+	&machine_driver,
+
+	f1dream_rom,
+	0,0,0,0,
+
+	f1dream_input_ports,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,

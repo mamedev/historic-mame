@@ -531,37 +531,21 @@ int spyhunt_port_1_r(int offset)
 /* Spy Hunter -- multiplexed steering wheel/gas pedal */
 int spyhunt_port_2_r(int offset)
 {
-        int weighting = 0;
-	int port = readinputport (6);
+	int accel = readinputport (6);
+	int steer = readinputport (7);
 
 	/* mux high bit on means return steering wheel */
 	if (spyhunt_mux & 0x80)
 	{
-		if (port & 8)
-			return 0x94;
-		else if (port & 4)
-			return 0x54;
-		else
-			return 0x74;
+		if (errorlog) fprintf(errorlog, "return steer = %d", steer);
+	   return steer;
 	}
 
 	/* mux high bit off means return gas pedal */
 	else
 	{
-		static int val = 0x30;
-		if (port & 1)
-		{
-                        if (weighting_factor != 0) weighting = val/((0xff-0x30)/weighting_factor);
-			val += (pedal_sensitivity + weighting);
-			if (val > 0xff) val = 0xff;
-		}
-		else if (port & 2)
-		{
-                        if (weighting_factor != 0) weighting = weighting_factor - (val/((0xff-0x30)/weighting_factor));
-			val -= (pedal_sensitivity + weighting);
-			if (val < 0x30) val = 0x30;
-		}
-		return val;
+		if (errorlog) fprintf(errorlog, "return accel = %d", accel);
+	   return accel;
 	}
 }
 

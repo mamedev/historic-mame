@@ -4,8 +4,7 @@
 **
 ** Copyright (C) 1998 Tatsuyuki Satoh , MultiArcadeMachineEmurator development
 **
-** Date       :  Name            :  version,function
-** 1998.03.12 :  Tatsuyuki Satoh :  Beta 9b
+** Version 0.33a
 **
 */
 
@@ -47,6 +46,8 @@
 #include "psg.h"
 #include "fm.h"
 
+/* ------------------------------------------------------------------ */
+#define MAME_TIMER 			/* use Aaron's timer system      */
 /* -------------------- speed up optimize switch -------------------- */
 //#define SEG_SUPPORT		/* OPN SSG type envelope support */
 #define S3_SUPPORT			/* OPN 3SLOT mode support        */
@@ -83,8 +84,7 @@
 
 /* sinwave entries */
 /* used static memory = SIN_ENT * 4 (byte) */
-#define SIN_ENT 512
-#define SIN_DIV ((1<<FREQ_BITS)/SIN_ENT)
+#define SIN_ENT 2048
 
 /* output level entries (envelope,sinwave) */
 /* used dynamic memory = EG_ENT*4*4(byte)or EG_ENT*6*4(byte) */
@@ -170,7 +170,6 @@ typedef struct fm_chan {
 	int op1_out;				/* op1 output foe beedback             */
 	/* envelope generator state */
 	unsigned char evm[4];		/* envelope phase                      */
-	signed int env[4];			/* envelope output                     */
 	signed int evc[4];			/* envelope counter                    */
 	signed int arc[4];			/* envelope counter for AR             */
 	signed int evsa[4];			/* envelope step for AR                */
@@ -426,20 +425,22 @@ static inline void FM_KEYOFF(FM_CH *CH , int s )
 {
 	if( CH->evm[s] > ENV_MOD_RR){
 		CH->evm[s] = ENV_MOD_RR;
-		if( CH->evsr[s] == 0 ) CH->evm[s] &= 0xfe;
+		//if( CH->evsr[s] == 0 ) CH->evm[s] &= 0xfe;
 	}
 }
 
 /* ---------- calcrate Envelope Generator & Phase Generator ---------- */
-/* return == 0:envelope output is volume off area  */
-/*        != 1:envelope output is volume on  area  */
-static inline int FM_CALC_SLOT( FM_CH *CH  , int s )
+/* return == -1:envelope silent */
+/*        >=  0:envelope output */
+static inline signed int FM_CALC_SLOT( FM_CH *CH  , int s )
 {
+	signed int env_out;
+
 	/* calcrate phage generator */
 	CH->Cnt[s] += CH->Incr[s];
 
 	/* bypass when envelope holding */
-	if( !(CH->evm[s]&1) ) return CH->evm[s]&0x0f;
+	if( !(CH->evm[s]&0x0f) ) return -1;
 
 	switch( CH->evm[s] ){
 	case ENV_MOD_AR:
@@ -456,7 +457,7 @@ static inline int FM_CALC_SLOT( FM_CH *CH  , int s )
 			/* next DR */
 			CH->evm[s] = ENV_MOD_DR;
 /* MB 980409  commented out the following line to fix Bubble Bobble */
-//			if( CH->evsd[s] == 0 ) CH->evm[s] &= 0xfe; /* stop */
+			//if( CH->evsd[s] == 0 ) CH->evm[s] &= 0xfe; /* stop */
 
 			CH->evc[s] = 0;
 #ifdef SEG_SUPPORT
@@ -483,16 +484,16 @@ static inline int FM_CALC_SLOT( FM_CH *CH  , int s )
 		/* next SR */
 		CH->evm[s] = ENV_MOD_SR;
 /* MB 980409  commented out the following line to fix Bubble Bobble */
-//		if( CH->evss[s] == 0 ) CH->evm[s] &= 0xfe; /* stop */
+		//if( CH->evss[s] == 0 ) CH->evm[s] &= 0xfe; /* stop */
 		CH->evc[s] = CH->SL[s];
 		break;
 	case ENV_MOD_SR:
-		if( (CH->evc[s]+=CH->evss[s]) < ENV_OFF )
+		if( (CH->evc[s]+=CH->evss[s]) <= ENV_OFF )
 		{
 			break;
 		}
 		/* wait for key off */
-		CH->evm[s]&= 0xf0;		/* off */
+		//CH->evm[s]&= 0xf0;		/* off */
 		CH->evc[s] = ENV_OFF;
 		break;
 	case ENV_MOD_RR:
@@ -500,8 +501,8 @@ static inline int FM_CALC_SLOT( FM_CH *CH  , int s )
 		{
 			break;
 		}
-		/* wait for key off */
-		CH->evm[s]&= 0xf0;		/* off */
+		/* wait for key on */
+		CH->evm[s] = ENV_MOD_OFF;
 		CH->evc[s] = ENV_OFF;
 		break;
 #ifdef SEG_SUPPORT
@@ -542,16 +543,14 @@ static inline int FM_CALC_SLOT( FM_CH *CH  , int s )
 #endif
 	}
 	/* calcrate envelope */
-	CH->env[s] = CH->TLL[s]+(CH->evc[s]>>ENV_BITS);
+	env_out = CH->TLL[s]+(CH->evc[s]>>ENV_BITS);
 #ifdef TL_SAVE_MEM
-	if(CH->env[s] >= (EG_ENT-1) )
+	if(env_out >= (EG_ENT-1) )
 	{
-		/* envelope output is volume off */
-		CH->env[s]=EG_ENT-1;
-		return 0;
+		return -1;
 	}
 #endif
-	return 1;
+	return env_out;
 }
 
 /* set algorythm and self feedback */
@@ -627,21 +626,21 @@ static void set_algorythm( FM_CH *CH , int algo_fb )
 }
 
 /* operator output calcrator */
-#define OP_OUT(SLOT,CON)   SIN_TABLE[((CH->Cnt[SLOT]+CON)>>15)&(SIN_ENT-1)][CH->env[SLOT]]
-
+#define OP_OUT(SLOT,CON)   SIN_TABLE[((CH->Cnt[SLOT]+CON)/(0x1000000/SIN_ENT))&(SIN_ENT-1)][env_out]
 /* ---------- calcrate one of channel ---------- */
 static inline int FM_CALC_CH( FM_CH *CH )
 {
 	int op_out;
+	int env_out;
 
 	/* bypass all SLOT output off (SILENCE) */
-//	if( !( (*(long *)(&CH->evm[0])) &0x0f0f0f0f) ) return 0;
+	if( !(*(long *)(&CH->evm[0])) ) return 0;
 
 	/* clear carrier output */
 	feedback2 = feedback3 = feedback4 = carrier = 0;
 
 	/* SLOT 1 */
-	if( FM_CALC_SLOT(CH,SLOT1) )
+	if( (env_out=FM_CALC_SLOT(CH,SLOT1))>=0 )
 	{
 		if( CH->FB ){
 			/* with self feed back */
@@ -662,11 +661,14 @@ static inline int FM_CALC_CH( FM_CH *CH )
 		}
 	}
 	/* SLOT 2 */
-	if( FM_CALC_SLOT(CH,SLOT2) ) *CH->connect2 += OP_OUT(SLOT2, feedback2 );
+	if( (env_out=FM_CALC_SLOT(CH,SLOT2))>=0 )
+		*CH->connect2 += OP_OUT(SLOT2, feedback2 );
 	/* SLOT 3 */
-	if( FM_CALC_SLOT(CH,SLOT3) ) *CH->connect3 += OP_OUT(SLOT3, feedback3 );
+	if( (env_out=FM_CALC_SLOT(CH,SLOT3))>=0 )
+		*CH->connect3 += OP_OUT(SLOT3, feedback3 );
 	/* SLOT 4 */
-	if( FM_CALC_SLOT(CH,SLOT4) ) carrier       += OP_OUT(SLOT4, feedback4 );
+	if( (env_out=FM_CALC_SLOT(CH,SLOT4))>=0 )
+		carrier       += OP_OUT(SLOT4, feedback4 );
 
 	return carrier;
 }
@@ -716,10 +718,10 @@ static inline void OPM_CALC_FCOUNT(YM2151 *OPM , FM_CH *CH )
 	}
 }
 
+#ifdef MAME_TIMER
 static void timer_callback_A_OPM(int param)
 {
 	YM2151 *OPM = &FMOPM[param];
-	FM_CH *CSM_CH = &OPM->CH[7];
 
 	OPM->ST.timer_a_timer = 0;
 
@@ -736,6 +738,7 @@ static void timer_callback_A_OPM(int param)
 #ifdef CSM_SUPPORT
 	if( OPM->ST.mode & 0x80 )
 	{	/* CSM mode total level latch and auto key on */
+		FM_CH *CSM_CH = &OPM->CH[7];
 		int ksl = KSL[CSM_CH->kcode];
 		CSM_CH->TLL[SLOT1] = CSM_CH->TL[SLOT1] + ksl;
 		CSM_CH->TLL[SLOT2] = CSM_CH->TL[SLOT2] + ksl;
@@ -770,7 +773,6 @@ static void timer_callback_B_OPM(int param)
 static void timer_callback_A_OPN(int param)
 {
 	YM2203 *OPN = &FMOPN[param];
-	FM_CH *CSM_CH = &OPN->CH[2];
 
 	OPN->ST.timer_a_timer = 0;
 
@@ -787,6 +789,7 @@ static void timer_callback_A_OPN(int param)
 #ifdef CSM_SUPPORT
 	if( OPN->ST.mode & 0x80 )
 	{	/* CSM mode total level latch and auto key on */
+		FM_CH *CSM_CH = &OPN->CH[2];
 		int ksl = KSL[CSM_CH->kcode];
 		CSM_CH->TLL[SLOT1] = CSM_CH->TL[SLOT1] + ksl;
 		CSM_CH->TLL[SLOT2] = CSM_CH->TL[SLOT2] + ksl;
@@ -817,6 +820,56 @@ static void timer_callback_B_OPN(int param)
 	/* update the counter */
 	OPN->ST.TBC = 0;
 }
+#else /* MAME_TIMER */
+
+/* ---------- calcrate timer A ---------- */
+static inline void CALC_TIMER_A(FM_ST *ST , FM_CH *CSM_CH )
+{
+	if( ST->TAC )
+	{
+		if( (ST->TAC -= ST->freqbase) <= 0 )
+		{
+			ST->TAC = 0; /* stop timer */
+			if( (ST->mode & 0x04) && (ST->status & 0x03)==0 )
+			{	/* user interrupt handler call back */
+				if( ST->handler != 0 ) ST->handler();
+			}
+			ST->status |= 0x01;
+#ifdef CSM_SUPPORT
+			if( ST->mode & 0x80 )
+			{	/* CSM mode total level latch and auto key on */
+				int ksl = KSL[CSM_CH->kcode];
+				CSM_CH->TLL[SLOT1] = CSM_CH->TL[SLOT1] + ksl;
+				CSM_CH->TLL[SLOT2] = CSM_CH->TL[SLOT2] + ksl;
+				CSM_CH->TLL[SLOT3] = CSM_CH->TL[SLOT3] + ksl;
+				CSM_CH->TLL[SLOT4] = CSM_CH->TL[SLOT4] + ksl;
+				/* all key on */
+				FM_KEYON(CSM_CH,SLOT1);
+				FM_KEYON(CSM_CH,SLOT2);
+				FM_KEYON(CSM_CH,SLOT3);
+				FM_KEYON(CSM_CH,SLOT4);
+			}
+#endif
+		}
+	}
+}
+/* ---------- calcrate timer B ---------- */
+static inline void CALC_TIMER_B(FM_ST *ST,int step)
+{
+	if( ST->TBC ){
+		if( (ST->TBC -= ST->freqbase*step) <= 0 )
+		{
+			ST->TBC = 0;
+			if( (ST->mode & 0x08) && (ST->status & 0x03)==0 )
+			{	/* interrupt reqest */
+				if( ST->handler != 0 ) ST->handler();
+			}
+			ST->status |= 0x02;
+		}
+	}
+}
+
+#endif /* MAME_TIMER */
 
 /* ----------- initialize time tabls ----------- */
 static void init_timetables( FM_ST *ST , char *DTTABLE , int ARRATE , int DRRATE )
@@ -887,7 +940,7 @@ static void reset_channel( FM_ST *ST , FM_CH *ch , int chan )
 		for(s = 0 ; s < 4 ; s++ )
 		{
 			ch[c].SEG[s] = 0;
-			ch[c].env[s] = EG_ENT-1;
+			ch[c].evc[s] = ENV_OFF;
 			ch[c].evm[s] = ENV_MOD_OFF;
 		}
 	}
@@ -1090,6 +1143,7 @@ void OPNWriteReg(int n, int r, int v)
 			/* b1 = load b */
 			/* b0 = load a */
 			OPN->ST.mode = v;
+#ifdef MAME_TIMER
 			if( v & 0x20 )
 			{
 				OPN->ST.status &=0xfd; /* reset TIMER B */
@@ -1113,7 +1167,7 @@ void OPNWriteReg(int n, int r, int v)
 				if (OPN->ST.timer_b_timer == 0)
 				{
 					OPN->ST.TBC = ( 256-OPN->ST.TB)<<(4+12);
-					if (OPN->ST.handler)
+					//if (OPN->ST.handler)
 						OPN->ST.timer_b_timer = timer_set ((double)OPN->ST.TBC / ((double)OPN->ST.freqbase * (double)OPN->ST.rate), n, timer_callback_B_OPN);
 				}
 			}
@@ -1122,10 +1176,25 @@ void OPNWriteReg(int n, int r, int v)
 				if (OPN->ST.timer_a_timer == 0)
 				{
 					OPN->ST.TAC = (1024-OPN->ST.TA)<<12;
-					if (OPN->ST.handler)
+					//if (OPN->ST.handler)
 						OPN->ST.timer_a_timer = timer_set ((double)OPN->ST.TAC / ((double)OPN->ST.freqbase * (double)OPN->ST.rate), n, timer_callback_A_OPN);
 				}
 			}
+#else /* MAME_TIMER */
+			if( v & 0x20 )
+			{
+				OPN->ST.status &=0xfd; /* reset TIMER B */
+				OPN->ST.TBC = 0;		/* timer stop */
+			}
+			if( v & 0x10 )
+			{
+				OPN->ST.status &=0xfe; /* reset TIMER A */
+				OPN->ST.TAC = 0;		/* timer stop */
+			}
+			if( (v & 0x02) && !(OPN->ST.status&0x02) ) OPN->ST.TBC = ( 256-OPN->ST.TB)<<(4+12);
+			if( (v & 0x01) && !(OPN->ST.status&0x01) ) OPN->ST.TAC = (1024-OPN->ST.TA)<<12;
+#endif /* MAME_TIMER */
+
 #ifndef S3_SUPPORT
 			if(errorlog && v&0x40 ) fprintf(errorlog,"OPN 3SLOT mode selected (not supported)\n");
 #endif
@@ -1274,48 +1343,55 @@ unsigned char OPNReadStatus(int n)
 void OPNUpdateOne(int num, int endp)
 {
     YM2203 *OPN = &(FMOPN[num]);
-	FM_ST  *ST  = &OPN->ST;
     int i;
-	FM_CH *fmchA = &OPN->CH[0];
-	FM_CH *fmchB = &OPN->CH[1];
-	FM_CH *fmchC = &OPN->CH[2];
 	int opn_data;
-
 	FMSAMPLE *buffer = OPN->Buf;
 
+	State = &OPN->ST;
+	chA   = &OPN->CH[0];
+	chB   = &OPN->CH[1];
+	chC   = &OPN->CH[2];
+
 	/* frequency counter channel A */
-	CALC_FCOUNT( fmchA );
+	CALC_FCOUNT( chA );
 	/* frequency counter channel B */
-	CALC_FCOUNT( fmchB );
+	CALC_FCOUNT( chB );
 	/* frequency counter channel C */
 #ifdef S3_SUPPORT
-	if( (ST->mode & 0x40) ){
-		if( fmchC->Incr[SLOT1]==-1){
+	if( (State->mode & 0x40) ){
+		if( chC->Incr[SLOT1]==-1){
 			/* 3 slot mode */
-			CALC_FCSLOT(fmchC , SLOT1 , OPN->fc3[1] , OPN->kcode3[1] );
-			CALC_FCSLOT(fmchC , SLOT2 , OPN->fc3[2] , OPN->kcode3[2] );
-			CALC_FCSLOT(fmchC , SLOT3 , OPN->fc3[0] , OPN->kcode3[0] );
-			CALC_FCSLOT(fmchC , SLOT4 , fmchC->fc , fmchC->kcode );
+			CALC_FCSLOT(chC , SLOT1 , OPN->fc3[1] , OPN->kcode3[1] );
+			CALC_FCSLOT(chC , SLOT2 , OPN->fc3[2] , OPN->kcode3[2] );
+			CALC_FCSLOT(chC , SLOT3 , OPN->fc3[0] , OPN->kcode3[0] );
+			CALC_FCSLOT(chC , SLOT4 , chC->fc , chC->kcode );
 		}
 	}else{
-		CALC_FCOUNT( fmchC );
+		CALC_FCOUNT( chC );
 	}
 #else
-	CALC_FCOUNT( fmchC );
+	CALC_FCOUNT( chC );
 #endif
 
-    for( i=ST->bufp; i < endp ; ++i )
+    for( i=State->bufp; i < endp ; ++i )
 	{
 		/*            channel A         channel B         channel C      */
-		opn_data  = FM_CALC_CH(fmchA) + FM_CALC_CH(fmchB) + FM_CALC_CH(fmchC);
+		opn_data  = FM_CALC_CH(chA) + FM_CALC_CH(chB) + FM_CALC_CH(chC);
 		/* limit check */
 		if( opn_data > OPN_MAXOUT )      opn_data = OPN_MAXOUT;
 		else if( opn_data < OPN_MINOUT ) opn_data = OPN_MINOUT;
 		/* store to sound buffer */
 		if( sample_16bit ) ((unsigned short *)buffer)[i] = opn_data >> OPN_OUTSB;
 		else           ((unsigned char  *)buffer)[i] = opn_data >> OPN_OUTSB_8;
-    }
-    ST->bufp = endp;
+#ifndef MAME_TIMER
+		/* timer controll */
+		CALC_TIMER_A( State , chC );
+#endif
+	}
+#ifndef MAME_TIMER
+	CALC_TIMER_B( State , endp-State->bufp );
+#endif
+    State->bufp = endp;
 }
 
 /* ---------- update all chips ----------- */
@@ -1519,6 +1595,7 @@ void OPMWriteReg(int n, int r, int v)
 			/* b1 = load b */
 			/* b0 = load a */
 			OPM->ST.mode = v % 0xbf;	/* 3slot = off */
+#ifdef MAME_TIMER
 			if( v & 0x20 )
 			{
 				OPM->ST.status &=0xfd; /* reset TIMER B */
@@ -1542,7 +1619,7 @@ void OPMWriteReg(int n, int r, int v)
 				if (OPM->ST.timer_b_timer == 0)
 				{
 					OPM->ST.TBC = ( 256-OPM->ST.TB)<<(4+12);
-					if (OPM->ST.handler)
+					//if (OPM->ST.handler)
 						OPM->ST.timer_b_timer = timer_set ((double)OPM->ST.TBC / ((double)OPM->ST.freqbase * (double)OPM->ST.rate), n, timer_callback_B_OPM);
 				}
 			}
@@ -1551,10 +1628,25 @@ void OPMWriteReg(int n, int r, int v)
 				if (OPM->ST.timer_a_timer == 0)
 				{
 					OPM->ST.TAC = (1024-OPM->ST.TA)<<12;
-					if (OPM->ST.handler)
+					//if (OPM->ST.handler)
 						OPM->ST.timer_a_timer = timer_set ((double)OPM->ST.TAC / ((double)OPM->ST.freqbase * (double)OPM->ST.rate), n, timer_callback_A_OPM);
 				}
 			}
+#else /* MAME_TIMER */
+			if( v & 0x20 )
+			{
+				OPM->ST.status &=0xfd; /* reset TIMER B */
+				OPM->ST.TBC = 0;
+			}
+			if( v & 0x10 )
+			{
+				OPM->ST.status &=0xfe; /* reset TIMER A */
+				OPM->ST.TAC = 0;
+			}
+			if( (v & 0x02) && !(OPM->ST.status&0x02) ) OPM->ST.TBC = ( 256-OPM->ST.TB)<<(4+12);
+			if( (v & 0x01) && !(OPM->ST.status&0x01) ) OPM->ST.TAC = (1024-OPM->ST.TA)<<12;
+#endif /* MAME_TIMER */
+
 #ifndef CSM_SUPPORT
 			if(errorlog && v&0x80 ) fprintf(errorlog,"OPM CSM select ( not supported )\n");
 #endif
@@ -1696,7 +1788,7 @@ void OPMUpdateOne(int num , int endp)
 	{
 		/* clear output acc. */
 		outd[OPM_LEFT] = outd[OPM_RIGHT]= outd[OPM_CENTER] = 0;
-		/* */
+		/* calcrate channel output */
 		*pan[0] += FM_CALC_CH( chA );
 		*pan[1] += FM_CALC_CH( chB );
 		*pan[2] += FM_CALC_CH( chC );
@@ -1705,7 +1797,7 @@ void OPMUpdateOne(int num , int endp)
 		*pan[5] += FM_CALC_CH( chF );
 		*pan[6] += FM_CALC_CH( chG );
 		*pan[7] += FM_CALC_CH( chH );
-
+		/* get left & right output */
 		dataL = outd[OPM_CENTER] + outd[OPM_LEFT];
 		dataR = outd[OPM_CENTER] + outd[OPM_RIGHT];
 		/* clipping data */
@@ -1739,7 +1831,14 @@ void OPMUpdateOne(int num , int endp)
 #ifdef LFO_SUPPORT
 		CALC_LOPM_LFO;
 #endif
+
+#ifndef MAME_TIMER
+		CALC_TIMER_A( State , chH );
+#endif
     }
+#ifndef MAME_TIMER
+	CALC_TIMER_B( State , endp-State->bufp );
+#endif
     State->bufp = endp;
 }
 

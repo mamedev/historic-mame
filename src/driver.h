@@ -190,6 +190,7 @@ struct MachineCPU
 #define CPU_HD63701  CPU_M6803	/* 6808 with some additional opcodes */
 #define CPU_M6805  6
 #define CPU_M6809  7
+#define CPU_M6309  CPU_M6809	/* actually it's not 100% compatible */
 #define CPU_M68000 8
 
 /* set this if the CPU is used as a slave for audio. It will not be emulated if */
@@ -346,7 +347,7 @@ struct GameDriver
 		/* Otherwise, leave this field null and provide palette and colortable. */
 	const unsigned char *color_prom;
 	const unsigned char *palette;
-	const unsigned char *colortable;
+	const unsigned short *colortable;
 	int orientation;	/* orientation of the monitor; see defines below */
 
 	int (*hiscore_load)(void);	/* will be called every vblank until it */

@@ -9,6 +9,7 @@ extern int cps1_gfxram_size;
 extern int cps1_output_size;
 
 extern int cps1_input_r(int offset);    /* Input ports */
+extern int cps1_player_input_r(int offset);    /* Input ports */
 
 extern int cps1_interrupt(void);       /* Ghouls and Ghosts */
 extern int cps1_interrupt2(void);      /* Everything else */
@@ -25,11 +26,11 @@ struct CPS1config
         int   base_obj;         /* Index of first obj object */
         int   base_scroll2;     /* Index of first scroll 2 object */
         int   base_scroll3;     /* Index of first scroll 3 object */
-        int   code_start;       /* Start address to skip ROM self test */
         int   alternative;      /* KLUDGE */
         int   space_scroll1;    /* Space character code for scroll 1 */
         int   space_scroll2;    /* Space character code for scroll 2 */
         int   space_scroll3;    /* Space character code for scroll 3 */
+        int   size_obj;         /* Size of obj RAM */
 };
 
 extern struct CPS1config *cps1_game_config;

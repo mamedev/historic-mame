@@ -135,7 +135,7 @@ static int get_int (char *section, char *option, char *shortcut, int def)
 	return res;
 }
 
-static int get_float (char *section, char *option, char *shortcut, float def)
+static float get_float (char *section, char *option, char *shortcut, float def)
 {
 	int i;
 	float res;

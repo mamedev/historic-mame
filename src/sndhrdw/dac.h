@@ -3,7 +3,7 @@
 #ifndef DAC_H
 #define DAC_H
 
-#define MAX_DAC 2
+#define MAX_DAC 4
 
 struct DACinterface
 {

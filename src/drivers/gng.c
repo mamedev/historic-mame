@@ -779,7 +779,7 @@ static int diamond_hiload(void)
 
 		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
-                        osd_fread(f,&RAM[0xC10E],0x80);
+			osd_fread(f,&RAM[0xC10E],0x80);
 			osd_fclose(f);
 		}
 
@@ -802,7 +802,7 @@ static void diamond_hisave(void)
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
 		/* The RAM location of the hi score table */
-                osd_fwrite(f,&RAM[0x105F],0x80);
+		osd_fwrite(f,&RAM[0x1200],0x80);
 		osd_fclose(f);
 	}
 

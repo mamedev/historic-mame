@@ -519,8 +519,6 @@ int game_attributes;
 /* Return a osd_bitmap pointer or 0 in case of error. */
 struct osd_bitmap *osd_create_display(int width,int height,int attributes)
 {
-	int i;
-
 	if (errorlog)
 		fprintf (errorlog, "width %d, height %d\n", width,height);
 
@@ -1152,6 +1150,8 @@ void clear_screen(void)
 			_movedatal(src_seg,(unsigned long)buf,dest_seg,address,columns4);
 		}
 	}
+
+	osd_mark_dirty (0,0,scrbitmap->width-1,scrbitmap->height-1,1);
 }
 
 static inline void pan_display(void)

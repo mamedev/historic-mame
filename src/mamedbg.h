@@ -179,7 +179,7 @@ typedef struct
 
 
 /* LEAVE cmNOMORE as last Command! */
-enum { cmBPX, cmBC, cmD, cmDASM, cmDUMP, cmE, cmF, cmG, cmHERE, cmJ, cmR, cmTRACE, cmWPX, cmWC, cmNOMORE };
+enum { cmBPX, cmBC, cmD, cmDASM, cmDUMP, cmE, cmF, cmG, cmHERE, cmJ, cmR, cmTRACE, cmBPW, cmWC, cmNOMORE };
 
 typedef struct
 {
@@ -204,7 +204,7 @@ static tCommands CommandInfo[] =
 	{	cmJ,	"J ",		"Jump <Address>", DisplayCode },
 	{	cmR,	"R ",		"r [register] = [register|value]", ModifyRegisters },
 	{	cmTRACE,"TRACE ",	"Trace <FileName>|OFF", TraceToFile },	/* JB 980214 */
-	{	cmWPX,	"WPX ",		"Set Watchpoint <Address>", SetWatchPoint },	/* EHC 980506 */
+	{	cmBPW,	"BPW ",		"Set Watchpoint <Address>", SetWatchPoint },	/* EHC 980506 */
 	{	cmWC,	"WC ",		"Clear Watchpoint", ClearWatchPoint },	/* EHC 980506 */
 	{   cmNOMORE },
 };

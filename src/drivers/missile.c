@@ -497,4 +497,3 @@ struct GameDriver suprmatk_driver =
 
 	hiload, hisave
 };
-

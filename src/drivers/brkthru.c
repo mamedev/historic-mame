@@ -69,6 +69,14 @@ void brkthru_1803_w(int offset, int data)
 
 	/* bit 1 = ? maybe IRQ acknowledge */
 }
+void darwin_0803_w(int offset, int data)
+{
+	/* bit 0 = NMI enable */
+	/*nmi_enable = ~data & 1;*/
+	if(errorlog) fprintf(errorlog,"0803 %02X\n",data);
+        nmi_enable = data;
+	/* bit 1 = ? maybe IRQ acknowledge */
+}
 
 void brkthru_soundlatch_w(int offset, int data)
 {
@@ -104,6 +112,35 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x1800, 0x1801, brkthru_1800_w },	/* bg scroll and color, ROM bank selection, flip screen */
 	{ 0x1802, 0x1802, brkthru_soundlatch_w },
 	{ 0x1803, 0x1803, brkthru_1803_w },	/* NMI enable, + ? */
+	{ 0x2000, 0xffff, MWA_ROM },
+	{ -1 }  /* end of table */
+};
+static struct MemoryReadAddress darwin_readmem[] =
+{
+	{ 0x1000, 0x13ff, MRA_RAM },		/* Plane 0: Text */
+	{ 0x0400, 0x07ff, MRA_RAM },
+	{ 0x1c00, 0x1fff, MRA_RAM },		/* Plane 2  Background */
+	{ 0x0000, 0x00ff, MRA_RAM },		/* Plane 1: Sprites */
+ 	{ 0x1400, 0x1bff, MRA_RAM },
+	{ 0x0800, 0x0800, input_port_0_r },	/* player controls, player start */
+	{ 0x0801, 0x0801, input_port_1_r },	/* cocktail player controls */
+	{ 0x0802, 0x0802, input_port_3_r },	/* DSW 0 */
+	{ 0x0803, 0x0803, input_port_2_r },	/* coin input & DSW */
+	{ 0x2000, 0x3fff, MRA_BANK1 },
+	{ 0x4000, 0xffff, MRA_ROM },
+	{ -1 }  /* end of table */
+};
+
+static struct MemoryWriteAddress darwin_writemem[] =
+{
+	{ 0x1000, 0x13ff, MWA_RAM, &brkthru_videoram, &brkthru_videoram_size },
+	{ 0x1c00, 0x1fff, videoram_w, &videoram, &videoram_size },
+	{ 0x0000, 0x00ff, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0x1400, 0x1bff, MWA_RAM },
+	{ 0x0100, 0x01ff, MWA_NOP  }, /*tidyup, nothing realy here?*/
+	{ 0x0800, 0x0801, brkthru_1800_w },     /* bg scroll and color, ROM bank selection, flip screen */
+	{ 0x0802, 0x0802, brkthru_soundlatch_w },
+	{ 0x0803, 0x0803, darwin_0803_w },     /* NMI enable, + ? */
 	{ 0x2000, 0xffff, MWA_ROM },
 	{ -1 }  /* end of table */
 };
@@ -210,6 +247,71 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPSETTING(    0x00, "On" )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( darwin_input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+        PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_VBLANK )	/* used only by the self test */
+
+	PORT_START	/* IN2 */
+	PORT_DIPNAME( 0x01, 0x01, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x01, "3" )
+	PORT_DIPSETTING(    0x00, "5" )
+	PORT_DIPNAME( 0x02, 0x02, "Unknown 0", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x02, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x04, 0x04, "Unknown 1", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x04, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x08, 0x08, "Unknown 2", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x08, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x10, 0x10, "Unknown 3", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x10, "On" )
+	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_COIN1 | IPF_IMPULSE, "Coin A", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 2)
+	PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_COIN2 | IPF_IMPULSE, "Coin B", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 2)
+	PORT_BITX(0x80, IP_ACTIVE_LOW, IPT_COIN3 | IPF_IMPULSE, "Coin C", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 2)
+
+	PORT_START      /* DSW0 */
+	PORT_DIPNAME( 0x03, 0x03, "Coin A", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x03, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x02, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x01, "1 Coin/3 Credits" )
+	PORT_DIPNAME( 0x0c, 0x0c, "Coin B", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x0c, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x08, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x04, "1 Coin/3 Credits" )
+	PORT_DIPNAME( 0x10, 0x10, "Unknown 4", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x10, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x20, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x20, "Cocktail" )
+	PORT_DIPNAME( 0x40, 0x40, "Demo Sounds", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x40, "On" )
+	PORT_DIPNAME( 0x80, 0x80, "Unknown 6", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+INPUT_PORTS_END
 
 
 static struct GfxLayout charlayout =
@@ -355,7 +457,7 @@ static struct MachineDriver brkthru_machine_driver =
 			1250000,        /* 1.25 Mhz ? */
 			2,	/* memory region #2 */
 			sound_readmem,sound_writemem,0,0,
-			interrupt,8	/* Set by hand. */
+                        interrupt,8     /* Set by hand. */
 		}
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
@@ -363,7 +465,7 @@ static struct MachineDriver brkthru_machine_driver =
 	0,	/* init machine */
 
 	/* video hardware */
-	32*8, 32*8, { 1*8, 31*8-1, 0*8, 32*8-1 },
+	32*8, 32*8, { 1*8, 31*8-1, 1*8, 31*8-1 },	/* not sure */
 	gfxdecodeinfo,
 	256,8+8*8+16*8,
 	brkthru_vh_convert_color_prom,
@@ -388,6 +490,54 @@ static struct MachineDriver brkthru_machine_driver =
 	}
 };
 
+static struct MachineDriver darwin_machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_M6809,
+			1200000,        /* 1.25 Mhz ? */
+			0,
+			darwin_readmem,darwin_writemem,0,0,
+			brkthru_interrupt,2
+		},
+		{
+			CPU_M6809 | CPU_AUDIO_CPU,
+			1200000,        /* 1.25 Mhz ? */
+			2,	/* memory region #2 */
+			sound_readmem,sound_writemem,0,0,
+			interrupt,6     /* Set by hand. */
+		}
+	},
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
+	0,	/* init machine */
+
+	/* video hardware */
+	32*8, 32*8, { 1*8, 31*8-1, 1*8, 31*8-1 },	/* not sure */
+	gfxdecodeinfo,
+	256,8+8*8+16*8,
+	brkthru_vh_convert_color_prom,
+
+	VIDEO_TYPE_RASTER ,
+	0,
+	brkthru_vh_start,
+	brkthru_vh_stop,
+	brkthru_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_YM2203,
+			&ym2203_interface
+		},
+		{
+			SOUND_YM3526,
+			&ym3526_interface
+		}
+	}
+};
 
 
 /***************************************************************************
@@ -427,6 +577,38 @@ ROM_START( brkthru_rom )
 
 	ROM_REGION(0x10000)	/* 64K for sound CPU */
 	ROM_LOAD( "brkthru.5", 0x8000, 0x8000, 0x364efd26 )
+ROM_END
+ROM_START( darwin_rom )
+	ROM_REGION(0x20000)     /* 64k for main CPU + 64k for banked ROMs */
+	ROM_LOAD( "darw_04.rom", 0x04000, 0x4000, 0x44937a5d )
+	ROM_LOAD( "darw_05.rom", 0x08000, 0x8000, 0x4eb1fe09 )
+	ROM_LOAD( "darw_07.rom", 0x10000, 0x8000, 0xaf168464 )
+	ROM_LOAD( "darw_06.rom", 0x18000, 0x8000, 0x6e650107 )
+
+	ROM_REGION(0x3a000)	/* temporary space for graphics */
+	ROM_LOAD( "darw_09.rom", 0x00000, 0x2000, 0x812801e6 )   /* characters */
+	/* background */
+	/* we do a lot of scatter loading here, to place the data in a format */
+	/* which can be decoded by MAME's standard functions */
+	ROM_LOAD( "darw_03.rom",  0x02000, 0x4000, 0x531c2446 )   /* bitplanes 1,2 for bank 1,2 */
+	ROM_CONTINUE(           0x0a000, 0x4000 )		/* bitplanes 1,2 for bank 3,4 */
+	ROM_LOAD( "darw_02.rom",  0x12000, 0x4000, 0xffd1f7fb )   /* bitplanes 1,2 for bank 5,6 */
+	ROM_CONTINUE(           0x1a000, 0x4000 )		/* bitplanes 1,2 for bank 7,8 */
+	ROM_LOAD( "darw_01.rom",  0x06000, 0x1000, 0xdfac73f0 )   /* bitplane 3 for bank 1,2 */
+	ROM_CONTINUE(           0x08000, 0x1000 )
+	ROM_CONTINUE(           0x0e000, 0x1000 )		/* bitplane 3 for bank 3,4 */
+	ROM_CONTINUE(           0x10000, 0x1000 )
+	ROM_CONTINUE(           0x16000, 0x1000 )		/* bitplane 3 for bank 5,6 */
+	ROM_CONTINUE(           0x18000, 0x1000 )
+	ROM_CONTINUE(           0x1e000, 0x1000 )		/* bitplane 3 for bank 7,8 */
+	ROM_CONTINUE(           0x20000, 0x1000 )
+	/* sprites */
+	ROM_LOAD( "darw_10.rom", 0x22000, 0x8000, 0x445ed6c4 )
+	ROM_LOAD( "darw_11.rom", 0x2a000, 0x8000, 0xb3db09a3 )
+	ROM_LOAD( "darw_12.rom", 0x32000, 0x8000, 0xebb10a19 )
+
+	ROM_REGION(0x10000)	/* 64K for sound CPU */
+	ROM_LOAD( "darw_08.rom", 0x8000, 0x8000, 0x5ad39fb7 )
 ROM_END
 
 
@@ -474,6 +656,51 @@ static void hisave(void)
 	}
 }
 
+static int darwin_hiload(void)
+{
+	/* get RAM pointer (this game is multiCPU, we can't assume the global */
+	/* RAM pointer is pointing to the right place) */
+	unsigned char *RAM = Machine->memory_region[0];
+
+
+	/* check if the hi score table has already been initialized */
+        if ((memcmp(&RAM[0x1b6c],"\x00\x04\x48\x30",4) == 0 )&& \
+		(memcmp(&RAM[0x1b93],"\x8b\x8b\x8b\x8a\x8a\x8a\x89\x89\x89" ,9) == 0))
+	{
+		void *f;
+
+
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+
+                        osd_fread(f,&RAM[0x1b6c],0x10);
+			osd_fread(f,&RAM[0x1b93],0x09);
+                        osd_fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;	/* we can't load the hi scores yet */
+}
+
+
+
+static void darwin_hisave(void)
+{
+	void *f;
+	/* get RAM pointer (this game is multiCPU, we can't assume the global */
+	/* RAM pointer is pointing to the right place) */
+	unsigned char *RAM = Machine->memory_region[0];
+
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&RAM[0x1b6c],0x10);
+		osd_fwrite(f,&RAM[0x1b93],0x09);
+		osd_fclose(f);
+	}
+}
+
 
 
 struct GameDriver brkthru_driver =
@@ -494,4 +721,23 @@ struct GameDriver brkthru_driver =
 	ORIENTATION_DEFAULT,
 
 	hiload, hisave
+};
+struct GameDriver darwin_driver =
+{
+	"Darwin 4078",
+	"darwin",
+	"Phil Stroffolino (MAME driver)\nCarlos Lozano (Breakthru hardware info)\nNicola Salmoria (MAME driver)\nTim Lindquist (color info)\nMarco Cassili\nBryan McPhail (sound)\nVille Laitinen (MAME driver)",
+	&darwin_machine_driver,
+
+	darwin_rom,
+	0, 0,
+	0,
+	0,
+
+	darwin_input_ports,
+
+	color_prom, 0, 0,	/* wrong! */
+	ORIENTATION_ROTATE_270,
+
+	darwin_hiload, darwin_hisave
 };

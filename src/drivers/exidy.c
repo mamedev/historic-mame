@@ -596,7 +596,7 @@ static unsigned char spectar_palette[] =
 };
 
 
-static unsigned char colortable[] =
+static unsigned short colortable[] =
 {
 	/* one-bit characters */
 	0, 4,  /* chars 0x00-0x3F */
@@ -612,7 +612,7 @@ static unsigned char colortable[] =
 
 };
 
-static unsigned char pepper2_colortable[] =
+static unsigned short pepper2_colortable[] =
 {
 	/* two-bit characters */
 	/* (Because this is 2-bit color, the colorspace is only divided
@@ -1116,7 +1116,7 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 31*8-1, 0*8, 32*8-1 },
 	gfxdecodeinfo,
-	sizeof(palette)/3,sizeof(colortable),
+	sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
 	0,
 
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY|VIDEO_MODIFIES_PALETTE,
@@ -1159,7 +1159,7 @@ static struct MachineDriver venture_machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 31*8-1, 0*8, 32*8-1 },
 	gfxdecodeinfo,
-	sizeof(palette)/3,sizeof(colortable),
+	sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
 	0,
 
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY|VIDEO_MODIFIES_PALETTE,
@@ -1239,7 +1239,7 @@ static struct MachineDriver targ_machine_driver =
     /* video hardware */
 	32*8, 32*8, { 0*8, 31*8-1, 0*8, 32*8-1 },
 	targ_gfxdecodeinfo,
-    sizeof(targ_palette)/3,sizeof(colortable),
+    sizeof(targ_palette)/3,sizeof(colortable)/sizeof(unsigned short),
 	0,
 
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,

@@ -494,7 +494,7 @@ static unsigned char amidars_color_prom[] =
 static struct AY8910interface scramble_ay8910_interface =
 {
 	2,	/* 2 chips */
-	14318000/8,	/* 1.78975 Mhz */
+	14318000/8,	/* 1.78975 MHz */
 	{ 0x60ff, 0x60ff },
 	{ soundlatch_r },
 	{ scramble_portB_r },
@@ -505,7 +505,7 @@ static struct AY8910interface scramble_ay8910_interface =
 static struct AY8910interface frogger_ay8910_interface =
 {
 	1,	/* 1 chip */
-	14318000/8,	/* 1.78975 Mhz */
+	14318000/8,	/* 1.78975 MHz */
 	{ 0x60ff },
 	{ soundlatch_r },
 	{ frogger_portB_r },
@@ -521,14 +521,14 @@ static struct MachineDriver scramble_machine_driver =
 	{
 		{
 			CPU_Z80,
-			18432000/6,	/* 3.072 Mhz */
+			18432000/6,	/* 3.072 MHz */
 			0,
 			scramble_readmem,writemem,0,0,
 			scramble_vh_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			14318000/8,	/* 1.78975 Mhz */
+			14318000/8,	/* 1.78975 MHz */
 			2,	/* memory region #2 */
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
@@ -567,14 +567,14 @@ static struct MachineDriver theend_machine_driver =
 	{
 		{
 			CPU_Z80,
-			18432000/6,	/* 3.072 Mhz */
+			18432000/6,	/* 3.072 MHz */
 			0,
 			readmem,writemem,0,0,
 			scramble_vh_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			14318000/8,	/* 1.78975 Mhz */
+			14318000/8,	/* 1.78975 MHz */
 			2,	/* memory region #2 */
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
@@ -612,14 +612,14 @@ static struct MachineDriver froggers_machine_driver =
 	{
 		{
 			CPU_Z80,
-			18432000/6,	/* 3.072 Mhz */
+			18432000/6,	/* 3.072 MHz */
 			0,
 			readmem,writemem,0,0,
 			scramble_vh_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			14318000/8,	/* 1.78975 Mhz */
+			14318000/8,	/* 1.78975 MHz */
 			2,	/* memory region #2 */
 			froggers_sound_readmem,froggers_sound_writemem,froggers_sound_readport,froggers_sound_writeport,
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */

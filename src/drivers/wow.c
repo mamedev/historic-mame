@@ -381,7 +381,7 @@ static unsigned char palette[] =
 
 enum { BLACK,YELLOW,BLUE,RED,WHITE };
 
-static unsigned char colortable[] =
+static unsigned short colortable[] =
 {
 	BLACK,YELLOW,BLUE,RED,
 	BLACK,WHITE,BLACK,RED	/* not used by the game, here only for the dip switch menu */
@@ -491,7 +491,7 @@ static struct MachineDriver wow_machine_driver =
 	/* video hardware */
 	320, 204, { 0, 320-1, 0, 204-1 },
 	0,	/* no gfxdecodeinfo - bitmapped display */
-	sizeof(palette)/3,sizeof(colortable),
+	sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
 	0,
 
 	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
@@ -683,7 +683,7 @@ static struct MachineDriver robby_machine_driver =
 	/* video hardware */
 	320, 204, { 1, 320-1, 0, 204-1 },
 	0,	/* no gfxdecodeinfo - bitmapped display */
-	sizeof(palette)/3,sizeof(colortable),
+	sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
 	0,
 
 	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
@@ -921,7 +921,7 @@ static struct MachineDriver gorf_machine_driver =
 	/* this isn't the case: cocktail mode would be clipped on the wrong side */
 	204, 320, { 0, 204-1, 0, 320-1 },
 	0,	/* no gfxdecodeinfo - bitmapped display */
-	sizeof(palette)/3,sizeof(colortable),
+	sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
 	0,
 
 	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
@@ -1100,7 +1100,7 @@ static struct MachineDriver spacezap_machine_driver =
 	/* video hardware */
 	320, 204, { 0, 320-1, 0, 204-1 },
 	0,	/* no gfxdecodeinfo - bitmapped display */
-	sizeof(palette)/3,sizeof(colortable),
+	sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
 	0,
 
 	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
@@ -1288,7 +1288,7 @@ static struct MachineDriver seawolf_machine_driver =
 	/* video hardware */
 	320, 204, { 1, 320-1, 0, 204-1 },
 	0,	/* no gfxdecodeinfo - bitmapped display */
-	sizeof(palette)/3,sizeof(colortable),
+	sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
 	0,
 
 	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
@@ -1335,7 +1335,7 @@ static void seawolf_hisave(void)
 
 }
 
-struct GameDriver seawolf_driver =
+struct GameDriver seawolf2_driver =
 {
     "Sea Wolf II",
 	"seawolf2",
@@ -1475,7 +1475,7 @@ static struct MachineDriver ebases_machine_driver =
 	/* video hardware */
 	320, 210, { 1, 320-1, 0, 192-1 },
 	0,	/* no gfxdecodeinfo - bitmapped display */
-	sizeof(palette)/3,sizeof(colortable),
+	sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
 	0,
 
 	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,

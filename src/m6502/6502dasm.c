@@ -103,7 +103,7 @@ int Dasm6502(char *S,word A)
 
     default: sprintf(S,".db $%02X; <Invalid OPcode>",OP/2);
   }
-  return(B-A);
+  return (word)(B-A);
 }
 
 /** Debug6502() **********************************************/

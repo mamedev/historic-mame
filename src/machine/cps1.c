@@ -35,9 +35,14 @@ void cps1_dump_driver(void)
 
 int cps1_input_r(int offset)
 {
-       return (readinputport (offset) << 8) + readinputport (offset+1);
+       return (readinputport (offset/2) << 8);
 }
 
+int cps1_player_input_r(int offset)
+{
+       return (readinputport (offset + 4 )+
+                (readinputport (offset+1 + 4 )<<8));
+}
 
 int cps1_interrupt(void)
 {

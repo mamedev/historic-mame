@@ -9,6 +9,12 @@
   Please do not send anything large to this address without asking me
   first.
 
+  Trojan contains a third Z80 to drive the game samples. This third
+  Z80 outputs the ADPCM data byte at a time to the sound hardware. Since
+  this will be expensive to do this extra processor is not emulated.
+
+  Instead, the ADPCM data is lifted directly from the sound ROMS.
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -42,24 +48,33 @@ int  trojan_vh_start(void);
 void trojan_vh_stop(void);
 void trojan_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-/*
-Call this function from somewhere to trigger the ADPCM. I can't find
-the output port.
-*/
-
-void trojan_adpcm_w(int offset, int data)
+void trojan_sound_cmd_w(int offset, int data)
 {
-    ADPCM_trigger(0, data&0x07);
-}
+       soundlatch_w(offset, data);
+       if (data != 0xff && (data & 0x08))
+       {
+              /*
+              I assume that Trojan's ADPCM output is directly derived
+              from the sound code. I can't find an output port that
+              does this on either the sound board or main board.
+              */
+              ADPCM_trigger(0, data & 0x07);
+        }
 
+#ifdef MAME_DEBUG
+        if (errorlog)
+        {
+               fprintf(errorlog, "Sound Code=%02x\n", data);
+        }
+#endif
+}
 
 
 static struct MemoryReadAddress readmem[] =
 {
         { 0x0000, 0x7fff, MRA_ROM },   /* CODE */
         { 0x8000, 0xbfff, MRA_BANK1 },  /* CODE */
-        { 0xc000, 0xdfff, MRA_RAM },
-        { 0xe000, 0xf7ff, MRA_RAM },
+        { 0xc000, 0xf7ff, MRA_RAM },
         { 0xf808, 0xf808, input_port_0_r },
         { 0xf809, 0xf809, input_port_1_r },
         { 0xf80a, 0xf80a, input_port_2_r },
@@ -76,7 +91,7 @@ static struct MemoryWriteAddress writemem[] =
         { 0xe400, 0xe7ff, colorram_w, &colorram },
         { 0xe800, 0xebff, lwings_background_w, &lwings_backgroundram, &lwings_backgroundram_size },
         { 0xec00, 0xefff, lwings_backgroundattrib_w, &lwings_backgroundattribram },
-        { 0xde00, 0xdf7f, MWA_RAM, &spriteram, &spriteram_size },
+        { 0xde00, 0xdfff, MWA_RAM, &spriteram, &spriteram_size },
         { 0xf000, 0xf7ff, lwings_paletteram_w, &lwings_paletteram, &lwings_paletteram_size },
         { 0xf800, 0xf801, MWA_RAM, &trojan_scrollx },
         { 0xf802, 0xf803, MWA_RAM, &trojan_scrolly },
@@ -90,6 +105,31 @@ static struct MemoryWriteAddress writemem[] =
         { 0x0000, 0xbfff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
+
+/* TROJAN - intercept sound command write for ADPCM samples */
+
+static struct MemoryWriteAddress trojan_writemem[] =
+{
+        { 0xc000, 0xddff, MWA_RAM },
+        { 0xe000, 0xe3ff, videoram_w, &videoram, &videoram_size },
+        { 0xe400, 0xe7ff, colorram_w, &colorram },
+        { 0xe800, 0xebff, lwings_background_w, &lwings_backgroundram, &lwings_backgroundram_size },
+        { 0xec00, 0xefff, lwings_backgroundattrib_w, &lwings_backgroundattribram },
+        { 0xde00, 0xdfff, MWA_RAM, &spriteram, &spriteram_size },
+        { 0xf000, 0xf7ff, lwings_paletteram_w, &lwings_paletteram, &lwings_paletteram_size },
+        { 0xf800, 0xf801, MWA_RAM, &trojan_scrollx },
+        { 0xf802, 0xf803, MWA_RAM, &trojan_scrolly },
+        { 0xf804, 0xf804, MWA_RAM, &trojan_bk_scrollx },
+        { 0xf805, 0xf805, MWA_RAM, &trojan_bk_scrolly },
+        { 0xf80c, 0xf80c, trojan_sound_cmd_w },
+        { 0xf80e, 0xf80e, lwings_bankswitch_w },
+        { 0xf808, 0xf809, MWA_RAM, &lwings_scrolly},
+        { 0xf80a, 0xf80b, MWA_RAM, &lwings_scrollx},
+        { 0xf80d, 0xf80d, MWA_RAM }, /* Watchdog (same as lower byte scroll y) */
+        { 0x0000, 0xbfff, MWA_ROM },
+	{ -1 }	/* end of table */
+};
+
 
 
 static struct MemoryReadAddress sound_readmem[] =
@@ -387,8 +427,6 @@ static struct GfxLayout spritelayout =
 };
 
 
-
-
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
         /*   start    pointer     colour start   number of colours */
@@ -404,7 +442,7 @@ static struct YM2203interface ym2203_interface =
 {
 	2,			/* 2 chips */
 	1500000,	/* 1.5 MHz (?) */
-	{ YM2203_VOL(100,0x20ff), YM2203_VOL(100,0x20ff) },
+        { YM2203_VOL(50,0x10ff), YM2203_VOL(50,0x10ff) },
 	{ 0 },
 	{ 0 },
         { 0 },
@@ -719,20 +757,20 @@ Sample 5 doesn't play properly.
 
 */
 
-ADPCM_SAMPLES_START(trojan_samples)
-	ADPCM_SAMPLE(0x01, 0x00a7, (0x0aa9-0x00a7)*2 )
-	ADPCM_SAMPLE(0x02, 0x0aa9, (0x12ab-0x0aa9)*2 )
-	ADPCM_SAMPLE(0x03, 0x12ab, (0x17ad-0x12ab)*2 )
-	ADPCM_SAMPLE(0x04, 0x17ad, (0x22af-0x17ad)*2 )
-	ADPCM_SAMPLE(0x05, 0x22af, (0x2db1-0x22af)*2 )
-	ADPCM_SAMPLE(0x06, 0x2db1, (0x310a-0x2db1)*2 )
-	ADPCM_SAMPLE(0x07, 0x310a, (0x3cb3-0x310a)*2 )
+ADPCM_SAMPLES_START(trojan_samples) /* Trojan J samples are the same */
+        ADPCM_SAMPLE(0x00, 0x00a7, (0x0aa9-0x00a7)*2 )
+        ADPCM_SAMPLE(0x01, 0x0aa9, (0x12ab-0x0aa9)*2 )
+        ADPCM_SAMPLE(0x02, 0x12ab, (0x17ad-0x12ab)*2 )
+        ADPCM_SAMPLE(0x03, 0x17ad, (0x22af-0x17ad)*2 )
+        ADPCM_SAMPLE(0x04, 0x22af, (0x2db1-0x22af)*2 )
+        ADPCM_SAMPLE(0x05, 0x2db1, (0x310a-0x2db1)*2 )
+        ADPCM_SAMPLE(0x06, 0x310a, (0x3cb3-0x310a)*2 )
 ADPCM_SAMPLES_END
 
 static struct ADPCMinterface adpcm_interface =
 {
 	1,			/* 1 channel */
-	4000,       /* 4000Hz playback */
+        4000,                   /* 4000Hz playback */
 	3,			/* memory region 3 */
 	0,			/* init function */
 	{ 255 }
@@ -748,7 +786,7 @@ static struct MachineDriver machine_driver_trojan =
 			CPU_Z80,
 			4000000,	/* 4 Mhz (?) */
 			0,
-			readmem,writemem,0,0,
+                        readmem,trojan_writemem,0,0,
 			lwings_interrupt,2
 		},
 		{
@@ -865,6 +903,51 @@ ROM_START( trojanj_rom )
 ROM_END
 
 
+
+static int trojan_hiload(void)
+{
+        /* get RAM pointer (this game is multiCPU, we can't assume the global */
+        /* RAM pointer is pointing to the right place) */
+        unsigned char *RAM = Machine->memory_region[0];
+
+
+        /* check if the hi score table has already been initialized */
+        if (memcmp(&RAM[0xce97],"\x00\x23\x60",3) == 0)
+        {
+                void *f;
+
+
+                if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+                {
+                        osd_fread(f,&RAM[0xce00],13*7);
+                        RAM[0xce97] = RAM[0xce00];
+                        RAM[0xce98] = RAM[0xce01];
+                        RAM[0xce99] = RAM[0xce02];
+                        osd_fclose(f);
+                }
+
+                return 1;
+        }
+        else return 0;  /* we can't load the hi scores yet */
+}
+
+static void trojan_hisave(void)
+{
+        void *f;
+        /* get RAM pointer (this game is multiCPU, we can't assume the global */
+        /* RAM pointer is pointing to the right place) */
+        unsigned char *RAM = Machine->memory_region[0];
+
+
+        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+        {
+                osd_fwrite(f,&RAM[0xce00],13*7);
+                osd_fclose(f);
+        }
+}
+
+
+
 struct GameDriver trojan_driver =
 {
 	"Trojan",
@@ -881,7 +964,7 @@ struct GameDriver trojan_driver =
 
 	NULL, 0, 0,
 	ORIENTATION_DEFAULT,
-	0, 0
+	trojan_hiload, trojan_hisave
 };
 
 struct GameDriver trojanj_driver =
@@ -894,12 +977,12 @@ struct GameDriver trojanj_driver =
 	trojanj_rom,
 	0, 0,
 	0,
-	(void *)trojan_samples, /* sound_prom */
+        (void *)trojan_samples, /* sound_prom */
 
 	trojan_input_ports,
 
 	NULL, 0, 0,
 	ORIENTATION_DEFAULT,
-	0, 0
+	trojan_hiload, trojan_hisave
 };
 

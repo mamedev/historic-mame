@@ -375,16 +375,6 @@ static unsigned char read_ram (struct ExtMemory *table, int offset)
 	return 0;
 }
 
-/* write a byte at the address <offset> in one of the tables */
-static void write_ram (struct ExtMemory *table, int offset, unsigned char data)
-{
-	struct ExtMemory *ext;
-
-	for (ext = table; ext->data; ext++)
-		if (ext->start <= offset && ext->end >= offset)
-			*(ext->data + (offset - ext->start)) = data;
-}
-
 /* make a copy of each ram area from CPU 0 ram to the specified table */
 static void backup_ram (struct ExtMemory *table)
 {

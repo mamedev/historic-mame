@@ -1,13 +1,14 @@
 #include "vidhrdw/generic.h"
 
-int tigerroad_base_bank;
-int tigerroad_scrollx;
-int tigerroad_scrolly;
+int tigeroad_base_bank;
+unsigned char *tigeroad_scrollram;
+
+
 
 static void render_background( struct osd_bitmap *bitmap, int priority );
 static void render_background( struct osd_bitmap *bitmap, int priority ){
-	int scrollx = 	tigerroad_scrollx & 0xfff; /* 0..4096 */
-	int scrolly =	tigerroad_scrolly & 0xfff; /* 0..4096 */
+	int scrollx = 	READ_WORD(&tigeroad_scrollram[0]) & 0xfff; /* 0..4096 */
+	int scrolly =	READ_WORD(&tigeroad_scrollram[2]) & 0xfff; /* 0..4096 */
 
 	unsigned char *p = Machine->memory_region[2];
 
@@ -41,7 +42,7 @@ static void render_background( struct osd_bitmap *bitmap, int priority ){
 			int flipx = attributes&0x20;
 			int flipy = 0;
 			int color = attributes&0xF;
-			int bank = tigerroad_base_bank+(attributes>>6);
+			int bank = tigeroad_base_bank+(attributes>>6);
 
 			drawgfx(bitmap,Machine->gfx[0],
 				tile_number + bank*256,
@@ -63,22 +64,22 @@ static void render_background( struct osd_bitmap *bitmap, int priority ){
 
 static void render_sprites( struct osd_bitmap *bitmap );
 static void render_sprites( struct osd_bitmap *bitmap ){
-	unsigned char *source = &spriteram[0x500] - 8;
+	unsigned char *source = &spriteram[spriteram_size] - 8;
 	unsigned char *finish = spriteram;
 
 	while( source>=finish ){
 		int tile_number = READ_WORD( source );
 		if( tile_number!=0xFFF ){
 			int attributes = READ_WORD( source+2 );
-			int sy = READ_WORD( source+4 );
-			int sx = READ_WORD( source+6 );
+			int sy = READ_WORD( source+4 ) & 0x1ff;
+			int sx = READ_WORD( source+6 ) & 0x1ff;
 
 			int flipx = attributes&2;
 			int flipy = attributes&1;
 			int color = (attributes>>2)&0xf;
 
-			if( sx>0x1F0 ) sx -= 0x200;
-			if( sy>0x1F0 ) sy -= 0x200;
+			if( sx>0x100 ) sx -= 0x200;
+			if( sy>0x100 ) sy -= 0x200;
 
 			drawgfx(bitmap,Machine->gfx[1],
 				tile_number,
@@ -100,7 +101,7 @@ static void render_text( struct osd_bitmap *bitmap ){
 		int data = READ_WORD( source );
 		int attributes = data>>8;
 		int flipy = attributes&0x10;
-		int color = attributes&0xF;
+		int color = attributes&0x0F;
 
 		int tile_number = data&0xFF;
 
@@ -120,8 +121,8 @@ static void render_text( struct osd_bitmap *bitmap ){
 	}
 }
 
-void tigerroad_vh_screenrefresh(struct osd_bitmap *bitmap);
-void tigerroad_vh_screenrefresh(struct osd_bitmap *bitmap){
+void tigeroad_vh_screenrefresh(struct osd_bitmap *bitmap);
+void tigeroad_vh_screenrefresh(struct osd_bitmap *bitmap){
 	render_background( bitmap,0 );
 	render_sprites( bitmap );
 	render_background( bitmap,1 );
@@ -129,8 +130,8 @@ void tigerroad_vh_screenrefresh(struct osd_bitmap *bitmap){
 }
 
 
-void tigerroad_SetPaletteEntry( int offset, int data );
-void tigerroad_SetPaletteEntry( int offset, int data ){
+void tigeroad_SetPaletteEntry( int offset, int data );
+void tigeroad_SetPaletteEntry( int offset, int data ){
 	int red		= (data>>8) & 0xf;
 	int green	= (data>>4) & 0xF;
 	int blue	= data & 0xf;
@@ -156,15 +157,4 @@ void tigerroad_SetPaletteEntry( int offset, int data ){
 			}
 		}
 	}
-}
-
-
-int tigerroad_vh_start (void);
-int tigerroad_vh_start (void){
-	tigerroad_base_bank = tigerroad_scrollx = tigerroad_scrolly = 0;
-	return 0;
-}
-
-void tigerroad_vh_stop (void);
-void tigerroad_vh_stop (void){
 }

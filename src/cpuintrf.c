@@ -1230,7 +1230,11 @@ static void cpu_inittimers (void)
 	refresh_timer = timer_set (TIME_NEVER, 0, NULL);
 
 	/* while we're at it, compute the scanline times */
-	scanline_period = (refresh_period - TIME_IN_USEC (Machine->drv->vblank_duration)) / (double)Machine->drv->screen_height;
+	if (Machine->drv->vblank_duration)
+		scanline_period = (refresh_period - TIME_IN_USEC (Machine->drv->vblank_duration)) /
+				(double)(Machine->drv->visible_area.max_y - Machine->drv->visible_area.min_y + 1);
+	else
+		scanline_period = refresh_period / (double)Machine->drv->screen_height;
 	scanline_period_inv = 1.0 / scanline_period;
 
 	/* allocate an infinite watchdog timer; it will be set to a sane value on a read/write */

@@ -4,9 +4,8 @@
 
   This file contains video emulation for:
 
-  	* Karnov (Data East USA, 1987)
-    * Karnov (Japan rom set - Data East Corp, 1987)
-    * Chelnov (Japan rom set - Data East Corp, 1988)
+  	* Karnov
+    * Chelnov
 
 
 Sprite Y-flip still not found...is it needed?
@@ -19,6 +18,10 @@ Sprite Y-flip still not found...is it needed?
 unsigned char *karnov_foreground,*karnov_sprites,*dirty_f;
 static struct osd_bitmap *bitmap_f;
 int karnov_scroll[4];
+
+extern int karnov_a,karnov_b,karnov_c,karnov_pal;
+
+//#define KARNOV_ATTR
 
 /******************************************************************************/
 
@@ -68,7 +71,7 @@ void karnov_vh_screenrefresh(struct osd_bitmap *bitmap)
 
   /* Sprites */
   for (offs = 0;offs <0x800;offs += 8) {
-   	int x,y,sprite,bank,colour,fx,fy,extra;
+   	int x,y,sprite,colour,fx,fy,extra;
 
     /* bit 7 of 1st bytes seems to be whether sprite is displayed... */
     y=READ_WORD (&karnov_sprites[offs]);
@@ -76,9 +79,8 @@ void karnov_vh_screenrefresh(struct osd_bitmap *bitmap)
 
     y=y&0x1ff;
     sprite=READ_WORD (&karnov_sprites[offs+6]);
-    colour=(sprite&0xf000)>>12;
+    colour=((sprite&0xf000)>>12)+16;
     sprite=0xfff&sprite;
-    if (sprite<2048) bank=2; else {bank=3; sprite-=2048;}
     x=0x1ff&READ_WORD (&karnov_sprites[offs+4]);
 
     /* Convert the co-ords..*/
@@ -94,16 +96,16 @@ void karnov_vh_screenrefresh(struct osd_bitmap *bitmap)
 
     if (extra) y=y-16;
 
-    drawgfx(bitmap,Machine->gfx[bank],
+    drawgfx(bitmap,Machine->gfx[2],
 				sprite,
-				colour+16,fx,0,x,y,
+				colour,fx,0,x,y,
 				0,TRANSPARENCY_PEN,0);
 
     /* 1 more sprite */
     if (extra) {
-    	drawgfx(bitmap,Machine->gfx[bank],
+    	drawgfx(bitmap,Machine->gfx[2],
 				sprite+1,
-				colour+16,fx,fy,x,y+16,
+				colour,fx,fy,x,y+16,
 				0,TRANSPARENCY_PEN,0);
     }
    }
@@ -112,14 +114,42 @@ void karnov_vh_screenrefresh(struct osd_bitmap *bitmap)
    for (offs = videoram_size - 2;offs >= 0;offs -= 2) {
       tile=READ_WORD (&videoram[offs]);
       if (!tile) continue;
-      color=(0x8000&tile)>>15;
+      color=(0xC000&tile)>>14;
       tile=0xfff&tile;
 			mx = (offs/2) % 32;
 			my = (offs/2) / 32;
 			drawgfx(bitmap,Machine->gfx[0],
 				tile,color,0,0,8*mx,8*my,
-				&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
+				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
    }
+
+/* On-screen debugging of unknown output ports */
+#ifdef KARNOV_ATTR
+  {
+   	int i,j;
+	char buf[20];
+	int trueorientation;
+	struct osd_bitmap *bitmap = Machine->scrbitmap;
+
+	trueorientation = Machine->orientation;
+	Machine->orientation = ORIENTATION_DEFAULT;
+
+	sprintf(buf,"%04X",karnov_a);
+	for (j = 0;j < 4;j++)
+		drawgfx(bitmap,Machine->uifont,buf[j],DT_COLOR_WHITE,0,0,3*8*0+8*j,8*2,0,TRANSPARENCY_NONE,0);
+
+ 	sprintf(buf,"%04X",karnov_b);
+	for (j = 0;j < 4;j++)
+		drawgfx(bitmap,Machine->uifont,buf[j],DT_COLOR_WHITE,0,0,3*8*3+8*j,8*2,0,TRANSPARENCY_NONE,0);
+
+  sprintf(buf,"%04X",karnov_c);
+	for (j = 0;j < 4;j++)
+		drawgfx(bitmap,Machine->uifont,buf[j],DT_COLOR_WHITE,0,0,3*8*6+8*j,8*2,0,TRANSPARENCY_NONE,0);
+
+
+	Machine->orientation = trueorientation;
+}
+#endif
 }
 
 /******************************************************************************/
@@ -131,7 +161,6 @@ void karnov_foreground_w(int offset, int data)
 }
 
 /******************************************************************************/
-
 
 void karnov_vh_stop (void)
 {
@@ -153,6 +182,8 @@ int karnov_vh_start (void)
 	karnov_foreground=malloc(0x1000);
   memset(karnov_foreground,0,0x1000);
   memset(dirty_f,1,0x1000);
+
+  karnov_pal=0;
 
 	return generic_vh_start();
 }
@@ -198,7 +229,6 @@ void karnov_palette(void)
       Machine->gfx[0]->colortable[offset/2]=Machine->pens[pen];
       Machine->gfx[1]->colortable[offset/2]=Machine->pens[pen];
       Machine->gfx[2]->colortable[offset/2]=Machine->pens[pen];
-      Machine->gfx[3]->colortable[offset/2]=Machine->pens[pen];
    	  continue;
     }
 
@@ -217,10 +247,10 @@ void karnov_palette(void)
   Machine->gfx[0]->colortable[offset/2]=Machine->pens[kColours_Allocated];
   Machine->gfx[1]->colortable[offset/2]=Machine->pens[kColours_Allocated];
   Machine->gfx[2]->colortable[offset/2]=Machine->pens[kColours_Allocated];
-  Machine->gfx[3]->colortable[offset/2]=Machine->pens[kColours_Allocated];
   kColours_Allocated++;
   }
 }
+
 
 /******************************************************************************/
 

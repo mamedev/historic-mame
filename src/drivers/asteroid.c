@@ -153,6 +153,10 @@ void asteroid_thump_w(int offset,int data);
 void asteroid_sounds_w(int offset,int data);
 void astdelux_sounds_w(int offset,int data);
 void llander_sounds_w(int offset,int data);
+void llander_snd_reset_w(int offset,int data);
+int llander_sh_start(void);
+void llander_sh_stop(void);
+void llander_sh_update(void);
 
 int asteroid_IN0_r(int offset);
 int asteroid_IN1_r(int offset);
@@ -232,9 +236,9 @@ static struct MemoryWriteAddress astdelux_writemem[] =
    It only seems to affect the selftest */
 static struct MemoryReadAddress llander_readmem[] =
 {
-	{ 0x0000, 0x01ff, MRA_RAM },
-/*	{ 0x0000, 0x00ff, llander_zeropage_r },*/
-/*	{ 0x0100, 0x01ff, MRA_RAM },*/
+/*	{ 0x0000, 0x01ff, MRA_RAM }, */
+	{ 0x0000, 0x00ff, llander_zeropage_r },
+	{ 0x0100, 0x01ff, MRA_RAM },
 	{ 0x6000, 0x7fff, MRA_ROM },
 	{ 0x4800, 0x5fff, MRA_ROM }, /* vector rom */
 	{ 0xf800, 0xffff, MRA_ROM }, /* for the reset / interrupt vectors */
@@ -248,15 +252,15 @@ static struct MemoryReadAddress llander_readmem[] =
 
 static struct MemoryWriteAddress llander_writemem[] =
 {
-	{ 0x0000, 0x01ff, MWA_RAM },
-/*	{ 0x0000, 0x00ff, llander_zeropage_w },*/
-/*	{ 0x0100, 0x01ff, MWA_RAM },*/
+/*	{ 0x0000, 0x01ff, MWA_RAM }, */
+	{ 0x0000, 0x00ff, llander_zeropage_w },
+	{ 0x0100, 0x01ff, MWA_RAM },
 	{ 0x4000, 0x47ff, MWA_RAM },
 	{ 0x3000, 0x3000, avgdvg_go },
 	{ 0x3200, 0x3200, llander_led_w },
 	{ 0x3400, 0x3400, watchdog_reset_w },
 	{ 0x3c00, 0x3c00, llander_sounds_w },
-/*	{ 0x3e00, 0x3e00, llander_snd_reset }, */
+	{ 0x3e00, 0x3e00, llander_snd_reset_w },
 	{ 0x6000, 0x7fff, MWA_ROM },
 	{ 0x4800, 0x5fff, MWA_ROM }, /* vector rom */
 	{ -1 }  /* end of table */
@@ -399,8 +403,8 @@ INPUT_PORTS_START ( llander_input_ports )
 	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT ( 0x04, IP_ACTIVE_HIGH, IPT_COIN2 )
 	PORT_BIT ( 0x08, IP_ACTIVE_LOW, IPT_COIN3 )
-	PORT_BIT ( 0x10, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BITX( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON1, "Abort", OSD_KEY_A, OSD_JOY_FIRE, 0 )
+	PORT_BITX( 0x10, IP_ACTIVE_HIGH, IPT_START2, "Select Game", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0 )
+	PORT_BITX( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON1, "Abort", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0 )
 	PORT_BIT ( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
 	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY )
 
@@ -648,11 +652,13 @@ static struct MachineDriver astdelux_machine_driver =
 };
 
 
-
-static struct Samplesinterface llander_samples_interface =
+static struct CustomSound_interface llander_custom_interface =
 {
-	3	/* 3 channels */
+	llander_sh_start,
+	llander_sh_stop,
+	llander_sh_update
 };
+
 
 static struct MachineDriver llander_machine_driver =
 {
@@ -660,11 +666,11 @@ static struct MachineDriver llander_machine_driver =
 	{
 		{
 			CPU_M6502,
-			1500000,	/* 1.5 Mhz */
+			1500000,			/* 1.5 Mhz */
 			0,
 			llander_readmem, llander_writemem,0,0,
-			0, 0, /* no vblank based interrupt */
-			llander_interrupt, 250 /* 250Hz? */
+			0, 0,				/* no vblank based interrupt */
+			llander_interrupt, 250 		/* 3KHz/12 as described in schematics */
 		}
 	},
 	40, 0,	/* frames per second, vblank duration (vector game, so no vblank) */
@@ -687,8 +693,8 @@ static struct MachineDriver llander_machine_driver =
 	0,0,0,0,
 	{
 		{
-			SOUND_SAMPLES,
-			&llander_samples_interface
+			SOUND_CUSTOM,
+			&llander_custom_interface
 		}
 	}
 };
@@ -865,14 +871,6 @@ struct GameDriver astdelu1_driver =
 };
 #endif
 
-static const char *llander_sample_names[] =
-{
-	"thrust.sam",
-	"beep.sam",
-	"explode1.sam",
-	0	/* end of array */
-};
-
 ROM_START( llander_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "034572.02", 0x6000, 0x0800, 0xee299da1 )
@@ -891,13 +889,14 @@ struct GameDriver llander_driver =
 	"Lunar Lander",
 	"llander",
 	"Brad Oliver (Mame Driver)\n"
+	"Keith Wilkins (Sound)\n"
 	VECTOR_TEAM,
 
 	&llander_machine_driver,
 
 	llander_rom,
 	0, 0,
-	llander_sample_names,
+	0,
 	0,	/* sound_prom */
 
 	llander_input_ports,

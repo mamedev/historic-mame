@@ -156,7 +156,8 @@ int init_machine(void)
 		j = 0;
 		while (Machine->memory_region[j]) j++;
 
-		if ((ROM = malloc(0x10000)) == 0)
+		/* allocate a ROM array of the same length of memory region #0 */
+		if ((ROM = malloc(gamedrv->rom->offset)) == 0)
 		{
 			free(Machine->input_ports);
 			/* TODO: should also free the allocated memory regions */
@@ -336,18 +337,17 @@ int updatescreen(void)
 #ifndef macintosh /* LBO 061497 */
 	/* if the user pressed ESC, stop the emulation */
 	if (osd_key_pressed(OSD_KEY_ESC))
+#else
+	/* LBO - moved most of the key-handling stuff to the OS routines so menu selections       */
+	/* can get trapped as well rather than having a sick hack in the osd_key_pressed routine  */
+	if (osd_handle_event() == true)
+#endif
 	{
 #ifdef BETA_VERSION
 		beta_count = 0;
 #endif
 		return 1;
 	}
-#else
-	/* LBO - moved most of the key-handling stuff to the OS routines so menu selections       */
-	/* can get trapped as well rather than having a sick hack in the osd_key_pressed routine  */
-	if (osd_handle_event() == true)
-		return 1;
-#endif
 
 
 	/* if the user pressed F3, reset the emulation */

@@ -69,7 +69,6 @@ static struct MemoryWriteAddress writemem_sound[] =
 
 INPUT_PORTS_START( input_ports )
 	PORT_START	/* IN0 */
-	/* this port is correct. The other two are completely made up */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
@@ -280,6 +279,51 @@ ROM_END
 
 
 
+static int hiload(void)
+{
+	/* get RAM pointer (this game is multiCPU, we can't assume the global */
+	/* RAM pointer is pointing to the right place) */
+	unsigned char *RAM = Machine->memory_region[0];
+
+
+	/* check if the hi score table has already been initialized */
+	if (memcmp(&RAM[0x0900],"\x53\x48\x4f",3) == 0)
+	{
+		void *f;
+
+
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&RAM[0x0900],24*10);
+			osd_fread(f,&RAM[0x0043],3);
+			osd_fread(f,&RAM[0x0055],3);
+			osd_fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;  /* we can't load the hi scores yet */
+}
+
+static void hisave(void)
+{
+	void *f;
+	/* get RAM pointer (this game is multiCPU, we can't assume the global */
+	/* RAM pointer is pointing to the right place) */
+	unsigned char *RAM = Machine->memory_region[0];
+
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&RAM[0x0900],24*10);
+		osd_fwrite(f,&RAM[0x0043],3);
+		osd_fwrite(f,&RAM[0x0055],3);
+		osd_fclose(f);
+	}
+}
+
+
+
 struct GameDriver citycon_driver =
 {
 	"City Connection",
@@ -298,5 +342,5 @@ struct GameDriver citycon_driver =
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
-	0, 0
+	hiload, hisave
 };

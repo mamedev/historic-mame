@@ -8,9 +8,7 @@
 **********************************************************************/
 
 #include <string.h>
-
 #include <stdio.h>
-
 #include "6821pia.h"
 
 #ifdef macintosh

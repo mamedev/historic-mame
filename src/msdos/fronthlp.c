@@ -94,6 +94,7 @@ int frontend_help (int argc, char **argv)
 		if (!stricmp(argv[i],"-list")) list = 1;
 		if (!stricmp(argv[i],"-listfull")) list = 2;
 		if (!stricmp(argv[i],"-listsamdir")) list = 3;
+        if (!stricmp(argv[i],"-listdetails")) list = 7; /* A detailed MAMELIST.TXT type roms lister */
 
 #ifdef MAME_DEBUG /* do not put this into a public release! */
 		if (!stricmp(argv[i],"-lmr")) list = 6;
@@ -217,6 +218,109 @@ int frontend_help (int argc, char **argv)
 			}
 			return 0;
 			break;
+
+        case 7: /* A detailed MAMELIST.TXT type roms lister */
+
+            /* First, we shall print the header */
+
+            printf(" romname   cpu 1   cpu 2   cpu 3   sound 1   sound 2   sound 3   name\n");
+            printf("--------   -----   -----   -----   -------   -------   -------   --------------------------\n");
+
+            /* Let's cycle through the drivers */
+
+            i = 0;
+
+            while (drivers[i])
+			{
+                /* Dummy structs to fetch the information from */
+
+                const struct MachineDriver *x_driver = drivers[i]->drv;
+                const struct MachineCPU *x_cpu = x_driver->cpu;
+                const struct MachineSound *x_sound = x_driver->sound;
+
+                /* First, the rom name */
+
+                printf("%-10s ",drivers[i]->name);
+
+                /* Then, cpus */
+
+                for(j=0;j<MAX_CPU-1;j++) /* Increase to table to 4, when a game with 4 cpus will appear */
+                {
+                    switch(x_cpu[j].cpu_type & (~CPU_FLAGS_MASK | CPU_AUDIO_CPU))
+                    {
+                        case 0:         printf("        "); break;
+                        case CPU_Z80:   printf("Z80     "); break;
+                        case CPU_M6502: printf("M6502   "); break;
+                        case CPU_I86:   printf("I86     "); break;
+                        case CPU_I8039: printf("I8039   "); break;
+                        case CPU_M6803: printf("M6808   "); break;
+                        case CPU_M6805: printf("M6805   "); break;
+                        case CPU_M6809: printf("M6809   "); break;
+                        case CPU_M68000:printf("M68000  "); break;
+
+                        case CPU_Z80   |CPU_AUDIO_CPU: printf("[Z80]   "); break; /* Brackets mean that the cpu is only needed for sound. In cpu flags, 0x8000 means it */
+                        case CPU_M6502 |CPU_AUDIO_CPU: printf("[M6502] "); break;
+                        case CPU_I86   |CPU_AUDIO_CPU: printf("[I86]   "); break;
+                        case CPU_I8039 |CPU_AUDIO_CPU: printf("[I8039] "); break;
+                        case CPU_M6803 |CPU_AUDIO_CPU: printf("[M6808] "); break;
+                        case CPU_M6805 |CPU_AUDIO_CPU: printf("[M6805] "); break;
+                        case CPU_M6809 |CPU_AUDIO_CPU: printf("[M6809] "); break;
+                        case CPU_M68000|CPU_AUDIO_CPU: printf("[M68000]"); break;
+                    }
+                }
+
+                for(j=0;j<MAX_CPU-1;j++) /* Increase to table to 4, when a game with 4 cpus will appear */
+                {
+
+                    /* Dummy int to hold the number of specific sound chip.
+                       In every multiple-chip interface, number of chips
+                       is defined as the first variable, and it is integer. */
+
+                    int *x_num = x_sound[j].sound_interface;
+
+                    switch(x_sound[j].sound_type)
+                    {
+                        case 0: printf("          "); break; /* These don't have a number of chips, only one possible */
+                        case SOUND_CUSTOM:  printf("Custom    "); break;
+                        case SOUND_SAMPLES: printf("Samples   "); break;
+                        case SOUND_NAMCO:   printf("Namco     "); break;
+                        case SOUND_TMS5220: printf("TMS5520   "); break;
+                        case SOUND_VLM5030: printf("VLM5030   "); break;
+
+                        default:
+
+                                /* Let's print out the number of the chips */
+
+                                printf("%dx",*x_num);
+
+                                /* Then the chip's name */
+
+                                switch(x_sound[j].sound_type)
+                                {
+                                    case SOUND_DAC:     printf("DAC     "); break;
+                                    case SOUND_AY8910:  printf("AY-8910 "); break;
+                                    case SOUND_YM2203:  printf("YM-2203 "); break;
+                                    case SOUND_YM2151:  printf("YM-2151 "); break;
+                                    case SOUND_YM2151_ALT: printf("YM-2151a"); break;
+                                    case SOUND_YM3812:  printf("YM-3812 "); break;
+                                    case SOUND_SN76496: printf("SN76496 "); break;
+                                    case SOUND_POKEY:   printf("Pokey   "); break;
+                                    case SOUND_NES:     printf("NES     "); break;
+                                    case SOUND_ADPCM:   printf("ADPCM   "); break;
+                                    case SOUND_OKIM6295:printf("OKI6295 "); break;
+                                    case SOUND_MSM5205: printf("MSM5205 "); break;
+                                }
+                                break;
+                    }
+                }
+
+                /* Lastly, the name of the game and a \newline */
+
+                printf("%s\n",drivers[i]->description);
+                i++;
+            }
+            return 0;
+            break;
 	}
 
 	if (verify)  /* "verify" utilities */

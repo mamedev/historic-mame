@@ -284,7 +284,7 @@ static struct GfxLayout tilelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &tilelayout,  0, 0x80 },
+	{ 1, 0x0000, &tilelayout,  0, 16 },
 	{ -1 } /* end of array */
 };
 
@@ -312,7 +312,7 @@ static struct MachineDriver machine_driver =
 			4000000,	/* 4 Mhz ??? */
 			2,
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
-			interrupt,1
+			interrupt,2	/* ? just a guess */
 		}
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
@@ -320,12 +320,12 @@ static struct MachineDriver machine_driver =
 	0,
 
 	/* video hardware */
-	32*8, 30*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
+	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	256,16*16,
+	256, 256,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_16BIT,
+	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
 	0,
 	generic_vh_start,
 	generic_vh_stop,

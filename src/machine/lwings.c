@@ -9,16 +9,14 @@
 
 #include "driver.h"
 
+int lwings_video_control=0xff;
+
 void lwings_bankswitch_w(int offset,int data)
 {
-        int bankaddress;
-        static int nOldData=0xff;
-        if (data != nOldData)
-        {
-                bankaddress = 0x10000 + (data & 0x06) * 0x1000 * 2;
-                cpu_setbank(1,&ROM[bankaddress]);
-                nOldData=data;
-        }
+	int bankaddress = 0x10000 + (data & 0x06) * 0x1000 * 2;
+	cpu_setbank(1,&ROM[bankaddress]);
+
+	lwings_video_control=data;
 }
 
 int lwings_interrupt(void)

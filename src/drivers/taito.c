@@ -1053,10 +1053,56 @@ static void junglek_hisave(void)
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-                osd_fwrite(f,&RAM[0x816B],3);
+		osd_fwrite(f,&RAM[0x816B],3);
 		osd_fclose(f);
 	}
 
+}
+
+
+static int frontlin_hiload(void)
+{
+	/* get RAM pointer (this game is multiCPU, we can't assume the global */
+	/* RAM pointer is pointing to the right place) */
+	unsigned char *RAM = Machine->memory_region[0];
+
+	/* check if the hi score table has already been initialized */
+	if (memcmp(&RAM[0x8640],"\x01\x00\x00",3) == 0)
+	{
+		void *f;
+
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) == 0)
+		{
+			osd_fread(f,&RAM[0x8640],3);
+			osd_fclose(f);
+
+			/* WE MUST ALSO COPY THE SCORE TO THE SCREEN*/
+			RAM[0xc5be]=(RAM[0x8640] >> 4);
+			RAM[0xc5de]=(RAM[0x8640] & 0x0f);
+			RAM[0xc5fe]=(RAM[0x8641] >> 4);
+			RAM[0xc61e]=(RAM[0x8641] & 0x0f);
+			RAM[0xc63e]=(RAM[0x8642] >> 4);
+			RAM[0xc65e]=(RAM[0x8642] & 0x0f);
+		}
+
+		return 1;
+	 }
+	 else return 0; /* we can't load the hi scores yet */
+}
+
+static void frontlin_hisave(void)
+{
+	void *f;
+
+	/* get RAM pointer (this game is multiCPU, we can't assume the global */
+	/* RAM pointer is pointing to the right place) */
+	unsigned char *RAM = Machine->memory_region[0];
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&RAM[0x8640],3);
+		osd_fclose(f);
+	}
 }
 
 
@@ -1158,7 +1204,7 @@ struct GameDriver frontlin_driver =
 	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
-	0, 0
+	frontlin_hiload, frontlin_hisave
 };
 
 

@@ -173,9 +173,8 @@ inline void cps1_get_video_base(void)
 
 ***************************************************************************/
 
-int cps1_vh_start()
+int cps1_vh_start(void)
 {
-        int i,j;
         cps1_old_palette=(unsigned char *)malloc(cps1_palette_size);
         if (!cps1_old_palette)
         {
@@ -189,13 +188,19 @@ int cps1_vh_start()
         cps1_get_video_base();   /* Calculate base pointers */
 
         /*
-                Some games interrogate a couple of registers on bootup.
-                These appear to be CPS1 board B self test checks.
-         */
-        WRITE_WORD(&cps1_output[0x60], 4);     /* Final fight */
-        WRITE_WORD(&cps1_output[0x72], 0x800); /* 3 Wonders */
+           Some games interrogate a couple of registers on bootup.
+           These are CPS1 board B self test checks.
+        */
+        WRITE_WORD(&cps1_output[0x40], 0x406);  /* Carrier Air Wing */
+        WRITE_WORD(&cps1_output[0x60], 0x004);  /* Final fight */
+        WRITE_WORD(&cps1_output[0x72], 0x800);  /* 3 Wonders */
         WRITE_WORD(&cps1_output[0x4e], 0x405);  /* Nemo */
         WRITE_WORD(&cps1_output[0x5e], 0x404);  /* Mega twins */
+
+        /*
+            Note: Carrier air wing does not work because it writes
+                  over this value before it reads it.
+        */
 
 	return 0;
 }
@@ -256,13 +261,32 @@ inline void cps1_build_palette(void)
 
 /***************************************************************************
 
-        Scroll 1 (8x8)
+  Scroll 1 (8x8)
+
+  Attribute word layout:
+  0x0001        colour
+  0x0002        colour
+  0x0004        colour
+  0x0008        colour
+  0x0010        colour
+  0x0020        X Flip
+  0x0040        Y Flip
+  0x0080
+  0x0100
+  0x0200
+  0x0400
+  0x0800
+  0x1000
+  0x2000
+  0x4000
+  0x8000
+
 
 ***************************************************************************/
 
 inline void cps1_render_scroll1(struct osd_bitmap *bitmap)
 {
-        int x,y, offs,  sx, sy;
+        int x,y, offs, offsx, sx, sy;
         int base_scroll1=cps1_game_config->base_scroll1;
         int space_char=cps1_game_config->space_scroll1;
 
@@ -274,14 +298,14 @@ inline void cps1_render_scroll1(struct osd_bitmap *bitmap)
         for (x=0; x<0x34; x++)
         {
              sy=-(scroll1y&0x07);
+             offsx=(scrlxrough+x)*0x80;
+             offsx&=0x1fff;
+
              for (y=0; y<0x20; y++)
              {
-                 int code;
-                 int offsy, offsx;
+                 int code, offsy;
                  int n=scrlyrough+y;
                  offsy=( (n&0x1f)*4 | ((n&0x20)*0x100)) & 0x3fff;
-                 offsx=(scrlxrough+x)*0x80;
-                 offsx&=0x1fff;
                  offs=offsy+offsx;
                  offs &= 0x3fff;
 
@@ -290,9 +314,8 @@ inline void cps1_render_scroll1(struct osd_bitmap *bitmap)
                  if (code >= base_scroll1 && code != space_char)
                  {
                        /* Optimization: only draw non-spaces */
-                       int colour;
+                       int colour=READ_WORD(&cps1_scroll1[offs+2]);
                        code -= base_scroll1;
-                       colour=READ_WORD(&cps1_scroll1[offs+2]);
                        drawgfx(bitmap,Machine->gfx[0],
                                      code,
                                      colour&0x1f,
@@ -308,15 +331,40 @@ inline void cps1_render_scroll1(struct osd_bitmap *bitmap)
 
 /***************************************************************************
 
-        Sprites
+  Sprites
+
+  Attribute word layout:
+  0x0001        colour
+  0x0002        colour
+  0x0004        colour
+  0x0008        colour
+  0x0010        colour
+  0x0020        X Flip
+  0x0040        Y Flip
+  0x0080        unknown
+  0x0100        X block size (in sprites)
+  0x0200        X block size
+  0x0400        X block size
+  0x0800        X block size
+  0x1000        Y block size (in sprites)
+  0x2000        Y block size
+  0x4000        Y block size
+  0x8000        Y block size
+
 
 ***************************************************************************/
 
 inline void cps1_render_sprites(struct osd_bitmap *bitmap)
 {
         int i;
+        int base_obj=cps1_game_config->base_obj;
+        int obj_size=cps1_obj_size;
+        if (cps1_game_config->size_obj)
+        {
+                obj_size=cps1_game_config->size_obj;
+        }
         /* Draw the sprites */
-        for (i=cps1_obj_size-8; i>=0; i-=8)
+        for (i=obj_size-8; i>=0; i-=8)
         {
                 int x=READ_WORD(&cps1_obj[i]);
                 int y=READ_WORD(&cps1_obj[i+2]);
@@ -327,9 +375,12 @@ inline void cps1_render_sprites(struct osd_bitmap *bitmap)
                    int col=colour&0x1f;
                    x-=0x40;
                    code &= 0x3fff;
-
-                   if (colour & 0xff00)
+                   if (code >= base_obj)
                    {
+                     code -= base_obj;
+                     if (colour & 0xff00)
+                     {
+                           /* handle blocked sprites */
                            int nx=(colour & 0x0f00) >> 8;
                            int ny=(colour & 0xf000) >> 12;
                            int nxs, nys;
@@ -404,9 +455,9 @@ inline void cps1_render_sprites(struct osd_bitmap *bitmap)
                                }
                             }
                          }
-                  }
-                  else
-                  {
+                   }
+                   else
+                   {
                         /* Simple case... 1 sprite */
                            drawgfx(bitmap,Machine->gfx[1],
                                        code,
@@ -415,8 +466,8 @@ inline void cps1_render_sprites(struct osd_bitmap *bitmap)
                                        x,y,
                                        &Machine->drv->visible_area,
                                        TRANSPARENCY_PEN,15);
+                   }
                   }
-
              }
         }
 }
@@ -425,7 +476,26 @@ inline void cps1_render_sprites(struct osd_bitmap *bitmap)
 
 /***************************************************************************
 
-        Scroll 2 (16x16 layer)
+  Scroll 2 (16x16 layer)
+
+  Attribute word layout:
+  0x0001        colour
+  0x0002        colour
+  0x0004        colour
+  0x0008        colour
+  0x0010        colour
+  0x0020        X Flip
+  0x0040        Y Flip
+  0x0080
+  0x0100
+  0x0200
+  0x0400
+  0x0800
+  0x1000
+  0x2000
+  0x4000
+  0x8000
+
 
 ***************************************************************************/
 
@@ -452,7 +522,7 @@ inline void cps1_render_scroll2(struct osd_bitmap *bitmap, int priority)
                         offs &= 0x3fff;
 
                         code=READ_WORD(&cps1_scroll2[offs]);
-                        if (code >= base_scroll2 && code != space_char)
+                        if (code >= base_scroll2 && code != space_char )
                         {
                                 code -= base_scroll2;
                                 colour=READ_WORD(&cps1_scroll2[offs+2]);
@@ -506,7 +576,25 @@ inline void cps1_render_scroll2(struct osd_bitmap *bitmap, int priority)
 
 /***************************************************************************
 
-        Scroll 3 (32x32 layer)
+  Scroll 3 (32x32 layer)
+
+  Attribute word layout:
+  0x0001        colour
+  0x0002        colour
+  0x0004        colour
+  0x0008        colour
+  0x0010        colour
+  0x0020        X Flip
+  0x0040        Y Flip
+  0x0080
+  0x0100
+  0x0200
+  0x0400
+  0x0800
+  0x1000
+  0x2000
+  0x4000
+  0x8000
 
 ***************************************************************************/
 
@@ -545,7 +633,7 @@ inline void cps1_render_scroll3(struct osd_bitmap *bitmap, int priority)
                                        int transp=0;
                                        switch (mask)
                                        {
-                                                case 0x80:
+                                                case 0x080:
                                                        transp=0xf001;
                                                        break;
                                                 case 0x0100:
@@ -554,16 +642,21 @@ inline void cps1_render_scroll3(struct osd_bitmap *bitmap, int priority)
                                                 case 0x0180:
                                                        transp=0x8000;
                                                        break;
+                                                case 0x0200:
+                                                       transp=0x8000;
+                                                       break;
                                         }
 
-
-                                        drawgfx(bitmap,Machine->gfx[3],
+                                        if (transp)
+                                        {
+                                            drawgfx(bitmap,Machine->gfx[3],
                                                  code,
                                                 colour&0x1f,
                                                 colour&0x20,colour&0x40,
                                                 32*sx-nxoffset,32*sy-nyoffset,
                                                 &Machine->drv->visible_area,
                                                 TRANSPARENCY_PENS,transp);
+                                        }
                                }
                            }
                            else
@@ -590,11 +683,13 @@ inline void cps1_render_scroll3(struct osd_bitmap *bitmap, int priority)
 
 void cps1_vh_screenrefresh(struct osd_bitmap *bitmap)
 {
+        int layercontrolport;
         int layercontrol;
         int scrl2on, scrl3on;
         int scroll1priority;
-        int scroll2priority;        /* Temporary kludge */
+        int scroll2priority;
 
+        /* Get video memory base registers */
         cps1_get_video_base();
 
         /* Get scroll values */
@@ -605,20 +700,54 @@ void cps1_vh_screenrefresh(struct osd_bitmap *bitmap)
         scroll3x=cps1_port(CPS1_SCROLL3_SCROLLX);
         scroll3y=cps1_port(CPS1_SCROLL3_SCROLLY);
 
-        /* Welcome to kludgesville... */
+        /*
+         Welcome to kludgesville... I have no idea how this is supposed
+         to work.
+        */
         switch (cps1_game_config->alternative)
         {
                 /* Wandering video control ports */
-                case 0: layercontrol=READ_WORD(&cps1_output[0x66]);
+                case 0:
+                        /* default */
+                        layercontrolport=0x66;
+                        layercontrol=READ_WORD(&cps1_output[layercontrolport]);
+                        scroll2priority=(layercontrol&0x040);
                         break;
                 case 1:
-                        layercontrol=READ_WORD(&cps1_output[0x70]);
+                        /* Willow */
+                        layercontrolport=0x70;
+                        layercontrol=READ_WORD(&cps1_output[layercontrolport]);
+                        /* Scroll 2 / 3 priority */
+                        scroll2priority=(layercontrol&0x040);
                         break;
                 case 2:
-                        layercontrol=READ_WORD(&cps1_output[0x6e]);
+                        layercontrolport=0x6e;
+                        layercontrol=READ_WORD(&cps1_output[layercontrolport]);
+                        /* Scroll 2 / 3 priority */
+                        scroll2priority=(layercontrol&0x040);
                         break;
+
+                case 4:
+                        /* Strider (completely kludged) */
+                        layercontrolport=0x66;
+                        layercontrol=READ_WORD(&cps1_output[layercontrolport]);
+                        /*
+                         Scroll 2 / 3 priority (best kluge, so far)
+                         works on level 1 but not the in-between intermissions
+                        */
+                        scroll2priority=(layercontrol&0x060)==0x40;
+                        if (layercontrol == 0x0e4e)
+                        {
+                            scroll2priority=0;
+                        }
+
+                        break;
+
                 default:
+                        layercontrolport=0;
                         layercontrol=0xffff;
+                        /* Scroll 2 / 3 priority */
+                        scroll2priority=1;
                         break;
         }
 
@@ -635,13 +764,10 @@ void cps1_vh_screenrefresh(struct osd_bitmap *bitmap)
         /* Scroll 1 priority */
         scroll1priority=(layercontrol&0x0080);
 
-        /* Scroll 2 / 3 priority */
-        scroll2priority=(layercontrol&0x0040);
-
         /* Scroll 1 priority */
         if (!scroll1priority)
         {
-                cps1_render_scroll1(bitmap);
+              cps1_render_scroll1(bitmap);
         }
 
         if (scroll2priority)
@@ -696,5 +822,29 @@ void cps1_vh_screenrefresh(struct osd_bitmap *bitmap)
         {
                 cps1_render_scroll1(bitmap);
         }
+
+#if 0
+        {
+                int i;
+                int nReg=layercontrolport;
+                int nVal=cps1_port(nReg);
+		struct DisplayText dt[2];
+                char szBuffer[40];
+		int count = 0;
+
+                char *pszPriority="SCROLL 2";
+                if (!scroll2priority)
+                {
+                        pszPriority="SCROLL 3";
+                }
+                sprintf(szBuffer, "%04x=%04x %s", nReg, nVal, pszPriority);
+                dt[0].text = szBuffer;
+		dt[0].color = DT_COLOR_RED;
+		dt[0].x = (Machine->uiwidth - Machine->uifont->width * strlen(dt[0].text)) / 2;
+                dt[0].y = (Machine->uiheight - Machine->uifont->height) / 2 + 2;
+		dt[1].text = 0;
+                displaytext(dt,0);
+         }
+#endif
 }
 

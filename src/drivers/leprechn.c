@@ -60,6 +60,8 @@
  ***************************************************************************/
 
 #include "driver.h"
+#include "M6502/M6502.h"
+
 
 int  leprechn_vh_start(void);
 void leprechn_vh_stop(void);
@@ -75,7 +77,15 @@ int  leprechn_input_port_r(int offset);
 int  leprechn_200d_r(int offset);
 int  leprechn_0805_r(int offset);
 
-void gottlieb_sh2_w(int offset, int data);
+
+
+void leprechn_sh_w(int offset, int data)
+{
+	soundlatch_w(offset,data);
+	cpu_cause_interrupt(1,INT_IRQ);
+}
+
+
 
 static struct MemoryReadAddress readmem[] =
 {
@@ -98,7 +108,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x2800, 0x2800, leprechn_input_port_select_w},
 	{ 0x2802, 0x2803, MWA_NOP },  // ???
 	{ 0x280c, 0x280c, MWA_NOP },  // ???
-	{ 0x3001, 0x3001, gottlieb_sh2_w},
+	{ 0x3001, 0x3001, leprechn_sh_w },
 	{ 0x3002, 0x3003, MWA_RAM},   // ???
 	{ 0x300c, 0x300c, MWA_NOP },  // ???
 	{ 0x8000, 0xffff, MWA_ROM},

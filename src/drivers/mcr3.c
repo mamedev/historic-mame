@@ -626,7 +626,7 @@ INPUT_PORTS_START( spyhunt_input_ports )
 	PORT_BITX( 0x02, IP_ACTIVE_LOW, IPT_BUTTON5, "Missiles", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0 )
 	PORT_BITX( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3, "Weapon Truck", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0 )
 	PORT_BITX( 0x08, IP_ACTIVE_LOW, IPT_BUTTON2, "Smoke Screen", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0 )
-	PORT_BIT(  0x10, IP_ACTIVE_LOW, IPT_BUTTON1 ) /* machine guns */
+	PORT_BITX( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1, "Machine Guns", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0 )
 	PORT_BIT(  0x60, IP_ACTIVE_HIGH, IPT_UNUSED ) /* CSD status bits */
 	PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
@@ -650,12 +650,11 @@ INPUT_PORTS_START( spyhunt_input_ports )
 	PORT_START	/* AIN0 */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START	/* fake port for additional controls */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP )	/* accelerator */
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN )	/* accelerator */
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT )	/* steering */
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT )	/* steering */
-	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_START	/* new fake for acceleration */
+	PORT_ANALOGX( 0xff, 0x30, IPT_AD_STICK_Y | IPF_REVERSE, 100, 0, 0x30, 0xff, OSD_KEY_DOWN, OSD_KEY_UP, IPT_JOYSTICK_DOWN , IPT_JOYSTICK_UP , 1 )
+
+	PORT_START	/* new fake for steering */
+	PORT_ANALOGX( 0xff, 0x74, IPT_AD_STICK_X | IPF_CENTER, 100, 0, 0x20, 0xff, OSD_KEY_LEFT, OSD_KEY_RIGHT, IPT_JOYSTICK_LEFT, IPT_JOYSTICK_RIGHT, 2 )
 INPUT_PORTS_END
 
 
@@ -826,11 +825,11 @@ static struct GfxLayout mcr3_spritelayout_512 =
    4,
    { 0, 1, 2, 3 },
    {  Z+0, Z+4, Y+0, Y+4, X+0, X+4, 0, 4, Z+8, Z+12, Y+8, Y+12, X+8, X+12, 8, 12,
-      Z+16, Z+20, Y+16, Y+20, X+16, X+20, 16, 20, Z+24, Z+28, Y+24, Y+28,
-      X+24, X+28, 24, 28 },
+	  Z+16, Z+20, Y+16, Y+20, X+16, X+20, 16, 20, Z+24, Z+28, Y+24, Y+28,
+	  X+24, X+28, 24, 28 },
    {  0, 32, 32*2, 32*3, 32*4, 32*5, 32*6, 32*7, 32*8, 32*9, 32*10, 32*11,
-      32*12, 32*13, 32*14, 32*15, 32*16, 32*17, 32*18, 32*19, 32*20, 32*21,
-      32*22, 32*23, 32*24, 32*25, 32*26, 32*27, 32*28, 32*29, 32*30, 32*31 },
+	  32*12, 32*13, 32*14, 32*15, 32*16, 32*17, 32*18, 32*19, 32*20, 32*21,
+	  32*22, 32*23, 32*24, 32*25, 32*26, 32*27, 32*28, 32*29, 32*30, 32*31 },
    128*8
 };
 #undef X
@@ -848,11 +847,11 @@ static struct GfxLayout mcr3_spritelayout_256 =
    4,
    { 0, 1, 2, 3 },
    {  Z+0, Z+4, Y+0, Y+4, X+0, X+4, 0, 4, Z+8, Z+12, Y+8, Y+12, X+8, X+12, 8, 12,
-      Z+16, Z+20, Y+16, Y+20, X+16, X+20, 16, 20, Z+24, Z+28, Y+24, Y+28,
-      X+24, X+28, 24, 28 },
+	  Z+16, Z+20, Y+16, Y+20, X+16, X+20, 16, 20, Z+24, Z+28, Y+24, Y+28,
+	  X+24, X+28, 24, 28 },
    {  0, 32, 32*2, 32*3, 32*4, 32*5, 32*6, 32*7, 32*8, 32*9, 32*10, 32*11,
-      32*12, 32*13, 32*14, 32*15, 32*16, 32*17, 32*18, 32*19, 32*20, 32*21,
-      32*22, 32*23, 32*24, 32*25, 32*26, 32*27, 32*28, 32*29, 32*30, 32*31 },
+	  32*12, 32*13, 32*14, 32*15, 32*16, 32*17, 32*18, 32*19, 32*20, 32*21,
+	  32*22, 32*23, 32*24, 32*25, 32*26, 32*27, 32*28, 32*29, 32*30, 32*31 },
    128*8
 };
 #undef X
@@ -870,11 +869,11 @@ static struct GfxLayout mcr3_spritelayout_128 =
    4,
    { 0, 1, 2, 3 },
    {  Z+0, Z+4, Y+0, Y+4, X+0, X+4, 0, 4, Z+8, Z+12, Y+8, Y+12, X+8, X+12, 8, 12,
-      Z+16, Z+20, Y+16, Y+20, X+16, X+20, 16, 20, Z+24, Z+28, Y+24, Y+28,
-      X+24, X+28, 24, 28 },
+	  Z+16, Z+20, Y+16, Y+20, X+16, X+20, 16, 20, Z+24, Z+28, Y+24, Y+28,
+	  X+24, X+28, 24, 28 },
    {  0, 32, 32*2, 32*3, 32*4, 32*5, 32*6, 32*7, 32*8, 32*9, 32*10, 32*11,
-      32*12, 32*13, 32*14, 32*15, 32*16, 32*17, 32*18, 32*19, 32*20, 32*21,
-      32*22, 32*23, 32*24, 32*25, 32*26, 32*27, 32*28, 32*29, 32*30, 32*31 },
+	  32*12, 32*13, 32*14, 32*15, 32*16, 32*17, 32*18, 32*19, 32*20, 32*21,
+	  32*22, 32*23, 32*24, 32*25, 32*26, 32*27, 32*28, 32*29, 32*30, 32*31 },
    128*8
 };
 #undef X
@@ -1304,7 +1303,7 @@ static struct MachineDriver spyhunt_machine_driver =
 		},
 		{
 			CPU_M68000 | CPU_AUDIO_CPU,
-			8500000,	/* Actually 7.5 Mhz, but the 68000 emulator isn't accurate */
+		8500000,	/* Actually 7.5 Mhz, but the 68000 emulator isn't accurate */
 			3,
 			csd_readmem,csd_writemem,0,0,
 			ignore_interrupt,1
@@ -1400,15 +1399,15 @@ static int mcr3_hiload(int addr, int len)
    /* see if it's okay to load */
    if (mcr_loadnvram)
    {
-      void *f;
+	  void *f;
 
 		f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0);
-      if (f)
-      {
+	  if (f)
+	  {
 			osd_fread(f,&RAM[addr],len);
 			osd_fclose (f);
-      }
-      return 1;
+	  }
+	  return 1;
    }
    else return 0;	/* we can't load the hi scores yet */
 }
@@ -1421,8 +1420,8 @@ static void mcr3_hisave(int addr, int len)
 	f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1);
    if (f)
    {
-      osd_fwrite(f,&RAM[addr],len);
-      osd_fclose (f);
+	  osd_fwrite(f,&RAM[addr],len);
+	  osd_fclose (f);
    }
 }
 
@@ -1511,7 +1510,7 @@ ROM_END
 
 struct GameDriver tapper_driver =
 {
-	"Tapper (Budweiser)",
+"Tapper (Budweiser)",
 	"tapper",
 	"Christopher Kirmse\nAaron Giles\nNicola Salmoria",
 	&tapper_machine_driver,
@@ -1531,49 +1530,49 @@ struct GameDriver tapper_driver =
 
 
 ROM_START( sutapper_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "5791", 0x0000, 0x4000, 0xa2e24a48 )
-	ROM_LOAD( "5792", 0x4000, 0x4000, 0x6747c235 )
-	ROM_LOAD( "5793", 0x8000, 0x4000, 0x2d32407c )
-	ROM_LOAD( "5794", 0xc000, 0x2000, 0x97ac03a4 )
+ROM_REGION(0x10000)	/* 64k for code */
+ROM_LOAD( "5791", 0x0000, 0x4000, 0xa2e24a48 )
+ROM_LOAD( "5792", 0x4000, 0x4000, 0x6747c235 )
+ROM_LOAD( "5793", 0x8000, 0x4000, 0x2d32407c )
+ROM_LOAD( "5794", 0xc000, 0x2000, 0x97ac03a4 )
 
-	ROM_REGION(0x28000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "5790", 0x00000, 0x4000, 0x45206b3a )
-	ROM_LOAD( "5789", 0x04000, 0x4000, 0xb4f2f8a6 )
-	ROM_LOAD( "5801", 0x08000, 0x4000, 0x05652719 )
-	ROM_LOAD( "5802", 0x0c000, 0x4000, 0x4d701a98 )
-	ROM_LOAD( "5799", 0x10000, 0x4000, 0x4f493201 )
-	ROM_LOAD( "5800", 0x14000, 0x4000, 0x76a9f89b )
-	ROM_LOAD( "5797", 0x18000, 0x4000, 0xae2a03c0 )
-	ROM_LOAD( "5798", 0x1c000, 0x4000, 0x0ca30a7b )
-	ROM_LOAD( "5795", 0x20000, 0x4000, 0x436ecbb8 )
-	ROM_LOAD( "5796", 0x24000, 0x4000, 0x1b70e618 )
+ROM_REGION(0x28000)	/* temporary space for graphics (disposed after conversion) */
+ROM_LOAD( "5790", 0x00000, 0x4000, 0x45206b3a )
+ROM_LOAD( "5789", 0x04000, 0x4000, 0xb4f2f8a6 )
+ROM_LOAD( "5801", 0x08000, 0x4000, 0x05652719 )
+ROM_LOAD( "5802", 0x0c000, 0x4000, 0x4d701a98 )
+ROM_LOAD( "5799", 0x10000, 0x4000, 0x4f493201 )
+ROM_LOAD( "5800", 0x14000, 0x4000, 0x76a9f89b )
+ROM_LOAD( "5797", 0x18000, 0x4000, 0xae2a03c0 )
+ROM_LOAD( "5798", 0x1c000, 0x4000, 0x0ca30a7b )
+ROM_LOAD( "5795", 0x20000, 0x4000, 0x436ecbb8 )
+ROM_LOAD( "5796", 0x24000, 0x4000, 0x1b70e618 )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "5788", 0x0000, 0x1000, 0x7deadcee )
-	ROM_LOAD( "5787", 0x1000, 0x1000, 0x3fd4b634 )
-	ROM_LOAD( "5786", 0x2000, 0x1000, 0xd39ced7e )
-	ROM_LOAD( "5785", 0x3000, 0x1000, 0xff9f449d )
+ROM_REGION(0x10000)	/* 64k for the audio CPU */
+ROM_LOAD( "5788", 0x0000, 0x1000, 0x7deadcee )
+ROM_LOAD( "5787", 0x1000, 0x1000, 0x3fd4b634 )
+ROM_LOAD( "5786", 0x2000, 0x1000, 0xd39ced7e )
+ROM_LOAD( "5785", 0x3000, 0x1000, 0xff9f449d )
 ROM_END
 
 struct GameDriver sutapper_driver =
 {
-	"Tapper (Suntory)",
-	"sutapper",
-	"Christopher Kirmse\nAaron Giles\nNicola Salmoria",
-	&tapper_machine_driver,
+"Tapper (Suntory)",
+"sutapper",
+"Christopher Kirmse\nAaron Giles\nNicola Salmoria",
+&tapper_machine_driver,
 
-	sutapper_rom,
-	0, 0,
-	0,
-	0,	/* sound_prom */
+sutapper_rom,
+0, 0,
+0,
+0,	/* sound_prom */
 
-	tapper_input_ports,
+tapper_input_ports,
 
-	0, 0,0,
-	ORIENTATION_DEFAULT,
+0, 0,0,
+ORIENTATION_DEFAULT,
 
-	tapper_hiload, tapper_hisave
+tapper_hiload, tapper_hisave
 };
 
 
@@ -1605,7 +1604,7 @@ ROM_END
 
 struct GameDriver rbtapper_driver =
 {
-	"Tapper (Root Beer)",
+"Tapper (Root Beer)",
 	"rbtapper",
 	"Christopher Kirmse\nAaron Giles\nNicola Salmoria",
 	&tapper_machine_driver,

@@ -1185,6 +1185,70 @@ static void wbdeluxe_hisave(void)
 }
 
 
+static int upndown_hiload(void)
+{
+        void *f;
+        unsigned char *RAM = Machine->memory_region[0];
+
+        /* check if the hi score table has already been initialized */
+
+        if (memcmp(&RAM[0xc93f],"\x01\x00\x00",3) == 0)
+        {
+                if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+                {
+                        osd_fread(f,&RAM[0xc93f],(6*10)+3);
+                        osd_fclose(f);
+                }
+                return 1;
+        }
+        else return 0;  /* we can't load the hi scores yet */
+}
+
+static void upndown_hisave(void)
+{
+        void *f;
+        unsigned char *RAM = Machine->memory_region[0];
+
+        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+        {
+                osd_fwrite(f,&RAM[0xc93f],(6*10)+3);
+                osd_fclose(f);
+        }
+}
+
+
+static int wbml_hiload(void)
+{
+        void *f;
+        unsigned char *RAM = Machine->memory_region[0];
+
+        /* check if the hi score table has already been initialized */
+
+        if (memcmp(&RAM[0xc17b],"\x00\x00\x03",3) == 0)
+        {
+                if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+                {
+                        osd_fread(f,&RAM[0xc179],8);
+                        osd_fclose(f);
+                }
+                return 1;
+        }
+        else return 0;  /* we can't load the hi scores yet */
+}
+
+static void wbml_hisave(void)
+{
+        void *f;
+        unsigned char *RAM = Machine->memory_region[0];
+
+        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+        {
+                osd_fwrite(f,&RAM[0xc179],8);
+                osd_fclose(f);
+        }
+}
+
+
 static int pitfall2_hiload(void)
 {
 	void *f;
@@ -1285,7 +1349,7 @@ struct GameDriver upndown_driver =
 
 	wrong_color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
-	0, 0
+	upndown_hiload, upndown_hisave
 };
 
 struct GameDriver wbml_driver =
@@ -1304,7 +1368,7 @@ struct GameDriver wbml_driver =
 
 	wbml_color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
-	0, 0
+	wbml_hiload, wbml_hisave
 };
 
 

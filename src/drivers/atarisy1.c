@@ -101,63 +101,41 @@ Program ROM (48K bytes)                   4000-FFFF   R    D0-D7
 
 
 #include "driver.h"
+#include "machine/atarigen.h"
 #include "vidhrdw/generic.h"
 #include "sndhrdw/pokyintf.h"
 #include "sndhrdw/5220intf.h"
 #include "sndhrdw/2151intf.h"
 
 
-extern int atarisys1_spriteram_size;
-extern int atarisys1_playfieldram_size;
-extern int atarisys1_alpharam_size;
-extern int atarisys1_paletteram_size;
-int atarisys1_eeprom_size;
-
-extern unsigned char *atarisys1_eeprom;
-extern unsigned char *atarisys1_slapstic_base;
-extern unsigned char *atarisys1_playfieldram;
-extern unsigned char *atarisys1_spriteram;
-extern unsigned char *atarisys1_alpharam;
-extern unsigned char *atarisys1_paletteram;
-extern unsigned char *atarisys1_vscroll;
-extern unsigned char *atarisys1_hscroll;
 extern unsigned char *atarisys1_bankselect;
 extern unsigned char *atarisys1_prioritycolor;
 
 extern unsigned char *marble_speedcheck;
 
 int atarisys1_io_r (int offset);
-int atarisys1_eeprom_r (int offset);
-int atarisys1_slapstic_r (int offset);
-int atarisys1_6502_sound_r (int offset);
 int atarisys1_6502_switch_r (int offset);
 int atarisys1_6522_r (int offset);
 int atarisys1_prioritycolor_r (int offset);
 int atarisys1_int3state_r (int offset);
 int atarisys1_trakball_r (int offset);
 int atarisys1_joystick_r (int offset);
+int atarisys1_paletteram_r (int offset);
 int atarisys1_playfieldram_r (int offset);
 int atarisys1_spriteram_r (int offset);
-int atarisys1_paletteram_r (int offset);
-int atarisys1_sound_r (int offset);
 
 int marble_speedcheck_r (int offset);
 
-void atarisys1_eeprom_w (int offset, int data);
-void atarisys1_eeprom_enable_w (int offset, int data);
 void atarisys1_led_w (int offset, int data);
-void atarisys1_sound_w (int offset, int data);
-void atarisys1_slapstic_w (int offset, int data);
-void atarisys1_6502_sound_w (int offset, int data);
 void atarisys1_6522_w (int offset, int data);
 void atarisys1_prioritycolor_w (int offset, int data);
 void atarisys1_joystick_w (int offset, int data);
+void atarisys1_paletteram_w (int offset, int data);
 void atarisys1_playfieldram_w (int offset, int data);
 void atarisys1_spriteram_w (int offset, int data);
 void atarisys1_bankselect_w (int offset, int data);
 void atarisys1_hscroll_w (int offset, int data);
 void atarisys1_vscroll_w (int offset, int data);
-void atarisys1_paletteram_w (int offset, int data);
 
 void marble_speedcheck_w (int offset, int data);
 
@@ -190,20 +168,20 @@ void roadblst_vh_screenrefresh (struct osd_bitmap *bitmap);
 static struct MemoryReadAddress atarisys1_readmem[] =
 {
 	{ 0x000000, 0x07ffff, MRA_ROM },
-	{ 0x080000, 0x087fff, atarisys1_slapstic_r, &atarisys1_slapstic_base },
+	{ 0x080000, 0x087fff, atarigen_slapstic_r, &atarigen_slapstic },
 	{ 0x2e0000, 0x2e0003, atarisys1_int3state_r },
 	{ 0x400000, 0x401fff, MRA_BANK1 },
 	{ 0x840000, 0x840003, atarisys1_prioritycolor_r, &atarisys1_prioritycolor },
 	{ 0x900000, 0x9fffff, MRA_BANK2 },
-	{ 0xa00000, 0xa01fff, atarisys1_playfieldram_r, &atarisys1_playfieldram, &atarisys1_playfieldram_size },
-	{ 0xa02000, 0xa02fff, atarisys1_spriteram_r, &atarisys1_spriteram, &atarisys1_spriteram_size },
-	{ 0xa03000, 0xa03fff, MRA_BANK6, &atarisys1_alpharam, &atarisys1_alpharam_size },
-	{ 0xb00000, 0xb007ff, atarisys1_paletteram_r, &atarisys1_paletteram, &atarisys1_paletteram_size },
-	{ 0xf00000, 0xf00fff, atarisys1_eeprom_r, &atarisys1_eeprom, &atarisys1_eeprom_size },
+	{ 0xa00000, 0xa01fff, atarisys1_playfieldram_r, &atarigen_playfieldram, &atarigen_playfieldram_size },
+	{ 0xa02000, 0xa02fff, atarisys1_spriteram_r, &atarigen_spriteram, &atarigen_spriteram_size },
+	{ 0xa03000, 0xa03fff, MRA_BANK6, &atarigen_alpharam, &atarigen_alpharam_size },
+	{ 0xb00000, 0xb007ff, atarisys1_paletteram_r, &atarigen_paletteram, &atarigen_paletteram_size },
+	{ 0xf00000, 0xf00fff, atarigen_eeprom_r, &atarigen_eeprom, &atarigen_eeprom_size },
 	{ 0xf20000, 0xf20007, atarisys1_trakball_r },
 	{ 0xf40000, 0xf40013, atarisys1_joystick_r },
 	{ 0xf60000, 0xf60003, atarisys1_io_r },
-	{ 0xfc0000, 0xfc0003, atarisys1_sound_r },
+	{ 0xfc0000, 0xfc0003, atarigen_sound_r },
 	{ -1 }  /* end of table */
 };
 
@@ -211,23 +189,23 @@ static struct MemoryReadAddress atarisys1_readmem[] =
 static struct MemoryWriteAddress atarisys1_writemem[] =
 {
 	{ 0x000000, 0x07ffff, MWA_ROM },
-	{ 0x080000, 0x087fff, atarisys1_slapstic_w },
+	{ 0x080000, 0x087fff, atarigen_slapstic_w },
 	{ 0x400000, 0x401fff, MWA_BANK1 },
-	{ 0x800000, 0x800003, atarisys1_hscroll_w, &atarisys1_hscroll },
-	{ 0x820000, 0x820003, atarisys1_vscroll_w, &atarisys1_vscroll },
+	{ 0x800000, 0x800003, atarisys1_hscroll_w, &atarigen_hscroll },
+	{ 0x820000, 0x820003, atarisys1_vscroll_w, &atarigen_vscroll },
 	{ 0x840000, 0x840003, atarisys1_prioritycolor_w },
 	{ 0x860000, 0x860003, atarisys1_bankselect_w, &atarisys1_bankselect },
 	{ 0x880000, 0x880003, watchdog_reset_w },
 	{ 0x8a0000, 0x8a0003, MWA_NOP },		/* VBLANK ack */
-	{ 0x8c0000, 0x8c0003, atarisys1_eeprom_enable_w },
+	{ 0x8c0000, 0x8c0003, atarigen_eeprom_enable_w },
 	{ 0x900000, 0x9fffff, MWA_BANK2 },
 	{ 0xa00000, 0xa01fff, atarisys1_playfieldram_w },
 	{ 0xa02000, 0xa02fff, atarisys1_spriteram_w },
 	{ 0xa03000, 0xa03fff, MWA_BANK6 },
 	{ 0xb00000, 0xb007ff, atarisys1_paletteram_w },
-	{ 0xf00000, 0xf00fff, atarisys1_eeprom_w },
+	{ 0xf00000, 0xf00fff, atarigen_eeprom_w },
 	{ 0xf40010, 0xf40013, atarisys1_joystick_w },
-	{ 0xfe0000, 0xfe0003, atarisys1_sound_w },
+	{ 0xfe0000, 0xfe0003, atarigen_sound_w },
 	{ -1 }  /* end of table */
 };
 
@@ -235,21 +213,21 @@ static struct MemoryWriteAddress atarisys1_writemem[] =
 static struct MemoryReadAddress marble_readmem[] =
 {
 	{ 0x000000, 0x07ffff, MRA_ROM },
-	{ 0x080000, 0x087fff, atarisys1_slapstic_r, &atarisys1_slapstic_base },
+	{ 0x080000, 0x087fff, atarigen_slapstic_r, &atarigen_slapstic },
 	{ 0x2e0000, 0x2e0003, atarisys1_int3state_r },
 	{ 0x400014, 0x400017, marble_speedcheck_r, &marble_speedcheck },
 	{ 0x400000, 0x401fff, MRA_BANK1 },
 	{ 0x840000, 0x840003, atarisys1_prioritycolor_r, &atarisys1_prioritycolor },
 	{ 0x900000, 0x9fffff, MRA_BANK2 },
-	{ 0xa00000, 0xa01fff, atarisys1_playfieldram_r, &atarisys1_playfieldram, &atarisys1_playfieldram_size },
-	{ 0xa02000, 0xa02fff, MRA_BANK3, &atarisys1_spriteram, &atarisys1_spriteram_size },
-	{ 0xa03000, 0xa03fff, MRA_BANK6, &atarisys1_alpharam, &atarisys1_alpharam_size },
-	{ 0xb00000, 0xb007ff, atarisys1_paletteram_r, &atarisys1_paletteram, &atarisys1_paletteram_size },
-	{ 0xf00000, 0xf00fff, atarisys1_eeprom_r, &atarisys1_eeprom, &atarisys1_eeprom_size },
+	{ 0xa00000, 0xa01fff, atarisys1_playfieldram_r, &atarigen_playfieldram, &atarigen_playfieldram_size },
+	{ 0xa02000, 0xa02fff, MRA_BANK3, &atarigen_spriteram, &atarigen_spriteram_size },
+	{ 0xa03000, 0xa03fff, MRA_BANK6, &atarigen_alpharam, &atarigen_alpharam_size },
+	{ 0xb00000, 0xb007ff, atarisys1_paletteram_r, &atarigen_paletteram, &atarigen_paletteram_size },
+	{ 0xf00000, 0xf00fff, atarigen_eeprom_r, &atarigen_eeprom, &atarigen_eeprom_size },
 	{ 0xf20000, 0xf20007, atarisys1_trakball_r },
 	{ 0xf40000, 0xf40013, atarisys1_joystick_r },
 	{ 0xf60000, 0xf60003, atarisys1_io_r },
-	{ 0xfc0000, 0xfc0003, atarisys1_sound_r },
+	{ 0xfc0000, 0xfc0003, atarigen_sound_r },
 	{ -1 }  /* end of table */
 };
 
@@ -257,24 +235,24 @@ static struct MemoryReadAddress marble_readmem[] =
 static struct MemoryWriteAddress marble_writemem[] =
 {
 	{ 0x000000, 0x07ffff, MWA_ROM },
-	{ 0x080000, 0x087fff, atarisys1_slapstic_w },
+	{ 0x080000, 0x087fff, atarigen_slapstic_w },
 	{ 0x400014, 0x400017, marble_speedcheck_w },
 	{ 0x400000, 0x401fff, MWA_BANK1 },
-	{ 0x800000, 0x800003, atarisys1_hscroll_w, &atarisys1_hscroll },
-	{ 0x820000, 0x820003, atarisys1_vscroll_w, &atarisys1_vscroll },
+	{ 0x800000, 0x800003, atarisys1_hscroll_w, &atarigen_hscroll },
+	{ 0x820000, 0x820003, atarisys1_vscroll_w, &atarigen_vscroll },
 	{ 0x840000, 0x840003, atarisys1_prioritycolor_w },
 	{ 0x860000, 0x860003, atarisys1_bankselect_w, &atarisys1_bankselect },
 	{ 0x880000, 0x880003, watchdog_reset_w },
 	{ 0x8a0000, 0x8a0003, MWA_NOP },		/* VBLANK ack */
-	{ 0x8c0000, 0x8c0003, atarisys1_eeprom_enable_w },
+	{ 0x8c0000, 0x8c0003, atarigen_eeprom_enable_w },
 	{ 0x900000, 0x9fffff, MWA_BANK2 },
 	{ 0xa00000, 0xa01fff, atarisys1_playfieldram_w },
 	{ 0xa02000, 0xa02fff, MWA_BANK3 },
 	{ 0xa03000, 0xa03fff, MWA_BANK6 },
 	{ 0xb00000, 0xb007ff, atarisys1_paletteram_w },
-	{ 0xf00000, 0xf00fff, atarisys1_eeprom_w },
+	{ 0xf00000, 0xf00fff, atarigen_eeprom_w },
 	{ 0xf40010, 0xf40013, atarisys1_joystick_w },
-	{ 0xfe0000, 0xfe0003, atarisys1_sound_w },
+	{ 0xfe0000, 0xfe0003, atarigen_sound_w },
 	{ -1 }  /* end of table */
 };
 
@@ -291,7 +269,7 @@ static struct MemoryReadAddress atarisys1_sound_readmem[] =
 	{ 0x0000, 0x0fff, MRA_RAM },
 	{ 0x1000, 0x100f, atarisys1_6522_r },
 	{ 0x1800, 0x1801, YM2151_status_port_0_r },
-	{ 0x1810, 0x1810, atarisys1_6502_sound_r },
+	{ 0x1810, 0x1810, atarigen_6502_sound_r },
 	{ 0x1820, 0x1820, atarisys1_6502_switch_r },
 	{ 0x1870, 0x187f, pokey1_r },
 	{ 0x4000, 0xffff, MRA_ROM },
@@ -305,7 +283,7 @@ static struct MemoryWriteAddress atarisys1_sound_writemem[] =
 	{ 0x1000, 0x100f, atarisys1_6522_w },
 	{ 0x1800, 0x1800, YM2151_register_port_0_w },
 	{ 0x1801, 0x1801, YM2151_data_port_0_w },
-	{ 0x1810, 0x1810, atarisys1_6502_sound_w },
+	{ 0x1810, 0x1810, atarigen_6502_sound_w },
 	{ 0x1824, 0x1825, atarisys1_led_w },
 	{ 0x1820, 0x1827, MWA_NOP },
 	{ 0x1870, 0x187f, pokey1_w },
@@ -338,7 +316,8 @@ INPUT_PORTS_START( marble_ports )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
-	PORT_BIT( 0xf8, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x78, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* DSW */
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
@@ -375,7 +354,8 @@ INPUT_PORTS_START( peterpak_ports )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
-	PORT_BIT( 0xf8, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x78, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* DSW */
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
@@ -413,7 +393,8 @@ INPUT_PORTS_START( indytemp_ports )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
-	PORT_BIT( 0xf8, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x78, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* DSW */
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
@@ -447,7 +428,8 @@ INPUT_PORTS_START( roadrunn_ports )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
-	PORT_BIT( 0xf8, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x78, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* DSW */
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
@@ -482,7 +464,8 @@ INPUT_PORTS_START( roadblst_ports )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
-	PORT_BIT( 0xf8, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x78, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* DSW */
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
@@ -633,7 +616,7 @@ static struct GfxDecodeInfo roadblst_gfxdecodeinfo[] =
 static struct POKEYinterface pokey_interface =
 {
 	1,	/* 1 chip */
-	1789772,	/* 1.78 MHz */
+	1789790,	/* 1.78 MHz */
 	128,
 	POKEY_DEFAULT_GAIN,
 	NO_CLIP,
@@ -653,7 +636,7 @@ static struct POKEYinterface pokey_interface =
 
 static struct TMS5220interface tms5220_interface =
 {
-    650826,		/* clock speed (80*samplerate) */
+    650826, /*640000,     * clock speed (80*samplerate) */
     255,        /* volume */
     0 /* irq handler */
 };
@@ -662,7 +645,7 @@ static struct TMS5220interface tms5220_interface =
 static struct YM2151interface ym2151_interface =
 {
 	1,			/* 1 chip */
-	3579545,	/* 3.58 MHZ ? */
+	3579580,	/* 3.58 MHZ ? */
 	{ 255 },
 	{ atarisys1_sound_interrupt }
 };
@@ -681,14 +664,14 @@ static struct MachineDriver marble_machine_driver =
 	{
 		{
 			CPU_M68000,
-			7159000,		/* 7.159 Mhz */
+			7159160,		/* 7.159 Mhz */
 			0,
 			marble_readmem,marble_writemem,0,0,
 			atarisys1_interrupt,1
 		},
 		{
 			CPU_M6502,
-			1790772,		/* 1.791 Mhz */
+			1789790,		/* 1.791 Mhz */
 			2,
 			atarisys1_sound_readmem,atarisys1_sound_writemem,0,0,
 			ignore_interrupt,1	/* IRQ generated by the YM2151 */
@@ -731,14 +714,14 @@ static struct MachineDriver peterpak_machine_driver =
 	{
 		{
 			CPU_M68000,
-			7159000,		/* 7.159 Mhz */
+			7159160,		/* 7.159 Mhz */
 			0,
 			atarisys1_readmem,atarisys1_writemem,0,0,
 			atarisys1_interrupt,1
 		},
 		{
 			CPU_M6502,
-			1790772,		/* 1.791 Mhz */
+			1789790,		/* 1.791 Mhz */
 			2,
 			atarisys1_sound_readmem,atarisys1_sound_writemem,0,0,
 			ignore_interrupt,1	/* IRQ generated by the YM2151 */
@@ -781,14 +764,14 @@ static struct MachineDriver indytemp_machine_driver =
 	{
 		{
 			CPU_M68000,
-			7159000,		/* 7.159 Mhz */
+			7159160,		/* 7.159 Mhz */
 			0,
 			atarisys1_readmem,atarisys1_writemem,0,0,
 			atarisys1_interrupt,1
 		},
 		{
 			CPU_M6502,
-			1790772,		/* 1.791 Mhz */
+			1789790,		/* 1.791 Mhz */
 			2,
 			atarisys1_sound_readmem,atarisys1_sound_writemem,0,0,
 			ignore_interrupt,1	/* IRQ generated by the YM2151 */
@@ -835,14 +818,14 @@ static struct MachineDriver roadrunn_machine_driver =
 	{
 		{
 			CPU_M68000,
-			7159000,		/* 7.159 Mhz */
+			7159160,		/* 7.159 Mhz */
 			0,
 			atarisys1_readmem,atarisys1_writemem,0,0,
 			atarisys1_interrupt,1
 		},
 		{
 			CPU_M6502,
-			1790772,		/* 1.791 Mhz */
+			1789790,		/* 1.791 Mhz */
 			2,
 			atarisys1_sound_readmem,atarisys1_sound_writemem,0,0,
 			ignore_interrupt,1	/* IRQ generated by the YM2151 */
@@ -889,14 +872,14 @@ static struct MachineDriver roadblst_machine_driver =
 	{
 		{
 			CPU_M68000,
-			7159000,		/* 7.159 Mhz */
+			7159160,		/* 7.159 Mhz */
 			0,
 			atarisys1_readmem,atarisys1_writemem,0,0,
 			atarisys1_interrupt,1
 		},
 		{
 			CPU_M6502,
-			1790772,		/* 1.791 Mhz */
+			1789790,		/* 1.791 Mhz */
 			2,
 			atarisys1_sound_readmem,atarisys1_sound_writemem,0,0,
 			ignore_interrupt,1	/* IRQ generated by the YM2151 */
@@ -935,43 +918,6 @@ static struct MachineDriver roadblst_machine_driver =
 		}
 	}
 };
-
-
-
-/*************************************
- *
- *		High score save/load
- *
- *************************************/
-
-static int hiload (void)
-{
-   void *f;
-
-	f = osd_fopen (Machine->gamedrv->name, 0, OSD_FILETYPE_HIGHSCORE, 0);
-   if (f)
-   {
-		osd_fread (f, atarisys1_eeprom, atarisys1_eeprom_size);
-		osd_fclose (f);
-   }
-   else
-   	memset (atarisys1_eeprom, 0xff, atarisys1_eeprom_size);
-
-   return 1;
-}
-
-
-static void hisave (void)
-{
-   void *f;
-
-	f = osd_fopen (Machine->gamedrv->name, 0, OSD_FILETYPE_HIGHSCORE, 1);
-   if (f)
-   {
-      osd_fwrite (f, atarisys1_eeprom, atarisys1_eeprom_size);
-      osd_fclose (f);
-   }
-}
 
 
 
@@ -1256,7 +1202,7 @@ ROM_START( roadrunn_rom )
 
 	ROM_REGION(0x10000)	/* 64k for 6502 code */
 	ROM_LOAD( "136040.143", 0x8000, 0x4000, 0x99ab0257 )
-	ROM_LOAD( "136040.144", 0xc000, 0x4000, 0xfe89db21 )
+	ROM_LOAD( "136040.144", 0xc000, 0x4000, 0xe97a31d0 )
 ROM_END
 
 
@@ -1342,7 +1288,7 @@ struct GameDriver marble_driver =
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,
-	hiload, hisave
+	atarigen_hiload, atarigen_hisave
 };
 
 
@@ -1363,7 +1309,7 @@ struct GameDriver marble2_driver =
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,
-	hiload, hisave
+	atarigen_hiload, atarigen_hisave
 };
 
 
@@ -1384,7 +1330,7 @@ struct GameDriver marblea_driver =
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,
-	hiload, hisave
+	atarigen_hiload, atarigen_hisave
 };
 
 
@@ -1405,7 +1351,7 @@ struct GameDriver peterpak_driver =
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,
-	hiload, hisave
+	atarigen_hiload, atarigen_hisave
 };
 
 
@@ -1426,7 +1372,7 @@ struct GameDriver indytemp_driver =
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,
-	hiload, hisave
+	atarigen_hiload, atarigen_hisave
 };
 
 
@@ -1447,7 +1393,7 @@ struct GameDriver roadrunn_driver =
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,
-	hiload, hisave
+	atarigen_hiload, atarigen_hisave
 };
 
 
@@ -1468,5 +1414,5 @@ struct GameDriver roadblst_driver =
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,
-	hiload, hisave
+	atarigen_hiload, atarigen_hisave
 };

@@ -16,9 +16,7 @@ These games use a 68000 main processor with a 6502, YM2203C and YM3526 for
 sound.  Karnov was a major pain to get going because of the
 'protection' on the main player sprite, probably connected to the Intel
 microcontroller on the board.  The game is very sensitive to the wrong values
-at the input ports...  There is also some sort of timer connected to the input
-bits and this is set 'by hand' - I don't have any schematics or know what
-this chip is.
+at the input ports...
 
 There is another Karnov rom set - a bootleg version of the Japanese roms with
 the Data East copyright removed - not supported because the original Japanese
@@ -29,35 +27,40 @@ Chelnov is still partially cracked - seems to work until first live is lost.
 Thanks to Oliver Stabel <stabel@rhein-neckar.netsurf.de> for confirming some
 of the sprite & control information :)
 
+Changes, May 1998 :
+* Fixed front plane graphics in both games.
+* Improved 'slowdowns' by adjusting vbl time. (still not perfect)
+* Chelnov attract mode now works properly.
+* Palette bug that affected Windows port fixed.
+* Karnov sprite banks merged.
+
 *******************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "M6502/M6502.h"
 
-
 extern unsigned char *karnov_foreground,*karnov_sprites;
 extern int karnov_scroll[4];
 
 extern void karnov_vh_screenrefresh(struct osd_bitmap *bitmap);
 extern void karnov_foreground_w(int offset, int data);
-
 extern void karnov_palette(void);
 
 int karnov_vh_start (void);
 void karnov_vh_stop (void);
 
 static int prot=0; /* For 'protection' on main player sprite */
+int karnov_pal;
+int karnov_a,karnov_b,karnov_c;  /* For testing of unknown ports */
 
 /******************************************************************************/
 
 void karnov_c_write(int offset, int data)
 {
-  static int f_pal=0;
-
 	switch (offset) {
     case 0: /* Dunno.. but a good place to map palette for now */
-			if (!f_pal) {karnov_palette(); f_pal=1;}
+			if (!karnov_pal) {karnov_palette(); karnov_pal=1;}
 			return;
 
 		case 2: /* Sound CPU in byte 3 */
@@ -66,10 +69,13 @@ void karnov_c_write(int offset, int data)
     	break;
 
     case 4: /* ?? */
+    	karnov_a=data;
     	break;
 
-    case 6:  /* Controls main player animation */
-   		prot=data&0xff;
+    case 6:  /* Controls main player animation in Karnov */
+      if (errorlog) fprintf(errorlog,"CPU %04x - Write %02x at c0000 %d\n",cpu_getpc(),data,offset);
+     	karnov_b=data;  /****/
+   		prot=data;
     	break;
 
   	case 8:
@@ -81,6 +87,7 @@ void karnov_c_write(int offset, int data)
 			break;
 
 		case 14: /* ?? */
+    	karnov_c=data;
 			break;
 
 		default:
@@ -109,7 +116,7 @@ int karnov_c_read(int offset)
 			return ( lsb + (msb<<8));
 
 		case 6: /* Byte 7 - coins, byte 6 controls main player sprite animation */
-			return (input_port_2_r (offset)<<8)+(prot*0x12);
+			return (input_port_2_r (offset)<<8)+((prot&0xff)*0x12);
 	}
 	if (errorlog) fprintf(errorlog,"Read at c0000 %d\n",offset);
 
@@ -119,7 +126,6 @@ int karnov_c_read(int offset)
 int chelnov_c_read(int offset)
 {
 	int msb,lsb;
-	static int vbl_toggle=0,shot_timer=0;
 
 	switch (offset) {
 		case 0: /* Player controls */
@@ -127,34 +133,57 @@ int chelnov_c_read(int offset)
 			return ( lsb + (lsb<<8));
 
 		case 2: /* Start buttons & VBL */
-		 //	return input_port_1_r (offset);
+		 	return input_port_1_r (offset);
 
-			lsb=input_port_1_r (offset);
-
-			shot_timer++;
-			if (shot_timer>5) { /* Value set by hand... */
-				shot_timer=0;
-
-				if (!vbl_toggle) {vbl_toggle=1; lsb=lsb&0xff;}
-				else {vbl_toggle=0; lsb=lsb&0x7f;}
-			}
-
-			return lsb;
-
-    /* Dipswitch A & B */
-    case 4:
+    case 4: /* Dipswitch A & B */
     	lsb=input_port_3_r (offset);
       msb=input_port_4_r (offset);
 			return ( lsb + (msb<<8));
 
 		case 6: /* Byte 7 - coins, byte 6 is protection */
-			return (input_port_2_r (offset)<<8)+(prot);
+      	if (errorlog) fprintf(errorlog,"Read at c0000 %d %d\n",offset,prot);
+
+			/* Some known return values for 8571 commands */
+ //     if (prot==0x100) return 0x71b;
+ //     if (prot==0x200) return 0x783e;
+
+			return (input_port_2_r (offset)<<8)+((prot&0xff));
 
 	/*
+    m/c -> d3 -> 0x60024 -> 0x6018c
+
+
+    CHEAT - byte at 0x60189 is level - enter value 0 - 6 at cartoon intro..
+
+
+    *** M/C check at 992
+    *** Check at 9e0
+
+    Another check around a10
+
+
 		bpx f326 - uses a0 as base offset to sprites
 		bpx f2f8 -
 				f2de - IMPORTANT - sprite tables mapped via protection here
 
+    bpx f2c8 to see results of m/c return
+
+
+    f31e...  main check???
+
+
+
+
+    115e & cdc8 & d536 & de84 & e9c0  clear 6018c - bpx this..
+    59a6 alters 6018c
+    f2de - main check
+
+    something at fa6...
+
+
+    0x62050 - set to FFFF when life is lost... so no baddies..
+
+    0xf0ae  check...
 
 	*/
 
@@ -191,7 +220,7 @@ static struct MemoryWriteAddress karnov_writemem[] =
 {
 	{ 0x000000, 0x05ffff, MWA_ROM },
 	{ 0x060000, 0x063fff, MWA_BANK1 },
-	{ 0x080000, 0x080fff, MWA_BANK2 , &karnov_sprites },
+  { 0x080000, 0x080fff, MWA_BANK2 , &karnov_sprites },
 	{ 0x0a0000, 0x0a07ff, MWA_BANK3 , &videoram, &videoram_size },
 	{ 0x0a1000, 0x0a1fff, karnov_foreground_w },
 	{ 0x0c0000, 0x0c000f, karnov_c_write },
@@ -313,8 +342,8 @@ INPUT_PORTS_START( chelnov_input_ports )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN3 )
-//	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_VBLANK )
+//	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START	/* Credits, protection */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -369,19 +398,32 @@ INPUT_PORTS_END
 
 /******************************************************************************/
 
-static struct GfxLayout karnov_characters =
+static struct GfxLayout chars =
 {
 	8,8,
 	1024,
-	4,
-	{ 0x0000*8,0x6000*8,0x4000*8,0x2000*8 },
+	3,
+	{ 0x6000*8,0x4000*8,0x2000*8 },
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	8*8	/* every sprite takes 8 consecutive bytes */
 };
 
+/* 16x16 sprites, 4 Planes, each plane is 0x10000 + 0x8000 bytes */
+static struct GfxLayout sprites =
+{
+	16,16,
+	2048+1024,
+	4,
+ 	{ 0x48000*8,0x00000*8,0x18000*8,0x30000*8 },
+	{ 16*8, 1+(16*8), 2+(16*8), 3+(16*8), 4+(16*8), 5+(16*8), 6+(16*8), 7+(16*8),
+  	0,1,2,3,4,5,6,7 },
+  { 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 ,8*8,9*8,10*8,11*8,12*8,13*8,14*8,15*8},
+	16*16
+};
+
 /* 16x16 tiles, 4 Planes, each plane is 0x10000 bytes */
-static struct GfxLayout tiles2 =
+static struct GfxLayout tiles =
 {
 	16,16,
 	2048,
@@ -393,33 +435,19 @@ static struct GfxLayout tiles2 =
 	16*16
 };
 
-static struct GfxLayout tiles3 =
-{
-	16,16,
-	1024,
-	4,
-	{ 0x18000*8,0x0000*8,0x08000*8,0x10000*8 },
-	{ 16*8, 1+(16*8), 2+(16*8), 3+(16*8), 4+(16*8), 5+(16*8), 6+(16*8), 7+(16*8),
-		0,1,2,3,4,5,6,7 },
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 ,8*8,9*8,10*8,11*8,12*8,13*8,14*8,15*8},
-	16*16
-};
-
 static struct GfxDecodeInfo karnov_gfxdecodeinfo[] =
 {
-  { 1, 0x00000, &karnov_characters,0,0x80 },
-  { 1, 0x08000, &tiles2,  0, 0x80 },  /* Backgrounds */
-	{ 1, 0x48000, &tiles2,  0, 0x80 },	/* Sprites */
-	{ 1, 0x88000, &tiles3,  0, 0x80 },	/* Sprites continued */
+  { 1, 0x00000, &chars,  0, 0x80 },
+  { 1, 0x08000, &tiles,  0, 0x80 },
+	{ 1, 0x48000, &sprites,0, 0x80 },
 	{ -1 } /* end of array */
 };
 
 static struct GfxDecodeInfo chelnov_gfxdecodeinfo[] =
 {
-  { 1, 0x00000, &karnov_characters,0,0x80 },
-	{ 1, 0x08000, &tiles2,  0, 0x80 },  /* Backgrounds */
-	{ 1, 0x48000, &tiles2,  0, 0x80 },	/* Sprites */
-	{ 1, 0x48000, &tiles3,  0, 0x80 },	/* Dummy area to be same as Karnov.. */
+  { 1, 0x00000, &chars,  0, 0x80 },
+	{ 1, 0x08000, &tiles,  0, 0x80 },
+	{ 1, 0x48000, &tiles,  0, 0x80 },
 	{ -1 } /* end of array */
 };
 
@@ -437,7 +465,7 @@ static struct YM2203interface ym2203_interface =
 {
 	1,
 	1500000,	/* Unknown */
-	{ YM2203_VOL(100,0x20ff) },
+	{ YM2203_VOL(120,0x20ff) },
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -472,7 +500,8 @@ static struct MachineDriver karnov_machine_driver =
 			interrupt,12
 		}
 	},
-	57, 1536, /* frames per second, vblank duration taken from Burger Time */
+57,50,
+//	57, 1536, /* frames per second, vblank duration taken from Burger Time */
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 
@@ -480,8 +509,7 @@ static struct MachineDriver karnov_machine_driver =
 	32*8, 32*8, { 0*8, 32*8-1, 0*8, 32*8-1 },
 
 	karnov_gfxdecodeinfo,
-	256,
-	64*16,
+	256, 64*16,
 	0,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
@@ -523,7 +551,8 @@ static struct MachineDriver chelnov_machine_driver =
 			interrupt,12
 		}
 	},
-	57, 1536, /* frames per second, vblank duration taken from Burger Time */
+57,50,
+//	57, 1536, /* frames per second, vblank duration taken from Burger Time */
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 
@@ -531,8 +560,7 @@ static struct MachineDriver chelnov_machine_driver =
  	32*8, 32*8, { 0*8, 32*8-1, 0*8, 32*8-1 },
 
 	chelnov_gfxdecodeinfo,
-	256,
-	64*16,
+	256, 64*16,
 	0,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
@@ -574,16 +602,16 @@ ROM_START( karnov_rom )
 	ROM_LOAD( "dn01-", 0x18000, 0x10000, 0xbe2ab384 )
   ROM_LOAD( "dn03-", 0x28000, 0x10000, 0xb2032daf )
   ROM_LOAD( "dn02-", 0x38000, 0x10000, 0xe60970ed )
-  /* Sprites */
-  ROM_LOAD( "dn12-", 0x48000, 0x10000, 0x0300f4c8 )
-  ROM_LOAD( "dn13-", 0x58000, 0x10000, 0x7d211a85 )
-	ROM_LOAD( "dn16-", 0x68000, 0x10000, 0xc945ee31 )
-  ROM_LOAD( "dn18-", 0x78000, 0x10000, 0xbb24da3a )
-  /* Sprites */
-	ROM_LOAD( "dn14-5", 0x88000, 0x8000, 0xb6b9f841 )
-	ROM_LOAD( "dn15-5", 0x90000, 0x8000, 0xcf18d74a )
-  ROM_LOAD( "dn17-5", 0x98000, 0x8000, 0x06e9df53 )
-  ROM_LOAD( "dn19-5", 0xa0000, 0x8000, 0x83fcbe26 )
+  /* Sprites - 2 sets of 4, interleaved here */
+  ROM_LOAD( "dn12-",  0x48000, 0x10000, 0x0300f4c8 )
+  ROM_LOAD( "dn14-5", 0x58000, 0x08000, 0xb6b9f841 )
+  ROM_LOAD( "dn13-",  0x60000, 0x10000, 0x7d211a85 )
+  ROM_LOAD( "dn15-5", 0x70000, 0x08000, 0xcf18d74a )
+	ROM_LOAD( "dn16-",  0x78000, 0x10000, 0xc945ee31 )
+  ROM_LOAD( "dn17-5", 0x88000, 0x08000, 0x06e9df53 )
+  ROM_LOAD( "dn18-",  0x90000, 0x10000, 0xbb24da3a )
+  ROM_LOAD( "dn19-5", 0xa0000, 0x08000, 0x83fcbe26 )
+
   /* 6502 Sound CPU */
   ROM_REGION(0x10000)
   ROM_LOAD( "dn05-5", 0x8000, 0x8000, 0x4fc9a353 )
@@ -612,14 +640,14 @@ ROM_START( karnovj_rom )
   ROM_LOAD( "kar2", 0x38000, 0x10000, 0xe60970ed )
   /* Sprites */
 	ROM_LOAD( "kar12", 0x48000, 0x10000, 0x0300f4c8 )
-  ROM_LOAD( "kar13", 0x58000, 0x10000, 0x7d211a85 )
-  ROM_LOAD( "kar16", 0x68000, 0x10000, 0xc945ee31 )
-  ROM_LOAD( "kar18", 0x78000, 0x10000, 0xbb24da3a )
-  /* Sprites */
-  ROM_LOAD( "kar14", 0x88000, 0x8000, 0x3d95baef )
-	ROM_LOAD( "kar15", 0x90000, 0x8000, 0xbb2d9d09 )
-  ROM_LOAD( "kar17", 0x98000, 0x8000, 0xc1a153c7 )
-  ROM_LOAD( "kar19", 0xa0000, 0x8000, 0x77773ad5 )
+  ROM_LOAD( "kar14", 0x58000, 0x08000, 0x3d95baef )
+  ROM_LOAD( "kar13", 0x60000, 0x10000, 0x7d211a85 )
+  ROM_LOAD( "kar15", 0x70000, 0x08000, 0xbb2d9d09 )
+  ROM_LOAD( "kar16", 0x78000, 0x10000, 0xc945ee31 )
+  ROM_LOAD( "kar17", 0x88000, 0x08000, 0xc1a153c7 )
+  ROM_LOAD( "kar18", 0x90000, 0x10000, 0xbb24da3a )
+  ROM_LOAD( "kar19", 0xa0000, 0x08000, 0x77773ad5 )
+
 	/* 6502 Sound CPU */
 	ROM_REGION(0x10000)
   ROM_LOAD( "kar5", 0x8000, 0x8000, 0x50cf61cf)
@@ -707,12 +735,6 @@ static void karnovj_patch(void)
 
 static void chelnov_patch(void)
 {
-//  WRITE_WORD (&RAM[0x0E54],0x4E71); /* Speed up */
-	//  WRITE_WORD (&RAM[0x0E46],0x4E71);
-//  WRITE_WORD (&RAM[0x0E6C],0x4E71);   /* tst*/
-	//  WRITE_WORD (&RAM[0x0E14],0x4E71); /* Speed up in game.. */
-
-
 	WRITE_WORD (&RAM[0x0A26],0x4E71);  /* removes a protection lookup table */
 
   /* Pulls out corrupt writes to protection location */
@@ -725,18 +747,30 @@ static void chelnov_patch(void)
 	WRITE_WORD (&RAM[0x0C54],0x4E71);
 	WRITE_WORD (&RAM[0x0C56],0x4E71);
 	WRITE_WORD (&RAM[0x0C58],0x4E71);
+
+  /* These next two are protection checks, a value is written to the 8751 and
+  	a specific value is needed back...  However, it doesn't seem to make any
+    reads from the 8751 before a timeout... Perhaps interrupts are wrong?
+
+    Let's just patch out the checks for now ;) */
+  WRITE_WORD (&RAM[0x09EC],0x4E75);
+	WRITE_WORD (&RAM[0x099E],0x4E75);
+
+  /* The main protection check...  kinda.. */
+//	WRITE_WORD (&RAM[0xf0ac],0x4E71);
+
+  /* Eliminate slowdowns. I tried to fix this by adjusting vbl times, but it
+  	didn't work... */
+	WRITE_WORD (&RAM[0xdfe],0x4E71);
 }
 
 static void chelnovj_patch(void)
 {
-	WRITE_WORD (&RAM[0x0E54],0x4E71); /* Speed up */
-	//  WRITE_WORD (&RAM[0x0E46],0x4E71);
-	WRITE_WORD (&RAM[0x0E6C],0x4E71);   /* tst*/
-	//  WRITE_WORD (&RAM[0x0E14],0x4E71); /* Speed up in game.. */
-
-
 	WRITE_WORD (&RAM[0x0A2E],0x4E71);  /* removes a protection lookup table */
-	WRITE_WORD (&RAM[0x0AAC],0x4E75);
+
+  /* Static checks, as for usa version */
+  WRITE_WORD (&RAM[0x09FC],0x4E75);
+  WRITE_WORD (&RAM[0x09A6],0x4E75);
 }
 
 struct GameDriver karnov_driver =

@@ -10,20 +10,18 @@
 #include "vidhrdw/generic.h"
 
 
-extern unsigned char eggs_palette[];
-extern unsigned char eggs_colortable[];
-
 unsigned char *lnc_charbank;
 unsigned char *lnc_control;
 unsigned char *bnj_backgroundram;
-int bnj_backgroundram_size;
 unsigned char *bnj_scroll2;
+unsigned char *zoar_scrollram;
+int bnj_backgroundram_size;
 
 static int background_image = 0;
-static int sprite_xadjust = 0;
 static unsigned char bnj_scroll1 = 0;
 static unsigned char *dirtybuffer2;
-static struct osd_bitmap *tmpbitmap2;
+static struct osd_bitmap *background_bitmap;
+static struct osd_bitmap *zoar_background_tile[16];
 
 /***************************************************************************
 
@@ -43,17 +41,6 @@ static struct osd_bitmap *tmpbitmap2;
 	bit 0 -- 47 kohm resistor  -- RED (inverted)
 
 ***************************************************************************/
-void btime_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
-{
-	/* nothing to do, the default settings are OK */
-}
-
-void eggs_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
-{
-	memcpy(palette, eggs_palette, Machine->drv->total_colors * 3);
-	memcpy(colortable, eggs_colortable, Machine->drv->color_table_len);
-}
-
 void lnc_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
 	int i;
@@ -83,22 +70,11 @@ void lnc_vh_convert_color_prom(unsigned char *palette, unsigned short *colortabl
 	}
 }
 
-void bnj_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
-{
-	/* nothing to do, the default settings are OK */
-}
-
-
-void btime_init_machine(void)
-{
-}
 
 void eggs_init_machine(void)
 {
 	// Suspend the dummy sound CPU
 	cpu_halt(1,0);
-
-	sprite_xadjust = 1;
 }
 
 void lnc_init_machine(void)
@@ -107,32 +83,11 @@ void lnc_init_machine(void)
 	*lnc_control = 0;
 }
 
-void bnj_init_machine(void)
-{
-	sprite_xadjust = 1;
-}
-
-
 /***************************************************************************
 
 Start the video hardware emulation.
 
 ***************************************************************************/
-int btime_vh_start (void)
-{
-	return generic_vh_start();
-}
-
-int eggs_vh_start (void)
-{
-	return generic_vh_start();
-}
-
-int lnc_vh_start (void)
-{
-	return generic_vh_start();
-}
-
 int bnj_vh_start (void)
 {
 	if (generic_vh_start() != 0)
@@ -146,7 +101,7 @@ int bnj_vh_start (void)
 	memset(dirtybuffer2,1,bnj_backgroundram_size);
 
 	/* the background area is twice as tall as the screen */
-	if ((tmpbitmap2 = osd_create_bitmap(Machine->drv->screen_width,2*Machine->drv->screen_height)) == 0)
+	if ((background_bitmap = osd_create_bitmap(Machine->drv->screen_width,2*Machine->drv->screen_height)) == 0)
 	{
 		free(dirtybuffer2);
 		generic_vh_stop();
@@ -156,34 +111,70 @@ int bnj_vh_start (void)
 	return 0;
 }
 
+int zoar_vh_start (void)
+{
+	int i,offs;
+
+	if (generic_vh_start() != 0)
+		return 1;
+
+	// Generate the 16 background titles
+	for (i = 0; i < 16; i++)
+	{
+		if ((zoar_background_tile[i] = osd_create_bitmap(16*16, 16*16)) == 0)
+		{
+			// Free all allocated tiles
+			for (i--; i >= 0; i--)
+			{
+				osd_free_bitmap(zoar_background_tile[i]);
+			}
+
+			generic_vh_stop();
+			return 1;
+		}
+
+		for (offs = 0; offs < 0x100; offs++)
+		{
+			int bx,by;
+
+			bx = 16 * (offs % 16);
+			by = 16 * (offs / 16);
+
+			drawgfx(zoar_background_tile[i], Machine->gfx[2],
+					Machine->memory_region[3][i * 0x100 + offs],
+					0,
+					0,0,
+					bx,by,
+					0,TRANSPARENCY_NONE,0);
+		}
+	}
+
+	return 0;
+}
 
 /***************************************************************************
 
 Stop the video hardware emulation.
 
 ***************************************************************************/
-void btime_vh_stop (void)
-{
-	generic_vh_stop();
-}
-
-void eggs_vh_stop (void)
-{
-	generic_vh_stop();
-}
-
-void lnc_vh_stop (void)
-{
-	generic_vh_stop();
-}
-
 void bnj_vh_stop (void)
 {
-	osd_free_bitmap(tmpbitmap2);
+	osd_free_bitmap(background_bitmap);
 	free(dirtybuffer2);
 	generic_vh_stop();
 }
 
+void zoar_vh_stop (void)
+{
+	int i;
+
+	for (i = 0; i < 16; i++)
+	{
+		osd_free_bitmap(zoar_background_tile[i]);
+	}
+
+	generic_vh_stop();
+}
 
 
 void btime_paletteram_w(int offset,int data)
@@ -336,7 +327,6 @@ void bnj_scroll1_w(int offset, int data)
 	bnj_scroll1 = data;
 }
 
-
 /***************************************************************************
 
 Draw the game screen in the given osd_bitmap.
@@ -344,81 +334,10 @@ Do NOT call osd_update_display() from this function, it will be called by
 the main emulation engine.
 
 ***************************************************************************/
-static void drawsprites(struct osd_bitmap *bitmap)
+static void drawchars(struct osd_bitmap *bitmap, int background_on)
 {
-	int offs;
-
-	/* Draw the sprites */
-	for (offs = 0;offs < videoram_size;offs += 4*0x20)
-	{
-		if (!(videoram[offs + 0] & 0x01)) continue;
-
-		drawgfx(bitmap,Machine->gfx[1],
-				videoram[offs + 0x20],
-				0,
-				videoram[offs + 0] & 0x02,videoram[offs + 0] & 0x04,
-				239 - videoram[offs + 2*0x20] + sprite_xadjust,
-				videoram[offs + 3*0x20],
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
-	}
-}
-
-void btime_vh_screenrefresh(struct osd_bitmap *bitmap)
-{
-	int offs, background_on, transparency;
+	int offs, transparency;
 	struct osd_bitmap *copytobitmap;
-
-	/*
-	 *  For each character in the background RAM, check if it has been
-	 *  modified since last time and update it accordingly.
-	 */
-	if (bnj_scroll1)
-	{
-		for (offs = bnj_backgroundram_size-1; offs >=0; offs--)
-		{
-			int sx,sy;
-
-			if (!dirtybuffer2[offs]) continue;
-
-			dirtybuffer2[offs] = 0;
-
-			sx = 16 * (((offs % 0x100) < 0x80) ? offs % 8 : (offs % 8) + 8);
-			sy = 16 * ((offs < 0x100) ? ((offs % 0x80) / 8) : ((offs % 0x80) / 8) + 16);
-
-			drawgfx(tmpbitmap2, Machine->gfx[2],
-					(bnj_backgroundram[offs] >> 4) + ((offs & 0x80) >> 3) + 32,
-					0,
-					0, 0,
-					sx, sy,
-					0, TRANSPARENCY_NONE, 0);
-		}
-	}
-
-	background_on = (background_image & 0x10) || bnj_scroll1;
-
-	if (background_on)
-	{
-		/* copy the background bitmap to the screen */
-		if (bnj_scroll1)
-		{
-			// Bump'n Jump
-			int scroll;
-
-			scroll = (bnj_scroll1 & 0x02) * 128 + 511 - *bnj_scroll2;
-			copyscrollbitmap (bitmap, tmpbitmap2, 0, 0, 1, &scroll, &Machine->drv->visible_area,TRANSPARENCY_NONE, 0);
-		}
-		else
-		{
-			// Burger Time
-			copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-		}
-	}
-
-	/* On Bump'n'Jump, the sprites appear below the text */
-	if (bnj_scroll1)
-	{
-		drawsprites(bitmap);
-	}
 
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. If the background is on, */
@@ -445,15 +364,166 @@ void btime_vh_screenrefresh(struct osd_bitmap *bitmap)
 				sx,sy,
 				&Machine->drv->visible_area,transparency,0);
 	}
+}
 
-	if (!background_on)
+static void drawsprites(struct osd_bitmap *bitmap, int start,
+                        int sprite_x_adjust)
+{
+	int offs;
+
+	/* Draw the sprites */
+	for (offs = start;offs < videoram_size;offs += 4*0x20)
 	{
+		int sx;
+
+		if (!(videoram[offs + 0] & 0x01)) continue;
+
+		sx = 240 - videoram[offs + 2*0x20] - sprite_x_adjust;
+
+		drawgfx(bitmap,Machine->gfx[1],
+				videoram[offs + 0x20],
+				0,
+				videoram[offs + 0] & 0x02,videoram[offs + 0] & 0x04,
+				sx,
+				videoram[offs + 3*0x20],
+				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+
+		// Wrap around
+		drawgfx(bitmap,Machine->gfx[1],
+				videoram[offs + 0x20],
+				0,
+				videoram[offs + 0] & 0x02,videoram[offs + 0] & 0x04,
+				sx + 256,
+				videoram[offs + 3*0x20],
+				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+	}
+}
+
+
+void btime_vh_screenrefresh(struct osd_bitmap *bitmap)
+{
+	if (background_image & 0x10)
+	{
+		// The background layer was drawn into tmpbitmap
+		copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+
+		drawchars(bitmap, 1);
+	}
+	else
+	{
+		drawchars(bitmap, 0);
+
 		/* copy the temporary bitmap to the screen */
 		copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 	}
 
-	if (!bnj_scroll1)
+	drawsprites(bitmap, 0, 1);
+}
+
+
+void eggs_vh_screenrefresh(struct osd_bitmap *bitmap)
+{
+	drawchars(bitmap, 0);
+
+	/* copy the temporary bitmap to the screen */
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+
+	drawsprites(bitmap, 0, 0);
+}
+
+
+void lnc_vh_screenrefresh(struct osd_bitmap *bitmap)
+{
+	drawchars(bitmap, 0);
+
+	/* copy the temporary bitmap to the screen */
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+
+	drawsprites(bitmap, 0, 1);
+}
+
+
+void zoar_vh_screenrefresh(struct osd_bitmap *bitmap)
+{
+	int scroll = (*bnj_scroll2 | ((bnj_scroll1 & 0x03) << 8));
+	scroll = -scroll;
+
+	if (bnj_scroll1 & 0x04)
 	{
-		drawsprites(bitmap);
+		int i;
+
+		// One extra iteration for wrap around
+		for (i = 0; i < 5; i++)
+		{
+			int tile = zoar_scrollram[i & 3];
+
+			copybitmap(bitmap,zoar_background_tile[tile],0,0,0,scroll,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+
+			scroll += 256;
+		}
+
+		drawchars(bitmap, 1);
+	}
+	else
+	{
+		drawchars(bitmap, 0);
+
+		/* copy the temporary bitmap to the screen */
+		copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	}
+
+	/* The order is important for correct priorities */
+	drawsprites(bitmap, 0x1f, 1);
+	drawsprites(bitmap, 0, 1);
+}
+
+
+void bnj_vh_screenrefresh(struct osd_bitmap *bitmap)
+{
+	/*
+	 *  For each character in the background RAM, check if it has been
+	 *  modified since last time and update it accordingly.
+	 */
+	if (bnj_scroll1)
+	{
+		int scroll, offs;
+
+		for (offs = bnj_backgroundram_size-1; offs >=0; offs--)
+		{
+			int sx,sy;
+
+			if (!dirtybuffer2[offs]) continue;
+
+			dirtybuffer2[offs] = 0;
+
+			sx = 16 * (((offs % 0x100) < 0x80) ? offs % 8 : (offs % 8) + 8);
+			sy = 16 * ((offs < 0x100) ? ((offs % 0x80) / 8) : ((offs % 0x80) / 8) + 16);
+
+			drawgfx(background_bitmap, Machine->gfx[2],
+					(bnj_backgroundram[offs] >> 4) + ((offs & 0x80) >> 3) + 32,
+					0,
+					0, 0,
+					sx, sy,
+					0, TRANSPARENCY_NONE, 0);
+		}
+
+		/* copy the background bitmap to the screen */
+		scroll = (bnj_scroll1 & 0x02) * 128 + 511 - *bnj_scroll2;
+		copyscrollbitmap (bitmap, background_bitmap, 0, 0, 1, &scroll, &Machine->drv->visible_area,TRANSPARENCY_NONE, 0);
+
+		// The sprites appear below the foremost layer
+		drawsprites(bitmap, 0, 0);
+
+		drawchars(bitmap, 1);
+	}
+	else
+	{
+		drawchars(bitmap, 0);
+
+		/* copy the temporary bitmap to the screen */
+		copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+
+		drawsprites(bitmap, 0, 0);
 	}
 }
+

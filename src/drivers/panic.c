@@ -182,7 +182,7 @@ enum
 	black, blue, red, purple, green, cyan, yellow, white, orange
 };
 
-static unsigned char colortable[] =
+static unsigned short colortable[] =
 {
 	black, yellow,    red,        white,        /* 1 Drop Monster */
 	black, green,     purple,     white,        /* 3 Drop Monster */
@@ -217,7 +217,7 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
   	32*8, 32*8, { 6*8, 30*8-1, 0*8, 32*8-1 },
 	gfxdecodeinfo,
-	sizeof(palette)/3,sizeof(colortable),
+	sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
 	0,
 
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,

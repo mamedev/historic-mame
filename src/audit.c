@@ -1,8 +1,10 @@
 #include "driver.h"
 #include "strings.h"
+#include "audit.h"
 
 /* 0 error else checksum */
-static int CalcCheckSum(void *f, const struct RomModule *romp, int length)
+static int CalcCheckSum(void *f, const struct RomModule *romp, int length,
+			verify_printf_proc verify_printf)
 {
 	int sum;
 	int xor;
@@ -19,14 +21,14 @@ static int CalcCheckSum(void *f, const struct RomModule *romp, int length)
 
 	if (!temp)
 	{
-		printf("Out of memory reading ROM %s\n",romp->name);
+		verify_printf("Out of memory reading ROM %s\n",romp->name);
 		osd_fclose(f);
 		exit(1);
 	}
 
 	if (osd_fread(f,temp,length) != length)
 	{
-		printf("Error reading ROM %s (length mismatch)\n", romp->name);
+		verify_printf("Error reading ROM %s (length mismatch)\n", romp->name);
 		free(temp);
 		return 0;
 	}
@@ -46,11 +48,7 @@ static int CalcCheckSum(void *f, const struct RomModule *romp, int length)
 }
 
 
-#define CORRECT   0
-#define NOTFOUND  1
-#define INCORRECT 2
-
-int VerifyRomSet (int game)
+int VerifyRomSet(int game,verify_printf_proc verify_printf)
 {
 	void *f;
 	const struct RomModule *romp;
@@ -97,17 +95,17 @@ int VerifyRomSet (int game)
 
 		if (!f)
 		{
-			printf("%-10s: %-12s %5d bytes   %08x NOT FOUND\n",
-					gamedrv->name, name, length, expchecksum);
+			verify_printf("%-10s: %-12s %5d bytes   %08x NOT FOUND\n",
+					      gamedrv->name, name, length, expchecksum);
 			badarchive=1;
 		}
 		else
 		{
-			checksum = CalcCheckSum(f, romp, length);
+			checksum = CalcCheckSum(f, romp, length, verify_printf);
 			if (checksum != expchecksum)
 			{
-				printf("%-10s: %-12s %5d bytes   %08x INCORRECT CHECKSUM\n",
-						gamedrv->name, name, length, expchecksum);
+				verify_printf("%-10s: %-12s %5d bytes   %08x INCORRECT CHECKSUM\n",
+						      gamedrv->name, name, length, expchecksum);
 				badarchive = 1;
 			}
 			osd_fclose(f);
@@ -122,7 +120,7 @@ int VerifyRomSet (int game)
 }
 
 
-int VerifySampleSet (int game)
+int VerifySampleSet(int game,verify_printf_proc verify_printf)
 {
 	int j;
 	int skipfirst;
@@ -176,12 +174,12 @@ int VerifySampleSet (int game)
 			osd_fclose(f);
 		else
 		{
-			printf("%-10s: %s NOT FOUND\n",gamedrv->name, gamedrv->samplenames[j]);
+			verify_printf("%-10s: %s NOT FOUND\n",gamedrv->name, gamedrv->samplenames[j]);
 			badsamples = 1;
 		}
 	}
 	if (badsamples)
 		return INCORRECT;
-	else 
+	else
 		return CORRECT;
 }

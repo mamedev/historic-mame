@@ -145,8 +145,10 @@ static void spunchout_prot_0_w( int offset, int data ) {
 	prot[0] = data;
 }
 
-static int spunchout_prot_2_r( int offset ) {
-	return prot[2];
+static int spunchout_prot_2_r( int offset )
+{
+	if( cpu_getpc() == 0x0615 ) return 0x09; //write "JMP (HL)"code to 0d79fh
+	else return prot[2];
 }
 
 static void spunchout_prot_2_w( int offset, int data ) {
@@ -842,11 +844,7 @@ static struct VLM5030interface vlm5030_interface =
 {
     3580000,    /* master clock */
     255,        /* volume       */
-#if 0
     3,          /* memory region of speech rom */
-#else
-    -1,         /* use sampling sound          */
-#endif
     0           /* VCU pin level (default)     */
 };
 

@@ -471,7 +471,16 @@ printoperands:
          pb2 = pb & 0x8f;
          if ((pb2 == 0x88) || (pb2 == 0x8c))
          {                    /* 8-bit offset */
-            offset = M6809_RDOP_ARG(pc+(p++));
+
+            /* KW 11/05/98 Fix of indirect opcodes      */
+
+            /*  offset = M6809_RDOP_ARG(pc+(p++));      */
+
+            offset = M6809_RDOP_ARG(pc);
+            p++;
+
+            /* KW 11/05/98 Fix of indirect opcodes      */
+
             if (offset > 127)                            /* convert to signed */
                offset = offset - 256;
             if (pb == 0x8c)
@@ -490,8 +499,18 @@ printoperands:
          }
          else if ((pb2 == 0x89) || (pb2 == 0x8d) || (pb2 == 0x8f))
          { /* 16-bit */
-            offset = M6809_RDOP_ARG(pc+(p++)) << 8;
-            offset += M6809_RDOP_ARG(pc+(p++));
+
+            /* KW 11/05/98 Fix of indirect opcodes      */
+
+            /*  offset = M6809_RDOP_ARG(pc+(p++)) << 8; */
+            /*  offset += M6809_RDOP_ARG(pc+(p++));     */
+
+            offset = M6809_RDOP_ARG(pc) << 8;
+            offset += M6809_RDOP_ARG(pc+1);
+            p+=2;
+
+            /* KW 11/05/98 Fix of indirect opcodes      */
+
             if ((pb != 0x8f) && (offset > 32767))
                offset = offset - 65536;
             offset &= 0xffff;

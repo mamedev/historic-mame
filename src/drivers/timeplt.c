@@ -247,7 +247,7 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPSETTING(    0x20, "6" )
 	PORT_DIPSETTING(    0x10, "7" )
 	PORT_DIPSETTING(    0x00, "8 (Hardest)" )
-	PORT_DIPNAME( 0x80, 0x00, "Demo Sound", IP_KEY_NONE )
+	PORT_DIPNAME( 0x80, 0x00, "Demo Sounds", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x80, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 INPUT_PORTS_END

@@ -95,7 +95,7 @@ static unsigned char palette[] = /* Smoothed pure colors, overlays are not so co
 	0xff,0x20,0x20, /* RED */
 };
 
-static unsigned char colortable[] =
+static unsigned short colortable[] =
 {
 	0,0,
 	0,1,
@@ -166,7 +166,7 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 31*8-1, 0*8, 32*8-1 },
 	gfxdecodeinfo,
-	sizeof(palette)/3,sizeof(colortable),
+	sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
 	0,
 
 	VIDEO_TYPE_RASTER,
@@ -368,7 +368,7 @@ static struct MachineDriver robotbowl_machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 31*8-1, 0*8, 32*8-1 },
 	robotbowl_gfxdecodeinfo,
-	sizeof(palette)/3,sizeof(colortable),
+	sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
 	0,
 
 	VIDEO_TYPE_RASTER,
@@ -512,7 +512,7 @@ static struct MachineDriver crash_machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 31*8-1, 0*8, 32*8-1 },
 	gfxdecodeinfo,
-	sizeof(palette)/3,sizeof(colortable),
+	sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
 	0,
 
 	VIDEO_TYPE_RASTER,

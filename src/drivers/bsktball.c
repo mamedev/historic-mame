@@ -3,7 +3,7 @@
 Atari Basketball Driver
 
 Note:  The original hardware uses the Player 1 and Player 2 Start buttons
-as the Jump/Shoot buttons.  I've taken button 1 and mapped it to the Start
+as the Jump/Shoot buttons.	I've taken button 1 and mapped it to the Start
 buttons to keep people from getting confused.
 
 If you have any questions about how this driver works, don't hesitate to
@@ -32,9 +32,13 @@ extern void bsktball_vh_screenrefresh(struct osd_bitmap *bitmap);
 static int note_timer=255;
 static int note_count=256;
 static void bsktball_note_w(int offset,int data);
-static void bsktball_32H(int foo);
+static void bsktball_note_32H(int foo);
+static void bsktball_noise_256H(int foo);
 static int init_timer=1;
-#define TIME_32H 10582*4
+static int crowd_mask=0;
+
+#define TIME_32H 10582*2
+#define TIME_256H TIME_32H*4
 
 static void bsktball_note_w(int offset,int data)
 {
@@ -44,12 +48,50 @@ static void bsktball_note_w(int offset,int data)
 
 	if ((init_timer) && (note_timer!=255))
 	{
-		timer_set (TIME_IN_NSEC(TIME_32H), 0, bsktball_32H);
+		timer_set (TIME_IN_NSEC(TIME_32H), 0, bsktball_note_32H);
 		init_timer=0;
 	}
 }
 
-static void bsktball_32H(int foo)
+static int noise_b10=0;
+static int noise_a10=0;
+static int noise=0;
+static int noise_timer_set=0;
+
+static void bsktball_noise_reset_w(int offset, int data)
+{
+	noise_a10=0;
+	noise_b10=0;
+	DAC_data_w(2,0);
+
+	if (!noise_timer_set)
+		timer_set (TIME_IN_NSEC(TIME_256H), 0, bsktball_noise_256H);
+	noise_timer_set=1;
+}
+
+static void bsktball_noise_256H(int foo)
+{
+	int b10_input;
+	int a10_input;
+
+	b10_input = (noise_b10 & 0x01) ^ (((~noise_a10) & 0x40) >> 6);
+	a10_input = (noise_b10 & 0x80) >> 7;
+
+	noise_b10 = ((noise_b10 << 1) | b10_input) & 0xFF;
+	noise_a10 = ((noise_a10 << 1) | a10_input) & 0xFF;
+
+	noise = (noise_a10 & 0x80) >> 7;
+
+	if (noise)
+		DAC_data_w(2,crowd_mask);
+	else
+		DAC_data_w(2,0);
+
+	timer_set (TIME_IN_NSEC(TIME_256H), 0, bsktball_noise_256H);
+	noise_timer_set=1;
+}
+
+static void bsktball_note_32H(int foo)
 {
 	note_count--;
 
@@ -62,15 +104,21 @@ static void bsktball_32H(int foo)
 		DAC_data_w(0,0);
 
 	if (note_timer!=255)
-		timer_set (TIME_IN_NSEC(TIME_32H), 0, bsktball_32H);
+		timer_set (TIME_IN_NSEC(TIME_32H), 0, bsktball_note_32H);
 	else
 		init_timer=1;
 }
 
 static void bsktball_bounce_w(int offset,int data)
 {
-	/* NOTE: D0-D3 should generate crowd noise */
+	/* D0-D3 = crowd */
+	crowd_mask = (data & 0x0F) << 4;
+	if (noise)
+		DAC_data_w(2,crowd_mask);
+	else
+		DAC_data_w(2,0);
 
+	/* D4 = bounce */
 	if (data & 0x10)
 		DAC_data_w(1,255);
 	else
@@ -95,12 +143,12 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x0000, 0x01ff, MWA_RAM }, /* WRAM */
 	{ 0x1000, 0x1000, MWA_RAM }, /* Timer Reset */
 	{ 0x1010, 0x101f, bsktball_bounce_w }, /* Crowd Amp / Bounce */
-	{ 0x1022, 0x1023, coin_counter_w }, /* Coin Counter */
+	{ 0x1022, 0x1023, MWA_RAM }, /* Coin Counter */
 	{ 0x1024, 0x1025, bsktball_led1_w }, /* LED 1 */
 	{ 0x1026, 0x1027, bsktball_led2_w }, /* LED 2 */
 	{ 0x1028, 0x1029, bsktball_ld1_w }, /* LD 1 */
 	{ 0x102a, 0x102b, bsktball_ld2_w }, /* LD 2 */
-	{ 0x102c, 0x102d, MWA_RAM }, /* Noise Reset */
+	{ 0x102c, 0x102d, bsktball_noise_reset_w }, /* Noise Reset */
 	{ 0x102e, 0x102f, bsktball_nmion_w }, /* NMI On */
 	{ 0x1030, 0x103f, bsktball_note_w }, /* Music Ckt Note Dvsr */
 	{ 0x1800, 0x1bbf, videoram_w, &videoram, &videoram_size }, /* DISPLAY */
@@ -207,7 +255,7 @@ static unsigned char palette[] =
 	0xff,0xff,0xff, /* WHITE */
 };
 
-static unsigned char colortable[] =
+static unsigned short colortable[] =
 {
 	/* Playfield */
 	0x01, 0x00, 0x00, 0x00,
@@ -299,10 +347,10 @@ static unsigned char colortable[] =
 
 static struct DACinterface dac_interface =
 {
-	2,
+	3,
 	441000,
-	{255,255 },
-	{  1,  1 }
+	{255,255,255 },
+	{  1,  1, 1 }
 };
 
 
@@ -325,7 +373,7 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	32*8, 28*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
 	gfxdecodeinfo,
-	sizeof(palette)/3,sizeof(colortable),
+	sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
 	0,
 
 	VIDEO_TYPE_RASTER,
@@ -379,7 +427,7 @@ struct GameDriver bsktball_driver =
 	0,
 	0,	/* sound_prom */
 
-        bsktball_input_ports,
+	bsktball_input_ports,
 
 	0, palette, colortable,
 	ORIENTATION_DEFAULT,

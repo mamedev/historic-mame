@@ -522,7 +522,6 @@ loop1:
 		else
 		{
 			/* totally unaligned case */
-loop2:
 			while (layer->dirty[block] == TILE_DIRTY ||
 					layer->dirty[block + (1 << layer_dirty_shift)] == TILE_DIRTY)
 			{

@@ -436,7 +436,7 @@ ROM_START( sbasketb_rom )
         ROM_LOAD( "sbb_e13.bin", 0x0000, 0x2000, 0x3d1ba1cb )
         ROM_LOAD( "sbb_e15.bin", 0x2000, 0x2000, 0x1c954ee7 )
         ROM_REGION(0x10000)     /* 64k for speeck rom */
-        ROM_LOAD( "sbb_e15.bin", 0x2000, 0x2000, 0x1c954ee7 )
+        ROM_LOAD( "sbb_e15.bin", 0x0000, 0x2000, 0x1c954ee7 )
 ROM_END
 
 

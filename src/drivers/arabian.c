@@ -273,7 +273,7 @@ static unsigned char palette[] =
 
 enum {BLACK,BLUE1,BLUE2,BLUE3,YELLOW };
 
-static unsigned char colortable[] =
+static unsigned short colortable[] =
 {
 	/* characters and sprites */
 	BLACK,BLUE1,BLACK,YELLOW,
@@ -313,7 +313,7 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0x0b, 0xf2, 0, 32*8-1 },
         0,
-	sizeof(palette)/3,sizeof(colortable),
+	sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
 	0,
 
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
