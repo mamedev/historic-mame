@@ -152,6 +152,186 @@ static unsigned short colortable[] =
 	0x00, 0x03
 };
 
+
+/************************************************************************/
+/* FireTruck Sound System Analog emulation by K.Wilkins Feb 2001        */
+/* Questions/Suggestions to mame@dysfunction.demon.co.uk                */
+/************************************************************************/
+
+#define	FIRETRUCK_MOTORSND		NODE_01
+#define	FIRETRUCK_HORNSND		NODE_02
+#define	FIRETRUCK_SIRENSND		NODE_03
+#define	FIRETRUCK_CRASHSND		NODE_04
+#define	FIRETRUCK_SKIDSND		NODE_05
+#define	FIRETRUCK_BELLSND		NODE_06
+#define	FIRETRUCK_ATTRACT		NODE_07
+#define	FIRETRUCK_XTNDPLY		NODE_08
+
+static DISCRETE_SOUND_START(firetruck_sound_interface)
+	/************************************************/
+	/* Firetruck sound system: 7 Sound Sources      */
+	/*                     Relative Volume          */
+	/*    1) Horn (Button)     10.02%               */
+	/*    2) Motor              8.17%               */
+	/*    3) Siren              1.47%               */
+	/*    4) Crash             22.05%               */
+	/*    5) Screech/Skid       6.68%               */
+	/*    6) Bell               4.69%               */
+	/*    7) Xtnd              46.91%               */
+	/* Relative volumes calculated from resitor     */
+	/* network in combiner circuit                  */
+	/*                                              */
+	/*  FireTruck Discrete sound mapping via:       */
+	/*     discrete_sound_w($register,value)        */
+	/*  $00 - Motorsound frequency                  */
+	/*  $01 - Hornsound enable                      */
+	/*  $02 - Siren frequency                       */
+	/*  $03 - Crash volume                          */
+	/*  $04 - Skid enable                           */
+	/*  $05 - Bell enable                           */
+	/*  $06 - Attract mode                          */
+	/*  $07 - Extend sound                          */
+	/*                                              */
+	/************************************************/
+
+	/************************************************/
+	/* Input register mapping for firetruck         */
+	/************************************************/
+	/*                   NODE             ADDR   MASK   GAIN    OFFSET  INIT */
+	DISCRETE_INPUTX(FIRETRUCK_MOTORSND    ,0x00,0x000f, -1.0   , 15.0,   0.0)
+	DISCRETE_INPUT (FIRETRUCK_HORNSND     ,0x01,0x000f,0)
+	DISCRETE_INPUTX(FIRETRUCK_SIRENSND    ,0x02,0x000f, -1.0   , 15.0,   0.0)
+	DISCRETE_INPUTX(FIRETRUCK_CRASHSND    ,0x03,0x000f, -1.0   , 15.0,   0.0)
+	DISCRETE_INPUT (FIRETRUCK_SKIDSND     ,0x04,0x000f,0)
+	DISCRETE_INPUT (FIRETRUCK_BELLSND     ,0x05,0x000f,0)
+	DISCRETE_INPUT (FIRETRUCK_ATTRACT     ,0x06,0x000f,0)
+	DISCRETE_INPUT (FIRETRUCK_XTNDPLY     ,0x07,0x000f,0)
+
+
+	/************************************************/
+	/* Motor sound circuit is based on a 556 VCO    */
+	/* with the input frequency set by the MotorSND */
+	/* latch (4 bit). This freqency is then used to */
+	/* driver a modulo 12 counter, with div2 & div12*/
+	/* summed as the output of the circuit.         */
+	/* VCO Output is Sq wave = 370-454Hz            */
+	/*  F1 freq = 185Hz - 227Hz (Div2)              */
+	/*  F2 freq = 30Hz - 38Hz   (Div12)             */
+	/* Motorsnd => 0000=454Hz  1111=270Hz           */
+	/* (Input register does the inversion of sign)  */
+	/************************************************/
+	DISCRETE_GAIN(NODE_18,FIRETRUCK_MOTORSND,(227.0-185.0)/16.0)	// F1
+	DISCRETE_ADDER2(NODE_17,1,NODE_18,185.0)
+	DISCRETE_SQUAREWAVE(NODE_16,1,NODE_17,(817.0/2.0),50.0,0)
+
+	DISCRETE_GAIN(NODE_14,FIRETRUCK_MOTORSND,(38.0-30.0)/16.0)		// F2
+	DISCRETE_ADDER2(NODE_13,1,NODE_14,30.0)
+	DISCRETE_SQUAREWAVE(NODE_12,1,NODE_13,(817.0/2.0),50.0,0)
+
+	DISCRETE_ADDER2(NODE_10,FIRETRUCK_ATTRACT,NODE_12,NODE_16)
+//	DISCRETE_RCFILTER(NODE_10,1,NODE_11,5000,0.1e-6)
+
+	/************************************************/
+	/* Horn, this is taken from the 64V signal that */
+	/* is a 750Hz sqruare wave. 1H = 3MHz with 32H  */
+	/* used to clock the V counter with 64V=3M/32/64*/
+	/************************************************/
+	DISCRETE_SQUAREWAVE(NODE_29,FIRETRUCK_ATTRACT,750.0,1002.0,50.0,0)
+	DISCRETE_ONOFF(NODE_20,FIRETRUCK_HORNSND,NODE_29)
+
+	/************************************************/
+	/* Siren is built around a 556 based VCO, the   */
+	/* 4 bit input value is smoothed between trans- */
+	/* itions by a 10u capacitor with around a 0.5s */
+	/* time constant, modelled with an RC filter.   */
+	/* 0000 = 666Hz with 35% duty cycle             */
+	/* 1111 = 526Hz with 63% duty cycle             */
+	/* Input register does the inversion of sense   */
+	/* to map this to:                              */
+	/* 0000 = 526Hz with 37% duty cycle             */
+	/* 1111 = 666Hz with 65% duty cycle             */
+	/* Duty cycle is inverted 100-x to make things  */
+	/* a little simpler and it doesnt affect sound. */
+	/************************************************/
+	DISCRETE_RCFILTER(NODE_38,1,FIRETRUCK_SIRENSND,250000,1e-6)		/* Input smoothing */
+
+	DISCRETE_GAIN(NODE_36,NODE_38,(666.0-526.0)/16.0)				/* Frequency modelling */
+	DISCRETE_ADDER2(NODE_35,1,NODE_36,526.0)
+
+	DISCRETE_GAIN(NODE_34,NODE_38,(65.0-37.0)/16.0)					/* Duty Cycle modelling */
+	DISCRETE_ADDER2(NODE_33,1,NODE_34,37.0)
+
+	DISCRETE_SQUAREWAVE(NODE_30,FIRETRUCK_ATTRACT,NODE_35,147.0,NODE_33,0)	/* VCO */
+
+
+	/************************************************/
+	/* Crash circuit is built around a noise        */
+	/* generator built from 2 shift registers that  */
+	/* are clocked by the 2V signal.                */
+	/* 1H = 3MHz and 1V = 32H /2 = 3Mhz/32/2/2      */
+	/*               2V = 3Mhz/32/4 = 23483Hz       */
+	/* Output is binary weighted with 4 bits of     */
+	/* crash volume.                                */
+	/* Volume is inverted by input register mapping */
+	/************************************************/
+	DISCRETE_NOISE(NODE_49,FIRETRUCK_ATTRACT,23483.0,FIRETRUCK_CRASHSND)
+	DISCRETE_GAIN(NODE_40,NODE_49,2205.0/15.0)
+
+	/************************************************/
+	/* Skid circuit takes the noise output from     */
+	/* the crash circuit and applies +ve feedback   */
+	/* to cause oscillation. There is also an RC    */
+	/* filter on the input to the feedback cct.     */
+	/* RC is 2.2K & 2.2uF                           */
+	/* Feedback cct is modelled by using the RC out */
+	/* as the frequency input on a VCO, estimated   */
+	/* freq range as 1Khz to 6Khz (sounds OK)       */
+	/************************************************/
+	DISCRETE_NOISE(NODE_59,1,23483.0,5000.0)
+	DISCRETE_RCFILTER(NODE_58,1,NODE_59,2200,2.2e-6)
+	DISCRETE_ADDER2(NODE_57,1,NODE_58,1500.0)
+	DISCRETE_SQUAREWAVE(NODE_50,FIRETRUCK_SKIDSND,NODE_57,668.0,50.0,0.0)
+
+
+	/************************************************/
+	/* Bell circuit - The bellsound signal is a one */
+	/* shot signal, a low pulse enables the bell    */
+	/* sound for 600ms with a 6Khz tone, the 600ms  */
+	/* decays with an RC TC of around 100ms.        */
+	/* The Hsync signal is put into a div 4 counter */
+	/* to get the 6KHz.                             */
+	/************************************************/
+	DISCRETE_ONESHOTR(NODE_69,1,FIRETRUCK_BELLSND,1,0.6)
+
+	DISCRETE_ADDER2(NODE_68,1,FIRETRUCK_BELLSND,-1.0)		// Invert sense of bellsnd for RC decay
+	DISCRETE_GAIN(NODE_67,NODE_68,-469.0)
+	DISCRETE_RCFILTER(NODE_66,1,NODE_67,10000,1.0e-6)
+
+	DISCRETE_SQUAREWAVE(NODE_60,NODE_69,5870.0,NODE_66,50.0,0.0)
+
+
+	/************************************************/
+	/* Extended play circuit is just the 8V signal  */
+	/* gated with regestered output from a D-Type   */
+	/* mand mapped into memory. 5870Hz              */
+	/************************************************/
+	DISCRETE_SQUAREWAVE(NODE_70,FIRETRUCK_XTNDPLY,5870.0,4691.0,50.0,0.0)
+
+	/************************************************/
+	/* Combine all 7 sound sources with a double    */
+	/* adder circuit                                */
+	/* (Note each cct contributes 1000 to the total */
+	/* and this needs to be scaled to give the      */
+	/* overall level to 65535 i.e *(65535/7000)     */
+	/************************************************/
+	DISCRETE_ADDER4(NODE_91,1,NODE_10,NODE_20,NODE_30,NODE_40)
+	DISCRETE_ADDER4(NODE_92,1,NODE_50,NODE_60,NODE_70,NODE_91)
+	DISCRETE_GAIN(NODE_90,NODE_92,(65535.0/10000.0))
+
+	DISCRETE_OUTPUT(NODE_90)														// Take the output from the mixer
+DISCRETE_SOUND_END
+
+
 static void init_palette(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom)
 {
 	memcpy(game_palette,palette,sizeof(palette));
@@ -353,6 +533,9 @@ void firetruck_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh )
 	draw_background( bitmap );
 	draw_text( bitmap );
 	draw_sprites( bitmap );
+
+	// Map horn button onto discrete sound emulation
+	discrete_sound_w(0x01,input_port_6_r(0));
 }
 
 static READ_HANDLER( firetruck_dsw_r )
@@ -417,6 +600,8 @@ static WRITE_HANDLER( crash_reset_w )
 static WRITE_HANDLER( skid_reset_w )
 {
 	firetruck_bit0_flags &= ~0x40;
+	// Clear skip sound output, Preset to D-Type, fed into NAND with crash noise
+	discrete_sound_w(0x04,0x00);
 }
 
 static WRITE_HANDLER( firetruck_out_w )
@@ -430,7 +615,37 @@ static WRITE_HANDLER( firetruck_out_w )
 	//		-----x--	0x04 FLASH - inverts screen
 	//		------x-	0x02 unused?
 	//		-------x	0x01 LED for START button
+	discrete_sound_w(0x06,!(data&0x10));	// Attract
+	discrete_sound_w(0x05,(data&0x80)?0x00:0x01);	// Bell
 }
+
+static WRITE_HANDLER( firetruck_motorsnd_w )
+{
+	//		xxxx----	0xf0 Siren Frequency
+	//		----xxxx	0x0f Motor Frequency
+	discrete_sound_w(0x00,data&0x0f);
+	discrete_sound_w(0x02,(data&0xf0)>>4);
+}
+
+static WRITE_HANDLER( firetruck_crashsnd_w )
+{
+	//		xxxx----	0xf0 Crash Volume
+	discrete_sound_w(0x03,(data&0xf0)>>4);
+}
+
+static WRITE_HANDLER( firetruck_skidsnd_w )
+{
+	//		Write starts the skid sound, Clear input to D-Type, fed into NAND with crash noise
+	discrete_sound_w(0x04,0x01);
+}
+
+static WRITE_HANDLER( firetruck_xtndply_w )
+{
+	//		-------x	0x01 Extend play sound
+	discrete_sound_w(0x07,!(data&0x01));
+}
+
+
 
 static MEMORY_READ_START( firetruck_readmem )
 	{ 0x0000, 0x01ff, MRA_RAM },
@@ -443,24 +658,24 @@ MEMORY_END
 
 static MEMORY_WRITE_START( firetruck_writemem )
 	{ 0x0000, 0x01ff, MWA_RAM, &videoram },
-	{ 0x0800, 0x08ff, MWA_RAM },			/* PRAM */
-	{ 0x1000, 0x1000, MWA_RAM },			/* PVPLOAD */
-	{ 0x1020, 0x1020, MWA_RAM },			/* PHPLOAD */
-	{ 0x1048, 0x1048, crash_reset_w },		/* CRASHRESET */
-	{ 0x1060, 0x1060, skid_reset_w },		/* SKIDRESET */
-	{ 0x1080, 0x1080, MWA_RAM },			/* CABROT */
-	{ 0x10a0, 0x10a0, steer_reset_w },		/* STEERRESET */
-	{ 0x10c0, 0x10c0, MWA_RAM },			/* WATCHDOGRESET */
-	{ 0x10e0, 0x10e0, MWA_RAM },			/* ARROWOFF */
-	{ 0x1400, 0x1400, MWA_RAM },			/* MOTORSND */
-	{ 0x1420, 0x1420, MWA_RAM }, 			/* CRASHSND */
-	{ 0x1440, 0x1440, MWA_RAM },			/* SKIDSND */
-	{ 0x1460, 0x1460, MWA_RAM },			/* HPOS */
-	{ 0x1480, 0x1480, MWA_RAM },			/* VPOS */
-	{ 0x14a0, 0x14a0, MWA_RAM },			/* TAILROT */
-	{ 0x14c0, 0x14c0, firetruck_out_w },	/* OUT */
-	{ 0x14e0, 0x14e0, MWA_RAM },			/* XTNDPLY */
-	{ 0x1800, 0x1807, MWA_RAM },			/* ? */
+	{ 0x0800, 0x08ff, MWA_RAM },				/* PRAM */
+	{ 0x1000, 0x1000, MWA_RAM },				/* PVPLOAD */
+	{ 0x1020, 0x1020, MWA_RAM },				/* PHPLOAD */
+	{ 0x1048, 0x1048, crash_reset_w },			/* CRASHRESET */
+	{ 0x1060, 0x1060, skid_reset_w },			/* SKIDRESET */
+	{ 0x1080, 0x1080, MWA_RAM },				/* CABROT */
+	{ 0x10a0, 0x10a0, steer_reset_w },			/* STEERRESET */
+	{ 0x10c0, 0x10c0, MWA_RAM },				/* WATCHDOGRESET */
+	{ 0x10e0, 0x10e0, MWA_RAM },				/* ARROWOFF */
+	{ 0x1400, 0x1400, firetruck_motorsnd_w },	/* MOTORSND */
+	{ 0x1420, 0x1420, firetruck_crashsnd_w }, 	/* CRASHSND */
+	{ 0x1440, 0x1440, firetruck_skidsnd_w },	/* SKIDSND */
+	{ 0x1460, 0x1460, MWA_RAM },				/* HPOS */
+	{ 0x1480, 0x1480, MWA_RAM },				/* VPOS */
+	{ 0x14a0, 0x14a0, MWA_RAM },				/* TAILROT */
+	{ 0x14c0, 0x14c0, firetruck_out_w },		/* OUT */
+	{ 0x14e0, 0x14e0, firetruck_xtndply_w },	/* XTNDPLY */
+	{ 0x1800, 0x1807, MWA_RAM },				/* ? */
 	{ 0x2000, 0x3fff, MWA_ROM },
 	{ 0xf000, 0xffff, MWA_ROM },
 MEMORY_END
@@ -512,7 +727,13 @@ static const struct MachineDriver machine_driver_firetruck =
 	firetruck_vh_stop,
 	firetruck_vh_screenrefresh,
 	/* sound hardware */
-	0,0,0,0
+	0,0,0,0,
+	{
+		{
+			SOUND_DISCRETE,
+			&firetruck_sound_interface
+		}
+	}
 };
 
 void init_firetruck( void )
@@ -592,7 +813,7 @@ INPUT_PORTS_START( firetruck )
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH,	IPT_START1 )	/* START1 */
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH,	IPT_START2 )	/* START2 */
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH,	IPT_START3 )	/* START3 */
-	PORT_BITX(0x08, IP_ACTIVE_HIGH,	IPT_BUTTON2, "Track Select", IP_KEY_DEFAULT, IP_JOY_DEFAULT)
+	PORT_BITX(0x08, IP_ACTIVE_HIGH,	IPT_BUTTON3, "Track Select", IP_KEY_DEFAULT, IP_JOY_DEFAULT)
 	PORT_BIT( 0x10, IP_ACTIVE_LOW,	IPT_UNUSED )	/* SPARE */
 	PORT_BIT( 0x20, IP_ACTIVE_LOW,	IPT_VBLANK )	/* VBLANK */
 	PORT_DIPNAME( 0x40, 0x40, "Cabinet Type" )		/* CABINET */
@@ -615,7 +836,11 @@ INPUT_PORTS_START( firetruck )
 
 	PORT_START /* p2 steering */
 	PORT_ANALOG ( 0xff, 0x80, IPT_DIAL | IPF_PLAYER2, 100, 0, 0, 255 )
+
+	PORT_START /* Mechanical Horn switch */
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_BUTTON4,"Horn Button",IP_KEY_DEFAULT,IP_JOY_DEFAULT)
+
 INPUT_PORTS_END
 
 /*           rom      parent    machine		inp			init */
-GAMEX( 1978, firetrk, 0,        firetruck,	firetruck,	firetruck,	ROT270, "Atari", "Fire Truck", GAME_NO_SOUND )
+GAME( 1978, firetrk, 0,        firetruck,	firetruck,	firetruck,	ROT270, "Atari", "Fire Truck")

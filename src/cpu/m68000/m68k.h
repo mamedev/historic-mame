@@ -248,6 +248,11 @@ void m68k_set_instr_hook_callback(void  (*callback)(void));
  */
 void m68k_set_cpu_type(unsigned int cpu_type);
 
+/* Do whatever initialisations the core requires.  Should be called
+ * at least once at init time.
+ */
+void m68k_init(void);
+
 /* Pulse the RESET pin on the CPU.
  * You *MUST* reset the CPU at least once to initialize the emulation
  * Note: If you didn't call m68k_set_cpu_type() before resetting

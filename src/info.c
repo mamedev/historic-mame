@@ -272,7 +272,7 @@ static void print_game_input(FILE* out, const struct GameDriver* game) {
 static void print_game_rom(FILE* out, const struct GameDriver* game)
 {
 	const struct RomModule *region, *rom, *chunk;
-	const struct RomModule *pregion, *prom = NULL;
+	const struct RomModule *pregion, *prom, *fprom=NULL;
 	extern struct GameDriver driver_0;
 
 	if (!game->rom) return;
@@ -286,7 +286,7 @@ static void print_game_rom(FILE* out, const struct GameDriver* game)
 			char name[100];
 			int offset, length, crc, in_parent;
 
-			sprintf(name,ROM_GETNAME(rom),game->name);
+			sprintf(name,ROM_GETNAME(rom));
 			offset = ROM_GETOFFSET(rom);
 			crc = ROM_GETCRC(rom);
 
@@ -296,19 +296,23 @@ static void print_game_rom(FILE* out, const struct GameDriver* game)
 				length += ROM_GETLENGTH(chunk);
 
 			if (crc && game->clone_of)
-				for (pregion = rom_first_region(game->clone_of); pregion && !in_parent; pregion = rom_next_region(pregion))
-					for (prom = rom_first_file(pregion); prom && !in_parent; prom = rom_next_file(prom))
+			{
+				fprom=NULL;
+				for (pregion = rom_first_region(game->clone_of); pregion; pregion = rom_next_region(pregion))
+					for (prom = rom_first_file(pregion); prom; prom = rom_next_file(prom))
 						if (ROM_GETCRC(prom) == crc)
 						{
+							if (!fprom || !strcmp(ROM_GETNAME(prom), name))
+								fprom=prom;
 							in_parent = 1;
-							break;
 						}
+			}
 
 			fprintf(out, L1P "rom" L2B);
 			if (*name)
 				fprintf(out, L2P "name %s" L2N, name);
-			if(in_parent && prom && ROM_GETNAME(prom))
-				fprintf(out, L2P "merge %s" L2N, ROM_GETNAME(prom));
+			if(in_parent)
+				fprintf(out, L2P "merge %s" L2N, ROM_GETNAME(fprom));
 			fprintf(out, L2P "size %d" L2N, length);
 			fprintf(out, L2P "crc %08x" L2N, crc);
 			switch (ROMREGION_GETTYPE(region))

@@ -481,30 +481,30 @@ ROM_END
 static void init_frogger(void)
 {
 	int A;
-	unsigned char *RAM;
+	unsigned char *rom;
 
 
 	/* the first ROM of the second CPU has data lines D0 and D1 swapped. Decode it. */
-	RAM = memory_region(REGION_CPU2);
+	rom = memory_region(REGION_CPU2);
 	for (A = 0;A < 0x0800;A++)
-		RAM[A] = (RAM[A] & 0xfc) | ((RAM[A] & 1) << 1) | ((RAM[A] & 2) >> 1);
+		rom[A] = BITSWAP8(rom[A],7,6,5,4,3,2,0,1);
 
 	/* likewise, the first gfx ROM has data lines D0 and D1 swapped. Decode it. */
-	RAM = memory_region(REGION_GFX1);
+	rom = memory_region(REGION_GFX1);
 	for (A = 0;A < 0x0800;A++)
-		RAM[A] = (RAM[A] & 0xfc) | ((RAM[A] & 1) << 1) | ((RAM[A] & 2) >> 1);
+		rom[A] = BITSWAP8(rom[A],7,6,5,4,3,2,0,1);
 }
 
 static void init_froggrmc(void)
 {
 	int A;
-	unsigned char *RAM;
+	unsigned char *rom;
 
 
 	/* the first ROM of the second CPU has data lines D0 and D1 swapped. Decode it. */
-	RAM = memory_region(REGION_CPU2);
+	rom = memory_region(REGION_CPU2);
 	for (A = 0;A < 0x1000;A++)
-		RAM[A] = (RAM[A] & 0xfc) | ((RAM[A] & 1) << 1) | ((RAM[A] & 2) >> 1);
+		rom[A] = BITSWAP8(rom[A],7,6,5,4,3,2,0,1);
 }
 
 

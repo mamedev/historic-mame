@@ -114,7 +114,7 @@ READ_HANDLER( K052109_051960_r );
 WRITE_HANDLER( K052109_051960_w );
 
 
-int K053245_vh_start(int gfx_memory_region,int big,int plane0,int plane1,int plane2,int plane3,
+int K053245_vh_start(int gfx_memory_region,int plane0,int plane1,int plane2,int plane3,
 		void (*callback)(int *code,int *color,int *priority_mask));
 void K053245_vh_stop(void);
 READ16_HANDLER( K053245_word_r );

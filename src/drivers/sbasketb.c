@@ -250,7 +250,6 @@ struct VLM5030interface sbasketb_vlm5030_interface =
 	255,        /* volume        */
 	REGION_SOUND1,	/* memory region  */
 	0,         /* memory size    */
-	0,         /* VCU            */
 	sbasketb_sample_names
 };
 

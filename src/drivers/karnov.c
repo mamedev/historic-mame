@@ -55,7 +55,7 @@ enum { KARNOV=0, KARNOVJ, CHELNOV, CHELNOVJ, WNDRPLNT };
 static data16_t i8751_return;
 static data16_t *karnov_ram;
 extern data16_t karnov_scroll[2], *karnov_pf_data;
-static int microcontroller_id;
+static int microcontroller_id,coin_mask;
 
 /******************************************************************************/
 
@@ -85,18 +85,47 @@ static void karnov_i8751_w(int data)
 
 static void wndrplnt_i8751_w(int data)
 {
-//	static int level;
-
 	i8751_return=0;
 	if (data==0x100) i8751_return=0x67a;
-//	if (data==0x200) i8751_return=0x214;
-
-	/* USA version will have different values for these commands */
-
+	if (data==0x200) i8751_return=0x214;
 	if (data==0x300) i8751_return=0x17; /* Copyright text on title screen */
 //	if (data==0x300) i8751_return=0x1; /* (USA) Copyright text on title screen */
 
-	if (data!=0x600) logerror("CPU %04x - Unknown Write %02x intel\n",cpu_get_pc(),data);
+	/* The game writes many values in the 0x600 range, but only a specific mask
+	matters for the return value */
+	if ((data&0x600)==0x600) {
+		switch (data&0x18) {
+			case 0x00: 	i8751_return=0x4d53; break;
+			case 0x08:	i8751_return=0x4b54; break;
+			case 0x10: 	i8751_return=0x5453; break;
+			case 0x18:	i8751_return=0x5341; break;
+		}
+	}
+//	else logerror("CPU %04x - Unknown Write %02x intel\n",cpu_get_pc(),data);
+
+	/* These are 68k function call addresses - different address for each power-up */
+	if (data==0x400) i8751_return=0x594;
+	if (data==0x401) i8751_return=0x5ea;
+	if (data==0x402) i8751_return=0x628;
+	if (data==0x403) i8751_return=0x66c;
+	if (data==0x404) i8751_return=0x6a4;
+	if (data==0x405) i8751_return=0x6a4;
+	if (data==0x406) i8751_return=0x6a4;
+
+	/* This is 68k program code which is executed every frame */
+	if (data==0x50c) i8751_return=0x13fc;
+	if (data==0x50b) i8751_return=0x00ff;
+	if (data==0x50a) i8751_return=0x0006;
+	if (data==0x509) i8751_return=0x0000;
+	if (data==0x508) i8751_return=0x4a39;
+	if (data==0x507) i8751_return=0x0006;
+	if (data==0x506) i8751_return=0x0000;
+	if (data==0x505) i8751_return=0x66f8;
+	if (data==0x504) i8751_return=0x4a39;
+	if (data==0x503) i8751_return=0x000c;
+	if (data==0x502) i8751_return=0x0003;
+	if (data==0x501) i8751_return=0x6bf8;
+	if (data==0x500) i8751_return=0x4e75;
 
 	cpu_cause_interrupt(0,6); /* Signal main cpu task is complete */
 }
@@ -333,22 +362,21 @@ INPUT_PORTS_START( karnov )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )
 
 	PORT_START	/* Dummy input for i8751 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN3 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0xf8, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_SERVICE1 )
 
 	PORT_START	/* Dip switch bank 1 */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_3C ) )
 	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_3C ) )
 	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
@@ -370,11 +398,11 @@ to have any effect */
 	PORT_DIPSETTING(    0x03, "3" )
 	PORT_DIPSETTING(    0x02, "5" )
 	PORT_BITX(0,        0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
-	PORT_DIPNAME( 0x0c, 0x0c, "K needed for Bonus Life" )
-	PORT_DIPSETTING(    0x0c, "50" )
-	PORT_DIPSETTING(    0x08, "70" )
-	PORT_DIPSETTING(    0x04, "90" )
-	PORT_DIPSETTING(    0x00, "100" )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x0c, "50 K" )
+	PORT_DIPSETTING(    0x08, "70 K" )
+	PORT_DIPSETTING(    0x04, "90 K" )
+	PORT_DIPSETTING(    0x00, "100 K" )
 	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x30, "Easy" )
 	PORT_DIPSETTING(    0x10, "Normal" )
@@ -386,6 +414,92 @@ to have any effect */
 	PORT_DIPNAME( 0x80, 0x80, "Timer Speed" )
 	PORT_DIPSETTING(    0x80, "Normal" )
 	PORT_DIPSETTING(    0x00, "Fast" )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( wndrplnt )
+	PORT_START	/* Player 1 controls */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* Player 2 controls */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_COCKTAIL )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* start buttons */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1  )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START2  )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )
+
+	PORT_START	/* Dummy input for i8751 */
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_SERVICE1 )
+
+	PORT_START	/* Dip switch bank 1 */
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_3C ) )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_3C ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Cocktail ) )
+
+	PORT_START	/* Dip switch bank 2 */
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x01, "1" )
+	PORT_DIPSETTING(    0x03, "3" )
+	PORT_DIPSETTING(    0x02, "5" )
+	PORT_BITX(0,        0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, "Allow Continue" )
+	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( chelnov )
@@ -420,22 +534,21 @@ INPUT_PORTS_START( chelnov )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )   /* Active_low is strange! */
 
 	PORT_START	/* Dummy input for i8751 */
-	PORT_BIT( 0x1f, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SERVICE1 )
 
 	PORT_START	/* Dip switch bank 1 */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_3C ) )
 	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_3C ) )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
@@ -528,8 +641,8 @@ static int karnov_interrupt(void)
 	static int latch;
 
 	/* Coin input to the i8751 generates an interrupt to the main cpu */
-	if (readinputport(3) == 0xff) latch=1;
-	if (readinputport(3) != 0xff && latch) {
+	if (readinputport(3) == coin_mask) latch=1;
+	if (readinputport(3) != coin_mask && latch) {
 		i8751_return=readinputport(3) | 0x8000;
 		cpu_cause_interrupt(0,6);
 		latch=0;
@@ -846,16 +959,19 @@ ROM_END
 static void init_karnov(void)
 {
 	microcontroller_id=KARNOV;
+	coin_mask=0;
 }
 
 static void init_karnovj(void)
 {
 	microcontroller_id=KARNOVJ;
+	coin_mask=0;
 }
 
 static void init_wndrplnt(void)
 {
 	microcontroller_id=WNDRPLNT;
+	coin_mask=0;
 }
 
 static void init_chelnov(void)
@@ -863,6 +979,7 @@ static void init_chelnov(void)
 	data16_t *RAM = (UINT16 *)memory_region(REGION_CPU1);
 
 	microcontroller_id=CHELNOV;
+	coin_mask=0xe0;
 	RAM[0x0A26/2]=0x4E71;  /* removes a protection lookup table */
 	RAM[0x062a/2]=0x4E71;  /* hangs waiting on i8751 int */
 }
@@ -872,6 +989,7 @@ static void init_chelnovj(void)
 	data16_t *RAM = (UINT16 *)memory_region(REGION_CPU1);
 
 	microcontroller_id=CHELNOVJ;
+	coin_mask=0xe0;
 	RAM[0x0a2e/2]=0x4E71;  /* removes a protection lookup table */
 	RAM[0x062a/2]=0x4E71;  /* hangs waiting on i8751 int */
 }
@@ -880,6 +998,6 @@ static void init_chelnovj(void)
 
 GAME( 1987, karnov,   0,       karnov,   karnov,  karnov,   ROT0,   "Data East USA", "Karnov (US)" )
 GAME( 1987, karnovj,  karnov,  karnov,   karnov,  karnovj,  ROT0,   "Data East Corporation", "Karnov (Japan)" )
-GAMEX(1987, wndrplnt, 0,       wndrplnt, karnov,  wndrplnt, ROT270, "Data East Corporation", "Wonder Planet (Japan)", GAME_UNEMULATED_PROTECTION )
+GAME( 1987, wndrplnt, 0,       wndrplnt, wndrplnt,wndrplnt, ROT270, "Data East Corporation", "Wonder Planet (Japan)" )
 GAME( 1988, chelnov,  0,       karnov,   chelnov, chelnov,  ROT0,   "Data East USA", "Chelnov - Atomic Runner (US)" )
 GAME( 1988, chelnovj, chelnov, karnov,   chelnov, chelnovj, ROT0,   "Data East Corporation", "Chelnov - Atomic Runner (Japan)" )

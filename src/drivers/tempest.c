@@ -195,13 +195,12 @@ static WRITE_HANDLER( tempest_led_w )
 
 static WRITE_HANDLER( tempest_coin_w )
 {
-	static int lastval;
-
-	if (lastval == data) return;
 	coin_counter_w (0, (data & 0x01));
 	coin_counter_w (1, (data & 0x02));
 	coin_counter_w (2, (data & 0x04));
-	lastval = data;
+	vector_set_flip_x (data & 0x08);
+	vector_set_flip_y (data & 0x10);
+	vector_set_swap_xy (1);	/* vertical game */
 }
 
 static MEMORY_READ_START( readmem )
@@ -262,9 +261,9 @@ INPUT_PORTS_START( tempest )
 	 * According to the documentation, this is not a switch, although
 	 * it may have been planned to put it on the Math Box PCB, D/E2 )
 	 */
-	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -373,7 +372,7 @@ static const struct MachineDriver machine_driver_tempest =
 	0,
 
 	/* video hardware */
-	300, 400, { 0, 550, 0, 580 },
+	400, 300, { 0, 550, 0, 580 },
 	0,
 	256,0,
 	avg_init_palette_multi,
@@ -402,14 +401,6 @@ static const struct MachineDriver machine_driver_tempest =
   Game driver(s)
 
 ***************************************************************************/
-
-/*
- * Tempest now uses the EAROM routines to load/save scores.
- * Just in case, here is a snippet of the old code:
- * if (memcmp(&RAM[0x0606],"\x07\x04\x01",3))
- *	osd_fread(f,&RAM[0x0600],0x200);
- */
-
 
 ROM_START( tempest ) /* rev 3 */
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
@@ -499,7 +490,7 @@ ROM_END
 
 
 
-GAMEX( 1980, tempest,  0,       tempest, tempest, 0, ROT0, "Atari", "Tempest (rev 3)", GAME_NO_COCKTAIL )
-GAMEX( 1980, tempest1, tempest, tempest, tempest, 0, ROT0, "Atari", "Tempest (rev 1)", GAME_NO_COCKTAIL )
-GAMEX( 1980, tempest2, tempest, tempest, tempest, 0, ROT0, "Atari", "Tempest (rev 2)", GAME_NO_COCKTAIL )
-GAMEX( 1980, temptube, tempest, tempest, tempest, 0, ROT0, "hack", "Tempest Tubes", GAME_NO_COCKTAIL )
+GAME( 1980, tempest,  0,       tempest, tempest, 0, ROT270, "Atari", "Tempest (rev 3)" )
+GAME( 1980, tempest1, tempest, tempest, tempest, 0, ROT270, "Atari", "Tempest (rev 1)" )
+GAME( 1980, tempest2, tempest, tempest, tempest, 0, ROT270, "Atari", "Tempest (rev 2)" )
+GAME( 1980, temptube, tempest, tempest, tempest, 0, ROT270, "hack", "Tempest Tubes" )

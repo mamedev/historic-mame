@@ -164,11 +164,11 @@ static struct GfxDecodeInfo znqs_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static MEMORY_READ_START( znqs_readmem )
-	{ 0xbfc00000, 0xbfc7ffff, MRA_BANK3 },	/* bios */
+static MEMORY_READ16_START( znqs_readmem )
+	{ 0xbfc00000, 0xbfc7ffff, MRA16_BANK3 },	/* bios */
 MEMORY_END
 
-static MEMORY_WRITE_START( znqs_writemem )
+static MEMORY_WRITE16_START( znqs_writemem )
 MEMORY_END
 
 
@@ -951,9 +951,9 @@ GAME( 1997, jgakuen,  rvschool, znqs, zn, 0, ROT0, "Capcom", "Justice Gakuen (JA
 GAME( 1998, sfex2,	  0,		znqs, zn, 0, ROT0, "Capcom/Arika", "Street Fighter EX 2 (JAPAN 980312)" )
 GAME( 1998, tgmj,	  0,		znqs, zn, 0, ROT0, "Capcom/Akira", "Tetris The Grand Master (JAPAN 980710)" )
 GAME( 1998, kikaioh,  0,		znqs, zn, 0, ROT0, "Capcom", "Kikaioh (JAPAN 980914)" )
-GAME( 1999, sfex2p,   sfex2,	znqs, zn, 0, ROT0, "Capcom/Arika", "Street Fighter EX 2 Plus (JAPAN 990611)" )
+GAME( 1999, sfex2p,   0,		znqs, zn, 0, ROT0, "Capcom/Arika", "Street Fighter EX 2 Plus (JAPAN 990611)" )
 GAME( 1999, shiryu2,  0,		znqs, zn, 0, ROT0, "Capcom", "Strider Hiryu 2 (JAPAN 991213)" )
 
-GAME( 1996, sncwgltd,	0,	  zn, zn, 0, ROT0_16BIT, "Video System", "Sonic Wings Limited (JAPAN)" )
+GAME( 1996, sncwgltd,	0,	  zn, zn, 0, ROT0_16BIT, "Video System Co.", "Sonic Wings Limited (JAPAN)" )
 GAME( 1997, glpracr2,	0,	  zn, zn, 0, ROT0_16BIT, "Tecmo", "Gallop Racer 2 (JAPAN)" )
 GAME( 1998, doapp,		0,	  zn, zn, 0, ROT0_16BIT, "Tecmo", "Dead Or Alive ++ (JAPAN)" )

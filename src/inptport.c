@@ -157,8 +157,8 @@ struct ipd inputport_defaults[] =
 	{ IPT_UI_PAN_LEFT,          "Pan Left",          SEQ_DEF_2(KEYCODE_PGUP, KEYCODE_LSHIFT) },
 	{ IPT_UI_PAN_RIGHT,         "Pan Right",         SEQ_DEF_2(KEYCODE_PGDN, KEYCODE_LSHIFT) },
 	{ IPT_UI_TOGGLE_DEBUG,      "Toggle Debugger",   SEQ_DEF_1(KEYCODE_F5) },
-	{ IPT_UI_SAVE_STATE,        "Save state",        SEQ_DEF_1(KEYCODE_F7) },
-	{ IPT_UI_LOAD_STATE,        "Load state",        SEQ_DEF_1(KEYCODE_F1) },
+	{ IPT_UI_SAVE_STATE,        "Save state",        SEQ_DEF_2(KEYCODE_F7, KEYCODE_LSHIFT) },
+	{ IPT_UI_LOAD_STATE,        "Load state",        SEQ_DEF_3(KEYCODE_F7, CODE_NOT, KEYCODE_LSHIFT) },
 	{ IPT_START1, "1 Player Start",  SEQ_DEF_1(KEYCODE_1) },
 	{ IPT_START2, "2 Players Start", SEQ_DEF_1(KEYCODE_2) },
 	{ IPT_START3, "3 Players Start", SEQ_DEF_1(KEYCODE_3) },
@@ -1541,10 +1541,11 @@ if (IP_GET_IMPULSE(in) == 0)
 								mask = 0;
 							else if (in->type & IPF_4WAY)
 							{
+
 								int mru_dir = joydir;
 								int mru_serial = 0;
 								int dir;
-
+								int stickyflag=0; /* jmk */
 
 								/* avoid diagonal movements, use mru button */
 								for (dir = 0;dir < 4;dir++)
@@ -1554,9 +1555,12 @@ if (IP_GET_IMPULSE(in) == 0)
 										mru_serial = joyserial[joynum][dir];
 										mru_dir = dir;
 									}
+									if ((dir != joydir) && (joyserial[joynum][dir] != 0))	/* jmk */
+										stickyflag=1;					/* jmk */
 								}
 
-								if (mru_dir != joydir)
+//								if (mru_dir != joydir) 			/* jmk */
+								if ((mru_dir == joydir) && stickyflag)	/* jmk */
 									mask = 0;
 							}
 #endif

@@ -231,22 +231,7 @@ WRITE16_HANDLER( paletteram16_RRRRRGGGGGBBBBBx_word_w );
 WRITE16_HANDLER( paletteram16_IIIIRRRRGGGGBBBB_word_w );
 WRITE16_HANDLER( paletteram16_RRRRGGGGBBBBIIII_word_w );
 WRITE16_HANDLER( paletteram16_xrgb_word_w );
-
-
-
-/* obsolete, will be removed */
-READ_HANDLER( paletteram_word_r );
-READ_HANDLER( paletteram_2_word_r );
-WRITE_HANDLER( paletteram_BBBBGGGGRRRRxxxx_word_w );
-WRITE_HANDLER( paletteram_xxxxBBBBGGGGRRRR_word_w );
-WRITE_HANDLER( paletteram_xxxxRRRRGGGGBBBB_word_w );
-WRITE_HANDLER( paletteram_RRRRGGGGBBBBxxxx_word_w );
-WRITE_HANDLER( paletteram_xBBBBBGGGGGRRRRR_word_w );
-WRITE_HANDLER( paletteram_xRRRRRGGGGGBBBBB_word_w );
-WRITE_HANDLER( paletteram_xGGGGGRRRRRBBBBB_word_w );
-WRITE_HANDLER( paletteram_RRRRRGGGGGBBBBBx_word_w );
-WRITE_HANDLER( paletteram_IIIIRRRRGGGGBBBB_word_w );
-WRITE_HANDLER( paletteram_RRRRGGGGBBBBIIII_word_w );
+WRITE16_HANDLER( paletteram16_RRRRGGGGBBBBRGBx_word_w );
 
 #ifdef __cplusplus
 }

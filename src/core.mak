@@ -5,7 +5,7 @@ COREOBJS = $(OBJ)/version.o $(OBJ)/mame.o \
 	$(OBJ)/cpuintrf.o $(OBJ)/memory.o $(OBJ)/timer.o $(OBJ)/palette.o \
 	$(OBJ)/input.o $(OBJ)/inptport.o $(OBJ)/unzip.o \
 	$(OBJ)/audit.o $(OBJ)/info.o $(OBJ)/png.o $(OBJ)/artwork.o \
-	$(OBJ)/tilemap.o $(OBJ)/sprite.o $(OBJ)/gfxobj.o \
+	$(OBJ)/tilemap.o $(OBJ)/sprite.o \
 	$(OBJ)/state.o $(OBJ)/datafile.o $(OBJ)/hiscore.o \
 	$(sort $(CPUOBJS)) \
 	$(OBJ)/sndintrf.o \
@@ -18,6 +18,7 @@ COREOBJS = $(OBJ)/version.o $(OBJ)/mame.o \
 	$(OBJ)/vidhrdw/avgdvg.o $(OBJ)/machine/mathbox.o \
 	$(OBJ)/machine/ticket.o $(OBJ)/machine/eeprom.o \
 	$(OBJ)/machine/6522via.o \
+	$(OBJ)/machine/mb87078.o \
 	$(OBJ)/mamedbg.o $(OBJ)/window.o \
 	$(OBJ)/profiler.o \
 	$(sort $(DBGOBJS))

@@ -54,6 +54,7 @@ enum {
 
 extern int m6509_ICount;				/* cycle count */
 
+extern void m6509_init(void);
 extern void m6509_reset(void *param);			/* Reset registers to the initial values */
 extern void m6509_exit(void);					/* Shut down CPU core */
 extern int	m6509_execute(int cycles);			/* Execute cycles - returns number of cycles actually run */

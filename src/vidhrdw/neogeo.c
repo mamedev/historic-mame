@@ -920,11 +920,8 @@ static void screenrefresh(struct osd_bitmap *bitmap,const struct rectangle *clip
 	char buf[80];
 
 	/* debug setting, tile view mode connected to '8' */
-	if (keyboard_pressed(KEYCODE_8))
-	{
-		while (keyboard_pressed(KEYCODE_8)) ;
+	if (keyboard_pressed_memory(KEYCODE_8))
 		dotiles ^= 1;
-	}
 
 	/* tile view - 0x80, connected to '9' */
 	if (keyboard_pressed(KEYCODE_9) && !keyboard_pressed(KEYCODE_LSHIFT))

@@ -689,14 +689,14 @@ ROM_END
 
 ROM_START( galaga3 )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* 64k for the MAIN CPU */
-	ROM_LOAD( "gal3_9e.bin",   0xa000, 0x2000, 0xf4845e7f )
-	ROM_LOAD( "gal3_9d.bin",   0xc000, 0x2000, 0x86fac687 )
-	ROM_LOAD( "gal3_9c.bin",   0xe000, 0x2000, 0xf1b00073 )
+	ROM_LOAD( "gp3-4c.bin",   0xa000, 0x2000, 0x10d7f64c )
+	ROM_LOAD( "gp3-3c.bin",   0xc000, 0x2000, 0x962411e8 )
+	ROM_LOAD( "gp3-2c.bin",   0xe000, 0x2000, 0xf72d6fc5 )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* 64k for the SUB CPU */
-	ROM_LOAD( "gal3_6l.bin",0xa000, 0x2000, 0x9ec3dce5 )
-	ROM_LOAD( "gp2-7.64",   0xc000, 0x2000, 0x0621f7df )
-	ROM_LOAD( "gal3_6n.bin",0xe000, 0x2000, 0x6a2942c5 )
+	ROM_LOAD( "gp3-8b.bin",   0xa000, 0x2000, 0xf5e056d1 )
+	ROM_LOAD( "gp2-7.64",     0xc000, 0x2000, 0x0621f7df )
+	ROM_LOAD( "gp3-6b.bin",   0xe000, 0x2000, 0x026491b6 )
 
 	ROM_REGION( 0x10000, REGION_CPU3, 0 ) /* 64k for the SOUND CPU */
 	ROM_LOAD( "gp2-1.64",   0xe000, 0x2000, 0xed8aa206 )
@@ -759,9 +759,45 @@ ROM_START( galaga3a )
 	ROM_LOAD( "gp2-3f.bin",   0x0000, 0x0100, 0x2d9fbdd8 )
 ROM_END
 
+ROM_START( galaga3b )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* 64k for the MAIN CPU */
+	ROM_LOAD( "gal3_9e.bin",   0xa000, 0x2000, 0xf4845e7f )
+	ROM_LOAD( "gal3_9d.bin",   0xc000, 0x2000, 0x86fac687 )
+	ROM_LOAD( "gal3_9c.bin",   0xe000, 0x2000, 0xf1b00073 )
 
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* 64k for the SUB CPU */
+	ROM_LOAD( "gal3_6l.bin",0xa000, 0x2000, 0x9ec3dce5 )
+	ROM_LOAD( "gp2-7.64",   0xc000, 0x2000, 0x0621f7df )
+	ROM_LOAD( "gal3_6n.bin",0xe000, 0x2000, 0x6a2942c5 )
 
+	ROM_REGION( 0x10000, REGION_CPU3, 0 ) /* 64k for the SOUND CPU */
+	ROM_LOAD( "gp2-1.64",   0xe000, 0x2000, 0xed8aa206 )
+
+	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "gal3_9l.bin",0x0000, 0x2000, 0x8d4dcebf )	/* characters */
+
+	ROM_REGION( 0xa000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "gp2-9.64",   0x0000, 0x2000, 0xe6a9ae67 )	/* objects */
+	ROM_LOAD( "gp2-11.64",  0x2000, 0x2000, 0x57740ff9 )	/* objects */
+	ROM_LOAD( "gp2-10.64",  0x4000, 0x2000, 0x6cd8ce11 )	/* objects */
+	ROM_LOAD( "gp2-12.64",  0x6000, 0x2000, 0x7316a1f1 )	/* objects */
+	/* 0xa000-0xbfff empty space to decode sprite set #3 as 3 bits per pixel */
+
+	ROM_REGION( 0x0800, REGION_PROMS, 0 )
+	ROM_LOAD( "gp2-1p.bin",   0x0000, 0x0100, 0xa5091352 )  /* red palette ROM (4 bits) */
+	ROM_LOAD( "gp2-1n.bin",   0x0100, 0x0100, 0x8bc8022a )  /* green palette ROM (4 bits) */
+	ROM_LOAD( "gp2-2n.bin",   0x0200, 0x0100, 0x8dabc20b )  /* blue palette ROM (4 bits) */
+	ROM_LOAD( "gp2-6s.bin",   0x0300, 0x0100, 0x2faa3e09 )  /* char color ROM */
+	ROM_LOAD( "g3_3f.bin",    0x0400, 0x0200, 0xd48c0eef )  /* sprite color ROM (lower 4 bits) */
+	ROM_LOAD( "g3_3e.bin",    0x0600, 0x0200, 0x417ba0dc )  /* sprite color ROM (upper 4 bits) */
+
+	ROM_REGION( 0x0100, REGION_SOUND1, 0 ) /* sound prom */
+	ROM_LOAD( "gp2-3f.bin",   0x0000, 0x0100, 0x2d9fbdd8 )
+ROM_END
+
+/*          rom       parent  machine  inp     init                                    */
 GAME( 1984, gaplus,   0,      gaplus,  gaplus,   0, ROT90, "Namco", "Gaplus (set 1)" )
 GAME( 1984, gaplusa,  gaplus, gaplusa, gaplus,   0, ROT90, "Namco", "Gaplus (set 2)" )
 GAME( 1984, galaga3,  gaplus, galaga3, galaga3,  0, ROT90, "Namco", "Galaga 3 (set 1)" )
 GAME( 1984, galaga3a, gaplus, galaga3, galaga3a, 0, ROT90, "Namco", "Galaga 3 (set 2)" )
+GAME( 1984, galaga3b, gaplus, galaga3, galaga3,  0, ROT90, "Namco", "Galaga 3 (set 3)" )

@@ -1060,6 +1060,51 @@ INPUT_PORTS_END
 **
 */
 
+/* 8x8x4 layout - straightforward arrangement */
+#define MEGASYS1_LAYOUT_8x8(_name_,_romsize_)\
+static struct GfxLayout _name_ =\
+{\
+	8,8,\
+	(_romsize_)*8/(8*8*4),\
+	4,\
+	{0, 1, 2, 3},\
+	{0*4,1*4,2*4,3*4,4*4,5*4,6*4,7*4},\
+	{0*32,1*32,2*32,3*32,4*32,5*32,6*32,7*32},\
+	8*8*4\
+};
+
+
+/* 16x16x4 layout - straightforward arrangement */
+#define MEGASYS1_LAYOUT_16x16(_name_,_romsize_) \
+static struct GfxLayout _name_ =\
+{\
+	16,16,\
+	(_romsize_)*8/(16*16*4),\
+	4,\
+	{0, 1, 2, 3},\
+	{0*4,1*4,2*4,3*4,4*4,5*4,6*4,7*4, \
+	 8*4,9*4,10*4,11*4,12*4,13*4,14*4,15*4}, \
+	{0*64,1*64,2*64,3*64,4*64,5*64,6*64,7*64,\
+	 8*64,9*64,10*64,11*64,12*64,13*64,14*64,15*64},\
+	16*16*4\
+};
+
+
+/* 16x16x4 layout - formed by four 8x8x4 tiles  */
+#define MEGASYS1_LAYOUT_16x16_QUAD(_name_,_romsize_)\
+static struct GfxLayout _name_ =\
+{\
+	16,16,\
+	(_romsize_)*8/(16*16*4),\
+	4,\
+	{0, 1, 2, 3},\
+	{0*4,1*4,2*4,3*4,4*4,5*4,6*4,7*4,\
+	 0*4+32*16,1*4+32*16,2*4+32*16,3*4+32*16,4*4+32*16,5*4+32*16,6*4+32*16,7*4+32*16},\
+	{0*32,1*32,2*32,3*32,4*32,5*32,6*32,7*32,\
+	 8*32,9*32,10*32,11*32,12*32,13*32,14*32,15*32},\
+	16*16*4\
+};
+
 /* Tiles are 8x8 */
 MEGASYS1_LAYOUT_8x8(tiles_8x8_01,  0x010000)
 MEGASYS1_LAYOUT_8x8(tiles_8x8_02,  0x020000)
@@ -1505,6 +1550,8 @@ ROM_START( cischeat )
 ROM_END
 
 
+
+void astyanax_rom_decode(int cpu);	/* in megasys1.c */
 
 void init_cischeat(void)
 {

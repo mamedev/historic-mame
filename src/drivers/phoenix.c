@@ -1,6 +1,6 @@
 /***************************************************************************
 
-Phoenix memory map
+Phoenix hardware games
 
 driver by Richard Davies
 
@@ -8,41 +8,16 @@ Note:
    pleiads is using another sound driver, sndhrdw\pleiads.c
  Andrew Scott (ascott@utkux.utcc.utk.edu)
 
-0000-3fff 16Kb Program ROM
-4000-43ff 1Kb Video RAM Charset A (4340-43ff variables)
-4800-4bff 1Kb Video RAM Charset B (4b40-4bff variables)
-5000-53ff 1Kb Video Control write-only (mirrored)
-5800-5bff 1Kb Video Scroll Register (mirrored)
-6000-63ff 1Kb Sound Control A (mirrored)
-6800-6bff 1Kb Sound Control B (mirrored)
-7000-73ff 1Kb 8bit Game Control read-only (mirrored)
-7800-7bff 1Kb 8bit Dip Switch read-only (mirrored)
 
-memory mapped ports:
+To Do:
 
-read-only:
-7000-73ff IN
-7800-7bff DSW
 
- * IN (all bits are inverted)
- * bit 7 : Shield
- * bit 6 : Left
- * bit 5 : Right
- * bit 4 : Fire
- * bit 3 : -
- * bit 2 : Start 2
- * bit 1 : Start 1
- * bit 0 : Coin
+Survival:
 
- * DSW
- * bit 7 : VBlank
- * bit 6 : free play (pleiads only)
- * bit 5 : attract sound 0 = off 1 = on (pleiads only?)
- * bit 4 : coins per play  0 = 1 coin  1 = 2 coins
- * bit 3 :\ bonus
- * bit 2 :/ 00 = 3000  01 = 4000  10 = 5000  11 = 6000
- * bit 1 :\ number of lives
- * bit 0 :/ 00 = 3	01 = 4	10 = 5	11 = 6
+- Protection
+- Check CPU/AY8910 clocks
+- Check background visibile area.  When the background scrolls up, it
+  currently shows below the top and bottom of the border of the play area.
 
 ***************************************************************************/
 
@@ -55,6 +30,7 @@ WRITE_HANDLER( phoenix_videoram_w );
 WRITE_HANDLER( phoenix_videoreg_w );
 WRITE_HANDLER( pleiads_videoreg_w );
 WRITE_HANDLER( phoenix_scroll_w );
+READ_HANDLER( phoenix_input_port_0_r );
 READ_HANDLER( pleiads_input_port_0_r );
 void phoenix_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void pleiads_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
@@ -78,16 +54,25 @@ void pleiads_sh_update(void);
 static MEMORY_READ_START( phoenix_readmem )
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x4000, 0x4fff, phoenix_videoram_r },		/* 2 pages selected by bit 0 of the video register */
-	{ 0x7000, 0x73ff, input_port_0_r }, 		/* IN0 */
-	{ 0x7800, 0x7bff, input_port_1_r }, 		/* DSW */
+	{ 0x7000, 0x73ff, phoenix_input_port_0_r }, /* IN0 or IN1 */
+	{ 0x7800, 0x7bff, input_port_2_r }, 		/* DSW */
 MEMORY_END
 
 static MEMORY_READ_START( pleiads_readmem )
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x4000, 0x4fff, phoenix_videoram_r },		/* 2 pages selected by bit 0 of the video register */
-	{ 0x7000, 0x73ff, pleiads_input_port_0_r }, /* IN0 + protection */
-	{ 0x7800, 0x7bff, input_port_1_r }, 		/* DSW */
+	{ 0x7000, 0x73ff, pleiads_input_port_0_r }, /* IN0 or IN1 + protection */
+	{ 0x7800, 0x7bff, input_port_2_r }, 		/* DSW */
 MEMORY_END
+
+static MEMORY_READ_START( survival_readmem )
+	{ 0x0000, 0x3fff, MRA_ROM },
+	{ 0x4000, 0x4fff, phoenix_videoram_r },		/* 2 pages selected by bit 0 of the video register */
+	{ 0x6900, 0x69ff, AY8910_read_port_0_r },
+	{ 0x7000, 0x73ff, phoenix_input_port_0_r }, /* IN0 or IN1 */
+	{ 0x7800, 0x7bff, input_port_2_r },			/* DSW */
+MEMORY_END
+
 
 static MEMORY_WRITE_START( phoenix_writemem )
 	{ 0x0000, 0x3fff, MWA_ROM },
@@ -107,6 +92,15 @@ static MEMORY_WRITE_START( pleiads_writemem )
 	{ 0x6800, 0x6bff, pleiads_sound_control_b_w },
 MEMORY_END
 
+static MEMORY_WRITE_START( survival_writemem )
+	{ 0x0000, 0x3fff, MWA_ROM },
+	{ 0x4000, 0x4fff, phoenix_videoram_w },		/* 2 pages selected by bit 0 of the video register */
+	{ 0x5000, 0x53ff, phoenix_videoreg_w },
+	{ 0x5800, 0x5bff, phoenix_scroll_w },
+	{ 0x6800, 0x68ff, AY8910_control_port_0_w },
+	{ 0x6900, 0x69ff, AY8910_write_port_0_w },
+MEMORY_END
+
 
 
 INPUT_PORTS_START( phoenix )
@@ -119,6 +113,16 @@ INPUT_PORTS_START( phoenix )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_2WAY )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON2 )
+
+	PORT_START		/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_COCKTAIL  )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_2WAY | IPF_COCKTAIL  )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL  )
 
 	PORT_START		/* DSW0 */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
@@ -141,6 +145,11 @@ INPUT_PORTS_START( phoenix )
 	PORT_DIPSETTING(	0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_VBLANK )
+
+	PORT_START		/* fake port for non-memory mapped dip switch */
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( phoenixa )
@@ -153,6 +162,16 @@ INPUT_PORTS_START( phoenixa )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_2WAY )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON2 )
+
+	PORT_START		/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_COCKTAIL  )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_2WAY | IPF_COCKTAIL  )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL  )
 
 	PORT_START		/* DSW0 */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
@@ -176,6 +195,11 @@ INPUT_PORTS_START( phoenixa )
 	PORT_DIPSETTING(	0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_VBLANK )
+
+	PORT_START		/* fake port for non-memory mapped dip switch */
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( phoenixt )
@@ -188,6 +212,16 @@ INPUT_PORTS_START( phoenixt )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_2WAY )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON2 )
+
+	PORT_START		/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_COCKTAIL  )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_2WAY | IPF_COCKTAIL  )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL  )
 
 	PORT_START		/* DSW0 */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
@@ -210,6 +244,11 @@ INPUT_PORTS_START( phoenixt )
 	PORT_DIPSETTING(	0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_VBLANK )
+
+	PORT_START		/* fake port for non-memory mapped dip switch */
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( phoenix3 )
@@ -222,6 +261,16 @@ INPUT_PORTS_START( phoenix3 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_2WAY )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON2 )
+
+	PORT_START		/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_COCKTAIL  )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_2WAY | IPF_COCKTAIL  )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL  )
 
 	PORT_START		/* DSW0 */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
@@ -244,6 +293,11 @@ INPUT_PORTS_START( phoenix3 )
 	PORT_DIPSETTING(	0x40, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( 1C_1C ) )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_VBLANK )
+
+	PORT_START		/* fake port for non-memory mapped dip switch */
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( pleiads )
@@ -256,6 +310,16 @@ INPUT_PORTS_START( pleiads )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_2WAY )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON2 )
+
+	PORT_START		/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_COCKTAIL  )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_2WAY | IPF_COCKTAIL  )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL  )
 
 	PORT_START		/* DSW0 */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
@@ -278,7 +342,61 @@ INPUT_PORTS_START( pleiads )
 	PORT_DIPSETTING(	0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_VBLANK )
+
+	PORT_START		/* fake port for non-memory mapped dip switch */
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
 INPUT_PORTS_END
+
+INPUT_PORTS_START( survival )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_UP )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN )
+
+	PORT_START		/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_COCKTAIL  )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_COCKTAIL  )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_COCKTAIL  )
+
+    PORT_START
+	PORT_DIPNAME( 0x03, 0x02, DEF_STR( Lives ) )
+	PORT_DIPSETTING(	0x03, "2" )
+	PORT_DIPSETTING(	0x02, "3" )
+	PORT_DIPSETTING(	0x01, "4" )
+	PORT_DIPSETTING(	0x00, "5" )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(	0x0c, "25000" )
+	PORT_DIPSETTING(	0x08, "35000" )
+	PORT_DIPSETTING(	0x04, "45000" )
+	PORT_DIPSETTING(	0x00, "55000" )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Free_Play ) )
+	PORT_DIPSETTING(	0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x60, 0x60, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(	0x20, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(	0x40, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(	0x60, DEF_STR( 1C_1C ) )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_VBLANK )
+
+	PORT_START		/* fake port for non-memory mapped dip switch */
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
+INPUT_PORTS_END
+
 
 
 static struct GfxLayout charlayout =
@@ -346,6 +464,16 @@ static struct CustomSound_interface pleiads_custom_interface =
 	pleiads_sh_update
 };
 
+static struct AY8910interface survival_ay8910_interface =
+{
+	1,	/* 1 chip */
+	1789750,	/* Wrong */
+	{ 50 },
+	{ 0 },
+	{ 0 },  /* Port B - read protection */
+	{ 0 },
+	{ 0 }
+};
 
 
 
@@ -392,9 +520,48 @@ static struct MachineDriver machine_driver_##NAME = 				\
 	}																\
 };
 
-
 MACHINE_DRIVER(phoenix,16)
 MACHINE_DRIVER(pleiads,32)
+
+
+/* Same as Phoenix, but uses an AY8910 and an extra visible line (column) */
+
+static const struct MachineDriver machine_driver_survival =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_8085A,
+			3072000,	/* 3 MHz ? */
+			survival_readmem,survival_writemem,0,0,
+			ignore_interrupt,1
+		}
+	},
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,  /* frames per second, vblank duration */
+	1,	/* single CPU, no need for interleaving */
+	0,
+
+	/* video hardware */
+	32*8, 32*8, { 0*8, 32*8-1, 0*8, 26*8-1 },
+	phoenix_gfxdecodeinfo,
+	256,16*4+16*4,
+	phoenix_vh_convert_color_prom,
+
+	VIDEO_TYPE_RASTER,
+	0,
+	phoenix_vh_start,
+	phoenix_vh_stop,
+	phoenix_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_AY8910,
+			&survival_ay8910_interface
+		}
+	}
+};
 
 
 /***************************************************************************
@@ -543,8 +710,8 @@ ROM_START( pleiads )
 	ROM_LOAD( "ic40.bin",     0x0800, 0x0800, 0xa841d511 ) /* IC 26 on real board */
 
 	ROM_REGION( 0x0200, REGION_PROMS, 0 )
-	ROM_LOAD( "7611-5.26",   0x0000, 0x0100, 0x7a1bcb1e )   /* palette low bits */
-	ROM_LOAD( "7611-5.33",   0x0100, 0x0100, 0xe38eeb83 )   /* palette high bits */
+	ROM_LOAD( "7611-5.26",    0x0000, 0x0100, 0x7a1bcb1e )   /* palette low bits */
+	ROM_LOAD( "7611-5.33",    0x0100, 0x0100, 0xe38eeb83 )   /* palette high bits */
 ROM_END
 
 ROM_START( pleiadbl )
@@ -567,8 +734,8 @@ ROM_START( pleiadbl )
 	ROM_LOAD( "ic40.bin",     0x0800, 0x0800, 0xa841d511 )
 
 	ROM_REGION( 0x0200, REGION_PROMS, 0 )
-	ROM_LOAD( "7611-5.26",   0x0000, 0x0100, 0x7a1bcb1e )   /* palette low bits */
-	ROM_LOAD( "7611-5.33",   0x0100, 0x0100, 0xe38eeb83 )   /* palette high bits */
+	ROM_LOAD( "7611-5.26",    0x0000, 0x0100, 0x7a1bcb1e )   /* palette low bits */
+	ROM_LOAD( "7611-5.33",    0x0100, 0x0100, 0xe38eeb83 )   /* palette high bits */
 ROM_END
 
 ROM_START( pleiadce )
@@ -591,18 +758,41 @@ ROM_START( pleiadce )
 	ROM_LOAD( "ic40.bin",     0x0800, 0x0800, 0xa841d511 )
 
 	ROM_REGION( 0x0200, REGION_PROMS, 0 )
-	ROM_LOAD( "7611-5.26",   0x0000, 0x0100, 0x7a1bcb1e )   /* palette low bits */
-	ROM_LOAD( "7611-5.33",   0x0100, 0x0100, 0xe38eeb83 )   /* palette high bits */
+	ROM_LOAD( "7611-5.26",    0x0000, 0x0100, 0x7a1bcb1e )   /* palette low bits */
+	ROM_LOAD( "7611-5.33",    0x0100, 0x0100, 0xe38eeb83 )   /* palette high bits */
+ROM_END
+
+ROM_START( survival )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "g959-32a.u45", 0x0000, 0x0800, 0x0bc53541 )
+	ROM_LOAD( "g959-33a.u46", 0x0800, 0x0800, 0x726e9428 )
+	ROM_LOAD( "g959-34a.u47", 0x1000, 0x0800, 0x78f166ff )
+	ROM_LOAD( "g959-35a.u48", 0x1800, 0x0800, 0x59dbe099 )
+	ROM_LOAD( "g959-36a.u49", 0x2000, 0x0800, 0xbd5e586e )
+	ROM_LOAD( "g959-37a.u50", 0x2800, 0x0800, 0xb2de1094 )
+	ROM_LOAD( "g959-38a.u51", 0x3000, 0x0800, 0x131c4440 )
+	ROM_LOAD( "g959-39a.u52", 0x3800, 0x0800, 0x213bc910 )
+
+	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "g959-42.u23",  0x0000, 0x0800, 0x3d1ce38d )
+	ROM_LOAD( "g959-43.u24",  0x0800, 0x0800, 0xcd150da9 )
+
+	ROM_REGION( 0x1000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "g959-40.u39",  0x0000, 0x0800, 0x41dee996 )
+	ROM_LOAD( "g959-41.u40",  0x0800, 0x0800, 0xa255d6dc )
+
+	ROM_REGION( 0x0200, REGION_PROMS, 0 )
+	ROM_LOAD( "clr.u40",      0x0000, 0x0100, 0xb3e20669 )   /* palette low bits */
+	ROM_LOAD( "clr.u41",      0x0100, 0x0100, 0xabddf69a )   /* palette high bits */
 ROM_END
 
 
-
-GAMEX( 1980, phoenix,  0,	   phoenix, phoenix,  0, ROT90, "Amstar", "Phoenix (Amstar)", GAME_NO_COCKTAIL )
-GAMEX( 1980, phoenixa, phoenix, phoenix, phoenixa, 0, ROT90, "Amstar (Centuri license)", "Phoenix (Centuri)", GAME_NO_COCKTAIL )
-GAMEX( 1980, phoenixt, phoenix, phoenix, phoenixt, 0, ROT90, "Taito", "Phoenix (Taito)", GAME_NO_COCKTAIL )
-GAMEX( 1980, phoenix3, phoenix, phoenix, phoenix3, 0, ROT90, "bootleg", "Phoenix (T.P.N.)", GAME_NO_COCKTAIL )
-GAMEX( 1981, phoenixc, phoenix, phoenix, phoenixt, 0, ROT90, "bootleg?", "Phoenix (IRECSA, G.G.I Corp)", GAME_NO_COCKTAIL )
-GAMEX( 1981, pleiads,  0,	   pleiads, pleiads,  0, ROT90, "Tehkan", "Pleiads (Tehkan)", GAME_NO_COCKTAIL )
-GAMEX( 1981, pleiadbl, pleiads, pleiads, pleiads,  0, ROT90, "bootleg", "Pleiads (bootleg)", GAME_NO_COCKTAIL )
-GAMEX( 1981, pleiadce, pleiads, pleiads, pleiads,  0, ROT90, "Tehkan (Centuri license)", "Pleiads (Centuri)", GAME_NO_COCKTAIL )
-
+GAME ( 1980, phoenix,  0,       phoenix,  phoenix,  0, ROT90, "Amstar", "Phoenix (Amstar)" )
+GAME ( 1980, phoenixa, phoenix, phoenix,  phoenixa, 0, ROT90, "Amstar (Centuri license)", "Phoenix (Centuri)" )
+GAME ( 1980, phoenixt, phoenix, phoenix,  phoenixt, 0, ROT90, "Taito", "Phoenix (Taito)" )
+GAME ( 1980, phoenix3, phoenix, phoenix,  phoenix3, 0, ROT90, "bootleg", "Phoenix (T.P.N.)" )
+GAME ( 1981, phoenixc, phoenix, phoenix,  phoenixt, 0, ROT90, "bootleg?", "Phoenix (IRECSA, G.G.I Corp)" )
+GAME ( 1981, pleiads,  0,       pleiads,  pleiads,  0, ROT90, "Tehkan", "Pleiads (Tehkan)" )
+GAME ( 1981, pleiadbl, pleiads, pleiads,  pleiads,  0, ROT90, "bootleg", "Pleiads (bootleg)" )
+GAME ( 1981, pleiadce, pleiads, pleiads,  pleiads,  0, ROT90, "Tehkan (Centuri license)", "Pleiads (Centuri)" )
+GAMEX( 1982, survival, 0,       survival, survival, 0, ROT90, "Rock-ola", "Survival", GAME_UNEMULATED_PROTECTION )

@@ -173,12 +173,61 @@ void looping_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh )
 	draw_sprites( bitmap );
 }
 
+WRITE_HANDLER( looping_intack )
+{
+	if (data==0)
+	{
+		cpu_0_irq_line_vector_w(0, 4);
+		cpu_set_irq_line(0, 0, CLEAR_LINE);
+	}
+}
+
+int looping_interrupt( void )
+{
+	cpu_0_irq_line_vector_w(0, 4);
+	cpu_set_irq_line(0, 0, ASSERT_LINE);
+	return ignore_interrupt();
+}
+
+/****** sound *******/
+
+WRITE_HANDLER( looping_soundlatch_w )
+{
+	soundlatch_w(offset, data);
+	cpu_1_irq_line_vector_w(0, 4);
+	cpu_set_irq_line(1, 0, ASSERT_LINE);
+}
+
+WRITE_HANDLER( looping_souint_clr )
+{
+	if (data==0)
+	{
+		cpu_1_irq_line_vector_w(0, 4);
+		cpu_set_irq_line(1, 0, CLEAR_LINE);
+	}
+}
+
+void looping_spcint(int state)
+{
+	cpu_1_irq_line_vector_w(0, 6);
+	cpu_set_irq_line(1, 0, state);
+}
+
+WRITE_HANDLER( looping_sound_sw )
+{
+	/* this can be improved by adding the missing
+	   signals for decay etc. (see schematics) */
+	static int r[8];
+	r[offset]=data^1;
+	DAC_data_w(0, ((r[1]<<7) + (r[2]<<6))*r[6]);
+}
+
 static MEMORY_READ_START( looping_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 /*	{ 0x9000, 0x9fff, MRA_RAM }, videoram is write only? */
 	{ 0xe000, 0xefff, MRA_RAM },
 	{ 0xf800, 0xf800, input_port_0_r },	/* inp */
-	{ 0xf801, 0xf801, input_port_1_r }, /* inp */
+	{ 0xf801, 0xf801, input_port_1_r },
 	{ 0xf802, 0xf802, input_port_2_r },	/* dsw */
 MEMORY_END
 
@@ -189,25 +238,34 @@ static MEMORY_WRITE_START( looping_writemem )
 	{ 0x9840, 0x987f, MWA_RAM, &spriteram },
 	{ 0xe000, 0xefff, MWA_RAM },
 	{ 0xb006, 0xb007, MWA_RAM }, /* unknown */
+	{ 0xf801, 0xf801, looping_soundlatch_w },
 MEMORY_END
 
-int looping_interrupt( void )
-{
-	cpu_0_irq_line_vector_w(0, 4);
-	cpu_set_irq_line(0, 0, ASSERT_LINE);
-	cpu_set_irq_line(0, 0, CLEAR_LINE);
-	return ignore_interrupt();
-}
+static PORT_WRITE_START( looping_writeport)
+	{ 0x000, 0x000, MWA_NOP },
+	{ 0x406, 0x406, looping_intack },
+	{ 0x407, 0x407, watchdog_reset_w },
+PORT_END
 
 static MEMORY_READ_START( looping_io_readmem )
-	{ 0x0000, 0x2fff, MRA_ROM },
-	{ 0x3800, 0x38ff, MRA_RAM },
+	{ 0x0000, 0x37ff, MRA_ROM },
+	{ 0x3800, 0x3bff, MRA_RAM },
+	{ 0x3c00, 0x3c00, AY8910_read_port_0_r },
+	{ 0x3e02, 0x3e02, tms5220_status_r },
 MEMORY_END
 
 static MEMORY_WRITE_START( looping_io_writemem )
-	{ 0x0000, 0x2fff, MWA_ROM },
-	{ 0x3800, 0x38ff, MWA_RAM },
+	{ 0x0000, 0x37ff, MWA_ROM },
+	{ 0x3800, 0x3bff, MWA_RAM },
+	{ 0x3c00, 0x3c00, AY8910_control_port_0_w },
+	{ 0x3c02, 0x3c02, AY8910_write_port_0_w },
+	{ 0x3e00, 0x3e00, tms5220_data_w },
 MEMORY_END
+
+static PORT_WRITE_START( looping_io_writeport)
+	{ 0x000, 0x000, looping_souint_clr },
+	{ 0x001, 0x007, looping_sound_sw },
+PORT_END
 
 static struct GfxLayout tile_layout =
 {
@@ -244,21 +302,45 @@ static struct GfxDecodeInfo looping_gfxdecodeinfo[] =
 	{ -1 }
 };
 
+static struct TMS5220interface tms5220_interface =
+{
+	640000,         /* clock speed (80*samplerate) */
+	50,             /* volume */
+	looping_spcint  /* IRQ handler */
+};
+
+static struct AY8910interface ay8910_interface =
+{
+	1,
+	2000000,
+	{ 20 },
+	{ soundlatch_r },
+	{ 0 },
+	{ 0 },
+	{ 0 }
+};
+
+static struct DACinterface dac_interface =
+{
+	1,
+	{ 30 }
+};
+
 static const struct MachineDriver machine_driver_looping =
 {
 	{
 		{
 			CPU_TMS9995,
-			1228500, /* ? */
-			looping_readmem,looping_writemem,0,0,
+			3000000, /* ? */
+			looping_readmem,looping_writemem,0,looping_writeport,
 			looping_interrupt,1
 		},
-//		{ /* sound */
-//			CPU_TMS9980,
-//			1228500, // ?
-//			looping_io_readmem,looping_io_writemem,0,0,
-//			ignore_interrupt,1
-//		}
+		{ /* sound */
+			CPU_TMS9980,
+			2000000, // ?
+			looping_io_readmem,looping_io_writemem,0,looping_io_writeport,
+			ignore_interrupt,1
+		}
 	},
 	60, 2500,	/* frames per second, vblank duration */
 	1,	/* 1 CPU slice per frame */
@@ -275,6 +357,21 @@ static const struct MachineDriver machine_driver_looping =
 	looping_vh_screenrefresh,
 	/* sound hardware */
 	0,0,0,0,
+	{
+		{
+			SOUND_AY8910,
+			&ay8910_interface
+		},
+		{
+			SOUND_TMS5220,
+			&tms5220_interface
+		},
+		{
+			SOUND_DAC,
+ 			&dac_interface
+		}
+	}
+
 };
 
 INPUT_PORTS_START( looping )
@@ -334,9 +431,9 @@ ROM_START( loopinga )
 	ROM_LOAD( "vli9-5.8a",		0x6000, 0x2000, 0x5d122f86 )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* 64k for TMS9980 code */
-	ROM_LOAD( "i-o-v2.13c",		0x0000, 0x1000, 0xd38a7f38 )
-	ROM_LOAD( "i-o.11a",		0x1000, 0x1000, 0x61c74c79 ) /* (speech?) */
-    ROM_LOAD( "i-o.13a",		0x2000, 0x1000, 0x1de29f25 ) /* (speech?) */
+	ROM_LOAD( "i-o-v2.13c",		0x0000, 0x0800, 0x09765ebe )
+    ROM_LOAD( "i-o.13a",		0x0800, 0x1000, 0x1de29f25 ) /* speech */
+	ROM_LOAD( "i-o.11a",		0x2800, 0x1000, 0x61c74c79 )
 
 	ROM_REGION( 0x1000, REGION_CPU3, 0 ) /* COP420 microcontroller code */
 	ROM_LOAD( "cop.bin",		0x0000, 0x1000, 0xbbfd26d5 )
@@ -356,10 +453,10 @@ ROM_START( looping )
 	ROM_LOAD( "l056-6.9a",		0x4000, 0x2000, 0x548afa52 )
 	ROM_LOAD( "vli9-5.8a",		0x6000, 0x2000, 0x5d122f86 )
 
-    ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* 64k for TMS9980 code */
-	ROM_LOAD( "i-o.13c",		0x0000, 0x1000, 0xff9ac4ec )
-	ROM_LOAD( "i-o.11a",		0x1000, 0x1000, 0x61c74c79 ) /* (speech?) */
-	ROM_LOAD( "i-o.13a",		0x2000, 0x1000, 0x1de29f25 ) /* (speech?) */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* 64k for TMS9980 code */
+	ROM_LOAD( "i-o.13c",		0x0000, 0x0800, 0x21e9350c )
+	ROM_LOAD( "i-o.13a",		0x0800, 0x1000, 0x1de29f25 )
+	ROM_LOAD( "i-o.11a",		0x2800, 0x1000, 0x61c74c79 ) /* speech */
 
 	ROM_REGION( 0x1000, REGION_CPU3, 0 ) /* COP420 microcontroller code */
 	ROM_LOAD( "cop.bin",		0x0000, 0x1000, 0xbbfd26d5 )
@@ -380,9 +477,9 @@ ROM_START( skybump )
 	ROM_LOAD( "cpu.8a",			0x6000, 0x2000, 0xa718c6f2 )
 
     ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* 64k for TMS9980 code */
-	ROM_LOAD( "i-o.13c",		0x0000, 0x1000, 0xff9ac4ec ) /* snd.13c */
-	ROM_LOAD( "i-o.11a",		0x1000, 0x1000, 0x61c74c79 ) /* snd.11a (speech?) */
-	ROM_LOAD( "i-o.13a",		0x2000, 0x1000, 0x1de29f25 ) /* snd.13a (speech?)  */
+	ROM_LOAD( "snd.13c",		0x0000, 0x0800, 0x21e9350c )
+	ROM_LOAD( "snd.13a",		0x0800, 0x1000, 0x1de29f25 )
+	ROM_LOAD( "snd.11a",		0x2800, 0x1000, 0x61c74c79 )
 
 	ROM_REGION( 0x1000, REGION_CPU3, 0 ) /* COP420 microcontroller code */
 	ROM_LOAD( "cop.bin",		0x0000, 0x1000, 0xbbfd26d5 )
@@ -392,7 +489,7 @@ ROM_START( skybump )
 	ROM_LOAD( "vid.8a",			0x0800, 0x800, 0x459ccc55 )
 
 	ROM_REGION( 0x0020, REGION_PROMS, 0 ) /* color prom */
-	ROM_LOAD( "18s030.11b",		0x0000, 0x0020, 0x6a0c7d87 )
+	ROM_LOAD( "vid.clr",		0x0000, 0x0020, 0x6a0c7d87 )
 ROM_END
 
 void init_looping( void ){
@@ -417,6 +514,6 @@ void init_looping( void ){
 }
 
 /*          rom       parent    machine   inp       init */
-GAMEX( 1982, looping,  0,        looping, looping, looping, ROT90, "Venture Line", "Looping (set 1)", GAME_NO_SOUND )
-GAMEX( 1982, loopinga, looping,  looping, looping, looping, ROT90, "Venture Line", "Looping (set 2)", GAME_NO_SOUND )
-GAMEX( 1982, skybump,  0,        looping, looping, looping, ROT90, "Venture Line", "Sky Bumper", GAME_NO_SOUND )
+GAME( 1982, looping,  0,        looping, looping, looping, ROT90, "Venture Line", "Looping (set 1)" )
+GAME( 1982, loopinga, looping,  looping, looping, looping, ROT90, "Venture Line", "Looping (set 2)" )
+GAME( 1982, skybump,  0,        looping, looping, looping, ROT90, "Venture Line", "Sky Bumper" )

@@ -679,5 +679,5 @@ GAME( 1982, treahunt, jack,     jack, jack,     treahunt, ROT90, "Hara Industrie
 GAME( 1982, zzyzzyxx, 0,        jack, zzyzzyxx, zzyzzyxx, ROT90, "Cinematronics + Advanced Microcomputer Systems", "Zzyzzyxx (set 1)" )
 GAME( 1982, zzyzzyx2, zzyzzyxx, jack, zzyzzyxx, zzyzzyxx, ROT90, "Cinematronics + Advanced Microcomputer Systems", "Zzyzzyxx (set 2)" )
 GAME( 1982, brix,     zzyzzyxx, jack, zzyzzyxx, zzyzzyxx, ROT90, "Cinematronics + Advanced Microcomputer Systems", "Brix" )
-GAME( ????, freeze,   0,        jack, freeze,   jack,     ROT90, "Cinematronics", "Freeze" )
+GAME( 19??, freeze,   0,        jack, freeze,   jack,     ROT90, "Cinematronics", "Freeze" )
 GAME( 1982, sucasino, 0,        jack, jack,     jack,     ROT90, "Data Amusement", "Super Casino" )

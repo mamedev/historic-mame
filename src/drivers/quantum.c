@@ -136,11 +136,16 @@ static WRITE16_HANDLER( led_w )
 		coin_counter_w(0, data & 2);
 		coin_counter_w(1, data & 1);
 
+		/* bit 3 = select second trackball for cocktail mode? */
+
 		/* bits 4 and 5 are LED controls */
 		set_led_status(0, data & 0x10);
 		set_led_status(1, data & 0x20);
 
-		/* other bits unknown */
+		/* bits 6 and 7 flip screen */
+		vector_set_flip_x (data & 0x40);
+		vector_set_flip_y (data & 0x80);
+		vector_set_swap_xy (1);	/* vertical game */
 	}
 }
 
@@ -307,7 +312,7 @@ static const struct MachineDriver machine_driver_quantum =
 	0,
 
 	/* video hardware */
-	300, 400, { 0, 600, 0, 900 },
+	400, 300, { 0, 600, 0, 900 },
 	0,
 	256, 0,
 	avg_init_palette_multi,
@@ -390,7 +395,6 @@ ROM_END
  *
  *************************************/
 
-GAMEX( 1982, quantum,  0,       quantum, quantum, 0, ROT0, "Atari", "Quantum (rev 2)", GAME_WRONG_COLORS )
-GAMEX( 1982, quantum1, quantum, quantum, quantum, 0, ROT0, "Atari", "Quantum (rev 1)", GAME_WRONG_COLORS )
-GAMEX( 1982, quantump, quantum, quantum, quantum, 0, ROT0, "Atari", "Quantum (prototype)", GAME_WRONG_COLORS )
-
+GAMEX( 1982, quantum,  0,       quantum, quantum, 0, ROT270, "Atari", "Quantum (rev 2)", GAME_WRONG_COLORS )
+GAMEX( 1982, quantum1, quantum, quantum, quantum, 0, ROT270, "Atari", "Quantum (rev 1)", GAME_WRONG_COLORS )
+GAMEX( 1982, quantump, quantum, quantum, quantum, 0, ROT270, "Atari", "Quantum (prototype)", GAME_WRONG_COLORS )

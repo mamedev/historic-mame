@@ -1,6 +1,8 @@
 /*	Namco System NA1/2 Video Hardware */
 #include "vidhrdw/generic.h"
 
+#define NAMCO_MAX_TILEMAPS 4
+
 void namcona1_vh_stop( void ); /* forward reference */
 
 /* public variables */
@@ -15,19 +17,20 @@ static char dirtygfx;
 static data16_t *shaperam;
 static data16_t *cgram;
 
-static struct tilemap *tilemap[4];
-static int tilemap_palette_bank[4];
+static struct tilemap *tilemap[NAMCO_MAX_TILEMAPS];
+static int tilemap_palette_bank[NAMCO_MAX_TILEMAPS];
 
 static const data16_t *tilemap_videoram;
 static int tilemap_color;
 
 static void tilemap_get_info( int tile_index )
 {
-	static UINT8 mask_data[8];
 	data16_t *source;
+	static UINT8 mask_data[8];
 
 	int data = tilemap_videoram[tile_index];
 	int tile = data&0xfff;
+
 	SET_TILE_INFO( 0,tile,tilemap_color );
 
 #ifdef LSB_FIRST
@@ -76,10 +79,14 @@ WRITE16_HANDLER( namcona1_paletteram_w )
 	g = (paletteram16[offset]>>5)&0x1f;
 	b = paletteram16[offset]&0x001f;
 
-	palette_change_color( offset,
-		(r<<3)|(r>>2),
-		(g<<3)|(g>>2),
-		(b<<3)|(b>>2));
+	r = (r<<3)|(r>>2);
+	g = (g<<3)|(g>>2);
+	b = (b<<3)|(b>>2);
+
+	palette_change_color( offset, r,g,b );
+
+	/* shadow */
+	palette_change_color( offset+0x1000, r/2,g/2,b/2 );
 }
 
 /*************************************************************************/
@@ -159,9 +166,23 @@ WRITE16_HANDLER( namcona1_gfxram_w )
 
 static void update_gfx( void )
 {
+	const data16_t *source = videoram16;
+	int page;
+	int i;
+
 	if( dirtygfx )
 	{
-		int i;
+		for( page = 0; page<4; page++ )
+		{
+			for( i=0; i<0x1000; i++ )
+			{
+				if( dirtychar[*source++ & 0xfff] )
+				{
+					tilemap_mark_tile_dirty( tilemap[page], i );
+				}
+			}
+		}
+
 		for( i = 0;i < 0x1000;i++ )
 		{
 			if( dirtychar[i] )
@@ -172,19 +193,18 @@ static void update_gfx( void )
 			}
 		}
 		dirtygfx = 0;
-		tilemap_mark_all_tiles_dirty( ALL_TILEMAPS );
 	}
 }
 
 int namcona1_vh_start( void )
 {
 	int i;
-	for( i=0; i<4; i++ )
+	for( i=0; i<NAMCO_MAX_TILEMAPS; i++ )
 	{
 		tilemap[i] = tilemap_create(
 			tilemap_get_info,
 			tilemap_scan_rows,
-			TILEMAP_BITMASK,8,8,64,32 );
+			TILEMAP_BITMASK,8,8,64,64 );
 
 		if( tilemap[i]==NULL ) return 1; /* error */
 		tilemap_palette_bank[i] = -1;
@@ -232,12 +252,13 @@ static void pdraw_masked_tile(
 		int color,
 		int sx, int sy,
 		int flipx, int flipy,
-		int priority )
+		int priority,
+		int bShadow )
 {
 	/*
 	**	custom blitter for drawing a masked 8x8x8BPP tile
 	**	- doesn't yet handle screen orientation (needed particularly for F/A, a vertical game)
-	**	- assumes there is an 8 pixel overdraw region on the screen for clipping
+	**	- assumes there is an 8 pixel overdraw region on the screen bitmap for clipping
 	*/
 	const struct GfxElement *gfx = Machine->gfx[0];
 	const struct GfxElement *mask = Machine->gfx[1];
@@ -296,6 +317,42 @@ static void pdraw_masked_tile(
 				mask_addr += mask_pitch;
 			}
 		}
+		else if( bShadow )
+		{
+			for( y=0; y<8; y++ )
+			{
+				int ypos = sy+(flipy?7-y:y);
+				data8_t *pri = (data8_t *)priority_bitmap->line[ypos];
+				UINT16 *dest = (UINT16 *)bitmap->line[ypos];
+				if( flipx )
+				{
+					dest += sx+7;
+					pri += sx+7;
+					for( x=0; x<8; x++ )
+					{
+						if( mask_addr[x] )
+						{ /* sprite pixel is opaque */
+							if( priority>=pri[-x] ) dest[-x] |= 0x1000;
+							pri[-x] = 0xff;
+						}
+					}
+				}
+				else
+				{
+					dest += sx;
+					pri += sx;
+					for( x=0; x<8; x++ )
+					{
+						if( mask_addr[x] )
+						{ /* sprite pixel is opaque */
+							if( priority>=pri[x] ) dest[x] |= 0x1000;
+							pri[x] = 0xff;
+						}
+					}
+				}
+				mask_addr += mask_pitch;
+			}
+		}
 		else
 		{ /* 16 bit color */
 			for( y=0; y<8; y++ )
@@ -342,17 +399,14 @@ static void draw_sprites( struct osd_bitmap *bitmap )
 {
 	int which;
 	const data16_t *source = spriteram16;
-	if( namcona1_vreg[0x22/2]&1 ) source += 0x400;
+	if( namcona1_vreg[0x22/2]&1 ) source += 0x400; /* alternate spriteram bank */
 
 	for( which=0; which<0x100; which++ )
 	{ /* 256 sprites */
+		data16_t xpos = source[3];	/* -------X XXXXXXXX */
 		data16_t ypos = source[0];	/* FHHH---- YYYYYYYY */
 		data16_t tile = source[1];	/* ----TTTT TTTTTTTT */
-		data16_t color = source[2];	/* FSWW---- CCCC-PPP	flipx, shadow, width, color, pri*/
-		data16_t xpos = source[3];	/* -------X XXXXXXXX */
-		/*
-			unmapped bits likely include xscale and yscale
-		*/
+		data16_t color = source[2];	/* FSWW???? CCCC?PPP	flipx, shadow, width, color, pri*/
 
 		int priority = pri_mask[color&0x7];
 		int width = ((color>>12)&0x3)+1;
@@ -361,12 +415,9 @@ static void draw_sprites( struct osd_bitmap *bitmap )
 		int flipx = color&0x8000;
 		int row,col;
 
-		int skip = 0;
-
-		if( !skip )
 		for( row=0; row<height; row++ )
 		{
-			int sy = (ypos&0x1ff)-30;
+			int sy = (ypos&0x1ff)-30+32;
 			if( flipy )
 			{
 				sy += (height-1-row)*8;
@@ -393,28 +444,67 @@ static void draw_sprites( struct osd_bitmap *bitmap )
 					((sx+16)&0x1ff)-8,
 					((sy+8)&0x1ff)-8,
 					flipx,flipy,
-					priority );
+					priority,
+					color&0x4000 /* shadow */ );
 			}
 		}
 		source += 4;
 	}
 }
 
-static int count_scroll_rows( const data16_t *source )
+static void draw_background( struct osd_bitmap *bitmap, int which, int primask )
 {
-	if( source[0x00]==0 ) return 0;
-	if( source[0x1f]==0 ) return 1;
-	if( source[0xff]==0 ) return 0x20;
-	return 0x100;
+	int adjust = 0x3a - which*2;
+	const data16_t *scroll = namcona1_scroll+0x200*which;
+	int line;
+	int scrollx, scrolly;
+	struct rectangle clip;
+
+	/* draw one scanline at a time */
+	clip.min_x = 0;
+	clip.max_x = 38*8-1;
+
+	scrollx = 0;
+	scrolly = 0;
+	for( line=0; line<256; line++ )
+	{
+		clip.min_y = line;
+		clip.max_y = line;
+		tilemap_set_clip( tilemap[which], &clip );
+
+		if( scroll[line] )
+		{
+			/* screenwise linescroll */
+			scrollx = scroll[line] + adjust;
+		}
+
+		if( scroll[line+0x100]&0x4000 )
+		{
+			/* line select (adjust to an appropriate tilemap scrolly) */
+			scrolly = (scroll[line+0x100] - line)&0x1ff;
+		}
+
+		tilemap_set_scrollx( tilemap[which], 0, scrollx );
+		tilemap_set_scrolly( tilemap[which], 0, scrolly );
+		tilemap_draw( bitmap, tilemap[which], 0, primask );
+	}
 }
 
 void namcona1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	int i;
+	int bg_to_show = -1;
+	int which;
 	int priority;
+
+//	if( keyboard_pressed( KEYCODE_Q ) ) bg_to_show = 0;
+//	if( keyboard_pressed( KEYCODE_W ) ) bg_to_show = 1;
+//	if( keyboard_pressed( KEYCODE_E ) ) bg_to_show = 2;
+//	if( keyboard_pressed( KEYCODE_R ) ) bg_to_show = 3;
+
 //	int flipscreen = namcona1_vreg[0x98/2];
 	/* cocktail not yet implemented */
 
+/*
 	if( keyboard_pressed( KEYCODE_Z ) )
 	{
 		while( keyboard_pressed( KEYCODE_Z ) ){}
@@ -431,93 +521,39 @@ void namcona1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		}
 		logerror( "\n" );
 	}
-
+*/
 	update_gfx();
 	palette_init_used_colors();
 
-	for( i=0; i<4; i++ )
+	for( which=0; which<NAMCO_MAX_TILEMAPS; which++ )
 	{
-		const data16_t *source = namcona1_scroll+0x200*i;
-		int scroll_rows, scrolly;
+		tilemap_videoram = which*0x1000+(data16_t *)videoram16;
+		tilemap_color = namcona1_vreg[0x58+(which&3)]&0xf;
 
-		if( cgang_hack() )
+		if( tilemap_color!=tilemap_palette_bank[which] )
 		{
-			/* Scrolling isn't well understood.  Each layer may
-			 * be configured to one of the following modes:
-			 * - no scrolling
-			 * - simple XY scrolling
-			 * - row/quarter scrolling?
-			 * - line scroll
-			 *
-			 * There is also a ROZ feature not yet hooked up.
-			 *
-			 * The following hack fixes Cosmo Gang:
-			 */
-			scroll_rows = 0;
-			scrolly = 0x41e0;
+			tilemap_mark_all_tiles_dirty( tilemap[which] );
+			tilemap_palette_bank[which] = tilemap_color;
 		}
-		else
-		{
-			scroll_rows = count_scroll_rows( source );
-			scrolly = source[0x100];
-		}
-
-		tilemap_set_scrolly( tilemap[i], 0, scrolly-0x41e0 );
-
-		if( scroll_rows )
-		{
-			int adjust = i*2+0x41c6;
-			int line;
-			tilemap_set_scroll_rows( tilemap[i], scroll_rows );
-			for( line=0; line<scroll_rows; line++ ){
-				int value = source[line]-adjust;
-				tilemap_set_scrollx( tilemap[i], line, value );
-			}
-		}
-		else {
-			tilemap_set_scroll_rows( tilemap[i], 1 );
-			tilemap_set_scrollx( tilemap[i], 0, -8 );
-		}
-
-		tilemap_videoram = i*0x1000+(data16_t *)videoram16;
-		tilemap_color = namcona1_vreg[0x58+i]&0xf;
-		if( tilemap_color!=tilemap_palette_bank[i] ){
-			tilemap_mark_all_tiles_dirty( tilemap[i] );
-			tilemap_palette_bank[i] = tilemap_color;
-		}
-		tilemap_update( tilemap[i] );
+		tilemap_update( tilemap[which] );
 	}
 
 	palette_recalc();
 
-	fillbitmap(priority_bitmap,0,NULL);
+	fillbitmap( priority_bitmap,0,NULL );
 	fillbitmap( bitmap,Machine->pens[0],&Machine->visible_area ); /* ? */
 
 	for( priority = 0; priority<8; priority++ )
 	{
-		int which;
-		for( which=3; which>=0; which-- )
+		for( which=NAMCO_MAX_TILEMAPS-1; which>=0; which-- )
 		{
-			if( (which!=0 || !keyboard_pressed( KEYCODE_Q ) ) &&
-				(which!=1 || !keyboard_pressed( KEYCODE_W ) ) &&
-				(which!=2 || !keyboard_pressed( KEYCODE_E ) ) &&
-				(which!=3 || !keyboard_pressed( KEYCODE_R ) ) )
+			if( namcona1_vreg[0x50+which] == priority )
 			{
-
-				if( namcona1_vreg[0x50+which] == priority )
-				{
-					tilemap_draw(
-						bitmap,
-						tilemap[which],
-						0,
-						pri_mask[priority] );
-				}
+				if( bg_to_show == -1 || bg_to_show == which )
+				draw_background( bitmap,which,pri_mask[priority] );
 			}
 		}
 	}
 
-	if( !keyboard_pressed( KEYCODE_T ) ) draw_sprites( bitmap );
-	/* Q,W,E,R,T are debug keys hooked up to hide individual
-	 *tilemap layers or sprites.
-	 */
+	draw_sprites( bitmap );
 }

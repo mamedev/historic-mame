@@ -97,6 +97,8 @@
  * 23.01.01 MJC   - Spits out seperate code for 68000 & 68020
  *                  allows seperate optimising!
  * 17.02.01 MJC   - Support for encrypted PC relative fetch calls
+ * 11.03.01 GUTI  - change some cmp reg,0 and or reg,reg with test
+ * 13.03.01 MJC   - Single Icount for Asm & C cores
  *---------------------------------------------------------------
  * Known Problems / Bugs
  *
@@ -137,7 +139,7 @@
 #define ALIGNMENT 4     /* Alignment to use for branches */
 #undef  MASKCCR         /* Mask the status register to filter out unused bits */
 #define KEEPHIGHPC      /* Keep or Ignore bits 24-31 */
-
+#define QUICKZERO       /* selects XOR r,r or MOV r,0 */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -188,7 +190,7 @@ int      DisOp;
 
 /* Register Location Offsets */
 
-#define ICOUNT             "asm_count"
+#define ICOUNT             "_m68k_ICount"
 
 #define REG_DAT            "R_D0"
 #define REG_DAT_EBX        "[R_D0+ebx*4]"
@@ -408,6 +410,15 @@ void CopyX(void)
  *
  */
 
+void ClearRegister(int regno)
+{
+#ifdef QUICKZERO
+	fprintf(fp, "\t\t mov   %s,0\n",regnameslong[regno]);
+#else
+	fprintf(fp, "\t\t xor   %s,%s\n",regnameslong[regno],regnameslong[regno]);
+#endif
+}
+
 void Immediate8(void)
 {
    /* This takes 3 cycles, 5 bytes, no memory reads */
@@ -608,7 +619,7 @@ void Completed(void)
       fprintf(fp, "\t\t xor   eax,esi\n");	/* ASG */
 
 #ifdef STALLCHECK
-      fprintf(fp, "\t\t xor   ecx,ecx\t\t; Avoid Stall\n");
+	  ClearRegister(ECX);
       fprintf(fp, "\t\t mov   cx,[eax+ebp]\n");
 #else
       fprintf(fp, "\t\t movzx ecx,word [eax+ebp]\n");
@@ -618,7 +629,7 @@ void Completed(void)
    {
       /* 16 bit memory */
 #ifdef STALLCHECK
-      fprintf(fp, "\t\t xor   ecx,ecx\t\t; Avoid Stall\n");
+	  ClearRegister(ECX);
       fprintf(fp, "\t\t mov   cx,[esi+ebp]\n");
 #else
       fprintf(fp, "\t\t movzx ecx,word [esi+ebp]\n");
@@ -1388,7 +1399,7 @@ void ExtensionDecode(int SaveEDX)
       fprintf(fp, "\t\t test  dl,40h\n");
       fprintf(fp, "\t\t jz   short %s_b\n",Label);
       // set index to 0, it's not added
-      fprintf(fp, "\t\t xor  eax,eax\n");
+      ClearRegister(EAX);
       fprintf(fp, "\t\t jmp  short %s_d\n",Label);  // near
 
       // add displacement
@@ -1429,7 +1440,7 @@ void ExtensionDecode(int SaveEDX)
       // if BS is 1 then set edi to 0
       fprintf(fp, "\t\t test  dl,80h\n");
       fprintf(fp, "\t\t jz    short %s_4a\n",Label);
-      fprintf(fp, "\t\t xor   edi,edi\n");
+      ClearRegister(EDI);
       // if null displacement skip over
       fprintf(fp, "%s_4a:\n",Label);
 //    fprintf(fp, "\t\t push  eax\n");		// Why ? (matched below)
@@ -2234,7 +2245,7 @@ void ConditionCheck(int mode, char *SetWhat)
       case 1:   /* F - Never */
          if (SetWhat[1] == 'L')
          {
-            fprintf(fp, "\t\t xor   eax,eax\n");
+         	ClearRegister(EAX);
          }
          else
          {
@@ -2648,8 +2659,13 @@ void dump_bit_dynamic( int sreg, int type, int mode, int dreg )
          else
             fprintf(fp, "\t\t and   ecx, byte 7\n");
 
-         fprintf(fp,"\t\t xor   eax,eax\n");
-         fprintf(fp,"\t\t inc   eax\n");
+		 #ifdef QUICKZERO
+		 	fprintf(fp,"\t\t mov   eax,1\n");
+		 #else
+            fprintf(fp,"\t\t xor   eax,eax\n");
+            fprintf(fp,"\t\t inc   eax\n");
+		 #endif
+
          fprintf(fp,"\t\t shl   eax,cl\n");
          fprintf(fp,"\t\t mov   ecx,eax\n");
 
@@ -2811,8 +2827,13 @@ void dump_bit_static(int type, int mode, int dreg )
          else
             fprintf(fp, "\t\t and   ecx, byte 7\n");
 
-         fprintf(fp,"\t\t xor   eax,eax\n");
-         fprintf(fp,"\t\t inc   eax\n");
+		 #ifdef QUICKZERO
+		 	fprintf(fp,"\t\t mov   eax,1\n");
+		 #else
+            fprintf(fp,"\t\t xor   eax,eax\n");
+            fprintf(fp,"\t\t inc   eax\n");
+		 #endif
+
          fprintf(fp,"\t\t shl   eax,cl\n");
          fprintf(fp,"\t\t mov   ecx,eax\n");
 
@@ -4308,7 +4329,7 @@ void divl(void)
                Memory_Fetch('W', EAX, FALSE ) ;
                fprintf(fp, "\t\t add   esi,byte 2\n\n");
                fprintf(fp, "\t\t push  esi\n");
-               fprintf(fp, "\t\t mov   esi,0\n");
+               ClearRegister(ESI);
 
                Label = GenerateLabel(BaseCode,1);
 
@@ -4320,7 +4341,7 @@ void divl(void)
                fprintf(fp, "\t\t and   eax,7\n");
                fprintf(fp, "\t\t mov   eax,[%s+eax*4]\n",REG_DAT);
 
-               fprintf(fp, "\t\t xor   edx,edx\n");
+               ClearRegister(EDX);
                fprintf(fp, "\t\t test  ch,4\n"); // size? 0=32
                fprintf(fp, "\t\t jz    short %s_1\n",Label);
 // high longword (64bit)
@@ -4333,19 +4354,19 @@ void divl(void)
                fprintf(fp, "\t\t jmp   near %s_2\n",Label);
 
                fprintf(fp, "%s_1:\n",Label); // short
-               fprintf(fp, "\t\t xor   edx,edx\n");
+               ClearRegister(EDX);
                fprintf(fp, "\t\t test  ch,8\n"); // signed?
                fprintf(fp, "\t\t jz    short %s_3\n",Label);
                fprintf(fp, "\t\t cdq\n");
 // signed
                fprintf(fp, "%s_2:\n",Label);
                fprintf(fp, "\t\t or    esi,1\n");
-               fprintf(fp, "\t\t cmp   ebx,0\n");
+               fprintf(fp, "\t\t test  ebx,ebx\n");
                fprintf(fp, "\t\t jge   short %s_2b\n",Label);
                fprintf(fp, "\t\t or    esi,2\n");
                fprintf(fp, "\t\t neg   ebx\n");
                fprintf(fp, "%s_2b:\n",Label);
-               fprintf(fp, "\t\t cmp   edx,0\n");
+               fprintf(fp, "\t\t test  edx,edx\n");
                fprintf(fp, "\t\t jge   short %s_3\n",Label);
                fprintf(fp, "\t\t neg   eax\n");
                fprintf(fp, "\t\t xor   edx,-1\n");
@@ -4357,7 +4378,7 @@ void divl(void)
                fprintf(fp, "\t\t div   ebx\n");
                fprintf(fp, "\t\t test  esi,esi\n");
                fprintf(fp, "\t\t jz    short %s_4\n",Label); // no need to check for v
-               fprintf(fp, "\t\t cmp   eax,0\n");
+               fprintf(fp, "\t\t test  eax,eax\n");
                fprintf(fp, "\t\t jl    short %s_4a\n",Label);
                fprintf(fp, "\t\t test  esi,esi\n");
                fprintf(fp, "\t\t jpo   short %s_4\n",Label); // jmp if ok
@@ -4607,7 +4628,7 @@ void not(void)
                            break;
 
                         case 1: /* clr */
-                           fprintf(fp, "\t\t xor   eax,eax\n") ;
+                           ClearRegister(EAX);
                            EffectiveAddressWrite(Dest,Size,ECX,TRUE,"----S-B",FALSE);
                            fprintf(fp, "\t\t mov   edx,40H\n");
                            break;
@@ -4888,7 +4909,7 @@ void nbcd(void)
 
                EffectiveAddressRead(Dest,'B',ECX,EBX,"--C-SDB",FALSE);
 
-               fprintf(fp, "\t\t xor   eax,eax\n");
+               ClearRegister(EAX);
                CopyX();
 
                fprintf(fp, "\t\t sbb   al,bl\n");
@@ -5194,7 +5215,7 @@ void movem_reg_ea(void)
                   /* other modes use   a7-a0..d7-d0  d0 first*/
 
                   if (Dest != 4)
-                     fprintf(fp, "\t\t xor   ecx,ecx\n");
+                     ClearRegister(ECX);
                   else
                      fprintf(fp, "\t\t mov   ecx,3Ch\n");
 
@@ -5328,7 +5349,7 @@ void movem_ea_reg(void)
                   /* predecrement uses d0-d7..a0-a7  a7 first*/
                   /* other modes use   a7-a0..d7-d0  d0 first*/
 
-                  fprintf(fp, "\t\t xor   ecx,ecx\n");         /* always start with D0 */
+                  ClearRegister(ECX);                          /* always start with D0 */
 
                   fprintf(fp, "OP_%4.4x_Again:\n",BaseCode);
                   fprintf(fp, "\t\t test  edx,ebx\n");         /* is bit set for this register? */
@@ -5507,7 +5528,7 @@ void reset(void)
 
          fprintf(fp, "\t\t xor   esi,[_a68k_memory_intf+0]\n");	/* ASG */
 #ifdef STALLCHECK
-         fprintf(fp, "\t\t xor   ecx,ecx\t\t; Avoid Stall\n");
+		 ClearRegister(ECX);
          fprintf(fp, "\t\t mov   cx,[esi+ebp]\n");
 #else
          fprintf(fp, "\t\t movzx ecx,word [esi+ebp]\n");
@@ -5518,15 +5539,15 @@ void reset(void)
       {
          /* 16 bit memory */
 #ifdef STALLCHECK
-         fprintf(fp, "\t\t xor   ecx,ecx\t\t; Avoid Stall\n");
+		 ClearRegister(ECX);
          fprintf(fp, "\t\t mov   cx,[esi+ebp]\n");
 #else
          fprintf(fp, "\t\t movzx ecx,word [esi+ebp]\n");
 #endif
       }
 
-      fprintf(fp, "\t\t mov   eax,dword [%s]\n", REG_RESET_CALLBACK);
-      fprintf(fp, "\t\t or    eax,eax\n");
+      fprintf(fp, "\t\t mov  eax,dword [%s]\n", REG_RESET_CALLBACK);
+      fprintf(fp, "\t\t test eax,eax\n");
       fprintf(fp, "\t\t jz   near OP_%4.4x_END\n",BaseCode);
 
       /* Callback for Reset */
@@ -5610,7 +5631,7 @@ void stop(void)
 
       /* No int waiting - clear count, set stop */
 
-      fprintf(fp, "\t\t xor   ecx,ecx\n");
+      ClearRegister(ECX);
       fprintf(fp, "\t\t mov   [%s],ecx\n",ICOUNT);
       fprintf(fp, "\t\t or    byte [%s],80h\n",REG_IRQ);
       Completed();
@@ -6777,7 +6798,7 @@ void roxl_roxr(void)
                      /* if shift count is zero clear carry */
 
                      Label = GenerateLabel(0,1);
-                     fprintf(fp, "\t\t or    cl,cl\n");
+                     fprintf(fp, "\t\t test  cl,cl\n");
                      fprintf(fp, "\t\t jz    %s\n",Label);
 
                      /* Add in Carry Flag */
@@ -6970,7 +6991,7 @@ void asl_asr(void)
                         fprintf(fp, "\t\t lahf\n");
 
 #ifdef STALLCHECK
-                        fprintf(fp, "\t\t xor   edx,edx\t\t; Avoid Stall\n");
+						ClearRegister(EDX);
                         fprintf(fp, "\t\t mov   dl,ah\n");
 #else
                         fprintf(fp, "\t\t movzx edx,ah\n");
@@ -6986,7 +7007,7 @@ void asl_asr(void)
 
                         fprintf(fp,"\t\t mov   edi,eax\t\t; Save It\n");
 
-                        fprintf(fp,"\t\t xor   edx,edx\n");
+                        ClearRegister(EDX);
                         fprintf(fp,"\t\t stc\n");
                         fprintf(fp,"\t\t rcr   %s,1\t\t; d=1xxxx\n",RegnameEDX);
                         fprintf(fp,"\t\t sar   %s,cl\t\t; d=1CCxx\n",RegnameEDX);
@@ -7000,7 +7021,7 @@ void asl_asr(void)
                         fprintf(fp,"\t\t jmp   short %s_OV\n",Label);
 
                         fprintf(fp,"%s_V:\n",Label);
-                        fprintf(fp,"\t\t xor   edx,edx\n");
+                        ClearRegister(EDX);
 
                         fprintf(fp,"%s_OV:\n",Label);
 
@@ -7050,7 +7071,7 @@ void asl_asr(void)
 
                               fprintf(fp, "%s_32:\n",Label);
                               fprintf(fp, "\t\t mov   dl,40h\n");    // Zero flag
-                              fprintf(fp, "\t\t xor   eax,eax\n");
+                              ClearRegister(EAX);
                               EffectiveAddressWrite(0,Size,EBX,EAX,"----S-B",TRUE);
                            }
                         }
@@ -7263,7 +7284,7 @@ void divides(void)
                      }
                      else
                      {
-                        fprintf(fp, "\t\t xor   edx,edx\n");   /* EDX:EAX = 64 bit signed */
+                        ClearRegister(EDX);
                         fprintf(fp, "\t\t div   ebx\n");
 
                         /* Check for Overflow */
@@ -7380,7 +7401,7 @@ void MoveControlRegister(void)
       fprintf(fp, "\t\t add   esi,byte 2\n");
       fprintf(fp, "\t\t xor   esi,[_a68k_memory_intf+0]\n");	/* ASG */
 #ifdef STALLCHECK
-      fprintf(fp, "\t\t xor   ebx,ebx\t\t; Avoid Stall\n");
+      ClearRegister(EBX);
       fprintf(fp, "\t\t mov   bx,[esi+ebp]\n");
 #else
       fprintf(fp, "\t\t movzx ebx,word [esi+ebp]\n");
@@ -7503,10 +7524,10 @@ void CodeSegmentBegin(void)
 
    fprintf(fp, "\t\t GLOBAL %s_RUN\n",CPUtype);
    fprintf(fp, "\t\t GLOBAL %s_RESET\n",CPUtype);
-   fprintf(fp, "\t\t GLOBAL %s_ICount\n",CPUtype);
    fprintf(fp, "\t\t GLOBAL %s_regs\n",CPUtype);
 
 	/* ASG - only one interface to memory now */
+   fprintf(fp, "\t\t EXTERN _m68k_ICount\n");
    fprintf(fp, "\t\t EXTERN _a68k_memory_intf\n");
    fprintf(fp, "\t\t EXTERN _memory_amask\n");
 
@@ -7563,7 +7584,7 @@ void CodeSegmentBegin(void)
    fprintf(fp, "\t\t jne   short RESET1\n");
 
 #ifdef STALLCHECK
-   fprintf(fp, "\t\t xor   ecx,ecx\n");
+   ClearRegister(ECX);
    fprintf(fp, "\t\t mov   cx,[esi]\t\t; Repeats\n");
 #else
    fprintf(fp, "\t\t movzx ecx,word [esi]\t\t; Repeats\n");
@@ -7611,7 +7632,7 @@ void CodeSegmentBegin(void)
       fprintf(fp, "\t\t mov   eax,[_a68k_memory_intf+0]\n");		/* ASG */
       fprintf(fp, "\t\t xor   eax,esi\n");							/* ASG */
 #ifdef STALLCHECK
-      fprintf(fp, "\t\t xor   ecx,ecx\t\t; Avoid Stall\n");
+      ClearRegister(ECX);
       fprintf(fp, "\t\t mov   cx,[eax+ebp]\n");
 #else
       fprintf(fp, "\t\t movzx ecx,word [eax+ebp]\n");
@@ -7621,7 +7642,7 @@ void CodeSegmentBegin(void)
    {
    	  /* 16 Bit Fetch */
 #ifdef STALLCHECK
-      fprintf(fp, "\t\t xor   ecx,ecx\t\t; Avoid Stall\n");
+      ClearRegister(ECX);
       fprintf(fp, "\t\t mov   cx,[esi+ebp]\n");
 #else
       fprintf(fp, "\t\t movzx ecx,word [esi+ebp]\n");
@@ -7729,7 +7750,7 @@ void CodeSegmentBegin(void)
    /* Do we want to use normal vector number ? */
 
 
-   fprintf(fp, "\t\t or    eax,eax\n");
+   fprintf(fp, "\t\t test  eax,eax\n");
    fprintf(fp, "\t\t jns   short AUTOVECTOR\n");
 
    /* Only need EBX restored if default vector to be used */

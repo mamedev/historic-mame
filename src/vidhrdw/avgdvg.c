@@ -120,14 +120,16 @@ static unsigned char *vectorbank[NUM_BANKS];
 #define memrdwd(offset) (VECTORRAM(offset) | (VECTORRAM(offset+1)<<8))
 /* The AVG used by Star Wars reads the bytes in the opposite order */
 #define memrdwd_flip(offset) (VECTORRAM(offset+1) | (VECTORRAM(offset)<<8))
-#define max(x,y) (((x)>(y))?(x):(y))
 
 
 INLINE void vector_timer (int deltax, int deltay)
 {
 	deltax = abs (deltax);
 	deltay = abs (deltay);
-	total_length += max (deltax, deltay) >> VEC_SHIFT;
+	if (deltax > deltay)
+		total_length += deltax >> VEC_SHIFT;
+	else
+		total_length += deltay >> VEC_SHIFT;
 }
 
 INLINE void dvg_vector_timer (int scale)

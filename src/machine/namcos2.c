@@ -28,16 +28,6 @@ int namcos2_gametype=0;
 void namcos2_init_machine(void){
 	int loop;
 
-	if(namcos2_dpram==NULL) namcos2_dpram = malloc(0x800);
-	memset( namcos2_dpram, 0, 0x800 );
-
-	if(namcos2_sprite_ram==NULL) namcos2_sprite_ram = malloc(0x4000);
-	memset( namcos2_sprite_ram, 0, 0x4000 );
-	namcos2_sprite_bank=0;
-
-	if(namcos2_68k_serial_comms_ram==NULL) namcos2_68k_serial_comms_ram = malloc(0x4000);
-	memset( namcos2_68k_serial_comms_ram, 0, 0x4000 );
-
 	/* Initialise the bank select in the sound CPU */
 	namcos2_sound_bankselect_w(0,0); /* Page in bank 0 */
 
@@ -100,198 +90,6 @@ READ16_HANDLER( namcos2_68k_data_rom_r ){
 	return ROM[offset];
 }
 
-/*************************************************************/
-/* 68000 Shared memory area - Video RAM control 			 */
-/*************************************************************/
-
-size_t namcos2_68k_vram_size;
-
-WRITE16_HANDLER( namcos2_68k_vram_w ){
-	data16_t oldword = videoram16[offset];
-	COMBINE_DATA( &videoram16[offset] );
-	/* Note: some games appear to use the 409000 region as SRAM to */
-	/* communicate between master/slave processors ??		       */
-	
-	if( oldword != videoram16[offset] ){
-		if( offset<0x4000 ){
-			switch( offset&0x3000 ){
-			case 0x0000:
-				tilemap_mark_tile_dirty(namcos2_tilemap0,offset&0xfff);
-				break;
-			case 0x1000:
-				tilemap_mark_tile_dirty(namcos2_tilemap1,offset&0xfff);
-				break;
-			case 0x2000:
-				tilemap_mark_tile_dirty(namcos2_tilemap2,offset&0xfff);
-				break;
-			case 0x3000:
-				tilemap_mark_tile_dirty(namcos2_tilemap3,offset&0xfff);
-				break;
-			}
-		}
-		else if( offset>=0x8010/2 && offset<0x87f0/2 ){
-			offset-=0x8010/2;	/* Fixed plane offsets */
-			tilemap_mark_tile_dirty( namcos2_tilemap4, offset );
-		}
-		else if( offset>=0x8810/2 && offset<0x8ff0/2 ){
-			offset-=0x8810/2;	/* Fixed plane offsets */
-			tilemap_mark_tile_dirty( namcos2_tilemap5, offset );
-		}
-	}
-}
-
-READ16_HANDLER( namcos2_68k_vram_r ){
-	return videoram16[offset];
-}
-
-data16_t namcos2_68k_vram_ctrl[0x20];
-
-WRITE16_HANDLER( namcos2_68k_vram_ctrl_w )
-{
-	data16_t oldword, newword;
-	offset &= 0x1f;
-	oldword = namcos2_68k_vram_ctrl[offset];
-	COMBINE_DATA( &namcos2_68k_vram_ctrl[offset] );
-	newword = namcos2_68k_vram_ctrl[offset];
-
-	if (oldword != newword){
-		switch( offset )
-		{
-			case 0x02/2:
-				/* All planes are flipped X+Y from D15 of this word */
-				tilemap_set_flip(ALL_TILEMAPS,(newword & 0x8000) ? (TILEMAP_FLIPX|TILEMAP_FLIPY) : 0);
-
-				tilemap_set_scrollx( namcos2_tilemap0, 0, (newword+44+4)&0x1ff );
-				break;
-			case 0x06/2:
-				tilemap_set_scrolly( namcos2_tilemap0, 0, (newword+24)&0x1ff );
-				break;
-			case 0x0a/2:
-				tilemap_set_scrollx( namcos2_tilemap1, 0, (newword+44+2)&0x1ff );
-				break;
-			case 0x0e/2:
-				tilemap_set_scrolly( namcos2_tilemap1, 0, (newword+24)&0x1ff );
-				break;
-			case 0x12/2:
-				tilemap_set_scrollx( namcos2_tilemap2, 0, (newword+44+1)&0x1ff );
-				break;
-			case 0x16/2:
-				tilemap_set_scrolly( namcos2_tilemap2, 0, (newword+24)&0x1ff );
-				break;
-			case 0x1a/2:
-				tilemap_set_scrollx( namcos2_tilemap3, 0, (newword+44)&0x1ff );
-				break;
-			case 0x1e/2:
-				tilemap_set_scrolly( namcos2_tilemap3, 0, (newword+24)&0x1ff );
-				break;
-			case 0x30/2:
-				/* Change of colour bank needs to force a tilemap redraw */
-				if ((newword & 7) != (oldword & 7))
-					tilemap_mark_all_tiles_dirty(namcos2_tilemap0);
-				break;
-			case 0x32/2:
-				/* Change of colour bank needs to force a tilemap redraw */
-				if ((newword & 7) != (oldword & 7))
-					tilemap_mark_all_tiles_dirty(namcos2_tilemap1);
-				break;
-			case 0x34/2:
-				/* Change of colour bank needs to force a tilemap redraw */
-				if ((newword & 7) != (oldword & 7))
-					tilemap_mark_all_tiles_dirty(namcos2_tilemap2);
-				break;
-			case 0x36/2:
-				/* Change of colour bank needs to force a tilemap redraw */
-				if ((newword & 7) != (oldword & 7))
-					tilemap_mark_all_tiles_dirty(namcos2_tilemap3);
-				break;
-			case 0x38/2:
-				/* Change of colour bank needs to force a tilemap redraw */
-				if ((newword & 7) != (oldword & 7))
-					tilemap_mark_all_tiles_dirty(namcos2_tilemap4);
-				break;
-			case 0x3a/2:
-				/* Change of colour bank needs to force a tilemap redraw */
-				if ((newword & 7) != (oldword & 7))
-					tilemap_mark_all_tiles_dirty(namcos2_tilemap5);
-				break;
-			default:
-				break;
-		}
-	}
-}
-
-READ16_HANDLER( namcos2_68k_vram_ctrl_r ){
-	return namcos2_68k_vram_ctrl[offset & 0x1f];
-}
-
-
-/*************************************************************/
-/* 68000 Shared memory area - Video palette control 		 */
-/*************************************************************/
-
-data16_t *namcos2_68k_palette_ram;
-size_t namcos2_68k_palette_size;
-
-READ16_HANDLER( namcos2_68k_video_palette_r ){
-	offset*=2;
-	if( (offset & 0xf000) == 0x3000 ){
-		/* Palette chip control registers */
-		offset&=0x001f;
-		switch( offset ){
-			case 0x1a:
-			case 0x1e:
-				return 0xff;
-				break;
-			default:
-				break;
-		}
-	}
-	return namcos2_68k_palette_ram[(offset/2)&0x7fff];
-}
-
-WRITE16_HANDLER( namcos2_68k_video_palette_w )
-{
-	data16_t oldword, newword;
-	offset &= 0x7fff;
-	oldword = namcos2_68k_palette_ram[offset];
-	COMBINE_DATA( &namcos2_68k_palette_ram[offset] );
-	newword = namcos2_68k_palette_ram[offset];
-	if( oldword != newword ){
-		offset*=2;
-		/* 0x3000 offset is control registers */
-		if( (offset&0x3000) != 0x3000 ){
-			int pen = (((offset&0xc000)>>2) | (offset&0x0fff))>>1;
-			int red  = namcos2_68k_palette_ram[((offset&0xcfff)+0x0000)/2]&0x00ff;
-			int green= namcos2_68k_palette_ram[((offset&0xcfff)+0x1000)/2]&0x00ff;
-			int blue = namcos2_68k_palette_ram[((offset&0xcfff)+0x2000)/2]&0x00ff;
-			palette_change_color(pen,red,green,blue);
-		}
-	}
-}
-
-/*************************************************************/
-/* 68000/6809/63705 Shared memory area - DUAL PORT Memory	 */
-/*************************************************************/
-
-unsigned char *namcos2_dpram=NULL;	/* 2Kx8 */
-
-READ16_HANDLER( namcos2_68k_dpram_word_r ){
-	return namcos2_dpram[offset&0x7ff];
-}
-
-WRITE16_HANDLER( namcos2_68k_dpram_word_w ){
-	if( ACCESSING_LSB ){
-		namcos2_dpram[offset&0x7ff] = data&0xff;
-	}
-}
-
-READ_HANDLER( namcos2_dpram_byte_r ){
-	return namcos2_dpram[offset&0x7ff];
-}
-
-WRITE_HANDLER( namcos2_dpram_byte_w ){
-	namcos2_dpram[offset&0x7ff] = data;
-}
 
 
 /**************************************************************/
@@ -299,22 +97,22 @@ WRITE_HANDLER( namcos2_dpram_byte_w ){
 /**************************************************************/
 
 data16_t  namcos2_68k_serial_comms_ctrl[0x8];
-data16_t *namcos2_68k_serial_comms_ram=NULL;
+data16_t *namcos2_68k_serial_comms_ram;
 
 READ16_HANDLER( namcos2_68k_serial_comms_ram_r ){
-	logerror("Serial Comms read  Addr=%08x\n",offset);
-	return namcos2_68k_serial_comms_ram[offset&0x1fff];
+//	logerror("Serial Comms read  Addr=%08x\n",offset);
+	return namcos2_68k_serial_comms_ram[offset];
 }
 
 WRITE16_HANDLER( namcos2_68k_serial_comms_ram_w ){
-	COMBINE_DATA( &namcos2_68k_serial_comms_ram[offset&0x1fff] );
-	logerror( "Serial Comms write Addr=%08x, Data=%04x\n",offset,data );
+	COMBINE_DATA( &namcos2_68k_serial_comms_ram[offset] );
+//	logerror( "Serial Comms write Addr=%08x, Data=%04x\n",offset,data );
 }
 
 
 READ16_HANDLER( namcos2_68k_serial_comms_ctrl_r )
 {
-	data16_t retval = namcos2_68k_serial_comms_ctrl[offset&0x07];
+	data16_t retval = namcos2_68k_serial_comms_ctrl[offset];
 
 	switch(offset){
 		case 0x00:
@@ -330,101 +128,81 @@ READ16_HANDLER( namcos2_68k_serial_comms_ctrl_r )
 
 WRITE16_HANDLER( namcos2_68k_serial_comms_ctrl_w )
 {
-	COMBINE_DATA( &namcos2_68k_serial_comms_ctrl[offset&0x07] );
+	COMBINE_DATA( &namcos2_68k_serial_comms_ctrl[offset] );
 //	logerror("Serial Comms write Addr=%08x, Data=%04x\n",offset,data);
 }
 
 
 
 /*************************************************************/
-/* 68000 Shared SPRITE/OBJECT Memory access/control 		 */
-/*************************************************************/
-
-/* The sprite bank register also holds the colour bank for */
-/* the ROZ memory and some of the priority control data    */
-
-data16_t *namcos2_sprite_ram=NULL;
-data16_t namcos2_sprite_bank=0;
-
-READ16_HANDLER( namcos2_68k_sprite_ram_r ){
-	return namcos2_sprite_ram[offset&0x1fff];
-}
-WRITE16_HANDLER( namcos2_68k_sprite_ram_w ){
-	COMBINE_DATA( &namcos2_sprite_ram[offset&0x1fff] );
-}
-
-READ16_HANDLER( namcos2_68k_sprite_bank_r ){
-	return namcos2_sprite_bank;
-}
-WRITE16_HANDLER( namcos2_68k_sprite_bank_w ){
-	COMBINE_DATA( &namcos2_sprite_bank );
-
-}
-
-/*************************************************************/
 /* 68000 Shared protection/random key generator 			 */
-/*************************************************************/
-//
-//$d00000
-//$d00002
-//$d00004	  Write 13 x $0000, read back $00bd from $d00002 (burnf)
-//$d00006	  Write $b929, read $014a (cosmog, does a jmp $0 if it doesnt get this)
-//$d00008	  Write $13ec, read $013f (rthun2)
-//$d0000a	  Write $f00f, read $f00f (phelios)
-//$d0000c	  Write $8fc8, read $00b2 (rthun2)
-//$d0000e	  Write $31ad, read $00bd (burnf)
-//
+/*************************************************************
 
-data16_t namcos2_68k_key[0x10];
+Custom chip ID numbers:
 
-READ16_HANDLER( namcos2_68k_key_r ){
-/*	return READ_WORD(&namcos2_68k_key[offset&0x0f]); */
+Game		Year	ID (dec)	ID (hex)
+--------	----	---			-----
+finallap	1987
+assault		1988	unused
+metlhawk	1988
+ordyne		1988	176			$00b0
+mirninja	1988	177			$00b1
+phelios		1988	178			$00b2	readme says 179
+dirtfoxj	1989	180			$00b4
+fourtrax	1989
+valkyrie	1989
+finehour	1989	188			$00bc
+burnforc	1989	189			$00bd
+marvland	1989	190			$00be
+kyukaidk	1990	191			$00bf
+dsaber		1990	192			$00c0
+finalap2	1990	318			$013e
+rthun2		1990	319			$013f
+sgunner2	1991	346			$015a	ID out of order; gfx board is not standard
+cosmogng	1991	330			$014a
+finalap3	1992	318			$013e	same as finalap2
+suzuka8h	1992
+sws92		1992	331			$014b
+sws92g		1992	332			$014c
+suzuk8h2	1993
+sws93		1993	334			$014e
+
+$d00000	Write $7a25, read back $00b4 from $d00002 (dirtfoxj)
+$d00002	Write 13 x $0000, read back $00be from $d00008 (marvland)
+$d00004	Write 13 x $0000, read back $00bd from $d00002 (burnf)
+		Write $a713, read $00c0 (dsaber)
+$d00006	Write $b929, read $014a (cosmogng)
+		Write $ac1d, read $014b (sws92)
+		Write $f14a, read $014c (sws92g)
+		Write $1fd0, read $014e (sws93)
+		Write $8fc8, read $00b2 also from $d00004 (phelios)
+$d00008	Write $13ec, read $013f (rthun2)
+		Write 13 x $0000, read back $00c0 from $d00004 (dsaber)
+$d0000a	Write $f00f, read $f00f (phelios)
+$d0000c	Write $a2c7, read $00b0 (ordyne)
+$d0000e	Write $31ad, read $00bd (burnforc)
+		Write $b607, read $00bc (finehour)
+		Write $615e, read $00be (marvland)
+		Write $31ae, read $00b1 (mirninja)
+
+$a00008	Write $6987, read $015a (sgunner2)
+ *************************************************************/
+
+data16_t namcos2_68k_key[0x08];
+
+READ16_HANDLER( namcos2_68k_key_r )
+{
+/*	return namcos2_68k_key[offset]); */
+//logerror("%06x: key_r 0xd0000%x\n",cpu_get_pc(),2*offset);
 	return rand()&0xffff;
 }
 
-WRITE16_HANDLER( namcos2_68k_key_w ){
-	/* Seed the random number generator */
-	srand(data);
-	COMBINE_DATA( &namcos2_68k_key[offset&0x07] );
+WRITE16_HANDLER( namcos2_68k_key_w )
+{
+//logerror("%06x: key_w 0xd0000%x = %04x\n",cpu_get_pc(),2*offset,data);
+	COMBINE_DATA(&namcos2_68k_key[offset]);
 }
 
-/**************************************************************/
-/*	ROZ - Rotate & Zoom memory function handlers			  */
-/*															  */
-/*	ROZ control made up of 8 registers, looks to be split	  */
-/*	into 2 groups of 3 registers one for each plane and two   */
-/*	other registers ??										  */
-/*															  */
-/*	0 - Plane 2 Offset 0x20000								  */
-/*	2 - Plane 2 											  */
-/*	4 - Plane 2 											  */
-/*	6 - Plane 1 Offset 0x00000								  */
-/*	8 - Plane 1 											  */
-/*	A	Plane 1 											  */
-/*	C - Unused												  */
-/*	E - Control reg ??										  */
-/*															  */
-/**************************************************************/
-
-data16_t namcos2_68k_roz_ctrl[0x8];
-size_t namcos2_68k_roz_ram_size;
-data16_t *namcos2_68k_roz_ram=NULL;
-
-WRITE16_HANDLER( namcos2_68k_roz_ctrl_w ){
-	COMBINE_DATA( &namcos2_68k_roz_ctrl[offset&0x7] );
-}
-
-READ16_HANDLER( namcos2_68k_roz_ctrl_r ){
-	return namcos2_68k_roz_ctrl[offset&0x7];
-}
-
-WRITE16_HANDLER( namcos2_68k_roz_ram_w ){
-	COMBINE_DATA( &namcos2_68k_roz_ram[offset] );
-}
-
-READ16_HANDLER( namcos2_68k_roz_ram_r ){
-	return namcos2_68k_roz_ram[offset];
-}
 
 
 /**************************************************************/
@@ -477,7 +255,7 @@ WRITE16_HANDLER( namcos2_68k_master_C148_w ){
 	offset*=2;
 	offset+=0x1c0000;
 	offset&=0x1fe000;
-	
+
 	data&=0x0007;
 	namcos2_68k_master_C148[(offset>>13)&0x1f]=data;
 

@@ -23,6 +23,7 @@ Different sound chips - depending on game.
 
 The memory map for each of the games is similar but not identical.
 
+
 Memory map for Rastan Saga 2 / Nastar / Nastar Warrior :
 
 CPU 1 : 68000, uses irqs 2 & 4. One of the IRQs just sets a flag which is
@@ -49,16 +50,17 @@ List of known B-System games:
 	Crime City						(YM2610 sound)
 	Rambo 3 (two different versions)(YM2610 sound)
 	Tetris							(YM2610 sound)
-	Space Invaders DX				(YM2610 sound)
+	Space Invaders DX				(YM2610 sound, MB87078 - electronic volume control)
 	Silent Dragon					(YM2610 sound)
 	Sel Feena						(YM2610 sound)
+	Ryujin							(YM2610 sound)
 
 	Violence Fight					(YM2203 sound, 2xMSM6295 )
 	Hit The Ice						(YM2203 sound, 2xMSM6295 )
 	Master of Weapons				(YM2203 sound)
 
-	Quiz Sekai wa SHOW by shobai	(YM2610-B sound)
-	Puzzle Bobble					(YM2610-B sound, MB87078P - electronic volume control)
+	Quiz Sekai wa SHOW by shobai	(YM2610-B sound, MB87078 - electronic volume control)
+	Puzzle Bobble					(YM2610-B sound, MB87078 - electronic volume control)
 	Sonic Blast Man					(YM2610-B sound)
 
 Other possible B-System games:
@@ -70,6 +72,7 @@ Other possible B-System games:
 #include "cpu/m68000/m68000.h"
 #include "vidhrdw/generic.h"
 #include "machine/eeprom.h"
+#include "machine/mb87078.h"
 #include "sndhrdw/taitosnd.h"
 
 extern data16_t *b_fscroll;
@@ -81,7 +84,6 @@ extern data16_t *b_videoram;
 extern data16_t *b_pixelram;
 
 extern size_t b_pixelram_size;
-//extern size_t b_videoram_size;
 
 
 int  taitob_vh_start_color_order0 (void);
@@ -514,31 +516,9 @@ static MEMORY_WRITE16_START( rambo3_writemem )
 MEMORY_END
 
 
-INLINE void taitob_changecolor_RRRRGGGGBBBBRGBx(int color,int data)
-{
-	int r,g,b;
-
-	r = ((data >> 11) & 0x1e) | ((data>>3) & 0x01);
-	g = ((data >>  7) & 0x1e) | ((data>>2) & 0x01);
-	b = ((data >>  3) & 0x1e) | ((data>>1) & 0x01);
-	r = (r<<3) | (r>>2);
-	g = (g<<3) | (g>>2);
-	b = (b<<3) | (b>>2);
-
-	palette_change_color(color,r,g,b);
-}
-
-WRITE16_HANDLER( taitob_paletteram16_RRRRGGGGBBBBRGBx_word_w )
-{
-	COMBINE_DATA(&paletteram16[offset]);
-
-	taitob_changecolor_RRRRGGGGBBBBRGBx(offset,paletteram16[offset]);
-}
-
-
 /***************************************************************************
 
-  Puzzle Bobble, Qzshoby, Space DX   EEPROM
+  Puzzle Bobble, Qzshowby, Space DX   EEPROM
 
 ***************************************************************************/
 
@@ -609,6 +589,24 @@ static WRITE16_HANDLER( eeprom_w )
 }
 
 
+static WRITE16_HANDLER( gain_control_w )
+{
+	if (ACCESSING_MSB)
+	{
+		if (offset==0)
+		{
+			MB87078_data_w(0, data>>8, 0);
+            //logerror("MB87078 dsel=0 data=%4x\n",data);
+		}
+		else
+		{
+			MB87078_data_w(0, data>>8, 1);
+            //logerror("MB87078 dsel=1 data=%4x\n",data);
+		}
+	}
+}
+
+
 
 READ16_HANDLER( p_read )
 {
@@ -652,7 +650,7 @@ static MEMORY_WRITE16_START( puzbobb_writemem )
 	{ 0x000000, 0x07ffff, MWA16_ROM },
 	{ 0x900000, 0x90ffff, MWA16_RAM },	/* Main RAM */
 
-	{ 0x800000, 0x801fff, taitob_paletteram16_RRRRGGGGBBBBRGBx_word_w, &paletteram16 },
+	{ 0x800000, 0x801fff, paletteram16_RRRRGGGGBBBBRGBx_word_w, &paletteram16 },
 
 	{ 0x400000, 0x403fff, taitob_foreground_w, &b_foregroundram },
 	{ 0x404000, 0x407fff, taitob_background_w, &b_backgroundram },
@@ -668,6 +666,7 @@ static MEMORY_WRITE16_START( puzbobb_writemem )
 
 	{ 0x500000, 0x500001, MWA16_NOP }, /*lots of zero writes here - watchdog ?*/
 
+	{ 0x600000, 0x600003, gain_control_w },
 	{ 0x700000, 0x700001, taitosound_port16_msb_w },
 	{ 0x700002, 0x700003, taitosound_comm16_msb_w },
 MEMORY_END
@@ -708,7 +707,7 @@ static MEMORY_WRITE16_START( spacedx_writemem )
 	{ 0x000000, 0x07ffff, MWA16_ROM },
 	{ 0x900000, 0x90ffff, MWA16_RAM },	/* Main RAM */
 
-	{ 0x800000, 0x801fff, taitob_paletteram16_RRRRGGGGBBBBRGBx_word_w, &paletteram16 },
+	{ 0x800000, 0x801fff, paletteram16_RRRRGGGGBBBBRGBx_word_w, &paletteram16 },
 
 	{ 0x400000, 0x403fff, taitob_foreground_w, &b_foregroundram },
 	{ 0x404000, 0x407fff, taitob_background_w, &b_backgroundram },
@@ -725,6 +724,7 @@ static MEMORY_WRITE16_START( spacedx_writemem )
 
 	{ 0x500000, 0x500001, MWA16_NOP }, /*lots of zero writes here - watchdog ?*/
 
+	{ 0x600000, 0x600003, gain_control_w },
 	{ 0x700000, 0x700001, taitosound_port16_msb_w },
 	{ 0x700002, 0x700003, taitosound_comm16_msb_w },
 MEMORY_END
@@ -762,7 +762,7 @@ static MEMORY_WRITE16_START( qzshowby_writemem )
 	{ 0x000000, 0x0fffff, MWA16_ROM },
 	{ 0x900000, 0x90ffff, MWA16_RAM },	/* Main RAM */
 
-	{ 0x800000, 0x801fff, taitob_paletteram16_RRRRGGGGBBBBRGBx_word_w, &paletteram16 },
+	{ 0x800000, 0x801fff, paletteram16_RRRRGGGGBBBBRGBx_word_w, &paletteram16 },
 
 	{ 0x400000, 0x403fff, taitob_foreground_w, &b_foregroundram },
 	{ 0x404000, 0x407fff, taitob_background_w, &b_backgroundram },
@@ -778,6 +778,7 @@ static MEMORY_WRITE16_START( qzshowby_writemem )
 
 	{ 0x200000, 0x200001, MWA16_NOP }, /*lots of zero writes here - watchdog ?*/
 
+	{ 0x700000, 0x700003, gain_control_w },
 	{ 0x600000, 0x600001, taitosound_port16_msb_w },
 	{ 0x600002, 0x600003, taitosound_comm16_msb_w },
 MEMORY_END
@@ -944,7 +945,7 @@ static MEMORY_WRITE16_START( silentd_writemem )
 	{ 0x000000, 0x07ffff, MWA16_ROM },
 	{ 0x400000, 0x403fff, MWA16_RAM },	/* Main RAM */
 
-	{ 0x300000, 0x301fff, taitob_paletteram16_RRRRGGGGBBBBRGBx_word_w, &paletteram16 },
+	{ 0x300000, 0x301fff, paletteram16_RRRRGGGGBBBBRGBx_word_w, &paletteram16 },
 
 	{ 0x500000, 0x503fff, taitob_foreground_w, &b_foregroundram },
 	{ 0x504000, 0x507fff, taitob_background_w, &b_backgroundram },
@@ -972,8 +973,9 @@ static MEMORY_READ16_START( selfeena_readmem )
 	{ 0x200000, 0x203fff, taitob_foreground_r },
 	{ 0x204000, 0x207fff, taitob_background_r },
 	{ 0x208000, 0x20bfff, taitob_text_r },
-//	{ 0x20c000, 0x20ffff, MRA16_RAM },
-	{ 0x210000, 0x21197f, MRA16_RAM },
+	{ 0x20c000, 0x20ffff, MRA16_RAM },
+	{ 0x210000, 0x211fff, MRA16_RAM },
+	{ 0x212000, 0x2137ff, MRA16_RAM },
 	{ 0x213800, 0x213bff, MRA16_RAM },
 	{ 0x213c00, 0x213fff, MRA16_RAM },
 	{ 0x218000, 0x21801f, taitob_v_control_r },
@@ -990,17 +992,19 @@ static MEMORY_READ16_START( selfeena_readmem )
 	{ 0x500002, 0x500003, taitosound_comm16_msb_r },
 MEMORY_END
 
+
 static MEMORY_WRITE16_START( selfeena_writemem )
 	{ 0x000000, 0x07ffff, MWA16_ROM },
 	{ 0x100000, 0x103fff, MWA16_RAM },	/* Main RAM */
 
-	{ 0x300000, 0x301fff, taitob_paletteram16_RRRRGGGGBBBBRGBx_word_w, &paletteram16 },
+	{ 0x300000, 0x301fff, paletteram16_RRRRGGGGBBBBRGBx_word_w, &paletteram16 },
 
 	{ 0x200000, 0x203fff, taitob_foreground_w, &b_foregroundram },
 	{ 0x204000, 0x207fff, taitob_background_w, &b_backgroundram },
 	{ 0x208000, 0x20bfff, taitob_text_w, &b_textram },
-//	{ 0x20c000, 0x20ffff, MWA16_RAM },
-	{ 0x210000, 0x21197f, MWA16_RAM, &b_videoram },
+	{ 0x20c000, 0x20ffff, MWA16_RAM },
+	{ 0x210000, 0x211fff, MWA16_RAM, &b_videoram },
+	{ 0x212000, 0x2137ff, MWA16_RAM },
 	{ 0x213800, 0x213bff, MWA16_RAM, &b_fscroll },
 	{ 0x213c00, 0x213fff, MWA16_RAM, &b_bscroll },
 	{ 0x218000, 0x21801f, taitob_v_control_w },
@@ -1043,7 +1047,7 @@ static MEMORY_WRITE16_START( sbm_writemem )
 	{ 0x000000, 0x07ffff, MWA16_ROM },
 	{ 0x100000, 0x10ffff, MWA16_RAM },	/* Main RAM */
 
-	{ 0x200000, 0x201fff, taitob_paletteram16_RRRRGGGGBBBBRGBx_word_w, &paletteram16 },
+	{ 0x200000, 0x201fff, paletteram16_RRRRGGGGBBBBRGBx_word_w, &paletteram16 },
 
 	{ 0x900000, 0x903fff, taitob_foreground_w, &b_foregroundram },
 	{ 0x904000, 0x907fff, taitob_background_w, &b_backgroundram },
@@ -2340,6 +2344,65 @@ INPUT_PORTS_START( selfeena )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
 INPUT_PORTS_END
 
+INPUT_PORTS_START( ryujin )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* IN1 */
+	PORT_BIT(         0x0100, IP_ACTIVE_LOW, IPT_TILT )
+	PORT_BIT_IMPULSE( 0x0200, IP_ACTIVE_LOW, IPT_SERVICE1, 2 )
+	PORT_BIT(         0x0400, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT(         0x0800, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT_IMPULSE( 0x1000, IP_ACTIVE_LOW, IPT_COIN1, 2 )
+	PORT_BIT_IMPULSE( 0x2000, IP_ACTIVE_LOW, IPT_COIN2, 2 )
+	PORT_BIT(         0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(         0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* IN2 */
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+
+	PORT_START /* DSW A */
+	PORT_DIPNAME( 0x0100, 0x0100, DEF_STR( Unused ) )
+	PORT_DIPSETTING(      0x0100, DEF_STR( Off ))
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
+	TAITO_B_DSWA_2_4
+	TAITO_COINAGE_JAPAN_NEW_16
+
+	PORT_START /* DSW B */
+	TAITO_DIFFICULTY_16
+	PORT_DIPNAME( 0x0c00, 0x0c00, DEF_STR( Lives ) )
+	PORT_DIPSETTING(      0x0000, "1" )
+	PORT_DIPSETTING(      0x0400, "2" )
+	PORT_DIPSETTING(      0x0c00, "3" )
+	PORT_DIPSETTING(      0x0800, "4" )
+	PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Unused ) )
+	PORT_DIPSETTING(      0x1000, DEF_STR( Off ))
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
+	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Unused ) )
+	PORT_DIPSETTING(      0x2000, DEF_STR( Off ))
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
+	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Unused ) )
+	PORT_DIPSETTING(      0x4000, DEF_STR( Off ))
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
+	PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Unused ) )
+	PORT_DIPSETTING(      0x8000, DEF_STR( Off ))
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
+INPUT_PORTS_END
+
 INPUT_PORTS_START( sbm )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )//select; ok (1P in object test)
@@ -2587,6 +2650,14 @@ static struct GfxDecodeInfo selfeena_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
+
+static struct GfxDecodeInfo ryujin_gfxdecodeinfo[] =
+{
+	{ REGION_GFX1, 0x200000, &silentd_charlayout,  0, 256 },  /* text */
+	{ REGION_GFX1, 0x0, &viofight_tilelayout,  0, 256 },  /* sprites & playfield */
+	{ -1 } /* end of array */
+};
+
 static struct GfxLayout sbm_tilelayout =
 {
 	16,16,	/* 16*16 tiles */
@@ -2677,6 +2748,49 @@ static struct OKIM6295interface okim6295_interface =
 	{ REGION_SOUND1,REGION_SOUND1 }, /* memory regions */
 	{ 50,65 }				/* ?? */
 };
+
+/*
+	Games that use the mb87078 are: puzbobb, spacedx and qzshowby
+	schems are not available, but from the writes I guess that
+	they only use channel 1
+	The sound chips' volume altered with the mb87078 are:
+	ym2610 in spacedx,
+	ym2610b in puzbobb,qzshowby,
+
+	Both ym2610 and ym2610b generate 3 (PSG like) + 2 (fm left,right) channels.
+	I use mixer_set_volume() to emulate the effect.
+*/
+static void mb87078_gain_changed(int channel, int percent)
+{
+	if (channel==1)
+	{
+		mixer_set_volume(0,percent);
+		mixer_set_volume(1,percent);
+		mixer_set_volume(2,percent);
+		mixer_set_volume(3,percent);
+		mixer_set_volume(4,percent);
+		//usrintf_showmessage("MB87078 gain ch#%i percent=%i",channel,percent);
+	}
+}
+
+static struct MB87078interface mb87078_interface =
+{
+	mb87078_gain_changed	/*callback function for gain change*/
+};
+
+
+static void init_mb87078(void)
+{
+	if (Machine->sample_rate != 0)
+		MB87078_start(0, &mb87078_interface); /*chip #0*/
+/*
+	{
+		int i;
+		for (i=0; i<6; i++)
+			logerror("SOUND Chan#%i name=%s\n", i, mixer_get_name(i) );
+	}
+*/
+}
 
 
 static const struct MachineDriver machine_driver_rastsag2 =
@@ -3012,7 +3126,7 @@ static const struct MachineDriver machine_driver_puzbobb =
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	10,
-	0,
+	init_mb87078,
 
 	/* video hardware */
 	64*8, 32*8, { 0*8, 40*8-1, 2*8, 30*8-1 },
@@ -3059,7 +3173,7 @@ static const struct MachineDriver machine_driver_spacedx =
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	10,
-	0,
+	init_mb87078,
 
 	/* video hardware */
 	64*8, 32*8, { 0*8, 40*8-1, 2*8, 30*8-1 },
@@ -3107,7 +3221,7 @@ static const struct MachineDriver machine_driver_qzshowby =
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	10,
-	0,
+	init_mb87078,
 
 	/* video hardware */
 	64*8, 32*8, { 0*8, 40*8-1, 2*8, 30*8-1 },
@@ -3271,7 +3385,6 @@ static const struct MachineDriver machine_driver_silentd =
 	}
 };
 
-
 static const struct MachineDriver machine_driver_selfeena =
 {
 	/* basic machine hardware */
@@ -3316,12 +3429,67 @@ static const struct MachineDriver machine_driver_selfeena =
 	}
 };
 
+#if 0
+static void ryujin_patch(void)
+{
+	data16_t *rom = (data16_t*)memory_region(REGION_CPU1);
+	rom[ 0x62/2 ] = 1;
+	//0 (already in rom) - Taito Corporation 1993
+	//1 - Taito America corp with blue FBI logo
+}
+#endif
 
+static const struct MachineDriver machine_driver_ryujin =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_M68000,
+			12000000,	/* 12 MHz */
+			selfeena_readmem,selfeena_writemem,0,0,
+			selfeena_interrupt,1
+		},
+		{
+			CPU_Z80,
+			4000000,	/* 4 MHz */
+			sound_readmem, sound_writemem,0,0,
+			ignore_interrupt,0	/* IRQs are triggered by the YM2610 */
+		}
+	},
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	10,
+	0, /*ryujin_patch,*/
+
+	/* video hardware */
+	64*8, 32*8, { 0*8, 40*8-1, 2*8, 30*8-1 },
+
+	ryujin_gfxdecodeinfo,
+	4096, 4096,
+	0,
+
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	0,
+	taitob_vh_start_color_order2,
+	taitob_vh_stop,
+	taitob_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_YM2610,
+			&ym2610_interface_crimec
+		}
+	}
+};
+
+#if 0
 static void sbm_patch(void)
 {
 	data16_t *rom = (data16_t*)memory_region(REGION_CPU1);
 	rom[ 0x7ffff/2 ] = 2; //US version
 }
+#endif
 
 static const struct MachineDriver machine_driver_sbm =
 {
@@ -3596,14 +3764,17 @@ ROM_START( rambo3 )
 	ROM_LOAD( "r3-ch1hl.rom", 0x020000, 0x020000, 0x7525eb92 )
 	ROM_LOAD( "r3-ch3ll.rom", 0x040000, 0x020000, 0xabe54b1e )
 	ROM_LOAD( "r3-ch3hl.rom", 0x060000, 0x020000, 0x80e5647e )
+
 	ROM_LOAD( "r3-ch1lh.rom", 0x080000, 0x020000, 0x75568cf0 )
 	ROM_LOAD( "r3-ch1hh.rom", 0x0a0000, 0x020000, 0xe39cff37 )
 	ROM_LOAD( "r3-ch3lh.rom", 0x0c0000, 0x020000, 0x5a155c04 )
 	ROM_LOAD( "r3-ch3hh.rom", 0x0e0000, 0x020000, 0xabe58fdb )
+
 	ROM_LOAD( "r3-ch0ll.rom", 0x100000, 0x020000, 0xb416f1bf )
 	ROM_LOAD( "r3-ch0hl.rom", 0x120000, 0x020000, 0xa4cad36d )
 	ROM_LOAD( "r3-ch2ll.rom", 0x140000, 0x020000, 0xd0ce3051 )
 	ROM_LOAD( "r3-ch2hl.rom", 0x160000, 0x020000, 0x837d8677 )
+
 	ROM_LOAD( "r3-ch0lh.rom", 0x180000, 0x020000, 0x76a330a2 )
 	ROM_LOAD( "r3-ch0hh.rom", 0x1a0000, 0x020000, 0x4dc69751 )
 	ROM_LOAD( "r3-ch2lh.rom", 0x1c0000, 0x020000, 0xdf3bc48f )
@@ -3817,6 +3988,48 @@ ROM_START( selfeena )
 	ROM_LOAD( "se-06.11", 0x00000, 0x80000, 0x80d5e772 )
 ROM_END
 
+ROM_START( ryujin )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 )     /* 256k for 68000 code */
+	ROM_LOAD16_BYTE( "ruj02.27", 0x00000, 0x20000, 0x0d223aee )
+	ROM_LOAD16_BYTE( "ruj01.26", 0x00001, 0x20000, 0xc6bcdd1e )
+	ROM_LOAD16_BYTE( "ruj04.29", 0x40000, 0x20000, 0x0c153cab )
+	ROM_LOAD16_BYTE( "ruj03.28", 0x40001, 0x20000, 0x7695f89c )
+
+	ROM_REGION( 0x1c000, REGION_CPU2, 0 )     /* 64k for Z80 code */
+	ROM_LOAD( "ruj05.39",0x00000, 0x4000, 0x95270b16 )
+	ROM_CONTINUE(        0x10000, 0xc000 ) /* banked stuff */
+
+	ROM_REGION( 0x320000, REGION_GFX1, ROMREGION_DISPOSE )
+/*
+This fixes attract mode (the button graphics above the energy bars).
+
+However some background graphics are wrong (attract/level 1 and some places on later levels):
+Attract mode:
+ - starts with the clouds in foreground plane
+ - the clouds are getting away and the background plane becomes visible
+ - a while after the rest of the clouds dissapear, there is something wrong:
+   the foreground suddenly changes to ground, parts of the background are missing,
+   background has wrong colors
+
+ Maybe the background graphics also need some address shuffling, but I need
+ the pictures (or better a movie) from a real game attract mode to fix that.
+*/
+	ROM_LOAD( "ryujin07.2", 0x000000, 0x100000, 0x34f50980 )
+	ROM_RELOAD  (           0x200000, 0x008000 )/*load characters into continuous memory space*/
+	ROM_CONTINUE(           0x220000, 0x0e8000 )/*not characters data, so skip it*/
+	ROM_CONTINUE(           0x208000, 0x008000 )/*load characters into continuous memory space*/
+	ROM_CONTINUE(           0x220000, 0x008000 )/*not characters data, so skip it*/
+
+	ROM_LOAD( "ryujin06.1", 0x100000, 0x100000, 0x1b85ff34 )
+	ROM_RELOAD(             0x210000, 0x008000 )/*load characters into continuous memory space*/
+	ROM_CONTINUE(           0x220000, 0x0e8000 )/*not characters data, so skip it*/
+	ROM_CONTINUE(           0x218000, 0x008000 )/*load characters into continuous memory space*/
+	ROM_CONTINUE(           0x220000, 0x008000 )/*not characters data, so skip it*/
+
+	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* adpcm samples */
+	ROM_LOAD( "ryujin08.11", 0x00000, 0x80000, 0x480d040d )
+ROM_END
+
 ROM_START( sbm )
 	ROM_REGION( 0x80000, REGION_CPU1, 0 )     /* 256k for 68000 code */
 	ROM_LOAD16_BYTE( "c69-20-1.10", 0x00000, 0x20000, 0xb40e4910 )
@@ -3863,6 +4076,7 @@ GAMEX( 1994, spacedx,  0,       spacedx,  puzbobb,  0, ROT0,       "Taito Corpor
 GAMEX( 1992, silentd,  0,       silentd,  silentd,  0, ROT0_16BIT, "Taito Corporation Japan", "Silent Dragon (World)", GAME_NO_COCKTAIL )
 GAMEX( 1992, silentdj, silentd, silentd,  silentdj, 0, ROT0_16BIT, "Taito Corporation", "Silent Dragon (Japan)", GAME_NO_COCKTAIL )
 GAMEX( 1991, selfeena, 0,       selfeena, selfeena, 0, ROT0,       "East Technology", "Sel Feena", GAME_NO_COCKTAIL )
+GAMEX( 1993, ryujin,   0,       ryujin,   ryujin,   0, ROT270,     "Taito Corporation", "Ryu Jin (Japan)", GAME_NO_COCKTAIL|GAME_IMPERFECT_GRAPHICS )
 
 /*
 	Sonic Blast Man is a ticket dipensing game.

@@ -758,7 +758,7 @@ ROM_START( topracer )
 	ROM_LOAD	 ( "014-138.bpr",   0x0100, 0x0100, 0xadbde7d7 )    /* green palette PROM */
 	ROM_LOAD	 ( "014-139.bpr",   0x0200, 0x0100, 0xddac786a )    /* blue palette PROM */
 	ROM_LOAD	 ( "10p.bin",       0x0300, 0x0100, 0x5af3f710 )    /* alpha color PROM */
-	ROM_LOAD	 ( "014-141.bpr",   0x0400, 0x0100, 0x00000000 )    /* view color PROM */
+	ROM_LOAD	 ( "014-141.bpr",   0x0400, 0x0100, BADCRC( 0x0e4fe8a0 ) )    /* view color PROM */
 	ROM_LOAD	 ( "014-142.bpr",   0x0500, 0x0100, 0x2d502464 )    /* vertical position low PROM */
 	ROM_LOAD	 ( "014-143.bpr",   0x0600, 0x0100, 0x027aa62c )    /* vertical position med PROM */
 	ROM_LOAD	 ( "014-144.bpr",   0x0700, 0x0100, 0x1f8d0df3 )    /* vertical position hi PROM */

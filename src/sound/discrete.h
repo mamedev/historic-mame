@@ -101,8 +101,11 @@
 /*                                                                      */
 /* DISCRETE_CONSTANT(NODE,CONST0)                                       */
 /* DISCRETE_INPUT(NODE,INIT0,ADDR,MASK)                                 */
-/* DISCRETE_SQUAREWAVE(NODE,IN0,IN1,IN2,IN3,PHASE)                      */
-/* DISCRETE_SINEWAVE(NODE,IN0,IN1,IN2,PHASE)                            */
+/* DISCRETE_SQUAREWAVE(NODE,ENAB,FREQ,AMP,DUTY,PHASE)                   */
+/* DISCRETE_SINEWAVE(NODE,ENAB,FREQ,AMP,PHASE)                          */
+/* DISCRETE_NOISE(NODE,ENAB,FREQ,AMP)                                   */
+/* DISCRETE_ONESHOTR(NODE,ENAB,TRIG,AMP,WIDTH) - Retriggerable          */
+/* DISCRETE_ONESHOT(NODE,ENAB,TRIG,RESET,AMP,WIDTH) - Non retriggerable */
 /*                                                                      */
 /* DISCRETE_INVERT(NODE,IN0)                                            */
 /* DISCRETE_GAIN(NODE,IN0,IN1)                                          */
@@ -233,6 +236,32 @@
 /*  Example config line                                                 */
 /*                                                                      */
 /*     DISCRETE_SINEWAVE(NODE_03,NODE_01,NODE_02,10000,90)              */
+/*                                                                      */
+/************************************************************************/
+/*                                                                      */
+/* DISCRETE_NOISE      - Noise waveform generator node, generates       */
+/*                       random noise at the chosen frequency.          */
+/*                                                                      */
+/*                         ------------                                 */
+/*                        |            |                                */
+/*    ENABLE     -0------}|            |                                */
+/*                        |            |                                */
+/*    FREQUENCY  -1------}|   NOISE    |----}   Netlist node            */
+/*                        |            |                                */
+/*    AMPLITUDE  -2------}|            |                                */
+/*                        |            |                                */
+/*                         ------------                                 */
+/*                                                                      */
+/*  Declaration syntax                                                  */
+/*                                                                      */
+/*     DISCRETE_NOISE     (name of node,                                */
+/*                         enable node or static value                  */
+/*                         frequency node or static value               */
+/*                         amplitude node or static value)              */
+/*                                                                      */
+/*  Example config line                                                 */
+/*                                                                      */
+/*     DISCRETE_NOISE(NODE_03,1,5000,NODE_01)                           */
 /*                                                                      */
 /************************************************************************/
 /*                                                                      */
@@ -466,6 +495,7 @@ enum {
 		DSS_NOISE,                               /* Noise generator */
 		DSS_SQUAREWAVE,                          /* Square Wave generator */
 		DSS_SINEWAVE,                            /* Sine Wave generator */
+		DSS_ONESHOT,                             /* One-shot pulse generator */
 //		DSS_TRIANGLEWAVE,                        /* Triangle wave generator */
 //		DSS_SAWTOOTHWAVE,                        /* Sawtooth wave generator
 	/* Transforms */
@@ -496,9 +526,11 @@ enum {
 #define DISCRETE_CONSTANT(NODE,CONST)                            { NODE   , DSS_CONSTANT   ,NODE_NC,NODE_NC,NODE_NC,NODE_NC,NODE_NC,NODE_NC,CONST ,0     ,0     ,0     ,0     ,0     },
 #define DISCRETE_INPUT(NODE,ADDR,MASK,INIT0)                     { NODE   , DSS_INPUT      ,NODE_NC,NODE_NC,NODE_NC,NODE_NC,NODE_NC,NODE_NC,INIT0 ,ADDR  ,MASK  ,1     ,0     ,INIT0 },
 #define DISCRETE_INPUTX(NODE,ADDR,MASK,GAIN,OFFSET,INIT0)        { NODE   , DSS_INPUT      ,NODE_NC,NODE_NC,NODE_NC,NODE_NC,NODE_NC,NODE_NC,INIT0 ,ADDR  ,MASK  ,GAIN  ,OFFSET,INIT0 },
-#define DISCRETE_SQUAREWAVE(NODE,ENAB,FREQ,AMPL,DUTY,PHASE)      { NODE   , DSS_SQUAREWAVE ,ENAB   ,FREQ   ,AMPL   ,DUTY   ,PHASE  ,NODE_NC,ENAB  ,FREQ  ,AMPL  ,DUTY  ,0     ,PHASE },
+#define DISCRETE_SQUAREWAVE(NODE,ENAB,FREQ,AMPL,DUTY,PHASE)      { NODE   , DSS_SQUAREWAVE ,ENAB   ,FREQ   ,AMPL   ,DUTY   ,NODE_NC,NODE_NC,ENAB  ,FREQ  ,AMPL  ,DUTY  ,0     ,PHASE },
 #define DISCRETE_SINEWAVE(NODE,ENAB,FREQ,AMPL,PHASE)             { NODE   , DSS_SINEWAVE   ,ENAB   ,FREQ   ,AMPL   ,NODE_NC,NODE_NC,NODE_NC,ENAB  ,FREQ  ,AMPL  ,0     ,0     ,PHASE },
 #define DISCRETE_NOISE(NODE,ENAB,FREQ,AMPL)                      { NODE   , DSS_NOISE      ,ENAB   ,FREQ   ,AMPL   ,NODE_NC,NODE_NC,NODE_NC,ENAB  ,FREQ  ,AMPL  ,0     ,0     ,0     },
+#define DISCRETE_ONESHOTR(NODE,ENAB,TRIG,AMPL,WIDTH)             { NODE   , DSS_ONESHOT    ,ENAB   ,TRIG   ,NODE_NC,AMPL   ,WIDTH  ,NODE_NC,ENAB  ,TRIG  ,1     ,AMPL  ,WIDTH ,0     },
+#define DISCRETE_ONESHOT(NODE,ENAB,TRIG,RESET,AMPL,WIDTH)        { NODE   , DSS_ONESHOT    ,ENAB   ,TRIG   ,RESET  ,AMPL   ,WIDTH  ,NODE_NC,ENAB  ,TRIG  ,RESET ,AMPL  ,WIDTH ,0     },
 
 #define DISCRETE_RCFILTER(NODE,ENAB,INP0,RVAL,CVAL)              { NODE   , DST_RCFILTER   ,ENAB   ,INP0   ,NODE_NC,NODE_NC,NODE_NC,NODE_NC,ENAB  ,INP0  ,RVAL  ,CVAL  ,0     ,0     },
 #define DISCRETE_INVERT(NODE,INP0)                               { NODE   , DST_GAIN       ,NODE_NC,INP0   ,NODE_NC,NODE_NC,NODE_NC,NODE_NC,1     ,0     ,-1    ,0     ,0     ,0     },

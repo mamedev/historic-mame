@@ -13,6 +13,7 @@ static int serial_count;
 static UINT8 serial_buffer[SERIAL_BUFFER_LENGTH];
 static UINT8 eeprom_data[MEMORY_SIZE];
 static int eeprom_data_bits;
+static int eeprom_read_address;
 static int eeprom_clock_count;
 static int latch,reset_line,clock_line,sending;
 static int locked;
@@ -34,6 +35,7 @@ void EEPROM_init(struct EEPROM_interface *interface)
 	latch = 0;
 	reset_line = ASSERT_LINE;
 	clock_line = ASSERT_LINE;
+	eeprom_read_address = 0;
 	sending = 0;
 	if (intf->cmd_unlock) locked = 1;
 	else locked = 0;
@@ -48,6 +50,7 @@ void EEPROM_init(struct EEPROM_interface *interface)
 	state_save_register_int  ("eeprom", 0, "reset delay",   &reset_delay);
 	state_save_register_int  ("eeprom", 0, "clock count",   &eeprom_clock_count);
 	state_save_register_int  ("eeprom", 0, "data bits",     &eeprom_data_bits);
+	state_save_register_int  ("eeprom", 0, "address",       &eeprom_read_address);
 }
 
 static void EEPROM_write(int bit)
@@ -80,6 +83,7 @@ logerror("error: EEPROM serial buffer overflow\n");
 			eeprom_data_bits = (eeprom_data[2*address+0] << 8) + eeprom_data[2*address+1];
 		else
 			eeprom_data_bits = eeprom_data[address];
+		eeprom_read_address = address;
 		eeprom_clock_count = 0;
 		sending = 1;
 		serial_count = 0;
@@ -227,13 +231,13 @@ logerror("set clock line %d\n",state);
 			{
 				if (eeprom_clock_count == intf->data_bits && intf->enable_multi_read)
 				{
-					int address = (address + 1) & ((1 << intf->address_bits) - 1);
+					eeprom_read_address = (eeprom_read_address + 1) & ((1 << intf->address_bits) - 1);
 					if (intf->data_bits == 16)
-						eeprom_data_bits = (eeprom_data[2*address+0] << 8) + eeprom_data[2*address+1];
+						eeprom_data_bits = (eeprom_data[2*eeprom_read_address+0] << 8) + eeprom_data[2*eeprom_read_address+1];
 					else
-						eeprom_data_bits = eeprom_data[address];
+						eeprom_data_bits = eeprom_data[eeprom_read_address];
 					eeprom_clock_count = 0;
-logerror("EEPROM read %04x from address %02x\n",eeprom_data_bits,address);
+logerror("EEPROM read %04x from address %02x\n",eeprom_data_bits,eeprom_read_address);
 				}
 				eeprom_data_bits = (eeprom_data_bits << 1) | 1;
 				eeprom_clock_count++;

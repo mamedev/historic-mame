@@ -66,8 +66,8 @@ char* g_version = "3.3";
 /* ============================= CONFIGURATION ============================ */
 /* ======================================================================== */
 
-#define MAX_PATH 1024
-#define MAX_DIR  1024
+#define M68K_MAX_PATH 1024
+#define M68K_MAX_DIR  1024
 
 #define NUM_CPUS                          3	/* 000, 010, 020 */
 #define MAX_LINE_LENGTH                 200	/* length of 1 line */
@@ -244,7 +244,7 @@ void read_insert(char* insert);
 /* ======================================================================== */
 
 /* Name of the input file */
-char g_input_filename[MAX_PATH] = FILENAME_INPUT;
+char g_input_filename[M68K_MAX_PATH] = FILENAME_INPUT;
 
 /* File handles */
 FILE* g_input_file = NULL;
@@ -1212,8 +1212,8 @@ void read_insert(char* insert)
 int main(int argc, char **argv)
 {
 	/* File stuff */
-	char output_path[MAX_DIR] = "";
-	char filename[MAX_PATH];
+	char output_path[M68K_MAX_DIR] = "";
+	char filename[M68K_MAX_PATH];
 	/* Section identifier */
 	char section_id[MAX_LINE_LENGTH+1];
 	/* Inserts */

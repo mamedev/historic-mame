@@ -286,9 +286,6 @@ int YM2612_num(const struct MachineSound *msound) { return ((struct YM2612interf
 int POKEY_clock(const struct MachineSound *msound) { return ((struct POKEYinterface*)msound->sound_interface)->baseclock; }
 int POKEY_num(const struct MachineSound *msound) { return ((struct POKEYinterface*)msound->sound_interface)->num; }
 #endif
-#if (HAS_TIA)
-int TIA_clock(const struct MachineSound *msound) { return ((struct TIAinterface*)msound->sound_interface)->baseclock; }
-#endif
 #if (HAS_YM3812)
 int YM3812_clock(const struct MachineSound *msound) { return ((struct YM3812interface*)msound->sound_interface)->baseclock; }
 int YM3812_num(const struct MachineSound *msound) { return ((struct YM3812interface*)msound->sound_interface)->num; }
@@ -364,14 +361,20 @@ int ES5505_num(const struct MachineSound *msound) { return ((struct ES5505interf
 int ES5506_clock(const struct MachineSound *msound) { return ((struct ES5506interface*)msound->sound_interface)->baseclock[0]; }
 int ES5506_num(const struct MachineSound *msound) { return ((struct ES5506interface*)msound->sound_interface)->num; }
 #endif
+
+#ifdef MESS
+#if (HAS_BEEP)
+int beep_num(const struct MachineSound *msound) { return ((struct beep_interface*)msound->sound_interface)->num; }
+#endif
 #if (HAS_SPEAKER)
 int speaker_num(const struct MachineSound *msound) { return ((struct Speaker_interface*)msound->sound_interface)->num; }
+#endif
+#if (HAS_TIA)
+int TIA_clock(const struct MachineSound *msound) { return ((struct TIAinterface*)msound->sound_interface)->baseclock; }
 #endif
 #if (HAS_WAVE)
 int wave_num(const struct MachineSound *msound) { return ((struct Wave_interface*)msound->sound_interface)->num; }
 #endif
-#if (HAS_BEEP)
-int beep_num(const struct MachineSound *msound) { return ((struct beep_interface*)msound->sound_interface)->num; }
 #endif
 
 struct snd_interface sndintf[] =
@@ -622,18 +625,6 @@ struct snd_interface sndintf[] =
 		pokey_sh_start,
 		pokey_sh_stop,
 		0,
-		0
-	},
-#endif
-#if (HAS_TIA)
-    {
-		SOUND_TIA,
-		"TIA",
-		0,
-		TIA_clock,
-		tia_sh_start,
-		tia_sh_stop,
-		tia_sh_update,
 		0
 	},
 #endif
@@ -949,6 +940,20 @@ struct snd_interface sndintf[] =
 		0
 	},
 #endif
+
+#ifdef MESS
+#if (HAS_BEEP)
+	{
+		SOUND_BEEP,
+		"Beep",
+		beep_num,
+		0,
+		beep_sh_start,
+		beep_sh_stop,
+		beep_sh_update,
+		0
+	},
+#endif
 #if (HAS_SPEAKER)
 	{
 		SOUND_SPEAKER,
@@ -958,6 +963,18 @@ struct snd_interface sndintf[] =
 		speaker_sh_start,
 		speaker_sh_stop,
 		speaker_sh_update,
+		0
+	},
+#endif
+#if (HAS_TIA)
+    {
+		SOUND_TIA,
+		"TIA",
+		0,
+		TIA_clock,
+		tia_sh_start,
+		tia_sh_stop,
+		tia_sh_update,
 		0
 	},
 #endif
@@ -973,19 +990,10 @@ struct snd_interface sndintf[] =
 		0
 	},
 #endif
-#if (HAS_BEEP)
-	{
-		SOUND_BEEP,
-		"Beep",
-		beep_num,
-		0,
-		beep_sh_start,
-		beep_sh_stop,
-		beep_sh_update,
-		0
-	},
 #endif
+
 };
+
 
 
 

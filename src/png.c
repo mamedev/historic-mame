@@ -264,7 +264,7 @@ int png_read_file(void *fp, struct png_info *p)
 			{
 				char *text = (char *)chunk_data;
 
-				while(*text++);
+				while(*text++) ;
 				chunk_data[chunk_length]=0;
  				logerror("Keyword: %s\n", chunk_data);
 				logerror("Text: %s\n", text);
@@ -424,7 +424,7 @@ int png_read_info(void *fp, struct png_info *p)
 				char *text = (char *)chunk_data;
 				int c;
 
-				while(*text++);
+				while(*text++) ;
 				chunk_data[chunk_length]=0;
 				if (strcmp ((const char *)chunk_data, "Screen") == 0)
 				{
@@ -600,7 +600,7 @@ static int png_write_text(void *fp, const char *keyword, const char *text)
 	return 1;
 }
 
-static int png_write_file(void *fp, struct png_info *p)
+int png_write_file(void *fp, struct png_info *p)
 {
 	UINT8 ihdr[13];
 	char text[1024];
@@ -653,7 +653,7 @@ static int png_write_file(void *fp, struct png_info *p)
 	return 1;
 }
 
-static int png_filter(struct png_info *p)
+int png_filter(struct png_info *p)
 {
 	int i;
 	UINT8 *src, *dst;
@@ -677,7 +677,7 @@ static int png_filter(struct png_info *p)
 	return 1;
 }
 
-static int png_deflate_image(struct png_info *p)
+int png_deflate_image(struct png_info *p)
 {
 	unsigned long zbuff_size;
 

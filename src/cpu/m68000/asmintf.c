@@ -9,8 +9,12 @@
 
 struct m68k_memory_interface a68k_memory_intf;
 
+// If we are only using assembler cores, we need to define these
+// otherwise they are declared by the C core.
+
 #ifdef A68K0
 #ifdef A68K2
+int m68k_ICount;
 struct m68k_memory_interface m68k_memory_intf;
 #endif
 #endif
@@ -78,8 +82,8 @@ typedef struct
     UINT32 usp;              /* User Stack (All) */
     UINT32 vbr;              /* Vector Base Register. (68010) */
 
-    UINT32 BankID;			  /* Memory bank in use */
-    UINT32 CPUtype;		  /* CPU Type 0=68000,1=68010,2=68020 */
+    UINT32 BankID;			 /* Memory bank in use */
+    UINT32 CPUtype;		  	 /* CPU Type 0=68000,1=68010,2=68020 */
 
 	struct m68k_memory_interface Memory_Interface;
 
@@ -136,8 +140,13 @@ static int IntelFlag[32] = {
 
 // The assembler engine only keeps flags in intel format, so ...
 
+static UINT32 zero = 0;
+static int stopped = 0;
+
 static void a68k_prepare_substate(void)
 {
+	stopped = ((M68000_regs.IRQ_level & 0x80) != 0);
+
 	M68000_regs.sr = ((M68000_regs.ccr >> 4) & 0x1C)
                    | (M68000_regs.ccr & 0x01)
                    | ((M68000_regs.ccr >> 10) & 0x02)
@@ -156,8 +165,6 @@ static void a68k_post_load(void)
 void a68k_state_register(const char *type)
 {
 	int cpu = cpu_getactivecpu();
-    UINT32 zero = 0;
-    int stopped = ((M68000_regs.IRQ_level & 0x80) != 0);
 
 	state_save_register_UINT32(type, cpu, "D"         , &M68000_regs.d[0], 8);
 	state_save_register_UINT32(type, cpu, "A"         , &M68000_regs.d[0], 8);
@@ -173,7 +180,7 @@ void a68k_state_register(const char *type)
 	state_save_register_UINT32(type, cpu, "CAAR"      , &zero, 1);
 	state_save_register_UINT16(type, cpu, "SR"        , &M68000_regs.sr, 1);
 	state_save_register_UINT32(type, cpu, "INT_LEVEL" , &M68000_regs.IRQ_level, 1);
-	state_save_register_UINT32(type, cpu, "INT_CYCLES", (UINT32 *)&M68000_ICount, 1);
+	state_save_register_UINT32(type, cpu, "INT_CYCLES", (UINT32 *)&m68k_ICount, 1);
 	state_save_register_int   (type, cpu, "STOPPED"   , &stopped);
 	state_save_register_int   (type, cpu, "HALTED"    , (int *)&zero);
 	state_save_register_UINT32(type, cpu, "PREF_ADDR" , &zero, 1);
@@ -202,7 +209,7 @@ static void writelong_a24_d16(offs_t address, data32_t data)
 
 static void changepc_a24_d16(offs_t pc)
 {
-	logerror("Change PC - %6.6x\n",pc);
+//	logerror("Change PC - %6.6x\n",pc);
 	change_pc24bew(pc);
 }
 
@@ -503,7 +510,7 @@ int m68000_execute(int cycles)
 {
 	if (M68000_regs.IRQ_level == 0x80) return cycles;		/* STOP with no IRQs */
 
-	M68000_ICount = cycles;
+	m68k_ICount = cycles;
 
 #ifdef MAME_DEBUG
     do
@@ -512,7 +519,7 @@ int m68000_execute(int cycles)
         {
 			#ifdef TRACE68K
 
-			int StartCycle = M68000_ICount;
+			int StartCycle = m68k_ICount;
 
             skiptrace++;
 
@@ -528,7 +535,7 @@ int m68000_execute(int cycles)
                 }
 
            	    logerror("=> %8x %8x ",areg,dreg);
-			    logerror("%6x %4x %d\n",M68000_regs.pc,M68000_regs.sr & 0x271F,M68000_ICount);
+			    logerror("%6x %4x %d\n",M68000_regs.pc,M68000_regs.sr & 0x271F,m68k_ICount);
             }
             #endif
 
@@ -538,15 +545,15 @@ int m68000_execute(int cycles)
 
             #ifdef TRACE68K
             if ((M68000_regs.IRQ_level & 0x80) || (cpu_getstatus(cpu_getactivecpu()) == 0))
-    			M68000_ICount = 0;
+    			m68k_ICount = 0;
             else
-				M68000_ICount = StartCycle - 12;
+				m68k_ICount = StartCycle - 12;
             #endif
         }
         else
 			M68000_RUN();
 
-    } while (M68000_ICount > 0);
+    } while (m68k_ICount > 0);
 
 #else
 
@@ -554,7 +561,7 @@ int m68000_execute(int cycles)
 
 #endif /* MAME_DEBUG */
 
-	return (cycles - M68000_ICount);
+	return (cycles - m68k_ICount);
 }
 
 
@@ -674,12 +681,18 @@ void m68000_set_reg(int regnum, unsigned val)
 
 void m68k_assert_irq(int int_line)
 {
+	/* Save icount */
+	int StartCount = m68k_ICount;
+
 	M68000_regs.IRQ_level = int_line;
 
     /* Now check for Interrupt */
 
-	M68000_ICount = -1;
+	m68k_ICount = -1;
     M68000_RUN();
+
+    /* Restore Count */
+	m68k_ICount = StartCount;
 }
 
 void m68k_clear_irq(int int_line)
@@ -924,7 +937,7 @@ int m68020_execute(int cycles)
 {
 	if (M68020_regs.IRQ_level == 0x80) return cycles;		/* STOP with no IRQs */
 
-	M68020_ICount = cycles;
+	m68k_ICount = cycles;
 
 #ifdef MAME_DEBUG
     do
@@ -933,7 +946,7 @@ int m68020_execute(int cycles)
         {
 			#ifdef TRACE68K
 
-			int StartCycle = M68020_ICount;
+			int StartCycle = m68k_ICount;
 
             skiptrace++;
 
@@ -949,7 +962,7 @@ int m68020_execute(int cycles)
                 }
 
            	    logerror("=> %8x %8x ",areg,dreg);
-			    logerror("%6x %4x %d\n",M68020_regs.pc,M68020_regs.sr & 0x271F,M68020_ICount);
+			    logerror("%6x %4x %d\n",M68020_regs.pc,M68020_regs.sr & 0x271F,m68k_ICount);
             }
             #endif
 
@@ -959,15 +972,15 @@ int m68020_execute(int cycles)
 
             #ifdef TRACE68K
             if ((M68020_regs.IRQ_level & 0x80) || (cpu_getstatus(cpu_getactivecpu()) == 0))
-    			M68020_ICount = 0;
+    			m68k_ICount = 0;
             else
-				M68020_ICount = StartCycle - 12;
+				m68k_ICount = StartCycle - 12;
             #endif
         }
         else
 			M68020_RUN();
 
-    } while (M68020_ICount > 0);
+    } while (m68k_ICount > 0);
 
 #else
 
@@ -975,7 +988,7 @@ int m68020_execute(int cycles)
 
 #endif /* MAME_DEBUG */
 
-	return (cycles - M68020_ICount);
+	return (cycles - m68k_ICount);
 }
 
 unsigned m68020_get_context(void *dst)
@@ -1094,12 +1107,18 @@ void m68020_set_reg(int regnum, unsigned val)
 
 void m68020_assert_irq(int int_line)
 {
+	/* Save icount */
+	int StartCount = m68k_ICount;
+
 	M68020_regs.IRQ_level = int_line;
 
     /* Now check for Interrupt */
 
-	M68020_ICount = -1;
+	m68k_ICount = -1;
     M68020_RUN();
+
+    /* Restore Count */
+	m68k_ICount = StartCount;
 }
 
 void m68020_clear_irq(int int_line)

@@ -928,4 +928,4 @@ GAME( 1978, atarifb1, atarifb, atarifb,  atarifb,  atarifb,  ROT0, "Atari", "Ata
 GAME( 1979, atarifb4, atarifb, atarifb4, atarifb4, atarifb4, ROT0, "Atari", "Atari Football (4 players)" )
 GAME( 1979, abaseb,   0,       atarifb,  abaseb,   abaseb,   ROT0, "Atari", "Atari Baseball (set 1)" )
 GAME( 1979, abaseb2,  abaseb,  atarifb,  abaseb,   abaseb,   ROT0, "Atari", "Atari Baseball (set 2)" )
-GAME( 197?, soccer,   0,       soccer,   soccer,   soccer,   ROT0, "Atari", "Atari Soccer" )
+GAME( 1980, soccer,   0,       soccer,   soccer,   soccer,   ROT0, "Atari", "Atari Soccer" )

@@ -2646,8 +2646,8 @@ ROM_START( meikyuh )
 	ROM_LOAD( "dw-09.rom", 0x30000, 0x10000, 0x6a528d13 )
 
 	ROM_REGION( 0x0800, REGION_PROMS, 0 )
-	ROM_LOAD( "dz19a.10d", 0x0000, 0x0400, 0x00000000 ) /* Not the real ones! */
-	ROM_LOAD( "dz20a.11d", 0x0400, 0x0400, 0x00000000 ) /* These are from ghostbusters */
+	ROM_LOAD( "dz19a.10d", 0x0000, 0x0400, BADCRC( 0x47e1f83b ) )
+	ROM_LOAD( "dz20a.11d", 0x0400, 0x0400, BADCRC( 0xd8fe2d99 ) )
 ROM_END
 
 ROM_START( srdarwin )

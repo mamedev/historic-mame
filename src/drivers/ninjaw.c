@@ -127,10 +127,7 @@ Verify 68000 clock rates. Unknown sprite bits.
 Ninjaw
 ------
 
-Similar "subwoofer" sound problem to Darius2 - see below.
-
-68000 clock rates are a guess (at 12MHz the world version
-rarely displayed any enemy sprites).
+"Subwoofer" sound filtering isn't perfect.
 
 Some enemies slide relative to the background when they should
 be standing still. High cpu interleaving doesn't help much.
@@ -139,16 +136,10 @@ be standing still. High cpu interleaving doesn't help much.
 Darius 2
 --------
 
-The unpleasant sounds when some big enemies appear are wrong: they
-are meant to create rumbling on a subwoofer in the cabinet. Can we
-strip them out or transpose them down in pitch?
+"Subwoofer" sound filtering isn't perfect.
 
-The low frequency sound is not heard at all via the regular stereo
-speakers on a real Darius 2 but is somehow routed only into the
-subwoofer. The subwoofer starts shaking due to the sound and rattles
-the player (the subwoofer is in the seat of the unit).
-So in a sense this low frequency rumble is more a force feedback
-device of sorts than anything. (Info from Julian Eggebrecht)
+(When you lose a life or big enemies appear it's meant to create
+rumbling on a subwoofer in the cabinet.)
 
 
 ***************************************************************************/
@@ -698,6 +689,32 @@ static struct YM2610interface ym2610_interface =
 };
 
 
+/**************************************************************
+			     SUBWOOFER (SOUND)
+**************************************************************/
+
+int  ninjaw_sh_start(const struct MachineSound *msound)
+{
+	/* Adjust the lowpass filter of the first three YM2610 channels */
+
+	/* The 150 Hz is a common top frequency played by a generic */
+	/* subwoofer, the real Arcade Machine may differs */
+
+	mixer_set_lowpass_frequency(0,150);
+	mixer_set_lowpass_frequency(1,150);
+	mixer_set_lowpass_frequency(2,150);
+
+	return 0;
+}
+
+static struct CustomSound_interface custom_interface =
+{
+	ninjaw_sh_start,
+	0, /* none */
+	0 /* none */
+};
+
+
 /*************************************************************
 			     MACHINE DRIVERS
 
@@ -713,19 +730,21 @@ static struct MachineDriver machine_driver_ninjaw =
 	{
 		{
 			CPU_M68000,
-			13343000,	/* 26.686/2 MHz ??? */
+			16000000/2,	/* 8 MHz ? */
+//			13343000,	/* 26.686/2 MHz ? */
 			ninjaw_readmem,ninjaw_writemem,0,0,
 			ninjaw_interrupt, 1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			16000000/4,	/* 4 MHz ??? */
+			16000000/4,	/* 16/4 MHz ? */
 			z80_sound_readmem, z80_sound_writemem,0,0,
 			ignore_interrupt, 0	/* IRQs are triggered by the YM2610 */
 		},
 		{
 			CPU_M68000,
-			13343000,	/* 26.686/2 MHz ??? */
+			16000000/2,	/* 8 MHz ? */
+//			13343000,	/* 26.686/2 MHz ? */
 			ninjaw_cpub_readmem,ninjaw_cpub_writemem,0,0,
 			ninjaw_interrupt, 1
 		},
@@ -753,7 +772,12 @@ static struct MachineDriver machine_driver_ninjaw =
 		{
 			SOUND_YM2610,
 			&ym2610_interface
+		},
+		{
+			SOUND_CUSTOM,
+			&custom_interface
 		}
+
 	}
 };
 
@@ -763,19 +787,21 @@ static struct MachineDriver machine_driver_darius2 =
 	{
 		{
 			CPU_M68000,
-			12000000,	/* 12 MHz ??? */
+			16000000/2,	/* 8 MHz ? */
+//			12000000,	/* 12 MHz ??? */
 			darius2_readmem,darius2_writemem,0,0,
 			ninjaw_interrupt, 1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			16000000/4,	/* 4 MHz ??? */
+			16000000/4,	/* 4 MHz ? */
 			z80_sound_readmem, z80_sound_writemem,0,0,
 			ignore_interrupt,0	/* IRQs are triggered by the YM2610 */
 		},
 		{
 			CPU_M68000,
-			12000000,	/* 12 MHz ??? */
+			16000000/2,	/* 8 MHz ? */
+//			12000000,	/* 12 MHz ??? */
 			darius2_cpub_readmem,darius2_cpub_writemem,0,0,
 			ninjaw_interrupt, 1
 		},
@@ -803,7 +829,12 @@ static struct MachineDriver machine_driver_darius2 =
 		{
 			SOUND_YM2610,
 			&ym2610_interface
+		},
+		{
+			SOUND_CUSTOM,
+			&custom_interface
 		}
+
 	}
 };
 

@@ -259,14 +259,14 @@ static struct GfxLayout tcharlayout =
 static struct GfxLayout tlayout =
 {
 	16,16,
-	0x2000,
+	RGN_FRAC(1,2),
 	4,
-	{ 0x00000*8 , 0x40000*8, 0x80000*8, 0xc0000*8 },
-	{ 16*8+0, 16*8+1, 16*8+2, 16*8+3, 16*8+4, 16*8+5, 16*8+6, 16*8+7,
+	{ 8, 0, RGN_FRAC(1,2)+8, RGN_FRAC(1,2)+0 },
+	{ 32*8+0, 32*8+1, 32*8+2, 32*8+3, 32*8+4, 32*8+5, 32*8+6, 32*8+7,
 			0, 1, 2, 3, 4, 5, 6, 7 },
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
-			8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },
-	32*8	/* every sprite takes 32 consecutive bytes */
+	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
+			8*16, 9*16, 10*16, 11*16, 12*16, 13*16, 14*16, 15*16 },
+	64*8
 };
 
 static struct GfxLayout tlayout3 =
@@ -413,46 +413,44 @@ static const struct MachineDriver machine_driver_tumblepb =
 
 ROM_START( tumblep )
 	ROM_REGION( 0x80000, REGION_CPU1, 0 ) /* 68000 code */
-	ROM_LOAD16_BYTE("hl01-1.f13", 0x00001, 0x40000, 0xd5a62a3f )
 	ROM_LOAD16_BYTE("hl00-1.f12", 0x00000, 0x40000, 0xfd697c1b )
+	ROM_LOAD16_BYTE("hl01-1.f13", 0x00001, 0x40000, 0xd5a62a3f )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* Sound cpu */
-	ROM_LOAD( "hl02-.f16",  0x00000,  0x10000, 0xa5cab888 )
+	ROM_LOAD( "hl02-.f16",    0x00000, 0x10000, 0xa5cab888 )
 
 	ROM_REGION( 0x080000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "thumbpop.19",  0x000000, 0x40000, 0x0795aab4 )
-	ROM_LOAD( "thumbpop.18",  0x040000, 0x40000, 0xad58df43 )
+	ROM_LOAD( "map-02.rom",   0x00000, 0x80000, 0xdfceaa26 )	// encrypted
+	ROM_LOAD( "thumbpop.19",  0x00000, 0x40000, 0x0795aab4 )	// let's use the bootleg ones instead
+	ROM_LOAD( "thumbpop.18",  0x40000, 0x40000, 0xad58df43 )
 
 	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "thumbpop.15",  0x00000,  0x40000, 0xac3d8349 )
-	ROM_LOAD( "thumbpop.14",  0x40000,  0x40000, 0x79a29725 )
-	ROM_LOAD( "thumbpop.17",  0x80000,  0x40000, 0x87cffb06 )
-	ROM_LOAD( "thumbpop.16",  0xc0000,  0x40000, 0xee91db18 )
+	ROM_LOAD( "map-00.rom",   0x00000, 0x80000, 0x8c879cfe )
+	ROM_LOAD( "map-01.rom",   0x80000, 0x80000, 0xe81ffa09 )
 
 	ROM_REGION( 0x20000, REGION_SOUND1, 0 ) /* Oki samples */
-	ROM_LOAD( "hl03-.j15",  0x00000,  0x20000, 0x01b81da0 )
+	ROM_LOAD( "hl03-.j15",    0x00000, 0x20000, 0x01b81da0 )
 ROM_END
 
 ROM_START( tumblepj )
 	ROM_REGION( 0x80000, REGION_CPU1, 0 ) /* 68000 code */
-	ROM_LOAD16_BYTE("hk01-1.f13", 0x00001, 0x40000, 0x56912a00 )
 	ROM_LOAD16_BYTE("hk00-1.f12", 0x00000, 0x40000, 0x2d3e4d3d )
+	ROM_LOAD16_BYTE("hk01-1.f13", 0x00001, 0x40000, 0x56912a00 )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* Sound cpu */
-	ROM_LOAD( "hl02-.f16",  0x00000,  0x10000, 0xa5cab888 )
+	ROM_LOAD( "hl02-.f16",    0x00000, 0x10000, 0xa5cab888 )
 
 	ROM_REGION( 0x080000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "thumbpop.19",  0x000000, 0x40000, 0x0795aab4 )
-	ROM_LOAD( "thumbpop.18",  0x040000, 0x40000, 0xad58df43 )
+	ROM_LOAD( "map-02.rom",   0x00000, 0x80000, 0xdfceaa26 )	// encrypted
+	ROM_LOAD( "thumbpop.19",  0x00000, 0x40000, 0x0795aab4 )	// let's use the bootleg ones instead
+	ROM_LOAD( "thumbpop.18",  0x40000, 0x40000, 0xad58df43 )
 
 	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "thumbpop.15",  0x00000,  0x40000, 0xac3d8349 )
-	ROM_LOAD( "thumbpop.14",  0x40000,  0x40000, 0x79a29725 )
-	ROM_LOAD( "thumbpop.17",  0x80000,  0x40000, 0x87cffb06 )
-	ROM_LOAD( "thumbpop.16",  0xc0000,  0x40000, 0xee91db18 )
+	ROM_LOAD( "map-00.rom",   0x00000, 0x80000, 0x8c879cfe )
+	ROM_LOAD( "map-01.rom",   0x80000, 0x80000, 0xe81ffa09 )
 
 	ROM_REGION( 0x20000, REGION_SOUND1, 0 ) /* Oki samples */
-	ROM_LOAD( "hl03-.j15",  0x00000,  0x20000, 0x01b81da0 )
+	ROM_LOAD( "hl03-.j15",    0x00000, 0x20000, 0x01b81da0 )
 ROM_END
 
 ROM_START( tumblepb )
@@ -461,17 +459,15 @@ ROM_START( tumblepb )
 	ROM_LOAD16_BYTE( "thumbpop.13", 0x00001, 0x40000, 0x864c4053 )
 
 	ROM_REGION( 0x080000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "thumbpop.19",  0x000000, 0x40000, 0x0795aab4 )
-	ROM_LOAD( "thumbpop.18",  0x040000, 0x40000, 0xad58df43 )
+	ROM_LOAD( "thumbpop.19",  0x00000, 0x40000, 0x0795aab4 )
+	ROM_LOAD( "thumbpop.18",  0x40000, 0x40000, 0xad58df43 )
 
 	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "thumbpop.15",  0x00000,  0x40000, 0xac3d8349 )
-	ROM_LOAD( "thumbpop.14",  0x40000,  0x40000, 0x79a29725 )
-	ROM_LOAD( "thumbpop.17",  0x80000,  0x40000, 0x87cffb06 )
-	ROM_LOAD( "thumbpop.16",  0xc0000,  0x40000, 0xee91db18 )
+	ROM_LOAD( "map-00.rom",   0x00000, 0x80000, 0x8c879cfe )
+	ROM_LOAD( "map-01.rom",   0x80000, 0x80000, 0xe81ffa09 )
 
 	ROM_REGION( 0x80000, REGION_SOUND1, 0 ) /* Oki samples */
-	ROM_LOAD( "thumbpop.snd",  0x00000,  0x80000, 0xfabbf15d )
+	ROM_LOAD( "thumbpop.snd", 0x00000, 0x80000, 0xfabbf15d )
 ROM_END
 
 ROM_START( tumblep2 )
@@ -480,17 +476,15 @@ ROM_START( tumblep2 )
 	ROM_LOAD16_BYTE( "thumbpop.3", 0x00001, 0x40000, 0x89501c71 )
 
 	ROM_REGION( 0x080000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "thumbpop.19",  0x000000, 0x40000, 0x0795aab4 )
-	ROM_LOAD( "thumbpop.18",  0x040000, 0x40000, 0xad58df43 )
+	ROM_LOAD( "thumbpop.19",  0x00000, 0x40000, 0x0795aab4 )
+	ROM_LOAD( "thumbpop.18",  0x40000, 0x40000, 0xad58df43 )
 
  	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "thumbpop.5",   0x00000,  0x40000, 0xdda8932e )
-	ROM_LOAD( "thumbpop.14",  0x40000,  0x40000, 0x79a29725 )
-	ROM_LOAD( "thumbpop.17",  0x80000,  0x40000, 0x87cffb06 )
-	ROM_LOAD( "thumbpop.16",  0xc0000,  0x40000, 0xee91db18 )
+	ROM_LOAD( "map-00.rom",   0x00000, 0x80000, 0x8c879cfe )
+	ROM_LOAD( "map-01.rom",   0x80000, 0x80000, 0xe81ffa09 )
 
 	ROM_REGION( 0x80000, REGION_SOUND1, 0 ) /* Oki samples */
-	ROM_LOAD( "thumbpop.snd",  0x00000,  0x80000, 0xfabbf15d )
+	ROM_LOAD( "thumbpop.snd", 0x00000, 0x80000, 0xfabbf15d )
 ROM_END
 
 /******************************************************************************/

@@ -1070,11 +1070,11 @@ void tilemap_dirty_palette( const UINT8 *dirty_pens ) {
 		else
 		{
 			UINT8 *dirty_map = tilemap->tile_dirty_map;
-			int i, j, pen;
+			int i, j, pen, row, col;
 			int step = 1 << tilemap->tile_granularity;
 			int count = 1 << tilemap->tile_depth;
 			int limit = Machine->drv->total_colors - count;
-			UINT32 num_pens = tilemap->cached_tile_width*tilemap->cached_tile_height;
+//			UINT32 num_pens = tilemap->cached_tile_width*tilemap->cached_tile_height;
 			pen = 0;
 			for( i=0; i<limit; i+=step )
 			{
@@ -1089,17 +1089,22 @@ void tilemap_dirty_palette( const UINT8 *dirty_pens ) {
 				;
 			}
 
-			for( i=0; i<tilemap->num_tiles; i++ )
-			{
-				if (!tilemap->dirty_vram[i])
-				{
-					struct cached_tile_info *cached_tile = tilemap->cached_tile_info+i;
-					j = (cached_tile->pal_data - color_base) >> tilemap->tile_granularity;
-					if( dirty_map[j] )
+			i = 0;
+			for( row=0; row<tilemap->num_cached_rows; row++ ){
+				for( col=0; col<tilemap->num_cached_cols; col++ ){
+					if (!tilemap->dirty_vram[i] && !tilemap->dirty_pixels[i])
 					{
-						unregister_pens( cached_tile, num_pens );
-						tilemap->dirty_vram[i] = 1;
+						struct cached_tile_info *cached_tile = tilemap->cached_tile_info+i;
+						j = (cached_tile->pal_data - color_base) >> tilemap->tile_granularity;
+						if( dirty_map[j] )
+						{
+							if( tilemap->visible[i] )
+								draw_tile( tilemap, i, col, row );
+							else
+								tilemap->dirty_pixels[i] = 1;
+						}
 					}
+					i++;
 				}
 			}
 		}

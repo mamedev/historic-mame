@@ -5,17 +5,6 @@
 				driver by	Luca Elia (eliavit@unina.it)
 
 
-Note:	if MAME_DEBUG is defined, pressing Z with:
-
-		Q		shows scroll 0
-		W		shows scroll 1
-		E		shows scroll 2
-		A		shows every sprite
-		S		shows sprites with attribute 0-7
-		D		shows sprites with attribute 8-f
-
-		Keys can be used togheter!
-
 
 **********  There are 3 scrolling layers, 1 word per tile:
 
@@ -206,15 +195,8 @@ actual code sent to the hardware.
 #include "vidhrdw/generic.h"
 #include "drivers/megasys1.h"
 
-/* Variables only used here: */
-
-/* For debug purposes: */
-#ifdef MAME_DEBUG
-static int debugsprites;
-#endif
-
 /* Variables defined here, that have to be shared: */
-struct tilemap *megasys1_tmap_0, *megasys1_tmap_1, *megasys1_tmap_2;
+static struct tilemap *megasys1_tmap[3];
 
 data16_t *megasys1_scrollram_0, *megasys1_scrollram_1, *megasys1_scrollram_2;
 data16_t *megasys1_objectram, *megasys1_vregs, *megasys1_ram;
@@ -232,6 +214,36 @@ int megasys1_8x8_scroll_2_factor, megasys1_16x16_scroll_2_factor;
 static int hardware_type_z;
 
 
+#ifdef MAME_DEBUG
+
+#define SHOW_WRITE_ERROR(_format_,_offset_,_data_)\
+{\
+	char buf[80];\
+	sprintf(buf,_format_,_offset_,_data_);\
+	usrintf_showmessage(buf);\
+	logerror("CPU #0 PC %06X : Warning, %s\n",cpu_get_pc(), buf); \
+}
+
+#else
+
+#define SHOW_WRITE_ERROR(_format_,_offset_,_data_)\
+{\
+	char buf[80];\
+	sprintf(buf,_format_,_offset_,_data_); \
+	logerror("CPU #0 PC %06X : Warning, %s\n",cpu_get_pc(), buf); \
+}
+
+#endif
+
+
+
+#define MEGASYS1_VREG_FLAG(_n_) \
+		megasys1_scroll_##_n_##_flag_w(new_data); \
+		if (megasys1_tmap[_n_] == 0) SHOW_WRITE_ERROR("vreg %04X <- %04X NO MEMORY FOR SCREEN",offset*2,data);
+
+
+
+
 
 extern struct GameDriver driver_lomakai;
 extern struct GameDriver driver_soldamj;
@@ -242,7 +254,7 @@ int megasys1_vh_start(void)
 	int i;
 
 	spriteram16 = &megasys1_ram[0x8000/2];
-	megasys1_tmap_0 = megasys1_tmap_1 = megasys1_tmap_2 = NULL;
+	megasys1_tmap[0] = megasys1_tmap[1] = megasys1_tmap[2] = NULL;
 
 	megasys1_active_layers = megasys1_sprite_bank = megasys1_screen_flag = megasys1_sprite_flag = 0;
 
@@ -287,37 +299,6 @@ int megasys1_vh_start(void)
 
  	return 0;
 }
-
-/***************************************************************************
-
-							Palette routines
-
-***************************************************************************/
-
-
-/* MS1-A, B, C, Z */
-WRITE16_HANDLER( paletteram16_RRRRGGGGBBBBRGBx_word_w )
-{
-	/*	byte 0    byte 1	*/
-	/*	RRRR GGGG BBBB RGB?	*/
-	/*	4321 4321 4321 000?	*/
-
-	int r,g,b;
-	data16_t word;
-
-	COMBINE_DATA(&paletteram16[offset]);
-	word = paletteram16[offset];
-
-	r = ((word >> 8) & 0xF0 ) | ((word << 0) & 0x08);
-	g = ((word >> 4) & 0xF0 ) | ((word << 1) & 0x08);
-	b = ((word >> 0) & 0xF0 ) | ((word << 2) & 0x08);
-
-	palette_change_color( offset, r,g,b );
-}
-
-
-/* MS1-D */
-
 
 /***************************************************************************
 
@@ -369,19 +350,19 @@ WRITE16_HANDLER( megasys1_scrollram_##_n_##_w ) \
 	data16_t new_data = COMBINE_DATA(&megasys1_scrollram_##_n_[offset]); \
 	if (old_data != new_data) \
 	{ \
-		if ( (offset < 0x40000/2) && (megasys1_tmap_##_n_) ) \
+		if ( (offset < 0x40000/2) && (megasys1_tmap[_n_]) ) \
 		{\
 			int tile_index = offset; \
 			if (megasys1_scroll_flag[_n_] & 0x10)	/* tiles are 8x8 */ \
 			{ \
-				tilemap_mark_tile_dirty(megasys1_tmap_##_n_, tile_index ); \
+				tilemap_mark_tile_dirty(megasys1_tmap[_n_], tile_index ); \
 			} \
 			else \
 			{ \
-				tilemap_mark_tile_dirty(megasys1_tmap_##_n_, tile_index*4 + 0); \
-				tilemap_mark_tile_dirty(megasys1_tmap_##_n_, tile_index*4 + 1); \
-				tilemap_mark_tile_dirty(megasys1_tmap_##_n_, tile_index*4 + 2); \
-				tilemap_mark_tile_dirty(megasys1_tmap_##_n_, tile_index*4 + 3); \
+				tilemap_mark_tile_dirty(megasys1_tmap[_n_], tile_index*4 + 0); \
+				tilemap_mark_tile_dirty(megasys1_tmap[_n_], tile_index*4 + 1); \
+				tilemap_mark_tile_dirty(megasys1_tmap[_n_], tile_index*4 + 2); \
+				tilemap_mark_tile_dirty(megasys1_tmap[_n_], tile_index*4 + 3); \
 			} \
 		}\
 	}\
@@ -405,12 +386,12 @@ MEGASYS1_SCROLLRAM_W(2)
 #define MEGASYS1_SCROLL_FLAG_W(_n_) \
 void megasys1_scroll_##_n_##_flag_w(int data) \
 { \
-	if ((megasys1_scroll_flag[_n_] != data) || (megasys1_tmap_##_n_ == 0) ) \
+	if ((megasys1_scroll_flag[_n_] != data) || (megasys1_tmap[_n_] == 0) ) \
 	{ \
 		megasys1_scroll_flag[_n_] = data; \
 \
-		if (megasys1_tmap_##_n_) \
-			tilemap_dispose(megasys1_tmap_##_n_); \
+		if (megasys1_tmap[_n_]) \
+			tilemap_dispose(megasys1_tmap[_n_]); \
 \
 		/* number of pages when tiles are 16x16 */ \
 		megasys1_pages_per_tmap_x[_n_] = 16 / ( 1 << (megasys1_scroll_flag[_n_] & 0x3) ); \
@@ -423,7 +404,7 @@ void megasys1_scroll_##_n_##_flag_w(int data) \
 			else									{ megasys1_pages_per_tmap_x[_n_] /= 2;	megasys1_pages_per_tmap_y[_n_] /= 2;} \
 		} \
 \
-		if ((megasys1_tmap_##_n_ = \
+		if ((megasys1_tmap[_n_] = \
 				tilemap_create \
 					(	(megasys1_scroll_flag[_n_] & 0x10) ? \
 							megasys1_get_scroll_##_n_##_tile_info_8x8 : \
@@ -436,7 +417,7 @@ void megasys1_scroll_##_n_##_flag_w(int data) \
 						TILES_PER_PAGE_X * megasys1_pages_per_tmap_x[_n_], \
 						TILES_PER_PAGE_Y * megasys1_pages_per_tmap_y[_n_]  \
 					) \
-			)) tilemap_set_transparent_pen(megasys1_tmap_##_n_,15); \
+			)) tilemap_set_transparent_pen(megasys1_tmap[_n_],15); \
 	} \
 }
 
@@ -454,16 +435,16 @@ WRITE16_HANDLER( megasys1_vregs_A_w )
 	{
 		case 0x000/2   :	megasys1_active_layers = new_data;	break;
 
-		case 0x008/2+0 :	MEGASYS1_VREG_SCROLL(2,x)	break;
-		case 0x008/2+1 :	MEGASYS1_VREG_SCROLL(2,y)	break;
+		case 0x008/2+0 :	megasys1_scrollx[2] = new_data;	break;
+		case 0x008/2+1 :	megasys1_scrolly[2] = new_data;	break;
 		case 0x008/2+2 :	MEGASYS1_VREG_FLAG(2)		break;
 
-		case 0x200/2+0 :	MEGASYS1_VREG_SCROLL(0,x)	break;
-		case 0x200/2+1 :	MEGASYS1_VREG_SCROLL(0,y)	break;
+		case 0x200/2+0 :	megasys1_scrollx[0] = new_data;	break;
+		case 0x200/2+1 :	megasys1_scrolly[0] = new_data;	break;
 		case 0x200/2+2 :	MEGASYS1_VREG_FLAG(0)		break;
 
-		case 0x208/2+0 :	MEGASYS1_VREG_SCROLL(1,x)	break;
-		case 0x208/2+1 :	MEGASYS1_VREG_SCROLL(1,y)	break;
+		case 0x208/2+0 :	megasys1_scrollx[1] = new_data;	break;
+		case 0x208/2+1 :	megasys1_scrolly[1] = new_data;	break;
 		case 0x208/2+2 :	MEGASYS1_VREG_FLAG(1)		break;
 
 		case 0x100/2   :	megasys1_sprite_flag = new_data;		break;
@@ -503,16 +484,16 @@ WRITE16_HANDLER( megasys1_vregs_C_w )
 
 	switch (offset)
 	{
-		case 0x2000/2+0 :	MEGASYS1_VREG_SCROLL(0,x)	break;
-		case 0x2000/2+1 :	MEGASYS1_VREG_SCROLL(0,y)	break;
+		case 0x2000/2+0 :	megasys1_scrollx[0] = new_data;	break;
+		case 0x2000/2+1 :	megasys1_scrolly[0] = new_data;	break;
 		case 0x2000/2+2 :	MEGASYS1_VREG_FLAG(0)		break;
 
-		case 0x2008/2+0 :	MEGASYS1_VREG_SCROLL(1,x)	break;
-		case 0x2008/2+1 :	MEGASYS1_VREG_SCROLL(1,y)	break;
+		case 0x2008/2+0 :	megasys1_scrollx[1] = new_data;	break;
+		case 0x2008/2+1 :	megasys1_scrolly[1] = new_data;	break;
 		case 0x2008/2+2 :	MEGASYS1_VREG_FLAG(1)		break;
 
-		case 0x2100/2+0 :	MEGASYS1_VREG_SCROLL(2,x)	break;
-		case 0x2100/2+1 :	MEGASYS1_VREG_SCROLL(2,y)	break;
+		case 0x2100/2+0 :	megasys1_scrollx[2] = new_data;	break;
+		case 0x2100/2+1 :	megasys1_scrolly[2] = new_data;	break;
 		case 0x2100/2+2 :	MEGASYS1_VREG_FLAG(2)		break;
 
 		case 0x2108/2   :	megasys1_sprite_bank   = new_data;	break;
@@ -544,16 +525,16 @@ WRITE16_HANDLER( megasys1_vregs_D_w )
 
 	switch (offset)
 	{
-		case 0x2000/2+0 :	MEGASYS1_VREG_SCROLL(0,x)	break;
-		case 0x2000/2+1 :	MEGASYS1_VREG_SCROLL(0,y)	break;
+		case 0x2000/2+0 :	megasys1_scrollx[0] = new_data;	break;
+		case 0x2000/2+1 :	megasys1_scrolly[0] = new_data;	break;
 		case 0x2000/2+2 :	MEGASYS1_VREG_FLAG(0)		break;
 
-		case 0x2008/2+0 :	MEGASYS1_VREG_SCROLL(1,x)	break;
-		case 0x2008/2+1 :	MEGASYS1_VREG_SCROLL(1,y)	break;
+		case 0x2008/2+0 :	megasys1_scrollx[1] = new_data;	break;
+		case 0x2008/2+1 :	megasys1_scrolly[1] = new_data;	break;
 		case 0x2008/2+2 :	MEGASYS1_VREG_FLAG(1)		break;
 
-//		case 0x2100/2+0 :	MEGASYS1_VREG_SCROLL(2,x)	break;
-//		case 0x2100/2+1 :	MEGASYS1_VREG_SCROLL(2,y)	break;
+//		case 0x2100/2+0 :	megasys1_scrollx[2] = new_data;	break;
+//		case 0x2100/2+1 :	megasys1_scrolly[2] = new_data;	break;
 //		case 0x2100/2+2 :	MEGASYS1_VREG_FLAG(2)		break;
 
 		case 0x2108/2   :	megasys1_sprite_bank	=	new_data;		break;
@@ -574,11 +555,7 @@ WRITE16_HANDLER( megasys1_vregs_D_w )
 ***************************************************************************/
 
 
-/*	 Draw sprites in the given bitmap. Priority may be:
-
- 0	Draw sprites whose priority bit is 0
- 1	Draw sprites whose priority bit is 1
--1	Draw sprites regardless of their priority
+/*	 Draw sprites in the given bitmap.
 
  Sprite Data:
 
@@ -596,14 +573,11 @@ WRITE16_HANDLER( megasys1_vregs_D_w )
 	0C		Y position
 	0E		Code											*/
 
-static void draw_sprites(struct osd_bitmap *bitmap, int priority)
+static void draw_sprites(struct osd_bitmap *bitmap)
 {
 	int color,code,sx,sy,flipx,flipy,attr,sprite,offs,color_mask;
 
 /* objram: 0x100*4 entries		spritedata: 0x80 entries */
-
-	/* move the bit to the relevant position (and invert it) */
-	if (priority != -1)	priority = (priority ^ 1) << 3;
 
 	/* sprite order is from first in Sprite Data RAM (frontmost) to last */
 
@@ -611,7 +585,7 @@ static void draw_sprites(struct osd_bitmap *bitmap, int priority)
 	{
 		color_mask = (megasys1_sprite_flag & 0x100) ? 0x07 : 0x0f;
 
-		for (offs = 0x000; offs < 0x800/2 ; offs += 8/2)
+		for (offs = (0x800-8)/2;offs >= 0;offs -= 8/2)
 		{
 			for (sprite = 0; sprite < 4 ; sprite ++)
 			{
@@ -619,12 +593,7 @@ static void draw_sprites(struct osd_bitmap *bitmap, int priority)
 				data16_t *spritedata = &spriteram16[ (objectdata[ 0 ] & 0x7f) * 0x10/2];
 
 				attr = spritedata[ 8/2 ];
-				if ( (attr & 0x08) == priority )	continue;	// priority
 				if (((attr & 0xc0)>>6) != sprite)	continue;	// flipping
-
-#ifdef MAME_DEBUG
-if ( (debugsprites) && (((attr & 0x0f)/8) != (debugsprites-1)) ) continue;
-#endif
 
 				/* apply the position displacements */
 				sx = ( spritedata[0x0A/2] + objectdata[0x02/2] ) % 512;
@@ -646,14 +615,14 @@ if ( (debugsprites) && (((attr & 0x0f)/8) != (debugsprites-1)) ) continue;
 				code  = spritedata[0x0E/2] + objectdata[0x06/2];
 				color = (attr & color_mask);
 
-				drawgfx(bitmap,Machine->gfx[3],
+				pdrawgfx(bitmap,Machine->gfx[3],
 						(code & 0xfff ) + ((megasys1_sprite_bank & 1) << 12),
 						color,
 						flipx, flipy,
 						sx, sy,
 						&Machine->visible_area,
-						TRANSPARENCY_PEN,15);
-
+						TRANSPARENCY_PEN,15,
+						(attr & 0x08) ? 0x0c : 0x0a);
 			}	/* sprite */
 		}	/* offs */
 	}	/* non Z hw */
@@ -662,16 +631,11 @@ if ( (debugsprites) && (((attr & 0x0f)/8) != (debugsprites-1)) ) continue;
 
 		/* MS1-Z just draws Sprite Data, and in reverse order */
 
-		for (sprite = 0; sprite < 0x80 ; sprite ++)
+		for (sprite = 0x80-1;sprite >= 0;sprite--)
 		{
 			data16_t *spritedata = &spriteram16[ sprite * 0x10/2];
 
 			attr = spritedata[ 8/2 ];
-			if ( (attr & 0x08) == priority ) continue;
-
-#ifdef MAME_DEBUG
-if ( (debugsprites) && (((attr & 0x0f)/8) != (debugsprites-1)) ) continue;
-#endif
 
 			sx = spritedata[0x0A/2] % 512;
 			sy = spritedata[0x0C/2] % 512;
@@ -691,13 +655,14 @@ if ( (debugsprites) && (((attr & 0x0f)/8) != (debugsprites-1)) ) continue;
 				sx = 240-sx;		sy = 240-sy;
 			}
 
-			drawgfx(bitmap,Machine->gfx[2],
+			pdrawgfx(bitmap,Machine->gfx[2],
 					code,
 					color,
 					flipx, flipy,
 					sx, sy,
 					&Machine->visible_area,
-					TRANSPARENCY_PEN,15);
+					TRANSPARENCY_PEN,15,
+					(attr & 0x08) ? 0x0c : 0x0a);
 		}	/* sprite */
 	}	/* Z hw */
 
@@ -1082,28 +1047,26 @@ void megasys1_convert_prom(unsigned char *palette, unsigned short *colortable,co
 
 void megasys1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	int i,flag,pri;
-	int megasys1_active_layers1 = megasys1_active_layers;
+	int i,flag,pri,primask;
+	int active_layers;
 
 	if (hardware_type_z)
 	{
 		/* no layer 2 and fixed layers order? */
-		megasys1_active_layers = 0x000b;
+		active_layers = 0x000b;
 		pri = 0x0314f;
 	}
 	else
 	{
-		int active_layers = 0;
+		int reallyactive = 0;
 
 		/* get layers order */
 		pri = megasys1_layers_order[(megasys1_active_layers & 0x0f0f) >> 8];
 
 #ifdef MAME_DEBUG
-		if (pri == 0xfffff || keyboard_pressed(KEYCODE_Z))
+		if (pri == 0xfffff)
 		{
-			char buf[40];
-			sprintf(buf,"Pri: %04X - Flag: %04X", megasys1_active_layers1, megasys1_sprite_flag);
-			usrintf_showmessage(buf);
+			usrintf_showmessage("Pri: %04X - Flag: %04X", megasys1_active_layers, megasys1_sprite_flag);
 		}
 #endif
 
@@ -1111,38 +1074,26 @@ void megasys1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 		/* see what layers are really active (layers 4 & f will do no harm) */
 		for (i = 0;i < 5;i++)
-			active_layers |= 1 << ((pri >> (4*i)) & 0x0f);
+			reallyactive |= 1 << ((pri >> (4*i)) & 0x0f);
 
-		megasys1_active_layers &= active_layers;
-		megasys1_active_layers |= 1 << ((pri & 0xf0000) >> 16);	// bottom layer can't be disabled
+		active_layers = megasys1_active_layers & reallyactive;
+		active_layers |= 1 << ((pri & 0xf0000) >> 16);	// bottom layer can't be disabled
 	}
 
 	tilemap_set_flip( ALL_TILEMAPS, (megasys1_screen_flag & 1) ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0 );
 
-#ifdef MAME_DEBUG
-debugsprites = 0;
-if (keyboard_pressed(KEYCODE_Z))
-{
-int msk = 0;
+	for (i = 0;i < 3;i++)
+	{
+		if (megasys1_tmap[i])
+		{
+			tilemap_set_enable(megasys1_tmap[i],active_layers & (1 << i));
 
-	if (keyboard_pressed(KEYCODE_Q))	{ msk |= 0xfff1;}
-	if (keyboard_pressed(KEYCODE_W))	{ msk |= 0xfff2;}
-	if (keyboard_pressed(KEYCODE_E))	{ msk |= 0xfff4;}
-	if (keyboard_pressed(KEYCODE_A))	{ msk |= 0xfff8;}
-	if (keyboard_pressed(KEYCODE_S))	{ msk |= 0xfff8; debugsprites = 1;}
-	if (keyboard_pressed(KEYCODE_D))	{ msk |= 0xfff8; debugsprites = 2;}
+			tilemap_set_scrollx(megasys1_tmap[i],0,megasys1_scrollx[i]);
+			tilemap_set_scrolly(megasys1_tmap[i],0,megasys1_scrolly[i]);
+		}
+	}
 
-	if (msk != 0) megasys1_active_layers &= msk;
-}
-#endif
-
-	MEGASYS1_TMAP_SET_SCROLL(0)
-	MEGASYS1_TMAP_SET_SCROLL(1)
-	MEGASYS1_TMAP_SET_SCROLL(2)
-
-	MEGASYS1_TMAP_UPDATE(0)
-	MEGASYS1_TMAP_UPDATE(1)
-	MEGASYS1_TMAP_UPDATE(2)
+	tilemap_update(ALL_TILEMAPS);
 
 	palette_init_used_colors();
 
@@ -1150,7 +1101,10 @@ int msk = 0;
 
 	palette_recalc();
 
+	fillbitmap(priority_bitmap,0,NULL);
+
 	flag = TILEMAP_IGNORE_TRANSPARENCY;
+	primask = 0;
 
 	for (i = 0;i < 5;i++)
 	{
@@ -1159,9 +1113,15 @@ int msk = 0;
 
 		switch (layer)
 		{
-			case 0:	MEGASYS1_TMAP_DRAW(0)	break;
-			case 1:	MEGASYS1_TMAP_DRAW(1)	break;
-			case 2:	MEGASYS1_TMAP_DRAW(2)	break;
+			case 0:
+			case 1:
+			case 2:
+				if ( (megasys1_tmap[layer]) && (active_layers & (1 << layer) ) )
+				{
+					tilemap_draw(bitmap,megasys1_tmap[layer],flag,primask);
+					flag = 0;
+				}
+				break;
 			case 3:
 			case 4:
 				if (flag != 0)
@@ -1170,27 +1130,19 @@ int msk = 0;
 					fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
 				}
 
-				if (megasys1_active_layers & 0x08)
+				if (megasys1_sprite_flag & 0x100)	/* sprites are split */
 				{
-					if (megasys1_sprite_flag & 0x100)	/* sprites are split */
-						draw_sprites(bitmap, (layer-3) & 1 );
-					else
-						if (layer == 3)	draw_sprites(bitmap, -1 );
+					/* following tilemaps will obscure this sprites layer */
+					primask |= 1 << (layer-3);
 				}
+				else
+					/* following tilemaps will obscure all sprites */
+					if (layer == 3)	primask |= 3;
 
 				break;
 		}
-
-		/*	This can happen only in debug mode, when the user
-			disables the single active layer. There's always at
-			least one active layer, otherwise.	 */
-		if (flag != 0)
-		{
-			flag = 0;
-			fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
-		}
-
 	}
 
-	megasys1_active_layers = megasys1_active_layers1;
+	if (active_layers & 0x08)
+		draw_sprites(bitmap);
 }

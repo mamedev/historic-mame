@@ -95,6 +95,12 @@ CPS2:
   msh (lava level, early in attract mode) and maybe others (xmcotaj, vsavj).
   IRQ4 is some sort of scanline interrupt used for that purpose.
 
+Alien vs. Predator:
+* This seems to be the only game setting the CPS2_OBJ_BASE register to 0x7000 instead
+  of 0x7080. However using 0x7000 makes sprites not sync with the background, so we
+  use 0x7080 anyway.
+
+
 SF2
 * Missing chain in the foreground in Ken's level, and sign in Cun Li's level.
   Those graphics are in the backmost layer.
@@ -327,6 +333,9 @@ static struct CPS1config cps1_config_table[]=
 	{"pnickj",  CPS_B_01, 0,0,0, 0x0000,0xffff,0x0000,0xffff },
 	{"pang3",   CPS_B_01, 0,0,0, 0x0000,0xffff,0x0000,0xffff, 5 },	/* EEPROM port is among the CPS registers */
 	{"pang3j",  CPS_B_01, 0,0,0, 0x0000,0xffff,0x0000,0xffff, 5 },	/* EEPROM port is among the CPS registers */
+	#ifdef MESS
+	{"sfzch",   CPS_B_01, 0,0,0, 0x0000,0xffff,0x0000,0xffff },
+	#endif
 
     /* CPS2 games */
 	{"cps2",    CPS_B_01, 4,4,4, 0x0000,0xffff,0x0000,0xffff },
@@ -589,12 +598,12 @@ const int stars_rom_size = 0x2000;
 
 /* PSL: CPS2 support */
 const int cps2_obj_size    =0x2000;
-data16_t *cps2_objram;
+data16_t *cps2_objram1,*cps2_objram2;
 data16_t *cps2_output;
 
-size_t cps2_objram_size;
 size_t cps2_output_size;
 static data16_t *cps2_buffered_obj;
+static int cps2_objram_bank;
 static int cps2_last_sprite_offset;     /* Offset of the last sprite */
 
 
@@ -1108,7 +1117,8 @@ void cps1_dump_video(void)
         fp=fopen("OBJCPS2.DMP", "w+b");
         if (fp)
         {
-            fwrite(cps2_objram, cps2_objram_size, 1, fp);
+            fwrite(cps2_objram1, cps2_obj_size, 1, fp);
+            fwrite(cps2_objram2, cps2_obj_size, 1, fp);
             fclose(fp);
         }
         fp=fopen("CPS2OUTP.DMP", "w+b");
@@ -1313,21 +1323,24 @@ int cps_vh_start(void)
 	}
     memset(cps1_buffered_obj, 0x00, cps1_obj_size);
 
-    cps2_buffered_obj = malloc (2*cps2_objram_size);
-    if (!cps2_buffered_obj)
-    {
-		return -1;
+    if (cps_version==2) {
+	cps2_buffered_obj = malloc (2*cps2_obj_size);
+	if (!cps2_buffered_obj)
+	{
+	    return -1;
 	}
-    memset(cps2_buffered_obj, 0x00, 2*cps2_objram_size);
+	memset(cps2_buffered_obj, 0x00, 2*cps2_obj_size);
+    }
 
 
 	memset(cps1_gfxram, 0, cps1_gfxram_size);   /* Clear GFX RAM */
 	memset(cps1_output, 0, cps1_output_size);   /* Clear output ports */
 
-    if (cps_version == 2)
-    {
-        memset(cps2_objram, 0, cps2_objram_size);
-    }
+	if (cps_version == 2)
+	{
+		memset(cps2_objram1, 0, cps2_obj_size);
+		memset(cps2_objram2, 0, cps2_obj_size);
+	}
 
 	/* Put in some defaults */
 	cps1_output[CPS1_OBJ_BASE/2]     = 0x9200;
@@ -1598,25 +1611,6 @@ void cps1_find_last_sprite(void)    /* Find the offset of last sprite */
     cps1_last_sprite_offset=cps1_obj_size/2-4;
 }
 
-void cps2_find_last_sprite(void)    /* Find the offset of last sprite */
-{
-	int offset=0;
-	/* Locate the end of table marker */
-	while (offset < cps2_obj_size/2)
-	{
-		if (cps2_buffered_obj[offset+1]==0x8000
-				|| cps2_buffered_obj[offset+3]==0xff00)
-		{
-			/* Marker found. This is the last sprite. */
-			cps2_last_sprite_offset=offset-4;
-			return;
-		}
-		offset+=4;
-	}
-	/* Sprites must use full sprite RAM */
-	cps2_last_sprite_offset=cps2_obj_size/2-4;
-}
-
 
 /* Find used colours */
 
@@ -1856,10 +1850,93 @@ void cps1_render_sprites(struct osd_bitmap *bitmap)
 	}
 }
 
+
+
+
+WRITE16_HANDLER( cps2_objram_bank_w )
+{
+	if (ACCESSING_LSB)
+	{
+		cps2_objram_bank = data & 1;
+	}
+}
+
+READ16_HANDLER( cps2_objram1_r )
+{
+	if (cps2_objram_bank & 1)
+		return cps2_objram2[offset];
+	else
+		return cps2_objram1[offset];
+}
+
+READ16_HANDLER( cps2_objram2_r )
+{
+	if (cps2_objram_bank & 1)
+		return cps2_objram1[offset];
+	else
+		return cps2_objram2[offset];
+}
+
+WRITE16_HANDLER( cps2_objram1_w )
+{
+	if (cps2_objram_bank & 1)
+		COMBINE_DATA(&cps2_objram2[offset]);
+	else
+		COMBINE_DATA(&cps2_objram1[offset]);
+}
+
+WRITE16_HANDLER( cps2_objram2_w )
+{
+	if (cps2_objram_bank & 1)
+		COMBINE_DATA(&cps2_objram1[offset]);
+	else
+		COMBINE_DATA(&cps2_objram2[offset]);
+}
+
+static data16_t *cps2_objbase(void)
+{
+	int baseptr;
+
+//	baseptr = cps2_port(CPS2_OBJ_BASE);
+// the above makes sprites in avsp not sync with the background, all other games
+// seem to set the register to 0x7080.
+	baseptr = 0x7080;
+
+	if (cps2_objram_bank & 1) baseptr ^= 0x0080;
+
+//usrintf_showmessage("%04x %d",cps2_port(CPS2_OBJ_BASE),cps2_objram_bank&1);
+
+	if (baseptr == 0x7000)
+		return cps2_buffered_obj;
+	else //if (baseptr == 0x7080)
+		return cps2_buffered_obj+cps2_obj_size/2;
+}
+
+
+void cps2_find_last_sprite(void)    /* Find the offset of last sprite */
+{
+	int offset=0;
+	data16_t *base=cps2_objbase();
+	/* Locate the end of table marker */
+	while (offset < cps2_obj_size/2)
+	{
+		if (base[offset+1]==0x8000
+				|| base[offset+3]==0xff00)
+		{
+			/* Marker found. This is the last sprite. */
+			cps2_last_sprite_offset=offset-4;
+			return;
+		}
+		offset+=4;
+	}
+	/* Sprites must use full sprite RAM */
+	cps2_last_sprite_offset=cps2_obj_size/2-4;
+}
+
 void cps2_render_sprites(struct osd_bitmap *bitmap,int minpri,int maxpri)
 {
 	int i;
-	data16_t *base=cps2_buffered_obj;
+	data16_t *base=cps2_objbase();
 	int xoffs = 0x20-cps2_port(CPS2_OBJ_XOFFS);
 
 	if (minpri > maxpri) return;
@@ -2485,7 +2562,7 @@ void cps1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
     cps_palette_sprites (&palette_usage[palette_basecolor[0]], cps1_buffered_obj, cps1_last_sprite_offset);
     if (cps_version == 2)
     {
-        cps_palette_sprites (&palette_usage[palette_basecolor[0]], cps2_buffered_obj, cps2_last_sprite_offset);
+        cps_palette_sprites (&palette_usage[palette_basecolor[0]], cps2_objbase(), cps2_last_sprite_offset);
     }
     if (cps1_layer_enabled[1])
 		cps1_palette_scroll1 (&palette_usage[palette_basecolor[1]]);
@@ -2617,9 +2694,8 @@ void cps1_eof_callback(void)
 	memcpy(cps1_buffered_obj, cps1_obj, cps1_obj_size);
 	if (cps_version == 2)
 	{
-		/* CPS2 sprites have to be delayed two frames */
-		memcpy(cps2_buffered_obj, cps2_buffered_obj+cps2_obj_size, cps2_obj_size);
-		memcpy(cps2_buffered_obj+cps2_obj_size, cps2_objram, cps2_obj_size);
+		memcpy(cps2_buffered_obj,                cps2_objram1,cps2_obj_size);
+		memcpy(cps2_buffered_obj+cps2_obj_size/2,cps2_objram2,cps2_obj_size);
 	}
 }
 

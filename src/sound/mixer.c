@@ -30,9 +30,9 @@
 
 /* Internal log */
 #ifdef MIXER_USE_LOGERROR
-#define mixererror(a) logerror a
+#define mixerlogerror(a) logerror a
 #else
-#define mixererror(a) do { } while (0)
+#define mixerlogerror(a) do { } while (0)
 #endif
 
 /* accumulators have ACCUMULATOR_SAMPLES samples (must be a power of 2) */
@@ -68,16 +68,20 @@ struct mixer_channel_data
 	/* current playback positions */
 	unsigned samples_available;
 
-	/* resample */
+	/* resample state */
 	int frac; /* resample fixed point state (used if filter is not active) */
 	int pivot; /* resample brehesnam state (used if filter is active) */
 	int step; /* fixed point increment */
-	unsigned from_frequency; /* source frequency */
-	unsigned to_frequency; /* destination frequency */
+	unsigned from_frequency; /* current source frequency */
+	unsigned to_frequency; /* current destination frequency */
+	unsigned lowpass_frequency; /* current lowpass arbitrary cut frequency, 0 if default */
 	filter* filter; /* filter used, ==0 if none */
 	filter_state* left; /* state of the filter for the left/mono channel */
 	filter_state* right; /* state of the filter for the right channel */
 	int is_reset_requested; /* state reset requested */
+
+	/* lowpass filter request */
+	unsigned request_lowpass_frequency; /* request for the lowpass arbitrary cut frequency, 0 if default */
 
 	/* state of non-streamed playback */
 	int is_stream;
@@ -113,33 +117,36 @@ static unsigned samples_this_frame;
 ***************************************************************************/
 
 /* Window size of the FIR filter in samples (must be odd) */
-/* Greather values are more precise, less values are faster. */
+/* Greater values are more precise, lesser values are faster. */
 #define FILTER_WIDTH 31
 
 /* The number of samples that need to be played to flush the filter state */
 /* For the FIR filters it's equal to the filter width */
 #define FILTER_FLUSH FILTER_WIDTH
 
-/* Setup the resample information */
-static void mixer_channel_resample_set(struct mixer_channel_data *channel, int freq, int restart)
+/* Setup the resample information
+	from_frequency - input frequency
+	lowpass_frequency - lowpass frequency, use 0 to automatically compute it from the resample operation
+	restart - restart the resample state
+*/
+static void mixer_channel_resample_set(struct mixer_channel_data *channel, unsigned from_frequency, unsigned lowpass_frequency, int restart)
 {
 	unsigned to_frequency;
-	unsigned from_frequency;
+	to_frequency = Machine->sample_rate;
 
-	mixererror(("Mixer:mixer_channel_resample_set(%s,%d,%d)\n",channel->name,freq,restart));
+	mixerlogerror(("Mixer:mixer_channel_resample_set(%s,%d,%d)\n",channel->name,from_frequency,lowpass_frequency,restart));
 
 	if (restart)
 	{
-		mixererror(("\tpivot=0\n"));
+		mixerlogerror(("\tpivot=0\n"));
 		channel->pivot = 0;
 		channel->frac = 0;
 	}
 
-	from_frequency = freq;
-	to_frequency = Machine->sample_rate;
-
 	/* only if the filter change */
-	if (from_frequency != channel->from_frequency || to_frequency != channel->to_frequency)
+	if (from_frequency != channel->from_frequency
+		|| to_frequency != channel->to_frequency
+		|| lowpass_frequency != channel->lowpass_frequency)
 	{
 		/* delete the previous filter */
 		if (channel->filter)
@@ -152,24 +159,32 @@ static void mixer_channel_resample_set(struct mixer_channel_data *channel, int f
 #ifdef MIXER_USE_OPTION_FILTER
 		if (options.use_filter)
 #endif
-		if (from_frequency && to_frequency && from_frequency != to_frequency)
+		if ((from_frequency != 0 && to_frequency != 0 && (from_frequency != to_frequency || lowpass_frequency != 0)))
 		{
 			double cut;
+			unsigned cut_frequency;
 
-			if (from_frequency < to_frequency)
+			if (from_frequency < to_frequency) {
 				/* upsampling */
-				cut = (double)from_frequency / to_frequency / 2;
-			else {
+				cut_frequency = from_frequency / 2;
+				if (lowpass_frequency != 0 && cut_frequency > lowpass_frequency)
+					cut_frequency = lowpass_frequency;
+				cut = (double)cut_frequency / to_frequency;
+			} else {
 				/* downsampling */
-				cut = (double)to_frequency / from_frequency / 2;
+				cut_frequency = to_frequency / 2;
+				if (lowpass_frequency != 0 && cut_frequency > lowpass_frequency)
+					cut_frequency = lowpass_frequency;
+				cut = (double)cut_frequency / from_frequency;
 			}
 
 			channel->filter = filter_lp_fir_alloc(cut, FILTER_WIDTH);
 
-			mixererror(("\tfilter from %d Hz, to %d Hz, cut %f\n",from_frequency,to_frequency,cut));
+			mixerlogerror(("\tfilter from %d Hz, to %d Hz, cut %f, cut %d Hz\n",from_frequency,to_frequency,cut,cut_frequency));
 		}
 	}
 
+	channel->lowpass_frequency = lowpass_frequency;
 	channel->from_frequency = from_frequency;
 	channel->to_frequency = to_frequency;
 	channel->step = (double)from_frequency * (1 << FRACTION_BITS) / to_frequency;
@@ -177,7 +192,7 @@ static void mixer_channel_resample_set(struct mixer_channel_data *channel, int f
 	/* reset the filter state */
 	if (channel->filter && channel->is_reset_requested)
 	{
-		mixererror(("\tstate clear\n"));
+		mixerlogerror(("\tstate clear\n"));
 		channel->is_reset_requested = 0;
 		filter_state_reset(channel->filter,channel->left);
 		filter_state_reset(channel->filter,channel->right);
@@ -185,13 +200,13 @@ static void mixer_channel_resample_set(struct mixer_channel_data *channel, int f
 }
 
 /* Resample a channel
-	channel		channel info
-	state		filter state
-	volume		volume (0-255)
-	dst		destination vector
-	dst_len		max number of destination samples
-	src		source vector, (updated at the exit)
-	src_len		max number of source samples
+	channel - channel info
+	state - filter state
+	volume - volume (0-255)
+	dst - destination vector
+	dst_len - max number of destination samples
+	src - source vector, (updated at the exit)
+	src_len - max number of source samples
 */
 static unsigned mixer_channel_resample_16(struct mixer_channel_data* channel, filter_state* state, int volume, int* dst, unsigned dst_len, INT16** psrc, unsigned src_len)
 {
@@ -610,7 +625,7 @@ static void mixer_flush(struct mixer_channel_data *channel)
 	int mixing_volume[2];
 	unsigned save_available;
 
-	mixererror(("Mixer:mixer_flush(%s)\n",channel->name));
+	mixerlogerror(("Mixer:mixer_flush(%s)\n",channel->name));
 
 	/* filter reset request */
 	channel->is_reset_requested = 1;
@@ -836,6 +851,8 @@ int mixer_allocate_channels(int channels, const int *default_mixing_levels)
 {
 	int i, j;
 
+	mixerlogerror(("Mixer:mixer_allocate_channels(%d)\n",channels));
+
 	/* make sure we didn't overrun the number of available channels */
 	if (first_free_channel + channels > MIXER_MAX_CHANNELS)
 	{
@@ -1038,7 +1055,7 @@ void mixer_play_streamed_sample_16(int ch, INT16 *data, int len, int freq)
 	struct mixer_channel_data *channel = &mixer_channel[ch];
 	int mixing_volume[2];
 
-	mixererror(("Mixer:mixer_play_streamed_sample_16(%s,,%d,%d)\n",channel->name,len/2,freq));
+	mixerlogerror(("Mixer:mixer_play_streamed_sample_16(%s,,%d,%d)\n",channel->name,len/2,freq));
 
 	/* skip if sound is off */
 	if (Machine->sample_rate == 0)
@@ -1056,7 +1073,7 @@ void mixer_play_streamed_sample_16(int ch, INT16 *data, int len, int freq)
 		mixing_volume[1] = 0;
 	}
 
-	mixer_channel_resample_set(channel, freq, 0);
+	mixer_channel_resample_set(channel,freq,channel->request_lowpass_frequency,0);
 
 	/* compute the length in fractional form */
 	len = len / 2; /* convert len from byte to word */
@@ -1096,7 +1113,7 @@ void mixer_play_sample(int ch, INT8 *data, int len, int freq, int loop)
 {
 	struct mixer_channel_data *channel = &mixer_channel[ch];
 
-	mixererror(("Mixer:mixer_play_sample_8(%s,,%d,%d,%s)\n",channel->name,len,freq,loop ? "loop" : "single"));
+	mixerlogerror(("Mixer:mixer_play_sample_8(%s,,%d,%d,%s)\n",channel->name,len,freq,loop ? "loop" : "single"));
 
 	/* skip if sound is off, or if this channel is a stream */
 	if (Machine->sample_rate == 0 || channel->is_stream)
@@ -1105,7 +1122,7 @@ void mixer_play_sample(int ch, INT8 *data, int len, int freq, int loop)
 	/* update the state of this channel */
 	mixer_update_channel(channel, sound_scalebufferpos(samples_this_frame));
 
-	mixer_channel_resample_set(channel,freq,1);
+	mixer_channel_resample_set(channel,freq,channel->request_lowpass_frequency,1);
 
 	/* now determine where to mix it */
 	channel->data_start = data;
@@ -1125,7 +1142,7 @@ void mixer_play_sample_16(int ch, INT16 *data, int len, int freq, int loop)
 {
 	struct mixer_channel_data *channel = &mixer_channel[ch];
 
-	mixererror(("Mixer:mixer_play_sample_16(%s,,%d,%d,%s)\n",channel->name,len/2,freq,loop ? "loop" : "single"));
+	mixerlogerror(("Mixer:mixer_play_sample_16(%s,,%d,%d,%s)\n",channel->name,len/2,freq,loop ? "loop" : "single"));
 
 	/* skip if sound is off, or if this channel is a stream */
 	if (Machine->sample_rate == 0 || channel->is_stream)
@@ -1134,7 +1151,7 @@ void mixer_play_sample_16(int ch, INT16 *data, int len, int freq, int loop)
 	/* update the state of this channel */
 	mixer_update_channel(channel, sound_scalebufferpos(samples_this_frame));
 
-	mixer_channel_resample_set(channel,freq,1);
+	mixer_channel_resample_set(channel,freq,channel->request_lowpass_frequency,1);
 
 	/* now determine where to mix it */
 	channel->data_start = data;
@@ -1154,7 +1171,7 @@ void mixer_stop_sample(int ch)
 {
 	struct mixer_channel_data *channel = &mixer_channel[ch];
 
-	mixererror(("Mixer:mixer_stop_sample(%s)\n",channel->name));
+	mixerlogerror(("Mixer:mixer_stop_sample(%s)\n",channel->name));
 
 	mixer_update_channel(channel, sound_scalebufferpos(samples_this_frame));
 
@@ -1188,12 +1205,34 @@ void mixer_set_sample_frequency(int ch, int freq)
 	assert( !channel->is_stream );
 
 	if (channel->is_playing) {
-		mixererror(("Mixer:mixer_set_sample_frequency(%s,%d)\n",channel->name,freq));
+		mixerlogerror(("Mixer:mixer_set_sample_frequency(%s,%d)\n",channel->name,freq));
 
 		mixer_update_channel(channel, sound_scalebufferpos(samples_this_frame));
 
-		mixer_channel_resample_set(channel,freq,0);
+		mixer_channel_resample_set(channel,freq,channel->request_lowpass_frequency,0);
 	}
+}
+
+/***************************************************************************
+	mixer_set_lowpass_frequency
+***************************************************************************/
+
+/* Set the desidered lowpass cut frequency.
+This function should be called immeditially after the mixer_allocate() and
+before the first play() call. Otherwise the lowpass frequency may be
+unused until the next filter recompute.
+	ch - channel
+	freq - frequency in Hz. Use 0 to disable
+*/
+void mixer_set_lowpass_frequency(int ch, int freq)
+{
+	struct mixer_channel_data *channel = &mixer_channel[ch];
+
+	assert(!channel->is_playing && !channel->is_stream);
+
+	mixerlogerror(("Mixer:mixer_set_lowpass_frequency(%s,%d)\n",channel->name,freq));
+
+	channel->request_lowpass_frequency = freq;
 }
 
 /***************************************************************************

@@ -456,7 +456,7 @@ static struct MachineDriver machine_driver_superchs =
 {
 	{
 		{
-			CPU_M68020,
+			CPU_M68EC020,
 			16000000,	/* 16 MHz */
 			superchs_readmem,superchs_writemem,0,0,
 			m68_level2_irq,1 /* VBL */

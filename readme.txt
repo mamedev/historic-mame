@@ -446,6 +446,14 @@ Options:
 -hotrodse     Sets a default keyboard configuration suitable for the HotRod SE
               joystick by HanaHo Games.
 
+-steadykey    Some games require two or more buttons to be pressed at exactly
+              the same time to make special moves. Due to limitations in the PC
+              keyboard hardware, it can be difficult or even impossible to
+              accomplish that using the standard keyboard handling. This option
+              selects a different handling that makes it easier to register
+              simultaneous button presses, but has the disadvantage of making
+              controls less responsive.
+
 -log          Creates a log of illegal memory accesses in ERROR.LOG
 
 -help, -?     Displays current MAME version and copyright notice

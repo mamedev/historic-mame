@@ -7,7 +7,7 @@
  *************************************************************************/
 
 #include <stdio.h>
-#include <strings.h>
+#include <string.h>
 #include "driver.h"
 #include "state.h"
 #include "mamedbg.h"

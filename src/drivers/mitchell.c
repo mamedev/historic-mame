@@ -1435,6 +1435,30 @@ ROM_END
 
 ROM_START( block )
 	ROM_REGION( 2*0x50000, REGION_CPU1, 0 )	/* 320k for code + 320k for decrypted opcodes */
+	ROM_LOAD( "ble_05.bin",   0x00000, 0x08000, 0xfa2a4536 )
+	ROM_LOAD( "ble_06.bin",   0x10000, 0x20000, 0x58a77402 )
+	ROM_LOAD( "ble_07.rom",   0x30000, 0x20000, 0x1d114f13 )
+
+	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "bl_08.rom",    0x000000, 0x20000, 0xaa0f4ff1 )	/* chars */
+	ROM_RELOAD(               0x040000, 0x20000 )
+	ROM_LOAD( "bl_09.rom",    0x020000, 0x20000, 0x6fa8c186 )
+	ROM_RELOAD(               0x060000, 0x20000 )
+	ROM_LOAD( "bl_18.rom",    0x080000, 0x20000, 0xc0acafaf )
+	ROM_RELOAD(               0x0c0000, 0x20000 )
+	ROM_LOAD( "bl_19.rom",    0x0a0000, 0x20000, 0x1ae942f5 )
+	ROM_RELOAD(               0x0e0000, 0x20000 )
+
+	ROM_REGION( 0x040000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "bl_16.rom",    0x000000, 0x20000, 0xfadcaff7 )	/* sprites */
+	ROM_LOAD( "bl_17.rom",    0x020000, 0x20000, 0x5f8cab42 )
+
+	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* OKIM */
+	ROM_LOAD( "bl_01.rom",    0x00000, 0x20000, 0xc2ec2abb )
+ROM_END
+
+ROM_START( blocka )
+	ROM_REGION( 2*0x50000, REGION_CPU1, 0 )	/* 320k for code + 320k for decrypted opcodes */
 	ROM_LOAD( "ble_05.rom",   0x00000, 0x08000, 0xc12e7f4c )
 	ROM_LOAD( "ble_06.rom",   0x10000, 0x20000, 0xcdb13d55 )
 	ROM_LOAD( "ble_07.rom",   0x30000, 0x20000, 0x1d114f13 )
@@ -1625,6 +1649,7 @@ GAME( 1990, sbbros,   spang,    pang,    pang,     sbbros,   ROT0,   "Mitchell +
 GAME( 1990, marukin,  0,        marukin, marukin,  marukin,  ROT0,   "Yuga", "Super Marukin-Ban" )
 GAME( 1991, qtono1,   0,        pang,    qtono1,   qtono1,   ROT0,   "Capcom", "Quiz Tonosama no Yabou (Japan)" )
 GAME( 1991, qsangoku, 0,        pang,    qtono1,   qsangoku, ROT0,   "Capcom", "Quiz Sangokushi (Japan)" )
-GAME( 1991, block,    0,        pang,    block,    block,    ROT270, "Capcom", "Block Block (World)" )
+GAME( 1991, block,    0,        pang,    block,    block,    ROT270, "Capcom", "Block Block (World 911106)" )
+GAME( 1991, blocka,   block,    pang,    block,    block,    ROT270, "Capcom", "Block Block (World 910910)" )
 GAME( 1991, blockj,   block,    pang,    block,    block,    ROT270, "Capcom", "Block Block (Japan)" )
 GAME( 1991, blockbl,  block,    pang,    block,    blockbl,  ROT270, "bootleg", "Block Block (bootleg)" )

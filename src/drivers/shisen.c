@@ -224,7 +224,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct YM2151interface ym2151_interface =
 {
 	1,			/* 1 chip */
-	3579645,	/* 3.579645 MHz */
+	3579545,	/* 3.579545 MHz */
 	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) },
 	{ m72_ym2151_irq_handler },
 	{ 0 }

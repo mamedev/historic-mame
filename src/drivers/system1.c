@@ -3353,7 +3353,7 @@ GAME (1985, 4dwarrio, 0,        system1,  4dwarrio, 4dwarrio, ROT0,   "Coreland 
 GAME (1986, brain,    0,        brain,    brain,    0,        ROT0,   "Coreland / Sega", "Brain" )
 GAME (1986, wboy,     0,        system1,  wboy,     hvymetal, ROT0,   "Sega (Escape license)", "Wonder Boy (set 1)" )
 GAME (1986, wboy2,    wboy,     system1,  wboy,     hvymetal, ROT0,   "Sega (Escape license)", "Wonder Boy (set 2)" )
-GAMEX(????, wboy3,    wboy,     system1,  wboy,     wboy3,    ROT0,   "<unknown>", "Wonder Boy (set 3)", GAME_NOT_WORKING )
+GAMEX(1986, wboy3,    wboy,     system1,  wboy,     wboy3,    ROT0,   "<unknown>", "Wonder Boy (set 3)", GAME_NOT_WORKING )
 GAME (1986, wboy4,    wboy,     system1,  wboy,     wboy4,    ROT0,   "Sega (Escape license)", "Wonder Boy (set 4)" )
 GAME (1986, wboyu,    wboy,     system1,  wboyu,    0,        ROT0,   "Sega (Escape license)", "Wonder Boy (not encrypted)" )
 GAME (1986, wboy4u,   wboy,     system1,  wboy,     0,        ROT0,   "Sega (Escape license)", "Wonder Boy (set 4 not encrypted)" )

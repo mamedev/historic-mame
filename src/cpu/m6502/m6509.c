@@ -375,44 +375,6 @@ void m6509_set_irq_callback(int (*callback)(int))
 	m6509.irq_callback = callback;
 }
 
-void m6509_state_save(void *file)
-{
-	int cpu = cpu_getactivecpu();
-	/* insn is set at restore since it's a pointer */
-	state_save_UINT16(file,"m6509",cpu,"PC",&m6509.pc.w.l,2);
-	state_save_UINT8(file,"m6509",cpu,"SP",&m6509.sp.b.l,1);
-	state_save_UINT8(file,"m6509",cpu,"P",&m6509.p,1);
-	state_save_UINT8(file,"m6509",cpu,"A",&m6509.a,1);
-	state_save_UINT8(file,"m6509",cpu,"X",&m6509.x,1);
-	state_save_UINT8(file,"m6509",cpu,"Y",&m6509.y,1);
-	state_save_UINT8(file,"m6509",cpu,"PB",&m6509.pc_bank.b.h2,1);
-	state_save_UINT8(file,"m6509",cpu,"IB",&m6509.ind_bank.b.h2,1);
-	state_save_UINT8(file,"m6509",cpu,"PENDING",&m6509.pending_irq,1);
-	state_save_UINT8(file,"m6509",cpu,"AFTER_CLI",&m6509.after_cli,1);
-	state_save_UINT8(file,"m6509",cpu,"NMI_STATE",&m6509.nmi_state,1);
-	state_save_UINT8(file,"m6509",cpu,"IRQ_STATE",&m6509.irq_state,1);
-	state_save_UINT8(file,"m6509",cpu,"SO_STATE",&m6509.so_state,1);
-}
-
-void m6509_state_load(void *file)
-{
-	int cpu = cpu_getactivecpu();
-	m6509.insn = insn6509;
-	state_load_UINT16(file,"m6509",cpu,"PC",&m6509.pc.w.l,2);
-	state_load_UINT8(file,"m6509",cpu,"SP",&m6509.sp.b.l,1);
-	state_load_UINT8(file,"m6509",cpu,"P",&m6509.p,1);
-	state_load_UINT8(file,"m6509",cpu,"A",&m6509.a,1);
-	state_load_UINT8(file,"m6509",cpu,"X",&m6509.x,1);
-	state_load_UINT8(file,"m6509",cpu,"Y",&m6509.y,1);
-	state_load_UINT8(file,"m6509",cpu,"PB",&m6509.pc_bank.b.h2,1);
-	state_load_UINT8(file,"m6509",cpu,"IB",&m6509.ind_bank.b.h2,1);
-	state_load_UINT8(file,"m6509",cpu,"PENDING",&m6509.pending_irq,1);
-	state_load_UINT8(file,"m6509",cpu,"AFTER_CLI",&m6509.after_cli,1);
-	state_load_UINT8(file,"m6509",cpu,"NMI_STATE",&m6509.nmi_state,1);
-	state_load_UINT8(file,"m6509",cpu,"IRQ_STATE",&m6509.irq_state,1);
-	state_load_UINT8(file,"m6509",cpu,"SO_STATE",&m6509.so_state,1);
-}
-
 /****************************************************************************
  * Return a formatted string for a register
  ****************************************************************************/
@@ -478,4 +440,6 @@ unsigned m6509_dasm(char *buffer, unsigned pc)
 }
 
 
+
+void m6509_init(void){ return; }
 

@@ -435,10 +435,10 @@ static MEMORY_WRITE_START( panic_writemem )
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x4000, 0x5fff, cosmica_videoram_w, &videoram, &videoram_size },
 	{ 0x6000, 0x601f, MWA_RAM, &spriteram, &spriteram_size },
-    { 0x7000, 0x700b, panic_sound_output_w },
+	{ 0x7000, 0x700b, panic_sound_output_w },
 	{ 0x700c, 0x700e, panic_color_register_w },
 	{ 0x700f, 0x700f, flip_screen_w },
-    { 0x7800, 0x7801, panic_sound_output2_w },
+	{ 0x7800, 0x7801, panic_sound_output2_w },
 MEMORY_END
 
 static MEMORY_READ_START( cosmica_readmem )
@@ -476,7 +476,7 @@ PORT_END
 
 static PORT_WRITE_START( cosmicg_writeport )
 	{ 0x00, 0x15, cosmicg_output_w },
-    { 0x16, 0x17, cosmicg_color_register_w },
+	{ 0x16, 0x17, cosmicg_color_register_w },
 PORT_END
 
 static MEMORY_READ_START( magspot2_readmem )
@@ -522,9 +522,9 @@ INPUT_PORTS_START( panic )
 	PORT_START      /* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON2 )
@@ -532,9 +532,9 @@ INPUT_PORTS_START( panic )
 	PORT_START      /* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
@@ -663,22 +663,23 @@ INPUT_PORTS_START( cosmicg )
 	/* to be notified of coin insertions. */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
 
-    /* This dip switch is not read by the program at any time   */
-    /* but is wired to enable or disable the flip screen output */
+	/* This dip switch is not read by the program at any time   */
+	/* but is wired to enable or disable the flip screen output */
 
 	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Cocktail ) )
 
-    /* This odd setting is marked as shown on the schematic,    */
-    /* and again, is not read by the program, but wired into    */
-    /* the watchdog circuit. The book says to leave it off      */
+	/* This odd setting is marked as shown on the schematic,    */
+	/* and again, is not read by the program, but wired into    */
+	/* the watchdog circuit. The book says to leave it off      */
 
 	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
 
 INPUT_PORTS_END
+
 
 INPUT_PORTS_START( magspot2 )
 	PORT_START	/* IN0 */
@@ -851,6 +852,7 @@ INPUT_PORTS_START( devzone )
 	PORT_DIPSETTING(    0x40, DEF_STR( 1C_5C ) )
 INPUT_PORTS_END
 
+
 INPUT_PORTS_START( nomnlnd )
 	PORT_START	/* Controls - Remapped for game */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
@@ -874,7 +876,7 @@ INPUT_PORTS_START( nomnlnd )
 	PORT_DIPSETTING(    0x00, "None" )
 	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ) )
-   	PORT_DIPSETTING(    0x0c, DEF_STR( 2C_2C ) )
+//	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( 1C_2C ) )
 	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Lives ) )
@@ -896,8 +898,9 @@ INPUT_PORTS_START( nomnlnd )
 	PORT_START	/* IN4 */
 	PORT_BIT_IMPULSE( 0x02, IP_ACTIVE_HIGH, IPT_COIN1, 1 )
 
-	PORT_START	/* IN5 */
-	PORT_DIPNAME( 0xf0, 0x00, DEF_STR( Coinage ) )
+/* Why is this here for this game? */
+//	PORT_START	/* IN5 */
+/* 	PORT_DIPNAME( 0xf0, 0x00, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0xc0, DEF_STR( 4C_1C ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( 3C_1C ) )
 	PORT_DIPSETTING(    0xd0, DEF_STR( 4C_2C ) )
@@ -913,7 +916,75 @@ INPUT_PORTS_START( nomnlnd )
 	PORT_DIPSETTING(    0x10, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING(    0x30, DEF_STR( 1C_4C ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 1C_5C ) ) */
+
+INPUT_PORTS_END
+
+
+INPUT_PORTS_START( nomnlndg )
+	PORT_START	/* Controls - Remapped for game */
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BIT( 0x55, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x55, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* IN2 */
+	PORT_DIPNAME( 0x03, 0x02, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x01, "3000" )
+	PORT_DIPSETTING(    0x02, "5000" )
+	PORT_DIPSETTING(    0x03, "8000" )
+	PORT_DIPSETTING(    0x00, "None" )
+	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ) )
+//	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_2C ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_DIPSETTING(    0x10, "3" )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Cocktail ) )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
+
+	PORT_START	/* IN3 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_VBLANK )
+	PORT_BIT( 0x3e, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 )
+
+	/* Fake port to handle coin */
+	PORT_START	/* IN4 */
+	PORT_BIT_IMPULSE( 0x02, IP_ACTIVE_HIGH, IPT_COIN1, 1 )
+
+/* Why is this here for this gane? */
+// 	PORT_START	/* IN5 */
+/* 	PORT_DIPNAME( 0xf0, 0x00, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0xd0, DEF_STR( 4C_2C ) )
+	PORT_DIPSETTING(    0x50, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x90, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(    0xe0, DEF_STR( 4C_3C ) )
+	PORT_DIPSETTING(    0xf0, DEF_STR( 4C_4C ) )
+	PORT_DIPSETTING(    0xa0, DEF_STR( 3C_3C ) )
+	PORT_DIPSETTING(    0x60, DEF_STR( 2C_2C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0xb0, DEF_STR( 3C_4C ) )
+	PORT_DIPSETTING(    0x70, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 1C_5C ) ) */
 
 INPUT_PORTS_END
 
@@ -1536,4 +1607,4 @@ GAME( 1980, panicger, panic,   panic,    panic,    0,       ROT270, "Universal (
 GAMEX(1980, magspot2, 0,       magspot2, magspot2, 0,       ROT270, "Universal", "Magical Spot II", GAME_IMPERFECT_SOUND )
 GAMEX(1980, devzone,  0,       magspot2, devzone,  0,       ROT270, "Universal", "Devil Zone", GAME_IMPERFECT_SOUND )
 GAMEX(1980?,nomnlnd,  0,       nomnlnd,  nomnlnd,  0,       ROT270, "Universal", "No Man's Land", GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
-GAMEX(1980?,nomnlndg, nomnlnd, nomnlnd,  nomnlnd,  0,       ROT270, "Universal (Gottlieb license)", "No Man's Land (Gottlieb)", GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
+GAMEX(1980?,nomnlndg, nomnlnd, nomnlnd,  nomnlndg, 0,       ROT270, "Universal (Gottlieb license)", "No Man's Land (Gottlieb)", GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )

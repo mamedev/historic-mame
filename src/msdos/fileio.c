@@ -335,7 +335,7 @@ void *osd_fopen (const char *game, const char *filename, int filetype, int _writ
 	if( !f )
 	{
 		logerror("osd_fopen: failed to malloc FakeFileHandle!\n");
-        return 0;
+                return 0;
 	}
 	memset (f, 0, sizeof (FakeFileHandle));
 
@@ -344,14 +344,20 @@ void *osd_fopen (const char *game, const char *filename, int filetype, int _writ
 	/* Support "-romdir" yuck. */
 	if( alternate_name )
 	{
-		/* check for DEFAULT.CFG file request */
-		if( filetype == OSD_FILETYPE_CONFIG && gamename == "default" )
+		/* CV 010326 - updated */
+#ifndef MESS
+		/* apply "-romdir" ONLY IF we are loading a rom or a sample */
+		if( (filetype == OSD_FILETYPE_ROM) || (filetype == OSD_FILETYPE_SAMPLE) )
 		{
-			LOG(("osd_fopen: default input configuration file requested; -romdir switch not applied\n"));
-		} else {
 			LOG(("osd_fopen: -romdir overrides '%s' by '%s'\n", gamename, alternate_name));
         		gamename = alternate_name;
+		} else {
+			LOG(("osd_fopen: requested file is not ROM or SAMPLE; -romdir switch not applied\n"));
         	}
+#else
+        	LOG(("osd_fopen: -romdir overrides '%s' by '%s'\n", gamename, alternate_name));
+        	gamename = alternate_name;
+#endif
 	}
 
 	switch( filetype )
@@ -359,24 +365,33 @@ void *osd_fopen (const char *game, const char *filename, int filetype, int _writ
 	case OSD_FILETYPE_ROM:
 	case OSD_FILETYPE_SAMPLE:
 
+		if( filetype == OSD_FILETYPE_ROM)
+		{
+			LOG(("osd_fopen: attempting to %s rom '%s' with name '%s'\n", _write ? "write" : "read", filename, gamename));
+		}
+		else
+		{
+			LOG(("osd_fopen: attempting to %s sample '%s' with name '%s'\n", _write ? "write" : "read", filename, gamename));
+		}
+
 		/* only for reading */
 		if( _write )
 		{
 			logerror("osd_fopen: type %02x write not supported\n",filetype);
-            break;
+                        break;
 		}
 
 		if( filetype == OSD_FILETYPE_SAMPLE )
 		{
 			LOG(("osd_fopen: using samplepath\n"));
-            pathc = samplepathc;
-            pathv = samplepathv;
-        }
+                        pathc = samplepathc;
+                        pathv = samplepathv;
+                }
 		else
 		{
 			LOG(("osd_fopen: using rompath\n"));
-            pathc = rompathc;
-            pathv = rompathv;
+                        pathc = rompathc;
+                        pathv = rompathv;
 		}
 
 		for( indx = 0; indx < pathc && !found; ++indx )
@@ -387,7 +402,7 @@ void *osd_fopen (const char *game, const char *filename, int filetype, int _writ
 			{
 				sprintf (name, "%s/%s", dir_name, gamename);
 				LOG(("Trying %s\n", name));
-                if( cache_stat (name, &stat_buffer) == 0 && (stat_buffer.st_mode & S_IFDIR) )
+                		if( cache_stat (name, &stat_buffer) == 0 && (stat_buffer.st_mode & S_IFDIR) )
 				{
 					sprintf (name, "%s/%s/%s", dir_name, gamename, filename);
 					if( filetype == OSD_FILETYPE_ROM )
@@ -413,7 +428,7 @@ void *osd_fopen (const char *game, const char *filename, int filetype, int _writ
 				/* try with a .zip extension */
 				sprintf (name, "%s/%s.zip", dir_name, gamename);
 				LOG(("Trying %s file\n", name));
-                if( cache_stat (name, &stat_buffer) == 0 )
+                		if( cache_stat (name, &stat_buffer) == 0 )
 				{
 					if( load_zipped_file (name, filename, &f->data, &f->length) == 0 )
 					{
@@ -431,7 +446,7 @@ void *osd_fopen (const char *game, const char *filename, int filetype, int _writ
 				/* try with a .zip directory (if ZipMagic is installed) */
 				sprintf (name, "%s/%s.zip", dir_name, gamename);
 				LOG(("Trying %s directory\n", name));
-                if( cache_stat (name, &stat_buffer) == 0 && (stat_buffer.st_mode & S_IFDIR) )
+                		if( cache_stat (name, &stat_buffer) == 0 && (stat_buffer.st_mode & S_IFDIR) )
 				{
 					sprintf (name, "%s/%s.zip/%s", dir_name, gamename, filename);
 					if( filetype == OSD_FILETYPE_ROM )
@@ -458,21 +473,23 @@ void *osd_fopen (const char *game, const char *filename, int filetype, int _writ
 #ifdef MESS
 	case OSD_FILETYPE_IMAGE_R:
 
+		LOG(("osd_fopen: attempting to %s read-only image '%s' with name '%s'\n", _write ? "write" : "read", filename, gamename));
+
 		/* only for reading */
 		if( _write )
 		{
 			logerror("osd_fopen: type %02x write not supported\n",filetype);
-            break;
+            		break;
 		}
-        else
+        	else
 		{
 			LOG(("osd_fopen: using rompath\n"));
-            pathc = rompathc;
-            pathv = rompathv;
+            		pathc = rompathc;
+            		pathv = rompathv;
 		}
 
 		LOG(("Open IMAGE_R '%s' for %s\n", filename, game));
-        for( indx = 0; indx < pathc && !found; ++indx )
+        	for( indx = 0; indx < pathc && !found; ++indx )
 		{
 			const char *dir_name = pathv[indx];
 
@@ -505,11 +522,11 @@ void *osd_fopen (const char *game, const char *filename, int filetype, int _writ
 			{
 				sprintf (name, "%s/%s", dir_name, gamename);
 				LOG(("Trying %s directory\n", name));
-                if( cache_stat (name, &stat_buffer) == 0 && (stat_buffer.st_mode & S_IFDIR) )
+                		if( cache_stat (name, &stat_buffer) == 0 && (stat_buffer.st_mode & S_IFDIR) )
 				{
 					sprintf (name, "%s/%s/%s", dir_name, gamename, filename);
 					LOG(("Trying %s file\n", name));
-                    if( filetype == OSD_FILETYPE_ROM )
+                    			if( filetype == OSD_FILETYPE_ROM )
 					{
 						if( checksum_file(name, &f->data, &f->length, &f->crc) == 0 )
 						{
@@ -566,22 +583,25 @@ void *osd_fopen (const char *game, const char *filename, int filetype, int _writ
 					}
 				}
 			}
-    	}
-    break; /* end of IMAGE_R */
+    		}
+    		break; /* end of IMAGE_R */
 
 	case OSD_FILETYPE_IMAGE_RW:
+
+			LOG(("osd_fopen: attempting to %s read/write image '%s' with name '%s'\n", _write ? "write" : "read", filename, gamename));
+
 		{
 			static char *write_modes[] = {"rb","wb","r+b","r+b","w+b"};
-            char file[256];
+            		char file[256];
 			char *extension;
 
 			LOG(("Open IMAGE_RW '%s' for %s mode '%s'\n", filename, game, write_modes[_write]));
 			strcpy (file, filename);
 
-			do
-            {
+		do
+            	{
 			/* 29-05-00 Lee Ward: Reversed the search order. */
-            for (indx=rompathc-1; indx>=0; --indx)
+            		for (indx=rompathc-1; indx>=0; --indx)
 			{
 				const char *dir_name = rompathv[indx];
 
@@ -721,6 +741,9 @@ void *osd_fopen (const char *game, const char *filename, int filetype, int _writ
 
 
 	case OSD_FILETYPE_NVRAM:
+
+		LOG(("osd_fopen: attempting to %s nvram '%s' with name '%s'\n", _write ? "write" : "read", filename, gamename));
+
 		if( !found )
 		{
 			sprintf (name, "%s/%s.nv", nvdir, gamename);
@@ -749,6 +772,9 @@ void *osd_fopen (const char *game, const char *filename, int filetype, int _writ
 		break;
 
 	case OSD_FILETYPE_HIGHSCORE:
+
+		LOG(("osd_fopen: attempting to %s highscore file '%s' with name '%s'\n", _write ? "write" : "read", filename, gamename));
+
 		if( mame_highscore_enabled () )
 		{
 			if( !found )
@@ -780,6 +806,9 @@ void *osd_fopen (const char *game, const char *filename, int filetype, int _writ
 		break;
 
     case OSD_FILETYPE_CONFIG:
+
+		LOG(("osd_fopen: attempting to %s configuration file '%s' with name '%s'\n", _write ? "write" : "read", filename, gamename));
+
 		sprintf (name, "%s/%s.cfg", cfgdir, gamename);
 		f->type = kPlainFile;
 		f->file = fopen (name, _write ? "wb" : "rb");
@@ -805,6 +834,9 @@ void *osd_fopen (const char *game, const char *filename, int filetype, int _writ
 		break;
 
 	case OSD_FILETYPE_INPUTLOG:
+
+		LOG(("osd_fopen: attempting to %s input log '%s' with name '%s'\n", _write ? "write" : "read", filename, gamename));
+
 		sprintf (name, "%s/%s.inp", inpdir, gamename);
 		f->type = kPlainFile;
 		f->file = fopen (name, _write ? "wb" : "rb");
@@ -849,6 +881,9 @@ void *osd_fopen (const char *game, const char *filename, int filetype, int _writ
         break;
 
 	case OSD_FILETYPE_STATE:
+
+		LOG(("osd_fopen: attempting to %s state save file '%s' with name '%s'\n", _write ? "write" : "read", filename, gamename));
+
 		sprintf (name, "%s/%s.sta", stadir, gamename);
 		f->file = fopen (name, _write ? "wb" : "rb");
 		found = !(f->file == 0);
@@ -869,6 +904,9 @@ void *osd_fopen (const char *game, const char *filename, int filetype, int _writ
 		break;
 
 	case OSD_FILETYPE_ARTWORK:
+
+		LOG(("osd_fopen: attempting to %s artwork '%s' with name '%s'\n", _write ? "write" : "read", filename, gamename));
+
 		/* only for reading */
 		if( _write )
 		{
@@ -937,6 +975,9 @@ void *osd_fopen (const char *game, const char *filename, int filetype, int _writ
         break;
 
 	case OSD_FILETYPE_MEMCARD:
+
+		LOG(("osd_fopen: attempting to %s memory card '%s' with name '%s'\n", _write ? "write" : "read", filename, gamename));
+
 		sprintf (name, "%s/%s", memcarddir, filename);
 		f->type = kPlainFile;
 		f->file = fopen (name, _write ? "wb" : "rb");
@@ -944,6 +985,9 @@ void *osd_fopen (const char *game, const char *filename, int filetype, int _writ
 		break;
 
 	case OSD_FILETYPE_SCREENSHOT:
+
+		LOG(("osd_fopen: attempting to %s screenshot '%s' with name '%s'\n", _write ? "write" : "read", filename, gamename));
+
 		/* only for writing */
 		if( !_write )
 		{
@@ -959,6 +1003,16 @@ void *osd_fopen (const char *game, const char *filename, int filetype, int _writ
 
 	case OSD_FILETYPE_HIGHSCORE_DB:
 	case OSD_FILETYPE_HISTORY:
+
+		if( filetype == OSD_FILETYPE_HIGHSCORE_DB )
+		{
+			LOG(("osd_fopen: attempting to %s highscore database '%s' with name '%s'\n", _write ? "write" : "read", filename, gamename));
+		}
+		else
+		{
+			LOG(("osd_fopen: attempting to %s history file '%s' with name '%s'\n", _write ? "write" : "read", filename, gamename));
+		}
+
 		/* only for reading */
 		if( _write )
 		{
@@ -973,6 +1027,9 @@ void *osd_fopen (const char *game, const char *filename, int filetype, int _writ
 
 	/* Steph */
 	case OSD_FILETYPE_CHEAT:
+
+		LOG(("osd_fopen: attempting to %s cheat file '%s' with name '%s'\n", _write ? "write" : "read", filename, gamename));
+
 		sprintf (name, "%s/%s", cheatdir, filename);
 		f->type = kPlainFile;
 		/* open as ASCII files, not binary like the others */
@@ -981,6 +1038,9 @@ void *osd_fopen (const char *game, const char *filename, int filetype, int _writ
         break;
 
 	case OSD_FILETYPE_LANGUAGE:
+
+		LOG(("osd_fopen: attempting to %s language file '%s' with name '%s'\n", _write ? "write" : "read", filename, gamename));
+
 		/* only for reading */
 		if( _write )
 		{

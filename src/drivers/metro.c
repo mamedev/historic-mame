@@ -8,29 +8,31 @@
 Main  CPU    :  MC68000
 
 Video Chips  :  Imagetek 14100 052 9227KK701	Or
-                Imagetek 14220 071 9338EK707
+                Imagetek 14220 071 9338EK707	Or
+				Imagetek 14300 095
 
-Sound Chips  :	NEC78C10 (CPU, unemulated) + OKIM6295 + YM2143  or
+Sound Chips  :	NEC78C10 (CPU, unemulated) + OKIM6295 + YM2413  or
                 YRW801-M + YMF278B (unemulated)
 
 Other        :  Memory Blitter
 
 ---------------------------------------------------------------------------
-Year + Game						PCB			Issues / Notes
+Year + Game						PCB			Video Chip	Issues / Notes
 ---------------------------------------------------------------------------
-92	The Karate Tournament		?
-92	Last Fortress - Toride		VG420
-92	Pang Poms					VG420
-92	Sky Alert					VG420
-93? Moeyo Gonta!!               VG460-(B)
-93	Poitto!						MTR5260-A
-94	Dharma Doujou				?
-94  Toride II Adauchi Gaiden	MTR5260-A
-95	Daitoride					MTR5260-A
-95	Puzzli 						MTR5260-A
-95	Pururun						MTR5260-A
-96	Bal Cube					?			Preliminary: wrong colors, some wrong sprites
-94  Blazing Tornado             ?           Also has Konami 053936 gfx chip
+92	The Karate Tournament		?			14100
+92	Last Fortress - Toride		VG420		14100
+92	Pang Poms					VG420		14100
+92	Sky Alert					VG420		14100
+93?	Moeyo Gonta!!               VG460-(B)	14100
+93	Poitto!						MTR5260-A	14100
+94	Dharma Doujou				?			?
+94	Toride II Adauchi Gaiden	MTR5260-A	14220
+94	Blazing Tornado				?			14220		Also has Konami 053936 gfx chip
+95	Daitoride					MTR5260-A	14220
+95	Puzzli 						MTR5260-A	14220
+95	Pururun						MTR5260-A	14220
+96	Bal Cube					?			14220
+96	Mouja						VG410-B		14300		No sound CPU
 ---------------------------------------------------------------------------
 Not dumped yet:
 94	Gun Master
@@ -40,16 +42,16 @@ To Do:
 
 -	Priorities (pdrawgfxzoom). Priorities are particularly bad in blzntrnd.
 -	Sprite palette marking doesn't know about 8bpp.
--	1 pixel granularity in the window's placement (8 pixels now, see daitorid)
+-	1 pixel granularity in the window's placement (8 pixels now, see daitorid title)
 -	Sound (as soon as the NEC78C10 gets emulated)
 -	Coin lockout
--	Most games, in service mode, seem to require that you press
-	start1&2 *exactly at once* in order to advance to the next
-	screen (e.g. holding 1 then pressing 2 doesn't work)
--	Some gfx problems in ladykill
+-	Some gfx problems in ladykill and puzzli
 -	To save memory, 8bpp tiles are handled fetching data directly from the ROMs,
 	without decoding them to a separate buffer, so screen rotation is not
-	supported.
+	supported. The same applies to 16x16 tiles.
+-	Sprite zoom in Mouja at the end of a match doesn't seem right
+-	Are the 16x16 tiles used by Mouja a Imagetek 14300-only feature?
+-	Flip screen doesn't work correctly in Mouja due to asymmetrical visible area
 
 Notes:
 - To enter service mode in Lady Killer, toggle the dip switch and reset keeping
@@ -67,6 +69,7 @@ extern data16_t *metro_videoregs;
 extern data16_t *metro_screenctrl;
 extern data16_t *metro_scroll;
 extern data16_t *metro_tiletable;
+extern size_t metro_tiletable_size;
 extern data16_t *metro_vram_0, *metro_vram_1, *metro_vram_2;
 extern data16_t *metro_window;
 extern data16_t *metro_K053936_ram,*metro_K053936_ctrl;
@@ -77,7 +80,6 @@ WRITE16_HANDLER( metro_K053936_w );
 
 WRITE16_HANDLER( metro_paletteram_w );
 
-WRITE16_HANDLER( metro_tiletable_w );
 WRITE16_HANDLER( metro_window_w );
 
 WRITE16_HANDLER( metro_vram_0_w );
@@ -87,6 +89,7 @@ WRITE16_HANDLER( metro_vram_2_w );
 
 int  metro_vh_start_14100(void);
 int  metro_vh_start_14220(void);
+int  metro_vh_start_14300(void);
 int  blzntrnd_vh_start(void);
 void metro_vh_stop(void);
 
@@ -103,14 +106,11 @@ void metro_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 static data16_t irq_enable;
 
-static UINT8 irq_line;
+static int irq_line;
 
-static UINT8 vblank_irq;
-static UINT8 blitter_irq;
-static UINT8 unknown1_irq;
-static UINT8 unknown2_irq;
-static UINT8 unknown3_irq;
-static UINT8 unknown4_irq;
+static UINT8 requested_irq[8];
+
+static data16_t mouja_irq_levels[8];
 
 
 WRITE16_HANDLER( metro_irq_enable_w )
@@ -121,20 +121,38 @@ WRITE16_HANDLER( metro_irq_enable_w )
 
 READ16_HANDLER( metro_irq_cause_r )
 {
-	return	vblank_irq   * 0x01 +
-			unknown1_irq * 0x02 +
-			blitter_irq  * 0x04 +
-			unknown2_irq * 0x08 +
-			unknown3_irq * 0x10 +
-			unknown4_irq * 0x20 ;
+	return	requested_irq[0] * 0x01 +	// vblank
+			requested_irq[1] * 0x02 +
+			requested_irq[2] * 0x04 +	// blitter
+			requested_irq[3] * 0x08 +
+			requested_irq[4] * 0x10 +
+			requested_irq[5] * 0x20 +
+			requested_irq[6] * 0x40 +	// unused
+			requested_irq[7] * 0x80 ;	// unused
 }
 
 
 /* Update the IRQ state based on all possible causes */
 static void update_irq_state(void)
 {
-	int state =	(metro_irq_cause_r(0,0) & ~irq_enable) ? ASSERT_LINE : CLEAR_LINE;
-	cpu_set_irq_line(0, irq_line, state);
+	if (irq_line == -1)	/* mouja */
+	{
+		int i;
+
+
+		for (i = 0;i < 8;i++)
+		{
+			if (requested_irq[i])
+				cpu_set_irq_line(0, mouja_irq_levels[i], ASSERT_LINE);
+			else
+				cpu_set_irq_line(0, mouja_irq_levels[i], CLEAR_LINE);
+		}
+	}
+	else
+	{
+		int state =	(metro_irq_cause_r(0,0) & ~irq_enable) ? ASSERT_LINE : CLEAR_LINE;
+		cpu_set_irq_line(0, irq_line, state);
+	}
 }
 
 
@@ -145,16 +163,25 @@ WRITE16_HANDLER( metro_irq_cause_w )
 	if (ACCESSING_LSB)
 	{
 		data &= ~irq_enable;
-		if (data & 0x01)	vblank_irq   = 0;
-		if (data & 0x02)	unknown1_irq = 0;	// DAITORIDE, BALCUBE, KARATOUR
-		if (data & 0x04)	blitter_irq  = 0;
-		if (data & 0x08)	unknown2_irq = 0;	// KARATOUR
-		if (data & 0x10)	unknown3_irq = 0;
-		if (data & 0x20)	unknown4_irq = 0;	// KARATOUR, BLZNTRND
+		if (data & 0x01)	requested_irq[0] = 0;
+		if (data & 0x02)	requested_irq[1] = 0;	// DAITORIDE, BALCUBE, KARATOUR, MOUJA
+		if (data & 0x04)	requested_irq[2] = 0;
+		if (data & 0x08)	requested_irq[3] = 0;	// KARATOUR
+		if (data & 0x10)	requested_irq[4] = 0;
+		if (data & 0x20)	requested_irq[5] = 0;	// KARATOUR, BLZNTRND
+		if (data & 0x40)	requested_irq[6] = 0;
+		if (data & 0x80)	requested_irq[7] = 0;
 	}
 
 	update_irq_state();
 }
+
+
+WRITE16_HANDLER( mouja_irq_levels_w )
+{
+	COMBINE_DATA(&mouja_irq_levels[offset]);
+}
+
 
 
 int metro_interrupt(void)
@@ -162,12 +189,12 @@ int metro_interrupt(void)
 	switch ( cpu_getiloops() )
 	{
 		case 0:
-			vblank_irq = 1;
+			requested_irq[0] = 1;
 			update_irq_state();
 			break;
 
 		default:
-			unknown3_irq = 1;
+			requested_irq[4] = 1;
 			update_irq_state();
 			break;
 	}
@@ -177,7 +204,7 @@ int metro_interrupt(void)
 
 static void vblank_end_callback(int param)
 {
-	unknown4_irq = param;
+	requested_irq[5] = param;
 }
 
 /* lev 2-7 (lev 1 seems sound related) */
@@ -186,19 +213,37 @@ int karatour_interrupt(void)
 	switch ( cpu_getiloops() )
 	{
 		case 0:
-			vblank_irq = 1;
-			unknown4_irq = 1;	// write the scroll registers
+			requested_irq[0] = 1;
+			requested_irq[5] = 1;	// write the scroll registers
 			timer_set(TIME_IN_USEC(DEFAULT_REAL_60HZ_VBLANK_DURATION), 0, vblank_end_callback);
 			update_irq_state();
 			break;
 
 		default:
-			unknown3_irq = 1;
+			requested_irq[4] = 1;
 			update_irq_state();
 			break;
 	}
 	return ignore_interrupt();
 }
+
+int mouja_interrupt(void)
+{
+	switch ( cpu_getiloops() )
+	{
+		case 0:
+			requested_irq[0] = 1;
+			update_irq_state();
+			break;
+
+		default:
+			requested_irq[1] = 1;
+			update_irq_state();
+			break;
+	}
+	return ignore_interrupt();
+}
+
 
 /***************************************************************************
 
@@ -208,6 +253,7 @@ int karatour_interrupt(void)
 
 ***************************************************************************/
 
+#ifdef TEST_SOUND
 static int metro_io_callback(int ioline, int state)
 {
 	data8_t data;
@@ -352,14 +398,56 @@ static struct YM2151interface daitorid_ym2151_interface =
 	{ metro_sound_irq_handler },	/* irq handler */
 	{ 0 }							/* port_write */
 };
+#else
+WRITE16_HANDLER( metro_soundlatch_w )
+{
+	if ( ACCESSING_LSB && (Machine->sample_rate != 0) )
+	{
+//		soundlatch_w(0,data & 0xff);
+	}
+}
 
-static struct OKIM6295interface daitorid_okim6295_interface =
+data16_t metro_soundstatus;
+
+WRITE16_HANDLER( metro_soundstatus_w )
+{
+	if (ACCESSING_LSB)
+	{
+		metro_soundstatus = (~data) & 1;
+	}
+	if (data & ~1)	logerror("CPU #0 PC %06X : unknown bits of soundstatus written: %04X\n",cpu_get_pc(),data);
+}
+
+
+READ16_HANDLER( metro_soundstatus_r )
+{
+//	return metro_soundstatus & 1;
+	return rand() & 1;
+}
+
+
+READ16_HANDLER( dharma_soundstatus_r )
+{
+//	return readinputport(0) | (metro_soundstatus ? 0x80 : 0);
+	return readinputport(0) | (0);
+}
+#endif
+
+static struct OKIM6295interface okim6295_interface =
 {
 	1,
-	{ 8000 },	/* ? */
+	{ 12000 },	/* ??? */
 	{ REGION_SOUND1 },
-	{ 50 }
+	{ 100 }
 };
+
+static struct YM2413interface ym2413_interface =
+{
+	1,	/* 1 chip */
+	8000000,	/* 8MHz ??? */
+	{ 100 },	/* Volume */
+};
+
 
 /***************************************************************************
 
@@ -407,7 +495,7 @@ WRITE16_HANDLER( metro_coin_lockout_4words_w )
 	that the blitter can readily use (which is a form of compression)
 */
 
-data16_t *metro_rombank;
+static data16_t *metro_rombank;
 
 READ16_HANDLER( metro_bankedrom_r )
 {
@@ -475,7 +563,7 @@ data16_t *metro_blitter_regs;
 
 void metro_blit_done(int param)
 {
-	blitter_irq = 1;
+	requested_irq[2] = 1;
 	update_irq_state();
 }
 
@@ -708,7 +796,7 @@ static MEMORY_WRITE16_START( balcube_writemem )
 	{ 0x600000, 0x61ffff, metro_vram_0_w, &metro_vram_0	},	// Layer 0
 	{ 0x620000, 0x63ffff, metro_vram_1_w, &metro_vram_1	},	// Layer 1
 	{ 0x640000, 0x65ffff, metro_vram_2_w, &metro_vram_2	},	// Layer 2
-	{ 0x678000, 0x6787ff, metro_tiletable_w, &metro_tiletable		},	// Tiles Set
+	{ 0x678000, 0x6787ff, MWA16_RAM, &metro_tiletable, &metro_tiletable_size		},	// Tiles Set
 	{ 0x678840, 0x67884d, metro_blitter_w, &metro_blitter_regs		},	// Tiles Blitter
 	{ 0x678860, 0x67886b, metro_window_w, &metro_window				},	// Tilemap Window
 	{ 0x678870, 0x67887b, MWA16_RAM, &metro_scroll		},	// Scroll
@@ -751,7 +839,7 @@ static MEMORY_WRITE16_START( daitorid_writemem )
 	{ 0x440000, 0x45ffff, metro_vram_2_w, &metro_vram_2	},	// Layer 2
 	{ 0x470000, 0x473fff, metro_paletteram_w, &paletteram16	},	// Palette
 	{ 0x474000, 0x474fff, MWA16_RAM, &spriteram16, &spriteram_size				},	// Sprites
-	{ 0x478000, 0x4787ff, metro_tiletable_w, &metro_tiletable	},	// Tiles Set
+	{ 0x478000, 0x4787ff, MWA16_RAM, &metro_tiletable, &metro_tiletable_size	},	// Tiles Set
 	{ 0x478840, 0x47884d, metro_blitter_w, &metro_blitter_regs	},	// Tiles Blitter
 	{ 0x478860, 0x47886b, metro_window_w, &metro_window			},	// Tilemap Window
 	{ 0x478870, 0x47887b, MWA16_RAM, &metro_scroll		},	// Scroll
@@ -797,7 +885,7 @@ static MEMORY_WRITE16_START( dharma_writemem )
 	{ 0x840000, 0x85ffff, metro_vram_2_w, &metro_vram_2	},	// Layer 2
 	{ 0x870000, 0x873fff, metro_paletteram_w, &paletteram16	},	// Palette
 	{ 0x874000, 0x874fff, MWA16_RAM, &spriteram16, &spriteram_size				},	// Sprites
-	{ 0x878000, 0x8787ff, metro_tiletable_w, &metro_tiletable	},	// Tiles Set
+	{ 0x878000, 0x8787ff, MWA16_RAM, &metro_tiletable, &metro_tiletable_size	},	// Tiles Set
 	{ 0x878840, 0x87884d, metro_blitter_w, &metro_blitter_regs	},	// Tiles Blitter
 	{ 0x878860, 0x87886b, metro_window_w, &metro_window	},	// Tilemap Window
 	{ 0x878870, 0x87887b, MWA16_RAM, &metro_scroll		},	// Scroll Regs
@@ -867,7 +955,7 @@ static MEMORY_WRITE16_START( karatour_writemem )
 	{ 0x875000, 0x875fff, karatour_vram_0_w				},	// Layer 0 (Part of)
 	{ 0x876000, 0x876fff, karatour_vram_1_w				},	// Layer 1 (Part of)
 	{ 0x877000, 0x877fff, karatour_vram_2_w				},	// Layer 2 (Part of)
-	{ 0x878000, 0x8787ff, metro_tiletable_w, &metro_tiletable	},	// Tiles Set
+	{ 0x878000, 0x8787ff, MWA16_RAM, &metro_tiletable, &metro_tiletable_size	},	// Tiles Set
 	{ 0x878800, 0x878813, MWA16_RAM, &metro_videoregs	},	// Video Registers
 	{ 0x878840, 0x87884d, metro_blitter_w, &metro_blitter_regs	},	// Tiles Blitter
 	{ 0x878860, 0x87886b, metro_window_w, &metro_window	},	// Tilemap Window
@@ -915,7 +1003,7 @@ static MEMORY_WRITE16_START( lastfort_writemem )
 	{ 0x840000, 0x85ffff, metro_vram_2_w, &metro_vram_2	},	// Layer 2
 	{ 0x870000, 0x873fff, metro_paletteram_w, &paletteram16	},	// Palette
 	{ 0x874000, 0x874fff, MWA16_RAM, &spriteram16, &spriteram_size				},	// Sprites
-	{ 0x878000, 0x8787ff, metro_tiletable_w, &metro_tiletable	},	// Tiles Set
+	{ 0x878000, 0x8787ff, MWA16_RAM, &metro_tiletable, &metro_tiletable_size	},	// Tiles Set
 	{ 0x878800, 0x878813, MWA16_RAM, &metro_videoregs	},	// Video Registers
 	{ 0x878840, 0x87884d, metro_blitter_w, &metro_blitter_regs	},	// Tiles Blitter
 	{ 0x878860, 0x87886b, metro_window_w, &metro_window	},	// Tilemap Window
@@ -965,7 +1053,7 @@ static MEMORY_WRITE16_START( pangpoms_writemem )
 	{ 0x440000, 0x45ffff, metro_vram_2_w, &metro_vram_2	},	// Layer 2
 	{ 0x470000, 0x473fff, metro_paletteram_w, &paletteram16	},	// Palette
 	{ 0x474000, 0x474fff, MWA16_RAM, &spriteram16, &spriteram_size				},	// Sprites
-	{ 0x478000, 0x4787ff, metro_tiletable_w, &metro_tiletable	},	// Tiles Set
+	{ 0x478000, 0x4787ff, MWA16_RAM, &metro_tiletable, &metro_tiletable_size	},	// Tiles Set
 	{ 0x478800, 0x478813, MWA16_RAM, &metro_videoregs	},	// Video Registers
 	{ 0x478840, 0x47884d, metro_blitter_w, &metro_blitter_regs	},	// Tiles Blitter
 	{ 0x478860, 0x47886b, metro_window_w, &metro_window	},	// Tilemap Window
@@ -1011,7 +1099,7 @@ static MEMORY_WRITE16_START( poitto_writemem )
 	{ 0xc40000, 0xc5ffff, metro_vram_2_w, &metro_vram_2	},	// Layer 2
 	{ 0xc70000, 0xc73fff, metro_paletteram_w, &paletteram16	},	// Palette
 	{ 0xc74000, 0xc74fff, MWA16_RAM, &spriteram16, &spriteram_size				},	// Sprites
-	{ 0xc78000, 0xc787ff, metro_tiletable_w, &metro_tiletable	},	// Tiles Set
+	{ 0xc78000, 0xc787ff, MWA16_RAM, &metro_tiletable, &metro_tiletable_size	},	// Tiles Set
 	{ 0xc78800, 0xc78813, MWA16_RAM, &metro_videoregs	},	// Video Registers
 	{ 0xc78840, 0xc7884d, metro_blitter_w, &metro_blitter_regs	},	// Tiles Blitter
 	{ 0xc78860, 0xc7886b, metro_window_w, &metro_window	},	// Tilemap Window
@@ -1061,7 +1149,7 @@ static MEMORY_WRITE16_START( skyalert_writemem )
 	{ 0x840000, 0x85ffff, metro_vram_2_w, &metro_vram_2	},	// Layer 2
 	{ 0x870000, 0x873fff, metro_paletteram_w, &paletteram16	},	// Palette
 	{ 0x874000, 0x874fff, MWA16_RAM, &spriteram16, &spriteram_size				},	// Sprites
-	{ 0x878000, 0x8787ff, metro_tiletable_w, &metro_tiletable	},	// Tiles Set
+	{ 0x878000, 0x8787ff, MWA16_RAM, &metro_tiletable, &metro_tiletable_size	},	// Tiles Set
 	{ 0x878800, 0x878813, MWA16_RAM, &metro_videoregs	},	// Video Registers
 	{ 0x878840, 0x87884d, metro_blitter_w, &metro_blitter_regs	},	// Tiles Blitter
 	{ 0x878860, 0x87886b, metro_window_w, &metro_window	},	// Tilemap Window
@@ -1107,7 +1195,7 @@ static MEMORY_WRITE16_START( pururun_writemem )
 	{ 0xc40000, 0xc5ffff, metro_vram_2_w, &metro_vram_2	},	// Layer 2
 	{ 0xc70000, 0xc73fff, metro_paletteram_w, &paletteram16	},	// Palette
 	{ 0xc74000, 0xc74fff, MWA16_RAM, &spriteram16, &spriteram_size				},	// Sprites
-	{ 0xc78000, 0xc787ff, metro_tiletable_w, &metro_tiletable	},	// Tiles Set
+	{ 0xc78000, 0xc787ff, MWA16_RAM, &metro_tiletable, &metro_tiletable_size	},	// Tiles Set
 	{ 0xc78840, 0xc7884d, metro_blitter_w, &metro_blitter_regs	},	// Tiles Blitter
 	{ 0xc78860, 0xc7886b, metro_window_w, &metro_window	},	// Tilemap Window
 	{ 0xc78870, 0xc7887b, MWA16_RAM, &metro_scroll		},	// Scroll Regs
@@ -1153,7 +1241,7 @@ static MEMORY_WRITE16_START( toride2g_writemem )
 	{ 0xc40000, 0xc5ffff, metro_vram_2_w, &metro_vram_2	},	// Layer 2
 	{ 0xc70000, 0xc73fff, metro_paletteram_w, &paletteram16	},	// Palette
 	{ 0xc74000, 0xc74fff, MWA16_RAM, &spriteram16, &spriteram_size				},	// Sprites
-	{ 0xc78000, 0xc787ff, metro_tiletable_w, &metro_tiletable	},	// Tiles Set
+	{ 0xc78000, 0xc787ff, MWA16_RAM, &metro_tiletable, &metro_tiletable_size	},	// Tiles Set
 	{ 0xc78840, 0xc7884d, metro_blitter_w, &metro_blitter_regs	},	// Tiles Blitter
 	{ 0xc78860, 0xc7886b, metro_window_w, &metro_window	},	// Tilemap Window
 	{ 0xc78870, 0xc7887b, MWA16_RAM, &metro_scroll		},	// Scroll Regs
@@ -1205,7 +1293,7 @@ static MEMORY_WRITE16_START( blzntrnd_writemem )
 	{ 0x200000, 0x21ffff, metro_vram_0_w, &metro_vram_0	},	// Layer 0
 	{ 0x220000, 0x23ffff, metro_vram_1_w, &metro_vram_1	},	// Layer 1
 	{ 0x240000, 0x25ffff, metro_vram_2_w, &metro_vram_2	},	// Layer 2
-	{ 0x278000, 0x2787ff, metro_tiletable_w, &metro_tiletable		},	// Tiles Set
+	{ 0x278000, 0x2787ff, MWA16_RAM, &metro_tiletable, &metro_tiletable_size		},	// Tiles Set
 //	{ 0x278840, 0x27884d, metro_blitter_w, &metro_blitter_regs		},	// Tiles Blitter
 	{ 0x278860, 0x27886b, metro_window_w, &metro_window				},	// Tilemap Window
 	{ 0x278870, 0x27887b, MWA16_RAM, &metro_scroll		},	// Scroll
@@ -1220,6 +1308,59 @@ static MEMORY_WRITE16_START( blzntrnd_writemem )
 	{ 0x400000, 0x43ffff, metro_K053936_w, &metro_K053936_ram	},	// 053936
 	{ 0x500000, 0x500fff, MWA16_RAM						},	// 053936 3D rotation control?
 	{ 0x600000, 0x60001f, MWA16_RAM, &metro_K053936_ctrl},	// 053936 control
+MEMORY_END
+
+
+/***************************************************************************
+							Mouja
+***************************************************************************/
+
+static MEMORY_READ16_START( mouja_readmem )
+	{ 0x000000, 0x07ffff, MRA16_ROM				},	// ROM
+	{ 0xf00000, 0xf0ffff, MRA16_RAM				},	// RAM
+	{ 0x400000, 0x41ffff, MRA16_RAM				},	// Layer 0
+	{ 0x420000, 0x43ffff, MRA16_RAM				},	// Layer 1
+	{ 0x440000, 0x45ffff, MRA16_RAM				},	// Layer 2
+	{ 0x470000, 0x473fff, MRA16_RAM				},	// Palette
+	{ 0x474000, 0x474fff, MRA16_RAM				},	// Sprites
+	{ 0x478000, 0x4787ff, MRA16_RAM				},	// Tiles Set
+	{ 0x478832, 0x478833, metro_irq_cause_r		},	// IRQ Cause
+	{ 0x478880, 0x478881, input_port_0_word_r	},	// Inputs
+	{ 0x478882, 0x478883, input_port_1_word_r	},	//
+	{ 0x478884, 0x478885, input_port_2_word_r	},	//
+//	{ 0x478886, 0x478887, input_port_3_word_r	},	//
+	{ 0xd00000, 0xd00001, OKIM6295_status_0_lsb_r },
+#if 0
+	{ 0x460000, 0x46ffff, metro_bankedrom_r		},	// Banked ROM
+#endif
+MEMORY_END
+
+static MEMORY_WRITE16_START( mouja_writemem )
+	{ 0x000000, 0x07ffff, MWA16_ROM						},	// ROM
+	{ 0xf00000, 0xf0ffff, MWA16_RAM						},	// RAM
+	{ 0x400000, 0x41ffff, metro_vram_0_w, &metro_vram_0	},	// Layer 0
+	{ 0x420000, 0x43ffff, metro_vram_1_w, &metro_vram_1	},	// Layer 1
+	{ 0x440000, 0x45ffff, metro_vram_2_w, &metro_vram_2	},	// Layer 2
+	{ 0x470000, 0x473fff, metro_paletteram_w, &paletteram16	},	// Palette
+	{ 0x474000, 0x474fff, MWA16_RAM, &spriteram16, &spriteram_size				},	// Sprites
+	{ 0x478000, 0x4787ff, MWA16_RAM, &metro_tiletable, &metro_tiletable_size	},	// Tiles Set
+	{ 0x47880e, 0x47880f, MWA16_RAM, &metro_screenctrl	},	// Screen Control
+	{ 0x478810, 0x47881f, mouja_irq_levels_w			},	// IRQ Levels
+	{ 0x478830, 0x478831, metro_irq_enable_w			},	// IRQ Enable
+	{ 0x478832, 0x478833, metro_irq_cause_w				},	// IRQ Acknowledge
+	{ 0x478836, 0x478837, MWA16_NOP						},	// ? watchdog ?
+	{ 0x478860, 0x47886b, metro_window_w, &metro_window	},	// Tilemap Window
+	{ 0x478850, 0x47885b, MWA16_RAM, &metro_scroll		},	// Scroll Regs
+	{ 0x479700, 0x479713, MWA16_RAM, &metro_videoregs	},	// Video Registers
+	{ 0xc00000, 0xc00001, YM2413_register_port_0_lsb_w	},
+	{ 0xc00002, 0xc00003, YM2413_data_port_0_lsb_w		},
+	{ 0xd00000, 0xd00001, OKIM6295_data_0_msb_w },
+
+#if 0
+	{ 0x478840, 0x47884d, metro_blitter_w, &metro_blitter_regs	},	// Tiles Blitter
+	{ 0x47883a, 0x47883b, MWA16_RAM, &metro_rombank		},	// Rom Bank
+	{ 0x800002, 0x800009, metro_coin_lockout_4words_w	},	// Coin Lockout
+#endif
 MEMORY_END
 
 
@@ -1312,7 +1453,7 @@ INPUT_PORTS_START( balcube )
 	PORT_DIPSETTING(      0x0000, "1" )
 	PORT_DIPSETTING(      0x0200, "2" )
 	PORT_DIPSETTING(      0x0300, "3" )
-	PORT_DIPNAME( 0x0400, 0x0400, "2 Player Game" )
+	PORT_DIPNAME( 0x0400, 0x0400, "2 Players Game" )
 	PORT_DIPSETTING(      0x0400, "2 Credits" )
 	PORT_DIPSETTING(      0x0000, "1 Credit" )
 	PORT_DIPNAME( 0x0800, 0x0800, DEF_STR( Lives ) )
@@ -1453,7 +1594,7 @@ INPUT_PORTS_START( dharma )
 	PORT_DIPSETTING(      0x0c00, "Normal" )
 	PORT_DIPSETTING(      0x0400, "Hard" )
 	PORT_DIPSETTING(      0x0000, "Hardest" )
-	PORT_DIPNAME( 0x1000, 0x1000, "2 Player Game" )
+	PORT_DIPNAME( 0x1000, 0x1000, "2 Players Game" )
 	PORT_DIPSETTING(      0x1000, "2 Credits" )
 	PORT_DIPSETTING(      0x0000, "1 Credit" )
 	PORT_DIPNAME( 0x2000, 0x2000, "Allow Continue" )
@@ -1496,8 +1637,8 @@ INPUT_PORTS_START( karatour )
 	PORT_DIPSETTING(      0x0004, "01" )
 	PORT_DIPSETTING(      0x0000, "00" )
 	PORT_DIPNAME( 0x0010, 0x0010, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(      0x0010, "60K" )
 	PORT_DIPSETTING(      0x0000, "40K" )
+	PORT_DIPSETTING(      0x0010, "60K" )
 	PORT_DIPNAME( 0x0020, 0x0020, DEF_STR( Free_Play ) )
 	PORT_DIPSETTING(      0x0020, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
@@ -1636,7 +1777,7 @@ INPUT_PORTS_START( lastfort )
 	PORT_DIPNAME( 0x0008, 0x0008, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(      0x0008, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0010, 0x0010, "2 Player Game" )
+	PORT_DIPNAME( 0x0010, 0x0010, "2 Players Game" )
 	PORT_DIPSETTING(      0x0010, "2 Credits" )
 	PORT_DIPSETTING(      0x0000, "1 Credit" )
 	PORT_DIPNAME( 0x0020, 0x0020, "Allow Continue" )
@@ -1685,7 +1826,7 @@ INPUT_PORTS_START( lastfero )
 	PORT_DIPNAME( 0x0008, 0x0008, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(      0x0008, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0010, 0x0010, "2 Player Game" )
+	PORT_DIPNAME( 0x0010, 0x0010, "2 Players Game" )
 	PORT_DIPSETTING(      0x0010, "2 Credits" )
 	PORT_DIPSETTING(      0x0000, "1 Credit" )
 	PORT_DIPNAME( 0x0020, 0x0020, "Allow Continue" )
@@ -1827,8 +1968,8 @@ INPUT_PORTS_START( skyalert )
 	PORT_DIPSETTING(      0x000c, "3" )
 	PORT_DIPSETTING(      0x0000, "4" )
 	PORT_DIPNAME( 0x0030, 0x0030, DEF_STR( Bonus_Life ) )	// the game shows wrong values on screen ? (c0e2f2.l = score)
-	PORT_DIPSETTING(      0x0030, "100K, Every 400K" )	// c <- other effect (difficulty?)
-	PORT_DIPSETTING(      0x0020, "200K, Every 400K" )	// d
+	PORT_DIPSETTING(      0x0030, "100K, every 400K" )	// c <- other effect (difficulty?)
+	PORT_DIPSETTING(      0x0020, "200K, every 400K" )	// d
 	PORT_DIPSETTING(      0x0010, "200K"  )				// e
 	PORT_DIPSETTING(      0x0000, "None" )				// f
 	PORT_DIPNAME( 0x0040, 0x0040, "Allow Continue" )
@@ -1868,7 +2009,7 @@ INPUT_PORTS_START( pururun )
 	PORT_DIPNAME( 0x0400, 0x0400, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(      0x0400, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0800, 0x0800, "2 Player Game" )
+	PORT_DIPNAME( 0x0800, 0x0800, "2 Players Game" )
 	PORT_DIPSETTING(      0x0800, "2 Credits" )
 	PORT_DIPSETTING(      0x0000, "1 Credit" )
 	PORT_DIPNAME( 0x1000, 0x1000, "Bombs" )
@@ -2012,9 +2153,6 @@ INPUT_PORTS_START( blzntrnd )
 	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 	PORT_BITX(0x0080, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
-//	PORT_DIPNAME( 0x0080, 0x0080, DEF_STR( Service_Mode ) )
-//	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
-//	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 	PORT_DIPNAME( 0x0300, 0x0300, "CP Single" )
 	PORT_DIPSETTING(      0x0300, "2:00" )
 	PORT_DIPSETTING(      0x0200, "2:30" )
@@ -2056,6 +2194,91 @@ INPUT_PORTS_START( blzntrnd )
 INPUT_PORTS_END
 
 
+/***************************************************************************
+									Mouja
+***************************************************************************/
+
+INPUT_PORTS_START( mouja )
+
+	PORT_START
+	PORT_BIT(  0x0001, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER1 )
+	PORT_BIT(  0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER1 )
+	PORT_BIT(  0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER1 )
+	PORT_BIT(  0x0010, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER1 )
+	PORT_BIT(  0x0020, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT(  0x0040, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT(  0x0080, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
+	PORT_BIT(  0x0100, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER2 )
+	PORT_BIT(  0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER2 )
+	PORT_BIT(  0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER2 )
+	PORT_BIT(  0x1000, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 )
+	PORT_BIT(  0x2000, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT(  0x4000, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT(  0x8000, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
+
+	PORT_START
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT_IMPULSE(  0x0010, IP_ACTIVE_LOW, IPT_COIN1, 2    )
+	PORT_BIT_IMPULSE(  0x0020, IP_ACTIVE_LOW, IPT_COIN2, 2    )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BITX(0x0080, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
+
+	PORT_START
+	PORT_DIPNAME( 0x0001, 0x0001, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0002, 0x0002, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0004, 0x0004, DEF_STR( Service_Mode ) )
+	PORT_DIPSETTING(      0x0004, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0008, 0x0000, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(      0x0008, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0030, 0x0030, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x0010, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x0030, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x0020, DEF_STR( 1C_2C ) )
+	PORT_DIPNAME( 0x00c0, 0x00c0, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x0040, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x00c0, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x0080, DEF_STR( 1C_2C ) )
+	PORT_DIPNAME( 0x0100, 0x0100, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0100, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0200, 0x0200, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0200, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0400, 0x0400, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0400, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0800, 0x0800, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0800, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x1000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x2000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+
+INPUT_PORTS_END
+
+
 
 /***************************************************************************
 
@@ -2093,14 +2316,12 @@ static struct GfxLayout layout_8x8x8 =
 static struct GfxDecodeInfo gfxdecodeinfo_4bit[] =
 {
 	{ REGION_GFX1, 0, &layout_8x8x4, 0x0, 0x200 }, // [0] 4 Bit Tiles
-	{ REGION_GFX2, 0, &layout_8x8x4, 0x0, 0x200 }, // [1] Fake Tiles
 	{ -1 }
 };
 
 static struct GfxDecodeInfo gfxdecodeinfo_8bit[] =
 {
 	{ REGION_GFX1, 0, &layout_8x8x4, 0x0, 0x200 }, // [0] 4 Bit Tiles
-	{ REGION_GFX2, 0, &layout_8x8x4, 0x0, 0x200 }, // [1] Fake Tiles
 //	{ REGION_GFX1, 0, &layout_8x8x8, 0x0,  0x20 }, // [2] 8 Bit Tiles (handled directly from ROM data, no decoding)
 	{ -1 }
 };
@@ -2108,7 +2329,6 @@ static struct GfxDecodeInfo gfxdecodeinfo_8bit[] =
 static struct GfxDecodeInfo gfxdecodeinfo_blzntrnd[] =
 {
 	{ REGION_GFX1, 0, &layout_8x8x4, 0x0, 0x200 }, // [0] 4 Bit Tiles
-	{ REGION_GFX2, 0, &layout_8x8x4, 0x0, 0x200 }, // [1] Fake Tiles
 	{ REGION_GFX3, 0, &layout_8x8x8, 0x0,  0x20 }, // [3] 053936 Tiles
 //	{ REGION_GFX1, 0, &layout_8x8x8, 0x0,  0x20 }, // [2] 8 Bit Tiles (handled directly from ROM data, no decoding)
 	{ -1 }
@@ -2165,6 +2385,7 @@ static const struct MachineDriver machine_driver_daitorid =
 			daitorid_readmem, daitorid_writemem,0,0,
 			metro_interrupt, 10	/* ? */
 		},
+#ifdef TEST_SOUND
 		{
 			CPU_UPD7810,
 			12000000,
@@ -2172,7 +2393,8 @@ static const struct MachineDriver machine_driver_daitorid =
 			ignore_interrupt, 0,
 			0, 0,
 			(void *)metro_io_callback
-        },
+        }
+#endif
 	},
 	60,DEFAULT_60HZ_VBLANK_DURATION,
 	1,
@@ -2191,10 +2413,12 @@ static const struct MachineDriver machine_driver_daitorid =
 
 	/* sound hardware */
 	SOUND_SUPPORTS_STEREO,0,0,0,
+#ifdef TEST_SOUND
 	{
         {   SOUND_YM2151,   &daitorid_ym2151_interface      },
-		{	SOUND_OKIM6295, &daitorid_okim6295_interface	}
+		{	SOUND_OKIM6295, &okim6295_interface	}
 	},
+#endif
 };
 
 
@@ -2264,7 +2488,7 @@ static const struct MachineDriver machine_driver_karatour =
 	/* sound hardware */
 	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
-		{ 0 },	// M6295, YM2143
+		{ 0 },	// M6295, YM2413
 	},
 };
 
@@ -2299,7 +2523,7 @@ static const struct MachineDriver machine_driver_lastfort =
 	/* sound hardware */
 	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
-		{ 0 },	// M6295, YM2143
+		{ 0 },	// M6295, YM2413
 	},
 };
 
@@ -2334,7 +2558,7 @@ static const struct MachineDriver machine_driver_pangpoms =
 	/* sound hardware */
 	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
-		{ 0 },	// M6295, YM2143
+		{ 0 },	// M6295, YM2413
 	},
 };
 
@@ -2369,7 +2593,7 @@ static const struct MachineDriver machine_driver_poitto =
 	/* sound hardware */
 	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
-		{ 0 },	// M6295, YM2143
+		{ 0 },	// M6295, YM2413
 	},
 };
 
@@ -2439,7 +2663,7 @@ static const struct MachineDriver machine_driver_skyalert =
 	/* sound hardware */
 	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
-		{ 0 },	// M6295, YM2143
+		{ 0 },	// M6295, YM2413
 	},
 };
 
@@ -2477,6 +2701,47 @@ static const struct MachineDriver machine_driver_toride2g =
 		{ 0 },	// M6295, YM2413
 	},
 };
+
+
+static const struct MachineDriver machine_driver_mouja =
+{
+	{
+		{
+			CPU_M68000,
+			12000000,	/* ??? */
+			mouja_readmem, mouja_writemem,0,0,
+			mouja_interrupt, 2	/* ? */
+		},
+	},
+	60,DEFAULT_60HZ_VBLANK_DURATION,
+	1,
+	0,
+
+	/* video hardware */
+	512, 256, { 0, 320-1, 0, 224-1 },
+	gfxdecodeinfo_4bit,
+	0x2000, 0x2000,
+	0,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	0,
+	metro_vh_start_14300,
+	metro_vh_stop,
+	metro_vh_screenrefresh,
+
+	/* sound hardware */
+	SOUND_SUPPORTS_STEREO,0,0,0,
+	{
+		{
+			SOUND_OKIM6295,
+			&okim6295_interface
+		},
+		{
+			SOUND_YM2413,
+			&ym2413_interface
+		},
+	},
+};
+
 
 static const struct MachineDriver machine_driver_blzntrnd =
 {
@@ -2546,12 +2811,14 @@ static void init_metro(void)
 		for (i = 0;i < memory_region_length(REGION_GFX3);i++)
 			memory_region(REGION_GFX3)[i] ^= 0xff;
 
-	vblank_irq   = 0;
-	blitter_irq  = 0;
-	unknown1_irq = 0;
-	unknown2_irq = 0;
-	unknown3_irq = 0;
-	unknown4_irq = 0;
+	requested_irq[0] = 0;
+	requested_irq[2] = 0;
+	requested_irq[1] = 0;
+	requested_irq[3] = 0;
+	requested_irq[4] = 0;
+	requested_irq[5] = 0;
+	requested_irq[6] = 0;
+	requested_irq[7] = 0;
 
 	irq_line   = 2;
 	irq_enable = 0;
@@ -2600,28 +2867,11 @@ static void init_blzntrnd(void)
 }
 
 
-/* Fake Tiles used to support a feature of this hardware: it can draw tiles
-   filled with one single color (e.g. not stored in the GFX ROMs) */
-
-#define METRO_FAKE_TILES(_rgn_)	\
-	ROM_REGION( 0x200, _rgn_, ROMREGION_DISPOSE ) \
-	ROM_FILL( 0x000, 0x20, 0xff ) \
-	ROM_FILL( 0x020, 0x20, 0xee ) \
-	ROM_FILL( 0x040, 0x20, 0xdd ) \
-	ROM_FILL( 0x060, 0x20, 0xcc ) \
-	ROM_FILL( 0x080, 0x20, 0xbb ) \
-	ROM_FILL( 0x0a0, 0x20, 0xaa ) \
-	ROM_FILL( 0x0c0, 0x20, 0x99 ) \
-	ROM_FILL( 0x0e0, 0x20, 0x88 ) \
-	ROM_FILL( 0x100, 0x20, 0x77 ) \
-	ROM_FILL( 0x120, 0x20, 0x66 ) \
-	ROM_FILL( 0x140, 0x20, 0x55 ) \
-	ROM_FILL( 0x160, 0x20, 0x44 ) \
-	ROM_FILL( 0x180, 0x20, 0x33 ) \
-	ROM_FILL( 0x1a0, 0x20, 0x22 ) \
-	ROM_FILL( 0x1c0, 0x20, 0x11 ) \
-	ROM_FILL( 0x1e0, 0x20, 0x00 )
-
+static void init_mouja(void)
+{
+	init_metro();
+	irq_line = -1;	/* split interrupt handlers */
+}
 
 
 /***************************************************************************
@@ -2654,8 +2904,6 @@ ROM_START( balcube )
 	ROMX_LOAD( "4", 0x000002, 0x080000, 0xd1acda2c, ROM_GROUPWORD | ROM_SKIP(6))
 	ROMX_LOAD( "1", 0x000004, 0x080000, 0x0ea3d161, ROM_GROUPWORD | ROM_SKIP(6))
 	ROMX_LOAD( "3", 0x000006, 0x080000, 0xeef1d3b4, ROM_GROUPWORD | ROM_SKIP(6))
-
-	METRO_FAKE_TILES( REGION_GFX2 )
 
 	ROM_REGION( 0x080000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
 	ROM_LOAD( "7", 0x000000, 0x080000, 0xf769287d )	// PCM 16 Bit (Signed)
@@ -2700,8 +2948,6 @@ ROM_START( daitorid )
 	ROMX_LOAD( "dt-ja-1.12h", 0x000004, 0x080000, 0x2a220bf2, ROM_GROUPWORD | ROM_SKIP(6))
 	ROMX_LOAD( "dt-ja-3.16h", 0x000006, 0x080000, 0xfd1f58e0, ROM_GROUPWORD | ROM_SKIP(6))
 
-	METRO_FAKE_TILES( REGION_GFX2 )
-
 	ROM_REGION( 0x040000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
 	ROM_LOAD( "dt-ja-7.3f", 0x000000, 0x040000, 0x0d888cde )
 ROM_END
@@ -2743,8 +2989,6 @@ ROM_START( dharma )
 	ROMX_LOAD( "jb-4", 0x000002, 0x080000, 0xfe15538e, ROM_GROUPWORD | ROM_SKIP(6))
 	ROMX_LOAD( "jb-1", 0x000004, 0x080000, 0xe6ca9bf6, ROM_GROUPWORD | ROM_SKIP(6))
 	ROMX_LOAD( "jb-3", 0x000006, 0x080000, 0x6ecbe193, ROM_GROUPWORD | ROM_SKIP(6))
-
-	METRO_FAKE_TILES( REGION_GFX2 )
 
 	ROM_REGION( 0x040000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
 	ROM_LOAD( "ja-7", 0x000000, 0x040000, 0x7ce817eb )
@@ -2801,8 +3045,6 @@ ROM_START( karatour )
 	ROMX_LOAD( "ktmask.17f", 0x000004, 0x100000, 0xea9c11fc, ROM_GROUPWORD | ROM_SKIP(6))
 	ROMX_LOAD( "ktmask.15d", 0x000006, 0x100000, 0x7e15f058, ROM_GROUPWORD | ROM_SKIP(6))
 
-	METRO_FAKE_TILES( REGION_GFX2 )
-
 	ROM_REGION( 0x040000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
 	ROM_LOAD( "kt008.1d", 0x000000, 0x040000, 0x47cf9fa1 )
 
@@ -2853,8 +3095,6 @@ ROM_START( ladykill )
 	ROMX_LOAD( "ladyj-5.17f", 0x000004, 0x100000, 0xa81ffaa3, ROM_GROUPWORD | ROM_SKIP(6))
 	ROMX_LOAD( "ladyj-6.15d", 0x000006, 0x100000, 0x3a34913a, ROM_GROUPWORD | ROM_SKIP(6))
 
-	METRO_FAKE_TILES( REGION_GFX2 )
-
 	ROM_REGION( 0x040000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
 	ROM_LOAD( "e8j.1d",   0x000000, 0x040000, 0xf66c2a80 )
 
@@ -2903,8 +3143,6 @@ ROM_START( lastfort )
 	ROMX_LOAD( "tr_jc05", 0x000006, 0x020000, 0x3fbbe49c, ROM_SKIP(7))
 	ROMX_LOAD( "tr_jc07", 0x000007, 0x020000, 0x05e1456b, ROM_SKIP(7))
 
-	METRO_FAKE_TILES( REGION_GFX2 )
-
 	ROM_REGION( 0x020000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
 	ROM_LOAD( "tr_jb11", 0x000000, 0x020000, 0x83786a09 )
 ROM_END
@@ -2942,8 +3180,6 @@ ROM_START( lastfero )
 	ROMX_LOAD( "tre_jc05", 0x000006, 0x020000, 0x79f769dd, ROM_SKIP(7))
 	ROMX_LOAD( "tre_jc07", 0x000007, 0x020000, 0xb6feacb2, ROM_SKIP(7))
 
-	METRO_FAKE_TILES( REGION_GFX2 )
-
 	ROM_REGION( 0x020000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
 	ROM_LOAD( "tr_jb11", 0x000000, 0x020000, 0x83786a09 )
 ROM_END
@@ -2957,7 +3193,7 @@ Pcb code:  VG420 (Same as Toride)
 
 Cpus:  M68000, Z80
 Clocks: 24 MHz, 3.579 MHz
-Sound: M6295, YM2143, _unused_ slot for a YM2151
+Sound: M6295, YM2413, _unused_ slot for a YM2151
 
 Custom graphics chip - Imagetek 14100 052 9227KK701 (same as Karate Tournament)
 
@@ -2981,8 +3217,6 @@ ROM_START( pangpoms )
 	ROMX_LOAD( "ppoms05.bin", 0x000006, 0x020000, 0x02226214, ROM_SKIP(7))
 	ROMX_LOAD( "ppoms07.bin", 0x000007, 0x020000, 0x48471c87, ROM_SKIP(7))
 
-	METRO_FAKE_TILES( REGION_GFX2 )
-
 	ROM_REGION( 0x020000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
 	ROM_LOAD( "ppoms11.bin", 0x000000, 0x020000, 0xe89bd565 )
 ROM_END
@@ -3004,8 +3238,6 @@ ROM_START( pangpomm )
 	ROMX_LOAD( "pj.e03",      0x000005, 0x020000, 0xd126e774, ROM_SKIP(7))
 	ROMX_LOAD( "pj.e05",      0x000006, 0x020000, 0x79c0ec1e, ROM_SKIP(7))
 	ROMX_LOAD( "ppoms07.bin", 0x000007, 0x020000, 0x48471c87, ROM_SKIP(7))
-
-	METRO_FAKE_TILES( REGION_GFX2 )
 
 	ROM_REGION( 0x020000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
 	ROM_LOAD( "ppoms11.bin", 0x000000, 0x020000, 0xe89bd565 )
@@ -3057,8 +3289,6 @@ ROM_START( poitto )
 	ROMX_LOAD( "pt-1.13i", 0x000004, 0x080000, 0xea6e2289, ROM_GROUPWORD | ROM_SKIP(6))
 	ROMX_LOAD( "pt-3.17i", 0x000006, 0x080000, 0x522917c1, ROM_GROUPWORD | ROM_SKIP(6))
 
-	METRO_FAKE_TILES( REGION_GFX2 )
-
 	ROM_REGION( 0x040000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
 	ROM_LOAD( "pt-jc07.3g", 0x000000, 0x040000, 0x5ae28b8d )
 ROM_END
@@ -3099,8 +3329,6 @@ ROM_START( puzzli )
 	ROMX_LOAD( "pz.jb4",       0x000002, 0x080000, 0x576bc5c2, ROM_GROUPWORD | ROM_SKIP(6))
 	ROMX_LOAD( "pz.jb1",       0x000004, 0x080000, 0x29f01eb3, ROM_GROUPWORD | ROM_SKIP(6))
 	ROMX_LOAD( "pz.jb3",       0x000006, 0x080000, 0x6753e282, ROM_GROUPWORD | ROM_SKIP(6))
-
-	METRO_FAKE_TILES( REGION_GFX2 )
 
 	ROM_REGION( 0x040000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
 	ROM_LOAD( "pz.jb7",      0x000000, 0x040000, 0xb3aab610 )
@@ -3152,8 +3380,6 @@ ROM_START( pururun )
 	ROMX_LOAD( "pu9-19-1.12i", 0x000004, 0x080000, 0x7e83a75f, ROM_GROUPWORD | ROM_SKIP(6))
 	ROMX_LOAD( "pu9-19-3.16i", 0x000006, 0x080000, 0xd15485c5, ROM_GROUPWORD | ROM_SKIP(6))
 
-	METRO_FAKE_TILES( REGION_GFX2 )
-
 	ROM_REGION( 0x040000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
 	ROM_LOAD( "pu9-19-7.3g", 0x000000, 0x040000, 0x51ae4926 )
 ROM_END
@@ -3189,8 +3415,6 @@ ROM_START( skyalert )
 	ROMX_LOAD( "sa_a_03.bin", 0x000005, 0x040000, 0xe0dff10d, ROM_SKIP(7))
 	ROMX_LOAD( "sa_a_05.bin", 0x000006, 0x040000, 0x62169d31, ROM_SKIP(7))
 	ROMX_LOAD( "sa_a_07.bin", 0x000007, 0x040000, 0xa6f5966f, ROM_SKIP(7))
-
-	METRO_FAKE_TILES( REGION_GFX2 )
 
 	ROM_REGION( 0x020000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
 	ROM_LOAD( "sa_a_11.bin", 0x000000, 0x020000, 0x04842a60 )
@@ -3242,8 +3466,6 @@ ROM_START( toride2g )
 	ROMX_LOAD( "tr2aja-1.12i", 0x000004, 0x080000, 0x96245a5c, ROM_GROUPWORD | ROM_SKIP(6))
 	ROMX_LOAD( "tr2aja-3.16i", 0x000006, 0x080000, 0x49013f5d, ROM_GROUPWORD | ROM_SKIP(6))
 
-	METRO_FAKE_TILES( REGION_GFX2 )
-
 	ROM_REGION( 0x020000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
 	ROM_LOAD( "tr2aja-7.3g", 0x000000, 0x020000, 0x630c6193 )
 ROM_END
@@ -3288,8 +3510,6 @@ ROM_START( blzntrnd )
 	ROMX_LOAD( "rom331.bin", 0x1000004, 0x200000, 0x4d909c28, ROM_GROUPWORD | ROM_SKIP(6))
 	ROMX_LOAD( "rom375.bin", 0x1000006, 0x200000, 0x6eb4f97c, ROM_GROUPWORD | ROM_SKIP(6))
 
-	METRO_FAKE_TILES( REGION_GFX2 )
-
 	ROM_REGION( 0x200000, REGION_GFX3, ROMREGION_DISPOSE )	/* 053936 gfx data */
 	ROM_LOAD( "rom9.bin", 0x000000, 0x200000, 0x37ca3570 )
 
@@ -3299,6 +3519,35 @@ ROM_START( blzntrnd )
 	ROM_REGION( 0x400000, REGION_SOUND2, ROMREGION_SOUNDONLY )	/* ? YRW801-M ? */
 	ROM_LOAD( "rom6.bin", 0x000000, 0x200000, 0x8b8819fc )
 	ROM_LOAD( "rom7.bin", 0x200000, 0x200000, 0x0089a52b )
+ROM_END
+
+
+/***************************************************************************
+
+Mouja (JPN Ver.)
+(c)1996 Etona / (c)1995 FPS/FWS
+VG410-B
+
+CPU 	:TMP68H000P-12
+Sound	:YM2413,OKI M6295
+OSC 	:16000.00KHz,3.579545MHz,26.666MHz
+other	:Imagetek Inc 14300 095
+
+***************************************************************************/
+
+ROM_START( mouja )
+	ROM_REGION( 0x080000, REGION_CPU1, 0 )		/* 68000 Code */
+	ROM_LOAD16_BYTE( "10.bin",      0x000000, 0x040000, 0xf9742b69 )
+	ROM_LOAD16_BYTE( "9.bin",       0x000001, 0x040000, 0xdc77216f )
+
+	ROM_REGION( 0x400000, REGION_GFX1, 0 )	/* Gfx + Data (Addressable by CPU & Blitter) */
+	ROMX_LOAD( "42.bin",      0x000000, 0x100000, 0xc4dd3194, ROM_GROUPWORD | ROM_SKIP(6))
+	ROMX_LOAD( "86.bin",      0x000002, 0x100000, 0x09530f9d, ROM_GROUPWORD | ROM_SKIP(6))
+	ROMX_LOAD( "31.bin",      0x000004, 0x100000, 0x5dd7a7b2, ROM_GROUPWORD | ROM_SKIP(6))
+	ROMX_LOAD( "75.bin",      0x000006, 0x100000, 0x430c3925, ROM_GROUPWORD | ROM_SKIP(6))
+
+	ROM_REGION( 0x100000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_LOAD( "11.bin",     0x000000, 0x100000, 0xfe3df432 )
 ROM_END
 
 
@@ -3325,5 +3574,6 @@ GAMEX( 1995, daitorid, 0,        daitorid, daitorid, metro,    ROT0,       "Metr
 GAMEX( 1995, puzzli,   0,        daitorid, puzzli,   metro,    ROT0_16BIT, "Metro / Banpresto",  "Puzzli",                   GAME_NO_SOUND )
 GAMEX( 1995, pururun,  0,        pururun,  pururun,  metro,    ROT0,       "Metro / Banpresto",  "Pururun",                  GAME_NO_SOUND )
 GAMEX( 1996, balcube,  0,        balcube,  balcube,  balcube,  ROT0_16BIT, "Metro",              "Bal Cube",                 GAME_NO_SOUND )
+GAMEX( 1996, mouja,    0,        mouja,    mouja,    mouja,    ROT0,       "Etona",              "Mouja (Japan)",            GAME_NO_COCKTAIL )
 
 GAMEX( 1994, blzntrnd, 0,        blzntrnd, blzntrnd, blzntrnd, ROT0_16BIT, "Human Amusement",    "Blazing Tornado",          GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )

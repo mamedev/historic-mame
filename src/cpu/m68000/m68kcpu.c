@@ -724,30 +724,28 @@ void m68k_set_irq(unsigned int int_level)
 		m68ki_check_interrupts(); /* Level triggered (IRQ) */
 }
 
-
-/* Pulse the RESET line on the CPU */
-void m68k_pulse_reset(void)
+void m68k_init(void)
 {
 	static uint emulation_initialized = 0;
 
 	/* The first call to this function initializes the opcode handler jump table */
 	if(!emulation_initialized)
-	{
+		{
 		m68ki_build_opcode_table();
-		m68k_set_int_ack_callback(NULL);
-		m68k_set_bkpt_ack_callback(NULL);
-		m68k_set_reset_instr_callback(NULL);
-		m68k_set_pc_changed_callback(NULL);
-		m68k_set_fc_callback(NULL);
-		m68k_set_instr_hook_callback(NULL);
-
 		emulation_initialized = 1;
 	}
 
+	m68k_set_int_ack_callback(NULL);
+	m68k_set_bkpt_ack_callback(NULL);
+	m68k_set_reset_instr_callback(NULL);
+	m68k_set_pc_changed_callback(NULL);
+	m68k_set_fc_callback(NULL);
+	m68k_set_instr_hook_callback(NULL);
+}
 
-	if(CPU_TYPE == 0)	/* KW 990319 */
-		m68k_set_cpu_type(M68K_CPU_TYPE_68000);
-
+/* Pulse the RESET line on the CPU */
+void m68k_pulse_reset(void)
+{
 	/* Clear all stop levels and eat up all remaining cycles */
 	CPU_STOPPED = 0;
 	SET_CYCLES(0);

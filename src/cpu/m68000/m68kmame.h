@@ -23,7 +23,7 @@ extern int m68ki_remaining_cycles;
 
 #define M68K_EMULATE_TRACE          OPT_OFF
 
-#define M68K_EMULATE_RESET          OPT_OFF
+#define M68K_EMULATE_RESET          OPT_ON
 #define M68K_RESET_CALLBACK()
 
 #define M68K_EMULATE_FC             OPT_OFF
@@ -101,7 +101,15 @@ INLINE unsigned int m68k_read_pcrelative_32(unsigned int address)
 #define M68K_EMULATE_010            OPT_OFF
 #else
 
+// The PPC 68k core defines A68K0 internal to itself to avoid recompiling
+// all of MAME when you want to disable it. The downside is that the C and x86
+// cores can't agree on the same name for the icount variable, so we force the
+// issue with a Mac-specific hack.
+#ifdef macintosh
+extern int M68000_ICount;
+#else
 #define M68000_ICount m68ki_remaining_cycles
+#endif
 
 /* M68K Variants */
 #if HAS_M68010
@@ -117,7 +125,15 @@ INLINE unsigned int m68k_read_pcrelative_32(unsigned int address)
 #define M68K_EMULATE_020            OPT_OFF
 #else
 
+// The PPC 68k core defines A68K2 internal to itself to avoid recompiling
+// all of MAME when you want to disable it. The downside is that the C and x86
+// cores can't agree on the same name for the icount variable, so we force the
+// issue with a Mac-specific hack.
+#ifdef macintosh
+extern int M68020_ICount;
+#else
 #define M68020_ICount m68ki_remaining_cycles
+#endif
 
 #undef  M68K_EMULATE_010
 #define M68K_EMULATE_010            OPT_ON

@@ -45,9 +45,11 @@
 unsigned char *vectorram;
 size_t vectorram_size;
 
-int antialias;                            /* flag for anti-aliasing */
-int beam;                                 /* size of vector beam    */
-int flicker;                              /* beam flicker value     */
+static int vector_orientation;
+
+static int antialias;                            /* flag for anti-aliasing */
+static int beam;                                 /* size of vector beam    */
+static int flicker;                              /* beam flicker value     */
 int translucency;
 
 static int beam_diameter_is_one;		  /* flag that beam is one pixel wide */
@@ -56,6 +58,7 @@ static int vector_scale_x;                /* scaling to screen */
 static int vector_scale_y;                /* scaling to screen */
 
 static float gamma_correction = 1.2;
+static float flicker_correction = 0.0;
 static float intensity_correction = 1.5;
 
 /* The vectices are buffered here */
@@ -206,6 +209,17 @@ float vector_get_gamma(void)
 	return gamma_correction;
 }
 
+void vector_set_flicker(float _flicker)
+{
+	flicker_correction = _flicker;
+	flicker = (int)(flicker_correction * 2.55);
+}
+
+float vector_get_flicker(void)
+{
+	return flicker_correction;
+}
+
 void vector_set_intensity(float _intensity)
 {
 	intensity_correction = _intensity;
@@ -227,7 +241,7 @@ int vector_vh_start (void)
 	/* Grab the settings for this session */
 	antialias = options.antialias;
 	translucency = options.translucency;
-	flicker = options.flicker;
+	vector_set_flicker(options.vector_flicker);
 	beam = options.beam;
 
 	pens = Machine->pens;
@@ -330,10 +344,40 @@ int vector_vh_start (void)
 		}
 	}
 
+	vector_set_flip_x(0);
+	vector_set_flip_y(0);
+	vector_set_swap_xy(0);
+
 	/* build gamma correction table */
 	vector_set_gamma (gamma_correction);
 
 	return 0;
+}
+
+
+
+void vector_set_flip_x (int flip)
+{
+	if (flip)
+		vector_orientation |=  ORIENTATION_FLIP_X;
+	else
+		vector_orientation &= ~ORIENTATION_FLIP_X;
+}
+
+void vector_set_flip_y (int flip)
+{
+	if (flip)
+		vector_orientation |=  ORIENTATION_FLIP_Y;
+	else
+		vector_orientation &= ~ORIENTATION_FLIP_Y;
+}
+
+void vector_set_swap_xy (int swap)
+{
+	if (swap)
+		vector_orientation |=  ORIENTATION_SWAP_XY;
+	else
+		vector_orientation &= ~ORIENTATION_SWAP_XY;
 }
 
 
@@ -430,7 +474,6 @@ INLINE void vector_draw_aa_pixel (int x, int y, int col, int dirty)
 void vector_draw_to (int x2, int y2, int col, int intensity, int dirty)
 {
 	unsigned char a1;
-	int orientation;
 	int dx,dy,sx,sy,cx,cy,width;
 	static int x1,yy1;
 	int xx,yy;
@@ -446,17 +489,20 @@ void vector_draw_to (int x2, int y2, int col, int intensity, int dirty)
 
 	/* [2] fix display orientation */
 
-	orientation = Machine->orientation;
-	if (orientation & ORIENTATION_SWAP_XY)
+	if (vector_orientation & ORIENTATION_FLIP_X)
+		x2 = ((vecwidth-1)<<16)-x2;
+	if (vector_orientation & ORIENTATION_FLIP_Y)
+		y2 = ((vecheight-1)<<16)-y2;
+	if ((Machine->orientation ^ vector_orientation) & ORIENTATION_SWAP_XY)
 	{
 		int temp;
 		temp = x2;
 		x2 = y2;
 		y2 = temp;
 	}
-	if (orientation & ORIENTATION_FLIP_X)
+	if (Machine->orientation & ORIENTATION_FLIP_X)
 		x2 = ((vecwidth-1)<<16)-x2;
-	if (orientation & ORIENTATION_FLIP_Y)
+	if (Machine->orientation & ORIENTATION_FLIP_Y)
 		y2 = ((vecheight-1)<<16)-y2;
 
 	/* [3] adjust cords if needed */
@@ -654,7 +700,6 @@ void vector_add_clip (int x1, int yy1, int x2, int y2)
  */
 void vector_set_clip (int x1, int yy1, int x2, int y2)
 {
-	int orientation;
 	int tmp;
 
 	/* failsafe */
@@ -675,22 +720,36 @@ void vector_set_clip (int x1, int yy1, int x2, int y2)
 	y2 = vec_mult(y2<<4,vector_scale_y);
 
 	/* fix orientation */
-	orientation = Machine->orientation;
-	/* swapping x/y coordinates will still have the minima in x1,yy1 */
-	if (orientation & ORIENTATION_SWAP_XY)
-	{
-		tmp = x1; x1 = yy1; yy1 = tmp;
-		tmp = x2; x2 = y2; y2 = tmp;
-	}
+
 	/* don't forget to swap x1,x2, since x2 becomes the minimum */
-	if (orientation & ORIENTATION_FLIP_X)
+	if (vector_orientation & ORIENTATION_FLIP_X)
 	{
 		x1 = ((vecwidth-1)<<16)-x1;
 		x2 = ((vecwidth-1)<<16)-x2;
 		tmp = x1; x1 = x2; x2 = tmp;
 	}
 	/* don't forget to swap yy1,y2, since y2 becomes the minimum */
-	if (orientation & ORIENTATION_FLIP_Y)
+	if (vector_orientation & ORIENTATION_FLIP_Y)
+	{
+		yy1 = ((vecheight-1)<<16)-yy1;
+		y2 = ((vecheight-1)<<16)-y2;
+		tmp = yy1; yy1 = y2; y2 = tmp;
+	}
+	/* swapping x/y coordinates will still have the minima in x1,yy1 */
+	if ((Machine->orientation ^ vector_orientation) & ORIENTATION_SWAP_XY)
+	{
+		tmp = x1; x1 = yy1; yy1 = tmp;
+		tmp = x2; x2 = y2; y2 = tmp;
+	}
+	/* don't forget to swap x1,x2, since x2 becomes the minimum */
+	if (Machine->orientation & ORIENTATION_FLIP_X)
+	{
+		x1 = ((vecwidth-1)<<16)-x1;
+		x2 = ((vecwidth-1)<<16)-x2;
+		tmp = x1; x1 = x2; x2 = tmp;
+	}
+	/* don't forget to swap yy1,y2, since y2 becomes the minimum */
+	if (Machine->orientation & ORIENTATION_FLIP_Y)
 	{
 		yy1 = ((vecheight-1)<<16)-yy1;
 		y2 = ((vecheight-1)<<16)-y2;
@@ -836,7 +895,7 @@ void vector_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	temp_x = (1<<(44-vecshift)) / (Machine->visible_area.max_x - Machine->visible_area.min_x);
 	temp_y = (1<<(44-vecshift)) / (Machine->visible_area.max_y - Machine->visible_area.min_y);
 
-	if (Machine->orientation & ORIENTATION_SWAP_XY)
+	if ((Machine->orientation ^ vector_orientation) & ORIENTATION_SWAP_XY)
 	{
 		vector_scale_x = temp_x * vecheight;
 		vector_scale_y = temp_y * vecwidth;

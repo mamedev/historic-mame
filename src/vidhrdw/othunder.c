@@ -1,4 +1,5 @@
 #include "driver.h"
+#include "state.h"
 #include "vidhrdw/generic.h"
 #include "vidhrdw/taitoic.h"
 
@@ -122,8 +123,8 @@ void othunder_update_palette (void)
 
 			for (sprite_chunk=0;sprite_chunk<32;sprite_chunk++)
 			{
-				i = sprite_chunk % 4;   // 4 sprite chunks across
-				j = sprite_chunk / 4;   // 8 sprite chunks down
+				i = sprite_chunk % 4;   /* 4 chunks across */
+				j = sprite_chunk / 4;   /* 8 chunks down */
 
 				code = spritemap[map_offset + i + (j<<2)] &tile_mask;
 
@@ -252,8 +253,8 @@ static void othunder_draw_sprites_16x8(struct osd_bitmap *bitmap,int *primasks,i
 
 		for (sprite_chunk=0;sprite_chunk<32;sprite_chunk++)
 		{
-			k = sprite_chunk % 4;   // 4 sprite chunks per row
-			j = sprite_chunk / 4;   // 8 rows
+			k = sprite_chunk % 4;   /* 4 chunks per row */
+			j = sprite_chunk / 4;   /* 8 rows */
 
 			px = k;
 			py = j;
@@ -353,8 +354,10 @@ void othunder_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	layer[2] = 2;
 
 	fillbitmap(priority_bitmap,0,NULL);
-	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);	/* wrong color? */
-	TC0100SCN_tilemap_draw(bitmap,0,layer[0],0,1);
+
+//	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);	/* wrong color? */
+
+	TC0100SCN_tilemap_draw(bitmap,0,layer[0],TILEMAP_IGNORE_TRANSPARENCY,1);
 	TC0100SCN_tilemap_draw(bitmap,0,layer[1],0,2);
 	TC0100SCN_tilemap_draw(bitmap,0,layer[2],0,4);
 
@@ -370,7 +373,7 @@ void othunder_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	{
 		int rawx, rawy, centrex, centrey, screenx, screeny;
 
-		//calculate p1 screen co-ords by matching routine at $A932
+		/* calculate p1 screen co-ords by matching routine at $A932 */
 		rawx = othunder_ram[0x2848/2];
 		centrex = othunder_ram[0xa046/2];
 		if (rawx <= centrex)
@@ -406,14 +409,14 @@ void othunder_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			if (screeny > 0xf0) screeny = 0xf0;
 		}
 
-		//fudge y to show in centre of scope/hit sprite, note that screenx, screeny
-		//were confirmed to match those stored by the game at $82732, $82734
+		// fudge y to show in centre of scope/hit sprite, note that screenx, screeny
+		// were confirmed to match those stored by the game at $82732, $82734
 		screeny += 2;
 
-		//player 1
+		/* player 1 */
 		draw_crosshair(bitmap,screenx,screeny,&Machine->visible_area);
 
-		//calculate p2 screen co-ords by matching routine at $AA48
+		/* calculate p2 screen co-ords by matching routine at $AA48 */
 		rawx = othunder_ram[0x284c/2];
 		centrex = othunder_ram[0xa04a/2];
 		if (rawx <= centrex)
@@ -449,11 +452,11 @@ void othunder_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			if (screeny > 0xf0) screeny = 0xf0;
 		}
 
-		//fudge y to show in centre of scope/hit sprite, note that screenx, screeny
-		//were confirmed to match those stored by the game at $82736, $82738
+		// fudge y to show in centre of scope/hit sprite, note that screenx, screeny
+		// were confirmed to match those stored by the game at $82736, $82738
 		screeny += 2;
 
-		//player 2
+		/* player 2 */
 		draw_crosshair(bitmap,screenx,screeny,&Machine->visible_area);
 	}
 }

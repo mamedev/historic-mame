@@ -10,7 +10,6 @@ struct VLM5030interface konami_vlm5030_interface =
     255,        /* volume        */
     4,         /* memory region  */
     0,         /* memory size    */
-    0,         /* VCU            */
 };
 
 struct SN76496interface konami_sn76496_interface =

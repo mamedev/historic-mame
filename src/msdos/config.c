@@ -57,7 +57,7 @@ extern unsigned char tw640x480arc_h, tw640x480arc_v;
 extern int soundcard, usestereo, attenuation, sampleratedetect;
 
 /* from input.c */
-extern int use_mouse, joystick, use_hotrod;
+extern int use_mouse, joystick, use_hotrod, steadykey;
 
 /* from cheat.c */
 extern char *cheatfile;
@@ -69,7 +69,7 @@ extern const char *history_filename,*mameinfo_filename;
 void decompose_rom_sample_path (const char *rompath, const char *samplepath);
 
 #ifdef MESS
-void decompose_software_path (char *softwarepath);
+void decompose_software_path (const char *softwarepath);
 #endif
 
 extern const char *nvdir, *hidir, *cfgdir, *inpdir, *stadir, *memcarddir;
@@ -80,8 +80,8 @@ extern const char *cheatdir;
 
 #ifdef MESS
 /* path to the CRC database files */
-char *crcdir;
-char *softwarepath;  /* for use in fileio.c */
+const char *crcdir;
+const char *softwarepath;  /* for use in fileio.c */
 #define CHEAT_NAME	"CHEAT.CDB"
 #define HISTRY_NAME "SYSINFO.DAT"
 #else
@@ -367,7 +367,7 @@ void init_inpdir(void)
 
 void parse_cmdline (int argc, char **argv, int game_index, char *override_default_rompath)
 {
-	static float f_beam, f_flicker;
+	static float f_beam;
 	const char *resolution, *vectorres;
 	const char *vesamode;
 	const char *joyname;
@@ -413,9 +413,9 @@ void parse_cmdline (int argc, char **argv, int game_index, char *override_defaul
 	f_beam		= get_float  ("config", "beam",         NULL, 1.0);
 	if (f_beam < 1.0) f_beam = 1.0;
 	if (f_beam > 16.0) f_beam = 16.0;
-	f_flicker	= get_float  ("config", "flicker",      NULL, 0.0);
-	if (f_flicker < 0.0) f_flicker = 0.0;
-	if (f_flicker > 100.0) f_flicker = 100.0;
+	options.vector_flicker	= get_float  ("config", "flicker",      NULL, 0.0);
+	if (options.vector_flicker < 0.0) options.vector_flicker = 0.0;
+	if (options.vector_flicker > 100.0) options.vector_flicker = 100.0;
 	osd_gamma_correction = get_float ("config", "gamma",   NULL, 1.0);
 	if (osd_gamma_correction < 0.5) osd_gamma_correction = 0.5;
 	if (osd_gamma_correction > 2.0) osd_gamma_correction = 2.0;
@@ -454,6 +454,8 @@ void parse_cmdline (int argc, char **argv, int game_index, char *override_defaul
 	/* read input configuration */
 	use_mouse = get_bool   ("config", "mouse",   NULL,  1);
 	joyname   = get_string ("config", "joystick", "joy", "none");
+    steadykey = get_bool   ("config", "steadykey", NULL, 0);
+
 	use_hotrod = 0;
 	if (get_bool  ("config", "hotrod",   NULL,  0)) use_hotrod = 1;
 	if (get_bool  ("config", "hotrodse",   NULL,  0)) use_hotrod = 2;
@@ -574,12 +576,6 @@ void parse_cmdline (int argc, char **argv, int game_index, char *override_defaul
 		options.beam = 0x00010000;
 	if (options.beam > 0x00100000)
 		options.beam = 0x00100000;
-
-	options.flicker = (int)(f_flicker * 2.55);
-	if (options.flicker < 0)
-		options.flicker = 0;
-	if (options.flicker > 255)
-		options.flicker = 255;
 
 	if (stricmp (vesamode, "vesa1") == 0)
 		gfx_mode = GFX_VESA1;

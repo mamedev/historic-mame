@@ -9,9 +9,16 @@
     - added secret room fix
     - added alternate GOAL IN fix
 
+  2001-Mar-22
+
+    - fixed crash in level 40 (new bug, oops)
+    - removed a hack for offsets 0x000 and 0x100
+    - added coin counters and lock-out
+
 *************************************************************************/
 
 #include "driver.h"
+#include "state.h"
 
 #ifndef RAINBOW_CROM_BASE
 #define RAINBOW_CROM_BASE 0x4950
@@ -35,6 +42,7 @@ int rainbow_interrupt(void)
  *************************************/
 
 static UINT8 cval[20];
+static UINT8 cc_port;
 
 static int current_round = 0;
 static int current_bank = 0;
@@ -54,12 +62,9 @@ static UINT8 rainbow_helper(int round, int bank, int offset)
 	int address1 = (CROM[cchip_index + 0] << 8) | CROM[cchip_index + 1];
 	int address2 = (CROM[cchip_index + 2] << 8) | CROM[cchip_index + 3];
 
-	if (offset >= address2 - address1)
-	{
-		logerror("rainbow c-chip: read out of range\n");
-	}
+	/* out-of-range reads happen in round 40, returning 0 is vital */
 
-	return CROM[address1 + offset];
+	return (offset >= address2 - address1) ? 0 : CROM[address1 + offset];
 }
 
 /*************************************
@@ -70,17 +75,27 @@ static UINT8 rainbow_helper(int round, int bank, int offset)
 
 WRITE16_HANDLER( rainbow_c_chip_w )
 {
-	if (offset == 0x00d)
-	{
-		current_round = data;
-	}
-
 	if (offset == 0x600)
 	{
 		current_bank = data;
 	}
 
-	if (offset == 0x141)
+	if (current_bank == 0 && offset == 0x00d)
+	{
+		current_round = data;
+	}
+
+	if (current_bank == 0 && offset == 0x008)
+	{
+		cc_port = data;
+
+		coin_lockout_w(1, data & 0x80);
+		coin_lockout_w(0, data & 0x40);
+		coin_counter_w(1, data & 0x20);
+		coin_counter_w(0, data & 0x10);
+	}
+
+	if (current_bank == 1 && offset == 0x141)
 	{
 		if (data >= 40)
 		{
@@ -145,6 +160,7 @@ WRITE16_HANDLER( rainbow_c_chip_w )
 
 #endif /* defined(RAINBOW_ALTERNATE_GOALIN) */
 
+			return;
 		}
 	}
 }
@@ -157,13 +173,11 @@ WRITE16_HANDLER( rainbow_c_chip_w )
 
 READ16_HANDLER( rainbow_c_chip_r )
 {
-	/* Special control registers */
+	/* C-chip identification */
 
-	switch (offset)
+	if (offset == 0x401)
 	{
-		case 0x000: return 0xff;	/* data ready */
-		case 0x100: return 0xff;	/* data ready */
-		case 0x401: return 0x01;	/* c-chip present */
+		return 0x01;
 	}
 
 	/* Check for input ports */
@@ -176,6 +190,7 @@ READ16_HANDLER( rainbow_c_chip_r )
 			case 0x004: return input_port_3_word_r(offset,mem_mask);
 			case 0x005: return input_port_4_word_r(offset,mem_mask);
 			case 0x006: return input_port_5_word_r(offset,mem_mask);
+			case 0x008: return cc_port;
 		}
 	}
 
@@ -193,3 +208,16 @@ READ16_HANDLER( rainbow_c_chip_r )
 
 	return rainbow_helper(current_round, current_bank, offset);
 }
+
+/*************************************
+	Save state initialization
+**************************************/
+
+void rainbow_cchip_init(void)
+{
+	state_save_register_int  ("cchip_bank", 0, "cchip", &current_bank);
+	state_save_register_int  ("cchip_round", 0, "cchip", &current_round);
+	state_save_register_UINT8("cchip_port", 0, "cchip", &cc_port, 1);
+	state_save_register_UINT8("cchip_values", 0, "cchip", cval, 20);
+}
+

@@ -2,7 +2,7 @@
 
 #ifdef MAME_DEBUG
 
-#include <strings.h>
+#include <string.h>
 #include "osd_cpu.h"
 #include "cpuintrf.h"
 #include "mamedbg.h"

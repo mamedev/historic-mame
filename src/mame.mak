@@ -1,7 +1,5 @@
 # uncomment the following lines to include a CPU core
 CPUS+=Z80@
-#CPUS+=Z80GB@
-#CPUS+=CDP1802@
 CPUS+=8080@
 CPUS+=8085A@
 CPUS+=M6502@
@@ -48,8 +46,6 @@ CPUS+=M68EC020@
 CPUS+=M68020@
 CPUS+=T11@
 CPUS+=S2650@
-#CPUS+=F8@
-#CPUS+=CP1600@
 CPUS+=TMS34010@
 #CPUS+=TMS34020@
 #CPUS+=TMS9900@
@@ -63,19 +59,10 @@ CPUS+=TMS9995@
 CPUS+=Z8000@
 CPUS+=TMS320C10@
 CPUS+=CCPU@
-#CPUS+=PDP1@
 CPUS+=ADSP2100@
 CPUS+=ADSP2105@
 CPUS+=PSXCPU@
-#CPUS+=SH2
-#CPUS+=SC61860@
-#CPUS+=ARM@
-#CPUS+=G65816@
-#CPUS+=SPC700@
 CPUS+=ASAP@
-#CPUS+=LH5801@
-#CPUS+=SATURN@
-#CPUS+=APEXC@
 CPUS+=UPD7810@
 
 # uncomment the following lines to include a sound core
@@ -101,7 +88,6 @@ SOUNDS+=Y8950@
 SOUNDS+=SN76477@
 SOUNDS+=SN76496@
 SOUNDS+=POKEY@
-#SOUNDS+=TIA@
 SOUNDS+=NES@
 SOUNDS+=ASTROCADE@
 SOUNDS+=NAMCO@
@@ -128,12 +114,9 @@ SOUNDS+=SAA1099@
 SOUNDS+=IREMGA20@
 SOUNDS+=ES5505@
 SOUNDS+=ES5506@
-#SOUNDS+=SPEAKER@
-#SOUNDS+=WAVE@
-#SOUNDS+=BEEP@
 
 DRVLIBS = \
-	$(OBJ)/pacman.a $(OBJ)/nichibut.a \
+	$(OBJ)/pacman.a $(OBJ)/epos.a $(OBJ)/nichibut.a \
 	$(OBJ)/phoenix.a $(OBJ)/namco.a $(OBJ)/univers.a $(OBJ)/nintendo.a \
 	$(OBJ)/midw8080.a $(OBJ)/meadows.a $(OBJ)/cvs.a $(OBJ)/midway.a \
 	$(OBJ)/irem.a $(OBJ)/gottlieb.a $(OBJ)/taito.a $(OBJ)/toaplan.a $(OBJ)/cave.a \
@@ -154,9 +137,12 @@ DRVLIBS = \
 $(OBJ)/pacman.a: \
 	$(OBJ)/drivers/pacman.o \
 	$(OBJ)/machine/pacplus.o $(OBJ)/machine/jumpshot.o $(OBJ)/machine/shootbul.o \
-	$(OBJ)/machine/theglob.o \
+	$(OBJ)/machine/theglobp.o \
 	$(OBJ)/drivers/jrpacman.o $(OBJ)/vidhrdw/jrpacman.o \
 	$(OBJ)/vidhrdw/pengo.o $(OBJ)/drivers/pengo.o \
+
+$(OBJ)/epos.a: \
+	$(OBJ)/drivers/epos.o $(OBJ)/vidhrdw/epos.o \
 
 $(OBJ)/nichibut.a: \
 	$(OBJ)/vidhrdw/cclimber.o $(OBJ)/sndhrdw/cclimber.o $(OBJ)/drivers/cclimber.o \
@@ -489,6 +475,7 @@ $(OBJ)/konami.a: \
 	$(OBJ)/vidhrdw/wecleman.o $(OBJ)/drivers/wecleman.o \
 	$(OBJ)/vidhrdw/chqflag.o $(OBJ)/drivers/chqflag.o \
 	$(OBJ)/vidhrdw/ultraman.o $(OBJ)/drivers/ultraman.o \
+	$(OBJ)/vidhrdw/hexion.o $(OBJ)/drivers/hexion.o \
 	$(OBJ)/vidhrdw/twin16.o $(OBJ)/drivers/twin16.o \
 	$(OBJ)/vidhrdw/tmnt.o $(OBJ)/drivers/tmnt.o \
 	$(OBJ)/vidhrdw/xmen.o $(OBJ)/drivers/xmen.o \
@@ -619,6 +606,7 @@ $(OBJ)/upl.a: \
 	$(OBJ)/vidhrdw/nova2001.o $(OBJ)/drivers/nova2001.o \
 	$(OBJ)/vidhrdw/ninjakid.o $(OBJ)/drivers/ninjakid.o \
 	$(OBJ)/vidhrdw/pkunwar.o $(OBJ)/drivers/pkunwar.o \
+	$(OBJ)/vidhrdw/xxmissio.o $(OBJ)/drivers/xxmissio.o \
 	$(OBJ)/vidhrdw/ninjakd2.o $(OBJ)/drivers/ninjakd2.o \
 	$(OBJ)/vidhrdw/mnight.o $(OBJ)/drivers/mnight.o \
 	$(OBJ)/vidhrdw/omegaf.o $(OBJ)/drivers/omegaf.o \
@@ -720,7 +708,8 @@ $(OBJ)/sun.a: \
 
 $(OBJ)/suna.a: \
 	$(OBJ)/vidhrdw/goindol.o $(OBJ)/drivers/goindol.o \
-	$(OBJ)/vidhrdw/bssoccer.o $(OBJ)/drivers/bssoccer.o \
+	$(OBJ)/vidhrdw/suna8.o $(OBJ)/drivers/suna8.o \
+	$(OBJ)/vidhrdw/suna16.o $(OBJ)/drivers/suna16.o \
 
 $(OBJ)/dooyong.a: \
 	$(OBJ)/vidhrdw/gundealr.o $(OBJ)/drivers/gundealr.o \
@@ -784,6 +773,7 @@ $(OBJ)/other.a: \
 	$(OBJ)/vidhrdw/amspdwy.o $(OBJ)/drivers/amspdwy.o \
 	$(OBJ)/vidhrdw/shangkid.o $(OBJ)/drivers/shangkid.o \
 	$(OBJ)/vidhrdw/othldrby.o $(OBJ)/drivers/othldrby.o \
+	$(OBJ)/vidhrdw/pbancho.o $(OBJ)/drivers/pbancho.o \
 
 COREOBJS += $(OBJ)/driver.o $(OBJ)/cheat.o
 

@@ -139,8 +139,8 @@ extern void pacplus_decode(void);
 extern void jumpshot_decode(void);
 extern void shootbul_decode(void);
 
-void theglob_init_machine(void);
-READ_HANDLER( theglob_decrypt_rom );
+void theglobp_init_machine(void);
+READ_HANDLER( theglobp_decrypt_rom );
 
 
 static int speedcheat = 0;	/* a well known hack allows to make Pac Man run at four times */
@@ -323,7 +323,7 @@ static PORT_WRITE_START( dremshpr_writeport )
 PORT_END
 
 
-static MEMORY_READ_START( theglob_readmem )
+static MEMORY_READ_START( theglobp_readmem )
 	{ 0x0000, 0x3fff, MRA_BANK1 },
 	{ 0x4000, 0x47ff, MRA_RAM },	/* video and color RAM */
 	{ 0x4c00, 0x4fff, MRA_RAM },	/* including sprite codes at 4ff0-4fff */
@@ -333,8 +333,8 @@ static MEMORY_READ_START( theglob_readmem )
 	{ 0x50c0, 0x50ff, input_port_3_r },	/* DSW2 */
 MEMORY_END
 
-static PORT_READ_START( theglob_readport )
-	{ 0x00, 0xff, theglob_decrypt_rom },	/* Switch protection logic */
+static PORT_READ_START( theglobp_readport )
+	{ 0x00, 0xff, theglobp_decrypt_rom },	/* Switch protection logic */
 PORT_END
 
 
@@ -815,7 +815,7 @@ INPUT_PORTS_START( lizwiz )
 	PORT_BIT( 0xff, IP_ACTIVE_HIGH, IPT_UNUSED )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( theglob )
+INPUT_PORTS_START( theglobp )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY )
@@ -1313,20 +1313,20 @@ static const struct MachineDriver machine_driver_pacman =
 	}
 };
 
-static const struct MachineDriver machine_driver_theglob =
+static const struct MachineDriver machine_driver_theglobp =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_Z80,
 			18432000/6,	/* 3.072 MHz */
-			theglob_readmem,writemem,theglob_readport,writeport,
+			theglobp_readmem,writemem,theglobp_readport,writeport,
 			pacman_interrupt,1
 		}
 	},
 	60.606060, 2500,	/* frames per second, vblank duration */
 	1,	/* single CPU, no need for interleaving */
-	theglob_init_machine,
+	theglobp_init_machine,
 
 	/* video hardware */
 	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },
@@ -2088,7 +2088,7 @@ ROM_START( lizwiz )
 	ROM_LOAD( "82s126.3m"  ,  0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
-ROM_START( theglob )
+ROM_START( theglobp )
 	ROM_REGION( 0x20000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "glob.u2",      0x0000, 0x2000, 0x829d0bea )
 	ROM_LOAD( "glob.u3",      0x2000, 0x2000, 0x31de6628 )
@@ -2464,8 +2464,8 @@ GAME( 1982, eyes,     0,        pacman,   eyes,     eyes,     ROT90,  "Digitrex 
 GAME( 1982, eyes2,    eyes,     pacman,   eyes,     eyes,     ROT90,  "Techstar Inc. (Rock-ola license)", "Eyes (Techstar Inc.)" )
 GAME( 1983, mrtnt,    0,        pacman,   mrtnt,    eyes,     ROT90,  "Telko", "Mr. TNT" )
 GAME( 1985, lizwiz,   0,        pacman,   lizwiz,   0,        ROT90,  "Techstar (Sunn license)", "Lizard Wizard" )
-GAME( 1983, theglob,  0,        theglob,  theglob,  0,        ROT90,  "Epos Corporation", "The Glob" )
-GAME( 1984, beastf,   theglob,  theglob,  theglob,  0,        ROT90,  "Epos Corporation", "Beastie Feastie" )
+GAME( 1983, theglobp, suprglob, theglobp, theglobp, 0,        ROT90,  "Epos Corporation", "The Glob (Pac-Man hardware)" )
+GAME( 1984, beastf,   suprglob, theglobp, theglobp, 0,        ROT90,  "Epos Corporation", "Beastie Feastie" )
 GAME( 1982, dremshpr, 0,        dremshpr, dremshpr, 0,        ROT270, "Sanritsu", "Dream Shopper" )
 GAME( 1983, vanvan,   0,        vanvan,   vanvan,   0,        ROT270, "Karateco", "Van Van Car" )
 GAME( 1983, vanvans,  vanvan,   vanvan,   vanvans,  0,        ROT270, "Sanritsu", "Van Van Car (Sanritsu)" )

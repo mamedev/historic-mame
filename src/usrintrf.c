@@ -3244,6 +3244,30 @@ static void onscrd_gamma(struct osd_bitmap *bitmap,int increment,int arg)
 	displayosd(bitmap,buf,100*(gamma_correction-0.5)/(2.0-0.5),100*(1.0-0.5)/(2.0-0.5));
 }
 
+static void onscrd_vector_flicker(struct osd_bitmap *bitmap,int increment,int arg)
+{
+	char buf[1000];
+	float flicker_correction;
+
+	if (!code_pressed(KEYCODE_LCONTROL) && !code_pressed(KEYCODE_RCONTROL))
+		increment *= 5;
+
+	if (increment)
+	{
+		flicker_correction = vector_get_flicker();
+
+		flicker_correction += increment;
+		if (flicker_correction < 0.0) flicker_correction = 0.0;
+		if (flicker_correction > 100.0) flicker_correction = 100.0;
+
+		vector_set_flicker(flicker_correction);
+	}
+	flicker_correction = vector_get_flicker();
+
+	sprintf(buf,"%s %1.2f", ui_getstring (UI_vectorflicker), flicker_correction);
+	displayosd(bitmap,buf,flicker_correction,0);
+}
+
 static void onscrd_vector_intensity(struct osd_bitmap *bitmap,int increment,int arg)
 {
 	char buf[30];
@@ -3347,6 +3371,10 @@ static void onscrd_init(void)
 
 	if (Machine->drv->video_attributes & VIDEO_TYPE_VECTOR)
 	{
+		onscrd_fnc[item] = onscrd_vector_flicker;
+		onscrd_arg[item] = 0;
+		item++;
+
 		onscrd_fnc[item] = onscrd_vector_intensity;
 		onscrd_arg[item] = 0;
 		item++;
@@ -3622,6 +3650,11 @@ if (Machine->gamedrv->flags & GAME_COMPUTER)
 		do
 		{
 			int ret;
+			if (request_loadsave == LOADSAVE_SAVE)
+				displaymessage(bitmap, "Select position to save to");
+			else
+				displaymessage(bitmap, "Select position to load from");
+
 			update_video_and_audio();
 			ret = seq_read_async(&seq, 1);
 
@@ -3647,9 +3680,21 @@ if (Machine->gamedrv->flags & GAME_COMPUTER)
 		osd_pause(0);
 		osd_sound_enable(1);
 
-
 		if (file > 0)
+		{
+			if (request_loadsave == LOADSAVE_SAVE)
+				usrintf_showmessage("Save to position %c", file);
+			else
+				usrintf_showmessage("Load from position %c", file);
 			cpu_loadsave_schedule(request_loadsave, file);
+		}
+		else
+		{
+			if (request_loadsave == LOADSAVE_SAVE)
+				usrintf_showmessage("Save cancelled");
+			else
+				usrintf_showmessage("Load cancelled");
+		}
 	}
 
 	if (single_step || input_ui_pressed(IPT_UI_PAUSE)) /* pause the game */

@@ -110,10 +110,10 @@ void cadash_update_palette (void)
 
 	for (offs = (spriteram_size/2)-4;offs >=0;offs -= 4)
 	{
-		data = spriteram16[offs+0];
+		data = buffered_spriteram16[offs+0];
 		color = (data &0x000f) | sprite_colbank;
 
-		data = spriteram16[offs+2];
+		data = buffered_spriteram16[offs+2];
 		tilenum = data &0x1fff;
 
 		if (tilenum)
@@ -200,18 +200,18 @@ static void cadash_draw_sprites(struct osd_bitmap *bitmap,int *primasks,int y_of
 
 	for (offs = (spriteram_size/2)-4;offs >=0;offs -= 4)
 	{
-		data = spriteram16[offs+0];
+		data = buffered_spriteram16[offs+0];
 		flipy = (data & 0x8000) >> 15;
 		flipx = (data & 0x4000) >> 14;
 		color = (data & 0x000f) | sprite_colbank;
 
-		data = spriteram16[offs+1];
+		data = buffered_spriteram16[offs+1];
 		y = data & 0x1ff;   // correct mask?
 
-		data = spriteram16[offs+2];
+		data = buffered_spriteram16[offs+2];
 		tilenum = data & 0x1fff;
 
-		data = spriteram16[offs+3];
+		data = buffered_spriteram16[offs+3];
 		x = data & 0x1ff;   // correct mask?
 
 		if (!tilenum) continue;
@@ -286,7 +286,6 @@ void cadash_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	palette_init_used_colors();
 	cadash_update_palette();
-	palette_used_colors[0] |= PALETTE_COLOR_VISIBLE;
 	palette_recalc();
 
 	layer[0] = TC0100SCN_bottomlayer(0);
@@ -294,8 +293,7 @@ void cadash_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	layer[2] = 2;
 
 	fillbitmap(priority_bitmap,0,NULL);
-	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);	/* wrong color? */
-	TC0100SCN_tilemap_draw(bitmap,0,layer[0],0,1);
+	TC0100SCN_tilemap_draw(bitmap,0,layer[0],TILEMAP_IGNORE_TRANSPARENCY,1);
 	TC0100SCN_tilemap_draw(bitmap,0,layer[1],0,2);
 	TC0100SCN_tilemap_draw(bitmap,0,layer[2],0,4);
 

@@ -64,22 +64,28 @@
 /*                                                                      */
 /************************************************************************/
 
+#if 0
 void CLIB_DECL discrete_log(const char *text, ...)
 {
 	static int firstout=1;
 	FILE *disclogfile=NULL;
     va_list arg;
     va_start(arg,text);
-	
+
 	if(firstout) disclogfile=fopen("discrete.log", "wa"); else disclogfile=fopen("discrete.log", "a");
 	firstout=0;
-	
+
     if(disclogfile) vfprintf(disclogfile, text, arg);
     fprintf(disclogfile,"\n");
     fclose(disclogfile);
 
     va_end(arg);
 }
+#else
+void CLIB_DECL discrete_log(const char *text, ...)
+{
+}
+#endif
 
 /* Include simulation objects */
 #include "disc_wav.c"		/* Wave sources   - SINE/SQUARE/NOISE/etc */
@@ -103,13 +109,14 @@ struct discrete_module module_list[]=
 	{ DSS_SQUAREWAVE  ,"DSS_SQUAREWAVE"  ,dss_squarewave_init  ,dss_squarewave_kill  ,dss_squarewave_reset  ,dss_squarewave_step  },
 	{ DSS_SINEWAVE    ,"DSS_SINEWAVE"    ,dss_sinewave_init    ,dss_sinewave_kill    ,dss_sinewave_reset    ,dss_sinewave_step    },
 	{ DSS_NOISE       ,"DSS_NOISE"       ,dss_noise_init       ,dss_noise_kill       ,dss_noise_reset       ,dss_noise_step       },
+	{ DSS_ONESHOT     ,"DSS_ONESHOT"     ,dss_oneshot_init     ,dss_oneshot_kill     ,dss_oneshot_reset     ,dss_oneshot_step     },
 
 	{ DST_GAIN        ,"DST_GAIN"        ,NULL                 ,NULL                 ,NULL                  ,dst_gain_step        },
 	{ DST_ADDER       ,"DST_ADDER"       ,NULL                 ,NULL                 ,NULL                  ,dst_adder_step       },
 	{ DST_RCFILTER    ,"DST_RCFILTER"    ,dst_rcfilter_init    ,NULL                 ,dst_rcfilter_reset    ,dst_rcfilter_step    },
 
 	{ DSD_NE555       ,"DSD_NE555"       ,dsd_ne555_init       ,dsd_ne555_kill       ,dsd_ne555_reset       ,dsd_ne555_step       },
-	
+
 	{ DSO_OUTPUT      ,"DSO_OUTPUT"      ,dso_output_init      ,NULL                 ,NULL                  ,dso_output_step      },
 	{ DSS_NULL        ,"DSS_NULL"        ,NULL                 ,NULL                 ,NULL                  ,NULL                 }
 };
@@ -145,7 +152,7 @@ static void discrete_stream_update(int ch, INT16 **buffer, int length)
 		{
 			/* Pick the first node to process */
 			node=running_order[loop2];
-			
+
 			/* Work out what nodes/inputs are required, dont process NO CONNECT nodes */
 			/* these are ones that are connected to NODE_LIST[0]                      */
 			if(node->input_node0 && (node->input_node0)->node!=NODE_NC) node->input0=(node->input_node0)->output;
@@ -154,11 +161,11 @@ static void discrete_stream_update(int ch, INT16 **buffer, int length)
 			if(node->input_node3 && (node->input_node3)->node!=NODE_NC) node->input3=(node->input_node3)->output;
 			if(node->input_node4 && (node->input_node4)->node!=NODE_NC) node->input4=(node->input_node4)->output;
 			if(node->input_node5 && (node->input_node5)->node!=NODE_NC) node->input5=(node->input_node5)->output;
-			
+
 			/* Now step the node */
 			if(module_list[node->module].step) (*module_list[node->module].step)(node);
 		}
-		
+
 		/* Now put the output into the buffers */
 		buffer[0][loop]=((struct dso_output_context*)(output_node->context))->left;
 		buffer[1][loop]=((struct dso_output_context*)(output_node->context))->right;
@@ -177,7 +184,7 @@ int discrete_sh_start (const struct MachineSound *msound)
 	/* Initialise */
 	intf=msound->sound_interface;
 	node_count=0;
-	
+
 	/* Sanity check and node count */
 	discrete_log("discrete_sh_start() - Doing node list sanity check");
 	while(1)
@@ -193,7 +200,7 @@ int discrete_sh_start (const struct MachineSound *msound)
 			logerror("discrete_sh_start() - Invalid function type on node %02d descriptor\n",node_count);
 			return 1;
 		}
-		
+
 		/* Node count must include the NULL node as well */
 		if(intf[node_count].type==DSS_NULL)
 		{
@@ -202,32 +209,32 @@ int discrete_sh_start (const struct MachineSound *msound)
 		}
 
 		node_count++;
-				
+
 		/* Sanity check */
 		if(node_count>255)
 		{
 			logerror("discrete_sh_start() - Upper limit of 255 nodes exceeded, have you terminated the interface block.");
-			return 1;			
+			return 1;
 		}
-	}		
+	}
 	discrete_log("discrete_sh_start() - Sanity check counted %d nodes", node_count);
 
 	/* Allocate memory for the context array and the node execution order array */
 	if((running_order=malloc(node_count*sizeof(struct node_description*)))==NULL)
 	{
 		logerror("discrete_sh_start() - Failed to allocate running order array.\n");
-		return 1;			
+		return 1;
 	}
 	else
 	{
 		/* Initialise memory */
 		memset(running_order,0,node_count*sizeof(struct node_description*));
 	}
-	
+
 	if((node_list=malloc(node_count*sizeof(struct node_description)))==NULL)
 	{
 		logerror("discrete_sh_start() - Failed to allocate context list array.\n");
-		return 1;			
+		return 1;
 	}
 	else
 	{
@@ -235,7 +242,7 @@ int discrete_sh_start (const struct MachineSound *msound)
 		memset(node_list,0,node_count*sizeof(struct node_description));
 	}
 	discrete_log("discrete_sh_start() - Malloc completed", node_count);
-	
+
 	/* Work out the execution order */
 	/* FAKE IT FOR THE MOMENT, EXECUTE IN ORDER */
 	for(loop=0;loop<node_count;loop++)
@@ -343,7 +350,7 @@ int discrete_sh_start (const struct MachineSound *msound)
 		logerror("discrete_sh_start() - Counldnt find an output node");
 		failed=1;
 	}
-		
+
 	discrete_log("discrete_sh_start() - Nodes initialised", node_count);
 
 	/* Initialise a stereo, stream, we always use stereo even if only a mono system */

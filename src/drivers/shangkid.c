@@ -1,6 +1,23 @@
 /*
+Dynamic Ski
+(c)1984 Taiyo
+
+Dynamic Ski runs on a single Z80.  It has the same graphics format as the
+newer Taiyo games.
+
+The game is playable, but lacks correct colors and has some minor priority
+glitches.  Two of the proms contain garbage.  One is likely a missing color
+component, and the other is probably priority-related.
+
+---------------------------------------------------------------------------
+
 Chinese Hero (developed by Taiyo)
 (c)1984 Taiyo
+
+Chinese Hero hardware differs only slightly from Shanghai Kid:
+- sprites have 3 bitplanes instead of 2
+- videoram attributes for the tilemap don't include xflip
+- no protection
 
 ---------------------------------------------------------------------------
 
@@ -9,7 +26,7 @@ Shanghai Kid / (Hokuha Syourin) Hiryu no Ken
 
 	3 Z-80A CPU
 	1 AY-3-8910
-	1 XTAL 18.432MHz
+	1 XTAL 18.432Mhz
 
 Also distributed with Data East and Memetron license.
 
@@ -46,8 +63,11 @@ extern WRITE_HANDLER( shangkid_videoram_w );
 extern UINT8 *shangkid_videoreg;
 extern int shangkid_gfx_type;
 
+extern void dynamski_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh );
+
 /***************************************************************************************/
 
+static data8_t bbx_sound_enable;
 static data8_t bbx_AY8910_control;
 static data8_t sound_latch;
 static data8_t *shareram;
@@ -81,53 +101,77 @@ static void init_shangkid( void )
 	shangkid_gfx_type = 1;
 }
 
+static void init_dynamski( void )
+{
+/*
+	unsigned char *pMem;
+	int i;
+
+	pMem = memory_region( REGION_PROMS );
+	for( i=0; i<0xa80; i++ )
+	{
+		if( (i&0x1f)==0 ) logerror( "\n %04x: ",i );
+		logerror( "%02x ", pMem[i] );
+	}
+*/
+}
+
 /***************************************************************************************/
 
-static WRITE_HANDLER( shangkid_bank_w )
+static WRITE_HANDLER( shangkid_maincpu_bank_w )
 {
 	cpu_setbank( 1,&memory_region(REGION_CPU1)[(data&1)?0x10000:0x8000] );
 }
 
 static WRITE_HANDLER( shangkid_bbx_enable_w )
 {
-	logerror( "bbx_enable(%d)\n", data );
 	cpu_set_halt_line( 1, data?0:1 );
 }
 
-static WRITE_HANDLER( shangkid_bbx_reset_w )
+static WRITE_HANDLER( shangkid_cpu_reset_w )
 {
 	if( data == 0 )
 	{
-		logerror( "reseting bbx\n" );
 		cpu_set_reset_line(1,PULSE_LINE);
 	}
 	else if( data == 1 )
 	{
-		logerror( "reseting main cpu\n" );
 		cpu_set_reset_line(0,PULSE_LINE);
 	}
 }
 
-static WRITE_HANDLER( bbx_AY8910_control_w )
+static WRITE_HANDLER( shangkid_sound_enable_w )
+{
+	bbx_sound_enable = data;
+}
+
+WRITE_HANDLER( shangkid_bbx_AY8910_control_w )
 {
 	bbx_AY8910_control = data;
 	AY8910_control_port_0_w( offset, data );
 }
 
-static WRITE_HANDLER( bbx_AY8910_write_w )
+WRITE_HANDLER( shangkid_bbx_AY8910_write_w )
 {
 	switch( bbx_AY8910_control )
 	{
 	case 0x0e:
-		if( data == 0x01 )
+		if( bbx_sound_enable )
 		{
-			/* 0->1 transition triggers interrupt on Sound CPU */
-			cpu_cause_interrupt( 2, Z80_IRQ_INT );
+			if( data == 0x01 )
+			{
+				/* 0->1 transition triggers interrupt on Sound CPU */
+				cpu_cause_interrupt( 2, Z80_IRQ_INT );
+			}
+		}
+		else
+		{
+			cpu_setbank( 2,&memory_region( REGION_CPU3 )[data?0x0000:0x10000] );
 		}
 		break;
 
 	case 0x0f:
-		sound_latch = data; /* read by Sound CPU */
+		sound_latch = data;
 		break;
 
 	default:
@@ -141,11 +185,6 @@ static WRITE_HANDLER( bbx_AY8910_write_w )
 READ_HANDLER( shangkid_soundlatch_r )
 {
 	return sound_latch;
-}
-
-WRITE_HANDLER( shangkid_soundbank_w )
-{
-	cpu_setbank( 2,&memory_region( REGION_CPU2 )[data?0x10000:0x0000] );
 }
 
 /***************************************************************************************/
@@ -235,6 +274,12 @@ static struct GfxDecodeInfo shangkid_gfxdecodeinfo[] = {
 	{ -1 }
 };
 
+static struct GfxDecodeInfo dynamski_gfxdecodeinfo[] = {
+	{ REGION_GFX1, 0, &shangkid_char_layout,	0, 0x40 },
+	{ REGION_GFX2, 0, &shangkid_sprite_layout,	0, 0x40 },
+	{ -1 }
+};
+
 /***************************************************************************************/
 
 static MEMORY_READ_START( main_readmem )
@@ -249,13 +294,14 @@ MEMORY_END
 
 static MEMORY_WRITE_START( main_writemem )
 	{ 0x0000, 0x9fff, MWA_ROM },
+	{ 0xa000, 0xa000, MWA_NOP }, /* ? */
 	{ 0xb000, 0xb000, shangkid_bbx_enable_w },
-	{ 0xb001, 0xb001, MWA_NOP },		/* watchdog */
+	{ 0xb001, 0xb001, shangkid_sound_enable_w },
 	{ 0xb002, 0xb002, MWA_NOP },		/* main CPU interrupt-related */
 	{ 0xb003, 0xb003, MWA_NOP },		/* BBX interrupt-related */
-	{ 0xb004, 0xb004, shangkid_bbx_reset_w },
+	{ 0xb004, 0xb004, shangkid_cpu_reset_w },
 	{ 0xb006, 0xb006, MWA_NOP },		/* coin counter */
-	{ 0xb007, 0xb007, shangkid_bank_w },
+	{ 0xb007, 0xb007, shangkid_maincpu_bank_w },
 	{ 0xc000, 0xc002, MWA_RAM, &shangkid_videoreg },
 	{ 0xd000, 0xdfff, shangkid_videoram_w, &videoram },
 	{ 0xe000, 0xfdff, MWA_RAM, &shareram },
@@ -276,20 +322,21 @@ MEMORY_END
 
 static MEMORY_WRITE_START( bbx_writemem )
 	{ 0x0000, 0x9fff, MWA_ROM },
+	{ 0xa000, 0xa000, MWA_NOP }, /* ? */
 	{ 0xb000, 0xb000, shangkid_bbx_enable_w },
-	{ 0xb001, 0xb001, MWA_NOP },		/* watchdog */
+	{ 0xb001, 0xb001, shangkid_sound_enable_w },
 	{ 0xb002, 0xb002, MWA_NOP },		/* main CPU interrupt-related */
 	{ 0xb003, 0xb003, MWA_NOP },		/* BBX interrupt-related */
-	{ 0xb004, 0xb004, shangkid_bbx_reset_w },
+	{ 0xb004, 0xb004, shangkid_cpu_reset_w },
 	{ 0xb006, 0xb006, MWA_NOP },		/* coin counter */
-	{ 0xb007, 0xb007, shangkid_bank_w },
+	{ 0xb007, 0xb007, shangkid_maincpu_bank_w },
 	{ 0xd000, 0xdfff, shangkid_videoram_w },
 	{ 0xe000, 0xffff, shareram_w },
 MEMORY_END
 
 static PORT_WRITE_START( bbx_writeport )
-	{ 0x00, 0x00, bbx_AY8910_control_w },
-	{ 0x01, 0x01, bbx_AY8910_write_w },
+	{ 0x00, 0x00, shangkid_bbx_AY8910_control_w },
+	{ 0x01, 0x01, shangkid_bbx_AY8910_write_w },
 PORT_END
 
 /***************************************************************************************/
@@ -300,7 +347,7 @@ static MEMORY_READ_START( sound_readmem )
 MEMORY_END
 
 static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0xdfff, MWA_ROM },
+	{ 0x0000, 0xdfff, MWA_NOP }, /* sample player writes to ROM area */
 	{ 0xe000, 0xefff, MWA_RAM },
 MEMORY_END
 
@@ -339,7 +386,7 @@ static struct MachineDriver machine_driver_##NAME = { \
 		}, \
 	}, \
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION, \
-	1, /* CPU slices */ \
+	10, /* CPU slices */ \
 	0, /* init machine */ \
 	40*8, 28*8, { 16, 319-16, 0, 223 }, \
 	NAME##_gfxdecodeinfo, \
@@ -366,7 +413,124 @@ static struct MachineDriver machine_driver_##NAME = { \
 MACHINE_DRIVER( chinhero )
 MACHINE_DRIVER( shangkid )
 
+static MEMORY_READ_START( dynamski_readmem )
+	{ 0x0000, 0x7fff, MRA_ROM },
+	{ 0xc000, 0xc7ff, MRA_RAM },
+	{ 0xc800, 0xcbff, MRA_RAM },
+	{ 0xd000, 0xd3ff, MRA_RAM },
+	{ 0xd800, 0xdbff, MRA_RAM },
+	{ 0xe000, 0xe002, MRA_RAM },
+	{ 0xe800, 0xe800, input_port_0_r },
+	{ 0xe801, 0xe801, input_port_1_r },
+	{ 0xe802, 0xe802, input_port_2_r },
+	{ 0xe803, 0xe803, input_port_3_r },
+	{ 0xf000, 0xf7ff, MRA_RAM }, /* work ram */
+MEMORY_END
+
+static MEMORY_WRITE_START( dynamski_writemem )
+	{ 0x0000, 0x7fff, MWA_ROM },
+	{ 0xc000, 0xc7ff, MWA_RAM, &videoram }, /* tilemap */
+	{ 0xc800, 0xcbff, MWA_RAM },
+	{ 0xd000, 0xd3ff, MWA_RAM },
+	{ 0xd800, 0xdbff, MWA_RAM },
+	{ 0xe000, 0xe000, MWA_NOP }, /* IRQ disable */
+	{ 0xe001, 0xe002, MWA_RAM }, /* screen flip */
+	{ 0xf000, 0xf7ff, MWA_RAM },
+MEMORY_END
+
+static PORT_WRITE_START( dynamski_writeport )
+	/* ports are reversed */
+	{ 0x00, 0x00, AY8910_write_port_0_w },
+	{ 0x01, 0x01, AY8910_control_port_0_w },
+PORT_END
+
+static struct MachineDriver machine_driver_dynamski = {
+	{
+		{
+			CPU_Z80,
+			3000000, /* ? */
+			dynamski_readmem,dynamski_writemem,0,dynamski_writeport,
+			interrupt,1
+		},
+	},
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	1, /* CPU slices */
+	0, /* init machine */
+	256+32, 256, { 0, 255+32, 16, 255-16 },
+	dynamski_gfxdecodeinfo,
+	256,256,
+	0,//vh_convert_color_prom,
+	VIDEO_TYPE_RASTER,
+	0,
+	0,//vh_start,
+	0,//vh_stop,
+	dynamski_screenrefresh,
+	0,0,0,0,
+	{
+		{
+			SOUND_AY8910,
+			&ay8910_interface
+		}
+	}
+};
+
 /***************************************************************************************/
+
+INPUT_PORTS_START( dynamski )
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_SERVICE1 ) /* service */
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START
+	PORT_DIPNAME( 0x03, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(	0x01, "A" )
+	PORT_DIPSETTING(	0x02, "B" )
+	PORT_DIPSETTING(	0x03, "C" )
+	PORT_BITX( 0,0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Play Forever",0,0 )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(	0x04, DEF_STR( Upright ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x18, 0x00, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(	0x18, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(	0x10, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(	0x08, DEF_STR( 1C_2C ) )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) ) /* unused? */
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) ) /* unused? */
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x80, DEF_STR( On ) )
+INPUT_PORTS_END
 
 INPUT_PORTS_START( chinhero )
 	PORT_START
@@ -374,7 +538,7 @@ INPUT_PORTS_START( chinhero )
 	PORT_DIPSETTING(	0x01, "3" )
 	PORT_DIPSETTING(	0x02, "4" )
 	PORT_DIPSETTING(	0x03, "5" )
-	PORT_BITX( 0,0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite",0 ,0 )
+	PORT_BITX( 0,0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite",0,0 )
 	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x04, DEF_STR( On ) )
@@ -425,20 +589,16 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( shangkid )
 	PORT_START
-	/*	On the physical PCB, there is actually one bank of 8 dipswitches labeled DSW1,
-	**	and 1 bank of 4 dipswitches labeled DSW2.  Only 8 out of the 12 seem to be
-	**	actually be used, both by the self-test and the game code proper.
-	**
-	**	There are two potentiometers on the PCB for volume:
+	/*	There are also two potentiometers on the PCB for volume:
 	**	RV1 - Music
 	**	RV2 - Sound Effects
 	*/
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Free_Play ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x01, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( Upright ) )
-	PORT_DIPSETTING(	0x02, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(	0x02, DEF_STR( Upright ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Cocktail ) )
 	PORT_DIPNAME( 0x1c, 0x04, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(	0x10, DEF_STR( 4C_1C ) )
 	PORT_DIPSETTING(	0x0c, DEF_STR( 3C_1C ) )
@@ -465,7 +625,7 @@ INPUT_PORTS_START( shangkid )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_START2 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED ) /* busy flag? */
 
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2 ) /* kick */
@@ -487,6 +647,8 @@ INPUT_PORTS_START( shangkid )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN )
 INPUT_PORTS_END
+
+/***************************************************************************************/
 
 ROM_START( chinhero )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* Z80 code (main) */
@@ -553,10 +715,10 @@ ROM_START( shangkid )
 	**	The BBX coprocessor receives graphics and sound-related commands from
 	**	the main CPU via shared RAM.  It directly manages an AY8910, is
 	**	responsible for populating spriteram, and forwards appropriate sound
-	**	commands to the Sample Player.
+	**	commands to the sample-playing CPU.
 	*/
-	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* Z80: bbx coprocessor */
-	/* 0x0000..0x1fff is battery-backed RAM */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* Z80: bbx module */
+	ROM_LOAD( "bbx.bin",	  0x0000, 0x2000, 0x560c0abd ) /* battery-backed RAM */
 	ROM_LOAD( "cr04ic31.bin", 0x2000, 0x2000, 0xcb207885 )
 	ROM_LOAD( "cr05ic32.bin", 0x4000, 0x4000, 0xcf3b8d55 )
 	ROM_LOAD( "cr06ic33.bin", 0x8000, 0x2000, 0x0f3bdbd8 )
@@ -601,6 +763,34 @@ ROM_START( shangkid )
 	ROM_LOAD( "cr24ic42.bin",	0xa60, 0x20, 0x823878aa )	/* 82S123 - sample player banking */
 ROM_END
 
+ROM_START( dynamski )
+	ROM_REGION( 0x12000, REGION_CPU1, 0 ) /* Z80 code */
+	ROM_LOAD( "dynski.1", 0x00000, 0x1000, 0x30191160 ) /* code */
+	ROM_LOAD( "dynski.2", 0x01000, 0x1000, 0x5e08a0b0 )
+	ROM_LOAD( "dynski.3", 0x02000, 0x1000, 0x29cfd740 )
+	ROM_LOAD( "dynski.4", 0x03000, 0x1000, 0xe1d47776 )
+	ROM_LOAD( "dynski.5", 0x04000, 0x1000, 0xe39aba1b )
+	ROM_LOAD( "dynski.6", 0x05000, 0x1000, 0x95780608 )
+	ROM_LOAD( "dynski.7", 0x06000, 0x1000, 0xb88d328b )
+	ROM_LOAD( "dynski.8", 0x07000, 0x1000, 0x8db5e691 )
 
-GAME(  1984, chinhero, 0, chinhero, chinhero, chinhero, ROT90, "Taiyo", "Chinese Hero" )
-GAMEX( 1985, shangkid, 0, shangkid, shangkid, shangkid, 0,     "Memetron", "Shanghai Kid", GAME_NOT_WORKING )
+	ROM_REGION( 0x4000, REGION_GFX1, ROMREGION_DISPOSE|ROMREGION_INVERT ) /* 8x8 tiles */
+	ROM_LOAD( "dynski8.3e",  0x0000, 0x2000, 0x32c354dc )
+	ROM_LOAD( "dynski9.2e",  0x2000, 0x2000, 0x80a6290c )
+
+	ROM_REGION( 0x6000, REGION_GFX2, ROMREGION_DISPOSE|ROMREGION_INVERT ) /* 16x16 sprites */
+	ROM_LOAD( "dynski5.14b", 0x0000, 0x2000, 0xaa4ac6e2 )
+	ROM_LOAD( "dynski6.15b", 0x2000, 0x2000, 0x47e76886 )
+	ROM_LOAD( "dynski7.14d", 0x4000, 0x2000, 0xa153dfa9 )
+
+	ROM_REGION( 0xa80, REGION_PROMS, 0 )
+	ROM_LOAD( "dynski.11e",		0x000, 256,0xe625aa09 )
+	ROM_LOAD( "dynski.4g",		0x100, 256,0x761fe465 )
+	ROM_LOAD( "dynskic.15f",	0x200, 256,0 /*0x025996b1*/ )
+	ROM_LOAD( "dynskic.15g",	0x300, 256,0 /*0x025996b1*/ )
+ROM_END
+
+/*           rom       parent  machine   inp       init	    vidflags */
+GAMEX( 1984, dynamski, 0,      dynamski, dynamski, dynamski,	ROT90,	"Taiyo",	"Dynamic Ski", GAME_WRONG_COLORS | GAME_NO_COCKTAIL )
+GAME(  1984, chinhero, 0,	   chinhero, chinhero, chinhero,	ROT90,	"Taiyo",	"Chinese Hero" )
+GAMEX( 1985, shangkid, 0,      shangkid, shangkid, shangkid,	0,		"Taiyo (Data East license)",	"Shanghai Kid (Japan)", GAME_NO_COCKTAIL )

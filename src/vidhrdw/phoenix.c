@@ -17,6 +17,7 @@ static unsigned char *videoram_pg2;
 static unsigned char *current_videoram_pg;
 static int current_videoram_pg_index;
 static int fg_palette_bank, bg_palette_bank;
+static int cocktail_mode;
 static int protection_question;
 static struct tilemap *fg_tilemap, *bg_tilemap;
 
@@ -67,34 +68,17 @@ void phoenix_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 		color_prom++;
 	}
 
-	/* first bank of characters use colors 0-31 and 64-95 */
-	for (i = 0;i < 8;i++)
+	/* first bank of characters use colors 0x00-0x1f and 0x40-0x5f */
+	/* second bank of characters use colors 0x20-0x3f and 0x60-0x7f */
+	for (i = 0;i < 0x40;i++)
 	{
-		int j;
+		int col;
 
 
-		for (j = 0;j < 2;j++)
-		{
-			COLOR(0,4*i + j*4*8) = i + j*64;
-			COLOR(0,4*i + j*4*8 + 1) = 8 + i + j*64;
-			COLOR(0,4*i + j*4*8 + 2) = 2*8 + i + j*64;
-			COLOR(0,4*i + j*4*8 + 3) = 3*8 + i + j*64;
-		}
-	}
+		col = ((i & 0x1c) >> 2) | ((i & 0x03) << 3) | ((i & 0x20) << 1);
 
-	/* second bank of characters use colors 32-63 and 96-127 */
-	for (i = 0;i < 8;i++)
-	{
-		int j;
-
-
-		for (j = 0;j < 2;j++)
-		{
-			COLOR(1,4*i + j*4*8) = i + 32 + j*64;
-			COLOR(1,4*i + j*4*8 + 1) = 8 + i + 32 + j*64;
-			COLOR(1,4*i + j*4*8 + 2) = 2*8 + i + 32 + j*64;
-			COLOR(1,4*i + j*4*8 + 3) = 3*8 + i + 32 + j*64;
-		}
+		COLOR(0,i) = col;
+		COLOR(1,i) = col | 0x20;
 	}
 }
 
@@ -124,36 +108,18 @@ void pleiads_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 	}
 
 	/* first bank of characters use colors 0x00-0x1f, 0x40-0x5f, 0x80-0x9f and 0xc0-0xdf */
-	for (i = 0;i < 8;i++)
-	{
-		int j;
-
-
-		for (j = 0;j < 4;j++)
-		{
-			COLOR(0,4*i + j*4*8 + 0) = 0*8 + i + (3-j)*64;
-			COLOR(0,4*i + j*4*8 + 1) = 1*8 + i + (3-j)*64;
-			COLOR(0,4*i + j*4*8 + 2) = 2*8 + i + (3-j)*64;
-			COLOR(0,4*i + j*4*8 + 3) = 3*8 + i + (3-j)*64;
-		}
-	}
-
 	/* second bank of characters use colors 0x20-0x3f, 0x60-0x7f, 0xa0-0xbf and 0xe0-0xff */
-	for (i = 0;i < 8;i++)
+	for (i = 0;i < 0x80;i++)
 	{
-		int j;
+		int col;
 
 
-		for (j = 0;j < 4;j++)
-		{
-			COLOR(1,4*i + j*4*8 + 0) = 0*8 + i + 32 + (3-j)*64;
-			COLOR(1,4*i + j*4*8 + 1) = 1*8 + i + 32 + (3-j)*64;
-			COLOR(1,4*i + j*4*8 + 2) = 2*8 + i + 32 + (3-j)*64;
-			COLOR(1,4*i + j*4*8 + 3) = 3*8 + i + 32 + (3-j)*64;
-		}
+		col = ((i & 0x1c) >> 2) | ((i & 0x03) << 3) | ((~i & 0x60) << 1);
+
+		COLOR(0,i) = col;
+		COLOR(1,i) = col | 0x20;
 	}
 }
-
 
 /***************************************************************************
 
@@ -258,6 +224,9 @@ WRITE_HANDLER( phoenix_videoreg_w )
 		current_videoram_pg_index = data & 1;
 		current_videoram_pg = current_videoram_pg_index ? videoram_pg2 : videoram_pg1;
 
+		cocktail_mode = current_videoram_pg_index && (input_port_3_r(0) & 0x01);
+
+		tilemap_set_flip(ALL_TILEMAPS, cocktail_mode ? (TILEMAP_FLIPX | TILEMAP_FLIPY) : 0);
 		tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
 	}
 
@@ -278,6 +247,9 @@ WRITE_HANDLER( pleiads_videoreg_w )
 		current_videoram_pg_index = data & 1;
 		current_videoram_pg = current_videoram_pg_index ? videoram_pg2 : videoram_pg1;
 
+		cocktail_mode = current_videoram_pg_index && (input_port_3_r(0) & 0x01);
+
+		tilemap_set_flip(ALL_TILEMAPS, cocktail_mode ? (TILEMAP_FLIPX | TILEMAP_FLIPY) : 0);
 		tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
 	}
 
@@ -309,9 +281,18 @@ WRITE_HANDLER( phoenix_scroll_w )
 }
 
 
+READ_HANDLER( phoenix_input_port_0_r )
+{
+	if (cocktail_mode)
+		return (input_port_0_r(0) & 0x07) | (input_port_1_r(0) & 0xf8);
+	else
+		return input_port_0_r(0);
+}
+
+
 READ_HANDLER( pleiads_input_port_0_r )
 {
-	int ret = input_port_0_r(0) & 0xf7;
+	int ret = phoenix_input_port_0_r(0) & 0xf7;
 
 	/* handle Pleiads protection */
 	switch (protection_question)

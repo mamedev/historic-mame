@@ -61,6 +61,7 @@ Video Section Summary		[ Cisco Heat ]			[ F1 GP Star ]
 #include "vidhrdw/generic.h"
 
 /* Variables only used here: */
+static struct tilemap *cischeat_tmap[3];
 
 static int cischeat_ip_select;
 #ifdef MAME_DEBUG
@@ -72,6 +73,67 @@ data16_t *cischeat_roadram[2];
 
 /* Variables defined in driver: */
 
+
+#ifdef MAME_DEBUG
+#define SHOW_READ_ERROR(_format_,_offset_)\
+{\
+	char buf[80];\
+	sprintf(buf,_format_,_offset_);\
+	usrintf_showmessage(buf);\
+	logerror("CPU #0 PC %06X : Warning, %s\n",cpu_get_pc(), buf); \
+}
+
+#define SHOW_WRITE_ERROR(_format_,_offset_,_data_)\
+{\
+	char buf[80];\
+	sprintf(buf,_format_,_offset_,_data_);\
+	usrintf_showmessage(buf);\
+	logerror("CPU #0 PC %06X : Warning, %s\n",cpu_get_pc(), buf); \
+}
+
+#else
+
+#define SHOW_READ_ERROR(_format_,_offset_)\
+{\
+	char buf[80];\
+	sprintf(buf,_format_,_offset_);\
+	logerror("CPU #0 PC %06X : Warning, %s\n",cpu_get_pc(), buf);\
+}
+
+#define SHOW_WRITE_ERROR(_format_,_offset_,_data_)\
+{\
+	char buf[80];\
+	sprintf(buf,_format_,_offset_,_data_); \
+	logerror("CPU #0 PC %06X : Warning, %s\n",cpu_get_pc(), buf); \
+}
+
+#endif
+
+#define MEGASYS1_VREG_FLAG(_n_) \
+		megasys1_scroll_##_n_##_flag_w(new_data); \
+		if (cischeat_tmap[_n_] == 0) SHOW_WRITE_ERROR("vreg %04X <- %04X NO MEMORY FOR SCREEN",offset*2,data);
+
+#define MEGASYS1_VREG_SCROLL(_n_, _dir_)	megasys1_scroll##_dir_[_n_] = new_data;
+
+
+#define cischeat_tmap_SET_SCROLL(_n_) \
+	if (cischeat_tmap[_n_]) \
+	{ \
+		tilemap_set_scrollx(cischeat_tmap[_n_], 0, megasys1_scrollx[_n_]); \
+		tilemap_set_scrolly(cischeat_tmap[_n_], 0, megasys1_scrolly[_n_]); \
+	}
+
+#define cischeat_tmap_UPDATE(_n_) \
+	if ( (cischeat_tmap[_n_]) && (megasys1_active_layers & (1 << _n_) ) ) \
+		tilemap_update(cischeat_tmap[_n_]);
+
+
+#define cischeat_tmap_DRAW(_n_) \
+	if ( (cischeat_tmap[_n_]) && (megasys1_active_layers & (1 << _n_) ) ) \
+	{ \
+		tilemap_draw(bitmap, cischeat_tmap[_n_], flag, 0 ); \
+		flag = 0; \
+	}
 
 /***************************************************************************
 
@@ -914,11 +976,8 @@ if (keyboard_pressed(KEYCODE_Z)) \
 \
 { \
 	static int show_unknown; \
-	if ( keyboard_pressed(KEYCODE_Z) && keyboard_pressed(KEYCODE_U) ) \
-	{ \
-		while (keyboard_pressed(KEYCODE_U)); \
+	if ( keyboard_pressed(KEYCODE_Z) && keyboard_pressed_memory(KEYCODE_U) ) \
 		show_unknown ^= 1; \
-	} \
  \
 	if (show_unknown) \
 	{ \
@@ -953,13 +1012,13 @@ void cischeat_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	CISCHEAT_LAYERSCTRL
 #endif
 
-	MEGASYS1_TMAP_SET_SCROLL(0)
-	MEGASYS1_TMAP_SET_SCROLL(1)
-	MEGASYS1_TMAP_SET_SCROLL(2)
+	cischeat_tmap_SET_SCROLL(0)
+	cischeat_tmap_SET_SCROLL(1)
+	cischeat_tmap_SET_SCROLL(2)
 
-	MEGASYS1_TMAP_UPDATE(0)
-	MEGASYS1_TMAP_UPDATE(1)
-	MEGASYS1_TMAP_UPDATE(2)
+	cischeat_tmap_UPDATE(0)
+	cischeat_tmap_UPDATE(1)
+	cischeat_tmap_UPDATE(2)
 
 	palette_init_used_colors();
 
@@ -976,9 +1035,9 @@ void cischeat_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	if (megasys1_active_layers & 0x20)	cischeat_draw_road(bitmap,1,7,5,TRANSPARENCY_PEN);
 
 	flag = 0;
-	MEGASYS1_TMAP_DRAW(0)
+	cischeat_tmap_DRAW(0)
 //	else fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
-	MEGASYS1_TMAP_DRAW(1)
+	cischeat_tmap_DRAW(1)
 
 	if (megasys1_active_layers & 0x08)	cischeat_draw_sprites(bitmap,15,3);
 	if (megasys1_active_layers & 0x10)	cischeat_draw_road(bitmap,0,4,1,TRANSPARENCY_PEN);
@@ -987,7 +1046,7 @@ void cischeat_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	if (megasys1_active_layers & 0x10)	cischeat_draw_road(bitmap,0,0,0,TRANSPARENCY_PEN);
 	if (megasys1_active_layers & 0x20)	cischeat_draw_road(bitmap,1,0,0,TRANSPARENCY_PEN);
 	if (megasys1_active_layers & 0x08)	cischeat_draw_sprites(bitmap,1,0);
-	MEGASYS1_TMAP_DRAW(2)
+	cischeat_tmap_DRAW(2)
 
 	/* for the map screen */
 	if (megasys1_active_layers & 0x08)	cischeat_draw_sprites(bitmap,0+16,0+16);
@@ -1023,13 +1082,13 @@ void f1gpstar_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	CISCHEAT_LAYERSCTRL
 #endif
 
-	MEGASYS1_TMAP_SET_SCROLL(0)
-	MEGASYS1_TMAP_SET_SCROLL(1)
-	MEGASYS1_TMAP_SET_SCROLL(2)
+	cischeat_tmap_SET_SCROLL(0)
+	cischeat_tmap_SET_SCROLL(1)
+	cischeat_tmap_SET_SCROLL(2)
 
-	MEGASYS1_TMAP_UPDATE(0)
-	MEGASYS1_TMAP_UPDATE(1)
-	MEGASYS1_TMAP_UPDATE(2)
+	cischeat_tmap_UPDATE(0)
+	cischeat_tmap_UPDATE(1)
+	cischeat_tmap_UPDATE(2)
 
 	palette_init_used_colors();
 
@@ -1051,9 +1110,9 @@ void f1gpstar_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	if (megasys1_active_layers & 0x10)	f1gpstar_draw_road(bitmap,0,6,7,TRANSPARENCY_PEN);
 
 	flag = 0;
-	MEGASYS1_TMAP_DRAW(0)
+	cischeat_tmap_DRAW(0)
 //	else fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
-	MEGASYS1_TMAP_DRAW(1)
+	cischeat_tmap_DRAW(1)
 
 	/* road 1!! 0!! */					/* bitmap, road, min_priority, max_priority, transparency */
 	if (megasys1_active_layers & 0x20)	f1gpstar_draw_road(bitmap,1,1,5,TRANSPARENCY_PEN);
@@ -1066,7 +1125,7 @@ void f1gpstar_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	if (megasys1_active_layers & 0x10)	f1gpstar_draw_road(bitmap,0,0,0,TRANSPARENCY_PEN);
 
 	if (megasys1_active_layers & 0x08)	cischeat_draw_sprites(bitmap,1,1);
-	MEGASYS1_TMAP_DRAW(2)
+	cischeat_tmap_DRAW(2)
 	if (megasys1_active_layers & 0x08)	cischeat_draw_sprites(bitmap,0,0);
 
 
@@ -1122,13 +1181,13 @@ if (keyboard_pressed(KEYCODE_Z))
 }
 #endif
 
-	MEGASYS1_TMAP_SET_SCROLL(0)
-//	MEGASYS1_TMAP_SET_SCROLL(1)
-	MEGASYS1_TMAP_SET_SCROLL(2)
+	cischeat_tmap_SET_SCROLL(0)
+//	cischeat_tmap_SET_SCROLL(1)
+	cischeat_tmap_SET_SCROLL(2)
 
-	MEGASYS1_TMAP_UPDATE(0)
-//	MEGASYS1_TMAP_UPDATE(1)
-	MEGASYS1_TMAP_UPDATE(2)
+	cischeat_tmap_UPDATE(0)
+//	cischeat_tmap_UPDATE(1)
+	cischeat_tmap_UPDATE(2)
 
 	palette_init_used_colors();
 
@@ -1139,11 +1198,11 @@ if (keyboard_pressed(KEYCODE_Z))
 	fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
 
 	flag = 0;
-	MEGASYS1_TMAP_DRAW(0)
+	cischeat_tmap_DRAW(0)
 //	else fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
-//	MEGASYS1_TMAP_DRAW(1)
+//	cischeat_tmap_DRAW(1)
 	if (megasys1_active_layers & 0x08)	cischeat_draw_sprites(bitmap,0,15);
-	MEGASYS1_TMAP_DRAW(2)
+	cischeat_tmap_DRAW(2)
 
 	megasys1_active_layers = megasys1_active_layers1;
 }

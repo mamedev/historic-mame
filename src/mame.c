@@ -1111,7 +1111,6 @@ int run_machine(void)
 	{
 		tilemap_init();
 		sprite_init();
-		gfxobj_init();
 		if (drv->vh_start == 0 || (*drv->vh_start)() == 0)		/* start the video hardware */
 		{
 			if (sound_start() == 0) /* start the audio hardware */
@@ -1200,7 +1199,6 @@ userquit:
 			printf("Unable to start video emulation\n");
 		}
 
-		gfxobj_close();
 		sprite_close();
 		tilemap_close();
 		vh_close();

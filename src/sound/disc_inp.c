@@ -33,7 +33,7 @@ WRITE_HANDLER(discrete_sound_w)
 READ_HANDLER(discrete_sound_r)
 {
 	int data=0;
-	
+
 	discrete_sh_update();
 	/* Mask the memory offset to stay in the space allowed */
 	offset&=(DSS_INPUT_SPACE-1);
@@ -79,7 +79,7 @@ int dss_input_init(struct node_description *node)
 		if((dss_input_map=malloc(DSS_INPUT_SPACE*sizeof(struct node_description*)))==NULL) return 1;
 		memset(dss_input_map,0,DSS_INPUT_SPACE*sizeof(struct node_description*));
 	}
-	
+
 	/* Initialise the input mapping array for this particular node */
 	addr=((int)node->input1)&(DSS_INPUT_SPACE-1);
 	mask=((int)node->input2)&(DSS_INPUT_SPACE-1);

@@ -2,13 +2,13 @@
 
 	Sega System C/C2 Driver
 	-----------------------
-	Version 0.50 - 16 November 2000
+	Version 0.52 - 5 March 2001
 	(for changes see drivers\segac2.c)
 
 ***********************************************************************************************/
 
 #include "driver.h"
-
+#include "state.h"
 
 /******************************************************************************
 	Macros
@@ -175,7 +175,36 @@ int segac2_vh_start(void)
 	/* reset palette tracking */
 	palette_init_used_colors();
 	memset(color_usage, 0, sizeof(color_usage));
+
+	/* Save State Stuff we could probably do with an init values from vdp registers function or something (todo) */
+
+	state_save_register_UINT8 ("C2_VDP", 0, "VDP Registers", segac2_vdp_regs, 32);
+	state_save_register_UINT8 ("C2_VDP", 0, "VDP VRam", vdp_vram, 0x10000);
+	state_save_register_UINT8 ("C2_VDP", 0, "VDP VSRam", vdp_vsram, 0x80);
+	state_save_register_int("C2_Video", 0, "Palette Bank", &segac2_palbank);
+	state_save_register_int("C2_Video", 0, "Background Pal Base",  &segac2_bg_palbase);
+	state_save_register_int("C2_Video", 0, "Sprite Pal Base",  &segac2_sp_palbase);
+	state_save_register_UINT8("C2_Video", 0, "Display Enabled",  &display_enable, 1);
+	state_save_register_UINT32("C2_Video", 0, "Scroll A Base in VRAM",  &vdp_scrollabase, 1);
+	state_save_register_UINT32("C2_Video", 0, "Scroll B Base in VRAM",  &vdp_scrollbbase, 1);
+	state_save_register_UINT32("C2_Video", 0, "Window Base in VRAM",  &vdp_windowbase, 1);
+	state_save_register_UINT32("C2_Video", 0, "Sprite Table Base in VRAM",  &vdp_spritebase, 1);
+	state_save_register_UINT32("C2_Video", 0, "HScroll Data Base in VRAM",  &vdp_hscrollbase, 1);
+	state_save_register_int("C2_Video", 0, "vdp_hscrollmask",  &vdp_hscrollmask);
+	state_save_register_UINT32("C2_Video", 0, "vdp_hscrollsize",  &vdp_hscrollsize, 1);
+	state_save_register_UINT8("C2_Video", 0, "vdp_vscrollmode",  &vdp_vscrollmode, 1);
+	state_save_register_UINT8("C2_VDP", 0, "VDP Command Part",  &vdp_cmdpart, 1);
+	state_save_register_UINT8("C2_VDP", 0, "VDP Current Code",  &vdp_code, 1);
+	state_save_register_UINT32("C2_VDP", 0, "VDP Address",  &vdp_address, 1);
+	state_save_register_UINT8("C2_VDP", 0, "VDP DMA Mode",  &vdp_dmafill, 1);
+	state_save_register_UINT8("C2_Video", 0, "scrollheight",  &scrollheight, 1);
+	state_save_register_UINT8("C2_Video", 0, "scrollwidth",  &scrollwidth, 1);
+	state_save_register_UINT8("C2_Video", 0, "Background Colour",  &bgcol, 1);
+	state_save_register_UINT8("C2_Video", 0, "Window Horz",  &window_down, 1);
+	state_save_register_UINT32("C2_Video", 0, "Window Vert",  &window_vpos, 1);
+
 	return 0;
+
 }
 
 

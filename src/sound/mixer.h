@@ -96,6 +96,7 @@ void mixer_sound_enable_global_w(int enable);
 void mixer_play_streamed_sample_16(int channel,INT16 *data,int len,int freq);
 int mixer_samples_this_frame(void);
 int mixer_need_samples_this_frame(int channel,int freq);
+void mixer_set_lowpass_frequency(int ch, int freq);
 
 /* private functions for user interface only - don't call them from drivers! */
 void mixer_set_mixing_level(int channel,int level);

@@ -269,4 +269,4 @@ ROM_START( safarir )
 ROM_END
 
 
-GAMEX( ????, safarir, 0, safarir, safarir, 0, ROT90, "SNK", "Safari Rally", GAME_NO_SOUND | GAME_IMPERFECT_COLORS )
+GAMEX( 19??, safarir, 0, safarir, safarir, 0, ROT90, "SNK", "Safari Rally", GAME_NO_SOUND | GAME_IMPERFECT_COLORS )

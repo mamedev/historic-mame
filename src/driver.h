@@ -17,7 +17,6 @@
 #include "cheat.h"
 #include "tilemap.h"
 #include "sprite.h"
-#include "gfxobj.h"
 #include "profiler.h"
 
 #ifdef MAME_NET

@@ -130,7 +130,7 @@ static void get_tile_info(int tile_index)
 	tile_info.flags = 0;
 	if (attr & 0x20) tile_info.flags |= TILE_FLIPX;
 	if (attr & 0x10) tile_info.flags |= TILE_FLIPY;
-	if ((attr & 0x0f) == 0x0f) tile_info.flags |= TILE_SPLIT(1);	/* hack */
+	if ((attr & 0x0f) == 0x0f) tile_info.flags |= TILE_SPLIT(1);	/* tunnels */
 }
 
 
@@ -149,7 +149,7 @@ int travrusa_vh_start(void)
 		return 1;
 
 	tilemap_set_transmask(bg_tilemap,0,0xff); /* split type 0 is totally transparent in front half */
-	tilemap_set_transmask(bg_tilemap,1,0x3f); /* split type 1 has pens 6 and 7 opaque - hack! */
+	tilemap_set_transmask(bg_tilemap,1,0x3f); /* split type 1 has pens 6 and 7 opaque - tunnels */
 
 	tilemap_set_scroll_rows(bg_tilemap,32);
 

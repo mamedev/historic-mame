@@ -162,13 +162,13 @@ TODO Lists
   buffering inside the chip but it's not clear how. See below the irq section
   for a long list of observations on sprite glitches.
 
-- TC0480SCP emulation (footchmp, metalb, deadconx) is incomplete. Zoom is
-  imperfect, and the row effects are wrong. Row horizontal and vertical
-  zoom need to be emulated.
+- TC0480SCP emulation (footchmp, metalb, deadconx) is slightly incomplete.
+  bg0/1 should have rowscroll in zoom, needed for the zooming goal in
+  Footchmp attract.
 
-- Some DIPS are wrong [and many unknown in the Japanese quiz games].
+- Some DIPS are wrong [and various unknown in the Japanese quiz games].
 
-- Macros for common input port definitions.
+- Restored save states on some games tend to hang.
 
 
 Dondokod
@@ -201,8 +201,15 @@ the left.
 Metal Black
 -----------
 
-Tilemap screenflip support has a possible issue; the blue planet in early
-attract should be 1 pixel left.
+Tilemap screenflip support has an issue: blue planet early in attract
+should be 1 pixel left.
+
+Sprite / tilemap lag may be responsible for minor glitches on the
+"bolts" on round 4 boss ship.
+
+Missing two blend effects: there's a sun sprite underneath tilemaps
+in round 1; and the boss sprite crosses under the tilemaps at start
+of round 5 finale.
 
 
 Yesnoj
@@ -238,18 +245,19 @@ Roz layer is around 4 pixels too far down in screenflip.
 ***************************************************************************/
 
 #include "driver.h"
+#include "state.h"
 #include "cpu/m68000/m68000.h"
 #include "vidhrdw/generic.h"
 #include "vidhrdw/taitoic.h"
 #include "sndhrdw/taitosnd.h"
 
 
-
 extern data16_t *f2_sprite_extension;
 extern size_t f2_spriteext_size;
 
-int mjnquest_input;
-int yesnoj_dsw = 0;
+static int banknum = 0;
+static int mjnquest_input;
+static int yesnoj_dsw = 0;
 
 int taitof2_default_vh_start (void);
 int taitof2_finalb_vh_start (void);
@@ -291,9 +299,8 @@ WRITE16_HANDLER( taitof2_spritebank_w );
 READ16_HANDLER( koshien_spritebank_r );
 WRITE16_HANDLER( koshien_spritebank_w );
 WRITE16_HANDLER( taitof2_sprite_extension_w );
-WRITE16_HANDLER( taitof2_scrbank_w );
-//WRITE16_HANDLER( taitof2_unknown_reg_w );
 
+//WRITE16_HANDLER( taitof2_unknown_reg_w );
 
 extern data16_t *cchip_ram;
 READ16_HANDLER( cchip2_word_r );
@@ -333,7 +340,7 @@ static WRITE16_HANDLER( TC0510NIO_halfword_w )
 		TC0510NIO_w(offset,data & 0xff);
 	else
 	{
-		/* driftout writes here the coin counters - bug? */
+		/* driftout writes the coin counters here - bug? */
 logerror("CPU #0 PC %06x: warning - write to MSB of TC0510NIO address %02x\n",cpu_get_pc(),offset);
 		TC0510NIO_w(offset,(data >> 8) & 0xff);
 	}
@@ -611,9 +618,10 @@ static READ16_HANDLER( yesnoj_input_r )
     switch (offset)
     {
          case 0x00:
-              return input_port_0_word_r(0,mem_mask); /* IN0 */
+              return input_port_0_word_r(0,mem_mask);	/* IN0 */
 
-// case 0x01 only used if "service" "DSW" bit is clear...
+/* case 0x01 only used if "printer" DSW is on, and appears to
+   be printer status byte */
 
          case 0x02:
               return input_port_1_word_r(0,mem_mask); /* IN1 */
@@ -802,15 +810,19 @@ static int taitof2_interrupt(void)
 			SOUND
 *****************************************/
 
+static void reset_sound_region(void)
+{
+	cpu_setbank( 2, memory_region(REGION_CPU2) + (banknum * 0x4000) + 0x10000 );
+}
+
 static WRITE_HANDLER( bankswitch_w )
 {
-	unsigned char *RAM = memory_region(REGION_CPU2);
-	int banknum = (data - 1) & 7;
+	banknum = (data - 1) & 7;
+	reset_sound_region();
 
 #ifdef MAME_DEBUG
-	if (banknum>3) logerror("CPU #1 switch to ROM bank %06x: should only happen if Z80 prg rom is 128K!\n",banknum);
+	if (banknum>2) logerror("CPU #1 switch to ROM bank %06x: should only happen if Z80 prg rom is 128K!\n",banknum);
 #endif
-	cpu_setbank(2, &RAM [0x10000 + (banknum * 0x4000)]);
 }
 
 
@@ -1119,7 +1131,7 @@ static MEMORY_WRITE16_START( growl_writemem )
 	{ 0x500000, 0x50000f, taitof2_spritebank_w },
 	{ 0x800000, 0x80ffff, TC0100SCN_word_0_w },	/* tilemaps */
 	{ 0x820000, 0x82000f, TC0100SCN_ctrl_word_0_w },
-	{ 0x900000, 0x90ffff, MWA16_RAM, &spriteram16, &spriteram_size  },
+	{ 0x900000, 0x90ffff, MWA16_RAM, &spriteram16, &spriteram_size },
 	{ 0xb00000, 0xb0001f, TC0360PRI_halfword_w },	/* ?? */
 MEMORY_END
 
@@ -1146,10 +1158,10 @@ static MEMORY_WRITE16_START( mjnquest_writemem )
 	{ 0x350000, 0x350001, MWA16_NOP },   /* watchdog ? */
 	{ 0x360000, 0x360001, taitosound_port16_msb_w },
 	{ 0x360002, 0x360003, taitosound_comm16_msb_w },
-	{ 0x380000, 0x380001, taitof2_scrbank_w },   /* scr bank */
+	{ 0x380000, 0x380001, TC0100SCN_gfxbank_w },	/* scr gfx bank select */
 	{ 0x400000, 0x40ffff, TC0100SCN_word_0_w },	/* tilemaps */
 	{ 0x420000, 0x42000f, TC0100SCN_ctrl_word_0_w },
-	{ 0x500000, 0x50ffff, MWA16_RAM, &spriteram16, &spriteram_size  },
+	{ 0x500000, 0x50ffff, MWA16_RAM, &spriteram16, &spriteram_size },
 MEMORY_END
 
 static MEMORY_READ16_START( footchmp_readmem )
@@ -1569,7 +1581,7 @@ static MEMORY_WRITE16_START( driftout_writemem )
 	{ 0xb00000, 0xb0000f, TC0510NIO_halfword_w },
 MEMORY_END
 
-/*same as driftout except for the sound address 0x200000 */
+/* same as driftout except for the sound address 0x200000 */
 static MEMORY_READ16_START( driveout_readmem )
 	{ 0x000000, 0x0fffff, MRA16_ROM },
 	{ 0x200000, 0x200003, MRA16_NOP },
@@ -1659,19 +1671,24 @@ MEMORY_END
 static READ_HANDLER( driveout_sound_command_r)
 {
 	cpu_set_irq_line(1,0,CLEAR_LINE);
-	/*logerror("sound IRQ OFF (sound command=%02x)\n",driveout_sound_latch);*/
+//	logerror("sound IRQ OFF (sound command=%02x)\n",driveout_sound_latch);
 	return driveout_sound_latch;
 }
 
 static int oki_bank = 0;
+
+static void reset_driveout_sound_region(void)
+{
+	OKIM6295_set_bank_base(0, oki_bank*0x40000);
+}
 
 static WRITE_HANDLER (oki_bank_w)
 {
 	if ((data&4) && (oki_bank!=(data&3)) )
 	{
 		oki_bank = (data&3);
-		OKIM6295_set_bank_base(0, oki_bank*0x40000);
 	}
+	reset_driveout_sound_region();
 }
 
 static MEMORY_READ_START( driveout_sound_readmem )
@@ -1769,6 +1786,7 @@ MEMORY_END
 
 INPUT_PORTS_START( finalb )
 	PORT_START /* DSW A */
+	/* This Dip disables both players buttons. Maybe need alternate controls */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -1822,6 +1840,7 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( finalbj )
 	PORT_START /* DSW A */
+	/* This Dip disables both players buttons. Maybe need alternate controls */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -1875,9 +1894,9 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( dondokod )
 	PORT_START /* DSW A */
-	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -1900,11 +1919,11 @@ INPUT_PORTS_START( dondokod )
 	PORT_DIPSETTING(    0x00, "4" )
 	PORT_DIPSETTING(    0x10, "5" )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	/* IN0 */
 	TAITO_F2_PLAYERS_INPUT( IPF_PLAYER1 )
@@ -1926,16 +1945,16 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( megab )
 	PORT_START /* DSW A */
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
-	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
 	TAITO_COINAGE_WORLD_8
 
 	PORT_START /* DSW B */
@@ -1977,16 +1996,16 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( megabj )
 	PORT_START /* DSW A */
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
-	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
 	TAITO_COINAGE_JAPAN_8
 
 	PORT_START /* DSW B */
@@ -2054,11 +2073,11 @@ INPUT_PORTS_START( thundfox )
 	PORT_DIPSETTING(    0x10, "4" )
 	PORT_DIPSETTING(    0x00, "5" )
 	PORT_DIPNAME( 0x40, 0x40, "Allow Continue" )
-	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x80, 0x80, "Game Type" )
-	PORT_DIPSETTING(    0x80, "Double Control Panel" )
-	PORT_DIPSETTING(    0x00, "Single Control Panel" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, "Upright Controls" ) /* ie single or two players at once */
+	PORT_DIPSETTING(    0x00, "Single" )
+	PORT_DIPSETTING(    0x80, "Dual" )
 
 	/* IN0 */
 	TAITO_F2_PLAYERS_INPUT( IPF_PLAYER1 )
@@ -2107,9 +2126,9 @@ INPUT_PORTS_START( cameltry )
 	PORT_DIPNAME( 0x40, 0x40, "Allow Continue" )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, "Pair Play" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x00, "Upright Controls" ) /* ie single or two players at once */
+	PORT_DIPSETTING(    0x80, "Single" )
+	PORT_DIPSETTING(    0x00, "Dual" )
 
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -2174,9 +2193,9 @@ INPUT_PORTS_START( cameltru )
 	PORT_DIPNAME( 0x40, 0x40, "Allow Continue" )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, "Pair Play" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x00, "Upright Controls" ) /* ie single or two players at once */
+	PORT_DIPSETTING(    0x80, "Single" )
+	PORT_DIPSETTING(    0x00, "Dual" )
 
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -2301,11 +2320,11 @@ INPUT_PORTS_START( liquidk )
 	PORT_DIPSETTING(    0x00, "4" )
 	PORT_DIPSETTING(    0x10, "5" )
 	PORT_DIPNAME( 0x40, 0x40, "Allow Continue" )
-	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )  //is this verified from manual?
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x00, "Upright Controls" ) /* ie single or two players at once */
+	PORT_DIPSETTING(    0x80, "Single" )
+	PORT_DIPSETTING(    0x00, "Dual" )
 
 	/* IN0 */
 	TAITO_F2_PLAYERS_INPUT( IPF_PLAYER1 )
@@ -2352,11 +2371,11 @@ INPUT_PORTS_START( liquidku )
 	PORT_DIPSETTING(    0x00, "4" )
 	PORT_DIPSETTING(    0x10, "5" )
 	PORT_DIPNAME( 0x40, 0x40, "Allow Continue" )
-	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )  //is this verified from manual?
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x00, "Upright Controls" ) /* ie single or two players at once */
+	PORT_DIPSETTING(    0x80, "Single" )
+	PORT_DIPSETTING(    0x00, "Dual" )
 
 	/* IN0 */
 	TAITO_F2_PLAYERS_INPUT( IPF_PLAYER1 )
@@ -2403,11 +2422,11 @@ INPUT_PORTS_START( mizubaku )
 	PORT_DIPSETTING(    0x00, "4" )
 	PORT_DIPSETTING(    0x10, "5" )
 	PORT_DIPNAME( 0x40, 0x40, "Allow Continue" )
-	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )  //is this verified from manual?
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x00, "Upright Controls" ) /* ie single or two players at once */
+	PORT_DIPSETTING(    0x80, "Single" )
+	PORT_DIPSETTING(    0x00, "Dual" )
 
 	/* IN0 */
 	TAITO_F2_PLAYERS_INPUT( IPF_PLAYER1 )
@@ -2457,8 +2476,8 @@ INPUT_PORTS_START( ssi )
 	PORT_DIPSETTING(    0x00, "Alternate, Dual")
 	PORT_DIPSETTING(    0x20, "Not Allowed")
 	PORT_DIPNAME( 0x40, 0x40, "Allow Continue" )
-	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Yes ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+    PORT_DIPSETTING(    0x40, DEF_STR( On ) )
 
 	/* IN0 */
 	TAITO_F2_PLAYERS_INPUT( IPF_PLAYER1 )
@@ -2508,8 +2527,8 @@ INPUT_PORTS_START( majest12 )
 	PORT_DIPSETTING(    0x00, "Alternate, Dual Controls")
 	PORT_DIPSETTING(    0x20, "Not Allowed")
 	PORT_DIPNAME( 0x40, 0x40, "Allow Continue" )
-	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Yes ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+    PORT_DIPSETTING(    0x40, DEF_STR( On ) )
 
 	/* IN0 */
 	TAITO_F2_PLAYERS_INPUT( IPF_PLAYER1 )
@@ -2796,11 +2815,11 @@ INPUT_PORTS_START( pulirula )
 	PORT_DIPSETTING(    0x10, "4" )
 	PORT_DIPSETTING(    0x00, "5" )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, "Pair Play" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, "Upright Controls" ) /* ie single or two players at once */
+	PORT_DIPSETTING(    0x00, "Single" )
+	PORT_DIPSETTING(    0x80, "Dual" )
 
 	/* IN0 */
 	TAITO_F2_PLAYERS_INPUT( IPF_PLAYER1 )
@@ -2847,11 +2866,11 @@ INPUT_PORTS_START( pulirulj )
 	PORT_DIPSETTING(    0x10, "4" )
 	PORT_DIPSETTING(    0x00, "5" )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, "Pair Play" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, "Upright Controls" ) /* ie single or two players at once */
+	PORT_DIPSETTING(    0x00, "Single" )
+	PORT_DIPSETTING(    0x80, "Dual" )
 
 	/* IN0 */
 	TAITO_F2_PLAYERS_INPUT( IPF_PLAYER1 )
@@ -2900,11 +2919,11 @@ INPUT_PORTS_START( qzquest )
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
@@ -2963,11 +2982,11 @@ INPUT_PORTS_START( qzchikyu )
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
@@ -3044,8 +3063,8 @@ INPUT_PORTS_START( footchmp )
 	PORT_DIPSETTING(    0x10, "4 Players / 2 cabinets combined" )
 	PORT_DIPSETTING(    0x00, "4 Players / 2 Coin Slots" )
 	PORT_DIPNAME( 0x40, 0x40, "Allow Continue" )
-	PORT_DIPSETTING(    0x40, DEF_STR( No ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x00, "Game Version" )	// Not used for Hat Trick Hero / Euro Champ '92
 	PORT_DIPSETTING(    0x00, "Normal" )
 	PORT_DIPSETTING(    0x80, "European" )
@@ -3121,8 +3140,8 @@ INPUT_PORTS_START( hthero )
 	PORT_DIPSETTING(    0x08, "4 Players / 2 cabinets combined" )
 	PORT_DIPSETTING(    0x00, "4 Players / 2 Coin Slots" )
 	PORT_DIPNAME( 0x02, 0x02, "Allow Continue" )
-	PORT_DIPSETTING(    0x02, DEF_STR( No ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -3185,8 +3204,8 @@ INPUT_PORTS_START( ninjak )
 	PORT_DIPSETTING(    0x10, "4" )
 	PORT_DIPSETTING(    0x00, "5" )
 	PORT_DIPNAME( 0x40, 0x40, "Allow Continue" )
-	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Yes ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x80, "Game Type" )
 	PORT_DIPSETTING(    0x00, "1 Player only" )
 	PORT_DIPSETTING(    0x80, "Multiplayer" )
@@ -3249,8 +3268,8 @@ INPUT_PORTS_START( ninjakj )
 	PORT_DIPSETTING(    0x10, "4" )
 	PORT_DIPSETTING(    0x00, "5" )
 	PORT_DIPNAME( 0x40, 0x40, "Allow Continue" )
-	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Yes ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x80, "Game Type" )
 	PORT_DIPSETTING(    0x00, "1 Player only" )
 	PORT_DIPSETTING(    0x80, "Multiplayer" )
@@ -3349,11 +3368,11 @@ INPUT_PORTS_START( gunfront )
 	PORT_DIPSETTING(    0x30, "3" )
 	PORT_DIPSETTING(    0x00, "5" )
 	PORT_DIPNAME( 0x40, 0x40, "Allow Continue" )
-	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x80, 0x80, "Pair Play" )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, "Upright Controls" ) /* ie single or two players at once */
+	PORT_DIPSETTING(    0x00, "Single" )
+	PORT_DIPSETTING(    0x80, "Dual" )
 
 	/* IN0 */
 	TAITO_F2_PLAYERS_INPUT( IPF_PLAYER1 )
@@ -3400,11 +3419,11 @@ INPUT_PORTS_START( gunfronj )
 	PORT_DIPSETTING(    0x30, "3" )
 	PORT_DIPSETTING(    0x00, "5" )
 	PORT_DIPNAME( 0x40, 0x40, "Allow Continue" )
-	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x80, 0x80, "Pair Play" )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, "Upright Controls" ) /* ie single or two players at once */
+	PORT_DIPSETTING(    0x00, "Single" )
+	PORT_DIPSETTING(    0x80, "Dual" )
 
 	/* IN0 */
 	TAITO_F2_PLAYERS_INPUT( IPF_PLAYER1 )
@@ -3451,11 +3470,11 @@ INPUT_PORTS_START( metalb )
 	PORT_DIPSETTING(    0x30, "3" )
 	PORT_DIPSETTING(    0x20, "5" )
 	PORT_DIPNAME( 0x40, 0x40, "Allow Continue" )
-	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x80, 0x80, "Pair Play" )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, "Upright Controls" ) /* ie single or two players at once */
+	PORT_DIPSETTING(    0x00, "Single" )
+	PORT_DIPSETTING(    0x80, "Dual" )
 
 	/* IN0 */
 	TAITO_F2_PLAYERS_INPUT( IPF_PLAYER1 )
@@ -3502,11 +3521,11 @@ INPUT_PORTS_START( metalbj )
 	PORT_DIPSETTING(    0x30, "3" )
 	PORT_DIPSETTING(    0x20, "5" )
 	PORT_DIPNAME( 0x40, 0x40, "Allow Continue" )
-	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x80, 0x80, "Pair Play" )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, "Upright Controls" ) /* ie single or two players at once */
+	PORT_DIPSETTING(    0x00, "Single" )
+	PORT_DIPSETTING(    0x80, "Dual" )
 
 	/* IN0 */
 	TAITO_F2_PLAYERS_INPUT( IPF_PLAYER1 )
@@ -3694,15 +3713,15 @@ INPUT_PORTS_START( dinorex )
 	PORT_DIPNAME( 0x10, 0x10, "Timer Speed" )	 // Appears to make little difference
 	PORT_DIPSETTING(    0x10, "Normal" )
 	PORT_DIPSETTING(    0x00, "Fast" )
-	PORT_DIPNAME( 0x20, 0x20, "Match Type" )	// Raine says "Points to Win"
+	PORT_DIPNAME( 0x20, 0x20, "Match Type" )
 	PORT_DIPSETTING(    0x20, "Best of 3" )
 	PORT_DIPSETTING(    0x00, "Single" )
-	PORT_DIPNAME( 0x40, 0x40, "2 Player Mode" )
+	PORT_DIPNAME( 0x40, 0x40, "2 Player Mode" )	// actually this seems to be unknown
 	PORT_DIPSETTING(    0x40, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, "Upright Controls" )	/* ie single or two players at once */
+	PORT_DIPSETTING(    0x00, "Single" )
+	PORT_DIPSETTING(    0x80, "Dual" )
 
 	/* IN0 */
 	TAITO_F2_PLAYERS_INPUT( IPF_PLAYER1 )
@@ -3746,15 +3765,15 @@ INPUT_PORTS_START( dinorexj )
 	PORT_DIPNAME( 0x10, 0x10, "Timer Speed" )	 // Appears to make little difference
 	PORT_DIPSETTING(    0x10, "Normal" )
 	PORT_DIPSETTING(    0x00, "Fast" )
-	PORT_DIPNAME( 0x20, 0x20, "Match Type" )	// Raine says "Points to Win"
+	PORT_DIPNAME( 0x20, 0x20, "Match Type" )
 	PORT_DIPSETTING(    0x20, "Best of 3" )
 	PORT_DIPSETTING(    0x00, "Single" )
-	PORT_DIPNAME( 0x40, 0x40, "2 Player Mode" )
+	PORT_DIPNAME( 0x40, 0x40, "2 Player Mode" )	// actually this seems to be unknown
 	PORT_DIPSETTING(    0x40, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, "Upright Controls" )	/* ie single or two players at once */
+	PORT_DIPSETTING(    0x00, "Single" )
+	PORT_DIPSETTING(    0x80, "Dual" )
 
 	/* IN0 */
 	TAITO_F2_PLAYERS_INPUT( IPF_PLAYER1 )
@@ -3828,7 +3847,7 @@ INPUT_PORTS_START( solfigtr )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( koshien )
-	PORT_START /* DSW A */
+	PORT_START /* DSW A, one lets you control fielders ? */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -3855,11 +3874,11 @@ INPUT_PORTS_START( koshien )
 	PORT_DIPSETTING(    0x10, "4" )
 	PORT_DIPSETTING(    0x00, "5" )
 	PORT_DIPNAME( 0x40, 0x40, "Allow Continue" )
-	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x80, 0x80, "Game Type" )
-	PORT_DIPSETTING(    0x80, "Double Control Panel" )
-	PORT_DIPSETTING(    0x00, "Single Control Panel" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, "Upright Controls" ) /* ie single or two players at once */
+	PORT_DIPSETTING(    0x00, "Single" )
+	PORT_DIPSETTING(    0x80, "Dual" )
 
 	PORT_START      /* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
@@ -3943,14 +3962,11 @@ INPUT_PORTS_START( quizhq )
 	PORT_DIPSETTING(    0x10, "3" )
 	PORT_DIPSETTING(    0x00, "4" )
 	PORT_DIPNAME( 0x40, 0x40, "Allow Continue" )
-	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x80, 0x80, "Game Type" )
-	PORT_DIPSETTING(    0x80, "Double Control Panel" )
-	PORT_DIPSETTING(    0x00, "Single Control Panel" )
-	PORT_DIPNAME( 0x80, 0x80, "Pair Play" )
-	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Yes ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, "Upright Controls" ) /* ie single or two players at once */
+	PORT_DIPSETTING(    0x00, "Single" )
+	PORT_DIPSETTING(    0x80, "Dual" )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( qjinsei )
@@ -4109,9 +4125,9 @@ INPUT_PORTS_START( qcrayon2 )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, "Game Control" )
+	PORT_DIPSETTING(    0x80, "Joystick" )
+	PORT_DIPSETTING(    0x00, "4 Buttons" )
 
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
@@ -4169,9 +4185,9 @@ INPUT_PORTS_START( yuyugogo )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, "Allow Continue" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -4251,7 +4267,7 @@ INPUT_PORTS_START( mjnquest )
 	PORT_BIT( 0xfc, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START      /* IN7:DSW A */
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unused ) )
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Flip_Screen ) )
@@ -4261,36 +4277,26 @@ INPUT_PORTS_START( mjnquest )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
-	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( 1C_2C ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	TAITO_COINAGE_JAPAN_NEW_8
 
 	PORT_START      /* IN8:DSW B */
 	TAITO_DIFFICULTY_8
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unused ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unused ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unused ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unused ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
@@ -4655,21 +4661,20 @@ ROM_START( finalb )
 	ROM_LOAD16_BYTE( "b82-09",     0x00000, 0x20000, 0x632f1ecd )
 	ROM_LOAD16_BYTE( "b82-17",     0x00001, 0x20000, 0xe91b2ec9 )
 
-	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD16_BYTE( "b82-06",     0x000000, 0x020000, 0xfc450a25 )
-	ROM_LOAD16_BYTE( "b82-07",     0x000001, 0x020000, 0xec3df577 )
+	ROM_REGION( 0x040000, REGION_GFX1, ROMREGION_DISPOSE )	/* SCR */
+	ROM_LOAD16_BYTE( "b82-06",     0x00000, 0x20000, 0xfc450a25 )
+	ROM_LOAD16_BYTE( "b82-07",     0x00001, 0x20000, 0xec3df577 )
 
-	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD16_BYTE( "b82-04",     0x000000, 0x080000, 0x6346f98e ) /* sprites 4-bit format*/
-	ROM_LOAD16_BYTE( "b82-03",     0x000001, 0x080000, 0xdaa11561 ) /* sprites 4-bit format*/
+	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )	/* OBJ */
+	ROM_LOAD16_BYTE( "b82-04",     0x000000, 0x80000, 0x6346f98e ) /* sprites 4-bit format*/
+	ROM_LOAD16_BYTE( "b82-03",     0x000001, 0x80000, 0xdaa11561 ) /* sprites 4-bit format*/
 
-	/*Note:
-	**this is intentional to load at 0x180000, not at 0x100000
-	**because finalb_driver_init will move some bits around before data will be 'gfxdecoded'.
-	**The whole thing is because this data is 2bits- while above is 4bits-packed format,
-	**for a total of 6 bits per pixel.
-	*/
-	ROM_LOAD         ( "b82-05",     0x180000, 0x080000, 0xaa90b93a ) /* sprites 2-bit format*/
+	/* Note: this is intentional to load at 0x180000, not at 0x100000
+	   because finalb_driver_init will move some bits around before data
+	   will be 'gfxdecoded'. The whole thing is because this data is 2bits-
+	   while above is 4bits-packed format, for a total of 6 bits per pixel. */
+
+	ROM_LOAD       ( "b82-05",     0x180000, 0x80000, 0xaa90b93a ) /* sprites 2-bit format*/
 
 	ROM_REGION( 0x1c000, REGION_CPU2, 0 )      /* sound cpu */
 	ROM_LOAD( "b82-10",      0x00000, 0x04000, 0xa38aaaed )
@@ -4687,21 +4692,20 @@ ROM_START( finalbj )
 	ROM_LOAD16_BYTE( "b82-09",     0x00000, 0x20000, 0x632f1ecd )
 	ROM_LOAD16_BYTE( "b82-08",     0x00001, 0x20000, 0x07154fe5 )
 
-	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD16_BYTE( "b82-06",     0x000000, 0x020000, 0xfc450a25 )
-	ROM_LOAD16_BYTE( "b82-07",     0x000001, 0x020000, 0xec3df577 )
+	ROM_REGION( 0x040000, REGION_GFX1, ROMREGION_DISPOSE )	/* SCR */
+	ROM_LOAD16_BYTE( "b82-06",     0x00000, 0x20000, 0xfc450a25 )
+	ROM_LOAD16_BYTE( "b82-07",     0x00001, 0x20000, 0xec3df577 )
 
-	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD16_BYTE( "b82-04",     0x000000, 0x080000, 0x6346f98e ) /* sprites 4-bit format*/
-	ROM_LOAD16_BYTE( "b82-03",     0x000001, 0x080000, 0xdaa11561 ) /* sprites 4-bit format*/
+	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )	/* OBJ */
+	ROM_LOAD16_BYTE( "b82-04",     0x000000, 0x80000, 0x6346f98e ) /* sprites 4-bit format*/
+	ROM_LOAD16_BYTE( "b82-03",     0x000001, 0x80000, 0xdaa11561 ) /* sprites 4-bit format*/
 
-	/*Note:
-	**this is intentional to load at 0x180000, not at 0x100000
-	**because finalb_driver_init will move some bits around before data will be 'gfxdecoded'.
-	**The whole thing is because this data is 2bits- while above is 4bits-packed format,
-	**for a total of 6 bits per pixel.
-	*/
-	ROM_LOAD         ( "b82-05",     0x180000, 0x080000, 0xaa90b93a ) /* sprites 2-bit format*/
+	/* Note: this is intentional to load at 0x180000, not at 0x100000
+	   because finalb_driver_init will move some bits around before data
+	   will be 'gfxdecoded'. The whole thing is because this data is 2bits-
+	   while above is 4bits-packed format, for a total of 6 bits per pixel. */
+
+	ROM_LOAD       ( "b82-05",     0x180000, 0x80000, 0xaa90b93a ) /* sprites 2-bit format */
 
 	ROM_REGION( 0x1c000, REGION_CPU2, 0 )      /* sound cpu */
 	ROM_LOAD( "b82-10",      0x00000, 0x04000, 0xa38aaaed )
@@ -4721,20 +4725,20 @@ ROM_START( dondokod )
 	ROM_LOAD16_BYTE( "b95-10.bin",   0x40000, 0x20000, 0xa46e1f0b )
 	ROM_LOAD16_BYTE( "b95-09.bin",   0x40001, 0x20000, 0xd8c86d39 )
 
-	ROM_REGION( 0x080000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "b95-02.bin", 0x000000, 0x080000, 0x67b4e979 )	 /* background/foreground */
+	ROM_REGION( 0x080000, REGION_GFX1, ROMREGION_DISPOSE )	/* SCR */
+	ROM_LOAD( "b95-02.bin", 0x00000, 0x80000, 0x67b4e979 )
 
-	ROM_REGION( 0x080000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "b95-01.bin", 0x000000, 0x080000, 0x51c176ce )	 /* sprites */
+	ROM_REGION( 0x080000, REGION_GFX2, ROMREGION_DISPOSE )	/* OBJ */
+	ROM_LOAD( "b95-01.bin", 0x00000, 0x80000, 0x51c176ce )
 
-	ROM_REGION( 0x080000, REGION_GFX3, ROMREGION_DISPOSE )
-	ROM_LOAD( "b95-03.bin", 0x000000, 0x080000, 0x543aa0d1 )     /* pivot graphics */
+	ROM_REGION( 0x080000, REGION_GFX3, ROMREGION_DISPOSE )	/* pivot gfx */
+	ROM_LOAD( "b95-03.bin", 0x00000, 0x80000, 0x543aa0d1 )
 
 	ROM_REGION( 0x1c000, REGION_CPU2, 0 )      /* sound cpu */
 	ROM_LOAD( "b95-08.bin",  0x00000, 0x04000, 0xb5aa49e1 )
 	ROM_CONTINUE(            0x10000, 0x0c000 ) /* banked stuff */
 
-	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* ADPCM samples? */
+	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* ADPCM samples */
 	ROM_LOAD( "b95-04.bin",  0x00000, 0x80000, 0xac4c1716 )
 
 	/* no Delta-T samples */
@@ -4744,19 +4748,19 @@ ROM_START( megab )
 	ROM_REGION( 0x80000, REGION_CPU1, 0 )     /* 256k for 68000 code */
 	ROM_LOAD16_BYTE( "c11-07",    0x00000, 0x20000, 0x11d228b6 )
 	ROM_LOAD16_BYTE( "c11-08",    0x00001, 0x20000, 0xa79d4dca )
-	ROM_LOAD16_BYTE( "c11-06",    0x40000, 0x20000, 0x7c249894 ) /* ?? */
-	ROM_LOAD16_BYTE( "c11-11",    0x40001, 0x20000, 0x263ecbf9 ) /* ?? */
+	ROM_LOAD16_BYTE( "c11-06",    0x40000, 0x20000, 0x7c249894 )
+	ROM_LOAD16_BYTE( "c11-11",    0x40001, 0x20000, 0x263ecbf9 )
 
-	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "c11-05", 0x000000, 0x080000, 0x733e6d8e )
+	ROM_REGION( 0x080000, REGION_GFX1, ROMREGION_DISPOSE )	/* SCR */
+	ROM_LOAD( "c11-05", 0x00000, 0x80000, 0x733e6d8e )
 
-	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD16_BYTE( "c11-03", 0x000000, 0x080000, 0x46718c7a )
-	ROM_LOAD16_BYTE( "c11-04", 0x000001, 0x080000, 0x663f33cc )
+	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )	/* OBJ */
+	ROM_LOAD16_BYTE( "c11-03", 0x00000, 0x80000, 0x46718c7a )
+	ROM_LOAD16_BYTE( "c11-04", 0x00001, 0x80000, 0x663f33cc )
 
-	ROM_REGION( 0x1c000, REGION_CPU2, 0 )      /* sound cpu */
+	ROM_REGION( 0x1c000, REGION_CPU2, 0 )	/* sound cpu */
 	ROM_LOAD( "c11-12", 0x00000, 0x04000, 0xb11094f1 )
-	ROM_CONTINUE(       0x10000, 0x0c000 ) /* banked stuff */
+	ROM_CONTINUE(       0x10000, 0x0c000 )	/* banked stuff */
 
 	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* ADPCM samples */
 	ROM_LOAD( "c11-01", 0x00000, 0x80000, 0xfd1ea532 )
@@ -4769,19 +4773,19 @@ ROM_START( megabj )
 	ROM_REGION( 0x80000, REGION_CPU1, 0 )     /* 256k for 68000 code */
 	ROM_LOAD16_BYTE( "c11-07",    0x00000, 0x20000, 0x11d228b6 )
 	ROM_LOAD16_BYTE( "c11-08",    0x00001, 0x20000, 0xa79d4dca )
-	ROM_LOAD16_BYTE( "c11-06",    0x40000, 0x20000, 0x7c249894 ) /* ?? */
-	ROM_LOAD16_BYTE( "c11-09.18", 0x40001, 0x20000, 0xc830aad5 ) /* ?? */
+	ROM_LOAD16_BYTE( "c11-06",    0x40000, 0x20000, 0x7c249894 )
+	ROM_LOAD16_BYTE( "c11-09.18", 0x40001, 0x20000, 0xc830aad5 )
 
-	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "c11-05", 0x000000, 0x080000, 0x733e6d8e )
+	ROM_REGION( 0x080000, REGION_GFX1, ROMREGION_DISPOSE )	/* SCR */
+	ROM_LOAD( "c11-05", 0x00000, 0x80000, 0x733e6d8e )
 
-	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD16_BYTE( "c11-03", 0x000000, 0x080000, 0x46718c7a )
-	ROM_LOAD16_BYTE( "c11-04", 0x000001, 0x080000, 0x663f33cc )
+	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )	/* OBJ */
+	ROM_LOAD16_BYTE( "c11-03", 0x00000, 0x80000, 0x46718c7a )
+	ROM_LOAD16_BYTE( "c11-04", 0x00001, 0x80000, 0x663f33cc )
 
-	ROM_REGION( 0x1c000, REGION_CPU2, 0 )      /* sound cpu */
+	ROM_REGION( 0x1c000, REGION_CPU2, 0 )	/* sound cpu */
 	ROM_LOAD( "c11-12", 0x00000, 0x04000, 0xb11094f1 )
-	ROM_CONTINUE(       0x10000, 0x0c000 ) /* banked stuff */
+	ROM_CONTINUE(       0x10000, 0x0c000 )	/* banked stuff */
 
 	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* ADPCM samples */
 	ROM_LOAD( "c11-01", 0x00000, 0x80000, 0xfd1ea532 )
@@ -4797,15 +4801,15 @@ ROM_START( thundfox )		/* Thunder Fox */
 	ROM_LOAD16_BYTE( "c28hi.08",    0x40000, 0x20000, 0x38e038f1 )
 	ROM_LOAD16_BYTE( "c28lo.07",    0x40001, 0x20000, 0x24419abb )
 
-	ROM_REGION( 0x080000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "c28scr1.01", 0x000000, 0x080000, 0x6230a09d )	/* TC0100SCN #1 */
+	ROM_REGION( 0x080000, REGION_GFX1, ROMREGION_DISPOSE )	/* SCR */
+	ROM_LOAD( "c28scr1.01", 0x000000, 0x80000, 0x6230a09d )	/* TC0100SCN #1 */
 
-	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD16_BYTE( "c28objl.03", 0x000000, 0x080000, 0x51bdc7af )
-	ROM_LOAD16_BYTE( "c28objh.04", 0x000001, 0x080000, 0xba7ed535 )
+	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )	/* OBJ */
+	ROM_LOAD16_BYTE( "c28objl.03", 0x00000, 0x80000, 0x51bdc7af )
+	ROM_LOAD16_BYTE( "c28objh.04", 0x00001, 0x80000, 0xba7ed535 )
 
-	ROM_REGION( 0x080000, REGION_GFX3, ROMREGION_DISPOSE )
-	ROM_LOAD( "c28scr2.01", 0x000000, 0x080000, 0x44552b25 )	/* TC0100SCN #2 */
+	ROM_REGION( 0x080000, REGION_GFX3, ROMREGION_DISPOSE )	/* SCR */
+	ROM_LOAD( "c28scr2.01", 0x000000, 0x80000, 0x44552b25 )	/* TC0100SCN #2 */
 
 	ROM_REGION( 0x1c000, REGION_CPU2, 0 )      /* sound cpu */
 	ROM_LOAD( "c28snd.14", 0x00000, 0x04000, 0x45ef3616 )
@@ -4823,13 +4827,14 @@ ROM_START( cameltry )
 	ROM_LOAD16_BYTE( "c38-09.bin", 0x00000, 0x20000, 0x2ae01120 )
 	ROM_LOAD16_BYTE( "c38-10.bin", 0x00001, 0x20000, 0x48d8ff56 )
 
-	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )      /* UNUSED! */
+	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
+	/* empty! */
 
-	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "c38-01.bin", 0x000000, 0x080000, 0xc170ff36 )	 /* sprites */
+	ROM_REGION( 0x080000, REGION_GFX2, ROMREGION_DISPOSE )	/* OBJ */
+	ROM_LOAD( "c38-01.bin", 0x00000, 0x80000, 0xc170ff36 )
 
-	ROM_REGION( 0x080000, REGION_GFX3, ROMREGION_DISPOSE )
-	ROM_LOAD( "c38-02.bin", 0x000000, 0x020000, 0x1a11714b )	 /* pivot graphics */
+	ROM_REGION( 0x080000, REGION_GFX3, ROMREGION_DISPOSE )	/* pivot gfx */
+	ROM_LOAD( "c38-02.bin", 0x00000, 0x20000, 0x1a11714b )
 
 	ROM_REGION( 0x1c000, REGION_CPU2, 0 )      /* sound cpu */
 	ROM_LOAD( "c38-08.bin", 0x00000, 0x04000, 0x7ff78873 )
@@ -4846,13 +4851,14 @@ ROM_START( cameltru )
 	ROM_LOAD16_BYTE( "c38-11", 0x00000, 0x20000, 0xbe172da0 )
 	ROM_LOAD16_BYTE( "c38-14", 0x00001, 0x20000, 0xffa430de )
 
-	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )      /* UNUSED! */
+	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
+	/* empty! */
 
-	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "c38-01.bin", 0x000000, 0x080000, 0xc170ff36 )	 /* sprites */
+	ROM_REGION( 0x080000, REGION_GFX2, ROMREGION_DISPOSE )	/* OBJ */
+	ROM_LOAD( "c38-01.bin", 0x00000, 0x80000, 0xc170ff36 )
 
-	ROM_REGION( 0x080000, REGION_GFX3, ROMREGION_DISPOSE )
-	ROM_LOAD( "c38-02.bin", 0x000000, 0x020000, 0x1a11714b )	 /* pivot graphics */
+	ROM_REGION( 0x080000, REGION_GFX3, ROMREGION_DISPOSE )	/* pivot gfx */
+	ROM_LOAD( "c38-02.bin", 0x00000, 0x20000, 0x1a11714b )
 
 	ROM_REGION( 0x1c000, REGION_CPU2, 0 )      /* sound cpu */
 	ROM_LOAD( "c38-08.bin", 0x00000, 0x04000, 0x7ff78873 )
@@ -4866,19 +4872,20 @@ ROM_END
 
 ROM_START( qtorimon )	/* Quiz Torimonochou */
 	ROM_REGION( 0x80000, REGION_CPU1, 0 )     /* 256k for 68000 code */
-	ROM_LOAD16_BYTE( "c41-04.bin",  0x00000, 0x20000, 0x0fbf5223 ) /* Prog1 */
-	ROM_LOAD16_BYTE( "c41-05.bin",  0x00001, 0x20000, 0x174bd5db ) /* Prog2 */
+	ROM_LOAD16_BYTE( "c41-04.bin",  0x00000, 0x20000, 0x0fbf5223 )
+	ROM_LOAD16_BYTE( "c41-05.bin",  0x00001, 0x20000, 0x174bd5db )
 	ROM_LOAD16_BYTE( "mask-51.bin", 0x40000, 0x20000, 0x12e14aca ) /* char defs, read by cpu */
 	ROM_LOAD16_BYTE( "mask-52.bin", 0x40001, 0X20000, 0xb3ef66f3 ) /* char defs, read by cpu */
 
-	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )      /* UNUSED! */
+	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
+	/* empty! */
 
-	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD16_BYTE( "c41-02.bin",  0x000000, 0x20000, 0x05dcd36d ) /* Object */
-	ROM_LOAD16_BYTE( "c41-01.bin",  0x000001, 0x20000, 0x39ff043c ) /* Object */
+	ROM_REGION( 0x040000, REGION_GFX2, ROMREGION_DISPOSE )	/* OBJ */
+	ROM_LOAD16_BYTE( "c41-02.bin",  0x00000, 0x20000, 0x05dcd36d )
+	ROM_LOAD16_BYTE( "c41-01.bin",  0x00001, 0x20000, 0x39ff043c )
 
 	ROM_REGION( 0x1c000, REGION_CPU2, 0 )      /* sound cpu */
-	ROM_LOAD( "c41-06.bin",    0x00000, 0x04000, 0x753a98d8 ) /* AUD Prog */
+	ROM_LOAD( "c41-06.bin",    0x00000, 0x04000, 0x753a98d8 )
 	ROM_CONTINUE(          0x10000, 0x0c000 ) /* banked stuff */
 
 	ROM_REGION( 0x080000, REGION_SOUND1, 0 )	/* ADPCM samples */
@@ -4894,16 +4901,16 @@ ROM_START( liquidk )
 	ROM_LOAD16_BYTE( "lq10.bin",  0x40000, 0x20000, 0x50bef2e0 )
 	ROM_LOAD16_BYTE( "lq12.bin",  0x40001, 0x20000, 0xcb16bad5 )
 
-	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "lk_scr.bin",  0x000000, 0x080000, 0xc3364f9b )
+	ROM_REGION( 0x080000, REGION_GFX1, ROMREGION_DISPOSE )	/* SCR */
+	ROM_LOAD( "lk_scr.bin",  0x00000, 0x80000, 0xc3364f9b )
 
-	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "lk_obj0.bin", 0x000000, 0x080000, 0x67cc3163 )
-	ROM_LOAD( "lk_obj1.bin", 0x080000, 0x080000, 0xd2400710 )
+	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )	/* OBJ */
+	ROM_LOAD( "lk_obj0.bin", 0x00000, 0x80000, 0x67cc3163 )
+	ROM_LOAD( "lk_obj1.bin", 0x80000, 0x80000, 0xd2400710 )
 
-	ROM_REGION( 0x1c000, REGION_CPU2, 0 )      /* sound cpu */
+	ROM_REGION( 0x1c000, REGION_CPU2, 0 )		/* sound cpu */
 	ROM_LOAD( "lq08.bin",    0x00000, 0x04000, 0x413c310c )
-	ROM_CONTINUE(            0x10000, 0x0c000 ) /* banked stuff */
+	ROM_CONTINUE(            0x10000, 0x0c000 )	/* banked stuff */
 
 	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* ADPCM samples */
 	ROM_LOAD( "lk_snd.bin",  0x00000, 0x80000, 0x474d45a4 )
@@ -4918,16 +4925,16 @@ ROM_START( liquidku )
 	ROM_LOAD16_BYTE( "lq10.bin",  0x40000, 0x20000, 0x50bef2e0 )
 	ROM_LOAD16_BYTE( "lq14.bin",  0x40001, 0x20000, 0xbc118a43 )
 
-	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "lk_scr.bin",  0x000000, 0x080000, 0xc3364f9b )
+	ROM_REGION( 0x080000, REGION_GFX1, ROMREGION_DISPOSE )	/* SCR */
+	ROM_LOAD( "lk_scr.bin",  0x00000, 0x80000, 0xc3364f9b )
 
-	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "lk_obj0.bin", 0x000000, 0x080000, 0x67cc3163 )
-	ROM_LOAD( "lk_obj1.bin", 0x080000, 0x080000, 0xd2400710 )
+	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )	/* OBJ */
+	ROM_LOAD( "lk_obj0.bin", 0x00000, 0x80000, 0x67cc3163 )
+	ROM_LOAD( "lk_obj1.bin", 0x80000, 0x80000, 0xd2400710 )
 
-	ROM_REGION( 0x1c000, REGION_CPU2, 0 )      /* sound cpu */
+	ROM_REGION( 0x1c000, REGION_CPU2, 0 )		/* sound cpu */
 	ROM_LOAD( "lq08.bin",    0x00000, 0x04000, 0x413c310c )
-	ROM_CONTINUE(            0x10000, 0x0c000 ) /* banked stuff */
+	ROM_CONTINUE(            0x10000, 0x0c000 )	/* banked stuff */
 
 	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* ADPCM samples */
 	ROM_LOAD( "lk_snd.bin",  0x00000, 0x80000, 0x474d45a4 )
@@ -4942,16 +4949,16 @@ ROM_START( mizubaku )
 	ROM_LOAD16_BYTE( "lq10.bin",  0x40000, 0x20000, 0x50bef2e0 )
 	ROM_LOAD16_BYTE( "c49-13",    0x40001, 0x20000, 0x2518dbf9 )
 
-	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "lk_scr.bin",  0x000000, 0x080000, 0xc3364f9b )
+	ROM_REGION( 0x080000, REGION_GFX1, ROMREGION_DISPOSE )	/* SCR */
+	ROM_LOAD( "lk_scr.bin",  0x00000, 0x80000, 0xc3364f9b )
 
-	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "lk_obj0.bin", 0x000000, 0x080000, 0x67cc3163 )
-	ROM_LOAD( "lk_obj1.bin", 0x080000, 0x080000, 0xd2400710 )
+	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )	/* OBJ */
+	ROM_LOAD( "lk_obj0.bin", 0x00000, 0x80000, 0x67cc3163 )
+	ROM_LOAD( "lk_obj1.bin", 0x80000, 0x80000, 0xd2400710 )
 
-	ROM_REGION( 0x1c000, REGION_CPU2, 0 )      /* sound cpu */
+	ROM_REGION( 0x1c000, REGION_CPU2, 0 )		/* sound cpu */
 	ROM_LOAD( "lq08.bin",    0x00000, 0x04000, 0x413c310c )
-	ROM_CONTINUE(            0x10000, 0x0c000 ) /* banked stuff */
+	ROM_CONTINUE(            0x10000, 0x0c000 )	/* banked stuff */
 
 	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* ADPCM samples */
 	ROM_LOAD( "lk_snd.bin",  0x00000, 0x80000, 0x474d45a4 )
@@ -4961,22 +4968,23 @@ ROM_END
 
 ROM_START( quizhq )	/* Quiz HQ */
 	ROM_REGION( 0xc0000, REGION_CPU1, 0 )     /* 256k for 68000 code */
-	ROM_LOAD16_BYTE( "c53-05.bin",  0x00000, 0x20000, 0xc798fc20 ) /* Prog1 */
-	ROM_LOAD16_BYTE( "c53-01.bin",  0x00001, 0x20000, 0xbf44c93e ) /* Prog2 */
+	ROM_LOAD16_BYTE( "c53-05.bin",  0x00000, 0x20000, 0xc798fc20 )
+	ROM_LOAD16_BYTE( "c53-01.bin",  0x00001, 0x20000, 0xbf44c93e )
 	ROM_LOAD16_BYTE( "c53-52.bin",  0x80000, 0x20000, 0x12e14aca ) /* char defs, read by cpu */
 	ROM_LOAD16_BYTE( "c53-51.bin",  0x80001, 0X20000, 0xb3ef66f3 ) /* char defs, read by cpu */
 
-	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )      /* UNUSED! */
+	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
+	/* empty */
 
-	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD16_BYTE( "c53-03.bin",  0x00000, 0x20000, 0x47596e70 ) /* Object */
-	ROM_LOAD16_BYTE( "c53-07.bin",  0x00001, 0x20000, 0x4f9fa82f ) /* Object */
-	ROM_LOAD16_BYTE( "c53-02.bin",  0x40000, 0x20000, 0xd704c6f4 ) /* Object */
-	ROM_LOAD16_BYTE( "c53-06.bin",  0x40001, 0x20000, 0xf77f63fc ) /* Object */
+	ROM_REGION( 0x080000, REGION_GFX2, ROMREGION_DISPOSE )	/* OBJ */
+	ROM_LOAD16_BYTE( "c53-03.bin",  0x00000, 0x20000, 0x47596e70 )
+	ROM_LOAD16_BYTE( "c53-07.bin",  0x00001, 0x20000, 0x4f9fa82f )
+	ROM_LOAD16_BYTE( "c53-02.bin",  0x40000, 0x20000, 0xd704c6f4 )
+	ROM_LOAD16_BYTE( "c53-06.bin",  0x40001, 0x20000, 0xf77f63fc )
 
-	ROM_REGION( 0x1c000, REGION_CPU2, 0 )      /* sound cpu */
-	ROM_LOAD( "c53-08.bin",    0x00000, 0x04000, 0x25187e81 ) /* AUD Prog */
-	ROM_CONTINUE(          0x10000, 0x0c000 ) /* banked stuff */
+	ROM_REGION( 0x1c000, REGION_CPU2, 0 )	 /* sound cpu */
+	ROM_LOAD( "c53-08.bin",    0x00000, 0x04000, 0x25187e81 )
+	ROM_CONTINUE(          0x10000, 0x0c000 )	/* banked stuff */
 
 	ROM_REGION( 0x080000, REGION_SOUND1, 0 )	/* ADPCM samples */
 	ROM_LOAD( "c53-04.bin",  0x000000, 0x020000, 0x99890ad4 )
@@ -4992,12 +5000,12 @@ ROM_START( ssi )
 	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
 	/* empty! */
 
-	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "ssi_m01.rom",  0x00000, 0x100000, 0xa1b4f486 )
+	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )	/* OBJ */
+	ROM_LOAD( "ssi_m01.rom",  0x000000, 0x100000, 0xa1b4f486 )
 
-	ROM_REGION( 0x1c000, REGION_CPU2, 0 )      /* sound cpu */
+	ROM_REGION( 0x1c000, REGION_CPU2, 0 )		/* sound cpu */
 	ROM_LOAD( "ssi_09.rom",   0x00000, 0x04000, 0x88d7f65c )
-	ROM_CONTINUE(             0x10000, 0x0c000 ) /* banked stuff */
+	ROM_CONTINUE(             0x10000, 0x0c000 )	/* banked stuff */
 
 	ROM_REGION( 0x20000, REGION_SOUND1, 0 )	/* ADPCM samples */
 	ROM_LOAD( "ssi_m02.rom",  0x00000, 0x20000, 0x3cb0b907 )
@@ -5015,12 +5023,12 @@ ROM_START( majest12 )
 	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
 	/* empty! */
 
-	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "ssi_m01.rom",  0x00000, 0x100000, 0xa1b4f486 )
+	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )	/* OBJ */
+	ROM_LOAD( "ssi_m01.rom",  0x000000, 0x100000, 0xa1b4f486 )
 
-	ROM_REGION( 0x1c000, REGION_CPU2, 0 )      /* sound cpu */
+	ROM_REGION( 0x1c000, REGION_CPU2, 0 )		/* sound cpu */
 	ROM_LOAD( "ssi_09.rom",   0x00000, 0x04000, 0x88d7f65c )
-	ROM_CONTINUE(             0x10000, 0x0c000 ) /* banked stuff */
+	ROM_CONTINUE(             0x10000, 0x0c000 )	/* banked stuff */
 
 	ROM_REGION( 0x20000, REGION_SOUND1, 0 )	/* ADPCM samples */
 	ROM_LOAD( "ssi_m02.rom",  0x00000, 0x20000, 0x3cb0b907 )
@@ -5037,13 +5045,13 @@ ROM_START( gunfront )
 	ROM_LOAD16_BYTE( "c71-16.rom",  0x80000, 0x20000, 0x1bbcc2d4 )
 	ROM_LOAD16_BYTE( "c71-15.rom",  0x80001, 0x20000, 0xdf3e00bb )
 
-	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "c71-02.rom", 0x000000, 0x100000, 0x2a600c92 )     /* characters */
+	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )	/* SCR */
+	ROM_LOAD( "c71-02.rom", 0x000000, 0x100000, 0x2a600c92 )
 
-	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "c71-03.rom", 0x000000, 0x100000, 0x9133c605 )     /* sprites */
+	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )	/* OBJ */
+	ROM_LOAD( "c71-03.rom", 0x000000, 0x100000, 0x9133c605 )
 
-	ROM_REGION( 0x1c000, REGION_CPU2, 0 )      /* sound cpu */
+	ROM_REGION( 0x1c000, REGION_CPU2, 0 )	 /* sound cpu */
 	ROM_LOAD( "c71-12.rom", 0x00000, 0x04000, 0x0038c7f8 )
 	ROM_CONTINUE(           0x10000, 0x0c000 ) /* banked stuff */
 
@@ -5062,13 +5070,13 @@ ROM_START( gunfronj )
 	ROM_LOAD16_BYTE( "c71-16.rom",  0x80000, 0x20000, 0x1bbcc2d4 )	/* C71-05 */
 	ROM_LOAD16_BYTE( "c71-15.rom",  0x80001, 0x20000, 0xdf3e00bb )	/* C71-04 */
 
-	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "c71-02.rom", 0x000000, 0x100000, 0x2a600c92 )     /* characters */
+	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )	/* SCR */
+	ROM_LOAD( "c71-02.rom", 0x000000, 0x100000, 0x2a600c92 )
 
-	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "c71-03.rom", 0x000000, 0x100000, 0x9133c605 )     /* sprites */
+	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )	/* OBJ */
+	ROM_LOAD( "c71-03.rom", 0x000000, 0x100000, 0x9133c605 )
 
-	ROM_REGION( 0x1c000, REGION_CPU2, 0 )      /* sound cpu */
+	ROM_REGION( 0x1c000, REGION_CPU2, 0 )	 /* sound cpu */
 	ROM_LOAD( "c71-12.rom", 0x00000, 0x04000, 0x0038c7f8 )
 	ROM_CONTINUE(           0x10000, 0x0c000 ) /* banked stuff */
 
@@ -5085,12 +5093,12 @@ ROM_START( growl )
 	ROM_LOAD16_BYTE( "c74-11",        0x80000, 0x40000, 0xee3bd6d5 )
 	ROM_LOAD16_BYTE( "c74-14",        0x80001, 0x40000, 0xb6c24ec7 )
 
-	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "c74-01",       0x000000, 0x100000, 0x3434ce80 ) /* characters */
+	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )	/* SCR */
+	ROM_LOAD( "c74-01",       0x000000, 0x100000, 0x3434ce80 )
 
-	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "c74-03",       0x000000, 0x100000, 0x1a0d8951 ) /* sprites */
-	ROM_LOAD( "c74-02",       0x100000, 0x100000, 0x15a21506 ) /* sprites */
+	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )	/* OBJ */
+	ROM_LOAD( "c74-03",       0x000000, 0x100000, 0x1a0d8951 )
+	ROM_LOAD( "c74-02",       0x100000, 0x100000, 0x15a21506 )
 
 	ROM_REGION( 0x1c000, REGION_CPU2, 0 )      /* sound cpu */
 	ROM_LOAD( "c74-12",       0x00000, 0x04000, 0xbb6ed668 )
@@ -5110,12 +5118,12 @@ ROM_START( growlu )
 	ROM_LOAD16_BYTE( "c74-11",        0x80000, 0x40000, 0xee3bd6d5 )
 	ROM_LOAD16_BYTE( "c74-13",        0x80001, 0x40000, 0xc1c57e51 )
 
-	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "c74-01",       0x000000, 0x100000, 0x3434ce80 ) /* characters */
+	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )	/* SCR */
+	ROM_LOAD( "c74-01",       0x000000, 0x100000, 0x3434ce80 )
 
-	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "c74-03",       0x000000, 0x100000, 0x1a0d8951 ) /* sprites */
-	ROM_LOAD( "c74-02",       0x100000, 0x100000, 0x15a21506 ) /* sprites */
+	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )	/* OBJ */
+	ROM_LOAD( "c74-03",       0x000000, 0x100000, 0x1a0d8951 )
+	ROM_LOAD( "c74-02",       0x100000, 0x100000, 0x15a21506 )
 
 	ROM_REGION( 0x1c000, REGION_CPU2, 0 )      /* sound cpu */
 	ROM_LOAD( "c74-12",       0x00000, 0x04000, 0xbb6ed668 )
@@ -5135,14 +5143,14 @@ ROM_START( runark )
 	ROM_LOAD16_BYTE( "c74-11",        0x80000, 0x40000, 0xee3bd6d5 )
 	ROM_LOAD16_BYTE( "c74-09.14",     0x80001, 0x40000, 0x58cc2feb )
 
-	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "c74-01",       0x000000, 0x100000, 0x3434ce80 ) /* characters */
+	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )	/* SCR */
+	ROM_LOAD( "c74-01",       0x000000, 0x100000, 0x3434ce80 )
 
-	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "c74-03",       0x000000, 0x100000, 0x1a0d8951 ) /* sprites */
-	ROM_LOAD( "c74-02",       0x100000, 0x100000, 0x15a21506 ) /* sprites */
+	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )	/* OBJ */
+	ROM_LOAD( "c74-03",       0x000000, 0x100000, 0x1a0d8951 )
+	ROM_LOAD( "c74-02",       0x100000, 0x100000, 0x15a21506 )
 
-	ROM_REGION( 0x1c000, REGION_CPU2, 0 )      /* sound cpu */
+	ROM_REGION( 0x1c000, REGION_CPU2, 0 )	/* sound cpu */
 	ROM_LOAD( "c74-12",       0x00000, 0x04000, 0xbb6ed668 )
 	ROM_CONTINUE(             0x10000, 0x0c000 ) /* banked stuff */
 
@@ -5155,20 +5163,20 @@ ROM_END
 
 ROM_START( mjnquest )	/* Mahjong Quest */
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )     /* 256k for 68000 code */
-	ROM_LOAD16_BYTE( "c77-09",  0x000000, 0x020000, 0x0a005d01 ) /* Prog1 */
-	ROM_LOAD16_BYTE( "c77-08",  0x000001, 0x020000, 0x4244f775 ) /* Prog2 */
-	ROM_LOAD16_WORD_SWAP( "c77-04",  0x080000, 0x080000, 0xc2e7e038 ) /* data */
+	ROM_LOAD16_BYTE( "c77-09",  0x000000, 0x020000, 0x0a005d01 )
+	ROM_LOAD16_BYTE( "c77-08",  0x000001, 0x020000, 0x4244f775 )
+	ROM_LOAD16_WORD_SWAP( "c77-04",  0x080000, 0x080000, 0xc2e7e038 )	/* data rom */
 
-	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE )   /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "c77-01", 0x000000, 0x100000, 0x5ba51205 )      /* Screen 0 */
-	ROM_LOAD( "c77-02", 0x100000, 0x100000, 0x6a6f3040 )      /* Screen 1 */
+	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE )	/* SCR */
+	ROM_LOAD( "c77-01", 0x000000, 0x100000, 0x5ba51205 )
+	ROM_LOAD( "c77-02", 0x100000, 0x100000, 0x6a6f3040 )
 
-	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )   /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "c77-05", 0x000000, 0x080000, 0xc5a54678 )      /* Object */
+	ROM_REGION( 0x080000, REGION_GFX2, ROMREGION_DISPOSE )	/* OBJ */
+	ROM_LOAD( "c77-05", 0x00000, 0x80000, 0xc5a54678 )
 
-	ROM_REGION( 0x1c000, REGION_CPU2, 0 )      /* sound cpu */
-	ROM_LOAD( "c77-10",    0x00000, 0x04000, 0xf16b2c1e ) /* AUD Prog */
-	ROM_CONTINUE(          0x10000, 0x0c000 ) /* banked stuff */
+	ROM_REGION( 0x1c000, REGION_CPU2, 0 )	/* sound cpu */
+	ROM_LOAD( "c77-10",    0x00000, 0x04000, 0xf16b2c1e )
+	ROM_CONTINUE(          0x10000, 0x0c000 )	/* banked stuff */
 
 	ROM_REGION( 0x080000, REGION_SOUND1, 0 )	/* ADPCM samples */
 	ROM_LOAD( "c77-03",  0x000000, 0x080000, 0x312f17b1 )
@@ -5178,20 +5186,20 @@ ROM_END
 
 ROM_START( mjnquesb )	/* Mahjong Quest (No Nudity) */
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )     /* 256k for 68000 code */
-	ROM_LOAD16_BYTE( "c77-09a", 0x000000, 0x020000, 0xfc17f1c2 ) /* Prog1 */
-	ROM_LOAD16_BYTE( "c77-08",  0x000001, 0x020000, 0x4244f775 ) /* Prog2 */
-	ROM_LOAD16_WORD_SWAP( "c77-04",  0x080000, 0x080000, 0xc2e7e038 ) /* data */
+	ROM_LOAD16_BYTE( "c77-09a", 0x000000, 0x020000, 0xfc17f1c2 )
+	ROM_LOAD16_BYTE( "c77-08",  0x000001, 0x020000, 0x4244f775 )
+	ROM_LOAD16_WORD_SWAP( "c77-04",  0x080000, 0x080000, 0xc2e7e038 )	/* data rom */
 
-	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE )   /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "c77-01", 0x000000, 0x100000, 0x5ba51205 )      /* Screen 0 */
-	ROM_LOAD( "c77-02", 0x100000, 0x100000, 0x6a6f3040 )      /* Screen 1 */
+	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE )	/* SCR */
+	ROM_LOAD( "c77-01", 0x000000, 0x100000, 0x5ba51205 )
+	ROM_LOAD( "c77-02", 0x100000, 0x100000, 0x6a6f3040 )
 
-	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )   /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "c77-05", 0x000000, 0x080000, 0xc5a54678 )      /* Object */
+	ROM_REGION( 0x080000, REGION_GFX2, ROMREGION_DISPOSE )	/* OBJ */
+	ROM_LOAD( "c77-05", 0x00000, 0x80000, 0xc5a54678 )
 
-	ROM_REGION( 0x1c000, REGION_CPU2, 0 )      /* sound cpu */
-	ROM_LOAD( "c77-10",    0x00000, 0x04000, 0xf16b2c1e ) /* AUD Prog */
-	ROM_CONTINUE(          0x10000, 0x0c000 ) /* banked stuff */
+	ROM_REGION( 0x1c000, REGION_CPU2, 0 )	/* sound cpu */
+	ROM_LOAD( "c77-10",    0x00000, 0x04000, 0xf16b2c1e )
+	ROM_CONTINUE(          0x10000, 0x0c000 )	/* banked stuff */
 
 	ROM_REGION( 0x080000, REGION_SOUND1, 0 )	/* ADPCM samples */
 	ROM_LOAD( "c77-03",  0x000000, 0x080000, 0x312f17b1 )
@@ -5206,17 +5214,17 @@ ROM_START( footchmp )
 	ROM_LOAD16_BYTE( "c80-12",     0x40000, 0x20000, 0x80d46fef )
 	ROM_LOAD16_BYTE( "c80-14",     0x40001, 0x20000, 0x40ac4828 )
 
-	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD16_BYTE( "c80-04", 0x000000, 0x080000, 0x9a17fe8c ) /* characters */
-	ROM_LOAD16_BYTE( "c80-05", 0x000001, 0x080000, 0xacde7071 ) /* characters */
+	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )	/* SCR */
+	ROM_LOAD16_BYTE( "c80-04", 0x00000, 0x80000, 0x9a17fe8c )
+	ROM_LOAD16_BYTE( "c80-05", 0x00001, 0x80000, 0xacde7071 )
 
-	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "c80-01", 0x000000, 0x100000, 0xf43782e6 )          /* sprites */
-	ROM_LOAD( "c80-02", 0x100000, 0x100000, 0x060a8b61 )          /* sprites */
+	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )	/* OBJ */
+	ROM_LOAD( "c80-01", 0x000000, 0x100000, 0xf43782e6 )
+	ROM_LOAD( "c80-02", 0x100000, 0x100000, 0x060a8b61 )
 
-	ROM_REGION( 0x1c000, REGION_CPU2, 0 )     /* 64k for Z80 code */
+	ROM_REGION( 0x1c000, REGION_CPU2, 0 )	/* 64k for Z80 code */
 	ROM_LOAD( "c80-15", 0x00000, 0x04000, 0x05aa7fd7 )
-	ROM_CONTINUE(       0x10000, 0x0c000 ) /* banked stuff */
+	ROM_CONTINUE(       0x10000, 0x0c000 )	/* banked stuff */
 
 	ROM_REGION( 0x100000, REGION_SOUND1, 0 )     /* YM2610 samples */
 	ROM_LOAD( "c80-03", 0x000000, 0x100000, 0x609938d5 )
@@ -5231,17 +5239,17 @@ ROM_START( hthero )
 	ROM_LOAD16_BYTE( "c80-12",  0x40000, 0x20000, 0x80d46fef )
 	ROM_LOAD16_BYTE( "c80-18",  0x40001, 0x20000, 0xaea22904 )
 
-	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD16_BYTE( "c80-04", 0x000000, 0x080000, 0x9a17fe8c ) /* characters */
-	ROM_LOAD16_BYTE( "c80-05", 0x000001, 0x080000, 0xacde7071 ) /* characters */
+	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )	/* SCR */
+	ROM_LOAD16_BYTE( "c80-04", 0x00000, 0x80000, 0x9a17fe8c )
+	ROM_LOAD16_BYTE( "c80-05", 0x00001, 0x80000, 0xacde7071 )
 
-	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "c80-01", 0x000000, 0x100000, 0xf43782e6 )          /* sprites */
-	ROM_LOAD( "c80-02", 0x100000, 0x100000, 0x060a8b61 )          /* sprites */
+	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )	/* OBJ */
+	ROM_LOAD( "c80-01", 0x000000, 0x100000, 0xf43782e6 )
+	ROM_LOAD( "c80-02", 0x100000, 0x100000, 0x060a8b61 )
 
-	ROM_REGION( 0x1c000, REGION_CPU2, 0 )      /* sound cpu */
+	ROM_REGION( 0x1c000, REGION_CPU2, 0 )	/* sound cpu */
 	ROM_LOAD( "c80-15", 0x00000, 0x04000, 0x05aa7fd7 )
-	ROM_CONTINUE(       0x10000, 0x0c000 ) /* banked stuff */
+	ROM_CONTINUE(       0x10000, 0x0c000 )	/* banked stuff */
 
 	ROM_REGION( 0x100000, REGION_SOUND1, 0 )	/* ADPCM samples */
 	ROM_LOAD( "c80-03", 0x000000, 0x100000, 0x609938d5 )
@@ -5256,19 +5264,19 @@ ROM_START( euroch92 )
 	ROM_LOAD16_BYTE( "ec92_26.rom", 0x40000, 0x20000, 0xb986ccb2 )
 	ROM_LOAD16_BYTE( "ec92_24.rom", 0x40001, 0x20000, 0xb31d94ac )
 
-	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD16_BYTE( "ec92_21.rom", 0x000000, 0x080000, 0x5759ed37 )
-	ROM_LOAD16_BYTE( "ec92_22.rom", 0x000001, 0x080000, 0xd9a0d38e )
+	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )	/* SCR */
+	ROM_LOAD16_BYTE( "ec92_21.rom", 0x00000, 0x80000, 0x5759ed37 )
+	ROM_LOAD16_BYTE( "ec92_22.rom", 0x00001, 0x80000, 0xd9a0d38e )
 
-	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )	/* OBJ */
 	ROM_LOAD( "ec92_19.rom", 0x000000, 0x100000, 0x219141a5 )
 	ROM_LOAD( "c80-02",      0x100000, 0x100000, 0x060a8b61 )	// ec92_20.rom
 
-	ROM_REGION( 0x1c000, REGION_CPU2, 0 )     /* 64k for Z80 code */
+	ROM_REGION( 0x1c000, REGION_CPU2, 0 )	/* 64k for Z80 code */
 	ROM_LOAD( "ec92_27.rom", 0x00000, 0x04000, 0x2db48e65 )
 	ROM_CONTINUE(            0x10000, 0x0c000 )
 
-	ROM_REGION( 0x100000, REGION_SOUND1, 0 )     /* YM2610 samples */
+	ROM_REGION( 0x100000, REGION_SOUND1, 0 )	/* YM2610 samples */
 	ROM_LOAD( "c80-03", 0x000000, 0x100000, 0x609938d5 )	// ec92_03.rom
 
 	/* no Delta-T samples */
@@ -5276,20 +5284,20 @@ ROM_END
 
 ROM_START( koshien )	/* Ah Eikou no Koshien */
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )     /* 256k for 68000 code */
-	ROM_LOAD16_BYTE( "c81-11.bin", 0x000000, 0x020000, 0xb44ea8c9 ) /* Prog1 */
-	ROM_LOAD16_BYTE( "c81-10.bin", 0x000001, 0x020000, 0x8f98c40a ) /* Prog2 */
-	ROM_LOAD16_WORD_SWAP( "c81-04.bin", 0x080000, 0x080000, 0x1592b460 ) /* data */
+	ROM_LOAD16_BYTE( "c81-11.bin", 0x000000, 0x020000, 0xb44ea8c9 )
+	ROM_LOAD16_BYTE( "c81-10.bin", 0x000001, 0x020000, 0x8f98c40a )
+	ROM_LOAD16_WORD_SWAP( "c81-04.bin", 0x080000, 0x080000, 0x1592b460 )	/* data rom */
 
-	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )    /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "c81-03.bin", 0x000000, 0x100000, 0x29bbf492 )   /* Screen */
+	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )	/* SCR */
+	ROM_LOAD( "c81-03.bin", 0x000000, 0x100000, 0x29bbf492 )
 
-	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )    /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "c81-01.bin", 0x000000, 0x100000, 0x64b15d2a )   /* Object 0 */
-	ROM_LOAD( "c81-02.bin", 0x100000, 0x100000, 0x962461e8 )   /* Object 1 */
+	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )	/* OBJ */
+	ROM_LOAD( "c81-01.bin", 0x000000, 0x100000, 0x64b15d2a )
+	ROM_LOAD( "c81-02.bin", 0x100000, 0x100000, 0x962461e8 )
 
 	ROM_REGION( 0x1c000, REGION_CPU2, 0 )      /* sound cpu */
-	ROM_LOAD( "c81-12.bin",    0x00000, 0x04000, 0x6e8625b6 ) /* AUD Prog */
-	ROM_CONTINUE(          0x10000, 0x0c000 ) /* banked stuff */
+	ROM_LOAD( "c81-12.bin", 0x00000, 0x04000, 0x6e8625b6 )
+	ROM_CONTINUE(           0x10000, 0x0c000 ) /* banked stuff */
 
 	ROM_REGION( 0x080000, REGION_SOUND1, 0 )	/* ADPCM samples */
 	ROM_LOAD( "c81-05.bin",  0x00000, 0x80000, 0x9c3d71be )
@@ -5305,18 +5313,18 @@ ROM_START( yuyugogo )	/* Yuuyu no QUIZ de GO!GO! */
 
 	ROM_REGION( 0x100000, REGION_USER1, 0 )
 	/* extra ROM mapped at d00000 */
-	ROM_LOAD( "c83-03.bin", 0x000000, 0x100000, 0xeed9acc2 )   /* data rom */
+	ROM_LOAD( "c83-03.bin", 0x000000, 0x100000, 0xeed9acc2 )	/* data rom */
 
-	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "c83-05.bin", 0x000000, 0x020000, 0xeca57fb1 )      /* screen */
+	ROM_REGION( 0x020000, REGION_GFX1, ROMREGION_DISPOSE )	/* SCR */
+	ROM_LOAD( "c83-05.bin", 0x00000, 0x20000, 0xeca57fb1 )
 
-	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD16_BYTE( "c83-01.bin", 0x000000, 0x100000, 0x8bf0d416 ) /* Object */
-	ROM_LOAD16_BYTE( "c83-02.bin", 0x000001, 0x100000, 0x20bb1c15 ) /* Object */
+	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )	/* OBJ */
+	ROM_LOAD16_BYTE( "c83-01.bin", 0x000000, 0x100000, 0x8bf0d416 )
+	ROM_LOAD16_BYTE( "c83-02.bin", 0x000001, 0x100000, 0x20bb1c15 )
 
-	ROM_REGION( 0x1c000, REGION_CPU2, 0 )      /* sound cpu */
-	ROM_LOAD( "c83-11.bin",    0x00000, 0x04000, 0x461e702a ) /* AUD Prog */
-	ROM_CONTINUE(          0x10000, 0x0c000 ) /* banked stuff */
+	ROM_REGION( 0x1c000, REGION_CPU2, 0 )	 /* sound cpu */
+	ROM_LOAD( "c83-11.bin", 0x00000, 0x04000, 0x461e702a )
+	ROM_CONTINUE(           0x10000, 0x0c000 ) /* banked stuff */
 
 	ROM_REGION( 0x100000, REGION_SOUND1, 0 )	/* ADPCM samples */
 	ROM_LOAD( "c83-04.bin",  0x000000, 0x100000, 0x2600093a )
@@ -5331,16 +5339,16 @@ ROM_START( ninjak )
 	ROM_LOAD16_BYTE( "nk_1lh.rom",  0x40000, 0x20000, 0x3eccfd0a )
 	ROM_LOAD16_BYTE( "nk_1ll.rom",  0x40001, 0x20000, 0xd126ded1 )
 
-	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "nk_scrn.rom", 0x000000, 0x080000, 0x4cc7b9df )    /* characters */
+	ROM_REGION( 0x080000, REGION_GFX1, ROMREGION_DISPOSE )	/* SCR */
+	ROM_LOAD( "nk_scrn.rom", 0x000000, 0x80000, 0x4cc7b9df )
 
-	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "nk_obj-0.rom", 0x000000, 0x100000, 0xa711977c )   /* sprites */
-	ROM_LOAD( "nk_obj-1.rom", 0x100000, 0x100000, 0xa6ad0f3d )   /* sprites */
+	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )	/* OBJ */
+	ROM_LOAD( "nk_obj-0.rom", 0x000000, 0x100000, 0xa711977c )
+	ROM_LOAD( "nk_obj-1.rom", 0x100000, 0x100000, 0xa6ad0f3d )
 
 	ROM_REGION( 0x1c000, REGION_CPU2, 0 )      /* sound cpu */
 	ROM_LOAD( "nk_snd.rom", 0x00000, 0x04000, 0xf2a52a51 )
-	ROM_CONTINUE(             0x10000, 0x0c000 ) /* banked stuff */
+	ROM_CONTINUE(           0x10000, 0x0c000 ) /* banked stuff */
 
 	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* ADPCM samples */
 	ROM_LOAD( "nk_sch-a.rom", 0x00000, 0x80000, 0x5afb747e )
@@ -5356,16 +5364,16 @@ ROM_START( ninjakj )
 	ROM_LOAD16_BYTE( "nk_1lh.rom",  0x40000, 0x20000, 0x3eccfd0a )
 	ROM_LOAD16_BYTE( "nk_1ll.rom",  0x40001, 0x20000, 0xd126ded1 )
 
-	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "nk_scrn.rom", 0x000000, 0x080000, 0x4cc7b9df )    /* characters */
+	ROM_REGION( 0x080000, REGION_GFX1, ROMREGION_DISPOSE )	/* SCR */
+	ROM_LOAD( "nk_scrn.rom", 0x00000, 0x80000, 0x4cc7b9df )
 
-	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "nk_obj-0.rom", 0x000000, 0x100000, 0xa711977c )   /* sprites */
-	ROM_LOAD( "nk_obj-1.rom", 0x100000, 0x100000, 0xa6ad0f3d )   /* sprites */
+	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )	/* OBJ */
+	ROM_LOAD( "nk_obj-0.rom", 0x000000, 0x100000, 0xa711977c )
+	ROM_LOAD( "nk_obj-1.rom", 0x100000, 0x100000, 0xa6ad0f3d )
 
 	ROM_REGION( 0x1c000, REGION_CPU2, 0 )      /* sound cpu */
 	ROM_LOAD( "nk_snd.rom", 0x00000, 0x04000, 0xf2a52a51 )
-	ROM_CONTINUE(             0x10000, 0x0c000 ) /* banked stuff */
+	ROM_CONTINUE(           0x10000, 0x0c000 ) /* banked stuff */
 
 	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* ADPCM samples */
 	ROM_LOAD( "nk_sch-a.rom", 0x00000, 0x80000, 0x5afb747e )
@@ -5379,15 +5387,15 @@ ROM_START( solfigtr )	/* Solitary Fighter */
 	ROM_LOAD16_BYTE( "c91-05",  0x00000, 0x40000, 0xc1260e7c )
 	ROM_LOAD16_BYTE( "c91-09",  0x00001, 0x40000, 0xd82b5266 )
 
-	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )    /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "c91-03", 0x000000, 0x100000, 0x8965da12 )       /* Characters */
+	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )	/* SCR */
+	ROM_LOAD( "c91-03", 0x000000, 0x100000, 0x8965da12 )
 
-	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )    /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "c91-01", 0x000000, 0x100000, 0x0f3f4e00 )       /* Object 0 */
-	ROM_LOAD( "c91-02", 0x100000, 0x100000, 0xe14ab98e )       /* Object 1 */
+	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )	/* OBJ */
+	ROM_LOAD( "c91-01", 0x000000, 0x100000, 0x0f3f4e00 )
+	ROM_LOAD( "c91-02", 0x100000, 0x100000, 0xe14ab98e )
 
 	ROM_REGION( 0x1c000, REGION_CPU2, 0 )      /* sound cpu */
-	ROM_LOAD( "c91-07",    0x00000, 0x04000, 0xe471a05a ) /* AUD Prog */
+	ROM_LOAD( "c91-07",    0x00000, 0x04000, 0xe471a05a )
 	ROM_CONTINUE(          0x10000, 0x0c000 ) /* banked stuff */
 
 	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* ADPCM samples */
@@ -5398,18 +5406,18 @@ ROM_END
 
 ROM_START( qzquest )	/* Quiz Quest */
 	ROM_REGION( 0x180000, REGION_CPU1, 0 )     /* 256k for 68000 code */
-	ROM_LOAD16_BYTE( "c92-06", 0x000000, 0x020000, 0x424be722 ) /* Prog1 */
-	ROM_LOAD16_BYTE( "c92-05", 0x000001, 0x020000, 0xda470f93 ) /* Prog2 */
-	ROM_LOAD16_WORD_SWAP( "c92-03", 0x100000, 0x080000, 0x1d697606 ) /* data */
+	ROM_LOAD16_BYTE( "c92-06", 0x000000, 0x020000, 0x424be722 )
+	ROM_LOAD16_BYTE( "c92-05", 0x000001, 0x020000, 0xda470f93 )
+	ROM_LOAD16_WORD_SWAP( "c92-03", 0x100000, 0x080000, 0x1d697606 )	/* data rom */
 
-	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )   /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "c92-02", 0x000000, 0x100000, 0x2daccecf )      /* Screen */
+	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )	/* SCR */
+	ROM_LOAD( "c92-02", 0x000000, 0x100000, 0x2daccecf )
 
-	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )   /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "c92-01", 0x000000, 0x100000, 0x9976a285 )      /* Object */
+	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )	/* OBJ */
+	ROM_LOAD( "c92-01", 0x000000, 0x100000, 0x9976a285 )
 
 	ROM_REGION( 0x1c000, REGION_CPU2, 0 )      /* sound cpu */
-	ROM_LOAD( "c92-07",    0x00000, 0x04000, 0x3e313db9 ) /* AUD Prog */
+	ROM_LOAD( "c92-07",    0x00000, 0x04000, 0x3e313db9 )
 	ROM_CONTINUE(          0x10000, 0x0c000 ) /* banked stuff */
 
 	ROM_REGION( 0x080000, REGION_SOUND1, 0 )	/* ADPCM samples */
@@ -5425,15 +5433,15 @@ ROM_START( pulirula )
 	ROM_LOAD16_BYTE( "c98-06.rom", 0x80000, 0x20000, 0x64a71b45 )
 	ROM_LOAD16_BYTE( "c98-07.rom", 0x80001, 0x20000, 0x90195bc0 )
 
-	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "c98-04.rom", 0x000000, 0x100000, 0x0e1fe3b2 )   /* background/foreground */
+	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )	/* SCR */
+	ROM_LOAD( "c98-04.rom", 0x000000, 0x100000, 0x0e1fe3b2 )
 
-	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "c98-02.rom", 0x000000, 0x100000, 0x4a2ad2b3 )   /* sprites */
-	ROM_LOAD( "c98-03.rom", 0x100000, 0x100000, 0x589a678f )   /* sprites */
+	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )	/* OBJ */
+	ROM_LOAD( "c98-02.rom", 0x000000, 0x100000, 0x4a2ad2b3 )
+	ROM_LOAD( "c98-03.rom", 0x100000, 0x100000, 0x589a678f )
 
-	ROM_REGION( 0x080000, REGION_GFX3, ROMREGION_DISPOSE )    /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "c98-05.rom", 0x000000, 0x080000, 0x9ddd9c39 )   /* pivot graphics */
+	ROM_REGION( 0x080000, REGION_GFX3, ROMREGION_DISPOSE )	/* pivot gfx */
+	ROM_LOAD( "c98-05.rom", 0x000000, 0x080000, 0x9ddd9c39 )
 
 	ROM_REGION( 0x2c000, REGION_CPU2, 0 )      /* sound cpu */
 	ROM_LOAD( "c98-14.rom", 0x00000, 0x04000, 0xa858e17c )
@@ -5452,15 +5460,15 @@ ROM_START( pulirulj )
 	ROM_LOAD16_BYTE( "c98-06.rom", 0x80000, 0x20000, 0x64a71b45 )
 	ROM_LOAD16_BYTE( "c98-07.rom", 0x80001, 0x20000, 0x90195bc0 )
 
-	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "c98-04.rom", 0x000000, 0x100000, 0x0e1fe3b2 )   /* background/foreground */
+	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )	/* SCR */
+	ROM_LOAD( "c98-04.rom", 0x000000, 0x100000, 0x0e1fe3b2 )
 
-	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "c98-02.rom", 0x000000, 0x100000, 0x4a2ad2b3 )   /* sprites */
-	ROM_LOAD( "c98-03.rom", 0x100000, 0x100000, 0x589a678f )   /* sprites */
+	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )	/* OBJ */
+	ROM_LOAD( "c98-02.rom", 0x000000, 0x100000, 0x4a2ad2b3 )
+	ROM_LOAD( "c98-03.rom", 0x100000, 0x100000, 0x589a678f )
 
-	ROM_REGION( 0x080000, REGION_GFX3, ROMREGION_DISPOSE )    /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "c98-05.rom", 0x000000, 0x080000, 0x9ddd9c39 )   /* pivot graphics */
+	ROM_REGION( 0x080000, REGION_GFX3, ROMREGION_DISPOSE )	/* pivot gfx */
+	ROM_LOAD( "c98-05.rom", 0x000000, 0x080000, 0x9ddd9c39 )
 
 	ROM_REGION( 0x2c000, REGION_CPU2, 0 )      /* sound cpu */
 	ROM_LOAD( "c98-14.rom", 0x00000, 0x04000, 0xa858e17c )
@@ -5479,12 +5487,12 @@ ROM_START( metalb )
 	ROM_LOAD16_BYTE( "d12-07.9",   0x80000, 0x20000, 0xe07f5136 )
 	ROM_LOAD16_BYTE( "d12-06.6",   0x80001, 0x20000, 0x131df731 )
 
-	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD16_BYTE( "d12-03.14", 0x000000, 0x080000, 0x46b498c0 ) /* characters */
-	ROM_LOAD16_BYTE( "d12-04.13", 0x000001, 0x080000, 0xab66d141 ) /* characters */
+	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )	/* SCR */
+	ROM_LOAD16_BYTE( "d12-03.14",  0x00000, 0x80000, 0x46b498c0 )
+	ROM_LOAD16_BYTE( "d12-04.13",  0x00001, 0x80000, 0xab66d141 )
 
-	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "d12-01.20", 0x000000, 0x100000, 0xb81523b9 )          /* sprites */
+	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )	/* OBJ */
+	ROM_LOAD( "d12-01.20", 0x000000, 0x100000, 0xb81523b9 )
 
 	ROM_REGION( 0x2c000, REGION_CPU2, 0 )      /* sound cpu */
 	ROM_LOAD( "d12-13.5", 0x00000, 0x04000, 0xbcca2649 )
@@ -5504,12 +5512,12 @@ ROM_START( metalbj )
 	ROM_LOAD16_BYTE( "d12-07.9",   0x80000, 0x20000, 0xe07f5136 )
 	ROM_LOAD16_BYTE( "d12-06.6",   0x80001, 0x20000, 0x131df731 )
 
-	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD16_BYTE( "d12-03.14", 0x000000, 0x080000, 0x46b498c0 ) /* characters */
-	ROM_LOAD16_BYTE( "d12-04.13", 0x000001, 0x080000, 0xab66d141 ) /* characters */
+	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )	/* SCR */
+	ROM_LOAD16_BYTE( "d12-03.14",  0x00000, 0x80000, 0x46b498c0 )
+	ROM_LOAD16_BYTE( "d12-04.13",  0x00001, 0x80000, 0xab66d141 )
 
-	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "d12-01.20", 0x000000, 0x100000, 0xb81523b9 )          /* sprites */
+	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )	/* OBJ */
+	ROM_LOAD( "d12-01.20", 0x000000, 0x100000, 0xb81523b9 )
 
 	ROM_REGION( 0x2c000, REGION_CPU2, 0 )      /* sound cpu */
 	ROM_LOAD( "d12-13.5", 0x00000, 0x04000, 0xbcca2649 )
@@ -5526,13 +5534,13 @@ ROM_START( qzchikyu )
 	ROM_REGION( 0x180000, REGION_CPU1, 0 )     /* 256k for 68000 code */
 	ROM_LOAD16_BYTE( "d19-06.bin", 0x000000, 0x020000, 0xde8c8e55 )
 	ROM_LOAD16_BYTE( "d19-05.bin", 0x000001, 0x020000, 0xc6d099d0 )
-	ROM_LOAD16_WORD_SWAP( "d19-03.bin", 0x100000, 0x080000, 0x5c1b92c0 )     /* data rom */
+	ROM_LOAD16_WORD_SWAP( "d19-03.bin", 0x100000, 0x080000, 0x5c1b92c0 )	/* data rom */
 
-	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "d19-02.bin", 0x000000, 0x100000, 0xf2dce2f2 )     /* screen */
+	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )	/* SCR */
+	ROM_LOAD( "d19-02.bin", 0x000000, 0x100000, 0xf2dce2f2 )
 
-	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "d19-01.bin", 0x000000, 0x100000, 0x6c4342d0 )	 /* sprites */
+	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )	/* OBJ */
+	ROM_LOAD( "d19-01.bin", 0x000000, 0x100000, 0x6c4342d0 )
 
 	ROM_REGION( 0x1c000, REGION_CPU2, 0 )      /* sound cpu */
 	ROM_LOAD( "d19-07.bin", 0x00000, 0x04000, 0xa8935f84 )
@@ -5549,15 +5557,15 @@ ROM_START( yesnoj )	/* Yes/No Sinri Tokimeki Chart */
 	ROM_LOAD16_BYTE( "d20-05-2.2",  0x00000, 0x40000, 0x68adb929 )
 	ROM_LOAD16_BYTE( "d20-04-2.4",  0x00001, 0x40000, 0xa84762f8 )
 
-	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "d20-01.11", 0x00000, 0x80000, 0x9d8a4d57 )          /* Screen */
+	ROM_REGION( 0x080000, REGION_GFX1, ROMREGION_DISPOSE )	/* SCR */
+	ROM_LOAD( "d20-01.11", 0x00000, 0x80000, 0x9d8a4d57 )
 
-	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD16_BYTE( "d20-02.12",  0x00000, 0x80000, 0xe71a8e40 ) /* Object */
-	ROM_LOAD16_BYTE( "d20-03.13",  0x00001, 0x80000, 0x6a51a1b4 ) /* Object */
+	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )	/* OBJ */
+	ROM_LOAD16_BYTE( "d20-02.12",  0x00000, 0x80000, 0xe71a8e40 )
+	ROM_LOAD16_BYTE( "d20-03.13",  0x00001, 0x80000, 0x6a51a1b4 )
 
 	ROM_REGION( 0x1c000, REGION_CPU2, 0 )      /* sound cpu */
-	ROM_LOAD( "d20-06.5",  0x00000, 0x04000, 0x3eb537dc ) /* AUD Prog */
+	ROM_LOAD( "d20-06.5",  0x00000, 0x04000, 0x3eb537dc )
 	ROM_CONTINUE(          0x10000, 0x0c000 ) /* banked stuff */
 
 	/* no ADPCM samples */
@@ -5572,17 +5580,17 @@ ROM_START( deadconx )
 	ROM_LOAD16_BYTE( "d28_09.2",  0x80000, 0x40000, 0x143a0cc1 )
 	ROM_LOAD16_BYTE( "d28_08.4",  0x80001, 0x40000, 0x4c872bd9 )
 
-	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD16_BYTE( "d28_04.16", 0x000000, 0x080000, 0xdcabc26b ) /* characters */
-	ROM_LOAD16_BYTE( "d28_05.17", 0x000001, 0x080000, 0x862f9665 ) /* characters */
+	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )	/* SCR */
+	ROM_LOAD16_BYTE( "d28_04.16", 0x00000, 0x80000, 0xdcabc26b )
+	ROM_LOAD16_BYTE( "d28_05.17", 0x00001, 0x80000, 0x862f9665 )
 
-	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "d28_01.8", 0x000000, 0x100000, 0x181d7b69 )          /* sprites */
-	ROM_LOAD( "d28_02.9", 0x100000, 0x100000, 0xd301771c )          /* sprites */
+	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )	/* OBJ */
+	ROM_LOAD( "d28_01.8", 0x000000, 0x100000, 0x181d7b69 )
+	ROM_LOAD( "d28_02.9", 0x100000, 0x100000, 0xd301771c )
 
-	ROM_REGION( 0x1c000, REGION_CPU2, 0 )      /* sound cpu */
+	ROM_REGION( 0x1c000, REGION_CPU2, 0 )	 /* sound cpu */
 	ROM_LOAD( "d28_10.6", 0x00000, 0x04000, 0x40805d74 )
-	ROM_CONTINUE(         0x10000, 0x0c000 ) /* banked stuff */
+	ROM_CONTINUE(         0x10000, 0x0c000 )	/* banked stuff */
 
 	ROM_REGION( 0x100000, REGION_SOUND1, 0 )	/* ADPCM samples */
 	ROM_LOAD( "d28_03.10", 0x000000, 0x100000, 0xa1804b52 )
@@ -5597,17 +5605,17 @@ ROM_START( deadconj )
 	ROM_LOAD16_BYTE( "d28_09.2",  0x80000, 0x40000, 0x143a0cc1 )
 	ROM_LOAD16_BYTE( "d28_08.4",  0x80001, 0x40000, 0x4c872bd9 )
 
-	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD16_BYTE( "d28_04.16", 0x000000, 0x080000, 0xdcabc26b ) /* characters */
-	ROM_LOAD16_BYTE( "d28_05.17", 0x000001, 0x080000, 0x862f9665 ) /* characters */
+	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )	/* SCR */
+	ROM_LOAD16_BYTE( "d28_04.16", 0x00000, 0x80000, 0xdcabc26b )
+	ROM_LOAD16_BYTE( "d28_05.17", 0x00001, 0x80000, 0x862f9665 )
 
-	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "d28_01.8", 0x000000, 0x100000, 0x181d7b69 )          /* sprites */
-	ROM_LOAD( "d28_02.9", 0x100000, 0x100000, 0xd301771c )          /* sprites */
+	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )	/* OBJ */
+	ROM_LOAD( "d28_01.8", 0x000000, 0x100000, 0x181d7b69 )
+	ROM_LOAD( "d28_02.9", 0x100000, 0x100000, 0xd301771c )
 
-	ROM_REGION( 0x1c000, REGION_CPU2, 0 )      /* sound cpu */
+	ROM_REGION( 0x1c000, REGION_CPU2, 0 )	 /* sound cpu */
 	ROM_LOAD( "d28_10.6", 0x00000, 0x04000, 0x40805d74 )
-	ROM_CONTINUE(         0x10000, 0x0c000 ) /* banked stuff */
+	ROM_CONTINUE(         0x10000, 0x0c000 )	/* banked stuff */
 
 	ROM_REGION( 0x100000, REGION_SOUND1, 0 )	/* ADPCM samples */
 	ROM_LOAD( "d28_03.10", 0x000000, 0x100000, 0xa1804b52 )
@@ -5622,22 +5630,22 @@ ROM_START( dinorex )
 	ROM_LOAD16_WORD_SWAP( "drex_04m.rom", 0x100000, 0x100000, 0x3800506d )  /* data rom */
 	ROM_LOAD16_WORD_SWAP( "drex_05m.rom", 0x200000, 0x100000, 0xe2ec3b5d )  /* data rom */
 
-	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "drex_06m.rom", 0x000000, 0x100000, 0x52f62835 )   /* characters */
+	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )	/* SCR */
+	ROM_LOAD( "drex_06m.rom", 0x000000, 0x100000, 0x52f62835 )
 
-	ROM_REGION( 0x600000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "drex_01m.rom", 0x000000, 0x200000, 0xd10e9c7d )   /* sprites */
-	ROM_LOAD( "drex_02m.rom", 0x200000, 0x200000, 0x6c304403 )   /* sprites */
-	ROM_LOAD( "drex_03m.rom", 0x400000, 0x200000, 0xfc9cdab4 )   /* sprites */
+	ROM_REGION( 0x600000, REGION_GFX2, ROMREGION_DISPOSE )	/* OBJ */
+	ROM_LOAD( "drex_01m.rom", 0x000000, 0x200000, 0xd10e9c7d )
+	ROM_LOAD( "drex_02m.rom", 0x200000, 0x200000, 0x6c304403 )
+	ROM_LOAD( "drex_03m.rom", 0x400000, 0x200000, 0xfc9cdab4 )
 
-	ROM_REGION( 0x1c000, REGION_CPU2, 0 )      /* sound cpu */
-	ROM_LOAD( "drex_12.rom", 0x00000, 0x04000, 0x8292c7c1 )
-	ROM_CONTINUE(             0x10000, 0x0c000 ) /* banked stuff */
+	ROM_REGION( 0x1c000, REGION_CPU2, 0 )		 /* sound cpu */
+	ROM_LOAD( "drex_12.rom",  0x00000, 0x04000, 0x8292c7c1 )
+	ROM_CONTINUE(             0x10000, 0x0c000 )	/* banked stuff */
 
 	ROM_REGION( 0x100000, REGION_SOUND1, 0 )	/* ADPCM samples */
 	ROM_LOAD( "drex_07m.rom", 0x000000, 0x100000, 0x28262816 )
 
-	ROM_REGION( 0x080000, REGION_SOUND2, 0 )   /* Delta-T samples */
+	ROM_REGION( 0x080000, REGION_SOUND2, 0 )	/* Delta-T samples */
 	ROM_LOAD( "drex_08m.rom", 0x000000, 0x080000, 0x377b8b7b )
 ROM_END
 
@@ -5645,69 +5653,69 @@ ROM_START( dinorexj )
 	ROM_REGION( 0x300000, REGION_CPU1, 0 )     /* 1Mb for 68000 code */
 	ROM_LOAD16_BYTE( "drex_14.rom",  0x000000, 0x080000, 0xe6aafdac )
 	ROM_LOAD16_BYTE( "d39-13.rom",   0x000001, 0x080000, 0xae496b2f )
-	ROM_LOAD16_WORD_SWAP( "drex_04m.rom", 0x100000, 0x100000, 0x3800506d )  /* data rom */
-	ROM_LOAD16_WORD_SWAP( "drex_05m.rom", 0x200000, 0x100000, 0xe2ec3b5d )  /* data rom */
+	ROM_LOAD16_WORD_SWAP( "drex_04m.rom", 0x100000, 0x100000, 0x3800506d )	/* data rom */
+	ROM_LOAD16_WORD_SWAP( "drex_05m.rom", 0x200000, 0x100000, 0xe2ec3b5d )	/* data rom */
 
-	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "drex_06m.rom", 0x000000, 0x100000, 0x52f62835 )   /* characters */
+	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )	/* SCR */
+	ROM_LOAD( "drex_06m.rom", 0x000000, 0x100000, 0x52f62835 )
 
-	ROM_REGION( 0x600000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "drex_01m.rom", 0x000000, 0x200000, 0xd10e9c7d )   /* sprites */
-	ROM_LOAD( "drex_02m.rom", 0x200000, 0x200000, 0x6c304403 )   /* sprites */
-	ROM_LOAD( "drex_03m.rom", 0x400000, 0x200000, 0xfc9cdab4 )   /* sprites */
+	ROM_REGION( 0x600000, REGION_GFX2, ROMREGION_DISPOSE )	/* OBJ */
+	ROM_LOAD( "drex_01m.rom", 0x000000, 0x200000, 0xd10e9c7d )
+	ROM_LOAD( "drex_02m.rom", 0x200000, 0x200000, 0x6c304403 )
+	ROM_LOAD( "drex_03m.rom", 0x400000, 0x200000, 0xfc9cdab4 )
 
-	ROM_REGION( 0x1c000, REGION_CPU2, 0 )      /* sound cpu */
-	ROM_LOAD( "drex_12.rom", 0x00000, 0x04000, 0x8292c7c1 )
-	ROM_CONTINUE(             0x10000, 0x0c000 ) /* banked stuff */
+	ROM_REGION( 0x1c000, REGION_CPU2, 0 )		 /* sound cpu */
+	ROM_LOAD( "drex_12.rom",  0x00000, 0x04000, 0x8292c7c1 )
+	ROM_CONTINUE(             0x10000, 0x0c000 )	/* banked stuff */
 
 	ROM_REGION( 0x100000, REGION_SOUND1, 0 )	/* ADPCM samples */
 	ROM_LOAD( "drex_07m.rom", 0x000000, 0x100000, 0x28262816 )
 
-	ROM_REGION( 0x080000, REGION_SOUND2, 0 )   /* Delta-T samples */
+	ROM_REGION( 0x080000, REGION_SOUND2, 0 )	/* Delta-T samples */
 	ROM_LOAD( "drex_08m.rom", 0x000000, 0x080000, 0x377b8b7b )
 ROM_END
 
 ROM_START( dinorexu )
-	ROM_REGION( 0x300000, REGION_CPU1, 0 )     /* 1Mb for 68000 code */
+	ROM_REGION( 0x300000, REGION_CPU1, 0 )	/* 1Mb for 68000 code */
 	ROM_LOAD16_BYTE( "drex_14.rom",  0x000000, 0x080000, 0xe6aafdac )
 	ROM_LOAD16_BYTE( "drex_16u.rom", 0x000001, 0x080000, 0xfe96723b )
-	ROM_LOAD16_WORD_SWAP( "drex_04m.rom", 0x100000, 0x100000, 0x3800506d )  /* data rom */
-	ROM_LOAD16_WORD_SWAP( "drex_05m.rom", 0x200000, 0x100000, 0xe2ec3b5d )  /* data rom */
+	ROM_LOAD16_WORD_SWAP( "drex_04m.rom", 0x100000, 0x100000, 0x3800506d )	/* data rom */
+	ROM_LOAD16_WORD_SWAP( "drex_05m.rom", 0x200000, 0x100000, 0xe2ec3b5d )	/* data rom */
 
-	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "drex_06m.rom", 0x000000, 0x100000, 0x52f62835 )   /* characters */
+	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )	/* SCR */
+	ROM_LOAD( "drex_06m.rom", 0x000000, 0x100000, 0x52f62835 )
 
-	ROM_REGION( 0x600000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "drex_01m.rom", 0x000000, 0x200000, 0xd10e9c7d )   /* sprites */
-	ROM_LOAD( "drex_02m.rom", 0x200000, 0x200000, 0x6c304403 )   /* sprites */
-	ROM_LOAD( "drex_03m.rom", 0x400000, 0x200000, 0xfc9cdab4 )   /* sprites */
+	ROM_REGION( 0x600000, REGION_GFX2, ROMREGION_DISPOSE )	/* OBJ */
+	ROM_LOAD( "drex_01m.rom", 0x000000, 0x200000, 0xd10e9c7d )
+	ROM_LOAD( "drex_02m.rom", 0x200000, 0x200000, 0x6c304403 )
+	ROM_LOAD( "drex_03m.rom", 0x400000, 0x200000, 0xfc9cdab4 )
 
-	ROM_REGION( 0x1c000, REGION_CPU2, 0 )      /* sound cpu */
-	ROM_LOAD( "drex_12.rom", 0x00000, 0x04000, 0x8292c7c1 )
-	ROM_CONTINUE(             0x10000, 0x0c000 ) /* banked stuff */
+	ROM_REGION( 0x1c000, REGION_CPU2, 0 )		 /* sound cpu */
+	ROM_LOAD( "drex_12.rom",  0x00000, 0x04000, 0x8292c7c1 )
+	ROM_CONTINUE(             0x10000, 0x0c000 )	/* banked stuff */
 
 	ROM_REGION( 0x100000, REGION_SOUND1, 0 )	/* ADPCM samples */
 	ROM_LOAD( "drex_07m.rom", 0x000000, 0x100000, 0x28262816 )
 
-	ROM_REGION( 0x080000, REGION_SOUND2, 0 )   /* Delta-T samples */
+	ROM_REGION( 0x080000, REGION_SOUND2, 0 )	/* Delta-T samples */
 	ROM_LOAD( "drex_08m.rom", 0x000000, 0x080000, 0x377b8b7b )
 ROM_END
 
 ROM_START( qjinsei )	/* Quiz Jinsei Gekijoh */
 	ROM_REGION( 0x200000, REGION_CPU1, 0 )     /* 512k for 68000 code */
-	ROM_LOAD16_BYTE( "d48-09",  0x000000, 0x040000, 0xa573b68d ) /* Prog1 */
-	ROM_LOAD16_BYTE( "d48-10",  0x000001, 0x040000, 0x37143a5b ) /* Prog2 */
-	ROM_LOAD16_WORD_SWAP( "d48-03",  0x100000, 0x100000, 0xfb5ea8dc ) /* data */
+	ROM_LOAD16_BYTE( "d48-09",  0x000000, 0x040000, 0xa573b68d )
+	ROM_LOAD16_BYTE( "d48-10",  0x000001, 0x040000, 0x37143a5b )
+	ROM_LOAD16_WORD_SWAP( "d48-03",  0x100000, 0x100000, 0xfb5ea8dc )	/* data rom */
 
-	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "d48-04", 0x000000, 0x100000, 0x61e4b078 )          /* Screen */
+	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )	/* SCR */
+	ROM_LOAD( "d48-04", 0x000000, 0x100000, 0x61e4b078 )
 
-	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD16_BYTE( "d48-02", 0x000000, 0x100000, 0xa7b68e63 ) /* Object */
-	ROM_LOAD16_BYTE( "d48-01", 0x000001, 0x100000, 0x72a94b73 ) /* Object */
+	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )	/* OBJ */
+	ROM_LOAD16_BYTE( "d48-02", 0x000000, 0x100000, 0xa7b68e63 )
+	ROM_LOAD16_BYTE( "d48-01", 0x000001, 0x100000, 0x72a94b73 )
 
 	ROM_REGION( 0x1c000, REGION_CPU2, 0 )      /* sound cpu */
-	ROM_LOAD( "d48-11",    0x00000, 0x04000, 0x656c5b54 ) /* AUD Prog */
+	ROM_LOAD( "d48-11",    0x00000, 0x04000, 0x656c5b54 )
 	ROM_CONTINUE(          0x10000, 0x0c000 ) /* banked stuff */
 
 	ROM_REGION( 0x080000, REGION_SOUND1, 0 )	/* ADPCM samples */
@@ -5725,16 +5733,16 @@ ROM_START( qcrayon )	/* Quiz Crayon */
 	/* extra ROM mapped 0x300000 */
 	ROM_LOAD16_WORD_SWAP( "d55-03", 0x000000, 0x100000, 0x4d161e76 )   /* data rom */
 
-	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "d55-02", 0x000000, 0x100000, 0xf3db2f1c )          /* Screen */
+	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )	/* SCR */
+	ROM_LOAD( "d55-02", 0x000000, 0x100000, 0xf3db2f1c )
 
-	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD16_BYTE( "d55-05", 0x000000, 0x100000, 0xf0e59902 ) /* Object */
-	ROM_LOAD16_BYTE( "d55-04", 0x000001, 0x100000, 0x412975ce ) /* Object */
+	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )	/* OBJ */
+	ROM_LOAD16_BYTE( "d55-05", 0x000000, 0x100000, 0xf0e59902 )
+	ROM_LOAD16_BYTE( "d55-04", 0x000001, 0x100000, 0x412975ce )
 
-	ROM_REGION( 0x1c000, REGION_CPU2, 0 )      /* sound cpu */
-	ROM_LOAD( "d55-15",    0x00000, 0x04000, 0xba782eff ) /* AUD Prog */
-	ROM_CONTINUE(          0x10000, 0x0c000 ) /* banked stuff */
+	ROM_REGION( 0x1c000, REGION_CPU2, 0 )	 /* sound cpu */
+	ROM_LOAD( "d55-15",  0x00000, 0x04000, 0xba782eff )
+	ROM_CONTINUE(        0x10000, 0x0c000 )	/* banked stuff */
 
 	ROM_REGION( 0x100000, REGION_SOUND1, 0 )	/* ADPCM samples */
 	ROM_LOAD( "d55-01",  0x000000, 0x100000, 0xa8309af4 )
@@ -5749,16 +5757,16 @@ ROM_START( qcrayon2 )	/* Quiz Crayon 2 */
 
 	ROM_REGION16_BE( 0x080000, REGION_USER1, 0 )
 	/* extra ROM mapped at 600000 */
-	ROM_LOAD16_WORD_SWAP( "d63-01", 0x000000, 0x080000, 0x872e38b4 )   /* data rom */
+	ROM_LOAD16_WORD_SWAP( "d63-01", 0x00000, 0x80000, 0x872e38b4 )   /* data rom */
 
-	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )    /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "d63-03", 0x000000, 0x100000, 0xd24843af )       /* Screen */
+	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )    /* SCR */
+	ROM_LOAD( "d63-03", 0x000000, 0x100000, 0xd24843af )
 
-	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )    /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "d63-06", 0x000000, 0x200000, 0x58b1e4a8 )       /* Object */
+	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )    /* OBJ */
+	ROM_LOAD( "d63-06", 0x000000, 0x200000, 0x58b1e4a8 )
 
 	ROM_REGION( 0x1c000, REGION_CPU2, 0 )      /* sound cpu */
-	ROM_LOAD( "d63-11",    0x00000, 0x04000, 0x2c7ac9e5 ) /* AUD Prog */
+	ROM_LOAD( "d63-11",    0x00000, 0x04000, 0x2c7ac9e5 )
 	ROM_CONTINUE(          0x10000, 0x0c000 ) /* banked stuff */
 
 	ROM_REGION( 0x100000, REGION_SOUND1, 0 )	/* ADPCM samples */
@@ -5772,54 +5780,60 @@ ROM_START( driftout )
 	ROM_LOAD16_BYTE( "do_46.rom",  0x00000, 0x80000, 0xf960363e )
 	ROM_LOAD16_BYTE( "do_45.rom",  0x00001, 0x80000, 0xe3fe66b9 )
 
-	ROM_REGION( 0x080000, REGION_GFX1, ROMREGION_DISPOSE )      /* UNUSED! */
+	ROM_REGION( 0x080000, REGION_GFX1, ROMREGION_DISPOSE )
+	/* empty */
 
-	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )      /* temporary space for sprites (disposed after conversion) */
-	ROM_LOAD( "do_obj.rom", 0x000000, 0x080000, 0x5491f1c4 )
+	ROM_REGION( 0x080000, REGION_GFX2, ROMREGION_DISPOSE )      /* OBJ */
+	ROM_LOAD( "do_obj.rom", 0x00000, 0x80000, 0x5491f1c4 )
 
-	ROM_REGION( 0x080000, REGION_GFX3, ROMREGION_DISPOSE )      /* temporary space for pivot chars (disposed after conversion) */
-	ROM_LOAD( "do_piv.rom",  0x000000, 0x080000, 0xc4f012f7 )
+	ROM_REGION( 0x080000, REGION_GFX3, ROMREGION_DISPOSE )      /* pivot gfx */
+	ROM_LOAD( "do_piv.rom", 0x00000, 0x80000, 0xc4f012f7 )
 
-	ROM_REGION( 0x1c000, REGION_CPU2, 0 )      /* sound cpu */
-	ROM_LOAD( "do_50.rom",   0x00000, 0x04000, 0xffe10124 )
-	ROM_CONTINUE(            0x10000, 0x0c000 ) /* banked stuff */
+	ROM_REGION( 0x1c000, REGION_CPU2, 0 )		/* sound cpu */
+	ROM_LOAD( "do_50.rom",  0x00000, 0x04000, 0xffe10124 )
+	ROM_CONTINUE(           0x10000, 0x0c000 )	/* banked stuff */
 
 	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* ADPCM samples */
-	ROM_LOAD( "do_snd.rom",  0x00000, 0x80000, 0xf2deb82b )
+	ROM_LOAD( "do_snd.rom", 0x00000, 0x80000, 0xf2deb82b )
 
 	/* no Delta-T samples */
 ROM_END
 
 ROM_START( driveout )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )     /* 1024k for 68000 code */
-	ROM_LOAD16_BYTE( "driveout.003",  0x00000, 0x80000, 0xdc431e4e )
-	ROM_LOAD16_BYTE( "driveout.002",  0x00001, 0x80000, 0x6f9063f4 )
+	ROM_LOAD16_BYTE( "driveout.003", 0x00000, 0x80000, 0xdc431e4e )
+	ROM_LOAD16_BYTE( "driveout.002", 0x00001, 0x80000, 0x6f9063f4 )
 
-	ROM_REGION( 0x080000, REGION_GFX1, ROMREGION_DISPOSE )      /* UNUSED! */
+	ROM_REGION( 0x080000, REGION_GFX1, ROMREGION_DISPOSE )
+	/* empty */
 
-	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )      /* temporary space for sprites (disposed after conversion) */
-	ROM_LOAD16_BYTE( "driveout.084", 0x000000, 0x040000, 0x530ac420 )
-	ROM_LOAD16_BYTE( "driveout.081", 0x000001, 0x040000, 0x0e9a3e9e )
+	ROM_REGION( 0x080000, REGION_GFX2, ROMREGION_DISPOSE )      /* OBJ */
+	ROM_LOAD16_BYTE( "driveout.084", 0x00000, 0x40000, 0x530ac420 )
+	ROM_LOAD16_BYTE( "driveout.081", 0x00001, 0x40000, 0x0e9a3e9e )
 
-	ROM_REGION( 0x080000, REGION_GFX3, ROMREGION_DISPOSE )      /* temporary space for pivot chars (disposed after conversion) */
-	ROM_LOAD( "do_piv.rom",  0x000000, 0x080000, 0xc4f012f7 )
+	ROM_REGION( 0x080000, REGION_GFX3, ROMREGION_DISPOSE )      /* pivot gfx */
+	ROM_LOAD( "do_piv.rom",    0x00000, 0x80000, 0xc4f012f7 )
 
-	ROM_REGION( 0x10000, REGION_CPU2, 0 )      /* sound cpu */
-	ROM_LOAD( "driveout.020",  0x0000, 0x8000, 0x99aaeb2e )
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	 /* sound cpu */
+	ROM_LOAD( "driveout.020",  0x0000,  0x8000, 0x99aaeb2e )
 
 	ROM_REGION( 0x100000, REGION_SOUND1, 0 )	/* ADPCM samples */
-	ROM_LOAD( "driveout.028",  0x00000, 0x20000, 0xcbde0b66 )	/*banked*/
+	ROM_LOAD( "driveout.028",  0x00000, 0x20000, 0xcbde0b66 )	/* banked */
 	ROM_CONTINUE(              0x40000, 0x20000 )
 	ROM_CONTINUE(              0x80000, 0x20000 )
 	ROM_CONTINUE(              0xc0000, 0x20000 )
-	ROM_LOAD( "driveout.029",  0x20000, 0x20000, 0x0aba2026 )	/*sandwitched*/
+	ROM_LOAD( "driveout.029",  0x20000, 0x20000, 0x0aba2026 )	/* sandwiched */
 	ROM_RELOAD(                0x60000, 0x20000 )
 	ROM_RELOAD(                0xa0000, 0x20000 )
 	ROM_RELOAD(                0xe0000, 0x20000 )
-
 ROM_END
 
 
+void init_f2( void)
+{
+	state_save_register_int("taitof2", 0, "sound region", &banknum);
+	state_save_register_func_postload(reset_sound_region);
+}
 
 void init_finalb(void)
 {
@@ -5846,6 +5860,8 @@ void init_finalb(void)
 		gfx[offset] = (d1<<2) | (d2<<6);
 		offset++;
 	}
+
+	init_f2();
 }
 
 void init_mjnquest(void)
@@ -5863,54 +5879,70 @@ void init_mjnquest(void)
 		gfx[i] = (gfx[i+1] >> 4) | (gfx[i+1] << 4);
 		gfx[i+1] = (t >> 4) | (t << 4);
 	}
+
+	init_f2();
 }
 
+void init_yesnoj( void)
+{
+	yesnoj_dsw = 0;
+	state_save_register_int("yesnoj_dsw", 0, "control", &yesnoj_dsw);
+	init_f2();
+}
+
+void init_driveout( void)
+{
+	state_save_register_int("driveout_sound1", 0, "sound", &driveout_sound_latch);
+	state_save_register_int("driveout_sound2", 0, "sound region", &oki_bank);
+	state_save_register_func_postload(reset_driveout_sound_region);
+	init_f2();
+}
 
 
 GAME( 1988, finalb,   0,        finalb,   finalb,   finalb,   ROT0,       "Taito Corporation Japan", "Final Blow (World)" )
 GAME( 1988, finalbj,  finalb,   finalb,   finalbj,  finalb,   ROT0,       "Taito Corporation", "Final Blow (Japan)" )
-GAME( 1989, dondokod, 0,        dondokod, dondokod, 0,        ROT0,       "Taito Corporation", "Don Doko Don (Japan)" )
-GAME( 1989, megab,    0,        megab,    megab,    0,        ROT0,       "Taito Corporation Japan", "Mega Blast (World)" )
-GAME( 1989, megabj,   megab,    megab,    megabj,   0,        ROT0,       "Taito Corporation", "Mega Blast (Japan)" )
-GAME( 1990, thundfox, 0,        thundfox, thundfox, 0,        ROT0,       "Taito Corporation", "Thunder Fox (Japan)" )
-GAME( 1989, cameltry, 0,        cameltry, cameltry, 0,        ROT0,       "Taito Corporation", "Camel Try (Japan)"  )
-GAME( 1989, cameltru, cameltry, cameltry, cameltru, 0,        ROT0,       "Taito America Corporation", "Camel Try (US)" )
-GAME( 1990, qtorimon, 0,        qtorimon, qtorimon, 0,        ROT0,       "Taito Corporation", "Quiz Torimonochou (Japan)" )
-GAME( 1990, liquidk,  0,        liquidk,  liquidk,  0,        ROT0,       "Taito Corporation Japan", "Liquid Kids (World)" )
-GAME( 1990, liquidku, liquidk,  liquidk,  liquidku, 0,        ROT0,       "Taito America Corporation", "Liquid Kids (US)" )
-GAME( 1990, mizubaku, liquidk,  liquidk,  mizubaku, 0,        ROT0,       "Taito Corporation", "Mizubaku Daibouken (Japan)" )
-GAME( 1990, quizhq,   0,        quizhq,   quizhq,   0,        ROT0,       "Taito Corporation", "Quiz HQ (Japan)" )
-GAME( 1990, ssi,      0,        ssi,      ssi,      0,        ROT270,     "Taito Corporation Japan", "Super Space Invaders '91 (World)" )
-GAME( 1990, majest12, ssi,      ssi,      majest12, 0,        ROT270,     "Taito Corporation", "Majestic Twelve - The Space Invaders Part IV (Japan)" )
-GAME( 1990, gunfront, 0,        gunfront, gunfront, 0,        ROT270,     "Taito Corporation Japan", "Gun & Frontier (World)" )
-GAME( 1990, gunfronj, gunfront, gunfront, gunfronj, 0,        ROT270,     "Taito Corporation", "Gun Frontier (Japan)" )
-GAME( 1990, growl,    0,        growl,    growl,    0,        ROT0,       "Taito Corporation Japan", "Growl (World)" )
-GAME( 1990, growlu,   growl,    growl,    growlu,   0,        ROT0,       "Taito America Corporation", "Growl (US)" )
-GAME( 1990, runark,   growl,    growl,    runark,   0,        ROT0,       "Taito Corporation", "Runark (Japan)" )
+GAME( 1989, dondokod, 0,        dondokod, dondokod, f2,       ROT0,       "Taito Corporation", "Don Doko Don (Japan)" )
+GAME( 1989, megab,    0,        megab,    megab,    f2,       ROT0,       "Taito Corporation Japan", "Mega Blast (World)" )
+GAME( 1989, megabj,   megab,    megab,    megabj,   f2,       ROT0,       "Taito Corporation", "Mega Blast (Japan)" )
+GAME( 1990, thundfox, 0,        thundfox, thundfox, f2,       ROT0,       "Taito Corporation", "Thunder Fox (Japan)" )
+GAME( 1989, cameltry, 0,        cameltry, cameltry, f2,       ROT0,       "Taito Corporation", "Camel Try (Japan)"  )
+GAME( 1989, cameltru, cameltry, cameltry, cameltru, f2,       ROT0,       "Taito America Corporation", "Camel Try (US)" )
+GAME( 1990, qtorimon, 0,        qtorimon, qtorimon, f2,       ROT0,       "Taito Corporation", "Quiz Torimonochou (Japan)" )
+GAME( 1990, liquidk,  0,        liquidk,  liquidk,  f2,       ROT0,       "Taito Corporation Japan", "Liquid Kids (World)" )
+GAME( 1990, liquidku, liquidk,  liquidk,  liquidku, f2,       ROT0,       "Taito America Corporation", "Liquid Kids (US)" )
+GAME( 1990, mizubaku, liquidk,  liquidk,  mizubaku, f2,       ROT0,       "Taito Corporation", "Mizubaku Daibouken (Japan)" )
+GAME( 1990, quizhq,   0,        quizhq,   quizhq,   f2,       ROT0,       "Taito Corporation", "Quiz HQ (Japan)" )
+GAME( 1990, ssi,      0,        ssi,      ssi,      f2,       ROT270,     "Taito Corporation Japan", "Super Space Invaders '91 (World)" )
+GAME( 1990, majest12, ssi,      ssi,      majest12, f2,       ROT270,     "Taito Corporation", "Majestic Twelve - The Space Invaders Part IV (Japan)" )
+GAME( 1990, gunfront, 0,        gunfront, gunfront, f2,       ROT270,     "Taito Corporation Japan", "Gun & Frontier (World)" )
+GAME( 1990, gunfronj, gunfront, gunfront, gunfronj, f2,       ROT270,     "Taito Corporation", "Gun Frontier (Japan)" )
+GAME( 1990, growl,    0,        growl,    growl,    f2,       ROT0,       "Taito Corporation Japan", "Growl (World)" )
+GAME( 1990, growlu,   growl,    growl,    growlu,   f2,       ROT0,       "Taito America Corporation", "Growl (US)" )
+GAME( 1990, runark,   growl,    growl,    runark,   f2,       ROT0,       "Taito Corporation", "Runark (Japan)" )
 GAME( 1990, mjnquest, 0,        mjnquest, mjnquest, mjnquest, ROT0,       "Taito Corporation", "Mahjong Quest (Japan)" )
 GAME( 1990, mjnquesb, mjnquest, mjnquest, mjnquest, mjnquest, ROT0,       "Taito Corporation", "Mahjong Quest (No Nudity)" )
-GAME( 1990, footchmp, 0,        footchmp, footchmp, 0,        ROT0,       "Taito Corporation Japan", "Football Champ (World)" )
-GAME( 1990, hthero,   footchmp, hthero,   hthero,   0,        ROT0,       "Taito Corporation", "Hat Trick Hero (Japan)" )
-GAME( 1992, euroch92, footchmp, footchmp, footchmp, 0,        ROT0,       "Taito Corporation Japan", "Euro Champ '92 (World)" )
-GAME( 1990, koshien,  0,        koshien,  koshien,  0,        ROT0,       "Taito Corporation", "Ah Eikou no Koshien (Japan)" )
-GAME( 1990, yuyugogo, 0,        yuyugogo, yuyugogo, 0,        ROT0,       "Taito Corporation", "Yuuyu no Quiz de GO!GO! (Japan)" )
-GAME( 1990, ninjak,   0,        ninjak,   ninjak,   0,        ROT0,       "Taito Corporation Japan", "Ninja Kids (World)" )
-GAME( 1990, ninjakj,  ninjak,   ninjak,   ninjakj,  0,        ROT0,       "Taito Corporation", "Ninja Kids (Japan)" )
-GAME( 1991, solfigtr, 0,        solfigtr, solfigtr, 0,        ROT0,       "Taito Corporation Japan", "Solitary Fighter (World)" )
-GAME( 1991, qzquest,  0,        qzquest , qzquest,  0,        ROT0,       "Taito Corporation", "Quiz Quest - Hime to Yuusha no Monogatari (Japan)" )
-GAME( 1991, pulirula, 0,        pulirula, pulirula, 0,        ROT0,       "Taito Corporation Japan", "PuLiRuLa (World)" )
-GAME( 1991, pulirulj, pulirula, pulirula, pulirulj, 0,        ROT0,       "Taito Corporation", "PuLiRuLa (Japan)" )
-GAME( 1991, metalb,   0,        metalb,   metalb,   0,        ROT0_16BIT, "Taito Corporation Japan", "Metal Black (World)" )
-GAME( 1991, metalbj,  metalb,   metalb,   metalbj,  0,        ROT0_16BIT, "Taito Corporation", "Metal Black (Japan)" )
-GAME( 1991, qzchikyu, 0,        qzchikyu, qzchikyu, 0,        ROT0,       "Taito Corporation", "Quiz Chikyu Bouei Gun (Japan)" )
-GAME( 1992, yesnoj,   0,        yesnoj,   yesnoj,   0,        ROT0,       "Taito Corporation", "Yes/No Sinri Tokimeki Chart" )
-GAME( 1992, deadconx, 0,        deadconx, deadconx, 0,        ROT0,       "Taito Corporation Japan", "Dead Connection (World)" )
-GAME( 1992, deadconj, deadconx, deadconj, deadconj, 0,        ROT0,       "Taito Corporation", "Dead Connection (Japan)" )
-GAME( 1992, dinorex,  0,        dinorex,  dinorex,  0,        ROT0,       "Taito Corporation Japan", "Dino Rex (World)" )
-GAME( 1992, dinorexj, dinorex,  dinorex,  dinorexj, 0,        ROT0,       "Taito Corporation", "Dino Rex (Japan)" )
-GAME( 1992, dinorexu, dinorex,  dinorex,  dinorex,  0,        ROT0,       "Taito America Corporation", "Dino Rex (US)" )
-GAME( 1992, qjinsei,  0,        qjinsei,  qjinsei,  0,        ROT0,       "Taito Corporation", "Quiz Jinsei Gekijoh (Japan)" )
-GAME( 1993, qcrayon,  0,        qcrayon,  qcrayon,  0,        ROT0,       "Taito Corporation", "Quiz Crayon Shinchan (Japan)" )
-GAME( 1993, qcrayon2, 0,        qcrayon2, qcrayon2, 0,        ROT0,       "Taito Corporation", "Crayon Shinchan Orato Asobo (Japan)" )
-GAME( 1991, driftout, 0,        driftout, driftout, 0,        ROT270,     "Visco", "Drift Out (Japan)" )
-GAME( 1991, driveout, driftout, driveout, driftout, 0,        ROT270,     "bootleg", "Drive Out" )
+GAME( 1990, footchmp, 0,        footchmp, footchmp, f2,       ROT0,       "Taito Corporation Japan", "Football Champ (World)" )
+GAME( 1990, hthero,   footchmp, hthero,   hthero,   f2,       ROT0,       "Taito Corporation", "Hat Trick Hero (Japan)" )
+GAME( 1992, euroch92, footchmp, footchmp, footchmp, f2,       ROT0,       "Taito Corporation Japan", "Euro Champ '92 (World)" )
+GAME( 1990, koshien,  0,        koshien,  koshien,  f2,       ROT0,       "Taito Corporation", "Ah Eikou no Koshien (Japan)" )
+GAME( 1990, yuyugogo, 0,        yuyugogo, yuyugogo, f2,       ROT0,       "Taito Corporation", "Yuuyu no Quiz de GO!GO! (Japan)" )
+GAME( 1990, ninjak,   0,        ninjak,   ninjak,   f2,       ROT0,       "Taito Corporation Japan", "Ninja Kids (World)" )
+GAME( 1990, ninjakj,  ninjak,   ninjak,   ninjakj,  f2,       ROT0,       "Taito Corporation", "Ninja Kids (Japan)" )
+GAME( 1991, solfigtr, 0,        solfigtr, solfigtr, f2,       ROT0,       "Taito Corporation Japan", "Solitary Fighter (World)" )
+GAME( 1991, qzquest,  0,        qzquest , qzquest,  f2,       ROT0,       "Taito Corporation", "Quiz Quest - Hime to Yuusha no Monogatari (Japan)" )
+GAME( 1991, pulirula, 0,        pulirula, pulirula, f2,       ROT0,       "Taito Corporation Japan", "PuLiRuLa (World)" )
+GAME( 1991, pulirulj, pulirula, pulirula, pulirulj, f2,       ROT0,       "Taito Corporation", "PuLiRuLa (Japan)" )
+GAME( 1991, metalb,   0,        metalb,   metalb,   f2,       ROT0_16BIT, "Taito Corporation Japan", "Metal Black (World)" )
+GAME( 1991, metalbj,  metalb,   metalb,   metalbj,  f2,       ROT0_16BIT, "Taito Corporation", "Metal Black (Japan)" )
+GAME( 1991, qzchikyu, 0,        qzchikyu, qzchikyu, f2,       ROT0,       "Taito Corporation", "Quiz Chikyu Bouei Gun (Japan)" )
+GAME( 1992, yesnoj,   0,        yesnoj,   yesnoj,   yesnoj,   ROT0,       "Taito Corporation", "Yes/No Sinri Tokimeki Chart" )
+GAME( 1992, deadconx, 0,        deadconx, deadconx, f2,       ROT0_16BIT, "Taito Corporation Japan", "Dead Connection (World)" )
+GAME( 1992, deadconj, deadconx, deadconj, deadconj, f2,       ROT0_16BIT, "Taito Corporation", "Dead Connection (Japan)" )
+GAME( 1992, dinorex,  0,        dinorex,  dinorex,  f2,       ROT0,       "Taito Corporation Japan", "Dino Rex (World)" )
+GAME( 1992, dinorexj, dinorex,  dinorex,  dinorexj, f2,       ROT0,       "Taito Corporation", "Dino Rex (Japan)" )
+GAME( 1992, dinorexu, dinorex,  dinorex,  dinorex,  f2,       ROT0,       "Taito America Corporation", "Dino Rex (US)" )
+GAME( 1992, qjinsei,  0,        qjinsei,  qjinsei,  f2,       ROT0,       "Taito Corporation", "Quiz Jinsei Gekijoh (Japan)" )
+GAME( 1993, qcrayon,  0,        qcrayon,  qcrayon,  f2,       ROT0,       "Taito Corporation", "Quiz Crayon Shinchan (Japan)" )
+GAME( 1993, qcrayon2, 0,        qcrayon2, qcrayon2, f2,       ROT0,       "Taito Corporation", "Crayon Shinchan Orato Asobo (Japan)" )
+GAME( 1991, driftout, 0,        driftout, driftout, f2,       ROT270,     "Visco", "Drift Out (Japan)" )
+GAME( 1991, driveout, driftout, driveout, driftout, driveout, ROT270,     "bootleg", "Drive Out" )

@@ -12,23 +12,19 @@ source was very helpful in many areas particularly the sprites.)
 				*****
 
 Operation Thunderbolt operates on hardware very similar to the Taito Z
-system, in particular to the game Spacegun. The lightgun hardware in these
-two is identical. The eerom and the calibration process also look very much
-alike.
+system, in particular the game Spacegun. The lightgun hardware in these
+two (as well as the eerom and calibration process) looks identical.
 
-Like Spacegun, this game has 4 separate layers of graphics - one 64x64
-tiled scrolling background plane of 8x8 tiles, a similar foreground plane,
-a sprite plane [with varying properties], and a text plane with character
-definitions held in ram.
+The game has 4 separate layers of graphics - one 64x64 tiled scrolling
+background plane of 8x8 tiles, a similar foreground plane, a sprite plane,
+and a text plane with character definitions held in ram.
 
 The sprites are 16x8 tiles aggregated through a spritemap rom into 64x64
-sprites - identical to Spacegun.
+zoomable sprites.
 
-The big difference is that Operation Thunderbolt only uses a *single* 68000
-CPU, whereas Spacegun has twin 68K CPUs. Operation Thunderbolt has a Z80
-taking over sound duties, which Spacegun doesn't.
-
-Commands are written to the Z80 by the 68000 (the same as Taito F2 games).
+The main difference is that Operation Thunderbolt uses only a single 68000
+CPU, whereas Spacegun has twin 68Ks. (Operation Thunderbolt has a Z80
+taking over sound duties, which Spacegun doesn't.)
 
 
 TODO
@@ -36,10 +32,17 @@ TODO
 
 Light gun interrupt timing is arbitrary.
 
-TC0100SCN problem: text vs. bg0/1 offsets seem wrong: first level
-wants bg layers 4 further right than usual. Some cut screens want
-them 4 further left. This may be a flaw in assumptions made in
-vidhrdw\taitoic.c, or related to game being ORIENTATION_FLIP_X ?
+Saved states invariably freeze.
+
+TC0100SCN problem: text vs. bg0/1 offsets are wrong: first level
+wants bg0 4 further right. Cut screens (all?) want bg0 4 pixels
+further left. But the bg0 x scroll value is zero in both cases!
+(and the code setting it is a CLR, so there's no doubt it's meant
+to be).
+
+There are no set bits in the TC0100SCN ctrl regs which might be
+causing this. So I'm mystified. (Maybe it's related to game being
+ORIENTATION_FLIP_X ??)
 
 DIPs
 
@@ -47,6 +50,7 @@ DIPs
 ***************************************************************************/
 
 #include "driver.h"
+#include "state.h"
 #include "cpu/m68000/m68000.h"
 #include "machine/eeprom.h"
 #include "vidhrdw/generic.h"
@@ -137,7 +141,7 @@ static WRITE16_HANDLER( eeprom_w )
 	EEPROM_set_cs_line((data & 0x10) ? CLEAR_LINE : ASSERT_LINE);
 
 #if 0
-	logerror("CPU #1 (2nd 68000) PC %06x: warning - write eeprom, data %04x\n",cpu_get_pc(),data);
+	logerror("CPU #0 PC %06x: warning - write eeprom, data %04x\n",cpu_get_pc(),data);
 #endif
 }
 
@@ -197,11 +201,8 @@ static WRITE16_HANDLER( othunder_lightgun_w )
 {
 	/* Each write invites a new lightgun interrupt as soon as the
 	   hardware has got the next coordinate ready. We set a token
-	   delay of 10000 cycles; our "lightgun" coords are always ready
-	   but we don't want CPUB to have an int5 before int4 is over (?).
-
-	   Four lightgun interrupts happen before the collected coords
-	   are moved to shared ram where CPUA can use them. */
+	   delay of 10000 cycles, small enough so they can all be
+	   collected inside one frame. */
 
 	timer_set(TIME_IN_CYCLES(10000,0),0, othunder_gun_interrupt);
 }
@@ -211,15 +212,17 @@ static WRITE16_HANDLER( othunder_lightgun_w )
 			SOUND
 *****************************************/
 
+static int banknum = -1;
+
+static void reset_sound_region(void)
+{
+	cpu_setbank( 10, memory_region(REGION_CPU2) + (banknum * 0x4000) + 0x10000 );
+}
+
 static WRITE_HANDLER( bankswitch_w )
 {
-	unsigned char *RAM = memory_region(REGION_CPU2);
-	int banknum = (data - 1) & 7;
-
-#ifdef MAME_DEBUG
-	if (banknum>3) logerror("CPU#1 (Z80) switch to ROM bank %06x: should only happen if Z80 prg rom is 128K!\n",banknum);
-#endif
-	cpu_setbank (10, &RAM [0x10000 + (banknum * 0x4000)]);
+	banknum = (data - 1) & 7;
+	reset_sound_region();
 }
 
 WRITE16_HANDLER( othunder_sound_w )
@@ -228,16 +231,6 @@ WRITE16_HANDLER( othunder_sound_w )
 		taitosound_port_w (0, data & 0xff);
 	else if (offset == 1)
 		taitosound_comm_w (0, data & 0xff);
-
-#ifdef MAME_DEBUG
-	if (data & 0xff00)
-	{
-		char buf[80];
-
-		sprintf(buf,"othunder_sound_w to high byte: %04x",data);
-		usrintf_showmessage(buf);
-	}
-#endif
 }
 
 READ16_HANDLER( othunder_sound_r )
@@ -400,7 +393,7 @@ INPUT_PORTS_START( othunder )
 	PORT_DIPSETTING(    0x00, "English" )
 
 	PORT_START	/* Fake DSW */
-	PORT_BITX(    0x01, 0x00, IPT_DIPSWITCH_NAME, "Show gun target", KEYCODE_F1, IP_JOY_NONE )
+	PORT_BITX(    0x01, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Show gun target", KEYCODE_F1, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Yes ) )
 
@@ -475,7 +468,7 @@ INPUT_PORTS_START( othundu )
 	PORT_DIPSETTING(    0x00, "English" )
 
 	PORT_START	/* Fake DSW */
-	PORT_BITX(    0x01, 0x00, IPT_DIPSWITCH_NAME, "Show gun target", KEYCODE_F1, IP_JOY_NONE )
+	PORT_BITX(    0x01, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Show gun target", KEYCODE_F1, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Yes ) )
 
@@ -613,7 +606,7 @@ static struct MachineDriver machine_driver_othunder =
 ***************************************************************************/
 
 ROM_START( othunder )
-	ROM_REGION( 0x80000, REGION_CPU1, 0 )	/* 512K for 68000 code (CPU A) */
+	ROM_REGION( 0x80000, REGION_CPU1, 0 )	/* 512K for 68000 code */
 	ROM_LOAD16_BYTE( "b67-20",    0x00000, 0x20000, 0x21439ea2 )
 	ROM_LOAD16_BYTE( "b67-23",    0x00001, 0x20000, 0x789e9daa )
 	ROM_LOAD16_BYTE( "b67-14.61", 0x40000, 0x20000, 0x7f3dd724 )
@@ -632,13 +625,13 @@ ROM_START( othunder )
 	ROM_LOAD32_BYTE( "b67-03", 0x00002, 0x80000, 0xbc9019ed )
 	ROM_LOAD32_BYTE( "b67-04", 0x00003, 0x80000, 0x2af4c8af )
 
-	ROM_REGION( 0x80000, REGION_USER1, 0 )
+	ROM_REGION16_LE( 0x80000, REGION_USER1, 0 )
 	ROM_LOAD16_WORD( "b67-05", 0x00000, 0x80000, 0x9593e42b )	/* STY, index used to create 64x64 sprites on the fly */
 
 	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* ADPCM samples */
 	ROM_LOAD( "b67-08", 0x00000, 0x80000, 0x458f41fb )
 
-	ROM_REGION( 0x80000, REGION_SOUND2, 0 )	/* delta-t samples */
+	ROM_REGION( 0x80000, REGION_SOUND2, 0 )	/* Delta-T samples */
 	ROM_LOAD( "b67-07", 0x00000, 0x80000, 0x4f834357 )
 
 	ROM_REGION( 0x10000, REGION_USER2, 0 )
@@ -649,7 +642,7 @@ ROM_START( othunder )
 ROM_END
 
 ROM_START( othundu )
-	ROM_REGION( 0x80000, REGION_CPU1, 0 )	/* 512K for 68000 code (CPU A) */
+	ROM_REGION( 0x80000, REGION_CPU1, 0 )	/* 512K for 68000 code */
 	ROM_LOAD16_BYTE( "b67-20-1.63", 0x00000, 0x20000, 0x851a453b )
 	ROM_LOAD16_BYTE( "b67-22-1.64", 0x00001, 0x20000, 0x19480dc0 )
 	ROM_LOAD16_BYTE( "b67-14.61",   0x40000, 0x20000, 0x7f3dd724 )
@@ -668,19 +661,24 @@ ROM_START( othundu )
 	ROM_LOAD32_BYTE( "b67-03", 0x00002, 0x80000, 0xbc9019ed )
 	ROM_LOAD32_BYTE( "b67-04", 0x00003, 0x80000, 0x2af4c8af )
 
-	ROM_REGION( 0x80000, REGION_USER1, 0 )
+	ROM_REGION16_LE( 0x80000, REGION_USER1, 0 )
 	ROM_LOAD16_WORD( "b67-05", 0x00000, 0x80000, 0x9593e42b )	/* STY, index used to create 64x64 sprites on the fly */
 
 	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* ADPCM samples */
 	ROM_LOAD( "b67-08", 0x00000, 0x80000, 0x458f41fb )
 
-	ROM_REGION( 0x80000, REGION_SOUND2, 0 )	/* delta-t samples */
+	ROM_REGION( 0x80000, REGION_SOUND2, 0 )	/* Delta-T samples */
 	ROM_LOAD( "b67-07", 0x00000, 0x80000, 0x4f834357 )
 ROM_END
 
 
+void init_othunder(void)
+{
+	state_save_register_int("sound1", 0, "sound region", &banknum);
+	state_save_register_func_postload(reset_sound_region);
+}
 
 
-GAME( 1988, othunder, 0,        othunder, othunder, 0,        ORIENTATION_FLIP_X, "Taito Corporation Japan", "Operation Thunderbolt (World)" )
-GAME( 1988, othundu,  othunder, othunder, othundu,  0,        ORIENTATION_FLIP_X, "Taito America Corporation", "Operation Thunderbolt (US)" )
+GAME( 1988, othunder, 0,        othunder, othunder, othunder, ORIENTATION_FLIP_X, "Taito Corporation Japan", "Operation Thunderbolt (World)" )
+GAME( 1988, othundu,  othunder, othunder, othundu,  othunder, ORIENTATION_FLIP_X, "Taito America Corporation", "Operation Thunderbolt (US)" )
 

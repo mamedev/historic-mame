@@ -1,5 +1,5 @@
 #include "driver.h"
-#include "strings.h"
+#include <string.h>
 #include "audit.h"
 
 

@@ -357,7 +357,6 @@ static struct VLM5030interface vlm5030_interface =
 	25,         /* volume */
 	REGION_SOUND1,/* memory region of speech rom */
 	0x10000,    /* memory size 64Kbyte * 2 bank */
-	0           /* VCU pin level (default) */
 };
 
 static const struct MachineDriver machine_driver_ddribble =

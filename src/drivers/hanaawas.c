@@ -47,7 +47,7 @@ static READ_HANDLER( hanaawas_input_port_0_r )
 	/* as to which player's jeys are read are probably selected via port 0, but
 	   it's not obvious to me how */
 
-	buttons = input_port_2_r(0);
+	buttons = readinputport(2);
 
 	/* map button pressed into 1-10 range */
 

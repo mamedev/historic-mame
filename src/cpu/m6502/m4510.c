@@ -22,7 +22,7 @@
  *
  *****************************************************************************/
 
-/* 
+/*
    c65 memory management
    (reset)
    c64 ff
@@ -37,7 +37,7 @@ b   (c65 dosmode?)
    c65 65 (interface, full colorram)
    a:00 x:11 y:80 z:31
    c64 ff
-   
+
 c   (?)
    c64 07
    a:00 x:00 y:00 z:00
@@ -56,7 +56,7 @@ c   (?)
    c65 2f:0 !
    c64 ff
    a:00 x:00 y:00 z:00
-   
+
 internal 8 mb to 64k switching (jmp routine in rom)
 ( seams to be incomplete, in chapter 1 1megabyte memory mapper )
          a  x  y  z
@@ -79,7 +79,7 @@ a: ?0?0 0000
 x:      xxxx address bits a19 .. a16 for memory accesses with a15 0 ?
    0000      c64 mode
    0001      dosmode
-   1110      c65 mode, plain ram access 
+   1110      c65 mode, plain ram access
              (0000-1fff contains the switching code, so not switchable!?)
    1000      monitor
    1         map 6000-7fff
@@ -133,10 +133,10 @@ extern void m4510_runtime_loader_init(void)
 /* Layout of the registers in the debugger */
 static UINT8 m4510_reg_layout[] = {
 	M4510_A,M4510_X,M4510_Y,M4510_Z,M4510_S,M4510_PC,
-	M4510_MEM_LOW, 
+	M4510_MEM_LOW,
 	-1,
 	M4510_EA,M4510_ZP,M4510_NMI_STATE,M4510_IRQ_STATE, M4510_B,
-	M4510_P, 
+	M4510_P,
 	M4510_MEM_HIGH,
 	0
 };
@@ -168,7 +168,7 @@ typedef struct {
 	UINT8	nmi_state;
 	UINT8	irq_state;
 	UINT16  low, high;
-	UINT32	mem[8];	
+	UINT32	mem[8];
 	int 	(*irq_callback)(int irqline);	/* IRQ callback */
 }	m4510_Regs;
 
@@ -308,11 +308,11 @@ void m4510_set_reg (int regnum, unsigned val)
 		case M4510_PC: m4510.pc.w.l = val; break;
 		case M4510_S: m4510.sp.w.l = val; break;
 		case M4510_P: m4510.p = val; break;
-		case M4510_MEM_LOW: 
+		case M4510_MEM_LOW:
 			m4510.low = val;
 			// change the memory registers
 			break;
-		case M4510_MEM_HIGH: 
+		case M4510_MEM_HIGH:
 			m4510.high = val;
 			// change the memory registers
 			break;
@@ -437,46 +437,6 @@ void m4510_set_irq_callback(int (*callback)(int))
 	m4510.irq_callback = callback;
 }
 
-void m4510_state_save(void *file)
-{
-	int cpu = cpu_getactivecpu();
-	/* insn is set at restore since it's a pointer */
-	state_save_UINT16(file,"m4510",cpu,"PC",&m4510.pc.w.l,2);
-	state_save_UINT16(file,"m4510",cpu,"SP",&m4510.sp.w.l,2);
-	state_save_UINT8(file,"m4510",cpu,"P",&m4510.p,1);
-	state_save_UINT8(file,"m4510",cpu,"A",&m4510.a,1);
-	state_save_UINT8(file,"m4510",cpu,"X",&m4510.x,1);
-	state_save_UINT8(file,"m4510",cpu,"Y",&m4510.y,1);
-	state_save_UINT8(file,"m4510",cpu,"Z",&m4510.z,1);
-	state_save_UINT8(file,"m4510",cpu,"B",&m4510.zp.b.h,1);
-	state_save_UINT8(file,"m4510",cpu,"PENDING",&m4510.pending_irq,1);
-	state_save_UINT8(file,"m4510",cpu,"AFTER_CLI",&m4510.after_cli,1);
-	state_save_UINT8(file,"m4510",cpu,"NMI_STATE",&m4510.nmi_state,1);
-	state_save_UINT8(file,"m4510",cpu,"IRQ_STATE",&m4510.irq_state,1);
-	state_save_UINT16(file,"m4510",cpu,"LO",&m4510.low,2);
-	state_save_UINT16(file,"m4510",cpu,"HI",&m4510.high,2);
-}
-
-void m4510_state_load(void *file)
-{
-	int cpu = cpu_getactivecpu();
-	m4510.insn = insn4510;
-	state_load_UINT16(file,"m4510",cpu,"PC",&m4510.pc.w.l,2);
-	state_load_UINT16(file,"m4510",cpu,"SP",&m4510.sp.w.l,2);
-	state_load_UINT8(file,"m4510",cpu,"P",&m4510.p,1);
-	state_load_UINT8(file,"m4510",cpu,"A",&m4510.a,1);
-	state_load_UINT8(file,"m4510",cpu,"X",&m4510.x,1);
-	state_load_UINT8(file,"m4510",cpu,"Y",&m4510.y,1);
-	state_load_UINT8(file,"m4510",cpu,"Z",&m4510.z,1);
-	state_load_UINT8(file,"m4510",cpu,"B",&m4510.zp.b.h,1);
-	state_load_UINT8(file,"m4510",cpu,"PENDING",&m4510.pending_irq,1);
-	state_load_UINT8(file,"m4510",cpu,"AFTER_CLI",&m4510.after_cli,1);
-	state_load_UINT8(file,"m4510",cpu,"NMI_STATE",&m4510.nmi_state,1);
-	state_load_UINT8(file,"m4510",cpu,"IRQ_STATE",&m4510.irq_state,1);
-	state_load_UINT16(file,"m4510",cpu,"LO",&m4510.low,2);
-	state_load_UINT16(file,"m4510",cpu,"HI",&m4510.high,2);
-}
-
 /****************************************************************************
  * Return a formatted string for a register
  ****************************************************************************/
@@ -542,5 +502,7 @@ unsigned m4510_dasm(char *buffer, unsigned pc)
 #endif
 }
 
+
+extern void m4510_init(void){ return; }
 
 

@@ -279,43 +279,6 @@ void hotchase_vh_stop(void);
 
 
 
-/* This macro is used to decipher the gfx ROMs */
-
-#define BITSWAP(_from,_len,_14,_13,_12,_11,_10,_f,_e,_d,_c,_b,_a,_9,_8,_7,_6,_5,_4,_3,_2,_1,_0)\
-{	unsigned char *buffer; \
-	unsigned char *src = _from; \
-	if ((buffer = malloc(_len))) \
-	{ \
-		for (i = 0 ; i <= _len ; i++) \
-			buffer[i] = \
-			 src[(((i & (1 << _0))?(1<<0x0):0) + \
-				 ((i & (1 << _1))?(1<<0x1):0) + \
-				 ((i & (1 << _2))?(1<<0x2):0) + \
-				 ((i & (1 << _3))?(1<<0x3):0) + \
-				 ((i & (1 << _4))?(1<<0x4):0) + \
-				 ((i & (1 << _5))?(1<<0x5):0) + \
-				 ((i & (1 << _6))?(1<<0x6):0) + \
-				 ((i & (1 << _7))?(1<<0x7):0) + \
-				 ((i & (1 << _8))?(1<<0x8):0) + \
-				 ((i & (1 << _9))?(1<<0x9):0) + \
-				 ((i & (1 << _a))?(1<<0xa):0) + \
-				 ((i & (1 << _b))?(1<<0xb):0) + \
-				 ((i & (1 << _c))?(1<<0xc):0) + \
-				 ((i & (1 << _d))?(1<<0xd):0) + \
-				 ((i & (1 << _e))?(1<<0xe):0) + \
-				 ((i & (1 << _f))?(1<<0xf):0) + \
-				 ((i & (1 << _10))?(1<<0x10):0) + \
-				 ((i & (1 << _11))?(1<<0x11):0) + \
-				 ((i & (1 << _12))?(1<<0x12):0) + \
-				 ((i & (1 << _13))?(1<<0x13):0) + \
-				 ((i & (1 << _14))?(1<<0x14):0))]; \
-		memcpy(src, buffer, _len); \
-		free(buffer); \
-	} \
-}
-
-
-
 /***************************************************************************
 							Common routines
 ***************************************************************************/
@@ -1498,6 +1461,24 @@ void wecleman_unpack_sprites(void)
 
 
 
+static void bitswap(data8_t *src,size_t len,int _14,int _13,int _12,int _11,int _10,int _f,int _e,int _d,int _c,int _b,int _a,int _9,int _8,int _7,int _6,int _5,int _4,int _3,int _2,int _1,int _0)
+{
+	data8_t *buffer = malloc(len);
+
+	if (buffer)
+	{
+		int i;
+
+		memcpy(buffer,src,len);
+		for (i = 0;i < len;i++)
+		{
+			src[i] =
+				buffer[BITSWAP24(i,23,22,21,_14,_13,_12,_11,_10,_f,_e,_d,_c,_b,_a,_9,_8,_7,_6,_5,_4,_3,_2,_1,_0)];
+		}
+		free(buffer);
+	}
+}
+
 /* Unpack sprites data and do some patching */
 void init_wecleman(void)
 {
@@ -1524,8 +1505,8 @@ void init_wecleman(void)
 		RAM[i] = x;
 	}
 
-	BITSWAP(memory_region(REGION_GFX1), memory_region_length(REGION_GFX1),
-			0,1,20,19,18,17,14,9,16,6,4,7,8,15,10,11,13,5,12,3,2)
+	bitswap(memory_region(REGION_GFX1), memory_region_length(REGION_GFX1),
+			0,1,20,19,18,17,14,9,16,6,4,7,8,15,10,11,13,5,12,3,2);
 
 	/* Now we can unpack each nibble of the sprites into a pixel (one byte) */
 	wecleman_unpack_sprites();
@@ -1533,13 +1514,13 @@ void init_wecleman(void)
 
 
 	/* Bg & Fg & Txt */
-	BITSWAP(memory_region(REGION_GFX2), memory_region_length(REGION_GFX2),
+	bitswap(memory_region(REGION_GFX2), memory_region_length(REGION_GFX2),
 			20,19,18,17,16,15,12,7,14,4,2,5,6,13,8,9,11,3,10,1,0);
 
 
 
 	/* Road */
-	BITSWAP(memory_region(REGION_GFX3), memory_region_length(REGION_GFX3),
+	bitswap(memory_region(REGION_GFX3), memory_region_length(REGION_GFX3),
 			20,19,18,17,16,15,14,7,12,4,2,5,6,13,8,9,11,3,10,1,0);
 }
 

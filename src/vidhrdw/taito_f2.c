@@ -1,4 +1,5 @@
 #include "driver.h"
+#include "state.h"
 #include "vidhrdw/generic.h"
 #include "vidhrdw/taitoic.h"
 
@@ -55,8 +56,8 @@ int f2_spriteext = 0;
 static int f2_hide_pixels;
 
 
-static int spritebank[8];
-static int koshien_spritebank;
+static UINT16 spritebank[8];
+static UINT16 koshien_spritebank;
 
 /* remember flip status over frames because driftout can fail to set it */
 static int sprites_flipscreen = 0;
@@ -66,7 +67,7 @@ static int f2_pivot_ydisp = 0;
 
 static int f2_tilemap_xoffs = 0;   /* Needed in TC0480SCP games: Deadconx, Metalb, Footchmp */
 static int f2_tilemap_yoffs = 0;
-static int f2_text_xkludge = 0;
+static int f2_text_xoffs = 0;
 
 
 static int has_two_TC0100SCN(void)
@@ -197,7 +198,7 @@ int taitof2_core_vh_start (void)
 	if (has_TC0480SCP())	/* it's a tc0480scp game */
 	{
 		if (TC0480SCP_vh_start(TC0480SCP_GFX_NUM,f2_hide_pixels,f2_tilemap_xoffs,
-		   f2_tilemap_yoffs,f2_text_xkludge,0,-1,0,f2_tilemap_col_base))
+		   f2_tilemap_yoffs,f2_text_xoffs,0,-1,0,f2_tilemap_col_base))
 			return 1;
 	}
 	else	/* it's a tc0100scn game */
@@ -218,6 +219,8 @@ int taitof2_core_vh_start (void)
 		if (TC0430GRW_vh_start(TC0430GRW_GFX_NUM))
 			return 1;
 
+	TC0360PRI_vh_start();	/* TODO: we should check to see if the game has one */
+
 	{
 		int i;
 
@@ -228,11 +231,20 @@ int taitof2_core_vh_start (void)
 	sprites_disabled = 1;
 	sprites_active_area = 0;
 
+	state_save_register_int   ("main1", 0, "control", &f2_hide_pixels);
+	state_save_register_int   ("main2", 0, "control", &f2_spriteext);
+	state_save_register_UINT16("main3", 0, "control", spritebank, 8);
+	state_save_register_UINT16("main4", 0, "control", &koshien_spritebank, 1);
+	state_save_register_int   ("main5", 0, "control", &sprites_disabled);
+	state_save_register_int   ("main6", 0, "control", &sprites_active_area);
+	state_save_register_UINT16("main7", 0, "memory", spriteram_delayed, spriteram_size/2);
+	state_save_register_UINT16("main8", 0, "memory", spriteram_buffered, spriteram_size/2);
+
 	return 0;
 }
 
 
-//DG: some of these can be merged...?
+// Some of these can be merged... //
 
 int taitof2_default_vh_start (void)
 {
@@ -331,7 +343,7 @@ int taitof2_footchmp_vh_start (void)
 	f2_hide_pixels = 3;
 	f2_tilemap_xoffs = 0x1d;
 	f2_tilemap_yoffs = 0x08;
-	f2_text_xkludge = -1;
+	f2_text_xoffs = -1;
 	f2_tilemap_col_base = 0;
 	f2_spriteext = 0;
 	return (taitof2_core_vh_start());
@@ -342,7 +354,7 @@ int taitof2_hthero_vh_start (void)
 	f2_hide_pixels = 3;
 	f2_tilemap_xoffs = 0x33;   // needs different kludges from Footchmp
 	f2_tilemap_yoffs = - 0x04;
-	f2_text_xkludge = -1;
+	f2_text_xoffs = -1;
 	f2_tilemap_col_base = 0;
 	f2_spriteext = 0;
 	return (taitof2_core_vh_start());
@@ -353,7 +365,7 @@ int taitof2_deadconx_vh_start (void)
 	f2_hide_pixels = 3;
 	f2_tilemap_xoffs = 0x1e;
 	f2_tilemap_yoffs = 0x08;
-	f2_text_xkludge = -1;
+	f2_text_xoffs = -1;
 	f2_tilemap_col_base = 0;
 	f2_spriteext = 0;
 	return (taitof2_core_vh_start());
@@ -364,7 +376,7 @@ int taitof2_deadconj_vh_start (void)
 	f2_hide_pixels = 3;
 	f2_tilemap_xoffs = 0x34;
 	f2_tilemap_yoffs = - 0x05;
-	f2_text_xkludge = -1;
+	f2_text_xoffs = -1;
 	f2_tilemap_col_base = 0;
 	f2_spriteext = 0;
 	return (taitof2_core_vh_start());
@@ -375,7 +387,7 @@ int taitof2_metalb_vh_start (void)
 	f2_hide_pixels = 3;
 	f2_tilemap_xoffs = 0x32;
 	f2_tilemap_yoffs = - 0x04;
-	f2_text_xkludge = 1;	/* text layer is offset from the norm */
+	f2_text_xoffs = 1;	/* text layer is offset from the norm */
 	f2_tilemap_col_base = 256;   /* uses separate palette area for tilemaps */
 	f2_spriteext = 0;
 	return (taitof2_core_vh_start());
@@ -521,7 +533,8 @@ void taitof2_update_palette(void)
 	int i, area;
 	int off,extoffs,code,color;
 	int spritecont,big_sprite=0,last_continuation_tile=0;
-	unsigned short palette_map[256];
+	UINT16 tile_modulo = Machine->gfx[0]->total_elements;
+	UINT16 palette_map[256];
 
 	memset (palette_map, 0, sizeof (palette_map));
 
@@ -610,7 +623,8 @@ void taitof2_update_palette(void)
 			palette_map[color+3] |= 0xffff;
 		}
 		else
-			palette_map[color] |= Machine->gfx[0]->pen_usage[code];
+			/* prevent sporadic page faults by using a tile modulo */
+			palette_map[color] |= Machine->gfx[0]->pen_usage[code % tile_modulo];
 	}
 
 
@@ -1195,6 +1209,14 @@ void taitof2_pri_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 		draw_sprites(bitmap,primasks);
 	}
+
+#if 0
+	{
+		char buf[100];
+		sprintf(buf,"spritebanks: %04x %04x %04x %04x %04x %04x",spritebank[2],spritebank[3],spritebank[4],spritebank[5],spritebank[6],spritebank[7]);
+		usrintf_showmessage(buf);
+	}
+#endif
 }
 
 
@@ -1437,50 +1459,6 @@ void metalb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	UINT8 spritepri[4];
 	UINT16 priority;
 
-/*
-Layer toggles to help get the layer offsets in Metalb correct.
-Some are still suspect! [see taitoic.c for more about this]
-*/
-
-#ifdef MAME_DEBUG
-	static int dislayer[4];
-	char buf[80];
-#endif
-
-#ifdef MAME_DEBUG
-	if (keyboard_pressed (KEYCODE_Z))
-	{
-		while (keyboard_pressed (KEYCODE_Z) != 0) {};
-		dislayer[0] ^= 1;
-		sprintf(buf,"taitof2_bg0: %01x",dislayer[0]);
-		usrintf_showmessage(buf);
-	}
-
-	if (keyboard_pressed (KEYCODE_X))
-	{
-		while (keyboard_pressed (KEYCODE_X) != 0) {};
-		dislayer[1] ^= 1;
-		sprintf(buf,"taitof2_bg1: %01x",dislayer[1]);
-		usrintf_showmessage(buf);
-	}
-
-	if (keyboard_pressed (KEYCODE_C))
-	{
-		while (keyboard_pressed (KEYCODE_C) != 0) {};
-		dislayer[2] ^= 1;
-			sprintf(buf,"taitof2_bg2: %01x",dislayer[2]);
-		usrintf_showmessage(buf);
-	}
-
-	if (keyboard_pressed (KEYCODE_V))
-	{
-		while (keyboard_pressed (KEYCODE_V) != 0) {};
-		dislayer[3] ^= 1;
-		sprintf(buf,"taitof2_bg3: %01x",dislayer[3]);
-		usrintf_showmessage(buf);
-	}
-#endif
-
 	taitof2_handle_sprite_buffering();
 
 	TC0480SCP_tilemap_update();
@@ -1521,25 +1499,10 @@ Some are still suspect! [see taitoic.c for more about this]
 	fillbitmap(priority_bitmap,0,NULL);
 	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 
-#ifdef MAME_DEBUG
-	if (dislayer[layer[0]]==0)
-#endif
-		TC0480SCP_tilemap_draw(bitmap,layer[0],0,1);
-
-#ifdef MAME_DEBUG
-	if (dislayer[layer[1]]==0)
-#endif
-		TC0480SCP_tilemap_draw(bitmap,layer[1],0,2);
-
-#ifdef MAME_DEBUG
-	if (dislayer[layer[2]]==0)
-#endif
-		TC0480SCP_tilemap_draw(bitmap,layer[2],0,4);
-
-#ifdef MAME_DEBUG
-	if (dislayer[layer[3]]==0)
-#endif
-		TC0480SCP_tilemap_draw(bitmap,layer[3],0,8);
+	TC0480SCP_tilemap_draw(bitmap,layer[0],0,1);
+	TC0480SCP_tilemap_draw(bitmap,layer[1],0,2);
+	TC0480SCP_tilemap_draw(bitmap,layer[2],0,4);
+	TC0480SCP_tilemap_draw(bitmap,layer[3],0,8);
 
 	{
 		int primasks[4] = {0,0,0,0};

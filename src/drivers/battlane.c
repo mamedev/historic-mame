@@ -143,10 +143,9 @@ MEMORY_END
 int battlane_cpu1_interrupt(void)
 {
 #ifdef MAME_DEBUG
-	if (keyboard_pressed(KEYCODE_F))
+	if (keyboard_pressed_memory(KEYCODE_F))
 	{
 		FILE *fp;
-		while (keyboard_pressed(KEYCODE_F)) ;
 		fp=fopen("RAM.DMP", "w+b");
 		if (fp)
 		{

@@ -51,7 +51,7 @@ static READ_HANDLER( jailbrek_speech_r ) {
 }
 
 static WRITE_HANDLER( jailbrek_speech_w ) {
-	VLM5030_VCU( data & 1 );
+	/* bit 0 could be latch direction like in yiear */
 	VLM5030_ST( ( data >> 1 ) & 1 );
 	VLM5030_RST( ( data >> 2 ) & 1 );
 }
@@ -249,7 +249,6 @@ static struct VLM5030interface vlm5030_interface =
 	100,        /* volume       */
 	REGION_SOUND1,	/* memory region of speech rom */
 	0,          /* memory size of speech rom */
-	0           /* VCU pin level (default)     */
 };
 
 static const struct MachineDriver machine_driver_jailbrek =

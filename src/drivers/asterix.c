@@ -175,7 +175,8 @@ static WRITE16_HANDLER( protection_w )
 static MEMORY_READ16_START( readmem )
 	{ 0x000000, 0x0fffff, MRA16_ROM },
 	{ 0x100000, 0x107fff, MRA16_RAM },			// Main RAM.
-	{ 0x180000, 0x180fff, K053245_word_r },		// Sprites
+	{ 0x180000, 0x1807ff, K053245_word_r },		// Sprites
+	{ 0x180800, 0x180fff, MRA16_RAM },
 	{ 0x200000, 0x20000f, K053244_word_r },
 	{ 0x280000, 0x280fff, MRA16_RAM },
 	{ 0x300000, 0x30001f, K053244_lsb_r },
@@ -190,7 +191,8 @@ MEMORY_END
 static MEMORY_WRITE16_START( writemem )
 	{ 0x000000, 0x0fffff, MWA16_ROM },
 	{ 0x100000, 0x107fff, MWA16_RAM },
-	{ 0x180000, 0x180fff, K053245_word_w },
+	{ 0x180000, 0x1807ff, K053245_word_w },
+	{ 0x180800, 0x180fff, MWA16_RAM },	// extra RAM, or mirror for the above?
 	{ 0x200000, 0x20000f, K053244_word_w },
 	{ 0x280000, 0x280fff, paletteram16_xBBBBBGGGGGRRRRR_word_w, &paletteram16 },
 	{ 0x300000, 0x30001f, K053244_lsb_w },

@@ -526,7 +526,7 @@ ROM_START( vball )
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* region#2: music CPU, 64kb */
 	ROM_LOAD( "vball.47",  0x00000, 0x8000,  0x10ca79ad )
 
-	/* These are from the bootleg */
+	/* These are from the bootleg; the original doesn't seem to have them?? */
 	ROM_REGION(0x80000, REGION_GFX1, ROMREGION_DISPOSE )	 /* fg tiles */
 	ROM_LOAD( "vball13.bin",  0x00000, 0x10000, 0xf26df8e1 ) /* 0,1,2,3 */
 	ROM_LOAD( "vball14.bin",  0x10000, 0x10000, 0xc9798d0e ) /* 0,1,2,3 */
@@ -536,11 +536,6 @@ ROM_START( vball )
 	ROM_LOAD( "vball10.bin",  0x50000, 0x10000, 0x6cc676ee ) /* 0,1,2,3 */
 	ROM_LOAD( "vball11.bin",  0x60000, 0x10000, 0x4754b303 ) /* 0,1,2,3 */
 	ROM_LOAD( "vball12.bin",  0x70000, 0x10000, 0x21294a84 ) /* 0,1,2,3 */
-	/* This is how I'd expect they were originally */
-//	ROM_LOAD( "bgdata1",	  0x00000, 0x20000, 0x0 )
-//	ROM_LOAD( "bgdata2",	  0x20000, 0x20000, 0x0 )
-//	ROM_LOAD( "bgdata3",	  0x40000, 0x20000, 0x0 )
-//	ROM_LOAD( "bgdata4",	  0x60000, 0x20000, 0x0 )
 
 	ROM_REGION(0x40000, REGION_GFX2, ROMREGION_DISPOSE )	 /* sprites */
 	ROM_LOAD( "vball.35",  0x00000, 0x20000, 0x877826d8 ) /* 0,1,2,3 */

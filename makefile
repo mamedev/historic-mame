@@ -2,7 +2,7 @@
 TARGET = mame
 # TARGET = mess
 # TARGET = neomame
-# TARGET = cpsmame
+# TARGET = cpmame
 # example for a tiny compile
 # TARGET = tiny
 
@@ -12,6 +12,9 @@ TARGET = mame
 # uncomment next line to include the symbols for symify
 # SYMBOLS = 1
 
+# uncomment next line to generate a link map for exception handling in win32
+# MAP = 1
+
 # uncomment next line to use Assembler 68000 engine
 X86_ASM_68000 = 1
 
@@ -19,8 +22,8 @@ X86_ASM_68000 = 1
 # X86_ASM_68020 = 1
 
 # set this the operating system you're building for
-# (actually you'll probably need your own main makefile anyways)
 OS = msdos
+# OS = win32
 
 # extension for executables
 EXE = .exe
@@ -47,7 +50,7 @@ NAME = $(TARGET)k6
 ARCH = -march=k6
 else
 ifdef I686
-NAME = $(TARGET)ppro
+NAME = $(TARGET)pp
 ARCH = -march=pentiumpro
 else
 NAME = $(TARGET)
@@ -67,15 +70,14 @@ EMULATOR = $(NAME)$(EXE)
 DEFS = -DX86_ASM -DLSB_FIRST -DINLINE="static __inline__" -Dasm=__asm__
 
 ifdef SYMBOLS
-CFLAGS = -Isrc -Isrc/msdos -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000 \
+CFLAGS = -Isrc -Isrc/$(OS) -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000 \
 	-O0 -pedantic -Wall -Werror -Wno-unused -g
 else
-CFLAGS = -Isrc -Isrc/msdos -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000 \
+CFLAGS = -Isrc -Isrc/$(OS) -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000 \
 	-DNDEBUG \
 	$(ARCH) -O3 -fomit-frame-pointer -fstrict-aliasing \
 	-Werror -Wall -Wno-sign-compare -Wunused \
 	-Wpointer-arith -Wbad-function-cast -Wcast-align -Waggregate-return \
-	-pedantic \
 	-Wshadow \
 	-Wstrict-prototypes
 #	-W had to remove because of the "missing initializer" warning
@@ -88,6 +90,8 @@ CFLAGS = -Isrc -Isrc/msdos -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000 \
 #	-Wmissing-declarations
 endif
 
+CFLAGSPEDANTIC = $(CFLAGS) -pedantic
+
 ifdef SYMBOLS
 LDFLAGS =
 else
@@ -95,23 +99,16 @@ else
 LDFLAGS = -s
 endif
 
-LIBS = -lalleg -laudio -lz
-
-# check that the required libraries are available
-ifeq ($(wildcard $(DJDIR)/lib/liballeg.a),)
-noallegro:
-	@echo Missing Allegro library! Get it from http://www.talula.demon.co.uk/allegro/
-endif
-ifeq ($(wildcard $(DJDIR)/lib/libaudio.a),)
-noseal:
-	@echo Missing SEAL library! Get it from http://www.egerter.com/
-endif
-ifeq ($(wildcard $(DJDIR)/lib/libz.a),)
-nozlib:
-	@echo Missing zlib library! Get it from http://www.cdrom.com/pub/infozip/zlib/
+ifdef MAP
+MAPFLAGS = -Wl,-M >$(NAME).map
+else
+MAPFLAGS =
 endif
 
-OBJDIRS = obj $(OBJ) $(OBJ)/cpu $(OBJ)/sound $(OBJ)/msdos \
+# platform .mak files will want to add to this
+LIBS = -lz
+
+OBJDIRS = obj $(OBJ) $(OBJ)/cpu $(OBJ)/sound $(OBJ)/$(OS) \
 	$(OBJ)/drivers $(OBJ)/machine $(OBJ)/vidhrdw $(OBJ)/sndhrdw
 ifdef MESS
 OBJDIRS += $(OBJ)/mess $(OBJ)/mess/systems $(OBJ)/mess/machine \
@@ -138,11 +135,12 @@ extra:	romcmp$(EXE) $(TOOLS) $(TEXTS)
 # combine the various definitions to one
 CDEFS = $(DEFS) $(COREDEFS) $(CPUDEFS) $(SOUNDDEFS) $(ASMDEFS) $(DBGDEFS)
 
-$(EMULATOR): $(OBJS) $(COREOBJS) $(OSOBJS) $(LIBS) $(DRVLIBS)
+# primary target
+$(EMULATOR): $(OBJS) $(COREOBJS) $(OSOBJS) $(DRVLIBS)
 # always recompile the version string
 	$(CC) $(CDEFS) $(CFLAGS) -c src/version.c -o $(OBJ)/version.o
 	@echo Linking $@...
-	$(LD) $(LDFLAGS) $(OBJS) $(COREOBJS) $(OSOBJS) $(LIBS) $(DRVLIBS) -o $@
+	$(LD) $(LDFLAGS) $(OBJS) $(COREOBJS) $(OSOBJS) $(LIBS) $(DRVLIBS) -o $@ $(MAPFLAGS)
 ifndef DEBUG
 	upx -9 $(EMULATOR)
 endif
@@ -155,17 +153,22 @@ ifdef PERL
 $(OBJ)/cpuintrf.o: src/cpuintrf.c rules.mak
 	$(PERL) src/makelist.pl
 	@echo Compiling $<...
-	$(CC) $(CDEFS) $(CFLAGS) -c $< -o $@
+	$(CC) $(CDEFS) $(CFLAGSPEDANTIC) -c $< -o $@
 endif
+
+# for Windows at least, we can't compile OS-specific code with -pedantic
+$(OBJ)/$(OS)/%.o: src/$(OS)/%.c
+	@echo Compiling $<...
+	$(CC) $(CDEFS) $(CFLAGS) -c $< -o $@
 
 $(OBJ)/%.o: src/%.c
 	@echo Compiling $<...
-	$(CC) $(CDEFS) $(CFLAGS) -c $< -o $@
+	$(CC) $(CDEFS) $(CFLAGSPEDANTIC) -c $< -o $@
 
 # compile generated C files for the 68000 emulator
 $(M68000_GENERATED_OBJS): $(OBJ)/cpu/m68000/m68kmake$(EXE)
 	@echo Compiling $(subst .o,.c,$@)...
-	$(CC) $(CDEFS) $(CFLAGS) -c $*.c -o $@
+	$(CC) $(CDEFS) $(CFLAGSPEDANTIC) -c $*.c -o $@
 
 # additional rule, because m68kcpu.c includes the generated m68kops.h :-/
 $(OBJ)/cpu/m68000/m68kcpu.o: $(OBJ)/cpu/m68000/m68kmake$(EXE)
@@ -173,20 +176,20 @@ $(OBJ)/cpu/m68000/m68kcpu.o: $(OBJ)/cpu/m68000/m68kmake$(EXE)
 # generate C source files for the 68000 emulator
 $(OBJ)/cpu/m68000/m68kmake$(EXE): src/cpu/m68000/m68kmake.c
 	@echo M68K make $<...
-	$(CC) $(CDEFS) $(CFLAGS) -DDOS -o $(OBJ)/cpu/m68000/m68kmake$(EXE) $<
+	$(CC) $(CDEFS) $(CFLAGSPEDANTIC) -DDOS -o $(OBJ)/cpu/m68000/m68kmake$(EXE) $<
 	@echo Generating M68K source files...
 	$(OBJ)/cpu/m68000/m68kmake$(EXE) $(OBJ)/cpu/m68000 src/cpu/m68000/m68k_in.c
 
 # generate asm source files for the 68000/68020 emulators
 $(OBJ)/cpu/m68000/68000.asm:  src/cpu/m68000/make68k.c
 	@echo Compiling $<...
-	$(CC) $(CDEFS) $(CFLAGS) -O0 -DDOS -o $(OBJ)/cpu/m68000/make68k$(EXE) $<
+	$(CC) $(CDEFS) $(CFLAGSPEDANTIC) -O0 -DDOS -o $(OBJ)/cpu/m68000/make68k$(EXE) $<
 	@echo Generating $@...
 	@$(OBJ)/cpu/m68000/make68k$(EXE) $@ $(OBJ)/cpu/m68000/68000tab.asm 00
 
 $(OBJ)/cpu/m68000/68020.asm:  src/cpu/m68000/make68k.c
 	@echo Compiling $<...
-	$(CC) $(CDEFS) $(CFLAGS) -O0 -DDOS -o $(OBJ)/cpu/m68000/make68k$(EXE) $<
+	$(CC) $(CDEFS) $(CFLAGSPEDANTIC) -O0 -DDOS -o $(OBJ)/cpu/m68000/make68k$(EXE) $<
 	@echo Generating $@...
 	@$(OBJ)/cpu/m68000/make68k$(EXE) $@ $(OBJ)/cpu/m68000/68020tab.asm 20
 

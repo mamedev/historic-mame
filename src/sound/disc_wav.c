@@ -29,6 +29,12 @@ struct dss_squarewave_context
 	double trigger;
 };
 
+struct dss_oneshot_context
+{
+	double countdown;
+	double stepsize;
+	int state;
+};
 
 /************************************************************************/
 /*                                                                      */
@@ -272,6 +278,105 @@ int dss_noise_init(struct node_description *node)
 }
 
 int dss_noise_kill(struct node_description *node)
+{
+	free(node->context);
+	node->context=NULL;
+	return 0;
+}
+
+
+/************************************************************************/
+/*                                                                      */
+/* DSS_ONESHOT - Usage of node_description values for one shot pulse    */
+/*                                                                      */
+/* input0    - Enable input value                                       */
+/* input1    - Trigger value                                            */
+/* input2    - Reset value                                              */
+/* input3    - Amplitude value                                          */
+/* input4    - Width of oneshot pulse                                   */
+/* input5    - NOT USED                                                 */
+/*                                                                      */
+/************************************************************************/
+int dss_oneshot_step(struct node_description *node)
+{
+	struct dss_oneshot_context *context;
+	context=(struct dss_oneshot_context*)node->context;
+
+	/* Check state */
+	switch(context->state)
+	{
+		case 0:		/* Waiting for trigger */
+			if(node->input1)
+			{
+				context->state=1;
+				context->countdown=node->input4;
+				node->output=node->input3;
+			}
+		 	node->output=0;
+			break;
+
+		case 1:		/* Triggered */
+			node->output=node->input3;
+			if(node->input1 && node->input2)
+			{
+				// Dont start the countdown if we're still triggering
+				// and we've got a reset signal as well
+			}
+			else
+			{
+				context->countdown-=context->stepsize;
+				if(context->countdown<0.0)
+				{
+					context->countdown=0;
+					node->output=0;
+					context->state=2;
+				}
+			}
+			break;
+
+		case 2:		/* Waiting for reset */
+		default:
+			if(node->input2) context->state=0;
+		 	node->output=0;
+			break;
+	}
+	return 0;
+}
+
+
+int dss_oneshot_reset(struct node_description *node)
+{
+	struct dss_oneshot_context *context=(struct dss_oneshot_context*)node->context;
+	context->countdown=0;
+	context->stepsize=1.0/Machine->sample_rate;
+	context->state=0;
+ 	node->output=0;
+ 	return 0;
+}
+
+int dss_oneshot_init(struct node_description *node)
+{
+	discrete_log("dss_oneshot_init() - Creating node %d.",node->node-NODE_00);
+
+	/* Allocate memory for the context array and the node execution order array */
+	if((node->context=malloc(sizeof(struct dss_oneshot_context)))==NULL)
+	{
+		discrete_log("dss_oneshot_init() - Failed to allocate local context memory.");
+		return 1;
+	}
+	else
+	{
+		/* Initialise memory */
+		memset(node->context,0,sizeof(struct dss_oneshot_context));
+	}
+
+	/* Initialise the object */
+	dss_oneshot_reset(node);
+
+	return 0;
+}
+
+int dss_oneshot_kill(struct node_description *node)
 {
 	free(node->context);
 	node->context=NULL;

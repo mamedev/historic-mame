@@ -260,7 +260,7 @@ static struct GfxLayout pflayout =
 static struct GfxLayout pftoplayout =
 {
 	8,8,
-	RGN_FRAC(2,5),
+	RGN_FRAC(1,5),
 	5,
 	{ RGN_FRAC(4,5), RGN_FRAC(4,5), RGN_FRAC(4,5), RGN_FRAC(4,5), RGN_FRAC(4,5) },
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },

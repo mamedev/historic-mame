@@ -100,7 +100,7 @@ static int samurai_interrupt( void ){
 
 READ_HANDLER( unknown_d803_r )
 {
-	return 0x6b;     // nogi
+	return 0x6b;
 }
 
 READ_HANDLER( unknown_d803_m660_r )
@@ -120,7 +120,7 @@ READ_HANDLER( unknown_d900_r )
 
 READ_HANDLER( unknown_d938_r )
 {
-	return 0xfb;    // nogi
+	return 0xfb;
 }
 
 static WRITE_HANDLER( sound_command1_w )
@@ -179,7 +179,7 @@ static MEMORY_WRITE_START( writemem )
 	{ 0xc000, 0xcfff, MWA_RAM },
 
 	{ 0xe000, 0xe3ff, tsamurai_fg_videoram_w, &videoram },
-	{ 0xe400, 0xe43f, tsamurai_fg_colorram_w, &colorram },    // nogi
+	{ 0xe400, 0xe43f, tsamurai_fg_colorram_w, &colorram },
 	{ 0xe440, 0xe7ff, MWA_RAM },
 	{ 0xe800, 0xefff, tsamurai_bg_videoram_w, &tsamurai_videoram },
 	{ 0xf000, 0xf3ff, MWA_RAM, &spriteram },
@@ -225,7 +225,7 @@ static MEMORY_WRITE_START( writemem_m660 )
 	{ 0xc000, 0xcfff, MWA_RAM },
 
 	{ 0xe000, 0xe3ff, tsamurai_fg_videoram_w, &videoram },
-	{ 0xe400, 0xe43f, tsamurai_fg_colorram_w, &colorram },    // nogi
+	{ 0xe400, 0xe43f, tsamurai_fg_colorram_w, &colorram },
 	{ 0xe440, 0xe7ff, MWA_RAM },
 	{ 0xe800, 0xefff, tsamurai_bg_videoram_w, &tsamurai_videoram },
 	{ 0xf000, 0xf3ff, MWA_RAM, &spriteram },
@@ -367,6 +367,15 @@ MEMORY_END
 
 /*******************************************************************************/
 
+static int vsgongf_sound_nmi_enabled;
+static WRITE_HANDLER( vsgongf_sound_nmi_enable_w ){
+	vsgongf_sound_nmi_enabled = data;
+}
+
+static int vsgongf_sound_interrupt( void ){
+	return vsgongf_sound_nmi_enabled ? nmi_interrupt() : ignore_interrupt();
+}
+
 static READ_HANDLER( vsgongf_a006_r ){
 	return 0x80; /* sound CPU busy? */
 }
@@ -423,7 +432,7 @@ MEMORY_END
 static MEMORY_WRITE_START( writemem_sound_vsgongf )
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x6000, 0x63ff, MWA_RAM }, /* work RAM */
-	{ 0x8000, 0x8000, MWA_NOP }, /* NMI enable */
+	{ 0x8000, 0x8000, vsgongf_sound_nmi_enable_w }, /* NMI enable */
 	{ 0xa000, 0xa000, sound_out1_w },
 MEMORY_END
 
@@ -1012,10 +1021,10 @@ static struct MachineDriver machine_driver_vsgongf =
 		},
 		{
 			CPU_Z80,
-			2000000,
+			4000000,
 			readmem_sound_vsgongf,writemem_sound_vsgongf,
 			0,z80_writeport,
-			ignore_interrupt,1
+			vsgongf_sound_interrupt, 3
 		},
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
@@ -1315,7 +1324,7 @@ ROM_START( vsgongf )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* Z80 code - sound CPU */
 	ROM_LOAD( "6.5n",	0x0000, 0x2000, 0x785b9000 )
-	ROM_LOAD( "5.5l",	0x2000, 0x2000, 0x76dbfde9 ) /* ? */
+	ROM_LOAD( "5.5l",	0x2000, 0x2000, 0x76dbfde9 )
 
 	ROM_REGION( 0xc000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles (N/A) */
 

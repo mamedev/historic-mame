@@ -1660,7 +1660,7 @@ ROM_START( rimrockn )
 ROM_END
 
 
-ROM_START( rimrocka )
+ROM_START( rimrck20 )
 	ROM_REGION( 0x34000, REGION_CPU1, 0 )
 	ROM_LOAD( "rrb.bin",   0x04000, 0x4000, 0x7e9d5545 )
 	ROM_CONTINUE(          0x10000, 0x4000 )
@@ -1679,6 +1679,31 @@ ROM_START( rimrocka )
 	ROM_LOAD( "grom01",       0x40000, 0x40000, 0x864cc269 )
 	ROM_LOAD( "grom02-2.st2", 0x80000, 0x40000, 0x47904233 )
 	ROM_LOAD( "grom03-2.st2", 0xc0000, 0x40000, 0xf005f118 )
+
+	ROM_REGION( 0x40000, REGION_SOUND1, 0 )
+	ROM_LOAD( "srom0", 0x00000, 0x40000, 0x7ad42be0 )
+ROM_END
+
+
+ROM_START( rimrck12 )
+	ROM_REGION( 0x34000, REGION_CPU1, 0 )
+	ROM_LOAD( "rrbbv12.u5",0x04000, 0x4000, 0x661761a6 )
+	ROM_CONTINUE(          0x10000, 0x4000 )
+	ROM_CONTINUE(          0x1c000, 0x4000 )
+	ROM_CONTINUE(          0x28000, 0xc000 )
+	ROM_CONTINUE(          0x2c000, 0x8000 )
+	ROM_COPY( REGION_CPU1, 0x2c000, 0x08000, 0x8000 )
+	ROM_COPY( REGION_CPU1, 0x2c000, 0x14000, 0x8000 )
+	ROM_COPY( REGION_CPU1, 0x2c000, 0x20000, 0x8000 )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
+	ROM_LOAD( "rrbsndv1.u27", 0x08000, 0x8000, 0x8eda5f53 )
+
+	ROM_REGION( 0x100000, REGION_GFX1, 0 )
+	ROM_LOAD( "grom00", 0x00000, 0x40000, 0x3eacbad9 )
+	ROM_LOAD( "grom01", 0x40000, 0x40000, 0x864cc269 )
+	ROM_LOAD( "grom02", 0x80000, 0x40000, 0x34e567d5 )
+	ROM_LOAD( "grom03", 0xc0000, 0x40000, 0xfd18045d )
 
 	ROM_REGION( 0x40000, REGION_SOUND1, 0 )
 	ROM_LOAD( "srom0", 0x00000, 0x40000, 0x7ad42be0 )
@@ -1756,7 +1781,8 @@ GAME ( 1991, arlingtn, 0,        arlingtn,  arlingtn, 0,        ROT0,   "Strata/
 GAME ( 1991, peggle,   0,        peggle,    peggle,   0,        ROT90,  "Strata/Incredible Technologies", "Peggle (Joystick)" )
 GAME ( 1991, pegglet,  peggle,   peggle,    pegglet,  0,        ROT90,  "Strata/Incredible Technologies", "Peggle (Trackball)" )
 GAME ( 1991, rimrockn, 0,        rimrockn,  rimrockn, rimrockn, ROT0,   "Strata/Incredible Technologies", "Rim Rockin' Basketball (V2.2)" )
-GAME ( 1991, rimrocka, rimrockn, rimrockn,  rimrockn, rimrockn, ROT0,   "Strata/Incredible Technologies", "Rim Rockin' Basketball (V2.0)" )
+GAME ( 1991, rimrck20, rimrockn, rimrockn,  rimrockn, rimrockn, ROT0,   "Strata/Incredible Technologies", "Rim Rockin' Basketball (V2.0)" )
+GAME ( 1991, rimrck12, rimrockn, rimrockn,  rimrockn, rimrockn, ROT0,   "Strata/Incredible Technologies", "Rim Rockin' Basketball (V1.2)" )
 GAME ( 1991, ninclown, 0,        ninclown,  ninclown, viasound, ROT0,   "Strata/Incredible Technologies", "Ninja Clowns" )
 GAME ( 1992, gtg2,     0,        gtg2,      gtg2,     viasound, ROT0,   "Strata/Incredible Technologies", "Golden Tee Golf II (Trackball, V2.2)" )
 GAME ( 1989, gtg2t,    gtg2,     tmshi2203, gtg2t,    0,        ROT0,   "Strata/Incredible Technologies", "Golden Tee Golf II (Trackball, V1.1)" )

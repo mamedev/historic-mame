@@ -1975,7 +1975,6 @@ static struct VLM5030interface vlm5030_interface =
     70,            /* volume        */
     REGION_SOUND1, /* memory region  */
     0,             /* memory length */
-    0,             /* VCU            */
 };
 
 static struct VLM5030interface gx400_vlm5030_interface =
@@ -1984,7 +1983,6 @@ static struct VLM5030interface gx400_vlm5030_interface =
     100,           /* volume        */
     0,             /* memory region (RAM based) */
     0x0800,        /* memory length (not sure if correct) */
-    0,             /* VCU            */
 };
 
 static void volume_callback(int v)

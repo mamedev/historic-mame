@@ -180,7 +180,7 @@ int lgtnfght_vh_start(void)	/* also tmnt2, ssriders */
 {
 	if (K052109_vh_start(REGION_GFX1,NORMAL_PLANE_ORDER,tmnt_tile_callback))
 		return 1;
-	if (K053245_vh_start(REGION_GFX2,0,NORMAL_PLANE_ORDER,lgtnfght_sprite_callback))
+	if (K053245_vh_start(REGION_GFX2,NORMAL_PLANE_ORDER,lgtnfght_sprite_callback))
 	{
 		K052109_vh_stop();
 		return 1;
@@ -192,7 +192,7 @@ int detatwin_vh_start(void)
 {
 	if (K052109_vh_start(REGION_GFX1,NORMAL_PLANE_ORDER,detatwin_tile_callback))
 		return 1;
-	if (K053245_vh_start(REGION_GFX2,0,NORMAL_PLANE_ORDER,detatwin_sprite_callback))
+	if (K053245_vh_start(REGION_GFX2,NORMAL_PLANE_ORDER,detatwin_sprite_callback))
 	{
 		K052109_vh_stop();
 		return 1;
@@ -204,7 +204,7 @@ int glfgreat_vh_start(void)
 {
 	if (K052109_vh_start(REGION_GFX1,NORMAL_PLANE_ORDER,tmnt_tile_callback))
 		return 1;
-	if (K053245_vh_start(REGION_GFX2,0,NORMAL_PLANE_ORDER,lgtnfght_sprite_callback))
+	if (K053245_vh_start(REGION_GFX2,NORMAL_PLANE_ORDER,lgtnfght_sprite_callback))
 	{
 		K052109_vh_stop();
 		return 1;

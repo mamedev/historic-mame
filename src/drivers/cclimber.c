@@ -161,7 +161,7 @@ static WRITE_HANDLER( flip_screen_y_w )
 static void cclimber_init_machine (void)
 {
 	/* Disable interrupts, River Patrol / Silver Land needs this */
-	interrupt_enable_w(0, 0);
+	cpu_interrupt_enable(0,0);
 }
 
 
@@ -935,9 +935,9 @@ ROM_START( monkeyd )
 	ROM_LOAD( "ck1.bin",      0x0800, 0x0800, 0x80eb517d )
 
 	ROM_REGION( 0x0060, REGION_PROMS, 0 )
-	ROM_LOAD( "cclimber.pr1", 0x0000, 0x0020, 0x00000000 )
-	ROM_LOAD( "cclimber.pr2", 0x0020, 0x0020, 0x00000000 )
-	ROM_LOAD( "ck6t.bin",     0x0040, 0x0020, 0x00000000 )
+	ROM_LOAD( "cclimber.pr1", 0x0000, 0x0020, BADCRC( 0x751c3325 ) )
+	ROM_LOAD( "cclimber.pr2", 0x0020, 0x0020, BADCRC( 0xab1940fa ) )
+	ROM_LOAD( "ck6t.bin",     0x0040, 0x0020, BADCRC( 0xb4e827a5 ) )
 
 	ROM_REGION( 0x2000, REGION_SOUND1, 0 )	/* samples */
 	ROM_LOAD( "cc13j.bin",    0x0000, 0x1000, 0x5f0bcdfb )
@@ -1423,8 +1423,8 @@ GAME( 1981, ckongjeu, ckong,    cclimber, ckong,    0,        ROT270, "bootleg",
 GAME( 1981, ckongo,   ckong,    cclimber, ckong,    0,        ROT270, "bootleg", "Crazy Kong (Orca bootleg)" )
 GAME( 1981, ckongalc, ckong,    cclimber, ckong,    0,        ROT270, "bootleg", "Crazy Kong (Alca bootleg)" )
 GAME( 1981, monkeyd,  ckong,    cclimber, ckong,    0,        ROT270, "bootleg", "Monkey Donkey" )
-GAME( ????, rpatrolb, 0,        cclimber, rpatrolb, 0,        ROT0,   "bootleg", "River Patrol (bootleg)" )
-GAME( ????, silvland, rpatrolb, cclimber, rpatrolb, 0,        ROT0,   "Falcon", "Silver Land" )
+GAME( 19??, rpatrolb, 0,        cclimber, rpatrolb, 0,        ROT0,   "bootleg", "River Patrol (bootleg)" )
+GAME( 19??, silvland, rpatrolb, cclimber, rpatrolb, 0,        ROT0,   "Falcon", "Silver Land" )
 
 GAME( 1982, swimmer,  0,       swimmer, swimmer, 0, ROT0,  "Tehkan", "Swimmer (set 1)" )
 GAME( 1982, swimmera, swimmer, swimmer, swimmer, 0, ROT0,  "Tehkan", "Swimmer (set 2)" )

@@ -230,41 +230,36 @@ void topspeed_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 #endif
 
 #ifdef MAME_DEBUG
-	if (keyboard_pressed (KEYCODE_V))
+	if (keyboard_pressed_memory (KEYCODE_V))
 	{
-		while (keyboard_pressed (KEYCODE_V) != 0) {};
 		dislayer[0] ^= 1;
 		sprintf(buf,"bg: %01x",dislayer[0]);
 		usrintf_showmessage(buf);
 	}
 
-	if (keyboard_pressed (KEYCODE_B))
+	if (keyboard_pressed_memory (KEYCODE_B))
 	{
-		while (keyboard_pressed (KEYCODE_B) != 0) {};
 		dislayer[1] ^= 1;
 		sprintf(buf,"fg: %01x",dislayer[1]);
 		usrintf_showmessage(buf);
 	}
 
-	if (keyboard_pressed (KEYCODE_N))
+	if (keyboard_pressed_memory (KEYCODE_N))
 	{
-		while (keyboard_pressed (KEYCODE_N) != 0) {};
 		dislayer[2] ^= 1;
 		sprintf(buf,"bg2: %01x",dislayer[2]);
 		usrintf_showmessage(buf);
 	}
 
-	if (keyboard_pressed (KEYCODE_M))
+	if (keyboard_pressed_memory (KEYCODE_M))
 	{
-		while (keyboard_pressed (KEYCODE_M) != 0) {};
 		dislayer[3] ^= 1;
 		sprintf(buf,"fg2: %01x",dislayer[3]);
 		usrintf_showmessage(buf);
 	}
 
-	if (keyboard_pressed (KEYCODE_C))
+	if (keyboard_pressed_memory (KEYCODE_C))
 	{
-		while (keyboard_pressed (KEYCODE_C) != 0) {};
 		dislayer[4] ^= 1;
 		sprintf(buf,"sprites: %01x",dislayer[4]);
 		usrintf_showmessage(buf);

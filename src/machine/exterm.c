@@ -1,7 +1,6 @@
 #include "driver.h"
 #include "cpu/tms34010/tms34010.h"
 
-extern unsigned char *exterm_code_rom;
 unsigned char *exterm_master_speedup, *exterm_slave_speedup;
 
 static int aimpos1, aimpos2;
@@ -16,12 +15,6 @@ WRITE_HANDLER( exterm_host_data_w )
 READ_HANDLER( exterm_host_data_r )
 {
 	return tms34010_host_r(1, TMS34010_HOST_DATA);
-}
-
-
-READ_HANDLER( exterm_coderom_r )
-{
-    return READ_WORD(&exterm_code_rom[offset]);
 }
 
 
@@ -99,40 +92,3 @@ WRITE_HANDLER( exterm_slave_speedup_w )
 
 	WRITE_WORD(&exterm_slave_speedup[offset], data);
 }
-
-READ_HANDLER( exterm_sound_dac_speedup_r )
-{
-	unsigned char *RAM = memory_region(REGION_CPU3);
-	int value = RAM[0x0007];
-
-	/* Suspend cpu if it's waiting for an interrupt */
-	if (cpu_get_pc() == 0x8e79 && !value)
-	{
-		cpu_spinuntil_int();
-	}
-
-	return value;
-}
-
-READ_HANDLER( exterm_sound_ym2151_speedup_r )
-{
-	/* Doing this won't flash the LED, but we're not emulating that anyhow, so
-	   it doesn't matter */
-
-	unsigned char *RAM = memory_region(REGION_CPU4);
-	int value = RAM[0x02b6];
-
-	/* Suspend cpu if it's waiting for an interrupt */
-	if (  cpu_get_pc() == 0x8179 &&
-		!(value & 0x80) &&
-		  RAM[0x00bc] == RAM[0x00bb] &&
-		  RAM[0x0092] == 0x00 &&
-		  RAM[0x0093] == 0x00 &&
-		!(RAM[0x0004] & 0x80))
-	{
-		cpu_spinuntil_int();
-	}
-
-	return value;
-}
-

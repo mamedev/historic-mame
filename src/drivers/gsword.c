@@ -1,5 +1,10 @@
 /* Great Swordsman (Taito) 1984
 
+TODO:
+- I haven't really tried to make Joshi Volley work. It's booting into
+  service mode now, it might not be hard to fix it. It has only two Z80.
+
+
 Credits:
 - Steve Ellenoff: Original emulation and Mame driver
 - Jarek Parchanski: Dip Switch Fixes, Color improvements, ADPCM Interface code
@@ -134,6 +139,7 @@ reg: 0->1 (main->2nd) /     : (1->0) 2nd->main :
 #include "cpu/z80/z80.h"
 #include "machine/tait8741.h"
 
+void josvolly_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void gsword_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int  gsword_vh_start(void);
 void gsword_vh_stop(void);
@@ -212,23 +218,14 @@ static struct TAITO8741interface gsword_8741interface=
 
 void machine_init(void)
 {
-	unsigned char *ROM2 = memory_region(REGION_CPU2);
-
-	ROM2[0x1da] = 0xc3; /* patch for rom self check */
-	ROM2[0x726] = 0;    /* patch for sound protection or time out function */
-	ROM2[0x727] = 0;
-
-	TAITO8741_start(&gsword_8741interface);
-}
-
-void init_gsword(void)
-{
 	int i;
 
 	for(i=0;i<4;i++) TAITO8741_reset(i);
 	coins = 0;
 	gsword_nmi_count = 0;
 	gsword_nmi_step  = 0;
+
+	TAITO8741_start(&gsword_8741interface);
 }
 
 static int gsword_snd_interrupt(void)
@@ -365,6 +362,38 @@ static PORT_WRITE_START( writeport_cpu2 )
 	{ 0xa0, 0xa0, IOWP_NOP }, /* ?? */
 	{ 0xe0, 0xe0, IOWP_NOP }, /* watch dog ?*/
 PORT_END
+
+
+
+
+
+static MEMORY_READ_START( josvolly_sound_readmem )
+	{ 0x0000, 0x0fff, MRA_ROM },
+//	{ 0x2000, 0x3fff, MRA_ROM }, another ROM probably, not sure which one (tested on boot)
+	{ 0x4000, 0x43ff, MRA_RAM },
+//	{ 0xa000, 0xa000, soundlatch_r },
+MEMORY_END
+
+static MEMORY_WRITE_START( josvolly_sound_writemem )
+	{ 0x0000, 0x0fff, MWA_ROM },
+	{ 0x4000, 0x43ff, MWA_RAM },
+//	{ 0x8000, 0x8000, gsword_adpcm_data_w },
+MEMORY_END
+
+static PORT_READ_START( josvolly_sound_readport )
+	{ 0x00, 0x00, AY8910_read_port_0_r },
+	{ 0x40, 0x40, AY8910_read_port_1_r },
+PORT_END
+
+static PORT_WRITE_START( josvolly_sound_writeport )
+	{ 0x00, 0x00, AY8910_control_port_0_w },
+	{ 0x01, 0x01, AY8910_write_port_0_w },
+	{ 0x40, 0x40, AY8910_control_port_1_w },
+	{ 0x41, 0x41, AY8910_write_port_1_w },
+PORT_END
+
+
+
 
 INPUT_PORTS_START( gsword )
 	PORT_START	/* IN0 (8741-2 port1?) */
@@ -549,6 +578,54 @@ static struct MSM5205interface msm5205_interface =
 
 
 
+static const struct MachineDriver machine_driver_josvolly =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_Z80,
+			3000000,
+			gsword_readmem,gsword_writemem,readport,writeport,
+			interrupt,1
+		},
+		{
+			CPU_Z80 | CPU_AUDIO_CPU,
+			3000000,
+			josvolly_sound_readmem,josvolly_sound_writemem,josvolly_sound_readport,josvolly_sound_writeport,
+			ignore_interrupt,0
+		}
+	},
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,
+	machine_init,
+
+	/* video hardware */
+	32*8, 32*8,{ 0*8, 32*8-1, 2*8, 30*8-1 },
+
+	gfxdecodeinfo,
+	256, 64*4+64*4,
+	josvolly_vh_convert_color_prom,
+	VIDEO_TYPE_RASTER,
+	0,
+	gsword_vh_start,
+	gsword_vh_stop,
+	gsword_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_AY8910,
+			&ay8910_interface
+		},
+		{
+			SOUND_MSM5205,
+			&msm5205_interface
+		}
+	}
+
+};
+
 static const struct MachineDriver machine_driver_gsword =
 {
 	/* basic machine hardware */
@@ -612,6 +689,41 @@ static const struct MachineDriver machine_driver_gsword =
 
 ***************************************************************************/
 
+ROM_START( josvolly )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64K for main CPU */
+	ROM_LOAD( "aa2-1.2c",     0x0000, 0x2000, 0x27f740a5 )
+	ROM_LOAD( "aa1-2.2d",     0x2000, 0x2000, 0x3e02e3e1 )
+	ROM_LOAD( "aa0-3.2e",     0x4000, 0x2000, 0x72843ffe )
+	ROM_LOAD( "aa1-4.2f",     0x6000, 0x2000, 0x22c1466e )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64K for 2nd CPU */
+	ROM_LOAD( "aa3-12.2h",    0x0000, 0x1000, 0x3796bbf6 )
+
+	ROM_REGION( 0x04000, REGION_USER1, 0 )	/* music data and samples - not sure where it's mapped */
+	ROM_LOAD( "aa0-13.2j",    0x0000, 0x2000, 0x58cc89ac )
+	ROM_LOAD( "aa0-14.4j",    0x2000, 0x2000, 0x436fe91f )
+
+	ROM_REGION( 0x4000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "aa0-10.9n",    0x0000, 0x2000, 0x207c4f42 )	/* tiles */
+	ROM_LOAD( "aa1-11.9p",    0x2000, 0x1000, 0xc130464a )
+
+	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "aa0-6.9e",     0x0000, 0x2000, 0xc2c2401a )	/* sprites */
+
+	ROM_REGION( 0x4000, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_LOAD( "aa0-7.9f",     0x0000, 0x2000, 0xda836231 )
+	ROM_LOAD( "aa0-8.9h",     0x2000, 0x2000, 0xa0426d57 )
+
+	ROM_REGION( 0x0460, REGION_PROMS, 0 )
+	ROM_LOAD( "a1.10k",       0x0000, 0x0100, 0x09f7b56a )	/* palette red? */
+	ROM_LOAD( "a2.9k",        0x0100, 0x0100, 0x852eceac )	/* palette green? */
+	ROM_LOAD( "a3.9j",        0x0200, 0x0100, 0x1312718b )	/* palette blue? */
+	ROM_LOAD( "a4.8c",        0x0300, 0x0100, 0x1dcec967 )	/* sprite lookup table */
+	ROM_LOAD( "003.4e",       0x0400, 0x0020, 0x43a548b8 )	/* address decoder? not used */
+	ROM_LOAD( "004.4d",       0x0420, 0x0020, 0x43a548b8 )	/* address decoder? not used */
+	ROM_LOAD( "005.3h",       0x0440, 0x0020, 0xe8d6dec0 )	/* address decoder? not used */
+ROM_END
+
 ROM_START( gsword )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64K for main CPU */
 	ROM_LOAD( "gs1",          0x0000, 0x2000, 0x565c4d9e )
@@ -651,4 +763,15 @@ ROM_END
 
 
 
-GAMEX( 1984, gsword, 0, gsword, gsword, gsword, ROT0, "Taito Corporation", "Great Swordsman", GAME_IMPERFECT_COLORS )
+static void init_gsword(void)
+{
+	unsigned char *ROM2 = memory_region(REGION_CPU2);
+
+	ROM2[0x1da] = 0xc3; /* patch for rom self check */
+	ROM2[0x726] = 0;    /* patch for sound protection or time out function */
+	ROM2[0x727] = 0;
+}
+
+
+GAMEX( 1983, josvolly, 0, josvolly, gsword, 0,      ROT90, "Taito Corporation", "Joshi Volleyball", GAME_NOT_WORKING )
+GAMEX( 1984, gsword,   0, gsword,   gsword, gsword, ROT0,  "Taito Corporation", "Great Swordsman", GAME_IMPERFECT_COLORS )

@@ -262,7 +262,6 @@ static struct VLM5030interface vlm5030_interface =
 	60,			/* volume */
 	REGION_SOUND1,	/* memory region of speech rom */
 	0,
-	0
 };
 
 static const struct MachineDriver machine_driver_rockrage =

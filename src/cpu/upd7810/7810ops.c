@@ -4761,7 +4761,8 @@ static void EQI_TMM_xx(void)
 /* 70 0e: 0111 0000 0000 1110 llll llll hhhh hhhh */
 static void SSPD_w(void)
 {
-	PAIR ea = {{0,},};
+	PAIR ea;
+	ea.d = 0;
 
 	RDOPARG( ea.b.l );
 	RDOPARG( ea.b.h );
@@ -4772,7 +4773,8 @@ static void SSPD_w(void)
 /* 70 0f: 0111 0000 0000 1111 llll llll hhhh hhhh */
 static void LSPD_w(void)
 {
-	PAIR ea = {{0,},};
+	PAIR ea;
+	ea.d = 0;
 
 	RDOPARG( ea.b.l );
 	RDOPARG( ea.b.h );
@@ -4783,7 +4785,8 @@ static void LSPD_w(void)
 /* 70 1e: 0111 0000 0001 1110 llll llll hhhh hhhh */
 static void SBCD_w(void)
 {
-	PAIR ea = {{0,},};
+	PAIR ea;
+	ea.d = 0;
 
 	RDOPARG( ea.b.l );
 	RDOPARG( ea.b.h );
@@ -4794,7 +4797,8 @@ static void SBCD_w(void)
 /* 70 1f: 0111 0000 0001 1111 llll llll hhhh hhhh */
 static void LBCD_w(void)
 {
-	PAIR ea = {{0,},};
+	PAIR ea;
+	ea.d = 0;
 
 	RDOPARG( ea.b.l );
 	RDOPARG( ea.b.h );
@@ -4805,7 +4809,8 @@ static void LBCD_w(void)
 /* 70 2e: 0111 0000 0010 1110 llll llll hhhh hhhh */
 static void SDED_w(void)
 {
-	PAIR ea = {{0,},};
+	PAIR ea;
+	ea.d = 0;
 
 	RDOPARG( ea.b.l );
 	RDOPARG( ea.b.h );
@@ -4816,7 +4821,8 @@ static void SDED_w(void)
 /* 70 2f: 0111 0000 0010 1111 llll llll hhhh hhhh */
 static void LDED_w(void)
 {
-	PAIR ea = {{0,},};
+	PAIR ea;
+	ea.d = 0;
 
 	RDOPARG( ea.b.l );
 	RDOPARG( ea.b.h );
@@ -4827,7 +4833,8 @@ static void LDED_w(void)
 /* 70 3e: 0111 0000 0011 1110 llll llll hhhh hhhh */
 static void SHLD_w(void)
 {
-	PAIR ea = {{0,},};
+	PAIR ea;
+	ea.d = 0;
 
 	RDOPARG( ea.b.l );
 	RDOPARG( ea.b.h );
@@ -4838,7 +4845,8 @@ static void SHLD_w(void)
 /* 70 3f: 0111 0000 0011 1111 llll llll hhhh hhhh */
 static void LHLD_w(void)
 {
-	PAIR ea = {{0,},};
+	PAIR ea;
+	ea.d = 0;
 
 	RDOPARG( ea.b.l );
 	RDOPARG( ea.b.h );
@@ -4903,7 +4911,8 @@ static void ESUB_EA_C(void)
 /* 70 68: 0111 0000 0110 1000 llll llll hhhh hhhh */
 static void MOV_V_w(void)
 {
-	PAIR ea = {{0,},};
+	PAIR ea;
+	ea.d = 0;
 
 	RDOPARG( ea.b.l );
 	RDOPARG( ea.b.h );
@@ -4913,7 +4922,8 @@ static void MOV_V_w(void)
 /* 70 69: 0111 0000 0110 1001 llll llll hhhh hhhh */
 static void MOV_A_w(void)
 {
-	PAIR ea = {{0,},};
+	PAIR ea;
+	ea.d = 0;
 
 	RDOPARG( ea.b.l );
 	RDOPARG( ea.b.h );
@@ -4923,7 +4933,8 @@ static void MOV_A_w(void)
 /* 70 6a: 0111 0000 0110 1010 llll llll hhhh hhhh */
 static void MOV_B_w(void)
 {
-	PAIR ea = {{0,},};
+	PAIR ea;
+	ea.d = 0;
 
 	RDOPARG( ea.b.l );
 	RDOPARG( ea.b.h );
@@ -4933,7 +4944,8 @@ static void MOV_B_w(void)
 /* 70 6b: 0111 0000 0110 1011 llll llll hhhh hhhh */
 static void MOV_C_w(void)
 {
-	PAIR ea = {{0,},};
+	PAIR ea;
+	ea.d = 0;
 
 	RDOPARG( ea.b.l );
 	RDOPARG( ea.b.h );
@@ -4943,7 +4955,8 @@ static void MOV_C_w(void)
 /* 70 6c: 0111 0000 0110 1100 llll llll hhhh hhhh */
 static void MOV_D_w(void)
 {
-	PAIR ea = {{0,},};
+	PAIR ea;
+	ea.d = 0;
 
 	RDOPARG( ea.b.l );
 	RDOPARG( ea.b.h );
@@ -4953,7 +4966,8 @@ static void MOV_D_w(void)
 /* 70 6d: 0111 0000 0110 1101 llll llll hhhh hhhh */
 static void MOV_E_w(void)
 {
-	PAIR ea = {{0,},};
+	PAIR ea;
+	ea.d = 0;
 
 	RDOPARG( ea.b.l );
 	RDOPARG( ea.b.h );
@@ -4963,7 +4977,8 @@ static void MOV_E_w(void)
 /* 70 6e: 0111 0000 0110 1110 llll llll hhhh hhhh */
 static void MOV_H_w(void)
 {
-	PAIR ea = {{0,},};
+	PAIR ea;
+	ea.d = 0;
 
 	RDOPARG( ea.b.l );
 	RDOPARG( ea.b.h );
@@ -4973,7 +4988,8 @@ static void MOV_H_w(void)
 /* 70 6f: 0111 0000 0110 1111 llll llll hhhh hhhh */
 static void MOV_L_w(void)
 {
-	PAIR ea = {{0,},};
+	PAIR ea;
+	ea.d = 0;
 
 	RDOPARG( ea.b.l );
 	RDOPARG( ea.b.h );
@@ -4983,7 +4999,8 @@ static void MOV_L_w(void)
 /* 70 78: 0111 0000 0111 1000 llll llll hhhh hhhh */
 static void MOV_w_V(void)
 {
-	PAIR ea = {{0,},};
+	PAIR ea;
+	ea.d = 0;
 
 	RDOPARG( ea.b.l );
 	RDOPARG( ea.b.h );
@@ -4993,7 +5010,8 @@ static void MOV_w_V(void)
 /* 70 79: 0111 0000 0111 1001 llll llll hhhh hhhh */
 static void MOV_w_A(void)
 {
-	PAIR ea = {{0,},};
+	PAIR ea;
+	ea.d = 0;
 
 	RDOPARG( ea.b.l );
 	RDOPARG( ea.b.h );
@@ -5003,7 +5021,8 @@ static void MOV_w_A(void)
 /* 70 7a: 0111 0000 0111 1010 llll llll hhhh hhhh */
 static void MOV_w_B(void)
 {
-	PAIR ea = {{0,},};
+	PAIR ea;
+	ea.d = 0;
 
 	RDOPARG( ea.b.l );
 	RDOPARG( ea.b.h );
@@ -5013,7 +5032,8 @@ static void MOV_w_B(void)
 /* 70 7b: 0111 0000 0111 1011 llll llll hhhh hhhh */
 static void MOV_w_C(void)
 {
-	PAIR ea = {{0,},};
+	PAIR ea;
+	ea.d = 0;
 
 	RDOPARG( ea.b.l );
 	RDOPARG( ea.b.h );
@@ -5023,7 +5043,8 @@ static void MOV_w_C(void)
 /* 70 7c: 0111 0000 0111 1100 llll llll hhhh hhhh */
 static void MOV_w_D(void)
 {
-	PAIR ea = {{0,},};
+	PAIR ea;
+	ea.d = 0;
 
 	RDOPARG( ea.b.l );
 	RDOPARG( ea.b.h );
@@ -5033,7 +5054,8 @@ static void MOV_w_D(void)
 /* 70 7d: 0111 0000 0111 1101 llll llll hhhh hhhh */
 static void MOV_w_E(void)
 {
-	PAIR ea = {{0,},};
+	PAIR ea;
+	ea.d = 0;
 
 	RDOPARG( ea.b.l );
 	RDOPARG( ea.b.h );
@@ -5043,7 +5065,8 @@ static void MOV_w_E(void)
 /* 70 7e: 0111 0000 0111 1110 llll llll hhhh hhhh */
 static void MOV_w_H(void)
 {
-	PAIR ea = {{0,},};
+	PAIR ea;
+	ea.d = 0;
 
 	RDOPARG( ea.b.l );
 	RDOPARG( ea.b.h );
@@ -5053,7 +5076,8 @@ static void MOV_w_H(void)
 /* 70 7f: 0111 0000 0111 1111 llll llll hhhh hhhh */
 static void MOV_w_L(void)
 {
-	PAIR ea = {{0,},};
+	PAIR ea;
+	ea.d = 0;
 
 	RDOPARG( ea.b.l );
 	RDOPARG( ea.b.h );
@@ -8194,7 +8218,8 @@ static void STAX_Hm(void)
 /* 40: 0100 0000 llll llll hhhh hhhh */
 static void CALL_w(void)
 {
-	PAIR w = {{0,},};
+	PAIR w;
+	w.d = 0;
 
 	RDOPARG( w.b.l );
 	RDOPARG( w.b.h );
@@ -8361,7 +8386,8 @@ static void DCR_C(void)
 /* 54: 0101 0100 llll llll hhhh hhhh */
 static void JMP_w(void)
 {
-	PAIR w = {{0,},};
+	PAIR w;
+	w.d = 0;
 
 	RDOPARG( w.b.l );
 	RDOPARG( w.b.h );
@@ -8534,7 +8560,8 @@ static void RETI(void)
 /* 63: 0110 0011 oooo oooo */
 static void STAW_wa(void)
 {
-	PAIR ea = {{0,},};
+	PAIR ea;
+	ea.d = 0;
 	RDOPARG(ea.b.l);
 	ea.b.h = V;
 
@@ -8636,8 +8663,10 @@ static void PRE_70(void)
 /* 71: 0111 0001 oooo oooo xxxx xxxx */
 static void MVIW_wa_xx(void)
 {
-	PAIR ea = {{0,},};
+	PAIR ea;
 	UINT8 imm;
+
+	ea.d = 0;
 
 	RDOPARG( ea.b.l );
 	ea.b.h = V;
@@ -8692,7 +8721,8 @@ static void EQIW_wa_xx(void)
 /* 78: 0111 1ddd dddd dddd */
 static void CALF(void)
 {
-	PAIR w = {{0,},};
+	PAIR w;
+	w.d = 0;
 
 	RDOPARG( w.b.l );
 	w.b.h = 0x08 + (OP & 0x07);
@@ -8709,7 +8739,8 @@ static void CALF(void)
 /* 80: 100t tttt */
 static void CALT(void)
 {
-	PAIR w = {{0,},};
+	PAIR w;
+	w.d = 0;
 
 	RDOPARG( w.b.l );
 	w.w.l = 0x80 + 2 * (OP & 0x1f);

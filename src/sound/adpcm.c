@@ -22,6 +22,7 @@
 #include <math.h>
 
 #include "driver.h"
+#include "state.h"
 #include "adpcm.h"
 
 
@@ -254,6 +255,67 @@ static void adpcm_update(int num, INT16 *buffer, int length)
 
 /**********************************************************************************************
 
+     state save support for MAME
+
+***********************************************************************************************/
+
+static UINT32 voice_base_offset[MAX_ADPCM]; /*we cannot save the pointer - this is a workaround*/
+static void adpcm_state_save_base_store (void)
+{
+	int i;
+	struct ADPCMVoice *voice;
+
+	for (i=0; i<num_voices; i++)
+	{
+		voice = &adpcm[i];
+		voice_base_offset[i] = voice->base - voice->region_base;
+	}
+}
+
+static void adpcm_state_save_base_refresh (void)
+{
+	int i;
+	struct ADPCMVoice *voice;
+
+	for (i=0; i<num_voices; i++)
+	{
+		voice = &adpcm[i];
+		voice->base = &voice->region_base[ voice_base_offset[i] ];
+	}
+}
+
+static void adpcm_state_save_register( void )
+{
+	int i;
+	char buf[20];
+	struct ADPCMVoice *voice;
+
+
+	sprintf(buf,"ADPCM");
+
+	for (i=0; i<num_voices; i++)
+	{
+		voice = &adpcm[i];
+
+		state_save_register_UINT8  (buf, i, "playing", &voice->playing, 1);
+		state_save_register_UINT32 (buf, i, "base_offset" , &voice_base_offset[i],  1);
+		state_save_register_UINT32 (buf, i, "sample" , &voice->sample,  1);
+		state_save_register_UINT32 (buf, i, "count"  , &voice->count,   1);
+		state_save_register_UINT32 (buf, i, "signal" , &voice->signal,  1);
+		state_save_register_UINT32 (buf, i, "step"   , &voice->step,    1);
+		state_save_register_UINT32 (buf, i, "volume" , &voice->volume,  1);
+
+		state_save_register_INT16  (buf, i, "last_sample", &voice->last_sample, 1);
+		state_save_register_INT16  (buf, i, "curr_sample", &voice->curr_sample, 1);
+		state_save_register_UINT32 (buf, i, "source_step", &voice->source_step, 1);
+		state_save_register_UINT32 (buf, i, "source_pos" , &voice->source_pos,  1);
+	}
+	state_save_register_func_presave(adpcm_state_save_base_store);
+	state_save_register_func_postload(adpcm_state_save_base_refresh);
+}
+
+/**********************************************************************************************
+
      ADPCM_sh_start -- start emulation of several ADPCM output streams
 
 ***********************************************************************************************/
@@ -285,6 +347,8 @@ int ADPCM_sh_start(const struct MachineSound *msound)
 		if (Machine->sample_rate)
 			adpcm[i].source_step = (UINT32)((double)intf->frequency * (double)FRAC_ONE / (double)Machine->sample_rate);
 	}
+
+	adpcm_state_save_register();
 
 	/* success */
 	return 0;
@@ -459,8 +523,38 @@ int ADPCM_playing(int num)
 
 #define OKIM6295_VOICES		4
 
-static int okim6295_command[MAX_OKIM6295];
-static int okim6295_base[MAX_OKIM6295][OKIM6295_VOICES];
+static INT32 okim6295_command[MAX_OKIM6295];
+static INT32 okim6295_base[MAX_OKIM6295][OKIM6295_VOICES];
+
+
+/**********************************************************************************************
+
+     state save support for MAME
+
+***********************************************************************************************/
+
+static void okim6295_state_save_register(void)
+{
+	int i,j;
+	int chips;
+	char buf[20];
+	char buf2[20];
+
+	adpcm_state_save_register();
+	sprintf(buf,"OKIM6295");
+
+	chips = num_voices / OKIM6295_VOICES;
+	for (i = 0; i < chips; i++)
+	{
+		state_save_register_INT32  (buf, i, "command", &okim6295_command[i], 1);
+		for (j = 0; j < OKIM6295_VOICES; j++)
+		{
+			sprintf(buf2,"base_voice_%1i",j);
+			state_save_register_INT32  (buf, i, buf2, &okim6295_base[i][j], 1);
+		}
+	}
+}
+
 
 
 /**********************************************************************************************
@@ -503,6 +597,8 @@ int OKIM6295_sh_start(const struct MachineSound *msound)
 		if (Machine->sample_rate)
 			adpcm[i].source_step = (UINT32)((double)intf->frequency[chip] * (double)FRAC_ONE / (double)Machine->sample_rate);
 	}
+
+	okim6295_state_save_register();
 
 	/* success */
 	return 0;
@@ -646,7 +742,7 @@ static void OKIM6295_data_w(int num, int data)
 				stream_update(voice->stream, 0);
 
 				/* determine the start/stop positions */
-				base = &voice->region_base[okim6295_base[num][i] + okim6295_command[num] * 8];
+				base = &voice->region_base[ okim6295_base[num][i] + okim6295_command[num] * 8];
 				start = (base[0] << 16) + (base[1] << 8) + base[2];
 				stop = (base[3] << 16) + (base[4] << 8) + base[5];
 

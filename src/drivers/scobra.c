@@ -107,7 +107,7 @@ static void scobra_init_machine(void)
 {
 	/* we must start with NMI interrupts disabled, otherwise some games */
 	/* (e.g. Lost Tomb, Rescue) will not pass the startup test. */
-	interrupt_enable_w(0,0);
+	cpu_interrupt_enable(0,0);
 }
 
 static READ_HANDLER( moonwar_IN0_r )

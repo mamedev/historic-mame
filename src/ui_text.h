@@ -36,6 +36,7 @@ enum
 	UI_allchannels,
 	UI_brightness,
 	UI_gamma,
+	UI_vectorflicker,
 	UI_vectorintensity,
 	UI_overclock,
 	UI_allcpus,

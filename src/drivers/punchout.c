@@ -797,7 +797,6 @@ static struct VLM5030interface vlm5030_interface =
 	50,        /* volume       */
 	REGION_SOUND1,	/* memory region of speech rom */
 	0,          /* memory size of speech rom */
-	0,           /* VCU pin level (default)     */
 	punchout_sample_names
 };
 

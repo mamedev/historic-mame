@@ -60,14 +60,11 @@ struct MachineSound
 #if (HAS_POKEY)
 #include "sound/pokey.h"
 #endif
-#if (HAS_TIA)
-#include "sound/tiaintf.h"
-#endif
 #if (HAS_NES)
  #ifndef MESS
 #include "sound/nes_apu.h"
  #else
-#include "sound/nesintf.h"
+#include "mess/sound/nesintf.h"
  #endif
 #endif
 #if (HAS_ASTROCADE)
@@ -139,14 +136,20 @@ struct MachineSound
 #if (HAS_ES5505 || HAS_ES5506)
 #include "sound/es5506.h"
 #endif
+
+#ifdef MESS
+#if (HAS_BEEP)
+#include "mess/sound/beep.h"
+#endif
 #if (HAS_SPEAKER)
-#include "sound/speaker.h"
+#include "mess/sound/speaker.h"
+#endif
+#if (HAS_TIA)
+#include "mess/sound/tiaintf.h"
 #endif
 #if (HAS_WAVE)
-#include "sound/wave.h"
+#include "mess/sound/wave.h"
 #endif
-#if (HAS_BEEP)
-#include "sound/beep.h"
 #endif
 
 
@@ -218,9 +221,6 @@ enum
 #endif
 #if (HAS_POKEY)
 	SOUND_POKEY,
-#endif
-#if (HAS_TIA)
-	SOUND_TIA,
 #endif
 #if (HAS_NES)
 	SOUND_NES,
@@ -300,14 +300,20 @@ enum
 #if (HAS_ES5506)
 	SOUND_ES5506,
 #endif
+
+#ifdef MESS
+#if (HAS_BEEP)
+	SOUND_BEEP,
+#endif
 #if (HAS_SPEAKER)
 	SOUND_SPEAKER,
+#endif
+#if (HAS_TIA)
+	SOUND_TIA,
 #endif
 #if (HAS_WAVE)
 	SOUND_WAVE,
 #endif
-#if (HAS_BEEP)
-	SOUND_BEEP,
 #endif
 	SOUND_COUNT
 };

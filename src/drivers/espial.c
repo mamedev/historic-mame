@@ -75,13 +75,13 @@ void espial_init_machine(void)
 {
 	/* we must start with NMI interrupts disabled */
 	//interrupt_enable = 0;
-	interrupt_enable_w(0, 0);
+	cpu_interrupt_enable(0,0);
 }
 
 
 WRITE_HANDLER( zodiac_master_interrupt_enable_w )
 {
-	interrupt_enable_w(offset, data ^ 1);
+	interrupt_enable_w(offset,~data & 1);
 }
 
 

@@ -147,8 +147,7 @@ WRITE_HANDLER( appoooh_colorram2_w )
 WRITE_HANDLER( appoooh_out_w )
 {
 	/* bit 0 controls NMI */
-	if (data & 0x01) interrupt_enable_w(0,1);
-	else interrupt_enable_w(0,0);
+	interrupt_enable_w(0,data & 0x01);
 
 	/* bit 1 flip screen */
 	if ((data & 0x02) != flipscreen)

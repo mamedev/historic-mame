@@ -1,10 +1,12 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "state.h"
 
 static struct tilemap *bg_tilemap, *fg_tilemap;
 static int flipscreen;
 
 UINT8 ninjakun_io_8000_ctrl[4];
+static UINT8 old_scroll;
 
 /*******************************************************************************
  Tilemap Callbacks
@@ -77,7 +79,6 @@ static void handle_scrolly( UINT8 new_scroll ){
 **  I don't know how this is handled by the actual NinjaKun hardware, but the
 **	following is a crude approximation, yielding a playable game.
 */
-	static UINT8 old_scroll;
 	int old_row = old_scroll/8;
 	int new_row = new_scroll/8;
 	int i;
@@ -149,6 +150,13 @@ int ninjakid_vh_start( void ){
     fg_tilemap = tilemap_create( get_fg_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32 );
 	bg_tilemap = tilemap_create( get_bg_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,32,32 );
 	tilemap_set_transparent_pen( fg_tilemap,0 );
+
+	/* Save State Support */
+
+	state_save_register_UINT8 ("NK_Video", 0, "ninjakun_io_8000_ctrl", ninjakun_io_8000_ctrl, 4);
+	state_save_register_int   ("NK_Video", 0, "flipscreen", &flipscreen);
+	state_save_register_UINT8 ("NK_Video", 0, "old_scroll", &old_scroll, 1);
+
 	return 0;
 }
 

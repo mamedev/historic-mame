@@ -175,8 +175,7 @@ WRITE_HANDLER( bankp_out_w )
 	/* bits 2-3 unknown (2 is used) */
 
 	/* bit 4 controls NMI */
-	if (data & 0x10) interrupt_enable_w(0,1);
-	else interrupt_enable_w(0,0);
+	interrupt_enable_w(0,(data & 0x10)>>4);
 
 	/* bit 5 controls screen flip */
 	if ((data & 0x20) != flipscreen)

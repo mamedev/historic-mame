@@ -8,6 +8,7 @@
 #include "osdepend.h"
 #include "mame.h"
 #include "driver.h"
+#include "zlib.h"
 
 /* Save state file format:
  *
@@ -90,7 +91,6 @@ static unsigned char *ss_dump_array;
 static void *ss_dump_file;
 static unsigned int ss_dump_size;
 
-extern unsigned int crc32 (unsigned int crc, const char *buf, unsigned int len);
 
 static UINT32 ss_get_signature(void)
 {
@@ -136,7 +136,7 @@ static UINT32 ss_get_signature(void)
 	}
 
 	// Pass 3 : Compute the crc32
-	signature = crc32(0, info, size);
+	signature = crc32(0, (unsigned char *)info, size);
 
 	free(info);
 	return signature;
@@ -183,7 +183,10 @@ static ss_module *ss_get_module(const char *name)
 		mp = &((*mp)->next);
 	}
 	*mp = malloc(sizeof(ss_module));
-	(*mp)->name = strdup(name);
+	if (*mp == NULL) return NULL;
+	(*mp)->name = malloc (strlen (name) + 1);
+	if ((*mp)->name == NULL) return NULL;
+	strcpy ((*mp)->name, name);
 	(*mp)->next = m;
 	for(i=0; i<MAX_INSTANCES; i++)
 		(*mp)->instances[i] = 0;
@@ -206,7 +209,10 @@ static ss_entry *ss_register_entry(const char *module, int instance, const char 
 		ep = &((*ep)->next);
 	}
 	*ep = malloc(sizeof(ss_entry));
-	(*ep)->name   = strdup(name);
+	if (*ep == NULL) return NULL;
+	(*ep)->name = malloc (strlen (name) + 1);
+	if ((*ep)->name == NULL) return NULL;
+	strcpy ((*ep)->name, name);
 	(*ep)->next   = e;
 	(*ep)->type   = type;
 	(*ep)->data   = data;
@@ -271,15 +277,20 @@ static void ss_register_func(ss_func **root, void (*func)(void))
 	ss_func *next = *root;
 	while (next)
 	{
-		if (next->func == func)
+		if (next->func == func && next->tag == ss_current_tag)
 		{
-			logerror("Duplicate save state function (0x%x)\n", func);
-			return;
+			logerror("Duplicate save state function (%d, 0x%x)\n", ss_current_tag, func);
+			exit(1);
 		}
 		next = next->next;
 	}
 	next = *root;
 	*root = malloc(sizeof(ss_func));
+	if (*root == NULL)
+	{
+		logerror ("malloc failed in ss_register_func\n");
+		return;
+	}
 	(*root)->next = next;
 	(*root)->func = func;
 	(*root)->tag  = ss_current_tag;
@@ -368,6 +379,10 @@ void state_save_save_begin(void *file)
 
 	TRACE(logerror("   total size %u\n", ss_dump_size));
 	ss_dump_array = malloc(ss_dump_size);
+	if (ss_dump_array == NULL)
+	{
+		logerror ("malloc failed in state_save_save_begin\n");
+	}
 }
 
 void state_save_save_continue(void)

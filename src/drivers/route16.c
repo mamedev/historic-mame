@@ -424,4 +424,4 @@ GAME( 1981, route16,  0,        route16,  route16,  route16,  ROT270, "Tehkan/Su
 GAME( 1981, route16b, route16,  route16,  route16,  route16b, ROT270, "bootleg", "Route 16 (bootleg)" )
 GAME( 1980, stratvox, 0,        stratvox, stratvox, stratvox, ROT270, "Taito", "Stratovox" )
 GAME( 1980, stratvxb, stratvox, stratvox, stratvox, stratvox, ROT270, "bootleg", "Stratovox (bootleg)" )
-GAME( ????, speakres, stratvox, stratvox, stratvox, stratvox, ROT270, "<unknown>", "Speak & Rescue" )
+GAME( 19??, speakres, stratvox, stratvox, stratvox, stratvox, ROT270, "<unknown>", "Speak & Rescue" )

@@ -1999,24 +1999,22 @@ WRITE16_HANDLER( paletteram16_xrgb_word_w )
 }
 
 
-/* obsolete, will be removed */
-READ_HANDLER( paletteram_word_r )
+INLINE void changecolor_RRRRGGGGBBBBRGBx(int color,int data)
 {
-	return READ_WORD(&paletteram[offset]);
+	int r,g,b;
+
+	r = ((data >> 11) & 0x1e) | ((data>>3) & 0x01);
+	g = ((data >>  7) & 0x1e) | ((data>>2) & 0x01);
+	b = ((data >>  3) & 0x1e) | ((data>>1) & 0x01);
+	r = (r<<3) | (r>>2);
+	g = (g<<3) | (g>>2);
+	b = (b<<3) | (b>>2);
+
+	palette_change_color(color,r,g,b);
 }
 
-READ_HANDLER( paletteram_2_word_r )
+WRITE16_HANDLER( paletteram16_RRRRGGGGBBBBRGBx_word_w )
 {
-	return READ_WORD(&paletteram_2[offset]);
+	COMBINE_DATA(&paletteram16[offset]);
+	changecolor_RRRRGGGGBBBBRGBx(offset,paletteram16[offset]);
 }
-
-WRITE_HANDLER( paletteram_BBBBGGGGRRRRxxxx_word_w ) { }
-WRITE_HANDLER( paletteram_xxxxBBBBGGGGRRRR_word_w ) { }
-WRITE_HANDLER( paletteram_xxxxRRRRGGGGBBBB_word_w ) { }
-WRITE_HANDLER( paletteram_RRRRGGGGBBBBxxxx_word_w ) { }
-WRITE_HANDLER( paletteram_xBBBBBGGGGGRRRRR_word_w ) { }
-WRITE_HANDLER( paletteram_xRRRRRGGGGGBBBBB_word_w ) { }
-WRITE_HANDLER( paletteram_xGGGGGRRRRRBBBBB_word_w ) { }
-WRITE_HANDLER( paletteram_RRRRRGGGGGBBBBBx_word_w ) { }
-WRITE_HANDLER( paletteram_IIIIRRRRGGGGBBBB_word_w ) { }
-WRITE_HANDLER( paletteram_RRRRGGGGBBBBIIII_word_w ) { }

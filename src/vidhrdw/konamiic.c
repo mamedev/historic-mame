@@ -6,6 +6,7 @@ TODO:
 - Implement shadows properly. Moreover, in chqflag and ssriders they are
   highlights, not shadows.
 - scrollcontrol = 30 in Golfing Greats (leader board)
+- detatwin: sprites are left on screen during attract mode
 
 
                       Emulated
@@ -48,7 +49,8 @@ Rack 'Em Up /       GX765*1987    6309 007342        007420               007327
 Haunted Castle      GX768*1988  052001           007121(x2)               007327
 Ajax / Typhoon      GX770*1987   6309+ 052109 051962 051960 051937  PROM  007327 051316 (zoom/rotation)
                                 052001
-Labyrinth Runner    GX771*1987    6309           007121                   007593 051733 (protection) 051550
+Labyrinth Runner /  GX771*1987    6309           007121                   007593 051733 (protection) 051550
+  Trick Trap
 Super Contra        GX775*1988  052001 052109 051962 051960 051937  PROM  007327
 Battlantis          GX777*1987    6309 007342        007420               007327 007324
 Vulcan Venture /    GX785*1988 2x68000           TWIN16
@@ -85,7 +87,7 @@ Rollergames         GX999*1991  053248 ------ ------ 053245 053244              
 Bells & Whistles /  GX060*1991   68000 052109 051962 053245 053244 053251        054000 (collision)
   Detana!! Twin Bee
 Golfing Greats      GX061*1991   68000 052109 051962 053245 053244 053251        053936 (3D)
-TMNT 2              GX063*1991   68000 052109 051962 053245 053244 053251        053990
+TMNT 2              GX063*1991   68000 052109 051962 053245 053244 053251        053990 051550
 Sunset Riders       GX064*1991   68000 052109 051962 053245 053244 053251        054358
 X-Men               GX065*1992   68000 052109 051962 053247 053246 053251        054539 (sound)
 XEXEX               GX067*1991   68000 054157 054156 053247 053246 053251        053250?("road") 054338 054539 (sound)
@@ -95,8 +97,8 @@ The Simpsons        GX072*1991  053248 052109 051962 053247 053246 053251
 Thunder Cross 2     GX073*1991   68000 052109 051962 051960 051937 053251        054000 (collision)
 Vendetta /          GX081*1991  053248 052109 051962 053247 053246 053251        054000 (collision)
   Crime Fighters 2
-Premier Soccer      GX101 1993   68000 052109 051962 053245 053244 053251        053936 (3D)
-Hexion              GX122+1992     Z80                                           052591 (protection) 053252(*)
+Premier Soccer      GX101+1993   68000 052109 051962 053245 053244 053251        053936 (3D) 054986
+Hexion              GX122*1992     Z80                                           052591 (protection) 053252(*)
 Entapous /          GX123+1993   68000 054157 054156 055673 053246               053252(*) 054000 055555
   Gaiapolis
 Mystic Warrior      GX128+1993   68000 054157 054156 055673 053246               054338 054539(x2) 053252(*) 055555
@@ -108,6 +110,8 @@ Lethal Enforcers    GX191+1992    6309 054157(x2) 054156 053245 053244(x2)      
 Metamorphic Force   GX224+1993
 Martial Champion    GX234+1993   68000 054157 054156 055673 053246               053252(*) 054338 054539 055555 053990 054986 054573
 Run and Gun         GX247+1993   68000               055673 053246               053253(x2) 054539(x2) 053252(*) 053936 (3D)
+Quiz Gakumon no     GX248*1993   68000 052109 051962 053245 053244 053251        053990 051550 - same board as TMNT2
+  Susume
 Polygonet CommandersGX305+1993   68020                                           056230?063936?054539?054986?
 
 
@@ -154,10 +158,11 @@ Sunset Riders       pass
 X-Men               pass
 The Simpsons        pass
 Thunder Cross 2     pass
-Vendetta            pass
 Xexex               pass
 Asterix             pass
 GiJoe				pass
+Vendetta            pass
+Hexion              pass
 
 
 THE FOLLOWING INFORMATION IS PRELIMINARY AND INACCURATE. DON'T RELY ON IT.
@@ -2792,7 +2797,7 @@ static int K053245_ramsize;
 static data16_t *K053245_ram, *K053245_buffer;
 static data8_t K053244_regs[0x10];
 
-int K053245_vh_start(int gfx_memory_region,int big,int plane0,int plane1,int plane2,int plane3,
+int K053245_vh_start(int gfx_memory_region,int plane0,int plane1,int plane2,int plane3,
 		void (*callback)(int *code,int *color,int *priority))
 {
 	int gfx_index;
@@ -2837,7 +2842,7 @@ int K053245_vh_start(int gfx_memory_region,int big,int plane0,int plane1,int pla
 	K053245_gfx = Machine->gfx[gfx_index];
 	K053245_callback = callback;
 	K053244_rombank = 0;
-	K053245_ramsize = big ? 0x1000 : 0x800;
+	K053245_ramsize = 0x800;
 	K053245_ram = malloc(K053245_ramsize);
 	if (!K053245_ram) return 1;
 
@@ -3004,7 +3009,7 @@ void K053244_bankselect(int bank)
 
 void K053245_sprites_draw(struct osd_bitmap *bitmap)
 {
-#define NUM_SPRITES 256
+#define NUM_SPRITES 128
 	int offs,pri_code;
 	int sortedlist[NUM_SPRITES];
 	int flipscreenX, flipscreenY, spriteoffsX, spriteoffsY;
@@ -3026,7 +3031,7 @@ void K053245_sprites_draw(struct osd_bitmap *bitmap)
 		}
 	}
 
-	for (pri_code = K053245_ramsize/16-1;pri_code >= 0;pri_code--)
+	for (pri_code = NUM_SPRITES-1;pri_code >= 0;pri_code--)
 	{
 		int ox,oy,color,code,size,w,h,x,y,flipx,flipy,mirrorx,mirrory,zoomx,zoomy,pri;
 
@@ -3960,7 +3965,6 @@ logerror("K051316_vh_start supports only 4, 7 and 8 bpp\n");
 	K051316_callback[chip] = callback;
 
 	K051316_tilemap[chip] = tilemap_create(K051316_get_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,16,16,32,32);
-	tilemap_set_depth(K051316_tilemap[chip], bpp, bpp);
 
 	K051316_ram[chip] = malloc(0x800);
 
@@ -3970,7 +3974,8 @@ logerror("K051316_vh_start supports only 4, 7 and 8 bpp\n");
 		return 1;
 	}
 
-	tilemap_set_clip(K051316_tilemap[chip],0);
+	tilemap_set_depth(K051316_tilemap[chip], bpp, bpp);
+	tilemap_set_clip(K051316_tilemap[chip],NULL);
 
 	K051316_wraparound[chip] = 0;	/* default = no wraparound */
 	K051316_offset[chip][0] = K051316_offset[chip][1] = 0;

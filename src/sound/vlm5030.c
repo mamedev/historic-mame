@@ -68,6 +68,7 @@ chirp 12-..: vokume   0   : silent
 */
 #include "driver.h"
 #include "vlm5030.h"
+#include <math.h>
 
 #define IP_SIZE 20		/* samples per interpolator */
 #define FR_SIZE 8		/* interpolator per frame   */
@@ -82,11 +83,27 @@ static int VLM5030_address_mask;
 static int VLM5030_address;
 static int pin_BSY;
 static int pin_ST;
+static int pin_VCU;
 static int pin_RST;
-static int latch_data = 0;
-static int sampling_mode;
+static int latch_data;
+static int VLM5030_param4800;
+static int VLM5030_param9600;
+/*
+  speed parameter
+SPC SPB SPA
+ 1   0   1  more slow (05h)
+ 1   1   x  slow      (06h,07h)
+ x   0   0  normal    (00h,04h)
+ 0   0   1  fast      (01h)
+ 0   1   x  more fast (02h,03h)
+*/
+static int VLM5030_paramSPeed;
+static int VLM5030_paramLowPitch;
+static int VLM5030_paramHighPitch;
 
-static int table_h;
+static int sampling_mode;
+static int vcu_addr_h;
+
 
 #define PH_RESET 0
 #define PH_IDLE  1
@@ -249,7 +266,7 @@ static int parse_frame (void)
 	/* normal frame */
 
 	new_pitch  = pitchtable[get_bits( 1,5)];
-	new_energy = energytable[get_bits( 6,5)] >> 6;
+	new_energy = energytable[get_bits( 6,5)];
 
 	/* 10 K's */
 	new_k[9] = k10table[get_bits(11,3)];
@@ -478,10 +495,13 @@ void VLM5030_RST (int pin )
 	if( pin_RST )
 	{
 		if( !pin )
-		{	/* H -> L : latch high address table */
+		{	/* H -> L : latch parameters */
 			pin_RST = 0;
-/*			table_h = latch_data * 256; */
-			table_h = 0;
+			VLM5030_param4800 = latch_data & 1;
+			VLM5030_param9600 = (latch_data>>1) &1;
+			VLM5030_paramSPeed = (latch_data>>2) &7;
+			VLM5030_paramLowPitch = (latch_data>>6) &1;
+			VLM5030_paramHighPitch = (latch_data>>7) &1;
 		}
 	}
 	else
@@ -494,6 +514,7 @@ void VLM5030_RST (int pin )
 				if( sampling_mode )
 					mixer_stop_sample( schannel );
 				phase = PH_RESET;
+				vcu_addr_h = 0;
 				pin_BSY = 0;
 			}
 		}
@@ -503,15 +524,15 @@ void VLM5030_RST (int pin )
 /* set VCU pin level : ?? unknown */
 void VLM5030_VCU(int pin)
 {
-	/* unknown */
-/*	intf->vcu = pin; */
+	/* direct mode / indirect mode */
+	pin_VCU = pin;
 	return;
 }
 
 /* set ST pin level  : set table address A0-A7 / start speech */
 void VLM5030_ST(int pin )
 {
-	int table = table_h | latch_data;
+	int table;
 
 	if( pin_ST != pin )
 	{
@@ -519,40 +540,61 @@ void VLM5030_ST(int pin )
 		if( !pin )
 		{	/* H -> L */
 			pin_ST = 0;
-			/* start speech */
 
-			if (Machine->sample_rate == 0)
-			{
-				pin_BSY = 0;
-				return;
-			}
-			/* set play mode samplingfile or emulate */
-			sampling_mode = check_samplefile(table/2);
-			if( !sampling_mode )
-			{
-				VLM5030_update();
-
-				logerror("VLM5030 %02X start adr=%04X\n",table/2,VLM5030_address );
-
-				/* docode mode */
-				VLM5030_address = (((int)VLM5030_rom[table&VLM5030_address_mask])<<8)
-				                |        VLM5030_rom[(table+1)&VLM5030_address_mask];
-				/* reset process status */
-				interp_count = sample_count = 0;
-				/* clear filter */
-				/* after 3 sampling start */
-				phase = PH_RUN;
+			if( pin_VCU )
+			{	/* direct access mode & address High */
+				vcu_addr_h = (latch_data<<8) + 0x01;
 			}
 			else
 			{
-				/* sampling mode */
-				int num = table>>1;
+				/* start speech */
+				if (Machine->sample_rate == 0)
+				{
+					pin_BSY = 0;
+					return;
+				}
+				/* check access mode */
+				if( vcu_addr_h )
+				{	/* direct access mode */
+					VLM5030_address = (vcu_addr_h&0xff00) + latch_data;
+					vcu_addr_h = 0;
+					/* can't use sample playback mode */
+					sampling_mode = 0;
+					table = -1; /* dummy */
+				}
+				else
+				{	/* indirect accedd mode */
+					table = (latch_data&0xfe) + ((latch_data&1)<<8);
+					VLM5030_address = (((int)VLM5030_rom[table&VLM5030_address_mask])<<8)
+					                |        VLM5030_rom[(table+1)&VLM5030_address_mask];
+					/* sample available flag */
+					sampling_mode = check_samplefile(table/2);
+				}
 
-				mixer_play_sample(schannel,
-					Machine->samples->sample[num]->data,
-					Machine->samples->sample[num]->length,
-					Machine->samples->sample[num]->smpfreq,
-					0);
+				/* set play mode samplingfile or emulate */
+				if( !sampling_mode )
+				{
+					VLM5030_update();
+
+					logerror("VLM5030 %02X start adr=%04X\n",table/2,VLM5030_address );
+
+					/* reset process status */
+					interp_count = sample_count = 0;
+					/* clear filter */
+					/* start after 3 sampling cycle */
+					phase = PH_RUN;
+				}
+				else
+				{
+					/* sample playback mode */
+					int num = table>>1;
+
+					mixer_play_sample(schannel,
+						Machine->samples->sample[num]->data,
+						Machine->samples->sample[num]->length,
+						Machine->samples->sample[num]->smpfreq,
+						0);
+				}
 			}
 		}
 		else
@@ -571,15 +613,25 @@ void VLM5030_ST(int pin )
 int VLM5030_sh_start(const struct MachineSound *msound)
 {
 	int emulation_rate;
+	int i;
 
 	intf = msound->sound_interface;
 
 	Machine->samples = readsamples(intf->samplenames,Machine->gamedrv->name);
 
 	emulation_rate = intf->baseclock / 440;
-	pin_BSY = pin_RST = pin_ST  = 0;
+	pin_BSY = pin_RST = pin_ST = pin_VCU= 0;
+	VLM5030_address = 0;
+	latch_data = 0;
+	/* reset parameters */
+	VLM5030_param4800 =
+	VLM5030_param9600 =
+	VLM5030_paramSPeed =
+	VLM5030_paramLowPitch =
+	VLM5030_paramHighPitch = 0;
+
+	vcu_addr_h = 0;
 	phase = PH_IDLE;
-/*	VLM5030_VCU(intf->vcu); */
 
 	VLM5030_rom = memory_region(intf->memory_region);
 	/* memory size */
@@ -594,37 +646,37 @@ int VLM5030_sh_start(const struct MachineSound *msound)
 
 	schannel = mixer_allocate_channel(intf->volume);
 
+	/* initialize energy table , 0.75dB step? */
+#define ENERGY_MAX 0x0fff
+	for(i=1;i<0x20;i++)
+		energytable[i] = ENERGY_MAX/pow(10,0.75*(0x1f-i)/20);
+	energytable[0] = 0;
+
+
 #if 1
-	{
-	int i;
-
-	/* initialize energy table */
-	for(i=0;i<0x20;i++)
-	{
-		energytable[i]=0x7fff*i/0x1f;
-	}
-
 	/* initialize filter table */
-	for(i=-0x40 ; i<0x40 ; i++)
+	for(i=-0x20 ; i<0x20 ; i++)
 	{
-		k1table[(i>=0) ? i : i+0x80] = i*K1_RANGE/0x40;
+		k1table[(i>=0) ? i : 0x40-i] = i*K1_RANGE/0x20;
 	}
+	for(i=-0x10 ; i<0x10 ; i++)
+	{
+		k2table[(i>=0) ? i : 0x20-i] = i*K2_RANGE/0x10;
+	}
+
 	for(i=-0x08 ; i<0x08 ; i++)
 	{
-		k2table[(i>=0) ? i : i+0x10] = i*K2_RANGE/0x08;
-		k3table[(i>=0) ? i : i+0x10] = i*K3_RANGE/0x08;
-		k4table[(i>=0) ? i : i+0x10] = i*K4_RANGE/0x08;
+		k3table[(i>=0) ? i : 0x10-i] = i*K3_RANGE/0x08;
+		k4table[(i>=0) ? i : 0x10-i] = i*K4_RANGE/0x08;
 	}
 	for(i=-0x04 ; i<0x04 ; i++)
 	{
-		k5table[(i>=0) ? i : i+0x08] = i*K5_RANGE/0x04;
-		k6table[(i>=0) ? i : i+0x08] = i*K6_RANGE/0x04;
-		k7table[(i>=0) ? i : i+0x08] = i*K7_RANGE/0x04;
-		k8table[(i>=0) ? i : i+0x08] = i*K8_RANGE/0x04;
-		k9table[(i>=0) ? i : i+0x08] = i*K9_RANGE/0x04;
-		k10table[(i>=0) ? i : i+0x08] = i*K10_RANGE/0x04;
-	}
-
+		k5table[(i>=0) ? i : 0x08-i] = i*K5_RANGE/0x04;
+		k6table[(i>=0) ? i : 0x08-i] = i*K6_RANGE/0x04;
+		k7table[(i>=0) ? i : 0x08-i] = i*K7_RANGE/0x04;
+		k8table[(i>=0) ? i : 0x08-i] = i*K8_RANGE/0x04;
+		k9table[(i>=0) ? i : 0x08-i] = i*K9_RANGE/0x04;
+		k10table[(i>=0) ? i : 0x08-i] = i*K10_RANGE/0x04;
 	}
 #endif
 	return 0;

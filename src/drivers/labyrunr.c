@@ -280,6 +280,23 @@ static const struct MachineDriver machine_driver_labyrunr =
 
 ***************************************************************************/
 
+ROM_START( tricktrp )
+	ROM_REGION( 0x28000, REGION_CPU1, 0 ) /* code + banked roms */
+	ROM_LOAD( "771e04",     0x10000, 0x08000, 0xba2c7e20 )
+	ROM_CONTINUE(           0x08000, 0x08000 )
+	ROM_LOAD( "771e03",     0x18000, 0x10000, 0xd0d68036 )
+
+	ROM_REGION( 0x40000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD16_BYTE( "771e01a",	0x00000, 0x10000, 0x103ffa0d )	/* tiles + sprites */
+	ROM_LOAD16_BYTE( "771e01c",	0x00001, 0x10000, 0xcfec5be9 )
+	ROM_LOAD16_BYTE( "771d01b",	0x20000, 0x10000, 0x07f2a71c )
+	ROM_LOAD16_BYTE( "771d01d",	0x20001, 0x10000, 0xf6810a49 )
+
+	ROM_REGION( 0x0100, REGION_PROMS, 0 )
+	ROM_LOAD( "771d02.08d", 0x0000, 0x0100, 0x3d34bb5a )	/* sprite lookup table */
+															/* there is no char lookup table */
+ROM_END
+
 ROM_START( labyrunr )
 	ROM_REGION( 0x28000, REGION_CPU1, 0 ) /* code + banked roms */
 	ROM_LOAD( "771j04.10f", 0x10000, 0x08000, 0x354a41d0 )
@@ -296,4 +313,5 @@ ROM_END
 
 
 
-GAMEX( 1987, labyrunr, 0, labyrunr, labyrunr, 0, ROT90, "Konami", "Labyrinth Runner (Japan)", GAME_NOT_WORKING )
+GAMEX( 1987, tricktrp, 0,        labyrunr, labyrunr, 0, ROT90, "Konami", "Trick Trap (World?)", GAME_NOT_WORKING )
+GAMEX( 1987, labyrunr, tricktrp, labyrunr, labyrunr, 0, ROT90, "Konami", "Labyrinth Runner (Japan)", GAME_NOT_WORKING )

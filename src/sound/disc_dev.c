@@ -39,16 +39,16 @@ int dsd_ne555_step(struct node_description *node)
 	if((node->input_node0)->module==DSS_NULL || node->input0>0.7)
 	{
 		/* Non reset scenario */
-		
+
 		/* Check if the control voltage node is connected is it changes the threshold voltage */
 		if((node->input_node3)->module==DSS_NULL) node->input3=(node->input4*2.0)/3.0;
 
 		/* Work out the upper/lower comparator states */
-		upper=(node->input2>node->input3)?1:0;	
-		lower=(node->input1>(node->input3/2.0))?1:0;	
+		upper=(node->input2>node->input3)?1:0;
+		lower=(node->input1>(node->input3/2.0))?1:0;
 
 		/* Now what will the flip-flop do */
-		/* UPPER LOWER OUTPUT    OUTPUT'  */	
+		/* UPPER LOWER OUTPUT    OUTPUT'  */
 		/*   0     0     0          0     */
 		/*   0     0     1          1     */
 		/*   0     1     0          1     */
@@ -68,7 +68,7 @@ int dsd_ne555_step(struct node_description *node)
 		/* Reset mode */
 		context->flip_flop=0;
 	}
-	
+
 	/* Output is either Vcc or Zero */
 	node->output=(context->flip_flop)?node->input4:0;
 
@@ -79,7 +79,7 @@ int dsd_ne555_reset(struct node_description *node)
 {
 	struct dsd_ne555_context *context;
 	context=(struct dsd_ne555_context*)node->context;
-	context->flip_flop=0;	
+	context->flip_flop=0;
 	return 0;
 }
 
@@ -91,7 +91,7 @@ int dsd_ne555_init(struct node_description *node)
 	if((node->context=malloc(sizeof(struct dsd_ne555_context)))==NULL)
 	{
 		discrete_log("dsd_ne555_init() - Failed to allocate local context memory.");
-		return 1;			
+		return 1;
 	}
 	else
 	{
@@ -100,8 +100,8 @@ int dsd_ne555_init(struct node_description *node)
 	}
 
 	/* Initialise the object */
-	dsd_ne555_reset(node);		
-	return 0;	
+	dsd_ne555_reset(node);
+	return 0;
 }
 
 int dsd_ne555_kill(struct node_description *node)

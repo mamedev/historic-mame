@@ -5,6 +5,12 @@ Irem "M62" system
 TODO:
 - Kid Niki is missing the drums. There is an analog section in the sound board.
 
+Notes:
+- I believe that both kungfum bootlegs are derived from an Irem original which we
+  don't have (prototype/early revision?). They say "kanfu master" instead of
+  "kung-fu master" on the introduction screen.
+
+
 
 The following information is gathered from Kung Fu Master; the board was most
 likely modified for other games (or, not all the games in this driver are
@@ -1989,11 +1995,11 @@ ROM_END
 
 
 
-GAME( 1984, kungfum,  0,        kungfum,  kungfum,  0, ROT0,  "Irem", "Kung Fu Master" )
-GAME( 1984, kungfud,  kungfum,  kungfum,  kungfum,  0, ROT0,  "Irem (Data East license)", "Kung Fu Master (Data East)" )
+GAME( 1984, kungfum,  0,        kungfum,  kungfum,  0, ROT0,  "Irem", "Kung-Fu Master" )
+GAME( 1984, kungfud,  kungfum,  kungfum,  kungfum,  0, ROT0,  "Irem (Data East license)", "Kung-Fu Master (Data East)" )
 GAME( 1984, spartanx, kungfum,  kungfum,  kungfum,  0, ROT0,  "Irem", "Spartan X (Japan)" )
-GAME( 1984, kungfub,  kungfum,  kungfum,  kungfum,  0, ROT0,  "bootleg", "Kung Fu Master (bootleg set 1)" )
-GAME( 1984, kungfub2, kungfum,  kungfum,  kungfum,  0, ROT0,  "bootleg", "Kung Fu Master (bootleg set 2)" )
+GAME( 1984, kungfub,  kungfum,  kungfum,  kungfum,  0, ROT0,  "bootleg", "Kung-Fu Master (bootleg set 1)" )
+GAME( 1984, kungfub2, kungfum,  kungfum,  kungfum,  0, ROT0,  "bootleg", "Kung-Fu Master (bootleg set 2)" )
 GAME( 1984, battroad, 0,        battroad, battroad, 0, ROT90, "Irem", "The Battle-Road" )
 GAME( 1984, ldrun,    0,        ldrun,    ldrun,    0, ROT0,  "Irem (licensed from Broderbund)", "Lode Runner (set 1)" )
 GAME( 1984, ldruna,   ldrun,    ldrun,    ldrun,    0, ROT0,  "Irem (licensed from Broderbund)", "Lode Runner (set 2)" )

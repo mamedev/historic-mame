@@ -376,7 +376,8 @@ static struct GfxLayout spritelayout =
 	RGN_FRAC(1,8),
 	4,
 	{ RGN_FRAC(3,4), RGN_FRAC(2,4), RGN_FRAC(1,4), RGN_FRAC(0,4) },
-	{ STEP8(RGN_FRAC(1,8)+7,-1), STEP8(7,-1) },
+	{ RGN_FRAC(1,8)+7, RGN_FRAC(1,8)+6, RGN_FRAC(1,8)+5, RGN_FRAC(1,8)+4, RGN_FRAC(1,8)+3, RGN_FRAC(1,8)+2, RGN_FRAC(1,8)+1, RGN_FRAC(1,8)+0,
+			7, 6, 5, 4, 3, 2, 1, 0 },
 	{ 0 },
 	8
 };

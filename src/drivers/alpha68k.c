@@ -2058,6 +2058,28 @@ ROM_START( skyadvnu )
 	ROM_LOAD( "sachr0",         0x1e0000, 0x80000, 0xe281b204 )
 ROM_END
 
+ROM_START( skyadvnj )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "saj1.c19",  0x00000,  0x20000, 0x662cb4b8 )
+	ROM_LOAD16_BYTE( "saj2.e19",  0x00001,  0x20000, 0x06d6130a )
+
+	ROM_REGION( 0x90000, REGION_CPU2, 0 )	/* Sound CPU */
+	ROM_LOAD( "sa.3",           0x00000,  0x08000, 0x3d0b32e0 )
+	ROM_CONTINUE(               0x18000,  0x08000 )
+	ROM_LOAD( "sa.4",           0x30000,  0x10000, 0xc2e3c30c )
+	ROM_LOAD( "sa.5",           0x50000,  0x10000, 0x11cdb868 )
+	ROM_LOAD( "sa.6",           0x70000,  0x08000, 0x237d93fd )
+
+	ROM_REGION( 0x020000, REGION_GFX1, ROMREGION_DISPOSE )	/* chars */
+	ROM_LOAD( "sa.7",           0x000000, 0x08000, 0xea26e9c5 )
+
+	ROM_REGION( 0x280000, REGION_GFX2, ROMREGION_DISPOSE )	/* sprites */
+	ROM_LOAD( "sachr3",         0x000000, 0x80000, 0xa986b8d5 )
+	ROM_LOAD( "sachr2",         0x0a0000, 0x80000, 0x504b07ae )
+	ROM_LOAD( "sachr1",         0x140000, 0x80000, 0xe734dccd )
+	ROM_LOAD( "sachr0",         0x1e0000, 0x80000, 0xe281b204 )
+ROM_END
+
 ROM_START( gangwars )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 )
 	ROM_LOAD16_BYTE( "u1",        0x00000, 0x20000, 0x11433507 )
@@ -2342,8 +2364,9 @@ GAME( 1987, btlfield, timesold, alpha68k_II,   btlfield, btlfield, ROT90,      "
 GAME( 1988, skysoldr, 0,        alpha68k_II,   skysoldr, skysoldr, ROT90,      "SNK / Romstar", "Sky Soldiers (US)" )
 GAMEX(1988, goldmedl, 0,        alpha68k_II,   goldmedl, goldmedl, ROT0,       "SNK", "Gold Medalist", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
 GAMEX(1988, goldmedb, goldmedl, alpha68k_II,   goldmedl, goldmedb, ROT0,       "bootleg", "Gold Medalist (bootleg)", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
-GAME( 1989, skyadvnt, 0,        alpha68k_V,    skyadvnt, skyadvnt, ROT90,      "Alpha Denshi Co.", "Sky Adventure (Japan)" )
+GAME( 1989, skyadvnt, 0,        alpha68k_V,    skyadvnt, skyadvnt, ROT90,      "Alpha Denshi Co.", "Sky Adventure (World)" )
 GAME( 1989, skyadvnu, skyadvnt, alpha68k_V,    skyadvnt, skyadvnu, ROT90,      "Alpha Denshi Co. (SNK of America license)", "Sky Adventure (US)" )
+GAME( 1989, skyadvnj, skyadvnt, alpha68k_V,    skyadvnt, skyadvnt, ROT90,      "Alpha Denshi Co.", "Sky Adventure (Japan)" )
 GAME( 1989, gangwars, 0,        alpha68k_V,    gangwars, gangwars, ROT0_16BIT, "Alpha Denshi Co.", "Gang Wars (US)" )
 GAME( 1989, gangwarb, gangwars, alpha68k_V,    gangwars, gangwars, ROT0_16BIT, "bootleg", "Gang Wars (bootleg)" )
 GAMEX(1989, sbasebal, 0,        alpha68k_V_sb, sbasebal, sbasebal, ROT0,       "Alpha Denshi Co. (SNK of America license)", "Super Champion Baseball", GAME_NO_COCKTAIL )

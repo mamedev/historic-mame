@@ -19,6 +19,15 @@ WRITE_HANDLER( YM2413_data_port_1_w );
 WRITE_HANDLER( YM2413_data_port_2_w );
 WRITE_HANDLER( YM2413_data_port_3_w );
 
+WRITE16_HANDLER( YM2413_register_port_0_lsb_w );
+WRITE16_HANDLER( YM2413_register_port_1_lsb_w );
+WRITE16_HANDLER( YM2413_register_port_2_lsb_w );
+WRITE16_HANDLER( YM2413_register_port_3_lsb_w );
+WRITE16_HANDLER( YM2413_data_port_0_lsb_w );
+WRITE16_HANDLER( YM2413_data_port_1_lsb_w );
+WRITE16_HANDLER( YM2413_data_port_2_lsb_w );
+WRITE16_HANDLER( YM2413_data_port_3_lsb_w );
+
 int YM2413_sh_start (const struct MachineSound *msound);
 void YM2413_sh_stop (void);
 void YM2413_sh_reset (void);

@@ -18,8 +18,8 @@ The 6809 NMI is used for sound timing.
 					bit 4 - coin counter B
 4800	 	 W	sound latch write
 4900	 	 W  copy sound latch to SN76496
-4a00	 	 W  VLM5030 write
-4b00	 	 W  VLM5030 start
+4a00	 	 W  VLM5030 control
+4b00	 	 W  VLM5030 data
 4c00		R   DSW #0
 4d00		R   DSW #1
 4e00		R   IN #0
@@ -66,17 +66,15 @@ WRITE_HANDLER( konami_SN76496_0_w );
 
 static READ_HANDLER( yiear_speech_r )
 {
-	return rand();
-	/* maybe bit 0 is VLM5030 busy pin??? */
 	if (VLM5030_BSY()) return 1;
 	else return 0;
 }
 
-static WRITE_HANDLER( yiear_speech_st_w )
+static WRITE_HANDLER( yiear_VLM5030_control_w )
 {
-	/* no idea if this is correct... */
-	VLM5030_ST( 1 );
-	VLM5030_ST( 0 );
+	/* bit 0 is latch direction */
+	VLM5030_ST( ( data >> 1 ) & 1 );
+	VLM5030_RST( ( data >> 2 ) & 1 );
 }
 
 
@@ -96,8 +94,8 @@ static MEMORY_WRITE_START( writemem )
 	{ 0x4000, 0x4000, yiear_control_w },
 	{ 0x4800, 0x4800, konami_SN76496_latch_w },
 	{ 0x4900, 0x4900, konami_SN76496_0_w },
-	{ 0x4a00, 0x4a00, VLM5030_data_w },
-	{ 0x4b00, 0x4b00, yiear_speech_st_w },
+	{ 0x4a00, 0x4a00, yiear_VLM5030_control_w },
+	{ 0x4b00, 0x4b00, VLM5030_data_w },
 	{ 0x4f00, 0x4f00, watchdog_reset_w },
 	{ 0x5000, 0x502f, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x5030, 0x53ff, MWA_RAM },
@@ -152,13 +150,12 @@ INPUT_PORTS_START( yiear )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x08, "30000 80000" )
 	PORT_DIPSETTING(    0x00, "40000 90000" )
-	PORT_DIPNAME( 0x10, 0x10, "Unknown DSW1 4" )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, "Difficulty?" )
-	PORT_DIPSETTING(    0x20, "Easy" )
-	PORT_DIPSETTING(    0x00, "Hard" )
-	PORT_DIPNAME( 0x40, 0x40, "Unknown DSW1 6" )
+	PORT_DIPNAME( 0x30, 0x10, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x30, "Easy" )
+	PORT_DIPSETTING(    0x10, "Normal" )
+	PORT_DIPSETTING(    0x20, "Difficult" )
+	PORT_DIPSETTING(    0x00, "Very Difficult" )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
@@ -173,21 +170,10 @@ INPUT_PORTS_START( yiear )
 	PORT_DIPSETTING(    0x02, "1" )
 	PORT_DIPSETTING(    0x00, "2" )
 	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
-	PORT_DIPNAME( 0x08, 0x08, "Unknown DSW2 4" )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, "Unknown DSW2 5" )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, "Unknown DSW2 6" )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, "Unknown DSW2 7" )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, "Unknown DSW2 8" )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* DSW2 */
 	PORT_DIPNAME( 0x0f, 0x0f, DEF_STR( Coin_A ) )
@@ -223,33 +209,33 @@ INPUT_PORTS_START( yiear )
 	PORT_DIPSETTING(    0xb0, DEF_STR( 1C_5C ) )
 	PORT_DIPSETTING(    0xa0, DEF_STR( 1C_6C ) )
 	PORT_DIPSETTING(    0x90, DEF_STR( 1C_7C ) )
-	/* 0x00 gives invalid */
+//	PORT_DIPSETTING(    0x00, "Invalid" )
 INPUT_PORTS_END
 
 
 
 static struct GfxLayout charlayout =
 {
-	8,8,	/* 8x8 characters */
-	512,	/* 512 characters */
-	4,		/* 4 bits per pixel */
-	{ 4, 0, 512*16*8+4, 512*16*8+0 },	/* plane offsets */
+	8,8,
+	RGN_FRAC(1,2),
+	4,
+	{ 4, 0, RGN_FRAC(1,2)+4, RGN_FRAC(1,2)+0 },
 	{ 0, 1, 2, 3, 8*8+0, 8*8+1, 8*8+2, 8*8+3 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	16*8	/* each character takes 16 bytes */
+	16*8
 };
 
 static struct GfxLayout spritelayout =
 {
-	16,16,	/* 16x16 sprites */
-	512,	/* 512 sprites */
-	4,		/* 4 bits per pixel */
-	{ 4, 0, 512*64*8+4, 512*64*8+0 },	/* plane offsets */
+	16,16,
+	RGN_FRAC(1,2),
+	4,
+	{ 4, 0, RGN_FRAC(1,2)+4, RGN_FRAC(1,2)+0 },
 	{ 0*8*8+0, 0*8*8+1, 0*8*8+2, 0*8*8+3, 1*8*8+0, 1*8*8+1, 1*8*8+2, 1*8*8+3,
 	  2*8*8+0, 2*8*8+1, 2*8*8+2, 2*8*8+3, 3*8*8+0, 3*8*8+1, 3*8*8+2, 3*8*8+3 },
 	{  0*8,  1*8,  2*8,  3*8,  4*8,  5*8,  6*8,  7*8,
 	  32*8, 33*8, 34*8, 35*8, 36*8, 37*8, 38*8, 39*8 },
-	64*8    /* each sprite takes 64 bytes */
+	64*8
 };
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
@@ -264,7 +250,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 struct SN76496interface sn76496_interface =
 {
 	1,			/* 1 chip */
-	{ 1500000 },	/*  1.5 MHz ? (hand tuned) */
+	{ 18432000/12 },	/*  1.536 MHz */
 	{ 100 }
 };
 
@@ -274,7 +260,6 @@ struct VLM5030interface vlm5030_interface =
 	100,        /* volume        */
 	REGION_SOUND1,	/* memory region  */
 	0,          /* memory size of speech rom */
-	0			/* VCU            */
 };
 
 
@@ -285,7 +270,7 @@ static const struct MachineDriver machine_driver_yiear =
 	{
 		{
 			CPU_M6809,
-			1250000,	/* 1.25 MHz */
+			18432000/16,	/* ???? */
 			readmem, writemem, 0, 0,
 			interrupt,1,	/* vblank */
 			yiear_nmi_interrupt,500	/* music tempo (correct frequency unknown) */

@@ -12,31 +12,38 @@ void shangkid_vh_convert_color_prom( unsigned char *palette,unsigned short *colo
 {
 	int i;
 	int bit0,bit1,bit2,bit3;
-	int intensity;
+	int bit4,bit5,bit6;
 
 	for( i = 0; i<256; i++ )
 	{
-		intensity = color_prom[0x300+i]; /* ? */
-
 		colortable[i] = i;
+		bit4 = (color_prom[0x300+i]>>2)&0x01;
+		bit5 = (color_prom[0x300+i]>>1)&0x01;
+		bit6 = (color_prom[0x300+i]>>0)&0x01;
 
 		bit0 = (color_prom[0x000+i] >> 0) & 0x01;
 		bit1 = (color_prom[0x000+i] >> 1) & 0x01;
 		bit2 = (color_prom[0x000+i] >> 2) & 0x01;
 		bit3 = (color_prom[0x000+i] >> 3) & 0x01;
-		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		*palette++ = bit3*0x80+bit2*0x40+bit1*0x20+bit0*0x10+
+			bit4*0x08+bit5+0x04+bit6*0x02;
+//		*(palette++) = (0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3)*intensity/7;
 
 		bit0 = (color_prom[0x100+i] >> 0) & 0x01;
 		bit1 = (color_prom[0x100+i] >> 1) & 0x01;
 		bit2 = (color_prom[0x100+i] >> 2) & 0x01;
 		bit3 = (color_prom[0x100+i] >> 3) & 0x01;
-		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		*palette++ = bit3*0x80+bit2*0x40+bit1*0x20+bit0*0x10+
+			bit4*0x08+bit5+0x04+bit6*0x02;
+//		*(palette++) = (0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3)*intensity/7;
 
 		bit0 = (color_prom[0x200+i] >> 0) & 0x01;
 		bit1 = (color_prom[0x200+i] >> 1) & 0x01;
 		bit2 = (color_prom[0x200+i] >> 2) & 0x01;
 		bit3 = (color_prom[0x200+i] >> 3) & 0x01;
-		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		*palette++ = bit3*0x80+bit2*0x40+bit1*0x20+bit0*0x10+
+			bit4*0x08+bit5+0x04+bit6*0x02;
+//		*(palette++) = (0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3)*intensity/7;
 	}
 }
 
@@ -81,15 +88,6 @@ int shangkid_vh_start( void )
 
 void shangkid_vh_stop( void )
 {
-/* (debug proms)
-	int i;
-	for( i=0x300; i<0xa80; i++ )
-	{
-		if( (i&0xf)==0 ) logerror( "\n %04x: ", i );
-		logerror( "%02x ", memory_region( REGION_PROMS )[i] );
-	}
-	logerror( "\n" );
-*/
 }
 
 WRITE_HANDLER( shangkid_videoram_w )
@@ -121,10 +119,15 @@ static void draw_sprite( const UINT8 *source, struct osd_bitmap *bitmap ){
 	int color		= source[6]&0x3f;
 	int xscale		= source[7]&0x07;	/* 0x0 = smallest; 0x7 = biggest */
 
+	/* adjust placement for small sprites */
+	if( xsize==0 && xflip ) xpos -= 16;
+	if( ysize==0 && yflip==0 ) ypos += 16;
+
 	if( shangkid_gfx_type == 1 )
 	{
 		/* Shanghai Kid */
-		switch( bank&0x30 ){
+		switch( bank&0x30 )
+		{
 		case 0x00:
 		case 0x10:
 			tile += 0x40*(bank&0xf);
@@ -165,13 +168,16 @@ static void draw_sprite( const UINT8 *source, struct osd_bitmap *bitmap ){
 	width = (xscale+1)*2;
 	height = (yscale+1)*2;
 
+	/* center zoomed sprites */
+	xpos += (16-width)*(xsize+1)/2;
+	ypos += (16-height)*(ysize+1)/2;
+
 	for( r=0; r<=ysize; r++ )
 	{
 		for( c=0; c<=xsize; c++ )
 		{
 			sx = xpos+(c^xflip)*width;
 			sy = ypos+(r^yflip)*height;
-
 			drawgfxzoom(
 				bitmap,
 				gfx,
@@ -209,4 +215,101 @@ void shangkid_screenrefresh( struct osd_bitmap *bitmap, int fullfresh )
 	tilemap_draw( bitmap,background,0,0 );
 	draw_sprites( bitmap );
 	tilemap_draw( bitmap,background,1,0 ); /* high priority tiles */
+}
+
+
+
+
+static void dynamski_draw_background( struct osd_bitmap *bitmap, int pri )
+{
+	int i;
+	int sx,sy;
+	int tile;
+	int attr;
+	int temp;
+	struct rectangle *clip = &Machine->visible_area;
+
+	int transparency = pri?TRANSPARENCY_PEN:TRANSPARENCY_NONE;
+
+	for( i=0; i<0x400; i++ )
+	{
+		sx = (i%32)*8;
+		sy = (i/32)*8;
+
+		if( sy<16 )
+		{
+			temp = sx;
+			sx = sy+256+16;
+			sy = temp;
+		}
+		else if( sy>=256-16 )
+		{
+			temp = sx;
+			sx = sy-256+16;
+			sy = temp;
+		}
+		else
+		{
+			sx+=16;
+		}
+
+		tile = videoram[i];
+		attr = videoram[i+0x400];
+		/*
+			x---.----	priority?
+			-xx-.----	bank
+		*/
+		if( pri==0 || (attr>>7)==pri )
+		{
+			tile += ((attr>>5)&0x3)*256;
+			drawgfx(
+				bitmap,
+				Machine->gfx[0],
+				tile,
+				0, /* color */
+				0,0,//xflip,yflip,
+				sx,sy,
+				clip,
+				transparency,3 );
+		}
+	}
+}
+
+static void dynamski_draw_sprites( struct osd_bitmap *bitmap )
+{
+	int i;
+	int sx,sy;
+	int tile;
+	int bank;
+	int attr;
+	int color;
+	struct rectangle *clip = &Machine->visible_area;
+	for( i=0x7e; i>=0x00; i-=2 )
+	{
+		bank = videoram[0x1b80+i];
+		attr = videoram[0x1b81+i];
+		tile = videoram[0xb80+i];
+		color = videoram[0xb81+i];
+		sy = 240-videoram[0x1380+i];
+
+		sx = videoram[0x1381+i]-64+8+16;
+		if( attr&1 ) sx += 0x100;
+
+		drawgfx(
+				bitmap,
+				Machine->gfx[1],
+				bank*0x40 + (tile&0x3f),
+				color,
+				tile&0x80,tile&0x40, /* flipx,flipy */
+				sx,sy,
+				clip,
+				TRANSPARENCY_PEN,3 );
+	}
+}
+
+void dynamski_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh )
+{
+	dynamski_draw_background( bitmap, 0 );
+	dynamski_draw_sprites( bitmap );
+	dynamski_draw_background( bitmap, 1 );
 }

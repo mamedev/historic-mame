@@ -7,6 +7,7 @@ driver by Jarek Burczynski
 ***************************************************************************/
 
 #include "driver.h"
+#include "state.h"
 #include "vidhrdw/generic.h"
 #include "vidhrdw/taitoic.h"
 #include "sndhrdw/taitosnd.h"
@@ -23,6 +24,8 @@ void rastan_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 WRITE_HANDLER( rastan_adpcm_trigger_w );
 WRITE_HANDLER( rastan_c000_w );
 WRITE_HANDLER( rastan_d000_w );
+
+static int banknum = -1;
 
 
 static int rastan_interrupt(void)
@@ -75,13 +78,15 @@ static MEMORY_WRITE16_START( rastan_writemem )
 MEMORY_END
 
 
+static void reset_sound_region(void)
+{
+	cpu_setbank( 5, memory_region(REGION_CPU2) + (banknum * 0x4000) + 0x10000 );
+}
+
 static WRITE_HANDLER( rastan_bankswitch_w )
 {
-	int bankaddress;
-	unsigned char *RAM = memory_region(REGION_CPU2);
-
-	bankaddress = 0x10000 + ((data^1) & 0x01) * 0x4000;
-	cpu_setbank(5,&RAM[bankaddress]);
+	banknum = (data ^1) & 0x01;
+	reset_sound_region();
 }
 
 static MEMORY_READ_START( rastan_s_readmem )
@@ -496,9 +501,15 @@ ROM_START( rastsaga )
 ROM_END
 
 
+static void init_rastan(void)
+{
+	state_save_register_int("sound", 0, "sound region", &banknum);
+	state_save_register_func_postload(reset_sound_region);
+}
 
-GAME( 1987, rastan,   0,      rastan, rastan,   0, ROT0, "Taito Corporation Japan", "Rastan (World)")
+
+GAME( 1987, rastan,   0,      rastan, rastan,   rastan, ROT0, "Taito Corporation Japan", "Rastan (World)")
 /* IDENTICAL to rastan, only difference is copyright notice and Coin B coinage */
-GAME( 1987, rastanu,  rastan, rastan, rastsaga, 0, ROT0, "Taito America Corporation", "Rastan (US set 1)")
-GAME( 1987, rastanu2, rastan, rastan, rastsaga, 0, ROT0, "Taito America Corporation", "Rastan (US set 2)")
-GAME( 1987, rastsaga, rastan, rastan, rastsaga, 0, ROT0, "Taito Corporation", "Rastan Saga (Japan)")
+GAME( 1987, rastanu,  rastan, rastan, rastsaga, rastan, ROT0, "Taito America Corporation", "Rastan (US set 1)")
+GAME( 1987, rastanu2, rastan, rastan, rastsaga, rastan, ROT0, "Taito America Corporation", "Rastan (US set 2)")
+GAME( 1987, rastsaga, rastan, rastan, rastsaga, rastan, ROT0, "Taito Corporation", "Rastan Saga (Japan)")

@@ -53,7 +53,7 @@ int rollerg_vh_start(void)
 	sprite_colorbase = 16;
 	zoom_colorbase = 0;
 
-	if (K053245_vh_start(REGION_GFX1,0,NORMAL_PLANE_ORDER,sprite_callback))
+	if (K053245_vh_start(REGION_GFX1,NORMAL_PLANE_ORDER,sprite_callback))
 		return 1;
 	if (K051316_vh_start_0(REGION_GFX2,4,zoom_callback))
 	{

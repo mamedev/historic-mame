@@ -382,7 +382,6 @@ struct VLM5030interface trackfld_vlm5030_interface =
 	255,        /* volume        */
 	REGION_SOUND1,	/* memory region  */
 	0,         /* memory size    */
-	0,         /* VCU            */
 	trackfld_sample_names
 };
 

@@ -53,7 +53,7 @@ int dst_rcfilter_init(struct node_description *node)
 	node->input5=-1.0/(node->input2*node->input3*Machine->sample_rate);
 	/* Initialise the object */
 	dst_rcfilter_reset(node);
-	return 0;	
+	return 0;
 }
 
 

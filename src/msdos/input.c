@@ -15,6 +15,7 @@ static int mouse_button_2; /* OptiMAME mouse extension */
 
 int joystick;
 int use_hotrod;
+int steadykey;
 
 
 
@@ -205,7 +206,8 @@ int osd_is_key_pressed(int keycode)
 		return res;
 	}
 
-	return currkey[keycode];
+    if(steadykey) return currkey[keycode];
+	else return key[keycode];
 }
 
 

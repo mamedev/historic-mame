@@ -38,7 +38,7 @@
 enum {
 	M4510_PC=1, M4510_S, M4510_P, M4510_A, M4510_X, M4510_Y,
 	M4510_Z, M4510_B, M4510_EA, M4510_ZP,
-	M4510_NMI_STATE, M4510_IRQ_STATE, 
+	M4510_NMI_STATE, M4510_IRQ_STATE,
 	M4510_MEM_LOW,M4510_MEM_HIGH,
 	M4510_MEM0, M4510_MEM1, M4510_MEM2, M4510_MEM3,
 	M4510_MEM4, M4510_MEM5, M4510_MEM6, M4510_MEM7
@@ -54,6 +54,7 @@ enum {
 
 extern int m4510_ICount;				/* cycle count */
 
+extern void m4510_init(void);
 extern void m4510_reset(void *param);
 extern void m4510_exit(void);
 extern int	m4510_execute(int cycles);

@@ -5,49 +5,49 @@
 				driver by	Luca Elia (eliavit@unina.it)
 
 
-To enter service mode in some games hit 5+F3.
+To enter service mode in some games press service1+F3.
 
 
-Game						Year	System	Dumped by			Supported ?
----------------------------------------------------------------------------
-64th Street  (World) /		1991	C		AraCORN 		*	Yes
-64th Street  (Japan)		1991	C		J-Rom	 		*	Yes
-Astyanax          (World) /	1989	A		-				*	Yes (encrypted)
-The Lord of King  (Japan)	1989	A	 	J-Rom			*	Yes (encrypted)
-Avenging Spirit (World) /	1991	B		AraCORN 		*	Yes
-Phantasm        (Japan)		1990	A		J-Rom 			*	Yes (encrypted)
-Big Striker					1992	C		ShinobiZ & COY	*	Yes
-Chimera Beast				1993	C		J-Rom	 		*	Yes
-Cybattler					1993	C		AraCORN			*	Yes
-Earth Defense Force			1991	B		AraCORN			*	Yes
-Hachoo!						1989	A		AraCORN 		*	Yes (encrypted)
-Iga Ninjyutsuden (Japan)	1988	A		J-Rom			*	Yes (encrypted)
-Kick Off (Japan)			1988	A		AraCORN			*	Yes
-Legend of Makai (World) /	1988	Z		AraCORN				Yes
-Makai Densetsu  (Japan)		1988	Z		-					Yes
-P-47  (World) /				1988	A	 	-					Yes
-P-47  (Japan)				1988	A		J-rom				Yes
-Peek-a-Boo!					1993	D		Bart				Yes
-Plus Alpha					1989	A		J-Rom 				Yes (encrypted)
-RodLand  (World) /			1990	A		AraCORN 		*	Yes (encrypted)
-RodLand  (Japan)			1990	A		-				*	Yes
-Saint Dragon				1989	A		J-Rom 				Yes (encrypted)
-Soldam (Japan)				1992	A		J-Rom			*	Yes (encrypted)
-Takeda Shingen (Japan)		1988	A		J-Rom			*	Yes (encrypted)
-------------------------------------------------------------^--------------
-															|
+Game						Year	System		Protection
+-----------------------------------------------------------
+Legend of Makai (World) /	1988	Z
+Makai Densetsu  (Japan)		1988	Z
+P-47  (World) /				1988	A
+P-47  (Japan)				1988	A
+Kick Off (Japan)			1988	A		*
+Takeda Shingen (Japan)		1988	A		*	      Encryption (key 1)
+Iga Ninjyutsuden (Japan)	1988	A		*	Yes + Encryption (key 1)
+Astyanax          (World) /	1989	A		*	Yes + Encryption (key 2)
+The Lord of King  (Japan)	1989	A	 	*	Yes + Encryption (key 2)
+Hachoo!						1989	A		*	Yes + Encryption (key 2)
+Plus Alpha					1989	A			Yes + Encryption (key 2)
+Saint Dragon				1989	A			Yes + Encryption (key 1)
+RodLand  (World) /			1990	A			      Encryption (key 3)
+RodLand  (Japan)			1990	A			      Encryption (key 2)
+Phantasm        (Japan)	/	1990	A			      Encryption (key 1)
+Avenging Spirit (World) 	1991	B			Inputs
+Earth Defense Force			1991	B			Inputs
+64th Street  (World) /		1991	C		*	Inputs
+64th Street  (Japan)		1991	C		*	Inputs
+Soldam (Japan)				1992	A			      Encryption (key 2)
+Big Striker					1992	C		*	Inputs
+Chimera Beast				1993	C		*	Inputs
+Cybattler					1993	C			Inputs
+Peek-a-Boo!					1993	D			Inputs
+--------------------------------------------^--------------
+											|
 							The Priority Prom is missing for these games !
 
 
 
 Hardware	Main CPU	Sound CPU	Sound Chips
-----------------------------------------------------------------
+-----------------------------------------------------------
 MS1 - Z		68000		Z80			YM2203c
-MS1 - A		68000		68000		YM2151	OKI-M6295 x 2 YM3012
-MS1 - B		68000		68000		YM2151	OKI-M6295 x 2 YM3012
-MS1 - C		68000		68000		YM2151	OKI-M6295 x 2 YM3012
-MS1 - D		68000		-			-		OKI-M6295 x 1
-----------------------------------------------------------------
+MS1 - A		68000		68000		YM2151		2xOKI-M6295
+MS1 - B		68000		68000		YM2151		2xOKI-M6295
+MS1 - C		68000		68000		YM2151		2xOKI-M6295
+MS1 - D		68000		-			-			  OKI-M6295
+-----------------------------------------------------------
 
 
 
@@ -61,10 +61,11 @@ Object RAM	RW	08e000-08ffff	04e000-04ffff	0d2000-0d3fff	0ca000-0cbfff
 Scroll 0	RW	090000-093fff	050000-053fff	0e0000-0e3fff	0d0000-0d3fff
 Scroll 1	RW	094000-097fff	054000-057fff	0e8000-0ebfff	0e8000-0ebfff
 Scroll 2	RW	098000-09bfff	058000-05bfff	0f0000-0f3fff	-
-Work RAM	RW	0f0000-0fffff*	060000-07ffff*	ff0000-ffffff*	1f0000-1fffff
+Work RAM	RW	0f0000-0fffff*	060000-07ffff*	1f0000-1fffff*	1f0000-1fffff
 Input Ports R	080000-080009	0e0000-0e0001**	0d8000-d80001**	100000-100001**
 -----------------------------------------------------------------------------------
-* Can vary 				** Through protection.
+*  Some games use mirror addresses
+** Through protection.
 
 
 
@@ -89,22 +90,26 @@ RAM				RW	0f0000-0f3fff	0e0000-0effff?	<
 
 - There's a 512 byte PROM in the video section (different for every game)
   that controls the priorities. It's been dumped for only a few games, so
-  we have to fake their data.
+  we have to use fake data for the missing ones.
 
 - Making the M6295 status register return 0 fixes the music tempo in
   avspirit, 64street, astyanax etc. but makes most of the effects in
   hachoo disappear! Define SOUND_HACK to 0 to turn this hack off
+  This seems to be some Jaleco magic at work (strange protection?). The
+  bootleg version of rodlandj has one instruction patched out to do exactly
+  the same thing that we are doing (ignoring the 6295 status).
 
 - Iganinju doesn't work properly: I have to patch lev3 irq and it severely
-  slows down at times (and it gets worse if I increase the clock)
-
-- Sprite / Sprite and Sprite / Layers priorities must be made orthogonal
-  (Hachoo! player passes over the portal at the end of level 2 otherwise)
+  slows down at times. Strangely, it gets *better* by lowering the main CPU
+  clock from 12 to 7 MHz.
+  This is likely an interrupt timing issue: changing the order in
+  interrupt_A() from 3 2 1 to 1 2 3 makes it work reasonably well for a very
+  short while.
 
 - VERY bad sprite lag in iganinju and plusalph and generally others.
   Is this a sprites buffer issue ?
 
-- Understand an handful of unknown bits in video regs
+- Understand a handful of unknown bits in video regs
 
 
 ***************************************************************************/
@@ -139,11 +144,6 @@ READ16_HANDLER( megasys1_vregs_C_r );
 WRITE16_HANDLER( megasys1_vregs_A_w );
 WRITE16_HANDLER( megasys1_vregs_C_w );
 WRITE16_HANDLER( megasys1_vregs_D_w );
-
-WRITE16_HANDLER( paletteram16_RRRRGGGGBBBBRGBx_word_w );
-
-READ16_HANDLER( protection_peekaboo_r );
-WRITE16_HANDLER( protection_peekaboo_w );
 
 
 
@@ -192,38 +192,34 @@ int interrupt_A(void)
 
 
 
-#define INTERRUPT_NUM_Z		INTERRUPT_NUM_A
-#define interrupt_Z			interrupt_A
-
-
-#define MEMORYMAP_A(_shortname_,_ram_start_,_ram_end_) \
-static MEMORY_READ16_START( readmem_##_shortname_ ) \
-	{ 0x000000, 0x05ffff, MRA16_ROM				}, \
-	{_ram_start_,_ram_end_, MRA16_RAM			}, \
-	{ 0x080000, 0x080001, coins_r				}, \
-	{ 0x080002, 0x080003, player1_r				}, \
-	{ 0x080004, 0x080005, player2_r				}, \
-	{ 0x080006, 0x080007, dsw_r					}, \
-	{ 0x080008, 0x080009, soundlatch2_word_r	}, /* from sound cpu */ \
-	{ 0x084000, 0x084fff, MRA16_RAM				}, \
-	{ 0x088000, 0x0887ff, paletteram16_word_r	}, \
-	{ 0x08e000, 0x08ffff, MRA16_RAM				}, \
-	{ 0x090000, 0x093fff, MRA16_RAM				}, \
-	{ 0x094000, 0x097fff, MRA16_RAM				}, \
-	{ 0x098000, 0x09bfff, MRA16_RAM				}, \
-MEMORY_END \
-static MEMORY_WRITE16_START( writemem_##_shortname_ ) \
- 	{ 0x000000, 0x05ffff, MWA16_ROM												}, \
-	{_ram_start_,_ram_end_, MWA16_RAM,				&megasys1_ram				}, \
-	{ 0x084000, 0x0843ff, megasys1_vregs_A_w,		&megasys1_vregs				}, \
-	{ 0x088000, 0x0887ff, paletteram16_RRRRGGGGBBBBRGBx_word_w, &paletteram16	}, \
-	{ 0x08e000, 0x08ffff, MWA16_RAM,				&megasys1_objectram			}, \
-	{ 0x090000, 0x093fff, megasys1_scrollram_0_w,	&megasys1_scrollram_0		}, \
-	{ 0x094000, 0x097fff, megasys1_scrollram_1_w,	&megasys1_scrollram_1		}, \
-	{ 0x098000, 0x09bfff, megasys1_scrollram_2_w,	&megasys1_scrollram_2		}, \
+static MEMORY_READ16_START( readmem_A )
+	MEMORY_ADDRESS_BITS(20)
+	{ 0x000000, 0x05ffff, MRA16_ROM },
+	{ 0x080000, 0x080001, coins_r },
+	{ 0x080002, 0x080003, player1_r },
+	{ 0x080004, 0x080005, player2_r },
+	{ 0x080006, 0x080007, dsw_r },
+	{ 0x080008, 0x080009, soundlatch2_word_r },	/* from sound cpu */
+	{ 0x084000, 0x084fff, MRA16_RAM },
+	{ 0x088000, 0x0887ff, paletteram16_word_r },
+	{ 0x08e000, 0x08ffff, MRA16_RAM },
+	{ 0x090000, 0x093fff, MRA16_RAM },
+	{ 0x094000, 0x097fff, MRA16_RAM },
+	{ 0x098000, 0x09bfff, MRA16_RAM },
+	{ 0x0f0000, 0x0fffff, MRA16_RAM },
 MEMORY_END
 
-#define MEMORYMAP_Z		MEMORYMAP_A
+static MEMORY_WRITE16_START( writemem_A )
+	MEMORY_ADDRESS_BITS(20)
+ 	{ 0x000000, 0x05ffff, MWA16_ROM },
+	{ 0x084000, 0x0843ff, megasys1_vregs_A_w, &megasys1_vregs },
+	{ 0x088000, 0x0887ff, paletteram16_RRRRGGGGBBBBRGBx_word_w, &paletteram16 },
+	{ 0x08e000, 0x08ffff, MWA16_RAM, &megasys1_objectram },
+	{ 0x090000, 0x093fff, megasys1_scrollram_0_w, &megasys1_scrollram_0 },
+	{ 0x094000, 0x097fff, megasys1_scrollram_1_w, &megasys1_scrollram_1 },
+	{ 0x098000, 0x09bfff, megasys1_scrollram_2_w, &megasys1_scrollram_2 },
+	{ 0x0f0000, 0x0fffff, MWA16_RAM, &megasys1_ram },
+MEMORY_END
 
 
 
@@ -271,7 +267,7 @@ static READ16_HANDLER( ip_select_r )
 
 	switch (i)
 	{
-			case 0 :	return coins_r(0,0);		break;
+			case 0 :	return coins_r(0,0);	break;
 			case 1 :	return player1_r(0,0);	break;
 			case 2 :	return player2_r(0,0);	break;
 			case 3 :	return dsw1_r(0,0);		break;
@@ -287,30 +283,32 @@ static WRITE16_HANDLER( ip_select_w )
 }
 
 
-#define MEMORYMAP_B(_shortname_,_ram_start_,_ram_end_) \
-static MEMORY_READ16_START( readmem_##_shortname_ ) \
-	{ 0x000000, 0x03ffff, MRA16_ROM				},\
-	{ 0x080000, 0x0bffff, MRA16_ROM				},\
-	{_ram_start_,_ram_end_,	MRA16_RAM			},\
-	{ 0x044000, 0x044fff, MRA16_RAM				},\
-	{ 0x048000, 0x0487ff, paletteram16_word_r	},\
-	{ 0x04e000, 0x04ffff, MRA16_RAM				},\
-	{ 0x050000, 0x053fff, MRA16_RAM				},\
-	{ 0x054000, 0x057fff, MRA16_RAM				},\
-	{ 0x058000, 0x05bfff, MRA16_RAM				},\
-	{ 0x0e0000, 0x0e0001, ip_select_r			},\
-MEMORY_END \
-static MEMORY_WRITE16_START( writemem_##_shortname_ ) \
- 	{ 0x000000, 0x03ffff, MWA16_ROM											},\
-	{ 0x080000, 0x0bffff, MWA16_ROM											},\
-	{_ram_start_,_ram_end_, MWA16_RAM,				&megasys1_ram			},\
-	{ 0x044000, 0x0443ff, megasys1_vregs_A_w,		&megasys1_vregs			},\
-	{ 0x048000, 0x0487ff, paletteram16_RRRRGGGGBBBBRGBx_word_w, &paletteram16	},\
-	{ 0x04e000, 0x04ffff, MWA16_RAM,				&megasys1_objectram		},\
-	{ 0x050000, 0x053fff, megasys1_scrollram_0_w ,	&megasys1_scrollram_0	},\
-	{ 0x054000, 0x057fff, megasys1_scrollram_1_w ,	&megasys1_scrollram_1	},\
-	{ 0x058000, 0x05bfff, megasys1_scrollram_2_w ,	&megasys1_scrollram_2	},\
-	{ 0x0e0000, 0x0e0001, ip_select_w										},\
+static MEMORY_READ16_START( readmem_B )
+	MEMORY_ADDRESS_BITS(20)
+	{ 0x000000, 0x03ffff, MRA16_ROM },
+	{ 0x044000, 0x044fff, MRA16_RAM },
+	{ 0x048000, 0x0487ff, paletteram16_word_r },
+	{ 0x04e000, 0x04ffff, MRA16_RAM },
+	{ 0x050000, 0x053fff, MRA16_RAM },
+	{ 0x054000, 0x057fff, MRA16_RAM },
+	{ 0x058000, 0x05bfff, MRA16_RAM },
+	{ 0x060000, 0x07ffff, MRA16_RAM },
+	{ 0x080000, 0x0bffff, MRA16_ROM },
+	{ 0x0e0000, 0x0e0001, ip_select_r },
+MEMORY_END
+
+static MEMORY_WRITE16_START( writemem_B )
+	MEMORY_ADDRESS_BITS(20)
+ 	{ 0x000000, 0x03ffff, MWA16_ROM },
+	{ 0x044000, 0x0443ff, megasys1_vregs_A_w, &megasys1_vregs },
+	{ 0x048000, 0x0487ff, paletteram16_RRRRGGGGBBBBRGBx_word_w, &paletteram16 },
+	{ 0x04e000, 0x04ffff, MWA16_RAM, &megasys1_objectram },
+	{ 0x050000, 0x053fff, megasys1_scrollram_0_w, &megasys1_scrollram_0 },
+	{ 0x054000, 0x057fff, megasys1_scrollram_1_w, &megasys1_scrollram_1 },
+	{ 0x058000, 0x05bfff, megasys1_scrollram_2_w, &megasys1_scrollram_2 },
+	{ 0x060000, 0x07ffff, MWA16_RAM, &megasys1_ram },
+	{ 0x080000, 0x0bffff, MWA16_ROM },
+	{ 0x0e0000, 0x0e0001, ip_select_w },
 MEMORY_END
 
 
@@ -323,28 +321,30 @@ MEMORY_END
 #define INTERRUPT_NUM_C	INTERRUPT_NUM_B
 #define interrupt_C		interrupt_B
 
-#define MEMORYMAP_C(_shortname_,_ram_start_,_ram_end_) \
-static MEMORY_READ16_START( readmem_##_shortname_ ) \
-	{ 0x000000, 0x07ffff, MRA16_ROM				}, \
-	{_ram_start_,_ram_end_, MRA16_RAM			}, \
-	{ 0x0c0000, 0x0cffff, megasys1_vregs_C_r	}, \
-	{ 0x0d2000, 0x0d3fff, MRA16_RAM				}, \
-	{ 0x0e0000, 0x0e3fff, MRA16_RAM				}, \
-	{ 0x0e8000, 0x0ebfff, MRA16_RAM				}, \
-	{ 0x0f0000, 0x0f3fff, MRA16_RAM				}, \
-	{ 0x0f8000, 0x0f87ff, paletteram16_word_r	}, \
-	{ 0x0d8000, 0x0d8001, ip_select_r			}, \
-MEMORY_END \
-static MEMORY_WRITE16_START( writemem_##_shortname_ ) \
- 	{ 0x000000, 0x07ffff, MWA16_ROM											}, \
-	{_ram_start_,_ram_end_, MWA16_RAM,				&megasys1_ram			}, \
-	{ 0x0c0000, 0x0cffff, megasys1_vregs_C_w,		&megasys1_vregs			}, \
-	{ 0x0d2000, 0x0d3fff, MWA16_RAM,				&megasys1_objectram		}, \
-	{ 0x0e0000, 0x0e3fff, megasys1_scrollram_0_w,	&megasys1_scrollram_0	}, \
-	{ 0x0e8000, 0x0ebfff, megasys1_scrollram_1_w,	&megasys1_scrollram_1	}, \
-	{ 0x0f0000, 0x0f3fff, megasys1_scrollram_2_w,	&megasys1_scrollram_2	}, \
-	{ 0x0f8000, 0x0f87ff, paletteram16_RRRRGGGGBBBBRGBx_word_w, &paletteram16	}, \
-	{ 0x0d8000, 0x0d8001, ip_select_w										}, \
+static MEMORY_READ16_START( readmem_C )
+	MEMORY_ADDRESS_BITS(21)
+	{ 0x000000, 0x07ffff, MRA16_ROM },
+	{ 0x0c0000, 0x0cffff, megasys1_vregs_C_r },
+	{ 0x0d2000, 0x0d3fff, MRA16_RAM },
+	{ 0x0e0000, 0x0e3fff, MRA16_RAM },
+	{ 0x0e8000, 0x0ebfff, MRA16_RAM },
+	{ 0x0f0000, 0x0f3fff, MRA16_RAM },
+	{ 0x0f8000, 0x0f87ff, paletteram16_word_r },
+	{ 0x0d8000, 0x0d8001, ip_select_r },
+	{ 0x1f0000, 0x1fffff, MRA16_RAM },
+MEMORY_END
+
+static MEMORY_WRITE16_START( writemem_C )
+	MEMORY_ADDRESS_BITS(21)
+ 	{ 0x000000, 0x07ffff, MWA16_ROM },
+	{ 0x0c0000, 0x0cffff, megasys1_vregs_C_w, &megasys1_vregs },
+	{ 0x0d2000, 0x0d3fff, MWA16_RAM, &megasys1_objectram },
+	{ 0x0e0000, 0x0e3fff, megasys1_scrollram_0_w, &megasys1_scrollram_0 },
+	{ 0x0e8000, 0x0ebfff, megasys1_scrollram_1_w, &megasys1_scrollram_1 },
+	{ 0x0f0000, 0x0f3fff, megasys1_scrollram_2_w, &megasys1_scrollram_2 },
+	{ 0x0f8000, 0x0f87ff, paletteram16_RRRRGGGGBBBBRGBx_word_w, &paletteram16 },
+	{ 0x0d8000, 0x0d8001, ip_select_w },
+	{ 0x1f0000, 0x1fffff, MWA16_RAM, &megasys1_ram },
 MEMORY_END
 
 
@@ -360,34 +360,34 @@ int interrupt_D(void)
 	return 2;
 }
 
-#define MEMORYMAP_D(_shortname_,_ram_start_,_ram_end_) \
-static MEMORY_READ16_START( readmem_##_shortname_ ) \
-	{ 0x000000, 0x03ffff, MRA16_ROM						}, \
-	{_ram_start_,_ram_end_, MRA16_RAM					}, \
-	{ 0x0c0000, 0x0c9fff, MRA16_RAM						}, \
-	{ 0x0ca000, 0x0cbfff, MRA16_RAM						}, \
-	{ 0x0d0000, 0x0d3fff, MRA16_RAM						}, \
-	{ 0x0d4000, 0x0d7fff, MRA16_RAM						}, \
-	{ 0x0d8000, 0x0d87ff, paletteram16_word_r			}, \
-	{ 0x0db000, 0x0db7ff, paletteram16_word_r			}, \
-	{ 0x0e0000, 0x0e0001, dsw_r							}, \
-	{ 0x0e8000, 0x0ebfff, MRA16_RAM						}, \
-	{ 0x0f0000, 0x0f0001, coins_r						}, /* Coins + P1&P2 Buttons */ \
-	{ 0x0f8000, 0x0f8001, OKIM6295_status_0_lsb_r		}, \
-	{ 0x100000, 0x100001, protection_##_shortname_##_r	}, /* Protection */ \
-MEMORY_END \
-static MEMORY_WRITE16_START( writemem_##_shortname_ ) \
- 	{ 0x000000, 0x03ffff, MWA16_ROM											}, \
-	{_ram_start_,_ram_end_, MWA16_RAM,				&megasys1_ram			}, \
-	{ 0x0c0000, 0x0c9fff, megasys1_vregs_D_w,		&megasys1_vregs			}, \
-	{ 0x0ca000, 0x0cbfff, MWA16_RAM, 				&megasys1_objectram		}, \
-	{ 0x0d0000, 0x0d3fff, megasys1_scrollram_1_w,	&megasys1_scrollram_1	}, \
-	{ 0x0d4000, 0x0d7fff, megasys1_scrollram_2_w,	&megasys1_scrollram_2	}, \
-	{ 0x0d8000, 0x0d87ff, paletteram16_RRRRRGGGGGBBBBBx_word_w				}, \
-	{ 0x0db000, 0x0db7ff, paletteram16_RRRRRGGGGGBBBBBx_word_w, &paletteram16	}, \
-	{ 0x0e8000, 0x0ebfff, megasys1_scrollram_0_w,	&megasys1_scrollram_0	}, \
-	{ 0x0f8000, 0x0f8001, OKIM6295_data_0_lsb_w								}, \
-	{ 0x100000, 0x100001, protection_##_shortname_##_w						}, /* Protection */ \
+static MEMORY_READ16_START( readmem_D )
+	{ 0x000000, 0x03ffff, MRA16_ROM },
+	{ 0x0c0000, 0x0c9fff, MRA16_RAM },
+	{ 0x0ca000, 0x0cbfff, MRA16_RAM },
+	{ 0x0d0000, 0x0d3fff, MRA16_RAM },
+	{ 0x0d4000, 0x0d7fff, MRA16_RAM },
+	{ 0x0d8000, 0x0d87ff, paletteram16_word_r },
+	{ 0x0db000, 0x0db7ff, paletteram16_word_r },
+	{ 0x0e0000, 0x0e0001, dsw_r },
+	{ 0x0e8000, 0x0ebfff, MRA16_RAM },
+	{ 0x0f0000, 0x0f0001, coins_r }, /* Coins + P1&P2 Buttons */
+	{ 0x0f8000, 0x0f8001, OKIM6295_status_0_lsb_r },
+//	{ 0x100000, 0x100001  protection
+	{ 0x1f0000, 0x1fffff, MRA16_RAM },
+MEMORY_END
+
+static MEMORY_WRITE16_START( writemem_D )
+ 	{ 0x000000, 0x03ffff, MWA16_ROM },
+	{ 0x0c0000, 0x0c9fff, megasys1_vregs_D_w, &megasys1_vregs },
+	{ 0x0ca000, 0x0cbfff, MWA16_RAM, &megasys1_objectram },
+	{ 0x0d0000, 0x0d3fff, megasys1_scrollram_1_w, &megasys1_scrollram_1 },
+	{ 0x0d4000, 0x0d7fff, megasys1_scrollram_2_w, &megasys1_scrollram_2 },
+	{ 0x0d8000, 0x0d87ff, paletteram16_RRRRRGGGGGBBBBBx_word_w },
+	{ 0x0db000, 0x0db7ff, paletteram16_RRRRRGGGGGBBBBBx_word_w, &paletteram16 },
+	{ 0x0e8000, 0x0ebfff, megasys1_scrollram_0_w, &megasys1_scrollram_0 },
+	{ 0x0f8000, 0x0f8001, OKIM6295_data_0_lsb_w },
+//	{ 0x100000, 0x100001  protection
+	{ 0x1f0000, 0x1fffff, MWA16_RAM, &megasys1_ram },
 MEMORY_END
 
 
@@ -459,27 +459,27 @@ static int sound_interrupt(void)
 
 
 static MEMORY_READ16_START( sound_readmem_A )
-	{ 0x000000, 0x01ffff, MRA16_ROM						},
-	{ 0x040000, 0x040001, soundlatch_word_r				},
-	{ 0x080002, 0x080003, YM2151_status_port_0_lsb_r	},
+	{ 0x000000, 0x01ffff, MRA16_ROM },
+	{ 0x040000, 0x040001, soundlatch_word_r },
+	{ 0x080002, 0x080003, YM2151_status_port_0_lsb_r },
 #if SOUND_HACK
-	{ 0x0a0000, 0x0a0001, MRA16_NOP						},
-	{ 0x0c0000, 0x0c0001, MRA16_NOP						},
+	{ 0x0a0000, 0x0a0001, MRA16_NOP },
+	{ 0x0c0000, 0x0c0001, MRA16_NOP },
 #else
-	{ 0x0a0000, 0x0a0001, OKIM6295_status_0_lsb_r		},
-	{ 0x0c0000, 0x0c0001, OKIM6295_status_1_lsb_r		},
+	{ 0x0a0000, 0x0a0001, OKIM6295_status_0_lsb_r },
+	{ 0x0c0000, 0x0c0001, OKIM6295_status_1_lsb_r },
 #endif
-	{ 0x0e0000, 0x0fffff, MRA16_RAM						},
+	{ 0x0e0000, 0x0fffff, MRA16_RAM },
 MEMORY_END
 
 static MEMORY_WRITE16_START( sound_writemem_A )
-	{ 0x000000, 0x01ffff, MWA16_ROM						},
-	{ 0x060000, 0x060001, soundlatch2_word_w			},	// to main cpu
-	{ 0x080000, 0x080001, YM2151_register_port_0_lsb_w	},
-	{ 0x080002, 0x080003, YM2151_data_port_0_lsb_w		},
-	{ 0x0a0000, 0x0a0003, OKIM6295_data_0_lsb_w			},
-	{ 0x0c0000, 0x0c0003, OKIM6295_data_1_lsb_w			},
-	{ 0x0e0000, 0x0fffff, MWA16_RAM						},
+	{ 0x000000, 0x01ffff, MWA16_ROM },
+	{ 0x060000, 0x060001, soundlatch2_word_w },	// to main cpu
+	{ 0x080000, 0x080001, YM2151_register_port_0_lsb_w },
+	{ 0x080002, 0x080003, YM2151_data_port_0_lsb_w },
+	{ 0x0a0000, 0x0a0003, OKIM6295_data_0_lsb_w },
+	{ 0x0c0000, 0x0c0003, OKIM6295_data_1_lsb_w },
+	{ 0x0e0000, 0x0fffff, MWA16_RAM },
 MEMORY_END
 
 
@@ -493,29 +493,29 @@ MEMORY_END
 
 
 static MEMORY_READ16_START( sound_readmem_B )
-	{ 0x000000, 0x01ffff, MRA16_ROM						},
-	{ 0x040000, 0x040001, soundlatch_word_r				},	/* from main cpu */
-	{ 0x060000, 0x060001, soundlatch_word_r				},	/* from main cpu */
-	{ 0x080002, 0x080003, YM2151_status_port_0_lsb_r	},
+	{ 0x000000, 0x01ffff, MRA16_ROM },
+	{ 0x040000, 0x040001, soundlatch_word_r },	/* from main cpu */
+	{ 0x060000, 0x060001, soundlatch_word_r },	/* from main cpu */
+	{ 0x080002, 0x080003, YM2151_status_port_0_lsb_r },
 #if SOUND_HACK
-	{ 0x0a0000, 0x0a0001, MRA16_NOP						},
-	{ 0x0c0000, 0x0c0001, MRA16_NOP						},
+	{ 0x0a0000, 0x0a0001, MRA16_NOP },
+	{ 0x0c0000, 0x0c0001, MRA16_NOP },
 #else
-	{ 0x0a0000, 0x0a0001, OKIM6295_status_0_lsb_r		},
-	{ 0x0c0000, 0x0c0001, OKIM6295_status_1_lsb_r		},
+	{ 0x0a0000, 0x0a0001, OKIM6295_status_0_lsb_r },
+	{ 0x0c0000, 0x0c0001, OKIM6295_status_1_lsb_r },
 #endif
-	{ 0x0e0000, 0x0effff, MRA16_RAM						},
+	{ 0x0e0000, 0x0effff, MRA16_RAM },
 MEMORY_END
 
 static MEMORY_WRITE16_START( sound_writemem_B )
-	{ 0x000000, 0x01ffff, MWA16_ROM						},
-	{ 0x040000, 0x040001, soundlatch2_word_w			},	/* to main cpu */
-	{ 0x060000, 0x060001, soundlatch2_word_w			},	/* to main cpu */
-	{ 0x080000, 0x080001, YM2151_register_port_0_lsb_w	},
-	{ 0x080002, 0x080003, YM2151_data_port_0_lsb_w		},
-	{ 0x0a0000, 0x0a0003, OKIM6295_data_0_lsb_w			},
-	{ 0x0c0000, 0x0c0003, OKIM6295_data_1_lsb_w			},
-	{ 0x0e0000, 0x0effff, MWA16_RAM						},
+	{ 0x000000, 0x01ffff, MWA16_ROM	 },
+	{ 0x040000, 0x040001, soundlatch2_word_w },	/* to main cpu */
+	{ 0x060000, 0x060001, soundlatch2_word_w },	/* to main cpu */
+	{ 0x080000, 0x080001, YM2151_register_port_0_lsb_w },
+	{ 0x080002, 0x080003, YM2151_data_port_0_lsb_w },
+	{ 0x0a0000, 0x0a0003, OKIM6295_data_0_lsb_w },
+	{ 0x0c0000, 0x0c0003, OKIM6295_data_1_lsb_w },
+	{ 0x0e0000, 0x0effff, MWA16_RAM },
 MEMORY_END
 
 #define sound_readmem_C		sound_readmem_B
@@ -533,25 +533,25 @@ MEMORY_END
 
 
 static MEMORY_READ_START( sound_readmem_z80 )
-	{ 0x0000, 0x3fff, MRA_ROM		},
-	{ 0xc000, 0xc7ff, MRA_RAM		},
-	{ 0xe000, 0xe000, soundlatch_r	},
+	{ 0x0000, 0x3fff, MRA_ROM },
+	{ 0xc000, 0xc7ff, MRA_RAM },
+	{ 0xe000, 0xe000, soundlatch_r },
 MEMORY_END
 
 static MEMORY_WRITE_START( sound_writemem_z80 )
-	{ 0x0000, 0x3fff, MWA_ROM	},
-	{ 0xc000, 0xc7ff, MWA_RAM	},
-	{ 0xf000, 0xf000, MWA_NOP	}, /* ?? */
+	{ 0x0000, 0x3fff, MWA_ROM },
+	{ 0xc000, 0xc7ff, MWA_RAM },
+	{ 0xf000, 0xf000, MWA_NOP }, /* ?? */
 MEMORY_END
 
 
 static PORT_READ_START( sound_readport )
-	{ 0x00, 0x00, YM2203_status_port_0_r	},
+	{ 0x00, 0x00, YM2203_status_port_0_r },
 PORT_END
 
 static PORT_WRITE_START( sound_writeport )
-	{ 0x00, 0x00, YM2203_control_port_0_w	},
-	{ 0x01, 0x01, YM2203_write_port_0_w		},
+	{ 0x00, 0x00, YM2203_control_port_0_w },
+	{ 0x01, 0x01, YM2203_write_port_0_w },
 PORT_END
 
 
@@ -560,57 +560,44 @@ PORT_END
 
 
 
-/*
-**
-**	Gfx data
-**
-*/
+static struct GfxLayout tilelayout =
+{
+	8,8,
+	RGN_FRAC(1,1),
+	4,
+	{ 0, 1, 2, 3 },
+	{ 0*4, 1*4, 2*4, 3*4, 4*4, 5*4, 6*4, 7*4 },
+	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32 },
+	32*8
+};
 
-/* Tiles are 8x8 */
-MEGASYS1_LAYOUT_8x8( tilelayout_01, 0x010000 )
-MEGASYS1_LAYOUT_8x8( tilelayout_02, 0x020000 )
-MEGASYS1_LAYOUT_8x8( tilelayout_08, 0x080000 )
-
-/* Sprites are 16x16 - formed by four 8x8 tiles */
-MEGASYS1_LAYOUT_16x16_QUAD( spritelayout_02, 0x020000 )	// MS1 Z
-MEGASYS1_LAYOUT_16x16_QUAD( spritelayout_08, 0x080000 )	// MS1 A & B
-MEGASYS1_LAYOUT_16x16_QUAD( spritelayout_10, 0x100000 )	// MS1 C
-
+static struct GfxLayout spritelayout =
+{
+	16,16,
+	RGN_FRAC(1,1),
+	4,
+	{ 0, 1, 2, 3 },
+	{ 0*4, 1*4, 2*4, 3*4, 4*4, 5*4, 6*4, 7*4,
+		0*4+32*16, 1*4+32*16, 2*4+32*16, 3*4+32*16, 4*4+32*16, 5*4+32*16, 6*4+32*16, 7*4+32*16},
+	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32,
+		8*32, 9*32, 10*32, 11*32, 12*32, 13*32, 14*32, 15*32},
+	32*16*2
+};
 
 static struct GfxDecodeInfo gfxdecodeinfo_Z[] =
 {
-	{ REGION_GFX1, 0, &tilelayout_02,	256*0, 16 },	// [0] Scroll 0
-	{ REGION_GFX2, 0, &tilelayout_01,	256*2, 16 },	// [1] Scroll 1
-	{ REGION_GFX3, 0, &spritelayout_02,	256*1, 16 },	// [2] Sprites
+	{ REGION_GFX1, 0, &tilelayout,   256*0, 16 },	// [0] Scroll 0
+	{ REGION_GFX2, 0, &tilelayout,   256*2, 16 },	// [1] Scroll 1
+	{ REGION_GFX3, 0, &spritelayout, 256*1, 16 },	// [2] Sprites
 	{ -1 }
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo_A[] =
+static struct GfxDecodeInfo gfxdecodeinfo_ABC[] =
 {
-	{ REGION_GFX1, 0, &tilelayout_08,	256*0, 16 },	// [0] Scroll 0
-	{ REGION_GFX2, 0, &tilelayout_08,	256*1, 16 },	// [1] Scroll 1
-	{ REGION_GFX3, 0, &tilelayout_02,	256*2, 16 },	// [2] Scroll 2
-	{ REGION_GFX4, 0, &spritelayout_08,	256*3, 16 },	// [3] Sprites
-	{ -1 }
-};
-
-#define gfxdecodeinfo_B		gfxdecodeinfo_A
-
-static struct GfxDecodeInfo gfxdecodeinfo_C[] =
-{
-	{ REGION_GFX1, 0, &tilelayout_08,	256*0, 16 },	// [0] Scroll 0
-	{ REGION_GFX2, 0, &tilelayout_08,	256*1, 16 },	// [1] Scroll 1
-	{ REGION_GFX3, 0, &tilelayout_02,	256*2, 16 },	// [2] Scroll 2
-	{ REGION_GFX4, 0, &spritelayout_10,	256*3, 16 },	// [3] Sprites
-	{ -1 }
-};
-
-static struct GfxDecodeInfo gfxdecodeinfo_D[] =
-{
-	{ REGION_GFX1, 0, &tilelayout_08,	256*0, 16 },	// [0] scroll 0
-	{ REGION_GFX2, 0, &tilelayout_08,	256*1, 16 },	// [1] scroll 1
-	{ REGION_GFX3, 0, &tilelayout_01,	256*1, 16 },	// [2] UNUSED
-	{ REGION_GFX4, 0, &spritelayout_08,	256*3, 16 },	// [3] sprites
+	{ REGION_GFX1, 0, &tilelayout,   256*0, 16 },	// [0] Scroll 0
+	{ REGION_GFX2, 0, &tilelayout,   256*1, 16 },	// [1] Scroll 1
+	{ REGION_GFX3, 0, &tilelayout,   256*2, 16 },	// [2] Scroll 2 (unused in system D)
+	{ REGION_GFX4, 0, &spritelayout, 256*3, 16 },	// [3] Sprites
 	{ -1 }
 };
 
@@ -629,32 +616,32 @@ static struct GfxDecodeInfo gfxdecodeinfo_D[] =
 
 ***************************************************************************/
 
-#define MEGASYS1_MACHINE(	_type_, \
-							_shortname_,_main_clock_,_sound_clock_, \
-							_fm_clock_,_oki1_clock_,_oki2_clock_) \
-static struct YM2151interface ym2151_interface_##_shortname_ = \
-{ \
-	1, \
-	_fm_clock_, \
-	{ YM3012_VOL(80,MIXER_PAN_LEFT,80,MIXER_PAN_RIGHT) }, \
-	{ 0 } \
-}; \
- \
-static struct OKIM6295interface okim6295_interface_##_shortname_ = \
-{ \
-	2, \
-	{_oki1_clock_, _oki2_clock_},\
-	{ REGION_SOUND1, REGION_SOUND2 }, \
-	{ MIXER(30,MIXER_PAN_LEFT), MIXER(30,MIXER_PAN_RIGHT) } \
-}; \
- \
-static const struct MachineDriver machine_driver_##_shortname_ = \
+/* Provided by Jim Hernandez: 3.5MHz for FM, 30KHz (!) for ADPCM */
+
+static struct YM2151interface ym2151_interface =
+{
+	1,
+	7000000/2,
+	{ YM3012_VOL(80,MIXER_PAN_LEFT,80,MIXER_PAN_RIGHT) },
+	{ 0 }
+};
+
+static struct OKIM6295interface okim6295_interface =
+{
+	2,
+	{ 4000000/132, 4000000/132 },	/* seems appropriate */
+	{ REGION_SOUND1, REGION_SOUND2 },
+	{ MIXER(30,MIXER_PAN_LEFT), MIXER(30,MIXER_PAN_RIGHT) }
+};
+
+#define MEGASYS1_MACHINE( _type_, _main_clock_,_sound_clock_) \
+static const struct MachineDriver machine_driver_system_##_type_ = \
 { \
 	{ \
 		{ \
 			CPU_M68000, \
 			_main_clock_, \
-			readmem_##_shortname_,writemem_##_shortname_,0,0, \
+			readmem_##_type_,writemem_##_type_,0,0, \
 			interrupt_##_type_,INTERRUPT_NUM_##_type_ \
 		}, \
 		{ \
@@ -668,8 +655,8 @@ static const struct MachineDriver machine_driver_##_shortname_ = \
 	1, \
 	megasys1_init_machine, \
 	/* video hardware */ \
-	256, 256,{ 0, 256-1, 0+16, 256-16-1 }, \
-	gfxdecodeinfo_##_type_, \
+	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 }, \
+	gfxdecodeinfo_ABC, \
 	1024, 1024, \
 	megasys1_convert_prom, \
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE, \
@@ -678,22 +665,29 @@ static const struct MachineDriver machine_driver_##_shortname_ = \
 	0, \
 	megasys1_vh_screenrefresh, \
 	/* sound hardware */ \
-	SOUND_SUPPORTS_STEREO,0,0,0, /* Stereo Output */\
+	SOUND_SUPPORTS_STEREO,0,0,0, \
 	{ \
 		{ \
 			SOUND_YM2151, \
-			&ym2151_interface_##_shortname_ \
+			&ym2151_interface \
 		},\
 		{\
 			SOUND_OKIM6295, \
-			&okim6295_interface_##_shortname_ \
+			&okim6295_interface \
 		} \
 	} \
 };
 
-#define MEGASYS1_MACHINE_A	MEGASYS1_MACHINE
-#define MEGASYS1_MACHINE_B	MEGASYS1_MACHINE
-#define MEGASYS1_MACHINE_C	MEGASYS1_MACHINE
+
+/* OSC:	4, 7, 12 MHz */
+MEGASYS1_MACHINE( A, 12000000,7000000 )
+
+/* OSC:	8, 7, 12 MHz */
+MEGASYS1_MACHINE( B, 12000000,7000000 )
+
+/* OSC: 7, 24 MHz */
+MEGASYS1_MACHINE( C, 12000000,7000000 )
+
 
 
 /***************************************************************************
@@ -702,51 +696,50 @@ static const struct MachineDriver machine_driver_##_shortname_ = \
 
 							  1x68000 1xM6295
 
+KLOV entry for peekaboo: Jaleco board no. PB-92127A. Main CPU: Motorola 68000P10
+
 ***************************************************************************/
 
 
-#define MEGASYS1_MACHINE_D(	_type_, \
-							_shortname_,_main_clock_,_sound_clock_, \
-							_fm_clock_,_oki1_clock_,_oki2_clock_) \
-static struct OKIM6295interface okim6295_interface_##_shortname_ = \
-{ \
-	1, \
-	{_oki1_clock_},\
-	{ REGION_SOUND1 }, \
-	{ 100 } \
-}; \
- \
-static const struct MachineDriver machine_driver_##_shortname_ = \
-{ \
-	{\
-		{\
-			CPU_M68000,\
-			_main_clock_, \
-			readmem_##_shortname_,writemem_##_shortname_,0,0, \
-			interrupt_##_type_,INTERRUPT_NUM_##_type_ \
-		} \
-	},\
-	60,DEFAULT_60HZ_VBLANK_DURATION,\
-	1,\
-	megasys1_init_machine,\
-	/* video hardware */ \
-	256, 256,{ 0, 256-1, 0+16, 256-16-1 },\
-	gfxdecodeinfo_##_type_,\
-	1024, 1024,\
-	megasys1_convert_prom,\
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,\
-	0,\
-	megasys1_vh_start,\
-	0,\
-	megasys1_vh_screenrefresh,\
-	/* sound hardware */ \
-	0,0,0,0,\
-	{ \
-		{\
-			SOUND_OKIM6295, \
-			&okim6295_interface_##_shortname_ \
-		} \
-	}\
+static struct OKIM6295interface okim6295_interface_D =
+{
+	1,
+	{ 12000 },
+	{ REGION_SOUND1 },
+	{ 100 }
+};
+
+static const struct MachineDriver machine_driver_system_D =
+{
+	{
+		{
+			CPU_M68000,
+			10000000,	/* ? */
+			readmem_D,writemem_D,0,0,
+			interrupt_D,INTERRUPT_NUM_D
+		}
+	},
+	60,DEFAULT_60HZ_VBLANK_DURATION,
+	1,
+	megasys1_init_machine,
+	/* video hardware */
+	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
+	gfxdecodeinfo_ABC,
+	1024, 1024,
+	megasys1_convert_prom,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	0,
+	megasys1_vh_start,
+	0,
+	megasys1_vh_screenrefresh,
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_OKIM6295,
+			&okim6295_interface_D
+		}
+	}
 };
 
 
@@ -758,6 +751,8 @@ static const struct MachineDriver machine_driver_##_shortname_ = \
 
 							 68000+Z80 1xYM2203
 
+							OSC:	5, 12 MHz
+
 ***************************************************************************/
 
 
@@ -767,185 +762,58 @@ static void irq_handler(int irq)
 }
 
 
-#define MEGASYS1_MACHINE_Z(	_type_, \
-							_shortname_,_main_clock_,_sound_clock_, \
-							_fm_clock_,_oki1_clock_,_oki2_clock_) \
-static struct YM2203interface ym2203_interface_##_shortname_ = \
-{ \
-	1, \
-	_fm_clock_, \
-	{ YM2203_VOL(50,50) }, \
-	{ 0 }, \
-	{ 0 }, \
-	{ 0	}, \
-	{ 0 }, \
-	{ irq_handler } \
-}; \
-\
-static const struct MachineDriver machine_driver_##_shortname_ = \
-{\
-	{\
-		{\
-			CPU_M68000,\
-			_main_clock_, \
-			readmem_##_shortname_,writemem_##_shortname_,0,0, \
-			interrupt_##_type_,INTERRUPT_NUM_##_type_ \
-		},\
-		{\
-			CPU_Z80 | CPU_AUDIO_CPU,\
-			_sound_clock_, \
-			sound_readmem_z80,sound_writemem_z80,sound_readport,sound_writeport,\
-			ignore_interrupt,1	/* irq generated by YM2203 */	\
-		},\
-	},\
-	60,DEFAULT_60HZ_VBLANK_DURATION,\
-	1,\
-	0,\
-	/* video hardware */ \
-	256, 256,{ 0, 256-1, 0+16, 256-16-1 },\
-	gfxdecodeinfo_Z,\
-	256*3, 256*3,\
-	0	/*megasys1_convert_prom*/,\
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,\
-	0,\
-	megasys1_vh_start,\
-	0,\
-	megasys1_vh_screenrefresh,\
-	/* sound hardware */ \
-	0,0,0,0, /* This system is mono */\
-	{\
-		{ \
-			SOUND_YM2203, \
-			&ym2203_interface_##_shortname_ \
-		},\
-	}\
+static struct YM2203interface ym2203_interface =
+{
+	1,
+	1500000,	/* ??? */
+	{ YM2203_VOL(50,50) },
+	{ 0 },
+	{ 0 },
+	{ 0	},
+	{ 0 },
+	{ irq_handler }
+};
+
+static const struct MachineDriver machine_driver_system_Z =
+{
+	{
+		{
+			CPU_M68000,
+			6000000, /* ??? */
+			readmem_A,writemem_A,0,0,
+			interrupt_A,INTERRUPT_NUM_A
+		},
+		{
+			CPU_Z80 | CPU_AUDIO_CPU,
+			3000000, /* ??? */
+			sound_readmem_z80,sound_writemem_z80,sound_readport,sound_writeport,
+			ignore_interrupt,0	/* irq generated by YM2203 */
+		},
+	},
+	60,DEFAULT_60HZ_VBLANK_DURATION,
+	1,
+	0,
+	/* video hardware */
+	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
+	gfxdecodeinfo_Z,
+	256*3, 256*3,
+	0,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	0,
+	megasys1_vh_start,
+	0,
+	megasys1_vh_screenrefresh,
+	/* sound hardware */
+	0,0,0,0, /* This system is mono */
+	{
+		{
+			SOUND_YM2203,
+			&ym2203_interface
+		},
+	}
 };
 
 
-
-
-
-/***************************************************************************
-
-							Game Driver Macros
-
-***************************************************************************/
-
-
-
-/* Provided by Jim Hernandez: 3.5MHz for FM, 30KHz (!) for ADPCM */
-#define STD_FM_CLOCK	3500000
-#define STD_OKI_CLOCK	  30000
-
-
-/*
-
- This is a general purpose macro to define a game.
-
- There is a different macro for clones (defined below), but if the
- parent and clone game run on different hardwares, you can use this
- macro for the clone (to describe its hardware) and specify the
- parent's driver as a parameter
-
-*/
-#define MEGASYS1_GAME(_shortname_, \
-					  _type_,_ram_start_, _ram_end_, \
-					  _main_clock_,_sound_clock_, \
-					  _fm_clock_,_oki1_clock_,_oki2_clock_) \
- \
-	MEMORYMAP_##_type_(_shortname_,_ram_start_,_ram_end_) \
- \
-	MEGASYS1_MACHINE_##_type_(	_type_, \
-								_shortname_,_main_clock_,_sound_clock_, \
-								_fm_clock_,_oki1_clock_,_oki2_clock_)
-
-
-/* OSC:	? (Main 12, Sound 10 MHz according to KLOV) */
-MEGASYS1_GAME(	64street, C,0xff0000,0xffffff,
-				12000000,8000000,STD_FM_CLOCK,STD_OKI_CLOCK,STD_OKI_CLOCK )
-
-/* OSC:	? */
-MEGASYS1_GAME(	astyanax, A,0xff0000,0xffffff,
-				12000000,7000000,STD_FM_CLOCK,STD_OKI_CLOCK,STD_OKI_CLOCK )
-
-/* OSC:	8,12,7 MHz */
-MEGASYS1_GAME(	avspirit, B,0x070000,0x07ffff,
-				12000000,8000000,STD_FM_CLOCK,STD_OKI_CLOCK,STD_OKI_CLOCK )
-
-/* This is a clone of Avenging Spirit but runs on different hardware */
-/* OSC: same as avspirit(8,12,7 MHz)? (Music tempo driven by timers of the 2151) */
-MEGASYS1_GAME(	phantasm, A,0xff0000,0xffffff,
-				12000000,8000000,STD_FM_CLOCK,STD_OKI_CLOCK,STD_OKI_CLOCK )
-
-/* OSC: 7.000 MHz + 24.000 MHz */
-MEGASYS1_GAME(	bigstrik, C,0xff0000,0xffffff,
-				12000000,7000000,STD_FM_CLOCK,STD_OKI_CLOCK,STD_OKI_CLOCK )
-
-/* OSC:	? */
-MEGASYS1_GAME(	chimerab, C,0xff0000,0xffffff,
-				12000000,8000000,STD_FM_CLOCK,STD_OKI_CLOCK,STD_OKI_CLOCK )
-
-/* OSC:	? */
-MEGASYS1_GAME(	cybattlr, C,0x1f0000,0x01fffff,
-				12000000,8000000,STD_FM_CLOCK,STD_OKI_CLOCK,STD_OKI_CLOCK )
-
-/* OSC:	8,12,7 MHz */
-MEGASYS1_GAME(	edf, B,0x060000,0x07ffff,
-				12000000,8000000,STD_FM_CLOCK,STD_OKI_CLOCK,STD_OKI_CLOCK )
-
-/* OSC:	4,7,12 MHz */
-MEGASYS1_GAME(	hachoo, A,0x0f0000,0x0fffff,
-				12000000,7000000,STD_FM_CLOCK,STD_OKI_CLOCK,STD_OKI_CLOCK )
-
-/* OSC:	? */
-MEGASYS1_GAME(	iganinju, A,0x0f0000,0x0fffff,
-				7000000,7000000,STD_FM_CLOCK,STD_OKI_CLOCK,STD_OKI_CLOCK )
-// This game doesn't work properly: it severely slows down (and gets worse bumping the clock)
-
-/* OSC:	4, 7, 12 MHz */
-MEGASYS1_GAME(	kickoff, A,0x0f0000,0x0fffff,
-				12000000,7000000,STD_FM_CLOCK,STD_OKI_CLOCK,STD_OKI_CLOCK )
-
-/* OSC:	5,12 MHz */
-MEGASYS1_GAME(	lomakai, Z,0x0f0000,0x0fffff,
-				6000000,3000000,	1200000,0,0 )	// no oki chips
-
-/*
- OSC:	? (YM2151 timers drive the music tempo)
-
- KLOV: This game is based on a standard Jaleco platform (using twin 68K CPU's) that is
- used on a few other games (e.g. Astyanax). It is coded MB8842 with an MB8843 ROM
- daughter card. Changing the ROM card changes the game.
-*/
-MEGASYS1_GAME(	p47, A,0x0f0000,0x0fffff,
-				12000000,7000000,STD_FM_CLOCK,STD_OKI_CLOCK,STD_OKI_CLOCK )
-
-/* OSC:	? */
-/* KLOV: Jaleco board no. PB-92127A. Main CPU: Motorola 68000P10 */
-MEGASYS1_GAME(	peekaboo, D,0x1f0000,0x1fffff,
-				10000000,0,	0,12000,0 )	// 1 cpu, no fm, 1 oki
-
-/* OSC:	? */
-MEGASYS1_GAME(	plusalph, A,0x0f0000,0x0fffff,
-				12000000,7000000,STD_FM_CLOCK,STD_OKI_CLOCK,STD_OKI_CLOCK )
-
-/* OSC:	4,12,7 MHz */
-MEGASYS1_GAME(	rodland, A,0x0f0000,0x0fffff,
-				12000000,7000000,STD_FM_CLOCK,STD_OKI_CLOCK,STD_OKI_CLOCK )
-
-/* OSC:	? */
-MEGASYS1_GAME(	stdragon, A,0x0f0000,0x0fffff,
-				12000000,7000000,STD_FM_CLOCK,STD_OKI_CLOCK,STD_OKI_CLOCK )
-
-
-/* OSC:	? */
-MEGASYS1_GAME(	soldamj, A,0x0f0000,0x0fffff,
-				12000000,7000000,STD_FM_CLOCK,STD_OKI_CLOCK,STD_OKI_CLOCK )
-
-
-/* OSC:	? */
-MEGASYS1_GAME(	tshingen, A, 0x0f0000, 0x0fffff,
-				12000000,7000000,STD_FM_CLOCK,STD_OKI_CLOCK,STD_OKI_CLOCK )
 
 
 
@@ -992,53 +860,69 @@ ff9df8.w	*** level ***
 
 ***************************************************************************/
 
-#define ROM_LOAD_64STREET \
-	ROM_REGION( 0x20000, REGION_CPU2, 0 )		/* Sound CPU Code */ \
-	ROM_LOAD16_BYTE( "64th_08.rom", 0x000000, 0x010000, 0x632be0c1 ) \
-	ROM_LOAD16_BYTE( "64th_07.rom", 0x000001, 0x010000, 0x13595d01 ) \
-\
-	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE ) /* Scroll 0 */ \
-	ROM_LOAD( "64th_01.rom", 0x000000, 0x080000, 0x06222f90 ) \
-\
-	ROM_REGION( 0x80000, REGION_GFX2, ROMREGION_DISPOSE ) /* Scroll 1 */ \
-	ROM_LOAD( "64th_06.rom", 0x000000, 0x080000, 0x2bfcdc75 ) \
-\
-	ROM_REGION( 0x20000, REGION_GFX3, ROMREGION_DISPOSE ) /* Scroll 2 */ \
-	ROM_LOAD( "64th_09.rom", 0x000000, 0x020000, 0xa4a97db4 ) \
-\
-	ROM_REGION( 0x100000, REGION_GFX4, ROMREGION_DISPOSE ) /* Sprites */ \
-	ROM_LOAD( "64th_05.rom", 0x000000, 0x080000, 0xa89a7020 ) \
-	ROM_LOAD( "64th_04.rom", 0x080000, 0x080000, 0x98f83ef6 ) \
-\
-	ROM_REGION( 0x40000, REGION_SOUND1, 0 )		/* Samples */ \
-	ROM_LOAD( "64th_11.rom", 0x000000, 0x020000, 0xb0b8a65c ) \
-\
-	ROM_REGION( 0x40000, REGION_SOUND2, 0 )		/* Samples */ \
-	ROM_LOAD( "64th_10.rom", 0x000000, 0x040000, 0xa3390561 ) \
-\
-	ROM_REGION( 0x0200, REGION_PROMS, 0 )		/* Priority PROM */ \
-	ROM_LOAD( "prom",        0x0000, 0x0200, 0x00000000 )
-
-
 ROM_START( 64street )
-
 	ROM_REGION( 0x80000, REGION_CPU1, 0 )		/* Main CPU Code */
 	ROM_LOAD16_BYTE( "64th_03.rom", 0x000000, 0x040000, 0xed6c6942 )
 	ROM_LOAD16_BYTE( "64th_02.rom", 0x000001, 0x040000, 0x0621ed1d )
 
-	ROM_LOAD_64STREET
+	ROM_REGION( 0x20000, REGION_CPU2, 0 )		/* Sound CPU Code */
+	ROM_LOAD16_BYTE( "64th_08.rom", 0x000000, 0x010000, 0x632be0c1 )
+	ROM_LOAD16_BYTE( "64th_07.rom", 0x000001, 0x010000, 0x13595d01 )
 
+	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE ) /* Scroll 0 */
+	ROM_LOAD( "64th_01.rom", 0x000000, 0x080000, 0x06222f90 )
+
+	ROM_REGION( 0x80000, REGION_GFX2, ROMREGION_DISPOSE ) /* Scroll 1 */
+	ROM_LOAD( "64th_06.rom", 0x000000, 0x080000, 0x2bfcdc75 )
+
+	ROM_REGION( 0x20000, REGION_GFX3, ROMREGION_DISPOSE ) /* Scroll 2 */
+	ROM_LOAD( "64th_09.rom", 0x000000, 0x020000, 0xa4a97db4 )
+
+	ROM_REGION( 0x100000, REGION_GFX4, ROMREGION_DISPOSE ) /* Sprites */
+	ROM_LOAD( "64th_05.rom", 0x000000, 0x080000, 0xa89a7020 )
+	ROM_LOAD( "64th_04.rom", 0x080000, 0x080000, 0x98f83ef6 )
+
+	ROM_REGION( 0x40000, REGION_SOUND1, 0 )		/* Samples */
+	ROM_LOAD( "64th_11.rom", 0x000000, 0x020000, 0xb0b8a65c )
+
+	ROM_REGION( 0x40000, REGION_SOUND2, 0 )		/* Samples */
+	ROM_LOAD( "64th_10.rom", 0x000000, 0x040000, 0xa3390561 )
+
+	ROM_REGION( 0x0200, REGION_PROMS, 0 )		/* Priority PROM */
+	ROM_LOAD( "prom",        0x0000, 0x0200, 0x00000000 )
 ROM_END
 
 
 ROM_START( 64streej )
-
 	ROM_REGION( 0x80000, REGION_CPU1, 0 )		/* Main CPU Code */
 	ROM_LOAD16_BYTE( "91105-3.bin", 0x000000, 0x040000, 0xa211a83b )
 	ROM_LOAD16_BYTE( "91105-2.bin", 0x000001, 0x040000, 0x27c1f436 )
 
-	ROM_LOAD_64STREET
+	ROM_REGION( 0x20000, REGION_CPU2, 0 )		/* Sound CPU Code */
+	ROM_LOAD16_BYTE( "64th_08.rom", 0x000000, 0x010000, 0x632be0c1 )
+	ROM_LOAD16_BYTE( "64th_07.rom", 0x000001, 0x010000, 0x13595d01 )
 
+	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE ) /* Scroll 0 */
+	ROM_LOAD( "64th_01.rom", 0x000000, 0x080000, 0x06222f90 )
+
+	ROM_REGION( 0x80000, REGION_GFX2, ROMREGION_DISPOSE ) /* Scroll 1 */
+	ROM_LOAD( "64th_06.rom", 0x000000, 0x080000, 0x2bfcdc75 )
+
+	ROM_REGION( 0x20000, REGION_GFX3, ROMREGION_DISPOSE ) /* Scroll 2 */
+	ROM_LOAD( "64th_09.rom", 0x000000, 0x020000, 0xa4a97db4 )
+
+	ROM_REGION( 0x100000, REGION_GFX4, ROMREGION_DISPOSE ) /* Sprites */
+	ROM_LOAD( "64th_05.rom", 0x000000, 0x080000, 0xa89a7020 )
+	ROM_LOAD( "64th_04.rom", 0x080000, 0x080000, 0x98f83ef6 )
+
+	ROM_REGION( 0x40000, REGION_SOUND1, 0 )		/* Samples */
+	ROM_LOAD( "64th_11.rom", 0x000000, 0x020000, 0xb0b8a65c )
+
+	ROM_REGION( 0x40000, REGION_SOUND2, 0 )		/* Samples */
+	ROM_LOAD( "64th_10.rom", 0x000000, 0x040000, 0xa3390561 )
+
+	ROM_REGION( 0x0200, REGION_PROMS, 0 )		/* Priority PROM */
+	ROM_LOAD( "prom",        0x0000, 0x0200, 0x00000000 )
 ROM_END
 
 
@@ -1077,19 +961,6 @@ INPUT_PORTS_START( 64street )
 
 INPUT_PORTS_END
 
-static void init_64street(void)
-{
-//	data16_t *RAM = (data16_t *) memory_region(REGION_CPU1);
-//	RAM[0x006b8/2] = 0x6004;		// d8001 test
-//	RAM[0x10EDE/2] = 0x6012;		// watchdog
-
-	ip_select_values[0] = 0x57;
-	ip_select_values[1] = 0x53;
-	ip_select_values[2] = 0x54;
-	ip_select_values[3] = 0x55;
-	ip_select_values[4] = 0x56;
-}
-
 
 /***************************************************************************
 
@@ -1100,68 +971,92 @@ interrupts:	1] 1aa	2] 1b4
 ***************************************************************************/
 
 
-#define ASTYANAX_ROM_LOAD \
-\
-	ROM_REGION( 0x20000, REGION_CPU2, 0 )		/* Sound CPU Code */ \
-	ROM_LOAD16_BYTE( "astyan5.bin",  0x000000, 0x010000, 0x11c74045 ) \
-	ROM_LOAD16_BYTE( "astyan6.bin",  0x000001, 0x010000, 0xeecd4b16 ) \
-\
-	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE ) /* Scroll 0 */ \
-	ROM_LOAD( "astyan11.bin", 0x000000, 0x020000, 0x5593fec9 ) \
-	ROM_LOAD( "astyan12.bin", 0x020000, 0x020000, 0xe8b313ec ) \
-	ROM_LOAD( "astyan13.bin", 0x040000, 0x020000, 0x5f3496c6 ) \
-	ROM_LOAD( "astyan14.bin", 0x060000, 0x020000, 0x29a09ec2 ) \
-\
-	ROM_REGION( 0x80000, REGION_GFX2, ROMREGION_DISPOSE ) /* Scroll 1 */ \
-	ROM_LOAD( "astyan15.bin", 0x000000, 0x020000, 0x0d316615 ) \
-	ROM_LOAD( "astyan16.bin", 0x020000, 0x020000, 0xba96e8d9 ) \
-	ROM_LOAD( "astyan17.bin", 0x040000, 0x020000, 0xbe60ba06 ) \
-	ROM_LOAD( "astyan18.bin", 0x060000, 0x020000, 0x3668da3d ) \
-\
-	ROM_REGION( 0x20000, REGION_GFX3, ROMREGION_DISPOSE ) /* Scroll 2 */ \
-	ROM_LOAD( "astyan19.bin", 0x000000, 0x020000, 0x98158623 ) \
-\
-	ROM_REGION( 0x80000, REGION_GFX4, ROMREGION_DISPOSE ) /* Sprites */ \
-	ROM_LOAD( "astyan20.bin", 0x000000, 0x020000, 0xc1ad9aa0 ) \
-	ROM_LOAD( "astyan21.bin", 0x020000, 0x020000, 0x0bf498ee ) \
-	ROM_LOAD( "astyan22.bin", 0x040000, 0x020000, 0x5f04d9b1 ) \
-	ROM_LOAD( "astyan23.bin", 0x060000, 0x020000, 0x7bd4d1e7 ) \
-\
-	ROM_REGION( 0x40000, REGION_SOUND1, 0 )		/* Samples */ \
-	ROM_LOAD( "astyan9.bin",  0x000000, 0x020000, 0xa10b3f17 ) \
-	ROM_LOAD( "astyan10.bin", 0x020000, 0x020000, 0x4f704e7a ) \
-\
-	ROM_REGION( 0x40000, REGION_SOUND2, 0 )		/* Samples */ \
-	ROM_LOAD( "astyan7.bin",  0x000000, 0x020000, 0x319418cc ) \
-	ROM_LOAD( "astyan8.bin",  0x020000, 0x020000, 0x5e5d2a22 ) \
-\
-	ROM_REGION( 0x0200, REGION_PROMS, 0 )		/* Priority PROM */ \
-	ROM_LOAD( "prom",         0x0000, 0x0200, 0x00000000 )
-
-
 ROM_START( astyanax )
-
 	ROM_REGION( 0x60000, REGION_CPU1, 0 )		/* Main CPU Code */
 	ROM_LOAD16_BYTE( "astyan2.bin", 0x00000, 0x20000, 0x1b598dcc )
 	ROM_LOAD16_BYTE( "astyan1.bin", 0x00001, 0x20000, 0x1a1ad3cf )
 	ROM_LOAD16_BYTE( "astyan3.bin", 0x40000, 0x10000, 0x097b53a6 )
 	ROM_LOAD16_BYTE( "astyan4.bin", 0x40001, 0x10000, 0x1e1cbdb2 )
 
-	ASTYANAX_ROM_LOAD
+	ROM_REGION( 0x20000, REGION_CPU2, 0 )		/* Sound CPU Code */
+	ROM_LOAD16_BYTE( "astyan5.bin",  0x000000, 0x010000, 0x11c74045 )
+	ROM_LOAD16_BYTE( "astyan6.bin",  0x000001, 0x010000, 0xeecd4b16 )
 
+	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE ) /* Scroll 0 */
+	ROM_LOAD( "astyan11.bin", 0x000000, 0x020000, 0x5593fec9 )
+	ROM_LOAD( "astyan12.bin", 0x020000, 0x020000, 0xe8b313ec )
+	ROM_LOAD( "astyan13.bin", 0x040000, 0x020000, 0x5f3496c6 )
+	ROM_LOAD( "astyan14.bin", 0x060000, 0x020000, 0x29a09ec2 )
+
+	ROM_REGION( 0x80000, REGION_GFX2, ROMREGION_DISPOSE ) /* Scroll 1 */
+	ROM_LOAD( "astyan15.bin", 0x000000, 0x020000, 0x0d316615 )
+	ROM_LOAD( "astyan16.bin", 0x020000, 0x020000, 0xba96e8d9 )
+	ROM_LOAD( "astyan17.bin", 0x040000, 0x020000, 0xbe60ba06 )
+	ROM_LOAD( "astyan18.bin", 0x060000, 0x020000, 0x3668da3d )
+
+	ROM_REGION( 0x20000, REGION_GFX3, ROMREGION_DISPOSE ) /* Scroll 2 */
+	ROM_LOAD( "astyan19.bin", 0x000000, 0x020000, 0x98158623 )
+
+	ROM_REGION( 0x80000, REGION_GFX4, ROMREGION_DISPOSE ) /* Sprites */
+	ROM_LOAD( "astyan20.bin", 0x000000, 0x020000, 0xc1ad9aa0 )
+	ROM_LOAD( "astyan21.bin", 0x020000, 0x020000, 0x0bf498ee )
+	ROM_LOAD( "astyan22.bin", 0x040000, 0x020000, 0x5f04d9b1 )
+	ROM_LOAD( "astyan23.bin", 0x060000, 0x020000, 0x7bd4d1e7 )
+
+	ROM_REGION( 0x40000, REGION_SOUND1, 0 )		/* Samples */
+	ROM_LOAD( "astyan9.bin",  0x000000, 0x020000, 0xa10b3f17 )
+	ROM_LOAD( "astyan10.bin", 0x020000, 0x020000, 0x4f704e7a )
+
+	ROM_REGION( 0x40000, REGION_SOUND2, 0 )		/* Samples */
+	ROM_LOAD( "astyan7.bin",  0x000000, 0x020000, 0x319418cc )
+	ROM_LOAD( "astyan8.bin",  0x020000, 0x020000, 0x5e5d2a22 )
+
+	ROM_REGION( 0x0200, REGION_PROMS, 0 )		/* Priority PROM */
+	ROM_LOAD( "prom",         0x0000, 0x0200, 0x00000000 )
 ROM_END
 
-
 ROM_START( lordofk )
-
 	ROM_REGION( 0x80000, REGION_CPU1, 0 )		/* Main CPU Code */
 	ROM_LOAD16_BYTE( "lokj02.bin", 0x00000, 0x20000, 0x0d7f9b4a )
 	ROM_LOAD16_BYTE( "lokj01.bin", 0x00001, 0x20000, 0xbed3cb93 )
 	ROM_LOAD16_BYTE( "lokj03.bin", 0x40000, 0x20000, 0xd8702c91 )
 	ROM_LOAD16_BYTE( "lokj04.bin", 0x40001, 0x20000, 0xeccbf8c9 )
 
-	ASTYANAX_ROM_LOAD
+	ROM_REGION( 0x20000, REGION_CPU2, 0 )		/* Sound CPU Code */
+	ROM_LOAD16_BYTE( "astyan5.bin",  0x000000, 0x010000, 0x11c74045 )
+	ROM_LOAD16_BYTE( "astyan6.bin",  0x000001, 0x010000, 0xeecd4b16 )
 
+	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE ) /* Scroll 0 */
+	ROM_LOAD( "astyan11.bin", 0x000000, 0x020000, 0x5593fec9 )
+	ROM_LOAD( "astyan12.bin", 0x020000, 0x020000, 0xe8b313ec )
+	ROM_LOAD( "astyan13.bin", 0x040000, 0x020000, 0x5f3496c6 )
+	ROM_LOAD( "astyan14.bin", 0x060000, 0x020000, 0x29a09ec2 )
+
+	ROM_REGION( 0x80000, REGION_GFX2, ROMREGION_DISPOSE ) /* Scroll 1 */
+	ROM_LOAD( "astyan15.bin", 0x000000, 0x020000, 0x0d316615 )
+	ROM_LOAD( "astyan16.bin", 0x020000, 0x020000, 0xba96e8d9 )
+	ROM_LOAD( "astyan17.bin", 0x040000, 0x020000, 0xbe60ba06 )
+	ROM_LOAD( "astyan18.bin", 0x060000, 0x020000, 0x3668da3d )
+
+	ROM_REGION( 0x20000, REGION_GFX3, ROMREGION_DISPOSE ) /* Scroll 2 */
+	ROM_LOAD( "astyan19.bin", 0x000000, 0x020000, 0x98158623 )
+
+	ROM_REGION( 0x80000, REGION_GFX4, ROMREGION_DISPOSE ) /* Sprites */
+	ROM_LOAD( "astyan20.bin", 0x000000, 0x020000, 0xc1ad9aa0 )
+	ROM_LOAD( "astyan21.bin", 0x020000, 0x020000, 0x0bf498ee )
+	ROM_LOAD( "astyan22.bin", 0x040000, 0x020000, 0x5f04d9b1 )
+	ROM_LOAD( "astyan23.bin", 0x060000, 0x020000, 0x7bd4d1e7 )
+
+	ROM_REGION( 0x40000, REGION_SOUND1, 0 )		/* Samples */
+	ROM_LOAD( "astyan9.bin",  0x000000, 0x020000, 0xa10b3f17 )
+	ROM_LOAD( "astyan10.bin", 0x020000, 0x020000, 0x4f704e7a )
+
+	ROM_REGION( 0x40000, REGION_SOUND2, 0 )		/* Samples */
+	ROM_LOAD( "astyan7.bin",  0x000000, 0x020000, 0x319418cc )
+	ROM_LOAD( "astyan8.bin",  0x020000, 0x020000, 0x5e5d2a22 )
+
+	ROM_REGION( 0x0200, REGION_PROMS, 0 )		/* Priority PROM */
+	ROM_LOAD( "prom",         0x0000, 0x0200, 0x00000000 )
 ROM_END
 
 
@@ -1226,51 +1121,6 @@ INPUT_PORTS_START( astyanax )
 INPUT_PORTS_END
 
 
-void astyanax_rom_decode(int cpu)
-{
-	data16_t	*RAM	=	(data16_t *) memory_region(REGION_CPU1+cpu);
-	int i,		size	=	memory_region_length(REGION_CPU1+cpu);
-	if (size > 0x40000)	size = 0x40000;
-
-	for (i = 0 ; i < size/2 ; i++)
-	{
-		data16_t x,y;
-
-		x = RAM[i];
-
-// [0] def0 a981 65cb 7234
-// [1] fdb9 7531 8ace 0246
-// [2] 4567 0123 ba98 fedc
-
-#define BITSWAP_0	BITSWAP(x,0xd,0xe,0xf,0x0,0xa,0x9,0x8,0x1,0x6,0x5,0xc,0xb,0x7,0x2,0x3,0x4)
-#define BITSWAP_1	BITSWAP(x,0xf,0xd,0xb,0x9,0x7,0x5,0x3,0x1,0x8,0xa,0xc,0xe,0x0,0x2,0x4,0x6)
-#define BITSWAP_2	BITSWAP(x,0x4,0x5,0x6,0x7,0x0,0x1,0x2,0x3,0xb,0xa,0x9,0x8,0xf,0xe,0xd,0xc)
-
-		if		(i < 0x08000/2)	{ if ( (i | (0x248/2)) != i ) {y = BITSWAP_0;} else {y = BITSWAP_1;} }
-		else if	(i < 0x10000/2)	{ y = BITSWAP_2; }
-		else if	(i < 0x18000/2)	{ if ( (i | (0x248/2)) != i ) {y = BITSWAP_0;} else {y = BITSWAP_1;} }
-		else if	(i < 0x20000/2)	{ y = BITSWAP_1; }
-		else 					{ y = BITSWAP_2; }
-
-#undef	BITSWAP_0
-#undef	BITSWAP_1
-#undef	BITSWAP_2
-
-		RAM[i] = y;
-	}
-}
-
-
-static void init_astyanax(void)
-{
-	data16_t *RAM;
-
-	astyanax_rom_decode(0);
-
-	RAM = (data16_t *) memory_region(REGION_CPU1);
-	RAM[0x0004e6/2] = 0x6040;	// protection
-}
-
 
 /***************************************************************************
 
@@ -1286,20 +1136,6 @@ fd6		reads e0000 (values FF,06,34,35,36,37)
 ffa		e0000<-6 test
 
 79584.w *** level ***
-
-phntsm08.bin            spirit13.rom            IDENTICAL
-phntsm10.bin            spirit14.rom            IDENTICAL
-phntsm14.bin            spirit12.rom            IDENTICAL
-phntsm18.bin            spirit11.rom            IDENTICAL
-phntsm19.bin            spirit09.rom            IDENTICAL
-phntsm23.bin            spirit10.rom            IDENTICAL
-phntsm05.bin            spirit01.rom [1st half] IDENTICAL
-phntsm06.bin            spirit02.rom [1st half] IDENTICAL
-phntsm01.bin            spirit05.rom [1st half] 38.631%
-phntsm02.bin            spirit06.rom [1st half] 22.478%
-phntsm03.bin            spirit02.rom [2nd half] 14.528%
-phntsm03.bin            spirit01.rom [2nd half] 14.528%
-phntsm04.bin                                    NO MATCH
 
 1] E9C
 2] ED4
@@ -1381,98 +1217,40 @@ ROM_START( phantasm )
 	ROM_LOAD( "ph.bin",        0x0000, 0x0200, 0x8359650a )
 ROM_END
 
-//	fire	jump
-#define INPUT_PORTS_AVSPIRIT \
-	COINS \
-	JOY_2BUTTONS(IPF_PLAYER1) \
-	RESERVE \
-	JOY_2BUTTONS(IPF_PLAYER2) \
-\
-	PORT_START \
-	COINAGE_8BITS \
-\
-	PORT_START \
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) ) \
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) ) \
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) ) \
-	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Demo_Sounds ) ) \
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) ) \
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) ) \
-	PORT_DIPNAME( 0x04, 0x04, "Allow Continue" ) \
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) ) \
-	PORT_DIPSETTING(    0x04, DEF_STR( On ) ) \
-	PORT_DIPNAME( 0x18, 0x18, DEF_STR( Difficulty ) ) \
-	PORT_DIPSETTING(    0x08, "Easy" ) \
-	PORT_DIPSETTING(    0x18, "Normal" ) \
-	PORT_DIPSETTING(    0x10, "Hard" ) \
-	PORT_DIPSETTING(    0x00, "Hardest" ) \
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Cabinet ) ) \
-	PORT_DIPSETTING(    0x20, DEF_STR( Upright ) ) \
-	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) ) \
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) ) \
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) ) \
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) ) \
-	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
-
 
 INPUT_PORTS_START( avspirit )
-	INPUT_PORTS_AVSPIRIT
+	COINS
+	JOY_2BUTTONS(IPF_PLAYER1)
+	RESERVE
+	JOY_2BUTTONS(IPF_PLAYER2)
+
+	PORT_START
+	COINAGE_8BITS
+
+	PORT_START
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, "Allow Continue" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
+	PORT_DIPNAME( 0x18, 0x18, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x08, "Easy" )
+	PORT_DIPSETTING(    0x18, "Normal" )
+	PORT_DIPSETTING(    0x10, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( phantasm )
-	INPUT_PORTS_AVSPIRIT
-INPUT_PORTS_END
-
-static void init_avspirit(void)
-{
-	ip_select_values[0] = 0x37;
-	ip_select_values[1] = 0x35;
-	ip_select_values[2] = 0x36;
-	ip_select_values[3] = 0x33;
-	ip_select_values[4] = 0x34;
-}
-
-
-
-void phantasm_rom_decode(int cpu)
-{
-	data16_t	*RAM	=	(data16_t *) memory_region(REGION_CPU1+cpu);
-	int i,		size	=	memory_region_length(REGION_CPU1+cpu);
-	if (size > 0x40000)	size = 0x40000;
-
-	for (i = 0 ; i < size/2 ; i++)
-	{
-		data16_t x,y;
-
-		x = RAM[i];
-
-// [0] def0 189a bc56 7234
-// [1] fdb9 7531 eca8 6420
-// [2] 0123 4567 ba98 fedc
-#define BITSWAP_0	BITSWAP(x,0xd,0xe,0xf,0x0,0x1,0x8,0x9,0xa,0xb,0xc,0x5,0x6,0x7,0x2,0x3,0x4)
-#define BITSWAP_1	BITSWAP(x,0xf,0xd,0xb,0x9,0x7,0x5,0x3,0x1,0xe,0xc,0xa,0x8,0x6,0x4,0x2,0x0)
-#define BITSWAP_2	BITSWAP(x,0x0,0x1,0x2,0x3,0x4,0x5,0x6,0x7,0xb,0xa,0x9,0x8,0xf,0xe,0xd,0xc)
-
-		if		(i < 0x08000/2)	{ if ( (i | (0x248/2)) != i ) {y = BITSWAP_0;} else {y = BITSWAP_1;} }
-		else if	(i < 0x10000/2)	{ y = BITSWAP_2; }
-		else if	(i < 0x18000/2)	{ if ( (i | (0x248/2)) != i ) {y = BITSWAP_0;} else {y = BITSWAP_1;} }
-		else if	(i < 0x20000/2)	{ y = BITSWAP_1; }
-		else 					{ y = BITSWAP_2; }
-
-#undef	BITSWAP_0
-#undef	BITSWAP_1
-#undef	BITSWAP_2
-
-		RAM[i] = y;
-	}
-
-}
-
-
-static void init_phantasm(void)
-{
-	phantasm_rom_decode(0);
-}
 
 
 /***************************************************************************
@@ -1590,22 +1368,6 @@ INPUT_PORTS_START( bigstrik )
 
 INPUT_PORTS_END
 
-WRITE16_HANDLER( bigstrik_spriteram16_w )
-{
-	COMBINE_DATA(&spriteram16[offset]);
-}
-
-static void init_bigstrik(void)
-{
-	ip_select_values[0] = 0x58;
-	ip_select_values[1] = 0x54;
-	ip_select_values[2] = 0x55;
-	ip_select_values[3] = 0x56;
-	ip_select_values[4] = 0x57;
-
-	install_mem_write16_handler(0, 0x1f8000, 0x1f87ff, bigstrik_spriteram16_w);
-}
-
 
 /***************************************************************************
 
@@ -1686,15 +1448,6 @@ INPUT_PORTS_START( chimerab )
 
 INPUT_PORTS_END
 
-static void init_chimerab(void)
-{
-	/* same as cybattlr */
-	ip_select_values[0] = 0x56;
-	ip_select_values[1] = 0x52;
-	ip_select_values[2] = 0x53;
-	ip_select_values[3] = 0x54;
-	ip_select_values[4] = 0x55;
-}
 
 
 /***************************************************************************
@@ -1822,17 +1575,6 @@ INPUT_PORTS_END
 
 
 
-static void init_cybattlr(void)
-{
-	ip_select_values[0] = 0x56;
-	ip_select_values[1] = 0x52;
-	ip_select_values[2] = 0x53;
-	ip_select_values[3] = 0x54;
-	ip_select_values[4] = 0x55;
-}
-
-
-
 /***************************************************************************
 
 						 [ Earth Defense Force ]
@@ -1924,15 +1666,6 @@ INPUT_PORTS_START( edf )
 
 INPUT_PORTS_END
 
-static void init_edf(void)
-{
-	ip_select_values[0] = 0x20;
-	ip_select_values[1] = 0x21;
-	ip_select_values[2] = 0x22;
-	ip_select_values[3] = 0x23;
-	ip_select_values[4] = 0x24;
-}
-
 
 
 /***************************************************************************
@@ -1942,50 +1675,43 @@ static void init_edf(void)
 ***************************************************************************/
 
 
-#define HACHOO_ROM_LOAD \
-\
-	ROM_REGION( 0x20000, REGION_CPU2, 0 )		/* Sound CPU Code */ \
-	ROM_LOAD16_BYTE( "hacho05.rom", 0x000000, 0x010000, 0x6271f74f ) \
-	ROM_LOAD16_BYTE( "hacho06.rom", 0x000001, 0x010000, 0xdb9e743c ) \
-\
-	ROM_REGION( 0x080000, REGION_GFX1, ROMREGION_DISPOSE ) /* Scroll 0 */ \
-	ROM_LOAD( "hacho14.rom", 0x000000, 0x080000, 0x10188483 ) \
-\
-	ROM_REGION( 0x080000, REGION_GFX2, ROMREGION_DISPOSE ) /* Scroll 1 */ \
-	ROM_LOAD( "hacho15.rom", 0x000000, 0x020000, 0xe559347e ) \
-	ROM_LOAD( "hacho16.rom", 0x020000, 0x020000, 0x105fd8b5 ) \
-	ROM_LOAD( "hacho17.rom", 0x040000, 0x020000, 0x77f46174 ) \
-	ROM_LOAD( "hacho18.rom", 0x060000, 0x020000, 0x0be21111 ) \
-\
-	ROM_REGION( 0x020000, REGION_GFX3, ROMREGION_DISPOSE ) /* Scroll 2 */ \
-	ROM_LOAD( "hacho19.rom", 0x000000, 0x020000, 0x33bc9de3 ) \
-\
-	ROM_REGION( 0x080000, REGION_GFX4, ROMREGION_DISPOSE ) /* Sprites */ \
-	ROM_LOAD( "hacho20.rom", 0x000000, 0x020000, 0x2ae2011e ) \
-	ROM_LOAD( "hacho21.rom", 0x020000, 0x020000, 0x6dcfb8d5 ) \
-	ROM_LOAD( "hacho22.rom", 0x040000, 0x020000, 0xccabf0e0 ) \
-	ROM_LOAD( "hacho23.rom", 0x060000, 0x020000, 0xff5f77aa ) \
-\
-	ROM_REGION( 0x040000, REGION_SOUND1, 0 )		/* Samples */ \
-	ROM_LOAD( "hacho09.rom", 0x000000, 0x020000, 0xe9f35c90 ) \
-	ROM_LOAD( "hacho10.rom", 0x020000, 0x020000, 0x1aeaa188 ) \
-\
-	ROM_REGION( 0x040000, REGION_SOUND2, 0 )		/* Samples */ \
-	ROM_LOAD( "hacho07.rom", 0x000000, 0x020000, 0x06e6ca7f ) \
-	ROM_LOAD( "hacho08.rom", 0x020000, 0x020000, 0x888a6df1 ) \
-\
-	ROM_REGION( 0x0200, REGION_PROMS, 0 )		/* Priority PROM */ \
-	ROM_LOAD( "prom",         0x0000, 0x0200, 0x00000000 )
-
-
 ROM_START( hachoo )
-
 	ROM_REGION( 0x40000, REGION_CPU1, 0 )		/* Main CPU Code */
 	ROM_LOAD16_BYTE( "hacho02.rom", 0x000000, 0x020000, 0x49489c27 )
 	ROM_LOAD16_BYTE( "hacho01.rom", 0x000001, 0x020000, 0x97fc9515 )
 
-	HACHOO_ROM_LOAD
+	ROM_REGION( 0x20000, REGION_CPU2, 0 )		/* Sound CPU Code */
+	ROM_LOAD16_BYTE( "hacho05.rom", 0x000000, 0x010000, 0x6271f74f )
+	ROM_LOAD16_BYTE( "hacho06.rom", 0x000001, 0x010000, 0xdb9e743c )
 
+	ROM_REGION( 0x080000, REGION_GFX1, ROMREGION_DISPOSE ) /* Scroll 0 */
+	ROM_LOAD( "hacho14.rom", 0x000000, 0x080000, 0x10188483 )
+
+	ROM_REGION( 0x080000, REGION_GFX2, ROMREGION_DISPOSE ) /* Scroll 1 */
+	ROM_LOAD( "hacho15.rom", 0x000000, 0x020000, 0xe559347e )
+	ROM_LOAD( "hacho16.rom", 0x020000, 0x020000, 0x105fd8b5 )
+	ROM_LOAD( "hacho17.rom", 0x040000, 0x020000, 0x77f46174 )
+	ROM_LOAD( "hacho18.rom", 0x060000, 0x020000, 0x0be21111 )
+
+	ROM_REGION( 0x020000, REGION_GFX3, ROMREGION_DISPOSE ) /* Scroll 2 */
+	ROM_LOAD( "hacho19.rom", 0x000000, 0x020000, 0x33bc9de3 )
+
+	ROM_REGION( 0x080000, REGION_GFX4, ROMREGION_DISPOSE ) /* Sprites */
+	ROM_LOAD( "hacho20.rom", 0x000000, 0x020000, 0x2ae2011e )
+	ROM_LOAD( "hacho21.rom", 0x020000, 0x020000, 0x6dcfb8d5 )
+	ROM_LOAD( "hacho22.rom", 0x040000, 0x020000, 0xccabf0e0 )
+	ROM_LOAD( "hacho23.rom", 0x060000, 0x020000, 0xff5f77aa )
+
+	ROM_REGION( 0x040000, REGION_SOUND1, 0 )		/* Samples */
+	ROM_LOAD( "hacho09.rom", 0x000000, 0x020000, 0xe9f35c90 )
+	ROM_LOAD( "hacho10.rom", 0x020000, 0x020000, 0x1aeaa188 )
+
+	ROM_REGION( 0x040000, REGION_SOUND2, 0 )		/* Samples */
+	ROM_LOAD( "hacho07.rom", 0x000000, 0x020000, 0x06e6ca7f )
+	ROM_LOAD( "hacho08.rom", 0x020000, 0x020000, 0x888a6df1 )
+
+	ROM_REGION( 0x0200, REGION_PROMS, 0 )		/* Priority PROM */
+	ROM_LOAD( "prom",         0x0000, 0x0200, 0x00000000 )
 ROM_END
 
 
@@ -2032,34 +1758,6 @@ INPUT_PORTS_START( hachoo )
 
 INPUT_PORTS_END
 
-static void init_hachoo(void)
-{
-	data16_t *RAM;
-
-	astyanax_rom_decode(0);
-
-	RAM  = (data16_t *) memory_region(REGION_CPU1);
-	RAM[0x0006da/2] = 0x6000;	// protection
-}
-
-
-
-/* There's another revision, but it's a bad dump (top half of the code is FF) */
-/* There's the priority PROM 82s131.14m in there, all FFs though :( */
-#if 0
-ROM_START( hachoo1 )
-
-	ROM_REGION( 0x40000, REGION_CPU1, 0 )		/* Main CPU Code */
-		ROM_LOAD16_BYTE( "hacho02.rom", 0x000000, 0x020000, 0x49489c27 )
-		ROM_LOAD16_BYTE( "hacho01.rom", 0x000001, 0x020000, 0x97fc9515 )
-		ROM_LOAD16_BYTE( "rom-2", 0x000000, 0x010000, 0x3f56efb8 )
-		ROM_LOAD16_BYTE( "rom-1", 0x000001, 0x010000, 0xc44bd605 )
-
-	HACHOO_ROM_LOAD
-
-ROM_END
-
-#endif
 
 
 /***************************************************************************
@@ -2154,19 +1852,6 @@ INPUT_PORTS_START( iganinju )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 INPUT_PORTS_END
-
-static void init_iganinju(void)
-{
-	data16_t *RAM;
-
-	phantasm_rom_decode(0);
-
-	RAM  = (data16_t *) memory_region(REGION_CPU1);
-	RAM[0x02f000/2] = 0x835d;	// protection
-
-	RAM[0x00006e/2] = 0x0420;	// the only game that does
-								// not like lev 3 interrupts
-}
 
 
 
@@ -2654,7 +2339,6 @@ c2200<-0
 ***************************************************************************/
 
 ROM_START( peekaboo )
-
 	ROM_REGION( 0x40000, REGION_CPU1, 0 )		/* 68000 CPU Code */
 	ROM_LOAD16_BYTE( "j3", 0x000000, 0x020000, 0xf5f4cf33 )
 	ROM_LOAD16_BYTE( "j2", 0x000001, 0x020000, 0x7b3d430d )
@@ -2673,11 +2357,10 @@ ROM_START( peekaboo )
 
 	ROM_REGION( 0x120000, REGION_SOUND1, 0 )		/* Samples */
 	ROM_LOAD( "peeksamp.124", 0x000000, 0x020000, 0xe1206fa8 )
-	ROM_CONTINUE(             0x040000, 0x0e0000             )
+	ROM_CONTINUE(             0x040000, 0x0e0000 )
 
 	ROM_REGION( 0x0200, REGION_PROMS, 0 )		/* Priority PROM */
 	ROM_LOAD( "priority.69",    0x000000, 0x200, 0xb40bff56 )
-
 ROM_END
 
 INPUT_PORTS_START( peekaboo )
@@ -2748,7 +2431,7 @@ INPUT_PORTS_END
 data16_t protection_val;
 
 /* Read the input ports, through a protection device */
-READ16_HANDLER( protection_peekaboo_r )
+static READ16_HANDLER( protection_peekaboo_r )
 {
 	switch (protection_val)
 	{
@@ -2758,7 +2441,8 @@ READ16_HANDLER( protection_peekaboo_r )
 		default:	return protection_val;
 	}
 }
-WRITE16_HANDLER( protection_peekaboo_w )
+
+static WRITE16_HANDLER( protection_peekaboo_w )
 {
 	static int bank;
 
@@ -2766,7 +2450,7 @@ WRITE16_HANDLER( protection_peekaboo_w )
 
 	if ((protection_val & 0x90) == 0x90)
 	{
-		unsigned char *RAM = memory_region(okim6295_interface_peekaboo.region[0]);
+		unsigned char *RAM = memory_region(okim6295_interface_D.region[0]);
 		int new_bank = (protection_val & 0x7) % 7;
 
 		if (bank != new_bank)
@@ -2877,16 +2561,6 @@ INPUT_PORTS_START( plusalph )
 
 INPUT_PORTS_END
 
-static void init_plusalph(void)
-{
-	data16_t *RAM;
-
-	astyanax_rom_decode(0);
-
-	RAM  = (data16_t *) memory_region(REGION_CPU1);
-	RAM[0x0012b6/2] = 0x0000;	// protection
-}
-
 
 /***************************************************************************
 
@@ -2919,17 +2593,17 @@ ROM_START( rodland )
 
 	ROM_REGION( 0x080000, REGION_GFX1, ROMREGION_DISPOSE ) /* Scroll 0 */
 	ROM_LOAD( "rl_23.rom", 0x000000, 0x020000, 0xac60e771 )
-	ROM_CONTINUE(          0x030000, 0x010000             )
-	ROM_CONTINUE(          0x050000, 0x010000             )
-	ROM_CONTINUE(          0x020000, 0x010000             )
-	ROM_CONTINUE(          0x040000, 0x010000             )
-	ROM_CONTINUE(          0x060000, 0x020000             )
+	ROM_CONTINUE(          0x030000, 0x010000 )
+	ROM_CONTINUE(          0x050000, 0x010000 )
+	ROM_CONTINUE(          0x020000, 0x010000 )
+	ROM_CONTINUE(          0x040000, 0x010000 )
+	ROM_CONTINUE(          0x060000, 0x020000 )
 
 	ROM_REGION( 0x080000, REGION_GFX2, ROMREGION_DISPOSE ) /* Scroll 1 */
 	ROM_LOAD( "rl_18.rom", 0x000000, 0x080000, 0xf3b30ca6 )
 
 	ROM_REGION( 0x020000, REGION_GFX3, ROMREGION_DISPOSE ) /* Scroll 2 */
-	ROM_LOAD( "rl_19.rom", 0x000000, 0x020000, 0x1b718e2a )
+	ROM_LOAD( "rl_19.bin", 0x000000, 0x020000, 0x124d7e8f )
 
 	ROM_REGION( 0x080000, REGION_GFX4, ROMREGION_DISPOSE ) /* Sprites */
 	ROM_LOAD( "rl_14.rom", 0x000000, 0x080000, 0x08d01bf4 )
@@ -2944,54 +2618,71 @@ ROM_START( rodland )
 	ROM_LOAD( "rl.bin",    0x0000, 0x0200, 0x8914e72d )
 ROM_END
 
-
 ROM_START( rodlandj )
+	ROM_REGION( 0x60000, REGION_CPU1, 0 )		/* Main CPU Code */
+	ROM_LOAD16_BYTE( "rl_2.bin", 0x000000, 0x020000, 0xb1d2047e )
+	ROM_LOAD16_BYTE( "rl_1.bin", 0x000001, 0x020000, 0x3c47c2a3 )
+	ROM_LOAD16_BYTE( "rl_3.bin", 0x040000, 0x010000, 0xc5b1075f )
+	ROM_LOAD16_BYTE( "rl_4.bin", 0x040001, 0x010000, 0x9ec61048 )
+
+	ROM_REGION( 0x20000, REGION_CPU2, 0 )		/* Sound CPU Code */
+	ROM_LOAD16_BYTE( "rl_05.rom", 0x000000, 0x010000, 0xc1617c28 )
+	ROM_LOAD16_BYTE( "rl_06.rom", 0x000001, 0x010000, 0x663392b2 )
+
+	ROM_REGION( 0x080000, REGION_GFX1, ROMREGION_DISPOSE ) /* Scroll 0 */
+	/* address and data lines are mangled, but otherwise identical to rl_23.rom */
+	ROM_LOAD( "rl_14.bin", 0x000000, 0x080000, 0x8201e1bb )
+
+	ROM_REGION( 0x080000, REGION_GFX2, ROMREGION_DISPOSE ) /* Scroll 1 */
+	ROM_LOAD( "rl_18.rom", 0x000000, 0x080000, 0xf3b30ca6 )
+
+	ROM_REGION( 0x020000, REGION_GFX3, ROMREGION_DISPOSE ) /* Scroll 2 */
+	ROM_LOAD( "rl_19.bin", 0x000000, 0x020000, 0x124d7e8f )
+
+	ROM_REGION( 0x080000, REGION_GFX4, ROMREGION_DISPOSE ) /* Sprites */
+	/* was a bad dump (first and second half identical), reconstructed from rl_14.rom */
+	ROM_LOAD( "rl_23.bin", 0x000000, 0x080000, 0x936db174 )
+
+	ROM_REGION( 0x040000, REGION_SOUND1, 0 )		/* Samples */
+	ROM_LOAD( "rl_10.rom", 0x000000, 0x040000, 0xe1d1cd99 )
+
+	ROM_REGION( 0x040000, REGION_SOUND2, 0 )		/* Samples */
+	ROM_LOAD( "rl_08.rom", 0x000000, 0x040000, 0x8a49d3a7 )
+
+	ROM_REGION( 0x0200, REGION_PROMS, 0 )		/* Priority PROM */
+	ROM_LOAD( "rl.bin",    0x0000, 0x0200, 0x8914e72d )
+ROM_END
+
+/* 100% identical to rodlandj, but not encrypted */
+ROM_START( rodlndjb )
 	ROM_REGION( 0x60000, REGION_CPU1, 0 )		/* Main CPU Code */
 	ROM_LOAD16_BYTE( "rl19.bin", 0x000000, 0x010000, 0x028de21f )
 	ROM_LOAD16_BYTE( "rl17.bin", 0x000001, 0x010000, 0x9c720046 )
 	ROM_LOAD16_BYTE( "rl20.bin", 0x020000, 0x010000, 0x3f536d07 )
 	ROM_LOAD16_BYTE( "rl18.bin", 0x020001, 0x010000, 0x5aa61717 )
-	ROM_LOAD16_BYTE( "rl12.bin", 0x040000, 0x010000, 0xc5b1075f )	// ~ rl_03.rom
-	ROM_LOAD16_BYTE( "rl11.bin", 0x040001, 0x010000, 0x9ec61048 )	// ~ rl_04.rom
+	ROM_LOAD16_BYTE( "rl_3.bin", 0x040000, 0x010000, 0xc5b1075f )
+	ROM_LOAD16_BYTE( "rl_4.bin", 0x040001, 0x010000, 0x9ec61048 )
 
 	ROM_REGION( 0x20000, REGION_CPU2, 0 )		/* Sound CPU Code */
 	ROM_LOAD16_BYTE( "rl02.bin", 0x000000, 0x010000, 0xd26eae8f )
 	ROM_LOAD16_BYTE( "rl01.bin", 0x000001, 0x010000, 0x04cf24bc )
 
-	// bg RL_23 = 27, 28, 29b, 29a, 31a?, 30?, ?, 31b?
 	ROM_REGION( 0x080000, REGION_GFX1, ROMREGION_DISPOSE ) /* Scroll 0 */
-	ROM_LOAD( "rl27.bin",  0x000000, 0x010000, 0x673a5986 )
-	ROM_LOAD( "rl28.bin",  0x010000, 0x010000, 0x523a731d )
-	ROM_LOAD( "rl26.bin",  0x020000, 0x010000, 0x4d0a5c97 )
-	ROM_LOAD( "rl29a.bin", 0x030000, 0x010000, 0x9fd628f1 )
-	ROM_LOAD( "rl29b.bin", 0x040000, 0x010000, 0x2279cb76 )
-	ROM_LOAD( "rl30.bin",  0x050000, 0x010000, 0xb155f39e )
-	ROM_LOAD( "rl31a.bin", 0x060000, 0x010000, 0xa9bc5b84 )
-	ROM_LOAD( "rl31b.bin", 0x070000, 0x010000, 0xfb2faa69 )
+	ROM_LOAD( "rl_23.rom", 0x000000, 0x020000, 0xac60e771 )
+	ROM_CONTINUE(          0x030000, 0x010000 )
+	ROM_CONTINUE(          0x050000, 0x010000 )
+	ROM_CONTINUE(          0x020000, 0x010000 )
+	ROM_CONTINUE(          0x040000, 0x010000 )
+	ROM_CONTINUE(          0x060000, 0x020000 )
 
 	ROM_REGION( 0x080000, REGION_GFX2, ROMREGION_DISPOSE ) /* Scroll 1 */
-	ROM_LOAD( "rl21.bin",  0x000000, 0x010000, 0x32fc0bc6 )	// bg = RL_18
-	ROM_LOAD( "rl22.bin",  0x010000, 0x010000, 0x0969daa9 )
-	ROM_LOAD( "rl13.bin",  0x020000, 0x010000, 0x1203cdf6 )
-	ROM_LOAD( "rl14.bin",  0x030000, 0x010000, 0xd53e094b )
-	ROM_LOAD( "rl24.bin",  0x040000, 0x010000, 0xb04343e6 )
-	ROM_LOAD( "rl23.bin",  0x050000, 0x010000, 0x70aa7e2c )
-	ROM_LOAD( "rl15.bin",  0x060000, 0x010000, 0x38ac846e )
-	ROM_LOAD( "rl16.bin",  0x070000, 0x010000, 0x5e31f0b2 )
+	ROM_LOAD( "rl_18.rom", 0x000000, 0x080000, 0xf3b30ca6 )
 
 	ROM_REGION( 0x020000, REGION_GFX3, ROMREGION_DISPOSE ) /* Scroll 2 */
-	ROM_LOAD( "rl25.bin",  0x000000, 0x010000, 0x4ca57cb6 )	// txt = RL_19
-	// Filled with pen 15 at startup
+	ROM_LOAD( "rl_19.bin", 0x000000, 0x020000, 0x124d7e8f )
 
 	ROM_REGION( 0x080000, REGION_GFX4, ROMREGION_DISPOSE ) /* Sprites */
-	ROM_LOAD( "rl04.bin",  0x000000, 0x010000, 0xcfcf9f97 )	// sprites = RL_14
-	ROM_LOAD( "rl05.bin",  0x010000, 0x010000, 0x38c05d15 )
-	ROM_LOAD( "rl07.bin",  0x020000, 0x010000, 0xe117cb72 )
-	ROM_LOAD( "rl08.bin",  0x030000, 0x010000, 0x2f9b40c3 )
-	ROM_LOAD( "rl03.bin",  0x040000, 0x010000, 0xf6a88efd )
-	ROM_LOAD( "rl06.bin",  0x050000, 0x010000, 0x90a78af1 )
-	ROM_LOAD( "rl09.bin",  0x060000, 0x010000, 0x427a0908 )
-	ROM_LOAD( "rl10.bin",  0x070000, 0x010000, 0x53cc2c11 )
+	ROM_LOAD( "rl_14.rom", 0x000000, 0x080000, 0x08d01bf4 )
 
 	ROM_REGION( 0x040000, REGION_SOUND1, 0 )		/* Samples */
 	ROM_LOAD( "rl_10.rom", 0x000000, 0x040000, 0xe1d1cd99 )
@@ -3044,62 +2735,6 @@ INPUT_PORTS_START( rodland )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 INPUT_PORTS_END
-
-
-void rodland_rom_decode(int cpu)
-{
-	data16_t	*RAM	=	(data16_t *) memory_region(REGION_CPU1+cpu);
-	int i,		size	=	memory_region_length(REGION_CPU1+cpu);
-	if (size > 0x40000)	size = 0x40000;
-
-	for (i = 0 ; i < size/2 ; i++)
-	{
-		data16_t x,y;
-
-		x = RAM[i];
-
-// [0] d0a9 6ebf 5c72 3814	[1] 4567 0123 ba98 fedc
-// [2] fdb9 ce07 5318 a246	[3] 4512 ed3b a967 08fc
-#define BITSWAP_0	BITSWAP(x,0xd,0x0,0xa,0x9,0x6,0xe,0xb,0xf,0x5,0xc,0x7,0x2,0x3,0x8,0x1,0x4);
-#define BITSWAP_1	BITSWAP(x,0x4,0x5,0x6,0x7,0x0,0x1,0x2,0x3,0xb,0xa,0x9,0x8,0xf,0xe,0xd,0xc);
-#define	BITSWAP_2	BITSWAP(x,0xf,0xd,0xb,0x9,0xc,0xe,0x0,0x7,0x5,0x3,0x1,0x8,0xa,0x2,0x4,0x6);
-#define	BITSWAP_3	BITSWAP(x,0x4,0x5,0x1,0x2,0xe,0xd,0x3,0xb,0xa,0x9,0x6,0x7,0x0,0x8,0xf,0xc);
-
-		if		(i < 0x08000/2)	{	if ( (i | (0x248/2)) != i ) {y = BITSWAP_0;} else {y = BITSWAP_1;} }
-		else if	(i < 0x10000/2)	{	if ( (i | (0x248/2)) != i ) {y = BITSWAP_2;} else {y = BITSWAP_3;} }
-		else if	(i < 0x18000/2)	{	if ( (i | (0x248/2)) != i ) {y = BITSWAP_0;} else {y = BITSWAP_1;} }
-		else if	(i < 0x20000/2)	{ y = BITSWAP_1; }
-		else 					{ y = BITSWAP_3; }
-
-#undef	BITSWAP_0
-#undef	BITSWAP_1
-#undef	BITSWAP_2
-#undef	BITSWAP_3
-
-		RAM[i] = y;
-	}
-}
-
-
-static void init_rodland(void)
-{
-	unsigned char *RAM = memory_region(REGION_GFX3);	// scroll 2
-
-	/* Second half of the text gfx should be all FF's, not 0's
-	   (is this right ? Otherwise the subtitle is wrong) */
-	memset( &RAM[0x10000], 0xFF , 0x10000);
-
-	rodland_rom_decode(0);
-}
-
-static void init_rodlandj(void)
-{
-	unsigned char *RAM = memory_region(REGION_GFX3);	// scroll 2
-
-	/* Second half of the text gfx should be all FF's, not 0's
-	   (is this right ? Otherwise the subtitle is wrong) */
-	memset( &RAM[0x10000], 0xFF , 0x10000);
-}
 
 
 /***************************************************************************
@@ -3195,16 +2830,6 @@ INPUT_PORTS_START( stdragon )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 INPUT_PORTS_END
-
-static void init_stdragon(void)
-{
-	data16_t *RAM;
-
-	phantasm_rom_decode(0);
-
-	RAM  = (data16_t *) memory_region(REGION_CPU1);
-	RAM[0x00045e/2] = 0x0098;	// protection
-}
 
 
 /***************************************************************************
@@ -3302,15 +2927,6 @@ WRITE16_HANDLER( soldamj_spriteram16_w )
 	if (offset < 0x800/2)	COMBINE_DATA(&spriteram16[offset]);
 }
 
-static void init_soldam(void)
-{
-	astyanax_rom_decode(0);
-
-	/* Sprite RAM is mirrored. Why? */
-	install_mem_read16_handler (0, 0x8c000, 0x8cfff, soldamj_spriteram16_r);
-	install_mem_write16_handler(0, 0x8c000, 0x8cfff, soldamj_spriteram16_w);
-}
-
 
 
 /***************************************************************************
@@ -3398,45 +3014,334 @@ INPUT_PORTS_START( tshingen )
 
 INPUT_PORTS_END
 
-static void init_tshingen(void)
-{
-	phantasm_rom_decode(0);
-}
-
-
-
-
 
 
 
 /***************************************************************************
 
-								Game drivers
+							 Code Decryption
 
 ***************************************************************************/
 
+static void phantasm_rom_decode(int cpu)
+{
+	data16_t	*RAM	=	(data16_t *) memory_region(REGION_CPU1+cpu);
+	int i,		size	=	memory_region_length(REGION_CPU1+cpu);
+	if (size > 0x40000)	size = 0x40000;
 
-GAME ( 1991, 64street, 0,        64street, 64street, 64street, ROT0,       "Jaleco", "64th. Street - A Detective Story (World)" )
-GAME ( 1991, 64streej, 64street, 64street, 64street, 64street, ROT0,       "Jaleco", "64th. Street - A Detective Story (Japan)" )
-GAME ( 1989, astyanax, 0,        astyanax, astyanax, astyanax, ROT0_16BIT, "Jaleco", "The Astyanax" )
-GAME ( 1989, lordofk,  astyanax, astyanax, astyanax, astyanax, ROT0_16BIT, "Jaleco", "The Lord of King (Japan)" )
-GAME ( 1991, avspirit, 0,        avspirit, avspirit, avspirit, ROT0,       "Jaleco", "Avenging Spirit" )
-GAME ( 1990, phantasm, avspirit, phantasm, phantasm, phantasm, ROT0,       "Jaleco", "Phantasm (Japan)" )
-GAME ( 1992, bigstrik, 0,        bigstrik, bigstrik, bigstrik, ROT0,       "Jaleco", "Big Striker" )
-GAME ( 1993, chimerab, 0,        chimerab, chimerab, chimerab, ROT0,       "Jaleco", "Chimera Beast" )
-GAME ( 1993, cybattlr, 0,        cybattlr, cybattlr, cybattlr, ROT90,      "Jaleco", "Cybattler" )
-GAME ( 1991, edf,      0,        edf,      edf,      edf,      ROT0,       "Jaleco", "Earth Defense Force" )
-GAMEX( 1989, hachoo,   0,        hachoo,   hachoo,   hachoo,   ROT0,       "Jaleco", "Hachoo!", GAME_IMPERFECT_SOUND )
-GAME ( 1988, iganinju, 0,        iganinju, iganinju, iganinju, ROT0,       "Jaleco", "Iga Ninjyutsuden (Japan)" )
-GAME ( 1988, kickoff,  0,        kickoff,  kickoff,  0,        ROT0,       "Jaleco", "Kick Off (Japan)" )
-GAME ( 1988, lomakai,  0,        lomakai,  lomakai,  0,        ROT0,       "Jaleco", "Legend of Makai (World)" )
-GAME ( 1988, makaiden, lomakai,  lomakai,  lomakai,  0,        ROT0,       "Jaleco", "Makai Densetsu (Japan)" )
-GAME ( 1988, p47,      0,        p47,      p47,      0,        ROT0,       "Jaleco", "P-47 - The Phantom Fighter (World)" )
-GAME ( 1988, p47j,     p47,      p47,      p47,      0,        ROT0,       "Jaleco", "P-47 - The Freedom Fighter (Japan)" )
-GAME ( 1993, peekaboo, 0,        peekaboo, peekaboo, 0,        ROT0,       "Jaleco", "Peek-a-Boo!" )
-GAME ( 1989, plusalph, 0,        plusalph, plusalph, plusalph, ROT270,     "Jaleco", "Plus Alpha" )
-GAME ( 1990, rodland,  0,        rodland,  rodland,  rodland,  ROT0,       "Jaleco", "RodLand (World)" )
-GAME ( 1990, rodlandj, rodland,  rodland,  rodland,  rodlandj, ROT0,       "Jaleco", "RodLand (Japan)" )
-GAME ( 1989, stdragon, 0,        stdragon, stdragon, stdragon, ROT0,       "Jaleco", "Saint Dragon" )
-GAME ( 1992, soldamj,  0,        soldamj,  soldamj,  soldam,   ROT0,       "Jaleco", "Soldam (Japan)" )
-GAME ( 1988, tshingen, 0,        tshingen, tshingen, tshingen, ROT0,       "Jaleco", "Takeda Shingen (Japan)" )
+	for (i = 0 ; i < size/2 ; i++)
+	{
+		data16_t x,y;
+
+		x = RAM[i];
+
+// [0] def0 189a bc56 7234
+// [1] fdb9 7531 eca8 6420
+// [2] 0123 4567 ba98 fedc
+#define BITSWAP_0	BITSWAP16(x,0xd,0xe,0xf,0x0,0x1,0x8,0x9,0xa,0xb,0xc,0x5,0x6,0x7,0x2,0x3,0x4)
+#define BITSWAP_1	BITSWAP16(x,0xf,0xd,0xb,0x9,0x7,0x5,0x3,0x1,0xe,0xc,0xa,0x8,0x6,0x4,0x2,0x0)
+#define BITSWAP_2	BITSWAP16(x,0x0,0x1,0x2,0x3,0x4,0x5,0x6,0x7,0xb,0xa,0x9,0x8,0xf,0xe,0xd,0xc)
+
+		if		(i < 0x08000/2)	{ if ( (i | (0x248/2)) != i ) {y = BITSWAP_0;} else {y = BITSWAP_1;} }
+		else if	(i < 0x10000/2)	{ y = BITSWAP_2; }
+		else if	(i < 0x18000/2)	{ if ( (i | (0x248/2)) != i ) {y = BITSWAP_0;} else {y = BITSWAP_1;} }
+		else if	(i < 0x20000/2)	{ y = BITSWAP_1; }
+		else 					{ y = BITSWAP_2; }
+
+#undef	BITSWAP_0
+#undef	BITSWAP_1
+#undef	BITSWAP_2
+
+		RAM[i] = y;
+	}
+
+}
+
+void astyanax_rom_decode(int cpu)
+{
+	data16_t	*RAM	=	(data16_t *) memory_region(REGION_CPU1+cpu);
+	int i,		size	=	memory_region_length(REGION_CPU1+cpu);
+	if (size > 0x40000)	size = 0x40000;
+
+	for (i = 0 ; i < size/2 ; i++)
+	{
+		data16_t x,y;
+
+		x = RAM[i];
+
+// [0] def0 a981 65cb 7234
+// [1] fdb9 7531 8ace 0246
+// [2] 4567 0123 ba98 fedc
+
+#define BITSWAP_0	BITSWAP16(x,0xd,0xe,0xf,0x0,0xa,0x9,0x8,0x1,0x6,0x5,0xc,0xb,0x7,0x2,0x3,0x4)
+#define BITSWAP_1	BITSWAP16(x,0xf,0xd,0xb,0x9,0x7,0x5,0x3,0x1,0x8,0xa,0xc,0xe,0x0,0x2,0x4,0x6)
+#define BITSWAP_2	BITSWAP16(x,0x4,0x5,0x6,0x7,0x0,0x1,0x2,0x3,0xb,0xa,0x9,0x8,0xf,0xe,0xd,0xc)
+
+		if		(i < 0x08000/2)	{ if ( (i | (0x248/2)) != i ) {y = BITSWAP_0;} else {y = BITSWAP_1;} }
+		else if	(i < 0x10000/2)	{ y = BITSWAP_2; }
+		else if	(i < 0x18000/2)	{ if ( (i | (0x248/2)) != i ) {y = BITSWAP_0;} else {y = BITSWAP_1;} }
+		else if	(i < 0x20000/2)	{ y = BITSWAP_1; }
+		else 					{ y = BITSWAP_2; }
+
+#undef	BITSWAP_0
+#undef	BITSWAP_1
+#undef	BITSWAP_2
+
+		RAM[i] = y;
+	}
+}
+
+static void rodland_rom_decode(int cpu)
+{
+	data16_t	*RAM	=	(data16_t *) memory_region(REGION_CPU1+cpu);
+	int i,		size	=	memory_region_length(REGION_CPU1+cpu);
+	if (size > 0x40000)	size = 0x40000;
+
+	for (i = 0 ; i < size/2 ; i++)
+	{
+		data16_t x,y;
+
+		x = RAM[i];
+
+// [0] d0a9 6ebf 5c72 3814	[1] 4567 0123 ba98 fedc
+// [2] fdb9 ce07 5318 a246	[3] 4512 ed3b a967 08fc
+#define BITSWAP_0	BITSWAP16(x,0xd,0x0,0xa,0x9,0x6,0xe,0xb,0xf,0x5,0xc,0x7,0x2,0x3,0x8,0x1,0x4);
+#define BITSWAP_1	BITSWAP16(x,0x4,0x5,0x6,0x7,0x0,0x1,0x2,0x3,0xb,0xa,0x9,0x8,0xf,0xe,0xd,0xc);
+#define	BITSWAP_2	BITSWAP16(x,0xf,0xd,0xb,0x9,0xc,0xe,0x0,0x7,0x5,0x3,0x1,0x8,0xa,0x2,0x4,0x6);
+#define	BITSWAP_3	BITSWAP16(x,0x4,0x5,0x1,0x2,0xe,0xd,0x3,0xb,0xa,0x9,0x6,0x7,0x0,0x8,0xf,0xc);
+
+		if		(i < 0x08000/2)	{	if ( (i | (0x248/2)) != i ) {y = BITSWAP_0;} else {y = BITSWAP_1;} }
+		else if	(i < 0x10000/2)	{	if ( (i | (0x248/2)) != i ) {y = BITSWAP_2;} else {y = BITSWAP_3;} }
+		else if	(i < 0x18000/2)	{	if ( (i | (0x248/2)) != i ) {y = BITSWAP_0;} else {y = BITSWAP_1;} }
+		else if	(i < 0x20000/2)	{ y = BITSWAP_1; }
+		else 					{ y = BITSWAP_3; }
+
+#undef	BITSWAP_0
+#undef	BITSWAP_1
+#undef	BITSWAP_2
+#undef	BITSWAP_3
+
+		RAM[i] = y;
+	}
+}
+
+
+static void rodlandj_gfx_unmangle(int region)
+{
+	data8_t *rom = memory_region(REGION_GFX1+region);
+	int size = memory_region_length(REGION_GFX1+region);
+	data8_t *buffer;
+	int i;
+
+	/* data lines swap: 76543210 -> 64537210 */
+	for (i = 0;i < size;i++)
+		rom[i] =   (rom[i] & 0x27)
+				| ((rom[i] & 0x80) >> 4)
+				| ((rom[i] & 0x48) << 1)
+				| ((rom[i] & 0x10) << 2);
+
+	buffer = malloc(size);
+	if (!buffer) return;
+
+	memcpy(buffer,rom,size);
+
+	/* address lines swap: ..dcba9876543210 -> ..acb8937654d210 */
+	for (i = 0;i < size;i++)
+	{
+		int a =    (i &~0x2508)
+				| ((i & 0x2000) >> 10)
+				| ((i & 0x0400) << 3)
+				| ((i & 0x0100) << 2)
+				| ((i & 0x0008) << 5);
+		rom[i] = buffer[a];
+	}
+
+	free(buffer);
+}
+
+
+
+
+static void init_tshingen(void)
+{
+	phantasm_rom_decode(0);
+}
+
+static void init_iganinju(void)
+{
+	data16_t *RAM;
+
+	phantasm_rom_decode(0);
+
+	RAM  = (data16_t *) memory_region(REGION_CPU1);
+	RAM[0x02f000/2] = 0x835d;	// protection
+
+	RAM[0x00006e/2] = 0x0420;	// the only game that does
+								// not like lev 3 interrupts
+}
+
+static void init_astyanax(void)
+{
+	data16_t *RAM;
+
+	astyanax_rom_decode(0);
+
+	RAM = (data16_t *) memory_region(REGION_CPU1);
+	RAM[0x0004e6/2] = 0x6040;	// protection
+}
+
+static void init_hachoo(void)
+{
+	data16_t *RAM;
+
+	astyanax_rom_decode(0);
+
+	RAM  = (data16_t *) memory_region(REGION_CPU1);
+	RAM[0x0006da/2] = 0x6000;	// protection
+}
+
+static void init_plusalph(void)
+{
+	data16_t *RAM;
+
+	astyanax_rom_decode(0);
+
+	RAM  = (data16_t *) memory_region(REGION_CPU1);
+	RAM[0x0012b6/2] = 0x0000;	// protection
+}
+
+static void init_stdragon(void)
+{
+	data16_t *RAM;
+
+	phantasm_rom_decode(0);
+
+	RAM  = (data16_t *) memory_region(REGION_CPU1);
+	RAM[0x00045e/2] = 0x0098;	// protection
+}
+
+static void init_rodland(void)
+{
+	rodland_rom_decode(0);
+}
+
+static void init_rodlandj(void)
+{
+	rodlandj_gfx_unmangle(0);
+	rodlandj_gfx_unmangle(3);
+
+	astyanax_rom_decode(0);
+}
+
+static void init_soldam(void)
+{
+	astyanax_rom_decode(0);
+
+	/* Sprite RAM is mirrored. Why? */
+	install_mem_read16_handler (0, 0x8c000, 0x8cfff, soldamj_spriteram16_r);
+	install_mem_write16_handler(0, 0x8c000, 0x8cfff, soldamj_spriteram16_w);
+}
+
+static void init_phantasm(void)
+{
+	phantasm_rom_decode(0);
+}
+
+static void init_avspirit(void)
+{
+	ip_select_values[0] = 0x37;
+	ip_select_values[1] = 0x35;
+	ip_select_values[2] = 0x36;
+	ip_select_values[3] = 0x33;
+	ip_select_values[4] = 0x34;
+
+	/* kludge: avspirit has 0x10000 bytes of RAM while edf has 0x20000. The */
+	/* following is needed to make vh_start() pick the correct address */
+	/* for spriteram16. */
+	megasys1_ram += 0x10000/2;
+}
+
+static void init_edf(void)
+{
+	ip_select_values[0] = 0x20;
+	ip_select_values[1] = 0x21;
+	ip_select_values[2] = 0x22;
+	ip_select_values[3] = 0x23;
+	ip_select_values[4] = 0x24;
+}
+
+static void init_64street(void)
+{
+//	data16_t *RAM = (data16_t *) memory_region(REGION_CPU1);
+//	RAM[0x006b8/2] = 0x6004;		// d8001 test
+//	RAM[0x10EDE/2] = 0x6012;		// watchdog
+
+	ip_select_values[0] = 0x57;
+	ip_select_values[1] = 0x53;
+	ip_select_values[2] = 0x54;
+	ip_select_values[3] = 0x55;
+	ip_select_values[4] = 0x56;
+}
+
+static void init_bigstrik(void)
+{
+	ip_select_values[0] = 0x58;
+	ip_select_values[1] = 0x54;
+	ip_select_values[2] = 0x55;
+	ip_select_values[3] = 0x56;
+	ip_select_values[4] = 0x57;
+}
+
+static void init_chimerab(void)
+{
+	/* same as cybattlr */
+	ip_select_values[0] = 0x56;
+	ip_select_values[1] = 0x52;
+	ip_select_values[2] = 0x53;
+	ip_select_values[3] = 0x54;
+	ip_select_values[4] = 0x55;
+}
+
+static void init_cybattlr(void)
+{
+	ip_select_values[0] = 0x56;
+	ip_select_values[1] = 0x52;
+	ip_select_values[2] = 0x53;
+	ip_select_values[3] = 0x54;
+	ip_select_values[4] = 0x55;
+}
+
+static void init_peekaboo(void)
+{
+	install_mem_read16_handler (0, 0x100000, 0x100001, protection_peekaboo_r);
+	install_mem_write16_handler(0, 0x100000, 0x100001, protection_peekaboo_w);
+}
+
+
+
+
+GAME ( 1988, lomakai,  0,        system_Z, lomakai,  0,        ROT0,       "Jaleco", "Legend of Makai (World)" )
+GAME ( 1988, makaiden, lomakai,  system_Z, lomakai,  0,        ROT0,       "Jaleco", "Makai Densetsu (Japan)" )
+GAME ( 1988, p47,      0,        system_A, p47,      0,        ROT0,       "Jaleco", "P-47 - The Phantom Fighter (World)" )
+GAME ( 1988, p47j,     p47,      system_A, p47,      0,        ROT0,       "Jaleco", "P-47 - The Freedom Fighter (Japan)" )
+GAME ( 1988, kickoff,  0,        system_A, kickoff,  0,        ROT0,       "Jaleco", "Kick Off (Japan)" )
+GAME ( 1988, tshingen, 0,        system_A, tshingen, tshingen, ROT0,       "Jaleco", "Takeda Shingen (Japan)" )
+GAME ( 1988, iganinju, 0,        system_A, iganinju, iganinju, ROT0,       "Jaleco", "Iga Ninjyutsuden (Japan)" )
+GAME ( 1989, astyanax, 0,        system_A, astyanax, astyanax, ROT0_16BIT, "Jaleco", "The Astyanax" )
+GAME ( 1989, lordofk,  astyanax, system_A, astyanax, astyanax, ROT0_16BIT, "Jaleco", "The Lord of King (Japan)" )
+GAMEX( 1989, hachoo,   0,        system_A, hachoo,   hachoo,   ROT0,       "Jaleco", "Hachoo!", GAME_IMPERFECT_SOUND )
+GAME ( 1989, plusalph, 0,        system_A, plusalph, plusalph, ROT270,     "Jaleco", "Plus Alpha" )
+GAME ( 1989, stdragon, 0,        system_A, stdragon, stdragon, ROT0,       "Jaleco", "Saint Dragon" )
+GAME ( 1990, rodland,  0,        system_A, rodland,  rodland,  ROT0,       "Jaleco", "Rod-Land (World)" )
+GAME ( 1990, rodlandj, rodland,  system_A, rodland,  rodlandj, ROT0,       "Jaleco", "Rod-Land (Japan)" )
+GAME ( 1990, rodlndjb, rodland,  system_A, rodland,  0,        ROT0,       "Jaleco", "Rod-Land (Japan bootleg)" )
+GAME ( 1991, avspirit, 0,        system_B, avspirit, avspirit, ROT0,       "Jaleco", "Avenging Spirit" )
+GAME ( 1990, phantasm, avspirit, system_A, avspirit, phantasm, ROT0,       "Jaleco", "Phantasm (Japan)" )
+GAME ( 1991, edf,      0,        system_B, edf,      edf,      ROT0,       "Jaleco", "Earth Defense Force" )
+GAME ( 1991, 64street, 0,        system_C, 64street, 64street, ROT0,       "Jaleco", "64th. Street - A Detective Story (World)" )
+GAME ( 1991, 64streej, 64street, system_C, 64street, 64street, ROT0,       "Jaleco", "64th. Street - A Detective Story (Japan)" )
+GAME ( 1992, soldamj,  0,        system_A, soldamj,  soldam,   ROT0,       "Jaleco", "Soldam (Japan)" )
+GAME ( 1992, bigstrik, 0,        system_C, bigstrik, bigstrik, ROT0,       "Jaleco", "Big Striker" )
+GAME ( 1993, chimerab, 0,        system_C, chimerab, chimerab, ROT0,       "Jaleco", "Chimera Beast" )
+GAME ( 1993, cybattlr, 0,        system_C, cybattlr, cybattlr, ROT90,      "Jaleco", "Cybattler" )
+GAME ( 1993, peekaboo, 0,        system_D, peekaboo, peekaboo, ROT0,       "Jaleco", "Peek-a-Boo!" )

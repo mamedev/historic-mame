@@ -168,8 +168,8 @@ static MEMORY_WRITE16_START( cadash_writemem )
 	{ 0x0c0002, 0x0c0003, taitosound_comm16_lsb_w },
 	{ 0x100000, 0x107fff, MWA16_RAM },
 	{ 0x800000, 0x800fff, MWA16_RAM },	/* like a cchip ?? */
-	{ 0x900000, 0x900001, MWA16_NOP },	/* watchdog ?? */
-//	{ 0x900008, 0x900009, MWA16_NOP },	/* ? */
+	{ 0x900000, 0x900001, watchdog_reset16_w },
+	{ 0x900008, 0x900009, MWA16_NOP },	/* ? */
 	{ 0xa00000, 0xa0000f, TC0110PCR_step1_4bpg_word_w },
 	{ 0xb00000, 0xb007ff, MWA16_RAM, &spriteram16, &spriteram_size },
 	{ 0xb01bfe, 0xb01bff, cadash_spriteflip_w },
@@ -196,7 +196,7 @@ static MEMORY_WRITE_START( z80_writemem )
 	{ 0x9001, 0x9001, YM2151_data_port_0_w },
 	{ 0xa000, 0xa000, taitosound_slave_port_w },
 	{ 0xa001, 0xa001, taitosound_slave_comm_w },
-	{ 0xb000, 0xb000, rastan_adpcm_trigger_w },
+//	{ 0xb000, 0xb000, rastan_adpcm_trigger_w }, /* No ADPCM in this game */
 	{ 0xc000, 0xc000, rastan_c000_w },
 	{ 0xd000, 0xd000, rastan_d000_w },
 MEMORY_END
@@ -474,6 +474,11 @@ static struct ADPCMinterface adpcm_interface =
 			     MACHINE DRIVERS
 ***********************************************************/
 
+void cadash_eof_callback(void)
+{
+	buffer_spriteram16_w(0,0,0);
+}
+
 static struct MachineDriver machine_driver_cadash =
 {
 	/* basic machine hardware */
@@ -501,8 +506,8 @@ static struct MachineDriver machine_driver_cadash =
 	4096, 4096,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
-	0,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_BUFFERS_SPRITERAM,
+	cadash_eof_callback,
 	cadash_vh_start,
 	cadash_vh_stop,
 	cadash_vh_screenrefresh,

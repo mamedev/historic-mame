@@ -47,7 +47,7 @@ int dso_output_init(struct node_description *node)
 	if((node->context=malloc(sizeof(struct dso_output_context)))==NULL)
 	{
 		discrete_log("dso_output_init() - Failed to allocate local context memory.");
-		return 1;			
+		return 1;
 	}
 	else
 	{
@@ -55,7 +55,7 @@ int dso_output_init(struct node_description *node)
 		memset(node->context,0,sizeof(struct dso_output_context));
 	}
 
-	return 0;	
+	return 0;
 }
 
 

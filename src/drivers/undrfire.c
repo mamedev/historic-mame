@@ -448,7 +448,7 @@ static struct MachineDriver machine_driver_undrfire =
 {
 	{
 		{
-			CPU_M68020,
+			CPU_M68EC020,
 			16000000,	/* 16 MHz */
 			undrfire_readmem,undrfire_writemem,0,0,
 			undrfire_interrupt, 1

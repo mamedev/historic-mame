@@ -174,10 +174,9 @@ WRITE_HANDLER( slapfight_flipscreen_w )
 #if MAME_DEBUG
 void slapfght_log_vram(void)
 {
-	if ( keyboard_pressed(KEYCODE_B) )
+	if ( keyboard_pressed_memory(KEYCODE_B) )
 	{
 		int i;
-		while (keyboard_pressed(KEYCODE_B)) ;
 		for (i=0; i<0x800; i++)
 		{
 			logerror("Offset:%03x   TileRAM:%02x   AttribRAM:%02x   SpriteRAM:%02x\n",i, videoram[i],colorram[i],spriteram[i]);

@@ -1742,7 +1742,6 @@ static int build_tables (int cpu)
 		yPos += (4 * FontHeight);
 		xprintf(0, 0, yPos, "Press A Key To Continue...");
 		key = keyboard_read_sync();
-		while (keyboard_pressed(key)) ; /* wait for key release */
 		cheat_clearbitmap();
 #endif
 	  }

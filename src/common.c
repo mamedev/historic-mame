@@ -742,7 +742,7 @@ void save_screen_snapshot(struct osd_bitmap *bitmap)
 	debugload - log data to a file
 -------------------------------------------------*/
 
-void debugload(const char *string, ...)
+void CLIB_DECL debugload(const char *string, ...)
 {
 #ifdef LOG_LOAD
 	static int opened;
@@ -1345,7 +1345,8 @@ int rom_load_new(const struct RomModule *romp)
 	int regnum;
 
 	/* reset the region list */
-	memset(regionlist, 0, sizeof(regionlist));
+	for (regnum = 0;regnum < REGION_MAX;regnum++)
+		regionlist[regnum] = NULL;
 
 	/* reset the romdata struct */
 	memset(&romdata, 0, sizeof(romdata));

@@ -5,15 +5,11 @@ Pandora's Palace(GX328) (c) 1984 Konami/Interlogic
 Driver by Manuel Abadia <manu@teleline.es>
 
 Notes:
-	Press 1P and 2P together to enter test mode.
+- Press 1P and 2P together to enter test mode.
 
-	There is an empty space ($4000-$5fff) on the CPU A. That space probably
-	is used for debugging purposes on the real thing. The code checks that
-	memory location, and if a ROM is present, it starts to execute code from
-	that ROM.
-
-	The AY-8910 has a timer or something like that on port B. I've managed
-	to make it sound, but it's not 100% accurate.
+TODO:
+- CPU B continuously reads from 1e00. It seems to be important, could be a
+  scanline counter or something like that.
 
 ***************************************************************************/
 
@@ -25,7 +21,8 @@ Notes:
 
 static int irq_enable_a, irq_enable_b;
 static int firq_old_data_a, firq_old_data_b;
-static int 	i8039_irqenable;
+static int i8039_irqenable;
+static int i8039_status;
 
 unsigned char *pandoras_sharedram;
 static unsigned char *pandoras_sharedram2;
@@ -116,10 +113,13 @@ WRITE_HANDLER( pandoras_cpub_irqtrigger_w ){
 	firq_old_data_b = data;
 }
 
-static WRITE_HANDLER( i8039_irqen_w )
+static WRITE_HANDLER( i8039_irqen_and_status_w )
 {
-	/* ??? */
+	/* bit 7 enables IRQ */
 	i8039_irqenable = data & 0x80;
+
+	/* bit 5 goes to 8910 port A */
+	i8039_status = (data & 0x20) >> 5;
 }
 
 WRITE_HANDLER( pandoras_z80_irqtrigger_w )
@@ -133,11 +133,13 @@ WRITE_HANDLER( pandoras_i8039_irqtrigger_w )
 		cpu_cause_interrupt(3,I8039_EXT_INT);
 }
 
+
+
 static MEMORY_READ_START( pandoras_readmem_a )
 	{ 0x0000, 0x0fff, pandoras_sharedram_r },	/* Work RAM (Shared with CPU B) */
 	{ 0x1000, 0x13ff, pandoras_cram_r },		/* Color RAM (shared with CPU B) */
 	{ 0x1400, 0x17ff, pandoras_vram_r },		/* Video RAM (shared with CPU B) */
-	{ 0x4000, 0x5fff, MRA_ROM },				/* see notes */
+	{ 0x4000, 0x5fff, MRA_ROM },				/* space for diagnostic ROM */
 	{ 0x6000, 0x67ff, pandoras_sharedram2_r },	/* Shared RAM with CPU B */
 	{ 0x8000, 0xffff, MRA_ROM },				/* ROM */
 MEMORY_END
@@ -162,12 +164,12 @@ static MEMORY_READ_START( pandoras_readmem_b )
 	{ 0x1000, 0x13ff, pandoras_cram_r },		/* Color RAM (shared with CPU A) */
 	{ 0x1400, 0x17ff, pandoras_vram_r },		/* Video RAM (shared with CPU A) */
 	{ 0x1800, 0x1800, input_port_0_r },			/* DIPSW #1 */
-	{ 0x1c00, 0x1c00, input_port_1_r },			/* DISPW #2 */
 	{ 0x1a00, 0x1a00, input_port_3_r },			/* COINSW */
 	{ 0x1a01, 0x1a01, input_port_4_r },			/* 1P inputs */
 	{ 0x1a02, 0x1a02, input_port_5_r },			/* 2P inputs */
 	{ 0x1a03, 0x1a03, input_port_2_r },			/* DIPSW #3 */
-//	{ 0x1e00, 0x1e00, MWA_NOP },				/* ??? */
+	{ 0x1c00, 0x1c00, input_port_1_r },			/* DISPW #2 */
+//	{ 0x1e00, 0x1e00, MRA_NOP },				/* ??? seems to be important */
 	{ 0xc000, 0xc7ff, pandoras_sharedram2_r },	/* Shared RAM with the CPU A */
 	{ 0xe000, 0xffff, MRA_ROM },				/* ROM */
 MEMORY_END
@@ -213,8 +215,9 @@ PORT_END
 
 static PORT_WRITE_START( i8039_writeport )
 	{ I8039_p1, I8039_p1, DAC_0_data_w },
-	{ I8039_p2, I8039_p2, i8039_irqen_w },
+	{ I8039_p2, I8039_p2, i8039_irqen_and_status_w },
 PORT_END
+
 
 /***************************************************************************
 
@@ -332,31 +335,32 @@ INPUT_PORTS_START( pandoras )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0xe0, IP_ACTIVE_LOW, IPT_UNUSED )
-
 INPUT_PORTS_END
+
+
 
 static struct GfxLayout charlayout =
 {
-	8,8,			/* 8*8 characters */
-	0x4000/32,		/* 512 characters */
-	4,				/* 4bpp */
-	{ 0, 1, 2, 3 },	/* the four bitplanes are packed in one nibble */
+	8,8,
+	RGN_FRAC(1,1),
+	4,
+	{ 0, 1, 2, 3 },
 	{ 0*4, 1*4, 2*4, 3*4, 4*4, 5*4, 6*4, 7*4 },
 	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32 },
-	32*8			/* every character takes 32 consecutive bytes */
+	32*8
 };
 
 static struct GfxLayout spritelayout =
 {
-	16,16,			/* 16*16 sprites */
-	0x6000/128,		/* 192 sprites */
-	4,				/* 4 bpp */
-	{ 0, 1, 2, 3 }, /* the four bitplanes are packed in one nibble */
+	16,16,
+	RGN_FRAC(1,1),
+	4,
+	{ 0, 1, 2, 3 },
 	{ 15*4, 14*4, 13*4, 12*4, 11*4, 10*4, 9*4, 8*4,
 			7*4, 6*4, 5*4, 4*4, 3*4, 2*4, 1*4, 0*4 },
 	{ 15*4*16, 14*4*16, 13*4*16, 12*4*16, 11*4*16, 10*4*16, 9*4*16, 8*4*16,
 			7*4*16, 6*4*16, 5*4*16, 4*4*16, 3*4*16, 2*4*16, 1*4*16, 0*4*16 },
-	32*4*8			/* every sprite takes 128 consecutive bytes */
+	32*4*8
 };
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
@@ -378,32 +382,31 @@ static void pandoras_init_machine( void )
 	irq_enable_a = irq_enable_b = 0;
 }
 
-static READ_HANDLER( pandoras_portB_r )
+static READ_HANDLER( pandoras_portA_r )
 {
-	/* ??? */
-	return (cpu_gettotalcycles() / 1024) & 0x0f;
+	return i8039_status;
 }
 
-static WRITE_HANDLER( pandoras_portB_w )
+static READ_HANDLER( pandoras_portB_r )
 {
-	/* ??? */
+	return (cpu_gettotalcycles() / 512) & 0x0f;
 }
 
 static struct AY8910interface ay8910_interface =
 {
 	1,			/* 1 chip */
-	4000000,	/* ??????? */
-	{ 25 },
-	{ 0 },
+	14318000/8,
+	{ 40 },
+	{ pandoras_portA_r },	// not used
 	{ pandoras_portB_r },
 	{ 0 },
-	{ pandoras_portB_w }
+	{ 0 }
 };
 
 static struct DACinterface dac_interface =
 {
 	1,
-	{ 50 }
+	{ 25 }
 };
 
 static const struct MachineDriver machine_driver_pandoras =
@@ -412,25 +415,25 @@ static const struct MachineDriver machine_driver_pandoras =
 	{
 		{
 			CPU_M6809,		/* CPU A */
-			3000000,		/* ? */
+			18432000/6,		/* ??? */
 			pandoras_readmem_a,pandoras_writemem_a,0,0,
             pandoras_interrupt_a,1,
         },
 		{
 			CPU_M6809,		/* CPU B */
-			3000000,		/* ? */
+			18432000/6,		/* ??? */
 			pandoras_readmem_b,pandoras_writemem_b,0,0,
             pandoras_interrupt_b,1,
         },
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			3579545,		/* ? */
+			14318000/8,
 			pandoras_readmem_snd,pandoras_writemem_snd,0,0,
 			ignore_interrupt,1
 		},
 		{
 			CPU_I8039 | CPU_AUDIO_CPU,
-			8000000/15,		/* ? */
+			14318000/2/15,
 			i8039_readmem,i8039_writemem,i8039_readport,i8039_writeport,
 			ignore_interrupt,1
 		},

@@ -51,7 +51,7 @@ static int scrolld[2][4][2] = {
 int asterix_vh_start(void)
 {
 	K054157_vh_start(REGION_GFX1, 0, scrolld, NORMAL_PLANE_ORDER, asterix_tile_callback);
-	if (K053245_vh_start(REGION_GFX2, 1, NORMAL_PLANE_ORDER, asterix_sprite_callback))
+	if (K053245_vh_start(REGION_GFX2,NORMAL_PLANE_ORDER, asterix_sprite_callback))
 	{
 		K054157_vh_stop();
 		return 1;

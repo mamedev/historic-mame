@@ -51,6 +51,7 @@ const char * default_text[] =
 	"ALL CHANNELS",
 	"Brightness",
 	"Gamma",
+	"Vector Flicker",
 	"Vector Intensity",
 	"Overclock",
 	"ALL CPUS",

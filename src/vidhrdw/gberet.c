@@ -176,10 +176,13 @@ WRITE_HANDLER( gberet_scroll_w )
 
 WRITE_HANDLER( gberetb_scroll_w )
 {
-	if (offset) data |= 0x100;
+	int scroll;
+
+	scroll = data;
+	if (offset) scroll |= 0x100;
 
 	for (offset = 6;offset < 29;offset++)
-		tilemap_set_scrollx(bg_tilemap,offset,data + 64-8);
+		tilemap_set_scrollx(bg_tilemap,offset,scroll + 64-8);
 }
 
 

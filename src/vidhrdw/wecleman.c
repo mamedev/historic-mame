@@ -104,10 +104,10 @@ extern int wecleman_selected_ip, wecleman_irqctrl;
 
 /* Useful defines - for debug */
 #define KEY(_k_,_action_) \
-	if (keyboard_pressed(KEYCODE_##_k_))	{ while (keyboard_pressed(KEYCODE_##_k_)); _action_ }
+	if (keyboard_pressed_memory(KEYCODE_##_k_))	{ _action_ }
 #define KEY_SHIFT(_k_,_action_) \
 	if ( (keyboard_pressed(KEYCODE_LSHIFT)||keyboard_pressed(KEYCODE_RSHIFT)) && \
-	      keyboard_pressed(KEYCODE_##_k_) )	{ while (keyboard_pressed(KEYCODE_##_k_)); _action_ }
+	      keyboard_pressed_memory(KEYCODE_##_k_) )	{ _action_ }
 #define KEY_FAST(_k_,_action_) \
 	if (keyboard_pressed(KEYCODE_##_k_))	{ _action_ }
 

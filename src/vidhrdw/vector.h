@@ -33,9 +33,14 @@ void vector_clear_list (void);
 void vector_draw_to (int x2, int y2, int col, int intensity, int dirty);
 void vector_add_point (int x, int y, int color, int intensity);
 void vector_add_clip (int minx, int miny, int maxx, int maxy);
+void vector_set_flip_x (int flip);
+void vector_set_flip_y (int flip);
+void vector_set_swap_xy (int swap);
 void vector_set_shift (int shift);
 void vector_set_intensity(float _intensity);
 float vector_get_intensity(void);
+void vector_set_flicker(float _flicker);
+float vector_get_flicker(void);
 void vector_set_gamma(float _gamma);
 float vector_get_gamma(void);
 

@@ -1066,7 +1066,7 @@ static void volume_callback(int v)
 static struct K007232_interface k007232_interface =
 {
 	1,		/* number of chips */
-	{ REGION_SOUND1, REGION_SOUND1 }, /* memory regions */
+	{ REGION_SOUND1 }, /* memory regions */
 	{ K007232_VOL(20,MIXER_PAN_CENTER,20,MIXER_PAN_CENTER) },	/* volume */
 	{ volume_callback }	/* external port callback */
 };
@@ -1568,6 +1568,30 @@ ROM_START( fround )
 	ROM_LOAD( "frf03.bin",	0x00000,  0x8000, 0xa645c727 )
 
 	ROM_REGION( 0x40000, REGION_CPU2, 0 ) /* 68000 code (CPU A) */
+	ROM_LOAD16_BYTE( "870m21.bin", 0x00000, 0x20000, 0x436dbffb )
+	ROM_LOAD16_BYTE( "870m20.bin", 0x00001, 0x20000, 0xb1c79d6a )
+
+	ROM_REGION( 0x4000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "870f14.d8",	0x0000, 0x4000, 0xc9b46615 ) /* characters */
+
+	ROM_REGION16_LE( 0x200000, REGION_GFX2, 0 )	/* gfx data used at runtime */
+	ROM_LOAD16_WORD(	"870c17.p16",	0x080000, 0x80000, 0x2bc99ff8 )
+	ROM_LOAD16_WORD(	"870c18.p18",	0x000000, 0x80000, 0x07927fe8 )
+	ROM_LOAD16_WORD(	"870c15.p13",	0x180000, 0x80000, 0x8c9281df )
+	ROM_LOAD16_WORD(	"870c16.p15",	0x100000, 0x80000, 0x41df6a1b )
+
+	ROM_REGION( 0x20000, REGION_SOUND1, 0 ) /* samples */
+	ROM_LOAD( "870c01.5a",	0x00000, 0x20000, 0x6af96546 )
+
+	ROM_REGION( 0x20000, REGION_SOUND2, 0 ) /* samples */
+	ROM_LOAD( "870c02.7c",	0x00000, 0x20000, 0x54e12c6d )
+ROM_END
+
+ROM_START( froundl )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* Z80 code (sound CPU) */
+	ROM_LOAD( "frf03.bin",	0x00000,  0x8000, 0xa645c727 )
+
+	ROM_REGION( 0x40000, REGION_CPU2, 0 ) /* 68000 code (CPU A) */
 	ROM_LOAD16_BYTE( "frl21.bin", 0x00000, 0x20000, 0xe21a3a19 )
 	ROM_LOAD16_BYTE( "frl20.bin", 0x00001, 0x20000, 0x0ce9786f )
 
@@ -1586,6 +1610,7 @@ ROM_START( fround )
 	ROM_REGION( 0x20000, REGION_SOUND2, 0 ) /* samples */
 	ROM_LOAD( "870c02.7c",	0x00000, 0x20000, 0x54e12c6d )
 ROM_END
+
 
 /******************************************************************************************/
 
@@ -1661,6 +1686,7 @@ GAME( 1988, gradius2, vulcan, twin16,    gradius2, twin16, ROT0, "Konami", "Grad
 GAME( 1988, grdius2a, vulcan, twin16,    gradius2, twin16, ROT0, "Konami", "Gradius II - Gofer no Yabou (Japan set 2)" )
 GAME( 1988, grdius2b, vulcan, twin16,    gradius2, twin16, ROT0, "Konami", "Gradius II - Gofer no Yabou (Japan set 3)" )
 GAME( 1989, cuebrick, 0,      cuebrick,  twin16,   twin16, ROT0, "Konami", "Cuebrick" )
-GAME( 1988, fround,   0,      fround,    fround,   fround, ROT0, "Konami", "Final Round" )
+GAME( 1988, fround,   0,      fround,    fround,   fround, ROT0, "Konami", "Final Round (version M)" )
+GAME( 1988, froundl,  fround, fround,    fround,   fround, ROT0, "Konami", "Final Round (version L)" )
 GAME( 1988, hpuncher, fround, twin16,    fround,   twin16, ROT0, "Konami", "Hard Puncher (Japan)" )
 GAME( 1989, miaj,     mia,    twin16,    miaj,     twin16, ROT0, "Konami", "Missing in Action (Japan)" )

@@ -34,75 +34,62 @@
 /* OUT WHAT GAME IS RUNNING 				 */
 /*********************************************/
 
-#define NAMCOS2_ASSAULT 			0x1000
-#define NAMCOS2_ASSAULT_JP			0x1001
-#define NAMCOS2_ASSAULT_PLUS		0x1002
-#define NAMCOS2_BUBBLE_TROUBLE		0x1003
-#define NAMCOS2_BURNING_FORCE		0x1004
-#define NAMCOS2_COSMO_GANG			0x1005
-#define NAMCOS2_COSMO_GANG_US		0x1006
-#define NAMCOS2_DIRT_FOX			0x1007
-#define NAMCOS2_DIRT_FOX_JP 		0x1008
-#define NAMCOS2_DRAGON_SABER		0x1009
-#define NAMCOS2_DRAGON_SABER_JP 	0x100a
-#define NAMCOS2_FINAL_LAP			0x100b
-#define NAMCOS2_FINAL_LAP_2 		0x100c
-#define NAMCOS2_FINAL_LAP_3 		0x100d
-#define NAMCOS2_FINEST_HOUR 		0x100e
-#define NAMCOS2_FOUR_TRAX			0x100f
-#define NAMCOS2_GOLLY_GHOST 		0x1010
-#define NAMCOS2_LUCKY_AND_WILD		0x1011
-#define NAMCOS2_MARVEL_LAND 		0x1012
-#define NAMCOS2_METAL_HAWK			0x1013
-#define NAMCOS2_MIRAI_NINJA 		0x1014
-#define NAMCOS2_ORDYNE				0x1015
-#define NAMCOS2_PHELIOS 			0x1016
-#define NAMCOS2_ROLLING_THUNDER_2	0x1017
-#define NAMCOS2_STEEL_GUNNER		0x1018
-#define NAMCOS2_STEEL_GUNNER_2		0x1019
-#define NAMCOS2_SUPER_WSTADIUM		0x101a
-#define NAMCOS2_SUPER_WSTADIUM_92	0x101b
-#define NAMCOS2_SUPER_WSTADIUM_93	0x101c
-#define NAMCOS2_SUZUKA_8_HOURS		0x101d
-#define NAMCOS2_SUZUKA_8_HOURS_2	0x101e
-#define NAMCOS2_VALKYRIE			0x101f
-#define NAMCOS2_KYUUKAI_DOUCHUUKI	0x1020
+enum {
+	NAMCOS2_ASSAULT = 0x1000,
+	NAMCOS2_ASSAULT_JP,
+	NAMCOS2_ASSAULT_PLUS,
+	NAMCOS2_BUBBLE_TROUBLE,
+	NAMCOS2_BURNING_FORCE,
+	NAMCOS2_COSMO_GANG,
+	NAMCOS2_COSMO_GANG_US,
+	NAMCOS2_DIRT_FOX,
+	NAMCOS2_DIRT_FOX_JP,
+	NAMCOS2_DRAGON_SABER,
+	NAMCOS2_DRAGON_SABER_JP,
+	NAMCOS2_FINAL_LAP,
+	NAMCOS2_FINAL_LAP_2,
+	NAMCOS2_FINAL_LAP_3,
+	NAMCOS2_FINEST_HOUR,
+	NAMCOS2_FOUR_TRAX,
+	NAMCOS2_GOLLY_GHOST,
+	NAMCOS2_LUCKY_AND_WILD,
+	NAMCOS2_MARVEL_LAND,
+	NAMCOS2_METAL_HAWK,
+	NAMCOS2_MIRAI_NINJA,
+	NAMCOS2_ORDYNE,
+	NAMCOS2_PHELIOS,
+	NAMCOS2_ROLLING_THUNDER_2,
+	NAMCOS2_STEEL_GUNNER,
+	NAMCOS2_STEEL_GUNNER_2,
+	NAMCOS2_SUPER_WSTADIUM,
+	NAMCOS2_SUPER_WSTADIUM_92,
+	NAMCOS2_SUPER_WSTADIUM_92T,
+	NAMCOS2_SUPER_WSTADIUM_93,
+	NAMCOS2_SUZUKA_8_HOURS,
+	NAMCOS2_SUZUKA_8_HOURS_2,
+	NAMCOS2_VALKYRIE,
+	NAMCOS2_KYUUKAI_DOUCHUUKI
+};
 
 extern int namcos2_gametype;
 
 /*********************************************/
 
 int  namcos2_vh_start(void);
-void namcos2_vh_stop(void);
 void namcos2_vh_update_default(struct osd_bitmap *bitmap, int full_refresh);
 void namcos2_vh_update_finallap(struct osd_bitmap *bitmap, int full_refresh);
-void namcos2_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 
 /* MACHINE */
 
 void namcos2_init_machine(void);
 
 
-/**************************************************************/
-/* Dual port memory handlers								  */
-/**************************************************************/
-READ_HANDLER( namcos2_dpram_byte_r );
-WRITE_HANDLER( namcos2_dpram_byte_w );
-READ16_HANDLER( namcos2_68k_dpram_word_r );
-WRITE16_HANDLER( namcos2_68k_dpram_word_w );
 
-extern UINT8 *namcos2_dpram;
 
-/**************************************************************/
-/* Sprite memory handlers									  */
-/**************************************************************/
-WRITE16_HANDLER( namcos2_68k_sprite_ram_w );
-WRITE16_HANDLER( namcos2_68k_sprite_bank_w );
-READ16_HANDLER( namcos2_68k_sprite_ram_r );
-READ16_HANDLER( namcos2_68k_sprite_bank_r );
+WRITE16_HANDLER( namcos2_gfx_ctrl_w );
 
 extern data16_t *namcos2_sprite_ram;
-extern data16_t namcos2_sprite_bank;
+WRITE16_HANDLER( namcos2_sprite_ram_w );
 
 
 /**************************************************************/
@@ -127,29 +114,13 @@ extern size_t namcos2_68k_vram_size;
 READ16_HANDLER( namcos2_68k_vram_ctrl_r );
 WRITE16_HANDLER( namcos2_68k_vram_ctrl_w );
 
-extern data16_t namcos2_68k_vram_ctrl[];
-
-extern struct tilemap *namcos2_tilemap0;
-extern struct tilemap *namcos2_tilemap1;
-extern struct tilemap *namcos2_tilemap2;
-extern struct tilemap *namcos2_tilemap3;
-extern struct tilemap *namcos2_tilemap4;
-extern struct tilemap *namcos2_tilemap5;
-
-extern int namcos2_tilemap0_flip;
-extern int namcos2_tilemap1_flip;
-extern int namcos2_tilemap2_flip;
-extern int namcos2_tilemap3_flip;
-extern int namcos2_tilemap4_flip;
-extern int namcos2_tilemap5_flip;
-
 /**************************************************************/
 /*	Shared video palette function handlers					  */
 /**************************************************************/
 READ16_HANDLER( namcos2_68k_video_palette_r );
 WRITE16_HANDLER( namcos2_68k_video_palette_w );
 
-#define NAMCOS2_COLOUR_CODES	0x20
+#define VIRTUAL_PALETTE_BANKS 30
 extern data16_t *namcos2_68k_palette_ram;
 extern size_t namcos2_68k_palette_size;
 
@@ -241,11 +212,9 @@ extern data16_t *namcos2_68k_slave_ram;
 
 WRITE16_HANDLER( namcos2_68k_roz_ctrl_w );
 READ16_HANDLER( namcos2_68k_roz_ctrl_r );
-extern data16_t namcos2_68k_roz_ctrl[];
 
 WRITE16_HANDLER( namcos2_68k_roz_ram_w );
 READ16_HANDLER( namcos2_68k_roz_ram_r );
-extern size_t namcos2_68k_roz_ram_size;
 extern data16_t *namcos2_68k_roz_ram;
 
 

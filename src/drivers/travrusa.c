@@ -9,7 +9,9 @@ Loosely based on the our previous 10 Yard Fight driver.
 
 - I haven't understood how char/sprite priority works. This is used for
   tunnels. I hacked it just by making the two needed colors opaque. They
-  don't seem to be used anywhere else.
+  don't seem to be used anywhere else. Even if it looks like a hack, it might
+  really be how the hardware works - see also notes regarding Kung Fu Master
+  at the beginning of m62.c.
 
 ****************************************************************************/
 
@@ -334,8 +336,7 @@ ROM_END
 
 ROM_START( motorace )
 	ROM_REGION( 0x12000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "mr.cpu",       0x10000, 0x2000, 0x89030b0c )	/* we load the ROM at 10000-11fff, */
-														/* it will be decrypted at 0000 */
+	ROM_LOAD( "mr.cpu",       0x0000, 0x2000, 0x89030b0c )	/* encrypted */
 	ROM_LOAD( "mr1.3l",       0x2000, 0x2000, 0x0904ed58 )
 	ROM_LOAD( "mr2.3k",       0x4000, 0x2000, 0x8a2374ec )
 	ROM_LOAD( "mr3.3j",       0x6000, 0x2000, 0x2f04c341 )
@@ -363,46 +364,22 @@ ROM_END
 
 void init_motorace(void)
 {
-	int A,i,j;
-	unsigned char *RAM = memory_region(REGION_CPU1);
+	int A,j;
+	unsigned char *rom = memory_region(REGION_CPU1);
+	data8_t *buffer = malloc(0x2000);
 
-
-	/* The first CPU ROM has the address and data lines scrambled */
-	for (A = 0;A < 0x2000;A++)
+	if (buffer)
 	{
-		int bit[13];
+		memcpy(buffer,rom,0x2000);
 
+		/* The first CPU ROM has the address and data lines scrambled */
+		for (A = 0;A < 0x2000;A++)
+		{
+			j = BITSWAP16(A,15,14,13,9,7,5,3,1,12,10,8,6,4,2,0,11);
+			rom[j] = BITSWAP8(buffer[A],2,7,4,1,6,3,0,5);
+		}
 
-		for (i = 0;i < 13;i++)
-			bit[i] = (A >> i) & 1;
-
-		j =
-			(bit[11] <<  0) +
-			(bit[ 0] <<  1) +
-			(bit[ 2] <<  2) +
-			(bit[ 4] <<  3) +
-			(bit[ 6] <<  4) +
-			(bit[ 8] <<  5) +
-			(bit[10] <<  6) +
-			(bit[12] <<  7) +
-			(bit[ 1] <<  8) +
-			(bit[ 3] <<  9) +
-			(bit[ 5] << 10) +
-			(bit[ 7] << 11) +
-			(bit[ 9] << 12);
-
-		for (i = 0;i < 8;i++)
-			bit[i] = (RAM[A + 0x10000] >> i) & 1;
-
-		RAM[j] =
-			(bit[5] << 0) +
-			(bit[0] << 1) +
-			(bit[3] << 2) +
-			(bit[6] << 3) +
-			(bit[1] << 4) +
-			(bit[4] << 5) +
-			(bit[7] << 6) +
-			(bit[2] << 7);
+		free(buffer);
 	}
 }
 

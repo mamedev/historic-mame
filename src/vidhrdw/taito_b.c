@@ -9,7 +9,6 @@ data16_t *b_textram;
 data16_t *b_videoram;
 data16_t *b_pixelram;
 
-/*size_t b_videoram_size;*/
 size_t b_pixelram_size;
 
 static struct tilemap *bg_tilemap, *fg_tilemap, *tx_tilemap;
@@ -37,8 +36,8 @@ static data16_t TC0180VCU_ctrl[0x10] = {0};
 * 2 - number of independent foreground scrolling blocks (see below)
 * 3 - number of independent background scrolling blocks
 * 4 - ? 0x00 in most games, 0x08 in qzshowby
-* 5 - ? 0x01 in most games, 0x09 in crimec, 0x0f in selfeena, 0x01 and 0x3f in silentd
-* 6 - text video page (page actually)
+* 5 - ? 0x01 in most games, 0x09 in crimec, 0x0f in selfeena, 0x1e in ryujin, 0x01 and 0x3f in silentd
+* 6 - text video page
 * 7 - video control: pixelram page and enable, screen flip, sprite to foreground priority (see below)
 * 8 to f - unused (always zero)
 *
@@ -139,8 +138,9 @@ WRITE16_HANDLER( taitob_v_control_w )
 
 static void dump_contr(void)
 {
-	usrintf_showmessage("180VCU=%2x %2x %2x %2x",
-						TC0180VCU_ctrl[2], TC0180VCU_ctrl[3], TC0180VCU_ctrl[4], TC0180VCU_ctrl[5] );
+	usrintf_showmessage("180VCU=%02x %02x %02x %02x",
+		TC0180VCU_ctrl[2]>>8, TC0180VCU_ctrl[3]>>8,
+		TC0180VCU_ctrl[6]>>8, TC0180VCU_ctrl[7]>>8 );
 }
 
 static void taitob_redraw_pixel_layer_dirty(void)
@@ -330,7 +330,7 @@ int taitob_vh_start_color_order1 (void)
 
 int taitob_vh_start_color_order2 (void)
 {
-	/*this is used in: rambo3a, masterw, silentd, selfeena */
+	/*this is used in: rambo3a, masterw, silentd, selfeena, ryujin */
 	b_bg_color_base = 0x30;
 	b_fg_color_base = 0x20;
 	b_sp_color_base = 0x10;

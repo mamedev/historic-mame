@@ -6,6 +6,11 @@ Taito Custom ICs
 Thanks to Suzuki2go for his videos of Metal Black which made better
 emulation of TC0480SCP row and column effects possible.
 
+TODO
+----
+
+sizeof() s in the TC0110PCR section are probably unnecessary?
+
 				---
 
 PC080SN
@@ -404,6 +409,7 @@ Newer version of the I/O chip
 ***************************************************************************/
 
 #include "driver.h"
+#include "state.h"
 #include "taitoic.h"
 
 
@@ -541,6 +547,14 @@ int PC080SN_vh_start(int chips,int gfxnum,int x_offset,int y_offset,int y_invert
 		PC080SN_fg_ram[i]       = PC080SN_ram[i] + 0x4000;
 		PC080SN_fgscroll_ram[i] = PC080SN_ram[i] + 0x6000;
 		memset(PC080SN_ram[i],0,PC080SN_RAM_SIZE);
+
+		{
+			char buf[20];	/* we need different labels for every item of save data */
+			sprintf(buf,"PC080SN-%01x",i);	/* so we add chip # as a suffix */
+
+			state_save_register_UINT16(buf, 0, "memory", PC080SN_ram[i], PC080SN_RAM_SIZE/2);
+			state_save_register_UINT16(strcat(buf,"a"), 0, "registers", PC080SN_ctrl[i], 8);
+		}
 
 		/* use the given gfx set for bg tiles */
 		PC080SN_bg_gfx[i] = gfxnum;
@@ -777,12 +791,6 @@ void PC080SN_tilemap_draw(struct osd_bitmap *bitmap,int chip,int layer,int flags
 /***************************************************************************/
 
 
-static unsigned char taitof2_scrbank;
-WRITE16_HANDLER( taitof2_scrbank_w )   /* Mjnquest banks its 2 sets of scr tiles */
-{
-    taitof2_scrbank = (data & 0x1);
-}
-
 #define TC0100SCN_RAM_SIZE 0x14000	/* enough for double-width tilemaps */
 #define TC0100SCN_TOTAL_CHARS 256
 #define TC0100SCN_MAX_CHIPS 3
@@ -808,7 +816,7 @@ static struct tilemap *TC0100SCN_tilemap[TC0100SCN_MAX_CHIPS][3][2];
 static char *TC0100SCN_char_dirty[TC0100SCN_MAX_CHIPS];
 static int TC0100SCN_chars_dirty[TC0100SCN_MAX_CHIPS];
 static int TC0100SCN_bg_gfx[TC0100SCN_MAX_CHIPS],TC0100SCN_tx_gfx[TC0100SCN_MAX_CHIPS];
-static int TC0100SCN_bg_col_mult = 0,TC0100SCN_bg_tilemask = 0;
+static int TC0100SCN_bg_col_mult = 0,TC0100SCN_bg_tilemask = 0, TC0100SCN_gfxbank;
 static int TC0100SCN_chip_colbank[3],TC0100SCN_colbank[3];
 static int TC0100SCN_dblwidth[TC0100SCN_MAX_CHIPS];
 
@@ -820,7 +828,7 @@ INLINE void common_get_bg0_tile_info(data16_t *ram,int gfxnum,int tile_index,int
 	if (!dblwidth)
 	{
 		/* Mahjong Quest (F2 system) inexplicably has a banking feature */
-		code = (ram[2*tile_index + 1] & TC0100SCN_bg_tilemask) + (taitof2_scrbank << 15);
+		code = (ram[2*tile_index + 1] & TC0100SCN_bg_tilemask) + (TC0100SCN_gfxbank << 15);
 		attr = ram[2*tile_index];
 	}
 	else
@@ -841,7 +849,7 @@ INLINE void common_get_bg1_tile_info(data16_t *ram,int gfxnum,int tile_index,int
 	if (!dblwidth)
 	{
 		/* Mahjong Quest (F2 system) inexplicably has a banking feature */
-		code = (ram[2*tile_index + 1] & TC0100SCN_bg_tilemask) + (taitof2_scrbank << 15);
+		code = (ram[2*tile_index + 1] & TC0100SCN_bg_tilemask) + (TC0100SCN_gfxbank << 15);
 		attr = ram[2*tile_index];
 	}
 	else
@@ -923,9 +931,9 @@ static void TC0100SCN_get_tx_tile_info_2(int tile_index)
 
 void (*TC0100SCN_get_tile_info[TC0100SCN_MAX_CHIPS][3])(int tile_index) =
 {
-	{ TC0100SCN_get_bg_tile_info_0, TC0100SCN_get_fg_tile_info_0 ,TC0100SCN_get_tx_tile_info_0 },
-	{ TC0100SCN_get_bg_tile_info_1, TC0100SCN_get_fg_tile_info_1 ,TC0100SCN_get_tx_tile_info_1 },
-	{ TC0100SCN_get_bg_tile_info_2, TC0100SCN_get_fg_tile_info_2 ,TC0100SCN_get_tx_tile_info_2 }
+	{ TC0100SCN_get_bg_tile_info_0, TC0100SCN_get_fg_tile_info_0, TC0100SCN_get_tx_tile_info_0 },
+	{ TC0100SCN_get_bg_tile_info_1, TC0100SCN_get_fg_tile_info_1, TC0100SCN_get_tx_tile_info_1 },
+	{ TC0100SCN_get_bg_tile_info_2, TC0100SCN_get_fg_tile_info_2, TC0100SCN_get_tx_tile_info_2 }
 };
 
 
@@ -964,6 +972,11 @@ void TC0100SCN_set_bg_tilemask(int mask)
 	TC0100SCN_bg_tilemask = mask;
 }
 
+WRITE16_HANDLER( TC0100SCN_gfxbank_w )   /* Mjnquest banks its 2 sets of scr tiles */
+{
+    TC0100SCN_gfxbank = (data & 0x1);
+}
+
 void TC0100SCN_set_layer_ptrs(int i)
 {
 	if (!TC0100SCN_dblwidth[i])
@@ -985,6 +998,82 @@ void TC0100SCN_set_layer_ptrs(int i)
 		TC0100SCN_tx_ram[i]       = TC0100SCN_ram[i] + 0x9000;	// 12000
 	}
 }
+
+/* As we can't pass function calls with params in set...func_postload() calls
+   in the vh_start, this slightly obnoxious method is used */
+
+static void TC0100SCN_layer_ptr_0(void)
+{
+	TC0100SCN_set_layer_ptrs(0);
+}
+
+static void TC0100SCN_layer_ptr_1(void)
+{
+	TC0100SCN_set_layer_ptrs(1);
+}
+
+static void TC0100SCN_layer_ptr_2(void)
+{
+	TC0100SCN_set_layer_ptrs(2);
+}
+
+void (*TC0100SCN_layer_ptr[TC0100SCN_MAX_CHIPS])(void) =
+{
+	TC0100SCN_layer_ptr_0, TC0100SCN_layer_ptr_1, TC0100SCN_layer_ptr_2
+};
+
+void TC0100SCN_dirty_tilemaps(int chip)
+{
+	tilemap_mark_all_tiles_dirty(TC0100SCN_tilemap[chip][0][TC0100SCN_dblwidth[chip]]);
+	tilemap_mark_all_tiles_dirty(TC0100SCN_tilemap[chip][1][TC0100SCN_dblwidth[chip]]);
+	tilemap_mark_all_tiles_dirty(TC0100SCN_tilemap[chip][2][TC0100SCN_dblwidth[chip]]);
+}
+
+static void TC0100SCN_dirty_t_0(void)
+{
+	TC0100SCN_dirty_tilemaps(0);
+}
+
+static void TC0100SCN_dirty_t_1(void)
+{
+	TC0100SCN_dirty_tilemaps(1);
+}
+
+static void TC0100SCN_dirty_t_2(void)
+{
+	TC0100SCN_dirty_tilemaps(2);
+}
+
+void (*TC0100SCN_dirty_t[TC0100SCN_MAX_CHIPS])(void) =
+{
+	TC0100SCN_dirty_t_0, TC0100SCN_dirty_t_1, TC0100SCN_dirty_t_2
+};
+
+void TC0100SCN_dirty_chars(int chip)
+{
+	memset(TC0100SCN_char_dirty[chip],1,TC0100SCN_TOTAL_CHARS);
+	TC0100SCN_chars_dirty[chip] = 1;
+}
+
+static void TC0100SCN_dirty_c_0(void)
+{
+	TC0100SCN_dirty_chars(0);
+}
+
+static void TC0100SCN_dirty_c_1(void)
+{
+	TC0100SCN_dirty_chars(1);
+}
+
+static void TC0100SCN_dirty_c_2(void)
+{
+	TC0100SCN_dirty_chars(2);
+}
+
+void (*TC0100SCN_dirty_c[TC0100SCN_MAX_CHIPS])(void) =
+{
+	TC0100SCN_dirty_c_0, TC0100SCN_dirty_c_1, TC0100SCN_dirty_c_2
+};
 
 
 int TC0100SCN_vh_start(int chips,int gfxnum,int x_offset)
@@ -1052,10 +1141,22 @@ int TC0100SCN_vh_start(int chips,int gfxnum,int x_offset)
 		}
 
 		TC0100SCN_set_layer_ptrs(i);
-
+		TC0100SCN_dirty_chars(i);
 		memset(TC0100SCN_ram[i],0,TC0100SCN_RAM_SIZE);
-		memset(TC0100SCN_char_dirty[i],1,TC0100SCN_TOTAL_CHARS);
-		TC0100SCN_chars_dirty[i] = 1;
+
+		{
+			char buf[20];	/* we need different labels for every item of save data */
+			sprintf(buf,"TC0100SCN-%01x",i);	/* so we add chip # as a suffix */
+
+			state_save_register_UINT16(buf, 0, "memory", TC0100SCN_ram[i], TC0100SCN_RAM_SIZE/2);
+			state_save_register_UINT16(strcat(buf,"a"), 0, "registers", TC0100SCN_ctrl[i], 8);
+			state_save_register_int   (strcat(buf,"b"), 0, "registers", &TC0100SCN_dblwidth[i]);
+		}
+
+		state_save_register_func_postload(TC0100SCN_layer_ptr[i]);
+		state_save_register_func_postload(TC0100SCN_dirty_c[i]);
+		// colors in saved states sometimes wrong but this doesn't help
+		state_save_register_func_postload(TC0100SCN_dirty_t[i]);
 
 		/* find first empty slot to decode gfx */
 		for (gfx_index = 0; gfx_index < MAX_GFX_ELEMENTS; gfx_index++)
@@ -1139,7 +1240,9 @@ int TC0100SCN_vh_start(int chips,int gfxnum,int x_offset)
 		TC0100SCN_chip_colbank[i]=0;
 	}
 
-	taitof2_scrbank = 0;	/* only Mjnquest banks tiles and has 0x7fff tilemask */
+	TC0100SCN_gfxbank= 0;	/* only Mjnquest banks tiles and has 0x7fff tilemask */
+	state_save_register_int   ("TC100SCN_bank", 0, "control", &TC0100SCN_gfxbank);
+
 	TC0100SCN_bg_tilemask = 0xffff;
 
 	TC0100SCN_bg_col_mult = 1;	/* multiplier for when bg gfx != 4bpp */
@@ -1288,7 +1391,6 @@ static void TC0100SCN_ctrl_word_w(int chip,offs_t offset,data16_t data,UINT32 me
 		case 0x06:
 		{
 			int old_width = TC0100SCN_dblwidth[chip];
-
 			TC0100SCN_dblwidth[chip] = (data &0x10) >> 4;
 
 			if (TC0100SCN_dblwidth[chip] != old_width)	/* tilemap width is changing */
@@ -1296,10 +1398,8 @@ static void TC0100SCN_ctrl_word_w(int chip,offs_t offset,data16_t data,UINT32 me
 				/* Reinitialise layer pointers */
 				TC0100SCN_set_layer_ptrs(chip);
 
-				/* We have neglected these tilemaps, so we make amends now */
-				tilemap_mark_all_tiles_dirty(TC0100SCN_tilemap[chip][0][TC0100SCN_dblwidth[chip]]);
-				tilemap_mark_all_tiles_dirty(TC0100SCN_tilemap[chip][1][TC0100SCN_dblwidth[chip]]);
-				tilemap_mark_all_tiles_dirty(TC0100SCN_tilemap[chip][2][TC0100SCN_dblwidth[chip]]);
+				/* and ensure full redraw of the tilemaps */
+				TC0100SCN_dirty_tilemaps(chip);
 			}
 
 			break;
@@ -1483,6 +1583,9 @@ int TC0280GRD_vh_start(int gfxnum)
 		return 1;
 	}
 
+	state_save_register_UINT16("TC0280GRDa", 0, "memory", TC0280GRD_ram, TC0280GRD_RAM_SIZE/2);
+	state_save_register_UINT16("TC0280GRDb", 0, "registers", TC0280GRD_ctrl, 8);
+
 	tilemap_set_clip(TC0280GRD_tilemap,0);
 
 	TC0280GRD_gfxnum = gfxnum;
@@ -1601,6 +1704,12 @@ void TC0430GRW_zoom_draw(struct osd_bitmap *bitmap,int xoffset,int yoffset,UINT3
 
 UINT8 TC0360PRI_regs[16];
 
+int TC0360PRI_vh_start(void)
+{
+	state_save_register_UINT8("TC0360PRI", 0, "registers", TC0360PRI_regs, 16);
+	return 0;
+}
+
 WRITE_HANDLER( TC0360PRI_w )
 {
 	TC0360PRI_regs[offset] = data;
@@ -1650,7 +1759,7 @@ if (data & 0xff)
 
 #define TC0480SCP_RAM_SIZE 0x10000
 #define TC0480SCP_TOTAL_CHARS 256
-static data16_t TC0480SCP_ctrl[24];
+static data16_t TC0480SCP_ctrl[0x18];
 static data16_t *TC0480SCP_ram,
 		*TC0480SCP_bg_ram[4],
 		*TC0480SCP_tx_ram,
@@ -1773,6 +1882,23 @@ void TC0480SCP_set_layer_ptrs(void)
 	}
 }
 
+void TC0480SCP_dirty_tilemaps(void)
+{
+	tilemap_mark_all_tiles_dirty(TC0480SCP_tilemap[0][TC0480SCP_dblwidth]);
+	tilemap_mark_all_tiles_dirty(TC0480SCP_tilemap[1][TC0480SCP_dblwidth]);
+	tilemap_mark_all_tiles_dirty(TC0480SCP_tilemap[2][TC0480SCP_dblwidth]);
+	tilemap_mark_all_tiles_dirty(TC0480SCP_tilemap[3][TC0480SCP_dblwidth]);
+	tilemap_mark_all_tiles_dirty(TC0480SCP_tilemap[4][TC0480SCP_dblwidth]);
+}
+
+void TC0480SCP_dirty_chars(void)
+{
+	memset(TC0480SCP_char_dirty,1,TC0480SCP_TOTAL_CHARS);
+	TC0480SCP_chars_dirty = 1;
+
+}
+
+
 int TC0480SCP_vh_start(int gfxnum,int pixels,int x_offset,int y_offset,int text_xoffs,int text_yoffs,int flip_xoffs,int flip_yoffs,int col_base)
 {
 	int gfx_index;
@@ -1802,7 +1928,8 @@ int TC0480SCP_vh_start(int gfxnum,int pixels,int x_offset,int y_offset,int text_
 		TC0480SCP_ram = malloc(TC0480SCP_RAM_SIZE);
 		TC0480SCP_char_dirty = malloc(TC0480SCP_TOTAL_CHARS);
 
-		if (!TC0480SCP_ram || !TC0480SCP_tilemap[0][0] || !TC0480SCP_tilemap[0][1] ||
+		if (!TC0480SCP_ram || !TC0480SCP_char_dirty ||
+				!TC0480SCP_tilemap[0][0] || !TC0480SCP_tilemap[0][1] ||
 				!TC0480SCP_tilemap[1][0] || !TC0480SCP_tilemap[1][1] ||
 				!TC0480SCP_tilemap[2][0] || !TC0480SCP_tilemap[2][1] ||
 				!TC0480SCP_tilemap[3][0] || !TC0480SCP_tilemap[3][1] ||
@@ -1813,10 +1940,18 @@ int TC0480SCP_vh_start(int gfxnum,int pixels,int x_offset,int y_offset,int text_
 		}
 
 		TC0480SCP_set_layer_ptrs();
-
+		TC0480SCP_dirty_chars();
 		memset(TC0480SCP_ram,0,TC0480SCP_RAM_SIZE);
-		memset(TC0480SCP_char_dirty,1,TC0480SCP_TOTAL_CHARS);
-		TC0480SCP_chars_dirty = 1;
+
+		state_save_register_UINT16("TC0480SCPa", 0, "memory", TC0480SCP_ram, TC0480SCP_RAM_SIZE/2);
+		state_save_register_UINT16("TC0480SCPb", 0, "registers", TC0480SCP_ctrl, 0x18);
+		state_save_register_int   ("TC0480SCPc", 0, "registers", &TC0480SCP_dblwidth);
+		state_save_register_func_postload(TC0480SCP_set_layer_ptrs);
+		state_save_register_func_postload(TC0480SCP_dirty_chars);
+
+		// colors in saved states often wrong, but this doesn't help //
+		state_save_register_func_postload(TC0480SCP_dirty_tilemaps);
+
 
 		/* find first empty slot to decode gfx */
 		for (gfx_index = 0; gfx_index < MAX_GFX_ELEMENTS; gfx_index++)
@@ -2123,12 +2258,8 @@ static void TC0480SCP_ctrl_word_write(offs_t offset,data16_t data,UINT32 mem_mas
 				/* Reinitialise layer pointers */
 				TC0480SCP_set_layer_ptrs();
 
-				/* We have neglected these tilemaps, so we make amends now */
-				tilemap_mark_all_tiles_dirty(TC0480SCP_tilemap[0][TC0480SCP_dblwidth]);
-				tilemap_mark_all_tiles_dirty(TC0480SCP_tilemap[1][TC0480SCP_dblwidth]);
-				tilemap_mark_all_tiles_dirty(TC0480SCP_tilemap[2][TC0480SCP_dblwidth]);
-				tilemap_mark_all_tiles_dirty(TC0480SCP_tilemap[3][TC0480SCP_dblwidth]);
-				tilemap_mark_all_tiles_dirty(TC0480SCP_tilemap[4][TC0480SCP_dblwidth]);
+				/* and ensure full redraw of tilemaps */
+				TC0480SCP_dirty_tilemaps();
 			}
 
 			break;
@@ -2634,57 +2765,136 @@ int TC0480SCP_get_bg_priority(void)
 /***************************************************************************/
 
 
-static int TC0110PCR_addr;
-static int TC0110PCR_1_addr;
-static int TC0110PCR_2_addr;
-static data16_t *TC0110PCR_ram;
-static data16_t *TC0110PCR_1_ram;
-static data16_t *TC0110PCR_2_ram;
+static int TC0110PCR_type = 0;
+static int TC0110PCR_addr[3];
+static data16_t *TC0110PCR_ram[3];
 #define TC0110PCR_RAM_SIZE 0x2000
+
+
+void TC0110PCR_restore_colors(int chip)
+{
+	int i,color,r=0,g=0,b=0;
+
+	for (i=0; i<(256*16); i++)
+	{
+		color = TC0110PCR_ram[chip][i];
+
+		switch (TC0110PCR_type)
+		{
+
+			case 0x00:
+			{
+				r = (color >>  0) & 0x1f;
+				g = (color >>  5) & 0x1f;
+				b = (color >> 10) & 0x1f;
+
+				r = (r << 3) | (r >> 2);
+				g = (g << 3) | (g >> 2);
+				b = (b << 3) | (b >> 2);
+				break;
+			}
+
+			case 0x01:
+			{
+				b = (color >>  0) & 0x1f;
+				g = (color >>  5) & 0x1f;
+				r = (color >> 10) & 0x1f;
+
+				r = (r << 3) | (r >> 2);
+				g = (g << 3) | (g >> 2);
+				b = (b << 3) | (b >> 2);
+				break;
+			}
+
+			case 0x02:
+			{
+				r = (color >> 0) & 0xf;
+				g = (color >> 4) & 0xf;
+				b = (color >> 8) & 0xf;
+
+				r = (r << 4) | r;
+				g = (g << 4) | g;
+				b = (b << 4) | b;
+			}
+		}
+
+		palette_change_color( i + (chip << 12),r,g,b);
+	}
+}
+
+static void TC0110PCR_restore_cols_0(void)
+{
+	TC0110PCR_restore_colors(0);
+}
+
+static void TC0110PCR_restore_cols_1(void)
+{
+	TC0110PCR_restore_colors(1);
+}
+
+static void TC0110PCR_restore_cols_2(void)
+{
+	TC0110PCR_restore_colors(2);
+}
+
 
 int TC0110PCR_vh_start(void)
 {
-	TC0110PCR_ram = malloc(TC0110PCR_RAM_SIZE * sizeof(*TC0110PCR_ram));
+	TC0110PCR_ram[0] = malloc(TC0110PCR_RAM_SIZE * sizeof(*TC0110PCR_ram[0]));
 
-	if (!TC0110PCR_ram) return 1;
+	if (!TC0110PCR_ram[0]) return 1;
+
+	state_save_register_UINT16("TC0110PCR-0", 0, "memory", TC0110PCR_ram[0],
+		TC0110PCR_RAM_SIZE * sizeof(*TC0110PCR_ram[0]) / 2);
+	state_save_register_func_postload(TC0110PCR_restore_cols_0);
+
+	TC0110PCR_type = 0;	/* default, xBBBBBGGGGGRRRRR */
 
 	return 0;
 }
 
 int TC0110PCR_1_vh_start(void)
 {
-	TC0110PCR_1_ram = malloc(TC0110PCR_RAM_SIZE * sizeof(*TC0110PCR_1_ram));
+	TC0110PCR_ram[1] = malloc(TC0110PCR_RAM_SIZE * sizeof(*TC0110PCR_ram[1]));
 
-	if (!TC0110PCR_1_ram) return 1;
+	if (!TC0110PCR_ram[1]) return 1;
+
+	state_save_register_UINT16("TC0110PCR-1", 0, "memory", TC0110PCR_ram[1],
+		TC0110PCR_RAM_SIZE * sizeof(*TC0110PCR_ram[1])/2);
+	state_save_register_func_postload(TC0110PCR_restore_cols_1);
 
 	return 0;
 }
 
 int TC0110PCR_2_vh_start(void)
 {
-	TC0110PCR_2_ram = malloc(TC0110PCR_RAM_SIZE * sizeof(*TC0110PCR_2_ram));
+	TC0110PCR_ram[2] = malloc(TC0110PCR_RAM_SIZE * sizeof(*TC0110PCR_ram[2]));
 
-	if (!TC0110PCR_2_ram) return 1;
+	if (!TC0110PCR_ram[2]) return 1;
+
+	state_save_register_UINT16("TC0110PCR-2", 0, "memory", TC0110PCR_ram[2],
+		TC0110PCR_RAM_SIZE * sizeof(*TC0110PCR_ram[2])/2);
+	state_save_register_func_postload(TC0110PCR_restore_cols_2);
 
 	return 0;
 }
 
 void TC0110PCR_vh_stop(void)
 {
-	free(TC0110PCR_ram);
-	TC0110PCR_ram = 0;
+	free(TC0110PCR_ram[0]);
+	TC0110PCR_ram[0] = 0;
 }
 
 void TC0110PCR_1_vh_stop(void)
 {
-	free(TC0110PCR_1_ram);
-	TC0110PCR_1_ram = 0;
+	free(TC0110PCR_ram[1]);
+	TC0110PCR_ram[1] = 0;
 }
 
 void TC0110PCR_2_vh_stop(void)
 {
-	free(TC0110PCR_2_ram);
-	TC0110PCR_2_ram = 0;
+	free(TC0110PCR_ram[2]);
+	TC0110PCR_ram[2] = 0;
 }
 
 READ16_HANDLER( TC0110PCR_word_r )
@@ -2692,7 +2902,7 @@ READ16_HANDLER( TC0110PCR_word_r )
 	switch (offset)
 	{
 		case 1:
-			return TC0110PCR_ram[TC0110PCR_addr];
+			return TC0110PCR_ram[0][(TC0110PCR_addr[0])];
 
 		default:
 logerror("PC %06x: warning - read TC0110PCR address %02x\n",cpu_get_pc(),offset);
@@ -2705,7 +2915,7 @@ READ16_HANDLER( TC0110PCR_word_1_r )
 	switch (offset)
 	{
 		case 1:
-			return TC0110PCR_1_ram[TC0110PCR_1_addr];
+			return TC0110PCR_ram[1][(TC0110PCR_addr[1])];
 
 		default:
 logerror("PC %06x: warning - read second TC0110PCR address %02x\n",cpu_get_pc(),offset);
@@ -2718,7 +2928,7 @@ READ16_HANDLER( TC0110PCR_word_2_r )
 	switch (offset)
 	{
 		case 1:
-			return TC0110PCR_2_ram[TC0110PCR_2_addr];
+			return TC0110PCR_ram[2][(TC0110PCR_addr[2])];
 
 		default:
 logerror("PC %06x: warning - read third TC0110PCR address %02x\n",cpu_get_pc(),offset);
@@ -2731,7 +2941,7 @@ WRITE16_HANDLER( TC0110PCR_word_w )
 	switch (offset)
 	{
 		case 0:
-			TC0110PCR_addr = (data >> 1) & 0xfff;   /* In test mode game writes to odd register number so it is (data>>1) */
+			TC0110PCR_addr[0] = (data >> 1) & 0xfff;   /* In test mode game writes to odd register number so it is (data>>1) */
 			if (data>0x1fff) logerror ("Write to palette index > 0x1fff\n");
 			break;
 
@@ -2739,7 +2949,7 @@ WRITE16_HANDLER( TC0110PCR_word_w )
 		{
 			int r,g,b;   /* data = palette BGR value */
 
-			TC0110PCR_ram[TC0110PCR_addr] = data & 0xffff;
+			TC0110PCR_ram[0][(TC0110PCR_addr[0])] = data & 0xffff;
 
 			r = (data >>  0) & 0x1f;
 			g = (data >>  5) & 0x1f;
@@ -2749,7 +2959,7 @@ WRITE16_HANDLER( TC0110PCR_word_w )
 			g = (g << 3) | (g >> 2);
 			b = (b << 3) | (b >> 2);
 
-			palette_change_color(TC0110PCR_addr,r,g,b);
+			palette_change_color(TC0110PCR_addr[0],r,g,b);
 			break;
 		}
 
@@ -2764,7 +2974,7 @@ WRITE16_HANDLER( TC0110PCR_step1_word_w )
 	switch (offset)
 	{
 		case 0:
-			TC0110PCR_addr = data & 0xfff;
+			TC0110PCR_addr[0] = data & 0xfff;
 			if (data>0xfff) logerror ("Write to palette index > 0xfff\n");
 			break;
 
@@ -2772,7 +2982,7 @@ WRITE16_HANDLER( TC0110PCR_step1_word_w )
 		{
 			int r,g,b;   /* data = palette BGR value */
 
-			TC0110PCR_ram[TC0110PCR_addr] = data & 0xffff;
+			TC0110PCR_ram[0][(TC0110PCR_addr[0])] = data & 0xffff;
 
 			r = (data >>  0) & 0x1f;
 			g = (data >>  5) & 0x1f;
@@ -2782,7 +2992,7 @@ WRITE16_HANDLER( TC0110PCR_step1_word_w )
 			g = (g << 3) | (g >> 2);
 			b = (b << 3) | (b >> 2);
 
-			palette_change_color(TC0110PCR_addr,r,g,b);
+			palette_change_color(TC0110PCR_addr[0],r,g,b);
 			break;
 		}
 
@@ -2797,7 +3007,7 @@ WRITE16_HANDLER( TC0110PCR_step1_word_1_w )
 	switch (offset)
 	{
 		case 0:
-			TC0110PCR_1_addr = data & 0xfff;
+			TC0110PCR_addr[1] = data & 0xfff;
 			if (data>0xfff) logerror ("Write to second TC0110PCR palette index > 0xfff\n");
 			break;
 
@@ -2805,7 +3015,7 @@ WRITE16_HANDLER( TC0110PCR_step1_word_1_w )
 		{
 			int r,g,b;   /* data = palette RGB value */
 
-			TC0110PCR_1_ram[TC0110PCR_1_addr] = data & 0xffff;
+			TC0110PCR_ram[1][(TC0110PCR_addr[1])] = data & 0xffff;
 
 			r = (data >>  0) & 0x1f;
 			g = (data >>  5) & 0x1f;
@@ -2816,7 +3026,7 @@ WRITE16_HANDLER( TC0110PCR_step1_word_1_w )
 			b = (b << 3) | (b >> 2);
 
 			/* change a color in the second color area (4096-8191) */
-			palette_change_color(TC0110PCR_1_addr + 4096,r,g,b);
+			palette_change_color(TC0110PCR_addr[1] + 4096,r,g,b);
 			break;
 		}
 
@@ -2831,7 +3041,7 @@ WRITE16_HANDLER( TC0110PCR_step1_word_2_w )
 	switch (offset)
 	{
 		case 0:
-			TC0110PCR_2_addr = data & 0xfff;
+			TC0110PCR_addr[2] = data & 0xfff;
 			if (data>0xfff) logerror ("Write to third TC0110PCR palette index > 0xfff\n");
 			break;
 
@@ -2839,7 +3049,7 @@ WRITE16_HANDLER( TC0110PCR_step1_word_2_w )
 		{
 			int r,g,b;   /* data = palette RGB value */
 
-			TC0110PCR_2_ram[TC0110PCR_2_addr] = data & 0xffff;
+			TC0110PCR_ram[2][(TC0110PCR_addr[2])] = data & 0xffff;
 
 			r = (data >>  0) & 0x1f;
 			g = (data >>  5) & 0x1f;
@@ -2850,7 +3060,7 @@ WRITE16_HANDLER( TC0110PCR_step1_word_2_w )
 			b = (b << 3) | (b >> 2);
 
 			/* change a color in the second color area (8192-12288) */
-			palette_change_color(TC0110PCR_2_addr + 8192,r,g,b);
+			palette_change_color(TC0110PCR_addr[2] + 8192,r,g,b);
 			break;
 		}
 
@@ -2862,10 +3072,12 @@ logerror("PC %06x: warning - write %04x to third TC0110PCR offset %02x\n",cpu_ge
 
 WRITE16_HANDLER( TC0110PCR_step1_rbswap_word_w )
 {
+	TC0110PCR_type = 1;	/* xRRRRRGGGGGBBBBB */
+
 	switch (offset)
 	{
 		case 0:
-			TC0110PCR_addr = data & 0xfff;
+			TC0110PCR_addr[0] = data & 0xfff;
 			if (data>0xfff) logerror ("Write to palette index > 0xfff\n");
 			break;
 
@@ -2873,7 +3085,7 @@ WRITE16_HANDLER( TC0110PCR_step1_rbswap_word_w )
 		{
 			int r,g,b;   /* data = palette RGB value */
 
-			TC0110PCR_ram[TC0110PCR_addr] = data & 0xffff;
+			TC0110PCR_ram[0][(TC0110PCR_addr[0])] = data & 0xffff;
 
 			b = (data >>  0) & 0x1f;
 			g = (data >>  5) & 0x1f;
@@ -2883,7 +3095,7 @@ WRITE16_HANDLER( TC0110PCR_step1_rbswap_word_w )
 			g = (g << 3) | (g >> 2);
 			b = (b << 3) | (b >> 2);
 
-			palette_change_color(TC0110PCR_addr,r,g,b);
+			palette_change_color(TC0110PCR_addr[0],r,g,b);
 			break;
 		}
 
@@ -2893,12 +3105,14 @@ logerror("PC %06x: warning - write %04x to TC0110PCR offset %02x\n",cpu_get_pc()
 	}
 }
 
-WRITE16_HANDLER( TC0110PCR_step1_4bpg_word_w )	/* 4 bits per color gun */
+WRITE16_HANDLER( TC0110PCR_step1_4bpg_word_w )
 {
+	TC0110PCR_type = 2;	/* xxxxBBBBGGGGRRRR */
+
 	switch (offset)
 	{
 		case 0:
-			TC0110PCR_addr = data & 0xfff;
+			TC0110PCR_addr[0] = data & 0xfff;
 			if (data>0xfff) logerror ("Write to palette index > 0xfff\n");
 			break;
 
@@ -2906,7 +3120,7 @@ WRITE16_HANDLER( TC0110PCR_step1_4bpg_word_w )	/* 4 bits per color gun */
 		{
 			int r,g,b;   /* data = palette BGR value */
 
-			TC0110PCR_ram[TC0110PCR_addr] = data & 0xffff;
+			TC0110PCR_ram[0][(TC0110PCR_addr[0])] = data & 0xffff;
 
 			r = (data >> 0) & 0xf;
 			g = (data >> 4) & 0xf;
@@ -2916,7 +3130,7 @@ WRITE16_HANDLER( TC0110PCR_step1_4bpg_word_w )	/* 4 bits per color gun */
 			g = (g << 4) | g;
 			b = (b << 4) | b;
 
-			palette_change_color(TC0110PCR_addr,r,g,b);
+			palette_change_color(TC0110PCR_addr[0],r,g,b);
 			break;
 		}
 

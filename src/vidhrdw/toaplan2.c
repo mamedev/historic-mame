@@ -1023,66 +1023,57 @@ void toaplan2_scroll_reg_data_w(offs_t offset, data16_t data, UINT32 mem_mask, i
 		vid_controllers = 2;
 	}
 
-	if ( keyboard_pressed(KEYCODE_W) )
+	if ( keyboard_pressed_memory(KEYCODE_W) )
 	{
-		while (keyboard_pressed(KEYCODE_W)) ;
 		display_tx += 1;
 		display_tx &= 1;
 		if (toaplan2_txvideoram16 != 0)
 			tilemap_set_enable(tx_tilemap, display_tx);
 	}
-	if ( keyboard_pressed(KEYCODE_L) )
+	if ( keyboard_pressed_memory(KEYCODE_L) )
 	{
-		while (keyboard_pressed(KEYCODE_L)) ;
 		display_sp[0] += 1;
 		display_sp[0] &= 1;
 	}
-	if ( keyboard_pressed(KEYCODE_K) )
+	if ( keyboard_pressed_memory(KEYCODE_K) )
 	{
-		while (keyboard_pressed(KEYCODE_K)) ;
 		display_top[0] += 1;
 		display_top[0] &= 1;
 		tilemap_set_enable(top_tilemap[0], display_top[0]);
 	}
-	if ( keyboard_pressed(KEYCODE_J) )
+	if ( keyboard_pressed_memory(KEYCODE_J) )
 	{
-		while (keyboard_pressed(KEYCODE_J)) ;
 		display_fg[0] += 1;
 		display_fg[0] &= 1;
 		tilemap_set_enable(fg_tilemap[0], display_fg[0]);
 	}
-	if ( keyboard_pressed(KEYCODE_H) )
+	if ( keyboard_pressed_memory(KEYCODE_H) )
 	{
-		while (keyboard_pressed(KEYCODE_H)) ;
 		display_bg[0] += 1;
 		display_bg[0] &= 1;
 		tilemap_set_enable(bg_tilemap[0], display_bg[0]);
 	}
 	if (vid_controllers == 2)
 	{
-		if ( keyboard_pressed(KEYCODE_O) )
+		if ( keyboard_pressed_memory(KEYCODE_O) )
 		{
-			while (keyboard_pressed(KEYCODE_O)) ;
 			display_sp[1] += 1;
 			display_sp[1] &= 1;
 		}
-		if ( keyboard_pressed(KEYCODE_I) )
+		if ( keyboard_pressed_memory(KEYCODE_I) )
 		{
-			while (keyboard_pressed(KEYCODE_I)) ;
 			display_top[1] += 1;
 			display_top[1] &= 1;
 			tilemap_set_enable(top_tilemap[1], display_top[1]);
 		}
-		if ( keyboard_pressed(KEYCODE_U) )
+		if ( keyboard_pressed_memory(KEYCODE_U) )
 		{
-			while (keyboard_pressed(KEYCODE_U)) ;
 			display_fg[1] += 1;
 			display_fg[1] &= 1;
 			tilemap_set_enable(fg_tilemap[1], display_fg[1]);
 		}
-		if ( keyboard_pressed(KEYCODE_Y) )
+		if ( keyboard_pressed_memory(KEYCODE_Y) )
 		{
-			while (keyboard_pressed(KEYCODE_Y)) ;
 			display_bg[1] += 1;
 			display_bg[1] &= 1;
 			tilemap_set_enable(bg_tilemap[1], display_bg[1]);
@@ -1165,7 +1156,7 @@ void toaplan2_log_vram(void)
 		vid_controllers = 2;
 	}
 
-	if ( keyboard_pressed(KEYCODE_M) )
+	if ( keyboard_pressed_memory(KEYCODE_M) )
 	{
 		data16_t *source_now0  = (data16_t *)(spriteram16_now[0]);
 		data16_t *source_next0 = (data16_t *)(spriteram16_next[0]);
@@ -1183,7 +1174,6 @@ void toaplan2_log_vram(void)
 			source_new1  = (data16_t *)(spriteram16_new[1]);
 		}
 
-		while (keyboard_pressed(KEYCODE_M)) ;
 		logerror("Scrolls   BG-X  BG-Y   FG-X  FG-Y   TOP-X  TOP-Y   Sprite-X  Sprite-Y\n");
 		logerror("---0-->   %04x  %04x   %04x  %04x    %04x  %04x       %04x    %04x\n", bg_scrollx[0],bg_scrolly[0],fg_scrollx[0],fg_scrolly[0],top_scrollx[0],top_scrolly[0],sprite_scrollx[0], sprite_scrolly[0]);
 		if (vid_controllers == 2)
@@ -1230,10 +1220,9 @@ void toaplan2_log_vram(void)
 			}
 		}
 	}
-	if ( keyboard_pressed(KEYCODE_N) )
+	if ( keyboard_pressed_memory(KEYCODE_N) )
 	{
 		int tchar[2], tattr[2];
-		while (keyboard_pressed(KEYCODE_N)) ;
 		logerror("Scrolls   BG-X  BG-Y   FG-X  FG-Y   TOP-X  TOP-Y   Sprite-X  Sprite-Y\n");
 		logerror("---0-->   %04x  %04x   %04x  %04x    %04x  %04x       %04x    %04x\n", bg_scrollx[0],bg_scrolly[0],fg_scrollx[0],fg_scrolly[0],top_scrollx[0],top_scrolly[0],sprite_scrollx[0], sprite_scrolly[0]);
 		if (vid_controllers == 2)
@@ -1256,10 +1245,9 @@ void toaplan2_log_vram(void)
 			}
 		}
 	}
-	if ( keyboard_pressed(KEYCODE_B) )
+	if ( keyboard_pressed_memory(KEYCODE_B) )
 	{
 		int tchar[2], tattr[2];
-		while (keyboard_pressed(KEYCODE_B)) ;
 		logerror("Scrolls   BG-X  BG-Y   FG-X  FG-Y   TOP-X  TOP-Y   Sprite-X  Sprite-Y\n");
 		logerror("---0-->   %04x  %04x   %04x  %04x    %04x  %04x       %04x    %04x\n", bg_scrollx[0],bg_scrolly[0],fg_scrollx[0],fg_scrolly[0],top_scrollx[0],top_scrolly[0],sprite_scrollx[0], sprite_scrolly[0]);
 		if (vid_controllers == 2)
@@ -1282,10 +1270,9 @@ void toaplan2_log_vram(void)
 			}
 		}
 	}
-	if ( keyboard_pressed(KEYCODE_V) )
+	if ( keyboard_pressed_memory(KEYCODE_V) )
 	{
 		int tchar[2], tattr[2];
-		while (keyboard_pressed(KEYCODE_V)) ;
 		logerror("Scrolls   BG-X  BG-Y   FG-X  FG-Y   TOP-X  TOP-Y   Sprite-X  Sprite-Y\n");
 		logerror("---0-->   %04x  %04x   %04x  %04x    %04x  %04x       %04x    %04x\n", bg_scrollx[0],bg_scrolly[0],fg_scrollx[0],fg_scrolly[0],top_scrollx[0],top_scrolly[0],sprite_scrollx[0], sprite_scrolly[0]);
 		if (vid_controllers == 2)
@@ -1309,14 +1296,11 @@ void toaplan2_log_vram(void)
 		}
 	}
 
-	if ( keyboard_pressed(KEYCODE_C) )
-	{
-		while (keyboard_pressed(KEYCODE_C)) ;
+	if ( keyboard_pressed_memory(KEYCODE_C) )
 		logerror("Mark here\n");
-	}
-	if ( keyboard_pressed(KEYCODE_E) )
+
+	if ( keyboard_pressed_memory(KEYCODE_E) )
 	{
-		while (keyboard_pressed(KEYCODE_E)) ;
 		displog += 1;
 		displog &= 1;
 	}

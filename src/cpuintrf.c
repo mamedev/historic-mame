@@ -18,12 +18,6 @@
 #if (HAS_Z80)
 #include "cpu/z80/z80.h"
 #endif
-#if (HAS_Z80GB)
-#include "cpu/z80gb/z80gb.h"
-#endif
-#if (HAS_CDP1802)
-#include "cpu/cdp1802/cdp1802.h"
-#endif
 #if (HAS_8080 || HAS_8085A)
 #include "cpu/i8085/i8085.h"
 #endif
@@ -90,12 +84,6 @@
 #if (HAS_S2650)
 #include "cpu/s2650/s2650.h"
 #endif
-#if (HAS_F8)
-#include "cpu/f8/f8.h"
-#endif
-#if (HAS_CP1600)
-#include "cpu/cp1600/cp1600.h"
-#endif
 #if (HAS_TMS34010 || HAS_TMS34020)
 #include "cpu/tms34010/tms34010.h"
 #endif
@@ -111,44 +99,62 @@
 #if (HAS_CCPU)
 #include "cpu/ccpu/ccpu.h"
 #endif
-#if (HAS_PDP1)
-#include "cpu/pdp1/pdp1.h"
-#endif
 #if (HAS_ADSP2100 || HAS_ADSP2105)
 #include "cpu/adsp2100/adsp2100.h"
 #endif
 #if (HAS_PSXCPU)
 #include "cpu/mips/mips.h"
 #endif
-#if (HAS_SH2)
-#include "cpu/sh2/sh2.h"
-#endif
-#if (HAS_SC61860)
-#include "cpu/sc61860/sc61860.h"
-#endif
-#if (HAS_ARM)
-#include "cpu/arm/arm.h"
-#endif
-#if (HAS_G65816)
-#include "cpu/g65816/g65816.h"
-#endif
-#if (HAS_SPC700)
-#include "cpu/spc700/spc700.h"
-#endif
 #if (HAS_ASAP)
 #include "cpu/asap/asap.h"
 #endif
-#if (HAS_LH5801)
-#include "cpu/lh5801/lh5801.h"
-#endif
-#if (HAS_SATURN)
-#include "cpu/saturn/saturn.h"
-#endif
-#if (HAS_APEXC)
-#include "cpu/apexc/apexc.h"
-#endif
 #if (HAS_UPD7810)
 #include "cpu/upd7810/upd7810.h"
+#endif
+
+
+#ifdef MESS
+
+#if (HAS_APEXC)
+#include "mess/cpu/apexc/apexc.h"
+#endif
+#if (HAS_ARM)
+#include "mess/cpu/arm/arm.h"
+#endif
+#if (HAS_CDP1802)
+#include "mess/cpu/cdp1802/cdp1802.h"
+#endif
+#if (HAS_CP1600)
+#include "mess/cpu/cp1600/cp1600.h"
+#endif
+#if (HAS_F8)
+#include "mess/cpu/f8/f8.h"
+#endif
+#if (HAS_G65816)
+#include "mess/cpu/g65816/g65816.h"
+#endif
+#if (HAS_LH5801)
+#include "mess/cpu/lh5801/lh5801.h"
+#endif
+#if (HAS_PDP1)
+#include "mess/cpu/pdp1/pdp1.h"
+#endif
+#if (HAS_SATURN)
+#include "mess/cpu/saturn/saturn.h"
+#endif
+#if (HAS_SC61860)
+#include "mess/cpu/sc61860/sc61860.h"
+#endif
+#if (HAS_SH2)
+#include "mess/cpu/sh2/sh2.h"
+#endif
+#if (HAS_SPC700)
+#include "mess/cpu/spc700/spc700.h"
+#endif
+#if (HAS_Z80GB)
+#include "mess/cpu/z80gb/z80gb.h"
+#endif
+
 #endif
 
 
@@ -426,16 +432,6 @@ struct cpu_interface cpuintf[] =
 #if (HAS_Z80)
 	CPU1(Z80,	   z80, 	 1,255,1.00,Z80_IGNORE_INT,    Z80_IRQ_INT,    Z80_NMI_INT,    8, 16,	  0,16,LE,1, 4	),
 #endif
-#if (HAS_SH2)
-	CPU4(SH2,	   sh2, 	16,  0,1.00,SH2_INT_NONE ,				 0, 			-1,   32,32bedw,   0,32,BE,2, 2  ),
-#endif
-#if (HAS_Z80GB)
-	CPU0(Z80GB,    z80gb,	 5,255,1.00,Z80GB_IGNORE_INT,  0,			   1,			   8, 16,	  0,16,LE,1, 4	),
-#endif
-#if (HAS_CDP1802)
-#define cdp1802_ICount cdp1802_icount
-	CPU0(CDP1802,  cdp1802,  1,  0,1.00,CDP1802_INT_NONE,  CDP1802_IRQ,    -1,			   8, 16,	  0,16,BE,1, 3	),
-#endif
 #if (HAS_8080)
 	CPU0(8080,	   i8080,	 4,255,1.00,I8080_NONE, 	   I8080_INTR,	   I8080_TRAP,	   8, 16,	  0,16,LE,1, 3	),
 #endif
@@ -574,14 +570,6 @@ struct cpu_interface cpuintf[] =
 #if (HAS_S2650)
 	CPU0(S2650,    s2650,	 2,  0,1.00,S2650_INT_NONE,    -1,			   -1,			   8, 16,	  0,15,LE,1, 3	),
 #endif
-#if (HAS_F8)
-#define f8_ICount f8_icount
-	CPU4(F8,	   f8,		 1,  0,1.00,F8_INT_NONE,	   F8_INT_INTR,    -1,			   8, 16,	  0,16,LE,1, 3	),
-#endif
-#if (HAS_CP1600)
-#define cp1600_ICount cp1600_icount
-	CPU0(CP1600,   cp1600,	 0,  0,1.00,CP1600_INT_NONE,   -1,			   -1,			   8, 16,	  0,16,LE,1, 3	),
-#endif
 #if (HAS_TMS34010)
 	CPU2(TMS34010, tms34010, 2,  0,1.00,TMS34010_INT_NONE, TMS34010_INT1,  -1,			   16,29lew,  3,29,LE,2,10	),
 #endif
@@ -621,9 +609,6 @@ struct cpu_interface cpuintf[] =
 #if (HAS_CCPU)
 	CPU3(CCPU,	   ccpu,	 2,  0,1.00,0,				   -1,			   -1,			   16,16bew,  0,15,BE,2, 3	),
 #endif
-#if (HAS_PDP1)
-	CPU0(PDP1,	   pdp1,	 0,  0,1.00,0,				   -1,			   -1,			   8, 16,	  0,18,LE,1, 3	),
-#endif
 #if (HAS_ADSP2100)
 	CPU3(ADSP2100, adsp2100, 4,  0,1.00,ADSP2100_INT_NONE, -1,			   -1,			   16,17lew, -1,14,LE,2, 4	),
 #endif
@@ -633,40 +618,61 @@ struct cpu_interface cpuintf[] =
 #if (HAS_PSXCPU)
 	CPU0(PSXCPU,   mips,	 8, -1,1.00,MIPS_INT_NONE,	   MIPS_INT_NONE,  MIPS_INT_NONE,  16,32lew,  0,32,LE,4, 4	),
 #endif
-#if (HAS_SH2)
-	CPU4(SH2,	   sh2, 	16,  0,1.00,SH2_INT_NONE,	   0,			   -1,			   32,32bedw, 0,32,BE,2, 2	),
+#if (HAS_ASAP)
+	#define asap_ICount asap_icount
+	CPU0(ASAP,	   asap,	 1,  0,1.00,ASAP_INT_NONE,	   -1,			   -1,			   32,32ledw, 0,32,LE,4, 12 ),
 #endif
-#if (HAS_SC61860)
-	#define sc61860_ICount sc61860_icount
-	CPU0(SC61860,  sc61860,  1,  0,1.00,-1, 			   -1,			   -1,			   8, 16,	  0,16,BE,1, 4	),
+#if (HAS_UPD7810)
+#define upd7810_ICount upd7810_icount
+	CPU0(UPD7810,  upd7810,  2,  0,1.00,UPD7810_INT_NONE,  UPD7810_INTF1,  UPD7810_INTNMI, 8, 16,	  0,16,LE,1, 4	),
+#endif
+
+#ifdef MESS
+#if (HAS_APEXC)
+	CPU0(APEXC,    apexc,	 0,  0,1.00,0,				   -1,			   -1,			   32,18bedw, 0,18,LE,1, 1	),
 #endif
 #if (HAS_ARM)
 	CPU0(ARM,	   arm, 	 2,  0,1.00,ARM_INT_NONE,	   ARM_FIRQ,	   ARM_IRQ, 	   32,26ledw, 0,26,LE,4, 4	),
 #endif
+#if (HAS_CDP1802)
+#define cdp1802_ICount cdp1802_icount
+	CPU0(CDP1802,  cdp1802,  1,  0,1.00,CDP1802_INT_NONE,  CDP1802_IRQ,    -1,			   8, 16,	  0,16,BE,1, 3	),
+#endif
+#if (HAS_CP1600)
+#define cp1600_ICount cp1600_icount
+	CPU0(CP1600,   cp1600,	 0,  0,1.00,CP1600_INT_NONE,   -1,			   -1,			   8, 16,	  0,16,LE,1, 3	),
+#endif
+#if (HAS_F8)
+#define f8_ICount f8_icount
+	CPU4(F8,	   f8,		 1,  0,1.00,F8_INT_NONE,	   F8_INT_INTR,    -1,			   8, 16,	  0,16,LE,1, 3	),
+#endif
 #if (HAS_G65816)
 	CPU0(G65816,  g65816,	 1,  0,1.00,G65816_INT_NONE,   G65816_INT_IRQ, G65816_INT_NMI, 8, 24,	  0,24,BE,1, 3	),
-#endif
-#if (HAS_SPC700)
-	CPU0(SPC700,   spc700,	 0,  0,1.00,0,				   -1,			   -1,			   8, 16,	  0,16,LE,1, 3	),
-#endif
-#if (HAS_ASAP)
-	#define asap_ICount asap_icount
-	CPU0(ASAP,	   asap,	 1,  0,1.00,ASAP_INT_NONE,	   -1,			   -1,			   32,32ledw, 0,32,LE,4, 12 ),
 #endif
 #if (HAS_LH5801)
 #define lh5801_ICount lh5801_icount
 	CPU0(LH5801,   lh5801,	 1,  0,1.00,LH5801_INT_NONE,   LH5801_IRQ,	   -1,			   8, 17,	  0,17,BE,1, 5	),
 #endif
+#if (HAS_PDP1)
+	CPU0(PDP1,	   pdp1,	 0,  0,1.00,0,				   -1,			   -1,			   8, 16,	  0,18,LE,1, 3	),
+#endif
 #if (HAS_SATURN)
 #define saturn_ICount saturn_icount
 	CPU0(SATURN,   saturn,	 1,  0,1.00,SATURN_INT_NONE,   SATURN_INT_IRQ, SATURN_INT_NMI,	8,20,	  0,20,LE,1, 21 ),
 #endif
-#if (HAS_APEXC)
-	CPU0(APEXC,    apexc,	 0,  0,1.00,0,				   -1,			   -1,			   32,18bedw, 0,18,LE,1, 1	),
+#if (HAS_SC61860)
+	#define sc61860_ICount sc61860_icount
+	CPU0(SC61860,  sc61860,  1,  0,1.00,-1, 			   -1,			   -1,			   8, 16,	  0,16,BE,1, 4	),
 #endif
-#if (HAS_UPD7810)
-#define upd7810_ICount upd7810_icount
-	CPU0(UPD7810,  upd7810,  2,  0,1.00,UPD7810_INT_NONE,  UPD7810_INTF1,  UPD7810_INTNMI, 8, 16,	  0,16,LE,1, 4	),
+#if (HAS_SH2)
+	CPU4(SH2,	   sh2, 	16,  0,1.00,SH2_INT_NONE ,				 0, 			-1,   32,32bedw,   0,32,BE,2, 2  ),
+#endif
+#if (HAS_SPC700)
+	CPU0(SPC700,   spc700,	 0,  0,1.00,0,				   -1,			   -1,			   8, 16,	  0,16,LE,1, 3	),
+#endif
+#if (HAS_Z80GB)
+	CPU0(Z80GB,    z80gb,	 5,255,1.00,Z80GB_IGNORE_INT,  0,			   1,			   8, 16,	  0,16,LE,1, 4	),
+#endif
 #endif
 };
 
@@ -749,7 +755,6 @@ logerror("CPU #%d failed to allocate context buffer (%d bytes)!\n", i, size);
 			irq_line_vector[i * MAX_IRQ_LINES + j] = cpuintf[CPU_TYPE(i)].default_vector;
 		}
 
-		if (cpu[i].save_context) SETCONTEXT(i, cpu[i].context);
 		state_save_set_current_tag(i+1);
 		INIT(i);
 		if (cpu[i].save_context) GETCONTEXT(i, cpu[i].context);
@@ -1482,13 +1487,18 @@ void cpu_clear_pending_interrupts(int cpunum)
 
 
 
+void cpu_interrupt_enable(int cpunum,int enabled)
+{
+	interrupt_enable[cpunum] = enabled;
+
+	/* make sure there are no queued interrupts */
+	if (enabled == 0) cpu_clear_pending_interrupts(cpunum);
+}
+
 WRITE_HANDLER( interrupt_enable_w )
 {
 	int cpunum = (activecpu < 0) ? 0 : activecpu;
-	interrupt_enable[cpunum] = data;
-
-	/* make sure there are no queued interrupts */
-	if (data == 0) cpu_clear_pending_interrupts(cpunum);
+	cpu_interrupt_enable(cpunum,data);
 }
 
 
@@ -3413,3 +3423,34 @@ static unsigned Dummy_dasm(char *buffer, unsigned pc)
 	return 1;
 }
 
+void cpu_set_m68k_reset(int cpunum, void (*resetfn)(void))
+{
+	void m68k_set_reset_instr_callback(void  (*callback)(void));
+
+	if (CPU_TYPE(cpunum) != CPU_M68000 &&
+		CPU_TYPE(cpunum) != CPU_M68010 &&
+		CPU_TYPE(cpunum) != CPU_M68020 &&
+		CPU_TYPE(cpunum) != CPU_M68EC020)
+	{
+		logerror("Trying to set m68k reset vector on non-68k cpu\n");
+		exit(1);
+	}
+
+	if (cpunum != activecpu)
+	{
+		if(activecpu != -1)
+			if (cpu[activecpu].save_context) GETCONTEXT(activecpu, cpu[activecpu].context);
+		memory_set_context(cpunum);
+		if (cpu[cpunum].save_context) SETCONTEXT(cpunum, cpu[cpunum].context);
+	}
+
+	m68k_set_reset_instr_callback(resetfn);
+
+	if(cpunum != activecpu)
+	{
+		memory_set_context(cpunum);
+		if (cpu[cpunum].save_context) GETCONTEXT(cpunum, cpu[cpunum].context);
+		if(activecpu != -1)
+			if (cpu[activecpu].save_context) SETCONTEXT(activecpu, cpu[activecpu].context);
+	}
+}

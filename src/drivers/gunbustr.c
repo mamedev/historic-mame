@@ -402,7 +402,7 @@ static struct MachineDriver machine_driver_gunbustr =
 {
 	{
 		{
-			CPU_M68020,
+			CPU_M68EC020,
 			16000000,	/* 16 MHz */
 			gunbustr_readmem,gunbustr_writemem,0,0,
 			gunbustr_interrupt,1 /* VBL */

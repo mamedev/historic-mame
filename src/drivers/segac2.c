@@ -3,10 +3,21 @@
 	Sega System C/C2 Driver
 	driver by David Haywood and Aaron Giles
 	---------------------------------------
-	Version 0.50 - 16 November 2000
+	Version 0.53 - 05 Mar 2001
 
 	Latest Changes :
 	-----+-------------------------------------------------------------------------------------
+	0.53 | Set the Protection Read / Write buffers to be cleared at reset in init_machine, this
+		 | fixes a problem with columns when you reset it and then attempted to play.
+		 |  (only drivers/segac2.c was changed)
+	0.52 | Added basic save state support .. not too sure how well it will work (seems to be
+		 | ok apart from sound where i guess the sound core needs updating) size of states
+		 | could probably be cut down a bit with an init variables from vdp registers function
+	0.51 | Added some Puyo Puyo (English Lang) Bootleg set, we don't have an *original* english
+		 | set yet however.  Also added a 2nd Bootleg of Tant-R, this one still has protection
+		 | inplace, however the apparently board lacks the sample playing hardware.
+		 | Removed 'Button3' from Puyo Puyo 2, its unneeded, the Rannyu Button is actually the
+		 | player 1 start button, its used for stopping a 2nd player interupting play.
 	0.50 | Added some Columns/Puyo Puyo 2 dips from Gerardo. Fixed nasty crash bug for games
 		 | not using the UPD7759. Made some minor tweaks to the VDP register accesses. Added
 		 | counter/timer description. Attempted to hook up battery RAM.
@@ -115,9 +126,10 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/m68000/m68000.h"
+#include "state.h"
 
 
-#define LOG_PROTECTION		0
+#define LOG_PROTECTION		1
 #define LOG_PALETTE			0
 #define LOG_IOCHIP			0
 
@@ -304,6 +316,9 @@ static void init_machine(void)
 	sound_banks = 0;
 	if (memory_region(REGION_SOUND1))
 		sound_banks = memory_region_length(REGION_SOUND1) / 0x20000;
+	/* reset the protection */
+	prot_write_buf = 0;
+	prot_read_buf = 0;
 }
 
 
@@ -1367,14 +1382,14 @@ INPUT_PORTS_START( puyopuy2 ) /*  Puyo Puyo 2 Input Ports */
 	PORT_START		/* Player 1 Controls */
     PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )   // Rotate clockwise
     PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )   // Rotate anti-clockwise. Can be inverted using the dips
-    PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 )   // Rannyu Button
+    PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED  )   // Button 3 Unused  _NOT_ Rannyu which is Start 1
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
     JOYSTICK_1
 
 	PORT_START		/* Player 2 Controls */
     PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
     PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
-    PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
+    PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED  )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
     JOYSTICK_2
 
@@ -1579,6 +1594,13 @@ ROM_START( columns2 ) /* Columns II - The Voyage Through Time (Jpn)  (c)1990 Seg
 	ROM_LOAD16_BYTE( "epr13360.rom", 0x000001, 0x020000, 0xa59b1d4f )
 ROM_END
 
+ROM_START( tantrbl2 ) /* Tant-R (Puzzle & Action) (Alt Bootleg Running on C Board?, No Samples) */
+	ROM_REGION( 0x200000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "trb2_2.32",    0x000000, 0x080000, 0x8fc99c48 )
+	ROM_LOAD16_BYTE( "trb2_1.31",    0x000001, 0x080000, 0xc318d00d )
+	ROM_LOAD16_BYTE( "mpr15616.34",  0x100000, 0x080000, 0x17b80202 )
+	ROM_LOAD16_BYTE( "mpr15615.33",  0x100001, 0x080000, 0x36a88bd4 )
+ROM_END
 
 /* ----- System C-2 Games ----- */
 
@@ -1682,6 +1704,17 @@ ROM_START( puyopuya	) /* Puyo Puyo (Rev A)  (c)1992 Sega / Compile */
 	ROM_LOAD( "epr15034", 0x000000, 0x020000, 0x5688213b )
 ROM_END
 
+ROM_START( puyopuyb ) /* Puyo Puyo  (c)1992 Sega / Compile  Bootleg */
+ ROM_REGION( 0x200000, REGION_CPU1, 0 )
+ ROM_LOAD16_BYTE( "puyopuyb.4bo", 0x000000, 0x020000, 0x89ea4d33 )
+ ROM_LOAD16_BYTE( "puyopuyb.3bo", 0x000001, 0x020000, 0xc002e545 )
+ /* 0x040000 - 0x100000 Empty */
+ ROM_LOAD16_BYTE( "puyopuyb.6bo", 0x100000, 0x020000, 0xa0692e5 )
+ ROM_LOAD16_BYTE( "puyopuyb.5bo", 0x100001, 0x020000, 0x353109b8 )
+
+ ROM_REGION( 0x020000, REGION_SOUND1, 0 )
+ ROM_LOAD( "puyopuyb.abo", 0x000000, 0x020000, 0x79112b3b )
+ROM_END
 
 ROM_START( ichidant ) /* Ichident-R (Puzzle & Action 2)  (c)1994 Sega */
 	ROM_REGION( 0x200000, REGION_CPU1, 0 )
@@ -1765,13 +1798,28 @@ ROM_END
 
 ******************************************************************************/
 
+static void init_saves(void)
+{
+	/* Do we need the int states ? */
+	state_save_register_UINT8 ("C2_main", 0, "Int 2 Status", &ym3438_int, 1);
+	state_save_register_UINT8 ("C2_main", 0, "Int 4 Status", &scanline_int, 1);
+	state_save_register_UINT8 ("C2_main", 0, "Int 6 Status", &vblank_int, 1);
+
+	state_save_register_UINT8 ("C2_IO", 0, "I/O Writes", iochip_reg, 0x10);
+
+	state_save_register_UINT16 ("C2 Protection", 0, "Write Buffer", &prot_write_buf, 1);
+	state_save_register_UINT16 ("C2 Protection", 0, "Read Buffer", &prot_read_buf, 1);
+}
+
 static void init_segac2(void)
 {
 	bloxeed_sound = 0;
+	init_saves();
 }
 
 static void init_bloxeedc(void)
 {
+	init_saves();
 	bloxeed_sound = 1;
 }
 
@@ -1790,6 +1838,7 @@ static void init_columns(void)
 	};
 	prot_table = columns_table;
 	bloxeed_sound = 0;
+	init_saves();
 }
 
 static void init_columns2(void)
@@ -1807,6 +1856,7 @@ static void init_columns2(void)
 	};
 	prot_table = columns2_table;
 	bloxeed_sound = 0;
+	init_saves();
 }
 
 static void init_borench(void)
@@ -1824,6 +1874,7 @@ static void init_borench(void)
 	};
 	prot_table = borench_table;
 	bloxeed_sound = 0;
+	init_saves();
 }
 
 static void init_tfrceac(void)
@@ -1841,6 +1892,7 @@ static void init_tfrceac(void)
 	};
 	prot_table = tfrceac_table;
 	bloxeed_sound = 0;
+	init_saves();
 }
 
 static void init_tfrceacb(void)
@@ -1864,6 +1916,7 @@ static void init_tantr(void)
 	};
 	prot_table = tantr_table;
 	bloxeed_sound = 0;
+	init_saves();
 }
 
 static void init_ichidant(void)
@@ -1881,6 +1934,7 @@ static void init_ichidant(void)
 	};
 	prot_table = ichidant_table;
 	bloxeed_sound = 0;
+	init_saves();
 }
 
 static void init_ichidnte(void)
@@ -1898,6 +1952,7 @@ static void init_ichidnte(void)
 	};
 	prot_table = ichidnte_table;
 	bloxeed_sound = 0;
+	init_saves();
 }
 
 
@@ -1919,6 +1974,7 @@ static void init_potopoto(void)
 	};
 	prot_table = potopoto_table;
 	bloxeed_sound = 0;
+	init_saves();
 }
 
 static void init_puyopuyo(void)
@@ -1936,6 +1992,7 @@ static void init_puyopuyo(void)
 	};
 	prot_table = puyopuyo_table;
 	bloxeed_sound = 0;
+	init_saves();
 }
 
 static void init_puyopuy2(void)
@@ -1959,6 +2016,7 @@ static void init_puyopuy2(void)
 	bloxeed_sound = 0;
 
 	install_mem_read16_handler(0, 0x800000, 0x800001, puyopuy2_prot_r);
+	init_saves();
 }
 
 static void init_stkclmns(void)
@@ -1985,6 +2043,7 @@ static void init_stkclmns(void)
 		for (i = 0; i < 0x10000/2; i++)
 			main_ram[i] = rand();
 	}
+	init_saves();
 }
 
 static void init_zunkyou(void)
@@ -2002,6 +2061,7 @@ static void init_zunkyou(void)
 	};
 	prot_table = zunkyou_table;
 	bloxeed_sound = 0;
+	init_saves();
 }
 
 
@@ -2033,11 +2093,13 @@ GAME ( 1990, columns2, 0,        segac,  columns2, columns2, ROT0, "Sega",      
 GAME ( 1990, borench,  0,        segac2, borench,  borench,  ROT0, "Sega",                   "Borench" )
 GAME ( 1990, tfrceac,  0,        segac2, tfrceac,  tfrceac,  ROT0, "Sega / Technosoft",      "ThunderForce AC" )
 GAME ( 1990, tfrceacj, tfrceac,  segac2, tfrceac,  tfrceac,  ROT0, "Sega / Technosoft",      "ThunderForce AC (Japan)" )
-GAME ( 1990, tfrceacb, tfrceac,  segac2, tfrceac,  tfrceacb, ROT0, "Sega / Technosoft",      "ThunderForce AC (Bootleg)" )
+GAME ( 1990, tfrceacb, tfrceac,  segac2, tfrceac,  tfrceacb, ROT0, "Sega / Technosoft",      "ThunderForce AC (bootleg)" )
 GAME ( 1992, tantr,    0,        segac2, ichidant, tantr,    ROT0, "Sega",                   "Tant-R (Puzzle & Action) (Japan)" )
-GAME ( 1992, tantrbl,  tantr,    segac2, ichidant, segac2,   ROT0, "Sega",                   "Tant-R (Puzzle & Action) (Japan) (Bootleg)" )
+GAME ( 1992, tantrbl,  tantr,    segac2, ichidant, segac2,   ROT0, "Sega",                   "Tant-R (Puzzle & Action) (Japan) (bootleg)" )
+GAME ( 1994, tantrbl2, tantr,    segac,  ichidant, tantr,    ROT0, "Sega",                   "Tant-R (Puzzle & Action) (Japan) (bootleg set 2)" )
 GAME ( 1992, puyopuyo, 0,        segac2, puyopuyo, puyopuyo, ROT0, "Sega / Compile",         "Puyo Puyo (Japan)" )
 GAME ( 1992, puyopuya, puyopuyo, segac2, puyopuyo, puyopuyo, ROT0, "Sega / Compile",         "Puyo Puyo (Japan) (Rev A)" )
+GAME ( 1992, puyopuyb, puyopuyo, segac2, puyopuyo, puyopuyo, ROT0, "Sega / Compile",         "Puyo Puyo (English) (bootleg)" )
 GAME ( 1994, ichidant, 0,        segac2, ichidant, ichidant, ROT0, "Sega",                   "Ichidant-R (Puzzle & Action 2) (Japan)" )
 GAME ( 1994, ichidnte, ichidant, segac2, ichidant, ichidnte, ROT0, "Sega",                   "Ichidant-R (Puzzle & Action 2) (English)" )
 GAME ( 1994, stkclmns, 0,        segac2, stkclmns, stkclmns, ROT0, "Sega",                   "Stack Columns (Japan)" )

@@ -161,6 +161,7 @@ extern unsigned int Dasm6510( char *dst, unsigned pc );
 
 #define m6510t_ICount                   m6502_ICount
 
+#define m6510t_init m6510_init
 #define m6510t_reset m6510_reset
 #define m6510t_exit m6510_exit
 #define m6510t_execute m6510_execute
@@ -203,6 +204,7 @@ extern const char *m6510t_info(void *context, int regnum);
 
 #define m7501_ICount                    m6502_ICount
 
+#define m7501_init m6510_init
 #define m7501_reset m6510_reset
 #define m7501_exit m6510_exit
 #define m7501_execute m6510_execute
@@ -245,6 +247,7 @@ extern const char *m7501_info(void *context, int regnum);
 
 #define m8502_ICount                    m6502_ICount
 
+#define m8502_init m6510_init
 #define m8502_reset m6510_reset
 #define m8502_exit m6510_exit
 #define m8502_execute m6510_execute

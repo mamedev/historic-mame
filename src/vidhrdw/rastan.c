@@ -9,43 +9,63 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "state.h"
 #include "vidhrdw/generic.h"
 #include "vidhrdw/taitoic.h"
 
-/* TODO: change sprite routines over to use pdrawgfx.
-
-struct tempsprite
-{
-	int gfx;
-	int code,color;
-	int flipx,flipy;
-	int x,y;
-	int zoomx,zoomy;
-	int primask;
-};
-static struct tempsprite *spritelist;
-*/
+/* NB: sprite routines can be moved over to pdrawgfx.
+   It seems fairly certain however that there is no
+   individual sprite/tile priority. */
 
 static UINT16 sprite_ctrl = 0;
 static UINT16 sprites_flipscreen = 0;
 
+static int beamx,beamy;
 
 /***************************************************************************/
+
+void rastan_coin_ctrl(void)
+{
+		/* bits 0 and 1 are coin lockout */
+		coin_lockout_w(1,~sprite_ctrl & 0x01);
+		coin_lockout_w(0,~sprite_ctrl & 0x02);
+
+		/* bits 2 and 3 are the coin counters */
+		coin_counter_w(1,sprite_ctrl & 0x04);
+		coin_counter_w(0,sprite_ctrl & 0x08);
+}
+
 
 int rastan_vh_start (void)
 {
 	/* (chips, gfxnum, x_offs, y_offs, y_invert, opaque, dblwidth) */
-	if (PC080SN_vh_start(1,1,0,0,0,1,0))
+	if (PC080SN_vh_start(1,1,0,0,0,0,0))
 		return 1;
 
+	state_save_register_UINT16("sprite_ctrl", 0, "sprites", &sprite_ctrl, 1);
+	state_save_register_UINT16("sprite_flip", 0, "sprites", &sprites_flipscreen, 1);
+	state_save_register_func_postload(rastan_coin_ctrl);
 	return 0;
 }
 
 int opwolf_vh_start (void)
 {
-	if (PC080SN_vh_start(1,1,0,0,0,1,0))
+	if (PC080SN_vh_start(1,1,0,0,0,0,0))
 		return 1;
 
+	state_save_register_UINT16("sprite_ctrl", 0, "sprites", &sprite_ctrl, 1);
+	state_save_register_UINT16("sprite_flip", 0, "sprites", &sprites_flipscreen, 1);
+	return 0;
+}
+
+int rainbow_vh_start (void)
+{
+	/* (chips, gfxnum, x_offs, y_offs, y_invert, opaque, dblwidth) */
+	if (PC080SN_vh_start(1,1,0,0,0,0,0))
+		return 1;
+
+	state_save_register_UINT16("sprite_ctrl", 0, "sprites", &sprite_ctrl, 1);
+	state_save_register_UINT16("sprite_flip", 0, "sprites", &sprites_flipscreen, 1);
 	return 0;
 }
 
@@ -56,6 +76,9 @@ int jumping_vh_start(void)
 
 	PC080SN_set_trans_pen(0,1,15);
 
+	/* not 100% sure Jumping needs to save both... */
+	state_save_register_UINT16("sprite_ctrl", 0, "sprites", &sprite_ctrl, 1);
+	state_save_register_UINT16("sprite_flip", 0, "sprites", &sprites_flipscreen, 1);
 	return 0;
 }
 
@@ -70,17 +93,10 @@ WRITE16_HANDLER( rastan_spritectrl_w )
 	if (offset == 0)
 	{
 		sprite_ctrl = data;
-
-		/* bits 0 and 1 are coin lockout */
-		coin_lockout_w(1,~data & 0x01);
-		coin_lockout_w(0,~data & 0x02);
-
-		/* bits 2 and 3 are the coin counters */
-		coin_counter_w(1,data & 0x04);
-		coin_counter_w(0,data & 0x08);
+		rastan_coin_ctrl();
 
 		/* bits 5-7 are the sprite palette bank */
-		/* other bits unknown */
+		/* bit 4 + hi byte unknown */
 	}
 }
 
@@ -192,10 +208,7 @@ void rastan_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	fillbitmap(priority_bitmap,0,NULL);
 
-	/* wrong color for Rainbow backgrounds: solved by making bg an opaque tilemap */
-	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
-
- 	PC080SN_tilemap_draw(bitmap,0,layer[0],0,0);
+ 	PC080SN_tilemap_draw(bitmap,0,layer[0],TILEMAP_IGNORE_TRANSPARENCY,0);
 	PC080SN_tilemap_draw(bitmap,0,layer[1],0,0);
 
 	rastan_draw_sprites(bitmap,0);
@@ -210,6 +223,14 @@ void rastan_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 }
 
 /***************************************************************************/
+
+void opwolf_eof_callback(void)
+{
+	/* Ensure the analog x,y values are read _exactly once_ */
+	/* per frame irrespective of frameskip and fake DSW */
+	beamx = ((input_port_5_r(0) * 256) >> 8);	//+3
+	beamy = ((input_port_6_r(0) * 256) >> 8);	//+19
+}
 
 void opwolf_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
@@ -232,25 +253,14 @@ void opwolf_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	fillbitmap(priority_bitmap,0,NULL);
 
-	/* wrong color e.g. picture when you die: solved by making bg an opaque tilemap */
-	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
-
- 	PC080SN_tilemap_draw(bitmap,0,layer[0],0,0);
-
+ 	PC080SN_tilemap_draw(bitmap,0,layer[0],TILEMAP_IGNORE_TRANSPARENCY,0);
 	rastan_draw_sprites(bitmap,0);
-
 	PC080SN_tilemap_draw(bitmap,0,layer[1],0,0);
 
 	/* See if we should draw artificial gun targets */
 	if (input_port_4_word_r(0,0) &0x1)	/* Fake DSW */
 	{
-		/* Draw an aiming crosshair (after exidy440) */
-		int beamx,beamy;
-
-		/* update the analog x,y values */
-		beamx = ((input_port_5_r(0) * 256) >> 8) + 3;
-		beamy = ((input_port_6_r(0) * 256) >> 8) + 19;
-
+		/* Draw an aiming crosshair */
 		draw_crosshair(bitmap,beamx,beamy,&Machine->visible_area);
 	}
 
@@ -309,9 +319,8 @@ void rainbow_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	layer[1] = 1;
 
 	fillbitmap(priority_bitmap,0,NULL);
-	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);	/* wrong color? */
 
- 	PC080SN_tilemap_draw(bitmap,0,layer[0],0,0);
+ 	PC080SN_tilemap_draw(bitmap,0,layer[0],TILEMAP_IGNORE_TRANSPARENCY,0);
 
 	/* Draw the sprites. 256 sprites in total */
 	for (offs = spriteram_size/2-4; offs >= 0; offs -= 4)
@@ -420,9 +429,8 @@ void jumping_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	layer[1] = 1;
 
 	fillbitmap(priority_bitmap,0,NULL);
-	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);	/* wrong color? */
 
- 	PC080SN_tilemap_draw(bitmap,0,layer[0],0,0);
+ 	PC080SN_tilemap_draw(bitmap,0,layer[0],TILEMAP_IGNORE_TRANSPARENCY,0);
 
 	/* Draw the sprites. 128 sprites in total */
 	for (offs = spriteram_size/2-8; offs >= 0; offs -= 8)

@@ -13,7 +13,10 @@ enum
 	M68K_A0, M68K_A1, M68K_A2, M68K_A3, M68K_A4, M68K_A5, M68K_A6, M68K_A7
 };
 
+extern int m68k_ICount;
+
 /* Redirect memory calls */
+
 struct m68k_memory_interface
 {
 	offs_t		opcode_xor;						// Address Calculation
@@ -49,7 +52,7 @@ struct m68k_memory_interface
 #define MC68000_INT_ACK_AUTOVECTOR    -1
 #define MC68000_INT_ACK_SPURIOUS      -2
 
-#define m68000_ICount                   M68000_ICount
+#define m68000_ICount                   m68k_ICount
 extern void m68000_init(void);
 extern void m68000_reset(void *param);
 extern void m68000_exit(void);
@@ -84,7 +87,7 @@ extern void m68000_memory_interface_set(int Entry,void * memory_routine);
 #define MC68010_INT_ACK_AUTOVECTOR		MC68000_INT_ACK_AUTOVECTOR
 #define MC68010_INT_ACK_SPURIOUS		MC68000_INT_ACK_SPURIOUS
 
-#define m68010_ICount                   M68000_ICount
+#define m68010_ICount                   m68k_ICount
 extern void m68010_init(void);
 extern void m68010_reset(void *param);
 extern void m68010_exit(void);
@@ -119,7 +122,7 @@ extern unsigned m68010_dasm(char *buffer, unsigned pc);
 #define MC68EC020_INT_ACK_AUTOVECTOR	MC68000_INT_ACK_AUTOVECTOR
 #define MC68EC020_INT_ACK_SPURIOUS		MC68000_INT_ACK_SPURIOUS
 
-#define m68ec020_ICount                 M68020_ICount
+#define m68ec020_ICount                 m68k_ICount
 extern void m68ec020_init(void);
 extern void m68ec020_reset(void *param);
 extern void m68ec020_exit(void);
@@ -154,7 +157,7 @@ extern unsigned m68ec020_dasm(char *buffer, unsigned pc);
 #define MC68020_INT_ACK_AUTOVECTOR		MC68000_INT_ACK_AUTOVECTOR
 #define MC68020_INT_ACK_SPURIOUS		MC68000_INT_ACK_SPURIOUS
 
-#define m68020_ICount                   M68020_ICount
+#define m68020_ICount                   m68k_ICount
 extern void m68020_init(void);
 extern void m68020_reset(void *param);
 extern void m68020_exit(void);
@@ -176,13 +179,5 @@ extern unsigned m68020_dasm(char *buffer, unsigned pc);
 
 // C Core header
 #include "m68kmame.h"
-
-#ifdef A68K0
-extern int M68000_ICount;
-#endif
-
-#ifdef A68K2
-extern int M68020_ICount;
-#endif
 
 #endif /* M68000__HEADER */

@@ -42,7 +42,7 @@ enum
 /****************************************************************************
  *	datafile constants
  ****************************************************************************/
-#define MAX_DATAFILE_ENTRIES 1275
+#define MAX_DATAFILE_ENTRIES 3000
 #define DATAFILE_TAG '$'
 
 const char *DATAFILE_TAG_KEY = "$info";

@@ -105,7 +105,7 @@ struct GameOptions {
 	int flipx;
 	int flipy;
 	int beam;
-	int flicker;
+	float vector_flicker;
 	int translucency;
 	int antialias;
 	int use_artwork;

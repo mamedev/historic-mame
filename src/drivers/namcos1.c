@@ -129,7 +129,6 @@ C - uses sub board with support for player 3 and 4 controls
 
 /* from vidhrdw */
 extern void namcos1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-extern void namcos1_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 extern int namcos1_vh_start(void);
 extern void namcos1_vh_stop(void);
 
@@ -832,9 +831,9 @@ static const struct MachineDriver machine_driver_ns1 =
 	gfxdecodeinfo,
 	128*16+6*256+6*256+1,	/* sprites, tiles, shadowed tiles, background */
 		128*16+6*256+1,
-	namcos1_vh_convert_color_prom,
+	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
 	namcos1_vh_start,
 	namcos1_vh_stop,
@@ -898,9 +897,9 @@ static const struct MachineDriver machine_driver_quester =
 	gfxdecodeinfo,
 	128*16+6*256+6*256+1,	/* sprites, tiles, shadowed tiles, background */
 		128*16+6*256+1,
-	namcos1_vh_convert_color_prom,
+	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
 	namcos1_vh_start,
 	namcos1_vh_stop,
@@ -964,9 +963,9 @@ static const struct MachineDriver machine_driver_faceoff =
 	gfxdecodeinfo,
 	128*16+6*256+6*256+1,	/* sprites, tiles, shadowed tiles, background */
 		128*16+6*256+1,
-	namcos1_vh_convert_color_prom,
+	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
 	namcos1_vh_start,
 	namcos1_vh_stop,
@@ -2194,6 +2193,40 @@ ROM_START( pistoldm )
 ROM_END
 
 /* Souko Ban Deluxe */
+ROM_START( boxyboy )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )		/* 64k for the main cpu */
+	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )		/* 64k for the sub cpu */
+	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
+
+	ROM_REGION( 0x2c000, REGION_CPU3, 0 )		/* 176k for the sound cpu */
+	ROM_LOAD( "sb1-snd0.bin",		0x0c000, 0x10000, 0xbf46a106 )
+
+	ROM_REGION( 0x100000, REGION_USER1, 0 )	/* 1M for ROMs */
+	ROM_LOAD_HS( "box-prg7.t10",	0x00000, 0x10000, 0x7787c72e )
+	ROM_LOAD( "sb1-prg1.bin",		0xc0000, 0x20000, 0x5d1fdd94 )
+	ROM_LOAD( "sb1-prg0.bin",		0xe0000, 0x20000, 0x8af8cb73 )
+
+	ROM_REGION( 0x14000, REGION_USER2, 0 ) 	/* 80k for RAM */
+
+	ROM_REGION( 0x30000, REGION_CPU4, 0 )		/* the MCU & voice */
+	ROM_LOAD( "ns1-mcu.bin",		0x0f000, 0x01000, 0xffb5c0bd )
+	ROM_LOAD_HS( "sb1-voi0.bin",	0x10000, 0x10000, 0x63d9cedf )
+
+	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )  /* character mask */
+	ROM_LOAD( "sb1-chr8.bin",		0x00000, 0x10000, 0x5692b297 )
+
+	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE ) /* characters */
+	ROM_LOAD( "sb1-chr0.bin",		0x00000, 0x20000, 0x267f1331 )
+	ROM_LOAD( "sb1-chr1.bin",		0x20000, 0x20000, 0xe5ff61ad )
+	ROM_LOAD( "sb1-chr2.bin",		0x40000, 0x20000, 0x099b746b )
+	ROM_LOAD( "sb1-chr3.bin",		0x60000, 0x20000, 0x1551bb7c )
+
+	ROM_REGION( 0x100000, REGION_GFX3, ROMREGION_DISPOSE ) /* sprites */
+	ROM_LOAD( "sb1-obj0.bin",		0x00000, 0x10000, 0xed810da4 )
+ROM_END
+
 ROM_START( soukobdx )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )		/* 64k for the main cpu */
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
@@ -2378,7 +2411,8 @@ GAME( 1989, ws89,     ws,       ns1,     ns1,     ws89,     ROT0,         "Namco
 GAME( 1989, dangseed, 0,        ns1,     ns1,     dangseed, ROT270_16BIT, "Namco", "Dangerous Seed (Japan)" )
 GAME( 1990, ws90,     ws,       ns1,     ns1,     ws90,     ROT0,         "Namco", "World Stadium '90 (Japan)" )
 GAME( 1990, pistoldm, 0,        ns1,     ns1,     pistoldm, ROT180,       "Namco", "Pistol Daimyo no Bouken (Japan)" )
-GAME( 1990, soukobdx, 0,        ns1,     ns1,     soukobdx, ROT180_16BIT, "Namco", "Souko Ban Deluxe (Japan)" )
+GAME( 1990, boxyboy,  0,        ns1,     ns1,     soukobdx, ROT180_16BIT, "Namco", "Boxy Boy (US)" )
+GAME( 1990, soukobdx, boxyboy,  ns1,     ns1,     soukobdx, ROT180_16BIT, "Namco", "Souko Ban Deluxe (Japan)" )
 GAME( 1990, puzlclub, 0,        ns1,     ns1,     puzlclub, ROT270,       "Namco", "Puzzle Club (Japan prototype)" )
 GAME( 1991, tankfrce, 0,        ns1,     ns1,     tankfrce, ROT180,       "Namco", "Tank Force (US)" )
 GAME( 1991, tankfrcj, tankfrce, ns1,     ns1,     tankfrce, ROT180,       "Namco", "Tank Force (Japan)" )

@@ -527,7 +527,10 @@ static int parse_frame(int removeit)
 
     /* if the previous frame was a stop frame, don't do anything */
     if (old_energy == (energytable[15] >> 6))
-        return 1;
+	{
+		buffer_empty = 1;
+		return 1;
+	}
 
     /* remember the original FIFO counts, in case we don't have enough bits */
     old_count = fifo_count;

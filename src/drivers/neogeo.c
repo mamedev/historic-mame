@@ -27,6 +27,14 @@
 	    the bottom of the screen).
 	  - strhoop enables IRQ2 on every scanline during attract mode, with no
 	    noticeable effect.
+	  - Money Idol Exchanger runs slow during the "vs. Computer" mode. Solo mode
+	    works fine.
+	  - Super Dodge Balls runs about as slow as Exchanger (above), and doesn't
+	    even seem to register key presses, other than the coin slots and start.
+		This is related to bit 15 of neo_control_16_r(), it needs to be 1 more
+		often than it is now.
+
+	- Viewpoint resets halfway through level 1. This is a bug in the asm 68k core.
 
 	- Gururin has bad tiles all over the place (used to work ..)
 
@@ -546,8 +554,8 @@ static READ16_HANDLER( neo_control_16_r )
 		  bclr	  #$0, $3c000e.l
 		  when the bit is set, so 3c000e (whose function is unknown) has to be
 		  related
-		D is unknown (counter of some kind, used in a couple of places).
-		  in blazstar, this controls the background speed in level 2.
+		D is a variable speed counter. In blazstar, it controls the background
+		  speed in level 2.
 	*/
 
 	line = current_scanline;
@@ -556,9 +564,9 @@ static READ16_HANDLER( neo_control_16_r )
 	irq_bit = irq2taken
 			|| (line < FIRST_VISIBLE_LINE) || (line > LAST_VISIBLE_LINE);
 
-	res = ((line * 0x80) & 0x7f80)				/* scanline */
-			| (irq_bit << 15)						/* vblank or irq2 */
-			| (neogeo_frame_counter & 0x0007);		/* frame counter */
+	res =	((line << 7) & 0x7f80) |				/* scanline */
+			(irq_bit << 15) |						/* vblank or irq2 */
+			(neogeo_frame_counter & 0x0007);		/* frame counter */
 
 	logerror("PC %06x: neo_control_16_r (%04x)\n",cpu_get_pc(),res);
 

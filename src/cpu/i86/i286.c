@@ -23,14 +23,14 @@
 
 
 static UINT8 i286_reg_layout[] = {
-	I286_FLAGS, 
+	I286_FLAGS,
 	I286_MSW,
 	I286_TR,
 	I286_TR_2,
 	I286_GDTR,
 	I286_GDTR_2,
 	-1,
-	I286_AX, 
+	I286_AX,
 	I286_BP,
 	I286_LDTR,
 	I286_LDTR_2,
@@ -39,26 +39,26 @@ static UINT8 i286_reg_layout[] = {
 	-1,
 	I286_BX,
 	I286_SP,
-	I286_SS, 
+	I286_SS,
 	I286_SS_2,
-	I286_IRQ_STATE, 
-	I286_VECTOR, 
+	I286_IRQ_STATE,
+	I286_VECTOR,
 	-1,
-	I286_CX, 
-	I286_IP, 
-	I286_CS, 
+	I286_CX,
+	I286_IP,
+	I286_CS,
 	I286_CS_2,
-	I286_NMI_STATE, 
+	I286_NMI_STATE,
 	-1,
-	I286_DX, 
-	I286_SI, 
-	I286_DS, 
+	I286_DX,
+	I286_SI,
+	I286_DS,
 	I286_DS_2,
 	-1,
 	I286_EMPTY,
-	I286_DI, 
+	I286_DI,
 	I286_ES,
-	I286_ES_2, 
+	I286_ES_2,
 	0
 };
 
@@ -156,10 +156,10 @@ static void i286_urinit(void)
 	{
 		for (j = i, c = 0; j > 0; j >>= 1)
 			if (j & 1) c++;
-		
+
 		parity_table[i] = !(c & 1);
 	}
-	
+
 	for (i = 0; i < 256; i++)
 	{
 		Mod_RM.reg.b[i] = reg_name[(i & 0x38) >> 3];
@@ -199,7 +199,7 @@ void i286_reset (void *param)
 	}
 
 	I.sregs[CS] = 0xf000;
-	I.base[CS] = 0xff0000; 
+	I.base[CS] = 0xff0000;
 	/* temporary, until I have the right reset vector working */
 	I.base[CS] = I.sregs[CS] << 4;
 	I.pc = 0xffff0;
@@ -237,7 +237,7 @@ void i286_set_context(void *src)
 	{
 		I = *(i286_Regs*)src;
 		if (PM) {
-			
+
 		} else {
 			I.base[CS] = SegBase(CS);
 			I.base[DS] = SegBase(DS);
@@ -362,7 +362,7 @@ void i286_set_nmi_line(int state)
 	if (I.nmi_state == state)
 		return;
 	I.nmi_state = state;
-	
+
 	/* on a rising edge, signal the NMI */
 	if (state != CLEAR_LINE)
 		PREFIX(_interrupt)(I86_NMI_INT);
@@ -371,7 +371,7 @@ void i286_set_nmi_line(int state)
 void i286_set_irq_line(int irqline, int state)
 {
 	I.irq_state = state;
-	
+
 	/* if the IF is set, signal an interrupt */
 	if (state != CLEAR_LINE && I.IF)
 		PREFIX(_interrupt)(-1);
@@ -396,17 +396,17 @@ int i286_execute(int num_cycles)
 	/* run until we're out */
 	while(i286_ICount>0)
 	{
-		
+
 //#define VERBOSE_DEBUG
 #ifdef VERBOSE_DEBUG
 		printf("[%04x:%04x]=%02x\tF:%04x\tAX=%04x\tBX=%04x\tCX=%04x\tDX=%04x %d%d%d%d%d%d%d%d%d\n",I.sregs[CS],I.pc - I.base[CS],ReadByte(I.pc),I.flags,I.regs.w[AX],I.regs.w[BX],I.regs.w[CX],I.regs.w[DX], I.AuxVal?1:0, I.OverVal?1:0, I.SignVal?1:0, I.ZeroVal?1:0, I.CarryVal?1:0, I.ParityVal?1:0,I.TF, I.IF, I.DirVal<0?1:0);
 #endif
-		
+
 		CALL_MAME_DEBUG;
-		
+
 		seg_prefix=FALSE;
 		I.prevpc = I.pc;
-		
+
 		TABLE286 // call instruction
     }
 
@@ -443,45 +443,45 @@ const char *i286_info(void *context, int regnum)
 	case CPU_INFO_REG+I286_BP: sprintf(buffer[which], "BP:%04X", r->regs.w[BP]); break;
 	case CPU_INFO_REG+I286_SI: sprintf(buffer[which], "SI:%04X", r->regs.w[SI]); break;
 	case CPU_INFO_REG+I286_DI: sprintf(buffer[which], "DI:%04X", r->regs.w[DI]); break;
-	case CPU_INFO_REG+I286_ES: 
-		sprintf(buffer[which], "ES:  %04X %02X", r->sregs[ES], r->rights[ES]); 
+	case CPU_INFO_REG+I286_ES:
+		sprintf(buffer[which], "ES:  %04X %02X", r->sregs[ES], r->rights[ES]);
 		break;
 	case CPU_INFO_REG+I286_ES_2:
-		sprintf(buffer[which],"%06X %04X", r->base[ES], r->limit[ES]); 
+		sprintf(buffer[which],"%06X %04X", r->base[ES], r->limit[ES]);
 		break;
-	case CPU_INFO_REG+I286_CS: 
-		sprintf(buffer[which], "CS:  %04X %02X", r->sregs[CS], r->rights[CS]); 
+	case CPU_INFO_REG+I286_CS:
+		sprintf(buffer[which], "CS:  %04X %02X", r->sregs[CS], r->rights[CS]);
 		break;
-	case CPU_INFO_REG+I286_CS_2:  
-		sprintf(buffer[which],"%06X %04X", r->base[CS], r->limit[CS]); 
+	case CPU_INFO_REG+I286_CS_2:
+		sprintf(buffer[which],"%06X %04X", r->base[CS], r->limit[CS]);
 		break;
-	case CPU_INFO_REG+I286_SS: 
-		sprintf(buffer[which], "SS:  %04X %02X", r->sregs[SS], r->rights[SS]); 
+	case CPU_INFO_REG+I286_SS:
+		sprintf(buffer[which], "SS:  %04X %02X", r->sregs[SS], r->rights[SS]);
 		break;
-	case CPU_INFO_REG+I286_SS_2:  
-		sprintf(buffer[which],"%06X %04X", r->base[SS], r->limit[SS]); 
+	case CPU_INFO_REG+I286_SS_2:
+		sprintf(buffer[which],"%06X %04X", r->base[SS], r->limit[SS]);
 		break;
-	case CPU_INFO_REG+I286_DS: 
-		sprintf(buffer[which], "DS:  %04X %02X", r->sregs[DS], r->rights[DS]); 
+	case CPU_INFO_REG+I286_DS:
+		sprintf(buffer[which], "DS:  %04X %02X", r->sregs[DS], r->rights[DS]);
 		break;
-	case CPU_INFO_REG+I286_DS_2:  
-		sprintf(buffer[which],"%06X %04X", r->base[DS], r->limit[DS]); 
+	case CPU_INFO_REG+I286_DS_2:
+		sprintf(buffer[which],"%06X %04X", r->base[DS], r->limit[DS]);
 		break;
 	case CPU_INFO_REG+I286_MSW: sprintf(buffer[which],"MSW:%04X", r->msw); break;
 	case CPU_INFO_REG+I286_GDTR: sprintf(buffer[which],"GDTR: %06X", r->gdtr.base); break;
 	case CPU_INFO_REG+I286_GDTR_2: sprintf(buffer[which],"%04X", r->gdtr.limit); break;
 	case CPU_INFO_REG+I286_IDTR: sprintf(buffer[which],"IDTR: %06X", r->idtr.base); break;
 	case CPU_INFO_REG+I286_IDTR_2: sprintf(buffer[which],"%04X", r->idtr.limit); break;
-	case CPU_INFO_REG+I286_LDTR: 
-		sprintf(buffer[which],"LDTR:%04X %02X", r->ldtr.sel, r->ldtr.rights); 
+	case CPU_INFO_REG+I286_LDTR:
+		sprintf(buffer[which],"LDTR:%04X %02X", r->ldtr.sel, r->ldtr.rights);
 		break;
-	case CPU_INFO_REG+I286_LDTR_2: 
+	case CPU_INFO_REG+I286_LDTR_2:
 		sprintf(buffer[which],"%06X %04X", r->ldtr.base, r->ldtr.limit);
 		break;
 	case CPU_INFO_REG+I286_TR:
-		sprintf(buffer[which],"TR:  %04X %02X", r->tr.sel, r->tr.rights); 
+		sprintf(buffer[which],"TR:  %04X %02X", r->tr.sel, r->tr.rights);
 		break;
-	case CPU_INFO_REG+I286_TR_2: 
+	case CPU_INFO_REG+I286_TR_2:
 		sprintf(buffer[which],"%06X %04X", r->tr.base, r->tr.limit);
 		break;
 	case CPU_INFO_REG+I286_VECTOR: sprintf(buffer[which], "V:%02X", r->int_vector); break;
@@ -528,3 +528,6 @@ unsigned i286_dasm(char *buffer, unsigned pc)
 	return 1;
 #endif
 }
+
+void i286_init(void){ return; }
+

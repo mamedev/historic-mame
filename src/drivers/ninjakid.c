@@ -4,7 +4,7 @@
  Driver by David Haywood
  with help from Steph and Phil Stroffolino
 
- Last Changes: 7 Jan 2001
+ Last Changes: 5 Mar 2001
 
  This driver was started after interest was shown in the game by a poster at
  various messageboards going under the name of 'ninjakid'  I decided to attempt
@@ -18,11 +18,15 @@ Known Issues:
 The most obvious problem is the vertical scrolling.  It's jerky, and occasionally
 scrolls to the wrong row.  See notes in vidhrdw/ninjakid.c
 
+Change Log:
+5 Mar - Added Saved State Support (DJH)
+
 *******************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
+#include "state.h"
 
 extern WRITE_HANDLER( ninjakid_bg_videoram_w );
 extern WRITE_HANDLER( ninjakid_fg_videoram_w );
@@ -330,7 +334,17 @@ INPUT_PORTS_START( ninjakid )
 INPUT_PORTS_END
 
 /*******************************************************************************
+ Init
+*******************************************************************************/
+
+static void init_ninjakid(void)
+{
+	/* Save State Stuff */
+	state_save_register_UINT8 ("NK_Main", 0, "ninjakun_io_a002_ctrl", &ninjakun_io_a002_ctrl, 1);
+}
+
+/*******************************************************************************
  Game Drivers
 *******************************************************************************/
 
-GAME( 1984, ninjakun, 0, ninjakid, ninjakid, 0, ROT0, "[UPL] (Taito license)", "Ninjakun Majou no Bouken" )
+GAME( 1984, ninjakun, 0, ninjakid, ninjakid, ninjakid, ROT0, "[UPL] (Taito license)", "Ninjakun Majou no Bouken" )

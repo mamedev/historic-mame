@@ -6,6 +6,14 @@ Momoko 120% (c) 1986 Jaleco
 
 	02/Mar/2001 -
 
+******************************************************************************
+
+Notes
+
+Real machine has some bugs.(escalator bug, sprite garbage)
+It is not emulation bug.
+Flipped screen looks wrong, but it is correct.
+
 *****************************************************************************/
 
 #include "driver.h"
@@ -110,20 +118,20 @@ INPUT_PORTS_START( momoko )
     PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 )
     PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
     PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
-    PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
+    PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
     PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-    PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
-    PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
+    PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
+    PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
 
     PORT_START
     PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
     PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
     PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
     PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
-    PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
+    PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
     PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
-    PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
-    PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
+    PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
+    PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
 
     PORT_START  /* dsw0 */
     PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
@@ -141,18 +149,18 @@ INPUT_PORTS_START( momoko )
     PORT_DIPSETTING(    0x08, DEF_STR( 1C_5C ) )
     PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
     PORT_DIPNAME( 0x60, 0x60, DEF_STR( Difficulty ) )
-    PORT_DIPSETTING(    0x00, "Very difficult" )
-    PORT_DIPSETTING(    0x40, "Difficult" )
+    PORT_DIPSETTING(    0x40, "Easy" )
     PORT_DIPSETTING(    0x60, "Normal" )
-    PORT_DIPSETTING(    0x20, "Easy" )
+    PORT_DIPSETTING(    0x20, "Difficult" )
+    PORT_DIPSETTING(    0x00, "Very difficult" )
     PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 
     PORT_START  /* dsw1 */
     PORT_DIPNAME( 0x03, 0x03, DEF_STR( Bonus_Life) )
-    PORT_DIPSETTING(    0x00, "100000" )
     PORT_DIPSETTING(    0x01, "20000" )
-    PORT_DIPSETTING(    0x02, "50000" )
     PORT_DIPSETTING(    0x03, "30000" )
+    PORT_DIPSETTING(    0x02, "50000" )
+    PORT_DIPSETTING(    0x00, "100000" )
     PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown) )
     PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
     PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -171,6 +179,12 @@ INPUT_PORTS_START( momoko )
     PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
     PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
     PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+    PORT_START	/* fake */
+    PORT_DIPNAME( 0x01, 0x00, DEF_STR( Flip_Screen ) )
+    PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+    PORT_DIPSETTING(	0x01, DEF_STR( On ) )
+
 INPUT_PORTS_END
 
 /****************************************************************************/
@@ -262,7 +276,7 @@ static const struct MachineDriver machine_driver_momoko =
 	1,
 	0,
 
-	32*8, 32*8, { 8*1, 31*8-1, 2*8, 29*8-1 },
+	32*8, 32*8, { 1*8, 31*8-1, 2*8, 29*8-1 },
 
 	gfxdecodeinfo,
 	512,512,
@@ -326,4 +340,4 @@ ROM_START( momoko )
 	ROM_LOAD( "momoko-b.bin", 0x0100,  0x0020, 0x427b0e5c )
 ROM_END
 
-GAMEX( 1986, momoko, 0, momoko, momoko, 0, ROT0, "Jaleco", "Momoko 120%", GAME_NO_COCKTAIL )
+GAME( 1986, momoko, 0, momoko, momoko, 0, ROT0, "Jaleco", "Momoko 120%" )

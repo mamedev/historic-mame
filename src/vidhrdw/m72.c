@@ -679,8 +679,8 @@ void m72_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		return;
 	}
 
-	tilemap_set_clip(fg_tilemap,0);
-	tilemap_set_clip(bg_tilemap,0);
+	tilemap_set_clip(fg_tilemap,NULL);
+	tilemap_set_clip(bg_tilemap,NULL);
 
 	tilemap_update(bg_tilemap);
 	tilemap_update(fg_tilemap);
@@ -707,7 +707,7 @@ void majtitle_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		return;
 	}
 
-	tilemap_set_clip(fg_tilemap,0);
+	tilemap_set_clip(fg_tilemap,NULL);
 
 	if (majtitle_rowscroll)
 	{

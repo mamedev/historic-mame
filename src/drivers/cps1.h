@@ -18,6 +18,12 @@ WRITE16_HANDLER( cps1_eeprom_port_w );
 READ16_HANDLER( cps1_output_r );
 WRITE16_HANDLER( cps1_output_w );
 
+WRITE16_HANDLER( cps2_objram_bank_w );
+READ16_HANDLER( cps2_objram1_r );
+READ16_HANDLER( cps2_objram2_r );
+WRITE16_HANDLER( cps2_objram1_w );
+WRITE16_HANDLER( cps2_objram2_w );
+
 int  cps1_vh_start(void);
 void cps1_vh_stop(void);
 void cps1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
