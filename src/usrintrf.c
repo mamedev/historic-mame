@@ -1015,11 +1015,14 @@ static void showcharset(void)
 #ifdef MAME_DEBUG
 static void showtotalcolors(void)
 {
-	char used[0x10000];
+	char *used;
 	int i,l,x,y,total;
 	char buf[40];
 	int trueorientation;
 
+
+	used = malloc(0x10000);
+	if (!used) return;
 
 	for (i = 0;i < 0x10000;i++)
 		used[i] = 0;
@@ -1060,6 +1063,8 @@ static void showtotalcolors(void)
 		drawgfx(Machine->scrbitmap,Machine->uifont,buf[i],total>256?DT_COLOR_YELLOW:DT_COLOR_WHITE,0,0,Machine->uixmin+i*Machine->uifontwidth,Machine->uiymin,0,TRANSPARENCY_NONE,0);
 
 	Machine->orientation = trueorientation;
+
+	free(used);
 }
 #endif
 
@@ -2214,7 +2219,7 @@ static int displaygameinfo(int selected)
 	while (i < MAX_CPU && Machine->drv->cpu[i].cpu_type)
 	{
 		sprintf(&buf[strlen(buf)],"%s %d.%06d MHz",
-				cpu_name(Machine->drv->cpu[i].cpu_type),
+				cputype_name(Machine->drv->cpu[i].cpu_type),
 				Machine->drv->cpu[i].cpu_clock / 1000000,
 				Machine->drv->cpu[i].cpu_clock % 1000000);
 
@@ -2280,6 +2285,7 @@ static int displaygameinfo(int selected)
 		strcat(buf,mameversion);
 		strcat(buf,"\n\tPress any key");
 
+		drawbox(0,0,Machine->uiwidth,Machine->uiheight);
 		displaymessagewindow(buf);
 
 		sel = 0;
@@ -2386,14 +2392,18 @@ int showgamewarnings(void)
 
 	osd_clearbitmap(Machine->scrbitmap);
 
-	/* don't stay on screen for more than 10 seconds */
-	counter = 10 * Machine->drv->frames_per_second;
+	/* don't stay on screen for more than 15 seconds */
+	counter = 15 * Machine->drv->frames_per_second;
 
 	while (displaygameinfo(0) == 1 && --counter > 0)
 		osd_update_video_and_audio();
 	osd_update_video_and_audio();
 
 	osd_clearbitmap(Machine->scrbitmap);
+	/* make sure that the screen is really cleared, in case autoframeskip kicked in */
+	osd_update_video_and_audio();
+	osd_update_video_and_audio();
+	osd_update_video_and_audio();
 	osd_update_video_and_audio();
 
 	return 0;

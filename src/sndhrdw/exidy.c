@@ -215,7 +215,7 @@ int exidy_shriot_r(int offset)
 			return timer_timeleft(timer)/(TIME_IN_USEC((riot_divider*BASE_TIME)));
 		}
 	default:
-	    if (errorlog) fprintf(errorlog,"Undeclared RIOT read: %x  PC:%x\n",offset,cpu_getpc());
+	    if (errorlog) fprintf(errorlog,"Undeclared RIOT read: %x  PC:%x\n",offset,cpu_get_pc());
   	    return 0xff;
 	}
 	return 0;

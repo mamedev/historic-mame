@@ -34,11 +34,42 @@
 #include "h6280.h"
 
 #include <stdio.h>
+#include <string.h>
 extern FILE * errorlog;
-extern unsigned cpu_getpc(void);
+extern unsigned cpu_get_pc(void);
 
 int 	h6280_ICount = 0;
-static	h6280_Regs	h6280;
+
+/****************************************************************************
+ * The 6280 registers.
+ ****************************************************************************/
+typedef struct
+{
+    PAIR  pc;                       /* program counter */
+    PAIR  sp;                       /* stack pointer (always 100 - 1FF) */
+    PAIR  zp;                       /* zero page address */
+    PAIR  ea;                       /* effective address */
+    UINT8 a;                        /* Accumulator */
+    UINT8 x;                        /* X index register */
+    UINT8 y;                        /* Y index register */
+    UINT8 p;                        /* Processor status */
+    UINT8 mmr[8];                   /* Hu6280 memory mapper registers */
+    UINT8 irq_mask;                 /* interrupt enable/disable */
+    UINT8 timer_status;             /* timer status */
+    int timer_value;                /* timer interrupt */
+    UINT8 timer_load;               /* reload value */
+    int pending_interrupt;          /* nonzero if an interrupt is pending */
+    int nmi_state;
+    int irq_state[3];
+    int (*irq_callback)(int irqline);
+
+#if LAZY_FLAGS
+    int NZ;                         /* last value (lazy N and Z flag) */
+#endif
+
+}   h6280_Regs;
+
+static  h6280_Regs  h6280;
 
 #ifdef  MAME_DEBUG /* Need some public segmentation registers for debugger */
 UINT8	H6280_debug_mmr[8];
@@ -169,7 +200,7 @@ int h6280_execute(int cycles)
 
 		/* If PC has not changed we are stuck in a tight loop, may as well finish */
 		if (PCD==previouspc) {
-//			if (errorlog && cpu_getpc()!=0xe0e6) fprintf(errorlog,"Spinning early %04x with %d cycles left\n",cpu_getpc(),h6280_ICount);
+//			if (errorlog && cpu_get_pc()!=0xe0e6) fprintf(errorlog,"Spinning early %04x with %d cycles left\n",cpu_get_pc(),h6280_ICount);
 			if (h6280_ICount>0) h6280_ICount=0;
 		}
 
@@ -178,64 +209,97 @@ int h6280_execute(int cycles)
 	return cycles - h6280_ICount;
 }
 
-void h6280_getregs (h6280_Regs *Regs)
+unsigned h6280_get_context (void *dst)
 {
-    *Regs = h6280;
+	if( dst )
+		*(h6280_Regs*)dst = h6280;
+	return sizeof(h6280_Regs);
 }
 
-void h6280_setregs (h6280_Regs *Regs)
+void h6280_set_context (void *src)
 {
-    h6280 = *Regs;
+	if( src )
+		h6280 = *(h6280_Regs*)src;
 }
 
-unsigned h6280_getpc (void)
+unsigned h6280_get_pc (void)
 {
     return PCD;
 }
 
-unsigned h6280_getreg (int regnum)
+void h6280_set_pc (unsigned val)
+{
+	PCW = val;
+	change_pc(PCD);
+}
+
+unsigned h6280_get_sp (void)
+{
+	return S;
+}
+
+void h6280_set_sp (unsigned val)
+{
+	S = val;
+}
+
+unsigned h6280_get_reg (int regnum)
 {
 	switch( regnum )
 	{
-		case  0: return h6280.a;
-		case  1: return h6280.x;
-		case  2: return h6280.y;
-		case  3: return h6280.sp.b.l;
-		case  4: return h6280.pc.w.l;
+		case H6280_A: return h6280.a;
+		case H6280_X: return h6280.x;
+		case H6280_Y: return h6280.y;
+		case H6280_S: return h6280.sp.b.l;
+		case H6280_PC: return h6280.pc.w.l;
+		case H6280_P: return h6280.p;
+		case H6280_IRQ_MASK: return h6280.irq_mask;
+		case H6280_TIMER_STATE: return h6280.timer_status;
+		case H6280_NMI_STATE: return h6280.nmi_state;
+		case H6280_IRQ1_STATE: return h6280.irq_state[0];
+		case H6280_IRQ2_STATE: return h6280.irq_state[1];
+		case H6280_IRQT_STATE: return h6280.irq_state[2];
 #ifdef MAME_DEBUG
-		case  5: return h6280.mmr[0];
-		case  6: return h6280.mmr[1];
-		case  7: return h6280.mmr[2];
-		case  8: return h6280.mmr[3];
-		case  9: return h6280.mmr[4];
-		case 10: return h6280.mmr[5];
-		case 11: return h6280.mmr[6];
-		case 12: return h6280.mmr[7];
+		case H6280_M1: return h6280.mmr[0];
+		case H6280_M2: return h6280.mmr[1];
+		case H6280_M3: return h6280.mmr[2];
+		case H6280_M4: return h6280.mmr[3];
+		case H6280_M5: return h6280.mmr[4];
+		case H6280_M6: return h6280.mmr[5];
+		case H6280_M7: return h6280.mmr[6];
+		case H6280_M8: return h6280.mmr[7];
 #endif
 	}
 	return 0;
 }
 
-void h6280_setreg (int regnum, unsigned val)
+void h6280_set_reg (int regnum, unsigned val)
 {
 	switch( regnum )
 	{
-		case  0: h6280.a = val; break;
-		case  1: h6280.x = val; break;
-		case  2: h6280.y = val; break;
-		case  3: h6280.sp.b.l = val; break;
-		case  4: h6280.pc.w.l = val; break;
+		case H6280_A: h6280.a = val; break;
+		case H6280_X: h6280.x = val; break;
+		case H6280_Y: h6280.y = val; break;
+		case H6280_S: h6280.sp.b.l = val; break;
+		case H6280_PC: h6280.pc.w.l = val; break;
+		case H6280_P: h6280.p = val; break;
+		case H6280_IRQ_MASK: h6280.irq_mask = val; break;
+		case H6280_TIMER_STATE: h6280.timer_status = val; break;
+		case H6280_NMI_STATE: h6280.nmi_state = val; break;
+		case H6280_IRQ1_STATE: h6280.irq_state[0] = val; break;
+		case H6280_IRQ2_STATE: h6280.irq_state[1] = val; break;
+		case H6280_IRQT_STATE: h6280.irq_state[2] = val; break;
 #ifdef MAME_DEBUG
-		case  5: h6280.mmr[0] = val; break;
-		case  6: h6280.mmr[1] = val; break;
-		case  7: h6280.mmr[2] = val; break;
-		case  8: h6280.mmr[3] = val; break;
-		case  9: h6280.mmr[4] = val; break;
-		case 10: h6280.mmr[5] = val; break;
-		case 11: h6280.mmr[6] = val; break;
-		case 12: h6280.mmr[7] = val; break;
+		case H6280_M1: h6280.mmr[0] = val; break;
+		case H6280_M2: h6280.mmr[1] = val; break;
+		case H6280_M3: h6280.mmr[2] = val; break;
+		case H6280_M4: h6280.mmr[3] = val; break;
+		case H6280_M5: h6280.mmr[4] = val; break;
+		case H6280_M6: h6280.mmr[5] = val; break;
+		case H6280_M7: h6280.mmr[6] = val; break;
+		case H6280_M8: h6280.mmr[7] = val; break;
 #endif
-	}
+    }
 }
 
 /*****************************************************************************/
@@ -283,18 +347,18 @@ const char *h6280_info(void *context, int regnum)
 {
 	static char buffer[32][47+1];
 	static int which = 0;
-	h6280_Regs *r = (h6280_Regs *)context;
+	h6280_Regs *r = context;
 
 	which = ++which % 32;
 	buffer[which][0] = '\0';
-	if( !context && regnum >= CPU_INFO_PC )
-		return buffer[which];
+	if( !context )
+		r = &h6280;
 
 	switch( regnum )
 	{
 		case CPU_INFO_NAME: return "H6280";
 		case CPU_INFO_FAMILY: return "Hitachi 6280";
-		case CPU_INFO_VERSION: return "1.0";
+		case CPU_INFO_VERSION: return "1.01";
 		case CPU_INFO_FILE: return __FILE__;
 		case CPU_INFO_CREDITS: return "Copyright (c) 1999 Bryan McPhail, mish@tendril.force9.net";
 
@@ -316,20 +380,27 @@ const char *h6280_info(void *context, int regnum)
 				r->p & 0x02 ? 'Z':'.',
 				r->p & 0x01 ? 'C':'.');
 			break;
-		case CPU_INFO_REG+ 0: sprintf(buffer[which], "A:%02X", r->a); break;
-		case CPU_INFO_REG+ 1: sprintf(buffer[which], "X:%02X", r->x); break;
-		case CPU_INFO_REG+ 2: sprintf(buffer[which], "Y:%02X", r->y); break;
-		case CPU_INFO_REG+ 3: sprintf(buffer[which], "S:%02X", r->sp.b.l); break;
-		case CPU_INFO_REG+ 4: sprintf(buffer[which], "PC:%04X", r->pc.w.l); break;
+		case CPU_INFO_REG+H6280_A: sprintf(buffer[which], "A:%02X", r->a); break;
+		case CPU_INFO_REG+H6280_X: sprintf(buffer[which], "X:%02X", r->x); break;
+		case CPU_INFO_REG+H6280_Y: sprintf(buffer[which], "Y:%02X", r->y); break;
+		case CPU_INFO_REG+H6280_S: sprintf(buffer[which], "S:%02X", r->sp.b.l); break;
+		case CPU_INFO_REG+H6280_PC: sprintf(buffer[which], "PC:%04X", r->pc.w.l); break;
+		case CPU_INFO_REG+H6280_P: sprintf(buffer[which], "P:%02X", r->p); break;
+		case CPU_INFO_REG+H6280_IRQ_MASK: sprintf(buffer[which], "IRQ_MASK:%02X", r->irq_mask); break;
+		case CPU_INFO_REG+H6280_TIMER_STATE: sprintf(buffer[which], "TIMER:%02X", r->timer_status); break;
+		case CPU_INFO_REG+H6280_NMI_STATE: sprintf(buffer[which], "NMI:%X", r->nmi_state); break;
+		case CPU_INFO_REG+H6280_IRQ1_STATE: sprintf(buffer[which], "IRQ1:%X", r->irq_state[0]); break;
+		case CPU_INFO_REG+H6280_IRQ2_STATE: sprintf(buffer[which], "IRQ2:%X", r->irq_state[1]); break;
+		case CPU_INFO_REG+H6280_IRQT_STATE: sprintf(buffer[which], "IRQT:%X", r->irq_state[2]); break;
 #ifdef MAME_DEBUG
-        case CPU_INFO_REG+ 5: sprintf(buffer[which], "M1:%02X", r->mmr[0]); break;
-		case CPU_INFO_REG+ 6: sprintf(buffer[which], "M2:%02X", r->mmr[1]); break;
-		case CPU_INFO_REG+ 7: sprintf(buffer[which], "M3:%02X", r->mmr[2]); break;
-		case CPU_INFO_REG+ 8: sprintf(buffer[which], "M4:%02X", r->mmr[3]); break;
-		case CPU_INFO_REG+ 9: sprintf(buffer[which], "M5:%02X", r->mmr[4]); break;
-		case CPU_INFO_REG+10: sprintf(buffer[which], "M6:%02X", r->mmr[5]); break;
-		case CPU_INFO_REG+11: sprintf(buffer[which], "M7:%02X", r->mmr[6]); break;
-		case CPU_INFO_REG+12: sprintf(buffer[which], "M8:%02X", r->mmr[7]); break;
+		case CPU_INFO_REG+H6280_M1: sprintf(buffer[which], "M1:%02X", r->mmr[0]); break;
+		case CPU_INFO_REG+H6280_M2: sprintf(buffer[which], "M2:%02X", r->mmr[1]); break;
+		case CPU_INFO_REG+H6280_M3: sprintf(buffer[which], "M3:%02X", r->mmr[2]); break;
+		case CPU_INFO_REG+H6280_M4: sprintf(buffer[which], "M4:%02X", r->mmr[3]); break;
+		case CPU_INFO_REG+H6280_M5: sprintf(buffer[which], "M5:%02X", r->mmr[4]); break;
+		case CPU_INFO_REG+H6280_M6: sprintf(buffer[which], "M6:%02X", r->mmr[5]); break;
+		case CPU_INFO_REG+H6280_M7: sprintf(buffer[which], "M7:%02X", r->mmr[6]); break;
+		case CPU_INFO_REG+H6280_M8: sprintf(buffer[which], "M8:%02X", r->mmr[7]); break;
 #endif
     }
 	return buffer[which];
@@ -346,7 +417,7 @@ int H6280_irq_status_r(int offset)
 			return h6280.irq_mask;
 
 		case 1: /* Read irq status */
-//			if (errorlog) fprintf(errorlog,"Hu6280: %04x: Read irq status\n",cpu_getpc());
+//			if (errorlog) fprintf(errorlog,"Hu6280: %04x: Read irq status\n",cpu_get_pc());
 			status=0;
 			/* Almost certainly wrong... */
 //			if (h6280.pending_irq1) status^=1;
@@ -362,7 +433,7 @@ void H6280_irq_status_w(int offset, int data)
 {
 	switch (offset) {
 		case 0: /* Write irq mask */
-//			if (errorlog) fprintf(errorlog,"Hu6280: %04x: write irq mask %04x\n",cpu_getpc(),data);
+//			if (errorlog) fprintf(errorlog,"Hu6280: %04x: write irq mask %04x\n",cpu_get_pc(),data);
 			h6280.irq_mask=data&0x7;
 			return;
 
@@ -371,7 +442,7 @@ void H6280_irq_status_w(int offset, int data)
 //aka TIQ acknowledge
 // if not ack'd TIQ cant fire again?!
 //
-		//	if (errorlog) fprintf(errorlog,"Hu6280: %04x: Timer irq reset!\n",cpu_getpc());
+		//	if (errorlog) fprintf(errorlog,"Hu6280: %04x: Timer irq reset!\n",cpu_get_pc());
 			h6280.timer_value=h6280.timer_load; /* hmm */
 			return;
 	}
@@ -381,11 +452,11 @@ int H6280_timer_r(int offset)
 {
 	switch (offset) {
 		case 0: /* Counter value */
-//			if (errorlog) fprintf(errorlog,"Hu6280: %04x: Read counter value\n",cpu_getpc());
+//			if (errorlog) fprintf(errorlog,"Hu6280: %04x: Read counter value\n",cpu_get_pc());
 			return h6280.timer_value;
 
 		case 1: /* Read counter status */
-//			if (errorlog) fprintf(errorlog,"Hu6280: %04x: Read counter status\n",cpu_getpc());
+//			if (errorlog) fprintf(errorlog,"Hu6280: %04x: Read counter status\n",cpu_get_pc());
 			return h6280.timer_status;
 	}
 
@@ -396,7 +467,7 @@ void H6280_timer_w(int offset, int data)
 {
 	switch (offset) {
 		case 0: /* Counter preload */
-			//if (errorlog) fprintf(errorlog,"Hu6280: %04x: Wrote counter preload %02x\n",cpu_getpc(),data);
+			//if (errorlog) fprintf(errorlog,"Hu6280: %04x: Wrote counter preload %02x\n",cpu_get_pc(),data);
 
 //H6280_Cause_Interrupt(H6280_INT_TIMER);
 
@@ -405,7 +476,7 @@ void H6280_timer_w(int offset, int data)
 
 		case 1: /* Counter enable */
 			h6280.timer_status=data&1;
-//			if (errorlog) fprintf(errorlog,"Hu6280: %04x: Timer status %02x\n",cpu_getpc(),data);
+//			if (errorlog) fprintf(errorlog,"Hu6280: %04x: Timer status %02x\n",cpu_get_pc(),data);
 			return;
 	}
 }

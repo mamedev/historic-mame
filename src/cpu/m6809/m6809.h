@@ -6,38 +6,10 @@
 #include "memory.h"
 #include "osd_cpu.h"
 
-/* 6809 Registers */
-typedef struct
-{
-	PAIR	pc; 	/* Program counter */
-	PAIR	u, s;	/* Stack pointers */
-	PAIR	x, y;	/* Index registers */
-	PAIR	d;		/* Accumulatora a and b */
-	UINT8	dp; 	/* Direct Page register */
-	UINT8	cc;
-	INT8	int_state;	/* SYNC and CWAI flags */
-    INT8    nmi_state;
-    INT8    irq_state[2];
-	int 	(*irq_callback)(int irqline);
-	int 	extra_cycles; /* cycles used up by interrupts */
-} m6809_Regs;
+enum { M6809_A, M6809_B, M6809_PC, M6809_S, M6809_U, M6809_X, M6809_Y, M6809_CC,
+	M6809_NMI_STATE, M6809_IRQ_STATE, M6809_FIRQ_STATE };
 
-#ifndef INLINE
-#define INLINE static inline
-#endif
-
-/* flag bits in the cc register */
-#define CC_C	0x01		/* Carry */
-#define CC_V	0x02		/* Overflow */
-#define CC_Z	0x04		/* Zero */
-#define CC_N	0x08		/* Negative */
-#define CC_II	0x10		/* Inhibit IRQ */
-#define CC_H	0x20		/* Half (auxiliary) carry */
-#define CC_IF	0x40		/* Inhibit FIRQ */
-#define CC_E	0x80		/* entire state pushed */
-
-
-#define M6809_INT_NONE	0	/* No interrupt required */
+#define M6809_INT_NONE  0   /* No interrupt required */
 #define M6809_INT_IRQ	1	/* Standard IRQ interrupt */
 #define M6809_INT_FIRQ	2	/* Fast IRQ */
 #define M6809_INT_NMI	4	/* NMI */	/* NS 970909 */
@@ -52,14 +24,19 @@ extern int  m6809_ICount;
 extern void m6809_reset(void *param);
 extern void m6809_exit(void);
 extern int m6809_execute(int cycles);  /* NS 970908 */
-extern void m6809_setregs(m6809_Regs *Regs);
-extern void m6809_getregs(m6809_Regs *Regs);
-extern unsigned m6809_getpc(void);
-extern unsigned m6809_getreg(int regnum);
-extern void m6809_setreg(int regnum, unsigned val);
+extern unsigned m6809_get_context(void *dst);
+extern void m6809_set_context(void *src);
+extern unsigned m6809_get_pc(void);
+extern void m6809_set_pc(unsigned val);
+extern unsigned m6809_get_sp(void);
+extern void m6809_set_sp(unsigned val);
+extern unsigned m6809_get_reg(int regnum);
+extern void m6809_set_reg(int regnum, unsigned val);
 extern void m6809_set_nmi_line(int state);
 extern void m6809_set_irq_line(int irqline, int state);
 extern void m6809_set_irq_callback(int (*callback)(int irqline));
+extern void m6809_state_save(void *file);
+extern void m6809_state_load(void *file);
 extern const char *m6809_info(void *context,int regnum);
 
 /****************************************************************************/
@@ -71,18 +48,24 @@ extern const char *m6809_info(void *context,int regnum);
 #define M6309_INT_NMI					M6809_INT_NMI
 #define M6309_IRQ_LINE					M6809_IRQ_LINE
 #define M6309_FIRQ_LINE 				M6809_FIRQ_LINE
-#define m6309_ICount					m6809_ICount
-#define m6309_reset 					m6809_reset
-#define m6309_exit						m6809_exit
-#define m6309_execute					m6809_execute
-#define m6309_setregs					m6809_setregs
-#define m6309_getregs					m6809_getregs
-#define m6309_getpc 					m6809_getpc
-#define m6309_getreg					m6809_getreg
-#define m6309_setreg					m6809_setreg
-#define m6309_set_nmi_line				m6809_set_nmi_line
-#define m6309_set_irq_line				m6809_set_irq_line
-#define m6309_set_irq_callback			m6809_set_irq_callback
+
+#define m6309_ICount                    m6809_ICount
+extern void m6309_reset(void *param);
+extern void m6309_exit(void);
+extern int m6309_execute(int cycles);  /* NS 970908 */
+extern unsigned m6309_get_context(void *dst);
+extern void m6309_set_context(void *src);
+extern unsigned m6309_get_pc(void);
+extern void m6309_set_pc(unsigned val);
+extern unsigned m6309_get_sp(void);
+extern void m6309_set_sp(unsigned val);
+extern unsigned m6309_get_reg(int regnum);
+extern void m6309_set_reg(int regnum, unsigned val);
+extern void m6309_set_nmi_line(int state);
+extern void m6309_set_irq_line(int irqline, int state);
+extern void m6309_set_irq_callback(int (*callback)(int irqline));
+extern void m6309_state_save(void *file);
+extern void m6309_state_load(void *file);
 extern const char *m6309_info(void *context,int regnum);
 
 /****************************************************************************/

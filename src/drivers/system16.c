@@ -323,7 +323,7 @@ static void sound_command_w(int offset, int data){
 	cpu_cause_interrupt( 1, 0 );
 }
 
-static void irq_handler_mus(void)
+static void irq_handler_mus(int irq)
 {
 }
 
@@ -975,7 +975,7 @@ ROM_END
 
 static int altbeast_skip(int offset)
 {
-	if (cpu_getpc()==0x3994) {cpu_spinuntil_int(); return 1<<8;}
+	if (cpu_get_pc()==0x3994) {cpu_spinuntil_int(); return 1<<8;}
 
 	return READ_WORD(&sys16_workingram[0xf01c]);
 }
@@ -2888,7 +2888,7 @@ ROM_END
 
 static int shinobi_skip(int offset)
 {
-	if (cpu_getpc()==0x32e0) {cpu_spinuntil_int(); return 1<<8;}
+	if (cpu_get_pc()==0x32e0) {cpu_spinuntil_int(); return 1<<8;}
 
 	return READ_WORD(&sys16_workingram[0xf01c]);
 }

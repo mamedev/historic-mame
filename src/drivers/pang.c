@@ -620,7 +620,7 @@ ROM_START( bbros_rom )
 	ROM_LOAD( "bb9.bin",      0xa0000, 0x20000, 0x39f47a63 )
 
 	ROM_REGION(0x20000)     /* OKIM */
-	ROM_LOAD( "bb1.bin",      0x0000, 0x20000, 0xc52e5b8e )
+	ROM_LOAD( "bb1.bin",      0x00000, 0x20000, 0xc52e5b8e )
 ROM_END
 
 ROM_START( spang_rom )
@@ -638,7 +638,7 @@ ROM_START( spang_rom )
 	ROM_LOAD( "spe_09.rom",   0xa0000, 0x20000, 0x04b41b75 )
 
 	ROM_REGION(0x20000)     /* OKIM */
-	ROM_LOAD( "spe_01.rom",   0x0000, 0x20000, 0x2d19c133 )
+	ROM_LOAD( "spe_01.rom",   0x00000, 0x20000, 0x2d19c133 )
 ROM_END
 
 ROM_START( sbbros_rom )
@@ -656,7 +656,7 @@ ROM_START( sbbros_rom )
 	ROM_LOAD( "09.l1",        0xa0000, 0x20000, 0x8f678bc8 )
 
 	ROM_REGION(0x20000)     /* OKIM */
-	ROM_LOAD( "01.d1",        0x0000, 0x20000, 0xb96ea126 )
+	ROM_LOAD( "01.d1",        0x00000, 0x20000, 0xb96ea126 )
 ROM_END
 
 ROM_START( block_rom )
@@ -674,8 +674,40 @@ ROM_START( block_rom )
 	ROM_LOAD( "bl_17.rom",    0xa0000, 0x20000, 0x5f8cab42 )
 
 	ROM_REGION(0x20000)     /* OKIM */
-	ROM_LOAD( "bl_01.rom",    0x0000, 0x20000, 0xc2ec2abb )
+	ROM_LOAD( "bl_01.rom",    0x00000, 0x20000, 0xc2ec2abb )
 ROM_END
+
+ROM_START( blockbl_rom )
+	ROM_REGION(0xa0000)
+	ROM_LOAD( "m6.l5",        0x30000, 0x20000, 0x5768d8eb )   /* Decrypted data */
+	ROM_LOAD( "m7.l6",        0x50000, 0x10000, 0x3b576fd9 )   /* Decrypted opcode + data */
+	ROM_LOAD( "m5.l3",        0x60000, 0x40000, 0x7c988bb7 )   /* Decrypted opcode + data */
+
+	ROM_REGION_DISPOSE(0xc0000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "m12.o10",      0x00000, 0x20000, 0x963154d9 )
+	ROM_LOAD( "m13.o14",      0x20000, 0x20000, 0x069480bb )
+	ROM_LOAD( "m4.j17",       0x40000, 0x20000, 0x9e3b6f4f )
+	ROM_LOAD( "m3.j20",       0x60000, 0x20000, 0x629d58fe )
+	ROM_LOAD( "m11.o7",       0x80000, 0x10000, 0x255180a5 )
+	ROM_LOAD( "m10.o5",       0x90000, 0x10000, 0x3201c088 )
+	ROM_LOAD( "m9.o3",        0xa0000, 0x10000, 0x29357fe4 )
+	ROM_LOAD( "m8.o2",        0xb0000, 0x10000, 0xabd665d1 )
+
+	ROM_REGION(0x20000)     /* OKIM */
+	ROM_LOAD( "m1.a1",        0x00000, 0x10000, 0xd826c105 )
+	ROM_LOAD( "m2.c1",        0x10000, 0x10000, 0xe03a07ea )
+ROM_END
+
+static void blockbl_decode(void)
+{
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+	/* this is a bootleg, the ROMs contain decrypted opcodes and data separately */
+	memcpy(ROM, RAM+0x50000, 0x8000);   /* OP codes */
+	memcpy(RAM, RAM+0x58000, 0x8000);   /* Data */
+	memcpy(ROM+0x10000, RAM+0x60000, 0x20000);   /* OP codes */
+	memcpy(RAM+0x10000, RAM+0x80000, 0x20000);   /* Data */
+}
 
 
 
@@ -819,6 +851,31 @@ struct GameDriver block_driver =
 
 	block_rom,
 	0, block_decode,
+	0,
+	0,      /* sound_prom */
+
+	block_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_ROTATE_270,
+	block_nvram_load, block_nvram_save
+};
+
+struct GameDriver blockbl_driver =
+{
+	__FILE__,
+	&block_driver,
+	"blockbl",
+	"Block Block (bootleg)",
+	"1991",
+	"bootleg",
+	"Paul Leaman",
+	0,
+	&machine_driver,
+	0,
+
+	blockbl_rom,
+	0, blockbl_decode,
 	0,
 	0,      /* sound_prom */
 

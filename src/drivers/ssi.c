@@ -13,7 +13,7 @@ void ssi_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void rastan_sound_port_w(int offset,int data);
 void rastan_sound_comm_w(int offset,int data);
 int rastan_sound_comm_r(int offset);
-void rastan_irq_handler (void);
+void rastan_irq_handler (int irq);
 
 void r_wr_a000(int offset,int data);
 void r_wr_a001(int offset,int data);
@@ -48,7 +48,7 @@ static int ssi_input_r (int offset)
               return readinputport(2); /* IN2 */
     }
 
-if (errorlog) fprintf(errorlog,"CPU #0 PC %06x: warning - read unmapped memory address %06x\n",cpu_getpc(),0x100000+offset);
+if (errorlog) fprintf(errorlog,"CPU #0 PC %06x: warning - read unmapped memory address %06x\n",cpu_get_pc(),0x100000+offset);
 
 	return 0xff;
 }

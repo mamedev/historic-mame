@@ -62,6 +62,7 @@
 #include <stdlib.h>
 #include "osd_dbg.h"
 #include "cpuintrf.h"
+#include "state.h"
 #include "M6809.h"
 
 #define VERBOSE 0
@@ -75,6 +76,32 @@
 extern FILE *errorlog;
 
 INLINE UINT8 fetch_effective_address( void );
+
+/* 6809 Registers */
+typedef struct
+{
+    PAIR    pc;     /* Program counter */
+    PAIR    u, s;   /* Stack pointers */
+    PAIR    x, y;   /* Index registers */
+    PAIR    d;      /* Accumulatora a and b */
+    UINT8   dp;     /* Direct Page register */
+    UINT8   cc;
+	UINT8	int_state;	/* SYNC and CWAI flags */
+	UINT8	nmi_state;
+	UINT8	irq_state[2];
+    int     (*irq_callback)(int irqline);
+    int     extra_cycles; /* cycles used up by interrupts */
+} m6809_Regs;
+
+/* flag bits in the cc register */
+#define CC_C    0x01        /* Carry */
+#define CC_V    0x02        /* Overflow */
+#define CC_Z    0x04        /* Zero */
+#define CC_N    0x08        /* Negative */
+#define CC_II   0x10        /* Inhibit IRQ */
+#define CC_H    0x20        /* Half (auxiliary) carry */
+#define CC_IF   0x40        /* Inhibit FIRQ */
+#define CC_E    0x80        /* entire state pushed */
 
 /* 6809 registers */
 static m6809_Regs m6809;
@@ -117,17 +144,18 @@ static PAIR ea;         /* effective address */
 		if( m6809.int_state & M6809_CWAI )								\
 		{																\
 			m6809.int_state &= ~M6809_CWAI;  /* clear CWAI */			\
-		}																\
+			m6809.extra_cycles += 7;		 /* subtract +7 cycles */	\
+        }                                                               \
 		else															\
 		{																\
 			CC &= ~CC_E;				/* save 'short' state */        \
 			PUSHWORD(pPC);												\
 			PUSHBYTE(CC);												\
+			m6809.extra_cycles += 10;	/* subtract +10 cycles */		\
 		}																\
 		CC |= CC_IF | CC_II;			/* inhibit FIRQ and IRQ */		\
 		RM16(0xfff6,&m6809.pc); 										\
 		change_pc(PC);					/* TS 971002 */ 				\
-		m6809.extra_cycles += 10;		/* subtract +10 cycles */		\
 		(void)(*m6809.irq_callback)(M6809_FIRQ_LINE);					\
 	}																	\
 	else																\
@@ -138,6 +166,7 @@ static PAIR ea;         /* effective address */
 		if( m6809.int_state & M6809_CWAI )								\
 		{																\
 			m6809.int_state &= ~M6809_CWAI;  /* clear CWAI flag */		\
+			m6809.extra_cycles += 7;		 /* subtract +7 cycles */	\
 		}																\
 		else															\
 		{																\
@@ -150,12 +179,11 @@ static PAIR ea;         /* effective address */
 			PUSHBYTE(B);												\
 			PUSHBYTE(A);												\
 			PUSHBYTE(CC);												\
-			m6809.extra_cycles += 9;	/* subtract +9 cycles */		\
+			m6809.extra_cycles += 19;	 /* subtract +19 cycles */		\
 		}																\
 		CC |= CC_II;					/* inhibit IRQ */				\
 		RM16(0xfff8,&m6809.pc); 										\
 		change_pc(PC);					/* TS 971002 */ 				\
-		m6809.extra_cycles += 10;		/* subtract +10 cycles */		\
 		(void)(*m6809.irq_callback)(M6809_IRQ_LINE);					\
 	}
 
@@ -546,51 +574,83 @@ INLINE void WM16( UINT32 Addr, PAIR *p )
 	WM( Addr, p->b.l );
 }
 
-/****************************************************************************/
-/* Set all registers to given values                                        */
-/****************************************************************************/
-void m6809_setregs(m6809_Regs *Regs)
+/****************************************************************************
+ * Get all registers in given buffer
+ ****************************************************************************/
+unsigned m6809_get_context(void *dst)
 {
-	m6809 = *Regs;
+	if( dst )
+		*(m6809_Regs*)dst = m6809;
+	return sizeof(m6809_Regs);
+}
+
+/****************************************************************************
+ * Set all registers to given values
+ ****************************************************************************/
+void m6809_set_context(void *src)
+{
+	if( src )
+		m6809 = *(m6809_Regs*)src;
     change_pc(PC);    /* TS 971002 */
 
     CHECK_IRQ_LINES;
 }
 
-/****************************************************************************/
-/* Get all registers in given buffer                                        */
-/****************************************************************************/
-void m6809_getregs(m6809_Regs *Regs)
-{
-	*Regs = m6809;
-}
-
-/****************************************************************************/
-/* Return program counter                                                   */
-/****************************************************************************/
-unsigned m6809_getpc(void)
+/****************************************************************************
+ * Return program counter
+ ****************************************************************************/
+unsigned m6809_get_pc(void)
 {
 	return PC;
+}
+
+
+/****************************************************************************
+ * Set program counter
+ ****************************************************************************/
+void m6809_set_pc(unsigned val)
+{
+	PC = val;
+	change_pc(PC);
+}
+
+
+/****************************************************************************
+ * Return stack pointer
+ ****************************************************************************/
+unsigned m6809_get_sp(void)
+{
+	return S;
+}
+
+
+/****************************************************************************
+ * Set stack pointer
+ ****************************************************************************/
+void m6809_set_sp(unsigned val)
+{
+	S = val;
 }
 
 
 /****************************************************************************/
 /* Return a specific register                                               */
 /****************************************************************************/
-unsigned m6809_getreg(int regnum)
+unsigned m6809_get_reg(int regnum)
 {
 	switch( regnum )
 	{
-		case 0: return m6809.d.b.h;
-		case 1: return m6809.d.b.l;
-		case 2: return m6809.pc.w.l;
-		case 3: return m6809.s.w.l;
-		case 4: return m6809.u.w.l;
-		case 5: return m6809.x.w.l;
-		case 6: return m6809.y.w.l;
-		case 7: return m6809.nmi_state;
-		case 8: return m6809.irq_state[M6809_IRQ_LINE];
-		case 9: return m6809.irq_state[M6809_FIRQ_LINE];
+		case M6809_A: return m6809.d.b.h;
+		case M6809_B: return m6809.d.b.l;
+		case M6809_PC: return m6809.pc.w.l;
+		case M6809_S: return m6809.s.w.l;
+		case M6809_U: return m6809.u.w.l;
+		case M6809_X: return m6809.x.w.l;
+		case M6809_Y: return m6809.y.w.l;
+		case M6809_CC: return m6809.cc;
+		case M6809_NMI_STATE: return m6809.nmi_state;
+		case M6809_IRQ_STATE: return m6809.irq_state[M6809_IRQ_LINE];
+		case M6809_FIRQ_STATE: return m6809.irq_state[M6809_FIRQ_LINE];
 	}
 	return 0;
 }
@@ -599,21 +659,22 @@ unsigned m6809_getreg(int regnum)
 /****************************************************************************/
 /* Set a specific register                                                  */
 /****************************************************************************/
-void m6809_setreg(int regnum, unsigned val)
+void m6809_set_reg(int regnum, unsigned val)
 {
 	switch( regnum )
 	{
-		case 0: m6809.d.b.h = val; break;
-		case 1: m6809.d.b.l = val; break;
-		case 2: m6809.pc.w.l = val; break;
-		case 3: m6809.s.w.l = val; break;
-		case 4: m6809.u.w.l = val; break;
-		case 5: m6809.x.w.l = val; break;
-		case 6: m6809.y.w.l = val; break;
-		case 7: m6809.nmi_state = val; break;
-		case 8: m6809.irq_state[M6809_IRQ_LINE] = val; break;
-		case 9: m6809.irq_state[M6809_FIRQ_LINE] = val; break;
-	}
+		case M6809_A: m6809.d.b.h = val; break;
+		case M6809_B: m6809.d.b.l = val; break;
+		case M6809_PC: m6809.pc.w.l = val; break;
+		case M6809_S: m6809.s.w.l = val; break;
+		case M6809_U: m6809.u.w.l = val; break;
+		case M6809_X: m6809.x.w.l = val; break;
+		case M6809_Y: m6809.y.w.l = val; break;
+		case M6809_CC: m6809.cc = val; break;
+		case M6809_NMI_STATE: m6809.nmi_state = val; break;
+		case M6809_IRQ_STATE: m6809.irq_state[M6809_IRQ_LINE] = val; break;
+		case M6809_FIRQ_STATE: m6809.irq_state[M6809_FIRQ_LINE] = val; break;
+    }
 }
 
 
@@ -663,6 +724,9 @@ void m6809_exit(void)
 }
 
 /* Generate interrupts */
+/****************************************************************************
+ * Set NMI line state
+ ****************************************************************************/
 void m6809_set_nmi_line(int state)
 {
 	if (m6809.nmi_state == state) return;
@@ -678,7 +742,8 @@ void m6809_set_nmi_line(int state)
 	if( m6809.int_state & M6809_CWAI )
 	{
 		m6809.int_state &= ~M6809_CWAI;
-	}
+		m6809.extra_cycles += 7;	/* subtract +7 cycles next time */
+    }
 	else
 	{
 		CC |= CC_E; 				/* save entire state */
@@ -690,14 +755,16 @@ void m6809_set_nmi_line(int state)
 		PUSHBYTE(B);
 		PUSHBYTE(A);
 		PUSHBYTE(CC);
-		m6809_ICount += 9;			/* subtract +9 cycles next time */
+		m6809.extra_cycles += 19;	/* subtract +19 cycles next time */
 	}
 	CC |= CC_IF | CC_II;			/* inhibit FIRQ and IRQ */
 	RM16(0xfffc,&m6809.pc);
 	change_pc(PC);					/* TS 971002 */
-	m6809.extra_cycles += 10;		/* subtract +10 cycles next time */
 }
 
+/****************************************************************************
+ * Set IRQ line state
+ ****************************************************************************/
 void m6809_set_irq_line(int irqline, int state)
 {
     LOG((errorlog, "M6809#%d set_irq_line %d, %d\n", cpu_getactivecpu(), irqline, state));
@@ -706,10 +773,52 @@ void m6809_set_irq_line(int irqline, int state)
 	CHECK_IRQ_LINES;
 }
 
+/****************************************************************************
+ * Set IRQ vector callback
+ ****************************************************************************/
 void m6809_set_irq_callback(int (*callback)(int irqline))
 {
 	m6809.irq_callback = callback;
 }
+
+/****************************************************************************
+ * Save CPU state
+ ****************************************************************************/
+static void state_save(void *file, const char *module)
+{
+	int cpu = cpu_getactivecpu();
+	state_save_UINT16(file, module, cpu, "PC", &m6809.pc.w.l, 1);
+	state_save_UINT16(file, module, cpu, "U", &m6809.u.w.l, 1);
+	state_save_UINT16(file, module, cpu, "S", &m6809.s.w.l, 1);
+	state_save_UINT16(file, module, cpu, "X", &m6809.x.w.l, 1);
+	state_save_UINT16(file, module, cpu, "Y", &m6809.y.w.l, 1);
+	state_save_UINT8(file, module, cpu, "DP", &m6809.dp, 1);
+	state_save_UINT8(file, module, cpu, "CC", &m6809.cc, 1);
+	state_save_UINT8(file, module, cpu, "INT_STATE", &m6809.int_state, 1);
+	state_save_UINT8(file, module, cpu, "NMI_STATE", &m6809.nmi_state, 1);
+	state_save_UINT8(file, module, cpu, "IRQ_STATE", m6809.irq_state, 2);
+}
+
+/****************************************************************************
+ * Load CPU state
+ ****************************************************************************/
+static void state_load(void *file, const char *module)
+{
+	int cpu = cpu_getactivecpu();
+	state_load_UINT16(file, module, cpu, "PC", &m6809.pc.w.l, 1);
+	state_load_UINT16(file, module, cpu, "U", &m6809.u.w.l, 1);
+	state_load_UINT16(file, module, cpu, "S", &m6809.s.w.l, 1);
+	state_load_UINT16(file, module, cpu, "X", &m6809.x.w.l, 1);
+	state_load_UINT16(file, module, cpu, "Y", &m6809.y.w.l, 1);
+	state_load_UINT8(file, module, cpu, "DP", &m6809.dp, 1);
+	state_load_UINT8(file, module, cpu, "CC", &m6809.cc, 1);
+	state_load_UINT8(file, module, cpu, "INT_STATE", &m6809.int_state, 1);
+	state_load_UINT8(file, module, cpu, "NMI_STATE", &m6809.nmi_state, 1);
+	state_load_UINT8(file, module, cpu, "IRQ_STATE", m6809.irq_state, 2);
+}
+
+void m6809_state_save(void *file) { state_save(file, "m6809"); }
+void m6809_state_load(void *file) { state_load(file, "m6809"); }
 
 /****************************************************************************
  * Return a formatted string for a register
@@ -718,12 +827,12 @@ const char *m6809_info(void *context, int regnum)
 {
 	static char buffer[16][47+1];
 	static int which = 0;
-	m6809_Regs *r = (m6809_Regs *)context;
+	m6809_Regs *r = context;
 
 	which = ++which % 16;
     buffer[which][0] = '\0';
-	if( !context && regnum >= CPU_INFO_PC )
-		return buffer[which];
+	if( !context )
+		r = &m6809;
 
 	switch( regnum )
 	{
@@ -731,7 +840,7 @@ const char *m6809_info(void *context, int regnum)
 		case CPU_INFO_FAMILY: return "Motorola 6809";
 		case CPU_INFO_VERSION: return "1.0";
 		case CPU_INFO_FILE: return __FILE__;
-		case CPU_INFO_CREDITS: return "????";
+		case CPU_INFO_CREDITS: return "Copyright (C) John Butler 1997";
 		case CPU_INFO_PC: sprintf(buffer[which], "%04X:", r->pc.w.l); break;
 		case CPU_INFO_SP: sprintf(buffer[which], "%04X", r->s.w.l); break;
 #if MAME_DEBUG
@@ -750,27 +859,19 @@ const char *m6809_info(void *context, int regnum)
                 r->cc & 0x02 ? 'V':'.',
                 r->cc & 0x01 ? 'C':'.');
             break;
-		case CPU_INFO_REG+ 0: sprintf(buffer[which], "A:%02X", r->d.b.h); break;
-		case CPU_INFO_REG+ 1: sprintf(buffer[which], "B:%02X", r->d.b.l); break;
-		case CPU_INFO_REG+ 2: sprintf(buffer[which], "PC:%04X", r->pc.w.l); break;
-		case CPU_INFO_REG+ 3: sprintf(buffer[which], "S:%04X", r->s.w.l); break;
-		case CPU_INFO_REG+ 4: sprintf(buffer[which], "U:%04X", r->u.w.l); break;
-		case CPU_INFO_REG+ 5: sprintf(buffer[which], "X:%04X", r->x.w.l); break;
-		case CPU_INFO_REG+ 6: sprintf(buffer[which], "Y:%04X", r->y.w.l); break;
-		case CPU_INFO_REG+ 7: sprintf(buffer[which], "NMI:%d", r->nmi_state); break;
-		case CPU_INFO_REG+ 8: sprintf(buffer[which], "IRQ:%d", r->irq_state[M6809_IRQ_LINE]); break;
-		case CPU_INFO_REG+ 9: sprintf(buffer[which], "FIRQ:%d", r->irq_state[M6809_FIRQ_LINE]); break;
+		case CPU_INFO_REG+M6809_A: sprintf(buffer[which], "A:%02X", r->d.b.h); break;
+		case CPU_INFO_REG+M6809_B: sprintf(buffer[which], "B:%02X", r->d.b.l); break;
+		case CPU_INFO_REG+M6809_PC: sprintf(buffer[which], "PC:%04X", r->pc.w.l); break;
+		case CPU_INFO_REG+M6809_S: sprintf(buffer[which], "S:%04X", r->s.w.l); break;
+		case CPU_INFO_REG+M6809_U: sprintf(buffer[which], "U:%04X", r->u.w.l); break;
+		case CPU_INFO_REG+M6809_X: sprintf(buffer[which], "X:%04X", r->x.w.l); break;
+		case CPU_INFO_REG+M6809_Y: sprintf(buffer[which], "Y:%04X", r->y.w.l); break;
+		case CPU_INFO_REG+M6809_CC: sprintf(buffer[which], "CC:%02X", r->cc); break;
+		case CPU_INFO_REG+M6809_NMI_STATE: sprintf(buffer[which], "NMI:%d", r->nmi_state); break;
+		case CPU_INFO_REG+M6809_IRQ_STATE: sprintf(buffer[which], "IRQ:%d", r->irq_state[M6809_IRQ_LINE]); break;
+		case CPU_INFO_REG+M6809_FIRQ_STATE: sprintf(buffer[which], "FIRQ:%d", r->irq_state[M6809_FIRQ_LINE]); break;
 	}
 	return buffer[which];
-}
-
-const char *m6309_info(void *context, int regnum)
-{
-	switch( regnum )
-	{
-		case CPU_INFO_NAME: return "M6309";
-	}
-	return m6809_info(context,regnum);
 }
 
 /* includes the static function prototypes and the master opcode table */
@@ -803,10 +904,7 @@ int m6809_execute(int cycles)	/* NS 970908 */
 		previouspc = PC;
 
 #ifdef	MAME_DEBUG
-		{
-			extern int mame_debug;
-			if (mame_debug) MAME_Debug();
-		}
+		if (mame_debug) MAME_Debug();
 #endif
 		ireg=M_RDOP(PC++);
 
@@ -1124,3 +1222,32 @@ INLINE UINT8 fetch_effective_address( void )
 	}
 	return (ec);
 }
+
+/****************************************************************************
+ * M6309 section
+ ****************************************************************************/
+void m6309_reset(void *param) { m6809_reset(param); }
+void m6309_exit(void) { m6809_exit(); }
+int m6309_execute(int cycles) { return m6809_execute(cycles); }
+unsigned m6309_get_context(void *dst) { return m6809_get_context(dst); }
+void m6309_set_context(void *src) { m6809_set_context(src); }
+unsigned m6309_get_pc(void) { return m6809_get_pc(); }
+void m6309_set_pc(unsigned val) { m6809_set_pc(val); }
+unsigned m6309_get_sp(void) { return m6809_get_sp(); }
+void m6309_set_sp(unsigned val) { m6809_set_sp(val); }
+unsigned m6309_get_reg(int regnum) { return m6809_get_reg(regnum); }
+void m6309_set_reg(int regnum, unsigned val) { m6809_set_reg(regnum,val); }
+void m6309_set_nmi_line(int state) { m6809_set_nmi_line(state); }
+void m6309_set_irq_line(int irqline, int state) { m6809_set_irq_line(irqline,state); }
+void m6309_set_irq_callback(int (*callback)(int irqline)) { m6809_set_irq_callback(callback); }
+void m6309_state_save(void *file) { state_save(file, "m6309"); }
+void m6309_state_load(void *file) { state_load(file, "m6309"); }
+const char *m6309_info(void *context, int regnum)
+{
+    switch( regnum )
+    {
+        case CPU_INFO_NAME: return "M6309";
+    }
+    return m6809_info(context,regnum);
+}
+

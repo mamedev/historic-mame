@@ -6,28 +6,10 @@
 #include "memory.h"
 #include "osd_cpu.h"
 
-/* 6805 Registers */
-typedef struct
-{
-	PAIR   pc;	/* Program counter */
-	UINT8  s;	/* Stack pointer */
-	UINT8  x;	/* Index register */
-	UINT8  a;	/* Accumulator */
-	UINT8  cc;
+enum { M6805_A, M6805_PC, M6805_S, M6805_X, M6805_CC, M6805_IRQ_STATE };
 
-	UINT8  pending_interrupts; /* MB */
-	INT8   irq_state;
-	int 	(*irq_callback)(int irqline);
-} m6805_Regs;
-
-#ifndef INLINE
-#define INLINE static inline
-#endif
-
-
-#define M6805_INT_NONE  0			/* No interrupt required */
+#define M6805_INT_NONE  0           /* No interrupt required */
 #define M6805_INT_IRQ	1 			/* Standard IRQ interrupt */
-
 
 /* PUBLIC GLOBALS */
 extern int  m6805_ICount;
@@ -36,34 +18,51 @@ extern int  m6805_ICount;
 extern void m6805_reset(void *param);
 extern void m6805_exit(void);
 extern int  m6805_execute(int cycles);             /* MB */
-extern void m6805_setregs(m6805_Regs *Regs);
-extern void m6805_getregs(m6805_Regs *Regs);
-extern unsigned m6805_getpc(void);
-extern unsigned m6805_getreg(int regnum);
-extern void m6805_setreg(int regnum, unsigned val);
+extern unsigned m6805_get_context(void *dst);
+extern void m6805_set_context(void *src);
+extern unsigned m6805_get_pc(void);
+extern void m6805_set_pc(unsigned val);
+extern unsigned m6805_get_sp(void);
+extern void m6805_set_sp(unsigned val);
+extern unsigned m6805_get_reg(int regnum);
+extern void m6805_set_reg(int regnum, unsigned val);
 extern void m6805_set_nmi_line(int state);
 extern void m6805_set_irq_line(int irqline, int state);
 extern void m6805_set_irq_callback(int (*callback)(int irqline));
+extern void m6805_state_save(void *file);
+extern void m6805_state_load(void *file);
 extern const char *m6805_info(void *context, int regnum);
 
 /****************************************************************************
- * For now make the 68705 using the m6805 variables and functions
+ * 68705 section
  ****************************************************************************/
-#define M68705_INT_NONE 			M6805_INT_NONE
+#define M68705_A					M6805_A
+#define M68705_PC					M6805_PC
+#define M68705_S					M6805_S
+#define M68705_X					M6805_X
+#define M68705_CC					M6805_CC
+#define M68705_IRQ_STATE			M6805_IRQ_STATE
+
+#define M68705_INT_NONE             M6805_INT_NONE
 #define M68705_INT_IRQ				M6805_INT_IRQ
 
 #define m68705_ICount				m6805_ICount
-#define m68705_reset				m6805_reset
-#define m68705_exit 				m6805_exit
-#define m68705_execute				m6805_execute
-#define m68705_setregs				m6805_setregs
-#define m68705_getregs              m6805_getregs
-#define m68705_getpc                m6805_getpc
-#define m68705_getreg				m6805_getreg
-#define m68705_setreg				m6805_setreg
-#define m68705_set_nmi_line         m6805_set_nmi_line
-#define m68705_set_irq_line 		m6805_set_irq_line
-#define m68705_set_irq_callback 	m6805_set_irq_callback
+extern void m68705_reset(void *param);
+extern void m68705_exit(void);
+extern int	m68705_execute(int cycles); 			/* MB */
+extern unsigned m68705_get_context(void *dst);
+extern void m68705_set_context(void *src);
+extern unsigned m68705_get_pc(void);
+extern void m68705_set_pc(unsigned val);
+extern unsigned m68705_get_sp(void);
+extern void m68705_set_sp(unsigned val);
+extern unsigned m68705_get_reg(int regnum);
+extern void m68705_set_reg(int regnum, unsigned val);
+extern void m68705_set_nmi_line(int state);
+extern void m68705_set_irq_line(int irqline, int state);
+extern void m68705_set_irq_callback(int (*callback)(int irqline));
+extern void m68705_state_save(void *file);
+extern void m68705_state_load(void *file);
 extern const char *m68705_info(void *context, int regnum);
 
 /****************************************************************************/

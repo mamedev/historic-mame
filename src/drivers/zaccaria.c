@@ -102,7 +102,7 @@ void zaccaria_dsw_sel_w(int offset,int data)
 
 		default:
 			break;
-if (errorlog) fprintf(errorlog,"PC %04x: portsel = %02x\n",cpu_getpc(),data);
+if (errorlog) fprintf(errorlog,"PC %04x: portsel = %02x\n",cpu_get_pc(),data);
 	}
 }
 

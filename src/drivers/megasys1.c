@@ -352,7 +352,7 @@ int old_data, new_data;
 		case 0x100   : {spriteflag = new_data ^ 0x0001;} break;
 		case 0x300   : {screenflag = new_data;} break;
 		case 0x308   : {soundlatch_w(0,new_data);} break;
-		default: {if (errorlog) fprintf(errorlog, "CPU #0 PC %06X : Warning, videoreg %04X <- %04X\n",cpu_getpc(),offset,data);}
+		default: {if (errorlog) fprintf(errorlog, "CPU #0 PC %06X : Warning, videoreg %04X <- %04X\n",cpu_get_pc(),offset,data);}
 	}
 }
 
@@ -463,7 +463,7 @@ int old_data, new_data;
 		case 0x2200   : {spriteflag = new_data;} break;
 		case 0x2308   : {screenflag = new_data;} break;
 		case 0x8000   : {soundlatch_w(0,new_data);} break;
-		default: {if (errorlog) fprintf(errorlog, "CPU #0 PC %06X : Warning, videoreg %04X <- %04X\n",cpu_getpc(),offset,data);}
+		default: {if (errorlog) fprintf(errorlog, "CPU #0 PC %06X : Warning, videoreg %04X <- %04X\n",cpu_get_pc(),offset,data);}
 	}
 }
 
@@ -877,9 +877,9 @@ static struct MachineDriver machine_driver_##_type_ = \
 MEGASYS1_MACHINE(A)
 MEGASYS1_MACHINE(C)
 
-void irq_handler(void)
+void irq_handler(int irq)
 {
-	cpu_cause_interrupt( 1, 0xff );
+	cpu_set_irq_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
 }
 
 static struct YM2203interface ym2203_interface =

@@ -68,7 +68,7 @@ int exterm_master_speedup_r(int offset)
 	int value = READ_WORD(&exterm_master_speedup[offset]);
 
 	/* Suspend cpu if it's waiting for an interrupt */
-	if (cpu_getpc() == 0xfff4d9b0 && !value)
+	if (cpu_get_pc() == 0xfff4d9b0 && !value)
 	{
 		cpu_spinuntil_int();
 	}
@@ -79,7 +79,7 @@ int exterm_master_speedup_r(int offset)
 void exterm_slave_speedup_w(int offset, int data)
 {
 	/* Suspend cpu if it's waiting for an interrupt */
-	if (cpu_getpc() == 0xfffff050)
+	if (cpu_get_pc() == 0xfffff050)
 	{
 		cpu_spinuntil_int();
 	}
@@ -93,7 +93,7 @@ int exterm_sound_dac_speedup_r(int offset)
 	int value = RAM[0x0007];
 
 	/* Suspend cpu if it's waiting for an interrupt */
-	if (cpu_getpc() == 0x8e79 && !value)
+	if (cpu_get_pc() == 0x8e79 && !value)
 	{
 		cpu_spinuntil_int();
 	}
@@ -110,7 +110,7 @@ int exterm_sound_ym2151_speedup_r(int offset)
 	int value = RAM[0x02b6];
 
 	/* Suspend cpu if it's waiting for an interrupt */
-	if (  cpu_getpc() == 0x8179 &&
+	if (  cpu_get_pc() == 0x8179 &&
 		!(value & 0x80) &&
 		  RAM[0x00bc] == RAM[0x00bb] &&
 		  RAM[0x0092] == 0x00 &&

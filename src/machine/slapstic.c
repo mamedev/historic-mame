@@ -448,7 +448,7 @@ static void slapstic_log (int offset)
 //		slapsticlog = fopen ("slapstic.log", "w");
 	if (errorlog)
 	{
-		fprintf (errorlog, "Slapstic bank %d @ %04X (PC=%08X), STATE: ", current_bank, offset, cpu_getpc ());
+		fprintf (errorlog, "Slapstic bank %d @ %04X (PC=%08X), STATE: ", current_bank, offset, cpu_get_pc ());
 		switch (state)
 		{
 			case ENABLED:

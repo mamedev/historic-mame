@@ -1078,7 +1078,7 @@ int avengers_protection_r(int offset)
 	if (errorlog)
 	{
 		fprintf(errorlog, "Protection read: %02x PC=%04x\n",
-			value, cpu_getpc());
+			value, cpu_get_pc());
 	}
 
 	/*

@@ -58,7 +58,7 @@ int digdug2_sharedram_r2(int offset)
 {
 	/* to speed up emulation, we check for the loop the sound CPU sits in most of the time
 	   and end the current iteration (things will start going again with the next IRQ) */
-	if (offset == 0x0a1 - 0x40 && mappy_sharedram[offset] == 0 && cpu_getpc () == 0xe383)
+	if (offset == 0x0a1 - 0x40 && mappy_sharedram[offset] == 0 && cpu_get_pc () == 0xe383)
 		cpu_spinuntil_int ();
 	return mappy_sharedram[offset];
 }
@@ -93,7 +93,7 @@ int digdug2_cpu1ram_r(int offset)
 
 	/* to speed up emulation, we check for the loop the main CPU sits in much of the time
 	   and end the current iteration (things will start going again with the next IRQ) */
-	if (offset == 0x1000 && RAM[offset] == 0 && cpu_getpc () == 0x80c4)
+	if (offset == 0x1000 && RAM[offset] == 0 && cpu_get_pc () == 0x80c4)
 		cpu_spinuntil_int ();
 	return RAM[offset];
 }

@@ -56,7 +56,7 @@ static void bionicc_sound_cmd(int data);
 
 int bionicc_inputs_r(int offset)
 {
-if (errorlog) fprintf(errorlog,"%06x: inputs_r %04x\n",cpu_getpc(),offset);
+if (errorlog) fprintf(errorlog,"%06x: inputs_r %04x\n",cpu_get_pc(),offset);
 	return (readinputport(offset)<<8) + readinputport(offset+1);
 }
 
@@ -64,13 +64,13 @@ static unsigned char bionicc_inp[6];
 
 void hacked_controls_w( int offset, int data )
 {
-if (errorlog) fprintf(errorlog,"%06x: hacked_controls_w %04x %02x\n",cpu_getpc(),offset,data);
+if (errorlog) fprintf(errorlog,"%06x: hacked_controls_w %04x %02x\n",cpu_get_pc(),offset,data);
 	COMBINE_WORD_MEM( &bionicc_inp[offset], data);
 }
 
 static int hacked_controls_r(int offset)
 {
-if (errorlog) fprintf(errorlog,"%06x: hacked_controls_r %04x %04x\n",cpu_getpc(),offset,READ_WORD( &bionicc_inp[offset] ));
+if (errorlog) fprintf(errorlog,"%06x: hacked_controls_r %04x %04x\n",cpu_get_pc(),offset,READ_WORD( &bionicc_inp[offset] ));
 	return READ_WORD( &bionicc_inp[offset] );
 }
 

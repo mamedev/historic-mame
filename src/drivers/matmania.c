@@ -74,14 +74,14 @@ void maniach_3040_w(int offset,int data)
 
 int maniach_3040_r(int offset)
 {
-	if (errorlog) fprintf (errorlog, "3040_r @ pc:%04x\n", cpu_getpc());
+	if (errorlog) fprintf (errorlog, "3040_r @ pc:%04x\n", cpu_get_pc());
 /*	return 0x4a; */
 	return maniach_3040;
 }
 
 int maniach_3041_r(int offset)
 {
-	if (errorlog) fprintf (errorlog, "3041_r @ pc:%04x\n", cpu_getpc());
+	if (errorlog) fprintf (errorlog, "3041_r @ pc:%04x\n", cpu_get_pc());
 	return 0x02;
 }
 

@@ -183,40 +183,44 @@ struct MachineCPU
 	void *reset_param;
 };
 
-#define CPU_Z80 		1
-#define CPU_8080		2	/* emulated by CPU_8085A */
-#define CPU_8085A		3
-#define CPU_M6502		4
-#define CPU_M65C02		5
-#define CPU_M6510		6
-#define CPU_H6280		7
-#define CPU_I86 		8
-#define CPU_I8035		9	/* emulated by CPU_I8039 */
-#define CPU_I8039		10
-#define CPU_I8048		11	/* emulated by CPU_I8039 */
-#define CPU_N7751		12	/* emulated by CPU_I8039 */
-#define CPU_M6800		13	/* emulated by CPU_M6808 */
-#define CPU_M6802		14	/* emulated by CPU_M6808 */
-#define CPU_M6803		15	/* emulated by CPU_M6808 */
-#define CPU_M6808		16
-#define CPU_HD63701 	17	/* emulated by CPU_M6808 6808 with some additional opcodes */
-#define CPU_M6805		18
-#define CPU_M68705		19	/* emulated by CPU_M6805 */
-#define CPU_M6309		20	/* emulated by CPU_M6809 actually it's not 100% compatible */
-#define CPU_M6809		21
-#define CPU_M68000		22
-#define CPU_M68010		23
-#define CPU_M68020		24
-#define CPU_T11 		25
-#define CPU_S2650		26
-#define CPU_TMS34010	27
-#define CPU_TMS9900 	28
-#define CPU_Z8000		29
-#define CPU_TMS320C10	30
-#define CPU_CCPU		31
+enum {
+	CPU_DUMMY,
+	CPU_Z80,
+	CPU_8080,
+	CPU_8085A,
+	CPU_M6502,
+	CPU_M65C02,
+	CPU_M6510,
+	CPU_H6280,
+	CPU_I86,
+	CPU_I8035,		/* same as CPU_I8039 */
+	CPU_I8039,
+	CPU_I8048,		/* same as CPU_I8039 */
+	CPU_N7751,		/* same as CPU_I8039 */
+	CPU_M6800,		/* same as CPU_M6802/CPU_M6808 */
+	CPU_M6801,		/* same as CPU_M6803 */
+	CPU_M6802,		/* same as CPU_M6800/CPU_M6808 */
+	CPU_M6803,		/* same as CPU_M6801 */
+	CPU_M6808,		/* same as CPU_M6800/CPU_M6802 */
+	CPU_HD63701,	/* 6808 with some additional opcodes */
+	CPU_M6805,
+	CPU_M68705, 	/* same as CPU_M6805 */
+	CPU_M6309,		/* same as CPU_M6809 (actually it's not 100% compatible) */
+	CPU_M6809,
+	CPU_M68000,
+	CPU_M68010,
+	CPU_M68020,
+	CPU_T11,
+	CPU_S2650,
+	CPU_TMS34010,
+	CPU_TMS9900,
+	CPU_Z8000,
+	CPU_TMS320C10,
+	CPU_CCPU
 #ifdef MESS
-#define CPU_PDP1		32
+	,CPU_PDP1
 #endif
+};
 
 /* set this if the CPU is used as a slave for audio. It will not be emulated if */
 /* sound is disabled, therefore speeding up a lot the emulation. */

@@ -138,13 +138,13 @@ void commando_spriteram_w(int offset,int data)
 {
 if (errorlog && data != spriteram[offset] && offset % 4 == 2)
 	fprintf(errorlog,"%04x: sprite %d X offset (old = %d new = %d) scanline %d\n",
-			cpu_getpc(),offset/4,spriteram[offset],data,255 - (cpu_getfcount() * 256 / cpu_getfperiod()));
+			cpu_get_pc(),offset/4,spriteram[offset],data,255 - (cpu_getfcount() * 256 / cpu_getfperiod()));
 if (errorlog && data != spriteram[offset] && offset % 4 == 3)
 	fprintf(errorlog,"%04x: sprite %d Y offset (old = %d new = %d) scanline %d\n",
-			cpu_getpc(),offset/4,spriteram[offset],data,255 - (cpu_getfcount() * 256 / cpu_getfperiod()));
+			cpu_get_pc(),offset/4,spriteram[offset],data,255 - (cpu_getfcount() * 256 / cpu_getfperiod()));
 if (errorlog && data != spriteram[offset] && offset % 4 == 0)
 	fprintf(errorlog,"%04x: sprite %d code (old = %d new = %d) scanline %d\n",
-			cpu_getpc(),offset/4,spriteram[offset],data,255 - (cpu_getfcount() * 256 / cpu_getfperiod()));
+			cpu_get_pc(),offset/4,spriteram[offset],data,255 - (cpu_getfcount() * 256 / cpu_getfperiod()));
 
 	spriteram[offset] = data;
 }

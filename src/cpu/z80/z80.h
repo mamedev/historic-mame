@@ -4,43 +4,32 @@
 #include "osd_cpu.h"
 #include "cpuintrf.h"
 
-/****************************************************************************/
-/* The Z80 registers. HALT is set to 1 when the CPU is halted, the refresh  */
-/* register is calculated as follows: refresh=(Regs.R&127)|(Regs.R2&128)    */
-/****************************************************************************/
-typedef struct {
-/* 00 */	PAIR	AF,BC,DE,HL,IX,IY,PC,SP;
-/* 20 */	PAIR	AF2,BC2,DE2,HL2;
-/* 30 */	UINT8	R,R2,IFF1,IFF2,HALT,IM,I;
-/* 37 */	UINT8	irq_max;			/* number of daisy chain devices		*/
-/* 38 */	INT8	request_irq;		/* daisy chain next request device		*/
-/* 39 */	INT8	service_irq;		/* daisy chain next reti handling devicve */
-/* 3a */	UINT8	int_state[Z80_MAXDAISY];
-/* 3e */	INT8	nmi_state;			/* nmi line state */
-/* 3f */	INT8	irq_state;			/* irq line state */
-/* 40 */	Z80_DaisyChain irq[Z80_MAXDAISY];
-/* 80 */	int 	(*irq_callback)(int irqline);
-/* 84 */	int 	extra_cycles;		/* extra cycles for interrupts */
-/* 88 */	int 	nmi_nesting;		/* nested NMI depth */
-}   Z80_Regs;
+enum { Z80_AF, Z80_BC, Z80_DE, Z80_HL, Z80_SP, Z80_PC, Z80_IX, Z80_IY,
+	Z80_AF2, Z80_BC2, Z80_DE2, Z80_HL2,
+	Z80_R, Z80_I, Z80_IM, Z80_IFF1, Z80_IFF2, Z80_HALT,
+	Z80_NMI_STATE, Z80_IRQ_STATE, Z80_DC0, Z80_DC1, Z80_DC2, Z80_DC3,
+	Z80_NMI_NESTING };
 
-extern int z80_ICount;				/* T-state count						*/
+extern int z80_ICount;              /* T-state count                        */
 
 #define Z80_IGNORE_INT  -1          /* Ignore interrupt                     */
 #define Z80_NMI_INT 	-2			/* Execute NMI							*/
 #define Z80_IRQ_INT 	-1000		/* Execute IRQ							*/
 
 /* Port number written to when entering/leaving HALT state */
-#define Z80_HALT_PORT   0x10000     
+#define Z80_HALT_PORT   0x10000
 
 extern void z80_reset (void *param);
 extern void z80_exit (void);
-extern int	z80_execute(int cycles);	   /* Execute cycles T-States - returns number of cycles actually run */
-extern void z80_getregs (Z80_Regs *Regs);  /* Get registers 				*/
-extern void z80_setregs (Z80_Regs *Regs);  /* Set registers 				*/
-extern unsigned z80_getpc (void);		   /* Get program counter			*/
-extern unsigned z80_getreg (int regnum);
-extern void z80_setreg (int regnum, unsigned val);
+extern int	z80_execute(int cycles);
+extern unsigned z80_get_context (void *dst);
+extern void z80_set_context (void *src);
+extern unsigned z80_get_pc (void);
+extern void z80_set_pc (unsigned val);
+extern unsigned z80_get_sp (void);
+extern void z80_set_sp (unsigned val);
+extern unsigned z80_get_reg (int regnum);
+extern void z80_set_reg (int regnum, unsigned val);
 extern void z80_set_nmi_line(int state);
 extern void z80_set_irq_line(int irqline, int state);
 extern void z80_set_irq_callback(int (*irq_callback)(int));

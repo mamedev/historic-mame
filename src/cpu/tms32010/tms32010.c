@@ -33,6 +33,22 @@
 
 #define ADDR_MASK		TMS320C10_ADDR_MASK
 
+#ifndef INLINE
+#define INLINE static inline
+#endif
+typedef struct
+{
+        UINT16  PC;
+        INT32   ACC, Preg;
+        INT32   ALU;
+        UINT16  Treg;
+        UINT16  AR[2], STACK[4], STR;
+        int     pending_irq, BIO_pending_irq;
+        int     irq_state;
+        int     (*irq_callback)(int irqline);
+} tms320c10_Regs;
+
+
 /********  The following is the Status (Flag) register definition.  *********/
 /* 15 | 14  |  13  | 12 | 11 | 10 | 9 |  8  | 7 | 6 | 5 | 4 | 3 | 2 | 1 | 0  */
 /* OV | OVM | INTM |  1 |  1 |  1 | 1 | ARP | 1 | 1 | 1 | 1 | 1 | 1 | 1 | DP */
@@ -44,10 +60,10 @@
 
 static UINT16	opcode=0;
 static UINT8	opcode_major=0, opcode_minor, opcode_minr;	/* opcode split into MSB and LSB */
-static			TMS320C10_Regs R;
-	   INT32	TMS320C10_ICount;
-static INT32	tmpacc;
-typedef void	(*opcode_fn) (void);
+static tms320c10_Regs R;
+INT32 tms320c10_ICount;
+static INT32 tmpacc;
+typedef void (*opcode_fn) (void);
 
 
 #define OV		 ( R.STR & OV_FLAG)			/* OV	(Overflow flag) */
@@ -588,10 +604,10 @@ static opcode_fn opcode_7F_other[32]=
 
 
 
-/****************************************************************************/
-/* Reset registers to their initial values									*/
-/****************************************************************************/
-void TMS320C10_reset (void *param)
+/****************************************************************************
+ * Reset registers to their initial values
+ ****************************************************************************/
+void tms320c10_reset (void *param)
 {
 	R.PC  = 0;
 	R.STR  = 0x0fefe;
@@ -601,18 +617,18 @@ void TMS320C10_reset (void *param)
 }
 
 
-/****************************************************************************/
-/* Shut down CPU emulation													*/
-/****************************************************************************/
-void TMS320C10_exit (void)
+/****************************************************************************
+ * Shut down CPU emulation
+ ****************************************************************************/
+void tms320c10_exit (void)
 {
 	/* nothing to do ? */
 }
 
 
-/****************************************************************************/
-/* Issue an interrupt if necessary											*/
-/****************************************************************************/
+/****************************************************************************
+ * Issue an interrupt if necessary
+ ****************************************************************************/
 
 static int Ext_IRQ(void)
 {
@@ -634,12 +650,12 @@ static int Ext_IRQ(void)
 
 
 
-/****************************************************************************/
-/* Execute IPeriod. Return 0 if emulation should be stopped					*/
-/****************************************************************************/
-int TMS320C10_execute(int cycles)
+/****************************************************************************
+ * Execute IPeriod. Return 0 if emulation should be stopped
+ ****************************************************************************/
+int tms320c10_execute(int cycles)
 {
-	TMS320C10_ICount=cycles;
+	tms320c10_ICount = cycles;
 
 	do
 	{
@@ -654,7 +670,7 @@ int TMS320C10_execute(int cycles)
 		if (R.pending_irq) {
 			/* Dont service INT if prev instruction was MPY, MPYK or EINT */
 			if ((opcode_major != 0x6d) || ((opcode_major & 0xe0) != 0x80) || (opcode != 0x7f82))
-				TMS320C10_ICount -= Ext_IRQ();
+				tms320c10_ICount -= Ext_IRQ();
 		}
 
 		#ifdef MAME_DEBUG
@@ -675,96 +691,126 @@ int TMS320C10_execute(int cycles)
 
 		R.PC++;
 		if (opcode_major != 0x07f) { /* Do all opcodes except the 7Fxx ones */
-			TMS320C10_ICount -= cycles_main[opcode_major];
+			tms320c10_ICount -= cycles_main[opcode_major];
 			(*(opcode_main[opcode_major]))();
 		}
 		else { /* Opcode major byte 7Fxx has many opcodes in its minor byte */
 			opcode_minr = (opcode & 0x001f);
-			TMS320C10_ICount -= cycles_7F_other[opcode_minr];
+			tms320c10_ICount -= cycles_7F_other[opcode_minr];
 			(*(opcode_7F_other[opcode_minr]))();
 		}
 	}
-	while (TMS320C10_ICount>0);
+	while (tms320c10_ICount>0);
 
-	return cycles - TMS320C10_ICount;
+	return cycles - tms320c10_ICount;
 }
 
-/****************************************************************************/
-/* Set all registers to given values                                        */
-/****************************************************************************/
-void TMS320C10_setregs (TMS320C10_Regs *Regs)
+/****************************************************************************
+ * Get all registers in given buffer
+ ****************************************************************************/
+unsigned tms320c10_get_context (void *dst)
 {
-    R=*Regs;
+    if( dst )
+        *(tms320c10_Regs*)dst = R;
+    return sizeof(tms320c10_Regs);
 }
 
-/****************************************************************************/
-/* Get all registers in given buffer                                        */
-/****************************************************************************/
-void TMS320C10_getregs (TMS320C10_Regs *Regs)
+/****************************************************************************
+ * Set all registers to given values
+ ****************************************************************************/
+void tms320c10_set_context (void *src)
 {
-    *Regs=R;
+	if( src )
+		R = *(tms320c10_Regs*)src;
 }
 
-/****************************************************************************/
-/* Return program counter                                                   */
-/****************************************************************************/
-unsigned TMS320C10_getpc (void)
+/****************************************************************************
+ * Return program counter
+ ****************************************************************************/
+unsigned tms320c10_get_pc (void)
 {
     return R.PC;
 }
 
 
-/****************************************************************************/
-/* Return a specific register                                               */
-/****************************************************************************/
-unsigned TMS320C10_getreg(int regnum)
+/****************************************************************************
+ * Set program counter
+ ****************************************************************************/
+void tms320c10_set_pc (unsigned val)
+{
+	R.PC = val;
+}
+
+
+/****************************************************************************
+ * Return stack pointer
+ ****************************************************************************/
+unsigned tms320c10_get_sp (void)
+{
+	return R.STACK[3];
+}
+
+
+/****************************************************************************
+ * Set stack pointer
+ ****************************************************************************/
+void tms320c10_set_sp (unsigned val)
+{
+	R.STACK[3] = val;
+}
+
+
+/****************************************************************************
+ * Return a specific register
+ ****************************************************************************/
+unsigned tms320c10_get_reg(int regnum)
 {
 	switch( regnum )
 	{
-		case 0: return R.PC;
-		case 1: return R.ACC;
-		case 2: return R.Preg;
-		case 3: return R.Treg;
-		case 4: return R.AR[0];
-		case 5: return R.AR[1];
-		case 6: return R.STR;
-		case 7: return R.STACK[3];
+		case TMS320C10_PC: return R.PC;
+		case TMS320C10_ACC: return R.ACC;
+		case TMS320C10_PREG: return R.Preg;
+		case TMS320C10_TREG: return R.Treg;
+		case TMS320C10_AR0: return R.AR[0];
+		case TMS320C10_AR1: return R.AR[1];
+		case TMS320C10_STR: return R.STR;
+		case TMS320C10_STACK3: return R.STACK[3];
 	}
 	return 0;
 }
 
 
-/****************************************************************************/
-/* Set a specific register                                                  */
-/****************************************************************************/
-void TMS320C10_setreg(int regnum, unsigned val)
+/****************************************************************************
+ * Set a specific register
+ ****************************************************************************/
+void tms320c10_set_reg(int regnum, unsigned val)
 {
 	switch( regnum )
 	{
-		case 0: R.PC = val; break;
-		case 1: R.ACC = val; break;
-		case 2: R.Preg = val; break;
-		case 3: R.Treg = val; break;
-		case 4: R.AR[0] = val; break;
-		case 5: R.AR[1] = val; break;
-		case 6: R.STR = val; break;
-		case 7: R.STACK[3] = val; break;
-	}
+		case TMS320C10_PC: R.PC = val; break;
+		case TMS320C10_ACC: R.ACC = val; break;
+		case TMS320C10_PREG: R.Preg = val; break;
+		case TMS320C10_TREG: R.Treg = val; break;
+		case TMS320C10_AR0: R.AR[0] = val; break;
+		case TMS320C10_AR1: R.AR[1] = val; break;
+		case TMS320C10_STR: R.STR = val; break;
+		case TMS320C10_STACK3: R.STACK[3] = val; break;
+    }
 }
 
 
-/****************************************************************************/
-/* Set NMI line state														*/
-/****************************************************************************/
-void TMS320C10_set_nmi_line(int state)
+/****************************************************************************
+ * Set NMI line state
+ ****************************************************************************/
+void tms320c10_set_nmi_line(int state)
 {
 	/* TMS320C10 does not have a NMI line */
 }
 
-/****************************************************************************/
-/* Set IRQ line state														*/
-/****************************************************************************/
-void TMS320C10_set_irq_line(int irqline, int state)
+/****************************************************************************
+ * Set IRQ line state
+ ****************************************************************************/
+void tms320c10_set_irq_line(int irqline, int state)
 {
 	if (irqline == TMS320C10_ACTIVE_INT)
 	{
@@ -779,7 +825,7 @@ void TMS320C10_set_irq_line(int irqline, int state)
 	}
 }
 
-void TMS320C10_set_irq_callback(int (*callback)(int irqline))
+void tms320c10_set_irq_callback(int (*callback)(int irqline))
 {
 	R.irq_callback = callback;
 }
@@ -787,16 +833,16 @@ void TMS320C10_set_irq_callback(int (*callback)(int irqline))
 /****************************************************************************
  * Return a formatted string for a register
  ****************************************************************************/
-const char *TMS320C10_info(void *context, int regnum)
+const char *tms320c10_info(void *context, int regnum)
 {
 	static char buffer[16][47+1];
 	static int which;
-	TMS320C10_Regs *r = (TMS320C10_Regs *)context;
+	tms320c10_Regs *r = context;
 
 	which = ++which % 16;
 	buffer[which][0] = '\0';
-	if( !context && regnum >= CPU_INFO_PC )
-		return buffer[which];
+	if( !context )
+		r = &R;
 
     switch( regnum )
 	{
@@ -808,9 +854,14 @@ const char *TMS320C10_info(void *context, int regnum)
 		case CPU_INFO_PC: sprintf(buffer[which], "%04X:", r->PC); break;
 		case CPU_INFO_SP: sprintf(buffer[which], "%08X", r->ACC); break;
 #ifdef MAME_DEBUG
-		case CPU_INFO_DASM: r->PC += Dasm32010(buffer[which], &ROM[r->PC]); break;
+		case CPU_INFO_DASM:
+			r->PC += Dasm32010(buffer[which], &ROM[r->PC]);
+			break;
 #else
-		case CPU_INFO_DASM: sprintf(buffer[which], "$%02x", ROM[r->PC]); r->PC++; break;
+		case CPU_INFO_DASM:
+			sprintf(buffer[which], "$%02x", ROM[r->PC]);
+			r->PC++;
+			break;
 #endif
 		case CPU_INFO_FLAGS:
 			sprintf(buffer[which], "%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",
@@ -831,14 +882,14 @@ const char *TMS320C10_info(void *context, int regnum)
 				r->STR & 0x0002 ? 'p':'.',
 				r->STR & 0x0001 ? '1':'.');
             break;
-		case CPU_INFO_REG+ 0: sprintf(buffer[which], "PC:%04X",  r->PC); break;
-		case CPU_INFO_REG+ 1: sprintf(buffer[which], "ACC:%08X", r->ACC); break;
-		case CPU_INFO_REG+ 2: sprintf(buffer[which], "P:%08X",   r->Preg); break;
-		case CPU_INFO_REG+ 3: sprintf(buffer[which], "T:%04X",   r->Treg); break;
-		case CPU_INFO_REG+ 4: sprintf(buffer[which], "AR0:%04X", r->AR[0]); break;
-		case CPU_INFO_REG+ 5: sprintf(buffer[which], "AR1:%04X", r->AR[1]); break;
-		case CPU_INFO_REG+ 6: sprintf(buffer[which], "STR:%04X", r->STR); break;
-		case CPU_INFO_REG+ 7: sprintf(buffer[which], "STAK3:%04X", r->STACK[3]); break;
+		case CPU_INFO_REG+TMS320C10_PC: sprintf(buffer[which], "PC:%04X",  r->PC); break;
+		case CPU_INFO_REG+TMS320C10_ACC: sprintf(buffer[which], "ACC:%08X", r->ACC); break;
+		case CPU_INFO_REG+TMS320C10_PREG: sprintf(buffer[which], "P:%08X",   r->Preg); break;
+		case CPU_INFO_REG+TMS320C10_TREG: sprintf(buffer[which], "T:%04X",   r->Treg); break;
+		case CPU_INFO_REG+TMS320C10_AR0: sprintf(buffer[which], "AR0:%04X", r->AR[0]); break;
+		case CPU_INFO_REG+TMS320C10_AR1: sprintf(buffer[which], "AR1:%04X", r->AR[1]); break;
+		case CPU_INFO_REG+TMS320C10_STR: sprintf(buffer[which], "STR:%04X", r->STR); break;
+		case CPU_INFO_REG+TMS320C10_STACK3: sprintf(buffer[which], "STAK3:%04X", r->STACK[3]); break;
 	}
 	return buffer[which];
 }

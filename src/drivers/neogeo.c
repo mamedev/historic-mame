@@ -238,7 +238,7 @@ static int timer_r (int offset)
 	int coinflip = read_4990_testbit();
 	int databit = read_4990_databit();
 
-//	if (errorlog) fprintf(errorlog,"CPU %04x - Read timer\n",cpu_getpc());
+//	if (errorlog) fprintf(errorlog,"CPU %04x - Read timer\n",cpu_get_pc());
 
 	res = readinputport(4) ^ (coinflip << 6) ^ (databit << 7);
 
@@ -299,14 +299,14 @@ extern int neogeo_game_fix;
 /* Temporary, Todo: Figure out how this really works! :) */
 static int neo_control_r(int offset)
 {
-if (errorlog) fprintf(errorlog,"PC %06x: read 0x3c0006\n",cpu_getpc());
+if (errorlog) fprintf(errorlog,"PC %06x: read 0x3c0006\n",cpu_get_pc());
 
 	switch(neogeo_game_fix)
 	{
 		case 0:
 			return (neogeo_frame_counter) & 0x0007;                 /* Blazing Stars */
 		case 1:
-			if (cpu_getpc() == 0x1b04) return 0x8000; /* Fix for Voltage Fighter */
+			if (cpu_get_pc() == 0x1b04) return 0x8000; /* Fix for Voltage Fighter */
 		case 2:
 			return 0x2000;          /* real bout 2 */
 		case 3:
@@ -328,7 +328,7 @@ if (errorlog) fprintf(errorlog,"PC %06x: read 0x3c0006\n",cpu_getpc());
 /* this does much more than this, but I'm not sure exactly what */
 void neo_control_w(int offset, int data)
 {
-if (errorlog) fprintf(errorlog,"PC %06x: 3c0006 = %02x\n",cpu_getpc(),data);
+if (errorlog) fprintf(errorlog,"PC %06x: 3c0006 = %02x\n",cpu_get_pc(),data);
 	/* I'm waving my hands in a big way here... */
 	/* Games which definitely need IRQ2:
 	   sengoku2
@@ -378,7 +378,7 @@ static void neo_irq2pos_w(int offset,int data)
 {
 	static int value;
 
-if (errorlog) fprintf(errorlog,"PC %06x: %06x = %02x\n",cpu_getpc(),0x3c0008+offset,data);
+if (errorlog) fprintf(errorlog,"PC %06x: %06x = %02x\n",cpu_get_pc(),0x3c0008+offset,data);
 
 	if (offset == 0)
 		value = (value & 0x0000ffff) | (data << 16);
@@ -560,7 +560,7 @@ static int z80_port_r(int offset)
 			}
 
 		default:
-if (errorlog) fprintf(errorlog,"CPU #1 PC %04x: read unmapped port %02x\n",cpu_getpc(),offset&0xff);
+if (errorlog) fprintf(errorlog,"CPU #1 PC %04x: read unmapped port %02x\n",cpu_get_pc(),offset&0xff);
 			return 0;
 			break;
 	}
@@ -599,7 +599,7 @@ static void z80_port_w(int offset,int data)
 			break;
 
 		default:
-if (errorlog) fprintf(errorlog,"CPU #1 PC %04x: write %02x to unmapped port %02x\n",cpu_getpc(),data,offset&0xff);
+if (errorlog) fprintf(errorlog,"CPU #1 PC %04x: write %02x to unmapped port %02x\n",cpu_get_pc(),data,offset&0xff);
 			break;
 	}
 }
@@ -761,9 +761,9 @@ static struct GfxDecodeInfo neogeo_mgd2_gfxdecodeinfo[] =
 
 /******************************************************************************/
 
-static void neogeo_sound_irq( void )
+static void neogeo_sound_irq( int irq )
 {
-	cpu_cause_interrupt(1,0xff);
+	cpu_set_irq_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
 }
 
 struct YM2610interface neogeo_ym2610_interface =

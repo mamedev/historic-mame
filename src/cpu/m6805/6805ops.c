@@ -78,11 +78,9 @@ INLINE void bclr (UINT8 bit)
 INLINE void bra( void )
 {
 	UINT8 t;
-	IMMBYTE(t);
-	PC+=SIGNED(t);
+	IMMBYTE(t);PC+=SIGNED(t);
 	/* speed up busy loops */
-	if( t == 0xfe )
-		if( m6805_ICount > 0 ) m6805_ICount = 0;
+	if (t==0xfe) m6805_ICount = 0;
 }
 
 /* $21 BRN relative ---- */
@@ -810,7 +808,6 @@ INLINE void rti( void )
 	PULLBYTE(m6805.a);
 	PULLBYTE(m6805.x);
 	PULLWORD(m6805.pc);
-	PC &= 0x7ff;
 #if IRQ_LEVEL_DETECT
 	if( m6805.irq_state != CLEAR_LINE && (CC & IFLAG) == 0 )
 		m6805.pending_interrupts |= M6805_INT_IRQ;
@@ -821,7 +818,6 @@ INLINE void rti( void )
 INLINE void rts( void )
 {
 	PULLWORD(m6805.pc);
-	PC &= 0x7ff;
 }
 
 /* $82 ILLEGAL */
@@ -835,7 +831,6 @@ INLINE void swi( void )
 	PUSHBYTE(m6805.cc);
 	SEI;
 	RM16( 0x07fc, &m6805.pc );
-	PC &= 0x7ff;
 }
 
 /* $84 ILLEGAL */

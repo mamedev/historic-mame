@@ -267,8 +267,9 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static void namcos1_sound_interrupt( void ) {
-	cpu_cause_interrupt( 2, M6809_INT_FIRQ );
+static void namcos1_sound_interrupt( int irq ) {
+	cpu_set_irq_line( 2, 1 , irq ? ASSERT_LINE : CLEAR_LINE);
+	//cpu_cause_interrupt( 2, M6809_INT_FIRQ );
 }
 
 static struct YM2151interface ym2151_interface =

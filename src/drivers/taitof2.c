@@ -140,7 +140,7 @@ static int taitof2_input_r (int offset)
               return readinputport(2); /* IN2 */
     }
 
-if (errorlog) fprintf(errorlog,"CPU #0 PC %06x: warning - read unmapped memory address %06x\n",cpu_getpc(),0x100000+offset);
+if (errorlog) fprintf(errorlog,"CPU #0 PC %06x: warning - read unmapped memory address %06x\n",cpu_get_pc(),0x100000+offset);
 
 	return 0xff;
 }
@@ -156,7 +156,7 @@ static int growl_dsw_r (int offset)
               return readinputport(4); /* DSW B */
     }
 
-if (errorlog) fprintf(errorlog,"CPU #0 PC %06x: warning - read unmapped memory address %06x\n",cpu_getpc(),0x100000+offset);
+if (errorlog) fprintf(errorlog,"CPU #0 PC %06x: warning - read unmapped memory address %06x\n",cpu_get_pc(),0x100000+offset);
 
 	return 0xff;
 }
@@ -175,7 +175,7 @@ static int growl_input_r (int offset)
               return readinputport(2); /* IN2 */
     }
 
-if (errorlog) fprintf(errorlog,"CPU #0 PC %06x: warning - read unmapped memory address %06x\n",cpu_getpc(),0x100000+offset);
+if (errorlog) fprintf(errorlog,"CPU #0 PC %06x: warning - read unmapped memory address %06x\n",cpu_get_pc(),0x100000+offset);
 
 	return 0xff;
 }
@@ -646,9 +646,9 @@ static struct GfxDecodeInfo finalb_gfxdecodeinfo[] =
 
 
 /* handler called by the YM2610 emulator when the internal timers cause an IRQ */
-static void irqhandler(void)
+static void irqhandler(int irq)
 {
-	cpu_cause_interrupt( 1, 0xff );
+	cpu_set_irq_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
 }
 
 static struct YM2610interface ym2610_interface =

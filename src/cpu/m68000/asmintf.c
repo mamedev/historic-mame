@@ -13,18 +13,46 @@
 #define CONVENTION
 #endif
 
+/* Use the x86 assembly core */
+typedef struct
+{
+    int   d[8];             /* 0x0004 8 Data registers */
+    int   a[8];             /* 0x0024 8 Address registers */
+
+    int   usp;              /* 0x0044 Stack registers (They will overlap over reg_a7) */
+    int   isp;              /* 0x0048 */
+
+    int   sr_high;          /* 0x004C System registers */
+    int   ccr;              /* 0x0050 CCR in Intel Format */
+    int   x_carry;          /* 0x0054 Extended Carry */
+
+    int   pc;               /* 0x0058 Program Counter */
+
+    int   IRQ_level;        /* 0x005C IRQ level you want the MC68K process (0=None)  */
+
+    /* Backward compatible with C emulator - Only set in Debug compile */
+
+    int   sr;
+
+    int (*irq_callback)(int irqline);
+
+    int vbr;                /* Vector Base Register.  Will be used in 68010 */
+    int sfc;                /* Source Function Code.  Will be used in 68010 */
+    int dfc;                /* Destination Function Code.  Will be used in 68010 */
+
+} m68k_cpu_context;
+
+
 m68k_cpu_context regs;
 
 extern void CONVENTION M68KRUN(void);
 extern void CONVENTION M68KRESET(void);
 
-int (*m68000_irq_callback)(int irqline);
-
 /********************************************/
 /* Interface routines to link Mame -> 68KEM */
 /********************************************/
 
-void MC68000_reset(void *param)
+void m68000_reset(void *param)
 {
 	memset(&regs,0,sizeof(regs));
 
@@ -37,17 +65,17 @@ void MC68000_reset(void *param)
 }
 
 
-void MC68000_exit(void)
+void m68000_exit(void)
 {
 	/* nothing to do ? */
 }
 
 
-int  MC68000_execute(int cycles)
+int  m68000_execute(int cycles)
 {
 	if (regs.IRQ_level == 0x80) return cycles;		/* STOP with no IRQs */
 
-  	MC68000_ICount = cycles;
+	m68000_ICount = cycles;
 
 #ifdef MAME_DEBUG
 
@@ -67,7 +95,7 @@ int  MC68000_execute(int cycles)
             }
 
            	fprintf(errorlog,"=> %8x %8x ",areg,dreg);
-            fprintf(errorlog,"%6x %4x %d\n",regs.pc,regs.sr,MC68000_ICount);
+			fprintf(errorlog,"%6x %4x %d\n",regs.pc,regs.sr,m68000_ICount);
         }
         #endif
 
@@ -82,7 +110,7 @@ int  MC68000_execute(int cycles)
 
 		M68KRUN();
     }
-	while (MC68000_ICount > 0);
+	while (m68000_ICount > 0);
 
 #else
 
@@ -90,90 +118,110 @@ int  MC68000_execute(int cycles)
 
 #endif /* MAME_DEBUG */
 
-    return (cycles - MC68000_ICount);
+	return (cycles - m68000_ICount);
 }
 
 
-void MC68000_setregs(MC68000_Regs *src)
+unsigned m68000_get_context(void *dst)
 {
-	regs = src->regs;
+	if( dst )
+		*(m68k_cpu_context*)dst = regs;
+	return sizeof(m68k_cpu_context);
 }
 
-void MC68000_getregs(MC68000_Regs *dst)
+void m68000_set_context(void *src)
 {
-  	dst->regs = regs;
+	if( src )
+		regs = *(m68k_cpu_context*)src;
 }
 
-unsigned MC68000_getpc(void)
+unsigned m68000_get_pc(void)
 {
     return regs.pc;
 }
 
-unsigned MC68000_getreg(int regnum)
+void m68000_set_pc(unsigned val)
+{
+	regs.pc = val;
+}
+
+unsigned m68000_get_sp(void)
+{
+	return regs.isp;
+}
+
+void m68000_set_sp(unsigned val)
+{
+	regs.isp = val;
+}
+
+unsigned m68000_get_reg(int regnum)
 {
     switch( regnum )
     {
-        case  0: regs.pc; break;
-        case  1: regs.vbr; break;
-        case  2: regs.isp; break;
-        case  3: regs.usp; break;
-        case  4: regs.sfc; break;
-        case  5: regs.dfc; break;
-        case  6: regs.d[0]; break;
-        case  7: regs.d[1]; break;
-        case  8: regs.d[2]; break;
-        case  9: regs.d[3]; break;
-        case 10: regs.d[4]; break;
-        case 11: regs.d[5]; break;
-        case 12: regs.d[6]; break;
-        case 13: regs.d[7]; break;
-        case 14: regs.a[0]; break;
-        case 15: regs.a[1]; break;
-        case 16: regs.a[2]; break;
-        case 17: regs.a[3]; break;
-        case 18: regs.a[4]; break;
-        case 19: regs.a[5]; break;
-        case 20: regs.a[6]; break;
-        case 21: regs.a[7]; break;
+		case M68K_PC: return regs.pc; break;
+		case M68K_ISP: return regs.isp; break;
+		case M68K_USP: return regs.usp; break;
+		case M68K_SR: return regs.sr; break;
+		case M68K_VBR: return regs.vbr; break;
+		case M68K_SFC: return regs.sfc; break;
+		case M68K_DFC: return regs.dfc; break;
+		case M68K_D0: return regs.d[0]; break;
+		case M68K_D1: return regs.d[1]; break;
+		case M68K_D2: return regs.d[2]; break;
+		case M68K_D3: return regs.d[3]; break;
+		case M68K_D4: return regs.d[4]; break;
+		case M68K_D5: return regs.d[5]; break;
+		case M68K_D6: return regs.d[6]; break;
+		case M68K_D7: return regs.d[7]; break;
+		case M68K_A0: return regs.a[0]; break;
+		case M68K_A1: return regs.a[1]; break;
+		case M68K_A2: return regs.a[2]; break;
+		case M68K_A3: return regs.a[3]; break;
+		case M68K_A4: return regs.a[4]; break;
+		case M68K_A5: return regs.a[5]; break;
+		case M68K_A6: return regs.a[6]; break;
+		case M68K_A7: return regs.a[7]; break;
     }
     return 0;
 }
 
-void MC68000_setreg(int regnum, unsigned val)
+void m68000_set_reg(int regnum, unsigned val)
 {
     switch( regnum )
     {
-        case  0: regs.pc = val; break;
-        case  1: regs.vbr = val; break;
-        case  2: regs.isp = val; break;
-        case  3: regs.usp = val; break;
-        case  4: regs.sfc = val; break;
-        case  5: regs.dfc = val; break;
-        case  6: regs.d[0] = val; break;
-        case  7: regs.d[1] = val; break;
-        case  8: regs.d[2] = val; break;
-        case  9: regs.d[3] = val; break;
-        case 10: regs.d[4] = val; break;
-        case 11: regs.d[5] = val; break;
-        case 12: regs.d[6] = val; break;
-        case 13: regs.d[7] = val; break;
-        case 14: regs.a[0] = val; break;
-        case 15: regs.a[1] = val; break;
-        case 16: regs.a[2] = val; break;
-        case 17: regs.a[3] = val; break;
-        case 18: regs.a[4] = val; break;
-        case 19: regs.a[5] = val; break;
-        case 20: regs.a[6] = val; break;
-        case 21: regs.a[7] = val; break;
+		case M68K_PC: regs.pc = val; break;
+		case M68K_ISP: regs.isp = val; break;
+		case M68K_USP: regs.usp = val; break;
+		case M68K_SR: regs.sr = val; break;
+		case M68K_VBR: regs.vbr = val; break;
+		case M68K_SFC: regs.sfc = val; break;
+		case M68K_DFC: regs.dfc = val; break;
+		case M68K_D0: regs.d[0] = val; break;
+		case M68K_D1: regs.d[1] = val; break;
+		case M68K_D2: regs.d[2] = val; break;
+		case M68K_D3: regs.d[3] = val; break;
+		case M68K_D4: regs.d[4] = val; break;
+		case M68K_D5: regs.d[5] = val; break;
+		case M68K_D6: regs.d[6] = val; break;
+		case M68K_D7: regs.d[7] = val; break;
+		case M68K_A0: regs.a[0] = val; break;
+		case M68K_A1: regs.a[1] = val; break;
+		case M68K_A2: regs.a[2] = val; break;
+		case M68K_A3: regs.a[3] = val; break;
+		case M68K_A4: regs.a[4] = val; break;
+		case M68K_A5: regs.a[5] = val; break;
+		case M68K_A6: regs.a[6] = val; break;
+		case M68K_A7: regs.a[7] = val; break;
     }
 }
 
-void MC68000_set_nmi_line(int state)
+void m68000_set_nmi_line(int state)
 {
 	/* the 68K does not have a dedicated NMI line */
 }
 
-void MC68000_set_irq_line(int irqline, int state)
+void m68000_set_irq_line(int irqline, int state)
 {
 //	if (errorlog) fprintf(errorlog, "Set IRQ Line %x = %x\n",irqline,state);
 
@@ -188,7 +236,7 @@ void MC68000_set_irq_line(int irqline, int state)
 	}
 }
 
-void MC68000_set_irq_callback(int (*callback)(int irqline))
+void m68000_set_irq_callback(int (*callback)(int irqline))
 {
 	regs.irq_callback = callback;
 }
@@ -196,103 +244,138 @@ void MC68000_set_irq_callback(int (*callback)(int irqline))
 /****************************************************************************
  * Return a formatted string for a register
  ****************************************************************************/
-const char *MC68000_info(void *context, int regnum)
+const char *m68000_info(void *context, int regnum)
 {
 #ifdef MAME_DEBUG
 extern int m68k_disassemble(char* str_buff, int pc);
 #endif
     static char buffer[32][47+1];
 	static int which;
-	MC68000_Regs *r = (MC68000_Regs *)context;
+	m68k_cpu_context *r = context;
 
 	which = ++which % 32;
 	buffer[which][0] = '\0';
-	if( !context && regnum >= CPU_INFO_PC )
-		return buffer[which];
+	if( !context )
+		r = &regs;
 
 	switch( regnum )
 	{
-		case CPU_INFO_NAME: return "MC68000";
+		case CPU_INFO_NAME: return "68000";
 		case CPU_INFO_FAMILY: return "Motorola 68K";
 		case CPU_INFO_VERSION: return "0.10";
 		case CPU_INFO_FILE: return __FILE__;
 		case CPU_INFO_CREDITS: return "Copyright 1998,99 Mike Coates, Darren Olafson. All rights reserved";
 
-		case CPU_INFO_PC: sprintf(buffer[which], "%06X:", r->regs.pc); break;
-		case CPU_INFO_SP: sprintf(buffer[which], "%08X", r->regs.isp); break;
+		case CPU_INFO_PC: sprintf(buffer[which], "%06X:", r->pc); break;
+		case CPU_INFO_SP: sprintf(buffer[which], "%08X", r->isp); break;
 #ifdef MAME_DEBUG
 		case CPU_INFO_DASM:
-			change_pc24(r->regs.pc);
-			r->regs.pc += m68k_disassemble(buffer[which], r->regs.pc);
+			change_pc24(r->pc);
+			r->pc += m68k_disassemble(buffer[which], r->pc);
 			break;
 #else
 		case CPU_INFO_DASM:
-			change_pc24(r->regs.pc);
-            sprintf(buffer[which],"$%02x", ROM[r->regs.pc]);
-			r->regs.pc++;
+			change_pc24(r->pc);
+			sprintf(buffer[which],"$%02x", ROM[r->pc]);
+			r->pc++;
 			break;
 #endif
 		case CPU_INFO_FLAGS:
 			sprintf(buffer[which], "%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",
-				r->regs.sr & 0x8000 ? 'T':'.',
-				r->regs.sr & 0x4000 ? '?':'.',
-				r->regs.sr & 0x2000 ? 'S':'.',
-				r->regs.sr & 0x1000 ? '?':'.',
-				r->regs.sr & 0x0800 ? '?':'.',
-				r->regs.sr & 0x0400 ? 'I':'.',
-				r->regs.sr & 0x0200 ? 'I':'.',
-				r->regs.sr & 0x0100 ? 'I':'.',
-				r->regs.sr & 0x0080 ? '?':'.',
-				r->regs.sr & 0x0040 ? '?':'.',
-				r->regs.sr & 0x0020 ? '?':'.',
-				r->regs.sr & 0x0010 ? 'X':'.',
-				r->regs.sr & 0x0008 ? 'N':'.',
-				r->regs.sr & 0x0004 ? 'Z':'.',
-				r->regs.sr & 0x0002 ? 'V':'.',
-				r->regs.sr & 0x0001 ? 'C':'.');
+				r->sr & 0x8000 ? 'T':'.',
+				r->sr & 0x4000 ? '?':'.',
+				r->sr & 0x2000 ? 'S':'.',
+				r->sr & 0x1000 ? '?':'.',
+				r->sr & 0x0800 ? '?':'.',
+				r->sr & 0x0400 ? 'I':'.',
+				r->sr & 0x0200 ? 'I':'.',
+				r->sr & 0x0100 ? 'I':'.',
+				r->sr & 0x0080 ? '?':'.',
+				r->sr & 0x0040 ? '?':'.',
+				r->sr & 0x0020 ? '?':'.',
+				r->sr & 0x0010 ? 'X':'.',
+				r->sr & 0x0008 ? 'N':'.',
+				r->sr & 0x0004 ? 'Z':'.',
+				r->sr & 0x0002 ? 'V':'.',
+				r->sr & 0x0001 ? 'C':'.');
             break;
-		case CPU_INFO_REG+ 0: sprintf(buffer[which], "PC:%08X", r->regs.pc); break;
-		case CPU_INFO_REG+ 1: sprintf(buffer[which], "VBR:%08X", r->regs.vbr); break;
-		case CPU_INFO_REG+ 2: sprintf(buffer[which], "ISP:%08X", r->regs.isp); break;
-		case CPU_INFO_REG+ 3: sprintf(buffer[which], "USP:%08X", r->regs.usp); break;
-		case CPU_INFO_REG+ 4: sprintf(buffer[which], "SFC:%08X", r->regs.sfc); break;
-		case CPU_INFO_REG+ 5: sprintf(buffer[which], "DFC:%08X", r->regs.dfc); break;
-		case CPU_INFO_REG+ 6: sprintf(buffer[which], "D0:%08X", r->regs.d[0]); break;
-		case CPU_INFO_REG+ 7: sprintf(buffer[which], "D1:%08X", r->regs.d[1]); break;
-		case CPU_INFO_REG+ 8: sprintf(buffer[which], "D2:%08X", r->regs.d[2]); break;
-		case CPU_INFO_REG+ 9: sprintf(buffer[which], "D3:%08X", r->regs.d[3]); break;
-		case CPU_INFO_REG+10: sprintf(buffer[which], "D4:%08X", r->regs.d[4]); break;
-		case CPU_INFO_REG+11: sprintf(buffer[which], "D5:%08X", r->regs.d[5]); break;
-		case CPU_INFO_REG+12: sprintf(buffer[which], "D6:%08X", r->regs.d[6]); break;
-		case CPU_INFO_REG+13: sprintf(buffer[which], "D7:%08X", r->regs.d[7]); break;
-		case CPU_INFO_REG+14: sprintf(buffer[which], "A0:%08X", r->regs.a[0]); break;
-		case CPU_INFO_REG+15: sprintf(buffer[which], "A1:%08X", r->regs.a[1]); break;
-		case CPU_INFO_REG+16: sprintf(buffer[which], "A2:%08X", r->regs.a[2]); break;
-		case CPU_INFO_REG+17: sprintf(buffer[which], "A3:%08X", r->regs.a[3]); break;
-		case CPU_INFO_REG+18: sprintf(buffer[which], "A4:%08X", r->regs.a[4]); break;
-		case CPU_INFO_REG+19: sprintf(buffer[which], "A5:%08X", r->regs.a[5]); break;
-		case CPU_INFO_REG+20: sprintf(buffer[which], "A6:%08X", r->regs.a[6]); break;
-		case CPU_INFO_REG+21: sprintf(buffer[which], "A7:%08X", r->regs.a[7]); break;
+		case CPU_INFO_REG+M68K_PC: sprintf(buffer[which], "PC:%08X", r->pc); break;
+		case CPU_INFO_REG+M68K_ISP: sprintf(buffer[which], "ISP:%08X", r->isp); break;
+		case CPU_INFO_REG+M68K_USP: sprintf(buffer[which], "USP:%08X", r->usp); break;
+		case CPU_INFO_REG+M68K_SR: sprintf(buffer[which], "SR:%08X", r->sr); break;
+		case CPU_INFO_REG+M68K_VBR: sprintf(buffer[which], "VBR:%08X", r->vbr); break;
+		case CPU_INFO_REG+M68K_SFC: sprintf(buffer[which], "SFC:%08X", r->sfc); break;
+		case CPU_INFO_REG+M68K_DFC: sprintf(buffer[which], "DFC:%08X", r->dfc); break;
+		case CPU_INFO_REG+M68K_D0: sprintf(buffer[which], "D0:%08X", r->d[0]); break;
+		case CPU_INFO_REG+M68K_D1: sprintf(buffer[which], "D1:%08X", r->d[1]); break;
+		case CPU_INFO_REG+M68K_D2: sprintf(buffer[which], "D2:%08X", r->d[2]); break;
+		case CPU_INFO_REG+M68K_D3: sprintf(buffer[which], "D3:%08X", r->d[3]); break;
+		case CPU_INFO_REG+M68K_D4: sprintf(buffer[which], "D4:%08X", r->d[4]); break;
+		case CPU_INFO_REG+M68K_D5: sprintf(buffer[which], "D5:%08X", r->d[5]); break;
+		case CPU_INFO_REG+M68K_D6: sprintf(buffer[which], "D6:%08X", r->d[6]); break;
+		case CPU_INFO_REG+M68K_D7: sprintf(buffer[which], "D7:%08X", r->d[7]); break;
+		case CPU_INFO_REG+M68K_A0: sprintf(buffer[which], "A0:%08X", r->a[0]); break;
+		case CPU_INFO_REG+M68K_A1: sprintf(buffer[which], "A1:%08X", r->a[1]); break;
+		case CPU_INFO_REG+M68K_A2: sprintf(buffer[which], "A2:%08X", r->a[2]); break;
+		case CPU_INFO_REG+M68K_A3: sprintf(buffer[which], "A3:%08X", r->a[3]); break;
+		case CPU_INFO_REG+M68K_A4: sprintf(buffer[which], "A4:%08X", r->a[4]); break;
+		case CPU_INFO_REG+M68K_A5: sprintf(buffer[which], "A5:%08X", r->a[5]); break;
+		case CPU_INFO_REG+M68K_A6: sprintf(buffer[which], "A6:%08X", r->a[6]); break;
+		case CPU_INFO_REG+M68K_A7: sprintf(buffer[which], "A7:%08X", r->a[7]); break;
 	}
 	return buffer[which];
 }
 
-const char *MC68010_info(void *context, int regnum)
+/****************************************************************************
+ * M68010 section
+ ****************************************************************************/
+void m68010_reset(void *param) { m68000_reset(param); }
+void m68010_exit(void) { m68000_exit(); }
+int  m68010_execute(int cycles) { return m68000_execute(cycles); }
+unsigned m68010_get_context(void *dst) { return m68000_get_context(dst); }
+void m68010_set_context(void *src) { m68000_set_context(src); }
+unsigned m68010_get_pc(void) { return m68000_get_pc(); }
+void m68010_set_pc(unsigned val) { m68000_set_pc(val); }
+unsigned m68010_get_sp(void) { return m68000_get_sp(); }
+void m68010_set_sp(unsigned val) { m68000_set_sp(val); }
+unsigned m68010_get_reg(int regnum) { return m68000_get_reg(regnum); }
+void m68010_set_reg(int regnum, unsigned val) { m68000_set_reg(regnum,val); }
+void m68010_set_nmi_line(int state) { m68000_set_nmi_line(state); }
+void m68010_set_irq_line(int irqline, int state)  { m68000_set_irq_line(irqline,state); }
+void m68010_set_irq_callback(int (*callback)(int irqline))  { m68000_set_irq_callback(callback); }
+const char *m68010_info(void *context, int regnum)
 {
 	switch( regnum )
 	{
 		case CPU_INFO_NAME: return "MC68010";
 	}
-	return MC68000_info(context,regnum);
+	return m68000_info(context,regnum);
 }
 
-const char *MC68020_info(void *context, int regnum)
+/****************************************************************************
+ * M68020 section
+ ****************************************************************************/
+void m68020_reset(void *param) { m68000_reset(param); }
+void m68020_exit(void) { m68000_exit(); }
+int  m68020_execute(int cycles) { return m68000_execute(cycles); }
+unsigned m68020_get_context(void *dst) { return m68000_get_context(dst); }
+void m68020_set_context(void *src) { m68000_set_context(src); }
+unsigned m68020_get_pc(void) { return m68000_get_pc(); }
+void m68020_set_pc(unsigned val) { m68000_set_pc(val); }
+unsigned m68020_get_sp(void) { return m68000_get_sp(); }
+void m68020_set_sp(unsigned val) { m68000_set_sp(val); }
+unsigned m68020_get_reg(int regnum) { return m68000_get_reg(regnum); }
+void m68020_set_reg(int regnum, unsigned val) { m68000_set_reg(regnum,val); }
+void m68020_set_nmi_line(int state) { m68000_set_nmi_line(state); }
+void m68020_set_irq_line(int irqline, int state)  { m68000_set_irq_line(irqline,state); }
+void m68020_set_irq_callback(int (*callback)(int irqline))  { m68000_set_irq_callback(callback); }
+const char *m68020_info(void *context, int regnum)
 {
 	switch( regnum )
 	{
 		case CPU_INFO_NAME: return "MC68020";
 	}
-	return MC68000_info(context,regnum);
+	return m68000_info(context,regnum);
 }
 
 

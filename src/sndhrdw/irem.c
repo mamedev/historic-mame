@@ -1,5 +1,5 @@
 #include "driver.h"
-#include "cpu/m6808/m6808.h"
+#include "cpu/m6800/m6800.h"
 
 
 

@@ -99,7 +99,7 @@ static void btime_decrypt(void)
 	/* xxxx xxx1 xxxx x1xx are encrypted. */
 
 	/* get the address of the next opcode */
-	A = cpu_getpc();
+	A = cpu_get_pc();
 
 	/* however if the previous instruction was JSR (which caused a write to */
 	/* the stack), fetch the address of the next instruction. */
@@ -174,7 +174,7 @@ static void zoar_ram_w(int offset,int data)
 
 	if (!good && errorlog)
 	{
-		fprintf(errorlog,"CPU #%d PC %04x: warning - write %02x to unmapped memory address %04x\n",cpu_getactivecpu(),cpu_getpc(),data,offset);
+		fprintf(errorlog,"CPU #%d PC %04x: warning - write %02x to unmapped memory address %04x\n",cpu_getactivecpu(),cpu_get_pc(),data,offset);
 	}
 }
 

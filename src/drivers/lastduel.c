@@ -329,9 +329,9 @@ static void SaveState(void)
 /******************************************************************************/
 
 /* handler called by the 2203 emulator when the internal timers cause an IRQ */
-static void irqhandler(void)
+static void irqhandler(int irq)
 {
-	cpu_cause_interrupt(1,0xff);
+	cpu_set_irq_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
 }
 
 static struct YM2203interface ym2203_interface =

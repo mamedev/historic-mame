@@ -626,7 +626,7 @@ static opcode_handler_struct g_func_table[] =
    {"m68020_pack_mm_axy7"   , 0xffff, 0x8f4f, 0x000, 0,   8},
    {"m68020_pack_mm"        , 0xf1f8, 0x8148, 0x000, 0,   8},
    {"m68000_pea"            , 0xffc0, 0x4840, 0x27b, 2,   0}, /* make table */
-   {"m68000_reset"          , 0xffff, 0x4e70, 0x000, 1, 132},
+   {"m68000_rst"            , 0xffff, 0x4e70, 0x000, 1, 132},
    {"m68000_ror_s_8"        , 0xf1f8, 0xe018, 0x000, 0,  14}, /* fix in code */
    {"m68000_ror_s_16"       , 0xf1f8, 0xe058, 0x000, 1,  14},
    {"m68000_ror_s_32"       , 0xf1f8, 0xe098, 0x000, 2,  16},

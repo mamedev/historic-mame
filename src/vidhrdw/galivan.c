@@ -235,7 +235,7 @@ void galivan_gfxbank_w(int offset,int data)
 	/* bit 7 selects one of two ROM banks for c000-dfff */
 	galivan_setrombank((data>>7)&1);
 
-//	if (errorlog) fprintf(errorlog,"Address: %04X - port 40 = %02x\n",cpu_getpc(),data);
+//	if (errorlog) fprintf(errorlog,"Address: %04X - port 40 = %02x\n",cpu_get_pc(),data);
 }
 
 

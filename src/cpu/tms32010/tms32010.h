@@ -20,24 +20,10 @@
 #include "osd_cpu.h"
 #include "cpuintrf.h"
 
+enum { TMS320C10_PC, TMS320C10_ACC, TMS320C10_PREG, TMS320C10_TREG,
+	TMS320C10_AR0, TMS320C10_AR1, TMS320C10_STR, TMS320C10_STACK3 };
 
-#ifndef INLINE
-#define INLINE static inline
-#endif
-typedef struct
-{
-		UINT16	PC;
-		INT32	ACC, Preg;
-		INT32	ALU;
-		UINT16	Treg;
-		UINT16	AR[2], STACK[4], STR;
-		int		pending_irq, BIO_pending_irq;
-		int		irq_state;
-		int		(*irq_callback)(int irqline);
-} TMS320C10_Regs;
-
-
-extern	int TMS320C10_ICount;		/* T-state count */
+extern	int tms320c10_ICount;		/* T-state count */
 
 #define TMS320C10_ACTIVE_INT  0		/* Activate INT external interrupt		 */
 #define TMS320C10_ACTIVE_BIO  1		/* Activate BIO for use with BIOZ inst	 */
@@ -51,19 +37,22 @@ extern	int TMS320C10_ICount;		/* T-state count */
 										/* can address up to 0xffff (incase  */
 										/* their support is ever added).	 */
 
-void TMS320C10_reset  (void *param);			/* Reset processor & registers	*/
-void TMS320C10_exit(void);						/* Shutdown CPU core			*/
-int TMS320C10_execute(int cycles);				/* Execute cycles T-States -	*/
+void tms320c10_reset  (void *param);			/* Reset processor & registers	*/
+void tms320c10_exit(void);						/* Shutdown CPU core			*/
+int tms320c10_execute(int cycles);				/* Execute cycles T-States -	*/
 												/* returns number of cycles actually run */
-void TMS320C10_getregs(TMS320C10_Regs *Regs);	/* Get registers		  */
-void TMS320C10_setregs(TMS320C10_Regs *Regs);	/* Set registers		  */
-unsigned TMS320C10_getpc(void);					/* Get program counter	  */
-unsigned TMS320C10_getreg(int regnum);			/* Get a specific register*/
-void TMS320C10_setreg(int regnum, unsigned val);/* Set a specific register*/
-void TMS320C10_set_nmi_line(int state);
-void TMS320C10_set_irq_line(int irqline, int state);
-void TMS320C10_set_irq_callback(int (*callback)(int irqline));
-const char *TMS320C10_info(void *context, int regnum);
+unsigned tms320c10_get_context(void *dst); 	/* Get registers			*/
+void tms320c10_set_context(void *src); 		/* Set registers			*/
+unsigned tms320c10_get_pc(void);				/* Get program counter		*/
+void tms320c10_set_pc(unsigned val);			/* Set program counter		*/
+unsigned tms320c10_get_sp(void);				/* Get stack pointer		*/
+void tms320c10_set_sp(unsigned val);			/* Set stack pointer		*/
+unsigned tms320c10_get_reg(int regnum);			/* Get specific register	*/
+void tms320c10_set_reg(int regnum, unsigned val);/* Set specific register	*/
+void tms320c10_set_nmi_line(int state);
+void tms320c10_set_irq_line(int irqline, int state);
+void tms320c10_set_irq_callback(int (*callback)(int irqline));
+const char *tms320c10_info(void *context, int regnum);
 
 #include "memory.h"
 

@@ -6,6 +6,10 @@
 #include "m68kcpu.h"
 #include <stdlib.h>
 
+#ifndef CLIB_DECL
+#define CLIB_DECL
+#endif
+
 extern void  (*m68k_instruction_jump_table[])(void); /* opcode handler jump table */
 
 /* This is used to generate the opcode handler jump table */
@@ -1520,7 +1524,7 @@ static opcode_handler_struct m68k_opcode_handler_table[] =
    {m68000_pea_al           , 0xffff, 0x4879},
    {m68000_pea_pcdi         , 0xffff, 0x487a},
    {m68000_pea_pcix         , 0xffff, 0x487b},
-   {m68000_reset            , 0xffff, 0x4e70},
+   {m68000_rst				, 0xffff, 0x4e70},
    {m68000_ror_s_8          , 0xf1f8, 0xe018},
    {m68000_ror_s_16         , 0xf1f8, 0xe058},
    {m68000_ror_s_32         , 0xf1f8, 0xe098},
@@ -2001,7 +2005,7 @@ static opcode_handler_struct m68k_opcode_handler_table[] =
 
 
 /* Comparison function for qsort() */
-static int compare_nof_true_bits(const void* aptr, const void* bptr)
+static int CLIB_DECL compare_nof_true_bits(const void* aptr, const void* bptr)
 {
    uint a = ((opcode_handler_struct*)aptr)->mask;
    uint b = ((opcode_handler_struct*)bptr)->mask;

@@ -1,4 +1,4 @@
-#define __INLINE__ static __inline__	/* keep allegro.h happy */
+#define __INLINE__ static __inline__    /* keep allegro.h happy */
 #include <allegro.h>
 #undef __INLINE__
 #include "driver.h"
@@ -104,6 +104,7 @@ int ntsc;
 int vgafreq;
 int always_synced;
 int video_sync;
+int wait_vsync;
 int color_depth;
 int skiplines;
 int skipcolumns;
@@ -151,8 +152,8 @@ int throttle = 1;       /* toggled by F10 */
 static int gone_to_gfx_mode;
 static int frameskip_counter;
 static int frames_displayed;
-static uclock_t start_time,end_time;	/* to calculate fps average on exit */
-#define FRAMES_TO_SKIP 20	/* skip the first few frames from the FPS calculation */
+static uclock_t start_time,end_time;    /* to calculate fps average on exit */
+#define FRAMES_TO_SKIP 20       /* skip the first few frames from the FPS calculation */
 							/* to avoid counting the copyright and info screens */
 
 
@@ -263,7 +264,7 @@ void osd_clearbitmap(struct osd_bitmap *bitmap)
 
 	if (bitmap == scrbitmap)
 	{
-		extern int bitmap_dirty;	/* in mame.c */
+		extern int bitmap_dirty;        /* in mame.c */
 
 		osd_mark_dirty (0,0,bitmap->width-1,bitmap->height-1,1);
 		bitmap_dirty = 1;
@@ -296,7 +297,7 @@ void osd_mark_dirty(int _x1, int _y1, int _x2, int _y2, int ui)
 		_y1 -= skiplines;
 		_y2 -= skiplines;
 
-        if (_y1 >= gfx_display_lines || _y2 < 0 || _x1 > gfx_display_columns || _x2 < 0) return;
+	if (_y1 >= gfx_display_lines || _y2 < 0 || _x1 > gfx_display_columns || _x2 < 0) return;
 		if (_y1 < 0) _y1 = 0;
 		if (_y2 >= gfx_display_lines) _y2 = gfx_display_lines - 1;
 		if (_x1 < 0) _x1 = 0;
@@ -779,7 +780,7 @@ struct osd_bitmap *osd_create_display(int width,int height,int attributes)
 		{
 			update_screen = blitscreen_dirty1_vga;
 			if (errorlog) fprintf (errorlog, "blitscreen_dirty1_vga\n");
-        }
+	}
 		else
 		if (scrbitmap->depth == 16)
 		{
@@ -787,10 +788,10 @@ struct osd_bitmap *osd_create_display(int width,int height,int attributes)
 				if (scanlines) {
 					update_screen = blitscreen_dirty1_vesa_2x_2xs_16bpp;
 					if (errorlog) fprintf (errorlog, "blitscreen_dirty1_vesa_2x_2xs_16bpp\n");
-                } else {
+		} else {
 					update_screen = blitscreen_dirty1_vesa_2x_2x_16bpp;
 					if (errorlog) fprintf (errorlog, "blitscreen_dirty1_vesa_2x_2x_16bpp\n");
-                }
+		}
 			} else {
 				if (vdoubling) {
 					if (scanlines) {
@@ -804,32 +805,32 @@ struct osd_bitmap *osd_create_display(int width,int height,int attributes)
 					update_screen = blitscreen_dirty1_vesa_1x_1x_16bpp;
 					if (errorlog) fprintf (errorlog, "blitscreen_dirty1_vesa_1x_1x_16bpp\n");
 				}
-            }
+	    }
 		} else {
 			if (doubling) {
 				if (scanlines) {
 					update_screen = blitscreen_dirty1_vesa_2x_2xs_8bpp;
 					if (errorlog) fprintf (errorlog, "blitscreen_dirty1_vesa_2x_2xs_8bpp\n");
-                } else {
+		} else {
 					update_screen = blitscreen_dirty1_vesa_2x_2x_8bpp;
 					if (errorlog) fprintf (errorlog, "blitscreen_dirty1_vesa_2x_2x_8bpp\n");
-                }
+		}
 			} else if (tripling) {
 				if (scanlines) {
 					update_screen = blitscreen_dirty1_vesa_3x_2xs_8bpp;
 					if (errorlog) fprintf (errorlog, "blitscreen_dirty1_vesa_3x_2xs_8bpp\n");
-                } else {
+		} else {
 					update_screen = blitscreen_dirty1_vesa_3x_2x_8bpp;
 					if (errorlog) fprintf (errorlog, "blitscreen_dirty1_vesa_3x_2x_8bpp\n");
-                }
+		}
 			} else if (quadring) {
 				if (scanlines) {
 					update_screen = blitscreen_dirty1_vesa_4x_3xs_8bpp;
 					if (errorlog) fprintf (errorlog, "blitscreen_dirty1_vesa_4x_3xs_8bpp\n");
-                } else {
+		} else {
 					update_screen = blitscreen_dirty1_vesa_4x_3x_8bpp;
 					if (errorlog) fprintf (errorlog, "blitscreen_dirty1_vesa_4x_3x_8bpp\n");
-                }
+		}
 			} else {
 				if (vdoubling) {
 					if (scanlines) {
@@ -846,13 +847,13 @@ struct osd_bitmap *osd_create_display(int width,int height,int attributes)
 			}
 		}
 	}
-	else	/* does not support dirty */
+	else    /* does not support dirty */
 	{
 		if (use_vesa == 0)
 		{
 			update_screen = blitscreen_dirty0_vga;
 			if (errorlog) fprintf (errorlog, "blitscreen_dirty0_vga\n");
-        }
+	}
 		else
 		if (scrbitmap->depth == 16)
 		{
@@ -860,10 +861,10 @@ struct osd_bitmap *osd_create_display(int width,int height,int attributes)
 				if (scanlines) {
 					update_screen = blitscreen_dirty0_vesa_2x_2xs_16bpp;
 					if (errorlog) fprintf (errorlog, "blitscreen_dirty0_vesa_2x_2xs_16bpp\n");
-                } else {
+		} else {
 					update_screen = blitscreen_dirty0_vesa_2x_2x_16bpp;
 					if (errorlog) fprintf (errorlog, "blitscreen_dirty0_vesa_2x_2x_16bpp\n");
-                }
+		}
 			} else {
 				if (vdoubling) {
 					if (scanlines) {
@@ -877,7 +878,7 @@ struct osd_bitmap *osd_create_display(int width,int height,int attributes)
 					update_screen = blitscreen_dirty0_vesa_1x_1x_16bpp;
 					if (errorlog) fprintf (errorlog, "blitscreen_dirty0_vesa_1x_1x_16bpp\n");
 				}
-            }
+	    }
 		} else {
 			if (doubling) {
 				if (scanlines) {
@@ -917,7 +918,7 @@ struct osd_bitmap *osd_create_display(int width,int height,int attributes)
 					update_screen = blitscreen_dirty0_vesa_1x_1x_8bpp;
 					if (errorlog) fprintf (errorlog, "blitscreen_dirty0_vesa_1x_1x_8bpp\n");
 				}
-            }
+	    }
 		}
     }
 
@@ -990,7 +991,7 @@ int osd_set_display(int width,int height, int attributes)
 
 		/* find the matching tweaked mode */
 		/* use noscanline modes if scanline modes not possible */
-		if (video_sync == 0 && always_synced == 0)
+		if (video_sync == 0 && always_synced == 0 && wait_vsync == 0)
 		{
 			/* if vsync not requested, first look for more compatible modes */
 			for (i=0; ((vga_orig_tweaked[i].x != 0) && !found); i++)
@@ -1004,7 +1005,7 @@ int osd_set_display(int width,int height, int attributes)
 				{
 					reg = vga_orig_tweaked[i].reg;
 					reglen = vga_orig_tweaked[i].reglen;
-					videofreq = 0;	/* always use the most compatible vgafreq 0 */
+					videofreq = 0;  /* always use the most compatible vgafreq 0 */
 					found = 1;
 				}
 			}
@@ -1434,7 +1435,7 @@ void clear_screen(void)
 		if (scrbitmap->depth == 16)
 		{
 			memset(buf, 0, gfx_width);
-            for (y = 0; y < gfx_height; y++)
+	    for (y = 0; y < gfx_height; y++)
 			{
 				address = bmp_write_line (screen, y);
 				_movedatal(src_seg,(unsigned long)buf,dest_seg,address,columns4);
@@ -1443,7 +1444,7 @@ void clear_screen(void)
 		else
 		{
 			memset(buf,BACKGROUND,gfx_width);
-            for (y = 0; y < gfx_height; y++)
+	    for (y = 0; y < gfx_height; y++)
 			{
 				address = bmp_write_line (screen, y);
 				_movedatal(src_seg,(unsigned long)buf,dest_seg,address,columns4);
@@ -1687,6 +1688,10 @@ void osd_update_video_and_audio(void)
 				uclock_t target,target2;
 
 
+				/* wait for video sync but use normal throttling */
+				if (wait_vsync)
+					vsync();
+
 				curr = uclock();
 
 				if (already_synced == 0)
@@ -1837,7 +1842,7 @@ void osd_update_video_and_audio(void)
 				frameskip += 2;
 				if (frameskip >= FRAMESKIP_LEVELS) frameskip = FRAMESKIP_LEVELS-1;
 			}
-			else if (speed < 100)
+			else if (speed < 98)	/* allow 98-99% speed */
 			{
 				frameskipadjust = 0;
 				/* don't push frameskip too far if we are close to 100% speed */
@@ -1894,7 +1899,7 @@ void osd_set_gamma(float _gamma)
 
 		for (i = 0;i < 256;i++)
 		{
-			if (i != Machine->uifont->colortable[1])	/* don't touch the user interface text */
+			if (i != Machine->uifont->colortable[1])        /* don't touch the user interface text */
 				dirtycolor[i] = 1;
 		}
 		dirtypalette = 1;
@@ -1918,7 +1923,7 @@ void osd_set_brightness(int _brightness)
 
 		for (i = 0;i < 256;i++)
 		{
-			if (i != Machine->uifont->colortable[1])	/* don't touch the user interface text */
+			if (i != Machine->uifont->colortable[1])        /* don't touch the user interface text */
 				dirtycolor[i] = 1;
 		}
 		dirtypalette = 1;

@@ -7033,7 +7033,7 @@ void m68000_pea(void)
 }
 
 
-void m68000_reset(void)
+void m68000_rst(void)
 {
    if(CPU_S)
    {

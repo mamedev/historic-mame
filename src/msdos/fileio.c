@@ -269,7 +269,7 @@ void *osd_fopen(const char *game,const char *filename,int filetype,int _write)
 	f = (FakeFileHandle *)malloc(sizeof(FakeFileHandle));
 	if (!f)
 		return 0;
-	memset(f,0,sizeof(FakeFileHandle));
+    memset(f,0,sizeof(FakeFileHandle));
 
 	gamename = (char *)game;
 
@@ -437,18 +437,21 @@ void *osd_fopen(const char *game,const char *filename,int filetype,int _write)
 		case OSD_FILETYPE_STATE:
 			sprintf(name,"%s/%s.sta",stadir,gamename);
 			f->file = fopen(name,_write ? "wb" : "rb");
-			if (f->file == 0)
+			found = !(f->file == 0);
+			if (!found)
 			{
 				/* try with a .zip directory (if ZipMagic is installed) */
 				sprintf(name,"%s.zip/%s.sta",stadir,gamename);
 				f->file = fopen(name,_write ? "wb" : "rb");
-			}
-			if (f->file == 0)
+				found = !(f->file == 0);
+            }
+			if (!found)
 			{
 				/* try with a .zif directory (if ZipFolders is installed) */
 				sprintf(name,"%s.zif/%s.sta",stadir,gamename);
 				f->file = fopen(name,_write ? "wb" : "rb");
-			}
+				found = !(f->file == 0);
+            }
 			break;
 		case OSD_FILETYPE_ARTWORK:
 			/* only for reading */

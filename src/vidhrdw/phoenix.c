@@ -212,7 +212,7 @@ int phoenix_input_port_0_r (int offset)
 		ret	|= 0x08;
 		break;
 	default:
-		if (errorlog) fprintf(errorlog, "Unknown protection question %02X at %04X\n", protection_question, cpu_getpc());
+		if (errorlog) fprintf(errorlog, "Unknown protection question %02X at %04X\n", protection_question, cpu_get_pc());
 	}
 
 	return ret;

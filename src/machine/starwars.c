@@ -33,7 +33,7 @@ int input_bank_0_r(int offset)
 	x=input_port_0_r(0); /* Read memory mapped port 1 */
 	x=x&0xdf; /* Clear out bit 5 (SPARE 1) */
 #if(MACHDEBUG==1)
-	printf("(%x)input_bank_0_r   (returning %xh)\n", cpu_getpc(), x);
+	printf("(%x)input_bank_0_r   (returning %xh)\n", cpu_get_pc(), x);
 #endif
 	return x;
 }
@@ -53,12 +53,12 @@ int starwars_input_bank_1_r(int offset)
 
 	/* Kludge to enable Starwars Mathbox Self-test                  */
 	/* The mathbox looks like it's running, from this address... :) */
-	if (cpu_getpc() == 0xf978)
+	if (cpu_get_pc() == 0xf978)
 		x|=0x80;
 
 	/* Kludge to enable Empire Mathbox Self-test                  */
 	/* The mathbox looks like it's running, from this address... :) */
-	if (cpu_getpc() == 0xf655)
+	if (cpu_get_pc() == 0xf655)
 		x|=0x80;
 
 	if (avgdvg_done())

@@ -1504,7 +1504,7 @@ void m68000_pea_aw(void);
 void m68000_pea_al(void);
 void m68000_pea_pcdi(void);
 void m68000_pea_pcix(void);
-void m68000_reset(void);
+void m68000_rst(void);
 void m68000_ror_s_8(void);
 void m68000_ror_s_16(void);
 void m68000_ror_s_32(void);

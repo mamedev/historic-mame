@@ -5,13 +5,8 @@ Irem "M62" system
 There's two crystals on Kid Kiki. 24.00 MHz and 3.579545 MHz for sound
 
 TODO:
-- in ldrun2, tile/sprite priority in the intermission scenes is not implemented
-  (sprites should disappear behind the door). Same goes for the title screen in
-  ldrun3. However when the sprite falls in the hole in ldrun3, it is masked by
-  another sprite. So is there really a priority control?
-- should sprites in ldrun be clipped at the top of the screen? (just below the
-  score). I was doing that before, but I have removed the code because it broke
-  ldrun3 title screen, where the title scrolls in from above.
+- In kungfum, the top portion of the screen should have priority over sprites.
+  The was implemented before I merged the driver with this one.
 
 **************************************************************************/
 
@@ -20,13 +15,24 @@ TODO:
 
 
 void irem_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+void battroad_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void spelunk2_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int ldrun_vh_start( void );
 int kidniki_vh_start( void );
 int spelunk2_vh_start( void );
 void irem_flipscreen_w(int offset,int data);
+void kungfum_scroll_low_w(int offset,int data);
+void kungfum_scroll_high_w(int offset,int data);
 void ldrun3_vscroll_w(int offset,int data);
 void ldrun4_hscroll_w(int offset,int data);
+void irem_background_hscroll_w( int offset, int data );
+void irem_background_vscroll_w( int offset, int data );
+void battroad_scroll_w( int offset, int data );
+void kidniki_text_vscroll_w( int offset, int data );
+void kidniki_background_bank_w( int offset, int data );
+void spelunk2_gfxport_w( int offset, int data );
+void kungfum_vh_screenrefresh(struct osd_bitmap *bitmap,int fullrefresh);
+void battroad_vh_screenrefresh(struct osd_bitmap *bitmap,int fullrefresh);
 void ldrun_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void ldrun4_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void lotlot_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
@@ -38,13 +44,6 @@ extern struct MemoryWriteAddress irem_sound_writemem[];
 extern struct AY8910interface irem_ay8910_interface;
 extern struct MSM5205interface irem_msm5205_interface;
 void irem_sound_cmd_w(int offset, int value);
-
-void irem_background_hscroll_w( int offset, int data );
-void irem_background_vscroll_w( int offset, int data );
-void kidniki_text_vscroll_w( int offset, int data );
-void kidniki_background_bank_w( int offset, int data );
-
-void spelunk2_gfxport_w( int offset, int data );
 
 extern unsigned char *irem_textram;
 extern int irem_textram_size;
@@ -144,6 +143,8 @@ static void kidniki_bankswitch_w(int offset,int data)
 	cpu_setbank(1,&RAM[bankaddress]);
 }
 
+#define battroad_bankswitch_w kidniki_bankswitch_w
+
 void spelunk2_bankswitch_w( int offset, int data )
 {
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
@@ -154,6 +155,38 @@ void spelunk2_bankswitch_w( int offset, int data )
 }
 
 
+
+
+static struct MemoryWriteAddress kungfum_writemem[] =
+{
+	{ 0x0000, 0x7fff, MWA_ROM },
+	{ 0xa000, 0xa000, kungfum_scroll_low_w },
+	{ 0xb000, 0xb000, kungfum_scroll_high_w },
+	{ 0xc000, 0xc0ff, MWA_RAM, &spriteram, &spriteram_size },
+	/* Kung Fu Master is the only game in this driver to have separated (but */
+	/* contiguous) videoram and colorram. They are interleaved in all the others. */
+	{ 0xd000, 0xdfff, videoram_w, &videoram, &videoram_size },
+	{ 0xe000, 0xefff, MWA_RAM },
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryReadAddress battroad_readmem[] =
+{
+	{ 0x0000, 0x7fff, MRA_ROM },
+	{ 0xa000, 0xbfff, MRA_BANK1 },
+	{ 0xc800, 0xefff, MRA_RAM },
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryWriteAddress battroad_writemem[] =
+{
+	{ 0x0000, 0xbfff, MWA_ROM },
+	{ 0xc000, 0xc0ff, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0xc800, 0xcfff, MWA_RAM, &irem_textram, &irem_textram_size },
+	{ 0xd000, 0xdfff, videoram_w, &videoram, &videoram_size },
+	{ 0xe000, 0xefff, MWA_RAM },
+	{ -1 }	/* end of table */
+};
 
 static struct MemoryReadAddress ldrun_readmem[] =
 {
@@ -294,6 +327,15 @@ static struct IOReadPort ldrun_readport[] =
 	{ -1 }	/* end of table */
 };
 
+static struct IOWritePort battroad_writeport[] =
+{
+	{ 0x00, 0x00, irem_sound_cmd_w },
+	{ 0x01, 0x01, irem_flipscreen_w },	/* + coin counters */
+	{ 0x80, 0x82, battroad_scroll_w },
+	{ 0x83, 0x83, battroad_bankswitch_w },
+	{ -1 }	/* end of table */
+};
+
 static struct IOWritePort ldrun_writeport[] =
 {
 	{ 0x00, 0x00, irem_sound_cmd_w },
@@ -354,7 +396,6 @@ static struct IOWritePort spelunk2_writeport[] =
 	{ 0x01, 0x01, irem_flipscreen_w },	/* + coin counters */
 	{ -1 }	/* end of table */
 };
-
 
 
 #define IN0_PORT \
@@ -428,6 +469,114 @@ static struct IOWritePort spelunk2_writeport[] =
 	PORT_DIPSETTING(    0x50, "1 Coin/6 Credits" ) \
 	PORT_DIPSETTING(    0x00, "Free Play" ) \
 
+
+INPUT_PORTS_START( kungfum_input_ports )
+	PORT_START	/* IN0 */
+	IN0_PORT
+
+	PORT_START	/* IN1 */
+	IN1_PORT
+
+	PORT_START	/* IN2 */
+	IN2_PORT
+
+	PORT_START	/* DSW1 */
+	PORT_DIPNAME( 0x01, 0x01, "Difficulty", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x01, "Easy" )
+	PORT_DIPSETTING(    0x00, "Hard" )
+	PORT_DIPNAME( 0x02, 0x02, "Energy Loss", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x02, "Slow" )
+	PORT_DIPSETTING(    0x00, "Fast" )
+	PORT_DIPNAME( 0x0c, 0x0c, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x08, "2" )
+	PORT_DIPSETTING(    0x0c, "3" )
+	PORT_DIPSETTING(    0x04, "4" )
+	PORT_DIPSETTING(    0x00, "5" )
+	COINAGE_DSW
+
+	PORT_START	/* DSW2 */
+	PORT_DIPNAME( 0x01, 0x01, "Flip Screen", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x01, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x02, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x02, "Cocktail" )
+/* This activates a different coin mode. Look at the dip switch setting schematic */
+	PORT_DIPNAME( 0x04, 0x04, "Coin Mode", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x04, "Mode 1" )
+	PORT_DIPSETTING(    0x00, "Mode 2" )
+	/* In slowmo mode, press 2 to slow game speed */
+	PORT_BITX   ( 0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Slow Motion Mode", IP_KEY_NONE, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x08, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	/* In stop mode, press 2 to stop and 1 to restart */
+	PORT_BITX   ( 0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Stop Mode", IP_KEY_NONE, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x10, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	/* In level selection mode, press 1 to select and 2 to restart */
+	PORT_BITX   ( 0x20, 0x20, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Level Selection Mode", IP_KEY_NONE, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x20, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x40, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( battroad_input_ports )
+	PORT_START	/* IN0 */
+	IN0_PORT
+
+	PORT_START	/* IN1 */
+	IN1_PORT
+
+	PORT_START	/* IN2 */
+	IN2_PORT
+
+	PORT_START	/* DSW1 */
+	PORT_DIPNAME( 0x03, 0x03, "Energy Decrease", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x03, "Slow" )
+	PORT_DIPSETTING(    0x02, "Medium" )
+	PORT_DIPSETTING(    0x01, "Fast" )
+	PORT_DIPSETTING(    0x00, "Fastest" )
+	PORT_DIPNAME( 0x08, 0x08, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x08, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x04, 0x04, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x04, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	COINAGE_DSW
+
+	PORT_START	/* DSW2 */
+	PORT_DIPNAME( 0x01, 0x01, "Flip Screen", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x01, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x02, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x02, "Cocktail" )
+/* This activates a different coin mode. Look at the dip switch setting schematic */
+	PORT_DIPNAME( 0x04, 0x04, "Coin Mode", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x04, "Mode 1" )
+	PORT_DIPSETTING(    0x00, "Mode 2" )
+	PORT_DIPNAME( 0x08, 0x00, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x08, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	/* In stop mode, press 2 to stop and 1 to restart */
+	PORT_BITX   ( 0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Stop Mode", IP_KEY_NONE, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x10, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x20, 0x20, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x20, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x40, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+INPUT_PORTS_END
 
 INPUT_PORTS_START( ldrun_input_ports )
 	PORT_START	/* IN0 */
@@ -758,7 +907,7 @@ INPUT_PORTS_START( spelunk2_input_ports )
 	IN2_PORT
 
 	PORT_START	/* DSW1 */
-	PORT_DIPNAME( 0x03, 0x03, "Energy Decrese", IP_KEY_NONE )
+	PORT_DIPNAME( 0x03, 0x03, "Energy Decrease", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x03, "Slow" )
 	PORT_DIPSETTING(    0x02, "Medium" )
 	PORT_DIPSETTING(    0x01, "Fast" )
@@ -808,7 +957,7 @@ INPUT_PORTS_END
 	3,	/* 3 bits per pixel */                                      \
 	{ 2*NUM*8*8, NUM*8*8, 0 },                                      \
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },                                     \
-	{ 8*0, 8*1, 8*2, 8*3, 8*4, 8*5, 8*6, 8*7 },                     \
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },                     \
 	8*8	/* every char takes 8 consecutive bytes */                  \
 }
 
@@ -816,6 +965,17 @@ TILELAYOUT(1024);
 TILELAYOUT(2048);
 TILELAYOUT(4096);
 
+
+static struct GfxLayout battroad_charlayout =
+{
+	8,8,	/* 8*8 characters */
+	1024,	/* number of characters */
+	2,	/* 2 bits per pixel */
+	{ 0, 1024*8*8 },
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
+	8*8	/* every char takes 8 consecutive bytes */
+};
 
 static struct GfxLayout lotlot_charlayout =
 {
@@ -873,6 +1033,21 @@ SPRITELAYOUT(1024);
 SPRITELAYOUT(2048);
 
 
+static struct GfxDecodeInfo kungfum_gfxdecodeinfo[] =
+{
+	{ 1, 0x00000, &tilelayout_1024,       0, 32 },	/* use colors   0-255 */
+	{ 1, 0x06000, &spritelayout_1024,  32*8, 32 },	/* use colors 256-511 */
+	{ -1 } /* end of array */
+};
+
+static struct GfxDecodeInfo battroad_gfxdecodeinfo[] =
+{
+	{ 1, 0x00000, &tilelayout_2048,       0, 32 },	/* use colors   0-255 */
+	{ 1, 0x0c000, &spritelayout_512,	256, 32 },	/* use colors 256-511 */
+	{ 1, 0x18000, &battroad_charlayout,	512, 32 },	/* use colors 512-543 */
+	{ -1 } /* end of array */
+};
+
 static struct GfxDecodeInfo ldrun_gfxdecodeinfo[] =
 {
 	{ 1, 0x00000, &tilelayout_1024,      0, 32 },	/* use colors   0-255 */
@@ -928,7 +1103,7 @@ static struct GfxDecodeInfo spelunk2_gfxdecodeinfo[] =
 
 
 
-#define MACHINE_DRIVER(GAMENAME,READPORT,COLORS,CONVERTCOLOR)                                \
+#define MACHINE_DRIVER(GAMENAME,READPORT,VISIBLEMINX,VISIBLEMAXX,COLORS,CONVERTCOLOR)        \
                                                                                              \
 static struct MachineDriver GAMENAME##_machine_driver =                                      \
 {                                                                                            \
@@ -954,7 +1129,7 @@ static struct MachineDriver GAMENAME##_machine_driver =                         
 	0,                                                                                       \
                                                                                              \
 	/* video hardware */                                                                     \
-	64*8, 32*8, { 8*8, (64-8)*8-1, 0*8, 32*8-1 },                                            \
+	64*8, 32*8, { VISIBLEMINX, VISIBLEMAXX, 0*8, 32*8-1 },                                   \
 	GAMENAME##_gfxdecodeinfo,                                                                \
 	COLORS, COLORS,                                                                          \
 	CONVERTCOLOR##_vh_convert_color_prom,                                                    \
@@ -979,8 +1154,11 @@ static struct MachineDriver GAMENAME##_machine_driver =                         
 	}                                                                                        \
 }
 
-
+#define kungfum_readmem ldrun_readmem
+#define kungfum_writeport ldrun_writeport
 #define lotlot_writeport ldrun_writeport
+#define	kungfum_vh_start kidniki_vh_start
+#define	battroad_vh_start kidniki_vh_start
 #define	ldrun2_vh_start ldrun_vh_start
 #define	ldrun3_vh_start ldrun_vh_start
 #define	ldrun4_vh_start ldrun_vh_start
@@ -988,13 +1166,15 @@ static struct MachineDriver GAMENAME##_machine_driver =                         
 #define	ldrun2_vh_screenrefresh ldrun_vh_screenrefresh
 #define	ldrun3_vh_screenrefresh ldrun_vh_screenrefresh
 
-MACHINE_DRIVER(ldrun,   ldrun, 512,irem);
-MACHINE_DRIVER(ldrun2,  ldrun2,512,irem);
-MACHINE_DRIVER(ldrun3,  ldrun, 512,irem);
-MACHINE_DRIVER(ldrun4,  ldrun, 512,irem);
-MACHINE_DRIVER(lotlot,  ldrun, 768,irem);
-MACHINE_DRIVER(kidniki, ldrun, 512,irem);
-MACHINE_DRIVER(spelunk2,ldrun, 768,spelunk2);
+MACHINE_DRIVER(kungfum,  ldrun, 16*8, (64-16)*8-1, 512,irem);
+MACHINE_DRIVER(battroad, ldrun, 16*8, (64-16)*8-1, 544,battroad);
+MACHINE_DRIVER(ldrun,    ldrun,  8*8, (64-8)*8-1,  512,irem);
+MACHINE_DRIVER(ldrun2,   ldrun2, 8*8, (64-8)*8-1,  512,irem);
+MACHINE_DRIVER(ldrun3,   ldrun,  8*8, (64-8)*8-1,  512,irem);
+MACHINE_DRIVER(ldrun4,   ldrun,  8*8, (64-8)*8-1,  512,irem);
+MACHINE_DRIVER(lotlot,   ldrun,  8*8, (64-8)*8-1,  768,irem);
+MACHINE_DRIVER(kidniki,  ldrun,  8*8, (64-8)*8-1,  512,irem);
+MACHINE_DRIVER(spelunk2, ldrun,  8*8, (64-8)*8-1,  768,spelunk2);
 
 
 
@@ -1003,6 +1183,203 @@ MACHINE_DRIVER(spelunk2,ldrun, 768,spelunk2);
   Game driver(s)
 
 ***************************************************************************/
+
+ROM_START( kungfum_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "a-4e-c.bin",   0x0000, 0x4000, 0xb6e2d083 )
+	ROM_LOAD( "a-4d-c.bin",   0x4000, 0x4000, 0x7532918e )
+
+	ROM_REGION_DISPOSE(0x1e000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "g-4c-a.bin",   0x00000, 0x2000, 0x6b2cc9c8 )	/* characters */
+	ROM_LOAD( "g-4d-a.bin",   0x02000, 0x2000, 0xc648f558 )
+	ROM_LOAD( "g-4e-a.bin",   0x04000, 0x2000, 0xfbe9276e )
+	ROM_LOAD( "b-4k-.bin",    0x06000, 0x2000, 0x16fb5150 )	/* sprites */
+	ROM_LOAD( "b-4f-.bin",    0x08000, 0x2000, 0x67745a33 )
+	ROM_LOAD( "b-4l-.bin",    0x0a000, 0x2000, 0xbd1c2261 )
+	ROM_LOAD( "b-4h-.bin",    0x0c000, 0x2000, 0x8ac5ed3a )
+	ROM_LOAD( "b-3n-.bin",    0x0e000, 0x2000, 0x28a213aa )
+	ROM_LOAD( "b-4n-.bin",    0x10000, 0x2000, 0xd5228df3 )
+	ROM_LOAD( "b-4m-.bin",    0x12000, 0x2000, 0xb16de4f2 )
+	ROM_LOAD( "b-3m-.bin",    0x14000, 0x2000, 0xeba0d66b )
+	ROM_LOAD( "b-4c-.bin",    0x16000, 0x2000, 0x01298885 )
+	ROM_LOAD( "b-4e-.bin",    0x18000, 0x2000, 0xc77b87d4 )
+	ROM_LOAD( "b-4d-.bin",    0x1a000, 0x2000, 0x6a70615f )
+	ROM_LOAD( "b-4a-.bin",    0x1c000, 0x2000, 0x6189d626 )
+
+	ROM_REGION(0x0620)	/* color PROMs */
+	ROM_LOAD( "g-1j-.bin",    0x0000, 0x0100, 0x668e6bca )	/* character palette red component */
+	ROM_LOAD( "b-1m-.bin",    0x0100, 0x0100, 0x76c05a9c )	/* sprite palette red component */
+	ROM_LOAD( "g-1f-.bin",    0x0200, 0x0100, 0x964b6495 )	/* character palette green component */
+	ROM_LOAD( "b-1n-.bin",    0x0300, 0x0100, 0x23f06b99 )	/* sprite palette green component */
+	ROM_LOAD( "g-1h-.bin",    0x0400, 0x0100, 0x550563e1 )	/* character palette blue component */
+	ROM_LOAD( "b-1l-.bin",    0x0500, 0x0100, 0x35e45021 )	/* sprite palette blue component */
+	ROM_LOAD( "b-5f-.bin",    0x0600, 0x0020, 0x7a601c3d )	/* sprite height, one entry per 32 */
+														/*   sprites. Used at run time! */
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU (6803) */
+	ROM_LOAD( "a-3e-.bin",    0xa000, 0x2000, 0x58e87ab0 )	/* samples (ADPCM 4-bit) */
+	ROM_LOAD( "a-3f-.bin",    0xc000, 0x2000, 0xc81e31ea )	/* samples (ADPCM 4-bit) */
+	ROM_LOAD( "a-3h-.bin",    0xe000, 0x2000, 0xd99fb995 )
+ROM_END
+
+ROM_START( kungfud_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "a-4e-d",       0x0000, 0x4000, 0xfc330a46 )
+	ROM_LOAD( "a-4d-d",       0x4000, 0x4000, 0x1b2fd32f )
+
+	ROM_REGION_DISPOSE(0x1e000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "g-4c-a.bin",   0x00000, 0x2000, 0x6b2cc9c8 )	/* characters */
+	ROM_LOAD( "g-4d-a.bin",   0x02000, 0x2000, 0xc648f558 )
+	ROM_LOAD( "g-4e-a.bin",   0x04000, 0x2000, 0xfbe9276e )
+	ROM_LOAD( "b-4k-.bin",    0x06000, 0x2000, 0x16fb5150 )	/* sprites */
+	ROM_LOAD( "b-4f-.bin",    0x08000, 0x2000, 0x67745a33 )
+	ROM_LOAD( "b-4l-.bin",    0x0a000, 0x2000, 0xbd1c2261 )
+	ROM_LOAD( "b-4h-.bin",    0x0c000, 0x2000, 0x8ac5ed3a )
+	ROM_LOAD( "b-3n-.bin",    0x0e000, 0x2000, 0x28a213aa )
+	ROM_LOAD( "b-4n-.bin",    0x10000, 0x2000, 0xd5228df3 )
+	ROM_LOAD( "b-4m-.bin",    0x12000, 0x2000, 0xb16de4f2 )
+	ROM_LOAD( "b-3m-.bin",    0x14000, 0x2000, 0xeba0d66b )
+	ROM_LOAD( "b-4c-.bin",    0x16000, 0x2000, 0x01298885 )
+	ROM_LOAD( "b-4e-.bin",    0x18000, 0x2000, 0xc77b87d4 )
+	ROM_LOAD( "b-4d-.bin",    0x1a000, 0x2000, 0x6a70615f )
+	ROM_LOAD( "b-4a-.bin",    0x1c000, 0x2000, 0x6189d626 )
+
+	ROM_REGION(0x0620)	/* color PROMs */
+	ROM_LOAD( "g-1j-.bin",    0x0000, 0x0100, 0x668e6bca )	/* character palette red component */
+	ROM_LOAD( "b-1m-.bin",    0x0100, 0x0100, 0x76c05a9c )	/* sprite palette red component */
+	ROM_LOAD( "g-1f-.bin",    0x0200, 0x0100, 0x964b6495 )	/* character palette green component */
+	ROM_LOAD( "b-1n-.bin",    0x0300, 0x0100, 0x23f06b99 )	/* sprite palette green component */
+	ROM_LOAD( "g-1h-.bin",    0x0400, 0x0100, 0x550563e1 )	/* character palette blue component */
+	ROM_LOAD( "b-1l-.bin",    0x0500, 0x0100, 0x35e45021 )	/* sprite palette blue component */
+	ROM_LOAD( "b-5f-.bin",    0x0600, 0x0020, 0x7a601c3d )	/* sprite height, one entry per 32 */
+														/*   sprites. Used at run time! */
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU (6803) */
+	ROM_LOAD( "a-3e-.bin",    0xa000, 0x2000, 0x58e87ab0 )	/* samples (ADPCM 4-bit) */
+	ROM_LOAD( "a-3f-.bin",    0xc000, 0x2000, 0xc81e31ea )	/* samples (ADPCM 4-bit) */
+	ROM_LOAD( "a-3h-.bin",    0xe000, 0x2000, 0xd99fb995 )
+ROM_END
+
+ROM_START( kungfub_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "c5.5h",        0x0000, 0x4000, 0x5d8e791d )
+	ROM_LOAD( "c4.5k",        0x4000, 0x4000, 0x4000e2b8 )
+
+	ROM_REGION_DISPOSE(0x1e000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "g-4c-a.bin",   0x00000, 0x2000, 0x6b2cc9c8 )	/* characters */
+	ROM_LOAD( "g-4d-a.bin",   0x02000, 0x2000, 0xc648f558 )
+	ROM_LOAD( "g-4e-a.bin",   0x04000, 0x2000, 0xfbe9276e )
+	ROM_LOAD( "b-4k-.bin",    0x06000, 0x2000, 0x16fb5150 )	/* sprites */
+	ROM_LOAD( "b-4f-.bin",    0x08000, 0x2000, 0x67745a33 )
+	ROM_LOAD( "b-4l-.bin",    0x0a000, 0x2000, 0xbd1c2261 )
+	ROM_LOAD( "b-4h-.bin",    0x0c000, 0x2000, 0x8ac5ed3a )
+	ROM_LOAD( "b-3n-.bin",    0x0e000, 0x2000, 0x28a213aa )
+	ROM_LOAD( "b-4n-.bin",    0x10000, 0x2000, 0xd5228df3 )
+	ROM_LOAD( "b-4m-.bin",    0x12000, 0x2000, 0xb16de4f2 )
+	ROM_LOAD( "b-3m-.bin",    0x14000, 0x2000, 0xeba0d66b )
+	ROM_LOAD( "b-4c-.bin",    0x16000, 0x2000, 0x01298885 )
+	ROM_LOAD( "b-4e-.bin",    0x18000, 0x2000, 0xc77b87d4 )
+	ROM_LOAD( "b-4d-.bin",    0x1a000, 0x2000, 0x6a70615f )
+	ROM_LOAD( "b-4a-.bin",    0x1c000, 0x2000, 0x6189d626 )
+
+	ROM_REGION(0x0620)	/* color PROMs */
+	ROM_LOAD( "g-1j-.bin",    0x0000, 0x0100, 0x668e6bca )	/* character palette red component */
+	ROM_LOAD( "b-1m-.bin",    0x0100, 0x0100, 0x76c05a9c )	/* sprite palette red component */
+	ROM_LOAD( "g-1f-.bin",    0x0200, 0x0100, 0x964b6495 )	/* character palette green component */
+	ROM_LOAD( "b-1n-.bin",    0x0300, 0x0100, 0x23f06b99 )	/* sprite palette green component */
+	ROM_LOAD( "g-1h-.bin",    0x0400, 0x0100, 0x550563e1 )	/* character palette blue component */
+	ROM_LOAD( "b-1l-.bin",    0x0500, 0x0100, 0x35e45021 )	/* sprite palette blue component */
+	ROM_LOAD( "b-5f-.bin",    0x0600, 0x0020, 0x7a601c3d )	/* sprite height, one entry per 32 */
+														/*   sprites. Used at run time! */
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU (6803) */
+	ROM_LOAD( "a-3e-.bin",    0xa000, 0x2000, 0x58e87ab0 )	/* samples (ADPCM 4-bit) */
+	ROM_LOAD( "a-3f-.bin",    0xc000, 0x2000, 0xc81e31ea )	/* samples (ADPCM 4-bit) */
+	ROM_LOAD( "a-3h-.bin",    0xe000, 0x2000, 0xd99fb995 )
+ROM_END
+
+ROM_START( kungfub2_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "kf4",          0x0000, 0x4000, 0x3f65313f )
+	ROM_LOAD( "kf5",          0x4000, 0x4000, 0x9ea325f3 )
+
+	ROM_REGION_DISPOSE(0x1e000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "g-4c-a.bin",   0x00000, 0x2000, 0x6b2cc9c8 )	/* characters */
+	ROM_LOAD( "g-4d-a.bin",   0x02000, 0x2000, 0xc648f558 )
+	ROM_LOAD( "g-4e-a.bin",   0x04000, 0x2000, 0xfbe9276e )
+	ROM_LOAD( "b-4k-.bin",    0x06000, 0x2000, 0x16fb5150 )	/* sprites */
+	ROM_LOAD( "b-4f-.bin",    0x08000, 0x2000, 0x67745a33 )
+	ROM_LOAD( "b-4l-.bin",    0x0a000, 0x2000, 0xbd1c2261 )
+	ROM_LOAD( "b-4h-.bin",    0x0c000, 0x2000, 0x8ac5ed3a )
+	ROM_LOAD( "b-3n-.bin",    0x0e000, 0x2000, 0x28a213aa )
+	ROM_LOAD( "b-4n-.bin",    0x10000, 0x2000, 0xd5228df3 )
+	ROM_LOAD( "b-4m-.bin",    0x12000, 0x2000, 0xb16de4f2 )
+	ROM_LOAD( "b-3m-.bin",    0x14000, 0x2000, 0xeba0d66b )
+	ROM_LOAD( "b-4c-.bin",    0x16000, 0x2000, 0x01298885 )
+	ROM_LOAD( "b-4e-.bin",    0x18000, 0x2000, 0xc77b87d4 )
+	ROM_LOAD( "b-4d-.bin",    0x1a000, 0x2000, 0x6a70615f )
+	ROM_LOAD( "b-4a-.bin",    0x1c000, 0x2000, 0x6189d626 )
+
+	ROM_REGION(0x0720)	/* color PROMs */
+	ROM_LOAD( "g-1j-.bin",    0x0000, 0x0100, 0x668e6bca )	/* character palette red component */
+	ROM_LOAD( "b-1m-.bin",    0x0100, 0x0100, 0x76c05a9c )	/* sprite palette red component */
+	ROM_LOAD( "g-1f-.bin",    0x0200, 0x0100, 0x964b6495 )	/* character palette green component */
+	ROM_LOAD( "b-1n-.bin",    0x0300, 0x0100, 0x23f06b99 )	/* sprite palette green component */
+	ROM_LOAD( "g-1h-.bin",    0x0400, 0x0100, 0x550563e1 )	/* character palette blue component */
+	ROM_LOAD( "b-1l-.bin",    0x0500, 0x0100, 0x35e45021 )	/* sprite palette blue component */
+	ROM_LOAD( "b-5f-.bin",    0x0600, 0x0020, 0x7a601c3d )	/* sprite height, one entry per 32 */
+															/* sprites. Used at run time! */
+	ROM_LOAD( "b-6f-.bin",    0x0620, 0x0100, 0x82c20d12 )	/* video timing? - same as battroad */
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU (6803) */
+	ROM_LOAD( "a-3e-.bin",    0xa000, 0x2000, 0x58e87ab0 )	/* samples (ADPCM 4-bit) */
+	ROM_LOAD( "a-3f-.bin",    0xc000, 0x2000, 0xc81e31ea )	/* samples (ADPCM 4-bit) */
+	ROM_LOAD( "a-3h-.bin",    0xe000, 0x2000, 0xd99fb995 )
+ROM_END
+
+ROM_START( battroad_rom )
+	ROM_REGION(0x1e000)	/* 64k for code */
+	ROM_LOAD( "br-a-4e.b",	0x00000, 0x2000, 0x9bf14768 )
+	ROM_LOAD( "br-a-4d.b",	0x02000, 0x2000, 0x39ca1627 )
+	ROM_LOAD( "br-a-4b.b",	0x04000, 0x2000, 0x1865bb22 )
+	ROM_LOAD( "br-a-4a",	0x06000, 0x2000, 0x65b61c21 )
+	ROM_LOAD( "br-c-7c",	0x10000, 0x2000, 0x2e1eca52 )	/* banked at a000-bfff */
+	ROM_LOAD( "br-c-7l",	0x12000, 0x2000, 0xf2178578 )
+	ROM_LOAD( "br-c-7d",	0x14000, 0x2000, 0x3aa9fa30 )
+	ROM_LOAD( "br-c-7b",	0x16000, 0x2000, 0x0b31b90b )
+	ROM_LOAD( "br-c-7a",	0x18000, 0x2000, 0xec3b0080 )
+	ROM_LOAD( "br-c-7k",	0x1c000, 0x2000, 0xedc75f7f )
+
+	ROM_REGION_DISPOSE(0x1e000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "br-c-6h",	0x00000, 0x2000, 0xca50841c )	/* tiles */
+	ROM_LOAD( "br-c-6n",	0x04000, 0x2000, 0x7d53163a )
+	ROM_LOAD( "br-c-6k",	0x08000, 0x2000, 0x5951e12a )
+	ROM_LOAD( "br-b-4k.a",	0x0c000, 0x2000, 0xd3c5e85b )	/* sprites */
+	ROM_LOAD( "br-b-4f.a",	0x0e000, 0x2000, 0x4354232a )
+	ROM_LOAD( "br-b-3n.a",	0x10000, 0x2000, 0x2668dbef )
+	ROM_LOAD( "br-b-4n.a",	0x12000, 0x2000, 0xc719a324 )
+	ROM_LOAD( "br-b-4c.a",	0x14000, 0x2000, 0x0b3193bf )
+	ROM_LOAD( "br-b-4e.a",	0x16000, 0x2000, 0x3662e8fb )
+	ROM_LOAD( "br-c-1b",	0x18000, 0x2000, 0x8088911e )	/* characters */
+	ROM_LOAD( "br-c-1c",	0x1a000, 0x2000, 0x3d78b653 )
+
+	ROM_REGION(0x0740)	/* color proms */
+	ROM_LOAD( "br-c-3j",     0x0000, 0x0100, 0xaceaed79 )	/* tile palette red component */
+	ROM_LOAD( "br-b-1m",     0x0100, 0x0100, 0x3bd30c7d )	/* sprite palette red component */
+	ROM_LOAD( "br-c-3l",     0x0200, 0x0100, 0x7cf6f380 )	/* tile palette green component */
+	ROM_LOAD( "br-b-1n",     0x0300, 0x0100, 0xb7f3dc3b )	/* sprite palette green component */
+	ROM_LOAD( "br-c-3k",     0x0400, 0x0100, 0xd90e4a54 )	/* tile palette blue component */
+	ROM_LOAD( "br-b-1l",     0x0500, 0x0100, 0x5271c7d8 )	/* sprite palette blue component */
+	ROM_LOAD( "br-c-1j",     0x0600, 0x0020, 0x78eb5d77 )	/* character palette */
+	ROM_LOAD( "br-b-5p",     0x0620, 0x0020, 0xce746937 )	/* sprite height, one entry per 32 */
+	                                                        /* sprites. Used at run time! */
+	ROM_LOAD( "br-b-6f",     0x0640, 0x0100, 0x82c20d12 )	/* video timing? - same as kungfum */
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU (6803) */
+	ROM_LOAD( "br-a-3e",     0xa000, 0x2000, 0xa7140871 )
+	ROM_LOAD( "br-a-3f",     0xc000, 0x2000, 0x1bb51b30 )
+	ROM_LOAD( "br-a-3h",     0xe000, 0x2000, 0xafb3e083 )
+ROM_END
 
 ROM_START( ldrun_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
@@ -1028,7 +1405,7 @@ ROM_START( ldrun_rom )
 	ROM_LOAD( "lr-b-1l",      0x0500, 0x0100, 0x08d8cf9a )	/* sprite palette blue component */
 	ROM_LOAD( "lr-b-5p",      0x0600, 0x0020, 0xe01f69e2 )	/* sprite height, one entry per 32 */
 	                                                        /* sprites. Used at run time! */
-	ROM_LOAD( "lr-b-6f",      0x0620, 0x0100, 0x34d88d3c )	/* unknown - common to the other games */
+	ROM_LOAD( "lr-b-6f",      0x0620, 0x0100, 0x34d88d3c )	/* video timing? - common to the other games */
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU (6803) */
 	ROM_LOAD( "lr-a-3f",      0xc000, 0x2000, 0x7a96accd )
@@ -1059,7 +1436,7 @@ ROM_START( ldruna_rom )
 	ROM_LOAD( "lr-b-1l",      0x0500, 0x0100, 0x08d8cf9a )	/* sprite palette blue component */
 	ROM_LOAD( "lr-b-5p",      0x0600, 0x0020, 0xe01f69e2 )	/* sprite height, one entry per 32 */
 	                                                        /* sprites. Used at run time! */
-	ROM_LOAD( "lr-b-6f",      0x0620, 0x0100, 0x34d88d3c )	/* unknown - common to the other games */
+	ROM_LOAD( "lr-b-6f",      0x0620, 0x0100, 0x34d88d3c )	/* video timing? - common to the other games */
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU (6803) */
 	ROM_LOAD( "lr-a-3f",      0xc000, 0x2000, 0x7a96accd )
@@ -1095,7 +1472,7 @@ ROM_START( ldrun2_rom )
 	ROM_LOAD( "lr2-b-1l",     0x0500, 0x0100, 0xc8fb708a )	/* sprite palette blue component */
 	ROM_LOAD( "lr2-b-5p",     0x0600, 0x0020, 0xe01f69e2 )	/* sprite height, one entry per 32 */
 	                                                        /* sprites. Used at run time! */
-	ROM_LOAD( "lr2-b-6f",     0x0620, 0x0100, 0x34d88d3c )	/* unknown - common to the other games */
+	ROM_LOAD( "lr2-b-6f",     0x0620, 0x0100, 0x34d88d3c )	/* video timing? - common to the other games */
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU (6803) */
 	ROM_LOAD( "lr2-a-3e",     0xa000, 0x2000, 0x853f3898 )
@@ -1127,7 +1504,7 @@ ROM_START( ldrun3_rom )
 	ROM_LOAD( "lr3-b-5p",     0x0600, 0x0020, 0xe01f69e2 )	/* sprite height, one entry per 32 */
 	                                                        /* sprites. Used at run time! */
 	ROM_LOAD( "lr3-n-4f",     0x0620, 0x0100, 0xdf674be9 )	/* unknown */
-	ROM_LOAD( "lr3-b-6f",     0x0720, 0x0100, 0x34d88d3c )	/* unknown - common to the other games */
+	ROM_LOAD( "lr3-b-6f",     0x0720, 0x0100, 0x34d88d3c )	/* video timing? - common to the other games */
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU (6803) */
 	ROM_LOAD( "lr3-a-3d",     0x8000, 0x4000, 0x28be68cd )
@@ -1161,7 +1538,7 @@ ROM_START( ldrun4_rom )
 	ROM_LOAD( "lr4-b-5p",     0x0600, 0x0020, 0xe01f69e2 )	/* sprite height, one entry per 32 */
 	                                                        /* sprites. Used at run time! */
 	ROM_LOAD( "lr4-v-4h",     0x0620, 0x0100, 0xdf674be9 )	/* unknown */
-	ROM_LOAD( "lr4-b-6f",     0x0720, 0x0100, 0x34d88d3c )	/* unknown - common to the other games */
+	ROM_LOAD( "lr4-b-6f",     0x0720, 0x0100, 0x34d88d3c )	/* video timing? - common to the other games */
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU (6803) */
 	ROM_LOAD( "lr4-a-3d",     0x8000, 0x4000, 0x86c6d445 )
@@ -1198,7 +1575,7 @@ ROM_START( lotlot_rom )
 	                                                        /* sprites. Used at run time! */
 	ROM_LOAD( "lot-k-7e",     0x0920, 0x0200, 0x6cef0fbd )	/* unknown */
 	ROM_LOAD( "lot-k-7h",     0x0b20, 0x0200, 0x04442bee )	/* unknown */
-	ROM_LOAD( "lot-b-6f",     0x0d20, 0x0100, 0x34d88d3c )	/* unknown - common to the other games */
+	ROM_LOAD( "lot-b-6f",     0x0d20, 0x0100, 0x34d88d3c )	/* video timing? - common to the other games */
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU (6803) */
 	ROM_LOAD( "lot-a-3h",     0xe000, 0x2000, 0x0781cee7 )
@@ -1242,7 +1619,7 @@ ROM_START( kidniki_rom )
 	ROM_LOAD( "dr32.5p",      0x0600, 0x0020, 0x11cd1f2e )	/* sprite height, one entry per 32 */
 	                                                        /* sprites. Used at run time! */
 	ROM_LOAD( "dr28.8f",      0x0620, 0x0200, 0x6cef0fbd )	/* unknown */
-	ROM_LOAD( "dr33.6f",      0x0820, 0x0100, 0x34d88d3c )	/* unknown - common to the other games */
+	ROM_LOAD( "dr33.6f",      0x0820, 0x0100, 0x34d88d3c )	/* video timing? - common to the other games */
 
 	ROM_REGION( 0x10000 )	/* sound CPU */
 	ROM_LOAD( "dr00.3a",      0x4000, 0x04000, 0x458309f7 )
@@ -1282,13 +1659,86 @@ ROM_START( spelunk2_rom )
 	ROM_LOAD( "sp2-b.5p",     0x0700, 0x0020, 0xcd126f6a )	/* sprite height, one entry per 32 */
 	                                                        /* sprites. Used at run time! */
 	ROM_LOAD( "sp2-r.8j",     0x0720, 0x0200, 0x875cc442 )	/* unknown */
-	ROM_LOAD( "sp2-b.6f",     0x0920, 0x0100, 0x34d88d3c )	/* unknown - common to the other games */
+	ROM_LOAD( "sp2-b.6f",     0x0920, 0x0100, 0x34d88d3c )	/* video timing? - common to the other games */
 
 	ROM_REGION( 0x10000 )	/* sound CPU */
 	ROM_LOAD( "sp2-a.3d",     0x8000, 0x04000, 0x839ec7e2 ) /* adpcm data */
 	ROM_LOAD( "sp2-a.3f",     0xc000, 0x04000, 0xad3ce898 ) /* 6803 code */
 ROM_END
 
+
+static int kungfum_hiload(void)
+{
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+	/* check if the hi score table has already been initialized */
+	if (memcmp(&RAM[0xea06],"\x00\x14\x95",3) == 0 &&
+			memcmp(&RAM[0xea78],"\x00\x48\x52",3) == 0)
+	{
+		void *f;
+
+
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&RAM[0xea06],6*20);
+			RAM[0xe980] = RAM[0xea7a];
+			RAM[0xe981] = RAM[0xea79];
+			RAM[0xe982] = RAM[0xea78];
+			osd_fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;	/* we can't load the hi scores yet */
+}
+
+static void kungfum_hisave(void)
+{
+	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&RAM[0xea06],6*20);
+		osd_fclose(f);
+	}
+}
+
+
+static int battroad_hiload(void)
+{
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+	if (memcmp(&RAM[0xed52],"\x06\x05\x04",3) == 0 &&
+			memcmp(&RAM[0xedfd],"\x00\x13\x08",3) == 0 )
+	{
+		void *f;
+
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&RAM[0xed50],0xb0);
+			osd_fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;   /* we can't load the hi scores yet */
+}
+
+static void battroad_hisave(void)
+{
+	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&RAM[0xed50],0xb0);
+		osd_fclose(f);
+	}
+}
 
 
 static int ldrun_hiload(void)
@@ -1473,6 +1923,7 @@ static void spelunk2_hisave(void)
 	}
 }
 
+
 static int lotlot_hiload(void)
 {
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
@@ -1508,6 +1959,136 @@ static void lotlot_hisave(void)
 }
 
 
+
+struct GameDriver kungfum_driver =
+{
+	__FILE__,
+	0,
+	"kungfum",
+	"Kung Fu Master",
+	"1984",
+	"Irem",
+	"Mirko Buffoni\nNicola Salmoria\nIshmair\nAaron Giles (sound)",
+	0,
+	&kungfum_machine_driver,
+	0,
+
+	kungfum_rom,
+	0, 0,
+	0,
+	0,
+
+	kungfum_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_DEFAULT,
+
+	kungfum_hiload, kungfum_hisave
+};
+
+struct GameDriver kungfud_driver =
+{
+	__FILE__,
+	&kungfum_driver,
+	"kungfud",
+	"Kung Fu Master (Data East)",
+	"1984",
+	"Irem (Data East license)",
+	"Mirko Buffoni\nNicola Salmoria\nIshmair\nAaron Giles (sound)",
+	0,
+	&kungfum_machine_driver,
+	0,
+
+	kungfud_rom,
+	0, 0,
+	0,
+	0,
+
+	kungfum_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_DEFAULT,
+
+	kungfum_hiload, kungfum_hisave
+};
+
+struct GameDriver kungfub_driver =
+{
+	__FILE__,
+	&kungfum_driver,
+	"kungfub",
+	"Kung Fu Master (bootleg set 1)",
+	"1984",
+	"bootleg",
+	"Mirko Buffoni\nNicola Salmoria\nIshmair\nAaron Giles (sound)",
+	0,
+	&kungfum_machine_driver,
+	0,
+
+	kungfub_rom,
+	0, 0,
+	0,
+	0,
+
+	kungfum_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_DEFAULT,
+
+	kungfum_hiload, kungfum_hisave
+};
+
+struct GameDriver kungfub2_driver =
+{
+	__FILE__,
+	&kungfum_driver,
+	"kungfub2",
+	"Kung Fu Master (bootleg set 2)",
+	"1984",
+	"bootleg",
+	"Mirko Buffoni\nNicola Salmoria\nIshmair\nAaron Giles (sound)",
+	0,
+	&kungfum_machine_driver,
+	0,
+
+	kungfub2_rom,
+	0, 0,
+	0,
+	0,
+
+	kungfum_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_DEFAULT,
+
+	kungfum_hiload, kungfum_hisave
+};
+
+struct GameDriver battroad_driver =
+{
+	__FILE__,
+	0,
+	"battroad",
+	"The Battle-Road",
+	"1984",
+	"Irem",
+	"Lee Taylor\nJohn Clegg\nAaron Giles (sound)\nEric Hustvedt",
+	0,
+	&battroad_machine_driver,
+	0,
+
+	battroad_rom,
+	0, 0,
+	0,
+	0,
+
+	battroad_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	battroad_hiload, battroad_hisave
+};
 
 struct GameDriver ldrun_driver =
 {

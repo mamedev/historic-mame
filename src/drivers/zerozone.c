@@ -42,7 +42,7 @@ static int zerozone_input_r (int offset)
 			return readinputport(3);
 	}
 
-if (errorlog) fprintf(errorlog,"CPU #0 PC %06x: warning - read unmapped memory address %06x\n",cpu_getpc(),0x800000+offset);
+if (errorlog) fprintf(errorlog,"CPU #0 PC %06x: warning - read unmapped memory address %06x\n",cpu_get_pc(),0x800000+offset);
 
 	return 0x00;
 }

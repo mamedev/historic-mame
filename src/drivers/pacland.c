@@ -29,7 +29,7 @@ f000-ffff MCU internal ROM
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "cpu/m6808/m6808.h"
+#include "cpu/m6800/m6800.h"
 
 /* This is the clock speed in Hz divided by 64 that is connected to the E pin on the MCU */
 /* Each pulse on the E pin increments timer A, wich is used for music tempo. */

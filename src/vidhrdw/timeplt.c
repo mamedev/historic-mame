@@ -127,7 +127,7 @@ int timeplt_vh_start(void)
 {
 	if (tilemap_start() == 0)
 	{
-		bg_tilemap = tilemap_create(TILEMAP_SPLIT,8,8,32,32,0,0);
+		bg_tilemap = tilemap_create(0,8,8,32,32,0,0);
 
 		if (bg_tilemap)
 		{

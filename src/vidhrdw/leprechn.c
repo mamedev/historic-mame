@@ -119,7 +119,7 @@ void leprechn_graphics_data_w(int offset,int data)
     }
 
     // Just a precaution. Doesn't seem to happen.
-    if (errorlog) fprintf(errorlog, "Unknown Graphics Command #%2X at %04X\n", last_command, cpu_getpc());
+    if (errorlog) fprintf(errorlog, "Unknown Graphics Command #%2X at %04X\n", last_command, cpu_get_pc());
 }
 
 

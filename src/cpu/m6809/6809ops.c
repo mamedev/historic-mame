@@ -332,7 +332,7 @@ INLINE void bra( void )
 	change_pc(PC);	 /* TS 971002 */
 	/* JB 970823 - speed up busy loops */
 	if( t == 0xfe )
-		m6809_ICount = 0;
+		if( m6809_ICount > 0 ) m6809_ICount = 0;
 }
 
 /* $21 BRN relative ----- */

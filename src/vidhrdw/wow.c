@@ -118,7 +118,7 @@ void wow_videoram_w(int offset,int data)
 void wow_magic_expand_color_w(int offset,int data)
 {
 #ifdef MAME_DEBUG
-	if (errorlog) fprintf(errorlog,"%04x: magic_expand_color = %02x\n",cpu_getpc(),data);
+	if (errorlog) fprintf(errorlog,"%04x: magic_expand_color = %02x\n",cpu_get_pc(),data);
 #endif
 
 	magic_expand_color = data;
@@ -128,7 +128,7 @@ void wow_magic_expand_color_w(int offset,int data)
 void wow_magic_control_w(int offset,int data)
 {
 #ifdef MAME_DEBUG
-	if (errorlog) fprintf(errorlog,"%04x: magic_control = %02x\n",cpu_getpc(),data);
+	if (errorlog) fprintf(errorlog,"%04x: magic_control = %02x\n",cpu_get_pc(),data);
 #endif
 
 	magic_control = data;
@@ -306,7 +306,7 @@ void wow_pattern_board_w(int offset,int data)
 
 #ifdef MAME_DEBUG
 		if (errorlog) fprintf(errorlog,"%04x: blit src %04x mode %02x skip %d dest %04x length %d loops %d\n",
-			cpu_getpc(),src,mode,skip,dest,length,loops);
+			cpu_get_pc(),src,mode,skip,dest,length,loops);
 #endif
 
         /* Special scroll screen for Gorf */
@@ -416,11 +416,9 @@ void wow_pattern_board_w(int offset,int data)
 
 int Gorf_IO_r(int offset)
 {
-	Z80_Regs regs;
 	int data;
 
-	z80_getregs(&regs);
-	data = regs.BC.b.h & 0x0F;
+	data = (cpu_get_reg(Z80_BC) >> 8) & 0x0F;
 
     Latch[(offset << 3) + (data >> 1)] = (data & 0x01);
 

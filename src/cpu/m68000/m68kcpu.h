@@ -885,6 +885,7 @@ INLINE void m68ki_set_sr(uint value)
    /* Now set the status register */
    CPU_T1 = BIT_F(value);
    CPU_T0 = BIT_E(value);
+   CPU_S = BIT_D(value);
    CPU_INT_MASK = (value >> 8) & 7;
    CPU_X = BIT_4(value);
    CPU_N = BIT_3(value);

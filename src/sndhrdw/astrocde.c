@@ -227,7 +227,6 @@ void astrocade_sh_stop(void)
 
 void astrocade_sound_w(int num, int offset, int data)
 {
-	Z80_Regs regs;
 	int i, bvalue, temp_vib;
 
 	/* update */
@@ -320,8 +319,7 @@ void astrocade_sound_w(int num, int offset, int data)
 
 		case 8:  /* Sound Block Transfer */
 
-			z80_getregs(&regs);
-			bvalue = regs.BC.b.h & 0x0F;
+			bvalue = (cpu_get_reg(Z80_BC) >> 8) & 0x0F;
 
 			astrocade_sound_w(num, bvalue-1, data);
 

@@ -1861,8 +1861,8 @@ static void exgpc_b (void) { EXGPC(B); }
 {																\
 	R##REG(R##DSTREG) = PC;										\
 }
-static void getpc_a (void) { GETPC(A); }
-static void getpc_b (void) { GETPC(B); }
+static void get_pc_a (void) { GETPC(A); }
+static void get_pc_b (void) { GETPC(B); }
 
 #define GETST(R)												\
 {			  													\

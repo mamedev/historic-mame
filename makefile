@@ -7,8 +7,8 @@ LD = gcc
 #ASM = nasm
 ASM = nasmw
 ASMFLAGS = -f coff
-VPATH=src src/cpu/z80 src/cpu/m6502 src/cpu/h6280 src/cpu/i86 \
-      src/cpu/m6809 src/cpu/m6808 src/cpu/m68000 src/cpu/tms34010 \
+VPATH=src src/cpu/z80 src/cpu/i8085 src/cpu/m6502 src/cpu/h6280 src/cpu/i86 \
+      src/cpu/m6800 src/cpu/m6805 src/cpu/m6809 src/cpu/m68000 src/cpu/tms34010 \
       src/cpu/tms9900 src/cpu/z8000 src/cpu/tms32010 src/cpu/ccpu
 
 # uncomment next line to include the debugger
@@ -33,8 +33,8 @@ TINY_OBJS = obj/drivers/rthunder.o obj/vidhrdw/rthunder.o
 # uncomment next line to use Assembler Z80 engine
 # X86_ASM_Z80 = 1
 
-# uncomment next line to use Assembler 6808 engine
-# X86_ASM_6808 = 1
+# uncomment next line to use Assembler 6800 engine
+# X86_ASM_6800 = 1
 
 ifdef X86_ASM_68K
 M68KOBJS = obj/cpu/m68000/asmintf.o obj/cpu/m68000/68kem.oa
@@ -54,10 +54,10 @@ Z80OBJS = obj/cpu/z80/z80.o
 Z80DEF =
 endif
 
-ifdef X86_ASM_6808
-M6808OBJS = obj/cpu/m6808/m6808.oa obj/cpu/m6808/6808dasm.o
+ifdef X86_ASM_6800
+M6800OBJS = obj/cpu/m6800/m6800.oa
 else
-M6808OBJS = obj/cpu/m6808/m6808.o obj/cpu/m6808/6808dasm.o
+M6800OBJS = obj/cpu/m6800/m6800.o
 endif
 
 ifdef DEBUG
@@ -93,13 +93,13 @@ else
 LDFLAGS = -s
 endif
 
-LIBS   = -lalleg $(DJDIR)/lib/libaudio.a \
+LIBS   = -lalleg -laudio \
 
 COREOBJS = obj/version.o obj/driver.o obj/mame.o obj/common.o obj/usrintrf.o \
          obj/cpuintrf.o obj/memory.o obj/timer.o obj/palette.o \
          obj/inptport.o obj/cheat.o obj/unzip.o obj/inflate.o \
          obj/audit.o obj/info.o obj/crc32.o obj/png.o obj/artwork.o \
-         obj/tilemap.o \
+         obj/tilemap.o obj/state.o \
          obj/sndhrdw/adpcm.o \
          obj/sndhrdw/ay8910.o obj/sndhrdw/2203intf.o \
          obj/sndhrdw/2151intf.o obj/sndhrdw/fm.o \
@@ -117,22 +117,19 @@ COREOBJS = obj/version.o obj/driver.o obj/mame.o obj/common.o obj/usrintrf.o \
          obj/vidhrdw/generic.o obj/sndhrdw/generic.o \
          obj/vidhrdw/vector.o obj/vidhrdw/avgdvg.o obj/machine/mathbox.o \
          obj/machine/ticket.o \
-         $(M68KOBJS) \
-         $(Z80OBJS) \
-         $(M6808OBJS) \
-         obj/cpu/m6502/m6502.o obj/cpu/h6280/h6280.o \
+         $(Z80OBJS) obj/cpu/m6502/m6502.o obj/cpu/h6280/h6280.o \
          obj/cpu/i86/i86.o obj/cpu/i8039/i8039.o obj/cpu/i8085/i8085.o \
-         obj/cpu/m6809/m6809.o obj/cpu/m6805/m6805.o \
-         obj/cpu/s2650/s2650.o obj/cpu/t11/t11.o \
+         $(M6800OBJS) obj/cpu/m6805/m6805.o obj/cpu/m6809/m6809.o \
+         $(M68KOBJS) obj/cpu/s2650/s2650.o obj/cpu/t11/t11.o \
          obj/cpu/tms34010/tms34010.o obj/cpu/tms34010/34010fld.o \
          obj/cpu/tms9900/tms9900.o obj/cpu/z8000/z8000.o \
          obj/cpu/ccpu/ccpu.o obj/vidhrdw/cinemat.o \
-         obj/mamedbg.o obj/asg.o \
+         obj/mamedbg.o \
          obj/cpu/m68000/d68k.o \
-         obj/cpu/z80/z80dasm.o obj/cpu/m6502/6502dasm.o obj/cpu/h6280/6280dasm.o \
-         obj/cpu/i86/i86dasm.o obj/cpu/i8039/8039dasm.o obj/cpu/i8085/8085dasm.o \
-         obj/cpu/m6809/6809dasm.o obj/cpu/m6805/6805dasm.o \
-         obj/cpu/s2650/2650dasm.o obj/cpu/t11/t11dasm.o obj/cpu/tms34010/34010dsm.o \
+         obj/cpu/z80/z80dasm.o	obj/cpu/i8085/8085dasm.o obj/cpu/m6502/6502dasm.o \
+         obj/cpu/h6280/6280dasm.o obj/cpu/i86/i86dasm.o obj/cpu/i8039/8039dasm.o \
+         obj/cpu/m6800/6800dasm.o obj/cpu/m6805/6805dasm.o obj/cpu/m6809/6809dasm.o \
+         obj/cpu/t11/t11dasm.o obj/cpu/s2650/2650dasm.o obj/cpu/tms34010/34010dsm.o \
          obj/cpu/tms9900/9900dasm.o obj/cpu/z8000/8000dasm.o \
          obj/cpu/tms32010/tms32010.o obj/cpu/tms32010/32010dsm.o \
 
@@ -201,9 +198,9 @@ obj/cpu/z80/z80.asm:  src/cpu/z80/makez80.c
 	$(CC) $(CDEFS) $(CFLAGS) -DDOS -o obj/cpu/z80/makez80.exe $<
 	obj/cpu/z80/makez80 $(Z80DEF) $(CDEFS) $(CFLAGS) $@
 
-obj/cpu/m6808/m6808.asm:  src/cpu/m6808/make6808.c
-	 $(CC) -o obj/cpu/m6808/make6808.exe src/cpu/m6808/make6808.c
-	 obj/cpu/m6808/make6808 obj/cpu/m6808/m6808.asm -s -m -h
+obj/cpu/m6800/m6800.asm:  src/cpu/m6800/make6808.c
+	 $(CC) -o obj/cpu/m6800/make6808.exe src/cpu/m6800/make6808.c
+	 obj/cpu/m6800/make6808 obj/cpu/m6800/m6800.asm -s -m -h
 
 obj/%.oa:  obj/%.asm
 	 $(ASM) -o $@ $(ASMFLAGS) $(ASMDEFS) $<
@@ -294,9 +291,8 @@ obj/irem.a: \
          obj/vidhrdw/mpatrol.o obj/drivers/mpatrol.o \
          obj/vidhrdw/troangel.o obj/drivers/troangel.o \
          obj/vidhrdw/yard.o obj/drivers/yard.o \
-         obj/vidhrdw/kungfum.o obj/drivers/kungfum.o \
          obj/vidhrdw/travrusa.o obj/drivers/travrusa.o \
-         obj/vidhrdw/ldrun.o obj/drivers/ldrun.o \
+         obj/vidhrdw/m62.o obj/drivers/m62.o \
 
 obj/gottlieb.a: \
          obj/vidhrdw/gottlieb.o obj/sndhrdw/gottlieb.o obj/drivers/gottlieb.o \
@@ -315,6 +311,7 @@ obj/taito2.a: \
          obj/vidhrdw/gsword.o obj/drivers/gsword.o \
          obj/vidhrdw/gladiatr.o obj/drivers/gladiatr.o \
          obj/machine/bublbobl.o obj/vidhrdw/bublbobl.o obj/drivers/bublbobl.o \
+         obj/drivers/mexico86.o \
          obj/vidhrdw/rastan.o obj/sndhrdw/rastan.o obj/drivers/rastan.o \
          obj/machine/rainbow.o obj/drivers/rainbow.o \
          obj/machine/arkanoid.o obj/vidhrdw/arkanoid.o obj/drivers/arkanoid.o \
@@ -623,11 +620,13 @@ obj/other.a: \
 
 # dependencies
 obj/cpu/z80/z80.o:  z80.c z80.h z80daa.h
+obj/cpu/i8085/i8085.o: i8085.c i8085.h i8085cpu.h i8085daa.h
 obj/cpu/m6502/m6502.o: m6502.c m6502.h m6502ops.h tbl6502.c tbl65c02.c tbl6510.c
 obj/cpu/m6502/h6280.o: h6280.c h6280.h h6280ops.h tblh6280.c
 obj/cpu/i86/i86.o:  i86.c i86.h i86intrf.h ea.h host.h instr.h modrm.h
-obj/cpu/m6809/m6809.o:  m6809.c m6809.h 6809ops.c
-obj/cpu/m6808/m6808.o:  m6808.c m6808.h
+obj/cpu/m6800/m6800.o:	m6800.c m6800.h 6800ops.c
+obj/cpu/m6805/m6805.o:	m6805.c m6805.h 6805ops.c
+obj/cpu/m6809/m6809.o:	m6809.c m6809.h 6809ops.c 6809tbl.c
 obj/cpu/tms34010/tms34010.o: tms34010.c tms34010.h 34010ops.c 34010tbl.c
 obj/cpu/tms9900/tms9900.o: tms9900.h
 obj/cpu/z8000/z8000.o: z8000.c z8000.h z8000cpu.h z8000dab.h z8000ops.c z8000tbl.c
@@ -644,9 +643,9 @@ makedir:
 	md obj\cpu\i86
 	md obj\cpu\i8039
 	md obj\cpu\i8085
-	md obj\cpu\m6809
-	md obj\cpu\m6808
+	md obj\cpu\m6800
 	md obj\cpu\m6805
+	md obj\cpu\m6809
 	md obj\cpu\m68000
 	md obj\cpu\s2650
 	md obj\cpu\t11
@@ -673,11 +672,11 @@ clean:
 	del obj\cpu\i86\*.o
 	del obj\cpu\i8039\*.o
 	del obj\cpu\i8085\*.o
-	del obj\cpu\m6809\*.o
-	del obj\cpu\m6808\*.o
-	del obj\cpu\m6808\*.oa
-	del obj\cpu\m6808\*.exe
+	del obj\cpu\m6800\*.o
+	del obj\cpu\m6800\*.oa
+	del obj\cpu\m6800\*.exe
 	del obj\cpu\m6805\*.o
+	del obj\cpu\m6809\*.o
 	del obj\cpu\m68000\*.o
 	del obj\cpu\m68000\*.oa
 	del obj\cpu\m68000\*.asm
@@ -695,6 +694,7 @@ clean:
 	del obj\sndhrdw\*.o
 	del obj\msdos\*.o
 	del mame.exe
+	del romcmp.exe
 
 cleandebug:
 	del obj\*.o
@@ -707,11 +707,11 @@ cleandebug:
 	del obj\cpu\i86\*.o
 	del obj\cpu\i8039\*.o
 	del obj\cpu\i8085\*.o
-	del obj\cpu\m6809\*.o
-	del obj\cpu\m6808\*.o
-	del obj\cpu\m6808\*.oa
-	del obj\cpu\m6808\*.exe
+	del obj\cpu\m6800\*.o
+	del obj\cpu\m6800\*.oa
+	del obj\cpu\m6800\*.exe
 	del obj\cpu\m6805\*.o
+	del obj\cpu\m6809\*.o
 	del obj\cpu\m68000\*.o
 	del obj\cpu\m68000\*.oa
 	del obj\cpu\m68000\*.asm
@@ -724,3 +724,4 @@ cleandebug:
 	del obj\cpu\tms32010\*.o
 	del obj\cpu\ccpu\*.o
 	del mame.exe
+

@@ -24,20 +24,34 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "cpuintrf.h"
+#include "state.h"
 #include "osd_dbg.h"
 #include "m6805.h"
 #include "driver.h"
 
-/* irq detection can be either edge *only, or edge *and* level. It is a mask */
-/* option you can choose when you order the CPU. */
-#define IRQ_LEVEL_DETECT 0
+#define IRQ_LEVEL_DETECT 1
+
+/* 6805 Registers */
+typedef struct
+{
+	PAIR	pc; 	/* Program counter */
+    PAIR    s;      /* Stack pointer */
+    UINT8   a;      /* Accumulator */
+    UINT8   x;      /* Index register */
+	UINT8	cc; 	/* Condition codes */
+
+	UINT8	pending_interrupts; /* MB */
+	int 	(*irq_callback)(int irqline);
+	int 	irq_state;
+} m6805_Regs;
 
 /* 6805 registers */
 static m6805_Regs m6805;
-#define PC	m6805.pc.w.l
-#define S	m6805.s
-#define X	m6805.x
+
+#define PC  m6805.pc.w.l
+#define S	m6805.s.w.l
 #define A   m6805.a
+#define X	m6805.x
 #define CC	m6805.cc
 
 static PAIR ea; 		/* effective address */
@@ -61,8 +75,8 @@ static void (*wr_s_handler_w)(PAIR *r);
 #define M_RDOP_ARG(Addr)	M6805_RDOP_ARG(Addr)
 
 /* macros to tweak the PC and SP */
-#define SP_INC	if( ++m6805.s > 0x7f ) m6805.s = 0x60
-#define SP_DEC	if( --m6805.s < 0x60 ) m6805.s = 0x7f
+#define SP_INC	if( ++S > 0x7f ) S = 0x60
+#define SP_DEC	if( --S < 0x60 ) S = 0x7f
 #define SP_ADJUST(s) ((s)=((s)&0x07f)|0x60)
 
 /* macros to access memory */
@@ -200,16 +214,16 @@ static unsigned char cycles1[] =
 
 static void rd_s_slow_b( UINT8 *b )
 {
-	*b = RM( m6805.s );
+	*b = RM( S );
 	SP_INC;
 }
 
 static void rd_s_slow_w( PAIR *p )
 {
 	CLEAR_PAIR(p);
-	p->b.h = RM( m6805.s );
+	p->b.h = RM( S );
 	SP_INC;
-	p->b.l = RM( m6805.s );
+	p->b.l = RM( S );
 	SP_INC;
 }
 
@@ -217,7 +231,7 @@ static void rd_s_fast_b( UINT8 *b )
 {
 	extern UINT8 *RAM;
 
-	*b = RAM[ m6805.s ];
+	*b = RAM[ S ];
 	SP_INC;
 }
 
@@ -226,24 +240,24 @@ static void rd_s_fast_w( PAIR *p )
 	extern UINT8 *RAM;
 
 	CLEAR_PAIR(p);
-	p->b.h = RAM[ m6805.s ];
+	p->b.h = RAM[ S ];
 	SP_INC;
-	p->b.l = RAM[ m6805.s ];
+	p->b.l = RAM[ S ];
 	SP_INC;
 }
 
 static void wr_s_slow_b( UINT8 *b )
 {
 	SP_DEC;
-	WM( m6805.s, *b );
+	WM( S, *b );
 }
 
 static void wr_s_slow_w( PAIR *p )
 {
     SP_DEC;
-	WM( m6805.s, p->b.l );
+	WM( S, p->b.l );
     SP_DEC;
-	WM( m6805.s, p->b.h );
+	WM( S, p->b.h );
 }
 
 static void wr_s_fast_b( UINT8 *b )
@@ -251,7 +265,7 @@ static void wr_s_fast_b( UINT8 *b )
 	extern UINT8 *RAM;
 
     SP_DEC;
-	RAM[ m6805.s ] = *b;
+	RAM[ S ] = *b;
 }
 
 static void wr_s_fast_w( PAIR *p )
@@ -259,9 +273,9 @@ static void wr_s_fast_w( PAIR *p )
 	extern UINT8 *RAM;
 
     SP_DEC;
-	RAM[ m6805.s ] = p->b.l;
+	RAM[ S ] = p->b.l;
     SP_DEC;
-	RAM[ m6805.s ] = p->b.h;
+	RAM[ S ] = p->b.h;
 }
 
 INLINE void RM16( UINT32 Addr, PAIR *p )
@@ -299,8 +313,7 @@ static void Interrupt(void)
 			(*m6805.irq_callback)(0);
 		m6805.pending_interrupts &= ~M6805_INT_IRQ;
 		RM16( 0x07fa, &m6805.pc );
-		PC &= 0x7ff;
-        m6805_ICount -= 11;
+		m6805_ICount -= 11;
 	}
 }
 
@@ -309,8 +322,7 @@ void m6805_reset(void *param)
 {
 	memset(&m6805, 0, sizeof(m6805));
 	RM16( 0x07fe, &m6805.pc );
-	PC &= 0x7ff;
-    SEI;            /* IRQ disabled */
+	SEI;			/* IRQ disabled */
 	S = 0x7f;		/* SP = 0x7f */
 
     /* default to unoptimized memory access */
@@ -334,63 +346,97 @@ void m6805_exit(void)
 	/* nothing to do */
 }
 
-/****************************************************************************/
-/* Set all registers to given values                                        */
-/****************************************************************************/
-void m6805_setregs(m6805_Regs *Regs)
+/****************************************************************************
+ * Get all registers in given buffer
+ ****************************************************************************/
+unsigned m6805_get_context(void *dst)
 {
-	m6805 = *Regs;
-	m6805.s = SP_ADJUST(m6805.s);
+	if( dst )
+		*(m6805_Regs*)dst = m6805;
+    return sizeof(m6805_Regs);
 }
 
 
-/****************************************************************************/
-/* Get all registers in given buffer                                        */
-/****************************************************************************/
-void m6805_getregs(m6805_Regs *Regs)
+/****************************************************************************
+ * Set all registers to given values
+ ****************************************************************************/
+void m6805_set_context(void *src)
 {
-	*Regs = m6805;
+	if( src )
+	{
+		m6805 = *(m6805_Regs*)src;
+		S = SP_ADJUST( S );
+	}
 }
 
 
-/****************************************************************************/
-/* Return program counter                                                   */
-/****************************************************************************/
-unsigned m6805_getpc(void)
+/****************************************************************************
+ * Return program counter
+ ****************************************************************************/
+unsigned m6805_get_pc(void)
 {
 	return PC & 0x7ff;	 /* NS 980731 */
 }
 
 
-/****************************************************************************/
-/* Return a specific register                                               */
-/****************************************************************************/
-unsigned m6805_getreg(int regnum)
+/****************************************************************************
+ * Set program counter
+ ****************************************************************************/
+void m6805_set_pc(unsigned val)
+{
+	PC = val & 0x7ff;	/* NS 980731 */
+}
+
+
+/****************************************************************************
+ * Return stack pointer
+ ****************************************************************************/
+unsigned m6805_get_sp(void)
+{
+	return SP_ADJUST(S);
+}
+
+
+/****************************************************************************
+ * Set program counter
+ ****************************************************************************/
+void m6805_set_sp(unsigned val)
+{
+	S = SP_ADJUST(val);
+}
+
+
+/****************************************************************************
+ * Return a specific register
+ ****************************************************************************/
+unsigned m6805_get_reg(int regnum)
 {
 	switch( regnum )
 	{
-        case 0: return m6805.a;
-		case 1: return m6805.pc.w.l;
-		case 2: return m6805.s;
-        case 3: return m6805.x;
-		case 4: return m6805.irq_state;
+		case M6805_A: return m6805.a;
+		case M6805_PC: return m6805.pc.w.l;
+		case M6805_S: return m6805.s.w.l;
+		case M6805_X: return m6805.x;
+		case M6805_CC: return m6805.cc;
+		case M6805_IRQ_STATE: return m6805.irq_state;
 	}
 	return 0;
 }
 
 
-/****************************************************************************/
-/* Set a specific register                                                  */
-/****************************************************************************/
-void m6805_setreg(int regnum, unsigned val)
+/****************************************************************************
+ * Set a specific register
+ ****************************************************************************/
+void m6805_set_reg(int regnum, unsigned val)
 {
 	switch( regnum )
 	{
-        case 0: m6805.a = val; break;
-		case 1: m6805.pc.w.l = val; break;
-		case 2: m6805.s = val; break;
-        case 3: m6805.x = val; break;
-		case 4: m6805.irq_state = val; break;
+		case M6805_A: m6805.a = val; break;
+		case M6805_PC: m6805.pc.w.l = val; break;
+		case M6805_S: m6805.s.w.l = val; break;
+		case M6805_X: m6805.x = val; break;
+		case M6805_CC: m6805.cc = val; break;
+		case M6805_IRQ_STATE: m6805.irq_state = val; break;
 	}
 }
 
@@ -414,6 +460,32 @@ void m6805_set_irq_callback(int (*callback)(int irqline))
 	m6805.irq_callback = callback;
 }
 
+static void state_save(void *file, const char *module)
+{
+	int cpu = cpu_getactivecpu();
+	state_save_UINT8(file,module,cpu,"A", &m6805.a, 1);
+	state_save_UINT16(file,module,cpu,"PC", &m6805.pc.w.l, 1);
+	state_save_UINT16(file,module,cpu,"S", &m6805.s.w.l, 1);
+	state_save_UINT8(file,module,cpu,"X", &m6805.x, 1);
+	state_save_UINT8(file,module,cpu,"CC", &m6805.cc, 1);
+	state_save_UINT8(file,module,cpu,"PENDING", &m6805.pending_interrupts, 1);
+	state_save_INT32(file,module,cpu,"IRQ_STATE", &m6805.irq_state, 1);
+}
+
+static void state_load(void *file, const char *module)
+{
+	int cpu = cpu_getactivecpu();
+	state_load_UINT8(file,module,cpu,"A", &m6805.a, 1);
+	state_load_UINT16(file,module,cpu,"PC", &m6805.pc.w.l, 1);
+	state_load_UINT16(file,module,cpu,"S", &m6805.s.w.l, 1);
+	state_load_UINT8(file,module,cpu,"X", &m6805.x, 1);
+	state_load_UINT8(file,module,cpu,"CC", &m6805.cc, 1);
+	state_load_UINT8(file,module,cpu,"PENDING", &m6805.pending_interrupts, 1);
+	state_load_INT32(file,module,cpu,"IRQ_STATE", &m6805.irq_state, 1);
+}
+
+void m6805_state_save(void *file) { state_save(file,"m6805"); }
+void m6805_state_load(void *file) { state_load(file,"m6805"); }
 
 #include "6805ops.c"
 
@@ -717,12 +789,13 @@ const char *m6805_info(void *context, int regnum)
 {
 	static char buffer[8][47+1];
 	static int which = 0;
-	m6805_Regs *r = (m6805_Regs *)context;
+	m6805_Regs *r = context;
 
 	which = ++which % 8;
     buffer[which][0] = '\0';
-	if( !context && regnum >= CPU_INFO_PC )
-		return buffer[which];
+
+    if( !context )
+		r = &m6805;
 
 	switch( regnum )
 	{
@@ -732,11 +805,16 @@ const char *m6805_info(void *context, int regnum)
 		case CPU_INFO_FILE: return __FILE__;
 		case CPU_INFO_CREDITS: return "????";
 		case CPU_INFO_PC: sprintf(buffer[which], "%04X:", r->pc.w.l); break;
-		case CPU_INFO_SP: sprintf(buffer[which], "%02X", r->s); break;
+		case CPU_INFO_SP: sprintf(buffer[which], "%02X", r->s.b.l); break;
 #if MAME_DEBUG
-		case CPU_INFO_DASM: r->pc.w.l += Dasm6805(&ROM[r->pc.w.l], buffer[which], r->pc.w.l); break;
+		case CPU_INFO_DASM:
+			r->pc.w.l += Dasm6805(&ROM[r->pc.w.l], buffer[which], r->pc.w.l);
+			break;
 #else
-		case CPU_INFO_DASM: sprintf(buffer[which], "$%02x", ROM[r->pc.w.l]); r->pc.w.l++; break;
+		case CPU_INFO_DASM:
+			sprintf(buffer[which], "$%02x", ROM[r->pc.w.l]);
+			r->pc.w.l++;
+			break;
 #endif
 		case CPU_INFO_FLAGS:
 			sprintf(buffer[which], "%c%c%c%c%c%c%c%c",
@@ -749,15 +827,35 @@ const char *m6805_info(void *context, int regnum)
                 r->cc & 0x02 ? 'Z':'.',
                 r->cc & 0x01 ? 'C':'.');
             break;
-        case CPU_INFO_REG+ 0: sprintf(buffer[which], "A:%02X", r->a); break;
-		case CPU_INFO_REG+ 1: sprintf(buffer[which], "PC:%04X", r->pc.w.l); break;
-		case CPU_INFO_REG+ 2: sprintf(buffer[which], "S:%02X", r->s); break;
-        case CPU_INFO_REG+ 3: sprintf(buffer[which], "X:%02X", r->x); break;
-		case CPU_INFO_REG+ 4: sprintf(buffer[which], "IRQ:%d", r->irq_state); break;
+		case CPU_INFO_REG+M6805_A: sprintf(buffer[which], "A:%02X", r->a); break;
+		case CPU_INFO_REG+M6805_PC: sprintf(buffer[which], "PC:%04X", r->pc.w.l); break;
+		case CPU_INFO_REG+M6805_S: sprintf(buffer[which], "S:%02X", r->s.w.l); break;
+		case CPU_INFO_REG+M6805_X: sprintf(buffer[which], "X:%02X", r->x); break;
+		case CPU_INFO_REG+M6805_CC: sprintf(buffer[which], "CC:%02X", r->cc); break;
+		case CPU_INFO_REG+M6805_IRQ_STATE: sprintf(buffer[which], "IRQ:%d", r->irq_state); break;
     }
 	return buffer[which];
 }
 
+/****************************************************************************
+ * 68705 section
+ ****************************************************************************/
+extern void m68705_reset(void *param) { m6805_reset(param); }
+extern void m68705_exit(void) { m6805_exit(); }
+extern int	m68705_execute(int cycles) { return m6805_execute(cycles); }
+extern unsigned m68705_get_context(void *dst) { return m6805_get_context(dst); }
+extern void m68705_set_context(void *src) { m6805_set_context(src); }
+extern unsigned m68705_get_pc(void) { return m6805_get_pc(); }
+extern void m68705_set_pc(unsigned val) { m6805_set_pc(val); }
+extern unsigned m68705_get_sp(void) { return m6805_get_sp(); }
+extern void m68705_set_sp(unsigned val) { m6805_set_pc(val); }
+extern unsigned m68705_get_reg(int regnum)  { return m6805_get_reg(regnum); }
+extern void m68705_set_reg(int regnum, unsigned val)  { m6805_set_reg(regnum,val); }
+extern void m68705_set_nmi_line(int state)	{ m6805_set_nmi_line(state); }
+extern void m68705_set_irq_line(int irqline, int state)  { m6805_set_irq_line(irqline,state); }
+extern void m68705_set_irq_callback(int (*callback)(int irqline))  { m6805_set_irq_callback(callback); }
+void m68705_state_save(void *file) { state_save(file,"m68705"); }
+void m68705_state_load(void *file) { state_load(file,"m68705"); }
 const char *m68705_info(void *context, int regnum)
 {
 	switch( regnum )

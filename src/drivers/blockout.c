@@ -49,7 +49,7 @@ int blockout_input_r(int offset)
 		case 8:
 			return input_port_4_r(offset);
 		default:
-if (errorlog) fprintf(errorlog,"PC %06x - read input port %06x\n",cpu_getpc(),0x100000+offset);
+if (errorlog) fprintf(errorlog,"PC %06x - read input port %06x\n",cpu_get_pc(),0x100000+offset);
 			return 0;
 	}
 }
@@ -195,9 +195,10 @@ INPUT_PORTS_END
 
 
 /* handler called by the 2151 emulator when the internal timers cause an IRQ */
-static void blockout_irq_handler(void)
+static void blockout_irq_handler(int irq)
 {
-	cpu_cause_interrupt(1,0xff);
+	cpu_set_irq_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
+	/* cpu_cause_interrupt(1,0xff); */
 }
 
 static struct YM2151interface ym2151_interface =

@@ -275,10 +275,9 @@ void lkage_sh_nmi_enable_w(int offset,int data)
 	}
 }
 
-
-static void irqhandler(void)
+static void irqhandler(int irq)
 {
-	cpu_cause_interrupt(1,0xff);
+	cpu_set_irq_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
 }
 
 static struct YM2203interface ym2203_interface =

@@ -689,9 +689,9 @@ static struct GfxDecodeInfo unkvsys_gfxdecodeinfo[] =
 
 
 
-static void irqhandler(void)
+static void irqhandler(int irq)
 {
-	cpu_cause_interrupt(1,0xff);
+	cpu_set_irq_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
 }
 
 struct YM2610interface ym2610_interface =

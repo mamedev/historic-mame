@@ -136,7 +136,7 @@ void atarisys1_vscroll_w (int offset, int data);
 void marble_speedcheck_w (int offset, int data);
 
 int atarisys1_interrupt (void);
-void atarisys1_sound_interrupt (void);
+void atarisys1_sound_interrupt (int irq);
 
 void marble_init_machine (void);
 void peterpak_init_machine (void);

@@ -73,7 +73,7 @@ void mystston_2000_w(int offset,int data)
 	}
 
 	/* other bits unused? */
-if (errorlog) fprintf(errorlog,"PC %04x: 2000 = %02x\n",cpu_getpc(),data);
+if (errorlog) fprintf(errorlog,"PC %04x: 2000 = %02x\n",cpu_get_pc(),data);
 }
 
 

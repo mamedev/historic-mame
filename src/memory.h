@@ -222,7 +222,7 @@ int cpu_readport(int Port);
 void cpu_writeport(int Port,int Value);
 
 /* -----  bank memory function ----- */
-#define cpu_setbank(B,A)  {cpu_bankbase[B]=(unsigned char *)(A);if(ophw==B){ophw=0xff;cpu_setOPbase16(cpu_getpc());}}
+#define cpu_setbank(B,A)  {cpu_bankbase[B]=(unsigned char *)(A);if(ophw==B){ophw=0xff;cpu_setOPbase16(cpu_get_pc());}}
 
 /* ------ bank memory handler ------ */
 extern void cpu_setbankhandler_r(int bank,int (*handler)(int) );

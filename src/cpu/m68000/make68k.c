@@ -102,7 +102,7 @@ int 		DisOp;
 
 /* Register Location Offsets */
 
-#define ICOUNT      "_MC68000_ICount"
+#define ICOUNT		"_m68000_ICount"
 #define REG_DAT     "R_D0"
 #define REG_DAT_EBX "[R_D0+ebx*4]"
 #define REG_ADD     "R_A0"
@@ -6005,7 +6005,7 @@ void CodeSegmentBegin(void)
     fprintf(fp, "\t\t BITS 32\n\n");
     fprintf(fp, "\t\t GLOBAL _M68KRUN\n");
     fprintf(fp, "\t\t GLOBAL _M68KRESET\n");
-    fprintf(fp, "\t\t GLOBAL _MC68000_ICount\n");
+	fprintf(fp, "\t\t GLOBAL _m68000_ICount\n");
     fprintf(fp, "\t\t GLOBAL _regs\n");
 
     fprintf(fp, "\t\t EXTERN %s\n",name_cpu_readmem24);
@@ -6280,7 +6280,7 @@ void CodeSegmentEnd(void)
 
     fprintf(fp, "\n\n; Register Structure\n\n");
 
-    fprintf(fp, "_MC68000_ICount\t DD 0\n\n");
+	fprintf(fp, "_m68000_ICount\t DD 0\n\n");
 
     fprintf(fp, "_regs\n");
     fprintf(fp, "R_D0\t DD 0\t\t\t ; Data Registers\n");

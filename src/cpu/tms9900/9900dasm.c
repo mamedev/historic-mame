@@ -20,7 +20,7 @@
 
 
 #include <stdio.h>
-#include <string.h>
+#include <strings.h>
 #include "memory.h"
 
 #define RDOP(A) (cpu_readop(A) << 8) + (cpu_readop((A+1) & 0xffff))

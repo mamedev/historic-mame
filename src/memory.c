@@ -196,18 +196,18 @@ int mrh_bank8(int address){return cpu_bankbase[8][address];}
 
 int mrh_error(int address)
 {
-	if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - read %02x from unmapped memory address %04x\n",cpu_getactivecpu(),cpu_getpc(),RAM[address],address);
+	if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - read %02x from unmapped memory address %04x\n",cpu_getactivecpu(),cpu_get_pc(),RAM[address],address);
 	return RAM[address];
 }
 /* 24-bit address spaces are sparse, so we can't just return RAM[address] */
 int mrh_error_sparse(int address)
 {
-	if (errorlog) fprintf(errorlog,"CPU #%d PC %08x: warning - read unmapped memory address %08x\n",cpu_getactivecpu(),cpu_getpc(),address);
+	if (errorlog) fprintf(errorlog,"CPU #%d PC %08x: warning - read unmapped memory address %08x\n",cpu_getactivecpu(),cpu_get_pc(),address);
 	return 0;
 }
 int mrh_error_sparse_bit(int address)
 {
-	if (errorlog) fprintf(errorlog,"CPU #%d PC %08x: warning - read unmapped memory bit addr %08x (byte addr %08x)\n",cpu_getactivecpu(),cpu_getpc(),address<<3, address);
+	if (errorlog) fprintf(errorlog,"CPU #%d PC %08x: warning - read unmapped memory bit addr %08x (byte addr %08x)\n",cpu_getactivecpu(),cpu_get_pc(),address<<3, address);
 	return 0;
 }
 int mrh_nop(int address)
@@ -227,21 +227,21 @@ void mwh_bank8(int address,int data){cpu_bankbase[8][address] = data;}
 
 void mwh_error(int address,int data)
 {
-	if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - write %02x to unmapped memory address %04x\n",cpu_getactivecpu(),cpu_getpc(),data,address);
+	if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - write %02x to unmapped memory address %04x\n",cpu_getactivecpu(),cpu_get_pc(),data,address);
 	RAM[address] = data;
 }
 /* 24-bit address spaces are sparse, so we can't just write to RAM[address] */
 void mwh_error_sparse(int address,int data)
 {
-	if (errorlog) fprintf(errorlog,"CPU #%d PC %08x: warning - write %02x to unmapped memory address %08x\n",cpu_getactivecpu(),cpu_getpc(),data,address);
+	if (errorlog) fprintf(errorlog,"CPU #%d PC %08x: warning - write %02x to unmapped memory address %08x\n",cpu_getactivecpu(),cpu_get_pc(),data,address);
 }
 void mwh_error_sparse_bit(int address,int data)
 {
-	if (errorlog) fprintf(errorlog,"CPU #%d PC %08x: warning - write %02x to unmapped memory bit addr %08x\n",cpu_getactivecpu(),cpu_getpc(),data,address<<3);
+	if (errorlog) fprintf(errorlog,"CPU #%d PC %08x: warning - write %02x to unmapped memory bit addr %08x\n",cpu_getactivecpu(),cpu_get_pc(),data,address<<3);
 }
 void mwh_rom(int address,int data)
 {
-	if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - write %02x to ROM address %04x\n",cpu_getactivecpu(),cpu_getpc(),data,address);
+	if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - write %02x to ROM address %04x\n",cpu_getactivecpu(),cpu_get_pc(),data,address);
 }
 void mwh_ramrom(int address,int data)
 {
@@ -1684,7 +1684,7 @@ int cpu_readport(int Port)
 		}
 	}
 
-	if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - read unmapped I/O port %02x\n",cpu_getactivecpu(),cpu_getpc(),Port & cur_portmask);
+	if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - read unmapped I/O port %02x\n",cpu_getactivecpu(),cpu_get_pc(),Port & cur_portmask);
 	return 0;
 }
 
@@ -1719,7 +1719,7 @@ void cpu_writeport(int Port,int Value)
 		}
 	}
 
-	if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - write %02x to unmapped I/O port %02x\n",cpu_getactivecpu(),cpu_getpc(),Value,Port & cur_portmask);
+	if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - write %02x to unmapped I/O port %02x\n",cpu_getactivecpu(),cpu_get_pc(),Value,Port & cur_portmask);
 }
 
 
@@ -1882,7 +1882,7 @@ void cpu_setOPbase16 (int pc)
 	}
 
 	/* do not support on callbank memory reasion */
-	if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - op-code execute on mapped i/o\n",cpu_getactivecpu(),cpu_getpc());
+	if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - op-code execute on mapped i/o\n",cpu_getactivecpu(),cpu_get_pc());
 }
 
 
@@ -1924,7 +1924,7 @@ void cpu_setOPbase16lew (int pc)
 	}
 
 	/* do not support on callbank memory reasion */
-	if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - op-code execute on mapped i/o\n",cpu_getactivecpu(),cpu_getpc());
+	if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - op-code execute on mapped i/o\n",cpu_getactivecpu(),cpu_get_pc());
 }
 
 
@@ -1966,7 +1966,7 @@ void cpu_setOPbase20 (int pc)
 	}
 
 	/* do not support on callbank memory reasion */
-	if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - op-code execute on mapped i/o\n",cpu_getactivecpu(),cpu_getpc());
+	if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - op-code execute on mapped i/o\n",cpu_getactivecpu(),cpu_get_pc());
 }
 
 
@@ -2016,7 +2016,7 @@ void cpu_setOPbase24 (int pc)
 	}
 
 	/* do not support on callbank memory reasion */
-	if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - op-code execute on mapped i/o\n",cpu_getactivecpu(),cpu_getpc());
+	if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - op-code execute on mapped i/o\n",cpu_getactivecpu(),cpu_get_pc());
 }
 
 
@@ -2060,7 +2060,7 @@ void cpu_setOPbase29 (int pc)    /* AJP 980803 */
 	}
 
 	/* do not support on callbank memory reasion */
-	if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - op-code execute on mapped i/o\n",cpu_getactivecpu(),cpu_getpc());
+	if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - op-code execute on mapped i/o\n",cpu_getactivecpu(),cpu_get_pc());
 }
 
 void install_mem_read_handler(int cpu, int start, int end, int (*handler)(int))

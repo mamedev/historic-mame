@@ -603,11 +603,45 @@ int frontend_help (int argc, char **argv)
 			while (drivers[i])
 			{
 				if ((drivers[i]->drv->video_attributes & VIDEO_TYPE_VECTOR) == 0 &&
+						drivers[i]->clone_of == 0 &&
 						drivers[i]->drv->visible_area.max_x - drivers[i]->drv->visible_area.min_x + 1 <=
 						drivers[i]->drv->visible_area.max_y - drivers[i]->drv->visible_area.min_y + 1)
-					printf("%s %dx%d\n",drivers[i]->name,
-							drivers[i]->drv->visible_area.max_x - drivers[i]->drv->visible_area.min_x + 1,
-							drivers[i]->drv->visible_area.max_y - drivers[i]->drv->visible_area.min_y + 1);
+				{
+					if (strcmp(drivers[i]->name,"crater") &&
+						strcmp(drivers[i]->name,"mpatrol") &&
+						strcmp(drivers[i]->name,"troangel") &&
+						strcmp(drivers[i]->name,"travrusa") &&
+						strcmp(drivers[i]->name,"vigilant") &&
+						strcmp(drivers[i]->name,"sonson") &&
+						strcmp(drivers[i]->name,"brkthru") &&
+						strcmp(drivers[i]->name,"darwin") &&
+						strcmp(drivers[i]->name,"exprraid") &&
+						strcmp(drivers[i]->name,"sidetrac") &&
+						strcmp(drivers[i]->name,"targ") &&
+						strcmp(drivers[i]->name,"spectar") &&
+						strcmp(drivers[i]->name,"venture") &&
+						strcmp(drivers[i]->name,"mtrap") &&
+						strcmp(drivers[i]->name,"pepper2") &&
+						strcmp(drivers[i]->name,"hardhat") &&
+						strcmp(drivers[i]->name,"fax") &&
+						strcmp(drivers[i]->name,"starfire") &&
+						strcmp(drivers[i]->name,"fireone") &&
+						strcmp(drivers[i]->name,"renegade") &&
+						strcmp(drivers[i]->name,"battlane") &&
+						strcmp(drivers[i]->name,"megatack") &&
+						strcmp(drivers[i]->name,"killcome") &&
+						strcmp(drivers[i]->name,"challeng") &&
+						strcmp(drivers[i]->name,"kaos") &&
+						strcmp(drivers[i]->name,"formatz") &&
+						strcmp(drivers[i]->name,"bankp") &&
+						strcmp(drivers[i]->name,"liberatr") &&
+						strcmp(drivers[i]->name,"toki") &&
+						strcmp(drivers[i]->name,"stactics") &&
+						1)
+						printf("%s %dx%d\n",drivers[i]->name,
+								drivers[i]->drv->visible_area.max_x - drivers[i]->drv->visible_area.min_x + 1,
+								drivers[i]->drv->visible_area.max_y - drivers[i]->drv->visible_area.min_y + 1);
+				}
 				i++;
 			}
 			return 0;

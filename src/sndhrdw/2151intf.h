@@ -14,7 +14,7 @@ struct YM2151interface
 	int num;
 	int baseclock;
 	int volume[MAX_2151]; /* need for use YM3012()_VOL macro */
-	void (*irqhandler[MAX_2151])(void);
+	void (*irqhandler[MAX_2151])(int irq);
 	void (*portwritehandler[MAX_2151])(int,int);
 };
 

@@ -458,7 +458,7 @@
  ***************************************************************/
 #define BRK 													\
 	PCW++;														\
-if (errorlog) fprintf(errorlog,"BRK %04x\n",cpu_getpc()); \
+if (errorlog) fprintf(errorlog,"BRK %04x\n",cpu_get_pc()); \
 	PUSH(PCH);													\
 	PUSH(PCL);													\
 	COMPOSE_P(_fB,0);											\
@@ -595,7 +595,7 @@ if (errorlog) fprintf(errorlog,"BRK %04x\n",cpu_getpc()); \
  ***************************************************************/
 #define ILL 													\
 	h6280_ICount -= 2; /* (assumed) */							\
-	if (errorlog) fprintf(errorlog,"%04x: WARNING - h6280 illegal opcode\n",cpu_getpc())
+	if (errorlog) fprintf(errorlog,"%04x: WARNING - h6280 illegal opcode\n",cpu_get_pc())
 
 /* 6280 ********************************************************
  *  INA Increment accumulator
@@ -877,7 +877,7 @@ if (errorlog) fprintf(errorlog,"BRK %04x\n",cpu_getpc()); \
  ***************************************************************/
 #define SET 													\
 	P |= _fT;													\
-	if (errorlog) fprintf(errorlog,"%04x: WARNING H6280 SET\n",cpu_getpc())
+	if (errorlog) fprintf(errorlog,"%04x: WARNING H6280 SET\n",cpu_get_pc())
 
 /* 6280 ********************************************************
  *  SMB Set memory bit

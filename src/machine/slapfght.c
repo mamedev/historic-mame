@@ -156,7 +156,7 @@ unsigned char val;
 void getstar_sh_intenable_w(int offset, int data)
 {
 	getstar_sh_intenabled = 1;
-	if (errorlog) fprintf(errorlog,"cpu #1 PC=%d: %d written to a0e0\n",cpu_getpc(),data);
+	if (errorlog) fprintf(errorlog,"cpu #1 PC=%d: %d written to a0e0\n",cpu_get_pc(),data);
 }
 
 

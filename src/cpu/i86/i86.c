@@ -11,41 +11,48 @@
 #include "I86.h"
 #include "I86intrf.h"
 
+/* I86 registers */
+typedef union
+{                   /* eight general registers */
+    UINT16 w[8];    /* viewed as 16 bits registers */
+    UINT8  b[16];   /* or as 8 bit registers */
+} i86basicregs;
+
+typedef struct
+{
+    i86basicregs regs;
+	int 	ip;
+	UINT16	flags;
+	UINT32	base[4];
+	UINT16	sregs[4];
+    int     (*irq_callback)(int irqline);
+    int     AuxVal, OverVal, SignVal, ZeroVal, CarryVal, ParityVal; /* 0 or non-0 valued flags */
+	UINT8	TF, IF, DF;   /* 0 or 1 valued flags */
+	UINT8	int_vector;
+	UINT8	pending_irq;
+	INT8	nmi_state;
+	INT8	irq_state;
+} i86_Regs;
+
+
 /***************************************************************************/
 /* cpu state                                                               */
 /***************************************************************************/
 
-static i86basicregs regs;       /* ASG 971222 */
-
 int i86_ICount;
-int i86_AddrMask = 0x0000ffff;	/* HJB 12/13/98 default mask 64K for MAME */
-#define cycle_count i86_ICount
+int i86_AddrMask = 0x0000ffff;  /* HJB 12/13/98 default mask 64K for MAME */
 
-static unsigned ip; 			/* instruction pointer register */
-static unsigned sregs[4];       /* four segment registers */
-static unsigned base[4];        /* and their base addresses */
-static unsigned prefix_base;    /* base address of the latest prefix segment */
+static i86_Regs I;
+static unsigned prefix_base;	/* base address of the latest prefix segment */
 static char seg_prefix;         /* prefix segment indicator */
 
-static UINT8 TF, IF, DF; /* 0 or 1 valued flags */
-static int AuxVal, OverVal, SignVal, ZeroVal, CarryVal, ParityVal; /* 0 or non-0 valued flags */
 
 /* The interrupt number of a pending external interrupt pending NMI is 2.	*/
 /* For INTR interrupts, the level is caught on the bus during an INTA cycle */
-static int int86_vector;
 
-static int pending_irq;         /* pending interrupts (NMI/IRQ) flag mask */
 #define INT_IRQ 0x01
 #define NMI_IRQ 0x02
-
-static int irq_state;
-static int nmi_state;
-static int (*irq_callback)(int) = 0;
-
-/* ASG 971222 static unsigned char *Memory;   * fetching goes directly to memory instead of going through MAME's cpu_readmem() */
-
-/***************************************************************************/
-/* ASG 971222 static int cycle_count, cycles_per_run; */
+#define I86_PENDING 0x80
 
 #include "instr.h"
 #include "ea.h"
@@ -55,42 +62,42 @@ static UINT8 parity_table[256];
 /***************************************************************************/
 
 
-/* ASG 971222 void I86_Reset(unsigned char *mem,int cycles)*/
 void i86_reset (void *param)
 {
     unsigned int i,j,c;
     BREGS reg_name[8]={ AL, CL, DL, BL, AH, CH, DH, BH };
 
-	int86_vector = 0;
-	pending_irq = 0;
-	nmi_state = 0;
-	irq_state = 0;
-	irq_callback = 0;
-    for (i = 0; i < 4; i++) sregs[i] = 0;
-    sregs[CS]=0xFFFF;
+	I.int_vector = 0;
+	I.pending_irq = 0;
+	I.nmi_state = CLEAR_LINE;
+	I.irq_state = CLEAR_LINE;
+	I.irq_callback = NULL;
+	for (i = 0; i < 4; i++)
+		I.sregs[i] = 0;
+	I.sregs[CS]=0xFFFF;
 
-    base[CS] = SegBase(CS);
-    base[DS] = SegBase(DS);
-    base[ES] = SegBase(ES);
-    base[SS] = SegBase(SS);
-	change_pc20((base[CS]+ip) & i86_AddrMask);
+	I.base[CS] = SegBase(CS);
+	I.base[DS] = SegBase(DS);
+	I.base[ES] = SegBase(ES);
+	I.base[SS] = SegBase(SS);
 
-    for (i=0; i < 8; i++) regs.w[i] = 0;
-    ip = 0;
+	for (i=0; i < 8; i++)
+		I.regs.w[i] = 0;
+	I.ip = 0;
 
-    /* ASG 971222 Memory=mem;*/
+	change_pc20((I.base[CS]+I.ip) & i86_AddrMask);
 
     for (i = 0;i < 256; i++)
     {
-	for (j = i, c = 0; j > 0; j >>= 1)
-	    if (j & 1) c++;
+		for (j = i, c = 0; j > 0; j >>= 1)
+			if (j & 1) c++;
 
-	parity_table[i] = !(c & 1);
+		parity_table[i] = !(c & 1);
     }
 
-	TF = IF = DF = 0;
-    SignVal=CarryVal=AuxVal=OverVal=0;
-    ZeroVal=ParityVal=1;
+	I.TF = I.IF = I.DF = 0;
+	I.SignVal = I.CarryVal = I.AuxVal = I.OverVal = 0;
+	I.ZeroVal = I.ParityVal = 1;
 
     for (i = 0; i < 256; i++)
     {
@@ -110,47 +117,47 @@ void i86_exit (void)
 	/* nothing to do ? */
 }
 
-static void I86_interrupt(unsigned int_num)
+static void i86_interrupt(unsigned int_num)
 {
     unsigned dest_seg, dest_off;
 
     i_pushf();
-	TF = IF = 0;
+	I.TF = I.IF = 0;
 
-    if (int_num == -1)
-		int_num = (*irq_callback)(0);
+	if (int_num == -1)
+		int_num = (*I.irq_callback)(0);
 
     dest_off = ReadWord(int_num*4);
     dest_seg = ReadWord(int_num*4+2);
 
-    PUSH(sregs[CS]);
-    PUSH(ip);
-    ip = (WORD)dest_off;
-    sregs[CS] = (WORD)dest_seg;
-    base[CS] = SegBase(CS);
-	change_pc20((base[CS]+ip) & i86_AddrMask);
+	PUSH(I.sregs[CS]);
+	PUSH(I.ip);
+	I.ip = (WORD)dest_off;
+	I.sregs[CS] = (WORD)dest_seg;
+	I.base[CS] = SegBase(CS);
+	change_pc20((I.base[CS]+I.ip) & i86_AddrMask);
 
 }
 
 void trap(void)
 {
 	instruction[FETCHOP]();
-	I86_interrupt(1);
+	i86_interrupt(1);
 }
 
 static void external_int(void)
 {
-	if( pending_irq & NMI_IRQ )
+	if( I.pending_irq & NMI_IRQ )
 	{
-		I86_interrupt(I86_NMI_INT);
-		pending_irq &= ~NMI_IRQ;
+		i86_interrupt(I86_NMI_INT);
+		I.pending_irq &= ~NMI_IRQ;
 	}
 	else
-	if( pending_irq )
+	if( I.pending_irq )
 	{
 		/* the actual vector is retrieved after pushing flags */
 		/* and clearing the IF */
-		I86_interrupt(-1);
+		i86_interrupt(-1);
 	}
 }
 
@@ -159,7 +166,7 @@ static void external_int(void)
 static void i_add_br8(void)    /* Opcode 0x00 */
 {
     DEF_br8(dst,src);
-    cycle_count-=3;
+	i86_ICount-=3;
     ADDB(dst,src);
     PutbackRMByte(ModRM,dst);
 }
@@ -167,7 +174,7 @@ static void i_add_br8(void)    /* Opcode 0x00 */
 static void i_add_wr16(void)    /* Opcode 0x01 */
 {
     DEF_wr16(dst,src);
-    cycle_count-=3;
+	i86_ICount-=3;
     ADDW(dst,src);
     PutbackRMWord(ModRM,dst);
 }
@@ -175,7 +182,7 @@ static void i_add_wr16(void)    /* Opcode 0x01 */
 static void i_add_r8b(void)    /* Opcode 0x02 */
 {
     DEF_r8b(dst,src);
-    cycle_count-=3;
+	i86_ICount-=3;
     ADDB(dst,src);
     RegByte(ModRM)=dst;
 }
@@ -183,7 +190,7 @@ static void i_add_r8b(void)    /* Opcode 0x02 */
 static void i_add_r16w(void)    /* Opcode 0x03 */
 {
     DEF_r16w(dst,src);
-    cycle_count-=3;
+	i86_ICount-=3;
     ADDW(dst,src);
     RegWord(ModRM)=dst;
 }
@@ -192,39 +199,39 @@ static void i_add_r16w(void)    /* Opcode 0x03 */
 static void i_add_ald8(void)    /* Opcode 0x04 */
 {
     DEF_ald8(dst,src);
-    cycle_count-=4;
+	i86_ICount-=4;
     ADDB(dst,src);
-    regs.b[AL]=dst;
+	I.regs.b[AL]=dst;
 }
 
 
 static void i_add_axd16(void)    /* Opcode 0x05 */
 {
     DEF_axd16(dst,src);
-    cycle_count-=4;
+	i86_ICount-=4;
     ADDW(dst,src);
-    regs.w[AX]=dst;
+	I.regs.w[AX]=dst;
 }
 
 
 static void i_push_es(void)    /* Opcode 0x06 */
 {
-    cycle_count-=3;
-    PUSH(sregs[ES]);
+	i86_ICount-=3;
+	PUSH(I.sregs[ES]);
 }
 
 
 static void i_pop_es(void)    /* Opcode 0x07 */
 {
-    POP(sregs[ES]);
-    base[ES] = SegBase(ES);
-    cycle_count-=2;
+	POP(I.sregs[ES]);
+	I.base[ES] = SegBase(ES);
+	i86_ICount-=2;
 }
 
 static void i_or_br8(void)    /* Opcode 0x08 */
 {
     DEF_br8(dst,src);
-    cycle_count-=3;
+	i86_ICount-=3;
     ORB(dst,src);
     PutbackRMByte(ModRM,dst);
 }
@@ -232,7 +239,7 @@ static void i_or_br8(void)    /* Opcode 0x08 */
 static void i_or_wr16(void)    /* Opcode 0x09 */
 {
     DEF_wr16(dst,src);
-    cycle_count-=3;
+	i86_ICount-=3;
     ORW(dst,src);
     PutbackRMWord(ModRM,dst);
 }
@@ -240,7 +247,7 @@ static void i_or_wr16(void)    /* Opcode 0x09 */
 static void i_or_r8b(void)    /* Opcode 0x0a */
 {
     DEF_r8b(dst,src);
-    cycle_count-=3;
+	i86_ICount-=3;
     ORB(dst,src);
     RegByte(ModRM)=dst;
 }
@@ -248,7 +255,7 @@ static void i_or_r8b(void)    /* Opcode 0x0a */
 static void i_or_r16w(void)    /* Opcode 0x0b */
 {
     DEF_r16w(dst,src);
-    cycle_count-=3;
+	i86_ICount-=3;
     ORW(dst,src);
     RegWord(ModRM)=dst;
 }
@@ -256,23 +263,23 @@ static void i_or_r16w(void)    /* Opcode 0x0b */
 static void i_or_ald8(void)    /* Opcode 0x0c */
 {
     DEF_ald8(dst,src);
-    cycle_count-=4;
+	i86_ICount-=4;
     ORB(dst,src);
-    regs.b[AL]=dst;
+	I.regs.b[AL]=dst;
 }
 
 static void i_or_axd16(void)    /* Opcode 0x0d */
 {
     DEF_axd16(dst,src);
-    cycle_count-=4;
+	i86_ICount-=4;
     ORW(dst,src);
-    regs.w[AX]=dst;
+	I.regs.w[AX]=dst;
 }
 
 static void i_push_cs(void)    /* Opcode 0x0e */
 {
-    cycle_count-=3;
-    PUSH(sregs[CS]);
+	i86_ICount-=3;
+	PUSH(I.sregs[CS]);
 }
 
 /* Opcode 0x0f invalid */
@@ -280,7 +287,7 @@ static void i_push_cs(void)    /* Opcode 0x0e */
 static void i_adc_br8(void)    /* Opcode 0x10 */
 {
     DEF_br8(dst,src);
-    cycle_count-=3;
+	i86_ICount-=3;
     src+=CF;
     ADDB(dst,src);
     PutbackRMByte(ModRM,dst);
@@ -289,7 +296,7 @@ static void i_adc_br8(void)    /* Opcode 0x10 */
 static void i_adc_wr16(void)    /* Opcode 0x11 */
 {
     DEF_wr16(dst,src);
-    cycle_count-=3;
+	i86_ICount-=3;
     src+=CF;
     ADDW(dst,src);
     PutbackRMWord(ModRM,dst);
@@ -298,7 +305,7 @@ static void i_adc_wr16(void)    /* Opcode 0x11 */
 static void i_adc_r8b(void)    /* Opcode 0x12 */
 {
     DEF_r8b(dst,src);
-    cycle_count-=3;
+	i86_ICount-=3;
     src+=CF;
     ADDB(dst,src);
     RegByte(ModRM)=dst;
@@ -307,7 +314,7 @@ static void i_adc_r8b(void)    /* Opcode 0x12 */
 static void i_adc_r16w(void)    /* Opcode 0x13 */
 {
     DEF_r16w(dst,src);
-    cycle_count-=3;
+	i86_ICount-=3;
     src+=CF;
     ADDW(dst,src);
     RegWord(ModRM)=dst;
@@ -316,39 +323,39 @@ static void i_adc_r16w(void)    /* Opcode 0x13 */
 static void i_adc_ald8(void)    /* Opcode 0x14 */
 {
     DEF_ald8(dst,src);
-    cycle_count-=4;
+	i86_ICount-=4;
     src+=CF;
     ADDB(dst,src);
-    regs.b[AL] = dst;
+	I.regs.b[AL] = dst;
 }
 
 static void i_adc_axd16(void)    /* Opcode 0x15 */
 {
     DEF_axd16(dst,src);
-    cycle_count-=4;
+	i86_ICount-=4;
     src+=CF;
     ADDW(dst,src);
-    regs.w[AX]=dst;
+	I.regs.w[AX]=dst;
 }
 
 static void i_push_ss(void)    /* Opcode 0x16 */
 {
-    cycle_count-=3;
-    PUSH(sregs[SS]);
+	i86_ICount-=3;
+	PUSH(I.sregs[SS]);
 }
 
 static void i_pop_ss(void)    /* Opcode 0x17 */
 {
-    cycle_count-=2;
-    POP(sregs[SS]);
-    base[SS] = SegBase(SS);
+	i86_ICount-=2;
+	POP(I.sregs[SS]);
+	I.base[SS] = SegBase(SS);
 	instruction[FETCHOP](); /* no interrupt before next instruction */
 }
 
 static void i_sbb_br8(void)    /* Opcode 0x18 */
 {
     DEF_br8(dst,src);
-    cycle_count-=3;
+	i86_ICount-=3;
     src+=CF;
     SUBB(dst,src);
     PutbackRMByte(ModRM,dst);
@@ -357,7 +364,7 @@ static void i_sbb_br8(void)    /* Opcode 0x18 */
 static void i_sbb_wr16(void)    /* Opcode 0x19 */
 {
     DEF_wr16(dst,src);
-    cycle_count-=3;
+	i86_ICount-=3;
     src+=CF;
     SUBW(dst,src);
     PutbackRMWord(ModRM,dst);
@@ -366,7 +373,7 @@ static void i_sbb_wr16(void)    /* Opcode 0x19 */
 static void i_sbb_r8b(void)    /* Opcode 0x1a */
 {
     DEF_r8b(dst,src);
-    cycle_count-=3;
+	i86_ICount-=3;
     src+=CF;
     SUBB(dst,src);
     RegByte(ModRM)=dst;
@@ -375,7 +382,7 @@ static void i_sbb_r8b(void)    /* Opcode 0x1a */
 static void i_sbb_r16w(void)    /* Opcode 0x1b */
 {
     DEF_r16w(dst,src);
-    cycle_count-=3;
+	i86_ICount-=3;
     src+=CF;
     SUBW(dst,src);
     RegWord(ModRM)= dst;
@@ -384,38 +391,38 @@ static void i_sbb_r16w(void)    /* Opcode 0x1b */
 static void i_sbb_ald8(void)    /* Opcode 0x1c */
 {
     DEF_ald8(dst,src);
-    cycle_count-=4;
+	i86_ICount-=4;
     src+=CF;
     SUBB(dst,src);
-    regs.b[AL] = dst;
+	I.regs.b[AL] = dst;
 }
 
 static void i_sbb_axd16(void)    /* Opcode 0x1d */
 {
     DEF_axd16(dst,src);
-    cycle_count-=4;
+	i86_ICount-=4;
     src+=CF;
     SUBW(dst,src);
-    regs.w[AX]=dst;
+	I.regs.w[AX]=dst;
 }
 
 static void i_push_ds(void)    /* Opcode 0x1e */
 {
-    cycle_count-=3;
-    PUSH(sregs[DS]);
+	i86_ICount-=3;
+	PUSH(I.sregs[DS]);
 }
 
 static void i_pop_ds(void)    /* Opcode 0x1f */
 {
-    POP(sregs[DS]);
-    base[DS] = SegBase(DS);
-    cycle_count-=2;
+	POP(I.sregs[DS]);
+	I.base[DS] = SegBase(DS);
+	i86_ICount-=2;
 }
 
 static void i_and_br8(void)    /* Opcode 0x20 */
 {
     DEF_br8(dst,src);
-    cycle_count-=3;
+	i86_ICount-=3;
     ANDB(dst,src);
     PutbackRMByte(ModRM,dst);
 }
@@ -423,7 +430,7 @@ static void i_and_br8(void)    /* Opcode 0x20 */
 static void i_and_wr16(void)    /* Opcode 0x21 */
 {
     DEF_wr16(dst,src);
-    cycle_count-=3;
+	i86_ICount-=3;
     ANDW(dst,src);
     PutbackRMWord(ModRM,dst);
 }
@@ -431,7 +438,7 @@ static void i_and_wr16(void)    /* Opcode 0x21 */
 static void i_and_r8b(void)    /* Opcode 0x22 */
 {
     DEF_r8b(dst,src);
-    cycle_count-=3;
+	i86_ICount-=3;
     ANDB(dst,src);
     RegByte(ModRM)=dst;
 }
@@ -439,7 +446,7 @@ static void i_and_r8b(void)    /* Opcode 0x22 */
 static void i_and_r16w(void)    /* Opcode 0x23 */
 {
     DEF_r16w(dst,src);
-    cycle_count-=3;
+	i86_ICount-=3;
     ANDW(dst,src);
     RegWord(ModRM)=dst;
 }
@@ -447,51 +454,51 @@ static void i_and_r16w(void)    /* Opcode 0x23 */
 static void i_and_ald8(void)    /* Opcode 0x24 */
 {
     DEF_ald8(dst,src);
-    cycle_count-=4;
+	i86_ICount-=4;
     ANDB(dst,src);
-    regs.b[AL] = dst;
+	I.regs.b[AL] = dst;
 }
 
 static void i_and_axd16(void)    /* Opcode 0x25 */
 {
     DEF_axd16(dst,src);
-    cycle_count-=4;
+	i86_ICount-=4;
     ANDW(dst,src);
-    regs.w[AX]=dst;
+	I.regs.w[AX]=dst;
 }
 
 static void i_es(void)    /* Opcode 0x26 */
 {
     seg_prefix=TRUE;
-    prefix_base=base[ES];
-    cycle_count-=2;
+	prefix_base=I.base[ES];
+	i86_ICount-=2;
 	instruction[FETCHOP]();
 }
 
 static void i_daa(void)    /* Opcode 0x27 */
 {
-	if (AF || ((regs.b[AL] & 0xf) > 9))
+	if (AF || ((I.regs.b[AL] & 0xf) > 9))
 	{
 		int tmp;
-		regs.b[AL] = tmp = regs.b[AL] + 6;
-		AuxVal = 1;
-		CarryVal |= tmp & 0x100;
+		I.regs.b[AL] = tmp = I.regs.b[AL] + 6;
+		I.AuxVal = 1;
+		I.CarryVal |= tmp & 0x100;
 	}
 
-	if (CF || (regs.b[AL] > 0x9f))
+	if (CF || (I.regs.b[AL] > 0x9f))
 	{
-		regs.b[AL] += 0x60;
-		CarryVal = 1;
+		I.regs.b[AL] += 0x60;
+		I.CarryVal = 1;
 	}
 
-	SetSZPF_Byte(regs.b[AL]);
-	cycle_count-=4;
+	SetSZPF_Byte(I.regs.b[AL]);
+	i86_ICount-=4;
 }
 
 static void i_sub_br8(void)    /* Opcode 0x28 */
 {
     DEF_br8(dst,src);
-    cycle_count-=3;
+	i86_ICount-=3;
     SUBB(dst,src);
     PutbackRMByte(ModRM,dst);
 }
@@ -499,7 +506,7 @@ static void i_sub_br8(void)    /* Opcode 0x28 */
 static void i_sub_wr16(void)    /* Opcode 0x29 */
 {
     DEF_wr16(dst,src);
-    cycle_count-=3;
+	i86_ICount-=3;
     SUBW(dst,src);
     PutbackRMWord(ModRM,dst);
 }
@@ -507,7 +514,7 @@ static void i_sub_wr16(void)    /* Opcode 0x29 */
 static void i_sub_r8b(void)    /* Opcode 0x2a */
 {
     DEF_r8b(dst,src);
-    cycle_count-=3;
+	i86_ICount-=3;
     SUBB(dst,src);
     RegByte(ModRM)=dst;
 }
@@ -515,7 +522,7 @@ static void i_sub_r8b(void)    /* Opcode 0x2a */
 static void i_sub_r16w(void)    /* Opcode 0x2b */
 {
     DEF_r16w(dst,src);
-    cycle_count-=3;
+	i86_ICount-=3;
     SUBW(dst,src);
     RegWord(ModRM)=dst;
 }
@@ -523,51 +530,51 @@ static void i_sub_r16w(void)    /* Opcode 0x2b */
 static void i_sub_ald8(void)    /* Opcode 0x2c */
 {
     DEF_ald8(dst,src);
-    cycle_count-=4;
+	i86_ICount-=4;
     SUBB(dst,src);
-    regs.b[AL] = dst;
+	I.regs.b[AL] = dst;
 }
 
 static void i_sub_axd16(void)    /* Opcode 0x2d */
 {
     DEF_axd16(dst,src);
-    cycle_count-=4;
+	i86_ICount-=4;
     SUBW(dst,src);
-    regs.w[AX]=dst;
+	I.regs.w[AX]=dst;
 }
 
 static void i_cs(void)    /* Opcode 0x2e */
 {
     seg_prefix=TRUE;
-    prefix_base=base[CS];
-    cycle_count-=2;
+	prefix_base=I.base[CS];
+	i86_ICount-=2;
 	instruction[FETCHOP]();
 }
 
 static void i_das(void)    /* Opcode 0x2f */
 {
-	if (AF || ((regs.b[AL] & 0xf) > 9))
+	if (AF || ((I.regs.b[AL] & 0xf) > 9))
 	{
 		int tmp;
-		regs.b[AL] = tmp = regs.b[AL] - 6;
-		AuxVal = 1;
-		CarryVal |= tmp & 0x100;
+		I.regs.b[AL] = tmp = I.regs.b[AL] - 6;
+		I.AuxVal = 1;
+		I.CarryVal |= tmp & 0x100;
 	}
 
-	if (CF || (regs.b[AL] > 0x9f))
+	if (CF || (I.regs.b[AL] > 0x9f))
 	{
-		regs.b[AL] -= 0x60;
-		CarryVal = 1;
+		I.regs.b[AL] -= 0x60;
+		I.CarryVal = 1;
 	}
 
-	SetSZPF_Byte(regs.b[AL]);
-	cycle_count-=4;
+	SetSZPF_Byte(I.regs.b[AL]);
+	i86_ICount-=4;
 }
 
 static void i_xor_br8(void)    /* Opcode 0x30 */
 {
     DEF_br8(dst,src);
-    cycle_count-=3;
+	i86_ICount-=3;
     XORB(dst,src);
     PutbackRMByte(ModRM,dst);
 }
@@ -575,7 +582,7 @@ static void i_xor_br8(void)    /* Opcode 0x30 */
 static void i_xor_wr16(void)    /* Opcode 0x31 */
 {
     DEF_wr16(dst,src);
-    cycle_count-=3;
+	i86_ICount-=3;
     XORW(dst,src);
     PutbackRMWord(ModRM,dst);
 }
@@ -583,7 +590,7 @@ static void i_xor_wr16(void)    /* Opcode 0x31 */
 static void i_xor_r8b(void)    /* Opcode 0x32 */
 {
     DEF_r8b(dst,src);
-    cycle_count-=3;
+	i86_ICount-=3;
     XORB(dst,src);
     RegByte(ModRM)=dst;
 }
@@ -591,7 +598,7 @@ static void i_xor_r8b(void)    /* Opcode 0x32 */
 static void i_xor_r16w(void)    /* Opcode 0x33 */
 {
     DEF_r16w(dst,src);
-    cycle_count-=3;
+	i86_ICount-=3;
     XORW(dst,src);
     RegWord(ModRM)=dst;
 }
@@ -599,120 +606,122 @@ static void i_xor_r16w(void)    /* Opcode 0x33 */
 static void i_xor_ald8(void)    /* Opcode 0x34 */
 {
     DEF_ald8(dst,src);
-    cycle_count-=4;
+	i86_ICount-=4;
     XORB(dst,src);
-    regs.b[AL] = dst;
+	I.regs.b[AL] = dst;
 }
 
 static void i_xor_axd16(void)    /* Opcode 0x35 */
 {
     DEF_axd16(dst,src);
-    cycle_count-=4;
+	i86_ICount-=4;
     XORW(dst,src);
-    regs.w[AX]=dst;
+	I.regs.w[AX]=dst;
 }
 
 static void i_ss(void)    /* Opcode 0x36 */
 {
     seg_prefix=TRUE;
-    prefix_base=base[SS];
-    cycle_count-=2;
+	prefix_base=I.base[SS];
+	i86_ICount-=2;
 	instruction[FETCHOP]();
 }
 
 static void i_aaa(void)    /* Opcode 0x37 */
 {
-    if (AF || ((regs.b[AL] & 0xf) > 9))
+	if (AF || ((I.regs.b[AL] & 0xf) > 9))
     {
-	regs.b[AL] += 6;
-	regs.b[AH] += 1;
-	AuxVal = 1;
-	CarryVal = 1;
+		I.regs.b[AL] += 6;
+		I.regs.b[AH] += 1;
+		I.AuxVal = 1;
+		I.CarryVal = 1;
     }
-    else {
-	AuxVal = 0;
-	CarryVal = 0;
+	else
+	{
+		I.AuxVal = 0;
+		I.CarryVal = 0;
     }
-    regs.b[AL] &= 0x0F;
-    cycle_count-=8;
+	I.regs.b[AL] &= 0x0F;
+	i86_ICount-=8;
 }
 
 static void i_cmp_br8(void)    /* Opcode 0x38 */
 {
     DEF_br8(dst,src);
-    cycle_count-=3;
+	i86_ICount-=3;
     SUBB(dst,src);
 }
 
 static void i_cmp_wr16(void)    /* Opcode 0x39 */
 {
     DEF_wr16(dst,src);
-    cycle_count-=3;
+	i86_ICount-=3;
     SUBW(dst,src);
 }
 
 static void i_cmp_r8b(void)    /* Opcode 0x3a */
 {
     DEF_r8b(dst,src);
-    cycle_count-=3;
+	i86_ICount-=3;
     SUBB(dst,src);
 }
 
 static void i_cmp_r16w(void)    /* Opcode 0x3b */
 {
     DEF_r16w(dst,src);
-    cycle_count-=3;
+	i86_ICount-=3;
     SUBW(dst,src);
 }
 
 static void i_cmp_ald8(void)    /* Opcode 0x3c */
 {
     DEF_ald8(dst,src);
-    cycle_count-=4;
+	i86_ICount-=4;
     SUBB(dst,src);
 }
 
 static void i_cmp_axd16(void)    /* Opcode 0x3d */
 {
     DEF_axd16(dst,src);
-    cycle_count-=4;
+	i86_ICount-=4;
     SUBW(dst,src);
 }
 
 static void i_ds(void)    /* Opcode 0x3e */
 {
     seg_prefix=TRUE;
-    prefix_base=base[DS];
-    cycle_count-=2;
+	prefix_base=I.base[DS];
+	i86_ICount-=2;
 	instruction[FETCHOP]();
 }
 
 static void i_aas(void)    /* Opcode 0x3f */
 {
-    if (AF || ((regs.b[AL] & 0xf) > 9))
+	if (AF || ((I.regs.b[AL] & 0xf) > 9))
     {
-	regs.b[AL] -= 6;
-	regs.b[AH] -= 1;
-	AuxVal = 1;
-	CarryVal = 1;
+		I.regs.b[AL] -= 6;
+		I.regs.b[AH] -= 1;
+		I.AuxVal = 1;
+		I.CarryVal = 1;
     }
-    else {
-	AuxVal = 0;
-	CarryVal = 0;
+	else
+	{
+		I.AuxVal = 0;
+		I.CarryVal = 0;
     }
-    regs.b[AL] &= 0x0F;
-    cycle_count-=8;
+	I.regs.b[AL] &= 0x0F;
+	i86_ICount-=8;
 }
 
-#define IncWordReg(Reg) \
-{ \
-    unsigned tmp = (unsigned)regs.w[Reg]; \
-    unsigned tmp1 = tmp+1; \
-    SetOFW_Add(tmp1,tmp,1); \
-    SetAF(tmp1,tmp,1); \
-    SetSZPF_Word(tmp1); \
-    regs.w[Reg]=tmp1; \
-    cycle_count-=3; \
+#define IncWordReg(Reg) 					\
+{											\
+	unsigned tmp = (unsigned)I.regs.w[Reg]; \
+	unsigned tmp1 = tmp+1;					\
+	SetOFW_Add(tmp1,tmp,1); 				\
+	SetAF(tmp1,tmp,1);						\
+	SetSZPF_Word(tmp1); 					\
+	I.regs.w[Reg]=tmp1; 					\
+	i86_ICount-=3;							\
 }
 
 static void i_inc_ax(void)    /* Opcode 0x40 */
@@ -757,13 +766,13 @@ static void i_inc_di(void)    /* Opcode 0x47 */
 
 #define DecWordReg(Reg) \
 { \
-    unsigned tmp = (unsigned)regs.w[Reg]; \
+	unsigned tmp = (unsigned)I.regs.w[Reg]; \
     unsigned tmp1 = tmp-1; \
     SetOFW_Sub(tmp1,1,tmp); \
     SetAF(tmp1,tmp,1); \
     SetSZPF_Word(tmp1); \
-    regs.w[Reg]=tmp1; \
-    cycle_count-=3; \
+	I.regs.w[Reg]=tmp1; \
+	i86_ICount-=3; \
 }
 
 static void i_dec_ax(void)    /* Opcode 0x48 */
@@ -808,127 +817,127 @@ static void i_dec_di(void)    /* Opcode 0x4f */
 
 static void i_push_ax(void)    /* Opcode 0x50 */
 {
-    cycle_count-=4;
-    PUSH(regs.w[AX]);
+	i86_ICount-=4;
+	PUSH(I.regs.w[AX]);
 }
 
 static void i_push_cx(void)    /* Opcode 0x51 */
 {
-    cycle_count-=4;
-    PUSH(regs.w[CX]);
+	i86_ICount-=4;
+	PUSH(I.regs.w[CX]);
 }
 
 static void i_push_dx(void)    /* Opcode 0x52 */
 {
-    cycle_count-=4;
-    PUSH(regs.w[DX]);
+	i86_ICount-=4;
+	PUSH(I.regs.w[DX]);
 }
 
 static void i_push_bx(void)    /* Opcode 0x53 */
 {
-    cycle_count-=4;
-    PUSH(regs.w[BX]);
+	i86_ICount-=4;
+	PUSH(I.regs.w[BX]);
 }
 
 static void i_push_sp(void)    /* Opcode 0x54 */
 {
-    cycle_count-=4;
-    PUSH(regs.w[SP]);
+	i86_ICount-=4;
+	PUSH(I.regs.w[SP]);
 }
 
 static void i_push_bp(void)    /* Opcode 0x55 */
 {
-    cycle_count-=4;
-    PUSH(regs.w[BP]);
+	i86_ICount-=4;
+	PUSH(I.regs.w[BP]);
 }
 
 
 static void i_push_si(void)    /* Opcode 0x56 */
 {
-    cycle_count-=4;
-    PUSH(regs.w[SI]);
+	i86_ICount-=4;
+	PUSH(I.regs.w[SI]);
 }
 
 static void i_push_di(void)    /* Opcode 0x57 */
 {
-    cycle_count-=4;
-    PUSH(regs.w[DI]);
+	i86_ICount-=4;
+	PUSH(I.regs.w[DI]);
 }
 
 static void i_pop_ax(void)    /* Opcode 0x58 */
 {
-    cycle_count-=2;
-    POP(regs.w[AX]);
+	i86_ICount-=2;
+	POP(I.regs.w[AX]);
 }
 
 static void i_pop_cx(void)    /* Opcode 0x59 */
 {
-    cycle_count-=2;
-    POP(regs.w[CX]);
+	i86_ICount-=2;
+	POP(I.regs.w[CX]);
 }
 
 static void i_pop_dx(void)    /* Opcode 0x5a */
 {
-    cycle_count-=2;
-    POP(regs.w[DX]);
+	i86_ICount-=2;
+	POP(I.regs.w[DX]);
 }
 
 static void i_pop_bx(void)    /* Opcode 0x5b */
 {
-    cycle_count-=2;
-    POP(regs.w[BX]);
+	i86_ICount-=2;
+	POP(I.regs.w[BX]);
 }
 
 static void i_pop_sp(void)    /* Opcode 0x5c */
 {
-    cycle_count-=2;
-    POP(regs.w[SP]);
+	i86_ICount-=2;
+	POP(I.regs.w[SP]);
 }
 
 static void i_pop_bp(void)    /* Opcode 0x5d */
 {
-    cycle_count-=2;
-    POP(regs.w[BP]);
+	i86_ICount-=2;
+	POP(I.regs.w[BP]);
 }
 
 static void i_pop_si(void)    /* Opcode 0x5e */
 {
-    cycle_count-=2;
-    POP(regs.w[SI]);
+	i86_ICount-=2;
+	POP(I.regs.w[SI]);
 }
 
 static void i_pop_di(void)    /* Opcode 0x5f */
 {
-    cycle_count-=2;
-    POP(regs.w[DI]);
+	i86_ICount-=2;
+	POP(I.regs.w[DI]);
 }
 
 static void i_pusha(void)    /* Opcode 0x60 */
 {
-    unsigned tmp=regs.w[SP];
-    cycle_count-=17;
-    PUSH(regs.w[AX]);
-    PUSH(regs.w[CX]);
-    PUSH(regs.w[DX]);
-    PUSH(regs.w[BX]);
+	unsigned tmp=I.regs.w[SP];
+	i86_ICount-=17;
+	PUSH(I.regs.w[AX]);
+	PUSH(I.regs.w[CX]);
+	PUSH(I.regs.w[DX]);
+	PUSH(I.regs.w[BX]);
     PUSH(tmp);
-    PUSH(regs.w[BP]);
-    PUSH(regs.w[SI]);
-    PUSH(regs.w[DI]);
+	PUSH(I.regs.w[BP]);
+	PUSH(I.regs.w[SI]);
+	PUSH(I.regs.w[DI]);
 }
 
 static void i_popa(void)    /* Opcode 0x61 */
 {
     unsigned tmp;
-    cycle_count-=19;
-    POP(regs.w[DI]);
-    POP(regs.w[SI]);
-    POP(regs.w[BP]);
+	i86_ICount-=19;
+	POP(I.regs.w[DI]);
+	POP(I.regs.w[SI]);
+	POP(I.regs.w[BP]);
     POP(tmp);
-    POP(regs.w[BX]);
-    POP(regs.w[DX]);
-    POP(regs.w[CX]);
-    POP(regs.w[AX]);
+	POP(I.regs.w[BX]);
+	POP(I.regs.w[DX]);
+	POP(I.regs.w[CX]);
+	POP(I.regs.w[AX]);
 }
 
 static void i_bound(void)    /* Opcode 0x62 */
@@ -938,15 +947,15 @@ static void i_bound(void)    /* Opcode 0x62 */
     int high= (INT16)GetnextRMWord;
     int tmp= (INT16)RegWord(ModRM);
     if (tmp<low || tmp>high) {
-        ip-=2;
-        I86_interrupt(5);
+		I.ip-=2;
+		i86_interrupt(5);
     }
 }
 
 static void i_push_d16(void)    /* Opcode 0x68 */
 {
     unsigned tmp = FETCH;
-    cycle_count-=3;
+	i86_ICount-=3;
     tmp += FETCH << 8;
     PUSH(tmp);
 }
@@ -957,9 +966,9 @@ static void i_imul_d16(void)    /* Opcode 0x69 */
     unsigned src2=FETCH;
     src+=(FETCH<<8);
 
-    cycle_count-=150;
+	i86_ICount-=150;
     dst = (INT32)((INT16)src)*(INT32)((INT16)src2);
-    CarryVal = OverVal = (((INT32)dst) >> 15 != 0) && (((INT32)dst) >> 15 != -1);
+	I.CarryVal = I.OverVal = (((INT32)dst) >> 15 != 0) && (((INT32)dst) >> 15 != -1);
     RegWord(ModRM)=(WORD)dst;
 }
 
@@ -967,7 +976,7 @@ static void i_imul_d16(void)    /* Opcode 0x69 */
 static void i_push_d8(void)    /* Opcode 0x6a */
 {
     unsigned tmp = (WORD)((INT16)((INT8)FETCH));
-    cycle_count-=3;
+	i86_ICount-=3;
     PUSH(tmp);
 }
 
@@ -976,200 +985,201 @@ static void i_imul_d8(void)    /* Opcode 0x6b */
     DEF_r16w(dst,src);
     unsigned src2= (WORD)((INT16)((INT8)FETCH));
 
-    cycle_count-=150;
+	i86_ICount-=150;
     dst = (INT32)((INT16)src)*(INT32)((INT16)src2);
-    CarryVal = OverVal = (((INT32)dst) >> 15 != 0) && (((INT32)dst) >> 15 != -1);
+	I.CarryVal = I.OverVal = (((INT32)dst) >> 15 != 0) && (((INT32)dst) >> 15 != -1);
     RegWord(ModRM)=(WORD)dst;
 }
 
 static void i_insb(void)    /* Opcode 0x6c */
 {
-    cycle_count-=5;
-    PutMemB(ES,regs.w[DI],read_port(regs.w[DX]));
-    regs.w[DI]+= -2*DF+1;
+	i86_ICount-=5;
+	PutMemB(ES,I.regs.w[DI],read_port(I.regs.w[DX]));
+	I.regs.w[DI]+= -2 * I.DF + 1;
 }
 
 static void i_insw(void)    /* Opcode 0x6d */
 {
-    cycle_count-=5;
-    PutMemB(ES,regs.w[DI],read_port(regs.w[DX]));
-    PutMemB(ES,regs.w[DI]+1,read_port(regs.w[DX]+1));
-    regs.w[DI]+= -4*DF+2;
+	i86_ICount-=5;
+	PutMemB(ES,I.regs.w[DI],read_port(I.regs.w[DX]));
+	PutMemB(ES,I.regs.w[DI]+1,read_port(I.regs.w[DX]+1));
+	I.regs.w[DI]+= -4 * I.DF + 2;
 }
 
 static void i_outsb(void)    /* Opcode 0x6e */
 {
-    cycle_count-=5;
-    write_port(regs.w[DX],GetMemB(DS,regs.w[SI]));
-    regs.w[DI]+= -2*DF+1;
+	i86_ICount-=5;
+	write_port(I.regs.w[DX],GetMemB(DS,I.regs.w[SI]));
+	I.regs.w[DI]+= -2 * I.DF + 1;
 }
 
 static void i_outsw(void)    /* Opcode 0x6f */
 {
-    cycle_count-=5;
-    write_port(regs.w[DX],GetMemB(DS,regs.w[SI]));
-    write_port(regs.w[DX]+1,GetMemB(DS,regs.w[SI]+1));
-    regs.w[DI]+= -4*DF+2;
+	i86_ICount-=5;
+	write_port(I.regs.w[DX],GetMemB(DS,I.regs.w[SI]));
+	write_port(I.regs.w[DX]+1,GetMemB(DS,I.regs.w[SI]+1));
+	I.regs.w[DI]+= -4 * I.DF + 2;
 }
 
 static void i_jo(void)    /* Opcode 0x70 */
 {
 	int tmp = (int)((INT8)FETCHOP);
-    if (OF) {
-	ip = (WORD)(ip+tmp);
-    cycle_count-=16;
-	change_pc20((base[CS]+ip) & i86_AddrMask);
-    } else cycle_count-=4;
+	if (OF)
+	{
+		I.ip = (WORD)(I.ip+tmp);
+		i86_ICount-=16;
+		change_pc20((I.base[CS]+I.ip) & i86_AddrMask);
+	} else i86_ICount-=4;
 }
 
 static void i_jno(void)    /* Opcode 0x71 */
 {
 	int tmp = (int)((INT8)FETCHOP);
-    if (!OF) {
-	ip = (WORD)(ip+tmp);
-    cycle_count-=16;
-	change_pc20((base[CS]+ip) & i86_AddrMask);
-    } else cycle_count-=4;
+	if (!OF) {
+		I.ip = (WORD)(I.ip+tmp);
+		i86_ICount-=16;
+		change_pc20((I.base[CS]+I.ip) & i86_AddrMask);
+	} else i86_ICount-=4;
 }
 
 static void i_jb(void)    /* Opcode 0x72 */
 {
 	int tmp = (int)((INT8)FETCHOP);
-    if (CF) {
-	ip = (WORD)(ip+tmp);
-    cycle_count-=16;
-	change_pc20((base[CS]+ip) & i86_AddrMask);
-    } else cycle_count-=4;
+	if (CF) {
+		I.ip = (WORD)(I.ip+tmp);
+		i86_ICount-=16;
+		change_pc20((I.base[CS]+I.ip) & i86_AddrMask);
+	} else i86_ICount-=4;
 }
 
 static void i_jnb(void)    /* Opcode 0x73 */
 {
 	int tmp = (int)((INT8)FETCHOP);
-    if (!CF) {
-	ip = (WORD)(ip+tmp);
-    cycle_count-=16;
-	change_pc20((base[CS]+ip) & i86_AddrMask);
-    } else cycle_count-=4;
+	if (!CF) {
+		I.ip = (WORD)(I.ip+tmp);
+		i86_ICount-=16;
+		change_pc20((I.base[CS]+I.ip) & i86_AddrMask);
+	} else i86_ICount-=4;
 }
 
 static void i_jz(void)    /* Opcode 0x74 */
 {
 	int tmp = (int)((INT8)FETCHOP);
-    if (ZF) {
-	ip = (WORD)(ip+tmp);
-    cycle_count-=16;
-	change_pc20((base[CS]+ip) & i86_AddrMask);
-    } else cycle_count-=4;
+	if (ZF) {
+		I.ip = (WORD)(I.ip+tmp);
+		i86_ICount-=16;
+		change_pc20((I.base[CS]+I.ip) & i86_AddrMask);
+	} else i86_ICount-=4;
 }
 
 static void i_jnz(void)    /* Opcode 0x75 */
 {
 	int tmp = (int)((INT8)FETCHOP);
-    if (!ZF) {
-	ip = (WORD)(ip+tmp);
-    cycle_count-=16;
-	change_pc20((base[CS]+ip) & i86_AddrMask);
-    } else cycle_count-=4;
+	if (!ZF) {
+		I.ip = (WORD)(I.ip+tmp);
+		i86_ICount-=16;
+		change_pc20((I.base[CS]+I.ip) & i86_AddrMask);
+	} else i86_ICount-=4;
 }
 
 static void i_jbe(void)    /* Opcode 0x76 */
 {
 	int tmp = (int)((INT8)FETCHOP);
     if (CF || ZF) {
-	ip = (WORD)(ip+tmp);
-    cycle_count-=16;
-	change_pc20((base[CS]+ip) & i86_AddrMask);
-    } else cycle_count-=4;
+		I.ip = (WORD)(I.ip+tmp);
+		i86_ICount-=16;
+		change_pc20((I.base[CS]+I.ip) & i86_AddrMask);
+	} else i86_ICount-=4;
 }
 
 static void i_jnbe(void)    /* Opcode 0x77 */
 {
 	int tmp = (int)((INT8)FETCHOP);
     if (!(CF || ZF)) {
-	ip = (WORD)(ip+tmp);
-    cycle_count-=16;
-	change_pc20((base[CS]+ip) & i86_AddrMask);
-    } else cycle_count-=4;
+		I.ip = (WORD)(I.ip+tmp);
+		i86_ICount-=16;
+		change_pc20((I.base[CS]+I.ip) & i86_AddrMask);
+	} else i86_ICount-=4;
 }
 
 static void i_js(void)    /* Opcode 0x78 */
 {
 	int tmp = (int)((INT8)FETCHOP);
     if (SF) {
-	ip = (WORD)(ip+tmp);
-    cycle_count-=16;
-	change_pc20((base[CS]+ip) & i86_AddrMask);
-    } else cycle_count-=4;
+		I.ip = (WORD)(I.ip+tmp);
+		i86_ICount-=16;
+		change_pc20((I.base[CS]+I.ip) & i86_AddrMask);
+	} else i86_ICount-=4;
 }
 
 static void i_jns(void)    /* Opcode 0x79 */
 {
 	int tmp = (int)((INT8)FETCHOP);
     if (!SF) {
-	ip = (WORD)(ip+tmp);
-    cycle_count-=16;
-	change_pc20((base[CS]+ip) & i86_AddrMask);
-    } else cycle_count-=4;
+		I.ip = (WORD)(I.ip+tmp);
+		i86_ICount-=16;
+		change_pc20((I.base[CS]+I.ip) & i86_AddrMask);
+	} else i86_ICount-=4;
 }
 
 static void i_jp(void)    /* Opcode 0x7a */
 {
 	int tmp = (int)((INT8)FETCHOP);
     if (PF) {
-	ip = (WORD)(ip+tmp);
-    cycle_count-=16;
-	change_pc20((base[CS]+ip) & i86_AddrMask);
-    } else cycle_count-=4;
+		I.ip = (WORD)(I.ip+tmp);
+		i86_ICount-=16;
+		change_pc20((I.base[CS]+I.ip) & i86_AddrMask);
+	} else i86_ICount-=4;
 }
 
 static void i_jnp(void)    /* Opcode 0x7b */
 {
 	int tmp = (int)((INT8)FETCHOP);
     if (!PF) {
-	ip = (WORD)(ip+tmp);
-    cycle_count-=16;
-	change_pc20((base[CS]+ip) & i86_AddrMask);
-    } else cycle_count-=4;
+		I.ip = (WORD)(I.ip+tmp);
+		i86_ICount-=16;
+		change_pc20((I.base[CS]+I.ip) & i86_AddrMask);
+	} else i86_ICount-=4;
 }
 
 static void i_jl(void)    /* Opcode 0x7c */
 {
 	int tmp = (int)((INT8)FETCHOP);
     if ((SF!=OF)&&!ZF) {
-	ip = (WORD)(ip+tmp);
-    cycle_count-=16;
-	change_pc20((base[CS]+ip) & i86_AddrMask);
-    } else cycle_count-=4;
+		I.ip = (WORD)(I.ip+tmp);
+		i86_ICount-=16;
+		change_pc20((I.base[CS]+I.ip) & i86_AddrMask);
+	} else i86_ICount-=4;
 }
 
 static void i_jnl(void)    /* Opcode 0x7d */
 {
 	int tmp = (int)((INT8)FETCHOP);
     if (ZF||(SF==OF)) {
-	ip = (WORD)(ip+tmp);
-    cycle_count-=16;
-	change_pc20((base[CS]+ip) & i86_AddrMask);
-    } else cycle_count-=4;
+		I.ip = (WORD)(I.ip+tmp);
+		i86_ICount-=16;
+		change_pc20((I.base[CS]+I.ip) & i86_AddrMask);
+	} else i86_ICount-=4;
 }
 
 static void i_jle(void)    /* Opcode 0x7e */
 {
 	int tmp = (int)((INT8)FETCHOP);
     if (ZF||(SF!=OF)) {
-	ip = (WORD)(ip+tmp);
-    cycle_count-=16;
-	change_pc20((base[CS]+ip) & i86_AddrMask);
-    } else cycle_count-=4;
+		I.ip = (WORD)(I.ip+tmp);
+		i86_ICount-=16;
+		change_pc20((I.base[CS]+I.ip) & i86_AddrMask);
+	} else i86_ICount-=4;
 }
 
 static void i_jnle(void)    /* Opcode 0x7f */
 {
 	int tmp = (int)((INT8)FETCHOP);
     if ((SF==OF)&&!ZF) {
-	ip = (WORD)(ip+tmp);
-    cycle_count-=16;
-	change_pc20((base[CS]+ip) & i86_AddrMask);
-    } else cycle_count-=4;
+		I.ip = (WORD)(I.ip+tmp);
+		i86_ICount-=16;
+		change_pc20((I.base[CS]+I.ip) & i86_AddrMask);
+	} else i86_ICount-=4;
 }
 
 static void i_80pre(void)    /* Opcode 0x80 */
@@ -1177,7 +1187,7 @@ static void i_80pre(void)    /* Opcode 0x80 */
 	unsigned ModRM = FETCHOP;
     unsigned dst = GetRMByte(ModRM);
     unsigned src = FETCH;
-    cycle_count-=4;
+	i86_ICount-=4;
 
     switch (ModRM & 0x38)
     {
@@ -1224,7 +1234,7 @@ static void i_81pre(void)    /* Opcode 0x81 */
     unsigned dst = GetRMWord(ModRM);
     unsigned src = FETCH;
     src+= (FETCH << 8);
-    cycle_count-=2;
+	i86_ICount-=2;
 
     switch (ModRM & 0x38)
     {
@@ -1269,7 +1279,7 @@ static void i_82pre(void)	 /* Opcode 0x82 */
 	unsigned ModRM = FETCHOP;
 	unsigned dst = GetRMByte(ModRM);
 	unsigned src = FETCH;
-    cycle_count-=2;
+	i86_ICount-=2;
 
     switch (ModRM & 0x38)
     {
@@ -1314,7 +1324,7 @@ static void i_83pre(void)    /* Opcode 0x83 */
 	unsigned ModRM = FETCHOP;
     unsigned dst = GetRMWord(ModRM);
     unsigned src = (WORD)((INT16)((INT8)FETCH));
-    cycle_count-=2;
+	i86_ICount-=2;
 
     switch (ModRM & 0x38)
     {
@@ -1357,21 +1367,21 @@ static void i_83pre(void)    /* Opcode 0x83 */
 static void i_test_br8(void)    /* Opcode 0x84 */
 {
     DEF_br8(dst,src);
-    cycle_count-=3;
+	i86_ICount-=3;
     ANDB(dst,src);
 }
 
 static void i_test_wr16(void)    /* Opcode 0x85 */
 {
     DEF_wr16(dst,src);
-    cycle_count-=3;
+	i86_ICount-=3;
     ANDW(dst,src);
 }
 
 static void i_xchg_br8(void)    /* Opcode 0x86 */
 {
     DEF_br8(dst,src);
-    cycle_count-=4;
+	i86_ICount-=4;
     RegByte(ModRM)=dst;
     PutbackRMByte(ModRM,src);
 }
@@ -1379,7 +1389,7 @@ static void i_xchg_br8(void)    /* Opcode 0x86 */
 static void i_xchg_wr16(void)    /* Opcode 0x87 */
 {
     DEF_wr16(dst,src);
-    cycle_count-=4;
+	i86_ICount-=4;
     RegWord(ModRM)=dst;
     PutbackRMWord(ModRM,src);
 }
@@ -1388,7 +1398,7 @@ static void i_mov_br8(void)    /* Opcode 0x88 */
 {
 	unsigned ModRM = FETCHOP;
     BYTE src = RegByte(ModRM);
-    cycle_count-=2;
+	i86_ICount-=2;
     PutRMByte(ModRM,src);
 }
 
@@ -1396,7 +1406,7 @@ static void i_mov_wr16(void)    /* Opcode 0x89 */
 {
 	unsigned ModRM = FETCHOP;
     WORD src = RegWord(ModRM);
-    cycle_count-=2;
+	i86_ICount-=2;
     PutRMWord(ModRM,src);
 }
 
@@ -1404,7 +1414,7 @@ static void i_mov_r8b(void)    /* Opcode 0x8a */
 {
 	unsigned ModRM = FETCHOP;
     BYTE src = GetRMByte(ModRM);
-    cycle_count-=2;
+	i86_ICount-=2;
     RegByte(ModRM)=src;
 }
 
@@ -1412,22 +1422,22 @@ static void i_mov_r16w(void)    /* Opcode 0x8b */
 {
 	unsigned ModRM = FETCHOP;
     WORD src = GetRMWord(ModRM);
-    cycle_count-=2;
+	i86_ICount-=2;
     RegWord(ModRM)=src;
 }
 
 static void i_mov_wsreg(void)    /* Opcode 0x8c */
 {
 	unsigned ModRM = FETCHOP;
-    cycle_count-=2;
+	i86_ICount-=2;
 	if (ModRM & 0x20) return;	/* HJB 12/13/98 1xx is invalid */
-    PutRMWord(ModRM,sregs[(ModRM & 0x38) >> 3]);
+	PutRMWord(ModRM,I.sregs[(ModRM & 0x38) >> 3]);
 }
 
 static void i_lea(void)    /* Opcode 0x8d */
 {
 	unsigned ModRM = FETCHOP;
-    cycle_count-=2;
+	i86_ICount-=2;
 	(void)(*GetEA[ModRM])();
 	RegWord(ModRM)=EO;	/* HJB 12/13/98 effective offset (no segment part) */
 }
@@ -1437,20 +1447,20 @@ static void i_mov_sregw(void)    /* Opcode 0x8e */
 	unsigned ModRM = FETCHOP;
     WORD src = GetRMWord(ModRM);
 
-    cycle_count-=2;
+	i86_ICount-=2;
     switch (ModRM & 0x38)
     {
     case 0x00:  /* mov es,ew */
-	sregs[ES] = src;
-	base[ES] = SegBase(ES);
+	I.sregs[ES] = src;
+	I.base[ES] = SegBase(ES);
 	break;
     case 0x18:  /* mov ds,ew */
-	sregs[DS] = src;
-	base[DS] = SegBase(DS);
+	I.sregs[DS] = src;
+	I.base[DS] = SegBase(DS);
 	break;
     case 0x10:  /* mov ss,ew */
-	sregs[SS] = src;
-	base[SS] = SegBase(SS); /* no interrupt allowed before next instr */
+	I.sregs[SS] = src;
+	I.base[SS] = SegBase(SS); /* no interrupt allowed before next instr */
 	instruction[FETCHOP]();
 	break;
     case 0x08:  /* mov cs,ew */
@@ -1463,7 +1473,7 @@ static void i_popw(void)    /* Opcode 0x8f */
 	unsigned ModRM = FETCHOP;
     WORD tmp;
     POP(tmp);
-    cycle_count-=4;
+	i86_ICount-=4;
     PutRMWord(ModRM,tmp);
 }
 
@@ -1471,17 +1481,17 @@ static void i_popw(void)    /* Opcode 0x8f */
 #define XchgAXReg(Reg) \
 { \
     WORD tmp; \
-    tmp = regs.w[Reg]; \
-    regs.w[Reg] = regs.w[AX]; \
-    regs.w[AX] = tmp; \
-    cycle_count-=3; \
+	tmp = I.regs.w[Reg]; \
+	I.regs.w[Reg] = I.regs.w[AX]; \
+	I.regs.w[AX] = tmp; \
+	i86_ICount-=3; \
 }
 
 
 static void i_nop(void)    /* Opcode 0x90 */
 {
     /* this is XchgAXReg(AX); */
-    cycle_count-=3;
+	i86_ICount-=3;
 }
 
 static void i_xchg_axcx(void)    /* Opcode 0x91 */
@@ -1521,14 +1531,14 @@ static void i_xchg_axdi(void)    /* Opcode 0x97 */
 
 static void i_cbw(void)    /* Opcode 0x98 */
 {
-    cycle_count-=2;
-    regs.b[AH] = (regs.b[AL] & 0x80) ? 0xff : 0;
+	i86_ICount-=2;
+	I.regs.b[AH] = (I.regs.b[AL] & 0x80) ? 0xff : 0;
 }
 
 static void i_cwd(void)    /* Opcode 0x99 */
 {
-    cycle_count-=5;
-    regs.w[DX] = (regs.b[AH] & 0x80) ? 0xffff : 0;
+	i86_ICount-=5;
+	I.regs.w[DX] = (I.regs.b[AH] & 0x80) ? 0xffff : 0;
 }
 
 static void i_call_far(void)
@@ -1541,24 +1551,24 @@ static void i_call_far(void)
 	tmp2 = FETCHOP;
 	tmp2 += FETCHOP << 8;
 
-    PUSH(sregs[CS]);
-    PUSH(ip);
+	PUSH(I.sregs[CS]);
+	PUSH(I.ip);
 
-    ip = (WORD)tmp;
-    sregs[CS] = (WORD)tmp2;
-    base[CS] = SegBase(CS);
-    cycle_count-=14;
-	change_pc20((base[CS]+ip) & i86_AddrMask);
+	I.ip = (WORD)tmp;
+	I.sregs[CS] = (WORD)tmp2;
+	I.base[CS] = SegBase(CS);
+	i86_ICount-=14;
+	change_pc20((I.base[CS]+I.ip) & i86_AddrMask);
 }
 
 static void i_wait(void)    /* Opcode 0x9b */
 {
-    cycle_count-=4;
+	i86_ICount-=4;
 }
 
 static void i_pushf(void)    /* Opcode 0x9c */
 {
-    cycle_count-=3;
+	i86_ICount-=3;
     PUSH( CompressFlags() | 0xf000 );
 }
 
@@ -1566,23 +1576,23 @@ static void i_popf(void)    /* Opcode 0x9d */
 {
     unsigned tmp;
     POP(tmp);
-    cycle_count-=2;
+	i86_ICount-=2;
     ExpandFlags(tmp);
 
-    if (TF) trap();
+	if (I.TF) trap();
 }
 
 static void i_sahf(void)    /* Opcode 0x9e */
 {
-    unsigned tmp = (CompressFlags() & 0xff00) | (regs.b[AH] & 0xd5);
+	unsigned tmp = (CompressFlags() & 0xff00) | (I.regs.b[AH] & 0xd5);
 
     ExpandFlags(tmp);
 }
 
 static void i_lahf(void)    /* Opcode 0x9f */
 {
-    regs.b[AH] = CompressFlags() & 0xff;
-    cycle_count-=4;
+	I.regs.b[AH] = CompressFlags() & 0xff;
+	i86_ICount-=4;
 }
 
 static void i_mov_aldisp(void)    /* Opcode 0xa0 */
@@ -1592,8 +1602,8 @@ static void i_mov_aldisp(void)    /* Opcode 0xa0 */
 	addr = FETCHOP;
 	addr += FETCHOP << 8;
 
-    cycle_count-=4;
-    regs.b[AL] = GetMemB(DS, addr);
+	i86_ICount-=4;
+	I.regs.b[AL] = GetMemB(DS, addr);
 }
 
 static void i_mov_axdisp(void)    /* Opcode 0xa1 */
@@ -1603,9 +1613,9 @@ static void i_mov_axdisp(void)    /* Opcode 0xa1 */
 	addr = FETCHOP;
 	addr += FETCHOP << 8;
 
-    cycle_count-=4;
-    regs.b[AL] = GetMemB(DS, addr);
-    regs.b[AH] = GetMemB(DS, addr+1);
+	i86_ICount-=4;
+	I.regs.b[AL] = GetMemB(DS, addr);
+	I.regs.b[AH] = GetMemB(DS, addr+1);
 }
 
 static void i_mov_dispal(void)    /* Opcode 0xa2 */
@@ -1615,8 +1625,8 @@ static void i_mov_dispal(void)    /* Opcode 0xa2 */
 	addr = FETCHOP;
 	addr += FETCHOP << 8;
 
-    cycle_count-=3;
-    PutMemB(DS, addr, regs.b[AL]);
+	i86_ICount-=3;
+	PutMemB(DS, addr, I.regs.b[AL]);
 }
 
 static void i_mov_dispax(void)    /* Opcode 0xa3 */
@@ -1626,212 +1636,212 @@ static void i_mov_dispax(void)    /* Opcode 0xa3 */
 	addr = FETCHOP;
 	addr += FETCHOP << 8;
 
-    cycle_count-=3;
-    PutMemB(DS, addr, regs.b[AL]);
-    PutMemB(DS, addr+1, regs.b[AH]);
+	i86_ICount-=3;
+	PutMemB(DS, addr, I.regs.b[AL]);
+	PutMemB(DS, addr+1, I.regs.b[AH]);
 }
 
 static void i_movsb(void)    /* Opcode 0xa4 */
 {
-    BYTE tmp = GetMemB(DS,regs.w[SI]);
-    PutMemB(ES,regs.w[DI], tmp);
-    regs.w[DI] += -2*DF +1;
-    regs.w[SI] += -2*DF +1;
-    cycle_count-=5;
+	BYTE tmp = GetMemB(DS,I.regs.w[SI]);
+	PutMemB(ES,I.regs.w[DI], tmp);
+	I.regs.w[DI] += -2 * I.DF + 1;
+	I.regs.w[SI] += -2 * I.DF + 1;
+	i86_ICount-=5;
 }
 
 static void i_movsw(void)    /* Opcode 0xa5 */
 {
-    WORD tmp = GetMemW(DS,regs.w[SI]);
-    PutMemW(ES,regs.w[DI], tmp);
-    regs.w[DI] += -4*DF +2;
-    regs.w[SI] += -4*DF +2;
-    cycle_count-=5;
+	WORD tmp = GetMemW(DS,I.regs.w[SI]);
+	PutMemW(ES,I.regs.w[DI], tmp);
+	I.regs.w[DI] += -4 * I.DF + 2;
+	I.regs.w[SI] += -4 * I.DF + 2;
+	i86_ICount-=5;
 }
 
 static void i_cmpsb(void)    /* Opcode 0xa6 */
 {
-    unsigned dst = GetMemB(ES, regs.w[DI]);
-    unsigned src = GetMemB(DS, regs.w[SI]);
+	unsigned dst = GetMemB(ES, I.regs.w[DI]);
+	unsigned src = GetMemB(DS, I.regs.w[SI]);
     SUBB(src,dst); /* opposite of the usual convention */
-    regs.w[DI] += -2*DF +1;
-    regs.w[SI] += -2*DF +1;
-    cycle_count-=10;
+	I.regs.w[DI] += -2 * I.DF + 1;
+	I.regs.w[SI] += -2 * I.DF + 1;
+	i86_ICount-=10;
 }
 
 static void i_cmpsw(void)    /* Opcode 0xa7 */
 {
-    unsigned dst = GetMemW(ES, regs.w[DI]);
-    unsigned src = GetMemW(DS, regs.w[SI]);
+	unsigned dst = GetMemW(ES, I.regs.w[DI]);
+	unsigned src = GetMemW(DS, I.regs.w[SI]);
     SUBW(src,dst); /* opposite of the usual convention */
-    regs.w[DI] += -4*DF +2;
-    regs.w[SI] += -4*DF +2;
-    cycle_count-=10;
+	I.regs.w[DI] += -4 * I.DF + 2;
+	I.regs.w[SI] += -4 * I.DF + 2;
+	i86_ICount-=10;
 }
 
 static void i_test_ald8(void)    /* Opcode 0xa8 */
 {
     DEF_ald8(dst,src);
-    cycle_count-=4;
+	i86_ICount-=4;
     ANDB(dst,src);
 }
 
 static void i_test_axd16(void)    /* Opcode 0xa9 */
 {
     DEF_axd16(dst,src);
-    cycle_count-=4;
+	i86_ICount-=4;
     ANDW(dst,src);
 }
 
 static void i_stosb(void)    /* Opcode 0xaa */
 {
-    PutMemB(ES,regs.w[DI],regs.b[AL]);
-    regs.w[DI] += -2*DF +1;
-    cycle_count-=4;
+	PutMemB(ES,I.regs.w[DI],I.regs.b[AL]);
+	I.regs.w[DI] += -2 * I.DF + 1;
+	i86_ICount-=4;
 }
 
 static void i_stosw(void)    /* Opcode 0xab */
 {
-    PutMemB(ES,regs.w[DI],regs.b[AL]);
-    PutMemB(ES,regs.w[DI]+1,regs.b[AH]);
-    regs.w[DI] += -4*DF +2;
-    cycle_count-=4;
+	PutMemB(ES,I.regs.w[DI],I.regs.b[AL]);
+	PutMemB(ES,I.regs.w[DI]+1,I.regs.b[AH]);
+	I.regs.w[DI] += -4 * I.DF + 2;
+	i86_ICount-=4;
 }
 
 static void i_lodsb(void)    /* Opcode 0xac */
 {
-    regs.b[AL] = GetMemB(DS,regs.w[SI]);
-    regs.w[SI] += -2*DF +1;
-    cycle_count-=6;
+	I.regs.b[AL] = GetMemB(DS,I.regs.w[SI]);
+	I.regs.w[SI] += -2 * I.DF + 1;
+	i86_ICount-=6;
 }
 
 static void i_lodsw(void)    /* Opcode 0xad */
 {
-    regs.w[AX] = GetMemW(DS,regs.w[SI]);
-    regs.w[SI] +=  -4*DF+2;
-    cycle_count-=6;
+	I.regs.w[AX] = GetMemW(DS,I.regs.w[SI]);
+	I.regs.w[SI] +=  -4 * I.DF + 2;
+	i86_ICount-=6;
 }
 
 static void i_scasb(void)    /* Opcode 0xae */
 {
-    unsigned src = GetMemB(ES, regs.w[DI]);
-    unsigned dst = regs.b[AL];
+	unsigned src = GetMemB(ES, I.regs.w[DI]);
+	unsigned dst = I.regs.b[AL];
     SUBB(dst,src);
-    regs.w[DI] += -2*DF +1;
-    cycle_count-=9;
+	I.regs.w[DI] += -2 * I.DF + 1;
+	i86_ICount-=9;
 }
 
 static void i_scasw(void)    /* Opcode 0xaf */
 {
-    unsigned src = GetMemW(ES, regs.w[DI]);
-    unsigned dst = regs.w[AX];
+	unsigned src = GetMemW(ES, I.regs.w[DI]);
+	unsigned dst = I.regs.w[AX];
     SUBW(dst,src);
-    regs.w[DI] += -4*DF +2;
-    cycle_count-=9;
+	I.regs.w[DI] += -4 * I.DF + 2;
+	i86_ICount-=9;
 }
 
 static void i_mov_ald8(void)    /* Opcode 0xb0 */
 {
-    regs.b[AL] = FETCH;
-    cycle_count-=4;
+	I.regs.b[AL] = FETCH;
+	i86_ICount-=4;
 }
 
 static void i_mov_cld8(void)    /* Opcode 0xb1 */
 {
-    regs.b[CL] = FETCH;
-    cycle_count-=4;
+	I.regs.b[CL] = FETCH;
+	i86_ICount-=4;
 }
 
 static void i_mov_dld8(void)    /* Opcode 0xb2 */
 {
-    regs.b[DL] = FETCH;
-    cycle_count-=4;
+	I.regs.b[DL] = FETCH;
+	i86_ICount-=4;
 }
 
 static void i_mov_bld8(void)    /* Opcode 0xb3 */
 {
-    regs.b[BL] = FETCH;
-    cycle_count-=4;
+	I.regs.b[BL] = FETCH;
+	i86_ICount-=4;
 }
 
 static void i_mov_ahd8(void)    /* Opcode 0xb4 */
 {
-    regs.b[AH] = FETCH;
-    cycle_count-=4;
+	I.regs.b[AH] = FETCH;
+	i86_ICount-=4;
 }
 
 static void i_mov_chd8(void)    /* Opcode 0xb5 */
 {
-    regs.b[CH] = FETCH;
-    cycle_count-=4;
+	I.regs.b[CH] = FETCH;
+	i86_ICount-=4;
 }
 
 static void i_mov_dhd8(void)    /* Opcode 0xb6 */
 {
-    regs.b[DH] = FETCH;
-    cycle_count-=4;
+	I.regs.b[DH] = FETCH;
+	i86_ICount-=4;
 }
 
 static void i_mov_bhd8(void)    /* Opcode 0xb7 */
 {
-    regs.b[BH] = FETCH;
-    cycle_count-=4;
+	I.regs.b[BH] = FETCH;
+	i86_ICount-=4;
 }
 
 static void i_mov_axd16(void)    /* Opcode 0xb8 */
 {
-    regs.b[AL] = FETCH;
-    regs.b[AH] = FETCH;
-    cycle_count-=4;
+	I.regs.b[AL] = FETCH;
+	I.regs.b[AH] = FETCH;
+	i86_ICount-=4;
 }
 
 static void i_mov_cxd16(void)    /* Opcode 0xb9 */
 {
-    regs.b[CL] = FETCH;
-    regs.b[CH] = FETCH;
-    cycle_count-=4;
+	I.regs.b[CL] = FETCH;
+	I.regs.b[CH] = FETCH;
+	i86_ICount-=4;
 }
 
 static void i_mov_dxd16(void)    /* Opcode 0xba */
 {
-    regs.b[DL] = FETCH;
-    regs.b[DH] = FETCH;
-    cycle_count-=4;
+	I.regs.b[DL] = FETCH;
+	I.regs.b[DH] = FETCH;
+	i86_ICount-=4;
 }
 
 static void i_mov_bxd16(void)    /* Opcode 0xbb */
 {
-    regs.b[BL] = FETCH;
-    regs.b[BH] = FETCH;
-    cycle_count-=4;
+	I.regs.b[BL] = FETCH;
+	I.regs.b[BH] = FETCH;
+	i86_ICount-=4;
 }
 
 static void i_mov_spd16(void)    /* Opcode 0xbc */
 {
-    regs.b[SPL] = FETCH;
-    regs.b[SPH] = FETCH;
-    cycle_count-=4;
+	I.regs.b[SPL] = FETCH;
+	I.regs.b[SPH] = FETCH;
+	i86_ICount-=4;
 }
 
 static void i_mov_bpd16(void)    /* Opcode 0xbd */
 {
-    regs.b[BPL] = FETCH;
-    regs.b[BPH] = FETCH;
-    cycle_count-=4;
+	I.regs.b[BPL] = FETCH;
+	I.regs.b[BPH] = FETCH;
+	i86_ICount-=4;
 }
 
 static void i_mov_sid16(void)    /* Opcode 0xbe */
 {
-    regs.b[SIL] = FETCH;
-    regs.b[SIH] = FETCH;
-    cycle_count-=4;
+	I.regs.b[SIL] = FETCH;
+	I.regs.b[SIH] = FETCH;
+	i86_ICount-=4;
 }
 
 static void i_mov_did16(void)    /* Opcode 0xbf */
 {
-    regs.b[DIL] = FETCH;
-    regs.b[DIH] = FETCH;
-    cycle_count-=4;
+	I.regs.b[DIL] = FETCH;
+	I.regs.b[DIH] = FETCH;
+	i86_ICount-=4;
 }
 
 void rotate_shift_Byte(unsigned ModRM, unsigned count)
@@ -1841,126 +1851,126 @@ void rotate_shift_Byte(unsigned ModRM, unsigned count)
 
   if (count==0)
   {
-    cycle_count-=8; /* or 7 if dest is in memory */
+	i86_ICount-=8; /* or 7 if dest is in memory */
   }
   else if (count==1)
   {
-    cycle_count-=2;
+	i86_ICount-=2;
     switch (ModRM & 0x38)
     {
       case 0x00:  /* ROL eb,1 */
-        CarryVal = src & 0x80;
+		I.CarryVal = src & 0x80;
         dst=(src<<1)+CF;
         PutbackRMByte(ModRM,dst);
-        OverVal = (src^dst)&0x80;
-	break;
+		I.OverVal = (src^dst)&0x80;
+		break;
       case 0x08:  /* ROR eb,1 */
-        CarryVal = src & 0x01;
+		I.CarryVal = src & 0x01;
         dst = ((CF<<8)+src) >> 1;
         PutbackRMByte(ModRM,dst);
-        OverVal = (src^dst)&0x80;
-	break;
+		I.OverVal = (src^dst)&0x80;
+		break;
       case 0x10:  /* RCL eb,1 */
         dst=(src<<1)+CF;
         PutbackRMByte(ModRM,dst);
         SetCFB(dst);
-        OverVal = (src^dst)&0x80;
-	break;
+		I.OverVal = (src^dst)&0x80;
+		break;
       case 0x18:  /* RCR eb,1 */
         dst = ((CF<<8)+src) >> 1;
         PutbackRMByte(ModRM,dst);
-        CarryVal = src & 0x01;
-        OverVal = (src^dst)&0x80;
-	break;
+		I.CarryVal = src & 0x01;
+		I.OverVal = (src^dst)&0x80;
+		break;
       case 0x20:  /* SHL eb,1 */
       case 0x30:
         dst = src << 1;
         PutbackRMByte(ModRM,dst);
         SetCFB(dst);
-        OverVal = (src^dst)&0x80;
-	AuxVal = 1;
+		I.OverVal = (src^dst)&0x80;
+		I.AuxVal = 1;
         SetSZPF_Byte(dst);
-	break;
+		break;
       case 0x28:  /* SHR eb,1 */
         dst = src >> 1;
         PutbackRMByte(ModRM,dst);
-        CarryVal = src & 0x01;
-        OverVal = src & 0x80;
-	AuxVal = 1;
+		I.CarryVal = src & 0x01;
+		I.OverVal = src & 0x80;
+		I.AuxVal = 1;
         SetSZPF_Byte(dst);
-	break;
+		break;
       case 0x38:  /* SAR eb,1 */
         dst = ((INT8)src) >> 1;
         PutbackRMByte(ModRM,dst);
-        CarryVal = src & 0x01;
-	OverVal = 0;
-	AuxVal = 1;
+		I.CarryVal = src & 0x01;
+		I.OverVal = 0;
+		I.AuxVal = 1;
         SetSZPF_Byte(dst);
-	break;
+		break;
     }
   }
   else
   {
-    cycle_count-=8+4*count; /* or 7+4*count if dest is in memory */
+	i86_ICount-=8+4*count; /* or 7+4*count if dest is in memory */
     switch (ModRM & 0x38)
     {
       case 0x00:  /* ROL eb,count */
-	for (; count > 0; count--)
-	{
-            CarryVal = dst & 0x80;
+		for (; count > 0; count--)
+		{
+			I.CarryVal = dst & 0x80;
             dst = (dst << 1) + CF;
-	}
+		}
         PutbackRMByte(ModRM,(BYTE)dst);
-	break;
+		break;
      case 0x08:  /* ROR eb,count */
-	for (; count > 0; count--)
-	{
-            CarryVal = dst & 0x01;
+		for (; count > 0; count--)
+		{
+			I.CarryVal = dst & 0x01;
             dst = (dst >> 1) + (CF << 7);
-	}
+		}
         PutbackRMByte(ModRM,(BYTE)dst);
-	break;
+		break;
       case 0x10:  /* RCL eb,count */
-	for (; count > 0; count--)
-	{
+		for (; count > 0; count--)
+		{
             dst = (dst << 1) + CF;
             SetCFB(dst);
-	}
+		}
         PutbackRMByte(ModRM,(BYTE)dst);
-	break;
+		break;
       case 0x18:  /* RCR eb,count */
-	for (; count > 0; count--)
-	{
+		for (; count > 0; count--)
+		{
             dst = (CF<<8)+dst;
-            CarryVal = dst & 0x01;
+			I.CarryVal = dst & 0x01;
             dst >>= 1;
-	}
+		}
         PutbackRMByte(ModRM,(BYTE)dst);
-	break;
+		break;
       case 0x20:
       case 0x30:  /* SHL eb,count */
         dst <<= count;
         SetCFB(dst);
-	AuxVal = 1;
+		I.AuxVal = 1;
         SetSZPF_Byte(dst);
         PutbackRMByte(ModRM,(BYTE)dst);
-	break;
+		break;
       case 0x28:  /* SHR eb,count */
         dst >>= count-1;
-        CarryVal = dst & 0x1;
+		I.CarryVal = dst & 0x1;
         dst >>= 1;
         SetSZPF_Byte(dst);
-	AuxVal = 1;
+		I.AuxVal = 1;
         PutbackRMByte(ModRM,(BYTE)dst);
-	break;
+		break;
       case 0x38:  /* SAR eb,count */
         dst = ((INT8)dst) >> (count-1);
-        CarryVal = dst & 0x1;
+		I.CarryVal = dst & 0x1;
         dst = ((INT8)((BYTE)dst)) >> 1;
         SetSZPF_Byte(dst);
-	AuxVal = 1;
+		I.AuxVal = 1;
         PutbackRMByte(ModRM,(BYTE)dst);
-	break;
+		break;
     }
   }
 }
@@ -1972,117 +1982,117 @@ void rotate_shift_Word(unsigned ModRM, unsigned count)
 
   if (count==0)
   {
-    cycle_count-=8; /* or 7 if dest is in memory */
+	i86_ICount-=8; /* or 7 if dest is in memory */
   }
   else if (count==1)
   {
-    cycle_count-=2;
+	i86_ICount-=2;
     switch (ModRM & 0x38)
     {
 #if 0
       case 0x00:  /* ROL ew,1 */
         tmp2 = (tmp << 1) + CF;
-	SetCFW(tmp2);
-	OverVal = !(!(tmp & 0x4000)) != CF;
-	PutbackRMWord(ModRM,tmp2);
-	break;
+		SetCFW(tmp2);
+		I.OverVal = !(!(tmp & 0x4000)) != CF;
+		PutbackRMWord(ModRM,tmp2);
+		break;
       case 0x08:  /* ROR ew,1 */
-	CarryVal = tmp & 0x01;
-	tmp2 = (tmp >> 1) + ((unsigned)CF << 15);
-	OverVal = !(!(tmp & 0x8000)) != CF;
-	PutbackRMWord(ModRM,tmp2);
-	break;
+		I.CarryVal = tmp & 0x01;
+		tmp2 = (tmp >> 1) + ((unsigned)CF << 15);
+		I.OverVal = !(!(tmp & 0x8000)) != CF;
+		PutbackRMWord(ModRM,tmp2);
+		break;
       case 0x10:  /* RCL ew,1 */
-	tmp2 = (tmp << 1) + CF;
-	SetCFW(tmp2);
-	OverVal = (tmp ^ (tmp << 1)) & 0x8000;
-	PutbackRMWord(ModRM,tmp2);
-	break;
-      case 0x18:  /* RCR ew,1 */
-	tmp2 = (tmp >> 1) + ((unsigned)CF << 15);
-	OverVal = !(!(tmp & 0x8000)) != CF;
-	CarryVal = tmp & 0x01;
-	PutbackRMWord(ModRM,tmp2);
-	break;
+		tmp2 = (tmp << 1) + CF;
+		SetCFW(tmp2);
+		I.OverVal = (tmp ^ (tmp << 1)) & 0x8000;
+		PutbackRMWord(ModRM,tmp2);
+		break;
+	  case 0x18:  /* RCR ew,1 */
+		tmp2 = (tmp >> 1) + ((unsigned)CF << 15);
+		I.OverVal = !(!(tmp & 0x8000)) != CF;
+		I.CarryVal = tmp & 0x01;
+		PutbackRMWord(ModRM,tmp2);
+		break;
       case 0x20:  /* SHL ew,1 */
       case 0x30:
-	tmp <<= 1;
+		tmp <<= 1;
 
-	SetCFW(tmp);
-	SetOFW_Add(tmp,tmp2,tmp2);
-	AuxVal = 1;
-	SetSZPF_Word(tmp);
+		SetCFW(tmp);
+		SetOFW_Add(tmp,tmp2,tmp2);
+		I.AuxVal = 1;
+		SetSZPF_Word(tmp);
 
-	PutbackRMWord(ModRM,tmp);
-	break;
+		PutbackRMWord(ModRM,tmp);
+		break;
       case 0x28:  /* SHR ew,1 */
-	CarryVal = tmp & 0x01;
-	OverVal = tmp & 0x8000;
+		I.CarryVal = tmp & 0x01;
+		I.OverVal = tmp & 0x8000;
 
-	tmp2 = tmp >> 1;
+		tmp2 = tmp >> 1;
 
-	SetSZPF_Word(tmp2);
-	AuxVal = 1;
-	PutbackRMWord(ModRM,tmp2);
-	break;
+		SetSZPF_Word(tmp2);
+		I.AuxVal = 1;
+		PutbackRMWord(ModRM,tmp2);
+		break;
       case 0x38:  /* SAR ew,1 */
-	CarryVal = tmp & 0x01;
-	OverVal = 0;
+		I.CarryVal = tmp & 0x01;
+		I.OverVal = 0;
 
-	tmp2 = (tmp >> 1) | (tmp & 0x8000);
+		tmp2 = (tmp >> 1) | (tmp & 0x8000);
 
-	SetSZPF_Word(tmp2);
-	AuxVal = 1;
-	PutbackRMWord(ModRM,tmp2);
-	break;
+		SetSZPF_Word(tmp2);
+		I.AuxVal = 1;
+		PutbackRMWord(ModRM,tmp2);
+		break;
 #else
       case 0x00:  /* ROL ew,1 */
-        CarryVal = src & 0x8000;
+		I.CarryVal = src & 0x8000;
         dst=(src<<1)+CF;
         PutbackRMWord(ModRM,dst);
-        OverVal = (src^dst)&0x8000;
-	break;
+		I.OverVal = (src^dst)&0x8000;
+		break;
       case 0x08:  /* ROR ew,1 */
-        CarryVal = src & 0x01;
+		I.CarryVal = src & 0x01;
         dst = ((CF<<16)+src) >> 1;
         PutbackRMWord(ModRM,dst);
-        OverVal = (src^dst)&0x8000;
-	break;
+		I.OverVal = (src^dst)&0x8000;
+		break;
       case 0x10:  /* RCL ew,1 */
         dst=(src<<1)+CF;
         PutbackRMWord(ModRM,dst);
         SetCFW(dst);
-        OverVal = (src^dst)&0x8000;
-	break;
+		I.OverVal = (src^dst)&0x8000;
+		break;
       case 0x18:  /* RCR ew,1 */
         dst = ((CF<<16)+src) >> 1;
         PutbackRMWord(ModRM,dst);
-        CarryVal = src & 0x01;
-        OverVal = (src^dst)&0x8000;
-	break;
+		I.CarryVal = src & 0x01;
+		I.OverVal = (src^dst)&0x8000;
+		break;
       case 0x20:  /* SHL ew,1 */
       case 0x30:
         dst = src << 1;
         PutbackRMWord(ModRM,dst);
         SetCFW(dst);
-        OverVal = (src^dst)&0x8000;
-	AuxVal = 1;
+		I.OverVal = (src^dst)&0x8000;
+		I.AuxVal = 1;
         SetSZPF_Word(dst);
-	break;
+		break;
       case 0x28:  /* SHR ew,1 */
         dst = src >> 1;
         PutbackRMWord(ModRM,dst);
-        CarryVal = src & 0x01;
-        OverVal = src & 0x8000;
-	AuxVal = 1;
+		I.CarryVal = src & 0x01;
+		I.OverVal = src & 0x8000;
+		I.AuxVal = 1;
         SetSZPF_Word(dst);
-	break;
+		break;
       case 0x38:  /* SAR ew,1 */
         dst = ((INT16)src) >> 1;
         PutbackRMWord(ModRM,dst);
-        CarryVal = src & 0x01;
-	OverVal = 0;
-	AuxVal = 1;
+		I.CarryVal = src & 0x01;
+		I.OverVal = 0;
+		I.AuxVal = 1;
         SetSZPF_Word(dst);
 	break;
 #endif
@@ -2090,67 +2100,67 @@ void rotate_shift_Word(unsigned ModRM, unsigned count)
   }
   else
   {
-    cycle_count-=8+4*count; /* or 7+4*count if dest is in memory */
+	i86_ICount-=8+4*count; /* or 7+4*count if dest is in memory */
 
     switch (ModRM & 0x38)
     {
       case 0x00:  /* ROL ew,count */
-	for (; count > 0; count--)
-	{
-            CarryVal = dst & 0x8000;
+		for (; count > 0; count--)
+		{
+			I.CarryVal = dst & 0x8000;
             dst = (dst << 1) + CF;
-	}
+		}
         PutbackRMWord(ModRM,dst);
-	break;
+		break;
       case 0x08:  /* ROR ew,count */
-	for (; count > 0; count--)
-	{
-            CarryVal = dst & 0x01;
+		for (; count > 0; count--)
+		{
+			I.CarryVal = dst & 0x01;
             dst = (dst >> 1) + (CF << 15);
-	}
+		}
         PutbackRMWord(ModRM,dst);
-	break;
+		break;
       case 0x10:  /* RCL ew,count */
-	for (; count > 0; count--)
-	{
+		for (; count > 0; count--)
+		{
             dst = (dst << 1) + CF;
             SetCFW(dst);
-	}
+		}
         PutbackRMWord(ModRM,dst);
 	break;
       case 0x18:  /* RCR ew,count */
-	for (; count > 0; count--)
-	{
+		for (; count > 0; count--)
+		{
             dst = dst + (CF << 16);
-            CarryVal = dst & 0x01;
+			I.CarryVal = dst & 0x01;
             dst >>= 1;
-	}
+		}
         PutbackRMWord(ModRM,dst);
-	break;
+		break;
       case 0x20:
       case 0x30:  /* SHL ew,count */
         dst <<= count;
         SetCFW(dst);
-	AuxVal = 1;
+		I.AuxVal = 1;
         SetSZPF_Word(dst);
         PutbackRMWord(ModRM,dst);
-	break;
+		break;
       case 0x28:  /* SHR ew,count */
         dst >>= count-1;
-        CarryVal = dst & 0x1;
+		I.CarryVal = dst & 0x1;
         dst >>= 1;
         SetSZPF_Word(dst);
-	AuxVal = 1;
+		I.AuxVal = 1;
         PutbackRMWord(ModRM,dst);
-	break;
+		break;
       case 0x38:  /* SAR ew,count */
         dst = ((INT16)dst) >> (count-1);
-        CarryVal = dst & 0x01;
+		I.CarryVal = dst & 0x01;
         dst = ((INT16)((WORD)dst)) >> 1;
         SetSZPF_Word(dst);
-	AuxVal = 1;
+		I.AuxVal = 1;
         PutbackRMWord(ModRM,dst);
-	break;
+		break;
     }
   }
 }
@@ -2177,17 +2187,17 @@ static void i_ret_d16(void)    /* Opcode 0xc2 */
 {
 	unsigned count = FETCHOP;
 	count += FETCHOP << 8;
-    POP(ip);
-    regs.w[SP]+=count;
-    cycle_count-=14;
-	change_pc20((base[CS]+ip) & i86_AddrMask);
+	POP(I.ip);
+	I.regs.w[SP]+=count;
+	i86_ICount-=14;
+	change_pc20((I.base[CS]+I.ip) & i86_AddrMask);
 }
 
 static void i_ret(void)    /* Opcode 0xc3 */
 {
-    POP(ip);
-    cycle_count-=10;
-	change_pc20((base[CS]+ip) & i86_AddrMask);
+	POP(I.ip);
+	i86_ICount-=10;
+	change_pc20((I.base[CS]+I.ip) & i86_AddrMask);
 }
 
 static void i_les_dw(void)    /* Opcode 0xc4 */
@@ -2196,9 +2206,9 @@ static void i_les_dw(void)    /* Opcode 0xc4 */
     WORD tmp = GetRMWord(ModRM);
 
     RegWord(ModRM)= tmp;
-    sregs[ES] = GetnextRMWord;
-    base[ES] = SegBase(ES);
-    cycle_count-=4;
+	I.sregs[ES] = GetnextRMWord;
+	I.base[ES] = SegBase(ES);
+	i86_ICount-=4;
 }
 
 static void i_lds_dw(void)    /* Opcode 0xc5 */
@@ -2207,22 +2217,22 @@ static void i_lds_dw(void)    /* Opcode 0xc5 */
     WORD tmp = GetRMWord(ModRM);
 
     RegWord(ModRM)=tmp;
-    sregs[DS] = GetnextRMWord;
-    base[DS] = SegBase(DS);
-    cycle_count-=4;
+	I.sregs[DS] = GetnextRMWord;
+	I.base[DS] = SegBase(DS);
+	i86_ICount-=4;
 }
 
 static void i_mov_bd8(void)    /* Opcode 0xc6 */
 {
 	unsigned ModRM = FETCHOP;
-    cycle_count-=4;
+	i86_ICount-=4;
     PutImmRMByte(ModRM);
 }
 
 static void i_mov_wd16(void)    /* Opcode 0xc7 */
 {
 	unsigned ModRM = FETCHOP;
-    cycle_count-=4;
+	i86_ICount-=4;
     PutImmRMWord(ModRM);
 }
 
@@ -2231,76 +2241,76 @@ static void i_enter(void)    /* Opcode 0xc8 */
 	unsigned nb = FETCHOP;
     unsigned i,level;
 
-    cycle_count-=11;
+	i86_ICount-=11;
 	nb += FETCHOP << 8;
 	level = FETCHOP;
-    PUSH(regs.w[BP]);
-    regs.w[BP]=regs.w[SP];
-    regs.w[SP] -= nb;
+	PUSH(I.regs.w[BP]);
+	I.regs.w[BP]=I.regs.w[SP];
+	I.regs.w[SP] -= nb;
     for (i=1;i<level;i++) {
-        PUSH(GetMemW(SS,regs.w[BP]-i*2));
-        cycle_count-=4;
+		PUSH(GetMemW(SS,I.regs.w[BP]-i*2));
+		i86_ICount-=4;
     }
-    if (level) PUSH(regs.w[BP]);
+	if (level) PUSH(I.regs.w[BP]);
 }
 
 static void i_leave(void)    /* Opcode 0xc9 */
 {
-    cycle_count-=5;
-    regs.w[SP]=regs.w[BP];
-    POP(regs.w[BP]);
+	i86_ICount-=5;
+	I.regs.w[SP]=I.regs.w[BP];
+	POP(I.regs.w[BP]);
 }
 
 static void i_retf_d16(void)    /* Opcode 0xca */
 {
 	unsigned count = FETCHOP;
 	count += FETCHOP << 8;
-    POP(ip);
-    POP(sregs[CS]);
-    base[CS] = SegBase(CS);
-    regs.w[SP]+=count;
-    cycle_count-=13;
-	change_pc20((base[CS]+ip) & i86_AddrMask);
+	POP(I.ip);
+	POP(I.sregs[CS]);
+	I.base[CS] = SegBase(CS);
+	I.regs.w[SP]+=count;
+	i86_ICount-=13;
+	change_pc20((I.base[CS]+I.ip) & i86_AddrMask);
 }
 
 static void i_retf(void)    /* Opcode 0xcb */
 {
-    POP(ip);
-    POP(sregs[CS]);
-    base[CS] = SegBase(CS);
-    cycle_count-=14;
-	change_pc20((base[CS]+ip) & i86_AddrMask);
+	POP(I.ip);
+	POP(I.sregs[CS]);
+	I.base[CS] = SegBase(CS);
+	i86_ICount-=14;
+	change_pc20((I.base[CS]+I.ip) & i86_AddrMask);
 }
 
 static void i_int3(void)    /* Opcode 0xcc */
 {
-    cycle_count-=16;
-    I86_interrupt(3);
+	i86_ICount-=16;
+	i86_interrupt(3);
 }
 
 static void i_int(void)    /* Opcode 0xcd */
 {
 	unsigned int_num = FETCHOP;
-    cycle_count-=15;
-    I86_interrupt(int_num);
+	i86_ICount-=15;
+	i86_interrupt(int_num);
 }
 
 static void i_into(void)    /* Opcode 0xce */
 {
     if (OF) {
-		cycle_count-=17;
-		I86_interrupt(4);
-    } else cycle_count-=4;
+		i86_ICount-=17;
+		i86_interrupt(4);
+	} else i86_ICount-=4;
 }
 
 static void i_iret(void)    /* Opcode 0xcf */
 {
-    cycle_count-=12;
-    POP(ip);
-    POP(sregs[CS]);
-    base[CS] = SegBase(CS);
+	i86_ICount-=12;
+	POP(I.ip);
+	POP(I.sregs[CS]);
+	I.base[CS] = SegBase(CS);
     i_popf();
-	change_pc20((base[CS]+ip) & i86_AddrMask);
+	change_pc20((I.base[CS]+I.ip) & i86_AddrMask);
 }
 
 static void i_rotshft_b(void)    /* Opcode 0xd0 */
@@ -2317,27 +2327,27 @@ static void i_rotshft_w(void)    /* Opcode 0xd1 */
 
 static void i_rotshft_bcl(void)    /* Opcode 0xd2 */
 {
-	rotate_shift_Byte(FETCHOP,regs.b[CL]);
+	rotate_shift_Byte(FETCHOP,I.regs.b[CL]);
 }
 
 static void i_rotshft_wcl(void)    /* Opcode 0xd3 */
 {
-	rotate_shift_Word(FETCHOP,regs.b[CL]);
+	rotate_shift_Word(FETCHOP,I.regs.b[CL]);
 }
 
 static void i_aam(void)    /* Opcode 0xd4 */
 {
 	unsigned mult = FETCHOP;
 
-    cycle_count-=83;
+	i86_ICount-=83;
     if (mult == 0)
-		I86_interrupt(0);
+		i86_interrupt(0);
     else
     {
-		regs.b[AH] = regs.b[AL] / mult;
-		regs.b[AL] %= mult;
+		I.regs.b[AH] = I.regs.b[AL] / mult;
+		I.regs.b[AL] %= mult;
 
-		SetSZPF_Word(regs.w[AX]);
+		SetSZPF_Word(I.regs.w[AX]);
     }
 }
 
@@ -2346,115 +2356,115 @@ static void i_aad(void)    /* Opcode 0xd5 */
 {
 	unsigned mult = FETCHOP;
 
-    cycle_count-=60;
-    regs.b[AL] = regs.b[AH] * mult + regs.b[AL];
-    regs.b[AH] = 0;
+	i86_ICount-=60;
+	I.regs.b[AL] = I.regs.b[AH] * mult + I.regs.b[AL];
+	I.regs.b[AH] = 0;
 
-    SetZF(regs.b[AL]);
-    SetPF(regs.b[AL]);
-    SignVal = 0;
+	SetZF(I.regs.b[AL]);
+	SetPF(I.regs.b[AL]);
+	I.SignVal = 0;
 }
 
 static void i_xlat(void)    /* Opcode 0xd7 */
 {
-    unsigned dest = regs.w[BX]+regs.b[AL];
+	unsigned dest = I.regs.w[BX]+I.regs.b[AL];
 
-    cycle_count-=5;
-    regs.b[AL] = GetMemB(DS, dest);
+	i86_ICount-=5;
+	I.regs.b[AL] = GetMemB(DS, dest);
 }
 
 static void i_escape(void)    /* Opcodes 0xd8, 0xd9, 0xda, 0xdb, 0xdc, 0xdd, 0xde and 0xdf */
 {
 	unsigned ModRM = FETCHOP;
-    cycle_count-=2;
+	i86_ICount-=2;
     GetRMByte(ModRM);
 }
 
 static void i_loopne(void)    /* Opcode 0xe0 */
 {
 	int disp = (int)((INT8)FETCHOP);
-    unsigned tmp = regs.w[CX]-1;
+	unsigned tmp = I.regs.w[CX]-1;
 
-    regs.w[CX]=tmp;
+	I.regs.w[CX]=tmp;
 
     if (!ZF && tmp) {
-	cycle_count-=19;
-	ip = (WORD)(ip+disp);
-	change_pc20((base[CS]+ip) & i86_AddrMask);
-    } else cycle_count-=5;
+	i86_ICount-=19;
+	I.ip = (WORD)(I.ip+disp);
+	change_pc20((I.base[CS]+I.ip) & i86_AddrMask);
+	} else i86_ICount-=5;
 }
 
 static void i_loope(void)    /* Opcode 0xe1 */
 {
 	int disp = (int)((INT8)FETCHOP);
-    unsigned tmp = regs.w[CX]-1;
+	unsigned tmp = I.regs.w[CX]-1;
 
-    regs.w[CX]=tmp;
+	I.regs.w[CX]=tmp;
 
     if (ZF && tmp) {
-	cycle_count-=18;
-	ip = (WORD)(ip+disp);
-	change_pc20((base[CS]+ip) & i86_AddrMask);
-    } else cycle_count-=6;
+	i86_ICount-=18;
+	I.ip = (WORD)(I.ip+disp);
+	change_pc20((I.base[CS]+I.ip) & i86_AddrMask);
+	} else i86_ICount-=6;
 }
 
 static void i_loop(void)    /* Opcode 0xe2 */
 {
 	int disp = (int)((INT8)FETCHOP);
-    unsigned tmp = regs.w[CX]-1;
+	unsigned tmp = I.regs.w[CX]-1;
 
-    regs.w[CX]=tmp;
+	I.regs.w[CX]=tmp;
 
     if (tmp) {
-	cycle_count-=17;
-	ip = (WORD)(ip+disp);
-	change_pc20((base[CS]+ip) & i86_AddrMask);
-    } else cycle_count-=5;
+	i86_ICount-=17;
+	I.ip = (WORD)(I.ip+disp);
+	change_pc20((I.base[CS]+I.ip) & i86_AddrMask);
+	} else i86_ICount-=5;
 }
 
 static void i_jcxz(void)    /* Opcode 0xe3 */
 {
 	int disp = (int)((INT8)FETCHOP);
 
-    if (regs.w[CX] == 0) {
-	cycle_count-=18;
-	ip = (WORD)(ip+disp);
-	change_pc20((base[CS]+ip) & i86_AddrMask);
-    } else cycle_count-=6;
+	if (I.regs.w[CX] == 0) {
+	i86_ICount-=18;
+	I.ip = (WORD)(I.ip+disp);
+	change_pc20((I.base[CS]+I.ip) & i86_AddrMask);
+	} else i86_ICount-=6;
 }
 
 static void i_inal(void)    /* Opcode 0xe4 */
 {
 	unsigned port = FETCHOP;
 
-    cycle_count-=10;
-    regs.b[AL] = read_port(port);
+	i86_ICount-=10;
+	I.regs.b[AL] = read_port(port);
 }
 
 static void i_inax(void)    /* Opcode 0xe5 */
 {
 	unsigned port = FETCHOP;
 
-    cycle_count-=14;
-    regs.b[AL] = read_port(port);
-    regs.b[AH] = read_port(port+1);
+	i86_ICount-=14;
+	I.regs.b[AL] = read_port(port);
+	I.regs.b[AH] = read_port(port+1);
 }
 
 static void i_outal(void)    /* Opcode 0xe6 */
 {
 	unsigned port = FETCHOP;
 
-    cycle_count-=10;
-    write_port(port, regs.b[AL]);
+	i86_ICount-=10;
+	write_port(port, I.regs.b[AL]);
 }
 
 static void i_outax(void)    /* Opcode 0xe7 */
 {
 	unsigned port = FETCHOP;
 
-    cycle_count-=14;
-    write_port(port, regs.b[AL]);
-    write_port(port+1, regs.b[AH]);
+	i86_ICount-=14;
+	write_port(port, I.regs.b[AL]);
+	write_port(port+1, I.regs.b[AH]);
 }
 
 static void i_call_d16(void)    /* Opcode 0xe8 */
@@ -2462,10 +2472,10 @@ static void i_call_d16(void)    /* Opcode 0xe8 */
 	unsigned tmp = FETCHOP;
 	tmp += FETCHOP << 8;
 
-    PUSH(ip);
-    ip = (WORD)(ip+(INT16)tmp);
-    cycle_count-=12;
-	change_pc20((base[CS]+ip) & i86_AddrMask);
+	PUSH(I.ip);
+	I.ip = (WORD)(I.ip+(INT16)tmp);
+	i86_ICount-=12;
+	change_pc20((I.base[CS]+I.ip) & i86_AddrMask);
 }
 
 
@@ -2474,9 +2484,9 @@ static void i_jmp_d16(void)    /* Opcode 0xe9 */
 	int tmp = FETCHOP;
 	tmp += FETCHOP << 8;
 
-    ip = (WORD)(ip+(INT16)tmp);
-    cycle_count-=15;
-	change_pc20((base[CS]+ip) & i86_AddrMask);
+	I.ip = (WORD)(I.ip+(INT16)tmp);
+	i86_ICount-=15;
+	change_pc20((I.base[CS]+I.ip) & i86_AddrMask);
 }
 
 static void i_jmp_far(void)    /* Opcode 0xea */
@@ -2489,53 +2499,53 @@ static void i_jmp_far(void)    /* Opcode 0xea */
 	tmp1 = FETCHOP;
 	tmp1 += FETCHOP << 8;
 
-    sregs[CS] = (WORD)tmp1;
-    base[CS] = SegBase(CS);
-    ip = (WORD)tmp;
-    cycle_count-=15;
-	change_pc20((base[CS]+ip) & i86_AddrMask);
+	I.sregs[CS] = (WORD)tmp1;
+	I.base[CS] = SegBase(CS);
+	I.ip = (WORD)tmp;
+	i86_ICount-=15;
+	change_pc20((I.base[CS]+I.ip) & i86_AddrMask);
 }
 
 static void i_jmp_d8(void)    /* Opcode 0xeb */
 {
 	int tmp = (int)((INT8)FETCHOP);
-    ip = (WORD)(ip+tmp);
-    cycle_count-=15;
+	I.ip = (WORD)(I.ip+tmp);
+	i86_ICount-=15;
 }
 
 static void i_inaldx(void)    /* Opcode 0xec */
 {
-    cycle_count-=8;
-    regs.b[AL] = read_port(regs.w[DX]);
+	i86_ICount-=8;
+	I.regs.b[AL] = read_port(I.regs.w[DX]);
 }
 
 static void i_inaxdx(void)    /* Opcode 0xed */
 {
-    unsigned port = regs.w[DX];
+	unsigned port = I.regs.w[DX];
 
-    cycle_count-=12;
-    regs.b[AL] = read_port(port);
-    regs.b[AH] = read_port(port+1);
+	i86_ICount-=12;
+	I.regs.b[AL] = read_port(port);
+	I.regs.b[AH] = read_port(port+1);
 }
 
 static void i_outdxal(void)    /* Opcode 0xee */
 {
-    cycle_count-=8;
-    write_port(regs.w[DX], regs.b[AL]);
+	i86_ICount-=8;
+	write_port(I.regs.w[DX], I.regs.b[AL]);
 }
 
 static void i_outdxax(void)    /* Opcode 0xef */
 {
-    unsigned port = regs.w[DX];
+	unsigned port = I.regs.w[DX];
 
-    cycle_count-=12;
-    write_port(port, regs.b[AL]);
-    write_port(port+1, regs.b[AH]);
+	i86_ICount-=12;
+	write_port(port, I.regs.b[AL]);
+	write_port(port+1, I.regs.b[AH]);
 }
 
 static void i_lock(void)    /* Opcode 0xf0 */
 {
-    cycle_count-=2;
+	i86_ICount-=2;
 	instruction[FETCHOP]();  /* un-interruptible */
 }
 
@@ -2545,120 +2555,120 @@ static void rep(int flagval)
        loop  to continue for CMPS and SCAS instructions. */
 
 	unsigned next = FETCHOP;
-    unsigned count = regs.w[CX];
+	unsigned count = I.regs.w[CX];
 
     switch(next)
     {
     case 0x26:  /* ES: */
         seg_prefix=TRUE;
-        prefix_base=base[ES];
-	cycle_count-=2;
-	rep(flagval);
-	break;
+		prefix_base=I.base[ES];
+		i86_ICount-=2;
+		rep(flagval);
+		break;
     case 0x2e:  /* CS: */
         seg_prefix=TRUE;
-        prefix_base=base[CS];
-	cycle_count-=2;
-	rep(flagval);
-	break;
+		prefix_base=I.base[CS];
+		i86_ICount-=2;
+		rep(flagval);
+		break;
     case 0x36:  /* SS: */
         seg_prefix=TRUE;
-        prefix_base=base[SS];
-	cycle_count-=2;
-	rep(flagval);
-	break;
+		prefix_base=I.base[SS];
+		i86_ICount-=2;
+		rep(flagval);
+		break;
     case 0x3e:  /* DS: */
         seg_prefix=TRUE;
-        prefix_base=base[DS];
-	cycle_count-=2;
-	rep(flagval);
-	break;
+		prefix_base=I.base[DS];
+		i86_ICount-=2;
+		rep(flagval);
+		break;
     case 0x6c:  /* REP INSB */
-	cycle_count-=9-count;
-	for (; count > 0; count--)
+		i86_ICount-=9-count;
+		for (; count > 0; count--)
             i_insb();
-	regs.w[CX]=count;
-	break;
+		I.regs.w[CX]=count;
+		break;
     case 0x6d:  /* REP INSW */
-	cycle_count-=9-count;
-	for (; count > 0; count--)
+		i86_ICount-=9-count;
+		for (; count > 0; count--)
             i_insw();
-	regs.w[CX]=count;
-	break;
+		I.regs.w[CX]=count;
+		break;
     case 0x6e:  /* REP OUTSB */
-	cycle_count-=9-count;
-	for (; count > 0; count--)
+		i86_ICount-=9-count;
+		for (; count > 0; count--)
             i_outsb();
-	regs.w[CX]=count;
-	break;
+		I.regs.w[CX]=count;
+		break;
     case 0x6f:  /* REP OUTSW */
-	cycle_count-=9-count;
-	for (; count > 0; count--)
+		i86_ICount-=9-count;
+		for (; count > 0; count--)
             i_outsw();
-	regs.w[CX]=count;
-	break;
+		I.regs.w[CX]=count;
+		break;
     case 0xa4:  /* REP MOVSB */
-	cycle_count-=9-count;
-	for (; count > 0; count--)
-	    i_movsb();
-	regs.w[CX]=count;
-	break;
+		i86_ICount-=9-count;
+		for (; count > 0; count--)
+			i_movsb();
+		I.regs.w[CX]=count;
+		break;
     case 0xa5:  /* REP MOVSW */
-	cycle_count-=9-count;
-	for (; count > 0; count--)
-	    i_movsw();
-	regs.w[CX]=count;
-	break;
+		i86_ICount-=9-count;
+		for (; count > 0; count--)
+			i_movsw();
+		I.regs.w[CX]=count;
+		break;
     case 0xa6:  /* REP(N)E CMPSB */
-	cycle_count-=9;
-	for (ZeroVal = !flagval; (ZF == flagval) && (count > 0); count--)
-	    i_cmpsb();
-	regs.w[CX]=count;
-	break;
+		i86_ICount-=9;
+		for (I.ZeroVal = !flagval; (ZF == flagval) && (count > 0); count--)
+			i_cmpsb();
+		I.regs.w[CX]=count;
+		break;
     case 0xa7:  /* REP(N)E CMPSW */
-	cycle_count-=9;
-	for (ZeroVal = !flagval; (ZF == flagval) && (count > 0); count--)
-	    i_cmpsw();
-	regs.w[CX]=count;
-	break;
+		i86_ICount-=9;
+		for (I.ZeroVal = !flagval; (ZF == flagval) && (count > 0); count--)
+			i_cmpsw();
+		I.regs.w[CX]=count;
+		break;
     case 0xaa:  /* REP STOSB */
-	cycle_count-=9-count;
-	for (; count > 0; count--)
-	    i_stosb();
-	regs.w[CX]=count;
-	break;
+		i86_ICount-=9-count;
+		for (; count > 0; count--)
+			i_stosb();
+		I.regs.w[CX]=count;
+		break;
     case 0xab:  /* REP STOSW */
-	cycle_count-=9-count;
-	for (; count > 0; count--)
-	    i_stosw();
-	regs.w[CX]=count;
-	break;
+		i86_ICount-=9-count;
+		for (; count > 0; count--)
+			i_stosw();
+		I.regs.w[CX]=count;
+		break;
     case 0xac:  /* REP LODSB */
-	cycle_count-=9;
-	for (; count > 0; count--)
-	    i_lodsb();
-	regs.w[CX]=count;
-	break;
+		i86_ICount-=9;
+		for (; count > 0; count--)
+			i_lodsb();
+		I.regs.w[CX]=count;
+		break;
     case 0xad:  /* REP LODSW */
-	cycle_count-=9;
-	for (; count > 0; count--)
-	    i_lodsw();
-	regs.w[CX]=count;
-	break;
+		i86_ICount-=9;
+		for (; count > 0; count--)
+			i_lodsw();
+		I.regs.w[CX]=count;
+		break;
     case 0xae:  /* REP(N)E SCASB */
-	cycle_count-=9;
-	for (ZeroVal = !flagval; (ZF == flagval) && (count > 0); count--)
-	    i_scasb();
-	regs.w[CX]=count;
-	break;
+		i86_ICount-=9;
+		for (I.ZeroVal = !flagval; (ZF == flagval) && (count > 0); count--)
+			i_scasb();
+		I.regs.w[CX]=count;
+		break;
     case 0xaf:  /* REP(N)E SCASW */
-	cycle_count-=9;
-	for (ZeroVal = !flagval; (ZF == flagval) && (count > 0); count--)
-	    i_scasw();
-	regs.w[CX]=count;
-	break;
+		i86_ICount-=9;
+		for (I.ZeroVal = !flagval; (ZF == flagval) && (count > 0); count--)
+			i_scasw();
+		I.regs.w[CX]=count;
+		break;
     default:
-	instruction[next]();
+		instruction[next]();
     }
 }
 
@@ -2674,13 +2684,13 @@ static void i_repe(void)    /* Opcode 0xf3 */
 
 static void i_hlt(void)    /* Opcode 0xf4 */
 {
-    cycle_count=0;
+	i86_ICount=0;
 }
 
 static void i_cmc(void)    /* Opcode 0xf5 */
 {
-    cycle_count-=2;
-    CarryVal = !CF;
+	i86_ICount-=2;
+	I.CarryVal = !CF;
 }
 
 static void i_f6pre(void)
@@ -2695,104 +2705,115 @@ static void i_f6pre(void)
     {
     case 0x00:  /* TEST Eb, data8 */
     case 0x08:  /* ??? */
-	cycle_count-=5;
-	tmp &= FETCH;
+		i86_ICount-=5;
+		tmp &= FETCH;
 
-	CarryVal = OverVal = AuxVal = 0;
-	SetSZPF_Byte(tmp);
-	break;
+		I.CarryVal = I.OverVal = I.AuxVal = 0;
+		SetSZPF_Byte(tmp);
+		break;
 
     case 0x10:  /* NOT Eb */
-	cycle_count-=3;
-	PutbackRMByte(ModRM,~tmp);
-	break;
+		i86_ICount-=3;
+		PutbackRMByte(ModRM,~tmp);
+		break;
 
     case 0x18:  /* NEG Eb */
-	cycle_count-=3;
+		i86_ICount-=3;
         tmp2=0;
         SUBB(tmp2,tmp);
         PutbackRMByte(ModRM,tmp2);
-	break;
+		break;
     case 0x20:  /* MUL AL, Eb */
-	cycle_count-=77;
-	{
-	    UINT16 result;
-	    tmp2 = regs.b[AL];
+		i86_ICount-=77;
+		{
+			UINT16 result;
+			tmp2 = I.regs.b[AL];
 
-	    SetSF((INT8)tmp2);
-	    SetPF(tmp2);
+			SetSF((INT8)tmp2);
+			SetPF(tmp2);
 
-	    result = (UINT16)tmp2*tmp;
-	    regs.w[AX]=(WORD)result;
+			result = (UINT16)tmp2*tmp;
+			I.regs.w[AX]=(WORD)result;
 
-	    SetZF(regs.w[AX]);
-	    CarryVal = OverVal = (regs.b[AH] != 0);
-	}
-	break;
+			SetZF(I.regs.w[AX]);
+			I.CarryVal = I.OverVal = (I.regs.b[AH] != 0);
+		}
+		break;
     case 0x28:  /* IMUL AL, Eb */
-	cycle_count-=80;
-	{
-	    INT16 result;
+		i86_ICount-=80;
+		{
+			INT16 result;
 
-	    tmp2 = (unsigned)regs.b[AL];
+			tmp2 = (unsigned)I.regs.b[AL];
 
-	    SetSF((INT8)tmp2);
-	    SetPF(tmp2);
+			SetSF((INT8)tmp2);
+			SetPF(tmp2);
 
-	    result = (INT16)((INT8)tmp2)*(INT16)((INT8)tmp);
-	    regs.w[AX]=(WORD)result;
+			result = (INT16)((INT8)tmp2)*(INT16)((INT8)tmp);
+			I.regs.w[AX]=(WORD)result;
 
-	    SetZF(regs.w[AX]);
+			SetZF(I.regs.w[AX]);
 
-	    CarryVal = OverVal = (result >> 7 != 0) && (result >> 7 != -1);
-	}
-	break;
+			I.CarryVal = I.OverVal = (result >> 7 != 0) && (result >> 7 != -1);
+		}
+		break;
     case 0x30:  /* DIV AL, Ew */
-	cycle_count-=90;
-	{
-	    UINT16 result;
+		i86_ICount-=90;
+		{
+			UINT16 result;
 
-	    result = regs.w[AX];
+			result = I.regs.w[AX];
 
-		if (tmp) {
-			if ((result / tmp) > 0xff) {
-				I86_interrupt(0);
-				break;
-			} else {
-				regs.b[AH] = result % tmp;
-				regs.b[AL] = result / tmp;
+			if (tmp)
+			{
+				if ((result / tmp) > 0xff)
+				{
+					i86_interrupt(0);
+					break;
+				}
+				else
+				{
+					I.regs.b[AH] = result % tmp;
+					I.regs.b[AL] = result / tmp;
+				}
 			}
-		} else {
-			I86_interrupt(0);
-			break;
-	    }
-	}
-	break;
+			else
+			{
+				i86_interrupt(0);
+				break;
+			}
+		}
+		break;
     case 0x38:  /* IDIV AL, Ew */
-	cycle_count-=106;
-	{
+		i86_ICount-=106;
+		{
 
-	    INT16 result;
+			INT16 result;
 
-	    result = regs.w[AX];
+			result = I.regs.w[AX];
 
-	    if (tmp)
-	    {
-			tmp2 = result % (INT16)((INT8)tmp);
+			if (tmp)
+			{
+				tmp2 = result % (INT16)((INT8)tmp);
 
-			if ((result /= (INT16)((INT8)tmp)) > 0xff) {
-				I86_interrupt(0);
-				break;
-			} else {
-				regs.b[AL] = result;
-				regs.b[AH] = tmp2;
+				if ((result /= (INT16)((INT8)tmp)) > 0xff)
+				{
+					i86_interrupt(0);
+					break;
+				}
+				else
+				{
+					I.regs.b[AL] = result;
+					I.regs.b[AH] = tmp2;
+				}
 			}
-		} else {
-			I86_interrupt(0);
-			break;
-	    }
-	}
-	break;
+			else
+			{
+				i86_interrupt(0);
+				break;
+			}
+		}
+		break;
     }
 }
 
@@ -2809,150 +2830,162 @@ static void i_f7pre(void)
     {
     case 0x00:  /* TEST Ew, data16 */
     case 0x08:  /* ??? */
-	cycle_count-=3;
-	tmp2 = FETCH;
-	tmp2 += FETCH << 8;
+		i86_ICount-=3;
+		tmp2 = FETCH;
+		tmp2 += FETCH << 8;
 
-	tmp &= tmp2;
+		tmp &= tmp2;
 
-	CarryVal = OverVal = AuxVal = 0;
-	SetSZPF_Word(tmp);
-	break;
+		I.CarryVal = I.OverVal = I.AuxVal = 0;
+		SetSZPF_Word(tmp);
+		break;
 
     case 0x10:  /* NOT Ew */
-	cycle_count-=3;
-	tmp = ~tmp;
-	PutbackRMWord(ModRM,tmp);
-	break;
+		i86_ICount-=3;
+		tmp = ~tmp;
+		PutbackRMWord(ModRM,tmp);
+		break;
 
     case 0x18:  /* NEG Ew */
-	cycle_count-=3;
+		i86_ICount-=3;
         tmp2 = 0;
         SUBW(tmp2,tmp);
         PutbackRMWord(ModRM,tmp2);
-	break;
+		break;
     case 0x20:  /* MUL AX, Ew */
-	cycle_count-=129;
-	{
-	    UINT32 result;
-	    tmp2 = regs.w[AX];
+		i86_ICount-=129;
+		{
+			UINT32 result;
+			tmp2 = I.regs.w[AX];
 
-	    SetSF((INT16)tmp2);
-	    SetPF(tmp2);
+			SetSF((INT16)tmp2);
+			SetPF(tmp2);
 
-	    result = (UINT32)tmp2*tmp;
-	    regs.w[AX]=(WORD)result;
+			result = (UINT32)tmp2*tmp;
+			I.regs.w[AX]=(WORD)result;
             result >>= 16;
-	    regs.w[DX]=result;
+			I.regs.w[DX]=result;
 
-	    SetZF(regs.w[AX] | regs.w[DX]);
-	    CarryVal = OverVal = (regs.w[DX] != 0);
-	}
-	break;
+			SetZF(I.regs.w[AX] | I.regs.w[DX]);
+			I.CarryVal = I.OverVal = (I.regs.w[DX] != 0);
+		}
+		break;
 
     case 0x28:  /* IMUL AX, Ew */
-	cycle_count-=150;
-	{
-	    INT32 result;
+		i86_ICount-=150;
+		{
+			INT32 result;
 
-	    tmp2 = regs.w[AX];
+			tmp2 = I.regs.w[AX];
 
-	    SetSF((INT16)tmp2);
-	    SetPF(tmp2);
+			SetSF((INT16)tmp2);
+			SetPF(tmp2);
 
-	    result = (INT32)((INT16)tmp2)*(INT32)((INT16)tmp);
-	    CarryVal = OverVal = (result >> 15 != 0) && (result >> 15 != -1);
+			result = (INT32)((INT16)tmp2)*(INT32)((INT16)tmp);
+			I.CarryVal = I.OverVal = (result >> 15 != 0) && (result >> 15 != -1);
 
-	    regs.w[AX]=(WORD)result;
-	    result = (WORD)(result >> 16);
-	    regs.w[DX]=result;
+			I.regs.w[AX]=(WORD)result;
+			result = (WORD)(result >> 16);
+			I.regs.w[DX]=result;
 
-	    SetZF(regs.w[AX] | regs.w[DX]);
-	}
-	break;
+			SetZF(I.regs.w[AX] | I.regs.w[DX]);
+		}
+		break;
     case 0x30:  /* DIV AX, Ew */
-	cycle_count-=158;
-	{
-	    UINT32 result;
+		i86_ICount-=158;
+		{
+			UINT32 result;
 
-	    result = (regs.w[DX] << 16) + regs.w[AX];
+			result = (I.regs.w[DX] << 16) + I.regs.w[AX];
 
-		if (tmp) {
-			tmp2 = result % tmp;
-			if ((result / tmp) > 0xffff) {
-				I86_interrupt(0);
-				break;
-			} else {
-				regs.w[DX]=tmp2;
-				result /= tmp;
-				regs.w[AX]=result;
+			if (tmp)
+			{
+				tmp2 = result % tmp;
+				if ((result / tmp) > 0xffff)
+				{
+					i86_interrupt(0);
+					break;
+				}
+				else
+				{
+					I.regs.w[DX]=tmp2;
+					result /= tmp;
+					I.regs.w[AX]=result;
+				}
 			}
-		} else {
-			I86_interrupt(0);
-			break;
-	    }
-	}
-	break;
+			else
+			{
+				i86_interrupt(0);
+				break;
+			}
+		}
+		break;
     case 0x38:  /* IDIV AX, Ew */
-	cycle_count-=180;
-	{
-	    INT32 result;
+		i86_ICount-=180;
+		{
+			INT32 result;
 
-	    result = (regs.w[DX] << 16) + regs.w[AX];
+			result = (I.regs.w[DX] << 16) + I.regs.w[AX];
 
-		if (tmp) {
-			tmp2 = result % (INT32)((INT16)tmp);
-			if ((result /= (INT32)((INT16)tmp)) > 0xffff) {
-				I86_interrupt(0);
-				break;
-			} else {
-				regs.w[AX]=result;
-				regs.w[DX]=tmp2;
+			if (tmp)
+			{
+				tmp2 = result % (INT32)((INT16)tmp);
+				if ((result /= (INT32)((INT16)tmp)) > 0xffff)
+				{
+					i86_interrupt(0);
+					break;
+				}
+				else
+				{
+					I.regs.w[AX]=result;
+					I.regs.w[DX]=tmp2;
+				}
 			}
-		} else {
-			I86_interrupt(0);
-			break;
-	    }
-	}
-	break;
+			else
+			{
+				i86_interrupt(0);
+				break;
+			}
+		}
+		break;
     }
 }
 
 
 static void i_clc(void)    /* Opcode 0xf8 */
 {
-    cycle_count-=2;
-    CarryVal = 0;
+	i86_ICount-=2;
+	I.CarryVal = 0;
 }
 
 static void i_stc(void)    /* Opcode 0xf9 */
 {
-    cycle_count-=2;
-    CarryVal = 1;
+	i86_ICount-=2;
+	I.CarryVal = 1;
 }
 
 static void i_cli(void)    /* Opcode 0xfa */
 {
-    cycle_count-=2;
-    IF = 0;
+	i86_ICount-=2;
+	I.IF = 0;
 }
 
 static void i_sti(void)    /* Opcode 0xfb */
 {
-    cycle_count-=2;
-    IF = 1;
+	i86_ICount-=2;
+	I.IF = 1;
 }
 
 static void i_cld(void)    /* Opcode 0xfc */
 {
-    cycle_count-=2;
-    DF = 0;
+	i86_ICount-=2;
+	I.DF = 0;
 }
 
 static void i_std(void)    /* Opcode 0xfd */
 {
-    cycle_count-=2;
-    DF = 1;
+	i86_ICount-=2;
+	I.DF = 1;
 }
 
 static void i_fepre(void)    /* Opcode 0xfe */
@@ -2961,16 +2994,16 @@ static void i_fepre(void)    /* Opcode 0xfe */
     unsigned tmp = GetRMByte(ModRM);
     unsigned tmp1;
 
-    cycle_count-=3; /* 2 if dest is in memory */
+	i86_ICount-=3; /* 2 if dest is in memory */
     if ((ModRM & 0x38) == 0)  /* INC eb */
     {
-	tmp1 = tmp+1;
-	SetOFB_Add(tmp1,tmp,1);
+		tmp1 = tmp+1;
+		SetOFB_Add(tmp1,tmp,1);
     }
     else  /* DEC eb */
     {
-	tmp1 = tmp-1;
-	SetOFB_Sub(tmp1,1,tmp);
+		tmp1 = tmp-1;
+		SetOFB_Sub(tmp1,1,tmp);
     }
 
     SetAF(tmp1,tmp,1);
@@ -2989,68 +3022,68 @@ static void i_ffpre(void)    /* Opcode 0xff */
     switch(ModRM & 0x38)
     {
     case 0x00:  /* INC ew */
-	cycle_count-=3; /* 2 if dest is in memory */
-	tmp = GetRMWord(ModRM);
-	tmp1 = tmp+1;
+		i86_ICount-=3; /* 2 if dest is in memory */
+		tmp = GetRMWord(ModRM);
+		tmp1 = tmp+1;
 
-	SetOFW_Add(tmp1,tmp,1);
-	SetAF(tmp1,tmp,1);
-	SetSZPF_Word(tmp1);
+		SetOFW_Add(tmp1,tmp,1);
+		SetAF(tmp1,tmp,1);
+		SetSZPF_Word(tmp1);
 
-	PutbackRMWord(ModRM,(WORD)tmp1);
-	break;
+		PutbackRMWord(ModRM,(WORD)tmp1);
+		break;
 
     case 0x08:  /* DEC ew */
-	cycle_count-=3; /* 2 if dest is in memory */
-	tmp = GetRMWord(ModRM);
-	tmp1 = tmp-1;
+		i86_ICount-=3; /* 2 if dest is in memory */
+		tmp = GetRMWord(ModRM);
+		tmp1 = tmp-1;
 
-	SetOFW_Sub(tmp1,1,tmp);
-	SetAF(tmp1,tmp,1);
-	SetSZPF_Word(tmp1);
+		SetOFW_Sub(tmp1,1,tmp);
+		SetAF(tmp1,tmp,1);
+		SetSZPF_Word(tmp1);
 
-	PutbackRMWord(ModRM,(WORD)tmp1);
-	break;
+		PutbackRMWord(ModRM,(WORD)tmp1);
+		break;
 
     case 0x10:  /* CALL ew */
-	cycle_count-=9; /* 8 if dest is in memory */
-	tmp = GetRMWord(ModRM);
-	PUSH(ip);
-	ip = (WORD)tmp;
-	change_pc20((base[CS]+ip) & i86_AddrMask);
-    break;
+		i86_ICount-=9; /* 8 if dest is in memory */
+		tmp = GetRMWord(ModRM);
+		PUSH(I.ip);
+		I.ip = (WORD)tmp;
+		change_pc20((I.base[CS]+I.ip) & i86_AddrMask);
+		break;
 
 	case 0x18:  /* CALL FAR ea */
-	cycle_count-=11;
-	tmp = sregs[CS];		/* HJB 12/13/98 need to skip displacements of EA */
-	tmp1 = GetRMWord(ModRM);
-	sregs[CS] = GetnextRMWord;
-    base[CS] = SegBase(CS);
-	PUSH(tmp);
-	PUSH(ip);
-	ip = tmp1;
-	change_pc20((base[CS]+ip) & i86_AddrMask);
-    break;
+		i86_ICount-=11;
+		tmp = I.sregs[CS];	/* HJB 12/13/98 need to skip displacements of EA */
+		tmp1 = GetRMWord(ModRM);
+		I.sregs[CS] = GetnextRMWord;
+		I.base[CS] = SegBase(CS);
+		PUSH(tmp);
+		PUSH(I.ip);
+		I.ip = tmp1;
+		change_pc20((I.base[CS]+I.ip) & i86_AddrMask);
+		break;
 
     case 0x20:  /* JMP ea */
-	cycle_count-=11; /* 8 if address in memory */
-	ip = GetRMWord(ModRM);
-	change_pc20((base[CS]+ip) & i86_AddrMask);
-    break;
+		i86_ICount-=11; /* 8 if address in memory */
+		I.ip = GetRMWord(ModRM);
+		change_pc20((I.base[CS]+I.ip) & i86_AddrMask);
+		break;
 
     case 0x28:  /* JMP FAR ea */
-	cycle_count-=4;
-	ip = GetRMWord(ModRM);
-	sregs[CS] = GetnextRMWord;
-	base[CS] = SegBase(CS);
-	change_pc20((base[CS]+ip) & i86_AddrMask);
-    break;
+		i86_ICount-=4;
+		I.ip = GetRMWord(ModRM);
+		I.sregs[CS] = GetnextRMWord;
+		I.base[CS] = SegBase(CS);
+		change_pc20((I.base[CS]+I.ip) & i86_AddrMask);
+		break;
 
     case 0x30:  /* PUSH ea */
-	cycle_count-=3;
-	tmp = GetRMWord(ModRM);
-	PUSH(tmp);
-	break;
+		i86_ICount-=3;
+		tmp = GetRMWord(ModRM);
+		PUSH(tmp);
+		break;
     }
 }
 
@@ -3059,142 +3092,156 @@ static void i_invalid(void)
 {
     /* makes the cpu loops forever until user resets it */
 /*	{ extern int debug_key_pressed; debug_key_pressed = 1; } */
-    ip--;
-    cycle_count-=10;
+	I.ip--;
+	i86_ICount-=10;
 }
-
 
 /* ASG 971222 -- added these interface functions */
-void i86_setregs(i86_Regs *Regs)
-{
-	regs = Regs->regs;
-	ip = Regs->ip;
-	ExpandFlags(Regs->flags);
-	sregs[CS] = Regs->sregs[CS];
-	sregs[DS] = Regs->sregs[DS];
-	sregs[ES] = Regs->sregs[ES];
-	sregs[SS] = Regs->sregs[SS];
-	int86_vector = Regs->int_vector;
-	pending_irq = Regs->pending_irq;
-    nmi_state = Regs->nmi_state;
-	irq_state = Regs->irq_state;
-    irq_callback = Regs->irq_callback;
 
-	base[CS] = SegBase(CS);
-	base[DS] = SegBase(DS);
-	base[ES] = SegBase(ES);
-	base[SS] = SegBase(SS);
-	change_pc20((base[CS]+ip) & i86_AddrMask);
+unsigned i86_get_context(void *dst)
+{
+	if( dst )
+		*(i86_Regs*)dst = I;
+    return sizeof(i86_Regs);
 }
 
-
-void i86_getregs(i86_Regs *Regs)
+void i86_set_context(void *src)
 {
-	Regs->regs = regs;
-	Regs->ip = ip;
-	Regs->flags = CompressFlags();
-	Regs->sregs[CS] = sregs[CS];
-	Regs->sregs[DS] = sregs[DS];
-	Regs->sregs[ES] = sregs[ES];
-	Regs->sregs[SS] = sregs[SS];
-	Regs->int_vector = int86_vector;
-	Regs->pending_irq = pending_irq;
-    Regs->nmi_state = nmi_state;
-	Regs->irq_state = irq_state;
-	Regs->irq_callback = irq_callback;
+	if( src )
+	{
+		I = *(i86_Regs*)src;
+		I.base[CS] = SegBase(CS);
+		I.base[DS] = SegBase(DS);
+		I.base[ES] = SegBase(ES);
+		I.base[SS] = SegBase(SS);
+		change_pc20((I.base[CS]+I.ip) & i86_AddrMask);
+	}
 }
 
-
-unsigned i86_getpc(void)
+unsigned i86_get_pc(void)
 {
-	return (SegBase(CS)+(WORD)ip) & i86_AddrMask;
+	return (SegBase(CS)+(WORD)I.ip) & i86_AddrMask;
 }
 
-unsigned i86_getreg(int regnum)
+void i86_set_pc(unsigned val)
+{
+	if( val - SegBase(CS) < 0x10000 )
+		I.ip = val - SegBase(CS);
+	else
+	{
+		I.base[CS] = (val & 0xff0000) >> 4;
+		I.ip = val & 0x0ffff;
+	}
+}
+
+unsigned i86_get_sp(void)
+{
+	return (SegBase(SS)+I.regs.w[SP]) & i86_AddrMask;
+}
+
+void i86_set_sp(unsigned val)
+{
+	if( val - SegBase(SS) < 0x10000 )
+		I.regs.w[SP] = val - SegBase(SS);
+	else
+	{
+		I.base[SS] = (val & 0xff0000) >> 4;
+		I.regs.w[SP] = val & 0x0ffff;
+	}
+}
+
+unsigned i86_get_reg(int regnum)
 {
 	switch( regnum )
 	{
-		case  0: return ip;
-		case  1: return sregs[ES];
-		case  2: return sregs[CS];
-		case  3: return sregs[SS];
-		case  4: return sregs[DS];
-		case  5: return regs.w[0];
-		case  6: return regs.w[1];
-		case  7: return regs.w[2];
-		case  8: return regs.w[3];
-		case  9: return regs.w[4];
-		case 10: return regs.w[5];
-		case 11: return regs.w[6];
-		case 12: return regs.w[7];
-		case 13: return int86_vector;
-		case 14: return pending_irq;
-		case 15: return nmi_state;
-		case 16: return irq_state;
+		case I86_IP: return I.ip;
+		case I86_AX: return I.regs.w[AX];
+		case I86_CX: return I.regs.w[CX];
+		case I86_DX: return I.regs.w[DX];
+		case I86_BX: return I.regs.w[BX];
+		case I86_SP: return I.regs.w[SP];
+		case I86_BP: return I.regs.w[BP];
+		case I86_SI: return I.regs.w[SI];
+		case I86_DI: return I.regs.w[DI];
+		case I86_FLAGS: CompressFlags(); return I.flags;
+		case I86_ES: return I.sregs[ES];
+		case I86_CS: return I.sregs[CS];
+		case I86_SS: return I.sregs[SS];
+		case I86_DS: return I.sregs[DS];
+		case I86_VECTOR: return I.int_vector;
+		case I86_PENDING: return I.pending_irq;
+		case I86_NMI_STATE: return I.nmi_state;
+		case I86_IRQ_STATE: return I.irq_state;
 	}
 	return 0;
 }
 
-void i86_setreg(int regnum, unsigned val)
+void i86_set_reg(int regnum, unsigned val)
 {
 	switch( regnum )
 	{
-		case  0: ip = val; break;
-		case  1: sregs[ES] = val; break;
-		case  2: sregs[CS] = val; break;
-		case  3: sregs[SS] = val; break;
-		case  4: sregs[DS] = val; break;
-		case  5: regs.w[0] = val; break;
-		case  6: regs.w[1] = val; break;
-		case  7: regs.w[2] = val; break;
-		case  8: regs.w[3] = val; break;
-		case  9: regs.w[4] = val; break;
-		case 10: regs.w[5] = val; break;
-		case 11: regs.w[6] = val; break;
-		case 12: regs.w[7] = val; break;
-		case 13: int86_vector = val; break;
-		case 14: pending_irq = val; break;
-		case 15: nmi_state = val; break;
-		case 16: irq_state = val; break;
-	}
+		case I86_IP: I.ip = val; break;
+		case I86_AX: I.regs.w[AX] = val; break;
+		case I86_CX: I.regs.w[CX] = val; break;
+		case I86_DX: I.regs.w[DX] = val; break;
+		case I86_BX: I.regs.w[BX] = val; break;
+		case I86_SP: I.regs.w[SP] = val; break;
+		case I86_BP: I.regs.w[BP] = val; break;
+		case I86_SI: I.regs.w[SI] = val; break;
+		case I86_DI: I.regs.w[DI] = val; break;
+		case I86_FLAGS: I.flags = val; ExpandFlags(val); break;
+		case I86_ES: I.sregs[ES] = val; break;
+		case I86_CS: I.sregs[CS] = val; break;
+		case I86_SS: I.sregs[SS] = val; break;
+		case I86_DS: I.sregs[DS] = val; break;
+		case I86_VECTOR: I.int_vector = val; break;
+		case I86_PENDING: I.pending_irq = val; break;
+		case I86_NMI_STATE: I.nmi_state = val; break;
+		case I86_IRQ_STATE: I.irq_state = val; break;
+    }
 }
 
 void i86_set_nmi_line(int state)
 {
-	nmi_state = state;
-	if (state != CLEAR_LINE) {
-		pending_irq |= NMI_IRQ;
+	if( I.nmi_state == state ) return;
+    I.nmi_state = state;
+	if (state != CLEAR_LINE)
+	{
+		I.pending_irq |= NMI_IRQ;
 	}
 }
 
 void i86_set_irq_line(int irqline, int state)
 {
-	irq_state = state;
-	if (state == CLEAR_LINE) {
-		if (!IF)
-			pending_irq &= ~INT_IRQ;
-	} else {
-		if (IF)
-			pending_irq |= INT_IRQ;
+	I.irq_state = state;
+	if (state == CLEAR_LINE)
+	{
+		if (!I.IF)
+			I.pending_irq &= ~INT_IRQ;
+	}
+	else
+	{
+		if (I.IF)
+			I.pending_irq |= INT_IRQ;
 	}
 }
 
 void i86_set_irq_callback(int (*callback)(int))
 {
-	irq_callback = callback;
+	I.irq_callback = callback;
 }
 
 int i86_execute(int cycles)
 {
-    cycle_count=cycles;/* ASG 971222 cycles_per_run;*/
-    while(cycle_count>0)
+	i86_ICount=cycles;	/* ASG 971222 cycles_per_run;*/
+	while(i86_ICount>0)
     {
 
 #ifdef VERBOSE_DEBUG
-printf("[%04x:%04x]=%02x\tAX=%04x\tBX=%04x\tCX=%04x\tDX=%04x\n",sregs[CS],ip,GetMemB(CS,ip),regs.w[AX],regs.w[BX],regs.w[CX],regs.w[DX]);
+printf("[%04x:%04x]=%02x\tAX=%04x\tBX=%04x\tCX=%04x\tDX=%04x\n",sregs[CS],I.ip,GetMemB(CS,I.ip),I.regs.w[AX],I.regs.w[BX],I.regs.w[CX],I.regs.w[DX]);
 #endif
 
-	if ((pending_irq && IF) || (pending_irq & NMI_IRQ))
+	if ((I.pending_irq && I.IF) || (I.pending_irq & NMI_IRQ))
 		external_int(); 	 /* HJB 12/15/98 */
 
 #ifdef MAME_DEBUG
@@ -3471,7 +3518,7 @@ printf("[%04x:%04x]=%02x\tAX=%04x\tBX=%04x\tCX=%04x\tDX=%04x\n",sregs[CS],ip,Get
 #endif
 
     }
-	return cycles - cycle_count;
+	return cycles - i86_ICount;
 }
 
 /****************************************************************************
@@ -3481,12 +3528,12 @@ const char *i86_info(void *context, int regnum)
 {
 	static char buffer[32][47+1];
 	static int which = 0;
-	i86_Regs *r = (i86_Regs *)context;
+	i86_Regs *r = context;
 
 	which = ++which % 32;
 	buffer[which][0] = '\0';
-	if( !context && regnum >= CPU_INFO_PC )
-		return buffer[which];
+	if( !context )
+		r = &I;
 
 	switch( regnum )
 	{
@@ -3494,15 +3541,21 @@ const char *i86_info(void *context, int regnum)
 		case CPU_INFO_FAMILY: return "Intel 80x86";
 		case CPU_INFO_VERSION: return "1.4";
 		case CPU_INFO_FILE: return __FILE__;
-		case CPU_INFO_CREDITS: return "Real mode i286 emulator v1.4 by Fabrice Frances\n(initial work based on David Hedley's pcemu)";
+		case CPU_INFO_CREDITS: return "Real mode i286 emulator v1.4 by Fabrice Frances\n(initial work I.based on David Hedley's pcemu)";
 		case CPU_INFO_PC: sprintf(buffer[which], "%06X:", (r->sregs[CS] + r->ip) & 0xffffff); break;
 		case CPU_INFO_SP: sprintf(buffer[which], "%06X", (r->sregs[SS] + r->regs.w[4]) & 0xffffff); break;
 #ifdef	MAME_DEBUG
-		case CPU_INFO_DASM: r->ip += DasmI86(&ROM[r->ip],buffer[which],r->ip); break;
+		case CPU_INFO_DASM:
+			r->ip += DasmI86(&ROM[r->ip],buffer[which],r->ip);
+			break;
 #else
-		case CPU_INFO_DASM: sprintf(buffer[which],"$%02x",ROM[r->ip]); r->ip++; break;
+		case CPU_INFO_DASM:
+			sprintf(buffer[which],"$%02x",ROM[r->ip]);
+			r->ip++;
+			break;
 #endif
 		case CPU_INFO_FLAGS:
+			r->flags = CompressFlags();
 			sprintf(buffer[which], "%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",
 				r->flags & 0x8000 ? '?':'.',
 				r->flags & 0x4000 ? '?':'.',
@@ -3521,23 +3574,23 @@ const char *i86_info(void *context, int regnum)
 				r->flags & 0x0002 ? 'N':'.',
 				r->flags & 0x0001 ? 'C':'.');
 			break;
-		case CPU_INFO_REG+ 0: sprintf(buffer[which], "IP:%04X", r->ip); break;
-		case CPU_INFO_REG+ 1: sprintf(buffer[which], "ES:%04X", r->sregs[ES]); break;
-		case CPU_INFO_REG+ 2: sprintf(buffer[which], "CS:%04X", r->sregs[CS]); break;
-		case CPU_INFO_REG+ 3: sprintf(buffer[which], "SS:%04X", r->sregs[SS]); break;
-		case CPU_INFO_REG+ 4: sprintf(buffer[which], "DS:%04X", r->sregs[DS]); break;
-		case CPU_INFO_REG+ 5: sprintf(buffer[which], "AX:%04X", r->regs.w[0]); break;
-		case CPU_INFO_REG+ 6: sprintf(buffer[which], "CX:%04X", r->regs.w[1]); break;
-		case CPU_INFO_REG+ 7: sprintf(buffer[which], "DX:%04X", r->regs.w[2]); break;
-		case CPU_INFO_REG+ 8: sprintf(buffer[which], "BX:%04X", r->regs.w[3]); break;
-		case CPU_INFO_REG+ 9: sprintf(buffer[which], "SP:%04X", r->regs.w[4]); break;
-		case CPU_INFO_REG+10: sprintf(buffer[which], "BP:%04X", r->regs.w[5]); break;
-		case CPU_INFO_REG+11: sprintf(buffer[which], "SI:%04X", r->regs.w[6]); break;
-		case CPU_INFO_REG+12: sprintf(buffer[which], "DI:%04X", r->regs.w[7]); break;
-		case CPU_INFO_REG+13: sprintf(buffer[which], "vector:%02X", r->int_vector); break;
-		case CPU_INFO_REG+14: sprintf(buffer[which], "pending:%X", r->pending_irq); break;
-		case CPU_INFO_REG+15: sprintf(buffer[which], "NMI:%d", r->nmi_state); break;
-		case CPU_INFO_REG+16: sprintf(buffer[which], "IRQ:%d", r->irq_state); break;
+		case CPU_INFO_REG+I86_IP: sprintf(buffer[which], "IP:%04X", r->ip); break;
+		case CPU_INFO_REG+I86_AX: sprintf(buffer[which], "AX:%04X", r->regs.w[0]); break;
+		case CPU_INFO_REG+I86_CX: sprintf(buffer[which], "CX:%04X", r->regs.w[1]); break;
+		case CPU_INFO_REG+I86_DX: sprintf(buffer[which], "DX:%04X", r->regs.w[2]); break;
+		case CPU_INFO_REG+I86_BX: sprintf(buffer[which], "BX:%04X", r->regs.w[3]); break;
+		case CPU_INFO_REG+I86_SP: sprintf(buffer[which], "SP:%04X", r->regs.w[4]); break;
+		case CPU_INFO_REG+I86_BP: sprintf(buffer[which], "BP:%04X", r->regs.w[5]); break;
+		case CPU_INFO_REG+I86_SI: sprintf(buffer[which], "SI:%04X", r->regs.w[6]); break;
+		case CPU_INFO_REG+I86_DI: sprintf(buffer[which], "DI:%04X", r->regs.w[7]); break;
+		case CPU_INFO_REG+I86_ES: sprintf(buffer[which], "ES:%04X", r->sregs[ES]); break;
+        case CPU_INFO_REG+I86_CS: sprintf(buffer[which], "CS:%04X", r->sregs[CS]); break;
+        case CPU_INFO_REG+I86_SS: sprintf(buffer[which], "SS:%04X", r->sregs[SS]); break;
+        case CPU_INFO_REG+I86_DS: sprintf(buffer[which], "DS:%04X", r->sregs[DS]); break;
+        case CPU_INFO_REG+I86_VECTOR: sprintf(buffer[which], "vector:%02X", r->int_vector); break;
+		case CPU_INFO_REG+I86_PENDING: sprintf(buffer[which], "pending:%X", r->pending_irq); break;
+		case CPU_INFO_REG+I86_NMI_STATE: sprintf(buffer[which], "NMI:%X", r->nmi_state); break;
+		case CPU_INFO_REG+I86_IRQ_STATE: sprintf(buffer[which], "IRQ:%X", r->irq_state); break;
 	}
 	return buffer[which];
 }

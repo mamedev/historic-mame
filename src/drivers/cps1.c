@@ -103,7 +103,7 @@ int cps1_eeprom_port_r(int offset)
 {
 	int bit;
 
-//if (errorlog) fprintf(errorlog, "PC=%08x EEPROM Read\n", cpu_getpc());
+//if (errorlog) fprintf(errorlog, "PC=%08x EEPROM Read\n", cpu_get_pc());
 	bit = (eeprom_data_bits & 0x80) >> 7;
 	eeprom_data_bits = (eeprom_data_bits << 1) | 1;
 	return bit;
@@ -124,12 +124,12 @@ void cps1_eeprom_port_w(int offset, int data)
 
 		if (!(data & 0x80))
 		{
-//if (errorlog) fprintf(errorlog, "PC=%08x EEPROM reset %02x\n", cpu_getpc(), data);
+//if (errorlog) fprintf(errorlog, "PC=%08x EEPROM reset %02x\n", cpu_get_pc(), data);
 			eeprom_serial_count = 0;
 		}
 		else
 		{
-//if (errorlog) fprintf(errorlog, "PC=%08x EEPROM clock (Write %02x)\n", cpu_getpc(), data);
+//if (errorlog) fprintf(errorlog, "PC=%08x EEPROM clock (Write %02x)\n", cpu_get_pc(), data);
 			if (eeprom_serial_count < 27)
 			{
 				eeprom_serial_buffer[eeprom_serial_count++] = data & 1;
@@ -3180,9 +3180,9 @@ static struct GfxDecodeInfo cps1_gfxdecodeinfo[] =
 
 
 
-static void cps1_irq_handler_mus(void)
+static void cps1_irq_handler_mus(int irq)
 {
-	cpu_cause_interrupt(1,0xff);
+	cpu_set_irq_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
 }
 
 static struct YM2151interface ym2151_interface =

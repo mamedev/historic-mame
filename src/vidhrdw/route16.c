@@ -96,7 +96,7 @@ void stratvox_samples_w (int offset,int data)
 
     default:
         // Shouldn't happen
-        if (errorlog) fprintf(errorlog, "SN76477 Write %X02 to %X04\n", data, cpu_getpc());
+        if (errorlog) fprintf(errorlog, "SN76477 Write %X02 to %X04\n", data, cpu_get_pc());
     }
 }
 

@@ -9,8 +9,9 @@
 #include <stdio.h>
 #include <strings.h>
 #include "driver.h"
-#include "cpu/s2650/s2650.h"
-#include "cpu/s2650/s2650cpu.h"
+#include "state.h"
+#include "s2650.h"
+#include "s2650cpu.h"
 
 /* define this to have some interrupt information logged */
 #define VERBOSE 0
@@ -26,6 +27,22 @@
 #define INLINE_EA	1
 
 int s2650_ICount = 0;
+
+typedef struct {
+    UINT16  page;   /* 8K page select register (A14..A13) */
+    UINT16  iar;    /* instruction address register (A12..A0) */
+    UINT16  ea;     /* effective address (A14..A0) */
+    UINT8   psl;    /* processor status lower */
+    UINT8   psu;    /* processor status upper */
+    UINT8   r;      /* absolute addressing dst/src register */
+    UINT8   reg[7]; /* 7 general purpose registers */
+    UINT8   halt;   /* 1 if cpu is halted */
+    UINT8   ir;     /* instruction register */
+    UINT16  ras[8]; /* 8 return address stack entries */
+	UINT8	irq_state;
+    int     (*irq_callback)(int irqline);
+}   s2650_Regs;
+
 static s2650_Regs S;
 
 /* condition code changes for a byte */
@@ -691,54 +708,83 @@ void s2650_exit(void)
 	/* nothing to do */
 }
 
-void s2650_setregs(s2650_Regs *rgs)
+unsigned s2650_get_context(void *dst)
 {
-    S = *rgs;
+	if( dst )
+		*(s2650_Regs*)dst = S;
+	return sizeof(s2650_Regs);
 }
 
-void s2650_getregs(s2650_Regs *rgs)
+void s2650_set_context(void *src)
 {
-    *rgs = S;
+	if( src )
+	{
+		S = *(s2650_Regs*)src;
+		S.page = S.page & PAGE;
+		S.iar = S.iar & PMSK;
+        change_pc(S.page + S.iar);
+	}
 }
 
-unsigned s2650_getpc(void)
+unsigned s2650_get_pc(void)
 {
     return S.page + S.iar;
 }
 
-unsigned s2650_getreg(int regnum)
+void s2650_set_pc(unsigned val)
+{
+	S.page = val & PAGE;
+	S.iar = val & PMSK;
+	change_pc(S.page + S.iar);
+}
+
+unsigned s2650_get_sp(void)
+{
+	return S.psu & SP;
+}
+
+void s2650_set_sp(unsigned val)
+{
+	S.psu = (S.psu & ~SP) | (val & SP);
+}
+
+unsigned s2650_get_reg(int regnum)
 {
 	switch( regnum )
 	{
-		case 0: return S.page + S.iar;
-		case 1: return S.psl;
-		case 2: return S.psu;
-		case 3: return S.reg[0];
-		case 4: return S.reg[1];
-		case 5: return S.reg[2];
-		case 6: return S.reg[3];
-		case 7: return S.reg[4];
-		case 8: return S.reg[5];
-		case 9: return S.reg[6];
+		case S2650_IAR: return S.page + S.iar;
+		case S2650_PSL: return S.psl;
+		case S2650_PSU: return S.psu;
+		case S2650_R0: return S.reg[0];
+		case S2650_R1: return S.reg[1];
+		case S2650_R2: return S.reg[2];
+		case S2650_R3: return S.reg[3];
+		case S2650_R1A: return S.reg[4];
+		case S2650_R2A: return S.reg[5];
+		case S2650_R3A: return S.reg[6];
+		case S2650_HALT: return S.halt;
+		case S2650_IRQ_STATE: return S.irq_state;
 	}
 	return 0;
 }
 
-void s2650_setreg(int regnum, unsigned val)
+void s2650_set_reg(int regnum, unsigned val)
 {
 	switch( regnum )
 	{
-		case 0: S.page = val & PAGE; S.iar = val & PMSK; break;
-		case 1: S.psl = val; break;
-		case 2: S.psu = val; break;
-        case 3: S.reg[0] = val; break;
-		case 4: S.reg[1] = val; break;
-		case 5: S.reg[2] = val; break;
-		case 6: S.reg[3] = val; break;
-		case 7: S.reg[4] = val; break;
-		case 8: S.reg[5] = val; break;
-		case 9: S.reg[6] = val; break;
-	}
+		case S2650_IAR: S.page = val & PAGE; S.iar = val & PMSK; break;
+		case S2650_PSL: S.psl = val; break;
+		case S2650_PSU: S.psu = val; break;
+		case S2650_R0: S.reg[0] = val; break;
+		case S2650_R1: S.reg[1] = val; break;
+		case S2650_R2: S.reg[2] = val; break;
+		case S2650_R3: S.reg[3] = val; break;
+		case S2650_R1A: S.reg[4] = val; break;
+		case S2650_R2A: S.reg[5] = val; break;
+		case S2650_R3A: S.reg[6] = val; break;
+		case S2650_HALT: S.halt = val; break;
+		case S2650_IRQ_STATE: S.irq_state = val; break;
+    }
 }
 
 void s2650_set_nmi_line(int state)
@@ -1339,26 +1385,28 @@ int s2650_execute(int cycles)
 
 void s2650_state_save(void *file)
 {
-	osd_fwrite_swap(file,&S.page,2);
-	osd_fwrite_swap(file,&S.iar,2);
-	osd_fwrite(file,&S.psl,1);
-	osd_fwrite(file,&S.psu,1);
-	osd_fwrite(file,S.reg,sizeof(S.reg));
-	osd_fwrite(file,&S.halt,1);
-	osd_fwrite_swap(file,S.ras,sizeof(S.ras));
-	osd_fwrite(file,&S.irq_state,1);
+	int cpu = cpu_getactivecpu();
+	state_save_UINT16(file,"s2650",cpu,"PAGE",&S.page,1);
+	state_save_UINT16(file,"s2650",cpu,"IAR",&S.iar,1);
+	state_save_UINT8(file,"s2650",cpu,"PSL",&S.psl,1);
+	state_save_UINT8(file,"s2650",cpu,"PSU",&S.psu,1);
+	state_save_UINT8(file,"s2650",cpu,"REG",S.reg,7);
+	state_save_UINT8(file,"s2650",cpu,"HALT",&S.halt,1);
+	state_save_UINT16(file,"s2650",cpu,"RAS",S.ras,8);
+	state_save_UINT8(file,"s2650",cpu,"IRQ_STATE",&S.irq_state,1);
 }
 
 void s2650_state_load(void *file)
 {
-	osd_fread_swap(file,&S.page,2);
-	osd_fread_swap(file,&S.iar,2);
-	osd_fread(file,&S.psl,1);
-	osd_fread(file,&S.psu,1);
-	osd_fread(file,S.reg,sizeof(S.reg));
-	osd_fread(file,&S.halt,1);
-	osd_fread_swap(file,S.ras,sizeof(S.ras));
-	osd_fread(file,&S.irq_state,1);
+	int cpu = cpu_getactivecpu();
+	state_load_UINT16(file,"s2650",cpu,"PAGE",&S.page,1);
+	state_load_UINT16(file,"s2650",cpu,"IAR",&S.iar,1);
+	state_load_UINT8(file,"s2650",cpu,"PSL",&S.psl,1);
+	state_load_UINT8(file,"s2650",cpu,"PSU",&S.psu,1);
+	state_load_UINT8(file,"s2650",cpu,"REG",S.reg,7);
+	state_load_UINT8(file,"s2650",cpu,"HALT",&S.halt,1);
+	state_load_UINT16(file,"s2650",cpu,"RAS",S.ras,8);
+	state_load_UINT8(file,"s2650",cpu,"IRQ_STATE",&S.irq_state,1);
 }
 
 /****************************************************************************
@@ -1368,12 +1416,13 @@ const char *s2650_info(void *context, int regnum)
 {
 	static char buffer[16][47+1];
 	static int which = 0;
-	s2650_Regs *r = (s2650_Regs *)context;
+	s2650_Regs *r = context;
 
 	which = ++which % 16;
 	buffer[which][0] = '\0';
-	if( !context && regnum >= CPU_INFO_PC )
-		return buffer[which];
+
+    if( !context )
+		r = &S;
 
     switch( regnum )
 	{
@@ -1383,7 +1432,7 @@ const char *s2650_info(void *context, int regnum)
 		case CPU_INFO_FILE: return __FILE__;
 		case CPU_INFO_CREDITS: return "Written by Juergen Buchmueller for use with MAME";
 		case CPU_INFO_PC: sprintf(buffer[which], "%04X:", (r->page + r->iar) & 0x7fff); break;
-		case CPU_INFO_SP: sprintf(buffer[which], "%X", r->psu & 7); break;
+		case CPU_INFO_SP: sprintf(buffer[which], "%X", r->psu & SP); break;
 #ifdef MAME_DEBUG
 		case CPU_INFO_DASM:
 			r->iar += Dasm2650(buffer[which], r->page + r->iar);
@@ -1405,26 +1454,36 @@ const char *s2650_info(void *context, int regnum)
             break;
 #endif
 		case CPU_INFO_FLAGS:
-			sprintf(buffer[which], "%c%c%c%c%c%c%c%c",
-				r->psl & 0x80 ? 'M':'.',
+			sprintf(buffer[which], "%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",
+				r->psu & 0x80 ? 'S':'.',
+				r->psu & 0x40 ? 'O':'.',
+				r->psu & 0x20 ? 'I':'.',
+				r->psu & 0x10 ? '?':'.',
+				r->psu & 0x08 ? '?':'.',
+				r->psu & 0x04 ? 's':'.',
+				r->psu & 0x02 ? 's':'.',
+				r->psu & 0x01 ? 's':'.',
+                r->psl & 0x80 ? 'M':'.',
 				r->psl & 0x40 ? 'P':'.',
 				r->psl & 0x20 ? 'H':'.',
 				r->psl & 0x10 ? 'R':'.',
 				r->psl & 0x08 ? 'W':'.',
 				r->psl & 0x04 ? 'V':'.',
-				r->psl & 0x02 ? '?':'.',
+				r->psl & 0x02 ? '2':'.',
 				r->psl & 0x01 ? 'C':'.');
 			break;
-		case CPU_INFO_REG+ 0: sprintf(buffer[which], "IAR:%04X", r->iar); break;
-		case CPU_INFO_REG+ 1: sprintf(buffer[which], "PSL:%02X", r->psl); break;
-		case CPU_INFO_REG+ 2: sprintf(buffer[which], "PSU:%02X", r->psu); break;
-		case CPU_INFO_REG+ 3: sprintf(buffer[which], "R0:%04X", r->reg[0]); break;
-		case CPU_INFO_REG+ 4: sprintf(buffer[which], "R1:%04X", r->reg[1]); break;
-		case CPU_INFO_REG+ 5: sprintf(buffer[which], "R2:%04X", r->reg[2]); break;
-		case CPU_INFO_REG+ 6: sprintf(buffer[which], "R3:%04X", r->reg[3]); break;
-		case CPU_INFO_REG+ 7: sprintf(buffer[which], "R1'%04X", r->reg[4]); break;
-		case CPU_INFO_REG+ 8: sprintf(buffer[which], "R2'%04X", r->reg[5]); break;
-		case CPU_INFO_REG+ 9: sprintf(buffer[which], "R3'%02X", r->reg[6]); break;
+		case CPU_INFO_REG+S2650_IAR: sprintf(buffer[which], "IAR:%04X", r->iar); break;
+		case CPU_INFO_REG+S2650_PSL: sprintf(buffer[which], "PSL:%02X", r->psl); break;
+		case CPU_INFO_REG+S2650_PSU: sprintf(buffer[which], "PSU:%02X", r->psu); break;
+		case CPU_INFO_REG+S2650_R0: sprintf(buffer[which], "R0:%04X", r->reg[0]); break;
+		case CPU_INFO_REG+S2650_R1: sprintf(buffer[which], "R1:%04X", r->reg[1]); break;
+		case CPU_INFO_REG+S2650_R2: sprintf(buffer[which], "R2:%04X", r->reg[2]); break;
+		case CPU_INFO_REG+S2650_R3: sprintf(buffer[which], "R3:%04X", r->reg[3]); break;
+		case CPU_INFO_REG+S2650_R1A: sprintf(buffer[which], "R1'%04X", r->reg[4]); break;
+		case CPU_INFO_REG+S2650_R2A: sprintf(buffer[which], "R2'%04X", r->reg[5]); break;
+		case CPU_INFO_REG+S2650_R3A: sprintf(buffer[which], "R3'%02X", r->reg[6]); break;
+		case CPU_INFO_REG+S2650_HALT: sprintf(buffer[which], "HALT:%X", r->halt); break;
+		case CPU_INFO_REG+S2650_IRQ_STATE: sprintf(buffer[which], "IRQ:%X", r->irq_state); break;
 	}
 	return buffer[which];
 }

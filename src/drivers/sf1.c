@@ -163,7 +163,7 @@ static void control15_w(int offset, int data)
   default:
     {
       if(errorlog) {
-	fprintf(errorlog, "Write control15 at %06x (%04x)\n", cpu_getpc(), data&0xffff);
+	fprintf(errorlog, "Write control15 at %06x (%04x)\n", cpu_get_pc(), data&0xffff);
 	fprintf(errorlog, "*** Unknown protection %d\n", cpu_readmem24(0xffc684));
       }
       break;
@@ -861,9 +861,9 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-static void irq_handler(void)
+static void irq_handler(int irq)
 {
-	cpu_cause_interrupt(1,0xff);
+	cpu_set_irq_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
 }
 
 static struct YM2151interface ym2151_interface =

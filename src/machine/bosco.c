@@ -89,7 +89,7 @@ void bosco_customio_data_w_1 (int offset,int data)
 {
 	customio_1[offset] = data;
 
-if (errorlog) fprintf(errorlog,"%04x: custom IO offset %02x data %02x\n",cpu_getpc(),offset,data);
+if (errorlog) fprintf(errorlog,"%04x: custom IO offset %02x data %02x\n",cpu_get_pc(),offset,data);
 }
 
 
@@ -227,8 +227,6 @@ void bosco_nmi_generate_1 (int param)
 
 void bosco_customio_w_1 (int offset,int data)
 {
-	Z80_Regs regs;
-
 	customio_command_1 = data;
 
 	switch (data)
@@ -239,8 +237,7 @@ void bosco_customio_w_1 (int offset,int data)
 			return;
 
 		case 0x48:
-			z80_getregs(&regs);
-			switch(regs.HL2.d)
+			switch( cpu_get_reg(Z80_HL2) )
 			{
 				case 0x16F0:	 //		Mid Bang
 					sample_start (0, 0, 0);
@@ -255,8 +252,7 @@ void bosco_customio_w_1 (int offset,int data)
 			break;
 
 		case 0x64:
-			z80_getregs(&regs);
-			switch(cpu_readmem16(regs.HL2.d))	/* ASG 971005 */
+			switch(cpu_readmem16(cpu_get_reg(Z80_HL2)))	 /* ASG 971005 */
 			{
 				case 0x01:	/*	??	*/
 					break;
@@ -321,7 +317,7 @@ void bosco_customio_w_1 (int offset,int data)
 				default:
 					if (errorlog)
 						fprintf(errorlog,"unknown score: %02x\n",
-								cpu_readmem16(regs.HL2.d)); /* ASG 971005 */
+								cpu_readmem16(cpu_get_reg(Z80_HL2))); /* ASG 971005 */
 					break;
 			}
 			break;
@@ -368,7 +364,7 @@ void bosco_customio_data_w_2 (int offset,int data)
 {
 	customio_2[offset] = data;
 
-if (errorlog) fprintf(errorlog,"%04x: custom IO offset %02x data %02x\n",cpu_getpc(),offset,data);
+if (errorlog) fprintf(errorlog,"%04x: custom IO offset %02x data %02x\n",cpu_get_pc(),offset,data);
 }
 
 
@@ -400,8 +396,6 @@ void bosco_nmi_generate_2 (int param)
 
 void bosco_customio_w_2 (int offset,int data)
 {
-	Z80_Regs regs;
-
 	customio_command_2 = data;
 
 	switch (data)
@@ -412,8 +406,7 @@ void bosco_customio_w_2 (int offset,int data)
 			return;
 
 		case 0x82:
-			z80_getregs(&regs);
-			switch (regs.HL2.d)
+			switch (cpu_get_reg(Z80_HL2))
 			{
 				case 0x1BEE:	// Blast Off
 					bosco_sample_play(0x0020 * 2, 0x08D7 * 2);

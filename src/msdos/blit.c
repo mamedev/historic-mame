@@ -319,7 +319,7 @@ INLINE void copyline_4x_8bpp(unsigned char *src,short seg,unsigned long address,
 	line_offs = (scrbitmap->line[1] - scrbitmap->line[0]); \
 	xoffs = (BPP/8)*gfx_xoffset; \
 	width = gfx_display_columns/(4/(BPP/8)); \
-	src = scrbitmap->line[skiplines] + (BPP/8)*skipcolumns; \
+	src = scrbitmap->line[skiplines] + (BPP/8)*skipcolumns;	\
 
 #define DIRTY0_NXNS(MX,MY,BPP) \
 	for (y = 0;y < gfx_display_lines;y++) \
@@ -378,7 +378,7 @@ void blitscreen_dirty0_vesa_1x_2xs_8bpp(void)  { DIRTY0(8)  DIRTY0_NXNS(1,2,8)  
 void blitscreen_dirty0_vesa_2x_2x_8bpp(void)   { DIRTY0(8)  DIRTY0_NX2 (2,8)  }
 void blitscreen_dirty0_vesa_2x_2xs_8bpp(void)  { DIRTY0(8)  DIRTY0_NXNS(2,2,8)  }
 void blitscreen_dirty0_vesa_3x_2x_8bpp(void)   { DIRTY0(8)  DIRTY0_NX2 (3,8)  }
-void blitscreen_dirty0_vesa_3x_2xs_8bpp(void)  { DIRTY0(8)  DIRTY0_NXNS(3,2,8)  }
+void blitscreen_dirty0_vesa_3x_2xs_8bpp(void)  { DIRTY0(8)  DIRTY0_NXNS(3,2,8)	}
 void blitscreen_dirty0_vesa_4x_3x_8bpp(void)   { DIRTY0(8)  DIRTY0_NX3 (4,8)  }
 void blitscreen_dirty0_vesa_4x_3xs_8bpp(void)  { DIRTY0(8)  DIRTY0_NXNS(4,3,8)  }
 

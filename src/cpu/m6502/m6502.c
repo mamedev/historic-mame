@@ -21,6 +21,7 @@
 
 #include <stdio.h>
 #include "driver.h"
+#include "state.h"
 #include "osd_dbg.h"
 #include "m6502.h"
 #include "m6502ops.h"
@@ -37,8 +38,41 @@ extern FILE * errorlog;
 
 extern int previouspc;
 
+#define M6502_PLAIN 0		/* set M6502_Type to this for a plain 6502 emulation */
+
+#if SUPP65C02
+#define M6502_65C02 1       /* set M6502_Type to this for a 65C02 emulation */
+#endif
+
+#if SUPP6510
+#define M6502_6510  2       /* set M6502_Type to this for a 6510 emulation */
+#endif
+
 int m6502_type = 0;
 int m6502_ICount = 0;
+
+/****************************************************************************
+ * The 6502 registers.
+ ****************************************************************************/
+typedef struct
+{
+    UINT8   cpu_type;       /* currently selected cpu sub type */
+    void    (**insn)(void); /* pointer to the function pointer table */
+    PAIR    pc;             /* program counter */
+    PAIR    sp;             /* stack pointer (always 100 - 1FF) */
+    PAIR    zp;             /* zero page address */
+    PAIR    ea;             /* effective address */
+    UINT8   a;              /* Accumulator */
+    UINT8   x;              /* X index register */
+    UINT8   y;              /* Y index register */
+    UINT8   p;              /* Processor status */
+    UINT8   pending_interrupt; /* nonzero if a NMI or IRQ is pending */
+    UINT8   after_cli;      /* pending IRQ and last insn cleared I */
+	UINT8	nmi_state;
+	UINT8	irq_state;
+    int     (*irq_callback)(int irqline);   /* IRQ callback */
+}   m6502_Regs;
+
 static m6502_Regs m6502;
 
 /***************************************************************
@@ -94,69 +128,79 @@ void m6502_reset(void *param)
     m6502.irq_state = 0;
 }
 
-void m65c02_reset(void *param)
-{
-	m6502_type = M6502_65C02;
-	m6502_reset(param);
-}
-
-void m6510_reset(void *param)
-{
-	m6502_type = M6502_6510;
-    m6502_reset(param);
-}
-
 void m6502_exit(void)
 {
 	/* nothing to do yet */
 }
 
-void m6502_getregs (m6502_Regs *regs)
+unsigned m6502_get_context (void *dst)
 {
-	*regs = m6502;
+	if( dst )
+		*(m6502_Regs*)dst = m6502;
+	return sizeof(m6502_Regs);
 }
 
-void m6502_setregs (m6502_Regs *regs)
+void m6502_set_context (void *src)
 {
-	m6502 = *regs;
+	if( src )
+		m6502 = *(m6502_Regs*)src;
+	change_pc(PCD);
 }
 
-unsigned m6502_getpc (void)
+unsigned m6502_get_pc (void)
 {
 	return PCD;
 }
 
-unsigned m6502_getreg (int regnum)
+void m6502_set_pc (unsigned val)
+{
+	PCW = val;
+	change_pc(PCD);
+}
+
+unsigned m6502_get_sp (void)
+{
+	return S;
+}
+
+void m6502_set_sp (unsigned val)
+{
+	S = val;
+}
+
+unsigned m6502_get_reg (int regnum)
 {
 	switch( regnum )
 	{
-		case 0: return m6502.a;
-		case 1: return m6502.x;
-		case 2: return m6502.y;
-		case 3: return m6502.sp.b.l;
-		case 4: return m6502.pc.w.l;
-		case 5: return m6502.ea.w.l;
-		case 6: return m6502.zp.w.l;
-		case 7: return m6502.nmi_state;
-		case 8: return m6502.irq_state;
+		case M6502_A: return m6502.a;
+		case M6502_X: return m6502.x;
+		case M6502_Y: return m6502.y;
+		case M6502_S: return m6502.sp.b.l;
+		case M6502_PC: return m6502.pc.w.l;
+		case M6502_P: return m6502.p;
+		case M6502_EA: return m6502.ea.w.l;
+		case M6502_ZP: return m6502.zp.w.l;
+		case M6502_NMI_STATE: return m6502.nmi_state;
+		case M6502_IRQ_STATE: return m6502.irq_state;
 	}
 	return 0;
 }
 
-void m6502_setreg (int regnum, unsigned val)
+void m6502_set_reg (int regnum, unsigned val)
 {
 	switch( regnum )
 	{
-		case 0: m6502.a = val; break;
-		case 1: m6502.x = val; break;
-		case 2: m6502.y = val; break;
-		case 3: m6502.sp.b.l = val; break;
-		case 4: m6502.pc.w.l = val; break;
-		case 5: m6502.ea.w.l = val; break;
-		case 6: m6502.zp.w.l = val; break;
-		case 7: m6502.nmi_state = val; break;
-		case 8: m6502.irq_state = val; break;
-	}
+		case M6502_A: m6502.a = val; break;
+		case M6502_X: m6502.x = val; break;
+		case M6502_Y: m6502.y = val; break;
+		case M6502_S: m6502.sp.b.l = val; break;
+		case M6502_PC: m6502.pc.w.l = val; break;
+		case M6502_P: m6502.p = val; break;
+		case M6502_EA: m6502.ea.w.l = val; break;
+		case M6502_ZP: m6502.zp.w.l = val; break;
+		case M6502_NMI_STATE: m6502.nmi_state = val; break;
+		case M6502_IRQ_STATE: m6502.irq_state = val; break;
+    }
 }
 
 INLINE void take_nmi(void)
@@ -263,23 +307,25 @@ void m6502_set_irq_callback(int (*callback)(int))
 
 void m6502_state_save(void *file)
 {
-	osd_fwrite(file,&m6502.cpu_type,1);
+	int cpu = cpu_getactivecpu();
+	state_save_UINT8(file,"m6502",cpu,"TYPE",&m6502.cpu_type,1);
 	/* insn is set at restore since it's a pointer */
-	osd_fwrite_lsbfirst(file,&m6502.pc.w.l,2);
-	osd_fwrite_lsbfirst(file,&m6502.sp.w.l,2);
-	osd_fwrite(file,&m6502.a,1);
-	osd_fwrite(file,&m6502.x,1);
-	osd_fwrite(file,&m6502.y,1);
-	osd_fwrite(file,&m6502.p,1);
-	osd_fwrite(file,&m6502.pending_interrupt,1);
-	osd_fwrite(file,&m6502.after_cli,1);
-	osd_fwrite(file,&m6502.nmi_state,1);
-	osd_fwrite(file,&m6502.irq_state,1);
+	state_save_UINT16(file,"m6502",cpu,"PC",&m6502.pc.w.l,2);
+	state_save_UINT16(file,"m6502",cpu,"SP",&m6502.sp.w.l,2);
+	state_save_UINT8(file,"m6502",cpu,"A",&m6502.a,1);
+	state_save_UINT8(file,"m6502",cpu,"X",&m6502.x,1);
+	state_save_UINT8(file,"m6502",cpu,"Y",&m6502.y,1);
+	state_save_UINT8(file,"m6502",cpu,"P",&m6502.p,1);
+	state_save_UINT8(file,"m6502",cpu,"PENDING",&m6502.pending_interrupt,1);
+	state_save_UINT8(file,"m6502",cpu,"AFTER_CLI",&m6502.after_cli,1);
+	state_save_UINT8(file,"m6502",cpu,"NMI_STATE",&m6502.nmi_state,1);
+	state_save_UINT8(file,"m6502",cpu,"IRQ_STATE",&m6502.irq_state,1);
 }
 
 void m6502_state_load(void *file)
 {
-	osd_fread(file,&m6502.cpu_type,1);
+	int cpu = cpu_getactivecpu();
+    state_load_UINT8(file,"m6502",cpu,"TYPE",&m6502.cpu_type,1);
 	switch (m6502.cpu_type)
 	{
 #if SUPP65C02
@@ -296,16 +342,17 @@ void m6502_state_load(void *file)
 			m6502.insn = insn6502;
 			break;
 	}
-	osd_fread_lsbfirst(file,&m6502.pc.w.l,2);
-	osd_fread_lsbfirst(file,&m6502.sp.w.l,2);
-	osd_fread(file,&m6502.a,1);
-	osd_fread(file,&m6502.x,1);
-	osd_fread(file,&m6502.y,1);
-	osd_fread(file,&m6502.p,1);
-	osd_fread(file,&m6502.pending_interrupt,1);
-	osd_fread(file,&m6502.after_cli,1);
-	osd_fread(file,&m6502.nmi_state,1);
-	osd_fread(file,&m6502.irq_state,1);
+	/* insn is set at restore since it's a pointer */
+	state_load_UINT16(file,"m6502",cpu,"PC",&m6502.pc.w.l,2);
+	state_load_UINT16(file,"m6502",cpu,"SP",&m6502.sp.w.l,2);
+	state_load_UINT8(file,"m6502",cpu,"A",&m6502.a,1);
+	state_load_UINT8(file,"m6502",cpu,"X",&m6502.x,1);
+	state_load_UINT8(file,"m6502",cpu,"Y",&m6502.y,1);
+	state_load_UINT8(file,"m6502",cpu,"P",&m6502.p,1);
+	state_load_UINT8(file,"m6502",cpu,"PENDING",&m6502.pending_interrupt,1);
+	state_load_UINT8(file,"m6502",cpu,"AFTER_CLI",&m6502.after_cli,1);
+	state_load_UINT8(file,"m6502",cpu,"NMI_STATE",&m6502.nmi_state,1);
+	state_load_UINT8(file,"m6502",cpu,"IRQ_STATE",&m6502.irq_state,1);
 }
 
 /****************************************************************************
@@ -315,12 +362,12 @@ const char *m6502_info(void *context, int regnum)
 {
 	static char buffer[16][47+1];
 	static int which = 0;
-	m6502_Regs *r = (m6502_Regs *)context;
+	m6502_Regs *r = context;
 
 	which = ++which % 16;
 	buffer[which][0] = '\0';
-	if( !context && regnum >= CPU_INFO_PC )
-		return buffer[which];
+	if( !context )
+		r = &m6502;
 
     switch( regnum )
 	{
@@ -347,19 +394,44 @@ const char *m6502_info(void *context, int regnum)
 				r->p & 0x02 ? 'Z':'.',
 				r->p & 0x01 ? 'C':'.');
 			break;
-		case CPU_INFO_REG+ 0: sprintf(buffer[which], "A:%02X", r->a); break;
-		case CPU_INFO_REG+ 1: sprintf(buffer[which], "X:%02X", r->x); break;
-		case CPU_INFO_REG+ 2: sprintf(buffer[which], "Y:%02X", r->y); break;
-		case CPU_INFO_REG+ 3: sprintf(buffer[which], "S:%02X", r->sp.b.l); break;
-		case CPU_INFO_REG+ 4: sprintf(buffer[which], "PC:%04X", r->pc.w.l); break;
-		case CPU_INFO_REG+ 5: sprintf(buffer[which], "EA:%04X", r->ea.w.l); break;
-		case CPU_INFO_REG+ 6: sprintf(buffer[which], "ZP:%03X", r->zp.w.l); break;
-		case CPU_INFO_REG+ 7: sprintf(buffer[which], "NMI:%d", r->nmi_state); break;
-		case CPU_INFO_REG+ 8: sprintf(buffer[which], "IRQ:%d", r->irq_state); break;
+		case CPU_INFO_REG+M6502_A: sprintf(buffer[which], "A:%02X", r->a); break;
+		case CPU_INFO_REG+M6502_X: sprintf(buffer[which], "X:%02X", r->x); break;
+		case CPU_INFO_REG+M6502_Y: sprintf(buffer[which], "Y:%02X", r->y); break;
+		case CPU_INFO_REG+M6502_S: sprintf(buffer[which], "S:%02X", r->sp.b.l); break;
+		case CPU_INFO_REG+M6502_PC: sprintf(buffer[which], "PC:%04X", r->pc.w.l); break;
+		case CPU_INFO_REG+M6502_P: sprintf(buffer[which], "P:%02X", r->p); break;
+		case CPU_INFO_REG+M6502_EA: sprintf(buffer[which], "EA:%04X", r->ea.w.l); break;
+		case CPU_INFO_REG+M6502_ZP: sprintf(buffer[which], "ZP:%03X", r->zp.w.l); break;
+		case CPU_INFO_REG+M6502_NMI_STATE: sprintf(buffer[which], "NMI:%X", r->nmi_state); break;
+		case CPU_INFO_REG+M6502_IRQ_STATE: sprintf(buffer[which], "IRQ:%X", r->irq_state); break;
 	}
 	return buffer[which];
 }
 
+/****************************************************************************
+ * 65C02 section
+ ****************************************************************************/
+
+void m65c02_reset (void *param)
+{
+	m6502_type = M6502_65C02;
+	m6502_reset(param);
+}
+void m65c02_exit  (void) { m6502_exit(); }
+int  m65c02_execute(int cycles) { return m6502_execute(cycles); }
+unsigned m65c02_get_context (void *dst) { return m6502_get_context(dst); }
+void m65c02_set_context (void *src) { m6502_set_context(src); }
+unsigned m65c02_get_pc (void) { return m6502_get_pc(); }
+void m65c02_set_pc (unsigned val) { m6502_set_pc(val); }
+unsigned m65c02_get_sp (void) { return m6502_get_sp(); }
+void m65c02_set_sp (unsigned val) { m6502_set_sp(val); }
+unsigned m65c02_get_reg (int regnum) { return m6502_get_reg(regnum); }
+void m65c02_set_reg (int regnum, unsigned val) { m6502_set_reg(regnum,val); }
+void m65c02_set_nmi_line(int state) { m6502_set_nmi_line(state); }
+void m65c02_set_irq_line(int irqline, int state) { m6502_set_irq_line(irqline,state); }
+void m65c02_set_irq_callback(int (*callback)(int irqline)) { m6502_set_irq_callback(callback); }
+void m65c02_state_save(void *file) { m6502_state_save(file); }
+void m65c02_state_load(void *file) { m6502_state_load(file); }
 const char *m65c02_info(void *context, int regnum)
 {
 	switch( regnum )
@@ -370,6 +442,30 @@ const char *m65c02_info(void *context, int regnum)
 	return m6502_info(context,regnum);
 }
 
+/****************************************************************************
+ * 6510 section
+ ****************************************************************************/
+
+void m6510_reset (void *param)
+{
+	m6502_type = M6502_6510;
+	m6502_reset(param);
+}
+void m6510_exit  (void) { m6502_exit(); }
+int  m6510_execute(int cycles) { return m6502_execute(cycles); }
+unsigned m6510_get_context (void *dst) { return m6502_get_context(dst); }
+void m6510_set_context (void *src) { m6502_set_context(src); }
+unsigned m6510_get_pc (void) { return m6502_get_pc(); }
+void m6510_set_pc (unsigned val) { m6502_set_pc(val); }
+unsigned m6510_get_sp (void) { return m6502_get_sp(); }
+void m6510_set_sp (unsigned val) { m6502_set_sp(val); }
+unsigned m6510_get_reg (int regnum) { return m6502_get_reg(regnum); }
+void m6510_set_reg (int regnum, unsigned val) { m6502_set_reg(regnum,val); }
+void m6510_set_nmi_line(int state) { m6502_set_nmi_line(state); }
+void m6510_set_irq_line(int irqline, int state) { m6502_set_irq_line(irqline,state); }
+void m6510_set_irq_callback(int (*callback)(int irqline)) { m6502_set_irq_callback(callback); }
+void m6510_state_save(void *file) { m6502_state_save(file); }
+void m6510_state_load(void *file) { m6502_state_load(file); }
 const char *m6510_info(void *context, int regnum)
 {
 	switch( regnum )

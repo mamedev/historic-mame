@@ -95,7 +95,7 @@ void crtc6845_address_w(int address, int data)
 void crtc6845_register_w(int address, int data)
 {
 
-if (errorlog) fprintf(errorlog,"CRT #0 PC %04x: WRITE reg 0x%02x data 0x%02x\n",cpu_getpc(),crtc6845_address_latch,data);
+if (errorlog) fprintf(errorlog,"CRT #0 PC %04x: WRITE reg 0x%02x data 0x%02x\n",cpu_get_pc(),crtc6845_address_latch,data);
 
 	switch(crtc6845_address_latch)
 	{

@@ -106,25 +106,25 @@ int taito_port_2_r(int offset)
 ***************************************************************************/
 int taito_fake_data_r(int offset)
 {
-if (errorlog) fprintf(errorlog,"%04x: protection read\n",cpu_getpc());
+if (errorlog) fprintf(errorlog,"%04x: protection read\n",cpu_get_pc());
 	return 0;
 }
 
 void taito_fake_data_w(int offset,int data)
 {
-if (errorlog) fprintf(errorlog,"%04x: protection write %02x\n",cpu_getpc(),data);
+if (errorlog) fprintf(errorlog,"%04x: protection write %02x\n",cpu_get_pc(),data);
 }
 
 int taito_fake_status_r(int offset)
 {
-if (errorlog) fprintf(errorlog,"%04x: protection status read\n",cpu_getpc());
+if (errorlog) fprintf(errorlog,"%04x: protection status read\n",cpu_get_pc());
 	return 0xff;
 }
 
 
 int taito_mcu_data_r(int offset)
 {
-if (errorlog) fprintf(errorlog,"%04x: protection read %02x\n",cpu_getpc(),toz80);
+if (errorlog) fprintf(errorlog,"%04x: protection read %02x\n",cpu_get_pc(),toz80);
 
 	zaccept = 1;
 	return toz80;
@@ -132,7 +132,7 @@ if (errorlog) fprintf(errorlog,"%04x: protection read %02x\n",cpu_getpc(),toz80)
 
 void taito_mcu_data_w(int offset,int data)
 {
-if (errorlog) fprintf(errorlog,"%04x: protection write %02x\n",cpu_getpc(),data);
+if (errorlog) fprintf(errorlog,"%04x: protection write %02x\n",cpu_get_pc(),data);
 
 	zready = 1;
 	cpu_set_irq_line(2,0,ASSERT_LINE);
@@ -151,13 +151,13 @@ static unsigned char portA_in,portA_out;
 
 int taito_68705_portA_r(int offset)
 {
-//if (errorlog) fprintf(errorlog,"%04x: 68705 port A read %02x\n",cpu_getpc(),portA_in);
+//if (errorlog) fprintf(errorlog,"%04x: 68705 port A read %02x\n",cpu_get_pc(),portA_in);
 	return portA_in;
 }
 
 void taito_68705_portA_w(int offset,int data)
 {
-//if (errorlog) fprintf(errorlog,"%04x: 68705 port A write %02x\n",cpu_getpc(),data);
+//if (errorlog) fprintf(errorlog,"%04x: 68705 port A write %02x\n",cpu_get_pc(),data);
 	portA_out = data;
 }
 
@@ -192,28 +192,28 @@ static int address;
 
 void taito_68705_portB_w(int offset,int data)
 {
-//if (errorlog) fprintf(errorlog,"%04x: 68705 port B write %02x\n",cpu_getpc(),data);
+//if (errorlog) fprintf(errorlog,"%04x: 68705 port B write %02x\n",cpu_get_pc(),data);
 
 	if (~data & 0x01)
 	{
-if (errorlog) fprintf(errorlog,"%04x: 68705  68INTRQ **NOT SUPPORTED**!\n",cpu_getpc());
+if (errorlog) fprintf(errorlog,"%04x: 68705  68INTRQ **NOT SUPPORTED**!\n",cpu_get_pc());
 	}
 	if (~data & 0x02)
 	{
 		zready = 0;	/* 68705 is going to read data from the Z80 */
 		cpu_set_irq_line(2,0,CLEAR_LINE);
 		portA_in = fromz80;
-if (errorlog) fprintf(errorlog,"%04x: 68705 <- Z80 %02x\n",cpu_getpc(),portA_in);
+if (errorlog) fprintf(errorlog,"%04x: 68705 <- Z80 %02x\n",cpu_get_pc(),portA_in);
 	}
 	if (~data & 0x04)
 	{
-if (errorlog) fprintf(errorlog,"%04x: 68705 -> Z80 %02x\n",cpu_getpc(),portA_out);
+if (errorlog) fprintf(errorlog,"%04x: 68705 -> Z80 %02x\n",cpu_get_pc(),portA_out);
 		zaccept = 0;	/* 68705 is writing data for the Z80 */
 		toz80 = portA_out;
 	}
 	if (~data & 0x10)
 	{
-if (errorlog) fprintf(errorlog,"%04x: 68705 write %02x to address %04x\n",cpu_getpc(),portA_out,address);
+if (errorlog) fprintf(errorlog,"%04x: 68705 write %02x to address %04x\n",cpu_get_pc(),portA_out,address);
 		if (address >= 0xc400 && address <= 0xc7ff)
 			/* trap writes to video memory */
 			videoram_w(address - 0xc400,portA_out);
@@ -235,16 +235,16 @@ if (errorlog) fprintf(errorlog,"%04x: 68705 write %02x to address %04x\n",cpu_ge
 			portA_in = input_port_4_r(0);
 		else
 			portA_in = Machine->memory_region[0][address];
-if (errorlog) fprintf(errorlog,"%04x: 68705 read %02x from address %04x\n",cpu_getpc(),portA_in,address);
+if (errorlog) fprintf(errorlog,"%04x: 68705 read %02x from address %04x\n",cpu_get_pc(),portA_in,address);
 	}
 	if (~data & 0x40)
 	{
-if (errorlog) fprintf(errorlog,"%04x: 68705 address low %02x\n",cpu_getpc(),portA_out);
+if (errorlog) fprintf(errorlog,"%04x: 68705 address low %02x\n",cpu_get_pc(),portA_out);
 		address = (address & 0xff00) | portA_out;
 	}
 	if (~data & 0x80)
 	{
-if (errorlog) fprintf(errorlog,"%04x: 68705 address high %02x\n",cpu_getpc(),portA_out);
+if (errorlog) fprintf(errorlog,"%04x: 68705 address high %02x\n",cpu_get_pc(),portA_out);
 		address = (address & 0x00ff) | (portA_out << 8);
 	}
 }
@@ -264,6 +264,6 @@ int taito_68705_portC_r(int offset)
 	int res;
 
 	res = (zready << 0) | (zaccept << 1);
-if (errorlog) fprintf(errorlog,"%04x: 68705 port C read %02x\n",cpu_getpc(),res);
+if (errorlog) fprintf(errorlog,"%04x: 68705 port C read %02x\n",cpu_get_pc(),res);
 	return res;
 }

@@ -20,7 +20,7 @@ extern void vigilant_horiz_scroll_w(int offset, int data);
 extern void vigilant_rear_horiz_scroll_w(int offset, int data);
 extern void vigilant_rear_color_w(int offset, int data);
 
-
+static unsigned char irq_vector = 0xff; /* sound irq vector & irq line */
 
 void vigilant_bank_select_w (int offset,int data)
 {
@@ -78,9 +78,17 @@ void vigilant_count_up_w(int offset,int data)
 void vigilant_soundcmd_w(int offset,int data)
 {
 	soundlatch_w(offset,data);
-	cpu_cause_interrupt(1,0x00df);	/* RST 18h (could be RST 08h instead) */
+	irq_vector &= 0xdf; /* RST 18h (could be RST 08h instead) */
+	cpu_irq_line_vector_w(1,0,irq_vector);
+        if(irq_vector==0xdf) cpu_set_irq_line(1,0,ASSERT_LINE);
 }
 
+void vigilant_irqclear_w(int offset,int data)
+{
+	irq_vector |= ~0xdf; /* irq clear */
+	cpu_irq_line_vector_w(1,0,irq_vector);
+	if(irq_vector==0xff) cpu_set_irq_line(1,0,CLEAR_LINE);
+}
 
 
 static struct MemoryReadAddress readmem[] =
@@ -155,7 +163,7 @@ static struct IOWritePort sound_writeport[] =
 	{ 0x80, 0x80, vigilant_sample_offset_low_w }, /* STL */
 	{ 0x81, 0x81, vigilant_sample_offset_high_w }, /* STH */
 	{ 0x82, 0x82, vigilant_count_up_w }, /* COUNT UP */
-/*	{ 0x83, 0x83, interrupt acknowledge? */
+	{ 0x83, 0x83, vigilant_irqclear_w }, /* IRQ clear */
 	{ -1 }	/* end of table */
 };
 
@@ -307,9 +315,18 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 /* handler called by the 2151 emulator when the internal timers cause an IRQ */
-static void vigilant_irq_handler(void)
+static void vigilant_irq_handler(int irq)
 {
-	cpu_cause_interrupt(1,0x00ef);	/* RST 28h */
+	if( irq )
+	{
+		irq_vector &= 0xef; /* RST 28h */
+		cpu_irq_line_vector_w(1,0,irq_vector);
+                if(irq_vector==0xef)cpu_set_irq_line(1,0,ASSERT_LINE);
+	}else{
+		irq_vector |= ~0xef; /* irq clear */
+ 		cpu_irq_line_vector_w(1,0,irq_vector);
+		if(irq_vector==0xff) cpu_set_irq_line(1,0,CLEAR_LINE);
+	}
 }
 
 static struct YM2151interface ym2151_interface =

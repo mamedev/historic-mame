@@ -42,7 +42,7 @@ void gameplan_select_port(int offset, int data)
 	if (errorlog)
 	{
 		fprintf(errorlog, "VIA 2: PC %04x: %x -> reg%X\n",
-				cpu_getpc(), data, offset);
+				cpu_get_pc(), data, offset);
 	}
 #endif /* VERY_VERBOSE */
 

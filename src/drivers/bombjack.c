@@ -100,7 +100,7 @@ int bombjack_sh_intflag_r(int offset)
 {
 	/* to speed up the emulation, detect when the program is looping waiting */
 	/* for an interrupt, and force it in that case */
-	if (cpu_getpc() == 0x0099 && (*bombjack_sh_intflag & 1) == 0)
+	if (cpu_get_pc() == 0x0099 && (*bombjack_sh_intflag & 1) == 0)
 		cpu_spinuntil_int();
 
 	return *bombjack_sh_intflag;

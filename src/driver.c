@@ -46,7 +46,6 @@ extern struct GameDriver jrpacman_driver;
 /* "Galaxian hardware" games */
 extern struct GameDriver galaxian_driver;
 extern struct GameDriver galmidw_driver;
-extern struct GameDriver galnamco_driver;
 extern struct GameDriver superg_driver;
 extern struct GameDriver galaxb_driver;
 extern struct GameDriver galapx_driver;
@@ -363,12 +362,13 @@ extern struct GameDriver troangel_driver;
 extern struct GameDriver yard_driver;
 extern struct GameDriver vsyard_driver;
 extern struct GameDriver vsyard2_driver;
+extern struct GameDriver travrusa_driver;
+extern struct GameDriver motorace_driver;
 extern struct GameDriver kungfum_driver;
 extern struct GameDriver kungfud_driver;
 extern struct GameDriver kungfub_driver;
 extern struct GameDriver kungfub2_driver;
-extern struct GameDriver travrusa_driver;
-extern struct GameDriver motorace_driver;
+extern struct GameDriver battroad_driver;
 extern struct GameDriver ldrun_driver;
 extern struct GameDriver ldruna_driver;
 extern struct GameDriver ldrun2_driver;
@@ -437,6 +437,8 @@ extern struct GameDriver boblbobl_driver;
 extern struct GameDriver sboblbob_driver;
 extern struct GameDriver tokio_driver;
 extern struct GameDriver tokiob_driver;
+extern struct GameDriver mexico86_driver;
+extern struct GameDriver kicknrun_driver;
 extern struct GameDriver rastan_driver;
 extern struct GameDriver rastsaga_driver;
 extern struct GameDriver rainbow_driver;
@@ -454,6 +456,7 @@ extern struct GameDriver ktiger_driver;
 extern struct GameDriver arkanoi2_driver;
 extern struct GameDriver ark2us_driver;
 extern struct GameDriver tnzs_driver;
+extern struct GameDriver tnzsb_driver;
 extern struct GameDriver tnzs2_driver;
 extern struct GameDriver tigerh_driver;
 extern struct GameDriver tigerh2_driver;
@@ -629,6 +632,7 @@ extern struct GameDriver bbros_driver;
 extern struct GameDriver spang_driver;
 extern struct GameDriver sbbros_driver;
 extern struct GameDriver block_driver;
+extern struct GameDriver blockbl_driver;
 
 /* Gremlin 8080 games */
 extern struct GameDriver blockade_driver;
@@ -1444,7 +1448,6 @@ const struct GameDriver *drivers[] =
 	/* "Galaxian hardware" games */
 	&galaxian_driver,	/* (c) Namco */
 	&galmidw_driver,	/* (c) Midway */
-	&galnamco_driver,	/* hack */
 	&superg_driver,		/* hack */
 	&galaxb_driver,		/* bootleg */
 	&galapx_driver,		/* hack */
@@ -1783,12 +1786,13 @@ Six Flags (?)
 	&yard_driver,		/* (c) 1983 */
 	&vsyard_driver,		/* (c) 1983/1984 */
 	&vsyard2_driver,	/* (c) 1983/1984 */
+	&travrusa_driver,	/* (c) 1983 */
+	&motorace_driver,	/* (c) 1983 Williams license */
 	&kungfum_driver,	/* (c) 1984 */
 	&kungfud_driver,	/* (c) 1984 + Data East license */
 	&kungfub_driver,	/* bootleg */
 	&kungfub2_driver,	/* bootleg */
-	&travrusa_driver,	/* (c) 1983 */
-	&motorace_driver,	/* (c) 1983 Williams license */
+	&battroad_driver,	/* (c) 1984 */
 	&ldrun_driver,		/* (c) 1984 licensed from Broderbund */
 	&ldruna_driver,		/* (c) 1984 licensed from Broderbund */
 	&ldrun2_driver,		/* (c) 1984 licensed from Broderbund */
@@ -1857,6 +1861,8 @@ Six Flags (?)
 	&sboblbob_driver,	/* bootleg */
 	&tokio_driver,		/* (c) 1986 */
 	&tokiob_driver,		/* bootleg */
+//	&mexico86_driver,
+//	&kicknrun_driver,
 	&rastan_driver,		/* (c) 1987 Taito Japan */
 	&rastsaga_driver,	/* (c) 1987 Taito */
 	&rainbow_driver,	/* (c) 1987 */
@@ -1874,6 +1880,7 @@ Six Flags (?)
 	&arkanoi2_driver,	/* (c) 1987 */
 	&ark2us_driver,		/* (c) 1987 + Romstar license */
 	&tnzs_driver,		/* (c) 1988 */
+	&tnzsb_driver,		/* bootleg */
 	&tnzs2_driver,		/* (c) 1988 */
 	&tigerh_driver,		/* (c) 1985 */
 	&tigerh2_driver,	/* (c) 1985 */
@@ -2122,6 +2129,7 @@ World Class Bowling
 	&spang_driver,		/* (c) 1990 Mitchell (World) */
 	&sbbros_driver,		/* (c) 1990 Mitchell + Capcom (US) */
 	&block_driver,		/* (c) 1991 Capcom (World) */
+	&blockbl_driver,	/* bootleg */
 
 	/* Gremlin 8080 games */
 	/* the numbers listed are the range of ROM part numbers */
@@ -2592,7 +2600,7 @@ DokiDoki Penguin Land *not confirmed
 	&excthour_driver,	/* TA-0015 (c) 1985 + Taito license */
 	&maniach_driver,	/* TA-???? (c) 1986 + Taito America license */
 	&maniach2_driver,	/* TA-???? (c) 1986 + Taito America license */
-	&renegade_driver,
+	&renegade_driver,	/* TA-0018 (c) 1986 + Taito America license */
 	&kuniokub_driver,	/* TA-0018 bootleg */
 	&xsleena_driver,	/* TA-0019 (c) 1986 */
 	&solarwar_driver,	/* TA-0019 (c) 1986 + Memetron license */

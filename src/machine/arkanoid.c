@@ -27,7 +27,7 @@ int arkanoid_Z80_mcu_r (int value)
 {
 #if MCU_DEBUG
 if (!thelog) thelog = fopen ("ark.log", "w");
-fprintf (thelog, "Read: D00C = %02X (PC=%04X)\n", toz80, cpu_getpc());
+fprintf (thelog, "Read: D00C = %02X (PC=%04X)\n", toz80, cpu_get_pc());
 #endif
 
 	/* return the last value the 68705 wrote, and mark that we've read it */
@@ -39,7 +39,7 @@ void arkanoid_Z80_mcu_w (int offset, int value)
 {
 #if MCU_DEBUG
 if (!thelog) thelog = fopen ("ark.log", "w");
-fprintf (thelog, "Write: D018 = %02X (PC=%04X)\n", value, cpu_getpc());
+fprintf (thelog, "Write: D018 = %02X (PC=%04X)\n", value, cpu_get_pc());
 #endif
 
 	/* a write from the Z80 has occurred, mark it and remember the value */
@@ -54,7 +54,7 @@ int arkanoid_68705_mcu_r (int offset)
 {
 #if MCU_DEBUG
 if (!thelog) thelog = fopen ("ark.log", "w");
-fprintf (thelog, "*** MCU Read: %02X (PC=%04X, $15=%04X)\n", fromz80, cpu_getpc(), (RAM[0x14] << 8) + RAM[0x13]);
+fprintf (thelog, "*** MCU Read: %02X (PC=%04X, $15=%04X)\n", fromz80, cpu_get_pc(), (RAM[0x14] << 8) + RAM[0x13]);
 #endif
 
 	/* mark that the command has been seen */
@@ -69,7 +69,7 @@ void arkanoid_68705_mcu_w (int offset, int value)
 {
 #if MCU_DEBUG
 if (!thelog) thelog = fopen ("ark.log", "w");
-fprintf (thelog, "*** MCU Write: %02X (PC=%04X)\n", value, cpu_getpc());
+fprintf (thelog, "*** MCU Write: %02X (PC=%04X)\n", value, cpu_get_pc());
 #endif
 
 	/* a write from the 68705 to the Z80; remember its value */

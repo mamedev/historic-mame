@@ -273,9 +273,9 @@ static struct GfxDecodeInfo superman_gfxdecodeinfo[] =
 };
 
 /* handler called by the YM2610 emulator when the internal timers cause an IRQ */
-static void irqhandler(void)
+static void irqhandler(int irq)
 {
-	cpu_cause_interrupt( 1, 0xff );
+	cpu_set_irq_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
 }
 
 

@@ -255,10 +255,11 @@ static void gladiator_int_controll_w(int offer , int data)
 	/* bit 0   : ??                    */
 }
 /* YM2203 IRQ */
-static void gladiator_ym_irq(void)
+static void gladiator_ym_irq(int irq)
 {
 	/* NMI IRQ is not used by gladiator sound program */
-	cpu_cause_interrupt(1,Z80_NMI_INT);
+	cpu_set_nmi_line(1,irq ? ASSERT_LINE : CLEAR_LINE);
+	/* cpu_cause_interrupt(1,Z80_NMI_INT); */
 }
 
 /* gladiator I8741 emulation */
@@ -289,7 +290,7 @@ int I8741_status_r(int num)
 {
 	I8741 *st = &gladiator_8741[num];
 #if 0
-	if(errorlog) fprintf(errorlog,"8741-%d ST Read %02x PC=%04x\n",num,st->status,cpu_getpc());
+	if(errorlog) fprintf(errorlog,"8741-%d ST Read %02x PC=%04x\n",num,st->status,cpu_get_pc());
 #endif
 	return st->status;
 }
@@ -301,7 +302,7 @@ int I8741_data_r(int num)
 	int ret = st->rdata;
 	st->status &= 0xfe;
 #if 0
-	if(errorlog) fprintf(errorlog,"8741-%d DATA Read %02x PC=%04x\n",num,ret,cpu_getpc());
+	if(errorlog) fprintf(errorlog,"8741-%d DATA Read %02x PC=%04x\n",num,ret,cpu_get_pc());
 #endif
 
 	switch( st->mode )
@@ -319,7 +320,7 @@ void I8741_data_w(int num, int data)
 {
 	I8741 *st = &gladiator_8741[num];
 #if 0
-	if(errorlog) fprintf(errorlog,"8741-%d DATA Write %02x PC=%04x\n",num,data,cpu_getpc());
+	if(errorlog) fprintf(errorlog,"8741-%d DATA Write %02x PC=%04x\n",num,data,cpu_get_pc());
 #endif
 	switch( st->mode )
 	{
@@ -344,7 +345,7 @@ void I8741_command_w(int num, int data)
 	I8741 *sst;
 
 #if 0
-	if(errorlog) fprintf(errorlog,"8741-%d CMD Write %02x PC=%04x\n",num,data,cpu_getpc());
+	if(errorlog) fprintf(errorlog,"8741-%d CMD Write %02x PC=%04x\n",num,data,cpu_get_pc());
 #endif
 	switch( data )
 	{

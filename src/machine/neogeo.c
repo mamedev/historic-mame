@@ -191,8 +191,8 @@ static int bios_cycle_skip_r(int offset)
 /******************************************************************************/
 /* Routines to speed up the main processor 				      */
 /******************************************************************************/
-#define NEO_CYCLE_R(name,pc,hit,other) static int name##_cycle_r(int offset) {	if (cpu_getpc()==pc) {cpu_spinuntil_int(); return hit;} return other;}
-#define NEO_CYCLE_RX(name,pc,hit,other,xxx) static int name##_cycle_r(int offset) {	if (cpu_getpc()==pc) {if(other==xxx) cpu_spinuntil_int(); return hit;} return other;}
+#define NEO_CYCLE_R(name,pc,hit,other) static int name##_cycle_r(int offset) {	if (cpu_get_pc()==pc) {cpu_spinuntil_int(); return hit;} return other;}
+#define NEO_CYCLE_RX(name,pc,hit,other,xxx) static int name##_cycle_r(int offset) {	if (cpu_get_pc()==pc) {if(other==xxx) cpu_spinuntil_int(); return hit;} return other;}
 
 NEO_CYCLE_R(puzzledp,0x12f2,1,								READ_WORD(&neogeo_ram[0x0000]))
 NEO_CYCLE_R(samsho4, 0xaffc,0,								READ_WORD(&neogeo_ram[0x830c]))
@@ -252,7 +252,7 @@ NEO_CYCLE_R(shocktro,0xdd28,0,								READ_WORD(&neogeo_ram[0x8344]))
 NEO_CYCLE_R(tws96,   0x17f4,0xffff,							READ_WORD(&neogeo_ram[0x010e]))
 static int zedblade_cycle_r(int offset)
 {
-	int pc=cpu_getpc();
+	int pc=cpu_get_pc();
 	if (pc==0xa2fa || pc==0xa2a0 || pc==0xa2ce || pc==0xa396 || pc==0xa3fa) {cpu_spinuntil_int(); return 0;}
 	return READ_WORD(&neogeo_ram[0x9004]);
 }
@@ -261,7 +261,7 @@ NEO_CYCLE_R(galaxyfg,0x09ea,READ_WORD(&neogeo_ram[0x1858])+1,READ_WORD(&neogeo_r
 NEO_CYCLE_R(wakuwak7,0x1a3c,READ_WORD(&neogeo_ram[0x0bd4])+1,READ_WORD(&neogeo_ram[0x0bd4]))
 static int mahretsu_cycle_r(int offset)
 {
-	int pc=cpu_getpc();
+	int pc=cpu_get_pc();
 	if (pc==0x1580 || pc==0xf3ba ) {cpu_spinuntil_int(); return 0;}
 	return READ_WORD(&neogeo_ram[0x13b2]);
 }
@@ -275,7 +275,7 @@ NEO_CYCLE_R(ssideki, 0x20b0,0xffff,							READ_WORD(&neogeo_ram[0x8c84]))
 NEO_CYCLE_R(kotm2,   0x045a,0,								READ_WORD(&neogeo_ram[0x1000]))
 static int samsho_cycle_r(int offset)
 {
-	int pc=cpu_getpc();
+	int pc=cpu_get_pc();
 	if (pc==0x3580 || pc==0x0f84 ) {cpu_spinuntil_int(); return 0xffff;}
 	return READ_WORD(&neogeo_ram[0x0a76]);
 }
@@ -317,7 +317,7 @@ static int cycle_v3_sr(int offset)
 {
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
 
-	if (cpu_getpc()==0x0137) {
+	if (cpu_get_pc()==0x0137) {
 		cpu_spinuntil_int();
 		return RAM[0xfeb1];
 	}
@@ -331,7 +331,7 @@ static int ssideki_cycle_sr(int offset)
 {
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
 
-	if (cpu_getpc()==0x015A) {
+	if (cpu_get_pc()==0x015A) {
 		cpu_spinuntil_int();
 		return RAM[0xfef3];
 	}
@@ -342,7 +342,7 @@ static int aof_cycle_sr(int offset)
 {
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
 
-	if (cpu_getpc()==0x0143) {
+	if (cpu_get_pc()==0x0143) {
 		cpu_spinuntil_int();
 		return RAM[0xfef3];
 	}
@@ -360,7 +360,7 @@ static int cycle_v2_sr(int offset)
 {
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
 
-	if (cpu_getpc()==0x0143) {
+	if (cpu_get_pc()==0x0143) {
 		cpu_spinuntil_int();
 		return RAM[0xfeef];
 	}
@@ -371,7 +371,7 @@ static int vwpoint_cycle_sr(int offset)
 {
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
 
-	if (cpu_getpc()==0x0143) {
+	if (cpu_get_pc()==0x0143) {
 		cpu_spinuntil_int();
 		return RAM[0xfe46];
 	}
@@ -389,7 +389,7 @@ static int cycle_v15_sr(int offset)
 {
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
 
-	if (cpu_getpc()==0x013D) {
+	if (cpu_get_pc()==0x013D) {
 		cpu_spinuntil_int();
 		return RAM[0xfe46];
 	}
@@ -406,7 +406,7 @@ static int maglord_cycle_sr(int offset)
 {
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
 
-	if (cpu_getpc()==0xd487) {
+	if (cpu_get_pc()==0xd487) {
 		cpu_spinuntil_int();
 		return RAM[0xfb91];
 	}
@@ -436,7 +436,7 @@ static int fatfury2_protection_r(int offset)
 			return ((res & 0xf0) >> 4) | ((res & 0x0f) << 4);
 
 		default:
-if (errorlog) fprintf(errorlog,"unknown protection read at pc %06x, offset %08x\n",cpu_getpc(),offset);
+if (errorlog) fprintf(errorlog,"unknown protection read at pc %06x, offset %08x\n",cpu_get_pc(),offset);
 			return 0;
 	}
 }
@@ -468,7 +468,7 @@ static void fatfury2_protection_w(int offset,int data)
 			break;
 
 		default:
-if (errorlog) fprintf(errorlog,"unknown protection write at pc %06x, offset %08x, data %02x\n",cpu_getpc(),offset,data);
+if (errorlog) fprintf(errorlog,"unknown protection write at pc %06x, offset %08x, data %02x\n",cpu_get_pc(),offset,data);
 			break;
 	}
 }
@@ -691,7 +691,7 @@ void neogeo_sram_w(int offset,int data)
 {
 	if (sram_locked)
 	{
-if (errorlog) fprintf(errorlog,"PC %06x: warning: write %02x to SRAM %04x while it was protected\n",cpu_getpc(),data,offset);
+if (errorlog) fprintf(errorlog,"PC %06x: warning: write %02x to SRAM %04x while it was protected\n",cpu_get_pc(),data,offset);
 	}
 	else
 	{

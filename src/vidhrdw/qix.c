@@ -244,7 +244,7 @@ void qix_palettebank_w(int offset,int data)
 		if (led_log)
 			fprintf (led_log, "LEDS: %d %d %d %d %d %d\n", (data & 0x80)>>7, (data & 0x40)>>6,
 				(data & 0x20)>>5, (data & 0x10)>>4, (data & 0x08)>>3, (data & 0x04)>>2 );
-//			fprintf (led_log, "PC: %04x LEDS: %d %d %d %d %d %d\n", cpu_getpc(),
+//			fprintf (led_log, "PC: %04x LEDS: %d %d %d %d %d %d\n", cpu_get_pc(),
 //				(data & 0x04)>>2,(data & 0x08)>>3,
 //				(data & 0x10)>>4, (data & 0x20)>>5, (data & 0x40)>>6, (data & 0x80)>>7);
 	#endif

@@ -20,7 +20,7 @@ extern struct tile_info {
 	unsigned int pen_usage;	/* used pens mask */
 	/*
 		you must set tile_info.pen_data, tile_info.pal_data and tile_info.pen_usage
-		in the callback (usually with the SET_TILE_INFO() macro below).
+		in the callback.  You can use the SET_TILE_INFO() macro below to do this.
 		tile_info.flags and tile_info.priority will be automatically preset to 0,
 		games that don't need them don't need to explicitly set them to 0
 	*/
@@ -68,7 +68,9 @@ struct tilemap {
 
 	char *priority, **priority_row;
 	char *visible, **visible_row;
-	char *dirty_vram;
+	char *dirty_vram;//, **dirty_vram_row;
+//	char *dirty_vramrow;
+
 	char *dirty_pixels;
 	unsigned char *flags;
 
@@ -91,12 +93,15 @@ struct tilemap {
 	unsigned char *fg_mask_data;
 	unsigned char **fg_mask_data_row;
 	int fg_mask_line_offset;
+	unsigned short *fg_span, **fg_span_row;
+
 
 	/* background mask (for the back half of a split layer) */
 	struct osd_bitmap *bg_mask;
 	unsigned char *bg_mask_data;
 	unsigned char **bg_mask_data_row;
 	int bg_mask_line_offset;
+	unsigned short *bg_span, **bg_span_row;
 };
 
 int tilemap_start( void );

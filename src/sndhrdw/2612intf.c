@@ -34,6 +34,12 @@ static void *Timer[MAX_2612][2];
 static double lastfired[MAX_2612][2];
 
 /*------------------------- TM2612 -------------------------------*/
+/* IRQ Handler */
+static void IRQHandler(int n,int irq)
+{
+	if(intf->handler[n]) intf->handler[n](irq);
+}
+
 /* Timer overflow callback from timer.c */
 static void timer_callback_2612(int param)
 {
@@ -43,11 +49,7 @@ static void timer_callback_2612(int param)
 //	if(errorlog) fprintf(errorlog,"2612 TimerOver %d\n",c);
 	Timer[n][c] = 0;
 	lastfired[n][c] = timer_get_time();
-	if( YM2612TimerOver(n,c) )
-	{	/* IRQ is active */;
-		/* User Interrupt call */
-		if(intf->handler[n]) intf->handler[n]();
-	}
+	YM2612TimerOver(n,c);
 }
 
 /* TimerHandler from fm.c */
@@ -135,7 +137,7 @@ int YM2612_sh_start(struct YM2612interface *interface ){
 	}
 
 	/**** initialize YM2612 ****/
-	if (YM2612Init(intf->num,intf->baseclock,rate,TimerHandler,0) == 0)
+	if (YM2612Init(intf->num,intf->baseclock,rate,TimerHandler,IRQHandler) == 0)
 	  return 0;
 	/* error */
 	return 1;

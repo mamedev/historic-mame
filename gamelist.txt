@@ -20,12 +20,14 @@ to list them.
 | 64th Street          |  Yes   |  Yes   |  Yes   |   No   |   No   | street64 |
 | 720 Degrees          |   No   |  Yes   |  Yes   |  Yes   |   No   | 720      |
 | APB                  |   No   |  Yes   |  Yes   |  Yes   |   No   | apb      |
+| Adv.of Robby Roto,The|  Yes   |   No   |   No   |  Yes   |  Yes   | robby    |
 | Aero Fighters        |  Yes   |  Yes   |  Yes   |   No   |   No   | aerofgt  |
 | Alex Kidd            |   No   |  Yes   |   No   |   No   |   No   | alexkidd |
 | Alien Storm          |   No   |  Yes   |   No   |   No   |   No   | astormbl |
 | Alien Syndrome       |Slowdowns  Yes   |  Yes   |   No   |   No   | aliensyn |
 | Alpine Ski           |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | alpine   |
 | Altered Beast        |  Yes   |  Yes   |  Yes   |   No   |   No   | altbeast |
+| Amazing Maze Game,The|  Yes   |  b/w   |   No   |  n/a   |   No   | maze     |
 | Ambush               |  Yes   |  Yes?  |  Yes   |  Yes   |  Yes   | ambush   |
 | Amidar               |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | amidar   |
 | Anteater             |  Yes   |   No   |  Yes   |  Yes   |   No   | anteater |
@@ -52,6 +54,7 @@ to list them.
 | Battle Lane Vol. 5   |   No   |   No   |  Yes   |   No   |   No   | battlane |
 | Battle Zone          |  Yes   |Overlay | Yes(1) |  Yes   |   No   | bzone    |
 | Battle of Atlantis   |  Yes   |  Yes?  |  Yes   |  Yes   |   No   | atlantis |
+| Battle-Road,The      |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | battroad |
 | Berzerk              |  Yes   |  Yes   | Yes(1) |  Yes   |  Yes   | berzerk  |
 | Bio Attack           |   No   |  Yes   |  Yes   |   No   |  Yes   | bioatack |
 | Bionic Commando      |  Yes   |  Yes   |  Yes   |  Yes   |   No   | bionicc  |
@@ -151,12 +154,15 @@ to list them.
 | Dynasty Wars         |  Yes   |  Yes   |  Yes   |   No   |   No   | dwj      |
 | E-Swat               |   No   |  Yes   |   No   |   No   |   No   | eswatbl  |
 | Eggs                 |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | eggs     |
+| Electric Yo-Yo,The   |  Yes   |  Yes   |  Yes   |  Yes   |   No   | elecyoyo |
 | Elevator Action      |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | elevator |
 | Eliminator           |  Yes   | Close  | Yes(1) |  Yes   |   No   | elim2    |
+| Empire Strikes Back,The  No   |  Yes   |  Yes   |   No   |   No   | empire   |
+| End,The              |  Yes   |  Yes?  |  Yes   |  Yes   |   No   | theend   |
 | Escape from the Planet  Yes   |  Yes   |  Yes   |  Yes   |   No   | eprom    |
 | Espial               |  Yes   |  Yes?  |  Yes   |   No   |   No   | espial   |
-| Exed Exes            |  Yes   |  Yes   |Partial |  Yes   |   No   | exedexes |
 | Exciting Soccer      |  Yes   |  Yes?  |  Yes   |  Yes   |   No   | exctsccr |
+| Exed Exes            |  Yes   |  Yes   |Partial |  Yes   |   No   | exedexes |
 | Exerion              |  Yes   |   No   |  Yes   |  Yes   |   No   | exerion  |
 | Express Raider       |  Yes   |  Yes   |  Yes   |  Yes   |   No   | exprraid |
 | Exterminator         |  Yes   |  Yes   |  Yes   |  Yes   |  n/a   | exterm   |
@@ -166,13 +172,13 @@ to list them.
 | F1 Dream             |  Yes   |  Yes   |  Yes   |   No   |   No   | f1dream  |
 | Fantasy              |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | fantasy  |
 | Fantasy Zone         |   No   |  Yes   |   No   |   No   |   No   | fantzone |
-| Fly Boy              |  Yes   |   No   |  Yes   |  Yes   |  Yes   | flyboy   |
 | Fax                  |  Yes   |  Yes   |   No   |   No   |   No   | fax      |
 | Final Fight          |  Yes   |  Yes   |  Yes   |   No   |   No   | ffight   |
 | Fire One             |Partial.|   No   |   No   |   No   |   No   | fireone  |
 | Fire Trap            |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | firetrap |
 | Flash Point          |   No   |  Yes   |   No   |   No   |   No   | fpointbl |
 | Flicky               |  Yes   |  Yes   |  Yes   |  Yes   |   No   | flicky   |
+| Fly Boy              |  Yes   |   No   |  Yes   |  Yes   |  Yes   | flyboy   |
 | Food Fight           |  Yes   |  Yes   |  Yes   |  Yes   |   No   | foodf    |
 | Formation Z          |   No   |   No   |  Yes   |   No   |   No   | formatz  |
 | Frenzy               |  Yes   |  Yes   | Yes(1) |  Yes   |  Yes   | frenzy   |
@@ -195,6 +201,7 @@ to list them.
 | Ghouls'n Ghosts      |  Yes   |  Yes   |  Yes   |   No   |   No   | ghouls   |
 | Gingateikoku No GyakushuYes   |  Yes   |  Yes   |  Yes   |   No   | japirem  |
 | Gladiator            |  Yes   |  Yes   |  Yes   |  Yes   |   No   | gladiatr |
+| Glob,The             |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | theglob  |
 | Golden Axe           |  Yes   |  Yes   |  Yes   |   No   |   No   | goldnaxe |
 | Golden Star          |  Yes   |  Yes   |  Yes   |  Yes   |  n/a   | goldstar |
 | Gondomania           |  Yes   |  Yes   |  Yes   |  Yes   |   No   | gondo    |
@@ -261,6 +268,7 @@ to list them.
 | Killer Comet         |  Yes   |  Yes?  |  Yes   |  Yes   |   No   | killcom  |
 | King & Balloon       |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | kingball |
 | King of Boxer        |  Yes   |  Yes?  |  Yes   |  Yes   |   No   | kingofb  |
+| King of Dragons,The  |  Yes   |  Yes   |  Yes   |   No   |   No   | kod      |
 | Klax                 |  Yes   |  Yes   |  Yes   |  Yes   |   No   | klax     |
 | Knights of the Round |  Yes   |  Yes   |  Yes   |   No   |   No   | knights  |
 | Konami GT            |  Yes   |  Yes   |Partial |   No   |   No   | konamigt |
@@ -294,6 +302,7 @@ to list them.
 | Mad Planets          |  Yes   |  Yes?  |  Yes   |  Yes   |   No   | mplanets |
 | Magic Sword          |  Yes   |  Yes   |  Yes   |   No   |   No   | msword   |
 | Magical Spot II      |  Yes   |  Yes   |Partial |   No   |   No   | magspot2 |
+| Main Event,The       |  Yes   |  Yes   |  Yes   |  Yes   |   No   | mainevt  |
 | Major Havoc          |  Yes   |  Yes   |  Yes   |   No   |   No   | mhavoc   |
 | Major League         |   No   |  Yes   |   No   |   No   |   No   | mjleague |
 | Make Trax            |  Yes   |  Yes?  |  Yes   |  Yes   |  Yes   | maketrax |
@@ -336,9 +345,9 @@ to list them.
 | My Hero              |  Yes   |  Yes   |  Yes   |  Yes   |   No   | myhero   |
 | Mysterious Stones    |  Yes   | Close  |  Yes   |  Yes   |  Yes   | mystston |
 | Mystic Marathon      |  Yes   |  Yes   |  Yes   |  Yes   |   No   | mysticm  |
+| NBA Jam              |   No   |  Yes   |  Yes   |  Yes   |   No   | nbajam   |
 | Narc                 |  Yes   |  Yes   |  Yes   |  Yes   |   No   | narc     |
 | Naughty Boy          |  Yes   |  Yes   |  Yes   |  Yes   |   No   | naughtyb |
-| NBA Jam              |   No   |  Yes   |  Yes   |  Yes   |   No   | nbajam   |
 | Nemesis              |  Yes   |  Yes   |Partial |  Yes   |   No   | nemesis  |
 | Nemo                 |  Yes   |  Yes   |  Yes   |   No   |   No   | nemo     |
 | New Rally X          |  Yes   |  Yes   | Yes(1) |  Yes   |  Yes   | nrallyx  |
@@ -350,6 +359,7 @@ to list them.
 | Nova 2001            |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | nova2001 |
 | Omega Race           |  Yes   |  Yes   |  Yes   |  Yes   |   No   | omegrace |
 | P-47                 |  Yes   |  Yes   |  Yes   |   No   |   No   | p47      |
+| P.O.W.               |  Yes   |  Yes   |Partial |   No   |   No   | pow      |
 | Pac & Pal            |  Yes   |  Yes   |  Yes   |  Yes   |   No   | pacnpal  |
 | Pac Man              |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | pacman   |
 | Pac Man Plus         |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | pacplus  |
@@ -368,6 +378,7 @@ to list them.
 | Ping Pong            |  Yes   |  Yes   |  Yes   |  Yes   |   No   | pingpong |
 | Pioneer Balloon      |  Yes   |  Yes   |  Yes   |   No   |  Yes   | pballoon |
 | Pisces               |  Yes   |  Yes   |  Yes   |  Yes   |   No   | pisces   |
+| Pit,The              |  Yes   | Close  |  Yes   |  Yes   |  Yes   | thepit   |
 | Pitfall 2            |  Yes   |  Yes   |  Yes   |  Yes   |   No   | pitfall2 |
 | Pleiads              |  Yes   |  Yes   |Limited |  Yes   |   No   | pleiads  |
 | Pnickies             |  Yes   |  Yes   |  Yes   |   No   |   No   | pnickj   |
@@ -376,7 +387,6 @@ to list them.
 | Ponpoko              |  Yes   |  Yes?  |  Yes   |  Yes   |  Yes   | ponpoko  |
 | Pontoon              |  Yes   |  Yes   |  Yes   |  Yes   |   No   | pontoon  |
 | Pooyan               |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | pooyan   |
-| P.O.W.               |  Yes   |  Yes   |Partial |   No   |   No   | pow      |
 | Pop Flamer           |  Yes   |  Yes   |  Yes   |  Yes   |   No   | popflame |
 | Popeye               |  Yes   |  Yes   |  Yes   |  Yes   |   No   | popeye   |
 | Port Man             |  Yes   | Close  |  Yes   |   No   |  Yes   | portman  |
@@ -399,6 +409,7 @@ to list them.
 | Rampage              |  Yes   |  Yes   |  Yes   |   No   |   No   | rampage  |
 | Rastan               |  Yes   | Close  |  Yes   |  Yes   |   No   | rastan   |
 | Reactor              |  Yes   |  Yes   |  Yes   |  Yes   |   No   | reactor  |
+| Real Ghostbusters,The|  Yes   |  Yes   |  Yes   |  Yes   |   No   | ghostb   |
 | Red Alert            |  Yes   |   No   | Wrong  |   No   |   No   | redalert |
 | Red Baron            |  Yes   | Close  | Yes(1) |  Yes   |   No   | redbaron |
 | Regulus              |  Yes   |  Yes   |  Yes   |  Yes   |   No   | regulus  |
@@ -418,6 +429,8 @@ to list them.
 | Round-Up             |  Yes   | Close  |  Yes   |  Yes   |  Yes   | roundup  |
 | Route 16             |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | route16  |
 | Rygar                |  Yes   |  Yes   |  Yes   |  Yes   |   No   | rygar    |
+| SDI                  |   No   |  Yes   |   No   |   No   |   No   | sdi      |
+| SWAT                 |  Yes   |  Yes   |  Yes   |  Yes   |   No   | swat     |
 | Safari               |  Yes   |  b/w   |   No   |   No   |  n/a   | safari   |
 | Samurai              |  Yes   |  Yes?  |   No   |   No   |   No   | samurai  |
 | Sarge                |  Yes   |  Yes   |  Yes   |  Yes   |   No   | sarge    |
@@ -427,7 +440,6 @@ to list them.
 | Sauro                |  Yes   | Close  |  Yes   |  Yes   |  Yes   | sauro    |
 | Scion                |  Yes   |   No   | Wrong  |  Yes   |  Yes   | scion    |
 | Scramble             |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | scramble |
-| SDI                  |   No   |  Yes   |   No   |   No   |   No   | sdi      |
 | Sea Fighter Poseidon |   No   |  Yes   |  Yes   |   No   |  Yes   | sfposeid |
 | Sea Wolf ][          |  Yes   |   No   |   No   |  Yes   |  n/a   | seawolf2 |
 | Section Z            |  Yes   |  Yes   |  Yes   |  Yes   |   No   | sectionz |
@@ -499,12 +511,11 @@ to list them.
 | Super Pang           |  Yes   |  Yes   |Partial |  Yes   |   No   | spang    |
 | Super Punch Out      |  Yes   |  Yes   |Partial |  Yes   |  n/a   | spnchout |
 | Super Qix            |  Yes   |  Yes   |  Yes   |  Yes   |   No   | superqix |
-| Super Real Darwin    |  Yes   | Close  |  Yes   |  Yes   |   No   | srdarwin |
+| Super Real Darwin    |  Yes   |  Yes   |  Yes   |  Yes   |   No   | srdarwin |
 | Super Space Invaders |  Yes   |  Yes   |   No   |   No   |   No   | ssi      |
 | Super Sprint         |  Yes   |  Yes   |  Yes   |  Yes   |   No   | ssprint  |
 | Super Zaxxon         |  Yes   |  Yes   | Yes(1) |  Yes   |   No   | szaxxon  |
 | Superman             |  Yes   |  Yes   |  Yes   |  Yes   |   No   | superman |
-| SWAT                 |  Yes   |  Yes   |  Yes   |  Yes   |   No   | swat     |
 | Swimmer              |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | swimmer  |
 | T.M.N.T.             |  Yes   |  Yes   |  Yes   |  Yes   |   No   | tmnt     |
 | Tac/Scan             |  Yes   | Close  | Yes(1) |  Yes   |   No   | tacscan  |
@@ -522,18 +533,6 @@ to list them.
 | Terra Cresta         |  Yes   |  Yes   |  Yes   |  Yes   |   No   | terracre |
 | Tetris (Atari)       |  Yes   |  Yes   |  Yes   |  Yes   |  n/a   | atetris  |
 | Tetris (Sega)        |  Yes   |  Yes   |  Yes   |   No   |   No   | tetrisbl |
-| The Adv.of Robby Roto|  Yes   |   No   |   No   |  Yes   |  Yes   | robby    |
-| The Amazing Maze Game|  Yes   |  b/w   |   No   |  n/a   |   No   | maze     |
-| The Electric Yo-Yo   |  Yes   |  Yes   |  Yes   |  Yes   |   No   | elecyoyo |
-| The Empire Strikes Back  No   |  Yes   |  Yes   |   No   |   No   | empire   |
-| The End              |  Yes   |  Yes?  |  Yes   |  Yes   |   No   | theend   |
-| The Glob             |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | theglob  |
-| The King of Dragons  |  Yes   |  Yes   |  Yes   |   No   |   No   | kod      |
-| The Main Event       |  Yes   |  Yes   |  Yes   |  Yes   |   No   | mainevt  |
-| The Pit              |  Yes   | Close  |  Yes   |  Yes   |  Yes   | thepit   |
-| The Real Ghostbusters|  Yes   |  Yes   |  Yes   |  Yes   |   No   | ghostb   |
-| The Tin Star         |  Yes   |  Yes   |  Yes   |   No   |  Yes   | tinstar  |
-| The Tower of Druaga  |  Yes   |  Yes   |  Yes   |  Yes   |   No   | todruaga |
 | Three Stooges        |  Yes   |  Yes   |Partial |  Yes   |   No   | 3stooges |
 | Tiger Heli           |  Yes   |  Yes   |  Yes   |  Yes   |   No   | tigerh   |
 | Tiger Road           |  Yes   |  Yes   |  Yes   |  Yes   |   No   | tigeroad |
@@ -542,6 +541,7 @@ to list them.
 | Time Pilot 84        |  Yes   |  Yes?  |  Yes   |  Yes   |   No   | tp84     |
 | Time Scanner         |   No   |  Yes   |  Yes   |   No   |   No   | timscanr |
 | Time Tunnel          |  Yes   |  Yes   |  Yes   |   No   |  Yes   | timetunl |
+| Tin Star,The         |  Yes   |  Yes   |  Yes   |   No   |  Yes   | tinstar  |
 | Toki                 |  Yes   |  Yes   |  Yes   |  Yes   |   No   | toki     |
 | Toki no Senshi       |  Yes   |  Yes   |  Yes   |  Yes   |   No   | tokisens |
 | Tokio                |  Yes   |  Yes   |   No   |   No   |   No   | tokio    |
@@ -551,6 +551,7 @@ to list them.
 | Tornado Baseball     |  Yes   |  b/w   |   No   |  n/a   |   No   | tornbase |
 | Total Carnage        |  Yes   |  Yes   |  Yes   |  Yes   |   No   | totcarn  |
 | Tough Turf           |   No   |  Yes   |   No   |   No   |   No   | tturfbl  |
+| Tower of Druaga,The  |  Yes   |  Yes   |  Yes   |  Yes   |   No   | todruaga |
 | Track & Field        |  Yes   |  Yes   | Yes(1) |  Yes   |  Yes   | trackfld |
 | Tranquilizer Gun     |  Yes   |   No   |   No   |   No   |   No   | tranqgun |
 | Traverse USA         |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | travrusa |
@@ -594,8 +595,8 @@ to list them.
 | Wiz                  |  Yes   |   No   |  Yes   |  Yes   |  Yes   | wiz      |
 | Wizard of Wor        |  Yes   | Maybe  | Yes(1) |  Yes   |  n/a   | wow      |
 | Wonder Boy           |  Yes   |  Yes   |  Yes   |  Yes   |   No   | wboy     |
-| Wonder Boy in M.L.   |  Yes   |  Yes   | Wrong  |  Yes   |   No   | wbml     |
 | Wonder Boy 3         |   No   |  Yes   |   No   |   No   |   No   | wb3bl    |
+| Wonder Boy in M.L.   |  Yes   |  Yes   | Wrong  |  Yes   |   No   | wbml     |
 | World Cup 90         |  Yes   |  Yes   |  Yes   |  Yes   |   No   | wc90     |
 | Wrestle War          |   No   |  Yes   |   No   |   No   |   No   | wrestwar |
 | Xain'd Sleena        |  Yes   |  Yes   |  Yes   |  Yes   |   No   | xsleena  |
@@ -1406,6 +1407,15 @@ Clones supported:
 
 
 
+Glob,The ("theglob")
+====================
+To enter service mode, press Player 2 Button 2. It works only in Upright mode.
+
+Clones supported:
+  Beastie Feastie ("beastf")
+
+
+
 Golden Star ("goldstar")
 ========================
 Clones supported:
@@ -2062,7 +2072,8 @@ Known issues:
 New Zealand Story ("tnzs")
 ==========================
 Clones supported:
-  alternate, very different, version ("tnzs2")
+  bootleg, different ("tnzsb")
+  alternate, different, harder, version ("tnzs2")
 
 
 
@@ -2505,7 +2516,12 @@ Clones supported:
 Snow Bros ("snowbros")
 ======================
 Clones supported:
-  alternate version, probably earlier ("snowbro2")
+  alternate version, probably earlier ("snowbroa")
+
+In snowbroa, you sometimes get a green potion that makes you invincible for a
+few seconds (during which you can pass through walls and destroy any enemies
+you touch). I looked at the GFX for this set vs snowbros and it appears that
+only the snowbroa set has it.
 
 
 
@@ -2843,35 +2859,6 @@ Clones supported:
 
 
 
-The End ("theend")
-==================
-Known issues:
-- The star background is probably not entirely accurate. Also, maybe it should
-  be clipped at the top and bottom of the screen?
-
-
-
-The Glob ("theglob")
-====================
-To enter service mode, press Player 2 Button 2. It works only in Upright mode.
-
-Clones supported:
-  Beastie Feastie ("beastf")
-
-
-
-The Tin Star ("tinstar")
-========================
-Known issues:
-- The aiming dial is emulated using a dual joystick setup.
-- Collision detection is not emulated, therefore the barrels don't have any
-  effect.
-- There might be some misbehaviours caused by imperfect emulation of the 68705
-  protection.
-- Sprite priority glitches.
-
-
-
 Three Stooges ("3stooges")
 ==========================
 Up to 3 players can play at once. After inserting coins,
@@ -2901,6 +2888,18 @@ Clones supported:
 Known issues:
 - sound is quite wrong
 - some sprites are displayed with wrong colors
+
+
+
+Tin Star,The ("tinstar")
+========================
+Known issues:
+- The aiming dial is emulated using a dual joystick setup.
+- Collision detection is not emulated, therefore the barrels don't have any
+  effect.
+- There might be some misbehaviours caused by imperfect emulation of the 68705
+  protection.
+- Sprite priority glitches.
 
 
 

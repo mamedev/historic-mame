@@ -295,8 +295,8 @@ void m68k_poke_isp(int value);
 void m68k_poke_msp(int value);
 
 /* context switching to allow multiple CPUs */
-void m68k_get_context(m68k_cpu_context* cpu_context);
-void m68k_set_context(m68k_cpu_context* cpu_context);
+unsigned m68k_get_context(void* dst);
+void m68k_set_context(void* dst);
 
 /* check if an instruction is valid for the specified CPU mode */
 int m68k_is_valid_instruction(int instruction, int cpu_mode);

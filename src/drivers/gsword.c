@@ -192,7 +192,7 @@ int gsword_port_c1r(int offset)
 {
 	int result=0;
 
-	if (errorlog) fprintf(errorlog,"%x  READ form port: %x\n",cpu_getpc(),offset);
+	if (errorlog) fprintf(errorlog,"%x  READ form port: %x\n",cpu_get_pc(),offset);
 
 	switch(offset)
         {
@@ -221,7 +221,7 @@ int gsword_port_c1r(int offset)
 void gsword_port_c1w(int offset, int data)
 {
 
-	if (errorlog) fprintf(errorlog,"%x  write to port: %x -> %x      %d     S:%d\n",cpu_getpc(),offset,data,port_select,data_nr);
+	if (errorlog) fprintf(errorlog,"%x  write to port: %x -> %x      %d     S:%d\n",cpu_get_pc(),offset,data,port_select,data_nr);
 
 	switch(offset)
         {
@@ -274,7 +274,7 @@ int gsword_port_c2r(int offset)
 int result=0;
 
 if (errorlog)
-      fprintf(errorlog,"%x  read from cpu2 port: %x\n",cpu_getpc(),offset);
+      fprintf(errorlog,"%x  read from cpu2 port: %x\n",cpu_get_pc(),offset);
 
 	switch(offset)
         {
@@ -315,7 +315,7 @@ void gsword_port_c2w(int offset, int data)
 {
 
 	if (errorlog)
-	   fprintf(errorlog,"%x  Write to cpu2 port: %x -> %x\n",cpu_getpc(),offset,data);
+	   fprintf(errorlog,"%x  Write to cpu2 port: %x -> %x\n",cpu_get_pc(),offset,data);
 
 	switch(offset)
         {

@@ -16,21 +16,9 @@
 
 #include "osd_cpu.h"
 
-typedef struct
-{
-	PAIR	PC; 			/* HJB */
-	UINT8	A, SP, PSW;
-	UINT8	RAM[128];
-	UINT8	bus, f1;		/* Bus data, and flag1 */
+enum { I8039_PC, I8039_SP, I8039_PSW, I8039_A, I8039_IRQ_STATE };
 
-	int 	pending_irq,irq_executing, masterClock, regPtr;
-	UINT8	t_flag, timer, timerON, countON, xirq_en, tirq_en;
-	UINT16	A11, A11ff;
-	int 	irq_state;
-	int 	(*irq_callback)(int irqline);
-} I8039_Regs;
-
-extern int i8039_ICount;		/* T-state count						  */
+extern int i8039_ICount;        /* T-state count                          */
 
 /* HJB 01/05/99 changed to positive values to use pending_irq as a flag */
 #define I8039_IGNORE_INT    0   /* Ignore interrupt                     */
@@ -38,17 +26,20 @@ extern int i8039_ICount;		/* T-state count						  */
 #define I8039_TIMER_INT 	2	/* Execute a Timer interrupt			*/
 #define I8039_COUNT_INT 	4	/* Execute a Counter interrupt			*/
 
-void i8039_reset(void *param);			/* Reset processor & registers	*/
-void i8039_exit(void);					/* Shut down CPU emulation		*/
-int i8039_execute(int cycles);			/* Execute cycles T-States - returns number of cycles actually run */
-void i8039_setregs(I8039_Regs *Regs);	/* Set registers				*/
-void i8039_getregs(I8039_Regs *Regs);	/* Get registers				*/
-unsigned i8039_getpc(void); 			/* Get program counter			*/
-unsigned i8039_getreg(int regnum);	   	/* Get a specific register      */
-void i8039_setreg(int regnum, unsigned val);	/* Set a specific register      */
-void i8039_set_nmi_line(int state);
-void i8039_set_irq_line(int irqline, int state);
-void i8039_set_irq_callback(int (*callback)(int irqline));
+extern void i8039_reset(void *param);			/* Reset processor & registers	*/
+extern void i8039_exit(void);					/* Shut down CPU emulation		*/
+extern int i8039_execute(int cycles);			/* Execute cycles T-States - returns number of cycles actually run */
+extern unsigned i8039_get_context(void *dst);	/* Get registers				*/
+extern void i8039_set_context(void *src);		/* Set registers				*/
+extern unsigned i8039_get_pc(void); 			/* Get program counter			*/
+extern void i8039_set_pc(unsigned val); 		/* Set program counter			*/
+extern unsigned i8039_get_sp(void); 			/* Get stack pointer			*/
+extern void i8039_set_sp(unsigned val); 		/* Set stack pointer			*/
+extern unsigned i8039_get_reg(int regnum);		/* Get specific register	  */
+extern void i8039_set_reg(int regnum, unsigned val);    /* Set specific register 	 */
+extern void i8039_set_nmi_line(int state);
+extern void i8039_set_irq_line(int irqline, int state);
+extern void i8039_set_irq_callback(int (*callback)(int irqline));
 const char *i8039_info(void *context, int regnum);
 
 /*   This handling of special I/O ports should be better for actual MAME
@@ -76,67 +67,100 @@ const char *i8039_info(void *context, int regnum);
 #endif
 
 /**************************************************************************
- *   For now make the I8035 using the I8039 variables and functions
+ * I8035 section
  **************************************************************************/
-#define I8035_IGNORE_INT		I8039_IGNORE_INT
+#define I8035_PC				I8039_PC
+#define I8035_SP				I8039_SP
+#define I8035_PSW				I8039_PSW
+#define I8035_A 				I8039_A
+
+#define I8035_IGNORE_INT        I8039_IGNORE_INT
 #define I8035_EXT_INT           I8039_EXT_INT
 #define I8035_TIMER_INT         I8039_TIMER_INT
 #define I8035_COUNT_INT         I8039_COUNT_INT
-#define i8035_ICount			i8039_ICount
-#define i8035_reset 			i8039_reset
-#define i8035_exit				i8039_exit
-#define i8035_execute			i8039_execute
-#define i8035_setregs			i8039_setregs
-#define i8035_getregs			i8039_getregs
-#define i8035_getpc 			i8039_getpc
-#define i8035_getreg 			i8039_getreg
-#define i8035_setreg 			i8039_setreg
-#define i8035_set_nmi_line		i8039_set_nmi_line
-#define i8035_set_irq_line		i8039_set_irq_line
-#define i8035_set_irq_callback	i8039_set_irq_callback
-const char *i8035_info(void *context, int regnum);
+#define I8035_IRQ_STATE 		I8039_IRQ_STATE
+
+#define i8035_ICount            i8039_ICount
+
+extern void i8035_reset(void *param);
+extern void i8035_exit(void);
+extern int i8035_execute(int cycles);
+extern unsigned i8035_get_context(void *dst);
+extern void i8035_set_context(void *src);
+extern unsigned i8035_get_pc(void);
+extern void i8035_set_pc(unsigned val);
+extern unsigned i8035_get_sp(void);
+extern void i8035_set_sp(unsigned val);
+extern unsigned i8035_get_reg(int regnum);
+extern void i8035_set_reg(int regnum, unsigned val);
+extern void i8035_set_nmi_line(int state);
+extern void i8035_set_irq_line(int irqline, int state);
+extern void i8035_set_irq_callback(int (*callback)(int irqline));
+extern const char *i8035_info(void *context, int regnum);
 
 /**************************************************************************
- *   For now make the I8048 using the I8039 variables and functions
+ * I8048 section
  **************************************************************************/
+#define I8048_PC				I8039_PC
+#define I8048_SP				I8039_SP
+#define I8048_PSW				I8039_PSW
+#define I8048_A 				I8039_A
+#define I8048_IRQ_STATE 		I8039_IRQ_STATE
+
 #define I8048_IGNORE_INT        I8039_IGNORE_INT
 #define I8048_EXT_INT           I8039_EXT_INT
 #define I8048_TIMER_INT         I8039_TIMER_INT
 #define I8048_COUNT_INT         I8039_COUNT_INT
-#define i8048_ICount			i8039_ICount
-#define i8048_reset 			i8039_reset
-#define i8048_exit				i8039_exit
-#define i8048_execute			i8039_execute
-#define i8048_setregs			i8039_setregs
-#define i8048_getregs			i8039_getregs
-#define i8048_getpc 			i8039_getpc
-#define i8048_getreg 			i8039_getreg
-#define i8048_setreg 			i8039_setreg
-#define i8048_set_nmi_line		i8039_set_nmi_line
-#define i8048_set_irq_line		i8039_set_irq_line
-#define i8048_set_irq_callback	i8039_set_irq_callback
+
+#define i8048_ICount            i8039_ICount
+
+extern void i8048_reset(void *param);
+extern void i8048_exit(void);
+extern int i8048_execute(int cycles);
+extern unsigned i8048_get_context(void *dst);
+extern void i8048_set_context(void *src);
+extern unsigned i8048_get_pc(void);
+extern void i8048_set_pc(unsigned val);
+extern unsigned i8048_get_sp(void);
+extern void i8048_set_sp(unsigned val);
+extern unsigned i8048_get_reg(int regnum);
+extern void i8048_set_reg(int regnum, unsigned val);
+extern void i8048_set_nmi_line(int state);
+extern void i8048_set_irq_line(int irqline, int state);
+extern void i8048_set_irq_callback(int (*callback)(int irqline));
 const char *i8048_info(void *context, int regnum);
 
 /**************************************************************************
- *   For now make the N7751 using the I8039 variables and functions
+ * N7751 section
  **************************************************************************/
+#define N7751_PC				I8039_PC
+#define N7751_SP				I8039_SP
+#define N7751_PSW				I8039_PSW
+#define N7751_A 				I8039_A
+#define N7751_IRQ_STATE 		I8039_IRQ_STATE
+
 #define N7751_IGNORE_INT        I8039_IGNORE_INT
 #define N7751_EXT_INT           I8039_EXT_INT
 #define N7751_TIMER_INT         I8039_TIMER_INT
 #define N7751_COUNT_INT         I8039_COUNT_INT
-#define n7751_ICount			i8039_ICount
-#define n7751_reset 			i8039_reset
-#define n7751_exit				i8039_exit
-#define n7751_execute			i8039_execute
-#define n7751_setregs			i8039_setregs
-#define n7751_getregs			i8039_getregs
-#define n7751_getpc 			i8039_getpc
-#define n7751_getreg 			i8039_getreg
-#define n7751_setreg 			i8039_setreg
-#define n7751_set_nmi_line		i8039_set_nmi_line
-#define n7751_set_irq_line		i8039_set_irq_line
-#define n7751_set_irq_callback	i8039_set_irq_callback
-const char *n7751_info(void *context, int regnum);
+
+#define n7751_ICount            i8039_ICount
+
+extern void n7751_reset(void *param);
+extern void n7751_exit(void);
+extern int n7751_execute(int cycles);
+extern unsigned n7751_get_context(void *dst);
+extern void n7751_set_context(void *src);
+extern unsigned n7751_get_pc(void);
+extern void n7751_set_pc(unsigned val);
+extern unsigned n7751_get_sp(void);
+extern void n7751_set_sp(unsigned val);
+extern unsigned n7751_get_reg(int regnum);
+extern void n7751_set_reg(int regnum, unsigned val);
+extern void n7751_set_nmi_line(int state);
+extern void n7751_set_irq_line(int irqline, int state);
+extern void n7751_set_irq_callback(int (*callback)(int irqline));
+extern const char *n7751_info(void *context, int regnum);
 
 #include "memory.h"
 

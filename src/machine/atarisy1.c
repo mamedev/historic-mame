@@ -207,9 +207,9 @@ int atarisys1_interrupt (void)
 }
 
 
-void atarisys1_sound_interrupt (void)
+void atarisys1_sound_interrupt (int irq)
 {
-	cpu_cause_interrupt (1, M6502_INT_IRQ);
+	cpu_set_irq_line(1, 0 , irq ? ASSERT_LINE : CLEAR_LINE);
 }
 
 

@@ -8,6 +8,22 @@ architecture.  Really, it's not so bad!
 #include "driver.h"
 #include "ccpu.h"
 
+/* the MAME version of the CCPU registers */
+typedef struct ccpuRegs
+{
+    UINT16  accVal;
+    UINT16  cmpVal;
+    UINT8   pa0;
+    UINT8   cFlag;
+    UINT16  eRegPC;
+    UINT16  eRegA;
+    UINT16  eRegB;
+    UINT16  eRegI;
+    UINT16  eRegJ;
+    UINT8   eRegP;
+    UINT8   eCState;
+} ccpuRegs;
+
 #define CCPU_FETCH(a) ((unsigned)cpu_readop(a))
 #define CCPU_READPORT(a) (cpu_readport (a))
 #define CCPU_WRITEPORT(a,v) (cpu_writeport (a,v))
@@ -45,47 +61,52 @@ int ccpu_execute(int cycles)
 }
 
 
-void ccpu_setregs(ccpuRegs *Regs)
+unsigned ccpu_get_context(void *dst)
 {
-	CONTEXTCCPU context;
-
-	context.accVal = Regs->accVal;
-	context.cmpVal = Regs->cmpVal;
-	context.pa0 = Regs->pa0;
-	context.cFlag = Regs->cFlag;
-	context.eRegPC = Regs->eRegPC;
-	context.eRegA = Regs->eRegA;
-	context.eRegB = Regs->eRegB;
-	context.eRegI = Regs->eRegI;
-	context.eRegJ = Regs->eRegJ;
-	context.eRegP = Regs->eRegP;
-	context.eCState = (CINESTATE)Regs->eCState;
-
-	cSetContext (&context);
+    if( dst )
+    {
+        CONTEXTCCPU context;
+        ccpuRegs *Regs = dst;
+        cGetContext (&context);
+        Regs->accVal = context.accVal;
+        Regs->cmpVal = context.cmpVal;
+        Regs->pa0 = context.pa0;
+        Regs->cFlag = context.cFlag;
+        Regs->eRegPC = context.eRegPC;
+        Regs->eRegA = context.eRegA;
+        Regs->eRegB = context.eRegB;
+        Regs->eRegI = context.eRegI;
+        Regs->eRegJ = context.eRegJ;
+        Regs->eRegP = context.eRegP;
+        Regs->eCState = context.eCState;
+    }
+    return sizeof(ccpuRegs);
 }
 
 
-void ccpu_getregs(ccpuRegs *Regs)
+void ccpu_set_context(void *src)
 {
-	CONTEXTCCPU context;
-
-	cGetContext (&context);
-
-	Regs->accVal = context.accVal;
-	Regs->cmpVal = context.cmpVal;
-	Regs->pa0 = context.pa0;
-	Regs->cFlag = context.cFlag;
-	Regs->eRegPC = context.eRegPC;
-	Regs->eRegA = context.eRegA;
-	Regs->eRegB = context.eRegB;
-	Regs->eRegI = context.eRegI;
-	Regs->eRegJ = context.eRegJ;
-	Regs->eRegP = context.eRegP;
-	Regs->eCState = context.eCState;
+	if( src )
+	{
+		CONTEXTCCPU context;
+		ccpuRegs *Regs = src;
+		context.accVal = Regs->accVal;
+		context.cmpVal = Regs->cmpVal;
+		context.pa0 = Regs->pa0;
+		context.cFlag = Regs->cFlag;
+		context.eRegPC = Regs->eRegPC;
+		context.eRegA = Regs->eRegA;
+		context.eRegB = Regs->eRegB;
+		context.eRegI = Regs->eRegI;
+		context.eRegJ = Regs->eRegJ;
+		context.eRegP = Regs->eRegP;
+		context.eCState = (CINESTATE)Regs->eCState;
+		cSetContext (&context);
+	}
 }
 
 
-unsigned ccpu_getpc(void)
+unsigned ccpu_get_pc(void)
 {
 	CONTEXTCCPU context;
 
@@ -93,49 +114,73 @@ unsigned ccpu_getpc(void)
 	return context.eRegPC;
 }
 
-unsigned ccpu_getreg(int regnum)
+void ccpu_set_pc(unsigned val)
+{
+	CONTEXTCCPU context;
+
+	cGetContext (&context);
+	context.eRegPC = val;
+	cSetContext (&context);
+}
+
+unsigned ccpu_get_sp(void)
+{
+	CONTEXTCCPU context;
+
+	cGetContext (&context);
+	return context.eRegP;	/* Is this a stack pointer? */
+}
+
+void ccpu_set_sp(unsigned val)
+{
+	CONTEXTCCPU context;
+
+	cGetContext (&context);
+	context.eRegP = val;   /* Is this a stack pointer? */
+	cSetContext (&context);
+}
+
+unsigned ccpu_get_reg(int regnum)
 {
 	CONTEXTCCPU context;
 	cGetContext (&context);
 
 	switch( regnum )
 	{
-		case  0: return context.accVal;
-		case  1: return context.cmpVal;
-		case  2: return context.pa0;
-		case  3: return context.cFlag;
-		case  5: return context.eRegPC;
-		case  6: return context.eRegA;
-		case  7: return context.eRegB;
-		case  8: return context.eRegI;
-		case  9: return context.eRegJ;
-		case 10: return context.eRegP;
-		case 11: return context.eCState;
-
+		case CCPU_ACC: return context.accVal;
+		case CCPU_CMP: return context.cmpVal;
+		case CCPU_PA0: return context.pa0;
+		case CCPU_CFLAG: return context.cFlag;
+		case CCPU_PC: return context.eRegPC;
+		case CCPU_A: return context.eRegA;
+		case CCPU_B: return context.eRegB;
+		case CCPU_I: return context.eRegI;
+		case CCPU_J: return context.eRegJ;
+		case CCPU_P: return context.eRegP;
+		case CCPU_CSTATE: return context.eCState;
 	}
 	return 0;
 }
 
-void ccpu_setreg(int regnum, unsigned val)
+void ccpu_set_reg(int regnum, unsigned val)
 {
 	CONTEXTCCPU context;
 
 	cGetContext (&context);
 	switch( regnum )
 	{
-		case  0: context.accVal = val; break;
-		case  1: context.cmpVal = val; break;
-		case  2: context.pa0 = val; break;
-		case  3: context.cFlag = val; break;
-		case  5: context.eRegPC = val; break;
-		case  6: context.eRegA = val; break;
-		case  7: context.eRegB = val; break;
-		case  8: context.eRegI = val; break;
-		case  9: context.eRegJ = val; break;
-		case 10: context.eRegP = val; break;
-		case 11: context.eCState = val; break;
-
-	}
+		case CCPU_ACC: context.accVal = val; break;
+		case CCPU_CMP: context.cmpVal = val; break;
+		case CCPU_PA0: context.pa0 = val; break;
+		case CCPU_CFLAG: context.cFlag = val; break;
+		case CCPU_PC: context.eRegPC = val; break;
+		case CCPU_A: context.eRegA = val; break;
+		case CCPU_B: context.eRegB = val; break;
+		case CCPU_I: context.eRegI = val; break;
+		case CCPU_J: context.eRegJ = val; break;
+		case CCPU_P: context.eRegP = val; break;
+		case CCPU_CSTATE: context.eCState = val; break;
+    }
 	cSetContext (&context);
 }
 
@@ -159,12 +204,16 @@ const char *ccpu_info(void *context, int regnum)
 {
 	static char buffer[16][47+1];
 	static int which = 0;
-	CONTEXTCCPU *r = (CONTEXTCCPU *)context;
+	CONTEXTCCPU *r = context;
 
 	which = ++which % 16;
     buffer[which][0] = '\0';
-	if( !context && regnum >= CPU_INFO_PC )
-		return buffer[which];
+	if( !context )
+	{
+		static CONTEXTCCPU tmp;
+		cGetContext(&tmp);
+		r = &tmp;
+	}
 
     switch( regnum )
 	{
@@ -184,17 +233,17 @@ const char *ccpu_info(void *context, int regnum)
 		case CPU_INFO_FLAGS:
 			/* TODO: no idea how the flags should look like */
 			break;
-		case CPU_INFO_REG+ 0: sprintf(buffer[which], "ACC:%04X", r->accVal); break;
-		case CPU_INFO_REG+ 1: sprintf(buffer[which], "CMP:%04X", r->cmpVal); break;
-		case CPU_INFO_REG+ 2: sprintf(buffer[which], "PA0:%02X", r->pa0); break;
-		case CPU_INFO_REG+ 3: sprintf(buffer[which], "C:%X", r->cFlag); break;
-		case CPU_INFO_REG+ 5: sprintf(buffer[which], "PC:%04X", r->eRegPC); break;
-		case CPU_INFO_REG+ 6: sprintf(buffer[which], "A:%04X", r->eRegA); break;
-		case CPU_INFO_REG+ 7: sprintf(buffer[which], "B:%04X", r->eRegB); break;
-		case CPU_INFO_REG+ 8: sprintf(buffer[which], "I:%04X", r->eRegI); break;
-		case CPU_INFO_REG+ 9: sprintf(buffer[which], "J:%04X", r->eRegJ); break;
-		case CPU_INFO_REG+10: sprintf(buffer[which], "P:%04X", r->eRegP); break;
-		case CPU_INFO_REG+11: sprintf(buffer[which], "CSTATE:%04X", r->eCState); break;
+		case CPU_INFO_REG+CCPU_ACC: sprintf(buffer[which], "ACC:%04X", r->accVal); break;
+		case CPU_INFO_REG+CCPU_CMP: sprintf(buffer[which], "CMP:%04X", r->cmpVal); break;
+		case CPU_INFO_REG+CCPU_PA0: sprintf(buffer[which], "PA0:%02X", r->pa0); break;
+		case CPU_INFO_REG+CCPU_CFLAG: sprintf(buffer[which], "C:%X", r->cFlag); break;
+		case CPU_INFO_REG+CCPU_PC: sprintf(buffer[which], "PC:%04X", r->eRegPC); break;
+		case CPU_INFO_REG+CCPU_A: sprintf(buffer[which], "A:%04X", r->eRegA); break;
+		case CPU_INFO_REG+CCPU_B: sprintf(buffer[which], "B:%04X", r->eRegB); break;
+		case CPU_INFO_REG+CCPU_I: sprintf(buffer[which], "I:%04X", r->eRegI); break;
+		case CPU_INFO_REG+CCPU_J: sprintf(buffer[which], "J:%04X", r->eRegJ); break;
+		case CPU_INFO_REG+CCPU_P: sprintf(buffer[which], "P:%04X", r->eRegP); break;
+		case CPU_INFO_REG+CCPU_CSTATE: sprintf(buffer[which], "CSTATE:%04X", r->eCState); break;
     }
 	return buffer[which];
 

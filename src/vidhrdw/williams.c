@@ -691,7 +691,7 @@ void williams_blitter_w (int offset, int data)
 	/* Log blits */
 	if (errorlog)
 	{
-		fprintf(errorlog,"---------- Blit %02X--------------PC: %04X\n",data,cpu_getpc());
+		fprintf(errorlog,"---------- Blit %02X--------------PC: %04X\n",data,cpu_get_pc());
 		fprintf(errorlog,"Source : %02X %02X\n",williams_blitterram[2],williams_blitterram[3]);
 		fprintf(errorlog,"Dest   : %02X %02X\n",williams_blitterram[4],williams_blitterram[5]);
 		fprintf(errorlog,"W H    : %02X %02X (%d,%d)\n",williams_blitterram[6],williams_blitterram[7],williams_blitterram[6]^4,williams_blitterram[7]^4);

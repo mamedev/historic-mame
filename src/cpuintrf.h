@@ -1,7 +1,7 @@
 #ifndef CPUINTRF_H
 #define CPUINTRF_H
 
-/* Maximum size that a CPU structure can be:
+/* Maximum size that a CPU structre can be:
  * HJB 01/02/98 changed to the next power of two
  * the real context size is evaluated by subtracting
  * the fixed part of struct cpuinfo
@@ -13,23 +13,27 @@
 
 #define MAX_IRQ_LINES   8       /* maximum number of IRQ lines per CPU */
 
-#define HOLD_LINE       -2      /* hold interrupt line until enable is true */
-#define ASSERT_LINE 	-1		/* assert an interrupt immediately */
 #define CLEAR_LINE		0		/* clear (a fired, held or pulsed) line */
-#define PULSE_LINE		1		/* pulse interrupt line for one instruction */
+#define ASSERT_LINE     1       /* assert an interrupt immediately */
+#define HOLD_LINE       2       /* hold interrupt line until enable is true */
+#define PULSE_LINE		3		/* pulse interrupt line for one instruction */
 
 #include "timer.h"
 
 /* ASG 971222 -- added this generic structure */
 struct cpu_interface
 {
+	int cpu_num, cpu_family;
 	void (*reset)(void *param);
 	void (*exit)(void);
 	int (*execute)(int cycles);
-	void (*set_regs)(void *reg);
-	void (*get_regs)(void *reg);
+	unsigned (*get_context)(void *reg);
+	void (*set_context)(void *reg);
     unsigned (*get_pc)(void);
-	unsigned (*get_reg)(int regnum);
+	void (*set_pc)(unsigned val);
+	unsigned (*get_sp)(void);
+	void (*set_sp)(unsigned val);
+    unsigned (*get_reg)(int regnum);
 	void (*set_reg)(int regnum, unsigned val);
     void (*set_nmi_line)(int linestate);
 	void (*set_irq_line)(int irqline, int linestate);
@@ -74,17 +78,24 @@ int cpu_getactivecpu(void);
 void cpu_setactivecpu(int cpunum);
 
 /* Returns the current program counter */
-unsigned cpu_getpc(void);
+unsigned cpu_get_pc(void);
+/* Set the current program counter */
+void cpu_set_pc(unsigned val);
+
+/* Returns the current stack pointer */
+unsigned cpu_get_sp(void);
+/* Set the current stack pointer */
+void cpu_set_sp(unsigned val);
 
 /* Returns a specific register value (mamedbg) */
-unsigned cpu_getreg(int cpunum, int regnum);
+unsigned cpu_get_reg(int regnum);
 /* Sets a specific register value (mamedbg) */
-void cpu_setreg(int cpunum, int regnum, unsigned val);
+void cpu_set_reg(int regnum, unsigned val);
 
 /* Returns a specific register value for the active CPU (mamedbg) */
-unsigned cur_cpu_getreg(int regnum);
+unsigned cpunum_get_reg(int cpunum, int regnum);
 /* Sets a specific register value for the active CPU (mamedbg) */
-void cur_cpu_setreg(int regnum, unsigned val);
+void cpunum_set_reg(int cpunum, int regnum, unsigned val);
 
 /* Returns previous pc (start of opcode causing read/write) */
 int cpu_getpreviouspc(void);  /* -RAY- */
@@ -197,32 +208,32 @@ int cpu_is_saving_context(int _activecpu);
 /* CPU info interface */
 
 /* get information for the active CPU */
-const char *cur_cpu_name(void);
-const char *cur_cpu_core_family(void);
-const char *cur_cpu_core_version(void);
-const char *cur_cpu_core_file(void);
-const char *cur_cpu_core_credits(void);
+const char *cpu_name(void);
+const char *cpu_core_family(void);
+const char *cpu_core_version(void);
+const char *cpu_core_file(void);
+const char *cpu_core_credits(void);
 
-const char *cur_cpu_program_counter(void);
-const char *cur_cpu_stack_pointer(void);
-const char *cur_cpu_flags(void);
-const char *cur_cpu_disassemble(void);
-const char *cur_cpu_register(int regnum);
-const char *cur_cpu_dump_state(void);
+const char *cpu_pc(void);
+const char *cpu_sp(void);
+const char *cpu_flags(void);
+const char *cpu_dasm(void);
+const char *cpu_dump_reg(int regnum);
+const char *cpu_dump_state(void);
 
 /* get information for a specific CPU */
-const char *cpu_name(int cputype);
-const char *cpu_core_family(int cputype);
-const char *cpu_core_version(int cputype);
-const char *cpu_core_file(int cputype);
-const char *cpu_core_credits(int cputype);
+const char *cputype_name(int cputype);
+const char *cputype_core_family(int cputype);
+const char *cputype_core_version(int cputype);
+const char *cputype_core_file(int cputype);
+const char *cputype_core_credits(int cputype);
 
-const char *cpu_pc(int cpunum);
-const char *cpu_sp(int cpunum);
-const char *cpu_dasm(int cpunum);
-const char *cpu_flags(int cpunum);
-const char *cpu_register(int cpunum, int regnum);
-const char *cpu_dump_state(int cpunum);
+const char *cpunum_pc(int cpunum);
+const char *cpunum_sp(int cpunum);
+const char *cpunum_dasm(int cpunum);
+const char *cpunum_flags(int cpunum);
+const char *cpunum_dump_reg(int cpunum, int regnum);
+const char *cpunum_dump_state(int cpunum);
 
 /* this is the 'low level' interface call for the active cpu */
 #define CPU_INFO_NAME		0
@@ -235,7 +246,6 @@ const char *cpu_dump_state(int cpunum);
 #define CPU_INFO_DASM		12
 #define CPU_INFO_FLAGS		13
 #define CPU_INFO_REG		14
-const char *_cpu_info(void *context,int regnum);
 
 void cpu_dump_states(void);
 
@@ -254,10 +264,4 @@ typedef struct {
 
 #define Z80_VECTOR(device,state) (((device)<<8)|(state))
 
-/*
- * This function is obsolete. Put the daisy_chain pointer into the
- * reset_param of your machine driver instead.
- */
-/* void cpu_setdaisychain(int cpunum, Z80_DaisyChain *daisy_chain); */
-
-#endif
+#endif	/* CPUINTRF_H */

@@ -98,7 +98,7 @@ void firetrap_bankselect_w(int offset,int data)
 
 int firetrap_8751_r(int offset)
 {
-//if (errorlog) fprintf(errorlog,"PC:%04x read from 8751\n",cpu_getpc());
+//if (errorlog) fprintf(errorlog,"PC:%04x read from 8751\n",cpu_get_pc());
 
 	/* Check for coin insertion */
 	/* the following only works in the bootleg version, which doesn't have an */
@@ -109,7 +109,7 @@ int firetrap_8751_r(int offset)
 
 void firetrap_8751_w(int offset,int data)
 {
-if (errorlog) fprintf(errorlog,"PC:%04x write %02x to 8751\n",cpu_getpc(),data);
+if (errorlog) fprintf(errorlog,"PC:%04x write %02x to 8751\n",cpu_get_pc(),data);
 	cpu_cause_interrupt(0,0xff);
 }
 

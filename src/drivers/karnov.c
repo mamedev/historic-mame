@@ -72,7 +72,7 @@ static void karnov_i8751_w(int data)
 	if (data==0x401) i8751_return=0x4138; /* ^Whistling wind */
 	if (data==0x408) i8751_return=0x4276; /* ^Heavy Gates */
 
-//	if (errorlog && !i8751_return && data!=0x300) fprintf(errorlog,"CPU %04x - Unknown Write %02x intel\n",cpu_getpc(),data);
+//	if (errorlog && !i8751_return && data!=0x300) fprintf(errorlog,"CPU %04x - Unknown Write %02x intel\n",cpu_get_pc(),data);
 
 	cpu_cause_interrupt(0,6); /* Signal main cpu task is complete */
 }
@@ -172,7 +172,7 @@ static void chelnov_i8751_w(int data)
 		}
 	}
 
-//	if (errorlog && !i8751_return) fprintf(errorlog,"CPU %04x - Unknown Write %02x intel\n",cpu_getpc(),data);
+//	if (errorlog && !i8751_return) fprintf(errorlog,"CPU %04x - Unknown Write %02x intel\n",cpu_get_pc(),data);
 
 	cpu_cause_interrupt(0,6); /* Signal main cpu task is complete */
 }
@@ -807,22 +807,22 @@ static void chelnov_hisave(void)
 
 static int karnov_cycle_r(int offset)
 {
-	if (cpu_getpc()==0x8f2) {cpu_spinuntil_int(); return 0;} return READ_WORD(&karnov_ram[0]);
+	if (cpu_get_pc()==0x8f2) {cpu_spinuntil_int(); return 0;} return READ_WORD(&karnov_ram[0]);
 }
 
 static int karnovj_cycle_r(int offset)
 {
-	if (cpu_getpc()==0x8ec) {cpu_spinuntil_int(); return 0;} return READ_WORD(&karnov_ram[0]);
+	if (cpu_get_pc()==0x8ec) {cpu_spinuntil_int(); return 0;} return READ_WORD(&karnov_ram[0]);
 }
 
 static int chelnov_cycle_r(int offset)
 {
-	if (cpu_getpc()==0xdfe) {cpu_spinuntil_int(); return 0;} return READ_WORD(&karnov_ram[0]);
+	if (cpu_get_pc()==0xdfe) {cpu_spinuntil_int(); return 0;} return READ_WORD(&karnov_ram[0]);
 }
 
 static int chelnovj_cycle_r(int offset)
 {
-	if (cpu_getpc()==0xe06) {cpu_spinuntil_int(); return 0;} return READ_WORD(&karnov_ram[0]);
+	if (cpu_get_pc()==0xe06) {cpu_spinuntil_int(); return 0;} return READ_WORD(&karnov_ram[0]);
 }
 
 static void karnov_init(void)

@@ -32,7 +32,7 @@ static int aeroboto_201_r(int offset)
 	/* serie of values to be returned from 3004, and display "PASS 201" if it is */
 	int res[4] = { 0xff,0x9f,0x1b,0x03};
 	static int count;
-	if (errorlog) fprintf(errorlog,"PC %04x: read 3004\n",cpu_getpc());
+	if (errorlog) fprintf(errorlog,"PC %04x: read 3004\n",cpu_get_pc());
 	return res[(count++)&3];
 }
 

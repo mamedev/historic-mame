@@ -92,7 +92,7 @@ static int fastfred_custom_io_r(int offset)
 {
 	if (!use_custom_io) return 0x00; // Flyboy bootleg
 
-    switch (cpu_getpc())
+    switch (cpu_get_pc())
     {
     case 0x03c0:
         return 0x9d;
@@ -153,7 +153,7 @@ static int fastfred_custom_io_r(int offset)
 
     }
 
-    if (errorlog) fprintf(errorlog, "Uncaught custom I/O read %04X at %04X\n", 0xc800+offset, cpu_getpc());
+    if (errorlog) fprintf(errorlog, "Uncaught custom I/O read %04X at %04X\n", 0xc800+offset, cpu_get_pc());
     return 0x00;
 }
 

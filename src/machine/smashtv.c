@@ -109,7 +109,7 @@ static int narc_input_r (int offset)
 //			ans = (input_port_9_r (offset) << 8) + (input_port_8_r (offset));
 //			break;
 		default:
-			if (errorlog) fprintf(errorlog, "CPU #0 PC %08x: warning - read from unmapped bit address %x\n", cpu_getpc(), (offset<<3));
+			if (errorlog) fprintf(errorlog, "CPU #0 PC %08x: warning - read from unmapped bit address %x\n", cpu_get_pc(), (offset<<3));
 	}
 	return ans;
 }
@@ -134,7 +134,7 @@ int wms_input_r (int offset)
 			ans = (input_port_9_r (offset) << 8) + (input_port_8_r (offset));
 			break;
 		default:
-			if (errorlog) fprintf(errorlog, "CPU #0 PC %08x: warning - read from unmapped bit address %x\n", cpu_getpc(), (offset<<3));
+			if (errorlog) fprintf(errorlog, "CPU #0 PC %08x: warning - read from unmapped bit address %x\n", cpu_get_pc(), (offset<<3));
 	}
 	return ans;
 }
@@ -154,7 +154,7 @@ static int term2_input_lo_r (int offset)
 //			ans = (input_port_9_r (offset) << 8) + (input_port_8_r (offset));
 //			break;
 		default:
-			if (errorlog) fprintf(errorlog, "CPU #0 PC %08x: warning - read from unmapped bit address %x\n", cpu_getpc(), (offset<<3));
+			if (errorlog) fprintf(errorlog, "CPU #0 PC %08x: warning - read from unmapped bit address %x\n", cpu_get_pc(), (offset<<3));
 	}
 	return ans;
 }
@@ -174,7 +174,7 @@ int wms_dma_r(int offset)
 {
 	if (wms_dma_stat&0x8000)
 	{
-		switch (cpu_getpc())
+		switch (cpu_get_pc())
 		{
 		case 0xfff7aa20: /* narc */
 		case 0xffe1c970: /* trog */
@@ -197,7 +197,7 @@ int wms_dma_r(int offset)
 			break;
 
 		default:
-//			if (errorlog) fprintf(errorlog, "CPU #0 PC %08x: read hi dma\n", cpu_getpc());
+//			if (errorlog) fprintf(errorlog, "CPU #0 PC %08x: read hi dma\n", cpu_get_pc());
 			break;
 		}
 	}
@@ -272,7 +272,7 @@ void wms_dma_w(int offset, int data)
 			rda = &(GFX_ROM[wms_dma_bank+wms_dma_subbank]);
 			wms_dma_stat = data;
 
-					if (errorlog) fprintf(errorlog, "\nCPU #0 PC %08x: DMA command %04x:\n",cpu_getpc(), data);
+					if (errorlog) fprintf(errorlog, "\nCPU #0 PC %08x: DMA command %04x:\n",cpu_get_pc(), data);
 					if (errorlog) fprintf(errorlog, "%04x %04x x%04x y%04x  c%04x r%04x p%04x c%04x\n",wms_dma_subbank, wms_dma_bank, wms_dma_x, wms_dma_y, wms_dma_cols, wms_dma_rows, wms_dma_pal, wms_dma_fgcol );
 			/*
 			 * DMA registers
@@ -358,7 +358,7 @@ void wms_dma_w(int offset, int data)
 					DMA_DRAW_NONZERO_BYTES(write_data,--);
 					break;
 				default:
-					if (errorlog) fprintf(errorlog, "\nCPU #0 PC %08x: unhandled DMA command %04x:\n",cpu_getpc(), data);
+					if (errorlog) fprintf(errorlog, "\nCPU #0 PC %08x: unhandled DMA command %04x:\n",cpu_get_pc(), data);
 					if (errorlog) fprintf(errorlog, "%04x %04x x%04x y%04x  c%04x r%04x p%04x c%04x\n",wms_dma_subbank, wms_dma_bank, wms_dma_x, wms_dma_y, wms_dma_cols, wms_dma_rows, wms_dma_pal, wms_dma_fgcol );
 					break;
 			}
@@ -831,7 +831,7 @@ void wms_dma2_w(int offset, int data)
 
 			if (0)
 			  {
-					if (errorlog) fprintf(errorlog, "\nCPU #0 PC %08x: DMA command %04x: (offs%02x) unk2=%04x sr%04x\n",cpu_getpc(), data, wms_dma_8pos, wms_unk2, wms_sysreg2);
+					if (errorlog) fprintf(errorlog, "\nCPU #0 PC %08x: DMA command %04x: (offs%02x) unk2=%04x sr%04x\n",cpu_get_pc(), data, wms_dma_8pos, wms_unk2, wms_sysreg2);
 					if (errorlog) fprintf(errorlog, "%08x x%04x y%04x c%04x r%04x p%04x c%04x  %04x %04x %04x %04x %04x %04x\n",wms_dma_subbank+wms_dma_bank+0x400000, wms_dma_x, wms_dma_y, wms_dma_cols, wms_dma_rows, wms_dma_pal, wms_dma_fgcol, wms_dma_14, wms_dma_16, wms_dma_tclip, wms_dma_bclip, wms_dma_1c, wms_dma_1e );
 			  }
 			/*
@@ -905,7 +905,7 @@ void wms_dma2_w(int offset, int data)
 				case 0x8003: /* draw all pixels */
 					dma_skip = ((wms_dma_cols + wms_dma_woffset)) - wms_dma_cols;
 					DMA_DRAW_ALL_BYTES(*BYTE_XOR_LE(rda++));
-					if (errorlog&&((data&0x0080)||(wms_dma_8pos&0x07))) fprintf(errorlog, "\nCPU #0 PC %08x: unhandled DMA command %04x:  (off%x)\n",cpu_getpc(), data, wms_dma_8pos&0x07);
+					if (errorlog&&((data&0x0080)||(wms_dma_8pos&0x07))) fprintf(errorlog, "\nCPU #0 PC %08x: unhandled DMA command %04x:  (off%x)\n",cpu_get_pc(), data, wms_dma_8pos&0x07);
 					break;
 				case 0x8008: /* draw nonzero pixels as color (8bpp) */
 					DMA2_DRAW(8, +, +, write_data, wms_dma_fgcol, ++);
@@ -922,7 +922,7 @@ void wms_dma2_w(int offset, int data)
 				case 0x8009: /* draw nonzero pixels as color, zero as zero */
 					dma_skip = ((wms_dma_cols + wms_dma_woffset)) - wms_dma_cols;
 					DMA_DRAW_ALL_BYTES((*BYTE_XOR_LE(rda++)?wms_dma_fgcol:0));
-					if (errorlog&&((data&0x0080)||(wms_dma_8pos&0x07))) fprintf(errorlog, "\nCPU #0 PC %08x: unhandled DMA command %04x:  (off%x)\n",cpu_getpc(), data, wms_dma_8pos&0x07);
+					if (errorlog&&((data&0x0080)||(wms_dma_8pos&0x07))) fprintf(errorlog, "\nCPU #0 PC %08x: unhandled DMA command %04x:  (off%x)\n",cpu_get_pc(), data, wms_dma_8pos&0x07);
 					break;
 				case 0xe00c: /* draw all pixels as color (fill) */
 				case 0xd00c: /* draw all pixels as color (fill) */
@@ -950,7 +950,7 @@ void wms_dma2_w(int offset, int data)
 				case 0x8013: /* draw all pixels x-flipped (8bpp) */
 					dma_skip = ((wms_dma_woffset - wms_dma_cols)) + wms_dma_cols;
 					DMA_DRAW_ALL_BYTES(*BYTE_XOR_LE(rda--));
-					if (errorlog&&((data&0x0080)||(wms_dma_8pos&0x07))) fprintf(errorlog, "\nCPU #0 PC %08x: unhandled DMA command %04x:  (off%x)\n",cpu_getpc(), data, wms_dma_8pos&0x07);
+					if (errorlog&&((data&0x0080)||(wms_dma_8pos&0x07))) fprintf(errorlog, "\nCPU #0 PC %08x: unhandled DMA command %04x:  (off%x)\n",cpu_get_pc(), data, wms_dma_8pos&0x07);
 					break;
 				case 0x8018: /* draw nonzero pixels as color x-flipped (8bpp)*/
 					DMA2_DRAW(8, -, +, write_data, wms_dma_fgcol, --);
@@ -971,7 +971,7 @@ void wms_dma2_w(int offset, int data)
 					DMA2_DRAW(6, -, -, write_data, write_data, --);
 					break;
 				default:
-					if (errorlog) fprintf(errorlog, "\nCPU #0 PC %08x: unhandled DMA command %04x:\n",cpu_getpc(), data);
+					if (errorlog) fprintf(errorlog, "\nCPU #0 PC %08x: unhandled DMA command %04x:\n",cpu_get_pc(), data);
 					if (errorlog) fprintf(errorlog, "%08x x%04x y%04x c%04x r%04x p%04x c%04x  %04x %04x %04x %04x %04x %04x\n",wms_dma_subbank+wms_dma_bank+0x400000, wms_dma_x, wms_dma_y, wms_dma_cols, wms_dma_rows, wms_dma_pal, wms_dma_fgcol, wms_dma_14, wms_dma_16, wms_dma_tclip, wms_dma_bclip, wms_dma_1c, wms_dma_1e );
 					break;
 			}
@@ -1052,19 +1052,16 @@ void wms_01c00060_w(int offset, int data) /* protection and more */
 //		if (errorlog) fprintf(errorlog, "Disable CMOS writes\n");
 	}
 	else
-	if (errorlog) fprintf(errorlog, "CPU #0 PC %08x: warning - write %x to protection chip\n", cpu_getpc(), data);
+	if (errorlog) fprintf(errorlog, "CPU #0 PC %08x: warning - write %x to protection chip\n", cpu_get_pc(), data);
 }
 int wms_01c00060_r(int offset) /* protection and more */
 {
-	if (cpu_getpc() == wms_protect_s) /* protection */
+	if (cpu_get_pc() == wms_protect_s) /* protection */
 	{
-		TMS34010_Regs Regs;
-		TMS34010_getregs(&Regs);
-		Regs.pc = wms_protect_d; /* skip it! */
-		TMS34010_setregs(&Regs);
+		cpu_set_pc(wms_protect_d); /* skip it! */
 		return 0xffffffff;
 	}
-	if (errorlog) fprintf(errorlog, "CPU #0 PC %08x: warning - unhandled read from protection chip\n",cpu_getpc());
+	if (errorlog) fprintf(errorlog, "CPU #0 PC %08x: warning - unhandled read from protection chip\n",cpu_get_pc());
 	return 0xffffffff;
 }
 
@@ -1213,7 +1210,7 @@ void wms_cmos_w(int offset, int data)
 		COMBINE_WORD_MEM(&wms_cmos_ram[(offset)+wms_cmos_page], data);
 	}
 	else
-	if (errorlog) fprintf(errorlog, "CPU #0 PC %08x: warning - write %x to disabled CMOS address %x\n", cpu_getpc(), data, offset);
+	if (errorlog) fprintf(errorlog, "CPU #0 PC %08x: warning - write %x to disabled CMOS address %x\n", cpu_get_pc(), data, offset);
 
 }
 int wms_cmos_r(int offset)
@@ -1292,7 +1289,7 @@ void wms_load_code_roms(void)
 #define DEREF_INT8(REG)         DEREF(REG, INT8 )
 #define DEREF_INT16(REG)        DEREF(REG, INT16)
 #define DEREF_INT32(REG)        DEREF(REG, INT32)
-#define BURN_TIME(INST_CNT)     TMS34010_ICount -= INST_CNT * TMS34010_AVGCYCLES
+#define BURN_TIME(INST_CNT) 	tms34010_ICount -= INST_CNT * TMS34010_AVGCYCLES
 
 #define INT32_MOD(x) BIG_DWORD_LE(x)
 #define INT16_MOD(x) (x)
@@ -1341,7 +1338,7 @@ void wms_load_code_roms(void)
 	 INT32 a1 = 0x80000000;									\
 	 INT32 a5 = 0x80000000;									\
 	 INT32 a7,a8;											\
-	while (TMS34010_ICount > 0)								\
+	while (tms34010_ICount > 0) 							\
 	{														\
 		a2 = BIG_DWORD_LE(DEREF_INT32(a0));					\
 		if (!a2)											\
@@ -1361,7 +1358,7 @@ void wms_load_code_roms(void)
 	UINT32 a4 = 0;                               			\
 	 INT32 a1,a5,a7,a8;										\
 															\
-	while (TMS34010_ICount > 0)								\
+	while (tms34010_ICount > 0) 							\
 	{														\
 		temp1 = BIG_DWORD_LE(DEREF_INT32(LOC1));			\
 		temp2 = BIG_DWORD_LE(DEREF_INT32(LOC2));			\
@@ -1379,7 +1376,7 @@ void wms_load_code_roms(void)
 			a2 = BIG_DWORD_LE(DEREF_INT32(a0));				\
 			if (!a2)										\
 			{												\
-				TMS34010_ICount -= 20;						\
+				tms34010_ICount -= 20;						\
 				break;										\
 			}												\
 			DO_SPEEDUP_LOOP(0xc0, 0xa0, INT32, INT32);		\
@@ -1393,7 +1390,7 @@ void wms_load_code_roms(void)
 			a2 = BIG_DWORD_LE(DEREF_INT32(a0));				\
 			if (!a2)										\
 			{												\
-				TMS34010_ICount -= 20;						\
+				tms34010_ICount -= 20;						\
 				break;										\
 			}												\
 			DO_SPEEDUP_LOOP(0xc0, 0xa0, INT32, INT32);		\
@@ -1407,7 +1404,7 @@ void wms_load_code_roms(void)
 			a2 = BIG_DWORD_LE(DEREF_INT32(a0));				\
 			if (!a2)										\
 			{												\
-				TMS34010_ICount -= 20;						\
+				tms34010_ICount -= 20;						\
 				break;										\
 			}												\
 			DO_SPEEDUP_LOOP(0xc0, 0xa0, INT32, INT32);		\
@@ -1422,7 +1419,7 @@ static int narc_speedup_r(int offset)
 		UINT32 value1 = READ_WORD(&SCRATCH_RAM[TOBYTE(0x1b310)]);
 
 		/* Suspend cpu if it's waiting for an interrupt */
-		if (cpu_getpc() == 0xffde33e0 && !value1)
+		if (cpu_get_pc() == 0xffde33e0 && !value1)
 		{
 			DO_SPEEDUP_LOOP_1(0x1000040, 0xc0, 0xa0, INT32, INT32);
 		}
@@ -1444,7 +1441,7 @@ static int smashtv_speedup_r(int offset)
 		UINT32 value1 = READ_WORD(&SCRATCH_RAM[TOBYTE(0x86760)]);
 
 		/* Suspend cpu if it's waiting for an interrupt */
-		if (cpu_getpc() == 0xffe0a340 && !value1)
+		if (cpu_get_pc() == 0xffe0a340 && !value1)
 		{
 			DO_SPEEDUP_LOOP_1(0x1000040, 0xa0, 0x80, INT16, INT32);
 		}
@@ -1458,7 +1455,7 @@ static int smashtv4_speedup_r(int offset)
 		UINT32 value1 = READ_WORD(&SCRATCH_RAM[TOBYTE(0x86790)]);
 
 		/* Suspend cpu if it's waiting for an interrupt */
-		if (cpu_getpc() == 0xffe0a320 && !value1)
+		if (cpu_get_pc() == 0xffe0a320 && !value1)
 		{
 			DO_SPEEDUP_LOOP_1(0x1000040, 0xa0, 0x80, INT16, INT32);
 		}
@@ -1480,7 +1477,7 @@ static int totcarn_speedup_r(int offset)
 		UINT32 value1 = READ_WORD(&SCRATCH_RAM[TOBYTE(0x7dde0)]);
 
 		/* Suspend cpu if it's waiting for an interrupt */
-		if (cpu_getpc() == 0xffc0c970 && !value1)
+		if (cpu_get_pc() == 0xffc0c970 && !value1)
 		{
 			DO_SPEEDUP_LOOP_1(0x1000040, 0xa0, 0x90, INT16, INT16);
 		}
@@ -1498,7 +1495,7 @@ static int trogp_speedup_r(int offset)
 		UINT32 value1 = READ_WORD(&SCRATCH_RAM[TOBYTE(0xa1ee0)]);
 
 		/* Suspend cpu if it's waiting for an interrupt */
-		if (cpu_getpc() == 0xffe210d0 && !value1)
+		if (cpu_get_pc() == 0xffe210d0 && !value1)
 		{
 			DO_SPEEDUP_LOOP_1(0x1000040, 0xc0, 0xa0, INT32, INT32);
 		}
@@ -1516,7 +1513,7 @@ static int trog_speedup_r(int offset)
 		UINT32 value1 = READ_WORD(&SCRATCH_RAM[TOBYTE(0xa20a0)]);
 
 		/* Suspend cpu if it's waiting for an interrupt */
-		if (cpu_getpc() == 0xffe20630 && !value1)
+		if (cpu_get_pc() == 0xffe20630 && !value1)
 		{
 			DO_SPEEDUP_LOOP_1(0x1000040, 0xc0, 0xa0, INT32, INT32);
 		}
@@ -1530,7 +1527,7 @@ static int trog3_speedup_r(int offset)
 		UINT32 value1 = READ_WORD(&SCRATCH_RAM[TOBYTE(0xa2090)]);
 
 		/* Suspend cpu if it's waiting for an interrupt */
-		if (cpu_getpc() == 0xffe20660 && !value1)
+		if (cpu_get_pc() == 0xffe20660 && !value1)
 		{
 			DO_SPEEDUP_LOOP_1(0x1000040, 0xc0, 0xa0, INT32, INT32);
 		}
@@ -1552,7 +1549,7 @@ static int mk_speedup_r(int offset)
 		UINT32 value1 = READ_WORD(&SCRATCH_RAM[TOBYTE(0x4f040)]);
 
 		/* Suspend cpu if it's waiting for an interrupt */
-		if (cpu_getpc() == 0xffce1ec0 && !value1)
+		if (cpu_get_pc() == 0xffce1ec0 && !value1)
 		{
 			DO_SPEEDUP_LOOP_3(0x104b6b0, 0x104b6f0, 0x104b710);
 		}
@@ -1561,7 +1558,7 @@ static int mk_speedup_r(int offset)
 }
 static int mkla1_speedup_r(int offset)
 {
-  if (errorlog) fprintf(errorlog, "PC=%08x\n", cpu_getpc());
+  if (errorlog) fprintf(errorlog, "PC=%08x\n", cpu_get_pc());
 	if (offset)
 	{
 		return READ_WORD(&SCRATCH_RAM[TOBYTE(0x4f010)]);
@@ -1571,7 +1568,7 @@ static int mkla1_speedup_r(int offset)
 		UINT32 value1 = READ_WORD(&SCRATCH_RAM[TOBYTE(0x4f000)]);
 
 		/* Suspend cpu if it's waiting for an interrupt */
-		if (cpu_getpc() == 0xffcddc00 && !value1)
+		if (cpu_get_pc() == 0xffcddc00 && !value1)
 		{
 			DO_SPEEDUP_LOOP_3(0x104b6b0, 0x104b6f0, 0x104b710);
 		}
@@ -1580,7 +1577,7 @@ static int mkla1_speedup_r(int offset)
 }
 static int mkla2_speedup_r(int offset)
 {
-  if (errorlog) fprintf(errorlog, "PC=%08x\n", cpu_getpc());
+  if (errorlog) fprintf(errorlog, "PC=%08x\n", cpu_get_pc());
 	if (offset)
 	{
 		return READ_WORD(&SCRATCH_RAM[TOBYTE(0x4f030)]);
@@ -1590,7 +1587,7 @@ static int mkla2_speedup_r(int offset)
 		UINT32 value1 = READ_WORD(&SCRATCH_RAM[TOBYTE(0x4f020)]);
 
 		/* Suspend cpu if it's waiting for an interrupt */
-		if (cpu_getpc() == 0xffcde000 && !value1)
+		if (cpu_get_pc() == 0xffcde000 && !value1)
 		{
 			DO_SPEEDUP_LOOP_3(0x104b6b0, 0x104b6f0, 0x104b710);
 		}
@@ -1608,7 +1605,7 @@ static int hiimpact_speedup_r(int offset)
 		UINT32 value1 = READ_WORD(&SCRATCH_RAM[TOBYTE(0x53150)]);
 
 		/* Suspend cpu if it's waiting for an interrupt */
-		if (cpu_getpc() == 0xffe28bb0 && !value1)
+		if (cpu_get_pc() == 0xffe28bb0 && !value1)
 		{
 			DO_SPEEDUP_LOOP_3(0x1000080, 0x10000a0, 0x10000c0);
 		}
@@ -1626,7 +1623,7 @@ static int shimpact_speedup_r(int offset)
 		UINT32 value1 = READ_WORD(&SCRATCH_RAM[TOBYTE(0x52070)]);
 
 		/* Suspend cpu if it's waiting for an interrupt */
-		if (cpu_getpc() == 0xffe27f00 && !value1)
+		if (cpu_get_pc() == 0xffe27f00 && !value1)
 		{
 			DO_SPEEDUP_LOOP_3(0x1000000, 0x1000020, 0x1000040);
 		}
@@ -1666,7 +1663,7 @@ static int term2_speedup_r(int offset)
 		UINT32 value1 = READ_WORD(&SCRATCH_RAM[TOBYTE(0xaa040)]);
 
 		/* Suspend cpu if it's waiting for an interrupt */
-		if (cpu_getpc() == 0xffcdc270 && !value1)
+		if (cpu_get_pc() == 0xffcdc270 && !value1)
 		{
 			INT32 a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a14,b0,b1,b2;
 			INT32 a3x,a5x,a6x,a7x;
@@ -1783,7 +1780,7 @@ static int term2_speedup_r(int offset)
 
 			t2_FFC07DD0:
 				BURN_TIME(50);
-				if (TMS34010_ICount <= 0)
+				if (tms34010_ICount <= 0)
 				{
 					break;
 				}
@@ -1817,7 +1814,7 @@ int strkforc_speedup_r(int offset)
 		UINT32 value1 = READ_WORD(&SCRATCH_RAM[TOBYTE(0x71dd0)]);
 
 		/* Suspend cpu if it's waiting for an interrupt */
-		if (cpu_getpc() == 0xffe0a290 && !value1)
+		if (cpu_get_pc() == 0xffe0a290 && !value1)
 		{
 			DO_SPEEDUP_LOOP_1(0x1000060, 0xc0, 0xa0, INT32, INT32);
 		}
@@ -1835,7 +1832,7 @@ static int mk2_speedup_r(int offset)
 		UINT32 value1 = READ_WORD(&SCRATCH_RAM[TOBYTE(0x68e70)]);
 
 		/* Suspend cpu if it's waiting for an interrupt */
-		if (cpu_getpc() == 0xff80db70 && !value1)
+		if (cpu_get_pc() == 0xff80db70 && !value1)
 		{
 			DO_SPEEDUP_LOOP_3(0x105d480, 0x105d4a0, 0x105d4c0);
 		}
@@ -1853,7 +1850,7 @@ static int mk2r14_speedup_r(int offset)
 		UINT32 value1 = READ_WORD(&SCRATCH_RAM[TOBYTE(0x68de0)]);
 
 		/* Suspend cpu if it's waiting for an interrupt */
-		if (cpu_getpc() == 0xff80d960 && !value1)
+		if (cpu_get_pc() == 0xff80d960 && !value1)
 		{
 			DO_SPEEDUP_LOOP_3(0x105d480, 0x105d4a0, 0x105d4c0);
 		}
@@ -1871,7 +1868,7 @@ static int nbajam_speedup_r(int offset)
 		UINT32 value1 = READ_WORD(&SCRATCH_RAM[TOBYTE(0x754c0)]);
 
 		/* Suspend cpu if it's waiting for an interrupt */
-		if (cpu_getpc() == 0xff833480 && !value1)
+		if (cpu_get_pc() == 0xff833480 && !value1)
 		{
 			DO_SPEEDUP_LOOP_1(0x1008040, 0xd0, 0xb0, INT16, INT16);
 		}
@@ -1884,7 +1881,7 @@ static int narc_music_speedup_r (int offset)
 	unsigned char a, b;
 	a = Machine->memory_region[Machine->drv->cpu[1].memory_region][0x0228];
 	b = Machine->memory_region[Machine->drv->cpu[1].memory_region][0x0226];
-	if ((a==b)&&(cpu_getpc()==0xc786)) cpu_spinuntil_int();
+	if ((a==b)&&(cpu_get_pc()==0xc786)) cpu_spinuntil_int();
 	return a;
 }
 static int narc_digitizer_speedup_r (int offset)
@@ -1892,7 +1889,7 @@ static int narc_digitizer_speedup_r (int offset)
 	unsigned char a, b;
 	a = Machine->memory_region[Machine->drv->cpu[2].memory_region][0x0228];
 	b = Machine->memory_region[Machine->drv->cpu[2].memory_region][0x0226];
-	if ((a==b)&&(cpu_getpc()==0xc786)) cpu_spinuntil_int();
+	if ((a==b)&&(cpu_get_pc()==0xc786)) cpu_spinuntil_int();
 	return a;
 }
 static int mk_sound_speedup_r (int offset)
@@ -1900,9 +1897,9 @@ static int mk_sound_speedup_r (int offset)
 	unsigned char a, b;
 	a = Machine->memory_region[Machine->drv->cpu[1].memory_region][0x0218];
 	b = Machine->memory_region[Machine->drv->cpu[1].memory_region][0x0216];
-	if ((a==b)&&(cpu_getpc()==0xf579)) cpu_spinuntil_int(); /* MK */
-	if ((a==b)&&(cpu_getpc()==0xf5db)) cpu_spinuntil_int(); /* totcarn */
-	if ((a==b)&&(cpu_getpc()==0xf5d2)) cpu_spinuntil_int(); /* term2 */
+	if ((a==b)&&(cpu_get_pc()==0xf579)) cpu_spinuntil_int(); /* MK */
+	if ((a==b)&&(cpu_get_pc()==0xf5db)) cpu_spinuntil_int(); /* totcarn */
+	if ((a==b)&&(cpu_get_pc()==0xf5d2)) cpu_spinuntil_int(); /* term2 */
 	return a;
 }
 static int smashtv_sound_speedup_r (int offset)
@@ -1910,12 +1907,12 @@ static int smashtv_sound_speedup_r (int offset)
 	unsigned char a, b;
 	a = Machine->memory_region[Machine->drv->cpu[1].memory_region][0x0218];
 	b = Machine->memory_region[Machine->drv->cpu[1].memory_region][0x0216];
-	if ((a==b)&&(cpu_getpc()==0x963d)) cpu_spinuntil_int(); /* smashtv */
-	if ((a==b)&&(cpu_getpc()==0x97d1)) cpu_spinuntil_int(); /* trog, trogp */
-	if ((a==b)&&(cpu_getpc()==0x97be)) cpu_spinuntil_int(); /* hiimpact */
-	if ((a==b)&&(cpu_getpc()==0x984c)) cpu_spinuntil_int(); /* shimpact */
-	if ((a==b)&&(cpu_getpc()==0x9883)) cpu_spinuntil_int(); /* strkforc */
-//	if (errorlog) fprintf(errorlog, "PC: 0x%04x -- smashtv_sound_speedup\n", cpu_getpc());
+	if ((a==b)&&(cpu_get_pc()==0x963d)) cpu_spinuntil_int(); /* smashtv */
+	if ((a==b)&&(cpu_get_pc()==0x97d1)) cpu_spinuntil_int(); /* trog, trogp */
+	if ((a==b)&&(cpu_get_pc()==0x97be)) cpu_spinuntil_int(); /* hiimpact */
+	if ((a==b)&&(cpu_get_pc()==0x984c)) cpu_spinuntil_int(); /* shimpact */
+	if ((a==b)&&(cpu_get_pc()==0x9883)) cpu_spinuntil_int(); /* strkforc */
+//	if (errorlog) fprintf(errorlog, "PC: 0x%04x -- smashtv_sound_speedup\n", cpu_get_pc());
 	return a;
 }
 

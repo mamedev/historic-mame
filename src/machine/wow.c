@@ -160,7 +160,7 @@ int gorf_timer_r(int offset)
 
 	if ((RAM[0x5A93]==160) || (RAM[0x5A93]==4)) 	/* INVADERS AND    */
 	{												/* GALAXIAN SCREEN */
-        if (cpu_getpc()==0x3086)
+        if (cpu_get_pc()==0x3086)
         {
     	    if(--Skip==-1)
             {

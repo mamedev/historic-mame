@@ -9,7 +9,7 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "cpu/m6808/m6808.h"
+#include "cpu/m6800/m6800.h"
 #include "cpu/m6809/m6809.h"
 #include "6821pia.h"
 #include "machine/ticket.h"
@@ -1102,7 +1102,7 @@ static int tshoot_input_port_0_3(int offset)
 static void tshoot_maxvol(int offset, int data)
 {
 	if (errorlog)
-		fprintf(errorlog, "tshoot maxvol = %d (pc:%x)\n", data, cpu_getpc());
+		fprintf(errorlog, "tshoot maxvol = %d (pc:%x)\n", data, cpu_get_pc());
 }
 
 /***************************************************************************
@@ -1129,7 +1129,7 @@ int joust2_interrupt(void)
 static void j2_pia1_B(int offset, int data)
 {
 	if (errorlog)
-		fprintf(errorlog, "pia1 B = %d (pc:%x)\n", data, cpu_getpc());
+		fprintf(errorlog, "pia1 B = %d (pc:%x)\n", data, cpu_get_pc());
 	pia_3_porta_w(offset, data);
 	pia_4_portb_w(offset, data);
 }
@@ -1138,7 +1138,7 @@ static void j2_pia1_B(int offset, int data)
 static void j2_pia1_CA2(int offset, int data)
 {
 	if (errorlog)
-		fprintf(errorlog, "pia1_CA2 = %d (pc:%x)\n", data, cpu_getpc());
+		fprintf(errorlog, "pia1_CA2 = %d (pc:%x)\n", data, cpu_get_pc());
 	pia_4_cb1_w(0, data);
 }
 
@@ -1147,14 +1147,14 @@ static void j2_pia1_CA2(int offset, int data)
 static void j2_pia2_B(int offset, int data)
 {
 	if (errorlog)
-		fprintf(errorlog, "pia2 B = %d (pc:%x)\n", data, cpu_getpc());
+		fprintf(errorlog, "pia2 B = %d (pc:%x)\n", data, cpu_get_pc());
 }
 
 /* Connected to the 'reset' of the sound board cpu and pia */
 static void j2_pia2_CB2(int offset, int data)
 {
 	if (errorlog)
-		fprintf(errorlog, "pia2_CB2 = %d (pc:%x)\n", data, cpu_getpc());
+		fprintf(errorlog, "pia2_CB2 = %d (pc:%x)\n", data, cpu_get_pc());
 
 	if (data == 0)
 	{
@@ -1173,20 +1173,21 @@ static void j2_pia4_CA2(int offset, int data)
 {
 	/* ym2151 ~IC 'initial clear' */
 	if (errorlog)
-		fprintf(errorlog, "pia4 CA2 = %d (pc:%x)\n", data, cpu_getpc());
+		fprintf(errorlog, "pia4 CA2 = %d (pc:%x)\n", data, cpu_get_pc());
 }
 
 static void j2_pia4_CB2(int offset, int data)
 {
 	/* to CPU board */
 	if (errorlog)
-		fprintf(errorlog, "pia4 CB2 = %d (pc:%x)\n", data, cpu_getpc());
+		fprintf(errorlog, "pia4 CB2 = %d (pc:%x)\n", data, cpu_get_pc());
 }
 
-void joust2_ym2151_int(void)
+void joust2_ym2151_int(int irq)
 {
-	pia_4_ca1_w(0, 0);
-	pia_4_ca1_w(0, 1);
+	pia_4_ca1_w (0, irq==0);
+	/* pia_4_ca1_w(0, 0); */
+	/* pia_4_ca1_w(0, 1); */
 }
 
 void joust2_sound_bank_select_w (int offset,int data)

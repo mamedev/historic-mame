@@ -99,7 +99,7 @@ typedef struct ym2151_v{
 #endif
 	unsigned int TimAIndex,TimBIndex;/*timers' indexes*/
 
-	void (*handler)(void);		/*IRQ function handler*/
+	void (*handler)(int irq);		/*IRQ function handler*/
 	void (*porthandler)(int offset,int data);	/*port write handler*/
 
 	unsigned int freq[11*12*64];	/*11 octaves, 12 semitones, 64 'cents' */
@@ -599,8 +599,9 @@ static void timer_callback_a (int n)
     YM2151 *chip = &YMPSG[n];
 	chip->TimATimer=0;
 	if ( chip->IRQenable & 0x04 ){
+		int oldstate = chip->status;
 		chip->status |= 1;
-		if (chip->handler) (*chip->handler)();
+		if( !(oldstate) && (chip->handler) ) (*chip->handler)(1);
 	}
 }
 static void timer_callback_b (int n)
@@ -608,8 +609,9 @@ static void timer_callback_b (int n)
     YM2151 *chip = &YMPSG[n];
 	chip->TimBTimer=0;
 	if ( chip->IRQenable & 0x08 ){
+		int oldstate = chip->status;
 		chip->status |= 2;
-		if (chip->handler) (*chip->handler)();
+		if( !(oldstate) && (chip->handler) ) (*chip->handler)(1);
 	}
 }
 #endif
@@ -730,8 +732,19 @@ void YM2151WriteReg(int n, int r, int v)
 		case 0x14: /*CSM, irq flag reset, irq enable, timer start/stop*/
 			if (errorlog && (v&0x80) ) fprintf(errorlog,"YM2151 CSM ON\n"); /*CSM*/
 			chip->IRQenable = v;               /*bit 3-timer B, bit 2-timer A*/
-			if (v&0x20) chip->status &= 0xfd;  /*FRESET B*/
-			if (v&0x10) chip->status &= 0xfe;  /*FRESET A*/
+			if (v&0x20)
+			{
+				int old_state = chip->status;
+				chip->status &= 0xfd;  /*FRESET B*/
+				if( (old_state==2) && (chip->handler) ) (*chip->handler)(0);
+			}
+			if (v&0x10)
+			{
+				int old_state = chip->status;
+				chip->status &= 0xfe;  /*FRESET A*/
+				if( (old_state==1) && (chip->handler) ) (*chip->handler)(0);
+			}
+
 			if (v&0x02){                       /*LOAD & START B*/
 				#ifdef USE_MAME_TIMERS
 				/* ASG 980324: added a real timer */
@@ -966,6 +979,7 @@ void YM2151ResetChip(int num)
 	chip->noise = 0;
 
 	chip->status = 0;
+	if (chip->handler) (*chip->handler)(0);
 	chip->need_refresh = 1; /*emulator needs refresh after reset*/
 }
 
@@ -1259,7 +1273,7 @@ void YM2151UpdateOne(int num, SAMP **buffers, int length)
 			/* ASG 980324 - handled by real timers now*/
 			if ( PSG->IRQenable & 0x04 ){
 				PSG->status |= 1;
-				if (PSG->handler) (*PSG->handler)();
+				if( (PSG->status==1) && (chip->handler) ) (*chip->handler)(1);
 			}
 		}
 	}
@@ -1270,7 +1284,7 @@ void YM2151UpdateOne(int num, SAMP **buffers, int length)
 			/* ASG 980324 - handled by real timers now*/
 			if ( PSG->IRQenable & 0x08 ){
 				PSG->status |= 2;
-				if (PSG->handler) (*PSG->handler)();
+				if( (PSG->status==2) && (chip->handler) ) (*chip->handler)(1);
 			}
 		}
 	}
@@ -1364,7 +1378,7 @@ chan_calc(7);
 #endif
 #endif
 
-void YM2151SetIrqHandler(int n, void(*handler)(void))
+void YM2151SetIrqHandler(int n, void(*handler)(int irq))
 {
     YMPSG[n].handler = handler;
 }

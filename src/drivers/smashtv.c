@@ -153,8 +153,8 @@ void strkforc_driver_init(void);
 void term2_driver_init(void);
 
 /* Functions in sndhrdw/smashtv.c */
-void smashtv_ym2151_int (void);
-void narc_ym2151_int (void);
+void smashtv_ym2151_int (int irq);
+void narc_ym2151_int (int irq);
 void mk_sound_talkback_w (int offset,int data);
 int  narc_DAC_r(int offset);
 void narc_slave_DAC_w (int offset,int data);

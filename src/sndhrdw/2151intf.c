@@ -24,17 +24,19 @@ static int FMMode;
 
 static void *Timer[MAX_2151][2];
 
+/* IRQ Handler */
+static void IRQHandler(int n,int irq)
+{
+	if(intf->irqhandler[n]) intf->irqhandler[n](irq);
+}
+
 static void timer_callback_2151(int param)
 {
 	int n=param&0x7f;
 	int c=param>>7;
 
 	Timer[n][c] = 0;
-	if( YM2151TimerOver(n,c) )
-	{	/* IRQ is active */;
-		/* User Interrupt call */
-		if(intf->irqhandler[n]) intf->irqhandler[n]();
-	}
+	YM2151TimerOver(n,c);
 }
 
 /* TimerHandler from fm.c */
@@ -116,7 +118,7 @@ int YM2151_sh_start(struct YM2151interface *interface,int mode)
 		/* Set Timer handler */
 		for (i = 0; i < intf->num; i++)
 			Timer[i][0] =Timer[i][1] = 0;
-		if (OPMInit(intf->num,intf->baseclock,Machine->sample_rate,TimerHandler,0) == 0)
+		if (OPMInit(intf->num,intf->baseclock,Machine->sample_rate,TimerHandler,IRQHandler) == 0)
 		{
 			/* set port handler */
 			for (i = 0; i < intf->num; i++)

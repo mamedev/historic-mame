@@ -50,9 +50,9 @@ int asteroid_IN0_r (int offset) {
 	if (cpu_gettotalcycles() & 0x100)
 		res |= 0x02;
 	if (!avgdvg_done()) {
-		if (cpu_getpc()==0x6815)
+		if (cpu_get_pc()==0x6815)
 			cpu_spinuntil_int();
-		if (cpu_getpc()==0x6017)
+		if (cpu_get_pc()==0x6017)
 			cpu_spinuntil_int();
 		res |= 0x04;
 	}
@@ -164,7 +164,7 @@ int llander_IN0_r (int offset)
 {
 	int res;
 
-	if (cpu_getpc()==0x6534)
+	if (cpu_get_pc()==0x6534)
 		cpu_spinuntil_int();
 
 	res = readinputport(0);

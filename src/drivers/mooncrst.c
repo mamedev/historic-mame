@@ -801,7 +801,7 @@ ROM_START( mooncrst_rom )
 	ROM_LOAD( "mcs_c",        0x1800, 0x0800, 0x24cfd145 )
 
 	ROM_REGION(0x0020)	/* color prom */
-	ROM_LOAD( "mooncrst.clr", 0x0000, 0x0020, 0x6a0c7d87 )
+	ROM_LOAD( "l06_prom.bin", 0x0000, 0x0020, 0x6a0c7d87 )
 ROM_END
 
 ROM_START( mooncrsg_rom )
@@ -817,33 +817,33 @@ ROM_START( mooncrsg_rom )
 
 	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "epr203",       0x0000, 0x0800, 0xbe26b561 )
-	ROM_LOAD( "epr172",       0x0800, 0x0800, 0x13932a15 )
+	ROM_LOAD( "mcs_d",        0x0800, 0x0800, 0x13932a15 )
 	ROM_LOAD( "epr202",       0x1000, 0x0800, 0x26c7e800 )
-	ROM_LOAD( "epr171",       0x1800, 0x0800, 0x24cfd145 )
+	ROM_LOAD( "mcs_c",        0x1800, 0x0800, 0x24cfd145 )
 
 	ROM_REGION(0x0020)	/* color prom */
-	ROM_LOAD( "mooncrst.clr", 0x0000, 0x0020, 0x6a0c7d87 )
+	ROM_LOAD( "l06_prom.bin", 0x0000, 0x0020, 0x6a0c7d87 )
 ROM_END
 
 ROM_START( mooncrsb_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "bepr194",      0x0000, 0x0800, 0x6a23ec6d )
 	ROM_LOAD( "bepr195",      0x0800, 0x0800, 0xee262ff2 )
-	ROM_LOAD( "bepr196",      0x1000, 0x0800, 0x29a2b0ab )
-	ROM_LOAD( "bepr197",      0x1800, 0x0800, 0x4c6a5a6d )
-	ROM_LOAD( "bepr198",      0x2000, 0x0800, 0x06d378a6 )
+	ROM_LOAD( "f03.bin",      0x1000, 0x0800, 0x29a2b0ab )
+	ROM_LOAD( "f04.bin",      0x1800, 0x0800, 0x4c6a5a6d )
+	ROM_LOAD( "e5",           0x2000, 0x0800, 0x06d378a6 )
 	ROM_LOAD( "bepr199",      0x2800, 0x0800, 0x6e84a927 )
-	ROM_LOAD( "bepr200",      0x3000, 0x0800, 0xb45af1e8 )
+	ROM_LOAD( "e7",           0x3000, 0x0800, 0xb45af1e8 )
 	ROM_LOAD( "bepr201",      0x3800, 0x0800, 0x66da55d5 )
 
 	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "bepr203",      0x0000, 0x0800, 0xbe26b561 )
-	ROM_LOAD( "bepr172",      0x0800, 0x0800, 0x13932a15 )
-	ROM_LOAD( "bepr202",      0x1000, 0x0800, 0x26c7e800 )
-	ROM_LOAD( "bepr171",      0x1800, 0x0800, 0x24cfd145 )
+	ROM_LOAD( "epr203",       0x0000, 0x0800, 0xbe26b561 )
+	ROM_LOAD( "mcs_d",        0x0800, 0x0800, 0x13932a15 )
+	ROM_LOAD( "epr202",       0x1000, 0x0800, 0x26c7e800 )
+	ROM_LOAD( "mcs_c",        0x1800, 0x0800, 0x24cfd145 )
 
 	ROM_REGION(0x0020)	/* color prom */
-	ROM_LOAD( "mooncrst.clr", 0x0000, 0x0020, 0x6a0c7d87 )
+	ROM_LOAD( "l06_prom.bin", 0x0000, 0x0020, 0x6a0c7d87 )
 ROM_END
 
 ROM_START( fantazia_rom )
@@ -859,20 +859,20 @@ ROM_START( fantazia_rom )
 
 	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "1h_1_10.bin",  0x0000, 0x0800, 0x528da705 )
-	ROM_LOAD( "1k_2_12.bin",  0x0800, 0x0800, 0x13932a15 )
+	ROM_LOAD( "mcs_d",        0x0800, 0x0800, 0x13932a15 )
 	ROM_LOAD( "1k_1_11.bin",  0x1000, 0x0800, 0x4e79ff6b )
-	ROM_LOAD( "1h_2_09.bin",  0x1800, 0x0800, 0x24cfd145 )
+	ROM_LOAD( "mcs_c",        0x1800, 0x0800, 0x24cfd145 )
 
 	ROM_REGION(0x0020)	/* color prom */
-
+	ROM_LOAD( "fantazia.clr", 0x0000, 0x0020, 0x00000000 )   /* missing */
 ROM_END
 
 ROM_START( eagle_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "e1",           0x0000, 0x0800, 0x224c9526 )
 	ROM_LOAD( "e2",           0x0800, 0x0800, 0xcc538ebd )
-	ROM_LOAD( "e3",           0x1000, 0x0800, 0x29a2b0ab )
-	ROM_LOAD( "e4",           0x1800, 0x0800, 0x4c6a5a6d )
+	ROM_LOAD( "f03.bin",      0x1000, 0x0800, 0x29a2b0ab )
+	ROM_LOAD( "f04.bin",      0x1800, 0x0800, 0x4c6a5a6d )
 	ROM_LOAD( "e5",           0x2000, 0x0800, 0x06d378a6 )
 	ROM_LOAD( "e6",           0x2800, 0x0800, 0x0dea20d5 )
 	ROM_LOAD( "e7",           0x3000, 0x0800, 0xb45af1e8 )
@@ -881,17 +881,17 @@ ROM_START( eagle_rom )
 	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "e10",          0x0000, 0x0800, 0x40ce58bf )
 	ROM_LOAD( "e12",          0x0800, 0x0200, 0x628fdeed )
-	ROM_CONTINUE(    0x0c00, 0x0200 )	/* this version of the gfx ROMs has two */
-	ROM_CONTINUE(    0x0a00, 0x0200 )	/* groups of 16 sprites swapped */
-	ROM_CONTINUE(    0x0e00, 0x0200 )
+	ROM_CONTINUE(             0x0c00, 0x0200 )	/* this version of the gfx ROMs has two */
+	ROM_CONTINUE(             0x0a00, 0x0200 )	/* groups of 16 sprites swapped */
+	ROM_CONTINUE(             0x0e00, 0x0200 )
 	ROM_LOAD( "e9",           0x1000, 0x0800, 0xba664099 )
 	ROM_LOAD( "e11",          0x1800, 0x0200, 0xee4ec5fd )
-	ROM_CONTINUE(    0x1c00, 0x0200 )
-	ROM_CONTINUE(    0x1a00, 0x0200 )
-	ROM_CONTINUE(    0x1e00, 0x0200 )
+	ROM_CONTINUE(             0x1c00, 0x0200 )
+	ROM_CONTINUE(             0x1a00, 0x0200 )
+	ROM_CONTINUE(             0x1e00, 0x0200 )
 
 	ROM_REGION(0x0020)	/* color prom */
-	ROM_LOAD( "mooncrst.clr", 0x0000, 0x0020, 0x6a0c7d87 )
+	ROM_LOAD( "l06_prom.bin", 0x0000, 0x0020, 0x6a0c7d87 )
 ROM_END
 
 ROM_START( moonqsr_rom )
@@ -912,7 +912,7 @@ ROM_START( moonqsr_rom )
 	ROM_LOAD( "mqc",          0x1800, 0x0800, 0xa6db5b0d )
 
 	ROM_REGION(0x0020)	/* color prom */
-	ROM_LOAD( "moonqsr.clr",  0x0000, 0x0020, 0x0b878b54 )
+	ROM_LOAD( "vid_e6.bin",   0x0000, 0x0020, 0x0b878b54 )
 ROM_END
 
 ROM_START( checkman_rom )
@@ -958,7 +958,7 @@ ROM_START( moonal2_rom )
 	/* 1800-1fff empty */
 
 	ROM_REGION(0x0020)	/* color prom */
-	ROM_LOAD( "ali.clr",      0x0000, 0x0020, 0xc3ac9467 )
+	ROM_LOAD( "galaxian.clr", 0x0000, 0x0020, 0xc3ac9467 )
 ROM_END
 
 ROM_START( moonal2b_rom )
@@ -981,7 +981,7 @@ ROM_START( moonal2b_rom )
 	/* 1800-1fff empty */
 
 	ROM_REGION(0x0020)	/* color prom */
-	ROM_LOAD( "ali.clr",      0x0000, 0x0020, 0xc3ac9467 )
+	ROM_LOAD( "galaxian.clr", 0x0000, 0x0020, 0xc3ac9467 )
 ROM_END
 
 ROM_START( kingball_rom )
@@ -997,7 +997,7 @@ ROM_START( kingball_rom )
 	/* 1800-1fff empty */
 
 	ROM_REGION(0x20)	/* color PROMs */
-	ROM_LOAD( "kb2-1",        0x0000, 0x20, 0x72551251 )
+	ROM_LOAD( "kb2-1",        0x0000, 0x0020, 0x72551251 )
 
 	ROM_REGION(0x10000)	/* 64k for sound code */
 	ROM_LOAD( "kbe1.ic4",     0x0000, 0x0800, 0x5be2c80a )

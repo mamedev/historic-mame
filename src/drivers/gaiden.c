@@ -119,7 +119,7 @@ void tknight_protection_w(int offset,int data)
 
 	data = (data >> 8) & 0xff;
 
-//if (errorlog) fprintf(errorlog,"PC %06x: prot = %02x\n",cpu_getpc(),data);
+//if (errorlog) fprintf(errorlog,"PC %06x: prot = %02x\n",cpu_get_pc(),data);
 
 	switch (data & 0xf0)
 	{
@@ -156,7 +156,7 @@ if (errorlog) fprintf(errorlog,"unknown jumpcode %02x\n",jumpcode);
 
 int tknight_protection_r(int offset)
 {
-//if (errorlog) fprintf(errorlog,"PC %06x: read prot %02x\n",cpu_getpc(),prot);
+//if (errorlog) fprintf(errorlog,"PC %06x: read prot %02x\n",cpu_get_pc(),prot);
 	return prot;
 }
 
@@ -474,9 +474,9 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 /* handler called by the 2203 emulator when the internal timers cause an IRQ */
-static void irqhandler(void)
+static void irqhandler(int irq)
 {
-	cpu_cause_interrupt(1,0xff);
+	cpu_set_irq_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
 }
 
 static struct YM2203interface ym2203_interface =

@@ -88,7 +88,7 @@ int cchip1_r (int offset)
 			break;
 		case 0x004:
 			/* Coins */
-			if (errorlog) fprintf (errorlog, "cchip1_r (coin) pc: %06x, offset: %04x\n", cpu_getpc(), offset);
+			if (errorlog) fprintf (errorlog, "cchip1_r (coin) pc: %06x, offset: %04x\n", cpu_get_pc(), offset);
 			if (cchip1_bank == 1)
 				ret = cchip1_code[offset/2];
 			else
@@ -123,7 +123,7 @@ int cchip1_r (int offset)
 
 void cchip1_w (int offset, int data)
 {
-	if (errorlog) fprintf (errorlog, "cchip1_w pc: %06x, %04x:%02x\n", cpu_getpc(), offset, data);
+	if (errorlog) fprintf (errorlog, "cchip1_w pc: %06x, %04x:%02x\n", cpu_get_pc(), offset, data);
 	switch (offset)
 	{
 		case 0x0000:

@@ -1749,13 +1749,13 @@ void MAME_Debug (void)
 			gCurrentTraceCPU = activecpu;
 			asg_TraceSelect (gCurrentTraceCPU);
 		}
-		DebugInfo[cputype].Trace(cpu_getpc ());
+		DebugInfo[cputype].Trace(cpu_get_pc ());
 	}
 
 	if (PreviousSP)
 	{
 		/* See if we went into a function.  A RET will cause SP to be > than previousSP */
-		if ((cpu_getpc() != NextPC) && (GetSPValue(cputype) < PreviousSP))
+		if ((cpu_get_pc() != NextPC) && (GetSPValue(cputype) < PreviousSP))
 		{
 			/* if so, set a breakpoint on the return PC */
 			BreakPoint[activecpu] = NextPC;
@@ -1781,8 +1781,8 @@ void MAME_Debug (void)
 	}
 
 	/* Check for breakpoint or tilde key to enter debugger */
-	if (((BreakPoint[activecpu] != -1 && cpu_getpc()==BreakPoint[activecpu]) ||
-		(TempBreakPoint != -1 && cpu_getpc() == TempBreakPoint) ||/*MB 980103*/
+	if (((BreakPoint[activecpu] != -1 && cpu_get_pc()==BreakPoint[activecpu]) ||
+		(TempBreakPoint != -1 && cpu_get_pc() == TempBreakPoint) ||/*MB 980103*/
 		( ( CPUWatchpoint[activecpu] >= 0 ) && ( cpuintf[cputype].memory_read( CPUWatchpoint[activecpu] ) != CPUWatchdata[activecpu] ) ) || /* EHC 980506 */
 		  debug_key_pressed /* JB 980505 */ || FirstTime || ((CPUBreakPoint >= 0) && (activecpu != CPUBreakPoint))) && (~InDebug))	 /* MB 980121 */
 	{
@@ -1810,11 +1810,11 @@ void MAME_Debug (void)
 		Update = TRUE;
 		DebugTrace = FALSE;
 		FirstTime = FALSE;
-		StartAddress = cpu_getpc ();
+		StartAddress = cpu_get_pc ();
 		CursorPC = StartAddress;	/* MB 980103 */
 	}
 	if (Step)
-		CursorPC = cpu_getpc ();	/* MB 980103 */
+		CursorPC = cpu_get_pc ();	/* MB 980103 */
 	Step = FALSE;		/* So that we will get back into debugger if needed */
 	Update = TRUE;		/* Cause a screen refresh */
 	while ((InDebug) && !Step)
@@ -1833,7 +1833,7 @@ void MAME_Debug (void)
 			ScreenPutString ("        ", FLAG_COLOUR, DebugInfo[cputype].NamePos, 3);
 			sprintf (s, "%d (%s)", activecpu, DebugInfo[cputype].Name);
 			ScreenPutString (s, FLAG_COLOUR, DebugInfo[cputype].NamePos, 3);
-			CurrentPC = cpu_getpc ();
+			CurrentPC = cpu_get_pc ();
 			if (DebugTrace)
 			   StartAddress = CurrentPC;
 			if (CurrentPC < StartAddress || CurrentPC >= EndAddress)	/* MB 980103 */

@@ -23,6 +23,7 @@
 #define VERBOSE 0
 
 #include "driver.h"
+#include "state.h"
 #include "osd_cpu.h"
 #include "i8085.h"
 #include "i8085cpu.h"
@@ -47,6 +48,23 @@ extern  FILE * errorlog;
 
 
 int i8085_ICount = 0;
+
+typedef struct {
+	int 	cputype;	/* 0 8080, 1 8085A */
+	PAIR	AF,BC,DE,HL,SP,PC,XX;
+    UINT8   HALT;
+	UINT8	IM; 		/* interrupt mask */
+	UINT8	IREQ;		/* requested interrupts */
+	UINT8	ISRV;		/* serviced interrupt */
+	UINT32	INTR;		/* vector for INTR */
+	UINT32	IRQ2;		/* scheduled interrupt address */
+	UINT32	IRQ1;		/* executed interrupt address */
+    INT8    nmi_state;
+    INT8    irq_state[4];
+    INT8    filler; /* align on dword boundary */
+    int     (*irq_callback)(int);
+    void    (*sod_callback)(int state);
+}   i8085_Regs;
 
 static i8085_Regs I;
 static UINT8 ZS[256];
@@ -194,8 +212,16 @@ INLINE void execute_one(int opcode)
 			M_RAR;
 			break;
 
-		case 0x20: i8085_ICount -= 7;	/* RIM	*/
-			I.AF.b.h = I.IM;
+		case 0x20:
+			if( I.cputype )
+			{
+				i8085_ICount -= 7;		/* RIM	*/
+				I.AF.b.h = I.IM;
+			}
+			else
+			{
+				i8085_ICount -= 7;		/* ???	*/
+            }
 			break;
 		case 0x21: i8085_ICount -= 10;	/* LXI	H,nnnn */
 			I.HL.w.l = ARG16();
@@ -255,12 +281,20 @@ INLINE void execute_one(int opcode)
 			I.AF.b.l |= HF + NF;
 			break;
 
-		case 0x30: i8085_ICount -= 7;	/* SIM	*/
-			if ((I.IM ^ I.AF.b.h) & 0x80)
-				if (I.sod_callback) (*I.sod_callback)(I.AF.b.h >> 7);
-			I.IM &= (IM_SID + IM_IEN + IM_TRAP);
-			I.IM |= (I.AF.b.h & ~(IM_SID + IM_SOD + IM_IEN + IM_TRAP));
-			if (I.AF.b.h & 0x80) I.IM |= IM_SOD;
+		case 0x30:
+			if( I.cputype )
+            {
+				i8085_ICount -= 7;		/* SIM	*/
+				if ((I.IM ^ I.AF.b.h) & 0x80)
+					if (I.sod_callback) (*I.sod_callback)(I.AF.b.h >> 7);
+				I.IM &= (IM_SID + IM_IEN + IM_TRAP);
+				I.IM |= (I.AF.b.h & ~(IM_SID + IM_SOD + IM_IEN + IM_TRAP));
+				if (I.AF.b.h & 0x80) I.IM |= IM_SOD;
+			}
+			else
+			{
+				i8085_ICount -= 4;		/* ???	*/
+			}
 			break;
 		case 0x31: i8085_ICount -= 10;	/* LXI SP,nnnn */
 			I.SP.w.l = ARG16();
@@ -923,50 +957,63 @@ INLINE void execute_one(int opcode)
 			I.IREQ &= ~I.ISRV;
 			/* reset serviced IRQ */
 			I.ISRV = 0;
-#if NEW_INTERRUPT_SYSTEM
-			if (I.irq_state[0] != CLEAR_LINE) {
+			if( I.irq_state[0] != CLEAR_LINE )
+			{
 				LOG((errorlog, "i8085 EI sets INTR\n"));
 				I.IREQ |= IM_INTR;
 				I.INTR = I8085_INTR;
 			}
-			if (I.irq_state[1] != CLEAR_LINE) {
-				LOG((errorlog, "i8085 EI sets RST5.5\n"));
-				I.IREQ |= IM_RST55;
-			}
-			if (I.irq_state[2] != CLEAR_LINE) {
-				LOG((errorlog, "i8085 EI sets RST6.5\n"));
-				I.IREQ |= IM_RST65;
-			}
-			if (I.irq_state[3] != CLEAR_LINE) {
-				LOG((errorlog, "i8085 EI sets RST7.5\n"));
-				I.IREQ |= IM_RST75;
-			}
-#endif
-            /* find highest priority IREQ flag with
-			   IM enabled and schedule for execution */
-			if( !(I.IM & IM_RST75) && (I.IREQ & IM_RST75) )
+			if( I.cputype )
 			{
-				I.ISRV = IM_RST75;
-				I.IRQ2 = ADDR_RST75;
+				if( I.irq_state[1] != CLEAR_LINE )
+				{
+					LOG((errorlog, "i8085 EI sets RST5.5\n"));
+					I.IREQ |= IM_RST55;
+				}
+				if( I.irq_state[2] != CLEAR_LINE )
+				{
+					LOG((errorlog, "i8085 EI sets RST6.5\n"));
+					I.IREQ |= IM_RST65;
+				}
+				if( I.irq_state[3] != CLEAR_LINE )
+				{
+					LOG((errorlog, "i8085 EI sets RST7.5\n"));
+					I.IREQ |= IM_RST75;
+				}
+				/* find highest priority IREQ flag with
+				   IM enabled and schedule for execution */
+				if( !(I.IM & IM_RST75) && (I.IREQ & IM_RST75) )
+				{
+					I.ISRV = IM_RST75;
+					I.IRQ2 = ADDR_RST75;
+				}
+				else
+				if( !(I.IM & IM_RST65) && (I.IREQ & IM_RST65) )
+				{
+					I.ISRV = IM_RST65;
+					I.IRQ2 = ADDR_RST65;
+				}
+				else
+				if( !(I.IM & IM_RST55) && (I.IREQ & IM_RST55) )
+				{
+					I.ISRV = IM_RST55;
+					I.IRQ2 = ADDR_RST55;
+				}
+				else
+				if( !(I.IM & IM_INTR) && (I.IREQ & IM_INTR) )
+				{
+					I.ISRV = IM_INTR;
+					I.IRQ2 = I.INTR;
+				}
 			}
 			else
-			if( !(I.IM & IM_RST65) && (I.IREQ & IM_RST65) )
 			{
-				I.ISRV = IM_RST65;
-				I.IRQ2 = ADDR_RST65;
-			}
-			else
-			if( !(I.IM & IM_RST55) && (I.IREQ & IM_RST55) )
-			{
-				I.ISRV = IM_RST55;
-				I.IRQ2 = ADDR_RST55;
-			}
-			else
-			if( !(I.IM & IM_INTR) && (I.IREQ & IM_INTR) )
-			{
-				I.ISRV = IM_INTR;
-				I.IRQ2 = I.INTR;
-			}
+				if( !(I.IM & IM_INTR) && (I.IREQ & IM_INTR) )
+				{
+					I.ISRV = IM_INTR;
+					I.IRQ2 = I.INTR;
+                }
+            }
 			break;
 		case 0xfc: i8085_ICount -= 10;	/* CM	nnnn */
 			M_CALL( I.AF.b.l & SF );
@@ -993,29 +1040,35 @@ static void Interrupt(void)
 		I.HALT = 0;
 	}
 	I.IM &= ~IM_IEN;		/* remove general interrupt enable bit */
-#if NEW_INTERRUPT_SYSTEM
-	if( I.ISRV == IM_INTR )
+
+    if( I.ISRV == IM_INTR )
 	{
 		LOG((errorlog,"Interrupt get INTR vector\n"));
 		I.IRQ1 = (I.irq_callback)(0);
 	}
-	if( I.ISRV == IM_RST55 )
+
+	if( I.cputype )
 	{
-		LOG((errorlog,"Interrupt get RST5.5 vector\n"));
-		I.IRQ1 = (I.irq_callback)(1);
+		if( I.ISRV == IM_RST55 )
+		{
+			LOG((errorlog,"Interrupt get RST5.5 vector\n"));
+			I.IRQ1 = (I.irq_callback)(1);
+		}
+
+		if( I.ISRV == IM_RST65	)
+		{
+			LOG((errorlog,"Interrupt get RST6.5 vector\n"));
+			I.IRQ1 = (I.irq_callback)(2);
+		}
+
+		if( I.ISRV == IM_RST75 )
+		{
+			LOG((errorlog,"Interrupt get RST7.5 vector\n"));
+			I.IRQ1 = (I.irq_callback)(3);
+		}
 	}
-	if( I.ISRV == IM_RST65	)
-	{
-		LOG((errorlog,"Interrupt get RST6.5 vector\n"));
-		I.IRQ1 = (I.irq_callback)(2);
-	}
-	if( I.ISRV == IM_RST75 )
-	{
-		LOG((errorlog,"Interrupt get RST7.5 vector\n"));
-		I.IRQ1 = (I.irq_callback)(3);
-	}
-#endif
-	switch( I.IRQ1 & 0xff0000 )
+
+    switch( I.IRQ1 & 0xff0000 )
 	{
 		case 0xcd0000:	/* CALL nnnn */
 			i8085_ICount -= 7;
@@ -1026,7 +1079,7 @@ static void Interrupt(void)
 			change_pc16(I.PC.d);
 			break;
 		default:
-			switch (I.IRQ1)
+			switch( I.IRQ1 )
 			{
 				case I8085_TRAP:
 				case I8085_RST75:
@@ -1071,9 +1124,9 @@ int i8085_execute(int cycles)
 	return cycles - i8085_ICount;
 }
 
-/****************************************************************************/
-/* Initialise the various lookup tables used by the emulation code          */
-/****************************************************************************/
+/****************************************************************************
+ * Initialise the various lookup tables used by the emulation code
+ ****************************************************************************/
 static void init_tables (void)
 {
 	UINT8 zs;
@@ -1097,83 +1150,131 @@ static void init_tables (void)
 	}
 }
 
-/****************************************************************************/
-/* Reset the 8085 emulation                                                 */
-/****************************************************************************/
+/****************************************************************************
+ * Reset the 8085 emulation
+ ****************************************************************************/
 void i8085_reset(void *param)
 {
 	init_tables();
 	memset(&I, 0, sizeof(i8085_Regs));
+	I.cputype = 1;
 	change_pc16(I.PC.d);
 }
 
-/****************************************************************************/
-/* Shut down the CPU emulation												*/
-/****************************************************************************/
+/****************************************************************************
+ * Shut down the CPU emulation
+ ****************************************************************************/
 void i8085_exit(void)
 {
 	/* nothing to do */
 }
 
-/****************************************************************************/
-/* Get the current 8085 context                                             */
-/****************************************************************************/
-void i8085_getregs(i8085_Regs * regs)
+/****************************************************************************
+ * Get the current 8085 context
+ ****************************************************************************/
+unsigned i8085_get_context(void *dst)
 {
-	*regs = I;
+	if( dst )
+		*(i8085_Regs*)dst = I;
+	return sizeof(i8085_Regs);
 }
 
-/****************************************************************************/
-/* Set the current 8085 context                                             */
-/****************************************************************************/
-void i8085_setregs(i8085_Regs * regs)
+/****************************************************************************
+ * Set the current 8085 context
+ ****************************************************************************/
+void i8085_set_context(void *src)
 {
-	I = *regs;
+	if( src )
+	{
+		I = *(i8085_Regs*)src;
+		change_pc(I.PC.d);
+	}
 }
 
-/****************************************************************************/
-/* Get the current 8085 PC                                                  */
-/****************************************************************************/
-unsigned i8085_getpc(void)
+/****************************************************************************
+ * Get the current 8085 PC
+ ****************************************************************************/
+unsigned i8085_get_pc(void)
 {
 	return I.PC.d;
 }
 
-/****************************************************************************/
-/* Get a specific register                                                  */
-/****************************************************************************/
-unsigned i8085_getreg(int regnum)
+/****************************************************************************
+ * Set the current 8085 PC
+ ****************************************************************************/
+void i8085_set_pc(unsigned val)
+{
+	I.PC.w.l = val;
+	change_pc(I.PC.d);
+}
+
+/****************************************************************************
+ * Get the current 8085 SP
+ ****************************************************************************/
+unsigned i8085_get_sp(void)
+{
+	return I.SP.d;
+}
+
+/****************************************************************************
+ * Set the current 8085 SP
+ ****************************************************************************/
+void i8085_set_sp(unsigned val)
+{
+	I.SP.w.l = val;
+}
+
+/****************************************************************************
+ * Get a specific register
+ ****************************************************************************/
+unsigned i8085_get_reg(int regnum)
 {
 	switch( regnum )
 	{
-		case 0: return I.AF.w.l;
-		case 1: return I.BC.w.l;
-		case 2: return I.DE.w.l;
-		case 3: return I.HL.w.l;
-		case 4: return I.SP.w.l;
-		case 5: return I.PC.w.l;
-		case 6: return I.IM;
-		case 7: return I.HALT;
+		case I8085_AF: return I.AF.w.l;
+		case I8085_BC: return I.BC.w.l;
+		case I8085_DE: return I.DE.w.l;
+		case I8085_HL: return I.HL.w.l;
+		case I8085_SP: return I.SP.w.l;
+		case I8085_PC: return I.PC.w.l;
+		case I8085_IM: return I.IM;
+		case I8085_HALT: return I.HALT;
+		case I8085_IREQ: return I.IREQ;
+		case I8085_ISRV: return I.ISRV;
+		case I8085_VECTOR: return I.INTR;
+		case I8085_TRAP_STATE: return I.nmi_state;
+		case I8085_INTR_STATE: return I.irq_state[I8085_INTR_LINE];
+		case I8085_RST55_STATE: return I.irq_state[I8085_RST55_LINE];
+		case I8085_RST65_STATE: return I.irq_state[I8085_RST65_LINE];
+		case I8085_RST75_STATE: return I.irq_state[I8085_RST75_LINE];
 	}
 	return 0;
 }
 
-/****************************************************************************/
-/* Set a specific register													*/
-/****************************************************************************/
-void i8085_setreg(int regnum, unsigned val)
+/****************************************************************************
+ * Set a specific register
+ ****************************************************************************/
+void i8085_set_reg(int regnum, unsigned val)
 {
 	switch( regnum )
 	{
-		case 0: I.AF.w.l = val; break;
-		case 1: I.BC.w.l = val; break;
-		case 2: I.DE.w.l = val; break;
-		case 3: I.HL.w.l = val; break;
-		case 4: I.SP.w.l = val; break;
-		case 5: I.PC.w.l = val; break;
-		case 6: I.IM = val; break;
-		case 7: I.HALT = val; break;
-	}
+		case I8085_AF: I.AF.w.l = val; break;
+		case I8085_BC: I.BC.w.l = val; break;
+		case I8085_DE: I.DE.w.l = val; break;
+		case I8085_HL: I.HL.w.l = val; break;
+		case I8085_SP: I.SP.w.l = val; break;
+		case I8085_PC: I.PC.w.l = val; break;
+		case I8085_IM: I.IM = val; break;
+		case I8085_HALT: I.HALT = val; break;
+		case I8085_IREQ: I.IREQ = val; break;
+		case I8085_ISRV: I.ISRV = val; break;
+		case I8085_VECTOR: I.INTR = val; break;
+		case I8085_TRAP_STATE: I.nmi_state = val; break;
+		case I8085_INTR_STATE: I.irq_state[I8085_INTR_LINE] = val; break;
+		case I8085_RST55_STATE: I.irq_state[I8085_RST55_LINE] = val; break;
+		case I8085_RST65_STATE: I.irq_state[I8085_RST65_LINE] = val; break;
+		case I8085_RST75_STATE: I.irq_state[I8085_RST75_LINE] = val; break;
+    }
 }
 
 /****************************************************************************/
@@ -1205,16 +1306,13 @@ void i8085_set_TRAP(int state)
 	if (state)
 	{
 		I.IREQ |= IM_TRAP;
-		/* already servicing TRAP ? */
-		if (I.ISRV & IM_TRAP) return;
-		/* schedule TRAP */
-		I.ISRV = IM_TRAP;
+		if( I.ISRV & IM_TRAP ) return;	/* already servicing TRAP ? */
+		I.ISRV = IM_TRAP;				/* service TRAP */
 		I.IRQ2 = ADDR_TRAP;
 	}
 	else
 	{
-		/* remove request for TRAP */
-		I.IREQ &= ~IM_TRAP;
+		I.IREQ &= ~IM_TRAP; 			/* remove request for TRAP */
 	}
 }
 
@@ -1224,17 +1322,14 @@ void i8085_set_TRAP(int state)
 void i8085_set_RST75(int state)
 {
 	LOG((errorlog, "i8085: RST7.5 %d\n", state));
-	if (state)
+	if( state )
 	{
-		/* request RST7.5 */
-		I.IREQ |= IM_RST75;
-		/* if masked, ignore it for now */
-		if (I.IM & IM_RST75) return;
-		/* if no higher priority IREQ is serviced */
-		if (!I.ISRV)
+
+		I.IREQ |= IM_RST75; 			/* request RST7.5 */
+		if( I.IM & IM_RST75 ) return;	/* if masked, ignore it for now */
+		if( !I.ISRV )					/* if no higher priority IREQ is serviced */
 		{
-			/* schedule RST7.5 */
-			I.ISRV = IM_RST75;
+			I.ISRV = IM_RST75;			/* service RST7.5 */
 			I.IRQ2 = ADDR_RST75;
 		}
 	}
@@ -1249,22 +1344,17 @@ void i8085_set_RST65(int state)
 	LOG((errorlog, "i8085: RST6.5 %d\n", state));
 	if( state )
 	{
-		/* request RST6.5 */
-		I.IREQ |= IM_RST65;
-		/* if masked, ignore it for now */
-		if (I.IM & IM_RST65) return;
-		/* if no higher priority IREQ is serviced */
-		if( !I.ISRV )
+		I.IREQ |= IM_RST65; 			/* request RST6.5 */
+		if( I.IM & IM_RST65 ) return;	/* if masked, ignore it for now */
+		if( !I.ISRV )					/* if no higher priority IREQ is serviced */
 		{
-			/* schedule RST6.5 */
-			I.ISRV = IM_RST65;
+			I.ISRV = IM_RST65;			/* service RST6.5 */
 			I.IRQ2 = ADDR_RST65;
 		}
 	}
 	else
 	{
-		/* remove request for RST6.5 */
-		I.IREQ &= ~IM_RST65;
+		I.IREQ &= ~IM_RST65;			/* remove request for RST6.5 */
 	}
 }
 
@@ -1276,22 +1366,17 @@ void i8085_set_RST55(int state)
 	LOG((errorlog, "i8085: RST5.5 %d\n", state));
 	if( state )
 	{
-		/* request RST5.5 */
-		I.IREQ |= IM_RST55;
-		/* if masked, ignore it for now */
-		if (I.IM & IM_RST55) return;
-		/* if no higher priority IREQ is serviced */
-		if( !I.ISRV )
+		I.IREQ |= IM_RST55; 			/* request RST5.5 */
+		if( I.IM & IM_RST55 ) return;	/* if masked, ignore it for now */
+		if( !I.ISRV )					/* if no higher priority IREQ is serviced */
 		{
-			/* schedule RST5.5 */
-			I.ISRV = IM_RST55;
+			I.ISRV = IM_RST55;			/* service RST5.5 */
 			I.IRQ2 = ADDR_RST55;
 		}
 	}
 	else
 	{
-		/* remove request for RST5.5 */
-		I.IREQ &= ~IM_RST55;
+		I.IREQ &= ~IM_RST55;			/* remove request for RST5.5 */
 	}
 }
 
@@ -1303,30 +1388,25 @@ void i8085_set_INTR(int state)
 	LOG((errorlog, "i8085: INTR %d\n", state));
 	if( state )
 	{
-		/* request INTR */
-		I.IREQ |= IM_INTR;
+		I.IREQ |= IM_INTR;				/* request INTR */
 		I.INTR = state;
-        /* if masked, ignore it for now */
-		if (I.IM & IM_INTR) return;
-		/* if no higher priority IREQ is serviced */
-		if( !I.ISRV )
+		if( I.IM & IM_INTR ) return;	/* if masked, ignore it for now */
+		if( !I.ISRV )					/* if no higher priority IREQ is serviced */
 		{
-			/* schedule INTR */
-			I.ISRV = IM_INTR;
+			I.ISRV = IM_INTR;			/* service INTR */
 			I.IRQ2 = I.INTR;
 		}
 	}
 	else
 	{
-		/* remove request for INTR */
-		I.IREQ &= ~IM_INTR;
+		I.IREQ &= ~IM_INTR; 			/* remove request for INTR */
 	}
 }
 
 void i8085_set_nmi_line(int state)
 {
 	I.nmi_state = state;
-	if (state != CLEAR_LINE)
+	if( state != CLEAR_LINE )
 		i8085_set_TRAP(1);
 }
 
@@ -1335,27 +1415,27 @@ void i8085_set_irq_line(int irqline, int state)
 	I.irq_state[irqline] = state;
 	if (state == CLEAR_LINE)
 	{
-		if (!(I.IM & IM_IEN))
+		if( !(I.IM & IM_IEN) )
 		{
 			switch (irqline)
 			{
-				case 0: i8085_set_INTR(0); break;
-				case 1: i8085_set_RST55(0); break;
-				case 2: i8085_set_RST65(0); break;
-				case 3: i8085_set_RST75(0); break;
+				case I8085_INTR_LINE: i8085_set_INTR(0); break;
+				case I8085_RST55_LINE: i8085_set_RST55(0); break;
+				case I8085_RST65_LINE: i8085_set_RST65(0); break;
+				case I8085_RST75_LINE: i8085_set_RST75(0); break;
             }
         }
 	}
 	else
 	{
-		if (I.IM & IM_IEN)
+		if( I.IM & IM_IEN )
 		{
-			switch (irqline)
+			switch( irqline )
 			{
-				case 0: i8085_set_INTR(1); break;
-				case 1: i8085_set_RST55(1); break;
-				case 2: i8085_set_RST65(1); break;
-				case 3: i8085_set_RST75(1); break;
+				case I8085_INTR_LINE: i8085_set_INTR(1); break;
+				case I8085_RST55_LINE: i8085_set_RST55(1); break;
+				case I8085_RST65_LINE: i8085_set_RST65(1); break;
+				case I8085_RST75_LINE: i8085_set_RST75(1); break;
 			}
 		}
     }
@@ -1368,42 +1448,42 @@ void i8085_set_irq_callback(int (*callback)(int))
 
 void i8085_state_save(void *file)
 {
-    osd_fwrite_lsbfirst(file, &I.PC.w.l, 2);
-    osd_fwrite_lsbfirst(file, &I.SP.w.l, 2);
-	osd_fwrite_lsbfirst(file, &I.BC.w.l, 2);
-	osd_fwrite_lsbfirst(file, &I.DE.w.l, 2);
-	osd_fwrite_lsbfirst(file, &I.HL.w.l, 2);
-    osd_fwrite_lsbfirst(file, &I.AF.w.l, 2);
-	osd_fwrite_lsbfirst(file, &I.XX.w.l, 2);
-	osd_fwrite(file,&I.HALT,1);
-	osd_fwrite(file,&I.IM,1);
-	osd_fwrite(file,&I.IREQ,1);
-	osd_fwrite(file,&I.ISRV,1);
-	osd_fwrite(file,&I.INTR,1);
-	osd_fwrite(file,&I.IRQ2,1);
-	osd_fwrite(file,&I.IRQ1,1);
-	osd_fwrite(file,&I.nmi_state,1);
-	osd_fwrite(file,&I.irq_state,4);
+	int cpu = cpu_getactivecpu();
+	state_save_UINT16(file, "i8085", cpu, "AF", &I.AF.w.l, 1);
+	state_save_UINT16(file, "i8085", cpu, "BC", &I.BC.w.l, 1);
+	state_save_UINT16(file, "i8085", cpu, "DE", &I.DE.w.l, 1);
+	state_save_UINT16(file, "i8085", cpu, "HL", &I.HL.w.l, 1);
+	state_save_UINT16(file, "i8085", cpu, "SP", &I.SP.w.l, 1);
+	state_save_UINT16(file, "i8085", cpu, "PC", &I.PC.w.l, 1);
+	state_save_UINT8(file, "i8085", cpu, "HALT", &I.HALT, 1);
+	state_save_UINT8(file, "i8085", cpu, "IM", &I.IM, 1);
+	state_save_UINT8(file, "i8085", cpu, "IREQ", &I.IREQ, 1);
+	state_save_UINT8(file, "i8085", cpu, "ISRV", &I.ISRV, 1);
+	state_save_UINT32(file, "i8085", cpu, "INTR", &I.INTR, 1);
+	state_save_UINT32(file, "i8085", cpu, "IRQ2", &I.IRQ2, 1);
+	state_save_UINT32(file, "i8085", cpu, "IRQ1", &I.IRQ1, 1);
+	state_save_INT8(file, "i8085", cpu, "NMI_STATE", &I.nmi_state, 1);
+	state_save_INT8(file, "i8085", cpu, "IRQ_STATE", I.irq_state, 4);
 }
 
 void i8085_state_load(void *file)
 {
-	osd_fread_lsbfirst(file, &I.PC.w.l, 2);
-	osd_fread_lsbfirst(file, &I.SP.w.l, 2);
-	osd_fread_lsbfirst(file, &I.BC.w.l, 2);
-	osd_fread_lsbfirst(file, &I.DE.w.l, 2);
-	osd_fread_lsbfirst(file, &I.HL.w.l, 2);
-	osd_fread_lsbfirst(file, &I.AF.w.l, 2);
-	osd_fread_lsbfirst(file, &I.XX.w.l, 2);
-	osd_fread(file,&I.HALT,1);
-	osd_fread(file,&I.IM,1);
-	osd_fread(file,&I.IREQ,1);
-	osd_fread(file,&I.ISRV,1);
-	osd_fread(file,&I.INTR,1);
-	osd_fread(file,&I.IRQ2,1);
-	osd_fread(file,&I.IRQ1,1);
-	osd_fread(file,&I.nmi_state,1);
-	osd_fread(file,&I.irq_state,4);
+	int cpu = cpu_getactivecpu();
+    state_load_UINT16(file, "i8085", cpu, "AF", &I.AF.w.l, 1);
+	state_load_UINT16(file, "i8085", cpu, "BC", &I.BC.w.l, 1);
+	state_load_UINT16(file, "i8085", cpu, "DE", &I.DE.w.l, 1);
+	state_load_UINT16(file, "i8085", cpu, "HL", &I.HL.w.l, 1);
+	state_load_UINT16(file, "i8085", cpu, "SP", &I.SP.w.l, 1);
+	state_load_UINT16(file, "i8085", cpu, "PC", &I.PC.w.l, 1);
+	state_load_UINT8(file, "i8085", cpu, "HALT", &I.HALT, 1);
+	state_load_UINT8(file, "i8085", cpu, "IM", &I.IM, 1);
+	state_load_UINT8(file, "i8085", cpu, "IREQ", &I.IREQ, 1);
+	state_load_UINT8(file, "i8085", cpu, "ISRV", &I.ISRV, 1);
+	state_load_UINT32(file, "i8085", cpu, "INTR", &I.INTR, 1);
+	state_load_UINT32(file, "i8085", cpu, "IRQ2", &I.IRQ2, 1);
+	state_load_UINT32(file, "i8085", cpu, "IRQ1", &I.IRQ1, 1);
+	state_load_INT8(file, "i8085", cpu, "NMI_STATE", &I.nmi_state, 1);
+	state_load_INT8(file, "i8085", cpu, "IRQ_STATE", I.irq_state, 4);
 }
 
 /****************************************************************************
@@ -1413,16 +1493,16 @@ const char *i8085_info(void *context, int regnum)
 {
 	static char buffer[16][47+1];
 	static int which = 0;
-	i8085_Regs *r = (i8085_Regs *)context;
+	i8085_Regs *r = context;
 
 	which = ++which % 16;
 	buffer[which][0] = '\0';
-	if( !context && regnum >= CPU_INFO_PC )
-		return buffer[which];
+	if( !context )
+		r = &I;
 
     switch( regnum )
 	{
-		case CPU_INFO_NAME: return "I8085A";
+		case CPU_INFO_NAME: return "8085A";
 		case CPU_INFO_FAMILY: return "Intel 8080";
 		case CPU_INFO_VERSION: return "1.1";
 		case CPU_INFO_FILE: return __FILE__;
@@ -1445,24 +1525,104 @@ const char *i8085_info(void *context, int regnum)
 				r->AF.b.l & 0x02 ? 'N':'.',
 				r->AF.b.l & 0x01 ? 'C':'.');
 			break;
-		case CPU_INFO_REG+ 0: sprintf(buffer[which], "AF:%04X", r->AF.w.l); break;
-		case CPU_INFO_REG+ 1: sprintf(buffer[which], "BC:%04X", r->BC.w.l); break;
-		case CPU_INFO_REG+ 2: sprintf(buffer[which], "DE:%04X", r->DE.w.l); break;
-		case CPU_INFO_REG+ 3: sprintf(buffer[which], "HL:%04X", r->HL.w.l); break;
-		case CPU_INFO_REG+ 4: sprintf(buffer[which], "SP:%04X", r->SP.w.l); break;
-		case CPU_INFO_REG+ 5: sprintf(buffer[which], "PC:%04X", r->PC.w.l); break;
-		case CPU_INFO_REG+ 6: sprintf(buffer[which], "IM:%02X", r->IM); break;
-		case CPU_INFO_REG+ 7: sprintf(buffer[which], "HALT:%d", r->HALT); break;
-	}
+		case CPU_INFO_REG+I8085_AF: sprintf(buffer[which], "AF:%04X", r->AF.w.l); break;
+		case CPU_INFO_REG+I8085_BC: sprintf(buffer[which], "BC:%04X", r->BC.w.l); break;
+		case CPU_INFO_REG+I8085_DE: sprintf(buffer[which], "DE:%04X", r->DE.w.l); break;
+		case CPU_INFO_REG+I8085_HL: sprintf(buffer[which], "HL:%04X", r->HL.w.l); break;
+		case CPU_INFO_REG+I8085_SP: sprintf(buffer[which], "SP:%04X", r->SP.w.l); break;
+		case CPU_INFO_REG+I8085_PC: sprintf(buffer[which], "PC:%04X", r->PC.w.l); break;
+		case CPU_INFO_REG+I8085_IM: sprintf(buffer[which], "IM:%02X", r->IM); break;
+		case CPU_INFO_REG+I8085_HALT: sprintf(buffer[which], "HALT:%d", r->HALT); break;
+		case CPU_INFO_REG+I8085_IREQ: sprintf(buffer[which], "%02X", I.IREQ); break;
+		case CPU_INFO_REG+I8085_ISRV: sprintf(buffer[which], "%02X", I.ISRV); break;
+		case CPU_INFO_REG+I8085_VECTOR: sprintf(buffer[which], "%02X", I.INTR); break;
+		case CPU_INFO_REG+I8085_TRAP_STATE: sprintf(buffer[which], "%X", I.nmi_state); break;
+		case CPU_INFO_REG+I8085_INTR_STATE: sprintf(buffer[which], "%X", I.irq_state[I8085_INTR_LINE]); break;
+		case CPU_INFO_REG+I8085_RST55_STATE: sprintf(buffer[which], "%X", I.irq_state[I8085_RST55_LINE]); break;
+		case CPU_INFO_REG+I8085_RST65_STATE: sprintf(buffer[which], "%X", I.irq_state[I8085_RST65_LINE]); break;
+		case CPU_INFO_REG+I8085_RST75_STATE: sprintf(buffer[which], "%X", I.irq_state[I8085_RST75_LINE]); break;
+    }
 	return buffer[which];
 }
 
+/**************************************************************************
+ * 8080 section
+ **************************************************************************/
+void i8080_reset(void *param)
+{
+	i8085_reset(param);
+	I.cputype = 0;
+}
+void i8080_exit(void) { i8085_exit(); }
+int i8080_execute(int cycles) { return i8085_execute(cycles); }
+unsigned i8080_get_context(void *dst) { return i8085_get_context(dst); }
+void i8080_set_context(void *src) { i8085_set_context(src); }
+unsigned i8080_get_pc(void) { return i8085_get_pc(); }
+void i8080_set_pc(unsigned val) { i8085_set_pc(val); }
+unsigned i8080_get_sp(void) { return i8085_get_sp(); }
+void i8080_set_sp(unsigned val) { i8085_set_sp(val); }
+unsigned i8080_get_reg(int regnum) { return i8085_get_reg(regnum); }
+void i8080_set_reg(int regnum, unsigned val)  { i8085_set_reg(regnum,val); }
+void i8080_set_nmi_line(int state)	{ i8085_set_nmi_line(state); }
+void i8080_set_irq_line(int irqline, int state)
+{
+	I.irq_state[irqline] = state;
+	if (state == CLEAR_LINE)
+	{
+		if (!(I.IM & IM_IEN))
+			i8085_set_INTR(0);
+	}
+	else
+	{
+		if (I.IM & IM_IEN)
+			i8085_set_INTR(1);
+    }
+}
+void i8080_set_irq_callback(int (*callback)(int irqline)) { i8085_set_irq_callback(callback); }
+
+void i8080_state_save(void *file)
+{
+	int cpu = cpu_getactivecpu();
+    state_save_UINT16(file, "i8080", cpu, "AF", &I.AF.w.l, 1);
+	state_save_UINT16(file, "i8080", cpu, "BC", &I.BC.w.l, 1);
+	state_save_UINT16(file, "i8080", cpu, "DE", &I.DE.w.l, 1);
+	state_save_UINT16(file, "i8080", cpu, "HL", &I.HL.w.l, 1);
+	state_save_UINT16(file, "i8080", cpu, "SP", &I.SP.w.l, 1);
+	state_save_UINT16(file, "i8080", cpu, "PC", &I.PC.w.l, 1);
+	state_save_UINT8(file, "i8080", cpu, "HALT", &I.HALT, 1);
+	state_save_UINT8(file, "i8080", cpu, "IREQ", &I.IREQ, 1);
+	state_save_UINT8(file, "i8080", cpu, "ISRV", &I.ISRV, 1);
+	state_save_UINT32(file, "i8080", cpu, "INTR", &I.INTR, 1);
+	state_save_UINT32(file, "i8080", cpu, "IRQ2", &I.IRQ2, 1);
+	state_save_UINT32(file, "i8080", cpu, "IRQ1", &I.IRQ1, 1);
+	state_save_INT8(file, "i8080", cpu, "NMI_STATE", &I.nmi_state, 1);
+	state_save_INT8(file, "i8080", cpu, "IRQ_STATE", I.irq_state, 1);
+}
+
+void i8080_state_load(void *file)
+{
+	int cpu = cpu_getactivecpu();
+	state_load_UINT16(file, "i8080", cpu, "AF", &I.AF.w.l, 1);
+	state_load_UINT16(file, "i8080", cpu, "BC", &I.BC.w.l, 1);
+	state_load_UINT16(file, "i8080", cpu, "DE", &I.DE.w.l, 1);
+	state_load_UINT16(file, "i8080", cpu, "HL", &I.HL.w.l, 1);
+	state_load_UINT16(file, "i8080", cpu, "SP", &I.SP.w.l, 1);
+	state_load_UINT16(file, "i8080", cpu, "PC", &I.PC.w.l, 1);
+	state_load_UINT8(file, "i8080", cpu, "HALT", &I.HALT, 1);
+	state_load_UINT8(file, "i8080", cpu, "IREQ", &I.IREQ, 1);
+	state_load_UINT8(file, "i8080", cpu, "ISRV", &I.ISRV, 1);
+	state_load_UINT32(file, "i8080", cpu, "INTR", &I.INTR, 1);
+	state_load_UINT32(file, "i8080", cpu, "IRQ2", &I.IRQ2, 1);
+	state_load_UINT32(file, "i8080", cpu, "IRQ1", &I.IRQ1, 1);
+	state_load_INT8(file, "i8080", cpu, "NMI_STATE", &I.nmi_state, 1);
+	state_load_INT8(file, "i8080", cpu, "IRQ_STATE", I.irq_state, 1);
+}
 
 const char *i8080_info(void *context, int regnum)
 {
 	switch( regnum )
     {
-		case CPU_INFO_NAME: return "I8080";
+		case CPU_INFO_NAME: return "8080";
 		case CPU_INFO_VERSION: return "1.0";
 	}
 	return i8085_info(context,regnum);

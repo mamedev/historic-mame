@@ -13,10 +13,25 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "osd_dbg.h"
 #include "cpuintrf.h"
 #include "t11.h"
 
+
+/* T-11 Registers */
+typedef struct
+{
+    PAIR    reg[8];
+    PAIR    psw;
+    int     op;
+    int     pending_interrupts;
+    UINT8   *bank[8];
+#if NEW_INTERRUPT_SYSTEM
+    INT8    irq_state[4];
+    int     (*irq_callback)(int irqline);
+#endif
+} t11_Regs;
 
 static t11_Regs t11;
 
@@ -108,70 +123,123 @@ INLINE int POP (void)
 #include "t11ops.c"
 
 
-/****************************************************************************/
-/* Set all registers to given values                                        */
-/****************************************************************************/
-void t11_setregs(t11_Regs *Regs)
+/****************************************************************************
+ * Get all registers in given buffer
+ ****************************************************************************/
+unsigned t11_get_context(void *dst)
 {
-	t11 = *Regs;
+	if( dst )
+		*(t11_Regs*)dst = t11;
+	return sizeof(t11_Regs);
 }
 
-/****************************************************************************/
-/* Get all registers in given buffer                                        */
-/****************************************************************************/
-void t11_getregs(t11_Regs *Regs)
+/****************************************************************************
+ * Set all registers to given values
+ ****************************************************************************/
+void t11_set_context(void *src)
 {
-	*Regs = t11;
+	if( src )
+		t11 = *(t11_Regs*)src;
 }
 
-/****************************************************************************/
-/* Return program counter                                                   */
-/****************************************************************************/
-unsigned t11_getpc(void)
+/****************************************************************************
+ * Return program counter
+ ****************************************************************************/
+unsigned t11_get_pc(void)
 {
 	return PCD;
 }
 
-/****************************************************************************/
-/* Return a specific register                                               */
-/****************************************************************************/
-unsigned t11_getreg(int regnum)
+/****************************************************************************
+ * Set program counter
+ ****************************************************************************/
+void t11_set_pc(unsigned val)
+{
+	PC = val;
+}
+
+/****************************************************************************
+ * Return stack pointer
+ ****************************************************************************/
+unsigned t11_get_sp(void)
+{
+	return SPD;
+}
+
+/****************************************************************************
+ * Set stack pointer
+ ****************************************************************************/
+void t11_set_sp(unsigned val)
+{
+	SP = val;
+}
+
+/****************************************************************************
+ * Return a specific register                                               
+ ****************************************************************************/
+unsigned t11_get_reg(int regnum)
 {
 	switch( regnum )
 	{
-		case 0: return t11.reg[0].w.l;
-		case 1: return t11.reg[1].w.l;
-		case 2: return t11.reg[2].w.l;
-		case 3: return t11.reg[3].w.l;
-		case 4: return t11.reg[4].w.l;
-		case 5: return t11.reg[5].w.l;
-		case 6: return t11.reg[6].w.l;
-		case 7: return t11.reg[7].w.l;
+		case T11_R0: return t11.reg[0].w.l;
+		case T11_R1: return t11.reg[1].w.l;
+		case T11_R2: return t11.reg[2].w.l;
+		case T11_R3: return t11.reg[3].w.l;
+		case T11_R4: return t11.reg[4].w.l;
+		case T11_R5: return t11.reg[5].w.l;
+		case T11_SP: return t11.reg[6].w.l;
+		case T11_PC: return t11.reg[7].w.l;
+		case T11_PSW: return t11.psw.b.l;
+		case T11_IRQ0_STATE: return t11.irq_state[T11_IRQ0];
+		case T11_IRQ1_STATE: return t11.irq_state[T11_IRQ1];
+		case T11_IRQ2_STATE: return t11.irq_state[T11_IRQ2];
+		case T11_IRQ3_STATE: return t11.irq_state[T11_IRQ3];
+		case T11_BANK0: return (unsigned)(t11.bank[0] - ROM);
+		case T11_BANK1: return (unsigned)(t11.bank[1] - ROM);
+		case T11_BANK2: return (unsigned)(t11.bank[2] - ROM);
+		case T11_BANK3: return (unsigned)(t11.bank[3] - ROM);
+		case T11_BANK4: return (unsigned)(t11.bank[4] - ROM);
+		case T11_BANK5: return (unsigned)(t11.bank[5] - ROM);
+		case T11_BANK6: return (unsigned)(t11.bank[6] - ROM);
+		case T11_BANK7: return (unsigned)(t11.bank[7] - ROM);
 	}
 	return 0;
 }
 
-/****************************************************************************/
-/* Set a specific register                                                  */
-/****************************************************************************/
-void t11_setreg(int regnum, unsigned val)
+/****************************************************************************
+ * Set a specific register                                                  
+ ****************************************************************************/
+void t11_set_reg(int regnum, unsigned val)
 {
 	switch( regnum )
 	{
-		case 0: t11.reg[0].w.l = val; break;
-		case 1: t11.reg[1].w.l = val; break;
-		case 2: t11.reg[2].w.l = val; break;
-		case 3: t11.reg[3].w.l = val; break;
-		case 4: t11.reg[4].w.l = val; break;
-		case 5: t11.reg[5].w.l = val; break;
-		case 6: t11.reg[6].w.l = val; break;
-		case 7: t11.reg[7].w.l = val; break;
-	}
+		case T11_R0: t11.reg[0].w.l = val; break;
+		case T11_R1: t11.reg[1].w.l = val; break;
+		case T11_R2: t11.reg[2].w.l = val; break;
+		case T11_R3: t11.reg[3].w.l = val; break;
+		case T11_R4: t11.reg[4].w.l = val; break;
+		case T11_R5: t11.reg[5].w.l = val; break;
+		case T11_SP: t11.reg[6].w.l = val; break;
+		case T11_PC: t11.reg[7].w.l = val; break;
+		case T11_PSW: t11.psw.b.l = val; break;
+		case T11_IRQ0_STATE: t11.irq_state[T11_IRQ0] = val; break;
+		case T11_IRQ1_STATE: t11.irq_state[T11_IRQ1] = val; break;
+		case T11_IRQ2_STATE: t11.irq_state[T11_IRQ2] = val; break;
+		case T11_IRQ3_STATE: t11.irq_state[T11_IRQ3] = val; break;
+		case T11_BANK0: t11.bank[0] = &ROM[val]; break;
+		case T11_BANK1: t11.bank[1] = &ROM[val]; break;
+		case T11_BANK2: t11.bank[2] = &ROM[val]; break;
+		case T11_BANK3: t11.bank[3] = &ROM[val]; break;
+		case T11_BANK4: t11.bank[4] = &ROM[val]; break;
+		case T11_BANK5: t11.bank[5] = &ROM[val]; break;
+		case T11_BANK6: t11.bank[6] = &ROM[val]; break;
+		case T11_BANK7: t11.bank[7] = &ROM[val]; break;
+    }
 }
 
-/****************************************************************************/
-/* Sets the banking                                                         */
-/****************************************************************************/
+/****************************************************************************
+ * Sets the banking                                                         
+ ****************************************************************************/
 void t11_SetBank(int offset, unsigned char *base)
 {
 	t11.bank[offset >> 13] = base;
@@ -190,21 +258,15 @@ void t11_reset(void *param)
 
 	for (i = 0; i < 8; i++)
 		t11.bank[i] = &RAM[i * 0x2000];
-#if NEW_INTERRUPT_SYSTEM
 	for (i = 0; i < 4; i++)
 		t11.irq_state[i] = CLEAR_LINE;
 	t11.pending_interrupts = 0;
-#else
-    t11_Clear_Pending_Interrupts();
-#endif
 }
 
 void t11_exit(void)
 {
 	/* nothing to do */
 }
-
-#if NEW_INTERRUPT_SYSTEM
 
 void t11_set_nmi_line(int state)
 {
@@ -218,10 +280,10 @@ void t11_set_irq_line(int irqline, int state)
 	{
 		switch( irqline )
 		{
-			case 0: t11.pending_interrupts &= ~T11_IRQ0_BIT; break;
-			case 1: t11.pending_interrupts &= ~T11_IRQ1_BIT; break;
-			case 2: t11.pending_interrupts &= ~T11_IRQ2_BIT; break;
-			case 3: t11.pending_interrupts &= ~T11_IRQ3_BIT; break;
+			case T11_IRQ0: t11.pending_interrupts &= ~T11_IRQ0_BIT; break;
+			case T11_IRQ1: t11.pending_interrupts &= ~T11_IRQ1_BIT; break;
+			case T11_IRQ2: t11.pending_interrupts &= ~T11_IRQ2_BIT; break;
+			case T11_IRQ3: t11.pending_interrupts &= ~T11_IRQ3_BIT; break;
 		}
 	}
 	else
@@ -229,10 +291,10 @@ void t11_set_irq_line(int irqline, int state)
         t11.pending_interrupts &= ~T11_WAIT;
 		switch( irqline )
 		{
-			case 0: t11.pending_interrupts |= T11_IRQ0_BIT; break;
-			case 1: t11.pending_interrupts |= T11_IRQ1_BIT; break;
-			case 2: t11.pending_interrupts |= T11_IRQ2_BIT; break;
-			case 3: t11.pending_interrupts |= T11_IRQ3_BIT; break;
+			case T11_IRQ0: t11.pending_interrupts |= T11_IRQ0_BIT; break;
+			case T11_IRQ1: t11.pending_interrupts |= T11_IRQ1_BIT; break;
+			case T11_IRQ2: t11.pending_interrupts |= T11_IRQ2_BIT; break;
+			case T11_IRQ3: t11.pending_interrupts |= T11_IRQ3_BIT; break;
         }
     }
 }
@@ -241,24 +303,6 @@ void t11_set_irq_callback(int (*callback)(int irqline))
 {
 	t11.irq_callback = callback;
 }
-
-#else
-
-void t11_Cause_Interrupt(int type)
-{
-	if (type >= 0 && type <= 3)
-	{
-		t11.pending_interrupts |= 1 << type;
-		t11.pending_interrupts &= ~T11_WAIT;
-	}
-}
-
-void t11_Clear_Pending_Interrupts(void)
-{
-	t11.pending_interrupts &= ~(T11_IRQ3_BIT | T11_IRQ2_BIT | T11_IRQ1_BIT | T11_IRQ0_BIT);
-}
-
-#endif
 
 /* Generate interrupts - I don't really know how this works, but this is how Paperboy uses them */
 static void Interrupt(void)
@@ -271,12 +315,8 @@ static void Interrupt(void)
 		PUSH (PC);
 		PCD = RWORD (0x60);
 		PSW = RWORD (0x62);
-#if NEW_INTERRUPT_SYSTEM
 		if( t11.irq_callback )
-			(*t11.irq_callback)(3);
-#else
-        t11.pending_interrupts &= ~T11_IRQ3_BIT;
-#endif
+			(*t11.irq_callback)(T11_IRQ3);
     }
 	else if ((t11.pending_interrupts & T11_IRQ2_BIT) && level < 3)
 	{
@@ -284,12 +324,8 @@ static void Interrupt(void)
 		PUSH (PC);
 		PCD = RWORD (0x50);
 		PSW = RWORD (0x52);
-#if NEW_INTERRUPT_SYSTEM
 		if( t11.irq_callback )
-			(*t11.irq_callback)(2);
-#else
-		t11.pending_interrupts &= ~T11_IRQ2_BIT;
-#endif
+			(*t11.irq_callback)(T11_IRQ2);
     }
 	else if ((t11.pending_interrupts & T11_IRQ1_BIT) && level < 2)
 	{
@@ -297,12 +333,8 @@ static void Interrupt(void)
 		PUSH (PC);
 		PCD = RWORD (0x40);
 		PSW = RWORD (0x42);
-#if NEW_INTERRUPT_SYSTEM
 		if( t11.irq_callback )
-			(*t11.irq_callback)(1);
-#else
-		t11.pending_interrupts &= ~T11_IRQ1_BIT;
-#endif
+			(*t11.irq_callback)(T11_IRQ1);
     }
 	else if ((t11.pending_interrupts & T11_IRQ0_BIT) && level < 1)
 	{
@@ -310,12 +342,8 @@ static void Interrupt(void)
 		PUSH (PC);
 		PCD = RWORD (0x38);
 		PSW = RWORD (0x3a);
-#if NEW_INTERRUPT_SYSTEM
 		if( t11.irq_callback )
-			(*t11.irq_callback)(0);
-#else
-		t11.pending_interrupts &= ~T11_IRQ0_BIT;
-#endif
+			(*t11.irq_callback)(T11_IRQ0);
     }
 }
 
@@ -403,12 +431,13 @@ const char *t11_info( void *context, int regnum )
 {
 	static char buffer[16][47+1];
 	static int which = 0;
-	t11_Regs *r = (t11_Regs *)context;
+	t11_Regs *r = context;
 
 	which = ++which % 16;
     buffer[which][0] = '\0';
-	if( !context && regnum >= CPU_INFO_PC )
-		return buffer[which];
+
+	if( !context )
+		r = &t11;
 
     switch( regnum )
 	{
@@ -435,14 +464,27 @@ const char *t11_info( void *context, int regnum )
 				r->psw.b.l & 0x02 ? 'V':'.',
 				r->psw.b.l & 0x01 ? 'C':'.');
 			break;
-		case CPU_INFO_REG+ 0: sprintf(buffer[which], "R0:%04X", r->reg[0].w.l); break;
-		case CPU_INFO_REG+ 1: sprintf(buffer[which], "R1:%04X", r->reg[1].w.l); break;
-		case CPU_INFO_REG+ 2: sprintf(buffer[which], "R2:%04X", r->reg[2].w.l); break;
-		case CPU_INFO_REG+ 3: sprintf(buffer[which], "R3:%04X", r->reg[3].w.l); break;
-		case CPU_INFO_REG+ 4: sprintf(buffer[which], "R4:%04X", r->reg[4].w.l); break;
-		case CPU_INFO_REG+ 5: sprintf(buffer[which], "R5:%04X", r->reg[5].w.l); break;
-		case CPU_INFO_REG+ 6: sprintf(buffer[which], "SP:%04X", r->reg[6].w.l); break;
-		case CPU_INFO_REG+ 7: sprintf(buffer[which], "PC:%04X", r->reg[7].w.l); break;
-	}
+		case CPU_INFO_REG+T11_R0: sprintf(buffer[which], "R0:%04X", r->reg[0].w.l); break;
+		case CPU_INFO_REG+T11_R1: sprintf(buffer[which], "R1:%04X", r->reg[1].w.l); break;
+		case CPU_INFO_REG+T11_R2: sprintf(buffer[which], "R2:%04X", r->reg[2].w.l); break;
+		case CPU_INFO_REG+T11_R3: sprintf(buffer[which], "R3:%04X", r->reg[3].w.l); break;
+		case CPU_INFO_REG+T11_R4: sprintf(buffer[which], "R4:%04X", r->reg[4].w.l); break;
+		case CPU_INFO_REG+T11_R5: sprintf(buffer[which], "R5:%04X", r->reg[5].w.l); break;
+		case CPU_INFO_REG+T11_SP: sprintf(buffer[which], "SP:%04X", r->reg[6].w.l); break;
+		case CPU_INFO_REG+T11_PC: sprintf(buffer[which], "PC:%04X", r->reg[7].w.l); break;
+		case CPU_INFO_REG+T11_PSW: sprintf(buffer[which], "PSW:%02X", r->psw.b.l); break;
+		case CPU_INFO_REG+T11_IRQ0_STATE: sprintf(buffer[which], "IRQ0:%X", r->irq_state[T11_IRQ0]); break;
+		case CPU_INFO_REG+T11_IRQ1_STATE: sprintf(buffer[which], "IRQ1:%X", r->irq_state[T11_IRQ1]); break;
+		case CPU_INFO_REG+T11_IRQ2_STATE: sprintf(buffer[which], "IRQ2:%X", r->irq_state[T11_IRQ2]); break;
+		case CPU_INFO_REG+T11_IRQ3_STATE: sprintf(buffer[which], "IRQ3:%X", r->irq_state[T11_IRQ3]); break;
+		case CPU_INFO_REG+T11_BANK0: sprintf(buffer[which], "BANK0:%06X", (unsigned)(r->bank[0] - ROM)); break;
+		case CPU_INFO_REG+T11_BANK1: sprintf(buffer[which], "BANK1:%06X", (unsigned)(r->bank[1] - ROM)); break;
+		case CPU_INFO_REG+T11_BANK2: sprintf(buffer[which], "BANK2:%06X", (unsigned)(r->bank[2] - ROM)); break;
+		case CPU_INFO_REG+T11_BANK3: sprintf(buffer[which], "BANK3:%06X", (unsigned)(r->bank[3] - ROM)); break;
+		case CPU_INFO_REG+T11_BANK4: sprintf(buffer[which], "BANK4:%06X", (unsigned)(r->bank[4] - ROM)); break;
+		case CPU_INFO_REG+T11_BANK5: sprintf(buffer[which], "BANK5:%06X", (unsigned)(r->bank[5] - ROM)); break;
+		case CPU_INFO_REG+T11_BANK6: sprintf(buffer[which], "BANK6:%06X", (unsigned)(r->bank[6] - ROM)); break;
+		case CPU_INFO_REG+T11_BANK7: sprintf(buffer[which], "BANK7:%06X", (unsigned)(r->bank[7] - ROM)); break;
+    }
 	return buffer[which];
 }

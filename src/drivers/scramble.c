@@ -61,7 +61,6 @@ To Do:
 
 - Mariner seems to have discrete sound circuits connected to the 8910's
   output ports
-- Sound in scramblb doesn't work.
 
 
 Notes:
@@ -84,13 +83,12 @@ void galaxian_flipx_w(int offset,int data);
 void galaxian_flipy_w(int offset,int data);
 void galaxian_attributes_w(int offset,int data);
 void galaxian_stars_w(int offset,int data);
-void scramble_background_w(int offset, int data);	/* MJC 051297 */
+void scramble_background_w(int offset, int data);
 int scramble_vh_start(void);
 int mariner_vh_start(void);
 void galaxian_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 int scramble_vh_interrupt(void);
 int mariner_vh_interrupt(void);
-void scramble_background_w(int offset, int data);	/* MJC 051297 */
 void scramble_filter_w(int offset, int data);
 
 int scramble_portB_r(int offset);
@@ -102,8 +100,6 @@ int frogger_portB_r(int offset);
 int scramble_input_port_2_r(int offset);
 int scramble_protection_r(int offset);
 int scramblk_protection_r(int offset);
-int scramblb_protection_1_r(int offset);
-int scramblb_protection_2_r(int offset);
 int mariner_protection_1_r(int offset);
 int mariner_protection_2_r(int offset);
 int mariner_pip(int offset);
@@ -121,19 +117,6 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x8100, 0x8100, input_port_0_r },	/* IN0 */
 	{ 0x8101, 0x8101, input_port_1_r },	/* IN1 */
 	{ 0x8102, 0x8102, input_port_2_r },	/* IN2 */
-	{ -1 }	/* end of table */
-};
-
-static struct MemoryReadAddress scramblb_readmem[] =
-{
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x4000, 0x4bff, MRA_RAM },	/* RAM and Video RAM */
-	{ 0x4c00, 0x4fff, videoram_r },	/* mirror address */
-	{ 0x5000, 0x507f, MRA_RAM },	/* screen attributes, sprites, bullets */
-	{ 0x6000, 0x6000, input_port_0_r },	/* IN0 */
-	{ 0x6800, 0x6800, input_port_1_r },	/* IN1 */
-	{ 0x7000, 0x7000, input_port_2_r },	/* IN2 */
-	{ 0x7800, 0x7800, watchdog_reset_r },
 	{ -1 }	/* end of table */
 };
 
@@ -169,25 +152,6 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x6804, 0x6804, galaxian_stars_w },
 	{ 0x6806, 0x6806, galaxian_flipx_w },
 	{ 0x6807, 0x6807, galaxian_flipy_w },
-	{ 0x8200, 0x8200, soundlatch_w },
-	{ 0x8201, 0x8201, scramble_sh_irqtrigger_w },
-	{ -1 }	/* end of table */
-};
-
-static struct MemoryWriteAddress scramblb_writemem[] =
-{
-	{ 0x0000, 0x3fff, MWA_ROM },
-	{ 0x4000, 0x47ff, MWA_RAM },
-	{ 0x4800, 0x4bff, videoram_w, &videoram, &videoram_size },
-	{ 0x5000, 0x503f, galaxian_attributes_w, &galaxian_attributesram },
-	{ 0x5040, 0x505f, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x5060, 0x507f, MWA_RAM, &galaxian_bulletsram, &galaxian_bulletsram_size },
-	{ 0x7001, 0x7001, interrupt_enable_w },
-	{ 0x7002, 0x7002, coin_counter_w },
-	{ 0x7003, 0x7003, scramble_background_w },
-	{ 0x7004, 0x7004, galaxian_stars_w },
-	{ 0x7006, 0x7006, galaxian_flipx_w },
-	{ 0x7007, 0x7007, galaxian_flipy_w },
 	{ 0x8200, 0x8200, soundlatch_w },
 	{ 0x8201, 0x8201, scramble_sh_irqtrigger_w },
 	{ -1 }	/* end of table */
@@ -330,54 +294,6 @@ INPUT_PORTS_START( scramble_input_ports )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* protection check? */
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* protection check? */
-INPUT_PORTS_END
-
-INPUT_PORTS_START( scramblb_input_ports )
-	PORT_START	/* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY )
-
-	PORT_START	/* IN1 */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_COCKTAIL )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_COCKTAIL )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_COCKTAIL )
-	PORT_DIPNAME( 0x40, 0x00, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Upright" )
-	PORT_DIPSETTING(    0x40, "Cocktail" )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
-
-	PORT_START	/* IN2 */
-	PORT_DIPNAME( 0x03, 0x00, "Coinage", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x00, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x00, "1 Coin/3 Credits" )
-	PORT_DIPSETTING(    0x00, "1 Coin/4 Credits" )
-	PORT_DIPNAME( 0x0c, 0x00, "Lives", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "3" )
-	PORT_DIPSETTING(    0x04, "4" )
-	PORT_DIPSETTING(    0x08, "5" )
-	PORT_BITX( 0,       0x0c, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "255", IP_KEY_NONE, IP_JOY_NONE, 0 )
-	PORT_DIPNAME( 0x10, 0x00, "Unknown 1", IP_KEY_NONE )   /* probably unused */
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x10, "On" )
-	PORT_DIPNAME( 0x20, 0x00, "Unknown 1", IP_KEY_NONE )   /* probably unused */
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x20, "On" )
-	PORT_DIPNAME( 0x40, 0x00, "Unknown 1", IP_KEY_NONE )   /* probably unused */
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x40, "On" )
-	PORT_DIPNAME( 0x80, 0x00, "Unknown 1", IP_KEY_NONE )   /* probably unused */
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x80, "On" )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( atlantis_input_ports )
@@ -789,50 +705,6 @@ static struct MachineDriver scramble_machine_driver =
 	}
 };
 
-static struct MachineDriver scramblb_machine_driver =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			18432000/6,	/* 3.072 MHz */
-			0,
-			scramblb_readmem,scramblb_writemem,0,0,
-			scramble_vh_interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			14318000/8,	/* 1.78975 MHz */
-			3,	/* memory region #3 */
-			sound_readmem,sound_writemem,sound_readport,sound_writeport,
-			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
-		}
-	},
-	60, 2500,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
-
-	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	scramble_gfxdecodeinfo,
-	32+64+1,8*4+2*2+128*1,	/* 32 for the characters, 64 for the stars, 1 for background */
-	galaxian_vh_convert_color_prom,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	scramble_vh_start,
-	generic_vh_stop,
-	galaxian_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&scramble_ay8910_interface
-		}
-	}
-};
 
 /* same as Scramble, the only difference is gfxdecodeinfo */
 static struct MachineDriver theend_machine_driver =
@@ -1057,30 +929,6 @@ ROM_START( scramblk_rom )
 	ROM_LOAD( "5e",           0x1000, 0x0800, 0xba2fa933 )
 ROM_END
 
-ROM_START( scramblb_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "scramble.1k",  0x0000, 0x0800, 0x9e025c4a )
-	ROM_LOAD( "scramble.2k",  0x0800, 0x0800, 0x306f783e )
-	ROM_LOAD( "scramble.3k",  0x1000, 0x0800, 0x0500b701 )
-	ROM_LOAD( "scramble.4k",  0x1800, 0x0800, 0xdd380a22 )
-	ROM_LOAD( "scramble.5k",  0x2000, 0x0800, 0xdf0b9648 )
-	ROM_LOAD( "scramble.1j",  0x2800, 0x0800, 0xb8c07b3c )
-	ROM_LOAD( "scramble.2j",  0x3000, 0x0800, 0x88ac07a0 )
-	ROM_LOAD( "scramble.3j",  0x3800, 0x0800, 0xc67d57ca )
-
-	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics */
-	ROM_LOAD( "5f.k",         0x0000, 0x0800, 0x4708845b )
-	ROM_LOAD( "5h.k",         0x0800, 0x0800, 0x11fd2887 )
-
-	ROM_REGION(0x0020)	/* color prom */
-	ROM_LOAD( "82s123.6e",    0x0000, 0x0020, 0x4e3caeab )
-
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "5c",           0x0000, 0x0800, 0xbcd297f0 )
-	ROM_LOAD( "5d",           0x0800, 0x0800, 0xde7912da )
-	ROM_LOAD( "5e",           0x1000, 0x0800, 0xba2fa933 )
-ROM_END
-
 ROM_START( atlantis_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "2c",           0x0000, 0x0800, 0x0e485b9a )
@@ -1212,12 +1060,6 @@ static void scramble_driver_init(void)
 static void scramblk_driver_init(void)
 {
 	install_mem_read_handler(0, 0x8202, 0x8202, scramblk_protection_r);
-}
-
-static void scramblb_driver_init(void)
-{
-	install_mem_read_handler(0, 0x8102, 0x8102, scramblb_protection_1_r);
-	install_mem_read_handler(0, 0x8202, 0x8202, scramblb_protection_2_r);
 }
 
 
@@ -1454,32 +1296,6 @@ struct GameDriver scramblk_driver =
 	0,	/* sound_prom */
 
 	scramble_input_ports,
-
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	scramble_hiload, scramble_hisave
-};
-
-struct GameDriver scramblb_driver =
-{
-	__FILE__,
-	&scramble_driver,
-	"scramblb",
-	"Scramble (bootleg)",
-	"1981",
-	"bootleg",
-	"Nicola Salmoria",
-	0,
-	&scramblb_machine_driver,
-	scramblb_driver_init,
-
-	scramblb_rom,
-	0, 0,
-	0,
-	0,	/* sound_prom */
-
-	scramblb_input_ports,
 
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,

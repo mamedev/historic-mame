@@ -13,7 +13,7 @@ struct AY8910interface
 	int (*portBread[MAX_8910])(int offset);
 	void (*portAwrite[MAX_8910])(int offset,int data);
 	void (*portBwrite[MAX_8910])(int offset,int data);
-	void (*handler[MAX_8910])(void);	/* IRQ handler for the YM2203 */
+	void (*handler[MAX_8910])(int irq);	/* IRQ handler for the YM2203 */
 };
 
 

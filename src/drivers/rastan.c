@@ -46,7 +46,7 @@ void r_wr_a001(int offset,int data);
 void r_wr_c000(int offset,int data);
 void r_wr_d000(int offset,int data);
 
-void rastan_irq_handler(void);
+void rastan_irq_handler(int irq);
 
 int rastan_interrupt(void)
 {
@@ -74,14 +74,14 @@ int rastan_input_r (int offset)
 
 static int rastan_cycle_r(int offset)
 {
-	if (cpu_getpc()==0x3b088) cpu_spinuntil_int();
+	if (cpu_get_pc()==0x3b088) cpu_spinuntil_int();
 
 	return READ_WORD(&rastan_ram[0x1c10]);
 }
 
 static int rastan_sound_spin(int offset)
 {
-	if ( (cpu_getpc()==0x1c5) && !(Machine->memory_region[2][ 0x8f27 ] & 0x01) )
+	if ( (cpu_get_pc()==0x1c5) && !(Machine->memory_region[2][ 0x8f27 ] & 0x01) )
 		cpu_spin();
 
 	return Machine->memory_region[2][ 0x8f27 ];

@@ -549,7 +549,7 @@ ROM_START( kungfub2_rom )
 	ROM_LOAD( "b-4d-.bin",    0x1a000, 0x2000, 0x6a70615f )
 	ROM_LOAD( "b-4a-.bin",    0x1c000, 0x2000, 0x6189d626 )
 
-	ROM_REGION(0x0620)	/* color PROMs */
+	ROM_REGION(0x0720)	/* color PROMs */
 	ROM_LOAD( "g-1j-.bin",    0x0000, 0x0100, 0x668e6bca )	/* character palette red component */
 	ROM_LOAD( "b-1m-.bin",    0x0100, 0x0100, 0x76c05a9c )	/* sprite palette red component */
 	ROM_LOAD( "g-1f-.bin",    0x0200, 0x0100, 0x964b6495 )	/* character palette green component */
@@ -557,7 +557,8 @@ ROM_START( kungfub2_rom )
 	ROM_LOAD( "g-1h-.bin",    0x0400, 0x0100, 0x550563e1 )	/* character palette blue component */
 	ROM_LOAD( "b-1l-.bin",    0x0500, 0x0100, 0x35e45021 )	/* sprite palette blue component */
 	ROM_LOAD( "b-5f-.bin",    0x0600, 0x0020, 0x7a601c3d )	/* sprite height, one entry per 32 */
-														/*   sprites. Used at run time! */
+															/* sprites. Used at run time! */
+	ROM_LOAD( "b-6f-.bin",    0x0620, 0x0100, 0x82c20d12 )	/* video timing? - same as battroad */
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU (6803) */
 	ROM_LOAD( "a-3e-.bin",    0xa000, 0x2000, 0x58e87ab0 )	/* samples (ADPCM 4-bit) */

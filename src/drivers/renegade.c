@@ -504,8 +504,7 @@ static struct MachineDriver renegade_machine_driver =
 	1, /* cpu slices */
 	0, /* init machine */
 
-	32*8, 32*8,
-	{ 8, 31*8-1, 0, 30*8-1 },
+	32*8, 32*8, { 1*8, 31*8-1, 0, 30*8-1 },
 	gfxdecodeinfo,
 	256,256,
 	0,
@@ -657,7 +656,7 @@ struct GameDriver renegade_driver =
 	"renegade",
 	"Renegade (US)",
 	"1986",
-	"Taito",
+	"Technos (Taito America license)",
 	"Phil Stroffolino\nCarlos A. Lozano\nRob Rosenbrock",
 	GAME_NOT_WORKING,
 	&renegade_machine_driver,
@@ -681,7 +680,7 @@ struct GameDriver kuniokub_driver =
 	__FILE__,
 	&renegade_driver,
 	"kuniokub",
-	"Nekketsu Kouha Kunio Kun (Jap bootleg)",
+	"Nekketsu Kouha Kunio Kun (Japan bootleg)",
 	"1986",
 	"bootleg",
 	"Phil Stroffolino\nCarlos A. Lozano\nRob Rosenbrock",

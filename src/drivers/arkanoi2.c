@@ -122,18 +122,23 @@ d23f=input port 1 value
 extern unsigned char *tnzs_objram, *tnzs_workram;
 extern unsigned char *tnzs_vdcram, *tnzs_scrollram;
 
-void tnzs_init_machine (void);
 int tnzs_workram_r (int offset);
 void tnzs_workram_w (int offset, int data);
 
-extern int current_inputport;	/* reads of c000 (sound cpu) expect a sequence of values */
-extern int number_of_credits;
+static int current_inputport;	/* reads of c000 (sound cpu) expect a sequence of values */
+int number_of_credits;
 
 /* prototypes for functions in ../vidhrdw/tnzs.c */
 int tnzs_vh_start(void);
 void tnzs_vh_stop(void);
 void arkanoi2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void arkanoi2_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+
+static void arkanoi2_init_machine (void)
+{
+    current_inputport = -3;
+    number_of_credits = 0;
+}
 
 
 
@@ -390,7 +395,7 @@ static struct MachineDriver arkanoi2_machine_driver =
 	},
 	60,DEFAULT_60HZ_VBLANK_DURATION,		/* video frequency (Hz), duration */
 	100,							/* cpu slices */
-	tnzs_init_machine,					/* called at startup */
+	arkanoi2_init_machine,					/* called at startup */
 
 	/* video hardware */
 	16*16, 14*16,			/* screen dimx, dimy (pixels) */

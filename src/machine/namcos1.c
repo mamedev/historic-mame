@@ -323,19 +323,19 @@ PRG_HANDLER( 7, 0x00000 )
 
 static void rom_w( int offset, int data, int bankoffset ) {
 	if ( errorlog )
-		fprintf(errorlog,"CPU #%d PC %04x: warning - write %02x to rom address %04x\n",cpu_getactivecpu(),cpu_getpc(),data,offset);
+		fprintf(errorlog,"CPU #%d PC %04x: warning - write %02x to rom address %04x\n",cpu_getactivecpu(),cpu_get_pc(),data,offset);
 }
 
 /* error handlers */
 static int unknown_r( int offset, int bankoffset ) {
 	if ( errorlog )
-		fprintf(errorlog,"CPU #%d PC %04x: warning - read from unknown chip\n",cpu_getactivecpu(),cpu_getpc() );
+		fprintf(errorlog,"CPU #%d PC %04x: warning - read from unknown chip\n",cpu_getactivecpu(),cpu_get_pc() );
 	return 0;
 }
 
 static void unknown_w( int offset, int data, int bankoffset ) {
 	if ( errorlog )
-		fprintf(errorlog,"CPU #%d PC %04x: warning - wrote to unknown chip\n",cpu_getactivecpu(),cpu_getpc() );
+		fprintf(errorlog,"CPU #%d PC %04x: warning - wrote to unknown chip\n",cpu_getactivecpu(),cpu_get_pc() );
 }
 
 
@@ -507,7 +507,7 @@ void namcos1_bankswitch_w( int offset, int data ) {
 
 			default:
 				if ( errorlog )
-					fprintf( errorlog, "CPU %d : Unknown chip selected ($%04x) at PC %04x\n", cpu_getactivecpu(), chip, cpu_getpc() );
+					fprintf( errorlog, "CPU %d : Unknown chip selected ($%04x) at PC %04x\n", cpu_getactivecpu(), chip, cpu_get_pc() );
 
 				namcos1_banks[cpu][bank].bank_handler_r = unknown_r;
 				namcos1_banks[cpu][bank].bank_handler_w = unknown_w;

@@ -109,9 +109,9 @@ static void capbowl_sndcmd_w(int offset,int data)
 
 
 /* Handler called by the 2203 emulator when the internal timers cause an IRQ */
-static void firqhandler(void)
+static void firqhandler(int irq)
 {
-	cpu_cause_interrupt(1, M6809_INT_FIRQ);
+	cpu_set_irq_line(1,1,irq ? ASSERT_LINE : CLEAR_LINE);
 }
 
 

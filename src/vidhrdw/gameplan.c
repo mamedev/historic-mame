@@ -82,7 +82,7 @@ int gameplan_sound_r(int offset)
 	if (errorlog)
 	{
 		fprintf(errorlog, "GAME:  read reg%X at PC %04x\n",
-				offset, cpu_getpc());
+				offset, cpu_get_pc());
 	}
 #endif
 
@@ -118,7 +118,7 @@ void gameplan_sound_w(int offset,int data)
 	if (errorlog)
 	{
 		fprintf(errorlog, "GAME: write reg%X with %02x at PC %04x\n",
-				offset, data, cpu_getpc());
+				offset, data, cpu_get_pc());
 	}
 #endif
 
@@ -163,7 +163,7 @@ int gameplan_via5_r(int offset)
 	if (errorlog)
 	{
 		fprintf(errorlog, "SOUND:  read reg%X at PC %04x\n",
-				offset, cpu_getpc());
+				offset, cpu_get_pc());
 	}
 #endif
 
@@ -206,7 +206,7 @@ void gameplan_via5_w(int offset, int data)
 	if (errorlog)
 	{
 		fprintf(errorlog, "SOUND: write reg%X with %02x at PC %04x\n",
-				offset, data, cpu_getpc());
+				offset, data, cpu_get_pc());
 	}
 #endif
 
@@ -226,7 +226,7 @@ int gameplan_video_r(int offset)
 	x++;
 #if 0
 	if (errorlog) fprintf(errorlog, "%04x: reading %d from 200d\n",
-						  cpu_getpc(), x);
+						  cpu_get_pc(), x);
 #endif
 	return x;
 }
@@ -240,7 +240,7 @@ void gameplan_video_w(int offset,int data)
 	if (errorlog)
 	{
 		fprintf(errorlog, "VIA 1: PC %04x: %x -> reg%X\n",
-				cpu_getpc(), data, offset);
+				cpu_get_pc(), data, offset);
 	}
 #endif /* VERBOSE_VIDEO */
 

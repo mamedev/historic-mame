@@ -3,10 +3,10 @@
  *
  * 19971219 support for mame.cfg by Valerio Verrando
  * 19980402 moved out of msdos.c (N.S.), generalized routines (BW)
- * 19980917 added a "-cheatfile" option (misc) in MAME.CFG	JCK
+ * 19980917 added a "-cheatfile" option (misc) in MAME.CFG      JCK
  */
 
-#define __INLINE__ static __inline__	/* keep allegro.h happy */
+#define __INLINE__ static __inline__    /* keep allegro.h happy */
 #include <allegro.h>
 #undef __INLINE__
 #include "driver.h"
@@ -20,7 +20,7 @@ extern int translucency;
 
 /* from video.c */
 extern int frameskip,autoframeskip;
-extern int scanlines, use_vesa, video_sync, antialias, ntsc;
+extern int scanlines, use_vesa, video_sync, wait_vsync, antialias, ntsc;
 extern int stretch, use_double;
 extern int vgafreq, always_synced, color_depth, skiplines, skipcolumns;
 extern int beam, flicker;
@@ -52,19 +52,19 @@ char *rompath, *samplepath;
 
 struct { char *name; int id; } joy_table[] =
 {
-	{ "none",	 	JOY_TYPE_NONE },
-	{ "standard",	JOY_TYPE_STANDARD },
-	{ "dual",		JOY_TYPE_2PADS },
-	{ "4button",	JOY_TYPE_4BUTTON },
-	{ "6button",	JOY_TYPE_6BUTTON },
-	{ "8button",	JOY_TYPE_8BUTTON },
-	{ "fspro",		JOY_TYPE_FSPRO },
-	{ "wingex",		JOY_TYPE_WINGEX },
-	{ "sidewinder",	JOY_TYPE_SIDEWINDER },
-	{ "gamepadpro",	JOY_TYPE_GAMEPAD_PRO },
-	{ "sneslpt1",	JOY_TYPE_SNESPAD_LPT1 },
-	{ "sneslpt2",	JOY_TYPE_SNESPAD_LPT2 },
-	{ "sneslpt3",	JOY_TYPE_SNESPAD_LPT3 },
+	{ "none",               JOY_TYPE_NONE },
+	{ "standard",   JOY_TYPE_STANDARD },
+	{ "dual",               JOY_TYPE_2PADS },
+	{ "4button",    JOY_TYPE_4BUTTON },
+	{ "6button",    JOY_TYPE_6BUTTON },
+	{ "8button",    JOY_TYPE_8BUTTON },
+	{ "fspro",              JOY_TYPE_FSPRO },
+	{ "wingex",             JOY_TYPE_WINGEX },
+	{ "sidewinder", JOY_TYPE_SIDEWINDER },
+	{ "gamepadpro", JOY_TYPE_GAMEPAD_PRO },
+	{ "sneslpt1",   JOY_TYPE_SNESPAD_LPT1 },
+	{ "sneslpt2",   JOY_TYPE_SNESPAD_LPT2 },
+	{ "sneslpt3",   JOY_TYPE_SNESPAD_LPT3 },
 	{ NULL, NULL }
 } ;
 
@@ -288,7 +288,7 @@ void parse_cmdline (int argc, char **argv, struct GameOptions *options, int game
 
 	/* read graphic configuration */
 	scanlines   = get_bool   ("config", "scanlines",    NULL,  1);
-	tmpstr		= get_string ("config", "stretch",		NULL,  "off");
+	tmpstr          = get_string ("config", "stretch",              NULL,  "off");
 	if (!stricmp(tmpstr,"800x600"))
 	{
 		stretch = 1;
@@ -303,10 +303,11 @@ void parse_cmdline (int argc, char **argv, struct GameOptions *options, int game
 	}
 	use_double  = get_bool   ("config", "double",       NULL, -1);
 	video_sync  = get_bool   ("config", "vsync",        NULL,  0);
+	wait_vsync  = get_bool   ("config", "waitvsync",    NULL,  0);
 	antialias   = get_bool   ("config", "antialias",    NULL,  1);
 	use_vesa    = get_bool   ("config", "vesa",         NULL,  0);
 	translucency = get_bool    ("config", "translucency", NULL, 1);
-	vesamode	= get_string ("config", "vesamode",		NULL,  "vesa2l");
+	vesamode        = get_string ("config", "vesamode",             NULL,  "vesa2l");
 	ntsc        = get_bool   ("config", "ntsc",         NULL,  0);
 	vgafreq     = get_int    ("config", "vgafreq",      NULL,  -1);
 	always_synced = get_bool ("config", "alwayssynced", NULL, 0);

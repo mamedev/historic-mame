@@ -66,6 +66,13 @@ Note: 9n reg,other bits  used on moon cresta for extra graphics rom control.
 7800        0111100000000000 R   --------   !wdr    watchdog reset
 7800        0111100000000000 W   DDDDDDDD   !pitch  Sound Fx base frequency
 
+
+Notes:
+-----
+
+- The only code difference between 'galaxian' and 'galmidw' is that the
+  'BONUS SHIP' text is printed on a different line.
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -76,35 +83,56 @@ Note: 9n reg,other bits  used on moon cresta for extra graphics rom control.
 extern unsigned char *galaxian_attributesram;
 extern unsigned char *galaxian_bulletsram;
 extern int galaxian_bulletsram_size;
-extern unsigned char *pisces_gfx_bank;
 void galaxian_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void galaxian_flipx_w(int offset,int data);
 void galaxian_flipy_w(int offset,int data);
 void galaxian_attributes_w(int offset,int data);
 void galaxian_stars_w(int offset,int data);
-int galaxian_vh_start(void);
-int mooncrst_vh_start(void);
-int pisces_vh_start(void);
+void scramble_background_w(int offset, int data);
+int  galaxian_vh_start(void);
+int  mooncrgx_vh_start(void);
+int  pisces_vh_start(void);
+int  scramble_vh_start(void);
 void galaxian_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-int galaxian_vh_interrupt(void);
-int devilfsh_vh_interrupt(void);
+int  galaxian_vh_interrupt(void);
+int  devilfsh_vh_interrupt(void);
+int  scramble_vh_interrupt(void);
 
 void mooncrst_pitch_w(int offset,int data);
 void mooncrst_vol_w(int offset,int data);
 void mooncrst_noise_w(int offset,int data);
 void mooncrst_background_w(int offset,int data);
 void mooncrst_shoot_w(int offset,int data);
-void mooncrgx_gfxextend_w(int offset,int data);
 void mooncrst_lfo_freq_w(int offset,int data);
-int mooncrst_sh_start(void);
+int  mooncrst_sh_start(void);
 void mooncrst_sh_stop(void);
 void mooncrst_sh_update(void);
 
+int scramblb_protection_1_r(int offset);
+int scramblb_protection_2_r(int offset);
 
+
+static void galaxian_coin_lockout_w(int offset, int data)
+{
+	coin_lockout_global_w(offset, data ^ 1);
+}
 
 static int galapx_funky_r(int offset)
 {
 	return 0xff;
+}
+
+
+static void galaxian_machine_init(void)
+{
+	install_mem_write_handler(0, 0x6002, 0x6002, galaxian_coin_lockout_w);
+}
+
+static void galapx_machine_init(void)
+{
+    /* for the title screen */
+	install_mem_read_handler(0, 0x7800, 0x78ff, galapx_funky_r);
+	galaxian_machine_init();
 }
 
 
@@ -117,33 +145,24 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x6800, 0x6800, input_port_1_r },	/* IN1 */
 	{ 0x7000, 0x7000, input_port_2_r },	/* DSW */
 	{ 0x7800, 0x7800, watchdog_reset_r },
-	{ 0x7800, 0x78ff, galapx_funky_r },	/* for the title screen */
 	{ -1 }	/* end of table */
 };
 
-static struct MemoryWriteAddress galaxian_writemem[] =
+static struct MemoryReadAddress scramblb_readmem[] =
 {
-	{ 0x0000, 0x3fff, MWA_ROM },	/* not all games use all the space */
-	{ 0x4000, 0x47ff, MWA_RAM },
-	{ 0x5000, 0x53ff, videoram_w, &videoram, &videoram_size },
-	{ 0x5800, 0x583f, galaxian_attributes_w, &galaxian_attributesram },
-	{ 0x5840, 0x585f, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x5860, 0x587f, MWA_RAM, &galaxian_bulletsram, &galaxian_bulletsram_size },
-	{ 0x7001, 0x7001, interrupt_enable_w },
-	{ 0x7800, 0x7800, mooncrst_pitch_w },
-	{ 0x6800, 0x6800, mooncrst_background_w },
-	{ 0x6803, 0x6803, mooncrst_noise_w },
-	{ 0x6805, 0x6805, mooncrst_shoot_w },
-	{ 0x6806, 0x6807, mooncrst_vol_w },
-	{ 0x6000, 0x6001, osd_led_w },
-	{ 0x6004, 0x6007, mooncrst_lfo_freq_w },
-	{ 0x7004, 0x7004, galaxian_stars_w },
-	{ 0x7006, 0x7006, galaxian_flipx_w },
-	{ 0x7007, 0x7007, galaxian_flipy_w },
+	{ 0x0000, 0x3fff, MRA_ROM },
+	{ 0x4000, 0x4bff, MRA_RAM },	/* RAM and video RAM */
+	{ 0x5000, 0x507f, MRA_RAM },	/* screen attributes, sprites, bullets */
+	{ 0x6000, 0x6000, input_port_0_r },	/* IN0 */
+	{ 0x6800, 0x6800, input_port_1_r },	/* IN1 */
+	{ 0x7000, 0x7000, input_port_2_r },	/* IN2 */
+	{ 0x7800, 0x7800, watchdog_reset_r },
+	{ 0x8102, 0x8102, scramblb_protection_1_r },
+	{ 0x8202, 0x8202, scramblb_protection_2_r },
 	{ -1 }	/* end of table */
 };
 
-static struct MemoryWriteAddress pisces_writemem[] =
+static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0x3fff, MWA_ROM },	/* not all games use all the space */
 	{ 0x4000, 0x47ff, MWA_RAM },
@@ -152,7 +171,6 @@ static struct MemoryWriteAddress pisces_writemem[] =
 	{ 0x5840, 0x585f, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x5860, 0x587f, MWA_RAM, &galaxian_bulletsram, &galaxian_bulletsram_size },
 	{ 0x6000, 0x6001, osd_led_w },
-	{ 0x6002, 0x6002, MWA_RAM, &pisces_gfx_bank },
 	{ 0x6004, 0x6007, mooncrst_lfo_freq_w },
 	{ 0x6800, 0x6800, mooncrst_background_w },
 	{ 0x6803, 0x6803, mooncrst_noise_w },
@@ -166,21 +184,23 @@ static struct MemoryWriteAddress pisces_writemem[] =
 	{ -1 }	/* end of table */
 };
 
-static struct MemoryWriteAddress mooncrgx_writemem[] =
+static struct MemoryWriteAddress scramblb_writemem[] =
 {
-	{ 0x0000, 0x3fff, MWA_ROM },	/* not all games use all the space */
+	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x4000, 0x47ff, MWA_RAM },
-	{ 0x5000, 0x53ff, videoram_w, &videoram, &videoram_size },
-	{ 0x5800, 0x583f, galaxian_attributes_w, &galaxian_attributesram },
-	{ 0x5840, 0x585f, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x5860, 0x587f, MWA_RAM, &galaxian_bulletsram, &galaxian_bulletsram_size },
-	{ 0x6000, 0x6002, mooncrgx_gfxextend_w },
+	{ 0x4800, 0x4bff, videoram_w, &videoram, &videoram_size },
+	{ 0x5000, 0x503f, galaxian_attributes_w, &galaxian_attributesram },
+	{ 0x5040, 0x505f, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0x5060, 0x507f, MWA_RAM, &galaxian_bulletsram, &galaxian_bulletsram_size },
+	{ 0x6000, 0x6001, MWA_NOP },  /* sound triggers */
 	{ 0x6004, 0x6007, mooncrst_lfo_freq_w },
 	{ 0x6800, 0x6800, mooncrst_background_w },
 	{ 0x6803, 0x6803, mooncrst_noise_w },
 	{ 0x6805, 0x6805, mooncrst_shoot_w },
 	{ 0x6806, 0x6807, mooncrst_vol_w },
 	{ 0x7001, 0x7001, interrupt_enable_w },
+	{ 0x7002, 0x7002, coin_counter_w },
+	{ 0x7003, 0x7003, scramble_background_w },
 	{ 0x7004, 0x7004, galaxian_stars_w },
 	{ 0x7006, 0x7006, galaxian_flipx_w },
 	{ 0x7007, 0x7007, galaxian_flipy_w },
@@ -236,8 +256,6 @@ static struct MemoryReadAddress zigzag_readmem[] =
 	{ 0x7800, 0x7800, watchdog_reset_r },
 	{ -1 }	/* end of table */
 };
-
-
 
 static struct MemoryWriteAddress zigzag_writemem[] =
 {
@@ -303,7 +321,7 @@ INPUT_PORTS_START( galaxian_input_ports )
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( galnamco_input_ports )
+INPUT_PORTS_START( superg_input_ports )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
@@ -399,7 +417,6 @@ INPUT_PORTS_START( pisces_input_ports )
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
 INPUT_PORTS_END
 
-
 INPUT_PORTS_START( warofbug_input_ports )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
@@ -438,7 +455,6 @@ INPUT_PORTS_START( warofbug_input_ports )
 	PORT_DIPSETTING(    0x00, "750000" )
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
 INPUT_PORTS_END
-
 
 INPUT_PORTS_START( redufo_input_ports )
 	PORT_START      /* IN0 */
@@ -632,7 +648,7 @@ INPUT_PORTS_START( mooncrgx_input_ports )
 	PORT_DIPSETTING(    0x01, "30000" )
 	PORT_DIPSETTING(    0x00, "50000" )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )   /* probably unused */
-  //PORT_DIPNAME( 0x04, 0x00, "Language", IP_KEY_NONE ) /* This version is always in English */
+  /*PORT_DIPNAME( 0x04, 0x00, "Language", IP_KEY_NONE )    This version is always in English */
 													  	/* Code has been commented out at 0x2f4b */
 	PORT_DIPNAME( 0x08, 0x00, "Cabinet", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x00, "Upright" )
@@ -640,6 +656,53 @@ INPUT_PORTS_START( mooncrgx_input_ports )
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNKNOWN )   /* probably unused */
 INPUT_PORTS_END
 
+INPUT_PORTS_START( scramblb_input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_DIPNAME( 0x40, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x40, "Cocktail" )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
+
+	PORT_START	/* IN2 */
+	PORT_DIPNAME( 0x03, 0x00, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x00, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x00, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0x00, "1 Coin/4 Credits" )
+	PORT_DIPNAME( 0x0c, 0x00, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x04, "4" )
+	PORT_DIPSETTING(    0x08, "5" )
+	PORT_BITX( 0,       0x0c, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "255", IP_KEY_NONE, IP_JOY_NONE, 0 )
+	PORT_DIPNAME( 0x10, 0x00, "Unknown 1", IP_KEY_NONE )   /* probably unused */
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x10, "On" )
+	PORT_DIPNAME( 0x20, 0x00, "Unknown 1", IP_KEY_NONE )   /* probably unused */
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x20, "On" )
+	PORT_DIPNAME( 0x40, 0x00, "Unknown 1", IP_KEY_NONE )   /* probably unused */
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x40, "On" )
+	PORT_DIPNAME( 0x80, 0x00, "Unknown 1", IP_KEY_NONE )   /* probably unused */
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x80, "On" )
+INPUT_PORTS_END
 
 
 static struct GfxLayout galaxian_charlayout =
@@ -664,6 +727,8 @@ static struct GfxLayout galaxian_spritelayout =
 			16*8, 17*8, 18*8, 19*8, 20*8, 21*8, 22*8, 23*8 },
 	32*8	/* every sprite takes 32 consecutive bytes */
 };
+
+/* twice as many characters and sprites */
 static struct GfxLayout pisces_charlayout =
 {
 	8,8,	/* 8*8 characters */
@@ -686,28 +751,7 @@ static struct GfxLayout pisces_spritelayout =
 			16*8, 17*8, 18*8, 19*8, 20*8, 21*8, 22*8, 23*8 },
 	32*8	/* every sprite takes 32 consecutive bytes */
 };
-static struct GfxLayout pacmanbl_charlayout =
-{
-	8,8,	/* 8*8 characters */
-	256,	/* 256 characters */
-	2,	/* 2 bits per pixel */
-	{ 0, 512*8*8 },	/* the two bitplanes are separated */
-	{ 0, 1, 2, 3, 4, 5, 6, 7 },
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	8*8	/* every char takes 8 consecutive bytes */
-};
-static struct GfxLayout pacmanbl_spritelayout =
-{
-	16,16,	/* 16*16 sprites */
-	64,	/* 64 sprites */
-	2,	/* 2 bits per pixel */
-	{ 0, 128*16*16 },	/* the two bitplanes are separated */
-	{ 0, 1, 2, 3, 4, 5, 6, 7,
-			8*8+0, 8*8+1, 8*8+2, 8*8+3, 8*8+4, 8*8+5, 8*8+6, 8*8+7 },
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
-			16*8, 17*8, 18*8, 19*8, 20*8, 21*8, 22*8, 23*8 },
-	32*8	/* every sprite takes 32 consecutive bytes */
-};
+
 static struct GfxLayout bulletlayout =
 {
 	/* there is no gfx ROM for this one, it is generated by the hardware */
@@ -717,6 +761,17 @@ static struct GfxLayout bulletlayout =
 	{ 0 },
 	{ 2, 2, 2 },	/* I "know" that this bit of the */
 	{ 0 },			/* graphics ROMs is 1 */
+	0	/* no use */
+};
+static struct GfxLayout scramble_bulletlayout =
+{
+	/* there is no gfx ROM for this one, it is generated by the hardware */
+	7,1,	/* it's just 1 pixel, but we use 7*1 to position it correctly */
+	1,	/* just one */
+	1,	/* 1 bit per pixel */
+	{ 0 },
+	{ 3, 0, 0, 0, 0, 0, 0 },	/* I "know" that this bit of the */
+	{ 0 },						/* graphics ROMs is 1 */
 	0	/* no use */
 };
 static struct GfxLayout backgroundlayout =
@@ -732,32 +787,40 @@ static struct GfxLayout backgroundlayout =
 };
 
 
-
 static struct GfxDecodeInfo galaxian_gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &galaxian_charlayout,    0,  8 },
-	{ 1, 0x0000, &galaxian_spritelayout,  0,  8 },
-	{ 1, 0x0000, &bulletlayout, 8*4, 2 },
+	{ 1, 0x0000, &galaxian_charlayout,    0, 8 },
+	{ 1, 0x0000, &galaxian_spritelayout,  0, 8 },
+	{ 1, 0x0000, &bulletlayout,         8*4, 2 },
 	{ 0, 0x0000, &backgroundlayout, 8*4+2*2, 1 },	/* this will be dynamically created */
 	{ -1 } /* end of array */
 };
 static struct GfxDecodeInfo pisces_gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &pisces_charlayout,    0,  8 },
-	{ 1, 0x0000, &pisces_spritelayout,  0,  8 },
-	{ 1, 0x0000, &bulletlayout, 8*4, 2 },
+	{ 1, 0x0000, &pisces_charlayout,      0, 8 },
+	{ 1, 0x0000, &pisces_spritelayout,    0, 8 },
+	{ 1, 0x0000, &bulletlayout,         8*4, 2 },
 	{ 0, 0x0000, &backgroundlayout, 8*4+2*2, 1 },	/* this will be dynamically created */
 	{ -1 } /* end of array */
 };
+/* seperate character and sprite ROMs */
 static struct GfxDecodeInfo pacmanbl_gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &pacmanbl_charlayout,    0,  8 },
-	{ 1, 0x0800, &pacmanbl_spritelayout,  0,  8 },
-	{ 1, 0x0000, &bulletlayout, 8*4, 2 },
+	{ 1, 0x0000, &galaxian_charlayout,    0, 8 },
+	{ 1, 0x1000, &galaxian_spritelayout,  0, 8 },
+	{ 1, 0x0000, &bulletlayout,         8*4, 2 },
 	{ 0, 0x0000, &backgroundlayout, 8*4+2*2, 1 },	/* this will be dynamically created */
 	{ -1 } /* end of array */
 };
-
+static struct GfxDecodeInfo scramble_gfxdecodeinfo[] =
+{
+	{ 1, 0x0000, &galaxian_charlayout,    0, 8 },
+	{ 1, 0x0000, &galaxian_spritelayout,  0, 8 },
+	{ 1, 0x0000, &scramble_bulletlayout,8*4, 1 },	/* 1 color code instead of 2, so all */
+													/* shots will be yellow */
+	{ 0, 0x0000, &backgroundlayout, 8*4+2*2, 1 },	/* this will be dynamically created */
+	{ -1 } /* end of array */
+};
 
 
 static struct CustomSound_interface custom_interface =
@@ -766,200 +829,6 @@ static struct CustomSound_interface custom_interface =
 	mooncrst_sh_stop,
 	mooncrst_sh_update
 };
-
-
-
-static struct MachineDriver galaxian_machine_driver =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			18432000/6,	/* 3.072 Mhz */
-			0,
-			readmem,galaxian_writemem,0,0,
-			galaxian_vh_interrupt,1
-		}
-	},
-	60, 2500,	/* frames per second, vblank duration */
-	1,	/* single CPU, no need for interleaving */
-	0,
-
-	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	galaxian_gfxdecodeinfo,
-	32+64+1,8*4+2*2+128*1,	/* 32 for the characters, 64 for the stars, 1 for background */
-	galaxian_vh_convert_color_prom,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	galaxian_vh_start,
-	generic_vh_stop,
-	galaxian_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_CUSTOM,
-			&custom_interface
-		}
-	}
-};
-
-static struct MachineDriver pisces_machine_driver =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			18432000/6,	/* 3.072 Mhz */
-			0,
-			readmem,pisces_writemem,0,0,
-			galaxian_vh_interrupt,1
-		}
-	},
-	60, 2500,	/* frames per second, vblank duration */
-	1,	/* single CPU, no need for interleaving */
-	0,
-
-	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	pisces_gfxdecodeinfo,
-	32+64+1,8*4+2*2+128*1,	/* 32 for the characters, 64 for the stars, 1 for background */
-	galaxian_vh_convert_color_prom,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	pisces_vh_start,
-	generic_vh_stop,
-	galaxian_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_CUSTOM,
-			&custom_interface
-		}
-	}
-};
-
-static struct MachineDriver mooncrgx_machine_driver =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			18432000/6,	/* 3.072 Mhz */
-			0,
-			readmem,mooncrgx_writemem,0,0,
-			galaxian_vh_interrupt,1
-		}
-	},
-	60, 2500,	/* frames per second, vblank duration */
-	1,	/* single CPU, no need for interleaving */
-	0,
-
-	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	pisces_gfxdecodeinfo,
-	32+64+1,8*4+2*2+128*1,	/* 32 for the characters, 64 for the stars, 1 for background */
-	galaxian_vh_convert_color_prom,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	mooncrst_vh_start,
-	generic_vh_stop,
-	galaxian_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_CUSTOM,
-			&custom_interface
-		}
-	}
-};
-
-
-static struct MachineDriver pacmanbl_machine_driver =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			18432000/6,	/* 3.072 Mhz */
-			0,
-			readmem,pisces_writemem,0,0,
-			galaxian_vh_interrupt,1
-		}
-	},
-	60, 2500,	/* frames per second, vblank duration */
-	1,	/* single CPU, no need for interleaving */
-	0,
-
-	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	pacmanbl_gfxdecodeinfo,
-	32+64+1,8*4+2*2+128*1,	/* 32 for the characters, 64 for the stars, 1 for background */
-	galaxian_vh_convert_color_prom,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	pisces_vh_start,
-	generic_vh_stop,
-	galaxian_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_CUSTOM,
-			&custom_interface
-		}
-	}
-};
-
-static struct MachineDriver devilfsh_machine_driver =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			18432000/6,	/* 3.072 Mhz */
-			0,
-			readmem,pisces_writemem,0,0,
-			devilfsh_vh_interrupt,1
-		}
-	},
-	60, 2500,	/* frames per second, vblank duration */
-	1,	/* single CPU, no need for interleaving */
-	0,
-
-	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	pacmanbl_gfxdecodeinfo,
-	32+64+1,8*4+2*2+128*1,	/* 32 for the characters, 64 for the stars, 1 for background */
-	galaxian_vh_convert_color_prom,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	pisces_vh_start,
-	generic_vh_stop,
-	galaxian_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_CUSTOM,
-			&custom_interface
-		}
-	}
-};
-
 
 static struct AY8910interface ay8910_interface =
 {
@@ -972,6 +841,57 @@ static struct AY8910interface ay8910_interface =
 	{ 0 }
 };
 
+
+#define MACHINE_DRIVER(NAME, INTERRUPT, MACHINEINIT, GFXDECODEINFO, VHSTART)	\
+																				\
+static struct MachineDriver NAME##_machine_driver =								\
+{																				\
+	/* basic machine hardware */												\
+	{																			\
+		{																		\
+			CPU_Z80,															\
+			18432000/6,	/* 3.072 Mhz */											\
+			0,																	\
+			readmem,writemem,0,0,												\
+			INTERRUPT##_vh_interrupt,1											\
+		}																		\
+	},																			\
+	60, 2500,	/* frames per second, vblank duration */						\
+	1,	/* single CPU, no need for interleaving */								\
+	MACHINEINIT,																\
+																				\
+	/* video hardware */														\
+	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },									\
+	GFXDECODEINFO##_gfxdecodeinfo,												\
+	32+64+1,8*4+2*2+128*1,	/* 32 for the characters, 64 for the stars, 1 for background */	\
+	galaxian_vh_convert_color_prom,												\
+																				\
+	VIDEO_TYPE_RASTER,															\
+	0,																			\
+	VHSTART##_vh_start,															\
+	generic_vh_stop,															\
+	galaxian_vh_screenrefresh,													\
+																				\
+	/* sound hardware */														\
+	0,0,0,0,																	\
+	{																			\
+		{																		\
+			SOUND_CUSTOM,														\
+			&custom_interface													\
+		}																		\
+	}																			\
+};
+
+/*						 INTERRUPT	MACHINE_INIT           GFXDECODE  VH_START */
+
+MACHINE_DRIVER(galaxian, galaxian,  galaxian_machine_init, galaxian,  galaxian)
+MACHINE_DRIVER(warofbug, galaxian,  0,                     galaxian,  galaxian)
+MACHINE_DRIVER(galapx,   galaxian,  galapx_machine_init,   galaxian,  galaxian)
+MACHINE_DRIVER(pisces,   galaxian,  0,                     pisces,    pisces)
+MACHINE_DRIVER(mooncrgx, galaxian,  0,                     pisces,    mooncrgx)
+MACHINE_DRIVER(pacmanbl, galaxian,  0,                     pacmanbl,  pisces)
+MACHINE_DRIVER(devilfsh, devilfsh,  0,                     pacmanbl,  pisces)
+
 static struct MachineDriver zigzag_machine_driver =
 {
 	/* basic machine hardware */
@@ -981,7 +901,7 @@ static struct MachineDriver zigzag_machine_driver =
 			18432000/6,	/* 3.072 Mhz */
 			0,
 			zigzag_readmem,zigzag_writemem,0,0,
-			galaxian_vh_interrupt,1
+			nmi_interrupt,1
 		}
 	},
 	60, 2500,	/* frames per second, vblank duration */
@@ -1010,6 +930,44 @@ static struct MachineDriver zigzag_machine_driver =
 	}
 };
 
+static struct MachineDriver scramblb_machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_Z80,
+			18432000/6,	/* 3.072 MHz */
+			0,
+			scramblb_readmem,scramblb_writemem,0,0,
+			scramble_vh_interrupt,1
+		}
+	},
+	60, 2500,	/* frames per second, vblank duration */
+	1,      /* single CPU, no need for interleaving */
+	0,
+
+	/* video hardware */
+	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
+	scramble_gfxdecodeinfo,
+	32+64+1,8*4+2*2+128*1,	/* 32 for the characters, 64 for the stars, 1 for background */
+	galaxian_vh_convert_color_prom,
+
+	VIDEO_TYPE_RASTER,
+	0,
+	scramble_vh_start,
+	generic_vh_stop,
+	galaxian_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_CUSTOM,
+			&custom_interface
+		}
+	}
+};
+
 static const char *mooncrst_sample_names[] =
 {
 	"*galaxian",
@@ -1026,9 +984,11 @@ static const char *mooncrst_sample_names[] =
 
 ROM_START( galaxian_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "7f",           0x0000, 0x1000, 0xb10533fd )
-	ROM_LOAD( "7j",           0x1000, 0x1000, 0x9163454d )
-	ROM_LOAD( "7l",           0x2000, 0x1000, 0x952c6135 )
+	ROM_LOAD( "galmidw.u",    0x0000, 0x0800, 0x745e2d61 )  /*	\ 7f previously */
+	ROM_LOAD( "galmidw.v",    0x0800, 0x0800, 0x9c999a40 )	/*  /				*/
+	ROM_LOAD( "galmidw.w",    0x1000, 0x0800, 0xb5894925 )  /*  \ 7j previously */
+	ROM_LOAD( "galmidw.y",    0x1800, 0x0800, 0x6b3ca10b )  /*  /               */
+	ROM_LOAD( "7l",           0x2000, 0x0800, 0x1b933207 )
 
 	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "1h",           0x0000, 0x0800, 0x39fb43a4 )
@@ -1049,22 +1009,6 @@ ROM_START( galmidw_rom )
 	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "galmidw.1j",   0x0000, 0x0800, 0x84decf98 )
 	ROM_LOAD( "galmidw.1k",   0x0800, 0x0800, 0xc31ada9e )
-
-	ROM_REGION(0x0020)	/* color prom */
-	ROM_LOAD( "galaxian.clr", 0x0000, 0x0020, 0xc3ac9467 )
-ROM_END
-
-ROM_START( galnamco_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "galnamco.u",   0x0000, 0x0800, 0xacfde501 )
-	ROM_LOAD( "galnamco.v",   0x0800, 0x0800, 0x65cf3c77 )
-	ROM_LOAD( "galnamco.w",   0x1000, 0x0800, 0x9eef9ae6 )
-	ROM_LOAD( "galnamco.y",   0x1800, 0x0800, 0x56a5ddd1 )
-	ROM_LOAD( "galnamco.z",   0x2000, 0x0800, 0xf4bc7262 )
-
-	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "1h",           0x0000, 0x0800, 0x39fb43a4 )
-	ROM_LOAD( "1k",           0x0800, 0x0800, 0x7e3f56a2 )
 
 	ROM_REGION(0x0020)	/* color prom */
 	ROM_LOAD( "galaxian.clr", 0x0000, 0x0020, 0xc3ac9467 )
@@ -1120,7 +1064,11 @@ ROM_END
 
 ROM_START( galap1_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "galx_1.rom",   0x0000, 0x2800, 0xb22ee816 )
+	ROM_LOAD( "superg.u",     0x0000, 0x0800, 0xe8f3aa67 ) /* \							*/
+	ROM_LOAD( "superg.v",     0x0800, 0x0800, 0xf58283e3 ) /*  \						*/
+	ROM_LOAD( "cp3",          0x1000, 0x0800, 0x4c7031c0 ) /*	\ galx_1.rom previously */
+	ROM_LOAD( "galx_1_4.rom", 0x1800, 0x0800, 0xe71e1d9e ) /*	/						*/
+	ROM_LOAD( "galx_1_5.rom", 0x2000, 0x0800, 0x6e65a3b2 ) /*  /						*/
 
 	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "galmidw.1j",   0x0000, 0x0800, 0x84decf98 )
@@ -1132,7 +1080,11 @@ ROM_END
 
 ROM_START( galap4_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "galx_4.rom",   0x0000, 0x2800, 0xe88a3eea )
+	ROM_LOAD( "galnamco.u",   0x0000, 0x0800, 0xacfde501 )
+	ROM_LOAD( "galnamco.v",   0x0800, 0x0800, 0x65cf3c77 )
+	ROM_LOAD( "galnamco.w",   0x1000, 0x0800, 0x9eef9ae6 )
+	ROM_LOAD( "galnamco.y",   0x1800, 0x0800, 0x56a5ddd1 )
+	ROM_LOAD( "galnamco.z",   0x2000, 0x0800, 0xf4bc7262 )
 
 	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "galx_4c1.rom", 0x0000, 0x0800, 0xd5e88ab4 )
@@ -1172,7 +1124,7 @@ ROM_START( pisces_rom )
 	ROM_LOAD( "pisces.1k",    0x1000, 0x1000, 0xcdc5aa26 )
 
 	ROM_REGION(0x0020)	/* color prom */
-	ROM_LOAD( "pis_l6.bin",   0x0000, 0x0020, 0x24652bc4 ) /* very close to Galaxian */
+	ROM_LOAD( "6331-1j.86",   0x0000, 0x0020, 0x24652bc4 ) /* very close to Galaxian */
 ROM_END
 
 ROM_START( japirem_rom )
@@ -1193,7 +1145,7 @@ ROM_START( japirem_rom )
 	ROM_LOAD( "k01_2.bin",    0x1800, 0x0800, 0xdcc2b33b )
 
 	ROM_REGION(0x0020)	/* color prom */
-	ROM_LOAD( "mooncrst.clr", 0x0000, 0x0020, 0x6a0c7d87 )
+	ROM_LOAD( "l06_prom.bin", 0x0000, 0x0020, 0x6a0c7d87 )
 ROM_END
 
 ROM_START( uniwars_rom )
@@ -1235,7 +1187,7 @@ ROM_START( spacbatt_rom )
 	ROM_LOAD( "k01_2.bin",    0x1800, 0x0800, 0xdcc2b33b )
 
 	ROM_REGION(0x0020)	/* color prom */
-	ROM_LOAD( "mooncrst.clr", 0x0000, 0x0020, 0x6a0c7d87 )
+	ROM_LOAD( "l06_prom.bin", 0x0000, 0x0020, 0x6a0c7d87 )
 ROM_END
 
 ROM_START( warofbug_rom )
@@ -1283,12 +1235,12 @@ ROM_START( pacmanbl_rom )
 
 	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "blpac12b",     0x0000, 0x0800, 0xb2ed320b )
-	ROM_LOAD( "blpac10b",     0x0800, 0x0800, 0x44a45b72 )
-	ROM_LOAD( "blpac11b",     0x1000, 0x0800, 0xab88b2c4 )
+	ROM_LOAD( "blpac11b",     0x0800, 0x0800, 0xab88b2c4 )
+	ROM_LOAD( "blpac10b",     0x1000, 0x0800, 0x44a45b72 )
 	ROM_LOAD( "blpac9b",      0x1800, 0x0800, 0xfa84659f )
 
 	ROM_REGION(0x0020)	/* color prom */
-	ROM_LOAD( "pis_16.bin",   0x0000, 0x0020, 0x24652bc4 ) /* same as pisces */
+	ROM_LOAD( "6331-1j.86",   0x0000, 0x0020, 0x24652bc4 ) /* same as pisces */
 ROM_END
 
 ROM_START( devilfsh_rom )
@@ -1303,13 +1255,13 @@ ROM_START( devilfsh_rom )
 	ROM_CONTINUE(             0x1800, 0x0800 )
 
 	ROM_REGION_DISPOSE(0x2000)      /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "dfish5.1h",    0x0800, 0x0800, 0xace6e31f )
+	ROM_LOAD( "dfish5.1h",    0x1000, 0x0800, 0xace6e31f )
 	ROM_CONTINUE(             0x0000, 0x0800 )
 	ROM_LOAD( "dfish6.1k",    0x1800, 0x0800, 0xd7a6c4c4 )
-	ROM_CONTINUE(             0x1000, 0x0800 )
+	ROM_CONTINUE(             0x0800, 0x0800 )
 
-	ROM_REGION(0x0020)
-	/* missing! */
+	ROM_REGION(0x0020)  /* color prom */
+	ROM_LOAD( "devilfsh.clr", 0x0000, 0x0020, 0x00000000 )  /* missing! */
 ROM_END
 
 ROM_START( zigzag_rom )
@@ -1320,8 +1272,10 @@ ROM_START( zigzag_rom )
 	ROM_LOAD( "zz_d3.bin",    0x3000, 0x1000, 0xce5e7a00 )
 
 	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "zz_6_h1.bin",  0x0000, 0x1000, 0x780c162a )
-	ROM_LOAD( "zz_5.bin",     0x1000, 0x1000, 0xf3cdfec5 )
+	ROM_LOAD( "zz_6_h1.bin",  0x0000, 0x0800, 0x780c162a )
+	ROM_CONTINUE(             0x1000, 0x0800 )
+	ROM_LOAD( "zz_5.bin",     0x0800, 0x0800, 0xf3cdfec5 )
+	ROM_CONTINUE(             0x1800, 0x0800 )
 
 	ROM_REGION(0x0020)	/* color prom */
 	ROM_LOAD( "zzbp_e9.bin",  0x0000, 0x0020, 0xaa486dd0 )
@@ -1335,8 +1289,10 @@ ROM_START( zigzag2_rom )
 	ROM_LOAD( "zz_d3.bin",    0x3000, 0x1000, 0xce5e7a00 )
 
 	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "zz_6_h1.bin",  0x0000, 0x1000, 0x780c162a )
-	ROM_LOAD( "zz_5.bin",     0x1000, 0x1000, 0xf3cdfec5 )
+	ROM_LOAD( "zz_6_h1.bin",  0x0000, 0x0800, 0x780c162a )
+	ROM_CONTINUE(             0x1000, 0x0800 )
+	ROM_LOAD( "zz_5.bin",     0x0800, 0x0800, 0xf3cdfec5 )
+	ROM_CONTINUE(             0x1800, 0x0800 )
 
 	ROM_REGION(0x0020)	/* color prom */
 	ROM_LOAD( "zzbp_e9.bin",  0x0000, 0x0020, 0xaa486dd0 )
@@ -1354,16 +1310,33 @@ ROM_START( mooncrgx_rom )
 	ROM_LOAD( "8",            0x3800, 0x0800, 0x5e09da94 )
 
 	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "10.chr",       0x0000, 0x0800, 0x528da705 )
+	ROM_LOAD( "1h_1_10.bin",  0x0000, 0x0800, 0x528da705 )
 	ROM_LOAD( "12.chr",       0x0800, 0x0800, 0x5a4b17ea )
 	ROM_LOAD( "9.chr",        0x1000, 0x0800, 0x70df525c )
 	ROM_LOAD( "11.chr",       0x1800, 0x0800, 0xe0edccbd )
 
 	ROM_REGION(0x0020)	/* color prom */
-	ROM_LOAD( "mooncrst.clr", 0x0000, 0x0020, 0x6a0c7d87 )
+	ROM_LOAD( "l06_prom.bin", 0x0000, 0x0020, 0x6a0c7d87 )
 ROM_END
 
+ROM_START( scramblb_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "scramble.1k",  0x0000, 0x0800, 0x9e025c4a )
+	ROM_LOAD( "scramble.2k",  0x0800, 0x0800, 0x306f783e )
+	ROM_LOAD( "scramble.3k",  0x1000, 0x0800, 0x0500b701 )
+	ROM_LOAD( "scramble.4k",  0x1800, 0x0800, 0xdd380a22 )
+	ROM_LOAD( "scramble.5k",  0x2000, 0x0800, 0xdf0b9648 )
+	ROM_LOAD( "scramble.1j",  0x2800, 0x0800, 0xb8c07b3c )
+	ROM_LOAD( "scramble.2j",  0x3000, 0x0800, 0x88ac07a0 )
+	ROM_LOAD( "scramble.3j",  0x3800, 0x0800, 0xc67d57ca )
 
+	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics */
+	ROM_LOAD( "5f.k",         0x0000, 0x0800, 0x4708845b )
+	ROM_LOAD( "5h.k",         0x0800, 0x0800, 0x11fd2887 )
+
+	ROM_REGION(0x0020)	/* color prom */
+	ROM_LOAD( "82s123.6e",    0x0000, 0x0020, 0x4e3caeab )
+ROM_END
 
 
 static unsigned char wrong_color_prom[32] =
@@ -1371,7 +1344,6 @@ static unsigned char wrong_color_prom[32] =
 	0x00,0x07,0x38,0xF6,0x00,0x16,0xC0,0x3F,0x00,0xD8,0x07,0x3F,0x00,0xC0,0xC4,0x07,
 	0x00,0xC0,0xA0,0x07,0x00,0x38,0xc0,0x07,0x00,0xF6,0x07,0xF0,0x00,0x76,0x07,0xC6
 };
-
 
 
 static int galaxian_hiload(void)
@@ -1396,8 +1368,6 @@ static int galaxian_hiload(void)
 	else return 0;	/* we can't load the hi scores yet */
 }
 
-
-
 static void galaxian_hisave(void)
 {
 	void *f;
@@ -1412,7 +1382,6 @@ static void galaxian_hisave(void)
 }
 
 
-
 static int pisces_hiload(void)
 {
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
@@ -1420,11 +1389,11 @@ static int pisces_hiload(void)
 	/* check if the hi score table has already been initialized */
 	/* the high score table is intialized to all 0, so first of all */
 	/* we dirty it, then we wait for it to be cleared again */
-		if (firsttime == 0)
-		{
-			memset(&RAM[0x4021],0xff,3);	/* high score */
-			firsttime = 1;
-		}
+	if (firsttime == 0)
+	{
+		memset(&RAM[0x4021],0xff,3);	/* high score */
+		firsttime = 1;
+	}
 
 
 	/* wait for the screen to initialize */
@@ -1444,8 +1413,6 @@ static int pisces_hiload(void)
 	else return 0;	/* we can't load the hi scores yet */
 }
 
-
-
 static void pisces_hisave(void)
 {
 	void *f;
@@ -1459,18 +1426,20 @@ static void pisces_hisave(void)
 	}
 }
 
+
 static int warofbug_hiload(void)
 {
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-static int firsttime;
+	static int firsttime;
+
 	/* check if the hi score table has already been initialized */
 	/* the high score table is intialized to all 0, so first of all */
 	/* we dirty it, then we wait for it to be cleared again */
-		if (firsttime == 0)
-		{
-			memset(&RAM[0x4034],0xff,3);	/* high score */
-			firsttime = 1;
-		}
+	if (firsttime == 0)
+	{
+		memset(&RAM[0x4034],0xff,3);	/* high score */
+		firsttime = 1;
+	}
 
 
 	/* wait for memory to be set */
@@ -1504,7 +1473,6 @@ static void warofbug_hisave(void)
 }
 
 
-
 static int pacmanbl_hiload(void)
 {
 	static int firsttime;
@@ -1514,11 +1482,11 @@ static int pacmanbl_hiload(void)
 	/* check if the hi score table has already been initialized */
 	/* the high score table is intialized to all 0, so first of all */
 	/* we dirty it, then we wait for it to be cleared again */
-		if (firsttime == 0)
-		{
-			memset(&RAM[0x4288],0xff,3);	/* high score */
-			firsttime = 1;
-		}
+	if (firsttime == 0)
+	{
+		memset(&RAM[0x4288],0xff,3);	/* high score */
+		firsttime = 1;
+	}
 
 
 	/* Check for score to be initialised, and wait for "HIGH" to be on screen */
@@ -1631,6 +1599,7 @@ static void zigzag_hisave(void)
     }
 }
 
+
 static int mooncrgx_hiload(void)
 {
     unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
@@ -1665,6 +1634,44 @@ static void mooncrgx_hisave(void)
 }
 
 
+static int scramble_hiload(void)
+{
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+	/* check if the hi score table has already been initialized */
+    if ((memcmp(&RAM[0x4200],"\x00\x00\x01",3) == 0) &&
+		(memcmp(&RAM[0x421B],"\x00\x00\x01",3) == 0))
+	{
+		void *f;
+
+
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&RAM[0x4200],0x1E);
+			/* copy high score */
+			memcpy(&RAM[0x40A8],&RAM[0x4200],3);
+			osd_fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;	/* we can't load the hi scores yet */
+}
+
+static void scramble_hisave(void)
+{
+	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&RAM[0x4200],0x1E);
+		osd_fclose(f);
+	}
+
+}
 
 
 struct GameDriver galaxian_driver =
@@ -1719,32 +1726,6 @@ struct GameDriver galmidw_driver =
 	galaxian_hiload, galaxian_hisave
 };
 
-struct GameDriver galnamco_driver =
-{
-	__FILE__,
-	&galaxian_driver,
-	"galnamco",
-	"Galaxian (Namco, modified)",
-	"1979",
-	"hack",
-	"Robert Anschuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili",
-	0,
-	&galaxian_machine_driver,
-	0,
-
-	galnamco_rom,
-	0, 0,
-	mooncrst_sample_names,
-	0,	/* sound_prom */
-
-	galnamco_input_ports,
-
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	galaxian_hiload, galaxian_hisave
-};
-
 struct GameDriver superg_driver =
 {
 	__FILE__,
@@ -1763,7 +1744,7 @@ struct GameDriver superg_driver =
 	mooncrst_sample_names,
 	0,	/* sound_prom */
 
-	galnamco_input_ports,
+	superg_input_ports,
 
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
@@ -1776,7 +1757,7 @@ struct GameDriver galaxb_driver =
 	__FILE__,
 	&galaxian_driver,
 	"galaxb",
-	"Galaxians (bootleg)",
+	"Galaxian (bootleg)",
 	"1979",
 	"bootleg",
 	"Robert Anschuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili",
@@ -1789,7 +1770,7 @@ struct GameDriver galaxb_driver =
 	mooncrst_sample_names,
 	0,	/* sound_prom */
 
-	galnamco_input_ports,
+	superg_input_ports,
 
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
@@ -1807,7 +1788,7 @@ struct GameDriver galapx_driver =
 	"hack",
 	"Robert Anschuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili",
 	0,
-	&galaxian_machine_driver,
+	&galapx_machine_driver,
 	0,
 
 	galapx_rom,
@@ -1815,7 +1796,7 @@ struct GameDriver galapx_driver =
 	mooncrst_sample_names,
 	0,	/* sound_prom */
 
-	galnamco_input_ports,
+	superg_input_ports,
 
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
@@ -1841,7 +1822,7 @@ struct GameDriver galap1_driver =
 	mooncrst_sample_names,
 	0,	/* sound_prom */
 
-	galnamco_input_ports,
+	superg_input_ports,
 
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
@@ -1867,7 +1848,7 @@ struct GameDriver galap4_driver =
 	mooncrst_sample_names,
 	0,	/* sound_prom */
 
-	galnamco_input_ports,
+	superg_input_ports,
 
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
@@ -1893,7 +1874,7 @@ struct GameDriver galturbo_driver =
 	mooncrst_sample_names,
 	0,	/* sound_prom */
 
-	galnamco_input_ports,
+	superg_input_ports,
 
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
@@ -1945,7 +1926,7 @@ struct GameDriver japirem_driver =
 	mooncrst_sample_names,
 	0,	/* sound_prom */
 
-	galnamco_input_ports,
+	superg_input_ports,
 
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
@@ -1971,7 +1952,7 @@ struct GameDriver uniwars_driver =
 	mooncrst_sample_names,
 	0,	/* sound_prom */
 
-	galnamco_input_ports,
+	superg_input_ports,
 
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
@@ -1997,7 +1978,7 @@ struct GameDriver spacbatt_driver =
 	mooncrst_sample_names,
 	0,	/* sound_prom */
 
-	galnamco_input_ports,
+	superg_input_ports,
 
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
@@ -2015,7 +1996,7 @@ struct GameDriver warofbug_driver =
 	"Armenia",
 	"Robert Aanchuetz\nNicola Salmoria\nAndrew Scott\nMike Balfour\nTim Lindquist (color info)\nMarco Cassili",
 	0,
-	&galaxian_machine_driver,
+	&warofbug_machine_driver,
 	0,
 
 	warofbug_rom,
@@ -2041,7 +2022,7 @@ struct GameDriver redufo_driver =
 	"hack",
 	"Robert Aanchuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili",
 	0,
-	&galaxian_machine_driver,
+	&warofbug_machine_driver,
 	0,
 
 	redufo_rom,
@@ -2115,7 +2096,7 @@ struct GameDriver zigzag_driver =
 	__FILE__,
 	0,
 	"zigzag",
-	"Zig Zag (Galaxian hardware set 1)",
+	"Zig Zag (Galaxian hardware, set 1)",
 	"1982",
 	"LAX",
 	"Nicola Salmoria",
@@ -2141,7 +2122,7 @@ struct GameDriver zigzag2_driver =
 	__FILE__,
 	&zigzag_driver,
 	"zigzag2",
-	"Zig Zag (Galaxian hardware set 2)",
+	"Zig Zag (Galaxian hardware, set 2)",
 	"1982",
 	"LAX",
 	"Nicola Salmoria",
@@ -2188,3 +2169,31 @@ struct GameDriver mooncrgx_driver =
 
 	mooncrgx_hiload, mooncrgx_hisave
 };
+
+extern struct GameDriver scramble_driver;
+struct GameDriver scramblb_driver =
+{
+	__FILE__,
+	&scramble_driver,
+	"scramblb",
+	"Scramble (bootleg on Galaxian hardware)",
+	"1981",
+	"bootleg",
+	"Robert Anschuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili",
+	0,
+	&scramblb_machine_driver,
+	0,
+
+	scramblb_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	scramblb_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	scramble_hiload, scramble_hisave
+};
+

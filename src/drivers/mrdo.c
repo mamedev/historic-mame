@@ -51,12 +51,8 @@ void mrdo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 /* if a read from this address doesn't return the value it expects. */
 int mrdo_SECRE_r(int offset)
 {
-	Z80_Regs regs;
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	z80_getregs(&regs);
-	return RAM[regs.HL.d];
+	return RAM[ cpu_get_reg(Z80_HL) ];
 }
 
 

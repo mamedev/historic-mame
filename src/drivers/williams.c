@@ -450,6 +450,7 @@ Memory Map:
 #include "machine/6821pia.h"
 #include "vidhrdw/generic.h"
 
+/* #define JOUST2_SND */
 
 /**** from machine/williams.h ****/
 extern unsigned char *williams_bank_base;
@@ -497,7 +498,7 @@ extern unsigned char *blaster_bank2_base;
 void blaster_bank_select_w(int offset,int data);
 void blaster_vram_select_w(int offset,int data);
 
-void joust2_ym2151_int(void);
+void joust2_ym2151_int(int irq);
 void joust2_sound_bank_select_w(int offset, int data);
 
 /**** from vidhrdw/williams.h ****/

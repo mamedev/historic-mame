@@ -313,9 +313,10 @@ static struct YM2203interface ym2203_interface =
 	{ 0 }
 };
 
-static void sound_irq(void)
+static void sound_irq(int state)
 {
-	cpu_cause_interrupt(1,H6280_INT_IRQ2);
+	cpu_set_irq_line(1,1,state);
+	/*cpu_cause_interrupt(1,H6280_INT_IRQ2);*/
 }
 
 static struct YM2151interface ym2151_interface =

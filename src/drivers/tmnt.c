@@ -228,7 +228,7 @@ int tmnt_input_r (int offset)
 			return readinputport(7);
 	}
 
-if (errorlog) fprintf(errorlog,"CPU #0 PC %06x: warning - read unmapped memory address %06x\n",cpu_getpc(),0x0a0000+offset);
+if (errorlog) fprintf(errorlog,"CPU #0 PC %06x: warning - read unmapped memory address %06x\n",cpu_get_pc(),0x0a0000+offset);
 
 	return 0;
 }
@@ -247,7 +247,7 @@ int punkshot_input_r(int offset)
 			return (readinputport(4) + (readinputport(5) << 8));
 	}
 
-if (errorlog) fprintf(errorlog,"CPU #0 PC %06x: warning - read unmapped memory address %06x\n",cpu_getpc(),0x0a0000+offset);
+if (errorlog) fprintf(errorlog,"CPU #0 PC %06x: warning - read unmapped memory address %06x\n",cpu_get_pc(),0x0a0000+offset);
 
 	return 0;
 }

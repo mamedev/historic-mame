@@ -44,7 +44,7 @@ static int sprite_irq, sound_irq, ym_irq;
 static void dd_init_machine( void ) {
 	sprite_irq = M6809_INT_NMI;
 	sound_irq = M6809_INT_IRQ;
-	ym_irq = M6809_INT_FIRQ;
+	ym_irq = 1;//M6809_INT_FIRQ;
 	dd2_video = 0;
 	dd_sub_cpu_busy = 0x10;
 }
@@ -52,7 +52,7 @@ static void dd_init_machine( void ) {
 static void dd2_init_machine( void ) {
 	sprite_irq = Z80_NMI_INT;
 	sound_irq = Z80_NMI_INT;
-	ym_irq = -1000;
+	ym_irq = 0;//-1000;
 	dd2_video = 1;
 	dd_sub_cpu_busy = 0x10;
 }
@@ -429,8 +429,8 @@ static struct GfxDecodeInfo dd2_gfxdecodeinfo[] =
 	{ -1 } // end of array
 };
 
-static void dd_irq_handler(void) {
-	cpu_cause_interrupt( 2, ym_irq );
+static void dd_irq_handler(int irq) {
+	cpu_set_irq_line( 2, ym_irq , irq ? ASSERT_LINE : CLEAR_LINE );
 }
 
 static struct YM2151interface ym2151_interface =

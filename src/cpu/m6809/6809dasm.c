@@ -14,7 +14,7 @@
 /* Please send all bug reports, update ideas and data files to: */
 /* sriddle@ionet.net */
 #include <stdio.h>
-#include <string.h>
+#include <strings.h>
 #include "memory.h"
 
 #ifndef TRUE

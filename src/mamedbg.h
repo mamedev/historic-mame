@@ -38,7 +38,7 @@
 #include "cpu/i86/i86intrf.h"
 #include "cpu/i8039/i8039.h"
 #include "cpu/i8085/i8085.h"
-#include "cpu/m6808/m6808.h"
+#include "cpu/m6800/m6800.h"
 #include "cpu/m6805/m6805.h"
 #include "cpu/m6809/m6809.h"
 #include "cpu/m68000/m68000.h"

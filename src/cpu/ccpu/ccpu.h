@@ -27,28 +27,15 @@
 /* added these includes */
 #include "osd_cpu.h"
 
+enum { CCPU_ACC, CCPU_CMP, CCPU_PA0, CCPU_CFLAG, CCPU_PC,
+	CCPU_A, CCPU_B, CCPU_I, CCPU_J, CCPU_P, CCPU_CSTATE };
+
 #ifndef FALSE
 #define FALSE	0
 #endif
 #ifndef TRUE
 #define TRUE	(!FALSE)
 #endif
-
-/* the MAME version of the CCPU registers */
-typedef struct ccpuRegs
-{
-	UINT16	accVal;
-	UINT16	cmpVal;
-	UINT8	pa0;
-	UINT8	cFlag;
-	UINT16	eRegPC;
-	UINT16	eRegA;
-	UINT16	eRegB;
-	UINT16	eRegI;
-	UINT16	eRegJ;
-	UINT8	eRegP;
-	UINT8	eCState;
-} ccpuRegs;
 
 /* an ICount variable (mostly irrelevant) */
 extern int ccpu_ICount;
@@ -57,11 +44,14 @@ extern int ccpu_ICount;
 void ccpu_reset(void *param);
 void ccpu_exit(void);
 int ccpu_execute(int cycles);
-void ccpu_setregs(ccpuRegs *Regs);
-void ccpu_getregs(ccpuRegs *Regs);
-unsigned ccpu_getpc(void);
-unsigned ccpu_getreg(int regnum);
-void ccpu_setreg(int regnum, unsigned val);
+unsigned ccpu_get_context(void *dst);
+void ccpu_set_context(void *src);
+unsigned ccpu_get_pc(void);
+void ccpu_set_pc(unsigned val);
+unsigned ccpu_get_sp(void);
+void ccpu_set_sp(unsigned val);
+unsigned ccpu_get_reg(int regnum);
+void ccpu_set_reg(int regnum, unsigned val);
 void ccpu_set_nmi_line(int state);
 void ccpu_set_irq_line(int irqline, int state);
 void ccpu_set_irq_callback(int (*callback)(int irqline));

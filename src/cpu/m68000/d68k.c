@@ -27,7 +27,9 @@ static const char* copyright_notice =
 #include "d68k.h"
 #include "d68kconf.h"
 
-
+#ifndef CLIB_DECL
+#define CLIB_DECL
+#endif
 
 /* ======================================================================== */
 /* ============================ GENERAL DEFINES =========================== */
@@ -140,7 +142,7 @@ char* get_imm_str_s32(void);
 /* Stuff to build the opcode handler jump table */
 static void  build_opcode_table(void);
 static int   valid_ea(uint opcode, uint mask);
-static int   compare_nof_true_bits(const void *aptr, const void *bptr);
+static int CLIB_DECL compare_nof_true_bits(const void *aptr, const void *bptr);
 
 
 /* used to build opcode handler jump table */
@@ -2996,7 +2998,7 @@ static int valid_ea(uint opcode, uint mask)
 }
 
 /* Used by qsort */
-static int compare_nof_true_bits(const void *aptr, const void *bptr)
+static int CLIB_DECL compare_nof_true_bits(const void *aptr, const void *bptr)
 {
    uint a = ((opcode_struct*)aptr)->mask;
    uint b = ((opcode_struct*)bptr)->mask;

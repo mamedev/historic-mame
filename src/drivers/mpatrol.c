@@ -71,12 +71,8 @@ int mpatrol_input_port_3_r(int offset);
 /* if a read from this address doesn't return the value it expects. */
 int mpatrol_protection_r(int offset)
 {
-	Z80_Regs regs;
-
-
-//if (errorlog) fprintf(errorlog,"%04x: read protection\n",cpu_getpc());
-	z80_getregs(&regs);
-	return regs.DE.b.l;
+//if (errorlog) fprintf(errorlog,"%04x: read protection\n",cpu_get_pc());
+	return cpu_get_reg(Z80_DE) & 0xff;
 }
 
 

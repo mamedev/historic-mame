@@ -117,7 +117,7 @@ void mainevt_sh_bankswitch_w(int offset,int data)
 {
 	unsigned char *src,*dest;
 
-//if (errorlog) fprintf(errorlog,"CPU #1 PC: %04x bank switch = %02x\n",cpu_getpc(),data);
+//if (errorlog) fprintf(errorlog,"CPU #1 PC: %04x bank switch = %02x\n",cpu_get_pc(),data);
 
 	/* bits 0-3 select the 007232 banks, but I don't know how yet */
 	/* the following is wrong! */

@@ -31,6 +31,12 @@ static struct YM2610interface *intf;
 static void *Timer[MAX_2610][2];
 
 /*------------------------- TM2610 -------------------------------*/
+/* IRQ Handler */
+static void IRQHandler(int n,int irq)
+{
+	if(intf->handler[n]) intf->handler[n](irq);
+}
+
 /* Timer overflow callback from timer.c */
 static void timer_callback_2610(int param)
 {
@@ -39,11 +45,7 @@ static void timer_callback_2610(int param)
 
 //	if(errorlog) fprintf(errorlog,"2610 TimerOver %d\n",c);
 	Timer[n][c] = 0;
-	if( YM2610TimerOver(n,c) )
-	{	/* IRQ is active */;
-		/* User Interrupt call */
-		if(intf->handler[n]) intf->handler[n]();
-	}
+	YM2610TimerOver(n,c);
 }
 
 /* TimerHandler from fm.c */
@@ -135,7 +137,7 @@ int YM2610_sh_start(struct YM2610interface *interface ){
 	}
 
 	/**** initialize YM2610 ****/
-	if (YM2610Init(intf->num,intf->baseclock,rate, intf->pcmroma, intf->pcmromb,TimerHandler,0) == 0)
+	if (YM2610Init(intf->num,intf->baseclock,rate, intf->pcmroma, intf->pcmromb,TimerHandler,IRQHandler) == 0)
 		return 0;
 
 	/* error */
@@ -217,13 +219,13 @@ void YM2610_sh_stop(void)
 /************************************************/
 int YM2610_status_port_0_A_r( int offset )
 {
-//if(errorlog) fprintf(errorlog,"PC %04x: 2610 S0A=%02X\n",cpu_getpc(),YM2610Read(0,0));
+//if(errorlog) fprintf(errorlog,"PC %04x: 2610 S0A=%02X\n",cpu_get_pc(),YM2610Read(0,0));
 	return YM2610Read(0,0);
 }
 
 int YM2610_status_port_0_B_r( int offset )
 {
-//if(errorlog) fprintf(errorlog,"PC %04x: 2610 S0B=%02X\n",cpu_getpc(),YM2610Read(0,2));
+//if(errorlog) fprintf(errorlog,"PC %04x: 2610 S0B=%02X\n",cpu_get_pc(),YM2610Read(0,2));
 	return YM2610Read(0,2);
 }
 
@@ -258,13 +260,13 @@ int YM2610_read_port_1_r( int offset ){
 /************************************************/
 void YM2610_control_port_0_A_w(int offset,int data)
 {
-//if(errorlog) fprintf(errorlog,"PC %04x: 2610 Reg A %02X",cpu_getpc(),data);
+//if(errorlog) fprintf(errorlog,"PC %04x: 2610 Reg A %02X",cpu_get_pc(),data);
 	YM2610Write(0,0,data);
 }
 
 void YM2610_control_port_0_B_w(int offset,int data)
 {
-//if(errorlog) fprintf(errorlog,"PC %04x: 2610 Reg B %02X",cpu_getpc(),data);
+//if(errorlog) fprintf(errorlog,"PC %04x: 2610 Reg B %02X",cpu_get_pc(),data);
 	YM2610Write(0,2,data);
 }
 

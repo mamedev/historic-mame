@@ -114,7 +114,7 @@ INLINE void TMS34061_register_w(int offset, int data)
 	if (!status && errorlog)
 	{
 		fprintf(errorlog, "Unsupported TMS34061 write. Reg #%02X=%04X - PC: %04X\n",
-				reg, regs[reg], cpu_getpc());
+				reg, regs[reg], cpu_get_pc());
 	}
 }
 
@@ -171,7 +171,7 @@ INLINE int TMS34061_register_r(int offset)
 	if (!status && errorlog)
 	{
 		fprintf(errorlog, "Unsupported TMS34061 read.  Reg #%02X      - PC: %04X\n",
-				reg, cpu_getpc());
+				reg, cpu_get_pc());
 	}
 
 	return ret;
@@ -260,7 +260,7 @@ void TMS34061_w(int offset, int data)
 		if (errorlog)
 		{
 			fprintf(errorlog, "Unsupported TMS34061 function %d - PC: %04X\n",
-					func, cpu_getpc());
+					func, cpu_get_pc());
 		}
 	}
 }
@@ -294,7 +294,7 @@ int TMS34061_r(int offset)
 		if (errorlog)
 		{
 			fprintf(errorlog, "Unsupported TMS34061 function %d - PC: %04X\n",
-					func, cpu_getpc());
+					func, cpu_get_pc());
 		}
 	}
 

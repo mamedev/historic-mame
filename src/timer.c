@@ -96,7 +96,7 @@ static void verbose_print(char *s, ...);
  */
 INLINE double getabsolutetime(void)
 {
-	if (activecpu)
+	if (activecpu && (*activecpu->icount + activecpu->lost) > 0)
 		return base_time - ((double)(*activecpu->icount + activecpu->lost) * activecpu->cycles_to_sec);
 	else
 		return base_time;
@@ -763,7 +763,7 @@ static int pick_cpu(int *cpunum, int *cycles, double end)
 
 			/* return the number of cycles to execute and the CPU number */
 			*cpunum = cpu->index;
-			*cycles = (int)((double)(end - cpu->time) * cpu->sec_to_cycles) + 1;
+			*cycles = (int)((double)(end - cpu->time) * cpu->sec_to_cycles);
 
 			#if VERBOSE
 				verbose_print("T=%.6g: CPU %d runs %d cycles\n", cpu->time + global_offset, *cpunum, *cycles);

@@ -88,7 +88,7 @@ static void f1dream_protection_w(void)
 	int indx;
 	int value = 255;
 
-	if (cpu_getpc() == 0x2450)
+	if (cpu_get_pc() == 0x2450)
 	{
 		/* Called once, when a race is started.*/
 		indx = READ_WORD(&ram[0x3ff0]);
@@ -97,7 +97,7 @@ static void f1dream_protection_w(void)
 		WRITE_WORD(&ram[0x3fea],f1dream_2450_lookup[++indx]);
 		WRITE_WORD(&ram[0x3fec],f1dream_2450_lookup[++indx]);
 	}
-	else if (cpu_getpc() == 0x613e)
+	else if (cpu_get_pc() == 0x613e)
 	{
 		/* Called for every sprite on-screen.*/
 		if ((READ_WORD(&ram[0x3ff6])) < 15)
@@ -113,7 +113,7 @@ static void f1dream_protection_w(void)
 
 		WRITE_WORD(&ram[0x3ff2],value);
 	}
-	else if (cpu_getpc() == 0x17b74)
+	else if (cpu_get_pc() == 0x17b74)
 	{
 		/* Called only before a real race, not a time trial.*/
 		if ((READ_WORD(&ram[0x3ff0])) >= 0x04) indx = 128;
@@ -138,7 +138,7 @@ static void f1dream_protection_w(void)
 			WRITE_WORD(&ram[0x3fec],0x00ff);
 		}
 	}
-	else if ((cpu_getpc() == 0x27fc) || (cpu_getpc() == 0x511e) || (cpu_getpc() == 0x5146) || (cpu_getpc() == 0x516e))
+	else if ((cpu_get_pc() == 0x27fc) || (cpu_get_pc() == 0x511e) || (cpu_get_pc() == 0x5146) || (cpu_get_pc() == 0x516e))
 	{
 		/* The main CPU stuffs the byte for the soundlatch into 0xfffffd.*/
 		soundlatch_w(2,READ_WORD(&ram[0x3ffc]));
@@ -153,7 +153,7 @@ static void f1dream_control_w( int offset, int data )
 			tigeroad_base_bank = (data>>8)&0xF;
 			break;
 		case 2:
-			if (errorlog) fprintf(errorlog,"protection write, PC: %04x  FFE1 Value:%01x\n",cpu_getpc(), ram[0x3fe1]);
+			if (errorlog) fprintf(errorlog,"protection write, PC: %04x  FFE1 Value:%01x\n",cpu_get_pc(), ram[0x3fe1]);
 			f1dream_protection_w();
 			break;
 	}
@@ -494,9 +494,9 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 /* handler called by the 2203 emulator when the internal timers cause an IRQ */
-static void irqhandler(void)
+static void irqhandler(int irq)
 {
-	cpu_cause_interrupt(1,0xff);
+	cpu_set_irq_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
 }
 
 static struct YM2203interface ym2203_interface =

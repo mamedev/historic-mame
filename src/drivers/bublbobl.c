@@ -631,9 +631,9 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 /* handler called by the 2203 emulator when the internal timers cause an IRQ */
-static void irqhandler(void)
+static void irqhandler(int irq)
 {
-	cpu_cause_interrupt(2,0xff);
+	cpu_set_irq_line(2,0,irq ? ASSERT_LINE : CLEAR_LINE);
 }
 
 static struct YM2203interface ym2203_interface =
@@ -647,6 +647,7 @@ static struct YM2203interface ym2203_interface =
 	{ 0 },
 	{ irqhandler }
 };
+
 
 static struct YM3526interface ym3526_interface =
 {
@@ -711,8 +712,7 @@ static struct MachineDriver bublbobl_machine_driver =
 	0,		/* init_machine() */
 
 	/* video hardware */
-	32*8, 32*8,			/* screen_width, height */
-	{ 0, 32*8-1, 2*8, 30*8-1 }, /* visible_area */
+	32*8, 32*8,	{ 0, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
 	256, 256,
 	bublbobl_vh_convert_color_prom,
@@ -770,8 +770,7 @@ static struct MachineDriver boblbobl_machine_driver =
 	0,		/* init_machine() */
 
 	/* video hardware */
-	32*8, 32*8,			/* screen_width, height */
-	{ 0, 32*8-1, 2*8, 30*8-1 }, /* visible_area */
+	32*8, 32*8,	{ 0, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
 	256, 256,
 	bublbobl_vh_convert_color_prom,
@@ -830,8 +829,7 @@ static struct MachineDriver tokio_machine_driver =
 	0,	/* init_machine() */
 
 	/* video hardware */
-	32*8, 32*8,			/* screen width, height */
-	{ 0, 32*8-1, 2*8, 30*8-1 },   /* visible area */
+	32*8, 32*8,	{ 0, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
 	256, 256,
 	bublbobl_vh_convert_color_prom,

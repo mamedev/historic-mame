@@ -6,23 +6,10 @@
 #include "memory.h"
 #include "osd_cpu.h"
 
-/* T-11 Registers */
-typedef struct
-{
-	PAIR	reg[8];
-	PAIR	psw;
-	int 	op;
-	int 	pending_interrupts;
-	UINT8	*bank[8];
-#if NEW_INTERRUPT_SYSTEM
-	INT8	irq_state[4];
-	int 	(*irq_callback)(int irqline);
-#endif
-} t11_Regs;
-
-#ifndef INLINE
-#define INLINE static inline
-#endif
+enum { T11_R0, T11_R1, T11_R2, T11_R3, T11_R4, T11_R5, T11_SP, T11_PC, T11_PSW,
+	T11_IRQ0_STATE, T11_IRQ1_STATE, T11_IRQ2_STATE, T11_IRQ3_STATE,
+	T11_BANK0, T11_BANK1, T11_BANK2, T11_BANK3,
+	T11_BANK4, T11_BANK5, T11_BANK6, T11_BANK7 };
 
 #define T11_INT_NONE    -1      /* No interrupt requested */
 #define T11_IRQ0        0      /* IRQ0 */
@@ -47,11 +34,14 @@ extern int  t11_ICount;
 extern void t11_reset(void *param);
 extern void t11_exit(void);
 extern int t11_execute(int cycles);    /* NS 970908 */
-extern void t11_setregs(t11_Regs *Regs);
-extern void t11_getregs(t11_Regs *Regs);
-extern unsigned t11_getpc(void);
-extern unsigned t11_getreg(int regnum);
-extern void t11_setreg(int regnum, unsigned val);
+extern unsigned t11_get_context(void *dst);
+extern void t11_set_context(void *src);
+extern unsigned t11_get_pc(void);
+extern void t11_set_pc(unsigned val);
+extern unsigned t11_get_sp(void);
+extern void t11_set_sp(unsigned val);
+extern unsigned t11_get_reg(int regnum);
+extern void t11_set_reg(int regnum, unsigned val);
 extern void t11_set_nmi_line(int state);
 extern void t11_set_irq_line(int irqline, int state);
 extern void t11_set_irq_callback(int (*callback)(int irqline));

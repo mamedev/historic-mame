@@ -225,7 +225,7 @@ void rainbow_c_chip_w(int offset, int data)
   }
 
 #ifdef MAME_DEBUG
-  if (errorlog) fprintf(errorlog,"PC %04x : C-Chip Write %06x = %08x\n",cpu_getpc(),offset+1,data);
+  if (errorlog) fprintf(errorlog,"PC %04x : C-Chip Write %06x = %08x\n",cpu_get_pc(),offset+1,data);
 #endif
 
 }
@@ -345,7 +345,7 @@ int  rainbow_c_chip_r(int offset)
   }
 
 #ifdef MAME_DEBUG
-  if ((errorlog) && (ans==0)) fprintf(errorlog,"PC %06x : C-Chip Read %04x Bank %02x\n",cpu_getpc(),offset+1,FrameBank);
+  if ((errorlog) && (ans==0)) fprintf(errorlog,"PC %06x : C-Chip Read %04x Bank %02x\n",cpu_get_pc(),offset+1,FrameBank);
 #endif
 
   return ans;

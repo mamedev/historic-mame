@@ -108,7 +108,7 @@ static void sound_answer_w(int offset,int data)
 
 	/* in Gridiron, the sound CPU goes in a tight loop after the self test, */
 	/* probably waiting to be reset by a watchdog */
-	if (cpu_getpc() == 0x08bc) timer_set(TIME_IN_SEC(1),0,reset_callback);
+	if (cpu_get_pc() == 0x08bc) timer_set(TIME_IN_SEC(1),0,reset_callback);
 }
 
 

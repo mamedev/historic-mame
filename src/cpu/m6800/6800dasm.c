@@ -73,8 +73,8 @@ static const char *op_name_str[] = {
 };
 
 
-/* the third byte describes the if an opcode is invalid for a CPU */
-/* 1 6800/6802, 2 6803, 4 6808, 8 HD63701 */
+/* the third byte defines if an opcode is invalid for a CPU */
+/* 1 6800/6802/6808, 2 6801/6803, 4 HD63701 */
 static UINT8 disasm[0x100][3] = {
 	{illegal,_inh, 0}, {nop,	_inh, 0}, {illegal,_inh, 0}, {illegal,_inh, 0}, /* 00 */
 	{lsrd,	 _inh, 1}, {asld,	_inh, 1}, {tap,    _inh, 0}, {tpa,	  _inh, 0},
@@ -82,7 +82,7 @@ static UINT8 disasm[0x100][3] = {
 	{clc,	 _inh, 0}, {sec,	_inh, 0}, {cli,    _inh, 0}, {sti,	  _inh, 0},
 	{sba,	 _inh, 0}, {cba,	_inh, 0}, {asx1,   _sx1, 0}, {asx2,   _sx1, 0}, /* 10 */
 	{illegal,_inh, 0}, {illegal,_inh, 0}, {tab,    _inh, 0}, {tba,	  _inh, 0},
-	{xgdx,	 _inh, 7}, {daa,	_inh, 0}, {illegal,_inh, 0}, {aba,	  _inh, 0},
+	{xgdx,	 _inh, 3}, {daa,	_inh, 0}, {illegal,_inh, 0}, {aba,	  _inh, 0},
 	{illegal,_inh, 0}, {illegal,_inh, 0}, {illegal,_inh, 0}, {illegal,_inh, 0},
 	{bra,	 _rel, 0}, {brn,	_rel, 0}, {bhi,    _rel, 0}, {bls,	  _rel, 0}, /* 20 */
 	{bcc,	 _rel, 0}, {bcs,	_rel, 0}, {bne,    _rel, 0}, {beq,	  _rel, 0},
@@ -100,13 +100,13 @@ static UINT8 disasm[0x100][3] = {
 	{lsrb,	 _inh, 0}, {illegal,_inh, 0}, {rorb,   _inh, 0}, {asrb,   _inh, 0},
 	{aslb,	 _inh, 0}, {rolb,	_inh, 0}, {decb,   _inh, 0}, {illegal,_inh, 0},
 	{incb,	 _inh, 0}, {tstb,	_inh, 0}, {illegal,_inh, 0}, {clrb,   _inh, 0},
-	{neg,	 _idx, 0}, {aim,	_imx, 7}, {oim,    _imx, 7}, {com,	  _idx, 0}, /* 60 */
-	{lsr,	 _idx, 0}, {eim,	_imx, 7}, {ror,    _idx, 0}, {asr,	  _idx, 0},
-	{asl,	 _idx, 0}, {rol,	_idx, 0}, {dec,    _idx, 0}, {tim,	  _imx, 7},
+	{neg,	 _idx, 0}, {aim,	_imx, 3}, {oim,    _imx, 3}, {com,	  _idx, 0}, /* 60 */
+	{lsr,	 _idx, 0}, {eim,	_imx, 3}, {ror,    _idx, 0}, {asr,	  _idx, 0},
+	{asl,	 _idx, 0}, {rol,	_idx, 0}, {dec,    _idx, 0}, {tim,	  _imx, 3},
 	{inc,	 _idx, 0}, {tst,	_idx, 0}, {jmp,    _idx, 0}, {clr,	  _idx, 0},
-	{neg,	 _ext, 0}, {aim,	_imd, 7}, {oim,    _imd, 7}, {com,	  _ext, 0}, /* 70 */
-	{lsr,	 _ext, 0}, {eim,	_imd, 7}, {ror,    _ext, 0}, {asr,	  _ext, 0},
-	{asl,	 _ext, 0}, {rol,	_ext, 0}, {dec,    _ext, 0}, {tim,	  _imd, 7},
+	{neg,	 _ext, 0}, {aim,	_imd, 3}, {oim,    _imd, 3}, {com,	  _ext, 0}, /* 70 */
+	{lsr,	 _ext, 0}, {eim,	_imd, 3}, {ror,    _ext, 0}, {asr,	  _ext, 0},
+	{asl,	 _ext, 0}, {rol,	_ext, 0}, {dec,    _ext, 0}, {tim,	  _imd, 3},
 	{inc,	 _ext, 0}, {tst,	_ext, 0}, {jmp,    _ext, 0}, {clr,	  _ext, 0},
 	{suba,	 _im1, 0}, {cmpa,	_im1, 0}, {sbca,   _im1, 0}, {subd,   _im2, 1}, /* 80 */
 	{anda,	 _im1, 0}, {bita,	_im1, 0}, {lda,    _im1, 0}, {sta,	  _im1, 0},
@@ -148,12 +148,25 @@ static UINT8 disasm[0x100][3] = {
 #define ARG2    cpu_readop_arg(pc+2)
 #define ARGW	(cpu_readop_arg(pc+1)<<8) + cpu_readop_arg(pc+2)
 
-int Dasm680x (char *buf, int pc, int cputype)
+int Dasm680x (int subtype, char *buf, int pc)
 {
+	int cputype;
 	int code = cpu_readop(pc);
 	const char *opstr;
 
-	if ( disasm[code][2] & cputype )	/* invalid for this cpu type ? */
+	switch( subtype )
+	{
+		case 6800: case 6802: case 6808:
+			cputype = 1;
+			break;
+		case 6801: case 6803:
+			cputype = 2;
+			break;
+		default:
+			cputype = 4;
+	}
+
+    if ( disasm[code][2] & cputype )    /* invalid for this cpu type ? */
 		code = 0;						/* code 0 is illegal */
 	opstr = op_name_str[disasm[code][0]];
 
@@ -191,30 +204,4 @@ int Dasm680x (char *buf, int pc, int cputype)
 			return 1;
 	}
 }
-
-int Dasm6800 (char *buf, int pc)
-{
-	return Dasm680x(buf,pc,1);
-}
-
-int Dasm6802 (char *buf, int pc)
-{
-	return Dasm680x(buf,pc,1);
-}
-
-int Dasm6803 (char *buf, int pc)
-{
-	return Dasm680x(buf,pc,2);
-}
-
-int Dasm6808 (char *buf, int pc)
-{
-	return Dasm680x(buf,pc,4);
-}
-
-int Dasm63701 (char *buf, int pc)
-{
-	return Dasm680x(buf,pc,8);
-}
-
 

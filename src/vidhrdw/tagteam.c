@@ -94,7 +94,7 @@ void tagteam_mirrorcolorram_w(int offset,int data)
 
 void tagteam_control_w(int offset,int data)
 {
-if (errorlog) fprintf(errorlog,"%04x: control = %02x\n",cpu_getpc(),data);
+if (errorlog) fprintf(errorlog,"%04x: control = %02x\n",cpu_get_pc(),data);
 
 	/* bit 7 is the palette bank */
 	palettebank = (data & 0x80) >> 7;

@@ -32,6 +32,7 @@ static const char* copyright_notice =
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "m68kcpu.h"
 #include "m68kops.h"
 
@@ -327,7 +328,6 @@ void m68k_poke_msp(int value)
    }
 }
 
-
 /* Set the callbacks */
 void m68k_set_int_ack_callback(int  (*callback)(int int_level))
 {
@@ -505,52 +505,63 @@ void m68k_pulse_halt(void)
 
 /* Get and set the current CPU context */
 /* This is to allow for multiple CPUs */
-void m68k_get_context(m68k_cpu_context* cpu)
+unsigned m68k_get_context(void* dst)
 {
-   cpu->mode                 = CPU_MODE;
-   cpu->sr                   = m68ki_get_sr();
-   cpu->pc                   = CPU_PC;
-   memcpy(cpu->d, CPU_D, sizeof(CPU_D));
-   memcpy(cpu->a, CPU_A, sizeof(CPU_A));
-   cpu->usp                  = CPU_USP;
-   cpu->isp                  = CPU_ISP;
-   cpu->msp                  = CPU_MSP;
-   cpu->vbr                  = CPU_VBR;
-   cpu->sfc                  = CPU_SFC;
-   cpu->dfc                  = CPU_DFC;
-   cpu->stopped              = CPU_STOPPED;
-   cpu->halted               = CPU_HALTED;
-   cpu->ints_pending         = CPU_INTS_PENDING;
-   cpu->int_ack_callback     = CPU_INT_ACK_CALLBACK;
-   cpu->bkpt_ack_callback    = CPU_BKPT_ACK_CALLBACK;
-   cpu->reset_instr_callback = CPU_RESET_INSTR_CALLBACK;
-   cpu->pc_changed_callback  = CPU_PC_CHANGED_CALLBACK;
-   cpu->set_fc_callback      = CPU_SET_FC_CALLBACK;
-   cpu->instr_hook_callback  = CPU_INSTR_HOOK_CALLBACK;
+	if( dst )
+	{
+		m68k_cpu_context *cpu = dst;
+
+        cpu->mode                 = CPU_MODE;
+		cpu->sr 				  = m68ki_get_sr();
+		cpu->pc 				  = CPU_PC;
+		memcpy(cpu->d, CPU_D, sizeof(CPU_D));
+		memcpy(cpu->a, CPU_A, sizeof(CPU_A));
+		cpu->usp				  = CPU_USP;
+		cpu->isp				  = CPU_ISP;
+		cpu->msp				  = CPU_MSP;
+		cpu->vbr				  = CPU_VBR;
+		cpu->sfc				  = CPU_SFC;
+		cpu->dfc				  = CPU_DFC;
+		cpu->stopped			  = CPU_STOPPED;
+		cpu->halted 			  = CPU_HALTED;
+		cpu->ints_pending		  = CPU_INTS_PENDING;
+		cpu->int_ack_callback	  = CPU_INT_ACK_CALLBACK;
+		cpu->bkpt_ack_callback	  = CPU_BKPT_ACK_CALLBACK;
+		cpu->reset_instr_callback = CPU_RESET_INSTR_CALLBACK;
+		cpu->pc_changed_callback  = CPU_PC_CHANGED_CALLBACK;
+		cpu->set_fc_callback	  = CPU_SET_FC_CALLBACK;
+		cpu->instr_hook_callback  = CPU_INSTR_HOOK_CALLBACK;
+	}
+	return sizeof(m68k_cpu_context);
 }
 
-void m68k_set_context(m68k_cpu_context* cpu)
+void m68k_set_context(void* src)
 {
-   CPU_MODE                 = cpu->mode;
-   m68ki_set_sr(cpu->sr); /* This stays on top to prevent side-effects */
-   m68ki_set_pc(cpu->pc);
-   memcpy(CPU_D, cpu->d, sizeof(CPU_D));
-   memcpy(CPU_A, cpu->a, sizeof(CPU_D));
-   CPU_USP                  = cpu->usp;
-   CPU_ISP                  = cpu->isp;
-   CPU_MSP                  = cpu->msp;
-   CPU_VBR                  = cpu->vbr;
-   CPU_SFC                  = cpu->sfc;
-   CPU_DFC                  = cpu->dfc;
-   CPU_STOPPED              = cpu->stopped;
-   CPU_HALTED               = cpu->halted;
-   CPU_INTS_PENDING         = cpu->ints_pending;
-   CPU_INT_ACK_CALLBACK     = cpu->int_ack_callback;
-   CPU_BKPT_ACK_CALLBACK    = cpu->bkpt_ack_callback;
-   CPU_RESET_INSTR_CALLBACK = cpu->reset_instr_callback;
-   CPU_PC_CHANGED_CALLBACK  = cpu->pc_changed_callback;
-   CPU_SET_FC_CALLBACK      = cpu->set_fc_callback;
-   CPU_INSTR_HOOK_CALLBACK  = cpu->instr_hook_callback;
+	if( src )
+	{
+		m68k_cpu_context *cpu = src;
+
+        CPU_MODE                 = cpu->mode;
+		m68ki_set_sr(cpu->sr); /* This stays on top to prevent side-effects */
+		m68ki_set_pc(cpu->pc);
+		memcpy(CPU_D, cpu->d, sizeof(CPU_D));
+		memcpy(CPU_A, cpu->a, sizeof(CPU_D));
+		CPU_USP 				 = cpu->usp;
+		CPU_ISP 				 = cpu->isp;
+		CPU_MSP 				 = cpu->msp;
+		CPU_VBR 				 = cpu->vbr;
+		CPU_SFC 				 = cpu->sfc;
+		CPU_DFC 				 = cpu->dfc;
+		CPU_STOPPED 			 = cpu->stopped;
+		CPU_HALTED				 = cpu->halted;
+		CPU_INTS_PENDING		 = cpu->ints_pending;
+		CPU_INT_ACK_CALLBACK	 = cpu->int_ack_callback;
+		CPU_BKPT_ACK_CALLBACK	 = cpu->bkpt_ack_callback;
+		CPU_RESET_INSTR_CALLBACK = cpu->reset_instr_callback;
+		CPU_PC_CHANGED_CALLBACK  = cpu->pc_changed_callback;
+		CPU_SET_FC_CALLBACK 	 = cpu->set_fc_callback;
+		CPU_INSTR_HOOK_CALLBACK  = cpu->instr_hook_callback;
+	}
 }
 
 

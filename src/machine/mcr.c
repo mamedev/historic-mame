@@ -13,7 +13,7 @@
 
 #include "driver.h"
 #include "machine/z80fmly.h"
-#include "cpu/m6808/m6808.h"
+#include "cpu/m6800/m6800.h"
 #include "cpu/m6809/m6809.h"
 #include "cpu/z80/z80.h"
 #include "machine/6821pia.h"
@@ -280,11 +280,8 @@ void mcr_writeport(int port,int value)
 			   currently 0; hopefully this is 99.9999% safe :-) */
 			if (value == 5)
 			{
-				Z80_Regs temp;
-				z80_getregs (&temp);
-				if (temp.IX.d == 0)
-					temp.IX.d += 1;
-				z80_setregs (&temp);
+				if (cpu_get_reg(Z80_IX) == 0)
+					cpu_set_reg(Z80_IX, 1);
 			}
 			return;
 
@@ -322,7 +319,7 @@ int mcr_readport(int port)
 
 	/* log all reads that end up here */
    if (errorlog)
-      fprintf (errorlog, "reading port %i (PC=%04X)\n", port, cpu_getpc ());
+      fprintf (errorlog, "reading port %i (PC=%04X)\n", port, cpu_get_pc ());
 	return 0;
 }
 

@@ -9,13 +9,14 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "state.h"
 #include "cpu/z80/z80.h"
 #include "cpu/i8085/i8085.h"
 #include "cpu/m6502/m6502.h"
 #include "cpu/h6280/h6280.h"
 #include "cpu/i86/i86intrf.h"
 #include "cpu/i8039/i8039.h"
-#include "cpu/m6808/m6808.h"
+#include "cpu/m6800/m6800.h"
 #include "cpu/m6805/m6805.h"
 #include "cpu/m6809/m6809.h"
 #include "cpu/m68000/m68000.h"
@@ -142,11 +143,14 @@ static int (*cpu_irq_callbacks[MAX_CPU])(int) = {
 static void Dummy_reset(void *param);
 static void Dummy_exit(void);
 static int Dummy_execute(int cycles);
-static void Dummy_setregs(void *Regs);
-static void Dummy_getregs(void *Regs);
-static unsigned Dummy_getpc(void);
-static unsigned Dummy_getreg(int regnum);
-static void Dummy_setreg(int regnum, unsigned val);
+static unsigned Dummy_get_context(void *regs);
+static void Dummy_set_context(void *regs);
+static unsigned Dummy_get_pc(void);
+static void Dummy_set_pc(unsigned val);
+static unsigned Dummy_get_sp(void);
+static void Dummy_set_sp(unsigned val);
+static unsigned Dummy_get_reg(int regnum);
+static void Dummy_set_reg(int regnum, unsigned val);
 static void Dummy_set_nmi_line(int state);
 static void Dummy_set_irq_line(int irqline, int state);
 static void Dummy_set_irq_callback(int (*callback)(int irqline));
@@ -157,12 +161,16 @@ static const char *Dummy_info(void *context, int regnum);
 static Z80_DaisyChain *Z80_daisychain[MAX_CPU];
 
 /* Convenience macros - not in cpuintrf.h because they shouldn't be used by everyone */
-#define RESET(index)					((*cpu[index].intf->reset)(Machine->drv->cpu[index].reset_param))
+#define CPU_FAMILY(index)				(cpu[index].intf->cpu_family)
+#define RESET(index)                    ((*cpu[index].intf->reset)(Machine->drv->cpu[index].reset_param))
 #define EXECUTE(index,cycles)           ((*cpu[index].intf->execute)(cycles))
-#define SETREGS(index,regs)             ((*cpu[index].intf->set_regs)(regs))
-#define GETREGS(index,regs)             ((*cpu[index].intf->get_regs)(regs))
+#define GETCONTEXT(index,context)		((*cpu[index].intf->get_context)(context))
+#define SETCONTEXT(index,context)		((*cpu[index].intf->set_context)(context))
 #define GETPC(index)                    ((*cpu[index].intf->get_pc)())
-#define GETREG(index,regnum)			((*cpu[index].intf->get_reg)(regnum))
+#define SETPC(index,val)				((*cpu[index].intf->set_pc)(val))
+#define GETSP(index)					((*cpu[index].intf->get_sp)())
+#define SETSP(index,val)				((*cpu[index].intf->set_sp)(val))
+#define GETREG(index,regnum)            ((*cpu[index].intf->get_reg)(regnum))
 #define SETREG(index,regnum,value)		((*cpu[index].intf->get_reg)(regnum,value))
 #define SET_NMI_LINE(index,state)       ((*cpu[index].intf->set_nmi_line)(state))
 #define SET_IRQ_LINE(index,line,state)	((*cpu[index].intf->set_irq_line)(line,state))
@@ -187,14 +195,18 @@ struct cpu_interface cpuintf[] =
 {
 	/* Dummy CPU -- placeholder for type 0 */
 	{
+		0,0,								/* CPU number and family cores sharing resources */
 		Dummy_reset,						/* Reset CPU */
 		Dummy_exit, 						/* Shut down the CPU */
 		Dummy_execute,						/* Execute a number of cycles */
-		(void (*)(void *))Dummy_setregs,	/* Set the contents of the registers */
-		(void (*)(void *))Dummy_getregs,	/* Get the contents of the registers */
-		Dummy_getpc,						/* Return the current PC */
-        Dummy_getreg,                       /* Get a specific register value */
-        Dummy_setreg,                       /* Set a specific register value */
+        Dummy_get_context,                  /* Get the contents of the registers */
+		Dummy_set_context,					/* Set the contents of the registers */
+		Dummy_get_pc,						/* Return the current program counter */
+		Dummy_set_pc,						/* Set the current program counter */
+		Dummy_get_sp,						/* Return the current stack pointer */
+		Dummy_set_sp,						/* Set the current stack pointer */
+        Dummy_get_reg,                       /* Get a specific register value */
+        Dummy_set_reg,                       /* Set a specific register value */
 		Dummy_set_nmi_line, 				/* Set state of the NMI line */
 		Dummy_set_irq_line, 				/* Set state of the IRQ line */
 		Dummy_set_irq_callback, 			/* Set IRQ enable/vector callback */
@@ -213,16 +225,19 @@ struct cpu_interface cpuintf[] =
 		16, 								/* CPU address bits */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
 	},
-	/* 1 CPU_Z80 */
 	{
-		z80_reset,							/* Reset CPU */
+		CPU_Z80,1,							/* CPU number and family cores sharing resources */
+        z80_reset,                          /* Reset CPU */
 		z80_exit,							/* Shut down the CPU */
 		z80_execute,						/* Execute a number of cycles */
-		(void (*)(void *))z80_setregs,		/* Set the contents of the registers */
-		(void (*)(void *))z80_getregs,		/* Get the contents of the registers */
-		z80_getpc,							/* Return the current PC */
-        z80_getreg,                         /* Get a specific register value */
-		z80_setreg, 						/* Set a specific register value */
+		z80_get_context,					/* Get the contents of the registers */
+		z80_set_context,					/* Set the contents of the registers */
+		z80_get_pc,							/* Return the current program counter */
+		z80_set_pc,							/* Set the current program counter */
+		z80_get_sp,							/* Return the current stack pointer */
+		z80_set_sp,							/* Set the current stack pointer */
+		z80_get_reg, 						/* Get a specific register value */
+		z80_set_reg, 						/* Set a specific register value */
         z80_set_nmi_line,                   /* Set state of the NMI line */
 		z80_set_irq_line,					/* Set state of the IRQ line */
 		z80_set_irq_callback,				/* Set IRQ enable/vector callback */
@@ -241,16 +256,19 @@ struct cpu_interface cpuintf[] =
 		16, 								/* CPU address bits */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
 	},
-	/* 2 CPU_8080 */
 	{
-		i8080_reset,						/* Reset CPU */
+		CPU_8080,2, 						/* CPU number and family cores sharing resources */
+        i8080_reset,                        /* Reset CPU */
 		i8080_exit, 						/* Shut down the CPU */
 		i8080_execute,						/* Execute a number of cycles */
-		(void (*)(void *))i8080_setregs,	/* Set the contents of the registers */
-		(void (*)(void *))i8080_getregs,	/* Get the contents of the registers */
-		i8080_getpc,						/* Return the current PC */
-        i8080_getreg,                       /* Get a specific register value */
-		i8080_setreg,						/* Set a specific register value */
+		i8080_get_context,					/* Get the contents of the registers */
+		i8080_set_context,					/* Set the contents of the registers */
+		i8080_get_pc,						/* Return the current program counter */
+		i8080_set_pc,						/* Set the current program counter */
+		i8080_get_sp,						/* Return the current stack pointer */
+		i8080_set_sp,						/* Set the current stack pointer */
+		i8080_get_reg,						/* Get a specific register value */
+		i8080_set_reg,						/* Set a specific register value */
         i8080_set_nmi_line,                 /* Set state of the NMI line */
 		i8080_set_irq_line, 				/* Set state of the IRQ line */
 		i8080_set_irq_callback, 			/* Set IRQ enable/vector callback */
@@ -269,16 +287,19 @@ struct cpu_interface cpuintf[] =
 		16,                                 /* CPU address bits */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
     },
-	/* 3 CPU_8085A */
 	{
-		i8085_reset,						/* Reset CPU */
+		CPU_8085A,2,						/* CPU number and family cores sharing resources */
+        i8085_reset,                        /* Reset CPU */
 		i8085_exit, 						/* Shut down the CPU */
 		i8085_execute,						/* Execute a number of cycles */
-		(void (*)(void *))i8085_setregs,	/* Set the contents of the registers */
-		(void (*)(void *))i8085_getregs,	/* Get the contents of the registers */
-		i8085_getpc,						/* Return the current PC */
-        i8085_getreg,                       /* Get a specific register value */
-		i8085_setreg,						/* Set a specific register value */
+		i8085_get_context,					/* Get the contents of the registers */
+		i8085_set_context,					/* Set the contents of the registers */
+		i8085_get_pc,						/* Return the current program counter */
+		i8085_set_pc,						/* Set the current program counter */
+		i8085_get_sp,						/* Return the current stack pointer */
+		i8085_set_sp,						/* Set the current stack pointer */
+		i8085_get_reg,						/* Get a specific register value */
+		i8085_set_reg,						/* Set a specific register value */
         i8085_set_nmi_line,                 /* Set state of the NMI line */
 		i8085_set_irq_line, 				/* Set state of the IRQ line */
 		i8085_set_irq_callback, 			/* Set IRQ enable/vector callback */
@@ -297,16 +318,19 @@ struct cpu_interface cpuintf[] =
 		16,                                 /* CPU address bits */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
 	},
-	/* 4 CPU_M6502 */
 	{
-		m6502_reset,						/* Reset CPU */
+		CPU_M6502,3,						/* CPU number and family cores sharing resources */
+        m6502_reset,                        /* Reset CPU */
 		m6502_exit, 						/* Shut down the CPU */
 		m6502_execute,						/* Execute a number of cycles */
-		(void (*)(void *))m6502_setregs,	/* Set the contents of the registers */
-		(void (*)(void *))m6502_getregs,	/* Get the contents of the registers */
-		m6502_getpc,						/* Return the current PC */
-        m6502_getreg,                       /* Get a specific register value */
-		m6502_setreg,						/* Set a specific register value */
+		m6502_get_context,					/* Get the contents of the registers */
+		m6502_set_context,					/* Set the contents of the registers */
+		m6502_get_pc,						/* Return the current program counter */
+		m6502_set_pc,						/* Set the current program counter */
+		m6502_get_sp,						/* Return the current stack pointer */
+		m6502_set_sp,						/* Set the current stack pointer */
+		m6502_get_reg,						/* Get a specific register value */
+		m6502_set_reg,						/* Set a specific register value */
         m6502_set_nmi_line,                 /* Set state of the NMI line */
 		m6502_set_irq_line, 				/* Set state of the IRQ line */
 		m6502_set_irq_callback, 			/* Set IRQ enable/vector callback */
@@ -325,16 +349,19 @@ struct cpu_interface cpuintf[] =
 		16, 								/* CPU address bits */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
 	},
-	/* 5 CPU_M65C02 */
 	{
-		m65c02_reset,						/* Reset CPU */
+		CPU_M65C02,3,						/* CPU number and family cores sharing resources */
+        m65c02_reset,                       /* Reset CPU */
 		m65c02_exit,						/* Shut down the CPU */
 		m65c02_execute, 					/* Execute a number of cycles */
-		(void (*)(void *))m6502_setregs,	/* Set the contents of the registers */
-		(void (*)(void *))m6502_getregs,	/* Get the contents of the registers */
-		m65c02_getpc,						/* Return the current PC */
-        m65c02_getreg,                      /* Get a specific register value */
-		m65c02_setreg,						/* Set a specific register value */
+		m65c02_get_context, 				/* Get the contents of the registers */
+		m65c02_set_context, 				/* Set the contents of the registers */
+		m65c02_get_pc,						/* Return the current program counter */
+		m65c02_set_pc,						/* Set the current program counter */
+		m65c02_get_sp,						/* Return the current stack pointer */
+		m65c02_set_sp,						/* Set the current stack pointer */
+		m65c02_get_reg,						/* Get a specific register value */
+		m65c02_set_reg,						/* Set a specific register value */
         m65c02_set_nmi_line,                /* Set state of the NMI line */
 		m65c02_set_irq_line,				/* Set state of the IRQ line */
 		m65c02_set_irq_callback,			/* Set IRQ enable/vector callback */
@@ -353,16 +380,19 @@ struct cpu_interface cpuintf[] =
 		16, 								/* CPU address bits */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
     },
-	/* 6 CPU_M6510 */
 	{
-		m6510_reset,						/* Reset CPU */
+		CPU_M6510,3,						/* CPU number and family cores sharing resources */
+        m6510_reset,                        /* Reset CPU */
 		m6510_exit, 						/* Shut down the CPU */
 		m6510_execute,						/* Execute a number of cycles */
-		(void (*)(void *))m6510_setregs,	/* Set the contents of the registers */
-		(void (*)(void *))m6510_getregs,	/* Get the contents of the registers */
-		m6510_getpc,						/* Return the current PC */
-        m6510_getreg,                       /* Get a specific register value */
-		m6510_setreg,						/* Set a specific register value */
+		m6510_get_context,					/* Get the contents of the registers */
+		m6510_set_context,					/* Set the contents of the registers */
+		m6510_get_pc,						/* Return the current program counter */
+		m6510_set_pc,						/* Set the current program counter */
+		m6510_get_sp,						/* Return the current stack pointer */
+		m6510_set_sp,						/* Set the current stack pointer */
+		m6510_get_reg,						/* Get a specific register value */
+		m6510_set_reg,						/* Set a specific register value */
         m6510_set_nmi_line,                 /* Set state of the NMI line */
 		m6510_set_irq_line, 				/* Set state of the IRQ line */
 		m6510_set_irq_callback, 			/* Set IRQ enable/vector callback */
@@ -381,16 +411,19 @@ struct cpu_interface cpuintf[] =
 		16, 								/* CPU address bits */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
     },
-	/* 7 CPU_H6280 */
 	{
-		h6280_reset,						/* Reset CPU */
+		CPU_H6280,4,						/* CPU number and family cores sharing resources */
+        h6280_reset,                        /* Reset CPU */
 		h6280_exit, 						/* Shut down the CPU */
 		h6280_execute,						/* Execute a number of cycles */
-		(void (*)(void *))h6280_setregs,	/* Set the contents of the registers */
-		(void (*)(void *))h6280_getregs,	/* Get the contents of the registers */
-		h6280_getpc,						/* Return the current PC */
-        h6280_getreg,                       /* Get a specific register value */
-		h6280_setreg,						/* Set a specific register value */
+		h6280_get_context,					/* Get the contents of the registers */
+		h6280_set_context,					/* Set the contents of the registers */
+		h6280_get_pc,						/* Return the current program counter */
+		h6280_set_pc,						/* Set the current program counter */
+		h6280_get_sp,						/* Return the current stack pointer */
+		h6280_set_sp,						/* Set the current stack pointer */
+		h6280_get_reg,						/* Get a specific register value */
+		h6280_set_reg,						/* Set a specific register value */
         h6280_set_nmi_line,                 /* Set state of the NMI line */
 		h6280_set_irq_line, 				/* Set state of the IRQ line */
 		h6280_set_irq_callback, 			/* Set IRQ enable/vector callback */
@@ -409,16 +442,19 @@ struct cpu_interface cpuintf[] =
 		21, 								/* CPU address bits */
 		ABITS1_21,ABITS2_21,ABITS_MIN_21	/* Address bits, for the memory system */
     },
-	/* 8 CPU_I86 */
 	{
-		i86_reset,							/* Reset CPU */
+		CPU_I86,5,							/* CPU number and family cores sharing resources */
+        i86_reset,                          /* Reset CPU */
 		i86_exit,							/* Shut down the CPU */
 		i86_execute,						/* Execute a number of cycles */
-		(void (*)(void *))i86_setregs,		/* Set the contents of the registers */
-		(void (*)(void *))i86_getregs,		/* Get the contents of the registers */
-		i86_getpc,							/* Return the current PC */
-        i86_getreg,                         /* Get a specific register value */
-		i86_setreg, 						/* Set a specific register value */
+		i86_get_context,					/* Get the contents of the registers */
+		i86_set_context,					/* Set the contents of the registers */
+		i86_get_pc,							/* Return the current program counter */
+		i86_set_pc,							/* Set the current program counter */
+		i86_get_sp,							/* Return the current stack pointer */
+		i86_set_sp,							/* Set the current stack pointer */
+		i86_get_reg, 						/* Get a specific register value */
+		i86_set_reg, 						/* Set a specific register value */
         i86_set_nmi_line,                   /* Set state of the NMI line */
 		i86_set_irq_line,					/* Set state of the IRQ line */
 		i86_set_irq_callback,				/* Set IRQ enable/vector callback */
@@ -437,16 +473,19 @@ struct cpu_interface cpuintf[] =
 		20, 								/* CPU address bits */
 		ABITS1_20,ABITS2_20,ABITS_MIN_20	/* Address bits, for the memory system */
     },
-	/*	9 CPU_I8035 */
     {
-		i8035_reset,						/* Reset CPU */
+		CPU_I8035,6,						/* CPU number and family cores sharing resources */
+        i8035_reset,                        /* Reset CPU */
 		i8035_exit, 						/* Shut down the CPU */
 		i8035_execute,						/* Execute a number of cycles */
-		(void (*)(void *))i8035_setregs,	/* Set the contents of the registers */
-		(void (*)(void *))i8035_getregs,	/* Get the contents of the registers */
-		i8035_getpc,						/* Return the current PC */
-        i8035_getreg,                       /* Get a specific register value */
-		i8035_setreg,						/* Set a specific register value */
+		i8035_get_context,					/* Get the contents of the registers */
+		i8035_set_context,					/* Set the contents of the registers */
+		i8035_get_pc,						/* Return the current program counter */
+		i8035_set_pc,						/* Set the current program counter */
+		i8035_get_sp,						/* Return the current stack pointer */
+		i8035_set_sp,						/* Set the current stack pointer */
+		i8035_get_reg,						/* Get a specific register value */
+		i8035_set_reg,						/* Set a specific register value */
         i8035_set_nmi_line,                 /* Set state of the NMI line */
 		i8035_set_irq_line, 				/* Set state of the IRQ line */
 		i8035_set_irq_callback, 			/* Set IRQ enable/vector callback */
@@ -465,16 +504,19 @@ struct cpu_interface cpuintf[] =
         16,                                 /* CPU address bits */
         ABITS1_16,ABITS2_16,ABITS_MIN_16    /* Address bits, for the memory system */
     },
-	/* 10 CPU_I8039 */
 	{
-		i8039_reset,						/* Reset CPU */
+		CPU_I8039,6,						/* CPU number and family cores sharing resources */
+        i8039_reset,                        /* Reset CPU */
 		i8039_exit, 						/* Shut down the CPU */
 		i8039_execute,						/* Execute a number of cycles */
-		(void (*)(void *))i8039_setregs,	/* Set the contents of the registers */
-		(void (*)(void *))i8039_getregs,	/* Get the contents of the registers */
-		i8039_getpc,						/* Return the current PC */
-        i8039_getreg,                       /* Get a specific register value */
-		i8039_setreg,						/* Set a specific register value */
+		i8039_get_context,					/* Get the contents of the registers */
+		i8039_set_context,					/* Set the contents of the registers */
+		i8039_get_pc,						/* Return the current program counter */
+		i8039_set_pc,						/* Set the current program counter */
+		i8039_get_sp,						/* Return the current stack pointer */
+		i8039_set_sp,						/* Set the current stack pointer */
+		i8039_get_reg,						/* Get a specific register value */
+		i8039_set_reg,						/* Set a specific register value */
         i8039_set_nmi_line,                 /* Set state of the NMI line */
 		i8039_set_irq_line, 				/* Set state of the IRQ line */
 		i8039_set_irq_callback, 			/* Set IRQ enable/vector callback */
@@ -493,16 +535,19 @@ struct cpu_interface cpuintf[] =
 		16, 								/* CPU address bits */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
     },
-	/* 11 CPU_I8048 */
 	{
-		i8048_reset,						/* Reset CPU */
+		CPU_I8048,6,						/* CPU number and family cores sharing resources */
+        i8048_reset,                        /* Reset CPU */
 		i8048_exit, 						/* Shut down the CPU */
 		i8048_execute,						/* Execute a number of cycles */
-		(void (*)(void *))i8048_setregs,	/* Set the contents of the registers */
-		(void (*)(void *))i8048_getregs,	/* Get the contents of the registers */
-		i8048_getpc,						/* Return the current PC */
-        i8048_getreg,                       /* Get a specific register value */
-		i8048_setreg,						/* Set a specific register value */
+		i8048_get_context,					/* Get the contents of the registers */
+		i8048_set_context,					/* Set the contents of the registers */
+		i8048_get_pc,						/* Return the current program counter */
+		i8048_set_pc,						/* Set the current program counter */
+		i8048_get_sp,						/* Return the current stack pointer */
+		i8048_set_sp,						/* Set the current stack pointer */
+		i8048_get_reg,						/* Get a specific register value */
+		i8048_set_reg,						/* Set a specific register value */
         i8048_set_nmi_line,                 /* Set state of the NMI line */
 		i8048_set_irq_line, 				/* Set state of the IRQ line */
 		i8048_set_irq_callback, 			/* Set IRQ enable/vector callback */
@@ -521,16 +566,19 @@ struct cpu_interface cpuintf[] =
 		16, 								/* CPU address bits */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
     },
-	/* 12 CPU_N7751 */
 	{
-		n7751_reset,						/* Reset CPU */
+		CPU_N7751,6,						/* CPU number and family cores sharing resources */
+        n7751_reset,                        /* Reset CPU */
 		n7751_exit, 						/* Shut down the CPU */
 		n7751_execute,						/* Execute a number of cycles */
-		(void (*)(void *))n7751_setregs,	/* Set the contents of the registers */
-		(void (*)(void *))n7751_getregs,	/* Get the contents of the registers */
-		n7751_getpc,						/* Return the current PC */
-        n7751_getreg,                       /* Get a specific register value */
-		n7751_setreg,						/* Set a specific register value */
+		n7751_get_context,					/* Get the contents of the registers */
+		n7751_set_context,					/* Set the contents of the registers */
+		n7751_get_pc,						/* Return the current program counter */
+		n7751_set_pc,						/* Set the current program counter */
+		n7751_get_sp,						/* Return the current stack pointer */
+		n7751_set_sp,						/* Set the current stack pointer */
+		n7751_get_reg,						/* Get a specific register value */
+		n7751_set_reg,						/* Set a specific register value */
         n7751_set_nmi_line,                 /* Set state of the NMI line */
 		n7751_set_irq_line, 				/* Set state of the IRQ line */
 		n7751_set_irq_callback, 			/* Set IRQ enable/vector callback */
@@ -549,22 +597,25 @@ struct cpu_interface cpuintf[] =
 		16, 								/* CPU address bits */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
     },
-	/* 13 CPU_M6800 */
 	{
-		m6800_reset,						/* Reset CPU */
+		CPU_M6800,7,						/* CPU number and family cores sharing resources */
+        m6800_reset,                        /* Reset CPU */
 		m6800_exit, 						/* Shut down the CPU */
 		m6800_execute,						/* Execute a number of cycles */
-		(void (*)(void *))m6800_setregs,	/* Set the contents of the registers */
-		(void (*)(void *))m6800_getregs,	/* Get the contents of the registers */
-		m6800_getpc,						/* Return the current PC */
-		m6800_getreg,						/* Get a specific register value */
-		m6800_setreg,						/* Set a specific register value */
-		m6800_set_nmi_line, 				/* Set state of the NMI line */
+		m6800_get_context,					/* Get the contents of the registers */
+		m6800_set_context,					/* Set the contents of the registers */
+		m6800_get_pc,						/* Return the current program counter */
+		m6800_set_pc,						/* Set the current program counter */
+		m6800_get_sp,						/* Return the current stack pointer */
+		m6800_set_sp,						/* Set the current stack pointer */
+		m6800_get_reg,						/* Get a specific register value */
+		m6800_set_reg,						/* Set a specific register value */
+        m6800_set_nmi_line,                 /* Set state of the NMI line */
 		m6800_set_irq_line, 				/* Set state of the IRQ line */
 		m6800_set_irq_callback, 			/* Set IRQ enable/vector callback */
 		NULL,								/* Cause internal interrupt */
-		NULL,								/* Save CPU state */
-		NULL,								/* Load CPU state */
+		m6800_state_save,					/* Save CPU state */
+		m6800_state_load,					/* Load CPU state */
 		m6800_info, 						/* Get formatted string for a specific register */
 		2,									/* Number of IRQ lines */
 		&m6800_ICount,						/* Pointer to the instruction count */
@@ -577,22 +628,56 @@ struct cpu_interface cpuintf[] =
 		16, 								/* CPU address bits */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
     },
-	/* 14 CPU_M6802 */
 	{
-		m6802_reset,						/* Reset CPU */
+		CPU_M6801,7,						/* CPU number and family cores sharing resources */
+        m6801_reset,                        /* Reset CPU */
+		m6801_exit, 						/* Shut down the CPU */
+		m6801_execute,						/* Execute a number of cycles */
+		m6801_get_context,					/* Get the contents of the registers */
+		m6801_set_context,					/* Set the contents of the registers */
+		m6801_get_pc,						/* Return the current program counter */
+		m6801_set_pc,						/* Set the current program counter */
+		m6801_get_sp,						/* Return the current stack pointer */
+		m6801_set_sp,						/* Set the current stack pointer */
+		m6801_get_reg,						/* Get a specific register value */
+		m6801_set_reg,						/* Set a specific register value */
+		m6801_set_nmi_line, 				/* Set state of the NMI line */
+		m6801_set_irq_line, 				/* Set state of the IRQ line */
+		m6801_set_irq_callback, 			/* Set IRQ enable/vector callback */
+		NULL,								/* Cause internal interrupt */
+		m6801_state_save,					/* Save CPU state */
+		m6801_state_load,					/* Load CPU state */
+		m6801_info, 						/* Get formatted string for a specific register */
+		2,									/* Number of IRQ lines */
+		&m6801_ICount,						/* Pointer to the instruction count */
+		M6801_INT_NONE, 					/* Interrupt types: none, IRQ, NMI */
+		M6801_INT_IRQ,
+		M6801_INT_NMI,
+		cpu_readmem16,						/* Memory read */
+		cpu_writemem16, 					/* Memory write */
+		cpu_setOPbase16,					/* Update CPU opcode base */
+		16, 								/* CPU address bits */
+		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
+    },
+	{
+		CPU_M6802,7,						/* CPU number and family cores sharing resources */
+        m6802_reset,                        /* Reset CPU */
 		m6802_exit, 						/* Shut down the CPU */
 		m6802_execute,						/* Execute a number of cycles */
-		(void (*)(void *))m6802_setregs,	/* Set the contents of the registers */
-		(void (*)(void *))m6802_getregs,	/* Get the contents of the registers */
-		m6802_getpc,						/* Return the current PC */
-        m6802_getreg,                       /* Get a specific register value */
-		m6802_setreg,						/* Set a specific register value */
+		m6802_get_context,					/* Get the contents of the registers */
+		m6802_set_context,					/* Set the contents of the registers */
+		m6802_get_pc,						/* Return the current program counter */
+		m6802_set_pc,						/* Set the current program counter */
+		m6802_get_sp,						/* Return the current stack pointer */
+		m6802_set_sp,						/* Set the current stack pointer */
+		m6802_get_reg,						/* Get a specific register value */
+		m6802_set_reg,						/* Set a specific register value */
         m6802_set_nmi_line,                 /* Set state of the NMI line */
 		m6802_set_irq_line, 				/* Set state of the IRQ line */
 		m6802_set_irq_callback, 			/* Set IRQ enable/vector callback */
 		NULL,								/* Cause internal interrupt */
-		NULL,								/* Save CPU state */
-		NULL,								/* Load CPU state */
+		m6802_state_save,					/* Save CPU state */
+		m6802_state_load,					/* Load CPU state */
         m6802_info,                         /* Get formatted string for a specific register */
 		2,									/* Number of IRQ lines */
 		&m6802_ICount,						/* Pointer to the instruction count */
@@ -605,22 +690,25 @@ struct cpu_interface cpuintf[] =
 		16, 								/* CPU address bits */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
     },
-	/* 15 CPU_M6803 */
 	{
-		m6803_reset,						/* Reset CPU */
+		CPU_M6803,7,						/* CPU number and family cores sharing resources */
+        m6803_reset,                        /* Reset CPU */
 		m6803_exit, 						/* Shut down the CPU */
 		m6803_execute,						/* Execute a number of cycles */
-		(void (*)(void *))m6803_setregs,	/* Set the contents of the registers */
-		(void (*)(void *))m6803_getregs,	/* Get the contents of the registers */
-		m6803_getpc,						/* Return the current PC */
-        m6803_getreg,                       /* Get a specific register value */
-		m6803_setreg,						/* Set a specific register value */
+		m6803_get_context,					/* Get the contents of the registers */
+		m6803_set_context,					/* Set the contents of the registers */
+		m6803_get_pc,						/* Return the current program counter */
+		m6803_set_pc,						/* Set the current program counter */
+		m6803_get_sp,						/* Return the current stack pointer */
+		m6803_set_sp,						/* Set the current stack pointer */
+		m6803_get_reg,						/* Get a specific register value */
+		m6803_set_reg,						/* Set a specific register value */
         m6803_set_nmi_line,                 /* Set state of the NMI line */
 		m6803_set_irq_line, 				/* Set state of the IRQ line */
 		m6803_set_irq_callback, 			/* Set IRQ enable/vector callback */
 		NULL,								/* Cause internal interrupt */
-		NULL,								/* Save CPU state */
-		NULL,								/* Load CPU state */
+		m6803_state_save,					/* Save CPU state */
+		m6803_state_load,					/* Load CPU state */
         m6803_info,                         /* Get formatted string for a specific register */
 		2,									/* Number of IRQ lines */
 		&m6803_ICount,						/* Pointer to the instruction count */
@@ -633,22 +721,25 @@ struct cpu_interface cpuintf[] =
 		16, 								/* CPU address bits */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
     },
-	/* 16 CPU_M6808 */
 	{
-		m6808_reset,						/* Reset CPU */
+		CPU_M6808,7,						/* CPU number and family cores sharing resources */
+        m6808_reset,                        /* Reset CPU */
 		m6808_exit, 						/* Shut down the CPU */
         m6808_execute,                      /* Execute a number of cycles */
-		(void (*)(void *))m6808_setregs,	/* Set the contents of the registers */
-		(void (*)(void *))m6808_getregs,	/* Get the contents of the registers */
-		m6808_getpc,						/* Return the current PC */
-        m6808_getreg,                       /* Get a specific register value */
-		m6808_setreg,						/* Set a specific register value */
+		m6808_get_context,					/* Get the contents of the registers */
+		m6808_set_context,					/* Set the contents of the registers */
+		m6808_get_pc,						/* Return the current program counter */
+		m6808_set_pc,						/* Set the current program counter */
+		m6808_get_sp,						/* Return the current stack pointer */
+		m6808_set_sp,						/* Set the current stack pointer */
+		m6808_get_reg,						/* Get a specific register value */
+		m6808_set_reg,						/* Set a specific register value */
         m6808_set_nmi_line,                 /* Set state of the NMI line */
 		m6808_set_irq_line, 				/* Set state of the IRQ line */
 		m6808_set_irq_callback, 			/* Set IRQ enable/vector callback */
 		NULL,								/* Cause internal interrupt */
-		NULL,								/* Save CPU state */
-		NULL,								/* Load CPU state */
+		m6808_state_save,					/* Save CPU state */
+		m6808_state_load,					/* Load CPU state */
         m6808_info,                         /* Get formatted string for a specific register */
 		2,									/* Number of IRQ lines */
 		&m6808_ICount,						/* Pointer to the instruction count */
@@ -661,22 +752,25 @@ struct cpu_interface cpuintf[] =
 		16, 								/* CPU address bits */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
     },
-	/* 17 CPU_HD63701 */
 	{
-		hd63701_reset,						/* Reset CPU */
+		CPU_HD63701,7,						/* CPU number and family cores sharing resources */
+        hd63701_reset,                      /* Reset CPU */
 		hd63701_exit,						/* Shut down the CPU */
 		hd63701_execute,					/* Execute a number of cycles */
-		(void (*)(void *))hd63701_setregs,	/* Set the contents of the registers */
-		(void (*)(void *))hd63701_getregs,	/* Get the contents of the registers */
-		hd63701_getpc,						/* Return the current PC */
-        hd63701_getreg,                     /* Get a specific register value */
-		hd63701_setreg, 					/* Set a specific register value */
+		hd63701_get_context,				/* Get the contents of the registers */
+		hd63701_set_context,				/* Set the contents of the registers */
+		hd63701_get_pc,						/* Return the current program counter */
+		hd63701_set_pc,						/* Set the current program counter */
+		hd63701_get_sp,						/* Return the current stack pointer */
+		hd63701_set_sp,						/* Set the current stack pointer */
+		hd63701_get_reg, 					/* Get a specific register value */
+		hd63701_set_reg, 					/* Set a specific register value */
         hd63701_set_nmi_line,               /* Set state of the NMI line */
 		hd63701_set_irq_line,				/* Set state of the IRQ line */
 		hd63701_set_irq_callback,			/* Set IRQ enable/vector callback */
 		NULL,								/* Cause internal interrupt */
-		NULL,								/* Save CPU state */
-		NULL,								/* Load CPU state */
+		hd63701_state_save, 				/* Save CPU state */
+		hd63701_state_load, 				/* Load CPU state */
         hd63701_info,                       /* Get formatted string for a specific register */
 		2,									/* Number of IRQ lines */
 		&hd63701_ICount,					/* Pointer to the instruction count */
@@ -689,22 +783,25 @@ struct cpu_interface cpuintf[] =
 		16, 								/* CPU address bits */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
     },
-	/* 18 CPU_M6805 */
 	{
-		m6805_reset,						/* Reset CPU */
+		CPU_M6805,8,						/* CPU number and family cores sharing resources */
+        m6805_reset,                        /* Reset CPU */
 		m6805_exit, 						/* Shut down the CPU */
         m6805_execute,                      /* Execute a number of cycles */
-		(void (*)(void *))m6805_setregs,	/* Set the contents of the registers */
-		(void (*)(void *))m6805_getregs,	/* Get the contents of the registers */
-		m6805_getpc,						/* Return the current PC */
-        m6805_getreg,                       /* Get a specific register value */
-		m6805_setreg,						/* Set a specific register value */
+		m6805_get_context,					/* Get the contents of the registers */
+		m6805_set_context,					/* Set the contents of the registers */
+		m6805_get_pc,						/* Return the current program counter */
+		m6805_set_pc,						/* Set the current program counter */
+		m6805_get_sp,						/* Return the current stack pointer */
+		m6805_set_sp,						/* Set the current stack pointer */
+		m6805_get_reg,						/* Get a specific register value */
+		m6805_set_reg,						/* Set a specific register value */
         m6805_set_nmi_line,                 /* Set state of the NMI line */
 		m6805_set_irq_line, 				/* Set state of the IRQ line */
 		m6805_set_irq_callback, 			/* Set IRQ enable/vector callback */
 		NULL,								/* Cause internal interrupt */
-		NULL,								/* Save CPU state */
-		NULL,								/* Load CPU state */
+		m6805_state_save,					/* Save CPU state */
+		m6805_state_load,					/* Load CPU state */
         m6805_info,                         /* Get formatted string for a specific register */
         1,                                  /* Number of IRQ lines */
 		&m6805_ICount,						/* Pointer to the instruction count */
@@ -717,22 +814,25 @@ struct cpu_interface cpuintf[] =
 		16, 								/* CPU address bits */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
     },
-	/* 19 CPU_M68705 */
 	{
-		m68705_reset,						/* Reset CPU */
+		CPU_M68705,8,						/* CPU number and family cores sharing resources */
+        m68705_reset,                       /* Reset CPU */
 		m68705_exit,						/* Shut down the CPU */
 		m68705_execute, 					/* Execute a number of cycles */
-		(void (*)(void *))m68705_setregs,	/* Set the contents of the registers */
-		(void (*)(void *))m68705_getregs,	/* Get the contents of the registers */
-		m68705_getpc,						/* Return the current PC */
-        m68705_getreg,                      /* Get a specific register value */
-		m68705_setreg,						/* Set a specific register value */
+		m68705_get_context, 				/* Get the contents of the registers */
+		m68705_set_context, 				/* Set the contents of the registers */
+		m68705_get_pc,						/* Return the current program counter */
+		m68705_set_pc,						/* Set the current program counter */
+		m68705_get_sp,						/* Return the current stack pointer */
+		m68705_set_sp,						/* Set the current stack pointer */
+		m68705_get_reg,						/* Get a specific register value */
+		m68705_set_reg,						/* Set a specific register value */
         m68705_set_nmi_line,                /* Set state of the NMI line */
 		m68705_set_irq_line,				/* Set state of the IRQ line */
 		m68705_set_irq_callback,			/* Set IRQ enable/vector callback */
 		NULL,								/* Cause internal interrupt */
-		NULL,								/* Save CPU state */
-		NULL,								/* Load CPU state */
+		m68705_state_save,					/* Save CPU state */
+		m68705_state_load,					/* Load CPU state */
         m68705_info,                        /* Get formatted string for a specific register */
         1,                                  /* Number of IRQ lines */
 		&m68705_ICount, 					/* Pointer to the instruction count */
@@ -745,22 +845,25 @@ struct cpu_interface cpuintf[] =
 		16, 								/* CPU address bits */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
     },
-	/* 20 CPU_M6309 */
 	{
-		m6309_reset,						/* Reset CPU */
+		CPU_M6309,9,						/* CPU number and family cores sharing resources */
+        m6309_reset,                        /* Reset CPU */
 		m6309_exit, 						/* Shut down the CPU */
 		m6309_execute,						/* Execute a number of cycles */
-		(void (*)(void *))m6309_setregs,	/* Set the contents of the registers */
-		(void (*)(void *))m6309_getregs,	/* Get the contents of the registers */
-		m6309_getpc,						/* Return the current PC */
-        m6309_getreg,                       /* Get a specific register value */
-		m6309_setreg,						/* Set a specific register value */
+		m6309_get_context,					/* Get the contents of the registers */
+		m6309_set_context,					/* Set the contents of the registers */
+		m6309_get_pc,						/* Return the current program counter */
+		m6309_set_pc,						/* Set the current program counter */
+		m6309_get_sp,						/* Return the current stack pointer */
+		m6309_set_sp,						/* Set the current stack pointer */
+		m6309_get_reg,						/* Get a specific register value */
+		m6309_set_reg,						/* Set a specific register value */
         m6309_set_nmi_line,                 /* Set state of the NMI line */
 		m6309_set_irq_line, 				/* Set state of the IRQ line */
 		m6309_set_irq_callback, 			/* Set IRQ enable/vector callback */
 		NULL,								/* Cause internal interrupt */
-		NULL,								/* Save CPU state */
-		NULL,								/* Load CPU state */
+		m6309_state_save,					/* Save CPU state */
+		m6309_state_load,					/* Load CPU state */
         m6309_info,                         /* Get formatted string for a specific register */
         2,                                  /* Number of IRQ lines */
 		&m6309_ICount,						/* Pointer to the instruction count */
@@ -773,22 +876,25 @@ struct cpu_interface cpuintf[] =
 		16, 								/* CPU address bits */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
 	},
-	/* 21 CPU_M6809 */
 	{
-		m6809_reset,						/* Reset CPU */
+		CPU_M6809,9,						/* CPU number and family cores sharing resources */
+        m6809_reset,                        /* Reset CPU */
 		m6809_exit, 						/* Shut down the CPU */
         m6809_execute,                      /* Execute a number of cycles */
-		(void (*)(void *))m6809_setregs,	/* Set the contents of the registers */
-		(void (*)(void *))m6809_getregs,	/* Get the contents of the registers */
-		m6809_getpc,						/* Return the current PC */
-        m6809_getreg,                       /* Get a specific register value */
-		m6809_setreg,						/* Set a specific register value */
+		m6809_get_context,					/* Get the contents of the registers */
+		m6809_set_context,					/* Set the contents of the registers */
+		m6809_get_pc,						/* Return the current program counter */
+		m6809_set_pc,						/* Set the current program counter */
+		m6809_get_sp,						/* Return the current stack pointer */
+		m6809_set_sp,						/* Set the current stack pointer */
+		m6809_get_reg,						/* Get a specific register value */
+		m6809_set_reg,						/* Set a specific register value */
         m6809_set_nmi_line,                 /* Set state of the NMI line */
 		m6809_set_irq_line, 				/* Set state of the IRQ line */
 		m6809_set_irq_callback, 			/* Set IRQ enable/vector callback */
 		NULL,								/* Cause internal interrupt */
-		NULL,								/* Save CPU state */
-		NULL,								/* Load CPU state */
+		m6809_state_save,					/* Save CPU state */
+		m6809_state_load,					/* Load CPU state */
         m6809_info,                         /* Get formatted string for a specific register */
         2,                                  /* Number of IRQ lines */
 		&m6809_ICount,						/* Pointer to the instruction count */
@@ -801,25 +907,28 @@ struct cpu_interface cpuintf[] =
 		16, 								/* CPU address bits */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
     },
-	/* 22 CPU_M68000 */
 	{
-		MC68000_reset,						/* Reset CPU */
-		MC68000_exit,						/* Shut down the CPU */
-		MC68000_execute,					/* Execute a number of cycles */
-		(void (*)(void *))MC68000_setregs,	/* Set the contents of the registers */
-		(void (*)(void *))MC68000_getregs,	/* Get the contents of the registers */
-		MC68000_getpc,						/* Return the current PC */
-        MC68000_getreg,                     /* Get a specific register value */
-		MC68000_setreg, 					/* Set a specific register value */
-        MC68000_set_nmi_line,               /* Set state of the NMI line */
-		MC68000_set_irq_line,				/* Set state of the IRQ line */
-		MC68000_set_irq_callback,			/* Set IRQ enable/vector callback */
+		CPU_M68000,10,						/* CPU number and family cores sharing resources */
+        m68000_reset,                       /* Reset CPU */
+		m68000_exit,						/* Shut down the CPU */
+		m68000_execute, 					/* Execute a number of cycles */
+		m68000_get_context, 				/* Get the contents of the registers */
+		m68000_set_context, 				/* Set the contents of the registers */
+		m68000_get_pc,						/* Return the current program counter */
+		m68000_set_pc,						/* Set the current program counter */
+		m68000_get_sp,						/* Return the current stack pointer */
+		m68000_set_sp,						/* Set the current stack pointer */
+		m68000_get_reg,						/* Get a specific register value */
+		m68000_set_reg,						/* Set a specific register value */
+		m68000_set_nmi_line,				/* Set state of the NMI line */
+		m68000_set_irq_line,				/* Set state of the IRQ line */
+		m68000_set_irq_callback,			/* Set IRQ enable/vector callback */
 		NULL,								/* Cause internal interrupt */
-		NULL,								/* Save CPU state */
-		NULL,								/* Load CPU state */
-        MC68000_info,                       /* Get formatted string for a specific register */
+        NULL,                               /* Save CPU state */
+        NULL,                               /* Load CPU state */
+        m68000_info,                        /* Get formatted string for a specific register */
         8,                                  /* Number of IRQ lines */
-		&MC68000_ICount,					/* Pointer to the instruction count */
+		&m68000_ICount, 					/* Pointer to the instruction count */
 		MC68000_INT_NONE,					/* Interrupt types: none, IRQ, NMI */
 		-1,
 		-1,
@@ -829,25 +938,28 @@ struct cpu_interface cpuintf[] =
 		24, 								/* CPU address bits */
 		ABITS1_24,ABITS2_24,ABITS_MIN_24	/* Address bits, for the memory system */
 	},
-	/* 23 CPU_M68010 */
 	{
-		MC68010_reset,						/* Reset CPU */
-		MC68010_exit,						/* Shut down the CPU */
-		MC68010_execute,					/* Execute a number of cycles */
-		(void (*)(void *))MC68010_setregs,	/* Set the contents of the registers */
-		(void (*)(void *))MC68010_getregs,	/* Get the contents of the registers */
-		MC68010_getpc,						/* Return the current PC */
-        MC68010_getreg,                     /* Get a specific register value */
-		MC68010_setreg, 					/* Set a specific register value */
-        MC68010_set_nmi_line,               /* Set state of the NMI line */
-		MC68010_set_irq_line,				/* Set state of the IRQ line */
-		MC68010_set_irq_callback,			/* Set IRQ enable/vector callback */
+		CPU_M68010,10,						/* CPU number and family cores sharing resources */
+        m68010_reset,                       /* Reset CPU */
+		m68010_exit,						/* Shut down the CPU */
+		m68010_execute, 					/* Execute a number of cycles */
+		m68010_get_context, 				/* Get the contents of the registers */
+		m68010_set_context, 				/* Set the contents of the registers */
+		m68010_get_pc,						/* Return the current program counter */
+		m68010_set_pc,						/* Set the current program counter */
+		m68010_get_sp,						/* Return the current stack pointer */
+		m68010_set_sp,						/* Set the current stack pointer */
+		m68010_get_reg,						/* Get a specific register value */
+		m68010_set_reg,						/* Set a specific register value */
+		m68010_set_nmi_line,				/* Set state of the NMI line */
+		m68010_set_irq_line,				/* Set state of the IRQ line */
+		m68010_set_irq_callback,			/* Set IRQ enable/vector callback */
 		NULL,								/* Cause internal interrupt */
 		NULL,								/* Save CPU state */
 		NULL,								/* Load CPU state */
-        MC68010_info,                       /* Get formatted string for a specific register */
+		m68010_info,						/* Get formatted string for a specific register */
         8,                                  /* Number of IRQ lines */
-		&MC68010_ICount,					/* Pointer to the instruction count */
+		&m68010_ICount, 					/* Pointer to the instruction count */
 		MC68010_INT_NONE,					/* Interrupt types: none, IRQ, NMI */
 		-1,
 		-1,
@@ -857,25 +969,28 @@ struct cpu_interface cpuintf[] =
 		24, 								/* CPU address bits */
 		ABITS1_24,ABITS2_24,ABITS_MIN_24	/* Address bits, for the memory system */
     },
-	/* 24 CPU_M68020 */
 	{
-		MC68020_reset,						/* Reset CPU */
-		MC68020_exit,						/* Shut down the CPU */
-		MC68020_execute,					/* Execute a number of cycles */
-		(void (*)(void *))MC68020_setregs,	/* Set the contents of the registers */
-		(void (*)(void *))MC68020_getregs,	/* Get the contents of the registers */
-		MC68020_getpc,						/* Return the current PC */
-        MC68020_getreg,                     /* Get a specific register value */
-		MC68020_setreg, 					/* Set a specific register value */
-        MC68020_set_nmi_line,               /* Set state of the NMI line */
-		MC68020_set_irq_line,				/* Set state of the IRQ line */
-		MC68020_set_irq_callback,			/* Set IRQ enable/vector callback */
+		CPU_M68020,10,						/* CPU number and family cores sharing resources */
+        m68020_reset,                       /* Reset CPU */
+		m68020_exit,						/* Shut down the CPU */
+		m68020_execute, 					/* Execute a number of cycles */
+		m68020_get_context, 				/* Get the contents of the registers */
+		m68020_set_context, 				/* Set the contents of the registers */
+		m68020_get_pc,						/* Return the current program counter */
+		m68020_set_pc,						/* Set the current program counter */
+		m68020_get_sp,						/* Return the current stack pointer */
+		m68020_set_sp,						/* Set the current stack pointer */
+		m68020_get_reg,						/* Get a specific register value */
+		m68020_set_reg,						/* Set a specific register value */
+		m68020_set_nmi_line,				/* Set state of the NMI line */
+		m68020_set_irq_line,				/* Set state of the IRQ line */
+		m68020_set_irq_callback,			/* Set IRQ enable/vector callback */
 		NULL,								/* Cause internal interrupt */
 		NULL,								/* Save CPU state */
 		NULL,								/* Load CPU state */
-        MC68020_info,                       /* Get formatted string for a specific register */
+		m68020_info,						/* Get formatted string for a specific register */
         8,                                  /* Number of IRQ lines */
-		&MC68020_ICount,					/* Pointer to the instruction count */
+		&m68020_ICount, 					/* Pointer to the instruction count */
 		MC68020_INT_NONE,					/* Interrupt types: none, IRQ, NMI */
 		-1,
 		-1,
@@ -885,16 +1000,19 @@ struct cpu_interface cpuintf[] =
 		24, 								/* CPU address bits */
 		ABITS1_24,ABITS2_24,ABITS_MIN_24	/* Address bits, for the memory system */
     },
-	/* 25 CPU_T11 */
 	{
-		t11_reset,							/* Reset CPU */
+		CPU_T11,11, 						/* CPU number and family cores sharing resources */
+        t11_reset,                          /* Reset CPU */
 		t11_exit,							/* Shut down the CPU */
         t11_execute,                        /* Execute a number of cycles */
-		(void (*)(void *))t11_setregs,		/* Set the contents of the registers */
-		(void (*)(void *))t11_getregs,		/* Get the contents of the registers */
-		t11_getpc,							/* Return the current PC */
-        t11_getreg,                         /* Get a specific register value */
-		t11_setreg, 						/* Set a specific register value */
+		t11_get_context,					/* Get the contents of the registers */
+		t11_set_context,					/* Set the contents of the registers */
+		t11_get_pc,							/* Return the current program counter */
+		t11_set_pc,							/* Set the current program counter */
+		t11_get_sp,							/* Return the current stack pointer */
+		t11_set_sp,							/* Set the current stack pointer */
+		t11_get_reg, 						/* Get a specific register value */
+		t11_set_reg, 						/* Set a specific register value */
         t11_set_nmi_line,                   /* Set state of the NMI line */
 		t11_set_irq_line,					/* Set state of the IRQ line */
 		t11_set_irq_callback,				/* Set IRQ enable/vector callback */
@@ -913,22 +1031,25 @@ struct cpu_interface cpuintf[] =
 		16, 								/* CPU address bits */
 		ABITS1_16LEW,ABITS2_16LEW,ABITS_MIN_16LEW  /* Address bits, for the memory system */
 	},
-	/* 26 CPU_S2650 */
 	{
-		s2650_reset,						/* Reset CPU */
+		CPU_S2650,12,						/* CPU number and family cores sharing resources */
+        s2650_reset,                        /* Reset CPU */
 		s2650_exit, 						/* Shut down the CPU */
 		s2650_execute,						/* Execute a number of cycles */
-		(void (*)(void *))s2650_setregs,	/* Set the contents of the registers */
-		(void (*)(void *))s2650_getregs,	/* Get the contents of the registers */
-		s2650_getpc,						/* Return the current PC */
-        s2650_getreg,                       /* Get a specific register value */
-		s2650_setreg,						/* Set a specific register value */
+		s2650_get_context,					/* Get the contents of the registers */
+		s2650_set_context,					/* Set the contents of the registers */
+		s2650_get_pc,						/* Return the current program counter */
+		s2650_set_pc,						/* Set the current program counter */
+		s2650_get_sp,						/* Return the current stack pointer */
+		s2650_set_sp,						/* Set the current stack pointer */
+		s2650_get_reg,						/* Get a specific register value */
+		s2650_set_reg,						/* Set a specific register value */
         s2650_set_nmi_line,                 /* Set state of the NMI line */
 		s2650_set_irq_line, 				/* Set state of the IRQ line */
 		s2650_set_irq_callback, 			/* Set IRQ enable/vector callback */
 		NULL,								/* Cause internal interrupt */
-		NULL,								/* Save CPU state */
-		NULL,								/* Load CPU state */
+		s2650_state_save,					/* Save CPU state */
+		s2650_state_load,					/* Load CPU state */
         s2650_info,                         /* Get formatted string for a specific register */
         2,                                  /* Number of IRQ lines */
 		&s2650_ICount,						/* Pointer to the instruction count */
@@ -941,25 +1062,28 @@ struct cpu_interface cpuintf[] =
 		16, 								/* CPU address bits */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
 	},
-	/* 27 CPU_TMS34010 */
 	{
-		TMS34010_reset, 					/* Reset CPU */
-		TMS34010_exit,						/* Shut down the CPU */
-		TMS34010_execute,					/* Execute a number of cycles */
-		(void (*)(void *))TMS34010_setregs, /* Set the contents of the registers */
-		(void (*)(void *))TMS34010_getregs, /* Get the contents of the registers */
-		TMS34010_getpc, 					/* Return the current PC */
-        TMS34010_getreg,                    /* Get a specific register value */
-		TMS34010_setreg,					/* Set a specific register value */
-        TMS34010_set_nmi_line,              /* Set state of the NMI line */
-		TMS34010_set_irq_line,				/* Set state of the IRQ line */
-		TMS34010_set_irq_callback,			/* Set IRQ enable/vector callback */
-		TMS34010_internal_interrupt,		/* Cause internal interrupt */
+		CPU_TMS34010,13,					/* CPU number and family cores sharing resources */
+        tms34010_reset,                     /* Reset CPU */
+		tms34010_exit,						/* Shut down the CPU */
+		tms34010_execute,					/* Execute a number of cycles */
+		tms34010_get_context,				/* Get the contents of the registers */
+		tms34010_set_context,				/* Set the contents of the registers */
+		tms34010_get_pc, 					/* Return the current program counter */
+		tms34010_set_pc, 					/* Set the current program counter */
+		tms34010_get_sp, 					/* Return the current stack pointer */
+		tms34010_set_sp, 					/* Set the current stack pointer */
+		tms34010_get_reg,					/* Get a specific register value */
+		tms34010_set_reg,					/* Set a specific register value */
+		tms34010_set_nmi_line,				/* Set state of the NMI line */
+		tms34010_set_irq_line,				/* Set state of the IRQ line */
+		tms34010_set_irq_callback,			/* Set IRQ enable/vector callback */
+		tms34010_internal_interrupt,		/* Cause internal interrupt */
 		NULL,								/* Save CPU state */
 		NULL,								/* Load CPU state */
-        TMS34010_info,                      /* Get formatted string for a specific register */
+		tms34010_info,						/* Get formatted string for a specific register */
         2,                                  /* Number of IRQ lines */
-        &TMS34010_ICount,                   /* Pointer to the instruction count */
+		&tms34010_ICount,					/* Pointer to the instruction count */
 		TMS34010_INT_NONE,					/* Interrupt types: none, IRQ, NMI */
 		TMS34010_INT1,
 		-1,
@@ -969,25 +1093,28 @@ struct cpu_interface cpuintf[] =
 		29, 								/* CPU address bits */
 		ABITS1_29,ABITS2_29,ABITS_MIN_29	/* Address bits, for the memory system */
 	},
-	/* 28 CPU_TMS9900 */
 	{
-		TMS9900_reset,						/* Reset CPU */
-		TMS9900_exit,						/* Shut down the CPU */
-		TMS9900_execute,					/* Execute a number of cycles */
-		(void (*)(void *))TMS9900_setregs,	/* Set the contents of the registers */
-		(void (*)(void *))TMS9900_getregs,	/* Get the contents of the registers */
-		TMS9900_getpc,						/* Return the current PC */
-        TMS9900_getreg,                     /* Get a specific register value */
-		TMS9900_setreg, 					/* Set a specific register value */
-        TMS9900_set_nmi_line,               /* Set state of the NMI line */
-		TMS9900_set_irq_line,				/* Set state of the IRQ line */
-		TMS9900_set_irq_callback,			/* Set IRQ enable/vector callback */
+		CPU_TMS9900,14, 					/* CPU number and family cores sharing resources */
+        tms9900_reset,                      /* Reset CPU */
+		tms9900_exit,						/* Shut down the CPU */
+		tms9900_execute,					/* Execute a number of cycles */
+		tms9900_get_context,				/* Get the contents of the registers */
+		tms9900_set_context,				/* Set the contents of the registers */
+		tms9900_get_pc,						/* Return the current program counter */
+		tms9900_set_pc,						/* Set the current program counter */
+		tms9900_get_sp,						/* Return the current stack pointer */
+		tms9900_set_sp,						/* Set the current stack pointer */
+		tms9900_get_reg, 					/* Get a specific register value */
+		tms9900_set_reg, 					/* Set a specific register value */
+		tms9900_set_nmi_line,				/* Set state of the NMI line */
+		tms9900_set_irq_line,				/* Set state of the IRQ line */
+		tms9900_set_irq_callback,			/* Set IRQ enable/vector callback */
 		NULL,								/* Cause internal interrupt */
 		NULL,								/* Save CPU state */
 		NULL,								/* Load CPU state */
-        TMS9900_info,                       /* Get formatted string for a specific register */
+		tms9900_info,						/* Get formatted string for a specific register */
         1,                                  /* Number of IRQ lines */
-		&TMS9900_ICount,					/* Pointer to the instruction count */
+		&tms9900_ICount,					/* Pointer to the instruction count */
 		TMS9900_NONE,						/* Interrupt types: none, IRQ, NMI */
 		-1,
 		-1,
@@ -998,16 +1125,19 @@ struct cpu_interface cpuintf[] =
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
         /* Were all ...LEW */
 	},
-	/* 29 CPU_Z8000 */
 	{
-		z8000_reset,						/* Reset CPU */
+		CPU_Z8000,15,						/* CPU number and family cores sharing resources */
+        z8000_reset,                        /* Reset CPU */
 		z8000_exit, 						/* Shut down the CPU */
 		z8000_execute,						/* Execute a number of cycles */
-		(void (*)(void *))z8000_setregs,	/* Set the contents of the registers */
-		(void (*)(void *))z8000_getregs,	/* Get the contents of the registers */
-		z8000_getpc,						/* Return the current PC */
-        z8000_getreg,                       /* Get a specific register value */
-		z8000_setreg,						/* Set a specific register value */
+		z8000_get_context,					/* Get the contents of the registers */
+		z8000_set_context,					/* Set the contents of the registers */
+		z8000_get_pc,						/* Return the current program counter */
+		z8000_set_pc,						/* Set the current program counter */
+		z8000_get_sp,						/* Return the current stack pointer */
+		z8000_set_sp,						/* Set the current stack pointer */
+		z8000_get_reg,						/* Get a specific register value */
+		z8000_set_reg,						/* Set a specific register value */
         z8000_set_nmi_line,                 /* Set state of the NMI line */
 		z8000_set_irq_line, 				/* Set state of the IRQ line */
 		z8000_set_irq_callback, 			/* Set IRQ enable/vector callback */
@@ -1026,25 +1156,28 @@ struct cpu_interface cpuintf[] =
 		16, 								/* CPU address bits */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
     },
-	/* 30 CPU_TMS320C10 */
 	{
-		TMS320C10_reset,					/* Reset CPU */
-		TMS320C10_exit, 					/* Shut down the CPU */
-		TMS320C10_execute,					/* Execute a number of cycles */
-		(void (*)(void *))TMS320C10_setregs,/* Set the contents of the registers */
-		(void (*)(void *))TMS320C10_getregs,/* Get the contents of the registers */
-		TMS320C10_getpc,					/* Return the current PC */
-        TMS320C10_getreg,                   /* Get a specific register value */
-		TMS320C10_setreg,					/* Set a specific register value */
-        TMS320C10_set_nmi_line,             /* Set state of the NMI line */
-		TMS320C10_set_irq_line, 			/* Set state of the IRQ line */
-		TMS320C10_set_irq_callback, 		/* Set IRQ enable/vector callback */
+		CPU_TMS320C10,16,					/* CPU number and family cores sharing resources */
+        tms320c10_reset,                    /* Reset CPU */
+		tms320c10_exit, 					/* Shut down the CPU */
+		tms320c10_execute,					/* Execute a number of cycles */
+		tms320c10_get_context,				/* Get the contents of the registers */
+		tms320c10_set_context,				/* Set the contents of the registers */
+		tms320c10_get_pc,					/* Return the current program counter */
+		tms320c10_set_pc,					/* Set the current program counter */
+		tms320c10_get_sp,					/* Return the current stack pointer */
+		tms320c10_set_sp,					/* Set the current stack pointer */
+		tms320c10_get_reg,					/* Get a specific register value */
+		tms320c10_set_reg,					/* Set a specific register value */
+		tms320c10_set_nmi_line, 			/* Set state of the NMI line */
+		tms320c10_set_irq_line, 			/* Set state of the IRQ line */
+		tms320c10_set_irq_callback, 		/* Set IRQ enable/vector callback */
 		NULL,								/* Cause internal interrupt */
 		NULL,								/* Save CPU state */
 		NULL,								/* Load CPU state */
-        TMS320C10_info,                     /* Get formatted string for a specific register */
+		tms320c10_info, 					/* Get formatted string for a specific register */
 		2,									/* Number of IRQ lines */
-		&TMS320C10_ICount,					/* Pointer to the instruction count */
+		&tms320c10_ICount,					/* Pointer to the instruction count */
 		TMS320C10_INT_NONE, 				/* Interrupt types: none, IRQ, NMI */
 		-1,
 		-1,
@@ -1054,16 +1187,19 @@ struct cpu_interface cpuintf[] =
 		16, 								/* CPU address bits */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
     },
-	/* 31 CPU_CCPU */
     {
-		ccpu_reset, 						/* Reset CPU  */
+		CPU_CCPU,17,						/* CPU number and family cores sharing resources */
+        ccpu_reset,                         /* Reset CPU  */
 		ccpu_exit,							/* Shut down CPU  */
 		ccpu_execute,						/* Execute a number of cycles  */
-		(void (*)(void *))ccpu_setregs, 	/* Set the contents of the registers  */
-		(void (*)(void *))ccpu_getregs, 	/* Get the contents of the registers  */
-		ccpu_getpc, 						/* Return the current PC  */
-        ccpu_getreg,                        /* Get a specific register value */
-		ccpu_setreg,						/* Set a specific register value */
+		ccpu_get_context,					/* Get the contents of the registers */
+		ccpu_set_context,					/* Set the contents of the registers */
+		ccpu_get_pc, 						/* Return the current program counter */
+		ccpu_set_pc, 						/* Set the current program counter */
+		ccpu_get_sp, 						/* Return the current stack pointer */
+		ccpu_set_sp, 						/* Set the current stack pointer */
+		ccpu_get_reg,						/* Get a specific register value */
+		ccpu_set_reg,						/* Set a specific register value */
         ccpu_set_nmi_line,                  /* Set state of the NMI line */
 		ccpu_set_irq_line,					/* Set state of the IRQ line */
 		ccpu_set_irq_callback,				/* Set IRQ enable/vector callback */
@@ -1081,16 +1217,19 @@ struct cpu_interface cpuintf[] =
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system	*/
 	},
 #ifdef MESS
-	/* 32 CPU_PDP1 */
     {
-		pdp1_reset, 						/* Reset CPU  */
+		CPU_PDP1,18,						/* CPU number and family cores sharing resources */
+        pdp1_reset,                         /* Reset CPU  */
 		pdp1_exit,							/* Shut down CPU  */
 		pdp1_execute,						/* Execute a number of cycles  */
-		(void (*)(void *))pdp1_setregs, 	/* Set the contents of the registers  */
-		(void (*)(void *))pdp1_getregs, 	/* Get the contents of the registers  */
-		pdp1_getpc, 						/* Return the current PC  */
-        pdp1_getreg,                        /* Get a specific register value */
-		pdp1_setreg,						/* Set a specific register value */
+		pdp1_get_context,					/* Get the contents of the registers */
+		pdp1_set_context,					/* Set the contents of the registers */
+		pdp1_get_pc, 						/* Return the current program counter */
+		pdp1_set_pc, 						/* Set the current program counter */
+		pdp1_get_sp, 						/* Return the current stack pointer */
+		pdp1_set_sp, 						/* Set the current stack pointer */
+		pdp1_get_reg,						/* Get a specific register value */
+		pdp1_set_reg,						/* Set a specific register value */
         pdp1_set_nmi_line,                  /* Set state of the NMI line */
 		pdp1_set_irq_line,					/* Set state of the IRQ line */
 		pdp1_set_irq_callback,				/* Set IRQ enable/vector callback */
@@ -1108,13 +1247,23 @@ struct cpu_interface cpuintf[] =
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system	*/
     },
 #endif
+	{
+		-1,0,								/* End of list marker */
+	}
 };
 
 void cpu_init(void)
 {
 	int i;
 
-	/* count how many CPUs we have to emulate */
+	/* Verify the order of entries in the cpuintf[] array */
+	for( i = 0; cpuintf[i].cpu_num >= 0; i++ )
+	{
+		if( cpuintf[i].cpu_num != i )
+			if( errorlog ) fprintf(errorlog, "CPU #%d wrong ID %d! Check enum CPU_... in driver.h\n", i, cpuintf[i].cpu_num);
+	}
+
+    /* count how many CPUs we have to emulate */
 	totalcpu = 0;
 
 	while (totalcpu < MAX_CPU)
@@ -1150,7 +1299,7 @@ void cpu_run(void)
 		cpu[i].save_context = 0;
 
 		for (j = 0; j < totalcpu; j++)
-			if ( i != j && !strcmp(cpu_core_file(CPU_TYPE(i)),cpu_core_file(CPU_TYPE(j))) )
+			if ( i != j && CPU_FAMILY(i) == CPU_FAMILY(j) )
 				cpu[i].save_context = 1;
 
 		#ifdef MAME_DEBUG
@@ -1197,7 +1346,7 @@ if (errorlog) fprintf(errorlog,"Machine reset\n");
 	{
 		/* swap memory contexts and reset */
 		memorycontextswap (i);
-		if (cpu[i].save_context) SETREGS (i, cpu[i].context);
+		if (cpu[i].save_context) SETCONTEXT (i, cpu[i].context);
 		activecpu = i;
 		RESET (i);
 
@@ -1205,7 +1354,7 @@ if (errorlog) fprintf(errorlog,"Machine reset\n");
 		SET_IRQ_CALLBACK(i,cpu_irq_callbacks[i]);
 
         /* save the CPU context if necessary */
-		if (cpu[i].save_context) GETREGS (i, cpu[i].context);
+		if (cpu[i].save_context) GETCONTEXT (i, cpu[i].context);
 
         /* reset the total number of cycles */
 		cpu[i].totalcycles = 0;
@@ -1231,7 +1380,57 @@ if (errorlog) fprintf(errorlog,"Machine reset\n");
 		}
         osd_profiler(OSD_PROFILE_EXTRA);
 
-		/* ask the timer system to schedule */
+#if 1
+        {
+            static int pressed_s = 0;
+            static int pressed_l = 0;
+
+            if( osd_key_pressed(OSD_KEY_S) && !pressed_s )
+            {
+                void *s = state_create(Machine->gamedrv->name);
+                pressed_s = 1;
+                if( s )
+                {
+					for( cpunum = 0; cpunum < totalcpu; cpunum++ )
+					{
+						activecpu = cpunum;
+						memorycontextswap (activecpu);
+						if (cpu[activecpu].save_context) SETCONTEXT (activecpu, cpu[activecpu].context);
+						/* make sure any bank switching is reset */
+						SET_OP_BASE (activecpu, GETPC (activecpu));
+						if( cpu[activecpu].intf->cpu_state_save )
+							(*cpu[activecpu].intf->cpu_state_save)(s);
+					}
+                    state_close(s);
+                }
+            }
+            else pressed_s = 0;
+
+            if( osd_key_pressed(OSD_KEY_L) && !pressed_l )
+            {
+                void *s = state_open(Machine->gamedrv->name);
+                pressed_l = 1;
+                if( s )
+                {
+					for( cpunum = 0; cpunum < totalcpu; cpunum++ )
+                    {
+						activecpu = cpunum;
+						memorycontextswap (activecpu);
+						if (cpu[activecpu].save_context) SETCONTEXT (activecpu, cpu[activecpu].context);
+						/* make sure any bank switching is reset */
+						SET_OP_BASE (activecpu, GETPC (activecpu));
+						if( cpu[activecpu].intf->cpu_state_load )
+							(*cpu[activecpu].intf->cpu_state_load)(s);
+						/* update the contexts */
+						if (cpu[activecpu].save_context) GETCONTEXT (activecpu, cpu[activecpu].context);
+						updatememorybase (activecpu);
+                    }
+                    state_close(s);
+                }
+            } else pressed_l = 0;
+        }
+#endif
+        /* ask the timer system to schedule */
 		if (timer_schedule_cpu (&cpunum, &running))
 		{
 			int ran;
@@ -1240,12 +1439,12 @@ if (errorlog) fprintf(errorlog,"Machine reset\n");
 			/* switch memory and CPU contexts */
 			activecpu = cpunum;
 			memorycontextswap (activecpu);
-			if (cpu[activecpu].save_context) SETREGS (activecpu, cpu[activecpu].context);
+			if (cpu[activecpu].save_context) SETCONTEXT (activecpu, cpu[activecpu].context);
 
 			/* make sure any bank switching is reset */
 			SET_OP_BASE (activecpu, GETPC (activecpu));
 
-			/* run for the requested number of cycles */
+            /* run for the requested number of cycles */
 			osd_profiler(OSD_PROFILE_CPU1 + cpunum);
 			ran = EXECUTE (activecpu, running);
 			osd_profiler(OSD_PROFILE_END);
@@ -1254,7 +1453,7 @@ if (errorlog) fprintf(errorlog,"Machine reset\n");
 			cpu[activecpu].totalcycles += ran;
 
 			/* update the contexts */
-			if (cpu[activecpu].save_context) GETREGS (activecpu, cpu[activecpu].context);
+			if (cpu[activecpu].save_context) GETCONTEXT (activecpu, cpu[activecpu].context);
 			updatememorybase (activecpu);
 			activecpu = -1;
 
@@ -1385,16 +1584,34 @@ int cpu_gettotalcpu(void)
 
 
 
-unsigned cpu_getpc(void)
+unsigned cpu_get_pc(void)
 {
 	int cpunum = (activecpu < 0) ? 0 : activecpu;
 	return GETPC (cpunum);
 }
 
+void cpu_set_pc(unsigned val)
+{
+	int cpunum = (activecpu < 0) ? 0 : activecpu;
+	SETPC (cpunum,val);
+}
+
+unsigned cpu_get_sp(void)
+{
+	int cpunum = (activecpu < 0) ? 0 : activecpu;
+	return GETSP (cpunum);
+}
+
+void cpu_set_sp(unsigned val)
+{
+	int cpunum = (activecpu < 0) ? 0 : activecpu;
+	SETSP (cpunum,val);
+}
+
 
 /***************************************************************************
 
-  This is similar to cpu_getpc(), but instead of returning the current PC,
+  This is similar to cpu_get_pc(), but instead of returning the current PC,
   it returns the address of the opcode that is doing the read/write. The PC
   has already been incremented by some unknown amount by the time the actual
   read or write is being executed. This helps to figure out what opcode is
@@ -1430,7 +1647,7 @@ int cpu_getpreviouspc(void)  /* -RAY- */
 
 /***************************************************************************
 
-  This is similar to cpu_getpc(), but instead of returning the current PC,
+  This is similar to cpu_get_pc(), but instead of returning the current PC,
   it returns the address stored on the top of the stack, which usually is
   the address where execution will resume after the current subroutine.
   Note that the returned value will be wrong if the program has PUSHed
@@ -1445,11 +1662,8 @@ int cpu_getreturnpc(void)
     {
 		case CPU_Z80:
 			{
-				Z80_Regs _regs;
 				extern unsigned char *RAM;
-
-				GETREGS(cpunum,&_regs);
-				return RAM[_regs.SP.d] + (RAM[_regs.SP.d+1] << 8);
+				return RAM[cpu_get_reg(Z80_SP)] + (RAM[cpu_get_reg(Z80_SP)+1] << 8);
 			}
 			break;
 
@@ -2006,7 +2220,7 @@ static void cpu_manualnmicallback(int param)
 	oldactive = activecpu;
     activecpu = cpunum;
     memorycontextswap (activecpu);
-    if (cpu[activecpu].save_context) SETREGS (activecpu, cpu[activecpu].context);
+	if (cpu[activecpu].save_context) SETCONTEXT (activecpu, cpu[activecpu].context);
 
 	LOG((errorlog,"cpu_manualnmicallback %d,%d\n",cpunum,state));
 
@@ -2027,7 +2241,7 @@ static void cpu_manualnmicallback(int param)
 			if( errorlog ) fprintf( errorlog, "cpu_manualnmicallback cpu #%d unknown state %d\n", cpunum, state);
     }
     /* update the CPU's context */
-	if (cpu[activecpu].save_context) GETREGS (activecpu, cpu[activecpu].context);
+	if (cpu[activecpu].save_context) GETCONTEXT (activecpu, cpu[activecpu].context);
 	activecpu = oldactive;
 	if (activecpu >= 0) memorycontextswap (activecpu);
 
@@ -2048,7 +2262,7 @@ static void cpu_manualirqcallback(int param)
 	oldactive = activecpu;
     activecpu = cpunum;
     memorycontextswap (activecpu);
-    if (cpu[activecpu].save_context) SETREGS (activecpu, cpu[activecpu].context);
+	if (cpu[activecpu].save_context) SETCONTEXT (activecpu, cpu[activecpu].context);
 
 	LOG((errorlog,"cpu_manualirqcallback %d,%d,%d\n",cpunum,irqline,state));
 
@@ -2071,7 +2285,7 @@ static void cpu_manualirqcallback(int param)
     }
 
     /* update the CPU's context */
-	if (cpu[activecpu].save_context) GETREGS (activecpu, cpu[activecpu].context);
+	if (cpu[activecpu].save_context) GETCONTEXT (activecpu, cpu[activecpu].context);
 	activecpu = oldactive;
 	if (activecpu >= 0) memorycontextswap (activecpu);
 
@@ -2087,12 +2301,12 @@ static void cpu_internal_interrupt (int cpunum, int type)
     /* swap to the CPU's context */
     activecpu = cpunum;
     memorycontextswap (activecpu);
-	if (cpu[activecpu].save_context) SETREGS (activecpu, cpu[activecpu].context);
+	if (cpu[activecpu].save_context) SETCONTEXT (activecpu, cpu[activecpu].context);
 
 	INTERNAL_INTERRUPT (cpunum, type);
 
     /* update the CPU's context */
-	if (cpu[activecpu].save_context) GETREGS (activecpu, cpu[activecpu].context);
+	if (cpu[activecpu].save_context) GETCONTEXT (activecpu, cpu[activecpu].context);
     activecpu = oldactive;
     if (activecpu >= 0) memorycontextswap (activecpu);
 
@@ -2117,7 +2331,7 @@ static void cpu_generate_interrupt (int cpunum, int (*func)(void), int num)
 	/* swap to the CPU's context */
     activecpu = cpunum;
 	memorycontextswap (activecpu);
-	if (cpu[activecpu].save_context) SETREGS (activecpu, cpu[activecpu].context);
+	if (cpu[activecpu].save_context) SETCONTEXT (activecpu, cpu[activecpu].context);
 
 	/* cause the interrupt, calling the function if it exists */
 	if (func) num = (*func)();
@@ -2146,9 +2360,6 @@ static void cpu_generate_interrupt (int cpunum, int (*func)(void), int num)
 				switch (num)
 				{
 				case I8080_INTR:		irq_line = 0; LOG((errorlog,"I8080 INTR\n")); break;
-				case I8080_RST55:		irq_line = 1; LOG((errorlog,"I8080 RST55\n")); break;
-				case I8080_RST65:		irq_line = 2; LOG((errorlog,"I8080 RST65\n")); break;
-				case I8080_RST75:		irq_line = 3; LOG((errorlog,"I8080 RST75\n")); break;
 				default:				irq_line = 0; LOG((errorlog,"I8080 unknown\n"));
 				}
                 break;
@@ -2308,7 +2519,7 @@ static void cpu_generate_interrupt (int cpunum, int (*func)(void), int num)
 	}
 
     /* update the CPU's context */
-    if (cpu[activecpu].save_context) GETREGS (activecpu, cpu[activecpu].context);
+	if (cpu[activecpu].save_context) GETCONTEXT (activecpu, cpu[activecpu].context);
     activecpu = oldactive;
     if (activecpu >= 0) memorycontextswap (activecpu);
 
@@ -2323,7 +2534,7 @@ static void cpu_clear_interrupts (int cpunum)
 	/* swap to the CPU's context */
 	activecpu = cpunum;
 	memorycontextswap (activecpu);
-	if (cpu[activecpu].save_context) SETREGS (activecpu, cpu[activecpu].context);
+	if (cpu[activecpu].save_context) SETCONTEXT (activecpu, cpu[activecpu].context);
 
 	/* clear NMI line */
     SET_NMI_LINE(activecpu,CLEAR_LINE);
@@ -2333,7 +2544,7 @@ static void cpu_clear_interrupts (int cpunum)
 		SET_IRQ_LINE(activecpu,i,CLEAR_LINE);
 
 	/* update the CPU's context */
-	if (cpu[activecpu].save_context) GETREGS (activecpu, cpu[activecpu].context);
+	if (cpu[activecpu].save_context) GETCONTEXT (activecpu, cpu[activecpu].context);
 	activecpu = oldactive;
 	if (activecpu >= 0) memorycontextswap (activecpu);
 }
@@ -2346,7 +2557,7 @@ static void cpu_reset_cpu (int cpunum)
 	/* swap to the CPU's context */
 	activecpu = cpunum;
 	memorycontextswap (activecpu);
-	if (cpu[activecpu].save_context) SETREGS (activecpu, cpu[activecpu].context);
+	if (cpu[activecpu].save_context) SETCONTEXT (activecpu, cpu[activecpu].context);
 
 	/* reset the CPU */
 	RESET (cpunum);
@@ -2355,7 +2566,7 @@ static void cpu_reset_cpu (int cpunum)
 	SET_IRQ_CALLBACK(cpunum,cpu_irq_callbacks[cpunum]);
 
 	/* update the CPU's context */
-	if (cpu[activecpu].save_context) GETREGS (activecpu, cpu[activecpu].context);
+	if (cpu[activecpu].save_context) GETCONTEXT (activecpu, cpu[activecpu].context);
 	activecpu = oldactive;
 	if (activecpu >= 0) memorycontextswap (activecpu);
 }
@@ -2708,49 +2919,60 @@ void cpu_setdaisychain(int cpunum, Z80_DaisyChain *daisy_chain)
 
 ***************************************************************************/
 
-unsigned cur_cpu_getreg(int regnum)
+unsigned cpu_get_reg(int regnum)
 {
 	return (*cpu[activecpu].intf->get_reg)(regnum);
 }
 
-void cur_cpu_setreg(int regnum, unsigned val)
+unsigned cpu_n_get_reg(int cpunum, int regnum)
 {
-	(*cpu[activecpu].intf->set_reg)(regnum,val);
-}
+    int oldactive;
+    unsigned val = 0;
 
-unsigned cpu_getreg(int cpunum, int regnum)
-{
-	int oldactive;
-	unsigned val = 0;
+    if( cpunum == activecpu )
+        return cpu_get_reg(regnum);
+
     /* swap to the CPU's context */
-	oldactive = activecpu;
+    oldactive = activecpu;
     activecpu = cpunum;
     memorycontextswap (activecpu);
-    if (cpu[activecpu].save_context) SETREGS (activecpu, cpu[activecpu].context);
+	if (cpu[activecpu].save_context) SETCONTEXT (activecpu, cpu[activecpu].context);
 
-	val = (*cpu[activecpu].intf->get_reg)(regnum);
+    val = (*cpu[activecpu].intf->get_reg)(regnum);
 
-	/* update the CPU's context */
-	if (cpu[activecpu].save_context) GETREGS (activecpu, cpu[activecpu].context);
-	activecpu = oldactive;
+    /* update the CPU's context */
+	if (cpu[activecpu].save_context) GETCONTEXT (activecpu, cpu[activecpu].context);
+    activecpu = oldactive;
     if (activecpu >= 0) memorycontextswap (activecpu);
 
-	return val;
+    return val;
 }
 
-void cpu_setreg(int cpunum, int regnum, unsigned val)
+void cpu_set_reg(int regnum, unsigned val)
+{
+	(*cpu[activecpu].intf->set_reg)(regnum,val);
+}
+
+void cpu_n_set_reg(int cpunum, int regnum, unsigned val)
 {
 	int oldactive;
+
+	if( cpunum == activecpu )
+	{
+		cpu_set_reg(regnum,val);
+		return;
+	}
+
     /* swap to the CPU's context */
 	oldactive = activecpu;
     activecpu = cpunum;
     memorycontextswap (activecpu);
-    if (cpu[activecpu].save_context) SETREGS (activecpu, cpu[activecpu].context);
+	if (cpu[activecpu].save_context) SETCONTEXT (activecpu, cpu[activecpu].context);
 
 	(*cpu[activecpu].intf->set_reg)(regnum,val);
 
 	/* update the CPU's context */
-	if (cpu[activecpu].save_context) GETREGS (activecpu, cpu[activecpu].context);
+	if (cpu[activecpu].save_context) GETCONTEXT (activecpu, cpu[activecpu].context);
 	activecpu = oldactive;
     if (activecpu >= 0) memorycontextswap (activecpu);
 }
@@ -2764,7 +2986,7 @@ void cpu_setreg(int cpunum, int regnum, unsigned val)
 /***************************************************************************
   Return the name for the current CPU
 ***************************************************************************/
-const char *cur_cpu_name(void)
+const char *cpu_name(void)
 {
 	if( activecpu >= 0 )
 		return CPU_INFO(activecpu,NULL,CPU_INFO_NAME);
@@ -2774,7 +2996,7 @@ const char *cur_cpu_name(void)
 /***************************************************************************
   Return the family name for the current CPU
 ***************************************************************************/
-const char *cur_cpu_core_family(void)
+const char *cpu_core_family(void)
 {
 	if( activecpu >= 0 )
 		return CPU_INFO(activecpu,NULL,CPU_INFO_FAMILY);
@@ -2784,7 +3006,7 @@ const char *cur_cpu_core_family(void)
 /***************************************************************************
   Return the version number for the current CPU
 ***************************************************************************/
-const char *cur_cpu_core_version(void)
+const char *cpu_core_version(void)
 {
 	if( activecpu >= 0 )
 		return CPU_INFO(activecpu,NULL,CPU_INFO_VERSION);
@@ -2794,7 +3016,7 @@ const char *cur_cpu_core_version(void)
 /***************************************************************************
   Return the core filename for the current CPU
 ***************************************************************************/
-const char *cur_cpu_core_file(void)
+const char *cpu_core_file(void)
 {
 	if( activecpu >= 0 )
 		return CPU_INFO(activecpu,NULL,CPU_INFO_FILE);
@@ -2804,7 +3026,7 @@ const char *cur_cpu_core_file(void)
 /***************************************************************************
   Return the credits for the current CPU
 ***************************************************************************/
-const char *cur_cpu_core_credits(void)
+const char *cpu_core_credits(void)
 {
 	if( activecpu >= 0 )
 		return CPU_INFO(activecpu,NULL,CPU_INFO_CREDITS);
@@ -2814,13 +3036,13 @@ const char *cur_cpu_core_credits(void)
 /***************************************************************************
   Return the current program counter for the current CPU
 ***************************************************************************/
-const char *cur_cpu_pc(void)
+const char *cpu_pc(void)
 {
 	UINT8 temp_context[CPU_CONTEXT_SIZE];
 
 	if( activecpu >= 0 )
 	{
-		GETREGS (activecpu, temp_context);
+		GETCONTEXT (activecpu, temp_context);
 		return CPU_INFO(activecpu,temp_context,CPU_INFO_PC);
 	}
 	return "";
@@ -2829,13 +3051,13 @@ const char *cur_cpu_pc(void)
 /***************************************************************************
   Return the current stack pointer for the current CPU
 ***************************************************************************/
-const char *cur_cpu_sp(void)
+const char *cpu_sp(void)
 {
 	UINT8 temp_context[CPU_CONTEXT_SIZE];
 
 	if( activecpu >= 0 )
 	{
-		GETREGS (activecpu, temp_context);
+		GETCONTEXT (activecpu, temp_context);
 		return CPU_INFO(activecpu,temp_context,CPU_INFO_SP);
 	}
 	return "";
@@ -2844,13 +3066,13 @@ const char *cur_cpu_sp(void)
 /***************************************************************************
   Return a dissassembled instruction for the current CPU
 ***************************************************************************/
-const char *cur_cpu_dasm(void)
+const char *cpu_dasm(void)
 {
 	UINT8 temp_context[CPU_CONTEXT_SIZE];
 
 	if( activecpu >= 0 )
 	{
-		GETREGS (activecpu, temp_context);
+		GETCONTEXT (activecpu, temp_context);
 		return CPU_INFO(activecpu,temp_context,CPU_INFO_DASM);
 	}
 	return "";
@@ -2859,13 +3081,13 @@ const char *cur_cpu_dasm(void)
 /***************************************************************************
   Return a flags (state, condition codes) string for the current CPU
 ***************************************************************************/
-const char *cur_cpu_flags(void)
+const char *cpu_flags(void)
 {
 	UINT8 temp_context[CPU_CONTEXT_SIZE];
 
 	if( activecpu >= 0 )
 	{
-		GETREGS (activecpu, temp_context);
+		GETCONTEXT (activecpu, temp_context);
 		return CPU_INFO(activecpu,temp_context,CPU_INFO_FLAGS);
 	}
 	return "";
@@ -2874,13 +3096,13 @@ const char *cur_cpu_flags(void)
 /***************************************************************************
   Return a specific register string for a specific CPU
 ***************************************************************************/
-const char *cur_cpu_register(int regnum)
+const char *cpu_dump_reg(int regnum)
 {
 	UINT8 temp_context[CPU_CONTEXT_SIZE];
 
 	if( activecpu >= 0 )
 	{
-		GETREGS (activecpu, temp_context);
+		GETCONTEXT (activecpu, temp_context);
 		return CPU_INFO(activecpu,temp_context,CPU_INFO_REG+regnum);
 	}
 	return "";
@@ -2889,18 +3111,18 @@ const char *cur_cpu_register(int regnum)
 /***************************************************************************
   Return a state dump for the current CPU
 ***************************************************************************/
-const char *cur_cpu_dump_state(void)
+const char *cpu_dump_state(void)
 {
 	static char buffer[1024+1];
 	char *dst = buffer;
 	const char *src;
 	int regnum, width;
 
-	dst += sprintf(dst, "CPU #%d [%s]", activecpu, cpu_name(CPU_TYPE(activecpu)));
-	dst += sprintf(dst, " program counter %s %s\n", cpu_pc(activecpu), cpu_dasm(activecpu));
+	dst += sprintf(dst, "CPU #%d [%s]", activecpu, cputype_name(CPU_TYPE(activecpu)));
+	dst += sprintf(dst, " program counter %s %s\n", cpu_pc(), cpu_dasm());
 	regnum = 0;
 	width = 0;
-	src = cpu_register(activecpu,regnum);
+	src = cpu_dump_reg(regnum);
 	while (*src)
 	{
 		if( width + strlen(src) + 1 >= 80 )
@@ -2911,7 +3133,7 @@ const char *cur_cpu_dump_state(void)
 		dst += sprintf(dst, "%s ", src);
 		width += strlen(src) + 1;
 		regnum++;
-		src = cpu_register(activecpu,regnum);
+		src = cpu_dump_reg(regnum);
 	}
 
     return buffer;
@@ -2920,7 +3142,7 @@ const char *cur_cpu_dump_state(void)
 /***************************************************************************
   Return the name for a CPU
 ***************************************************************************/
-const char *cpu_name(int cpu_type)
+const char *cputype_name(int cpu_type)
 {
 	cpu_type &= ~CPU_FLAGS_MASK;
 	if( cpu_type < MAX_CPU_TYPE )
@@ -2931,7 +3153,7 @@ const char *cpu_name(int cpu_type)
 /***************************************************************************
   Return the family name for a CPU
 ***************************************************************************/
-const char *cpu_core_family(int cpu_type)
+const char *cputype_core_family(int cpu_type)
 {
 	cpu_type &= ~CPU_FLAGS_MASK;
 	if( cpu_type < MAX_CPU_TYPE )
@@ -2942,7 +3164,7 @@ const char *cpu_core_family(int cpu_type)
 /***************************************************************************
   Return the version number for a CPU
 ***************************************************************************/
-const char *cpu_core_version(int cpu_type)
+const char *cputype_core_version(int cpu_type)
 {
 	cpu_type &= ~CPU_FLAGS_MASK;
 	if( cpu_type < MAX_CPU_TYPE )
@@ -2953,7 +3175,7 @@ const char *cpu_core_version(int cpu_type)
 /***************************************************************************
   Return the core filename for a CPU
 ***************************************************************************/
-const char *cpu_core_file(int cpu_type)
+const char *cputype_core_file(int cpu_type)
 {
 	cpu_type &= ~CPU_FLAGS_MASK;
 	if( cpu_type < MAX_CPU_TYPE )
@@ -2964,7 +3186,7 @@ const char *cpu_core_file(int cpu_type)
 /***************************************************************************
   Return the credits for a CPU
 ***************************************************************************/
-const char *cpu_core_credits(int cpu_type)
+const char *cputype_core_credits(int cpu_type)
 {
 	cpu_type &= ~CPU_FLAGS_MASK;
 	if( cpu_type < MAX_CPU_TYPE )
@@ -2975,13 +3197,13 @@ const char *cpu_core_credits(int cpu_type)
 /***************************************************************************
   Return the current program counter for a specific CPU
 ***************************************************************************/
-const char *cpu_pc(int cpunum)
+const char *cpunum_pc(int cpunum)
 {
 	UINT8 temp_context[CPU_CONTEXT_SIZE];
 
 	if( cpunum < MAX_CPU )
     {
-		GETREGS (cpunum, temp_context);
+		GETCONTEXT (cpunum, temp_context);
 		return CPU_INFO(cpunum,temp_context,CPU_INFO_PC);
 	}
 	return "";
@@ -2990,13 +3212,13 @@ const char *cpu_pc(int cpunum)
 /***************************************************************************
   Return the current stack pointer for a specific CPU
 ***************************************************************************/
-const char *cpu_sp(int cpunum)
+const char *cpunum_sp(int cpunum)
 {
 	UINT8 temp_context[CPU_CONTEXT_SIZE];
 
 	if( cpunum < MAX_CPU )
 	{
-		GETREGS (cpunum, temp_context);
+		GETCONTEXT (cpunum, temp_context);
 		return CPU_INFO(cpunum,temp_context,CPU_INFO_SP);
 	}
 	return "";
@@ -3005,13 +3227,13 @@ const char *cpu_sp(int cpunum)
 /***************************************************************************
   Return a dissassembled instruction for a specific CPU
 ***************************************************************************/
-const char *cpu_dasm(int cpunum)
+const char *cpunum_dasm(int cpunum)
 {
 	UINT8 temp_context[CPU_CONTEXT_SIZE];
 
 	if( cpunum < MAX_CPU )
 	{
-		GETREGS (cpunum, temp_context);
+		GETCONTEXT (cpunum, temp_context);
 		return CPU_INFO(cpunum,temp_context,CPU_INFO_DASM);
 	}
 	return "";
@@ -3020,13 +3242,13 @@ const char *cpu_dasm(int cpunum)
 /***************************************************************************
   Return a flags (state, condition codes) string for a specific CPU
 ***************************************************************************/
-const char *cpu_flags(int cpunum)
+const char *cpunum_flags(int cpunum)
 {
 	UINT8 temp_context[CPU_CONTEXT_SIZE];
 
 	if( cpunum < MAX_CPU )
 	{
-		GETREGS (cpunum, temp_context);
+		GETCONTEXT (cpunum, temp_context);
 		return CPU_INFO(cpunum,temp_context,CPU_INFO_FLAGS);
 	}
 	return "";
@@ -3035,13 +3257,13 @@ const char *cpu_flags(int cpunum)
 /***************************************************************************
   Return a specific register string for a specific CPU
 ***************************************************************************/
-const char *cpu_register(int cpunum, int regnum)
+const char *cpunum_dump_reg(int cpunum, int regnum)
 {
 	UINT8 temp_context[CPU_CONTEXT_SIZE];
 
 	if( cpunum < MAX_CPU )
 	{
-		GETREGS (cpunum, temp_context);
+		GETCONTEXT (cpunum, temp_context);
 		return CPU_INFO(cpunum,temp_context,CPU_INFO_REG+regnum);
 	}
 	return "";
@@ -3050,18 +3272,18 @@ const char *cpu_register(int cpunum, int regnum)
 /***************************************************************************
   Return a state dump for a specific CPU
 ***************************************************************************/
-const char *cpu_dump_state(int cpunum)
+const char *cpunum_dump_state(int cpunum)
 {
 	static char buffer[1024+1];
 	char *dst = buffer;
 	const char *src;
 	int regnum, width;
 
-	dst += sprintf(dst, "CPU #%d [%s]", cpunum, cpu_name(CPU_TYPE(cpunum)));
-	dst += sprintf(dst, " program counter %s %s\n", cpu_pc(cpunum), cpu_dasm(cpunum));
+	dst += sprintf(dst, "CPU #%d [%s]", cpunum, cputype_name(CPU_TYPE(cpunum)));
+	dst += sprintf(dst, " program counter %s %s\n", cpunum_pc(cpunum), cpunum_dasm(cpunum));
 	regnum = 0;
 	width = 0;
-	src = cpu_register(cpunum,regnum);
+	src = cpunum_dump_reg(cpunum,regnum);
 	while (*src)
 	{
 		if( width + strlen(src) + 1 >= 80 )
@@ -3073,7 +3295,7 @@ const char *cpu_dump_state(int cpunum)
         width += strlen(src) + 1;
         width += strlen(src);
 		regnum++;
-		src = cpu_register(cpunum,regnum);
+		src = cpunum_dump_reg(cpunum,regnum);
 	}
 
     return buffer;
@@ -3087,8 +3309,8 @@ void cpu_dump_states(void)
 	int i;
 	for( i = 0; i < MAX_CPU; i++ )
 	{
-		if( CPU_TYPE(i) != 0)
-			fprintf(stderr, "%s\n\n", cpu_dump_state(i));
+		if( CPU_TYPE(i) != 0 )
+			fprintf(stderr, "%s\n\n", cpunum_dump_state(i));
 	}
 }
 
@@ -3100,40 +3322,34 @@ void cpu_dump_states(void)
 static void Dummy_reset(void *param) { }
 static void Dummy_exit(void) { }
 static int Dummy_execute(int cycles) { return cycles; }
-static void Dummy_setregs(void *Regs) { }
-static void Dummy_getregs(void *Regs) { }
-static unsigned Dummy_getpc(void) { return 0; }
-static unsigned Dummy_getreg(int regnum) { return 0; }
-static void Dummy_setreg(int regnum, unsigned val) { }
+static unsigned Dummy_get_context(void *regs) { return 0; }
+static void Dummy_set_context(void *regs) { }
+static unsigned Dummy_get_pc(void) { return 0; }
+static void Dummy_set_pc(unsigned val) { }
+static unsigned Dummy_get_sp(void) { return 0; }
+static void Dummy_set_sp(unsigned val) { }
+static unsigned Dummy_get_reg(int regnum) { return 0; }
+static void Dummy_set_reg(int regnum, unsigned val) { }
 static void Dummy_set_nmi_line(int state) { }
 static void Dummy_set_irq_line(int irqline, int state) { }
 static void Dummy_set_irq_callback(int (*callback)(int irqline)) { }
 
 /****************************************************************************
  * Return a formatted string for a register
- * regnum	meaning
- * 0		CPU name
- * 1		Program counter
- * 2		Disassemble
- * 3		Flags
- * 14...n	Registers in the order you wish them to be displayed
  ****************************************************************************/
 static const char *Dummy_info(void *context, int regnum)
 {
-	static char buffer[32+1];
-
-	buffer[0] = '\0';
 	if( !context && regnum )
-		return buffer;
+		return "";
 
     switch (regnum)
 	{
-		case 0: sprintf(buffer,"Dummy"); break;
-		case 1: sprintf(buffer,"%X", *(int*)context); break;
-		case 2: sprintf(buffer,"???"); break;
-		case 3: sprintf(buffer,"--------"); break;
-		default: buffer[0] = '\0';
+		case CPU_INFO_NAME: return "Dummy";
+		case CPU_INFO_FAMILY: return "no CPU";
+		case CPU_INFO_VERSION: return "0.0";
+		case CPU_INFO_FILE: return __FILE__;
+		case CPU_INFO_CREDITS: return "The MAME team.";
 	}
-	return buffer;
+	return "";
 }
 

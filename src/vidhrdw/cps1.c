@@ -307,7 +307,7 @@ INLINE unsigned char * cps1_base(int offset)
 int cps1_output_r(int offset)
 {
 #if VERBOSE
-if (errorlog && offset >= 0x18) fprintf(errorlog,"PC %06x: read output port %02x\n",cpu_getpc(),offset);
+if (errorlog && offset >= 0x18) fprintf(errorlog,"PC %06x: read output port %02x\n",cpu_get_pc(),offset);
 #endif
 
 	/* Some games interrogate a couple of registers on bootup. */
@@ -341,7 +341,7 @@ if (errorlog && offset >= 0x18 && //offset != 0x22 &&
 		offset != cps1_game_config->priority2 &&
 		offset != cps1_game_config->priority3 &&
 		offset != cps1_game_config->control_reg)
-	fprintf(errorlog,"PC %06x: write %02x to output port %02x\n",cpu_getpc(),data,offset);
+	fprintf(errorlog,"PC %06x: write %02x to output port %02x\n",cpu_get_pc(),data,offset);
 
 #ifdef MAME_DEBUG
 #if 0

@@ -44,12 +44,9 @@ void blktiger_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 /* if a read from this address doesn't return the value it expects. */
 static int blktiger_protection_r(int offset)
 {
-	Z80_Regs regs;
-
-
-	z80_getregs(&regs);
-	if (errorlog) fprintf(errorlog,"protection read, PC: %04x Result:%02x\n",cpu_getpc(),regs.DE.b.h);
-	return regs.DE.b.h;
+	int data = cpu_get_reg(Z80_DE) >> 8;
+	if (errorlog) fprintf(errorlog,"protection read, PC: %04x Result:%02x\n",cpu_get_pc(),data);
+	return data;
 }
 
 static void blktiger_bankswitch_w(int offset,int data)
@@ -267,9 +264,9 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 /* handler called by the 2203 emulator when the internal timers cause an IRQ */
-static void irqhandler(void)
+static void irqhandler(int irq)
 {
-	cpu_cause_interrupt(1,0xff);
+	cpu_set_irq_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
 }
 
 static struct YM2203interface ym2203_interface =

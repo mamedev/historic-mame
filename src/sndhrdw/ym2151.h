@@ -81,7 +81,7 @@ int YM2151ReadStatus(int n);
 
 
 /* set interrupt handler on YM2151 chip number 'n'*/
-void YM2151SetIrqHandler(int n, void (*handler)(void));
+void YM2151SetIrqHandler(int n, void (*handler)(int irq));
 
 
 /* set port write handler on YM2151 chip number 'n' */

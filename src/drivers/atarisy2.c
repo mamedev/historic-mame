@@ -227,7 +227,7 @@ static void sound_eeprom_w (int offset, int data)
 /*	{
 	static FILE *f;
 	if (!f) f = fopen ("eeprom.log", "w");
-	fprintf (f, "Write %02X @ %04X (PC = %04X)\n", data, offset + 0x1000, cpu_getpc ());
+	fprintf (f, "Write %02X @ %04X (PC = %04X)\n", data, offset + 0x1000, cpu_get_pc ());
 	}*/
 }
 

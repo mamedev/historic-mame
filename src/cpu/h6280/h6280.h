@@ -15,40 +15,17 @@
 
 #include "osd_cpu.h"
 
-#ifndef INLINE
-#define INLINE static inline
+enum { H6280_A, H6280_X, H6280_Y, H6280_S, H6280_PC, H6280_P,
+	H6280_IRQ_MASK, H6280_TIMER_STATE,
+	H6280_NMI_STATE, H6280_IRQ1_STATE, H6280_IRQ2_STATE, H6280_IRQT_STATE
+#ifdef MAME_DEBUG
+    ,
+	H6280_M1, H6280_M2, H6280_M3, H6280_M4,
+	H6280_M5, H6280_M6, H6280_M7, H6280_M8
 #endif
+};
 
-#define LAZY_FLAGS	1
-
-/****************************************************************************
- * The 6280 registers.
- ****************************************************************************/
-typedef struct
-{
-	PAIR  pc;						/* program counter */
-	PAIR  sp;						/* stack pointer (always 100 - 1FF) */
-	PAIR  zp;						/* zero page address */
-	PAIR  ea;						/* effective address */
-	UINT8 a;						/* Accumulator */
-	UINT8 x;						/* X index register */
-	UINT8 y;						/* Y index register */
-	UINT8 p;						/* Processor status */
-	UINT8 mmr[8];					/* Hu6280 memory mapper registers */
-	UINT8 irq_mask; 				/* interrupt enable/disable */
-	UINT8 timer_status; 			/* timer status */
-	int timer_value;				/* timer interrupt */
-	UINT8 timer_load;				/* reload value */
-	int pending_interrupt;			/* nonzero if an interrupt is pending */
-	int nmi_state;
-	int irq_state[3];
-	int (*irq_callback)(int irqline);
-
-#if LAZY_FLAGS
-	int NZ; 						/* last value (lazy N and Z flag) */
-#endif
-
-}	h6280_Regs;
+#define LAZY_FLAGS  1
 
 #define H6280_INT_NONE	0
 #define H6280_INT_NMI	1
@@ -69,14 +46,17 @@ typedef struct
 
 extern int h6280_ICount;				/* cycle count */
 
-extern void h6280_reset (void *param);		   /* Reset registers to the initial values */
-extern void h6280_exit	(void); 			   /* Shut down CPU */
-extern int	h6280_execute(int cycles);		   /* Execute cycles - returns number of cycles actually run */
-extern void h6280_getregs (h6280_Regs *Regs);  /* Get registers */
-extern void h6280_setregs (h6280_Regs *Regs);  /* Set registers */
-extern unsigned h6280_getpc (void); 		   /* Get program counter */
-extern unsigned h6280_getreg (int regnum);
-extern void h6280_setreg (int regnum, unsigned val);
+extern void h6280_reset(void *param);			/* Reset registers to the initial values */
+extern void h6280_exit(void);					/* Shut down CPU */
+extern int h6280_execute(int cycles);			/* Execute cycles - returns number of cycles actually run */
+extern unsigned h6280_get_context(void *dst);	/* Get registers, return context size */
+extern void h6280_set_context(void *src);		/* Set registers */
+extern unsigned h6280_get_pc(void); 			/* Get program counter */
+extern void h6280_set_pc(unsigned val); 		/* Set program counter */
+extern unsigned h6280_get_sp(void); 			/* Get stack pointer */
+extern void h6280_set_sp(unsigned val); 		/* Set stack pointer */
+extern unsigned h6280_get_reg (int regnum);
+extern void h6280_set_reg (int regnum, unsigned val);
 extern void h6280_set_nmi_line(int state);
 extern void h6280_set_irq_line(int irqline, int state);
 extern void h6280_set_irq_callback(int (*callback)(int irqline));

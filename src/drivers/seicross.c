@@ -76,7 +76,7 @@ static int friskyt_portB_r(int offset)
 
 static void friskyt_portB_w(int offset,int data)
 {
-if (errorlog) fprintf(errorlog,"PC %04x: 8910 port B = %02x\n",cpu_getpc(),data);
+if (errorlog) fprintf(errorlog,"PC %04x: 8910 port B = %02x\n",cpu_get_pc(),data);
 	/* bit 0 is IRQ enable */
 	interrupt_enable_w(0,data & 1);
 

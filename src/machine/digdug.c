@@ -55,7 +55,7 @@ void digdug_sharedram_w(int offset,int data)
 		dirtybuffer[offset] = 1;
 
 	/* location 9b3d is set to zero just before CPU 2 spins */
-	if (offset == 0x1b3d && data == 0 && cpu_getpc () == 0x1df1 && cpu_getactivecpu () == 1)
+	if (offset == 0x1b3d && data == 0 && cpu_get_pc () == 0x1df1 && cpu_getactivecpu () == 1)
 		cpu_spinuntil_int ();
 
 	digdug_sharedram[offset] = data;
@@ -77,7 +77,7 @@ void digdug_customio_data_w(int offset,int data)
 {
 	customio[offset] = data;
 
-if (errorlog) fprintf(errorlog,"%04x: custom IO offset %02x data %02x\n",cpu_getpc(),offset,data);
+if (errorlog) fprintf(errorlog,"%04x: custom IO offset %02x data %02x\n",cpu_get_pc(),offset,data);
 
 	switch (customio_command)
 	{
@@ -235,7 +235,7 @@ void digdug_nmi_generate (int param)
 
 void digdug_customio_w(int offset,int data)
 {
-if (errorlog && data != 0x10 && data != 0x71) fprintf(errorlog,"%04x: custom IO command %02x\n",cpu_getpc(),data);
+if (errorlog && data != 0x10 && data != 0x71) fprintf(errorlog,"%04x: custom IO command %02x\n",cpu_get_pc(),data);
 
 	customio_command = data;
 

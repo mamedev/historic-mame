@@ -241,13 +241,13 @@ static unsigned char portC_in,portC_out,ddrC;
 
 int sdungeon_68705_portA_r(int offset)
 {
-//if (errorlog) fprintf(errorlog,"PC: %x MCU PORTA R = %x\n",cpu_getpc(),portA_in);
+//if (errorlog) fprintf(errorlog,"PC: %x MCU PORTA R = %x\n",cpu_get_pc(),portA_in);
 	return (portA_out & ddrA) | (portA_in & ~ddrA);
 }
 
 void sdungeon_68705_portA_w(int offest,int data)
 {
-//if (errorlog) fprintf(errorlog,"PC: %x SD COINTOMAIN W: %x\n",cpu_getpc(),data);
+//if (errorlog) fprintf(errorlog,"PC: %x SD COINTOMAIN W: %x\n",cpu_get_pc(),data);
 	portA_out = data;
 }
 
@@ -261,14 +261,14 @@ int sdungeon_68705_portB_r(int offset)
 {
 	portB_in = input_port_1_r(0) & 0x0F;
 	portB_in = portB_in | ((input_port_1_r(0) & 0x80) >> 3);
-//if (errorlog) fprintf(errorlog,"PC: %x MCU PORTB R = %x\n",cpu_getpc(),portB_in);
+//if (errorlog) fprintf(errorlog,"PC: %x MCU PORTB R = %x\n",cpu_get_pc(),portB_in);
 
 	return (portB_out & ddrB) | (portB_in & ~ddrB);
 }
 
 void sdungeon_68705_portB_w(int offest,int data)
 {
-//if (errorlog) fprintf(errorlog,"PC: %x port B write %x\n",cpu_getpc(),data);
+//if (errorlog) fprintf(errorlog,"PC: %x port B write %x\n",cpu_get_pc(),data);
 	portB_out = data;
 }
 
@@ -281,14 +281,14 @@ void sdungeon_68705_ddrB_w(int offset,int data)
 int sdungeon_68705_portC_r(int offset)
 {
 	portC_in = (~sdungeon_coinctrl & 0x08) | ((input_port_1_r(0) & 0x70) >> 4);
-//if (errorlog) fprintf(errorlog,"PC: %x MCU PORTC R = %x\n",cpu_getpc(),portC_in);
+//if (errorlog) fprintf(errorlog,"PC: %x MCU PORTC R = %x\n",cpu_get_pc(),portC_in);
 
 	return (portC_out & ddrC) | (portC_in & ~ddrC);
 }
 
 void sdungeon_68705_portC_w(int offest,int data)
 {
-//if (errorlog) fprintf(errorlog,"PC: %x port C write %x\n",cpu_getpc(),data);
+//if (errorlog) fprintf(errorlog,"PC: %x port C write %x\n",cpu_get_pc(),data);
 	portC_out = data;
 }
 
@@ -306,7 +306,7 @@ int sdungeon_coin_r (int offset)
 
 static void sdungeon_coin_w (int offset, int data)
 {
-//if (errorlog) fprintf(errorlog,"PC: %x COIN COMMAND W: %x\n",cpu_getpc(),data);
+//if (errorlog) fprintf(errorlog,"PC: %x COIN COMMAND W: %x\n",cpu_get_pc(),data);
 	/* this is a callback called by pia_1_w(), so I don't need to synchronize */
 	/* the CPUs - they have already been synchronized by sdungeon_pia_1_w() */
 	portA_in = data;
@@ -314,7 +314,7 @@ static void sdungeon_coin_w (int offset, int data)
 
 static void sdungeon_coinctrl_w (int offset, int data)
 {
-//if (errorlog) fprintf(errorlog,"PC: %x COIN CTRL W: %x\n",cpu_getpc(),data);
+//if (errorlog) fprintf(errorlog,"PC: %x COIN CTRL W: %x\n",cpu_get_pc(),data);
 	if (data & 0x04)
 	{
 		cpu_set_irq_line(3,0,ASSERT_LINE);
@@ -337,7 +337,7 @@ static void pia_1_w_callback(int param)
 
 void sdungeon_pia_1_w(int offset,int data)
 {
-//if (errorlog) fprintf(errorlog,"%04x: PIA 1 write offset %02x data %02x\n",cpu_getpc(),offset,data);
+//if (errorlog) fprintf(errorlog,"%04x: PIA 1 write offset %02x data %02x\n",cpu_get_pc(),offset,data);
 
 	/* Hack: Kram and Zoo Keeper for some reason (protection?) leave the port A */
 	/* DDR set to 0xff, so they cannot read the player 1 controls. Here I force */

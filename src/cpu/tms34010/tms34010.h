@@ -12,53 +12,15 @@
 
 #include "osd_cpu.h"
 
-/* TMS34010 State */
-typedef struct
-{
-	UINT32 op;
-	UINT32 pc;
-	UINT32 st;        /* Only here so we can display it in the debug window */
-	union		  				/* The register files are interleaved, so */
-	{							/* that the SP occupies the same location in both */
-			INT32 Bregs[241];	/* Only every 16th entry is actually used */
-		struct
-		{
-			INT32 unused[225];
-			INT32 Aregs[16];
-		} a;
-	} regs;
-	UINT32 nflag;
-	UINT32 cflag;
-	UINT32 notzflag;  /* So we can just do an assignment to set it */
-	UINT32 vflag;
-	UINT32 pflag;
-	UINT32 ieflag;
-	UINT32 fe0flag;
-	UINT32 fe1flag;
-	UINT32 fw[2];
-	UINT32 fw_inc[2];  /* Same as fw[], except when fw = 0, fw_inc = 32 */
-	UINT32 IOregs[32];
-	void (*F0_write) (UINT32 bitaddr, UINT32 data);
-	void (*F1_write) (UINT32 bitaddr, UINT32 data);
-	 INT32 (*F0_read) (UINT32 bitaddr);
-	 INT32 (*F1_read) (UINT32 bitaddr);
-    UINT32 (*pixel_write)(UINT32 address, UINT32 value);
-    UINT32 (*pixel_read)(UINT32 address);
-	UINT32 transparency;
-	UINT32 window_checking;
-	 INT32 (*raster_op)(INT32 newpix, INT32 oldpix);
-	UINT32 lastpixaddr;
-	UINT32 lastpixword;
-	UINT32 lastpixwordchanged;
-	UINT32 xytolshiftcount1;
-	UINT32 xytolshiftcount2;
-	UINT16* shiftreg;
-	void (*to_shiftreg)  (UINT32 address, UINT16* shiftreg);
-    void (*from_shiftreg)(UINT32 address, UINT16* shiftreg);
-	UINT8* stackbase;
-	UINT32 stackoffs;
-	int (*irq_callback)(int irqline);
-} TMS34010_Regs;
+enum { TMS34010_PC, TMS34010_SP, TMS34010_ST,
+	TMS34010_A0, TMS34010_A1, TMS34010_A2, TMS34010_A3,
+	TMS34010_A4, TMS34010_A5, TMS34010_A6, TMS34010_A7,
+	TMS34010_A8, TMS34010_A9, TMS34010_A10, TMS34010_A11,
+	TMS34010_A12, TMS34010_A13, TMS34010_A14,
+	TMS34010_B0, TMS34010_B1, TMS34010_B2, TMS34010_B3,
+	TMS34010_B4, TMS34010_B5, TMS34010_B6, TMS34010_B7,
+	TMS34010_B8, TMS34010_B9, TMS34010_B10, TMS34010_B11,
+	TMS34010_B12, TMS34010_B13, TMS34010_B14 };
 
 /* average instruction time in cycles */
 #define TMS34010_AVGCYCLES 2
@@ -69,19 +31,22 @@ typedef struct
 #define TMS34010_INT2		0x0004	/* External Interrupt 2 */
 
 /* PUBLIC FUNCTIONS */
-extern void TMS34010_reset(void *param);
-extern void TMS34010_exit(void);
-extern int	TMS34010_execute(int cycles);
-extern void TMS34010_setregs(TMS34010_Regs *Regs);
-extern void TMS34010_getregs(TMS34010_Regs *Regs);
-extern unsigned TMS34010_getpc(void);
-extern unsigned TMS34010_getreg(int regnum);
-extern void TMS34010_setreg(int regnum, unsigned val);
-extern void TMS34010_set_nmi_line(int linestate);
-extern void TMS34010_set_irq_line(int irqline, int linestate);
-extern void TMS34010_set_irq_callback(int (*callback)(int irqline));
-extern void TMS34010_internal_interrupt(int type);
-extern const char *TMS34010_info(void *context, int regnum);
+extern void tms34010_reset(void *param);
+extern void tms34010_exit(void);
+extern int	tms34010_execute(int cycles);
+extern unsigned tms34010_get_context(void *dst);
+extern void tms34010_set_context(void *src);
+extern unsigned tms34010_get_pc(void);
+extern void tms34010_set_pc(unsigned val);
+extern unsigned tms34010_get_sp(void);
+extern void tms34010_set_sp(unsigned val);
+extern unsigned tms34010_get_reg(int regnum);
+extern void tms34010_set_reg(int regnum, unsigned val);
+extern void tms34010_set_nmi_line(int linestate);
+extern void tms34010_set_irq_line(int irqline, int linestate);
+extern void tms34010_set_irq_callback(int (*callback)(int irqline));
+extern void tms34010_internal_interrupt(int type);
+extern const char *tms34010_info(void *context, int regnum);
 
 extern void TMS34010_State_Save(int cpunum, void *f);
 extern void TMS34010_State_Load(int cpunum, void *f);
@@ -112,7 +77,7 @@ int TMS34010_io_display_blanked(int cpu);
 int TMS34010_get_DPYSTRT(int cpu);
 
 /* PUBLIC GLOBALS */
-extern int TMS34010_ICount;
+extern int tms34010_ICount;
 
 
 /* Use this macro in the memory definitions to specify bit-based addresses */

@@ -1,6 +1,22 @@
 #include "driver.h"
 #include "tilemap.h"
 
+/*
+new:
+-	tile priority and orientation should now work with non-transparent layers
+-	a bug in tilemap_set_clip when width!=height (hopefully the only bug, but I still
+	need to do testing).
+
+to do:
+-	only update scrolled flag when a tilemap scrolls a full tile or more
+-	flag dirtyness per row, not just per tile, so that entire rows of unchanged tiles can be
+	skipped in tilemap_update and tilemap_render
+-	precompute spans per row (to speed up the low level code)
+-	support for unusual tile sizes (8x12, 8x10)
+-	dirtygrid for non-scrolling games
+-	profile average tiles changed per last N frames
+*/
+
 /* use bitmasks */
 #define USE_FATMASKS 0
 
@@ -69,8 +85,8 @@ void tilemap_set_clip( struct tilemap *tilemap, const struct rectangle *clip ){
 	}
 	if( orientation & ORIENTATION_FLIP_Y ){
 		SWAP(top,bottom)
-		top = screen_width-top;
-		bottom = screen_width-bottom;
+		top = screen_height-top;
+		bottom = screen_height-bottom;
 	}
 
 	tilemap->clip_left = left;
@@ -232,6 +248,7 @@ static void dispose_tile_info( struct tilemap *tilemap ){
 	if( tilemap->pen_usage ) free( tilemap->pen_usage );
 	if( tilemap->priority ) free( tilemap->priority );
 	if( tilemap->visible ) free( tilemap->visible );
+//	if( tilemap->dirty_vramrow ) free( tilemap->dirty_vramrow );
 	if( tilemap->dirty_vram ) free( tilemap->dirty_vram );
 	if( tilemap->dirty_pixels ) free( tilemap->dirty_pixels );
 	if( tilemap->flags ) free( tilemap->flags );
@@ -251,6 +268,7 @@ static int create_tile_info( struct tilemap *tilemap ){
 	tilemap->priority = malloc( num_tiles );
 	tilemap->visible = malloc( num_tiles );
 	tilemap->dirty_vram = malloc( num_tiles );
+//	tilemap->dirty_vramrow = malloc( num_rows );
 	tilemap->dirty_pixels = malloc( num_tiles );
 	tilemap->flags = malloc( num_tiles );
 
@@ -259,7 +277,8 @@ static int create_tile_info( struct tilemap *tilemap ){
 
 	if( tilemap->pendata && tilemap->paldata && tilemap->pen_usage &&
 		tilemap->priority && tilemap->visible &&
-		tilemap->dirty_vram && tilemap->dirty_pixels &&
+		tilemap->dirty_vram && //tilemap->dirty_vramrow &&
+		tilemap->dirty_pixels &&
 		tilemap->flags &&
 		tilemap->priority_row && tilemap->visible_row )
 	{
@@ -278,6 +297,7 @@ static int create_tile_info( struct tilemap *tilemap ){
 		memset( tilemap->priority, 0, num_tiles );
 		memset( tilemap->visible, 0, num_tiles );
 		memset( tilemap->dirty_vram, 1, num_tiles );
+		//memset( tilemap->dirty_vramrow, 1, num_rows );
 		memset( tilemap->dirty_pixels, 1, num_tiles );
 
 		return 1; /* done */
@@ -345,12 +365,12 @@ static unsigned char **new_mask_data_table( unsigned char *mask_data, int num_co
 }
 
 static int create_fg_mask( struct tilemap *tilemap ){
-	if( tilemap->type==0 ) return 1;
-
 	tilemap->fg_mask_data = malloc( tilemap->num_tiles );
 	if( tilemap->fg_mask_data ){
 		tilemap->fg_mask_data_row = new_mask_data_table( tilemap->fg_mask_data, tilemap->num_cols, tilemap->num_rows );
 		if( tilemap->fg_mask_data_row ){
+//			if( tilemap->type==0 ) return 1;
+
 			tilemap->fg_mask = create_tmpbitmap( MASKROWBYTES(tilemap->width), tilemap->height );
 			if( tilemap->fg_mask ){
 				tilemap->fg_mask_line_offset = tilemap->fg_mask->line[1] - tilemap->fg_mask->line[0];
@@ -383,11 +403,10 @@ static int create_bg_mask( struct tilemap *tilemap ){
 }
 
 static void dispose_fg_mask( struct tilemap *tilemap ){
-	if( tilemap->type!=0 ){
-		osd_free_bitmap( tilemap->fg_mask );
-		free( tilemap->fg_mask_data_row );
-		free( tilemap->fg_mask_data );
-	}
+	free( tilemap->fg_mask_data_row );
+	free( tilemap->fg_mask_data );
+//	if( tilemap->type!=0 )
+	osd_free_bitmap( tilemap->fg_mask );
 }
 
 static void dispose_bg_mask( struct tilemap *tilemap ){
@@ -417,6 +436,7 @@ struct tilemap *tilemap_create(
 		}
 
 		if( errorlog ){
+			fprintf( errorlog, "cached tilemap info:\n" );
 			fprintf( errorlog, "tilewidth,tileheight:%d,%d\n",tile_width,tile_height );
 			fprintf( errorlog, "cols,rows:%d,%d\n",num_cols,num_rows );
 			fprintf( errorlog, "scroll_rows,scroll_cols:%d,%d\n",scroll_rows,scroll_cols );
@@ -596,6 +616,7 @@ static void draw_mask(
 /***********************************************************************************/
 
 void tilemap_mark_tile_dirty( struct tilemap *tilemap, int col, int row ){
+	/* convert logical coordinates to cached coordinates */
 	if( orientation & ORIENTATION_SWAP_XY ) SWAP(col,row)
 	if( orientation & ORIENTATION_FLIP_X ) col = tilemap->num_cols-1-col;
 	if( orientation & ORIENTATION_FLIP_Y ) row = tilemap->num_rows-1-row;
@@ -698,7 +719,11 @@ void tilemap_render( struct tilemap *tilemap ){
 					else {
 						tilemap->fg_mask_data_row[row][col] = TILE_OPAQUE;
 					}
+				}
+				else {
+					tilemap->fg_mask_data_row[row][col] = TILE_OPAQUE;
 			 	}
+
 				dirty_pixels[tile_index] = 0;
 			}
 			tile_index++;
@@ -723,10 +748,10 @@ void tilemap_draw( struct osd_bitmap *dest, struct tilemap *tilemap, int priorit
 
 	int tile_height = tilemap->tile_height;
 
-	if( tilemap->type==0 ){
-		copyscrollbitmap(dest,tilemap->pixmap,rows,rowscroll,cols,colscroll,&tilemap->clip,TRANSPARENCY_NONE,0);
-		return;
-	}
+//	if( tilemap->type==0 ){
+//		copyscrollbitmap(dest,tilemap->pixmap,rows,rowscroll,cols,colscroll,&tilemap->clip,TRANSPARENCY_NONE,0);
+//		return;
+//	}
 
 	blit.screen = dest;
 	blit.dest_line_offset = dest->line[1] - dest->line[0];

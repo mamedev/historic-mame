@@ -19,6 +19,9 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
+static void mooncrgx_gfxextend_w(int offset,int data);
+static void pisces_gfxbank_w(int offset,int data);
+
 static struct rectangle spritevisiblearea =
 {
 	2*8+1, 32*8-1,
@@ -35,7 +38,6 @@ static struct rectangle spritevisibleareaflipx =
 
 unsigned char *galaxian_attributesram;
 unsigned char *galaxian_bulletsram;
-unsigned char *pisces_gfx_bank;
 
 int galaxian_bulletsram_size = 0;
 static int stars_on,stars_blink;
@@ -54,6 +56,7 @@ static int total_stars;
 static void (*modify_charcode  )(int*,int)           = 0;  /* function to call to do character banking */
 static void (*modify_spritecode)(int*,int*,int*,int) = 0;  /* function to call to do sprite banking */
 static int gfx_extend;	/* used by Moon Cresta only */
+static int pisces_gfxbank;
 static int flipscreen[2];
 
 static int background_on;
@@ -338,6 +341,12 @@ int mooncrst_vh_start(void)
 	return galaxian_vh_start();
 }
 
+int mooncrgx_vh_start(void)
+{
+	install_mem_write_handler(0, 0x6000, 0x6002, mooncrgx_gfxextend_w);
+	return mooncrst_vh_start();
+}
+
 int moonqsr_vh_start(void)
 {
 	modify_charcode   = moonqsr_modify_charcode;
@@ -347,6 +356,7 @@ int moonqsr_vh_start(void)
 
 int pisces_vh_start(void)
 {
+	install_mem_write_handler(0, 0x6002, 0x6002, pisces_gfxbank_w);
 	modify_charcode   = pisces_modify_charcode;
 	modify_spritecode = pisces_modify_spritecode;
 	return galaxian_vh_start();
@@ -519,7 +529,7 @@ void mooncrst_gfxextend_w(int offset,int data)
 }
 
 
-void mooncrgx_gfxextend_w(int offset,int data)
+static void mooncrgx_gfxextend_w(int offset,int data)
 {
   /* for the Moon Cresta bootleg on Galaxian H/W the gfx_extend is
      located at 0x6000-0x6002.  Also, 0x6000 and 0x6001 are reversed. */
@@ -528,6 +538,12 @@ void mooncrgx_gfxextend_w(int offset,int data)
      else if(offset == 0)
        offset = 1;    /* switch 0x6000 and 0x6001 */
 	mooncrst_gfxextend_w(offset, data);
+}
+
+
+static void pisces_gfxbank_w(int offset,int data)
+{
+	pisces_gfxbank = data & 1;
 }
 
 
@@ -590,7 +606,7 @@ static void moonqsr_modify_charcode(int *charcode,int offs)
 
 static void pisces_modify_charcode(int *charcode,int offs)
 {
-	if (*pisces_gfx_bank & 1)
+	if (pisces_gfxbank)
 	{
 		*charcode += 256;
 	}
@@ -644,7 +660,7 @@ static void calipso_modify_spritecode(int *spritecode,int *flipx,int *flipy,int 
 
 static void pisces_modify_spritecode(int *spritecode,int *flipx,int *flipy,int offs)
 {
-	if (*pisces_gfx_bank & 1)
+	if (pisces_gfxbank)
 	{
 		*spritecode += 64;
 	}

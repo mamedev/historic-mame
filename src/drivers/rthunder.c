@@ -25,7 +25,7 @@ a 0xff mark.
 
 #include "driver.h"
 #include "cpu/m6809/m6809.h"
-#include "cpu/m6808/m6808.h"
+#include "cpu/m6800/m6800.h"
 
 /* This is the clock speed in Hz divided by 64 that is connected to the E pin on the MCU */
 /* Each pulse on the E pin increments timer A, wich is used for music tempo. */
@@ -68,7 +68,7 @@ extern void rthunder_tilebank_w( int offset, int data );
 #if CYCLE_SKIP
 static int cpu0_skip_r( int offs ) {
 
-	if ( spriteram[0x126f] == spriteram[0x126e] && cpu_getpc() == 0xd64c ) {
+	if ( spriteram[0x126f] == spriteram[0x126e] && cpu_get_pc() == 0xd64c ) {
 		if ( spriteram[0x12b4] == spriteram[0x12b3] ) {
 			cpu_spinuntil_int();
 		}
@@ -79,7 +79,7 @@ static int cpu0_skip_r( int offs ) {
 
 static int cpu1_skip_r( int offs ) {
 
-	if ( spriteram[0x1268] == spriteram[0x1267] && cpu_getpc() == 0xb0c1 )
+	if ( spriteram[0x1268] == spriteram[0x1267] && cpu_get_pc() == 0xb0c1 )
 		cpu_spinuntil_int();
 
 	return spriteram[0x1268];
@@ -633,7 +633,7 @@ static struct MachineDriver machine_driver =
 		},
 		{
 			CPU_HD63701,	/* or compatible 6808 with extra instructions */
-			3000000,		/* ??? */
+			6000000/4,		/* ??? */
 			MEM_MCU,
 			mcu_readmem,mcu_writemem,0,0,
 			ignore_interrupt, 1 /* irq's triggered by the main cpu */

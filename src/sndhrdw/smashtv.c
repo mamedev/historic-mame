@@ -11,19 +11,22 @@
 #include "vidhrdw/generic.h"
 #include "machine/6821pia.h"
 
-void smashtv_ym2151_int (void)
+void smashtv_ym2151_int (int irq)
 {
 //	if (errorlog) fprintf(errorlog, "ym2151_int\n");
-	pia_1_ca1_w (0, (0));
-	pia_1_ca1_w (0, (1));
-
+	pia_1_ca1_w (0, irq==0);
+	/* pia_1_ca1_w (0, (0)); */
+	/* pia_1_ca1_w (0, (1)); */
 }
-void narc_ym2151_int (void)
+void narc_ym2151_int (int irq)
 {
-	cpu_cause_interrupt(1,M6809_INT_FIRQ);
+	cpu_set_irq_line(1,1,irq ? ASSERT_LINE : CLEAR_LINE);
+
+	//cpu_cause_interrupt(1,M6809_INT_FIRQ);
 //	if (errorlog) fprintf(errorlog, "ym2151_int: ");
 //	if (errorlog) fprintf(errorlog, "sound FIRQ\n");
 }
+
 void smashtv_snd_cmd_real_w (int param)
 {
 	pia_1_portb_w (0, param&0xff);
@@ -59,31 +62,31 @@ void mk_snd_cmd_real_w (int param)
 }
 void smashtv_sound_w(int offset, int data)
 {
-	if (errorlog) fprintf(errorlog, "CPU #0 PC %08x: ", cpu_getpc());
+	if (errorlog) fprintf(errorlog, "CPU #0 PC %08x: ", cpu_get_pc());
 	if (errorlog) fprintf(errorlog, "sound write %x\n", data);
 	timer_set (TIME_NOW, data, smashtv_snd_cmd_real_w);
 }
 void trog_sound_w(int offset, int data)
 {
-	if (errorlog) fprintf(errorlog, "CPU #0 PC %08x: ", cpu_getpc());
+	if (errorlog) fprintf(errorlog, "CPU #0 PC %08x: ", cpu_get_pc());
 	if (errorlog) fprintf(errorlog, "sound write %x\n", data|0x100);
 	timer_set (TIME_NOW, data|0x0100, smashtv_snd_cmd_real_w);
 }
 void narc_sound_w(int offset, int data)
 {
-//	if (errorlog) fprintf(errorlog, "CPU #0 PC %08x: ", cpu_getpc());
+//	if (errorlog) fprintf(errorlog, "CPU #0 PC %08x: ", cpu_get_pc());
 //	if (errorlog) fprintf(errorlog, "sound write %x\n", data);
 	timer_set (TIME_NOW, data, narc_snd_cmd_real_w);
 }
 void mk_sound_w(int offset, int data)
 {
-//	if (errorlog) fprintf(errorlog, "CPU #0 PC %08x: ", cpu_getpc());
+//	if (errorlog) fprintf(errorlog, "CPU #0 PC %08x: ", cpu_get_pc());
 //	if (errorlog) fprintf(errorlog, "sound write %x\n", data);
 	timer_set (TIME_NOW, data, mk_snd_cmd_real_w);
 }
 void nbajam_sound_w(int offset, int data)
 {
-	if (errorlog) fprintf(errorlog, "CPU #0 PC %08x: ", cpu_getpc());
+	if (errorlog) fprintf(errorlog, "CPU #0 PC %08x: ", cpu_get_pc());
 	if (errorlog) fprintf(errorlog, "sound write %x\n", data);
 //	timer_set (TIME_NOW, data, mk_snd_cmd_real_w);
 }

@@ -48,13 +48,13 @@ int dec0_controls_read(int offset)
 
 		case 8: /* Intel 8751 mc, Bad Dudes & Heavy Barrel only */
 
-	if (errorlog) fprintf(errorlog,"CPU #0 PC %06x: warning - read unmapped memory address %06x\n",cpu_getpc(),0x30c000+offset);
+	if (errorlog) fprintf(errorlog,"CPU #0 PC %06x: warning - read unmapped memory address %06x\n",cpu_get_pc(),0x30c000+offset);
 
 
 			return i8751_return;
 	}
 
-	if (errorlog) fprintf(errorlog,"CPU #0 PC %06x: warning - read unmapped memory address %06x\n",cpu_getpc(),0x30c000+offset);
+	if (errorlog) fprintf(errorlog,"CPU #0 PC %06x: warning - read unmapped memory address %06x\n",cpu_get_pc(),0x30c000+offset);
 	return 0xffff;
 }
 
@@ -102,7 +102,7 @@ int midres_controls_read(int offset)
 			return 0;	/* ?? watchdog ?? */
 	}
 
-	if (errorlog) fprintf(errorlog,"PC %06x unknown control read at %02x\n",cpu_getpc(),0x180000+offset);
+	if (errorlog) fprintf(errorlog,"PC %06x unknown control read at %02x\n",cpu_get_pc(),0x180000+offset);
 	return 0xffff;
 }
 
@@ -136,7 +136,7 @@ int slyspy_protection_r(int offset)
 		case 6:		return 0x2;
 	}
 
-	if (errorlog) fprintf(errorlog,"%04x, Unknown protection read at 30c000 %d\n",cpu_getpc(),offset);
+	if (errorlog) fprintf(errorlog,"%04x, Unknown protection read at 30c000 %d\n",cpu_get_pc(),offset);
 	return 0;
 }
 
@@ -199,7 +199,7 @@ void slyspy_240000_w(int offset,int data)
 			else if (offset<0x20) dec0_pf2_control_1_w(offset-0x10,data);
 			return;
 	}
-	if (errorlog) fprintf(errorlog,"Wrote to 240000 %02x at %04x %04x (Trap %02x)\n",offset,cpu_getpc(),data,slyspy_state);
+	if (errorlog) fprintf(errorlog,"Wrote to 240000 %02x at %04x %04x (Trap %02x)\n",offset,cpu_get_pc(),data,slyspy_state);
 }
 
 void slyspy_242000_w(int offset,int data)
@@ -213,7 +213,7 @@ void slyspy_242000_w(int offset,int data)
 			else if (offset<0x600) dec0_pf2_rowscroll_w(offset-0x400,data);
 			return;
 	}
-	if (errorlog) fprintf(errorlog,"Wrote to 242000 %02x at %04x %04x (Trap %02x)\n",offset,cpu_getpc(),data,slyspy_state);
+	if (errorlog) fprintf(errorlog,"Wrote to 242000 %02x at %04x %04x (Trap %02x)\n",offset,cpu_get_pc(),data,slyspy_state);
 }
 
 void slyspy_246000_w(int offset,int data)
@@ -223,7 +223,7 @@ void slyspy_246000_w(int offset,int data)
 			dec0_pf2_data_w(offset,data);
 			return;
 	}
-	if (errorlog) fprintf(errorlog,"Wrote to 246000 %02x at %04x %04x (Trap %02x)\n",offset,cpu_getpc(),data,slyspy_state);
+	if (errorlog) fprintf(errorlog,"Wrote to 246000 %02x at %04x %04x (Trap %02x)\n",offset,cpu_get_pc(),data,slyspy_state);
 }
 
 void slyspy_248000_w(int offset,int data)
@@ -240,7 +240,7 @@ void slyspy_248000_w(int offset,int data)
 			else if (offset<0x20) dec0_pf1_control_1_w(offset-0x10,data);
 			return;
 	}
-	if (errorlog) fprintf(errorlog,"Wrote to 248000 %02x at %04x %04x (Trap %02x)\n",offset,cpu_getpc(),data,slyspy_state);
+	if (errorlog) fprintf(errorlog,"Wrote to 248000 %02x at %04x %04x (Trap %02x)\n",offset,cpu_get_pc(),data,slyspy_state);
 }
 
 void slyspy_24c000_w(int offset,int data)
@@ -254,7 +254,7 @@ void slyspy_24c000_w(int offset,int data)
 			else if (offset<0x600) dec0_pf1_rowscroll_w(offset-0x400,data);
 			return;
 	}
-	if (errorlog) fprintf(errorlog,"Wrote to 24c000 %02x at %04x %04x (Trap %02x)\n",offset,cpu_getpc(),data,slyspy_state);
+	if (errorlog) fprintf(errorlog,"Wrote to 24c000 %02x at %04x %04x (Trap %02x)\n",offset,cpu_get_pc(),data,slyspy_state);
 }
 
 void slyspy_24e000_w(int offset,int data)
@@ -265,7 +265,7 @@ void slyspy_24e000_w(int offset,int data)
 			dec0_pf1_data_w(offset,data);
 			return;
 	}
-	if (errorlog) fprintf(errorlog,"Wrote to 24e000 %02x at %04x %04x (Trap %02x)\n",offset,cpu_getpc(),data,slyspy_state);
+	if (errorlog) fprintf(errorlog,"Wrote to 24e000 %02x at %04x %04x (Trap %02x)\n",offset,cpu_get_pc(),data,slyspy_state);
 }
 
 /******************************************************************************/
@@ -275,7 +275,7 @@ static int share[0x20];
 
 int hippodrm_test_r(int offset)
 {
-//if (errorlog) fprintf(errorlog,"6280 PC %06x - Read %06x\n",cpu_getpc(),offset+0x1d0000);
+//if (errorlog) fprintf(errorlog,"6280 PC %06x - Read %06x\n",cpu_get_pc(),offset+0x1d0000);
 
 	return 0x4e;
 }
@@ -308,7 +308,7 @@ RETURN   TO GO TO E2BA (MAST C0... BACKS?)
 
 int hippodrm_shared_r(int offset)
 {
-//if (errorlog) fprintf(errorlog,"6280 PC %06x - Read %06x\n",cpu_getpc(),offset+0x180000);
+//if (errorlog) fprintf(errorlog,"6280 PC %06x - Read %06x\n",cpu_get_pc(),offset+0x180000);
 
 	return share[offset];
 
@@ -331,7 +331,7 @@ void hippodrm_shared_w(int offset,int data)
 {
 	share[offset]=data;
 
-//if (errorlog) fprintf(errorlog,"6280 PC %06x - write %06x %04x\n",cpu_getpc(),offset,data);
+//if (errorlog) fprintf(errorlog,"6280 PC %06x - write %06x %04x\n",cpu_get_pc(),offset,data);
 }
 
 
@@ -346,7 +346,7 @@ static int hippodrm_protection(int offset)
   	case 0x1c: return 4;
   }
 
-	if (errorlog) fprintf(errorlog,"PC %06x - Read %06x\n",cpu_getpc(),0x180000+offset);
+	if (errorlog) fprintf(errorlog,"PC %06x - Read %06x\n",cpu_get_pc(),0x180000+offset);
   return 0; /* Keep zero */
 }
 
@@ -356,7 +356,7 @@ void hippodrm_prot_w(int offset,int data)
 	share[offset/2]=data&0xff;
 
 	if (offset==0) cpu_cause_interrupt(2,M6502_INT_IRQ);
-	if (errorlog) fprintf(errorlog,"PC %06x - write %06x %04x\n",cpu_getpc(),0x180000+offset,data);
+	if (errorlog) fprintf(errorlog,"PC %06x - write %06x %04x\n",cpu_get_pc(),0x180000+offset,data);
 
 }
 */
@@ -418,7 +418,7 @@ void hippodrm_prot_w(int offset,int data)
 
 	}
 
-	if (errorlog) fprintf(errorlog,"PC %06x - write %06x %04x\n",cpu_getpc(),0x180000+offset,data);
+	if (errorlog) fprintf(errorlog,"PC %06x - write %06x %04x\n",cpu_get_pc(),0x180000+offset,data);
 }
 
 /******************************************************************************/
@@ -468,7 +468,7 @@ static void hbarrel_i8751_write(int data)
 		/* We have to use a state as the microcontroller remembers previous commands */
 	}
 
-//if (errorlog) fprintf(errorlog,"CPU #0 PC %06x: warning - write %02x to i8751\n",cpu_getpc(),data);
+//if (errorlog) fprintf(errorlog,"CPU #0 PC %06x: warning - write %02x to i8751\n",cpu_get_pc(),data);
 }
 
 static void baddudes_i8751_write(int data)
@@ -494,14 +494,14 @@ static void baddudes_i8751_write(int data)
 		case 0x75b: i8751_return=0x70f; break;
 	}
 
-	if (errorlog && !i8751_return) fprintf(errorlog,"%04x: warning - write unknown command %02x to 8571\n",cpu_getpc(),data);
+	if (errorlog && !i8751_return) fprintf(errorlog,"%04x: warning - write unknown command %02x to 8571\n",cpu_get_pc(),data);
 }
 
 static void birdtry_i8751_write(int data)
 {
 	i8751_return=0;
 
-	if (errorlog) fprintf(errorlog,"%04x: warning - write unknown command %02x to 8571\n",cpu_getpc(),data);
+	if (errorlog) fprintf(errorlog,"%04x: warning - write unknown command %02x to 8571\n",cpu_get_pc(),data);
 
 if ((data&0xff00)==0x200) i8751_return=0x300;
 if ((data&0xff00)==0x300) i8751_return=0x200;
@@ -529,7 +529,7 @@ if ((data&0xff00)==0x300) i8751_return=0x200;
 		case 0x75b: i8751_return=0x70f; break;
 	}
 
-	if (errorlog && !i8751_return) fprintf(errorlog,"%04x: warning - write unknown command %02x to 8571\n",cpu_getpc(),data);
+	if (errorlog && !i8751_return) fprintf(errorlog,"%04x: warning - write unknown command %02x to 8571\n",cpu_get_pc(),data);
 */
 }
 
@@ -573,7 +573,7 @@ See the code about 0xb60 (USA version)
 
 */
 
-if (errorlog) fprintf(errorlog,"CPU #0 PC %06x: warning - write %02x to i8751\n",cpu_getpc(),data);
+if (errorlog) fprintf(errorlog,"CPU #0 PC %06x: warning - write %02x to i8751\n",cpu_get_pc(),data);
 
 
 }
@@ -587,12 +587,12 @@ void dec0_i8751_reset(void)
 
 static int hbarrel_cycle_r(int offset)
 {
-	if (cpu_getpc()==0x131a0) {cpu_spinuntil_int(); return 0;} return READ_WORD(&dec0_ram[0x10]);
+	if (cpu_get_pc()==0x131a0) {cpu_spinuntil_int(); return 0;} return READ_WORD(&dec0_ram[0x10]);
 }
 
 static int hbarrelj_cycle_r(int offset)
 {
-	if (cpu_getpc()==0x130ca) {cpu_spinuntil_int(); return 0;} return READ_WORD(&dec0_ram[0x10]);
+	if (cpu_get_pc()==0x130ca) {cpu_spinuntil_int(); return 0;} return READ_WORD(&dec0_ram[0x10]);
 }
 
 static int dude_skip(int offset)
@@ -603,7 +603,7 @@ static int dude_skip(int offset)
 
 static int robocop_skip(int offset)
 {
-	int p=cpu_getpc();
+	int p=cpu_get_pc();
 	int result=READ_WORD(&dec0_ram[0x4]);
 
 	if (p==0x17c8 || p==0x17f6) { cpu_spinuntil_int(); return result+1; }
@@ -615,13 +615,13 @@ static int slyspy_skip(int offset)
 {
 	int result=READ_WORD(&dec0_ram[0x2018]);
 
-	if (cpu_getpc()==0xe04 && !(result&0x100)) { cpu_spinuntil_int(); return (READ_WORD(&dec0_ram[0x2018]) | 0x0100); }
+	if (cpu_get_pc()==0xe04 && !(result&0x100)) { cpu_spinuntil_int(); return (READ_WORD(&dec0_ram[0x2018]) | 0x0100); }
 	return result;
 }
 
 static int midres_skip(int offset)
 {
-	if (cpu_getpc()==0x3a9c) cpu_spinuntil_int();
+	if (cpu_get_pc()==0x3a9c) cpu_spinuntil_int();
 	return READ_WORD(&dec0_ram[0x207c]);
 }
 

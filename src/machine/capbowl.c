@@ -54,7 +54,7 @@ void bowlrama_turbo_w(int offset, int data)
 
 		default:
 			if(errorlog)
-				fprintf(errorlog, "PC=%04X Write to unsupported Turbo address %02X Data=%02X\n",cpu_getpc(),offset, data);
+				fprintf(errorlog, "PC=%04X Write to unsupported Turbo address %02X Data=%02X\n",cpu_get_pc(),offset, data);
 	}
 
 	currentaddress = ((GRHighByte << 16) | (GRMidByte << 8) | GRLowByte);
@@ -102,7 +102,7 @@ int bowlrama_turbo_r(int offset)
 
 	default:
 		if(errorlog)
-			fprintf(errorlog, "PC=%04X Read from unsupported Turbo address %02X\n",cpu_getpc(),offset);
+			fprintf(errorlog, "PC=%04X Read from unsupported Turbo address %02X\n",cpu_get_pc(),offset);
 	}
 
 	return ret;

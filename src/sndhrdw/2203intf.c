@@ -13,6 +13,12 @@ static struct YM2203interface *intf;
 static void *Timer[MAX_2203][2];
 static void (*timer_callback)(int param);
 
+/* IRQ Handler */
+static void IRQHandler(int n,int irq)
+{
+	if(intf->handler[n]) intf->handler[n](irq);
+}
+
 /* TimerHandler from fm.c */
 static void TimerHandler(int n,int c,int count,double stepTime)
 {
@@ -60,11 +66,7 @@ static void timer_callback_2203(int param)
 	int c=param>>7;
 
 	Timer[n][c] = 0;
-	if( YM2203TimerOver(n,c) )
-	{	/* IRQ is active */;
-		/* User Interrupt call */
-		if(intf->handler[n]) intf->handler[n]();
-	}
+	YM2203TimerOver(n,c);
 }
 /* update request from fm.c */
 void YM2203UpdateRequest(int chip)
@@ -105,7 +107,7 @@ int YM2203_sh_start(struct YM2203interface *interface)
 		stream_set_volume(stream[i],volume);
 	}
 	/* Initialize FM emurator */
-	if (YM2203Init(intf->num,intf->baseclock,Machine->sample_rate,TimerHandler,0) == 0)
+	if (YM2203Init(intf->num,intf->baseclock,Machine->sample_rate,TimerHandler,IRQHandler) == 0)
 	{
 		/* Ready */
 		return 0;

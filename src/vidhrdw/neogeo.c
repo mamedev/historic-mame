@@ -89,7 +89,7 @@ int neo_unknown[32];
 void neo_unknown1(int offset, int data) {WRITE_WORD(&neo_unknown[0],data);}
 void neo_unknown2(int offset, int data) {WRITE_WORD(&neo_unknown[2],data);}
 void neo_unknown3(int offset, int data) {WRITE_WORD(&neo_unknown[4],data);}
-void neo_unknown4(int offset, int data) {if (cpu_getpc()!=0x4a44) WRITE_WORD(&neo_unknown[6],data>>7);}
+void neo_unknown4(int offset, int data) {if (cpu_get_pc()!=0x4a44) WRITE_WORD(&neo_unknown[6],data>>7);}
 
 int dotiles = 0;
 int screen_offs = 0x0000;

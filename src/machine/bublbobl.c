@@ -117,13 +117,13 @@ static unsigned char portA_in,portA_out,ddrA;
 
 int bublbobl_68705_portA_r(int offset)
 {
-//if (errorlog) fprintf(errorlog,"%04x: 68705 port A read %02x\n",cpu_getpc(),portA_in);
+//if (errorlog) fprintf(errorlog,"%04x: 68705 port A read %02x\n",cpu_get_pc(),portA_in);
 	return (portA_out & ddrA) | (portA_in & ~ddrA);
 }
 
 void bublbobl_68705_portA_w(int offset,int data)
 {
-//if (errorlog) fprintf(errorlog,"%04x: 68705 port A write %02x\n",cpu_getpc(),data);
+//if (errorlog) fprintf(errorlog,"%04x: 68705 port A write %02x\n",cpu_get_pc(),data);
 	portA_out = data;
 }
 
@@ -165,7 +165,7 @@ static int address,latch;
 
 void bublbobl_68705_portB_w(int offset,int data)
 {
-//if (errorlog) fprintf(errorlog,"%04x: 68705 port B write %02x\n",cpu_getpc(),data);
+//if (errorlog) fprintf(errorlog,"%04x: 68705 port B write %02x\n",cpu_get_pc(),data);
 
 	if ((ddrB & 0x01) && (~data & 0x01) && (portB_out & 0x01))
 	{
@@ -174,7 +174,7 @@ void bublbobl_68705_portB_w(int offset,int data)
 	if ((ddrB & 0x02) && (data & 0x02) && (~portB_out & 0x02)) /* positive edge trigger */
 	{
 		address = (address & 0xff00) | portA_out;
-//if (errorlog) fprintf(errorlog,"%04x: 68705 address %02x\n",cpu_getpc(),portA_out);
+//if (errorlog) fprintf(errorlog,"%04x: 68705 address %02x\n",cpu_get_pc(),portA_out);
 	}
 	if ((ddrB & 0x04) && (data & 0x04) && (~portB_out & 0x04)) /* positive edge trigger */
 	{
@@ -186,26 +186,26 @@ void bublbobl_68705_portB_w(int offset,int data)
 		{
 			if ((address & 0x0f00) == 0x0000)
 			{
-//if (errorlog) fprintf(errorlog,"%04x: 68705 read input port %02x\n",cpu_getpc(),address);
+//if (errorlog) fprintf(errorlog,"%04x: 68705 read input port %02x\n",cpu_get_pc(),address);
 				latch = readinputport((address & 3) + 1);
 			}
 			else if ((address & 0x0f00) == 0x0c00)
 			{
-//if (errorlog) fprintf(errorlog,"%04x: 68705 read %02x from address %04x\n",cpu_getpc(),bublbobl_sharedram2[address],address);
+//if (errorlog) fprintf(errorlog,"%04x: 68705 read %02x from address %04x\n",cpu_get_pc(),bublbobl_sharedram2[address],address);
 				latch = bublbobl_sharedram2[address & 0x00ff];
 			}
 			else
-if (errorlog) fprintf(errorlog,"%04x: 68705 unknown read address %04x\n",cpu_getpc(),address);
+if (errorlog) fprintf(errorlog,"%04x: 68705 unknown read address %04x\n",cpu_get_pc(),address);
 		}
 		else	/* write */
 		{
 			if ((address & 0x0f00) == 0x0c00)
 			{
-//if (errorlog) fprintf(errorlog,"%04x: 68705 write %02x to address %04x\n",cpu_getpc(),portA_out,address);
+//if (errorlog) fprintf(errorlog,"%04x: 68705 write %02x to address %04x\n",cpu_get_pc(),portA_out,address);
 				bublbobl_sharedram2[address & 0x00ff] = portA_out;
 			}
 			else
-if (errorlog) fprintf(errorlog,"%04x: 68705 unknown write to address %04x\n",cpu_getpc(),address);
+if (errorlog) fprintf(errorlog,"%04x: 68705 unknown write to address %04x\n",cpu_get_pc(),address);
 		}
 	}
 	if ((ddrB & 0x20) && (~data & 0x20) && (portB_out & 0x20))
@@ -218,11 +218,11 @@ if (errorlog) fprintf(errorlog,"%04x: 68705 unknown write to address %04x\n",cpu
 	}
 	if ((ddrB & 0x40) && (~data & 0x40) && (portB_out & 0x40))
 	{
-if (errorlog) fprintf(errorlog,"%04x: 68705 unknown port B bit %02x\n",cpu_getpc(),data);
+if (errorlog) fprintf(errorlog,"%04x: 68705 unknown port B bit %02x\n",cpu_get_pc(),data);
 	}
 	if ((ddrB & 0x80) && (~data & 0x80) && (portB_out & 0x80))
 	{
-if (errorlog) fprintf(errorlog,"%04x: 68705 unknown port B bit %02x\n",cpu_getpc(),data);
+if (errorlog) fprintf(errorlog,"%04x: 68705 unknown port B bit %02x\n",cpu_get_pc(),data);
 	}
 
 	portB_out = data;
