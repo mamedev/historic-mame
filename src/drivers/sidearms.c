@@ -527,7 +527,7 @@ static void irqhandler(int irq)
 static struct YM2203interface ym2203_interface =
 {
 	2,                      /* 2 chips */
-	3500000,        /* 3.5 MHz ? (hand tuned) */
+	4000000,        /* 4 MHz ? (hand tuned) */
 	{ YM2203_VOL(15,25), YM2203_VOL(15,25) },
 	AY8910_DEFAULT_GAIN,
 	{ 0 },
@@ -552,7 +552,7 @@ static struct MachineDriver sidearms_machine_driver =
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			3000000,        /* 3 Mhz (?) */
+			4000000,        /* 4 Mhz (?) */
 			2,      /* memory region #2 */
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,0      /* IRQs are triggered by the YM2203 */
@@ -606,7 +606,7 @@ static struct MachineDriver turtship_machine_driver =
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,        /* 3 Mhz (?) */
+			4000000,        /* 4 Mhz (?) */
 			2,      /* memory region #2 */
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,0      /* IRQs are triggered by the YM2203 */

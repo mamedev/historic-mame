@@ -40,30 +40,29 @@ void zaccaria_attributes_w(int offset,int data);
 void zaccaria_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
-
-static pia6821_interface pia_intf =
-{
-	2,                                             	/* 2 chips */
-	{ PIA_DDRA, PIA_CTLA, PIA_DDRB, PIA_CTLB,
-	  PIA_DDRA, PIA_CTLA, PIA_DDRB, PIA_CTLB },    	/* offsets */
 /* all connections unknown */
-	{ 0, 0 },	/* input port A  */
-	{ 0, 0 },	/* input bit CA1 */
-	{ 0, 0 },	/* input bit CA2 */
-	{ 0, 0 },	/* input port B  */
-	{ 0, 0 },	/* input bit CB1 */
-	{ 0, 0 },	/* input bit CB2 */
-	{ 0, 0 },	/* output port A */
-	{ 0, 0 },	/* output port B */
-	{ 0, 0 },	/* output CA2 */
-	{ 0, 0 },	/* output CB2 */
-	{ 0, 0 },	/* IRQ A */
-	{ 0, 0 },	/* IRQ B */
+static struct pia6821_interface pia_0_intf =
+{
+	/*inputs : A/B,CA/B1,CA/B2 */ 0, 0, 0, 0, 0, 0,
+	/*outputs: A/B,CA/B2       */ 0, 0, 0, 0,
+	/*irqs   : A/B             */ 0, 0
 };
+
+
+/* all connections unknown */
+static struct pia6821_interface pia_1_intf =
+{
+	/*inputs : A/B,CA/B1,CA/B2 */ 0, 0, 0, 0, 0, 0,
+	/*outputs: A/B,CA/B2       */ 0, 0, 0, 0,
+	/*irqs   : A/B             */ 0, 0
+};
+
 
 static void zaccaria_init_machine(void)
 {
-	pia_startup(&pia_intf);
+	pia_config(0, PIA_STANDARD_ORDERING | PIA_8BIT, &pia_0_intf);
+	pia_config(1, PIA_STANDARD_ORDERING | PIA_8BIT, &pia_1_intf);
+	pia_reset();
 }
 
 

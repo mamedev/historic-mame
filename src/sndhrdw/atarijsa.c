@@ -589,9 +589,9 @@ struct MemoryWriteAddress atarijsa3_writemem[] =
 
 struct TMS5220interface atarijsa_tms5220_interface =
 {
-    640000,     /* clock speed (80*samplerate) */
-    100,        /* volume */
-    0 			/* irq handler */
+	640000,     /* clock speed (80*samplerate) */
+	100,        /* volume */
+	0 			/* irq handler */
 };
 
 

@@ -34,30 +34,40 @@ FILE *errorlog = 0;
 /* O1 = Odd butes 1st half */
 /* E2 = Even bytes 2nd half */
 /* O2 = Odd butes 2nd half */
-enum {	MODE_A_A, MODE_1_A, MODE_2_A, MODE_E_A, MODE_O_A,
+enum {	MODE_A_A, MODE_12_A, MODE_22_A, MODE_E_A, MODE_O_A,
+		          MODE_14_A, MODE_24_A, MODE_34_A, MODE_44_A,
 		          MODE_E1_A, MODE_O1_A, MODE_E2_A, MODE_O2_A,
-		          MODE_A_1, MODE_A_2, MODE_A_E, MODE_A_O,
+		          MODE_A_12, MODE_A_22, MODE_A_E, MODE_A_O,
+		          MODE_A_14, MODE_A_24, MODE_A_34, MODE_A_44,
 		          MODE_A_E1, MODE_A_O1, MODE_A_E2, MODE_A_O2,
 		TOTAL_MODES };
 char *modenames[][2] =
 {
 	{ "          ", "          " },
-	{ "[1st half]", "          " },
-	{ "[2nd half]", "          " },
+	{ "[1/2]     ", "          " },
+	{ "[2/2]     ", "          " },
 	{ "[even]    ", "          " },
 	{ "[odd]     ", "          " },
-	{ "[even 1st]", "          " },
-	{ "[odd 1st] ", "          " },
-	{ "[even 2nd]", "          " },
-	{ "[odd 2nd] ", "          " },
-	{ "          ", "[1st half]" },
-	{ "          ", "[2nd half]" },
+	{ "[1/4]     ", "          " },
+	{ "[2/4]     ", "          " },
+	{ "[3/4]     ", "          " },
+	{ "[4/4]     ", "          " },
+	{ "[even 1/2]", "          " },
+	{ "[odd 1/2] ", "          " },
+	{ "[even 2/2]", "          " },
+	{ "[odd 2/2] ", "          " },
+	{ "          ", "[1/2]     " },
+	{ "          ", "[2/2]     " },
 	{ "          ", "[even]    " },
 	{ "          ", "[odd]     " },
-	{ "          ", "[even 1st]" },
-	{ "          ", "[odd 1st] " },
-	{ "          ", "[even 2nd]" },
-	{ "          ", "[odd 2nd] " }
+	{ "          ", "[1/4]     " },
+	{ "          ", "[2/4]     " },
+	{ "          ", "[3/4]     " },
+	{ "          ", "[4/4]     " },
+	{ "          ", "[even 1/2]" },
+	{ "          ", "[odd 1/2] " },
+	{ "          ", "[even 2/2]" },
+	{ "          ", "[odd 2/2] " }
 };
 
 struct fileinfo
@@ -229,10 +239,10 @@ static float filecompare(const struct fileinfo *file1,const struct fileinfo *fil
 
 	if (file1->buf == 0 || file2->buf == 0) return 0.0;
 
-	if (mode >= MODE_A_1 && mode <= MODE_A_O2)
+	if (mode >= MODE_A_12 && mode <= MODE_A_O2)
 	{
 		const struct fileinfo *temp;
-		mode -= MODE_A_O2 - MODE_A_1 + 1;
+		mode -= MODE_A_O2 - MODE_A_12 + 1;
 
 		temp = file1;
 		file1 = file2;
@@ -243,11 +253,11 @@ static float filecompare(const struct fileinfo *file1,const struct fileinfo *fil
 	{
 		if (file1->size != file2->size) return 0.0;
 	}
-	else if (mode >= MODE_1_A && mode <= MODE_O_A)
+	else if (mode >= MODE_12_A && mode <= MODE_O_A)
 	{
 		if (file1->size != 2*file2->size) return 0.0;
 	}
-	else if (mode >= MODE_E1_A && mode <= MODE_O2_A)
+	else if (mode >= MODE_14_A && mode <= MODE_O2_A)
 	{
 		if (file1->size != 4*file2->size) return 0.0;
 	}
@@ -255,7 +265,8 @@ static float filecompare(const struct fileinfo *file1,const struct fileinfo *fil
 	switch (mode)
 	{
 		case MODE_A_A:
-		case MODE_1_A:
+		case MODE_12_A:
+		case MODE_14_A:
 			for (i = 0;i < file2->size;i++)
 			{
 				if (file1->buf[i] == file2->buf[i]) match++;
@@ -263,10 +274,27 @@ static float filecompare(const struct fileinfo *file1,const struct fileinfo *fil
 			score = (float)match/file2->size;
 			break;
 
-		case MODE_2_A:
+		case MODE_22_A:
+		case MODE_24_A:
 			for (i = 0;i < file2->size;i++)
 			{
 				if (file1->buf[i + file2->size] == file2->buf[i]) match++;
+			}
+			score = (float)match/file2->size;
+			break;
+
+		case MODE_34_A:
+			for (i = 0;i < file2->size;i++)
+			{
+				if (file1->buf[i + 2*file2->size] == file2->buf[i]) match++;
+			}
+			score = (float)match/file2->size;
+			break;
+
+		case MODE_44_A:
+			for (i = 0;i < file2->size;i++)
+			{
+				if (file1->buf[i + 3*file2->size] == file2->buf[i]) match++;
 			}
 			score = (float)match/file2->size;
 			break;
@@ -594,12 +622,16 @@ int main(int argc,char **argv)
 					for (mode = 0;mode < TOTAL_MODES;mode++)
 					{
 						if (bestmode == MODE_A_A || mode == bestmode ||
-								(bestmode >= MODE_1_A && bestmode <= MODE_O_A &&
-								((mode-MODE_1_A)&~1) != ((bestmode-MODE_1_A)&~1)) ||
+								(bestmode >= MODE_12_A && bestmode <= MODE_O_A &&
+								((mode-MODE_12_A)&~1) != ((bestmode-MODE_12_A)&~1)) ||
+								(bestmode >= MODE_14_A && bestmode <= MODE_44_A &&
+								((mode-MODE_14_A)&~3) != ((bestmode-MODE_14_A)&~3)) ||
 								(bestmode >= MODE_E1_A && bestmode <= MODE_O2_A &&
 								((mode-MODE_E1_A)&~3) != ((bestmode-MODE_E1_A)&~3)) ||
-								(bestmode >= MODE_A_1 && bestmode <= MODE_A_O &&
-								((mode-MODE_A_1)&~1) != ((bestmode-MODE_A_1)&~1)) ||
+								(bestmode >= MODE_A_12 && bestmode <= MODE_A_O &&
+								((mode-MODE_A_12)&~1) != ((bestmode-MODE_A_12)&~1)) ||
+								(bestmode >= MODE_A_14 && bestmode <= MODE_A_44 &&
+								((mode-MODE_A_14)&~3) != ((bestmode-MODE_A_14)&~3)) ||
 								(bestmode >= MODE_A_E1 && bestmode <= MODE_A_O2 &&
 								((mode-MODE_A_E1)&~3) != ((bestmode-MODE_A_E1)&~3)))
 						{

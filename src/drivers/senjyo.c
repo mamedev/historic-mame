@@ -487,7 +487,7 @@ static Z80_DaisyChain daisy_chain[] =
 static struct SN76496interface sn76496_interface =
 {
 	3,	/* 3 chips */
-	2000000,	/* 2 Mhz? */
+	{ 2000000, 2000000, 2000000 },	/* 2 Mhz? */
 	{ 50, 50, 50 }
 };
 
@@ -616,6 +616,9 @@ ROM_START( starforc_rom )
 
 	ROM_REGION(0x10000)     /* 64k for sound board */
 	ROM_LOAD( "starforc.1",   0x0000, 0x2000, 0x2735bb22 )
+
+	ROM_REGION(0x0020)     /* PROMs */
+    ROM_LOAD( "07b.bin",    0x0000, 0x0020, 0x68db8300 )	/* unknown - timing? */
 ROM_END
 
 ROM_START( starfore_rom )

@@ -119,6 +119,64 @@ static struct MemoryWriteAddress writemem[] =
 static unsigned char YM8950_register_index;
 static unsigned char YM8950_register[256];
 
+/* Added by Takahiro Nogi. 1999/09/27 */
+static unsigned char MC6840_index0;
+static unsigned char MC6840_register0;
+static unsigned char MC6840_index1;
+static unsigned char MC6840_register1;
+static int S_TEMPO = 0;
+static int S_TEMPO_OLD = 0;
+static int MC6809_CTR = 0;
+static int MC6809_FLAG = 0;
+
+
+static void MC6840_control_port_0_w(int offset, int data)
+{
+	/* MC6840 Emulation by Takahiro Nogi. 1999/09/27
+	(This routine hasn't been completed yet.) */
+
+//	char	mess[80];
+
+	MC6840_index0 = data;
+
+	if (MC6840_index0 & 0x80) {	// enable timer output
+		if ((MC6840_register0 != S_TEMPO) && (MC6840_register0 != 0)) {
+			S_TEMPO = MC6840_register0;
+		//	sprintf(mess, "I0:0x%02X R0:0x%02X I1:0x%02X R1:0x%02X", MC6840_index0, MC6840_register0, MC6840_index1, MC6840_register1);
+		//	usrintf_showmessage(mess);
+		}
+		MC6809_FLAG = 1;
+	} else {
+		MC6809_FLAG = 0;
+	}
+//	if (errorlog) fprintf(errorlog, "MC6840 Write:(0x%02X)0x%02X\n", MC6840_register0_index, data);
+}
+
+static void MC6840_control_port_1_w(int offset, int data)
+{
+	/* MC6840 Emulation by Takahiro Nogi. 1999/09/27
+	(This routine hasn't been completed yet.) */
+
+	MC6840_index1 = data;
+}
+
+static void MC6840_write_port_0_w(int offset, int data)
+{
+	/* MC6840 Emulation by Takahiro Nogi. 1999/09/27
+	(This routine hasn't been completed yet.) */
+
+	MC6840_register0 = data;
+}
+
+static void MC6840_write_port_1_w(int offset, int data)
+{
+	/* MC6840 Emulation by Takahiro Nogi. 1999/09/27
+	(This routine hasn't been completed yet.) */
+
+	MC6840_register1 = data;
+}
+
+
 static void YM8950_control_port_0_w( int offset, int data )
 {
 	YM8950_register_index = data;
@@ -139,7 +197,7 @@ static void YM8950_write_port_0_w( int offset, int data )
 		int finish	=	(YM8950_register[0x0b] + YM8950_register[0x0c] * 256) * 0x20;
 //		int vol		=	YM8950_register[0x12];
 
-		int len		=	finish-start;
+		int len		=	((finish-start) * 2);	// Takahiro Nogi. 1999/09/27 (finish-start -> ((finish-start) * 2))
 
 		if ( (start >= 0) && (finish <= 0x20000) && (len > 0) )
 		{
@@ -166,9 +224,10 @@ static struct MemoryReadAddress sound_readmem[] =
 static struct MemoryWriteAddress sound_writemem[] =
 {
 	{ 0x0000, 0x07ff, MWA_RAM },
-	{ 0x0800, 0x0800, MWA_NOP },	// MC6840?
-	{ 0x0801, 0x0801, MWA_NOP },
-	{ 0x0802, 0x0803, MWA_NOP },
+	{ 0x0800, 0x0800, MC6840_control_port_0_w },	// Takahiro Nogi. 1999/09/27
+	{ 0x0801, 0x0801, MC6840_control_port_1_w },	// Takahiro Nogi. 1999/09/27
+	{ 0x0802, 0x0802, MC6840_write_port_0_w },	// Takahiro Nogi. 1999/09/27
+	{ 0x0803, 0x0803, MC6840_write_port_1_w },	// Takahiro Nogi. 1999/09/27
 	{ 0x2000, 0x2000, YM8950_control_port_0_w },
 	{ 0x2001, 0x2001, YM8950_write_port_0_w },
 	{ 0x2800, 0x2800, AY8910_control_port_0_w },
@@ -312,9 +371,27 @@ int ginganin_interrupt(void)
 	return 1;	/* ? (vectors 1-7 cointain the same address) */
 }
 
+/* Modified by Takahiro Nogi. 1999/09/27 */
 int ginganin_sound_interrupt(void)
 {
-	return M6809_INT_IRQ;
+	/* MC6840 Emulation by Takahiro Nogi. 1999/09/27
+	(This routine hasn't been completed yet.) */
+
+	if (S_TEMPO_OLD != S_TEMPO) {
+		S_TEMPO_OLD = S_TEMPO;
+		MC6809_CTR = 0;
+	}
+
+	if (MC6809_FLAG != 0) {
+		if (MC6809_CTR > S_TEMPO) {
+			MC6809_CTR = 0;
+			return M6809_INT_IRQ;
+		} else {
+			MC6809_CTR++;
+		}
+	}
+
+	return 0;
 }
 
 
@@ -324,7 +401,7 @@ static struct AY8910interface AY8910_interface =
 {
 	1,
 	3579545 / 2 ,	/* ? */
-	{ 30 },
+	{ 10 },					// Takahiro Nogi. 1999/09/27 (30 -> 10)
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -337,7 +414,7 @@ static struct YM3526interface ym3526_interface =
 {
 	1,
 	3579545,	/* ? */
-	{ 50 },
+	{ 63 },					// Takahiro Nogi. 1999/09/27 (50 -> 63)
 	{ 0 }
 };
 
@@ -346,10 +423,10 @@ static struct YM3526interface ym3526_interface =
 static struct ADPCMinterface adpcm_interface =
 {
 	4,			/* ? channels */
-	6000,		/* ? Hz */
+	16000/2,		/* ? Hz */	// Takahiro Nogi. 1999/09/27 (6000 -> 8000)
 	4,			/* memory region */
 	0,			/* init function */
-	{ 30, 30, 30 , 30 }		/* volume(s) */
+	{ 10, 10, 10 , 10 }	/* volume(s) */	// Takahiro Nogi. 1999/09/27 (30 -> 10)
 };
 
 
@@ -365,10 +442,10 @@ static struct MachineDriver ginganin_machine_driver =
 		},
 		{
 			CPU_M6809 | CPU_AUDIO_CPU,
-			3579545,	/* ? */
+			1000000,	/* ? */		// Takahiro Nogi. 1999/09/27 (3579545 -> 1000000)
 			3,
 			sound_readmem,sound_writemem,0,0,
-			ginganin_sound_interrupt, 1
+			ginganin_sound_interrupt, 60	// Takahiro Nogi. 1999/09/27 (1 -> 60)
 		},
 	},
 	60,DEFAULT_60HZ_VBLANK_DURATION,
@@ -487,3 +564,4 @@ struct GameDriver ginganin_driver =
 
 	0,0
 };
+

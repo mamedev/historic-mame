@@ -94,8 +94,6 @@ Changes:
 #define LOG(n,x)
 #endif
 
-#define STATIC_SAMPLE_RATE 0	/* EHC - 13/08/99 */
-
 /* number of samples stuffed into the rom */
 static unsigned char numsam;
 
@@ -255,20 +253,15 @@ static int find_sample(int num, int sample_num,struct UPD7759sample *sample)
 	j = 0;
 	if (!data[j]) j++;
 	if ((data[j] & 0xf0) != 0x50) j++;
-#if STATIC_SAMPLE_RATE
+
 	switch (data[j])
 	{
 		case 0x53: sample->freq = 8000; break;
 		case 0x59: sample->freq = 6000; break;
+		case 0x5f: sample->freq = 5000; break;
 		default:
 			sample->freq = 5000;
 	}
-#else
-	if ( ( data[j] & 0xf0 ) == 0x50 )
-		sample->freq = 9000 - ( ( data[j] & 0x0f ) * 333 );
-	else
-		return 0;
-#endif
 
 	if (sample_num == numsam)
 	{

@@ -112,6 +112,8 @@
 #include "driver.h"
 
 
+#define VERBOSE 0
+
 static unsigned char *game_palette;	/* RGB palette as set by the driver. */
 static unsigned char *new_palette;	/* changes to the palette are stored here before */
 							/* being moved to game_palette by palette_recalc() */
@@ -730,6 +732,7 @@ static int compress_palette(void)
 		}
 	}
 
+#if VERBOSE
 if (errorlog)
 {
 	int subcount[8];
@@ -750,6 +753,7 @@ if (errorlog)
 			subcount[PALETTE_COLOR_TRANSPARENT]);
 	fprintf(errorlog,"Compressed the palette, saving %d pens\n",saved);
 }
+#endif
 
 	return saved;
 }
@@ -943,7 +947,9 @@ static const unsigned char *palette_recalc_8(void)
 
 		if (need > avail)
 		{
+#if VERBOSE
 if (errorlog) fprintf(errorlog,"Need %d new pens; %d available. I'll reuse some pens.\n",need,avail);
+#endif
 			reuse_pens = 1;
 			build_rgb_to_pen();
 		}
@@ -1173,7 +1179,9 @@ for (color = 0;color < Machine->drv->total_colors;color++)
 					used++;
 			}
 
+#if VERBOSE
 			fprintf(errorlog,"Did a palette remap, need a full screen redraw (%d pens used).\n",used);
+#endif
 		}
 		return just_remapped;
 	}

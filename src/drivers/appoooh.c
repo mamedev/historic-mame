@@ -232,7 +232,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct SN76496interface sn76496_interface =
 {
 	3,	/* 3 chips */
-	18432000/6,	/* ??? */
+	{ 18432000/6, 18432000/6, 18432000/6 },	/* ??? */
 	{ 30, 30, 30 }
 };
 

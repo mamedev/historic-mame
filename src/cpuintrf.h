@@ -84,6 +84,15 @@ enum {
 #ifndef HAS_I86
 #define HAS_I86 		0
 #endif
+#ifndef HAS_V20
+#define HAS_V20 		0
+#endif
+#ifndef HAS_V30
+#define HAS_V30 		0
+#endif
+#ifndef HAS_V33
+#define HAS_V33 		0
+#endif
 #ifndef HAS_I8035
 #define HAS_I8035		0
 #endif

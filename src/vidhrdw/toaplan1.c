@@ -279,13 +279,13 @@ void layers_offset_w(int offset, int data)
 	switch (offset)
 	{
 		case 0:
-			layers_offset[0] = (data&0xff) - 0xd8 ;
+			layers_offset[0] = (data&0xff) - 0xdb ;
 			break ;
 		case 2:
-			layers_offset[1] = (data&0xff) - 0x17 ;
+			layers_offset[1] = (data&0xff) - 0x14 ;
 			break ;
 		case 4:
-			layers_offset[2] = (data&0xff) - 0x88 ;
+			layers_offset[2] = (data&0xff) - 0x85 ;
 			break ;
 		case 6:
 			layers_offset[3] = (data&0xff) - 0x07 ;
@@ -323,7 +323,7 @@ static void toaplan1_update_palette (void)
 
 			bank  = (tinfo->color >> 7) & 1;
 			color = (tinfo->color & 0x3f);
-			palette_map[color + bank*64] |= Machine->gfx[bank]->pen_usage[tinfo->tile_num];
+			palette_map[color + bank*64] |= Machine->gfx[bank]->pen_usage[tinfo->tile_num & (Machine->gfx[bank]->total_elements-1)];
 
 			tinfo++;
 		}
@@ -340,7 +340,7 @@ static void toaplan1_update_palette (void)
 			palette_used_colors[i * 16 + 0] = PALETTE_COLOR_TRANSPARENT;
 			for (j = 0; j < 16; j++)
 			{
-					if (usage & (1 << j))
+				if (usage & (1 << j))
 					palette_used_colors[i * 16 + j] = PALETTE_COLOR_USED;
 				else
 					palette_used_colors[i * 16 + j] = PALETTE_COLOR_UNUSED;
@@ -360,10 +360,6 @@ static void toaplan1_find_tiles(int xoffs,int yoffs)
 	tile_struct *tinfo;
 	unsigned char *t_info;
 
-	for ( priority = 0 ; priority < 16 ; priority++ )
-	{
-		tile_count[priority]=0;
-	}
 
 	for ( layer = 3 ; layer >= 0 ; layer-- )
 	{
@@ -485,8 +481,15 @@ static void rallybik_find_tiles(void)
 
 static void toaplan1_find_sprites (void)
 {
+	int priority;
 	int sprite;
 	unsigned char *s_info,*s_size;
+
+
+	for ( priority = 0 ; priority < 16 ; priority++ )
+	{
+		tile_count[priority]=0;
+	}
 
 	s_size = (toaplan1_videoram2);	/* sprite block size */
 	s_info = (toaplan1_videoram1) ;	/* start of sprite ram */
@@ -500,7 +503,6 @@ static void toaplan1_find_sprites (void)
 		{
 			int sx,sy,dx,dy,s_sizex,s_sizey,tchar;
 			int sprite_size_ptr;
-			int priority;
 
 			sx=READ_WORD(&s_info[4]);
 			sx >>= 7 ;
@@ -516,6 +518,8 @@ static void toaplan1_find_sprites (void)
 			sprite_size_ptr = (tattr>>6)&0x3f ;
 			s_sizey = (READ_WORD(&s_size[2*sprite_size_ptr])>>4)&0xf ;
 			s_sizex = (READ_WORD(&s_size[2*sprite_size_ptr]))&0xf ;
+
+//			if( tchar < 0x4000 )	this was added by suz but it breaks Vimana
 			for ( dy = s_sizey ; dy > 0 ; dy-- )
 			for ( dx = s_sizex; dx > 0 ; dx-- )
 			{
@@ -524,7 +528,7 @@ static void toaplan1_find_sprites (void)
 				tinfo = (tile_struct *)&(tile_list[priority][tile_count[priority]]) ;
 				tinfo->tile_num = tchar++ ;
 				tinfo->color = 0x80 | (tattr & 0x3f) ;
-				tinfo->xpos = sx-dx*8+s_sizex*8-3 ;
+				tinfo->xpos = sx-dx*8+s_sizex*8 ;
 				tinfo->ypos = sy-dy*8+s_sizey*8 ;
 				tile_count[priority]++ ;
 				if(tile_count[priority]==max_list_size[priority])
@@ -630,8 +634,8 @@ static void toaplan1_render (struct osd_bitmap *bitmap)
 void toaplan1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	/* discover what data will be drawn */
-	toaplan1_find_tiles(tiles_offsetx,tiles_offsety);
 	toaplan1_find_sprites();
+	toaplan1_find_tiles(tiles_offsetx,tiles_offsety);
 
 	toaplan1_update_palette();
 	toaplan1_render(bitmap);

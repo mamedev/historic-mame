@@ -184,48 +184,6 @@ void vigilant_rear_color_w(int offset, int data)
 }
 
 /***************************************************************************
- draw_sprites
-
- ???
- **************************************************************************/
-static void draw_sprites(struct osd_bitmap *bitmap)
-{
-	int offs;
-
-	for (offs = 0;offs < spriteram_size; offs+=8 )
-	{
-		int color = spriteram[offs];
-		int attributes = spriteram[offs+5];
-		int sy = 256+128-16-(256*spriteram[offs+3]+spriteram[offs+2]);
-		int size = 1;
-		int charcode = spriteram[offs+4];
-		int sx = 256*spriteram[offs+7] + spriteram[offs+6];
-		int flipx = attributes&0x40;
-		int flipy = attributes&0x80;
-
-		if( attributes&0x20 ) size = 4;
-		if( attributes&0x10 ) size = 2;
-
-		if( !flipy ) sy -= (size-1)*16;
-
-		charcode += (attributes&0xF)*256;
-		if( (charcode>=0x400) && (charcode<0xC00) )
-			charcode = charcode ^ 0xC00;
-
-		while( size-- )
-		{
-			drawgfx(bitmap,Machine->gfx[1],
-				charcode, color,
-				flipx,flipy,sx,sy,
-				&bottomvisiblearea,TRANSPARENCY_PEN,0);
-
-			charcode++;
-			sy += flipy?-16:16;
-		}
-	}
-}
-
-/***************************************************************************
  draw_foreground
 
  ???
@@ -316,6 +274,41 @@ static void draw_background( struct osd_bitmap *bitmap )
   the main emulation engine.
 
 ***************************************************************************/
+
+static void draw_sprites(struct osd_bitmap *bitmap,const struct rectangle *clip)
+{
+	int offs;
+
+	for (offs = 0;offs < spriteram_size;offs += 8)
+	{
+		int code,color,sx,sy,flipx,flipy,h,y;
+
+		code = spriteram[offs+4] | ((spriteram[offs+5] & 0x0f) << 8);
+		color = spriteram[offs+0] & 0x0f;
+		sx = (spriteram[offs+6] | ((spriteram[offs+7] & 0x01) << 8));
+		sy = 256+128 - (spriteram[offs+2] | ((spriteram[offs+3] & 0x01) << 8));
+		flipx = spriteram[offs+5] & 0x40;
+		flipy = spriteram[offs+5] & 0x80;
+		h = 1 << ((spriteram[offs+5] & 0x30) >> 4);
+		sy -= 16 * h;
+
+		for (y = 0;y < h;y++)
+		{
+			int c = code;
+
+			if (flipy) c += h-1-y;
+			else c += y;
+
+			drawgfx(bitmap,Machine->gfx[1],
+					c,
+					color,
+					flipx,flipy,
+					sx,sy + 16*y,
+					clip,TRANSPARENCY_PEN,0);
+		}
+	}
+}
+
 void vigilant_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int i;
@@ -361,14 +354,48 @@ void vigilant_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	if (rear_disable)	 /* opaque foreground */
 	{
 		draw_foreground(bitmap,0,1);
-		draw_sprites(bitmap);
+		draw_sprites(bitmap,&bottomvisiblearea);
 		draw_foreground(bitmap,1,1);
 	}
 	else
 	{
 		draw_background(bitmap);
 		draw_foreground(bitmap,0,0);
-		draw_sprites(bitmap);
+		draw_sprites(bitmap,&bottomvisiblearea);
 		draw_foreground(bitmap,1,0); // priority tiles
 	}
+}
+
+void kikcubic_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
+	int offs;
+
+
+	if (palette_recalc())
+		memset(dirtybuffer,1,videoram_size);
+
+	for (offs = 0; offs<videoram_size; offs+=2 )
+	{
+		int sy = 8 * ((offs/2) / 64);
+		int sx = 8 * ((offs/2) % 64);
+		int attributes = videoram[offs+1];
+		int color = (attributes & 0xF0) >> 4;
+		int tile_number = videoram[offs] | ((attributes & 0x0F) << 8);
+
+		if (dirtybuffer[offs] || dirtybuffer[offs+1])
+		{
+			dirtybuffer[offs] = dirtybuffer[offs+1] = 0;
+
+			drawgfx(tmpbitmap,Machine->gfx[0],
+					tile_number,
+					color,
+					0,0,
+					sx,sy,
+					0,TRANSPARENCY_NONE,0);
+		}
+	}
+
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+
+	draw_sprites(bitmap,&Machine->drv->visible_area);
 }

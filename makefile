@@ -12,8 +12,8 @@ EMULATOR_EXE = mame.exe
 
 # uncomment next line to do a smaller compile including only one driver
 # TINY_COMPILE = 1
-TINY_NAME = quarth_driver
-TINY_OBJS = obj/drivers/blockhl.o obj/vidhrdw/blockhl.o obj/vidhrdw/konamiic.o
+TINY_NAME = rtype_driver
+TINY_OBJS = obj/drivers/m72.o obj/vidhrdw/m72.o obj/sndhrdw/m72.o
 
 # uncomment one of the two next lines to not compile the NeoGeo games or to
 # compile only the NeoGeo games
@@ -42,7 +42,9 @@ CPUS+=M6510@
 CPUS+=N2A03@
 CPUS+=H6280@
 CPUS+=I86@
+CPUS+=V20@
 CPUS+=V30@
+CPUS+=V33@
 CPUS+=I8035@
 CPUS+=I8039@
 CPUS+=I8048@
@@ -205,11 +207,25 @@ CPUOBJS += obj/cpu/i86/i86.o
 DBGOBJS += obj/cpu/i86/i86dasm.o
 endif
 
+CPU=$(strip $(findstring V20@,$(CPUS)))
+ifneq ($(CPU),)
+CPUDEFS += -DHAS_V20=1
+CPUOBJS += obj/cpu/nec/nec.o
+DBGOBJS += obj/cpu/nec/necdasm.o
+endif
+
 CPU=$(strip $(findstring V30@,$(CPUS)))
 ifneq ($(CPU),)
 CPUDEFS += -DHAS_V30=1
-CPUOBJS += obj/cpu/i86/i86.o
-DBGOBJS += obj/cpu/i86/i86dasm.o
+CPUOBJS += obj/cpu/nec/nec.o
+DBGOBJS += obj/cpu/nec/necdasm.o
+endif
+
+CPU=$(strip $(findstring V33@,$(CPUS)))
+ifneq ($(CPU),)
+CPUDEFS += -DHAS_V33=1
+CPUOBJS += obj/cpu/nec/nec.o
+DBGOBJS += obj/cpu/nec/necdasm.o
 endif
 
 CPU=$(strip $(findstring I8035@,$(CPUS)))
@@ -849,10 +865,10 @@ obj/meadows.a: \
 obj/midway.a: \
          obj/machine/wow.o obj/vidhrdw/wow.o obj/sndhrdw/wow.o obj/drivers/wow.o \
          obj/sndhrdw/gorf.o \
-         obj/machine/mcr.o \
+         obj/machine/mcr.o obj/sndhrdw/mcr.o \
          obj/vidhrdw/mcr1.o obj/vidhrdw/mcr2.o obj/vidhrdw/mcr3.o \
          obj/drivers/mcr1.o obj/drivers/mcr2.o obj/drivers/mcr3.o \
-         obj/machine/mcr68.o obj/vidhrdw/mcr68.o obj/drivers/mcr68.o \
+         obj/vidhrdw/mcr68.o obj/drivers/mcr68.o \
          obj/vidhrdw/balsente.o obj/drivers/balsente.o \
 
 obj/irem.a: \
@@ -864,6 +880,9 @@ obj/irem.a: \
          obj/vidhrdw/travrusa.o obj/drivers/travrusa.o \
          obj/vidhrdw/m62.o obj/drivers/m62.o \
          obj/vidhrdw/vigilant.o obj/drivers/vigilant.o \
+         obj/vidhrdw/m72.o obj/sndhrdw/m72.o obj/drivers/m72.o \
+         obj/vidhrdw/shisen.o obj/drivers/shisen.o \
+         obj/vidhrdw/m92.o obj/drivers/m92.o \
          obj/drivers/m97.o \
 
 obj/gottlieb.a: \
@@ -955,7 +974,6 @@ obj/sega.a: \
 
 obj/dataeast.a: \
          obj/machine/btime.o obj/vidhrdw/btime.o obj/drivers/btime.o \
-         obj/vidhrdw/tagteam.o obj/drivers/tagteam.o \
          obj/vidhrdw/astrof.o obj/sndhrdw/astrof.o obj/drivers/astrof.o \
          obj/vidhrdw/kchamp.o obj/drivers/kchamp.o \
          obj/vidhrdw/firetrap.o obj/drivers/firetrap.o \
@@ -997,9 +1015,10 @@ obj/konami.a: \
          obj/vidhrdw/pooyan.o obj/drivers/pooyan.o \
          obj/vidhrdw/timeplt.o obj/drivers/timeplt.o \
          obj/vidhrdw/megazone.o obj/drivers/megazone.o \
-         obj/vidhrdw/rocnrope.o obj/drivers/rocnrope.o \
+         obj/vidhrdw/pandoras.o obj/drivers/pandoras.o \
          obj/sndhrdw/gyruss.o obj/vidhrdw/gyruss.o obj/drivers/gyruss.o \
          obj/machine/konami.o obj/vidhrdw/trackfld.o obj/sndhrdw/trackfld.o obj/drivers/trackfld.o \
+         obj/vidhrdw/rocnrope.o obj/drivers/rocnrope.o \
          obj/vidhrdw/circusc.o obj/drivers/circusc.o \
          obj/machine/tp84.o obj/vidhrdw/tp84.o obj/drivers/tp84.o \
          obj/vidhrdw/hyperspt.o obj/drivers/hyperspt.o \
@@ -1015,10 +1034,12 @@ obj/konami.a: \
          obj/machine/ddrible.o obj/vidhrdw/ddrible.o obj/drivers/ddrible.o \
          obj/vidhrdw/contra.o obj/drivers/contra.o \
          obj/machine/combatsc.o obj/vidhrdw/combatsc.o obj/drivers/combatsc.o \
-         obj/vidhrdw/nemesis.o obj/drivers/nemesis.o \
          obj/vidhrdw/hcastle.o obj/drivers/hcastle.o \
-         obj/vidhrdw/battlnts.o obj/drivers/battlnts.o \
+         obj/vidhrdw/nemesis.o obj/drivers/nemesis.o \
          obj/vidhrdw/konamiic.o \
+         obj/vidhrdw/rockrage.o obj/drivers/rockrage.o \
+         obj/vidhrdw/battlnts.o obj/drivers/battlnts.o \
+         obj/vidhrdw/bladestl.o obj/drivers/bladestl.o \
          obj/machine/ajax.o obj/vidhrdw/ajax.o obj/drivers/ajax.o \
          obj/vidhrdw/thunderx.o obj/drivers/thunderx.o \
          obj/vidhrdw/mainevt.o obj/drivers/mainevt.o \
@@ -1034,7 +1055,7 @@ obj/konami.a: \
          obj/vidhrdw/xexex.o obj/drivers/xexex.o \
          obj/machine/simpsons.o obj/vidhrdw/simpsons.o obj/drivers/simpsons.o \
          obj/vidhrdw/vendetta.o obj/drivers/vendetta.o \
-         obj/drivers/darkadv.o \
+         obj/drivers/twin16.o \
          obj/vidhrdw/tmnt.o obj/drivers/tmnt.o \
          obj/vidhrdw/wecleman.o obj/drivers/wecleman.o \
 
@@ -1128,6 +1149,8 @@ obj/snk.a: \
          obj/vidhrdw/alpha68k.o obj/drivers/alpha68k.o \
 
 obj/technos.a: \
+         obj/drivers/scregg.o \
+         obj/vidhrdw/tagteam.o obj/drivers/tagteam.o \
          obj/vidhrdw/mystston.o obj/drivers/mystston.o \
          obj/vidhrdw/matmania.o obj/drivers/matmania.o obj/machine/maniach.o \
          obj/vidhrdw/renegade.o obj/drivers/renegade.o \
@@ -1228,7 +1251,6 @@ obj/other.a: \
          obj/vidhrdw/airbustr.o obj/drivers/airbustr.o \
          obj/vidhrdw/ambush.o obj/drivers/ambush.o \
          obj/vidhrdw/starcrus.o obj/drivers/starcrus.o \
-         obj/vidhrdw/shisen.o obj/sndhrdw/shisen.o obj/drivers/shisen.o \
          obj/drivers/shanghai.o \
          obj/vidhrdw/goindol.o obj/drivers/goindol.o \
          obj/drivers/dlair.o \
@@ -1262,6 +1284,7 @@ makedir:
 	md obj\cpu\m6502
 	md obj\cpu\h6280
 	md obj\cpu\i86
+	md obj\cpu\nec
 	md obj\cpu\i8039
 	md obj\cpu\i8085
 	md obj\cpu\m6800
@@ -1294,6 +1317,7 @@ clean:
 	del obj\cpu\m6502\*.o
 	del obj\cpu\h6280\*.o
 	del obj\cpu\i86\*.o
+	del obj\cpu\nec\*.o
 	del obj\cpu\i8039\*.o
 	del obj\cpu\i8085\*.o
 	del obj\cpu\m6800\*.o
@@ -1335,6 +1359,7 @@ cleandebug:
 	del obj\cpu\m6502\*.o
 	del obj\cpu\h6280\*.o
 	del obj\cpu\i86\*.o
+	del obj\cpu\nec\*.o
 	del obj\cpu\i8039\*.o
 	del obj\cpu\i8085\*.o
 	del obj\cpu\m6800\*.o

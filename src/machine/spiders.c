@@ -15,16 +15,16 @@
 
 /* Declare inividual irq handlers, may be able to combine later */
 /* Main CPU */
-void spiders_irq1a(void) { cpu_cause_interrupt(0,M6809_INT_IRQ); }
-void spiders_irq1b(void) { cpu_cause_interrupt(0,M6809_INT_IRQ); }
-void spiders_irq2a(void) { cpu_cause_interrupt(0,M6809_INT_IRQ); }
-void spiders_irq2b(void) { cpu_cause_interrupt(0,M6809_INT_IRQ); }
-void spiders_irq3a(void) { cpu_cause_interrupt(0,M6809_INT_IRQ); }
-void spiders_irq3b(void) { cpu_cause_interrupt(0,M6809_INT_IRQ); }
+void spiders_irq0a(int state) { cpu_set_irq_line(0,M6809_IRQ_LINE,state ? ASSERT_LINE : CLEAR_LINE); }
+void spiders_irq0b(int state) { cpu_set_irq_line(0,M6809_IRQ_LINE,state ? ASSERT_LINE : CLEAR_LINE); }
+void spiders_irq1a(int state) { cpu_set_irq_line(0,M6809_IRQ_LINE,state ? ASSERT_LINE : CLEAR_LINE); }
+void spiders_irq1b(int state) { cpu_set_irq_line(0,M6809_IRQ_LINE,state ? ASSERT_LINE : CLEAR_LINE); }
+void spiders_irq2a(int state) { cpu_set_irq_line(0,M6809_IRQ_LINE,state ? ASSERT_LINE : CLEAR_LINE); }
+void spiders_irq2b(int state) { cpu_set_irq_line(0,M6809_IRQ_LINE,state ? ASSERT_LINE : CLEAR_LINE); }
 
 /* Sound CPU */
-void spiders_irq4a(void) { }
-void spiders_irq4b(void) { }
+void spiders_irq3a(int state) { }
+void spiders_irq3b(int state) { }
 
 /* Function prototypes */
 
@@ -35,24 +35,38 @@ int spiders_vrom_r(int address);
 
 /* Declare PIA structure */
 
-static pia6821_interface pia_intf =
+/* PIA 0, main CPU */
+static struct pia6821_interface pia_0_intf =
 {
-	4,								/* 4 chips (3-Main CPU + 1-Sound CPU) */
-	{ PIA_DDRA, PIA_CTLA, PIA_DDRB, PIA_CTLB },			/* offsets */
-
-	{ input_port_0_r , spiders_vrom_r , 0              , 0              },	/* input port A  */
-	{ 0              , input_port_5_r , 0              , 0              },	/* input bit CA1 */
-	{ 0              , 0              , 0              , 0              },	/* input bit CA2 */
-	{ input_port_1_r , 0              , 0              , 0              },	/* input port B  */
-	{ 0              , 0              , 0              , 0              },	/* input bit CB1 */
-	{ 0              , 0              , 0              , 0              },	/* input bit CB2 */
-	{ 0              , 0              , 0              , 0              },	/* output port A */
-	{ 0              , spiders_vrif_w , 0              , 0              },	/* output port B */
-	{ 0              , 0              , 0              , 0              },	/* output CA2 */
-	{ 0              , spiders_flip_w , 0              , 0              },	/* output CB2 */
-	{ spiders_irq1a  , spiders_irq2a  , spiders_irq3a  , spiders_irq4a  },	/* IRQ A */
-	{ spiders_irq1b  , spiders_irq2b  , spiders_irq3b  , spiders_irq4b  },	/* IRQ B */
+	/*inputs : A/B,CA/B1,CA/B2 */ input_port_0_r, input_port_1_r, 0, 0, 0, 0,
+	/*outputs: A/B,CA/B2       */ 0, 0, 0, 0,
+	/*irqs   : A/B             */ spiders_irq0a, spiders_irq0b
 };
+
+/* PIA 1, main CPU */
+static struct pia6821_interface pia_1_intf =
+{
+	/*inputs : A/B,CA/B1,CA/B2 */ spiders_vrom_r, 0, input_port_5_r, 0, 0, 0,
+	/*outputs: A/B,CA/B2       */ 0, spiders_vrif_w, 0, spiders_flip_w,
+	/*irqs   : A/B             */ spiders_irq1a, spiders_irq1b
+};
+
+/* PIA 2, main CPU */
+static struct pia6821_interface pia_2_intf =
+{
+	/*inputs : A/B,CA/B1,CA/B2 */ 0, 0, 0, 0, 0, 0,
+	/*outputs: A/B,CA/B2       */ 0, 0, 0, 0,
+	/*irqs   : A/B             */ spiders_irq2a, spiders_irq2b
+};
+
+/* PIA 3, sound CPU */
+static struct pia6821_interface pia_3_intf =
+{
+	/*inputs : A/B,CA/B1,CA/B2 */ 0, 0, 0, 0, 0, 0,
+	/*outputs: A/B,CA/B2       */ 0, 0, 0, 0,
+	/*irqs   : A/B             */ spiders_irq3a, spiders_irq3b
+};
+
 
 /***************************************************************************
 
@@ -65,7 +79,11 @@ void spiders_init_machine(void)
 	/* Set OPTIMIZATION FLAGS FOR M6809 */
 //	m6809_Flags = M6809_FAST_NONE;
 
-	pia_startup (&pia_intf);
+	pia_config(0, PIA_STANDARD_ORDERING  | PIA_8BIT, &pia_0_intf);
+	pia_config(1, PIA_ALTERNATE_ORDERING | PIA_8BIT, &pia_1_intf);
+	pia_config(2, PIA_STANDARD_ORDERING  | PIA_8BIT, &pia_2_intf);
+	pia_config(3, PIA_STANDARD_ORDERING  | PIA_8BIT, &pia_3_intf);
+	pia_reset();
 }
 
 
@@ -79,38 +97,17 @@ void spiders_init_machine(void)
 int spiders_timed_irq(void)
 {
 	/* Update CA1 on PIA1 - copy of PA0 (COIN1?) */
-	pia_1_ca1_w(0 , input_port_0_r(0)&0x01);
+	pia_0_ca1_w(0 , input_port_0_r(0)&0x01);
 
 	/* Update CA2 on PIA1 - copy of PA0 (PS2) */
-	pia_1_ca2_w(0 , input_port_0_r(0)&0x02);
+	pia_0_ca2_w(0 , input_port_0_r(0)&0x02);
 
 	/* Update CA1 on PIA1 - copy of PA0 (COIN1?) */
-	pia_1_cb1_w(0 , input_port_6_r(0));
+	pia_0_cb1_w(0 , input_port_6_r(0));
 
 	/* Update CB2 on PIA1 - NOT CONNECTED */
 
 	return ignore_interrupt();
-}
-
-
-/***************************************************************************
-
-    6821 PIA handlers
-
-***************************************************************************/
-
-/* The middle PIA is wired up differently than the other two !!! */
-
-static int pia_remap[4]={0,2,1,3};
-
-void spiders_pia_2_w(int address, int data)
-{
-	pia_2_w(pia_remap[address],data);
-}
-
-int spiders_pia_2_r(int address)
-{
-	return pia_2_r(pia_remap[address]);
 }
 
 

@@ -217,7 +217,7 @@ static int jb_interrupt_nmi( void ) {
 static struct SN76496interface sn76496_interface =
 {
 	1,	/* 1 chip */
-	1500000,	/*  1.5 MHz ? (hand tuned) */
+	{ 1500000 },	/*  1.5 MHz ? (hand tuned) */
 	{ 100 }
 };
 

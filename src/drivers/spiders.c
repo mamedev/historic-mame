@@ -173,9 +173,6 @@ int  spiders_vh_start(void);
 void spiders_vh_stop(void);
 void spiders_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-void spiders_pia_2_w(int address, int data);
-int spiders_pia_2_r(int address);
-
 /* MACHINE */
 
 void spiders_init_machine(void);
@@ -192,9 +189,9 @@ static struct MemoryReadAddress readmem[] =
 //	{ 0x8000, 0x9bff, MRA_RAM },	// Video ram 2
 //	{ 0x7800, 0x7fff, MRA_RAM },	// Stack space
         { 0xc001, 0xc001, crtc6845_register_r },
-	{ 0xc044, 0xc047, pia_1_r },
-	{ 0xc048, 0xc04b, spiders_pia_2_r },
-	{ 0xc050, 0xc053, pia_3_r },
+	{ 0xc044, 0xc047, pia_0_r },
+	{ 0xc048, 0xc04b, pia_1_r },
+	{ 0xc050, 0xc053, pia_2_r },
 	{ 0xc060, 0xc060, input_port_2_r },
 	{ 0xc080, 0xc080, input_port_3_r },
 	{ 0xc0a0, 0xc0a0, input_port_4_r },
@@ -211,9 +208,9 @@ static struct MemoryWriteAddress writemem[] =
 //	{ 0x7800, 0x7fff, MWA_RAM },
         { 0xc000, 0xc000, crtc6845_address_w },
         { 0xc001, 0xc001, crtc6845_register_w },
-	{ 0xc044, 0xc047, pia_1_w },
-	{ 0xc048, 0xc04b, spiders_pia_2_w },
-	{ 0xc050, 0xc053, pia_3_w },
+	{ 0xc044, 0xc047, pia_0_w },
+	{ 0xc048, 0xc04b, pia_1_w },
+	{ 0xc050, 0xc053, pia_2_w },
         { 0xc100, 0xffff, MWA_ROM },
         { -1 } /* end of table */
 };
@@ -310,10 +307,10 @@ INPUT_PORTS_START( spiders_input_ports )
     PORT_DIPSETTING(    0xc0, "6" )
     PORT_DIPSETTING(    0xe0, "7" )
 
-    PORT_START      /* Connected to PIA2 CA1 input */
+    PORT_START      /* Connected to PIA1 CA1 input */
     PORT_BIT( 0xFF, IP_ACTIVE_HIGH, IPT_VBLANK )
 
-    PORT_START      /* Connected to PIA1 CB1 input */
+    PORT_START      /* Connected to PIA0 CB1 input */
     PORT_BITX(0xff, 0xff, IP_ACTIVE_LOW, "PS1 (Crosshatch)", KEYCODE_F2, IP_JOY_NONE )
 
 INPUT_PORTS_END

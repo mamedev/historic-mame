@@ -399,6 +399,8 @@ options:
 -listgames    list the supported games, year, manufacturer
 -listinfo     list comprehensive details for all of the supported games
 -listclones   list all clones of the specified game
+-noclones     used together with the list commands, doesn't list alternate
+              versions of the same game
 -verifyroms   check selected game for missing and invalid ROMs.
 -verifysamples check selected game for missing samples.
 -romdir       specify an alternate directory/zip name where to load the ROMs

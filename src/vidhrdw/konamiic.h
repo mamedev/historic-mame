@@ -3,6 +3,25 @@ void konami_rom_deinterleave_2(int memory_region);
 /* helper function to join four 16-bit ROMs and form a 64-bit data stream */
 void konami_rom_deinterleave_4(int memory_region);
 
+
+int K007342_vh_start(int gfx_index, void (*callback)(int layer,int bank,int *code,int *color));
+void K007342_vh_stop(void);
+int K007342_r(int offset);
+void K007342_w(int offset,int data);
+void K007342_tilemap_update(void);
+void K007342_vreg_w(int offset,int data);
+void K007342_tilemap_set_enable(int layer, int enable);
+void K007342_tilemap_draw(struct osd_bitmap *bitmap,int num,int flags);
+int K007342_is_INT_enabled(void);
+
+
+int K007420_vh_start(int gfxnum, void (*callback)(int *code,int *color));
+void K007420_vh_stop(void);
+int K007420_r(int offset);
+void K007420_w(int offset,int data);
+void K007420_sprites_draw(struct osd_bitmap *bitmap);
+
+
 /*
 You don't have to decode the graphics: the vh_start() routines will do that
 for you, using the plane order passed.
@@ -14,6 +33,7 @@ permutations which may be required).
 */
 #define NORMAL_PLANE_ORDER 0,1,2,3
 #define REVERSE_PLANE_ORDER 3,2,1,0
+
 
 /*
 The callback is passed:

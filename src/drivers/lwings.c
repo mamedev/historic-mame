@@ -340,8 +340,8 @@ INPUT_PORTS_START( trojan_input_ports )
 
 	PORT_START      /* DSW0 */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(    0x00, "Upright 1 Joystick" )
-	PORT_DIPSETTING(    0x02, "Upright 2 Joysticks" )
+	PORT_DIPSETTING(    0x00, "Upright 1 Player" )
+	PORT_DIPSETTING(    0x02, "Upright 2 Players" )
 	PORT_DIPSETTING(    0x03, DEF_STR( Cocktail ) )
 /* 0x01 same as 0x02 or 0x03 */
 	PORT_DIPNAME( 0x1c, 0x1c, DEF_STR( Bonus_Life ) )
@@ -420,8 +420,8 @@ INPUT_PORTS_START( trojanls_input_ports )
 
 	PORT_START      /* DSW0 */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(    0x00, "Upright 1 Joystick" )
-	PORT_DIPSETTING(    0x02, "Upright 2 Joysticks" )
+	PORT_DIPSETTING(    0x00, "Upright 1 Player" )
+	PORT_DIPSETTING(    0x02, "Upright 2 Players" )
 	PORT_DIPSETTING(    0x03, DEF_STR( Cocktail ) )
 /* 0x01 same as 0x02 or 0x03 */
 	PORT_DIPNAME( 0x1c, 0x1c, DEF_STR( Bonus_Life ) )

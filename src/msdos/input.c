@@ -455,11 +455,35 @@ void osd_joystick_end_calibration (void)
 	save_joystick_data(0);
 }
 
+#include <time.h>
 
 void osd_trak_read(int player,int *deltax,int *deltay)
 {
 	if (player != 0 || use_mouse == 0) *deltax = *deltay = 0;
-	else get_mouse_mickeys(deltax,deltay);
+	else
+	{
+		static int skip;
+		static int mx,my;
+
+		/* get_mouse_mickeys() doesn't work when called 60 times per second,
+		   it often returns 0, so I have to call it every other frame and split
+		   the result between two frames.
+		  */
+		if (skip)
+		{
+			*deltax = mx;
+			*deltay = my;
+		}
+		else
+		{
+			get_mouse_mickeys(&mx,&my);
+			*deltax = mx/2;
+			*deltay = my/2;
+			mx -= *deltax;
+			my -= *deltay;
+		}
+		skip ^= 1;
+	}
 }
 
 

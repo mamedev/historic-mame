@@ -162,7 +162,7 @@ static void SN76496Update_16(int chip,void *buffer,int length)
 
 
 
-void SN76496_set_clock(int chip,int clock)
+static void SN76496_set_clock(int chip,int clock)
 {
 	struct SN76496 *R = &sn[chip];
 
@@ -253,7 +253,7 @@ int SN76496_sh_start(const struct MachineSound *msound)
 
 	for (chip = 0;chip < intf->num;chip++)
 	{
-		if (SN76496_init(msound,chip,intf->baseclock,intf->volume[chip] & 0xff,Machine->sample_rate,Machine->sample_bits) != 0)
+		if (SN76496_init(msound,chip,intf->baseclock[chip],intf->volume[chip] & 0xff,Machine->sample_rate,Machine->sample_bits) != 0)
 			return 1;
 
 		SN76496_set_gain(chip,(intf->volume[chip] >> 8) & 0xff);

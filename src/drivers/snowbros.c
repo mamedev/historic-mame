@@ -244,10 +244,10 @@ static void irqhandler(int linestate)
 
 static struct YM3812interface ym3812_interface =
 {
-	1,			/* 1 chip (no more supported) */
+	1,			/* 1 chip */
 	3600000,	/* 3.6 MHz ? (hand tuned) */
-	{ 255 },		/* (not supported) */
-	{ irqhandler},
+	{ 100 },	/* volume */
+	{ irqhandler },
 };
 
 

@@ -14,9 +14,9 @@
 void smashtv_ym2151_int (int irq)
 {
 //	if (errorlog) fprintf(errorlog, "ym2151_int\n");
-	pia_1_ca1_w (0, irq==0);
-	/* pia_1_ca1_w (0, (0)); */
-	/* pia_1_ca1_w (0, (1)); */
+	pia_0_ca1_w (0, irq==0);
+	/* pia_0_ca1_w (0, (0)); */
+	/* pia_0_ca1_w (0, (1)); */
 }
 void narc_ym2151_int (int irq)
 {
@@ -29,8 +29,8 @@ void narc_ym2151_int (int irq)
 
 void smashtv_snd_cmd_real_w (int param)
 {
-	pia_1_portb_w (0, param&0xff);
-	pia_1_cb1_w (0, (param&0x200?1:0));
+	pia_0_portb_w (0, param&0xff);
+	pia_0_cb1_w (0, (param&0x200?1:0));
 	if (!(param&0x100))
 	{
 		cpu_reset(1);

@@ -78,8 +78,14 @@ enum
 #if (HAS_I86)
 	CPU_I86,
 #endif
+#if (HAS_V20)
+	CPU_V20,
+#endif
 #if (HAS_V30)
-	CPU_V30,		/* a hacked I86 core until new V30 core is complete */
+	CPU_V30,
+#endif
+#if (HAS_V33)
+	CPU_V33,
 #endif
 #if (HAS_I8035)
 	CPU_I8035,		/* same as CPU_I8039 */

@@ -11,10 +11,9 @@ extern int namcos1_videoram_r( int offset );
 extern void namcos1_videoram_w( int offset, int data );
 extern int namcos1_paletteram_r( int offset );
 extern void namcos1_paletteram_w( int offset, int data );
-extern void namcos1_spriteram_w( int offset, int data );
-
-extern void namcos1_playfield_control_w( int offs, int data );
+extern void namcos1_videocontroll_w(int offset,int data);
 extern void namcos1_set_scroll_offsets( const int *bgx, const int*bgy, int negative, int optimize );
+extern void namcos1_set_optimize( int optimize );
 extern void namcos1_set_sprite_offsets( int x, int y );
 
 #define NAMCOS1_MAX_KEY 0x100
@@ -192,20 +191,6 @@ static void rev2_key_w( int offset, int data )
 *	Banking emulation (CUS117)                                                        *
 *	                                                                                  *
 **************************************************************************************/
-
-static void ram1_w( int offset, int data )
-{
-	/* 8800-8fff sprite ram */
-	if ( offset>= 0x8800 && offset<=0x8fff)
-	{
-		namcos1_spriteram_w( offset-0x8800, data );
-		return;
-	}
-	s1ram[ offset ] = data;
-	/* 9000-9fff controll ram */
-	if ( (offset&0x1fff) >= 0x1000 )
-		namcos1_playfield_control_w( offset-0x9000, data );
-}
 
 #if 0
 static int soundram_r( int offset)
@@ -468,7 +453,6 @@ static void namcos1_install_rom_bank(int start,int end,int size,int offset)
 static void namcos1_build_banks(/* int *romsize_maps,*/
                            handler_r key_r,handler_w key_w)
 {
-//	unsigned char *BROM = Machine->memory_region[4];
 	int i;
 
 	/* S1 RAM pointer set */
@@ -487,8 +471,8 @@ static void namcos1_build_banks(/* int *romsize_maps,*/
 	/* key chip bank (rev1_key_w / rev2_key_w ) */
 	namcos1_insatll_bank(0x17c,0x17c,key_r,key_w,0,0);
 	/* namcos1_insatll_bank(0x17c,0x17c,0,key_w,0,key); */
-	/* RAM 1 banks playfield , sprite */
-	namcos1_insatll_bank(0x17e,0x17e,0,ram1_w,0x8000,&s1ram[0x8000]);
+	/* RAM 1 banks display controll , playfields , sprite */
+	namcos1_insatll_bank(0x17e,0x17e,0,namcos1_videocontroll_w,0,&s1ram[0x8000]);
 	/* RAM 1 shared ram , PSG device */
 	/* namcos1_insatll_bank(0x17f,0x17f,soundram_r,soundram_w,0x0000,namco_wavedata); */
 	namcos1_insatll_bank(0x17f,0x17f,0,soundram_w,0x0000,namco_wavedata);
@@ -572,18 +556,10 @@ struct namcos1_specific
 	int key_id_query , key_id;
 	handler_r key_r;
 	handler_w key_w;
-	/* background offset */
-	int bgx[4];
-	int bgy[4];
-	int negative;
-	/* optimize flag , use tilemap for playfield */
+	/* optimiaze flag , use tilemap for playfield */
 	int tilemap_use;
-	/* scroll offset */
-	int spx , spy;
-#if 0
 	/* start bank number */
-	int cpu0_start_bank , cpu1_start_bank;
-#endif
+//	int cpu0_start_bank , cpu1_start_bank;
 };
 
 static void namcos1_driver_init(const struct namcos1_specific *specific )
@@ -592,11 +568,8 @@ static void namcos1_driver_init(const struct namcos1_specific *specific )
 	key_id_query = specific->key_id_query;
 	key_id       = specific->key_id;
 
-	/* back ground offsets */
-	namcos1_set_scroll_offsets( specific->bgx, specific->bgy, specific->negative ,specific->tilemap_use);
-
-	/* set sprite offset */
-	namcos1_set_sprite_offsets( specific->spx, specific->spy );
+	/* tilemap use optimize option */
+	namcos1_set_optimize( specific->tilemap_use );
 
 	/* build bank elements */
 	namcos1_build_banks(specific->key_r,specific->key_w);
@@ -605,9 +578,6 @@ static void namcos1_driver_init(const struct namcos1_specific *specific )
 	/* m6809_slapstic = 1; */
 	cpu_setOPbaseoverride( namcos1_setopbase );
 }
-
-#define BG_POSITIVE_NORMAL {0x0b0,0x0b2,0x0b3,0x0b4},{0x108,0x108,0x108,0x008},0
-#define BG_NEGATIVE_NORMAL {0x1d0,0x1d2,0x1d3,0x1d4},{0x1e8,0x1e8,0x1e8,0x0e8},1
 
 /**************************************************************************************
 *	Shadowland / Youkai Douchuuki specific                                            *
@@ -619,9 +589,7 @@ void shadowld_driver_init( void )
 	{
 		0x00,0x00,							/* key query , key id */
 		rev1_key_r,rev1_key_w,				/* key handler */
-		BG_POSITIVE_NORMAL,					/* background  */
-		1,									/* use tilemap flag : speedup optimize */
-		-120,231,							/* sprite x,y   */
+		1									/* use tilemap flag : speedup optimize */
 //		0x03ff,0x03fb						/* start bank   */
 	};
 	namcos1_driver_init(&shadowld_specific);
@@ -638,9 +606,7 @@ void dspirit_driver_init( void )
 	{
 		0x00,0x36,							/* key query , key id */
 		rev2_key_r,rev2_key_w,				/* key handler */
-		BG_NEGATIVE_NORMAL,					/* background  */
-		1,									/* use tilemap flag : speedup optimize */
-		-40,256								/* sprite x,y   */
+		1									/* use tilemap flag : speedup optimize */
 //		0x03ff,0x03fb						/* start bank   */
 	};
 	namcos1_driver_init(&dspirit_specific);
@@ -658,9 +624,7 @@ void quester_driver_init( void )
 	{
 		0x00,0x00,							/* key query , key id */
 		rev1_key_r,rev1_key_w,				/* key handler */
-		BG_NEGATIVE_NORMAL,					/* background  */
-		1,									/* use tilemap flag : speedup optimize */
-		0,256								/* sprite x,y   */
+		1									/* use tilemap flag : speedup optimize */
 //		0x03ff,0x03fb						/* start bank   */
 	};
 	namcos1_driver_init(&quester_specific);
@@ -679,16 +643,14 @@ void blazer_driver_init( void )
 	{
 		0x00,0x13,							/* key query , key id */
 		rev2_key_r,rev2_key_w,				/* key handler */
-		BG_NEGATIVE_NORMAL,					/* background  */
-		1,									/* use tilemap flag : speedup optimize */
-		-40,256								/* sprite x,y   */
+		1									/* use tilemap flag : speedup optimize */
 //		0x03ff,0x03fb						/* start bank   */
 	};
 	namcos1_driver_init(&blazer_specific);
 }
 
 /**************************************************************************************
-*	Pacmania specific                                                                 *
+*	Pacmania / Pacmania (japan) specific                                                                 *
 **************************************************************************************/
 void pacmania_driver_init( void )
 {
@@ -696,33 +658,14 @@ void pacmania_driver_init( void )
 	{
 		0x4b,0x12,							/* key query , key id */
 		rev1_key_r,rev1_key_w,				/* key handler */
-		BG_POSITIVE_NORMAL,					/* background  */
-		1,									/* use tilemap flag : speedup optimize */
-		-56,256								/* sprite x,y   */
+		1									/* use tilemap flag : speedup optimize */
 //		0x03ff,0x03fb						/* start bank   */
 	};
 	namcos1_driver_init(&pacmania_specific);
 }
 
 /**************************************************************************************
-*	Pacmania (japan) specific                                                                 *
-**************************************************************************************/
-void pacmanij_driver_init( void )
-{
-	const struct namcos1_specific pacmanij_specific=
-	{
-		0x4b,0x12,							/* key query , key id */
-		rev1_key_r,rev1_key_w,				/* key handler */
-		BG_NEGATIVE_NORMAL,					/* background  */
-		1,									/* use tilemap flag : speedup optimize */
-		-56,256								/* sprite x,y   */
-//		0x03ff,0x03fb						/* start bank   */
-	};
-	namcos1_driver_init(&pacmanij_specific);
-}
-
-/**************************************************************************************
-*	Galaga 88 specific                                                                 *
+*	Galaga 88 / Galaga 88 (japan) specific                                                                 *
 **************************************************************************************/
 void galaga88_driver_init( void )
 {
@@ -730,29 +673,10 @@ void galaga88_driver_init( void )
 	{
 		0x2d,0x31,							/* key query , key id */
 		rev1_key_r,rev1_key_w,				/* key handler */
-		BG_POSITIVE_NORMAL,					/* background  */
-		1,									/* use tilemap flag : speedup optimize */
-		-120,248							/* sprite x,y   */
+		1									/* use tilemap flag : speedup optimize */
 //		0x03ff,0x03fb						/* start bank   */
 	};
 	namcos1_driver_init(&galaga88_specific);
-}
-
-/**************************************************************************************
-*	Galaga 88 japan specific                                                                 *
-**************************************************************************************/
-void galag88j_driver_init( void )
-{
-	const struct namcos1_specific galag88j_specific=
-	{
-		0x2d,0x31,							/* key query , key id */
-		rev1_key_r,rev1_key_w,				/* key handler */
-		BG_NEGATIVE_NORMAL,					/* background  */
-		1,									/* use tilemap flag : speedup optimize */
-		-120,248							/* sprite x,y   */
-//		0x03ff,0x03fb						/* start bank   */
-	};
-	namcos1_driver_init(&galag88j_specific);
 }
 
 #if 0
@@ -765,9 +689,7 @@ void wstadium_driver_init( void )
 	{
 		0x00,0x00,							/* key query , key id */
 		rev1_key_r,rev1_key_w,				/* key handler */
-		BG_POSITIVE_NORMAL,					/* background  */
-		1,									/* use tilemap flag : speedup optimize */
-		0,256								/* sprite x,y   */
+		1									/* use tilemap flag : speedup optimize */
 //		0x03ff,0x03fb						/* start bank   */
 	};
 	namcos1_driver_init(&wstadium_specific);
@@ -783,9 +705,7 @@ void berabohm_driver_init( void )
 	{
 		0x00,0x00,							/* key query , key id */
 		rev1_key_r,rev1_key_w,				/* key handler */
-		BG_POSITIVE_NORMAL,					/* background  */
-		1,									/* use tilemap flag : speedup optimize */
-		0,256								/* sprite x,y   */
+		1									/* use tilemap flag : speedup optimize */
 //		0x03ff,0x03fb						/* start bank   */
 	};
 	namcos1_driver_init(&berabohm_specific);
@@ -800,9 +720,7 @@ void alice_driver_init( void )
 	{
 		0x5b,0x25,							/* key query , key id */
 		rev1_key_r,rev1_key_w,				/* key handler */
-		BG_POSITIVE_NORMAL,					/* background  */
-		1,									/* use tilemap flag : speedup optimize */
-		0,224								/* sprite x,y   */
+		1									/* use tilemap flag : speedup optimize */
 //		0x03ff,0x03ef						/* start bank   */
 	};
 	namcos1_driver_init(&alice_specific);
@@ -817,9 +735,7 @@ void bakutotu_driver_init( void )
 	{
 		0x03,0x22,							/* key query , key id */
 		rev1_key_r,rev1_key_w,				/* key handler */
-		BG_POSITIVE_NORMAL,					/* background  */
-		1,									/* use tilemap flag : speedup optimize */
-		0,224								/* sprite x,y   */
+		1									/* use tilemap flag : speedup optimize */
 //		0x03ff,0x03fe						/* start bank   */
 	};
 	namcos1_driver_init(&bakutotu_specific);
@@ -834,9 +750,7 @@ void wldcourt_driver_init( void )
 	{
 		0x00,0x35,							/* key query , key id */
 		rev2_key_r,rev2_key_w,				/* key handler */
-		BG_POSITIVE_NORMAL,					/* background  */
-		1,									/* use tilemap flag : speedup optimize */
-		0,191								/* sprite x,y   */
+		1									/* use tilemap flag : speedup optimize */
 //		0x03ff,0x03f8						/* start bank   */
 	};
 	namcos1_driver_init(&worldcourt_specific);
@@ -854,9 +768,7 @@ void splatter_driver_init( void )
 	{
 		0x00,0x00,							/* key query , key id */
 		rev2_key_r,rev2_key_w,				/* key handler */
-		BG_POSITIVE_NORMAL,					/* background  */
-		1,									/* use tilemap flag : speedup optimize */
-		0,256								/* sprite x,y   */
+		1									/* use tilemap flag : speedup optimize */
 //		0x03ff,0x037f						/* start bank   */
 	};
 	namcos1_driver_init(&splatter_specific);
@@ -872,9 +784,7 @@ void faceoff_driver_init( void )
 	{
 		0x00,0x00,							/* key query , key id */
 		rev1_key_r,rev1_key_w,				/* key handler */
-		BG_POSITIVE_NORMAL,					/* background  */
-		1,									/* use tilemap flag : speedup optimize */
-		0,256								/* sprite x,y   */
+		1									/* use tilemap flag : speedup optimize */
 //		0x03ff,0x03fb						/* start bank   */
 	};
 	namcos1_driver_init(&faceoff_specific);
@@ -890,9 +800,7 @@ void rompers_driver_init( void )
 	{
 		0x00,0x00,							/* key query , key id */
 		rev1_key_r,rev1_key_w,				/* key handler */
-		BG_NEGATIVE_NORMAL,					/* background  */
-		1,									/* use tilemap flag : speedup optimize */
-		0,224								/* sprite x,y   */
+		1									/* use tilemap flag : speedup optimize */
 //		0x03ff,0x03fd						/* start bank   */
 	};
 	namcos1_driver_init(&rompers_specific);
@@ -908,9 +816,7 @@ void blastoff_driver_init( void )
 	{
 		0x00,0x00,							/* key query , key id */
 		rev1_key_r,rev1_key_w,				/* key handler */
-		BG_NEGATIVE_NORMAL,					/* background  */
-		1,									/* use tilemap flag : speedup optimize */
-		-72,240								/* sprite x,y   */
+		1									/* use tilemap flag : speedup optimize */
 //		0x03ff,0x03f7						/* start bank   */
 	};
 	namcos1_driver_init(&blastoff_specific);
@@ -927,9 +833,7 @@ void ws89_driver_init( void )
 	{
 		0x00,0x00,							/* key query , key id */
 		rev1_key_r,rev1_key_w,				/* key handler */
-		BG_POSITIVE_NORMAL,					/* background  */
-		1,									/* use tilemap flag : speedup optimize */
-		0,256								/* sprite x,y   */
+		1									/* use tilemap flag : speedup optimize */
 //		0x03ff,0x03fb						/* start bank   */
 	};
 	namcos1_driver_init(&ws89_specific);
@@ -945,9 +849,7 @@ void dangseed_driver_init( void )
 	{
 		0x00,0x00,							/* key query , key id */
 		rev1_key_r,rev1_key_w,				/* key handler */
-		BG_NEGATIVE_NORMAL,					/* background  */
-		1,									/* use tilemap flag : speedup optimize */
-		-32,256								/* sprite x,y   */
+		1									/* use tilemap flag : speedup optimize */
 //		0x03ff,0x03fb						/* start bank   */
 	};
 	namcos1_driver_init(&dangseed_specific);
@@ -967,9 +869,7 @@ void ws90_driver_init( void )
 	{
 		0x00,0x00,							/* key query , key id */
 		rev1_key_r,rev1_key_w,				/* key handler */
-		BG_POSITIVE_NORMAL,					/* background  */
-		1,									/* use tilemap flag : speedup optimize */
-		0,224								/* sprite x,y   */
+		1									/* use tilemap flag : speedup optimize */
 //		0x03ff,0x03fb						/* start bank   */
 	};
 	namcos1_driver_init(&ws90_specific);
@@ -987,9 +887,7 @@ void pistoldm_driver_init( void )
 	{
 		0x00,0x00,							/* key query , key id */
 		rev1_key_r,rev1_key_w,				/* key handler */
-		BG_NEGATIVE_NORMAL,					/* background  */
-		1,									/* use tilemap flag : speedup optimize */
-		-16,272								/* sprite x,y   */
+		1									/* use tilemap flag : speedup optimize */
 //		0x03ff,0x03f1						/* start bank   */
 	};
 	namcos1_driver_init(&pistoldm_specific);
@@ -1007,9 +905,7 @@ void soukobdx_driver_init( void )
 	{
 		0x00,0x00,							/* key query , key id */
 		rev1_key_r,rev1_key_w,				/* key handler */
-		BG_NEGATIVE_NORMAL,					/* background  */
-		1,									/* use tilemap flag : speedup optimize */
-		0,288								/* sprite x,y   */
+		1									/* use tilemap flag : speedup optimize */
 //		0x03ff,0x03fb						/* start bank   */
 	};
 	namcos1_driver_init(&soukobdx_specific);
@@ -1027,9 +923,7 @@ void tankfrce_driver_init( void )
 	{
 		0x00,0x00,							/* key query , key id */
 		rev1_key_r,rev1_key_w,				/* key handler */
-		BG_POSITIVE_NORMAL,					/* background  */
-		1,									/* use tilemap flag : speedup optimize */
-		0,256								/* sprite x,y   */
+		1									/* use tilemap flag : speedup optimize */
 //		0x03ff,0x03fb						/* start bank   */
 	};
 	namcos1_driver_init(&tankfrce_specific);

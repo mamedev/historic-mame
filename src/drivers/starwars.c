@@ -506,9 +506,9 @@ static struct POKEYinterface pokey_interface =
 
 static struct TMS5220interface tms5220_interface =
 {
-    640000,     /* clock speed (80*samplerate) */
-    50,        /* volume */
-    0           /* IRQ handler */
+	640000,     /* clock speed (80*samplerate) */
+	50,         /* volume */
+	0           /* IRQ handler */
 };
 
 

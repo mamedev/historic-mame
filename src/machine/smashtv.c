@@ -4,17 +4,15 @@
 
 **************************************************************************/
 #include "driver.h"
-#include "osd_cpu.h"
 #include "cpu/tms34010/tms34010.h"
 #include "cpu/m6809/m6809.h"
 #include "6821pia.h"
-#include "vidhrdw/generic.h"
 
 #if LSB_FIRST
-	#define BYTE_XOR_LE(a) (a)
+	#define BYTE_XOR_LE(a)  (a)
 	#define BIG_DWORD_LE(x) (x)
 #else
-	#define BYTE_XOR_LE(a) ( (unsigned char*) ((unsigned int) (a) ^ 1) )
+	#define BYTE_XOR_LE(a)  ((UINT8*)((UINT32)(a) ^ 1))
 	#define BIG_DWORD_LE(x) (((UINT32)(x) >> 16) + ((x) << 16))
 #endif
 
@@ -88,28 +86,30 @@ static unsigned int smashtv_cmos_w_enable=1;
 static unsigned int wms_protect_s=0xffffffff; /* never gets here */
 static unsigned int wms_protect_d=0xffffffff;
 
+static unsigned int term2_analog_select = 0;
+
 static int narc_input_r (int offset)
 {
 	int ans = 0xffff;
 	switch (offset)
 	{
-		case 0:
-			ans = (input_port_1_r (offset) << 8) + (input_port_0_r (offset));
-			break;
-		case 2:
-			ans = (input_port_3_r (offset) << 8) + (input_port_2_r (offset));
-			break;
-		case 4:
-			ans = (input_port_5_r (offset) << 8) + (soundlatch3_r (0));
-			break;
-//		case 6:
-//			ans = (input_port_7_r (offset) << 8) + (input_port_6_r (offset));
-//			break;
-//		case 8:
-//			ans = (input_port_9_r (offset) << 8) + (input_port_8_r (offset));
-//			break;
-		default:
-			if (errorlog) fprintf(errorlog, "CPU #0 PC %08x: warning - read from unmapped bit address %x\n", cpu_get_pc(), (offset<<3));
+	case 0:
+		ans = (input_port_1_r (offset) << 8) + (input_port_0_r (offset));
+		break;
+	case 2:
+		ans = (input_port_3_r (offset) << 8) + (input_port_2_r (offset));
+		break;
+	case 4:
+		ans = (input_port_5_r (offset) << 8) + (soundlatch3_r (0));
+		break;
+//	case 6:
+//		ans = (input_port_7_r (offset) << 8) + (input_port_6_r (offset));
+//		break;
+//	case 8:
+//		ans = (input_port_9_r (offset) << 8) + (input_port_8_r (offset));
+//		break;
+	default:
+		if (errorlog) fprintf(errorlog, "CPU #0 PC %08x: warning - read from unmapped bit address %x\n", cpu_get_pc(), (offset<<3));
 	}
 	return ans;
 }
@@ -118,23 +118,55 @@ int wms_input_r (int offset)
 	int ans = 0xffff;
 	switch (offset)
 	{
-		case 0:
-			ans = (input_port_1_r (offset) << 8) + (input_port_0_r (offset));
-			break;
-		case 2:
-			ans = (input_port_3_r (offset) << 8) + (input_port_2_r (offset));
-			break;
-		case 4:
-			ans = (input_port_5_r (offset) << 8) + (input_port_4_r (offset));
-			break;
-		case 6:
-			ans = (input_port_7_r (offset) << 8) + (input_port_6_r (offset));
-			break;
-		case 8:
-			ans = (input_port_9_r (offset) << 8) + (input_port_8_r (offset));
-			break;
-		default:
-			if (errorlog) fprintf(errorlog, "CPU #0 PC %08x: warning - read from unmapped bit address %x\n", cpu_get_pc(), (offset<<3));
+	case 0:
+		ans = (input_port_1_r (offset) << 8) + (input_port_0_r (offset));
+		break;
+	case 2:
+		ans = (input_port_3_r (offset) << 8) + (input_port_2_r (offset));
+		break;
+	case 4:
+		ans = (input_port_5_r (offset) << 8) + (input_port_4_r (offset));
+		break;
+	case 6:
+		ans = (input_port_7_r (offset) << 8) + (input_port_6_r (offset));
+		break;
+	case 8:
+		ans = (input_port_9_r (offset) << 8) + (input_port_8_r (offset));
+		break;
+	default:
+		if (errorlog) fprintf(errorlog, "CPU #0 PC %08x: warning - read from unmapped bit address %x\n", cpu_get_pc(), (offset<<3));
+	}
+	return ans;
+}
+static int term2_input_r (int offset)
+{
+	int ans = 0xffff;
+	switch (offset)
+	{
+	case 0:
+		ans = (input_port_1_r (offset) << 8) + (input_port_0_r (offset));
+		break;
+	case 2:
+		ans = (input_port_3_r (offset) << 8) + (input_port_2_r (offset));
+		break;
+	case 4:
+		ans = (input_port_5_r (offset) << 8);
+		switch (term2_analog_select)
+		{
+		case 0:  ans |= input_port_4_r  (offset);  break;
+		case 1:  ans |= input_port_10_r (offset);  break;
+		case 2:  ans |= input_port_11_r (offset);  break;
+		case 3:  ans |= input_port_12_r (offset);  break;
+		}
+		break;
+	case 6:
+		ans = (input_port_7_r (offset) << 8) + (input_port_6_r (offset));
+		break;
+	case 8:
+		ans = (input_port_9_r (offset) << 8) + (input_port_8_r (offset));
+		break;
+	default:
+		if (errorlog) fprintf(errorlog, "CPU #0 PC %08x: warning - read from unmapped bit address %x\n", cpu_get_pc(), (offset<<3));
 	}
 	return ans;
 }
@@ -144,19 +176,29 @@ static int term2_input_lo_r (int offset)
 	int ans = 0xffff;
 	switch (offset)
 	{
-//		case 0:
-//			ans = (input_port_5_r (offset) << 8) + (input_port_4_r (offset));
-//			break;
-//		case 2:
-//			ans = (input_port_7_r (offset) << 8) + (input_port_6_r (offset));
-//			break;
-//		case 4:
-//			ans = (input_port_9_r (offset) << 8) + (input_port_8_r (offset));
-//			break;
-		default:
-			if (errorlog) fprintf(errorlog, "CPU #0 PC %08x: warning - read from unmapped bit address %x\n", cpu_get_pc(), (offset<<3));
+//	case 0:
+//		ans = (input_port_5_r (offset) << 8) + (input_port_4_r (offset));
+//		break;
+//	case 2:
+//		ans = (input_port_7_r (offset) << 8) + (input_port_6_r (offset));
+//		break;
+//	case 4:
+//		ans = (input_port_9_r (offset) << 8) + (input_port_8_r (offset));
+//		break;
+	default:
+		if (errorlog) fprintf(errorlog, "CPU #0 PC %08x: warning - read from unmapped bit address %x\n", cpu_get_pc(), (offset<<3));
 	}
 	return ans;
+}
+
+static void term2_sound_w (int offset,int data)
+{
+	if (offset == 0)
+	{
+		term2_analog_select = (data >> 0x0c) & 0x03;
+	}
+
+	mk_sound_w(offset, data);
 }
 
 static void dma_callback(int param)
@@ -194,7 +236,7 @@ int wms_dma_r(int offset)
 		case 0xff82e200: /* nbajam */
 			cpu_spinuntil_int();
 			wms_dma_stat=0;
-			break;
+		break;
 
 		default:
 //			if (errorlog) fprintf(errorlog, "CPU #0 PC %08x: read hi dma\n", cpu_get_pc());
@@ -213,47 +255,47 @@ int wms_dma_r(int offset)
  *																						 *
  *****************************************************************************************/
 
-#define DMA_DRAW_NONZERO_BYTES(data,advance)        	   \
-	if (write_cols >= 0)								   \
-	{												       \
-		pal = wms_dma_pal;								   \
-		line_skip = 511 - write_cols; 			           \
-		wrva = &(wms_videoram[wms_dma_dst]);               \
-		for (i=wms_dma_write_rows;i;i--)				   \
-		{                                                  \
-			j=write_cols;						           \
-			do											   \
-			{                                              \
-				if ((write_data = *BYTE_XOR_LE(rda)))	   \
-				{                                          \
-					*wrva = pal | (data); 		   		   \
-				}                                          \
-				rda##advance;							   \
-				wrva++;                                    \
-			}											   \
-			while (j--); 								   \
-			rda+=dma_skip;                             	   \
-			wrva+=line_skip;                               \
-		}												   \
+#define DMA_DRAW_NONZERO_BYTES(data,advance)			\
+	if (write_cols >= 0)								\
+	{													\
+		pal = wms_dma_pal;								\
+		line_skip = 511 - write_cols; 					\
+		wrva = &(wms_videoram[wms_dma_dst]);			\
+		for (i=wms_dma_write_rows;i;i--)				\
+		{												\
+			j=write_cols;								\
+			do											\
+			{											\
+				if ((write_data = *BYTE_XOR_LE(rda)))	\
+				{										\
+					*wrva = pal | (data);				\
+				}										\
+				rda##advance;							\
+				wrva++;									\
+			}											\
+			while (j--); 								\
+			rda+=dma_skip;								\
+			wrva+=line_skip;							\
+		}												\
 	}
 
-#define DMA_DRAW_ALL_BYTES(data)                       	   \
-	if (write_cols >= 0)								   \
-	{												   	   \
-		pal = wms_dma_pal;								   \
-		line_skip = 511 - write_cols;                      \
-		wrva = &(wms_videoram[wms_dma_dst]);               \
-		for (i=wms_dma_write_rows;i;i--)				   \
-		{                                                  \
-			j=write_cols;						           \
-			do											   \
-			{                                              \
-				*(wrva++) = pal | (data); 		           \
-			}											   \
-			while (j--);  								   \
-			rda+=dma_skip;                                 \
-			wrva+=line_skip;                               \
-		}												   \
+#define DMA_DRAW_ALL_BYTES(data)						\
+	if (write_cols >= 0)								\
+	{													\
+		pal = wms_dma_pal;								\
+		line_skip = 511 - write_cols;					\
+		wrva = &(wms_videoram[wms_dma_dst]);			\
+		for (i=wms_dma_write_rows;i;i--)				\
+		{												\
+			j=write_cols;								\
+			do											\
+			{											\
+				*(wrva++) = pal | (data);				\
+			}											\
+			while (j--);								\
+			rda+=dma_skip;								\
+			wrva+=line_skip;							\
+		}												\
 	}
 
 void wms_dma_w(int offset, int data)
@@ -265,139 +307,139 @@ void wms_dma_w(int offset, int data)
 
 	switch (offset)
 	{
-		case 0:
-			write_cols = (wms_dma_cols+wms_dma_x<512?wms_dma_cols:512-wms_dma_x)-1;  /* Note the -1 */
-			wms_dma_write_rows = (wms_dma_rows+wms_dma_y<512?wms_dma_rows:512-wms_dma_y);
-			wms_dma_dst = ((wms_dma_y<<9) + (wms_dma_x)); /* byte addr */
-			rda = &(GFX_ROM[wms_dma_bank+wms_dma_subbank]);
-			wms_dma_stat = data;
+	case 0:
+		write_cols = (wms_dma_cols+wms_dma_x<512?wms_dma_cols:512-wms_dma_x)-1;  /* Note the -1 */
+		wms_dma_write_rows = (wms_dma_rows+wms_dma_y<512?wms_dma_rows:512-wms_dma_y);
+		wms_dma_dst = ((wms_dma_y<<9) + (wms_dma_x)); /* byte addr */
+		rda = &(GFX_ROM[wms_dma_bank+wms_dma_subbank]);
+		wms_dma_stat = data;
 
-					if (errorlog) fprintf(errorlog, "\nCPU #0 PC %08x: DMA command %04x:\n",cpu_get_pc(), data);
-					if (errorlog) fprintf(errorlog, "%04x %04x x%04x y%04x  c%04x r%04x p%04x c%04x\n",wms_dma_subbank, wms_dma_bank, wms_dma_x, wms_dma_y, wms_dma_cols, wms_dma_rows, wms_dma_pal, wms_dma_fgcol );
-			/*
-			 * DMA registers
-			 * ------------------
-			 *
-			 *  Register | Bit              | Use
-			 * ----------+-FEDCBA9876543210-+------------
-			 *     0     | x--------------- | trigger write (or clear if zero)
-			 *           | ---184-1-------- | unknown
-			 *           | ----------x----- | flip y
-			 *           | -----------x---- | flip x
-			 *           | ------------x--- | blit nonzero pixels as color
-			 *           | -------------x-- | blit zero pixels as color
-			 *           | --------------x- | blit nonzero pixels
-			 *           | ---------------x | blit zero pixels
-			 *     1     | xxxxxxxxxxxxxxxx | width offset
-			 *     2     | xxxxxxxxxxxxxxxx | source address low word
-			 *     3     | xxxxxxxxxxxxxxxx | source address high word
-			 *     4     | xxxxxxxxxxxxxxxx | detination x
-			 *     5     | xxxxxxxxxxxxxxxx | destination y
-			 *     6     | xxxxxxxxxxxxxxxx | image columns
-			 *     7     | xxxxxxxxxxxxxxxx | image rows
-			 *     8     | xxxxxxxxxxxxxxxx | palette
-			 *     9     | xxxxxxxxxxxxxxxx | color
-			 */
-			switch(data&0x803f)
-			{
-				case 0x0000: /* clear registers */
-					dma_skip=0;
-					wms_dma_cols=0;
-					wms_dma_rows=0;
-					wms_dma_pal=0;
-					wms_dma_fgcol=0;
-					break;
-				case 0x8000: /* draw nothing */
-					break;
-				case 0x8002: /* draw only nonzero pixels */
-					dma_skip = ((wms_dma_cols + wms_dma_woffset+3)&(~3)) - wms_dma_cols;
-					DMA_DRAW_NONZERO_BYTES(write_data,++);
-					break;
-				case 0x8003: /* draw all pixels */
-					dma_skip = ((wms_dma_cols + wms_dma_woffset+3)&(~3)) - wms_dma_cols;
-					DMA_DRAW_ALL_BYTES(*BYTE_XOR_LE(rda++));
-					break;
-				case 0x8006: /* draw nonzero pixels, zero as color */
-					dma_skip = ((wms_dma_cols + wms_dma_woffset+3)&(~3)) - wms_dma_cols;
-					DMA_DRAW_ALL_BYTES((*BYTE_XOR_LE(rda++)?*BYTE_XOR_LE(rda-1):wms_dma_fgcol));
-					break;
-				case 0x800a: /* ????? */
-				case 0x8008: /* draw nonzero pixels as color */
-					dma_skip = ((wms_dma_cols + wms_dma_woffset+3)&(~3)) - wms_dma_cols;
-					DMA_DRAW_NONZERO_BYTES(wms_dma_fgcol,++);
-					break;
-				case 0x8009: /* draw nonzero pixels as color, zero as zero */
-					dma_skip = ((wms_dma_cols + wms_dma_woffset+3)&(~3)) - wms_dma_cols;
-					DMA_DRAW_ALL_BYTES((*BYTE_XOR_LE(rda++)?wms_dma_fgcol:0));
-					break;
-				case 0x800e: /* ????? */
-				case 0x800c: /* draw all pixels as color (fill) */
-					DMA_DRAW_ALL_BYTES(wms_dma_fgcol);
-					break;
-				case 0x8010: /* draw nothing */
-					break;
-				case 0x8012: /* draw nonzero pixels x-flipped */
-					dma_skip = ((wms_dma_woffset + 3 - wms_dma_cols)&(~3)) + wms_dma_cols;
-					DMA_DRAW_NONZERO_BYTES(write_data,--);
-					break;
-				case 0x8013: /* draw all pixels x-flipped */
-					dma_skip = ((wms_dma_woffset + 3 - wms_dma_cols)&(~3)) + wms_dma_cols;
-					DMA_DRAW_ALL_BYTES(*BYTE_XOR_LE(rda--));
-					break;
-				case 0x801a: /* ????? */
-				case 0x8018: /* draw nonzero pixels as color x-flipped */
-					dma_skip = ((wms_dma_woffset + 3 - wms_dma_cols)&(~3)) + wms_dma_cols;
-					DMA_DRAW_NONZERO_BYTES(wms_dma_fgcol,--);
-					break;
-				case 0x8022: /* draw nonzero pixels y-flipped */
-					dma_skip = ((wms_dma_cols + wms_dma_woffset+3)&(~3)) - wms_dma_cols;
-					DMA_DRAW_NONZERO_BYTES(write_data,++);
-					break;
-				case 0x8032: /* draw nonzero pixels x-flipped and y-flipped */
-					dma_skip = ((wms_dma_woffset + 3 - wms_dma_cols)&(~3)) + wms_dma_cols;
-					DMA_DRAW_NONZERO_BYTES(write_data,--);
-					break;
-				default:
-					if (errorlog) fprintf(errorlog, "\nCPU #0 PC %08x: unhandled DMA command %04x:\n",cpu_get_pc(), data);
-					if (errorlog) fprintf(errorlog, "%04x %04x x%04x y%04x  c%04x r%04x p%04x c%04x\n",wms_dma_subbank, wms_dma_bank, wms_dma_x, wms_dma_y, wms_dma_cols, wms_dma_rows, wms_dma_pal, wms_dma_fgcol );
-					break;
-			}
-			/*
-			 * One pixel every 41 ns (1e-9 sec)
-			 */
-			timer_set (TIME_IN_NSEC(41*wms_dma_cols*wms_dma_rows), data, dma_callback);
+//		if (errorlog) fprintf(errorlog, "\nCPU #0 PC %08x: DMA command %04x:\n",cpu_get_pc(), data);
+//		if (errorlog) fprintf(errorlog, "%04x %04x x%04x y%04x  c%04x r%04x p%04x c%04x\n",wms_dma_subbank, wms_dma_bank, wms_dma_x, wms_dma_y, wms_dma_cols, wms_dma_rows, wms_dma_pal, wms_dma_fgcol );
+		/*
+		 * DMA registers
+		 * ------------------
+		 *
+		 *  Register | Bit              | Use
+		 * ----------+-FEDCBA9876543210-+------------
+		 *     0     | x--------------- | trigger write (or clear if zero)
+		 *           | ---184-1-------- | unknown
+		 *           | ----------x----- | flip y
+		 *           | -----------x---- | flip x
+		 *           | ------------x--- | blit nonzero pixels as color
+		 *           | -------------x-- | blit zero pixels as color
+		 *           | --------------x- | blit nonzero pixels
+		 *           | ---------------x | blit zero pixels
+		 *     1     | xxxxxxxxxxxxxxxx | width offset
+		 *     2     | xxxxxxxxxxxxxxxx | source address low word
+		 *     3     | xxxxxxxxxxxxxxxx | source address high word
+		 *     4     | xxxxxxxxxxxxxxxx | detination x
+		 *     5     | xxxxxxxxxxxxxxxx | destination y
+		 *     6     | xxxxxxxxxxxxxxxx | image columns
+		 *     7     | xxxxxxxxxxxxxxxx | image rows
+		 *     8     | xxxxxxxxxxxxxxxx | palette
+		 *     9     | xxxxxxxxxxxxxxxx | color
+		 */
+		switch(data&0x803f)
+		{
+		case 0x0000: /* clear registers */
+			dma_skip=0;
+			wms_dma_cols=0;
+			wms_dma_rows=0;
+			wms_dma_pal=0;
+			wms_dma_fgcol=0;
 			break;
-		case 2:
-			wms_dma_woffset = data;
+		case 0x8000: /* draw nothing */
 			break;
-		case 4:
-			wms_dma_subbank = data>>3;
+		case 0x8002: /* draw only nonzero pixels */
+			dma_skip = ((wms_dma_cols + wms_dma_woffset+3)&(~3)) - wms_dma_cols;
+			DMA_DRAW_NONZERO_BYTES(write_data,++);
 			break;
-		case 6:
-			wms_dma_bank = ((data&0xfe00)?(data-0x200)*0x2000:data*0x2000);
+		case 0x8003: /* draw all pixels */
+			dma_skip = ((wms_dma_cols + wms_dma_woffset+3)&(~3)) - wms_dma_cols;
+			DMA_DRAW_ALL_BYTES(*BYTE_XOR_LE(rda++));
 			break;
-		case 8:
-			wms_dma_x = data&0x1ff;
+		case 0x8006: /* draw nonzero pixels, zero as color */
+			dma_skip = ((wms_dma_cols + wms_dma_woffset+3)&(~3)) - wms_dma_cols;
+			DMA_DRAW_ALL_BYTES((*BYTE_XOR_LE(rda++)?*BYTE_XOR_LE(rda-1):wms_dma_fgcol));
 			break;
-		case 0x0a:
-			wms_dma_y = data&0x1ff;
+		case 0x800a: /* ????? */
+		case 0x8008: /* draw nonzero pixels as color */
+			dma_skip = ((wms_dma_cols + wms_dma_woffset+3)&(~3)) - wms_dma_cols;
+			DMA_DRAW_NONZERO_BYTES(wms_dma_fgcol,++);
 			break;
-		case 0x0c:
-			wms_dma_cols = data;
-			dma_skip = data;
+		case 0x8009: /* draw nonzero pixels as color, zero as zero */
+			dma_skip = ((wms_dma_cols + wms_dma_woffset+3)&(~3)) - wms_dma_cols;
+			DMA_DRAW_ALL_BYTES((*BYTE_XOR_LE(rda++)?wms_dma_fgcol:0));
 			break;
-		case 0x0e:
-			wms_dma_rows = data;
+		case 0x800e: /* ????? */
+		case 0x800c: /* draw all pixels as color (fill) */
+			DMA_DRAW_ALL_BYTES(wms_dma_fgcol);
 			break;
-		case 0x10:  /* set palette */
-    		wms_dma_pal = (data&0xff) << 8;
-			wms_dma_pal_word = data;
-    		break;
-		case 0x12:  /* set color for 1-bit */
-			wms_dma_fgcol = data&0xff;
+		case 0x8010: /* draw nothing */
+			break;
+		case 0x8012: /* draw nonzero pixels x-flipped */
+			dma_skip = ((wms_dma_woffset + 3 - wms_dma_cols)&(~3)) + wms_dma_cols;
+			DMA_DRAW_NONZERO_BYTES(write_data,--);
+			break;
+		case 0x8013: /* draw all pixels x-flipped */
+			dma_skip = ((wms_dma_woffset + 3 - wms_dma_cols)&(~3)) + wms_dma_cols;
+			DMA_DRAW_ALL_BYTES(*BYTE_XOR_LE(rda--));
+			break;
+		case 0x801a: /* ????? */
+		case 0x8018: /* draw nonzero pixels as color x-flipped */
+			dma_skip = ((wms_dma_woffset + 3 - wms_dma_cols)&(~3)) + wms_dma_cols;
+			DMA_DRAW_NONZERO_BYTES(wms_dma_fgcol,--);
+			break;
+		case 0x8022: /* draw nonzero pixels y-flipped */
+			dma_skip = ((wms_dma_cols + wms_dma_woffset+3)&(~3)) - wms_dma_cols;
+			DMA_DRAW_NONZERO_BYTES(write_data,++);
+			break;
+		case 0x8032: /* draw nonzero pixels x-flipped and y-flipped */
+			dma_skip = ((wms_dma_woffset + 3 - wms_dma_cols)&(~3)) + wms_dma_cols;
+			DMA_DRAW_NONZERO_BYTES(write_data,--);
 			break;
 		default:
+			if (errorlog) fprintf(errorlog, "\nCPU #0 PC %08x: unhandled DMA command %04x:\n",cpu_get_pc(), data);
+			if (errorlog) fprintf(errorlog, "%04x %04x x%04x y%04x  c%04x r%04x p%04x c%04x\n",wms_dma_subbank, wms_dma_bank, wms_dma_x, wms_dma_y, wms_dma_cols, wms_dma_rows, wms_dma_pal, wms_dma_fgcol );
 			break;
+		}
+		/*
+		 * One pixel every 41 ns (1e-9 sec)
+		 */
+		timer_set (TIME_IN_NSEC(41*wms_dma_cols*wms_dma_rows), data, dma_callback);
+		break;
+	case 2:
+		wms_dma_woffset = data;
+		break;
+	case 4:
+		wms_dma_subbank = data>>3;
+		break;
+	case 6:
+		wms_dma_bank = ((data&0xfe00)?(data-0x200)*0x2000:data*0x2000);
+		break;
+	case 8:
+		wms_dma_x = data&0x1ff;
+		break;
+	case 0x0a:
+		wms_dma_y = data&0x1ff;
+		break;
+	case 0x0c:
+		wms_dma_cols = data;
+		dma_skip = data;
+		break;
+	case 0x0e:
+		wms_dma_rows = data;
+		break;
+	case 0x10:  /* set palette */
+		wms_dma_pal = (data&0xff) << 8;
+		wms_dma_pal_word = data;
+		break;
+	case 0x12:  /* set color for 1-bit */
+		wms_dma_fgcol = data&0xff;
+		break;
+	default:
+		break;
 	}
 }
 
@@ -406,29 +448,29 @@ void wms_dma_w(int offset, int data)
 	{															\
 		switch(wms_dma_8pos&0x07)								\
 		{														\
-			case 0:												\
-				write_data = (*BYTE_XOR_LE(rda))&0x0f;			\
-				break;											\
-			case 1:												\
-			case 2:												\
-			case 3:												\
-				write_data = (((*BYTE_XOR_LE(rda))>>(wms_dma_8pos&0x07))&0x0f); \
-				break;											\
-			case 4:												\
-				write_data = (((*BYTE_XOR_LE(rda++))>>4)&0x0f);	\
-				break;											\
-			case 5:												\
-				write_data = (((*BYTE_XOR_LE(rda++))>>5)&0x07);	\
-				write_data |= (((*BYTE_XOR_LE(rda))<<3)&0x08);	\
-				break;											\
-			case 6:												\
-				write_data = (((*BYTE_XOR_LE(rda++))>>6)&0x03);	\
-				write_data |= (((*BYTE_XOR_LE(rda))<<2)&0x0c);	\
-				break;											\
-			case 7:												\
-				write_data = (((*BYTE_XOR_LE(rda++))>>7)&0x01);	\
-				write_data |= (((*BYTE_XOR_LE(rda))<<1)&0x0e);	\
-				break;											\
+		case 0:													\
+			write_data = (*BYTE_XOR_LE(rda))&0x0f;				\
+			break;												\
+		case 1:													\
+		case 2:													\
+		case 3:													\
+			write_data = (((*BYTE_XOR_LE(rda))>>(wms_dma_8pos&0x07))&0x0f); \
+			break;												\
+		case 4:													\
+			write_data = (((*BYTE_XOR_LE(rda++))>>4)&0x0f);		\
+			break;												\
+		case 5:													\
+			write_data = (((*BYTE_XOR_LE(rda++))>>5)&0x07);		\
+			write_data |= (((*BYTE_XOR_LE(rda))<<3)&0x08);		\
+			break;												\
+		case 6:													\
+			write_data = (((*BYTE_XOR_LE(rda++))>>6)&0x03);		\
+			write_data |= (((*BYTE_XOR_LE(rda))<<2)&0x0c);		\
+			break;												\
+		case 7:													\
+			write_data = (((*BYTE_XOR_LE(rda++))>>7)&0x01);		\
+			write_data |= (((*BYTE_XOR_LE(rda))<<1)&0x0e);		\
+			break;												\
 		}														\
 		if (j)													\
 		{														\
@@ -448,18 +490,18 @@ void wms_dma_w(int offset, int data)
 	{															\
 		switch(wms_dma_8pos&0x07)								\
 		{														\
-			case 0:  /* 0x00 - 0x06 */							\
-			case 1:												\
-			case 2:												\
-			case 3:												\
-			case 4:												\
-			case 5:												\
-			case 6:												\
-				write_data = ((*BYTE_XOR_LE(rda))>>(wms_dma_8pos&0x07))&0x01;	\
-				break;											\
-			case 7:  /* 0x07 */									\
-				write_data = (((*BYTE_XOR_LE(rda++))>>7)&0x01);	\
-				break;											\
+		case 0:  /* 0x00 - 0x06 */								\
+		case 1:													\
+		case 2:													\
+		case 3:													\
+		case 4:													\
+		case 5:													\
+		case 6:													\
+			write_data = ((*BYTE_XOR_LE(rda))>>(wms_dma_8pos&0x07))&0x01;	\
+			break;												\
+		case 7:  /* 0x07 */										\
+			write_data = (((*BYTE_XOR_LE(rda++))>>7)&0x01);		\
+			break;												\
 		}														\
 		if (check)												\
 		{														\
@@ -474,31 +516,31 @@ void wms_dma_w(int offset, int data)
 	{															\
 		switch(wms_dma_8pos&0x07)								\
 		{														\
-			case 0:												\
-				write_data = (*BYTE_XOR_LE(rda))&0x03;			\
-				break;											\
-			case 1:												\
-				write_data = (((*BYTE_XOR_LE(rda))>>1)&0x03);	\
-				break;											\
-			case 2:												\
-				write_data = (((*BYTE_XOR_LE(rda))>>2)&0x03);	\
-				break;											\
-			case 3:												\
-				write_data = (((*BYTE_XOR_LE(rda))>>3)&0x03);	\
-				break;											\
-			case 4:												\
-				write_data = (((*BYTE_XOR_LE(rda))>>4)&0x03);	\
-				break;											\
-			case 5:												\
-				write_data = (((*BYTE_XOR_LE(rda))>>5)&0x03);	\
-				break;											\
-			case 6:												\
-				write_data = (((*BYTE_XOR_LE(rda++))>>6)&0x03);	\
-				break;											\
-			case 7:												\
-				write_data = (((*BYTE_XOR_LE(rda++))>>7)&0x01);	\
-				write_data |= (((*BYTE_XOR_LE(rda))<<1)&0x02);	\
-				break;											\
+		case 0:													\
+			write_data = (*BYTE_XOR_LE(rda))&0x03;				\
+			break;												\
+		case 1:													\
+			write_data = (((*BYTE_XOR_LE(rda))>>1)&0x03);		\
+			break;												\
+		case 2:													\
+			write_data = (((*BYTE_XOR_LE(rda))>>2)&0x03);		\
+			break;												\
+		case 3:													\
+			write_data = (((*BYTE_XOR_LE(rda))>>3)&0x03);		\
+			break;												\
+		case 4:													\
+			write_data = (((*BYTE_XOR_LE(rda))>>4)&0x03);		\
+			break;												\
+		case 5:													\
+			write_data = (((*BYTE_XOR_LE(rda))>>5)&0x03);		\
+			break;												\
+		case 6:													\
+			write_data = (((*BYTE_XOR_LE(rda++))>>6)&0x03);		\
+			break;												\
+		case 7:													\
+			write_data = (((*BYTE_XOR_LE(rda++))>>7)&0x01);		\
+			write_data |= (((*BYTE_XOR_LE(rda))<<1)&0x02);		\
+			break;												\
 		}														\
 		if (check)												\
 		{														\
@@ -513,32 +555,32 @@ void wms_dma_w(int offset, int data)
 	{															\
 		switch(wms_dma_8pos&0x07)								\
 		{														\
-			case 0:												\
-				write_data = (*BYTE_XOR_LE(rda))&0x07;			\
-				break;											\
-			case 1:												\
-				write_data = (((*BYTE_XOR_LE(rda))>>1)&0x07);	\
-				break;											\
-			case 2:												\
-				write_data = (((*BYTE_XOR_LE(rda))>>2)&0x07);	\
-				break;											\
-			case 3:												\
-				write_data = (((*BYTE_XOR_LE(rda))>>3)&0x07);	\
-				break;											\
-			case 4:												\
-				write_data = (((*BYTE_XOR_LE(rda))>>4)&0x07);	\
-				break;											\
-			case 5:												\
-				write_data = (((*BYTE_XOR_LE(rda++))>>5)&0x07);	\
-				break;											\
-			case 6:												\
-				write_data = (((*BYTE_XOR_LE(rda++))>>6)&0x03);	\
-				write_data |= (((*BYTE_XOR_LE(rda))<<2)&0x04);	\
-				break;											\
-			case 7:												\
-				write_data = (((*BYTE_XOR_LE(rda++))>>7)&0x01);	\
-				write_data |= (((*BYTE_XOR_LE(rda))<<1)&0x06);	\
-				break;											\
+		case 0:													\
+			write_data = (*BYTE_XOR_LE(rda))&0x07;				\
+			break;												\
+		case 1:													\
+			write_data = (((*BYTE_XOR_LE(rda))>>1)&0x07);		\
+			break;												\
+		case 2:													\
+			write_data = (((*BYTE_XOR_LE(rda))>>2)&0x07);		\
+			break;												\
+		case 3:													\
+			write_data = (((*BYTE_XOR_LE(rda))>>3)&0x07);		\
+			break;												\
+		case 4:													\
+			write_data = (((*BYTE_XOR_LE(rda))>>4)&0x07);		\
+			break;												\
+		case 5:													\
+			write_data = (((*BYTE_XOR_LE(rda++))>>5)&0x07);		\
+			break;												\
+		case 6:													\
+			write_data = (((*BYTE_XOR_LE(rda++))>>6)&0x03);		\
+			write_data |= (((*BYTE_XOR_LE(rda))<<2)&0x04);		\
+			break;												\
+		case 7:													\
+			write_data = (((*BYTE_XOR_LE(rda++))>>7)&0x01);		\
+			write_data |= (((*BYTE_XOR_LE(rda))<<1)&0x06);		\
+			break;												\
 		}														\
 		if (check)												\
 		{														\
@@ -553,33 +595,33 @@ void wms_dma_w(int offset, int data)
 	{															\
 		switch(wms_dma_8pos&0x07)								\
 		{														\
-			case 0:												\
-				write_data = (*BYTE_XOR_LE(rda))&0x0f;			\
-				break;											\
-			case 1:												\
-				write_data = (((*BYTE_XOR_LE(rda))>>1)&0x0f);	\
-				break;											\
-			case 2:												\
-				write_data = (((*BYTE_XOR_LE(rda))>>2)&0x0f);	\
-				break;											\
-			case 3:												\
-				write_data = (((*BYTE_XOR_LE(rda))>>3)&0x0f);	\
-				break;											\
-			case 4:												\
-				write_data = (((*BYTE_XOR_LE(rda++))>>4)&0x0f);	\
-				break;											\
-			case 5:												\
-				write_data = (((*BYTE_XOR_LE(rda++))>>5)&0x07);	\
-				write_data |= (((*BYTE_XOR_LE(rda))<<3)&0x08);	\
-				break;											\
-			case 6:												\
-				write_data = (((*BYTE_XOR_LE(rda++))>>6)&0x03);	\
-				write_data |= (((*BYTE_XOR_LE(rda))<<2)&0x0c);	\
-				break;											\
-			case 7:												\
-				write_data = (((*BYTE_XOR_LE(rda++))>>7)&0x01);	\
-				write_data |= (((*BYTE_XOR_LE(rda))<<1)&0x0e);	\
-				break;											\
+		case 0:													\
+			write_data = (*BYTE_XOR_LE(rda))&0x0f;				\
+			break;												\
+		case 1:													\
+			write_data = (((*BYTE_XOR_LE(rda))>>1)&0x0f);		\
+			break;												\
+		case 2:													\
+			write_data = (((*BYTE_XOR_LE(rda))>>2)&0x0f);		\
+			break;												\
+		case 3:													\
+			write_data = (((*BYTE_XOR_LE(rda))>>3)&0x0f);		\
+			break;												\
+		case 4:													\
+			write_data = (((*BYTE_XOR_LE(rda++))>>4)&0x0f);		\
+			break;												\
+		case 5:													\
+			write_data = (((*BYTE_XOR_LE(rda++))>>5)&0x07);		\
+			write_data |= (((*BYTE_XOR_LE(rda))<<3)&0x08);		\
+			break;												\
+		case 6:													\
+			write_data = (((*BYTE_XOR_LE(rda++))>>6)&0x03);		\
+			write_data |= (((*BYTE_XOR_LE(rda))<<2)&0x0c);		\
+			break;												\
+		case 7:													\
+			write_data = (((*BYTE_XOR_LE(rda++))>>7)&0x01);		\
+			write_data |= (((*BYTE_XOR_LE(rda))<<1)&0x0e);		\
+			break;												\
 		}														\
 		if (check)												\
 		{														\
@@ -594,34 +636,34 @@ void wms_dma_w(int offset, int data)
 	{															\
 		switch(wms_dma_8pos&0x07)								\
 		{														\
-			case 0:												\
-				write_data = (*BYTE_XOR_LE(rda))&0x1f;			\
-				break;											\
-			case 1:												\
-				write_data = (((*BYTE_XOR_LE(rda))>>1)&0x1f);	\
-				break;											\
-			case 2:												\
-				write_data = (((*BYTE_XOR_LE(rda))>>2)&0x1f);	\
-				break;											\
-			case 3:												\
-				write_data = (((*BYTE_XOR_LE(rda++))>>3)&0x1f);	\
-				break;											\
-			case 4:												\
-				write_data = (((*BYTE_XOR_LE(rda++))>>4)&0x0f);	\
-				write_data |= (((*BYTE_XOR_LE(rda))<<4)&0x10);	\
-				break;											\
-			case 5:												\
-				write_data = (((*BYTE_XOR_LE(rda++))>>5)&0x07);	\
-				write_data |= (((*BYTE_XOR_LE(rda))<<3)&0x18);	\
-				break;											\
-			case 6:												\
-				write_data = (((*BYTE_XOR_LE(rda++))>>6)&0x03);	\
-				write_data |= (((*BYTE_XOR_LE(rda))<<2)&0x1c);	\
-				break;											\
-			case 7:												\
-				write_data = (((*BYTE_XOR_LE(rda++))>>7)&0x01);	\
-				write_data |= (((*BYTE_XOR_LE(rda))<<1)&0x1e);	\
-				break;											\
+		case 0:													\
+			write_data = (*BYTE_XOR_LE(rda))&0x1f;				\
+			break;												\
+		case 1:													\
+			write_data = (((*BYTE_XOR_LE(rda))>>1)&0x1f);		\
+			break;												\
+		case 2:													\
+			write_data = (((*BYTE_XOR_LE(rda))>>2)&0x1f);		\
+			break;												\
+		case 3:													\
+			write_data = (((*BYTE_XOR_LE(rda++))>>3)&0x1f);		\
+			break;												\
+		case 4:													\
+			write_data = (((*BYTE_XOR_LE(rda++))>>4)&0x0f);		\
+			write_data |= (((*BYTE_XOR_LE(rda))<<4)&0x10);		\
+			break;												\
+		case 5:													\
+			write_data = (((*BYTE_XOR_LE(rda++))>>5)&0x07);		\
+			write_data |= (((*BYTE_XOR_LE(rda))<<3)&0x18);		\
+			break;												\
+		case 6:													\
+			write_data = (((*BYTE_XOR_LE(rda++))>>6)&0x03);		\
+			write_data |= (((*BYTE_XOR_LE(rda))<<2)&0x1c);		\
+			break;												\
+		case 7:													\
+			write_data = (((*BYTE_XOR_LE(rda++))>>7)&0x01);		\
+			write_data |= (((*BYTE_XOR_LE(rda))<<1)&0x1e);		\
+			break;												\
 		}														\
 		if (check)												\
 		{														\
@@ -636,35 +678,35 @@ void wms_dma_w(int offset, int data)
 	{															\
 		switch(wms_dma_8pos&0x07)								\
 		{														\
-			case 0:												\
-				write_data = (*BYTE_XOR_LE(rda))&0x3f;			\
-				break;											\
-			case 1:												\
-				write_data = (((*BYTE_XOR_LE(rda))>>1)&0x3f);	\
-				break;											\
-			case 2:												\
-				write_data = (((*BYTE_XOR_LE(rda++))>>2)&0x3f);	\
-				break;											\
-			case 3:												\
-				write_data = (((*BYTE_XOR_LE(rda++))>>3)&0x1f);	\
-				write_data |= (((*BYTE_XOR_LE(rda))<<5)&0x20);	\
-				break;											\
-			case 4:												\
-				write_data = (((*BYTE_XOR_LE(rda++))>>4)&0x0f);	\
-				write_data |= (((*BYTE_XOR_LE(rda))<<4)&0x30);	\
-				break;											\
-			case 5:												\
-				write_data = (((*BYTE_XOR_LE(rda++))>>5)&0x07);	\
-				write_data |= (((*BYTE_XOR_LE(rda))<<3)&0x38);	\
-				break;											\
-			case 6:												\
-				write_data = (((*BYTE_XOR_LE(rda++))>>6)&0x03);	\
-				write_data |= (((*BYTE_XOR_LE(rda))<<2)&0x3c);	\
-				break;											\
-			case 7:												\
-				write_data = (((*BYTE_XOR_LE(rda++))>>7)&0x01);	\
-				write_data |= (((*BYTE_XOR_LE(rda))<<1)&0x3e);	\
-				break;											\
+		case 0:													\
+			write_data = (*BYTE_XOR_LE(rda))&0x3f;				\
+			break;												\
+		case 1:													\
+			write_data = (((*BYTE_XOR_LE(rda))>>1)&0x3f);		\
+			break;												\
+		case 2:													\
+			write_data = (((*BYTE_XOR_LE(rda++))>>2)&0x3f);		\
+			break;												\
+		case 3:													\
+			write_data = (((*BYTE_XOR_LE(rda++))>>3)&0x1f);		\
+			write_data |= (((*BYTE_XOR_LE(rda))<<5)&0x20);		\
+			break;												\
+		case 4:													\
+			write_data = (((*BYTE_XOR_LE(rda++))>>4)&0x0f);		\
+			write_data |= (((*BYTE_XOR_LE(rda))<<4)&0x30);		\
+			break;												\
+		case 5:													\
+			write_data = (((*BYTE_XOR_LE(rda++))>>5)&0x07);		\
+			write_data |= (((*BYTE_XOR_LE(rda))<<3)&0x38);		\
+			break;												\
+		case 6:													\
+			write_data = (((*BYTE_XOR_LE(rda++))>>6)&0x03);		\
+			write_data |= (((*BYTE_XOR_LE(rda))<<2)&0x3c);		\
+			break;												\
+		case 7:													\
+			write_data = (((*BYTE_XOR_LE(rda++))>>7)&0x01);		\
+			write_data |= (((*BYTE_XOR_LE(rda))<<1)&0x3e);		\
+			break;												\
 		}														\
 		if (check)												\
 		{														\
@@ -679,36 +721,36 @@ void wms_dma_w(int offset, int data)
 	{															\
 		switch(wms_dma_8pos&0x07)								\
 		{														\
-			case 0:												\
-				write_data = (*BYTE_XOR_LE(rda))&0x7f;			\
-				break;											\
-			case 1:												\
-				write_data = (((*BYTE_XOR_LE(rda++))>>1)&0x7f);	\
-				break;											\
-			case 2:												\
-				write_data = (((*BYTE_XOR_LE(rda++))>>2)&0x3f);	\
-				write_data |= (((*BYTE_XOR_LE(rda))<<6)&0x40);	\
-				break;											\
-			case 3:												\
-				write_data = (((*BYTE_XOR_LE(rda++))>>3)&0x1f);	\
-				write_data |= (((*BYTE_XOR_LE(rda))<<5)&0x60);	\
-				break;											\
-			case 4:												\
-				write_data = (((*BYTE_XOR_LE(rda++))>>4)&0x0f);	\
-				write_data |= (((*BYTE_XOR_LE(rda))<<4)&0x70);	\
-				break;											\
-			case 5:												\
-				write_data = (((*BYTE_XOR_LE(rda++))>>5)&0x07);	\
-				write_data |= (((*BYTE_XOR_LE(rda))<<3)&0x78);	\
-				break;											\
-			case 6:												\
-				write_data = (((*BYTE_XOR_LE(rda++))>>6)&0x03);	\
-				write_data |= (((*BYTE_XOR_LE(rda))<<2)&0x7c);	\
-				break;											\
-			case 7:												\
-				write_data = (((*BYTE_XOR_LE(rda++))>>7)&0x01);	\
-				write_data |= (((*BYTE_XOR_LE(rda))<<1)&0x7e);	\
-				break;											\
+		case 0:													\
+			write_data = (*BYTE_XOR_LE(rda))&0x7f;				\
+			break;												\
+		case 1:													\
+			write_data = (((*BYTE_XOR_LE(rda++))>>1)&0x7f);		\
+			break;												\
+		case 2:													\
+			write_data = (((*BYTE_XOR_LE(rda++))>>2)&0x3f);		\
+			write_data |= (((*BYTE_XOR_LE(rda))<<6)&0x40);		\
+			break;												\
+		case 3:													\
+			write_data = (((*BYTE_XOR_LE(rda++))>>3)&0x1f);		\
+			write_data |= (((*BYTE_XOR_LE(rda))<<5)&0x60);		\
+			break;												\
+		case 4:													\
+			write_data = (((*BYTE_XOR_LE(rda++))>>4)&0x0f);		\
+			write_data |= (((*BYTE_XOR_LE(rda))<<4)&0x70);		\
+			break;												\
+		case 5:													\
+			write_data = (((*BYTE_XOR_LE(rda++))>>5)&0x07);		\
+			write_data |= (((*BYTE_XOR_LE(rda))<<3)&0x78);		\
+			break;												\
+		case 6:													\
+			write_data = (((*BYTE_XOR_LE(rda++))>>6)&0x03);		\
+			write_data |= (((*BYTE_XOR_LE(rda))<<2)&0x7c);		\
+			break;												\
+		case 7:													\
+			write_data = (((*BYTE_XOR_LE(rda++))>>7)&0x01);		\
+			write_data |= (((*BYTE_XOR_LE(rda))<<1)&0x7e);		\
+			break;												\
 		}														\
 		if (check)												\
 		{														\
@@ -723,37 +765,37 @@ void wms_dma_w(int offset, int data)
 	{															\
 		switch(wms_dma_8pos&0x07)								\
 		{														\
-			case 0:												\
-				write_data = (*BYTE_XOR_LE(rda++))&0xff;		\
-				break;											\
-			case 1:												\
-				write_data = (((*BYTE_XOR_LE(rda++))>>1)&0x7f);	\
-				write_data |= (((*BYTE_XOR_LE(rda))<<7)&0x80);	\
-				break;											\
-			case 2:												\
-				write_data = (((*BYTE_XOR_LE(rda++))>>2)&0x3f);	\
-				write_data |= (((*BYTE_XOR_LE(rda))<<6)&0xc0);	\
-				break;											\
-			case 3:												\
-				write_data = (((*BYTE_XOR_LE(rda++))>>3)&0x1f);	\
-				write_data |= (((*BYTE_XOR_LE(rda))<<5)&0xe0);	\
-				break;											\
-			case 4:												\
-				write_data = (((*BYTE_XOR_LE(rda++))>>4)&0x0f);	\
-				write_data |= (((*BYTE_XOR_LE(rda))<<4)&0xf0);	\
-				break;											\
-			case 5:												\
-				write_data = (((*BYTE_XOR_LE(rda++))>>5)&0x07);	\
-				write_data |= (((*BYTE_XOR_LE(rda))<<3)&0xf8);	\
-				break;											\
-			case 6:												\
-				write_data = (((*BYTE_XOR_LE(rda++))>>6)&0x03);	\
-				write_data |= (((*BYTE_XOR_LE(rda))<<2)&0xfc);	\
-				break;											\
-			case 7:												\
-				write_data = (((*BYTE_XOR_LE(rda++))>>7)&0x01);	\
-				write_data |= (((*BYTE_XOR_LE(rda))<<1)&0xfe);	\
-				break;											\
+		case 0:													\
+			write_data = (*BYTE_XOR_LE(rda++))&0xff;			\
+			break;												\
+		case 1:													\
+			write_data = (((*BYTE_XOR_LE(rda++))>>1)&0x7f);		\
+			write_data |= (((*BYTE_XOR_LE(rda))<<7)&0x80);		\
+			break;												\
+		case 2:													\
+			write_data = (((*BYTE_XOR_LE(rda++))>>2)&0x3f);		\
+			write_data |= (((*BYTE_XOR_LE(rda))<<6)&0xc0);		\
+			break;												\
+		case 3:													\
+			write_data = (((*BYTE_XOR_LE(rda++))>>3)&0x1f);		\
+			write_data |= (((*BYTE_XOR_LE(rda))<<5)&0xe0);		\
+			break;												\
+		case 4:													\
+			write_data = (((*BYTE_XOR_LE(rda++))>>4)&0x0f);		\
+			write_data |= (((*BYTE_XOR_LE(rda))<<4)&0xf0);		\
+			break;												\
+		case 5:													\
+			write_data = (((*BYTE_XOR_LE(rda++))>>5)&0x07);		\
+			write_data |= (((*BYTE_XOR_LE(rda))<<3)&0xf8);		\
+			break;												\
+		case 6:													\
+			write_data = (((*BYTE_XOR_LE(rda++))>>6)&0x03);		\
+			write_data |= (((*BYTE_XOR_LE(rda))<<2)&0xfc);		\
+			break;												\
+		case 7:													\
+			write_data = (((*BYTE_XOR_LE(rda++))>>7)&0x01);		\
+			write_data |= (((*BYTE_XOR_LE(rda))<<1)&0xfe);		\
+			break;												\
 		}														\
 		if (check)												\
 		{														\
@@ -807,225 +849,225 @@ void wms_dma2_w(int offset, int data)
 
 	switch (offset)
 	{
-		case 0:
-			break;
-		case 2:
-			if (wms_dma_bclip >= 512) wms_dma_bclip = 512;
-			wms_dma_write_rows = wms_dma_rows;
-			wrvatop = &(wms_videoram[(wms_dma_tclip<<9)]);
-			wrvabot = &(wms_videoram[(wms_dma_bclip<<9)+0x1ff]);
+	case 0:
+		break;
+	case 2:
+		if (wms_dma_bclip >= 512) wms_dma_bclip = 512;
+		wms_dma_write_rows = wms_dma_rows;
+		wrvatop = &(wms_videoram[(wms_dma_tclip<<9)]);
+		wrvabot = &(wms_videoram[(wms_dma_bclip<<9)+0x1ff]);
 
-			write_cols = wms_dma_cols-1;
-			wms_dma_postclip = (wms_dma_cols+wms_dma_x >= 512?wms_dma_cols+wms_dma_x - 512:0);
-			wms_dma_preclip = 0;
-			wms_dma_postclip = 0;
+		write_cols = wms_dma_cols-1;
+		wms_dma_postclip = (wms_dma_cols+wms_dma_x >= 512?wms_dma_cols+wms_dma_x - 512:0);
+		wms_dma_preclip = 0;
+		wms_dma_postclip = 0;
 
 
-			wms_dma_dst = ((wms_dma_y<<9) + (wms_dma_x)); /* byte addr */
+		wms_dma_dst = ((wms_dma_y<<9) + (wms_dma_x)); /* byte addr */
 
-			rda = &(GFX_ROM[wms_dma_bank+wms_dma_subbank]);
-			wms_dma_stat = data;
-			if (wms_dma_bank+wms_dma_subbank > wms_gfx_rom_size) data = 0x8000;
-			wms_dma_postskip = 1<<((data&0x0c00)>>10);
-			wms_dma_preskip = 1<<((data&0x0300)>>8);
+		rda = &(GFX_ROM[wms_dma_bank+wms_dma_subbank]);
+		wms_dma_stat = data;
+		if (wms_dma_bank+wms_dma_subbank > wms_gfx_rom_size) data = 0x8000;
+		wms_dma_postskip = 1<<((data&0x0c00)>>10);
+		wms_dma_preskip = 1<<((data&0x0300)>>8);
 
-			if (0)
-			  {
-					if (errorlog) fprintf(errorlog, "\nCPU #0 PC %08x: DMA command %04x: (offs%02x) unk2=%04x sr%04x\n",cpu_get_pc(), data, wms_dma_8pos, wms_unk2, wms_sysreg2);
-					if (errorlog) fprintf(errorlog, "%08x x%04x y%04x c%04x r%04x p%04x c%04x  %04x %04x %04x %04x %04x %04x\n",wms_dma_subbank+wms_dma_bank+0x400000, wms_dma_x, wms_dma_y, wms_dma_cols, wms_dma_rows, wms_dma_pal, wms_dma_fgcol, wms_dma_14, wms_dma_16, wms_dma_tclip, wms_dma_bclip, wms_dma_1c, wms_dma_1e );
-			  }
-			/*
-			 * DMA registers
-			 * ------------------
-			 *
-			 *  Register | Bit              | Use
-			 * ----------+-FEDCBA9876543210-+------------
-			 *     0     | x--------------- | trigger write (or clear if zero)
-			 *           | -421------------ | image bpp (0=8)
-			 *           | ----84---------- | post skip size = (1<<x)
-			 *           | ------21-------- | pre skip size = (1<<x)
-			 *           | --------8------- | pre/post skip enable
-			 *           | ----------2----- | flip y
-			 *           | -----------1---- | flip x
-			 *           | ------------8--- | blit nonzero pixels as color
-			 *           | -------------4-- | blit zero pixels as color
-			 *           | --------------2- | blit nonzero pixels
-			 *           | ---------------1 | blit zero pixels
-			 *     1     | xxxxxxxxxxxxxxxx | width offset
-			 *     2     | xxxxxxxxxxxxxxxx | source address low word
-			 *     3     | xxxxxxxxxxxxxxxx | source address high word
-			 *     4     | xxxxxxxxxxxxxxxx | detination x
-			 *     5     | xxxxxxxxxxxxxxxx | destination y
-			 *     6     | xxxxxxxxxxxxxxxx | image columns
-			 *     7     | xxxxxxxxxxxxxxxx | image rows
-			 *     8     | xxxxxxxxxxxxxxxx | palette
-			 *     9     | xxxxxxxxxxxxxxxx | color
-			 */
-			switch(data&0xf07f)
-			{
-				case 0x0000: /* clear registers */
-					dma_skip=0;
-					wms_dma_cols=1;
-					wms_dma_rows=0;
-//					wms_dma_pal=0;
-					wms_dma_fgcol=0;
-					break;
-				case 0xf000: /* draw nothing ???*/
-				case 0xb000: /* draw nothing ???*/
-				case 0xa000: /* draw nothing ???*/
-				case 0xe000: /* draw nothing ???*/
-				case 0x8000: /* draw nothing */
-					break;
-				case 0x8002: /* draw only nonzero pixels (8bpp) */
-					DMA2_DRAW(8, +, +, write_data, write_data, ++);
-					break;
-				case 0x9002: /* draw only nonzero pixels (1bpp) */
-					DMA2_DRAW(1, +, +, write_data, write_data, ++);
-					break;
-				case 0xa002: /* draw only nonzero pixels (2bpp) */
-					DMA2_DRAW(2, +, +, write_data, write_data, ++);
-					break;
-				case 0xb002: /* draw only nonzero pixels (3bpp) */
-					DMA2_DRAW(3, +, +, write_data, write_data, ++);
-					break;
-				case 0xc002: /* draw only nonzero pixels (4bpp) */
-					DMA2_DRAW(4, +, +, write_data, write_data, ++);
-					break;
-				case 0xd002: /* draw only nonzero pixels (5bpp) */
-					DMA2_DRAW(5, +, +, write_data, write_data, ++);
-					break;
-				case 0xe042: /* draw only nonzero pixels (6bpp) ????? */
-					// fixme 0x0040 ?????
-				case 0xe002: /* draw only nonzero pixels (6bpp) */
-					DMA2_DRAW(6, +, +, write_data, write_data, ++);
-					break;
-				case 0xf002: /* draw only nonzero pixels (7bpp) */
-					DMA2_DRAW(7, +, +, write_data, write_data, ++);
-					break;
-				case 0x8003: /* draw all pixels */
-					dma_skip = ((wms_dma_cols + wms_dma_woffset)) - wms_dma_cols;
-					DMA_DRAW_ALL_BYTES(*BYTE_XOR_LE(rda++));
-					if (errorlog&&((data&0x0080)||(wms_dma_8pos&0x07))) fprintf(errorlog, "\nCPU #0 PC %08x: unhandled DMA command %04x:  (off%x)\n",cpu_get_pc(), data, wms_dma_8pos&0x07);
-					break;
-				case 0x8008: /* draw nonzero pixels as color (8bpp) */
-					DMA2_DRAW(8, +, +, write_data, wms_dma_fgcol, ++);
-					break;
-				case 0x9008: /* draw nonzero pixels as color (1bpp) */
-					DMA2_DRAW(1, +, +, write_data, wms_dma_fgcol, ++);
-					break;
-				case 0xc008: /* draw nonzero pixels as color (4bpp) */
-					DMA2_DRAW(4, +, +, write_data, wms_dma_fgcol, ++);
-					break;
-				case 0xe008: /* draw nonzero pixels as color (6bpp) */
-					DMA2_DRAW(6, +, +, write_data, wms_dma_fgcol, ++);
-					break;
-				case 0x8009: /* draw nonzero pixels as color, zero as zero */
-					dma_skip = ((wms_dma_cols + wms_dma_woffset)) - wms_dma_cols;
-					DMA_DRAW_ALL_BYTES((*BYTE_XOR_LE(rda++)?wms_dma_fgcol:0));
-					if (errorlog&&((data&0x0080)||(wms_dma_8pos&0x07))) fprintf(errorlog, "\nCPU #0 PC %08x: unhandled DMA command %04x:  (off%x)\n",cpu_get_pc(), data, wms_dma_8pos&0x07);
-					break;
-				case 0xe00c: /* draw all pixels as color (fill) */
-				case 0xd00c: /* draw all pixels as color (fill) */
-				case 0xc00c: /* draw all pixels as color (fill) */
-				case 0xb00c: /* draw all pixels as color (fill) */
-				case 0xa00c: /* draw all pixels as color (fill) */
-				case 0x900c: /* draw all pixels as color (fill) */
-				case 0x800c: /* draw all pixels as color (fill) */
-					DMA_DRAW_ALL_BYTES(wms_dma_fgcol);
-					break;
-				case 0x8010: /* draw nothing ???? */
-					break;
-				case 0x8012: /* draw nonzero pixels x-flipped (8bpp) */
-					DMA2_DRAW(8, -, +, write_data, write_data, --);
-					break;
-				case 0xc012: /* draw nonzero pixels x-flipped (4bpp) */
-					DMA2_DRAW(4, -, +, write_data, write_data, --);
-					break;
-				case 0xd012: /* draw nonzero pixels x-flipped (5bpp) */
-					DMA2_DRAW(5, -, +, write_data, write_data, --);
-					break;
-				case 0xe012: /* draw nonzero pixels x-flipped (6bpp) */
-					DMA2_DRAW(6, -, +, write_data, write_data, --);
-					break;
-				case 0x8013: /* draw all pixels x-flipped (8bpp) */
-					dma_skip = ((wms_dma_woffset - wms_dma_cols)) + wms_dma_cols;
-					DMA_DRAW_ALL_BYTES(*BYTE_XOR_LE(rda--));
-					if (errorlog&&((data&0x0080)||(wms_dma_8pos&0x07))) fprintf(errorlog, "\nCPU #0 PC %08x: unhandled DMA command %04x:  (off%x)\n",cpu_get_pc(), data, wms_dma_8pos&0x07);
-					break;
-				case 0x8018: /* draw nonzero pixels as color x-flipped (8bpp)*/
-					DMA2_DRAW(8, -, +, write_data, wms_dma_fgcol, --);
-					break;
-				case 0xe018: /* draw only nonzero pixels (6bpp) */
-					DMA2_DRAW(6, -, +, write_data, wms_dma_fgcol, --);
-					break;
-				case 0x8022: /* draw nonzero pixels y-flipped (8bpp) */
-					DMA2_DRAW(8, +, -, write_data, write_data, ++);
-					break;
-				case 0xe022: /* draw nonzero pixels y-flipped (6bpp) */
-					DMA2_DRAW(6, +, -, write_data, write_data, ++);
-					break;
-				case 0x8032: /* draw nonzero pixels x- and y-flipped (8pp) */
-					DMA2_DRAW(8, -, -, write_data, write_data, --);
-					break;
-				case 0xe032: /* draw nonzero pixels x- and y-flipped (6bpp) */
-					DMA2_DRAW(6, -, -, write_data, write_data, --);
-					break;
-				default:
-					if (errorlog) fprintf(errorlog, "\nCPU #0 PC %08x: unhandled DMA command %04x:\n",cpu_get_pc(), data);
-					if (errorlog) fprintf(errorlog, "%08x x%04x y%04x c%04x r%04x p%04x c%04x  %04x %04x %04x %04x %04x %04x\n",wms_dma_subbank+wms_dma_bank+0x400000, wms_dma_x, wms_dma_y, wms_dma_cols, wms_dma_rows, wms_dma_pal, wms_dma_fgcol, wms_dma_14, wms_dma_16, wms_dma_tclip, wms_dma_bclip, wms_dma_1c, wms_dma_1e );
-					break;
-			}
-			timer_set (TIME_IN_NSEC(41*wms_dma_cols*wms_dma_rows), data, dma2_callback);
+		if (0)
+		{
+			if (errorlog) fprintf(errorlog, "\nCPU #0 PC %08x: DMA command %04x: (offs%02x) unk2=%04x sr%04x\n",cpu_get_pc(), data, wms_dma_8pos, wms_unk2, wms_sysreg2);
+			if (errorlog) fprintf(errorlog, "%08x x%04x y%04x c%04x r%04x p%04x c%04x  %04x %04x %04x %04x %04x %04x\n",wms_dma_subbank+wms_dma_bank+0x400000, wms_dma_x, wms_dma_y, wms_dma_cols, wms_dma_rows, wms_dma_pal, wms_dma_fgcol, wms_dma_14, wms_dma_16, wms_dma_tclip, wms_dma_bclip, wms_dma_1c, wms_dma_1e );
+		}
+		/*
+		 * DMA registers
+		 * ------------------
+		 *
+		 *  Register | Bit              | Use
+		 * ----------+-FEDCBA9876543210-+------------
+		 *     0     | x--------------- | trigger write (or clear if zero)
+		 *           | -421------------ | image bpp (0=8)
+		 *           | ----84---------- | post skip size = (1<<x)
+		 *           | ------21-------- | pre skip size = (1<<x)
+		 *           | --------8------- | pre/post skip enable
+		 *           | ----------2----- | flip y
+		 *           | -----------1---- | flip x
+		 *           | ------------8--- | blit nonzero pixels as color
+		 *           | -------------4-- | blit zero pixels as color
+		 *           | --------------2- | blit nonzero pixels
+		 *           | ---------------1 | blit zero pixels
+		 *     1     | xxxxxxxxxxxxxxxx | width offset
+		 *     2     | xxxxxxxxxxxxxxxx | source address low word
+		 *     3     | xxxxxxxxxxxxxxxx | source address high word
+		 *     4     | xxxxxxxxxxxxxxxx | detination x
+		 *     5     | xxxxxxxxxxxxxxxx | destination y
+		 *     6     | xxxxxxxxxxxxxxxx | image columns
+		 *     7     | xxxxxxxxxxxxxxxx | image rows
+		 *     8     | xxxxxxxxxxxxxxxx | palette
+		 *     9     | xxxxxxxxxxxxxxxx | color
+		 */
+		switch(data&0xf07f)
+		{
+		case 0x0000: /* clear registers */
+			dma_skip=0;
+			wms_dma_cols=1;
+			wms_dma_rows=0;
+//			wms_dma_pal=0;
+			wms_dma_fgcol=0;
 			break;
-		case 4:
-			wms_dma_subbank = data>>3;
-			wms_dma_8pos = data&0x07;
+		case 0xf000: /* draw nothing ???*/
+		case 0xb000: /* draw nothing ???*/
+		case 0xa000: /* draw nothing ???*/
+		case 0xe000: /* draw nothing ???*/
+		case 0x8000: /* draw nothing */
 			break;
-		case 6:
-			wms_dma_bank = ((data&0xfe00)?(data-0x200)*0x2000:data*0x2000);
+		case 0x8002: /* draw only nonzero pixels (8bpp) */
+			DMA2_DRAW(8, +, +, write_data, write_data, ++);
 			break;
-		case 8:
-			wms_dma_x = data&0x1ff;
+		case 0x9002: /* draw only nonzero pixels (1bpp) */
+			DMA2_DRAW(1, +, +, write_data, write_data, ++);
 			break;
-		case 0x0a:
-			wms_dma_y = data&0x1ff;
+		case 0xa002: /* draw only nonzero pixels (2bpp) */
+			DMA2_DRAW(2, +, +, write_data, write_data, ++);
 			break;
-		case 0x0c:
-			wms_dma_cols = data;
-			dma_skip = data;
+		case 0xb002: /* draw only nonzero pixels (3bpp) */
+			DMA2_DRAW(3, +, +, write_data, write_data, ++);
 			break;
-		case 0x0e:
-			wms_dma_rows = data;
+		case 0xc002: /* draw only nonzero pixels (4bpp) */
+			DMA2_DRAW(4, +, +, write_data, write_data, ++);
 			break;
-		case 0x10:  /* set palette */
-    		wms_dma_pal = (data&0xff00);  /* changed from rev1? */
-//    		wms_dma_pal = (data&0xffff);
-			wms_dma_pal_word = data;
+		case 0xd002: /* draw only nonzero pixels (5bpp) */
+			DMA2_DRAW(5, +, +, write_data, write_data, ++);
 			break;
-		case 0x12:  /* set color for 1-bit */
-			wms_dma_fgcol = data&0xff;
+		case 0xe042: /* draw only nonzero pixels (6bpp) ????? */
+			// fixme 0x0040 ?????
+		case 0xe002: /* draw only nonzero pixels (6bpp) */
+			DMA2_DRAW(6, +, +, write_data, write_data, ++);
 			break;
-		case 0x14:
-			wms_dma_14 = data;
+		case 0xf002: /* draw only nonzero pixels (7bpp) */
+			DMA2_DRAW(7, +, +, write_data, write_data, ++);
 			break;
-		case 0x16:
-			wms_dma_16 = data;
+		case 0x8003: /* draw all pixels */
+			dma_skip = ((wms_dma_cols + wms_dma_woffset)) - wms_dma_cols;
+			DMA_DRAW_ALL_BYTES(*BYTE_XOR_LE(rda++));
+			if (errorlog&&((data&0x0080)||(wms_dma_8pos&0x07))) fprintf(errorlog, "\nCPU #0 PC %08x: unhandled DMA command %04x:  (off%x)\n",cpu_get_pc(), data, wms_dma_8pos&0x07);
 			break;
-		case 0x18:
-			wms_dma_tclip = data;
+		case 0x8008: /* draw nonzero pixels as color (8bpp) */
+			DMA2_DRAW(8, +, +, write_data, wms_dma_fgcol, ++);
 			break;
-		case 0x1a:
-			wms_dma_bclip = data;
+		case 0x9008: /* draw nonzero pixels as color (1bpp) */
+			DMA2_DRAW(1, +, +, write_data, wms_dma_fgcol, ++);
 			break;
-		case 0x1c:
-			wms_dma_1c = data;
+		case 0xc008: /* draw nonzero pixels as color (4bpp) */
+			DMA2_DRAW(4, +, +, write_data, wms_dma_fgcol, ++);
 			break;
-		case 0x1e:
-			wms_dma_1e = data;
+		case 0xe008: /* draw nonzero pixels as color (6bpp) */
+			DMA2_DRAW(6, +, +, write_data, wms_dma_fgcol, ++);
+			break;
+		case 0x8009: /* draw nonzero pixels as color, zero as zero */
+			dma_skip = ((wms_dma_cols + wms_dma_woffset)) - wms_dma_cols;
+			DMA_DRAW_ALL_BYTES((*BYTE_XOR_LE(rda++)?wms_dma_fgcol:0));
+			if (errorlog&&((data&0x0080)||(wms_dma_8pos&0x07))) fprintf(errorlog, "\nCPU #0 PC %08x: unhandled DMA command %04x:  (off%x)\n",cpu_get_pc(), data, wms_dma_8pos&0x07);
+			break;
+		case 0xe00c: /* draw all pixels as color (fill) */
+		case 0xd00c: /* draw all pixels as color (fill) */
+		case 0xc00c: /* draw all pixels as color (fill) */
+		case 0xb00c: /* draw all pixels as color (fill) */
+		case 0xa00c: /* draw all pixels as color (fill) */
+		case 0x900c: /* draw all pixels as color (fill) */
+		case 0x800c: /* draw all pixels as color (fill) */
+			DMA_DRAW_ALL_BYTES(wms_dma_fgcol);
+			break;
+		case 0x8010: /* draw nothing ???? */
+			break;
+		case 0x8012: /* draw nonzero pixels x-flipped (8bpp) */
+			DMA2_DRAW(8, -, +, write_data, write_data, --);
+			break;
+		case 0xc012: /* draw nonzero pixels x-flipped (4bpp) */
+			DMA2_DRAW(4, -, +, write_data, write_data, --);
+			break;
+		case 0xd012: /* draw nonzero pixels x-flipped (5bpp) */
+			DMA2_DRAW(5, -, +, write_data, write_data, --);
+			break;
+		case 0xe012: /* draw nonzero pixels x-flipped (6bpp) */
+			DMA2_DRAW(6, -, +, write_data, write_data, --);
+			break;
+		case 0x8013: /* draw all pixels x-flipped (8bpp) */
+			dma_skip = ((wms_dma_woffset - wms_dma_cols)) + wms_dma_cols;
+			DMA_DRAW_ALL_BYTES(*BYTE_XOR_LE(rda--));
+			if (errorlog&&((data&0x0080)||(wms_dma_8pos&0x07))) fprintf(errorlog, "\nCPU #0 PC %08x: unhandled DMA command %04x:  (off%x)\n",cpu_get_pc(), data, wms_dma_8pos&0x07);
+			break;
+		case 0x8018: /* draw nonzero pixels as color x-flipped (8bpp)*/
+			DMA2_DRAW(8, -, +, write_data, wms_dma_fgcol, --);
+			break;
+		case 0xe018: /* draw only nonzero pixels (6bpp) */
+			DMA2_DRAW(6, -, +, write_data, wms_dma_fgcol, --);
+			break;
+		case 0x8022: /* draw nonzero pixels y-flipped (8bpp) */
+			DMA2_DRAW(8, +, -, write_data, write_data, ++);
+			break;
+		case 0xe022: /* draw nonzero pixels y-flipped (6bpp) */
+			DMA2_DRAW(6, +, -, write_data, write_data, ++);
+			break;
+		case 0x8032: /* draw nonzero pixels x- and y-flipped (8pp) */
+			DMA2_DRAW(8, -, -, write_data, write_data, --);
+			break;
+		case 0xe032: /* draw nonzero pixels x- and y-flipped (6bpp) */
+			DMA2_DRAW(6, -, -, write_data, write_data, --);
 			break;
 		default:
-			if (errorlog) fprintf(errorlog,"dma offset %x: %x\n",offset, data);
+			if (errorlog) fprintf(errorlog, "\nCPU #0 PC %08x: unhandled DMA command %04x:\n",cpu_get_pc(), data);
+			if (errorlog) fprintf(errorlog, "%08x x%04x y%04x c%04x r%04x p%04x c%04x  %04x %04x %04x %04x %04x %04x\n",wms_dma_subbank+wms_dma_bank+0x400000, wms_dma_x, wms_dma_y, wms_dma_cols, wms_dma_rows, wms_dma_pal, wms_dma_fgcol, wms_dma_14, wms_dma_16, wms_dma_tclip, wms_dma_bclip, wms_dma_1c, wms_dma_1e );
 			break;
+		}
+		timer_set (TIME_IN_NSEC(41*wms_dma_cols*wms_dma_rows), data, dma2_callback);
+		break;
+	case 4:
+		wms_dma_subbank = data>>3;
+		wms_dma_8pos = data&0x07;
+		break;
+	case 6:
+		wms_dma_bank = ((data&0xfe00)?(data-0x200)*0x2000:data*0x2000);
+		break;
+	case 8:
+		wms_dma_x = data&0x1ff;
+		break;
+	case 0x0a:
+		wms_dma_y = data&0x1ff;
+		break;
+	case 0x0c:
+		wms_dma_cols = data;
+		dma_skip = data;
+		break;
+	case 0x0e:
+		wms_dma_rows = data;
+		break;
+	case 0x10:  /* set palette */
+		wms_dma_pal = (data&0xff00);  /* changed from rev1? */
+//		wms_dma_pal = (data&0xffff);
+		wms_dma_pal_word = data;
+		break;
+	case 0x12:  /* set color for 1-bit */
+		wms_dma_fgcol = data&0xff;
+		break;
+	case 0x14:
+		wms_dma_14 = data;
+		break;
+	case 0x16:
+		wms_dma_16 = data;
+		break;
+	case 0x18:
+		wms_dma_tclip = data;
+		break;
+	case 0x1a:
+		wms_dma_bclip = data;
+		break;
+	case 0x1c:
+		wms_dma_1c = data;
+		break;
+	case 0x1e:
+		wms_dma_1e = data;
+		break;
+	default:
+		if (errorlog) fprintf(errorlog,"dma offset %x: %x\n",offset, data);
+		break;
 	}
 }
 
@@ -1092,6 +1134,7 @@ void wms_sysreg_w(int offset, int data)
 		install_mem_read_handler (0, TOBYTE(0x00000000), TOBYTE(0x001fffff), wms_objpalram_r);
 	}
 	wms_objpalram_select = ((data&0x20)?0:0x40000);
+
 	if (data&0x10) /* turn off auto-erase */
 	{
 		wms_autoerase_enable = 0;
@@ -1105,6 +1148,7 @@ void wms_sysreg_w(int offset, int data)
 		wms_autoerase_enable = 1;
 	}
 }
+
 void wms_sysreg2_w(int offset, int data)
 {
 	wms_sysreg2 = data;
@@ -1181,6 +1225,7 @@ void wms_unk1_w(int offset, int data)
 //	usrintf_showmessage(buf);
 //#endif
 }
+
 extern int debug_key_pressed;
 void wms_unk2_w(int offset, int data)
 {
@@ -1218,33 +1263,23 @@ int wms_cmos_r(int offset)
 	return READ_WORD(&wms_cmos_ram[(offset)+wms_cmos_page]);
 }
 
-static void smashtv_sound_nmi(void)
+static void smashtv_sound_nmi(int state)
 {
-	cpu_cause_interrupt(1,M6809_INT_NMI);
+	cpu_set_nmi_line(1,state ? ASSERT_LINE : CLEAR_LINE);
 	if (errorlog) fprintf(errorlog, "sound NMI\n");
 }
-static void smashtv_sound_firq(void)
+static void smashtv_sound_firq(int state)
 {
-	cpu_cause_interrupt(1,M6809_INT_FIRQ);
+	cpu_set_irq_line(1,M6809_FIRQ_LINE,state ? ASSERT_LINE : CLEAR_LINE);
 	if (errorlog) fprintf(errorlog, "sound FIRQ\n");
 }
 
-static pia6821_interface smashtv_pia_intf =
+/* PIA 0, main CPU */
+static struct pia6821_interface smashtv_pia_intf =
 {
-	1,                                              /* 1 chip */
-	{ PIA_DDRA, PIA_CTLA, PIA_DDRB, PIA_CTLB },     /* offsets */
-	{ 0 },                                    /* input port A */
-	{ 0 },                                    /* input bit CA1 */
-	{ 0 },                                    /* input bit CA2 */
-	{ 0 },                                    /* input port B */
-	{ 0 },                                    /* input bit CB1 */
-	{ 0 },                                    /* input bit CB2 */
-	{ DAC_data_w },                           /* output port A */
-	{ 0 },                                    /* output port B */
-	{ 0 },                                    /* output CA2 */
-	{ 0 },                                    /* output CB2 */
-	{ smashtv_sound_firq },                   /* IRQ A */
-	{ smashtv_sound_nmi }                     /* IRQ B */
+	/*inputs : A/B,CA/B1,CA/B2 */ 0, 0, 0, 0, 0, 0,
+	/*outputs: A/B,CA/B2       */ DAC_data_w, 0, 0, 0,
+	/*irqs   : A/B             */ smashtv_sound_firq, smashtv_sound_nmi
 };
 
 void smashtv_sound_bank_select_w (int offset,int data)
@@ -1256,6 +1291,7 @@ void smashtv_sound_bank_select_w (int offset,int data)
 	/* set bank address */
 	cpu_setbank (5, &RAM[bank[data & 0x0f]]);
 }
+
 void narc_music_bank_select_w (int offset,int data)
 {
 	static int bank[8] = { 0x10000, 0x10000, 0x10000, 0x10000, 0x20000, 0x28000, 0x10000, 0x18000 };
@@ -1263,6 +1299,7 @@ void narc_music_bank_select_w (int offset,int data)
 	/* set bank address */
 	cpu_setbank (5, &RAM[bank[data&0x07]]);
 }
+
 void narc_digitizer_bank_select_w (int offset,int data)
 {
 	static int bank[8] = { 0x40000, 0x48000, 0x30000, 0x38000, 0x20000, 0x28000, 0x10000, 0x18000 };
@@ -1270,6 +1307,7 @@ void narc_digitizer_bank_select_w (int offset,int data)
 	/* set bank address */
 	cpu_setbank (6, &RAM[bank[data&0x07]]);
 }
+
 void mk_sound_bank_select_w (int offset,int data)
 {
 	static int bank[8] = { 0x10000, 0x18000, 0x20000, 0x28000, 0x30000, 0x38000, 0x40000, 0x48000 };
@@ -1285,11 +1323,11 @@ void wms_load_code_roms(void)
 	memcpy(CODE_ROM,Machine->memory_region[Machine->drv->cpu[0].memory_region],wms_code_rom_size);
 }
 
-#define DEREF(REG, SIZE)        *(SIZE*)(&SCRATCH_RAM[TOBYTE((REG) & 0xffffff)])
-#define DEREF_INT8(REG)         DEREF(REG, INT8 )
-#define DEREF_INT16(REG)        DEREF(REG, INT16)
-#define DEREF_INT32(REG)        DEREF(REG, INT32)
-#define BURN_TIME(INST_CNT) 	tms34010_ICount -= INST_CNT * TMS34010_AVGCYCLES
+#define DEREF(REG, SIZE)		*(SIZE*)(&SCRATCH_RAM[TOBYTE((REG) & 0xffffff)])
+#define DEREF_INT8(REG)			DEREF(REG, INT8 )
+#define DEREF_INT16(REG)		DEREF(REG, INT16)
+#define DEREF_INT32(REG)		DEREF(REG, INT32)
+#define BURN_TIME(INST_CNT)		tms34010_ICount -= INST_CNT * TMS34010_AVGCYCLES
 
 #define INT32_MOD(x) BIG_DWORD_LE(x)
 #define INT16_MOD(x) (x)
@@ -1558,7 +1596,6 @@ static int mk_speedup_r(int offset)
 }
 static int mkla1_speedup_r(int offset)
 {
-  if (errorlog) fprintf(errorlog, "PC=%08x\n", cpu_get_pc());
 	if (offset)
 	{
 		return READ_WORD(&SCRATCH_RAM[TOBYTE(0x4f010)]);
@@ -1577,7 +1614,6 @@ static int mkla1_speedup_r(int offset)
 }
 static int mkla2_speedup_r(int offset)
 {
-  if (errorlog) fprintf(errorlog, "PC=%08x\n", cpu_get_pc());
 	if (offset)
 	{
 		return READ_WORD(&SCRATCH_RAM[TOBYTE(0x4f030)]);
@@ -1639,10 +1675,10 @@ static int shimpact_speedup_r(int offset)
 	a5x += 0x1008000;								/* ADDI   1008000h,A5	*/  \
 	a3x = (UINT32)a2  * (UINT32)a3x;				/* MPYU   A2,A3			*/	\
 	a3x += 0x1008000;								/* ADDI   1008000h,A3	*/  \
-    a7x = (INT32)(DEREF_INT16(a1+0x190));			/* MOVE   *A1(190h),A7,0*/	\
-    a6x = (INT32)(DEREF_INT16(a5x+0x50));			/* MOVE   *A5(50h),A6,0 */	\
+	a7x = (INT32)(DEREF_INT16(a1+0x190));			/* MOVE   *A1(190h),A7,0*/	\
+	a6x = (INT32)(DEREF_INT16(a5x+0x50));			/* MOVE   *A5(50h),A6,0 */	\
 	a7x -= a6x;										/* SUB    A6,A7			*/  \
-    a6x = (INT32)(DEREF_INT16(a3x+0x50));			/* MOVE   *A3(50h),A6,0 */	\
+	a6x = (INT32)(DEREF_INT16(a3x+0x50));			/* MOVE   *A3(50h),A6,0 */	\
 	a7x += a6x;										/* ADD    A6,A7			*/  \
 	DEREF_INT16(a1+0x190) = a7x & 0xffff;			/* MOVE   A7,*A1(190h),0*/	\
 	a5x = DEREF_INT32(a5x+0xa0);					/* MOVE   *A5(A0h),A5,1 */	\
@@ -1695,14 +1731,14 @@ static int term2_speedup_r(int offset)
 				}
 				else
 				{
-                    // FFC077C0
+					// FFC077C0
 					a4 = 0x80000000;							// MOVI   80000000h,A4
 				}												// JR     FFC07830h
 
 				// FFC07830
-				b0 += 0xf0;									    // ADDI   F0h,B0
-				a6 = 0x80000000;                                // MOVI   80000000h,A6
-				a5 = 0x80000000;                                // MOVI   80000000h,A5
+				b0 += 0xf0;										// ADDI   F0h,B0
+				a6 = 0x80000000;								// MOVI   80000000h,A6
+				a5 = 0x80000000;								// MOVI   80000000h,A5
 				goto t2_FFC07DD0;								// JR     FFC07DD0h
 
 			t2_FFC078C0:
@@ -1932,18 +1968,18 @@ static void load_gfx_roms_4bit(void)
 	unsigned char d1,d2,d3,d4;
 	unsigned char *mem_rom;
 	memset(GFX_ROM,0,wms_gfx_rom_size);
-	mem_rom = Machine->memory_region[2];
+	mem_rom = Machine->memory_region[1];
 	/* load the graphics ROMs -- quadruples 2 bits each */
 	for (i=0;i<wms_gfx_rom_size;i+=2)
 	{
-		d1 = ((mem_rom[                   (i  )/4])>>(2*((i  )%4)))&0x03;
+		d1 = ((mem_rom[					  (i  )/4])>>(2*((i  )%4)))&0x03;
 		d2 = ((mem_rom[wms_gfx_rom_size/4+(i  )/4])>>(2*((i  )%4)))&0x03;
-		d3 = ((mem_rom[                   (i+1)/4])>>(2*((i+1)%4)))&0x03;
+		d3 = ((mem_rom[					  (i+1)/4])>>(2*((i+1)%4)))&0x03;
 		d4 = ((mem_rom[wms_gfx_rom_size/4+(i+1)/4])>>(2*((i+1)%4)))&0x03;
 		WRITE_WORD(&GFX_ROM[i],d1|(d2<<2)|(d1<<4)|(d2<<6)|(d3<<8)|(d4<<10)|(d3<<12)|(d4<<14));
 	}
-	free(Machine->memory_region[2]);
-	Machine->memory_region[2] = 0;
+	free(Machine->memory_region[1]);
+	Machine->memory_region[1] = 0;
 }
 static void load_gfx_roms_6bit(void)
 {
@@ -1951,20 +1987,20 @@ static void load_gfx_roms_6bit(void)
 	unsigned char d1,d2,d3,d4,d5,d6;
 	unsigned char *mem_rom;
 	memset(GFX_ROM,0,wms_gfx_rom_size);
-	mem_rom = Machine->memory_region[2];
+	mem_rom = Machine->memory_region[1];
 	/* load the graphics ROMs -- quadruples 2 bits each */
 	for (i=0;i<wms_gfx_rom_size;i+=2)
 	{
-		d1 = ((mem_rom[                     (i  )/4])>>(2*((i  )%4)))&0x03;
+		d1 = ((mem_rom[						(i  )/4])>>(2*((i  )%4)))&0x03;
 		d2 = ((mem_rom[  wms_gfx_rom_size/4+(i  )/4])>>(2*((i  )%4)))&0x03;
 		d3 = ((mem_rom[2*wms_gfx_rom_size/4+(i  )/4])>>(2*((i  )%4)))&0x03;
-		d4 = ((mem_rom[                     (i+1)/4])>>(2*((i+1)%4)))&0x03;
+		d4 = ((mem_rom[						(i+1)/4])>>(2*((i+1)%4)))&0x03;
 		d5 = ((mem_rom[  wms_gfx_rom_size/4+(i+1)/4])>>(2*((i+1)%4)))&0x03;
 		d6 = ((mem_rom[2*wms_gfx_rom_size/4+(i+1)/4])>>(2*((i+1)%4)))&0x03;
 		WRITE_WORD(&GFX_ROM[i],d1|(d2<<2)|(d3<<4)|(d4<<8)|(d5<<10)|(d6<<12));
 	}
-	free(Machine->memory_region[2]);
-	Machine->memory_region[2] = 0;
+	free(Machine->memory_region[1]);
+	Machine->memory_region[1] = 0;
 }
 static void load_gfx_roms_8bit(void)
 {
@@ -1972,36 +2008,36 @@ static void load_gfx_roms_8bit(void)
 	unsigned char d1,d2;
 	unsigned char *mem_rom;
 	memset(GFX_ROM,0,wms_gfx_rom_size);
-	mem_rom = Machine->memory_region[2];
+	mem_rom = Machine->memory_region[1];
 	/* load the graphics ROMs -- quadruples */
 	for (i=0;i<wms_gfx_rom_size;i+=4)
 	{
-		d1 = mem_rom[                     i/4];
+		d1 = mem_rom[					  i/4];
 		d2 = mem_rom[  wms_gfx_rom_size/4+i/4];
 		WRITE_WORD(&GFX_ROM[i  ],(unsigned int)((unsigned int)(d1) | ((unsigned int)(d2)<<8)));
 		d1 = mem_rom[2*wms_gfx_rom_size/4+i/4];
 		d2 = mem_rom[3*wms_gfx_rom_size/4+i/4];
 		WRITE_WORD(&GFX_ROM[i+2],(unsigned int)((unsigned int)(d1) | ((unsigned int)(d2)<<8)));
 	}
-	free(Machine->memory_region[2]);
-	Machine->memory_region[2] = 0;
+	free(Machine->memory_region[1]);
+	Machine->memory_region[1] = 0;
 }
 
 static void load_adpcm_roms_512k(void)
 {
+	unsigned char *mem_reg3;
 	unsigned char *mem_reg4;
 	unsigned char *mem_reg5;
-	unsigned char *mem_reg6;
+	mem_reg3 = Machine->memory_region[3];
 	mem_reg4 = Machine->memory_region[4];
 	mem_reg5 = Machine->memory_region[5];
-	mem_reg6 = Machine->memory_region[6];
-	memcpy(mem_reg4+0x40000, mem_reg4+0x00000, 0x40000); /* copy u12 */
-	memcpy(mem_reg5+0x60000, mem_reg4+0x00000, 0x20000); /* copy u12 */
-	memcpy(mem_reg5+0x20000, mem_reg4+0x20000, 0x20000); /* copy u12 */
-	memcpy(mem_reg6+0x60000, mem_reg4+0x00000, 0x20000); /* copy u12 */
-	memcpy(mem_reg6+0x20000, mem_reg4+0x20000, 0x20000); /* copy u12 */
-	memcpy(mem_reg6+0x40000, mem_reg5+0x00000, 0x20000); /* copy u13 */
-	memcpy(mem_reg6+0x00000, mem_reg5+0x40000, 0x20000); /* copy u13 */
+	memcpy(mem_reg3+0x40000, mem_reg3+0x00000, 0x40000); /* copy u12 */
+	memcpy(mem_reg4+0x60000, mem_reg3+0x00000, 0x20000); /* copy u12 */
+	memcpy(mem_reg4+0x20000, mem_reg3+0x20000, 0x20000); /* copy u12 */
+	memcpy(mem_reg5+0x60000, mem_reg3+0x00000, 0x20000); /* copy u12 */
+	memcpy(mem_reg5+0x20000, mem_reg3+0x20000, 0x20000); /* copy u12 */
+	memcpy(mem_reg5+0x40000, mem_reg4+0x00000, 0x20000); /* copy u13 */
+	memcpy(mem_reg5+0x00000, mem_reg4+0x40000, 0x20000); /* copy u13 */
 }
 
 static void wms_modify_pen(int i, int rgb)
@@ -2259,9 +2295,6 @@ void mkla2_driver_init(void)
 }
 void term2_driver_init(void)
 {
-	/* extra input handler */
-	install_mem_read_handler(0, TOBYTE(0x01600020), TOBYTE(0x0160005f), term2_input_lo_r ); /* ??? */
-
 	/* set up speedup loops */
 	install_mem_read_handler(0, TOBYTE(0x010aa040), TOBYTE(0x010aa05f), term2_speedup_r);
 	install_mem_read_handler(1, 0x0218, 0x0218, mk_sound_speedup_r);
@@ -2380,8 +2413,9 @@ void smashtv_init_machine(void)
 	/* set up sound board */
 	smashtv_sound_bank_select_w(0,0);
 	m6809_Flags = M6809_FAST_NONE;
-	pia_startup (&smashtv_pia_intf);
-	pia_1_ca1_w (0, (1));
+	pia_config(0, PIA_STANDARD_ORDERING | PIA_8BIT, &smashtv_pia_intf);
+	pia_reset();
+	pia_0_ca1_w(0, 1);
 	install_mem_write_handler(0, TOBYTE(0x01e00000), TOBYTE(0x01e0001f), smashtv_sound_w);
 
 	TMS34010_set_shiftreg_functions(0, wms_to_shiftreg, wms_from_shiftreg);
@@ -2417,6 +2451,23 @@ void mk_init_machine(void)
 
 	TMS34010_set_shiftreg_functions(0, wms_to_shiftreg, wms_from_shiftreg);
 }
+void term2_init_machine(void)
+{
+	/*
+	 * Y-Unit
+	 *
+	 * same as Mortal Kombat, but with the gun controllers
+	 *
+	 */
+
+	mk_init_machine();
+
+	/* special input handler */
+	install_mem_read_handler(0, TOBYTE(0x01c00000), TOBYTE(0x01c0005f), term2_input_r );
+	install_mem_read_handler(0, TOBYTE(0x01600020), TOBYTE(0x0160005f), term2_input_lo_r ); /* ??? */
+
+	install_mem_write_handler(0, TOBYTE(0x01e00000), TOBYTE(0x01e0001f), term2_sound_w);
+}
 void trog_init_machine(void)
 {
 	/*
@@ -2443,8 +2494,9 @@ void trog_init_machine(void)
 	/* set up sound board */
 	smashtv_sound_bank_select_w(0,0);
 	m6809_Flags = M6809_FAST_NONE;
-	pia_startup (&smashtv_pia_intf);
-	pia_1_ca1_w (0, (1));
+	pia_config(0, PIA_STANDARD_ORDERING | PIA_8BIT, &smashtv_pia_intf);
+	pia_reset();
+	pia_0_ca1_w (0, 1);
 	/* fix sound (hack) */
 	install_mem_write_handler(0, TOBYTE(0x01e00000), TOBYTE(0x01e0001f), trog_sound_w);
 

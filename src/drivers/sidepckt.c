@@ -2,6 +2,8 @@
 
 Side Pocket - (c) 1986 Data East
 
+The original board has an 8751 protection mcu
+
 Ernesto Corvi
 ernesto@imagina.com
 
@@ -264,6 +266,14 @@ static unsigned short colortable[] =
     0,1,2,3,4,5,6,7,              /* ??? */
 };
 
+
+
+/* handler called by the 3526 emulator when the internal timers cause an IRQ */
+static void irqhandler(int linestate)
+{
+	cpu_set_irq_line(1,0,linestate);
+}
+
 static struct YM2203interface ym2203_interface =
 {
     1,      /* 1 chip */
@@ -278,29 +288,32 @@ static struct YM2203interface ym2203_interface =
 
 static struct YM3526interface ym3526_interface =
 {
-    1,                      /* 1 chip (no more supported) */
-	3600000,	/* 3.600000 MHz ? (partially supported) */
-    { 255 }         /* (not supported) */
+	1,			/* 1 chip */
+	3000000,	/* 3 MHz ? */
+	{ 25 },		/* volume */
+	{ irqhandler},
 };
+
+
 
 static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
 	{
 		{
-		    CPU_M6809,
-		    3000000,        /* 3 Mhz ??? */
-		    0,
-		    readmem,writemem,0,0,
-		    nmi_interrupt,1
+			CPU_M6809,
+			3000000,        /* 3 MHz ??? */
+			0,
+			readmem,writemem,0,0,
+			nmi_interrupt,1
 		},
 		{
-		    CPU_M6502 | CPU_AUDIO_CPU,
-		    3000000,        /* 3 Mhz ??? */
+			CPU_M6502 | CPU_AUDIO_CPU,
+			1500000,        /* 1.5 MHz ??? */
 			3,
-		    sound_readmem,sound_writemem,0,0,
-		    interrupt,16 /* guessed value, altho sounds ok (check on power bar) */
-		    /* nmi's are triggered from the main cpu */
+			sound_readmem,sound_writemem,0,0,
+			ignore_interrupt,0	/* IRQs are triggered by the YM3526 */
+								/* NMIs are triggered by the main cpu */
 		}
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,  /* frames per second, vblank duration */
@@ -340,6 +353,25 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( sidepckt_rom )
+    ROM_REGION(0x10000)     /* 64k for code */
+    ROM_LOAD( "dh00",         0x00000, 0x10000, 0x251b316e )
+
+    ROM_REGION_DISPOSE(0x30000)     /* temporary space for graphics (disposed after conversion) */
+    ROM_LOAD( "sp_05.bin",    0x00000, 0x8000, 0x05ab71d2 ) /* characters */
+    ROM_LOAD( "sp_06.bin",    0x08000, 0x8000, 0x580e4e43 ) /* characters */
+    ROM_LOAD( "sp_07.bin",    0x10000, 0x8000, 0x9d6f7969 ) /* characters */
+    ROM_LOAD( "sp_01.bin",    0x18000, 0x8000, 0xa2cdfbea ) /* sprites */
+    ROM_LOAD( "sp_02.bin",    0x20000, 0x8000, 0xeeb5c3e7 ) /* sprites */
+    ROM_LOAD( "sp_03.bin",    0x28000, 0x8000, 0x8e18d21d ) /* sprites */
+
+    ROM_REGION(0x0100)	/* color PROMs (missing) */
+    ROM_LOAD( "proms",        0x0000, 0x0100, 0x00000000 )
+
+    ROM_REGION(0x10000)     /* 64k for the audio cpu */
+    ROM_LOAD( "sp_04.bin",    0x08000, 0x8000, 0xd076e62e )
+ROM_END
+
+ROM_START( sidepckb_rom )
     ROM_REGION(0x10000)     /* 64k for code */
     ROM_LOAD( "sp_09.bin",    0x04000, 0x4000, 0x3c6fe54b )
     ROM_LOAD( "sp_08.bin",    0x08000, 0x8000, 0x347f81cd )
@@ -407,15 +439,41 @@ struct GameDriver sidepckt_driver =
 	__FILE__,
 	0,
 	"sidepckt",
-	"Side Pocket (World?)",
+	"Side Pocket",
 	"1986",
 	"Data East Corporation",
+	"Ernesto Corvi\nMarc Vergoossen (hardware info)",
+	GAME_NOT_WORKING|GAME_WRONG_COLORS,
+	&machine_driver,
+	0,
+
+	sidepckt_rom,
+	0, 0,
+	0,
+	0,      /* sound_prom */
+
+	input_ports,
+
+	0, palette, colortable,
+	ORIENTATION_DEFAULT,
+
+	hiload, hisave
+};
+
+struct GameDriver sidepckb_driver =
+{
+	__FILE__,
+	&sidepckt_driver,
+	"sidepckb",
+	"Side Pocket (bootleg)",
+	"1986",
+	"bootleg",
 	"Ernesto Corvi\nMarc Vergoossen (hardware info)",
 	GAME_WRONG_COLORS,
 	&machine_driver,
 	0,
 
-	sidepckt_rom,
+	sidepckb_rom,
 	0, 0,
 	0,
 	0,      /* sound_prom */

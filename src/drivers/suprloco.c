@@ -31,12 +31,6 @@ int  suprloco_control_r(int offset);
 void suprloco_decode(void);
 
 
-static void suprloco_init_machine(void)
-{
-	SN76496_set_clock(1,4000000);
-}
-
-
 static void suprloco_soundport_w(int offset, int data)
 {
 	soundlatch_w(0,data);
@@ -203,7 +197,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct SN76496interface sn76496_interface =
 {
 	2,		/* 2 chips */
-	2000000,	/* 8 MHz / 4 ?*/
+	{ 2000000, 4000000 },	/* 8 MHz / 4 ?*/
 	{ 100, 100 }
 };
 
@@ -230,7 +224,7 @@ static struct MachineDriver suprloco_machine_driver =
 	},
 	60, 5000,           /* frames per second, vblank duration */
 	1,					/* single CPU, no need for interleaving */
-	suprloco_init_machine,
+	0,
 
 	/* video hardware */
 	32*8, 32*8,				/* screen_width, screen_height */

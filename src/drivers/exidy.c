@@ -176,7 +176,7 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x5101, 0x5101, input_port_1_r }, /* IN0 */
 	{ 0x5103, 0x5103, exidy_input_port_2_r, &exidy_collision }, /* IN1 */
 	{ 0x5105, 0x5105, input_port_4_r }, /* IN3 - Targ, Spectar only */
-	{ 0x5200, 0x520F, pia_1_r },
+	{ 0x5200, 0x520F, pia_0_r },
 	{ 0x5213, 0x5213, input_port_3_r },     /* IN2 */
 	{ 0x6000, 0x6fff, MRA_RAM }, /* Pepper II only */
 	{ 0x8000, 0xffff, MRA_ROM },
@@ -195,7 +195,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x50C0, 0x50C0, MWA_RAM, &exidy_sprite2_ypos },
 	{ 0x5100, 0x5100, MWA_RAM, &exidy_sprite_no },
 	{ 0x5101, 0x5101, MWA_RAM, &exidy_sprite_enable },
-	{ 0x5200, 0x520F, pia_1_w },
+	{ 0x5200, 0x520F, pia_0_w },
 	{ 0x5210, 0x5212, exidy_color_w, &exidy_color_latch },
 	{ 0x8000, 0xffff, MWA_ROM },
 	{ -1 }  /* end of table */
@@ -228,7 +228,7 @@ static struct MemoryWriteAddress pepper2_writemem[] =
 	{ 0x50C0, 0x50C0, MWA_RAM, &exidy_sprite2_ypos },
 	{ 0x5100, 0x5100, MWA_RAM, &exidy_sprite_no },
 	{ 0x5101, 0x5101, MWA_RAM, &exidy_sprite_enable },
-	{ 0x5200, 0x520F, pia_1_w },
+	{ 0x5200, 0x520F, pia_0_w },
 	{ 0x5210, 0x5212, exidy_color_w, &exidy_color_latch },
 	{ 0x5213, 0x5217, MWA_NOP }, /* empty control lines on color/sound board */
 	{ 0x6000, 0x6fff, exidy_characterram_w, &exidy_characterram }, /* two 6116 character RAMs */
@@ -247,7 +247,7 @@ static struct MemoryReadAddress fax_readmem[] =
 	{ 0x5100, 0x5100, input_port_0_r }, /* DSW */
 	{ 0x5101, 0x5101, input_port_1_r }, /* IN0 */
 	{ 0x5103, 0x5103, exidy_input_port_2_r, &exidy_collision }, /* IN1 */
-	{ 0x5200, 0x520F, pia_1_r },
+	{ 0x5200, 0x520F, pia_0_r },
 	{ 0x5213, 0x5213, input_port_3_r },     /* IN2 */
 	{ 0x6000, 0x6fff, MRA_RAM }, /* Fax, Pepper II only */
 	{ 0x8000, 0xffff, MRA_ROM },
@@ -266,7 +266,7 @@ static struct MemoryWriteAddress fax_writemem[] =
 	{ 0x50C0, 0x50C0, MWA_RAM, &exidy_sprite2_ypos },
 	{ 0x5100, 0x5100, MWA_RAM, &exidy_sprite_no },
 	{ 0x5101, 0x5101, MWA_RAM, &exidy_sprite_enable },
-	{ 0x5200, 0x520F, pia_1_w },
+	{ 0x5200, 0x520F, pia_0_w },
 	{ 0x5210, 0x5212, exidy_color_w, &exidy_color_latch },
 	{ 0x5213, 0x5217, MWA_NOP }, /* empty control lines on color/sound board */
 	{ 0x6000, 0x6fff, exidy_characterram_w, &exidy_characterram }, /* two 6116 character RAMs */
@@ -278,7 +278,7 @@ static struct MemoryReadAddress sound_readmem[] =
 {
 	{ 0x0000, 0x07ff, MRA_RAM },
 	{ 0x0800, 0x0FFF, exidy_shriot_r },
-	{ 0x1000, 0x100F, pia_2_r },
+	{ 0x1000, 0x100F, pia_1_r },
 	{ 0x1800, 0x1FFF, exidy_sh8253_r },
 	{ 0x2000, 0x27FF, MRA_RAM },
 	{ 0x2800, 0x2FFF, exidy_sh6840_r },
@@ -292,7 +292,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 {
 	{ 0x0000, 0x07FF, MWA_RAM },
 	{ 0x0800, 0x0FFF, exidy_shriot_w },
-	{ 0x1000, 0x100F, pia_2_w },
+	{ 0x1000, 0x100F, pia_1_w },
 	{ 0x1800, 0x1FFF, exidy_sh8253_w },
 	{ 0x2000, 0x27FF, MWA_RAM },
 	{ 0x2800, 0x2FFF, exidy_sh6840_w },
@@ -1661,7 +1661,6 @@ static void fax_hisave(void)
 	}
 }
 
-#if 0
 static int sidetrac_hiload(void)
 {
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
@@ -1703,7 +1702,6 @@ static void sidetrac_hisave(void)
 		osd_fclose(f);
 	}
 }
-#endif
 
 
 /***************************************************************************
@@ -1769,7 +1767,7 @@ struct GameDriver spectar_driver =
 	__FILE__,
 	0,
 	"spectar",
-	"Spectar (revision 2)",
+	"Spectar (revision 3)",
 	"1980",
 	"Exidy",
 	"Neil Bradley (hardware info)\nDan Boris (adaptation of Venture driver)",

@@ -706,41 +706,45 @@ static struct MachineDriver machine_driver =
 
 ROM_START( xevious_rom )
 	ROM_REGION(0x10000)	/* 64k for the first CPU */
-	ROM_LOAD( "xe-1m-a.bin",  0x0000, 0x2000, 0x92fa6cae )
-	ROM_LOAD( "xe-1l-a.bin",  0x2000, 0x2000, 0xbd74609a )
+	ROM_LOAD( "xvi_1.3p",     0x0000, 0x1000, 0x09964dda )
+	ROM_LOAD( "xvi_2.3m",     0x1000, 0x1000, 0x60ecce84 )
+	ROM_LOAD( "xvi_3.2m",     0x2000, 0x1000, 0x79754b7d )
+	ROM_LOAD( "xvi_4.2l",     0x3000, 0x1000, 0xc7d4bbf0 )
 
 	ROM_REGION_DISPOSE(0xb000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "xe-3b.bin",    0x0000, 0x1000, 0x088c8b26 )	/* foreground characters */
-	ROM_LOAD( "xe-3c.bin",    0x1000, 0x1000, 0xde60ba25 )	/* bg pattern B0 */
-	ROM_LOAD( "xe-3d.bin",    0x2000, 0x1000, 0x535cdbbc )	/* bg pattern B1 */
-	ROM_LOAD( "xe-4m.bin",    0x3000, 0x2000, 0xdc2c0ecb )	/* sprite set #1, planes 0/1 */
-	ROM_LOAD( "xe-4r.bin",    0x5000, 0x2000, 0x02417d19 )	/* sprite set #1, plane 2, set #2, plane 0 */
-	ROM_LOAD( "xe-4p.bin",    0x7000, 0x2000, 0xdfb587ce )	/* sprite set #2, planes 1/2 */
-	ROM_LOAD( "xe-4n.bin",    0x9000, 0x1000, 0x605ca889 )	/* sprite set #3, planes 0/1 */
+	ROM_LOAD( "xvi_12.3b",    0x0000, 0x1000, 0x088c8b26 )	/* foreground characters */
+	ROM_LOAD( "xvi_13.3c",    0x1000, 0x1000, 0xde60ba25 )	/* bg pattern B0 */
+	ROM_LOAD( "xvi_14.3d",    0x2000, 0x1000, 0x535cdbbc )	/* bg pattern B1 */
+	ROM_LOAD( "xvi_15.4m",    0x3000, 0x2000, 0xdc2c0ecb )	/* sprite set #1, planes 0/1 */
+	ROM_LOAD( "xvi_18.4r",    0x5000, 0x2000, 0x02417d19 )	/* sprite set #1, plane 2, set #2, plane 0 */
+	ROM_LOAD( "xvi_17.4p",    0x7000, 0x2000, 0xdfb587ce )	/* sprite set #2, planes 1/2 */
+	ROM_LOAD( "xvi_16.4n",    0x9000, 0x1000, 0x605ca889 )	/* sprite set #3, planes 0/1 */
 	/* 0xa000-0xafff empty space to decode sprite set #3 as 3 bits per pixel */
 
-	ROM_REGION(0x0700)	/* color proms */
-	ROM_LOAD( "xevious.6a",   0x0000, 0x0100, 0xa0334cef ) /* palette red component */
-	ROM_LOAD( "xevious.6d",   0x0100, 0x0100, 0xa076a85c ) /* palette green component */
-	ROM_LOAD( "xevious.6e",   0x0200, 0x0100, 0xc04737e5 ) /* palette blue component */
-	ROM_LOAD( "4h-4f",        0x0300, 0x0200, 0xc21a65ff ) /* background tiles lookup table */
-	/* These are probably not the original PROMs. The transparency information */
-	/* (bit 7) is missing. The 0x80 bytes are mine, needed to fix the targeting cursor */
-	ROM_LOAD( "3l-3m",        0x0500, 0x0200, BADCRC( 0x48d96000 ) ) /* sprite lookup table */
+	ROM_REGION(0x0b00)	/* color PROMs */
+	ROM_LOAD( "xvi_8bpr.6a",  0x0000, 0x0100, 0x5cc2727f ) /* palette red component */
+	ROM_LOAD( "xvi_9bpr.6d",  0x0100, 0x0100, 0x5c8796cc ) /* palette green component */
+	ROM_LOAD( "xvi10bpr.6e",  0x0200, 0x0100, 0x3cb60975 ) /* palette blue component */
+	ROM_LOAD( "xvi_7bpr.4h",  0x0300, 0x0200, 0x22d98032 ) /* bg tiles lookup table low bits */
+	ROM_LOAD( "xvi_6bpr.4f",  0x0500, 0x0200, 0x3a7599f0 ) /* bg tiles lookup table high bits */
+	ROM_LOAD( "xvi_4bpr.3l",  0x0700, 0x0200, 0xfd8b9d91 ) /* sprite lookup table low bits */
+	ROM_LOAD( "xvi_5bpr.3m",  0x0900, 0x0200, 0xbf906d82 ) /* sprite lookup table high bits */
 
 	ROM_REGION(0x10000)	/* 64k for the second CPU */
-	ROM_LOAD( "xe-4c-a.bin",  0x0000, 0x2000, 0x0ede5706 )
+	ROM_LOAD( "xvi_5.3f",     0x0000, 0x1000, 0xc85b703f )
+	ROM_LOAD( "xvi_6.3j",     0x1000, 0x1000, 0xe18cdaad )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "xe-2c-a.bin",  0x0000, 0x1000, 0xdd35cf1c )
+	ROM_LOAD( "xvi_7.2c",     0x0000, 0x1000, 0xdd35cf1c )
 
 	ROM_REGION(0x4000)	/* gfx map */
-	ROM_LOAD( "xe-2a.bin",    0x0000, 0x1000, 0x57ed9879 )
-	ROM_LOAD( "xe-2b.bin",    0x1000, 0x2000, 0xae3ba9e5 )
-	ROM_LOAD( "xe-2c.bin",    0x3000, 0x1000, 0x31e244dd )
+	ROM_LOAD( "xvi_9.2a",     0x0000, 0x1000, 0x57ed9879 )
+	ROM_LOAD( "xvi_10.2b",    0x1000, 0x2000, 0xae3ba9e5 )
+	ROM_LOAD( "xvi_11.2c",    0x3000, 0x1000, 0x31e244dd )
 
-	ROM_REGION(0x0100)	/* sound prom */
-	ROM_LOAD( "xevious.spr",  0x0000, 0x0100, 0xa9fe382c )
+	ROM_REGION(0x0200)	/* sound PROMs */
+	ROM_LOAD( "xvi_2bpr.7n",  0x0000, 0x0100, 0x550f06bc )
+	ROM_LOAD( "xvi_1bpr.5n",  0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
 ROM_START( xeviousa_rom )
@@ -749,83 +753,87 @@ ROM_START( xeviousa_rom )
 	ROM_LOAD( "xea-1l-a.bin", 0x2000, 0x2000, 0x0821642b )
 
 	ROM_REGION_DISPOSE(0xb000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "xe-3b.bin",    0x0000, 0x1000, 0x088c8b26 )	/* foreground characters */
-	ROM_LOAD( "xe-3c.bin",    0x1000, 0x1000, 0xde60ba25 )	/* bg pattern B0 */
-	ROM_LOAD( "xe-3d.bin",    0x2000, 0x1000, 0x535cdbbc )	/* bg pattern B1 */
-	ROM_LOAD( "xe-4m.bin",    0x3000, 0x2000, 0xdc2c0ecb )	/* sprite set #1, planes 0/1 */
-	ROM_LOAD( "xe-4r.bin",    0x5000, 0x2000, 0x02417d19 )	/* sprite set #1, plane 2, set #2, plane 0 */
-	ROM_LOAD( "xe-4p.bin",    0x7000, 0x2000, 0xdfb587ce )	/* sprite set #2, planes 1/2 */
-	ROM_LOAD( "xe-4n.bin",    0x9000, 0x1000, 0x605ca889 )	/* sprite set #3, planes 0/1 */
+	ROM_LOAD( "xvi_12.3b",    0x0000, 0x1000, 0x088c8b26 )	/* foreground characters */
+	ROM_LOAD( "xvi_13.3c",    0x1000, 0x1000, 0xde60ba25 )	/* bg pattern B0 */
+	ROM_LOAD( "xvi_14.3d",    0x2000, 0x1000, 0x535cdbbc )	/* bg pattern B1 */
+	ROM_LOAD( "xvi_15.4m",    0x3000, 0x2000, 0xdc2c0ecb )	/* sprite set #1, planes 0/1 */
+	ROM_LOAD( "xvi_18.4r",    0x5000, 0x2000, 0x02417d19 )	/* sprite set #1, plane 2, set #2, plane 0 */
+	ROM_LOAD( "xvi_17.4p",    0x7000, 0x2000, 0xdfb587ce )	/* sprite set #2, planes 1/2 */
+	ROM_LOAD( "xvi_16.4n",    0x9000, 0x1000, 0x605ca889 )	/* sprite set #3, planes 0/1 */
 	/* 0xa000-0xafff empty space to decode sprite set #3 as 3 bits per pixel */
 
-	ROM_REGION(0x0700)	/* color proms */
-	ROM_LOAD( "xevious.6a",   0x0000, 0x0100, 0xa0334cef ) /* palette red component */
-	ROM_LOAD( "xevious.6d",   0x0100, 0x0100, 0xa076a85c ) /* palette green component */
-	ROM_LOAD( "xevious.6e",   0x0200, 0x0100, 0xc04737e5 ) /* palette blue component */
-	ROM_LOAD( "4h-4f",        0x0300, 0x0200, 0xc21a65ff ) /* background tiles lookup table */
-	/* These are probably not the original PROMs. The transparency information */
-	/* (bit 7) is missing. The 0x80 bytes are mine, needed to fix the targeting cursor */
-	ROM_LOAD( "3l-3m",        0x0500, 0x0200, BADCRC( 0x48d96000 ) ) /* sprite lookup table */
+	ROM_REGION(0x0b00)	/* color PROMs */
+	ROM_LOAD( "xvi_8bpr.6a",  0x0000, 0x0100, 0x5cc2727f ) /* palette red component */
+	ROM_LOAD( "xvi_9bpr.6d",  0x0100, 0x0100, 0x5c8796cc ) /* palette green component */
+	ROM_LOAD( "xvi10bpr.6e",  0x0200, 0x0100, 0x3cb60975 ) /* palette blue component */
+	ROM_LOAD( "xvi_7bpr.4h",  0x0300, 0x0200, 0x22d98032 ) /* bg tiles lookup table low bits */
+	ROM_LOAD( "xvi_6bpr.4f",  0x0500, 0x0200, 0x3a7599f0 ) /* bg tiles lookup table high bits */
+	ROM_LOAD( "xvi_4bpr.3l",  0x0700, 0x0200, 0xfd8b9d91 ) /* sprite lookup table low bits */
+	ROM_LOAD( "xvi_5bpr.3m",  0x0900, 0x0200, 0xbf906d82 ) /* sprite lookup table high bits */
 
 	ROM_REGION(0x10000)	/* 64k for the second CPU */
 	ROM_LOAD( "xea-4c-a.bin", 0x0000, 0x2000, 0x14d8fa03 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "xe-2c-a.bin",  0x0000, 0x1000, 0xdd35cf1c )
+	ROM_LOAD( "xvi_7.2c",     0x0000, 0x1000, 0xdd35cf1c )
 
 	ROM_REGION(0x4000)	/* gfx map */
-	ROM_LOAD( "xe-2a.bin",    0x0000, 0x1000, 0x57ed9879 )
-	ROM_LOAD( "xe-2b.bin",    0x1000, 0x2000, 0xae3ba9e5 )
-	ROM_LOAD( "xe-2c.bin",    0x3000, 0x1000, 0x31e244dd )
+	ROM_LOAD( "xvi_9.2a",     0x0000, 0x1000, 0x57ed9879 )
+	ROM_LOAD( "xvi_10.2b",    0x1000, 0x2000, 0xae3ba9e5 )
+	ROM_LOAD( "xvi_11.2c",    0x3000, 0x1000, 0x31e244dd )
 
-	ROM_REGION(0x0100)	/* sound prom */
-	ROM_LOAD( "xevious.spr",  0x0000, 0x0100, 0xa9fe382c )
+	ROM_REGION(0x0200)	/* sound PROMs */
+	ROM_LOAD( "xvi_2bpr.7n",  0x0000, 0x0100, 0x550f06bc )
+	ROM_LOAD( "xvi_1bpr.5n",  0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
 ROM_START( xevios_rom )
 	ROM_REGION(0x10000)	/* 64k for the first CPU */
 	ROM_LOAD( "4.7h",         0x0000, 0x1000, 0x1f8ca4c0 )
 	ROM_LOAD( "5.6h",         0x1000, 0x1000, 0x2e47ce8f )
-	ROM_LOAD( "6.5h",         0x2000, 0x1000, 0x79754b7d )
+	ROM_LOAD( "xvi_3.2m",     0x2000, 0x1000, 0x79754b7d )
 	ROM_LOAD( "7.4h",         0x3000, 0x1000, 0x7033f2e3 )
 
 	ROM_REGION_DISPOSE(0xb000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "xe-3b.bin",    0x0000, 0x1000, 0x088c8b26 )	/* foreground characters */
-	ROM_LOAD( "xe-3c.bin",    0x1000, 0x1000, 0xde60ba25 )	/* bg pattern B0 */
-	ROM_LOAD( "xe-3d.bin",    0x2000, 0x1000, 0x535cdbbc )	/* bg pattern B1 */
-	ROM_LOAD( "xe-4m.bin",    0x3000, 0x2000, 0xdc2c0ecb )	/* sprite set #1, planes 0/1 */
+	ROM_LOAD( "xvi_12.3b",    0x0000, 0x1000, 0x088c8b26 )	/* foreground characters */
+	ROM_LOAD( "xvi_13.3c",    0x1000, 0x1000, 0xde60ba25 )	/* bg pattern B0 */
+	ROM_LOAD( "xvi_14.3d",    0x2000, 0x1000, 0x535cdbbc )	/* bg pattern B1 */
+	ROM_LOAD( "xvi_15.4m",    0x3000, 0x2000, 0xdc2c0ecb )	/* sprite set #1, planes 0/1 */
 	ROM_LOAD( "16.8d",        0x5000, 0x2000, 0x44262c04 )	/* sprite set #1, plane 2, set #2, plane 0 */
-	ROM_LOAD( "xe-4p.bin",    0x7000, 0x2000, 0xdfb587ce )	/* sprite set #2, planes 1/2 */
-	ROM_LOAD( "xe-4n.bin",    0x9000, 0x1000, 0x605ca889 )	/* sprite set #3, planes 0/1 */
+	ROM_LOAD( "xvi_17.4p",    0x7000, 0x2000, 0xdfb587ce )	/* sprite set #2, planes 1/2 */
+	ROM_LOAD( "xvi_16.4n",    0x9000, 0x1000, 0x605ca889 )	/* sprite set #3, planes 0/1 */
 	/* 0xa000-0xafff empty space to decode sprite set #3 as 3 bits per pixel */
 
-	ROM_REGION(0x0700)	/* color proms */
-	ROM_LOAD( "xevious.6a",   0x0000, 0x0100, 0xa0334cef ) /* palette red component */
-	ROM_LOAD( "xevious.6d",   0x0100, 0x0100, 0xa076a85c ) /* palette green component */
-	ROM_LOAD( "xevious.6e",   0x0200, 0x0100, 0xc04737e5 ) /* palette blue component */
-	ROM_LOAD( "4h-4f",        0x0300, 0x0200, 0xc21a65ff ) /* background tiles lookup table */
-	/* These are probably not the original PROMs. The transparency information */
-	/* (bit 7) is missing. The 0x80 bytes are mine, needed to fix the targeting cursor */
-	ROM_LOAD( "3l-3m",        0x0500, 0x0200, BADCRC( 0x48d96000 ) ) /* sprite lookup table */
+	ROM_REGION(0x0b00)	/* color PROMs */
+	ROM_LOAD( "xvi_8bpr.6a",  0x0000, 0x0100, 0x5cc2727f ) /* palette red component */
+	ROM_LOAD( "xvi_9bpr.6d",  0x0100, 0x0100, 0x5c8796cc ) /* palette green component */
+	ROM_LOAD( "xvi10bpr.6e",  0x0200, 0x0100, 0x3cb60975 ) /* palette blue component */
+	ROM_LOAD( "xvi_7bpr.4h",  0x0300, 0x0200, 0x22d98032 ) /* bg tiles lookup table low bits */
+	ROM_LOAD( "xvi_6bpr.4f",  0x0500, 0x0200, 0x3a7599f0 ) /* bg tiles lookup table high bits */
+	ROM_LOAD( "xvi_4bpr.3l",  0x0700, 0x0200, 0xfd8b9d91 ) /* sprite lookup table low bits */
+	ROM_LOAD( "xvi_5bpr.3m",  0x0900, 0x0200, 0xbf906d82 ) /* sprite lookup table high bits */
 
 	ROM_REGION(0x10000)	/* 64k for the second CPU */
-	ROM_LOAD( "xe-4c-a.bin",  0x0000, 0x2000, 0x0ede5706 )
+	ROM_LOAD( "xvi_5.3f",     0x0000, 0x1000, 0xc85b703f )
+	ROM_LOAD( "xvi_6.3j",     0x1000, 0x1000, 0xe18cdaad )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "xe-2c-a.bin",  0x0000, 0x1000, 0xdd35cf1c )
+	ROM_LOAD( "xvi_7.2c",     0x0000, 0x1000, 0xdd35cf1c )
 
 	ROM_REGION(0x4000)	/* gfx map */
 	ROM_LOAD( "10.1d",        0x0000, 0x1000, 0x10baeebb )
-	ROM_LOAD( "xe-2b.bin",    0x1000, 0x2000, 0xae3ba9e5 )
+	ROM_LOAD( "xvi_10.2b",    0x1000, 0x2000, 0xae3ba9e5 )
 	ROM_LOAD( "12.3d",        0x3000, 0x1000, 0x51a4e83b )
 
-	ROM_REGION(0x0100)	/* sound prom */
-	ROM_LOAD( "xevious.spr",  0x0000, 0x0100, 0xa9fe382c )
+	ROM_REGION(0x0200)	/* sound PROMs */
+	ROM_LOAD( "xvi_2bpr.7n",  0x0000, 0x0100, 0x550f06bc )
+	ROM_LOAD( "xvi_1bpr.5n",  0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 
+	ROM_REGION(0x3000)
 	/* extra ROMs (function unknown, could be emulation of the custom I/O */
 	/* chip with a Z80): */
-	/* 1.16J */
-	/* 2.17B */
+	ROM_LOAD( "1.16j",        0x0000, 0x1000, 0x2618f0ce )
+	ROM_LOAD( "2.17b",        0x1000, 0x2000, 0xde359fac )
 ROM_END
 
 ROM_START( sxevious_rom )
@@ -836,38 +844,39 @@ ROM_START( sxevious_rom )
 	ROM_LOAD( "cpu_2l.rom",   0x3000, 0x1000, 0x6a44bf92 )
 
 	ROM_REGION_DISPOSE(0xb000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "xe-3b.bin",    0x0000, 0x1000, 0x088c8b26 )	/* foreground characters */
-	ROM_LOAD( "xe-3c.bin",    0x1000, 0x1000, 0xde60ba25 )	/* bg pattern B0 */
-	ROM_LOAD( "xe-3d.bin",    0x2000, 0x1000, 0x535cdbbc )	/* bg pattern B1 */
-	ROM_LOAD( "xe-4m.bin",    0x3000, 0x2000, 0xdc2c0ecb )	/* sprite set #1, planes 0/1 */
-	ROM_LOAD( "xe-4r.bin",    0x5000, 0x2000, 0x02417d19 )	/* sprite set #1, plane 2, set #2, plane 0 */
-	ROM_LOAD( "xe-4p.bin",    0x7000, 0x2000, 0xdfb587ce )	/* sprite set #2, planes 1/2 */
-	ROM_LOAD( "xe-4n.bin",    0x9000, 0x1000, 0x605ca889 )	/* sprite set #3, planes 0/1 */
+	ROM_LOAD( "xvi_12.3b",    0x0000, 0x1000, 0x088c8b26 )	/* foreground characters */
+	ROM_LOAD( "xvi_13.3c",    0x1000, 0x1000, 0xde60ba25 )	/* bg pattern B0 */
+	ROM_LOAD( "xvi_14.3d",    0x2000, 0x1000, 0x535cdbbc )	/* bg pattern B1 */
+	ROM_LOAD( "xvi_15.4m",    0x3000, 0x2000, 0xdc2c0ecb )	/* sprite set #1, planes 0/1 */
+	ROM_LOAD( "xvi_18.4r",    0x5000, 0x2000, 0x02417d19 )	/* sprite set #1, plane 2, set #2, plane 0 */
+	ROM_LOAD( "xvi_17.4p",    0x7000, 0x2000, 0xdfb587ce )	/* sprite set #2, planes 1/2 */
+	ROM_LOAD( "xvi_16.4n",    0x9000, 0x1000, 0x605ca889 )	/* sprite set #3, planes 0/1 */
 	/* 0xa000-0xafff empty space to decode sprite set #3 as 3 bits per pixel */
 
-	ROM_REGION(0x0700)	/* color proms */
-	ROM_LOAD( "xevious.6a",   0x0000, 0x0100, 0xa0334cef ) /* palette red component */
-	ROM_LOAD( "xevious.6d",   0x0100, 0x0100, 0xa076a85c ) /* palette green component */
-	ROM_LOAD( "xevious.6e",   0x0200, 0x0100, 0xc04737e5 ) /* palette blue component */
-	ROM_LOAD( "4h-4f",        0x0300, 0x0200, 0xc21a65ff ) /* background tiles lookup table */
-	/* These are probably not the original PROMs. The transparency information */
-	/* (bit 7) is missing. The 0x80 bytes are mine, needed to fix the targeting cursor */
-	ROM_LOAD( "3l-3m",        0x0500, 0x0200, BADCRC( 0x48d96000 ) ) /* sprite lookup table */
+	ROM_REGION(0x0b00)	/* color PROMs */
+	ROM_LOAD( "xvi_8bpr.6a",  0x0000, 0x0100, 0x5cc2727f ) /* palette red component */
+	ROM_LOAD( "xvi_9bpr.6d",  0x0100, 0x0100, 0x5c8796cc ) /* palette green component */
+	ROM_LOAD( "xvi10bpr.6e",  0x0200, 0x0100, 0x3cb60975 ) /* palette blue component */
+	ROM_LOAD( "xvi_7bpr.4h",  0x0300, 0x0200, 0x22d98032 ) /* bg tiles lookup table low bits */
+	ROM_LOAD( "xvi_6bpr.4f",  0x0500, 0x0200, 0x3a7599f0 ) /* bg tiles lookup table high bits */
+	ROM_LOAD( "xvi_4bpr.3l",  0x0700, 0x0200, 0xfd8b9d91 ) /* sprite lookup table low bits */
+	ROM_LOAD( "xvi_5bpr.3m",  0x0900, 0x0200, 0xbf906d82 ) /* sprite lookup table high bits */
 
 	ROM_REGION(0x10000)	/* 64k for the second CPU */
 	ROM_LOAD( "cpu_3f.rom",   0x0000, 0x1000, 0xd4bd3d81 )
 	ROM_LOAD( "cpu_3j.rom",   0x1000, 0x1000, 0xaf06be5f )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "xe-2c-a.bin",  0x0000, 0x1000, 0xdd35cf1c )
+	ROM_LOAD( "xvi_7.2c",     0x0000, 0x1000, 0xdd35cf1c )
 
 	ROM_REGION(0x4000)	/* gfx map */
-	ROM_LOAD( "xe-2a.bin",    0x0000, 0x1000, 0x57ed9879 )
-	ROM_LOAD( "xe-2b.bin",    0x1000, 0x2000, 0xae3ba9e5 )
-	ROM_LOAD( "xe-2c.bin",    0x3000, 0x1000, 0x31e244dd )
+	ROM_LOAD( "xvi_9.2a",     0x0000, 0x1000, 0x57ed9879 )
+	ROM_LOAD( "xvi_10.2b",    0x1000, 0x2000, 0xae3ba9e5 )
+	ROM_LOAD( "xvi_11.2c",    0x3000, 0x1000, 0x31e244dd )
 
-	ROM_REGION(0x0100)	/* sound prom */
-	ROM_LOAD( "xevious.spr",  0x0000, 0x0100, 0xa9fe382c )
+	ROM_REGION(0x0200)	/* sound PROMs */
+	ROM_LOAD( "xvi_2bpr.7n",  0x0000, 0x0100, 0x550f06bc )
+	ROM_LOAD( "xvi_1bpr.5n",  0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
 

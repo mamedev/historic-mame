@@ -19,8 +19,8 @@ static void sdungeon_coin_w (int offset, int data);
 
 static int qix_sound_r (int offset);
 static void qix_dac_w (int offset, int data);
-static void qix_pia_sint (void);
-static void qix_pia_dint (void);
+static void qix_pia_sint (int state);
+static void qix_pia_dint (int state);
 static int suspended;
 
 static int sdungeon_coinctrl;
@@ -65,6 +65,64 @@ static int sdungeon_coinctrl;
 
 ***************************************************************************/
 
+static struct pia6821_interface qix_pia_0_intf =
+{
+	/*inputs : A/B,CA/B1,CA/B2 */ input_port_0_r, input_port_1_r, 0, 0, 0, 0,
+	/*outputs: A/B,CA/B2       */ 0, 0, 0, 0,
+	/*irqs   : A/B             */ 0, 0
+};
+
+static struct pia6821_interface qixmcu_pia_0_intf =
+{
+	/*inputs : A/B,CA/B1,CA/B2 */ input_port_0_r, sdungeon_coin_r, 0, 0, 0, 0,
+	/*outputs: A/B,CA/B2       */ 0, sdungeon_coin_w, 0, 0,
+	/*irqs   : A/B             */ 0, 0
+};
+
+static struct pia6821_interface qix_pia_1_intf =
+{
+	/*inputs : A/B,CA/B1,CA/B2 */ input_port_2_r, input_port_3_r, 0, 0, 0, 0,
+	/*outputs: A/B,CA/B2       */ 0, 0, 0, 0,
+	/*irqs   : A/B             */ 0, 0
+};
+
+static struct pia6821_interface qix_pia_2_intf =
+{
+	/*inputs : A/B,CA/B1,CA/B2 */ input_port_4_r, 0, 0, 0, 0, 0,
+	/*outputs: A/B,CA/B2       */ 0, 0, 0, 0,
+	/*irqs   : A/B             */ 0, 0
+};
+
+static struct pia6821_interface qixmcu_pia_2_intf =
+{
+	/*inputs : A/B,CA/B1,CA/B2 */ input_port_4_r, 0, 0, 0, 0, 0,
+	/*outputs: A/B,CA/B2       */ 0, sdungeon_coinctrl_w, 0, 0,
+	/*irqs   : A/B             */ 0, 0
+};
+
+static struct pia6821_interface qix_pia_3_intf =
+{
+	/*inputs : A/B,CA/B1,CA/B2 */ 0, 0, 0, 0, 0, 0,
+	/*outputs: A/B,CA/B2       */ pia_4_porta_w, 0, pia_4_ca1_w, 0,
+	/*irqs   : A/B             */ /*qix_pia_dint*/0, /*qix_pia_dint*/0
+};
+
+static struct pia6821_interface qix_pia_4_intf =
+{
+	/*inputs : A/B,CA/B1,CA/B2 */ qix_sound_r, 0, 0, 0, 0, 0,
+	/*outputs: A/B,CA/B2       */ pia_3_porta_w, qix_dac_w, pia_3_ca1_w, 0,
+	/*irqs   : A/B             */ qix_pia_sint, qix_pia_sint
+};
+
+static struct pia6821_interface qix_pia_5_intf =
+{
+	/*inputs : A/B,CA/B1,CA/B2 */ 0, 0, 0, 0, 0, 0,
+	/*outputs: A/B,CA/B2       */ pia_3_porta_w, qix_dac_w, pia_3_ca1_w, 0,
+	/*irqs   : A/B             */ qix_pia_sint, qix_pia_sint
+};
+
+
+#if 0
 static pia6821_interface pia_intf_withmcu =
 {
 	6,                                             	/* 6 chips */
@@ -76,9 +134,9 @@ static pia6821_interface pia_intf_withmcu =
 	{ sdungeon_coin_r, input_port_3_r, 0, 0, 0, 0 }, /* input port B  */
 	{ 0, 0, 0, 0, 0, 0 },                           /* input bit CB1 */
 	{ 0, 0, 0, 0, 0, 0 },                           /* input bit CB2 */
-	{ 0, 0, 0, pia_5_porta_w, pia_4_porta_w, 0 },   /* output port A */
+	{ 0, 0, 0, pia_4_porta_w, pia_3_porta_w, 0 },   /* output port A */
 	{ sdungeon_coin_w, 0, sdungeon_coinctrl_w, 0, qix_dac_w, 0 },  /* output port B */
-	{ 0, 0, 0, pia_5_ca1_w, pia_4_ca1_w, 0 },       /* output CA2 */
+	{ 0, 0, 0, pia_4_ca1_w, pia_3_ca1_w, 0 },       /* output CA2 */
 	{ 0, 0, 0, 0, 0, 0 },                          	/* output CB2 */
 	{ 0, 0, 0, 0/*qix_pia_dint*/, qix_pia_sint, 0 },/* IRQ A */
 	{ 0, 0, 0, 0/*qix_pia_dint*/, qix_pia_sint, 0 },/* IRQ B */
@@ -95,14 +153,14 @@ static pia6821_interface pia_intf =
 	{ input_port_1_r, input_port_3_r, 0, 0, 0, 0 }, /* input port B  */
 	{ 0, 0, 0, 0, 0, 0 },                           /* input bit CB1 */
 	{ 0, 0, 0, 0, 0, 0 },                           /* input bit CB2 */
-	{ 0, 0, 0, pia_5_porta_w, pia_4_porta_w, 0 },   /* output port A */
+	{ 0, 0, 0, pia_4_porta_w, pia_3_porta_w, 0 },   /* output port A */
 	{ 0, 0, 0, 0, qix_dac_w, 0 },                   /* output port B */
-	{ 0, 0, 0, pia_5_ca1_w, pia_4_ca1_w, 0 },       /* output CA2 */
+	{ 0, 0, 0, pia_4_ca1_w, pia_3_ca1_w, 0 },       /* output CA2 */
 	{ 0, 0, 0, 0, 0, 0 },                          	/* output CB2 */
 	{ 0, 0, 0, 0/*qix_pia_dint*/, qix_pia_sint, 0 },/* IRQ A */
 	{ 0, 0, 0, 0/*qix_pia_dint*/, qix_pia_sint, 0 },/* IRQ B */
 };
-
+#endif
 
 
 unsigned char *qix_sharedram;
@@ -160,7 +218,13 @@ void withmcu_init_machine(void)
 	/* Set OPTIMIZATION FLAGS FOR M6809 */
 	m6809_Flags = M6809_FAST_S;/* | M6809_FAST_U;*/
 
-	pia_startup (&pia_intf_withmcu);
+	pia_config(0, PIA_STANDARD_ORDERING | PIA_8BIT, &qixmcu_pia_0_intf);
+	pia_config(1, PIA_STANDARD_ORDERING | PIA_8BIT, &qix_pia_1_intf);
+	pia_config(2, PIA_STANDARD_ORDERING | PIA_8BIT, &qixmcu_pia_2_intf);
+	pia_config(3, PIA_STANDARD_ORDERING | PIA_8BIT, &qix_pia_3_intf);
+	pia_config(4, PIA_STANDARD_ORDERING | PIA_8BIT, &qix_pia_4_intf);
+	pia_config(5, PIA_STANDARD_ORDERING | PIA_8BIT, &qix_pia_5_intf);
+	pia_reset();
 
 	sdungeon_coinctrl = 0x00;
 }
@@ -172,19 +236,23 @@ void qix_init_machine(void)
 	/* Set OPTIMIZATION FLAGS FOR M6809 */
 	m6809_Flags = M6809_FAST_S;/* | M6809_FAST_U;*/
 
-	pia_startup (&pia_intf);
+	pia_config(0, PIA_STANDARD_ORDERING | PIA_8BIT, &qix_pia_0_intf);
+	pia_config(1, PIA_STANDARD_ORDERING | PIA_8BIT, &qix_pia_1_intf);
+	pia_config(2, PIA_STANDARD_ORDERING | PIA_8BIT, &qix_pia_2_intf);
+	pia_config(3, PIA_STANDARD_ORDERING | PIA_8BIT, &qix_pia_3_intf);
+	pia_config(4, PIA_STANDARD_ORDERING | PIA_8BIT, &qix_pia_4_intf);
+	pia_config(5, PIA_STANDARD_ORDERING | PIA_8BIT, &qix_pia_5_intf);
+	pia_reset();
 
 	sdungeon_coinctrl = 0x00;
 }
 
 void zoo_init_machine(void)
 {
-	suspended = 0;
+	withmcu_init_machine();
 
 	/* Set OPTIMIZATION FLAGS FOR M6809 */
 	m6809_Flags = M6809_FAST_NONE;
-
-	pia_startup (&pia_intf_withmcu);
 }
 
 
@@ -208,25 +276,32 @@ int qix_sound_r (int offset)
 		cpu_yielduntil_time (TIME_IN_USEC (100));
 		suspended = 0;
 	}
-	return pia_5_porta_r (offset);
+	return pia_4_porta_r (offset);
 }
 
-static void qix_pia_dint (void)
+static void qix_pia_dint (int state)
 {
 	/* not used by Qix, but others might use it; depends on a jumper on the PCB */
 }
 
-static void qix_pia_sint (void)
+static void qix_pia_sint (int state)
 {
 	/* generate a sound interrupt */
-	cpu_cause_interrupt (2, M6809_INT_IRQ);
-
-	/* wait for the sound CPU to read the command */
-	cpu_yielduntil_trigger (500);
-	suspended = 1;
-
-	/* but add a watchdog so that we're not hosed if interrupts are disabled */
-	cpu_triggertime (TIME_IN_USEC (100), 500);
+/*	cpu_set_irq_line (2, M6809_IRQ_LINE, state ? ASSERT_LINE : CLEAR_LINE);*/
+	
+	if (state)
+	{
+		/* ideally we should use the cpu_set_irq_line call above, but it breaks */
+		/* sound in Qix */
+		cpu_cause_interrupt (2, M6809_INT_IRQ);
+	
+		/* wait for the sound CPU to read the command */
+		cpu_yielduntil_trigger (500);
+		suspended = 1;
+	
+		/* but add a watchdog so that we're not hosed if interrupts are disabled */
+		cpu_triggertime (TIME_IN_USEC (100), 500);
+	}
 }
 
 /***************************************************************************
@@ -307,8 +382,8 @@ int sdungeon_coin_r (int offset)
 static void sdungeon_coin_w (int offset, int data)
 {
 //if (errorlog) fprintf(errorlog,"PC: %x COIN COMMAND W: %x\n",cpu_get_pc(),data);
-	/* this is a callback called by pia_1_w(), so I don't need to synchronize */
-	/* the CPUs - they have already been synchronized by sdungeon_pia_1_w() */
+	/* this is a callback called by pia_0_w(), so I don't need to synchronize */
+	/* the CPUs - they have already been synchronized by sdungeon_pia_0_w() */
 	portA_in = data;
 }
 
@@ -317,25 +392,25 @@ static void sdungeon_coinctrl_w (int offset, int data)
 //if (errorlog) fprintf(errorlog,"PC: %x COIN CTRL W: %x\n",cpu_get_pc(),data);
 	if (data & 0x04)
 	{
-		cpu_set_irq_line(3,0,ASSERT_LINE);
+		cpu_set_irq_line(3,M6809_IRQ_LINE,ASSERT_LINE);
 		/* spin for a while to let the 68705 write the result */
 		cpu_spinuntil_time(TIME_IN_USEC(50));
 	}
 	else
-		cpu_set_irq_line(3,0,CLEAR_LINE);
+		cpu_set_irq_line(3,M6809_IRQ_LINE,CLEAR_LINE);
 
-	/* this is a callback called by pia_1_w(), so I don't need to synchronize */
-	/* the CPUs - they have already been synchronized by sdungeon_pia_1_w() */
+	/* this is a callback called by pia_0_w(), so I don't need to synchronize */
+	/* the CPUs - they have already been synchronized by sdungeon_pia_0_w() */
 	sdungeon_coinctrl = data;
 }
 
 
-static void pia_1_w_callback(int param)
+static void pia_0_w_callback(int param)
 {
-	pia_1_w(param >> 8,param & 0xff);
+	pia_0_w(param >> 8,param & 0xff);
 }
 
-void sdungeon_pia_1_w(int offset,int data)
+void sdungeon_pia_0_w(int offset,int data)
 {
 //if (errorlog) fprintf(errorlog,"%04x: PIA 1 write offset %02x data %02x\n",cpu_get_pc(),offset,data);
 
@@ -346,5 +421,5 @@ void sdungeon_pia_1_w(int offset,int data)
 
 	/* make all the CPUs synchronize, and only AFTER that write the command to the PIA */
 	/* otherwise the 68705 will miss commands */
-	timer_set(TIME_NOW,data | (offset << 8),pia_1_w_callback);
+	timer_set(TIME_NOW,data | (offset << 8),pia_0_w_callback);
 }

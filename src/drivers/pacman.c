@@ -853,7 +853,7 @@ static struct namco_interface namco_interface =
 static struct SN76496interface sn76496_interface =
 {
 	2,
-	1789750,	/* 1.78975 Mhz ? */
+	{ 1789750, 1789750 },	/* 1.78975 Mhz ? */
 	{ 75, 75 }
 };
 

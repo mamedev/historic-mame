@@ -83,16 +83,24 @@ void xevious_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 
 	/* background tiles */
 	for (i = 0;i < TOTAL_COLORS(1);i++)
-		COLOR(1,i) = *(color_prom++);
+	{
+		COLOR(1,i) = (color_prom[0] & 0x0f) | ((color_prom[TOTAL_COLORS(1)] & 0x0f) << 4);
+
+		color_prom++;
+	}
+	color_prom += TOTAL_COLORS(1);
 
 	/* sprites */
 	for (i = 0;i < TOTAL_COLORS(2);i++)
 	{
-		if (i % 8 == 0) COLOR(2,i) = 0x80; 	/* transparent */
-		else COLOR(2,i) = *color_prom;	/* this can be transparent too */
+		int c = (color_prom[0] & 0x0f) | ((color_prom[TOTAL_COLORS(2)] & 0x0f) << 4);
+
+		if (c & 0x80) COLOR(2,i) = c & 0x7f;
+		else COLOR(2,i) = 0x80;	/* transparent */
 
 		color_prom++;
 	}
+	color_prom += TOTAL_COLORS(2);
 
 	/* foreground characters */
 	for (i = 0;i < TOTAL_COLORS(0);i++)

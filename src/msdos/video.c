@@ -1910,7 +1910,7 @@ void osd_update_video_and_audio(void)
 	static int showfps,showfpstemp;
 	uclock_t curr;
 	static uclock_t prev_frames[FRAMESKIP_LEVELS],prev;
-	static int speed=0;
+	static int speed = 100;
 	static int vups,vfcount;
 	int need_to_clear_bitmap = 0;
 	int already_synced;
@@ -2031,12 +2031,12 @@ void osd_update_video_and_audio(void)
 			end_time = curr;
 
 
-		if (frameskip_counter == 0 && curr - prev_frames[frameskip_counter])
+		if (frameskip_counter == 0 && prev_frames[0])
 		{
 			int divdr;
 
 
-			divdr = Machine->drv->frames_per_second * (curr - prev_frames[frameskip_counter]) / (100 * FRAMESKIP_LEVELS);
+			divdr = Machine->drv->frames_per_second * (curr - prev_frames[0]) / (100 * FRAMESKIP_LEVELS);
 			speed = (UCLOCKS_PER_SEC + divdr/2) / divdr;
 		}
 

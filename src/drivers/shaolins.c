@@ -223,7 +223,7 @@ static struct GfxDecodeInfo shaolins_gfxdecodeinfo[] =
 static struct SN76496interface sn76496_interface =
 {
 	2,	/* 2 chips */
-	3072000,	/* 3.072 Mhz???? */
+	{ 1536000, 3072000 },	/* 3.072 Mhz???? */
 	{ 100, 100 }
 };
 

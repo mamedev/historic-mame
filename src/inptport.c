@@ -80,6 +80,7 @@ char ipdn_defaultstrings[][MAX_DEFSTR_LEN] =
 	"3 Coins/2 Credits",
 	"4 Coins/3 Credits",
 	"1 Coin/1 Credit",
+	"4 Coins/5 Credits",
 	"3 Coins/4 Credits",
 	"2 Coins/3 Credits",
 	"1 Coin/2 Credits",
@@ -419,6 +420,7 @@ static void save_default_keys(void)
 
 		osd_fclose(f);
 	}
+	memcpy(inputport_defaults,inputport_defaults_backup,sizeof(inputport_defaults_backup));
 }
 
 

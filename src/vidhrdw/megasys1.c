@@ -365,7 +365,19 @@ MEGASYS1_SCROLLRAM_W(2)
 
 int megasys1_vh_start(void)
 {
+	int i;
+
 	spriteram = &megasys1_ram[0x8000];
+	scrollram_0_tilemap = scrollram_1_tilemap = scrollram_2_tilemap = 0;
+
+	active_layers = spritebank = screenflag = spriteflag = 0;
+
+	for (i = 0; i < 3; i ++)
+	{
+	  scrollflag[i] = scrollx[i] = scrolly[i] = 0;
+	  pages_per_tmap_x[i] = pages_per_tmap_y[i] = 0;
+	}
+
 	return 0;
 }
 

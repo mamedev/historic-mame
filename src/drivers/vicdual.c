@@ -1052,7 +1052,7 @@ static struct MachineDriver NAME##_machine_driver =	\
 	64, 64,											\
 	vicdual_vh_convert_color_prom,					\
 													\
-	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,			\
+	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY|VIDEO_UPDATE_BEFORE_VBLANK,			\
 	0,												\
 	generic_vh_start,								\
 	generic_vh_stop,								\
@@ -1118,7 +1118,7 @@ static struct MachineDriver carnival_machine_driver =
 	64, 64,
 	vicdual_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY|VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
 	generic_vh_start,
 	generic_vh_stop,

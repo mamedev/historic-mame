@@ -187,7 +187,7 @@ extern void sdungeon_68705_portC_w(int offest,int data);
 void sdungeon_68705_ddrA_w(int offset,int data);
 void sdungeon_68705_ddrB_w(int offset,int data);
 void sdungeon_68705_ddrC_w(int offset,int data);
-void sdungeon_pia_1_w(int offset,int data);
+void sdungeon_pia_0_w(int offset,int data);
 
 extern unsigned char *qix_sharedram;
 int qix_scanline_r(int offset);
@@ -229,10 +229,10 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x8000, 0x83ff, qix_sharedram_r, &qix_sharedram },
 	{ 0x8400, 0x87ff, MRA_RAM },
 	{ 0x8800, 0x8800, MRA_RAM },   /* ACIA */
-	{ 0x9000, 0x9003, pia_4_r },
-	{ 0x9400, 0x9403, pia_1_r },
-	{ 0x9900, 0x9903, pia_2_r },
-	{ 0x9c00, 0x9FFF, pia_3_r },
+	{ 0x9000, 0x9003, pia_3_r },
+	{ 0x9400, 0x9403, pia_0_r },
+	{ 0x9900, 0x9903, pia_1_r },
+	{ 0x9c00, 0x9FFF, pia_2_r },
 	{ 0xa000, 0xffff, MRA_ROM },
 	{ -1 } /* end of table */
 };
@@ -241,10 +241,10 @@ static struct MemoryReadAddress zoo_readmem[] =
 {
 	{ 0x0000, 0x03ff, qix_sharedram_r, &qix_sharedram },
 	{ 0x0400, 0x07ff, MRA_RAM },
-	{ 0x1000, 0x1003, pia_4_r },	/* Sound PIA */
-	{ 0x1400, 0x1403, pia_1_r },	/* Game PIA 1 - Player inputs, coin door switches */
-	{ 0x1900, 0x1903, pia_2_r },	/* Game PIA 2 */
-	{ 0x1c00, 0x1fff, pia_3_r },    /* Game PIA 3 - Player 2 */
+	{ 0x1000, 0x1003, pia_3_r },	/* Sound PIA */
+	{ 0x1400, 0x1403, pia_0_r },	/* Game PIA 1 - Player inputs, coin door switches */
+	{ 0x1900, 0x1903, pia_1_r },	/* Game PIA 2 */
+	{ 0x1c00, 0x1fff, pia_2_r },    /* Game PIA 3 - Player 2 */
 	{ 0x8000, 0xffff, MRA_ROM },
 	{ -1 } /* end of table */
 };
@@ -275,8 +275,8 @@ static struct MemoryReadAddress zoo_readmem_video[] =
 static struct MemoryReadAddress readmem_sound[] =
 {
 	{ 0x0000, 0x007f, MRA_RAM },
-	{ 0x2000, 0x2003, pia_6_r },
-	{ 0x4000, 0x4003, pia_5_r },
+	{ 0x2000, 0x2003, pia_5_r },
+	{ 0x4000, 0x4003, pia_4_r },
 	{ 0xf000, 0xffff, MRA_ROM },
 	{ -1 } /* end of table */
 };
@@ -284,8 +284,8 @@ static struct MemoryReadAddress readmem_sound[] =
 static struct MemoryReadAddress zoo_readmem_sound[] =
 {
 	{ 0x0000, 0x007f, MRA_RAM },
-	{ 0x2000, 0x2003, pia_6_r },
-	{ 0x4000, 0x4003, pia_5_r },
+	{ 0x2000, 0x2003, pia_5_r },
+	{ 0x4000, 0x4003, pia_4_r },
 	{ 0xd000, 0xffff, MRA_ROM },
 	{ -1 } /* end of table */
 };
@@ -296,10 +296,10 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x8000, 0x83ff, qix_sharedram_w },
 	{ 0x8400, 0x87ff, MWA_RAM },
 	{ 0x8c00, 0x8c00, qix_video_firq_w },
-	{ 0x9000, 0x9003, pia_4_w },
-	{ 0x9400, 0x9403, sdungeon_pia_1_w },
-	{ 0x9900, 0x9903, pia_2_w },
-	{ 0x9c00, 0x9fff, pia_3_w },
+	{ 0x9000, 0x9003, pia_3_w },
+	{ 0x9400, 0x9403, sdungeon_pia_0_w },
+	{ 0x9900, 0x9903, pia_1_w },
+	{ 0x9c00, 0x9fff, pia_2_w },
 	{ 0xa000, 0xffff, MWA_ROM },
 	{ -1 } /* end of table */
 };
@@ -310,10 +310,10 @@ static struct MemoryWriteAddress zoo_writemem[] =
 	{ 0x0400, 0x07ff, MWA_RAM },
 	{ 0x0c00, 0x0c00, qix_video_firq_w },
 	{ 0x0c01, 0x0c01, MWA_NOP },	/* interrupt acknowledge */
-	{ 0x1000, 0x1003, pia_4_w },	/* Sound PIA */
-	{ 0x1400, 0x1403, sdungeon_pia_1_w },	/* Game PIA 1 */
-	{ 0x1900, 0x1903, pia_2_w },	/* Game PIA 2 */
-	{ 0x1c00, 0x1fff, pia_3_w },    /* Game PIA 3 */
+	{ 0x1000, 0x1003, pia_3_w },	/* Sound PIA */
+	{ 0x1400, 0x1403, sdungeon_pia_0_w },	/* Game PIA 1 */
+	{ 0x1900, 0x1903, pia_1_w },	/* Game PIA 2 */
+	{ 0x1c00, 0x1fff, pia_2_w },    /* Game PIA 3 */
 	{ 0x8000, 0xffff, MWA_ROM },
 	{ -1 } /* end of table */
 };
@@ -354,8 +354,8 @@ static struct MemoryWriteAddress zoo_writemem_video[] =
 static struct MemoryWriteAddress writemem_sound[] =
 {
 	{ 0x0000, 0x007f, MWA_RAM },
-	{ 0x2000, 0x2003, pia_6_w },
-	{ 0x4000, 0x4003, pia_5_w },
+	{ 0x2000, 0x2003, pia_5_w },
+	{ 0x4000, 0x4003, pia_4_w },
 	{ 0xf000, 0xffff, MWA_ROM },
 	{ -1 } /* end of table */
 };
@@ -363,8 +363,8 @@ static struct MemoryWriteAddress writemem_sound[] =
 static struct MemoryWriteAddress zoo_writemem_sound[] =
 {
 	{ 0x0000, 0x007f, MWA_RAM },
-	{ 0x2000, 0x2003, pia_6_w },
-	{ 0x4000, 0x4003, pia_5_w },
+	{ 0x2000, 0x2003, pia_5_w },
+	{ 0x4000, 0x4003, pia_4_w },
 	{ 0xd000, 0xffff, MWA_ROM },
 	{ -1 } /* end of table */
 };
@@ -416,7 +416,7 @@ static struct MemoryWriteAddress mcu_writemem[] =
 
 
 INPUT_PORTS_START( qix_input_ports )
-	PORT_START	/* PIA 1 Port A (PLAYER 1) */
+	PORT_START	/* PIA 0 Port A (PLAYER 1) */
     PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY )
     PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
     PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY )
@@ -426,16 +426,16 @@ INPUT_PORTS_START( qix_input_ports )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 )
 
-	PORT_START	/* PIA 1 Port B (COIN) */
+	PORT_START	/* PIA 0 Port B (COIN) */
 	COIN_PORT
 
-	PORT_START	/* PIA 2 Port A (SPARE) */
+	PORT_START	/* PIA 1 Port A (SPARE) */
 	UNKNOWN_PORT
 
-    PORT_START /* PIA 2 Port B (PLAYER 1/2) */
+    PORT_START /* PIA 1 Port B (PLAYER 1/2) */
 	UNKNOWN_PORT
 
-	PORT_START	/* PIA 3 Port A (PLAYER 2) */
+	PORT_START	/* PIA 2 Port A (PLAYER 2) */
     PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY | IPF_COCKTAIL )
     PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
     PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY | IPF_COCKTAIL )
@@ -447,7 +447,7 @@ INPUT_PORTS_START( qix_input_ports )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( sdungeon_input_ports )
-	PORT_START	/* PIA 1 Port A (PLAYER 1) */
+	PORT_START	/* PIA 0 Port A (PLAYER 1) */
     PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_UP     | IPF_8WAY )
     PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_RIGHT  | IPF_8WAY )
     PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_DOWN   | IPF_8WAY )
@@ -457,13 +457,13 @@ INPUT_PORTS_START( sdungeon_input_ports )
     PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_DOWN  | IPF_8WAY )
     PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_LEFT  | IPF_8WAY )
 
-	PORT_START	/* PIA 1 Port B (COIN) */
+	PORT_START	/* PIA 0 Port B (COIN) */
 	COIN_PORT
 
-	PORT_START	/* PIA 2 Port A (SPARE) */
+	PORT_START	/* PIA 1 Port A (SPARE) */
 	UNKNOWN_PORT
 
-    PORT_START /* PIA 2 Port B (PLAYER 1/2) */
+    PORT_START /* PIA 1 Port B (PLAYER 1/2) */
     PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
     PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
     PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -473,7 +473,7 @@ INPUT_PORTS_START( sdungeon_input_ports )
     PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
     PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START	/* PIA 3 Port A (PLAYER 2) */
+	PORT_START	/* PIA 2 Port A (PLAYER 2) */
     PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_UP     | IPF_8WAY | IPF_COCKTAIL )
     PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_RIGHT  | IPF_8WAY | IPF_COCKTAIL )
     PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_DOWN   | IPF_8WAY | IPF_COCKTAIL )
@@ -485,7 +485,7 @@ INPUT_PORTS_START( sdungeon_input_ports )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( elecyoyo_input_ports )
-	PORT_START	/* PIA 1 Port A (PLAYER 1) */
+	PORT_START	/* PIA 0 Port A (PLAYER 1) */
     PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY )
     PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
     PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY )
@@ -495,16 +495,16 @@ INPUT_PORTS_START( elecyoyo_input_ports )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START	/* PIA 1 Port B (COIN) */
+	PORT_START	/* PIA 0 Port B (COIN) */
 	COIN_PORT
 
-	PORT_START	/* PIA 2 Port A (SPARE) */
+	PORT_START	/* PIA 1 Port A (SPARE) */
 	UNKNOWN_PORT
 
-    PORT_START /* PIA 2 Port B (PLAYER 1/2) */
+    PORT_START /* PIA 1 Port B (PLAYER 1/2) */
 	UNKNOWN_PORT
 
-	PORT_START	/* PIA 3 Port A (PLAYER 2) */
+	PORT_START	/* PIA 2 Port A (PLAYER 2) */
     PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY | IPF_COCKTAIL )
     PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
     PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY | IPF_COCKTAIL )
@@ -516,7 +516,7 @@ INPUT_PORTS_START( elecyoyo_input_ports )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( kram_input_ports )
-	PORT_START	/* PIA 1 Port A (PLAYER 1) */
+	PORT_START	/* PIA 0 Port A (PLAYER 1) */
     PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
     PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
     PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
@@ -526,16 +526,16 @@ INPUT_PORTS_START( kram_input_ports )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 )
 
-	PORT_START	/* PIA 1 Port B (COIN) */
+	PORT_START	/* PIA 0 Port B (COIN) */
 	COIN_PORT
 
-	PORT_START	/* PIA 2 Port A (SPARE) */
+	PORT_START	/* PIA 1 Port A (SPARE) */
 	UNKNOWN_PORT
 
-    PORT_START /* PIA 2 Port B (PLAYER 1/2) */
+    PORT_START /* PIA 1 Port B (PLAYER 1/2) */
 	UNKNOWN_PORT
 
-	PORT_START	/* PIA 3 Port A (PLAYER 2) */
+	PORT_START	/* PIA 2 Port A (PLAYER 2) */
     PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
     PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
     PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
@@ -547,7 +547,7 @@ INPUT_PORTS_START( kram_input_ports )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( zoo_input_ports )
-	PORT_START	/* PIA 1 Port A (PLAYER 1) */
+	PORT_START	/* PIA 0 Port A (PLAYER 1) */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY )
@@ -557,16 +557,16 @@ INPUT_PORTS_START( zoo_input_ports )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START	/* PIA 1 Port B (COIN) */
+	PORT_START	/* PIA 0 Port B (COIN) */
 	COIN_PORT
 
-	PORT_START	/* PIA 2 Port A (SPARE) */
+	PORT_START	/* PIA 1 Port A (SPARE) */
 	UNKNOWN_PORT
 
-    PORT_START /* PIA 2 Port B (PLAYER 1/2) */
+    PORT_START /* PIA 1 Port B (PLAYER 1/2) */
 	UNKNOWN_PORT
 
-	PORT_START	/* PIA 3 Port A (PLAYER 2) */
+	PORT_START	/* PIA 2 Port A (PLAYER 2) */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY | IPF_COCKTAIL )

@@ -7,7 +7,6 @@
 **************************************************************************/
 #include "driver.h"
 #include "cpu/tms34010/tms34010.h"
-#include "vidhrdw/generic.h"
 
 void wms_stateload(void);
 void wms_statesave(void);
@@ -199,4 +198,3 @@ void wms_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	}
 	wms_autoerase_start=1000;
 }
-

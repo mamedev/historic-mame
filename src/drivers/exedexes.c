@@ -273,7 +273,7 @@ static struct AY8910interface ay8910_interface =
 static struct SN76496interface sn76496_interface =
 {
 	2,	/* 2 chips */
-	3000000,	/* 3 MHz????? */
+	{ 3000000, 3000000 },	/* 3 MHz????? */
 	{ 30, 30 }
 };
 

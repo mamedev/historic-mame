@@ -221,6 +221,7 @@ enum {
 	STR_3C_2C,
 	STR_4C_3C,
 	STR_1C_1C,
+	STR_4C_5C,
 	STR_3C_4C,
 	STR_2C_3C,
 	STR_1C_2C,

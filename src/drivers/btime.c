@@ -24,9 +24,9 @@ These games don't have VBLANK interrupts, but instead an IRQ or NMI
 Some of the games also have a background playfield which, in the
 case of Bump 'n' Jump and Zoar, can be scrolled vertically.
 
-These boards use two 8910's for sound, controlled by a dedicated 6502 (except
-in Eggs, where the main processor handles the sound). The main processor
-triggers an IRQ request when writing a command to the sound CPU.
+These boards use two 8910's for sound, controlled by a dedicated 6502. The
+main processor triggers an IRQ request when writing a command to the sound
+CPU.
 
 Main clock: XTAL = 12 MHz
 Horizontal video frequency: HSYNC = XTAL/768?? = 15.625 kHz ??
@@ -66,9 +66,9 @@ void btime_vh_screenrefresh   (struct osd_bitmap *bitmap,int full_refresh);
 void cookrace_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void bnj_vh_screenrefresh     (struct osd_bitmap *bitmap,int full_refresh);
 void lnc_vh_screenrefresh     (struct osd_bitmap *bitmap,int full_refresh);
-void eggs_vh_screenrefresh    (struct osd_bitmap *bitmap,int full_refresh);
 void zoar_vh_screenrefresh    (struct osd_bitmap *bitmap,int full_refresh);
 void disco_vh_screenrefresh   (struct osd_bitmap *bitmap,int full_refresh);
+void eggs_vh_screenrefresh    (struct osd_bitmap *bitmap,int full_refresh);
 
 void btime_paletteram_w(int offset,int data);
 void bnj_background_w(int offset, int data);
@@ -329,39 +329,6 @@ static struct MemoryWriteAddress zoar_writemem[] =
   /*{ 0x9807, 0x9807, MWA_RAM }, */ /* Marked as ACK on schematics (Board 2 Pg 5) */
 	{ -1 }  /* end of table */
 };
-
-static struct MemoryReadAddress eggs_readmem[] =
-{
-	{ 0x0000, 0x07ff, MRA_RAM },
-	{ 0x1000, 0x17ff, MRA_RAM },
-	{ 0x1800, 0x1bff, btime_mirrorvideoram_r },
-	{ 0x1c00, 0x1fff, btime_mirrorcolorram_r },
-	{ 0x2000, 0x2000, input_port_2_r },     /* DSW1 */
-	{ 0x2001, 0x2001, input_port_3_r },     /* DSW2 */
-	{ 0x2002, 0x2002, input_port_0_r },     /* IN0 */
-	{ 0x2003, 0x2003, input_port_1_r },     /* IN1 */
-	{ 0x3000, 0x7fff, MRA_ROM },
-	{ 0xf000, 0xffff, MRA_ROM },    /* reset/interrupt vectors */
-	{ -1 }  /* end of table */
-};
-
-static struct MemoryWriteAddress eggs_writemem[] =
-{
-	{ 0x0000, 0x07ff, MWA_RAM },
-	{ 0x1000, 0x13ff, videoram_w, &videoram, &videoram_size },
-	{ 0x1400, 0x17ff, colorram_w, &colorram },
-	{ 0x1800, 0x1bff, btime_mirrorvideoram_w },
-	{ 0x1c00, 0x1fff, btime_mirrorcolorram_w },
-	{ 0x2000, 0x2000, btime_video_control_w },
-	{ 0x2001, 0x2001, MWA_NOP },
-	{ 0x2004, 0x2004, AY8910_control_port_0_w },
-	{ 0x2005, 0x2005, AY8910_write_port_0_w },
-	{ 0x2006, 0x2006, AY8910_control_port_1_w },
-	{ 0x2007, 0x2007, AY8910_write_port_1_w },
-	{ 0x3000, 0x7fff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
-
 
 static struct MemoryReadAddress lnc_readmem[] =
 {
@@ -808,70 +775,6 @@ INPUT_PORTS_START( zoar_input_ports )
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
-INPUT_PORTS_END
-
-INPUT_PORTS_START( eggs_input_ports )
-	PORT_START      /* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
-
-	PORT_START      /* IN1 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
-
-	PORT_START      /* DSW1 */
-	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( 1C_3C ) )
-	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( 1C_3C ) )
-	PORT_BIT( 0x30, 0x30, IPT_UNKNOWN )     /* almost certainly unused */
-	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Cocktail ) )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK  )
-
-	PORT_START      /* DSW2 */
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Lives ) )
-	PORT_DIPSETTING(    0x01, "3" )
-	PORT_DIPSETTING(    0x00, "5" )
-	PORT_DIPNAME( 0x06, 0x04, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x04, "30000" )
-	PORT_DIPSETTING(    0x02, "50000" )
-	PORT_DIPSETTING(    0x00, "70000"  )
-	PORT_DIPSETTING(    0x06, "Never"  )
-	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )   /* almost certainly unused */
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )   /* almost certainly unused */
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )   /* almost certainly unused */
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )   /* almost certainly unused */
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x80, "Easy" )
-	PORT_DIPSETTING(    0x00, "Hard" )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( lnc_input_ports )
@@ -1360,6 +1263,8 @@ static struct GfxDecodeInfo disco_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
+
+
 static struct AY8910interface ay8910_interface =
 {
 	2,      /* 2 chips */
@@ -1383,7 +1288,6 @@ static struct AY8910interface ay8910_interface =
 
 #define cookrace_vh_convert_color_prom   btime_vh_convert_color_prom
 #define bnj_vh_convert_color_prom        0
-#define eggs_vh_convert_color_prom       btime_vh_convert_color_prom
 #define wtennis_vh_convert_color_prom    lnc_vh_convert_color_prom
 #define mmonkey_vh_convert_color_prom    lnc_vh_convert_color_prom
 #define zoar_vh_convert_color_prom       btime_vh_convert_color_prom
@@ -1398,7 +1302,6 @@ static struct AY8910interface ay8910_interface =
 
 #define btime_sound_readmem		sound_readmem
 #define cookrace_sound_readmem	sound_readmem
-#define eggs_sound_readmem		sound_readmem
 #define lnc_sound_readmem		sound_readmem
 #define wtennis_sound_readmem	sound_readmem
 #define mmonkey_sound_readmem	sound_readmem
@@ -1407,7 +1310,6 @@ static struct AY8910interface ay8910_interface =
 
 #define btime_sound_writemem	sound_writemem
 #define cookrace_sound_writemem	sound_writemem
-#define eggs_sound_writemem		sound_writemem
 #define lnc_sound_writemem		sound_writemem
 #define wtennis_sound_writemem	sound_writemem
 #define mmonkey_sound_writemem	sound_writemem
@@ -1424,7 +1326,6 @@ static struct AY8910interface ay8910_interface =
 
 #define cookrace_vh_start  btime_vh_start
 #define zoar_vh_start      btime_vh_start
-#define eggs_vh_start      btime_vh_start
 #define lnc_vh_start       btime_vh_start
 #define wtennis_vh_start   btime_vh_start
 #define mmonkey_vh_start   btime_vh_start
@@ -1433,7 +1334,6 @@ static struct AY8910interface ay8910_interface =
 #define btime_vh_stop      generic_vh_stop
 #define cookrace_vh_stop   generic_vh_stop
 #define zoar_vh_stop       generic_vh_stop
-#define eggs_vh_stop       generic_vh_stop
 #define lnc_vh_stop        generic_vh_stop
 #define wtennis_vh_stop    generic_vh_stop
 #define mmonkey_vh_stop    generic_vh_stop
@@ -1487,57 +1387,17 @@ static struct MachineDriver GAMENAME##_machine_driver =             \
 	}                                                           	\
 }
 
-#define EGGS_MACHINE_DRIVER(GAMENAME, CLOCK, MAIN_IRQ, SOUND_IRQ, GFX, COLOR)   \
-																	\
-static struct MachineDriver GAMENAME##_machine_driver =             \
-{                                                                   \
-	/* basic machine hardware */                                	\
-	{		                                                        \
-		{	  	                                                    \
-			CPU_M6502,                                  			\
-			CLOCK,													\
-			0,                                          			\
-			GAMENAME##_readmem,GAMENAME##_writemem,0,0, 			\
-			MAIN_IRQ,1                                  			\
-		}                                                   		\
-	},                                                          	\
-	57, 3072,        /* frames per second, vblank duration */   	\
-	1,      /* 1 CPU slice per frame - interleaving is forced when a sound command is written */ \
-	0,						                                    	\
-																	\
-	/* video hardware */                                        	\
-	32*8, 32*8, { 1*8, 31*8-1, 1*8, 31*8-1 },                   	\
-	GFX,                                                        	\
-	COLOR,COLOR,                                                	\
-	GAMENAME##_vh_convert_color_prom,                           	\
-																	\
-	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,                   	\
-	0,                                                          	\
-	GAMENAME##_vh_start,                                        	\
-	GAMENAME##_vh_stop,                                         	\
-	GAMENAME##_vh_screenrefresh,                                   	\
-																	\
-	/* sound hardware */                                        	\
-	0,0,0,0,                                                    	\
-	{                                                           	\
-		{                                                   		\
-			SOUND_AY8910,                               			\
-			&ay8910_interface                           			\
-		}                                                   		\
-	}                                                           	\
-}
 
-/*                  NAME      CLOCK    MAIN_IRQ             SOUND_IRQ            GFX_DECODE              COLOR */
+/*              NAME      CLOCK    MAIN_IRQ             SOUND_IRQ            GFX_DECODE              COLOR */
 
-MACHINE_DRIVER(     btime,    1500000, btime_irq_interrupt, nmi_interrupt,       btime_gfxdecodeinfo,    16);
-MACHINE_DRIVER(     cookrace, 1500000, btime_nmi_interrupt, nmi_interrupt,       cookrace_gfxdecodeinfo, 16);
-EGGS_MACHINE_DRIVER(eggs,     1500000, interrupt,           nmi_interrupt,       lnc_gfxdecodeinfo,      8);
-MACHINE_DRIVER(     lnc,      1500000, btime_nmi_interrupt, lnc_sound_interrupt, lnc_gfxdecodeinfo,      8);
-MACHINE_DRIVER(     wtennis,  1500000, btime_nmi_interrupt, nmi_interrupt,       lnc_gfxdecodeinfo,      8);
-MACHINE_DRIVER(     mmonkey,  1500000, btime_nmi_interrupt, nmi_interrupt,       lnc_gfxdecodeinfo,      8);
-MACHINE_DRIVER(     bnj,       750000, btime_nmi_interrupt, nmi_interrupt,       bnj_gfxdecodeinfo,      16);
-MACHINE_DRIVER(     zoar,     1500000, zoar_irq_interrupt,  nmi_interrupt,       zoar_gfxdecodeinfo,     64);
-MACHINE_DRIVER(     disco,     750000, btime_irq_interrupt, nmi_interrupt,       disco_gfxdecodeinfo,    32);
+MACHINE_DRIVER( btime,    1500000, btime_irq_interrupt, nmi_interrupt,       btime_gfxdecodeinfo,    16);
+MACHINE_DRIVER( cookrace, 1500000, btime_nmi_interrupt, nmi_interrupt,       cookrace_gfxdecodeinfo, 16);
+MACHINE_DRIVER( lnc,      1500000, btime_nmi_interrupt, lnc_sound_interrupt, lnc_gfxdecodeinfo,      8);
+MACHINE_DRIVER( wtennis,  1500000, btime_nmi_interrupt, nmi_interrupt,       lnc_gfxdecodeinfo,      8);
+MACHINE_DRIVER( mmonkey,  1500000, btime_nmi_interrupt, nmi_interrupt,       lnc_gfxdecodeinfo,      8);
+MACHINE_DRIVER( bnj,       750000, btime_nmi_interrupt, nmi_interrupt,       bnj_gfxdecodeinfo,      16);
+MACHINE_DRIVER( zoar,     1500000, zoar_irq_interrupt,  nmi_interrupt,       zoar_gfxdecodeinfo,     64);
+MACHINE_DRIVER( disco,     750000, btime_irq_interrupt, nmi_interrupt,       disco_gfxdecodeinfo,    32);
 
 
 /***************************************************************************
@@ -1647,50 +1507,6 @@ ROM_START( cookrace_rom )
     ROM_REGION(0x0040)
     ROM_LOAD( "f9.clr",       0x0000, 0x0020, 0xc2348c1d )	/* palette */
     ROM_LOAD( "b7",           0x0020, 0x0020, 0xe4268fa6 )	/* unknown */
-ROM_END
-
-ROM_START( scregg_rom )
-	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "scregg.e14",   0x3000, 0x1000, 0x29226d77 )
-	ROM_LOAD( "scregg.d14",   0x4000, 0x1000, 0xeb143880 )
-	ROM_LOAD( "scregg.c14",   0x5000, 0x1000, 0x4455f262 )
-	ROM_LOAD( "scregg.b14",   0x6000, 0x1000, 0x044ac5d2 )
-	ROM_LOAD( "scregg.a14",   0x7000, 0x1000, 0xb5a0814a )
-	ROM_RELOAD(               0xf000, 0x1000 )        /* for reset/interrupt vectors */
-
-	ROM_REGION_DISPOSE(0x6000)      /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "scregg.j12",   0x0000, 0x1000, 0xa485c10c )
-	ROM_LOAD( "scregg.j10",   0x1000, 0x1000, 0x1fd4e539 )
-	ROM_LOAD( "scregg.h12",   0x2000, 0x1000, 0x8454f4b2 )
-	ROM_LOAD( "scregg.h10",   0x3000, 0x1000, 0x72bd89ee )
-	ROM_LOAD( "scregg.g12",   0x4000, 0x1000, 0xff3c2894 )
-	ROM_LOAD( "scregg.g10",   0x5000, 0x1000, 0x9c20214a )
-
-	ROM_REGION(0x0040)	/* PROMs */
-	ROM_LOAD( "screggco.c6",  0x0000, 0x0020, 0xff23bdd6 )	/* palette */
-	ROM_LOAD( "screggco.b4",  0x0020, 0x0020, 0x7cc4824b )	/* unknown */
-ROM_END
-
-ROM_START( eggs_rom )
-	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "e14.bin",      0x3000, 0x1000, 0x4e216f9d )
-	ROM_LOAD( "d14.bin",      0x4000, 0x1000, 0x4edb267f )
-	ROM_LOAD( "c14.bin",      0x5000, 0x1000, 0x15a5c48c )
-	ROM_LOAD( "b14.bin",      0x6000, 0x1000, 0x5c11c00e )
-	ROM_LOAD( "a14.bin",      0x7000, 0x1000, 0x953faf07 )
-	ROM_RELOAD(               0xf000, 0x1000 )   /* for reset/interrupt vectors */
-
-	ROM_REGION_DISPOSE(0x6000)      /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "j12.bin",      0x0000, 0x1000, 0xce4a2e46 )
-	ROM_LOAD( "j10.bin",      0x1000, 0x1000, 0xa1bcaffc )
-	ROM_LOAD( "h12.bin",      0x2000, 0x1000, 0x9562836d )
-	ROM_LOAD( "h10.bin",      0x3000, 0x1000, 0x3cfb3a8e )
-	ROM_LOAD( "g12.bin",      0x4000, 0x1000, 0x679f8af7 )
-	ROM_LOAD( "g10.bin",      0x5000, 0x1000, 0x5b58d3b5 )
-
-	ROM_REGION(0x0040)	/* PROMs */
-	ROM_LOAD( "eggs.c6",      0x0000, 0x0020, 0xe8408c81 )	/* palette */
-	ROM_LOAD( "screggco.b4",  0x0020, 0x0020, 0x7cc4824b )	/* unknown */
 ROM_END
 
 /* There is a flyer with a screen shot for Lock'n'Chase at:
@@ -1964,43 +1780,6 @@ static void btime_hisave(void)
 	}
 }
 
-
-static int eggs_hiload(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	/* check if the hi score table has already been initialized */
-	if ((memcmp(&RAM[0x0400],"\x17\x25\x19",3) == 0) &&
-		(memcmp(&RAM[0x041B],"\x00\x47\x00",3) == 0))
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x0400],0x1E);
-			/* Fix hi score at top */
-			memcpy(&RAM[0x0015],&RAM[0x0403],3);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void eggs_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x0400],0x1E);
-		osd_fclose(f);
-	}
-}
 
 static int lnc_hiload(void)
 {
@@ -2336,58 +2115,6 @@ struct GameDriver cookrace_driver =
 	ORIENTATION_ROTATE_270,
 
 	0, 0
-};
-
-struct GameDriver scregg_driver =
-{
-	__FILE__,
-	0,
-	"scregg",
-	"Scrambled Egg",
-	"1983",
-	"Technos",
-	"Nicola Salmoria",
-	0,
-	&eggs_machine_driver,
-	0,
-
-	scregg_rom,
-	0, 0,
-	0,
-	0,	/* sound_prom */
-
-	eggs_input_ports,
-
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	eggs_hiload, eggs_hisave
-};
-
-struct GameDriver eggs_driver =
-{
-	__FILE__,
-	&scregg_driver,
-	"eggs",
-	"Eggs",
-	"1983",
-	"[Technos] Universal USA",
-	"Nicola Salmoria",
-	0,
-	&eggs_machine_driver,
-	0,
-
-	eggs_rom,
-	0, 0,
-	0,
-	0,	/* sound_prom */
-
-	eggs_input_ports,
-
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	eggs_hiload, eggs_hisave
 };
 
 struct GameDriver lnc_driver =

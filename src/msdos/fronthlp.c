@@ -11,6 +11,12 @@
 #include <unzip.h>
 
 
+int silentident,knownstatus;
+
+#define KNOWN_START 0
+#define KNOWN_ALL   1
+#define KNOWN_NONE  2
+#define KNOWN_SOME  3
 
 extern unsigned int crc32 (unsigned int crc, const unsigned char *buf, unsigned int len);
 
@@ -72,7 +78,7 @@ int strwildcmp(const char *sp1, const char *sp2)
 
 
 /* Identifies a rom from from this checksum */
-void identify_rom(const char* name, int checksum)
+void identify_rom(const char* name, int checksum, int length)
 {
 /* Nicola output format */
 #if 1
@@ -88,7 +94,8 @@ void identify_rom(const char* name, int checksum)
 			break;
 		}
 	}
-	printf("%-12s ",&name[i]);
+	if (!silentident)
+		printf("%-12s ",&name[i]);
 
 	for (i = 0; drivers[i]; i++)
 	{
@@ -100,16 +107,43 @@ void identify_rom(const char* name, int checksum)
 		{
 			if (romp->name && romp->name != (char *)-1 && checksum == romp->crc)
 			{
-				if (found != 0)
-					printf("             ");
-				printf("= %-12s  %s\n",romp->name,drivers[i]->description);
+				if (!silentident)
+				{
+					if (found != 0)
+						printf("             ");
+					printf("= %-12s  %s\n",romp->name,drivers[i]->description);
+				}
 				found++;
 			}
 			romp++;
 		}
 	}
 	if (found == 0)
-		printf("NO MATCH\n");
+	{
+		unsigned size = length;
+		while (size && (size & 1) == 0) size >>= 1;
+		if (size & ~1)
+		{
+			if (!silentident)
+				printf("NOT A ROM\n");
+		}
+		else
+		{
+			if (!silentident)
+				printf("NO MATCH\n");
+			if (knownstatus == KNOWN_START)
+				knownstatus = KNOWN_NONE;
+			else if (knownstatus == KNOWN_ALL)
+				knownstatus = KNOWN_SOME;
+		}
+	}
+	else
+	{
+		if (knownstatus == KNOWN_START)
+			knownstatus = KNOWN_ALL;
+		else if (knownstatus == KNOWN_NONE)
+			knownstatus = KNOWN_SOME;
+	}
 #else
 /* New output format */
 	int i;
@@ -186,7 +220,7 @@ void identify_file(const char* name)
 
 	fclose(f);
 
-	identify_rom(name, crc32(0L,(const unsigned char*)data,length));
+	identify_rom(name, crc32(0L,(const unsigned char*)data,length),length);
 
 	free(data);
 }
@@ -204,7 +238,7 @@ void identify_zip(const char* zipname)
 		if (ent->uncompressed_size!=0) {
 			char* buf = (char*)malloc(strlen(zipname)+1+strlen(ent->name)+1);
 			sprintf(buf,"%s/%s",zipname,ent->name);
-			identify_rom(buf,ent->crc32);
+			identify_rom(buf,ent->crc32,ent->uncompressed_size);
 			free(buf);
 		}
 	}
@@ -330,6 +364,7 @@ int frontend_help (int argc, char **argv)
 			if (!stricmp(argv[i],"-verifyroms")) verify = 1;
 			if (!stricmp(argv[i],"-verifysamples")) verify = 2;
 			if (!stricmp(argv[i],"-romident")) ident = 1;
+			if (!stricmp(argv[i],"-isknown")) ident = 2;
 		}
 	}
 
@@ -960,12 +995,26 @@ nextloop:
 	}
 	if (ident)
 	{
+		if (ident == 2) silentident = 1;
+		else silentident = 0;
+
 		for (i = 1;i < argc;i++)
 		{
 			/* find the FIRST "name" field (without '-') */
 			if (argv[i][0] != '-')
 			{
+				knownstatus = KNOWN_START;
 				romident(argv[i],1);
+				if (ident == 2)
+				{
+					switch (knownstatus)
+					{
+						case KNOWN_START: printf("ERROR     %s\n",argv[i]); break;
+						case KNOWN_ALL:   printf("KNOWN     %s\n",argv[i]); break;
+						case KNOWN_NONE:  printf("UNKNOWN   %s\n",argv[i]); break;
+						case KNOWN_SOME:  printf("PARTKNOWN %s\n",argv[i]); break;
+					}
+				}
 				break;
 			}
 		}

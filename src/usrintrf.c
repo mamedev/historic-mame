@@ -2306,10 +2306,16 @@ static int displaygameinfo(int selected)
 	i = 0;
 	while (i < MAX_CPU && Machine->drv->cpu[i].cpu_type)
 	{
-		sprintf(&buf[strlen(buf)],"%s %d.%06d MHz",
-				cputype_name(Machine->drv->cpu[i].cpu_type),
-				Machine->drv->cpu[i].cpu_clock / 1000000,
-				Machine->drv->cpu[i].cpu_clock % 1000000);
+		if (Machine->drv->cpu[i].cpu_clock >= 1000000)
+			sprintf(&buf[strlen(buf)],"%s %d.%06d MHz",
+					cputype_name(Machine->drv->cpu[i].cpu_type),
+					Machine->drv->cpu[i].cpu_clock / 1000000,
+					Machine->drv->cpu[i].cpu_clock % 1000000);
+		else
+			sprintf(&buf[strlen(buf)],"%s %d.%03d kHz",
+					cputype_name(Machine->drv->cpu[i].cpu_type),
+					Machine->drv->cpu[i].cpu_clock / 1000,
+					Machine->drv->cpu[i].cpu_clock % 1000);
 
 		if (Machine->drv->cpu[i].cpu_type & CPU_AUDIO_CPU)
 			strcat(buf," (sound)");
@@ -2333,9 +2339,16 @@ static int displaygameinfo(int selected)
 		sprintf(&buf[strlen(buf)],"%s",sound_name(&Machine->drv->sound[i]));
 
 		if (sound_clock(&Machine->drv->sound[i]))
-			sprintf(&buf[strlen(buf)]," %d.%06d MHz",
-					sound_clock(&Machine->drv->sound[i]) / 1000000,
-					sound_clock(&Machine->drv->sound[i]) % 1000000);
+		{
+			if (sound_clock(&Machine->drv->sound[i]) >= 1000000)
+				sprintf(&buf[strlen(buf)]," %d.%06d MHz",
+						sound_clock(&Machine->drv->sound[i]) / 1000000,
+						sound_clock(&Machine->drv->sound[i]) % 1000000);
+			else
+				sprintf(&buf[strlen(buf)]," %d.%03d kHz",
+						sound_clock(&Machine->drv->sound[i]) / 1000,
+						sound_clock(&Machine->drv->sound[i]) % 1000);
+		}
 
 		strcat(buf,"\n");
 

@@ -132,7 +132,7 @@ void tilemap_set_clip( struct tilemap *tilemap, const struct rectangle *clip ){
 	tilemap->clip_right = right;
 	tilemap->clip_top = top;
 	tilemap->clip_bottom = bottom;
-	if( errorlog ) fprintf( errorlog, "clip: %d,%d,%d,%d\n", left,top,right,bottom );
+//	if( errorlog ) fprintf( errorlog, "clip: %d,%d,%d,%d\n", left,top,right,bottom );
 }
 
 void tilemap_init( void ){

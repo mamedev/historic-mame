@@ -65,23 +65,35 @@ void rthunder_tilebank_select_1(int offset,int data);
 
 /*******************************************************************/
 
-/* Sampled voices */
+/* Sampled voices (Modified and Added by Takahiro Nogi. 1999/09/26) */
 
 /* signed/unsigned 8-bit conversion macros */
 #define AUDIO_CONV(A) ((A)^0x80)
 
-static int rt_totalsamples[4];
+static int rt_totalsamples[6];
+static int rt_decode_mode;
+
 
 static int rt_decode_sample( void ) {
+
 	struct GameSamples *samples;
 	unsigned char *src, *scan, *dest, last=0;
 	int size, n = 0, j;
+	int decode_mode;
+
+	if ( errorlog ) fprintf( errorlog, "pcm decode mode:%d\n", rt_decode_mode );
+	if (rt_decode_mode != 0) {
+		decode_mode = 6;
+	} else {
+		decode_mode = 4;
+	}
 
 	/* get amount of samples */
-	for ( j = 0; j < 4; j++ ) {
+	for ( j = 0; j < decode_mode; j++ ) {
 		src = Machine->memory_region[MEM_SAMPLES]+ ( j * 0x10000 );
 		rt_totalsamples[j] = ( ( src[0] << 8 ) + src[1] ) / 2;
 		n += rt_totalsamples[j];
+		if ( errorlog ) fprintf( errorlog, "rt_totalsamples[%d]:%d\n", j, rt_totalsamples[j] );
 	}
 
 	/* calculate the amount of headers needed */
@@ -108,10 +120,22 @@ static int rt_decode_sample( void ) {
 				if ( ( n - ( rt_totalsamples[0] + rt_totalsamples[1] ) ) < rt_totalsamples[2] ) {
 					src = Machine->memory_region[MEM_SAMPLES]+0x20000;
 					indx = n - ( rt_totalsamples[0] + rt_totalsamples[1] );
-				} else {
-					src = Machine->memory_region[MEM_SAMPLES]+0x30000;
-					indx = n - ( rt_totalsamples[0] + rt_totalsamples[1] + rt_totalsamples[2] );
-				}
+				} else
+					if ( ( n - ( rt_totalsamples[0] + rt_totalsamples[1] + rt_totalsamples[2] ) ) < rt_totalsamples[3] ) {
+						src = Machine->memory_region[MEM_SAMPLES]+0x30000;
+						indx = n - ( rt_totalsamples[0] + rt_totalsamples[1] + rt_totalsamples[2] );
+					} else
+						if ( ( n - ( rt_totalsamples[0] + rt_totalsamples[1] + rt_totalsamples[2] + rt_totalsamples[3] ) ) < rt_totalsamples[4] ) {
+							src = Machine->memory_region[MEM_SAMPLES]+0x40000;
+							indx = n - ( rt_totalsamples[0] + rt_totalsamples[1] + rt_totalsamples[2] + rt_totalsamples[3] );
+						} else
+							if ( ( n - ( rt_totalsamples[0] + rt_totalsamples[1] + rt_totalsamples[2] + rt_totalsamples[3] + rt_totalsamples[4] ) ) < rt_totalsamples[5] ) {
+								src = Machine->memory_region[MEM_SAMPLES]+0x50000;
+								indx = n - ( rt_totalsamples[0] + rt_totalsamples[1] + rt_totalsamples[2] + rt_totalsamples[3] + rt_totalsamples[4] );
+							} else {
+								src = Machine->memory_region[MEM_SAMPLES]+0x60000;
+								indx = n - ( rt_totalsamples[0] + rt_totalsamples[1] + rt_totalsamples[2] + rt_totalsamples[3] + rt_totalsamples[4] + rt_totalsamples[5] );
+							}
 
 		/* calculate header offset */
 		offs = indx * 2;
@@ -165,85 +189,121 @@ static int rt_decode_sample( void ) {
 	return 0; /* no errors */
 }
 
-/* play voice sample */
+static int rt_decode_sample0( void ) {
+
+	rt_decode_mode = 0;
+	return rt_decode_sample();
+}
+
+static int rt_decode_sample1( void ) {
+
+	rt_decode_mode = 1;
+	return rt_decode_sample();
+}
+
+/* play voice sample (Modified and Added by Takahiro Nogi. 1999/09/26) */
 static int voice[2];
+
+static void namco_voice_play( int offset, int data, int ch ) {
+
+	if ( voice[ch] == -1 )
+		sample_stop( ch );
+	else
+		sample_start( ch, voice[ch], 0 );
+}
 
 static void namco_voice0_play_w( int offset, int data ) {
 
-	if ( voice[0] == -1 )
-		sample_stop( 0 );
-	else
-		sample_start( 0, voice[0], 0 );
-}
-
-static void namco_voice0_select_w( int offset, int data ) {
-
-	if ( errorlog )
-		fprintf( errorlog, "Voice 0 select: %02x\n", data );
-
-	if ( data == 0 )
-		sample_stop( 0 );
-
-	switch ( data & 0xc0 ) {
-		case 0x00:
-		break;
-
-		case 0x40:
-			data &= 0x3f;
-			data += rt_totalsamples[0];
-		break;
-
-		case 0x80:
-			data &= 0x3f;
-			data += rt_totalsamples[0] + rt_totalsamples[1];
-		break;
-
-		case 0xc0:
-			data &= 0x3f;
-			data += rt_totalsamples[0] + rt_totalsamples[1] + rt_totalsamples[2];
-		break;
-	}
-
-	voice[0] = data - 1;
+	namco_voice_play(offset, data, 0);
 }
 
 static void namco_voice1_play_w( int offset, int data ) {
 
-	if ( voice[1] == -1 )
-		sample_stop( 1 );
-	else
-		sample_start( 1, voice[1], 0 );
+	namco_voice_play(offset, data, 1);
+}
+
+/* select voice sample (Modified and Added by Takahiro Nogi. 1999/09/26) */
+static void namco_voice_select( int offset, int data, int ch ) {
+
+	if ( errorlog )
+		fprintf( errorlog, "Voice %d mode: %d select: %02x\n", ch, rt_decode_mode, data );
+
+	if ( data == 0 )
+		sample_stop( ch );
+
+	if (rt_decode_mode != 0) {
+		switch ( data & 0xe0 ) {
+			case 0x00:
+			break;
+
+			case 0x20:
+				data &= 0x1f;
+				data += rt_totalsamples[0];
+			break;
+
+			case 0x40:
+				data &= 0x1f;
+				data += rt_totalsamples[0] + rt_totalsamples[1];
+			break;
+
+			case 0x60:
+				data &= 0x1f;
+				data += rt_totalsamples[0] + rt_totalsamples[1] + rt_totalsamples[2];
+			break;
+
+			case 0x80:
+				data &= 0x1f;
+				data += rt_totalsamples[0] + rt_totalsamples[1] + rt_totalsamples[2] + rt_totalsamples[3];
+			break;
+
+			case 0xa0:
+				data &= 0x1f;
+				data += rt_totalsamples[0] + rt_totalsamples[1] + rt_totalsamples[2] + rt_totalsamples[3] + rt_totalsamples[4];
+			break;
+
+			case 0xc0:
+				data &= 0x1f;
+				data += rt_totalsamples[0] + rt_totalsamples[1] + rt_totalsamples[2] + rt_totalsamples[3] + rt_totalsamples[4] + rt_totalsamples[5];
+			break;
+
+			case 0xe0:
+				data &= 0x1f;
+				data += rt_totalsamples[0] + rt_totalsamples[1] + rt_totalsamples[2] + rt_totalsamples[3] + rt_totalsamples[4] + rt_totalsamples[5] + rt_totalsamples[6];
+			break;
+		}
+	} else {
+		switch ( data & 0xc0 ) {
+			case 0x00:
+			break;
+
+			case 0x40:
+				data &= 0x3f;
+				data += rt_totalsamples[0];
+			break;
+
+			case 0x80:
+				data &= 0x3f;
+				data += rt_totalsamples[0] + rt_totalsamples[1];
+			break;
+
+			case 0xc0:
+				data &= 0x3f;
+				data += rt_totalsamples[0] + rt_totalsamples[1] + rt_totalsamples[2];
+			break;
+		}
+	}
+
+	voice[ch] = data - 1;
+}
+
+static void namco_voice0_select_w( int offset, int data ) {
+
+	namco_voice_select(offset, data, 0);
 }
 
 static void namco_voice1_select_w( int offset, int data ) {
 
-	if ( errorlog )
-		fprintf( errorlog, "Voice 1 select: %02x\n", data );
-
-	if ( data == 0 )
-		sample_stop( 1 );
-
-	switch ( data & 0xc0 ) {
-		case 0x00:
-		break;
-
-		case 0x40:
-			data &= 0x3f;
-			data += rt_totalsamples[0];
-		break;
-
-		case 0x80:
-			data &= 0x3f;
-			data += rt_totalsamples[0] + rt_totalsamples[1];
-		break;
-
-		case 0xc0:
-			data &= 0x3f;
-			data += rt_totalsamples[0] + rt_totalsamples[1] + rt_totalsamples[2];
-		break;
-	}
-
-	voice[1] = data - 1;
+	namco_voice_select(offset, data, 1);
 }
 /*******************************************************************/
 
@@ -1045,7 +1105,7 @@ static struct namco_interface namco_interface =
 static struct Samplesinterface samples_interface =
 {
 	2,	/* 2 channels for voice effects */
-	20	/* volume */
+	40	/* volume */			// Takahiro Nogi. 1999/09/26 (20 -> 40)
 };
 
 static void rt_init_machine( void )
@@ -1101,7 +1161,7 @@ static struct MachineDriver roishtar_machine_driver =
 	namcos86_vh_screenrefresh,
 
 	/* sound hardware */
-	0,rt_decode_sample,0,0,
+	0,rt_decode_sample0,0,0,		// Takahiro Nogi. 1999/09/26
 	{
 		{
 			SOUND_YM2151,
@@ -1161,7 +1221,7 @@ static struct MachineDriver genpeitd_machine_driver =
 	namcos86_vh_screenrefresh,
 
 	/* sound hardware */
-	0,rt_decode_sample,0,0,
+	0,rt_decode_sample1,0,0,		// Takahiro Nogi. 1999/09/26
 	{
 		{
 			SOUND_YM2151,
@@ -1221,7 +1281,7 @@ static struct MachineDriver rthunder_machine_driver =
 	namcos86_vh_screenrefresh,
 
 	/* sound hardware */
-	0,rt_decode_sample,0,0,
+	0,rt_decode_sample0,0,0,		// Takahiro Nogi. 1999/09/26
 	{
 		{
 			SOUND_YM2151,
@@ -1281,7 +1341,7 @@ static struct MachineDriver wndrmomo_machine_driver =
 	namcos86_vh_screenrefresh,
 
 	/* sound hardware */
-	0,rt_decode_sample,0,0,
+	0,rt_decode_sample0,0,0,		// Takahiro Nogi. 1999/09/26
 	{
 		{
 			SOUND_YM2151,
@@ -1792,3 +1852,4 @@ struct GameDriver wndrmomo_driver =
 	ORIENTATION_DEFAULT,
 	0, 0
 };
+

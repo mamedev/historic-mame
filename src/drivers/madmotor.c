@@ -4,6 +4,8 @@
 
   But it's really a Data East game..  Bad Dudes era graphics hardware with
   Dark Seal era sound hardware.  Maybe a license for a specific territory?
+This game is developed by
+Mitchell, but they entrusted PCB design and some routines to Data East.
 
   Emulation by Bryan McPhail, mish@tendril.force9.net
 
@@ -449,7 +451,7 @@ struct GameDriver madmotor_driver =
 	"madmotor",
 	"Mad Motor",
 	"1989", /* The title screen is undated, but it's (c) 1989 Data East at 0xefa0 */
-	"[Data East] (Mitchell license)",
+	"Mitchell",
 	"Bryan McPhail",
 	0,
 	&madmotor_machine_driver,

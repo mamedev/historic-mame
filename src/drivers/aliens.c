@@ -359,7 +359,7 @@ ROM_START( aliens_rom )
 	ROM_LOAD( "875b04.bin",  0x00000, 0x40000, 0x4e209ac8 )
 
 	ROM_REGION(0x0100)	/* PROMs */
-	ROM_LOAD( "prom",        0x0000, 0x0100, 0x00000000 )	/* priority encoder (not used) */
+	ROM_LOAD( "821a08.h14",  0x0000, 0x0100, 0x7da55800 )	/* priority encoder (not used) */
 ROM_END
 
 ROM_START( aliens2_rom )
@@ -391,7 +391,7 @@ ROM_START( aliens2_rom )
 	ROM_LOAD( "875b04.bin",  0x00000, 0x40000, 0x4e209ac8 )
 
 	ROM_REGION(0x0100)	/* PROMs */
-	ROM_LOAD( "prom",        0x0000, 0x0100, 0x00000000 )	/* priority encoder (not used) */
+	ROM_LOAD( "821a08.h14",  0x0000, 0x0100, 0x7da55800 )	/* priority encoder (not used) */
 ROM_END
 
 ROM_START( aliensj_rom )
@@ -423,7 +423,7 @@ ROM_START( aliensj_rom )
 	ROM_LOAD( "875b04.bin",  0x00000, 0x40000, 0x4e209ac8 )
 
 	ROM_REGION(0x0100)	/* PROMs */
-	ROM_LOAD( "prom",        0x0000, 0x0100, 0x00000000 )	/* priority encoder (not used) */
+	ROM_LOAD( "821a08.h14",  0x0000, 0x0100, 0x7da55800 )	/* priority encoder (not used) */
 ROM_END
 
 

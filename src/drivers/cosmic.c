@@ -87,6 +87,8 @@ static struct Samplesinterface samples_interface =
 
 void panic_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void panic_colourmap_select(int offset,int data);
+void panic_sound_output_w(int offset,int data);
+void panic_sound_output_w2(int offset,int data);
 int  panic_interrupt(void);
 
 static struct MemoryWriteAddress panic_writemem[] =
@@ -96,7 +98,9 @@ static struct MemoryWriteAddress panic_writemem[] =
 	{ 0x5C00, 0x5FFF, MWA_RAM },
 	{ 0x6000, 0x601F, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x0000, 0x3fff, MWA_ROM },
+    { 0x7000, 0x700B, panic_sound_output_w },
 	{ 0x700C, 0x700E, panic_colourmap_select },
+    { 0x7800, 0x7801, panic_sound_output_w2 },
 	{ -1 }	/* end of table */
 };
 
@@ -192,6 +196,117 @@ static struct GfxDecodeInfo panic_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
+/* Schematics show 12 triggers for discrete sound circuits */
+
+static const char *panic_sample_names[] =
+{
+	"*panic",
+	"walk.wav",
+    "upordown.wav",
+    "trapped.wav",
+    "falling.wav",
+    "escaping.wav",
+	"ekilled.wav",
+    "death.wav",
+	0       /* end of array */
+};
+
+void panic_sound_output_w(int offset, int data)
+{
+    static int SoundEnable=1;
+
+    /* Sound Enable / Disable */
+
+    if (offset == 11)
+    {
+    	int Count;
+    	if (data == 0)
+        	for(Count=0;Count<9;Count++) sample_stop(Count);
+
+    	SoundEnable = data;
+    }
+
+    if (SoundEnable)
+    {
+        switch (offset)
+        {
+        	case 0  : /* Walk */
+                      if (data) sample_start(0, 0, 0);
+                      break;
+
+            case 1  : /* Enemy Die 1 */
+                      if (data) sample_start(0, 5, 0);
+                      break;
+
+            case 2  : /* Drop 1 */
+                      if (data)
+                      {
+                      	 if (!sample_playing(1))
+                         {
+                       	 	sample_stop(2);
+        			     	sample_start(1, 3, 0);
+                         }
+                      }
+                      else
+                 	     sample_stop(1);
+                      break;
+
+            case 3  : /* Oxygen */
+                      break;
+
+            case 4  : /* Drop 2 */
+                      break;
+
+            case 5  : /* Enemy Die 2 (use same sample as 1) */
+                      if (data) sample_start(0, 5, 0);
+                      break;
+
+            case 6  : /* Hang */
+                      if (data)
+					  	if (!sample_playing(1) && !sample_playing(3))
+							sample_start(2, 2, 0);
+                      break;
+
+            case 7  : /* Escape */
+                      if (data)
+                      {
+                      	sample_stop(2);
+					  	sample_start(3, 4, 0);
+                      }
+                      else
+                      	sample_stop(3);
+                      break;
+
+    	    case 8  : /* Stairs */
+			          if (data) sample_start(0, 1, 0);
+        		      break;
+
+            case 9  : /* Extend */
+                      break;
+
+            case 10 : /* Bonus */
+			          DAC_data_w(0, data);
+        		      break;
+
+            case 15 : /* Player Die */
+			          if (data) sample_start(0, 6, 0);
+                      break;
+
+            case 16 : /* Enemy Laugh */
+                      break;
+        }
+    }
+
+    #ifdef MAME_DEBUG
+ 	if(errorlog) fprintf(errorlog,"Sound output %x=%x\n",offset,data);
+	#endif
+}
+
+void panic_sound_output_w2(int offset, int data)
+{
+	panic_sound_output_w(offset+15, data);
+}
+
 static struct MachineDriver panic_machine_driver =
 {
 	/* basic machine hardware */
@@ -221,7 +336,17 @@ static struct MachineDriver panic_machine_driver =
 	cosmic_vh_screenrefresh,
 
 	/* sound hardware */
-	0,0,0,0
+	0,0,0,0,
+    {
+		{
+			SOUND_SAMPLES,
+			&samples_interface
+		},
+		{
+			SOUND_DAC,
+			&dac_interface
+		}
+    }
 };
 
 
@@ -361,7 +486,7 @@ struct GameDriver panic_driver =
 
 	panic_rom,
 	0, 0,
-	0,
+	panic_sample_names,
 	0,	/* sound_prom */
 
 	input_ports,
@@ -387,7 +512,7 @@ struct GameDriver panica_driver =
 
 	panica_rom,
 	0, 0,
-	0,
+	panic_sample_names,
 	0,	/* sound_prom */
 
 	input_ports,
@@ -413,7 +538,7 @@ struct GameDriver panicger_driver =
 
 	panicger_rom,
 	0, 0,
-	0,
+	panic_sample_names,
 	0,	/* sound_prom */
 
 	input_ports,
@@ -793,8 +918,7 @@ void cosmicguerilla_output_w(int offset, int data)
 
             /* March Sound */
 
-    	    case 2 : if (errorlog) fprintf(errorlog,"March = %d\n",MarchSelect);
-				     if (data) sample_start (0, MarchSelect, 0);
+    	    case 2 : if (data) sample_start (0, MarchSelect, 0);
         		     break;
 
             case 3 : MarchSelect = (MarchSelect & 0xFE) | data;
@@ -862,8 +986,10 @@ void cosmicguerilla_output_w(int offset, int data)
         }
     }
 
+	#ifdef MAME_DEBUG
  	if((errorlog) && (offset != 11))
 		fprintf(errorlog,"Output %x=%x\n",offset,data);
+    #endif
 }
 
 int cosmicguerilla_read_pixel_clock(int offset)

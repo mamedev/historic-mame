@@ -13,42 +13,147 @@
 
 #include "driver.h"
 #include "machine/z80fmly.h"
+#include "machine/mcr.h"
+#include "sndhrdw/mcr.h"
 #include "cpu/m6800/m6800.h"
 #include "cpu/m6809/m6809.h"
 #include "cpu/z80/z80.h"
-#include "machine/6821pia.h"
-#include "timer.h"
 
 
-int pedal_sensitivity = 4;			/* Amount of change to read each time the pedal keys are pulsed */
-int weighting_factor = 0;			/* Progressive weighting factor */
+/* change this define to errorlog to get 6840 timer logging */
+#define m6840log 0
 
-int mcr_loadnvram;
-int spyhunt_lamp[8];
 
-extern int spyhunt_scrollx,spyhunt_scrolly;
-static int spyhunt_mux;
 
-static int maxrpm_mux;
-static int maxrpm_last_shift;
-static int maxrpm_p1_shift;
-static int maxrpm_p2_shift;
+/*************************************
+ *
+ *	Global variables
+ *
+ *************************************/
 
-static unsigned char soundlatch[4];
-static unsigned char soundstatus;
+double mcr68_timing_factor;
 
-extern void dotron_change_light(int light);
+UINT16 mcr_hiscore_start;
+UINT16 mcr_hiscore_length;
+const UINT8 *mcr_hiscore_init;
+UINT16 mcr_hiscore_init_length;
 
-/* z80 ctc */
-static void ctc_interrupt (int state)
+int (*mcr_port04_r[5])(int offset);
+void (*mcr_port47_w[4])(int offset, int data);
+UINT8 mcr_cocktail_flip;
+
+
+
+/*************************************
+ *
+ *	Statics
+ *
+ *************************************/
+
+static UINT8 mcr_loadnvram;
+
+static UINT8 m6840_status;
+static UINT8 m6840_status_read_since_int;
+static UINT8 m6840_msb_buffer;
+static UINT8 m6840_lsb_buffer;
+static struct counter_state
 {
-	cpu_cause_interrupt (0, Z80_VECTOR(0,state) );
+	UINT8	control;
+	UINT16	latch;
+	UINT16	count;
+	void *	timer;
+	double	period;
+} m6840_state[3];
+
+/* MCR/68k interrupt states */
+static UINT8 m6840_irq_state;
+static UINT8 m6840_irq_vector;
+static UINT8 v493_irq_state;
+static UINT8 v493_irq_vector;
+
+static void (*v493_callback)(int param);
+
+static UINT8 zwackery_sound_data;
+
+static const double m6840_counter_periods[3] = { 1.0 / 30.0, 1000000.0, 1.0 / (512.0 * 30.0) };
+static double m6840_internal_counter_period;	/* 68000 CLK / 10 */
+
+
+
+/*************************************
+ *
+ *	Function prototypes
+ *
+ *************************************/
+
+static void subtract_from_counter(int counter, int count);
+
+static void mcr68_493_callback(int param);
+static void zwackery_493_callback(int param);
+
+static void zwackery_pia_2_w(int offset, int data);
+static void zwackery_pia_3_w(int offset, int data);
+static void zwackery_ca2_w(int offset, int data);
+static void zwackery_pia_irq(int state);
+
+static void reload_count(int counter);
+
+
+
+/*************************************
+ *
+ *	6821 PIA declarations
+ *
+ *************************************/
+
+extern int zwackery_port_2_r(int offset);
+
+static struct pia6821_interface zwackery_pia_2_intf =
+{
+	/*inputs : A/B,CA/B1,CA/B2 */ 0, input_port_0_r, 0, 0, 0, 0,
+	/*outputs: A/B,CA/B2       */ zwackery_pia_2_w, 0, 0, 0,
+	/*irqs   : A/B             */ zwackery_pia_irq, zwackery_pia_irq
+};
+
+static struct pia6821_interface zwackery_pia_3_intf =
+{
+	/*inputs : A/B,CA/B1,CA/B2 */ input_port_1_r, zwackery_port_2_r, 0, 0, 0, 0,
+	/*outputs: A/B,CA/B2       */ zwackery_pia_3_w, 0, zwackery_ca2_w, 0,
+	/*irqs   : A/B             */ 0, 0
+};
+
+static struct pia6821_interface zwackery_pia_4_intf =
+{
+	/*inputs : A/B,CA/B1,CA/B2 */ input_port_3_r, input_port_4_r, 0, 0, 0, 0,
+	/*outputs: A/B,CA/B2       */ 0, 0, 0, 0,
+	/*irqs   : A/B             */ 0, 0
+};
+
+
+
+/*************************************
+ *
+ *	Generic MCR CTC interface
+ *
+ *************************************/
+
+static void ctc_interrupt(int state)
+{
+	cpu_cause_interrupt(0, Z80_VECTOR(0, state));
 }
+
+
+Z80_DaisyChain mcr_daisy_chain[] =
+{
+	{ z80ctc_reset, z80ctc_interrupt, z80ctc_reti, 0 }, /* CTC number 0 */
+	{ 0, 0, 0, -1} 		/* end mark */
+};
+
 
 static z80ctc_interface ctc_intf =
 {
 	1,                  /* 1 chip */
-	{ 0 },              /* clock (filled in from the CPU 0 clock */
+	{ 0 },              /* clock (filled in from the CPU 0 clock) */
 	{ 0 },              /* timer disables */
 	{ ctc_interrupt },  /* interrupt handler */
 	{ 0 },              /* ZC/TO0 callback */
@@ -57,840 +162,655 @@ static z80ctc_interface ctc_intf =
 };
 
 
-/* used for the sound boards */
-static int dacval;
-static int suspended;
 
-
-/* Chip Squeak Deluxe (CSD) interface */
-static void csd_porta_w (int offset, int data);
-static void csd_portb_w (int offset, int data);
-static void csd_irq (void);
-
-static pia6821_interface csd_pia_intf =
-{
-	1,                /* 1 chip */
-	{ PIA_DDRA, PIA_NOP, PIA_DDRB, PIA_NOP, PIA_CTLA, PIA_NOP, PIA_CTLB, PIA_NOP }, /* offsets */
-	{ 0 },            /* input port A  */
-	{ 0 },            /* input bit CA1 */
-	{ 0 },            /* input bit CA2 */
-	{ 0 },            /* input port B  */
-	{ 0 },            /* input bit CB1 */
-	{ 0 },            /* input bit CB2 */
-	{ csd_porta_w },  /* output port A */
-	{ csd_portb_w },  /* output port B */
-	{ 0 },            /* output CA2    */
-	{ 0 },            /* output CB2    */
-	{ csd_irq },      /* IRQ A         */
-	{ csd_irq },      /* IRQ B         */
-};
-
-
-/* Sounds Good (SG) PIA interface */
-static void sg_porta_w (int offset, int data);
-static void sg_portb_w (int offset, int data);
-static void sg_irq (void);
-
-static pia6821_interface sg_pia_intf =
-{
-	1,                /* 1 chip */
-	{ PIA_DDRA, PIA_NOP, PIA_DDRB, PIA_NOP, PIA_CTLA, PIA_NOP, PIA_CTLB, PIA_NOP }, /* offsets */
-	{ 0 },            /* input port A  */
-	{ 0 },            /* input bit CA1 */
-	{ 0 },            /* input bit CA2 */
-	{ 0 },            /* input port B  */
-	{ 0 },            /* input bit CB1 */
-	{ 0 },            /* input bit CB2 */
-	{ sg_porta_w },   /* output port A */
-	{ sg_portb_w },   /* output port B */
-	{ 0 },            /* output CA2    */
-	{ 0 },            /* output CB2    */
-	{ sg_irq },       /* IRQ A         */
-	{ sg_irq },       /* IRQ B         */
-};
-
-
-/* Turbo Chip Squeak (TCS) PIA interface */
-static void tcs_irq (void);
-
-static pia6821_interface tcs_pia_intf =
-{
-	1,                /* 1 chip */
-	{ PIA_DDRA, PIA_DDRB, PIA_CTLA, PIA_CTLB }, /* offsets */
-	{ 0 },            /* input port A  */
-	{ 0 },            /* input bit CA1 */
-	{ 0 },            /* input bit CA2 */
-	{ 0 },            /* input port B  */
-	{ 0 },            /* input bit CB1 */
-	{ 0 },            /* input bit CB2 */
-	{ DAC_data_w },   /* output port A */
-	{ 0 },            /* output port B */
-	{ 0 },            /* output CA2    */
-	{ 0 },            /* output CB2    */
-	{ tcs_irq },      /* IRQ A         */
-	{ tcs_irq },      /* IRQ B         */
-};
-
-
-/* Squawk & Talk (SNT) PIA interface */
-static void snt_porta1_w (int offset, int data);
-static void snt_porta2_w (int offset, int data);
-static void snt_portb2_w (int offset, int data);
-static void snt_irq (void);
-
-static pia6821_interface snt_pia_intf =
-{
-	2,                              /* 2 chips */
-	{ PIA_DDRA, PIA_CTLA, PIA_DDRB, PIA_CTLB }, /* offsets */
-	{ 0, 0 },                       /* input port A  */
-	{ 0, 0 },                       /* input bit CA1 */
-	{ 0, 0 },                       /* input bit CA2 */
-	{ 0, 0 },                       /* input port B  */
-	{ 0, 0 },                       /* input bit CB1 */
-	{ 0, 0 },                       /* input bit CB2 */
-	{ snt_porta1_w, snt_porta2_w }, /* output port A */
-	{ 0, snt_portb2_w },            /* output port B */
-	{ 0, 0 },                       /* output CA2    */
-	{ 0, 0 },                       /* output CB2    */
-	{ snt_irq, snt_irq },           /* IRQ A         */
-	{ snt_irq, snt_irq },           /* IRQ B         */
-};
-
-
-/***************************************************************************
-
-  Generic MCR handlers
-
-***************************************************************************/
+/*************************************
+ *
+ *	Generic MCR machine initialization
+ *
+ *************************************/
 
 void mcr_init_machine(void)
 {
-   int i;
-
-	/* reset the sound */
-   for (i = 0; i < 4; i++)
-      soundlatch[i] = 0;
-   soundstatus = 0;
-   suspended = 0;
-
-   /* initialize the CTC */
-   ctc_intf.baseclock[0] = Machine->drv->cpu[0].cpu_clock;
-   z80ctc_init (&ctc_intf);
-
-
-   /* can't load NVRAM right away */
-   mcr_loadnvram = 0;
-}
-
-void spyhunt_init_machine (void)
-{
-   mcr_init_machine ();
-
-   /* reset the PIAs */
-   pia_startup (&csd_pia_intf);
+	/* initialize the CTC */
+	ctc_intf.baseclock[0] = Machine->drv->cpu[0].cpu_clock;
+	z80ctc_init(&ctc_intf);
+	
+	/* can't load NVRAM right away, except for games with no SSIO */
+	mcr_loadnvram = !(mcr_sound_config & MCR_SSIO);
+	mcr_cocktail_flip = 0;
+	
+	/* initialize the sound */
+	mcr_sound_init();
 }
 
 
-void rampage_init_machine (void)
+
+/*************************************
+ *
+ *	Generic MCR/68k machine initialization
+ *
+ *************************************/
+
+static void mcr68_common_init(void)
 {
-	mcr_init_machine ();
-	mcr_loadnvram = 1;
-
-   /* reset the PIAs */
-   pia_startup (&sg_pia_intf);
-}
-
-
-void sarge_init_machine (void)
-{
-	mcr_init_machine ();
-	mcr_loadnvram = 1;
-
-   /* reset the PIAs */
-   pia_startup (&tcs_pia_intf);
-}
-
-
-void dotron_init_machine (void)
-{
-   mcr_init_machine ();
-
-   /* reset the PIAs */
-   pia_startup (&snt_pia_intf);
-}
-
-
-int mcr_interrupt (void)
-{
-	/* once per frame, pulse the CTC line 3 */
-	z80ctc_0_trg3_w (0, 1);
-	z80ctc_0_trg3_w (0, 0);
-	return ignore_interrupt ();
-}
-
-int dotron_interrupt (void)
-{
-	/* pulse the CTC line 2 to enable Platform Poles */
-	z80ctc_0_trg2_w (0, 1);
-	z80ctc_0_trg2_w (0, 0);
-	/* once per frame, pulse the CTC line 3 */
-	z80ctc_0_trg3_w (0, 1);
-	z80ctc_0_trg3_w (0, 0);
-	return ignore_interrupt ();
-}
-
-
-void mcr_delayed_write (int param)
-{
-	soundlatch[param >> 8] = param & 0xff;
-}
-
-void mcr_writeport(int port,int value)
-{
-	switch (port)
+	int i;
+	
+	/* reset the 6840's */
+	m6840_status = 0x00;
+	m6840_status_read_since_int = 0x00;
+	m6840_msb_buffer = m6840_lsb_buffer = 0;
+	for (i = 0; i < 3; i++)
 	{
-		case 0:	/* OP0  Write latch OP0 (coin meters, 2 led's and cocktail 'flip') */
-		   if (errorlog)
-		      fprintf (errorlog, "mcr write to OP0 = %02i\n", value);
-		   return;
-
-		case 4:	/* Write latch OP4 */
-		   if (errorlog)
-		      fprintf (errorlog, "mcr write to OP4 = %02i\n", value);
-			return;
-
-		case 0x1c:	/* WIRAM0 - write audio latch 0 */
-		case 0x1d:	/* WIRAM0 - write audio latch 1 */
-		case 0x1e:	/* WIRAM0 - write audio latch 2 */
-		case 0x1f:	/* WIRAM0 - write audio latch 3 */
-			timer_set (TIME_NOW, ((port - 0x1c) << 8) | (value & 0xff), mcr_delayed_write);
-/*			mcr_delayed_write (((port - 0x1c) << 8) | (value & 0xff));*/
-/*			soundlatch[port - 0x1c] = value;*/
-			return;
-
-		case 0xe0:	/* clear watchdog timer */
-			watchdog_reset_w (0, 0);
-			return;
-
-		case 0xe8:
-			/* A sequence of values gets written here at startup; we don't know why;
-			   However, it does give us the opportunity to tweak the IX register before
-			   it's checked in Tapper and Timber, thus eliminating the need for patches
-			   The value 5 is written last; we key on that, and only modify IX if it is
-			   currently 0; hopefully this is 99.9999% safe :-) */
-			if (value == 5)
-			{
-				if (cpu_get_reg(Z80_IX) == 0)
-					cpu_set_reg(Z80_IX, 1);
-			}
-			return;
-
-		case 0xf0:	/* These are the ports of a Z80-CTC; it generates interrupts in mode 2 */
-		case 0xf1:
-		case 0xf2:
-		case 0xf3:
-		  z80ctc_0_w (port - 0xf0, value);
-		  return;
+		m6840_state[i].control = 0x00;
+		m6840_state[i].latch = 0xffff;
+		m6840_state[i].count = 0xffff;
+		m6840_state[i].timer = NULL;
+		m6840_state[i].period = m6840_counter_periods[i];
 	}
+	
+	/* initialize the clock */
+	m6840_internal_counter_period = TIME_IN_HZ(Machine->drv->cpu[0].cpu_clock / 10);
 
-	/* log all writes that end up here */
-   if (errorlog)
-      fprintf (errorlog, "mcr unknown write port %02x %02i\n", port, value);
+	/* can't load NVRAM right away, except for games with no SSIO */
+	mcr_loadnvram = !(mcr_sound_config & MCR_SSIO);
+	mcr_cocktail_flip = 0;
+	
+	/* initialize the sound */
+	mcr_sound_init();
 }
 
 
-int mcr_readport(int port)
+void mcr68_init_machine(void)
 {
-	/* ports 0-4 are read directly via the input ports structure */
-	port += 5;
+	/* for the most part all MCR/68k games are the same */
+	mcr68_common_init();
+	v493_callback = mcr68_493_callback;
+	
+	/* vectors are 1 and 2 */
+	v493_irq_vector = 1;
+	m6840_irq_vector = 2;
+}
 
-   /* only a few ports here */
-   switch (port)
-   {
-		case 0x07:	/* Read audio status register */
 
-			/* once the system starts checking the sound, memory tests are done; load the NVRAM */
-		   mcr_loadnvram = 1;
-			return soundstatus;
+void zwackery_init_machine(void)
+{
+	/* for the most part all MCR/68k games are the same */
+	mcr68_common_init();
+	v493_callback = zwackery_493_callback;
+	
+	/* append our PIA state onto the existing one and reinit */
+	pia_config(2, PIA_STANDARD_ORDERING | PIA_16BIT_UPPER, &zwackery_pia_2_intf);
+	pia_config(3, PIA_STANDARD_ORDERING | PIA_16BIT_LOWER, &zwackery_pia_3_intf);
+	pia_config(4, PIA_STANDARD_ORDERING | PIA_16BIT_LOWER, &zwackery_pia_4_intf);
+	pia_reset();
 
-		case 0x10:	/* Tron reads this as an alias to port 0 -- does this apply to all ports 10-14? */
-			return cpu_readport (port & 0x0f);
-   }
+	/* vectors are 5 and 6 */
+	v493_irq_vector = 5;
+	m6840_irq_vector = 6;
+}
 
-	/* log all reads that end up here */
-   if (errorlog)
-      fprintf (errorlog, "reading port %i (PC=%04X)\n", port, cpu_get_pc ());
+
+
+/*************************************
+ *
+ *	Generic MCR interrupt handler
+ *
+ *************************************/
+
+int mcr_interrupt(void)
+{
+	/* once per frame, pulse the CTC line 3 */
+	z80ctc_0_trg3_w(0, 1);
+	z80ctc_0_trg3_w(0, 0);
+	
+	return ignore_interrupt();
+}
+
+
+int mcr68_interrupt(void)
+{
+	/* update the 6840 VBLANK clock */
+	if (!m6840_state[0].timer)
+		subtract_from_counter(0, 1);
+
+	if (errorlog) fprintf(errorlog, "--- VBLANK ---\n");
+	
+	/* also set a timer to generate the 493 signal at a specific time before the next VBLANK */
+	/* the timing of this is crucial for Blasted and Tri-Sports, which check the timing of */
+	/* VBLANK and 493 using counter 2 */
+	timer_set(TIME_IN_HZ(30) - mcr68_timing_factor, 0, v493_callback);
+
+	return ignore_interrupt();
+}
+
+
+
+/*************************************
+ *
+ *	MCR/68k interrupt central
+ *
+ *************************************/
+
+static void update_mcr68_interrupts(void)
+{
+	int newstate = 0;
+
+	/* all interrupts go through an LS148, which gives priority to the highest */
+	if (v493_irq_state)
+		newstate = v493_irq_vector;
+	if (m6840_irq_state)
+		newstate = m6840_irq_vector;
+
+	/* set the new state of the IRQ lines */
+	if (newstate)
+		cpu_set_irq_line(0, newstate, ASSERT_LINE);
+	else
+		cpu_set_irq_line(0, 7, CLEAR_LINE);
+}
+
+
+static void mcr68_493_off_callback(int param)
+{
+	v493_irq_state = 0;
+	update_mcr68_interrupts();
+}
+
+
+static void mcr68_493_callback(int param)
+{
+	v493_irq_state = 1;
+	update_mcr68_interrupts();
+	timer_set(cpu_getscanlineperiod(), 0, mcr68_493_off_callback);
+	if (errorlog) fprintf(errorlog, "--- (INT1) ---\n");
+}
+
+
+
+/*************************************
+ *
+ *	Generic MCR port write handlers
+ *
+ *************************************/
+
+void mcr_dummy_w(int offset, int data)
+{
+}
+
+
+void mcr_port_01_w(int offset, int data)
+{
+	mcr_cocktail_flip = (data >> 6) & 1;
+}
+
+
+void mcr_port_47_dispatch_w(int offset, int data)
+{
+	(*mcr_port47_w[offset])(offset, data);
+}
+
+
+void mcr_scroll_value_w(int offset, int data)
+{
+	switch (offset)
+	{
+		case 0:
+			/* low 8 bits of horizontal scroll */
+			spyhunt_scrollx = (spyhunt_scrollx & ~0xff) | data;
+			break;
+
+		case 1:
+			/* upper 3 bits of horizontal scroll and upper 1 bit of vertical scroll */
+			spyhunt_scrollx = (spyhunt_scrollx & 0xff) | ((data & 0x07) << 8);
+			spyhunt_scrolly = (spyhunt_scrolly & 0xff) | ((data & 0x80) << 1);
+			break;
+
+		case 2:
+			/* low 8 bits of vertical scroll */
+			spyhunt_scrolly = (spyhunt_scrolly & ~0xff) | data;
+			break;
+	}
+}
+
+
+void mcr_unknown_w(int offset, int data)
+{
+	/*  A sequence of values gets written here at startup; we don't know why.
+		However, it does give us the opportunity to tweak the IX register before
+		it's checked in Tapper and Timber, thus eliminating the need for patches
+		The values 5 is written last; we key on that, and only modify IX if it is
+		currently 0; hopefully this is 99.9999% safe :-) */
+	if (data == 5)
+	{
+		if (cpu_get_reg(Z80_IX) == 0)
+			cpu_set_reg(Z80_IX, 1);
+	}
+}
+
+
+
+/*************************************
+ *
+ *	Generic MCR port read handlers
+ *
+ *************************************/
+
+int mcr_port_04_dispatch_r(int offset)
+{
+	return (*mcr_port04_r[offset])(offset);
+}
+
+
+int mcr_sound_status_r(int offset)
+{
+	mcr_loadnvram = 1;
+	return ssio_status_r(offset);
+}
+
+
+
+/*************************************
+ *
+ *	Generic MCR hiscore save/load
+ *
+ *************************************/
+
+int mcr_hiload(void)
+{
+	unsigned char *RAM = Machine->memory_region[0];
+
+	/* see if it's okay to load */
+	if (mcr_loadnvram)
+	{
+		/* don't bother if 0 length */
+		if (mcr_hiscore_length != 0)
+		{
+			void *f = osd_fopen(Machine->gamedrv->name, 0, OSD_FILETYPE_HIGHSCORE, 0);
+			
+			/* read data if we succeed */
+			if (f)
+			{
+				osd_fread(f, &RAM[mcr_hiscore_start], mcr_hiscore_length);
+				osd_fclose(f);
+			}
+			
+			/* copy data if we failed */
+			else if (mcr_hiscore_init && mcr_hiscore_init_length)
+			{
+				memcpy(&RAM[mcr_hiscore_start], mcr_hiscore_init, mcr_hiscore_init_length);
+			}
+		}
+		
+		/* don't bother us anymore */
+		return 1;
+	}
+	
+	/* we can't load the hi scores yet */
 	return 0;
 }
 
 
-void mcr_soundstatus_w (int offset,int data)
+void mcr_hisave(void)
 {
-   soundstatus = data;
-}
-
-
-int mcr_soundlatch_r (int offset)
-{
-   return soundlatch[offset];
-}
-
-
-/***************************************************************************
-
-  Game-specific port handlers
-
-***************************************************************************/
-
-/* Translation table for one-joystick emulation */
-static int one_joy_trans[32]={
-        0x00,0x05,0x0A,0x00,0x06,0x04,0x08,0x00,
-        0x09,0x01,0x02,0x00,0x00,0x00,0x00,0x00 };
-
-int sarge_IN1_r(int offset)
-{
-	int res,res1;
-
-	res=readinputport(1);
-	res1=readinputport(6);
-
-	res&=~one_joy_trans[res1&0xf];
-
-	return (res);
-}
-
-int sarge_IN2_r(int offset)
-{
-	int res,res1;
-
-	res=readinputport(2);
-	res1=readinputport(6)>>4;
-
-	res&=~one_joy_trans[res1&0xf];
-
-	return (res);
-}
-
-
-
-void spyhunt_delayed_write (int param)
-{
-	pia_1_portb_w (0, param & 0x0f);
-	pia_1_ca1_w (0, param & 0x10);
-}
-
-void spyhunt_writeport(int port,int value)
-{
-	static int lastport4;
-
-	switch (port)
+	/* don't bother if 0 length */
+	if (mcr_hiscore_length != 0)
 	{
-		case 0x04:
-		case 0x05:
-		case 0x06:
-		case 0x07:
-			/* mux select is in bit 7 */
-		   spyhunt_mux = value & 0x80;
-
-	   	/* lamp driver command triggered by bit 5, data is in low four bits */
-		   if (((lastport4 ^ value) & 0x20) && !(value & 0x20))
-		   {
-		   	if (value & 8)
-		   		spyhunt_lamp[value & 7] = 1;
-		   	else
-		   		spyhunt_lamp[value & 7] = 0;
-		   }
-
-	   	/* CSD command triggered by bit 4, data is in low four bits */
-	   	timer_set (TIME_NOW, value, spyhunt_delayed_write);
-
-		   /* remember the last value */
-		   lastport4 = value;
-		   break;
-
-		case 0x84:
-			spyhunt_scrollx = (spyhunt_scrollx & ~0xff) | value;
-			break;
-
-		case 0x85:
-			spyhunt_scrollx = (spyhunt_scrollx & 0xff) | ((value & 0x07) << 8);
-			spyhunt_scrolly = (spyhunt_scrolly & 0xff) | ((value & 0x80) << 1);
-			break;
-
-		case 0x86:
-			spyhunt_scrolly = (spyhunt_scrolly & ~0xff) | value;
-			break;
-
-		default:
-			mcr_writeport(port,value);
-			break;
+		unsigned char *RAM = Machine->memory_region[0];
+		void *f = osd_fopen(Machine->gamedrv->name, 0, OSD_FILETYPE_HIGHSCORE, 1);
+	
+		/* write data if we succeed */
+		if (f)
+		{
+			osd_fwrite(f, &RAM[mcr_hiscore_start], mcr_hiscore_length);
+			osd_fclose(f);
+		}
 	}
 }
 
 
 
-void rampage_delayed_write (int param)
+/*************************************
+ *
+ *	Zwackery-specific interfaces
+ *
+ *************************************/
+
+void zwackery_pia_2_w(int offset, int data)
 {
-	pia_1_portb_w (0, (param >> 1) & 0x0f);
-	pia_1_ca1_w (0, ~param & 0x01);
-}
-
-void rampage_writeport(int port,int value)
-{
-	switch (port)
-	{
-		case 0x04:
-		case 0x05:
-			break;
-
-		case 0x06:
-			timer_set (TIME_NOW, value, rampage_delayed_write);
-	   	break;
-
-		case 0x07:
-		   break;
-
-		default:
-			mcr_writeport(port,value);
-			break;
-	}
+	/* bit 7 is the watchdog */
+	if (!(data & 0x80)) watchdog_reset_w(offset, data);
+	
+	/* bits 5 and 6 control hflip/vflip */
+	/* bits 3 and 4 control coin counters? */
+	/* bits 0, 1 and 2 control meters? */
 }
 
 
-
-void maxrpm_writeport(int port,int value)
+void zwackery_pia_3_w(int offset, int data)
 {
-	switch (port)
-	{
-		case 0x04:
-			break;
+	zwackery_sound_data = (data >> 4) & 0x0f;
+}
 
-		case 0x05:
-			maxrpm_mux = (value >> 1) & 3;
-			break;
 
-		case 0x06:
-			timer_set (TIME_NOW, value, rampage_delayed_write);
-			break;
+void zwackery_ca2_w(int offset, int data)
+{
+	csdeluxe_data_w(offset, (data << 4) | zwackery_sound_data);
+}
 
-		case 0x07:
-		   break;
 
-		default:
-			mcr_writeport(port,value);
-			break;
-	}
+void zwackery_pia_irq(int state)
+{
+	v493_irq_state = state;
+	update_mcr68_interrupts();
+}
+
+
+static void zwackery_493_off_callback(int param)
+{
+	pia_2_ca1_w(0, 0);
+}
+
+
+static void zwackery_493_callback(int param)
+{
+	pia_2_ca1_w(0, 1);
+	timer_set(cpu_getscanlineperiod(), 0, zwackery_493_off_callback);
 }
 
 
 
-void sarge_delayed_write (int param)
+/*************************************
+ *
+ *	M6840 timer utilities
+ *
+ *************************************/
+
+INLINE void update_interrupts(void)
 {
-	pia_1_portb_w (0, (param >> 1) & 0x0f);
-	pia_1_ca1_w (0, ~param & 0x01);
-}
-
-void sarge_writeport(int port,int value)
-{
-	switch (port)
-	{
-		case 0x04:
-		case 0x05:
-			break;
-
-		case 0x06:
-			timer_set (TIME_NOW, value, sarge_delayed_write);
-			break;
-
-		case 0x07:
-		   break;
-
-		default:
-			mcr_writeport(port,value);
-			break;
-	}
-}
-
-void destderb_writeport(int port,int value)
-{
-	switch (port)
-	{
-		case 0x04:
-			timer_set (TIME_NOW, value, sarge_delayed_write);
-			break;
-
-		default:
-			mcr_writeport(port,value);
-			break;
-	}
+	m6840_status &= ~0x80;
+	
+	if ((m6840_status & 0x01) && (m6840_state[0].control & 0x40)) m6840_status |= 0x80;
+	if ((m6840_status & 0x02) && (m6840_state[1].control & 0x40)) m6840_status |= 0x80;
+	if ((m6840_status & 0x04) && (m6840_state[2].control & 0x40)) m6840_status |= 0x80;
+	
+	m6840_irq_state = m6840_status >> 7;
+	update_mcr68_interrupts();
 }
 
 
-
-void dotron_delayed_write(int param)
+static void subtract_from_counter(int counter, int count)
 {
-	pia_1_porta_w(0,~param & 0x0f);
-	pia_1_cb1_w(0,~param & 0x10);
-	dotron_change_light(param >> 6);
-
-#ifdef MAME_DEBUG
-	switch (param & 0x27)
+	/* dual-byte mode */
+	if (m6840_state[counter].control & 0x04)
 	{
-		case 0x24:
-			usrintf_showmessage("Stop");
-			break;
-		case 0x23:
-			usrintf_showmessage("Forward Fast");
-			break;
-		case 0x22:
-			usrintf_showmessage("Forward Slow");
-			break;
-		case 0x21:
-			usrintf_showmessage("Reverse Fast");
-			break;
-		case 0x20:
-			usrintf_showmessage("Reverse Slow");
-			break;
+		int lsb = m6840_state[counter].count & 0xff;
+		int msb = m6840_state[counter].count >> 8;
+		
+		/* count the clocks */
+		lsb -= count;
+		
+		/* loop while we're less than zero */
+		while (lsb < 0)
+		{
+			/* borrow from the MSB */
+			lsb += (m6840_state[counter].latch & 0xff) + 1;
+			msb--;
+			
+			/* if MSB goes less than zero, we've expired */
+			if (msb < 0)
+			{
+				m6840_status |= 1 << counter;
+				m6840_status_read_since_int &= ~(1 << counter);
+				update_interrupts();
+				msb = (m6840_state[counter].latch >> 8) + 1;
+				if (m6840log) fprintf(m6840log, "** Counter %d fired\n", counter);
+			}
+		}
+		
+		/* store the result */
+		m6840_state[counter].count = (msb << 8) | lsb;
 	}
-#endif
-}
-
-void dotron_writeport(int port,int value)
-{
-	switch (port)
-	{
-		case 0x04:
-			timer_set (TIME_NOW, value, dotron_delayed_write);
-			break;
-
-		case 0x05:
-		case 0x06:
-		case 0x07:
-			if (errorlog) fprintf(errorlog,"Write to port %02X = %02X\n",port,value);
-		   break;
-
-		default:
-			mcr_writeport(port,value);
-			break;
-	}
-}
-
-
-void crater_writeport(int port,int value)
-{
-	switch (port)
-	{
-		case 0x84:
-			spyhunt_scrollx = (spyhunt_scrollx & ~0xff) | value;
-			break;
-
-		case 0x85:
-			spyhunt_scrollx = (spyhunt_scrollx & 0xff) | ((value & 0x07) << 8);
-			spyhunt_scrolly = (spyhunt_scrolly & 0xff) | ((value & 0x80) << 1);
-			break;
-
-		case 0x86:
-			spyhunt_scrolly = (spyhunt_scrolly & ~0xff) | value;
-			break;
-
-		default:
-			mcr_writeport(port,value);
-			break;
-	}
-}
-
-
-/***************************************************************************
-
-  Game-specific input handlers
-
-***************************************************************************/
-
-/* Max RPM -- multiplexed steering wheel/gas pedals */
-int maxrpm_IN1_r(int offset)
-{
-	return readinputport (6 + maxrpm_mux);
-}
-
-int maxrpm_IN2_r(int offset)
-{
-	static int shift_bits[5] = { 0x00, 0x05, 0x06, 0x01, 0x02 };
-	int start = readinputport (0);
-	int shift = readinputport (10);
-
-	/* reset on a start */
-	if (!(start & 0x08))
-		maxrpm_p1_shift = 0;
-	if (!(start & 0x04))
-		maxrpm_p2_shift = 0;
-
-	/* increment, decrement on falling edge */
-	if (!(shift & 0x01) && (maxrpm_last_shift & 0x01))
-	{
-		maxrpm_p1_shift++;
-		if (maxrpm_p1_shift > 4)
-			maxrpm_p1_shift = 4;
-	}
-	if (!(shift & 0x02) && (maxrpm_last_shift & 0x02))
-	{
-		maxrpm_p1_shift--;
-		if (maxrpm_p1_shift < 0)
-			maxrpm_p1_shift = 0;
-	}
-	if (!(shift & 0x04) && (maxrpm_last_shift & 0x04))
-	{
-		maxrpm_p2_shift++;
-		if (maxrpm_p2_shift > 4)
-			maxrpm_p2_shift = 4;
-	}
-	if (!(shift & 0x08) && (maxrpm_last_shift & 0x08))
-	{
-		maxrpm_p2_shift--;
-		if (maxrpm_p2_shift < 0)
-			maxrpm_p2_shift = 0;
-	}
-
-	maxrpm_last_shift = shift;
-
-	return ~((shift_bits[maxrpm_p1_shift] << 4) + shift_bits[maxrpm_p2_shift]);
-}
-
-
-/* Spy Hunter -- normal port plus CSD status bits */
-int spyhunt_port_1_r(int offset)
-{
-	return input_port_1_r(offset) | ((pia_1_portb_r (0) & 0x30) << 1);
-}
-
-
-/* Spy Hunter -- multiplexed steering wheel/gas pedal */
-int spyhunt_port_2_r(int offset)
-{
-	int accel = readinputport (6);
-	int steer = readinputport (7);
-
-	/* mux high bit on means return steering wheel */
-	if (spyhunt_mux & 0x80)
-	{
-		if (errorlog) fprintf(errorlog, "return steer = %d", steer);
-	   return steer;
-	}
-
-	/* mux high bit off means return gas pedal */
+	
+	/* word mode */
 	else
 	{
-		if (errorlog) fprintf(errorlog, "return accel = %d", accel);
-	   return accel;
+		int word = m6840_state[counter].count;
+		
+		/* count the clocks */
+		word -= count;
+
+		/* loop while we're less than zero */
+		while (word < 0)
+		{
+			/* borrow from the MSB */
+			word += m6840_state[counter].latch + 1;
+			
+			/* we've expired */
+			m6840_status |= 1 << counter;
+			m6840_status_read_since_int &= ~(1 << counter);
+			update_interrupts();
+			if (m6840log) fprintf(m6840log, "** Counter %d fired\n", counter);
+		}
+		
+		/* store the result */
+		m6840_state[counter].count = word;
 	}
 }
 
 
-/* Destruction Derby -- 6 bits of steering plus 2 bits of normal inputs */
-int destderb_port_r(int offset)
+static void counter_fired_callback(int counter)
 {
-	return readinputport (1 + offset);
+	int count = counter >> 2;
+	counter &= 3;
+	
+	/* reset the timer */
+	m6840_state[counter].timer = NULL;
+
+	/* subtract it all from the counter; this will generate an interrupt */
+	subtract_from_counter(counter, count);
 }
 
 
-/* Kozmik Krooz'r -- dial reader */
-int kroozr_dial_r(int offset)
+static void reload_count(int counter)
 {
-	int dial = readinputport (7);
-	int val = readinputport (1);
+	double period;
+	int count;
 
-	val |= (dial & 0x80) >> 1;
-	val |= (dial & 0x70) >> 4;
+	/* copy the latched value in */
+	m6840_state[counter].count = m6840_state[counter].latch;
 
-	return val;
+	/* remove any old timers */
+	if (m6840_state[counter].timer)
+		timer_remove(m6840_state[counter].timer);
+	m6840_state[counter].timer = NULL;
+
+	/* counter 0 is self-updating if clocked externally */
+	if (counter == 0 && !(m6840_state[counter].control & 0x02))
+		return;
+	
+	/* determine the clock period for this timer */
+	if (m6840_state[counter].control & 0x02)
+		period = m6840_internal_counter_period;
+	else
+		period = m6840_counter_periods[counter];
+	
+	/* determine the number of clock periods before we expire */
+	count = m6840_state[counter].count;
+	if (m6840_state[counter].control & 0x04)
+		count = ((count >> 8) + 1) * ((count & 0xff) + 1);
+	else
+		count = count + 1;
+	
+	/* set the timer */
+	m6840_state[counter].timer = timer_set(period * (double)count, (count << 2) + counter, counter_fired_callback);
 }
 
 
-/* Kozmik Krooz'r -- joystick readers */
-int kroozr_trakball_x_r(int data)
+static UINT16 compute_counter(int counter)
 {
-	int val = readinputport (6);
+	double period;
+	int remaining;
 
-	if (val & 0x02)		/* left */
-		return 0x64 - 0x34;
-	if (val & 0x01)		/* right */
-		return 0x64 + 0x34;
-	return 0x64;
-}
-
-int kroozr_trakball_y_r(int data)
-{
-	int val = readinputport (6);
-
-	if (val & 0x08)		/* up */
-		return 0x64 - 0x34;
-	if (val & 0x04)		/* down */
-		return 0x64 + 0x34;
-	return 0x64;
-}
-
-/* Discs of Tron -- remap up and down on the mouse to aim up and down */
-int dotron_IN2_r(int offset)
-{
-	int data;
-	static int delta = 0;
-	char fake;
-	static char lastfake = 0;
-	static int mask = 0x00FF;
-	static int count = 0;
-
-	data = input_port_2_r(offset);
-	fake = input_port_6_r(offset);
-
-	delta += (fake - lastfake);
-	lastfake = fake;
-
-	/* Map to "aim up" */
-	if (delta > 5)
+	/* if there's no timer, return the count */
+	if (!m6840_state[counter].timer)
+		return m6840_state[counter].count;
+	
+	/* determine the clock period for this timer */
+	if (m6840_state[counter].control & 0x02)
+		period = m6840_internal_counter_period;
+	else
+		period = m6840_counter_periods[counter];
+	
+	/* see how many are left */
+	remaining = (int)(timer_timeleft(m6840_state[counter].timer) / period);
+	
+	/* adjust the count for dual byte mode */
+	if (m6840_state[counter].control & 0x04)
 	{
-		mask = 0x00EF;
-		count = 5;
-		delta = 0;
+		int divisor = (m6840_state[counter].count & 0xff) + 1;
+		int msb = remaining / divisor;
+		int lsb = remaining % divisor;
+		remaining = (msb << 8) | lsb;
 	}
-	/* Map to "aim down" */
-	else if (delta < -5)
-	{
-		mask = 0x00DF;
-		count = 5;
-		delta = 0;
-	}
-
-	if ((count--) <= 0)
-	{
-		count = 0;
-		mask = 0x00FF;
-	}
-
-	data &= mask;
-
-	return data;
+	
+	return remaining;
 }
 
 
-/***************************************************************************
 
-  Sound board-specific PIA handlers
+/*************************************
+ *
+ *	M6840 timer I/O
+ *
+ *************************************/
 
-***************************************************************************/
+static void mcr68_6840_w_common(int offset, int data)
+{
+	int i;
+	
+	/* offsets 0 and 1 are control registers */
+	if (offset < 2)
+	{
+		int counter = (offset == 1) ? 1 : (m6840_state[1].control & 0x01) ? 0 : 2;
+		UINT8 diffs = data ^ m6840_state[counter].control;
+		
+		m6840_state[counter].control = data;
 
-void mcr_pia_1_w (int offset, int data)
+		/* reset? */
+		if (counter == 0 && (diffs & 0x01))
+		{
+			/* holding reset down */
+			if (data & 0x01)
+			{
+				for (i = 0; i < 3; i++)
+				{
+					if (m6840_state[i].timer)
+						timer_remove(m6840_state[i].timer);
+					m6840_state[i].timer = NULL;
+				}
+			}
+			
+			/* releasing reset */
+			else
+			{
+				for (i = 0; i < 3; i++)
+					reload_count(i);
+			}
+
+			m6840_status = 0;
+			update_interrupts();
+		}
+		
+		/* changing the clock source? (needed for Zwackery) */
+		if (diffs & 0x02)
+			reload_count(counter);
+		
+		if (m6840log) fprintf(m6840log, "%06X:Counter %d control = %02X\n", cpu_getpreviouspc(), counter, data);
+	}
+	
+	/* offsets 2, 4, and 6 are MSB buffer registers */
+	else if ((offset & 1) == 0)
+	{
+		if (m6840log) fprintf(m6840log, "%06X:MSB = %02X\n", cpu_getpreviouspc(), data);
+		m6840_msb_buffer = data;
+	}
+	
+	/* offsets 3, 5, and 7 are Write Timer Latch commands */
+	else
+	{
+		int counter = (offset - 2) / 2;
+		m6840_state[counter].latch = (m6840_msb_buffer << 8) | (data & 0xff);
+		
+		/* clear the interrupt */
+		m6840_status &= ~(1 << counter);
+		update_interrupts();
+		
+		/* reload the count if in an appropriate mode */
+		if (!(m6840_state[counter].control & 0x10))
+			reload_count(counter);
+		
+		if (m6840log) fprintf(m6840log, "%06X:Counter %d latch = %04X\n", cpu_getpreviouspc(), counter, m6840_state[counter].latch);
+	}
+}
+
+
+static int mcr68_6840_r_common(int offset)
+{
+	/* offset 0 is a no-op */
+	if (offset == 0)
+		return 0;
+	
+	/* offset 1 is the status register */
+	else if (offset == 1)
+	{
+		if (m6840log) fprintf(m6840log, "%06X:Status read = %04X\n", cpu_getpreviouspc(), m6840_status);
+		m6840_status_read_since_int |= m6840_status & 0x07;
+		return m6840_status;
+	}
+	
+	/* offsets 2, 4, and 6 are Read Timer Counter commands */
+	else if ((offset & 1) == 0)
+	{
+		int counter = (offset - 2) / 2;
+		int result = compute_counter(counter);
+
+		/* clear the interrupt if the status has been read */
+		if (m6840_status_read_since_int & (1 << counter))
+			m6840_status &= ~(1 << counter);
+		update_interrupts();
+
+		m6840_lsb_buffer = result & 0xff;
+		
+		if (m6840log) fprintf(m6840log, "%06X:Counter %d read = %04X\n", cpu_getpreviouspc(), counter, result);
+		return result >> 8;
+	}
+	
+	/* offsets 3, 5, and 7 are LSB buffer registers */
+	else
+		return m6840_lsb_buffer;
+}
+
+
+void mcr68_6840_upper_w(int offset, int data)
 {
 	if (!(data & 0xff000000))
-		pia_1_w (offset, (data >> 8) & 0xff);
-}
-
-int mcr_pia_1_r (int offset)
-{
-	return pia_1_r (offset) << 8;
+		mcr68_6840_w_common(offset / 2, (data >> 8) & 0xff);
 }
 
 
-/*
- *		Chip Squeak Deluxe (Spy Hunter) board
- *
- *		MC68000, 1 PIA, 10-bit DAC
- */
-static void csd_porta_w (int offset, int data)
+void mcr68_6840_lower_w(int offset, int data)
 {
-	dacval = (dacval & ~0x3fc) | (data << 2);
-	DAC_signed_data_w (0, dacval >> 2);
-}
-
-static void csd_portb_w (int offset, int data)
-{
-	dacval = (dacval & ~0x003) | (data >> 6);
-	/* only update when the MSB's are changed */
-}
-
-static void csd_irq (void)
-{
-	/* generate a sound interrupt */
-  	cpu_cause_interrupt (2, 4);
+	if (!(data & 0x00ff0000))
+		mcr68_6840_w_common(offset / 2, data & 0xff);
 }
 
 
-/*
- *		Sounds Good (Rampage) board
- *
- *		MC68000, 1 PIA, 10-bit DAC
- */
-static void sg_porta_w (int offset, int data)
+int mcr68_6840_upper_r(int offset)
 {
-	dacval = (dacval & ~0x3fc) | (data << 2);
-	DAC_signed_data_w (0, dacval >> 2);
-}
-
-static void sg_portb_w (int offset, int data)
-{
-	dacval = (dacval & ~0x003) | (data >> 6);
-	/* only update when the MSB's are changed */
-}
-
-static void sg_irq (void)
-{
-	/* generate a sound interrupt */
-  	cpu_cause_interrupt (1, 4);
+	return (mcr68_6840_r_common(offset / 2) << 8) | 0x00ff;
 }
 
 
-/*
- *		Turbo Chip Squeak (Sarge) board
- *
- *		MC6809, 1 PIA, 8-bit DAC
- */
-static void tcs_irq (void)
+int mcr68_6840_lower_r(int offset)
 {
-	/* generate a sound interrupt */
-	cpu_cause_interrupt (1, M6809_INT_IRQ);
-}
-
-
-/*
- *		Squawk & Talk (Discs of Tron) board
- *
- *		MC6802, 2 PIAs, TMS5220, AY8912 (not used), 8-bit DAC (not used)
- */
-static int tms_command;
-static int tms_strobes;
-
-static void snt_porta1_w (int offset, int data)
-{
-	/*printf ("Write to AY-8912\n");*/
-}
-
-static void snt_porta2_w (int offset, int data)
-{
-	tms_command = data;
-}
-
-static void snt_portb2_w (int offset, int data)
-{
-	/* bits 0-1 select read/write strobes on the TMS5220 */
-	data &= 0x03;
-	if (((data ^ tms_strobes) & 0x02) && !(data & 0x02))
-	{
-		tms5220_data_w (offset, tms_command);
-
-		/* DoT expects the ready line to transition on a command/write here, so we oblige */
-		pia_2_ca2_w (0,1);
-		pia_2_ca2_w (0,0);
-	}
-	else if (((data ^ tms_strobes) & 0x01) && !(data & 0x01))
-	{
-		pia_2_porta_w (0,tms5220_status_r(offset));
-
-		/* DoT expects the ready line to transition on a command/write here, so we oblige */
-		pia_2_ca2_w (0,1);
-		pia_2_ca2_w (0,0);
-	}
-	tms_strobes = data;
-}
-
-static void snt_irq (void)
-{
-	cpu_cause_interrupt (2, M6808_INT_IRQ);
+	return mcr68_6840_r_common(offset / 2) | 0xff00;
 }

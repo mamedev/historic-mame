@@ -12,7 +12,7 @@ struct VLM5030interface konami_vlm5030_interface =
 struct SN76496interface konami_sn76496_interface =
 {
 	1,	/* 1 chip */
-	14318180/8,	/*  1.7897725 Mhz */
+	{ 14318180/8 },	/*  1.7897725 Mhz */
 	{ 0x2064 }
 };
 

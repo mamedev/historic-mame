@@ -592,23 +592,23 @@ static struct MemoryWriteAddress writemem[] =
 
 static struct IOReadPort readport[] =
 {
-	{ 0x0000, 0x0001, HD63484_status_r },
-	{ 0x0002, 0x0003, HD63484_data_r },
-	{ 0x0020, 0x0020, YM2203_status_port_0_r },
-	{ 0x0022, 0x0022, YM2203_read_port_0_r },
-	{ 0x0040, 0x0040, input_port_0_r },
-	{ 0x0044, 0x0044, input_port_1_r },
-	{ 0x0048, 0x0048, input_port_2_r },
+	{ 0x00, 0x01, HD63484_status_r },
+	{ 0x02, 0x03, HD63484_data_r },
+	{ 0x20, 0x20, YM2203_status_port_0_r },
+	{ 0x22, 0x22, YM2203_read_port_0_r },
+	{ 0x40, 0x40, input_port_0_r },
+	{ 0x44, 0x44, input_port_1_r },
+	{ 0x48, 0x48, input_port_2_r },
 	{ -1 }  /* end of table */
 };
 
 static struct IOWritePort writeport[] =
 {
-	{ 0x0000, 0x0001, HD63484_address_w },
-	{ 0x0002, 0x0003, HD63484_data_w },
-	{ 0x0020, 0x0020, YM2203_control_port_0_w },
-	{ 0x0022, 0x0022, YM2203_write_port_0_w },
-	{ 0x004c, 0x004c, shanghai_coin_w },
+	{ 0x00, 0x01, HD63484_address_w },
+	{ 0x02, 0x03, HD63484_data_w },
+	{ 0x20, 0x20, YM2203_control_port_0_w },
+	{ 0x22, 0x22, YM2203_write_port_0_w },
+	{ 0x4c, 0x4c, shanghai_coin_w },
 	{ -1 }  /* end of table */
 };
 
@@ -709,20 +709,17 @@ static struct YM2203interface ym2203_interface =
 
 
 
-/* V30 1 MB address mask */
-static int shanghai_addrmask = 0x0fffff;
-
 static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_V30,
-			8000000,	/* ??? */
+			16000000,	/* ??? */
 			0,
 			readmem,writemem,readport,writeport,
 			shanghai_interrupt,1,
-			0,0,&shanghai_addrmask
+			0,0
 		}
 	},
 	30, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
@@ -761,12 +758,12 @@ static struct MachineDriver machine_driver =
 
 ROM_START( shanghai_rom )
 	ROM_REGION(0x100000)
-	ROM_LOAD_EVEN( "shg-22a.rom", 0xa0000, 0x10000, 0xe0a085be )
-	ROM_LOAD_ODD ( "shg-21a.rom", 0xa0000, 0x10000, 0x4ab06d32 )
-	ROM_LOAD_EVEN( "shg-28a.rom", 0xc0000, 0x10000, 0x983ec112 )
-	ROM_LOAD_ODD ( "shg-27a.rom", 0xc0000, 0x10000, 0x41af0945 )
-	ROM_LOAD_EVEN( "shg-37b.rom", 0xe0000, 0x10000, 0x3f192da0 )
-	ROM_LOAD_ODD ( "shg-36b.rom", 0xe0000, 0x10000, 0xa1d6af96 )
+	ROM_LOAD_V20_EVEN( "shg-22a.rom", 0xa0000, 0x10000, 0xe0a085be )
+	ROM_LOAD_V20_ODD ( "shg-21a.rom", 0xa0000, 0x10000, 0x4ab06d32 )
+	ROM_LOAD_V20_EVEN( "shg-28a.rom", 0xc0000, 0x10000, 0x983ec112 )
+	ROM_LOAD_V20_ODD ( "shg-27a.rom", 0xc0000, 0x10000, 0x41af0945 )
+	ROM_LOAD_V20_EVEN( "shg-37b.rom", 0xe0000, 0x10000, 0x3f192da0 )
+	ROM_LOAD_V20_ODD ( "shg-36b.rom", 0xe0000, 0x10000, 0xa1d6af96 )
 ROM_END
 
 

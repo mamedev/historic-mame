@@ -45,24 +45,22 @@ static int exidy_sfxctrl;
 	PIA Interface
 ***************************************************************************/
 
-static void exidy_irq (void);
+static void exidy_irq (int state);
 
-static pia6821_interface pia_intf =
+/* PIA 0 */
+static struct pia6821_interface pia_0_intf =
 {
-	2,                                              /* 2 chips */
-	{ PIA_DDRA, PIA_CTLA, PIA_DDRB, PIA_CTLB },     /* offsets */
-    { pia_1_porta_r, pia_2_porta_r },               /* input port A */
-    { pia_1_ca1_r,   pia_2_ca1_r },                 /* input bit CA1 */
-    { pia_1_ca2_r,   pia_2_ca2_r },                 /* input bit CA2 */
-    { pia_1_portb_r, pia_2_portb_r },               /* input port B */
-    { pia_1_cb1_r,   pia_2_cb1_r },                 /* input bit CB1 */
-    { pia_1_cb2_r,   pia_2_cb2_r },                 /* input bit CB2 */
-	{ pia_2_portb_w, pia_1_portb_w },               /* output port A */
-	{ pia_2_porta_w, pia_1_porta_w },               /* output port B */
-	{ pia_2_cb1_w,   pia_1_cb1_w },                 /* output CA2 */
-	{ pia_2_ca1_w,   pia_1_ca1_w },                 /* output CB2 */
-	{ 0, exidy_irq },                               /* IRQ A */
-	{ 0, 0 }                                        /* IRQ B */
+	/*inputs : A/B,CA/B1,CA/B2 */ 0, 0, 0, 0, 0, 0,
+	/*outputs: A/B,CA/B2       */ pia_1_portb_w, pia_1_porta_w, pia_1_cb1_w, pia_1_ca1_w,
+	/*irqs   : A/B             */ 0, 0
+};
+
+/* PIA 1 */
+static struct pia6821_interface pia_1_intf =
+{
+	/*inputs : A/B,CA/B1,CA/B2 */ 0, 0, 0, 0, 0, 0,
+	/*outputs: A/B,CA/B2       */ pia_0_portb_w, pia_0_porta_w, pia_0_cb1_w, pia_0_ca1_w,
+	/*irqs   : A/B             */ 0, exidy_irq
 };
 
 int exidy_sh_start(const struct MachineSound *msound)
@@ -86,7 +84,9 @@ int exidy_sh_start(const struct MachineSound *msound)
 	mixer_play_sample(exidy_sample_channels[2],(signed char*)exidy_waveform1,16,1000,1);
 
 	/* Init PIA */
-	pia_startup (&pia_intf);
+	pia_config(0, PIA_STANDARD_ORDERING, &pia_0_intf);
+	pia_config(1, PIA_STANDARD_ORDERING, &pia_1_intf);
+	pia_reset();
 
 	/* Init 6532 */
     timer=0;
@@ -136,9 +136,9 @@ static void riot_interrupt(int parm)
  *  PIA callback to generate the interrupt to the main CPU
  */
 
-static void exidy_irq (void)
+static void exidy_irq (int state)
 {
-    cpu_cause_interrupt (1, M6502_INT_IRQ);
+    cpu_set_irq_line (1, 0, state ? ASSERT_LINE : CLEAR_LINE);
 }
 
 

@@ -92,6 +92,8 @@ static int cheat_r(int offset)
 }
 
 static int speech_chip;
+static int invalid_code;
+static int total_samples[] = { 0x39, 0x15 };
 
 static void speech_control_w( int offset, int data )
 {
@@ -101,15 +103,16 @@ static void speech_control_w( int offset, int data )
 	speech_chip = ( data & 4 ) ? 1 : 0;
 
 	UPD7759_reset_w( speech_chip, reset );
-	UPD7759_start_w( speech_chip, start );
+
+	if (!invalid_code)
+		UPD7759_start_w( speech_chip, start );
 }
 
 static void speech_msg_w( int offset, int data )
 {
 	UPD7759_message_w( speech_chip, data );
+	invalid_code = (data == total_samples[speech_chip]);
 }
-
-
 
 static struct MemoryReadAddress readmem[] =
 {

@@ -8,14 +8,20 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "memory.h"
-#include "mamedbg.h"
 #include "osd_cpu.h"
 
+#ifdef STANDALONE
+#define PC __pc + (offset << 3)
+#define PARAM_WORD(v) { v = filebuf[_pc>>3]; _pc += 8; v = v | (filebuf[_pc>>3] << 8); _pc += 8;}
+#define PARAM_LONG(v) { int v1, v2; PARAM_WORD(v1); PARAM_WORD(v2); v = v1 | (v2 << 16); }
+#else
+#include "memory.h"
+#define PC __pc
 #define PARAM_WORD(v) { v = cpu_readmem29_word(_pc>>3); _pc += 16; }
 #define PARAM_LONG(v) { v = cpu_readmem29_dword(_pc>>3); _pc += 32; }
+#endif
 
-static char rf;
+static UINT8 rf;
 static UINT32 __pc, _pc;
 static UINT16 op,rs,rd;
 
@@ -23,7 +29,7 @@ static char *buffer;
 static char temp[20];
 
 
-static void print_reg(short reg)
+static void print_reg(UINT8 reg)
 {
 	if (reg != 0x0f)
 	{
@@ -55,7 +61,7 @@ static void print_src_des_reg(void)
 
 static void print_word_parm(void)
 {
-	unsigned short w;
+	UINT16 w;
 
 	PARAM_WORD(w);
 
@@ -65,10 +71,11 @@ static void print_word_parm(void)
 
 static void print_word_parm_1s_comp(void)
 {
-	unsigned short w;
+	UINT16 w;
 
 	PARAM_WORD(w);
-	sprintf(temp, "%Xh", ~w & 0xffff);
+	w = ~w;
+	sprintf(temp, "%Xh", w);
 	strcat(buffer, temp);
 }
 
@@ -92,7 +99,7 @@ static void print_long_parm_1s_comp(void)
 
 static void print_constant(void)
 {
-	UINT16 constant = (op >> 5) & 0x1f;
+	UINT8 constant = (op >> 5) & 0x1f;
 
 	sprintf(temp, "%Xh", constant);
 	strcat(buffer, temp);
@@ -100,7 +107,7 @@ static void print_constant(void)
 
 static void print_constant_1_32(void)
 {
-	UINT16 constant = (op >> 5) & 0x1f;
+	UINT8 constant = (op >> 5) & 0x1f;
 	if (!constant) constant = 0x20;
 
 	sprintf(temp, "%Xh", constant);
@@ -109,7 +116,7 @@ static void print_constant_1_32(void)
 
 static void print_constant_1s_comp(void)
 {
-	short constant = (~op >> 5) & 0x1f;
+	UINT8 constant = (~op >> 5) & 0x1f;
 
 	sprintf(temp, "%Xh", constant);
 	strcat(buffer, temp);
@@ -117,7 +124,7 @@ static void print_constant_1s_comp(void)
 
 static void print_constant_2s_comp(void)
 {
-	short constant = 32 - ((op >> 5) & 0x1f);
+	UINT8 constant = 32 - ((op >> 5) & 0x1f);
 
 	sprintf(temp, "%Xh", constant);
 	strcat(buffer, temp);
@@ -125,30 +132,30 @@ static void print_constant_2s_comp(void)
 
 static void print_relative(void)
 {
-	unsigned short l;
-	signed short ls;
+	UINT16 l;
+	INT16 ls;
 
 	PARAM_WORD(l);
-	ls = (signed short)l;
+	ls = (INT16)l;
 
-	sprintf(temp, "%Xh", __pc + 32 + (ls << 4));
+	sprintf(temp, "%Xh", PC + 32 + (ls << 4));
 	strcat(buffer, temp);
 }
 
 static void print_relative_8bit(void)
 {
-	signed char ls = (signed char)(op & 0xff);
+	INT8 ls = (INT8)op;
 
-	sprintf(temp, "%Xh", __pc + 16 + (ls << 4));
+	sprintf(temp, "%Xh", PC + 16 + (ls << 4));
 	strcat(buffer, temp);
 }
 
 static void print_relative_5bit(void)
 {
-	signed char ls = (signed char)((op >> 5) & 0x1f);
+	INT8 ls = (INT8)((op >> 5) & 0x1f);
 	if (op & 0x0400) ls = -ls;
 
-	sprintf(temp, "%Xh", __pc + 16 + (ls << 4));
+	sprintf(temp, "%Xh", PC + 16 + (ls << 4));
 	strcat(buffer, temp);
 }
 
@@ -181,41 +188,65 @@ static void print_condition_code(void)
 	}
 }
 
-static void print_reg_list(int rev)
+static void print_reg_list_range(INT8 first, INT8 last)
 {
-	unsigned short l,i;
+	if ((first != -1 ) && (first != last))
+	{
+		if ((last - first) == 1)
+			strcat(buffer, ",");
+		else
+			strcat(buffer, "-");
+		print_reg(last);
+	}
+}
+
+static void print_reg_list(UINT16 rev)
+{
+	UINT16 l;
+	UINT8 i;
+	INT8 first = -1, last = 0;
 
 	PARAM_WORD(l);
 
 	for (i = 0; i  < 16; i++)
 	{
+		int moved;
+
 		if (rev)
 		{
-			if (l & 0x8000)
-			{
-				strcat(buffer, ",");
-				print_reg(i);
-			}
-
+			moved = l & 0x8000;
 			l <<= 1;
 		}
 		else
 		{
-			if (l & 0x01)
+			moved = l & 0x01;
+			l >>= 1;
+		}
+
+		if (moved)
+		{
+			if (first == -1)
 			{
 				strcat(buffer, ",");
 				print_reg(i);
+				first = i;
 			}
-
-			l >>= 1;
+			last = i;
+		}
+		else
+		{
+			print_reg_list_range(first, last);
+			first = -1;
 		}
 	}
+
+	print_reg_list_range(first, last);
 }
 
 
-unsigned Dasm34010 (char *buff, unsigned pc)
+unsigned Dasm34010 (char *buff, UINT32 pc)
 {
-	int bad = 0;
+	UINT8 bad = 0;
 	UINT16 subop;
 
 	__pc = _pc = pc;

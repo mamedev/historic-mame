@@ -1395,7 +1395,7 @@ void street64_init(void)
 }
 
 /* OSC:	? (Main 12, Sound 10 MHz according to KLOV) */
-MEGASYS1_GAME_EXT(	street64, 64street, 0, 64th. Street - A Detective Story,1991 (World), ORIENTATION_DEFAULT,
+MEGASYS1_GAME_EXT(	street64, 64street, 0, 64th. Street - A Detective Story (World),1991, ORIENTATION_DEFAULT,
 					C,0xff0000,0xffffff,
 					12000000,10000000,STD_FM_CLOCK,STD_OKI_CLOCK,STD_OKI_CLOCK,
 					street64_init, 0 )
@@ -1714,7 +1714,6 @@ ROM_START( avspirit_rom )
 
 	ROM_REGION(0x40000)		/* Region 4 - ADPCM sound samples */
 	ROM_LOAD( "spirit13.rom",  0x000000, 0x040000, 0x05bc04d9 )
-
 ROM_END
 
 #define INPUT_PORTS_AVSPIRIT \
@@ -2554,21 +2553,20 @@ ROM_START( phantasm_rom )
 	ROM_LOAD_ODD(  "phntsm04.bin", 0x040000, 0x010000, 0xdc0c4994 )
 
 	ROM_REGION_DISPOSE(0x1a0000)	/* Region 1 - temporary for gfx roms */
-	ROM_LOAD( "phntsm14.bin",  0x000000, 0x080000, 0x728335d4 )
-	ROM_LOAD( "phntsm18.bin",  0x080000, 0x080000, 0x7896f6b0 )
-	ROM_LOAD( "phntsm19.bin",  0x100000, 0x020000, 0x0c37edf7 )
-	ROM_LOAD( "phntsm23.bin",  0x120000, 0x080000, 0x2b1180b3 )
+	ROM_LOAD( "spirit12.rom",  0x000000, 0x080000, 0x728335d4 )
+	ROM_LOAD( "spirit11.rom",  0x080000, 0x080000, 0x7896f6b0 )
+	ROM_LOAD( "spirit09.rom",  0x100000, 0x020000, 0x0c37edf7 )
+	ROM_LOAD( "spirit10.rom",  0x120000, 0x080000, 0x2b1180b3 )
 
 	ROM_REGION(0x20000)		/* Region 2 - sound cpu code */
 	ROM_LOAD_EVEN( "phntsm05.bin", 0x000000, 0x010000, 0x3b169b4a )
 	ROM_LOAD_ODD(  "phntsm06.bin", 0x000000, 0x010000, 0xdf2dfb2e )
 
 	ROM_REGION(0x40000)		/* Region 3 - ADPCM sound samples */
-	ROM_LOAD( "phntsm10.bin", 0x000000, 0x040000, 0x13be9979 )
+	ROM_LOAD( "spirit14.rom",  0x000000, 0x040000, 0x13be9979 )
 
 	ROM_REGION(0x40000)		/* Region 4 - ADPCM sound samples */
-	ROM_LOAD( "phntsm08.bin", 0x000000, 0x040000, 0x05bc04d9 )
-
+	ROM_LOAD( "spirit13.rom",  0x000000, 0x040000, 0x05bc04d9 )
 ROM_END
 
 INPUT_PORTS_START( input_ports_phantasm )

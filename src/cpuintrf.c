@@ -29,8 +29,11 @@
 #if (HAS_H6280)
 #include "cpu/h6280/h6280.h"
 #endif
-#if (HAS_I86 || HAS_V30)
+#if (HAS_I86)
 #include "cpu/i86/i86intrf.h"
+#endif
+#if (HAS_V20 || HAS_V30 || HAS_V33)
+#include "cpu/nec/necintrf.h"
 #endif
 #if (HAS_I8035 || HAS_I8039 || HAS_I8048 || HAS_N7751)
 #include "cpu/i8039/i8039.h"
@@ -617,39 +620,107 @@ struct cpu_interface cpuintf[] =
 		ABITS1_20,ABITS2_20,ABITS_MIN_20	/* Address bits, for the memory system */
     },
 #endif
-#if (HAS_V30)
-    {
-		CPU_V30,							/* CPU number and family cores sharing resources */
-        v30_reset,                          /* Reset CPU */
-		i86_exit,							/* Shut down the CPU */
-		i86_execute,						/* Execute a number of cycles */
-		i86_get_context,					/* Get the contents of the registers */
-		i86_set_context,					/* Set the contents of the registers */
-		i86_get_pc,							/* Return the current program counter */
-		i86_set_pc,							/* Set the current program counter */
-		i86_get_sp,							/* Return the current stack pointer */
-		i86_set_sp,							/* Set the current stack pointer */
-		i86_get_reg, 						/* Get a specific register value */
-		i86_set_reg, 						/* Set a specific register value */
-        i86_set_nmi_line,                   /* Set state of the NMI line */
-		i86_set_irq_line,					/* Set state of the IRQ line */
-		i86_set_irq_callback,				/* Set IRQ enable/vector callback */
+#if (HAS_V20)
+	{
+		CPU_V20,							/* CPU number and family cores sharing resources */
+		nec_reset,							/* Reset CPU */
+		nec_exit,							/* Shut down the CPU */
+		nec_execute,						/* Execute a number of cycles */
+		nec_get_context,					/* Get the contents of the registers */
+		nec_set_context,					/* Set the contents of the registers */
+		nec_get_pc,							/* Return the current program counter */
+		nec_set_pc,							/* Set the current program counter */
+		nec_get_sp,							/* Return the current stack pointer */
+		nec_set_sp,							/* Set the current stack pointer */
+		nec_get_reg,						/* Get a specific register value */
+		nec_set_reg,						/* Set a specific register value */
+		nec_set_nmi_line,					/* Set state of the NMI line */
+		nec_set_irq_line,					/* Set state of the IRQ line */
+		nec_set_irq_callback,				/* Set IRQ enable/vector callback */
 		NULL,								/* Cause internal interrupt */
 		NULL,								/* Save CPU state */
 		NULL,								/* Load CPU state */
-        v30_info,                           /* Get formatted string for a specific register */
-		i86_dasm,							/* Disassemble one instruction */
+		nec_v20_info,						/* Get formatted string for a specific register */
+		nec_dasm,							/* Disassemble one instruction */
 		1,0,								/* Number of IRQ lines, default IRQ vector */
-		&i86_ICount,						/* Pointer to the instruction count */
-		I86_INT_NONE,						/* Interrupt types: none, IRQ, NMI */
+		&nec_ICount,						/* Pointer to the instruction count */
+		NEC_INT_NONE,						/* Interrupt types: none, IRQ, NMI */
 		-1000,
-		I86_NMI_INT,
+		NEC_NMI_INT,
 		cpu_readmem20,						/* Memory read */
-		cpu_writemem20, 					/* Memory write */
+		cpu_writemem20,						/* Memory write */
 		cpu_setOPbase20,					/* Update CPU opcode base */
-		0,20,CPU_IS_LE,1,5, 				/* CPU address shift, bits, endianess, align unit, max. instruction length	*/
+		0,20,CPU_IS_LE,1,5,					/* CPU address shift, bits, endianess, align unit, max. instruction length */
 		ABITS1_20,ABITS2_20,ABITS_MIN_20	/* Address bits, for the memory system */
-    },
+	},
+#endif
+#if (HAS_V30)
+	{
+		CPU_V30,							/* CPU number and family cores sharing resources */
+		nec_reset,							/* Reset CPU */
+		nec_exit,							/* Shut down the CPU */
+		nec_execute,						/* Execute a number of cycles */
+		nec_get_context,					/* Get the contents of the registers */
+		nec_set_context,					/* Set the contents of the registers */
+		nec_get_pc,							/* Return the current program counter */
+		nec_set_pc,							/* Set the current program counter */
+		nec_get_sp,							/* Return the current stack pointer */
+		nec_set_sp,							/* Set the current stack pointer */
+		nec_get_reg,						/* Get a specific register value */
+		nec_set_reg,						/* Set a specific register value */
+		nec_set_nmi_line,					/* Set state of the NMI line */
+		nec_set_irq_line,					/* Set state of the IRQ line */
+		nec_set_irq_callback,				/* Set IRQ enable/vector callback */
+		NULL,								/* Cause internal interrupt */
+		NULL,								/* Save CPU state */
+		NULL,								/* Load CPU state */
+		nec_v30_info,						/* Get formatted string for a specific register */
+		nec_dasm,							/* Disassemble one instruction */
+		1,0,								/* Number of IRQ lines, default IRQ vector */
+		&nec_ICount,						/* Pointer to the instruction count */
+		NEC_INT_NONE,						/* Interrupt types: none, IRQ, NMI */
+		-1000,
+		NEC_NMI_INT,
+		cpu_readmem20,						/* Memory read */
+		cpu_writemem20,						/* Memory write */
+		cpu_setOPbase20,					/* Update CPU opcode base */
+		0,20,CPU_IS_LE,1,5,					/* CPU address shift, bits, endianess, align unit, max. instruction length */
+		ABITS1_20,ABITS2_20,ABITS_MIN_20	/* Address bits, for the memory system */
+	},
+#endif
+#if (HAS_V33)
+	{
+		CPU_V33,							/* CPU number and family cores sharing resources */
+		nec_reset,							/* Reset CPU */
+		nec_exit,							/* Shut down the CPU */
+		nec_execute,						/* Execute a number of cycles */
+		nec_get_context,					/* Get the contents of the registers */
+		nec_set_context,					/* Set the contents of the registers */
+		nec_get_pc,							/* Return the current program counter */
+		nec_set_pc,							/* Set the current program counter */
+		nec_get_sp,							/* Return the current stack pointer */
+		nec_set_sp,							/* Set the current stack pointer */
+		nec_get_reg,						/* Get a specific register value */
+		nec_set_reg,						/* Set a specific register value */
+		nec_set_nmi_line,					/* Set state of the NMI line */
+		nec_set_irq_line,					/* Set state of the IRQ line */
+		nec_set_irq_callback,				/* Set IRQ enable/vector callback */
+		NULL,								/* Cause internal interrupt */
+		NULL,								/* Save CPU state */
+		NULL,								/* Load CPU state */
+		nec_v33_info,						/* Get formatted string for a specific register */
+		nec_dasm,							/* Disassemble one instruction */
+		1,0,								/* Number of IRQ lines, default IRQ vector */
+		&nec_ICount,						/* Pointer to the instruction count */
+		NEC_INT_NONE,						/* Interrupt types: none, IRQ, NMI */
+		-1000,
+		NEC_NMI_INT,
+		cpu_readmem20,						/* Memory read */
+		cpu_writemem20,						/* Memory write */
+		cpu_setOPbase20,					/* Update CPU opcode base */
+		0,20,CPU_IS_LE,1,5,					/* CPU address shift, bits, endianess, align unit, max. instruction length */
+		ABITS1_20,ABITS2_20,ABITS_MIN_20	/* Address bits, for the memory system */
+	},
 #endif
 #if (HAS_I8035)
     {
@@ -2647,6 +2718,8 @@ static void cpu_generate_interrupt (int cpunum, int (*func)(void), int num)
 {
 	int oldactive = activecpu;
 
+	if (!cpu_running[cpunum]) return;
+
 	/* swap to the CPU's context */
     activecpu = cpunum;
 	memorycontextswap (activecpu);
@@ -2722,6 +2795,15 @@ static void cpu_generate_interrupt (int cpunum, int (*func)(void), int num)
 #endif
 #if (HAS_I86)
             case CPU_I86:               irq_line = 0; LOG((errorlog,"I86 IRQ\n")); break;
+#endif
+#if (HAS_V20)
+            case CPU_V20:               irq_line = 0; LOG((errorlog,"V20 IRQ\n")); break;
+#endif
+#if (HAS_V30)
+            case CPU_V30:               irq_line = 0; LOG((errorlog,"V30 IRQ\n")); break;
+#endif
+#if (HAS_V33)
+            case CPU_V33:               irq_line = 0; LOG((errorlog,"V33 IRQ\n")); break;
 #endif
 #if (HAS_I8035)
             case CPU_I8035:             irq_line = 0; LOG((errorlog,"I8035 IRQ\n")); break;

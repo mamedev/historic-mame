@@ -561,212 +561,212 @@ static struct MachineDriver machine_driver =
 
 ROM_START(polepos_rom)
 	ROM_REGION(0x10000) 			/* #0 64K ROM/RAM Z80 */
-		ROM_LOAD	 ( "014-105.rom",   0x00000, 0x2000, 0xc918c043 )
-		ROM_LOAD	 ( "014-116.rom",   0x02000, 0x1000, 0x7174bcb7 )
+	ROM_LOAD	 ( "014-105.rom",   0x00000, 0x2000, 0xc918c043 )
+	ROM_LOAD	 ( "014-116.rom",   0x02000, 0x1000, 0x7174bcb7 )
 
 	ROM_REGION_DISPOSE(0x18000) 	/* #1 graphics */
-		/* 2bpp 8x8 char, missing 2nd half? */
-		ROM_LOAD	 ( "014-132.rom",   0x00000, 0x1000, 0xa949aa85 )
-		/* 4 bpp 8x8 char?, missing 2nd half? */
-		ROM_LOAD	 ( "014-133.rom",   0x02000, 0x1000, 0x3f0eb551 )
+	/* 2bpp 8x8 char, missing 2nd half? */
+	ROM_LOAD	 ( "014-132.rom",   0x00000, 0x1000, 0xa949aa85 )
+	/* 4 bpp 8x8 char?, missing 2nd half? */
+	ROM_LOAD	 ( "014-133.rom",   0x02000, 0x1000, 0x3f0eb551 )
 
-		/* 4bpp 32x32 sprites */
-		ROM_LOAD	 ( "014-150.rom",   0x04000, 0x2000, 0x2e134b46 )   /* planes 0+1 */
-		ROM_LOAD	 ( "014-152.rom",   0x06000, 0x2000, 0xa7e3a1c6 )
-		ROM_LOAD	 ( "014-154.rom",   0x08000, 0x2000, 0x8992d381 )
-		ROM_LOAD	 ( "014-151.rom",   0x0a000, 0x2000, 0x6f9997d2 )   /* planes 2+3 */
-		ROM_LOAD	 ( "014-153.rom",   0x0c000, 0x2000, 0x6c5c6e68 )
-		ROM_LOAD	 ( "014-155.rom",   0x0e000, 0x2000, 0x111896ad )
+	/* 4bpp 32x32 sprites */
+	ROM_LOAD	 ( "014-150.rom",   0x04000, 0x2000, 0x2e134b46 )   /* planes 0+1 */
+	ROM_LOAD	 ( "014-152.rom",   0x06000, 0x2000, 0xa7e3a1c6 )
+	ROM_LOAD	 ( "014-154.rom",   0x08000, 0x2000, 0x8992d381 )
+	ROM_LOAD	 ( "014-151.rom",   0x0a000, 0x2000, 0x6f9997d2 )   /* planes 2+3 */
+	ROM_LOAD	 ( "014-153.rom",   0x0c000, 0x2000, 0x6c5c6e68 )
+	ROM_LOAD	 ( "014-155.rom",   0x0e000, 0x2000, 0x111896ad )
 
-		/* 4bpp 16x16 sprites */
-		ROM_LOAD	 ( "014-156.rom",   0x10000, 0x2000, 0xe7a09c93 )   /* planes 0+1 ? */
-		ROM_LOAD	 ( "014-157.rom",   0x14000, 0x2000, 0xdee7d687 )   /* planes 2+3 ? */
+	/* 4bpp 16x16 sprites */
+	ROM_LOAD	 ( "014-156.rom",   0x10000, 0x2000, 0xe7a09c93 )   /* planes 0+1 ? */
+	ROM_LOAD	 ( "014-157.rom",   0x14000, 0x2000, 0xdee7d687 )   /* planes 2+3 ? */
 
 	ROM_REGION(0x10000) 			/* #2 64K ROM/RAM for Z8002 #1 */
-		ROM_LOAD_ODD ( "014-101.rom",   0x00000, 0x2000, 0x8c2cf172 )
-		ROM_LOAD_EVEN( "014-102.rom",   0x00000, 0x2000, 0x51018857 )
+	ROM_LOAD_ODD ( "014-101.rom",   0x00000, 0x2000, 0x8c2cf172 )
+	ROM_LOAD_EVEN( "014-102.rom",   0x00000, 0x2000, 0x51018857 )
 
 	ROM_REGION(0x10000) 			/* #3 64K ROM/RAM for Z8002 #2 */
-		ROM_LOAD_ODD ( "014-203.rom",   0x00000, 0x2000, 0xeedea6e7 )
-		ROM_LOAD_EVEN( "014-204.rom",   0x00000, 0x2000, 0xc52c98ed )
+	ROM_LOAD_ODD ( "014-203.rom",   0x00000, 0x2000, 0xeedea6e7 )
+	ROM_LOAD_EVEN( "014-204.rom",   0x00000, 0x2000, 0xc52c98ed )
 
 	ROM_REGION(0x10000) 			/* #4 PROM data */
-		/* 136014-137, 136014-138, 136014-139 red/green/blue */
-		ROM_LOAD	 ( "014-137.bpr",   0x0000, 0x0100, 0xf07ff2ad )
-		ROM_LOAD	 ( "014-138.bpr",   0x0100, 0x0100, 0xadbde7d7 )
-		ROM_LOAD	 ( "014-139.bpr",   0x0200, 0x0100, 0xddac786a )
+	/* 136014-137, 136014-138, 136014-139 red/green/blue */
+	ROM_LOAD	 ( "014-137.bpr",   0x0000, 0x0100, 0xf07ff2ad )
+	ROM_LOAD	 ( "014-138.bpr",   0x0100, 0x0100, 0xadbde7d7 )
+	ROM_LOAD	 ( "014-139.bpr",   0x0200, 0x0100, 0xddac786a )
 
-		/* 136014-140 alpha character attribute to color mapping ? */
-		ROM_LOAD	 ( "014-140.bpr",   0x0300, 0x0100, 0x1e8d0491 )
-		/* 136014-141 background attribute to color mapping ? */
-        ROM_LOAD     ( "014-141.bpr",   0x0400, 0x0100, 0x0e4fe8a0 )
+	/* 136014-140 alpha character attribute to color mapping ? */
+	ROM_LOAD	 ( "014-140.bpr",   0x0300, 0x0100, 0x1e8d0491 )
+	/* 136014-141 background attribute to color mapping ? */
+	ROM_LOAD     ( "014-141.bpr",   0x0400, 0x0100, 0x0e4fe8a0 )
 
-		ROM_LOAD	 ( "014-117.bpr",   0x0500, 0x0100, 0x2401c817 )
-		ROM_LOAD	 ( "014-118.bpr",   0x0600, 0x0100, 0x8568decc )
+	ROM_LOAD	 ( "014-117.bpr",   0x0500, 0x0100, 0x2401c817 )
+	ROM_LOAD	 ( "014-118.bpr",   0x0600, 0x0100, 0x8568decc )
 
-		/* 136014-142, 136014-143, 136014-144 Vertical position modifiers */
-        ROM_LOAD     ( "014-142.bpr",   0x0700, 0x0100, 0x2d502464 )
-		ROM_LOAD	 ( "014-143.bpr",   0x0800, 0x0100, 0x027aa62c )
-		ROM_LOAD	 ( "014-144.bpr",   0x0900, 0x0100, 0x1f8d0df3 )
+	/* 136014-142, 136014-143, 136014-144 Vertical position modifiers */
+	ROM_LOAD     ( "014-142.bpr",   0x0700, 0x0100, 0x2d502464 )
+	ROM_LOAD	 ( "014-143.bpr",   0x0800, 0x0100, 0x027aa62c )
+	ROM_LOAD	 ( "014-144.bpr",   0x0900, 0x0100, 0x1f8d0df3 )
 
-		ROM_LOAD	 ( "014-186.bpr",   0x0a00, 0x0100, 0x16d69c31 )
-		ROM_LOAD	 ( "014-187.bpr",   0x0b00, 0x0100, 0x07340311 )
-		ROM_LOAD	 ( "014-188.bpr",   0x0c00, 0x0100, 0x1efc84d7 )
+	ROM_LOAD	 ( "014-186.bpr",   0x0a00, 0x0100, 0x16d69c31 )
+	ROM_LOAD	 ( "014-187.bpr",   0x0b00, 0x0100, 0x07340311 )
+	ROM_LOAD	 ( "014-188.bpr",   0x0c00, 0x0100, 0x1efc84d7 )
 
-		ROM_LOAD	 ( "014-145.bpr",   0x1000, 0x0400, 0x7afc7cfc )
-		ROM_LOAD	 ( "014-146.bpr",   0x1400, 0x0400, 0xca4ba741 )
+	ROM_LOAD	 ( "014-145.bpr",   0x1000, 0x0400, 0x7afc7cfc )
+	ROM_LOAD	 ( "014-146.bpr",   0x1400, 0x0400, 0xca4ba741 )
 
-		/* 136014-127, 136014-128 ? */
-		ROM_LOAD	 ( "014-110.rom",   0x2000, 0x2000, 0xb5ad4d5f )
-		ROM_LOAD	 ( "014-111.rom",   0x4000, 0x2000, 0x8fdd2f6f )
+	/* 136014-127, 136014-128 ? */
+	ROM_LOAD	 ( "014-110.rom",   0x2000, 0x2000, 0xb5ad4d5f )
+	ROM_LOAD	 ( "014-111.rom",   0x4000, 0x2000, 0x8fdd2f6f )
 
-		ROM_LOAD	 ( "014-106.rom",   0x6000, 0x2000, 0x5b4cf05e )
-		ROM_LOAD	 ( "014-231.rom",   0x8000, 0x1000, 0xa61bff15 )
+	ROM_LOAD	 ( "014-106.rom",   0x6000, 0x2000, 0x5b4cf05e )
+	ROM_LOAD	 ( "014-231.rom",   0x8000, 0x1000, 0xa61bff15 )
 
-		/* roadway memory 136014-127, 136014-128, 136014-134 */
-		ROM_LOAD	 ( "014-158.rom",   0x9000, 0x2000, 0xee6b3315 )
-		ROM_LOAD	 ( "014-159.rom",   0xb000, 0x2000, 0x6d1e7042 )
-		ROM_LOAD	 ( "014-134.rom",   0xd000, 0x1000, 0x4e97f101 )
+	/* roadway memory 136014-127, 136014-128, 136014-134 */
+	ROM_LOAD	 ( "014-158.rom",   0x9000, 0x2000, 0xee6b3315 )
+	ROM_LOAD	 ( "014-159.rom",   0xb000, 0x2000, 0x6d1e7042 )
+	ROM_LOAD	 ( "014-134.rom",   0xd000, 0x1000, 0x4e97f101 )
 ROM_END
 
-ROM_START(polepos2_rom)
+ROM_START(poleposa_rom)
 	ROM_REGION(0x10000) 			/* #0 64K ROM/RAM Z80 */
-		ROM_LOAD	 ( "7hcpu.rom",     0x00000, 0x2000, 0xf85212c4 )
-		ROM_LOAD	 ( "7fcpu.rom",     0x02000, 0x1000, 0xa9d4c380 )
+	ROM_LOAD	 ( "7hcpu.rom",     0x00000, 0x2000, 0xf85212c4 )
+	ROM_LOAD	 ( "7fcpu.rom",     0x02000, 0x1000, 0xa9d4c380 )
 
 	ROM_REGION_DISPOSE(0x18000) 	/* #1 graphics */
-		/* 2bpp 8x8 char */
-		ROM_LOAD	 ( "7nvid.rom",     0x00000, 0x2000, 0xfbe5e72f )
-		/* 4bpp 8x8 char? */
-		ROM_LOAD	 ( "6nvid.rom",     0x02000, 0x2000, 0xec3ec6e6 )
+	/* 2bpp 8x8 char */
+	ROM_LOAD	 ( "7nvid.rom",     0x00000, 0x2000, 0xfbe5e72f )
+	/* 4bpp 8x8 char? */
+	ROM_LOAD	 ( "6nvid.rom",     0x02000, 0x2000, 0xec3ec6e6 )
 
-		/* 4bpp 32x32 sprites */
-		ROM_LOAD	 ( "13jvid.rom",    0x04000, 0x2000, 0x2e134b46 )   /* planes 0+1 */
-		ROM_LOAD	 ( "13kvid.rom",    0x06000, 0x2000, 0x2b0517bd )
-		ROM_LOAD	 ( "13lvid.rom",    0x08000, 0x2000, 0x9ab89d7f )
-		ROM_LOAD	 ( "12jvid.rom",    0x0a000, 0x2000, 0x6f9997d2 )   /* planes 2+3 */
-		ROM_LOAD	 ( "12kvid.rom",    0x0c000, 0x2000, 0xfa131a9b )
-		ROM_LOAD	 ( "12lvid.rom",    0x0e000, 0x2000, 0x662ff24b )
+	/* 4bpp 32x32 sprites */
+	ROM_LOAD	 ( "13jvid.rom",    0x04000, 0x2000, 0x2e134b46 )   /* planes 0+1 */
+	ROM_LOAD	 ( "13kvid.rom",    0x06000, 0x2000, 0x2b0517bd )
+	ROM_LOAD	 ( "13lvid.rom",    0x08000, 0x2000, 0x9ab89d7f )
+	ROM_LOAD	 ( "12jvid.rom",    0x0a000, 0x2000, 0x6f9997d2 )   /* planes 2+3 */
+	ROM_LOAD	 ( "12kvid.rom",    0x0c000, 0x2000, 0xfa131a9b )
+	ROM_LOAD	 ( "12lvid.rom",    0x0e000, 0x2000, 0x662ff24b )
 
-		/* 4bpp 16x16 sprites */
-		ROM_LOAD	 ( "13nvid.rom",    0x10000, 0x2000, 0x455d79a0 )   /* planes 0+1 */
-		ROM_LOAD	 ( "12nvid.rom",    0x14000, 0x2000, 0x78372b81 )   /* planes 2+3 */
+	/* 4bpp 16x16 sprites */
+	ROM_LOAD	 ( "13nvid.rom",    0x10000, 0x2000, 0x455d79a0 )   /* planes 0+1 */
+	ROM_LOAD	 ( "12nvid.rom",    0x14000, 0x2000, 0x78372b81 )   /* planes 2+3 */
 
 	ROM_REGION(0x10000) 			/* #2 64K ROM/RAM for Z8002 #1 */
-		ROM_LOAD_ODD ( "014-101.rom",   0x00000, 0x2000, 0x8c2cf172 )
-		ROM_LOAD_EVEN( "014-102.rom",   0x00000, 0x2000, 0x51018857 )
+	ROM_LOAD_ODD ( "014-101.rom",   0x00000, 0x2000, 0x8c2cf172 )
+	ROM_LOAD_EVEN( "014-102.rom",   0x00000, 0x2000, 0x51018857 )
 
 	ROM_REGION(0x10000) 			/* #3 64K ROM/RAM for Z8002 #2 */
-		ROM_LOAD_ODD ( "014-203.rom",   0x00000, 0x2000, 0xeedea6e7 )
-		ROM_LOAD_EVEN( "014-204.rom",   0x00000, 0x2000, 0xc52c98ed )
+	ROM_LOAD_ODD ( "014-203.rom",   0x00000, 0x2000, 0xeedea6e7 )
+	ROM_LOAD_EVEN( "014-204.rom",   0x00000, 0x2000, 0xc52c98ed )
 
 	ROM_REGION(0x10000) 			/* #4 PROM data */
-		/* 136014-137, 136014-138, 136014-139 red/green/blue */
-		ROM_LOAD	 ( "014-137.bpr",   0x0000, 0x0100, 0xf07ff2ad )
-		ROM_LOAD	 ( "014-138.bpr",   0x0100, 0x0100, 0xadbde7d7 )
-		ROM_LOAD	 ( "014-139.bpr",   0x0200, 0x0100, 0xddac786a )
+	/* 136014-137, 136014-138, 136014-139 red/green/blue */
+	ROM_LOAD	 ( "014-137.bpr",   0x0000, 0x0100, 0xf07ff2ad )
+	ROM_LOAD	 ( "014-138.bpr",   0x0100, 0x0100, 0xadbde7d7 )
+	ROM_LOAD	 ( "014-139.bpr",   0x0200, 0x0100, 0xddac786a )
 
-		/* 136014-140 alpha character attribute to color mapping ? */
-		ROM_LOAD	 ( "014-140.bpr",   0x0300, 0x0100, 0x1e8d0491 )
-		/* 136014-141 background attribute to color mapping ? */
-        ROM_LOAD     ( "014-141.bpr",   0x0400, 0x0100, 0x0e4fe8a0 )
+	/* 136014-140 alpha character attribute to color mapping ? */
+	ROM_LOAD	 ( "014-140.bpr",   0x0300, 0x0100, 0x1e8d0491 )
+	/* 136014-141 background attribute to color mapping ? */
+	ROM_LOAD     ( "014-141.bpr",   0x0400, 0x0100, 0x0e4fe8a0 )
 
-		ROM_LOAD	 ( "014-117.bpr",   0x0500, 0x0100, 0x2401c817 )
-		ROM_LOAD	 ( "014-118.bpr",   0x0600, 0x0100, 0x8568decc )
-		/* 136014-142, 136014-143, 136014-144 Vertical position modifiers */
-        ROM_LOAD     ( "014-142.bpr",   0x0700, 0x0100, 0x2d502464 )
-		ROM_LOAD	 ( "014-143.bpr",   0x0800, 0x0100, 0x027aa62c )
-		ROM_LOAD	 ( "014-144.bpr",   0x0900, 0x0100, 0x1f8d0df3 )
+	ROM_LOAD	 ( "014-117.bpr",   0x0500, 0x0100, 0x2401c817 )
+	ROM_LOAD	 ( "014-118.bpr",   0x0600, 0x0100, 0x8568decc )
+	/* 136014-142, 136014-143, 136014-144 Vertical position modifiers */
+	ROM_LOAD     ( "014-142.bpr",   0x0700, 0x0100, 0x2d502464 )
+	ROM_LOAD	 ( "014-143.bpr",   0x0800, 0x0100, 0x027aa62c )
+	ROM_LOAD	 ( "014-144.bpr",   0x0900, 0x0100, 0x1f8d0df3 )
 
-		ROM_LOAD	 ( "014-186.bpr",   0x0a00, 0x0100, 0x16d69c31 )
-		ROM_LOAD	 ( "014-187.bpr",   0x0b00, 0x0100, 0x07340311 )
-		ROM_LOAD	 ( "014-188.bpr",   0x0c00, 0x0100, 0x1efc84d7 )
+	ROM_LOAD	 ( "014-186.bpr",   0x0a00, 0x0100, 0x16d69c31 )
+	ROM_LOAD	 ( "014-187.bpr",   0x0b00, 0x0100, 0x07340311 )
+	ROM_LOAD	 ( "014-188.bpr",   0x0c00, 0x0100, 0x1efc84d7 )
 
-		ROM_LOAD	 ( "014-145.bpr",   0x1000, 0x0400, 0x7afc7cfc )
-		ROM_LOAD	 ( "014-146.bpr",   0x1400, 0x0400, 0xca4ba741 )
+	ROM_LOAD	 ( "014-145.bpr",   0x1000, 0x0400, 0x7afc7cfc )
+	ROM_LOAD	 ( "014-146.bpr",   0x1400, 0x0400, 0xca4ba741 )
 
-		/* 136014-127, 136014-128 */
-		ROM_LOAD	 ( "014-110.rom",   0x2000, 0x2000, 0xb5ad4d5f )
-		ROM_LOAD	 ( "014-111.rom",   0x4000, 0x2000, 0x8fdd2f6f )
+	/* 136014-127, 136014-128 */
+	ROM_LOAD	 ( "014-110.rom",   0x2000, 0x2000, 0xb5ad4d5f )
+	ROM_LOAD	 ( "014-111.rom",   0x4000, 0x2000, 0x8fdd2f6f )
 
-		ROM_LOAD	 ( "014-106.rom",   0x6000, 0x2000, 0x5b4cf05e )
-		ROM_LOAD	 ( "014-231.rom",   0x8000, 0x1000, 0xa61bff15 )
+	ROM_LOAD	 ( "014-106.rom",   0x6000, 0x2000, 0x5b4cf05e )
+	ROM_LOAD	 ( "014-231.rom",   0x8000, 0x1000, 0xa61bff15 )
 
-		/* roadway memory 136014-127, 136014-128, 136014-134  */
-		ROM_LOAD	 ( "2lvid.rom",     0x9000, 0x2000, 0xee6b3315 )
-		ROM_LOAD	 ( "2mvid.rom",     0xb000, 0x2000, 0x6d1e7042 )
-		ROM_LOAD	 ( "014-134.rom",   0xd000, 0x1000, 0x4e97f101 )
+	/* roadway memory 136014-127, 136014-128, 136014-134  */
+	ROM_LOAD	 ( "2lvid.rom",     0x9000, 0x2000, 0xee6b3315 )
+	ROM_LOAD	 ( "2mvid.rom",     0xb000, 0x2000, 0x6d1e7042 )
+	ROM_LOAD	 ( "014-134.rom",   0xd000, 0x1000, 0x4e97f101 )
 ROM_END
 
-ROM_START(poleposb_rom)
+ROM_START(poleps2b_rom)
 	ROM_REGION(0x10000) 			/* #0 64K ROM/RAM Z80 */
-		ROM_LOAD	 ( "tr9b.bin",      0x00000, 0x2000, 0x94436b70 )
-		ROM_LOAD	 ( "10.bin",        0x02000, 0x1000, 0x7174bcb7 )
+	ROM_LOAD	 ( "tr9b.bin",      0x00000, 0x2000, 0x94436b70 )
+	ROM_LOAD	 ( "10.bin",        0x02000, 0x1000, 0x7174bcb7 )
 
 	ROM_REGION_DISPOSE(0x14000) 	/* #1 graphics */
-		/* 2bpp 8x8 char, missing 2nd half? */
-		ROM_LOAD	 ( "tr28.bin",      0x00000, 0x1000, 0xb8217c96 )
-		/* 4bpp 8x8 char?, missing 2nd half? */
-		ROM_LOAD	 ( "tr29.bin",      0x02000, 0x1000, 0xc6e15c21 )
+	/* 2bpp 8x8 char, missing 2nd half? */
+	ROM_LOAD	 ( "tr28.bin",      0x00000, 0x1000, 0xb8217c96 )
+	/* 4bpp 8x8 char?, missing 2nd half? */
+	ROM_LOAD	 ( "tr29.bin",      0x02000, 0x1000, 0xc6e15c21 )
 
-		/* 4bpp 32x32 sprites */
-		ROM_LOAD	 ( "pp17.bin",      0x04000, 0x2000, 0x613ab0df )   /* planes 0+1 */
-		ROM_LOAD	 ( "tr19.bin",      0x06000, 0x2000, 0xf8e7f551 )
-		ROM_LOAD	 ( "tr21.bin",      0x08000, 0x2000, 0x17c798b0 )
-		ROM_LOAD	 ( "pp18.bin",      0x0a000, 0x2000, 0x5fd933e3 )   /* planes 2+3 */
-		ROM_LOAD	 ( "tr20.bin",      0x0c000, 0x2000, 0x7053e219 )
-		ROM_LOAD	 ( "tr22.bin",      0x0e000, 0x2000, 0xf48917b2 )
+	/* 4bpp 32x32 sprites */
+	ROM_LOAD	 ( "pp17.bin",      0x04000, 0x2000, 0x613ab0df )   /* planes 0+1 */
+	ROM_LOAD	 ( "tr19.bin",      0x06000, 0x2000, 0xf8e7f551 )
+	ROM_LOAD	 ( "tr21.bin",      0x08000, 0x2000, 0x17c798b0 )
+	ROM_LOAD	 ( "pp18.bin",      0x0a000, 0x2000, 0x5fd933e3 )   /* planes 2+3 */
+	ROM_LOAD	 ( "tr20.bin",      0x0c000, 0x2000, 0x7053e219 )
+	ROM_LOAD	 ( "tr22.bin",      0x0e000, 0x2000, 0xf48917b2 )
 
-		/* 4bpp 16x16 sprites */
-		ROM_LOAD	 ( "trus25.bin",    0x10000, 0x2000, 0x9e1a9c3b )   /* planes 0+1 ? */
-		ROM_LOAD	 ( "trus26.bin",    0x12000, 0x2000, 0x3b39a176 )   /* planes 2+3 ? */
+	/* 4bpp 16x16 sprites */
+	ROM_LOAD	 ( "trus25.bin",    0x10000, 0x2000, 0x9e1a9c3b )   /* planes 0+1 ? */
+	ROM_LOAD	 ( "trus26.bin",    0x12000, 0x2000, 0x3b39a176 )   /* planes 2+3 ? */
 
 	ROM_REGION(0x10000) 			/* #2 64K ROM/RAM for Z8002 #1 */
-		ROM_LOAD_ODD ( "tr1b.bin",      0x00000, 0x2000, 0x127f0750 )
-		ROM_LOAD_EVEN( "tr2b.bin",      0x00000, 0x2000, 0x6bd4ff6b )
+	ROM_LOAD_ODD ( "tr1b.bin",      0x00000, 0x2000, 0x127f0750 )
+	ROM_LOAD_EVEN( "tr2b.bin",      0x00000, 0x2000, 0x6bd4ff6b )
 
 
 	ROM_REGION(0x10000) 			/* #3 64K ROM/RAM for Z8002 #2 */
-		ROM_LOAD_ODD ( "tr5b.bin",      0x00000, 0x2000, 0x4e5f7b9c )
-		ROM_LOAD_EVEN( "tr6b.bin",      0x00000, 0x2000, 0x9d038ada )
+	ROM_LOAD_ODD ( "tr5b.bin",      0x00000, 0x2000, 0x4e5f7b9c )
+	ROM_LOAD_EVEN( "tr6b.bin",      0x00000, 0x2000, 0x9d038ada )
 
 	ROM_REGION(0x10000) 			/* #4 PROM data */
-		/* 136014-137, 136014-138, 136014-139 red/green/blue */
-		ROM_LOAD	 ( "014-137.bpr",   0x0000, 0x0100, 0xf07ff2ad )    /* 7.bin no good dump? */
-		ROM_LOAD	 ( "8.bin",         0x0100, 0x0100, 0xadbde7d7 )
-		ROM_LOAD	 ( "9.bin",         0x0200, 0x0100, 0xddac786a )
+	/* 136014-137, 136014-138, 136014-139 red/green/blue */
+	ROM_LOAD	 ( "014-137.bpr",   0x0000, 0x0100, 0xf07ff2ad )    /* 7.bin no good dump? */
+	ROM_LOAD	 ( "8.bin",         0x0100, 0x0100, 0xadbde7d7 )
+	ROM_LOAD	 ( "9.bin",         0x0200, 0x0100, 0xddac786a )
 
-		/* 136014-140 alpha character attribute to color mapping ? */
-        ROM_LOAD     ( "10p.bin",       0x0300, 0x0100, 0x5af3f710 )
-		/* 136014-141 background attribute to color mapping ? */
-		ROM_LOAD	 ( "014-141.bpr",   0x0400, 0x0100, 0x0e4fe8a0 )
+	/* 136014-140 alpha character attribute to color mapping ? */
+	ROM_LOAD     ( "10p.bin",       0x0300, 0x0100, 0x5af3f710 )
+	/* 136014-141 background attribute to color mapping ? */
+	ROM_LOAD	 ( "014-141.bpr",   0x0400, 0x0100, 0x0e4fe8a0 )
 
-		ROM_LOAD	 ( "4.bin",         0x0500, 0x0100, 0x0e742cb1 )
-		ROM_LOAD	 ( "5.bin",         0x0600, 0x0100, 0x8568decc )
-		/* 136014-142, 136014-143, 136014-144 Vertical position modifiers */
-        ROM_LOAD     ( "15.bin",        0x0700, 0x0100, 0x2d502464 )
-		ROM_LOAD	 ( "16.bin",        0x0800, 0x0100, 0x027aa62c )
-		ROM_LOAD	 ( "17.bin",        0x0900, 0x0100, 0x1f8d0df3 )
+	ROM_LOAD	 ( "4.bin",         0x0500, 0x0100, 0x0e742cb1 )
+	ROM_LOAD	 ( "5.bin",         0x0600, 0x0100, 0x8568decc )
+	/* 136014-142, 136014-143, 136014-144 Vertical position modifiers */
+	ROM_LOAD     ( "15.bin",        0x0700, 0x0100, 0x2d502464 )
+	ROM_LOAD	 ( "16.bin",        0x0800, 0x0100, 0x027aa62c )
+	ROM_LOAD	 ( "17.bin",        0x0900, 0x0100, 0x1f8d0df3 )
 
-		ROM_LOAD	 ( "014-186.bpr",   0x0a00, 0x0100, 0x16d69c31 )
-		ROM_LOAD	 ( "014-187.bpr",   0x0b00, 0x0100, 0x07340311 )
-		ROM_LOAD	 ( "014-188.bpr",   0x0c00, 0x0100, 0x1efc84d7 )
+	ROM_LOAD	 ( "014-186.bpr",   0x0a00, 0x0100, 0x16d69c31 )
+	ROM_LOAD	 ( "014-187.bpr",   0x0b00, 0x0100, 0x07340311 )
+	ROM_LOAD	 ( "014-188.bpr",   0x0c00, 0x0100, 0x1efc84d7 )
 
 
-		ROM_LOAD	 ( "014-145.bpr",   0x1000, 0x0400, 0x7afc7cfc )
-		ROM_LOAD	 ( "014-146.bpr",   0x1400, 0x0400, 0xca4ba741 )
+	ROM_LOAD	 ( "014-145.bpr",   0x1000, 0x0400, 0x7afc7cfc )
+	ROM_LOAD	 ( "014-146.bpr",   0x1400, 0x0400, 0xca4ba741 )
 
-		/* 136014-127, 136014-128 ? */
-		ROM_LOAD	 ( "tr15.bin",      0x2000, 0x2000, 0xb5ad4d5f )
-		ROM_LOAD	 ( "tr16.bin",      0x4000, 0x2000, 0x8fdd2f6f )
+	/* 136014-127, 136014-128 ? */
+	ROM_LOAD	 ( "tr15.bin",      0x2000, 0x2000, 0xb5ad4d5f )
+	ROM_LOAD	 ( "tr16.bin",      0x4000, 0x2000, 0x8fdd2f6f )
 
-		ROM_LOAD	 ( "tr11b.bin",     0x6000, 0x2000, 0x5b4cf05e )
-		ROM_LOAD	 ( "tr27.bin",      0x8000, 0x1000, 0xa61bff15 )
+	ROM_LOAD	 ( "tr11b.bin",     0x6000, 0x2000, 0x5b4cf05e )
+	ROM_LOAD	 ( "tr27.bin",      0x8000, 0x1000, 0xa61bff15 )
 
-		/* roadway memory 136014-127, 136014-128, 136014-134 */
-		ROM_LOAD	 ( "tr30.bin",      0x9000, 0x2000, 0xee6b3315 )
-		ROM_LOAD	 ( "tr31.bin",      0xb000, 0x2000, 0x6d1e7042 )
-		ROM_LOAD	 ( "tr32.bin",      0xd000, 0x1000, 0x4e97f101 )
+	/* roadway memory 136014-127, 136014-128, 136014-134 */
+	ROM_LOAD	 ( "tr30.bin",      0x9000, 0x2000, 0xee6b3315 )
+	ROM_LOAD	 ( "tr31.bin",      0xb000, 0x2000, 0x6d1e7042 )
+	ROM_LOAD	 ( "tr32.bin",      0xd000, 0x1000, 0x4e97f101 )
 ROM_END
 
 static void polepos_init(void)
@@ -781,7 +781,7 @@ struct GameDriver polepos_driver =
 	__FILE__,
 	0,
 	"polepos",
-	"Pole Position I",
+	"Pole Position (set 1)",
 	"1982",
 	"Atari",
 	"Ernesto Corvi\nJuergen Buchmueller\nAlex Pasadyn\n",
@@ -805,12 +805,12 @@ struct GameDriver polepos_driver =
 	0,0
 };
 
-struct GameDriver polepos2_driver =
+struct GameDriver poleposa_driver =
 {
 	__FILE__,
 	&polepos_driver,
-	"polepos2",
-	"Pole Position I (alternate set)",
+	"poleposa",
+	"Pole Position (set 2)",
 	"1982",
 	"Atari",
 	"Ernesto Corvi\nJuergen Buchmueller\nAlex Pasadyn\n",
@@ -818,7 +818,7 @@ struct GameDriver polepos2_driver =
 	&machine_driver,
 	polepos_init,		/* driver init */
 
-	polepos2_rom,
+	poleposa_rom,
 	0,		/* rom decode */
 	0,
 	0,
@@ -834,11 +834,11 @@ struct GameDriver polepos2_driver =
 	0,0
 };
 
-struct GameDriver poleposb_driver =
+struct GameDriver poleps2b_driver =
 {
 	__FILE__,
 	&polepos_driver,
-	"poleposb",
+	"poleps2b",
 	"Pole Position II (bootleg)",
 	"1982",
 	"Atari",
@@ -847,7 +847,7 @@ struct GameDriver poleposb_driver =
 	&machine_driver,
 	polepos_init,		/* driver init */
 
-	poleposb_rom,
+	poleps2b_rom,
 	0,		/* rom decode */
 	0,
 	0,

@@ -4,105 +4,100 @@
 
                       Emulated
                          |
-                  board #|year   CPU      tiles        sprites  priority     other
-                    -----|---- ------ ------------- ------------- ------ ----------------
+                  board #|year    CPU      tiles        sprites  priority     other
+                    -----|----  ------ ------------- ------------- ------ ----------------
 Hyper Crash         GX401 1985
-Twinbee             GX412*1985  68000           GX400
+Twinbee             GX412*1985   68000           GX400
 Yie Ar Kung Fu      GX407*1985
-Gradius / Nemesis   GX456*1985  68000           GX400
+Gradius / Nemesis   GX456*1985   68000           GX400
 Shao-lins Road      GX477*1985
-Jail Break          GX507*1986   6809?          005849
-Finaliser           GX523 1985
-Konami's Ping Pong  GX555*1985    Z80
-Iron Horse          GX560*1986   6809           005885
-Konami GT           GX561*1985  68000           GX400
-Green Beret         GX577*1985    Z80           005849
-Galactic Warriors   GX578*1985  68000           GX400
-Salamander          GX587*1986  68000           GX400
-WEC Le Mans 24      GX602*1986 2x
-                                68000
+Jail Break          GX507*1986    6809?          005849
+Finaliser           GX523+1985  KONAMI-1?        005885
+Konami's Ping Pong  GX555*1985     Z80
+Iron Horse          GX560*1986    6809           005885
+Konami GT           GX561*1985   68000           GX400
+Green Beret         GX577*1985     Z80           005849
+Galactic Warriors   GX578*1985   68000           GX400
+Salamander          GX587*1986   68000           GX400
+WEC Le Mans 24      GX602*1986 2x68000
 BAW                 GX604 1987
-Combat School       GX611*1987   6309           007121(x2)
-Rock 'n Rage        GX620 1986
-Mr Kabuki /         GX621*1986    Z80           005849
-  Mr Goemon
-Jackal              GX631*1986   6809?          005885(x2)
-Contra / Gryzor     GX633*1987   6809?          007121(x2)               007593 (palette)
-Flak Attack         GX669 1987
-Devil World / Dark  GX687 1987 2x               TWIN16
-  Adventure / Majuu no Oukoku   68010
-Double Dribble      GX690*1986 3x6809           005885(x2)               007327 (palette) 007452
+Combat School       GX611*1987    6309           007121(x2)
+Rock 'n Rage /      GX620*1986    6309 007342        007420               007327 (palette)
+  Koi no Hotrock
+Mr Kabuki/Mr Goemon GX621*1986     Z80           005849
+Jackal              GX631*1986    6809?          005885(x2)
+Contra / Gryzor     GX633*1987    6809?          007121(x2)               007593 (palette)
+Flak Attack         GX669-1987
+Devil World / Dark  GX687+1987 2x68010           TWIN16
+  Adventure / Majuu no Oukoku
+Double Dribble      GX690*1986  3x6809           005885(x2)               007327 (palette) 007452
 Kitten Kaboodle     GX712 1988
-Chequered Flag      GX717 1988
-Fast Lane           GX752 1987
+Chequered Flag      GX717-1988
+Fast Lane           GX752+1987
 Hot Chase           GX763*1988
 Rack 'Em Up         GX765 1987
-Haunted Castle      GX768*1988 052001           007121(x2)               007327 (palette)
-Ajax / Typhoon      GX770*1987  6309+ 052109 051962 051960 051937  PROM  051316 (zoom/rotation) 007327 (palette)
-                               052001
-Labyrinth Runner    GX771 1987  6309+           007121
-                               051733
-Super Contra        GX775*1988 052001 052109 051962 051960 051937  PROM  007327 (palette)
-Battlantis          GX777*1987   6309           007420 007432            007327 (palette) 051550 007324
-Vulcan Venture /    GX785 1988 2x               TWIN16
-  Gradius 2                     68010
-City Bomber         GX787 1987  68000
+Haunted Castle      GX768*1988  052001           007121(x2)               007327 (palette)
+Ajax / Typhoon      GX770*1987   6309+ 052109 051962 051960 051937  PROM  051316 (zoom/rotation) 007327 (palette)
+                                052001
+Labyrinth Runner    GX771 1987    6309           007121                   051733 (protection cpu)
+Super Contra        GX775*1988  052001 052109 051962 051960 051937  PROM  007327 (palette)
+Battlantis          GX777*1987    6309 007342        007420               007327 (palette) 007324 051550
+Vulcan Venture /    GX785+1988 2x68010           TWIN16
+  Gradius 2
+City Bomber         GX787+1987   68000
 Over Drive          GX789 1990
 Hyper Crash         GX790 1987
-Blades of Steel     GX797 1987  6309+           007121?
-                               051733
-The Main Event      GX799*1988   6309 052109 051962 051960 051937  PROM
-Missing in Action   GX808*1989  68000 052109 051962 051960 051937  PROM
-Crime Fighters      GX821*1989 052526 052109 051962 051960 051937
-Special Project Y   GX857 1989 should be similar to GX891 Bottom of the 9th
-'88 Games           GX861*1988 052001 052109 051962 051960 051937  PROM  051316 (zoom/rotation)
-Final Round /       GX870 1988 2x               TWIN16
-  Hard Puncher                  68010
-Thunder Cross       GX873*1988 052001 052109 051962 051960 051937  PROM  007327 (palette) 052591
-Aliens              GX875*1990 052526 052109 051962 051960 051937
-Gang Busters        GX878*1988 052526 052109 051962 051960 051937  PROM
-Devastators         GX890*1988  6309+ 052109 051962 051960 051937  PROM  007324
-                               051733
-Bottom of the Ninth GX891*1989   6809 052109 051962 051960 051937  PROM  051316 (zoom/rotation)
-Cue Brick           GX903 1989 2x               TWIN16
-                                68010
-Punk Shot           GX907*1990  68000 052109 051962 051960 051937 053251
-Surprise Attack     GX911*1990 053248 052109 051962 053245 053244 053251
-Lightning Fighters /
-  Trigon            GX939*1990  68000 052109 051962 053245 053244 053251
+Blades of Steel     GX797*1987    6309 007342        007420               007327 (palette) 051733 (protection cpu)
+The Main Event      GX799*1988    6309 052109 051962 051960 051937  PROM
+Missing in Action   GX808*1989   68000 052109 051962 051960 051937  PROM
+Crime Fighters      GX821*1989  052526 052109 051962 051960 051937  PROM
+Special Project Y   GX857-1989  should be similar to GX891 Bottom of the 9th
+'88 Games           GX861*1988  052001 052109 051962 051960 051937  PROM  051316 (zoom/rotation)
+Final Round /       GX870+1988 1x68010           TWIN16?
+  Hard Puncher
+Thunder Cross       GX873*1988  052001 052109 051962 051960 051937  PROM  007327 (palette) 052591
+Aliens              GX875*1990  052526 052109 051962 051960 051937  PROM
+Gang Busters        GX878*1988  052526 052109 051962 051960 051937  PROM
+Devastators         GX890*1988    6309 052109 051962 051960 051937  PROM  007324 051733 (protection cpu)
+Bottom of the Ninth GX891*1989    6809 052109 051962 051960 051937  PROM  051316 (zoom/rotation)
+Cue Brick           GX903+1989 2x68010           TWIN16
+Punk Shot           GX907*1990   68000 052109 051962 051960 051937 053251
+Surprise Attack     GX911*1990  053248 052109 051962 053245 053244 053251
+Lightning Fighters /GX939*1990   68000 052109 051962 053245 053244 053251
+  Trigon
 Gradius 3           GX945 1989
-Parodius            GX955*1990 053248 052109 051962 053245 053244 053251
-TMNT                GX963*1989  68000 052109 051962 051960 051937  PROM
-Block Hole          GX973*1989 052526 052109 051962 051960 051937  PROM
-Escape Kids         GX975 1991 053248 052109 051962 053247 053246 053251 053252 - same board as Vendetta
-Rollergames         GX999*1991 053248 ------ ------ 053245 053244        051316 (zoom/rotation) 053252
-Bells & Whistles /
-  Detana! Twin Bee  GX060*1991  68000 052109 051962 053245 053244 053251 054000 (collision)
-Golfing Greats      GX061*1991  68000 052109 051962 053245 053244 053251 053936 (3D)
-TMNT 2              GX063*1991  68000 052109 051962 053245a053244a053251 053990
-Sunset Riders       GX064*1991  68000 052109 051962 053245 053244 053251 054358
-X-Men               GX065*1992  68000 052109 051962 053247 053246 053251
-XEXEX               GX067*1991  68000 053157 053156 053247 053246a
-Asterix             GX068 1992  68000 054157 054156 053245 053244 053251 054358
-G.I. Joe            GX069 1992  68000 053157 054156 053247a053246a053251 054539
-The Simpsons        GX072*1991 053248 052109 051962 053247 053246 053251
-Thunder Cross 2     GX073 1991  68000 052109 051962 051960 051937 053251 054000
-Vendetta /
-  Crime Fighters 2  GX081*1991 053248 052109 051962 053247 053246 053251 054000 (collision)
-Premier Soccer      GX101 1993  68000 052109 051962 053245 053244 053251 053936 (3D)
-Hexion              GX122 1992    Z80                                    052591 053252
-Entapous /
-  Gaiapolis         GX123 1993  68000 054157 054156 055673 053246        053252 054000 055555
+Parodius            GX955*1990  053248 052109 051962 053245 053244 053251
+TMNT                GX963*1989   68000 052109 051962 051960 051937  PROM
+Block Hole          GX973*1989  052526 052109 051962 051960 051937  PROM
+Escape Kids         GX975 1991  053248 052109 051962 053247 053246 053251 053252 - same board as Vendetta
+Rollergames         GX999*1991  053248 ------ ------ 053245 053244        051316 (zoom/rotation) 053252
+Bells & Whistles /  GX060*1991   68000 052109 051962 053245 053244 053251 054000 (collision)
+  Detana!! Twin Bee
+Golfing Greats      GX061*1991   68000 052109 051962 053245 053244 053251 053936 (3D)
+TMNT 2              GX063*1991   68000 052109 051962 053245a053244a053251 053990
+Sunset Riders       GX064*1991   68000 052109 051962 053245 053244 053251 054358
+X-Men               GX065*1992   68000 052109 051962 053247 053246 053251
+XEXEX               GX067*1991   68000 054157 054156 053247 053246a053251 054338 054539
+Asterix             GX068+1992   68000 054157 054156 053245 053244 053251 054358
+G.I. Joe            GX069+1992   68000 054157 054156 053247a053246a053251 054539
+The Simpsons        GX072*1991  053248 052109 051962 053247 053246 053251
+Thunder Cross 2     GX073-1991   68000 052109 051962 051960 051937 053251 054000
+Vendetta /          GX081*1991  053248 052109 051962 053247 053246 053251 054000 (collision)
+  Crime Fighters 2
+Premier Soccer      GX101 1993   68000 052109 051962 053245 053244 053251 053936 (3D)
+Hexion              GX122+1992     Z80                                    052591 053252
+Entapous /          GX123+1993   68000 054157 054156 055673 053246        053252 054000 055555
+  Gaiapolis
 Mystic Warrior      GX128 1993
-Cowboys of Moo Mesa GX151 1993  68000 054157 054156 053247a053246a       053252 054338 053990
-Violent Storm       GX168 1993  68000 054157 054156 055673 053246a       054338 054539(x2) 055550 055555
-Bucky 'O Hare       GX173 1992  68000 054157 054156 053247a053246a053251 054338 054539
+Cowboys of Moo Mesa GX151 1993   68000 054157 054156 053247a053246a       053252 054338 053990
+Violent Storm       GX168+1993   68000 054157 054156 055673 053246a       054338 054539(x2) 055550 055555
+Bucky 'O Hare       GX173+1992   68000 054157 054156 053247a053246a053251 054338 054539
 Potrio              GX174 1992
-Lethal Enforcers    GX191 1992   6309 054157 054156 053245 053244        054000 054539 054906
+Lethal Enforcers    GX191 1992    6309 054157 054156 053245 053244        054000 054539 054906
 Metamorphic Force   GX224 1993
-Martial Champion    GX234 1993  68000 054157 054156 055673 053246a       053252 054338 054539 055555 053990 054986 054573
-Run and Gun         GX247 1993  68000               055673 053246a       053253(x2)
-Polygonet CommandersGX305 1993  68020                                    056230?063936?054539?054986?
+Martial Champion    GX234+1993   68000 054157 054156 055673 053246a       053252 054338 054539 055555 053990 054986 054573
+Run and Gun         GX247+1993   68000               055673 053246a       053253(x2)
+Polygonet CommandersGX305 1993   68020                                    056230?063936?054539?054986?
 
 
 Notes:
@@ -147,6 +142,32 @@ Xexex               pass
 
 
 THE FOLLOWING INFORMATION IS PRELIMINARY AND INACCURATE. DON'T RELY ON IT.
+
+
+
+007342
+------
+The 007342 manages 2 64x32 scrolling tilemaps with 8x8 characters, and
+optionally generates timing clocks and interrupt signals. It uses 0x2000
+bytes of RAM, and a variable amount of ROM. It cannot read the ROMs.
+
+control registers
+000 bit 1: INT control
+    bit 4: flip screen
+001	Used for banking in Rock'n'Rage
+002	Used, but unknown
+003	x scroll 1
+004	y scroll 1
+005	x scroll 2
+006 y scroll 2
+007	not used
+
+
+007420
+------
+Sprite generator. 8 bytes per sprite with zoom. It uses 0x200 bytes of RAM,
+and a variable amount of ROM. Nothing is known about its external interface.
+
 
 
 052109/051962
@@ -261,7 +282,6 @@ to through the chip.
 
 051960/051937
 -------------
-
 Sprite generators. Designed to work in pair. The 051960 manages the sprite
 list and produces and address that is fed to the gfx ROMs. The data from the
 ROMs is sent to the 051937, along with color code and other stuff from the
@@ -312,7 +332,6 @@ memory map:
 
 053245/053244
 -------------
-
 Sprite generators. The 053245 has a 16-bit data bus to the main CPU.
 
 053244 memory map (but the 053245 sees and processes them too):
@@ -336,7 +355,6 @@ Sprite generators. The 053245 has a 16-bit data bus to the main CPU.
 
 053247/053246
 -------------
-
 Sprite generators. Nothing is known about their external interface.
 The sprite RAM format is very similar to the 053245.
 
@@ -525,7 +543,6 @@ Memory map:
 16-17 W B center X
 18    R 0 = collision, 1 = no collision
 
-
 ***************************************************************************/
 
 #include "driver.h"
@@ -575,9 +592,396 @@ void konami_rom_deinterleave_4(int memory_region)
 
 
 
+
+
+
+
+
+static unsigned char *K007342_ram;
+static int K007342_gfxnum;
+static int K007342_int_enabled;
+static int K007342_flipscreen;
+static int K007342_scrollx[2];
+static int K007342_scrolly[2];
+static unsigned char *K007342_videoram_0,*K007342_colorram_0;
+static unsigned char *K007342_videoram_1,*K007342_colorram_1;
+static int K007342_regs[8];
+static void (*K007342_callback)(int tilemap, int bank, int *code, int *color);
+static struct tilemap *K007342_tilemap[2];
+
+/***************************************************************************
+
+  Callbacks for the TileMap code
+
+***************************************************************************/
+
+/*
+  data format:
+  video RAM		xxxxxxxx	tile number (bits 0-7)
+  color RAM		x-------	tiles with priority over the sprites
+  color RAM		-x------	depends on external conections
+  color RAM		--x-----	flip Y
+  color RAM		---x----	flip X
+  color RAM		----xxxx	depends on external connections (usually color and banking)
+*/
+
+static unsigned char *colorram,*videoram1,*videoram2;
+static int layer;
+
+static void tilemap_0_preupdate(void)
+{
+	colorram = K007342_colorram_0;
+	videoram1 = K007342_videoram_0;
+	layer = 0;
+}
+
+static void tilemap_1_preupdate(void)
+{
+	colorram = K007342_colorram_1;
+	videoram1 = K007342_videoram_1;
+	layer = 1;
+}
+
+static void K007342_get_tile_info(int col,int row)
+{
+	int tile_index, color, code;
+
+	if (col >= 32)
+	{
+		col -= 32;
+		tile_index = 0x400 + row*32 + col;
+	}
+	else
+		tile_index = row*32 + col;
+
+	color = colorram[tile_index];
+	code = videoram1[tile_index];
+
+	tile_info.flags = TILE_FLIPYX((color & 0x30) >> 4);
+	tile_info.priority = (color & 0x80) >> 7;
+
+	(*K007342_callback)(layer, K007342_regs[1], &code, &color);
+
+	SET_TILE_INFO(K007342_gfxnum,code,color);
+}
+
+int K007342_vh_start(int gfx_index, void (*callback)(int tilemap, int bank, int *code, int *color))
+{
+	K007342_gfxnum = gfx_index;
+	K007342_callback = callback;
+
+	K007342_tilemap[0] = tilemap_create(K007342_get_tile_info, TILEMAP_TRANSPARENT, 8, 8, 64, 32);
+	K007342_tilemap[1] = tilemap_create(K007342_get_tile_info, TILEMAP_TRANSPARENT, 8, 8, 64, 32);
+
+	K007342_ram = malloc(0x2000);
+
+	if (!K007342_ram || !K007342_tilemap[0] || !K007342_tilemap[1])
+	{
+		K007342_vh_stop();
+		return 1;
+	}
+
+	memset(K007342_ram,0,0x2000);
+
+	K007342_colorram_0 = &K007342_ram[0x0000];
+	K007342_colorram_1 = &K007342_ram[0x1000];
+	K007342_videoram_0 = &K007342_ram[0x0800];
+	K007342_videoram_1 = &K007342_ram[0x1800];
+
+	K007342_tilemap[0]->transparent_pen = 0;
+	K007342_tilemap[1]->transparent_pen = 0;
+
+	return 0;
+}
+
+void K007342_vh_stop(void)
+{
+	free(K007342_ram);
+	K007342_ram = 0;
+}
+
+int K007342_r(int offset)
+{
+	return K007342_ram[offset];
+}
+
+void K007342_w(int offset,int data)
+{
+	if (offset < 0x1000){		/* layer 0 */
+		if (K007342_ram[offset] != data){
+			if (offset & 0x400)
+				tilemap_mark_tile_dirty(K007342_tilemap[0], offset%32 + 32, (offset&0x3ff)/32);
+			else
+				tilemap_mark_tile_dirty(K007342_tilemap[0], offset%32, (offset&0x3ff)/32);
+			K007342_ram[offset] = data;
+		}
+	}
+	else{						/* layer 1 */
+		if (K007342_ram[offset] != data){
+			if (offset & 0x400)
+				tilemap_mark_tile_dirty(K007342_tilemap[1], offset%32 + 32, (offset&0x3ff)/32);
+			else
+				tilemap_mark_tile_dirty(K007342_tilemap[1], offset%32, (offset&0x3ff)/32);
+			K007342_ram[offset] = data;
+		}
+	}
+}
+
+void K007342_vreg_w(int offset,int data)
+{
+	switch(offset){
+		case 0x00:
+			/* bit 1: INT control */
+			K007342_int_enabled = data & 0x02;
+			K007342_flipscreen = data & 0x10;
+			tilemap_set_flip(K007342_tilemap[0],K007342_flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
+			tilemap_set_flip(K007342_tilemap[1],K007342_flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
+			break;
+		case 0x01:	/* used for banking in Rock'n'Rage */
+			if (data != K007342_regs[1])
+				tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
+		case 0x02:	/* ??? */
+			break;
+		case 0x03:	/* scroll x (register 0) */
+			K007342_scrollx[0] = data;
+			break;
+		case 0x04:	/* scroll y (register 0) */
+			K007342_scrolly[0] = data;
+			break;
+		case 0x05:	/* scroll x (register 1) */
+			K007342_scrollx[1] = data;
+			break;
+		case 0x06:	/* scroll y (register 1) */
+			K007342_scrolly[1] = data;
+		case 0x07:	/* unused */
+			break;
+	}
+	K007342_regs[offset] = data;
+}
+
+void K007342_tilemap_update(void)
+{
+	/* update scroll */
+	tilemap_set_scrollx(K007342_tilemap[0],0,K007342_scrollx[0]);
+	tilemap_set_scrollx(K007342_tilemap[1],0,K007342_scrollx[1]);
+	if (K007342_regs[2] & 0x0c)	/* kludge for Blades of Steel */
+		tilemap_set_scrolly(K007342_tilemap[0],0,K007342_scrolly[1]);
+	else
+		tilemap_set_scrolly(K007342_tilemap[0],0,K007342_scrolly[0]);
+	tilemap_set_scrolly(K007342_tilemap[1],0,K007342_scrolly[1]);
+
+	/* update all layers */
+	tilemap_0_preupdate(); tilemap_update(K007342_tilemap[0]);
+	tilemap_1_preupdate(); tilemap_update(K007342_tilemap[1]);
+
+#if 0
+	{
+		char baf[100];
+		static int current_layer = 0;
+
+		if (keyboard_pressed(KEYCODE_Z)){ while (keyboard_pressed(KEYCODE_Z)); current_layer = !current_layer;}
+		tilemap_set_enable(K007342_tilemap[current_layer], 1);
+		tilemap_set_enable(K007342_tilemap[!current_layer], 0);
+
+		sprintf(baf, "regs:%02x %02x %02x %02x-%02x %02x %02x %02x:%02x",
+			K007342_regs[0], K007342_regs[1], K007342_regs[2], K007342_regs[3],
+			K007342_regs[4], K007342_regs[5], K007342_regs[6], K007342_regs[7],
+			current_layer);
+		usrintf_showmessage(baf);
+	}
+#endif
+}
+
+void K007342_tilemap_set_enable(int tilemap, int enable)
+{
+	tilemap_set_enable(K007342_tilemap[tilemap], enable);
+}
+
+void K007342_tilemap_draw(struct osd_bitmap *bitmap,int num,int flags)
+{
+	tilemap_draw(bitmap,K007342_tilemap[num],flags);
+}
+
+int K007342_is_INT_enabled(void)
+{
+	return K007342_int_enabled;
+}
+
+
+
+static struct GfxElement *K007420_gfx;
+static void (*K007420_callback)(int *code,int *color);
+static unsigned char *K007420_ram;
+
+int K007420_vh_start(int gfxnum, void (*callback)(int *code,int *color))
+{
+	K007420_gfx = Machine->gfx[gfxnum];
+	K007420_callback = callback;
+	K007420_ram = malloc(0x200);
+	if (!K007420_ram) return 1;
+
+	memset(K007420_ram,0,0x200);
+
+	return 0;
+}
+
+void K007420_vh_stop(void)
+{
+	free(K007420_ram);
+	K007420_ram = 0;
+}
+
+int K007420_r(int offset)
+{
+	return K007420_ram[offset];
+}
+
+void K007420_w(int offset,int data)
+{
+	K007420_ram[offset] = data;
+}
+
+/*
+ * Sprite Format
+ * ------------------
+ *
+ * Byte | Bit(s)   | Use
+ * -----+-76543210-+----------------
+ *   0  | xxxxxxxx | y position
+ *   1  | xxxxxxxx | sprite code (low 8 bits)
+ *   2  | xxxxxxxx | depends on external conections. Usually banking
+ *   3  | xxxxxxxx | x position
+ *   4  | x------- | visible
+ *   4  | -x------ | 32x32 sprite
+ *   4  | --xx---- | unknown
+ *   4  | ----x--- | flip y
+ *   4  | -----x-- | flip x
+ *   4  | ------xx | zoom (bits 8 & 9)
+ *   5  | xxxxxxxx | zoom (low 8 bits)	0x080 = normal, < 0x80 enlarge, > 0x80 reduce
+ *   6  | xxxxxxxx | unused
+ *   7  | xxxxxxxx | unused
+ */
+
+void K007420_sprites_draw(struct osd_bitmap *bitmap)
+{
+#define K007420_SPRITERAM_SIZE 0x200
+	int offs;
+
+	for (offs = K007420_SPRITERAM_SIZE - 8; offs >= 0; offs -= 8)
+	{
+		int ox,oy,code,color,flipx,flipy,zoom,w,h,x,y;
+		static int xoffset[2] = { 0, 1 };
+		static int yoffset[2] = { 0, 2 };
+
+		code = K007420_ram[offs+1];// + ((K007420_ram[offs+2] & 0x40) << 2) + ((K007420_ram[offs+2] & 0x80) << 1)*(rockrage_vreg << 1);
+		color = K007420_ram[offs+2];
+		ox = K007420_ram[offs+3];
+		oy = 256 - K007420_ram[offs+0];
+		flipx = K007420_ram[offs+4] & 0x04;
+		flipy = K007420_ram[offs+4] & 0x08;
+
+		(*K007420_callback)(&code,&color);
+
+		if (((K007420_ram[offs+4] & 0x40) && (K007420_ram[offs+1] == 0xff)) || (K007420_ram[offs+4] & 0x80)) continue;
+
+		/* 0x080 = normal scale, 0x040 = double size, 0x100 half size */
+		zoom = K007420_ram[offs+5] | ((K007420_ram[offs+4] & 0x03) << 8);
+		if (!zoom) continue;
+		zoom = 0x10000 * 128 / zoom;
+
+		w = h = 1;
+		if (K007420_ram[offs+4] & 0x40)	/* 32x32 */
+			w = h = 2;
+
+		if (K007342_flipscreen)
+		{
+			ox = 256 - ox - ((zoom * w + (1<<11)) >> 12);
+			oy = 256 - oy - ((zoom * h + (1<<11)) >> 12);
+			flipx = !flipx;
+			flipy = !flipy;
+		}
+
+		if (zoom == 0x10000)
+		{
+			int sx,sy;
+
+			for (y = 0;y < h;y++)
+			{
+				sy = oy + 16 * y;
+
+				for (x = 0;x < w;x++)
+				{
+					int c = code;
+
+					sx = ox + 16 * x;
+					if (flipx) c += xoffset[(w-1-x)];
+					else c += xoffset[x];
+					if (flipy) c += yoffset[(h-1-y)];
+					else c += yoffset[y];
+
+					drawgfx(bitmap,Machine->gfx[1],
+							c,
+							color,
+							flipx,flipy,
+							sx,sy,
+							&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+				}
+			}
+		}
+		else
+		{
+			int sx,sy,zw,zh;
+			for (y = 0;y < h;y++)
+			{
+				sy = oy + ((zoom * y + (1<<11)) >> 12);
+				zh = (oy + ((zoom * (y+1) + (1<<11)) >> 12)) - sy;
+
+				for (x = 0;x < w;x++)
+				{
+					int c = code;
+
+					sx = ox + ((zoom * x + (1<<11)) >> 12);
+					zw = (ox + ((zoom * (x+1) + (1<<11)) >> 12)) - sx;
+					if (flipx) c += xoffset[(w-1-x)];
+					else c += xoffset[x];
+					if (flipy) c += yoffset[(h-1-y)];
+					else c += yoffset[y];
+
+					drawgfxzoom(bitmap,Machine->gfx[1],
+							c,
+							color,
+							flipx,flipy,
+							sx,sy,
+							&Machine->drv->visible_area,TRANSPARENCY_PEN,0,
+							(zw << 16) / 16,(zh << 16) / 16);
+				}
+			}
+		}
+	}
+#if 0
+	{
+		char baf[100];
+		static int current_sprite = 0;
+
+		if (keyboard_pressed_memory(KEYCODE_Z)) current_sprite = (current_sprite+1) & ((K007420_SPRITERAM_SIZE/8)-1);
+		if (keyboard_pressed_memory(KEYCODE_X)) current_sprite = (current_sprite-1) & ((K007420_SPRITERAM_SIZE/8)-1);
+
+		sprintf(baf, "%02x:%02x %02x %02x %02x %02x %02x %02x %02x", current_sprite,
+			K007420_ram[(current_sprite*8)+0], K007420_ram[(current_sprite*8)+1],
+			K007420_ram[(current_sprite*8)+2], K007420_ram[(current_sprite*8)+3],
+			K007420_ram[(current_sprite*8)+4], K007420_ram[(current_sprite*8)+5],
+			K007420_ram[(current_sprite*8)+6], K007420_ram[(current_sprite*8)+7]);
+		usrintf_showmessage(baf);
+	}
+#endif
+}
+
+
+
+
 static int K052109_memory_region;
 static int K052109_gfxnum;
-static void (*K052109_callback)(int layer,int bank,int *code,int *color);
+static void (*K052109_callback)(int tilemap,int bank,int *code,int *color);
 static unsigned char *K052109_ram;
 static unsigned char *K052109_videoram_F,*K052109_videoram2_F,*K052109_colorram_F;
 static unsigned char *K052109_videoram_A,*K052109_videoram2_A,*K052109_colorram_A;
@@ -607,9 +1011,6 @@ static struct tilemap *K052109_tilemap[3];
 						 placed on the CAB1 and CAB2 output pins.
   color RAM    ------xx  depends on external connections (usually banking, flip)
 */
-
-static unsigned char *colorram,*videoram1,*videoram2;
-static int layer;
 
 static void tilemap0_preupdate(void)
 {
@@ -653,7 +1054,7 @@ if (has_extra_video_ram) bank = (color & 0x0c) >> 2;	/* kludge for X-Men */
 
 
 int K052109_vh_start(int gfx_memory_region,int plane0,int plane1,int plane2,int plane3,
-		void (*callback)(int layer,int bank,int *code,int *color))
+		void (*callback)(int tilemap,int bank,int *code,int *color))
 {
 	int gfx_index;
 	static struct GfxLayout charlayout =

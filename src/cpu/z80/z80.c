@@ -3651,7 +3651,7 @@ void z80_reset(void *param)
 			{
 				/* add or adc w/o carry set */
 				val = newval - oldval;
-                *padd = (newval) ? ((newval & 0x80) ? SF : 0) : ZF;
+				*padd = (newval) ? ((newval & 0x80) ? SF : 0) : ZF;
 				if( (newval & 0x0f) < (oldval & 0x0f) ) *padd |= HF;
 				if( newval < oldval ) *padd |= CF;
 				if( (val^oldval^0x80) & (val^newval) & 0x80 ) *padd |= VF;
@@ -3659,9 +3659,9 @@ void z80_reset(void *param)
 
 				/* adc with carry set */
 				val = newval - oldval - 1;
-                *padc = (newval) ? ((newval & 0x80) ? SF : 0) : ZF;
-				if( (newval & 0x0f) < (oldval & 0x0f) ) *padc |= HF;
-				if( newval < oldval ) *padc |= CF;
+				*padc = (newval) ? ((newval & 0x80) ? SF : 0) : ZF;
+				if( (newval & 0x0f) <= (oldval & 0x0f) ) *padc |= HF;
+				if( newval <= oldval ) *padc |= CF;
 				if( (val^oldval^0x80) & (val^newval) & 0x80 ) *padc |= VF;
 				padc++;
 
@@ -3676,8 +3676,8 @@ void z80_reset(void *param)
 				/* sbc with carry set */
 				val = oldval - newval - 1;
 				*psbc = NF | ((newval) ? ((newval & 0x80) ? SF : 0) : ZF);
-				if( (newval & 0x0f) > (oldval & 0x0f) ) *psbc |= HF;
-				if( newval > oldval ) *psbc |= CF;
+				if( (newval & 0x0f) >= (oldval & 0x0f) ) *psbc |= HF;
+				if( newval >= oldval ) *psbc |= CF;
 				if( (val^oldval) & (oldval^newval) & 0x80 ) *psbc |= VF;
 				psbc++;
 			}

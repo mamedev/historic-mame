@@ -5,29 +5,23 @@ Battlantis(GX777) (c) 1987 Konami
 Preliminary driver by:
 	Manuel Abadia <manu@teleline.es>
 
-Notes: The background layer seems to be unused
-
 ***************************************************************************/
 
 #include "driver.h"
 #include "cpu/m6809/m6809.h"
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
-
-static int irq_enable;
+#include "vidhrdw/konamiic.h"
 
 /* from vidhrdw */
-void battlnts_fg_vram_w(int offset,int data);
-void battlnts_bg_vram_w(int offset,int data);
-void battlnts_fg_cram_w(int offset,int data);
-void battlnts_bg_cram_w(int offset,int data);
-void battlnts_spritebank_w(int offset,int data);
+extern void battlnts_spritebank_w(int offset,int data);
 int battlnts_vh_start(void);
+void battlnts_vh_stop(void);
 void battlnts_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 static int battlnts_interrupt( void )
 {
-	if (irq_enable)
+	if (K007342_is_INT_enabled)
         return M6309_INT_IRQ;
     else
         return ignore_interrupt();
@@ -36,17 +30,6 @@ static int battlnts_interrupt( void )
 void battlnts_sh_irqtrigger_w(int offset, int data)
 {
 	cpu_cause_interrupt(1,0xff);
-}
-
-void battlnts_irq_control_w(int offset, int data)
-{
-	//unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-	/* bit 1: IRQ enable */
-	irq_enable = data & 0x02;
-
-	/* other bits unknown */
-	//RAM[0x2600] = data;
 }
 
 static void battlnts_bankswitch_w(int offset, int data)
@@ -63,21 +46,13 @@ static void battlnts_bankswitch_w(int offset, int data)
 	coin_counter_w(1,data & 0x20);
 
 	/* other bits unknown */
-	//RAM[0x2e08] = data;
-
-	//if (errorlog && data & 0x0f)
-	//		fprintf(errorlog,"%04x: (ccount) write %02x\n",cpu_get_pc(), data);
 }
 
 static struct MemoryReadAddress battlnts_readmem[] =
 {
-	{ 0x0000, 0x03ff, MRA_RAM, &colorram },	/* Color RAM (foreground) */
-	{ 0x0400, 0x07ff, MRA_RAM },			/* Color RAM (background) */
-	{ 0x0800, 0x0bff, MRA_RAM, &videoram },	/* Video RAM (foreground) */
-	{ 0x0c00, 0x0fff, MRA_RAM },			/* Video RAM (background) */
-	{ 0x1000, 0x1fff, MRA_RAM },			/* Work RAM */
-	{ 0x2000, 0x21ff, MRA_RAM },			/* Sprite RAM */
-	{ 0x2200, 0x23ff, MRA_RAM },			/* Sprite RAM? */
+	{ 0x0000, 0x1fff, K007342_r },			/* Color RAM + Video RAM */
+	{ 0x2000, 0x21ff, K007420_r },			/* Sprite RAM */
+	{ 0x2200, 0x23ff, MRA_RAM },			/* ??? */
 	{ 0x2400, 0x24ff, MRA_RAM },			/* Palette */
 	{ 0x2e00, 0x2e00, input_port_0_r },		/* DIPSW #1 */
 	{ 0x2e01, 0x2e01, input_port_4_r },		/* 2P controls */
@@ -91,21 +66,13 @@ static struct MemoryReadAddress battlnts_readmem[] =
 
 static struct MemoryWriteAddress battlnts_writemem[] =
 {
-	{ 0x0000, 0x03ff, battlnts_fg_cram_w },		/* Color RAM (foreground) */
-	{ 0x0400, 0x07ff, battlnts_bg_cram_w },		/* Color RAM (background) */
-	{ 0x0800, 0x0bff, battlnts_fg_vram_w },		/* Video RAM (foreground) */
-	{ 0x0c00, 0x0fff, battlnts_bg_vram_w },		/* Video RAM (background) */
-	{ 0x1000, 0x1fff, MWA_RAM },				/* Work RAM */
-	{ 0x2000, 0x21ff, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0x0000, 0x1fff, K007342_w },				/* Color RAM + Video RAM */
+	{ 0x2000, 0x21ff, K007420_w },				/* Sprite RAM */
 	{ 0x2200, 0x23ff, MWA_RAM },				/* ??? */
 	{ 0x2400, 0x24ff, paletteram_xBBBBBGGGGGRRRRR_swap_w, &paletteram },/* palette */
-	{ 0x2600, 0x2600, battlnts_irq_control_w },	/* IRQ control */
-	{ 0x2601, 0x2601, MWA_RAM },				/* ??? */
-	{ 0x2602, 0x2602, MWA_RAM },				/* ??? */
-	{ 0x2603, 0x2603, MWA_RAM },				/* ??? */
-	{ 0x2604, 0x2604, MWA_RAM },				/* ??? */
+	{ 0x2600, 0x2607, K007342_vreg_w },			/* Video Registers */
 	{ 0x2e08, 0x2e08, battlnts_bankswitch_w },	/* bankswitch control */
-	{ 0x2e0c, 0x2e0c, battlnts_spritebank_w },
+	{ 0x2e0c, 0x2e0c, battlnts_spritebank_w },	/* sprite bank select */
 	{ 0x2e10, 0x2e10, watchdog_reset_w },		/* watchdog reset */
 	{ 0x2e14, 0x2e14, soundlatch_w },			/* sound code # */
 	{ 0x2e18, 0x2e18, battlnts_sh_irqtrigger_w },/* cause interrupt on audio CPU */
@@ -207,7 +174,7 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x40, 0x40, "Upright Controls" )
@@ -266,8 +233,8 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x000000, &charlayout,      0, 1 },	/* colors  0-15 */
-	{ 1, 0x040000, &spritelayout, 4*16, 1 },	/* colors 64-79 */
+	{ 1, 0x000000, &charlayout,     0,	1 },	/* colors  0-15 */
+	{ 1, 0x040000, &spritelayout,4*16,	1 },	/* colors 64-79 */
 	{ -1 } /* end of array */
 };
 
@@ -317,7 +284,7 @@ static struct MachineDriver machine_driver =
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
 	battlnts_vh_start,
-	0,
+	battlnts_vh_stop,
 	battlnts_vh_screenrefresh,
 
 	/* sound hardware */

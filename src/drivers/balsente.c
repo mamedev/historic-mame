@@ -8,32 +8,30 @@
 		* Goalie Ghost
 		* Hat Trick
 		* Mini Golf
+		* Name that Tune
 		* Night Stocker
 		* Off the Wall
 		* Rescue Raider
 		* Sente Diagnostic Cartridge
 		* Snacks'n Jaxson
+		* Snake Pit
 		* Stocker
 		* Street Football
 		* Toggle
 		* Trivial Pursuit (Genus I)
+		* Trivial Pursuit (Genus II)
 		* Trivial Pursuit (All Sports Edition)
-
-	Currently implemented, but no good dumps known to exist:
-		* Snake Pit
+		* Trivial Pursuit (Young Player's Edition)
+		* Trivial Pursuit (Baby Boomer Series)
 
 	Looking for ROMs for these:
 		* Euro Stocker
-		* Name that Tune
 		* Spiker
 		* Stompin'
 		* Strike Avenger
 		* Team Hat Trick
 		* Trick Shot
-		* Trivial Pursuit (Genus II)
 		* Trivial Pursuit (Spanish)
-		* Trivial Pursuit (Young Player's Edition)
-		* Trivial Pursuit (Baby Boomer Series)
 
 	Unknowns:
 		* Snack Attack (may be another name for Snacks'n Jaxson)
@@ -402,7 +400,7 @@ static void random_reset_w(int offset, int data)
 }
 
 
-static int random_r(int offset)
+static int random_num_r(int offset)
 {
 	unsigned int cc;
 
@@ -426,7 +424,7 @@ static void rombank_select_w(int offset, int data)
 {
 	int bank_offset = 0x6000 * ((data >> 4) & 7);
 
-//if (errorlog) fprintf(errorlog, "%04X:rombank_select_w(%02X)\n", cpu_getpreviouspc(), data);
+if (errorlog) fprintf(errorlog, "%04X:rombank_select_w(%02X)\n", cpu_getpreviouspc(), data);
 
 	/* the bank number comes from bits 4-6 */
 	cpu_setbank(1, &Machine->memory_region[0][0x10000 + bank_offset]);
@@ -436,21 +434,26 @@ static void rombank_select_w(int offset, int data)
 
 static void rombank2_select_w(int offset, int data)
 {
-	/* night stocker only? */
+	/* Night Stocker and Name that Tune only so far.... */
+	int bank = data & 7;
+
+	/* top bit controls which half of the ROMs to use (Name that Tune only) */
+	if (Machine->memory_region_length[0] > 0x40000) bank |= (data >> 4) & 8;
 
 //if (errorlog) fprintf(errorlog, "%04X:rombank2_select_w(%02X)\n", cpu_getpreviouspc(), data);
 
 	/* when they set the AB bank, it appears as though the CD bank is reset */
 	if (data & 0x20)
 	{
-		cpu_setbank(1, &Machine->memory_region[0][0x10000 + 0x6000 * (data & 7)]);
+		cpu_setbank(1, &Machine->memory_region[0][0x10000 + 0x6000 * bank]);
 		cpu_setbank(2, &Machine->memory_region[0][0x12000 + 0x6000 * 6]);
 	}
 
-	/* set the CD bank */
+	/* set both banks */
 	else
 	{
-		cpu_setbank(2, &Machine->memory_region[0][0x12000 + 0x6000 * (data & 7)]);
+		cpu_setbank(1, &Machine->memory_region[0][0x10000 + 0x6000 * bank]);
+		cpu_setbank(2, &Machine->memory_region[0][0x12000 + 0x6000 * bank]);
 	}
 }
 
@@ -1225,7 +1228,7 @@ static struct MemoryReadAddress readmem_cpu1[] =
 	{ 0x9901, 0x9901, input_port_1_r },
 	{ 0x9902, 0x9902, input_port_2_r },
 	{ 0x9903, 0x9903, input_port_3_r },
-	{ 0x9a00, 0x9a03, random_r },
+	{ 0x9a00, 0x9a03, random_num_r },
 	{ 0x9a04, 0x9a05, m6850_r },
 	{ 0x9b00, 0x9bff, MRA_RAM },		/* system NOVRAM */
 	{ 0x9c00, 0x9cff, MRA_RAM },		/* cart NOVRAM */
@@ -1755,19 +1758,16 @@ INPUT_PORTS_START( triviag1_input_ports )
 	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ))
 	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ))
 	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ))
-	PORT_BIT( 0x0c, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_DIPNAME( 0x10, 0x10, "IN0 $10" )
-	PORT_DIPSETTING(    0x00, "$00" )
-	PORT_DIPSETTING(    0x10, "$10" )
+	PORT_BIT( 0x1c, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_DIPNAME( 0x20, 0x00, "Sound" )
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ))
 	PORT_DIPSETTING(    0x00, DEF_STR( On ))
-	PORT_DIPNAME( 0x40, 0x00, "Sound Calibration" )
+	PORT_DIPNAME( 0x40, 0x00, "Sound Test" )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ))
 	PORT_DIPSETTING(    0x00, DEF_STR( On ))
 	PORT_DIPNAME( 0x80, 0x80, "High Scores" )
-	PORT_DIPSETTING(    0x80, "Keep Top 5" )
-	PORT_DIPSETTING(    0x00, "Keep All" )
+	PORT_DIPSETTING(    0x00, "Keep Top 5" )
+	PORT_DIPSETTING(    0x80, "Keep Top 10" )
 
 	PORT_START	/* IN1 */
 	PORT_BIT( 0x03, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -1806,57 +1806,10 @@ INPUT_PORTS_START( triviag1_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( triviasp_input_ports )
-	PORT_START	/* IN0 */
-	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coinage ))
-	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ))
-	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ))
-	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ))
-	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ))
-	PORT_BIT( 0x0c, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_DIPNAME( 0x10, 0x10, "IN0 $10" )
-	PORT_DIPSETTING(    0x00, "$00" )
-	PORT_DIPSETTING(    0x10, "$10" )
-	PORT_BIT( 0x60, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_DIPNAME( 0x80, 0x80, "High Scores" )
-	PORT_DIPSETTING(    0x80, "Keep Top 5" )
-	PORT_DIPSETTING(    0x00, "Keep All" )
-
-	PORT_START	/* IN1 */
-	PORT_BIT( 0x03, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_DIPNAME( 0x0c, 0x04, "Guesses" )
-	PORT_DIPSETTING(    0x00, "3" )
-	PORT_DIPSETTING(    0x04, "4" )
-	PORT_DIPSETTING(    0x08, "5" )
-	PORT_DIPSETTING(    0x0c, "6" )
-	PORT_BIT( 0x70, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ))
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ))
-	PORT_DIPSETTING(    0x00, DEF_STR( On ))
-
-	PORT_START	/* IN2 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER1 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER1 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER1 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
-
-	PORT_START	/* IN3 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START3 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START4 )
-	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_BUTTON2, "Red Button", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
-	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_BUTTON1, "Green Button", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )
-
-	/* analog ports */
-	UNUSED_ANALOG_X4
-INPUT_PORTS_END
+#define triviag2_input_ports triviag1_input_ports
+#define triviasp_input_ports triviag1_input_ports
+#define triviayp_input_ports triviag1_input_ports
+#define triviabb_input_ports triviag1_input_ports
 
 
 INPUT_PORTS_START( gimeabrk_input_ports )
@@ -2205,6 +2158,61 @@ INPUT_PORTS_START( sfootbal_input_ports )
 INPUT_PORTS_END
 
 
+INPUT_PORTS_START( nametune_input_ports )
+	PORT_START	/* IN0 */
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coinage ))
+	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ))
+	PORT_DIPSETTING(    0x03, DEF_STR( 3C_2C ))
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ))
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ))
+	PORT_DIPNAME( 0x1c, 0x00, "Bonus Coins" )
+	PORT_DIPSETTING(    0x00, "None" )
+	PORT_DIPSETTING(    0x04, "2 Coins = 1 Bonus" )
+	PORT_DIPSETTING(    0x08, "3 Coins = 1 Bonus" )
+	PORT_DIPSETTING(    0x0c, "4 Coins = 1 Bonus" )
+	PORT_DIPSETTING(    0x10, "4 Coins = 2 Bonus" )
+	PORT_DIPSETTING(    0x14, "5 Coins = 1 Bonus" )
+	PORT_DIPSETTING(    0x18, "5 Coins = 2 Bonus" )
+	PORT_DIPSETTING(    0x1c, "5 Coins = 3 Bonus" )
+	PORT_DIPNAME( 0x20, 0x00, "Left Coin Mech" )
+	PORT_DIPSETTING(    0x00, "x1" )
+	PORT_DIPSETTING(    0x20, "x2" )
+	PORT_DIPNAME( 0xc0, 0x00, "Right Coin Mech" )
+	PORT_DIPSETTING(    0x00, "x1" )
+	PORT_DIPSETTING(    0x40, "x4" )
+	PORT_DIPSETTING(    0x80, "x5" )
+	PORT_DIPSETTING(    0xc0, "x6" )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x7f, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ))
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x00, DEF_STR( On ))
+
+	PORT_START	/* IN2 */
+	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER1, "P1 Blue Button", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
+	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1, "P1 Green Button", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
+	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1, "P1 Yellow Button", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
+	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1, "P1 Red Button", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
+	PORT_BIT( 0x30, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
+
+	PORT_START	/* IN3 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2, "P2 Red Button", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
+	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2, "P2 Yellow Button", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
+	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2, "P2 Green Button", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
+	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER2, "P2 Blue Button", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_VBLANK )
+
+	/* analog ports */
+	UNUSED_ANALOG_X4
+INPUT_PORTS_END
+
+
 INPUT_PORTS_START( rescraid_input_ports )
 	PORT_START	/* IN0 */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coinage ))
@@ -2410,6 +2418,7 @@ static void hisave(void)
 
 #define EXPAND_ALL		0x00
 #define EXPAND_NONE		0x3f
+#define SWAP_HALVES		0x80
 
 static void expand_roms(UINT8 cd_rom_mask)
 {
@@ -2422,46 +2431,56 @@ static void expand_roms(UINT8 cd_rom_mask)
 	if (temp)
 	{
 		UINT8 *rom = Machine->memory_region[0];
-		UINT8 *ab_base = &temp[0x00000];
-		UINT8 *cd_base = &temp[0x10000];
-		UINT8 *cd_common = &temp[0x1c000];
-		UINT8 *ef_common = &temp[0x1e000];
+		UINT32 base;
 
-		memcpy(temp, &rom[0x10000], 0x20000);
+		for (base = 0x10000; base < Machine->memory_region_length[0]; base += 0x30000)
+		{
+			UINT8 *ab_base = &temp[0x00000];
+			UINT8 *cd_base = &temp[0x10000];
+			UINT8 *cd_common = &temp[0x1c000];
+			UINT8 *ef_common = &temp[0x1e000];
+			UINT32 dest;
 
-		memcpy(&rom[0x0e000], ef_common, 0x2000);
+			for (dest = 0x00000; dest < 0x20000; dest += 0x02000)
+			{
+				if (cd_rom_mask & SWAP_HALVES)
+					memcpy(&temp[dest ^ 0x02000], &rom[base + dest], 0x02000);
+				else
+					memcpy(&temp[dest], &rom[base + dest], 0x02000);
+			}
 
-		memcpy(&rom[0x3e000], ef_common, 0x2000);
-		memcpy(&rom[0x3c000], cd_common, 0x2000);
-		memcpy(&rom[0x3a000], &ab_base[0xe000], 0x2000);
+			memcpy(&rom[base + 0x2e000], ef_common, 0x2000);
+			memcpy(&rom[base + 0x2c000], cd_common, 0x2000);
+			memcpy(&rom[base + 0x2a000], &ab_base[0xe000], 0x2000);
 
-		memcpy(&rom[0x38000], ef_common, 0x2000);
-		memcpy(&rom[0x36000], cd_common, 0x2000);
-		memcpy(&rom[0x34000], &ab_base[0xc000], 0x2000);
+			memcpy(&rom[base + 0x28000], ef_common, 0x2000);
+			memcpy(&rom[base + 0x26000], cd_common, 0x2000);
+			memcpy(&rom[base + 0x24000], &ab_base[0xc000], 0x2000);
 
-		memcpy(&rom[0x32000], ef_common, 0x2000);
-		memcpy(&rom[0x30000], (cd_rom_mask & 0x20) ? &cd_base[0xa000] : cd_common, 0x2000);
-		memcpy(&rom[0x2e000], &ab_base[0xa000], 0x2000);
+			memcpy(&rom[base + 0x22000], ef_common, 0x2000);
+			memcpy(&rom[base + 0x20000], (cd_rom_mask & 0x20) ? &cd_base[0xa000] : cd_common, 0x2000);
+			memcpy(&rom[base + 0x1e000], &ab_base[0xa000], 0x2000);
 
-		memcpy(&rom[0x2c000], ef_common, 0x2000);
-		memcpy(&rom[0x2a000], (cd_rom_mask & 0x10) ? &cd_base[0x8000] : cd_common, 0x2000);
-		memcpy(&rom[0x28000], &ab_base[0x8000], 0x2000);
+			memcpy(&rom[base + 0x1c000], ef_common, 0x2000);
+			memcpy(&rom[base + 0x1a000], (cd_rom_mask & 0x10) ? &cd_base[0x8000] : cd_common, 0x2000);
+			memcpy(&rom[base + 0x18000], &ab_base[0x8000], 0x2000);
 
-		memcpy(&rom[0x26000], ef_common, 0x2000);
-		memcpy(&rom[0x24000], (cd_rom_mask & 0x08) ? &cd_base[0x6000] : cd_common, 0x2000);
-		memcpy(&rom[0x22000], &ab_base[0x6000], 0x2000);
+			memcpy(&rom[base + 0x16000], ef_common, 0x2000);
+			memcpy(&rom[base + 0x14000], (cd_rom_mask & 0x08) ? &cd_base[0x6000] : cd_common, 0x2000);
+			memcpy(&rom[base + 0x12000], &ab_base[0x6000], 0x2000);
 
-		memcpy(&rom[0x20000], ef_common, 0x2000);
-		memcpy(&rom[0x1e000], (cd_rom_mask & 0x04) ? &cd_base[0x4000] : cd_common, 0x2000);
-		memcpy(&rom[0x1c000], &ab_base[0x4000], 0x2000);
+			memcpy(&rom[base + 0x10000], ef_common, 0x2000);
+			memcpy(&rom[base + 0x0e000], (cd_rom_mask & 0x04) ? &cd_base[0x4000] : cd_common, 0x2000);
+			memcpy(&rom[base + 0x0c000], &ab_base[0x4000], 0x2000);
 
-		memcpy(&rom[0x1a000], ef_common, 0x2000);
-		memcpy(&rom[0x18000], (cd_rom_mask & 0x02) ? &cd_base[0x2000] : cd_common, 0x2000);
-		memcpy(&rom[0x16000], &ab_base[0x2000], 0x2000);
+			memcpy(&rom[base + 0x0a000], ef_common, 0x2000);
+			memcpy(&rom[base + 0x08000], (cd_rom_mask & 0x02) ? &cd_base[0x2000] : cd_common, 0x2000);
+			memcpy(&rom[base + 0x06000], &ab_base[0x2000], 0x2000);
 
-		memcpy(&rom[0x14000], ef_common, 0x2000);
-		memcpy(&rom[0x12000], (cd_rom_mask & 0x01) ? &cd_base[0x0000] : cd_common, 0x2000);
-		memcpy(&rom[0x10000], &ab_base[0x0000], 0x2000);
+			memcpy(&rom[base + 0x04000], ef_common, 0x2000);
+			memcpy(&rom[base + 0x02000], (cd_rom_mask & 0x01) ? &cd_base[0x0000] : cd_common, 0x2000);
+			memcpy(&rom[base + 0x00000], &ab_base[0x0000], 0x2000);
+		}
 
 		free(temp);
 	}
@@ -2472,35 +2491,30 @@ static void cshift_init(void)   { expand_roms(EXPAND_ALL);  balsente_shooter = 0
 static void gghost_init(void)   { expand_roms(EXPAND_ALL);  balsente_shooter = 0; adc_shift = 1; }
 static void hattrick_init(void) { expand_roms(EXPAND_ALL);  balsente_shooter = 0; /* noanalog */ }
 static void otwalls_init(void)  { expand_roms(EXPAND_ALL);  balsente_shooter = 0; adc_shift = 0; }
-static void snakepit_init(void)
-{
-	/* kludge for bad ROM read */
-	Machine->memory_region[0][0x2c1f7] |= 0x80;
-	Machine->memory_region[0][0x2c2e7] |= 0x80;
-	Machine->memory_region[0][0x2c2f7] |= 0x80;
-	Machine->memory_region[0][0x2c2ff] |= 0x80;
-	Machine->memory_region[0][0x2c31f] |= 0x80;
-	expand_roms(EXPAND_ALL);  balsente_shooter = 0; adc_shift = 3;
-}
+static void snakepit_init(void) { expand_roms(EXPAND_ALL);  balsente_shooter = 0; adc_shift = 1; }
 static void snakjack_init(void) { expand_roms(EXPAND_ALL);  balsente_shooter = 0; adc_shift = 1; }
 static void stocker_init(void)  { expand_roms(EXPAND_ALL);  balsente_shooter = 0; adc_shift = 0; }
 static void triviag1_init(void) { expand_roms(EXPAND_ALL);  balsente_shooter = 0; /* noanalog */ }
-static void triviasp_init(void)
+static void triviag2_init(void)
 {
-	memcpy(&Machine->memory_region[0][0x20000], &Machine->memory_region[0][0x24000], 0x4000);
-	memcpy(&Machine->memory_region[0][0x28000], &Machine->memory_region[0][0x24000], 0x4000);
+	memcpy(&Machine->memory_region[0][0x20000], &Machine->memory_region[0][0x28000], 0x4000);
+	memcpy(&Machine->memory_region[0][0x24000], &Machine->memory_region[0][0x28000], 0x4000);
 	expand_roms(EXPAND_NONE); balsente_shooter = 0; /* noanalog */
 }
+static void triviasp_init(void) { triviag2_init(); }
+static void triviayp_init(void) { triviag2_init(); }
+static void triviabb_init(void) { triviag2_init(); }
 static void gimeabrk_init(void) { expand_roms(EXPAND_ALL);  balsente_shooter = 0; adc_shift = 1; }
-static void minigolf_init(void) { expand_roms(0x0c);        balsente_shooter = 0; adc_shift = 1; }
-static void minigol2_init(void) { expand_roms(EXPAND_NONE); balsente_shooter = 0; adc_shift = 1; }
+static void minigolf_init(void) { expand_roms(0x0c);        balsente_shooter = 0; adc_shift = 2; }
+static void minigol2_init(void) { expand_roms(EXPAND_NONE); balsente_shooter = 0; adc_shift = 2; }
 static void toggle_init(void)   { expand_roms(EXPAND_ALL);  balsente_shooter = 0; /* noanalog */ }
 static void nstocker_init(void)
 {
 	install_mem_read_handler(0, 0x9902, 0x9902, nstocker_port2_r);
-	expand_roms(EXPAND_NONE); balsente_shooter = 1; adc_shift = 1;
+	expand_roms(EXPAND_NONE | SWAP_HALVES); balsente_shooter = 1; adc_shift = 1;
 }
-static void sfootbal_init(void) { expand_roms(EXPAND_ALL);  balsente_shooter = 0; adc_shift = 0; }
+static void sfootbal_init(void) { expand_roms(EXPAND_ALL  | SWAP_HALVES); balsente_shooter = 0; adc_shift = 0; }
+static void nametune_init(void) { expand_roms(EXPAND_NONE | SWAP_HALVES); balsente_shooter = 0; /* noanalog */ }
 static void rescraid_init(void) { expand_roms(EXPAND_NONE); balsente_shooter = 0; /* noanalog */ }
 
 
@@ -2619,7 +2633,7 @@ ROM_START( snakepit_rom )
 	ROM_LOAD( "spit-ab3.bin", 0x16000, 0x2000, 0x56cb51a8 )
 	ROM_LOAD( "spit-ab4.bin", 0x18000, 0x2000, 0x40ba61e0 )
 	ROM_LOAD( "spit-ab5.bin", 0x1a000, 0x2000, 0x2a1d9d8f )
-	ROM_LOAD( "spit-cd.bin",  0x2c000, 0x2000, BADCRC( 0xc5dd5d07 ))
+	ROM_LOAD( "spit-cd.bin",  0x2c000, 0x2000, 0x54095cbb )
 	ROM_LOAD( "spit-ef.bin",  0x2e000, 0x2000, 0x5f836a66 )
 
 	ROM_REGION(0x10000)		/* 64k for Z80 */
@@ -2703,22 +2717,79 @@ ROM_START( triviag1_rom )
 ROM_END
 
 
+ROM_START( triviag2_rom )
+	ROM_REGION(0x40000)     /* 64k for code for the first CPU, plus 128k of banked ROMs */
+	ROM_LOAD( "ab01.bin",  0x10000, 0x4000, 0x4fca20c5 )
+	ROM_LOAD( "ab23.bin",  0x14000, 0x4000, 0x6cf2ddeb )
+	ROM_LOAD( "ab45.bin",  0x18000, 0x4000, 0xa7ff789c )
+	ROM_LOAD( "ab67.bin",  0x1c000, 0x4000, 0xcc5c68ef )
+	ROM_LOAD( "cd45.bin",  0x28000, 0x4000, 0xfc9c752a )
+	ROM_LOAD( "cd6ef.bin", 0x2c000, 0x4000, 0x23b56fb8 )
+
+	ROM_REGION(0x10000)		/* 64k for Z80 */
+	ROM_LOAD( "sentesnd",  0x00000, 0x2000, 0x4dd0a525 )
+
+	ROM_REGION_DISPOSE(0x10000)	/* up to 64k of sprites */
+	ROM_LOAD( "gr01.bin",  0x00000, 0x4000, 0x6829de8e )
+	ROM_LOAD( "gr23.bin",  0x04000, 0x4000, 0x89398700 )
+	ROM_LOAD( "gr45.bin",  0x08000, 0x4000, 0x1e870293 )
+ROM_END
+
+
 ROM_START( triviasp_rom )
 	ROM_REGION(0x40000)     /* 64k for code for the first CPU, plus 128k of banked ROMs */
 	ROM_LOAD( "allsport.8a", 0x10000, 0x4000, 0x54b7ff31 )
 	ROM_LOAD( "allsport.7a", 0x14000, 0x4000, 0x59fae9d2 )
 	ROM_LOAD( "allsport.6a", 0x18000, 0x4000, 0x237b6b95 )
 	ROM_LOAD( "allsport.5a", 0x1c000, 0x4000, 0xb64d7f61 )
-	ROM_LOAD( "allsport.3a", 0x24000, 0x4000, 0xe45d09d6 )
+	ROM_LOAD( "allsport.3a", 0x28000, 0x4000, 0xe45d09d6 )
 	ROM_LOAD( "allsport.1a", 0x2c000, 0x4000, 0x8bb3e831 )
 
 	ROM_REGION(0x10000)		/* 64k for Z80 */
 	ROM_LOAD( "sentesnd",     0x00000, 0x2000, 0x4dd0a525 )
 
 	ROM_REGION_DISPOSE(0x10000)	/* up to 64k of sprites */
-	ROM_LOAD( "allsport.6b", 0x00000, 0x4000, 0x6829de8e )
-	ROM_LOAD( "allsport.5b", 0x04000, 0x4000, 0x89398700 )
+	ROM_LOAD( "gr01.bin",    0x00000, 0x4000, 0x6829de8e )
+	ROM_LOAD( "gr23.bin",    0x04000, 0x4000, 0x89398700 )
 	ROM_LOAD( "allsport.3b", 0x08000, 0x4000, 0x7415a7fc )
+ROM_END
+
+
+ROM_START( triviayp_rom )
+	ROM_REGION(0x40000)     /* 64k for code for the first CPU, plus 128k of banked ROMs */
+	ROM_LOAD( "ab01.bin",  0x10000, 0x4000, 0x97d35a85 )
+	ROM_LOAD( "ab23.bin",  0x14000, 0x4000, 0x2ff67c70 )
+	ROM_LOAD( "ab45.bin",  0x18000, 0x4000, 0x511a0fab )
+	ROM_LOAD( "ab67.bin",  0x1c000, 0x4000, 0xdf99d00c )
+	ROM_LOAD( "cd45.bin",  0x28000, 0x4000, 0xac45809e )
+	ROM_LOAD( "cd6ef.bin", 0x2c000, 0x4000, 0xa008059f )
+
+	ROM_REGION(0x10000)		/* 64k for Z80 */
+	ROM_LOAD( "sentesnd",  0x00000, 0x2000, 0x4dd0a525 )
+
+	ROM_REGION_DISPOSE(0x10000)	/* up to 64k of sprites */
+	ROM_LOAD( "gr01.bin", 0x00000, 0x4000, 0x6829de8e )
+	ROM_LOAD( "gr23.bin", 0x04000, 0x4000, 0x89398700 )
+	ROM_LOAD( "gr45.bin", 0x08000, 0x4000, 0x1242033e )
+ROM_END
+
+
+ROM_START( triviabb_rom )
+	ROM_REGION(0x40000)     /* 64k for code for the first CPU, plus 128k of banked ROMs */
+	ROM_LOAD( "ab01.bin",  0x10000, 0x4000, 0x1b7c439d )
+	ROM_LOAD( "ab23.bin",  0x14000, 0x4000, 0xe4f1e704 )
+	ROM_LOAD( "ab45.bin",  0x18000, 0x4000, 0xdaa2d8bc )
+	ROM_LOAD( "ab67.bin",  0x1c000, 0x4000, 0x3622c4f1 )
+	ROM_LOAD( "cd45.bin",  0x28000, 0x4000, 0x07fd88ff )
+	ROM_LOAD( "cd6ef.bin", 0x2c000, 0x4000, 0x2d03f241 )
+
+	ROM_REGION(0x10000)		/* 64k for Z80 */
+	ROM_LOAD( "sentesnd",  0x00000, 0x2000, 0x4dd0a525 )
+
+	ROM_REGION_DISPOSE(0x10000)	/* up to 64k of sprites */
+	ROM_LOAD( "gr01.bin", 0x00000, 0x4000, 0x6829de8e )
+	ROM_LOAD( "gr23.bin", 0x04000, 0x4000, 0x89398700 )
+	ROM_LOAD( "gr45.bin", 0x08000, 0x4000, 0x92fb6fb1 )
 ROM_END
 
 
@@ -2793,22 +2864,14 @@ ROM_END
 
 ROM_START( nstocker_rom )
 	ROM_REGION(0x40000)     /* 64k for code for the first CPU, plus 128k of banked ROMs */
-	ROM_LOAD( "ab01.u8a",  0x12000, 0x2000, 0xa635f973 )
-	ROM_CONTINUE(          0x10000, 0x2000 )
-	ROM_LOAD( "ab23.u7a",  0x16000, 0x2000, 0x223acbb2 )
-	ROM_CONTINUE(          0x14000, 0x2000 )
-	ROM_LOAD( "ab45.u6a",  0x1a000, 0x2000, 0x27a728b5 )
-	ROM_CONTINUE(          0x18000, 0x2000 )
-	ROM_LOAD( "ab67.u5a",  0x1e000, 0x2000, 0x2999cdf2 )
-	ROM_CONTINUE(          0x1c000, 0x2000 )
-	ROM_LOAD( "cd01.u4a",  0x22000, 0x2000, 0x75e9b51a )
-	ROM_CONTINUE(          0x20000, 0x2000 )
-	ROM_LOAD( "cd23.u3a",  0x26000, 0x2000, 0x0a32e0a5 )
-	ROM_CONTINUE(          0x24000, 0x2000 )
-	ROM_LOAD( "cd45.u2a",  0x2a000, 0x2000, 0x9bb292fe )
-	ROM_CONTINUE(          0x28000, 0x2000 )
-	ROM_LOAD( "cd6ef.u1a", 0x2e000, 0x2000, 0xe77c1aea )
-	ROM_CONTINUE(          0x2c000, 0x2000)
+	ROM_LOAD( "ab01.u8a",  0x10000, 0x4000, 0xa635f973 )
+	ROM_LOAD( "ab23.u7a",  0x14000, 0x4000, 0x223acbb2 )
+	ROM_LOAD( "ab45.u6a",  0x18000, 0x4000, 0x27a728b5 )
+	ROM_LOAD( "ab67.u5a",  0x1c000, 0x4000, 0x2999cdf2 )
+	ROM_LOAD( "cd01.u4a",  0x20000, 0x4000, 0x75e9b51a )
+	ROM_LOAD( "cd23.u3a",  0x24000, 0x4000, 0x0a32e0a5 )
+	ROM_LOAD( "cd45.u2a",  0x28000, 0x4000, 0x9bb292fe )
+	ROM_LOAD( "cd6ef.u1a", 0x2c000, 0x4000, 0xe77c1aea )
 
 	ROM_REGION(0x10000)		/* 64k for Z80 */
 	ROM_LOAD( "sentesnd",  0x00000, 0x2000, 0x4dd0a525 )
@@ -2823,14 +2886,10 @@ ROM_END
 
 ROM_START( sfootbal_rom )
 	ROM_REGION(0x40000)     /* 64k for code for the first CPU, plus 128k of banked ROMs */
-	ROM_LOAD( "sfbab01.bin",  0x12000, 0x2000, 0x2a69803f )
-	ROM_CONTINUE(             0x10000, 0x2000 )
-	ROM_LOAD( "sfbab23.bin",  0x16000, 0x2000, 0x89f157c2 )
-	ROM_CONTINUE(             0x14000, 0x2000 )
-	ROM_LOAD( "sfbab45.bin",  0x1a000, 0x2000, 0x91ad42c5 )
-	ROM_CONTINUE(             0x18000, 0x2000 )
-	ROM_LOAD( "sfbcd6ef.bin", 0x2e000, 0x2000, 0xbf80bb1a )
-	ROM_CONTINUE(             0x2c000, 0x2000 )
+	ROM_LOAD( "sfbab01.bin",  0x10000, 0x4000, 0x2a69803f )
+	ROM_LOAD( "sfbab23.bin",  0x14000, 0x4000, 0x89f157c2 )
+	ROM_LOAD( "sfbab45.bin",  0x18000, 0x4000, 0x91ad42c5 )
+	ROM_LOAD( "sfbcd6ef.bin", 0x2c000, 0x4000, 0xbf80bb1a )
 
 	ROM_REGION(0x10000)		/* 64k for Z80 */
 	ROM_LOAD( "sentesnd",  0x00000, 0x2000, 0x4dd0a525 )
@@ -2840,6 +2899,33 @@ ROM_START( sfootbal_rom )
 	ROM_LOAD( "sfbgr23.bin", 0x04000, 0x4000, 0x5c5af726 )
 	ROM_LOAD( "sfbgr45.bin", 0x08000, 0x4000, 0xe767251e )
 	ROM_LOAD( "sfbgr67.bin", 0x0c000, 0x4000, 0x42452a7a )
+ROM_END
+
+
+ROM_START( nametune_rom )
+	ROM_REGION(0x70000)     /* 64k for code for the first CPU, plus 128k of banked ROMs */
+	ROM_LOAD( "nttab01.bin",  0x10000, 0x4000, 0xf99054f1 )
+	ROM_CONTINUE(             0x40000, 0x4000 )
+	ROM_LOAD( "nttab23.bin",  0x14000, 0x4000, 0xf2b8f7fa )
+	ROM_CONTINUE(             0x44000, 0x4000 )
+	ROM_LOAD( "nttab45.bin",  0x18000, 0x4000, 0x89e1c769 )
+	ROM_CONTINUE(             0x48000, 0x4000 )
+	ROM_LOAD( "nttab67.bin",  0x1c000, 0x4000, 0x7e5572a1 )
+	ROM_CONTINUE(             0x4c000, 0x4000 )
+	ROM_LOAD( "nttcd01.bin",  0x20000, 0x4000, 0xdb9d6154 )
+	ROM_CONTINUE(             0x50000, 0x4000 )
+	ROM_LOAD( "nttcd23.bin",  0x24000, 0x4000, 0x9d2e458f )
+	ROM_CONTINUE(             0x54000, 0x4000 )
+	ROM_LOAD( "nttcd45.bin",  0x28000, 0x4000, 0x9a4b87aa )
+	ROM_CONTINUE(             0x58000, 0x4000 )
+	ROM_LOAD( "nttcd6ef.bin", 0x2c000, 0x4000, 0x0459e6f8 )
+	ROM_CONTINUE(             0x5c000, 0x4000 )
+
+	ROM_REGION(0x10000)		/* 64k for Z80 */
+	ROM_LOAD( "sentesnd",  0x00000, 0x2000, 0x4dd0a525 )
+
+	ROM_REGION_DISPOSE(0x10000)	/* up to 64k of sprites */
+	ROM_LOAD( "nttgr0.bin",  0x00000, 0x8000, 0x6b75bb4b )
 ROM_END
 
 
@@ -2930,11 +3016,15 @@ BALSENTE_DRIVER      (snakepit, 1984, "Snake Pit")
 BALSENTE_DRIVER      (snakjack, 1984, "Snacks'n Jaxson")
 BALSENTE_DRIVER      (stocker,  1984, "Stocker")
 BALSENTE_DRIVER      (triviag1, 1984, "Trivial Pursuit (Genus I)")
+BALSENTE_DRIVER      (triviag2, 1984, "Trivial Pursuit (Genus II)")
 BALSENTE_DRIVER      (triviasp, 1984, "Trivial Pursuit (All Star Sports Edition)")
+BALSENTE_DRIVER      (triviayp, 1984, "Trivial Pursuit (Young Players Edition)")
+BALSENTE_DRIVER      (triviabb, 1984, "Trivial Pursuit (Baby Boomer Edition)")
 BALSENTE_DRIVER      (gimeabrk, 1985, "Gimme A Break")
 BALSENTE_DRIVER      (minigolf, 1985, "Mini Golf (set 1)")
 BALSENTE_CLONE_DRIVER(minigol2, 1985, "Mini Golf (set 2)", minigolf)
 BALSENTE_DRIVER      (toggle,   1985, "Toggle")
 BALSENTE_DRIVER      (nstocker, 1986, "Night Stocker")
 BALSENTE_DRIVER      (sfootbal, 1986, "Street Football")
+BALSENTE_DRIVER      (nametune, 1986, "Name That Tune")
 BALSENTE_DRIVER      (rescraid, 1987, "Rescue Raider")

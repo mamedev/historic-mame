@@ -292,8 +292,8 @@ INLINE void exg( void )
 		/* transfer $ff to both registers */
 		SETREG(0xff,tb>>4);
 		SETREG(0xff,tb&15);
-	} 
-	else 
+	}
+	else
 	{
 		GETREG(t1,tb>>4); GETREG(t2,tb&15);
 		SETREG(t2,tb>>4); SETREG(t1,tb&15);
@@ -311,8 +311,8 @@ INLINE void tfr( void )
 	{
 		/* transfer $ff to register */
 		SETREG(-1,tb&15);
-    } 
-	else 
+    }
+	else
 	{
 		GETREG(t,tb>>4);
 		SETREG(t,tb&15);
@@ -1028,7 +1028,7 @@ INLINE void asr_ix( void )
 	t=RM(EA);
 	CLR_NZC;
 	CC |= (t & CC_C);
-	t=(t&0x80)|(t>>=1);
+	t=(t&0x80)|(t>>1);
 	SET_NZ8(t);
 	WM(EAD,t);
 }

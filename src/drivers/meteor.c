@@ -226,7 +226,7 @@ static unsigned short colortable[] =
 static struct SN76496interface sn76496_interface =
 {
 	3,		/* 3 chips */
-	2000000,	/* 8 MHz / 4 ?*/
+	{ 2000000, 2000000, 2000000 },	/* 8 MHz / 4 ?*/
 	{ 100, 100, 100 }
 };
 

@@ -63,20 +63,36 @@ struct RomModule
 /* The following ones are for code ONLY - don't use for graphics data!!! */
 /* load the ROM at even/odd addresses. Useful with 16 bit games */
 #define ROM_LOAD_EVEN(name,offset,length,crc) { name, offset & ~1, length | ROMFLAG_ALTERNATE, crc },
+#define ROM_RELOAD_EVEN(offset,length) { (char *)-1, offset & ~1, length | ROMFLAG_ALTERNATE, 0 },
 #define ROM_LOAD_ODD(name,offset,length,crc)  { name, offset |  1, length | ROMFLAG_ALTERNATE, crc },
+#define ROM_RELOAD_ODD(offset,length)  { (char *)-1, offset |  1, length | ROMFLAG_ALTERNATE, 0 },
 /* load the ROM at even/odd addresses. Useful with 16 bit games */
 #define ROM_LOAD_WIDE(name,offset,length,crc) { name, offset, length | ROMFLAG_WIDE, crc },
+#define ROM_RELOAD_WIDE(offset,length) { (char *)-1, offset, length | ROMFLAG_WIDE, 0 },
 #define ROM_LOAD_WIDE_SWAP(name,offset,length,crc) { name, offset, length | ROMFLAG_WIDE | ROMFLAG_SWAP, crc },
+#define ROM_RELOAD_WIDE_SWAP(offset,length) { (char *)-1, offset, length | ROMFLAG_WIDE | ROMFLAG_SWAP, 0 },
+
+#ifdef LSB_FIRST
+#define ROM_LOAD_V20_EVEN	ROM_LOAD_EVEN
+#define ROM_RELOAD_V20_EVEN  ROM_RELOAD_EVEN
+#define ROM_LOAD_V20_ODD	ROM_LOAD_ODD
+#define ROM_RELOAD_V20_ODD   ROM_RELOAD_ODD
+#else
+#define ROM_LOAD_V20_EVEN	ROM_LOAD_ODD
+#define ROM_RELOAD_V20_EVEN  ROM_RELOAD_ODD
+#define ROM_LOAD_V20_ODD	ROM_LOAD_EVEN
+#define ROM_RELOAD_V20_ODD   ROM_RELOAD_EVEN
+#endif
 
 /* Use THESE ones for graphics data */
 #ifdef LSB_FIRST
-#define ROM_LOAD_GFX_EVEN  ROM_LOAD_ODD
-#define ROM_LOAD_GFX_ODD   ROM_LOAD_EVEN
-#define ROM_LOAD_GFX_SWAP  ROM_LOAD_WIDE
+#define ROM_LOAD_GFX_EVEN    ROM_LOAD_ODD
+#define ROM_LOAD_GFX_ODD     ROM_LOAD_EVEN
+#define ROM_LOAD_GFX_SWAP    ROM_LOAD_WIDE
 #else
-#define ROM_LOAD_GFX_EVEN  ROM_LOAD_EVEN
-#define ROM_LOAD_GFX_ODD   ROM_LOAD_ODD
-#define ROM_LOAD_GFX_SWAP  ROM_LOAD_WIDE_SWAP
+#define ROM_LOAD_GFX_EVEN    ROM_LOAD_EVEN
+#define ROM_LOAD_GFX_ODD     ROM_LOAD_ODD
+#define ROM_LOAD_GFX_SWAP    ROM_LOAD_WIDE_SWAP
 #endif
 
 /* end of table */

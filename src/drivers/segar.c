@@ -1951,63 +1951,57 @@ static struct MachineDriver pignewt_machine_driver =
         0,0,0,0
 };
 
+
 static struct SN76496interface sn76496_interface =
 {
-        2,              /* 2 chips */
-        2000000,        /* 8 MHz / 4 ?*/
-        { 100, 100 }
+	2,              /* 2 chips */
+	{ 2000000, 4000000 },	/* I'm assuming that the sound board is the same as System 1 */
+	{ 100, 100 }
 };
-
-static void sindbadm_init_machine(void)
-{
-        /* I'm assuming that the sound board is the same as System 1 */
-        SN76496_set_clock(1,4000000);
-}
-
 
 static struct MachineDriver sindbadm_machine_driver =
 {
-        /* basic machine hardware */
-        {
-                {
-                        CPU_Z80,
-                        3072000,        /* 3.072 Mhz ? */
-                        0,
-                        sindbadm_readmem,sindbadm_writemem,readport,sindbadm_writeport,
-                        segar_interrupt,1
-                },
-                {
-                        CPU_Z80 | CPU_AUDIO_CPU,
-                        4000000,        /* 4 Mhz ? - see system1.c */
-                        3,      /* memory region #3 */
-                        sindbadm_sound_readmem,sindbadm_sound_writemem,0,0,
-                        interrupt,4                     /* NMIs are caused by the main CPU */
-                }
-        },
-        60, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
-        1,      /* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-        sindbadm_init_machine,
+	/* basic machine hardware */
+	{
+		{
+			CPU_Z80,
+			3072000,        /* 3.072 Mhz ? */
+			0,
+			sindbadm_readmem,sindbadm_writemem,readport,sindbadm_writeport,
+			segar_interrupt,1
+		},
+		{
+			CPU_Z80 | CPU_AUDIO_CPU,
+			4000000,        /* 4 Mhz ? - see system1.c */
+			3,      /* memory region #3 */
+			sindbadm_sound_readmem,sindbadm_sound_writemem,0,0,
+			interrupt,4                     /* NMIs are caused by the main CPU */
+		}
+	},
+	60, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
+	1,      /* 1 CPU slice per frame - interleaving is forced when a sound command is written */
+	0,
 
-        /* video hardware */
-        32*8, 32*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
-        monsterb_gfxdecodeinfo,
-        16*4*2+1,16*4*2+1,              // 16 2-bit colors for foreground and background
-        segar_init_colors,
+	/* video hardware */
+	32*8, 32*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
+	monsterb_gfxdecodeinfo,
+	16*4*2+1,16*4*2+1,              // 16 2-bit colors for foreground and background
+	segar_init_colors,
 
-        VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
-        0,
-        monsterb_vh_start,
-        generic_vh_stop,
-        sindbadm_vh_screenrefresh,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	0,
+	monsterb_vh_start,
+	generic_vh_stop,
+	sindbadm_vh_screenrefresh,
 
-        /* sound hardware */
-        0,0,0,0,
-        {
-                {
-                        SOUND_SN76496,
-                        &sn76496_interface
-                }
-        }
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_SN76496,
+			&sn76496_interface
+		}
+	}
 };
 
 

@@ -1185,6 +1185,7 @@ static int fantasy_hiload(void)
 		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
 			osd_fread(f,&RAM[0x0025],3);
+			osd_fread(f,&RAM[0x0220],3*16);
 			osd_fclose(f);
 		}
 
@@ -1202,6 +1203,7 @@ static void fantasy_hisave(void)
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
 		osd_fwrite(f,&RAM[0x0025],3);
+		osd_fwrite(f,&RAM[0x0220],3*16);
 		osd_fclose(f);
 	}
 }

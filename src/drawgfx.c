@@ -281,7 +281,7 @@ INLINE void blockmove_transpen_noremap_flipx8(
 
 	srcmodulo += srcwidth;
 	dstmodulo -= srcwidth;
-	srcdata += srcwidth-1;
+	//srcdata += srcwidth-1;
 	srcdata -= 3;
 
 	trans4 = transpen * 0x01010101;
@@ -370,7 +370,7 @@ INLINE void blockmove_transpen_noremap_flipx16(
 
 	srcmodulo += srcwidth;
 	dstmodulo -= srcwidth;
-	srcdata += srcwidth-1;
+	//srcdata += srcwidth-1;
 
 	while (srcheight)
 	{
@@ -1667,7 +1667,7 @@ DECLARE(blockmove_opaque_flipx,(
 
 	srcmodulo += srcwidth;
 	dstmodulo -= srcwidth;
-	srcdata += srcwidth-1;
+	//srcdata += srcwidth-1;
 
 	while (srcheight)
 	{
@@ -1764,7 +1764,7 @@ DECLARE(blockmove_transpen_flipx,(
 
 	srcmodulo += srcwidth;
 	dstmodulo -= srcwidth;
-	srcdata += srcwidth-1;
+	//srcdata += srcwidth-1;
 	srcdata -= 3;
 
 	trans4 = transpen * 0x01010101;
@@ -1883,7 +1883,7 @@ DECLARE(blockmove_transmask_flipx,(
 
 	srcmodulo += srcwidth;
 	dstmodulo -= srcwidth;
-	srcdata += srcwidth-1;
+	//srcdata += srcwidth-1;
 	srcdata -= 3;
 
 	while (srcheight)
@@ -1970,7 +1970,7 @@ DECLARE(blockmove_transcolor_flipx,(
 
 	srcmodulo += srcwidth;
 	dstmodulo -= srcwidth;
-	srcdata += srcwidth-1;
+	//srcdata += srcwidth-1;
 
 	while (srcheight)
 	{
@@ -2026,7 +2026,7 @@ DECLARE(blockmove_transthrough_flipx,(
 
 	srcmodulo += srcwidth;
 	dstmodulo -= srcwidth;
-	srcdata += srcwidth-1;
+	//srcdata += srcwidth-1;
 
 	while (srcheight)
 	{
@@ -2099,7 +2099,7 @@ DECLARE(blockmove_pen_table_flipx,(
 
 	srcmodulo += srcwidth;
 	dstmodulo -= srcwidth;
-	srcdata += srcwidth-1;
+	//srcdata += srcwidth-1;
 
 	while (srcheight)
 	{
@@ -2158,7 +2158,7 @@ DECLARE(blockmove_opaque_noremap_flipx,(
 
 	srcmodulo += srcwidth;
 	dstmodulo -= srcwidth;
-	srcdata += srcwidth-1;
+	//srcdata += srcwidth-1;
 
 	while (srcheight)
 	{
@@ -2221,7 +2221,7 @@ DECLARE(blockmove_transthrough_noremap_flipx,(
 
 	srcmodulo += srcwidth;
 	dstmodulo -= srcwidth;
-	srcdata += srcwidth-1;
+	//srcdata += srcwidth-1;
 
 	while (srcheight)
 	{
@@ -2281,16 +2281,19 @@ DECLARE(drawgfx_core,(
 
 		if (flipx)
 		{
-			if ((sx-ox) == 0) sd += gfx->width - sw;
+			//if ((sx-ox) == 0) sd += gfx->width - sw;
+			sd += gfx->width -1 -(sx-ox);
 		}
 		else
 			sd += (sx-ox);
 
 		if (flipy)
 		{
-			if ((sy-oy) == 0) sd += sm * (gfx->height - sh);
-			dd += dm * (sh - 1);
-			dm = -dm;
+			//if ((sy-oy) == 0) sd += sm * (gfx->height - sh);
+			//dd += dm * (sh - 1);
+			//dm = -dm;
+			sd += sm * (gfx->height -1 -(sy-oy));
+			sm = -sm;
 		}
 		else
 			sd += sm * (sy-oy);
@@ -2363,16 +2366,19 @@ DECLARE(copybitmap_core,(
 
 		if (flipx)
 		{
-			if ((sx-ox) == 0) sd += src->width - sw;
+			//if ((sx-ox) == 0) sd += gfx->width - sw;
+			sd += src->width -1 -(sx-ox);
 		}
 		else
 			sd += (sx-ox);
 
 		if (flipy)
 		{
-			if ((sy-oy) == 0) sd += sm * (src->height - sh);
-			dd += dm * (sh - 1);
-			dm = -dm;
+			//if ((sy-oy) == 0) sd += sm * (gfx->height - sh);
+			//dd += dm * (sh - 1);
+			//dm = -dm;
+			sd += sm * (src->height -1 -(sy-oy));
+			sm = -sm;
 		}
 		else
 			sd += sm * (sy-oy);

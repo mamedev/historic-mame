@@ -25,16 +25,19 @@ Etc.
 Emulating this is not trivial.
 
 issue:
-  unknown playfied and sprite position offset : all
-  not work               : berabohm , tankfrce
-  not playable           : bakutotu
-  sometime needed reset  : mmaze , galag88j
-  some sprite wrong      : 'ammo' of galaga88,
-                           sometime 'namco' zoom out in attract mode of dangseed
-                           sometime time count in game select of ws90
-  sprite priority wrong  : pacmania , soukobdx
-  credit display not changed : dangseed
-
+  not work                   : berabohm , tankfrce
+  not playable               : bakutotu
+  sometime need namual reset : galag88j , etc
+  shadow/highlight sprite    : mmaze, pacmania , soukobdx , dangseed , etc
+  playfield offset           : dspirit (1dot shift case flipscreen)
+  display error (about cpu communication ?)
+    : dangseed credit and score is not changed.
+    : ws90 time count of select is wrong , somwtime no display 'score'
+    : gaalga88 flip sprite in opening of 2player case 'TYPE A'
+  no voice sound   : voice data looks unsigned 8bit PCM data
+                     voice data handled by mcu ,maybe
+                     But it is uncertain now.
+                     And voice ROM allocation is wrong too
 stubs for driver.c:
 ------------------
 
@@ -196,6 +199,33 @@ void mwh_bank3(int _address,int _data);
 	mwh_bank3( offs, data );
 }
 
+static int pd000,pd400,pd800,pf000;
+
+static void show_adpcmport(void)
+{
+#if 0
+	char buf[80];
+	sprintf(buf,"d000=%02x d400=%02x d800=%02x f000=%02x",
+	pd000,pd400,pd800,pf000 );
+	usrintf_showmessage(buf);
+#endif
+}
+static void pd000_w(int offset,int data)
+{
+	/* DAC_data_w(0,data); */
+	pd000 = data; show_adpcmport();
+}
+static void pd400_w(int offset,int data)
+{
+	/* DAC_data_w(1,data); */
+	pd400 = data; show_adpcmport();
+}
+
+static void pd800_w(int offset,int data)
+{	pd800 = data; show_adpcmport(); }
+static void pf000_w(int offset,int data)
+{	pf000 = data; show_adpcmport(); }
+
 static struct MemoryReadAddress mcu_readmem[] =
 {
 	{ 0x0000, 0x001f, hd63701_internal_registers_r },
@@ -218,12 +248,13 @@ static struct MemoryWriteAddress mcu_writemem[] =
 	{ 0xc000, 0xc000, mcu_patch_w },
 	{ 0xc000, 0xc7ff, MWA_BANK3 },
 	{ 0xc800, 0xcfff, MWA_RAM }, /* EEPROM */
-//	{ 0xd000, 0xd000, mwh_error },
-//	{ 0xd400, 0xd400, mwh_error },
-//	{ 0xd800, 0xd800, mwh_error },
-//	{ 0xd800, 0xd800, mwh_error },
-//	{ 0xf000, 0xffff, mwh_error },
-	{ 0xf000, 0xffff, MWA_ROM },
+
+	{ 0xd000, 0xd000, pd000_w }, // DAC L ch ?
+	{ 0xd400, 0xd400, pd400_w }, // DAC R ch ?
+	{ 0xd800, 0xd800, pd800_w }, // ??
+	{ 0xf000, 0xf000, pf000_w }, // ??
+
+//	{ 0xf000, 0xffff, MWA_ROM },
 	{ -1 }  /* end of table */
 };
 
@@ -238,6 +269,30 @@ static struct IOReadPort mcu_readport[] =
 	{ HD63701_PORT1, HD63701_PORT1, input_port_3_r },
 	{ -1 }	/* end of table */
 };
+
+static int namcos1_eeprom_load(void)
+{
+	void *f;
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+	{
+		osd_fread(f,&Machine->memory_region[6][0xc800],0x800);
+		osd_fclose(f);
+	}
+
+	return 1;
+}
+
+static void namcos1_eeprom_save(void)
+{
+	void *f;
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&Machine->memory_region[6][0xc800],0x800);
+		osd_fclose(f);
+	}
+}
 
 INPUT_PORTS_START( input_ports )
 	PORT_START /* IN0 */
@@ -356,9 +411,16 @@ static struct namco_interface namco_interface =
 	8,		/* number of voices */
 	50,		/* playback volume */
 	-1,		/* memory region */
-//	8,		/* memory region */
 	1		/* stereo */
 };
+
+#if 0
+static struct DACinterface dac_interface =
+{
+	2,			/* 2 channel ? */
+	{ 50,50 }	/* mixing level */
+};
+#endif
 
 static struct MachineDriver machine_driver =
 {
@@ -400,7 +462,7 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },
 	gfxdecodeinfo,
-	128*16+6*256, 128*16+6*256,
+	128*16+6*256+1, 128*16+6*256+1,
 	namcos1_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
@@ -419,6 +481,12 @@ static struct MachineDriver machine_driver =
 		{
 			SOUND_NAMCO,
 			&namco_interface
+#if 0
+		},
+		{
+			SOUND_DAC,
+			&dac_interface
+#endif
 		}
 	}
 };
@@ -463,7 +531,7 @@ static struct MachineDriver machine_driver16 =
 	/* video hardware */
 	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },
 	gfxdecodeinfo,
-	128*16+6*256, 128*16+6*256,
+	128*16+6*256+1, 128*16+6*256+1,
 	namcos1_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_SUPPORTS_16BIT,
@@ -482,6 +550,12 @@ static struct MachineDriver machine_driver16 =
 		{
 			SOUND_NAMCO,
 			&namco_interface
+#if 0
+		},
+		{
+			SOUND_DAC,
+			&dac_interface
+#endif
 		}
 	}
 };
@@ -1575,7 +1649,8 @@ struct GameDriver NAME##_driver  = \
 	input_ports,      \
 	0, 0, 0,          \
 	ORIENTATION,      \
-	0, 0              \
+	namcos1_eeprom_load, \
+	namcos1_eeprom_save  \
 };
 
 #define NAMCOS1_DRIVERCLONE(NAME,CLONE,REALNAME,YEAR,MANU,INIT_NAME,ORIENTATION) \
@@ -1599,7 +1674,8 @@ struct GameDriver NAME##_driver  = \
 	input_ports,      \
 	0, 0, 0,          \
 	ORIENTATION,      \
-	0, 0              \
+	namcos1_eeprom_load, \
+	namcos1_eeprom_save  \
 };
 
 #define NAMCOS1_DRIVER16(NAME,REALNAME,YEAR,MANU,INIT_NAME,ORIENTATION) \
@@ -1623,7 +1699,8 @@ struct GameDriver NAME##_driver  = \
 	input_ports,      \
 	0, 0, 0,          \
 	ORIENTATION,      \
-	0, 0              \
+	namcos1_eeprom_load, \
+	namcos1_eeprom_save  \
 };
 
 #define NAMCOS1_DRIVER16CLONE(NAME,CLONE,REALNAME,YEAR,MANU,INIT_NAME,ORIENTATION) \
@@ -1647,7 +1724,8 @@ struct GameDriver NAME##_driver  = \
 	input_ports,      \
 	0, 0, 0,          \
 	ORIENTATION,      \
-	0, 0              \
+	namcos1_eeprom_load, \
+	namcos1_eeprom_save  \
 };
 
 #define NAMCOS1_NWDRIVER(NAME,REALNAME,YEAR,MANU,INIT_NAME,ORIENTATION) \
@@ -1671,33 +1749,34 @@ struct GameDriver NAME##_driver  = \
 	input_ports,      \
 	0, 0, 0,          \
 	ORIENTATION,      \
-	0, 0              \
+	namcos1_eeprom_load, \
+	namcos1_eeprom_save  \
 };
 
 NAMCOS1_DRIVER16(shadowld,"Shadow Land","1987","Namco",shadowld,ORIENTATION_DEFAULT)
 NAMCOS1_DRIVER16CLONE(youkaidk,shadowld,"Yokai Douchuuki (Japan)","1987","Namco",shadowld,ORIENTATION_DEFAULT)
-NAMCOS1_DRIVER(dspirit,"Dragon Spirit","1987","Namco",dspirit,ORIENTATION_ROTATE_90)
-//NAMCOS1_DRIVER(dspirita,"Dragon Spirit (set 2)","1987","Namco",dspirit,ORIENTATION_ROTATE_90)
-NAMCOS1_DRIVER(blazer,"Blazer (Japan)","1987","Namco",blazer,ORIENTATION_ROTATE_90)
+NAMCOS1_DRIVER(dspirit,"Dragon Spirit","1987","Namco",dspirit,ORIENTATION_ROTATE_270)
+//NAMCOS1_DRIVER(dspirita,"Dragon Spirit (set 2)","1987","Namco",dspirit,ORIENTATION_ROTATE_270)
+NAMCOS1_DRIVER(blazer,"Blazer (Japan)","1987","Namco",blazer,ORIENTATION_ROTATE_270)
 //NAMCOS1_NWDRIVER(quester,"Quester","1987","Namco",quester,ORIENTATION_DEFAULT)
-NAMCOS1_DRIVER16(pacmania,"Pacmania","1987","Namco",pacmania,ORIENTATION_ROTATE_90)
-NAMCOS1_DRIVER16CLONE(pacmanij,pacmania,"Pacmania (Japan)","1987","Namco",pacmanij,ORIENTATION_ROTATE_90)
-NAMCOS1_DRIVER(galaga88,"Galaga '88","1987","Namco",galaga88,ORIENTATION_ROTATE_90)
-NAMCOS1_DRIVERCLONE(galag88j,galaga88,"Galaga '88 (Japan)","1987","Namco",galag88j,ORIENTATION_ROTATE_90)
+NAMCOS1_DRIVER16(pacmania,"Pacmania","1987","Namco",pacmania,ORIENTATION_ROTATE_270)
+NAMCOS1_DRIVER16CLONE(pacmanij,pacmania,"Pacmania (Japan)","1987","Namco",pacmania,ORIENTATION_ROTATE_270)
+NAMCOS1_DRIVER(galaga88,"Galaga '88","1987","Namco",galaga88,ORIENTATION_ROTATE_270)
+NAMCOS1_DRIVERCLONE(galag88j,galaga88,"Galaga '88 (Japan)","1987","Namco",galaga88,ORIENTATION_ROTATE_270)
 //NAMCOS1_NWDRIVER(wstadium,"World Stadium","1988","Namco",wstadium,ORIENTATION_DEFAULT)
 NAMCOS1_NWDRIVER(berabohm,"Beraboh Man","1988","Namco",berabohm,ORIENTATION_DEFAULT)
 //NAMCOS1_DRIVER(alice,"Alice In Wonderland","1988","Namco",alice,ORIENTATION_DEFAULT)
-NAMCOS1_DRIVER(mmaze,"Marchen Maze (Japan)","1988","Namco",alice,ORIENTATION_DEFAULT)
+NAMCOS1_DRIVER16(mmaze,"Marchen Maze (Japan)","1988","Namco",alice,ORIENTATION_DEFAULT)
 NAMCOS1_NWDRIVER(bakutotu,"Bakutotsu Kijuutei","1988","Namco",bakutotu,ORIENTATION_DEFAULT)
 NAMCOS1_DRIVER(wldcourt,"World Court (Japan)","1988","Namco",wldcourt,ORIENTATION_DEFAULT)
 /* in theory Splatterhouse could fit in 256 colors */
 NAMCOS1_DRIVER16(splatter,"Splatter House (Japan)","1988","Namco",splatter,ORIENTATION_DEFAULT)
 //NAMCOS1_NWDRIVER(faceoff,"Face Off","1988","Namco",faceoff,ORIENTATION_DEFAULT)
-NAMCOS1_DRIVER(rompers,"Rompers (Japan)","1989","Namco",rompers,ORIENTATION_ROTATE_90)
-NAMCOS1_DRIVER(blastoff,"Blast Off (Japan)","1989","Namco",blastoff,ORIENTATION_ROTATE_90)
+NAMCOS1_DRIVER16(rompers,"Rompers (Japan)","1989","Namco",rompers,ORIENTATION_ROTATE_270)
+NAMCOS1_DRIVER(blastoff,"Blast Off (Japan)","1989","Namco",blastoff,ORIENTATION_ROTATE_270)
 //NAMCOS1_NWDRIVER(ws89,"World Stadium 89","1989","Namco",ws89,ORIENTATION_DEFAULT)
 /* dangseed overflows palette in a few places, it might be improveable */
-NAMCOS1_DRIVER(dangseed,"Dangerous Seed (Japan)","1989","Namco",dangseed,ORIENTATION_ROTATE_90)
+NAMCOS1_DRIVER16(dangseed,"Dangerous Seed (Japan)","1989","Namco",dangseed,ORIENTATION_ROTATE_270)
 NAMCOS1_DRIVER(ws90,"World Stadium 90 (Japan)","1990","Namco",ws90,ORIENTATION_DEFAULT)
 NAMCOS1_DRIVER(pistoldm,"Pistol Daimyo no Bouken (Japan)","1990","Namco",pistoldm,ORIENTATION_DEFAULT)
 NAMCOS1_DRIVER(soukobdx,"Souko Ban Deluxe (Japan)","1990","Namco",soukobdx,ORIENTATION_DEFAULT)

@@ -60,16 +60,32 @@ static UINT8 tms34010_win_layout[] = {
 /* TMS34010 State */
 typedef struct
 {
+#if LSB_FIRST
+	INT16 x;
+	INT16 y;
+#else
+	INT16 y;
+	INT16 x;
+#endif
+} XY;
+
+typedef struct
+{
     UINT32 op;
     UINT32 pc;
     UINT32 st;        /* Only here so we can display it in the debug window */
     union                       /* The register files are interleaved, so */
     {                           /* that the SP occupies the same location in both */
-            INT32 Bregs[241];   /* Only every 16th entry is actually used */
+        INT32 Bregs[241];   	/* Only every 16th entry is actually used */
+        XY BregsXY[241];
         struct
         {
             INT32 unused[225];
-            INT32 Aregs[16];
+            union
+            {
+            	INT32 Aregs[16];
+	            XY AregsXY[16];
+			} a;
         } a;
     } regs;
     UINT32 nflag;
@@ -148,20 +164,27 @@ static INT32 (*rfield_functions_s[32]) (UINT32 bitaddr) =
 int	tms34010_ICount;
 
 /* register definitions and shortcuts */
-#define PC (state.pc)
-#define N_FLAG    (state.nflag)
-#define NOTZ_FLAG (state.notzflag)
-#define C_FLAG    (state.cflag)
-#define V_FLAG    (state.vflag)
-#define P_FLAG    (state.pflag)
-#define IE_FLAG   (state.ieflag)
-#define FE0_FLAG  (state.fe0flag)
-#define FE1_FLAG  (state.fe1flag)
-#define AREG(i)   (state.regs.a.Aregs[i])
-#define BREG(i)   (state.regs.Bregs[i])
-#define SP        (state.regs.a.Aregs[15])
-#define FW(i)     (state.fw[i])
-#define FW_INC(i) (state.fw_inc[i])
+#define PC         (state.pc)
+#define ST         (state.st)
+#define N_FLAG     (state.nflag)
+#define NOTZ_FLAG  (state.notzflag)
+#define C_FLAG     (state.cflag)
+#define V_FLAG     (state.vflag)
+#define P_FLAG     (state.pflag)
+#define IE_FLAG    (state.ieflag)
+#define FE0_FLAG   (state.fe0flag)
+#define FE1_FLAG   (state.fe1flag)
+#define AREG(i)    (state.regs.a.a.Aregs[i])
+#define AREG_XY(i) (state.regs.a.a.AregsXY[i])
+#define AREG_X(i)  (state.regs.a.a.AregsXY[i].x)
+#define AREG_Y(i)  (state.regs.a.a.AregsXY[i].y)
+#define BREG(i)    (state.regs.Bregs[i])
+#define BREG_XY(i) (state.regs.BregsXY[i])
+#define BREG_X(i)  (state.regs.BregsXY[i].x)
+#define BREG_Y(i)  (state.regs.BregsXY[i].y)
+#define SP         (state.regs.a.a.Aregs[15])
+#define FW(i)      (state.fw[i])
+#define FW_INC(i)  (state.fw_inc[i])
 #define ASRCREG  (((state.op)>>5)&0x0f)
 #define ADSTREG   ((state.op)    &0x0f)
 #define BSRCREG  (((state.op)&0x1e0)>>1)
@@ -169,7 +192,7 @@ int	tms34010_ICount;
 #define SKIP_WORD (PC += (2<<3))
 #define SKIP_LONG (PC += (4<<3))
 #define PARAM_K   (((state.op)>>5)&0x1f)
-#define PARAM_N   ((state.op)&0x1f)
+#define PARAM_N    ((state.op)&0x1f)
 #define PARAM_REL8 ((signed char) ((state.op)&0x00ff))
 #define WFIELD0(a,b) state.F0_write(a,b)
 #define WFIELD1(a,b) state.F1_write(a,b)
@@ -179,21 +202,32 @@ int	tms34010_ICount;
 #define RPIXEL(a)    state.pixel_read(a)
 
 /* Implied Operands */
-#define SADDR  BREG(0<<4)
-#define SPTCH  BREG(1<<4)
-#define DADDR  BREG(2<<4)
-#define DPTCH  BREG(3<<4)
-#define OFFSET BREG(4<<4)
-#define WSTART BREG(5<<4)
-#define WEND   BREG(6<<4)
-#define DYDX   BREG(7<<4)
-#define COLOR0 BREG(8<<4)
-#define COLOR1 BREG(9<<4)
-#define COUNT  BREG(10<<4)
-#define INC1   BREG(11<<4)
-#define INC2   BREG(12<<4)
-#define PATTRN BREG(13<<4)
-#define TEMP   BREG(14<<4)
+#define SADDR	    BREG(0<<4)
+#define SADDR_X   BREG_X(0<<4)
+#define SADDR_Y   BREG_Y(0<<4)
+#define SADDR_XY BREG_XY(0<<4)
+#define SPTCH       BREG(1<<4)
+#define DADDR       BREG(2<<4)
+#define DADDR_X   BREG_X(2<<4)
+#define DADDR_Y   BREG_Y(2<<4)
+#define DADDR_XY BREG_XY(2<<4)
+#define DPTCH       BREG(3<<4)
+#define OFFSET      BREG(4<<4)
+#define WSTART_X  BREG_X(5<<4)
+#define WSTART_Y  BREG_Y(5<<4)
+#define WEND_X    BREG_X(6<<4)
+#define WEND_Y    BREG_Y(6<<4)
+#define DYDX_X    BREG_X(7<<4)
+#define DYDX_Y    BREG_Y(7<<4)
+#define COLOR0      BREG(8<<4)
+#define COLOR1      BREG(9<<4)
+#define COUNT       BREG(10<<4)
+#define INC1_X    BREG_X(11<<4)
+#define INC1_Y    BREG_Y(11<<4)
+#define INC2_X    BREG_X(12<<4)
+#define INC2_Y    BREG_Y(12<<4)
+#define PATTRN      BREG(13<<4)
+#define TEMP        BREG(14<<4)
 
 /* set the field widths - shortcut */
 INLINE void SET_FW(void)
@@ -802,7 +836,7 @@ void tms34010_set_pc(unsigned val)
  ****************************************************************************/
 unsigned tms34010_get_sp(void)
 {
-    return state.regs.a.Aregs[15];
+    return SP;
 }
 
 
@@ -811,7 +845,7 @@ unsigned tms34010_get_sp(void)
  ****************************************************************************/
 void tms34010_set_sp(unsigned val)
 {
-    state.regs.a.Aregs[15] = val;
+    SP = val;
 }
 
 
@@ -822,44 +856,44 @@ unsigned tms34010_get_reg(int regnum)
 {
     switch( regnum )
     {
-        case TMS34010_PC: return state.pc;
-        case TMS34010_SP: return state.regs.a.Aregs[15];
-        case TMS34010_ST: return state.st;
-        case TMS34010_A0: return state.regs.a.Aregs[ 0];
-        case TMS34010_A1: return state.regs.a.Aregs[ 1];
-        case TMS34010_A2: return state.regs.a.Aregs[ 2];
-        case TMS34010_A3: return state.regs.a.Aregs[ 3];
-        case TMS34010_A4: return state.regs.a.Aregs[ 4];
-        case TMS34010_A5: return state.regs.a.Aregs[ 5];
-        case TMS34010_A6: return state.regs.a.Aregs[ 6];
-        case TMS34010_A7: return state.regs.a.Aregs[ 7];
-        case TMS34010_A8: return state.regs.a.Aregs[ 8];
-        case TMS34010_A9: return state.regs.a.Aregs[ 9];
-        case TMS34010_A10: return state.regs.a.Aregs[10];
-        case TMS34010_A11: return state.regs.a.Aregs[11];
-        case TMS34010_A12: return state.regs.a.Aregs[12];
-        case TMS34010_A13: return state.regs.a.Aregs[13];
-        case TMS34010_A14: return state.regs.a.Aregs[14];
-        case TMS34010_B0: return state.regs.Bregs[ 0<<4];
-        case TMS34010_B1: return state.regs.Bregs[ 1<<4];
-        case TMS34010_B2: return state.regs.Bregs[ 2<<4];
-        case TMS34010_B3: return state.regs.Bregs[ 3<<4];
-        case TMS34010_B4: return state.regs.Bregs[ 4<<4];
-        case TMS34010_B5: return state.regs.Bregs[ 5<<4];
-        case TMS34010_B6: return state.regs.Bregs[ 6<<4];
-        case TMS34010_B7: return state.regs.Bregs[ 7<<4];
-        case TMS34010_B8: return state.regs.Bregs[ 8<<4];
-        case TMS34010_B9: return state.regs.Bregs[ 9<<4];
-        case TMS34010_B10: return state.regs.Bregs[10<<4];
-        case TMS34010_B11: return state.regs.Bregs[11<<4];
-        case TMS34010_B12: return state.regs.Bregs[12<<4];
-        case TMS34010_B13: return state.regs.Bregs[13<<4];
-        case TMS34010_B14: return state.regs.Bregs[14<<4];
+        case TMS34010_PC:  return PC;
+        case TMS34010_SP:  return SP;
+        case TMS34010_ST:  return ST;
+        case TMS34010_A0:  return AREG( 0);
+        case TMS34010_A1:  return AREG( 1);
+        case TMS34010_A2:  return AREG( 2);
+        case TMS34010_A3:  return AREG( 3);
+        case TMS34010_A4:  return AREG( 4);
+        case TMS34010_A5:  return AREG( 5);
+        case TMS34010_A6:  return AREG( 6);
+        case TMS34010_A7:  return AREG( 7);
+        case TMS34010_A8:  return AREG( 8);
+        case TMS34010_A9:  return AREG( 9);
+        case TMS34010_A10: return AREG(10);
+        case TMS34010_A11: return AREG(11);
+        case TMS34010_A12: return AREG(12);
+        case TMS34010_A13: return AREG(13);
+        case TMS34010_A14: return AREG(14);
+        case TMS34010_B0:  return BREG( 0<<4);
+        case TMS34010_B1:  return BREG( 1<<4);
+        case TMS34010_B2:  return BREG( 2<<4);
+        case TMS34010_B3:  return BREG( 3<<4);
+        case TMS34010_B4:  return BREG( 4<<4);
+        case TMS34010_B5:  return BREG( 5<<4);
+        case TMS34010_B6:  return BREG( 6<<4);
+        case TMS34010_B7:  return BREG( 7<<4);
+        case TMS34010_B8:  return BREG( 8<<4);
+        case TMS34010_B9:  return BREG( 9<<4);
+        case TMS34010_B10: return BREG(10<<4);
+        case TMS34010_B11: return BREG(11<<4);
+        case TMS34010_B12: return BREG(12<<4);
+        case TMS34010_B13: return BREG(13<<4);
+        case TMS34010_B14: return BREG(14<<4);
 /* TODO: return contents of [SP + wordsize * (CPU_SP_CONTENTS-regnum)] */
 		default:
 			if( regnum <= REG_SP_CONTENTS )
 			{
-				unsigned offset = state.regs.a.Aregs[15] + 4 * (REG_SP_CONTENTS - regnum);
+				unsigned offset = SP + 4 * (REG_SP_CONTENTS - regnum);
 				return cpu_readmem29_dword( offset >> 3 );
 			}
     }
@@ -874,44 +908,44 @@ void tms34010_set_reg(int regnum, unsigned val)
 {
     switch( regnum )
     {
-        case TMS34010_PC: state.pc = val; break;
-        case TMS34010_SP: state.regs.a.Aregs[15] = val; break;
-        case TMS34010_ST: state.st = val; break;
-        case TMS34010_A0: state.regs.a.Aregs[ 0] = val; break;
-        case TMS34010_A1: state.regs.a.Aregs[ 1] = val; break;
-        case TMS34010_A2: state.regs.a.Aregs[ 2] = val; break;
-        case TMS34010_A3: state.regs.a.Aregs[ 3] = val; break;
-        case TMS34010_A4: state.regs.a.Aregs[ 4] = val; break;
-        case TMS34010_A5: state.regs.a.Aregs[ 5] = val; break;
-        case TMS34010_A6: state.regs.a.Aregs[ 6] = val; break;
-        case TMS34010_A7: state.regs.a.Aregs[ 7] = val; break;
-        case TMS34010_A8: state.regs.a.Aregs[ 8] = val; break;
-        case TMS34010_A9: state.regs.a.Aregs[ 9] = val; break;
-        case TMS34010_A10: state.regs.a.Aregs[10] = val; break;
-        case TMS34010_A11: state.regs.a.Aregs[11] = val; break;
-        case TMS34010_A12: state.regs.a.Aregs[12] = val; break;
-        case TMS34010_A13: state.regs.a.Aregs[13] = val; break;
-        case TMS34010_A14: state.regs.a.Aregs[14] = val; break;
-        case TMS34010_B0: state.regs.Bregs[ 0<<4] = val; break;
-        case TMS34010_B1: state.regs.Bregs[ 1<<4] = val; break;
-        case TMS34010_B2: state.regs.Bregs[ 2<<4] = val; break;
-        case TMS34010_B3: state.regs.Bregs[ 3<<4] = val; break;
-        case TMS34010_B4: state.regs.Bregs[ 4<<4] = val; break;
-        case TMS34010_B5: state.regs.Bregs[ 5<<4] = val; break;
-        case TMS34010_B6: state.regs.Bregs[ 6<<4] = val; break;
-        case TMS34010_B7: state.regs.Bregs[ 7<<4] = val; break;
-        case TMS34010_B8: state.regs.Bregs[ 8<<4] = val; break;
-        case TMS34010_B9: state.regs.Bregs[ 9<<4] = val; break;
-        case TMS34010_B10: state.regs.Bregs[10<<4] = val; break;
-        case TMS34010_B11: state.regs.Bregs[11<<4] = val; break;
-        case TMS34010_B12: state.regs.Bregs[12<<4] = val; break;
-        case TMS34010_B13: state.regs.Bregs[13<<4] = val; break;
-        case TMS34010_B14: state.regs.Bregs[14<<4] = val; break;
+        case TMS34010_PC:  PC = val; break;
+        case TMS34010_SP:  SP = val; break;
+        case TMS34010_ST:  ST = val; break;
+        case TMS34010_A0:  AREG( 0) = val; break;
+        case TMS34010_A1:  AREG( 1) = val; break;
+        case TMS34010_A2:  AREG( 2) = val; break;
+        case TMS34010_A3:  AREG( 3) = val; break;
+        case TMS34010_A4:  AREG( 4) = val; break;
+        case TMS34010_A5:  AREG( 5) = val; break;
+        case TMS34010_A6:  AREG( 6) = val; break;
+        case TMS34010_A7:  AREG( 7) = val; break;
+        case TMS34010_A8:  AREG( 8) = val; break;
+        case TMS34010_A9:  AREG( 9) = val; break;
+        case TMS34010_A10: AREG(10) = val; break;
+        case TMS34010_A11: AREG(11) = val; break;
+        case TMS34010_A12: AREG(12) = val; break;
+        case TMS34010_A13: AREG(13) = val; break;
+        case TMS34010_A14: AREG(14) = val; break;
+        case TMS34010_B0:  BREG( 0<<4) = val; break;
+        case TMS34010_B1:  BREG( 1<<4) = val; break;
+        case TMS34010_B2:  BREG( 2<<4) = val; break;
+        case TMS34010_B3:  BREG( 3<<4) = val; break;
+        case TMS34010_B4:  BREG( 4<<4) = val; break;
+        case TMS34010_B5:  BREG( 5<<4) = val; break;
+        case TMS34010_B6:  BREG( 6<<4) = val; break;
+        case TMS34010_B7:  BREG( 7<<4) = val; break;
+        case TMS34010_B8:  BREG( 8<<4) = val; break;
+        case TMS34010_B9:  BREG( 9<<4) = val; break;
+        case TMS34010_B10: BREG(10<<4) = val; break;
+        case TMS34010_B11: BREG(11<<4) = val; break;
+        case TMS34010_B12: BREG(12<<4) = val; break;
+        case TMS34010_B13: BREG(13<<4) = val; break;
+        case TMS34010_B14: BREG(14<<4) = val; break;
 /* TODO: set contents of [SP + wordsize * (CPU_SP_CONTENTS-regnum)] */
 		default:
 			if( regnum <= REG_SP_CONTENTS )
 			{
-				unsigned offset = state.regs.a.Aregs[15] + 4 * (REG_SP_CONTENTS - regnum);
+				unsigned offset = SP + 4 * (REG_SP_CONTENTS - regnum);
 				cpu_writemem29_word( offset >> 3, val ); /* ??? */
 			}
 	}
@@ -1158,23 +1192,23 @@ const char *tms34010_info(void *context, int regnum)
 				r->st & 0x00000001 ? 'F':'.');
             break;
 		case CPU_INFO_REG+TMS34010_PC: sprintf(buffer[which], "PC :%08X", r->pc); break;
-		case CPU_INFO_REG+TMS34010_SP: sprintf(buffer[which], "SP :%08X", r->regs.a.Aregs[15]); break;
+		case CPU_INFO_REG+TMS34010_SP: sprintf(buffer[which], "SP :%08X", r->regs.a.a.Aregs[15]); break;
 		case CPU_INFO_REG+TMS34010_ST: sprintf(buffer[which], "ST :%08X", r->st); break;
-		case CPU_INFO_REG+TMS34010_A0: sprintf(buffer[which], "A0 :%08X", r->regs.a.Aregs[ 0]); break;
-		case CPU_INFO_REG+TMS34010_A1: sprintf(buffer[which], "A1 :%08X", r->regs.a.Aregs[ 1]); break;
-		case CPU_INFO_REG+TMS34010_A2: sprintf(buffer[which], "A2 :%08X", r->regs.a.Aregs[ 2]); break;
-		case CPU_INFO_REG+TMS34010_A3: sprintf(buffer[which], "A3 :%08X", r->regs.a.Aregs[ 3]); break;
-		case CPU_INFO_REG+TMS34010_A4: sprintf(buffer[which], "A4 :%08X", r->regs.a.Aregs[ 4]); break;
-		case CPU_INFO_REG+TMS34010_A5: sprintf(buffer[which], "A5 :%08X", r->regs.a.Aregs[ 5]); break;
-		case CPU_INFO_REG+TMS34010_A6: sprintf(buffer[which], "A6 :%08X", r->regs.a.Aregs[ 6]); break;
-		case CPU_INFO_REG+TMS34010_A7: sprintf(buffer[which], "A7 :%08X", r->regs.a.Aregs[ 7]); break;
-		case CPU_INFO_REG+TMS34010_A8: sprintf(buffer[which], "A8 :%08X", r->regs.a.Aregs[ 8]); break;
-		case CPU_INFO_REG+TMS34010_A9: sprintf(buffer[which], "A9 :%08X", r->regs.a.Aregs[ 9]); break;
-		case CPU_INFO_REG+TMS34010_A10: sprintf(buffer[which],"A10:%08X", r->regs.a.Aregs[10]); break;
-		case CPU_INFO_REG+TMS34010_A11: sprintf(buffer[which],"A11:%08X", r->regs.a.Aregs[11]); break;
-		case CPU_INFO_REG+TMS34010_A12: sprintf(buffer[which],"A12:%08X", r->regs.a.Aregs[12]); break;
-		case CPU_INFO_REG+TMS34010_A13: sprintf(buffer[which],"A13:%08X", r->regs.a.Aregs[13]); break;
-		case CPU_INFO_REG+TMS34010_A14: sprintf(buffer[which],"A14:%08X", r->regs.a.Aregs[14]); break;
+		case CPU_INFO_REG+TMS34010_A0: sprintf(buffer[which], "A0 :%08X", r->regs.a.a.Aregs[ 0]); break;
+		case CPU_INFO_REG+TMS34010_A1: sprintf(buffer[which], "A1 :%08X", r->regs.a.a.Aregs[ 1]); break;
+		case CPU_INFO_REG+TMS34010_A2: sprintf(buffer[which], "A2 :%08X", r->regs.a.a.Aregs[ 2]); break;
+		case CPU_INFO_REG+TMS34010_A3: sprintf(buffer[which], "A3 :%08X", r->regs.a.a.Aregs[ 3]); break;
+		case CPU_INFO_REG+TMS34010_A4: sprintf(buffer[which], "A4 :%08X", r->regs.a.a.Aregs[ 4]); break;
+		case CPU_INFO_REG+TMS34010_A5: sprintf(buffer[which], "A5 :%08X", r->regs.a.a.Aregs[ 5]); break;
+		case CPU_INFO_REG+TMS34010_A6: sprintf(buffer[which], "A6 :%08X", r->regs.a.a.Aregs[ 6]); break;
+		case CPU_INFO_REG+TMS34010_A7: sprintf(buffer[which], "A7 :%08X", r->regs.a.a.Aregs[ 7]); break;
+		case CPU_INFO_REG+TMS34010_A8: sprintf(buffer[which], "A8 :%08X", r->regs.a.a.Aregs[ 8]); break;
+		case CPU_INFO_REG+TMS34010_A9: sprintf(buffer[which], "A9 :%08X", r->regs.a.a.Aregs[ 9]); break;
+		case CPU_INFO_REG+TMS34010_A10: sprintf(buffer[which],"A10:%08X", r->regs.a.a.Aregs[10]); break;
+		case CPU_INFO_REG+TMS34010_A11: sprintf(buffer[which],"A11:%08X", r->regs.a.a.Aregs[11]); break;
+		case CPU_INFO_REG+TMS34010_A12: sprintf(buffer[which],"A12:%08X", r->regs.a.a.Aregs[12]); break;
+		case CPU_INFO_REG+TMS34010_A13: sprintf(buffer[which],"A13:%08X", r->regs.a.a.Aregs[13]); break;
+		case CPU_INFO_REG+TMS34010_A14: sprintf(buffer[which],"A14:%08X", r->regs.a.a.Aregs[14]); break;
 		case CPU_INFO_REG+TMS34010_B0: sprintf(buffer[which], "B0 :%08X", r->regs.Bregs[ 0<<4]); break;
 		case CPU_INFO_REG+TMS34010_B1: sprintf(buffer[which], "B1 :%08X", r->regs.Bregs[ 1<<4]); break;
 		case CPU_INFO_REG+TMS34010_B2: sprintf(buffer[which], "B2 :%08X", r->regs.Bregs[ 2<<4]); break;

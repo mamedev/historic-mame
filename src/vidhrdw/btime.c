@@ -4,6 +4,8 @@
 
 	Functions to emulate the video hardware of the machine.
 
+This file is also used by scregg.c
+
 ***************************************************************************/
 
 #include "driver.h"

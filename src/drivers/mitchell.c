@@ -75,7 +75,7 @@ static int block_input_r(int offset)
 			delta = (-delta) & 0xff;
 			if (dir[offset])
 			{
-			/* don't report movement on a direction change,otherwise it will stutter */
+			/* don't report movement on a direction change, otherwise it will stutter */
 				dir[offset] = 0;
 				delta = 0;
 			}
@@ -84,7 +84,7 @@ static int block_input_r(int offset)
 		{
 			if (dir[offset] == 0)
 			{
-			/* don't report movement on a direction change,otherwise it will stutter */
+			/* don't report movement on a direction change, otherwise it will stutter */
 				dir[offset] = 1;
 				delta = 0;
 			}

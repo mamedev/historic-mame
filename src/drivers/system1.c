@@ -45,8 +45,6 @@ static void system1_init_machine(void)
 
 	system1_define_sprite_pixelmode(system1_SPRITE_PIXEL_MODE1);
 	system1_define_background_memory(system1_BACKGROUND_MEMORY_SINGLE);
-
-	SN76496_set_clock(1,4000000);
 }
 
 static void chplft_init_machine(void)
@@ -59,8 +57,6 @@ static void chplft_init_machine(void)
 
 	system1_define_sprite_pixelmode(system1_SPRITE_PIXEL_MODE2);
 	system1_define_background_memory(system1_BACKGROUND_MEMORY_SINGLE);
-
-	SN76496_set_clock(1,4000000);
 }
 
 static void wbml_init_machine(void)
@@ -73,8 +69,6 @@ static void wbml_init_machine(void)
 
 	system1_define_sprite_pixelmode(system1_SPRITE_PIXEL_MODE2);
 	system1_define_background_memory(system1_BACKGROUND_MEMORY_BANKED);
-
-	SN76496_set_clock(1,4000000);
 }
 
 
@@ -1721,7 +1715,7 @@ static struct GfxDecodeInfo chplft_gfxdecodeinfo[] =
 static struct SN76496interface sn76496_interface =
 {
 	2,		/* 2 chips */
-	2000000,	/* 8 MHz / 4 ?*/
+	{ 2000000, 4000000 },	/* 8 MHz / 4 ?*/
 	{ 50, 50 }
 };
 

@@ -10,22 +10,25 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "machine/mcr.h"
 #include "vidhrdw/generic.h"
 
 
-static int sprite_transparency[128]; /* no mcr2 game has more than this many sprites */
+UINT8 mcr2_sprite_color;
+
+static UINT8 last_cocktail_flip;
 
 
-/***************************************************************************
 
-  Generic MCR/II video routines
-
-***************************************************************************/
+/*************************************
+ *
+ *	Generic MCR2 palette writes
+ *
+ *************************************/
 
 void mcr2_paletteram_w(int offset,int data)
 {
-	int r,g,b;
-
+	int r, g, b;
 
 	paletteram[offset] = data;
 
@@ -39,9 +42,16 @@ void mcr2_paletteram_w(int offset,int data)
 	g = (g << 5) | (g << 2) | (g >> 1);
 	b = (b << 5) | (b << 2) | (b >> 1);
 
-	palette_change_color(offset/2,r,g,b);
-}
+	palette_change_color(offset / 2, r, g, b);
+} 
 
+
+
+/*************************************
+ *
+ *	Generic MCR2 videoram writes
+ *
+ *************************************/
 
 void mcr2_videoram_w(int offset,int data)
 {
@@ -53,206 +63,143 @@ void mcr2_videoram_w(int offset,int data)
 }
 
 
-void mcr2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+
+/*************************************
+ *
+ *	Background update
+ *
+ *************************************/
+
+static void mcr2_update_background(struct osd_bitmap *bitmap)
 {
 	int offs;
-	int mx,my;
-	int attr;
-	int color;
-
-	if (full_refresh)
-		memset (dirtybuffer, 1, videoram_size);
-
+	
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
-	for (offs = videoram_size - 2;offs >= 0;offs -= 2)
+	for (offs = videoram_size - 2; offs >= 0; offs -= 2)
 	{
-		/*
-		The attributes are as follows:
-		0x01 = character bank
-		0x02 = flip x
-		0x04 = flip y
-		0x18 = color
-		*/
-
 		if (dirtybuffer[offs])
 		{
+			int mx = (offs / 2) % 32;
+			int my = (offs / 2) / 32;
+			
+			int attr = videoram[offs + 1];
+			int code = videoram[offs] + 256 * (attr & 0x01);
+			int hflip = attr & 0x02;
+			int vflip = attr & 0x04;
+			int color = (attr & 0x18) >> 3;
+
+			if (!mcr_cocktail_flip)
+				drawgfx(bitmap, Machine->gfx[0], code, color, hflip, vflip,
+						16 * mx, 16 * my, &Machine->drv->visible_area, TRANSPARENCY_NONE, 0);
+			else
+				drawgfx(bitmap, Machine->gfx[0], code, color, !hflip, !vflip,
+						16 * (31 - mx), 16 * (29 - my), &Machine->drv->visible_area, TRANSPARENCY_NONE, 0);
+
 			dirtybuffer[offs] = 0;
-
-			mx = (offs/2) % 32;
-			my = (offs/2) / 32;
-			attr = videoram[offs+1];
-			color = (attr & 0x18) >> 3;
-
-			drawgfx(bitmap,Machine->gfx[0],
-				videoram[offs] + 256*(attr & 0x01),
-				color,
-				attr & 0x02, attr & 0x04,
-				16*mx, 16*my,
-				&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 		}
 	}
+}
 
-	/* Draw the sprites. */
-	for (offs = 0;offs < spriteram_size;offs += 4)
+
+
+/*************************************
+ *
+ *	Sprite update
+ *
+ *************************************/
+
+void mcr2_update_sprites(struct osd_bitmap *bitmap)
+{
+	int offs;
+	
+	for (offs = 0; offs < spriteram_size; offs += 4)
 	{
-		int x,y,sx,sy,flags;
+		int code, x, y, xcount, ycount, hflip, vflip, sx, sy, flags;
 
-		if (spriteram[offs] == 0) continue;
+		/* skip if zero */
+		if (spriteram[offs] == 0)
+			continue;
 
-		flags = spriteram[offs+3];
-		x = (spriteram[offs+2]-3)*2;
-		y = (241-spriteram[offs])*2;
+		/* extract the bits of information */
+		code = spriteram[offs + 1] & 0x3f;
+		hflip = spriteram[offs + 1] & 0x40;
+		vflip = spriteram[offs + 1] & 0x80;
+		flags = spriteram[offs + 3];
+		x = (spriteram[offs + 2] - 3) * 2;
+		y = (241 - spriteram[offs]) * 2;
 
 		/* TRANSPARENCY_PENS, 0x0101 fixes a black border around the fire */
 		/* breath in Satan's Hollow, however it's probably wrong. I don't */
 		/* know what's going on here: using the "pen 8 masks underlying */
 		/* sprites" as in the MCR3 games doesn't seem to make sense. */
-		drawgfx (bitmap,Machine->gfx[1],
-			spriteram[offs+1] & 0x3f,
-			0,
-			spriteram[offs+1] & 0x40, spriteram[offs+1] & 0x80,
-			x,y,
-			&Machine->drv->visible_area,TRANSPARENCY_PENS,0x0101);
+		if (!mcr_cocktail_flip)
+			drawgfx(bitmap, Machine->gfx[1], code, mcr2_sprite_color, hflip, vflip,
+					x, y, &Machine->drv->visible_area, TRANSPARENCY_PENS, 0x0101);
+		else
+			drawgfx(bitmap, Machine->gfx[1], code, mcr2_sprite_color, !hflip, !vflip,
+					466 - x, 448 - y, &Machine->drv->visible_area, TRANSPARENCY_PENS, 0x0101);
 
 		/* mark tiles underneath as dirty */
-		sx = x >> 4;
-		sy = y >> 4;
+		sx = x / 16;
+		sy = y / 16;
+		xcount = (x & 15) ? 4 : 3;
+		ycount = (y & 15) ? 4 : 3;
 
-		{
-			int max_x = 2;
-			int max_y = 2;
-			int x2, y2;
-
-			if (x & 0x1f) max_x = 3;
-			if (y & 0x1f) max_y = 3;
-
-			for (y2 = sy; y2 < sy + max_y; y2 ++)
-			{
-				for (x2 = sx; x2 < sx + max_x; x2 ++)
-				{
-					if ((x2 < 32) && (y2 < 30) && (x2 >= 0) && (y2 >= 0))
-						dirtybuffer[x2*2 + 32*y2 * 2] = 1;
-				}
-			}
-		}
-
+		for (y = sy; y < sy + ycount; y++)
+			for (x = sx; x < sx + xcount; x++)
+				if (x >= 0 && x < 32 && y >= 0 && y < 30)
+					dirtybuffer[(32 * y + x) * 2] = 1;
 	}
 }
 
 
-/***************************************************************************
 
-  Journey-specific video routines
+/*************************************
+ *
+ *	Generic MCR2 redraw
+ *
+ *************************************/
 
-***************************************************************************/
-
-int journey_vh_start(void)
+void mcr2_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
-   /* now check our sprites and mark which ones have color 8 ('draw under') */
-   {
-      struct GfxElement *gfx;
-      int i,x,y;
-      unsigned char *dp;
+	/* mark everything dirty on a full refresh or cocktail flip change */
+	if (full_refresh || last_cocktail_flip != mcr_cocktail_flip)
+		memset(dirtybuffer, 1, videoram_size);
+	last_cocktail_flip = mcr_cocktail_flip;
 
-      gfx = Machine->gfx[1];
-      for (i=0;i<gfx->total_elements;i++)
-      {
-			sprite_transparency[i] = 0;
+	/* redraw the background */
+	mcr2_update_background(bitmap);
 
-			dp = gfx->gfxdata + i * gfx->char_modulo;
-			for (y=0;y<gfx->height;y++)
-			{
-				for (x=0;x<gfx->width;x++)
-				{
-					if (dp[x] == 8)
-						sprite_transparency[i] = 1;
-				}
-				dp += gfx->line_modulo;
-			}
-
-			if (sprite_transparency[i])
-				if (errorlog)
-					fprintf(errorlog,"sprite %i has transparency.\n",i);
-      }
-   }
-
-	return generic_vh_start();
+	/* draw the sprites */
+	mcr2_update_sprites(bitmap);
 }
 
 
+
+/*************************************
+ *
+ *	Journey-specific MCR2 redraw
+ *
+ *	Uses the MCR3 sprite drawing
+ *
+ *************************************/
+
+extern void mcr3_update_sprites(struct osd_bitmap *bitmap, int color_mask, int code_xor, int dx, int dy);
+
 void journey_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-   int offs;
-   int mx,my;
-   int attr;
-   int color;
+	/* mark everything dirty on a cocktail flip change */
+	if (last_cocktail_flip != mcr_cocktail_flip)
+		memset(dirtybuffer, 1, videoram_size);
+	last_cocktail_flip = mcr_cocktail_flip;
 
-   /* for every character in the Video RAM, check if it has been modified */
-   /* since last time and update it accordingly. */
-   for (offs = videoram_size - 2;offs >= 0;offs -= 2)
-   {
-	/*
-		The attributes are as follows:
-		0x01 = character bank
-		0x02 = flip x
-		0x04 = flip y
-		0x18 = color
-	*/
+	/* redraw the background */
+	mcr2_update_background(tmpbitmap);
 
-      if (dirtybuffer[offs])
-      {
-			dirtybuffer[offs] = 0;
-
-			mx = (offs/2) % 32;
-			my = (offs/2) / 32;
-	      attr = videoram[offs+1];
-	      color = (attr & 0x18) >> 3;
-
-			drawgfx(tmpbitmap,Machine->gfx[0],
-				videoram[offs]+256*(attr & 0x01),
-				color,attr & 0x02,attr & 0x04,16*mx,16*my,
-				&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-      }
-   }
-
-   /* copy the character mapped graphics */
-   copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-
-   /* Draw the sprites. */
-   for (offs = 0;offs < spriteram_size;offs += 4)
-   {
-      int code,flipx,flipy,sx,sy,flags;
-
-      if (spriteram[offs] == 0)
-			continue;
-
-      code = spriteram[offs+2];
-      flags = spriteram[offs+1];
-      color = 3 - (flags & 0x03);
-      flipx = flags & 0x10;
-      flipy = flags & 0x20;
-      sx = (spriteram[offs+3]-3)*2;
-      sy = (241-spriteram[offs])*2;
-
-      drawgfx(bitmap,Machine->gfx[1],
-	      code,color,flipx,flipy,sx,sy,
-	      &Machine->drv->visible_area,TRANSPARENCY_PEN,0);
-
-      /* sprites use color 0 for background pen and 8 for the 'under tile' pen.
-			The color 8 is used to cover over other sprites.
-      	At the beginning we scanned all sprites and marked the ones that contained
-			at least one pixel of color 8, so we only need to worry about these few. */
-      if (sprite_transparency[code])
-      {
-			struct rectangle clip;
-
-			clip.min_x = sx;
-			clip.max_x = sx+31;
-			clip.min_y = sy;
-			clip.max_y = sy+31;
-
-			copybitmap(bitmap,tmpbitmap,0,0,0,0,&clip,TRANSPARENCY_THROUGH,Machine->pens[8+(color*16)+1]);
-      }
-   }
+	/* copy it to the destination */
+	copybitmap(bitmap, tmpbitmap, 0, 0, 0, 0, &Machine->drv->visible_area, TRANSPARENCY_NONE, 0);
+	
+	/* draw the sprites */
+	mcr3_update_sprites(bitmap, 0x03, 0, 0, 0);
 }

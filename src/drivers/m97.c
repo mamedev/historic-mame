@@ -17,7 +17,7 @@ games running on this:
 Risky Challenge/Gussun Oyoyo D8000019A1
 Shisensho II                 D8000020A1 023 9320NK700
 Quiz F-1 1,2 Finish          NANAO 08J27291A4 014 9147KK700
-Bomber Man World
+Bomber Man World/Atomic Punk
 
 */
 
@@ -89,9 +89,6 @@ static struct YM2151interface ym2151_interface =
 #endif
 
 
-/* V30 1 MB address mask */
-static int shanghai_addrmask = 0x0fffff;
-
 static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
@@ -101,8 +98,7 @@ static struct MachineDriver machine_driver =
 			32000000/4,	/* ??? */
 			0,
 			readmem,writemem,0,0,
-			ignore_interrupt,1,
-			0,0,&shanghai_addrmask
+			ignore_interrupt,1
 		},
 #if 0
 		{
@@ -152,73 +148,91 @@ static struct MachineDriver machine_driver =
 
 ROM_START( riskchal_rom )
 	ROM_REGION(0x100000)
-	ROM_LOAD_GFX_EVEN( "rc_h0.rom",    0x80000, 0x40000, 0x4c9b5344 )
-	ROM_LOAD_GFX_ODD ( "rc_l0.rom",    0x80000, 0x40000, 0x0455895a )
+	ROM_LOAD_GFX_EVEN( "rc_l0.rom",    0x80000, 0x40000, 0x0455895a )
+	ROM_LOAD_GFX_ODD ( "rc_h0.rom",    0x80000, 0x40000, 0x4c9b5344 )
 
 	ROM_REGION_DISPOSE(0x200000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "rc_c0.rom",         0x000000, 0x80000, 0x84d0b907 )
-	ROM_LOAD( "rc_c1.rom",         0x080000, 0x80000, 0xcb3784ef )
-	ROM_LOAD( "rc_c2.rom",         0x100000, 0x80000, 0x687164d7 )
-	ROM_LOAD( "rc_c3.rom",         0x180000, 0x80000, 0xc86be6af )
+	ROM_LOAD( "rc_c0.rom",    0x000000, 0x80000, 0x84d0b907 )
+	ROM_LOAD( "rc_c1.rom",    0x080000, 0x80000, 0xcb3784ef )
+	ROM_LOAD( "rc_c2.rom",    0x100000, 0x80000, 0x687164d7 )
+	ROM_LOAD( "rc_c3.rom",    0x180000, 0x80000, 0xc86be6af )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "rc_sp.rom",         0x0000, 0x10000, 0xbb80094e )
+	ROM_LOAD( "rc_sp.rom",    0x0000, 0x10000, 0xbb80094e )
 
 	ROM_REGION(0x40000)	/* ADPCM samples */
-	ROM_LOAD( "rc_v0.rom",         0x0000, 0x40000, 0xcddac360 )
+	ROM_LOAD( "rc_v0.rom",    0x0000, 0x40000, 0xcddac360 )
 ROM_END
 
 ROM_START( shisen2_rom )
 	ROM_REGION(0x100000)
-	ROM_LOAD_GFX_EVEN( "sis2-ho-.rom", 0x80000, 0x40000, 0x6fae0aea )
-	ROM_LOAD_GFX_ODD ( "sis2-lo-.rom", 0x80000, 0x40000, 0x2af25182 )
+	ROM_LOAD_GFX_EVEN( "sis2-lo-.rom", 0x80000, 0x40000, 0x2af25182 )
+	ROM_LOAD_GFX_ODD ( "sis2-ho-.rom", 0x80000, 0x40000, 0x6fae0aea )
 
 	ROM_REGION_DISPOSE(0x200000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "ic81.rom",          0x000000, 0x80000, 0x5a7cb88f )
-	ROM_LOAD( "ic82.rom",          0x080000, 0x80000, 0x54a7852c )
-	ROM_LOAD( "ic83.rom",          0x100000, 0x80000, 0x2bd65dc6 )
-	ROM_LOAD( "ic84.rom",          0x180000, 0x80000, 0x876d5fdb )
+	ROM_LOAD( "ic81.rom",     0x000000, 0x80000, 0x5a7cb88f )
+	ROM_LOAD( "ic82.rom",     0x080000, 0x80000, 0x54a7852c )
+	ROM_LOAD( "ic83.rom",     0x100000, 0x80000, 0x2bd65dc6 )
+	ROM_LOAD( "ic84.rom",     0x180000, 0x80000, 0x876d5fdb )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "sis2-sp-.rom",      0x0000, 0x10000, 0x6fc0ff3a )
+	ROM_LOAD( "sis2-sp-.rom", 0x0000, 0x10000, 0x6fc0ff3a )
 ROM_END
 
 ROM_START( quizf1_rom )
 	ROM_REGION(0x200000)
-	ROM_LOAD_GFX_EVEN( "qf1-h0-.77",   0x080000, 0x40000, 0x280e3049 )
-	ROM_LOAD_GFX_ODD ( "qf1-l0-.79",   0x080000, 0x40000, 0x94588a6f )
-	ROM_LOAD_GFX_EVEN( "qf1-h1-.78",   0x100000, 0x80000, 0xc6c2eb2b )	/* banked? */
-	ROM_LOAD_GFX_ODD ( "qf1-l1-.80",   0x100000, 0x80000, 0x3132c144 )	/* banked? */
+	ROM_LOAD_GFX_EVEN( "qf1-l0-.79",   0x080000, 0x40000, 0x94588a6f )
+	ROM_LOAD_GFX_ODD ( "qf1-h0-.77",   0x080000, 0x40000, 0x280e3049 )
+	ROM_LOAD_GFX_EVEN( "qf1-l1-.80",   0x100000, 0x80000, 0x3132c144 )	/* banked? */
+	ROM_LOAD_GFX_ODD ( "qf1-h1-.78",   0x100000, 0x80000, 0xc6c2eb2b )	/* banked? */
 
 	ROM_REGION_DISPOSE(0x200000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "qf1-c0-.81",        0x000000, 0x80000, 0xc26b521e )
-	ROM_LOAD( "qf1-c1-.82",        0x080000, 0x80000, 0xdb9d7394 )
-	ROM_LOAD( "qf1-c2-.83",        0x100000, 0x80000, 0x0b1460ae )
-	ROM_LOAD( "qf1-c3-.84",        0x180000, 0x80000, 0x2d32ff37 )
+	ROM_LOAD( "qf1-c0-.81",   0x000000, 0x80000, 0xc26b521e )
+	ROM_LOAD( "qf1-c1-.82",   0x080000, 0x80000, 0xdb9d7394 )
+	ROM_LOAD( "qf1-c2-.83",   0x100000, 0x80000, 0x0b1460ae )
+	ROM_LOAD( "qf1-c3-.84",   0x180000, 0x80000, 0x2d32ff37 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "qf1-sp-.33",        0x0000, 0x10000, 0x0664fa9f )
+	ROM_LOAD( "qf1-sp-.33",   0x0000, 0x10000, 0x0664fa9f )
 
 	ROM_REGION(0x40000)	/* ADPCM samples */
-	ROM_LOAD( "qf1-v0-.30",        0x0000, 0x40000, 0xb8d16e7c )
+	ROM_LOAD( "qf1-v0-.30",   0x0000, 0x40000, 0xb8d16e7c )
+ROM_END
+
+ROM_START( atompunk_rom )
+	ROM_REGION(0x100000)
+	ROM_LOAD_GFX_EVEN( "bm2-lo-a.9k",  0x080000, 0x40000, 0xc7568031 )
+	ROM_LOAD_GFX_ODD ( "bm2-ho-a.9f",  0x080000, 0x40000, 0x7d858682 )
+
+	ROM_REGION_DISPOSE(0x200000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "bbm2_c0.bin",  0x000000, 0x40000, 0xe7ce058a )
+	ROM_LOAD( "bbm2_c1.bin",  0x080000, 0x40000, 0x636a78a9 )
+	ROM_LOAD( "bbm2_c2.bin",  0x100000, 0x40000, 0x9ac2142f )
+	ROM_LOAD( "bbm2_c3.bin",  0x180000, 0x40000, 0x47af1750 )
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "5j",           0x0000, 0x10000, 0x6bc1689e )
+
+	ROM_REGION(0x20000)	/* ADPCM samples */
+	ROM_LOAD( "5e",           0x0000, 0x20000, 0x4ad889ed )
 ROM_END
 
 ROM_START( bbmanw_rom )
 	ROM_REGION(0x100000)
-	ROM_LOAD_GFX_EVEN( "bbm2_h0.bin",  0x080000, 0x20000, 0xf694b461 )
-	ROM_LOAD_GFX_ODD ( "bbm2_l0.bin",  0x080000, 0x20000, 0x755126cc )
+	ROM_LOAD_GFX_EVEN( "bbm2_l0.bin",  0x080000, 0x20000, 0x755126cc )
+	ROM_LOAD_GFX_ODD ( "bbm2_h0.bin",  0x080000, 0x20000, 0xf694b461 )
 
 	ROM_REGION_DISPOSE(0x200000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "bbm2_c0.bin",       0x000000, 0x40000, 0xe7ce058a )
-	ROM_LOAD( "bbm2_c1.bin",       0x080000, 0x40000, 0x636a78a9 )
-	ROM_LOAD( "bbm2_c2.bin",       0x100000, 0x40000, 0x9ac2142f )
-	ROM_LOAD( "bbm2_c3.bin",       0x180000, 0x40000, 0x47af1750 )
+	ROM_LOAD( "bbm2_c0.bin",  0x000000, 0x40000, 0xe7ce058a )
+	ROM_LOAD( "bbm2_c1.bin",  0x080000, 0x40000, 0x636a78a9 )
+	ROM_LOAD( "bbm2_c2.bin",  0x100000, 0x40000, 0x9ac2142f )
+	ROM_LOAD( "bbm2_c3.bin",  0x180000, 0x40000, 0x47af1750 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "bbm2sp-b.bin",      0x0000, 0x10000, 0xb8d8108c )
+	ROM_LOAD( "bbm2sp-b.bin", 0x0000, 0x10000, 0xb8d8108c )
 
 	ROM_REGION(0x20000)	/* ADPCM samples */
-	ROM_LOAD( "bbm2_vo.bin",       0x0000, 0x20000, 0x0ae655ff )
+	ROM_LOAD( "bbm2_vo.bin",  0x0000, 0x20000, 0x0ae655ff )
 ROM_END
 
 
@@ -301,12 +315,38 @@ struct GameDriver quizf1_driver =
 	0, 0
 };
 
-struct GameDriver bbmanw_driver =
+struct GameDriver atompunk_driver =
 {
 	__FILE__,
 	0,
+	"atompunk",
+	"Atomic Punk (US)",
+	"1992",
+	"Irem America (licensed from Hudson Soft)",
+	"Nicola Salmoria",
+	GAME_NOT_WORKING,
+	&machine_driver,
+	0,
+
+	atompunk_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	0, 0
+};
+
+struct GameDriver bbmanw_driver =
+{
+	__FILE__,
+	&atompunk_driver,
 	"bbmanw",
-	"Bomber Man World",
+	"Bomber Man World (Japan)",
 	"1992",
 	"Irem (licensed from Hudson Soft)",
 	"Nicola Salmoria",

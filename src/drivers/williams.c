@@ -553,8 +553,8 @@ static struct MemoryReadAddress robotron_readmem[] =
 {
 	{ 0x0000, 0x97ff, MRA_BANK1, &williams_bank_base },
 	{ 0x9800, 0xbfff, MRA_RAM },
-	{ 0xc804, 0xc807, pia_1_r },
-	{ 0xc80c, 0xc80f, pia_2_r },
+	{ 0xc804, 0xc807, pia_0_r },
+	{ 0xc80c, 0xc80f, pia_1_r },
 	{ 0xcb00, 0xcb00, MRA_RAM, &williams_video_counter },
 	{ 0xcc00, 0xcfff, MRA_RAM },            /* CMOS */
 	{ 0xd000, 0xffff, MRA_ROM },
@@ -565,8 +565,8 @@ static struct MemoryReadAddress joust_readmem[] =
 {
 	{ 0x0000, 0x97ff, MRA_BANK1, &williams_bank_base },
 	{ 0x9800, 0xbfff, MRA_RAM },
-	{ 0xc804, 0xc807, pia_1_r },
-	{ 0xc80c, 0xc80f, pia_2_r },
+	{ 0xc804, 0xc807, pia_0_r },
+	{ 0xc80c, 0xc80f, pia_1_r },
 	{ 0xcb00, 0xcb00, MRA_RAM, &williams_video_counter },
 	{ 0xcc00, 0xcfff, MRA_RAM },                 /* CMOS */
 	{ 0xd000, 0xffff, MRA_ROM },
@@ -577,8 +577,8 @@ static struct MemoryReadAddress stargate_readmem[] =
 {
 	{ 0x0000, 0x97ff, MRA_BANK1, &williams_bank_base },
 	{ 0x9800, 0xbfff, MRA_RAM },
-	{ 0xc804, 0xc807, pia_1_r },
-	{ 0xc80c, 0xc80f, pia_2_r },
+	{ 0xc804, 0xc807, pia_0_r },
+	{ 0xc80c, 0xc80f, pia_1_r },
 	{ 0xcb00, 0xcb00, MRA_RAM, &williams_video_counter },
 	{ 0xcc00, 0xcfff, MRA_RAM },            /* CMOS */
 	{ 0xd000, 0xffff, MRA_ROM },
@@ -589,8 +589,8 @@ static struct MemoryReadAddress bubbles_readmem[] =
 {
 	{ 0x0000, 0x97ff, MRA_BANK1, &williams_bank_base },
 	{ 0x9800, 0xbfff, MRA_RAM },
-	{ 0xc804, 0xc807, pia_1_r },
-	{ 0xc80c, 0xc80f, pia_2_r },
+	{ 0xc804, 0xc807, pia_0_r },
+	{ 0xc80c, 0xc80f, pia_1_r },
 	{ 0xcb00, 0xcb00, MRA_RAM, &williams_video_counter },
 	{ 0xcc00, 0xcfff, MRA_RAM },            /* CMOS */
 	{ 0xd000, 0xffff, MRA_ROM },
@@ -602,8 +602,8 @@ static struct MemoryWriteAddress williams_writemem[] =
 	{ 0x0000, 0x97ff, williams_videoram_w, &videoram, &videoram_size },
 	{ 0x9800, 0xbfff, MWA_RAM },
 	{ 0xc000, 0xc00f, paletteram_BBGGGRRR_w, &paletteram },
-	{ 0xc804, 0xc807, pia_1_w },
-	{ 0xc80c, 0xc80f, pia_2_w },
+	{ 0xc804, 0xc807, pia_0_w },
+	{ 0xc80c, 0xc80f, pia_1_w },
 	{ 0xc900, 0xc900, williams_vram_select_w },           /* bank  */
 	{ 0xca00, 0xca07, williams_blitter_w, &williams_blitterram }, /* blitter */
 	{ 0xcbff, 0xcbff, watchdog_reset_w },                         /* WatchDog (have to be $39) */
@@ -622,8 +622,8 @@ static struct MemoryReadAddress splat_readmem[] =
 {
 	{ 0x0000, 0x97ff, MRA_BANK1, &williams_bank_base },
 	{ 0x9800, 0xbfff, MRA_RAM },
-	{ 0xc804, 0xc807, pia_1_r },
-	{ 0xc80c, 0xc80f, pia_2_r },
+	{ 0xc804, 0xc807, pia_0_r },
+	{ 0xc80c, 0xc80f, pia_1_r },
 	{ 0xcb00, 0xcb00, MRA_RAM, &williams_video_counter },
 	{ 0xcc00, 0xcfff, MRA_RAM },                           /* CMOS */
 	{ 0xd000, 0xffff, MRA_ROM },
@@ -635,8 +635,8 @@ static struct MemoryWriteAddress splat_writemem[] =
 	{ 0x0000, 0x97ff, williams_videoram_w, &videoram, &videoram_size },
 	{ 0x9800, 0xbfff, MWA_RAM },
 	{ 0xc000, 0xc00f, paletteram_BBGGGRRR_w, &paletteram },
-	{ 0xc804, 0xc807, pia_1_w },
-	{ 0xc80c, 0xc80f, pia_2_w },
+	{ 0xc804, 0xc807, pia_0_w },
+	{ 0xc80c, 0xc80f, pia_1_w },
 	{ 0xc900, 0xc900, williams_vram_select_w },         /* bank  */
 	{ 0xca00, 0xca07, williams_blitter_w, &williams_blitterram },  /* blitter */
 	{ 0xcbff, 0xcbff, watchdog_reset_w },                         /* WatchDog (have to be $39) */
@@ -655,8 +655,8 @@ static struct MemoryReadAddress sinistar_readmem[] =
 {
 	{ 0x0000, 0x97ff, MRA_BANK1, &williams_bank_base },
 	{ 0x9800, 0xbfff, MRA_RAM },
-	{ 0xc804, 0xc807, pia_1_r },
-	{ 0xc80c, 0xc80f, pia_2_r },
+	{ 0xc804, 0xc807, pia_0_r },
+	{ 0xc80c, 0xc80f, pia_1_r },
 	{ 0xcb00, 0xcb00, MRA_RAM, &williams_video_counter },
 	{ 0xcc00, 0xcfff, MRA_RAM },                 /* CMOS */
 	{ 0xd000, 0xdfff, MRA_RAM },                 /* for Sinistar */
@@ -669,8 +669,8 @@ static struct MemoryWriteAddress sinistar_writemem[] =
 	{ 0x0000, 0x97ff, williams_videoram_w, &videoram, &videoram_size },
 	{ 0x9800, 0xbfff, MWA_RAM },
 	{ 0xc000, 0xc00f, paletteram_BBGGGRRR_w, &paletteram },
-	{ 0xc804, 0xc807, pia_1_w },
-	{ 0xc80c, 0xc80f, pia_2_w },
+	{ 0xc804, 0xc807, pia_0_w },
+	{ 0xc80c, 0xc80f, pia_1_w },
 	{ 0xc900, 0xc900, williams_vram_select_w },             /* bank  */
 	{ 0xca00, 0xca07, williams_blitter_w, &williams_blitterram },   /* blitter */
 	{ 0xcbff, 0xcbff, watchdog_reset_w },                         /* WatchDog (have to be $39) */
@@ -691,8 +691,8 @@ static struct MemoryReadAddress blaster_readmem[] =
 	{ 0x0000, 0x3fff, MRA_BANK1, &williams_bank_base },
 	{ 0x4000, 0x96ff, MRA_BANK2, &blaster_bank2_base },
 	{ 0x9700, 0xbfff, MRA_RAM },
-	{ 0xc804, 0xc807, pia_1_r },
-	{ 0xc80c, 0xc80f, pia_2_r },
+	{ 0xc804, 0xc807, pia_0_r },
+	{ 0xc80c, 0xc80f, pia_1_r },
 	{ 0xcb00, 0xcb00, MRA_RAM, &williams_video_counter },
 	{ 0xcc00, 0xcfff, MRA_RAM },                 /* CMOS      */
 	{ 0xd000, 0xffff, MRA_ROM },
@@ -707,8 +707,8 @@ static struct MemoryWriteAddress blaster_writemem[] =
 	{ 0xbc00, 0xbcff, MWA_RAM, &blaster_color_zero_flags },     /* Color 0 flags, latch color only if bit 0 = 1 */
 	{ 0xbd00, 0xbfff, MWA_RAM },
 	{ 0xc000, 0xc00f, paletteram_BBGGGRRR_w, &paletteram },
-	{ 0xc804, 0xc807, pia_1_w },
-	{ 0xc80c, 0xc80f, pia_2_w },
+	{ 0xc804, 0xc807, pia_0_w },
+	{ 0xc80c, 0xc80f, pia_1_w },
 	{ 0xc900, 0xc900, blaster_vram_select_w },          			 /* VRAM bank  */
 	{ 0xc940, 0xc940, williams_remap_select_w, &williams_remap_select }, /* select remap colors in Remap prom */
 	{ 0xc980, 0xc980, blaster_bank_select_w },                   /* Bank Select */
@@ -832,7 +832,7 @@ static struct MemoryReadAddress mysticm_readmem[] =
 
 	{ 0xC000, 0xC7FF, MRA_RAM },
 	{ 0xC980, 0xC983, pia_1_r },
-	{ 0xC984, 0xC987, pia_2_r },
+	{ 0xC984, 0xC987, pia_0_r },
 	{ 0xCBE0, 0xCBE0, MRA_RAM, &williams_video_counter },
 	{ 0xCC00, 0xCFFF, MRA_RAM },
 	{ 0xD000, 0xDFFF, MRA_RAM },
@@ -850,7 +850,7 @@ static struct MemoryWriteAddress mysticm_writemem[] =
 	{ 0xC880, 0xC887, williams_blitter_w, &williams_blitterram },
 	{ 0xC900, 0xC900, williams2_watchdog },
 	{ 0xC980, 0xC983, pia_1_w },
-	{ 0xC984, 0xC987, pia_2_w },
+	{ 0xC984, 0xC987, pia_0_w },
 	{ 0xC98C, 0xC98C, williams2_7segment },
 	{ 0xCB00, 0xCB00, williams2_fg_select_w },
 	{ 0xCB20, 0xCB20, mysticm_bg_select_w },
@@ -877,7 +877,7 @@ static struct MemoryReadAddress tshoot_readmem[] =
 
 	{ 0xC000, 0xC7FF, MRA_RAM },
 	{ 0xC980, 0xC983, pia_1_r },
-	{ 0xC984, 0xC987, pia_2_r },
+	{ 0xC984, 0xC987, pia_0_r },
 /* 	{ 0xC988, 0xC989,  },	??? */
 	{ 0xCBE0, 0xCBE0, MRA_RAM, &williams_video_counter },
 	{ 0xCC00, 0xCFFF, MRA_RAM },
@@ -895,7 +895,7 @@ static struct MemoryWriteAddress tshoot_writemem[] =
 	{ 0xC880, 0xC887, williams_blitter_w, &williams_blitterram },
 	{ 0xC900, 0xC900, williams2_watchdog },
 	{ 0xC980, 0xC983, pia_1_w },
-	{ 0xC984, 0xC987, pia_2_w },
+	{ 0xC984, 0xC987, pia_0_w },
 /* 	{ 0xC988, 0xC989,  },	??? */
 	{ 0xC98C, 0xC98C, williams2_7segment },
 	{ 0xCB00, 0xCB00, williams2_fg_select_w },
@@ -922,7 +922,7 @@ static struct MemoryReadAddress inferno_readmem[] =
 
 	{ 0xC000, 0xC7FF, MRA_RAM },
 	{ 0xC980, 0xC983, pia_1_r },
-	{ 0xC984, 0xC987, pia_2_r },
+	{ 0xC984, 0xC987, pia_0_r },
 	{ 0xCBE0, 0xCBE0, MRA_RAM, &williams_video_counter },
 	{ 0xCC00, 0xCFFF, MRA_RAM },
 	{ 0xD000, 0xDFFF, MRA_RAM },
@@ -940,7 +940,7 @@ static struct MemoryWriteAddress inferno_writemem[] =
 	{ 0xC880, 0xC887, williams_blitter_w, &williams_blitterram },
 	{ 0xC900, 0xC900, williams2_watchdog },
 	{ 0xC980, 0xC983, pia_1_w },
-	{ 0xC984, 0xC987, pia_2_w },
+	{ 0xC984, 0xC987, pia_0_w },
 	{ 0xC98C, 0xC98C, williams2_7segment },
 	{ 0xCB00, 0xCB00, &williams2_fg_select_w },
 	{ 0xCB20, 0xCB20, &williams2_bg_select_w },
@@ -967,7 +967,7 @@ static struct MemoryReadAddress joust2_readmem[] =
 
 	{ 0xC000, 0xC7FF, MRA_RAM },
 	{ 0xC980, 0xC983, pia_1_r },
-	{ 0xC984, 0xC987, pia_2_r },
+	{ 0xC984, 0xC987, pia_0_r },
 	{ 0xCBE0, 0xCBE0, MRA_RAM, &williams_video_counter },
 	{ 0xCC00, 0xCFFF, MRA_RAM },
 	{ 0xD000, 0xFFFF, MRA_ROM },
@@ -984,7 +984,7 @@ static struct MemoryWriteAddress joust2_writemem[] =
 	{ 0xC880, 0xC887, williams_blitter_w, &williams_blitterram },
 	{ 0xC900, 0xC900, williams2_watchdog },
 	{ 0xC980, 0xC983, pia_1_w },
-	{ 0xC984, 0xC987, pia_2_w },
+	{ 0xC984, 0xC987, pia_0_w },
 	{ 0xC98C, 0xC98C, williams2_7segment },
 	{ 0xCB00, 0xCB00, williams2_fg_select_w },
 	{ 0xCB20, 0xCB20, williams2_bg_select_w },
@@ -1006,7 +1006,7 @@ static struct MemoryReadAddress joust2_sound_readmem[] =
 {
 	{ 0x0000, 0x07FF, MRA_RAM },
 	{ 0x2001, 0x2001, YM2151_status_port_0_r },
-	{ 0x4000, 0x4003, pia_4_r },
+	{ 0x4000, 0x4003, pia_2_r },
 	{ 0x8000, 0xFFFF, MRA_BANK4},
 	{ -1 }
 };
@@ -1015,7 +1015,7 @@ static struct MemoryWriteAddress joust2_sound_writemem[] =
 	{ 0x0000, 0x07FF, MWA_RAM},
 	{ 0x2000, 0x2000, YM2151_register_port_0_w },
 	{ 0x2001, 0x2001, YM2151_data_port_0_w },
-	{ 0x4000, 0x4003, pia_4_w },
+	{ 0x4000, 0x4003, pia_2_w },
 	{ 0x6000, 0x6000, CVSD_dig_and_clk_w },
 	{ 0x6800, 0x6800, CVSD_clock_w },
 	{ 0x7800, 0x7800, joust2_sound_bank_select_w },
@@ -1031,7 +1031,7 @@ static struct MemoryWriteAddress joust2_sound_writemem[] =
 static struct MemoryReadAddress williams2_sound_readmem[] =
 {
 	{ 0x0000, 0x00FF, MRA_RAM },
-	{ 0x2000, 0x2003, pia_3_r },
+	{ 0x2000, 0x2003, pia_2_r },
 	{ 0xE000, 0xFFFF, MRA_ROM },
 	{ -1 }	/* end of table */
 };
@@ -1039,7 +1039,7 @@ static struct MemoryReadAddress williams2_sound_readmem[] =
 static struct MemoryWriteAddress williams2_sound_writemem[] =
 {
 	{ 0x0000, 0x00FF, MWA_RAM },
-	{ 0x2000, 0x2003, pia_3_w },
+	{ 0x2000, 0x2003, pia_2_w },
 	{ 0xE000, 0xFFFF, MWA_ROM },
 	{ -1 }	/* end of table */
 };
@@ -1051,7 +1051,7 @@ static struct MemoryWriteAddress williams2_sound_writemem[] =
 static struct MemoryReadAddress sound_readmem[] =
 {
 	{ 0x0000, 0x007f, MRA_RAM },
-	{ 0x0400, 0x0403, pia_3_r },
+	{ 0x0400, 0x0403, pia_2_r },
 	{ 0xf000, 0xffff, MRA_ROM },
 	{ -1 }  /* end of table */
 };
@@ -1059,7 +1059,7 @@ static struct MemoryReadAddress sound_readmem[] =
 static struct MemoryWriteAddress sound_writemem[] =
 {
 	{ 0x0000, 0x007f, MWA_RAM },
-	{ 0x0400, 0x0403, pia_3_w },
+	{ 0x0400, 0x0403, pia_2_w },
 	{ 0xf000, 0xffff, MWA_ROM },
 	{ -1 }  /* end of table */
 };
@@ -1072,7 +1072,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 static struct MemoryReadAddress colony7_sound_readmem[] =
 {
 	{ 0x0000, 0x007f, MRA_RAM },
-	{ 0x8400, 0x8403, pia_3_r },
+	{ 0x8400, 0x8403, pia_2_r },
 	{ 0xf000, 0xffff, MRA_ROM },
 	{ -1 }  /* end of table */
 };
@@ -1080,7 +1080,7 @@ static struct MemoryReadAddress colony7_sound_readmem[] =
 static struct MemoryWriteAddress colony7_sound_writemem[] =
 {
 	{ 0x0000, 0x007f, MWA_RAM },
-	{ 0x8400, 0x8403, pia_3_w },
+	{ 0x8400, 0x8403, pia_2_w },
 	{ 0xf000, 0xffff, MWA_ROM },
 	{ -1 }  /* end of table */
 };
@@ -1434,16 +1434,6 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( mysticm_input_ports )
 
-	PORT_START	/* IN0 */
-	PORT_BITX(0x01, IP_ACTIVE_HIGH, 0, "Auto Up", KEYCODE_F1, IP_JOY_NONE )
-	PORT_BITX(0x02, IP_ACTIVE_HIGH, 0, "Advance", KEYCODE_F2, IP_JOY_NONE )
-	PORT_BITX(0x04, IP_ACTIVE_HIGH, 0, "High Score Reset", KEYCODE_7, IP_JOY_NONE )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN1 )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN2 )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN3 )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_TILT )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
-
 	PORT_START	/* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT )
@@ -1453,6 +1443,19 @@ INPUT_PORTS_START( mysticm_input_ports )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_START2 )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNUSED ) /* Key */
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	
+	PORT_START
+	PORT_BIT( 0xff, IP_ACTIVE_HIGH, IPT_UNUSED )
+
+	PORT_START	/* IN0 */
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, 0, "Auto Up", KEYCODE_F1, IP_JOY_NONE )
+	PORT_BITX(0x02, IP_ACTIVE_HIGH, 0, "Advance", KEYCODE_F2, IP_JOY_NONE )
+	PORT_BITX(0x04, IP_ACTIVE_HIGH, 0, "High Score Reset", KEYCODE_7, IP_JOY_NONE )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN3 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_TILT )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
 
 INPUT_PORTS_END
 

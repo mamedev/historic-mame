@@ -370,7 +370,7 @@ struct GameDriver tagteam_driver =
 	"tagteam",
 	"Tag Team Wrestling",
 	"1983",
-	"Data East (Technos license)",
+	"Technos (Data East license)",
 	"Steve Ellenoff\nBrad Oliver\nCamilty (hardware info)",
 	0,
 	&machine_driver,

@@ -35,13 +35,8 @@
 #define SET_NZCV_SUB(a,b,r)  {SET_NZV_SUB(a,b,r);SET_C_SUB(a,b);}
 #define SET_NZCV_ADD(a,b,r)  {SET_NZ(r);SET_V_ADD(a,b,r);SET_C_ADD(a,b);}
 
-/* XY manipulation macros */
-
-#define GET_X(val) ((INT16) (val))
-#define GET_Y(val) ((INT16)((val) >> 16))
-#define COMBINE_XY(x,y) (((UINT32)((UINT16)(x))) | (((UINT16)(y)) << 16))
-#define XYTOL(val) ((((INT32)((UINT16)GET_Y(val) )<<state.xytolshiftcount1) |	\
-				    (((INT32)((UINT16)GET_X(val)))<<state.xytolshiftcount2)) + OFFSET)
+#define XYTOL(val) ((((INT32)((UINT16)(val.y) )<<state.xytolshiftcount1) |	\
+				    (((INT32)((UINT16)(val.x)))<<state.xytolshiftcount2)) + OFFSET)
 
 
 static void unimpl(void)
@@ -56,28 +51,16 @@ static void unimpl(void)
 
 static void clip_xy_to_window(void)
 {
-	/* Window clipping mode 3 */
-	INT16  sx, sy, ex, ey;
-	INT16 wsx,wsy,wex,wey;
-	INT16 csx,csy,cex,cey;
+	/* window clipping mode 3 */
+	INT16 ex  = DADDR_X + DYDX_X;
+	INT16 ey  = DADDR_Y + DYDX_Y;
+	INT16 wex = WEND_X + 1;
+	INT16 wey = WEND_Y + 1;
 
-	sx = GET_X(DADDR);
-	sy = GET_Y(DADDR);
-	ex = sx + GET_X(DYDX);
-	ey = sy + GET_Y(DYDX);
-
-	wsx = GET_X(WSTART);
-	wsy = GET_Y(WSTART);
-	wex = GET_X(WEND) + 1;
-	wey = GET_Y(WEND) + 1;
-
-	csx = (sx >= wsx) ? sx : wsx;
-	csy = (sy >= wsy) ? sy : wsy;
-	cex = (ex <= wex) ? ex : wex;
-	cey = (ey <= wey) ? ey : wey;
-
-	DADDR = COMBINE_XY(csx, csy);
-	DYDX  = COMBINE_XY(cex - csx, cey - csy);
+	DADDR_X = (DADDR_X >= WSTART_X) ? DADDR_X : WSTART_X;
+	DADDR_Y = (DADDR_Y >= WSTART_Y) ? DADDR_Y : WSTART_Y;
+	DYDX_X  = ((ex <= wex) ? ex : wex) - DADDR_X;
+	DYDX_Y  = ((ey <= wey) ? ey : wey) - DADDR_Y;
 }
 
 static void pixblt_b_l(void)
@@ -86,10 +69,10 @@ static void pixblt_b_l(void)
 
 	if (!P_FLAG)
 	{
-		/* Setup */
+		/* setup */
 		P_FLAG = 1;
-		BREG(10<<4) = (UINT16)GET_X(DYDX);
-		BREG(11<<4) = (UINT16)GET_Y(DYDX);
+		BREG(10<<4) = (UINT16)DYDX_X;
+		BREG(11<<4) = (UINT16)DYDX_Y;
 		BREG(12<<4) = DADDR;
 		BREG(13<<4) = SADDR;
 	}
@@ -98,79 +81,100 @@ static void pixblt_b_l(void)
 		boundary = WPIXEL(DADDR, (rfield_z_01(SADDR) ? COLOR1 : COLOR0));
 		if (--BREG(10<<4))
 		{
-			/* Next column */
+			/* next column */
 			DADDR += IOREG(REG_PSIZE);
 			SADDR++;
 		}
 		else
 		{
-			/* Next row */
+			/* next row */
 			if (!--BREG(11<<4))
 			{
-				//Done
+				/* done */
 				FINISH_PIX_OP;
 				return;
 			}
-			BREG(10<<4) = (UINT16)GET_X(DYDX);
+			BREG(10<<4) = (UINT16)DYDX_X;
 			DADDR = BREG(12<<4) = BREG(12<<4) + DPTCH;
 			SADDR = BREG(13<<4) = BREG(13<<4) + SPTCH;
+			boundary = 1;
 		}
 	}
 	while (!boundary);
 
-	PC -= 0x10;  /* Not done yet, check for interrupts and restart instruction */
+	PC -= 0x10;  /* not done yet, check for interrupts and restart instruction */
 }
 
 static void pixblt_b_xy(void)
 {
 	UINT32 boundary;
-	INT16 x,y;
 
 	if (!P_FLAG)
 	{
-		if (state.window_checking && errorlog)
+		INT16 oldx, oldy, oldw, oldh;
+
+		switch (state.window_checking)
 		{
-			fprintf(errorlog, "PIXBLT B,XY  %08X - Window Checking Mode %d not supported\n", PC, state.window_checking);
+		case 0: break;
+		case 3:
+			oldx = DADDR_X;
+			oldy = DADDR_X;
+			oldw = DYDX_X;
+			oldh = DYDX_X;
+
+			clip_xy_to_window();
+
+			/* clip source array if destination clipping occured */
+			CLR_V;
+			if ((oldw != DYDX_X) || (oldh != DYDX_Y))
+			{
+				V_FLAG = 1;
+
+				SADDR +=  DADDR_X - oldx;
+				SADDR += (DADDR_Y - oldy) * SPTCH;
+			}
+			break;
+
+		default:
+			if (errorlog) fprintf(errorlog, "PIXBLT B,XY  %08X - Window Checking Mode %d not supported\n", PC, state.window_checking);
+			break;
 		}
 
-		/* Setup */
+		/* setup */
 		P_FLAG = 1;
-		BREG(10<<4) = (UINT16)GET_X(DYDX);
-		BREG(11<<4) = (UINT16)GET_Y(DYDX);
+		BREG(10<<4) = (UINT16)DYDX_X;
+		BREG(11<<4) = (UINT16)DYDX_Y;
 		BREG(12<<4) = DADDR;
 		BREG(13<<4) = SADDR;
 	}
 
 	do {
-		boundary = WPIXEL(XYTOL(DADDR), (rfield_z_01(SADDR) ? COLOR1 : COLOR0));
+		boundary = WPIXEL(XYTOL(DADDR_XY), (rfield_z_01(SADDR) ? COLOR1 : COLOR0));
 		if (--BREG(10<<4))
 		{
-			/* Next column */
-			x = GET_X(DADDR) + 1;
-			y = GET_Y(DADDR);
-			DADDR = COMBINE_XY(x,y);
+			/* next column */
+			DADDR_X++;
 			SADDR++;
 		}
 		else
 		{
-			/* Next row */
+			/* next row */
 			if (!--BREG(11<<4))
 			{
-				//Done
+				/* done */
 				FINISH_PIX_OP;
 				return;
 			}
-			BREG(10<<4) = (UINT16)GET_X(DYDX);
-			x = GET_X(BREG(12<<4));
-			y = GET_Y(BREG(12<<4)) + 1;
-			DADDR = BREG(12<<4) = COMBINE_XY(x,y);
+			BREG(10<<4) = (UINT16)DYDX_X;
+			BREG_Y(12<<4)++;
+			DADDR = BREG(12<<4);
 			SADDR = BREG(13<<4) = BREG(13<<4) + SPTCH;
-
+			boundary = 1;
 		}
 	}
 	while (!boundary);
 
-	PC -= 0x10;  /* Not done yet, check for interrupts and restart instruction */
+	PC -= 0x10;  /* not done yet, check for interrupts and restart instruction */
 }
 
 static void pixblt_l_l(void)
@@ -179,7 +183,7 @@ static void pixblt_l_l(void)
 
 	if (!P_FLAG)
 	{
-		/* Setup */
+		/* setup */
 		P_FLAG = 1;
 
 		BREG(14<<4) = IOREG(REG_PSIZE);
@@ -190,8 +194,8 @@ static void pixblt_l_l(void)
 			SADDR += BREG(14<<4);
 		}
 
-		BREG(10<<4) = (UINT16)GET_X(DYDX);
-		BREG(11<<4) = (UINT16)GET_Y(DYDX);
+		BREG(10<<4) = (UINT16)DYDX_X;
+		BREG(11<<4) = (UINT16)DYDX_Y;
 		BREG(12<<4) = DADDR;
 		BREG(13<<4) = SADDR;
 	}
@@ -200,20 +204,20 @@ static void pixblt_l_l(void)
 		boundary = WPIXEL(DADDR,RPIXEL(SADDR));
 		if (--BREG(10<<4))
 		{
-			/* Next column */
+			/* next column */
 			DADDR += BREG(14<<4);
 			SADDR += BREG(14<<4);
 		}
 		else
 		{
-			/* Next row */
+			/* next row */
 			if (!--BREG(11<<4))
 			{
-				//Done
+				/* done */
 				FINISH_PIX_OP;
 				return;
 			}
-			BREG(10<<4) = (UINT16)GET_X(DYDX);
+			BREG(10<<4) = (UINT16)DYDX_X;
 
 			if (PBV)
 			{
@@ -225,22 +229,21 @@ static void pixblt_l_l(void)
 				DADDR = BREG(12<<4) = BREG(12<<4) + DPTCH;
 				SADDR = BREG(13<<4) = BREG(13<<4) + SPTCH;
 			}
+			boundary = 1;
 		}
 	}
 	while (!boundary);
 
-	PC -= 0x10;  /* Not done yet, check for interrupts and restart instruction */
+	PC -= 0x10;  /* not done yet, check for interrupts and restart instruction */
 }
 
 static void pixblt_l_xy(void)
 {
 	UINT32 boundary;
 
-	INT16 x,y;
-
 	if (!P_FLAG)
 	{
-		/* Setup */
+		/* setup */
 		if ((PBH || PBV) && errorlog)
 		{
 			fprintf(errorlog, "PIXBLT L,XY  %08X - Corner Adjust not supported\n", PC);
@@ -252,100 +255,92 @@ static void pixblt_l_xy(void)
 		}
 
 		P_FLAG = 1;
-		BREG(10<<4) = (UINT16)GET_X(DYDX);
-		BREG(11<<4) = (UINT16)GET_Y(DYDX);
+		BREG(10<<4) = (UINT16)DYDX_X;
+		BREG(11<<4) = (UINT16)DYDX_Y;
 		BREG(12<<4) = DADDR;
 		BREG(13<<4) = SADDR;
 	}
 
 	do {
-		boundary = WPIXEL(XYTOL(DADDR),RPIXEL(SADDR));
+		boundary = WPIXEL(XYTOL(DADDR_XY),RPIXEL(SADDR));
 		if (--BREG(10<<4))
 		{
-			/* Next column */
-			x = GET_X(DADDR) + 1;
-			y = GET_Y(DADDR);
-			DADDR = COMBINE_XY(x,y);
+			/* next column */
+			DADDR_X++;
 			SADDR += IOREG(REG_PSIZE);
 		}
 		else
 		{
-			/* Next row */
+			/* next row */
 			if (!--BREG(11<<4))
 			{
-				//Done
+				/* done */
 				FINISH_PIX_OP;
 				return;
 			}
-			BREG(10<<4) = (UINT16)GET_X(DYDX);
-			x = GET_X(BREG(12<<4));
-			y = GET_Y(BREG(12<<4)) + 1;
-			DADDR = BREG(12<<4) = COMBINE_XY(x,y);
+			BREG(10<<4) = (UINT16)DYDX_X;
+			BREG_Y(12<<4)++;
+			DADDR = BREG(12<<4);
 			SADDR = BREG(13<<4) = BREG(13<<4) + SPTCH;
+			boundary = 1;
 		}
 	}
 	while (!boundary);
 
-	PC -= 0x10;  /* Not done yet, check for interrupts and restart instruction */
+	PC -= 0x10;  /* not done yet, check for interrupts and restart instruction */
 }
 
 static void pixblt_xy_l(void)
 {
 	UINT32 boundary;
 
-	INT16 x,y;
-
 	if (!P_FLAG)
 	{
-		/* Setup */
+		/* setup */
 		if ((PBH || PBV) && errorlog)
 		{
 			fprintf(errorlog, "PIXBLT XY,L  %08X - Corner Adjust not supported\n", PC);
 		}
 
 		P_FLAG = 1;
-		BREG(10<<4) = (UINT16)GET_X(DYDX);
-		BREG(11<<4) = (UINT16)GET_Y(DYDX);
+		BREG(10<<4) = (UINT16)DYDX_X;
+		BREG(11<<4) = (UINT16)DYDX_Y;
 		BREG(12<<4) = DADDR;
 		BREG(13<<4) = SADDR;
 	}
 
 	do {
-		boundary = WPIXEL(DADDR,RPIXEL(XYTOL(SADDR)));
+		boundary = WPIXEL(DADDR,RPIXEL(XYTOL(SADDR_XY)));
 		if (--BREG(10<<4))
 		{
-			/* Next column */
+			/* next column */
 			DADDR += IOREG(REG_PSIZE);
-			x = GET_X(SADDR) + 1;
-			y = GET_Y(SADDR);
-			SADDR = COMBINE_XY(x,y);
+			SADDR_X++;
 		}
 		else
 		{
-			/* Next row */
+			/* next row */
 			if (!--BREG(11<<4))
 			{
-				//Done
+				/* done */
 				FINISH_PIX_OP;
 				return;
 			}
-			BREG(10<<4) = (UINT16)GET_X(DYDX);
+			BREG(10<<4) = (UINT16)DYDX_X;
 			DADDR = BREG(12<<4) = BREG(12<<4) + DPTCH;
-			x = GET_X(BREG(13<<4));
-			y = GET_Y(BREG(13<<4)) + 1;
-			SADDR = BREG(13<<4) = COMBINE_XY(x,y);
+			BREG_Y(13<<4)++;
+			SADDR = BREG(13<<4);
+			boundary = 1;
 		}
 	}
 	while (!boundary);
 
-	PC -= 0x10;  /* Not done yet, check for interrupts and restart instruction */
+	PC -= 0x10;  /* not done yet, check for interrupts and restart instruction */
 }
 
 static void pixblt_xy_xy(void)
 {
 	UINT32 boundary;
-
-	INT16 x,y;
 
 	if (!P_FLAG)
 	{
@@ -359,47 +354,41 @@ static void pixblt_xy_xy(void)
 			fprintf(errorlog, "PIXBLT XY,XY  %08X - Window Checking Mode %d not supported\n", PC, state.window_checking);
 		}
 
-		/* Setup */
+		/* setup */
 		P_FLAG = 1;
-		BREG(10<<4) = (UINT16)GET_X(DYDX);
-		BREG(11<<4) = (UINT16)GET_Y(DYDX);
+		BREG(10<<4) = (UINT16)DYDX_X;
+		BREG(11<<4) = (UINT16)DYDX_Y;
 		BREG(12<<4) = DADDR;
 		BREG(13<<4) = SADDR;
 	}
 
 	do {
-		boundary = WPIXEL(XYTOL(DADDR),RPIXEL(XYTOL(SADDR)));
+		boundary = WPIXEL(XYTOL(DADDR_XY),RPIXEL(XYTOL(SADDR_XY)));
 		if (--BREG(10<<4))
 		{
-			/* Next column */
-			x = GET_X(DADDR) + 1;
-			y = GET_Y(DADDR);
-			DADDR = COMBINE_XY(x,y);
-			x = GET_X(SADDR) + 1;
-			y = GET_Y(SADDR);
-			SADDR = COMBINE_XY(x,y);
+			/* next column */
+			DADDR_X++;
+			SADDR_X++;
 		}
 		else
 		{
-			/* Next row */
+			/* next row */
 			if (!--BREG(11<<4))
 			{
-				//Done
+				/* done */
 				FINISH_PIX_OP;
 				return;
 			}
-			BREG(10<<4) = (UINT16)GET_X(DYDX);
-			x = GET_X(BREG(12<<4));
-			y = GET_Y(BREG(12<<4)) + 1;
-			DADDR = BREG(12<<4) = COMBINE_XY(x,y);
-			x = GET_X(BREG(13<<4));
-			y = GET_Y(BREG(13<<4)) + 1;
-			SADDR = BREG(13<<4) = COMBINE_XY(x,y);
+			BREG_Y(12<<4)++;
+			DADDR = BREG(12<<4);
+			BREG_Y(13<<4)++;
+			SADDR = BREG(13<<4);
+			boundary = 1;
 		}
 	}
 	while (!boundary);
 
-	PC -= 0x10;  /* Not done yet, check for interrupts and restart instruction */
+	PC -= 0x10;  /* not done yet, check for interrupts and restart instruction */
 }
 
 static void fill_l(void)
@@ -408,10 +397,10 @@ static void fill_l(void)
 
 	if (!P_FLAG)
 	{
-		/* Setup */
+		/* setup */
 		P_FLAG = 1;
-		BREG(10<<4) = (UINT16)GET_X(DYDX);
-		BREG(11<<4) = (UINT16)GET_Y(DYDX);
+		BREG(10<<4) = (UINT16)DYDX_X;
+		BREG(11<<4) = (UINT16)DYDX_Y;
 		BREG(12<<4) = DADDR;
 	}
 
@@ -419,32 +408,32 @@ static void fill_l(void)
 		boundary = WPIXEL(DADDR,COLOR1);
 		if (--BREG(10<<4))
 		{
-			/* Next column */
+			/* next column */
 			DADDR += IOREG(REG_PSIZE);
 		}
 		else
 		{
-			/* Next row */
+			/* next row */
 			if (!--BREG(11<<4))
 			{
-				//Done
+				/* done */
 				FINISH_PIX_OP;
 				return;
 			}
-			BREG(10<<4) = (UINT16)GET_X(DYDX);
+			BREG(10<<4) = (UINT16)DYDX_X;
 			DADDR = BREG(12<<4) = BREG(12<<4) + DPTCH;
+			boundary = 1;
 		}
 	}
 	while (!boundary);
 
-	PC -= 0x10;  /* Not done yet, check for interrupts and restart instruction */
+	PC -= 0x10;  /* not done yet, check for interrupts and restart instruction */
 }
 
 static void fill_xy(void)
 {
 	UINT32 boundary;
 
-	INT16 x,y;
 	if (!P_FLAG)
 	{
 		switch (state.window_checking)
@@ -456,9 +445,9 @@ static void fill_xy(void)
 			break;
 		}
 
-		/* Setup */
-		BREG(10<<4) = (UINT16)GET_X(DYDX);
-		BREG(11<<4) = (UINT16)GET_Y(DYDX);
+		/* setup */
+		BREG(10<<4) = (UINT16)DYDX_X;
+		BREG(11<<4) = (UINT16)DYDX_Y;
 		BREG(12<<4) = DADDR;
 
 		if ((INT16)BREG(10<<4)<=0 ||
@@ -471,32 +460,30 @@ static void fill_xy(void)
 	}
 
 	do {
-		boundary = WPIXEL(XYTOL(DADDR),COLOR1);
+		boundary = WPIXEL(XYTOL(DADDR_XY),COLOR1);
 		if (--BREG(10<<4))
 		{
-			/* Next column */
-			x = GET_X(DADDR) + 1;
-			y = GET_Y(DADDR);
-			DADDR = COMBINE_XY(x,y);
+			/* next column */
+			DADDR_X++;
 		}
 		else
 		{
-			/* Next row */
+			/* next row */
 			if (!--BREG(11<<4))
 			{
-				//Done
+				/* done */
 				FINISH_PIX_OP;
 				return;
 			}
-			BREG(10<<4) = (UINT16)GET_X(DYDX);
-			x = GET_X(BREG(12<<4));
-			y = GET_Y(BREG(12<<4)) + 1;
-			DADDR = BREG(12<<4) = COMBINE_XY(x,y);
+			BREG(10<<4) = (UINT16)DYDX_X;
+			BREG_Y(12<<4)++;
+			DADDR = BREG(12<<4);
+			boundary = 1;
 		}
 	}
 	while (!boundary);
 
-	PC -= 0x10;  /* Not done yet, check for interrupts and restart instruction */
+	PC -= 0x10;  /* not done yet, check for interrupts and restart instruction */
 }
 
 static void line(void)
@@ -509,34 +496,31 @@ static void line(void)
 		}
 
 		P_FLAG = 1;
-		TEMP = (state.op & 0x80) ? 1 : 0;  /* Boundary value depends on the algorithm */
+		TEMP = (state.op & 0x80) ? 1 : 0;  /* boundary value depends on the algorithm */
 	}
 
 	if (COUNT > 0)
 	{
-		INT16 x1,x2,y1,y2,newx,newy;
+		INT16 x1,y1;
 
 		COUNT--;
-		WPIXEL(XYTOL(DADDR),COLOR1);
+		WPIXEL(XYTOL(DADDR_XY),COLOR1);
 		if (SADDR >= TEMP)
 		{
-			SADDR += GET_Y(DYDX)*2 - GET_X(DYDX)*2;
-			x1 = GET_X(INC1);
-			y1 = GET_Y(INC1);
+			SADDR += DYDX_Y*2 - DYDX_X*2;
+			x1 = INC1_X;
+			y1 = INC1_Y;
 		}
 		else
 		{
-			SADDR += GET_Y(DYDX)*2;
-			x1 = GET_X(INC2);
-			y1 = GET_Y(INC2);
+			SADDR += DYDX_Y*2;
+			x1 = INC2_X;
+			y1 = INC2_Y;
 		}
-		x2 = GET_X(DADDR);
-		y2 = GET_Y(DADDR);
-		newx = x1+x2;
-		newy = y1+y2;
-		DADDR = COMBINE_XY(newx,newy);
+		DADDR_X += x1;
+		DADDR_Y += y1;
 
-		PC -= 0x10;  /* Not done yet, check for interrupts and restart instruction */
+		PC -= 0x10;  /* not done yet, check for interrupts and restart instruction */
 		return;
 	}
 	FINISH_PIX_OP;
@@ -544,80 +528,67 @@ static void line(void)
 
 #define ADD_XY(R)								\
 {												\
-	INT32 *rs = &R##REG(R##SRCREG);				\
-	INT32 *rd = &R##REG(R##DSTREG);				\
-	INT16 x1 = GET_X(*rd);						\
-	INT16 x2 = GET_X(*rs);						\
-	INT16 y1 = GET_Y(*rd);						\
-	INT16 y2 = GET_Y(*rs);						\
-	INT16 newx = x1+x2;							\
-	INT16 newy = y1+y2;							\
-	   N_FLAG = !newx;							\
-	   V_FLAG = (newx & 0x8000);				\
-	NOTZ_FLAG =  newy;							\
-  	   C_FLAG = (newy & 0x8000);				\
-    *rd = COMBINE_XY(newx,newy);				\
+	XY res;										\
+	XY  a =  R##REG_XY(R##SRCREG);				\
+	XY *b = &R##REG_XY(R##DSTREG);				\
+	res.x = b->x + a.x;							\
+	   N_FLAG = !res.x;							\
+	   V_FLAG = res.x & 0x8000;					\
+	res.y = b->y + a.y;							\
+	NOTZ_FLAG = res.y;							\
+	   C_FLAG = res.y & 0x8000;					\
+  	*b = res;									\
 }
 static void add_xy_a(void) { ADD_XY(A); }
 static void add_xy_b(void) { ADD_XY(B); }
 
 #define SUB_XY(R)								\
 {												\
-	INT32 *rs = &R##REG(R##SRCREG);				\
-	INT32 *rd = &R##REG(R##DSTREG);				\
-	INT16 x1 = GET_X(*rd);						\
-	INT16 x2 = GET_X(*rs);						\
-	INT16 y1 = GET_Y(*rd);						\
-	INT16 y2 = GET_Y(*rs);						\
-	INT16 newx = x1-x2;							\
-	INT16 newy = y1-y2;							\
-	*rd = COMBINE_XY(newx,newy);				\
-       N_FLAG = (x2 == x1);						\
-	   C_FLAG = (y2 >  y1);						\
-	NOTZ_FLAG = (y2 != y1);						\
-	   V_FLAG = (x2 >  x1);						\
+	XY  a =  R##REG_XY(R##SRCREG);				\
+	XY *b = &R##REG_XY(R##DSTREG);				\
+	   N_FLAG = (a.x == b->x);					\
+	   V_FLAG = (a.x >  b->x);					\
+	   C_FLAG = (a.y >  b->y);					\
+	NOTZ_FLAG = (a.y != b->y);					\
+	b->x -= a.x;								\
+	b->y -= a.y;								\
 }
 static void sub_xy_a(void) { SUB_XY(A); }
 static void sub_xy_b(void) { SUB_XY(B); }
 
 #define CMP_XY(R)								\
 {												\
-	INT16 x1 = GET_X(R##REG(R##DSTREG));		\
-	INT16 y1 = GET_Y(R##REG(R##DSTREG));		\
-	INT16 x2 = GET_X(R##REG(R##SRCREG));		\
-	INT16 y2 = GET_Y(R##REG(R##SRCREG));		\
-	INT16 newx = x1-x2;							\
-	INT16 newy = y1-y2;							\
-	   N_FLAG = !newx;							\
-	NOTZ_FLAG =  newy;							\
-	   V_FLAG = (newx & 0x8000);				\
-	   C_FLAG = (newy & 0x8000);				\
+	INT16 res;									\
+	XY a = R##REG_XY(R##DSTREG);				\
+	XY b = R##REG_XY(R##SRCREG);				\
+	res = a.x-b.x;								\
+	   N_FLAG = !res;							\
+	   V_FLAG = (res & 0x8000);					\
+	res = a.y-b.y;								\
+	NOTZ_FLAG =  res;							\
+	   C_FLAG = (res & 0x8000);					\
 }
 static void cmp_xy_a(void) { CMP_XY(A); }
 static void cmp_xy_b(void) { CMP_XY(B); }
 
-#define CPW(R)										\
-{													\
-	INT32 res = 0;									\
-	INT16 x       = GET_X(R##REG(R##SRCREG));		\
-	INT16 y       = GET_Y(R##REG(R##SRCREG));		\
-	INT16 wstartx = GET_X(WSTART);					\
-	INT16 wstarty = GET_Y(WSTART);					\
-	INT16 wendx   = GET_X(WEND);					\
-	INT16 wendy   = GET_Y(WEND);					\
-													\
-	res |= ((wstartx > x) ? 0x20  : 0);				\
-	res |= ((x > wendx)   ? 0x40  : 0);				\
-	res |= ((wstarty > y) ? 0x80  : 0);				\
-	res |= ((y > wendy)   ? 0x100 : 0);				\
-	R##REG(R##DSTREG) = V_FLAG = res;				\
+#define CPW(R)									\
+{												\
+	INT32 res = 0;								\
+	INT16 x = R##REG_X(R##SRCREG);				\
+	INT16 y = R##REG_Y(R##SRCREG);				\
+												\
+	res |= ((WSTART_X > x) ? 0x20  : 0);		\
+	res |= ((x > WEND_X)   ? 0x40  : 0);		\
+	res |= ((WSTART_Y > y) ? 0x80  : 0);		\
+	res |= ((y > WEND_Y)   ? 0x100 : 0);		\
+	R##REG(R##DSTREG) = V_FLAG = res;			\
 }
 static void cpw_a(void) { CPW(A); }
 static void cpw_b(void) { CPW(B); }
 
 #define CVXYL(R)									\
 {													\
-    R##REG(R##DSTREG) = XYTOL(R##REG(R##SRCREG));	\
+    R##REG(R##DSTREG) = XYTOL(R##REG_XY(R##SRCREG));\
 }
 static void cvxyl_a(void) { CVXYL(A); }
 static void cvxyl_b(void) { CVXYL(B); }
@@ -651,7 +622,7 @@ static void pixt_ri_b(void) { PIXT_RI(B); }
 		fprintf(errorlog, "PIXT R,XY  %08X - Window Checking Mode %d not supported\n", PC, state.window_checking);	\
 	}												\
 													\
-	WPIXEL(XYTOL(R##REG(R##DSTREG)),R##REG(R##SRCREG));	\
+	WPIXEL(XYTOL(R##REG_XY(R##DSTREG)),R##REG(R##SRCREG));	\
 	FINISH_PIX_OP;									\
 }
 static void pixt_rixy_a(void) { PIXT_RIXY(A); }
@@ -675,7 +646,7 @@ static void pixt_ii_b(void) { PIXT_II(B); }
 
 #define PIXT_IXYR(R)			              		\
 {													\
-	R##REG(R##DSTREG) = V_FLAG = RPIXEL(XYTOL(R##REG(R##SRCREG)));	\
+	R##REG(R##DSTREG) = V_FLAG = RPIXEL(XYTOL(R##REG_XY(R##SRCREG)));	\
 	FINISH_PIX_OP;									\
 }
 static void pixt_ixyr_a(void) { PIXT_IXYR(A); }
@@ -683,7 +654,7 @@ static void pixt_ixyr_b(void) { PIXT_IXYR(B); }
 
 #define PIXT_IXYIXY(R)			              			      		\
 {																	\
-	WPIXEL(XYTOL(R##REG(R##DSTREG)),RPIXEL(XYTOL(R##REG(R##SRCREG))));	\
+	WPIXEL(XYTOL(R##REG_XY(R##DSTREG)),RPIXEL(XYTOL(R##REG_XY(R##SRCREG))));	\
 	FINISH_PIX_OP;													\
 }
 static void pixt_ixyixy_a(void) { PIXT_IXYIXY(A); }
@@ -691,22 +662,15 @@ static void pixt_ixyixy_b(void) { PIXT_IXYIXY(B); }
 
 #define DRAV(R)			              			      		\
 {															\
-	INT16 x1,y1,x2,y2,newx,newy;							\
-															\
 	if (state.window_checking && errorlog)					\
 	{														\
 		fprintf(errorlog, "DRAV  %08X - Window Checking Mode %d not supported\n", PC, state.window_checking);	\
 	}														\
 															\
-	WPIXEL(XYTOL(R##REG(R##DSTREG)),COLOR1);				\
+	WPIXEL(XYTOL(R##REG_XY(R##DSTREG)),COLOR1);				\
 															\
-	x1 = GET_X(R##REG(R##DSTREG));							\
-	y1 = GET_Y(R##REG(R##DSTREG));							\
-	x2 = GET_X(R##REG(R##SRCREG));							\
-	y2 = GET_Y(R##REG(R##SRCREG));							\
-	newx = x1+x2;											\
-	newy = y1+y2;											\
-	R##REG(R##DSTREG) = COMBINE_XY(newx,newy);				\
+	R##REG_X(R##DSTREG) += R##REG_X(R##SRCREG);				\
+	R##REG_Y(R##DSTREG) += R##REG_Y(R##SRCREG);				\
 	FINISH_PIX_OP;											\
 }
 static void drav_a(void) { DRAV(A); }
@@ -1844,7 +1808,7 @@ static void dsjs_b (void) { DSJS(B); }
 
 static void emu(void)
 {
-	/* In RUN state, this instruction is a NOP */
+	/* in RUN state, this instruction is a NOP */
 }
 
 #define EXGPC(R)												\

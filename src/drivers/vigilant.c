@@ -4,33 +4,29 @@
 
 If you have any questions about how this driver works, don't hesitate to
 ask.  - Mike Balfour (mab22@po.cwru.edu)
+
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sndhrdw/m72.h"
 
 /* vidhrdw/vigilant.c */
-extern int vigilant_vh_start(void);
-extern void vigilant_vh_stop(void);
-extern void vigilant_vh_convert_color_prom (unsigned char *palette, unsigned char *colortable, const unsigned char *color_prom);
-extern void vigilant_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-extern void vigilant_paletteram_w(int offset, int data);
-extern void vigilant_sprite_paletteram_w(int offset, int data);
-extern void vigilant_horiz_scroll_w(int offset, int data);
-extern void vigilant_rear_horiz_scroll_w(int offset, int data);
-extern void vigilant_rear_color_w(int offset, int data);
+int vigilant_vh_start(void);
+void vigilant_vh_stop(void);
+void vigilant_paletteram_w(int offset, int data);
+void vigilant_sprite_paletteram_w(int offset, int data);
+void vigilant_horiz_scroll_w(int offset, int data);
+void vigilant_rear_horiz_scroll_w(int offset, int data);
+void vigilant_rear_color_w(int offset, int data);
+void vigilant_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void kikcubic_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-static unsigned char irq_vector = 0xff; /* sound irq vector & irq line */
 
 void vigilant_bank_select_w (int offset,int data)
 {
 	int bankaddress;
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	/* This is bad because ROM 7-8K is unpopulated */
-	if ((errorlog) && (data & 0x04))
-		fprintf(errorlog,"switching to ROM 7-8K!!\n");
 
 	bankaddress = 0x10000 + (data & 0x07) * 0x4000;
 	cpu_setbank(1,&RAM[bankaddress]);
@@ -46,68 +42,35 @@ void vigilant_out2_w(int offset,int data)
 	/* D2 = COB1 = Coin Counter B? */
 
 	/* The hardware has both coin counters hooked up to a single meter. */
-	coin_counter_w(0, (data&0x02));
-	coin_counter_w(1, (data&0x04));
+	coin_counter_w(0,data & 0x02);
+	coin_counter_w(1,data & 0x04);
 }
 
-
-static int sample_rom_offset;
-
-void vigilant_sample_offset_low_w(int offset,int data)
+void kikcubic_coin_w(int offset,int data)
 {
-	sample_rom_offset = (sample_rom_offset & 0xFF00) | (data & 0x00FF);
-}
+	/* bits 0 is flip screen */
 
-void vigilant_sample_offset_high_w(int offset,int data)
-{
-	sample_rom_offset = (sample_rom_offset & 0x00FF) | ((data & 0x00FF) << 8);
-}
+	/* bit 1 is used but unknown */
 
-int vigilant_sample_rom_r(int offset)
-{
-	unsigned char *dac_ROM = Machine->memory_region[3];
-
-	return dac_ROM[sample_rom_offset];
-}
-
-void vigilant_count_up_w(int offset,int data)
-{
-	unsigned char *dac_ROM = Machine->memory_region[3];
-
-	sample_rom_offset++;
-	DAC_data_w(0,dac_ROM[sample_rom_offset]);
+	/* bits 4/5 are coin counters */
+	coin_counter_w(0,data & 0x10);
+	coin_counter_w(1,data & 0x20);
 }
 
 
-void vigilant_soundcmd_w(int offset,int data)
-{
-	soundlatch_w(offset,data);
-	irq_vector &= 0xdf; /* RST 18h (could be RST 08h instead) */
-	cpu_irq_line_vector_w(1,0,irq_vector);
-        if(irq_vector==0xdf) cpu_set_irq_line(1,0,ASSERT_LINE);
-}
 
-void vigilant_irqclear_w(int offset,int data)
-{
-	irq_vector |= ~0xdf; /* irq clear */
-	cpu_irq_line_vector_w(1,0,irq_vector);
-	if(irq_vector==0xff) cpu_set_irq_line(1,0,CLEAR_LINE);
-}
-
-
-static struct MemoryReadAddress readmem[] =
+static struct MemoryReadAddress vigilant_readmem[] =
 {
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0xbfff, MRA_BANK1 },
 	{ 0xc020, 0xc0df, MRA_RAM },
-	{ 0xc800, 0xcbff, MRA_RAM },
-	{ 0xcc00, 0xcfff, MRA_RAM },
+	{ 0xc800, 0xcfff, MRA_RAM },
 	{ 0xd000, 0xdfff, videoram_r },
 	{ 0xe000, 0xefff, MRA_RAM },
 	{ -1 }	/* end of table */
 };
 
-static struct MemoryWriteAddress writemem[] =
+static struct MemoryWriteAddress vigilant_writemem[] =
 {
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc020, 0xc0df, MWA_RAM, &spriteram, &spriteram_size },
@@ -117,7 +80,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ -1 }	/* end of table */
 };
 
-static struct IOReadPort readport[] =
+static struct IOReadPort vigilant_readport[] =
 {
 	{ 0x00, 0x00, input_port_0_r },
 	{ 0x01, 0x01, input_port_1_r },
@@ -127,14 +90,54 @@ static struct IOReadPort readport[] =
 	{ -1 }	/* end of table */
 };
 
-static struct IOWritePort writeport[] =
+static struct IOWritePort vigilant_writeport[] =
 {
-	{ 0x00, 0x00, vigilant_soundcmd_w },  /* SD */
+	{ 0x00, 0x00, m72_sound_command_w },  /* SD */
 	{ 0x01, 0x01, vigilant_out2_w }, /* OUT2 */
 	{ 0x04, 0x04, vigilant_bank_select_w }, /* PBANK */
 	{ 0x80, 0x81, vigilant_horiz_scroll_w }, /* HSPL, HSPH */
 	{ 0x82, 0x83, vigilant_rear_horiz_scroll_w }, /* RHSPL, RHSPH */
 	{ 0x84, 0x84, vigilant_rear_color_w }, /* RCOD */
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryReadAddress kikcubic_readmem[] =
+{
+	{ 0x0000, 0x7fff, MRA_ROM },
+	{ 0x8000, 0xbfff, MRA_BANK1 },
+	{ 0xc000, 0xc0ff, MRA_RAM },
+	{ 0xc800, 0xcaff, MRA_RAM },
+	{ 0xd000, 0xdfff, videoram_r },
+	{ 0xe000, 0xffff, MRA_RAM },
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryWriteAddress kikcubic_writemem[] =
+{
+	{ 0x0000, 0xbfff, MWA_ROM },
+	{ 0xc000, 0xc0ff, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0xc800, 0xcaff, vigilant_paletteram_w, &paletteram },
+	{ 0xd000, 0xdfff, videoram_w, &videoram, &videoram_size },
+	{ 0xe000, 0xffff, MWA_RAM },
+	{ -1 }	/* end of table */
+};
+
+static struct IOReadPort kikcubic_readport[] =
+{
+	{ 0x00, 0x00, input_port_3_r },
+	{ 0x01, 0x01, input_port_4_r },
+	{ 0x02, 0x02, input_port_0_r },
+	{ 0x03, 0x03, input_port_1_r },
+	{ 0x04, 0x04, input_port_2_r },
+	{ -1 }	/* end of table */
+};
+
+static struct IOWritePort kikcubic_writeport[] =
+{
+	{ 0x00, 0x00, kikcubic_coin_w },	/* also flip screen, and...? */
+	{ 0x04, 0x04, vigilant_bank_select_w },
+	{ 0x06, 0x06, m72_sound_command_w },
+//	{ 0x07, 0x07, IOWP_NOP },	/* ?? */
 	{ -1 }	/* end of table */
 };
 
@@ -155,8 +158,8 @@ static struct MemoryWriteAddress sound_writemem[] =
 static struct IOReadPort sound_readport[] =
 {
 	{ 0x01, 0x01, YM2151_status_port_0_r },
-	{ 0x80, 0x80, soundlatch_r },  /* SDRE */
-	{ 0x84, 0x84, vigilant_sample_rom_r },  /* S ROM C */
+	{ 0x80, 0x80, soundlatch_r },	/* SDRE */
+	{ 0x84, 0x84, m72_sample_r },	/* S ROM C */
 	{ -1 }	/* end of table */
 };
 
@@ -164,10 +167,9 @@ static struct IOWritePort sound_writeport[] =
 {
 	{ 0x00, 0x00, YM2151_register_port_0_w },
 	{ 0x01, 0x01, YM2151_data_port_0_w },
-	{ 0x80, 0x80, vigilant_sample_offset_low_w }, /* STL */
-	{ 0x81, 0x81, vigilant_sample_offset_high_w }, /* STH */
-	{ 0x82, 0x82, vigilant_count_up_w }, /* COUNT UP */
-	{ 0x83, 0x83, vigilant_irqclear_w }, /* IRQ clear */
+	{ 0x80, 0x81, vigilant_sample_addr_w },	/* STL / STH */
+	{ 0x82, 0x82, m72_sample_w },			/* COUNT UP */
+	{ 0x83, 0x83, m72_sound_irq_ack_w },	/* IRQ clear */
 	{ -1 }	/* end of table */
 };
 
@@ -213,16 +215,16 @@ INPUT_PORTS_START( vigilant_input_ports )
 	PORT_DIPSETTING(	0x08, "Slow" )
 	PORT_DIPSETTING(	0x00, "Fast" )
 	/* TODO: support the different settings which happen in Coin Mode 2 */
-	PORT_DIPNAME( 0xF0, 0xF0, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(	0xA0, DEF_STR( 6C_1C ) )
-	PORT_DIPSETTING(	0xB0, DEF_STR( 5C_1C ) )
-	PORT_DIPSETTING(	0xC0, DEF_STR( 4C_1C ) )
-	PORT_DIPSETTING(	0xD0, DEF_STR( 3C_1C ) )
+	PORT_DIPNAME( 0xf0, 0xf0, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(	0xa0, DEF_STR( 6C_1C ) )
+	PORT_DIPSETTING(	0xb0, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(	0xc0, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(	0xd0, DEF_STR( 3C_1C ) )
 	PORT_DIPSETTING(	0x10, "8 Coins/3 Credits" )
-	PORT_DIPSETTING(	0xE0, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(	0xe0, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(	0x20, "5 Coins/3 Credits" )
 	PORT_DIPSETTING(	0x30, DEF_STR( 3C_2C ) )
-	PORT_DIPSETTING(	0xF0, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(	0xf0, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(	0x40, DEF_STR( 2C_3C ) )
 	PORT_DIPSETTING(	0x90, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(	0x80, DEF_STR( 1C_3C ) )
@@ -260,13 +262,101 @@ INPUT_PORTS_START( vigilant_input_ports )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( kikcubic_input_ports )
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 )
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT_IMPULSE( 0x40, IP_ACTIVE_LOW, IPT_COIN3, 19 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+
+	PORT_START
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x02, "Easy" )
+	PORT_DIPSETTING(    0x03, "Medium" )
+	PORT_DIPSETTING(    0x01, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x08, "1" )
+	PORT_DIPSETTING(    0x04, "2" )
+	PORT_DIPSETTING(    0x0c, "3" )
+	PORT_DIPSETTING(    0x00, "4" )
+	/* TODO: support the different settings which happen in Coin Mode 2 */
+	PORT_DIPNAME( 0xf0, 0xf0, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(	0xa0, DEF_STR( 6C_1C ) )
+	PORT_DIPSETTING(	0xb0, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(	0xc0, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(	0xd0, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(	0xe0, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(	0xf0, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(	0x70, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(	0x60, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(	0x50, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(	0x40, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(	0x30, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Free_Play ) )
+//	PORT_DIPSETTING(	0x10, "Undefined" )
+//	PORT_DIPSETTING(	0x20, "Undefined" )
+//	PORT_DIPSETTING(	0x80, "Undefined" )
+//	PORT_DIPSETTING(	0x90, "Undefined" )
+
+	PORT_START
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(	0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Cocktail ) )
+/* This activates a different coin mode. Look at the dip switch setting schematic */
+	PORT_DIPNAME( 0x04, 0x04, "Coin Mode" )
+	PORT_DIPSETTING(	0x04, "Mode 1" )
+	PORT_DIPSETTING(	0x00, "Mode 2" )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(	0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x00, "Level Select" )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, "Player Adding" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
+INPUT_PORTS_END
+
+
 
 static struct GfxLayout text_layout =
 {
 	8,8, /* tile size */
 	4096, /* number of tiles */
 	4, /* bits per pixel */
-	{0,4,64*1024*8,64*1024*8+4}, /* plane offsets */
+	{64*1024*8,64*1024*8+4,0,4}, /* plane offsets */
 	{ 0,1,2,3, 64+0,64+1,64+2,64+3 }, /* x offsets */
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 }, /* y offsets */
 	128
@@ -277,7 +367,7 @@ static struct GfxLayout sprite_layout =
 	16,16,	/* tile size */
 	4096,	/* number of sprites ($1000) */
 	4,		/* bits per pixel */
-	{0,4,0x40000*8,0x40000*8+4}, /* plane offsets */
+	{0x40000*8,0x40000*8+4,0,4}, /* plane offsets */
 	{ /* x offsets */
 		0x00*8+0,0x00*8+1,0x00*8+2,0x00*8+3,
 		0x10*8+0,0x10*8+1,0x10*8+2,0x10*8+3,
@@ -306,7 +396,7 @@ static struct GfxLayout back_layout =
 	16*8
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static struct GfxDecodeInfo vigilant_gfxdecodeinfo[] =
 {
 	{ 1, 0x00000, &text_layout,   256, 16 },	/* colors 256-511 */
 	{ 1, 0x20000, &sprite_layout,   0, 16 },	/* colors   0-255 */
@@ -316,29 +406,22 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-
-
-/* handler called by the 2151 emulator when the internal timers cause an IRQ */
-static void vigilant_irq_handler(int irq)
+static struct GfxDecodeInfo kikcubic_gfxdecodeinfo[] =
 {
-	if( irq )
-	{
-		irq_vector &= 0xef; /* RST 28h */
-		cpu_irq_line_vector_w(1,0,irq_vector);
-                if(irq_vector==0xef)cpu_set_irq_line(1,0,ASSERT_LINE);
-	}else{
-		irq_vector |= ~0xef; /* irq clear */
- 		cpu_irq_line_vector_w(1,0,irq_vector);
-		if(irq_vector==0xff) cpu_set_irq_line(1,0,CLEAR_LINE);
-	}
-}
+	{ 1, 0x00000, &text_layout,   0, 16 },
+	{ 1, 0x20000, &sprite_layout, 0, 16 },
+	{ -1 } /* end of array */
+};
+
+
 
 static struct YM2151interface ym2151_interface =
 {
 	1,			/* 1 chip */
 	3579645,	/* 3.579645 MHz */
 	{ YM3012_VOL(55,MIXER_PAN_LEFT,55,MIXER_PAN_RIGHT) },
-	{ vigilant_irq_handler }
+	{ m72_ym2151_irq_handler },
+	{ 0 }
 };
 
 static struct DACinterface dac_interface =
@@ -349,7 +432,7 @@ static struct DACinterface dac_interface =
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver vigilant_machine_driver =
 {
 	/* basic machine hardware */
 	{
@@ -357,7 +440,7 @@ static struct MachineDriver machine_driver =
 			CPU_Z80,
 			3579645,		   /* 3.579645 MHz */
 			0,
-			readmem,writemem,readport,writeport,
+			vigilant_readmem,vigilant_writemem,vigilant_readport,vigilant_writeport,
 			interrupt,1
 		},
 		{
@@ -366,18 +449,17 @@ static struct MachineDriver machine_driver =
 			2,
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
 			nmi_interrupt,128	/* clocked by V1 */
-								/* RST 18h (RST 08h?) is caused by the main CPU */
-								/* RST 28h is caused by the YM2151 */
+								/* IRQs are generated by main Z80 and YM2151 */
 		}
 	},
-	57, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	55, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,	/* no need for interleaving */
-	0,
+	m72_init_sound,
 
 	/* video hardware */
-	64*8, 32*8, { 16*8, 48*8-1, 0*8, 32*8-1 },
-	gfxdecodeinfo,
-	512+32,512+32,
+	64*8, 32*8, { 16*8, (64-16)*8-1, 0*8, 32*8-1 },
+	vigilant_gfxdecodeinfo,
+	512+32, 512+32,
 	0, /* no color prom */
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
@@ -398,7 +480,56 @@ static struct MachineDriver machine_driver =
 			&dac_interface
 		}
 	}
+};
 
+static struct MachineDriver kikcubic_machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_Z80,
+			3579645,		   /* 3.579645 MHz */
+			0,
+			kikcubic_readmem,kikcubic_writemem,kikcubic_readport,kikcubic_writeport,
+			interrupt,1
+		},
+		{
+			CPU_Z80 | CPU_AUDIO_CPU,
+			3579645,		   /* 3.579645 MHz */
+			2,
+			sound_readmem,sound_writemem,sound_readport,sound_writeport,
+			nmi_interrupt,128	/* clocked by V1 */
+								/* IRQs are generated by main Z80 and YM2151 */
+		}
+	},
+	55, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,	/* no need for interleaving */
+	m72_init_sound,
+
+	/* video hardware */
+	64*8, 32*8, { 8*8, (64-8)*8-1, 0*8, 32*8-1 },
+	kikcubic_gfxdecodeinfo,
+	256, 256,
+	0, /* no color prom */
+
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	0,
+	vigilant_vh_start,
+	vigilant_vh_stop,
+	kikcubic_vh_screenrefresh,
+
+	/* sound hardware */
+	SOUND_SUPPORTS_STEREO,0,0,0,
+	{
+		{
+			SOUND_YM2151,
+			&ym2151_interface
+		},
+		{
+			SOUND_DAC,
+			&dac_interface
+		}
+	}
 };
 
 
@@ -410,24 +541,25 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( vigilant_rom )
-	ROM_REGION(0x20000) /* region#0: 64k for code + 64k for bankswitching */
+	ROM_REGION(0x30000) /* region#0: 64k for code + 128k for bankswitching */
 	ROM_LOAD( "g07_c03.bin",  0x00000, 0x08000, 0x9dcca081 )
 	ROM_LOAD( "j07_c04.bin",  0x10000, 0x10000, 0xe0159105 )
+	/* 0x20000-0x2ffff empty */
 
-	ROM_REGION_DISPOSE(0xD0000) /* region #1: graphics (disposed after conversion) */
-	ROM_LOAD( "h05_c09.bin",  0x00000, 0x10000, 0x4f5872f0 )
-	ROM_LOAD( "f05_c08.bin",  0x10000, 0x10000, 0x01579d20 )
-	ROM_LOAD( "t07_c16.bin",  0x20000, 0x10000, 0xf5425e42 )
-	ROM_LOAD( "v07_c17.bin",  0x30000, 0x10000, 0x959ba3c7 )
-	ROM_LOAD( "p07_c14.bin",  0x40000, 0x10000, 0xcb50a17c )
-	ROM_LOAD( "s07_c15.bin",  0x50000, 0x10000, 0x7f2e91c5 )
-	ROM_LOAD( "n07_c12.bin",  0x60000, 0x10000, 0x10af8eb2 )
-	ROM_LOAD( "o07_c13.bin",  0x70000, 0x10000, 0xb1d9d4dc )
-	ROM_LOAD( "k07_c10.bin",  0x80000, 0x10000, 0x9576f304 )
-	ROM_LOAD( "l07_c11.bin",  0x90000, 0x10000, 0x4598be4a )
-	ROM_LOAD( "d01_c05.bin",  0xA0000, 0x10000, 0x81b1ee5c )
-	ROM_LOAD( "e01_c06.bin",  0xB0000, 0x10000, 0xd0d33673 )
-	ROM_LOAD( "f01_c07.bin",  0xC0000, 0x10000, 0xaae81695 )
+	ROM_REGION_DISPOSE(0xd0000) /* region #1: graphics (disposed after conversion) */
+	ROM_LOAD( "f05_c08.bin",  0x00000, 0x10000, 0x01579d20 )
+	ROM_LOAD( "h05_c09.bin",  0x10000, 0x10000, 0x4f5872f0 )
+	ROM_LOAD( "n07_c12.bin",  0x20000, 0x10000, 0x10af8eb2 )
+	ROM_LOAD( "k07_c10.bin",  0x30000, 0x10000, 0x9576f304 )
+	ROM_LOAD( "o07_c13.bin",  0x40000, 0x10000, 0xb1d9d4dc )
+	ROM_LOAD( "l07_c11.bin",  0x50000, 0x10000, 0x4598be4a )
+	ROM_LOAD( "t07_c16.bin",  0x60000, 0x10000, 0xf5425e42 )
+	ROM_LOAD( "p07_c14.bin",  0x70000, 0x10000, 0xcb50a17c )
+	ROM_LOAD( "v07_c17.bin",  0x80000, 0x10000, 0x959ba3c7 )
+	ROM_LOAD( "s07_c15.bin",  0x90000, 0x10000, 0x7f2e91c5 )
+	ROM_LOAD( "d01_c05.bin",  0xa0000, 0x10000, 0x81b1ee5c )
+	ROM_LOAD( "e01_c06.bin",  0xb0000, 0x10000, 0xd0d33673 )
+	ROM_LOAD( "f01_c07.bin",  0xc0000, 0x10000, 0xaae81695 )
 
 	ROM_REGION(0x10000) /* region#2: 64k for sound */
 	ROM_LOAD( "g05_c02.bin",  0x00000, 0x10000, 0x10582b2d )
@@ -437,24 +569,25 @@ ROM_START( vigilant_rom )
 ROM_END
 
 ROM_START( vigilntu_rom )
-	ROM_REGION(0x20000) /* region#0: 64k for code + 64k for bankswitching */
+	ROM_REGION(0x30000) /* region#0: 64k for code + 128k for bankswitching */
 	ROM_LOAD( "a-8h",  0x00000, 0x08000, 0x8d15109e )
 	ROM_LOAD( "a-8l",  0x10000, 0x10000, 0x7f95799b )
+	/* 0x20000-0x2ffff empty */
 
-	ROM_REGION_DISPOSE(0xD0000) /* region #1: graphics (disposed after conversion) */
-	ROM_LOAD( "h05_c09.bin",  0x00000, 0x10000, 0x4f5872f0 )
-	ROM_LOAD( "f05_c08.bin",  0x10000, 0x10000, 0x01579d20 )
-	ROM_LOAD( "t07_c16.bin",  0x20000, 0x10000, 0xf5425e42 )
-	ROM_LOAD( "v07_c17.bin",  0x30000, 0x10000, 0x959ba3c7 )
-	ROM_LOAD( "p07_c14.bin",  0x40000, 0x10000, 0xcb50a17c )
-	ROM_LOAD( "s07_c15.bin",  0x50000, 0x10000, 0x7f2e91c5 )
-	ROM_LOAD( "n07_c12.bin",  0x60000, 0x10000, 0x10af8eb2 )
-	ROM_LOAD( "o07_c13.bin",  0x70000, 0x10000, 0xb1d9d4dc )
-	ROM_LOAD( "k07_c10.bin",  0x80000, 0x10000, 0x9576f304 )
-	ROM_LOAD( "l07_c11.bin",  0x90000, 0x10000, 0x4598be4a )
-	ROM_LOAD( "d01_c05.bin",  0xA0000, 0x10000, 0x81b1ee5c )
-	ROM_LOAD( "e01_c06.bin",  0xB0000, 0x10000, 0xd0d33673 )
-	ROM_LOAD( "f01_c07.bin",  0xC0000, 0x10000, 0xaae81695 )
+	ROM_REGION_DISPOSE(0xd0000) /* region #1: graphics (disposed after conversion) */
+	ROM_LOAD( "f05_c08.bin",  0x00000, 0x10000, 0x01579d20 )
+	ROM_LOAD( "h05_c09.bin",  0x10000, 0x10000, 0x4f5872f0 )
+	ROM_LOAD( "n07_c12.bin",  0x20000, 0x10000, 0x10af8eb2 )
+	ROM_LOAD( "k07_c10.bin",  0x30000, 0x10000, 0x9576f304 )
+	ROM_LOAD( "o07_c13.bin",  0x40000, 0x10000, 0xb1d9d4dc )
+	ROM_LOAD( "l07_c11.bin",  0x50000, 0x10000, 0x4598be4a )
+	ROM_LOAD( "t07_c16.bin",  0x60000, 0x10000, 0xf5425e42 )
+	ROM_LOAD( "p07_c14.bin",  0x70000, 0x10000, 0xcb50a17c )
+	ROM_LOAD( "v07_c17.bin",  0x80000, 0x10000, 0x959ba3c7 )
+	ROM_LOAD( "s07_c15.bin",  0x90000, 0x10000, 0x7f2e91c5 )
+	ROM_LOAD( "d01_c05.bin",  0xa0000, 0x10000, 0x81b1ee5c )
+	ROM_LOAD( "e01_c06.bin",  0xb0000, 0x10000, 0xd0d33673 )
+	ROM_LOAD( "f01_c07.bin",  0xc0000, 0x10000, 0xaae81695 )
 
 	ROM_REGION(0x10000) /* region#2: 64k for sound */
 	ROM_LOAD( "g05_c02.bin",  0x00000, 0x10000, 0x10582b2d )
@@ -464,24 +597,25 @@ ROM_START( vigilntu_rom )
 ROM_END
 
 ROM_START( vigilntj_rom )
-	ROM_REGION(0x20000) /* region#0: 64k for code + 64k for bankswitching */
+	ROM_REGION(0x30000) /* region#0: 64k for code + 128k for bankswitching */
 	ROM_LOAD( "vg_a-8h.rom",  0x00000, 0x08000, 0xba848713 )
 	ROM_LOAD( "vg_a-8l.rom",  0x10000, 0x10000, 0x3b12b1d8 )
+	/* 0x20000-0x2ffff empty */
 
-	ROM_REGION_DISPOSE(0xD0000) /* region #1: graphics (disposed after conversion) */
-	ROM_LOAD( "h05_c09.bin",  0x00000, 0x10000, 0x4f5872f0 )
-	ROM_LOAD( "f05_c08.bin",  0x10000, 0x10000, 0x01579d20 )
-	ROM_LOAD( "t07_c16.bin",  0x20000, 0x10000, 0xf5425e42 )
-	ROM_LOAD( "v07_c17.bin",  0x30000, 0x10000, 0x959ba3c7 )
-	ROM_LOAD( "p07_c14.bin",  0x40000, 0x10000, 0xcb50a17c )
-	ROM_LOAD( "s07_c15.bin",  0x50000, 0x10000, 0x7f2e91c5 )
-	ROM_LOAD( "n07_c12.bin",  0x60000, 0x10000, 0x10af8eb2 )
-	ROM_LOAD( "o07_c13.bin",  0x70000, 0x10000, 0xb1d9d4dc )
-	ROM_LOAD( "k07_c10.bin",  0x80000, 0x10000, 0x9576f304 )
-	ROM_LOAD( "l07_c11.bin",  0x90000, 0x10000, 0x4598be4a )
-	ROM_LOAD( "d01_c05.bin",  0xA0000, 0x10000, 0x81b1ee5c )
-	ROM_LOAD( "e01_c06.bin",  0xB0000, 0x10000, 0xd0d33673 )
-	ROM_LOAD( "f01_c07.bin",  0xC0000, 0x10000, 0xaae81695 )
+	ROM_REGION_DISPOSE(0xd0000) /* region #1: graphics (disposed after conversion) */
+	ROM_LOAD( "f05_c08.bin",  0x00000, 0x10000, 0x01579d20 )
+	ROM_LOAD( "h05_c09.bin",  0x10000, 0x10000, 0x4f5872f0 )
+	ROM_LOAD( "n07_c12.bin",  0x20000, 0x10000, 0x10af8eb2 )
+	ROM_LOAD( "k07_c10.bin",  0x30000, 0x10000, 0x9576f304 )
+	ROM_LOAD( "o07_c13.bin",  0x40000, 0x10000, 0xb1d9d4dc )
+	ROM_LOAD( "l07_c11.bin",  0x50000, 0x10000, 0x4598be4a )
+	ROM_LOAD( "t07_c16.bin",  0x60000, 0x10000, 0xf5425e42 )
+	ROM_LOAD( "p07_c14.bin",  0x70000, 0x10000, 0xcb50a17c )
+	ROM_LOAD( "v07_c17.bin",  0x80000, 0x10000, 0x959ba3c7 )
+	ROM_LOAD( "s07_c15.bin",  0x90000, 0x10000, 0x7f2e91c5 )
+	ROM_LOAD( "d01_c05.bin",  0xa0000, 0x10000, 0x81b1ee5c )
+	ROM_LOAD( "e01_c06.bin",  0xb0000, 0x10000, 0xd0d33673 )
+	ROM_LOAD( "f01_c07.bin",  0xc0000, 0x10000, 0xaae81695 )
 
 	ROM_REGION(0x10000) /* region#2: 64k for sound */
 	ROM_LOAD( "g05_c02.bin",  0x00000, 0x10000, 0x10582b2d )
@@ -489,6 +623,27 @@ ROM_START( vigilntj_rom )
 	ROM_REGION(0x10000) /* region#3: 64k for sample ROM */
 	ROM_LOAD( "d04_c01.bin",  0x00000, 0x10000, 0x9b85101d )
 ROM_END
+
+ROM_START( kikcubic_rom )
+	ROM_REGION(0x30000) /* region#0: 64k for code + 128k for bankswitching */
+	ROM_LOAD( "mqj-p0",       0x00000, 0x08000, 0x9cef394a )
+	ROM_LOAD( "mqj-b0",       0x10000, 0x10000, 0xd9bcf4cd )
+	ROM_LOAD( "mqj-b1",       0x20000, 0x10000, 0x54a0abe1 )
+
+	ROM_REGION_DISPOSE(0xa0000) /* region #1: graphics (disposed after conversion) */
+	ROM_LOAD( "mqj-c0",       0x00000, 0x10000, 0x975585c5 )
+	ROM_LOAD( "mqj-c1",       0x10000, 0x10000, 0x49d9936d )
+	ROM_LOAD( "mqj-00",       0x20000, 0x40000, 0x7fb0c58f )
+	ROM_LOAD( "mqj-10",       0x60000, 0x40000, 0x3a189205 )
+
+	ROM_REGION(0x10000) /* region#2: 64k for sound */
+	ROM_LOAD( "mqj-sp",       0x00000, 0x10000, 0xbbcf3582 )
+
+	ROM_REGION(0x10000) /* region#3: 64k for sample ROM */
+	ROM_LOAD( "mqj-v0",       0x00000, 0x10000, 0x54762956 )
+ROM_END
+
+
 
 static int vigilant_hiload(void)
 {
@@ -533,12 +688,12 @@ struct GameDriver vigilant_driver =
 	__FILE__,
 	0,
 	"vigilant",
-	"Vigilante (World?)",
+	"Vigilante (World)",
 	"1988",
 	"Irem",
 	"Mike Balfour\nPhil Stroffolino\nNicola Salmoria",
 	0,
-	&machine_driver,
+	&vigilant_machine_driver,
 	0,
 
 	vigilant_rom,
@@ -548,9 +703,9 @@ struct GameDriver vigilant_driver =
 
 	vigilant_input_ports,
 
-	0, 0, 0,   /* colors, palette, colortable */
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
-        vigilant_hiload, vigilant_hisave
+	vigilant_hiload, vigilant_hisave
 };
 
 struct GameDriver vigilntu_driver =
@@ -563,7 +718,7 @@ struct GameDriver vigilntu_driver =
 	"Irem (Data East USA license)",
 	"Mike Balfour\nPhil Stroffolino\nNicola Salmoria",
 	0,
-	&machine_driver,
+	&vigilant_machine_driver,
 	0,
 
 	vigilntu_rom,
@@ -573,9 +728,9 @@ struct GameDriver vigilntu_driver =
 
 	vigilant_input_ports,
 
-	0, 0, 0,   /* colors, palette, colortable */
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
-        vigilant_hiload, vigilant_hisave
+	vigilant_hiload, vigilant_hisave
 };
 
 struct GameDriver vigilntj_driver =
@@ -588,7 +743,7 @@ struct GameDriver vigilntj_driver =
 	"Irem",
 	"Mike Balfour\nPhil Stroffolino\nNicola Salmoria",
 	0,
-	&machine_driver,
+	&vigilant_machine_driver,
 	0,
 
 	vigilntj_rom,
@@ -598,7 +753,32 @@ struct GameDriver vigilntj_driver =
 
 	vigilant_input_ports,
 
-	0, 0, 0,   /* colors, palette, colortable */
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
-        vigilant_hiload, vigilant_hisave
+	vigilant_hiload, vigilant_hisave
+};
+
+struct GameDriver kikcubic_driver =
+{
+	__FILE__,
+	0,
+	"kikcubic",
+	"Meikyu Jima (Japan)",	/* English title is Kickle Cubicle */
+	"1988",
+	"Irem",
+	"Mike Balfour\nPhil Stroffolino\nNicola Salmoria",
+	0,
+	&kikcubic_machine_driver,
+	0,
+
+	kikcubic_rom,
+	0,0,
+	0,
+	0,	/* sound_prom */
+
+	kikcubic_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+	0, 0
 };
