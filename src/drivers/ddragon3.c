@@ -387,6 +387,7 @@ INPUT_PORTS_START( ddragon3 )
 	PORT_DIPSETTING(	  0x0000, DEF_STR( On ) )
 
 	PORT_START /* 180006 DSW */
+	PORT_BIT( 0x00ff, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* fixes skipping through cut scenes without a button being pressed */
 	PORT_DIPNAME( 0x0100, 0x0100, "Starting Power" )
 	PORT_DIPSETTING(	  0x0000, "200" )
 	PORT_DIPSETTING(	  0x0100, "230" )

@@ -12,6 +12,7 @@
 
 #include "driver.h"
 #include "adpcm.h"
+#include "state.h"
 
 
 #define MAX_SAMPLE_CHUNK	10000
@@ -543,7 +544,22 @@ static void ymz280b_update(int num, INT16 **buffer, int length)
 }
 
 
-
+//ks s
+static int chip_num;
+static void YMZ280B_state_save_update_step(void)
+{
+	int i,j;
+	for (i = 0; i < chip_num; i++)
+	{
+		for (j = 0; j < 8; j++)
+		{
+			struct YMZ280BChip *chip = &ymz280b[i];
+			struct YMZ280BVoice *voice = &chip->voice[j];
+			update_step(chip, voice);
+		}
+	}
+}
+//ks e
 /**********************************************************************************************
 
      YMZ280B_sh_start -- start emulation of the YMZ280B
@@ -591,6 +607,47 @@ int YMZ280B_sh_start(const struct MachineSound *msound)
 	scratch = malloc(sizeof(scratch[0]) * MAX_SAMPLE_CHUNK);
 	if (!accumulator || !scratch)
 		return 1;
+
+//ks s
+	/* state save */
+	for (i = 0; i < intf->num; i++)
+	{
+		int j;
+		state_save_register_UINT8("YMZ280B", i, "current_register", &ymz280b[i].current_register,1);
+		state_save_register_UINT8("YMZ280B", i, "status_register", &ymz280b[i].status_register,1);
+		state_save_register_UINT8("YMZ280B", i, "irq_state", &ymz280b[i].irq_state,1);
+		state_save_register_UINT8("YMZ280B", i, "irq_mask", &ymz280b[i].irq_mask,1);
+		state_save_register_UINT8("YMZ280B", i, "irq_enable", &ymz280b[i].irq_enable,1);
+		state_save_register_UINT8("YMZ280B", i, "keyon_enable", &ymz280b[i].keyon_enable,1);
+		for (j = 0; j < 8; j++)
+		{
+			state_save_register_UINT8 ("YMZ280B.voice", i*8+j, "playing", &ymz280b[i].voice[j].playing,1);
+			state_save_register_UINT8 ("YMZ280B.voice", i*8+j, "keyon", &ymz280b[i].voice[j].keyon,1);
+			state_save_register_UINT8 ("YMZ280B.voice", i*8+j, "looping", &ymz280b[i].voice[j].looping,1);
+			state_save_register_UINT8 ("YMZ280B.voice", i*8+j, "mode", &ymz280b[i].voice[j].mode,1);
+			state_save_register_UINT16 ("YMZ280B.voice", i*8+j, "fnum", &ymz280b[i].voice[j].fnum,1);
+			state_save_register_UINT8 ("YMZ280B.voice", i*8+j, "level", &ymz280b[i].voice[j].level,1);
+			state_save_register_UINT8 ("YMZ280B.voice", i*8+j, "pan", &ymz280b[i].voice[j].pan,1);
+			state_save_register_UINT32 ("YMZ280B.voice", i*8+j, "start", &ymz280b[i].voice[j].start,1);
+			state_save_register_UINT32 ("YMZ280B.voice", i*8+j, "stop", &ymz280b[i].voice[j].stop,1);
+			state_save_register_UINT32 ("YMZ280B.voice", i*8+j, "loop_start", &ymz280b[i].voice[j].loop_start,1);
+			state_save_register_UINT32 ("YMZ280B.voice", i*8+j, "loop_end", &ymz280b[i].voice[j].loop_end,1);
+			state_save_register_UINT32 ("YMZ280B.voice", i*8+j, "position", &ymz280b[i].voice[j].position,1);
+			state_save_register_INT32 ("YMZ280B.voice", i*8+j, "signal", &ymz280b[i].voice[j].signal,1);
+			state_save_register_INT32 ("YMZ280B.voice", i*8+j, "step", &ymz280b[i].voice[j].step,1);
+			state_save_register_INT32 ("YMZ280B.voice", i*8+j, "loop_signal", &ymz280b[i].voice[j].loop_signal,1);
+			state_save_register_INT32 ("YMZ280B.voice", i*8+j, "loop_step", &ymz280b[i].voice[j].loop_step,1);
+			state_save_register_UINT32 ("YMZ280B.voice", i*8+j, "loop_count", &ymz280b[i].voice[j].loop_count,1);
+			state_save_register_INT32 ("YMZ280B.voice", i*8+j, "output_left", &ymz280b[i].voice[j].output_left,1);
+			state_save_register_INT32 ("YMZ280B.voice", i*8+j, "output_right", &ymz280b[i].voice[j].output_right,1);
+			state_save_register_INT32 ("YMZ280B.voice", i*8+j, "output_pos", &ymz280b[i].voice[j].output_pos,1);
+			state_save_register_INT16 ("YMZ280B.voice", i*8+j, "last_sample", &ymz280b[i].voice[j].last_sample,1);
+			state_save_register_INT16 ("YMZ280B.voice", i*8+j, "curr_sample", &ymz280b[i].voice[j].curr_sample,1);
+		}
+	}
+	state_save_register_func_postload(YMZ280B_state_save_update_step);
+	chip_num = intf->num;
+//ks e
 
 	/* success */
 	return 0;

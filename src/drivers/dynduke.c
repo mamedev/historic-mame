@@ -6,8 +6,8 @@
 
 	To access test mode, reset with both start buttons held.
 
-	Coins are controlled by the sound cpu, and the sound cpu is encrypted!
-	You need to play with sound off at the moment to coin up.
+	Coin inputs are handled by the sound CPU, so they don't work with sound
+	disabled. Just put the game in Free Play mode.
 
 	The background layer is 5bpp and I'm not 100% sure the colours are
 	correct on it, although the layer is 5bpp the palette data is 4bpp.
@@ -45,34 +45,17 @@ extern unsigned char *dynduke_back_data,*dynduke_fore_data,*dynduke_scroll_ram,*
 static READ_HANDLER( dynduke_shared_r ) { return dynduke_shared_ram[offset]; }
 static WRITE_HANDLER( dynduke_shared_w ) { dynduke_shared_ram[offset]=data; }
 
-static READ_HANDLER( dynduke_soundcpu_r )
-{
-	int erg,orig;
-	orig=seibu_shared_sound_ram[offset];
-
-	/* Small kludge to allows coins with sound off */
-	if (offset==4 && (!Machine->sample_rate) && (readinputport(4)&1)==1) return 1;
-
-	switch (offset)
-	{
-		case 0x04:{erg=seibu_shared_sound_ram[6];seibu_shared_sound_ram[6]=0;break;} /* just 1 time */
-		case 0x06:{erg=0xa0;break;}
-		case 0x0a:{erg=0;break;}
-		default: erg=seibu_shared_sound_ram[offset];
-	}
-	return erg;
-}
 
 /******************************************************************************/
 
 static MEMORY_READ_START( readmem )
 	{ 0x00000, 0x07fff, MRA_RAM },
 	{ 0x0a000, 0x0afff, dynduke_shared_r },
-	{ 0x0b000, 0x0b000, input_port_0_r },
-	{ 0x0b001, 0x0b001, input_port_1_r },
-	{ 0x0b002, 0x0b002, input_port_2_r },
-	{ 0x0b003, 0x0b003, input_port_3_r },
-	{ 0x0d000, 0x0d00f, dynduke_soundcpu_r },
+	{ 0x0b000, 0x0b000, input_port_1_r },
+	{ 0x0b001, 0x0b001, input_port_2_r },
+	{ 0x0b002, 0x0b002, input_port_3_r },
+	{ 0x0b003, 0x0b003, input_port_4_r },
+	{ 0x0d000, 0x0d00d, seibu_main_v30_r },
 	{ 0xa0000, 0xfffff, MRA_ROM },
 MEMORY_END
 
@@ -83,7 +66,7 @@ static MEMORY_WRITE_START( writemem )
 	{ 0x0a000, 0x0afff, dynduke_shared_w, &dynduke_shared_ram },
 	{ 0x0b000, 0x0b007, dynduke_control_w, &dynduke_control_ram },
 	{ 0x0c000, 0x0c7ff, dynduke_text_w, &videoram },
-	{ 0x0d000, 0x0d00f, seibu_soundlatch_w, &seibu_shared_sound_ram },
+	{ 0x0d000, 0x0d00d, seibu_main_v30_w },
 	{ 0xa0000, 0xfffff, MWA_ROM },
 MEMORY_END
 
@@ -109,13 +92,9 @@ MEMORY_END
 
 /******************************************************************************/
 
-#if 0
-SEIBU_SOUND_SYSTEM_YM3812_MEMORY_MAP(input_port_4_r) /* Coin port */
-#endif
-
-/******************************************************************************/
-
 INPUT_PORTS_START( dynduke )
+	SEIBU_COIN_INPUTS	/* Must be port 0: coin inputs read through sound cpu */
+
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER1 )
@@ -179,13 +158,9 @@ INPUT_PORTS_START( dynduke )
 	PORT_DIPNAME( 0x40, 0x40, "Continue?" )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x00, "Demo Sound?" )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
-
-	PORT_START	/* Coins */
-	PORT_BIT_IMPULSE( 0x01, IP_ACTIVE_HIGH, IPT_COIN1, 1 )
-	PORT_BIT_IMPULSE( 0x02, IP_ACTIVE_HIGH, IPT_COIN2, 1 )
 INPUT_PORTS_END
 
 /******************************************************************************/
@@ -293,15 +268,13 @@ static const struct MachineDriver machine_driver_dynduke =
 			sub_readmem,sub_writemem,0,0,
 			dynduke_interrupt,1
 		},
-#if 0
 		{
 			SEIBU_SOUND_SYSTEM_CPU(14318180/4)
 		}
-#endif
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	60,	/* CPU interleave  */
-	0,//seibu_sound_init_2,
+	seibu_sound_init_2,
 
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
@@ -336,9 +309,10 @@ ROM_START( dynduke )
 	ROM_LOAD16_BYTE("dd5.p8",  0x0e0000, 0x10000, 0x883d319c )
 	ROM_LOAD16_BYTE("dd6.p7",  0x0e0001, 0x10000, 0xd94cb4ff )
 
-	ROM_REGION( 0x18000, REGION_CPU3, 0 ) /* sound Z80 */
-	ROM_LOAD( "dd8.w8", 0x000000, 0x08000, 0x3c29480b )
-	ROM_CONTINUE(       0x010000, 0x08000 )
+	ROM_REGION( 0x20000*2, REGION_CPU3, 0 ) /* sound Z80 */
+	ROM_LOAD( "dd8.w8",       0x000000, 0x08000, 0x3c29480b )
+	ROM_CONTINUE(             0x010000, 0x08000 )
+	ROM_COPY( REGION_CPU3, 0, 0x018000, 0x08000 )
 
 	ROM_REGION( 0x020000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "dd9.jk5",	0x000000, 0x04000, 0xf2bc9af4 ) /* chars */
@@ -383,9 +357,10 @@ ROM_START( dbldyn )
 	ROM_LOAD16_BYTE("5.8p",  0x0e0000, 0x10000, 0xea56d719 )
 	ROM_LOAD16_BYTE("6.7p",  0x0e0001, 0x10000, 0x9ffa0ecd )
 
-	ROM_REGION( 0x18000, REGION_CPU3, 0 ) /* sound Z80 */
-	ROM_LOAD( "8.8w", 0x000000, 0x08000, 0xf4066081 )
-	ROM_CONTINUE(     0x010000, 0x08000 )
+	ROM_REGION( 0x20000*2, REGION_CPU3, 0 ) /* sound Z80 */
+	ROM_LOAD( "8.8w",         0x000000, 0x08000, 0xf4066081 )
+	ROM_CONTINUE(             0x010000, 0x08000 )
+	ROM_COPY( REGION_CPU3, 0, 0x018000, 0x08000 )
 
 	ROM_REGION( 0x020000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "9.5k",	    0x004000, 0x4000, 0x16bec703 ) /* chars */
@@ -428,9 +403,9 @@ ROM_END
 
 static void init_dynduke(void)
 {
-	seibu_sound_decrypt();
+	seibu_sound_decrypt(REGION_CPU3,0x20000);
 }
 
 
-GAMEX( 1989, dynduke, 0,       dynduke, dynduke, dynduke, ROT0, "Seibu Kaihatsu (Fabtek license)", "Dynamite Duke", GAME_NO_SOUND )
-GAMEX( 1989, dbldyn,  dynduke, dynduke, dynduke, dynduke, ROT0, "Seibu Kaihatsu (Fabtek license)", "The Double Dynamites", GAME_NO_SOUND )
+GAME( 1989, dynduke, 0,       dynduke, dynduke, dynduke, ROT0, "Seibu Kaihatsu (Fabtek license)", "Dynamite Duke" )
+GAME( 1989, dbldyn,  dynduke, dynduke, dynduke, dynduke, ROT0, "Seibu Kaihatsu (Fabtek license)", "The Double Dynamites" )

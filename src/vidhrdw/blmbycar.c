@@ -84,18 +84,26 @@ static void get_tile_info_0( int tile_index )
 {
 	data16_t code = blmbycar_vram_0[ tile_index * 2 + 0 ];
 	data16_t attr = blmbycar_vram_0[ tile_index * 2 + 1 ];
-	SET_TILE_INFO( 0 , code, attr & 0x1f );
+	SET_TILE_INFO(
+			0,
+			code,
+			attr & 0x1f,
+			TILE_FLIPYX((attr >> 6) & 3))
+
 	tile_info.priority = (attr >> 5) & 1;
-	tile_info.flags = TILE_FLIPYX( (attr >> 6) & 3 );
 }
 
 static void get_tile_info_1( int tile_index )
 {
 	data16_t code = blmbycar_vram_1[ tile_index * 2 + 0 ];
 	data16_t attr = blmbycar_vram_1[ tile_index * 2 + 1 ];
-	SET_TILE_INFO( 0 , code, attr & 0x1f );
+	SET_TILE_INFO(
+			0,
+			code,
+			attr & 0x1f,
+			TILE_FLIPYX((attr >> 6) & 3))
+
 	tile_info.priority = (attr >> 5) & 1;
-	tile_info.flags = TILE_FLIPYX( (attr >> 6) & 3 );
 }
 
 

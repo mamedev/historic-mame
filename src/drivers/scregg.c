@@ -8,7 +8,6 @@ driver by Nicola Salmoria
 
 To Do:
 Sprite Priorities in Dommy
-Is the Colour Decoding in Dommy Ok?
 
 ***************************************************************************/
 
@@ -201,7 +200,7 @@ static const struct MachineDriver machine_driver_dommy =
 			CPU_M6502,
 			1500000,
 			dommy_readmem,dommy_writemem,0,0,
-			interrupt,1
+			interrupt,16
 		}
 	},
 	57, 3072,        /* frames per second, vblank duration taken from Burger Time */
@@ -209,7 +208,7 @@ static const struct MachineDriver machine_driver_dommy =
 	0,
 
 	/* video hardware */
-	32*8, 32*8, { 1*8, 31*8-1, 1*8, 31*8-1 },
+	32*8, 32*8, { 0*8, 31*8-1, 1*8, 31*8-1 },
 	gfxdecodeinfo,
 	8, 8,
 	btime_vh_convert_color_prom,
@@ -238,7 +237,7 @@ static const struct MachineDriver machine_driver_scregg =
 			CPU_M6502,
 			1500000,
 			eggs_readmem,eggs_writemem,0,0,
-			interrupt,1
+			interrupt,16
 		}
 	},
 	57, 3072,        /* frames per second, vblank duration taken from Burger Time */
@@ -274,9 +273,9 @@ ROM_START( dommy )
 	ROM_LOAD( "dommy.e21",  0xe000, 0x2000, 0xcd1a4d55 )
 
 	ROM_REGION( 0x6000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "dommy.e30",  0x0000, 0x2000, 0x4e68bb12 )
+	ROM_LOAD( "dommy.e50",  0x0000, 0x2000, 0x5e9db0a4 )
 	ROM_LOAD( "dommy.e40",  0x2000, 0x2000, 0x4d1c36fb )
-	ROM_LOAD( "dommy.e50",  0x4000, 0x2000, 0x5e9db0a4 )
+	ROM_LOAD( "dommy.e30",  0x4000, 0x2000, 0x4e68bb12 )
 
 	ROM_REGION( 0x0040, REGION_PROMS, 0 ) /* palette decoding is probably wrong */
 	ROM_LOAD( "dommy.e70",  0x0018, 0x0008, 0x50c1d86e )	/* palette */
@@ -329,6 +328,6 @@ ROM_START( eggs )
 ROM_END
 
 
-GAMEX(198?, dommy,  0,      dommy,  scregg, 0, ROT270, "Technos", "Dommy", GAME_IMPERFECT_COLORS )
+GAME( 198?, dommy,  0,      dommy,  scregg, 0, ROT270, "Technos", "Dommy" )
 GAME( 1983, scregg, 0,      scregg, scregg, 0, ROT270, "Technos", "Scrambled Egg" )
 GAME( 1983, eggs,   scregg, scregg, scregg, 0, ROT270, "[Technos] Universal USA", "Eggs" )

@@ -8,16 +8,20 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 
-extern unsigned char *amidar_attributesram;
-void amidar_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-WRITE_HANDLER( amidar_attributes_w );
-WRITE_HANDLER( amidar_bcr_w );
-WRITE_HANDLER( amidar_bcg_w );
-WRITE_HANDLER( amidar_bcb_w );
-void amidar_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+extern unsigned char *galaxian_videoram;
+extern unsigned char *galaxian_spriteram;
+extern unsigned char *galaxian_attributesram;
+extern size_t galaxian_spriteram_size;
+
+void turtles_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+WRITE_HANDLER( scramble_background_red_w );
+WRITE_HANDLER( scramble_background_green_w );
+WRITE_HANDLER( scramble_background_blue_w );
+WRITE_HANDLER( galaxian_flip_screen_x_w );
+WRITE_HANDLER( galaxian_flip_screen_y_w );
+void galaxian_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 extern struct AY8910interface scobra_ay8910_interface;
 extern const struct Memory_ReadAddress scobra_sound_readmem[];
@@ -25,9 +29,14 @@ extern const struct Memory_WriteAddress scobra_sound_writemem[];
 extern const struct IO_ReadPort scobra_sound_readport[];
 extern const struct IO_WritePort scobra_sound_writeport[];
 
+extern struct GfxDecodeInfo galaxian_gfxdecodeinfo[];
+
+void init_scobra(void);
 void init_amidar(void);
 
 void scramble_init_machine(void);
+
+int turtles_vh_start(void);
 
 READ_HANDLER(amidar_ppi8255_0_r);
 READ_HANDLER(amidar_ppi8255_1_r);
@@ -47,21 +56,12 @@ static WRITE_HANDLER( amidar_coinb_w )
 	coin_counter_w (1, 0);
 }
 
-static WRITE_HANDLER( flip_screen_x_w )
-{
-	flip_screen_x_set(data);
-}
-
-static WRITE_HANDLER( flip_screen_y_w )
-{
-	flip_screen_y_set(data);
-}
-
 
 static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x87ff, MRA_RAM },
 	{ 0x9000, 0x93ff, MRA_RAM },
+	{ 0x9800, 0x98ff, MRA_RAM },
 	{ 0xa800, 0xa800, watchdog_reset_r },
 	{ 0xb000, 0xb03f, amidar_ppi8255_0_r },
 	{ 0xb800, 0xb83f, amidar_ppi8255_1_r },
@@ -70,15 +70,16 @@ MEMORY_END
 static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x87ff, MWA_RAM },
-	{ 0x9000, 0x93ff, videoram_w, &videoram, &videoram_size },
-	{ 0x9800, 0x983f, amidar_attributes_w, &amidar_attributesram },
-	{ 0x9840, 0x985f, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0xa000, 0xa000, amidar_bcr_w },
+	{ 0x9000, 0x93ff, MWA_RAM, &galaxian_videoram },
+	{ 0x9800, 0x983f, MWA_RAM, &galaxian_attributesram },
+	{ 0x9840, 0x985f, MWA_RAM, &galaxian_spriteram, &galaxian_spriteram_size },
+	{ 0x9860, 0x98ff, MWA_RAM },
+	{ 0xa000, 0xa000, scramble_background_red_w },
 	{ 0xa008, 0xa008, interrupt_enable_w },
-	{ 0xa010, 0xa010, flip_screen_x_w },
-	{ 0xa018, 0xa018, flip_screen_y_w },
-	{ 0xa020, 0xa020, amidar_bcg_w },
-	{ 0xa028, 0xa028, amidar_bcb_w },
+	{ 0xa010, 0xa010, galaxian_flip_screen_x_w },
+	{ 0xa018, 0xa018, galaxian_flip_screen_y_w },
+	{ 0xa020, 0xa020, scramble_background_green_w },
+	{ 0xa028, 0xa028, scramble_background_blue_w },
 	{ 0xa030, 0xa030, amidar_coina_w },
 	{ 0xa038, 0xa038, amidar_coinb_w },
 	{ 0xb000, 0xb03f, amidar_ppi8255_0_w },
@@ -346,9 +347,9 @@ INPUT_PORTS_START( turtles )
 
 	PORT_START	/* IN1 */
 	PORT_DIPNAME( 0x03, 0x01, DEF_STR( Lives ) )
-	PORT_DIPSETTING(    0x00, "2" )
-	PORT_DIPSETTING(    0x01, "3" )
-	PORT_DIPSETTING(    0x02, "4" )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_DIPSETTING(    0x02, "5" )
 	PORT_BITX (0,       0x03, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "126", IP_KEY_NONE, IP_JOY_NONE )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably space for player 2 button 2 */
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
@@ -391,9 +392,9 @@ INPUT_PORTS_START( turpin )
 
 	PORT_START	/* IN1 */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
-	PORT_DIPSETTING(    0x00, "2" )
-	PORT_DIPSETTING(    0x01, "4" )
-	PORT_DIPSETTING(    0x02, "6" )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x01, "5" )
+	PORT_DIPSETTING(    0x02, "7" )
 	PORT_BITX (0,       0x03, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "126", IP_KEY_NONE, IP_JOY_NONE )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably space for player 2 button 2 */
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
@@ -422,83 +423,6 @@ INPUT_PORTS_START( turpin )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
-/* similar to Turtles, lives are different */
-INPUT_PORTS_START( 600 )
-	PORT_START	/* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably space for button 2 */
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
-
-	PORT_START	/* IN1 */
-	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
-	PORT_DIPSETTING(    0x00, "3" )
-	PORT_DIPSETTING(    0x01, "4" )
-	PORT_DIPSETTING(    0x02, "5" )
-	PORT_BITX (0,       0x03, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "126", IP_KEY_NONE, IP_JOY_NONE )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably space for player 2 button 2 */
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
-
-	PORT_START	/* IN2 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
-	PORT_DIPNAME( 0x06, 0x00, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(    0x00, "A 1/1 B 2/1 C 1/1" )
-	PORT_DIPSETTING(    0x02, "A 1/2 B 1/1 C 1/2" )
-	PORT_DIPSETTING(    0x04, "A 1/3 B 3/1 C 1/3" )
-	PORT_DIPSETTING(    0x06, "A 1/4 B 4/1 C 1/4" )
-	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Cocktail ) )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
-	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
-	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-INPUT_PORTS_END
-
-
-
-static struct GfxLayout charlayout =
-{
-	8,8,	/* 8*8 characters */
-	256,	/* 256 characters */
-	2,	/* 2 bits per pixel */
-	{ 0, 256*8*8 },	/* the two bitplanes are separated */
-	{ 0, 1, 2, 3, 4, 5, 6, 7 },
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	8*8	/* every char takes 8 consecutive bytes */
-};
-static struct GfxLayout spritelayout =
-{
-	16,16,	/* 16*16 sprites */
-	64,	/* 64 sprites */
-	2,	/* 2 bits per pixel */
-	{ 0, 64*16*16 },	/* the two bitplanes are separated */
-	{ 0, 1, 2, 3, 4, 5, 6, 7,
-			8*8+0, 8*8+1, 8*8+2, 8*8+3, 8*8+4, 8*8+5, 8*8+6, 8*8+7 },
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
-			16*8, 17*8, 18*8, 19*8, 20*8, 21*8, 22*8, 23*8 },
-	32*8	/* every sprite takes 32 consecutive bytes */
-};
-
-static struct GfxDecodeInfo gfxdecodeinfo[] =
-{
-	{ REGION_GFX1, 0x0000, &charlayout,     0, 8 },
-	{ REGION_GFX1, 0x0000, &spritelayout,   0, 8 },
-	{ -1 } /* end of array */
-};
-
 
 static const struct MachineDriver machine_driver_amidar =
 {
@@ -523,15 +447,15 @@ static const struct MachineDriver machine_driver_amidar =
 
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	32+8,32,
-	amidar_vh_convert_color_prom,
+	galaxian_gfxdecodeinfo,
+	32+64+2+8,8*4,	/* 32 for characters, 64 for stars, 2 for bullets, 8 for background */
+	turtles_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
 	0,
-	generic_vh_start,
-	generic_vh_stop,
-	amidar_vh_screenrefresh,
+	turtles_vh_start,
+	0,
+	galaxian_vh_screenrefresh,
 
 	/* sound hardware */
 	0,0,0,0,
@@ -695,6 +619,6 @@ GAME( 1981, amidar,  0,       amidar, amidar,  amidar, ROT90, "Konami", "Amidar"
 GAME( 1982, amidaru, amidar,  amidar, amidaru, amidar, ROT90, "Konami (Stern license)", "Amidar (Stern)" )
 GAME( 1982, amidaro, amidar,  amidar, amidaro, amidar, ROT90, "Konami (Olympia license)", "Amidar (Olympia)" )
 GAME( 1982, amigo,   amidar,  amidar, amidaru, amidar, ROT90, "bootleg", "Amigo" )
-GAME( 1981, turtles, 0,       amidar, turtles, amidar, ROT90, "[Konami] (Stern license)", "Turtles" )
-GAME( 1981, turpin,  turtles, amidar, turpin,  amidar, ROT90, "[Konami] (Sega license)", "Turpin" )
-GAME( 1981, 600,     turtles, amidar, 600,     amidar, ROT90, "Konami", "600" )
+GAME( 1981, turtles, 0,       amidar, turtles, scobra, ROT90, "[Konami] (Stern license)", "Turtles" )
+GAME( 1981, turpin,  turtles, amidar, turpin,  scobra, ROT90, "[Konami] (Sega license)", "Turpin" )
+GAME( 1981, 600,     turtles, amidar, turtles, scobra, ROT90, "Konami", "600" )

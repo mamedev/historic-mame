@@ -78,7 +78,11 @@ static void get_fg_tile_info(int tile_index)
 
 	bank = (bank & ~(mask << 1)) | ((K007121_ctrlram[0][0x04] & mask) << 1);
 
-	SET_TILE_INFO(0, contra_fg_vram[tile_index]+bank*256, ((K007121_ctrlram[0][6]&0x30)*2+16)+(attr&7) )
+	SET_TILE_INFO(
+			0,
+			contra_fg_vram[tile_index]+bank*256,
+			((K007121_ctrlram[0][6]&0x30)*2+16)+(attr&7),
+			0)
 }
 
 static void get_bg_tile_info(int tile_index)
@@ -98,7 +102,11 @@ static void get_bg_tile_info(int tile_index)
 
 	bank = (bank & ~(mask << 1)) | ((K007121_ctrlram[0][0x04] & mask) << 1);
 
-	SET_TILE_INFO(1, contra_bg_vram[tile_index]+bank*256, ((K007121_ctrlram[1][6]&0x30)*2+16)+(attr&7) )
+	SET_TILE_INFO(
+			1,
+			contra_bg_vram[tile_index]+bank*256,
+			((K007121_ctrlram[1][6]&0x30)*2+16)+(attr&7),
+			0)
 }
 
 static void get_tx_tile_info(int tile_index)
@@ -113,7 +121,11 @@ static void get_tx_tile_info(int tile_index)
 			((attr >> (bit1+1)) & 0x04) |
 			((attr >> (bit2  )) & 0x08) |
 			((attr >> (bit3-1)) & 0x10);
-	SET_TILE_INFO(0,contra_text_vram[tile_index]+bank*256, ((K007121_ctrlram[0][6]&0x30)*2+16)+(attr&7) )
+	SET_TILE_INFO(
+			0,
+			contra_text_vram[tile_index]+bank*256,
+			((K007121_ctrlram[0][6]&0x30)*2+16)+(attr&7),
+			0)
 }
 
 

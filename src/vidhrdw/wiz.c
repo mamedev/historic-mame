@@ -8,6 +8,7 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "state.h"
 
 
 static struct rectangle spritevisiblearea =
@@ -35,6 +36,20 @@ static unsigned char char_bank[2];
 static unsigned char palbank[2];
 static int palette_bank;
 
+
+int wiz_vh_start(void)
+{
+	if (generic_vh_start())
+		return 1;
+
+	state_save_register_UINT8("wiz", 0, "char_bank",   char_bank,   2);
+	state_save_register_UINT8("wiz", 0, "palbank",	   palbank,     2);
+	state_save_register_int  ("wiz", 0, "flipx",       &flipx);
+	state_save_register_int  ("wiz", 0, "flipy",       &flipy);
+	state_save_register_int  ("wiz", 0, "bgpen",       &bgpen);
+
+	return 0;
+}
 
 /***************************************************************************
 
@@ -265,15 +280,7 @@ void wiz_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	visible_area = flipx ? &spritevisibleareaflipx : &spritevisiblearea;
 
-	/* I seriously doubt that the real hardware works this way */
-	if ((spriteram[1] & 0x80) || !spriteram[3] || !spriteram[0])
-	{
-	    bank = 7 + *wiz_sprite_bank;
-	}
-	else
-	{
-		bank = 8;	// Dragon boss
-	}
+    bank = 7 + *wiz_sprite_bank;
 
 	draw_sprites(bitmap, spriteram_2, 6,    visible_area);
 	draw_sprites(bitmap, spriteram  , bank, visible_area);

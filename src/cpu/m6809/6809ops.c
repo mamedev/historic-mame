@@ -21,7 +21,7 @@ INLINE void illegal( void )
 	logerror("M6809: illegal opcode at %04x\n",PC);
 }
 
-#if macintosh
+#ifdef macintosh
 #pragma mark ____0x____
 #endif
 
@@ -163,7 +163,7 @@ INLINE void clr_di( void )
 	SEZ;
 }
 
-#if macintosh
+#ifdef macintosh
 #pragma mark ____1x____
 #endif
 
@@ -387,7 +387,7 @@ INLINE void tfr( void )
     }
 }
 
-#if macintosh
+#ifdef macintosh
 #pragma mark ____2x____
 #endif
 
@@ -584,7 +584,7 @@ INLINE void lble( void )
 	LBRANCH( (NXORV || (CC&CC_Z)) );
 }
 
-#if macintosh
+#ifdef macintosh
 #pragma mark ____3x____
 #endif
 
@@ -810,7 +810,7 @@ INLINE void swi3( void )
 	CHANGE_PC;
 }
 
-#if macintosh
+#ifdef macintosh
 #pragma mark ____4x____
 #endif
 
@@ -923,7 +923,7 @@ INLINE void clra( void )
 	CLR_NZVC; SEZ;
 }
 
-#if macintosh
+#ifdef macintosh
 #pragma mark ____5x____
 #endif
 
@@ -1038,7 +1038,7 @@ INLINE void clrb( void )
 	CLR_NZVC; SEZ;
 }
 
-#if macintosh
+#ifdef macintosh
 #pragma mark ____6x____
 #endif
 
@@ -1183,7 +1183,7 @@ INLINE void clr_ix( void )
 	CLR_NZVC; SEZ;
 }
 
-#if macintosh
+#ifdef macintosh
 #pragma mark ____7x____
 #endif
 
@@ -1302,7 +1302,7 @@ INLINE void clr_ex( void )
 }
 
 
-#if macintosh
+#ifdef macintosh
 #pragma mark ____8x____
 #endif
 
@@ -1539,7 +1539,7 @@ INLINE void sty_im( void )
 	WM16(EAD,&pY);
 }
 
-#if macintosh
+#ifdef macintosh
 #pragma mark ____9x____
 #endif
 
@@ -1772,7 +1772,7 @@ INLINE void sty_di( void )
 	WM16(EAD,&pY);
 }
 
-#if macintosh
+#ifdef macintosh
 #pragma mark ____Ax____
 #endif
 
@@ -2016,7 +2016,7 @@ INLINE void sty_ix( void )
 	WM16(EAD,&pY);
 }
 
-#if macintosh
+#ifdef macintosh
 #pragma mark ____Bx____
 #endif
 
@@ -2249,7 +2249,7 @@ INLINE void sty_ex( void )
 }
 
 
-#if macintosh
+#ifdef macintosh
 #pragma mark ____Cx____
 #endif
 
@@ -2435,7 +2435,7 @@ INLINE void sts_im( void )
 }
 
 
-#if macintosh
+#ifdef macintosh
 #pragma mark ____Dx____
 #endif
 
@@ -2617,7 +2617,7 @@ INLINE void sts_di( void )
 	WM16(EAD,&pS);
 }
 
-#if macintosh
+#ifdef macintosh
 #pragma mark ____Ex____
 #endif
 
@@ -2806,7 +2806,7 @@ INLINE void sts_ix( void )
 	WM16(EAD,&pS);
 }
 
-#if macintosh
+#ifdef macintosh
 #pragma mark ____Fx____
 #endif
 

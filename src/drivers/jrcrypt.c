@@ -197,10 +197,6 @@ functions that I used to help me during the decoding process.
 
 ***************************************************************************/
 
-#ifdef MACINTOSH
-#include <events.h> // for tickcount
-#endif
-
 int jrpacman_romdecode(int offset)
 {
 	int addressBus = offset;

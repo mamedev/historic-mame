@@ -3,23 +3,30 @@
 Taito B System
 
 driver by Jarek Burczynski, with help from:
-Nicola Salmoria, Brian A. Troha, Stephane Humbert
+Nicola Salmoria, Brian A. Troha, Stephane Humbert, Gerardo Oporto Jorrin, David Graves
 
 heavily based on Taito F2 System driver by Brad Oliver, Andrew Prime
 
 The board uses TC0220IOC, TC0260DAR, TC0180VCU, and TC0140SYT.
+Sonic Blast Man uses TC0510NIO instead of TC0220IOC.
+
 
 TODO:
-- should use the TC0220IOC functions in vidhrdw/taitoic.
-- masterw: title screen is incomplete, has wrong colors and misses palette marking
+- masterw: title screen is incomplete, has wrong colors and misses palette
+  marking
+- rambo3a: has a lot of unmapped writes in the VCU area (log up to end of
+  round 2) [viofight also does a few]
+- qzshowby: watchdog forces reset just after you start game!
+- The eprom games could have a single io handler if it's confirmed all
+  3 use a special 4 player I/O chip. Puzzle Bobble and qzshowby use TC0640FIO
 
 The Taito B system is a fairly flexible hardware platform. It supports 4
 separate layers of graphics - one 64x64 tiled scrolling background plane
-of 8x8 tiles, a similar foreground plane, a sprite plane capable of sprite
-zooming and 'pageable' text plane.
+of 16x16 tiles, a similar foreground plane, a sprite plane capable of sprite
+zooming and 'pageable' text plane of 8x8 tiles.
 
-Sound is handled by a Z80 with a YM2610 or YM2610B or YM2203's connected to it.
-Different sound chips - depending on game.
+Sound is handled by a Z80 with a YM2610 or YM2610B or YM2203's connected
+to it. Different sound chips - depending on game.
 
 The memory map for each of the games is similar but not identical.
 
@@ -35,12 +42,30 @@ checked in the other IRQ routine. Could be timed to vblank...
   0x404000 - 0x407fff : 64x64 background layer (offsets 0x0000-0x1fff tile codes; offsets 0x2000-0x3fff tile attributes)
   0x408000 - 0x408fff : 64x64 text layer
   0x410000 - 0x41197f : ??k of sprite RAM (this is the range that Rastan Saga II tests at startup time)
-  0x413800 - 0x413bff : foreground control RAM (413800.w - foreground x scroll, 413802.w - foreground y scroll)
-  0x413c00 - 0x413fff : background control RAM (413c00.w - background x scroll, 413c02.w - background y scroll)
+  0x413800 - 0x413bff : foreground (line/screen) scroll RAM
+  0x413c00 - 0x413fff : background (line/screen) scroll RAM
 
   0x600000 - 0x607fff : 32k of CPU RAM
-  0x800000 - 0x800003 : communication with sound CPU
-  0xa00000 - 0xa0000f : input ports and dipswitches (writes may be IRQ acknowledge)
+  0x800000 - 0x800003 : communication with sound CPU via TC0140SYT
+  0xa00000 - 0xa0000f : input ports and dipswitches
+
+
+Notes:
+ Master of Weapon has secret command to select level:
+ (sequence is the same as in Metal Black):
+ - boot machine with service switch pressed
+ - message appears: "SERVICE SWITCH ERROR"
+ - press 1p start, 1p start, 1p start, service switch, 1p start
+ - message appears: "SELECT BY DOWN SW"
+ - select level with joy down/up
+ - press 1p start button
+
+Other games that have this feature:
+ Rastan Saga 2
+ Crime City
+ Violence Fight
+ Rambo 3
+
 
 
 List of known B-System games:
@@ -71,6 +96,7 @@ Other possible B-System games:
 #include "driver.h"
 #include "cpu/m68000/m68000.h"
 #include "vidhrdw/generic.h"
+#include "vidhrdw/taitoic.h"
 #include "machine/eeprom.h"
 #include "machine/mb87078.h"
 #include "sndhrdw/taitosnd.h"
@@ -169,14 +195,14 @@ static int rambo3_interrupt(void)
 }
 
 
-void puzbobb_interrupt5(int x)
+void pbobblbs_interrupt5(int x)
 {
 	cpu_cause_interrupt(0,MC68000_IRQ_5);
 }
 
-static int puzbobb_interrupt(void)
+static int pbobblbs_interrupt(void)
 {
-	timer_set(TIME_IN_CYCLES(5000,0),0,puzbobb_interrupt5);
+	timer_set(TIME_IN_CYCLES(5000,0),0,pbobblbs_interrupt5);
 	return MC68000_IRQ_3;
 }
 
@@ -252,11 +278,7 @@ static MEMORY_READ16_START( rastsag2_readmem )
 	{ 0x413c00, 0x413fff, MRA16_RAM },
 	{ 0x418000, 0x41801f, taitob_v_control_r },
 
-	{ 0xa00000, 0xa00001, input_port_3_word_r },
-	{ 0xa00002, 0xa00003, input_port_4_word_r },
-	{ 0xa00004, 0xa00005, input_port_0_word_r },
-	{ 0xa00006, 0xa00007, input_port_1_word_r },
-	{ 0xa0000e, 0xa0000f, input_port_2_word_r },
+	{ 0xa00000, 0xa0000f, TC0220IOC_halfword_byteswap_r },
 
 	{ 0x800000, 0x800001, MRA16_NOP },
 	{ 0x800002, 0x800003, taitosound_comm16_msb_r },
@@ -280,7 +302,7 @@ static MEMORY_WRITE16_START( rastsag2_writemem )
 
 	{ 0x440000, 0x47ffff, taitob_pixelram_w, &b_pixelram, &b_pixelram_size }, /* ashura(US) pixel layer*/
 
-	{ 0xa00000, 0xa0000f, MWA16_NOP }, // ??
+	{ 0xa00000, 0xa0000f, TC0220IOC_halfword_byteswap_w },
 
 	{ 0x800000, 0x800001, taitosound_port16_msb_w },
 	{ 0x800002, 0x800003, taitosound_comm16_msb_w },
@@ -301,11 +323,7 @@ static MEMORY_READ16_START( crimec_readmem )
 	{ 0x413c00, 0x413fff, MRA16_RAM },
 	{ 0x418000, 0x41801f, taitob_v_control_r },
 
-	{ 0x200000, 0x200001, input_port_3_word_r },
-	{ 0x200002, 0x200003, input_port_4_word_r },
-	{ 0x200004, 0x200005, input_port_0_word_r },
-	{ 0x200006, 0x200007, input_port_1_word_r },
-	{ 0x20000e, 0x20000f, input_port_2_word_r },
+	{ 0x200000, 0x20000f, TC0220IOC_halfword_byteswap_r },
 
 	{ 0x600000, 0x600001, MRA16_NOP },
 	{ 0x600002, 0x600003, taitosound_comm16_msb_r },
@@ -319,13 +337,14 @@ static MEMORY_WRITE16_START( crimec_writemem )
 	{ 0x400000, 0x403fff, taitob_foreground_w, &b_foregroundram },
 	{ 0x404000, 0x407fff, taitob_background_w, &b_backgroundram },
 	{ 0x408000, 0x40bfff, taitob_text_w, &b_textram },
+	{ 0x40c000, 0x40ffff, MWA16_NOP },	// zeroed
 	{ 0x410000, 0x41197f, MWA16_RAM, &b_videoram },
 	{ 0x413800, 0x413bff, MWA16_RAM, &b_fscroll },
 	{ 0x413c00, 0x413fff, MWA16_RAM, &b_bscroll },
 	{ 0x418000, 0x41801f, taitob_v_control_w },
 	{ 0x440000, 0x47ffff, taitob_pixelram_w, &b_pixelram, &b_pixelram_size }, /* pixel layer */
 
-	{ 0x200000, 0x20000f, MWA16_NOP }, /**/
+	{ 0x200000, 0x20000f, TC0220IOC_halfword_byteswap_w },
 
 	{ 0x600000, 0x600001, taitosound_port16_msb_w },
 	{ 0x600002, 0x600003, taitosound_comm16_msb_w },
@@ -348,11 +367,7 @@ static MEMORY_READ16_START( tetrist_readmem )
 
 	{ 0x440000, 0x47ffff, MRA16_RAM },	/* Pixel Layer */
 
-	{ 0x600000, 0x600001, input_port_3_word_r },
-	{ 0x600002, 0x600003, input_port_4_word_r },
-	{ 0x600004, 0x600005, input_port_0_word_r },
-	{ 0x600006, 0x600007, input_port_1_word_r },
-	{ 0x60000e, 0x60000f, input_port_2_word_r },
+	{ 0x600000, 0x60000f, TC0220IOC_halfword_byteswap_r },
 
 	{ 0x200000, 0x200001, MRA16_NOP },
 	{ 0x200002, 0x200003, taitosound_comm16_msb_r },
@@ -373,7 +388,7 @@ static MEMORY_WRITE16_START( tetrist_writemem )
 	{ 0x418000, 0x41801f, taitob_v_control_w },
 	{ 0x440000, 0x47ffff, taitob_pixelram_w, &b_pixelram, &b_pixelram_size }, /* pixel layer */
 
-	{ 0x600000, 0x60000f, MWA16_NOP }, // ??
+	{ 0x600000, 0x60000f, TC0220IOC_halfword_byteswap_w },
 
 	{ 0x200000, 0x200001, taitosound_port16_msb_w },
 	{ 0x200002, 0x200003, taitosound_comm16_msb_w },
@@ -396,11 +411,7 @@ static MEMORY_READ16_START( hitice_readmem )
 
 	{ 0xb00000, 0xb7ffff, MRA16_RAM },	/* Pixel Layer ???????????? */
 
-	{ 0x600000, 0x600001, input_port_3_word_r },
-	{ 0x600002, 0x600003, input_port_4_word_r },
-	{ 0x600004, 0x600005, input_port_0_word_r },
-	{ 0x600006, 0x600007, input_port_1_word_r },
-	{ 0x60000e, 0x60000f, input_port_2_word_r },
+	{ 0x600000, 0x60000f, TC0220IOC_halfword_byteswap_r },
 	{ 0x610000, 0x610001, input_port_5_word_r },		/* player 3,4 inputs*/
 
 	{ 0x700000, 0x700001, MRA16_NOP },
@@ -421,43 +432,46 @@ static MEMORY_WRITE16_START( hitice_writemem )
 	{ 0x413c00, 0x413fff, MWA16_RAM, &b_bscroll },
 	{ 0x418000, 0x41801f, taitob_v_control_w },
 
-	{ 0xb00000, 0xb7ffff, hitice_pixelram_w, &b_pixelram, &b_pixelram_size }, /* pixel layer ????????*/
+	/* pixel layer ??? (different from other TaitoB games) */
+	{ 0xb00000, 0xb7ffff, hitice_pixelram_w, &b_pixelram, &b_pixelram_size },
+	{ 0xbffff2, 0xbffff3, MWA16_NOP },	// written at $3e2, control word?
+	{ 0xbffff4, 0xbffff5, MWA16_NOP },	// written at $3ee, control word?
 
-	{ 0x600000, 0x60000f, MWA16_NOP }, // ??
+	{ 0x600000, 0x60000f, TC0220IOC_halfword_byteswap_w },
 
 	{ 0x700000, 0x700001, taitosound_port16_msb_w },
 	{ 0x700002, 0x700003, taitosound_comm16_msb_w },
 MEMORY_END
 
-READ16_HANDLER( tracky1_hi_r )
+static READ16_HANDLER( tracky1_hi_r )
 {
 	return input_port_5_word_r(0,0);
 }
-READ16_HANDLER( tracky1_lo_r )
+static READ16_HANDLER( tracky1_lo_r )
 {
 	return (input_port_5_word_r(0,0) & 0xff) <<8;
 }
-READ16_HANDLER( trackx1_hi_r )
+static READ16_HANDLER( trackx1_hi_r )
 {
 	return input_port_6_word_r(0,0);
 }
-READ16_HANDLER( trackx1_lo_r )
+static READ16_HANDLER( trackx1_lo_r )
 {
 	return (input_port_6_word_r(0,0) & 0xff) <<8;
 }
-READ16_HANDLER( tracky2_hi_r )
+static READ16_HANDLER( tracky2_hi_r )
 {
 	return input_port_7_word_r(0,0);
 }
-READ16_HANDLER( tracky2_lo_r )
+static READ16_HANDLER( tracky2_lo_r )
 {
 	return (input_port_7_word_r(0,0) & 0xff) <<8;
 }
-READ16_HANDLER( trackx2_hi_r )
+static READ16_HANDLER( trackx2_hi_r )
 {
 	return input_port_8_word_r(0,0);
 }
-READ16_HANDLER( trackx2_lo_r )
+static READ16_HANDLER( trackx2_lo_r )
 {
 	return (input_port_8_word_r(0,0) & 0xff) <<8;
 }
@@ -471,17 +485,13 @@ static MEMORY_READ16_START( rambo3_readmem )
 	{ 0x400000, 0x403fff, taitob_foreground_r },
 	{ 0x404000, 0x407fff, taitob_background_r },
 	{ 0x408000, 0x40bfff, taitob_text_r },
+	{ 0x40c000, 0x40ffff, MRA16_RAM }, //needed for test mode
 	{ 0x410000, 0x411fff /*97f*/, MRA16_RAM },
 	{ 0x413800, 0x413bff, MRA16_RAM },
 	{ 0x413c00, 0x413fff, MRA16_RAM },
 	{ 0x418000, 0x41801f, taitob_v_control_r },
 
-	{ 0x600000, 0x600001, input_port_3_word_r },
-	{ 0x600002, 0x600003, input_port_4_word_r },
-	{ 0x600004, 0x600005, input_port_0_word_r },
-	{ 0x600006, 0x600007, input_port_1_word_r },
-	{ 0x60000e, 0x60000f, input_port_2_word_r },
-
+	{ 0x600000, 0x60000f, TC0220IOC_halfword_byteswap_r },
 	{ 0x600010, 0x600011, tracky1_lo_r }, /*player 1*/
 	{ 0x600012, 0x600013, tracky1_hi_r },
 	{ 0x600014, 0x600015, trackx1_lo_r },
@@ -504,17 +514,35 @@ static MEMORY_WRITE16_START( rambo3_writemem )
 	{ 0x400000, 0x403fff, taitob_foreground_w, &b_foregroundram },
 	{ 0x404000, 0x407fff, taitob_background_w, &b_backgroundram },
 	{ 0x408000, 0x40bfff, taitob_text_w, &b_textram },
+	{ 0x40c000, 0x40ffff, MWA16_RAM }, //needed for test mode
 	{ 0x410000, 0x411fff /*97f*/, MWA16_RAM, &b_videoram },
 	{ 0x413800, 0x413bff, MWA16_RAM, &b_fscroll },
 	{ 0x413c00, 0x413fff, MWA16_RAM, &b_bscroll },
 	{ 0x418000, 0x41801f, taitob_v_control_w },
 
-	{ 0x600000, 0x60000f, MWA16_NOP }, // ??
+	{ 0x600000, 0x60000f, TC0220IOC_halfword_byteswap_w },
 
 	{ 0x200000, 0x200001, taitosound_port16_msb_w },
 	{ 0x200002, 0x200003, taitosound_comm16_msb_w },
 MEMORY_END
 
+
+static WRITE16_HANDLER( gain_control_w )
+{
+	if (ACCESSING_MSB)
+	{
+		if (offset==0)
+		{
+			MB87078_data_w(0, data>>8, 0);
+            //logerror("MB87078 dsel=0 data=%4x\n",data);
+		}
+		else
+		{
+			MB87078_data_w(0, data>>8, 1);
+            //logerror("MB87078 dsel=1 data=%4x\n",data);
+		}
+	}
+}
 
 /***************************************************************************
 
@@ -551,8 +579,8 @@ static READ16_HANDLER( eeprom_r )
 {
 	int res;
 
-	res = (EEPROM_read_bit() & 0x01)<<8;
-	res |= input_port_4_word_r(0,0) & 0xfe00; /* coin inputs */
+	res = (EEPROM_read_bit() & 0x01);
+	res |= input_port_1_word_r(0,0) & 0xfe; /* coin inputs */
 
 	return res;
 }
@@ -588,38 +616,47 @@ static WRITE16_HANDLER( eeprom_w )
 	}
 }
 
+/*************************************************************************
+   The input area for the three eprom games ($500000-2f) may well be
+   addressing a single i/o chip with 4 player and coin inputs as
+   standard.
 
-static WRITE16_HANDLER( gain_control_w )
+   Does anyone have custom chip numbers from the Space Invaders DX ?
+   (qzshowby and pbobblbs do use TC0640FIO).
+
+*************************************************************************/
+
+static UINT16 coin_word=0;
+
+static READ16_HANDLER( player_34_coin_ctrl_r )
 {
-	if (ACCESSING_MSB)
+	return coin_word;
+}
+
+static WRITE16_HANDLER( player_34_coin_ctrl_w )
+{
+	COMBINE_DATA(&coin_word);
+
+	/* coin counters and lockout */
+	coin_lockout_w(2,~data & 0x0100);
+	coin_lockout_w(3,~data & 0x0200);
+	coin_counter_w(2, data & 0x0400);
+	coin_counter_w(3, data & 0x0800);
+}
+
+static READ16_HANDLER( pbobblbs_input_bypass_r )
+{
+	switch (offset)
 	{
-		if (offset==0)
-		{
-			MB87078_data_w(0, data>>8, 0);
-            //logerror("MB87078 dsel=0 data=%4x\n",data);
-		}
-		else
-		{
-			MB87078_data_w(0, data>>8, 1);
-            //logerror("MB87078 dsel=1 data=%4x\n",data);
-		}
+		case 0x01:
+			return eeprom_r(0,mem_mask) << 8;
+
+		default:
+			return TC0640FIO_r( offset ) << 8;
 	}
 }
 
-
-
-READ16_HANDLER( p_read )
-{
-	//logerror("puzzle_read off%x\n",offset);
-	return ~0;
-}
-
-WRITE16_HANDLER( p_write )
-{
-	logerror("puzzle_write off%2x data=%8x   pc=%8x\n",offset,data, cpu_get_pc());
-}
-
-static MEMORY_READ16_START( puzbobb_readmem )
+static MEMORY_READ16_START( pbobblbs_readmem )
 	{ 0x000000, 0x07ffff, MRA16_ROM },
 	{ 0x900000, 0x90ffff, MRA16_RAM },	/* Main RAM */
 
@@ -633,20 +670,17 @@ static MEMORY_READ16_START( puzbobb_readmem )
 	{ 0x413c00, 0x413fff, MRA16_RAM },
 	{ 0x418000, 0x41801f, taitob_v_control_r },
 
-	{ 0x500010, 0x50002f, p_read }, //????
+	{ 0x500000, 0x50000f, pbobblbs_input_bypass_r },
+	{ 0x500024, 0x500025, input_port_5_word_r },	/* shown in service mode, game omits to read it */
+	{ 0x500026, 0x500027, eep_latch_r },	/* not read by this game */
+	{ 0x50002e, 0x50002f, input_port_6_word_r },	/* shown in service mode, game omits to read it */
 
-	{ 0x500000, 0x500001, input_port_3_word_r },
-	{ 0x500002, 0x500003, eeprom_r },	/*EEP bit 8, bits9-15 input_port_4 */
-	{ 0x500004, 0x500005, input_port_0_word_r },
-	{ 0x500006, 0x500007, input_port_1_word_r },
-	{ 0x500008, 0x500009, input_port_5_word_r },
-	{ 0x50000e, 0x50000f, input_port_2_word_r },
 
 	{ 0x700000, 0x700001, MRA16_NOP },
 	{ 0x700002, 0x700003, taitosound_comm16_msb_r },
 MEMORY_END
 
-static MEMORY_WRITE16_START( puzbobb_writemem )
+static MEMORY_WRITE16_START( pbobblbs_writemem )
 	{ 0x000000, 0x07ffff, MWA16_ROM },
 	{ 0x900000, 0x90ffff, MWA16_RAM },	/* Main RAM */
 
@@ -660,11 +694,9 @@ static MEMORY_WRITE16_START( puzbobb_writemem )
 	{ 0x413c00, 0x413fff, MWA16_RAM, &b_bscroll },
 	{ 0x418000, 0x41801f, taitob_v_control_w },
 
-	{ 0x500028, 0x50002f, p_write }, //?????
-
+	{ 0x500000, 0x50000f, TC0640FIO_halfword_byteswap_w },
 	{ 0x500026, 0x500027, eeprom_w },
-
-	{ 0x500000, 0x500001, MWA16_NOP }, /*lots of zero writes here - watchdog ?*/
+	{ 0x500028, 0x500029, player_34_coin_ctrl_w },	/* simply locks coins 3&4 out */
 
 	{ 0x600000, 0x600003, gain_control_w },
 	{ 0x700000, 0x700001, taitosound_port16_msb_w },
@@ -686,18 +718,10 @@ static MEMORY_READ16_START( spacedx_readmem )
 	{ 0x418000, 0x41801f, taitob_v_control_r },
 	{ 0x440000, 0x47ffff, MRA16_RAM }, /* pixel layer */
 
-	{ 0x500010, 0x500025, p_read }, //????
-
-    { 0x500026, 0x500027, eep_latch_r },
-
-	{ 0x500028, 0x50002f, p_read }, //????
-
-	{ 0x500000, 0x500001, input_port_3_word_r },
-	{ 0x500002, 0x500003, eeprom_r },	/*EEP bit 8, bits9-15 input_port_4 */
-	{ 0x500004, 0x500005, input_port_0_word_r },
-	{ 0x500006, 0x500007, input_port_1_word_r },
-	{ 0x500008, 0x500009, input_port_5_word_r },
-	{ 0x50000e, 0x50000f, input_port_2_word_r },
+	{ 0x500000, 0x50000f, pbobblbs_input_bypass_r },
+	{ 0x500024, 0x500025, input_port_5_word_r },
+	{ 0x500026, 0x500027, eep_latch_r },
+	{ 0x50002e, 0x50002f, input_port_6_word_r },
 
 	{ 0x700000, 0x700001, MRA16_NOP },
 	{ 0x700002, 0x700003, taitosound_comm16_msb_r },
@@ -712,24 +736,21 @@ static MEMORY_WRITE16_START( spacedx_writemem )
 	{ 0x400000, 0x403fff, taitob_foreground_w, &b_foregroundram },
 	{ 0x404000, 0x407fff, taitob_background_w, &b_backgroundram },
 	{ 0x408000, 0x40bfff, taitob_text_w, &b_textram },
+	{ 0x40c000, 0x40ffff, MWA16_NOP },	// zeroed when you press service switch
 	{ 0x410000, 0x41197f, MWA16_RAM, &b_videoram },
 	{ 0x413800, 0x413bff, MWA16_RAM, &b_fscroll },
 	{ 0x413c00, 0x413fff, MWA16_RAM, &b_bscroll },
 	{ 0x418000, 0x41801f, taitob_v_control_w },
 	{ 0x440000, 0x47ffff, taitob_pixelram_w, &b_pixelram, &b_pixelram_size }, /* pixel layer */
 
-	{ 0x500028, 0x50002f, p_write }, //?????
-
+	{ 0x500000, 0x50000f, TC0640FIO_halfword_byteswap_w },
 	{ 0x500026, 0x500027, eeprom_w },
-
-	{ 0x500000, 0x500001, MWA16_NOP }, /*lots of zero writes here - watchdog ?*/
+	{ 0x500028, 0x500029, player_34_coin_ctrl_w },	/* simply locks coins 3&4 out */
 
 	{ 0x600000, 0x600003, gain_control_w },
 	{ 0x700000, 0x700001, taitosound_port16_msb_w },
 	{ 0x700002, 0x700003, taitosound_comm16_msb_w },
 MEMORY_END
-
-
 
 static MEMORY_READ16_START( qzshowby_readmem )
 	{ 0x000000, 0x0fffff, MRA16_ROM },
@@ -745,13 +766,9 @@ static MEMORY_READ16_START( qzshowby_readmem )
 	{ 0x413c00, 0x413fff, MRA16_RAM },
 	{ 0x418000, 0x41801f, taitob_v_control_r },
 
-	{ 0x200000, 0x200001, input_port_3_word_r },
-	{ 0x200002, 0x200003, eeprom_r },	/*EEP bit 8, bits9-15 input_port_4 */
-	{ 0x200004, 0x200005, input_port_0_word_r },
-	{ 0x200006, 0x200007, input_port_1_word_r },
-	{ 0x200008, 0x200009, input_port_5_word_r },
-	{ 0x20000e, 0x20000f, input_port_2_word_r },
-	{ 0x200024, 0x200025, input_port_7_word_r },	/* player 3,4 start */
+	{ 0x200000, 0x20000f, pbobblbs_input_bypass_r },
+	{ 0x200024, 0x200025, input_port_5_word_r },	/* player 3,4 start */
+	{ 0x200028, 0x200029, player_34_coin_ctrl_r },
 	{ 0x20002e, 0x20002f, input_port_6_word_r },	/* player 3,4 buttons */
 
 	{ 0x600000, 0x600001, MRA16_NOP },
@@ -772,11 +789,9 @@ static MEMORY_WRITE16_START( qzshowby_writemem )
 	{ 0x413c00, 0x413fff, MWA16_RAM, &b_bscroll },
 	{ 0x418000, 0x41801f, taitob_v_control_w },
 
-//{ 0x200028, 0x20002f, p_write }, //?????
-
+	{ 0x200000, 0x20000f, TC0640FIO_halfword_byteswap_w },
 	{ 0x200026, 0x200027, eeprom_w },
-
-	{ 0x200000, 0x200001, MWA16_NOP }, /*lots of zero writes here - watchdog ?*/
+	{ 0x200028, 0x200029, player_34_coin_ctrl_w },
 
 	{ 0x700000, 0x700003, gain_control_w },
 	{ 0x600000, 0x600001, taitosound_port16_msb_w },
@@ -797,11 +812,7 @@ static MEMORY_READ16_START( viofight_readmem )
 	{ 0x413c00, 0x413fff, MRA16_RAM },
 	{ 0x418000, 0x41801f, taitob_v_control_r },
 
-	{ 0x800000, 0x800001, input_port_3_word_r },
-	{ 0x800002, 0x800003, input_port_4_word_r },
-	{ 0x800004, 0x800005, input_port_0_word_r },
-	{ 0x800006, 0x800007, input_port_1_word_r },
-	{ 0x80000e, 0x80000f, input_port_2_word_r },
+	{ 0x800000, 0x80000f, TC0220IOC_halfword_byteswap_r },
 
 	{ 0x200000, 0x200001, MRA16_NOP },
 	{ 0x200002, 0x200003, taitosound_comm16_msb_r },
@@ -819,49 +830,13 @@ static MEMORY_WRITE16_START( viofight_writemem )
 	{ 0x413800, 0x413bff, MWA16_RAM, &b_fscroll },
 	{ 0x413c00, 0x413fff, MWA16_RAM, &b_bscroll },
 	{ 0x418000, 0x41801f, taitob_v_control_w },
-	//{ 0x440000, 0x47ffff, taitob_pixelram_w, &b_pixelram }, /* pixel layer */
+//	{ 0x440000, 0x47ffff, taitob_pixelram_w, &b_pixelram }, /* pixel layer */
 
-	{ 0x800000, 0x80000f, MWA16_NOP }, /**/
+	{ 0x800000, 0x80000f, TC0220IOC_halfword_byteswap_w },
 
 	{ 0x200000, 0x200001, taitosound_port16_msb_w },
 	{ 0x200002, 0x200003, taitosound_comm16_msb_w },
 MEMORY_END
-
-
-static int device_no =0 ;
-
-static WRITE16_HANDLER( taitob_input_mux_w )
-{
-	if (ACCESSING_MSB)
-		device_no = (data>>8)&0xff;
-
-}
-
-static READ16_HANDLER( taitob_input_mux_r )
-{
-
-   	switch (device_no)
-	{
-		case 0x00:
-			return input_port_3_word_r(0,mem_mask); /*DSW A*/
-		case 0x01:
-			return input_port_4_word_r(0,mem_mask); /*DSW B*/
-		case 0x02:
-			return input_port_0_word_r(0,mem_mask); /*player 1*/
-		case 0x03:
-			return input_port_1_word_r(0,mem_mask); /*player 2*/
-		case 0x04:
-        case 0x05:
-        case 0x06:
-             return rand()&0xffff;
-        case 0x07:
-			return input_port_2_word_r(0,mem_mask); /*tilt, coins*/
-		default:
-            logerror("WARNING: mow read input offs=%2x PC=%08x\n", offset, cpu_get_pc());
-			return ~0;
-	}
-}
-
 
 static MEMORY_READ16_START( masterw_readmem )
 	{ 0x000000, 0x07ffff, MRA16_ROM },
@@ -873,19 +848,17 @@ static MEMORY_READ16_START( masterw_readmem )
 	{ 0x404000, 0x407fff, taitob_background_r },
 	{ 0x408000, 0x40bfff, taitob_text_r },
 	{ 0x40c000, 0x40ffff, MRA16_RAM },	/* Pixel Layer ???*/
-	{ 0x410000, 0x41197f, MRA16_RAM },
-//	{ 0x411980, 0x411fff, MRA16_RAM },			/*ashura only (spriteram continue ?)*/
+	{ 0x410000, 0x411fff, MRA16_RAM },
 	{ 0x413800, 0x413bff, MRA16_RAM },
 	{ 0x413c00, 0x413fff, MRA16_RAM },
 	{ 0x418000, 0x41801f, taitob_v_control_r },
 
-	{ 0x800000, 0x800001, taitob_input_mux_r },	/* DSW A/B, player inputs*/
-//	{ 0x800002, 0x800003, MRA16_RAM }, /*unkown location*/
+	{ 0x800000, 0x800001, TC0220IOC_halfword_byteswap_portreg_r },	/* DSW A/B, player inputs*/
+	{ 0x800002, 0x800003, TC0220IOC_halfword_byteswap_port_r /*watchdog_reset16_r*/ },
 
 	{ 0xa00000, 0xa00001, MRA16_NOP },
 	{ 0xa00002, 0xa00003, taitosound_comm16_msb_r },
 MEMORY_END
-
 
 static MEMORY_WRITE16_START( masterw_writemem )
 	{ 0x000000, 0x07ffff, MWA16_ROM },
@@ -897,14 +870,13 @@ static MEMORY_WRITE16_START( masterw_writemem )
 	{ 0x404000, 0x407fff, taitob_background_w, &b_backgroundram },
 	{ 0x408000, 0x40bfff, taitob_text_w, &b_textram },
 	{ 0x40c000, 0x40ffff, masterw_pixelram_w, &b_pixelram, &b_pixelram_size },	/* Pixel Layer ???*/
-	{ 0x410000, 0x41197f, MWA16_RAM, &b_videoram },
-//	{ 0x411980, 0x411fff, MWA16_RAM }, /*ashura clears this area only*/
+	{ 0x410000, 0x411fff, MWA16_RAM, &b_videoram },
 	{ 0x413800, 0x413bff, MWA16_RAM, &b_fscroll },
 	{ 0x413c00, 0x413fff, MWA16_RAM, &b_bscroll },
 	{ 0x418000, 0x41801f, taitob_v_control_w },
 
-//	{ 0x800000, 0x800001, MWA16_RAM }, /*unknown location*/
-	{ 0x800002, 0x800003, taitob_input_mux_w },
+	{ 0x800000, 0x800001, TC0220IOC_halfword_byteswap_portreg_w },
+	{ 0x800002, 0x800003, TC0220IOC_halfword_byteswap_port_w },
 
 	{ 0xa00000, 0xa00001, taitosound_port16_msb_w },
 	{ 0xa00002, 0xa00003, taitosound_comm16_msb_w },
@@ -927,18 +899,18 @@ static MEMORY_READ16_START( silentd_readmem )
 	{ 0x513c00, 0x513fff, MRA16_RAM },
 	{ 0x518000, 0x51801f, taitob_v_control_r },
 
-	{ 0x200000, 0x200001, input_port_3_word_r },
-	{ 0x200002, 0x200003, input_port_4_word_r },
-	{ 0x200004, 0x200005, input_port_0_word_r },
-	{ 0x200006, 0x200007, input_port_1_word_r },
-	{ 0x20000e, 0x20000f, input_port_2_word_r },
+	{ 0x200000, 0x20000f, TC0220IOC_halfword_r },
 
 	{ 0x210000, 0x210001, input_port_5_word_r },
 	{ 0x220000, 0x220001, input_port_6_word_r },
 	{ 0x230000, 0x230001, input_port_7_word_r },
+//	{ 0x240000, 0x240001, MRA16_NOP },	/* read 4 times at init */
 
 	{ 0x100000, 0x100001, MRA16_NOP },
 	{ 0x100002, 0x100003, taitosound_comm16_msb_r },
+
+//	{ 0x10001a, 0x10001b, MRA16_NOP },	// ??? read at $1e344
+//	{ 0x10001c, 0x10001d, MRA16_NOP },	// ??? read at $1e356
 MEMORY_END
 
 static MEMORY_WRITE16_START( silentd_writemem )
@@ -957,12 +929,13 @@ static MEMORY_WRITE16_START( silentd_writemem )
 	{ 0x513c00, 0x513fff, MWA16_RAM, &b_bscroll },
 	{ 0x518000, 0x51801f, taitob_v_control_w },
 
-	{ 0x200000, 0x20000f, MWA16_NOP }, // ??
-	{ 0x240000, 0x240001, MWA16_NOP }, // ??
+	{ 0x200000, 0x20000f, TC0220IOC_halfword_w },
+	{ 0x240000, 0x240001, MWA16_NOP }, // ???
 
 	{ 0x100000, 0x100001, taitosound_port16_msb_w },
 	{ 0x100002, 0x100003, taitosound_comm16_msb_w },
 MEMORY_END
+
 
 static MEMORY_READ16_START( selfeena_readmem )
 	{ 0x000000, 0x07ffff, MRA16_ROM },
@@ -980,18 +953,12 @@ static MEMORY_READ16_START( selfeena_readmem )
 	{ 0x213c00, 0x213fff, MRA16_RAM },
 	{ 0x218000, 0x21801f, taitob_v_control_r },
 
-	{ 0x400000, 0x400001, input_port_3_word_r },
-	{ 0x400002, 0x400003, input_port_4_word_r },
-	{ 0x400004, 0x400005, input_port_0_word_r },
-	{ 0x400006, 0x400007, input_port_1_word_r },
-	{ 0x40000e, 0x40000f, input_port_2_word_r },
-
-	{ 0x410008, 0x410009, MRA16_RAM }, // lots of reads
+	{ 0x400000, 0x40000f, TC0220IOC_halfword_byteswap_r },
+	{ 0x410000, 0x41000f, TC0220IOC_halfword_byteswap_r }, /* mirror address - seems to be only used for coin control */
 
 	{ 0x500000, 0x500001, MRA16_NOP },
 	{ 0x500002, 0x500003, taitosound_comm16_msb_r },
 MEMORY_END
-
 
 static MEMORY_WRITE16_START( selfeena_writemem )
 	{ 0x000000, 0x07ffff, MWA16_ROM },
@@ -1009,13 +976,13 @@ static MEMORY_WRITE16_START( selfeena_writemem )
 	{ 0x213c00, 0x213fff, MWA16_RAM, &b_bscroll },
 	{ 0x218000, 0x21801f, taitob_v_control_w },
 
-	{ 0x400000, 0x40000f, MWA16_NOP }, // ??
-
-	{ 0x410008, 0x410009, MWA16_RAM }, // lots of bit 0 and bit 1 writes
+	{ 0x400000, 0x40000f, TC0220IOC_halfword_byteswap_w },
+	{ 0x410000, 0x41000f, TC0220IOC_halfword_byteswap_w }, /* mirror address - seems to be only used for coin control */
 
 	{ 0x500000, 0x500001, taitosound_port16_msb_w },
 	{ 0x500002, 0x500003, taitosound_comm16_msb_w },
 MEMORY_END
+
 
 static MEMORY_READ16_START( sbm_readmem )
 	{ 0x000000, 0x07ffff, MRA16_ROM },
@@ -1026,18 +993,13 @@ static MEMORY_READ16_START( sbm_readmem )
 	{ 0x900000, 0x903fff, taitob_foreground_r },
 	{ 0x904000, 0x907fff, taitob_background_r },
 	{ 0x908000, 0x90bfff, taitob_text_r },
-//	{ 0x90c000, 0x90ffff, MRA16_RAM },
+	{ 0x90c000, 0x90ffff, MRA16_RAM },
 	{ 0x910000, 0x91197f, MRA16_RAM },
 	{ 0x913800, 0x913bff, MRA16_RAM },
 	{ 0x913c00, 0x913fff, MRA16_RAM },
 	{ 0x918000, 0x91801f, taitob_v_control_r },
 
-	{ 0x300000, 0x300001, input_port_4_word_r },
-	{ 0x300002, 0x300003, input_port_3_word_r },
-	{ 0x300004, 0x300005, input_port_0_word_r },
-	{ 0x300006, 0x300007, input_port_1_word_r },
-	{ 0x30000a, 0x30000b, input_port_5_word_r },
-	{ 0x30000c, 0x30000d, input_port_2_word_r },
+	{ 0x300000, 0x30000f, TC0510NIO_halfword_wordswap_r },
 
 	{ 0x320000, 0x320001, MRA16_NOP },
 	{ 0x320002, 0x320003, taitosound_comm16_msb_r },
@@ -1052,13 +1014,13 @@ static MEMORY_WRITE16_START( sbm_writemem )
 	{ 0x900000, 0x903fff, taitob_foreground_w, &b_foregroundram },
 	{ 0x904000, 0x907fff, taitob_background_w, &b_backgroundram },
 	{ 0x908000, 0x90bfff, taitob_text_w, &b_textram },
-//	{ 0x90c000, 0x90ffff, MWA16_RAM },
+	{ 0x90c000, 0x90ffff, MWA16_RAM },
 	{ 0x910000, 0x91197f, MWA16_RAM, &b_videoram },
 	{ 0x913800, 0x913bff, MWA16_RAM, &b_fscroll },
 	{ 0x913c00, 0x913fff, MWA16_RAM, &b_bscroll },
 	{ 0x918000, 0x91801f, taitob_v_control_w },
 
-	{ 0x300000, 0x30000f, MWA16_NOP }, // ??
+	{ 0x300000, 0x30000f, TC0510NIO_halfword_wordswap_w },
 
 	{ 0x320000, 0x320001, taitosound_port16_msb_w },
 	{ 0x320002, 0x320003, taitosound_comm16_msb_w },
@@ -1135,496 +1097,498 @@ MEMORY_END
 			 INPUT PORTS, DIPs
 ***********************************************************/
 
-#define TAITO_COINAGE_JAPAN_16 \
-	PORT_DIPNAME( 0x3000, 0x3000, DEF_STR( Coin_A ) ) \
-	PORT_DIPSETTING(      0x1000, DEF_STR( 2C_1C ) ) \
-	PORT_DIPSETTING(      0x3000, DEF_STR( 1C_1C ) ) \
-	PORT_DIPSETTING(      0x0000, DEF_STR( 2C_3C ) ) \
-	PORT_DIPSETTING(      0x2000, DEF_STR( 1C_2C ) ) \
-	PORT_DIPNAME( 0xc000, 0xc000, DEF_STR( Coin_B ) ) \
-	PORT_DIPSETTING(      0x4000, DEF_STR( 2C_1C ) ) \
-	PORT_DIPSETTING(      0xc000, DEF_STR( 1C_1C ) ) \
-	PORT_DIPSETTING(      0x0000, DEF_STR( 2C_3C ) ) \
-	PORT_DIPSETTING(      0x8000, DEF_STR( 1C_2C ) )
+#define TAITO_COINAGE_JAPAN_8 \
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Coin_A ) ) \
+	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) ) \
+	PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) ) \
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_3C ) ) \
+	PORT_DIPSETTING(    0x20, DEF_STR( 1C_2C ) ) \
+	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Coin_B ) ) \
+	PORT_DIPSETTING(    0x40, DEF_STR( 2C_1C ) ) \
+	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_1C ) ) \
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_3C ) ) \
+	PORT_DIPSETTING(    0x80, DEF_STR( 1C_2C ) )
 
-#define TAITO_COINAGE_WORLD_16 \
-	PORT_DIPNAME( 0x3000, 0x3000, DEF_STR( Coin_A ) ) \
-	PORT_DIPSETTING(      0x0000, DEF_STR( 4C_1C ) ) \
-	PORT_DIPSETTING(      0x1000, DEF_STR( 3C_1C ) ) \
-	PORT_DIPSETTING(      0x2000, DEF_STR( 2C_1C ) ) \
-	PORT_DIPSETTING(      0x3000, DEF_STR( 1C_1C ) ) \
-	PORT_DIPNAME( 0xc000, 0xc000, DEF_STR( Coin_B ) ) \
-	PORT_DIPSETTING(      0xc000, DEF_STR( 1C_2C ) ) \
-	PORT_DIPSETTING(      0x8000, DEF_STR( 1C_3C ) ) \
-	PORT_DIPSETTING(      0x4000, DEF_STR( 1C_4C ) ) \
-	PORT_DIPSETTING(      0x0000, DEF_STR( 1C_6C ) )
+#define TAITO_COINAGE_WORLD_8 \
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Coin_A ) ) \
+	PORT_DIPSETTING(    0x00, DEF_STR( 4C_1C ) ) \
+	PORT_DIPSETTING(    0x10, DEF_STR( 3C_1C ) ) \
+	PORT_DIPSETTING(    0x20, DEF_STR( 2C_1C ) ) \
+	PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) ) \
+	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Coin_B ) ) \
+	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_2C ) ) \
+	PORT_DIPSETTING(    0x80, DEF_STR( 1C_3C ) ) \
+	PORT_DIPSETTING(    0x40, DEF_STR( 1C_4C ) ) \
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_6C ) )
 
-#define TAITO_COINAGE_US_16 \
-	PORT_DIPNAME( 0x3000, 0x3000, DEF_STR( Coinage ) ) \
-	PORT_DIPSETTING(      0x0000, DEF_STR( 4C_1C ) ) \
-	PORT_DIPSETTING(      0x1000, DEF_STR( 3C_1C ) ) \
-	PORT_DIPSETTING(      0x2000, DEF_STR( 2C_1C ) ) \
-	PORT_DIPSETTING(      0x3000, DEF_STR( 1C_1C ) ) \
-	PORT_DIPNAME( 0xc000, 0xc000, "Price to Continue" ) \
-	PORT_DIPSETTING(      0x0000, DEF_STR( 3C_1C ) ) \
-	PORT_DIPSETTING(      0x4000, DEF_STR( 2C_1C ) ) \
-	PORT_DIPSETTING(      0x8000, DEF_STR( 1C_1C ) ) \
-	PORT_DIPSETTING(      0xc000, "Same as Start" )
+#define TAITO_COINAGE_US_8 \
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Coinage ) ) \
+	PORT_DIPSETTING(    0x00, DEF_STR( 4C_1C ) ) \
+	PORT_DIPSETTING(    0x10, DEF_STR( 3C_1C ) ) \
+	PORT_DIPSETTING(    0x20, DEF_STR( 2C_1C ) ) \
+	PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) ) \
+	PORT_DIPNAME( 0xc0, 0xc0, "Price to Continue" ) \
+	PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) ) \
+	PORT_DIPSETTING(    0x40, DEF_STR( 2C_1C ) ) \
+	PORT_DIPSETTING(    0x80, DEF_STR( 1C_1C ) ) \
+	PORT_DIPSETTING(    0xc0, "Same as Start" )
 
-#define TAITO_COINAGE_JAPAN_NEW_16 \
-	PORT_DIPNAME( 0x3000, 0x3000, DEF_STR( Coin_A ) ) \
-	PORT_DIPSETTING(      0x0000, DEF_STR( 3C_1C ) ) \
-	PORT_DIPSETTING(      0x1000, DEF_STR( 2C_1C ) ) \
-	PORT_DIPSETTING(      0x3000, DEF_STR( 1C_1C ) ) \
-	PORT_DIPSETTING(      0x2000, DEF_STR( 1C_2C ) ) \
-	PORT_DIPNAME( 0xc000, 0xc000, DEF_STR( Coin_B ) ) \
-	PORT_DIPSETTING(      0x0000, DEF_STR( 3C_1C ) ) \
-	PORT_DIPSETTING(      0x4000, DEF_STR( 2C_1C ) ) \
-	PORT_DIPSETTING(      0xc000, DEF_STR( 1C_1C ) ) \
-	PORT_DIPSETTING(      0x8000, DEF_STR( 1C_2C ) )
+#define TAITO_COINAGE_JAPAN_NEW_8 \
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Coin_A ) ) \
+	PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) ) \
+	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) ) \
+	PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) ) \
+	PORT_DIPSETTING(    0x20, DEF_STR( 1C_2C ) ) \
+	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Coin_B ) ) \
+	PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) ) \
+	PORT_DIPSETTING(    0x40, DEF_STR( 2C_1C ) ) \
+	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_1C ) ) \
+	PORT_DIPSETTING(    0x80, DEF_STR( 1C_2C ) )
 
-#define TAITO_DIFFICULTY_16 \
-	PORT_DIPNAME( 0x0300, 0x0300, DEF_STR( Difficulty ) ) \
-	PORT_DIPSETTING(      0x0200, "Easy" ) \
-	PORT_DIPSETTING(      0x0300, "Medium" ) \
-	PORT_DIPSETTING(      0x0100, "Hard" ) \
-	PORT_DIPSETTING(      0x0000, "Hardest" )
+#define TAITO_DIFFICULTY_8 \
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) ) \
+	PORT_DIPSETTING(    0x02, "Easy" ) \
+	PORT_DIPSETTING(    0x03, "Medium" ) \
+	PORT_DIPSETTING(    0x01, "Hard" ) \
+	PORT_DIPSETTING(    0x00, "Hardest" )
 
-/* Included only the nits that are common to all sets (viofight has  3 buttons) */
+
+/* Included only the bits that are common to all sets (viofight has 3 buttons) */
 #define TAITO_B_PLAYERS_INPUT( player ) \
-	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | player ) \
-	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | player ) \
-	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | player ) \
-	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | player ) \
-	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON1 | player ) \
-	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON2 | player )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | player ) \
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | player ) \
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | player ) \
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | player ) \
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | player ) \
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | player )
 
 #define TAITO_B_SYSTEM_INPUT \
 	PORT_START \
-	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_TILT ) \
-	PORT_BIT_IMPULSE( 0x0200, IP_ACTIVE_LOW, IPT_SERVICE1, 2 ) \
-	PORT_BIT_IMPULSE( 0x0400, IP_ACTIVE_LOW, IPT_COIN1, 2 ) \
-	PORT_BIT_IMPULSE( 0x0800, IP_ACTIVE_LOW, IPT_COIN2, 2 ) \
-	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_UNKNOWN ) \
-	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_UNKNOWN ) \
-	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_START1 ) \
-	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_TILT ) \
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_SERVICE1 ) \
+	PORT_BIT_IMPULSE( 0x04, IP_ACTIVE_LOW, IPT_COIN1, 2 ) \
+	PORT_BIT_IMPULSE( 0x08, IP_ACTIVE_LOW, IPT_COIN2, 2 ) \
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN ) \
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN ) \
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 ) \
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
 
 #define TAITO_B_DSWA_2_4 \
-	PORT_DIPNAME( 0x0200, 0x0200, DEF_STR( Flip_Screen ) ) \
-	PORT_DIPSETTING(      0x0200, DEF_STR( Off )) \
-	PORT_DIPSETTING(      0x0000, DEF_STR( On )) \
-	PORT_SERVICE( 0x0400, IP_ACTIVE_LOW ) \
-	PORT_DIPNAME( 0x0800, 0x0800, DEF_STR( Demo_Sounds ) ) \
-	PORT_DIPSETTING(      0x0000, DEF_STR( Off )) \
-	PORT_DIPSETTING(      0x0800, DEF_STR( On ))
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Flip_Screen ) ) \
+	PORT_DIPSETTING(    0x02, DEF_STR( Off )) \
+	PORT_DIPSETTING(    0x00, DEF_STR( On )) \
+	PORT_SERVICE( 0x04, IP_ACTIVE_LOW ) \
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Demo_Sounds ) ) \
+	PORT_DIPSETTING(    0x00, DEF_STR( Off )) \
+	PORT_DIPSETTING(    0x08, DEF_STR( On ))
 
 
 INPUT_PORTS_START( rastsag2 )
+	PORT_START /* DSW A */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unused ) )  // all 2 "unused" in manual
+	TAITO_B_DSWA_2_4
+	TAITO_COINAGE_JAPAN_8
+
+	PORT_START /* DSW B */
+	TAITO_DIFFICULTY_8
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x0c, "100k only" )
+	PORT_DIPSETTING(    0x08, "150k only" )
+	PORT_DIPSETTING(    0x04, "200k only" )
+	PORT_DIPSETTING(    0x00, "250k only" )
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x20, "1" )
+	PORT_DIPSETTING(    0x10, "2" )
+	PORT_DIPSETTING(    0x30, "3" )
+	PORT_DIPSETTING(    0x00, "5" )
+	PORT_DIPNAME( 0x40, 0x40, "Allow Continue" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x00, DEF_STR( On ))
+
 	PORT_START      /* IN0 */
 	TAITO_B_PLAYERS_INPUT( IPF_PLAYER1 )
-	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* IN1 */
 	TAITO_B_PLAYERS_INPUT( IPF_PLAYER2 )
-	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	/* IN2 */
 	TAITO_B_SYSTEM_INPUT
-
-	PORT_START /* DSW A */
-	PORT_DIPNAME( 0x0100, 0x0100, DEF_STR( Unused ) )  // all 2 "unused" in manual
-	TAITO_B_DSWA_2_4
-	TAITO_COINAGE_JAPAN_16
-
-	PORT_START /* DSW B */
-	TAITO_DIFFICULTY_16
-	PORT_DIPNAME( 0x0c00, 0x0c00, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(      0x0c00, "100k only" )
-	PORT_DIPSETTING(      0x0800, "150k only" )
-	PORT_DIPSETTING(      0x0400, "200k only" )
-	PORT_DIPSETTING(      0x0000, "250k only" )
-	PORT_DIPNAME( 0x3000, 0x3000, DEF_STR( Lives ) )
-	PORT_DIPSETTING(      0x2000, "1" )
-	PORT_DIPSETTING(      0x1000, "2" )
-	PORT_DIPSETTING(      0x3000, "3" )
-	PORT_DIPSETTING(      0x0000, "5" )
-	PORT_DIPNAME( 0x4000, 0x4000, "Allow Continue" )
-	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x4000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Unused ) )
-	PORT_DIPSETTING(      0x8000, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
 INPUT_PORTS_END
 
 INPUT_PORTS_START( nastar )
+	PORT_START /* DSW A */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x00, DEF_STR( On ))
+	TAITO_B_DSWA_2_4
+	TAITO_COINAGE_WORLD_8
+
+	PORT_START /* DSW B */
+	TAITO_DIFFICULTY_8
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x0c, "100k only" )
+	PORT_DIPSETTING(    0x08, "150k only" )
+	PORT_DIPSETTING(    0x04, "200k only" )
+	PORT_DIPSETTING(    0x00, "250k only" )
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x20, "1" )
+	PORT_DIPSETTING(    0x10, "2" )
+	PORT_DIPSETTING(    0x30, "3" )
+	PORT_DIPSETTING(    0x00, "5" )
+	PORT_DIPNAME( 0x40, 0x40, "Allow Continue" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x00, DEF_STR( On ))
+
 	PORT_START      /* IN0 */
 	TAITO_B_PLAYERS_INPUT( IPF_PLAYER1 )
-	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* IN1 */
 	TAITO_B_PLAYERS_INPUT( IPF_PLAYER2 )
-	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	/* IN2 */
 	TAITO_B_SYSTEM_INPUT
-
-	PORT_START /* DSW A */
-	PORT_DIPNAME( 0x0100, 0x0100, DEF_STR( Unused ) )
-	PORT_DIPSETTING(      0x0100, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	TAITO_B_DSWA_2_4
-	TAITO_COINAGE_WORLD_16
-
-	PORT_START /* DSW B */
-	TAITO_DIFFICULTY_16
-	PORT_DIPNAME( 0x0c00, 0x0c00, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(      0x0c00, "100k only" )
-	PORT_DIPSETTING(      0x0800, "150k only" )
-	PORT_DIPSETTING(      0x0400, "200k only" )
-	PORT_DIPSETTING(      0x0000, "250k only" )
-	PORT_DIPNAME( 0x3000, 0x3000, DEF_STR( Lives ) )
-	PORT_DIPSETTING(      0x2000, "1" )
-	PORT_DIPSETTING(      0x1000, "2" )
-	PORT_DIPSETTING(      0x3000, "3" )
-	PORT_DIPSETTING(      0x0000, "5" )
-	PORT_DIPNAME( 0x4000, 0x4000, "Allow Continue" )
-	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x4000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Unused ) )
-	PORT_DIPSETTING(      0x8000, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
 INPUT_PORTS_END
 
 INPUT_PORTS_START( nastarw )
+	PORT_START /* DSW A */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x00, DEF_STR( On ))
+	TAITO_B_DSWA_2_4
+	TAITO_COINAGE_US_8
+
+	PORT_START /* DSW B */
+	TAITO_DIFFICULTY_8
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x0c, "100k only" )
+	PORT_DIPSETTING(    0x08, "150k only" )
+	PORT_DIPSETTING(    0x04, "200k only" )
+	PORT_DIPSETTING(    0x00, "250k only" )
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x20, "1" )
+	PORT_DIPSETTING(    0x10, "2" )
+	PORT_DIPSETTING(    0x30, "3" )
+	PORT_DIPSETTING(    0x00, "5" )
+	PORT_DIPNAME( 0x40, 0x40, "Allow Continue" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x00, DEF_STR( On ))
+
 	PORT_START      /* IN0 */
 	TAITO_B_PLAYERS_INPUT( IPF_PLAYER1 )
-	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* IN1 */
 	TAITO_B_PLAYERS_INPUT( IPF_PLAYER2 )
-	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	/* IN2 */
 	TAITO_B_SYSTEM_INPUT
-
-	PORT_START /* DSW A */
-	PORT_DIPNAME( 0x0100, 0x0100, DEF_STR( Unused ) )
-	PORT_DIPSETTING(      0x0100, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	TAITO_B_DSWA_2_4
-	TAITO_COINAGE_US_16
-
-	PORT_START /* DSW B */
-	TAITO_DIFFICULTY_16
-	PORT_DIPNAME( 0x0c00, 0x0c00, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(      0x0c00, "100k only" )
-	PORT_DIPSETTING(      0x0800, "150k only" )
-	PORT_DIPSETTING(      0x0400, "200k only" )
-	PORT_DIPSETTING(      0x0000, "250k only" )
-	PORT_DIPNAME( 0x3000, 0x3000, DEF_STR( Lives ) )
-	PORT_DIPSETTING(      0x2000, "1" )
-	PORT_DIPSETTING(      0x1000, "2" )
-	PORT_DIPSETTING(      0x3000, "3" )
-	PORT_DIPSETTING(      0x0000, "5" )
-	PORT_DIPNAME( 0x4000, 0x4000, "Allow Continue" )
-	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x4000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Unused ) )
-	PORT_DIPSETTING(      0x8000, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
 INPUT_PORTS_END
 
 INPUT_PORTS_START( masterw )
+	PORT_START /* DSW A */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x00, DEF_STR( On ))
+	TAITO_B_DSWA_2_4
+	TAITO_COINAGE_WORLD_8
+
+	PORT_START /* DSW B */
+	TAITO_DIFFICULTY_8
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x08, "500k, 1000k and 1500k" )
+	PORT_DIPSETTING(    0x0c, "500k and 1000k" )
+	PORT_DIPSETTING(    0x04, "500k only" )
+	PORT_DIPSETTING(    0x00, "None" )
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x30, "3" )
+	PORT_DIPSETTING(    0x20, "4" )
+	PORT_DIPSETTING(    0x10, "5" )
+	PORT_DIPSETTING(    0x00, "6" )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, "Ship" )
+	PORT_DIPSETTING(    0x80, "Default" )
+	PORT_DIPSETTING(    0x00, "Alternate" )
+
 	PORT_START      /* IN0 */
 	TAITO_B_PLAYERS_INPUT( IPF_PLAYER1 )
-	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* IN1 */
 	TAITO_B_PLAYERS_INPUT( IPF_PLAYER2 )
-	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	/* IN2 */
 	TAITO_B_SYSTEM_INPUT
 
-	PORT_START /* DSW A */
-	PORT_DIPNAME( 0x0100, 0x0100, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0100, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	TAITO_B_DSWA_2_4
-	TAITO_COINAGE_WORLD_16
-
-	PORT_START /* DSW B */
-	TAITO_DIFFICULTY_16
-	PORT_DIPNAME( 0x0c00, 0x0c00, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(      0x0800, "500k, 1000k and 1500k" )
-	PORT_DIPSETTING(      0x0c00, "500k and 1000k" )
-	PORT_DIPSETTING(      0x0400, "500k only" )
-	PORT_DIPSETTING(      0x0000, "None" )
-	PORT_DIPNAME( 0x3000, 0x3000, DEF_STR( Lives ) )
-	PORT_DIPSETTING(      0x3000, "3" )
-	PORT_DIPSETTING(      0x2000, "4" )
-	PORT_DIPSETTING(      0x1000, "5" )
-	PORT_DIPSETTING(      0x0000, "6" )
-	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x8000, 0x8000, "Ship" )
-	PORT_DIPSETTING(      0x8000, "Default" )
-	PORT_DIPSETTING(      0x0000, "Alternate" )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( crimec )
+	PORT_START /* DSW A */
+	PORT_DIPNAME( 0x01, 0x01, "Hi Score" )
+	PORT_DIPSETTING(    0x01, "Scribble" )
+	PORT_DIPSETTING(    0x00, "3 Characters" )
+	TAITO_B_DSWA_2_4
+	TAITO_COINAGE_WORLD_8
+
+	PORT_START /* DSW B */
+	TAITO_DIFFICULTY_8
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x08, "every 80k" )
+	PORT_DIPSETTING(    0x0c, "80k only" )
+	PORT_DIPSETTING(    0x04, "160k only" )
+	PORT_DIPSETTING(    0x00, "None" )
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x10, "1" )
+	PORT_DIPSETTING(    0x20, "2" )
+	PORT_DIPSETTING(    0x30, "3" )
+	PORT_DIPSETTING(    0x00, "4" )
+	PORT_DIPNAME( 0xc0, 0x40, "Allow Continue" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0xc0, "5 Times" )
+	PORT_DIPSETTING(    0x00, "8 Times" )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+
 	PORT_START      /* IN0 */
 	TAITO_B_PLAYERS_INPUT( IPF_PLAYER1 )
-	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* IN1 */
 	TAITO_B_PLAYERS_INPUT( IPF_PLAYER2 )
-	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	/* IN2 */
 	TAITO_B_SYSTEM_INPUT
-
-	PORT_START /* DSW A */
-	PORT_DIPNAME( 0x0100, 0x0100, "Hi Score" )
-	PORT_DIPSETTING(      0x0100, "Scribble" )
-	PORT_DIPSETTING(      0x0000, "3 Characters" )
-	TAITO_B_DSWA_2_4
-	TAITO_COINAGE_WORLD_16
-
-	PORT_START /* DSW B */
-	TAITO_DIFFICULTY_16
-	PORT_DIPNAME( 0x0c00, 0x0c00, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(      0x0800, "every 80k" )
-	PORT_DIPSETTING(      0x0c00, "80k only" )
-	PORT_DIPSETTING(      0x0400, "160k only" )
-	PORT_DIPSETTING(      0x0000, "None" )
-	PORT_DIPNAME( 0x3000, 0x3000, DEF_STR( Lives ) )
-	PORT_DIPSETTING(      0x1000, "1" )
-	PORT_DIPSETTING(      0x2000, "2" )
-	PORT_DIPSETTING(      0x3000, "3" )
-	PORT_DIPSETTING(      0x0000, "4" )
-	PORT_DIPNAME( 0xc000, 0x4000, "Allow Continue" )
-	PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0xc000, "5 Times" )
-	PORT_DIPSETTING(      0x0000, "8 Times" )
-	PORT_DIPSETTING(      0x4000, DEF_STR( On ) )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( crimecj )
+	PORT_START /* DSW A */
+	PORT_DIPNAME( 0x01, 0x01, "Hi Score" )
+	PORT_DIPSETTING(    0x01, "Scribble" )
+	PORT_DIPSETTING(    0x00, "3 Characters" )
+	TAITO_B_DSWA_2_4
+	TAITO_COINAGE_JAPAN_8
+
+	PORT_START /* DSW B */
+	TAITO_DIFFICULTY_8
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x08, "every 80k" )
+	PORT_DIPSETTING(    0x0c, "80k only" )
+	PORT_DIPSETTING(    0x04, "160k only" )
+	PORT_DIPSETTING(    0x00, "None" )
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x10, "1" )
+	PORT_DIPSETTING(    0x20, "2" )
+	PORT_DIPSETTING(    0x30, "3" )
+	PORT_DIPSETTING(    0x00, "4" )
+	PORT_DIPNAME( 0xc0, 0x40, "Allow Continue" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0xc0, "5 Times" )
+	PORT_DIPSETTING(    0x00, "8 Times" )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+
 	PORT_START      /* IN0 */
 	TAITO_B_PLAYERS_INPUT( IPF_PLAYER1 )
-	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* IN1 */
 	TAITO_B_PLAYERS_INPUT( IPF_PLAYER2 )
-	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	/* IN2 */
 	TAITO_B_SYSTEM_INPUT
-
-	PORT_START /* DSW A */
-	PORT_DIPNAME( 0x0100, 0x0100, "Hi Score" )
-	PORT_DIPSETTING(      0x0100, "Scribble" )
-	PORT_DIPSETTING(      0x0000, "3 Characters" )
-	TAITO_B_DSWA_2_4
-	TAITO_COINAGE_JAPAN_16
-
-	PORT_START /* DSW B */
-	TAITO_DIFFICULTY_16
-	PORT_DIPNAME( 0x0c00, 0x0c00, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(      0x0800, "every 80k" )
-	PORT_DIPSETTING(      0x0c00, "80k only" )
-	PORT_DIPSETTING(      0x0400, "160k only" )
-	PORT_DIPSETTING(      0x0000, "None" )
-	PORT_DIPNAME( 0x3000, 0x3000, DEF_STR( Lives ) )
-	PORT_DIPSETTING(      0x1000, "1" )
-	PORT_DIPSETTING(      0x2000, "2" )
-	PORT_DIPSETTING(      0x3000, "3" )
-	PORT_DIPSETTING(      0x0000, "4" )
-	PORT_DIPNAME( 0xc000, 0x4000, "Allow Continue" )
-	PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0xc000, "5 Times" )
-	PORT_DIPSETTING(      0x0000, "8 Times" )
-	PORT_DIPSETTING(      0x4000, DEF_STR( On ) )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( crimecu )
+	PORT_START /* DSW A */
+	PORT_DIPNAME( 0x01, 0x01, "Hi Score" )
+	PORT_DIPSETTING(    0x01, "Scribble" )
+	PORT_DIPSETTING(    0x00, "3 Characters" )
+	TAITO_B_DSWA_2_4
+	TAITO_COINAGE_US_8
+
+	PORT_START /* DSW B */
+	TAITO_DIFFICULTY_8
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x08, "every 80k" )
+	PORT_DIPSETTING(    0x0c, "80k only" )
+	PORT_DIPSETTING(    0x04, "160k only" )
+	PORT_DIPSETTING(    0x00, "None" )
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x10, "1" )
+	PORT_DIPSETTING(    0x20, "2" )
+	PORT_DIPSETTING(    0x30, "3" )
+	PORT_DIPSETTING(    0x00, "4" )
+	PORT_DIPNAME( 0xc0, 0x40, "Allow Continue" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0xc0, "5 Times" )
+	PORT_DIPSETTING(    0x00, "8 Times" )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+
 	PORT_START      /* IN0 */
 	TAITO_B_PLAYERS_INPUT( IPF_PLAYER1 )
-	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* IN1 */
 	TAITO_B_PLAYERS_INPUT( IPF_PLAYER2 )
-	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	/* IN2 */
 	TAITO_B_SYSTEM_INPUT
-
-	PORT_START /* DSW A */
-	PORT_DIPNAME( 0x0100, 0x0100, "Hi Score" )
-	PORT_DIPSETTING(      0x0100, "Scribble" )
-	PORT_DIPSETTING(      0x0000, "3 Characters" )
-	TAITO_B_DSWA_2_4
-	TAITO_COINAGE_US_16
-
-	PORT_START /* DSW B */
-	TAITO_DIFFICULTY_16
-	PORT_DIPNAME( 0x0c00, 0x0c00, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(      0x0800, "every 80k" )
-	PORT_DIPSETTING(      0x0c00, "80k only" )
-	PORT_DIPSETTING(      0x0400, "160k only" )
-	PORT_DIPSETTING(      0x0000, "None" )
-	PORT_DIPNAME( 0x3000, 0x3000, DEF_STR( Lives ) )
-	PORT_DIPSETTING(      0x1000, "1" )
-	PORT_DIPSETTING(      0x2000, "2" )
-	PORT_DIPSETTING(      0x3000, "3" )
-	PORT_DIPSETTING(      0x0000, "4" )
-	PORT_DIPNAME( 0xc000, 0x4000, "Allow Continue" )
-	PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0xc000, "5 Times" )
-	PORT_DIPSETTING(      0x0000, "8 Times" )
-	PORT_DIPSETTING(      0x4000, DEF_STR( On ) )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( tetrist )
+	PORT_START /* DSW A */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x00, DEF_STR( On ))
+	TAITO_B_DSWA_2_4
+	TAITO_COINAGE_JAPAN_8
+
+	PORT_START /* DSW B */
+	TAITO_DIFFICULTY_8
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x00, DEF_STR( On ))
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x00, DEF_STR( On ))
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x00, DEF_STR( On ))
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x00, DEF_STR( On ))
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x40, DEF_STR( On ))
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x00, DEF_STR( On ))
+
 	PORT_START      /* IN0 */
 	TAITO_B_PLAYERS_INPUT( IPF_PLAYER1 )
-	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* IN1 */
 	TAITO_B_PLAYERS_INPUT( IPF_PLAYER2 )
-	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	/* IN2 */
 	TAITO_B_SYSTEM_INPUT
-
-	PORT_START /* DSW A */
-	PORT_DIPNAME( 0x0100, 0x0100, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0100, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	TAITO_B_DSWA_2_4
-	TAITO_COINAGE_JAPAN_16
-
-	PORT_START /* DSW B */
-	TAITO_DIFFICULTY_16
-	PORT_DIPNAME( 0x0400, 0x0400, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0400, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x0800, 0x0800, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0800, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x1000, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x2000, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x4000, DEF_STR( On ))
-	PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x8000, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
 INPUT_PORTS_END
 
 INPUT_PORTS_START( ashura )
+	PORT_START /* DSW A */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x00, DEF_STR( On ))
+	TAITO_B_DSWA_2_4
+	TAITO_COINAGE_JAPAN_8
+
+	PORT_START /* DSW B */
+	TAITO_DIFFICULTY_8
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x08, "every 100k" )
+	PORT_DIPSETTING(    0x0c, "every 150k" )
+	PORT_DIPSETTING(    0x04, "every 200k" )
+	PORT_DIPSETTING(    0x00, "every 250k" )
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "1" )
+	PORT_DIPSETTING(    0x10, "2" )
+	PORT_DIPSETTING(    0x30, "3" )
+	PORT_DIPSETTING(    0x20, "4" )
+	PORT_DIPNAME( 0x40, 0x40, "Allow Continue" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x00, DEF_STR( On ))
+
 	PORT_START      /* IN0 */
 	TAITO_B_PLAYERS_INPUT( IPF_PLAYER1 )
-	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* IN1 */
 	TAITO_B_PLAYERS_INPUT( IPF_PLAYER2 )
-	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	/* IN2 */
 	TAITO_B_SYSTEM_INPUT
-
-	PORT_START /* DSW A */
-	PORT_DIPNAME( 0x0100, 0x0100, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0100, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	TAITO_B_DSWA_2_4
-	TAITO_COINAGE_JAPAN_16
-
-	PORT_START /* DSW B */
-	TAITO_DIFFICULTY_16
-	PORT_DIPNAME( 0x0c00, 0x0c00, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(      0x0800, "every 100k" )
-	PORT_DIPSETTING(      0x0c00, "every 150k" )
-	PORT_DIPSETTING(      0x0400, "every 200k" )
-	PORT_DIPSETTING(      0x0000, "every 250k" )
-	PORT_DIPNAME( 0x3000, 0x3000, DEF_STR( Lives ) )
-	PORT_DIPSETTING(      0x0000, "1" )
-	PORT_DIPSETTING(      0x1000, "2" )
-	PORT_DIPSETTING(      0x3000, "3" )
-	PORT_DIPSETTING(      0x2000, "4" )
-	PORT_DIPNAME( 0x4000, 0x4000, "Allow Continue" )
-	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x4000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x8000, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
 INPUT_PORTS_END
 
 INPUT_PORTS_START( ashurau )
+	PORT_START /* DSW A */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x00, DEF_STR( On ))
+	TAITO_B_DSWA_2_4
+	TAITO_COINAGE_US_8
+
+	PORT_START /* DSW B */
+	TAITO_DIFFICULTY_8
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x08, "every 100k" )
+	PORT_DIPSETTING(    0x0c, "every 150k" )
+	PORT_DIPSETTING(    0x04, "every 200k" )
+	PORT_DIPSETTING(    0x00, "every 250k" )
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "1" )
+	PORT_DIPSETTING(    0x10, "2" )
+	PORT_DIPSETTING(    0x30, "3" )
+	PORT_DIPSETTING(    0x20, "4" )
+	PORT_DIPNAME( 0x40, 0x40, "Allow Continue" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x00, DEF_STR( On ))
+
 	PORT_START      /* IN0 */
 	TAITO_B_PLAYERS_INPUT( IPF_PLAYER1 )
-	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* IN1 */
 	TAITO_B_PLAYERS_INPUT( IPF_PLAYER2 )
-	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	/* IN2 */
 	TAITO_B_SYSTEM_INPUT
-
-	PORT_START /* DSW A */
-	PORT_DIPNAME( 0x0100, 0x0100, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0100, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	TAITO_B_DSWA_2_4
-	TAITO_COINAGE_US_16
-
-	PORT_START /* DSW B */
-	TAITO_DIFFICULTY_16
-	PORT_DIPNAME( 0x0c00, 0x0c00, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(      0x0800, "every 100k" )
-	PORT_DIPSETTING(      0x0c00, "every 150k" )
-	PORT_DIPSETTING(      0x0400, "every 200k" )
-	PORT_DIPSETTING(      0x0000, "every 250k" )
-	PORT_DIPNAME( 0x3000, 0x3000, DEF_STR( Lives ) )
-	PORT_DIPSETTING(      0x0000, "1" )
-	PORT_DIPSETTING(      0x1000, "2" )
-	PORT_DIPSETTING(      0x3000, "3" )
-	PORT_DIPSETTING(      0x2000, "4" )
-	PORT_DIPNAME( 0x4000, 0x4000, "Allow Continue" )
-	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x4000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x8000, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
 INPUT_PORTS_END
 
 /*
@@ -1673,68 +1637,68 @@ maximum credit      9                             0
 */
 
 INPUT_PORTS_START( hitice )
-	PORT_START      /* IN0 */
-	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
-	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
-	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
-	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
-	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
-	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
-	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
-
-	PORT_START      /* IN1 */
-	PORT_BIT(         0x0100, IP_ACTIVE_LOW, IPT_TILT )
-	PORT_BIT_IMPULSE( 0x0200, IP_ACTIVE_LOW, IPT_SERVICE1, 2 )
-	PORT_BIT(         0x0400, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT(         0x0800, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT_IMPULSE( 0x1000, IP_ACTIVE_LOW, IPT_COIN1, 2 )
-	PORT_BIT_IMPULSE( 0x2000, IP_ACTIVE_LOW, IPT_COIN2, 2 )
-	PORT_BIT(         0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT(         0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
-
-	PORT_START      /* IN2 */
-	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
-	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
-	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
-	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
-	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
-
 	PORT_START /* DSW A */
-	PORT_DIPNAME( 0x0100, 0x0100, "Cabinet Style" )
-	PORT_DIPSETTING(      0x0100, "4 Players")
-	PORT_DIPSETTING(      0x0000, "2 Players")
-	PORT_DIPNAME( 0x0200, 0x0200, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0200, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_SERVICE( 0x0400, IP_ACTIVE_LOW )
-	PORT_DIPNAME( 0x0800, 0x0800, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0800, DEF_STR( On ))
-	TAITO_COINAGE_JAPAN_16
+	PORT_DIPNAME( 0x01, 0x01, "Cabinet Style" )
+	PORT_DIPSETTING(    0x01, "4 Players")
+	PORT_DIPSETTING(    0x00, "2 Players")
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x00, DEF_STR( On ))
+	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x08, DEF_STR( On ))
+	TAITO_COINAGE_JAPAN_8
 
 	PORT_START /* DSW B */
-	TAITO_DIFFICULTY_16
-	PORT_DIPNAME( 0x0c00, 0x0c00, "Timer count" )
-	PORT_DIPSETTING(      0x0c00, "1 sec = 58/60" )
-	PORT_DIPSETTING(      0x0400, "1 sec = 56/60" )
-	PORT_DIPSETTING(      0x0800, "1 sec = 62/60" )
-	PORT_DIPSETTING(      0x0000, "1 sec = 45/60" )
-	PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x1000, DEF_STR( On ))
-	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x2000, DEF_STR( On ))
-	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Unknown) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x4000, DEF_STR( On ))
-	PORT_DIPNAME( 0x8000, 0x8000, "Maximum credits" )
-	PORT_DIPSETTING(      0x0000, "99" )
-	PORT_DIPSETTING(      0x8000, "9"  )
+	TAITO_DIFFICULTY_8
+	PORT_DIPNAME( 0x0c, 0x0c, "Timer count" )
+	PORT_DIPSETTING(    0x0c, "1 sec = 58/60" )
+	PORT_DIPSETTING(    0x04, "1 sec = 56/60" )
+	PORT_DIPSETTING(    0x08, "1 sec = 62/60" )
+	PORT_DIPSETTING(    0x00, "1 sec = 45/60" )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x10, DEF_STR( On ))
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x20, DEF_STR( On ))
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x40, DEF_STR( On ))
+	PORT_DIPNAME( 0x80, 0x80, "Maximum credits" )
+	PORT_DIPSETTING(    0x00, "99" )
+	PORT_DIPSETTING(    0x80, "9"  )
+
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* IN1 */
+	PORT_BIT(         0x01, IP_ACTIVE_LOW, IPT_TILT )
+	PORT_BIT(         0x02, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT(         0x04, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT(         0x08, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT_IMPULSE( 0x10, IP_ACTIVE_LOW, IPT_COIN1, 2 )
+	PORT_BIT_IMPULSE( 0x20, IP_ACTIVE_LOW, IPT_COIN2, 2 )
+	PORT_BIT(         0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(         0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
 
 	PORT_START      /* IN5 IN6 */
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER3 )
@@ -1756,116 +1720,116 @@ INPUT_PORTS_START( hitice )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( rambo3 )
+	PORT_START /* DSW A */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unused ) )  // all 5 "unused" in manual
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x00, DEF_STR( On ))
+	TAITO_B_DSWA_2_4
+	TAITO_COINAGE_WORLD_8
+
+	PORT_START /* DSW B */
+	TAITO_DIFFICULTY_8
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x00, DEF_STR( On ))
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x00, DEF_STR( On ))
+	PORT_DIPNAME( 0x10, 0x10, "Allow Continue" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x10, DEF_STR( On ))
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x00, DEF_STR( On ))
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x00, DEF_STR( On ))
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x00, DEF_STR( On ))
+
 	PORT_START      /* IN0 */
 	TAITO_B_PLAYERS_INPUT( IPF_PLAYER1 )
-	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* IN1 */
 	TAITO_B_PLAYERS_INPUT( IPF_PLAYER2 )
-	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	/* IN2 */
 	TAITO_B_SYSTEM_INPUT
-
-	PORT_START /* DSW A */
-	PORT_DIPNAME( 0x0100, 0x0100, DEF_STR( Unused ) )  // all 5 "unused" in manual
-	PORT_DIPSETTING(      0x0100, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	TAITO_B_DSWA_2_4
-	TAITO_COINAGE_WORLD_16
-
-	PORT_START /* DSW B */
-	TAITO_DIFFICULTY_16
-	PORT_DIPNAME( 0x0400, 0x0400, DEF_STR( Unused ) )
-	PORT_DIPSETTING(      0x0400, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x0800, 0x0800, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0800, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x1000, 0x1000, "Allow Continue" )
-	PORT_DIPSETTING(      0x0000, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x1000, DEF_STR( On ))
-	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Unused ) )
-	PORT_DIPSETTING(      0x2000, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Unused ) )
-	PORT_DIPSETTING(      0x4000, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Unused ) )
-	PORT_DIPSETTING(      0x8000, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
 INPUT_PORTS_END
 
 INPUT_PORTS_START( rambo3a )
-	PORT_START      /* IN0 */
-	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
-	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
-	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
-	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
-	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
-
-	PORT_START      /* IN1 */
-	PORT_BIT(         0x0100, IP_ACTIVE_LOW, IPT_TILT )
-	PORT_BIT_IMPULSE( 0x0200, IP_ACTIVE_LOW, IPT_SERVICE1, 2 )
-	PORT_BIT(         0x0400, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT(         0x0800, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT_IMPULSE( 0x1000, IP_ACTIVE_HIGH, IPT_COIN1, 2 )
-	PORT_BIT_IMPULSE( 0x2000, IP_ACTIVE_HIGH, IPT_COIN2, 2 )
-	PORT_BIT(         0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT(         0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
-
-	PORT_START      /* IN2 */
-	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
-	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
-	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
-	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
-	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
-
 	PORT_START /* DSW A */
-	PORT_DIPNAME( 0x0100, 0x0100, DEF_STR( Unused ) )
-	PORT_DIPSETTING(      0x0100, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x00, DEF_STR( On ))
 	TAITO_B_DSWA_2_4
 	/* Coinage similar to US, but there are some differences */
-	PORT_DIPNAME( 0x3000, 0x3000, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(      0x1000, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(      0x2000, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( 4C_3C ) )
-	PORT_DIPSETTING(      0x3000, DEF_STR( 1C_1C ) )
-	PORT_DIPNAME( 0xc000, 0xc000, "Price to Continue" )
-	PORT_DIPSETTING(      0x4000, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(      0x8000, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(      0xc000, "Same as Start" )
-	PORT_DIPSETTING(      0x0000, "Same as Start or 1C/1C (if Coinage 4C/3C)" )
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 4C_3C ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) )
+	PORT_DIPNAME( 0xc0, 0xc0, "Price to Continue" )
+	PORT_DIPSETTING(    0x40, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0xc0, "Same as Start" )
+	PORT_DIPSETTING(    0x00, "Same as Start or 1C/1C (if Coinage 4C/3C)" )
 
 	PORT_START /* DSW B */
-	TAITO_DIFFICULTY_16
-	PORT_DIPNAME( 0x0400, 0x0400, DEF_STR( Unused ) )
-	PORT_DIPSETTING(      0x0400, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x0800, 0x0800, "Control" )
-	PORT_DIPSETTING(      0x0800, "8 way Joystick" )
-	PORT_DIPSETTING(      0x0000, "Trackball" )
-	PORT_DIPNAME( 0x1000, 0x1000, "Allow Continue" )
-	PORT_DIPSETTING(      0x0000, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x1000, DEF_STR( On ))
-	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Unused ) )
-	PORT_DIPSETTING(      0x2000, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Unused ) )
-	PORT_DIPSETTING(      0x4000, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Unused ) )
-	PORT_DIPSETTING(      0x8000, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
+	TAITO_DIFFICULTY_8
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x00, DEF_STR( On ))
+	PORT_DIPNAME( 0x08, 0x08, "Control" )
+	PORT_DIPSETTING(    0x08, "8 way Joystick" )
+	PORT_DIPSETTING(    0x00, "Trackball" )
+	PORT_DIPNAME( 0x10, 0x10, "Allow Continue" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x10, DEF_STR( On ))
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x00, DEF_STR( On ))
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x00, DEF_STR( On ))
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x00, DEF_STR( On ))
+
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* IN1 */
+	PORT_BIT(         0x01, IP_ACTIVE_LOW, IPT_TILT )
+	PORT_BIT(         0x02, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT(         0x04, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT(         0x08, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT_IMPULSE( 0x10, IP_ACTIVE_HIGH, IPT_COIN1, 2 )
+	PORT_BIT_IMPULSE( 0x20, IP_ACTIVE_HIGH, IPT_COIN2, 2 )
+	PORT_BIT(         0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(         0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
 
 	PORT_START
 	PORT_ANALOG( 0xffff, 0x0000, IPT_TRACKBALL_Y | IPF_PLAYER1 | IPF_REVERSE, 70, 30, 0, 0 )
@@ -1887,125 +1851,135 @@ INPUT_PORTS_END
 	PORT_BITX(    mask, mask & default, IPT_SERVICE1, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
 
 
-INPUT_PORTS_START( puzbobb )
-	PORT_START      /* IN2 */ /*all OK*/
-	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_TILT )
-	PORT_BIT_IMPULSE( 0x0200, IP_ACTIVE_LOW, IPT_SERVICE1, 2 )
-	PORT_BIT_IMPULSE( 0x0400, IP_ACTIVE_LOW, IPT_SERVICE2, 2 )
-	PORT_BIT_IMPULSE( 0x0800, IP_ACTIVE_LOW, IPT_SERVICE3, 2 )
-	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_START3 )
-	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_START4 )
+INPUT_PORTS_START( pbobblbs )	/* Missing P3&4 controls ! */
+	PORT_START /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN ) /*unused in test mode*/
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN ) /*unused in test mode*/
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN ) /*unused in test mode*/
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN ) /*unused in test mode*/
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN ) /*unused in test mode*/
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN ) /*unused in test mode*/
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN ) /*unused in test mode*/
+	PORT_SERVICE_NO_TOGGLE( 0x80, IP_ACTIVE_LOW ) /*ok*/
 
-	PORT_START /* IN X */ /*all OK*/
-	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
-	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
-	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
-	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_UNKNOWN ) /*unused in test mode*/
-	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
-	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
-	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
-	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN ) /*unused in test mode*/
+	PORT_START /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT_IMPULSE( 0x10, IP_ACTIVE_LOW, IPT_COIN1, 2 ) /*ok*/
+	PORT_BIT_IMPULSE( 0x20, IP_ACTIVE_LOW, IPT_COIN2, 2 ) /*ok*/
+	PORT_BIT_IMPULSE( 0x40, IP_ACTIVE_LOW, IPT_COIN3, 2 ) /*ok*/
+	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN4, 2 ) /*ok*/
 
-	PORT_START      /* IN0 */ /*all OK*/
-	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
-	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
-	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
-	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
-	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_START /* IN2 */ /*all OK*/
+	PORT_BIT(         0x01, IP_ACTIVE_LOW, IPT_TILT )
+	PORT_BIT(         0x02, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT_IMPULSE( 0x04, IP_ACTIVE_LOW, IPT_SERVICE2, 2 )
+	PORT_BIT_IMPULSE( 0x08, IP_ACTIVE_LOW, IPT_SERVICE3, 2 )
+	PORT_BIT(         0x10, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT(         0x20, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT(         0x40, IP_ACTIVE_LOW, IPT_START3 )
+	PORT_BIT(         0x80, IP_ACTIVE_LOW, IPT_START4 )
 
-	PORT_START /* DSW B */
-	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_UNKNOWN ) /*unused in test mode*/
-	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_UNKNOWN ) /*unused in test mode*/
-	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_UNKNOWN ) /*unused in test mode*/
-	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_UNKNOWN ) /*unused in test mode*/
-	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_UNKNOWN ) /*unused in test mode*/
-	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_UNKNOWN ) /*unused in test mode*/
-	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN ) /*unused in test mode*/
-	PORT_SERVICE_NO_TOGGLE( 0x8000, IP_ACTIVE_LOW ) /*ok*/
+	PORT_START /* IN3 */ /*all OK*/
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN ) /*unused in test mode*/
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN ) /*unused in test mode*/
 
-	PORT_START
-	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT_IMPULSE( 0x1000, IP_ACTIVE_LOW, IPT_COIN1, 2 ) /*ok*/
-	PORT_BIT_IMPULSE( 0x2000, IP_ACTIVE_LOW, IPT_COIN2, 2 ) /*ok*/
-	PORT_BIT_IMPULSE( 0x4000, IP_ACTIVE_LOW, IPT_COIN3, 2 ) /*ok*/
-	PORT_BIT_IMPULSE( 0x8000, IP_ACTIVE_LOW, IPT_COIN4, 2 ) /*ok*/
+	PORT_START /* IN4 */ /*all OK*/
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
 
-	PORT_START
-	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_START /* IN5 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER3 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER3 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER3 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN ) /*unused in test mode*/
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER4 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER4 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER4 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN ) /*unused in test mode*/
+
+	PORT_START /* IN6 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER3 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER3 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER3 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER3 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER4 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER4 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER4 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER4 )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( qzshowby )
+	PORT_START /* DSW B */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN ) /*unused in test mode*/
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN ) /*unused in test mode*/
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN ) /*unused in test mode*/
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN ) /*unused in test mode*/
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN ) /*unused in test mode*/
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN ) /*unused in test mode*/
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN ) /*unused in test mode*/
+	PORT_SERVICE_NO_TOGGLE( 0x80, IP_ACTIVE_LOW ) /*ok*/
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT_IMPULSE( 0x10, IP_ACTIVE_LOW, IPT_COIN1, 2 ) /*ok*/
+	PORT_BIT_IMPULSE( 0x20, IP_ACTIVE_LOW, IPT_COIN2, 2 ) /*ok*/
+	PORT_BIT_IMPULSE( 0x40, IP_ACTIVE_LOW, IPT_COIN3, 2 ) /*ok*/
+	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN4, 2 ) /*ok*/
+
 	PORT_START      /* IN2 */ /*all OK*/
-	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_TILT )
-	PORT_BIT_IMPULSE( 0x0200, IP_ACTIVE_LOW, IPT_SERVICE1, 2 )
-	PORT_BIT_IMPULSE( 0x0400, IP_ACTIVE_LOW, IPT_SERVICE2, 2 )
-	PORT_BIT_IMPULSE( 0x0800, IP_ACTIVE_LOW, IPT_SERVICE3, 2 )
-	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_START3 )
-	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_START4 )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_TILT )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT_IMPULSE( 0x04, IP_ACTIVE_LOW, IPT_SERVICE2, 2 )
+	PORT_BIT_IMPULSE( 0x08, IP_ACTIVE_LOW, IPT_SERVICE3, 2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START3 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START4 )
 
 	PORT_START /* IN X */ /*all OK*/
-	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_UNKNOWN  ) /* IPT_START1 in test mode */
-	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_UNKNOWN  ) /* IPT_START2 in test mode */
-	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN  ) /* IPT_START1 in test mode */
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN  ) /* IPT_START2 in test mode */
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* IN0 */ /*all OK*/
-	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
-	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
-	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER1 )
-	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
-	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
-	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
-	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER2 )
-	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
 
-	PORT_START /* DSW B */
-	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_UNKNOWN ) /*unused in test mode*/
-	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_UNKNOWN ) /*unused in test mode*/
-	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_UNKNOWN ) /*unused in test mode*/
-	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_UNKNOWN ) /*unused in test mode*/
-	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_UNKNOWN ) /*unused in test mode*/
-	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_UNKNOWN ) /*unused in test mode*/
-	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN ) /*unused in test mode*/
-	PORT_SERVICE_NO_TOGGLE( 0x8000, IP_ACTIVE_LOW ) /*ok*/
-
-	PORT_START
-	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_START      /* IN5 */
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_UNKNOWN  ) /* IPT_START3 in test mode */
 	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT_IMPULSE( 0x1000, IP_ACTIVE_LOW, IPT_COIN1, 2 ) /*ok*/
-	PORT_BIT_IMPULSE( 0x2000, IP_ACTIVE_LOW, IPT_COIN2, 2 ) /*ok*/
-	PORT_BIT_IMPULSE( 0x4000, IP_ACTIVE_LOW, IPT_COIN3, 2 ) /*ok*/
-	PORT_BIT_IMPULSE( 0x8000, IP_ACTIVE_LOW, IPT_COIN4, 2 ) /*ok*/
-
-	PORT_START
-	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_UNKNOWN  ) /* IPT_START4 in test mode */
 	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -2019,92 +1993,52 @@ INPUT_PORTS_START( qzshowby )
 	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER4 )
 	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER4 )
 	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER4 )
-
-	PORT_START      /* IN7 */
-	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_UNKNOWN  ) /* IPT_START3 in test mode */
-	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_UNKNOWN  ) /* IPT_START4 in test mode */
-	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( viofight )
-	PORT_START      /* IN0 */
-	TAITO_B_PLAYERS_INPUT( IPF_PLAYER1 )
-	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
-	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
-
-	PORT_START      /* IN1 */
-	TAITO_B_PLAYERS_INPUT( IPF_PLAYER2 )
-	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
-	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
-
-	/* IN2 */
-	TAITO_B_SYSTEM_INPUT
-
 	PORT_START /* DSW A */
-	PORT_DIPNAME( 0x0100, 0x0100, DEF_STR( Unused ) )  // all 7 "unused" in manual
-	PORT_DIPSETTING(      0x0100, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unused ) )  // all 7 "unused" in manual
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	TAITO_B_DSWA_2_4
-	TAITO_COINAGE_WORLD_16
+	TAITO_COINAGE_WORLD_8
 
 	PORT_START /* DSW B */
-	TAITO_DIFFICULTY_16
-	PORT_DIPNAME( 0x0400, 0x0400, DEF_STR( Unused ) )
-	PORT_DIPSETTING(      0x0400, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x0800, 0x0800, DEF_STR( Unused ) )
-	PORT_DIPSETTING(      0x0800, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Unused ) )
-	PORT_DIPSETTING(      0x1000, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Unused ) )
-	PORT_DIPSETTING(      0x2000, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Unused ) )
-	PORT_DIPSETTING(      0x4000, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Unused ) )
-	PORT_DIPSETTING(      0x8000, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-INPUT_PORTS_END
+	TAITO_DIFFICULTY_8
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x00, DEF_STR( On ))
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x00, DEF_STR( On ))
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x00, DEF_STR( On ))
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x00, DEF_STR( On ))
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x00, DEF_STR( On ))
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x00, DEF_STR( On ))
 
-INPUT_PORTS_START( silentd )
 	PORT_START      /* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	TAITO_B_PLAYERS_INPUT( IPF_PLAYER1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* IN1 */
-	PORT_BIT(         0x01, IP_ACTIVE_LOW, IPT_TILT )
-	PORT_BIT_IMPULSE( 0x02, IP_ACTIVE_LOW, IPT_SERVICE1, 2 )
-	PORT_BIT(         0x04, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT(         0x08, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT_IMPULSE( 0x10, IP_ACTIVE_LOW, IPT_COIN1, 2 )
-	PORT_BIT_IMPULSE( 0x20, IP_ACTIVE_LOW, IPT_COIN2, 2 )
-	PORT_BIT(         0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT(         0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	TAITO_B_PLAYERS_INPUT( IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START      /* IN2 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	/* IN2 */
+	TAITO_B_SYSTEM_INPUT
+INPUT_PORTS_END
 
+INPUT_PORTS_START( silentd )
 	PORT_START /* DSW A */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ))
@@ -2129,7 +2063,7 @@ INPUT_PORTS_START( silentd )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ))
 
 	PORT_START /* DSW B */
-	TAITO_DIFFICULTY_16
+	TAITO_DIFFICULTY_8
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ))
 	PORT_DIPSETTING(    0x00, DEF_STR( On ))
@@ -2158,6 +2092,35 @@ INPUT_PORTS_START( silentd )
 	PORT_DIPSETTING(    0x40, "4 Players/1 Machine??") /* with bit6, shows 4 seperate credits */
 	PORT_DIPSETTING(    0x00, "4 Players/2 Machines??")	/* with bit6 shows 2 seperate credits */
 
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* IN1 */
+	PORT_BIT(         0x01, IP_ACTIVE_LOW, IPT_TILT )
+	PORT_BIT(         0x02, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT(         0x04, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT(         0x08, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT_IMPULSE( 0x10, IP_ACTIVE_LOW, IPT_COIN1, 2 )
+	PORT_BIT_IMPULSE( 0x20, IP_ACTIVE_LOW, IPT_COIN2, 2 )
+	PORT_BIT(         0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(         0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
 
 	PORT_START      /* IN5 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START3 )
@@ -2191,36 +2154,6 @@ INPUT_PORTS_START( silentd )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( silentdj )
-	PORT_START      /* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
-
-	PORT_START      /* IN1 */
-	PORT_BIT(         0x01, IP_ACTIVE_LOW, IPT_TILT )
-	PORT_BIT_IMPULSE( 0x02, IP_ACTIVE_LOW, IPT_SERVICE1, 2 )
-	PORT_BIT(         0x04, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT(         0x08, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT_IMPULSE( 0x10, IP_ACTIVE_LOW, IPT_COIN1, 2 )
-	PORT_BIT_IMPULSE( 0x20, IP_ACTIVE_LOW, IPT_COIN2, 2 )
-	PORT_BIT(         0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT(         0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
-
-	PORT_START      /* IN2 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
-
 	PORT_START /* DSW A */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ))
@@ -2232,10 +2165,10 @@ INPUT_PORTS_START( silentdj )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ))
 	PORT_DIPSETTING(    0x08, DEF_STR( On ))
-	TAITO_COINAGE_JAPAN_16
+	TAITO_COINAGE_JAPAN_8
 
 	PORT_START /* DSW B */
-	TAITO_DIFFICULTY_16
+	TAITO_DIFFICULTY_8
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ))
 	PORT_DIPSETTING(    0x00, DEF_STR( On ))
@@ -2254,6 +2187,35 @@ INPUT_PORTS_START( silentdj )
 	PORT_DIPSETTING(    0x40, "4 Players/1 Machine??") /* with bit6, shows 4 seperate credits */
 	PORT_DIPSETTING(    0x00, "4 Players/2 Machines??")	/* with bit6 shows 2 seperate credits */
 
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* IN1 */
+	PORT_BIT(         0x01, IP_ACTIVE_LOW, IPT_TILT )
+	PORT_BIT(         0x02, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT(         0x04, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT(         0x08, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT_IMPULSE( 0x10, IP_ACTIVE_LOW, IPT_COIN1, 2 )
+	PORT_BIT_IMPULSE( 0x20, IP_ACTIVE_LOW, IPT_COIN2, 2 )
+	PORT_BIT(         0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(         0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
 
 	PORT_START      /* IN5 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START3 )
@@ -2287,162 +2249,123 @@ INPUT_PORTS_START( silentdj )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( selfeena )
-	PORT_START      /* IN0 */
-	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
-	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
-	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
-	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
-	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
-	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
-	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
-
-	PORT_START      /* IN1 */
-	PORT_BIT(         0x0100, IP_ACTIVE_LOW, IPT_TILT )
-	PORT_BIT_IMPULSE( 0x0200, IP_ACTIVE_LOW, IPT_SERVICE1, 2 )
-	PORT_BIT(         0x0400, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT(         0x0800, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT_IMPULSE( 0x1000, IP_ACTIVE_LOW, IPT_COIN1, 2 )
-	PORT_BIT_IMPULSE( 0x2000, IP_ACTIVE_LOW, IPT_COIN2, 2 )
-	PORT_BIT(         0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT(         0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
-
-	PORT_START      /* IN2 */
-	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
-	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
-	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
-	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
-	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
-
 	PORT_START /* DSW A */
-	PORT_DIPNAME( 0x0100, 0x0100, DEF_STR( Unused ) )
-	PORT_DIPSETTING(      0x0100, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x00, DEF_STR( On ))
 	TAITO_B_DSWA_2_4
-	TAITO_COINAGE_JAPAN_NEW_16
+	TAITO_COINAGE_JAPAN_NEW_8
 
 	PORT_START /* DSW B */
-	TAITO_DIFFICULTY_16
-	PORT_DIPNAME( 0x0c00, 0x0c00, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(      0x0c00, "100k only" )
-	PORT_DIPSETTING(      0x0800, "200k only" )
-	PORT_DIPSETTING(      0x0400, "300k only" )
-	PORT_DIPSETTING(      0x0000, "400k only" )
-	PORT_DIPNAME( 0x3000, 0x3000, DEF_STR( Lives ) )
-	PORT_DIPSETTING(      0x0000, "1" )
-	PORT_DIPSETTING(      0x1000, "2" )
-	PORT_DIPSETTING(      0x3000, "3" )
-	PORT_DIPSETTING(      0x2000, "4" )
-	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Unused ) )
-	PORT_DIPSETTING(      0x4000, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Unused ) )
-	PORT_DIPSETTING(      0x8000, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-INPUT_PORTS_END
+	TAITO_DIFFICULTY_8
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x0c, "100k only" )
+	PORT_DIPSETTING(    0x08, "200k only" )
+	PORT_DIPSETTING(    0x04, "300k only" )
+	PORT_DIPSETTING(    0x00, "400k only" )
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "1" )
+	PORT_DIPSETTING(    0x10, "2" )
+	PORT_DIPSETTING(    0x30, "3" )
+	PORT_DIPSETTING(    0x20, "4" )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x00, DEF_STR( On ))
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x00, DEF_STR( On ))
 
-INPUT_PORTS_START( ryujin )
 	PORT_START      /* IN0 */
-	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
-	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
-	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
-	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
-	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
-	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
-	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
-
-	PORT_START      /* IN1 */
-	PORT_BIT(         0x0100, IP_ACTIVE_LOW, IPT_TILT )
-	PORT_BIT_IMPULSE( 0x0200, IP_ACTIVE_LOW, IPT_SERVICE1, 2 )
-	PORT_BIT(         0x0400, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT(         0x0800, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT_IMPULSE( 0x1000, IP_ACTIVE_LOW, IPT_COIN1, 2 )
-	PORT_BIT_IMPULSE( 0x2000, IP_ACTIVE_LOW, IPT_COIN2, 2 )
-	PORT_BIT(         0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT(         0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
-
-	PORT_START      /* IN2 */
-	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
-	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
-	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
-	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
-	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
-
-	PORT_START /* DSW A */
-	PORT_DIPNAME( 0x0100, 0x0100, DEF_STR( Unused ) )
-	PORT_DIPSETTING(      0x0100, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	TAITO_B_DSWA_2_4
-	TAITO_COINAGE_JAPAN_NEW_16
-
-	PORT_START /* DSW B */
-	TAITO_DIFFICULTY_16
-	PORT_DIPNAME( 0x0c00, 0x0c00, DEF_STR( Lives ) )
-	PORT_DIPSETTING(      0x0000, "1" )
-	PORT_DIPSETTING(      0x0400, "2" )
-	PORT_DIPSETTING(      0x0c00, "3" )
-	PORT_DIPSETTING(      0x0800, "4" )
-	PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Unused ) )
-	PORT_DIPSETTING(      0x1000, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Unused ) )
-	PORT_DIPSETTING(      0x2000, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Unused ) )
-	PORT_DIPSETTING(      0x4000, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Unused ) )
-	PORT_DIPSETTING(      0x8000, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-INPUT_PORTS_END
-
-INPUT_PORTS_START( sbm )
-	PORT_START      /* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )//select; ok (1P in object test)
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )//start ; ok (2P in object test)
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* IN1 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )//sound select UP
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )//sound select DOWN
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )//ok (object test)
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )//ok (object test)
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )//-- unused in test modes
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )//-- unused in test modes
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )//BEN IN (ticket dispenser)
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )//LADY ????
+	PORT_BIT(         0x01, IP_ACTIVE_LOW, IPT_TILT )
+	PORT_BIT(         0x02, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT(         0x04, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT(         0x08, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT_IMPULSE( 0x10, IP_ACTIVE_LOW, IPT_COIN1, 2 )
+	PORT_BIT_IMPULSE( 0x20, IP_ACTIVE_LOW, IPT_COIN2, 2 )
+	PORT_BIT(         0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(         0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* IN2 */
-	PORT_BIT(         0x01, IP_ACTIVE_LOW, IPT_TILT )       //ok
-	PORT_BIT_IMPULSE( 0x02, IP_ACTIVE_LOW, IPT_SERVICE1, 2 )//ok
-	PORT_BIT_IMPULSE( 0x04, IP_ACTIVE_LOW, IPT_COIN1, 2 )   //ok
-	PORT_BIT_IMPULSE( 0x08, IP_ACTIVE_LOW, IPT_COIN2, 2 )   //ok
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+INPUT_PORTS_END
 
-	/* BUTTON1 ACTIVE LOW, - game thinks that punching pad has already been raised */
-	PORT_BIT(         0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )//PHOTO 1 (punching pad photosensor 1)
-	PORT_BIT(         0x20, IP_ACTIVE_HIGH,IPT_BUTTON2 | IPF_PLAYER1 )//PHOTO 2 (punching pad photosensor 2)
-	PORT_BIT(         0x40, IP_ACTIVE_HIGH,IPT_BUTTON3 | IPF_PLAYER1 )//PHOTO 3	(punching pad photosensor 3)
- 	/*To simulate a punch:
-		- wait for "READY GO!" message,
-		- press button1 + button 2 (LCTRL + ALT) (you'll hear a "punching" sound),
-  		- THEN  press button 3 (SPACE)
- 		The time passed between the presses will be used to calculate the power of your punch.
-		The longer the time - the less power.
-	*/
-	PORT_BIT(         0x80, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER1 )//PHOTO 4  ??? ACTIVE_LOW  ??? (punching pad photosensor 4)
+INPUT_PORTS_START( ryujin )
+	PORT_START /* DSW A */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x00, DEF_STR( On ))
+	TAITO_B_DSWA_2_4
+	TAITO_COINAGE_JAPAN_NEW_8
 
+	PORT_START /* DSW B */
+	TAITO_DIFFICULTY_8
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "1" )
+	PORT_DIPSETTING(    0x04, "2" )
+	PORT_DIPSETTING(    0x0c, "3" )
+	PORT_DIPSETTING(    0x08, "4" )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x00, DEF_STR( On ))
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x00, DEF_STR( On ))
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x00, DEF_STR( On ))
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x00, DEF_STR( On ))
+
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* IN1 */
+	PORT_BIT(         0x01, IP_ACTIVE_LOW, IPT_TILT )
+	PORT_BIT(         0x02, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT(         0x04, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT(         0x08, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT_IMPULSE( 0x10, IP_ACTIVE_LOW, IPT_COIN1, 2 )
+	PORT_BIT_IMPULSE( 0x20, IP_ACTIVE_LOW, IPT_COIN2, 2 )
+	PORT_BIT(         0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(         0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( sbm )
 	PORT_START /* DSW A *///+-ok
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ))
@@ -2467,11 +2390,7 @@ INPUT_PORTS_START( sbm )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START /* DSW B */ //+-ok
-	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x03, "Medium" )
-	PORT_DIPSETTING(    0x02, "Easy" )
-	PORT_DIPSETTING(    0x01, "Hard" )
-	PORT_DIPSETTING(    0x00, "Hardest" )
+	TAITO_DIFFICULTY_8
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ))
 	PORT_DIPSETTING(    0x00, DEF_STR( On ))
@@ -2491,17 +2410,46 @@ INPUT_PORTS_START( sbm )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ))
 	PORT_DIPSETTING(    0x00, DEF_STR( On ))
 
-	PORT_START      /* IN5 */ /* all bits below unknown (port is read) - here just to try them */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START3 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER3 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER3 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER3 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER3 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER3 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER3 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER3 )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )//sound select UP
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )//sound select DOWN
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )//ok (object test)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )//ok (object test)
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )//-- unused in test modes
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )//-- unused in test modes
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )//BEN IN (ticket dispenser)
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )//LADY ????
 
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )//select; ok (1P in object test)
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )//start ; ok (2P in object test)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* IN2 */
+	PORT_BIT(         0x01, IP_ACTIVE_LOW, IPT_TILT )       //ok
+	PORT_BIT(         0x02, IP_ACTIVE_LOW, IPT_SERVICE1 )	//ok
+	PORT_BIT_IMPULSE( 0x04, IP_ACTIVE_LOW, IPT_COIN1, 2 )   //ok
+	PORT_BIT_IMPULSE( 0x08, IP_ACTIVE_LOW, IPT_COIN2, 2 )   //ok
+	/* BUTTON1 ACTIVE LOW, - game thinks that punching pad has already been raised */
+	PORT_BIT(         0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )//PHOTO 1 (punching pad photosensor 1)
+	PORT_BIT(         0x20, IP_ACTIVE_HIGH,IPT_BUTTON2 | IPF_PLAYER1 )//PHOTO 2 (punching pad photosensor 2)
+	PORT_BIT(         0x40, IP_ACTIVE_HIGH,IPT_BUTTON3 | IPF_PLAYER1 )//PHOTO 3	(punching pad photosensor 3)
+ 	/*To simulate a punch:
+		- wait for "READY GO!" message,
+		- press button1 + button 2 (LCTRL + ALT) (you'll hear a "punching" sound),
+  		- THEN  press button 3 (SPACE)
+ 		The time passed between the presses will be used to calculate the power of your punch.
+		The longer the time - the less power.
+	*/
+	PORT_BIT(         0x80, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER1 )//PHOTO 4  ??? ACTIVE_LOW  ??? (punching pad photosensor 4)
 INPUT_PORTS_END
+
+
 
 static struct GfxLayout charlayout =
 {
@@ -2712,21 +2660,21 @@ static struct YM2610interface ym2610_interface_crimec =
 	{ YM3012_VOL(60,MIXER_PAN_LEFT,60,MIXER_PAN_RIGHT) }
 };
 
-WRITE_HANDLER( portAwrite )
+static UINT8 banknum;
+
+static WRITE_HANDLER( portAwrite )
 {
-	static int a;
-
 	unsigned char *RAM = memory_region(REGION_CPU2);
-	int banknum = (data - 1) & 1;
+	int a = (data - 1) & 3;
 
-	if (a!=data)
+	if (banknum!=a)
+	{
+		banknum = a;
 		cpu_setbank (1, &RAM [0x10000 + (banknum * 0x4000)]);
 
-	a=data;
-
-	if ((a!=1) && (a!=2) )
-		logerror("hitice write to port A on YM2203 val=%x\n",data);
-
+		if ((a != 1) && (a != 2))
+			usrintf_showmessage("write to port A on YM2203 val=%x",data);
+	}
 }
 
 static struct YM2203interface ym2203_interface =
@@ -2750,12 +2698,12 @@ static struct OKIM6295interface okim6295_interface =
 };
 
 /*
-	Games that use the mb87078 are: puzbobb, spacedx and qzshowby
+	Games that use the mb87078 are: pbobblbs, spacedx and qzshowby
 	schems are not available, but from the writes I guess that
 	they only use channel 1
 	The sound chips' volume altered with the mb87078 are:
 	ym2610 in spacedx,
-	ym2610b in puzbobb,qzshowby,
+	ym2610b in pbobblbs,qzshowby,
 
 	Both ym2610 and ym2610b generate 3 (PSG like) + 2 (fm left,right) channels.
 	I use mixer_set_volume() to emulate the effect.
@@ -3107,15 +3055,15 @@ static const struct MachineDriver machine_driver_rambo3a =
 };
 
 
-static const struct MachineDriver machine_driver_puzbobb =
+static const struct MachineDriver machine_driver_pbobblbs =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_M68000,
 			12000000,	/* 12 MHz */
-			puzbobb_readmem,puzbobb_writemem,0,0,
-			puzbobb_interrupt,1
+			pbobblbs_readmem,pbobblbs_writemem,0,0,
+			pbobblbs_interrupt,1
 		},
 		{
 			CPU_Z80,
@@ -3162,7 +3110,7 @@ static const struct MachineDriver machine_driver_spacedx =
 			CPU_M68000,
 			12000000,	/* 12 MHz */
 			spacedx_readmem,spacedx_writemem,0,0,
-			puzbobb_interrupt,1
+			pbobblbs_interrupt,1
 		},
 		{
 			CPU_Z80,
@@ -3210,7 +3158,7 @@ static const struct MachineDriver machine_driver_qzshowby =
 			CPU_M68000,
 			16000000,	/* 16 MHz according to the readme*/
 			qzshowby_readmem,qzshowby_writemem,0,0,
-			puzbobb_interrupt,1
+			pbobblbs_interrupt,1
 		},
 		{
 			CPU_Z80,
@@ -3297,6 +3245,14 @@ static const struct MachineDriver machine_driver_viofight =
 	}
 };
 
+#if 0
+static void masterw_patch(void)
+{
+	data16_t *rom = (data16_t*)memory_region(REGION_CPU1);
+	rom[ 0x3fffe/2 ] = 2; //US version
+}
+#endif
+
 static const struct MachineDriver machine_driver_masterw =
 {
 	/* basic machine hardware */
@@ -3316,7 +3272,7 @@ static const struct MachineDriver machine_driver_masterw =
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	10,
-	0,
+	0, /*masterw_patch,*/
 
 	/* video hardware */
 	64*8, 32*8, { 0*8, 40*8-1, 2*8, 30*8-1 },
@@ -3757,7 +3713,7 @@ ROM_START( rambo3 )
 
 	ROM_REGION( 0x1c000, REGION_CPU2, 0 )     /* 64k for Z80 code */
 	ROM_LOAD( "r3-00.rom", 0x00000, 0x4000, 0xdf7a6ed6 )
-	ROM_CONTINUE(           0x10000, 0xc000 ) /* banked stuff */
+	ROM_CONTINUE(          0x10000, 0xc000 ) /* banked stuff */
 
 	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "r3-ch1ll.rom", 0x000000, 0x020000, 0xc86ea5fc )
@@ -3797,7 +3753,7 @@ ROM_START( rambo3a )
 
 	ROM_REGION( 0x1c000, REGION_CPU2, 0 )     /* 64k for Z80 code */
 	ROM_LOAD( "ramb3-10.bin", 0x00000, 0x4000, 0xb18bc020 )
-	ROM_CONTINUE(           0x10000, 0xc000 ) /* banked stuff */
+	ROM_CONTINUE(             0x10000, 0xc000 ) /* banked stuff */
 
 	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "ramb3-03.bin",  0x000000, 0x80000, 0xf5808c41 )
@@ -3809,7 +3765,7 @@ ROM_START( rambo3a )
 	ROM_LOAD( "ramb3-05.bin", 0x00000, 0x80000, 0x0179dc40 )
 ROM_END
 
-ROM_START( puzbobb )
+ROM_START( pbobblbs )
 	ROM_REGION( 0x80000, REGION_CPU1, 0 )     /* 512k for 68000 code */
 	ROM_LOAD16_BYTE( "pb-1c18.bin", 0x00000, 0x40000, 0x5de14f49 )
 	ROM_LOAD16_BYTE( "pb-ic2.bin",  0x00001, 0x40000, 0x2abe07d1 )
@@ -4000,20 +3956,6 @@ ROM_START( ryujin )
 	ROM_CONTINUE(        0x10000, 0xc000 ) /* banked stuff */
 
 	ROM_REGION( 0x320000, REGION_GFX1, ROMREGION_DISPOSE )
-/*
-This fixes attract mode (the button graphics above the energy bars).
-
-However some background graphics are wrong (attract/level 1 and some places on later levels):
-Attract mode:
- - starts with the clouds in foreground plane
- - the clouds are getting away and the background plane becomes visible
- - a while after the rest of the clouds dissapear, there is something wrong:
-   the foreground suddenly changes to ground, parts of the background are missing,
-   background has wrong colors
-
- Maybe the background graphics also need some address shuffling, but I need
- the pictures (or better a movie) from a real game attract mode to fix that.
-*/
 	ROM_LOAD( "ryujin07.2", 0x000000, 0x100000, 0x34f50980 )
 	ROM_RELOAD  (           0x200000, 0x008000 )/*load characters into continuous memory space*/
 	ROM_CONTINUE(           0x220000, 0x0e8000 )/*not characters data, so skip it*/
@@ -4071,12 +4013,12 @@ GAMEX( 1990, ashura,   0,       ashura,   ashura,   0, ROT270,     "Taito Corpor
 GAMEX( 1990, ashurau,  ashura,  ashura,   ashurau,  0, ROT270,     "Taito America Corporation", "Ashura Blaster (US)", GAME_NO_COCKTAIL )
 GAMEX( 1990, hitice,   0,       hitice,   hitice,   0, ROT180,     "Williams", "Hit the Ice (US)", GAME_NO_COCKTAIL )
 GAMEX( 1993, qzshowby, 0,       qzshowby, qzshowby, 0, ROT0,       "Taito Corporation", "Quiz Sekai wa SHOW by shobai (Japan)", GAME_NO_COCKTAIL )
-GAMEX( 1994, puzbobb,  pbobble, puzbobb,  puzbobb,  0, ROT0,       "Taito Corporation", "Puzzle Bobble (Japan, B-System)", GAME_NO_COCKTAIL )
-GAMEX( 1994, spacedx,  0,       spacedx,  puzbobb,  0, ROT0,       "Taito Corporation", "Space Invaders DX (Japan)", GAME_NO_COCKTAIL )
+GAMEX( 1994, pbobblbs, pbobble, pbobblbs, pbobblbs, 0, ROT0,       "Taito Corporation", "Puzzle Bobble (Japan, B-System)", GAME_NO_COCKTAIL )
+GAMEX( 1994, spacedx,  0,       spacedx,  pbobblbs, 0, ROT0,       "Taito Corporation", "Space Invaders DX (Japan)", GAME_NO_COCKTAIL )
 GAMEX( 1992, silentd,  0,       silentd,  silentd,  0, ROT0_16BIT, "Taito Corporation Japan", "Silent Dragon (World)", GAME_NO_COCKTAIL )
 GAMEX( 1992, silentdj, silentd, silentd,  silentdj, 0, ROT0_16BIT, "Taito Corporation", "Silent Dragon (Japan)", GAME_NO_COCKTAIL )
 GAMEX( 1991, selfeena, 0,       selfeena, selfeena, 0, ROT0,       "East Technology", "Sel Feena", GAME_NO_COCKTAIL )
-GAMEX( 1993, ryujin,   0,       ryujin,   ryujin,   0, ROT270,     "Taito Corporation", "Ryu Jin (Japan)", GAME_NO_COCKTAIL|GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1993, ryujin,   0,       ryujin,   ryujin,   0, ROT270,     "Taito Corporation", "Ryu Jin (Japan)", GAME_NO_COCKTAIL )
 
 /*
 	Sonic Blast Man is a ticket dipensing game.

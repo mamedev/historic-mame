@@ -58,7 +58,11 @@ WRITE16_HANDLER( ddragon3_scroll16_w )
 static void get_bg_tile_info(int tile_index)
 {
 	data16_t data = ddragon3_bg_videoram16[tile_index];
-	SET_TILE_INFO( 0, (data&0xfff) | ((ddragon3_bg_tilebase&1)<<12), ((data&0xf000)>>12)+16 );	// GFX,NUMBER,COLOR
+	SET_TILE_INFO(
+			0,
+			(data&0xfff) | ((ddragon3_bg_tilebase&1)<<12),
+			((data&0xf000)>>12)+16,
+			0)
 }
 
 WRITE16_HANDLER( ddragon3_bg_videoram16_w )
@@ -74,8 +78,11 @@ static void get_fg_tile_info(int tile_index)
 {
 	data16_t data0 = ddragon3_fg_videoram16[2*tile_index];
 	data16_t data1 = ddragon3_fg_videoram16[2*tile_index+1];
-	SET_TILE_INFO( 0, data1&0x1fff , data0&0xf );  // GFX,NUMBER,COLOR
-	tile_info.flags = ((data0&0x40) >> 6);	// FLIPX
+	SET_TILE_INFO(
+			0,
+			data1&0x1fff,
+			data0&0xf,
+			(data0&0x40) ? TILE_FLIPX : 0)
 }
 
 WRITE16_HANDLER( ddragon3_fg_videoram16_w )

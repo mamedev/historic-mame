@@ -11,10 +11,10 @@
 
 
 unsigned char *zodiack_videoram2;
+unsigned char *zodiack_attributesram;
+unsigned char *zodiack_bulletsram;
+size_t zodiack_bulletsram_size;
 
-extern unsigned char *galaxian_attributesram;
-extern unsigned char *galaxian_bulletsram;
-extern size_t galaxian_bulletsram_size;
 extern int percuss_hardware;
 
 static int flipscreen;
@@ -73,6 +73,21 @@ void zodiack_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 }
 
 
+WRITE_HANDLER( zodiack_attributes_w )
+{
+	if ((offset & 1) && zodiack_attributesram[offset] != data)
+	{
+		int i;
+
+
+		for (i = offset / 2;i < videoram_size;i += 32)
+			dirtybuffer[i] = 1;
+	}
+
+	zodiack_attributesram[offset] = data;
+}
+
+
 WRITE_HANDLER( zodiac_flipscreen_w )
 {
 	if (flipscreen != (!data))
@@ -120,7 +135,7 @@ void zodiack_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		sy = offs / 32;
 		sx = offs % 32;
 
-		col = galaxian_attributesram[2 * sx + 1] & 0x07;
+		col = zodiack_attributesram[2 * sx + 1] & 0x07;
 
 		if (flipscreen)
 		{
@@ -148,7 +163,7 @@ void zodiack_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		sy = offs / 32;
 		sx = offs % 32;
 
-		col = (galaxian_attributesram[2 * sx + 1] >> 4) & 0x07;
+		col = (zodiack_attributesram[2 * sx + 1] >> 4) & 0x07;
 
 		if (flipscreen)
 		{
@@ -176,14 +191,14 @@ void zodiack_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		{
 			for (i = 0;i < 32;i++)
 			{
-				scroll[31-i] = galaxian_attributesram[2 * i];
+				scroll[31-i] = zodiack_attributesram[2 * i];
 			}
 		}
 		else
 		{
 			for (i = 0;i < 32;i++)
 			{
-				scroll[i] = -galaxian_attributesram[2 * i];
+				scroll[i] = -zodiack_attributesram[2 * i];
 			}
 		}
 
@@ -192,13 +207,13 @@ void zodiack_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 
 	/* draw the bullets */
-	for (offs = 0;offs < galaxian_bulletsram_size;offs += 4)
+	for (offs = 0;offs < zodiack_bulletsram_size;offs += 4)
 	{
 		int x,y;
 
 
-		x = galaxian_bulletsram[offs + 3] + Machine->drv->gfxdecodeinfo[2].gfxlayout->width;
-		y = 255 - galaxian_bulletsram[offs + 1];
+		x = zodiack_bulletsram[offs + 3] + Machine->drv->gfxdecodeinfo[2].gfxlayout->width;
+		y = 255 - zodiack_bulletsram[offs + 1];
 
 		if (flipscreen && percuss_hardware)
 		{

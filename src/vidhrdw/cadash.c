@@ -4,8 +4,7 @@
 
 #define TC0100SCN_GFX_NUM 1
 
-static UINT16 sprite_ctrl = 0;
-static UINT16 sprites_flipscreen = 0;
+void cadash_vh_stop(void);
 
 struct tempsprite
 {
@@ -17,6 +16,9 @@ struct tempsprite
 	int primask;
 };
 static struct tempsprite *spritelist;
+
+static UINT16 sprite_ctrl = 0;
+static UINT16 sprites_flipscreen = 0;
 
 static int taito_hide_pixels;
 
@@ -53,12 +55,18 @@ int cadash_core_vh_start (void)
 	if (!spritelist)
 		return 1;
 
-	if (TC0100SCN_vh_start(1,TC0100SCN_GFX_NUM,taito_hide_pixels))
+	if (TC0100SCN_vh_start(1,TC0100SCN_GFX_NUM,taito_hide_pixels,0,0,0,0,0,0))
+	{
+		cadash_vh_stop();
 		return 1;
+	}
 
 	if (has_TC0110PCR())
 		if (TC0110PCR_vh_start())
+		{
+			cadash_vh_stop();
 			return 1;
+		}
 
 	return 0;
 }
@@ -102,10 +110,9 @@ WRITE16_HANDLER( cadash_spriteflip_w )
 
 void cadash_update_palette (void)
 {
-	int i,j;
-	int offs,data,tilenum,color;
-	int sprite_colbank = (sprite_ctrl & 0x3c) << 2;
-	unsigned short palette_map[256];
+	int i,j,offs;
+	UINT8 color, sprite_colbank = (sprite_ctrl & 0x3c) << 2;
+	UINT16 data, tilenum, palette_map[256];
 	memset (palette_map, 0, sizeof (palette_map));
 
 	for (offs = (spriteram_size/2)-4;offs >=0;offs -= 4)
@@ -188,11 +195,11 @@ void cadash_update_palette (void)
 
 static void cadash_draw_sprites(struct osd_bitmap *bitmap,int *primasks,int y_offs)
 {
-	int offs, data, tilenum, color, flipx, flipy;
-	int x, y, code, curx, cury;
-	int sprite_colbank = (sprite_ctrl & 0x3c) << 2;
-
+	int offs, flipx, flipy;
+	int x, y, curx, cury;
 	int priority = (sprite_ctrl & 0x2000) >> 13;	/* 1 = sprites under top bg layer */
+	UINT8 color, sprite_colbank = (sprite_ctrl & 0x3c) << 2;
+	UINT16 data, tilenum, code;
 
 	/* pdrawgfx() needs us to draw sprites front to back, so we have to build a list
 	   while processing sprite ram and then draw them all at the end */
@@ -280,7 +287,7 @@ static void cadash_draw_sprites(struct osd_bitmap *bitmap,int *primasks,int y_of
 
 void cadash_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	int layer[3];
+	UINT8 layer[3];
 
 	TC0100SCN_tilemap_update();
 
@@ -293,6 +300,10 @@ void cadash_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	layer[2] = 2;
 
 	fillbitmap(priority_bitmap,0,NULL);
+
+	/* Ensure screen blanked even when bottom layer not drawn due to disable bit */
+	fillbitmap(bitmap, palette_transparent_pen, &Machine -> visible_area);
+
 	TC0100SCN_tilemap_draw(bitmap,0,layer[0],TILEMAP_IGNORE_TRANSPARENCY,1);
 	TC0100SCN_tilemap_draw(bitmap,0,layer[1],0,2);
 	TC0100SCN_tilemap_draw(bitmap,0,layer[2],0,4);

@@ -17,7 +17,7 @@
 
 /* Layout of the registers in the debugger */
 static UINT8 i8039_reg_layout[] = {
-	I8039_PC, I8039_SP, I8039_PSW, I8039_A, I8039_IRQ_STATE, -1,
+	I8039_PC, I8039_SP, I8039_PSW, I8039_A, I8039_IRQ_STATE,I8039_P1, I8039_P2, -1,
 	I8039_R0, I8039_R1, I8039_R2, I8039_R3, I8039_R4, I8039_R5, I8039_R6, I8039_R7, 0
 };
 
@@ -30,18 +30,18 @@ static UINT8 i8039_win_layout[] = {
 	 0,23,80, 1,	/* command line window (bottom rows) */
 };
 
-#define M_RDMEM(A)      I8039_RDMEM(A)
-#define M_RDOP(A)       I8039_RDOP(A)
-#define M_RDOP_ARG(A)   I8039_RDOP_ARG(A)
-#define M_IN(A)		I8039_In(A)
-#define M_OUT(A,V)	I8039_Out(A,V)
+#define M_RDMEM(A)		I8039_RDMEM(A)
+#define M_RDOP(A)		I8039_RDOP(A)
+#define M_RDOP_ARG(A)	I8039_RDOP_ARG(A)
+#define M_IN(A)			I8039_In(A)
+#define M_OUT(A,V)		I8039_Out(A,V)
 
-#define port_r(A)	I8039_In(I8039_p0 + A)
-#define port_w(A,V)	I8039_Out(I8039_p0 + A,V)
-#define test_r(A)	I8039_In(I8039_t0 + A)
-#define test_w(A,V)	I8039_Out(I8039_t0 + A,V)
-#define bus_r()		I8039_In(I8039_bus)
-#define bus_w(V)	I8039_Out(I8039_bus,V)
+#define port_r(A)		I8039_In(I8039_p0 + A)
+#define port_w(A,V)		I8039_Out(I8039_p0 + A,V)
+#define test_r(A)		I8039_In(I8039_t0 + A)
+#define test_w(A,V)		I8039_Out(I8039_t0 + A,V)
+#define bus_r()			I8039_In(I8039_bus)
+#define bus_w(V)		I8039_Out(I8039_bus,V)
 
 #define C_FLAG          0x80
 #define A_FLAG          0x40
@@ -51,16 +51,17 @@ static UINT8 i8039_win_layout[] = {
 typedef struct
 {
 	PAIR	PREPC;			/* previous program counter */
-    PAIR    PC;             /* program counter */
-    UINT8   A, SP, PSW;
-    UINT8   RAM[128];
-    UINT8   bus, f1;        /* Bus data, and flag1 */
+	PAIR    PC;				/* program counter */
+	UINT8   A, SP, PSW;
+	UINT8   RAM[128];
+	UINT8   bus, f1;		/* Bus data, and flag1 */
+	UINT8   P1, P2;			/* Internal Port 1 and 2 latched outputs */
 
-    int     pending_irq,irq_executing, masterClock, regPtr;
-    UINT8   t_flag, timer, timerON, countON, xirq_en, tirq_en;
-    UINT16  A11, A11ff;
-    int     irq_state;
-    int     (*irq_callback)(int irqline);
+	int     pending_irq,irq_executing, masterClock, regPtr;
+	UINT8   t_flag, timer, timerON, countON, xirq_en, tirq_en;
+	UINT16  A11, A11ff;
+	int     irq_state;
+	int     (*irq_callback)(int irqline);
 } I8039_Regs;
 
 static I8039_Regs R;
@@ -105,24 +106,24 @@ INLINE void SET (UINT8 flag) { R.PSW |= flag;  }
 /* Get next opcode argument and increment program counter */
 INLINE unsigned M_RDMEM_OPCODE (void)
 {
-        unsigned retval;
+		unsigned retval;
 		retval=M_RDOP_ARG(R.PC.w.l);
 		R.PC.w.l++;
-        return retval;
+		return retval;
 }
 
 INLINE void push(UINT8 d)
 {
 	intRAM[8+R.SP++] = d;
-    R.SP  = R.SP & 0x0f;
-    R.PSW = R.PSW & 0xf8;
-    R.PSW = R.PSW | (R.SP >> 1);
+	R.SP  = R.SP & 0x0f;
+	R.PSW = R.PSW & 0xf8;
+	R.PSW = R.PSW | (R.SP >> 1);
 }
 
 INLINE UINT8 pull(void) {
 	R.SP  = (R.SP + 15) & 0x0f;		/*  if (--R.SP < 0) R.SP = 15;  */
-    R.PSW = R.PSW & 0xf8;
-    R.PSW = R.PSW | (R.SP >> 1);
+	R.PSW = R.PSW & 0xf8;
+	R.PSW = R.PSW | (R.SP >> 1);
 	/* regPTR = ((M_By) ? 24 : 0);  regPTR should not change */
 	return intRAM[8+R.SP];
 }
@@ -229,8 +230,8 @@ static void anl_a_r7(void)   { R.A &= R7; }
 static void anl_a_xr0(void)  { R.A &= intRAM[R0 & 0x7f]; }
 static void anl_a_xr1(void)  { R.A &= intRAM[R1 & 0x7f]; }
 static void anl_bus_n(void)  { bus_w( bus_r() & M_RDMEM_OPCODE() ); }
-static void anl_p1_n(void)   { port_w( 1, port_r(1) & M_RDMEM_OPCODE() ); }
-static void anl_p2_n(void)   { port_w( 2, port_r(2) & M_RDMEM_OPCODE() ); }
+static void anl_p1_n(void)   { R.P1 &= M_RDMEM_OPCODE(); port_w( 1, R.P1); }
+static void anl_p2_n(void)   { R.P2 &= M_RDMEM_OPCODE(); port_w( 2, R.P2 ); }
 static void anld_p4_a(void)  { port_w( 4, port_r(4) & M_RDMEM_OPCODE() ); }
 static void anld_p5_a(void)  { port_w( 5, port_r(5) & M_RDMEM_OPCODE() ); }
 static void anld_p6_a(void)  { port_w( 6, port_r(6) & M_RDMEM_OPCODE() ); }
@@ -284,8 +285,8 @@ static void dis_tcnti(void)  { R.tirq_en = 0; }
 static void en_i(void)       { R.xirq_en = 1; if (R.irq_state != CLEAR_LINE) R.pending_irq |= I8039_EXT_INT; }
 static void en_tcnti(void)   { R.tirq_en = 1; }
 static void ento_clk(void)   { M_UNDEFINED(); }
-static void in_a_p1(void)    { R.A = port_r(1); }
-static void in_a_p2(void)    { R.A = port_r(2); }
+static void in_a_p1(void)    { R.A = port_r(1) & R.P1; }
+static void in_a_p2(void)    { R.A = port_r(2) & R.P2; }
 static void ins_a_bus(void)  { R.A = bus_r(); }
 static void inc_a(void)      { R.A++; }
 static void inc_r0(void)     { R0++; }
@@ -304,18 +305,18 @@ static void inc_xr1(void)    { intRAM[R1 & 0x7f]++; }
 
 static void jmp(void)
 {
-  UINT8 i=M_RDOP(R.PC.w.l);
-  UINT16 oldpc,newpc;
+	UINT8 i=M_RDOP(R.PC.w.l);
+	UINT16 oldpc,newpc;
 
-  oldpc = R.PC.w.l-1;
-  R.PC.w.l = i | R.A11;
-  #ifdef MESS
-	  change_pc16(R.PC.w.l);
-  #endif
-  newpc = R.PC.w.l;
-  if (newpc == oldpc) { if (i8039_ICount > 0) i8039_ICount = 0; } /* speed up busy loop */
-  else if (newpc == oldpc-1 && M_RDOP(newpc) == 0x00)	/* NOP - Gyruss */
-	  { if (i8039_ICount > 0) i8039_ICount = 0; }
+	oldpc = R.PC.w.l-1;
+	R.PC.w.l = i | R.A11;
+#ifdef MESS
+	change_pc16(R.PC.w.l);
+#endif
+	newpc = R.PC.w.l;
+	if (newpc == oldpc) { if (i8039_ICount > 0) i8039_ICount = 0; } /* speed up busy loop */
+	else if (newpc == oldpc-1 && M_RDOP(newpc) == 0x00)	/* NOP - Gyruss */
+		{ if (i8039_ICount > 0) i8039_ICount = 0; }
 }
 
 #ifdef MESS
@@ -440,15 +441,15 @@ static void orl_a_r7(void)   { R.A |= R7; }
 static void orl_a_xr0(void)  { R.A |= intRAM[R0 & 0x7f]; }
 static void orl_a_xr1(void)  { R.A |= intRAM[R1 & 0x7f]; }
 static void orl_bus_n(void)  { bus_w( bus_r() | M_RDMEM_OPCODE() ); }
-static void orl_p1_n(void)   { port_w(1, port_r(1) | M_RDMEM_OPCODE() ); }
-static void orl_p2_n(void)   { port_w(2, port_r(2) | M_RDMEM_OPCODE() ); }
+static void orl_p1_n(void)   { R.P1 |= M_RDMEM_OPCODE(); port_w(1, R.P1); }
+static void orl_p2_n(void)   { R.P2 |= M_RDMEM_OPCODE(); port_w(2, R.P2); }
 static void orld_p4_a(void)  { port_w(4, port_r(4) | R.A ); }
 static void orld_p5_a(void)  { port_w(5, port_r(5) | R.A ); }
 static void orld_p6_a(void)  { port_w(6, port_r(6) | R.A ); }
 static void orld_p7_a(void)  { port_w(7, port_r(7) | R.A ); }
 static void outl_bus_a(void) { bus_w(R.A); }
-static void outl_p1_a(void)  { port_w(1, R.A ); }
-static void outl_p2_a(void)  { port_w(2, R.A ); }
+static void outl_p1_a(void)  { port_w(1, R.A); R.P1 = R.A; }
+static void outl_p2_a(void)  { port_w(2, R.A); R.P2 = R.A; }
 #ifdef MESS
 	static void ret(void)		 { R.PC.w.l = ((pull() & 0x0f) << 8); R.PC.w.l |= pull(); change_pc16(R.PC.w.l); }
 #else
@@ -573,10 +574,10 @@ static int Ext_IRQ(void)
 		push((R.PC.b.h & 0x0f) | (R.PSW & 0xf0));
 		R.PC.w.l = 0x03;
 		R.A11ff = R.A11;
-        R.A11   = 0;
-        return 2;       /* 2 clock cycles used */
+		R.A11   = 0;
+		return 2;		/* 2 clock cycles used */
 	}
-    return 0;
+	return 0;
 }
 
 
@@ -597,6 +598,8 @@ void i8039_reset (void *param)
 	R.A   = 0;
 	R.PSW = 0x08;		/* Start with Carry SET, Bit 4 is always SET */
 	memset(R.RAM, 0x0, 128);
+	R.P1  = 0xff;
+	R.P2  = 0xff;
 	R.bus = 0;
 	R.irq_executing = I8039_IGNORE_INT;
 	R.pending_irq	= I8039_IGNORE_INT;
@@ -623,67 +626,67 @@ void i8039_exit (void)
  ****************************************************************************/
 int i8039_execute(int cycles)
 {
-    unsigned opcode, T1;
-    int count;
+	unsigned opcode, T1;
+	int count;
 
 	i8039_ICount=cycles;
 
-    do {
-        switch (R.pending_irq)
-        {
-            case I8039_COUNT_INT:
-            case I8039_TIMER_INT:
-                count = Timer_IRQ();
+	do {
+		switch (R.pending_irq)
+		{
+			case I8039_COUNT_INT:
+			case I8039_TIMER_INT:
+				count = Timer_IRQ();
 				i8039_ICount -= count;
-                if (R.timerON)  /* NS990113 */
-                    R.masterClock += count;
-                R.t_flag = 1;
-                break;
-            case I8039_EXT_INT:
-                if (R.irq_callback) (*R.irq_callback)(0);
-                count = Ext_IRQ();
+				if (R.timerON)  /* NS990113 */
+					R.masterClock += count;
+				R.t_flag = 1;
+				break;
+			case I8039_EXT_INT:
+				if (R.irq_callback) (*R.irq_callback)(0);
+				count = Ext_IRQ();
 				i8039_ICount -= count;
-                if (R.timerON)  /* NS990113 */
-                    R.masterClock += count;
-                break;
+				if (R.timerON)  /* NS990113 */
+					R.masterClock += count;
+				break;
 		}
-        R.pending_irq = I8039_IGNORE_INT;
+		R.pending_irq = I8039_IGNORE_INT;
 
-        R.PREPC = R.PC;
+		R.PREPC = R.PC;
 
 		CALL_MAME_DEBUG;
 
 		opcode=M_RDOP(R.PC.w.l);
 
-/*      logerror("I8039:  PC = %04x,  opcode = %02x\n", R.PC.w.l, opcode); */
+/*		logerror("I8039:  PC = %04x,  opcode = %02x\n", R.PC.w.l, opcode); */
 
-        R.PC.w.l++;
+		R.PC.w.l++;
 		i8039_ICount -= opcode_main[opcode].cycles;
 		(*(opcode_main[opcode].function))();
 
-        if (R.countON)  /* NS990113 */
-        {
-            T1 = test_r(1);
-            if (POSITIVE_EDGE_T1)
-            {   /* Handle COUNTER IRQs */
-                R.timer++;
-                if (R.timer == 0) R.pending_irq = I8039_COUNT_INT;
+		if (R.countON)  /* NS990113 */
+		{
+			T1 = test_r(1);
+			if (POSITIVE_EDGE_T1)
+			{   /* Handle COUNTER IRQs */
+				R.timer++;
+				if (R.timer == 0) R.pending_irq = I8039_COUNT_INT;
 
-                Old_T1 = T1;
+				Old_T1 = T1;
 			}
 		}
 
-        if (R.timerON) {                        /* Handle TIMER IRQs */
+		if (R.timerON) {							/* Handle TIMER IRQs */
 			R.masterClock += opcode_main[opcode].cycles;
-            if (R.masterClock >= 32) {  /* NS990113 */
-                R.masterClock -= 32;
-                R.timer++;
-                if (R.timer == 0) R.pending_irq = I8039_TIMER_INT;
+			if (R.masterClock >= 32) {  /* NS990113 */
+				R.masterClock -= 32;
+				R.timer++;
+				if (R.timer == 0) R.pending_irq = I8039_TIMER_INT;
 			}
 		}
-   } while (i8039_ICount>0);
+	} while (i8039_ICount>0);
 
-   return cycles - i8039_ICount;
+	return cycles - i8039_ICount;
 }
 
 /****************************************************************************
@@ -760,7 +763,7 @@ unsigned i8039_get_reg (int regnum)
 		case I8039_PC: return R.PC.w.l;
 		case I8039_SP: return R.SP;
 		case I8039_PSW: return R.PSW;
-        case I8039_A: return R.A;
+		case I8039_A: return R.A;
 		case I8039_IRQ_STATE: return R.irq_state;
 		case I8039_R0: return R0;
 		case I8039_R1: return R1;
@@ -770,6 +773,8 @@ unsigned i8039_get_reg (int regnum)
 		case I8039_R5: return R5;
 		case I8039_R6: return R6;
 		case I8039_R7: return R7;
+		case I8039_P1: return R.P1;
+		case I8039_P2: return R.P2;
 		case REG_PREVIOUSPC: return R.PREPC.w.l;
 		default:
 			if( regnum <= REG_SP_CONTENTS )
@@ -802,13 +807,15 @@ void i8039_set_reg (int regnum, unsigned val)
 		case I8039_R5: R5 = val; break;
 		case I8039_R6: R6 = val; break;
 		case I8039_R7: R7 = val; break;
+		case I8039_P1: R.P1 = val; break;
+		case I8039_P2: R.P2 = val; break;
 		default:
 			if( regnum <= REG_SP_CONTENTS )
 			{
 				unsigned offset = 8 + 2 * ((R.SP + REG_SP_CONTENTS - regnum) & 7);
 				R.RAM[offset] = val & 0xff;
 				R.RAM[offset+1] = val >> 8;
-            }
+			}
 	}
 }
 
@@ -848,19 +855,19 @@ const char *i8039_info(void *context, int regnum)
 {
 	static char buffer[8][47+1];
 	static int which = 0;
-    I8039_Regs *r = context;
+	I8039_Regs *r = context;
 
 	which = (which+1) % 8;
 	buffer[which][0] = '\0';
 	if( !context )
 		r = &R;
 
-    switch( regnum )
-    {
+	switch( regnum )
+	{
 		case CPU_INFO_REG+I8039_PC: sprintf(buffer[which], "PC:%04X", r->PC.w.l); break;
 		case CPU_INFO_REG+I8039_SP: sprintf(buffer[which], "SP:%02X", r->SP); break;
 		case CPU_INFO_REG+I8039_PSW: sprintf(buffer[which], "PSW:%02X", r->PSW); break;
-        case CPU_INFO_REG+I8039_A: sprintf(buffer[which], "A:%02X", r->A); break;
+		case CPU_INFO_REG+I8039_A: sprintf(buffer[which], "A:%02X", r->A); break;
 		case CPU_INFO_REG+I8039_IRQ_STATE: sprintf(buffer[which], "IRQ:%X", r->irq_state); break;
 		case CPU_INFO_REG+I8039_R0: sprintf(buffer[which], "R0:%02X", r->RAM[r->regPtr+0]); break;
 		case CPU_INFO_REG+I8039_R1: sprintf(buffer[which], "R1:%02X", r->RAM[r->regPtr+1]); break;
@@ -870,6 +877,8 @@ const char *i8039_info(void *context, int regnum)
 		case CPU_INFO_REG+I8039_R5: sprintf(buffer[which], "R5:%02X", r->RAM[r->regPtr+5]); break;
 		case CPU_INFO_REG+I8039_R6: sprintf(buffer[which], "R6:%02X", r->RAM[r->regPtr+6]); break;
 		case CPU_INFO_REG+I8039_R7: sprintf(buffer[which], "R7:%02X", r->RAM[r->regPtr+7]); break;
+		case CPU_INFO_REG+I8039_P1: sprintf(buffer[which], "P1:%02X", r->P1); break;
+		case CPU_INFO_REG+I8039_P2: sprintf(buffer[which], "P2:%02X", r->P2); break;
 		case CPU_INFO_FLAGS:
 			sprintf(buffer[which], "%c%c%c%c%c%c%c%c",
 				r->PSW & 0x80 ? 'C':'.',
@@ -889,7 +898,7 @@ const char *i8039_info(void *context, int regnum)
 		case CPU_INFO_REG_LAYOUT: return (const char*)i8039_reg_layout;
 		case CPU_INFO_WIN_LAYOUT: return (const char*)i8039_win_layout;
 	}
-    return buffer[which];
+	return buffer[which];
 }
 
 unsigned i8039_dasm(char *buffer, unsigned pc)
@@ -908,7 +917,7 @@ unsigned i8039_dasm(char *buffer, unsigned pc)
 #if (HAS_I8035)
 /* Layout of the registers in the debugger */
 static UINT8 i8035_reg_layout[] = {
-	I8035_PC, I8035_SP, I8035_PSW, I8035_A, I8035_IRQ_STATE, -1,
+	I8035_PC, I8035_SP, I8035_PSW, I8035_A, I8035_IRQ_STATE,    I8035_P1, I8035_P2, -1,
 	I8035_R0, I8035_R1, I8035_R2, I8035_R3, I8035_R4, I8035_R5, I8035_R6, I8035_R7, 0
 };
 
@@ -939,7 +948,7 @@ void i8035_set_irq_callback(int (*callback)(int irqline)) { i8039_set_irq_callba
 const char *i8035_info(void *context, int regnum)
 {
 	switch( regnum )
-    {
+	{
 		case CPU_INFO_NAME: return "I8035";
 		case CPU_INFO_VERSION: return "1.1";
 		case CPU_INFO_REG_LAYOUT: return (const char*)i8035_reg_layout;
@@ -966,7 +975,7 @@ unsigned i8035_dasm(char *buffer, unsigned pc)
 #if (HAS_I8048)
 /* Layout of the registers in the debugger */
 static UINT8 i8048_reg_layout[] = {
-	I8048_PC, I8048_SP, I8048_PSW, I8048_A, I8048_IRQ_STATE, -1,
+	I8048_PC, I8048_SP, I8048_PSW, I8048_A, I8048_IRQ_STATE,    I8048_P1, I8048_P2, -1,
 	I8048_R0, I8048_R1, I8048_R2, I8048_R3, I8048_R4, I8048_R5, I8048_R6, I8048_R7, 0
 };
 
@@ -997,7 +1006,7 @@ void i8048_set_irq_callback(int (*callback)(int irqline)) { i8039_set_irq_callba
 const char *i8048_info(void *context, int regnum)
 {
 	switch( regnum )
-    {
+	{
 		case CPU_INFO_NAME: return "I8048";
 		case CPU_INFO_VERSION: return "1.1";
 		case CPU_INFO_REG_LAYOUT: return (const char*)i8048_reg_layout;
@@ -1022,7 +1031,7 @@ unsigned i8048_dasm(char *buffer, unsigned pc)
 #if (HAS_N7751)
 /* Layout of the registers in the debugger */
 static UINT8 n7751_reg_layout[] = {
-	N7751_PC, N7751_SP, N7751_PSW, N7751_A, N7751_IRQ_STATE, -1,
+	N7751_PC, N7751_SP, N7751_PSW, N7751_A, N7751_IRQ_STATE,    N7751_P1, N7751_P2, -1,
 	N7751_R0, N7751_R1, N7751_R2, N7751_R3, N7751_R4, N7751_R5, N7751_R6, N7751_R7, 0
 };
 
@@ -1053,7 +1062,7 @@ void n7751_set_irq_callback(int (*callback)(int irqline)) { i8039_set_irq_callba
 const char *n7751_info(void *context, int regnum)
 {
 	switch( regnum )
-    {
+	{
 		case CPU_INFO_NAME: return "N7751";
 		case CPU_INFO_VERSION: return "1.1";
 		case CPU_INFO_REG_LAYOUT: return (const char*)n7751_reg_layout;

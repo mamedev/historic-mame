@@ -13,14 +13,22 @@ static void get_bg_tile_info(int tile_index){
 	int attributes = videoram[tile_index+0x400]; /* CCCC -TTT */
 	int tile_number = videoram[tile_index] + 256*(attributes&7);
 	int color = attributes>>4;
-	SET_TILE_INFO(2,tile_number,color )
+	SET_TILE_INFO(
+			2,
+			tile_number,
+			color,
+			0)
 }
 
 static void get_fg_tile_info(int tile_index){
 	int attributes = shootout_textram[tile_index+0x400]; /* CCCC --TT */
 	int tile_number = shootout_textram[tile_index] + 256*(attributes&0x3);
 	int color = attributes>>4;
-	SET_TILE_INFO(0,tile_number,color )
+	SET_TILE_INFO(
+			0,
+			tile_number,
+			color,
+			0)
 }
 
 WRITE_HANDLER( shootout_videoram_w ){

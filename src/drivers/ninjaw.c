@@ -155,13 +155,11 @@ int ninjaw_vh_start (void);
 void ninjaw_vh_stop (void);
 void ninjaw_vh_screenrefresh (struct osd_bitmap *bitmap,int full_refresh);
 
-//static data16_t *ninjaw_ram;
-
-static UINT8 ioc220_port=0;
 static UINT16 cpua_ctrl = 0xff;
 
 static size_t sharedram_size;
 static data16_t *sharedram;
+
 
 static READ16_HANDLER( sharedram_r )
 {
@@ -173,7 +171,7 @@ static WRITE16_HANDLER( sharedram_w )
 	COMBINE_DATA(&sharedram[offset]);
 }
 
-static void parse_control(void)
+static void parse_control(void)	/* assumes Z80 sandwiched between 68Ks */
 {
 	/* bit 0 enables cpu B */
 	/* however this fails when recovering from a save state
@@ -182,7 +180,7 @@ static void parse_control(void)
 
 }
 
-static WRITE16_HANDLER( cpua_ctrl_w )	/* assumes Z80 sandwiched between 68Ks */
+static WRITE16_HANDLER( cpua_ctrl_w )
 {
 	if ((data &0xff00) && ((data &0xff) == 0))
 		data = data >> 8;	/* for Wgp */
@@ -201,59 +199,6 @@ static WRITE16_HANDLER( cpua_ctrl_w )	/* assumes Z80 sandwiched between 68Ks */
 static int ninjaw_interrupt(void)
 {
 	return 4;
-}
-
-
-/**********************************************************
-			GAME INPUTS
-**********************************************************/
-
-static READ16_HANDLER( ninjaw_ioc_r )
-{
-	switch (offset)
-	{
-		case 0x00:
-		{
-			switch (ioc220_port & 0xf)
-			{
-				case 0x00:
-					return input_port_3_word_r(0,mem_mask);	/* DSW A */
-
-				case 0x01:
-					return input_port_4_word_r(0,mem_mask);	/* DSW B */
-
-				case 0x02:
-					return input_port_0_word_r(0,mem_mask);	/* IN0 */
-
-				case 0x03:
-					return input_port_1_word_r(0,mem_mask);	/* IN1 */
-
-				case 0x07:
-					return input_port_2_word_r(0,mem_mask);	/* IN2 */
-			}
-
-logerror("CPU #0 PC %06x: warning - read unmapped ioc220 port %02x\n",cpu_get_pc(),ioc220_port);
-				return 0;
-		}
-
-		case 0x01:
-			return ioc220_port;
-	}
-
-	return 0x00;	// keep compiler happy
-}
-
-static WRITE16_HANDLER( ninjaw_ioc_w )
-{
-	switch (offset)
-	{
-		case 0x00:
-			// write to ioc [coin lockout etc.?]
-			break;
-
-		case 0x01:
-			ioc220_port = data &0xff;	// mask seems ok
-	}
 }
 
 
@@ -307,7 +252,8 @@ static READ16_HANDLER( ninjaw_sound_r )
 static MEMORY_READ16_START( ninjaw_readmem )
 	{ 0x000000, 0x0bffff, MRA16_ROM },
 	{ 0x0c0000, 0x0cffff, MRA16_RAM },	/* main ram */
-	{ 0x200000, 0x20000f, ninjaw_ioc_r },
+	{ 0x200000, 0x200001, TC0220IOC_halfword_portreg_r },
+	{ 0x200002, 0x200003, TC0220IOC_halfword_port_r },
 	{ 0x220000, 0x220003, ninjaw_sound_r },
 	{ 0x240000, 0x24ffff, sharedram_r },
 	{ 0x260000, 0x263fff, MRA16_RAM },			/* sprite ram */
@@ -325,7 +271,8 @@ MEMORY_END
 static MEMORY_WRITE16_START( ninjaw_writemem )
 	{ 0x000000, 0x0bffff, MWA16_ROM },
 	{ 0x0c0000, 0x0cffff, MWA16_RAM },
-	{ 0x200000, 0x20000f, ninjaw_ioc_w },
+	{ 0x200000, 0x200001, TC0220IOC_halfword_portreg_w },
+	{ 0x200002, 0x200003, TC0220IOC_halfword_port_w },
 	{ 0x210000, 0x210001, cpua_ctrl_w },
 	{ 0x220000, 0x220003, ninjaw_sound_w },
 	{ 0x240000, 0x24ffff, sharedram_w, &sharedram, &sharedram_size },
@@ -347,7 +294,8 @@ MEMORY_END
 static MEMORY_READ16_START( ninjaw_cpub_readmem )
 	{ 0x000000, 0x05ffff, MRA16_ROM },
 	{ 0x080000, 0x08ffff, MRA16_RAM },	/* main ram */
-	{ 0x200000, 0x20000f, ninjaw_ioc_r },
+	{ 0x200000, 0x200001, TC0220IOC_halfword_portreg_r },
+	{ 0x200002, 0x200003, TC0220IOC_halfword_port_r },
 	{ 0x240000, 0x24ffff, sharedram_r },
 	{ 0x260000, 0x263fff, spriteram16_r },	/* sprite ram */
 	{ 0x280000, 0x293fff, TC0100SCN_word_0_r },	/* tilemaps (1st screen) */
@@ -359,7 +307,8 @@ MEMORY_END
 static MEMORY_WRITE16_START( ninjaw_cpub_writemem )
 	{ 0x000000, 0x05ffff, MWA16_ROM },
 	{ 0x080000, 0x08ffff, MWA16_RAM },
-	{ 0x200000, 0x20000f, ninjaw_ioc_w },
+	{ 0x200000, 0x200001, TC0220IOC_halfword_portreg_w },
+	{ 0x200002, 0x200003, TC0220IOC_halfword_port_w },
 	{ 0x240000, 0x24ffff, sharedram_w, &sharedram },
 	{ 0x260000, 0x263fff, spriteram16_w },
 	{ 0x280000, 0x293fff, TC0100SCN_triple_screen_w },	/* tilemaps (all screens) */
@@ -372,7 +321,8 @@ MEMORY_END
 static MEMORY_READ16_START( darius2_readmem )
 	{ 0x000000, 0x0bffff, MRA16_ROM },
 	{ 0x0c0000, 0x0cffff, MRA16_RAM },	/* main ram */
-	{ 0x200000, 0x20000f, ninjaw_ioc_r },
+	{ 0x200000, 0x200001, TC0220IOC_halfword_portreg_r },
+	{ 0x200002, 0x200003, TC0220IOC_halfword_port_r },
 	{ 0x220000, 0x220003, ninjaw_sound_r },
 	{ 0x240000, 0x24ffff, sharedram_r },
 	{ 0x260000, 0x263fff, MRA16_RAM },	/* sprite ram */
@@ -390,7 +340,8 @@ MEMORY_END
 static MEMORY_WRITE16_START( darius2_writemem )
 	{ 0x000000, 0x0bffff, MWA16_ROM },
 	{ 0x0c0000, 0x0cffff, MWA16_RAM },
-	{ 0x200000, 0x20000f, ninjaw_ioc_w },
+	{ 0x200000, 0x200001, TC0220IOC_halfword_portreg_w },
+	{ 0x200002, 0x200003, TC0220IOC_halfword_port_w },
 	{ 0x210000, 0x210001, cpua_ctrl_w },
 	{ 0x220000, 0x220003, ninjaw_sound_w },
 	{ 0x240000, 0x24ffff, sharedram_w, &sharedram, &sharedram_size },
@@ -409,7 +360,8 @@ MEMORY_END
 static MEMORY_READ16_START( darius2_cpub_readmem )
 	{ 0x000000, 0x05ffff, MRA16_ROM },
 	{ 0x080000, 0x08ffff, MRA16_RAM },	/* main ram */
-	{ 0x200000, 0x20000f, ninjaw_ioc_r },
+	{ 0x200000, 0x200001, TC0220IOC_halfword_portreg_r },
+	{ 0x200002, 0x200003, TC0220IOC_halfword_port_r },
 	{ 0x240000, 0x24ffff, sharedram_r },
 	{ 0x260000, 0x263fff, spriteram16_r },	/* sprite ram */
 	{ 0x280000, 0x293fff, TC0100SCN_word_0_r },	/* tilemaps (1st screen) */
@@ -418,7 +370,8 @@ MEMORY_END
 static MEMORY_WRITE16_START( darius2_cpub_writemem )
 	{ 0x000000, 0x05ffff, MWA16_ROM },
 	{ 0x080000, 0x08ffff, MWA16_RAM },
-	{ 0x200000, 0x20000f, ninjaw_ioc_w },
+	{ 0x200000, 0x200001, TC0220IOC_halfword_portreg_w },
+	{ 0x200002, 0x200003, TC0220IOC_halfword_port_w },
 	{ 0x240000, 0x24ffff, sharedram_w, &sharedram },
 	{ 0x260000, 0x263fff, spriteram16_w },
 	{ 0x280000, 0x293fff, TC0100SCN_triple_screen_w },	/* tilemaps (all screens) */
@@ -459,70 +412,6 @@ MEMORY_END
 			 INPUT PORTS, DIPs
 ***********************************************************/
 
-#define TAITO_COINAGE_JAPAN_8 \
-	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Coin_A ) ) \
-	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) ) \
-	PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) ) \
-	PORT_DIPSETTING(    0x00, DEF_STR( 2C_3C ) ) \
-	PORT_DIPSETTING(    0x20, DEF_STR( 1C_2C ) ) \
-	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Coin_B ) ) \
-	PORT_DIPSETTING(    0x40, DEF_STR( 2C_1C ) ) \
-	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_1C ) ) \
-	PORT_DIPSETTING(    0x00, DEF_STR( 2C_3C ) ) \
-	PORT_DIPSETTING(    0x80, DEF_STR( 1C_2C ) )
-
-#define TAITO_COINAGE_WORLD_8 \
-	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Coin_A ) ) \
-	PORT_DIPSETTING(    0x00, DEF_STR( 4C_1C ) ) \
-	PORT_DIPSETTING(    0x10, DEF_STR( 3C_1C ) ) \
-	PORT_DIPSETTING(    0x20, DEF_STR( 2C_1C ) ) \
-	PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) ) \
-	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Coin_B ) ) \
-	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_2C ) ) \
-	PORT_DIPSETTING(    0x80, DEF_STR( 1C_3C ) ) \
-	PORT_DIPSETTING(    0x40, DEF_STR( 1C_4C ) ) \
-	PORT_DIPSETTING(    0x00, DEF_STR( 1C_6C ) )
-
-#define TAITO_DIFFICULTY_8 \
-	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) ) \
-	PORT_DIPSETTING(    0x02, "Easy" ) \
-	PORT_DIPSETTING(    0x03, "Medium" ) \
-	PORT_DIPSETTING(    0x01, "Hard" ) \
-	PORT_DIPSETTING(    0x00, "Hardest" )
-
-#define NINJAW_IN0 \
-	PORT_START \
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* Stops working if this is high */ \
-	PORT_BIT( 0x02, IP_ACTIVE_LOW,  IPT_UNKNOWN ) \
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN1 ) \
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN2 ) \
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON3 | IPF_PLAYER1 )	/* Freezes game */ \
-	PORT_BIT( 0x20, IP_ACTIVE_LOW,  IPT_UNKNOWN ) \
-	PORT_BIT( 0x40, IP_ACTIVE_LOW,  IPT_UNKNOWN ) \
-	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_UNKNOWN )
-
-#define NINJAW_IN1 \
-	PORT_START \
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 ) \
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 ) \
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 ) \
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 ) \
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 ) \
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 ) \
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 ) \
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
-
-#define NINJAW_IN2 \
-	PORT_START \
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE1 ) \
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_TILT ) \
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 ) \
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START2 ) \
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 ) \
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 ) \
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 ) \
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
-
 #define NINJAW_DSWA \
 	PORT_START \
 	PORT_DIPNAME( 0x01, 0x01, "Allow Continue" ) \
@@ -558,39 +447,97 @@ MEMORY_END
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) ) \
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
+#define TAITO_COINAGE_JAPAN_8 \
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Coin_A ) ) \
+	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) ) \
+	PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) ) \
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_3C ) ) \
+	PORT_DIPSETTING(    0x20, DEF_STR( 1C_2C ) ) \
+	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Coin_B ) ) \
+	PORT_DIPSETTING(    0x40, DEF_STR( 2C_1C ) ) \
+	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_1C ) ) \
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_3C ) ) \
+	PORT_DIPSETTING(    0x80, DEF_STR( 1C_2C ) )
+
+#define TAITO_COINAGE_WORLD_8 \
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Coin_A ) ) \
+	PORT_DIPSETTING(    0x00, DEF_STR( 4C_1C ) ) \
+	PORT_DIPSETTING(    0x10, DEF_STR( 3C_1C ) ) \
+	PORT_DIPSETTING(    0x20, DEF_STR( 2C_1C ) ) \
+	PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) ) \
+	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Coin_B ) ) \
+	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_2C ) ) \
+	PORT_DIPSETTING(    0x80, DEF_STR( 1C_3C ) ) \
+	PORT_DIPSETTING(    0x40, DEF_STR( 1C_4C ) ) \
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_6C ) )
+
+#define TAITO_DIFFICULTY_8 \
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) ) \
+	PORT_DIPSETTING(    0x02, "Easy" ) \
+	PORT_DIPSETTING(    0x03, "Medium" ) \
+	PORT_DIPSETTING(    0x01, "Hard" ) \
+	PORT_DIPSETTING(    0x00, "Hardest" )
+
+#define NINJAW_IN2 \
+	PORT_START \
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* Stops working if this is high */ \
+	PORT_BIT( 0x02, IP_ACTIVE_LOW,  IPT_UNKNOWN ) \
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN1 ) \
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN2 ) \
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON3 | IPF_PLAYER1 )	/* Freezes game */ \
+	PORT_BIT( 0x20, IP_ACTIVE_LOW,  IPT_UNKNOWN ) \
+	PORT_BIT( 0x40, IP_ACTIVE_LOW,  IPT_UNKNOWN ) \
+	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+
+#define NINJAW_IN3 \
+	PORT_START \
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 ) \
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 ) \
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 ) \
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 ) \
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 ) \
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 ) \
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 ) \
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
+
+#define NINJAW_IN4 \
+	PORT_START \
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE1 ) \
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_TILT ) \
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 ) \
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START2 ) \
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 ) \
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 ) \
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 ) \
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+
 INPUT_PORTS_START( ninjaw )
-	NINJAW_IN0
-
-	NINJAW_IN1
-
-	NINJAW_IN2
-
 	NINJAW_DSWA
 	TAITO_COINAGE_WORLD_8
 
 	NINJAW_DSWB
-INPUT_PORTS_END
-
-INPUT_PORTS_START( ninjawj )
-	NINJAW_IN0
-
-	NINJAW_IN1
 
 	NINJAW_IN2
 
+	NINJAW_IN3
+
+	NINJAW_IN4
+INPUT_PORTS_END
+
+INPUT_PORTS_START( ninjawj )
 	NINJAW_DSWA
 	TAITO_COINAGE_JAPAN_8
 
 	NINJAW_DSWB
-INPUT_PORTS_END
-
-INPUT_PORTS_START( darius2 )
-	NINJAW_IN0
-
-	NINJAW_IN1
 
 	NINJAW_IN2
 
+	NINJAW_IN3
+
+	NINJAW_IN4
+INPUT_PORTS_END
+
+INPUT_PORTS_START( darius2 )
 	PORT_START /* DSW A */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
@@ -622,6 +569,12 @@ INPUT_PORTS_START( darius2 )
 	PORT_DIPNAME( 0x80, 0x80, "Allow Continue" )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+
+	NINJAW_IN2
+
+	NINJAW_IN3
+
+	NINJAW_IN4
 INPUT_PORTS_END
 
 

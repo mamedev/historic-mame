@@ -1,48 +1,244 @@
 /***************************************************************************
 
-  vidhrdw.c
+	Taito Qix hardware
 
-  Functions to emulate the video hardware of the machine.
+	driver by John Butler, Ed Mueller, Aaron Giles
 
 ***************************************************************************/
 
 #include "driver.h"
+#include "qix.h"
 #include "vidhrdw/generic.h"
 
 
-
-unsigned char *qix_palettebank;
-unsigned char *qix_videoaddress;
-
-/*#define DEBUG_LEDS*/
-
-#ifdef DEBUG_LEDS
-#include <stdio.h>
-static FILE *led_log;
-#endif
+/* Constants */
+#define SCANLINE_INCREMENT	4
 
 
-/***************************************************************************
+/* Globals */
+UINT8 *qix_palettebank;
+UINT8 *qix_videoaddress;
+UINT8 qix_cocktail_flip;
 
-  Convert the color PROMs into a more useable format.
 
-  Qix doesn't have colors PROMs, it uses RAM. The meaning of the bits are
-  bit 7 -- Red
-        -- Red
-        -- Green
-        -- Green
-        -- Blue
-        -- Blue
-        -- Intensity
-  bit 0 -- Intensity
+/* Local variables */
+static UINT8 vram_mask;
+static UINT8 *videoram_cache;
+static UINT8 *palette_cache;
 
-***************************************************************************/
-static void update_pen (int pen, int val)
+
+
+/*************************************
+ *
+ *	Video startup
+ *
+ *************************************/
+
+int qix_vh_start(void)
+{
+	/* allocate memory for the full video RAM */
+	videoram = malloc(256 * 256);
+	if (!videoram)
+		return 1;
+
+	/* allocate memory for the cached video RAM */
+	videoram_cache = malloc(256 * 256);
+	if (!videoram_cache)
+	{
+		free(videoram);
+		videoram = NULL;
+		return 1;
+	}
+
+	/* allocate memory for the cached palette banks */
+	palette_cache = malloc(256 * sizeof(palette_cache[0]));
+	if (!palette_cache)
+	{
+		free(videoram_cache);
+		free(videoram);
+		videoram = videoram_cache = NULL;
+		return 1;
+	}
+
+	/* initialize the mask for games that don't use it */
+	vram_mask = 0xff;
+	return 0;
+}
+
+
+
+/*************************************
+ *
+ *	Video shutdown
+ *
+ *************************************/
+
+void qix_vh_stop(void)
+{
+	/* free memory */
+	free(palette_cache);
+	free(videoram_cache);
+	free(videoram);
+
+	/* reset the pointers */
+	videoram = videoram_cache = NULL;
+	palette_cache = NULL;
+}
+
+
+
+/*************************************
+ *
+ *	Scanline caching
+ *
+ *************************************/
+
+void qix_scanline_callback(int scanline)
+{
+	/* for non-zero scanlines, cache the previous data and the palette bank */
+	if (scanline != 0)
+	{
+		int offset = (scanline - SCANLINE_INCREMENT) * 256;
+		int count = SCANLINE_INCREMENT * 256;
+		UINT8 *src, *dst = &videoram_cache[offset];
+
+		/* copy the data forwards or backwards, based on the cocktail flip */
+		if (!qix_cocktail_flip)
+		{
+			src = &videoram[offset];
+			memcpy(dst, src, count);
+		}
+		else
+		{
+			src = &videoram[offset ^ 0xffff];
+			while (count--)
+				*dst++ = *src--;
+		}
+
+		/* cache the palette bank as well */
+		memset(&palette_cache[scanline - SCANLINE_INCREMENT], *qix_palettebank, SCANLINE_INCREMENT);
+	}
+
+	/* set a timer for the next increment */
+	scanline += SCANLINE_INCREMENT;
+	if (scanline > 256)
+		scanline = SCANLINE_INCREMENT;
+	timer_set(cpu_getscanlinetime(scanline), scanline, qix_scanline_callback);
+}
+
+
+
+/*************************************
+ *
+ *	Current scanline read
+ *
+ *************************************/
+
+READ_HANDLER( qix_scanline_r )
+{
+	int scanline = cpu_getscanline();
+	return (scanline <= 0xff) ? scanline : 0;
+}
+
+
+
+/*************************************
+ *
+ *	Video RAM mask
+ *
+ *************************************/
+
+WRITE_HANDLER( slither_vram_mask_w )
+{
+	/* Slither appears to extend the basic hardware by providing */
+	/* a mask register which controls which data bits get written */
+	/* to video RAM */
+	vram_mask = data;
+}
+
+
+
+/*************************************
+ *
+ *	Direct video RAM read/write
+ *
+ *	The screen is 256x256 with eight
+ *	bit pixels (64K).  The screen is
+ *	divided into two halves each half
+ *	mapped by the video CPU at
+ *	$0000-$7FFF.  The high order bit
+ *	of the address latch at $9402
+ *	specifies which half of the screen
+ *	is being accessed.
+ *
+ *************************************/
+
+READ_HANDLER( qix_videoram_r )
+{
+	/* add in the upper bit of the address latch */
+	offset += (qix_videoaddress[0] & 0x80) << 8;
+	return videoram[offset];
+}
+
+
+WRITE_HANDLER( qix_videoram_w )
+{
+	/* add in the upper bit of the address latch */
+	offset += (qix_videoaddress[0] & 0x80) << 8;
+
+	/* blend the data */
+	videoram[offset] = (videoram[offset] & ~vram_mask) | (data & vram_mask);
+}
+
+
+
+/*************************************
+ *
+ *	Latched video RAM read/write
+ *
+ *	The address latch works as follows.
+ *	When the video CPU accesses $9400,
+ *	the screen address is computed by
+ *	using the values at $9402 (high
+ *	byte) and $9403 (low byte) to get
+ *	a value between $0000-$FFFF.  The
+ *	value at that location is either
+ *	returned or written.
+ *
+ *************************************/
+
+READ_HANDLER( qix_addresslatch_r )
+{
+	/* compute the value at the address latch */
+	offset = (qix_videoaddress[0] << 8) | qix_videoaddress[1];
+	return videoram[offset];
+}
+
+
+
+WRITE_HANDLER( qix_addresslatch_w )
+{
+	/* compute the value at the address latch */
+	offset = (qix_videoaddress[0] << 8) | qix_videoaddress[1];
+
+	/* blend the data */
+	videoram[offset] = (videoram[offset] & ~vram_mask) | (data & vram_mask);
+}
+
+
+
+/*************************************
+ *
+ *	Palette RAM
+ *
+ *************************************/
+
+WRITE_HANDLER( qix_paletteram_w )
 {
 	/* this conversion table should be about right. It gives a reasonable */
 	/* gray scale in the test screen, and the red, green and blue squares */
 	/* in the same screen are barely visible, as the manual requires. */
-	static unsigned char table[16] =
+	static UINT8 table[16] =
 	{
 		0x00,	/* value = 0, intensity = 0 */
 		0x12,	/* value = 0, intensity = 1 */
@@ -61,171 +257,64 @@ static void update_pen (int pen, int val)
 		0xb6,	/* value = 3, intensity = 2 */
 		0xff	/* value = 3, intensity = 3 */
 	};
+	int bits, intensity, red, green, blue;
 
-	int bits,intensity,red,green,blue;
-
-	intensity = (val >> 0) & 0x03;
-	bits = (val >> 6) & 0x03;
-	red = table[(bits << 2) | intensity];
-	bits = (val >> 4) & 0x03;
-	green = table[(bits << 2) | intensity];
-	bits = (val >> 2) & 0x03;
-	blue = table[(bits << 2) | intensity];
-
-	palette_change_color(pen,red,green,blue);
-}
-
-
-
-/***************************************************************************
-
-  Start the video hardware emulation.
-
-***************************************************************************/
-int qix_vh_start(void)
-{
-	if ((videoram = malloc(256*256)) == 0)
-		return 1;
-
-#ifdef DEBUG_LEDS
-	led_log = fopen ("led.log","w");
-#endif
-
-	return 0;
-}
-
-
-
-/***************************************************************************
-
-  Stop the video hardware emulation.
-
-***************************************************************************/
-void qix_vh_stop(void)
-{
-	free (videoram);
-	videoram = 0;
-
-#ifdef DEBUG_LEDS
-	if (led_log) fclose (led_log);
-	led_log = 0;
-#endif
-}
-
-
-
-/* The screen is 256x256 with eight bit pixels (64K).  The screen is divided
-into two halves each half mapped by the video CPU at $0000-$7FFF.  The
-high order bit of the address latch at $9402 specifies which half of the
-screen is being accessed.
-
-The address latch works as follows.  When the video CPU accesses $9400,
-the screen address is computed by using the values at $9402 (high byte)
-and $9403 (low byte) to get a value between $0000-$FFFF.  The value at
-that location is either returned or written. */
-
-READ_HANDLER( qix_videoram_r )
-{
-	offset += (qix_videoaddress[0] & 0x80) * 0x100;
-	return videoram[offset];
-}
-
-WRITE_HANDLER( qix_videoram_w )
-{
-	int x, y;
-
-	offset += (qix_videoaddress[0] & 0x80) * 0x100;
-
-	x = offset & 0xff;
-	y = offset >> 8;
-
-	plot_pixel(Machine->scrbitmap, x, y, Machine->pens[data]);
-
-	videoram[offset] = data;
-}
-
-
-
-READ_HANDLER( qix_addresslatch_r )
-{
-	offset = qix_videoaddress[0] * 0x100 + qix_videoaddress[1];
-	return videoram[offset];
-}
-
-
-
-WRITE_HANDLER( qix_addresslatch_w )
-{
-	int x, y;
-
-	offset = qix_videoaddress[0] * 0x100 + qix_videoaddress[1];
-
-	x = offset & 0xff;
-	y = offset >> 8;
-
-	plot_pixel(Machine->scrbitmap, x, y, Machine->pens[data]);
-
-	videoram[offset] = data;
-}
-
-
-
-/* The color RAM works as follows.  The color RAM contains palette values for
-four pages (0-3).  When a write to $8800 on the video CPU occurs, the color
-RAM page is taken from the lowest 2 bits of the value.  This selects one of
-the color RAM pages as follows:
-
-     colorRAMAddr = 0x9000 + ((data & 0x03) * 0x100);
-
-Qix uses a palette of 64 colors (2 each RGB) and four intensities (RRGGBBII).
-*/
-WRITE_HANDLER( qix_paletteram_w )
-{
+	/* set the palette RAM value */
 	paletteram[offset] = data;
 
-	if ((*qix_palettebank & 0x03) == (offset / 256))
-		update_pen (offset % 256, data);
-}
+	/* compute R, G, B from the table */
+	intensity = (data >> 0) & 0x03;
+	bits = (data >> 6) & 0x03;
+	red = table[(bits << 2) | intensity];
+	bits = (data >> 4) & 0x03;
+	green = table[(bits << 2) | intensity];
+	bits = (data >> 2) & 0x03;
+	blue = table[(bits << 2) | intensity];
 
+	/* update the palette */
+	palette_change_color(offset, red, green, blue);
+}
 
 
 WRITE_HANDLER( qix_palettebank_w )
 {
-	if ((*qix_palettebank & 0x03) != (data & 0x03))
-	{
-		unsigned char *pram = &paletteram[256 * (data & 0x03)];
-		int i;
-
-		for (i = 0;i < 256;i++)
-			update_pen (i, *pram++);
-	}
-
+	/* set the bank value; this is cached per-scanline above */
 	*qix_palettebank = data;
 
-#ifdef DEBUG_LEDS
-	data = ~(data) & 0xfc;
-	if (led_log)
-	{
-		fprintf (led_log, "LEDS: %d %d %d %d %d %d\n", (data & 0x80)>>7, (data & 0x40)>>6,
-			(data & 0x20)>>5, (data & 0x10)>>4, (data & 0x08)>>3, (data & 0x04)>>2 );
-	}
-#endif
+	/* LEDs are in the upper 6 bits */
 }
 
 
-void qix_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+
+/*************************************
+ *
+ *	Core video refresh
+ *
+ *************************************/
+
+void qix_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
-	/* recalc the palette if necessary */
-	if (palette_recalc () || full_refresh)
+	int y, palette_used[4];
+
+	/* determine which palette banks have been used this frame */
+	for (y = 0; y < 4; y++)
+		palette_used[y] = 0;
+	for (y = 0; y < 256; y++)
+		palette_used[palette_cache[y] & 3] = 1;
+
+	/* mark the palettes */
+	palette_init_used_colors();
+	for (y = 0; y < 4; y++)
+		if (palette_used[y])
+			memset(&palette_used_colors[y * 256], PALETTE_COLOR_USED, 256);
+
+	/* recalc */
+	palette_recalc();
+
+	/* draw the bitmap */
+	for (y = 0; y < 256; y++)
 	{
-		int offs;
-
-		for (offs = 0; offs < 256*256; offs++)
-		{
-			int x = offs & 0xff;
-			int y = offs >> 8;
-
-			plot_pixel(bitmap, x, y, Machine->pens[videoram[offs]]);
-		}
+		UINT32 *pens = &Machine->pens[(palette_cache[y] & 3) * 256];
+		draw_scanline8(bitmap, 0, y, 256, &videoram_cache[y * 256], pens, -1);
 	}
 }

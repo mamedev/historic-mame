@@ -365,7 +365,7 @@ static const struct MachineDriver machine_driver_turbo =
 	512+6,512+6,
 	turbo_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER,
+	VIDEO_TYPE_RASTER | VIDEO_ASPECT_RATIO(104,105),
 	turbo_vh_eof,
 	turbo_vh_start,
 	turbo_vh_stop,

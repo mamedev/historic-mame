@@ -25,40 +25,64 @@ static void get_pspikes_tile_info(int tile_index)
 {
 	UINT16 code = aerofgt_bg1videoram[tile_index];
 	int bank = (code & 0x1000) >> 12;
-	SET_TILE_INFO(0,(code & 0x0fff) + (gfxbank[bank] << 12),((code & 0xe000) >> 13) + 8 * charpalettebank)
+	SET_TILE_INFO(
+			0,
+			(code & 0x0fff) + (gfxbank[bank] << 12),
+			((code & 0xe000) >> 13) + 8 * charpalettebank,
+			0)
 }
 
 static void karatblz_bg1_tile_info(int tile_index)
 {
 	UINT16 code = aerofgt_bg1videoram[tile_index];
-	SET_TILE_INFO(0,(code & 0x1fff) + (gfxbank[0] << 13),(code & 0xe000) >> 13)
+	SET_TILE_INFO(
+			0,
+			(code & 0x1fff) + (gfxbank[0] << 13),
+			(code & 0xe000) >> 13,
+			0)
 }
 
 /* also spinlbrk */
 static void karatblz_bg2_tile_info(int tile_index)
 {
 	UINT16 code = aerofgt_bg2videoram[tile_index];
-	SET_TILE_INFO(1,(code & 0x1fff) + (gfxbank[1] << 13),(code & 0xe000) >> 13)
+	SET_TILE_INFO(
+			1,
+			(code & 0x1fff) + (gfxbank[1] << 13),
+			(code & 0xe000) >> 13,
+			0)
 }
 
 static void spinlbrk_bg1_tile_info(int tile_index)
 {
 	UINT16 code = aerofgt_bg1videoram[tile_index];
-	SET_TILE_INFO(0,(code & 0x0fff) + (gfxbank[0] << 12),(code & 0xf000) >> 12)
+	SET_TILE_INFO(
+			0,
+			(code & 0x0fff) + (gfxbank[0] << 12),
+			(code & 0xf000) >> 12,
+			0)
 }
 
 static void get_bg1_tile_info(int tile_index)
 {
 	UINT16 code = aerofgt_bg1videoram[tile_index];
 	int bank = (code & 0x1800) >> 11;
-	SET_TILE_INFO(0,(code & 0x07ff) + (gfxbank[bank] << 11),(code & 0xe000) >> 13)
+	SET_TILE_INFO(
+			0,
+			(code & 0x07ff) + (gfxbank[bank] << 11),
+			(code & 0xe000) >> 13,
+			0)
 }
 
 static void get_bg2_tile_info(int tile_index)
 {
 	UINT16 code = aerofgt_bg2videoram[tile_index];
 	int bank = 4 + ((code & 0x1800) >> 11);
-	SET_TILE_INFO(1,(code & 0x07ff) + (gfxbank[bank] << 11),(code & 0xe000) >> 13)
+	SET_TILE_INFO(
+			1,
+			(code & 0x07ff) + (gfxbank[bank] << 11),
+			(code & 0xe000) >> 13,
+			0)
 }
 
 
@@ -431,21 +455,13 @@ static void aerofgt_drawsprites(struct osd_bitmap *bitmap,int priority)
 					else
 						code = aerofgt_spriteram2[map_start & 0x1fff] & 0x1fff;
 
-					if (zoomx == 16 && zoomy == 16)
-						drawgfx(bitmap,Machine->gfx[sprite_gfx + (map_start >= 0x2000 ? 1 : 0)],
-								code,
-								color,
-								flipx,flipy,
-								sx,sy,
-								&Machine->visible_area,TRANSPARENCY_PEN,15);
-					else
-						drawgfxzoom(bitmap,Machine->gfx[sprite_gfx + (map_start >= 0x2000 ? 1 : 0)],
-								code,
-								color,
-								flipx,flipy,
-								sx,sy,
-								&Machine->visible_area,TRANSPARENCY_PEN,15,
-								0x1000 * zoomx,0x1000 * zoomy);
+					drawgfxzoom(bitmap,Machine->gfx[sprite_gfx + (map_start >= 0x2000 ? 1 : 0)],
+							code,
+							color,
+							flipx,flipy,
+							sx,sy,
+							&Machine->visible_area,TRANSPARENCY_PEN,15,
+							0x1000 * zoomx,0x1000 * zoomy);
 					map_start++;
 				}
 			}
@@ -507,23 +523,14 @@ static void turbofrc_drawsprites(struct osd_bitmap *bitmap,int chip)
 				else
 					code = aerofgt_spriteram2[map_start % (aerofgt_spriteram2_size/2)];
 
-				if (zoomx == 16 && zoomy == 16)
-					pdrawgfx(bitmap,Machine->gfx[sprite_gfx + chip],
-							code,
-							color,
-							flipx,flipy,
-							sx,sy,
-							&Machine->visible_area,TRANSPARENCY_PEN,15,
-							pri ? 0 : 0x2);
-				else
-					pdrawgfxzoom(bitmap,Machine->gfx[sprite_gfx + chip],
-							code,
-							color,
-							flipx,flipy,
-							sx,sy,
-							&Machine->visible_area,TRANSPARENCY_PEN,15,
-							0x1000 * zoomx,0x1000 * zoomy,
-							pri ? 0 : 0x2);
+				pdrawgfxzoom(bitmap,Machine->gfx[sprite_gfx + chip],
+						code,
+						color,
+						flipx,flipy,
+						sx,sy,
+						&Machine->visible_area,TRANSPARENCY_PEN,15,
+						0x1000 * zoomx,0x1000 * zoomy,
+						pri ? 0 : 0x2);
 				map_start++;
 			}
 

@@ -45,15 +45,21 @@ static void get_bg_tile_info(int tile_index)
 	};
 	unsigned char attr = scroll_ram[2*tile_index + 1];
 	int color = (attr & 0x78) >> 3;
-	SET_TILE_INFO(1,scroll_ram[2*tile_index] + ((attr & 0x07) << 8),color)
-	tile_info.flags = TILE_SPLIT(split_table[color]);
-	if (attr & 0x80) tile_info.flags |= TILE_FLIPX;
+	SET_TILE_INFO(
+			1,
+			scroll_ram[2*tile_index] + ((attr & 0x07) << 8),
+			color,
+			TILE_SPLIT(split_table[color]) | ((attr & 0x80) ? TILE_FLIPX : 0))
 }
 
 static void get_tx_tile_info(int tile_index)
 {
 	unsigned char attr = blktiger_txvideoram[tile_index + 0x400];
-	SET_TILE_INFO(0,blktiger_txvideoram[tile_index] + ((attr & 0xe0) << 3),attr & 0x1f)
+	SET_TILE_INFO(
+			0,
+			blktiger_txvideoram[tile_index] + ((attr & 0xe0) << 3),
+			attr & 0x1f,
+			0)
 }
 
 
@@ -73,9 +79,9 @@ int blktiger_vh_start(void)
 {
 	scroll_ram = malloc(BGRAM_BANK_SIZE * BGRAM_BANKS);
 
-	tx_tilemap = tilemap_create(get_tx_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
-	bg_tilemap8x4 = tilemap_create(get_bg_tile_info,bg8x4_scan,TILEMAP_TRANSPARENT | TILEMAP_SPLIT,16,16,128,64);
-	bg_tilemap4x8 = tilemap_create(get_bg_tile_info,bg4x8_scan,TILEMAP_TRANSPARENT | TILEMAP_SPLIT,16,16,64,128);
+	tx_tilemap =    tilemap_create(get_tx_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
+	bg_tilemap8x4 = tilemap_create(get_bg_tile_info,bg8x4_scan,       TILEMAP_SPLIT,   16,16,128,64);
+	bg_tilemap4x8 = tilemap_create(get_bg_tile_info,bg4x8_scan,       TILEMAP_SPLIT,   16,16,64,128);
 
 	if (!scroll_ram || !tx_tilemap || !bg_tilemap8x4 || !bg_tilemap4x8)
 	{
@@ -84,17 +90,15 @@ int blktiger_vh_start(void)
 	}
 
 	tilemap_set_transparent_pen(tx_tilemap,3);
-	tilemap_set_transparent_pen(bg_tilemap8x4,15);
-	tilemap_set_transparent_pen(bg_tilemap4x8,15);
 
-	tilemap_set_transmask(bg_tilemap8x4,0,0xffff);	/* split type 0 is totally transparent in front half */
-	tilemap_set_transmask(bg_tilemap8x4,1,0xfff0);	/* split type 1 has pens 4-15 transparent in front half */
-	tilemap_set_transmask(bg_tilemap8x4,2,0xff00);	/* split type 1 has pens 8-15 transparent in front half */
-	tilemap_set_transmask(bg_tilemap8x4,3,0xf000);	/* split type 1 has pens 12-15 transparent in front half */
-	tilemap_set_transmask(bg_tilemap4x8,0,0xffff);
-	tilemap_set_transmask(bg_tilemap4x8,1,0xfff0);
-	tilemap_set_transmask(bg_tilemap4x8,2,0xff00);
-	tilemap_set_transmask(bg_tilemap4x8,3,0xf000);
+	tilemap_set_transmask(bg_tilemap8x4,0,0xffff,0x8000);	/* split type 0 is totally transparent in front half */
+	tilemap_set_transmask(bg_tilemap8x4,1,0xfff0,0x800f);	/* split type 1 has pens 4-15 transparent in front half */
+	tilemap_set_transmask(bg_tilemap8x4,2,0xff00,0x80ff);	/* split type 1 has pens 8-15 transparent in front half */
+	tilemap_set_transmask(bg_tilemap8x4,3,0xf000,0x8fff);	/* split type 1 has pens 12-15 transparent in front half */
+	tilemap_set_transmask(bg_tilemap4x8,0,0xffff,0x8000);
+	tilemap_set_transmask(bg_tilemap4x8,1,0xfff0,0x800f);
+	tilemap_set_transmask(bg_tilemap4x8,2,0xff00,0x80ff);
+	tilemap_set_transmask(bg_tilemap4x8,3,0xf000,0x8fff);
 
 	return 0;
 }

@@ -146,7 +146,7 @@ INPUT_PORTS_START( ladybug )
 	PORT_DIPSETTING(    0x00, "5" )
 
 	PORT_START	/* DSW1 */
-	PORT_DIPNAME( 0x0f, 0x0f, "Right Coin" )
+	PORT_DIPNAME( 0x0f, 0x0f, DEF_STR( Coin_B ) )
 	PORT_DIPSETTING(    0x06, DEF_STR( 4C_1C ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( 3C_1C ) )
 	PORT_DIPSETTING(    0x0a, DEF_STR( 2C_1C ) )
@@ -158,7 +158,7 @@ INPUT_PORTS_START( ladybug )
 	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_4C ) )
 	PORT_DIPSETTING(    0x0b, DEF_STR( 1C_5C ) )
 	/* settings 0x00 thru 0x05 all give 1 Coin/1 Credit */
-	PORT_DIPNAME( 0xf0, 0xf0, "Left Coin" )
+	PORT_DIPNAME( 0xf0, 0xf0, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x60, DEF_STR( 4C_1C ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( 3C_1C ) )
 	PORT_DIPSETTING(    0xa0, DEF_STR( 2C_1C ) )
@@ -237,7 +237,7 @@ INPUT_PORTS_START( snapjack )
 
 	PORT_START	/* DSW1 */
 	/* coinage is slightly different from Lady Bug and Cosmic Avenger */
-	PORT_DIPNAME( 0x0f, 0x0f, "Right Coin" )
+	PORT_DIPNAME( 0x0f, 0x0f, DEF_STR( Coin_B ) )
 	PORT_DIPSETTING(    0x05, DEF_STR( 4C_1C ) )
 	PORT_DIPSETTING(    0x07, DEF_STR( 3C_1C ) )
 	PORT_DIPSETTING(    0x0a, DEF_STR( 2C_1C ) )
@@ -250,7 +250,7 @@ INPUT_PORTS_START( snapjack )
 	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_4C ) )
 	PORT_DIPSETTING(    0x0b, DEF_STR( 1C_5C ) )
 	/* settings 0x00 thru 0x04 all give 1 Coin/1 Credit */
-	PORT_DIPNAME( 0xf0, 0xf0, "Left Coin" )
+	PORT_DIPNAME( 0xf0, 0xf0, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x50, DEF_STR( 4C_1C ) )
 	PORT_DIPSETTING(    0x70, DEF_STR( 3C_1C ) )
 	PORT_DIPSETTING(    0xa0, DEF_STR( 2C_1C ) )
@@ -328,7 +328,7 @@ INPUT_PORTS_START( cavenger )
 	PORT_DIPSETTING(    0x40, "5" )
 
 	PORT_START	/* DSW1 */
-	PORT_DIPNAME( 0x0f, 0x0f, "Right Coin" )
+	PORT_DIPNAME( 0x0f, 0x0f, DEF_STR( Coin_B ) )
 	PORT_DIPSETTING(    0x06, DEF_STR( 4C_1C ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( 3C_1C ) )
 	PORT_DIPSETTING(    0x0a, DEF_STR( 2C_1C ) )
@@ -340,7 +340,7 @@ INPUT_PORTS_START( cavenger )
 	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_4C ) )
 	PORT_DIPSETTING(    0x0b, DEF_STR( 1C_5C ) )
 	/* settings 0x00 thru 0x05 all give 1 Coin/1 Credit */
-	PORT_DIPNAME( 0xf0, 0xf0, "Left Coin" )
+	PORT_DIPNAME( 0xf0, 0xf0, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x60, DEF_STR( 4C_1C ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( 3C_1C ) )
 	PORT_DIPSETTING(    0xa0, DEF_STR( 2C_1C ) )

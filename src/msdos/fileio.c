@@ -1020,8 +1020,7 @@ void *osd_fopen (const char *game, const char *filename, int filetype, int _writ
             break;
 		}
 		f->type = kPlainFile;
-		/* open as ASCII files, not binary like the others */
-		f->file = fopen (filename, _write ? "w" : "r");
+		f->file = fopen (filename, _write ? "wb" : "rb");
 		found = f->file != 0;
         break;
 

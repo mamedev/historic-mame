@@ -50,7 +50,11 @@ static void get_tile_info( int tile_index )
 {
 	data8_t code	=	videoram[ tile_index ];
 	data8_t color	=	colorram[ tile_index ];
-	SET_TILE_INFO(0, code + ((color & 0x18)<<5), color & 0x07 );
+	SET_TILE_INFO(
+			0,
+			code + ((color & 0x18)<<5),
+			color & 0x07,
+			0)
 }
 
 WRITE_HANDLER( amspdwy_videoram_w )

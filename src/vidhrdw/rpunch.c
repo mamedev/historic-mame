@@ -60,9 +60,11 @@ void rpunch_vh_stop(void);
 static void get_bg_tile_info(int tile_index)
 {
 	int data = callback_videoram[tile_index];
-	SET_TILE_INFO(callback_gfxbank,
+	SET_TILE_INFO(
+			callback_gfxbank,
 			callback_imagebase | (data & callback_imagemask),
-			callback_colorbase | ((data >> 13) & 7));
+			callback_colorbase | ((data >> 13) & 7),
+			0)
 }
 
 

@@ -73,6 +73,22 @@ extern int verbose;
 
 
 //============================================================
+//	TYPE DEFINITIONS
+//============================================================
+
+struct effect_data
+{
+	const char *name;
+	int effect;
+	int min_xscale;
+	int min_yscale;
+	int max_xscale;
+	int max_yscale;
+};
+
+
+
+//============================================================
 //	GLOBAL VARIABLES
 //============================================================
 
@@ -94,6 +110,8 @@ int gfx_refresh;
 int matchrefresh;
 int syncrefresh;
 float gfx_brightness;
+int bliteffect;
+float screen_aspect = (4.0 / 3.0);
 
 // windows
 HWND video_window;
@@ -183,6 +201,23 @@ static RECT non_maximized_bounds;
 // debugger
 static int debug_focus;
 
+// effects table
+static struct effect_data effect_table[] =
+{
+	{ "none",    EFFECT_NONE,        1, 1, 3, 4 },
+	{ "scan25",  EFFECT_SCANLINE_25, 1, 2, 3, 4 },
+	{ "scan50",  EFFECT_SCANLINE_50, 1, 2, 3, 4 },
+	{ "scan75",  EFFECT_SCANLINE_75, 1, 2, 3, 4 },
+	{ "rgb16",   EFFECT_RGB16,       2, 2, 2, 2 },
+	{ "rgb6",    EFFECT_RGB6,        2, 2, 2, 2 },
+	{ "rgb4",    EFFECT_RGB4,        2, 2, 2, 2 },
+	{ "rgb4v",   EFFECT_RGB4V,       2, 2, 2, 2 },
+	{ "rgb3",    EFFECT_RGB3,        2, 2, 2, 2 },
+	{ "rgbtiny", EFFECT_RGB_TINY,    2, 2, 2, 2 },
+	{ "scan75v", EFFECT_SCANLINE_75V,2, 2, 2, 2 },
+};
+
+
 
 //============================================================
 //	PROTOTYPES
@@ -252,6 +287,53 @@ INLINE int wnd_extra_height(void)
 
 
 //============================================================
+//	wnd_extra_left
+//============================================================
+
+INLINE int wnd_extra_left(void)
+{
+	RECT window = { 100, 100, 200, 200 };
+	if (!window_mode)
+		return 0;
+	AdjustWindowRectEx(&window, WINDOW_STYLE, FALSE, WINDOW_STYLE_EX);
+	return 100 - window.left;
+}
+
+
+
+//============================================================
+//	get_aligned_window_pos
+//============================================================
+
+INLINE int get_aligned_window_pos(int x)
+{
+	DEVMODE mode;
+
+	// get the current destination depth
+	if (EnumDisplaySettings(NULL, ENUM_CURRENT_SETTINGS, &mode))
+	{
+		int bytes_per_pixel = (mode.dmBitsPerPel + 7) / 8;
+		int pixels_per_16bytes = 16 / bytes_per_pixel;
+		int extra_left = wnd_extra_left();
+		x = (((x + extra_left) + pixels_per_16bytes - 1) / pixels_per_16bytes) * pixels_per_16bytes - extra_left;
+	}
+	return x;
+}
+
+
+
+//============================================================
+//	set_aligned_window_pos
+//============================================================
+
+INLINE void set_aligned_window_pos(HWND wnd, HWND insert, int x, int y, int cx, int cy, UINT flags)
+{
+	SetWindowPos(wnd, insert, get_aligned_window_pos(x), y, cx, cy, flags);
+}
+
+
+
+//============================================================
 //	compute_multipliers
 //============================================================
 
@@ -261,11 +343,17 @@ INLINE void compute_multipliers(const RECT *rect, int *xmult, int *ymult)
 	*xmult = (rect->right - rect->left) / visible_width;
 	*ymult = (rect->bottom - rect->top) / visible_height;
 
-	// clamp X to the max
+	// clamp to the hardcoded max
 	if (*xmult > MAX_X_MULTIPLY)
 		*xmult = MAX_X_MULTIPLY;
 	if (*ymult > MAX_Y_MULTIPLY)
 		*ymult = MAX_Y_MULTIPLY;
+
+	// clamp to the effect max
+	if (*xmult > effect_table[bliteffect].max_xscale)
+		*xmult = effect_table[bliteffect].max_xscale;
+	if (*ymult > effect_table[bliteffect].max_yscale)
+		*ymult = effect_table[bliteffect].max_yscale;
 
 	// adjust for pixel aspect ratio
 	if (pixel_aspect_ratio == VIDEO_PIXEL_ASPECT_RATIO_1_2)
@@ -280,6 +368,27 @@ INLINE void compute_multipliers(const RECT *rect, int *xmult, int *ymult)
 		*xmult = 1;
 	if (*ymult < 1)
 		*ymult = 1;
+}
+
+
+
+//============================================================
+//	determine_effect
+//============================================================
+
+INLINE int determine_effect(const struct blit_params *params)
+{
+	// default to what was selected
+	int result = effect_table[bliteffect].effect;
+
+	// if we're out of range, revert to NONE
+	if (params->dstxscale < effect_table[bliteffect].min_xscale ||
+		params->dstxscale > effect_table[bliteffect].max_xscale ||
+		params->dstyscale < effect_table[bliteffect].min_yscale ||
+		params->dstyscale > effect_table[bliteffect].max_yscale)
+		result = EFFECT_NONE;
+
+	return result;
 }
 
 
@@ -381,6 +490,10 @@ int win32_init_window(void)
 	static int classes_created = 0;
 	char title[256];
 
+	// disable scanlines if a bliteffect is active
+	if (bliteffect != 0)
+		scanlines = 0;
+
 	// set up window class and register it
 	if (!classes_created)
 	{
@@ -465,20 +578,20 @@ int create_window(int width, int height, int depth, int attributes, int orientat
 	if (!converted_bitmap)
 		return 1;
 
+	// override the width/height with the vector resolution
+	if (vector_game && options.vector_width && options.vector_height)
+	{
+		width = options.vector_width;
+		height = options.vector_height;
+	}
+
 	// adjust the window position
-	SetWindowPos(video_window, NULL, 20, 20,
+	set_aligned_window_pos(video_window, NULL, 20, 20,
 			width + wnd_extra_width() + 2, height + wnd_extra_height() + 2,
 			SWP_NOZORDER);
 
 	// make sure we paint the window once here
 	update_video_window(NULL);
-
-	// override the width/height with the vector resolution
-	if (vector_game && options.vector_width && options.vector_height)
-	{
-		max_width = options.vector_width;
-		max_height = options.vector_height;
-	}
 
 	// set the graphics mode width/height to the window size
 	max_width = width;
@@ -610,10 +723,6 @@ static void update_system_menu(void)
 
 void update_video_window(struct osd_bitmap *bitmap)
 {
-	// if the debugger has focus, skip it
-	if (debug_focus)
-		return;
-
 	// get the client DC and draw to it
 	if (video_window)
 	{
@@ -656,6 +765,18 @@ static void draw_video_contents(HDC dc, struct osd_bitmap *bitmap, int update)
 	{
 		forced_updates--;
 		update = 1;
+	}
+
+	// if we're in a window, constrain to a 16-byte aligned boundary
+	if (window_mode && !update)
+	{
+		RECT original;
+		int newleft;
+
+		GetWindowRect(video_window, &original);
+		newleft = get_aligned_window_pos(original.left);
+		if (newleft != original.left)
+			SetWindowPos(video_window, NULL, newleft, original.top, 0, 0, SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE);
 	}
 
 	// if we have a blit surface, use that
@@ -948,7 +1069,7 @@ void adjust_window_for_visible(int min_x, int max_x, int min_y, int max_y)
 
 			// otherwise, just enforce the bounds
 			else
-				SetWindowPos(video_window, NULL, non_maximized_bounds.left, non_maximized_bounds.top,
+				set_aligned_window_pos(video_window, NULL, non_maximized_bounds.left, non_maximized_bounds.top,
 						non_maximized_bounds.right - non_maximized_bounds.left,
 						non_maximized_bounds.bottom - non_maximized_bounds.top,
 						SWP_NOZORDER);
@@ -1033,7 +1154,7 @@ void toggle_maximize(void)
 	}
 
 	// set the new position
-	SetWindowPos(video_window, NULL, current.left, current.top,
+	set_aligned_window_pos(video_window, NULL, current.left, current.top,
 			current.right - current.left, current.bottom - current.top,
 			SWP_NOZORDER);
 }
@@ -1072,20 +1193,20 @@ void toggle_full_screen(void)
 		// adjust the style
 		SetWindowLong(video_window, GWL_STYLE, WINDOW_STYLE);
 		SetWindowLong(video_window, GWL_EXSTYLE, WINDOW_STYLE_EX);
-		SetWindowPos(video_window, 0, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
+		set_aligned_window_pos(video_window, 0, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
 
 		// force to the bottom, then back on top
-		SetWindowPos(video_window, HWND_BOTTOM, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
-		SetWindowPos(video_window, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+		set_aligned_window_pos(video_window, HWND_BOTTOM, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+		set_aligned_window_pos(video_window, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
 
 		// adjust the bounds
 		if (non_fullscreen_bounds.right != non_fullscreen_bounds.left)
-			SetWindowPos(video_window, HWND_TOP, non_fullscreen_bounds.left, non_fullscreen_bounds.top,
+			set_aligned_window_pos(video_window, HWND_TOP, non_fullscreen_bounds.left, non_fullscreen_bounds.top,
 						non_fullscreen_bounds.right - non_fullscreen_bounds.left, non_fullscreen_bounds.bottom - non_fullscreen_bounds.top,
 						SWP_NOZORDER);
 		else
 		{
-			SetWindowPos(video_window, HWND_TOP, 0, 0, visible_width + 2, visible_height + 2, SWP_NOZORDER);
+			set_aligned_window_pos(video_window, HWND_TOP, 0, 0, visible_width + 2, visible_height + 2, SWP_NOZORDER);
 			toggle_maximize();
 		}
 	}
@@ -1097,10 +1218,10 @@ void toggle_full_screen(void)
 		// adjust the style
 		SetWindowLong(video_window, GWL_STYLE, FULLSCREEN_STYLE);
 		SetWindowLong(video_window, GWL_EXSTYLE, FULLSCREEN_STYLE_EX);
-		SetWindowPos(video_window, 0, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
+		set_aligned_window_pos(video_window, 0, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
 
 		// set topmost
-		SetWindowPos(video_window, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+		set_aligned_window_pos(video_window, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
 	}
 
 	// adjust the window to compensate for the change
@@ -1155,8 +1276,9 @@ static void adjust_window(void)
 	if (original.left != window.left ||
 		original.top != window.top ||
 		original.right != window.right ||
-		original.bottom != window.bottom)
-		SetWindowPos(video_window, window_mode ? HWND_TOP : HWND_TOPMOST,
+		original.bottom != window.bottom ||
+		original.left != get_aligned_window_pos(original.left))
+		set_aligned_window_pos(video_window, window_mode ? HWND_TOP : HWND_TOPMOST,
 				window.left, window.top,
 				window.right - window.left, window.bottom - window.top, 0);
 
@@ -1416,7 +1538,7 @@ static void dib_draw_window(HDC dc, struct osd_bitmap *bitmap, int update)
 	compute_multipliers(&client, &xmult, &ymult);
 
 	// blit to our temporary bitmap
-	params.dstdata		= converted_bitmap;
+	params.dstdata		= (void *)(((UINT32)converted_bitmap + 15) & ~15);
 	params.dstpitch		= (((visible_width * xmult) + 3) & ~3) * depth / 8;
 	params.dstdepth		= depth;
 	params.dstxoffs		= 0;
@@ -1424,6 +1546,7 @@ static void dib_draw_window(HDC dc, struct osd_bitmap *bitmap, int update)
 	params.dstxscale	= xmult;
 	params.dstyscale	= (!scanlines || ymult == 1) ? ymult : ymult - 1;
 	params.dstyskip		= (!scanlines || ymult == 1) ? 0 : 1;
+	params.dsteffect	= determine_effect(&params);
 
 	params.srcdata		= bitmap->line[0];
 	params.srcpitch		= bitmap->line[1] - bitmap->line[0];
@@ -1464,6 +1587,24 @@ static void dib_draw_window(HDC dc, struct osd_bitmap *bitmap, int update)
 		inner.bottom = cy + visible_height * ymult;
 		erase_outer_rect(&client, &inner, dc, NULL);
 	}
+}
+
+
+
+//============================================================
+//	lookup_effect
+//============================================================
+
+int lookup_effect(const char *arg)
+{
+	int effindex;
+
+	// loop through all the effects and find a match
+	for (effindex = 0; effindex < sizeof(effect_table) / sizeof(effect_table[0]); effindex++)
+		if (!strcmp(arg, effect_table[effindex].name))
+			return effindex;
+
+	return -1;
 }
 
 
@@ -1644,19 +1785,39 @@ static double ddraw_compute_mode_score(int width, int height, int depth, int ref
 	};
 
 	double size_score, depth_score, refresh_score, final_score;
+	int minxscale = effect_table[bliteffect].min_xscale;
+	int minyscale = effect_table[bliteffect].min_yscale;
 	int target_width, target_height;
 
 	// first compute a score based on size
 
+	// if not stretching, we need to keep minx and miny scale equal
+	if (!ddraw_stretch)
+	{
+		if (minxscale > minyscale)
+			minyscale = minxscale;
+		else
+			minxscale = minyscale;
+	}
+
 	// determine minimum requirements
-	target_width = max_width;
-	target_height = max_height;
+	target_width = max_width * minxscale;
+	target_height = max_height * minyscale;
 	if (pixel_aspect_ratio == VIDEO_PIXEL_ASPECT_RATIO_1_2)
 		target_height *= 2;
-	else if (ddraw_stretch || scanlines)
+	else if (scanlines)
 		target_width *= 2, target_height *= 2;
 	if (pixel_aspect_ratio == VIDEO_PIXEL_ASPECT_RATIO_2_1)
 		target_width *= 2;
+
+	// hardware stretch modes prefer at least 2x expansion
+	if (ddraw_stretch)
+	{
+		if (target_width < max_width * 2 + 2)
+			target_width = max_width * 2 + 2;
+		if (target_height < max_height * 2 + 2)
+			target_height = max_height * 2 + 2;
+	}
 
 	// compute initial score based on difference between target and current
 	size_score = 1.0 / (1.0 + fabs(width - target_width) + fabs(height - target_height));
@@ -1676,8 +1837,8 @@ static double ddraw_compute_mode_score(int width, int height, int depth, int ref
 	// next compute depth score
 	depth_score = depth_matrix[(pref_depth + 7) / 8 - 1][needs_6bpp_per_gun][(depth + 7) / 8 - 1];
 
-	// hardware stretch requires 16bpp
-	if (ddraw_stretch && depth < 16)
+	// hardware stretch and effects require 16bpp
+	if ((ddraw_stretch || bliteffect != 0) && depth < 16)
 		return 0.0;
 
 	// if we're looking for a particular depth, make sure it matches
@@ -1697,7 +1858,6 @@ static double ddraw_compute_mode_score(int width, int height, int depth, int ref
 
 	// weight size highest, followed by depth and refresh
 	final_score = (size_score * 100.0 + depth_score * 10.0 + refresh_score) / 111.0;
-//	fprintf(stderr, "%4dx%4dx%2d @ %3dHz = %f (%f, %f, %f)\n", width, height, depth, refresh, final_score, size_score, depth_score, refresh_score);
 	return final_score;
 }
 
@@ -1710,7 +1870,7 @@ static double ddraw_compute_mode_score(int width, int height, int depth, int ref
 static int ddraw_set_resolution(void)
 {
 	DDSURFACEDESC currmode = { sizeof(DDSURFACEDESC) };
-	double screen_aspect;
+	double resolution_aspect;
 	HRESULT result;
 
 	// skip if not switching resolution
@@ -1750,7 +1910,12 @@ static int ddraw_set_resolution(void)
 		}
 
 		if (verbose)
-			fprintf(stderr, "Best mode = %dx%dx%d @ %d Hz\n", best_width, best_height, best_depth, best_refresh);
+		{
+			if (best_refresh)
+				fprintf(stderr, "Best mode = %dx%dx%d @ %d Hz\n", best_width, best_height, best_depth, best_refresh);
+			else
+				fprintf(stderr, "Best mode = %dx%dx%d @ default Hz\n", best_width, best_height, best_depth);
+		}
 
 		// set it
 		if (best_width != 0)
@@ -1777,11 +1942,9 @@ static int ddraw_set_resolution(void)
 		goto cant_get_mode;
 	}
 
-	// compute the adjusted aspect ratio if the monitor smells horizontal
-	screen_aspect = (double)currmode.dwWidth / (double)currmode.dwHeight;
-	if (screen_aspect >= 1.25 && screen_aspect <= 1.6)
-		aspect_ratio_adjust = screen_aspect / (4.0 / 3.0);
-
+	// compute the adjusted aspect ratio
+	resolution_aspect = (double)currmode.dwWidth / (double)currmode.dwHeight;
+	aspect_ratio_adjust = resolution_aspect / screen_aspect;
 	return 0;
 
 	// error handling - non fatal in general
@@ -1920,8 +2083,8 @@ static int ddraw_create_blit_surface(void)
 	// now make a description of our blit surface, based on the primary surface
 	blit_desc = primary_desc;
 	blit_desc.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT | DDSD_CAPS;
-	blit_desc.dwWidth = max_width + 2;
-	blit_desc.dwHeight = max_height + 2;
+	blit_desc.dwWidth = (max_width * effect_table[bliteffect].min_xscale) + 18;
+	blit_desc.dwHeight = (max_height * effect_table[bliteffect].min_yscale) + 2;
 	blit_desc.ddsCaps.dwCaps = DDSCAPS_VIDEOMEMORY;
 
 	// then create the blit surface
@@ -2258,10 +2421,12 @@ static int ddraw_draw_window(struct osd_bitmap *bitmap, int update)
 
 static int ddraw_render_to_blit(struct osd_bitmap *bitmap, int update)
 {
+	int dstdepth = blit_desc.ddpfPixelFormat.DUMMYUNIONNAMEN(1).dwRGBBitCount;
 	LPDIRECTDRAWSURFACE target_surface;
 	struct blit_params params;
 	HRESULT result;
 	RECT src, dst;
+	int dstxoffs;
 
 tryagain:
 	// attempt to lock the blit surface
@@ -2279,15 +2444,20 @@ tryagain:
 		return 0;
 	}
 
+	// align the destination to 16 bytes
+	dstxoffs = (((UINT32)blit_desc.lpSurface + 16) & ~15) - (UINT32)blit_desc.lpSurface;
+	dstxoffs /= (dstdepth / 8);
+
 	// perform the low-level blit
 	params.dstdata		= blit_desc.lpSurface;
 	params.dstpitch		= blit_desc.DUMMYUNIONNAMEN(1).lPitch;
-	params.dstdepth		= blit_desc.ddpfPixelFormat.DUMMYUNIONNAMEN(1).dwRGBBitCount;
-	params.dstxoffs		= 1;
+	params.dstdepth		= dstdepth;
+	params.dstxoffs		= dstxoffs;
 	params.dstyoffs		= 1;
-	params.dstxscale	= 1;
-	params.dstyscale	= 1;
+	params.dstxscale	= effect_table[bliteffect].min_xscale;
+	params.dstyscale	= effect_table[bliteffect].min_yscale;
 	params.dstyskip		= 0;
+	params.dsteffect	= determine_effect(&params);
 
 	params.srcdata		= bitmap->line[0];
 	params.srcpitch		= bitmap->line[1] - bitmap->line[0];
@@ -2307,9 +2477,10 @@ tryagain:
 	IDirectDrawSurface_Unlock(blit_surface, NULL);
 
 	// make the src rect
-	src.left = src.top = 0;
-	src.right = visible_width + 2;
-	src.bottom = visible_height + 2;
+	src.left = dstxoffs - 1;
+	src.top = 0;
+	src.right = (dstxoffs + visible_width * effect_table[bliteffect].min_xscale) + 1;
+	src.bottom = (visible_height * effect_table[bliteffect].min_yscale) + 2;
 
 	// window mode
 	if (window_mode)
@@ -2461,7 +2632,7 @@ static int ddraw_render_to_primary(struct osd_bitmap *bitmap, int update)
 	DDSURFACEDESC temp_desc = { sizeof(temp_desc) };
 	LPDIRECTDRAWSURFACE target_surface;
 	struct blit_params params;
-	int xmult, ymult;
+	int xmult, ymult, dstdepth;
 	HRESULT result;
 	RECT outer, inner, temp;
 
@@ -2516,14 +2687,19 @@ tryagain:
 			return 0;
 	}
 
-	// clamp to the display rect
-	IntersectRect(&temp, &inner, &outer);
-	inner = temp;
-
 	// attempt to lock the target surface
 	result = IDirectDrawSurface_Lock(target_surface, NULL, &temp_desc, throttle ? DDLOCK_WAIT : 0, NULL);
 	if (result == DDERR_SURFACELOST)
 		goto surface_lost;
+	dstdepth = temp_desc.ddpfPixelFormat.DUMMYUNIONNAMEN(1).dwRGBBitCount;
+
+	// try to align the destination
+	while (inner.left > outer.left && (((UINT32)temp_desc.lpSurface + ((dstdepth + 7) / 8) * inner.left) & 15) != 0)
+		inner.left--, inner.right--;
+
+	// clamp to the display rect
+	IntersectRect(&temp, &inner, &outer);
+	inner = temp;
 
 	// if it was busy (and we're not throttling), just punt
 	if (result == DDERR_SURFACEBUSY || result == DDERR_WASSTILLDRAWING)
@@ -2537,12 +2713,13 @@ tryagain:
 	// perform the low-level blit
 	params.dstdata		= temp_desc.lpSurface;
 	params.dstpitch		= temp_desc.DUMMYUNIONNAMEN(1).lPitch;
-	params.dstdepth		= temp_desc.ddpfPixelFormat.DUMMYUNIONNAMEN(1).dwRGBBitCount;
+	params.dstdepth		= dstdepth;
 	params.dstxoffs		= inner.left;
 	params.dstyoffs		= inner.top;
 	params.dstxscale	= xmult;
 	params.dstyscale	= (!scanlines || ymult == 1) ? ymult : ymult - 1;
 	params.dstyskip		= (!scanlines || ymult == 1) ? 0 : 1;
+	params.dsteffect	= determine_effect(&params);
 
 	params.srcdata		= bitmap->line[0];
 	params.srcpitch		= bitmap->line[1] - bitmap->line[0];

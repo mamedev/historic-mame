@@ -74,8 +74,11 @@ void pandoras_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 static void get_tile_info0(int tile_index)
 {
 	unsigned char attr = colorram[tile_index];
-	SET_TILE_INFO(0,videoram[tile_index] + ((attr & 0x10) << 4),attr & 0x0f);
-	tile_info.flags = TILE_FLIPYX((attr & 0xc0) >> 6);
+	SET_TILE_INFO(
+			0,
+			videoram[tile_index] + ((attr & 0x10) << 4),
+			attr & 0x0f,
+			TILE_FLIPYX((attr & 0xc0) >> 6))
 	tile_info.priority = (attr & 0x20) >> 5;
 }
 

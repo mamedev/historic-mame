@@ -84,6 +84,7 @@ typedef struct
 
     UINT32 BankID;			 /* Memory bank in use */
     UINT32 CPUtype;		  	 /* CPU Type 0=68000,1=68010,2=68020 */
+	UINT32 FullPC;
 
 	struct m68k_memory_interface Memory_Interface;
 
@@ -167,7 +168,7 @@ void a68k_state_register(const char *type)
 	int cpu = cpu_getactivecpu();
 
 	state_save_register_UINT32(type, cpu, "D"         , &M68000_regs.d[0], 8);
-	state_save_register_UINT32(type, cpu, "A"         , &M68000_regs.d[0], 8);
+	state_save_register_UINT32(type, cpu, "A"         , &M68000_regs.a[0], 8);
 	state_save_register_UINT32(type, cpu, "PPC"       , &M68000_regs.previous_pc, 1);
 	state_save_register_UINT32(type, cpu, "PC"        , &M68000_regs.pc, 1);
 	state_save_register_UINT32(type, cpu, "USP"       , &M68000_regs.usp, 1);
@@ -209,7 +210,6 @@ static void writelong_a24_d16(offs_t address, data32_t data)
 
 static void changepc_a24_d16(offs_t pc)
 {
-//	logerror("Change PC - %6.6x\n",pc);
 	change_pc24bew(pc);
 }
 
@@ -820,6 +820,7 @@ unsigned m68000_dasm(char *buffer, unsigned pc)
 	A68K_SET_PC_CALLBACK(pc);
 
 #ifdef MAME_DEBUG
+	m68k_memory_intf = a68k_memory_intf;
 	return m68k_disassemble(buffer, pc, M68K_CPU_TYPE_68000);
 #else
 	sprintf(buffer, "$%04X", cpu_readop16(pc) );
@@ -882,6 +883,7 @@ unsigned m68010_dasm(char *buffer, unsigned pc)
 	A68K_SET_PC_CALLBACK(pc);
 
 #ifdef MAME_DEBUG
+	m68k_memory_intf = a68k_memory_intf;
 	return m68k_disassemble(buffer, pc, M68K_CPU_TYPE_68010);
 #else
 	sprintf(buffer, "$%04X", cpu_readop16(pc) );
@@ -899,6 +901,11 @@ unsigned m68010_dasm(char *buffer, unsigned pc)
  ****************************************************************************/
 
 #ifdef A68K2
+
+void m68020_init(void)
+{
+	a68k_state_register("m68020");
+}
 
 static void m68k32_reset_common(void)
 {
@@ -924,8 +931,8 @@ void m68020_reset(void *param)
 
 	m68k32_reset_common();
 
-    M68000_regs.CPUtype=2;
-    M68000_regs.Memory_Interface = a68k_memory_intf;
+    M68020_regs.CPUtype=2;
+    M68020_regs.Memory_Interface = a68k_memory_intf;
 }
 
 void m68020_exit(void)
@@ -1003,7 +1010,7 @@ void m68020_set_context(void *src)
 	if( src )
     {
 		M68020_regs = *(a68k_cpu_context*)src;
-        a68k_memory_intf = M68000_regs.Memory_Interface;
+        a68k_memory_intf = M68020_regs.Memory_Interface;
     }
 }
 
@@ -1170,11 +1177,72 @@ void m68020_set_reset_callback(int (*callback)(void))
 
 const char *m68020_info(void *context, int regnum)
 {
+#ifdef MAME_DEBUG
+//extern int m68k_disassemble(char* str_buff, int pc, int cputype);
+#endif
+
+    static char buffer[32][47+1];
+	static int which;
+	a68k_cpu_context *r = context;
+
+	which = (which + 1) % 32;
+	buffer[which][0] = '\0';
+	if( !context )
+		r = &M68020_regs;
+
 	switch( regnum )
 	{
+		case CPU_INFO_REG+M68K_PC: sprintf(buffer[which], "PC:%06X", r->pc); break;
+		case CPU_INFO_REG+M68K_ISP: sprintf(buffer[which], "ISP:%08X", r->isp); break;
+		case CPU_INFO_REG+M68K_USP: sprintf(buffer[which], "USP:%08X", r->usp); break;
+		case CPU_INFO_REG+M68K_SR: sprintf(buffer[which], "SR:%08X", r->sr); break;
+		case CPU_INFO_REG+M68K_VBR: sprintf(buffer[which], "VBR:%08X", r->vbr); break;
+		case CPU_INFO_REG+M68K_SFC: sprintf(buffer[which], "SFC:%08X", r->sfc); break;
+		case CPU_INFO_REG+M68K_DFC: sprintf(buffer[which], "DFC:%08X", r->dfc); break;
+		case CPU_INFO_REG+M68K_D0: sprintf(buffer[which], "D0:%08X", r->d[0]); break;
+		case CPU_INFO_REG+M68K_D1: sprintf(buffer[which], "D1:%08X", r->d[1]); break;
+		case CPU_INFO_REG+M68K_D2: sprintf(buffer[which], "D2:%08X", r->d[2]); break;
+		case CPU_INFO_REG+M68K_D3: sprintf(buffer[which], "D3:%08X", r->d[3]); break;
+		case CPU_INFO_REG+M68K_D4: sprintf(buffer[which], "D4:%08X", r->d[4]); break;
+		case CPU_INFO_REG+M68K_D5: sprintf(buffer[which], "D5:%08X", r->d[5]); break;
+		case CPU_INFO_REG+M68K_D6: sprintf(buffer[which], "D6:%08X", r->d[6]); break;
+		case CPU_INFO_REG+M68K_D7: sprintf(buffer[which], "D7:%08X", r->d[7]); break;
+		case CPU_INFO_REG+M68K_A0: sprintf(buffer[which], "A0:%08X", r->a[0]); break;
+		case CPU_INFO_REG+M68K_A1: sprintf(buffer[which], "A1:%08X", r->a[1]); break;
+		case CPU_INFO_REG+M68K_A2: sprintf(buffer[which], "A2:%08X", r->a[2]); break;
+		case CPU_INFO_REG+M68K_A3: sprintf(buffer[which], "A3:%08X", r->a[3]); break;
+		case CPU_INFO_REG+M68K_A4: sprintf(buffer[which], "A4:%08X", r->a[4]); break;
+		case CPU_INFO_REG+M68K_A5: sprintf(buffer[which], "A5:%08X", r->a[5]); break;
+		case CPU_INFO_REG+M68K_A6: sprintf(buffer[which], "A6:%08X", r->a[6]); break;
+		case CPU_INFO_REG+M68K_A7: sprintf(buffer[which], "A7:%08X", r->a[7]); break;
+		case CPU_INFO_FLAGS:
+			sprintf(buffer[which], "%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",
+				r->sr & 0x8000 ? 'T':'.',
+				r->sr & 0x4000 ? '?':'.',
+				r->sr & 0x2000 ? 'S':'.',
+				r->sr & 0x1000 ? '?':'.',
+				r->sr & 0x0800 ? '?':'.',
+				r->sr & 0x0400 ? 'I':'.',
+				r->sr & 0x0200 ? 'I':'.',
+				r->sr & 0x0100 ? 'I':'.',
+				r->sr & 0x0080 ? '?':'.',
+				r->sr & 0x0040 ? '?':'.',
+				r->sr & 0x0020 ? '?':'.',
+				r->sr & 0x0010 ? 'X':'.',
+				r->sr & 0x0008 ? 'N':'.',
+				r->sr & 0x0004 ? 'Z':'.',
+				r->sr & 0x0002 ? 'V':'.',
+				r->sr & 0x0001 ? 'C':'.');
+            break;
 		case CPU_INFO_NAME: return "68020";
+		case CPU_INFO_FAMILY: return "Motorola 68K";
+		case CPU_INFO_VERSION: return "0.16";
+		case CPU_INFO_FILE: return __FILE__;
+		case CPU_INFO_CREDITS: return "Copyright 1998,99 Mike Coates, Darren Olafson. All rights reserved";
+		case CPU_INFO_REG_LAYOUT: return (const char*)M68K_layout;
+        case CPU_INFO_WIN_LAYOUT: return (const char*)m68k_win_layout;
 	}
-	return m68000_info(context,regnum);
+	return buffer[which];
 }
 
 unsigned m68020_dasm(char *buffer, unsigned pc)
@@ -1182,6 +1250,7 @@ unsigned m68020_dasm(char *buffer, unsigned pc)
 	A68K_SET_PC_CALLBACK(pc);
 
 #ifdef MAME_DEBUG
+	m68k_memory_intf = a68k_memory_intf;
 	return m68k_disassemble(buffer, pc, M68K_CPU_TYPE_68020);
 #else
 	sprintf(buffer, "$%04X", cpu_readop16(pc) );
@@ -1200,9 +1269,10 @@ void m68ec020_reset(void *param)
 	m68k32_reset_common();
 
     M68020_regs.CPUtype=2;
-    M68000_regs.Memory_Interface = a68k_memory_intf;
+    M68020_regs.Memory_Interface = a68k_memory_intf;
 }
 
+void m68ec020_init(void) { m68020_init(); }
 void m68ec020_exit(void) { m68020_exit(); }
 int  m68ec020_execute(int cycles) { return m68020_execute(cycles); }
 unsigned m68ec020_get_context(void *dst) { return m68020_get_context(dst); }
@@ -1212,7 +1282,7 @@ void m68ec020_set_context(void *src)
 	if( src )
     {
 		M68020_regs = *(a68k_cpu_context*)src;
-        a68k_memory_intf = M68000_regs.Memory_Interface;
+        a68k_memory_intf = M68020_regs.Memory_Interface;
     }
 }
 
@@ -1232,7 +1302,7 @@ const char *m68ec020_info(void *context, int regnum)
 	{
 		case CPU_INFO_NAME: return "68EC020";
 	}
-	return m68000_info(context,regnum);
+	return m68020_info(context,regnum);
 }
 
 unsigned m68ec020_dasm(char *buffer, unsigned pc)
@@ -1240,6 +1310,7 @@ unsigned m68ec020_dasm(char *buffer, unsigned pc)
 	A68K_SET_PC_CALLBACK(pc);
 
 #ifdef MAME_DEBUG
+	m68k_memory_intf = a68k_memory_intf;
 	return m68k_disassemble(buffer, pc, M68K_CPU_TYPE_68EC020);
 #else
 	sprintf(buffer, "$%04X", cpu_readop16(pc) );

@@ -1,3 +1,585 @@
+#include "driver.h"
+
+#define SPRITE_FLIPX					0x01
+#define SPRITE_FLIPY					0x02
+#define SPRITE_VISIBLE					0x08
+
+struct sprite {
+	int priority, flags;
+
+	const UINT8 *pen_data;	/* points to top left corner of tile data */
+	int line_offset;
+
+	const UINT32 *pal_data;
+	UINT32 pen_usage;
+
+	int x_offset, y_offset;
+	int tile_width, tile_height;
+	int total_width, total_height;	/* in screen coordinates */
+	int x, y;
+
+	/* private */ const struct sprite *next;
+	/* private */ long mask_offset;
+};
+
+struct sprite_list {
+	int num_sprites;
+	int max_priority;
+	int transparent_pen;
+
+	struct sprite *sprite;
+	struct sprite_list *next; /* resource tracking */
+};
+
+
+
+#define SWAP(X,Y) { int temp = X; X = Y; Y = temp; }
+
+/*
+	The Sprite Manager provides a service that would be difficult or impossible using drawgfx.
+	It allows sprite-to-sprite priority to be orthogonal to sprite-to-tilemap priority.
+
+	The sprite manager also abstract a nice chunk of generally useful functionality.
+
+	Drivers making use of Sprite Manager will NOT necessarily be any faster than traditional
+	drivers using drawgfx.
+
+	Currently supported features include:
+	- sprite layering order, FRONT_TO_BACK / BACK_TO_FRONT (can be easily switched from a driver)
+	- priority masking (needed for Gaiden, Blood Brothers, and surely many others)
+	  this allows sprite-to-sprite priority to be orthogonal to sprite-to-layer priority.
+	- resource tracking (sprite_init and sprite_close must be called by mame.c)
+	- flickering sprites
+	- offscreen sprite skipping
+	- palette usage tracking
+	- support for graphics that aren't pre-rotated (i.e. System16)
+
+There are three sprite types that a sprite_list may use.  With all three sprite types, sprite->x and sprite->y
+are screenwise coordinates for the topleft pixel of a sprite, and sprite->total_width, sprite->total_width is the
+sprite size in screen coordinates - the "footprint" of the sprite on the screen.  sprite->line_offset indicates
+offset from one logical row of sprite pen data to the next.
+
+		line_offset is pen skip to next line; tile_width and tile_height are logical sprite dimensions
+		The sprite will be stretched to fit total_width, total_height, shrinking or magnifying as needed
+
+	TBA:
+	- GfxElement-oriented field-setting macros
+	- cocktail support
+	- "special" pen (hides pixels of previously drawn sprites) - for MCR games, Mr. Do's Castle, etc.
+	- end-of-line marking pen (needed for Altered Beast, ESWAT)
+*/
+
+static int orientation, screen_width, screen_height;
+static int screen_clip_left, screen_clip_top, screen_clip_right, screen_clip_bottom;
+unsigned char *screen_baseaddr;
+int screen_line_offset;
+
+static struct sprite_list *first_sprite_list = NULL; /* used for resource tracking */
+
+static UINT32 *shade_table;
+
+static void sprite_order_setup( struct sprite_list *sprite_list, int *first, int *last, int *delta ){
+	*delta = 1;
+	*first = 0;
+	*last = sprite_list->num_sprites-1;
+}
+
+/*********************************************************************
+
+	The mask buffer is a dynamically allocated resource
+	it is recycled each frame.  Using this technique reduced the runttime
+	memory requirements of the Gaiden from 512k (worst case) to approx 6K.
+
+	Sprites use offsets instead of pointers directly to the mask data, since it
+	is potentially reallocated.
+
+*********************************************************************/
+static unsigned char *mask_buffer = NULL;
+static int mask_buffer_size = 0; /* actual size of allocated buffer */
+static int mask_buffer_used = 0;
+
+static void mask_buffer_reset( void ){
+	mask_buffer_used = 0;
+}
+static void mask_buffer_dispose( void ){
+	free( mask_buffer );
+	mask_buffer = NULL;
+	mask_buffer_size = 0;
+}
+static long mask_buffer_alloc( long size ){
+	long result = mask_buffer_used;
+	long req_size = mask_buffer_used + size;
+	if( req_size>mask_buffer_size ){
+		mask_buffer = realloc( mask_buffer, req_size );
+		mask_buffer_size = req_size;
+		logerror("increased sprite mask buffer size to %d bytes.\n", mask_buffer_size );
+		if( !mask_buffer ) logerror("Error! insufficient memory for mask_buffer_alloc\n" );
+	}
+	mask_buffer_used = req_size;
+	memset( &mask_buffer[result], 0x00, size ); /* clear it */
+	return result;
+}
+
+#define BLIT \
+if( sprite->flags&SPRITE_FLIPX ){ \
+	source += screenx + flipx_adjust; \
+	for( y=y1; y<y2; y++ ){ \
+		for( x=x1; x<x2; x++ ){ \
+			if( OPAQUE(-x) ) dest[x] = COLOR(-x); \
+		} \
+		source += source_dy; dest += blit.line_offset; \
+		NEXTLINE \
+	} \
+} \
+else { \
+	source -= screenx; \
+	for( y=y1; y<y2; y++ ){ \
+		for( x=x1; x<x2; x++ ){ \
+			if( OPAQUE(x) ) dest[x] = COLOR(x); \
+			\
+		} \
+		source += source_dy; dest += blit.line_offset; \
+		NEXTLINE \
+	} \
+}
+
+static struct {
+	int transparent_pen;
+	int clip_left, clip_right, clip_top, clip_bottom;
+	unsigned char *baseaddr;
+	int line_offset;
+	int write_to_mask;
+	int origin_x, origin_y;
+} blit;
+
+static void do_blit_zoom( const struct sprite *sprite ){
+	int x1,x2, y1,y2, dx,dy;
+	int xcount0 = 0, ycount0 = 0;
+
+	if( sprite->flags & SPRITE_FLIPX ){
+		x2 = sprite->x;
+		x1 = x2+sprite->total_width;
+		dx = -1;
+		if( x2<blit.clip_left ) x2 = blit.clip_left;
+		if( x1>blit.clip_right ){
+			xcount0 = (x1-blit.clip_right)*sprite->tile_width;
+			x1 = blit.clip_right;
+		}
+		if( x2>=x1 ) return;
+		x1--; x2--;
+	}
+	else {
+		x1 = sprite->x;
+		x2 = x1+sprite->total_width;
+		dx = 1;
+		if( x1<blit.clip_left ){
+			xcount0 = (blit.clip_left-x1)*sprite->tile_width;
+			x1 = blit.clip_left;
+		}
+		if( x2>blit.clip_right ) x2 = blit.clip_right;
+		if( x1>=x2 ) return;
+	}
+	if( sprite->flags & SPRITE_FLIPY ){
+		y2 = sprite->y;
+		y1 = y2+sprite->total_height;
+		dy = -1;
+		if( y2<blit.clip_top ) y2 = blit.clip_top;
+		if( y1>blit.clip_bottom ){
+			ycount0 = (y1-blit.clip_bottom)*sprite->tile_height;
+			y1 = blit.clip_bottom;
+		}
+		if( y2>=y1 ) return;
+		y1--; y2--;
+	}
+	else {
+		y1 = sprite->y;
+		y2 = y1+sprite->total_height;
+		dy = 1;
+		if( y1<blit.clip_top ){
+			ycount0 = (blit.clip_top-y1)*sprite->tile_height;
+			y1 = blit.clip_top;
+		}
+		if( y2>blit.clip_bottom ) y2 = blit.clip_bottom;
+		if( y1>=y2 ) return;
+	}
+
+	{
+		const unsigned char *pen_data = sprite->pen_data;
+		const UINT32 *pal_data = sprite->pal_data;
+		int x,y;
+		unsigned char pen;
+		int pitch = blit.line_offset*dy;
+		unsigned char *dest = blit.baseaddr + blit.line_offset*y1;
+		int ycount = ycount0;
+
+		if( orientation & ORIENTATION_SWAP_XY ){ /* manually rotate the sprite graphics */
+			int xcount = xcount0;
+			for( x=x1; x!=x2; x+=dx ){
+				const unsigned char *source;
+				unsigned char *dest1;
+
+				ycount = ycount0;
+				while( xcount>=sprite->total_width ){
+					xcount -= sprite->total_width;
+					pen_data+=sprite->line_offset;
+				}
+				source = pen_data;
+				dest1 = &dest[x];
+				for( y=y1; y!=y2; y+=dy ){
+					while( ycount>=sprite->total_height ){
+						ycount -= sprite->total_height;
+						source ++;
+					}
+					pen = *source;
+					if( pen==0xff ) goto skip1; /* marker for right side of sprite; needed for AltBeast, ESwat */
+/*					if( pen==10 ) *dest1 = shade_table[*dest1];
+					else */if( pen ) *dest1 = pal_data[pen];
+					ycount+= sprite->tile_height;
+					dest1 += pitch;
+				}
+skip1:
+				xcount += sprite->tile_width;
+			}
+		}
+		else {
+			for( y=y1; y!=y2; y+=dy ){
+				int xcount = xcount0;
+				const unsigned char *source;
+				while( ycount>=sprite->total_height ){
+					ycount -= sprite->total_height;
+					pen_data += sprite->line_offset;
+				}
+				source = pen_data;
+				for( x=x1; x!=x2; x+=dx ){
+					while( xcount>=sprite->total_width ){
+						xcount -= sprite->total_width;
+						source++;
+					}
+					pen = *source;
+					if( pen==0xff ) goto skip; /* marker for right side of sprite; needed for AltBeast, ESwat */
+/*					if( pen==10 ) dest[x] = shade_table[dest[x]];
+					else */if( pen ) dest[x] = pal_data[pen];
+					xcount += sprite->tile_width;
+				}
+skip:
+				ycount += sprite->tile_height;
+				dest += pitch;
+			}
+		}
+	}
+}
+
+
+static void do_blit_zoom16( const struct sprite *sprite ){
+	int x1,x2, y1,y2, dx,dy;
+	int xcount0 = 0, ycount0 = 0;
+
+	if( sprite->flags & SPRITE_FLIPX ){
+		x2 = sprite->x;
+		x1 = x2+sprite->total_width;
+		dx = -1;
+		if( x2<blit.clip_left ) x2 = blit.clip_left;
+		if( x1>blit.clip_right ){
+			xcount0 = (x1-blit.clip_right)*sprite->tile_width;
+			x1 = blit.clip_right;
+		}
+		if( x2>=x1 ) return;
+		x1--; x2--;
+	}
+	else {
+		x1 = sprite->x;
+		x2 = x1+sprite->total_width;
+		dx = 1;
+		if( x1<blit.clip_left ){
+			xcount0 = (blit.clip_left-x1)*sprite->tile_width;
+			x1 = blit.clip_left;
+		}
+		if( x2>blit.clip_right ) x2 = blit.clip_right;
+		if( x1>=x2 ) return;
+	}
+	if( sprite->flags & SPRITE_FLIPY ){
+		y2 = sprite->y;
+		y1 = y2+sprite->total_height;
+		dy = -1;
+		if( y2<blit.clip_top ) y2 = blit.clip_top;
+		if( y1>blit.clip_bottom ){
+			ycount0 = (y1-blit.clip_bottom)*sprite->tile_height;
+			y1 = blit.clip_bottom;
+		}
+		if( y2>=y1 ) return;
+		y1--; y2--;
+	}
+	else {
+		y1 = sprite->y;
+		y2 = y1+sprite->total_height;
+		dy = 1;
+		if( y1<blit.clip_top ){
+			ycount0 = (blit.clip_top-y1)*sprite->tile_height;
+			y1 = blit.clip_top;
+		}
+		if( y2>blit.clip_bottom ) y2 = blit.clip_bottom;
+		if( y1>=y2 ) return;
+	}
+
+	{
+		const unsigned char *pen_data = sprite->pen_data;
+		const UINT32 *pal_data = sprite->pal_data;
+		int x,y;
+		unsigned char pen;
+		int pitch = blit.line_offset*dy/2;
+		UINT16 *dest = (UINT16 *)(blit.baseaddr + blit.line_offset*y1);
+		int ycount = ycount0;
+
+		if( orientation & ORIENTATION_SWAP_XY ){ /* manually rotate the sprite graphics */
+			int xcount = xcount0;
+			for( x=x1; x!=x2; x+=dx ){
+				const unsigned char *source;
+				UINT16 *dest1;
+
+				ycount = ycount0;
+				while( xcount>=sprite->total_width ){
+					xcount -= sprite->total_width;
+					pen_data+=sprite->line_offset;
+				}
+				source = pen_data;
+				dest1 = &dest[x];
+				for( y=y1; y!=y2; y+=dy ){
+					while( ycount>=sprite->total_height ){
+						ycount -= sprite->total_height;
+						source ++;
+					}
+					pen = *source;
+					if( pen==0xff ) goto skip1; /* marker for right side of sprite; needed for AltBeast, ESwat */
+/*					if( pen==10 ) *dest1 = shade_table[*dest1];
+					else */if( pen ) *dest1 = pal_data[pen];
+					ycount+= sprite->tile_height;
+					dest1 += pitch;
+				}
+skip1:
+				xcount += sprite->tile_width;
+			}
+		}
+		else {
+			for( y=y1; y!=y2; y+=dy ){
+				int xcount = xcount0;
+				const unsigned char *source;
+				while( ycount>=sprite->total_height ){
+					ycount -= sprite->total_height;
+					pen_data += sprite->line_offset;
+				}
+				source = pen_data;
+				for( x=x1; x!=x2; x+=dx ){
+					while( xcount>=sprite->total_width ){
+						xcount -= sprite->total_width;
+						source++;
+					}
+					pen = *source;
+					if( pen==0xff ) goto skip; /* marker for right side of sprite; needed for AltBeast, ESwat */
+/*					if( pen==10 ) dest[x] = shade_table[dest[x]];
+					else */if( pen ) dest[x] = pal_data[pen];
+					xcount += sprite->tile_width;
+				}
+skip:
+				ycount += sprite->tile_height;
+				dest += pitch;
+			}
+		}
+	}
+}
+
+/*********************************************************************/
+
+static void sprite_init( void ){
+	const struct rectangle *clip = &Machine->visible_area;
+	int left = clip->min_x;
+	int top = clip->min_y;
+	int right = clip->max_x+1;
+	int bottom = clip->max_y+1;
+
+	struct osd_bitmap *bitmap = Machine->scrbitmap;
+	screen_baseaddr = bitmap->line[0];
+	screen_line_offset = bitmap->line[1]-bitmap->line[0];
+
+	orientation = Machine->orientation;
+	screen_width = Machine->scrbitmap->width;
+	screen_height = Machine->scrbitmap->height;
+
+	if( orientation & ORIENTATION_SWAP_XY ){
+		SWAP(left,top)
+		SWAP(right,bottom)
+	}
+	if( orientation & ORIENTATION_FLIP_X ){
+		SWAP(left,right)
+		left = screen_width-left;
+		right = screen_width-right;
+	}
+	if( orientation & ORIENTATION_FLIP_Y ){
+		SWAP(top,bottom)
+		top = screen_height-top;
+		bottom = screen_height-bottom;
+	}
+
+	screen_clip_left = left;
+	screen_clip_right = right;
+	screen_clip_top = top;
+	screen_clip_bottom = bottom;
+}
+
+static void sprite_close( void ){
+	struct sprite_list *sprite_list = first_sprite_list;
+	mask_buffer_dispose();
+
+	while( sprite_list ){
+		struct sprite_list *next = sprite_list->next;
+		free( sprite_list->sprite );
+		free( sprite_list );
+		sprite_list = next;
+	}
+	first_sprite_list = NULL;
+}
+
+static struct sprite_list *sprite_list_create( int num_sprites ){
+	struct sprite *sprite = calloc( num_sprites, sizeof(struct sprite) );
+	struct sprite_list *sprite_list = calloc( 1, sizeof(struct sprite_list) );
+
+	sprite_list->num_sprites = num_sprites;
+	sprite_list->sprite = sprite;
+
+	/* resource tracking */
+	sprite_list->next = first_sprite_list;
+	first_sprite_list = sprite_list;
+
+	return sprite_list; /* warning: no error checking! */
+}
+
+static void sprite_update_helper( struct sprite_list *sprite_list ){
+	struct sprite *sprite_table = sprite_list->sprite;
+
+	/* initialize constants */
+	blit.transparent_pen = sprite_list->transparent_pen;
+	blit.write_to_mask = 1;
+	blit.clip_left = 0;
+	blit.clip_top = 0;
+
+	/* make a pass to adjust for screen orientation */
+	if( orientation & ORIENTATION_SWAP_XY ){
+		struct sprite *sprite = sprite_table;
+		const struct sprite *finish = &sprite[sprite_list->num_sprites];
+		while( sprite<finish ){
+			SWAP(sprite->x, sprite->y)
+			SWAP(sprite->total_height,sprite->total_width)
+			SWAP(sprite->tile_width,sprite->tile_height)
+			SWAP(sprite->x_offset,sprite->y_offset)
+
+			/* we must also swap the flipx and flipy bits (if they aren't identical) */
+			if( sprite->flags&SPRITE_FLIPX ){
+				if( !(sprite->flags&SPRITE_FLIPY) ){
+					sprite->flags = (sprite->flags&~SPRITE_FLIPX)|SPRITE_FLIPY;
+				}
+			}
+			else {
+				if( sprite->flags&SPRITE_FLIPY ){
+					sprite->flags = (sprite->flags&~SPRITE_FLIPY)|SPRITE_FLIPX;
+				}
+			}
+			sprite++;
+		}
+	}
+	if( orientation & ORIENTATION_FLIP_X ){
+		struct sprite *sprite = sprite_table;
+		const struct sprite *finish = &sprite[sprite_list->num_sprites];
+		int toggle_bit = SPRITE_FLIPX;
+		while( sprite<finish ){
+			sprite->x = screen_width - (sprite->x+sprite->total_width);
+			sprite->flags ^= toggle_bit;
+
+			/* extra processing for packed sprites */
+			sprite->x_offset = sprite->tile_width - (sprite->x_offset+sprite->total_width);
+			sprite++;
+		}
+	}
+	if( orientation & ORIENTATION_FLIP_Y ){
+		struct sprite *sprite = sprite_table;
+		const struct sprite *finish = &sprite[sprite_list->num_sprites];
+		int toggle_bit = SPRITE_FLIPY;
+		while( sprite<finish ){
+			sprite->y = screen_height - (sprite->y+sprite->total_height);
+			sprite->flags ^= toggle_bit;
+
+			/* extra processing for packed sprites */
+			sprite->y_offset = sprite->tile_height - (sprite->y_offset+sprite->total_height);
+			sprite++;
+		}
+	}
+	{ /* visibility check */
+		struct sprite *sprite = sprite_table;
+		const struct sprite *finish = &sprite[sprite_list->num_sprites];
+		while( sprite<finish ){
+			if(
+				sprite->total_width<=0 || sprite->total_height<=0 ||
+				sprite->x + sprite->total_width<=0 || sprite->x>=screen_width ||
+				sprite->y + sprite->total_height<=0 || sprite->y>=screen_height ){
+				sprite->flags &= (~SPRITE_VISIBLE);
+			}
+			sprite++;
+		}
+	}
+}
+
+static void sprite_update( void ){
+	struct sprite_list *sprite_list = first_sprite_list;
+	mask_buffer_reset();
+	while( sprite_list ){
+		sprite_update_helper( sprite_list );
+		sprite_list = sprite_list->next;
+	}
+}
+
+static void sprite_draw( struct sprite_list *sprite_list, int priority ){
+	const struct sprite *sprite_table = sprite_list->sprite;
+
+
+	{ /* set constants */
+		blit.origin_x = 0;
+		blit.origin_y = 0;
+
+		blit.baseaddr = screen_baseaddr;
+		blit.line_offset = screen_line_offset;
+		blit.transparent_pen = sprite_list->transparent_pen;
+		blit.write_to_mask = 0;
+
+		blit.clip_left = screen_clip_left;
+		blit.clip_top = screen_clip_top;
+		blit.clip_right = screen_clip_right;
+		blit.clip_bottom = screen_clip_bottom;
+	}
+
+	{
+		int i, dir, last;
+		void (*do_blit)( const struct sprite * );
+
+		if (Machine->scrbitmap->depth == 16) /* 16 bit */
+			do_blit = do_blit_zoom16;
+		else
+			do_blit = do_blit_zoom;
+
+		sprite_order_setup( sprite_list, &i, &last, &dir );
+		for(;;){
+			const struct sprite *sprite = &sprite_table[i];
+			if( (sprite->flags&SPRITE_VISIBLE) && (sprite->priority==priority) ) do_blit( sprite );
+			if( i==last ) break;
+			i+=dir;
+		}
+	}
+}
+
+
+static void sprite_set_shade_table(UINT32 *table)
+{
+	shade_table=table;
+}
+
+
 /***************************************************************************
 						WEC Le Mans 24  &   Hot Chase
 
@@ -166,7 +748,11 @@ WRITE16_HANDLER( paletteram16_SBGRBBBBGGGGRRRR_word_w )
 void wecleman_get_txt_tile_info( int tile_index )
 {
 	data16_t code = wecleman_txtram[tile_index];
-	SET_TILE_INFO(PAGE_GFX, code & 0xfff, (code >> 12) + ((code >> 5) & 0x70) );
+	SET_TILE_INFO(
+			PAGE_GFX,
+			code & 0xfff,
+			(code >> 12) + ((code >> 5) & 0x70),
+			0)
 }
 
 
@@ -218,7 +804,11 @@ void wecleman_get_bg_tile_info( int tile_index )
 {
 	int page = wecleman_bgpage[(tile_index%(PAGE_NX*2))/PAGE_NX+2*(tile_index/(PAGE_NX*2*PAGE_NY))];
 	int code = wecleman_pageram[(tile_index%PAGE_NX) + PAGE_NX*((tile_index/(PAGE_NX*2))%PAGE_NY) + page*PAGE_NX*PAGE_NY];
-	SET_TILE_INFO(PAGE_GFX, code & 0xfff, (code >> 12) + ((code >> 5) & 0x70) );
+	SET_TILE_INFO(
+			PAGE_GFX,
+			code & 0xfff,
+			(code >> 12) + ((code >> 5) & 0x70),
+			0)
 }
 
 
@@ -231,7 +821,11 @@ void wecleman_get_fg_tile_info( int tile_index )
 {
 	int page = wecleman_fgpage[(tile_index%(PAGE_NX*2))/PAGE_NX+2*(tile_index/(PAGE_NX*2*PAGE_NY))];
 	int code = wecleman_pageram[(tile_index%PAGE_NX) + PAGE_NX*((tile_index/(PAGE_NX*2))%PAGE_NY) + page*PAGE_NX*PAGE_NY];
-	SET_TILE_INFO(PAGE_GFX, code & 0xfff, (code >> 12) + ((code >> 5) & 0x70) );
+	SET_TILE_INFO(
+			PAGE_GFX,
+			code & 0xfff,
+			(code >> 12) + ((code >> 5) & 0x70),
+			0)
 }
 
 
@@ -297,6 +891,8 @@ int wecleman_vh_start(void)
 	wecleman_gfx_bank = bank;
 
 
+	sprite_init();
+
 	bg_tilemap = tilemap_create(wecleman_get_bg_tile_info,
 								tilemap_scan_rows,
 								TILEMAP_TRANSPARENT,	/* We draw part of the road below */
@@ -316,7 +912,7 @@ int wecleman_vh_start(void)
 								 PAGE_NX * 1, PAGE_NY * 1);
 
 
-	sprite_list = sprite_list_create( NUM_SPRITES, SPRITE_LIST_BACK_TO_FRONT | SPRITE_LIST_RAW_DATA );
+	sprite_list = sprite_list_create( NUM_SPRITES );
 
 
 	if (bg_tilemap && fg_tilemap && txt_tilemap && sprite_list)
@@ -336,11 +932,15 @@ int wecleman_vh_start(void)
 		tilemap_set_scrolly(txt_tilemap,0, 0 );
 
 		sprite_list->max_priority = 0;
-		sprite_list->sprite_type = SPRITE_TYPE_ZOOM;
 
 		return 0;
 	}
 	else return 1;
+}
+
+void wecleman_vh_stop(void)
+{
+	sprite_close();
 }
 
 
@@ -403,6 +1003,8 @@ int hotchase_vh_start(void)
 	wecleman_gfx_bank = bank;
 
 
+	sprite_init();
+
 	if (K051316_vh_start_0(ZOOMROM0_MEM_REGION,4,zoom_callback_0))
 		return 1;
 
@@ -415,7 +1017,7 @@ int hotchase_vh_start(void)
 	temp_bitmap  = bitmap_alloc(512,512);
 	temp_bitmap2 = bitmap_alloc(512,256);
 
-	sprite_list = sprite_list_create( NUM_SPRITES, SPRITE_LIST_BACK_TO_FRONT | SPRITE_LIST_RAW_DATA );
+	sprite_list = sprite_list_create( NUM_SPRITES );
 
 	if (temp_bitmap && temp_bitmap2 && sprite_list)
 	{
@@ -425,7 +1027,6 @@ int hotchase_vh_start(void)
 		K051316_set_offset(1, -0xB0/2, -16);
 
 		sprite_list->max_priority = 0;
-		sprite_list->sprite_type = SPRITE_TYPE_ZOOM;
 
 		return 0;
 	}
@@ -438,6 +1039,8 @@ void hotchase_vh_stop(void)
 	if (temp_bitmap2)	bitmap_free(temp_bitmap2);
 	K051316_vh_stop_0();
 	K051316_vh_stop_1();
+
+	sprite_close();
 }
 
 

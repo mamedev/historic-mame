@@ -30,7 +30,11 @@ INLINE void get_tile_info(int tile_index,data16_t *vram,int color)
 	tile_info.mask_data = memory_region(REGION_GFX4)+(0x08*tile);
 	/* The order of bits needs to be corrected to index the right tile  14 15 11 12 13 */
 	tile=(tile&0x07ff)|((tile&0xc000)>>3)|((tile&0x3800)<<2);
-	SET_TILE_INFO(GFX_CHR,tile,color)
+	SET_TILE_INFO(
+			GFX_CHR,
+			tile,
+			color,
+			0)
 }
 
 static void get_tile_info0(int tile_index) { get_tile_info(tile_index,videoram16+0x0000,0); }
@@ -44,7 +48,11 @@ static void get_tile_info_roz(int tile_index)
 {
 	int tile;
 	tile = namcos2_68k_roz_ram[tile_index];
-	SET_TILE_INFO(GFX_ROZ,tile,0)
+	SET_TILE_INFO(
+			GFX_ROZ,
+			tile,
+			0,
+			0)
 }
 
 

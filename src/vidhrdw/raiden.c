@@ -50,7 +50,11 @@ static void get_back_tile_info(int tile_index)
 
 	tile=tile&0xfff;
 
-	SET_TILE_INFO(1,tile,color)
+	SET_TILE_INFO(
+			1,
+			tile,
+			color,
+			0)
 }
 
 static void get_fore_tile_info(int tile_index)
@@ -60,7 +64,11 @@ static void get_fore_tile_info(int tile_index)
 
 	tile=tile&0xfff;
 
-	SET_TILE_INFO(2,tile,color)
+	SET_TILE_INFO(
+			2,
+			tile,
+			color,
+			0)
 }
 
 static void get_text_tile_info(int tile_index)
@@ -68,7 +76,11 @@ static void get_text_tile_info(int tile_index)
 	int tile=videoram[2*tile_index]+((videoram[2*tile_index+1]&0xc0)<<2);
 	int color=videoram[2*tile_index+1]&0xf;
 
-	SET_TILE_INFO(0,tile,color)
+	SET_TILE_INFO(
+			0,
+			tile,
+			color,
+			0)
 }
 
 int raiden_vh_start(void)

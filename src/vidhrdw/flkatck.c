@@ -43,9 +43,12 @@ static void get_tile_info_A(int tile_index)
 	if ((attr == 0x0d) && (!(K007121_ctrlram[0][0])) && (!(K007121_ctrlram[0][2])))
 		bank = 0;	/*	this allows the game to print text
 					in all banks selected by the k007121 */
-	tile_info.flags = (attr & 0x20) ? TILE_FLIPY : 0;
 
-	SET_TILE_INFO(0, code + 256*bank, (attr & 0x0f) + 16)
+	SET_TILE_INFO(
+			0,
+			code + 256*bank,
+			(attr & 0x0f) + 16,
+			(attr & 0x20) ? TILE_FLIPY : 0)
 }
 
 static void get_tile_info_B(int tile_index)
@@ -53,7 +56,11 @@ static void get_tile_info_B(int tile_index)
 	int attr = k007121_ram[tile_index+0x800];
 	int code = k007121_ram[tile_index+0xc00];
 
-	SET_TILE_INFO(0, code, (attr & 0x0f) + 16)
+	SET_TILE_INFO(
+			0,
+			code,
+			(attr & 0x0f) + 16,
+			0)
 }
 
 

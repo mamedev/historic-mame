@@ -10,7 +10,7 @@
 #include "vidhrdw/generic.h"
 
 
-extern unsigned char *galaxian_attributesram;
+unsigned char *fastfred_attributesram;
 static const unsigned char *fastfred_color_prom;
 
 
@@ -109,6 +109,21 @@ void fastfred_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 }
 
 
+WRITE_HANDLER( fastfred_attributes_w )
+{
+	if ((offset & 1) && fastfred_attributesram[offset] != data)
+	{
+		int i;
+
+
+		for (i = offset / 2;i < videoram_size;i += 32)
+			dirtybuffer[i] = 1;
+	}
+
+	fastfred_attributesram[offset] = data;
+}
+
+
 WRITE_HANDLER( fastfred_character_bank_select_w )
 {
 	set_vh_global_attribute(&character_bank[offset], data & 0x01);
@@ -166,7 +181,7 @@ void fastfred_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			sx = offs % 32;
 			sy = offs / 32;
 
-			color = colorbank | (galaxian_attributesram[2 * sx + 1] & 0x07);
+			color = colorbank | (fastfred_attributesram[2 * sx + 1] & 0x07);
 
 			if (flip_screen_x) sx = 31 - sx;
 			if (flip_screen_y) sy = 31 - sy;
@@ -189,7 +204,7 @@ void fastfred_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		{
 			for (i = 0;i < 32;i++)
 			{
-				scroll[31-i] = -galaxian_attributesram[2 * i];
+				scroll[31-i] = -fastfred_attributesram[2 * i];
 				if (flip_screen_y) scroll[31-i] = -scroll[31-i];
 			}
 		}
@@ -197,7 +212,7 @@ void fastfred_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		{
 			for (i = 0;i < 32;i++)
 			{
-				scroll[i] = -galaxian_attributesram[2 * i];
+				scroll[i] = -fastfred_attributesram[2 * i];
 				if (flip_screen_y) scroll[i] = -scroll[i];
 			}
 		}

@@ -123,28 +123,44 @@ static void get_pf2_tile_info(int tile_index)
 {
 	int tile=cninja_pf2_data[tile_index];
 
-	SET_TILE_INFO(1,(tile&0xfff)|cninja_pf2_bank,(tile>>12)+48)
+	SET_TILE_INFO(
+			1,
+			(tile&0xfff)|cninja_pf2_bank,
+			(tile>>12)+48,
+			0)
 }
 
 static void get_pf3_tile_info(int tile_index)
 {
 	int tile=cninja_pf3_data[tile_index];
 
-	SET_TILE_INFO(1,(tile&0xfff)|cninja_pf3_bank,tile>>12)
+	SET_TILE_INFO(
+			1,
+			(tile&0xfff)|cninja_pf3_bank,
+			tile>>12,
+			0)
 }
 
 static void get_pf4_tile_info(int tile_index)
 {
 	int tile=cninja_pf4_data[tile_index];
 
-	SET_TILE_INFO(2,(tile&0xfff)|cninja_pf4_bank,tile>>12)
+	SET_TILE_INFO(
+			2,
+			(tile&0xfff)|cninja_pf4_bank,
+			tile>>12,
+			0)
 }
 
 static void get_pf1_tile_info(int tile_index)
 {
 	int tile=cninja_pf1_data[tile_index];
 
-	SET_TILE_INFO(0,tile&0xfff,tile>>12)
+	SET_TILE_INFO(
+			0,
+			tile&0xfff,
+			tile>>12,
+			0)
 }
 
 /******************************************************************************/
@@ -153,7 +169,7 @@ static int common_vh_start(void)
 {
 	pf2_tilemap = tilemap_create(get_pf2_tile_info,back_scan,TILEMAP_OPAQUE,16,16,64,32);
 	pf3_tilemap = tilemap_create(get_pf3_tile_info,back_scan,TILEMAP_TRANSPARENT,16,16,64,32);
-	pf4_tilemap = tilemap_create(get_pf4_tile_info,back_scan,TILEMAP_TRANSPARENT | TILEMAP_SPLIT,16,16,64,32);
+	pf4_tilemap = tilemap_create(get_pf4_tile_info,back_scan,TILEMAP_SPLIT,16,16,64,32);
 	pf1_tilemap = tilemap_create(get_pf1_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,32);
 
 	if (!pf1_tilemap || !pf2_tilemap || !pf3_tilemap || !pf4_tilemap)
@@ -161,9 +177,7 @@ static int common_vh_start(void)
 
 	tilemap_set_transparent_pen(pf1_tilemap,0);
 	tilemap_set_transparent_pen(pf3_tilemap,0);
-	tilemap_set_transparent_pen(pf4_tilemap,0);
-	tilemap_set_transmask(pf4_tilemap,0,0x00ff);
-	tilemap_set_transmask(pf4_tilemap,1,0xff00);
+	tilemap_set_transmask(pf4_tilemap,0,0x00ff,0xff01);
 
 	return 0;
 }

@@ -25,7 +25,11 @@ static void fg_get_tile_info(int tile_index)
 	int tile = tecmo16_videoram[tile_index] & 0x1fff;
 	int color = tecmo16_colorram[tile_index] & 0x7f;
 
-	SET_TILE_INFO(1,tile,color)
+	SET_TILE_INFO(
+			1,
+			tile,
+			color,
+			0)
 }
 
 static void bg_get_tile_info(int tile_index)
@@ -33,13 +37,21 @@ static void bg_get_tile_info(int tile_index)
 	int tile = tecmo16_videoram2[tile_index] & 0x1fff;
 	int color = (tecmo16_colorram2[tile_index] & 0x7f)+0x10;
 
-	SET_TILE_INFO(1,tile,color)
+	SET_TILE_INFO(
+			1,
+			tile,
+			color,
+			0)
 }
 
 static void tx_get_tile_info(int tile_index)
 {
 	int tile = tecmo16_charram[tile_index];
-	SET_TILE_INFO(0,tile & 0x0fff,tile >> 12)
+	SET_TILE_INFO(
+			0,
+			tile & 0x0fff,
+			tile >> 12,
+			0)
 }
 
 /******************************************************************************/

@@ -356,7 +356,7 @@ if (!strcmp(Machine->gamedrv->name,"zedblade"))
 	{
 		if (line == irq2start)
 		{
-			logerror("trigger IRQ2 at raster line %d (screen line %d)\n",line,current_scanline);
+//logerror("trigger IRQ2 at raster line %d (screen line %d)\n",line,current_scanline);
 			if (!busy)
 			{
 				if (neogeo_raster_enable)
@@ -404,7 +404,7 @@ if (!strcmp(Machine->gamedrv->name,"zedblade"))
 		do_refresh = 1;
 
 		/* return a standard vblank interrupt */
-logerror("trigger IRQ1\n");
+//logerror("trigger IRQ1\n");
 		vblank_int = 1;	   /* vertical blank */
 	}
 
@@ -2492,7 +2492,7 @@ ROM_START( savagere )
 
 	ROM_REGION( 0x600000, REGION_SOUND1, ROMREGION_SOUNDONLY )
 	ROM_LOAD( "savag_v1.rom", 0x000000, 0x200000, 0x530c50fd )
-	ROM_LOAD( "savag_v2.rom", 0x200000, 0x200000, 0xe79a9bd0 )
+	ROM_LOAD( "savag_v2.rom", 0x200000, 0x200000, BADCRC( 0xe79a9bd0 ) )
 	ROM_LOAD( "savag_v3.rom", 0x400000, 0x200000, 0x7038c2f9 )
 
 	NO_DELTAT_REGION

@@ -113,7 +113,11 @@ static void get_tile_info_0(int tile_index)
 {
 	data16_t code_hi = tetrisp2_vram_0[ 2 * tile_index + 0];
 	data16_t code_lo = tetrisp2_vram_0[ 2 * tile_index + 1];
-	SET_TILE_INFO( 1, code_hi, code_lo & 0xf);
+	SET_TILE_INFO(
+			1,
+			code_hi,
+			code_lo & 0xf,
+			0)
 }
 
 WRITE16_HANDLER( tetrisp2_vram_0_w )
@@ -132,7 +136,11 @@ static void get_tile_info_1(int tile_index)
 {
 	data16_t code_hi = tetrisp2_vram_1[ 2 * tile_index + 0];
 	data16_t code_lo = tetrisp2_vram_1[ 2 * tile_index + 1];
-	SET_TILE_INFO( 2, code_hi, code_lo & 0xf);
+	SET_TILE_INFO(
+			2,
+			code_hi,
+			code_lo & 0xf,
+			0)
 }
 
 WRITE16_HANDLER( tetrisp2_vram_1_w )

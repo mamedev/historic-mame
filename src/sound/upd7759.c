@@ -388,7 +388,7 @@ static void UPD7759_update (int chip, INT16 *buffer, int left)
 				while( left-- > 0 )
 				{
 					*buffer++ = voice->data[voice->tail];
-#if OVERSAMPLE
+#ifdef OVERSAMPLE
 					if( (voice->counter++ % OVERSAMPLE) == 0 )
 #endif
                     voice->tail = (voice->tail + 1) % DATA_MAX;

@@ -7,39 +7,45 @@
 
   Driver provided by Paul Leaman
 
-TODO:
-- sectionz does "false contacts" on the coin counters, causing them to
-  increment twice per coin.
+To Do:
+-	sectionz does "false contacts" on the coin counters, causing them to
+	increment twice per coin.
+-	clean up Avengers protection; it currently checks against hard-coded program
+	counter rather than behaving as a memory-mapped black box.
 
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "lwings.h"
 
+/* Avengers runs on hardware almost identical to Trojan, but with a protection
+ * device and some small changes to the memory map and videohardware.
+ *
+ * Background colors are fetched 64 bytes at a time and copied to palette RAM.
+ *
+ * Another function takes as input 2 pairs of (x,y) coordinates, and returns
+ * a code reflecting the direction (8 angles) from one point to the other.
+ */
+static data8_t avengers_param[4];
+static int avengers_palette_pen;
 
-extern unsigned char *lwings_fgvideoram;
-extern unsigned char *lwings_bg1videoram;
+static data8_t avengers_adpcm;
 
-WRITE_HANDLER( lwings_fgvideoram_w );
-WRITE_HANDLER( lwings_bg1videoram_w );
-WRITE_HANDLER( lwings_bg1_scrollx_w );
-WRITE_HANDLER( lwings_bg1_scrolly_w );
-WRITE_HANDLER( lwings_bg2_scrollx_w );
-WRITE_HANDLER( lwings_bg2_image_w );
-int  lwings_vh_start(void);
-int  trojan_vh_start(void);
-int  avengers_vh_start(void);
-void lwings_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void trojan_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void lwings_eof_callback(void);
+WRITE_HANDLER( avengers_adpcm_w )
+{
+	avengers_adpcm = data;
+}
 
-
+READ_HANDLER( avengers_adpcm_r )
+{
+	return avengers_adpcm;
+}
 
 static WRITE_HANDLER( lwings_bankswitch_w )
 {
 	unsigned char *RAM;
 	int bank;
-
 
 	/* bit 0 is flip screen */
 	flip_screen_set(~data & 0x01);
@@ -63,26 +69,161 @@ static int lwings_interrupt(void)
 }
 
 static int avengers_interrupt( void )
-{ /* hack */
-	static int s;
-
-	s=!s;
-	if( s )
+{
+	if( cpu_getiloops()==0 )
+	{
 		return interrupt();
-	else
-		return nmi_interrupt();
+	}
+	return nmi_interrupt();
 }
 
 static WRITE_HANDLER( avengers_protection_w )
 {
+	int pc = cpu_get_pc();
+
+	if( pc == 0x2eeb )
+	{
+		avengers_param[0] = data;
+	}
+	else if( pc == 0x2f09 )
+	{
+		avengers_param[1] = data;
+	}
+	else if( pc == 0x2f26 )
+	{
+		avengers_param[2] = data;
+	}
+	else if( pc == 0x2f43 )
+	{
+		avengers_param[3] = data;
+	}
+	else if( pc == 0x0445 )
+	{
+		soundlatch_w( 0, data );
+	}
+}
+
+static WRITE_HANDLER( avengers_prot_bank_w )
+{
+	avengers_palette_pen = data*64;
+}
+
+static int avengers_fetch_paldata( void )
+{
+	const char pal_data[] =
+	/* page 1: 0x03,0x02,0x01,0x00 */
+	"0000000000000000" "A65486A6364676D6" "C764C777676778A7" "A574E5E5C5756AE5"
+	"0000000000000000" "F51785D505159405" "A637B6A636269636" "F45744E424348824"
+	"0000000000000000" "A33263B303330203" "4454848454440454" "A27242C232523632"
+	"0000000000000000" "1253327202421102" "3386437373631373" "41A331A161715461"
+	"0000000000000000" "1341715000711203" "4442635191622293" "5143D48383D37186"
+	"0000000000000000" "2432423000412305" "6633343302333305" "7234A565A5A4A2A8"
+	"0000000000000000" "46232422A02234A7" "88241624A21454A7" "A3256747A665D3AA"
+	"0000000000000000" "070406020003050B" "0A05090504050508" "05060A090806040C"
+
+	/* page2: 0x07,0x06,0x05,0x04 */
+	"0000000000000000" "2472030503230534" "6392633B23433B53" "0392846454346423"
+	"0000000000000000" "1313052405050423" "3223754805354832" "323346A38686A332"
+	"0000000000000000" "72190723070723D2" "81394776070776D1" "A15929F25959F2F1"
+	"0000000000000000" "650706411A2A1168" "770737C43A3A3466" "87071F013C0C3175"
+	"0000000000000000" "2001402727302020" "4403048F4A484344" "4A050B074E0E4440"
+	"0000000000000000" "3003800C35683130" "5304035C587C5453" "5607080C5B265550"
+	"0000000000000000" "4801D00043854245" "6C020038669A6569" "6604050A69446764"
+	"0000000000000000" "0504000001030504" "0A05090504060307" "04090D0507010403"
+
+	/* page3: 0x0b,0x0a,0x09,0x08 */
+	"0000000000000000" "685A586937F777F7" "988A797A67A7A7A7" "B8CA898DC737F787"
+	"0000000000000000" "4738A61705150505" "8797672835250535" "7777072A25350525"
+	"0000000000000000" "3525642404340404" "6554453554440454" "5544053634540434"
+	"0000000000000000" "2301923203430303" "4333834383630373" "3324034473730363"
+	"0000000000000000" "3130304000762005" "5352525291614193" "6463635483D06581"
+	"0000000000000000" "4241415100483107" "6463631302335304" "76757415A5A077A3"
+	"0000000000000000" "53525282A02A43AA" "76747424A31565A5" "88888536A66089A4"
+	"0000000000000000" "05040304000D050C" "0806050604070707" "0A0A060808000C06"
+
+	/* page4: 0x0f,0x0e,0x0d,0x0c */
+	"0000000000000000" "3470365956342935" "5590578997554958" "73C078A8C573687A"
+	"0000000000000000" "5355650685030604" "2427362686042607" "010A070584010508"
+	"0000000000000000" "0208432454022403" "737A243455733406" "000D050353000307"
+	"0000000000000000" "000A023233003202" "424C134234424204" "000F241132001105"
+	"0000000000000000" "3031113030300030" "5152215252512051" "7273337374723272"
+	"0000000000000000" "4141214041411041" "6263326363623162" "8385448585834383"
+	"0000000000000000" "5153225152512051" "7375437475734273" "9598559697946495"
+	"0000000000000000" "0205020303020102" "0407040606040304" "060A060809060506"
+
+	/* page5: 0x13,0x12,0x11,0x10 */
+	"0000000000000000" "4151D141D3D177F7" "5454C44482C4A7A7" "0404D45491D4F787"
+	"0000000000000000" "0303032374230505" "9696962673560535" "0505054502850525"
+	"0000000000000000" "0303030355030404" "7777770754470454" "0606060603760434"
+	"0000000000000000" "0505053547050303" "4949492945390373" "0808083804580363"
+	"0000000000000000" "0B0C444023442005" "3D3F333433334193" "0000043504046581"
+	"0000000000000000" "0809565085863107" "0B6A352374455304" "00700644050677A3"
+	"0000000000000000" "06073879C8C843AA" "09492739A58765A5" "0050084A060889A4"
+	"0000000000000000" "05060B070B0B050C" "0707090707090707" "00000B08070B0C06"
+
+	/* page6: 0x17,0x16,0x15,0x14 */
+	"0000000000000000" "0034308021620053" "0034417042512542" "0034526064502E31"
+	"0000000000000000" "0106412032733060" "11A6522053628350" "22A6632072620D42"
+	"0000000000000000" "1308223052242080" "2478233071235170" "3578243090230960"
+	"0000000000000000" "2111334333331404" "3353324232324807" "45B5314131310837"
+	"0000000000000000" "3232445444445302" "445443534343B725" "567642524242B745"
+	"0000000000000000" "4343556555550201" "5575546454540524" "6787536353537554"
+	"0000000000000000" "6474667676660100" "7696657575650423" "88A8647474645473"
+	"0000000000000000" "0001070701050004" "0003060603040303" "0005050505040302";
+
+	int bank = avengers_palette_pen/64;
+	int offs = avengers_palette_pen%64;
+	int page = bank/4;					/* 0..7 */
+	int base = (3-(bank&3));			/* 0..3 */
+	int row = offs&0xf;					/* 0..15 */
+	int col = offs/16 + base*4;			/* 0..15 */
+	int digit0 = pal_data[page*256*2 + (31-row*2)*16+col];
+	int digit1 = pal_data[page*256*2 + (30-row*2)*16+col];
+	int result;
+
+	if( digit0>='A' ) digit0 += 10 - 'A'; else digit0 -= '0';
+	if( digit1>='A' ) digit1 += 10 - 'A'; else digit1 -= '0';
+	result = digit0 * 16 + digit1;
+
+	if( (avengers_palette_pen&0x3f)!=0x3f ) avengers_palette_pen++;
+
+	return result;
 }
 
 static READ_HANDLER( avengers_protection_r )
 {
-	/* the protection reads are used for background palette among other things */
-	static int hack;
-	hack = hack&0xf;
-	return hack++;
+	const int xpos[8] = { 10, 7,  0, -7, -10, -7,   0,  7 };
+	const int ypos[8] = {  0, 7, 10,  7,   0, -7, -10, -7 };
+	int best_dist = 0;
+	int best_dir = 0;
+	int x,y;
+	int dx,dy,dist,dir;
+
+	if( cpu_get_pc() == 0x7c7 )
+	{
+		/* palette data */
+		return avengers_fetch_paldata();
+	}
+
+	/*	Point to Angle Function
+
+		Input: two cartesian points
+		Output: direction code (north,northeast,east,...)
+	 */
+	x = avengers_param[0] - avengers_param[2];
+	y = avengers_param[1] - avengers_param[3];
+	for( dir=0; dir<8; dir++ )
+	{
+		dx = xpos[dir]-x;
+		dy = ypos[dir]-y;
+		dist = dx*dx+dy*dy;
+		if( dist < best_dist || dir==0 )
+		{
+			best_dir = dir;
+			best_dist = dist;
+		}
+	}
+	return best_dir<<5;
 }
 
 static WRITE_HANDLER( msm5205_w )
@@ -93,9 +234,7 @@ static WRITE_HANDLER( msm5205_w )
 	MSM5205_vclk_w(offset,0);
 }
 
-
-
-static MEMORY_READ_START( readmem )
+static MEMORY_READ_START( avengers_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0xbfff, MRA_BANK1 },
 	{ 0xc000, 0xf7ff, MRA_RAM },
@@ -107,7 +246,38 @@ static MEMORY_READ_START( readmem )
 	{ 0xf80d, 0xf80d, avengers_protection_r },
 MEMORY_END
 
-static MEMORY_WRITE_START( writemem )
+static MEMORY_WRITE_START( avengers_writemem )
+	{ 0x0000, 0xbfff, MWA_ROM },
+	{ 0xc000, 0xddff, MWA_RAM },
+	{ 0xde00, 0xdf7f, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0xdf80, 0xdfff, MWA_RAM },
+	{ 0xe000, 0xe7ff, lwings_fgvideoram_w, &lwings_fgvideoram },
+	{ 0xe800, 0xefff, lwings_bg1videoram_w, &lwings_bg1videoram },
+	{ 0xf000, 0xf3ff, paletteram_RRRRGGGGBBBBxxxx_split2_w, &paletteram_2 },
+	{ 0xf400, 0xf7ff, paletteram_RRRRGGGGBBBBxxxx_split1_w, &paletteram },
+	{ 0xf800, 0xf801, lwings_bg1_scrollx_w },
+	{ 0xf802, 0xf803, lwings_bg1_scrolly_w },
+	{ 0xf804, 0xf804, lwings_bg2_scrollx_w },
+	{ 0xf805, 0xf805, lwings_bg2_image_w },
+	{ 0xf808, 0xf808, MWA_NOP }, /* ? */
+	{ 0xf809, 0xf809, avengers_protection_w },
+	{ 0xf80c, 0xf80c, avengers_prot_bank_w },
+	{ 0xf80d, 0xf80d, avengers_adpcm_w },
+	{ 0xf80e, 0xf80e, lwings_bankswitch_w },
+MEMORY_END
+
+static MEMORY_READ_START( readmem ) /* common to trojan and lwings */
+	{ 0x0000, 0x7fff, MRA_ROM },
+	{ 0x8000, 0xbfff, MRA_BANK1 },
+	{ 0xc000, 0xf7ff, MRA_RAM },
+	{ 0xf808, 0xf808, input_port_0_r },
+	{ 0xf809, 0xf809, input_port_1_r },
+	{ 0xf80a, 0xf80a, input_port_2_r },
+	{ 0xf80b, 0xf80b, input_port_3_r },
+	{ 0xf80c, 0xf80c, input_port_4_r },
+MEMORY_END
+
+static MEMORY_WRITE_START( writemem ) /* lwings */
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xddff, MWA_RAM },
 	{ 0xde00, 0xdfff, MWA_RAM, &spriteram, &spriteram_size },
@@ -135,12 +305,10 @@ static MEMORY_WRITE_START( trojan_writemem )
 	{ 0xf802, 0xf803, lwings_bg1_scrolly_w },
 	{ 0xf804, 0xf804, lwings_bg2_scrollx_w },
 	{ 0xf805, 0xf805, lwings_bg2_image_w },
-	{ 0xf809, 0xf809, avengers_protection_w },
 	{ 0xf80c, 0xf80c, soundlatch_w },
 	{ 0xf80d, 0xf80d, watchdog_reset_w },
 	{ 0xf80e, 0xf80e, lwings_bankswitch_w },
 MEMORY_END
-
 
 static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
@@ -159,7 +327,6 @@ static MEMORY_WRITE_START( sound_writemem )
 	{ 0xe006, 0xe006, MWA_RAM },    /* Avengers - ADPCM output??? */
 MEMORY_END
 
-
 static MEMORY_READ_START( adpcm_readmem )
 	{ 0x0000, 0xffff, MRA_ROM },
 MEMORY_END
@@ -170,16 +337,17 @@ static MEMORY_WRITE_START( adpcm_writemem )
 	{ 0x0000, 0xffff, MWA_NOP },
 MEMORY_END
 
+static PORT_READ_START( avengers_adpcm_readport )
+	{ 0x00, 0x00, avengers_adpcm_r },
+PORT_END
+
 static PORT_READ_START( adpcm_readport )
 	{ 0x00, 0x00, soundlatch_r },
 PORT_END
 
-
 static PORT_WRITE_START( adpcm_writeport )
 	{ 0x01, 0x01, msm5205_w },
 PORT_END
-
-
 
 INPUT_PORTS_START( sectionz )
 	PORT_START      /* IN0 */
@@ -577,8 +745,6 @@ INPUT_PORTS_START( avengers )
 	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_6C ) )
 INPUT_PORTS_END
 
-
-
 static struct GfxLayout charlayout =
 {
 	8,8,
@@ -647,8 +813,6 @@ static struct GfxDecodeInfo gfxdecodeinfo_trojan[] =
 	{ -1 } /* end of array */
 };
 
-
-
 static struct YM2203interface ym2203_interface =
 {
 	2,			/* 2 chips */
@@ -668,8 +832,6 @@ static struct MSM5205interface msm5205_interface =
 	{ MSM5205_SEX_4B },	/* slave mode */
 	{ 50 }
 };
-
-
 
 static const struct MachineDriver machine_driver_lwings =
 {
@@ -775,7 +937,7 @@ static const struct MachineDriver machine_driver_avengers =
 		{
 			CPU_Z80,
 			4000000,        /* 4 MHz (?) */
-			readmem,trojan_writemem,0,0,
+			avengers_readmem,avengers_writemem,0,0,
 			avengers_interrupt,2
 		},
 		{
@@ -787,7 +949,7 @@ static const struct MachineDriver machine_driver_avengers =
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			3579545,	/* ? */
-			adpcm_readmem,adpcm_writemem,adpcm_readport,adpcm_writeport,
+			adpcm_readmem,adpcm_writemem,avengers_adpcm_readport,adpcm_writeport,
 			0,0,
 			interrupt,4000
 		}
@@ -821,7 +983,6 @@ static const struct MachineDriver machine_driver_avengers =
 		}
 	}
 };
-
 
 /***************************************************************************
 
@@ -1272,7 +1433,6 @@ ROM_START( buraiken )
 	ROM_LOAD( "tbb_1bpr.1e",  0x0100,  0x0100, 0x5052fa9d )	/* priority (not used) */
 ROM_END
 
-
 GAME( 1985, sectionz, 0,        lwings,   sectionz, 0, ROT0,  "Capcom", "Section Z (set 1)" )
 GAME( 1985, sctionza, sectionz, lwings,   sectionz, 0, ROT0,  "Capcom", "Section Z (set 2)" )
 GAME( 1986, lwings,   0,        lwings,   lwings,   0, ROT90, "Capcom", "Legendary Wings (US set 1)" )
@@ -1281,6 +1441,6 @@ GAME( 1986, lwingsjp, lwings,   lwings,   lwings,   0, ROT90, "Capcom", "Ales no
 GAME( 1986, trojan,   0,        trojan,   trojanls, 0, ROT0,  "Capcom", "Trojan (US)" )
 GAME( 1986, trojanr,  trojan,   trojan,   trojan,   0, ROT0,  "Capcom (Romstar license)", "Trojan (Romstar)" )
 GAME( 1986, trojanj,  trojan,   trojan,   trojan,   0, ROT0,  "Capcom", "Tatakai no Banka (Japan)" )
-GAMEX(1987, avengers, 0,        avengers, avengers, 0, ROT90, "Capcom", "Avengers (US set 1)", GAME_WRONG_COLORS | GAME_NO_SOUND | GAME_UNEMULATED_PROTECTION )
-GAMEX(1987, avenger2, avengers, avengers, avengers, 0, ROT90, "Capcom", "Avengers (US set 2)", GAME_WRONG_COLORS | GAME_NO_SOUND | GAME_UNEMULATED_PROTECTION )
-GAMEX(1987, buraiken, avengers, avengers, avengers, 0, ROT90, "Capcom", "Hissatsu Buraiken (Japan)", GAME_WRONG_COLORS | GAME_NO_SOUND | GAME_UNEMULATED_PROTECTION )
+GAME( 1987, avengers, 0,        avengers, avengers, 0, ROT90, "Capcom", "Avengers (US set 1)" )
+GAME( 1987, avenger2, avengers, avengers, avengers, 0, ROT90, "Capcom", "Avengers (US set 2)" )
+GAME( 1987, buraiken, avengers, avengers, avengers, 0, ROT90, "Capcom", "Hissatsu Buraiken (Japan)" )

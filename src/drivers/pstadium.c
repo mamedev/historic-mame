@@ -1533,7 +1533,7 @@ static struct MachineDriver machine_driver_##_name_ = \
 			&galkoku_dac_interface \
 		} \
 	}, \
-	##_nvram_ \
+	_nvram_ \
 };
 
 #define NBMJDRV3( _name_, _mrmem_, _mwmem_, _mrport_, _mwport_, _nvram_ ) \
@@ -1575,7 +1575,7 @@ static struct MachineDriver machine_driver_##_name_ = \
 			&galkoku_dac_interface \
 		} \
 	}, \
-	##_nvram_ \
+	_nvram_ \
 };
 
 //	      NAME,  MAIN_RM,  MAIN_WM,  MAIN_RP,  MAIN_WP, NV_RAM

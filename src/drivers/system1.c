@@ -34,8 +34,8 @@ void teddybb_decode(void);
 void hvymetal_decode(void);
 void myheroj_decode(void);
 void fdwarrio_decode(void);
-void wboy3_decode(void);
-void wboy4_decode(void);
+void wboy_decode(void);
+void wboy2_decode(void);
 void gardia_decode(void);
 
 
@@ -2178,6 +2178,34 @@ ROM_START( flicky2 )
 	ROM_LOAD( "5317",         0x0000, 0x0100, 0x648350b8 )	/* timing? (not used) */
 ROM_END
 
+ROM_START( bullfgt )
+	ROM_REGION( 2*0x10000, REGION_CPU1, 0 ) /* 64k for code + 64k for decrypted opcodes */
+	ROM_LOAD( "ic129",        0x0000, 0x2000, 0x29f19156 )  /* encrypted */
+	ROM_LOAD( "ic130",        0x2000, 0x2000, 0xe37d2b95 )  /* encrypted */
+	ROM_LOAD( "ic131",        0x4000, 0x2000, 0xeaf5773d )  /* encrypted */
+	ROM_LOAD( "ic132",        0x6000, 0x2000, 0x72c3c712 )  /* encrypted */
+	ROM_LOAD( "ic133",        0x8000, 0x2000, 0x7d9fa4cd )
+	ROM_LOAD( "ic134",        0xa000, 0x2000, 0x061f2797 )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* 64k for sound cpu */
+	ROM_LOAD( "6077",         0x0000, 0x2000, 0x02a37602 )
+
+	ROM_REGION( 0xc000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "ic82",         0x0000, 0x2000, 0xb71c349f )
+	ROM_LOAD( "ic65",         0x2000, 0x2000, 0x86deafa8 )
+	ROM_LOAD( "6087",         0x4000, 0x2000, 0x2677742c )
+	ROM_LOAD( "ic64",         0x6000, 0x2000, 0x6f0a62be )
+	ROM_LOAD( "6085",         0x8000, 0x2000, 0x9c3ddc62 )
+	ROM_LOAD( "ic63",         0xa000, 0x2000, 0xc0fce57c )
+
+	ROM_REGION( 0x8000, REGION_GFX2, 0 )	/* 32k for sprites data */
+	ROM_LOAD( "6069",         0x0000, 0x4000, 0xfe691e41 )
+	ROM_LOAD( "6070",         0x4000, 0x4000, 0x34f080df )
+
+	ROM_REGION( 0x0100, REGION_USER1, 0 )	/* misc PROMs, but no color so don't use REGION_PROMS! */
+	ROM_LOAD( "pr-5317",      0x0000, 0x0100, 0x648350b8 )	/* timing? (not used) */
+ROM_END
+
 ROM_START( bullfgtj )
 	ROM_REGION( 2*0x10000, REGION_CPU1, 0 ) /* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "6071",         0x0000, 0x4000, 0x96b57df9 )  /* encrypted */
@@ -2750,6 +2778,33 @@ ROM_END
 
 ROM_START( wboy )
 	ROM_REGION( 2*0x10000, REGION_CPU1, 0 ) /* 64k for code + 64k for decrypted opcodes */
+	ROM_LOAD( "epr7489.116",  0x0000, 0x4000, 0x130f4b70 )  /* encrypted */
+	ROM_LOAD( "epr7490.109",  0x4000, 0x4000, 0x9e656733 )  /* encrypted */
+	ROM_LOAD( "epr7491.96",   0x8000, 0x4000, 0x1f7d0efe )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* 64k for sound cpu */
+	ROM_LOAD( "epra7498.120", 0x0000, 0x2000, 0xc198205c )
+
+	ROM_REGION( 0xc000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "epr6497.62",   0x0000, 0x2000, 0x08d609ca )
+	ROM_LOAD( "epr7496.61",   0x2000, 0x2000, 0x6f61fdf1 )
+	ROM_LOAD( "epr7495.64",   0x4000, 0x2000, 0x6a0d2c2d )
+	ROM_LOAD( "epr7494.63",   0x6000, 0x2000, 0xa8e281c7 )
+	ROM_LOAD( "epr7493.66",   0x8000, 0x2000, 0x89305df4 )
+	ROM_LOAD( "epr7492.65",   0xa000, 0x2000, 0x60f806b1 )
+
+	ROM_REGION( 0x10000, REGION_GFX2, 0 )	/* 64k for sprites data */
+	ROM_LOAD( "epr7485.117",  0x0000, 0x4000, 0xc2891722 )
+	ROM_LOAD( "epr7487.04",   0x4000, 0x4000, 0x2d3a421b )
+	ROM_LOAD( "epr7486.110",  0x8000, 0x4000, 0x8d622c50 )
+	ROM_LOAD( "epr7488.05",   0xc000, 0x4000, 0x007c2f1b )
+
+	ROM_REGION( 0x0100, REGION_USER1, 0 )	/* misc PROMs, but no color so don't use REGION_PROMS! */
+	ROM_LOAD( "pr5317.76",    0x0000, 0x0100, 0x648350b8 )	/* timing? (not used) */
+ROM_END
+
+ROM_START( wboyo )
+	ROM_REGION( 2*0x10000, REGION_CPU1, 0 ) /* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "b-1.bin",      0x0000, 0x4000, 0x51d27534 )  /* encrypted */
 	ROM_LOAD( "b-2.bin",      0x4000, 0x4000, 0xe29d1cd1 )  /* encrypted */
 	ROM_LOAD( "epr7491.96",   0x8000, 0x4000, 0x1f7d0efe )
@@ -2777,12 +2832,15 @@ ROM_END
 
 ROM_START( wboy2 )
 	ROM_REGION( 2*0x10000, REGION_CPU1, 0 ) /* 64k for code + 64k for decrypted opcodes */
-	ROM_LOAD( "wb_1",         0x0000, 0x4000, 0xbd6fef49 )  /* encrypted */
-	ROM_LOAD( "wb_2",         0x4000, 0x4000, 0x4081b624 )  /* encrypted */
-	ROM_LOAD( "wb_3",         0x8000, 0x4000, 0xc48a0e36 )
+	ROM_LOAD( "ic129",        0x0000, 0x2000, 0x1bbb7354 )  /* encrypted */
+	ROM_LOAD( "ic130",        0x2000, 0x2000, 0x21007413 )  /* encrypted */
+	ROM_LOAD( "ic131",        0x4000, 0x2000, 0x44b30433 )  /* encrypted */
+	ROM_LOAD( "ic132",        0x6000, 0x2000, 0xbb525a0b )  /* encrypted */
+	ROM_LOAD( "ic133",        0x8000, 0x2000, 0x8379aa23 )
+	ROM_LOAD( "ic134",        0xa000, 0x2000, 0xc767a5d7 )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* 64k for sound cpu */
-	ROM_LOAD( "ic120_98.bin", 0x0000, 0x2000, 0x78ae1e7b )
+	ROM_LOAD( "epr7502",      0x0000, 0x2000, 0xc92484b3 )
 
 	ROM_REGION( 0xc000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "epr6497.62",   0x0000, 0x2000, 0x08d609ca )
@@ -2802,11 +2860,14 @@ ROM_START( wboy2 )
 	ROM_LOAD( "pr5317.76",    0x0000, 0x0100, 0x648350b8 )	/* timing? (not used) */
 ROM_END
 
-ROM_START( wboy3 )
-	ROM_REGION( 2*0x10000, REGION_CPU1, 0 ) /* 64k for code + 64k for decrypted opcodes */
-	ROM_LOAD( "epr7489.116",  0x0000, 0x4000, 0x130f4b70 )  /* encrypted */
-	ROM_LOAD( "epr7490.109",  0x4000, 0x4000, 0x9e656733 )  /* encrypted */
-	ROM_LOAD( "epr7491.96",   0x8000, 0x4000, 0x1f7d0efe )
+ROM_START( wboy2u )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* 64k for code */
+	ROM_LOAD( "ic129_02.bin", 0x0000, 0x2000, 0x32c4b709 )
+	ROM_LOAD( "ic130_03.bin", 0x2000, 0x2000, 0x56463ede )
+	ROM_LOAD( "ic131_04.bin", 0x4000, 0x2000, 0x775ed392 )
+	ROM_LOAD( "ic132_05.bin", 0x6000, 0x2000, 0x7b922708 )
+	ROM_LOAD( "ic133",        0x8000, 0x2000, 0x8379aa23 )
+	ROM_LOAD( "ic134",        0xa000, 0x2000, 0xc767a5d7 )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* 64k for sound cpu */
 	ROM_LOAD( "epra7498.120", 0x0000, 0x2000, 0xc198205c )
@@ -2829,17 +2890,14 @@ ROM_START( wboy3 )
 	ROM_LOAD( "pr5317.76",    0x0000, 0x0100, 0x648350b8 )	/* timing? (not used) */
 ROM_END
 
-ROM_START( wboy4 )
+ROM_START( wboy3 )
 	ROM_REGION( 2*0x10000, REGION_CPU1, 0 ) /* 64k for code + 64k for decrypted opcodes */
-	ROM_LOAD( "ic129",        0x0000, 0x2000, 0x1bbb7354 )  /* encrypted */
-	ROM_LOAD( "ic130",        0x2000, 0x2000, 0x21007413 )  /* encrypted */
-	ROM_LOAD( "ic131",        0x4000, 0x2000, 0x44b30433 )  /* encrypted */
-	ROM_LOAD( "ic132",        0x6000, 0x2000, 0xbb525a0b )  /* encrypted */
-	ROM_LOAD( "ic133",        0x8000, 0x2000, 0x8379aa23 )
-	ROM_LOAD( "ic134",        0xa000, 0x2000, 0xc767a5d7 )
+	ROM_LOAD( "wb_1",         0x0000, 0x4000, 0xbd6fef49 )  /* encrypted */
+	ROM_LOAD( "wb_2",         0x4000, 0x4000, 0x4081b624 )  /* encrypted */
+	ROM_LOAD( "wb_3",         0x8000, 0x4000, 0xc48a0e36 )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* 64k for sound cpu */
-	ROM_LOAD( "epr7502",      0x0000, 0x2000, 0xc92484b3 )
+	ROM_LOAD( "ic120_98.bin", 0x0000, 0x2000, 0x78ae1e7b )
 
 	ROM_REGION( 0xc000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "epr6497.62",   0x0000, 0x2000, 0x08d609ca )
@@ -2881,36 +2939,6 @@ ROM_START( wboyu )
 	ROM_LOAD( "ic004_87.bin", 0x4000, 0x4000, 0x119735bb )
 	ROM_LOAD( "ic110_86.bin", 0x8000, 0x4000, 0x26d0fac4 )
 	ROM_LOAD( "ic005_88.bin", 0xc000, 0x4000, 0x2602e519 )
-
-	ROM_REGION( 0x0100, REGION_USER1, 0 )	/* misc PROMs, but no color so don't use REGION_PROMS! */
-	ROM_LOAD( "pr5317.76",    0x0000, 0x0100, 0x648350b8 )	/* timing? (not used) */
-ROM_END
-
-ROM_START( wboy4u )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* 64k for code */
-	ROM_LOAD( "ic129_02.bin", 0x0000, 0x2000, 0x32c4b709 )
-	ROM_LOAD( "ic130_03.bin", 0x2000, 0x2000, 0x56463ede )
-	ROM_LOAD( "ic131_04.bin", 0x4000, 0x2000, 0x775ed392 )
-	ROM_LOAD( "ic132_05.bin", 0x6000, 0x2000, 0x7b922708 )
-	ROM_LOAD( "ic133",        0x8000, 0x2000, 0x8379aa23 )
-	ROM_LOAD( "ic134",        0xa000, 0x2000, 0xc767a5d7 )
-
-	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* 64k for sound cpu */
-	ROM_LOAD( "epra7498.120", 0x0000, 0x2000, 0xc198205c )
-
-	ROM_REGION( 0xc000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "epr6497.62",   0x0000, 0x2000, 0x08d609ca )
-	ROM_LOAD( "epr7496.61",   0x2000, 0x2000, 0x6f61fdf1 )
-	ROM_LOAD( "epr7495.64",   0x4000, 0x2000, 0x6a0d2c2d )
-	ROM_LOAD( "epr7494.63",   0x6000, 0x2000, 0xa8e281c7 )
-	ROM_LOAD( "epr7493.66",   0x8000, 0x2000, 0x89305df4 )
-	ROM_LOAD( "epr7492.65",   0xa000, 0x2000, 0x60f806b1 )
-
-	ROM_REGION( 0x10000, REGION_GFX2, 0 )	/* 64k for sprites data */
-	ROM_LOAD( "epr7485.117",  0x0000, 0x4000, 0xc2891722 )
-	ROM_LOAD( "epr7487.04",   0x4000, 0x4000, 0x2d3a421b )
-	ROM_LOAD( "epr7486.110",  0x8000, 0x4000, 0x8d622c50 )
-	ROM_LOAD( "epr7488.05",   0xc000, 0x4000, 0x007c2f1b )
 
 	ROM_REGION( 0x0100, REGION_USER1, 0 )	/* misc PROMs, but no color so don't use REGION_PROMS! */
 	ROM_LOAD( "pr5317.76",    0x0000, 0x0100, 0x648350b8 )	/* timing? (not used) */
@@ -3262,8 +3290,8 @@ static void init_teddybb(void)	{ teddybb_decode(); }
 static void init_hvymetal(void)	{ hvymetal_decode(); }
 static void init_myheroj(void)	{ myheroj_decode(); }
 static void init_4dwarrio(void)	{ fdwarrio_decode(); }
-static void init_wboy3(void)	{ wboy3_decode(); }
-static void init_wboy4(void)	{ wboy4_decode(); }
+static void init_wboy(void)		{ wboy_decode(); }
+static void init_wboy2(void)	{ wboy2_decode(); }
 static void init_gardia(void)	{ gardia_decode(); }
 
 void init_myherok(void)
@@ -3320,44 +3348,45 @@ static void init_bootleg(void)
 
 
 
-GAME (1983, starjack, 0,        small,    starjack, 0,        ROT270, "Sega", "Star Jacker (Sega)" )
-GAME (1983, starjacs, starjack, small,    starjacs, 0,        ROT270, "Stern", "Star Jacker (Stern)" )
-GAME (1983, regulus,  0,        system1,  regulus,  regulus,  ROT270, "Sega", "Regulus" )
-GAME (1983, regulusu, regulus,  system1,  regulus,  0,        ROT270, "Sega", "Regulus (not encrypted)" )
-GAME (1983, upndown,  0,        system1,  upndown,  0,        ROT270, "Sega", "Up'n Down" )
-GAME (1984, mrviking, 0,        small,    mrviking, mrviking, ROT270, "Sega", "Mister Viking" )
-GAME (1984, mrvikinj, mrviking, small,    mrviking, mrviking, ROT270, "Sega", "Mister Viking (Japan)" )
-GAME (1984, swat,     0,        system1,  swat,     swat,     ROT270, "Coreland / Sega", "SWAT" )
-GAME (1984, flicky,   0,        system1,  flicky,   flicky,   ROT0,   "Sega", "Flicky (set 1)" )
-GAME (1984, flicky2,  flicky,   system1,  flicky,   flicky,   ROT0,   "Sega", "Flicky (set 2)" )
-GAME (1984, bullfgtj, 0,        system1,  bullfgtj, bullfgtj, ROT0,   "Sega / Coreland", "The Tougyuu (Japan)" )	/* Bull Fight */
-GAME (1985, pitfall2, 0,        system1,  pitfall2, pitfall2, ROT0,   "Sega", "Pitfall II" )
-GAME (1985, pitfallu, pitfall2, system1,  pitfallu, 0,        ROT0,   "Sega", "Pitfall II (not encrypted)" )
-GAME (1985, seganinj, 0,        system1,  seganinj, seganinj, ROT0,   "Sega", "Sega Ninja" )
-GAME (1985, seganinu, seganinj, system1,  seganinj, 0,        ROT0,   "Sega", "Sega Ninja (not encrypted)" )
-GAME (1985, nprinces, seganinj, system1,  seganinj, nprinces, ROT0,   "Sega", "Ninja Princess" )
-GAME (1985, nprincsu, seganinj, system1,  seganinj, 0,        ROT0,   "Sega", "Ninja Princess (not encrypted)" )
-GAME (1985, nprincsb, seganinj, system1,  seganinj, flicky,   ROT0,   "bootleg?", "Ninja Princess (bootleg?)" )
-GAME (1985, imsorry,  0,        system1,  imsorry,  imsorry,  ROT0,   "Coreland / Sega", "I'm Sorry (US)" )
-GAME (1985, imsorryj, imsorry,  system1,  imsorry,  imsorry,  ROT0,   "Coreland / Sega", "I'm Sorry (Japan)" )
-GAME (1985, teddybb,  0,        system1,  teddybb,  teddybb,  ROT0,   "Sega", "TeddyBoy Blues" )
-GAME (1985, hvymetal, 0,        hvymetal, hvymetal, hvymetal, ROT0,   "Sega", "Heavy Metal" )
-GAME (1985, myhero,   0,        system1,  myhero,   0,        ROT0,   "Sega", "My Hero (US)" )
-GAME (1985, myheroj,  myhero,   system1,  myhero,   myheroj,  ROT0,   "Coreland / Sega", "Seishun Scandal (Japan)" )
-GAME (1985, myherok,  myhero,   system1,  myhero,   myherok,  ROT0,   "Coreland / Sega", "My Hero (Korea)" )
+GAME( 1983, starjack, 0,        small,    starjack, 0,        ROT270, "Sega", "Star Jacker (Sega)" )
+GAME( 1983, starjacs, starjack, small,    starjacs, 0,        ROT270, "Stern", "Star Jacker (Stern)" )
+GAME( 1983, regulus,  0,        system1,  regulus,  regulus,  ROT270, "Sega", "Regulus" )
+GAME( 1983, regulusu, regulus,  system1,  regulus,  0,        ROT270, "Sega", "Regulus (not encrypted)" )
+GAME( 1983, upndown,  0,        system1,  upndown,  0,        ROT270, "Sega", "Up'n Down" )
+GAME( 1984, mrviking, 0,        small,    mrviking, mrviking, ROT270, "Sega", "Mister Viking" )
+GAME( 1984, mrvikinj, mrviking, small,    mrviking, mrviking, ROT270, "Sega", "Mister Viking (Japan)" )
+GAME( 1984, swat,     0,        system1,  swat,     swat,     ROT270, "Coreland / Sega", "SWAT" )
+GAME( 1984, flicky,   0,        system1,  flicky,   flicky,   ROT0,   "Sega", "Flicky (set 1)" )
+GAME( 1984, flicky2,  flicky,   system1,  flicky,   flicky,   ROT0,   "Sega", "Flicky (set 2)" )
+GAME( 1984, bullfgt,  0,        system1,  bullfgtj, bullfgtj, ROT0,   "Sega / Coreland", "Bullfight" )
+GAME( 1984, bullfgtj, bullfgt,  system1,  bullfgtj, bullfgtj, ROT0,   "Sega / Coreland", "The Tougyuu (Japan)" )
+GAME( 1985, pitfall2, 0,        system1,  pitfall2, pitfall2, ROT0,   "Sega", "Pitfall II" )
+GAME( 1985, pitfallu, pitfall2, system1,  pitfallu, 0,        ROT0,   "Sega", "Pitfall II (not encrypted)" )
+GAME( 1985, seganinj, 0,        system1,  seganinj, seganinj, ROT0,   "Sega", "Sega Ninja" )
+GAME( 1985, seganinu, seganinj, system1,  seganinj, 0,        ROT0,   "Sega", "Sega Ninja (not encrypted)" )
+GAME( 1985, nprinces, seganinj, system1,  seganinj, nprinces, ROT0,   "Sega", "Ninja Princess" )
+GAME( 1985, nprincsu, seganinj, system1,  seganinj, 0,        ROT0,   "Sega", "Ninja Princess (not encrypted)" )
+GAME( 1985, nprincsb, seganinj, system1,  seganinj, flicky,   ROT0,   "bootleg?", "Ninja Princess (bootleg?)" )
+GAME( 1985, imsorry,  0,        system1,  imsorry,  imsorry,  ROT0,   "Coreland / Sega", "I'm Sorry (US)" )
+GAME( 1985, imsorryj, imsorry,  system1,  imsorry,  imsorry,  ROT0,   "Coreland / Sega", "I'm Sorry (Japan)" )
+GAME( 1985, teddybb,  0,        system1,  teddybb,  teddybb,  ROT0,   "Sega", "TeddyBoy Blues" )
+GAME( 1985, hvymetal, 0,        hvymetal, hvymetal, hvymetal, ROT0,   "Sega", "Heavy Metal" )
+GAME( 1985, myhero,   0,        system1,  myhero,   0,        ROT0,   "Sega", "My Hero (US)" )
+GAME( 1985, myheroj,  myhero,   system1,  myhero,   myheroj,  ROT0,   "Coreland / Sega", "Seishun Scandal (Japan)" )
+GAME( 1985, myherok,  myhero,   system1,  myhero,   myherok,  ROT0,   "Coreland / Sega", "My Hero (Korea)" )
 GAMEX(1985, shtngmst, 0,        chplft,   chplft,   0,        ROT0,   "Sega", "Shooting Master", GAME_NOT_WORKING )	/* 8751 protection */
 GAMEX(1985, chplft,   0,        chplft,   chplft,   0,        ROT0,   "Sega", "Choplifter", GAME_NOT_WORKING )	/* 8751 protection */
-GAME (1985, chplftb,  chplft,   chplft,   chplft,   0,        ROT0,   "Sega", "Choplifter (alternate)" )
-GAME (1985, chplftbl, chplft,   chplft,   chplft,   0,        ROT0,   "bootleg", "Choplifter (bootleg)" )
-GAME (1985, 4dwarrio, 0,        system1,  4dwarrio, 4dwarrio, ROT0,   "Coreland / Sega", "4-D Warriors" )
-GAME (1986, brain,    0,        brain,    brain,    0,        ROT0,   "Coreland / Sega", "Brain" )
-GAME (1986, wboy,     0,        system1,  wboy,     hvymetal, ROT0,   "Sega (Escape license)", "Wonder Boy (set 1)" )
-GAME (1986, wboy2,    wboy,     system1,  wboy,     hvymetal, ROT0,   "Sega (Escape license)", "Wonder Boy (set 2)" )
-GAMEX(1986, wboy3,    wboy,     system1,  wboy,     wboy3,    ROT0,   "<unknown>", "Wonder Boy (set 3)", GAME_NOT_WORKING )
-GAME (1986, wboy4,    wboy,     system1,  wboy,     wboy4,    ROT0,   "Sega (Escape license)", "Wonder Boy (set 4)" )
-GAME (1986, wboyu,    wboy,     system1,  wboyu,    0,        ROT0,   "Sega (Escape license)", "Wonder Boy (not encrypted)" )
-GAME (1986, wboy4u,   wboy,     system1,  wboy,     0,        ROT0,   "Sega (Escape license)", "Wonder Boy (set 4 not encrypted)" )
-GAME (1986, wbdeluxe, wboy,     system1,  wbdeluxe, 0,        ROT0,   "Sega (Escape license)", "Wonder Boy Deluxe" )
+GAME( 1985, chplftb,  chplft,   chplft,   chplft,   0,        ROT0,   "Sega", "Choplifter (alternate)" )
+GAME( 1985, chplftbl, chplft,   chplft,   chplft,   0,        ROT0,   "bootleg", "Choplifter (bootleg)" )
+GAME( 1985, 4dwarrio, 0,        system1,  4dwarrio, 4dwarrio, ROT0,   "Coreland / Sega", "4-D Warriors" )
+GAME( 1986, brain,    0,        brain,    brain,    0,        ROT0,   "Coreland / Sega", "Brain" )
+GAME( 1986, wboy,     0,        system1,  wboy,     wboy,     ROT0,   "Sega (Escape license)", "Wonder Boy (set 1, new encryption)" )
+GAME( 1986, wboyo,    wboy,     system1,  wboy,     hvymetal, ROT0,   "Sega (Escape license)", "Wonder Boy (set 1, old encryption)" )
+GAME( 1986, wboy2,    wboy,     system1,  wboy,     wboy2,    ROT0,   "Sega (Escape license)", "Wonder Boy (set 2)" )
+GAME( 1986, wboy2u,   wboy,     system1,  wboy,     0,        ROT0,   "Sega (Escape license)", "Wonder Boy (set 2 not encrypted)" )
+GAME( 1986, wboy3,    wboy,     system1,  wboy,     hvymetal, ROT0,   "Sega (Escape license)", "Wonder Boy (set 3)" )
+GAME( 1986, wboyu,    wboy,     system1,  wboyu,    0,        ROT0,   "Sega (Escape license)", "Wonder Boy (not encrypted)" )
+GAME( 1986, wbdeluxe, wboy,     system1,  wbdeluxe, 0,        ROT0,   "Sega (Escape license)", "Wonder Boy Deluxe" )
 GAMEX(1986, gardia,   0,        brain,    wboy,     gardia,   ROT270, "Sega / Coreland", "Gardia", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
 GAMEX(1986, gardiab,  gardia,   brain,    wboy,     gardia,   ROT270, "bootleg", "Gardia (bootleg)", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
 GAMEX(1987, blockgal, 0,        system1,  blockgal, 0,        ROT90,  "Sega / Vic Tokai", "Block Gal", GAME_NOT_WORKING | GAME_NO_COCKTAIL )

@@ -84,7 +84,11 @@ static void get_fg_tile_info(int tile_index)
 	int code;
 
 	code = mystston_fgvideoram[tile_index] + ((mystston_fgvideoram[tile_index + 0x400] & 0x07) << 8);
-	SET_TILE_INFO(0, code, textcolor);
+	SET_TILE_INFO(
+			0,
+			code,
+			textcolor,
+			0)
 }
 
 static void get_bg_tile_info(int tile_index)
@@ -92,9 +96,11 @@ static void get_bg_tile_info(int tile_index)
 	int code;
 
 	code = mystston_bgvideoram[tile_index] + ((mystston_bgvideoram[tile_index + 0x200] & 0x01) << 8);
-	SET_TILE_INFO(1, code, 0);
-	/* the right (lower) side of the screen is flipped */
-	tile_info.flags = (tile_index & 0x10) ? TILE_FLIPY : 0;
+	SET_TILE_INFO(
+			1,
+			code,
+			0,
+			(tile_index & 0x10) ? TILE_FLIPY : 0)	/* the right (lower) side of the screen is flipped */
 }
 
 

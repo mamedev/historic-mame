@@ -37,7 +37,11 @@ static void get_bg_tile_info(int tile_index)
 	color=tile >> 12;
 	tile=tile&0xfff;
 
-	SET_TILE_INFO(gfx_bank,tile,color)
+	SET_TILE_INFO(
+			gfx_bank,
+			tile,
+			color,
+			0)
 }
 
 /* 8x8 top layer */
@@ -48,7 +52,11 @@ static void get_fg_tile_info(int tile_index)
 
 	tile=tile&0xfff;
 
-	SET_TILE_INFO(0,tile,color)
+	SET_TILE_INFO(
+			0,
+			tile,
+			color,
+			0)
 }
 
 /******************************************************************************/

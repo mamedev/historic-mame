@@ -6,6 +6,9 @@
 
 	Emulation by Bryan McPhail, mish@tendril.co.uk
 
+	Coin inputs are handled by the sound CPU, so they don't work with sound
+	disabled. Use the service switch instead.
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -34,10 +37,10 @@ static MEMORY_READ16_START( readmem )
 	{ 0x8d000, 0x8d7ff, MRA16_RAM },
 	{ 0x8e800, 0x8f7ff, MRA16_RAM },
 	{ 0x8f800, 0x8ffff, MRA16_RAM },
-	{ 0xa0000, 0xa000f, MRA16_NOP }, /* Unused sound cpu read */
-	{ 0xe0000, 0xe0001, input_port_0_word_r },
-	{ 0xe0002, 0xe0003, input_port_1_word_r },
-	{ 0xe0004, 0xe0005, input_port_2_word_r },
+	{ 0xa0000, 0xa000d, seibu_main_word_r },
+	{ 0xe0000, 0xe0001, input_port_1_word_r },
+	{ 0xe0002, 0xe0003, input_port_2_word_r },
+	{ 0xe0004, 0xe0005, input_port_3_word_r },
 MEMORY_END
 
 static MEMORY_WRITE16_START( writemem )
@@ -49,7 +52,7 @@ static MEMORY_WRITE16_START( writemem )
 	{ 0x8d800, 0x8e7ff, dcon_text_w, &dcon_textram },
 	{ 0x8e800, 0x8f7ff, paletteram16_xBBBBBGGGGGRRRRR_word_w, &paletteram16 },
 	{ 0x8f800, 0x8ffff, MWA16_RAM, &spriteram16 },
-	{ 0xa0000, 0xa000f, seibu_soundlatch_word_w, (data16_t **)&seibu_shared_sound_ram },
+	{ 0xa0000, 0xa000d, seibu_main_word_w },
 	{ 0xc001c, 0xc001d, dcon_control_w },
 	{ 0xc0020, 0xc002b, MWA16_RAM, &dcon_scroll_ram },
 	{ 0xc0000, 0xc00ff, MWA16_NOP },
@@ -57,11 +60,9 @@ MEMORY_END
 
 /******************************************************************************/
 
-SEIBU_SOUND_SYSTEM_YM3812_MEMORY_MAP(MRA_NOP) /* No coin port in this game */
-
-/******************************************************************************/
-
 INPUT_PORTS_START( dcon )
+	SEIBU_COIN_INPUTS	/* Must be port 0: coin inputs read through sound cpu */
+
 	PORT_START
 	PORT_DIPNAME( 0x0001, 0x0001, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(      0x0001, DEF_STR( Off ) )
@@ -143,7 +144,7 @@ INPUT_PORTS_START( dcon )
 	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_UNKNOWN)
 	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -260,9 +261,10 @@ ROM_START( dcon )
 	ROM_LOAD16_BYTE("p1-0",   0x040000, 0x20000, 0x3ec1ef7d )
 	ROM_LOAD16_BYTE("p1-1",   0x040001, 0x20000, 0x4b8de320 )
 
-	ROM_REGION( 0x18000, REGION_CPU2, 0 )	 /* 64k code for sound Z80 */
-	ROM_LOAD( "fm", 0x000000, 0x08000, 0x50450faa )
-	ROM_CONTINUE(   0x010000, 0x08000 )
+	ROM_REGION( 0x20000, REGION_CPU2, 0 )	 /* 64k code for sound Z80 */
+	ROM_LOAD( "fm",           0x000000, 0x08000, 0x50450faa )
+	ROM_CONTINUE(             0x010000, 0x08000 )
+	ROM_COPY( REGION_CPU2, 0, 0x018000, 0x08000 )
 
 	ROM_REGION( 0x020000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "fix0",  0x000000, 0x10000, 0xab30061f ) /* chars */
@@ -289,11 +291,4 @@ ROM_END
 
 /***************************************************************************/
 
-static void init_dcon(void)
-{
-	install_seibu_sound_speedup(1);
-}
-
-/***************************************************************************/
-
-GAMEX( 1992, dcon, 0, dcon, dcon, dcon, ROT0, "Success (Seibu hardware)", "D-Con", GAME_NO_COCKTAIL )
+GAMEX( 1992, dcon, 0, dcon, dcon, 0, ROT0, "Success (Seibu hardware)", "D-Con", GAME_NO_COCKTAIL )

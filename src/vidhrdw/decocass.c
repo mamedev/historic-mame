@@ -96,21 +96,32 @@ static UINT32 bgvideoram_scan_cols( UINT32 col, UINT32 row, UINT32 num_cols, UIN
 static void get_bg_l_tile_info(int tile_index)
 {
 	int color = (color_center_bot >> 7) & 1;
-	SET_TILE_INFO(2, (0x80 == (tile_index & 0x80)) ? 16 : decocass_bgvideoram[tile_index] >> 4, color)
+	SET_TILE_INFO(
+			2,
+			(0x80 == (tile_index & 0x80)) ? 16 : decocass_bgvideoram[tile_index] >> 4,
+			color,
+			0)
 }
 
 static void get_bg_r_tile_info(int tile_index)
 {
 	int color = (color_center_bot >> 7) & 1;
-	SET_TILE_INFO(2, (0x00 == (tile_index & 0x80)) ? 16 : decocass_bgvideoram[tile_index] >> 4, color)
-	tile_info.flags = TILE_FLIPY;
+	SET_TILE_INFO(
+			2,
+			(0x00 == (tile_index & 0x80)) ? 16 : decocass_bgvideoram[tile_index] >> 4,
+			color,
+			TILE_FLIPY)
 }
 
 static void get_fg_tile_info(int tile_index)
 {
 	unsigned char code = decocass_fgvideoram[tile_index];
 	unsigned char attr = decocass_colorram[tile_index];
-	SET_TILE_INFO(0, 256 * (attr & 3) + code, color_center_bot & 1)
+	SET_TILE_INFO(
+			0,
+			256 * (attr & 3) + code,
+			color_center_bot & 1,
+			0)
 }
 
 /********************************************
@@ -685,7 +696,7 @@ void decocass_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			(tape_dir > 0 && tape_speed) ? '>' : ' ');
 	}
 #endif
-#if MAME_DEBUG
+#ifdef MAME_DEBUG
 	{
 		static int showmsg;
 		if (code_pressed_memory(KEYCODE_I))

@@ -1524,10 +1524,10 @@ ROM_START( wtennis )
 	ROM_REGION( 0x6000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "t7",           0x0000, 0x1000, 0xaa935169 )
 	ROM_LOAD( "t10",          0x1000, 0x1000, 0x746be927 )
-	ROM_LOAD( "t5",           0x2000, 0x1000, 0xea1efa5d )
-	ROM_LOAD( "t8",           0x3000, 0x1000, 0x542ace7b )
-	ROM_LOAD( "t6",           0x4000, 0x1000, 0x4fb8565d )
-	ROM_LOAD( "t9",           0x5000, 0x1000, 0x4893286d )
+	ROM_LOAD( "t6",           0x2000, 0x1000, 0x4fb8565d )
+	ROM_LOAD( "t9",           0x3000, 0x1000, 0x4893286d )
+	ROM_LOAD( "t5",           0x4000, 0x1000, 0xea1efa5d )
+	ROM_LOAD( "t8",           0x5000, 0x1000, 0x542ace7b )
 
 	ROM_REGION( 0x0040, REGION_PROMS, 0 )
 	ROM_LOAD( "mb7051.m5",    0x0000, 0x0020, 0xf051cb28 )	/* palette */
@@ -1667,6 +1667,24 @@ ROM_START( disco )
 	ROM_LOAD( "disco.clr",    0x0000, 0x0020, 0xa393f913 )
 ROM_END
 
+ROM_START( discof )
+	ROM_REGION( 2*0x10000, REGION_CPU1, 0 ) /* 64k for code + 64k for decrypted opcodes */
+	ROM_LOAD( "w5-f",     0xa000, 0x1000, 0x9d53c71c )
+	ROM_LOAD( "w4-f",     0xb000, 0x1000, 0xc1f8d747 )
+	ROM_LOAD( "w3-f",     0xc000, 0x1000, 0x9aadd252 )
+	ROM_LOAD( "w2-f",     0xd000, 0x1000, 0xf131a5bb )
+	ROM_LOAD( "w1-f",     0xe000, 0x1000, 0xc8ec57c5 )
+	ROM_LOAD( "w0-f",     0xf000, 0x1000, 0xb3787a92 )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for the audio CPU */
+	ROM_LOAD( "disco.w6",     0xf000, 0x1000, 0xd81e781e )
+
+	/* no gfx1 */
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "disco.clr",    0x0000, 0x0020, 0xa393f913 )
+ROM_END
+
 
 static READ_HANDLER( wtennis_reset_hack_r )
 {
@@ -1734,10 +1752,11 @@ GAME( 1982, btime2,   btime,   btime,    btime,    btime,   ROT270, "Data East C
 GAME( 1982, btimem,   btime,   btime,    btime,    btime,   ROT270, "Data East (Bally Midway license)", "Burger Time (Midway)" )
 GAME( 1982, cookrace, btime,   cookrace, cookrace, lnc,     ROT270, "bootleg", "Cook Race" )
 GAME( 1981, lnc,      0,       lnc,      lnc,      lnc,     ROT270, "Data East Corporation", "Lock'n'Chase" )
-GAMEX(1982, wtennis,  0,       wtennis,  wtennis,  wtennis, ROT270, "bootleg", "World Tennis", GAME_IMPERFECT_COLORS )
+GAME( 1982, wtennis,  0,       wtennis,  wtennis,  wtennis, ROT270, "bootleg", "World Tennis" )
 GAME( 1982, mmonkey,  0,       mmonkey,  mmonkey,  lnc,     ROT270, "Technos + Roller Tron", "Minky Monkey" )
 GAME( 1982, brubber,  0,       bnj,      bnj,      lnc,     ROT270, "Data East", "Burnin' Rubber" )
 GAME( 1982, bnj,      brubber, bnj,      bnj,      lnc,     ROT270, "Data East USA (Bally Midway license)", "Bump 'n' Jump" )
 GAME( 1983, caractn,  brubber, bnj,      bnj,      lnc,     ROT270, "bootleg", "Car Action" )
 GAME( 1982, zoar,     0,       zoar,     zoar,     zoar,    ROT270, "Data East USA", "Zoar" )
 GAME( 1982, disco,    0,       disco,    disco,    btime,   ROT270, "Data East", "Disco No.1" )
+GAME( 1982, discof,   disco,   disco,    disco,    btime,   ROT270, "Data East", "Disco No.1 (Rev.F)" )

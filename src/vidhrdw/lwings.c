@@ -8,16 +8,13 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-
-
+#include "lwings.h"
 
 unsigned char *lwings_fgvideoram;
 unsigned char *lwings_bg1videoram;
 
-static int trojan_vh_type, bg2_image;
+static int bAvengersHardware, bg2_image;
 static struct tilemap *fg_tilemap, *bg1_tilemap, *bg2_tilemap;
-
-
 
 /***************************************************************************
 
@@ -36,8 +33,11 @@ static void get_fg_tile_info(int tile_index)
 
 	code = lwings_fgvideoram[tile_index];
 	color = lwings_fgvideoram[tile_index + 0x400];
-	SET_TILE_INFO(0, code + ((color & 0xc0) << 2), color & 0x0f);
-	tile_info.flags = TILE_FLIPYX((color & 0x30) >> 4);
+	SET_TILE_INFO(
+			0,
+			code + ((color & 0xc0) << 2),
+			color & 0x0f,
+			TILE_FLIPYX((color & 0x30) >> 4))
 }
 
 static void lwings_get_bg1_tile_info(int tile_index)
@@ -46,20 +46,26 @@ static void lwings_get_bg1_tile_info(int tile_index)
 
 	code = lwings_bg1videoram[tile_index];
 	color = lwings_bg1videoram[tile_index + 0x400];
-	SET_TILE_INFO(1, code + ((color & 0xe0) << 3), color & 0x07);
-	tile_info.flags = TILE_FLIPYX((color & 0x18) >> 3);
+	SET_TILE_INFO(
+			1,
+			code + ((color & 0xe0) << 3),
+			color & 0x07,
+			TILE_FLIPYX((color & 0x18) >> 3))
 }
 
 static void trojan_get_bg1_tile_info(int tile_index)
 {
+	const unsigned char avengers_color_remap[8]	= {6,7,4,5,2,3,0,1};
 	int code, color;
 
 	code = lwings_bg1videoram[tile_index];
 	color = lwings_bg1videoram[tile_index + 0x400];
-	SET_TILE_INFO(1, code + ((color & 0xe0) << 3), color & 0x07);
-	tile_info.flags = TILE_SPLIT((color & 0x08) >> 3);
-	if (color & 0x10)
-		tile_info.flags |= TILE_FLIPX;
+	code += (color & 0xe0)<<3;
+	SET_TILE_INFO(
+			1,
+			code,
+			bAvengersHardware ? avengers_color_remap[color & 7] : (color & 7),
+			TILE_SPLIT((color & 0x08) >> 3) | ((color & 0x10) ? TILE_FLIPX : 0))
 }
 
 static void get_bg2_tile_info(int tile_index)
@@ -68,8 +74,11 @@ static void get_bg2_tile_info(int tile_index)
 
 	code = memory_region(REGION_GFX5)[bg2_image * 0x20 + tile_index];
 	color = memory_region(REGION_GFX5)[bg2_image * 0x20 + tile_index + 1];
-	SET_TILE_INFO(3, code + ((color & 0x80) << 1), color & 0x07);
-	tile_info.flags = TILE_FLIPYX((color & 0x30) >> 4);
+	SET_TILE_INFO(
+			3,
+			code + ((color & 0x80) << 1),
+			color & 0x07,
+			TILE_FLIPYX((color & 0x30) >> 4))
 }
 
 /***************************************************************************
@@ -93,32 +102,28 @@ int lwings_vh_start(void)
 
 int trojan_vh_start(void)
 {
-	fg_tilemap  = tilemap_create(get_fg_tile_info,        tilemap_scan_rows,    TILEMAP_TRANSPARENT,                 8, 8,32,32);
-	bg1_tilemap = tilemap_create(trojan_get_bg1_tile_info,tilemap_scan_cols,    TILEMAP_TRANSPARENT | TILEMAP_SPLIT,16,16,32,32);
-	bg2_tilemap = tilemap_create(get_bg2_tile_info,       get_bg2_memory_offset,TILEMAP_OPAQUE,                     16,16,32,16);
+	fg_tilemap  = tilemap_create(get_fg_tile_info,        tilemap_scan_rows,    TILEMAP_TRANSPARENT,8, 8,32,32);
+	bg1_tilemap = tilemap_create(trojan_get_bg1_tile_info,tilemap_scan_cols,    TILEMAP_SPLIT,     16,16,32,32);
+	bg2_tilemap = tilemap_create(get_bg2_tile_info,       get_bg2_memory_offset,TILEMAP_OPAQUE,    16,16,32,16);
 
-	if (!fg_tilemap || !bg1_tilemap || !bg2_tilemap)
-		return 1;
+	if( fg_tilemap && bg1_tilemap && bg2_tilemap )
+	{
+		tilemap_set_transparent_pen(fg_tilemap,3);
+		tilemap_set_transmask(bg1_tilemap,0,0xffff,0x0001); /* split type 0 is totally transparent in front half */
+		tilemap_set_transmask(bg1_tilemap,1,0xf07f,0x0f81); /* split type 1 has pens 7-11 opaque in front half */
 
-	tilemap_set_transparent_pen(fg_tilemap,3);
-	tilemap_set_transparent_pen(bg1_tilemap,0);
-	tilemap_set_transmask(bg1_tilemap,0,0xffff); /* split type 0 is totally transparent in front half */
-	tilemap_set_transmask(bg1_tilemap,1,0xf07f); /* split type 1 has pens 7-11 opaque in front half */
-
-	trojan_vh_type = 0;
-
-	return 0;
+		bAvengersHardware = 0;
+		return 0;
+	}
+	return 1; /* error */
 }
 
 int avengers_vh_start( void )
 {
 	int result = trojan_vh_start();
-
-	trojan_vh_type = 1;
-
+	bAvengersHardware = 1;
 	return result;
 }
-
 
 /***************************************************************************
 
@@ -243,7 +248,7 @@ static void trojan_draw_sprites(struct osd_bitmap *bitmap)
 				   ((buffered_spriteram[offs + 1] & 0x80) << 3);
 			color = (buffered_spriteram[offs + 1] & 0x0e) >> 1;
 
-			if( trojan_vh_type )
+			if( bAvengersHardware )
 			{
 				flipx = 0;										/* Avengers */
 				flipy = ~buffered_spriteram[offs + 1] & 0x10;

@@ -19,16 +19,21 @@ static int flipscreen;
 static void get_bg_tile_info(int tile_index)
 {
 	unsigned char attr = cbasebal_scrollram[2*tile_index+1];
-	SET_TILE_INFO(1,cbasebal_scrollram[2*tile_index] + ((attr & 0x07) << 8) + 0x800 * tilebank,
-			(attr & 0xf0) >> 4)
-	tile_info.flags = (attr & 0x08) ? TILE_FLIPX : 0;
+	SET_TILE_INFO(
+			1,
+			cbasebal_scrollram[2*tile_index] + ((attr & 0x07) << 8) + 0x800 * tilebank,
+			(attr & 0xf0) >> 4,
+			(attr & 0x08) ? TILE_FLIPX : 0)
 }
 
 static void get_fg_tile_info(int tile_index)
 {
 	unsigned char attr = cbasebal_textram[tile_index+0x800];
-	SET_TILE_INFO(0,cbasebal_textram[tile_index] + ((attr & 0xf0) << 4),attr & 0x07)
-	tile_info.flags = (attr & 0x08) ? TILE_FLIPX : 0;
+	SET_TILE_INFO(
+			0,
+			cbasebal_textram[tile_index] + ((attr & 0xf0) << 4),
+			attr & 0x07,
+			(attr & 0x08) ? TILE_FLIPX : 0)
 }
 
 

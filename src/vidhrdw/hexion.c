@@ -53,7 +53,11 @@ void hexion_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 INLINE void get_tile_info(int tile_index,data8_t *ram)
 {
 	tile_index *= 4;
-	SET_TILE_INFO(0,ram[tile_index] + ((ram[tile_index+1] & 0x3f) << 8),ram[tile_index+2] & 0x0f)
+	SET_TILE_INFO(
+			0,
+			ram[tile_index] + ((ram[tile_index+1] & 0x3f) << 8),
+			ram[tile_index+2] & 0x0f,
+			0)
 }
 
 static void get_tile_info0(int tile_index)

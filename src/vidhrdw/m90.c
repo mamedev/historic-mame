@@ -39,9 +39,11 @@ static void get_pf1_tile_info(int tile_index)
 
 	tile=m90_video_data[tile_index]+(m90_video_data[tile_index+1]<<8);
 	color=m90_video_data[tile_index+2];
-	SET_TILE_INFO(0,tile,color&0xf)
-
-	tile_info.flags = TILE_FLIPYX(m90_video_data[tile_index+2]>>6);
+	SET_TILE_INFO(
+			0,
+			tile,
+			color&0xf,
+			TILE_FLIPYX(m90_video_data[tile_index+2]>>6))
 }
 
 static void get_pf2_tile_info(int tile_index)
@@ -51,9 +53,11 @@ static void get_pf2_tile_info(int tile_index)
 
 	tile=m90_video_data[tile_index]+(m90_video_data[tile_index+1]<<8);
 	color=m90_video_data[tile_index+2];
-	SET_TILE_INFO(0,tile,color&0xf)
-
-	tile_info.flags = TILE_FLIPYX(m90_video_data[tile_index+2]>>6);
+	SET_TILE_INFO(
+			0,
+			tile,
+			color&0xf,
+			TILE_FLIPYX(m90_video_data[tile_index+2]>>6))
 }
 
 int m90_vh_start(void)

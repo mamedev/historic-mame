@@ -2,6 +2,8 @@
 #include "vidhrdw/generic.h"
 #include "vidhrdw/taitoic.h"
 
+#define TC0480SCP_GFX_NUM 1
+
 struct tempsprite
 {
 	int gfx;
@@ -29,7 +31,7 @@ int gunbustr_vh_start (void)
 	if (!spritelist)
 		return 1;
 
-	if (TC0480SCP_vh_start(1,0,0x20,0x07,-1,-1,-1,0,0))
+	if (TC0480SCP_vh_start(TC0480SCP_GFX_NUM,0,0x20,0x07,-1,-1,-1,0,0))
 		return 1;
 
 	return 0;

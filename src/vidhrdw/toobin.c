@@ -42,13 +42,13 @@ int toobin_vh_start(void)
 		0,			/* index to which gfx system */
 		128,64,		/* size of the playfield in tiles (x,y) */
 		1,128,		/* tile_index = x * xmult + y * ymult (xmult,ymult) */
-	
+
 		0x000,		/* index of palette base */
 		0x100,		/* maximum number of colors */
 		0,			/* color XOR for shadow effect (if any) */
 		0,			/* latch mask */
 		0,			/* transparent pen mask */
-	
+
 		0x003fff,	/* tile data index mask */
 		0x0f0000,	/* tile data color mask */
 		0x004000,	/* tile data hflip mask */
@@ -86,7 +86,7 @@ int toobin_vh_start(void)
 		{{ 0 }},			/* mask for the priority */
 		{{ 0 }},			/* mask for the neighbor */
 		{{ 0x8000,0,0,0 }},	/* mask for absolute coordinates */
-		
+
 		{{ 0 }},			/* mask for the ignore value */
 		0,					/* resulting value to indicate "ignore" */
 		0					/* callback routine for ignored entries */
@@ -96,7 +96,7 @@ int toobin_vh_start(void)
 	{
 		2,			/* index to which gfx system */
 		64,64,		/* size of the alpha RAM in tiles (x,y) */
-	
+
 		0x200,		/* index of palette base */
 		0x040,		/* maximum number of colors */
 		0,			/* mask of the palette split */
@@ -118,7 +118,7 @@ int toobin_vh_start(void)
 	/* initialize the alphanumerics */
 	if (!atarian_init(0, &andesc))
 		goto cant_create_an;
-	
+
 	/* reset the statics */
 	last_intensity = 0;
 	return 0;
@@ -158,7 +158,7 @@ void toobin_vh_stop(void)
 WRITE16_HANDLER( toobin_paletteram_w )
 {
 	int newword;
-	
+
 	COMBINE_DATA(&paletteram16[offset]);
 	newword = paletteram16[offset];
 
@@ -195,7 +195,7 @@ WRITE16_HANDLER( toobin_hscroll_w )
 	int scanline = cpu_getscanline() + 1;
 	int newscroll = ataripf_get_xscroll(0) << 6;
 	COMBINE_DATA(&newscroll);
-	
+
 	ataripf_set_xscroll(0, (newscroll >> 6) & 0x3ff, scanline);
 	atarimo_set_xscroll(0, (newscroll >> 6) & 0x3ff, scanline);
 }
@@ -230,7 +230,7 @@ static int overrender_callback(struct ataripf_overrender_data *data, int state)
 		data->maskpens = 0x0001;
 		return OVERRENDER_SOME;
 	}
-	
+
 	/* handle a query */
 	else if (state == OVERRENDER_QUERY)
 	{

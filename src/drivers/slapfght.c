@@ -978,6 +978,35 @@ ROM_START( perfrman )
 	ROM_LOAD( "ci09.13",    0x200, 0x0020, 0xaa0ca5a5 )
 ROM_END
 
+ROM_START( perfrmau )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )				 /* Main CPU code */
+	ROM_LOAD( "ci07.0",    0x00000, 0x4000, 0x7ad32eea )
+	ROM_LOAD( "ci108r5.1", 0x04000, 0x4000, 0x9d373efa )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )				 /* Sound CPU code */
+	ROM_LOAD( "ci06.4",    0x0000, 0x2000, 0xdf891ad0 )
+
+	ROM_REGION( 0x6000, REGION_GFX1, ROMREGION_DISPOSE ) /* Tiles */
+	ROM_LOAD( "ci02.7",     0x0000, 0x2000, 0x8efa960a )
+	ROM_LOAD( "ci01.6",     0x2000, 0x2000, 0x2e8e69df )
+	ROM_LOAD( "ci00.5",     0x4000, 0x2000, 0x79e191f8 )
+
+	ROM_REGION( 0x6000, REGION_GFX2, ROMREGION_DISPOSE ) /* Sprites */
+	ROM_LOAD( "ci05.10",    0x0000, 0x2000, 0x809a4ccc )
+	ROM_LOAD( "ci04.9",     0x2000, 0x2000, 0x026f27b3 )
+	ROM_LOAD( "ci03.8",     0x4000, 0x2000, 0x6410d9eb )
+
+	ROM_REGION( 0x300, REGION_PROMS, 0 )				 /* Color BPROMs */
+	ROM_LOAD( "ci14.16",    0x000, 0x0100, 0x515f8a3b )
+	ROM_LOAD( "ci13.15",    0x100, 0x0100, 0xa9a397eb )
+	ROM_LOAD( "ci12.14",    0x200, 0x0100, 0x67f86e3d )
+
+	ROM_REGION( 0x220, REGION_USER1, 0 )
+	ROM_LOAD( "ci11.11",    0x000, 0x0100, 0xd492e6c2 )
+	ROM_LOAD( "ci10.12",    0x100, 0x0100, 0x59490887 )
+	ROM_LOAD( "ci09r1.13",  0x200, 0x0020, 0xd9e92f6f )
+ROM_END
+
 ROM_START( tigerh )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )
 	ROM_LOAD( "0.4",          0x00000, 0x4000, 0x4be73246 )
@@ -1369,8 +1398,10 @@ ROM_START( getstarb )
 ROM_END
 
 
+
 /*   ( YEAR  NAME      PARENT    MACHINE   INPUT   INIT MONITOR COMPANY    FULLNAME     FLAGS ) */
-GAME ( 1985, perfrman, 0,        perfrman, perfrman, 0, ROT270, "[Toaplan] Data East Corporation", "Performan" )
+GAME ( 1985, perfrman, 0,        perfrman, perfrman, 0, ROT270, "[Toaplan] Data East Corporation", "Performan (Japan)" )
+GAME ( 1985, perfrmau, perfrman, perfrman, perfrman, 0, ROT270, "[Toaplan] Data East USA", "Performan (US)" )
 GAMEX( 1985, tigerh,   0,        tigerh,   tigerh,   0, ROT270, "Taito", "Tiger Heli (set 1)", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
 GAMEX( 1985, tigerh2,  tigerh,   tigerh,   tigerh,   0, ROT270, "Taito", "Tiger Heli (set 2)", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
 GAMEX( 1985, tigerhj,  tigerh,   tigerh,   tigerh,   0, ROT270, "Taito", "Tiger Heli (Japan)", GAME_NOT_WORKING | GAME_NO_COCKTAIL )

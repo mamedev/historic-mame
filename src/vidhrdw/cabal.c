@@ -8,99 +8,189 @@
 
 #include "vidhrdw/generic.h"
 
-static void draw_background( struct osd_bitmap *bitmap ) {
-    int offs;
-    const struct GfxElement *gfx = Machine->gfx[1];
+static struct tilemap *background_layer,*text_layer;
 
-    for( offs = 0; offs < videoram_size/2; offs++ )
+
+static void get_back_tile_info(int tile_index)
+{
+	int tile = videoram16[tile_index];
+	int color = (tile>>12)&0xf;
+
+	tile &= 0xfff;
+
+	SET_TILE_INFO(
+			1,
+			tile,
+			color,
+			0)
+}
+
+static void get_text_tile_info(int tile_index)
+{
+	int tile = colorram16[tile_index];
+	int color = (tile>>10);
+
+	tile &= 0x3ff;
+
+	SET_TILE_INFO(
+			0,
+			tile,
+			color,
+			0)
+}
+
+
+int cabal_vh_start( void )
+{
+	background_layer = tilemap_create(get_back_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,16,16);
+	text_layer       = tilemap_create(get_text_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,  8,8,32,32);
+
+	if (!text_layer || !background_layer ) return 1;
+
+	tilemap_set_transparent_pen(text_layer,3);
+	tilemap_set_transparent_pen(background_layer,15);
+
+	return 0;
+}
+
+
+/**************************************************************************/
+
+WRITE16_HANDLER( cabal_flipscreen_w )
+{
+	if (ACCESSING_LSB)
 	{
-        if( dirtybuffer[offs] ) {
-            int data = videoram16[offs];
-            int numtile = ( data & 0xfff );
-            int color = ( data & 0xf000 ) >> 12;
-            int sx = ( offs % 16 ) * 16;
-            int sy = ( offs / 16 ) * 16;
+		int flip = (data & 0x20) ? (TILEMAP_FLIPX | TILEMAP_FLIPY) : 0;
+		tilemap_set_flip(background_layer,flip);
+		tilemap_set_flip(text_layer,flip);
 
-            dirtybuffer[offs] = 0;
-
-            drawgfx( tmpbitmap,gfx,
-                numtile,
-                color,
-                0,0,
-                sx,sy,
-                0,TRANSPARENCY_NONE,0);
-        }
-    }
-
-    copybitmap( bitmap, tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0 );
+		flip_screen_set(data & 0x20);
+	}
 }
 
-static void draw_text( struct osd_bitmap *bitmap ) {
-    int offs;
-    const struct rectangle *clip = &Machine->visible_area;
-
-    for ( offs = 0; offs < 0x400; offs++) {
-        unsigned short data = colorram16[offs];
-        int tile_number = data&0x3ff;
-
-        if ( tile_number != 0xd ) {
-            int color = data>>10;
-            int sx = 8 * ( offs % 32 );
-            int sy = 8 * ( offs / 32 );
-
-            drawgfx( bitmap,Machine->gfx[0],
-                tile_number,
-                color,
-                0,0, /* no flip */
-                sx,sy,
-                clip,TRANSPARENCY_PEN,0x3);
-        }
-    }
+WRITE16_HANDLER( cabal_background_videoram16_w )
+{
+	int oldword = videoram16[offset];
+	COMBINE_DATA(&videoram16[offset]);
+	if (oldword != videoram16[offset])
+		tilemap_mark_tile_dirty(background_layer,offset);
 }
 
-static void draw_sprites( struct osd_bitmap *bitmap ){
-    const struct rectangle *clip = &Machine->visible_area;
-    const struct GfxElement *gfx = Machine->gfx[2];
-    int offs;
+WRITE16_HANDLER( cabal_text_videoram16_w )
+{
+	int oldword = colorram16[offset];
+	COMBINE_DATA(&colorram16[offset]);
+	if (oldword != colorram16[offset])
+		tilemap_mark_tile_dirty(text_layer,offset);
+}
 
-    for( offs = spriteram_size/2 - 4; offs >= 0; offs -= 4 ) {
-        int data0 = spriteram16[offs];
-        int data1 = spriteram16[offs+1];
-        int data2 = spriteram16[offs+2];
-//      int data3 = spriteram16[offs+3];
 
-        /*
+/**************************************************************************/
+
+void cabal_mark_sprite_colours(void)
+{
+	UINT16 palette_map[16*4],usage;
+	int i,code,color,offs;
+
+	memset (palette_map, 0, sizeof (palette_map));
+
+	for (offs = 0;offs < (spriteram_size/2);offs += 4)
+	{
+		if (spriteram16[offs] &0x100)
+		{
+			code  = (spriteram16[offs+1] &0xfff);
+			color = (spriteram16[offs+2] &0x7800 ) >> 11;
+			palette_map[color + 0x10] |= Machine->gfx[2]->pen_usage[code];
+		}
+	}
+
+	/* expand it */
+	for (color = 0; color < 16 * 4; color++)
+	{
+		usage = palette_map[color];
+
+		if (usage)
+		{
+			for (i = 0; i < 15; i++)
+				if (usage & (1 << i))
+					palette_used_colors[color * 16 + i] = PALETTE_COLOR_USED;
+			palette_used_colors[color * 16 + 15] = PALETTE_COLOR_TRANSPARENT;
+		}
+	}
+}
+
+
+/********************************************************************
+
+	Cabal Spriteram
+	---------------
+
+	+0   .......x ........  Sprite enable bit
+	+0   ........ xxxxxxxx  Sprite Y coordinate
+	+1   ..??.... ........  ??? unknown ???
+	+1   ....xxxx xxxxxxxx  Sprite tile number
+ 	+2   .xxxx... ........  Sprite color bank
+	+2   .....x.. ........  Sprite flip x
+	+2   .......x xxxxxxxx  Sprite X coordinate
+	+3   (unused)
+
             -------E YYYYYYYY
             ----BBTT TTTTTTTT
             -CCCCF-X XXXXXXXX
             -------- --------
-        */
-        if( data0 & 0x100 ) {
-            int tile_number = data1 & 0xfff;
-            int color   = ( data2 & 0x7800 ) >> 11;
-            int sy = ( data0 & 0xff );
-            int sx = ( data2 & 0x1ff );
-            int hflip = ( data2 & 0x0400 );
 
-            if ( sx > 256 )
-                sx -= 512;
+********************************************************************/
 
-            drawgfx( bitmap,gfx,
-                tile_number,
-                color,
-                hflip,0,
-                sx,sy,
-                clip,TRANSPARENCY_PEN,0xf );
-        }
-    }
+static void cabal_draw_sprites( struct osd_bitmap *bitmap )
+{
+	int offs,data0,data1,data2;
+
+	for( offs = spriteram_size/2 - 4; offs >= 0; offs -= 4 )
+	{
+		data0 = spriteram16[offs];
+		data1 = spriteram16[offs+1];
+		data2 = spriteram16[offs+2];
+
+		if( data0 & 0x100 )
+		{
+			int tile_number = data1 & 0xfff;
+			int color   = ( data2 & 0x7800 ) >> 11;
+			int sy = ( data0 & 0xff );
+			int sx = ( data2 & 0x1ff );
+			int flipx = ( data2 & 0x0400 );
+			int flipy = 0;
+
+			if ( sx>256 )   sx -= 512;
+
+			if (flip_screen)
+			{
+				sx = 240 - sx;
+				sy = 240 - sy;
+				flipx = !flipx;
+				flipy = !flipy;
+			}
+
+			drawgfx( bitmap,Machine->gfx[2],
+				tile_number,
+				color,
+				flipx,flipy,
+				sx,sy,
+				&Machine->visible_area,TRANSPARENCY_PEN,0xf );
+		}
+	}
 }
+
 
 void cabal_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh )
 {
-    if (palette_recalc())
-        memset(dirtybuffer, 1, videoram_size/2);
+	tilemap_update(ALL_TILEMAPS);
+	palette_init_used_colors();
+	cabal_mark_sprite_colours();
+	palette_recalc();
 
-    draw_background( bitmap );
-    draw_sprites( bitmap );
-    draw_text( bitmap );
+	tilemap_draw(bitmap,background_layer,TILEMAP_IGNORE_TRANSPARENCY,0);
+	cabal_draw_sprites(bitmap);
+	tilemap_draw(bitmap,text_layer,0,0);
 }
+
+

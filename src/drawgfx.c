@@ -79,6 +79,43 @@ void alpha_init(void)
 }
 
 
+static void calc_penusage(struct GfxElement *gfx,int num)
+{
+	int x,y;
+	UINT8 *dp;
+
+	if (!gfx->pen_usage) return;
+
+	/* fill the pen_usage array with info on the used pens */
+	gfx->pen_usage[num] = 0;
+
+	dp = gfx->gfxdata + num * gfx->char_modulo;
+
+	if (gfx->flags & GFX_PACKED)
+	{
+		for (y = 0;y < gfx->height;y++)
+		{
+			for (x = 0;x < gfx->width/2;x++)
+			{
+				gfx->pen_usage[num] |= 1 << (dp[x] & 0x0f);
+				gfx->pen_usage[num] |= 1 << (dp[x] >> 4);
+			}
+			dp += gfx->line_modulo;
+		}
+	}
+	else
+	{
+		for (y = 0;y < gfx->height;y++)
+		{
+			for (x = 0;x < gfx->width;x++)
+			{
+				gfx->pen_usage[num] |= 1 << dp[x];
+			}
+			dp += gfx->line_modulo;
+		}
+	}
+}
+
 void decodechar(struct GfxElement *gfx,int num,const UINT8 *src,const struct GfxLayout *gl)
 {
 	int plane,x,y;
@@ -126,24 +163,6 @@ void decodechar(struct GfxElement *gfx,int num,const UINT8 *src,const struct Gfx
 						dp[x] |= shiftedbit;
 				}
 				dp -= gfx->line_modulo;
-			}
-		}
-
-
-		if (gfx->pen_usage)
-		{
-			/* fill the pen_usage array with info on the used pens */
-			gfx->pen_usage[num] = 0;
-
-			dp = gfx->gfxdata + num * gfx->char_modulo;
-			for (y = 0;y < gfx->height;y++)
-			{
-				for (x = 0;x < gfx->width/2;x++)
-				{
-					gfx->pen_usage[num] |= 1 << (dp[x] & 0x0f);
-					gfx->pen_usage[num] |= 1 << (dp[x] >> 4);
-				}
-				dp += gfx->line_modulo;
 			}
 		}
 	}
@@ -196,24 +215,9 @@ void decodechar(struct GfxElement *gfx,int num,const UINT8 *src,const struct Gfx
 			}
 #endif
 		}
-
-
-		if (gfx->pen_usage)
-		{
-			/* fill the pen_usage array with info on the used pens */
-			gfx->pen_usage[num] = 0;
-
-			dp = gfx->gfxdata + num * gfx->char_modulo;
-			for (y = 0;y < gfx->height;y++)
-			{
-				for (x = 0;x < gfx->width;x++)
-				{
-					gfx->pen_usage[num] |= 1 << dp[x];
-				}
-				dp += gfx->line_modulo;
-			}
-		}
 	}
+
+	calc_penusage(gfx,num);
 }
 
 
@@ -244,20 +248,6 @@ struct GfxElement *decodegfx(const UINT8 *src,const struct GfxLayout *gl)
 		gfx->height = gl->height;
 	}
 
-	if (0 && gl->planes <= 4 && !(gfx->width & 1))
-	{
-		gfx->flags |= GFX_PACKED;
-		gfx->line_modulo = gfx->width/2;
-	}
-	else
-		gfx->line_modulo = gfx->width;
-	gfx->char_modulo = gfx->line_modulo * gfx->height;
-	if ((gfx->gfxdata = malloc(gl->total * gfx->char_modulo * sizeof(UINT8))) == 0)
-	{
-		free(gfx);
-		return 0;
-	}
-
 	gfx->total_elements = gl->total;
 	gfx->color_granularity = 1 << gl->planes;
 
@@ -266,8 +256,42 @@ struct GfxElement *decodegfx(const UINT8 *src,const struct GfxLayout *gl)
 		gfx->pen_usage = malloc(gfx->total_elements * sizeof(int));
 		/* no need to check for failure, the code can work without pen_usage */
 
-	for (c = 0;c < gl->total;c++)
-		decodechar(gfx,c,src,gl);
+	if (gl->planeoffset[0] == GFX_RAW)
+	{
+		if (gl->planes <= 4) gfx->flags |= GFX_PACKED;
+		if (Machine->orientation & ORIENTATION_SWAP_XY) gfx->flags |= GFX_SWAPXY;
+
+		gfx->line_modulo = gl->yoffset[0] / 8;
+		gfx->char_modulo = gl->charincrement / 8;
+
+		gfx->gfxdata = (UINT8 *)src + gl->xoffset[0] / 8;
+		gfx->flags |= GFX_DONT_FREE_GFXDATA;
+
+		for (c = 0;c < gfx->total_elements;c++)
+			calc_penusage(gfx,c);
+	}
+	else
+	{
+		if (0 && gl->planes <= 4 && !(gfx->width & 1))
+//		if (gl->planes <= 4 && !(gfx->width & 1))
+		{
+			gfx->flags |= GFX_PACKED;
+			gfx->line_modulo = gfx->width/2;
+		}
+		else
+			gfx->line_modulo = gfx->width;
+		gfx->char_modulo = gfx->line_modulo * gfx->height;
+
+		if ((gfx->gfxdata = malloc(gfx->total_elements * gfx->char_modulo * sizeof(UINT8))) == 0)
+		{
+			free(gfx->pen_usage);
+			free(gfx);
+			return 0;
+		}
+
+		for (c = 0;c < gfx->total_elements;c++)
+			decodechar(gfx,c,src,gl);
+	}
 
 	return gfx;
 }
@@ -278,7 +302,8 @@ void freegfx(struct GfxElement *gfx)
 	if (gfx)
 	{
 		free(gfx->pen_usage);
-		free(gfx->gfxdata);
+		if (!(gfx->flags & GFX_DONT_FREE_GFXDATA))
+			free(gfx->gfxdata);
 		free(gfx);
 	}
 }
@@ -540,7 +565,7 @@ INLINE void blockmove_NtoN_transpen_noremap_flipx32(
 #define VMODULO 1
 #define HMODULO dstmodulo
 #define COMMON_ARGS														\
-		const UINT8 *srcdata,int srcwidth,int srcheight,int srcmodulo,	\
+		const UINT8 *srcdata,int srcheight,int srcwidth,int srcmodulo,	\
 		int topskip,int leftskip,int flipy,int flipx,					\
 		DATA_TYPE *dstdata,int dstheight,int dstwidth,int dstmodulo
 
@@ -692,7 +717,7 @@ INLINE void blockmove_NtoN_transpen_noremap_flipx32(
 #define VMODULO 1
 #define HMODULO dstmodulo
 #define COMMON_ARGS														\
-		const UINT8 *srcdata,int srcwidth,int srcheight,int srcmodulo,	\
+		const UINT8 *srcdata,int srcheight,int srcwidth,int srcmodulo,	\
 		int topskip,int leftskip,int flipy,int flipx,					\
 		DATA_TYPE *dstdata,int dstheight,int dstwidth,int dstmodulo
 
@@ -844,7 +869,7 @@ INLINE void blockmove_NtoN_transpen_noremap_flipx32(
 #define VMODULO 1
 #define HMODULO dstmodulo
 #define COMMON_ARGS														\
-		const UINT8 *srcdata,int srcwidth,int srcheight,int srcmodulo,	\
+		const UINT8 *srcdata,int srcheight,int srcwidth,int srcmodulo,	\
 		int topskip,int leftskip,int flipy,int flipx,					\
 		DATA_TYPE *dstdata,int dstheight,int dstwidth,int dstmodulo
 
@@ -1912,44 +1937,92 @@ INLINE void common_drawgfxzoom( struct osd_bitmap *dest_bmp,const struct GfxElem
 					{
 						if (pri_buffer)
 						{
-							for( y=sy; y<ey; y++ )
+							if (gfx->flags & GFX_PACKED)
 							{
-								UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
-								UINT8 *dest = dest_bmp->line[y];
-								UINT8 *pri = pri_buffer->line[y];
-
-								int x, x_index = x_index_base;
-								for( x=sx; x<ex; x++ )
+								for( y=sy; y<ey; y++ )
 								{
-									int c = source[x_index>>16];
-									if( c != transparent_color )
-									{
-										if (((1 << pri[x]) & pri_mask) == 0)
-											dest[x] = pal[c];
-										pri[x] = 31;
-									}
-									x_index += dx;
-								}
+									UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+									UINT8 *dest = dest_bmp->line[y];
+									UINT8 *pri = pri_buffer->line[y];
 
-								y_index += dy;
+									int x, x_index = x_index_base;
+									for( x=sx; x<ex; x++ )
+									{
+										int c = (source[x_index>>17] >> ((x_index & 0x10000) >> 14)) & 0x0f;
+										if( c != transparent_color )
+										{
+											if (((1 << pri[x]) & pri_mask) == 0)
+												dest[x] = pal[c];
+											pri[x] = 31;
+										}
+										x_index += dx;
+									}
+
+									y_index += dy;
+								}
+							}
+							else
+							{
+								for( y=sy; y<ey; y++ )
+								{
+									UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+									UINT8 *dest = dest_bmp->line[y];
+									UINT8 *pri = pri_buffer->line[y];
+
+									int x, x_index = x_index_base;
+									for( x=sx; x<ex; x++ )
+									{
+										int c = source[x_index>>16];
+										if( c != transparent_color )
+										{
+											if (((1 << pri[x]) & pri_mask) == 0)
+												dest[x] = pal[c];
+											pri[x] = 31;
+										}
+										x_index += dx;
+									}
+
+									y_index += dy;
+								}
 							}
 						}
 						else
 						{
-							for( y=sy; y<ey; y++ )
+							if (gfx->flags & GFX_PACKED)
 							{
-								UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
-								UINT8 *dest = dest_bmp->line[y];
-
-								int x, x_index = x_index_base;
-								for( x=sx; x<ex; x++ )
+								for( y=sy; y<ey; y++ )
 								{
-									int c = source[x_index>>16];
-									if( c != transparent_color ) dest[x] = pal[c];
-									x_index += dx;
-								}
+									UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+									UINT8 *dest = dest_bmp->line[y];
 
-								y_index += dy;
+									int x, x_index = x_index_base;
+									for( x=sx; x<ex; x++ )
+									{
+										int c = (source[x_index>>17] >> ((x_index & 0x10000) >> 14)) & 0x0f;
+										if( c != transparent_color ) dest[x] = pal[c];
+										x_index += dx;
+									}
+
+									y_index += dy;
+								}
+							}
+							else
+							{
+								for( y=sy; y<ey; y++ )
+								{
+									UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+									UINT8 *dest = dest_bmp->line[y];
+
+									int x, x_index = x_index_base;
+									for( x=sx; x<ex; x++ )
+									{
+										int c = source[x_index>>16];
+										if( c != transparent_color ) dest[x] = pal[c];
+										x_index += dx;
+									}
+
+									y_index += dy;
+								}
 							}
 						}
 					}
@@ -2362,44 +2435,92 @@ INLINE void common_drawgfxzoom( struct osd_bitmap *dest_bmp,const struct GfxElem
 					{
 						if (pri_buffer)
 						{
-							for( y=sy; y<ey; y++ )
+							if (gfx->flags & GFX_PACKED)
 							{
-								UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
-								UINT16 *dest = (UINT16 *)dest_bmp->line[y];
-								UINT8 *pri = pri_buffer->line[y];
-
-								int x, x_index = x_index_base;
-								for( x=sx; x<ex; x++ )
+								for( y=sy; y<ey; y++ )
 								{
-									int c = source[x_index>>16];
-									if( c != transparent_color )
-									{
-										if (((1 << pri[x]) & pri_mask) == 0)
-											dest[x] = pal[c];
-										pri[x] = 31;
-									}
-									x_index += dx;
-								}
+									UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+									UINT16 *dest = (UINT16 *)dest_bmp->line[y];
+									UINT8 *pri = pri_buffer->line[y];
 
-								y_index += dy;
+									int x, x_index = x_index_base;
+									for( x=sx; x<ex; x++ )
+									{
+										int c = (source[x_index>>17] >> ((x_index & 0x10000) >> 14)) & 0x0f;
+										if( c != transparent_color )
+										{
+											if (((1 << pri[x]) & pri_mask) == 0)
+												dest[x] = pal[c];
+											pri[x] = 31;
+										}
+										x_index += dx;
+									}
+
+									y_index += dy;
+								}
+							}
+							else
+							{
+								for( y=sy; y<ey; y++ )
+								{
+									UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+									UINT16 *dest = (UINT16 *)dest_bmp->line[y];
+									UINT8 *pri = pri_buffer->line[y];
+
+									int x, x_index = x_index_base;
+									for( x=sx; x<ex; x++ )
+									{
+										int c = source[x_index>>16];
+										if( c != transparent_color )
+										{
+											if (((1 << pri[x]) & pri_mask) == 0)
+												dest[x] = pal[c];
+											pri[x] = 31;
+										}
+										x_index += dx;
+									}
+
+									y_index += dy;
+								}
 							}
 						}
 						else
 						{
-							for( y=sy; y<ey; y++ )
+							if (gfx->flags & GFX_PACKED)
 							{
-								UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
-								UINT16 *dest = (UINT16 *)dest_bmp->line[y];
-
-								int x, x_index = x_index_base;
-								for( x=sx; x<ex; x++ )
+								for( y=sy; y<ey; y++ )
 								{
-									int c = source[x_index>>16];
-									if( c != transparent_color ) dest[x] = pal[c];
-									x_index += dx;
-								}
+									UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+									UINT16 *dest = (UINT16 *)dest_bmp->line[y];
 
-								y_index += dy;
+									int x, x_index = x_index_base;
+									for( x=sx; x<ex; x++ )
+									{
+										int c = (source[x_index>>17] >> ((x_index & 0x10000) >> 14)) & 0x0f;
+										if( c != transparent_color ) dest[x] = pal[c];
+										x_index += dx;
+									}
+
+									y_index += dy;
+								}
+							}
+							else
+							{
+								for( y=sy; y<ey; y++ )
+								{
+									UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+									UINT16 *dest = (UINT16 *)dest_bmp->line[y];
+
+									int x, x_index = x_index_base;
+									for( x=sx; x<ex; x++ )
+									{
+										int c = source[x_index>>16];
+										if( c != transparent_color ) dest[x] = pal[c];
+										x_index += dx;
+									}
+
+									y_index += dy;
+								}
 							}
 						}
 					}
@@ -3777,10 +3898,13 @@ void draw_crosshair(struct osd_bitmap *bitmap,int x,int y,const struct rectangle
 	{																\
 		INCREMENT_DST(HMODULO * (dstwidth-1))						\
 		srcdata += (srcwidth - dstwidth - leftskip)/2;				\
+		leftskip = (srcwidth - dstwidth - leftskip) & 1;			\
 	}																\
 	else															\
+	{																\
 		srcdata += leftskip/2;										\
-	leftskip &= 1;													\
+		leftskip &= 1;												\
+	}																\
 	srcmodulo -= (dstwidth+leftskip)/2;
 
 

@@ -26,8 +26,11 @@ INLINE void get_tile_info(int tile_index,int plane)
 
 	tile_index = 2*tile_index + 0x800*plane;
 	attr = vram[tile_index];
-	SET_TILE_INFO(1,vram[tile_index+1],attr & 0x7f)
-	tile_info.priority = (attr & 0x0600) >> 9;
+	SET_TILE_INFO(
+			1,
+			vram[tile_index+1],
+			attr & 0x7f,
+			(attr & 0x0600) >> 9)
 }
 
 static void get_tile_info0(int tile_index)

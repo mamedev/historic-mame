@@ -162,78 +162,58 @@ static int prvscrollx = 0;
 
 static void argus_get_tx_tile_info(int tile_index)
 {
-	int hi, lo, color, tile;
+	int hi, lo;
 
 	lo = argus_txram[  tile_index << 1  ];
 	hi = argus_txram[ (tile_index << 1) + 1 ];
 
-	tile_info.flags = 0;
-	if ( hi & 0x20 )
-		tile_info.flags |= TILE_FLIPY;
-	if ( hi & 0x10 )
-		tile_info.flags |= TILE_FLIPX;
-
-	tile = ((hi & 0xc0) << 2) | lo;
-	color = hi & 0x0f;
-
-	SET_TILE_INFO(3, tile, color)
+	SET_TILE_INFO(
+			3,
+			((hi & 0xc0) << 2) | lo,
+			hi & 0x0f,
+			TILE_FLIPYX((hi & 0x30) >> 4))
 }
 
 static void argus_get_bg0_tile_info(int tile_index)
 {
-	int hi, lo, color, tile;
+	int hi, lo;
 
 	lo = argus_dummy_bg0ram[  tile_index << 1  ];
 	hi = argus_dummy_bg0ram[ (tile_index << 1) + 1 ];
 
-	tile_info.flags = 0;
-	if ( hi & 0x20 )
-		tile_info.flags |= TILE_FLIPY;
-	if ( hi & 0x10 )
-		tile_info.flags |= TILE_FLIPX;
-
-	tile = ((hi & 0xc0) << 2) | lo;
-	color = hi & 0x0f;
-
-	SET_TILE_INFO(1, tile, color)
+	SET_TILE_INFO(
+			1,
+			((hi & 0xc0) << 2) | lo,
+			hi & 0x0f,
+			TILE_FLIPYX((hi & 0x30) >> 4))
 }
 
 static void argus_get_bg1_tile_info(int tile_index)
 {
-	int hi, lo, color, tile;
+	int hi, lo;
 
 	lo = argus_bg1ram[  tile_index << 1  ];
 	hi = argus_bg1ram[ (tile_index << 1) + 1 ];
 
-	tile_info.flags = 0;
-	if ( hi & 0x20 )
-		tile_info.flags |= TILE_FLIPY;
-	if ( hi & 0x10 )
-		tile_info.flags |= TILE_FLIPX;
-
-	tile =  lo;
-	color = hi & 0x0f;
-
-	SET_TILE_INFO(2, tile, color)
+	SET_TILE_INFO(
+			2,
+			lo,
+			hi & 0x0f,
+			TILE_FLIPYX((hi & 0x30) >> 4))
 }
 
 static void valtric_get_tx_tile_info(int tile_index)
 {
-	int hi, lo, color, tile;
+	int hi, lo;
 
 	lo = argus_txram[  tile_index << 1  ];
 	hi = argus_txram[ (tile_index << 1) + 1 ];
 
-	tile_info.flags = 0;
-	if ( hi & 0x20 )
-		tile_info.flags |= TILE_FLIPY;
-	if ( hi & 0x10 )
-		tile_info.flags |= TILE_FLIPX;
-
-	tile = ((hi & 0xc0) << 2) | lo;
-	color = hi & 0x0f;
-
-	SET_TILE_INFO(2, tile, color)
+	SET_TILE_INFO(
+			2,
+			((hi & 0xc0) << 2) | lo,
+			hi & 0x0f,
+			TILE_FLIPYX((hi & 0x30) >> 4))
 }
 
 static void valtric_get_bg_tile_info(int tile_index)
@@ -246,33 +226,32 @@ static void valtric_get_bg_tile_info(int tile_index)
 	tile = ((hi & 0xc0) << 2) | ((hi & 0x20) << 5) | lo;
 	color = hi & 0x0f;
 
-	SET_TILE_INFO(1, tile, color)
+	SET_TILE_INFO(
+			1,
+			tile,
+			color,
+			0)
 }
 
 static void butasan_get_tx_tile_info(int tile_index)
 {
-	int hi, lo, color, tile;
+	int hi, lo;
 
 	tile_index ^= 0x3e0;
 
 	lo = butasan_txram[  tile_index << 1  ];
 	hi = butasan_txram[ (tile_index << 1) + 1 ];
 
-	tile_info.flags = 0;
-	if ( hi & 0x20 )
-		tile_info.flags |= TILE_FLIPY;
-	if ( hi & 0x10 )
-		tile_info.flags |= TILE_FLIPX;
-
-	tile = ((hi & 0xc0) << 2) | lo;
-	color = hi & 0x0f;
-
-	SET_TILE_INFO(3, tile, color)
+	SET_TILE_INFO(
+			3,
+			((hi & 0xc0) << 2) | lo,
+			hi & 0x0f,
+			TILE_FLIPYX((hi & 0x30) >> 4))
 }
 
 static void butasan_get_bg0_tile_info(int tile_index)
 {
-	int hi, lo, color, tile;
+	int hi, lo;
 	int attrib;
 
 	attrib = (tile_index & 0x00f) | ((tile_index & 0x1e0) >> 1);
@@ -282,16 +261,11 @@ static void butasan_get_bg0_tile_info(int tile_index)
 	lo = butasan_bg0ram[  attrib << 1  ];
 	hi = butasan_bg0ram[ (attrib << 1) + 1 ];
 
-	tile_info.flags = 0;
-	if ( hi & 0x20 )
-		tile_info.flags |= TILE_FLIPY;
-	if ( hi & 0x10 )
-		tile_info.flags |= TILE_FLIPX;
-
-	tile = ((hi & 0xc0) << 2) | lo;
-	color = hi & 0x0f;
-
-	SET_TILE_INFO(1, tile, color)
+	SET_TILE_INFO(
+			1,
+			((hi & 0xc0) << 2) | lo,
+			hi & 0x0f,
+			TILE_FLIPYX((hi & 0x30) >> 4))
 }
 
 static void butasan_get_bg1_tile_info(int tile_index)
@@ -306,7 +280,11 @@ static void butasan_get_bg1_tile_info(int tile_index)
 	tile = butasan_bg1ram[ attrib ] | bank;
 	color = (tile & 0x80) >> 7;
 
-	SET_TILE_INFO(2, tile, color)
+	SET_TILE_INFO(
+			2,
+			tile,
+			color,
+			0)
 }
 
 
@@ -1489,7 +1467,7 @@ void butasan_draw_sprites(struct osd_bitmap *bitmap)
 }
 
 
-#if MAME_DEBUG
+#ifdef MAME_DEBUG
 static void butasan_log_vram(void)
 {
 	int offs;
@@ -1591,7 +1569,7 @@ void butasan_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	butasan_draw_sprites(bitmap);
 	tilemap_draw(bitmap, tx_tilemap,  0, 0);
 
-#if MAME_DEBUG
+#ifdef MAME_DEBUG
 	butasan_log_vram();
 #endif
 }

@@ -4,7 +4,7 @@
 **
 ** Copyright (C) 1999,2000 Tatsuyuki Satoh , MultiArcadeMachineEmurator development
 **
-** Version 0.37
+** Version 0.37a
 **
 */
 
@@ -1117,7 +1117,7 @@ void Y8950UpdateOne(FM_OPL *OPL, INT16 *buffer, int length)
 		vib = vib_table[(vibCnt+=vibIncr)>>VIB_SHIFT];
 		outd[0] = 0;
 		/* deltaT ADPCM */
-		if( DELTAT->flag )
+		if( DELTAT->portstate )
 			YM_DELTAT_ADPCM_CALC(DELTAT);
 		/* FM part */
 		for(CH=S_CH ; CH < R_CH ; CH++)
@@ -1133,7 +1133,7 @@ void Y8950UpdateOne(FM_OPL *OPL, INT16 *buffer, int length)
 	OPL->amsCnt = amsCnt;
 	OPL->vibCnt = vibCnt;
 	/* deltaT START flag */
-	if( !DELTAT->flag )
+	if( !DELTAT->portstate )
 		OPL->status &= 0xfe;
 }
 #endif

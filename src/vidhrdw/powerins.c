@@ -129,7 +129,11 @@ Offset:
 static void get_tile_info_0( int tile_index )
 {
 	data16_t code = powerins_vram_0[tile_index];
-	SET_TILE_INFO( 0 , (code & 0x07ff) + (tile_bank*0x800), ((code & 0xf000) >> (16-4)) + ((code & 0x0800) >> (11-4)) );
+	SET_TILE_INFO(
+			0,
+			(code & 0x07ff) + (tile_bank*0x800),
+			((code & 0xf000) >> (16-4)) + ((code & 0x0800) >> (11-4)),
+			0)
 }
 
 WRITE16_HANDLER( powerins_vram_0_w )
@@ -167,7 +171,11 @@ Offset:
 static void get_tile_info_1( int tile_index )
 {
 	data16_t code = powerins_vram_1[tile_index];
-	SET_TILE_INFO( 1 , code & 0x0fff , (code & 0xf000) >> (16-4) );
+	SET_TILE_INFO(
+			1,
+			code & 0x0fff,
+			(code & 0xf000) >> (16-4),
+			0)
 }
 
 WRITE16_HANDLER( powerins_vram_1_w )

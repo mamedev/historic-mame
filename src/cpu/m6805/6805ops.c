@@ -18,7 +18,7 @@ static void illegal( void )
 	logerror("M6805: illegal opcode\n");
 }
 
-#if macintosh
+#ifdef macintosh
 #pragma mark ____0x____
 #endif
 
@@ -56,7 +56,7 @@ INLINE void brclr (UINT8 bit)
 }
 
 
-#if macintosh
+#ifdef macintosh
 #pragma mark ____1x____
 #endif
 
@@ -77,7 +77,7 @@ INLINE void bclr (UINT8 bit)
 }
 
 
-#if macintosh
+#ifdef macintosh
 #pragma mark ____2x____
 #endif
 
@@ -200,7 +200,7 @@ INLINE void bih( void )
 }
 
 
-#if macintosh
+#ifdef macintosh
 #pragma mark ____3x____
 #endif
 
@@ -330,7 +330,7 @@ INLINE void clr_di( void )
 }
 
 
-#if macintosh
+#ifdef macintosh
 #pragma mark ____4x____
 #endif
 
@@ -446,7 +446,7 @@ INLINE void clra( void )
 }
 
 
-#if macintosh
+#ifdef macintosh
 #pragma mark ____5x____
 #endif
 
@@ -563,7 +563,7 @@ INLINE void clrx( void )
 }
 
 
-#if macintosh
+#ifdef macintosh
 #pragma mark ____6x____
 #endif
 
@@ -693,7 +693,7 @@ INLINE void clr_ix1( void )
 }
 
 
-#if macintosh
+#ifdef macintosh
 #pragma mark ____7x____
 #endif
 
@@ -822,7 +822,7 @@ INLINE void clr_ix( void )
 }
 
 
-#if macintosh
+#ifdef macintosh
 #pragma mark ____8x____
 #endif
 
@@ -885,7 +885,7 @@ INLINE void swi( void )
 /* $8F ILLEGAL */
 
 
-#if macintosh
+#ifdef macintosh
 #pragma mark ____9x____
 #endif
 
@@ -937,7 +937,7 @@ INLINE void txa (void)
 }
 
 
-#if macintosh
+#ifdef macintosh
 #pragma mark ____Ax____
 #endif
 
@@ -1079,7 +1079,7 @@ INLINE void ldx_im( void )
 /* $af ILLEGAL */
 
 
-#if macintosh
+#ifdef macintosh
 #pragma mark ____Bx____
 #endif
 
@@ -1239,7 +1239,7 @@ INLINE void stx_di( void )
 }
 
 
-#if macintosh
+#ifdef macintosh
 #pragma mark ____Cx____
 #endif
 
@@ -1399,7 +1399,7 @@ INLINE void stx_ex( void )
 }
 
 
-#if macintosh
+#ifdef macintosh
 #pragma mark ____Dx____
 #endif
 
@@ -1559,7 +1559,7 @@ INLINE void stx_ix2( void )
 }
 
 
-#if macintosh
+#ifdef macintosh
 #pragma mark ____Ex____
 #endif
 
@@ -1719,7 +1719,7 @@ INLINE void stx_ix1( void )
 }
 
 
-#if macintosh
+#ifdef macintosh
 #pragma mark ____Fx____
 #endif
 

@@ -2,7 +2,7 @@
 
 						  -= Yun Sung 16 Bit Games =-
 
-					driver by	Luca Elia (eliavit@unina.it)
+					driver by	Luca Elia (l.elia@tin.it)
 
 
 Note:	if MAME_DEBUG is defined, pressing Z with:
@@ -68,14 +68,22 @@ static void get_tile_info_0(int tile_index)
 {
 	data16_t code = yunsun16_vram_0[ 2 * tile_index + 0 ];
 	data16_t attr = yunsun16_vram_0[ 2 * tile_index + 1 ];
-	SET_TILE_INFO(TMAP_GFX, code, attr & 0xf);
+	SET_TILE_INFO(
+			TMAP_GFX,
+			code,
+			attr & 0xf,
+			0)
 }
 
 static void get_tile_info_1(int tile_index)
 {
 	data16_t code = yunsun16_vram_1[ 2 * tile_index + 0 ];
 	data16_t attr = yunsun16_vram_1[ 2 * tile_index + 1 ];
-	SET_TILE_INFO(TMAP_GFX, code, attr & 0xf);
+	SET_TILE_INFO(
+			TMAP_GFX,
+			code,
+			attr & 0xf,
+			0)
 }
 
 WRITE16_HANDLER( yunsun16_vram_0_w )

@@ -70,7 +70,11 @@ static void get_bg_tile_info(int tile_index)
 
 	tile=tile&0xfff;
 
-	SET_TILE_INFO(1,tile+back_bankbase,color+back_palbase)
+	SET_TILE_INFO(
+			1,
+			tile+back_bankbase,
+			color+back_palbase,
+			0)
 }
 
 static void get_fg_tile_info(int tile_index)
@@ -80,7 +84,11 @@ static void get_fg_tile_info(int tile_index)
 
 	tile=tile&0xfff;
 
-	SET_TILE_INFO(2,tile+fore_bankbase,color)
+	SET_TILE_INFO(
+			2,
+			tile+fore_bankbase,
+			color,
+			0)
 }
 
 static void get_tx_tile_info(int tile_index)
@@ -88,7 +96,11 @@ static void get_tx_tile_info(int tile_index)
 	int tile=videoram[2*tile_index]+((videoram[2*tile_index+1]&0xc0)<<2);
 	int color=videoram[2*tile_index+1]&0xf;
 
-	SET_TILE_INFO(0,tile,color)
+	SET_TILE_INFO(
+			0,
+			tile,
+			color,
+			0)
 }
 
 int dynduke_vh_start(void)
@@ -97,8 +109,7 @@ int dynduke_vh_start(void)
 	fg_layer = tilemap_create(get_fg_tile_info,tilemap_scan_cols,TILEMAP_TRANSPARENT,16,16,32,32);
 	tx_layer = tilemap_create(get_tx_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8,32,32);
 
-	tilemap_set_transmask(bg_layer,0,0x0000ffff); /* 4bpp */
-	tilemap_set_transmask(bg_layer,1,0xffff0000); /* The rest - 1bpp */
+	tilemap_set_transmask(bg_layer,0,0x0000ffff,0xffff0000); /* 4bpp + The rest - 1bpp */
 
 	tilemap_set_transparent_pen(fg_layer,15);
 	tilemap_set_transparent_pen(tx_layer,15);

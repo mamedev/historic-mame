@@ -2,7 +2,11 @@
 #include "vidhrdw/generic.h"
 #include "vidhrdw/taitoic.h"
 
-#define TC0100SCN_GFX_NUM 3
+#define TC0100SCN_GFX_NUM 2
+#define TC0480SCP_GFX_NUM 1
+
+UINT16 undrfire_rotate_ctrl[8];
+extern int TC0480SCP_pri_reg;
 
 struct tempsprite
 {
@@ -14,6 +18,9 @@ struct tempsprite
 	int primask;
 };
 static struct tempsprite *spritelist;
+
+
+/******************************************************************/
 
 void undrfire_vh_stop (void)
 {
@@ -27,21 +34,30 @@ void undrfire_vh_stop (void)
 
 int undrfire_vh_start (void)
 {
+	int i;
+
 	spritelist = malloc(0x4000 * sizeof(*spritelist));
 	if (!spritelist)
 		return 1;
 
-	/* aligns piv layers with window but vertical align may be bad */
-	if (TC0100SCN_vh_start(1,TC0100SCN_GFX_NUM,50))
+	if (TC0100SCN_vh_start(1,TC0100SCN_GFX_NUM,50,8,0,0,0,0,0))
+	{
+		undrfire_vh_stop();
 		return 1;
+	}
 
-	if (TC0480SCP_vh_start(1,0,0x24,0,-1,0,0,0,0))
+	if (TC0480SCP_vh_start(TC0480SCP_GFX_NUM,0,0x24,0,-1,0,0,0,0))
+	{
+		undrfire_vh_stop();
 		return 1;
+	}
 
+	for (i=0; i<16384; i++) /* Fix later - some weird colours in places */
+		palette_change_color(i,0,0,0);
 	return 0;
 }
 
-/************************************************************
+/***************************************************************
 			SPRITE DRAW ROUTINES
 
 We draw a series of small tiles ("chunks") together to
@@ -83,9 +99,10 @@ Heavy use is made of sprite zooming.
 	 3 | ........ ........ ......xx xxxxxxxx | Y position
 	------------------------------------------
 
-	[* 00=over BG0, 01=BG1, 10=BG2, 11=BG3 ]
+	[*  00=over BG0, 01=BG1, 10=BG2, 11=BG3 ]
+	[or 00=over BG1, 01=BG2, 10=BG3, 11=BG3 ]
 
-********************************************************/
+***************************************************************/
 
 static void undrfire_draw_sprites_16x16(struct osd_bitmap *bitmap,int *primasks,int x_offs,int y_offs)
 {
@@ -241,11 +258,17 @@ void undrfire_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	UINT16 priority;
 
 #ifdef MAME_DEBUG
-	static int dislayer[5];	/* Layer toggles to help get the layers correct */
+	static UINT8 dislayer[6];	/* Layer toggles to help get layers correct */
 	char buf[80];
 #endif
 
 #ifdef MAME_DEBUG
+	if (keyboard_pressed_memory (KEYCODE_X))
+	{
+		dislayer[5] ^= 1;
+		sprintf(buf,"piv text: %01x",dislayer[5]);
+		usrintf_showmessage(buf);
+	}
 	if (keyboard_pressed_memory (KEYCODE_C))
 	{
 		dislayer[0] ^= 1;
@@ -305,7 +328,12 @@ void undrfire_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	fillbitmap(priority_bitmap,0,NULL);
 	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);	/* wrong color? */
 
-/* Suspect the PIV chip is a TC0100SCN in disguise ? */
+
+/* The "PIV" chip seems to be a renamed TC0100SCN. It has a
+   bottom layer usually full of bright garish colors that
+   vaguely mimic the structure of the layers on top. Seems
+   pointless - it's always hidden by other layers. Does it
+   serve some blending pupose ? */
 
 	TC0100SCN_tilemap_draw(bitmap,0,pivlayer[0],0,0);
 	TC0100SCN_tilemap_draw(bitmap,0,pivlayer[1],0,0);
@@ -333,13 +361,46 @@ void undrfire_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 #ifdef MAME_DEBUG
 	if (dislayer[4]==0)
 #endif
-	/* Sprites have variable priority */
+	/* Sprites have variable priority (we kludge this on road levels) */
 	{
-		int primasks[4] = {0xfffc, 0xfff0, 0xff00, 0x0};
-		undrfire_draw_sprites_16x16(bitmap,primasks,44,-574);	// aligns round 1 window
+		if ((TC0480SCP_pri_reg &0x3) == 3)	/* on road levels kludge sprites up 1 priority */
+		{
+			int primasks[4] = {0xfff0, 0xff00, 0x0, 0x0};
+			undrfire_draw_sprites_16x16(bitmap,primasks,44,-574);
+		}
+		else
+		{
+			int primasks[4] = {0xfffc, 0xfff0, 0xff00, 0x0};
+			undrfire_draw_sprites_16x16(bitmap,primasks,44,-574);
+		}
 	}
 
+#ifdef MAME_DEBUG
+	if (dislayer[5]==0)
+#endif
 	TC0100SCN_tilemap_draw(bitmap,0,pivlayer[2],0,0);	/* piv text layer */
-	TC0480SCP_tilemap_draw(bitmap,layer[4],0,0);	/* text layer */
 
+	TC0480SCP_tilemap_draw(bitmap,layer[4],0,0);	/* TC0480SCP text layer */
+
+	/* See if we should draw artificial gun targets */
+	/* (not yet implemented...) */
+
+	if (input_port_7_word_r(0,0) & 0x1)	/* Fake DSW */
+	{
+		usrintf_showmessage("Gunsights on");
+	}
+
+/* Enable this to see rotation (?) control words */
+#if 0
+	{
+		char buf[80];
+		int i;
+
+		for (i = 0; i < 8; i += 1)
+		{
+			sprintf (buf, "%02x: %04x", i, undrfire_rotate_ctrl[i]);
+			ui_text (Machine->scrbitmap, buf, 0, i*8);
+		}
+	}
+#endif
 }

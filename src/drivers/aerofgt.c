@@ -1,8 +1,10 @@
 /***************************************************************************
 
-Various Video System Co. games using the C7-01 VS8803 VS8904 VS8905 video
-chips.
-I'm not sure, but I think 8904/8905 handle sprites and c7-01/8803 tilemaps.
+Various Video System Co. games using the C7-01 GGA, VS8803, VS8904, VS8905
+video chips.
+C7-01 GGA is used in a lot of games, some of them without sprites. So it
+either controls tilemaps, or the video signal, or both.
+I think 8904/8905 handle sprites, don't know about 8803.
 tail2nos doesn't have the 8904/8905, and indeed it has a different sprite
 system.
 
@@ -19,16 +21,28 @@ registers for a video generator. Maybe they control the display size/position.
 aerofgt is different, it writes to consecutive memory addresses and the values
 it writes don't seem to be related to these ones.
 
-          00 01 02 03 04 05  08 09 0a 0b 0c 0d
-          ------------------------------------
-pspikes   57 63 69 71 1f 00  77 79 7b 7f 1f 00
-karatblz  57 63 69 71 1f 00  77 79 7b 7f 1f 00
-turbofrc  57 63 69 71 1f 00  77 79 7b 7f 1f 00
-spinlbrk  57 68 6f 75 ff 01  77 78 7b 7f ff 00
-aerofgtb  4f 5d 63 71 1f 00  6f 70 72 7c 1f 02
-tail2nos  4f 5e 64 71 1f 09  7a 7c 7e 7f 1f 02
+                  00 01 02 03 04 05  08 09 0a 0b 0c 0d
+                  ------------------------------------
+pspikes  352x240? 57 63 69 71 1f 00  77 79 7b 7f 1f 00
+karatblz 352x240  57 63 69 71 1f 00  77 79 7b 7f 1f 00
+turbofrc 352x240  57 63 69 71 1f 00  77 79 7b 7f 1f 00
+spinlbrk 352x240  57 68 6f 75 ff 01  77 78 7b 7f ff 00
+aerofgtb 320x224  4f 5d 63 71 1f 00  6f 70 72 7c 1f 02
+tail2nos 320x240  4f 5e 64 71 1f 09  7a 7c 7e 7f 1f 02
 
-I think that bit 1 of register 0d is flip screen.
+games with 8x4 tiles:
+
+pipedrm  352x240  57 63 69 71 1f 00  7a 7b 7e 7f 1f 00 * register 0b also briefly toggled to ff
+hatris   352x240  57 63 69 71 1f 00  7a 7b 7e 7f 1f 00 * register 0b also briefly toggled to ff
+idolmj   352x240  57 63 69 71 1f 00  7a 7b 7e 7f 1f 00
+mjnatsu  352x240  57 63 69 71 1f 00  7a 7b 7e 7f 1f 00 * register 0b also briefly toggled to ff
+mfunclub 352x240  57 63 69 71 1f 00  7a 7b 7e 7f 1f 00 * register 0b also briefly toggled to ff
+daiyogen 352x240  57 63 69 71 1f 00  7a 7b 7e 7f 1f 00 * register 0b also briefly toggled to ff
+nmsengen 352x240  57 63 69 71 1f 00  7a 7b 7e 7f 1f 00 * register 0b also briefly toggled to ff
+fromance 352x240  57 63 69 71 1f 00  7a 7b 7e 7f 1f 00 * register 0b also briefly toggled to ff
+
+register 00 could be screen width / 4 (hblank start?)
+register 08 could be screen height / 2 (vblank start?)
 
 ***************************************************************************/
 
@@ -1043,7 +1057,7 @@ static const struct MachineDriver machine_driver_pspikes =
 	0,
 
 	/* video hardware */
-	64*8, 32*8, { 2*8-4, 44*8-4-1, 1*8, 29*8-1 },
+	64*8, 32*8, { 0*8+4, 44*8+4-1, 0*8, 30*8-1 },
 	pspikes_gfxdecodeinfo,
 	2048, 2048,
 	0,
@@ -1175,7 +1189,7 @@ static const struct MachineDriver machine_driver_turbofrc =
 	0,
 
 	/* video hardware */
-	64*8, 32*8, { 1*8, 44*8-1, 0*8, 30*8-1 },
+	64*8, 32*8, { 0*8, 44*8-1, 0*8, 30*8-1 },
 	turbofrc_gfxdecodeinfo,
 	1024, 1024,
 	0,

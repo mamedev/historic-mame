@@ -22,19 +22,31 @@ static struct tilemap *bg_tilemap,*fg_tilemap,*tx_tilemap;
 static void get_bg_tile_info(int tile_index)
 {
 	int code = bloodbro_bgvideoram[tile_index];
-	SET_TILE_INFO(1,code & 0xfff,code >> 12)
+	SET_TILE_INFO(
+			1,
+			code & 0xfff,
+			code >> 12,
+			0)
 }
 
 static void get_fg_tile_info(int tile_index)
 {
 	int code = bloodbro_fgvideoram[tile_index];
-	SET_TILE_INFO(2,code & 0xfff,code >> 12)
+	SET_TILE_INFO(
+			2,
+			code & 0xfff,
+			code >> 12,
+			0)
 }
 
 static void get_tx_tile_info(int tile_index)
 {
 	int code = bloodbro_txvideoram[tile_index];
-	SET_TILE_INFO(0,code & 0xfff,code >> 12)
+	SET_TILE_INFO(
+			0,
+			code & 0xfff,
+			code >> 12,
+			0)
 }
 
 

@@ -17,6 +17,10 @@ static struct osd_bitmap *pixel_layer;
 static UINT32 pixel_layer_colors[256]; /*to keep track of colors used*/
 static UINT8  pixel_layer_dirty[512];
 
+
+static int b_colors_per_layer = 0;
+static int b_bg_color_base_normal = 0;
+static int b_fg_color_base_normal = 0;
 static int b_bg_color_base = 0;
 static int b_fg_color_base = 0;
 static int b_sp_color_base = 0;
@@ -27,12 +31,12 @@ static int flipscreen = 0;
 
 static UINT8 video_control = 0;
 static data16_t TC0180VCU_ctrl[0x10] = {0};
-
+static UINT8 TC0180VCU_dirty = 0;
 
 /* TC0180VCU control registers:
 * offset:
-* 0 - ? 0x10 in all games
-* 1 - ? 0x32 in all games
+* 0 - 0x10 in all games (Ryujin swaps the values of registers 0 and 1 on the fly)
+* 1 - 0x32 in all games
 * 2 - number of independent foreground scrolling blocks (see below)
 * 3 - number of independent background scrolling blocks
 * 4 - ? 0x00 in most games, 0x08 in qzshowby
@@ -78,14 +82,15 @@ static data16_t TC0180VCU_ctrl[0x10] = {0};
 *            note that the game (crimecu) doesn't clear pixel layer between
 *            enabling and disabling it, it just writes 0x29 here instead
 *
-*     0x20 - set at the third level (in the garage) in Crime City
-*            and at the start in Ashura Blaster and Puzzle Bobble.
-*            My best guess so far is that bit 3 (0x08) changes display mode
-*            (priority system). When set, draw order is (from back to front):
-*            background, foreground, sprites 0 and 1, text,
-*            when it is cleared: background, sprites 0, foreground, sprites 1, text
-*            where sprites 1 and sprites 0 have _some_ priority. In Ashura Blaster
-*            the priority bit is bit 0 of color code.
+*     0x20 - set at the third level (in the garage) in Crime City and
+*            at the start in Ashura Blaster, Puzzle Bobble and Master of Weapon.
+*
+*     My best guess so far is that bit 3 (0x08) changes display mode
+*     (priority system). When set, draw order is (from back to front):
+*     background, foreground, sprites 0 and 1, text,
+*     when it is cleared: background, sprites 0, foreground, sprites 1, text
+*     where sprites 1 and sprites 0 have _some_ priority. In Ashura Blaster
+*     the priority bit is bit 0 of color code.
 *
 */
 
@@ -95,7 +100,7 @@ static void taitob_video_control (unsigned char data)
 
 	if ( ((video_control & 1)==0) && ((val & 1)==1) ) /*kludge or correct implementation ?*/
 	{
-		//usrintf_showmessage("pixel layer clear");
+		/*usrintf_showmessage("pixel layer clear");*/
 		memset(b_pixelram,0,b_pixelram_size);
 		memset(pixel_layer_dirty, 1, sizeof(pixel_layer_dirty));
 		memset(pixel_layer_colors, 0, sizeof(pixel_layer_colors));
@@ -121,14 +126,21 @@ READ16_HANDLER( taitob_v_control_r )
 
 WRITE16_HANDLER( taitob_v_control_w )
 {
+	data16_t oldword = TC0180VCU_ctrl[offset];
+
 	COMBINE_DATA (&TC0180VCU_ctrl[offset]);
 
 	if (ACCESSING_MSB)
 	{
 		switch(offset)
 		{
-		//case 6: taitob_text_video_control( (data>>8) & 0xff );
-		//		break;
+		case 0:
+		case 1:	if (oldword != TC0180VCU_ctrl[offset])
+				{
+					TC0180VCU_dirty = 1;
+					logerror("TC0180VCU dirty (%4x %4x)\n",TC0180VCU_ctrl[0], TC0180VCU_ctrl[1] );
+				}
+				break;
 		case 7: taitob_video_control( (data>>8) & 0xff );
 				break;
 		default: break;
@@ -136,12 +148,16 @@ WRITE16_HANDLER( taitob_v_control_w )
 	}
 }
 
+#if 0
 static void dump_contr(void)
 {
-	usrintf_showmessage("180VCU=%02x %02x %02x %02x",
+	usrintf_showmessage("180VCU=%02x-%02x %02x-%02x %02x-%02x %02x:%02x",
+		TC0180VCU_ctrl[0]>>8, TC0180VCU_ctrl[1]>>8,
 		TC0180VCU_ctrl[2]>>8, TC0180VCU_ctrl[3]>>8,
+		TC0180VCU_ctrl[4]>>8, TC0180VCU_ctrl[5]>>8,
 		TC0180VCU_ctrl[6]>>8, TC0180VCU_ctrl[7]>>8 );
 }
+#endif
 
 static void taitob_redraw_pixel_layer_dirty(void)
 {
@@ -236,8 +252,11 @@ static void get_bg_tile_info(int tile_index)
 	int color = b_backgroundram[tile_index + 0x1000];
 
 	/*qzshowby uses 0x7fff tiles*/
-	SET_TILE_INFO(1, tile & 0x7fff, b_bg_color_base + (color&0x3f) )
-	tile_info.flags = TILE_FLIPYX((color & 0x00c0)>>6);
+	SET_TILE_INFO(
+			1,
+			tile & 0x7fff,
+			b_bg_color_base + (color&0x3f),
+			TILE_FLIPYX((color & 0x00c0)>>6))
 }
 
 static void get_fg_tile_info(int tile_index)
@@ -246,16 +265,22 @@ static void get_fg_tile_info(int tile_index)
 	int color = b_foregroundram[tile_index + 0x1000];
 
 	/*qzshowby uses 0x7fff tiles*/
-	SET_TILE_INFO(1, tile & 0x7fff, b_fg_color_base + (color&0x3f) )
-	tile_info.flags = TILE_FLIPYX((color & 0x00c0)>>6);
+	SET_TILE_INFO(
+			1,
+			tile & 0x7fff,
+			b_fg_color_base + (color&0x3f),
+			TILE_FLIPYX((color & 0x00c0)>>6))
 }
 
 static void get_tx_tile_info(int tile_index)
 {
 	int tile  = b_textram[tile_index];
 
-	SET_TILE_INFO(0, tile & 0x0fff, b_tx_color_base + ((tile>>12) & 0x0f) )
-	/*no flip attribute*/
+	SET_TILE_INFO(
+			0,
+			tile & 0x0fff,
+			b_tx_color_base + ((tile>>12) & 0x0f),
+			0)	/*no flip attribute*/
 }
 
 
@@ -269,13 +294,14 @@ static int taitob_vh_start_core (void)
 {
 	pixel_layer = 0;
 
-	bg_tilemap = tilemap_create(get_bg_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,16,16,64,64);
+	bg_tilemap = tilemap_create(get_bg_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,64,64);
 	fg_tilemap = tilemap_create(get_fg_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,64,64);
 	tx_tilemap = tilemap_create(get_tx_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,32*4); /*there is a simple paging system used in Rambo3 and Hit the Ice*/
 
 	if (!bg_tilemap || !fg_tilemap || !tx_tilemap)
 		return 1;
 
+	tilemap_set_transparent_pen(bg_tilemap,0);
 	tilemap_set_transparent_pen(fg_tilemap,0);
 	tilemap_set_transparent_pen(tx_tilemap,0);
 
@@ -313,6 +339,11 @@ int taitob_vh_start_color_order0 (void)
 	b_tx_color_base = 0x00;	/*text      */
 	b_px_color_base= 0x400;	/*pixel (this one refers COLOR, not COLOR CODE)*/
 
+	b_bg_color_base_normal = b_bg_color_base;
+	b_fg_color_base_normal = b_fg_color_base;
+
+	b_colors_per_layer = 0x40;
+
 	return taitob_vh_start_core();
 }
 
@@ -325,6 +356,11 @@ int taitob_vh_start_color_order1 (void)
 	b_tx_color_base = 0xc0;
 	b_px_color_base = 0x800; /*(this one refers COLOR, not COLOR CODE)*/
 
+	b_bg_color_base_normal = b_bg_color_base;
+	b_fg_color_base_normal = b_fg_color_base;
+
+	b_colors_per_layer = 0x40;
+
 	return taitob_vh_start_core();
 }
 
@@ -336,6 +372,11 @@ int taitob_vh_start_color_order2 (void)
 	b_sp_color_base = 0x10;
 	b_tx_color_base = 0x00;
 	b_px_color_base = 0x100; /* my guess */ /*(this one refers COLOR, not COLOR CODE)*/
+
+	b_bg_color_base_normal = b_bg_color_base;
+	b_fg_color_base_normal = b_fg_color_base;
+
+	b_colors_per_layer = 0x10;
 
 	return taitob_vh_start_core();
 }
@@ -440,6 +481,17 @@ static void taitob_mark_pixellayer_colors(void)
 		{
 			palette_used_colors[ b_px_color_base + i ] = PALETTE_COLOR_USED;
 		}
+	}
+}
+
+static void taitob_fix_transparent_colors(void)
+{
+	int i;
+
+	/* fix TC0180VCU transparency - only foreground layer */
+	for (i = b_fg_color_base;i < (b_fg_color_base+b_colors_per_layer); i++)
+	{
+			palette_used_colors[16*i] = PALETTE_COLOR_TRANSPARENT;
 	}
 }
 
@@ -766,17 +818,35 @@ static void TC0180VCU_set_scroll(void)
 	int number_of_blocks; 	/* number of such blocks per _screen_ (256 lines) */
 	int tx_scrolly;
 
+	int plane;
+
+
 	/* foreground scroll */
+	if ((TC0180VCU_ctrl[0]>>8)==0x10)
+		plane = 0;
+	else
+		plane = 1;
+
 	lines_per_block  = 256 - (TC0180VCU_ctrl[2]>>8);
 	number_of_blocks = 256 / lines_per_block;
 
 	if (number_of_blocks == 1)	/* one scroll value per whole screen */
 	{
-		tilemap_set_scroll_rows( fg_tilemap , 1);
-		tilemap_set_scroll_cols( fg_tilemap , 1);
-		tilemap_set_scrollx( fg_tilemap, 0, -b_fscroll[0] );
-		tilemap_set_scrolly( fg_tilemap, 0, -b_fscroll[1] );
-		scroll_blocks[0] = 1;
+		if (plane==0)
+		{
+			tilemap_set_scroll_rows( fg_tilemap , 1);
+			tilemap_set_scroll_cols( fg_tilemap , 1);
+			tilemap_set_scrollx( fg_tilemap, 0, -b_fscroll[0] );
+			tilemap_set_scrolly( fg_tilemap, 0, -b_fscroll[1] );
+		}
+    	else
+		{
+			tilemap_set_scroll_rows( bg_tilemap , 1);
+			tilemap_set_scroll_cols( bg_tilemap , 1);
+			tilemap_set_scrollx( bg_tilemap, 0, -b_fscroll[0] );
+			tilemap_set_scrolly( bg_tilemap, 0, -b_fscroll[1] );
+		}
+		scroll_blocks[plane] = 1;
 	}
 	else
 	{
@@ -785,8 +855,8 @@ static void TC0180VCU_set_scroll(void)
 		/* translate to tilemap manager */
 		int tmap_scroll_blocks = 1024 / lines_per_block; /* size of tilemap (in lines) / lines_per_block */
 
-		scroll_blocks[0] = number_of_blocks;
-		scroll_lines[0]  = lines_per_block;
+		scroll_blocks[plane] = number_of_blocks;
+		scroll_lines[plane]  = lines_per_block;
 		//tilemap_set_scroll_rows( fg_tilemap , tmap_scroll_blocks);
 		//tilemap_set_scroll_cols( fg_tilemap , tmap_scroll_blocks);
 
@@ -794,24 +864,40 @@ static void TC0180VCU_set_scroll(void)
 		{
 			if (i*2*lines_per_block < 0x200)	/*0x200 -> size of scroll RAM (in words)*/
 			{
-				scrollx_offset[0][i] = b_fscroll[ i*2*lines_per_block   ];
-				scrolly_offset[0][i] = b_fscroll[ i*2*lines_per_block+1 ];
+				scrollx_offset[plane][i] = b_fscroll[ i*2*lines_per_block   ];
+				scrolly_offset[plane][i] = b_fscroll[ i*2*lines_per_block+1 ];
 				//tilemap_set_scrollx( fg_tilemap, i, -b_fscroll[ i*2*lines_per_block   ] );
 				//tilemap_set_scrolly( fg_tilemap, i, -b_fscroll[ i*2*lines_per_block+1 ] );
 			}
 		}
 	}
+
 	/* background scroll */
+	if ((TC0180VCU_ctrl[1]>>8)==0x10)
+		plane = 0;
+	else
+		plane = 1;
+
 	lines_per_block  = 256 - (TC0180VCU_ctrl[3]>>8);
 	number_of_blocks = 256 / lines_per_block;
 
 	if (number_of_blocks == 1)	/* one scroll value per whole screen */
 	{
-		tilemap_set_scroll_rows( bg_tilemap , 1);
-		tilemap_set_scroll_cols( bg_tilemap , 1);
-		tilemap_set_scrollx( bg_tilemap, 0, -b_bscroll[0] );
-		tilemap_set_scrolly( bg_tilemap, 0, -b_bscroll[1] );
-		scroll_blocks[1] = 1;
+		if (plane==0)
+		{
+			tilemap_set_scroll_rows( fg_tilemap , 1);
+			tilemap_set_scroll_cols( fg_tilemap , 1);
+			tilemap_set_scrollx( fg_tilemap, 0, -b_bscroll[0] );
+			tilemap_set_scrolly( fg_tilemap, 0, -b_bscroll[1] );
+		}
+		else
+		{
+			tilemap_set_scroll_rows( bg_tilemap , 1);
+			tilemap_set_scroll_cols( bg_tilemap , 1);
+			tilemap_set_scrollx( bg_tilemap, 0, -b_bscroll[0] );
+			tilemap_set_scrolly( bg_tilemap, 0, -b_bscroll[1] );
+		}
+		scroll_blocks[plane] = 1;
 	}
 	else
 	{
@@ -820,8 +906,8 @@ static void TC0180VCU_set_scroll(void)
 		/* translate to tilemap manager */
 		int tmap_scroll_blocks = 1024 / lines_per_block; /* size of tilemap (in lines) / lines_per_block */
 
-		scroll_blocks[1] = number_of_blocks;
-		scroll_lines[1]  = lines_per_block;
+		scroll_blocks[plane] = number_of_blocks;
+		scroll_lines[plane]  = lines_per_block;
 		//tilemap_set_scroll_rows( bg_tilemap , tmap_scroll_blocks);
 		//tilemap_set_scroll_cols( bg_tilemap , tmap_scroll_blocks);
 
@@ -829,8 +915,8 @@ static void TC0180VCU_set_scroll(void)
 		{
 			if (i*2*lines_per_block < 0x200)	/*0x200 -> size of scroll RAM (in words)*/
 			{
-				scrollx_offset[1][i] = b_bscroll[ i*2*lines_per_block   ];
-				scrolly_offset[1][i] = b_bscroll[ i*2*lines_per_block+1 ];
+				scrollx_offset[plane][i] = b_bscroll[ i*2*lines_per_block   ];
+				scrolly_offset[plane][i] = b_bscroll[ i*2*lines_per_block+1 ];
 				//tilemap_set_scrollx( bg_tilemap, i, -b_bscroll[ i*2*lines_per_block   ] );
 				//tilemap_set_scrolly( bg_tilemap, i, -b_bscroll[ i*2*lines_per_block+1 ] );
 			}
@@ -860,6 +946,42 @@ static void TC0180VCU_set_scroll(void)
 }
 #endif
 
+static void TC0180VCU_set_bindings(void)
+{
+	int field0 = TC0180VCU_ctrl[0]>>8;
+	int field1 = TC0180VCU_ctrl[1]>>8;
+
+	if (TC0180VCU_dirty)
+	{
+		TC0180VCU_dirty = 0;
+		tilemap_mark_all_tiles_dirty(bg_tilemap);
+		tilemap_mark_all_tiles_dirty(fg_tilemap);
+
+		switch (field0)
+		{
+		case 0x10:	/* standard value for foreground playfield */
+					b_fg_color_base =  b_fg_color_base_normal;
+					break;
+		case 0x32:	/* standard value for background playfield */
+					b_fg_color_base =  b_bg_color_base_normal;
+					break;
+        default:	if (field0!=0)
+			 			logerror("TC0180VCU control word 0 =%2x\n", field0);
+		}
+		switch (field1)
+		{
+		case 0x10:	/* standard value for foreground playfield */
+					b_bg_color_base =  b_fg_color_base_normal;
+					break;
+		case 0x32:	/* standard value for background playfield */
+					b_bg_color_base =  b_bg_color_base_normal;
+					break;
+        default:	if (field1!=0)
+			 			logerror("TC0180VCU control word 1 =%2x\n", field1);
+		}
+	}
+}
+
 static void TC0180VCU_tilemap_update(void)
 {
 	tilemap_update(bg_tilemap);
@@ -874,7 +996,10 @@ static void TC0180VCU_tilemap_draw(int plane, struct tilemap * tmap, struct osd_
 
 	if (scroll_blocks[plane]==1)
 	{
-		tilemap_draw(bitmap, tmap, 0 ,0);
+		if (transparency == TRANSPARENCY_NONE)
+			tilemap_draw(bitmap, tmap, TILEMAP_IGNORE_TRANSPARENCY ,0);
+		else
+			tilemap_draw(bitmap, tmap, 0 ,0);
 	}
 	else
 	{
@@ -910,15 +1035,24 @@ void taitob_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	/* Update tilemaps */
 	TC0180VCU_set_scroll();
+	TC0180VCU_set_bindings();
 	TC0180VCU_tilemap_update();
 
 	palette_init_used_colors();
 	taitob_mark_sprite_colors();
+	taitob_fix_transparent_colors();
 	palette_recalc();
 
 	/* Draw playfields */
-	TC0180VCU_tilemap_draw(1,bg_tilemap,bitmap,TRANSPARENCY_NONE,0);
-	TC0180VCU_tilemap_draw(0,fg_tilemap,bitmap,TRANSPARENCY_PEN,Machine->pens[b_fg_color_base*16] );
+	if ((TC0180VCU_ctrl[0]>>8)==0x10)
+		TC0180VCU_tilemap_draw(1,bg_tilemap,bitmap,TRANSPARENCY_NONE,0);
+	else
+		TC0180VCU_tilemap_draw(1,fg_tilemap,bitmap,TRANSPARENCY_NONE,0);
+
+	if ((TC0180VCU_ctrl[1]>>8)==0x10)
+		TC0180VCU_tilemap_draw(0,bg_tilemap,bitmap,TRANSPARENCY_PEN,palette_transparent_pen );
+	else
+		TC0180VCU_tilemap_draw(0,fg_tilemap,bitmap,TRANSPARENCY_PEN,palette_transparent_pen );
 
 	taitob_draw_sprites(bitmap);
 
@@ -936,10 +1070,12 @@ void ashura_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	palette_init_used_colors();
 	taitob_mark_sprite_colors();
+	taitob_fix_transparent_colors();
 	if ( (video_control&0xef) == 0xef)
 	{
 		taitob_mark_pixellayer_colors();
 	}
+
 	if ( palette_recalc() )
 	{
 		memset(pixel_layer_dirty, 1, sizeof(pixel_layer_dirty));
@@ -951,7 +1087,7 @@ void ashura_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	ashura_draw_sprites(bitmap,1);
 
-	TC0180VCU_tilemap_draw(0,fg_tilemap,bitmap,TRANSPARENCY_PEN,Machine->pens[b_fg_color_base*16]);
+	TC0180VCU_tilemap_draw(0,fg_tilemap,bitmap,TRANSPARENCY_PEN,palette_transparent_pen);
 
 	ashura_draw_sprites(bitmap,0);
 
@@ -974,10 +1110,12 @@ void crimec_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	palette_init_used_colors();
 	taitob_mark_sprite_colors();
+	taitob_fix_transparent_colors();
 	if ( (video_control&0xef) == 0xef)
 	{
 		taitob_mark_pixellayer_colors();
 	}
+
 	if ( palette_recalc() )
 	{
 		memset(pixel_layer_dirty, 1, sizeof(pixel_layer_dirty));
@@ -989,7 +1127,7 @@ void crimec_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	if (!(video_control&0x08))
 		ashura_draw_sprites (bitmap,1);
 
-	TC0180VCU_tilemap_draw(0,fg_tilemap,bitmap,TRANSPARENCY_PEN,Machine->pens[b_fg_color_base*16]);
+	TC0180VCU_tilemap_draw(0,fg_tilemap,bitmap,TRANSPARENCY_PEN,palette_transparent_pen);
 
 	 /*a HACK or not ?*/
 	if ((video_control&0xef) == 0xef) /*masked out bit is screen flip*/
@@ -1061,6 +1199,7 @@ void masterw_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	palette_init_used_colors();
 	taitob_mark_sprite_colors();
+	taitob_fix_transparent_colors();
 	palette_recalc();
 
 	/* Draw playfields */
@@ -1075,7 +1214,7 @@ void masterw_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	ashura_draw_sprites(bitmap,1);
 
-	TC0180VCU_tilemap_draw(0,fg_tilemap,bitmap,TRANSPARENCY_PEN,Machine->pens[b_fg_color_base*16]);
+	TC0180VCU_tilemap_draw(0,fg_tilemap,bitmap,TRANSPARENCY_PEN,palette_transparent_pen);
 
 	ashura_draw_sprites(bitmap,0);
 

@@ -91,7 +91,7 @@ static const UINT8 swizzle_address[4] = { 0, 2, 1, 3 };
 /******************* stave state *******************/
 
 static void update_6821_interrupts(struct pia6821 *p);
-
+/*
 static void pia_postload(int which)
 {
 	struct pia6821 *p = pia + which;
@@ -153,7 +153,7 @@ static void (*pia_postload_funcs[MAX_PIA])(void) =
 	pia_postload_6,
 	pia_postload_7
 };
-
+*/
 /******************* un-configuration *******************/
 
 void pia_unconfig(void)
@@ -169,7 +169,7 @@ void pia_config(int which, int addressing, const struct pia6821_interface *intf)
 	if (which >= MAX_PIA) return;
 	pia[which].intf = intf;
 	pia[which].addr = addressing;
-
+/*
 	state_save_register_UINT8("6821pia", which, "in_a",		&pia[which].in_a, 1);
 	state_save_register_UINT8("6821pia", which, "in_ca1",	&pia[which].in_ca1, 1);
 	state_save_register_UINT8("6821pia", which, "in_ca2",	&pia[which].in_ca2, 1);
@@ -188,7 +188,7 @@ void pia_config(int which, int addressing, const struct pia6821_interface *intf)
 	state_save_register_UINT8("6821pia", which, "ctl_b",	&pia[which].ctl_b, 1);
 	state_save_register_UINT8("6821pia", which, "irq_b1",	&pia[which].irq_b1, 1);
 	state_save_register_UINT8("6821pia", which, "irq_b2",	&pia[which].irq_b2, 1);
-	state_save_register_func_postload(pia_postload_funcs[which]);
+	state_save_register_func_postload(pia_postload_funcs[which]);*/
 }
 
 
@@ -313,14 +313,14 @@ int pia_read(int which, int offset)
 					}
 				}
 
-				LOG(("PIA%d read port A = %02X\n", which, val));
+				LOG(("%04x: PIA%d read port A = %02X\n", cpu_getpreviouspc(),  which, val));
 			}
 
 			/* read DDR register */
 			else
 			{
 				val = p->ddr_a;
-				LOG(("PIA%d read DDR A = %02X\n", which, val));
+				LOG(("%04x: PIA%d read DDR A = %02X\n", cpu_getpreviouspc(), which, val));
 			}
 			break;
 
@@ -340,14 +340,14 @@ int pia_read(int which, int offset)
 				p->irq_b1 = p->irq_b2 = 0;
 				update_6821_interrupts(p);
 
-				LOG(("PIA%d read port B = %02X\n", which, val));
+				LOG(("%04x: PIA%d read port B = %02X\n", cpu_getpreviouspc(), which, val));
 			}
 
 			/* read DDR register */
 			else
 			{
 				val = p->ddr_b;
-				LOG(("PIA%d read DDR B = %02X\n", which, val));
+				LOG(("%04x: PIA%d read DDR B = %02X\n", cpu_getpreviouspc(), which, val));
 			}
 			break;
 
@@ -365,7 +365,7 @@ int pia_read(int which, int offset)
 			if (p->irq_a1) val |= PIA_IRQ1;
 			if (p->irq_a2 && C2_INPUT(p->ctl_a)) val |= PIA_IRQ2;
 
-			LOG(("PIA%d read control A = %02X\n", which, val));
+			LOG(("%04x: PIA%d read control A = %02X\n", cpu_getpreviouspc(), which, val));
 			break;
 
 		/******************* port B control read *******************/
@@ -382,7 +382,7 @@ int pia_read(int which, int offset)
 			if (p->irq_b1) val |= PIA_IRQ1;
 			if (p->irq_b2 && C2_INPUT(p->ctl_b)) val |= PIA_IRQ2;
 
-			LOG(("PIA%d read control B = %02X\n", which, val));
+			LOG(("%04x: PIA%d read control B = %02X\n", cpu_getpreviouspc(), which, val));
 			break;
 	}
 
@@ -408,7 +408,7 @@ void pia_write(int which, int offset, int data)
 			/* write output register */
 			if (OUTPUT_SELECTED(p->ctl_a))
 			{
-				LOG(("PIA%d port A write = %02X\n", which, data));
+				LOG(("%04x: PIA%d port A write = %02X\n", cpu_getpreviouspc(), which, data));
 
 				/* update the output value */
 				p->out_a = data;/* & p->ddr_a; */	/* NS990130 - don't mask now, DDR could change later */
@@ -420,7 +420,7 @@ void pia_write(int which, int offset, int data)
 			/* write DDR register */
 			else
 			{
-				LOG(("PIA%d DDR A write = %02X\n", which, data));
+				LOG(("%04x: PIA%d DDR A write = %02X\n", cpu_getpreviouspc(), which, data));
 
 				if (p->ddr_a != data)
 				{
@@ -439,7 +439,7 @@ void pia_write(int which, int offset, int data)
 			/* write output register */
 			if (OUTPUT_SELECTED(p->ctl_b))
 			{
-				LOG(("PIA%d port B write = %02X\n", which, data));
+				LOG(("%04x: PIA%d port B write = %02X\n", cpu_getpreviouspc(), which, data));
 
 				/* update the output value */
 				p->out_b = data;/* & p->ddr_b */	/* NS990130 - don't mask now, DDR could change later */
@@ -467,7 +467,7 @@ void pia_write(int which, int offset, int data)
 			/* write DDR register */
 			else
 			{
-				LOG(("PIA%d DDR B write = %02X\n", which, data));
+				LOG(("%04x: PIA%d DDR B write = %02X\n", cpu_getpreviouspc(), which, data));
 
 				if (p->ddr_b != data)
 				{
@@ -488,7 +488,7 @@ void pia_write(int which, int offset, int data)
 			data &= 0x3f;
 
 
-			LOG(("PIA%d control A write = %02X\n", which, data));
+			LOG(("%04x: PIA%d control A write = %02X\n", cpu_getpreviouspc(), which, data));
 
 			/* CA2 is configured as output and in set/reset mode */
 			/* 10/22/98 - MAB/FMP - any C2_OUTPUT should affect CA2 */
@@ -520,7 +520,7 @@ void pia_write(int which, int offset, int data)
 
 			data &= 0x3f;
 
-			LOG(("PIA%d control B write = %02X\n", which, data));
+			LOG(("%04x: PIA%d control B write = %02X\n", cpu_getpreviouspc(), which, data));
 
 			/* CB2 is configured as output and in set/reset mode */
 			/* 10/22/98 - MAB/FMP - any C2_OUTPUT should affect CB2 */

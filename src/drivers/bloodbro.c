@@ -6,6 +6,9 @@ TAD Corporation 1990
 
 driver by Carlos A. Lozano Baides
 
+Coin inputs are handled by the sound CPU, so they don't work with sound
+disabled. Use the service switch instead.
+
 TODO:
 West Story:
 - sound
@@ -33,23 +36,6 @@ extern data16_t *bloodbro_scroll;
 
 /***************************************************************************/
 
-static WRITE16_HANDLER( bloodbro_sound_w )
-{
-	if (ACCESSING_LSB)
-	{
-		/* Slightly different interface in this game */
-		seibu_soundlatch_w(offset<<1,data&0xff);
-	}
-}
-
-READ16_HANDLER( bloodbro_sound_r )
-{
-      return 0x0060; /* Always return sound cpu ready */
-}
-
-
-/**** Blood Bros Memory Map  *******************************************/
-
 static MEMORY_READ16_START( readmem_cpu )
 	{ 0x000000, 0x07ffff, MRA16_ROM },
 	{ 0x080000, 0x08afff, MRA16_RAM },
@@ -62,11 +48,11 @@ static MEMORY_READ16_START( readmem_cpu )
 	{ 0x08e000, 0x08e7ff, MRA16_RAM },
 	{ 0x08e800, 0x08f7ff, MRA16_RAM },
 	{ 0x08f800, 0x08ffff, MRA16_RAM },
-	{ 0x0a0000, 0x0a001f, bloodbro_sound_r },
+	{ 0x0a0000, 0x0a000d, seibu_main_word_r },
 	{ 0x0c0000, 0x0c007f, MRA16_RAM },
-	{ 0x0e0000, 0x0e0001, input_port_0_word_r },
-	{ 0x0e0002, 0x0e0003, input_port_1_word_r },
-	{ 0x0e0004, 0x0e0005, input_port_2_word_r },
+	{ 0x0e0000, 0x0e0001, input_port_1_word_r },
+	{ 0x0e0002, 0x0e0003, input_port_2_word_r },
+	{ 0x0e0004, 0x0e0005, input_port_3_word_r },
 MEMORY_END
 
 static MEMORY_WRITE16_START( writemem_cpu )
@@ -81,7 +67,7 @@ static MEMORY_WRITE16_START( writemem_cpu )
 	{ 0x08e000, 0x08e7ff, MWA16_RAM },
 	{ 0x08e800, 0x08f7ff, paletteram16_xxxxBBBBGGGGRRRR_word_w, &paletteram16 },
 	{ 0x08f800, 0x08ffff, MWA16_RAM },
-	{ 0x0a0000, 0x0a001f, bloodbro_sound_w, (data16_t **)&seibu_shared_sound_ram },
+	{ 0x0a0000, 0x0a000d, seibu_main_word_w },
 	{ 0x0c0000, 0x0c007f, MWA16_RAM, &bloodbro_scroll },
 	{ 0x0c0080, 0x0c0081, MWA16_NOP }, /* IRQ Ack VBL? */
 	{ 0x0c00c0, 0x0c00c1, MWA16_NOP }, /* watchdog? */
@@ -121,41 +107,56 @@ static MEMORY_WRITE16_START( weststry_writemem_cpu )
 	{ 0x0c1000, 0x0c17ff, MWA16_RAM },
 	{ 0x128000, 0x1287ff, paletteram16_xxxxBBBBGGGGRRRR_word_w, &paletteram16 },
 	{ 0x120000, 0x128fff, MWA16_RAM },
-	/* the following handler is fake, it's here only to allocates ram */
-	/* for the seibu system so it doesn't crash */
-	{ 0x0a0000, 0x0a001f, bloodbro_sound_w, (data16_t **)&seibu_shared_sound_ram },
 MEMORY_END
 
 /******************************************************************************/
 
-SEIBU_SOUND_SYSTEM_YM3812_MEMORY_MAP(MRA_NOP) /* No coin port in this game */
-
-/******************************************************************************/
-
 INPUT_PORTS_START( bloodbro )
+	SEIBU_COIN_INPUTS	/* Must be port 0: coin inputs read through sound cpu */
+
 	PORT_START
-	PORT_DIPNAME( 0x0001, 0x0000, "Coin Mode" )
-	PORT_DIPSETTING(      0x0000, "Normal" )
-	PORT_DIPSETTING(      0x0100, DEF_STR( Free_Play ) )
-	PORT_DIPNAME( 0x0006, 0x0600, DEF_STR( Coin_A ) )
+	PORT_DIPNAME( 0x0001, 0x0001, "Coin Mode" )
+	PORT_DIPSETTING(      0x0001, "Mode 1" )
+	PORT_DIPSETTING(      0x0000, "Mode 2" )
+/* Coin Mode 1, todo Mode 2 */
+	PORT_DIPNAME( 0x001e, 0x001e, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(      0x0014, DEF_STR( 6C_1C ) )
+	PORT_DIPSETTING(      0x0016, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(      0x0018, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(      0x001a, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( 8C_3C ) )
+	PORT_DIPSETTING(      0x001c, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x0004, DEF_STR( 5C_3C ) )
+	PORT_DIPSETTING(      0x0006, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(      0x001e, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x0008, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(      0x0012, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x0010, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x000e, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(      0x000c, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(      0x000a, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Free_Play ) )
+/* mode 2
+	PORT_DIPNAME( 0x0006, 0x0006, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( 5C_1C ) )
-	PORT_DIPSETTING(      0x0200, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(      0x0400, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(      0x0600, DEF_STR( 1C_1C ) )
-	PORT_DIPNAME( 0x0018, 0x1800, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING(      0x1800, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(      0x1000, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(      0x0800, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x0004, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x0006, DEF_STR( 1C_1C ) )
+	PORT_DIPNAME( 0x0018, 0x0018, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(      0x0018, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x0010, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x0008, DEF_STR( 1C_5C ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( 1C_6C ) )
-	PORT_DIPNAME( 0x0020, 0x2000, "Starting Coin" )
-	PORT_DIPSETTING(      0x2000, "Normal" )
+*/
+	PORT_DIPNAME( 0x0020, 0x0020, "Starting Coin" )
+	PORT_DIPSETTING(      0x0020, "Normal" )
 	PORT_DIPSETTING(      0x0000, "x2" )
-	PORT_DIPNAME( 0x0040, 0x4000, "Unused 1" )
+	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x4000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0080, 0x8000, "Unused 2" )
+	PORT_DIPSETTING(      0x0040, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0080, 0x0080, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x8000, DEF_STR( On ) )
+	PORT_DIPSETTING(      0x0080, DEF_STR( On ) )
 	PORT_DIPNAME( 0x0300, 0x0300, DEF_STR( Lives ) )
 	PORT_DIPSETTING(      0x0000, "1" )
 	PORT_DIPSETTING(      0x0200, "2" )
@@ -203,7 +204,7 @@ INPUT_PORTS_START( bloodbro )
 	PORT_BIT( 0x00e0, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x0e00, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0xe000, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
@@ -278,8 +279,8 @@ INPUT_PORTS_START( weststry )
 	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START
-	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_COIN1)
-	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_COIN2)
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_START2 )
@@ -464,9 +465,10 @@ ROM_START( bloodbro )
 	ROM_LOAD16_BYTE( "bb_04.bin",    0x40001, 0x20000, 0xfd951c2c )
 	ROM_LOAD16_BYTE( "bb_03.bin",    0x40000, 0x20000, 0x18d3c460 )
 
-	ROM_REGION( 0x18000, REGION_CPU2, 0 )
+	ROM_REGION( 0x20000, REGION_CPU2, 0 )
 	ROM_LOAD( "bb_07.bin",    0x000000, 0x08000, 0x411b94e8 )
 	ROM_CONTINUE(             0x010000, 0x08000 )
+	ROM_COPY( REGION_CPU2, 0, 0x018000, 0x08000 )
 
 	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "bb_05.bin",    0x00000, 0x10000, 0x04ba6d19 )	/* characters */
@@ -489,9 +491,10 @@ ROM_START( weststry )
 	ROM_LOAD16_BYTE( "bb_04.bin",   0x40001, 0x20000, 0xfd951c2c )
 	ROM_LOAD16_BYTE( "bb_03.bin",   0x40000, 0x20000, 0x18d3c460 )
 
-	ROM_REGION( 0x18000, REGION_CPU2, 0 )	/* 64k for sound cpu code */
+	ROM_REGION( 0x20000, REGION_CPU2, 0 )	/* 64k for sound cpu code */
 	ROM_LOAD( "ws17.bin",    0x000000, 0x08000, 0xe00a8f09 )
 	ROM_CONTINUE(            0x010000, 0x08000 )
+	ROM_COPY( REGION_CPU2, 0, 0x018000, 0x08000 )
 
 	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "ws09.bin",    0x00000, 0x08000, 0xf05b2b3e )	/* characters */
@@ -529,17 +532,10 @@ ROM_END
 
 /***************************************************************************/
 
-static void init_bloodbro(void)
-{
-	install_seibu_sound_speedup(1);
-}
-
 static void init_weststry(void)
 {
 	UINT8 *gfx = memory_region(REGION_GFX3);
 	int i;
-
-	install_seibu_sound_speedup(1);
 
 	/* invert sprite data */
 	for (i = 0;i < memory_region_length(REGION_GFX3);i++)
@@ -548,5 +544,5 @@ static void init_weststry(void)
 
 /***************************************************************************/
 
-GAMEX( 1990, bloodbro, 0,        bloodbro, bloodbro, bloodbro, ROT0, "Tad", "Blood Bros.", GAME_NO_COCKTAIL )
+GAMEX( 1990, bloodbro, 0,        bloodbro, bloodbro, 0,        ROT0, "Tad", "Blood Bros.", GAME_NO_COCKTAIL )
 GAMEX( 1990, weststry, bloodbro, weststry, weststry, weststry, ROT0, "bootleg", "West Story", GAME_NO_COCKTAIL | GAME_NO_SOUND )

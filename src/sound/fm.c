@@ -7,15 +7,19 @@
 **
 ** File: fm.c -- software implementation of FM sound generator
 **
-** Copyright (C) 1998 Tatsuyuki Satoh , MultiArcadeMachineEmurator development
+** Copyright (C) 1998 Tatsuyuki Satoh , MultiArcadeMachineEmulator development
 **
-** Version 0.37a
+** Version 0.37d
 **
 */
 
 /*
-**** change log. (hiro-shi) ****
-** 08-12-98:
+** History:
+** 11-06-2001 Jarek Burczynski:
+**  - corrected end of sample bug in OPNB_ADPCM_CALC_CHA.
+**    Real YM2610 checks for equality between current and end addresses (only 20 LSB bits).
+**
+** 08-12-98 hiro-shi:
 ** rename ADPCMA -> ADPCMB, ADPCMB -> ADPCMA
 ** move ROM limit check.(CALC_CH? -> 2610Write1/2)
 ** test program (ADPCMB_TEST)
@@ -23,7 +27,7 @@
 ** ADPCMB repeat flag(no check)
 ** change ADPCM volume rate (8->16) (32->48).
 **
-** 09-12-98:
+** 09-12-98 hiro-shi:
 ** change ADPCM volume. (8->16, 48->64)
 ** replace ym2610 ch0/3 (YM-2610B)
 ** init cur_chip (restart bug fix)
@@ -33,13 +37,18 @@
 */
 
 /*
-    no check:
+	TO DO:
+		change SIN_ENT from 2048 to 1024 (this is the size of the YM2203 sin table)
+		correct sin_table and tl_table data accordingly
+		remove all tables from envelope generator calculations
+
+
+	no check:
 		YM2608 rhythm sound
 		OPN SSG type envelope (SEG)
 		YM2151 CSM speech mode
 
 	no support:
-		status BUSY flag (everytime not busy)
 		YM2608 status mask (register :0x110)
 		YM2608 RYTHM sound
 		YM2608 PCM memory data access , DELTA-T-ADPCM with PCM port
@@ -78,6 +87,7 @@
 #include <math.h>
 #ifndef __RAINE__
 #include "driver.h"		/* use M.A.M.E. */
+#include "state.h"
 #else
 #include "deftypes.h"		/* use RAINE */
 #include "support.h"		/* use RAINE */
@@ -200,7 +210,7 @@ typedef struct fm_slot {
 	UINT32 Cnt;			/* frequency count :                   */
 	UINT32 Incr;		/* frequency step  :                   */
 	/* Envelope Generator */
-	void (*eg_next)(struct fm_slot *SLOT);	/* pointer of phase handler */
+	UINT8 eg_next;		/* phase type                          */
 	INT32 evc;			/* envelope counter                    */
 	INT32 eve;			/* envelope counter end point          */
 	INT32 evs;			/* envelope counter step               */
@@ -268,7 +278,7 @@ typedef struct fm_state {
 
 /* -------------------- tables --------------------- */
 
-/* sustain lebel table (3db per step) */
+/* sustain level table (3db per step) */
 /* 0 - 15: 0, 3, 6, 9,12,15,18,21,24,27,30,33,36,39,42,93 (dB)*/
 #define SC(db) (int)((db*((3/EG_STEP)*(1<<ENV_BITS)))+EG_DST)
 static const int SL_TABLE[16]={
@@ -509,8 +519,17 @@ INLINE void FM_BUSY_SET(FM_ST *ST,int busyclock )
 
 /* ---------- event hander of Phase Generator ---------- */
 
+/* phase generator phase */
+enum
+{
+	FM_EG_RR , FM_EG_AR , FM_EG_DR , FM_EG_SR
+#if FM_SEG_SUPPORT
+	,FM_EG_SSG_DR , FM_EG_SSG_SR , FM_EG_SSG_AR
+#endif
+};
+
 /* Release end -> stop counter */
-static void FM_EG_Release( FM_SLOT *SLOT )
+static void FM_EG_rr( FM_SLOT *SLOT )
 {
 	SLOT->evc = EG_OFF;
 	SLOT->eve = EG_OFF+1;
@@ -518,7 +537,7 @@ static void FM_EG_Release( FM_SLOT *SLOT )
 }
 
 /* SUSTAIN end -> stop counter */
-static void FM_EG_SR( FM_SLOT *SLOT )
+static void FM_EG_sr( FM_SLOT *SLOT )
 {
 	SLOT->evs = 0;
 	SLOT->evc = EG_OFF;
@@ -526,7 +545,7 @@ static void FM_EG_SR( FM_SLOT *SLOT )
 }
 
 /* Decay end -> Sustain */
-static void FM_EG_DR( FM_SLOT *SLOT )
+static void FM_EG_dr( FM_SLOT *SLOT )
 {
 	SLOT->eg_next = FM_EG_SR;
 	SLOT->evc = SLOT->SL;
@@ -535,7 +554,7 @@ static void FM_EG_DR( FM_SLOT *SLOT )
 }
 
 /* Attack end -> Decay */
-static void FM_EG_AR( FM_SLOT *SLOT )
+static void FM_EG_ar( FM_SLOT *SLOT )
 {
 	/* next DR */
 	SLOT->eg_next = FM_EG_DR;
@@ -545,10 +564,10 @@ static void FM_EG_AR( FM_SLOT *SLOT )
 }
 
 #if FM_SEG_SUPPORT
-static void FM_EG_SSG_SR( FM_SLOT *SLOT );
+static void FM_EG_SSG_sr( FM_SLOT *SLOT );
 
 /* SEG down side end  */
-static void FM_EG_SSG_DR( FM_SLOT *SLOT )
+static void FM_EG_SSG_sr( FM_SLOT *SLOT )
 {
 	if( SLOT->SEG&2){
 		/* reverce */
@@ -565,7 +584,7 @@ static void FM_EG_SSG_DR( FM_SLOT *SLOT )
 }
 
 /* SEG upside side end */
-static void FM_EG_SSG_SR( FM_SLOT *SLOT )
+static void FM_EG_SSG_sr( FM_SLOT *SLOT )
 {
 	if( SLOT->SEG&2){
 		/* reverce  */
@@ -582,7 +601,7 @@ static void FM_EG_SSG_SR( FM_SLOT *SLOT )
 }
 
 /* SEG Attack end */
-static void FM_EG_SSG_AR( FM_SLOT *SLOT )
+static void FM_EG_SSG_ar( FM_SLOT *SLOT )
 {
 	if( SLOT->SEG&4){	/* start direction */
 		/* next SSG-SR (upside start ) */
@@ -600,8 +619,16 @@ static void FM_EG_SSG_AR( FM_SLOT *SLOT )
 }
 #endif /* FM_SEG_SUPPORT */
 
+static void (*FM_EG_TABLE[])(FM_SLOT *SLOT) =
+{
+	FM_EG_rr , FM_EG_ar , FM_EG_dr , FM_EG_sr
+#if FM_SEG_SUPPORT
+	,FM_EG_SSG_dr , FM_EG_SSG_sr , FM_EG_SSG_ar
+#endif
+};
+
 /* ----- key on of SLOT ----- */
-#define FM_KEY_IS(SLOT) ((SLOT)->eg_next!=FM_EG_Release)
+#define FM_KEY_IS(SLOT) ((SLOT)->eg_next!=FM_EG_RR)
 
 INLINE void FM_KEYON(FM_CH *CH , int s )
 {
@@ -638,7 +665,7 @@ INLINE void FM_KEYOFF(FM_CH *CH , int s )
 		if( SLOT->evc < EG_DST )
 			SLOT->evc = (ENV_CURVE[SLOT->evc>>ENV_BITS]<<ENV_BITS) + EG_DST;
 		/* phase -> Release */
-		SLOT->eg_next = FM_EG_Release;
+		SLOT->eg_next = FM_EG_RR;
 		SLOT->eve     = EG_DED;
 		SLOT->evs     = SLOT->evsr;
 	}
@@ -760,7 +787,7 @@ INLINE void set_sl_rr(FM_SLOT *SLOT,int v,INT32 *dr_table)
 	SLOT->SL = SL_TABLE[(v>>4)];
 	SLOT->RR = &dr_table[((v&0x0f)<<2)|2];
 	SLOT->evsr = SLOT->RR[SLOT->ksr];
-	if( SLOT->eg_next == FM_EG_Release ) SLOT->evs = SLOT->evsr;
+	if( SLOT->eg_next == FM_EG_RR ) SLOT->evs = SLOT->evsr;
 }
 
 /* operator output calcrator */
@@ -772,7 +799,7 @@ INLINE void set_sl_rr(FM_SLOT *SLOT,int v,INT32 *dr_table)
 #define FM_CALC_EG(OUT,SLOT)						\
 {													\
 	if( (SLOT.evc += SLOT.evs) >= SLOT.eve) 		\
-		SLOT.eg_next(&(SLOT));						\
+		FM_EG_TABLE[SLOT.eg_next](&(SLOT));			\
 	OUT = SLOT.TLL+ENV_CURVE[SLOT.evc>>ENV_BITS];	\
 	if(SLOT.ams)									\
 		OUT += (SLOT.ams*lfo_amd/LFO_RATE);			\
@@ -781,7 +808,7 @@ INLINE void set_sl_rr(FM_SLOT *SLOT,int v,INT32 *dr_table)
 #define FM_CALC_EG(OUT,SLOT)						\
 {													\
 	if( (SLOT.evc += SLOT.evs) >= SLOT.eve) 		\
-		SLOT.eg_next(&(SLOT));						\
+		FM_EG_TABLE[SLOT.eg_next](&(SLOT));			\
 	OUT = SLOT.TLL+ENV_CURVE[SLOT.evc>>ENV_BITS];	\
 }
 #endif
@@ -935,7 +962,7 @@ static void reset_channel( FM_ST *ST , FM_CH *CH , int chan )
 		for(s = 0 ; s < 4 ; s++ )
 		{
 			CH[c].SLOT[s].SEG = 0;
-			CH[c].SLOT[s].eg_next= FM_EG_Release;
+			CH[c].SLOT[s].eg_next= FM_EG_RR;
 			CH[c].SLOT[s].evc = EG_OFF;
 			CH[c].SLOT[s].eve = EG_OFF+1;
 			CH[c].SLOT[s].evs = 0;
@@ -1118,6 +1145,100 @@ INLINE void CSMKeyControll(FM_CH *CH)
 	FM_KEYON(CH,SLOT3);
 	FM_KEYON(CH,SLOT4);
 }
+
+#ifdef _STATE_H
+static void FM_channel_postload(FM_CH *CH,int num_ch)
+{
+	int slot , ch;
+
+	for(ch=0;ch<num_ch;ch++,CH++)
+	{
+		/* slots */
+		for(slot=0;slot<4;slot++)
+		{
+			FM_SLOT *SLOT = &CH->SLOT[slot];
+			switch(SLOT->eg_next)
+			{
+			case FM_EG_RR:
+				SLOT->eve = EG_DED;
+				SLOT->evs = SLOT->evsr;
+				break;
+			case FM_EG_AR:
+				SLOT->evs = SLOT->evsa;
+				SLOT->eve = EG_AED;
+				break;
+			case FM_EG_DR:
+				SLOT->evs = SLOT->evsd;
+				SLOT->eve = SLOT->SL;
+				break;
+			case FM_EG_SR:
+				SLOT->evs = SLOT->evss;
+				SLOT->eve = EG_DED;
+				break;
+#if FM_SEG_SUPPORT
+			case FM_EG_SSG_DR:
+				SLOT->evs = SLOT->evsd;
+				SLOT->eve = EG_DED;
+				break;
+			case FM_EG_SSG_SR:
+				SLOT->evs = SLOT->evss;
+				SLOT->eve = EG_UED;
+				break;
+			case FM_EG_SSG_AR:
+				SLOT->evs = SLOT->evsa;
+				SLOT->eve = EG_AED;
+				break;
+#endif
+			}
+		}
+	}
+}
+
+/* FM channel save , internal state only */
+static void FMsave_state_channel(const char *name,int num,FM_CH *CH,int num_ch)
+{
+	int slot , ch;
+	char state_name[20];
+	const char slot_array[4] = { 1 , 3 , 2 , 4 };
+
+	for(ch=0;ch<num_ch;ch++,CH++)
+	{
+		/* channel */
+		sprintf(state_name,"%s.CH%d",name,ch);
+		state_save_register_INT32(state_name, num, "selffeedback" , CH->op1_out , 2);
+		state_save_register_UINT32(state_name, num, "phasestep"   , &CH->fc , 1);
+		/* slots */
+		for(slot=0;slot<4;slot++)
+		{
+			FM_SLOT *SLOT = &CH->SLOT[slot];
+
+			sprintf(state_name,"%s.CH%d.SLOT%d",name,ch,slot_array[slot]);
+			state_save_register_UINT32(state_name, num, "phasecount"   , &SLOT->Cnt , 1);
+			state_save_register_UINT8(state_name, num, "evphase"       , &SLOT->eg_next , 1);
+			state_save_register_INT32 (state_name, num, "evcount"      , &SLOT->evc , 1);
+			state_save_register_INT32(state_name, num,  "totallevel"   , &SLOT->TLL , 1);
+		}
+	}
+}
+
+static void FMsave_state_st(const char *state_name,int num,FM_ST *ST)
+{
+#if FM_BUSY_FLAG_SUPPORT
+	state_save_register_double(state_name, num, "BusyExpire", &ST->BusyExpire , 1);
+#endif
+	state_save_register_UINT8 (state_name, num, "address"   , &ST->address , 1);
+	state_save_register_UINT8 (state_name, num, "IRQ"       , &ST->irq     , 1);
+	state_save_register_UINT8 (state_name, num, "IRQ MASK"  , &ST->irqmask , 1);
+	state_save_register_UINT8 (state_name, num, "status"    , &ST->status  , 1);
+	state_save_register_UINT32(state_name, num, "mode"      , &ST->mode    , 1);
+	state_save_register_UINT8 (state_name, num, "prescaler" , &ST->prescaler_sel , 1);
+	state_save_register_UINT8 (state_name, num, "freq latch", &ST->fn_h , 1);
+	state_save_register_int   (state_name, num, "TIMER A"   , &ST->TA   );
+	state_save_register_int   (state_name, num, "TIMER Acnt", &ST->TAC  );
+	state_save_register_UINT8 (state_name, num, "TIMER B"   , &ST->TB   , 1);
+	state_save_register_int   (state_name, num, "TIMER Bcnt", &ST->TBC  );
+}
+#endif /* _STATE_H */
 
 #if BUILD_OPN
 /***********************************************************/
@@ -1370,22 +1491,45 @@ static void OPNWriteReg(FM_OPN *OPN, int r, int v)
 		break;
 	}
 }
+
 #endif /* BUILD_OPN */
 
 #if BUILD_OPN_PRESCALER
-void OPNPrescaler_w(FM_OPN *OPN , int pre_divider)
+/*
+  priscaler circuit
+
+               +--------------+  +-sel2-+
+               |              +--|in20  |
+         +---+ |  +-sel1-+       |      |
+M-CLK -+-|1/2|-+--|in10  | +---+ |   out|--INT_CLOCK
+       | +---+    |   out|-|1/3|-|in21  |
+       +----------|in11  | +---+ +------+
+                  +------+
+
+reg.2d : sel2 = in21 (select sel2)
+reg.2e : sel1 = in11 (select sel1)
+reg.2f : sel1 = in10 , sel2 = in20 (clear selector)
+reset  : sel1 = in11 , sel2 = in21 (clear both)
+
+*/
+void OPNPrescaler_w(FM_OPN *OPN , int addr, int pre_divider)
 {
 	static const int opn_pres[4] = { 2*12 , 2*12 , 6*12 , 3*12 };
 	static const int ssg_pres[4] = { 1    ,    1 ,    4 ,    2 };
 	int sel;
 
-	switch(OPN->ST.address)
+	switch(addr)
 	{
+	case 0:		/* when reset */
+		OPN->ST.prescaler_sel = 2;
+		break;
+	case 1:		/* when postload */
+		break;
 	case 0x2d:	/* divider sel : select 1/1 for 1/3line    */
-		OPN->ST.prescaler_sel |= 0x01;
+		OPN->ST.prescaler_sel |= 0x02;
 		break;
 	case 0x2e:	/* divider sel , select 1/3line for output */
-		OPN->ST.prescaler_sel |= 0x02;
+		OPN->ST.prescaler_sel |= 0x01;
 		break;
 	case 0x2f:	/* divider sel , clear both selector to 1/2,1/2 */
 		OPN->ST.prescaler_sel = 0;
@@ -1406,6 +1550,9 @@ void OPNPrescaler_w(FM_OPN *OPN , int pre_divider)
 
 /* here's the virtual YM2203(OPN) */
 typedef struct ym2203_f {
+#ifdef _STATE_H
+	UINT8 REGS[256];		/* registers         */
+#endif
 	FM_OPN OPN;				/* OPN state         */
 	FM_CH CH[3];			/* channel state     */
 } YM2203;
@@ -1470,8 +1617,8 @@ void YM2203ResetChip(int num)
 	int i;
 	FM_OPN *OPN = &(FM2203[num].OPN);
 
-	/* Reset Priscaler */
-	OPNSetPris( OPN, 6*12 , 6*12 ,4); /* 1/6 , 1/4 */
+	/* Reset Prescaler */
+	OPNPrescaler_w(OPN, 0 , 1 );
 	/* reset SSG section */
 	SSGReset(OPN->ST.index);
 	/* status clear */
@@ -1484,6 +1631,58 @@ void YM2203ResetChip(int num)
 	for(i = 0xb2 ; i >= 0x30 ; i-- ) OPNWriteReg(OPN,i,0);
 	for(i = 0x26 ; i >= 0x20 ; i-- ) OPNWriteReg(OPN,i,0);
 }
+
+#ifdef _STATE_H
+static void YM2203_postload(void)
+{
+	int num , r;
+
+	for(num=0;num<YM2203NumChips;num++)
+	{
+		/* prescaler */
+		OPNPrescaler_w(&FM2203[num].OPN,1,1);
+
+		/* SSG registers */
+		for(r=0;r<16;r++)
+		{
+			SSGWrite(num,0,r);
+			SSGWrite(num,1,FM2203[num].REGS[r]);
+		}
+
+		/* OPN registers */
+		/* DT / MULTI , TL , KS / AR , AMON / DR , SR , SL / RR , SSG-EG */
+		for(r=0x30;r<0x9e;r++)
+			if((r&3) != 3)
+				OPNWriteReg(&FM2203[num].OPN,r,FM2203[num].REGS[r]);
+		/* FB / CONNECT , L / R / AMS / PMS */
+		for(r=0xb0;r<0xb6;r++)
+			if((r&3) != 3)
+				OPNWriteReg(&FM2203[num].OPN,r,FM2203[num].REGS[r]);
+
+		/* channels */
+		FM_channel_postload(FM2203[num].CH,3);
+	}
+	cur_chip = NULL;
+}
+
+static void YM2203_save_state(void)
+{
+	int num;
+	const char statename[] = "YM2203";
+
+	for(num=0;num<YM2203NumChips;num++)
+	{
+		state_save_register_UINT8 (statename, num, "regs"   , FM2203[num].REGS   , 256);
+		FMsave_state_st(statename,num,&FM2203[num].OPN.ST);
+		FMsave_state_channel(statename,num,FM2203[num].CH,3);
+		/* 3slots */
+		state_save_register_UINT32 (statename, num, "slot3fc" , FM2203[num].OPN.SL3.fc , 3);
+		state_save_register_UINT8  (statename, num, "slot3fh" , &FM2203[num].OPN.SL3.fn_h , 1);
+		state_save_register_UINT8  (statename, num, "slot3kc" , FM2203[num].OPN.SL3.kcode , 3);
+	}
+	state_save_register_func_postload(YM2203_postload);
+}
+#endif /* _STATE_H */
 
 /* ----------  Initialize YM2203 emulator(s) ----------    */
 /* 'num' is the number of virtual YM2203's to allocate     */
@@ -1524,10 +1723,13 @@ int YM2203Init(int num, int clock, int rate,
 		FM2203[i].OPN.ST.IRQ_Handler   = IRQHandler;
 		YM2203ResetChip(i);
 	}
+#ifdef _STATE_H
+	YM2203_save_state();
+#endif
 	return(0);
 }
 
-/* ---------- shut down emurator ----------- */
+/* ---------- shut down emulator ----------- */
 void YM2203Shutdown(void)
 {
     if (!FM2203) return;
@@ -1545,19 +1747,22 @@ int YM2203Write(int n,int a,UINT8 v)
 	if( !(a&1) )
 	{	/* address port */
 		OPN->ST.address = (v &= 0xff);
-		/* Write register to SSG emurator */
+		/* Write register to SSG emulator */
 		if( v < 16 ) SSGWrite(n,0,v);
 		/* prescaler selecter : 2d,2e,2f  */
 		if( v >= 0x2d && v <= 0x2f )
-			OPNPrescaler_w(OPN, 1 );
+			OPNPrescaler_w(OPN , v , 1);
 	}
 	else
 	{	/* data port */
 		int addr = OPN->ST.address;
+#ifdef _STATE_H
+		FM2203[n].REGS[addr] = v;
+#endif
 		switch( addr & 0xf0 )
 		{
 		case 0x00:	/* 0x00-0x0f : SSG section */
-			/* Write data to SSG emurator */
+			/* Write data to SSG emulator */
 			SSGWrite(n,a,v);
 			break;
 		case 0x20:	/* 0x20-0x2f : Mode section */
@@ -1613,7 +1818,6 @@ int YM2203TimerOver(int n,int c)
 	}
 	return F2203->OPN.ST.irq;
 }
-
 #endif /* BUILD_YM2203 */
 
 #if (BUILD_YM2608||BUILD_OPNB)
@@ -1630,20 +1834,24 @@ typedef struct adpcm_state {
 	int IL;
 	int volume;					/* calcrated mixing level */
 	INT32 *pan;					/* &out_ch[OPN_xxxx] */
-	int /*adpcmm,*/ adpcmx, adpcmd;
-	int adpcml;					/* hiro-shi!! */
+	INT32 adpcmx;
+	INT32 adpcmd;
+	INT32 adpcml;					/* hiro-shi!! */
 }ADPCM_CH;
 
 /* here's the virtual YM2610 */
 typedef struct ym2610_f {
+#ifdef _STATE_H
+	UINT8 REGS[512];		/* registers    */
+#endif
 	FM_OPN OPN;				/* OPN state    */
 	FM_CH CH[6];			/* channel state */
 	int address1;			/* address register1 */
 	/* ADPCM-A unit */
 	UINT8 *pcmbuf;			/* pcm rom buffer */
-	UINT32 pcm_size;			/* size of pcm rom */
-	INT32 *adpcmTL;					/* adpcmA total level */
-	ADPCM_CH adpcm[6];				/* adpcm channels */
+	UINT32 pcm_size;		/* size of pcm rom */
+	INT32 *adpcmTL;			/* adpcmA total level */
+	ADPCM_CH adpcm[6];		/* adpcm channels */
 	UINT32 adpcmreg[0x30];	/* registers */
 	UINT8 adpcm_arrivedEndAddress;
 	/* Delta-T ADPCM unit */
@@ -1746,13 +1954,18 @@ INLINE void OPNB_ADPCM_CALC_CHA( YM2610 *F2610, ADPCM_CH *ch )
 	{
 		step = ch->now_step >> ADPCM_SHIFT;
 		ch->now_step &= (1<<ADPCM_SHIFT)-1;
-		/* end check */
-		if ( (ch->now_addr+step) > (ch->end<<1) ) {
-			ch->flag = 0;
-			F2610->adpcm_arrivedEndAddress |= ch->flagMask;
-			return;
-		}
 		do{
+			/* end check */
+			/* 11-06-2001 JB: corrected comparison. Was > instead of == */
+			/* YM2610 checks lower 20 bits only, the 4 MSB bits are sample bank */
+			/* Here we use 1<<21 to compensate for nibble calculations */
+
+			if (   (ch->now_addr & ((1<<21)-1)) == ((ch->end<<1) & ((1<<21)-1))	   )
+			{
+				ch->flag = 0;
+				F2610->adpcm_arrivedEndAddress |= ch->flagMask;
+				return;
+			}
 #if 0
 			if ( ch->now_addr > (pcmsizeA<<1) ) {
 				LOG(LOG_WAR,("YM2610: Attempting to play past adpcm rom size!\n" ));
@@ -1808,15 +2021,16 @@ static void FM_ADPCMAWrite(YM2610 *F2610,int r,int v)
 					} else{
 						if(adpcm[c].end >= F2610->pcm_size){		// Check End in Range
 							LOG(LOG_WAR,("YM2610: ADPCM-A end out of range: $%08x\n",adpcm[c].end));
-							adpcm[c].end = F2610->pcm_size-1;
+
+							/*adpcm[c].end = F2610->pcm_size-1;*/ /* JB: DO NOT uncomment this, otherwise you will break the comparison in the ADPCM_CALC_CHA() */
 						}
 						if(adpcm[c].start >= F2610->pcm_size)
 						{	// Check Start in Range
 							LOG(LOG_WAR,("YM2610: ADPCM-A start out of range: $%08x\n",adpcm[c].start));
 							adpcm[c].flag = 0;
 						}
-/*LOG(LOG_WAR,("YM2610: Start %06X : %02X %02X %02X\n",adpcm[c].start,
-pcmbufA[adpcm[c].start],pcmbufA[adpcm[c].start+1],pcmbufA[adpcm[c].start+2]));*/
+						/*LOG(LOG_WAR,("YM2610: Start chan[%1x]=%08X : %02X %02X %02X\n", c, adpcm[c].start,
+						pcmbufA[adpcm[c].start],pcmbufA[adpcm[c].start+1],pcmbufA[adpcm[c].start+2]));*/
 					}
 				}	/*** (1<<c)&v ***/
 			}	/**** for loop ****/
@@ -1837,6 +2051,8 @@ pcmbufA[adpcm[c].start],pcmbufA[adpcm[c].start+1],pcmbufA[adpcm[c].start+2]));*/
 		}
 		break;
 	default:
+//LOG(LOG_WAR,("YM2610: Reg %02X = %02X\n",r,v) );
+
 		c = r&0x07;
 		if( c >= 0x06 ) return;
 		switch( r&0x38 ){
@@ -1859,6 +2075,28 @@ pcmbufA[adpcm[c].start],pcmbufA[adpcm[c].start+1],pcmbufA[adpcm[c].start+2]));*/
 		}
 	}
 }
+
+#ifdef _STATE_H
+/* FM channel save , internal state only */
+static void FMsave_state_adpcma(const char *name,int num,ADPCM_CH *adpcm)
+{
+	int ch;
+	char state_name[20];
+
+	for(ch=0;ch<6;ch++,adpcm++)
+	{
+		sprintf(state_name,"%s.CH%d",name,ch);
+
+		state_save_register_UINT8 (state_name, num, "flag"    , &adpcm->flag     , 1);
+		state_save_register_UINT8 (state_name, num, "data"    , &adpcm->now_data , 1);
+		state_save_register_UINT32(state_name, num, "addr"    , &adpcm->now_addr , 1);
+		state_save_register_UINT32(state_name, num, "step"    , &adpcm->now_step , 1);
+		state_save_register_INT32 (state_name, num, "adpcmx"  , &adpcm->adpcmx   , 1);
+		state_save_register_INT32 (state_name, num, "adpcmd"  , &adpcm->adpcmd   , 1);
+		state_save_register_INT32 (state_name, num, "adpcml"  , &adpcm->adpcml   , 1);
+	}
+}
+#endif /* _STATE_H */
 
 #endif /* BUILD_FM_ADPCMA */
 
@@ -1923,6 +2161,17 @@ INLINE void YM2608IRQFlagWrite(FM_ST *ST,int n,int v)
 	}
 }
 
+/* ---------- compatible mode & IRQ flag Controll Write 0x29 ---------- */
+void YM2608IRQMaskWrite(FM_OPN *OPN,int v)
+{
+	/* SCH,xx,xxx,EN_ZERO,EN_BRDY,EN_EOS,EN_TB,EN_TA */
+	/* extend 3ch. enable/disable */
+	if(v&0x80) OPN->type |= TYPE_6CH;
+	else       OPN->type &= ~TYPE_6CH;
+	/* IRQ MASK */
+	FM_IRQMASK_SET(&OPN->ST,v&0x1f);
+}
+
 #ifdef YM2608_RHYTHM_PCM
 /**** RYTHM (PCM) ****/
 INLINE void YM2608_RYTHM( YM2608 *F2608, ADPCM_CH *ch )
@@ -1966,8 +2215,6 @@ void YM2608UpdateOne(int num, INT16 **buffer, int length)
 
 	/* setup DELTA-T unit */
 	YM_DELTAT_DECODE_PRESET(DELTAT);
-	DELTAT->arrivedFlag = 0;	/* ASG */
-	DELTAT->flagMask = 1;	/* ASG */
 
 	/* set bufer */
 	bufL = buffer[0];
@@ -2022,7 +2269,7 @@ void YM2608UpdateOne(int num, INT16 **buffer, int length)
 		/* clear output acc. */
 		out_ch[OUTD_LEFT] = out_ch[OUTD_RIGHT]= out_ch[OUTD_CENTER] = 0;
 		/**** deltaT ADPCM ****/
-		if( DELTAT->flag )
+		if( DELTAT->portstate )
 			YM_DELTAT_ADPCM_CALC(DELTAT);
 		/* FM */
 		for(ch = cch[0] ; ch <= cch[5] ; ch++)
@@ -2043,12 +2290,85 @@ void YM2608UpdateOne(int num, INT16 **buffer, int length)
 		INTERNAL_TIMER_A( State , cch[2] )
 	}
 	INTERNAL_TIMER_B(State,length)
-	if (DELTAT->arrivedFlag) FM_STATUS_SET(State, 0x04);	/* ASG */
-
+	/* check IRQ for DELTA-T arrived flag */
+ 	FM_STATUS_SET(State, 0);
 #if FM_LFO_SUPPORT
 	OPN->LFOCnt = LFOCnt;
 #endif
 }
+#ifdef _STATE_H
+static void YM2608_postload(void)
+{
+	int num , r;
+
+	for(num=0;num<YM2608NumChips;num++)
+	{
+		YM2608 *F2608 = &(FM2608[num]);
+		/* prescaler */
+		OPNPrescaler_w(&F2608->OPN,1,2);
+		F2608->deltaT.freqbase = F2608->OPN.ST.freqbase;
+		/* IRQ mask / mode */
+		YM2608IRQMaskWrite(&F2608->OPN,F2608->REGS[0x29]);
+		/* SSG registers */
+		for(r=0;r<16;r++)
+		{
+			SSGWrite(num,0,r);
+			SSGWrite(num,1,F2608->REGS[r]);
+		}
+
+		/* OPN registers */
+		/* DT / MULTI , TL , KS / AR , AMON / DR , SR , SL / RR , SSG-EG */
+		for(r=0x30;r<0x9e;r++)
+			if((r&3) != 3)
+			{
+				OPNWriteReg(&F2608->OPN,r,F2608->REGS[r]);
+				OPNWriteReg(&F2608->OPN,r|0x100,F2608->REGS[r|0x100]);
+			}
+		/* FB / CONNECT , L / R / AMS / PMS */
+		for(r=0xb0;r<0xb6;r++)
+			if((r&3) != 3)
+			{
+				OPNWriteReg(&F2608->OPN,r,F2608->REGS[r]);
+				OPNWriteReg(&F2608->OPN,r|0x100,F2608->REGS[r|0x100]);
+			}
+		/* FM channels */
+		FM_channel_postload(F2608->CH,6);
+		/* rhythm(ADPCMA) */
+		FM_ADPCMAWrite(F2608,1,F2608->REGS[0x111]);
+		for( r=0x08 ; r<0x0c ; r++)
+			FM_ADPCMAWrite(F2608,r,F2608->REGS[r+0x110]);
+		/* Delta-T ADPCM unit */
+		YM_DELTAT_postload(&F2608->deltaT , &F2608->REGS[0x100] );
+	}
+	cur_chip = NULL;
+}
+
+static void YM2608_save_state(void)
+{
+	int num;
+	const char statename[] = "YM2608";
+
+	for(num=0;num<YM2608NumChips;num++)
+	{
+		YM2608 *F2608 = &(FM2608[num]);
+
+		state_save_register_UINT8 (statename, num, "regs"   , F2608->REGS   , 512);
+		FMsave_state_st(statename,num,&FM2608[num].OPN.ST);
+		FMsave_state_channel(statename,num,FM2608[num].CH,6);
+		/* 3slots */
+		state_save_register_UINT32(statename, num, "slot3fc" , F2608->OPN.SL3.fc , 3);
+		state_save_register_UINT8 (statename, num, "slot3fh" , &F2608->OPN.SL3.fn_h , 1);
+		state_save_register_UINT8 (statename, num, "slot3kc" , F2608->OPN.SL3.kcode , 3);
+		/* address register1 */
+		state_save_register_int (statename, num, "address1" , &F2608->address1);
+		/* rythm(ADPCMA) */
+		FMsave_state_adpcma(statename,num,F2608->adpcm);
+		/* Delta-T ADPCM unit */
+		YM_DELTAT_savestate(statename,num,&FM2608[num].deltaT);
+	}
+	state_save_register_func_postload(YM2608_postload);
+}
+#endif /* _STATE_H */
 
 /* -------------------------- YM2608(OPNA) ---------------------------------- */
 int YM2608Init(int num, int clock, int rate,
@@ -2089,6 +2409,8 @@ int YM2608Init(int num, int clock, int rate,
 		/* DELTA-T */
 		FM2608[i].deltaT.memory = (UINT8 *)(pcmrom[i]);
 		FM2608[i].deltaT.memory_size = pcmsize[i];
+		FM2608[i].deltaT.arrivedFlagPtr = &FM2608[i].OPN.ST.status;
+		FM2608[i].deltaT.flagMask = 0x04; /* status flag.bit3 */
 		/* ADPCM(Rythm) */
 		FM2608[i].pcmbuf   = (UINT8 *)rhythmrom;
 #ifdef YM2608_RHYTHM_PCM
@@ -2107,10 +2429,13 @@ int YM2608Init(int num, int clock, int rate,
 		YM2608ResetChip(i);
 	}
 	InitOPNB_ADPCMATable();
+#ifdef _STATE_H
+	YM2608_save_state();
+#endif
 	return 0;
 }
 
-/* ---------- shut down emurator ----------- */
+/* ---------- shut down emulator ----------- */
 void YM2608Shutdown()
 {
     if (!FM2608) return;
@@ -2128,8 +2453,9 @@ void YM2608ResetChip(int num)
 	FM_OPN *OPN   = &(FM2608[num].OPN);
 	YM_DELTAT *DELTAT = &(F2608[num].deltaT);
 
-	/* Reset Priscaler */
-	OPNSetPris( OPN, 6*24, 6*24, 4*2); /* OPN 1/6 , SSG 1/4 */
+	/* Reset Prescaler */
+	OPNPrescaler_w(OPN , 0 , 2);
+	F2608->deltaT.freqbase = OPN->ST.freqbase;
 	/* reset SSG section */
 	SSGReset(OPN->ST.index);
 	/* status clear */
@@ -2195,21 +2521,24 @@ int YM2608Write(int n, int a,UINT8 v)
 	switch(a&3){
 	case 0:	/* address port 0 */
 		OPN->ST.address = (v &= 0xff);
-		/* Write register to SSG emurator */
+		/* Write register to SSG emulator */
 		if( v < 16 ) SSGWrite(n,0,v);
 		/* prescaler selecter : 2d,2e,2f  */
 		if( v >= 0x2d && v <= 0x2f )
 		{
-			OPNPrescaler_w(OPN, 2 );
+			OPNPrescaler_w(OPN , v , 2);
 			F2608->deltaT.freqbase = OPN->ST.freqbase;
 		}
 		break;
 	case 1:	/* data port 0    */
 		addr = OPN->ST.address;
+#ifdef _STATE_H
+		F2608->REGS[addr] = v;
+#endif
 		switch(addr & 0xf0)
 		{
 		case 0x00:	/* SSG section */
-			/* Write data to SSG emurator */
+			/* Write data to SSG emulator */
 			SSGWrite(n,a,v);
 			break;
 		case 0x10:	/* 0x10-0x1f : Rhythm section */
@@ -2220,12 +2549,7 @@ int YM2608Write(int n, int a,UINT8 v)
 			switch(addr)
 			{
 			case 0x29: /* SCH,xirq mask */
-				/* SCH,xx,xxx,EN_ZERO,EN_BRDY,EN_EOS,EN_TB,EN_TA */
-				/* extend 3ch. enable/disable */
-				if(v&0x80) OPN->type |= TYPE_6CH;
-				else       OPN->type &= ~TYPE_6CH;
-				/* IRQ MASK */
-				FM_IRQMASK_SET(&OPN->ST,v&0x1f);
+				YM2608IRQMaskWrite(OPN,v);
 				break;
 			default:
 				YM2608UpdateReq(n);
@@ -2242,6 +2566,9 @@ int YM2608Write(int n, int a,UINT8 v)
 		break;
 	case 3:	/* data port 1    */
 		addr = F2608->address1;
+#ifdef _STATE_H
+		F2608->REGS[addr+0x100] = v;
+#endif
 		YM2608UpdateReq(n);
 		switch( addr & 0xf0 )
 		{
@@ -2270,7 +2597,7 @@ int YM2608Write(int n, int a,UINT8 v)
 				YM2608IRQFlagWrite(&(OPN->ST),n,v);
 			break;
 		default:
-			OPNWriteReg(OPN,addr|0x100,v);
+			OPNWriteReg(OPN,addr+0x100,v);
 		}
 	}
 	return OPN->ST.irq;
@@ -2401,7 +2728,7 @@ void YM2610UpdateOne(int num, INT16 **buffer, int length)
 		/* clear output acc. */
 		out_ch[OUTD_LEFT] = out_ch[OUTD_RIGHT]= out_ch[OUTD_CENTER] = 0;
 		/**** deltaT ADPCM ****/
-		if( DELTAT->flag )
+		if( DELTAT->portstate )
 			YM_DELTAT_ADPCM_CALC(DELTAT);
 		/* FM */
 		for(ch = 0 ; ch < 4 ; ch++)
@@ -2491,7 +2818,7 @@ void YM2610BUpdateOne(int num, INT16 **buffer, int length)
 		/* clear output acc. */
 		out_ch[OUTD_LEFT] = out_ch[OUTD_RIGHT]= out_ch[OUTD_CENTER] = 0;
 		/**** deltaT ADPCM ****/
-		if( DELTAT->flag )
+		if( DELTAT->portstate )
 			YM_DELTAT_ADPCM_CALC(DELTAT);
 		/* FM */
 		for(ch = cch[0] ; ch <= cch[5] ; ch++)
@@ -2515,6 +2842,77 @@ void YM2610BUpdateOne(int num, INT16 **buffer, int length)
 #endif /* BUILD_YM2610B */
 
 #if BUILD_OPNB
+
+#ifdef _STATE_H
+static void YM2610_postload(void)
+{
+	int num , r;
+
+	for(num=0;num<YM2610NumChips;num++)
+	{
+		YM2610 *F2610 = &(FM2610[num]);
+		/* SSG registers */
+		for(r=0;r<16;r++)
+		{
+			SSGWrite(num,0,r);
+			SSGWrite(num,1,F2610->REGS[r]);
+		}
+
+		/* OPN registers */
+		/* DT / MULTI , TL , KS / AR , AMON / DR , SR , SL / RR , SSG-EG */
+		for(r=0x30;r<0x9e;r++)
+			if((r&3) != 3)
+			{
+				OPNWriteReg(&F2610->OPN,r,F2610->REGS[r]);
+				OPNWriteReg(&F2610->OPN,r|0x100,F2610->REGS[r|0x100]);
+			}
+		/* FB / CONNECT , L / R / AMS / PMS */
+		for(r=0xb0;r<0xb6;r++)
+			if((r&3) != 3)
+			{
+				OPNWriteReg(&F2610->OPN,r,F2610->REGS[r]);
+				OPNWriteReg(&F2610->OPN,r|0x100,F2610->REGS[r|0x100]);
+			}
+		/* FM channels */
+		FM_channel_postload(F2610->CH,6);
+		/* rhythm(ADPCMA) */
+		FM_ADPCMAWrite(F2610,1,F2610->REGS[0x111]);
+		for( r=0x08 ; r<0x0c ; r++)
+			FM_ADPCMAWrite(F2610,r,F2610->REGS[r+0x110]);
+		/* Delta-T ADPCM unit */
+		YM_DELTAT_postload(&F2610->deltaT , &F2610->REGS[0x100] );
+	}
+	cur_chip = NULL;
+}
+
+static void YM2610_save_state(void)
+{
+	int num;
+	const char statename[] = "YM2610";
+
+	for(num=0;num<YM2610NumChips;num++)
+	{
+		YM2610 *F2610 = &(FM2610[num]);
+
+		state_save_register_UINT8 (statename, num, "regs"   , F2610->REGS   , 512);
+		FMsave_state_st(statename,num,&FM2610[num].OPN.ST);
+		FMsave_state_channel(statename,num,FM2610[num].CH,6);
+		/* 3slots */
+		state_save_register_UINT32(statename, num, "slot3fc" , F2610->OPN.SL3.fc , 3);
+		state_save_register_UINT8 (statename, num, "slot3fh" , &F2610->OPN.SL3.fn_h , 1);
+		state_save_register_UINT8 (statename, num, "slot3kc" , F2610->OPN.SL3.kcode , 3);
+		/* address register1 */
+		state_save_register_int (statename, num, "address1" , &F2610->address1);
+		state_save_register_UINT8 (statename, num, "arrivedFlag", &F2610->adpcm_arrivedEndAddress , 1);
+		/* rythm(ADPCMA) */
+		FMsave_state_adpcma(statename,num,F2610->adpcm);
+		/* Delta-T ADPCM unit */
+		YM_DELTAT_savestate(statename,num,&FM2610[num].deltaT);
+	}
+	state_save_register_func_postload(YM2610_postload);
+}
+#endif /* _STATE_H */
+
 int YM2610Init(int num, int clock, int rate,
                void **pcmroma,int *pcmsizea,void **pcmromb,int *pcmsizeb,
                FM_TIMERHANDLER TimerHandler,FM_IRQHANDLER IRQHandler)
@@ -2540,32 +2938,37 @@ int YM2610Init(int num, int clock, int rate,
 	}
 
 	for ( i = 0 ; i < YM2610NumChips; i++ ) {
+		YM2610 *F2610 = &(FM2610[i]);
 		/* FM */
-		FM2610[i].OPN.ST.index = i;
-		FM2610[i].OPN.type = TYPE_YM2610;
-		FM2610[i].OPN.P_CH = FM2610[i].CH;
-		FM2610[i].OPN.ST.clock = clock;
-		FM2610[i].OPN.ST.rate = rate;
+		F2610->OPN.ST.index = i;
+		F2610->OPN.type = TYPE_YM2610;
+		F2610->OPN.P_CH = FM2610[i].CH;
+		F2610->OPN.ST.clock = clock;
+		F2610->OPN.ST.rate = rate;
 		/* FM2610[i].OPN.ST.irq = 0; */
 		/* FM2610[i].OPN.ST.status = 0; */
-		FM2610[i].OPN.ST.timermodel = FM_TIMER_INTERVAL;
+		F2610->OPN.ST.timermodel = FM_TIMER_INTERVAL;
 		/* Extend handler */
-		FM2610[i].OPN.ST.Timer_Handler = TimerHandler;
-		FM2610[i].OPN.ST.IRQ_Handler   = IRQHandler;
+		F2610->OPN.ST.Timer_Handler = TimerHandler;
+		F2610->OPN.ST.IRQ_Handler   = IRQHandler;
 		/* ADPCM */
-		FM2610[i].pcmbuf   = (UINT8 *)(pcmroma[i]);
-		FM2610[i].pcm_size = pcmsizea[i];
+		F2610->pcmbuf   = (UINT8 *)(pcmroma[i]);
+		F2610->pcm_size = pcmsizea[i];
 		/* DELTA-T */
-		FM2610[i].deltaT.memory = (UINT8 *)(pcmromb[i]);
-		FM2610[i].deltaT.memory_size = pcmsizeb[i];
+		F2610->deltaT.memory = (UINT8 *)(pcmromb[i]);
+		F2610->deltaT.memory_size = pcmsizeb[i];
+		F2610->deltaT.arrivedFlagPtr = &F2610->adpcm_arrivedEndAddress;
 		/* */
 		YM2610ResetChip(i);
 	}
 	InitOPNB_ADPCMATable();
+#ifdef _STATE_H
+	YM2610_save_state();
+#endif
 	return 0;
 }
 
-/* ---------- shut down emurator ----------- */
+/* ---------- shut down emulator ----------- */
 void YM2610Shutdown()
 {
     if (!FM2610) return;
@@ -2644,18 +3047,22 @@ int YM2610Write(int n, int a,UINT8 v)
 	int addr;
 	int ch;
 
+
 	switch( a&3 ){
 	case 0:	/* address port 0 */
 		OPN->ST.address = v & 0xff;
-		/* Write register to SSG emurator */
+		/* Write register to SSG emulator */
 		if( v < 16 ) SSGWrite(n,0,v);
 		break;
 	case 1:	/* data port 0    */
 		addr = OPN->ST.address;
+#ifdef _STATE_H
+		F2610->REGS[addr] = v;
+#endif
 		switch(addr & 0xf0)
 		{
 		case 0x00:	/* SSG section */
-			/* Write data to SSG emurator */
+			/* Write data to SSG emulator */
 			SSGWrite(n,a,v);
 			break;
 		case 0x10: /* DeltaT ADPCM */
@@ -2668,10 +3075,9 @@ int YM2610Write(int n, int a,UINT8 v)
 				/* set arrived flag mask */
 				for(ch=0;ch<6;ch++)
 					F2610->adpcm[ch].flagMask = statusmask&(1<<ch);
-				F2610->deltaT.flagMask = statusmask&0x80;
+				F2610->deltaT.flagMask      = statusmask&0x80;
 				/* clear arrived flag */
 				F2610->adpcm_arrivedEndAddress &= statusmask&0x3f;
-				F2610->deltaT.arrivedFlag      &= F2610->deltaT.flagMask;
 			}
 				break;
 			default:
@@ -2695,6 +3101,9 @@ int YM2610Write(int n, int a,UINT8 v)
 	case 3:	/* data port 1    */
 		YM2610UpdateReq(n);
 		addr = F2610->address1;
+#ifdef _STATE_H
+		F2610->REGS[addr|0x100] = v;
+#endif
 		if( addr < 0x30 )
 			/* 100-12f : ADPCM A section */
 			FM_ADPCMAWrite(F2610,addr,v);
@@ -2722,7 +3131,7 @@ UINT8 YM2610Read(int n,int a)
 		/* B,--,A5,A4,A3,A2,A1,A0 */
 		/* B     = ADPCM-B(DELTA-T) arrived end address */
 		/* A0-A5 = ADPCM-A          arrived end address */
-		ret = F2610->adpcm_arrivedEndAddress | F2610->deltaT.arrivedFlag;
+		ret = F2610->adpcm_arrivedEndAddress;
 		break;
 	case 3:
 		ret = 0;
@@ -2762,12 +3171,15 @@ int YM2610TimerOver(int n,int c)
 /*******************************************************************************/
 /* here's the virtual YM2612 */
 typedef struct ym2612_f {
-	FM_OPN OPN;						/* OPN state       */
-	FM_CH CH[6];					/* channel state */
-	int address1;	/* address register1 */
+#ifdef _STATE_H
+	UINT8 REGS[512];	/* registers         */
+#endif
+	FM_OPN OPN;			/* OPN state       */
+	FM_CH CH[6];		/* channel state */
+	int address1;		/* address register1 */
 	/* dac output (YM2612) */
 	int dacen;
-	int dacout;
+	INT32 dacout;
 } YM2612;
 
 static int YM2612NumChips;	/* total chip */
@@ -2783,7 +3195,7 @@ void YM2612UpdateOne(int num, INT16 **buffer, int length)
 	int i;
 	FM_CH *ch,*ech;
 	FMSAMPLE  *bufL,*bufR;
-	int dacout  = F2612->dacout;
+	INT32 dacout  = F2612->dacout;
 
 	/* set bufer */
 	bufL = buffer[0];
@@ -2853,6 +3265,58 @@ void YM2612UpdateOne(int num, INT16 **buffer, int length)
 #endif
 }
 
+#ifdef _STATE_H
+static void YM2612_postload(void)
+{
+	int num , r;
+
+	for(num=0;num<YM2612NumChips;num++)
+	{
+		/* DAC data & port */
+		FM2612[num].dacout = ((int)FM2612[num].REGS[0x2a] - 0x80)<<(TL_BITS-7);
+		FM2612[num].dacen  = FM2612[num].REGS[0x2d] & 0x80;
+		/* OPN registers */
+		/* DT / MULTI , TL , KS / AR , AMON / DR , SR , SL / RR , SSG-EG */
+		for(r=0x30;r<0x9e;r++)
+			if((r&3) != 3)
+			{
+				OPNWriteReg(&FM2612[num].OPN,r,FM2612[num].REGS[r]);
+				OPNWriteReg(&FM2612[num].OPN,r|0x100,FM2612[num].REGS[r|0x100]);
+			}
+		/* FB / CONNECT , L / R / AMS / PMS */
+		for(r=0xb0;r<0xb6;r++)
+			if((r&3) != 3)
+			{
+				OPNWriteReg(&FM2612[num].OPN,r,FM2612[num].REGS[r]);
+				OPNWriteReg(&FM2612[num].OPN,r|0x100,FM2612[num].REGS[r|0x100]);
+			}
+		/* channels */
+		FM_channel_postload(FM2612[num].CH,6);
+	}
+	cur_chip = NULL;
+}
+
+static void YM2612_save_state(void)
+{
+	int num;
+	const char statename[] = "YM2612";
+
+	for(num=0;num<YM2612NumChips;num++)
+	{
+		state_save_register_UINT8 (statename, num, "regs"   , FM2612[num].REGS   , 512);
+		FMsave_state_st(statename,num,&FM2612[num].OPN.ST);
+		FMsave_state_channel(statename,num,FM2612[num].CH,6);
+		/* 3slots */
+		state_save_register_UINT32 (statename, num, "slot3fc" , FM2612[num].OPN.SL3.fc , 3);
+		state_save_register_UINT8  (statename, num, "slot3fh" , &FM2612[num].OPN.SL3.fn_h , 1);
+		state_save_register_UINT8  (statename, num, "slot3kc" , FM2612[num].OPN.SL3.kcode , 3);
+		/* address register1 */
+		state_save_register_int (statename, num, "address1" , &FM2612[num].address1);
+	}
+	state_save_register_func_postload(YM2612_postload);
+}
+#endif /* _STATE_H */
+
 /* -------------------------- YM2612 ---------------------------------- */
 int YM2612Init(int num, int clock, int rate,
                FM_TIMERHANDLER TimerHandler,FM_IRQHANDLER IRQHandler)
@@ -2890,10 +3354,13 @@ int YM2612Init(int num, int clock, int rate,
 		FM2612[i].OPN.ST.IRQ_Handler   = IRQHandler;
 		YM2612ResetChip(i);
 	}
+#ifdef _STATE_H
+	YM2612_save_state();
+#endif
 	return 0;
 }
 
-/* ---------- shut down emurator ----------- */
+/* ---------- shut down emulator ----------- */
 void YM2612Shutdown()
 {
     if (!FM2612) return;
@@ -2948,6 +3415,9 @@ int YM2612Write(int n, int a,UINT8 v)
 		break;
 	case 1:	/* data port 0    */
 		addr = F2612->OPN.ST.address;
+#ifdef _STATE_H
+		F2612->REGS[addr] = v;
+#endif
 		switch( addr & 0xf0 )
 		{
 		case 0x20:	/* 0x20-0x2f Mode */
@@ -2978,9 +3448,12 @@ int YM2612Write(int n, int a,UINT8 v)
 		F2612->address1 = v & 0xff;
 		break;
 	case 3:	/* data port 1    */
-		addr = F2612->address1;
+		addr = F2612->address1 |0x100;
+#ifdef _STATE_H
+		F2612->REGS[addr] = v;
+#endif
 		YM2612UpdateReq(n);
-		OPNWriteReg(&(F2612->OPN),addr|0x100,v);
+		OPNWriteReg(&(F2612->OPN),addr,v);
 		break;
 	}
 	return F2612->OPN.ST.irq;
@@ -3036,6 +3509,9 @@ int YM2612TimerOver(int n,int c)
 
 /* here's the virtual YM2151(OPM)  */
 typedef struct ym2151_f {
+#ifdef _STATE_H
+	UINT8 REGS[256];
+#endif
 	FM_ST ST;					/* general state     */
 	FM_CH CH[8];				/* channel state     */
 	UINT8 ct;					/* CT0,1             */
@@ -3343,14 +3819,12 @@ static void OPMWriteReg(int n, int r, int v)
 				/* make keyscale code */
 				CH->kcode = (v>>2)&0x1f;
 				/* make basic increment counter 22bit = 1 cycle */
-				CH->fc = (blk * (12*64)) + KC_TO_SEMITONE[v&0x0f] + CH->fn_h;
+				CH->fc = (blk * (12*64)) + KC_TO_SEMITONE[v&0x0f] + (CH->fc&0x3f);
 				CH->SLOT[SLOT1].Incr=-1;
 			}
 			break;
 		case 2: /* 0x30-0x37 : Keyfunction */
-			CH->fc -= CH->fn_h;
-			CH->fn_h = v>>2;
-			CH->fc += CH->fn_h;
+			CH->fc = (CH->fc&~0x3f) + (v>>2);
 			CH->SLOT[SLOT1].Incr=-1;
 			break;
 #if FM_LFO_SUPPORT
@@ -3414,10 +3888,13 @@ int YM2151Write(int n,int a,UINT8 v)
 	else
 	{	/* data port */
 		int addr = F2151->ST.address;
+#ifdef _STATE_H
+		F2151->REGS[addr] = v;
+#endif
 		YM2151UpdateReq(n);
 		/* write register */
 		OPMWriteReg(n,addr,v);
-		FM_BUSY_SET(&OPN->ST,1);
+		FM_BUSY_SET(&F2151->ST,1);
 	}
 	return F2151->ST.irq;
 }
@@ -3437,6 +3914,54 @@ void OPMResetChip(int num)
 	/* reset OPerator paramater */
 	for(i = 0xff ; i >= 0x20 ; i-- ) OPMWriteReg(num,i,0);
 }
+
+#ifdef _STATE_H
+static void YM2151_postload(void)
+{
+	int num , r;
+
+	for(num=0;num<YM2151NumChips;num++)
+	{
+	    YM2151 *F2151 = &(FMOPM[num]);
+
+		OPMWriteReg(num,0x0f,F2151->REGS[0x0f]);	/* noise sel */
+		OPMWriteReg(num,0x18,F2151->REGS[0x18]);	/* lfreq     */
+		OPMWriteReg(num,0x1b,F2151->REGS[0x1b]);	/* CT , W    */
+
+		for(r=0xff;r>=0x20;r--)
+			OPMWriteReg(num,r,F2151->REGS[r]);
+		/* channels */
+		FM_channel_postload(F2151->CH,8);
+	}
+	cur_chip = NULL;
+}
+
+static void YM2151_save_state(void)
+{
+	int num;
+	const char statename[] = "YM2151";
+
+	for(num=0;num<YM2151NumChips;num++)
+	{
+		YM2151 *F2151 = &(FMOPM[num]);
+
+		state_save_register_UINT8 (statename, num, "regs"   , F2151->REGS   , 256);
+		FMsave_state_st(statename,num,&F2151->ST);
+		FMsave_state_channel(statename,num,F2151->CH,8);
+
+		state_save_register_UINT32 (statename, num, "NoiseCount" , &F2151->NoiseCnt , 1);
+		state_save_register_UINT32 (statename, num, "NoiseStep"  , &F2151->NoiseIncr , 1);
+#if FM_LFO_SUPPORT
+		state_save_register_UINT32 (statename, num, "LFOCount" , &F2151->LFOCnt , 1);
+		state_save_register_UINT32 (statename, num, "LFOStep"  , &F2151->LFOIncr , 1);
+		state_save_register_UINT8  (statename, num, "LFOPMD"   , &F2151->pmd , 1);
+		state_save_register_UINT8  (statename, num, "LFOAMD"   , &F2151->amd , 1);
+		state_save_register_UINT8  (statename, num, "test"     , &F2151->testreg , 1);
+#endif
+	}
+	state_save_register_func_postload(YM2151_postload);
+}
+#endif /* _STATE_H */
 
 /* ----------  Initialize YM2151 emulator(s) ----------    */
 /* 'num' is the number of virtual YM2151's to allocate     */
@@ -3459,7 +3984,7 @@ int OPMInit(int num, int clock, int rate,
 	/* clear */
 	memset(FMOPM,0,sizeof(YM2151) * YM2151NumChips);
 
-	/* allocate total lebel table (128kb space) */
+	/* allocate total level table (128kb space) */
 	if( !OPMInitTable() )
 	{
 		free( FMOPM );
@@ -3481,10 +4006,13 @@ int OPMInit(int num, int clock, int rate,
 		FMOPM[i].PortWrite = 0;
 		OPMResetChip(i);
 	}
+#ifdef _STATE_H
+	YM2151_save_state();
+#endif /* _STATE_H */
 	return(0);
 }
 
-/* ---------- shut down emurator ----------- */
+/* ---------- shut down emulator ----------- */
 void OPMShutdown()
 {
     if (!FMOPM) return;

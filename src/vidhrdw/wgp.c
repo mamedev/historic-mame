@@ -53,8 +53,11 @@ static void common_get_piv_tile_info(int num,int tile_index)
 	int a = (colbank &0xe0);	/* kill bit 4 */
 	colbank = ((colbank &0xf) << 1) | a;
 
-	SET_TILE_INFO(2, tilenum & 0x3fff, colbank + (attr & 0x3f));	/* or attr &0x1 ?? */
-	tile_info.flags = TILE_FLIPYX( (attr & 0xc0) >> 6);
+	SET_TILE_INFO(
+			2,
+			tilenum & 0x3fff,
+			colbank + (attr & 0x3f),	/* or attr &0x1 ?? */
+			TILE_FLIPYX( (attr & 0xc0) >> 6))
 }
 
 static void get_piv0_tile_info(int tile_index)
@@ -80,7 +83,7 @@ static void dirty_piv_tilemaps(void)
 }
 
 
-int wgp_core_vh_start (int tc0100scn_hide_pixels, int piv_xoffs, int piv_yoffs)
+int wgp_core_vh_start (int x_offs,int y_offs,int piv_xoffs,int piv_yoffs)
 {
 	piv_tilemap[0] = tilemap_create(get_piv0_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,64,64);
 	piv_tilemap[1] = tilemap_create(get_piv1_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,64,64);
@@ -89,7 +92,7 @@ int wgp_core_vh_start (int tc0100scn_hide_pixels, int piv_xoffs, int piv_yoffs)
 	if (!piv_tilemap[0] || !piv_tilemap[1] || !piv_tilemap[2] )
 		return 1;
 
-	if (TC0100SCN_vh_start(1,TC0100SCN_GFX_NUM,tc0100scn_hide_pixels))
+	if (TC0100SCN_vh_start(1,TC0100SCN_GFX_NUM,x_offs,y_offs,0,0,0,0,0))
 		return 1;
 
 	if (has_TC0110PCR())
@@ -125,12 +128,12 @@ int wgp_core_vh_start (int tc0100scn_hide_pixels, int piv_xoffs, int piv_yoffs)
 
 int wgp_vh_start (void)
 {
-	return (wgp_core_vh_start(0,32,16));
+	return (wgp_core_vh_start(0,0,32,16));
 }
 
 int wgp2_vh_start (void)
 {
-	return (wgp_core_vh_start(4,32,16));
+	return (wgp_core_vh_start(4,2,32,16));
 }
 
 void wgp_vh_stop (void)
@@ -687,7 +690,6 @@ void wgp_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	palette_used_colors[0] |= PALETTE_COLOR_VISIBLE;
 	palette_recalc();
 
-//	fillbitmap(priority_bitmap,0,NULL);
 	fillbitmap(bitmap, palette_transparent_pen, &Machine -> visible_area);
 
 	layer[0] = 0;

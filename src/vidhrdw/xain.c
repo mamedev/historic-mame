@@ -29,21 +29,31 @@ static UINT32 back_scan(UINT32 col,UINT32 row,UINT32 num_cols,UINT32 num_rows)
 static void get_bgram0_tile_info(int tile_index)
 {
 	int attr = xain_bgram0[tile_index | 0x400];
-	SET_TILE_INFO(2,xain_bgram0[tile_index] | ((attr & 7) << 8),(attr & 0x70) >> 4);
-	tile_info.flags = (attr & 0x80) ? TILE_FLIPX : 0;
+	SET_TILE_INFO(
+			2,
+			xain_bgram0[tile_index] | ((attr & 7) << 8),
+			(attr & 0x70) >> 4,
+			(attr & 0x80) ? TILE_FLIPX : 0)
 }
 
 static void get_bgram1_tile_info(int tile_index)
 {
 	int attr = xain_bgram1[tile_index | 0x400];
-	SET_TILE_INFO(1,xain_bgram1[tile_index] | ((attr & 7) << 8),(attr & 0x70) >> 4);
-	tile_info.flags = (attr & 0x80) ? TILE_FLIPX : 0;
+	SET_TILE_INFO(
+			1,
+			xain_bgram1[tile_index] | ((attr & 7) << 8),
+			(attr & 0x70) >> 4,
+			(attr & 0x80) ? TILE_FLIPX : 0)
 }
 
 static void get_char_tile_info(int tile_index)
 {
 	int attr = xain_charram[tile_index | 0x400];
-	SET_TILE_INFO(0,xain_charram[tile_index] | ((attr & 3) << 8),(attr & 0xe0) >> 5);
+	SET_TILE_INFO(
+			0,
+			xain_charram[tile_index] | ((attr & 3) << 8),
+			(attr & 0xe0) >> 5,
+			0)
 }
 
 

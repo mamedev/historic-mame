@@ -58,11 +58,14 @@ static void get_pf1_tile_info(int tile_index)
 	if (m107_vram_data[tile_index+3] & 0x10) tile+=0x10000;
 	color=m107_vram_data[tile_index+2];
 
-	SET_TILE_INFO(0,tile,color&0x7f)
+	SET_TILE_INFO(
+			0,
+			tile,
+			color&0x7f,
+			TILE_FLIPYX((m107_vram_data[tile_index+3] & 0xc)>>2))
 
 	/* Priority 1 = tile appears above sprites */
 	tile_info.priority = ((m107_vram_data[tile_index+3]&2)>>1);
-	tile_info.flags = TILE_FLIPYX((m107_vram_data[tile_index+3] & 0xc)>>2);
 }
 
 static void get_pf2_tile_info(int tile_index)
@@ -74,10 +77,13 @@ static void get_pf2_tile_info(int tile_index)
 	if (m107_vram_data[tile_index+3] & 0x10) tile+=0x10000;
 	color=m107_vram_data[tile_index+2];
 
-	SET_TILE_INFO(0,tile,color&0x7f)
+	SET_TILE_INFO(
+			0,
+			tile,
+			color&0x7f,
+			TILE_FLIPYX((m107_vram_data[tile_index+3] & 0xc)>>2))
 
 	tile_info.priority = ((m107_vram_data[tile_index+3]&2)>>1);
-	tile_info.flags = TILE_FLIPYX((m107_vram_data[tile_index+3] & 0xc)>>2);
 }
 
 static void get_pf3_tile_info(int tile_index)
@@ -89,8 +95,11 @@ static void get_pf3_tile_info(int tile_index)
 	if (m107_vram_data[tile_index+3] & 0x10) tile+=0x10000;
 	color=m107_vram_data[tile_index+2];
 
-	SET_TILE_INFO(0,tile,color&0x7f)
-	tile_info.flags = TILE_FLIPYX((m107_vram_data[tile_index+3] & 0xc)>>2);
+	SET_TILE_INFO(
+			0,
+			tile,
+			color&0x7f,
+			TILE_FLIPYX((m107_vram_data[tile_index+3] & 0xc)>>2))
 }
 
 static void get_pf4_tile_info(int tile_index)
@@ -102,8 +111,11 @@ static void get_pf4_tile_info(int tile_index)
 	if (m107_vram_data[tile_index+3] & 0x10) tile+=0x10000;
 	color=m107_vram_data[tile_index+2];
 
-	SET_TILE_INFO(0,tile,color&0x7f)
-	tile_info.flags = TILE_FLIPYX((m107_vram_data[tile_index+3] & 0xc)>>2);
+	SET_TILE_INFO(
+			0,
+			tile,
+			color&0x7f,
+			TILE_FLIPYX((m107_vram_data[tile_index+3] & 0xc)>>2))
 }
 
 /*****************************************************************************/
@@ -206,14 +218,14 @@ int m107_vh_start(void)
 {
 	pf1_layer = tilemap_create(
 		get_pf1_tile_info,tilemap_scan_rows,
-		TILEMAP_TRANSPARENT,// | TILEMAP_SPLIT,
+		TILEMAP_TRANSPARENT,
 		8,8,
 		64,64
 	);
 
 	pf2_layer = tilemap_create(
 		get_pf2_tile_info,tilemap_scan_rows,
-		TILEMAP_TRANSPARENT,// | TILEMAP_SPLIT,
+		TILEMAP_TRANSPARENT,
 		8,8,
 		64,64
 	);
@@ -238,12 +250,6 @@ int m107_vh_start(void)
 	tilemap_set_transparent_pen(pf1_layer,0);
 	tilemap_set_transparent_pen(pf2_layer,0);
 	tilemap_set_transparent_pen(pf3_layer,0);
-//	tilemap_set_transmask(pf1_layer,0,0x00ff);
-//	tilemap_set_transmask(pf1_layer,1,0xff00);
-//	tilemap_set_transmask(pf2_layer,0,0x00ff);
-//	tilemap_set_transmask(pf2_layer,1,0xff00);
-//	tilemap_set_transmask(pf3_layer,0,0x00ff);
-//	tilemap_set_transmask(pf3_layer,1,0xff00);
 
 	pf1_vram_ptr=pf2_vram_ptr=pf3_vram_ptr=pf4_vram_ptr=0;
 	pf1_enable=pf2_enable=pf3_enable=pf4_enable=0;

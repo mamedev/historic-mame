@@ -28,6 +28,8 @@ int  cps1_vh_start(void);
 void cps1_vh_stop(void);
 void cps1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void cps1_eof_callback(void);
+void init_cps1(void);
+void init_cps2(void);
 
 int cps1_qsound_interrupt(void);
 

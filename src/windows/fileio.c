@@ -1,9 +1,10 @@
 //#include "mamalleg.h"
-#include "driver.h"
-#include "unzip.h"
 #include <sys/stat.h>
 #include <unistd.h>
 #include <signal.h>
+#include "driver.h"
+#include "unzip.h"
+#include "rc.h"
 
 #ifdef MESS
 #include "mess/msdos.h"
@@ -29,8 +30,39 @@ char *samples = NULL;
 char **samplepathv = NULL;
 int samplepathc = 0;
 
-const char *cfgdir, *nvdir, *hidir, *inpdir, *stadir;
-const char *memcarddir, *artworkdir, *screenshotdir, *cheatdir;
+static const char *rompath;
+static const char *samplepath;
+static const char *cfgdir, *nvdir, *hidir, *inpdir, *stadir;
+static const char *memcarddir, *artworkdir, *screenshotdir, *cheatdir;
+/* from datafile.c */
+extern const char *history_filename;
+extern const char *mameinfo_filename;
+/* from cheat.c */
+extern char *cheatfile;
+
+static int decompose_rompath(struct rc_option *option, const char *arg, int priority);
+static int decompose_samplepath(struct rc_option *option, const char *arg, int priority);
+
+struct rc_option fileio_opts[] =
+{
+	/* name, shortname, type, dest, deflt, min, max, func, help */
+	{ "Windows path and directory options", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
+	{ "rompath", "rp", rc_string, &rompath, "roms", 0, 0, decompose_rompath, "path to romsets" },
+	{ "samplepath", "sp", rc_string, &samplepath, "samples", 0, 0, decompose_samplepath, "path to samplesets" },
+	{ "cfg_directory", NULL, rc_string, &cfgdir, "cfg", 0, 0, NULL, "directory to save configurations" },
+	{ "nvram_directory", NULL, rc_string, &nvdir, "nvram", 0, 0, NULL, "directory to save nvram contents" },
+	{ "memcard_directory", NULL, rc_string, &memcarddir, "memcard", 0, 0, NULL, "directory to save memory card contents" },
+	{ "input_directory", NULL, rc_string, &inpdir, "inp", 0, 0, NULL, "directory to save input device logs" },
+	{ "hiscore_directory", NULL, rc_string, &hidir, "hi", 0, 0, NULL, "directory to save hiscores" },
+	{ "state_directory", NULL, rc_string, &stadir, "sta", 0, 0, NULL, "directory to save states" },
+	{ "artwork_directory", NULL, rc_string, &artworkdir, "artwork", 0, 0, NULL, "directory for Artwork (Overlays etc.)" },
+	{ "snapshot_directory", NULL, rc_string, &screenshotdir, "snap", 0, 0, NULL, "directory for screenshots (.png format)" },
+	{ "cheat_file", NULL, rc_string, &cheatfile, "cheat.dat", 0, 0, NULL, "cheat filename" },
+	{ "history_file", NULL, rc_string, &history_filename, "history.dat", 0, 0, NULL, NULL },
+	{ "mameinfo_file", NULL, rc_string, &mameinfo_filename, "mameinfo.dat", 0, 0, NULL, NULL },
+	{ NULL,	NULL, rc_end, NULL, NULL, 0, 0,	NULL, NULL }
+};
+
 
 char *alternate_name;				   /* for "-romdir" */
 
@@ -162,30 +194,25 @@ static void cache_allocate (unsigned entries)
 
 /* This function can be called several times with different parameters,
  * for example by "mame -verifyroms *". */
-void decompose_rom_sample_path (const char *rompath, const char *samplepath)
+static int decompose_rompath(struct rc_option *option, const char *arg, int priority)
 {
 	char *token;
 
 	/* start with zero path components */
-	rompathc = samplepathc = 0;
+	rompathc = 0;
 
 	if (!roms)
-		roms = malloc( strlen(rompath) + 1);
+		roms = malloc( strlen(arg) + 1);
 	else
-		roms = realloc( roms, strlen(rompath) + 1);
+		roms = realloc( roms, strlen(arg) + 1);
 
-	if (!samples)
-		samples = malloc( strlen(samplepath) + 1);
-	else
-		samples = realloc( samples, strlen(samplepath) + 1);
-
-	if( !roms || !samples )
+	if( !roms )
 	{
-		logerror("decompose_rom_sample_path: failed to malloc!\n");
+		logerror("decompose_rom_path: failed to malloc!\n");
 		raise(SIGABRT);
 	}
 
-	strcpy (roms, rompath);
+	strcpy (roms, arg);
 	token = strtok (roms, ";");
 	while( token )
 	{
@@ -196,20 +223,6 @@ void decompose_rom_sample_path (const char *rompath, const char *samplepath)
 		if( !rompathv )
 			break;
 		rompathv[rompathc++] = token;
-		token = strtok (NULL, ";");
-	}
-
-	strcpy (samples, samplepath);
-	token = strtok (samples, ";");
-	while( token )
-	{
-		if( samplepathc )
-			samplepathv = realloc (samplepathv, (samplepathc + 1) * sizeof(char *));
-		else
-			samplepathv = malloc (sizeof(char *));
-		if( !samplepathv )
-			break;
-		samplepathv[samplepathc++] = token;
 		token = strtok (NULL, ";");
 	}
 
@@ -224,7 +237,47 @@ void decompose_rom_sample_path (const char *rompath, const char *samplepath)
     }
 #endif
 
+	option->priority = priority;
+	return 0;
 }
+
+/* This function can be called several times with different parameters,
+ * for example by "mame -verifysamples *". */
+static int decompose_samplepath(struct rc_option *option, const char *arg, int priority)
+{
+	char *token;
+
+	/* start with zero path components */
+	samplepathc = 0;
+
+	if (!samples)
+		samples = malloc( strlen(arg) + 1);
+	else
+		samples = realloc( samples, strlen(arg) + 1);
+
+	if( !samples )
+	{
+		logerror("decompose_sample_path: failed to malloc!\n");
+		raise(SIGABRT);
+	}
+
+	strcpy (samples, arg);
+	token = strtok (samples, ";");
+	while( token )
+	{
+		if( samplepathc )
+			samplepathv = realloc (samplepathv, (samplepathc + 1) * sizeof(char *));
+		else
+			samplepathv = malloc (sizeof(char *));
+		if( !samplepathv )
+			break;
+		samplepathv[samplepathc++] = token;
+		token = strtok (NULL, ";");
+	}
+	option->priority = priority;
+	return 0;
+}
+
 
 /*
  * file handling routines
@@ -958,7 +1011,6 @@ void *osd_fopen (const char *game, const char *filename, int filetype, int openf
 		break;
 
 	case OSD_FILETYPE_HIGHSCORE_DB:
-	case OSD_FILETYPE_HISTORY:
 		/* only for reading */
 		if( openforwrite )
 		{
@@ -970,6 +1022,20 @@ void *osd_fopen (const char *game, const char *filename, int filetype, int openf
 		f->file = fopen (filename, openforwrite ? "w" : "r");
 		found = f->file != 0;
         break;
+
+	case OSD_FILETYPE_HISTORY:
+		/* only for reading */
+		if( openforwrite )
+		{
+			logerror("osd_fopen: type %02x write not supported\n",filetype);
+            break;
+		}
+		f->type = kPlainFile;
+		/* open as _binary_ like the others */
+		f->file = fopen (filename, openforwrite ? "wb" : "rb");
+		found = f->file != 0;
+        break;
+
 
 	/* Steph */
 	case OSD_FILETYPE_CHEAT:

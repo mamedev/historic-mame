@@ -89,6 +89,18 @@ The eeprom unlock command is different, and the write/clock/reset
 bits are different.
 ******************************************************************/
 
+static data8_t default_eeprom[128]=
+{
+	0x00,0x00,0x00,0xff,0x00,0x01,0x41,0x41,0x00,0x00,0x00,0xff,0x00,0x00,0xf0,0xf0,
+	0x00,0x00,0x00,0xff,0x00,0x01,0x41,0x41,0x00,0x00,0x00,0xff,0x00,0x00,0xf0,0xf0,
+	0x00,0x80,0x00,0x80,0x00,0x80,0x00,0x80,0x00,0x01,0x40,0x00,0x00,0x00,0xf0,0x00,
+	0x00,0x01,0x42,0x85,0x00,0x00,0xf1,0xe3,0x00,0x01,0x40,0x00,0x00,0x00,0xf0,0x00,
+	0x00,0x01,0x42,0x85,0x00,0x00,0xf1,0xe3,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,
+	0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,
+	0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,
+	0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff
+};
+
 static struct EEPROM_interface eeprom_interface =
 {
 	6,				/* address bits */
@@ -108,8 +120,10 @@ static void nvram_handler(void *file,int read_or_write)
 	{
 		EEPROM_init(&eeprom_interface);
 
-		if (file)  EEPROM_load(file);
-		else       usrintf_showmessage("You MUST calibrate guns in service mode");
+		if (file)
+			EEPROM_load(file);
+		else
+			EEPROM_set_data(default_eeprom,128);  /* Default the gun setup values */
 	}
 }
 
@@ -123,25 +137,27 @@ static READ16_HANDLER( eep_latch_r )
 	return eep_latch;
 }
 
-static WRITE16_HANDLER( eeprom_w )
+static WRITE16_HANDLER( othunder_output_bypass_w )
 {
-/*
-	0000xxxx	(unused)
-	000x0000	eeprom reset (active low)
-	00x00000	eeprom clock
-	0x000000	eeprom data
-	x0000000	(unused)
-*/
+	switch (offset)
+	{
+		case 0x03:
 
-	COMBINE_DATA(&eep_latch);
+/*			0000xxxx	(unused)
+			000x0000	eeprom reset (active low)
+			00x00000	eeprom clock
+			0x000000	eeprom data
+			x0000000	(unused)                  */
 
-	EEPROM_write_bit(data & 0x40);
-	EEPROM_set_clock_line((data & 0x20) ? ASSERT_LINE : CLEAR_LINE);
-	EEPROM_set_cs_line((data & 0x10) ? CLEAR_LINE : ASSERT_LINE);
+			COMBINE_DATA(&eep_latch);
+			EEPROM_write_bit(data & 0x40);
+			EEPROM_set_clock_line((data & 0x20) ? ASSERT_LINE : CLEAR_LINE);
+			EEPROM_set_cs_line((data & 0x10) ? CLEAR_LINE : ASSERT_LINE);
+			break;
 
-#if 0
-	logerror("CPU #0 PC %06x: warning - write eeprom, data %04x\n",cpu_get_pc(),data);
-#endif
+		default:
+			TC0220IOC_w(offset,data & 0xff);
+	}
 }
 
 
@@ -149,29 +165,16 @@ static WRITE16_HANDLER( eeprom_w )
 			GAME INPUTS
 **********************************************************/
 
-static READ16_HANDLER( othunder_input_r )
+static READ16_HANDLER( othunder_input_bypass_r )
 {
 	switch (offset)
 	{
-		case 0x00:
-			return input_port_2_word_r(0,mem_mask);	/* DSW A */
-
-		case 0x01:
-			return input_port_3_word_r(0,mem_mask);	/* DSW B */
-
-		case 0x02:
-			return input_port_0_word_r(0,mem_mask);	/* IN0 */
-
 		case 0x03:
 			return eeprom_r();
 
-		case 0x07:
-			return input_port_1_word_r(0,mem_mask);	/* IN1 */
+		default:
+			return TC0220IOC_r( offset );
 	}
-
-logerror("CPU #0 PC %06x: warning - read unmapped input offset %06x\n",cpu_get_pc(),offset);
-
-	return 0xff;
 }
 
 static READ16_HANDLER( othunder_lightgun_r )
@@ -191,7 +194,7 @@ static READ16_HANDLER( othunder_lightgun_r )
 			return input_port_8_word_r(0,mem_mask);	/* P2Y */
 	}
 
-logerror("CPU #0 lightgun_r offset %06x: warning - read unmapped memory address %06x\n",cpu_get_pc(),offset);
+//logerror("CPU #0 lightgun_r offset %06x: warning - read unmapped memory address %06x\n",cpu_get_pc(),offset);
 
 	return 0x0;
 }
@@ -247,7 +250,7 @@ static READ16_HANDLER( othunder_sound_r )
 static MEMORY_READ16_START( othunder_readmem )
 	{ 0x000000, 0x07ffff, MRA16_ROM },
 	{ 0x080000, 0x08ffff, MRA16_RAM },	/* main ram */
-	{ 0x090000, 0x09000f, othunder_input_r },
+	{ 0x090000, 0x09000f, othunder_input_bypass_r },
 	{ 0x100000, 0x100007, TC0110PCR_word_r },	/* palette */
 	{ 0x200000, 0x20ffff, TC0100SCN_word_0_r },	/* tilemaps */
 	{ 0x220000, 0x22000f, TC0100SCN_ctrl_word_0_r },
@@ -259,10 +262,10 @@ MEMORY_END
 static MEMORY_WRITE16_START( othunder_writemem )
 	{ 0x000000, 0x07ffff, MWA16_ROM },
 	{ 0x080000, 0x08ffff, MWA16_RAM, &othunder_ram },
-	{ 0x090000, 0x090001, MWA16_NOP },   /* watchdog ?? (alternates 1 and 0xffff) */
-	{ 0x090006, 0x090007, eeprom_w },
-	{ 0x090008, 0x090009, MWA16_NOP },   /* coin ctr, lockout ? */
-	{ 0x09000c, 0x09000d, MWA16_NOP },   /* ?? (keeps writing 0x77) */
+	{ 0x090000, 0x09000f, othunder_output_bypass_w },
+//	{ 0x090006, 0x090007, eeprom_w },
+//	{ 0x090008, 0x090009, MWA16_NOP },   /* coin ctr, lockout ? */
+//	{ 0x09000c, 0x09000d, MWA16_NOP },   /* ?? (keeps writing 0x77) */
 	{ 0x100000, 0x100007, TC0110PCR_step1_rbswap_word_w },	/* palette */
 	{ 0x200000, 0x20ffff, TC0100SCN_word_0_w },	/* tilemaps */
 	{ 0x220000, 0x22000f, TC0100SCN_ctrl_word_0_w },
@@ -339,33 +342,13 @@ MEMORY_END
 	PORT_DIPSETTING(    0x00, "Hardest" )
 
 INPUT_PORTS_START( othunder )
-	PORT_START      /* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SERVICE1 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1)
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2)
-
-	PORT_START      /* IN1 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
-
 	PORT_START /* DSW A */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x02, "Allow Continue" )
-	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Yes ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
 	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
@@ -391,10 +374,27 @@ INPUT_PORTS_START( othunder )
 	PORT_DIPSETTING(    0x80, "Japanese" )
 	PORT_DIPSETTING(    0x00, "English" )
 
-	PORT_START	/* Fake DSW */
-	PORT_BITX(    0x01, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Show gun target", KEYCODE_F1, IP_JOY_NONE )
-	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Yes ) )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1)
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2)
+
+	PORT_START      /* IN1, unused */
+
+	PORT_START      /* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	/* speed of 13 is compromise between moving aim around screen fast
 	   enough and being accurate enough not to miss targets. 20 is too
@@ -411,36 +411,21 @@ INPUT_PORTS_START( othunder )
 
 	PORT_START
 	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_Y | IPF_PLAYER2, 25, 13, 0, 0xff)
+
+	PORT_START	/* Fake DSW */
+	PORT_BITX(    0x01, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Show gun target", KEYCODE_F1, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Yes ) )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( othundu )
-	PORT_START      /* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SERVICE1 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1)
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2)
-
-	PORT_START      /* IN1 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
-
 	PORT_START /* DSW A */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x02, "Allow Continue" )
-	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Yes ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
 	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
@@ -466,10 +451,27 @@ INPUT_PORTS_START( othundu )
 	PORT_DIPSETTING(    0x80, "Japanese" )
 	PORT_DIPSETTING(    0x00, "English" )
 
-	PORT_START	/* Fake DSW */
-	PORT_BITX(    0x01, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Show gun target", KEYCODE_F1, IP_JOY_NONE )
-	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Yes ) )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1)
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2)
+
+	PORT_START      /* IN1, unused */
+
+	PORT_START      /* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	/* speed of 13 is compromise between moving aim around screen fast
 	   enough and being accurate enough not to miss targets. 20 is too
@@ -486,6 +488,11 @@ INPUT_PORTS_START( othundu )
 
 	PORT_START
 	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_Y | IPF_PLAYER2, 25, 13, 0, 0xff)
+
+	PORT_START	/* Fake DSW */
+	PORT_BITX(    0x01, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Show gun target", KEYCODE_F1, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Yes ) )
 INPUT_PORTS_END
 
 

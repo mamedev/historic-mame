@@ -187,12 +187,16 @@ static const int waittable[FRAMESKIP_LEVELS][FRAMESKIP_LEVELS] =
 
 // prototypes
 static int video_set_resolution(struct rc_option *option, const char *arg, int priority);
+static int decode_effect(struct rc_option *option, const char *arg, int priority);
+static int decode_aspect(struct rc_option *option, const char *arg, int priority);
 
 // internal variables
 static char *resolution;
+static char *effect;
+static char *aspect;
 
 // options struct
-struct rc_option video_opts[] = 
+struct rc_option video_opts[] =
 {
 	// name, shortname, type, dest, deflt, min, max, func, help
 	{ "Windows video options", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
@@ -216,6 +220,8 @@ struct rc_option video_opts[] =
 	{ "throttle", NULL, rc_bool, &throttle, "1", 0, 0, NULL, "throttle speed to the game's framerate" },
 	{ "full_screen_brightness", "fsb", rc_float, &gfx_brightness, "0.0", 0.0, 4.0, NULL, "sets the brightness in full screen mode" },
 	{ "frames_to_run", "ftr", rc_int, &frames_to_display, "0", 0, 0, NULL, "sets the number of frames to run within the game" },
+	{ "effect", NULL, rc_string, &effect, "none", 0, 0, decode_effect, "specify the blitting effect" },
+	{ "screen_aspect", NULL, rc_string, &aspect, "4:3", 0, 0, decode_aspect, "specify an alternate monitor aspect ratio" },
 	{ NULL,	NULL, rc_end, NULL, NULL, 0, 0,	NULL, NULL }
 };
 
@@ -253,10 +259,12 @@ static int video_set_resolution(struct rc_option *option, const char *arg, int p
 	if (!strcmp(arg, "auto"))
 	{
 		gfx_width = gfx_height = gfx_depth = 0;
+		options.vector_width = options.vector_height = 0;
 	}
 	else if (sscanf(arg, "%dx%dx%d", &gfx_width, &gfx_height, &gfx_depth) < 2)
 	{
 		gfx_width = gfx_height = gfx_depth = 0;
+		options.vector_width = options.vector_height = 0;
 		fprintf(stderr, "error: invalid value for resolution: %s\n", arg);
 		return -1;
 	}
@@ -267,9 +275,52 @@ static int video_set_resolution(struct rc_option *option, const char *arg, int p
 		(gfx_depth != 32))
 	{
 		gfx_width = gfx_height = gfx_depth = 0;
+		options.vector_width = options.vector_height = 0;
 		fprintf(stderr, "error: invalid value for resolution: %s\n", arg);
 		return -1;
 	}
+	options.vector_width = gfx_width;
+	options.vector_height = gfx_height;
+
+	option->priority = priority;
+	return 0;
+}
+
+
+
+//============================================================
+//	decode_effect
+//============================================================
+
+static int decode_effect(struct rc_option *option, const char *arg, int priority)
+{
+	bliteffect = lookup_effect(arg);
+	if (bliteffect == -1)
+	{
+		fprintf(stderr, "error: invalid value for effect: %s\n", arg);
+		return -1;
+	}
+	option->priority = priority;
+	return 0;
+}
+
+
+
+//============================================================
+//	decode_aspect
+//============================================================
+
+static int decode_aspect(struct rc_option *option, const char *arg, int priority)
+{
+	int num, den;
+
+	if (sscanf(arg, "%d:%d", &num, &den) != 2 || num == 0 || den == 0)
+	{
+		fprintf(stderr, "error: invalid value for aspect ratio: %s\n", arg);
+		return -1;
+	}
+	screen_aspect = (double)num / (double)den;
+
 	option->priority = priority;
 	return 0;
 }
@@ -306,7 +357,7 @@ struct osd_bitmap *osd_alloc_bitmap(int width, int height, int depth)
 		// round the width to a quadword
 		rdwidth = (width + 7) & ~7;
 		rowlen = (rdwidth + 2 * BITMAP_SAFETY) * sizeof(unsigned char);
-		
+
 		// expand 32bpp and 15/16bpp depths
 		if (depth == 32)
 			rowlen *= 4;
@@ -343,7 +394,7 @@ struct osd_bitmap *osd_alloc_bitmap(int width, int height, int depth)
 			else
 				bitmap->line[i] = &bm[i * rowlen + BITMAP_SAFETY];
 		}
-		
+
 		// adjust for the safety rows
 		bitmap->line += BITMAP_SAFETY;
 
@@ -369,7 +420,7 @@ void osd_free_bitmap(struct osd_bitmap *bitmap)
 
 	// unadjust for the safety rows
 	bitmap->line -= BITMAP_SAFETY;
-	
+
 	// free the memory
 	free(bitmap->line);
 	free(bitmap->_private);
@@ -421,7 +472,7 @@ void osd_mark_dirty(int left, int top, int right, int bottom)
 	// if completely out of range, bail
 	if (top >= vis_height || bottom < 0 || left > vis_width || right < 0)
 		return;
-	
+
 	// clamp to the bitmap size
 	if (top < 0)
 		top = 0;
@@ -504,7 +555,7 @@ int osd_create_display(int width, int height, int depth, int fps, int attributes
 	// create the window
 	if (create_window(width, height, video_depth, attributes, orientation))
 		return 1;
-	
+
 	// set visible area to nothing just to initialize it - it will be set by the core
 	osd_set_visible_area(0,0,0,0);
 
@@ -532,11 +583,11 @@ void osd_close_display(void)
 	// free the array of dirty colors
 	free(dirtycolor);
 	dirtycolor = NULL;
-	
+
 	// free the current palette
 	free(current_palette);
 	current_palette = NULL;
-	
+
 	// free the 16bpp lookup table
 	free(palette_16bit_lookup);
 	palette_16bit_lookup = NULL;
@@ -565,7 +616,7 @@ static int init_direct_mapped_16bpp(unsigned int totalcolors, const UINT8 *palet
 	current_palette = malloc(3 * screen_colors * sizeof(current_palette[0]));
 	palette_16bit_lookup = malloc(screen_colors * sizeof(palette_16bit_lookup[0]));
 	palette_32bit_lookup = malloc(screen_colors * sizeof(palette_32bit_lookup[0]));
-	
+
 	// handle failure
 	if (dirtycolor == NULL || current_palette == NULL || palette_16bit_lookup == NULL || palette_32bit_lookup == NULL)
 		return 1;
@@ -715,7 +766,7 @@ int osd_allocate_colors(unsigned int totalcolors, const UINT8 *palette, UINT32 *
 				bestblack = i;
 				bestblackscore = score;
 			}
-			
+
 			// best white so far?
 			if (score > bestwhitescore)
 			{
@@ -788,7 +839,7 @@ void osd_modify_pen(int pen, unsigned char red, unsigned char green, unsigned ch
 		current_palette[3 * pen + 0] = red;
 		current_palette[3 * pen + 1] = green;
 		current_palette[3 * pen + 2] = blue;
-		
+
 		// mark the color and palette dirty
 		dirtycolor[pen] = 1;
 		dirtypalette = 1;
@@ -810,7 +861,7 @@ void osd_get_pen(int pen, unsigned char *red, unsigned char *green, unsigned cha
 		*green 	= green16(pen);
 		*blue	= blue16(pen);
 	}
-	
+
 	// modifiable cases
 	else
 	{
@@ -851,14 +902,14 @@ static void check_inputs(void)
 			autoframeskip = 0;
 			frameskip = 0;
 		}
-		
+
 		// wrap from maximum to auto
 		else if (frameskip == FRAMESKIP_LEVELS - 1)
 		{
 			frameskip = 0;
 			autoframeskip = 1;
 		}
-		
+
 		// else just increment
 		else
 			frameskip++;
@@ -880,11 +931,11 @@ static void check_inputs(void)
 			autoframeskip = 0;
 			frameskip = FRAMESKIP_LEVELS-1;
 		}
-		
+
 		// wrap from 0 to auto
 		else if (frameskip == 0)
 			autoframeskip = 1;
-		
+
 		// else just decrement
 		else
 			frameskip--;
@@ -915,7 +966,7 @@ static void check_inputs(void)
 			showfpstemp = 0;
 			schedule_full_refresh();
 		}
-		
+
 		// otherwise, just toggle; force a refresh if going off
 		else
 		{
@@ -926,7 +977,7 @@ static void check_inputs(void)
 	}
 
 	// check for toggling fullscreen mode
-	if (code_pressed(KEYCODE_ENTER) && 
+	if (code_pressed(KEYCODE_ENTER) &&
 		(code_pressed(KEYCODE_LALT) || code_pressed(KEYCODE_RALT)))
 	{
 		if (!alt_enter_pressed)
@@ -947,14 +998,14 @@ static void throttle_speed(void)
 {
 	TICKER target;
 	TICKER curr;
-	
+
 	// if we're only syncing to the refresh, bail now
 	if (syncrefresh)
 		return;
 
 	// this counts as idle time
 	profiler_mark(PROFILER_IDLE);
-	
+
 	// get the current time and the target time
 	curr = ticker();
 	target = this_frame_base + (int)((double)frameskip_counter * (double)TICKS_PER_SEC / video_fps);
@@ -967,7 +1018,7 @@ static void throttle_speed(void)
 			curr = ticker();
 		} while (curr - target < 0);
 	}
-	
+
 	// idle time done
 	profiler_mark(PROFILER_END);
 }
@@ -981,7 +1032,7 @@ static void throttle_speed(void)
 void update_palette_8(void)
 {
 	int i;
-	
+
 	// loop over dirty colors
 	for (i = 0; i < screen_colors; i++)
 		if (dirtycolor[i])
@@ -989,7 +1040,7 @@ void update_palette_8(void)
 			int r = current_palette[3 * i + 0];
 			int g = current_palette[3 * i + 1];
 			int b = current_palette[3 * i + 2];
-			
+
 			// don't adjust the brightness of UI text
 			if (i != Machine->uifont->colortable[1])
 			{
@@ -997,7 +1048,7 @@ void update_palette_8(void)
 				g = bright_lookup[g];
 				b = bright_lookup[b];
 			}
-			
+
 			// set the entry
 			set_palette_entry(i, r, g, b);
 
@@ -1036,7 +1087,7 @@ void update_palette_16(void)
 				g = bright_lookup[g];
 				b = bright_lookup[b];
 			}
-			
+
 			// set the 16-bit color value
 			palette_16bit_lookup[i] = color16(r, g, b) * 0x10001;
 			palette_32bit_lookup[i] = color32(r, g, b);
@@ -1061,7 +1112,7 @@ static void display_fps(struct osd_bitmap *bitmap)
 	// display the FPS, frameskip, percent, fps and target fps
 	sprintf(buf, "%s%2d%4d%%%4d/%d fps", autoframeskip ? "auto" : "fskp", frameskip, game_speed_percent, fps, (int)(video_fps + 0.5));
 	ui_text(bitmap, buf, Machine->uiwidth - strlen(buf) * Machine->uifontwidth, 0);
-	
+
 	// for vector games, add the number of vector updates
 	if (vector_game)
 	{
@@ -1090,7 +1141,7 @@ void update_autoframeskip(void)
 	if (game_speed_percent >= 100)
 	{
 		frameskipadjust++;
-		
+
 		// but only after 3 consecutive frames where we are too fast
 		if (frameskipadjust >= 3)
 		{
@@ -1098,14 +1149,14 @@ void update_autoframeskip(void)
 			if (frameskip > 0) frameskip--;
 		}
 	}
-	
+
 	// if we're too slow, attempt to increase the frameskip
 	else
 	{
 		// if below 80% speed, be more aggressive
 		if (game_speed_percent < 80)
 			frameskipadjust -= (90 - game_speed_percent) / 5;
-		
+
 		// if we're close, only force it up to frameskip 8
 		else if (frameskip < 8)
 			frameskipadjust--;
@@ -1239,7 +1290,7 @@ void osd_update_video_and_audio(struct osd_bitmap *game_bitmap, struct osd_bitma
 	// if we're not skipping this frame, draw it
 	if (!osd_skip_this_frame())
 		render_frame(game_bitmap);
-	
+
 	// update the debugger
 	if (debug_bitmap)
 		update_debug_window(debug_bitmap);
@@ -1336,7 +1387,7 @@ void osd_pause(int paused)
 		brightness_adjust = 0.65;
 	else
 		brightness_adjust = 1.0;
-	
+
 	// mark the palette dirty, and set a flag to rebuild the brightness table
 	mark_palette_dirty();
 	dirty_bright = 1;

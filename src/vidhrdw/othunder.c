@@ -5,7 +5,7 @@
 
 #define TC0100SCN_GFX_NUM 1
 
-
+void othunder_vh_stop(void);
 data16_t *othunder_ram;
 
 struct tempsprite
@@ -57,12 +57,18 @@ static int othunder_core_vh_start (void)
 	if (!spritelist)
 		return 1;
 
-	if (TC0100SCN_vh_start(1,TC0100SCN_GFX_NUM,taito_hide_pixels))
+	if (TC0100SCN_vh_start(1,TC0100SCN_GFX_NUM,taito_hide_pixels,0,0,0,0,0,0))
+	{
+		othunder_vh_stop();
 		return 1;
+	}
 
 	if (has_TC0110PCR())
 		if (TC0110PCR_vh_start())
+		{
+			othunder_vh_stop();
 			return 1;
+		}
 
 	return 0;
 }
@@ -86,13 +92,6 @@ void othunder_vh_stop (void)
 	if (has_TC0110PCR())
 		TC0110PCR_vh_stop();
 }
-
-
-/********************************************************
-          SPRITE READ AND WRITE HANDLERS
-********************************************************/
-
-// None //
 
 
 /*********************************************************
@@ -355,7 +354,8 @@ void othunder_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	fillbitmap(priority_bitmap,0,NULL);
 
-//	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);	/* wrong color? */
+	/* Ensure screen blanked even when bottom layer not drawn due to disable bit */
+	fillbitmap(bitmap, palette_transparent_pen, &Machine -> visible_area);
 
 	TC0100SCN_tilemap_draw(bitmap,0,layer[0],TILEMAP_IGNORE_TRANSPARENCY,1);
 	TC0100SCN_tilemap_draw(bitmap,0,layer[1],0,2);
@@ -369,7 +369,7 @@ void othunder_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	/* See if we should draw artificial gun targets */
 
-	if (input_port_4_word_r(0,0) & 0x1)	/* Fake DSW */
+	if (input_port_9_word_r(0,0) & 0x1)	/* Fake DSW */
 	{
 		int rawx, rawy, centrex, centrey, screenx, screeny;
 

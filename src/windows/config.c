@@ -5,102 +5,45 @@
  * 20010424 BW uses Hans de Goede's rc subsystem
  *
  * TODO:
+ * - reintroduce override_rompath
+ *
+ * Suggestions
  * - norotate? funny, leads to option -nonorotate ...
- *   should possibly be renamed
- * - remove #ifdef MESS and provide generic hooks for projects using the MAME
- *   core
- * - suggestion for new core options:
+ *   fix when rotation options take turnable LCD's in account
+ * - switchres --> switch_resolution, swres
+ * - switchbpp --> switch_bpp, swbpp
+ * - give up distinction between vector_width and gfx_width
+ *   eventually introduce options.width, options.height
+ * - new core options:
  *   gamma (is already osd_)
  *   sound (enable/disable sound)
  *   volume
- *   resolution: introduce options.width, options.height?
  * - rename	options.use_emulated_ym3812 to options_use_real_ym3812;
- * - repair playback when no gamename given
- * - reintroduce override_rompath
- * - consolidate namespace "long_option" vs. "longoption" vs. "longopt"
- *
- * other suggestions
- * - switchres --> switch_resolution, swres
- * - switchbpp --> switch_bpp, swbpp
+ * - get rid of #ifdef MESS's by providing appropriate hooks
  */
 
+#include <stdarg.h>
 #include <ctype.h>
 #include <time.h>
 #include "driver.h"
 #include "rc.h"
 #include "misc.h"
 
-
-#ifdef MESS
-extern char *crcdir;
-static char crcfilename[256] = "";
-const char *crcfile = crcfilename;
-extern char *pcrcdir;
-static char pcrcfilename[256] = "";
-const char *pcrcfile = pcrcfilename;
-#endif
-
-
 extern struct rc_option frontend_opts[];
-
-/* FIXME: the following parts should be moved to the files they belong to */
-
-/* START: probably everything for fileio.c, datafile.c and cheat.c */
-/* FIXME: needs to be sorted out much more, leave here for the moment */
-static const char *rompath;
-static const char *samplepath;
-extern const char *cfgdir;
-extern const char *nvdir;
-extern const char *hidir;
-extern const char *inpdir;
-extern const char *cheatdir;
-extern const char *stadir;
-extern const char *memcarddir;
-extern const char *artworkdir;
-extern const char *screenshotdir;
-/* from datafile.c */
-extern const char *history_filename;
-extern const char *mameinfo_filename;
-/* from cheat.c */
-extern char *cheatfile;
-
-void decompose_rom_sample_path (const char *_rompath, const char *_samplepath);
-
-static struct rc_option fileio_opts[] =
-{
-	/* name, shortname, type, dest, deflt, min, max, func, help */
-	{ "Windows path and directory options", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
-	{ "rompath", "rp", rc_string, &rompath, "roms", 0, 0, NULL, "path to romsets" },
-	{ "samplepath", "sp", rc_string, &samplepath, "samples", 0, 0, NULL, "path to samplesets" },
-	{ "cfg_directory", NULL, rc_string, &cfgdir, "cfg", 0, 0, NULL, "directory to save configurations" },
-	{ "nvram_directory", NULL, rc_string, &nvdir, "nvram", 0, 0, NULL, "directory to save nvram contents" },
-	{ "memcard_directory", NULL, rc_string, &memcarddir, "memcard", 0, 0, NULL, "directory to save memory card contents" },
-	{ "input_directory", NULL, rc_string, &inpdir, "inp", 0, 0, NULL, "directory to save input device logs" },
-	{ "hiscore_directory", NULL, rc_string, &hidir, "hi", 0, 0, NULL, "directory to save hiscores" },
-	{ "state_directory", NULL, rc_string, &stadir, "sta", 0, 0, NULL, "directory to save states" },
-	{ "artwork_directory", NULL, rc_string, &artworkdir, "artwork", 0, 0, NULL, "directory for Artwork (Overlays etc.)" },
-	{ "snapshot_directory", NULL, rc_string, &screenshotdir, "snap", 0, 0, NULL, "directory for screenshots (.png format)" },
-//	{ "cheat_directory", NULL, rc_string, &cheatdir, "cheat", 0, 0, NULL, "directory for cheatfiles" },
-	{ "cheat_file", NULL, rc_string, &cheatfile, "cheat.dat", 0, 0, NULL, "cheat filename" },
-	{ "history_file", NULL, rc_string, &history_filename, "history.dat", 0, 0, NULL, NULL },
-	{ "mameinfo_file", NULL, rc_string, &mameinfo_filename, "mameinfo.dat", 0, 0, NULL, NULL },
-	{ NULL,	NULL, rc_end, NULL, NULL, 0, 0,	NULL, NULL }
-};
-/* END: move into fileio.c */
-
-
+extern struct rc_option fileio_opts[];
 extern struct rc_option input_opts[];
 extern struct rc_option sound_opts[];
 extern struct rc_option video_opts[];
 
-
-/* <<<----------- snip ----------->>> */
-/* config.c really starts here */
+#ifdef MESS
+extern struct rc_option mess_opts[];
+#endif
 
 extern int frontend_help(char *gamename);
 static int config_handle_arg(char *arg);
 
-int errorlog;
+static FILE *logfile;
+static int errorlog;
 static int showconfig;
 static int showusage;
 static int readconfig;
@@ -237,10 +180,16 @@ static struct rc_option opts[] = {
 	{ NULL,	NULL, rc_end, NULL, NULL, 0, 0,	NULL, NULL }
 };
 
-/* fuzzy string compare, compare short string against long string        */
-/* e.g. astdel == "Asteroids Deluxe". The return code is the fuzz index, */
-/* we simply count the gaps between maching chars.                       */
-int fuzzycmp (const char *s, const char *l)
+/*
+ * Penalty string compare, the result _should_ be a measure on
+ * how "close" two strings ressemble each other.
+ * The implementation is way too simple, but it sort of suits the
+ * purpose.
+ * This used to be called fuzzy matching, but there's no randomness
+ * involved and it is in fact a penalty method.
+ */
+
+int penalty_compare (const char *s, const char *l)
 {
 	int gaps = 0;
 	int match = 0;
@@ -275,35 +224,45 @@ int fuzzycmp (const char *s, const char *l)
 	return gaps;
 }
 
-void show_fuzzy_matches(void)
+/*
+ * We compare the game name given on the CLI against the long and
+ * the short game names supported
+ */
+void show_approx_matches(void)
 {
-	struct { int fuzz; int index; } topten[10];
+	struct { int penalty; int index; } topten[10];
 	int i,j;
-	int fuzz; /* best fuzz factor so far */
+	int penalty; /* best fuzz factor so far */
 
 	for (i = 0; i < 10; i++)
 	{
-		topten[i].fuzz = 9999;
+		topten[i].penalty = 9999;
 		topten[i].index = -1;
 	}
 
 	for (i = 0; (drivers[i] != 0); i++)
 	{
-		fuzz = fuzzycmp(gamename, drivers[i]->description);
+		int tmp;
+
+		penalty = penalty_compare (gamename, drivers[i]->description);
+		tmp = penalty_compare (gamename, drivers[i]->name);
+		if (tmp < penalty) penalty = tmp;
+
+		/* eventually insert into table of approximate matches */
 		for (j = 0; j < 10; j++)
 		{
-			if (fuzz >= topten[j].fuzz) break;
+			if (penalty >= topten[j].penalty) break;
 			if (j > 0)
 			{
-				topten[j-1].fuzz = topten[j].fuzz;
+				topten[j-1].penalty = topten[j].penalty;
 				topten[j-1].index = topten[j].index;
 			}
 			topten[j].index = i;
-			topten[j].fuzz = fuzz;
+			topten[j].penalty = penalty;
 		}
 	}
 
-	for (i = 0; i < 10; i++)
+	for (i = 9; i >= 0; i--)
 	{
 		if (topten[i].index != -1)
 			fprintf (stderr, "%-10s%s\n", drivers[topten[i].index]->name, drivers[topten[i].index]->description);
@@ -357,12 +316,14 @@ int parse_config (const char* filename, const struct GameDriver *gamedrv)
 	return retval;
 }
 
-int parse_config_and_cmdline (int argc, char **argv)
+int cli_frontend_init (int argc, char **argv)
 {
+	char buffer[128];
 	int game_index;
 	int i;
 
 	gamename = NULL;
+	game_index = -1;
 
 	/* clear all core options */
 	memset(&options,0,sizeof(options));
@@ -383,6 +344,15 @@ int parse_config_and_cmdline (int argc, char **argv)
 		exit(1);
 	}
 
+#ifdef MESS
+	/* mess registers its additional options and callbacks here */
+	if (rc_register(rc, mess_opts))
+	{
+		fprintf (stderr, "error on registering mess options\n");
+		exit(1);
+	}
+#endif
+
 	/* parse the commandline */
 	if (rc_parse_commandline(rc, argc, argv, 2, config_handle_arg))
 	{
@@ -390,14 +360,34 @@ int parse_config_and_cmdline (int argc, char **argv)
 		exit(1);
 	}
 
+	/* provide errorlog from here on */
+	if (errorlog)
+	{
+		logfile = fopen("error.log","wa");
+		if (!logfile)
+		{
+			perror("unable to open log file\n");
+			exit (1);
+		}
+	}
+
 	/* parse the global configfile */
 	if (readconfig)
+#ifdef MESS
+		if (parse_config ("mess.ini", NULL))
+			exit(1);
+#else
 		if (parse_config ("mame.ini", NULL))
 			exit(1);
+#endif
 
 	if (createconfig)
 	{
+#ifdef MESS
+		rc_save(rc, "mess.ini", 0);
+#else
 		rc_save(rc, "mame.ini", 0);
+#endif
 		exit(0);
 	}
 
@@ -416,19 +406,16 @@ int parse_config_and_cmdline (int argc, char **argv)
 		exit(0);
 	}
 
-	/* FIXME: split this up into two functions and use rc-callbacks" */
-	decompose_rom_sample_path (rompath, samplepath);
-
-	/* check for frontend options, horrible 1234 hack */
-	if (frontend_help(gamename) != 1234)
-		exit(0);
-
-	/* we're pretty sure that the users wants to play a game now */
-	game_index = -1;
-
-	/* handle playback which is not available in mame.cfg */
+	/* handle playback */
     if (playbackname != NULL)
+	{
         options.playback = osd_fopen(playbackname,0,OSD_FILETYPE_INPUTLOG,0);
+		if (!options.playback)
+		{
+			fprintf(stderr, "failed to open %s for playback\n", playbackname);
+			exit(1);
+		}
+	}
 
     /* check for game name embedded in .inp header */
     if (options.playback)
@@ -447,6 +434,7 @@ int parse_config_and_cmdline (int argc, char **argv)
                 if (strcmp(drivers[i]->name, inp_header.name) == 0)
                 {
                     game_index = i;
+					gamename = (char *)drivers[i]->name;
                     printf("Playing back previously recorded game %s (%s) [press return]\n",
                         drivers[game_index]->name,drivers[game_index]->description);
                     getchar();
@@ -455,6 +443,10 @@ int parse_config_and_cmdline (int argc, char **argv)
             }
         }
     }
+
+	/* check for frontend options, horrible 1234 hack */
+	if (frontend_help(gamename) != 1234)
+		exit(0);
 
 	/* if not given by .inp file yet */
 	if (game_index == -1)
@@ -468,7 +460,6 @@ int parse_config_and_cmdline (int argc, char **argv)
 			}
 	}
 
-	/* random ?*/
 #ifdef MAME_DEBUG
 	if (game_index == -1)
 	{
@@ -478,7 +469,7 @@ int parse_config_and_cmdline (int argc, char **argv)
 			i = 0;
 			while (drivers[i]) i++;	/* count available drivers */
 
-			srand(clock());
+			srand(time(0));
 			game_index = rand() % i;
 
 			fprintf(stderr, "Running %s (%s) [press return]\n",drivers[game_index]->name,drivers[game_index]->description);
@@ -487,37 +478,45 @@ int parse_config_and_cmdline (int argc, char **argv)
 	}
 #endif
 
-	/* we give up. print a few fuzzy matches */
+	/* we give up. print a few approximate matches */
 	if (game_index == -1)
 	{
-		fprintf(stderr, "game \"%s\" not supported\n", gamename);
-		fprintf(stderr, "the name fuzzy matches the following supported games:\n");
-		show_fuzzy_matches();
+		fprintf(stderr, "\n\"%s\" approximately matches the following\n"
+				"supported games (best match first):\n\n", gamename);
+		show_approx_matches();
 		exit(1);
 	}
+
+	/* ok, got a gamename */
 
 	/* if this is a vector game, parse vector.ini first */
 	if (drivers[game_index]->drv->video_attributes & VIDEO_TYPE_VECTOR)
 		if (parse_config ("vector.ini", NULL))
 			exit(1);
 
-	/* ok, got a gamename. now load gamename.ini */
-	/* this possibly checks for clonename.ini recursively! */
+	/* nice hack: load source_file.ini */
+	sprintf(buffer, "%s", drivers[game_index]->source_file+12);
+	buffer[strlen(buffer) - 2] = 0;
+	strcat(buffer, ".ini");
+	if (readconfig)
+		if (parse_config (buffer, NULL))
+			exit(1);
 
+	/* now load gamename.ini */
+	/* this possibly checks for clonename.ini recursively! */
 	if (readconfig)
 		if (parse_config (NULL, drivers[game_index]))
 			exit(1);
 
-	#ifdef MESS
-	/* This function has been added to MESS.C as load_image() */
-	/* FIXME: broken, sorry */
-//	load_image(argc, argv, j, game_index);
-	#endif
-
-	/* handle record which is not available in mame.cfg */
+	/* handle record option */
 	if (recordname)
 	{
 		options.record = osd_fopen(recordname,0,OSD_FILETYPE_INPUTLOG,1);
+		if (!options.record)
+		{
+			fprintf(stderr, "failed to open %s for recording\n", recordname);
+			exit(1);
+		}
 	}
 
     if (options.record)
@@ -538,18 +537,6 @@ int parse_config_and_cmdline (int argc, char **argv)
         osd_fwrite(options.record, &inp_header, sizeof(INP_HEADER));
     }
 
-	#ifdef MESS
-	/* Build the CRC database filename */
-	sprintf(crcfilename, "%s/%s.crc", crcdir, drivers[game_index]->name);
-	if (drivers[game_index]->clone_of->name)
-		sprintf (pcrcfilename, "%s/%s.crc", crcdir, drivers[game_index]->clone_of->name);
-	else
-		pcrcfilename[0] = 0;
-    #endif
-
-/* FIXME */
-/*	logerror("cheatfile = %s - cheatdir = %s\n",cheatfile,cheatdir); */
-
 	/* need a decent default for debug width/height */
 	if (options.debug_width == 0)
 		options.debug_width = 640;
@@ -563,6 +550,15 @@ int parse_config_and_cmdline (int argc, char **argv)
 	return game_index;
 }
 
+void cli_frontend_exit(void)
+{
+	/* close open files */
+	if (logfile) fclose(logfile);
+
+	if (options.playback) osd_fclose(options.playback);
+	if (options.record)   osd_fclose(options.record);
+	if (options.language_file) osd_fclose(options.language_file);
+}
 
 static int config_handle_arg(char *arg)
 {
@@ -574,26 +570,28 @@ static int config_handle_arg(char *arg)
 		got_gamename = 1;
 	}
 	else
-#ifdef MESS
-	{
-		if (options.image_count >= MAX_IMAGES)
-		{
-			fprintf(stderr, "error: too many image names specified!\n");
-			return -1;
-		}
-		options.image_files[options.image_count].type = iodevice_type;
-		options.image_files[options.image_count].name = arg;
-		options.image_count++;
-	}
-#else
 	{
 		fprintf(stderr,"error: duplicate gamename: %s\n", arg);
 		return -1;
 	}
-#endif
 
 	return 0;
 }
 
+
+/*
+ * logerror
+ */
+
+void CLIB_DECL logerror(const char *text,...)
+{
+	va_list arg;
+
+	/* standard vfprintf stuff here */
+	va_start(arg, text);
+	if (errorlog)
+		vfprintf(logfile, text, arg);
+	va_end(arg);
+}
 
 

@@ -36,27 +36,43 @@ static void terraf_get_tx_tile_info(int tile_index)
 {
 	int attributes = terraf_text_videoram[tile_index+0x400]&0xff;
 	int tile_number = terraf_text_videoram[tile_index]&0xff;
-	SET_TILE_INFO(0,tile_number + 256 * (attributes & 0x3),attributes >> 4);
+	SET_TILE_INFO(
+			0,
+			tile_number + 256 * (attributes & 0x3),
+			attributes >> 4,
+			0)
 }
 
 static void get_tx_tile_info(int tile_index)
 {
 	int attributes = terraf_text_videoram[tile_index+0x800]&0xff;
 	int tile_number = terraf_text_videoram[tile_index]&0xff;
-	SET_TILE_INFO(0,tile_number + 256 * (attributes & 0x3),attributes >> 4);
+	SET_TILE_INFO(
+			0,
+			tile_number + 256 * (attributes & 0x3),
+			attributes >> 4,
+			0)
 }
 
 static void get_fg_tile_info( int tile_index )
 {
 	int data = armedf_fg_videoram[tile_index];
-	SET_TILE_INFO( 1, data&0x7ff, data>>11 );
+	SET_TILE_INFO(
+			1,
+			data&0x7ff,
+			data>>11,
+			0)
 }
 
 
 static void get_bg_tile_info( int tile_index )
 {
 	int data = armedf_bg_videoram[tile_index];
-	SET_TILE_INFO( 2, data&0x3ff, data>>11 );
+	SET_TILE_INFO(
+			2,
+			data&0x3ff,
+			data>>11,
+			0)
 }
 
 

@@ -471,7 +471,7 @@ static void update_interrupts(int fast)
 	if (VIDEO_INTSTATE & VIDEO_INTENABLE & VIDEOINT_BLITTER)
 		blitter_state = 1;
 
-#if !MAME_DEBUG
+#ifndef MAME_DEBUG
 	if (fast)
 		itech32_update_interrupts_fast(-1, blitter_state, scanline_state);
 	else

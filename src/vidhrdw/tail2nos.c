@@ -25,7 +25,11 @@ static unsigned char *dirtychar;
 static void get_tile_info(int tile_index)
 {
 	UINT16 code = tail2nos_bgvideoram[tile_index];
-	SET_TILE_INFO(0,(code & 0x1fff) + (charbank << 13),((code & 0xe000) >> 13) + charpalette * 16)
+	SET_TILE_INFO(
+			0,
+			(code & 0x1fff) + (charbank << 13),
+			((code & 0xe000) >> 13) + charpalette * 16,
+			0)
 }
 
 

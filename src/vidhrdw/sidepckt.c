@@ -48,9 +48,11 @@ void sidepckt_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 static void get_tile_info(int tile_index)
 {
 	unsigned char attr = colorram[tile_index];
-	SET_TILE_INFO(0,videoram[tile_index] + ((attr & 0x07) << 8),
-			((attr & 0x10) >> 3) | ((attr & 0x20) >> 5))
-	tile_info.flags = TILE_FLIPX | TILE_SPLIT((attr & 0x80) >> 7);
+	SET_TILE_INFO(
+			0,
+			videoram[tile_index] + ((attr & 0x07) << 8),
+			((attr & 0x10) >> 3) | ((attr & 0x20) >> 5),
+			TILE_FLIPX | TILE_SPLIT((attr & 0x80) >> 7))
 }
 
 
@@ -68,8 +70,8 @@ int sidepckt_vh_start(void)
 	if (!bg_tilemap)
 		return 1;
 
-	tilemap_set_transmask(bg_tilemap,0,0xff); /* split type 0 is totally transparent in front half */
-	tilemap_set_transmask(bg_tilemap,1,0x01); /* split type 1 has pen 1 transparent in front half */
+	tilemap_set_transmask(bg_tilemap,0,0xff,0xff); /* split type 0 is totally transparent in front half */
+	tilemap_set_transmask(bg_tilemap,1,0x01,0xfe); /* split type 1 has pen 1 transparent in front half */
 
 	tilemap_set_flip(ALL_TILEMAPS,TILEMAP_FLIPX);
 

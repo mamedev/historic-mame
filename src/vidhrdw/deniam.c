@@ -60,20 +60,32 @@ static void get_bg_tile_info(int tile_index)
 {
 	int page = tile_index >> 11;
 	UINT16 attr = deniam_videoram[bg_page[page] * 0x0800 + (tile_index & 0x7ff)];
-	SET_TILE_INFO(0,attr,(attr & 0x1fc0) >> 6)
+	SET_TILE_INFO(
+			0,
+			attr,
+			(attr & 0x1fc0) >> 6,
+			0)
 }
 
 static void get_fg_tile_info(int tile_index)
 {
 	int page = tile_index >> 11;
 	UINT16 attr = deniam_videoram[fg_page[page] * 0x0800 + (tile_index & 0x7ff)];
-	SET_TILE_INFO(0,attr,(attr & 0x1fc0) >> 6)
+	SET_TILE_INFO(
+			0,
+			attr,
+			(attr & 0x1fc0) >> 6,
+			0)
 }
 
 static void get_tx_tile_info(int tile_index)
 {
 	UINT16 attr = deniam_textram[tile_index];
-	SET_TILE_INFO(0,attr & 0xf1ff,(attr & 0x0e00) >> 9)
+	SET_TILE_INFO(
+			0,
+			attr & 0xf1ff,
+			(attr & 0x0e00) >> 9,
+			0)
 }
 
 

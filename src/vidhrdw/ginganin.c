@@ -84,7 +84,11 @@ data16_t *ginganin_fgram16, *ginganin_txtram16, *ginganin_vregs16;
 static void get_bg_tile_info(int tile_index)
 {
 	int code = memory_region(REGION_GFX5)[2*tile_index + 0] * 256 + memory_region(REGION_GFX5)[2*tile_index + 1];
-	SET_TILE_INFO(BG_GFX, code, code >> 12);
+	SET_TILE_INFO(
+			BG_GFX,
+			code,
+			code >> 12,
+			0)
 }
 
 
@@ -97,7 +101,11 @@ static void get_bg_tile_info(int tile_index)
 static void get_fg_tile_info(int tile_index)
 {
 	data16_t code = ginganin_fgram16[tile_index];
-	SET_TILE_INFO(FG_GFX, code, code >> 12);
+	SET_TILE_INFO(
+			FG_GFX,
+			code,
+			code >> 12,
+			0)
 }
 
 WRITE16_HANDLER( ginganin_fgram16_w )
@@ -118,7 +126,11 @@ WRITE16_HANDLER( ginganin_fgram16_w )
 static void get_txt_tile_info(int tile_index)
 {
 	data16_t code = ginganin_txtram16[tile_index];
-	SET_TILE_INFO(TXT_GFX, code, code >> 12);
+	SET_TILE_INFO(
+			TXT_GFX,
+			code,
+			code >> 12,
+			0)
 }
 
 WRITE16_HANDLER( ginganin_txtram16_w )

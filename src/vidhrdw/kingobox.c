@@ -262,7 +262,7 @@ void ringking_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			dirtybuffer[offs] = 0;
 
 			drawgfx(tmpbitmap,Machine->gfx[4],
-					videoram[offs],
+					sx ? videoram[offs] : 0,	/* make the top row black */
 					((colorram[offs] & 0x70) >> 4 ) + 8 * palette_bank,
 					0,0,
 					sx*16,sy*16,

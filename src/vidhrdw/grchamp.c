@@ -101,19 +101,31 @@ WRITE_HANDLER( grchamp_videoram_w )
 static void get_bg0_tile_info( int offset )
 {
 	int tile_number = grchamp_videoram[offset];
-	SET_TILE_INFO(1,tile_number,palette_bank)
+	SET_TILE_INFO(
+			1,
+			tile_number,
+			palette_bank,
+			0)
 }
 
 static void get_bg1_tile_info( int offset )
 {
 	int tile_number = grchamp_videoram[offset+0x800]+256;
-	SET_TILE_INFO(1,tile_number,palette_bank)
+	SET_TILE_INFO(
+			1,
+			tile_number,
+			palette_bank,
+			0)
 }
 
 static void get_bg2_tile_info( int offset )
 {
 	int tile_number = grchamp_videoram[offset+0x800*2]+256*2;
-	SET_TILE_INFO(1,tile_number,0)
+	SET_TILE_INFO(
+			1,
+			tile_number,
+			0,
+			0)
 }
 
 static UINT32 get_memory_offset( UINT32 col, UINT32 row, UINT32 num_cols, UINT32 num_rows )

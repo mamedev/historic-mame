@@ -279,7 +279,7 @@ static READ16_HANDLER( ip_select_r )
 
 static WRITE16_HANDLER( ip_select_w )
 {
-	ip_select = COMBINE_DATA(&ip_select);
+	COMBINE_DATA(&ip_select);
 	cpu_cause_interrupt(0,2);
 }
 

@@ -1,9 +1,13 @@
 #include "driver.h"
+#include "state.h"
 #include "vidhrdw/generic.h"
 #include "vidhrdw/taitoic.h"
 
 #define TC0480SCP_GFX_NUM 1
 #define TC0100SCN_GFX_NUM 1
+
+extern UINT8 TC0360PRI_regs[16];
+void slapshot_vh_stop(void);
 
 struct tempsprite
 {
@@ -16,20 +20,16 @@ struct tempsprite
 };
 static struct tempsprite *spritelist;
 
-static int taito_hide_pixels;
-
-extern UINT8 TC0360PRI_regs[16];
-extern int TC0480SCP_pri_reg;
-
-static int spritebank[8];
-
 static int sprites_disabled,sprites_active_area,sprites_master_scrollx,sprites_master_scrolly;
 static int sprites_flipscreen = 0;
 static data16_t *spriteram_buffered,*spriteram_delayed;
 
+int taito_sprite_type = 0;
 data16_t *taito_sprite_ext;
 size_t taito_spriteext_size;
-UINT8 taito_sprite_type = 0;
+static UINT16 spritebank[8];
+
+static int taito_hide_pixels;
 
 /**********************************************************/
 
@@ -60,6 +60,8 @@ static int has_TC0480SCP(void)
 
 int slapshot_core_vh_start (void)
 {
+	int i;
+
 	spriteram_delayed = malloc(spriteram_size);
 	spriteram_buffered = malloc(spriteram_size);
 	spritelist = malloc(0x400 * sizeof(*spritelist));
@@ -70,23 +72,35 @@ int slapshot_core_vh_start (void)
 	if (has_TC0480SCP())	/* it's a tc0480scp game */
 	{
 		if (TC0480SCP_vh_start(TC0480SCP_GFX_NUM,taito_hide_pixels,30,9,-1,1,0,2,256))
+		{
+			slapshot_vh_stop();
 			return 1;
+		}
 	}
 	else	/* it's a tc0100scn game */
 	{
-		if (TC0100SCN_vh_start(1,TC0100SCN_GFX_NUM,taito_hide_pixels))
+		if (TC0100SCN_vh_start(1,TC0100SCN_GFX_NUM,taito_hide_pixels,0,0,0,0,0,0))
+		{
+			slapshot_vh_stop();
 			return 1;
+		}
 	}
 
-	{
-		int i;
+	TC0360PRI_vh_start();	/* Purely for save-state purposes */
 
-		for (i = 0; i < 8; i ++)
-			spritebank[i] = 0x400 * i;
-	}
+	for (i = 0; i < 8; i ++)
+		spritebank[i] = 0x400 * i;
 
 	sprites_disabled = 1;
 	sprites_active_area = 0;
+
+	state_save_register_int   ("main1", 0, "control", &taito_hide_pixels);
+	state_save_register_int   ("main2", 0, "control", &taito_sprite_type);
+	state_save_register_UINT16("main3", 0, "control", spritebank, 8);
+	state_save_register_int   ("main5", 0, "control", &sprites_disabled);
+	state_save_register_int   ("main6", 0, "control", &sprites_active_area);
+	state_save_register_UINT16("main7", 0, "memory", spriteram_delayed, spriteram_size/2);
+	state_save_register_UINT16("main8", 0, "memory", spriteram_buffered, spriteram_size/2);
 
 	return 0;
 }
@@ -116,13 +130,6 @@ void slapshot_vh_stop (void)
 		TC0100SCN_vh_stop();
 	}
 }
-
-
-/********************************************************
-          SPRITE READ AND WRITE HANDLERS
-********************************************************/
-
-// none //
 
 
 /*********************************************************
@@ -821,12 +828,5 @@ void slapshot_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	if (dislayer[layer[4]]==0)
 #endif
 	TC0480SCP_tilemap_draw(bitmap,layer[4],0,0);
-
-#if 0
-	/* show priority ctrl reg */
-	sprintf (buf, "%04x", TC0480SCP_pri_reg );
-	ui_text (Machine->scrbitmap, buf, 0, 0);
-#endif
 }
-
 

@@ -16,7 +16,6 @@
 #include "usrintrf.h"
 #include "cheat.h"
 #include "tilemap.h"
-#include "sprite.h"
 #include "profiler.h"
 
 #ifdef MAME_NET

@@ -126,10 +126,11 @@ void travrusa_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 static void get_tile_info(int tile_index)
 {
 	unsigned char attr = travrusa_videoram[2*tile_index+1];
-	SET_TILE_INFO(0,travrusa_videoram[2*tile_index] + ((attr & 0xc0) << 2),attr & 0x0f)
-	tile_info.flags = 0;
-	if (attr & 0x20) tile_info.flags |= TILE_FLIPX;
-	if (attr & 0x10) tile_info.flags |= TILE_FLIPY;
+	SET_TILE_INFO(
+			0,
+			travrusa_videoram[2*tile_index] + ((attr & 0xc0) << 2),
+			attr & 0x0f,
+			TILE_FLIPXY((attr & 0x30) >> 4))
 	if ((attr & 0x0f) == 0x0f) tile_info.flags |= TILE_SPLIT(1);	/* tunnels */
 }
 
@@ -148,8 +149,8 @@ int travrusa_vh_start(void)
 	if (!bg_tilemap)
 		return 1;
 
-	tilemap_set_transmask(bg_tilemap,0,0xff); /* split type 0 is totally transparent in front half */
-	tilemap_set_transmask(bg_tilemap,1,0x3f); /* split type 1 has pens 6 and 7 opaque - tunnels */
+	tilemap_set_transmask(bg_tilemap,0,0xff,0x00); /* split type 0 is totally transparent in front half */
+	tilemap_set_transmask(bg_tilemap,1,0x3f,0xc0); /* split type 1 has pens 6 and 7 opaque - tunnels */
 
 	tilemap_set_scroll_rows(bg_tilemap,32);
 

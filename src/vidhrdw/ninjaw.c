@@ -4,6 +4,8 @@
 
 #define TC0100SCN_GFX_NUM 1
 
+void ninjaw_vh_stop(void);
+
 struct tempsprite
 {
 	int gfx;
@@ -163,22 +165,37 @@ static int ninjaw_core_vh_start (void)
 	chips = number_of_TC0100SCN();
 
 	if (chips <= 0)	/* we have an erroneous TC0100SCN configuration */
+	{
+		ninjaw_vh_stop();
 		return 1;
+	}
 
-	if (TC0100SCN_vh_start(chips,TC0100SCN_GFX_NUM,taito_hide_pixels))
+	if (TC0100SCN_vh_start(chips,TC0100SCN_GFX_NUM,taito_hide_pixels,0,0,0,0,0,0))
+	{
+		ninjaw_vh_stop();
 		return 1;
+	}
 
 	if (has_TC0110PCR())
 		if (TC0110PCR_vh_start())
+		{
+			ninjaw_vh_stop();
 			return 1;
+		}
 
 	if (has_second_TC0110PCR())
 		if (TC0110PCR_1_vh_start())
+		{
+			ninjaw_vh_stop();
 			return 1;
+		}
 
 	if (has_third_TC0110PCR())
 		if (TC0110PCR_2_vh_start())
+		{
+			ninjaw_vh_stop();
 			return 1;
+		}
 
 	/* Ensure palette from correct TC0110PCR used for each screen */
 	TC0100SCN_set_chip_colbanks(0x0,0x100,0x200);
@@ -380,7 +397,9 @@ void ninjaw_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	layer[2] = 2;
 
 	fillbitmap(priority_bitmap,0,NULL);
-//	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);	/* wrong color? */
+
+	/* Ensure screen blanked even when bottom layers not drawn due to disable bit */
+	fillbitmap(bitmap, palette_transparent_pen, &Machine -> visible_area);
 
 	/* chip 0 does tilemaps on the left, chip 1 center, chip 2 the right */
 	TC0100SCN_tilemap_draw(bitmap,0,layer[0],TILEMAP_IGNORE_TRANSPARENCY,1);	/* left */

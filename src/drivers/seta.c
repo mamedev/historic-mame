@@ -47,15 +47,23 @@ Year + Game                  Licensed To            Board
 94 Eight Forces              Tecmo					Same As Zing Zing Zip
    Pro Mahjong Kiwame        Athena                 P0-101-1
    Krazy Bowl                American Sammy         P0-114-A (SKB-001)
+95 Extreme Downhill          Sammy Japan			P0-117-A (DH-01)
+   Gundhara                  Banpresto              P0-120-A (BP954KA)
 ---------------------------------------------------------------------------
 (1)	some wrong tiles	(2) wrong colors
 (3) not working: if the demo modes runs long enough, the colors will screw up.
 
 
-To Do: Better Sound, NVRAM
+To Do:
 
+- All games : better sound
+- Some games: battery backed portion of RAM
+- Some games: programmable timer that generates IRQ. See e.g. gundhara:
+  lev 4 is triggerd by writes at d00000-6 and drives the sound.
+  See also msgundam.
 
 ***************************************************************************/
+
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
@@ -83,10 +91,11 @@ WRITE16_HANDLER( seta_vram_2_w );
 WRITE16_HANDLER( seta_vram_3_w );
 WRITE16_HANDLER( seta_vregs_w );
 
-void blandia_vh_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+void blandia_vh_init_palette (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+void gundhara_vh_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void jjsquawk_vh_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void zingzip_vh_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void usclssic_vh_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+void zingzip_vh_init_palette (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 
 int seta_vh_start_1_layer(void);
 int seta_vh_start_1_layer_offset_0x02(void);
@@ -205,6 +214,7 @@ static WRITE16_HANDLER( sub_ctrl_w )
 
 const struct GameDriver driver_blandia;
 const struct GameDriver driver_zingzip;
+const struct GameDriver driver_gundhara;
 
 /*	---- 3---		Coin #1 Lock Out
 	---- -2--		Coin #0 Lock Out
@@ -216,12 +226,15 @@ void seta_coin_lockout_w(int data)
 	coin_counter_w		(0, (( data) >> 0) & 1 );
 	coin_counter_w		(1, (( data) >> 1) & 1 );
 
-	/* Blandia & ZingZingZip haven't the coin lockout device */
-	if (Machine->gamedrv			==	&driver_blandia ||
-		Machine->gamedrv->clone_of	==	&driver_blandia ||
+	/* blandia, zingzip & gundhara haven't the coin lockout device */
+	if (Machine->gamedrv			==	&driver_blandia  ||
+		Machine->gamedrv->clone_of	==	&driver_blandia  ||
 
-		Machine->gamedrv			==	&driver_zingzip ||
-		Machine->gamedrv->clone_of	==	&driver_zingzip)
+		Machine->gamedrv			==	&driver_gundhara ||
+		Machine->gamedrv->clone_of	==	&driver_gundhara ||
+
+		Machine->gamedrv			==	&driver_zingzip  ||
+		Machine->gamedrv->clone_of	==	&driver_zingzip     )
 		return;
 	coin_lockout_w		(0, ((~data) >> 2) & 1 );
 	coin_lockout_w		(1, ((~data) >> 3) & 1 );
@@ -319,15 +332,16 @@ MEMORY_END
 
 
 /***************************************************************************
-		Blandia, J.J.Squawkers, Rezon, War of Aero, Zing Zing Zip
+	Blandia, Gundhara, J.J.Squawkers, Rezon, War of Aero, Zing Zing Zip
 						(with slight variations)
 ***************************************************************************/
 
 static MEMORY_READ16_START( wrofaero_readmem )
-	{ 0x000000, 0x07ffff, MRA16_ROM				},	// ROM
-	{ 0x100000, 0x1fffff, MRA16_ROM				},	// ROM (for blandia)
+	{ 0x000000, 0x1fffff, MRA16_ROM				},	// ROM (up to 2MB)
 	{ 0x200000, 0x20ffff, MRA16_RAM				},	// RAM (main ram for zingzip, wrofaero writes to 20f000-20ffff)
+	{ 0x210000, 0x21ffff, MRA16_RAM				},	// RAM (gundhara)
 	{ 0x300000, 0x30ffff, MRA16_RAM				},	// RAM (wrofaero only?)
+	{ 0x500000, 0x500005, MRA16_RAM				},	// (gundhara)
 	{ 0x400000, 0x400001, input_port_0_word_r	},	// P1
 	{ 0x400002, 0x400003, input_port_1_word_r	},	// P2
 	{ 0x400004, 0x400005, input_port_2_word_r	},	// Coins
@@ -349,9 +363,9 @@ static MEMORY_READ16_START( wrofaero_readmem )
 MEMORY_END
 
 static MEMORY_WRITE16_START( wrofaero_writemem )
-	{ 0x000000, 0x07ffff, MWA16_ROM						},	// ROM
-	{ 0x100000, 0x1fffff, MWA16_ROM						},	// ROM (for blandia)
+	{ 0x000000, 0x1fffff, MWA16_ROM						},	// ROM (up to 2MB)
 	{ 0x200000, 0x20ffff, MWA16_RAM						},	// RAM
+	{ 0x210000, 0x21ffff, MWA16_RAM						},	// RAM (gundhara)
 	{ 0x300000, 0x30ffff, MWA16_RAM						},	// RAM (wrofaero only?)
 	{ 0x500000, 0x500005, seta_vregs_w, &seta_vregs		},	// Coin Lockout + Video Registers
 	{ 0x700000, 0x7003ff, MWA16_RAM						},	// (rezon,jjsquawk)
@@ -370,9 +384,9 @@ static MEMORY_WRITE16_START( wrofaero_writemem )
 	{ 0xb00000, 0xb03fff, MWA16_RAM, &spriteram16_2		},	// Sprites Code + X + Attr
 	{ 0xc00000, 0xc000ff, seta_sound_word_w				},	// Sound
 	{ 0xc00100, 0xc03fff, MWA16_RAM						},	//
-//	{ 0xd00000, 0xd00007, MWA16_NOP						},	// ?
-	{ 0xe00000, 0xe00001, MWA16_NOP						},	// ?
-	{ 0xf00000, 0xf00001, MWA16_NOP						},	// ?
+//	{ 0xd00000, 0xd00007, MWA16_NOP						},	// ? Programmable Timer
+	{ 0xe00000, 0xe00001, MWA16_NOP						},	// ? VBlank IRQ Ack
+	{ 0xf00000, 0xf00001, MWA16_NOP						},	// ? Sound  IRQ Ack
 MEMORY_END
 
 
@@ -570,6 +584,130 @@ static MEMORY_WRITE16_START( drgnunit_writemem )
 	{ 0xd00000, 0xd00607, MWA16_RAM, &spriteram16		},	// Sprites Y
 	{ 0xe00000, 0xe03fff, MWA16_RAM, &spriteram16_2		},	// Sprites Code + X + Attr
 MEMORY_END
+
+
+/***************************************************************************
+								Extreme Downhill
+***************************************************************************/
+
+static MEMORY_READ16_START( extdwnhl_readmem )
+	{ 0x000000, 0x0fffff, MRA16_ROM				},	// ROM
+	{ 0x200000, 0x20ffff, MRA16_RAM				},	// RAM
+	{ 0x210000, 0x21ffff, MRA16_RAM				},	// RAM
+	{ 0x400000, 0x400001, input_port_0_word_r	},	// P1
+	{ 0x400002, 0x400003, input_port_1_word_r	},	// P2
+	{ 0x400004, 0x400005, input_port_2_word_r	},	// Coins
+	{ 0x400008, 0x40000b, seta_dsw_r			},	// DSW
+	{ 0x40000c, 0x40000d, watchdog_reset16_r	},	// Watchdog (MUST RETURN $FFFF)
+	{ 0x500004, 0x500007, MRA16_NOP				},	//
+	{ 0x600400, 0x600fff, MRA16_RAM				},	// Palette
+	{ 0x601000, 0x610bff, MRA16_RAM				},	//
+	{ 0x800000, 0x803fff, MRA16_RAM				},	// VRAM 0&1
+	{ 0x804000, 0x80ffff, MRA16_RAM				},	//
+	{ 0x880000, 0x883fff, MRA16_RAM				},	// VRAM 2&3
+	{ 0x884000, 0x88ffff, MRA16_RAM				},	//
+/**/{ 0x900000, 0x900005, MRA16_RAM				},	// VRAM 0&1 Ctrl
+/**/{ 0x980000, 0x980005, MRA16_RAM				},	// VRAM 2&3 Ctrl
+/**/{ 0xa00000, 0xa00607, MRA16_RAM				},	// Sprites Y
+/**/{ 0xa80000, 0xa80001, MRA16_RAM				},	// ? 0x4000
+	{ 0xb00000, 0xb03fff, MRA16_RAM				},	// Sprites Code + X + Attr
+	{ 0xb04000, 0xb13fff, MRA16_RAM				},	//
+	{ 0xe00000, 0xe000ff, seta_sound_word_r		},	// Sound
+	{ 0xe00100, 0xe03fff, MRA16_RAM				},	//
+MEMORY_END
+
+static MEMORY_WRITE16_START( extdwnhl_writemem )
+	{ 0x000000, 0x0fffff, MWA16_ROM						},	// ROM
+	{ 0x200000, 0x20ffff, MWA16_RAM						},	// RAM
+	{ 0x210000, 0x21ffff, MWA16_RAM						},	// RAM
+	{ 0x500000, 0x500005, seta_vregs_w, &seta_vregs		},	// Coin Lockout + Video Registers
+	{ 0x600400, 0x600fff, paletteram16_xRRRRRGGGGGBBBBB_word_w, &paletteram16	},	// Palette
+	{ 0x601000, 0x610bff, MWA16_RAM						},	//
+	{ 0x800000, 0x801fff, seta_vram_0_w, &seta_vram_0	},	// VRAM 0
+	{ 0x802000, 0x803fff, seta_vram_1_w, &seta_vram_1	},	// VRAM 1
+	{ 0x804000, 0x80ffff, MWA16_RAM						},	//
+	{ 0x880000, 0x881fff, seta_vram_2_w, &seta_vram_2	},	// VRAM 2
+	{ 0x882000, 0x883fff, seta_vram_3_w, &seta_vram_3	},	// VRAM 3
+	{ 0x884000, 0x88ffff, MWA16_RAM						},	//
+	{ 0x900000, 0x900005, MWA16_RAM, &seta_vctrl_0		},	// VRAM 0&1 Ctrl
+	{ 0x980000, 0x980005, MWA16_RAM, &seta_vctrl_2		},	// VRAM 2&3 Ctrl
+	{ 0xa00000, 0xa00607, MWA16_RAM, &spriteram16		},	// Sprites Y
+	{ 0xa80000, 0xa80001, MWA16_RAM						},	// ? 0x4000
+	{ 0xb00000, 0xb03fff, MWA16_RAM, &spriteram16_2		},	// Sprites Code + X + Attr
+	{ 0xb04000, 0xb13fff, MWA16_RAM						},	//
+	{ 0xe00000, 0xe000ff, seta_sound_word_w				},	// Sound
+	{ 0xe00100, 0xe03fff, MWA16_RAM						},	//
+MEMORY_END
+
+
+/***************************************************************************
+
+									GundHara
+
+(C) 1995 Banpresto
+Seta/Allumer Hardware
+
+PCB: BP954KA
+PCB: PO-120A
+CPU: TMP68HC000N16 (68000, 64 pin DIP)
+SND: ?
+OSC: 16.000MHz
+RAM: 6264 x 8, 62256 x 4
+DIPS: 2 x 8 position
+Other Chips:	PALs x 6 (not dumped)
+				NEC 71054C
+				X1-004
+				X1-007
+				X1-010
+				X1-011 x2	X1-012 x2
+				X1-001A		X1-002A
+
+On PCB near JAMMA connector is a small push button to reset the PCB.
+
+ROMS:
+BPGH-001.102	27C040
+BPGH-002.103	27C4000
+BPGH-003.U3		27C4000
+BPGH-004.U4		23C4000
+BPGH-005.200	23C16000
+BPGH-006.201	23C16000
+BPGH-007.U63	23C16000
+BPGH-008.U64	23C16000
+BPGH-009.U65	27C4000
+BPGH-010.U66	TC538200
+BPGH-011.U67	TC538000
+BPGH-012.U68	TC5316200
+BPGH-013.U70	TC538000
+
+***************************************************************************/
+
+ROM_START( gundhara )
+
+	ROM_REGION( 0x200000, REGION_CPU1, 0 )		/* 68000 Code */
+	ROM_LOAD16_BYTE( "bpgh-003.u3",  0x000000, 0x080000, 0x14e9970a )
+	ROM_LOAD16_BYTE( "bpgh-004.u4",  0x000001, 0x080000, 0x96dfc658 )
+	ROM_LOAD16_BYTE( "bpgh-002.103", 0x100000, 0x080000, 0x312f58e2 )
+	ROM_LOAD16_BYTE( "bpgh-001.102", 0x100001, 0x080000, 0x8d23a23c )
+
+	ROM_REGION( 0x800000, REGION_GFX1, ROMREGION_DISPOSE )	/* Sprites */
+	ROM_LOAD( "bpgh-008.u64", 0x000000, 0x200000, 0x7ed9d272 )
+	ROM_LOAD( "bpgh-006.201", 0x200000, 0x200000, 0x5a81411d )
+	ROM_LOAD( "bpgh-007.u63", 0x400000, 0x200000, 0xaa49ce7b )
+	ROM_LOAD( "bpgh-005.200", 0x600000, 0x200000, 0x74138266 )
+
+	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )	/* Layer 1 */
+	ROM_LOAD       ( "bpgh-010.u66", 0x000000, 0x100000, 0xb742f0b8 )
+	ROM_LOAD16_BYTE( "bpgh-009.u65", 0x100000, 0x080000, 0xb768e666 )
+
+	ROM_REGION( 0x400000, REGION_GFX3, ROMREGION_DISPOSE )	/* Layer 2 */
+	ROM_LOAD       ( "bpgh-012.u68", 0x000000, 0x200000, 0xedfda595 )
+	ROM_LOAD16_BYTE( "bpgh-011.u67", 0x200000, 0x100000, 0x49aff270 )
+
+	ROM_REGION( 0x100000, REGION_SOUND1, 0 )	/* Samples */
+	ROM_LOAD( "bpgh-013.u70",  0x080000, 0x080000, 0x0fa5d503 )	// swapped halves
+	ROM_CONTINUE(              0x000000, 0x080000             )
+
+ROM_END
 
 
 /***************************************************************************
@@ -1867,6 +2005,167 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
+								Extreme Downhill
+***************************************************************************/
+
+INPUT_PORTS_START( extdwnhl )
+
+	PORT_START	// IN0 - Player 1
+	PORT_BIT(  0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER1 | IPF_2WAY )
+	PORT_BIT(  0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER1 | IPF_2WAY )
+	PORT_BIT(  0x0004, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x0008, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT(  0x0020, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x0080, IP_ACTIVE_LOW, IPT_START1  )
+
+	PORT_START	// IN1 - Player 2
+	PORT_BIT(  0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER2 | IPF_2WAY )
+	PORT_BIT(  0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 | IPF_2WAY )
+	PORT_BIT(  0x0004, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x0008, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT(  0x0020, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x0080, IP_ACTIVE_LOW, IPT_START2  )
+
+	PORT_START	// IN2 - Coins
+	PORT_BIT_IMPULSE( 0x0001, IP_ACTIVE_LOW, IPT_COIN1, 5 )
+	PORT_BIT_IMPULSE( 0x0002, IP_ACTIVE_LOW, IPT_COIN2, 5 )
+	PORT_BIT(  0x0004, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BITX( 0x0008, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
+	PORT_BIT(  0x0010, IP_ACTIVE_LOW, IPT_UNKNOWN )	// Country Code
+	PORT_BIT(  0x0020, IP_ACTIVE_LOW, IPT_UNKNOWN )	//
+	PORT_BIT(  0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	// IN3 - 2 DSWs - $400009 & b.b
+	PORT_DIPNAME( 0x0001, 0x0001, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0002, 0x0002, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( No ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x000c, 0x000c, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(      0x0008, "Easy" )
+	PORT_DIPSETTING(      0x000c, "Normal" )
+	PORT_DIPSETTING(      0x0004, "Hard" )
+	PORT_DIPSETTING(      0x0000, "Hardest" )
+	PORT_DIPNAME( 0x0010, 0x0010, DEF_STR( Free_Play ) )
+	PORT_DIPSETTING(      0x0010, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0020, 0x0020, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(      0x0020, DEF_STR( Upright ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x0040, 0x0040, "Controls" )
+	PORT_DIPSETTING(      0x0040, "2" )
+	PORT_DIPSETTING(      0x0000, "1" )
+	PORT_SERVICE( 0x0080, IP_ACTIVE_LOW )
+
+	PORT_DIPNAME( 0x0700, 0x0700, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(      0x0500, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x0600, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x0700, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x0400, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x0300, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x0200, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(      0x0100, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( 1C_6C ) )
+	PORT_DIPNAME( 0x3800, 0x3800, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(      0x2800, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x3000, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x3800, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x2000, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x1800, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x1000, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(      0x0800, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( 1C_6C ) )
+	PORT_DIPNAME( 0x4000, 0x4000, "Cheap Continue" )
+	PORT_DIPSETTING(      0x4000, DEF_STR( No ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x8000, 0x8000, "Game Mode" )
+	PORT_DIPSETTING(      0x8000, "Finals Only" )
+	PORT_DIPSETTING(      0x0000, "Semi-Finals & Finals" )
+
+INPUT_PORTS_END
+
+
+
+/***************************************************************************
+								Gundhara
+***************************************************************************/
+
+INPUT_PORTS_START( gundhara )
+
+	PORT_START	// IN0 - Player 1
+	JOY_TYPE1_3BUTTONS(1)
+
+	PORT_START	// IN1 - Player 2
+	JOY_TYPE1_3BUTTONS(2)
+
+	PORT_START	// IN2 - Coins
+	PORT_BIT_IMPULSE( 0x0001, IP_ACTIVE_LOW, IPT_COIN1, 5 )
+	PORT_BIT_IMPULSE( 0x0002, IP_ACTIVE_LOW, IPT_COIN2, 5 )
+	PORT_BIT(  0x0004, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BITX( 0x0008, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
+	PORT_BIT(  0x0010, IP_ACTIVE_LOW, IPT_UNKNOWN  )
+	PORT_BIT(  0x0020, IP_ACTIVE_LOW, IPT_UNKNOWN  )
+	PORT_BIT(  0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN  )
+	PORT_BIT(  0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN  )
+
+	PORT_START	// IN3 - 2 DSWs - $600001 & 3.b
+	PORT_DIPNAME( 0x000f, 0x000f, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(      0x0005, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x0008, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x0004, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( 4C_3C ) )
+	PORT_DIPSETTING(      0x000f, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x0003, DEF_STR( 3C_4C ) )
+	PORT_DIPSETTING(      0x0007, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(      0x000e, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x0006, DEF_STR( 2C_5C ) )
+	PORT_DIPSETTING(      0x000d, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x000c, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(      0x000b, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(      0x000a, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(      0x0009, DEF_STR( 1C_7C ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Free_Play ) )
+	PORT_DIPNAME( 0x0030, 0x0030, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x0010, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x0030, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x0020, DEF_STR( 1C_2C ) )
+	PORT_DIPNAME( 0x00c0, 0x00c0, "Country" )
+	PORT_DIPSETTING(      0x00c0, "Japan" )
+	PORT_DIPSETTING(      0x0000, "World" )
+
+	PORT_DIPNAME( 0x0300, 0x0300, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(      0x0200, "Easy" )
+	PORT_DIPSETTING(      0x0300, "Normal" )
+	PORT_DIPSETTING(      0x0100, "Hard" )
+	PORT_DIPSETTING(      0x0000, "Hardest" )
+	PORT_DIPNAME( 0x0c00, 0x0c00, DEF_STR( Lives ) )
+	PORT_DIPSETTING(      0x0800, "1" )
+	PORT_DIPSETTING(      0x0c00, "2" )
+	PORT_DIPSETTING(      0x0400, "3" )
+	PORT_DIPSETTING(      0x0000, "4" )
+	PORT_DIPNAME( 0x3000, 0x3000, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(      0x3000, "200K" )
+	PORT_DIPSETTING(      0x2000, "200K, Every 200K" )
+	PORT_DIPSETTING(      0x1000, "400K" )
+	PORT_DIPSETTING(      0x0000, "None" )
+	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x4000, DEF_STR( On ) )
+	PORT_SERVICE( 0x8000, IP_ACTIVE_LOW )
+
+INPUT_PORTS_END
+
+
+
+/***************************************************************************
 								J.J.Squawkers
 ***************************************************************************/
 
@@ -2192,7 +2491,7 @@ INPUT_PORTS_START( oisipuzl )
 	PORT_BIT_IMPULSE( 0x0001, IP_ACTIVE_LOW, IPT_COIN1, 5 )
 	PORT_BIT_IMPULSE( 0x0002, IP_ACTIVE_LOW, IPT_COIN2, 5 )
 	PORT_BIT(  0x0004, IP_ACTIVE_LOW, IPT_SERVICE1 )
-	PORT_BIT(  0x0008, IP_ACTIVE_LOW, IPT_TILT     )	// Test Mode
+	PORT_BITX( 0x0008, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
 	PORT_BIT(  0x0010, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT(  0x0020, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT(  0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -2461,7 +2760,7 @@ INPUT_PORTS_START( rezon )
 	PORT_BIT_IMPULSE( 0x0001, IP_ACTIVE_LOW, IPT_COIN1, 5 )
 	PORT_BIT_IMPULSE( 0x0002, IP_ACTIVE_LOW, IPT_COIN2, 5 )
 	PORT_BIT(  0x0004, IP_ACTIVE_LOW, IPT_SERVICE1 )
-	PORT_BIT(  0x0008, IP_ACTIVE_LOW, IPT_TILT     )	// Test Mode
+	PORT_BITX( 0x0008, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
 	PORT_BIT(  0x0010, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT(  0x0020, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT(  0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -3222,7 +3521,7 @@ static struct GfxLayout layout_packed_6bits_3roms =
 
 /* The bitplanes are packed togheter: 4 bits in one rom, 2 bits in another.
    Since there isn't simmetry between the two roms, we load the latter with
-   ROM_LOAD_GFX_EVEN. This way we can think of it as a 4 planes rom, with the
+   ROM_LOAD16_BYTE. This way we can think of it as a 4 planes rom, with the
    upper 2 planes unused.	 */
 
 static struct GfxLayout layout_packed_6bits_2roms =
@@ -3675,6 +3974,89 @@ static const struct MachineDriver machine_driver_eightfrc =
 	msgundam_gfxdecodeinfo,
 	512 * 3, 512 * 3,	/* sprites, layer1, layer2 */
 	0,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	0,
+	seta_vh_start_2_layers,
+	0,
+	seta_vh_screenrefresh,
+
+	/* sound hardware */
+	SOUND_SUPPORTS_STEREO,0,0,0,
+	{
+		{ SOUND_CUSTOM, &seta_sound_interface }
+	}
+};
+
+
+/***************************************************************************
+								Extreme Downhill
+***************************************************************************/
+
+/*
+	extdwnhl:
+	lev 1 == lev 3 (writes to $500000, bit 4 -> 1 then 0)
+	lev 2 drives the game
+*/
+static const struct MachineDriver machine_driver_extdwnhl =
+{
+	{
+		{
+			CPU_M68000,
+			16000000,
+			extdwnhl_readmem, extdwnhl_writemem,0,0,
+			seta_interrupt_1_and_2, SETA_INTERRUPTS_NUM
+		},
+	},
+	60,DEFAULT_60HZ_VBLANK_DURATION,	// 60->too fast? 30->too slow
+	1,
+	0,
+
+	/* video hardware */
+	400, 256-16, { 16, 320+16-1, 0, 256-16-1},
+	zingzip_gfxdecodeinfo,
+	16*32+16*32+16*32, 16*32+16*32+64*32,	/* sprites, layer2, layer1 */
+	zingzip_vh_init_palette,				/* layer 1 gfx is 6 planes deep */
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	0,
+	seta_vh_start_2_layers,
+	0,
+	seta_vh_screenrefresh,
+
+	/* sound hardware */
+	SOUND_SUPPORTS_STEREO,0,0,0,
+	{
+		{ SOUND_CUSTOM, &seta_sound_interface }
+	}
+};
+
+
+/***************************************************************************
+								Gundhara
+***************************************************************************/
+
+/*
+	lev 2: Sound (generated by a timer mapped at $d00000-6 ?)
+	lev 4: VBlank
+*/
+static const struct MachineDriver machine_driver_gundhara =
+{
+	{
+		{
+			CPU_M68000,
+			16000000,
+			wrofaero_readmem, wrofaero_writemem,0,0,
+			seta_interrupt_2_and_4, SETA_INTERRUPTS_NUM
+		},
+	},
+	60,DEFAULT_60HZ_VBLANK_DURATION,
+	1,
+	0,
+
+	/* video hardware */
+	400, 256-16, { 16+8, 320+32+16+8+16-1, 0, 256-16-1},
+	jjsquawk_gfxdecodeinfo,
+	16*32+16*32+16*32, 16*32+64*32+64*32,	/* sprites, layer2, layer1 */
+	gundhara_vh_init_palette,				/* layers are 6 planes deep (but have only 4 palettes) */
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
 	seta_vh_start_2_layers,
@@ -4792,6 +5174,67 @@ void init_eightfrc(void)
 
 /***************************************************************************
 
+								Extreme Downhill
+
+(c)1995 Sammy
+DH-01
+PO-117A (board is made by Seta/Allumer)
+
+CPU  : MC68HC000B16
+Sound: X1-010
+OSC: 16.0000MHz (X1), 14.3180MHz (X2)
+
+ROMs:
+fw001002.201 - Main program (even) (Macronics 27c4000)
+fw001001.200 - Main program (odd)  (Macronics 27c4000)
+
+fw001005.205 - (32pin mask, read as 27c8001)
+fw001007.026 /
+
+fw001003.202 - (42pin mask, read as 27c160)
+fw001004.206 |
+fw001006.152 /
+
+PALs (16L8ACN, not dumped):
+FW-001
+FW-002
+FW-003
+FW-005
+
+Custom chips:	X1-001A		X1-002A
+				X1-004
+				X1-007
+				X1-010
+				X1-011 (x2)	X1-012 (x2)
+
+***************************************************************************/
+
+ROM_START( extdwnhl )
+
+	ROM_REGION( 0x100000, REGION_CPU1, 0 )		/* 68000 Code */
+	ROM_LOAD16_BYTE( "fw001002.201",  0x000000, 0x080000, 0x24d21924 )
+	ROM_LOAD16_BYTE( "fw001001.200",  0x000001, 0x080000, 0xfb12a28b )
+
+	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE )	/* Sprites */
+	ROM_LOAD( "fw001003.202", 0x000000, 0x200000, 0xac9b31d5 )
+
+	ROM_REGION( 0x400000, REGION_GFX2, ROMREGION_DISPOSE )	/* Layer 1 */
+	ROM_LOAD       ( "fw001004.206", 0x000000, 0x200000, 0x0dcb1d72 )
+	ROM_LOAD16_BYTE( "fw001005.205", 0x200000, 0x100000, 0x5c33b2f1 )
+
+	ROM_REGION( 0x200000, REGION_GFX3, ROMREGION_DISPOSE )	/* Layer 2 */
+	ROM_LOAD( "fw001006.152",  0x000000, 0x200000, 0xd00e8ddd )	// FIRST AND SECOND HALF IDENTICAL
+
+	ROM_REGION( 0x100000, REGION_SOUND1, 0 )	/* Samples */
+	ROM_LOAD( "fw001007.026",  0x080000, 0x080000, 0x16d84d7a )	// swapped halves
+	ROM_CONTINUE(              0x000000, 0x080000             )
+
+ROM_END
+
+
+
+/***************************************************************************
+
 								J.J. Squawkers
 
 68HC000N -16N
@@ -5222,10 +5665,6 @@ Other	: Allumer
 			X1-007
 			X1-011 x 2		X1-012 x 2
 
-us001003.102                                           1xxxxxxxxxxxxxxxx = 0x00
-us001004.103                                           1xxxxxxxxxxxxxxxx = 0x00
-us001007.u66                                         1xxxxxxxxxxxxxxxxxx = 0xFF
-us001008.u68                                         1xxxxxxxxxxxxxxxxxx = 0xFF
 ***************************************************************************/
 
 ROM_START( rezon )
@@ -5688,30 +6127,32 @@ ROM_END
 
 /* Working Games: */
 
-GAMEX( 1987, tndrcade, 0,        tndrcade, tndrcade, 0,        ROT270,     "[Seta] (Taito license)", "Thundercade / Twin Formation",   GAME_IMPERFECT_SOUND ) // Title/License: DSW
-GAMEX( 1987, tndrcadj, tndrcade, tndrcade, tndrcadj, 0,        ROT270,     "[Seta] (Taito license)", "Tokusyu Butai UAG (Japan)",      GAME_IMPERFECT_SOUND ) // License: DSW
-GAMEX( 1988, twineagl, 0,        twineagl, twineagl, twineagl, ROT270,     "Seta (Taito license)",   "Twin Eagle - Revenge Joe's Brother (Japan)", GAME_IMPERFECT_SOUND )
-GAMEX( 1989, calibr50, 0,        calibr50, calibr50, 0,        ROT270,     "Athena / Seta",          "Caliber 50",                     GAME_IMPERFECT_SOUND ) // Country/License: DSW
-GAMEX( 1989, drgnunit, 0,        drgnunit, drgnunit, 0,        ROT0,       "Seta",                   "Dragon Unit / Castle of Dragon", GAME_IMPERFECT_SOUND )
-GAMEX( 1989, downtown, 0,        downtown, downtown, downtown, ROT270,     "Seta",                   "DownTown",                       GAME_IMPERFECT_SOUND ) // Country/License: DSW
-GAMEX( 1989, usclssic, 0,        usclssic, usclssic, 0,        ROT270,     "Seta",                   "U.S. Classic",                   GAME_IMPERFECT_SOUND | GAME_WRONG_COLORS ) // Country/License: DSW
-GAMEX( 1989, arbalest, 0,        metafox,  arbalest, arbalest, ROT270,     "Seta",                   "Arbalester",                     GAME_IMPERFECT_SOUND ) // Country/License: DSW
-GAMEX( 1989, metafox,  0,        metafox,  metafox,  metafox,  ROT270,     "Seta",                   "Meta Fox",                       GAME_IMPERFECT_SOUND ) // Country/License: DSW
-GAMEX( 1990, thunderl, 0,        thunderl, thunderl, 0,        ROT270,     "Seta",                   "Thunder & Lightning",            GAME_IMPERFECT_SOUND ) // Country/License: DSW
-GAMEX( 1991, rezon,    0,        rezon,    rezon,    rezon,    ROT0,       "Allumer",                "Rezon",                          GAME_IMPERFECT_SOUND )
-GAMEX( 1991, stg,      0,        drgnunit, stg,      0,        ROT270,     "Athena / Tecmo",         "Strike Gunner S.T.G",            GAME_IMPERFECT_SOUND )
-GAMEX( 1992, blandia,  0,        blandia,  blandia,  0,        ROT0,       "Allumer",                "Blandia (prototype)",            GAME_IMPERFECT_SOUND )
-GAMEX( 1992, blockcar, 0,        blockcar, blockcar, 0,        ROT90,      "Visco",                  "Block Carnival / Thunder & Lightning 2", GAME_IMPERFECT_SOUND ) // Title: DSW
-GAMEX( 1992, qzkklogy, 0,        drgnunit, qzkklogy, 0,        ROT0,       "Tecmo",                  "Quiz Kokology",                  GAME_IMPERFECT_SOUND )
-GAMEX( 1992, zingzip,  0,        zingzip,  zingzip,  0,        ROT270,     "Allumer + Tecmo",        "Zing Zing Zip",                  GAME_IMPERFECT_SOUND )
-GAMEX( 1993, atehate,  0,        atehate,  atehate,  0,        ROT0,       "Athena",                 "Athena no Hatena ?",             GAME_IMPERFECT_SOUND )
-GAMEX( 1993, msgundam, 0,        msgundam, msgundam, 0,        ROT0,       "Banpresto",              "Mobile Suit Gundam",             GAME_IMPERFECT_SOUND )
-GAMEX( 1993, oisipuzl, 0,        oisipuzl, oisipuzl, oisipuzl, ROT0,       "Sunsoft + Atlus",        "Oishii Puzzle Ha Irimasenka",    GAME_IMPERFECT_SOUND )
-GAMEX( 1993, wrofaero, 0,        wrofaero, wrofaero, 0,        ROT270,     "Yang Cheng",             "War of Aero - Project MEIOU",    GAME_IMPERFECT_SOUND )
-GAMEX( 1993, jjsquawk, 0,        jjsquawk, jjsquawk, 0,        ROT0_16BIT, "Athena / Able",          "J. J. Squawkers",                GAME_IMPERFECT_SOUND )
-GAMEX( 1994, eightfrc, 0,        eightfrc, eightfrc, eightfrc, ROT90,      "Tecmo",                  "Eight Forces",                   GAME_IMPERFECT_SOUND )
-GAMEX( 1994, kiwame,   0,        kiwame,   kiwame,   kiwame,   ROT0,       "Athena",                 "Pro Mahjong Kiwame",             GAME_IMPERFECT_SOUND )
-GAMEX( 1994, krzybowl, 0,        krzybowl, krzybowl, 0,        ROT270,     "American Sammy Corp.",   "Krazy Bowl",                     GAME_IMPERFECT_SOUND )
+GAMEX( 1987, tndrcade, 0,        tndrcade, tndrcade, 0,        ROT270,       "[Seta] (Taito license)", "Thundercade / Twin Formation",   GAME_IMPERFECT_SOUND ) // Title/License: DSW
+GAMEX( 1987, tndrcadj, tndrcade, tndrcade, tndrcadj, 0,        ROT270,       "[Seta] (Taito license)", "Tokusyu Butai UAG (Japan)",      GAME_IMPERFECT_SOUND ) // License: DSW
+GAMEX( 1988, twineagl, 0,        twineagl, twineagl, twineagl, ROT270,       "Seta (Taito license)",   "Twin Eagle - Revenge Joe's Brother (Japan)", GAME_IMPERFECT_SOUND )
+GAMEX( 1989, calibr50, 0,        calibr50, calibr50, 0,        ROT270,       "Athena / Seta",          "Caliber 50",                     GAME_IMPERFECT_SOUND ) // Country/License: DSW
+GAMEX( 1989, drgnunit, 0,        drgnunit, drgnunit, 0,        ROT0,         "Seta",                   "Dragon Unit / Castle of Dragon", GAME_IMPERFECT_SOUND )
+GAMEX( 1989, downtown, 0,        downtown, downtown, downtown, ROT270,       "Seta",                   "DownTown",                       GAME_IMPERFECT_SOUND ) // Country/License: DSW
+GAMEX( 1989, usclssic, 0,        usclssic, usclssic, 0,        ROT270,       "Seta",                   "U.S. Classic",                   GAME_IMPERFECT_SOUND | GAME_WRONG_COLORS ) // Country/License: DSW
+GAMEX( 1989, arbalest, 0,        metafox,  arbalest, arbalest, ROT270,       "Seta",                   "Arbalester",                     GAME_IMPERFECT_SOUND ) // Country/License: DSW
+GAMEX( 1989, metafox,  0,        metafox,  metafox,  metafox,  ROT270,       "Seta",                   "Meta Fox",                       GAME_IMPERFECT_SOUND ) // Country/License: DSW
+GAMEX( 1990, thunderl, 0,        thunderl, thunderl, 0,        ROT270,       "Seta",                   "Thunder & Lightning",            GAME_IMPERFECT_SOUND ) // Country/License: DSW
+GAMEX( 1991, rezon,    0,        rezon,    rezon,    rezon,    ROT0,         "Allumer",                "Rezon",                          GAME_IMPERFECT_SOUND )
+GAMEX( 1991, stg,      0,        drgnunit, stg,      0,        ROT270,       "Athena / Tecmo",         "Strike Gunner S.T.G",            GAME_IMPERFECT_SOUND )
+GAMEX( 1992, blandia,  0,        blandia,  blandia,  0,        ROT0,         "Allumer",                "Blandia (prototype)",            GAME_IMPERFECT_SOUND )
+GAMEX( 1992, blockcar, 0,        blockcar, blockcar, 0,        ROT90,        "Visco",                  "Block Carnival / Thunder & Lightning 2", GAME_IMPERFECT_SOUND ) // Title: DSW
+GAMEX( 1992, qzkklogy, 0,        drgnunit, qzkklogy, 0,        ROT0,         "Tecmo",                  "Quiz Kokology",                  GAME_IMPERFECT_SOUND )
+GAMEX( 1992, zingzip,  0,        zingzip,  zingzip,  0,        ROT270,       "Allumer + Tecmo",        "Zing Zing Zip",                  GAME_IMPERFECT_SOUND )
+GAMEX( 1993, atehate,  0,        atehate,  atehate,  0,        ROT0,         "Athena",                 "Athena no Hatena ?",             GAME_IMPERFECT_SOUND )
+GAMEX( 1993, msgundam, 0,        msgundam, msgundam, 0,        ROT0,         "Banpresto",              "Mobile Suit Gundam",             GAME_IMPERFECT_SOUND )
+GAMEX( 1993, oisipuzl, 0,        oisipuzl, oisipuzl, oisipuzl, ROT0,         "Sunsoft + Atlus",        "Oishii Puzzle Ha Irimasenka",    GAME_IMPERFECT_SOUND )
+GAMEX( 1993, wrofaero, 0,        wrofaero, wrofaero, 0,        ROT270,       "Yang Cheng",             "War of Aero - Project MEIOU",    GAME_IMPERFECT_SOUND )
+GAMEX( 1993, jjsquawk, 0,        jjsquawk, jjsquawk, 0,        ROT0_16BIT,   "Athena / Able",          "J. J. Squawkers",                GAME_IMPERFECT_SOUND )
+GAMEX( 1994, eightfrc, 0,        eightfrc, eightfrc, eightfrc, ROT90,        "Tecmo",                  "Eight Forces",                   GAME_IMPERFECT_SOUND )
+GAMEX( 1994, kiwame,   0,        kiwame,   kiwame,   kiwame,   ROT0,         "Athena",                 "Pro Mahjong Kiwame",             GAME_IMPERFECT_SOUND )
+GAMEX( 1994, krzybowl, 0,        krzybowl, krzybowl, 0,        ROT270,       "American Sammy Corp.",   "Krazy Bowl",                     GAME_IMPERFECT_SOUND )
+GAMEX( 1995, extdwnhl, 0,        extdwnhl, extdwnhl, 0,        ROT0_16BIT,   "Sammy Industries Japan", "Extreme Downhill (v1.5)",        GAME_IMPERFECT_SOUND )
+GAMEX( 1995, gundhara, 0,        gundhara, gundhara, 0,        ROT270_16BIT, "Banpresto",              "Gundhara",                       GAME_IMPERFECT_SOUND )
 
 /* Nearly Working Games: */
 

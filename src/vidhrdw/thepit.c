@@ -9,7 +9,8 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-extern unsigned char *galaxian_attributesram;
+
+unsigned char *thepit_attributesram;
 
 static int graphics_bank = 0;
 
@@ -134,6 +135,21 @@ void suprmous_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 }
 
 
+WRITE_HANDLER( thepit_attributes_w )
+{
+	if ((offset & 1) && thepit_attributesram[offset] != data)
+	{
+		int i;
+
+
+		for (i = offset / 2;i < videoram_size;i += 32)
+			dirtybuffer[i] = 1;
+	}
+
+	thepit_attributesram[offset] = data;
+}
+
+
 WRITE_HANDLER( intrepid_graphics_bank_select_w )
 {
 	set_vh_global_attribute(&graphics_bank, data << 1);
@@ -210,7 +226,7 @@ static void drawtiles(struct osd_bitmap *bitmap,int priority)
 				code = spacechar;
 				bank = 0;
 
-				sy = (sy - galaxian_attributesram[2 * sx]) & 0xff;
+				sy = (sy - thepit_attributesram[2 * sx]) & 0xff;
 			}
 
 			if (flip_screen_x) sx = 31 - sx;
@@ -242,7 +258,7 @@ static void drawtiles(struct osd_bitmap *bitmap,int priority)
 		{
 			for (i = 0;i < 32;i++)
 			{
-				scroll[31-i] = -galaxian_attributesram[2 * i];
+				scroll[31-i] = -thepit_attributesram[2 * i];
 				if (flip_screen_y) scroll[31-i] = -scroll[31-i];
 			}
 		}
@@ -250,7 +266,7 @@ static void drawtiles(struct osd_bitmap *bitmap,int priority)
 		{
 			for (i = 0;i < 32;i++)
 			{
-				scroll[i] = -galaxian_attributesram[2 * i];
+				scroll[i] = -thepit_attributesram[2 * i];
 				if (flip_screen_y) scroll[i] = -scroll[i];
 			}
 		}

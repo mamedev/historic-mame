@@ -7,13 +7,9 @@
 	Major thanks to Aaron Giles for sound info, figuring out the 68K/ES5505
 	rom interface and ES5505 emulator!
 
-	Current suspected 68020 core problems:
-		DariusG/Gekirido/Cleopatr:  Garbage written into sprite block control bits
-		PBobble3:  Tries to execute code in spriteram and crashes (patched)
-
 	Main Issues:
 		Alpha blending not supported (sprite & playfield).
-		Some games could fit in 8 bit colour - but marking pens is difficult
+		Some early games could fit in 8 bit colour - but marking pens is difficult
 			because graphics are 6bpp with 4bpp palette indexes.
 		Sound eats lots of memory as 8 bit PCM data is decoded as 16 bit for
 			use by the current ES5505 core (which rightly should be 16 bit).
@@ -22,8 +18,6 @@
 		Zoomed layers are not always positioned quite correctly in flipscreen mode
 
 	Other Issues:
-		Bats in Arkretrn/Puchicar can fly off one side of the screen and appear
-			on the other - analogue input problem.
 		Dsp isn't hooked up.
 		Crowd/boards not shown in the football games
 		Sound doesn't work in RidingF/RingRage/QTheater?
@@ -46,6 +40,8 @@
 #include "machine/eeprom.h"
 #include "drivers/taito_f3.h"
 #include "state.h"
+
+#define TRY_ALPHA 0
 
 int  f3_vh_start(void);
 void f3_vh_stop(void);
@@ -95,10 +91,10 @@ static READ32_HANDLER( f3_control_r )
 			return (coin_word[0]<<16) | readinputport(0) | 0xff00;
 
 		case 0x2: /* Analog control 1 */
-			return ((readinputport(3)&0xf)<<12) | ((readinputport(3)&0xf0)>>4);
+			return ((readinputport(3)&0xf)<<12) | ((readinputport(3)&0xff0)>>4);
 
 		case 0x3: /* Analog control 2 */
-			return ((readinputport(4)&0xf)<<12) | ((readinputport(4)&0xf0)>>4);
+			return ((readinputport(4)&0xf)<<12) | ((readinputport(4)&0xff0)>>4);
 
 		case 0x4: /* Player 3 & 4 fire buttons (Player 2 top fire buttons in Kaiser Knuckle) */
 			return readinputport(5)<<8;
@@ -257,10 +253,10 @@ INPUT_PORTS_START( f3 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN4 )
 
 	PORT_START
-	PORT_ANALOGX( 0xff, 0x00, IPT_DIAL | IPF_PLAYER1, 50, 0, 0, 0, KEYCODE_Z, KEYCODE_X, 0, 0 )
+	PORT_ANALOGX( 0xfff, 0x000, IPT_DIAL | IPF_PLAYER1, 25, 25, 0, 0, KEYCODE_Z, KEYCODE_X, 0, 0 )
 
 	PORT_START
-	PORT_ANALOGX( 0xff, 0x00, IPT_DIAL | IPF_PLAYER2, 50, 0, 0, 0, KEYCODE_N, KEYCODE_M, 0, 0 )
+	PORT_ANALOGX( 0xfff, 0x000, IPT_DIAL | IPF_PLAYER2, 25, 25, 0, 0, KEYCODE_N, KEYCODE_M, 0, 0 )
 
 	PORT_START
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER3 )
@@ -323,10 +319,10 @@ INPUT_PORTS_START( kn )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN4 )
 
 	PORT_START
-	PORT_ANALOGX( 0xffff, 0x00, IPT_DIAL | IPF_PLAYER1, 30, 15, 0, 0, KEYCODE_Z, KEYCODE_X, 0, 0 )
+	PORT_ANALOGX( 0xfff, 0x000, IPT_DIAL | IPF_PLAYER1, 25, 25, 0, 0, KEYCODE_Z, KEYCODE_X, 0, 0 )
 
 	PORT_START
-	PORT_ANALOGX( 0xffff, 0x00, IPT_DIAL | IPF_PLAYER2, 30, 15, 0, 0, KEYCODE_N, KEYCODE_M, 0, 0 )
+	PORT_ANALOGX( 0xfff, 0x000, IPT_DIAL | IPF_PLAYER2, 25, 25, 0, 0, KEYCODE_N, KEYCODE_M, 0, 0 )
 
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER2 )
@@ -411,7 +407,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ 0,           0x000000, &charlayout,          0,  64 }, /* Dynamically modified */
 	{ REGION_GFX2, 0x000000, &tile_layout, 	       0, 512 }, /* Tiles area */
 	{ REGION_GFX1, 0x000000, &spriteram_layout, 4096, 256 }, /* Sprites area */
-	{ 0,           0x000000, &pivotlayout,         0, 256 }, /* Dynamically modified */
+	{ 0,           0x000000, &pivotlayout,         0,  64 }, /* Dynamically modified */
 	{ -1 } /* end of array */
 };
 
@@ -492,7 +488,6 @@ static struct MachineDriver machine_driver_f3 =
 
  	/* video hardware */
 	40*8+48*2, 32*8, { 46, 40*8-1+46, 3*8, 32*8-1 },
-//	40*8+48*2, 64*8, { 46, 64*8-1+46, 3*8, 64*8-1 },
 
 	gfxdecodeinfo,
 	8192, 8192,
@@ -2518,14 +2513,14 @@ static READ32_HANDLER( irq_speedup_r_##GAME )					\
 static READ32_HANDLER( irq_speedup_r_##GAME )					\
 {																\
 	int ptr;													\
-	if ((cpu_get_sp()&2)==0) ptr=f3_ram[(cpu_get_sp()&0xffff)/4];	\
-	else ptr=(((f3_ram[(cpu_get_sp()&0xffff)/4])&0xffff)<<16) | \
-	(f3_ram[((cpu_get_sp()&0xffff)/4)+1]>>16); 					\
+	if ((cpu_get_sp()&2)==0) ptr=f3_ram[(cpu_get_sp()&0x1ffff)/4];	\
+	else ptr=(((f3_ram[(cpu_get_sp()&0x1ffff)/4])&0x1ffff)<<16) | \
+	(f3_ram[((cpu_get_sp()&0x1ffff)/4)+1]>>16); 				\
 	if (cpu_get_pc()==counter && ptr==stack)					\
 		cpu_spinuntil_int();									\
 	return f3_ram[mem_addr];									\
 }
-//logerror("ptr is %08x, pc is %08x\n",ptr,cpu_get_pc());
+
 F3_IRQ_SPEEDUP_2_R(arabianm, 0x238,    0x8124/4, 0xff000000 )
 F3_IRQ_SPEEDUP_1_R(gseeker,  0x43ac,   0xad94/4, 0xffff0000 )
 F3_IRQ_SPEEDUP_1_R(gunlock,  0x646,    0x0004/4, 0xffffffff )
@@ -2549,7 +2544,9 @@ F3_IRQ_SPEEDUP_3_R(dariusg,  0x1d8e,   0x6ba8/4, 0x00001a76 )
 F3_IRQ_SPEEDUP_2_R(puchicar, 0x9dc,    0x24d8/4, 0x80000000 )
 F3_IRQ_SPEEDUP_2_R(popnpop,  0x9bc,    0x1cf8/4, 0x00008000 )
 F3_IRQ_SPEEDUP_2_R(arkretrn, 0x960,    0x2154/4, 0x0000ffff )
-F3_IRQ_SPEEDUP_3_R(landmakr, 0x146c,   0x0824/4, 0x00000000 )
+F3_IRQ_SPEEDUP_3_R(landmakr, 0x146c,   0x0824/4, 0x00001178 )
+F3_IRQ_SPEEDUP_3_R(eaction2, 0x133c,   0x07a0/4, 0x00001048 )
+F3_IRQ_SPEEDUP_1_R(twinqix,  0xe9a52,  0x0134/4, 0x000000ff )
 
 static void init_ringrage(void)
 {
@@ -2566,6 +2563,11 @@ static void init_arabianm(void)
 
 static void init_ridingf(void)
 {
+	data16_t *RAM = (UINT16 *)memory_region(REGION_CPU2);
+
+	RAM[0x19a02/2]=0x4e71;
+	RAM[0x19a04/2]=0x4e71;
+
 	f3_game=RIDINGF;
 	tile_decode(1);
 }
@@ -2586,6 +2588,7 @@ static void init_gunlock(void)
 
 static void init_elvactr(void)
 {
+	install_mem_read32_handler(0, 0x4007a0, 0x4007a3, irq_speedup_r_eaction2 );
 	f3_game=EACTION2;
 	tile_decode(1);
 }
@@ -2726,12 +2729,6 @@ static void init_landmakr(void)
 
 static void init_pbobble3(void)
 {
-	data32_t *RAM = (UINT32 *)memory_region(REGION_CPU1);
-
-	/* JSR crash - It tries to execute code in spriteram */
-    RAM[0x80a94/4]=0x4E714E71;
-    RAM[0x80a98/4]=0x4E710000 | (RAM[0x80a98/4]&0xffff);
-
 	install_mem_read32_handler(0, 0x405af4, 0x405af7, irq_speedup_r_pbobble3 );
 	f3_game=PBOBBLE3;
 	tile_decode(0);
@@ -2793,6 +2790,7 @@ static void init_puchicar(void)
 
 static void init_twinqix(void)
 {
+	install_mem_read32_handler(0, 0x400134, 0x400137, irq_speedup_r_twinqix );
 	f3_game=TWINQIX;
 	tile_decode(0);
 }
@@ -2843,9 +2841,9 @@ GAME( 1994, bublbob2, 0       , f3, f3, bubsymph, ROT0_16BIT,   "Taito Corporati
 GAME( 1994, bubsymph, bublbob2, f3, f3, bubsymph, ROT0_16BIT,   "Taito Corporation",         "Bubble Symphony (Japan)" )
 GAME( 1994, bubsympu, bublbob2, f3, f3, bubsymph, ROT0_16BIT,   "Taito America Corporation", "Bubble Symphony (US)" )
 GAME( 1994, spcinvdj, spacedx , f3, f3, spcinvdj, ROT0_16BIT,   "Taito Corporation",         "Space Invaders DX (Japan F3 version)" )
-GAME( 1995, pwrgoal,  0       , f3, f3, hthero95, ROT0_16BIT,   "Taito Corporation Japan",   "Power Goal (World)" )
-GAME( 1995, hthero95, pwrgoal , f3, f3, hthero95, ROT0_16BIT,   "Taito Corporation",         "Hat Trick Hero '95 (Japan)" )
-GAME( 1995, hthro95u, pwrgoal , f3, f3, hthero95, ROT0_16BIT,   "Taito America Corporation", "Hat Trick Hero '95 (US)" )
+GAME( 1994, pwrgoal,  0       , f3, f3, hthero95, ROT0_16BIT,   "Taito Corporation Japan",   "Power Goal (World)" )
+GAME( 1994, hthero95, pwrgoal , f3, f3, hthero95, ROT0_16BIT,   "Taito Corporation",         "Hat Trick Hero '95 (Japan)" )
+GAME( 1994, hthro95u, pwrgoal , f3, f3, hthero95, ROT0_16BIT,   "Taito America Corporation", "Hat Trick Hero '95 (US)" )
 GAME( 1994, qtheater, 0       , f3, f3, qtheater, ROT0_16BIT,   "Taito Corporation",         "Quiz Theater - 3tsu no Monogatari (Japan)" )
 GAME( 1994, elvactr,  0       , f3, f3, elvactr,  ROT0_16BIT,   "Taito Corporation Japan",   "Elevator Action Returns (World)" )
 GAME( 1994, elvactrj, elvactr , f3, f3, elvactr,  ROT0_16BIT,   "Taito Corporation",         "Elevator Action Returns (Japan)" )

@@ -28,51 +28,51 @@ System specs	(from TaitoH: incorrect!)
 From Ainferno readme
 --------------------
 
-Location     Type       File ID    Checksum
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-CPU IC5       9016*     C45-01       609E
-CPU IC4       9016*     C45-02       6BA6
-CPU IC3       9016*     C45-03       E01C
-CPU IC2       9016*     C45-04       CD6A
-CPU IC1       9016*     C45-05       054D
-CPU IC31      9016*     C45-06       D4A5
-VID IC28     27C010     C45-11       C8E0
-VID IC29     27C010     C45-12       93F1
-VID IC30     27C010     C45-13       18B6
-VID IC31     27C010     C45-14       0957
-VID IC40     27C010     C45-15       D7C8
-VID IC41     27C010     C45-16       C950
-VID IC42     27C010     C45-17       3E4F
-VID IC43     27C010     C45-18       19D1
-CPU IC14     27C010     C45-20       48F6
-CPU IC42     27C010     C45-21       A138
-CPU IC43     27C010     C45-22       1934
-CPU IC43     27C010     C45-23       4052
-CPU IC6      LH5763     C45-24       BB7D
-CPU IC35     LH5763     C45-25       3D38
-CPU IC13     27C010     C45-28       CA4D
+Location     Type       File ID
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+CPU IC5       9016*     C45-01
+CPU IC4       9016*     C45-02
+CPU IC3       9016*     C45-03
+CPU IC2       9016*     C45-04
+CPU IC1       9016*     C45-05
+CPU IC31      9016*     C45-06
+VID IC28     27C010     C45-11
+VID IC29     27C010     C45-12
+VID IC30     27C010     C45-13
+VID IC31     27C010     C45-14
+VID IC40     27C010     C45-15
+VID IC41     27C010     C45-16
+VID IC42     27C010     C45-17
+VID IC43     27C010     C45-18
+CPU IC14     27C010     C45-20
+CPU IC42     27C010     C45-21
+CPU IC43     27C010     C45-22
+CPU IC43     27C010     C45-23
+CPU IC6      LH5763     C45-24
+CPU IC35     LH5763     C45-25
+CPU IC13     27C010     C45-28
 
-VID IC6    PAL16L8B     C45-07       13CC
-VID IC62   PAL16L8B     C45-08       1779
-VID IC63   PAL16L8B     C45-09       7C0A
-VID IC2    PAL20L8B     C45-10       4014
-CPU IC76   PAL16L8B     C45-26       570A
-CPU IC114  PAL16L8B     C45-27       4934
-CPU IC60   PAL20L8B     B62-02       589A
-CPU IC62   PAL20L8B     B62-03       5C6D
-CPU IC63   PAL20L8B     B62-04       6702
-CPU IC82   PAL16L8B     B62-07       02BB
-VID IC23   PAL16L8B     B62-08       4A06
-VID IC26   PAL16L8B     B62-11       6BEF
-VID IC27   PAL16L8B     B62-12       6C2F
+VID IC6    PAL16L8B     C45-07
+VID IC62   PAL16L8B     C45-08
+VID IC63   PAL16L8B     C45-09
+VID IC2    PAL20L8B     C45-10
+CPU IC76   PAL16L8B     C45-26
+CPU IC114  PAL16L8B     C45-27
+CPU IC60   PAL20L8B     B62-02
+CPU IC62   PAL20L8B     B62-03
+CPU IC63   PAL20L8B     B62-04
+CPU IC82   PAL16L8B     B62-07
+VID IC23   PAL16L8B     B62-08
+VID IC26   PAL16L8B     B62-11
+VID IC27   PAL16L8B     B62-12
 
 
 Notes:  CPU - CPU PCB      K1100586A  M4300186A
         VID - Video PCB    K1100576A  M4300186A
 
 
-Known issues	(from TaitoH driver)
-------------
+Known TC0080VCO issues	(from TaitoH driver)
+----------------------
 
  - Y coordinate of sprite zooming is non-linear, so currently implemented
    hand-tuned value and this is used for only Record Breaker.
@@ -83,11 +83,10 @@ Known issues	(from TaitoH driver)
  - Sprite zoom is a bit wrong.
 
 
-TODO	(issues shared with TaitoH driver)
+TODO	(TC0080VCO issues shared with TaitoH driver)
 ----
 
- - Implemented BG1 : sprite priority. Currently it is not brought out priority
-   bit.
+ - Need to implement BG1 : sprite priority. Currently not clear how this works.
  - Fix sprite coordinates.
  - Improve zoom y coordinate.
 
@@ -95,15 +94,22 @@ TODO	(issues shared with TaitoH driver)
 TODO
 ----
 
-Video section hung off TaitoH driver, should be separate.
+Video section hung off TaitoH driver, it should be separate.
 
-TMS320C25: needs to be emulated. Are the short interleaved roms
+TMS320C25 needs to be emulated. Are the short interleaved roms
 its program?
 
-3d graphics h/w
+3d graphics h/w: do the gradiation ram and line ram map to
+hardware which creates the 3d background scenes? If so,
+presumably the TMS320C25 is being used as a co-processor to
+relieve the 68000 of 3d calculations... and the results are
+shoved into gradiation/line ram to drive the graphics h/w.
 
-Offer dip-selectable kludge of the analogue stick inputs so that
-keyboard play is possible.
+"Power common ram" is presumably for communication with an MCU
+controlling the sit-in-cabinet (deluxe mechanized version only).
+
+[Offer dip-selectable kludge of the analogue stick inputs so that
+keyboard play is possible.]
 
 DIPs
 
@@ -131,18 +137,11 @@ interrupts are taken but nothing seems to happen.
 Ainferno
 --------
 
-ADPCM sound problems. Before the roms were spaced out like Raine we
-had errors like this. Sound is now better but still imperfect. Roms
-probably read at half length?
-
-YM2610: ADPCM-A end out of range: $000685ff
-YM2610: ADPCM-A start out of range: $00067f00
-YM2610: ADPCM-A end out of range: $0009eeff
-YM2610: ADPCM-A start out of range: $00099e00)
+Sprite/tile priority bad.
 
 
-Stuff to clear from the log
----------------------------
+Log
+---
 
 Topland
 -------
@@ -161,7 +160,7 @@ cpu #0 (PC=0001941E): unmapped word write to 0098000E = 0000 & FFFF
 cpu #0 (PC=00001EA4): unmapped word write to 00140000 = 0005 & 00FF
 cpu #0 (PC=00001EBC): unmapped word write to 00830000 = A6E7 & FFFF
 
-
+ 
 ****************************************************************************/
 
 #include "driver.h"
@@ -177,7 +176,7 @@ void 		syvalion_vh_stop (void);
 void		recordbr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
-static WRITE16_HANDLER( airsys_paletteram16_w )	/* xBBBBxRRRRxGGGG */
+static WRITE16_HANDLER( airsys_paletteram16_w )	/* xxBBBBxRRRRxGGGG */
 {
 	int a,r,g,b;
 	COMBINE_DATA(&paletteram16[offset]);
@@ -199,18 +198,6 @@ static WRITE16_HANDLER( airsys_paletteram16_w )	/* xBBBBxRRRRxGGGG */
 /***********************************************************
 				INPUTS
 ***********************************************************/
-
-static READ16_HANDLER( TC0220IOC_halfword_r )
-{
-	return TC0220IOC_r( offset );
-}
-
-static WRITE16_HANDLER( TC0220IOC_halfword_w )
-{
-	if (ACCESSING_LSB)
-		TC0220IOC_w( offset, data & 0xff );
-}
-
 
 static READ16_HANDLER( stick_input_r )
 {
@@ -364,7 +351,7 @@ MEMORY_END
 	PORT_DIPSETTING(    0x00, "Hardest" )
 
 INPUT_PORTS_START( topland )
-	PORT_START  /* DSW1 (0) */
+	PORT_START  /* DSWA */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, "Mechanized (alt)?" )
 	PORT_DIPSETTING(    0x01, "Standard (alt) ?" )
@@ -376,7 +363,7 @@ INPUT_PORTS_START( topland )
 	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
 	TAITO_COINAGE_JAPAN_8
 
-	PORT_START  /* DSW2 (1), all bogus !!! */
+	PORT_START  /* DSWB, all bogus !!! */
 	TAITO_DIFFICULTY_8
 	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x08, "1000k only" )
@@ -395,7 +382,7 @@ INPUT_PORTS_START( topland )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
-	PORT_START	/* IN0 (2) */
+	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW,  IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW,  IPT_UNKNOWN )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN1 )
@@ -405,7 +392,7 @@ INPUT_PORTS_START( topland )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW,  IPT_START1 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_BUTTON3 | IPF_PLAYER1 )	/* "door" (!) */
 
-	PORT_START	/* IN1 (3) */
+	PORT_START	/* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW,  IPT_BUTTON1 | IPF_PLAYER1 )	/* slot down */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW,  IPT_BUTTON2 | IPF_PLAYER1 )	/* slot up */
 	PORT_BIT( 0x04, IP_ACTIVE_LOW,  IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )	/* handle */
@@ -431,7 +418,7 @@ INPUT_PORTS_START( topland )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( ainferno )
-	PORT_START  /* DSW1 (0) */
+	PORT_START  /* DSWA */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, "Mechanized (alt)?" )
 	PORT_DIPSETTING(    0x01, "Special Sensors" )	// on its test mode screen
@@ -443,7 +430,7 @@ INPUT_PORTS_START( ainferno )
 	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
 	TAITO_COINAGE_US_8
 
-	PORT_START  /* DSW2 (1), all bogus !!! */
+	PORT_START  /* DSWB, all bogus !!! */
 	TAITO_DIFFICULTY_8
 	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x08, "1000k only" )
@@ -462,7 +449,7 @@ INPUT_PORTS_START( ainferno )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
-	PORT_START	/* IN0 (2) */
+	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW,  IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW,  IPT_UNKNOWN )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN1 )
@@ -472,7 +459,7 @@ INPUT_PORTS_START( ainferno )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW,  IPT_START1 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_START2 )
 
-	PORT_START	/* IN1 (3) */
+	PORT_START	/* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW,  IPT_BUTTON1 | IPF_PLAYER1 )	/* lever */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW,  IPT_BUTTON2 | IPF_PLAYER1 )	/* handle x */
 	PORT_BIT( 0x04, IP_ACTIVE_LOW,  IPT_BUTTON3 | IPF_PLAYER1 )	/* handle y */
@@ -543,7 +530,7 @@ static struct YM2610interface airsys_ym2610_interface =
 	{ 0 },
 	{ 0 },
 	{ irqhandler },
-	{ REGION_SOUND1 },
+	{ REGION_SOUND2 },
 	{ REGION_SOUND1 },
 	{ YM3012_VOL(60,MIXER_PAN_LEFT,60,MIXER_PAN_RIGHT) }
 };
@@ -598,88 +585,96 @@ static const struct MachineDriver machine_driver_airsys =
 
 /*************************************************************
 				   DRIVERS
+
+Ainferno may be missing an 0x2000 byte rom from the video
+board - possibly?
 *************************************************************/
 
 ROM_START( topland )
-	ROM_REGION( 0xc0000, REGION_CPU1, 0 )
+	ROM_REGION( 0xc0000, REGION_CPU1, 0 )	/* 68000 */
 	ROM_LOAD16_BYTE( "b62_41.43",  0x00000, 0x20000, 0x28264798 )
-	ROM_LOAD16_BYTE( "b62_40.13",  0x00001, 0x20000, 0xdb872f7d )
+	ROM_LOAD16_BYTE( "b62_40.14",  0x00001, 0x20000, 0xdb872f7d )
 	ROM_LOAD16_BYTE( "b62_25.42",  0x40000, 0x20000, 0x1bd53a72 )
 	ROM_LOAD16_BYTE( "b62_24.13",  0x40001, 0x20000, 0x845026c5 )
 	ROM_LOAD16_BYTE( "b62_23.41",  0x80000, 0x20000, 0xef3a971c )
 	ROM_LOAD16_BYTE( "b62_22.12",  0x80001, 0x20000, 0x94279201 )
 
-	ROM_REGION( 0x1c000, REGION_CPU2, 0 )
+	ROM_REGION( 0x1c000, REGION_CPU2, 0 )	/* Z80 */
 	ROM_LOAD( "b62-42.34", 0x00000, 0x04000, 0x389230e0 )
 	ROM_CONTINUE(          0x10000, 0x0c000 )
 
 	/* Plus a TMS320C25 */
 
-	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )	/* 16x16 tiles */
 	ROM_LOAD16_BYTE( "b62-33.39",  0x000000, 0x20000, 0x38786867 )
 	ROM_LOAD16_BYTE( "b62-36.48",  0x000001, 0x20000, 0x4259e76a )
 	ROM_LOAD16_BYTE( "b62-29.27",  0x040000, 0x20000, 0xefdd5c51 )
 	ROM_LOAD16_BYTE( "b62-34.40",  0x040001, 0x20000, 0xa7e10ca4 )
-	// NB b62-35 exists in two sets 95% similar, 35a is probably wrong //
-	ROM_LOAD16_BYTE( "b62-35a.47", 0x080000, 0x20000, 0xbc53af37 )
 	ROM_LOAD16_BYTE( "b62-35.47",  0x080000, 0x20000, 0xcba7bac5 )
 	ROM_LOAD16_BYTE( "b62-30.28",  0x080001, 0x20000, 0x30e37cb8 )
 	ROM_LOAD16_BYTE( "b62-31.29",  0x0c0000, 0x20000, 0x3feebfe3 )
 	ROM_LOAD16_BYTE( "b62-32.30",  0x0c0001, 0x20000, 0x66806646 )
 
-	ROM_REGION( 0xc0000, REGION_SOUND1, 0 )	/* samples */
+	ROM_REGION( 0xa0000, REGION_SOUND1, 0 )	/* ADPCM samples */
 	ROM_LOAD( "b62-13.1",  0x00000, 0x20000, 0xb37dc3ea )
 	ROM_LOAD( "b62-14.2",  0x20000, 0x20000, 0x617948a3 )
 	ROM_LOAD( "b62-15.3",  0x40000, 0x20000, 0xe35ffe81 )
 	ROM_LOAD( "b62-16.4",  0x60000, 0x20000, 0x203a5c27 )
 	ROM_LOAD( "b62-17.5",  0x80000, 0x20000, 0x36447066 )
-	ROM_LOAD( "b62-18.31", 0xa0000, 0x20000, 0x3a4e687a )
+
+	ROM_REGION( 0x20000, REGION_SOUND2, 0 )	/* Delta-T samples */
+	ROM_LOAD( "b62-18.31", 0x00000, 0x20000, 0x3a4e687a )
 
 	ROM_REGION( 0x10000, REGION_USER1, 0 )	/* unknown */
-	ROM_LOAD( "b62-28.22", 0x00000, 0x02000, 0xc4be68a6 )	// video board
+	ROM_LOAD( "b62-28.22", 0x08000, 0x02000, 0xc4be68a6 )	// video board
 
-	/* These seem to be an interleaved pair with $a34 words of code */
-	ROM_LOAD( "b62-21.35", 0x02000, 0x02000, 0x5f38460d )	// cpu board
-	ROM_LOAD( "b62-20.6",  0x04000, 0x02000, 0xa4afe958 )	// cpu board
+	/* TMS320C25 code ? */
+	/* Interleaved pair, $a34 words of code */
+	ROM_LOAD16_BYTE( "b62-20.6",  0x00000, 0x02000, 0xa4afe958 )	// cpu board
+	ROM_LOAD16_BYTE( "b62-21.35", 0x00001, 0x02000, 0x5f38460d )	// cpu board
 ROM_END
 
 ROM_START( ainferno )
-	ROM_REGION( 0xc0000, REGION_CPU1, 0 )
-	ROM_LOAD16_BYTE( "c45-22",  0x00000, 0x20000, 0x50300926 )
-	ROM_LOAD16_BYTE( "c45-20",  0x00001, 0x20000, 0x39b189d9 )
-	ROM_LOAD16_BYTE( "c45-21",  0x40000, 0x20000, 0x1b687241 )
-	ROM_LOAD16_BYTE( "c45-28",  0x40001, 0x20000, 0xc7cd2567 )
+	ROM_REGION( 0xc0000, REGION_CPU1, 0 )	/* 68000 */
+	ROM_LOAD16_BYTE( "c45_22.43", 0x00000, 0x20000, 0x50300926 )
+	ROM_LOAD16_BYTE( "c45_20.14", 0x00001, 0x20000, 0x39b189d9 )
+	ROM_LOAD16_BYTE( "c45_21.42", 0x40000, 0x20000, 0x1b687241 )
+	ROM_LOAD16_BYTE( "c45_28.13", 0x40001, 0x20000, 0xc7cd2567 )
 
-	/* 0x80000 to 0xbfffff is empty for this game */
+	/* 0x80000 to 0xbffff is empty for this game */
 
-	ROM_REGION( 0x1c000, REGION_CPU2, 0 )
-	ROM_LOAD( "c45-23", 0x00000, 0x04000, 0xd0750c78 )
-	ROM_CONTINUE(       0x10000, 0x0c000 )
+	ROM_REGION( 0x1c000, REGION_CPU2, 0 )	/* Z80 */
+	ROM_LOAD( "c45-23.34", 0x00000, 0x04000, 0xd0750c78 )
+	ROM_CONTINUE(          0x10000, 0x0c000 )
 
 	/* Plus a TMS320C25 */
 
-	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD16_BYTE( "c45-11",  0x000000, 0x20000, 0xd9b4b77c )
-	ROM_LOAD16_BYTE( "c45-15",  0x000001, 0x20000, 0xd4610698 )
-	ROM_LOAD16_BYTE( "c45-12",  0x040000, 0x20000, 0x4ae305b8 )
-	ROM_LOAD16_BYTE( "c45-16",  0x040001, 0x20000, 0xc6eb93b0 )
-	ROM_LOAD16_BYTE( "c45-13",  0x080000, 0x20000, 0x69b82af6 )
-	ROM_LOAD16_BYTE( "c45-17",  0x080001, 0x20000, 0x0dbee000 )
-	ROM_LOAD16_BYTE( "c45-14",  0x0c0000, 0x20000, 0x481b6f29 )
-	ROM_LOAD16_BYTE( "c45-18",  0x0c0001, 0x20000, 0xba7ecf3b )
+	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )	/* 16x16 tiles */
+	ROM_LOAD16_BYTE( "c45-11.28", 0x000000, 0x20000, 0xd9b4b77c )
+	ROM_LOAD16_BYTE( "c45-15.40", 0x000001, 0x20000, 0xd4610698 )
+	ROM_LOAD16_BYTE( "c45-12.29", 0x040000, 0x20000, 0x4ae305b8 )
+	ROM_LOAD16_BYTE( "c45-16.41", 0x040001, 0x20000, 0xc6eb93b0 )
+	ROM_LOAD16_BYTE( "c45-13.30", 0x080000, 0x20000, 0x69b82af6 )
+	ROM_LOAD16_BYTE( "c45-17.42", 0x080001, 0x20000, 0x0dbee000 )
+	ROM_LOAD16_BYTE( "c45-14.31", 0x0c0000, 0x20000, 0x481b6f29 )
+	ROM_LOAD16_BYTE( "c45-18.43", 0x0c0001, 0x20000, 0xba7ecf3b )
 
-	ROM_REGION( 0xc0000, REGION_SOUND1, 0 )	/* samples: read at half length ??? */
-	ROM_LOAD( "c45-01", 0x00000, 0x10000, 0xb7e4001b )
-	ROM_LOAD( "c45-02", 0x20000, 0x10000, 0x9a599578 )
-	ROM_LOAD( "c45-03", 0x40000, 0x10000, 0x24121724 )
-	ROM_LOAD( "c45-04", 0x60000, 0x10000, 0x41169e41 )
-	ROM_LOAD( "c45-05", 0x80000, 0x10000, 0x680cd0f6 )
-	ROM_LOAD( "c45-06", 0xa0000, 0x10000, 0xe348a6af )
+	ROM_REGION( 0xa0000, REGION_SOUND1, 0 )	/* ADPCM samples */
+	ROM_LOAD( "c45-01.5",  0x00000, 0x20000, 0x052997b2 )
+	ROM_LOAD( "c45-02.4",  0x20000, 0x20000, 0x2fc0a88e )
+	ROM_LOAD( "c45-03.3",  0x40000, 0x20000, 0x0e1e5b5f )
+	ROM_LOAD( "c45-04.2",  0x60000, 0x20000, 0x6d081044 )
+	ROM_LOAD( "c45-05.1",  0x80000, 0x20000, 0x6c59a808 )
 
-	ROM_REGION( 0x10000, REGION_USER1, 0 )	/* unknown */
-	/* These seem to be an interleaved pair with $e3f words of code */
-	ROM_LOAD( "c45-24", 0x00000, 0x02000, 0x1013d937 )
-	ROM_LOAD( "c45-25", 0x02000, 0x02000, 0xc0d39f95 )
+	ROM_REGION( 0x20000, REGION_SOUND2, 0 )	/* Delta-T samples */
+	ROM_LOAD( "c45-06.31", 0x00000, 0x20000, 0x6a7976d4 )
+
+	ROM_REGION( 0x10000, REGION_USER1, 0 )
+
+	/* TMS320C25 code ? */
+	/* Interleaved pair, $e3f words of code */
+	ROM_LOAD16_BYTE( "c45-24.6",  0x00000, 0x02000, 0x1013d937 )
+	ROM_LOAD16_BYTE( "c45-25.35", 0x00001, 0x02000, 0xc0d39f95 )
 
 	/* Readme says 7 pals on video board and 6 on cpu board */
 ROM_END

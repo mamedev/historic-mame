@@ -82,7 +82,11 @@ static void get_tile_info_bg(int tile_index)
 	unsigned char code = skykid_videoram[tile_index];
 	unsigned char attr = skykid_videoram[tile_index+0x800];
 
-	SET_TILE_INFO(1, code + 256*(attr & 0x01),((attr & 0x7e) >> 1) | ((attr & 0x01) << 6));
+	SET_TILE_INFO(
+			1,
+			code + 256*(attr & 0x01),
+			((attr & 0x7e) >> 1) | ((attr & 0x01) << 6),
+			0)
 }
 
 /***************************************************************************

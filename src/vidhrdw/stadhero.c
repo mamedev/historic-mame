@@ -186,7 +186,11 @@ static void get_pf2_tile_info(int tile_index)
 	color=tile >> 12;
 	tile=tile&0xfff;
 
-	SET_TILE_INFO(1,tile,color)
+	SET_TILE_INFO(
+			1,
+			tile,
+			color,
+			0)
 }
 
 static void get_pf1_tile_info(int tile_index)
@@ -195,7 +199,11 @@ static void get_pf1_tile_info(int tile_index)
 	int color=tile >> 12;
 
 	tile=tile&0xfff;
-	SET_TILE_INFO(0,tile,color)
+	SET_TILE_INFO(
+			0,
+			tile,
+			color,
+			0)
 }
 
 int stadhero_vh_start (void)

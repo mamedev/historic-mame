@@ -167,9 +167,32 @@ logerror("%04x: custom IO offset %02x data %02x\n",cpu_get_pc(),offset,data);
 				/* it is not known how the parameters control the explosion. */
 				/* We just use samples. */
 				if (memcmp(customio,"\x40\x40\x40\x01\xff\x00\x20",7) == 0)
+				{
 					sample_start (0, 0, 0);
+				}
 				else if (memcmp(customio,"\x30\x40\x00\x02\xdf\x00\x10",7) == 0)
+				{
 					sample_start (0, 1, 0);
+				}
+				else if (memcmp(customio,"\x30\x10\x00\x80\xff\x00\x10",7) == 0)
+				{
+					sample_start (0, 2, 0);
+				}
+				else if (memcmp(customio,"\x30\x80\x80\x01\xff\x00\x10",7) == 0)
+				{
+					sample_start (0, 3, 0);
+				}
+				else
+				{
+					logerror("%04x: custom IO offset %02x\n",cpu_get_pc(),offset);
+					logerror("data[0]=%02x\n",customio[0]);
+					logerror("data[1]=%02x\n",customio[1]);
+					logerror("data[2]=%02x\n",customio[2]);
+					logerror("data[3]=%02x\n",customio[3]);
+					logerror("data[4]=%02x\n",customio[4]);
+					logerror("data[5]=%02x\n",customio[5]);
+					logerror("data[6]=%02x\n",customio[6]);
+				}
 			}
 			break;
 	}
@@ -311,8 +334,8 @@ WRITE_HANDLER( xevious_customio_w )
 			nmi_timer = 0;
 			return; /* nop */
 	}
-
 	nmi_timer = timer_pulse (TIME_IN_USEC (50), 0, xevious_nmi_generate);
+
 }
 
 

@@ -108,7 +108,11 @@ static void get_tile_info0(int tile_index)
 
 	number = combasc_page[0][tile_index + 0x400] + 256*bank;
 
-	SET_TILE_INFO(0,number,color)
+	SET_TILE_INFO(
+			0,
+			number,
+			color,
+			0)
 	tile_info.priority = (attributes & 0x40) >> 6;
 }
 
@@ -129,7 +133,11 @@ static void get_tile_info1(int tile_index)
 
 	number = combasc_page[1][tile_index + 0x400] + 256*bank;
 
-	SET_TILE_INFO(1,number,color)
+	SET_TILE_INFO(
+			1,
+			number,
+			color,
+			0)
 	tile_info.priority = (attributes & 0x40) >> 6;
 }
 
@@ -139,12 +147,11 @@ static void get_text_info(int tile_index)
 	int number = combasc_page[0][tile_index + 0xc00];
 	int color = 16 + (attributes & 0x0f);
 
-	SET_TILE_INFO(0,number,color)
-
-	/* the following hack is needed because the TileMap system doesn't support TRANSPARENCY_COLOR */
-	tile_info.flags = 0;
-	if ((attributes & 0x0f) == 0x01 || (attributes & 0x0f) == 0x0e)
-		tile_info.flags = TILE_IGNORE_TRANSPARENCY;
+	SET_TILE_INFO(
+			0,
+			number,
+			color,
+			0)
 }
 
 
@@ -165,7 +172,11 @@ static void get_tile_info0_bootleg(int tile_index)
 	color = pal*16;// + (attributes & 0x0f);
 	number = combasc_page[0][tile_index + 0x400] + 256*bank;
 
-	SET_TILE_INFO(0,number,color)
+	SET_TILE_INFO(
+			0,
+			number,
+			color,
+			0)
 }
 
 static void get_tile_info1_bootleg(int tile_index)
@@ -185,7 +196,11 @@ static void get_tile_info1_bootleg(int tile_index)
 	color = pal*16;// + (attributes & 0x0f);
 	number = combasc_page[1][tile_index + 0x400] + 256*bank;
 
-	SET_TILE_INFO(1,number,color)
+	SET_TILE_INFO(
+			1,
+			number,
+			color,
+			0)
 }
 
 static void get_text_info_bootleg(int tile_index)
@@ -194,7 +209,11 @@ static void get_text_info_bootleg(int tile_index)
 	int number = combasc_page[0][tile_index + 0xc00];
 	int color = 16;// + (attributes & 0x0f);
 
-	SET_TILE_INFO(1, number, color)
+	SET_TILE_INFO(
+			1,
+			number,
+			color,
+			0)
 }
 
 /***************************************************************************
@@ -209,7 +228,7 @@ int combasc_vh_start(void)
 
 	tilemap[0] = tilemap_create(get_tile_info0,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
 	tilemap[1] = tilemap_create(get_tile_info1,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
-	textlayer =  tilemap_create(get_text_info, tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
+	textlayer =  tilemap_create(get_text_info, tilemap_scan_rows,TILEMAP_OPAQUE,     8,8,32,32);
 
 	private_spriteram[0] = malloc(0x800);
 	private_spriteram[1] = malloc(0x800);

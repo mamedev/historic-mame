@@ -868,6 +868,12 @@ ROM_END
 
 ROM_START( cgangpzl )
 	ROM_REGION( 0x180000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "274001l.bin", 0x080001, 0x80000, 0x8f5cdcc5 )
+	ROM_LOAD16_BYTE( "274001u.bin", 0x080000, 0x80000, 0x3a816140 )
+ROM_END
+
+ROM_START( cgangpzj )
+	ROM_REGION( 0x180000, REGION_CPU1, 0 )
 	ROM_LOAD16_BYTE( "cp2-ep0l.bin", 0x080001, 0x80000, 0x2825f7ba ) /* 0xc00000 */
 	ROM_LOAD16_BYTE( "cp2-ep0u.bin", 0x080000, 0x80000, 0x94d7d6fc )
 ROM_END
@@ -976,14 +982,15 @@ ROM_START( fa )
 	ROM_LOAD16_BYTE( "fa1_ma1u.bin", 0x480000, 0x100000, 0x900297be )
 ROM_END
 
-/*          rom   parent machine    inp       		init */
-GAMEX( 1992,bkrtmaq,  0, namcona1w, namcona1_quiz,	bkrtmaq,  ROT0_16BIT, "Namco", "Bakuretsu Quiz Ma-Q Dai Bouken (Japan)", GAME_NO_SOUND )
-GAMEX( 1992,cgangpzl, 0, namcona1w, namcona1_joy,	cgangpzl, ROT0_16BIT, "Namco", "Cosmo Gang the Puzzle (Japan)", GAME_NO_SOUND )
-GAMEX( 1992,exvania,  0, namcona1,  namcona1_joy,	exbania,  ROT0_16BIT, "Namco", "Exvania (Japan)", GAME_NO_SOUND )
-GAMEX( 1992,fa,       0, namcona1,  namcona1_joy,	fa,       ROT0_16BIT/*ROT90_16BIT*/,"Namco", "F/A (Japan)", GAME_NO_SOUND|GAME_NOT_WORKING )
-GAMEX( 1992,knckhead, 0, namcona1,  namcona1_joy,	knckhead, ROT0_16BIT, "Namco", "Knuckle Heads (Japan)", GAME_NO_SOUND )
-GAMEX( 1992,swcourt,  0, namcona1w, namcona1_joy,	swcourt,  ROT0_16BIT, "Namco", "Super World Court (Japan)", GAME_NO_SOUND )
-GAMEX( 1993,emeralda, 0, namcona1w, namcona1_joy,	emeralda, ROT0_16BIT, "Namco", "Emeraldia (Japan)", GAME_NO_SOUND )
-GAMEX( 1993,numanath, 0, namcona1w, namcona1_joy,	numanath, ROT0_16BIT, "Namco", "Numan Athletics (Japan)", GAME_NO_SOUND|GAME_NOT_WORKING )
-GAMEX( 1993,quiztou,  0, namcona1w, namcona1_quiz,	quiztou,  ROT0_16BIT, "Namco", "Nettou! Gekitou! Quiztou!! (Japan)", GAME_NO_SOUND )
-GAMEX( 1993,tinklpit, 0, namcona1w, namcona1_joy,	tinklpit, ROT0_16BIT, "Namco", "Tinkle Pit (Japan)", GAME_NO_SOUND )
+
+GAMEX( 1992,bkrtmaq,  0,        namcona1w, namcona1_quiz,	bkrtmaq,  ROT0_16BIT, "Namco", "Bakuretsu Quiz Ma-Q Dai Bouken (Japan)", GAME_NO_SOUND )
+GAMEX( 1992,cgangpzl, 0,        namcona1w, namcona1_joy,	cgangpzl, ROT0_16BIT, "Namco", "Cosmo Gang the Puzzle (US)", GAME_NO_SOUND )
+GAMEX( 1992,cgangpzj, cgangpzl, namcona1w, namcona1_joy,	cgangpzl, ROT0_16BIT, "Namco", "Cosmo Gang the Puzzle (Japan)", GAME_NO_SOUND )
+GAMEX( 1992,exvania,  0,        namcona1,  namcona1_joy,	exbania,  ROT0_16BIT, "Namco", "Exvania (Japan)", GAME_NO_SOUND )
+GAMEX( 1992,fa,       0,        namcona1,  namcona1_joy,	fa,       ROT0_16BIT/*ROT90_16BIT*/,"Namco", "F/A (Japan)", GAME_NO_SOUND|GAME_NOT_WORKING )
+GAMEX( 1992,knckhead, 0,        namcona1,  namcona1_joy,	knckhead, ROT0_16BIT, "Namco", "Knuckle Heads (Japan)", GAME_NO_SOUND )
+GAMEX( 1992,swcourt,  0,        namcona1w, namcona1_joy,	swcourt,  ROT0_16BIT, "Namco", "Super World Court (Japan)", GAME_NO_SOUND )
+GAMEX( 1993,emeralda, 0,        namcona1w, namcona1_joy,	emeralda, ROT0_16BIT, "Namco", "Emeraldia (Japan)", GAME_NO_SOUND )
+GAMEX( 1993,numanath, 0,        namcona1w, namcona1_joy,	numanath, ROT0_16BIT, "Namco", "Numan Athletics (Japan)", GAME_NO_SOUND|GAME_NOT_WORKING )
+GAMEX( 1993,quiztou,  0,        namcona1w, namcona1_quiz,	quiztou,  ROT0_16BIT, "Namco", "Nettou! Gekitou! Quiztou!! (Japan)", GAME_NO_SOUND )
+GAMEX( 1993,tinklpit, 0,        namcona1w, namcona1_joy,	tinklpit, ROT0_16BIT, "Namco", "Tinkle Pit (Japan)", GAME_NO_SOUND )

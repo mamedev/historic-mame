@@ -66,8 +66,7 @@ static void get_tile_info_##_N_(int tile_index) \
 { \
 	data16_t code = fuuki16_vram_##_N_[ 2 * tile_index + 0 ]; \
 	data16_t attr = fuuki16_vram_##_N_[ 2 * tile_index + 1 ]; \
-	SET_TILE_INFO(1 + _N_, code, attr & 0x3f); \
-	tile_info.flags = TILE_FLIPYX( (attr >> 6) & 3 ); \
+	SET_TILE_INFO(1 + _N_, code, attr & 0x3f,TILE_FLIPYX( (attr >> 6) & 3 )) \
 } \
 \
 WRITE16_HANDLER( fuuki16_vram_##_N_##_w ) \

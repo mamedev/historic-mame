@@ -10,21 +10,17 @@
 /* Indentation */
 #define INDENT "\t"
 
-/* Possible output format */
-#define OUTPUT_FORMAT_UNFORMATTED 0
-#define OUTPUT_FORMAT_ONE_LEVEL 1
-#define OUTPUT_FORMAT_TWO_LEVEL 2
-
-/* Output format */
-#define OUTPUT_FORMAT OUTPUT_FORMAT_ONE_LEVEL
-
 /* Output format configuration
-	L list
-	1,2 levels
-	B,S,E Begin, Separator, End
+	L1 first level
+	L2 second level
+	B begin a list of items
+	E end a list of items
+	P begin an item
+	N end an item
 */
 
-#if OUTPUT_FORMAT == OUTPUT_FORMAT_UNFORMATTED
+/* Output unformatted */
+/*
 #define L1B "("
 #define L1P " "
 #define L1N ""
@@ -33,7 +29,9 @@
 #define L2P " "
 #define L2N ""
 #define L2E ")"
-#elif OUTPUT_FORMAT == OUTPUT_FORMAT_ONE_LEVEL
+*/
+
+/* Output on one level */
 #define L1B " (\n"
 #define L1P INDENT
 #define L1N "\n"
@@ -42,7 +40,9 @@
 #define L2P " "
 #define L2N ""
 #define L2E " )"
-#elif OUTPUT_FORMAT == OUTPUT_FORMAT_TWO_LEVEL
+
+/* Output on two levels */
+/*
 #define L1B " (\n"
 #define L1P INDENT
 #define L1N "\n"
@@ -51,16 +51,18 @@
 #define L2P INDENT INDENT
 #define L2N "\n"
 #define L2E INDENT ")"
-#else
-#error Wrong OUTPUT_FORMAT
-#endif
+*/
 
 /* Print a string in C format */
-static void print_c_string(FILE* out, const char* s) {
+static void print_c_string(FILE* out, const char* s)
+{
 	fprintf(out, "\"");
-	if (s) {
-		while (*s) {
-			switch (*s) {
+	if (s)
+	{
+		while (*s)
+		{
+			switch (*s)
+			{
 				case '\a' : fprintf(out, "\\a"); break;
 				case '\b' : fprintf(out, "\\b"); break;
 				case '\f' : fprintf(out, "\\f"); break;
@@ -83,13 +85,20 @@ static void print_c_string(FILE* out, const char* s) {
 }
 
 /* Print a string in statement format (remove space, parentesis, ") */
-static void print_statement_string(FILE* out, const char* s) {
-	if (s) {
-		while (*s) {
-			if (isspace(*s)) {
+static void print_statement_string(FILE* out, const char* s)
+{
+	if (s)
+	{
+		while (*s)
+		{
+			if (isspace(*s))
+			{
 				fprintf(out, "_");
-			} else {
-				switch (*s) {
+			}
+			else
+			{
+				switch (*s)
+				{
 					case '(' :
 					case ')' :
 					case '"' :
@@ -101,16 +110,21 @@ static void print_statement_string(FILE* out, const char* s) {
 			}
 			++s;
 		}
-	} else {
+	}
+	else
+	{
 		fprintf(out, "null");
 	}
 }
 
-static void print_game_switch(FILE* out, const struct GameDriver* game) {
+static void print_game_switch(FILE* out, const struct GameDriver* game)
+{
 	const struct InputPortTiny* input = game->input_ports;
 
-	while ((input->type & ~IPF_MASK) != IPT_END) {
-		if ((input->type & ~IPF_MASK)==IPT_DIPSWITCH_NAME) {
+	while ((input->type & ~IPF_MASK) != IPT_END)
+	{
+		if ((input->type & ~IPF_MASK)==IPT_DIPSWITCH_NAME)
+		{
 			int def = input->default_value;
 			const char* def_name = 0;
 
@@ -121,7 +135,8 @@ static void print_game_switch(FILE* out, const struct GameDriver* game) {
 			fprintf(out, "%s", L2N);
 			++input;
 
-			while ((input->type & ~IPF_MASK)==IPT_DIPSWITCH_SETTING) {
+			while ((input->type & ~IPF_MASK)==IPT_DIPSWITCH_SETTING)
+			{
 				if (def == input->default_value)
 					def_name = input->name;
 				fprintf(out, L2P "entry " );
@@ -130,7 +145,8 @@ static void print_game_switch(FILE* out, const struct GameDriver* game) {
 				++input;
 			}
 
-			if (def_name) {
+			if (def_name)
+			{
 				fprintf(out, L2P "default ");
 				print_c_string(out,def_name);
 				fprintf(out, "%s", L2N);
@@ -143,7 +159,8 @@ static void print_game_switch(FILE* out, const struct GameDriver* game) {
 	}
 }
 
-static void print_game_input(FILE* out, const struct GameDriver* game) {
+static void print_game_input(FILE* out, const struct GameDriver* game)
+{
 	const struct InputPortTiny* input = game->input_ports;
 	int nplayer = 0;
 	const char* control = 0;
@@ -152,8 +169,10 @@ static void print_game_input(FILE* out, const struct GameDriver* game) {
 	const char* service = 0;
 	const char* tilt = 0;
 
-	while ((input->type & ~IPF_MASK) != IPT_END) {
-		switch (input->type & IPF_PLAYERMASK) {
+	while ((input->type & ~IPF_MASK) != IPT_END)
+	{
+		switch (input->type & IPF_PLAYERMASK)
+		{
 			case IPF_PLAYER1:
 				if (nplayer<1) nplayer = 1;
 				break;
@@ -167,7 +186,8 @@ static void print_game_input(FILE* out, const struct GameDriver* game) {
 				if (nplayer<4) nplayer = 4;
 				break;
 		}
-		switch (input->type & ~IPF_MASK) {
+		switch (input->type & ~IPF_MASK)
+		{
 			case IPT_JOYSTICK_UP:
 			case IPT_JOYSTICK_DOWN:
 			case IPT_JOYSTICK_LEFT:
@@ -275,7 +295,8 @@ static void print_game_rom(FILE* out, const struct GameDriver* game)
 	const struct RomModule *pregion, *prom, *fprom=NULL;
 	extern struct GameDriver driver_0;
 
-	if (!game->rom) return;
+	if (!game->rom)
+		return;
 
 	if (game->clone_of && game->clone_of != &driver_0)
 		fprintf(out, L1P "romof %s" L1N, game->clone_of->name);
@@ -317,60 +338,61 @@ static void print_game_rom(FILE* out, const struct GameDriver* game)
 			fprintf(out, L2P "crc %08x" L2N, crc);
 			switch (ROMREGION_GETTYPE(region))
 			{
-			case REGION_CPU1: fprintf(out, L2P "region cpu1" L2N); break;
-			case REGION_CPU2: fprintf(out, L2P "region cpu2" L2N); break;
-			case REGION_CPU3: fprintf(out, L2P "region cpu3" L2N); break;
-			case REGION_CPU4: fprintf(out, L2P "region cpu4" L2N); break;
-			case REGION_CPU5: fprintf(out, L2P "region cpu5" L2N); break;
-			case REGION_CPU6: fprintf(out, L2P "region cpu6" L2N); break;
-			case REGION_CPU7: fprintf(out, L2P "region cpu7" L2N); break;
-			case REGION_CPU8: fprintf(out, L2P "region cpu8" L2N); break;
-			case REGION_GFX1: fprintf(out, L2P "region gfx1" L2N); break;
-			case REGION_GFX2: fprintf(out, L2P "region gfx2" L2N); break;
-			case REGION_GFX3: fprintf(out, L2P "region gfx3" L2N); break;
-			case REGION_GFX4: fprintf(out, L2P "region gfx4" L2N); break;
-			case REGION_GFX5: fprintf(out, L2P "region gfx5" L2N); break;
-			case REGION_GFX6: fprintf(out, L2P "region gfx6" L2N); break;
-			case REGION_GFX7: fprintf(out, L2P "region gfx7" L2N); break;
-			case REGION_GFX8: fprintf(out, L2P "region gfx8" L2N); break;
-			case REGION_PROMS: fprintf(out, L2P "region proms" L2N); break;
-			case REGION_SOUND1: fprintf(out, L2P "region sound1" L2N); break;
-			case REGION_SOUND2: fprintf(out, L2P "region sound2" L2N); break;
-			case REGION_SOUND3: fprintf(out, L2P "region sound3" L2N); break;
-			case REGION_SOUND4: fprintf(out, L2P "region sound4" L2N); break;
-			case REGION_SOUND5: fprintf(out, L2P "region sound5" L2N); break;
-			case REGION_SOUND6: fprintf(out, L2P "region sound6" L2N); break;
-			case REGION_SOUND7: fprintf(out, L2P "region sound7" L2N); break;
-			case REGION_SOUND8: fprintf(out, L2P "region sound8" L2N); break;
-			case REGION_USER1: fprintf(out, L2P "region user1" L2N); break;
-			case REGION_USER2: fprintf(out, L2P "region user2" L2N); break;
-			case REGION_USER3: fprintf(out, L2P "region user3" L2N); break;
-			case REGION_USER4: fprintf(out, L2P "region user4" L2N); break;
-			case REGION_USER5: fprintf(out, L2P "region user5" L2N); break;
-			case REGION_USER6: fprintf(out, L2P "region user6" L2N); break;
-			case REGION_USER7: fprintf(out, L2P "region user7" L2N); break;
-			case REGION_USER8: fprintf(out, L2P "region user8" L2N); break;
-			default: fprintf(out, L2P "region 0x%x" L2N, ROMREGION_GETTYPE(region));
-            }
-			switch (ROMREGION_GETFLAGS(region))
-			{
+				case REGION_CPU1: fprintf(out, L2P "region cpu1" L2N); break;
+				case REGION_CPU2: fprintf(out, L2P "region cpu2" L2N); break;
+				case REGION_CPU3: fprintf(out, L2P "region cpu3" L2N); break;
+				case REGION_CPU4: fprintf(out, L2P "region cpu4" L2N); break;
+				case REGION_CPU5: fprintf(out, L2P "region cpu5" L2N); break;
+				case REGION_CPU6: fprintf(out, L2P "region cpu6" L2N); break;
+				case REGION_CPU7: fprintf(out, L2P "region cpu7" L2N); break;
+				case REGION_CPU8: fprintf(out, L2P "region cpu8" L2N); break;
+				case REGION_GFX1: fprintf(out, L2P "region gfx1" L2N); break;
+				case REGION_GFX2: fprintf(out, L2P "region gfx2" L2N); break;
+				case REGION_GFX3: fprintf(out, L2P "region gfx3" L2N); break;
+				case REGION_GFX4: fprintf(out, L2P "region gfx4" L2N); break;
+				case REGION_GFX5: fprintf(out, L2P "region gfx5" L2N); break;
+				case REGION_GFX6: fprintf(out, L2P "region gfx6" L2N); break;
+				case REGION_GFX7: fprintf(out, L2P "region gfx7" L2N); break;
+				case REGION_GFX8: fprintf(out, L2P "region gfx8" L2N); break;
+				case REGION_PROMS: fprintf(out, L2P "region proms" L2N); break;
+				case REGION_SOUND1: fprintf(out, L2P "region sound1" L2N); break;
+				case REGION_SOUND2: fprintf(out, L2P "region sound2" L2N); break;
+				case REGION_SOUND3: fprintf(out, L2P "region sound3" L2N); break;
+				case REGION_SOUND4: fprintf(out, L2P "region sound4" L2N); break;
+				case REGION_SOUND5: fprintf(out, L2P "region sound5" L2N); break;
+				case REGION_SOUND6: fprintf(out, L2P "region sound6" L2N); break;
+				case REGION_SOUND7: fprintf(out, L2P "region sound7" L2N); break;
+				case REGION_SOUND8: fprintf(out, L2P "region sound8" L2N); break;
+				case REGION_USER1: fprintf(out, L2P "region user1" L2N); break;
+				case REGION_USER2: fprintf(out, L2P "region user2" L2N); break;
+				case REGION_USER3: fprintf(out, L2P "region user3" L2N); break;
+				case REGION_USER4: fprintf(out, L2P "region user4" L2N); break;
+				case REGION_USER5: fprintf(out, L2P "region user5" L2N); break;
+				case REGION_USER6: fprintf(out, L2P "region user6" L2N); break;
+				case REGION_USER7: fprintf(out, L2P "region user7" L2N); break;
+				case REGION_USER8: fprintf(out, L2P "region user8" L2N); break;
+				default: fprintf(out, L2P "region 0x%x" L2N, ROMREGION_GETTYPE(region));
+		}
+		switch (ROMREGION_GETFLAGS(region))
+		{
 			case 0:
 				break;
 			case ROMREGION_SOUNDONLY:
 				fprintf(out, L2P "flags soundonly" L2N);
-                break;
+				break;
 			case ROMREGION_DISPOSE:
 				fprintf(out, L2P "flags dispose" L2N);
 				break;
 			default:
 				fprintf(out, L2P "flags 0x%x" L2N, ROMREGION_GETFLAGS(region));
-            }
-			fprintf(out, L2P "offs %x", offset);
-            fprintf(out, L2E L1N);
 		}
+		fprintf(out, L2P "offs %x", offset);
+		fprintf(out, L2E L1N);
+	}
 }
 
-static void print_game_sample(FILE* out, const struct GameDriver* game) {
+static void print_game_sample(FILE* out, const struct GameDriver* game)
+{
 #if (HAS_SAMPLES || HAS_VLM5030)
 	int i;
 	for( i = 0; game->drv->sound[i].sound_type && i < MAX_SOUND; i++ )
@@ -386,11 +408,11 @@ static void print_game_sample(FILE* out, const struct GameDriver* game) {
 #endif
 		if (samplenames != 0 && samplenames[0] != 0) {
 			int k = 0;
-			if (samplenames[k][0]=='*') {
+			if (samplenames[k][0]=='*')
+			{
 				/* output sampleof only if different from game name */
-				if (strcmp(samplenames[k] + 1, game->name)!=0) {
+				if (strcmp(samplenames[k] + 1, game->name)!=0)
 					fprintf(out, L1P "sampleof %s" L1N, samplenames[k] + 1);
-				}
 				++k;
 			}
 			while (samplenames[k] != 0) {
@@ -400,9 +422,8 @@ static void print_game_sample(FILE* out, const struct GameDriver* game) {
 					int l = 0;
 					while (l<k && strcmp(samplenames[k],samplenames[l])!=0)
 						++l;
-					if (l==k) {
+					if (l==k)
 						fprintf(out, L1P "sample %s" L1N, samplenames[k]);
-					}
 				}
 				++k;
 			}
@@ -410,7 +431,6 @@ static void print_game_sample(FILE* out, const struct GameDriver* game) {
 	}
 #endif
 }
-
 
 static void print_game_micro(FILE* out, const struct GameDriver* game)
 {
@@ -468,6 +488,8 @@ static void print_game_video(FILE* out, const struct GameDriver* game)
 
 	int dx;
 	int dy;
+	int ax;
+	int ay;
 	int showxy;
 	int orientation;
 
@@ -485,17 +507,28 @@ static void print_game_video(FILE* out, const struct GameDriver* game)
 
 	if (game->flags & ORIENTATION_SWAP_XY)
 	{
+		ax = VIDEO_ASPECT_RATIO_DEN(driver->video_attributes);
+		ay = VIDEO_ASPECT_RATIO_NUM(driver->video_attributes);
+		if (ax == 0 && ay == 0) {
+			ax = 3;
+			ay = 4;
+		}
 		dx = driver->default_visible_area.max_y - driver->default_visible_area.min_y + 1;
 		dy = driver->default_visible_area.max_x - driver->default_visible_area.min_x + 1;
 		orientation = 1;
 	}
 	else
 	{
+		ax = VIDEO_ASPECT_RATIO_NUM(driver->video_attributes);
+		ay = VIDEO_ASPECT_RATIO_DEN(driver->video_attributes);
+		if (ax == 0 && ay == 0) {
+			ax = 4;
+			ay = 3;
+		}
 		dx = driver->default_visible_area.max_x - driver->default_visible_area.min_x + 1;
 		dy = driver->default_visible_area.max_y - driver->default_visible_area.min_y + 1;
 		orientation = 0;
 	}
-
 
 	fprintf(out, L2P "orientation %s" L2N, orientation ? "vertical" : "horizontal" );
 	if (showxy)
@@ -504,12 +537,15 @@ static void print_game_video(FILE* out, const struct GameDriver* game)
 		fprintf(out, L2P "y %d" L2N, dy);
 	}
 
-	fprintf(out, L2P "colors %d" L2N, driver->total_colors);
+	fprintf(out, L2P "aspectx %d" L2N, ax);
+	fprintf(out, L2P "aspecty %d" L2N, ay);
+
 	fprintf(out, L2P "freq %f" L2N, driver->frames_per_second);
 	fprintf(out, L2E L1N);
 }
 
-static void print_game_sound(FILE* out, const struct GameDriver* game) {
+static void print_game_sound(FILE* out, const struct GameDriver* game)
+{
 	const struct MachineDriver* driver = game->drv;
 	const struct MachineCPU* cpu = driver->cpu;
 	const struct MachineSound* sound = driver->sound;
@@ -536,12 +572,14 @@ static void print_game_sound(FILE* out, const struct GameDriver* game) {
 	fprintf(out, L1P "sound" L2B);
 
 	/* sound channel */
-	if (has_sound) {
+	if (has_sound)
+	{
 		if (driver->sound_attributes & SOUND_SUPPORTS_STEREO)
 			fprintf(out, L2P "channels 2" L2N);
 		else
 			fprintf(out, L2P "channels 1" L2N);
-	} else
+	}
+	else
 		fprintf(out, L2P "channels 0" L2N);
 
 	fprintf(out, L2E L1N);
@@ -549,17 +587,22 @@ static void print_game_sound(FILE* out, const struct GameDriver* game) {
 
 #define HISTORY_BUFFER_MAX 16384
 
-static void print_game_history(FILE* out, const struct GameDriver* game) {
+static void print_game_history(FILE* out, const struct GameDriver* game)
+{
 	char buffer[HISTORY_BUFFER_MAX];
 
-	if (load_driver_history(game,buffer,HISTORY_BUFFER_MAX)==0) {
+	if (load_driver_history(game,buffer,HISTORY_BUFFER_MAX)==0)
+	{
 		fprintf(out, L1P "history ");
 		print_c_string(out, buffer);
 		fprintf(out, "%s", L1N);
 	}
 }
 
-static void print_game_driver(FILE* out, const struct GameDriver* game) {
+static void print_game_driver(FILE* out, const struct GameDriver* game)
+{
+	const struct MachineDriver* driver = game->drv;
+
 	fprintf(out, L1P "driver" L2B);
 	if (game->flags & GAME_NOT_WORKING)
 		fprintf(out, L2P "status preliminary" L2N);
@@ -580,37 +623,51 @@ static void print_game_driver(FILE* out, const struct GameDriver* game) {
 	else
 		fprintf(out, L2P "sound good" L2N);
 
-	if (game->flags & GAME_REQUIRES_16BIT)
-		fprintf(out, L2P "colordeep 16" L2N);
+	fprintf(out, L2P "palettesize %d" L2N, driver->total_colors);
+
+	if (driver->video_attributes & VIDEO_MODIFIES_PALETTE)
+		fprintf(out, L2P "palettemode dynamic" L2N);
 	else
-		fprintf(out, L2P "colordeep 8" L2N);
+		fprintf(out, L2P "palettemode static" L2N);
+
+	if (game->flags & GAME_REQUIRES_16BIT)
+		fprintf(out, L2P "palettedepth 16" L2N);
+	else
+		fprintf(out, L2P "palettedepth 8" L2N);
+
+	if (driver->video_attributes & VIDEO_SUPPORTS_DIRTY)
+		fprintf(out, L2P "blit dirty" L2N);
+	else
+		fprintf(out, L2P "blit plain" L2N);
 
 	fprintf(out, L2E L1N);
 }
 
 /* Print the MAME info record for a game */
-static void print_game_info(FILE* out, const struct GameDriver* game) {
+static void print_game_info(FILE* out, const struct GameDriver* game)
+{
 
-	#ifndef MESS
+#ifndef MESS
 	fprintf(out, "game" L1B );
-	#else
+#else
 	fprintf(out, "machine" L1B );
-	#endif
+#endif
 
 	fprintf(out, L1P "name %s" L1N, game->name );
 
-	if (game->description) {
+	if (game->description)
+	{
 		fprintf(out, L1P "description ");
 		print_c_string(out, game->description );
 		fprintf(out, "%s", L1N);
 	}
 
 	/* print the year only if is a number */
-	if (game->year && strspn(game->year,"0123456789")==strlen(game->year)) {
+	if (game->year && strspn(game->year,"0123456789")==strlen(game->year))
 		fprintf(out, L1P "year %s" L1N, game->year );
-	}
 
-	if (game->manufacturer) {
+	if (game->manufacturer)
+	{
 		fprintf(out, L1P "manufacturer ");
 		print_c_string(out, game->manufacturer );
 		fprintf(out, "%s", L1N);
@@ -618,9 +675,8 @@ static void print_game_info(FILE* out, const struct GameDriver* game) {
 
 	print_game_history(out,game);
 
-	if (game->clone_of && !(game->clone_of->flags & NOT_A_DRIVER)) {
+	if (game->clone_of && !(game->clone_of->flags & NOT_A_DRIVER))
 		fprintf(out, L1P "cloneof %s" L1N, game->clone_of->name);
-	}
 
 	print_game_rom(out,game);
 	print_game_sample(out,game);
@@ -634,128 +690,63 @@ static void print_game_info(FILE* out, const struct GameDriver* game) {
 	fprintf(out, L1E);
 }
 
+#if !defined(MESS) && !defined(TINY_COMPILE) && !defined(CPSMAME)
+/* Print the resource info */
+static void print_resource_info(FILE* out, const struct GameDriver* game)
+{
+	fprintf(out, "resource" L1B );
+
+	fprintf(out, L1P "name %s" L1N, game->name );
+
+	if (game->description)
+	{
+		fprintf(out, L1P "description ");
+		print_c_string(out, game->description );
+		fprintf(out, "%s", L1N);
+	}
+
+	/* print the year only if it's a number */
+	if (game->year && strspn(game->year,"0123456789")==strlen(game->year))
+		fprintf(out, L1P "year %s" L1N, game->year );
+
+	if (game->manufacturer)
+	{
+		fprintf(out, L1P "manufacturer ");
+		print_c_string(out, game->manufacturer );
+		fprintf(out, "%s", L1N);
+	}
+
+	print_game_rom(out,game);
+	print_game_sample(out,game);
+
+	fprintf(out, L1E);
+}
+
+/* Import the driver object and print it as a resource */
+#define PRINT_RESOURCE(s) \
+	{ \
+		extern struct GameDriver driver_##s; \
+		print_resource_info( out, &driver_##s ); \
+	}
+
+#endif
+
 /* Print all the MAME info database */
-void print_mame_info(FILE* out, const struct GameDriver* games[]) {
+void print_mame_info(FILE* out, const struct GameDriver* games[])
+{
 	int j;
 
+	/* print games */
 	for(j=0;games[j];++j)
 		print_game_info( out, games[j] );
 
-	#ifndef MESS
-	/* addictional fixed record */
-
-	/* NEO GEO bios */
-	fprintf(out, "resource" L1B);
-	fprintf(out, L1P "name neogeo" L1N);
-	fprintf(out, L1P "description \"Neo Geo BIOS\"" L1N);
-	fprintf(out, L1P "rom" L2B);
-	fprintf(out, L2P "name neo-geo.rom" L2N);
-	fprintf(out, L2P "size 131072" L2N);
-	fprintf(out, L2P "crc 9036d879" L2N);
-	fprintf(out, L2E L1N);
-	fprintf(out, L1P "rom" L2B);
-	fprintf(out, L2P "name ng-sm1.rom" L2N);
-	fprintf(out, L2P "size 131072" L2N);
-	fprintf(out, L2P "crc 97cf998b" L2N);
-	fprintf(out, L2E L1N);
-	fprintf(out, L1P "rom" L2B);
-	fprintf(out, L2P "name ng-sfix.rom" L2N);
-	fprintf(out, L2P "size 131072" L2N);
-	fprintf(out, L2P "crc 354029fc" L2N);
-	fprintf(out, L2E L1N);
-	fprintf(out, L1E);
-
-	/* PLAYCH10 bios */
-	fprintf(out, "resource" L1B);
-	fprintf(out, L1P "name playch10" L1N);
-	fprintf(out, L1P "description \"PlayChoice-10 BIOS\"" L1N);
-	fprintf(out, L1P "rom" L2B);
-	fprintf(out, L2P "name pch1-c.8t" L2N);
-	fprintf(out, L2P "size 16384" L2N);
-	fprintf(out, L2P "crc d52fa07a" L2N);
-	fprintf(out, L2E L1N);
-	fprintf(out, L1P "rom" L2B);
-	fprintf(out, L2P "name pch1-c.8p" L2N);
-	fprintf(out, L2P "size 8192" L2N);
-	fprintf(out, L2P "crc 30c15e23" L2N);
-	fprintf(out, L2E L1N);
-	fprintf(out, L1P "rom" L2B);
-	fprintf(out, L2P "name pch1-c.8m" L2N);
-	fprintf(out, L2P "size 8192" L2N);
-	fprintf(out, L2P "crc c1232eee" L2N);
-	fprintf(out, L2E L1N);
-	fprintf(out, L1P "rom" L2B);
-	fprintf(out, L2P "name pch1-c.8k" L2N);
-	fprintf(out, L2P "size 8192" L2N);
-	fprintf(out, L2P "crc 9acffb30" L2N);
-	fprintf(out, L2E L1N);
-	fprintf(out, L1P "rom" L2B);
-	fprintf(out, L2P "name 82s129.6f" L2N);
-	fprintf(out, L2P "size 256" L2N);
-	fprintf(out, L2P "crc e5414ca3" L2N);
-	fprintf(out, L2E L1N);
-	fprintf(out, L1P "rom" L2B);
-	fprintf(out, L2P "name 82s129.6e" L2N);
-	fprintf(out, L2P "size 256" L2N);
-	fprintf(out, L2P "crc a2625c6e" L2N);
-	fprintf(out, L2E L1N);
-	fprintf(out, L1P "rom" L2B);
-	fprintf(out, L2P "name 82s129.6d" L2N);
-	fprintf(out, L2P "size 256" L2N);
-	fprintf(out, L2P "crc 1213ebd4" L2N);
-	fprintf(out, L2E L1N);
-	fprintf(out, L1E);
-
-	/* CVS bios */
-	fprintf(out, "resource" L1B);
-	fprintf(out, L1P "name cvs" L1N);
-	fprintf(out, L1P "description \"CVS BIOS\"" L1N);
-	fprintf(out, L1P "rom" L2B);
-	fprintf(out, L2P "name 5b.bin" L2N);
-	fprintf(out, L2P "size 2048" L2N);
-	fprintf(out, L2P "crc f055a624" L2N);
-	fprintf(out, L2E L1N);
-	fprintf(out, L1P "rom" L2B);
-	fprintf(out, L2P "name 82s185.10h" L2N);
-	fprintf(out, L2P "size 2048" L2N);
-	fprintf(out, L2P "crc c205bca6" L2N);
-	fprintf(out, L2E L1N);
-	fprintf(out, L1E);
-
-    /* DECO Cassette System */
-	fprintf(out, "resource" L1B);
-    fprintf(out, L1P "name decocass" L1N);
-    fprintf(out, L1P "description \"DECO Cassette System\"" L1N);
-    fprintf(out, L1P "rom" L2B);
-    fprintf(out, L2P "name rms8.cpu" L2N);
-    fprintf(out, L2P "size 4096" L2N);
-    fprintf(out, L2P "crc 23d929b7" L2N);
-	fprintf(out, L2E L1N);
-	fprintf(out, L1P "rom" L2B);
-    fprintf(out, L2P "name rms8.snd" L2N);
-	fprintf(out, L2P "size 2048" L2N);
-    fprintf(out, L2P "crc b66b2c2a" L2N);
-    fprintf(out, L2E L1N);
-    fprintf(out, L1P "rom" L2B);
-    fprintf(out, L2P "name cass8041.bin" L2N);
-    fprintf(out, L2P "size 1024" L2N);
-    fprintf(out, L2P "crc a6df18fd" L2N);
-	fprintf(out, L2E L1N);
-	fprintf(out, L1P "rom" L2B);
-    fprintf(out, L2P "name dsp8.3m" L2N);
-    fprintf(out, L2P "size 32" L2N);
-    fprintf(out, L2P "crc 238fdb40" L2N);
-    fprintf(out, L2E L1N);
-    fprintf(out, L1P "rom" L2B);
-    fprintf(out, L2P "name dsp8.10d" L2N);
-    fprintf(out, L2P "size 32" L2N);
-    fprintf(out, L2P "crc 3b5836b4" L2N);
-    fprintf(out, L2E L1N);
-    fprintf(out, L1P "rom" L2B);
-    fprintf(out, L2P "name rms8.j3" L2N);
-    fprintf(out, L2P "size 32" L2N);
-    fprintf(out, L2P "crc 51eef657" L2N);
-    fprintf(out, L2E L1N);
-    fprintf(out, L1E);
-    #endif
+	/* print the resources (only if linked) */
+#if !defined(MESS) && !defined(TINY_COMPILE) && !defined(CPSMAME)
+	PRINT_RESOURCE(neogeo);
+#if !defined(NEOMAME)
+	PRINT_RESOURCE(cvs);
+	PRINT_RESOURCE(decocass);
+	PRINT_RESOURCE(playch10);
+#endif
+#endif
 }

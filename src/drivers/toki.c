@@ -4,37 +4,42 @@ Toki
 
 driver by Jarek Parchanski
 
+
+Coin inputs are handled by the sound CPU, so they don't work with sound
+disabled. Use the service switch instead.
+
+
+TODO
+----
+
+Does the bootleg use a 68000 @ 10MHz ? This causes some bad slow-
+downs at the floating monkey machine (round 1), so set to 12 MHz
+for now. Even at 12 this slowdown still happens a little.
+
 ***************************************************************************/
+
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
+#include "sndhrdw/seibu.h"
 
-
-extern data16_t *toki_foreground_videoram16;
 extern data16_t *toki_background1_videoram16;
 extern data16_t *toki_background2_videoram16;
 extern data16_t *toki_sprites_dataram16;
 extern data16_t *toki_scrollram16;
 
-extern size_t toki_foreground_videoram16_size;
-extern size_t toki_background1_videoram16_size;
-extern size_t toki_background2_videoram16_size;
-extern size_t toki_sprites_dataram16_size;
-
 int toki_interrupt(void);
 int  toki_vh_start(void);
-void toki_vh_stop(void);
+void toki_eof_callback(void);
 void toki_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-READ16_HANDLER( toki_foreground_videoram16_r );
-WRITE16_HANDLER( toki_foreground_videoram16_w );
-READ16_HANDLER( toki_background1_videoram16_r );
+void tokib_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 WRITE16_HANDLER( toki_background1_videoram16_w );
-READ16_HANDLER( toki_background2_videoram16_r );
 WRITE16_HANDLER( toki_background2_videoram16_w );
-WRITE16_HANDLER( toki_linescroll16_w );
+WRITE16_HANDLER( toki_control_w );
+WRITE16_HANDLER( toki_foreground_videoram16_w );
 
 
-WRITE16_HANDLER( toki_soundcommand16_w )
+static WRITE16_HANDLER( tokib_soundcommand16_w )
 {
 	soundlatch_w(0,data & 0xff);
 	cpu_set_irq_line(1, 0, HOLD_LINE);
@@ -48,7 +53,7 @@ static READ16_HANDLER( pip16_r )
 
 static int msm5205next;
 
-void toki_adpcm_int (int data)
+static void toki_adpcm_int (int data)
 {
 	static int toggle=0;
 
@@ -60,7 +65,7 @@ void toki_adpcm_int (int data)
 		cpu_set_nmi_line(1, PULSE_LINE);
 }
 
-WRITE_HANDLER( toki_adpcm_control_w )
+static WRITE_HANDLER( toki_adpcm_control_w )
 {
 	int bankaddress;
 	unsigned char *RAM = memory_region(REGION_CPU2);
@@ -73,47 +78,75 @@ WRITE_HANDLER( toki_adpcm_control_w )
 	MSM5205_reset_w(0,data & 0x08);
 }
 
-WRITE_HANDLER( toki_adpcm_data_w )
+static WRITE_HANDLER( toki_adpcm_data_w )
 {
 	msm5205next = data;
 }
 
 
+/*****************************************************************************/
 
-static MEMORY_READ16_START( readmem )
+static MEMORY_READ16_START( toki_readmem )
+	{ 0x000000, 0x05ffff, MRA16_ROM },
+	{ 0x060000, 0x06d7ff, MRA16_RAM },
+	{ 0x06d800, 0x06dfff, MRA16_RAM },
+	{ 0x06e000, 0x06e7ff, MRA16_RAM },
+	{ 0x06e800, 0x06efff, MRA16_RAM },
+	{ 0x06f000, 0x06f7ff, MRA16_RAM },
+	{ 0x06f800, 0x06ffff, MRA16_RAM },
+	{ 0x080000, 0x08000d, seibu_main_word_r },
+	{ 0x0c0000, 0x0c0001, input_port_1_word_r },
+	{ 0x0c0002, 0x0c0003, input_port_2_word_r },
+	{ 0x0c0004, 0x0c0005, input_port_3_word_r },
+MEMORY_END
+
+static MEMORY_WRITE16_START( toki_writemem )
+	{ 0x000000, 0x05ffff, MWA16_ROM },
+	{ 0x060000, 0x06d7ff, MWA16_RAM },
+	{ 0x06d800, 0x06dfff, MWA16_RAM, &spriteram16, &spriteram_size },
+	{ 0x06e000, 0x06e7ff, paletteram16_xxxxBBBBGGGGRRRR_word_w, &paletteram16 },
+	{ 0x06e800, 0x06efff, toki_background1_videoram16_w, &toki_background1_videoram16 },
+	{ 0x06f000, 0x06f7ff, toki_background2_videoram16_w, &toki_background2_videoram16 },
+	{ 0x06f800, 0x06ffff, toki_foreground_videoram16_w, &videoram16 },
+	{ 0x080000, 0x08000d, seibu_main_word_w },
+	{ 0x0a0000, 0x0a005f, toki_control_w, &toki_scrollram16 },
+MEMORY_END
+
+/* In the bootleg, sound and sprites are remapped to 0x70000 */
+static MEMORY_READ16_START( tokib_readmem )
 	{ 0x000000, 0x05ffff, MRA16_ROM },
 	{ 0x060000, 0x06dfff, MRA16_RAM },
 	{ 0x06e000, 0x06e7ff, MRA16_RAM },
-	{ 0x06e800, 0x06efff, toki_background1_videoram16_r },
-	{ 0x06f000, 0x06f7ff, toki_background2_videoram16_r },
-	{ 0x06f800, 0x06ffff, toki_foreground_videoram16_r },
+	{ 0x06e800, 0x06efff, MRA16_RAM },
+	{ 0x06f000, 0x06f7ff, MRA16_RAM },
+	{ 0x06f800, 0x06ffff, MRA16_RAM },
 	{ 0x072000, 0x072001, watchdog_reset16_r },   /* probably */
 	{ 0x0c0000, 0x0c0001, input_port_0_word_r },
 	{ 0x0c0002, 0x0c0003, input_port_1_word_r },
 	{ 0x0c0004, 0x0c0005, input_port_2_word_r },
 	{ 0x0c000e, 0x0c000f, pip16_r },  /* sound related, if we return 0 the code writes */
-									/* the sound command quickly followed by 0 and the */
-									/* sound CPU often misses the command. */
+				/* the sound command quickly followed by 0 and the */
+				/* sound CPU often misses the command. */
 MEMORY_END
 
-static MEMORY_WRITE16_START( writemem )
+static MEMORY_WRITE16_START( tokib_writemem )
 	{ 0x000000, 0x05ffff, MWA16_ROM },
 	{ 0x060000, 0x06dfff, MWA16_RAM },
 	{ 0x06e000, 0x06e7ff, paletteram16_xxxxBBBBGGGGRRRR_word_w, &paletteram16 },
-	{ 0x06e800, 0x06efff, toki_background1_videoram16_w, &toki_background1_videoram16, &toki_background1_videoram16_size },
-	{ 0x06f000, 0x06f7ff, toki_background2_videoram16_w, &toki_background2_videoram16, &toki_background2_videoram16_size },
-	{ 0x06f800, 0x06ffff, toki_foreground_videoram16_w, &toki_foreground_videoram16, &toki_foreground_videoram16_size },
+	{ 0x06e800, 0x06efff, toki_background1_videoram16_w, &toki_background1_videoram16 },
+	{ 0x06f000, 0x06f7ff, toki_background2_videoram16_w, &toki_background2_videoram16 },
+	{ 0x06f800, 0x06ffff, toki_foreground_videoram16_w, &videoram16 },
 	{ 0x071000, 0x071001, MWA16_NOP },	/* sprite related? seems another scroll register */
-										/* gets written the same value as 75000a (bg2 scrollx) */
+				/* gets written the same value as 75000a (bg2 scrollx) */
 	{ 0x071804, 0x071807, MWA16_NOP },	/* sprite related, always 01be0100 */
-	{ 0x07180e, 0x071e45, MWA16_RAM, &toki_sprites_dataram16, &toki_sprites_dataram16_size },
-	{ 0x075000, 0x075001, toki_soundcommand16_w },
+	{ 0x07180e, 0x071e45, MWA16_RAM, &spriteram16, &spriteram_size },
+	{ 0x075000, 0x075001, tokib_soundcommand16_w },
 	{ 0x075004, 0x07500b, MWA16_RAM, &toki_scrollram16 },
-	{ 0x0a002a, 0x0a002d, toki_linescroll16_w },  /* scroll register used to waggle the title screen */
 MEMORY_END
 
+/*****************************************************************************/
 
-static MEMORY_READ_START( sound_readmem )
+static MEMORY_READ_START( tokib_sound_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0xbfff, MRA_BANK1 },
 	{ 0xec00, 0xec00, YM3812_status_port_0_r },
@@ -121,7 +154,7 @@ static MEMORY_READ_START( sound_readmem )
 	{ 0xf800, 0xf800, soundlatch_r },
 MEMORY_END
 
-static MEMORY_WRITE_START( sound_writemem )
+static MEMORY_WRITE_START( tokib_sound_writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xe000, 0xe000, toki_adpcm_control_w },	/* MSM5205 + ROM bank */
 	{ 0xe400, 0xe400, toki_adpcm_data_w },
@@ -132,9 +165,11 @@ static MEMORY_WRITE_START( sound_writemem )
 	{ 0xf000, 0xf7ff, MWA_RAM },
 MEMORY_END
 
-
+/*****************************************************************************/
 
 INPUT_PORTS_START( toki )
+	SEIBU_COIN_INPUTS	/* Must be port 0: coin inputs read through sound cpu */
+
 	PORT_START
 	PORT_DIPNAME( 0x001f, 0x001f, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(      0x0015, DEF_STR( 6C_1C ) )
@@ -157,7 +192,7 @@ INPUT_PORTS_START( toki )
 	PORT_DIPSETTING(      0x000a, "A 3/1 B 1/5" )
 	PORT_DIPSETTING(      0x0000, "A 5/1 B 1/6" )
 	PORT_DIPSETTING(      0x0001, DEF_STR( Free_Play ) )
-	PORT_DIPNAME( 0x0020, 0x0020, "Joysticks" )
+	PORT_DIPNAME( 0x0020, 0x0000, "Joysticks" )
 	PORT_DIPSETTING(      0x0020, "1" )
 	PORT_DIPSETTING(      0x0000, "2" )
 	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Cabinet ) )
@@ -189,35 +224,119 @@ INPUT_PORTS_START( toki )
 	PORT_DIPSETTING(      0x8000, DEF_STR( On ) )
 
 	PORT_START
-	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
-	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
-	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
-	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW,  IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW,  IPT_JOYSTICK_DOWN  | IPF_8WAY )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW,  IPT_JOYSTICK_LEFT  | IPF_8WAY )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW,  IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW,  IPT_BUTTON1 )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW,  IPT_BUTTON2 )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW,  IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW,  IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW,  IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW,  IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW,  IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW,  IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( tokib )
+	PORT_START
+	PORT_DIPNAME( 0x001f, 0x001f, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(      0x0015, DEF_STR( 6C_1C ) )
+	PORT_DIPSETTING(      0x0017, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(      0x0019, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(      0x001b, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x0003, DEF_STR( 8C_3C ) )
+	PORT_DIPSETTING(      0x001d, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x0005, DEF_STR( 5C_3C ) )
+	PORT_DIPSETTING(      0x0007, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(      0x001f, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x0009, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(      0x0013, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x0011, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x000f, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(      0x000d, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(      0x000b, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(      0x001e, "A 1/1 B 1/2" )
+	PORT_DIPSETTING(      0x0014, "A 2/1 B 1/3" )
+	PORT_DIPSETTING(      0x000a, "A 3/1 B 1/5" )
+	PORT_DIPSETTING(      0x0000, "A 5/1 B 1/6" )
+	PORT_DIPSETTING(      0x0001, DEF_STR( Free_Play ) )
+	PORT_DIPNAME( 0x0020, 0x0000, "Joysticks" )
+	PORT_DIPSETTING(      0x0020, "1" )
+	PORT_DIPSETTING(      0x0000, "2" )
+	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(      0x0040, DEF_STR( Upright ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x0080, 0x0080, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0300, 0x0300, DEF_STR( Lives ) )
+	PORT_DIPSETTING(      0x0200, "2" )
+	PORT_DIPSETTING(      0x0300, "3" )
+	PORT_DIPSETTING(      0x0100, "5" )
+	PORT_BITX( 0,         0x0000, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x0c00, 0x0c00, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(      0x0800, "50000 150000" )
+	PORT_DIPSETTING(      0x0000, "70000 140000 210000" )
+	PORT_DIPSETTING(      0x0c00, "70000" )
+	PORT_DIPSETTING(      0x0400, "100000 200000" )
+	PORT_DIPNAME( 0x3000, 0x3000, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(      0x2000, "Easy" )
+	PORT_DIPSETTING(      0x3000, "Medium" )
+	PORT_DIPSETTING(      0x1000, "Hard" )
+	PORT_DIPSETTING(      0x0000, "Hardest" )
+	PORT_DIPNAME( 0x4000, 0x4000, "Allow Continue" )
+	PORT_DIPSETTING(      0x0000, DEF_STR( No ) )
+	PORT_DIPSETTING(      0x4000, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x8000, DEF_STR( On ) )
+
+	PORT_START
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW,  IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW,  IPT_JOYSTICK_DOWN  | IPF_8WAY )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW,  IPT_JOYSTICK_LEFT  | IPF_8WAY )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW,  IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW,  IPT_BUTTON1 )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW,  IPT_BUTTON2 )
 	PORT_BIT( 0x0040, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x0080, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
-	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW,  IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW,  IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW,  IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW,  IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW,  IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW,  IPT_BUTTON2 | IPF_COCKTAIL )
 	PORT_BIT( 0x4000, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x8000, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW,  IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW,  IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW,  IPT_SERVICE1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW,  IPT_START1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW,  IPT_START2 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 INPUT_PORTS_END
 
 
+/*****************************************************************************/
 
 static struct GfxLayout toki_charlayout =
 {
@@ -314,8 +433,13 @@ static struct GfxDecodeInfo tokib_gfxdecodeinfo[] =
 };
 
 
+/*****************************************************************************/
 
-static struct YM3526interface ym3812_interface =
+/* Parameters: YM3812 frequency, Oki frequency, Oki memory region */
+SEIBU_SOUND_SYSTEM_YM3812_HARDWARE(14318180/4,8000,REGION_SOUND1);
+
+
+static struct YM3526interface ym3812_tokib_interface =
 {
 	1,			/* 1 chip (no more supported) */
 	3600000,	/* 3.600000 MHz ? (partially supported) */
@@ -331,53 +455,41 @@ static struct MSM5205interface msm5205_interface =
 	{ 60 }
 };
 
+
 static const struct MachineDriver machine_driver_toki =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_M68000,
-			16000000,	/* with less than 14MHz there are slowdowns and the */
-						/* title screen doesn't wave correctly */
-			readmem,writemem,
-			0,0,
-			toki_interrupt,1
+			20000000/2, 	/* Accurate?  There is a 20MHz near the cpu, but a 12MHz elsewhere */
+			toki_readmem,toki_writemem,0,0,
+			m68_level1_irq,1 /* VBL */
 		},
 		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,	/* 4 MHz (?) */
-			sound_readmem,sound_writemem,
-			0,0,
-			ignore_interrupt,0	/* IRQs are caused by the main CPU?? */
-								/* NMIs are caused by the ADPCM chip */
+			SEIBU_SOUND_SYSTEM_CPU(14318180/4)
 		},
 	},
-	57, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	seibu_sound_init_1, /* init machine */
+
 	/* video hardware */
-	32*8, 32*8,
-	{ 0*8, 32*8-1, 0*8, 32*8-1 },
+	32*8, 32*8, { 0*8, 32*8-1, 0*8, 30*8-1 },
+
 	toki_gfxdecodeinfo,
 	4*256, 4*256,
 	0,
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
-	0,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_BUFFERS_SPRITERAM,
+	toki_eof_callback,
 	toki_vh_start,
-	toki_vh_stop,
+	0,
 	toki_vh_screenrefresh,
 
 	/* sound hardware */
 	0,0,0,0,
 	{
-		{
-			SOUND_YM3812,
-			&ym3812_interface
-		},
-		{
-			SOUND_MSM5205,
-			&msm5205_interface
-		}
+		SEIBU_SOUND_SYSTEM_YM3812_INTERFACE
 	}
 };
 
@@ -387,42 +499,39 @@ static const struct MachineDriver machine_driver_tokib =
 	{
 		{
 			CPU_M68000,
-			16000000,	/* with less than 14MHz there are slowdowns and the */
-						/* title screen doesn't wave correctly */
-			readmem,writemem,
-			0,0,
-			toki_interrupt,1
+			12000000,	/* 10MHz causes bad slowdowns with monkey machine rd1 */
+			tokib_readmem,tokib_writemem,0,0,
+			m68_level6_irq,1 /* VBL (could be level1, same vector) */
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			4000000,	/* 4 MHz (?) */
-			sound_readmem,sound_writemem,
+			tokib_sound_readmem,tokib_sound_writemem,
 			0,0,
 			ignore_interrupt,0	/* IRQs are caused by the main CPU?? */
 								/* NMIs are caused by the ADPCM chip */
 		},
 	},
-	57, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 	/* video hardware */
-	32*8, 32*8,
-	{ 0*8, 32*8-1, 0*8, 32*8-1 },
+	32*8, 32*8, { 0*8, 32*8-1, 0*8, 30*8-1 },
 	tokib_gfxdecodeinfo,
 	4*256, 4*256,
 	0,
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
-	0,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_BUFFERS_SPRITERAM,
+	toki_eof_callback,
 	toki_vh_start,
-	toki_vh_stop,
-	toki_vh_screenrefresh,
+	0,
+	tokib_vh_screenrefresh,
 
 	/* sound hardware */
 	0,0,0,0,
 	{
 		{
 			SOUND_YM3812,
-			&ym3812_interface
+			&ym3812_tokib_interface
 		},
 		{
 			SOUND_MSM5205,
@@ -439,16 +548,16 @@ static const struct MachineDriver machine_driver_tokib =
 
 ***************************************************************************/
 
-ROM_START( toki )
+ROM_START( tokij )
 	ROM_REGION( 0x60000, REGION_CPU1, 0 )	/* 6*64k for 68000 code */
 	ROM_LOAD16_BYTE( "tokijp.006",   0x00000, 0x20000, 0x03d726b1 )
 	ROM_LOAD16_BYTE( "tokijp.004",   0x00001, 0x20000, 0x54a45e12 )
 	ROM_LOAD16_BYTE( "tokijp.005",   0x40000, 0x10000, 0xd6a82808 )
 	ROM_LOAD16_BYTE( "tokijp.003",   0x40001, 0x10000, 0xa01a5b10 )
 
-	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for code */
-	/* is this the Z80 code? maybe its encrypted */
-	ROM_LOAD( "tokijp.008",   0x00000, 0x2000, 0x6c87c4c5 )
+	ROM_REGION( 0x20000*2, REGION_CPU2, 0 )	/* Z80 code, banked data */
+	ROM_LOAD( "tokijp.008",   0x00000, 0x02000, 0x6c87c4c5 )	/* encrypted */
+	ROM_LOAD( "tokijp.007",   0x10000, 0x10000, 0xa67969c4 )	/* banked stuff */
 
 	ROM_REGION( 0x020000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "tokijp.001",   0x000000, 0x10000, 0x8aa964a2 )   /* chars */
@@ -464,23 +573,20 @@ ROM_START( toki )
 	ROM_REGION( 0x080000, REGION_GFX4, ROMREGION_DISPOSE )
 	ROM_LOAD( "toki.bk2",     0x000000, 0x80000, 0xd86ac664 )   /* tiles 2 */
 
-	ROM_REGION( 0x20000, REGION_SOUND1, 0 )	/* samples */
+	ROM_REGION( 0x20000, REGION_SOUND1, 0 )	/* ADPCM samples */
 	ROM_LOAD( "tokijp.009",   0x00000, 0x20000, 0xae7a6b8b )
-
-	ROM_REGION( 0x10000, REGION_USER1, 0 ) /* unknown */
-	ROM_LOAD( "tokijp.007",   0x00000, 0x10000, 0xa67969c4 )
 ROM_END
 
-ROM_START( toki2 )
+ROM_START( tokia )
 	ROM_REGION( 0x60000, REGION_CPU1, 0 )	/* 6*64k for 68000 code */
 	ROM_LOAD16_BYTE( "tokijp.006",   0x00000, 0x20000, 0x03d726b1 )
 	ROM_LOAD16_BYTE( "4c.10k",       0x00001, 0x20000, 0xb2c345c5 )
 	ROM_LOAD16_BYTE( "tokijp.005",   0x40000, 0x10000, 0xd6a82808 )
 	ROM_LOAD16_BYTE( "tokijp.003",   0x40001, 0x10000, 0xa01a5b10 )
 
-	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for code */
-	/* is this the Z80 code? maybe its encrypted */
-	ROM_LOAD( "tokijp.008",   0x00000, 0x2000, 0x6c87c4c5 )
+	ROM_REGION( 0x20000*2, REGION_CPU2, 0 )	/* Z80 code, banked data */
+	ROM_LOAD( "tokijp.008",   0x00000, 0x02000, 0x6c87c4c5 )	/* encrypted */
+	ROM_LOAD( "tokijp.007",   0x10000, 0x10000, 0xa67969c4 )	/* banked stuff */
 
 	ROM_REGION( 0x020000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "tokijp.001",   0x000000, 0x10000, 0x8aa964a2 )   /* chars */
@@ -496,23 +602,20 @@ ROM_START( toki2 )
 	ROM_REGION( 0x080000, REGION_GFX4, ROMREGION_DISPOSE )
 	ROM_LOAD( "toki.bk2",     0x000000, 0x80000, 0xd86ac664 )   /* tiles 2 */
 
-	ROM_REGION( 0x20000, REGION_SOUND1, 0 )	/* samples */
+	ROM_REGION( 0x20000, REGION_SOUND1, 0 )	/* ADPCM samples */
 	ROM_LOAD( "tokijp.009",   0x00000, 0x20000, 0xae7a6b8b )
-
-	ROM_REGION( 0x10000, REGION_USER1, 0 ) /* unknown */
-	ROM_LOAD( "tokijp.007",   0x00000, 0x10000, 0xa67969c4 )
 ROM_END
 
-ROM_START( toki3 )
+ROM_START( toki )
 	ROM_REGION( 0x60000, REGION_CPU1, 0 )	/* 6*64k for 68000 code */
 	ROM_LOAD16_BYTE( "l10_6.bin",    0x00000, 0x20000, 0x94015d91 )
 	ROM_LOAD16_BYTE( "k10_4e.bin",   0x00001, 0x20000, 0x531bd3ef )
 	ROM_LOAD16_BYTE( "tokijp.005",   0x40000, 0x10000, 0xd6a82808 )
 	ROM_LOAD16_BYTE( "tokijp.003",   0x40001, 0x10000, 0xa01a5b10 )
 
-	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for code */
-	/* is this the Z80 code? maybe its encrypted */
-	ROM_LOAD( "tokijp.008",   0x00000, 0x2000, 0x6c87c4c5 )
+	ROM_REGION( 0x20000*2, REGION_CPU2, 0 )	/* Z80 code, banked data */
+	ROM_LOAD( "tokijp.008",   0x00000, 0x02000, 0x6c87c4c5 )	/* encrypted */
+	ROM_LOAD( "tokijp.007",   0x10000, 0x10000, 0xa67969c4 )	/* banked stuff */
 
 	ROM_REGION( 0x020000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "tokijp.001",   0x000000, 0x10000, 0x8aa964a2 )   /* chars */
@@ -528,11 +631,8 @@ ROM_START( toki3 )
 	ROM_REGION( 0x080000, REGION_GFX4, ROMREGION_DISPOSE )
 	ROM_LOAD( "toki.bk2",     0x000000, 0x80000, 0xd86ac664 )   /* tiles 2 */
 
-	ROM_REGION( 0x20000, REGION_SOUND1, 0 )	/* samples */
+	ROM_REGION( 0x20000, REGION_SOUND1, 0 )	/* ADPCM samples */
 	ROM_LOAD( "tokijp.009",   0x00000, 0x20000, 0xae7a6b8b )
-
-	ROM_REGION( 0x10000, REGION_USER1, 0 ) /* unknown */
-	ROM_LOAD( "tokijp.007",   0x00000, 0x10000, 0xa67969c4 )
 ROM_END
 
 ROM_START( tokiu )
@@ -542,9 +642,9 @@ ROM_START( tokiu )
 	ROM_LOAD16_BYTE( "tokijp.005",   0x40000, 0x10000, 0xd6a82808 )
 	ROM_LOAD16_BYTE( "tokijp.003",   0x40001, 0x10000, 0xa01a5b10 )
 
-	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for code */
-	/* is this the Z80 code? maybe its encrypted */
-	ROM_LOAD( "tokijp.008",   0x00000, 0x2000, 0x6c87c4c5 )
+	ROM_REGION( 0x20000*2, REGION_CPU2, 0 )	/* Z80 code, banked data */
+	ROM_LOAD( "tokijp.008",   0x00000, 0x02000, 0x6c87c4c5 )	/* encrypted */
+	ROM_LOAD( "tokijp.007",   0x10000, 0x10000, 0xa67969c4 )	/* banked stuff */
 
 	ROM_REGION( 0x020000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "tokijp.001",   0x000000, 0x10000, 0x8aa964a2 )   /* chars */
@@ -560,11 +660,8 @@ ROM_START( tokiu )
 	ROM_REGION( 0x080000, REGION_GFX4, ROMREGION_DISPOSE )
 	ROM_LOAD( "toki.bk2",     0x000000, 0x80000, 0xd86ac664 )   /* tiles 2 */
 
-	ROM_REGION( 0x20000, REGION_SOUND1, 0 )	/* samples */
+	ROM_REGION( 0x20000, REGION_SOUND1, 0 )	/* ADPCM samples */
 	ROM_LOAD( "tokijp.009",   0x00000, 0x20000, 0xae7a6b8b )
-
-	ROM_REGION( 0x10000, REGION_USER1, 0 ) /* unknown */
-	ROM_LOAD( "tokijp.007",   0x00000, 0x10000, 0xa67969c4 )
 ROM_END
 
 ROM_START( tokib )
@@ -576,7 +673,7 @@ ROM_START( tokib )
 
 	ROM_REGION( 0x18000, REGION_CPU2, 0 )	/* 64k for code + 32k for banked data */
 	ROM_LOAD( "toki.e1",      0x00000, 0x8000, 0x2832ef75 )
-	ROM_CONTINUE(			  0x10000, 0x8000 ) /* banked at 8000-bfff */
+	ROM_CONTINUE(             0x10000, 0x8000 ) /* banked at 8000-bfff */
 
 	ROM_REGION( 0x020000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "toki.e21",     0x000000, 0x08000, 0xbb8cacbd )   /* chars */
@@ -615,6 +712,11 @@ ROM_START( tokib )
 	ROM_LOAD( "toki.e6",      0x070000, 0x10000, 0x6f4b878a )
 ROM_END
 
+
+static void init_toki(void)
+{
+	seibu_sound_decrypt(REGION_CPU2,0x2000);
+}
 
 
 void init_tokib(void)
@@ -660,8 +762,8 @@ void init_tokib(void)
 
 
 
-GAMEX( 1989, toki,	0,	  toki,  toki, 0,	  ROT0, "Tad", "Toki (set 1)", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
-GAMEX( 1989, toki2, toki, toki,  toki, 0,	  ROT0, "Tad", "Toki (set 2)", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
-GAMEX( 1989, toki3, toki, toki,  toki, 0,	  ROT0, "Tad", "Toki (set 3)", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
-GAMEX( 1989, tokiu, toki, toki,  toki, 0,	  ROT0, "Tad (Fabtek license)", "Toki (US)", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
-GAMEX( 1989, tokib, toki, tokib, toki, tokib, ROT0, "bootleg", "Toki (bootleg)", GAME_NO_COCKTAIL )
+GAME( 1989, toki,  0,    toki,  toki,  toki,  ROT0, "Tad", "Toki (World set 1)" )
+GAME( 1989, tokia, toki, toki,  toki,  toki,  ROT0, "Tad", "Toki (World set 2)" )
+GAME( 1989, tokij, toki, toki,  toki,  toki,  ROT0, "Tad", "JuJu Densetsu (Japan)" )
+GAME( 1989, tokiu, toki, toki,  toki,  toki,  ROT0, "Tad (Fabtek license)", "Toki (US)" )
+GAME( 1989, tokib, toki, tokib, tokib, tokib, ROT0, "bootleg", "Toki (bootleg)" )

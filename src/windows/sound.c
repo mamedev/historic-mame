@@ -111,7 +111,7 @@ static FILE *				sound_log;
 #endif
 
 // sound options (none at this time)
-struct rc_option sound_opts[] = 
+struct rc_option sound_opts[] =
 {
 	// name, shortname, type, dest, deflt, min, max, func, help
 	{ NULL,	NULL, rc_end, NULL, NULL, 0, 0,	NULL, NULL }
@@ -136,10 +136,10 @@ static void			dsound_destroy_buffers(void);
 
 INLINE int bytes_in_stream_buffer(void)
 {
-	DWORD play_position;
+	DWORD play_position, write_position;
 	HRESULT result;
-	
-	result = IDirectSoundBuffer_GetCurrentPosition(stream_buffer, &play_position, NULL);
+
+	result = IDirectSoundBuffer_GetCurrentPosition(stream_buffer, &play_position, &write_position);
 	if (stream_buffer_in > play_position)
 		return stream_buffer_in - play_position;
 	else
@@ -165,7 +165,7 @@ int osd_start_audio_stream(int stereo)
 		if (dsound_init())
 			return 1;
 
-		// set the startup volume	
+		// set the startup volume
 		osd_set_mastervolume(attenuation);
 	}
 
@@ -192,11 +192,11 @@ void osd_stop_audio_stream(void)
 	// if nothing to do, don't do it
 	if (Machine->sample_rate == 0)
 		return;
-	
+
 	// kill the buffers and dsound
 	dsound_destroy_buffers();
 	dsound_kill();
-	
+
 	// print out over/underflow stats
 	if (verbose && (buffer_overflows || buffer_underflows))
 		fprintf(stderr, "Sound buffer: overflows=%d underflows=%d\n", buffer_overflows, buffer_underflows);
@@ -241,7 +241,7 @@ static void update_sample_adjustment(int buffered)
 		consecutive_lows++;
 		consecutive_mids = 0;
 		consecutive_highs = 0;
-		
+
 		// adjust so that we generate more samples per frame to compensate
 		current_adjustment = (consecutive_lows < MAX_SAMPLE_ADJUST) ? consecutive_lows : MAX_SAMPLE_ADJUST;
 
@@ -249,7 +249,7 @@ static void update_sample_adjustment(int buffered)
 		fprintf(sound_log, "  (too low - adjusting to %d)\n", current_adjustment);
 #endif
 	}
-	
+
 	// do we have too many samples in the buffer?
 	else if (buffered > upper_thresh)
 	{
@@ -265,7 +265,7 @@ static void update_sample_adjustment(int buffered)
 		fprintf(sound_log, "  (too high - adjusting to %d)\n", current_adjustment);
 #endif
 	}
-	
+
 	// otherwise, we're in the sweet spot
 	else
 	{
@@ -298,7 +298,7 @@ static void copy_sample_data(UINT16 *data, int bytes_to_copy)
 	DWORD length1, length2;
 	HRESULT result;
 	int cur_bytes;
-	
+
 	// attempt to lock the stream buffer
 	result = IDirectSoundBuffer_Lock(stream_buffer, stream_buffer_in, bytes_to_copy, &buffer1, &length1, &buffer2, &length2, 0);
 	if (result != DD_OK)
@@ -306,25 +306,25 @@ static void copy_sample_data(UINT16 *data, int bytes_to_copy)
 		buffer_underflows++;
 		return;
 	}
-	
+
 	// adjust the input pointer
 	stream_buffer_in = (stream_buffer_in + bytes_to_copy) % stream_buffer_size;
-	
+
 	// copy the first chunk
 	cur_bytes = (bytes_to_copy > length1) ? length1 : bytes_to_copy;
 	memcpy(buffer1, data, cur_bytes);
-	
+
 	// adjust for the number of bytes
 	bytes_to_copy -= cur_bytes;
 	data = (UINT16 *)((UINT8 *)data + cur_bytes);
-	
+
 	// copy the second chunk
-	if (cur_bytes != 0)
+	if (bytes_to_copy != 0)
 	{
 		cur_bytes = (bytes_to_copy > length2) ? length2 : bytes_to_copy;
 		memcpy(buffer2, data, cur_bytes);
 	}
-	
+
 	// unlock
 	result = IDirectSoundBuffer_Unlock(stream_buffer, buffer1, length1, buffer2, length2);
 }
@@ -343,13 +343,13 @@ int osd_update_audio_stream(INT16 *buffer)
 		int original_bytes = bytes_in_stream_buffer();
 		int input_bytes = samples_this_frame * stream_format.nBlockAlign;
 		int final_bytes;
-		
+
 		// update the sample adjustment
 		update_sample_adjustment(original_bytes);
-		
+
 		// copy data into the sound buffer
 		copy_sample_data(buffer, input_bytes);
-		
+
 		// check for overflows
 		final_bytes = bytes_in_stream_buffer();
 		if (final_bytes < original_bytes)
@@ -382,7 +382,7 @@ int osd_update_audio_stream(INT16 *buffer)
 	samples_left_over += samples_per_frame;
 	samples_this_frame = (UINT32)samples_left_over;
 	samples_left_over -= (double)samples_this_frame;
-	
+
 	samples_this_frame += current_adjustment;
 
 	// return the samples to play this next frame
@@ -476,7 +476,7 @@ static int dsound_init(void)
 		fprintf(stderr, "Error creating DirectSound: %08x\n", (UINT32)result);
 		goto cant_create_dsound;
 	}
-	
+
 	// get the capabilities
 	dsound_caps.dwSize = sizeof(dsound_caps);
 	result = IDirectSound_GetCaps(dsound, &dsound_caps);
@@ -485,7 +485,7 @@ static int dsound_init(void)
 		fprintf(stderr, "Error getting DirectSound capabilities: %08x\n", (UINT32)result);
 		goto cant_get_caps;
 	}
-	
+
 	// set the cooperative level
 	result = IDirectSound_SetCooperativeLevel(dsound, video_window, DSSCL_PRIORITY);
 	if (result != DS_OK)
@@ -493,7 +493,7 @@ static int dsound_init(void)
 		fprintf(stderr, "Error setting cooperative level: %08x\n", (UINT32)result);
 		goto cant_set_coop_level;
 	}
-	
+
 	// make a format description for what we want
 	stream_format.wBitsPerSample	= 16;
 	stream_format.wFormatTag		= WAVE_FORMAT_PCM;
@@ -501,7 +501,7 @@ static int dsound_init(void)
 	stream_format.nSamplesPerSec	= Machine->sample_rate;
 	stream_format.nBlockAlign		= stream_format.wBitsPerSample * stream_format.nChannels / 8;
 	stream_format.nAvgBytesPerSec	= stream_format.nSamplesPerSec * stream_format.nBlockAlign;
-	
+
 	// compute the buffer sizes
 	stream_buffer_size = ((UINT64)MAX_BUFFER_SIZE * (UINT64)stream_format.nSamplesPerSec) / 44100;
 	stream_buffer_size = (stream_buffer_size * stream_format.nBlockAlign) / 4;
@@ -516,11 +516,11 @@ static int dsound_init(void)
 	fprintf(sound_log, "lower_thresh = %d\n", lower_thresh);
 	fprintf(sound_log, "upper_thresh = %d\n", upper_thresh);
 #endif
-	
+
 	// create the buffers
 	if (dsound_create_buffers())
 		goto cant_create_buffers;
-	
+
 	// start playing
 	result = IDirectSoundBuffer_Play(stream_buffer, 0, 0, DSBPLAY_LOOPING);
 	if (result != DS_OK)
@@ -570,7 +570,7 @@ static int dsound_create_buffers(void)
 
 	// create a buffer desc for the primary buffer
 	primary_desc.dwSize				= sizeof(primary_desc);
-	primary_desc.dwFlags			= DSBCAPS_PRIMARYBUFFER | 
+	primary_desc.dwFlags			= DSBCAPS_PRIMARYBUFFER |
 									  DSBCAPS_GETCURRENTPOSITION2;
 	primary_desc.lpwfxFormat		= NULL;
 
@@ -581,7 +581,7 @@ static int dsound_create_buffers(void)
 		fprintf(stderr, "Error creating primary buffer: %08x\n", (UINT32)result);
 		goto cant_create_primary;
 	}
-	
+
 	// attempt to set the primary format
 	result = IDirectSoundBuffer_SetFormat(primary_buffer, &stream_format);
 	if (result != DS_OK)
@@ -598,13 +598,13 @@ static int dsound_create_buffers(void)
 		goto cant_get_primary_format;
 	}
 	if (verbose)
-		fprintf(stderr, "Primary buffer: %d Hz, %d bits, %d channels\n", 
+		fprintf(stderr, "Primary buffer: %d Hz, %d bits, %d channels\n",
 				(int)primary_format.nSamplesPerSec, (int)primary_format.wBitsPerSample, (int)primary_format.nChannels);
-	
+
 	// create a buffer desc for the stream buffer
 	stream_desc.dwSize				= sizeof(stream_desc);
-	stream_desc.dwFlags				= DSBCAPS_CTRLVOLUME | 
-									  DSBCAPS_GLOBALFOCUS | 
+	stream_desc.dwFlags				= DSBCAPS_CTRLVOLUME |
+									  DSBCAPS_GLOBALFOCUS |
 									  DSBCAPS_GETCURRENTPOSITION2;
 	stream_desc.dwBufferBytes 		= stream_buffer_size;
 	stream_desc.lpwfxFormat			= &stream_format;
@@ -616,7 +616,7 @@ static int dsound_create_buffers(void)
 		fprintf(stderr, "Error creating DirectSound buffer: %08x\n", (UINT32)result);
 		goto cant_create_buffer;
 	}
-	
+
 	// lock the buffer
 	result = IDirectSoundBuffer_Lock(stream_buffer, 0, stream_buffer_size, &buffer, &locked, NULL, NULL, 0);
 	if (result != DS_OK)
@@ -624,7 +624,7 @@ static int dsound_create_buffers(void)
 		fprintf(stderr, "Error locking stream buffer: %08x\n", (UINT32)result);
 		goto cant_lock_buffer;
 	}
-	
+
 	// clear the buffer and unlock it
 	memset(buffer, 0, locked);
 	IDirectSoundBuffer_Unlock(stream_buffer, buffer, locked, NULL, 0);
@@ -654,7 +654,7 @@ static void dsound_destroy_buffers(void)
 	// stop any playback
 	if (stream_buffer)
 		IDirectSoundBuffer_Stop(stream_buffer);
-	
+
 	// release the buffer
 	if (stream_buffer)
 		IDirectSoundBuffer_Release(stream_buffer);

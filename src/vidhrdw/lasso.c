@@ -54,7 +54,11 @@ static void get_bg_tile_info(int tile_index)
 {
 	int tile_number = videoram[tile_index];
 	int attributes = videoram[tile_index+0x400];
-	SET_TILE_INFO(gfxbank,tile_number,attributes&0xf)
+	SET_TILE_INFO(
+			gfxbank,
+			tile_number,
+			attributes&0xf,
+			0)
 }
 
 

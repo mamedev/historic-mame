@@ -5,7 +5,7 @@ COREOBJS = $(OBJ)/version.o $(OBJ)/mame.o \
 	$(OBJ)/cpuintrf.o $(OBJ)/memory.o $(OBJ)/timer.o $(OBJ)/palette.o \
 	$(OBJ)/input.o $(OBJ)/inptport.o $(OBJ)/unzip.o \
 	$(OBJ)/audit.o $(OBJ)/info.o $(OBJ)/png.o $(OBJ)/artwork.o \
-	$(OBJ)/tilemap.o $(OBJ)/sprite.o \
+	$(OBJ)/tilemap.o \
 	$(OBJ)/state.o $(OBJ)/datafile.o $(OBJ)/hiscore.o \
 	$(sort $(CPUOBJS)) \
 	$(OBJ)/sndintrf.o \

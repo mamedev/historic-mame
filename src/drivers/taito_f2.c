@@ -15,7 +15,7 @@ tilemap, or additional tilemap planes.
 
 Sound is handled by a Z80 with a YM2610 connected to it.
 
-The memory map for each of the games is similar but not identical.
+The memory map for each of the games is similar but shuffled around.
 
 Notes:
 - Metal Black has secret command to select stage.
@@ -162,11 +162,14 @@ TODO Lists
   buffering inside the chip but it's not clear how. See below the irq section
   for a long list of observations on sprite glitches.
 
-- TC0480SCP emulation (footchmp, metalb, deadconx) is slightly incomplete.
-  bg0/1 should have rowscroll in zoom, needed for the zooming goal in
-  Footchmp attract.
+  Other limitations include: misplaced tile of the zooming title in Qcrayon
+  (the one on the yellow background in attract); sprites when you get a home
+  run in Koshien are often out on x axis by 1 pixel.
 
-- Some DIPS are wrong [and various unknown in the Japanese quiz games].
+- TC0480SCP emulation (footchmp, metalb, deadconx) has slight inaccuracies.
+  Zoomed layers and zoomed pixel rows are not precisely positioned.
+
+- Some DIPS are wrong (and various unknown in the Japanese quiz games).
 
 - Restored save states on some games tend to hang.
 
@@ -175,12 +178,6 @@ Dondokod
 --------
 
 Roz layer is one pixel out vertically when screen flipped.
-
-
-Qtorimon
---------
-
-CoinA/B don't register in test mode.
 
 
 Gun Frontier
@@ -221,10 +218,6 @@ input. With the value currently returned, it sounds an alarm and says
 [Japanese trans.] "Error detected on the printer. Call machine operator."
 
 The timer stays at 00:00. Missing RTC emulation?
-
-Only first section of scr rom decodes properly at 1bpp: rest looked
-plausible at 4bpp (but pixel order not the standard layout). Could
-the rest be data for the 68000?
 
 
 Quiz Crayon 2
@@ -283,8 +276,10 @@ int taitof2_metalb_vh_start (void);
 int taitof2_yesnoj_vh_start (void);
 void taitof2_vh_stop (void);
 void taitof2_no_buffer_eof_callback(void);
+void taitof2_full_buffer_delayed_eof_callback(void);
 void taitof2_partial_buffer_delayed_eof_callback(void);
 void taitof2_partial_buffer_delayed_thundfox_eof_callback(void);
+void taitof2_partial_buffer_delayed_qzchikyu_eof_callback(void);
 
 void taitof2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void taitof2_pri_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
@@ -296,14 +291,12 @@ void metalb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void yesnoj_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 WRITE16_HANDLER( taitof2_spritebank_w );
-READ16_HANDLER( koshien_spritebank_r );
+READ16_HANDLER ( koshien_spritebank_r );
 WRITE16_HANDLER( koshien_spritebank_w );
 WRITE16_HANDLER( taitof2_sprite_extension_w );
 
-//WRITE16_HANDLER( taitof2_unknown_reg_w );
-
 extern data16_t *cchip_ram;
-READ16_HANDLER( cchip2_word_r );
+READ16_HANDLER ( cchip2_word_r );
 WRITE16_HANDLER( cchip2_word_w );
 
 
@@ -311,50 +304,6 @@ WRITE16_HANDLER( cchip2_word_w );
 /**********************************************************
 			GAME INPUTS
 **********************************************************/
-
-static READ16_HANDLER( TC0220IOC_halfword_r )
-{
-	return TC0220IOC_r(offset);
-}
-
-static WRITE16_HANDLER( TC0220IOC_halfword_w )
-{
-	if (ACCESSING_LSB)
-		TC0220IOC_w(offset,data & 0xff);
-	else
-	{
-		/* qtorimon writes here the coin counters - bug? */
-logerror("CPU #0 PC %06x: warning - write to MSB of TC0220IOC address %02x\n",cpu_get_pc(),offset);
-		TC0220IOC_w(offset,(data >> 8) & 0xff);
-	}
-}
-
-static READ16_HANDLER( TC0510NIO_halfword_r )
-{
-	return TC0510NIO_r(offset);
-}
-
-static WRITE16_HANDLER( TC0510NIO_halfword_w )
-{
-	if (ACCESSING_LSB)
-		TC0510NIO_w(offset,data & 0xff);
-	else
-	{
-		/* driftout writes the coin counters here - bug? */
-logerror("CPU #0 PC %06x: warning - write to MSB of TC0510NIO address %02x\n",cpu_get_pc(),offset);
-		TC0510NIO_w(offset,(data >> 8) & 0xff);
-	}
-}
-
-static READ16_HANDLER( TC0510NIO_halfword_wordswap_r )
-{
-	return TC0510NIO_halfword_r(offset ^ 1,mem_mask);
-}
-
-static WRITE16_HANDLER( TC0510NIO_halfword_wordswap_w )
-{
-	TC0510NIO_halfword_w(offset ^ 1,data,mem_mask);
-}
 
 static READ16_HANDLER( growl_dsw_r )
 {
@@ -1179,7 +1128,7 @@ static MEMORY_WRITE16_START( footchmp_writemem )
 	{ 0x000000, 0x07ffff, MWA16_ROM },
 	{ 0x100000, 0x10ffff, MWA16_RAM },
 	{ 0x200000, 0x20ffff, MWA16_RAM, &spriteram16, &spriteram_size },
-	{ 0x300000, 0x30000f, taitof2_spritebank_w },
+	{ 0x300000, 0x30000f, taitof2_spritebank_w },	/* updated at $a6e, off irq5 */
 	{ 0x400000, 0x40ffff, TC0480SCP_word_w },	  /* tilemaps */
 	{ 0x430000, 0x43002f, TC0480SCP_ctrl_word_w },
 	{ 0x500000, 0x50001f, TC0360PRI_halfword_w },
@@ -2476,8 +2425,8 @@ INPUT_PORTS_START( ssi )
 	PORT_DIPSETTING(    0x00, "Alternate, Dual")
 	PORT_DIPSETTING(    0x20, "Not Allowed")
 	PORT_DIPNAME( 0x40, 0x40, "Allow Continue" )
-    PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-    PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
 
 	/* IN0 */
 	TAITO_F2_PLAYERS_INPUT( IPF_PLAYER1 )
@@ -2527,8 +2476,8 @@ INPUT_PORTS_START( majest12 )
 	PORT_DIPSETTING(    0x00, "Alternate, Dual Controls")
 	PORT_DIPSETTING(    0x20, "Not Allowed")
 	PORT_DIPNAME( 0x40, 0x40, "Allow Continue" )
-    PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-    PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
 
 	/* IN0 */
 	TAITO_F2_PLAYERS_INPUT( IPF_PLAYER1 )
@@ -4588,8 +4537,8 @@ MACHINE_DRIVER( ssi,      0,       4096,		taitof2,  ssi,      ssi,             p
 MACHINE_DRIVER( gunfront, 0,       4096,		taitof2,  gunfront, taitof2_pri,     no_buffer )
 MACHINE_DRIVER( growl,    0,       4096,		taitof2,  growl,    taitof2_pri,     no_buffer )
 MACHINE_DRIVER( mjnquest, 0,       4096,		taitof2,  mjnquest, taitof2,         no_buffer )
-MACHINE_DRIVER( footchmp, 0,       4096,		deadconx, footchmp, deadconx,        no_buffer )
-MACHINE_DRIVER( hthero,   0,       4096,		deadconx, hthero,   deadconx,        no_buffer )
+MACHINE_DRIVER( footchmp, 0,       4096,		deadconx, footchmp, deadconx,        full_buffer_delayed )
+MACHINE_DRIVER( hthero,   0,       4096,		deadconx, hthero,   deadconx,        full_buffer_delayed )
 MACHINE_DRIVER( koshien,  0,       4096,		taitof2,  3p_buf,   taitof2_pri,     no_buffer )
 MACHINE_DRIVER( yuyugogo, qcrayon, 4096,		yuyugogo, yuyugogo, yesnoj,          no_buffer )
 MACHINE_DRIVER( ninjak,   0,       4096,		taitof2,  ninjak,   taitof2_pri,     no_buffer )
@@ -4597,7 +4546,7 @@ MACHINE_DRIVER( solfigtr, 0,       4096,		taitof2,  3p_buf,   taitof2_pri,     n
 MACHINE_DRIVER( qzquest,  0,       4096,		taitof2,  default,  taitof2,         partial_buffer_delayed )
 MACHINE_DRIVER( pulirula, 0,       4096,		pivot,    pulirula, taitof2_pri_roz, no_buffer )
 MACHINE_DRIVER( metalb,   0,       8192,		deadconx, metalb,   metalb,          no_buffer )
-MACHINE_DRIVER( qzchikyu, 0,       4096,		taitof2,  default,  taitof2,         no_buffer )
+MACHINE_DRIVER( qzchikyu, 0,       4096,		taitof2,  default,  taitof2,         partial_buffer_delayed_qzchikyu )
 MACHINE_DRIVER( yesnoj,   0,       4096,		yuyugogo, yesnoj,   yesnoj,          no_buffer )
 MACHINE_DRIVER( deadconx, 0,       4096,		deadconx, deadconx, deadconx,        no_buffer )
 MACHINE_DRIVER( deadconj, 0,       4096,		deadconx, deadconj, deadconx,        no_buffer )
@@ -5311,9 +5260,9 @@ ROM_START( yuyugogo )	/* Yuuyu no QUIZ de GO!GO! */
 	ROM_LOAD16_BYTE( "c83-10.bin",  0x00000,  0x20000, 0x4d185d03 )
 	ROM_LOAD16_BYTE( "c83-09.bin",  0x00001,  0x20000, 0xf9892792 )
 
-	ROM_REGION( 0x100000, REGION_USER1, 0 )
+	ROM_REGION16_BE( 0x100000, REGION_USER1, 0 )
 	/* extra ROM mapped at d00000 */
-	ROM_LOAD( "c83-03.bin", 0x000000, 0x100000, 0xeed9acc2 )	/* data rom */
+	ROM_LOAD16_WORD_SWAP( "c83-03.bin", 0x000000, 0x100000, 0xeed9acc2 )	/* data rom */
 
 	ROM_REGION( 0x020000, REGION_GFX1, ROMREGION_DISPOSE )	/* SCR */
 	ROM_LOAD( "c83-05.bin", 0x00000, 0x20000, 0xeca57fb1 )

@@ -72,8 +72,11 @@ static void get_fg_tile_info(int tile_index)
 
 	code = commando_fgvideoram[tile_index];
 	color = commando_fgvideoram[tile_index + 0x400];
-	SET_TILE_INFO(0, code + ((color & 0xc0) << 2), color & 0x0f);
-	tile_info.flags = TILE_FLIPYX((color & 0x30) >> 4);
+	SET_TILE_INFO(
+			0,
+			code + ((color & 0xc0) << 2),
+			color & 0x0f,
+			TILE_FLIPYX((color & 0x30) >> 4))
 }
 
 static void get_bg_tile_info(int tile_index)
@@ -82,8 +85,11 @@ static void get_bg_tile_info(int tile_index)
 
 	code = commando_bgvideoram[tile_index];
 	color = commando_bgvideoram[tile_index + 0x400];
-	SET_TILE_INFO(1, code + ((color & 0xc0) << 2), color & 0x0f);
-	tile_info.flags = TILE_FLIPYX((color & 0x30) >> 4);
+	SET_TILE_INFO(
+			1,
+			code + ((color & 0xc0) << 2),
+			color & 0x0f,
+			TILE_FLIPYX((color & 0x30) >> 4))
 }
 
 

@@ -34,7 +34,11 @@ static void get_tile_info(int tile_index)
 	color=tile >> 12;
 	tile=tile&0xfff;
 
-	SET_TILE_INFO(2,tile,color)
+	SET_TILE_INFO(
+			2,
+			tile,
+			color,
+			0)
 }
 
 static UINT32 triothep_scan(UINT32 col,UINT32 row,UINT32 num_cols,UINT32 num_rows)
@@ -51,7 +55,11 @@ static void get_trio_tile_info(int tile_index)
 	color=tile >> 12;
 	tile=tile&0xfff;
 
-	SET_TILE_INFO(2,tile,color)
+	SET_TILE_INFO(
+			2,
+			tile,
+			color,
+			0)
 }
 
 /******************************************************************************/

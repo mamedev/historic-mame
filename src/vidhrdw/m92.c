@@ -95,13 +95,15 @@ static void get_pf1_tile_info(int tile_index)
 
 	tile=m92_vram_data[tile_index]+(m92_vram_data[tile_index+1]<<8);
 	color=m92_vram_data[tile_index+2];
-	SET_TILE_INFO(0,tile,color&0x3f)
-
 	if (m92_vram_data[tile_index+3]&1) pri = 2;
 	else if (color&0x80) pri = 1;
 	else pri = 0;
 
-	tile_info.flags = TILE_FLIPYX((m92_vram_data[tile_index+3] & 0x6)>>1) | TILE_SPLIT(pri);
+	SET_TILE_INFO(
+			0,
+			tile,
+			color&0x3f,
+			TILE_FLIPYX((m92_vram_data[tile_index+3] & 0x6)>>1) | TILE_SPLIT(pri))
 }
 
 static void get_pf1_htile_info(int tile_index)
@@ -111,13 +113,15 @@ static void get_pf1_htile_info(int tile_index)
 
 	tile=m92_vram_data[tile_index]+(m92_vram_data[tile_index+1]<<8);
 	color=m92_vram_data[tile_index+2];
-	SET_TILE_INFO(0,tile,color&0x3f)
-
 	if (m92_vram_data[tile_index+3]&1) pri = 2;
 	else if (color&0x80) pri = 1;
 	else pri = 0;
 
-	tile_info.flags = TILE_FLIPYX((m92_vram_data[tile_index+3] & 0x6)>>1) | TILE_SPLIT(pri);
+	SET_TILE_INFO(
+			0,
+			tile,
+			color&0x3f,
+			TILE_FLIPYX((m92_vram_data[tile_index+3] & 0x6)>>1) | TILE_SPLIT(pri))
 }
 
 static void get_pf1_ltile_info(int tile_index)
@@ -129,13 +133,15 @@ static void get_pf1_ltile_info(int tile_index)
 
 	tile=m92_vram_data[tile_index]+(m92_vram_data[tile_index+1]<<8);
 	color=m92_vram_data[tile_index+2];
-	SET_TILE_INFO(0,tile,color&0x3f)
-
 	if (m92_vram_data[tile_index+3]&1) pri = 2;
 	else if (color&0x80) pri = 1;
 	else pri = 0;
 
-	tile_info.flags = TILE_FLIPYX((m92_vram_data[tile_index+3] & 0x6)>>1) | TILE_SPLIT(pri);
+	SET_TILE_INFO(
+			0,
+			tile,
+			color&0x3f,
+			TILE_FLIPYX((m92_vram_data[tile_index+3] & 0x6)>>1) | TILE_SPLIT(pri))
 }
 
 static void get_pf2_tile_info(int tile_index)
@@ -145,13 +151,15 @@ static void get_pf2_tile_info(int tile_index)
 
 	tile=m92_vram_data[tile_index]+(m92_vram_data[tile_index+1]<<8);
 	color=m92_vram_data[tile_index+2];
-	SET_TILE_INFO(0,tile,color&0x3f)
-
 	if (m92_vram_data[tile_index+3]&1) pri = 2;
 	else if (color&0x80) pri = 1;
 	else pri = 0;
 
-	tile_info.flags = TILE_FLIPYX((m92_vram_data[tile_index+3] & 0x6)>>1) | TILE_SPLIT(pri);
+	SET_TILE_INFO(
+			0,
+			tile,
+			color&0x3f,
+			TILE_FLIPYX((m92_vram_data[tile_index+3] & 0x6)>>1) | TILE_SPLIT(pri))
 }
 
 static void get_pf3_tile_info(int tile_index)
@@ -164,8 +172,11 @@ static void get_pf3_tile_info(int tile_index)
 	if (color&0x80) pri = 1;
 	else pri = 0;
 
-	SET_TILE_INFO(0,tile,color&0x3f)
-	tile_info.flags = TILE_FLIPYX((m92_vram_data[tile_index+3] & 0x6)>>1) | TILE_SPLIT(pri);
+	SET_TILE_INFO(
+			0,
+			tile,
+			color&0x3f,
+			TILE_FLIPYX((m92_vram_data[tile_index+3] & 0x6)>>1) | TILE_SPLIT(pri))
 }
 
 static void get_pf1_wide_tile_info(int tile_index)
@@ -175,13 +186,15 @@ static void get_pf1_wide_tile_info(int tile_index)
 
 	tile=m92_vram_data[tile_index]+(m92_vram_data[tile_index+1]<<8);
 	color=m92_vram_data[tile_index+2];
-	SET_TILE_INFO(0,tile,color&0x3f)
-
 	if (m92_vram_data[tile_index+3]&1) pri = 2;
 	else if (color&0x80) pri = 1;
 	else pri = 0;
 
-	tile_info.flags = TILE_FLIPYX((m92_vram_data[tile_index+3] & 0x6)>>1) | TILE_SPLIT(pri);
+	SET_TILE_INFO(
+			0,
+			tile,
+			color&0x3f,
+			TILE_FLIPYX((m92_vram_data[tile_index+3] & 0x6)>>1) | TILE_SPLIT(pri))
 }
 
 static void get_pf3_wide_tile_info(int tile_index)
@@ -195,8 +208,11 @@ static void get_pf3_wide_tile_info(int tile_index)
 	if (color&0x80) pri = 1;
 	else pri = 0;
 
-	SET_TILE_INFO(0,tile,color&0x3f)
-	tile_info.flags = TILE_FLIPYX((m92_vram_data[tile_index+3] & 0x6)>>1) | TILE_SPLIT(pri);
+	SET_TILE_INFO(
+			0,
+			tile,
+			color&0x3f,
+			TILE_FLIPYX((m92_vram_data[tile_index+3] & 0x6)>>1) | TILE_SPLIT(pri))
 }
 
 /*****************************************************************************/
@@ -331,32 +347,31 @@ int m92_vh_start(void)
 	if (RYPELEO_SPEEDUP) {
 		pf1_hlayer = tilemap_create(
 			get_pf1_htile_info,tilemap_scan_rows,
-			TILEMAP_TRANSPARENT | TILEMAP_SPLIT,
+			TILEMAP_SPLIT,
 			8,8,
 			64,64
 		);
 		pf1_layer = tilemap_create(
 				get_pf1_ltile_info,tilemap_scan_rows,
-				TILEMAP_TRANSPARENT | TILEMAP_SPLIT,
+				TILEMAP_SPLIT,
 				8,8,
 				64,64
 			);
-		tilemap_set_transmask(pf1_hlayer,0,0xffff);
-		tilemap_set_transmask(pf1_hlayer,1,0x00ff);
-		tilemap_set_transmask(pf1_hlayer,2,0x0001);
-		tilemap_set_transparent_pen(pf1_hlayer,0);
+		tilemap_set_transmask(pf1_hlayer,0,0xffff,0x0001);
+		tilemap_set_transmask(pf1_hlayer,1,0x00ff,0xff01);
+		tilemap_set_transmask(pf1_hlayer,2,0x0001,0xffff);
 	}
 	else
 		pf1_layer = tilemap_create(
 			get_pf1_tile_info,tilemap_scan_rows,
-			TILEMAP_TRANSPARENT | TILEMAP_SPLIT,
+			TILEMAP_SPLIT,
 			8,8,
 			64,64
 		);
 
 	pf2_layer = tilemap_create(
 		get_pf2_tile_info,tilemap_scan_rows,
-		TILEMAP_TRANSPARENT | TILEMAP_SPLIT,
+		TILEMAP_SPLIT,
 		8,8,
 		64,64
 	);
@@ -370,7 +385,7 @@ int m92_vh_start(void)
 
 	pf1_wide_layer = tilemap_create(
 		get_pf1_wide_tile_info,tilemap_scan_rows,
-		TILEMAP_TRANSPARENT | TILEMAP_SPLIT,
+		TILEMAP_SPLIT,
 		8,8,
 		128,64
 	);
@@ -385,27 +400,24 @@ int m92_vh_start(void)
 	if (!pf1_layer || !pf2_layer || !pf3_layer || !pf1_wide_layer || !pf3_wide_layer)
 		return 1;
 
-	tilemap_set_transparent_pen(pf1_layer,0);
-	tilemap_set_transparent_pen(pf2_layer,0);
-	tilemap_set_transparent_pen(pf1_wide_layer,0);
 	/* split type 0 - totally transparent in front half */
-	tilemap_set_transmask(pf1_layer,0,0xffff);
-	tilemap_set_transmask(pf2_layer,0,0xffff);
-	tilemap_set_transmask(pf3_layer,0,0xffff);
-	tilemap_set_transmask(pf1_wide_layer,0,0xffff);
-	tilemap_set_transmask(pf3_wide_layer,0,0xffff);
+	tilemap_set_transmask(pf1_layer,0,0xffff,0x0001);
+	tilemap_set_transmask(pf2_layer,0,0xffff,0x0001);
+	tilemap_set_transmask(pf3_layer,0,0xffff,0x0000);
+	tilemap_set_transmask(pf1_wide_layer,0,0xffff,0x0001);
+	tilemap_set_transmask(pf3_wide_layer,0,0xffff,0x0000);
 	/* split type 1 - pens 0-7 transparent in front half */
-	tilemap_set_transmask(pf1_layer,1,0x00ff);
-	tilemap_set_transmask(pf2_layer,1,0x00ff);
-	tilemap_set_transmask(pf3_layer,1,0x00ff);
-	tilemap_set_transmask(pf1_wide_layer,1,0x00ff);
-	tilemap_set_transmask(pf3_wide_layer,1,0x00ff);
+	tilemap_set_transmask(pf1_layer,1,0x00ff,0xff01);
+	tilemap_set_transmask(pf2_layer,1,0x00ff,0xff01);
+	tilemap_set_transmask(pf3_layer,1,0x00ff,0xff00);
+	tilemap_set_transmask(pf1_wide_layer,1,0x00ff,0xff01);
+	tilemap_set_transmask(pf3_wide_layer,1,0x00ff,0xff00);
 	/* split type 2 - pen 0 transparent in front half */
-	tilemap_set_transmask(pf1_layer,2,0x0001);
-	tilemap_set_transmask(pf2_layer,2,0x0001);
-	tilemap_set_transmask(pf3_layer,2,0x0001);
-	tilemap_set_transmask(pf1_wide_layer,2,0x0001);
-	tilemap_set_transmask(pf3_wide_layer,2,0x0001);
+	tilemap_set_transmask(pf1_layer,2,0x0001,0xffff);
+	tilemap_set_transmask(pf2_layer,2,0x0001,0xffff);
+	tilemap_set_transmask(pf3_layer,2,0x0001,0xfffe);
+	tilemap_set_transmask(pf1_wide_layer,2,0x0001,0xffff);
+	tilemap_set_transmask(pf3_wide_layer,2,0x0001,0xfffe);
 
 	pf1_vram_ptr=pf2_vram_ptr=pf3_vram_ptr=0;
 	pf1_enable=pf2_enable=pf3_enable=0;

@@ -21,11 +21,11 @@ Other        :  Memory Blitter
 ---------------------------------------------------------------------------
 Year + Game						PCB			Video Chip	Issues / Notes
 ---------------------------------------------------------------------------
-92	The Karate Tournament		?			14100
+92	The Karate Tournament		VG460-B		14100
 92	Last Fortress - Toride		VG420		14100
 92	Pang Poms					VG420		14100
 92	Sky Alert					VG420		14100
-93?	Moeyo Gonta!!               VG460-(B)	14100
+93?	Lady Killer / Moeyo Gonta!! VG460-B		14100
 93	Poitto!						MTR5260-A	14100
 94	Dharma Doujou				?			?
 94	Toride II Adauchi Gaiden	MTR5260-A	14220
@@ -36,6 +36,8 @@ Year + Game						PCB			Video Chip	Issues / Notes
 96	Bal Cube					?			14220		No sound CPU
 96	Mouja						VG410-B		14300		No sound CPU
 96	Bang Bang Ball				?			14220		No sound CPU
+97	Mahjong Gakuensai			VG340-A		14300		No sound CPU
+98	Mahjong Gakuensai 2			VG340-A		14300		No sound CPU
 ---------------------------------------------------------------------------
 Not dumped yet:
 94	Gun Master
@@ -43,15 +45,13 @@ Not dumped yet:
 
 To Do:
 
--	Priorities (pdrawgfxzoom). Priorities are particularly bad in blzntrnd.
+-	Sound in games with a sound CPU
 -	Sprite palette marking doesn't know about 8bpp.
 -	1 pixel granularity in the window's placement (8 pixels now, see daitorid title)
--	Sound
 -	Coin lockout
 -	Some gfx problems in ladykill and puzzli
--	To save memory, 8bpp tiles are handled fetching data directly from the ROMs,
-	without decoding them to a separate buffer, so screen rotation is not
-	supported. The same applies to 16x16 tiles.
+-	Zoomed sprites don't work correctly when rotated because drawgfxzoom() doesn't
+	support GFX_SWAPXY.
 -	Sprite zoom in Mouja at the end of a match doesn't seem right
 -	Are the 16x16 tiles used by Mouja a Imagetek 14300-only feature?
 -	Flip screen doesn't work correctly in Mouja due to asymmetrical visible area
@@ -65,6 +65,7 @@ Notes:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/upd7810/upd7810.h"
+#include "machine/eeprom.h"
 
 /* Variables defined in vidhrdw: */
 
@@ -142,7 +143,6 @@ static void update_irq_state(void)
 	{
 		int i;
 
-
 		for (i = 0;i < 8;i++)
 		{
 			if (requested_irq[i])
@@ -161,7 +161,7 @@ static void update_irq_state(void)
 
 WRITE16_HANDLER( metro_irq_cause_w )
 {
-	if (data & ~0x15)	logerror("CPU #0 PC %06X : unknown bits of irqcause written: %04X\n",cpu_get_pc(),data);
+//if (data & ~0x15)	logerror("CPU #0 PC %06X : unknown bits of irqcause written: %04X\n",cpu_get_pc(),data);
 
 	if (ACCESSING_LSB)
 	{
@@ -256,6 +256,17 @@ int mouja_interrupt(void)
 	return ignore_interrupt();
 }
 
+int gakusai_interrupt(void)
+{
+	switch ( cpu_getiloops() )
+	{
+		case 0:
+			requested_irq[0] = 1;
+			update_irq_state();
+			break;
+	}
+	return ignore_interrupt();
+}
 
 /***************************************************************************
 
@@ -445,15 +456,23 @@ READ16_HANDLER( dharma_soundstatus_r )
 }
 #endif
 
-static struct OKIM6295interface okim6295_interface =
+static struct OKIM6295interface okim6295_interface_12kHz =
 {
 	1,
-	{ 12000 },	/* ??? */
+	{ 12000 },
 	{ REGION_SOUND1 },
 	{ 100 }
 };
 
-static struct YM2413interface ym2413_interface =
+static struct OKIM6295interface okim6295_interface_16kHz =
+{
+	1,
+	{ 16000 },
+	{ REGION_SOUND1 },
+	{ 50 }
+};
+
+static struct YM2413interface ym2413_interface_8MHz =
 {
 	1,	/* 1 chip */
 	8000000,	/* 8MHz ??? */
@@ -617,7 +636,7 @@ WRITE16_HANDLER( metro_blitter_w )
 		int shift			=	(dst_offs & 0x80) ? 0 : 8;
 		data16_t mask		=	(dst_offs & 0x80) ? 0xff00 : 0x00ff;
 
-		logerror("CPU #0 PC %06X : Blitter regs %08X, %08X, %08X\n",cpu_get_pc(),tmap,src_offs,dst_offs);
+//		logerror("CPU #0 PC %06X : Blitter regs %08X, %08X, %08X\n",cpu_get_pc(),tmap,src_offs,dst_offs);
 
 		dst_offs >>= 7+1;
 		switch( tmap )
@@ -1082,6 +1101,177 @@ MEMORY_END
 
 
 /***************************************************************************
+								Mahjong Gakuensai
+***************************************************************************/
+
+static int gakusai_oki_bank_lo, gakusai_oki_bank_hi;
+
+void gakusai_oki_bank_set(void)
+{
+	int bank = (gakusai_oki_bank_lo & 7) + (gakusai_oki_bank_hi & 1) * 8;
+	OKIM6295_set_bank_base(0, bank * 0x40000);
+}
+
+static WRITE16_HANDLER( gakusai_oki_bank_hi_w )
+{
+	if (ACCESSING_LSB)
+	{
+		gakusai_oki_bank_hi = data & 0xff;
+		gakusai_oki_bank_set();
+	}
+}
+
+static WRITE16_HANDLER( gakusai_oki_bank_lo_w )
+{
+	if (ACCESSING_LSB)
+	{
+		gakusai_oki_bank_lo = data & 0xff;
+		gakusai_oki_bank_set();
+	}
+}
+
+static data16_t *gakusai_input_sel;
+
+static READ16_HANDLER( gakusai_input_r )
+{
+	data16_t input_sel = (*gakusai_input_sel) ^ 0x3e;
+	// Bit 0 ??
+	if (input_sel & 0x0002)	return readinputport(1);
+	if (input_sel & 0x0004)	return readinputport(2);
+	if (input_sel & 0x0008)	return readinputport(3);
+	if (input_sel & 0x0010)	return readinputport(4);
+	if (input_sel & 0x0020)	return readinputport(5);
+	return 0xffff;
+}
+
+READ16_HANDLER( gakusai_eeprom_r )
+{
+	return EEPROM_read_bit() & 1;
+}
+
+WRITE16_HANDLER( gakusai_eeprom_w )
+{
+	if (ACCESSING_LSB)
+	{
+		// latch the bit
+		EEPROM_write_bit(data & 0x01);
+
+		// reset line asserted: reset.
+		EEPROM_set_cs_line((data & 0x04) ? CLEAR_LINE : ASSERT_LINE );
+
+		// clock line asserted: write latch or select next bit to read
+		EEPROM_set_clock_line((data & 0x02) ? ASSERT_LINE : CLEAR_LINE );
+	}
+}
+
+WRITE16_HANDLER( gakusai_irq_cause_w )
+{
+	metro_irq_cause_w(offset,data>>1,mem_mask);
+}
+
+static MEMORY_READ16_START( gakusai_readmem )
+	{ 0x000000, 0x07ffff, MRA16_ROM					},	// ROM
+	{ 0xff0000, 0xffffff, MRA16_RAM					},	// RAM
+	{ 0x200000, 0x21ffff, MRA16_RAM					},	// Layer 0
+	{ 0x220000, 0x23ffff, MRA16_RAM					},	// Layer 1
+	{ 0x240000, 0x25ffff, MRA16_RAM					},	// Layer 2
+	{ 0x260000, 0x26ffff, metro_bankedrom_r			},	// Banked ROM
+	{ 0x270000, 0x273fff, MRA16_RAM					},	// Palette
+	{ 0x274000, 0x274fff, MRA16_RAM					},	// Sprites
+	{ 0x278000, 0x2787ff, MRA16_RAM					},	// Tiles Set
+	{ 0x278832, 0x278833, metro_irq_cause_r			},	// IRQ Cause
+	{ 0x278880, 0x278881, gakusai_input_r			},	// Inputs
+	{ 0x278882, 0x278883, input_port_0_word_r		},	//
+	{ 0x27880e, 0x27880f, MRA16_RAM					},	// Screen Control
+	{ 0x700000, 0x700001, OKIM6295_status_0_lsb_r	},	// Sound
+	{ 0xc00000, 0xc00001, gakusai_eeprom_r			},	// EEPROM
+MEMORY_END
+
+static MEMORY_WRITE16_START( gakusai_writemem )
+	{ 0x000000, 0x07ffff, MWA16_ROM						},	// ROM
+	{ 0xff0000, 0xffffff, MWA16_RAM						},	// RAM
+	{ 0x200000, 0x21ffff, metro_vram_0_w, &metro_vram_0	},	// Layer 0
+	{ 0x220000, 0x23ffff, metro_vram_1_w, &metro_vram_1	},	// Layer 1
+	{ 0x240000, 0x25ffff, metro_vram_2_w, &metro_vram_2	},	// Layer 2
+	{ 0x270000, 0x273fff, metro_paletteram_w, &paletteram16	},	// Palette
+	{ 0x274000, 0x274fff, MWA16_RAM, &spriteram16, &spriteram_size				},	// Sprites
+	{ 0x278000, 0x2787ff, MWA16_RAM, &metro_tiletable, &metro_tiletable_size	},	// Tiles Set
+	{ 0x27880e, 0x27880f, MWA16_RAM, &metro_screenctrl	},	// Screen Control
+//	{ 0x278810, 0x27881f, mouja_irq_levels_w			},	// IRQ Levels
+	{ 0x278830, 0x278831, metro_irq_enable_w			},	// IRQ Enable
+	{ 0x278832, 0x278833, gakusai_irq_cause_w			},	// IRQ Acknowledge
+	{ 0x278836, 0x278837, watchdog_reset16_w			},	// Watchdog
+	{ 0x278840, 0x27884d, metro_blitter_w, &metro_blitter_regs	},	// Tiles Blitter
+	{ 0x278860, 0x27886b, metro_window_w, &metro_window	},	// Tilemap Window
+	{ 0x278850, 0x27885b, MWA16_RAM, &metro_scroll		},	// Scroll Regs
+	{ 0x278870, 0x278871, MWA16_RAM, &metro_rombank		},	// Rom Bank
+	{ 0x278888, 0x278889, MWA16_RAM, &gakusai_input_sel	},	// Inputs
+	{ 0x279700, 0x279713, MWA16_RAM, &metro_videoregs	},	// Video Registers
+	{ 0x400000, 0x400001, MWA16_NOP						},	// ? 5
+	{ 0x500000, 0x500001, gakusai_oki_bank_lo_w			},	// Sound
+	{ 0x600000, 0x600001, YM2413_register_port_0_lsb_w	},
+	{ 0x600002, 0x600003, YM2413_data_port_0_lsb_w		},
+	{ 0x700000, 0x700001, OKIM6295_data_0_lsb_w 		},
+	{ 0xc00000, 0xc00001, gakusai_eeprom_w				},	// EEPROM
+	{ 0xd00000, 0xd00001, gakusai_oki_bank_hi_w			},
+MEMORY_END
+
+
+/***************************************************************************
+								Mahjong Gakuensai 2
+***************************************************************************/
+
+static MEMORY_READ16_START( gakusai2_readmem )
+	{ 0x000000, 0x07ffff, MRA16_ROM					},	// ROM
+	{ 0xff0000, 0xffffff, MRA16_RAM					},	// RAM
+	{ 0x600000, 0x61ffff, MRA16_RAM					},	// Layer 0
+	{ 0x620000, 0x63ffff, MRA16_RAM					},	// Layer 1
+	{ 0x640000, 0x65ffff, MRA16_RAM					},	// Layer 2
+	{ 0x660000, 0x66ffff, metro_bankedrom_r			},	// Banked ROM
+	{ 0x670000, 0x673fff, MRA16_RAM					},	// Palette
+	{ 0x674000, 0x674fff, MRA16_RAM					},	// Sprites
+	{ 0x675000, 0x675fff, MRA16_RAM					},	// Sprites?
+	{ 0x678000, 0x6787ff, MRA16_RAM					},	// Tiles Set
+	{ 0x678832, 0x678833, metro_irq_cause_r			},	// IRQ Cause
+	{ 0x678880, 0x678881, gakusai_input_r			},	// Inputs
+	{ 0x678882, 0x678883, input_port_0_word_r		},	//
+	{ 0x67880e, 0x67880f, MRA16_RAM					},	// Screen Control
+	{ 0xb00000, 0xb00001, OKIM6295_status_0_lsb_r	},	// Sound
+	{ 0xe00000, 0xe00001, gakusai_eeprom_r			},	// EEPROM
+MEMORY_END
+
+static MEMORY_WRITE16_START( gakusai2_writemem )
+	{ 0x000000, 0x07ffff, MWA16_ROM						},	// ROM
+	{ 0xff0000, 0xffffff, MWA16_RAM						},	// RAM
+	{ 0x600000, 0x61ffff, metro_vram_0_w, &metro_vram_0	},	// Layer 0
+	{ 0x620000, 0x63ffff, metro_vram_1_w, &metro_vram_1	},	// Layer 1
+	{ 0x640000, 0x65ffff, metro_vram_2_w, &metro_vram_2	},	// Layer 2
+	{ 0x670000, 0x673fff, metro_paletteram_w, &paletteram16	},	// Palette
+	{ 0x674000, 0x674fff, MWA16_RAM, &spriteram16, &spriteram_size				},	// Sprites
+	{ 0x675000, 0x675fff, MWA16_RAM						},	// Sprites?
+	{ 0x678000, 0x6787ff, MWA16_RAM, &metro_tiletable, &metro_tiletable_size	},	// Tiles Set
+	{ 0x67880e, 0x67880f, MWA16_RAM, &metro_screenctrl	},	// Screen Control
+//	{ 0x678810, 0x67881f, mouja_irq_levels_w			},	// IRQ Levels
+	{ 0x678830, 0x678831, metro_irq_enable_w			},	// IRQ Enable
+	{ 0x678832, 0x678833, gakusai_irq_cause_w			},	// IRQ Acknowledge
+	{ 0x678836, 0x678837, watchdog_reset16_w			},	// Watchdog
+	{ 0x678840, 0x67884d, metro_blitter_w, &metro_blitter_regs	},	// Tiles Blitter
+	{ 0x678860, 0x67886b, metro_window_w, &metro_window	},	// Tilemap Window
+	{ 0x678850, 0x67885b, MWA16_RAM, &metro_scroll		},	// Scroll Regs
+	{ 0x678870, 0x678871, MWA16_RAM, &metro_rombank		},	// Rom Bank
+	{ 0x678888, 0x678889, MWA16_RAM, &gakusai_input_sel	},	// Inputs
+	{ 0x679700, 0x679713, MWA16_RAM, &metro_videoregs	},	// Video Registers
+	{ 0x800000, 0x800001, MWA16_NOP						},	// ? 5
+	{ 0x900000, 0x900001, gakusai_oki_bank_lo_w			},	// Sound
+	{ 0xa00000, 0xa00001, gakusai_oki_bank_hi_w			},
+	{ 0xb00000, 0xb00001, OKIM6295_data_0_lsb_w 		},
+	{ 0xc00000, 0xc00001, YM2413_register_port_0_lsb_w	},
+	{ 0xc00002, 0xc00003, YM2413_data_port_0_lsb_w		},
+	{ 0xe00000, 0xe00001, gakusai_eeprom_w				},	// EEPROM
+MEMORY_END
+
+
+/***************************************************************************
 								Pang Poms
 ***************************************************************************/
 
@@ -1373,7 +1563,7 @@ MEMORY_END
 
 
 /***************************************************************************
-							Mouja
+									Mouja
 ***************************************************************************/
 
 static MEMORY_READ16_START( mouja_readmem )
@@ -1955,6 +2145,136 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
+								Mahjong Gakuensai
+***************************************************************************/
+
+INPUT_PORTS_START( gakusai )
+	PORT_START	// IN0 - $278882.w
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT_IMPULSE(  0x0002, IP_ACTIVE_LOW, IPT_COIN1, 2 )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BITX(0x0008, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	// IN1 - $278880.w
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BITX(0x0002, IP_ACTIVE_LOW, 0, "A",   KEYCODE_A,        IP_JOY_NONE )
+	PORT_BITX(0x0004, IP_ACTIVE_LOW, 0, "E",   KEYCODE_E,        IP_JOY_NONE )
+	PORT_BITX(0x0008, IP_ACTIVE_LOW, 0, "I",   KEYCODE_I,        IP_JOY_NONE )
+	PORT_BITX(0x0010, IP_ACTIVE_LOW, 0, "M",   KEYCODE_M,        IP_JOY_NONE )
+	PORT_BITX(0x0020, IP_ACTIVE_LOW, 0, "Kan", KEYCODE_LCONTROL, IP_JOY_NONE )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_START1  )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	// IN2 - $278880.w
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BITX(0x0002, IP_ACTIVE_LOW, 0, "B",   KEYCODE_B, IP_JOY_NONE )
+	PORT_BITX(0x0004, IP_ACTIVE_LOW, 0, "F",   KEYCODE_F, IP_JOY_NONE )
+	PORT_BITX(0x0008, IP_ACTIVE_LOW, 0, "J",   KEYCODE_J, IP_JOY_NONE )
+	PORT_BITX(0x0010, IP_ACTIVE_LOW, 0, "N",   KEYCODE_N, IP_JOY_NONE )
+	PORT_BITX(0x0020, IP_ACTIVE_LOW, 0, "Reach", KEYCODE_LSHIFT, IP_JOY_NONE )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	// IN3 - $278880.w
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BITX(0x0002, IP_ACTIVE_LOW, 0, "C",     KEYCODE_C,      IP_JOY_NONE )
+	PORT_BITX(0x0004, IP_ACTIVE_LOW, 0, "G",     KEYCODE_G,      IP_JOY_NONE )
+	PORT_BITX(0x0008, IP_ACTIVE_LOW, 0, "K",     KEYCODE_K,      IP_JOY_NONE )
+	PORT_BITX(0x0010, IP_ACTIVE_LOW, 0, "Chi", KEYCODE_SPACE, IP_JOY_NONE )
+	PORT_BITX(0x0020, IP_ACTIVE_LOW, 0, "Ron", KEYCODE_Z, IP_JOY_NONE )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	// IN4 - $278880.w
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BITX(0x0002, IP_ACTIVE_LOW, 0, "D",   KEYCODE_D,     IP_JOY_NONE )
+	PORT_BITX(0x0004, IP_ACTIVE_LOW, 0, "H",   KEYCODE_H,     IP_JOY_NONE )
+	PORT_BITX(0x0008, IP_ACTIVE_LOW, 0, "L",   KEYCODE_L,     IP_JOY_NONE )
+	PORT_BITX(0x0010, IP_ACTIVE_LOW, 0, "Pon",   KEYCODE_LALT,   IP_JOY_NONE )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	// IN5 - $278880.w
+	PORT_BIT( 0xffff, IP_ACTIVE_LOW, IPT_UNKNOWN )
+INPUT_PORTS_END
+
+
+/***************************************************************************
+								Mahjong Gakuensai 2
+***************************************************************************/
+
+INPUT_PORTS_START( gakusai2 )
+	PORT_START	// IN0 - $278882.w
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT_IMPULSE(  0x0002, IP_ACTIVE_LOW, IPT_COIN1, 2 )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BITX(0x0008, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	// IN1 - $278880.w
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BITX(0x0002, IP_ACTIVE_LOW, 0, "A",   KEYCODE_A,        IP_JOY_NONE )
+	PORT_BITX(0x0004, IP_ACTIVE_LOW, 0, "E",   KEYCODE_E,        IP_JOY_NONE )
+	PORT_BITX(0x0008, IP_ACTIVE_LOW, 0, "I",   KEYCODE_I,        IP_JOY_NONE )
+	PORT_BITX(0x0010, IP_ACTIVE_LOW, 0, "M",   KEYCODE_M,        IP_JOY_NONE )
+	PORT_BITX(0x0020, IP_ACTIVE_LOW, 0, "Kan", KEYCODE_LCONTROL, IP_JOY_NONE )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_START1  )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	// IN2 - $278880.w
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BITX(0x0002, IP_ACTIVE_LOW, 0, "B",     KEYCODE_B,      IP_JOY_NONE )
+	PORT_BITX(0x0004, IP_ACTIVE_LOW, 0, "F",     KEYCODE_F,      IP_JOY_NONE )
+	PORT_BITX(0x0008, IP_ACTIVE_LOW, 0, "J",     KEYCODE_J,      IP_JOY_NONE )
+	PORT_BITX(0x0010, IP_ACTIVE_LOW, 0, "N",     KEYCODE_N,      IP_JOY_NONE )
+	PORT_BITX(0x0020, IP_ACTIVE_LOW, 0, "Reach", KEYCODE_LSHIFT, IP_JOY_NONE )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	// IN3 - $278880.w
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BITX(0x0002, IP_ACTIVE_LOW, 0, "C",     KEYCODE_C,     IP_JOY_NONE )
+	PORT_BITX(0x0004, IP_ACTIVE_LOW, 0, "G",     KEYCODE_G,     IP_JOY_NONE )
+	PORT_BITX(0x0008, IP_ACTIVE_LOW, 0, "K",     KEYCODE_K,     IP_JOY_NONE )
+	PORT_BITX(0x0010, IP_ACTIVE_LOW, 0, "Chi",   KEYCODE_SPACE, IP_JOY_NONE )
+	PORT_BITX(0x0020, IP_ACTIVE_LOW, 0, "Ron",   KEYCODE_Z,     IP_JOY_NONE )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	// IN4 - $278880.w
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BITX(0x0002, IP_ACTIVE_LOW, 0, "D",   KEYCODE_D,    IP_JOY_NONE )
+	PORT_BITX(0x0004, IP_ACTIVE_LOW, 0, "H",   KEYCODE_H,    IP_JOY_NONE )
+	PORT_BITX(0x0008, IP_ACTIVE_LOW, 0, "L",   KEYCODE_L,    IP_JOY_NONE )
+	PORT_BITX(0x0010, IP_ACTIVE_LOW, 0, "Pon", KEYCODE_LALT, IP_JOY_NONE )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	// IN5 - $278880.w
+	PORT_BIT( 0xffff, IP_ACTIVE_LOW, IPT_UNKNOWN )
+INPUT_PORTS_END
+
+
+/***************************************************************************
 								Pang Poms
 ***************************************************************************/
 
@@ -2404,42 +2724,86 @@ static struct GfxLayout layout_8x8x4 =
 	8,8,
 	RGN_FRAC(1,1),
 	4,
-	{ STEP4(0,1) },
-	{ 1*4,0*4,3*4,2*4,5*4,4*4,7*4,6*4 },
-	{ STEP8(0,8*4) },
-	8*8*4
+	{ GFX_RAW },
+	{ 0 },		/* org displacement */
+	{ 4*8 },	/* line modulo */
+	32*8		/* char modulo */
 };
 
 /* 8x8x8 tiles for later games */
-static struct GfxLayout layout_8x8x8 =
+static struct GfxLayout layout_8x8x8h =
 {
 	8,8,
 	RGN_FRAC(1,1),
 	8,
-	{ STEP8(0,1) },
-	{ STEP8(0,8) },
-	{ STEP8(0,8*8) },
+	{ GFX_RAW },
+	{ 0 },		/* org displacement */
+	{ 8*8 },	/* line modulo */
+	32*8		/* char modulo (half char step) */
+};
+
+/* 16x16x4 tiles for later games */
+static struct GfxLayout layout_16x16x4q =
+{
+	16,16,
+	RGN_FRAC(1,1),
+	4,
+	{ GFX_RAW },
+	{ 0 },		/* org displacement */
+	{ 8*8 },	/* line modulo */
+	32*8		/* char modulo (quarter char step) */
+};
+
+/* 16x16x8 tiles for later games */
+static struct GfxLayout layout_16x16x8o =
+{
+	16,16,
+	RGN_FRAC(1,1),
+	8,
+	{ GFX_RAW },
+	{ 0 },		/* org displacement */
+	{ 16*8 },	/* line modulo */
+	32*8		/* char modulo (1/8th char step) */
+};
+
+static struct GfxLayout layout_053936 =
+{
+	8,8,
+	RGN_FRAC(1,1),
+	8,
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
+	{ 0*8*8, 1*8*8, 2*8*8, 3*8*8, 4*8*8, 5*8*8, 6*8*8, 7*8*8 },
 	8*8*8
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo_4bit[] =
+static struct GfxDecodeInfo gfxdecodeinfo_14100[] =
 {
-	{ REGION_GFX1, 0, &layout_8x8x4, 0x0, 0x200 }, // [0] 4 Bit Tiles
+	{ REGION_GFX1, 0, &layout_8x8x4,    0x0, 0x200 }, // [0] 4 Bit Tiles
 	{ -1 }
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo_8bit[] =
+static struct GfxDecodeInfo gfxdecodeinfo_14220[] =
 {
-	{ REGION_GFX1, 0, &layout_8x8x4, 0x0, 0x200 }, // [0] 4 Bit Tiles
-//	{ REGION_GFX1, 0, &layout_8x8x8, 0x0,  0x20 }, // [2] 8 Bit Tiles (handled directly from ROM data, no decoding)
+	{ REGION_GFX1, 0, &layout_8x8x4,    0x0, 0x200 }, // [0] 4 Bit Tiles
+	{ REGION_GFX1, 0, &layout_8x8x8h,   0x0,  0x20 }, // [1] 8 Bit Tiles
 	{ -1 }
 };
 
 static struct GfxDecodeInfo gfxdecodeinfo_blzntrnd[] =
 {
-	{ REGION_GFX1, 0, &layout_8x8x4, 0x0, 0x200 }, // [0] 4 Bit Tiles
-	{ REGION_GFX3, 0, &layout_8x8x8, 0x0,  0x20 }, // [3] 053936 Tiles
-//	{ REGION_GFX1, 0, &layout_8x8x8, 0x0,  0x20 }, // [2] 8 Bit Tiles (handled directly from ROM data, no decoding)
+	{ REGION_GFX1, 0, &layout_8x8x4,    0x0, 0x200 }, // [0] 4 Bit Tiles
+	{ REGION_GFX1, 0, &layout_8x8x8h,   0x0,  0x20 }, // [1] 8 Bit Tiles
+	{ REGION_GFX3, 0, &layout_053936,   0x0,  0x20 }, // [2] 053936 Tiles
+	{ -1 }
+};
+
+static struct GfxDecodeInfo gfxdecodeinfo_14300[] =
+{
+	{ REGION_GFX1, 0, &layout_8x8x4,    0x0, 0x200 }, // [0] 4 Bit Tiles
+	{ REGION_GFX1, 0, &layout_8x8x8h,   0x0,  0x20 }, // [1] 8 Bit Tiles
+	{ REGION_GFX1, 0, &layout_16x16x4q, 0x0, 0x200 }, // [2] 4 Bit Tiles 16x16
+	{ REGION_GFX1, 0, &layout_16x16x8o, 0x0, 0x200 }, // [2] 8 Bit Tiles 16x16
 	{ -1 }
 };
 
@@ -2468,7 +2832,7 @@ static const struct MachineDriver machine_driver_balcube =
 
 	/* video hardware */
 	320, 224, { 0, 320-1, 0, 224-1 },
-	gfxdecodeinfo_8bit,
+	gfxdecodeinfo_14220,
 	0x2000, 0x2000,
 	0,
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
@@ -2501,7 +2865,7 @@ static const struct MachineDriver machine_driver_bangball =
 
 	/* video hardware */
 	320, 224, { 0, 320-1, 0, 224-1 },
-	gfxdecodeinfo_8bit,
+	gfxdecodeinfo_14220,
 	0x2000, 0x2000,
 	0,
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
@@ -2544,7 +2908,7 @@ static const struct MachineDriver machine_driver_daitorid =
 
 	/* video hardware */
 	320, 224, { 0, 320-1, 0, 224-1 },
-	gfxdecodeinfo_4bit,
+	gfxdecodeinfo_14220,
 	0x2000, 0x2000,
 	0,
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
@@ -2582,7 +2946,7 @@ static const struct MachineDriver machine_driver_dharma =
 
 	/* video hardware */
 	320, 224, { 0, 320-1, 0, 224-1 },
-	gfxdecodeinfo_4bit,
+	gfxdecodeinfo_14100,
 	0x2000, 0x2000,
 	0,
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
@@ -2618,7 +2982,7 @@ static const struct MachineDriver machine_driver_karatour =
 
 	/* video hardware */
 	320, 240, { 0, 320-1, 0, 240-1 },
-	gfxdecodeinfo_4bit,
+	gfxdecodeinfo_14100,
 	0x2000, 0x2000,
 	0,
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
@@ -2653,7 +3017,7 @@ static const struct MachineDriver machine_driver_lastfort =
 
 	/* video hardware */
 	360, 224, { 0, 360-1, 0, 224-1 },
-	gfxdecodeinfo_4bit,
+	gfxdecodeinfo_14100,
 	0x2000, 0x2000,
 	0,
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
@@ -2667,6 +3031,78 @@ static const struct MachineDriver machine_driver_lastfort =
 	{
 		{ 0 },	// M6295, YM2413
 	},
+};
+
+
+static const struct MachineDriver machine_driver_gakusai =
+{
+	{
+		{
+			CPU_M68000,
+			16000000,
+			gakusai_readmem, gakusai_writemem,0,0,
+			gakusai_interrupt, 1
+		},
+	},
+	60,DEFAULT_60HZ_VBLANK_DURATION,
+	1,
+	0,
+
+	/* video hardware */
+	320, 240, { 0, 320-1, 0, 240-1 },
+	gfxdecodeinfo_14300,
+	0x2000, 0x2000,
+	0,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	0,
+	metro_vh_start_14300,
+	metro_vh_stop,
+	metro_vh_screenrefresh,
+
+	/* sound hardware */
+	SOUND_SUPPORTS_STEREO,0,0,0,
+	{
+		{	SOUND_OKIM6295,	&okim6295_interface_16kHz	},
+		{	SOUND_YM2413,	&ym2413_interface_8MHz		},
+	},
+
+	nvram_handler_93C46
+};
+
+
+static const struct MachineDriver machine_driver_gakusai2 =
+{
+	{
+		{
+			CPU_M68000,
+			16000000,
+			gakusai2_readmem, gakusai2_writemem,0,0,
+			gakusai_interrupt, 1
+		},
+	},
+	60,DEFAULT_60HZ_VBLANK_DURATION,
+	1,
+	0,
+
+	/* video hardware */
+	320, 240, { 0, 320-1, 0, 240-1 },
+	gfxdecodeinfo_14300,
+	0x2000, 0x2000,
+	0,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	0,
+	metro_vh_start_14300,
+	metro_vh_stop,
+	metro_vh_screenrefresh,
+
+	/* sound hardware */
+	SOUND_SUPPORTS_STEREO,0,0,0,
+	{
+		{	SOUND_OKIM6295,	&okim6295_interface_16kHz	},
+		{	SOUND_YM2413,	&ym2413_interface_8MHz		},
+	},
+
+	nvram_handler_93C46
 };
 
 
@@ -2688,7 +3124,7 @@ static const struct MachineDriver machine_driver_pangpoms =
 
 	/* video hardware */
 	360, 224, { 0, 360-1, 0, 224-1 },
-	gfxdecodeinfo_4bit,
+	gfxdecodeinfo_14100,
 	0x2000, 0x2000,
 	0,
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
@@ -2723,7 +3159,7 @@ static const struct MachineDriver machine_driver_poitto =
 
 	/* video hardware */
 	360, 224, { 0, 360-1, 0, 224-1 },
-	gfxdecodeinfo_4bit,
+	gfxdecodeinfo_14100,
 	0x2000, 0x2000,
 	0,
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
@@ -2758,7 +3194,7 @@ static const struct MachineDriver machine_driver_pururun =
 
 	/* video hardware */
 	320, 224, { 0, 320-1, 0, 224-1 },
-	gfxdecodeinfo_4bit,
+	gfxdecodeinfo_14100,
 	0x2000, 0x2000,
 	0,
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
@@ -2793,7 +3229,7 @@ static const struct MachineDriver machine_driver_skyalert =
 
 	/* video hardware */
 	360, 224, { 0, 360-1, 0, 224-1 },
-	gfxdecodeinfo_4bit,
+	gfxdecodeinfo_14100,
 	0x2000, 0x2000,
 	0,
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
@@ -2828,7 +3264,7 @@ static const struct MachineDriver machine_driver_toride2g =
 
 	/* video hardware */
 	320, 224, { 0, 320-1, 0, 224-1 },
-	gfxdecodeinfo_4bit,
+	gfxdecodeinfo_14100,
 	0x2000, 0x2000,
 	0,
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
@@ -2861,7 +3297,7 @@ static const struct MachineDriver machine_driver_mouja =
 
 	/* video hardware */
 	512, 256, { 0, 320-1, 0, 224-1 },
-	gfxdecodeinfo_4bit,
+	gfxdecodeinfo_14300,
 	0x2000, 0x2000,
 	0,
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
@@ -2873,14 +3309,8 @@ static const struct MachineDriver machine_driver_mouja =
 	/* sound hardware */
 	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
-		{
-			SOUND_OKIM6295,
-			&okim6295_interface
-		},
-		{
-			SOUND_YM2413,
-			&ym2413_interface
-		},
+		{	SOUND_OKIM6295,	&okim6295_interface_12kHz	},
+		{	SOUND_YM2413,	&ym2413_interface_8MHz		},
 	},
 };
 
@@ -3273,6 +3703,27 @@ Imagetek I4100 052 9330EK712
 
 ROM_START( ladykill )
 	ROM_REGION( 0x080000, REGION_CPU1, 0 )		/* 68000 Code */
+	ROM_LOAD16_BYTE( "e2.bin",    0x000000, 0x040000, 0x211a4865 )
+	ROM_LOAD16_BYTE( "e3.bin",    0x000001, 0x040000, 0x581a55ea )
+
+	ROM_REGION( 0x020000, REGION_CPU2, 0 )		/* NEC78C10 Code */
+	ROM_LOAD( "e1.1i",    0x000000, 0x020000, 0xa4d95cfb )	// 11xxxxxxxxxxxxxxx = 0xFF
+
+	ROM_REGION( 0x400000, REGION_GFX1, 0 )	/* Gfx + Data (Addressable by CPU & Blitter) */
+	ROMX_LOAD( "ladyj-4.15f", 0x000000, 0x100000, 0x65e5906c, ROM_GROUPWORD | ROM_SKIP(6))
+	ROMX_LOAD( "ladyj-7.17d", 0x000002, 0x100000, 0x56bd64a5, ROM_GROUPWORD | ROM_SKIP(6))
+	ROMX_LOAD( "ladyj-5.17f", 0x000004, 0x100000, 0xa81ffaa3, ROM_GROUPWORD | ROM_SKIP(6))
+	ROMX_LOAD( "ladyj-6.15d", 0x000006, 0x100000, 0x3a34913a, ROM_GROUPWORD | ROM_SKIP(6))
+
+	ROM_REGION( 0x040000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_LOAD( "e8.bin",   0x000000, 0x040000, 0xda88244d )
+
+	/* Additional memory for the layers' ram */
+	ROM_REGION( 0x20000*3, REGION_USER1, 0 )
+ROM_END
+
+ROM_START( moegonta )
+	ROM_REGION( 0x080000, REGION_CPU1, 0 )		/* 68000 Code */
 	ROM_LOAD16_BYTE( "j2.8g",     0x000000, 0x040000, 0xaa18d130 )
 	ROM_LOAD16_BYTE( "j3.10g",    0x000001, 0x040000, 0xb555e6ab )
 
@@ -3372,6 +3823,98 @@ ROM_START( lastfero )
 
 	ROM_REGION( 0x020000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
 	ROM_LOAD( "tr_jb11", 0x000000, 0x020000, 0x83786a09 )
+ROM_END
+
+
+/***************************************************************************
+
+Mahjong Gakuensai (JPN Ver.)
+(c)1997 Make Software
+
+Board:	VG340-A
+
+CPU:	68000-16
+Sound:	M6295
+		YM2413
+OSC:	26.6660MHz
+		3.5795MHz
+
+Custom:	14300 095
+
+***************************************************************************/
+
+ROM_START( gakusai )
+	ROM_REGION( 0x080000, REGION_CPU1, 0 )		/* 68000 Code */
+	ROM_LOAD16_BYTE( "6.bin", 0x000000, 0x040000, 0x6f8ab082 )
+	ROM_LOAD16_BYTE( "5.bin", 0x000001, 0x040000, 0x010176c4 )
+
+	ROM_REGION( 0x2000000, REGION_GFX1, 0 )	/* Gfx + Data (Addressable by CPU & Blitter) */
+	ROMX_LOAD( "2l.bin", 0x0000000, 0x400000, 0x45dfb5c7, ROM_GROUPWORD | ROM_SKIP(6))
+	ROMX_LOAD( "4l.bin", 0x0000002, 0x400000, 0x7ab64f49, ROM_GROUPWORD | ROM_SKIP(6))
+	ROMX_LOAD( "1l.bin", 0x0000004, 0x400000, 0x75093421, ROM_GROUPWORD | ROM_SKIP(6))
+	ROMX_LOAD( "3l.bin", 0x0000006, 0x400000, 0x4dcfcd98, ROM_GROUPWORD | ROM_SKIP(6))
+	ROMX_LOAD( "2u.bin", 0x1000000, 0x400000, 0x8d4f912b, ROM_GROUPWORD | ROM_SKIP(6))
+	ROMX_LOAD( "4u.bin", 0x1000002, 0x400000, 0x1f83e98a, ROM_GROUPWORD | ROM_SKIP(6))
+	ROMX_LOAD( "1u.bin", 0x1000004, 0x400000, 0x28b386d9, ROM_GROUPWORD | ROM_SKIP(6))
+	ROMX_LOAD( "3u.bin", 0x1000006, 0x400000, 0x87f3c5e6, ROM_GROUPWORD | ROM_SKIP(6))
+
+	ROM_REGION( 0x400000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_LOAD( "7.bin", 0x000000, 0x400000, 0x34575a14 )
+ROM_END
+
+static void init_gakusai(void)
+{
+	data16_t *RAM = (data16_t *) memory_region( REGION_CPU1 );
+	int i;
+
+	init_metro();
+	irq_line = -1;
+
+	/* Kind of an hack, honestly */
+	for (i = 0;i < 8;i++)	mouja_irq_levels[i] = (i+1)&7;
+	for (i = 0;i < 32/2;i++)
+	{
+		data16_t t = RAM[0x060/2 + i];
+		RAM[0x060/2 + i] = RAM[0x100/2 + i];
+		RAM[0x100/2 + i] = t;
+	}
+}
+
+
+/***************************************************************************
+
+Mahjong Gakuensai 2 (JPN Ver.)
+(c)1998 Make Software
+
+Board:	VG340-A
+
+CPU:	68000-16
+Sound:	M6295
+		YM2413
+OSC:	26.6660MHz
+		3.579545MHz
+
+Custom:	14300 095
+
+***************************************************************************/
+
+ROM_START( gakusai2 )
+	ROM_REGION( 0x040000, REGION_CPU1, 0 )		/* 68000 Code */
+	ROM_LOAD16_BYTE( "mg2a06.bin", 0x000000, 0x020000, 0x8b006dd4 )
+	ROM_LOAD16_BYTE( "mg2a05.bin", 0x000001, 0x020000, 0x7702b9ac )
+
+	ROM_REGION( 0x2000000, REGION_GFX1, 0 )	/* Gfx + Data (Addressable by CPU & Blitter) */
+	ROMX_LOAD( "mg22l.bin", 0x0000000, 0x400000, 0x28366708, ROM_GROUPWORD | ROM_SKIP(6))
+	ROMX_LOAD( "mg24l.bin", 0x0000002, 0x400000, 0x9e003bb0, ROM_GROUPWORD | ROM_SKIP(6))
+	ROMX_LOAD( "mg21l.bin", 0x0000004, 0x400000, 0x3827098d, ROM_GROUPWORD | ROM_SKIP(6))
+	ROMX_LOAD( "mg23l.bin", 0x0000006, 0x400000, 0xa6f96961, ROM_GROUPWORD | ROM_SKIP(6))
+	ROMX_LOAD( "mg22u.bin", 0x1000000, 0x400000, 0x53ffa68a, ROM_GROUPWORD | ROM_SKIP(6))
+	ROMX_LOAD( "mg24u.bin", 0x1000002, 0x400000, 0xc218e9ab, ROM_GROUPWORD | ROM_SKIP(6))
+	ROMX_LOAD( "mg21u.bin", 0x1000004, 0x400000, 0x385495e5, ROM_GROUPWORD | ROM_SKIP(6))
+	ROMX_LOAD( "mg23u.bin", 0x1000006, 0x400000, 0xd8315923, ROM_GROUPWORD | ROM_SKIP(6))
+
+	ROM_REGION( 0x400000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_LOAD( "mg2-7.bin", 0x000000, 0x400000, 0x2f1c041e )
 ROM_END
 
 
@@ -3751,7 +4294,8 @@ ROM_END
 ***************************************************************************/
 
 GAMEX( 1992, karatour, 0,        karatour, karatour, karatour, ROT0,       "Mitchell",           "The Karate Tournament",    GAME_NO_SOUND )
-GAMEX( 1993?,ladykill, 0,        karatour, ladykill, karatour, ROT90,      "Yanyaka",            "Moeyo Gonta!! (Japan)",    GAME_NO_SOUND )
+GAMEX( 1993?,ladykill, 0,        karatour, ladykill, karatour, ROT90,      "Yanyaka (Mitchell license)", "Lady Killer",           GAME_NO_SOUND )
+GAMEX( 1993?,moegonta, ladykill, karatour, ladykill, karatour, ROT90,      "Yanyaka",                    "Moeyo Gonta!! (Japan)", GAME_NO_SOUND )
 GAMEX( 1992, pangpoms, 0,        pangpoms, pangpoms, metro,    ROT0,       "Metro",              "Pang Poms",                GAME_NO_SOUND )
 GAMEX( 1992, pangpomm, pangpoms, pangpoms, pangpoms, metro,    ROT0,       "Metro (Mitchell license)", "Pang Poms (Mitchell)", GAME_NO_SOUND )
 GAMEX( 1992, skyalert, 0,        skyalert, skyalert, metro,    ROT270,     "Metro",              "Sky Alert",                GAME_NO_SOUND )
@@ -3766,5 +4310,7 @@ GAMEX( 1995, pururun,  0,        pururun,  pururun,  metro,    ROT0,       "Metr
 GAMEX( 1996, balcube,  0,        balcube,  balcube,  balcube,  ROT0_16BIT, "Metro",              "Bal Cube",                 GAME_NO_SOUND )
 GAMEX( 1996, mouja,    0,        mouja,    mouja,    mouja,    ROT0,       "Etona",              "Mouja (Japan)",            GAME_NO_COCKTAIL )
 GAMEX( 1996, bangball, 0,        bangball, bangball, balcube,  ROT0_16BIT, "Banpresto / Kunihiko Tashiro+Goodhouse", "Bang Bang Ball (v1.05)", GAME_NO_SOUND )
+GAME ( 1997, gakusai,  0,        gakusai,  gakusai,  gakusai,  ROT0_16BIT, "MakeSoft",           "Mahjong Gakuensai (Japan)"   )
+GAME ( 1998, gakusai2, 0,        gakusai2, gakusai2, gakusai,  ROT0_16BIT, "MakeSoft",           "Mahjong Gakuensai 2 (Japan)" )
 
 GAMEX( 1994, blzntrnd, 0,        blzntrnd, blzntrnd, blzntrnd, ROT0_16BIT, "Human Amusement",    "Blazing Tornado",          GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )

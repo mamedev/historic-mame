@@ -78,7 +78,11 @@ static void get_pf_tile_info(int tile_index)	/* For Performan only */
 
 	tile=videoram[tile_index] + ((colorram[tile_index] & 0x03) << 8);
 	color=(colorram[tile_index] >> 3) & 0x0f;
-	SET_TILE_INFO(0,tile,color)
+	SET_TILE_INFO(
+			0,
+			tile,
+			color,
+			0)
 }
 
 static void get_pf1_tile_info(int tile_index)
@@ -88,7 +92,11 @@ static void get_pf1_tile_info(int tile_index)
 	tile=videoram[tile_index] + ((colorram[tile_index] & 0x0f) << 8);
 	color=(colorram[tile_index] & 0xf0) >> 4;
 
-	SET_TILE_INFO(1,tile,color)
+	SET_TILE_INFO(
+			1,
+			tile,
+			color,
+			0)
 }
 
 static void get_fix_tile_info(int tile_index)
@@ -98,7 +106,11 @@ static void get_fix_tile_info(int tile_index)
 	tile=slapfight_videoram[tile_index] + ((slapfight_colorram[tile_index] & 0x03) << 8);
 	color=(slapfight_colorram[tile_index] & 0xfc) >> 2;
 
-	SET_TILE_INFO(0,tile,color)
+	SET_TILE_INFO(
+			0,
+			tile,
+			color,
+			0)
 }
 
 
@@ -171,7 +183,7 @@ WRITE_HANDLER( slapfight_flipscreen_w )
 	else flipscreen=0; /* Port 0x3 is normal */
 }
 
-#if MAME_DEBUG
+#ifdef MAME_DEBUG
 void slapfght_log_vram(void)
 {
 	if ( keyboard_pressed_memory(KEYCODE_B) )

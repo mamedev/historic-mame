@@ -126,15 +126,21 @@ void mrdo_vh_convert_color_prom(unsigned char *palette, unsigned short *colortab
 static void get_bg_tile_info(int tile_index)
 {
 	unsigned char attr = mrdo_bgvideoram[tile_index];
-	SET_TILE_INFO(1,mrdo_bgvideoram[tile_index+0x400] + ((attr & 0x80) << 1),attr & 0x3f)
-	tile_info.flags = (attr & 0x40) ? TILE_IGNORE_TRANSPARENCY : 0;
+	SET_TILE_INFO(
+			1,
+			mrdo_bgvideoram[tile_index+0x400] + ((attr & 0x80) << 1),
+			attr & 0x3f,
+			(attr & 0x40) ? TILE_IGNORE_TRANSPARENCY : 0)
 }
 
 static void get_fg_tile_info(int tile_index)
 {
 	unsigned char attr = mrdo_fgvideoram[tile_index];
-	SET_TILE_INFO(0,mrdo_fgvideoram[tile_index+0x400] + ((attr & 0x80) << 1),attr & 0x3f)
-	tile_info.flags = (attr & 0x40) ? TILE_IGNORE_TRANSPARENCY : 0;
+	SET_TILE_INFO(
+			0,
+			mrdo_fgvideoram[tile_index+0x400] + ((attr & 0x80) << 1),
+			attr & 0x3f,
+			(attr & 0x40) ? TILE_IGNORE_TRANSPARENCY : 0)
 }
 
 

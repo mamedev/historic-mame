@@ -97,11 +97,14 @@ static WRITE32_HANDLER( cpua_ctrl_w )
 	is there an irq enable in the top nibble?
 	*/
 
-	if (ACCESSING_MSB) {
+	if (ACCESSING_MSB)
+	{
 		cpu_set_reset_line(2,(data &0x200) ? CLEAR_LINE : ASSERT_LINE);
 		if (data&0x8000) cpu_cause_interrupt(0,3); /* Guess */
 	}
-	if (ACCESSING_LSB) {
+
+	if (ACCESSING_LSB32)
+	{
 		/* Lamp control bits of some sort in the lsb */
 	}
 }

@@ -23,14 +23,22 @@ static void bigtwin_get_tx_tile_info(int tile_index)
 {
 	UINT16 code = wbeachvl_videoram1[2*tile_index];
 	UINT16 color = wbeachvl_videoram1[2*tile_index+1];
-	SET_TILE_INFO(2,code,color)
+	SET_TILE_INFO(
+			2,
+			code,
+			color,
+			0)
 }
 
 static void bigtwin_get_fg_tile_info(int tile_index)
 {
 	UINT16 code = wbeachvl_videoram2[2*tile_index];
 	UINT16 color = wbeachvl_videoram2[2*tile_index+1];
-	SET_TILE_INFO(1,code,color)
+	SET_TILE_INFO(
+			1,
+			code,
+			color,
+			0)
 }
 
 
@@ -38,23 +46,33 @@ static void wbeachvl_get_tx_tile_info(int tile_index)
 {
 	UINT16 code = wbeachvl_videoram1[2*tile_index];
 	UINT16 color = wbeachvl_videoram1[2*tile_index+1];
-	SET_TILE_INFO(2,code,color / 4)
+	SET_TILE_INFO(
+			2,
+			code,
+			color / 4,
+			0)
 }
 
 static void wbeachvl_get_fg_tile_info(int tile_index)
 {
 	UINT16 code = wbeachvl_videoram2[2*tile_index];
 	UINT16 color = wbeachvl_videoram2[2*tile_index+1];
-	SET_TILE_INFO(1,code & 0x7fff,color / 4 + 8)
-	tile_info.flags = (code & 0x8000) ? TILE_FLIPX : 0;
+	SET_TILE_INFO(
+			1,
+			code & 0x7fff,
+			color / 4 + 8,
+			(code & 0x8000) ? TILE_FLIPX : 0)
 }
 
 static void wbeachvl_get_bg_tile_info(int tile_index)
 {
 	UINT16 code = wbeachvl_videoram3[2*tile_index];
 	UINT16 color = wbeachvl_videoram3[2*tile_index+1];
-	SET_TILE_INFO(1,code & 0x7fff,color / 4)
-	tile_info.flags = (code & 0x8000) ? TILE_FLIPX : 0;
+	SET_TILE_INFO(
+			1,
+			code & 0x7fff,
+			color / 4,
+			(code & 0x8000) ? TILE_FLIPX : 0)
 }
 
 

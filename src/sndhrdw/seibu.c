@@ -32,10 +32,140 @@
 #include "driver.h"
 #include "sndhrdw/seibu.h"
 
-static int sound_cpu;
-unsigned char *seibu_shared_sound_ram;
+
+
+/*
+	Games using encrypted sound cpu:
+
+	Cabal            1988	"Michel/Seibu    sound 11/04/88"
+	Dead Angle       1988?	"START UP PROGRAM V1.02 (C)1986 SEIBU KAIHATSU INC."
+	Dynamite Duke    1989	"START UP PROGRAM V1.02 (C)1986 SEIBU KAIHATSU INC."
+	Toki             1989	"START UP PROGRAM V1.02 (C)1986 SEIBU KAIHATSU INC."
+	Raiden (alt)     1990	"START UP PROGRAM V1.02 (C)1986 SEIBU KAIHATSU INC."
+
+	raiden and the decrypted raidena are not identical, there are vast sections of different data.
+	However, there are a few different bytes in the middle of identical data, suggesting a possible
+	error in the decryption scheme: they all require an additional XOR with 0x20 and are located at
+	similar addresses.
+	00002422: 03 23
+	000024A1: 00 20
+	000024A2: 09 29
+	00002822: 48 68
+	000028A1: 06 26
+	00002A21: 17 37
+	00002A22: 00 20
+	00002AA1: 12 32
+	00002C21: 02 22
+	00002CA1: 02 22
+	00002CA2: 17 37
+*/
+
+#define BIT(data,bit) (((data)>>(bit))&1)
+
+static UINT8 decrypt_data(int a,int src)
+{
+	int xor = 0;
+
+	//80 =  ADDR_9  &  ADDR_8
+	//40 =  ADDR_11 &  ADDR_4  & ADDR_1
+	//04 =  ADDR_11 & !ADDR_8  & ADDR_1
+	//02 =  ADDR_13 & !ADDR_11 & ADDR_9 &  ADDR_4 & ADDR_2
+	//01 =  ADDR_13 & !ADDR_11 & ADDR_9 & !ADDR_4 & ADDR_2
+	//01 = !ADDR_13 & !ADDR_11 & ADDR_9 &  ADDR_2
+	//01 =  ADDR_13 & !ADDR_6  & ADDR_4
+	if ( BIT(a,9)  &  BIT(a,8))                                    xor |= 0x80;
+	if ( BIT(a,11) &  BIT(a,4)  & BIT(a,1))                        xor |= 0x40;
+	if ( BIT(a,11) & ~BIT(a,8)  & BIT(a,1))                        xor |= 0x04;
+	if ( BIT(a,13) & ~BIT(a,11) & BIT(a,9) &  BIT(a,4) & BIT(a,2)) xor |= 0x02;
+	if ( BIT(a,13) & ~BIT(a,11) & BIT(a,9) & ~BIT(a,4) & BIT(a,2)) xor |= 0x01;
+	if (~BIT(a,13) & ~BIT(a,11) & BIT(a,9) &  BIT(a,2))            xor |= 0x01;
+	if ( BIT(a,13) & ~BIT(a,6)  & BIT(a,4))                        xor |= 0x01;
+
+	//03 = ADDR_13 & ADDR_4 & (SRC_0 ^ SRC_1)
+	//0C = ADDR_8  & ADDR_4 & (SRC_2 ^ SRC_3)
+	if (BIT(a,13) & BIT(a,4) & (BIT(src,0) ^ BIT(src,1))) xor ^= 0x03;
+	if (BIT(a, 8) & BIT(a,4) & (BIT(src,2) ^ BIT(src,3))) xor ^= 0x0C;
+
+	return src ^ xor;
+}
+
+static UINT8 decrypt_opcode(int a,int src)
+{
+	int xor = 0;
+
+	//80 = !ADDR_11 &  ADDR_9 & ADDR_8
+	//80 = !ADDR_12 &  ADDR_11 &  ADDR_9 & ADDR_8 &  ADDR_6
+	//80 = !ADDR_12 &  ADDR_11 & !ADDR_6 & ADDR_4 &  ADDR_1
+	//40 = !ADDR_12 &  ADDR_11 &  ADDR_9 & ADDR_8 & !ADDR_6
+	//40 = !ADDR_12 &  ADDR_11 &  ADDR_6 & ADDR_4 &  ADDR_1
+	//20 =  ADDR_12 & !ADDR_9
+	//20 =  ADDR_12 &  ADDR_9  & !ADDR_6 & ADDR_1
+	//10 = !ADDR_12 & !ADDR_11 & !ADDR_6 & ADDR_1
+	//10 = !ADDR_12 &  ADDR_11 & !ADDR_6 & ADDR_1
+	//10 =  ADDR_12 &  ADDR_9
+	//10 =  ADDR_12 & !ADDR_9  & !ADDR_6 & ADDR_1
+	//08 = !ADDR_12 & !ADDR_11 & !ADDR_4 & ADDR_2
+	//08 = !ADDR_12 & !ADDR_11 & !ADDR_8 & ADDR_4 & ADDR_2
+	//08 = !ADDR_12 &  ADDR_11 & !ADDR_8 & ADDR_2
+	//08 = !ADDR_12 &  ADDR_11 & !ADDR_4 & ADDR_2
+	//04 = !ADDR_12 & !ADDR_11 &  ADDR_8 & ADDR_4 & ADDR_2
+	//04 = !ADDR_12 &  ADDR_11 & !ADDR_8 & ADDR_1
+	//04 = !ADDR_12 &  ADDR_11 &  ADDR_8 & ADDR_4 & ADDR_2
+	//01 = !ADDR_12 & !ADDR_11 &  ADDR_9 & ADDR_2
+	//01 =  ADDR_12 &  ADDR_9  &  ADDR_2
+	if (~BIT(a,11) &  BIT(a,9) &  BIT(a,8))                          xor |= 0x80;
+	if (~BIT(a,12) &  BIT(a,11) &  BIT(a,9) &  BIT(a,8) &  BIT(a,6)) xor |= 0x80;
+	if (~BIT(a,12) &  BIT(a,11) & ~BIT(a,6) &  BIT(a,4) &  BIT(a,1)) xor |= 0x80;
+	if (~BIT(a,12) &  BIT(a,11) &  BIT(a,9) &  BIT(a,8) & ~BIT(a,6)) xor |= 0x40;
+	if (~BIT(a,12) &  BIT(a,11) &  BIT(a,6) &  BIT(a,4) &  BIT(a,1)) xor |= 0x40;
+	if ( BIT(a,12) & ~BIT(a,9))                                      xor |= 0x20;
+	if ( BIT(a,12) &  BIT(a,9)  & ~BIT(a,6) &  BIT(a,1))             xor |= 0x20;
+	if (~BIT(a,12) & ~BIT(a,11) & ~BIT(a,6) &  BIT(a,1))             xor |= 0x10;
+	if (~BIT(a,12) &  BIT(a,11) & ~BIT(a,6) &  BIT(a,1))             xor |= 0x10;
+	if ( BIT(a,12) &  BIT(a,9))                                      xor |= 0x10;
+	if ( BIT(a,12) & ~BIT(a,9)  & ~BIT(a,6) &  BIT(a,1))             xor |= 0x10;
+	if (~BIT(a,12) & ~BIT(a,11) & ~BIT(a,4) &  BIT(a,2))             xor |= 0x08;
+	if (~BIT(a,12) & ~BIT(a,11) & ~BIT(a,8) &  BIT(a,4) &  BIT(a,2)) xor |= 0x08;
+	if (~BIT(a,12) &  BIT(a,11) & ~BIT(a,8) &  BIT(a,2))             xor |= 0x08;
+	if (~BIT(a,12) &  BIT(a,11) & ~BIT(a,4) &  BIT(a,2))             xor |= 0x08;
+	if (~BIT(a,12) & ~BIT(a,11) &  BIT(a,8) &  BIT(a,4) &  BIT(a,2)) xor |= 0x04;
+	if (~BIT(a,12) &  BIT(a,11) & ~BIT(a,8) &  BIT(a,1))             xor |= 0x04;
+	if (~BIT(a,12) &  BIT(a,11) &  BIT(a,8) &  BIT(a,4) &  BIT(a,2)) xor |= 0x04;
+	if (~BIT(a,12) & ~BIT(a,11) &  BIT(a,9) &  BIT(a,2))             xor |= 0x01;
+	if ( BIT(a,12) &  BIT(a,9)  &  BIT(a,2))                         xor |= 0x01;
+
+	//0C = ADDR_8  &  ADDR_4 & (SRC_2 ^ SRC_3)
+	//30 = ADDR_12 &  ADDR_9 & (SRC_4 ^ SRC_5)
+	//C0 = ADDR_11 & !ADDR_6 & (SRC_6 ^ SRC_7)
+	if (BIT(a, 8) &  BIT(a,4) & (BIT(src,2) ^ BIT(src,3))) xor ^= 0x0C;
+	if (BIT(a,12) &  BIT(a,9) & (BIT(src,4) ^ BIT(src,5))) xor ^= 0x30;
+	if (BIT(a,11) & ~BIT(a,6) & (BIT(src,6) ^ BIT(src,7))) xor ^= 0xC0;
+
+	return src ^ xor;
+}
+
+void seibu_sound_decrypt(int cpu_region,int length)
+{
+	UINT8 *rom = memory_region(cpu_region);
+	int diff =  memory_region_length(cpu_region)/2;
+	int i;
+
+	memory_set_opcode_base(cpu_region-REGION_CPU1,rom+diff);
+
+	for (i = 0;i < length;i++)
+	{
+		UINT8 src = rom[i];
+
+		rom[i]      = decrypt_data(i,src);
+		rom[i+diff] = decrypt_opcode(i,src);
+	}
+}
+
 
 /***************************************************************************/
+
+
+static int sound_cpu;
 
 enum
 {
@@ -80,6 +210,11 @@ static void setvector_callback(int param)
 		cpu_set_irq_line(sound_cpu,0,ASSERT_LINE);
 }
 
+WRITE_HANDLER( seibu_irq_clear_w )
+{
+	setvector_callback(VECTOR_INIT);
+}
+
 WRITE_HANDLER( seibu_rst10_ack_w )
 {
 	/* Unused for now */
@@ -116,107 +251,121 @@ void seibu_sound_init_2(void)
 
 /***************************************************************************/
 
+static UINT8 main2sub[2],sub2main[2];
+static int main2sub_pending,sub2main_pending;
+
+
 WRITE_HANDLER( seibu_bank_w )
 {
-	unsigned char *RAM;
+	UINT8 *rom = memory_region(REGION_CPU1+sound_cpu);
 
-	if (sound_cpu==1) RAM = memory_region(REGION_CPU2);
-	else RAM = memory_region(REGION_CPU3);
+	cpu_setbank(1,rom + 0x10000 + 0x8000 * (data & 1));
+}
 
-	if (data&1) { cpu_setbank(1,&RAM[0x0000]); }
-	else { cpu_setbank(1,&RAM[0x10000]); }
+WRITE_HANDLER( seibu_coin_w )
+{
+	coin_counter_w(0,data & 1);
+	coin_counter_w(1,data & 2);
 }
 
 READ_HANDLER( seibu_soundlatch_r )
 {
-	return seibu_shared_sound_ram[offset<<1];
+	return main2sub[offset];
 }
 
-WRITE_HANDLER( seibu_soundclear_w )
+READ_HANDLER( seibu_main_data_pending_r )
 {
-	seibu_shared_sound_ram[0]=data;
-}
-
-WRITE_HANDLER( seibu_soundlatch_w )
-{
-	seibu_shared_sound_ram[offset]=data;
-	if (offset==0xc && seibu_shared_sound_ram[0]!=0)
-		timer_set(TIME_NOW,RST18_ASSERT,setvector_callback);
-}
-
-WRITE16_HANDLER( seibu_soundlatch_word_w )
-{
-	if (ACCESSING_LSB)
-		seibu_soundlatch_w(2*offset,data & 0xff);
+	return sub2main_pending ? 1 : 0;
 }
 
 WRITE_HANDLER( seibu_main_data_w )
 {
-	seibu_shared_sound_ram[offset<<1]=data;
+	sub2main[offset] = data;
 }
+
+WRITE_HANDLER( seibu_pending_w )
+{
+	/* just a guess */
+	main2sub_pending = 0;
+	sub2main_pending = 1;
+}
+
+READ16_HANDLER( seibu_main_word_r )
+{
+	switch (offset)
+	{
+		case 2:
+		case 3:
+			return sub2main[offset-2];
+		case 5:
+			return main2sub_pending ? 1 : 0;
+		default:
+			logerror("%06x: seibu_main_word_r(%x)\n",cpu_get_pc(),offset);
+			return 0xffff;
+	}
+}
+
+WRITE16_HANDLER( seibu_main_word_w )
+{
+	if (ACCESSING_LSB)
+	{
+		switch (offset)
+		{
+			case 0:
+			case 1:
+				main2sub[offset] = data;
+				break;
+			case 4:
+				timer_set(TIME_NOW,RST18_ASSERT,setvector_callback);
+				break;
+			case 6:
+				/* just a guess */
+				sub2main_pending = 0;
+				main2sub_pending = 1;
+				break;
+			default:
+				logerror("%06x: seibu_main_word_w(%x,%02x)\n",cpu_get_pc(),offset,data);
+		}
+	}
+}
+
+READ_HANDLER( seibu_main_v30_r )
+{
+	return seibu_main_word_r(offset/2,0) >> (8 * (offset & 1));
+}
+
+WRITE_HANDLER( seibu_main_v30_w )
+{
+	seibu_main_word_w(offset/2,data << (8 * (offset & 1)),0xff00 >> (8 * (offset & 1)));
+}
+
 
 /***************************************************************************/
 
-static READ_HANDLER( sound_cpu_spin_r )
-{
-	unsigned char *RAM;
 
-	if (sound_cpu==1) RAM = memory_region(REGION_CPU2);
-	else RAM = memory_region(REGION_CPU3);
+MEMORY_READ_START( seibu_sound_readmem )
+	{ 0x0000, 0x1fff, MRA_ROM },
+	{ 0x2000, 0x27ff, MRA_RAM },
+	{ 0x4008, 0x4008, YM3812_status_port_0_r },
+	{ 0x4010, 0x4011, seibu_soundlatch_r },
+	{ 0x4012, 0x4012, seibu_main_data_pending_r },
+	{ 0x4013, 0x4013, input_port_0_r },
+	{ 0x6000, 0x6000, OKIM6295_status_0_r },
+	{ 0x8000, 0xffff, MRA_BANK1 },
+MEMORY_END
 
-	if (cpu_get_pc()==0x129 && RAM[0x201c]==0)
-		cpu_spinuntil_int();
-
-	return RAM[0x201c+offset];
-}
-
-void install_seibu_sound_speedup(int cpu)
-{
-	install_mem_read_handler(cpu, 0x201c, 0x201d, sound_cpu_spin_r);
-}
-
-/***************************************************************************/
-
-/* NOTICE!  This is not currently correct, this table works for the first
-128 bytes, but goes wrong after that.  I suspect the bytes in this table
-are shifted according to an address line.  I have not confirmed the pattern
-repeats after 128 bytes, it may be more...
-
-There is also a 0xff fill at the end of the rom.
-
-*/
-
-/* Game using encrypted sound cpu - Raiden, Dynamite Duke, Dead Angle */
-void seibu_sound_decrypt(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU3);
-	int xor_table[128]={
-		0x00,0x00,0x10,0x10,0x08,0x00,0x00,0x18,
-		0x00,0x00,0x10,0x10,0x08,0x08,0x18,0x18,
-
-		0x00,0x00,0x00,0x10,0x08,0x08,0x18,0x18,
-		0x00,0x00,0x00,0x10,0x08,0x08,0x18,0x18,
-
-		0x00,0x00,0x10,0x10,0x08,0x08,0x18,0x18,
-		0x00,0x00,0x10,0x10,0x08,0x08,0x18,0x18,
-
-		0x00,0x00,0x10,0x10,0x08,0x08,0x18,0x18,
-		0x00,0x00,0x10,0x10,0x08,0x08,0x18,0x18,
-
-		0x00,0x00,0x00,0x00,0x08,0x08,0x08,0x08,
-		0x00,0x00,0x00,0x00,0x08,0x08,0x08,0x08,
-
-		0x00,0x00,0x00,0x00,0x08,0x08,0x08,0x08,
-		0x00,0x00,0x00,0x00,0x08,0x08,0x08,0x08,
-
-		0x00,0x00,0x00,0x00,0x08,0x08,0x08,0x08,
-		0x00,0x00,0x00,0x00,0x08,0x08,0x08,0x08,
-
-		0x00,0x00,0x00,0x00,0x00,0x00,0x08,0x08,
-		0x00,0x00,0x00,0x00,0x08,0x08,0x08,0x08,
-	};
-	int i;
-
-	for (i=0; i<0x18000; i++)
-		RAM[i]=RAM[i]^xor_table[i%128];
-}
+MEMORY_WRITE_START( seibu_sound_writemem )
+	{ 0x0000, 0x1fff, MWA_ROM },
+	{ 0x2000, 0x27ff, MWA_RAM },
+	{ 0x4000, 0x4000, seibu_pending_w },
+	{ 0x4001, 0x4001, seibu_irq_clear_w },
+	{ 0x4002, 0x4002, seibu_rst10_ack_w },
+	{ 0x4003, 0x4003, seibu_rst18_ack_w },
+	{ 0x4007, 0x4007, seibu_bank_w },
+	{ 0x4008, 0x4008, YM3812_control_port_0_w },
+	{ 0x4009, 0x4009, YM3812_write_port_0_w },
+	{ 0x4018, 0x4019, seibu_main_data_w },
+	{ 0x401b, 0x401b, seibu_coin_w },
+	{ 0x6000, 0x6000, OKIM6295_data_0_w },
+	{ 0x8000, 0xffff, MWA_ROM },
+MEMORY_END

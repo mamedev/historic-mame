@@ -51,17 +51,21 @@ extern int flipscreen;
 static void get_fg_tile_info(int tile_index)
 {
 	unsigned char attr = airbustr_fgram[tile_index + 0x400];
-	SET_TILE_INFO(	0,
-					airbustr_fgram[tile_index] + ((attr & 0x0f) << 8),
-					(attr >> 4) + 0);
+	SET_TILE_INFO(
+			0,
+			airbustr_fgram[tile_index] + ((attr & 0x0f) << 8),
+			(attr >> 4) + 0,
+			0)
 }
 
 static void get_bg_tile_info(int tile_index)
 {
 	unsigned char attr = airbustr_bgram[tile_index + 0x400];
-	SET_TILE_INFO(	0,
-					airbustr_bgram[tile_index] + ((attr & 0x0f) << 8),
-					(attr >> 4) + 16);
+	SET_TILE_INFO(
+			0,
+			airbustr_bgram[tile_index] + ((attr & 0x0f) << 8),
+			(attr >> 4) + 16,
+			0)
 }
 
 

@@ -11,6 +11,7 @@ games, and the video hardware is pretty much like Irem games too. The only
 strange thing is that the screen is flipped vertically.
 
 TODO:
+- you can't play anymore after you die
 - lots of unknown dipswitches
 
 ***************************************************************************/
@@ -275,5 +276,5 @@ ROM_END
 
 
 
-GAME( 1985, kncljoe,  0,       kncljoe, kncljoe, 0, ROT0, "[Seibu Kaihatsu] (Taito license)", "Knuckle Joe (set 1)" )
-GAME( 1985, kncljoea, kncljoe, kncljoe, kncljoe, 0, ROT0, "[Seibu Kaihatsu] (Taito license)", "Knuckle Joe (set 2)" )
+GAMEX( 1985, kncljoe,  0,       kncljoe, kncljoe, 0, ROT0, "[Seibu Kaihatsu] (Taito license)", "Knuckle Joe (set 1)", GAME_NOT_WORKING )
+GAMEX( 1985, kncljoea, kncljoe, kncljoe, kncljoe, 0, ROT0, "[Seibu Kaihatsu] (Taito license)", "Knuckle Joe (set 2)", GAME_NOT_WORKING )

@@ -508,7 +508,7 @@ static void tape_update(void)
 	i8041_p2 = (i8041_p2 & ~0xe0) | (tape_bot_eot << 5) | (rclk << 6) | (rdata << 7);
 }
 
-#if MAME_DEBUG
+#ifdef MAME_DEBUG
 static void decocass_fno(offs_t offset, data8_t data)
 {
 		/* 8041ENA/ and is this a FNO write (function number)? */
@@ -951,7 +951,7 @@ WRITE_HANDLER( decocass_type2_w )
 	}
 	cpunum_set_reg(2, offset & 1 ? I8X41_CMND : I8X41_DATA, data);
 
-#if MAME_DEBUG
+#ifdef MAME_DEBUG
 	decocass_fno(offset, data);
 #endif
 }
@@ -1421,7 +1421,7 @@ WRITE_HANDLER( decocass_e5xx_w )
 	{
 		LOG(3,("%9.7f 6502-PC: %04x decocass_e5xx_w(%02x): $%02x -> %s\n", timer_get_time(), cpu_getpreviouspc(), offset, data, offset & 1 ? "8041-CMND" : "8041-DATA"));
 		cpunum_set_reg(2, offset & 1 ? I8X41_CMND : I8X41_DATA, data);
-#if MAME_DEBUG
+#ifdef MAME_DEBUG
 		decocass_fno(offset, data);
 #endif
 	}

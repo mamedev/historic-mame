@@ -1,8 +1,8 @@
-Description of the -listinfo output.
-------------------------------------
+Description of the -listinfo output
+-----------------------------------
 
-Grammar:
---------
+Grammar
+-------
 	start -> ENTRY*
 	ENTRY -> ENTRYNAME ENTRYVALUE
 	ENTRYNAME -> SYMBOL
@@ -11,19 +11,17 @@ Grammar:
 	SYMBOL -> any char except separator, '"', '(', ')'
 	STRING -> default C string in double quote ""
 
-Any space (specifically any char which C function ispace() tells is a
+Any space (specifically any char that the C function ispace() tells is a
 space) is considered a separator and must be ignored.
 
 
-Semantic:
----------
+Semantic
+--------
 game (...)
-Definition of all games emulated.
+Definition of a game emulated.
 
 resource (...)
-Definition of a resource. Actually the only two resource are
-the NeoGeo BIOS roms (named 'neogeo') and the YM-3812 samples
-(named 'ym3812').
+Definition of a resource. For example the NeoGeo BIOS rom 'neogeo'.
 
 
 Entries common for 'game' and 'resource'
@@ -57,35 +55,35 @@ Sample specification.
 
 
 Entries specific for 'game'
--------------------------
+---------------------------
 cloneof NAME
 Clone-of relathionship. This is intended to express an abstract
-clone-of relathionship.	[It's equal to the cloneof entry in gamedriver
-specification with the exception of the neogeo game which is not reported
-has a parent of any game.]
+clone-of relathionship. It's equal to the cloneof entry in gamedriver
+specification with the exception of the special NOT_DRIVER games
+(neogeo, cvs, decocass, playch10).
 
-chip '(' type (cpu | audio) [flags audio] name NAME [clock CLOCK] ')'
-List of hardware chips which the game use.
-[A MAME cpu used for sound has "flags audio"]
+chip '(' ... ')'
+List of hardware chips used by the game. A MAME cpu used ONLY for sound
+has the 'flags audio'.
 
-video '(' (screen raster | vector) [x X y Y] colors NCOLORS freq NFREQ ')'
-Many information of the game video hardware.
+video '(' ... ')'
+Informations of the game video hardware.
 
-input '(' players NPLAYERS [control TYPE] [buttons NBUTTONS] coins NCOINS ')'
-Many information of the game input hardware.
+input '(' ... ')'
+Informations of the game input hardware.
 
 driver '(' status (preliminary | good) color (preliminary | imperfect | good)
-  hiscore (preliminary | good) colordeep NCOLORBITS credits CREDITS ')'
-Many information of the MAME driver status and requirements.
+  hiscore (preliminary | good) ... ')'
+Informations of the MAME driver status and requirements.
 
-sound (channels NUMBER)
+sound '(' ... ')'
 Number of the sound channels.
 
 
 How to read the file
 --------------------
-If you have the necessity to read the output of -listinfo option
-you must do attention of these issues:
+If you need to read the output of -listinfo option you must take care
+of these issues:
 
 1) You can't do any assumption of space indentation.
 2) You can't do any assumption of max line length. All output can be
@@ -93,8 +91,8 @@ you must do attention of these issues:
 3) You can't do any assumption of order of the entries.
 4) You can't do any assumption of the presence of any entry except the
    game.name and resource.name which are mandatory and unique.
-5) You must skip entry unknow.
-6) Spaces are required only for separing SYMBOL.
+5) You must ignore any entry unknow.
+6) Spaces are required only for separing SYMBOLs.
 7) Lists of entry empty are valid.
 
 For example:
@@ -122,19 +120,20 @@ extern "C" {
 #include <stdio.h>
 
 enum info_t {
-	info_error,      /* Generic error in reading */
-	info_eof,	 /* End of file got at valid position */
-	info_symbol,	 /* Symbol */
-	info_open,	 /* ( */
-	info_close,	 /* ) */
-	info_string      /* C string (automatically converted) */
+	info_error,      /* generic error in reading */
+	info_eof,        /* end of file got at valid position */
+	info_symbol,     /* symbol */
+	info_open,       /* ( */
+	info_close,      /* ) */
+	info_string      /* c string automatically converted */
 };
 
-void info_init(void);
-void info_done(void);
 const char* info_text_get(void);
 enum info_t info_token_get(FILE* f);
 enum info_t info_skip_value(FILE* f);
+
+void info_init(void);
+void info_done(void);
 unsigned info_row_get(void);
 unsigned info_col_get(void);
 unsigned info_pos_get(void);
@@ -167,8 +166,10 @@ static unsigned info_pos = 0; /* Char */
 static unsigned info_row = 0; /* Row */
 static unsigned info_col = 0; /* Column */
 
-/* Inizialize the info reading system */
+/* Init */
 void info_init(void) {
+	assert(!info_buf_map);
+
 	info_buf_max = 0;
 	info_buf_map = 0;
 	info_pos = 0;
@@ -176,9 +177,10 @@ void info_init(void) {
 	info_col = 0;
 }
 
-/* Deinizialize the info reading system */
+/* Done */
 void info_done(void) {
 	free(info_buf_map);
+	info_buf_map = 0;
 }
 
 /* Get information of file position */
@@ -203,7 +205,7 @@ static void info_buf_resize(unsigned size) {
 	if (size > info_buf_max)
 		info_buf_max = size;
 	info_buf_map = realloc(info_buf_map, info_buf_max );
-	assert(	info_buf_map );
+	assert( info_buf_map );
 }
 
 /* Add a char to the buffer end */
@@ -218,7 +220,7 @@ static void info_buf_reset() {
 	info_buf_mac = 0;
 }
 
-/* Return last token text if is a info_symbol or a info_string token */
+/* Return last token text */
 const char* info_text_get(void) {
 	/* ensure the buffer end with zero */
 	if (info_buf_mac==0 || info_buf_map[info_buf_mac-1]!=0)
@@ -228,7 +230,7 @@ const char* info_text_get(void) {
 
 /* Read a char from file */
 static int info_getc(FILE* f) {
-	int c =	fgetc(f);
+	int c = fgetc(f);
 	switch (c) {
 		case EOF:
 			break;
@@ -300,9 +302,7 @@ static enum info_t get_string(FILE* f) {
 				}
 				break;
 				default:
-					info_buf_add('\\');
-					info_buf_add(c);
-				break;
+					return info_error;
 			}
 		} else {
 			info_buf_add(c);
@@ -481,6 +481,4 @@ int main() {
 	return EXIT_SUCCESS;
 }
 ------------------------------------------------------------------------------
-
-
 

@@ -2,7 +2,7 @@
 
 						  -= Yun Sung 8 Bit Games =-
 
-					driver by	Luca Elia (eliavit@unina.it)
+					driver by	Luca Elia (l.elia@tin.it)
 
 
 Main  CPU    :  Z80B

@@ -18,6 +18,7 @@
 #include "driver.h"
 #include "png.h"
 #include "artwork.h"
+#include <ctype.h>
 
 /* the backdrop instance */
 struct artwork_info *artwork_backdrop = NULL;
@@ -28,6 +29,17 @@ struct artwork_info *artwork_overlay = NULL;
 struct osd_bitmap *artwork_real_scrbitmap;
 
 void artwork_free(struct artwork_info **a);
+
+int my_stricmp( const char *dst, const char *src)
+{
+	while (*src && *dst)
+	{
+		if( tolower(*src) != tolower(*dst) ) return *dst - *src;
+		src++;
+		dst++;
+	}
+	return *dst - *src;
+}
 
 static void brightness_update (struct artwork_info *a)
 {
@@ -450,7 +462,7 @@ static int decode_png(const char *file_name, struct osd_bitmap **bitmap, struct 
 	/* check for .png */
 	strcpy(file_name2, file_name);
 	file_name_len = strlen(file_name2);
-	if ((file_name_len < 4) || stricmp(&file_name2[file_name_len - 4], ".png"))
+	if ((file_name_len < 4) || my_stricmp(&file_name2[file_name_len - 4], ".png"))
 	{
 		strcat(file_name2, ".png");
 	}
@@ -1449,7 +1461,7 @@ int artwork_get_size_info(const char *file_name, struct artwork_size_info *a)
 	/* check for .png */
 	strcpy(file_name2, file_name);
 	file_name_len = strlen(file_name2);
-	if ((file_name_len < 4) || stricmp(&file_name2[file_name_len - 4], ".png"))
+	if ((file_name_len < 4) || my_stricmp(&file_name2[file_name_len - 4], ".png"))
 	{
 		strcat(file_name2, ".png");
 	}

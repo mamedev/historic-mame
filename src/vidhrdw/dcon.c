@@ -75,7 +75,11 @@ static void get_back_tile_info(int tile_index)
 
 	tile&=0xfff;
 
-	SET_TILE_INFO(1,tile,color)
+	SET_TILE_INFO(
+			1,
+			tile,
+			color,
+			0)
 }
 
 static void get_fore_tile_info(int tile_index)
@@ -85,7 +89,11 @@ static void get_fore_tile_info(int tile_index)
 
 	tile&=0xfff;
 
-	SET_TILE_INFO(2,tile,color)
+	SET_TILE_INFO(
+			2,
+			tile,
+			color,
+			0)
 }
 
 static void get_mid_tile_info(int tile_index)
@@ -95,7 +103,11 @@ static void get_mid_tile_info(int tile_index)
 
 	tile&=0xfff;
 
-	SET_TILE_INFO(3,tile,color)
+	SET_TILE_INFO(
+			3,
+			tile,
+			color,
+			0)
 }
 
 static void get_text_tile_info(int tile_index)
@@ -105,7 +117,11 @@ static void get_text_tile_info(int tile_index)
 
 	tile&=0xfff;
 
-	SET_TILE_INFO(0,tile,color)
+	SET_TILE_INFO(
+			0,
+			tile,
+			color,
+			0)
 }
 
 int dcon_vh_start(void)

@@ -235,7 +235,11 @@ static void get_top0_tile_info(int tile_index)
 	attrib = topvideoram16[0][2*tile_index];
 	tile_number = topvideoram16[0][2*tile_index+1];
 	color = attrib & 0x7f;
-	SET_TILE_INFO(0,tile_number,color)
+	SET_TILE_INFO(
+			0,
+			tile_number,
+			color,
+			0)
 	tile_info.priority = (attrib & 0x0f00) >> 8;
 }
 
@@ -246,7 +250,11 @@ static void get_fg0_tile_info(int tile_index)
 	attrib = fgvideoram16[0][2*tile_index];
 	tile_number = fgvideoram16[0][2*tile_index+1];
 	color = attrib & 0x7f;
-	SET_TILE_INFO(0,tile_number,color)
+	SET_TILE_INFO(
+			0,
+			tile_number,
+			color,
+			0)
 	tile_info.priority = (attrib & 0x0f00) >> 8;
 }
 
@@ -257,7 +265,11 @@ static void get_bg0_tile_info(int tile_index)
 	attrib = bgvideoram16[0][2*tile_index];
 	tile_number = bgvideoram16[0][2*tile_index+1];
 	color = attrib & 0x7f;
-	SET_TILE_INFO(0,tile_number,color)
+	SET_TILE_INFO(
+			0,
+			tile_number,
+			color,
+			0)
 	tile_info.priority = (attrib & 0x0f00) >> 8;
 ///	if ((attrib & 0x0f00) == 0) tile_info.flags |= TILE_IGNORE_TRANSPARENCY;
 }
@@ -269,7 +281,11 @@ static void get_top1_tile_info(int tile_index)
 	attrib = topvideoram16[1][2*tile_index];
 	tile_number = topvideoram16[1][2*tile_index+1];
 	color = attrib & 0x7f;
-	SET_TILE_INFO(2,tile_number,color)
+	SET_TILE_INFO(
+			2,
+			tile_number,
+			color,
+			0)
 	tile_info.priority = (attrib & 0x0f00) >> 8;
 }
 
@@ -280,7 +296,11 @@ static void get_fg1_tile_info(int tile_index)
 	attrib = fgvideoram16[1][2*tile_index];
 	tile_number = fgvideoram16[1][2*tile_index+1];
 	color = attrib & 0x7f;
-	SET_TILE_INFO(2,tile_number,color)
+	SET_TILE_INFO(
+			2,
+			tile_number,
+			color,
+			0)
 	tile_info.priority = (attrib & 0x0f00) >> 8;
 }
 
@@ -291,7 +311,11 @@ static void get_bg1_tile_info(int tile_index)
 	attrib = bgvideoram16[1][2*tile_index];
 	tile_number = bgvideoram16[1][2*tile_index+1];
 	color = attrib & 0x7f;
-	SET_TILE_INFO(2,tile_number,color)
+	SET_TILE_INFO(
+			2,
+			tile_number,
+			color,
+			0)
 	tile_info.priority = (attrib & 0x0f00) >> 8;
 }
 
@@ -303,7 +327,11 @@ static void batrider_get_top0_tile_info(int tile_index)
 	tile = topvideoram16[0][2*tile_index+1];
 	tile_number = ( batrider_object_bank[(tile >> 13) & 7] << 13 ) | ( tile & 0x1fff );
 	color = attrib & 0x7f;
-	SET_TILE_INFO(0,tile_number,color)
+	SET_TILE_INFO(
+			0,
+			tile_number,
+			color,
+			0)
 	tile_info.priority = (attrib & 0x0f00) >> 8;
 }
 
@@ -315,7 +343,11 @@ static void batrider_get_fg0_tile_info(int tile_index)
 	tile = fgvideoram16[0][2*tile_index+1];
 	tile_number = ( batrider_object_bank[(tile >> 13) & 7] << 13 ) | ( tile & 0x1fff );
 	color = attrib & 0x7f;
-	SET_TILE_INFO(0,tile_number,color)
+	SET_TILE_INFO(
+			0,
+			tile_number,
+			color,
+			0)
 	tile_info.priority = (attrib & 0x0f00) >> 8;
 }
 
@@ -327,7 +359,11 @@ static void batrider_get_bg0_tile_info(int tile_index)
 	tile = bgvideoram16[0][2*tile_index+1];
 	tile_number = ( batrider_object_bank[(tile >> 13) & 7] << 13 ) | ( tile & 0x1fff );
 	color = attrib & 0x7f;
-	SET_TILE_INFO(0,tile_number,color)
+	SET_TILE_INFO(
+			0,
+			tile_number,
+			color,
+			0)
 	tile_info.priority = (attrib & 0x0f00) >> 8;
 }
 
@@ -338,7 +374,11 @@ static void get_text_tile_info(int tile_index)
 	attrib = toaplan2_txvideoram16[tile_index];
 	tile_number = attrib & 0x3ff;
 	color = ((attrib >> 10) | 0x40) & 0x7f;
-	SET_TILE_INFO(2,tile_number,color)
+	SET_TILE_INFO(
+			2,
+			tile_number,
+			color,
+			0)
 	tile_info.priority = 0;
 }
 

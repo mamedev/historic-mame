@@ -1,5 +1,6 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "state.h"
 
 
 unsigned char *solomon_bgvideoram;
@@ -9,6 +10,12 @@ static struct osd_bitmap *tmpbitmap2;
 static unsigned char *dirtybuffer2;
 static int flipscreen;
 
+
+
+static void solomon_dirty_all(void)
+{
+	memset(dirtybuffer2,1,videoram_size);
+}
 
 
 /***************************************************************************
@@ -40,6 +47,9 @@ int solomon_vh_start(void)
 
 	/* leave everything at the default, but map all foreground 0 pens as transparent */
 	for (i = 0;i < 8;i++) palette_used_colors[16 * i] = PALETTE_COLOR_TRANSPARENT;
+
+	state_save_register_int ("video", 0, "flipscreen", &flipscreen);
+	state_save_register_func_postload (solomon_dirty_all);
 
 	return 0;
 }

@@ -1,3 +1,4 @@
+#ifndef DECLARE
 /***************************************************************************
 
 							  -= Cave Games =-
@@ -66,12 +67,10 @@ struct sprite_cave {
 	int line_offset;
 
 	const UINT32 *pal_data;
-//	UINT32 pen_usage;
-
-	int x_offset, y_offset;
 	int tile_width, tile_height;
 	int total_width, total_height;	/* in screen coordinates */
-	int x, y;
+	int x, y, xcount0, ycount0;
+	int zoomx_re, zoomy_re;
 };
 
 static int orientation, screen_width, screen_height;
@@ -125,18 +124,18 @@ Offset:
 #define DIM_NX		(0x20)
 #define DIM_NY		(0x20)
 
-
 #define CAVE_TILEMAP(_n_) \
 static void get_tile_info_##_n_( int tile_index ) \
 { \
 	UINT32 code		=	(cave_vram_##_n_[ tile_index * 2 + 0] << 16 )+ \
 						 cave_vram_##_n_[ tile_index * 2 + 1]; \
-	SET_TILE_INFO( _n_ ,  code & 0x00ffffff , (code & 0x3f000000) >> (32-8) ); \
+	SET_TILE_INFO( _n_ ,  code & 0x00ffffff , (code & 0x3f000000) >> (32-8), 0 ); \
 	tile_info.priority = (code & 0xc0000000)>> (32-2); \
 } \
 \
 WRITE16_HANDLER( cave_vram_##_n_##_w ) \
 { \
+	if((cave_vram_##_n_[offset] & ~mem_mask)==(data & ~mem_mask)) return; \
 	COMBINE_DATA(&cave_vram_##_n_[offset]); \
 	if ( (offset/2) < DIM_NX * DIM_NY ) \
 		tilemap_mark_tile_dirty(tilemap_##_n_, offset/2 ); \
@@ -145,6 +144,7 @@ WRITE16_HANDLER( cave_vram_##_n_##_w ) \
 WRITE16_HANDLER( cave_vram_##_n_##_8x8_w ) \
 { \
 	offset %= ( (DIM_NX * 2) * (DIM_NY * 2) * 2); /* mirrored RAM */ \
+	if((cave_vram_##_n_[offset] & ~mem_mask)==(data & ~mem_mask)) return; \
 	COMBINE_DATA(&cave_vram_##_n_[offset]); \
 	tilemap_mark_tile_dirty(tilemap_##_n_, offset/2 ); \
 }
@@ -585,9 +585,9 @@ static void get_sprite_info_cave(void)
 	const unsigned char  *gfx_max	=	base_gfx + memory_region_length(region);
 
 	data16_t      *source			=	spriteram16 + ((spriteram_size/2) / 2) * (cave_videoregs[ 4 ] & 1);
+	data16_t      *finish			=	source + ((spriteram_size/2) / 2);
 
 	struct sprite_cave *sprite			=	sprite_cave;
-	const struct sprite_cave *finish	=	sprite + num_sprites;
 
 	int	glob_flipx	=	cave_videoregs[ 0 ] & 0x8000;
 	int	glob_flipy	=	cave_videoregs[ 1 ] & 0x8000;
@@ -595,19 +595,20 @@ static void get_sprite_info_cave(void)
 	int max_x		=	Machine->drv->screen_width;
 	int max_y		=	Machine->drv->screen_height;
 
-	for (; sprite < finish; sprite++,source+=8 )
+	for (; source < finish; source+=8 )
 	{
 		int x,y,attr,code,zoomx,zoomy,size,flipx,flipy;
+		int total_width_f,total_height_f;
 
 		if (cave_spritetype == 2)	/* Hot Dog Storm */
 		{
-			x		=		source[ 0 ] & 0x3ff;
-			y		=		source[ 1 ] & 0x3ff;
+			x		=		(source[ 0 ] & 0x3ff) << 8;
+			y		=		(source[ 1 ] & 0x3ff) << 8;
 		}
 		else						/* all others */
 		{
-			x		=		source[ 0 ] >> 6;
-			y		=		source[ 1 ] >> 6;
+			x		=		source[ 0 ] << 2;
+			y		=		source[ 1 ] << 2;
 		}
 		attr		=		source[ 2 ];
 		code		=		source[ 3 ] + ((attr & 3) << 16);
@@ -615,32 +616,62 @@ static void get_sprite_info_cave(void)
 		zoomy		=		source[ 5 ];
 		size		=		source[ 6 ];
 
+		sprite->tile_width		=	( (size >> 8) & 0x1f ) * 16;
+		sprite->tile_height		=	( (size >> 0) & 0x1f ) * 16;
+		sprite->pen_data		=	base_gfx + (16*16) * code;
+
+		/* Bound checking */
+		if (((sprite->pen_data + sprite->tile_width * sprite->tile_height - 1) >= gfx_max ) ||
+		    !sprite->tile_width || !sprite->tile_height ){continue;}
+
 		flipx		=		attr & 0x0008;
 		flipy		=		attr & 0x0004;
 
-		sprite->priority		=	(attr & 0x0030) >> 4;
-		sprite->flags			=	SPRITE_VISIBLE_CAVE;
+		sprite->total_width		=	(total_width_f  = sprite->tile_width  * zoomx) / 0x100;
+		sprite->total_height	=	(total_height_f = sprite->tile_height * zoomy) / 0x100;
 
-		sprite->tile_width		=	( (size >> 8) & 0x1f ) * 16;
-		sprite->tile_height		=	( (size >> 0) & 0x1f ) * 16;
+		if (sprite->total_width <= 1)
+		{
+			sprite->total_width  = 1;
+			sprite->zoomx_re = sprite->tile_width << 16;
+			sprite->xcount0 = sprite->zoomx_re / 2;
+			x -= 0x80;
+		}
+		else
+		{
+			sprite->zoomx_re = 0x1000000 / zoomx;
+			sprite->xcount0 = sprite->zoomx_re - 1;
+		}
 
-		sprite->total_width		=	(sprite->tile_width  * zoomx) / 0x100;
-		sprite->total_height	=	(sprite->tile_height * zoomy) / 0x100;
+		if (sprite->total_height <= 1)
+		{
+			sprite->total_height = 1;
+			sprite->zoomy_re = sprite->tile_height << 16;
+			sprite->ycount0 = sprite->zoomy_re / 2;
+			y -= 0x80;
+		}
+		else
+		{
+			sprite->zoomy_re = 0x1000000 / zoomy;
+			sprite->ycount0 = sprite->zoomy_re - 1;
+		}
 
-		sprite->pen_data		=	base_gfx + (16*16) * code;
-		sprite->line_offset		=	sprite->tile_width;
+		if (flipx && (zoomx != 0x100)) x += (sprite->tile_width<<8) - total_width_f - 0x80;
+		if (flipy && (zoomy != 0x100)) y += (sprite->tile_height<<8) - total_height_f - 0x80;
 
-		sprite->pal_data		=	base_pal + (attr & 0x3f00);	// first 0x4000 colors
-
-		/* Bound checking */
-		if ((sprite->pen_data + sprite->tile_width * sprite->tile_height - 1) >= gfx_max )
-			{sprite->flags = 0;	continue;}
-
-		if (flipx) x += sprite->tile_width - sprite->total_width;
-		if (flipy) y += sprite->tile_height - sprite->total_height;
+		x >>= 8;
+		y >>= 8;
 
 		if (x > 0x1FF)	x -= 0x400;
 		if (y > 0x1FF)	y -= 0x400;
+
+		if (x + sprite->total_width<=0 || x>=max_x || y + sprite->total_height<=0 || y>=max_y )
+		{continue;}
+
+		sprite->priority		=	(attr & 0x0030) >> 4;
+		sprite->flags			=	SPRITE_VISIBLE_CAVE;
+		sprite->line_offset		=	sprite->tile_width;
+		sprite->pal_data		=	base_pal + (attr & 0x3f00);	// first 0x4000 colors
 
 		if (glob_flipx)	{ x = max_x - x - sprite->total_width;	flipx = !flipx; }
 		if (glob_flipy)	{ y = max_y - y - sprite->total_height;	flipy = !flipy; }
@@ -650,7 +681,10 @@ static void get_sprite_info_cave(void)
 
 		if (flipx)	sprite->flags |= SPRITE_FLIPX_CAVE;
 		if (flipy)	sprite->flags |= SPRITE_FLIPY_CAVE;
+
+		sprite++;
 	}
+	num_sprites = sprite - sprite_cave;
 }
 
 static void get_sprite_info_donpachi(void)
@@ -662,9 +696,9 @@ static void get_sprite_info_donpachi(void)
 	const unsigned char  *gfx_max	=	base_gfx + memory_region_length(region);
 
 	data16_t      *source			=	spriteram16 + ((spriteram_size/2) / 2) * (cave_videoregs[ 4 ] & 1);
+	data16_t      *finish			=	source + ((spriteram_size/2) / 2);
 
 	struct sprite_cave *sprite			=	sprite_cave;
-	const struct sprite_cave *finish	=	sprite + num_sprites;
 
 	int	glob_flipx	=	cave_videoregs[ 0 ] & 0x8000;
 	int	glob_flipy	=	cave_videoregs[ 1 ] & 0x8000;
@@ -672,7 +706,7 @@ static void get_sprite_info_donpachi(void)
 	int max_x		=	Machine->drv->screen_width;
 	int max_y		=	Machine->drv->screen_height;
 
-	for (; sprite < finish; sprite++,source+=8 )
+	for (; source < finish; source+=8 )
 	{
 		int x,y,attr,code,size,flipx,flipy;
 
@@ -682,26 +716,25 @@ static void get_sprite_info_donpachi(void)
 		y			=		source[ 3 ] & 0x3FF;
 		size		=		source[ 4 ];
 
+		sprite->tile_width		=	sprite->total_width		=	( (size >> 8) & 0x1f ) * 16;
+		sprite->tile_height		=	sprite->total_height	=	( (size >> 0) & 0x1f ) * 16;
+		sprite->pen_data		=	base_gfx + (16*16) * code;
+		if (x > 0x1FF)	x -= 0x400;
+		if (y > 0x1FF)	y -= 0x400;
+
+		/* Bound checking */
+		if (((sprite->pen_data + sprite->tile_width * sprite->tile_height - 1) >= gfx_max ) ||
+		    !sprite->tile_width || !sprite->tile_height ||
+			x + sprite->total_width<=0 || x>=max_x || y + sprite->total_height<=0 || y>=max_y )
+		{continue;}
+
 		flipx		=		attr & 0x0008;
 		flipy		=		attr & 0x0004;
 
 		sprite->priority		=	(attr & 0x0030) >> 4;
 		sprite->flags			=	SPRITE_VISIBLE_CAVE;
-
-		sprite->tile_width		=	sprite->total_width		=	( (size >> 8) & 0x1f ) * 16;
-		sprite->tile_height		=	sprite->total_height	=	( (size >> 0) & 0x1f ) * 16;
-
-		sprite->pen_data		=	base_gfx + (16*16) * code;
 		sprite->line_offset		=	sprite->tile_width;
-
 		sprite->pal_data		=	base_pal + (attr & 0x3f00);	// first 0x4000 colors
-
-		/* Bound checking */
-		if ((sprite->pen_data + sprite->tile_width * sprite->tile_height - 1) >= gfx_max )
-			{sprite->flags = 0;	continue;}
-
-		if (x > 0x1FF)	x -= 0x400;
-		if (y > 0x1FF)	y -= 0x400;
 
 		if (glob_flipx)	{ x = max_x - x - sprite->total_width;	flipx = !flipx; }
 		if (glob_flipy)	{ y = max_y - y - sprite->total_height;	flipy = !flipy; }
@@ -711,7 +744,10 @@ static void get_sprite_info_donpachi(void)
 
 		if (flipx)	sprite->flags |= SPRITE_FLIPX_CAVE;
 		if (flipy)	sprite->flags |= SPRITE_FLIPY_CAVE;
+
+		sprite++;
 	}
+	num_sprites = sprite - sprite_cave;
 }
 
 static void sprite_set_clip( const struct rectangle *clip )
@@ -787,8 +823,9 @@ static void sprite_update_cave( void ){
 		while( sprite<finish ){
 			SWAP(sprite->x, sprite->y)
 			SWAP(sprite->total_height,sprite->total_width)
+			SWAP(sprite->zoomx_re,sprite->zoomy_re)
+			SWAP(sprite->xcount0,sprite->ycount0)
 			SWAP(sprite->tile_width,sprite->tile_height)
-			SWAP(sprite->x_offset,sprite->y_offset)
 
 			/* we must also swap the flipx and flipy bits (if they aren't identical) */
 			if( sprite->flags&SPRITE_FLIPX_CAVE ){
@@ -811,9 +848,6 @@ static void sprite_update_cave( void ){
 		while( sprite<finish ){
 			sprite->x = screen_width - (sprite->x+sprite->total_width);
 			sprite->flags ^= toggle_bit;
-
-			/* extra processing for packed sprites */
-			sprite->x_offset = sprite->tile_width - (sprite->x_offset+sprite->total_width);
 			sprite++;
 		}
 	}
@@ -824,9 +858,6 @@ static void sprite_update_cave( void ){
 		while( sprite<finish ){
 			sprite->y = screen_height - (sprite->y+sprite->total_height);
 			sprite->flags ^= toggle_bit;
-
-			/* extra processing for packed sprites */
-			sprite->y_offset = sprite->tile_height - (sprite->y_offset+sprite->total_height);
 			sprite++;
 		}
 	}
@@ -838,9 +869,12 @@ static void sprite_update_cave( void ){
 		int spritetype = cave_spritetype2;
 		while( sprite<finish )
 		{
-			if( sprite->total_width>0 && sprite->total_height>0 && (sprite->flags&SPRITE_VISIBLE_CAVE) &&
-				sprite->x + sprite->total_width>blit.clip_left && sprite->x<blit.clip_right &&
-				sprite->y + sprite->total_height>blit.clip_top && sprite->y<blit.clip_bottom )
+/*
+			if( (sprite->flags&SPRITE_VISIBLE_CAVE)
+			  && sprite->x + sprite->total_width>blit.clip_left && sprite->x<blit.clip_right &&
+				sprite->y + sprite->total_height>blit.clip_top && sprite->y<blit.clip_bottom
+				)
+*/
 			{
 				sprite_table[sprite->priority][i[sprite->priority]++] = sprite;
 
@@ -848,11 +882,17 @@ static void sprite_update_cave( void ){
 				{
 					int j,offs = sprite->pal_data - Machine->remapped_colortable;
 					if(Machine->drv->total_colors == 0x8000)	/* 8 Bit Sprites */
-						for(j=1;j<256;j++)
-							palette_used_colors[offs+j] = PALETTE_COLOR_USED;
+					{
+						if(palette_used_colors[offs+1] != PALETTE_COLOR_USED)
+							for(j=1;j<256;j++)
+								palette_used_colors[offs+j] = PALETTE_COLOR_USED;
+					}
 					else										/* 4 Bit Sprites */
-						for(j=1;j<16;j++)
-							palette_used_colors[(offs>>4)+j] = PALETTE_COLOR_USED;
+					{
+						if(palette_used_colors[(offs>>4)+1] != PALETTE_COLOR_USED)
+							for(j=1;j<16;j++)
+								palette_used_colors[(offs>>4)+j] = PALETTE_COLOR_USED;
+					}
 				}
 
 				if(!(spritetype&CAVE_SPRITETYPE_ZBUF))
@@ -900,7 +940,7 @@ static void do_blit_zoom16_cave( const struct sprite_cave *sprite ){
 	/*	assumes SPRITE_LIST_RAW_DATA flag is set */
 
 	int x1,x2, y1,y2, dx,dy;
-	int xcount0 = 0, ycount0 = 0;
+	int xcount0 = 0x10000 + sprite->xcount0, ycount0 = 0x10000 + sprite->ycount0;
 
 	if( sprite->flags & SPRITE_FLIPX_CAVE ){
 		x2 = sprite->x;
@@ -908,8 +948,9 @@ static void do_blit_zoom16_cave( const struct sprite_cave *sprite ){
 		dx = -1;
 		if( x2<blit.clip_left ) x2 = blit.clip_left;
 		if( x1>blit.clip_right ){
-			xcount0 = (x1-blit.clip_right)*sprite->tile_width;
+			xcount0 += (x1-blit.clip_right)* sprite->zoomx_re;
 			x1 = blit.clip_right;
+			while((xcount0&0xffff)>=sprite->zoomx_re){xcount0 += sprite->zoomx_re; x1--;}
 		}
 		if( x2>=x1 ) return;
 		x1--; x2--;
@@ -919,8 +960,9 @@ static void do_blit_zoom16_cave( const struct sprite_cave *sprite ){
 		x2 = x1+sprite->total_width;
 		dx = 1;
 		if( x1<blit.clip_left ){
-			xcount0 = (blit.clip_left-x1)*sprite->tile_width;
+			xcount0 += (blit.clip_left-x1)*sprite->zoomx_re;
 			x1 = blit.clip_left;
+			while((xcount0&0xffff)>=sprite->zoomx_re){xcount0 += sprite->zoomx_re; x1++;}
 		}
 		if( x2>blit.clip_right ) x2 = blit.clip_right;
 		if( x1>=x2 ) return;
@@ -931,8 +973,9 @@ static void do_blit_zoom16_cave( const struct sprite_cave *sprite ){
 		dy = -1;
 		if( y2<blit.clip_top ) y2 = blit.clip_top;
 		if( y1>blit.clip_bottom ){
-			ycount0 = (y1-blit.clip_bottom)*sprite->tile_height;
+			ycount0 += (y1-blit.clip_bottom)*sprite->zoomy_re;
 			y1 = blit.clip_bottom;
+			while((ycount0&0xffff)>=sprite->zoomy_re){ycount0 += sprite->zoomy_re; y1--;}
 		}
 		if( y2>=y1 ) return;
 		y1--; y2--;
@@ -942,15 +985,16 @@ static void do_blit_zoom16_cave( const struct sprite_cave *sprite ){
 		y2 = y1+sprite->total_height;
 		dy = 1;
 		if( y1<blit.clip_top ){
-			ycount0 = (blit.clip_top-y1)*sprite->tile_height;
+			ycount0 += (blit.clip_top-y1)*sprite->zoomy_re;
 			y1 = blit.clip_top;
+			while((ycount0&0xffff)>=sprite->zoomy_re){ycount0 += sprite->zoomy_re; y1++;}
 		}
 		if( y2>blit.clip_bottom ) y2 = blit.clip_bottom;
 		if( y1>=y2 ) return;
 	}
 
 	{
-		const unsigned char *pen_data = sprite->pen_data;
+		const unsigned char *pen_data = sprite->pen_data -1 -sprite->line_offset;
 		const UINT32        *pal_data = sprite->pal_data;
 		int x,y;
 		unsigned char pen;
@@ -964,49 +1008,47 @@ static void do_blit_zoom16_cave( const struct sprite_cave *sprite ){
 				const unsigned char *source;
 				UINT16 *dest1;
 
-				ycount = ycount0;
-				while( xcount>=sprite->total_width ){
-					xcount -= sprite->total_width;
-					pen_data+=sprite->line_offset;
-				}
-				if (xcount >= sprite->tile_width) goto skip1;
-				source = pen_data;
-				dest1 = &dest[x];
-				for( y=y1; y!=y2; y+=dy ){
-					while( ycount>=sprite->total_height ){
-						ycount -= sprite->total_height;
-						source ++;
+				if (xcount&0xffff0000){
+					ycount = ycount0;
+					pen_data+=sprite->line_offset*(xcount>>16);
+					xcount &= 0xffff;
+					source = pen_data;
+					dest1 = &dest[x];
+					for( y=y1; y!=y2; y+=dy ){
+						if (ycount&0xffff0000){
+							source+=ycount>>16;
+							ycount &= 0xffff;
+							pen = *source;
+							if (pen) *dest1 = pal_data[pen];
+						}
+						ycount+= sprite->zoomy_re;
+						dest1 += pitch;
 					}
-					pen = *source;
-					if ((ycount < sprite->tile_height) && pen) *dest1 = pal_data[pen];
-					ycount+= sprite->tile_height;
-					dest1 += pitch;
 				}
-skip1:
-				xcount += sprite->tile_width;
+				xcount += sprite->zoomx_re;
 			}
 		}
 		else {
 			for( y=y1; y!=y2; y+=dy ){
-				int xcount = xcount0;
+				int xcount;
 				const unsigned char *source;
-				while( ycount>=sprite->total_height ){
-					ycount -= sprite->total_height;
-					pen_data += sprite->line_offset;
-				}
-				if (ycount >= sprite->tile_height) goto skip;
-				source = pen_data;
-				for( x=x1; x!=x2; x+=dx ){
-					while( xcount>=sprite->total_width ){
-						xcount -= sprite->total_width;
-						source++;
+
+				if (ycount&0xffff0000){
+					xcount = xcount0;
+					pen_data+=sprite->line_offset*(ycount>>16);
+					ycount &= 0xffff;
+					source = pen_data;
+					for( x=x1; x!=x2; x+=dx ){
+						if (xcount&0xffff0000){
+							source+=xcount>>16;
+							xcount &= 0xffff;
+							pen = *source;
+							if (pen) dest[x] = pal_data[pen];
+						}
+						xcount += sprite->zoomx_re;
 					}
-					pen = *source;
-					if ((xcount < sprite->tile_width) && pen) dest[x] = pal_data[pen];
-					xcount += sprite->tile_width;
 				}
-skip:
-				ycount += sprite->tile_height;
+				ycount += sprite->zoomy_re;
 				dest += pitch;
 			}
 		}
@@ -1018,7 +1060,7 @@ static void do_blit_zoom16_cave_zb( const struct sprite_cave *sprite ){
 	/*	assumes SPRITE_LIST_RAW_DATA flag is set */
 
 	int x1,x2, y1,y2, dx,dy;
-	int xcount0 = 0, ycount0 = 0;
+	int xcount0 = 0x10000 + sprite->xcount0, ycount0 = 0x10000 + sprite->ycount0;
 
 	if( sprite->flags & SPRITE_FLIPX_CAVE ){
 		x2 = sprite->x;
@@ -1026,8 +1068,9 @@ static void do_blit_zoom16_cave_zb( const struct sprite_cave *sprite ){
 		dx = -1;
 		if( x2<blit.clip_left ) x2 = blit.clip_left;
 		if( x1>blit.clip_right ){
-			xcount0 = (x1-blit.clip_right)*sprite->tile_width;
+			xcount0 += (x1-blit.clip_right)* sprite->zoomx_re;
 			x1 = blit.clip_right;
+			while((xcount0&0xffff)>=sprite->zoomx_re){xcount0 += sprite->zoomx_re; x1--;}
 		}
 		if( x2>=x1 ) return;
 		x1--; x2--;
@@ -1037,8 +1080,9 @@ static void do_blit_zoom16_cave_zb( const struct sprite_cave *sprite ){
 		x2 = x1+sprite->total_width;
 		dx = 1;
 		if( x1<blit.clip_left ){
-			xcount0 = (blit.clip_left-x1)*sprite->tile_width;
+			xcount0 += (blit.clip_left-x1)*sprite->zoomx_re;
 			x1 = blit.clip_left;
+			while((xcount0&0xffff)>=sprite->zoomx_re){xcount0 += sprite->zoomx_re; x1++;}
 		}
 		if( x2>blit.clip_right ) x2 = blit.clip_right;
 		if( x1>=x2 ) return;
@@ -1049,8 +1093,9 @@ static void do_blit_zoom16_cave_zb( const struct sprite_cave *sprite ){
 		dy = -1;
 		if( y2<blit.clip_top ) y2 = blit.clip_top;
 		if( y1>blit.clip_bottom ){
-			ycount0 = (y1-blit.clip_bottom)*sprite->tile_height;
+			ycount0 += (y1-blit.clip_bottom)*sprite->zoomy_re;
 			y1 = blit.clip_bottom;
+			while((ycount0&0xffff)>=sprite->zoomy_re){ycount0 += sprite->zoomy_re; y1--;}
 		}
 		if( y2>=y1 ) return;
 		y1--; y2--;
@@ -1060,15 +1105,16 @@ static void do_blit_zoom16_cave_zb( const struct sprite_cave *sprite ){
 		y2 = y1+sprite->total_height;
 		dy = 1;
 		if( y1<blit.clip_top ){
-			ycount0 = (blit.clip_top-y1)*sprite->tile_height;
+			ycount0 += (blit.clip_top-y1)*sprite->zoomy_re;
 			y1 = blit.clip_top;
+			while((ycount0&0xffff)>=sprite->zoomy_re){ycount0 += sprite->zoomy_re; y1++;}
 		}
 		if( y2>blit.clip_bottom ) y2 = blit.clip_bottom;
 		if( y1>=y2 ) return;
 	}
 
 	{
-		const unsigned char *pen_data = sprite->pen_data;
+		const unsigned char *pen_data = sprite->pen_data -1 -sprite->line_offset;
 		const UINT32        *pal_data = sprite->pal_data;
 		int x,y;
 		unsigned char pen;
@@ -1086,59 +1132,55 @@ static void do_blit_zoom16_cave_zb( const struct sprite_cave *sprite ){
 				UINT16 *dest1;
 				UINT16 *zbf1;
 
-				ycount = ycount0;
-				while( xcount>=sprite->total_width ){
-					xcount -= sprite->total_width;
-					pen_data+=sprite->line_offset;
-				}
-				if (xcount >= sprite->tile_width) goto skip1;
-				source = pen_data;
-				dest1 = &dest[x];
-				zbf1 = &zbf[x];
-				for( y=y1; y!=y2; y+=dy ){
-					while( ycount>=sprite->total_height ){
-						ycount -= sprite->total_height;
-						source ++;
+				if (xcount&0xffff0000){
+					ycount = ycount0;
+					pen_data+=sprite->line_offset*(xcount>>16);
+					xcount &= 0xffff;
+					source = pen_data;
+					dest1 = &dest[x];
+					zbf1 = &zbf[x];
+					for( y=y1; y!=y2; y+=dy ){
+						if (ycount&0xffff0000){
+							source+=ycount>>16;
+							ycount &= 0xffff;
+							pen = *source;
+							if (pen && (*zbf1<=pri_sp)){
+								*dest1 = pal_data[pen];
+								*zbf1 = pri_sp;
+							}
+						}
+						ycount+= sprite->zoomy_re;
+						dest1 += pitch;
+						zbf1 += pitchz;
 					}
-					pen = *source;
-					if ((ycount < sprite->tile_height) && pen && (*zbf1<=pri_sp))
-					{
-						*dest1 = pal_data[pen];
-						*zbf1 = pri_sp;
-					}
-					ycount+= sprite->tile_height;
-					dest1 += pitch;
-					zbf1 += pitchz;
 				}
-skip1:
-				xcount += sprite->tile_width;
+				xcount += sprite->zoomx_re;
 			}
 		}
 		else {
 			for( y=y1; y!=y2; y+=dy ){
-				int xcount = xcount0;
+				int xcount;
 				const unsigned char *source;
-				while( ycount>=sprite->total_height ){
-					ycount -= sprite->total_height;
-					pen_data += sprite->line_offset;
-				}
-				if (ycount >= sprite->tile_height) goto skip;
-				source = pen_data;
-				for( x=x1; x!=x2; x+=dx ){
-					while( xcount>=sprite->total_width ){
-						xcount -= sprite->total_width;
-						source++;
+
+				if (ycount&0xffff0000){
+					xcount = xcount0;
+					pen_data+=sprite->line_offset*(ycount>>16);
+					ycount &= 0xffff;
+					source = pen_data;
+					for( x=x1; x!=x2; x+=dx ){
+						if (xcount&0xffff0000){
+							source+=xcount>>16;
+							xcount &= 0xffff;
+							pen = *source;
+							if (pen && (zbf[x]<=pri_sp)){
+								dest[x] = pal_data[pen];
+								zbf[x] = pri_sp;
+							}
+						}
+						xcount += sprite->zoomx_re;
 					}
-					pen = *source;
-					if ((xcount < sprite->tile_width) && pen && (zbf[x]<=pri_sp))
-					{
-						dest[x] = pal_data[pen];
-						zbf[x] = pri_sp;
-					}
-					xcount += sprite->tile_width;
 				}
-skip:
-				ycount += sprite->tile_height;
+				ycount += sprite->zoomy_re;
 				dest += pitch;
 				zbf += pitchz;
 			}
@@ -1350,12 +1392,11 @@ static void do_blit_16_cave_zb( const struct sprite_cave *sprite ){
 	}
 }
 
-//ks s
 static void do_blit_zoom8_cave( const struct sprite_cave *sprite ){
 	/*	assumes SPRITE_LIST_RAW_DATA flag is set */
 
 	int x1,x2, y1,y2, dx,dy;
-	int xcount0 = 0, ycount0 = 0;
+	int xcount0 = 0x10000 + sprite->xcount0, ycount0 = 0x10000 + sprite->ycount0;
 
 	if( sprite->flags & SPRITE_FLIPX_CAVE ){
 		x2 = sprite->x;
@@ -1363,8 +1404,9 @@ static void do_blit_zoom8_cave( const struct sprite_cave *sprite ){
 		dx = -1;
 		if( x2<blit.clip_left ) x2 = blit.clip_left;
 		if( x1>blit.clip_right ){
-			xcount0 = (x1-blit.clip_right)*sprite->tile_width;
+			xcount0 += (x1-blit.clip_right)* sprite->zoomx_re;
 			x1 = blit.clip_right;
+			while((xcount0&0xffff)>=sprite->zoomx_re){xcount0 += sprite->zoomx_re; x1--;}
 		}
 		if( x2>=x1 ) return;
 		x1--; x2--;
@@ -1374,8 +1416,9 @@ static void do_blit_zoom8_cave( const struct sprite_cave *sprite ){
 		x2 = x1+sprite->total_width;
 		dx = 1;
 		if( x1<blit.clip_left ){
-			xcount0 = (blit.clip_left-x1)*sprite->tile_width;
+			xcount0 += (blit.clip_left-x1)*sprite->zoomx_re;
 			x1 = blit.clip_left;
+			while((xcount0&0xffff)>=sprite->zoomx_re){xcount0 += sprite->zoomx_re; x1++;}
 		}
 		if( x2>blit.clip_right ) x2 = blit.clip_right;
 		if( x1>=x2 ) return;
@@ -1386,8 +1429,9 @@ static void do_blit_zoom8_cave( const struct sprite_cave *sprite ){
 		dy = -1;
 		if( y2<blit.clip_top ) y2 = blit.clip_top;
 		if( y1>blit.clip_bottom ){
-			ycount0 = (y1-blit.clip_bottom)*sprite->tile_height;
+			ycount0 += (y1-blit.clip_bottom)*sprite->zoomy_re;
 			y1 = blit.clip_bottom;
+			while((ycount0&0xffff)>=sprite->zoomy_re){ycount0 += sprite->zoomy_re; y1--;}
 		}
 		if( y2>=y1 ) return;
 		y1--; y2--;
@@ -1397,15 +1441,16 @@ static void do_blit_zoom8_cave( const struct sprite_cave *sprite ){
 		y2 = y1+sprite->total_height;
 		dy = 1;
 		if( y1<blit.clip_top ){
-			ycount0 = (blit.clip_top-y1)*sprite->tile_height;
+			ycount0 += (blit.clip_top-y1)*sprite->zoomy_re;
 			y1 = blit.clip_top;
+			while((ycount0&0xffff)>=sprite->zoomy_re){ycount0 += sprite->zoomy_re; y1++;}
 		}
 		if( y2>blit.clip_bottom ) y2 = blit.clip_bottom;
 		if( y1>=y2 ) return;
 	}
 
 	{
-		const unsigned char *pen_data = sprite->pen_data;
+		const unsigned char *pen_data = sprite->pen_data -1 -sprite->line_offset;
 		const UINT32        *pal_data = sprite->pal_data;
 		int x,y;
 		unsigned char pen;
@@ -1419,49 +1464,47 @@ static void do_blit_zoom8_cave( const struct sprite_cave *sprite ){
 				const unsigned char *source;
 				UINT8 *dest1;
 
-				ycount = ycount0;
-				while( xcount>=sprite->total_width ){
-					xcount -= sprite->total_width;
-					pen_data+=sprite->line_offset;
-				}
-				if (xcount >= sprite->tile_width) goto skip1;
-				source = pen_data;
-				dest1 = &dest[x];
-				for( y=y1; y!=y2; y+=dy ){
-					while( ycount>=sprite->total_height ){
-						ycount -= sprite->total_height;
-						source ++;
+				if (xcount&0xffff0000){
+					ycount = ycount0;
+					pen_data+=sprite->line_offset*(xcount>>16);
+					xcount &= 0xffff;
+					source = pen_data;
+					dest1 = &dest[x];
+					for( y=y1; y!=y2; y+=dy ){
+						if (ycount&0xffff0000){
+							source+=ycount>>16;
+							ycount &= 0xffff;
+							pen = *source;
+							if (pen) *dest1 = pal_data[pen];
+						}
+						ycount+= sprite->zoomy_re;
+						dest1 += pitch;
 					}
-					pen = *source;
-					if ((ycount < sprite->tile_height) && pen) *dest1 = pal_data[pen];
-					ycount+= sprite->tile_height;
-					dest1 += pitch;
 				}
-skip1:
-				xcount += sprite->tile_width;
+				xcount += sprite->zoomx_re;
 			}
 		}
 		else {
 			for( y=y1; y!=y2; y+=dy ){
-				int xcount = xcount0;
+				int xcount;
 				const unsigned char *source;
-				while( ycount>=sprite->total_height ){
-					ycount -= sprite->total_height;
-					pen_data += sprite->line_offset;
-				}
-				if (ycount >= sprite->tile_height) goto skip;
-				source = pen_data;
-				for( x=x1; x!=x2; x+=dx ){
-					while( xcount>=sprite->total_width ){
-						xcount -= sprite->total_width;
-						source++;
+
+				if (ycount&0xffff0000){
+					xcount = xcount0;
+					pen_data+=sprite->line_offset*(ycount>>16);
+					ycount &= 0xffff;
+					source = pen_data;
+					for( x=x1; x!=x2; x+=dx ){
+						if (xcount&0xffff0000){
+							source+=xcount>>16;
+							xcount &= 0xffff;
+							pen = *source;
+							if (pen) dest[x] = pal_data[pen];
+						}
+						xcount += sprite->zoomx_re;
 					}
-					pen = *source;
-					if ((xcount < sprite->tile_width) && pen) dest[x] = pal_data[pen];
-					xcount += sprite->tile_width;
 				}
-skip:
-				ycount += sprite->tile_height;
+				ycount += sprite->zoomy_re;
 				dest += pitch;
 			}
 		}
@@ -1473,7 +1516,7 @@ static void do_blit_zoom8_cave_zb( const struct sprite_cave *sprite ){
 	/*	assumes SPRITE_LIST_RAW_DATA flag is set */
 
 	int x1,x2, y1,y2, dx,dy;
-	int xcount0 = 0, ycount0 = 0;
+	int xcount0 = 0x10000 + sprite->xcount0, ycount0 = 0x10000 + sprite->ycount0;
 
 	if( sprite->flags & SPRITE_FLIPX_CAVE ){
 		x2 = sprite->x;
@@ -1481,8 +1524,9 @@ static void do_blit_zoom8_cave_zb( const struct sprite_cave *sprite ){
 		dx = -1;
 		if( x2<blit.clip_left ) x2 = blit.clip_left;
 		if( x1>blit.clip_right ){
-			xcount0 = (x1-blit.clip_right)*sprite->tile_width;
+			xcount0 += (x1-blit.clip_right)* sprite->zoomx_re;
 			x1 = blit.clip_right;
+			while((xcount0&0xffff)>=sprite->zoomx_re){xcount0 += sprite->zoomx_re; x1--;}
 		}
 		if( x2>=x1 ) return;
 		x1--; x2--;
@@ -1492,8 +1536,9 @@ static void do_blit_zoom8_cave_zb( const struct sprite_cave *sprite ){
 		x2 = x1+sprite->total_width;
 		dx = 1;
 		if( x1<blit.clip_left ){
-			xcount0 = (blit.clip_left-x1)*sprite->tile_width;
+			xcount0 += (blit.clip_left-x1)*sprite->zoomx_re;
 			x1 = blit.clip_left;
+			while((xcount0&0xffff)>=sprite->zoomx_re){xcount0 += sprite->zoomx_re; x1++;}
 		}
 		if( x2>blit.clip_right ) x2 = blit.clip_right;
 		if( x1>=x2 ) return;
@@ -1504,8 +1549,9 @@ static void do_blit_zoom8_cave_zb( const struct sprite_cave *sprite ){
 		dy = -1;
 		if( y2<blit.clip_top ) y2 = blit.clip_top;
 		if( y1>blit.clip_bottom ){
-			ycount0 = (y1-blit.clip_bottom)*sprite->tile_height;
+			ycount0 += (y1-blit.clip_bottom)*sprite->zoomy_re;
 			y1 = blit.clip_bottom;
+			while((ycount0&0xffff)>=sprite->zoomy_re){ycount0 += sprite->zoomy_re; y1--;}
 		}
 		if( y2>=y1 ) return;
 		y1--; y2--;
@@ -1515,15 +1561,16 @@ static void do_blit_zoom8_cave_zb( const struct sprite_cave *sprite ){
 		y2 = y1+sprite->total_height;
 		dy = 1;
 		if( y1<blit.clip_top ){
-			ycount0 = (blit.clip_top-y1)*sprite->tile_height;
+			ycount0 += (blit.clip_top-y1)*sprite->zoomy_re;
 			y1 = blit.clip_top;
+			while((ycount0&0xffff)>=sprite->zoomy_re){ycount0 += sprite->zoomy_re; y1++;}
 		}
 		if( y2>blit.clip_bottom ) y2 = blit.clip_bottom;
 		if( y1>=y2 ) return;
 	}
 
 	{
-		const unsigned char *pen_data = sprite->pen_data;
+		const unsigned char *pen_data = sprite->pen_data -1 -sprite->line_offset;
 		const UINT32        *pal_data = sprite->pal_data;
 		int x,y;
 		unsigned char pen;
@@ -1541,59 +1588,55 @@ static void do_blit_zoom8_cave_zb( const struct sprite_cave *sprite ){
 				UINT8 *dest1;
 				UINT16 *zbf1;
 
-				ycount = ycount0;
-				while( xcount>=sprite->total_width ){
-					xcount -= sprite->total_width;
-					pen_data+=sprite->line_offset;
-				}
-				if (xcount >= sprite->tile_width) goto skip1;
-				source = pen_data;
-				dest1 = &dest[x];
-				zbf1 = &zbf[x];
-				for( y=y1; y!=y2; y+=dy ){
-					while( ycount>=sprite->total_height ){
-						ycount -= sprite->total_height;
-						source ++;
+				if (xcount&0xffff0000){
+					ycount = ycount0;
+					pen_data+=sprite->line_offset*(xcount>>16);
+					xcount &= 0xffff;
+					source = pen_data;
+					dest1 = &dest[x];
+					zbf1 = &zbf[x];
+					for( y=y1; y!=y2; y+=dy ){
+						if (ycount&0xffff0000){
+							source+=ycount>>16;
+							ycount &= 0xffff;
+							pen = *source;
+							if (pen && (*zbf1<=pri_sp)){
+								*dest1 = pal_data[pen];
+								*zbf1 = pri_sp;
+							}
+						}
+						ycount+= sprite->zoomy_re;
+						dest1 += pitch;
+						zbf1 += pitchz;
 					}
-					pen = *source;
-					if ((ycount < sprite->tile_height) && pen && (*zbf1<=pri_sp))
-					{
-						*dest1 = pal_data[pen];
-						*zbf1 = pri_sp;
-					}
-					ycount+= sprite->tile_height;
-					dest1 += pitch;
-					zbf1 += pitchz;
 				}
-skip1:
-				xcount += sprite->tile_width;
+				xcount += sprite->zoomx_re;
 			}
 		}
 		else {
 			for( y=y1; y!=y2; y+=dy ){
-				int xcount = xcount0;
+				int xcount;
 				const unsigned char *source;
-				while( ycount>=sprite->total_height ){
-					ycount -= sprite->total_height;
-					pen_data += sprite->line_offset;
-				}
-				if (ycount >= sprite->tile_height) goto skip;
-				source = pen_data;
-				for( x=x1; x!=x2; x+=dx ){
-					while( xcount>=sprite->total_width ){
-						xcount -= sprite->total_width;
-						source++;
+
+				if (ycount&0xffff0000){
+					xcount = xcount0;
+					pen_data+=sprite->line_offset*(ycount>>16);
+					ycount &= 0xffff;
+					source = pen_data;
+					for( x=x1; x!=x2; x+=dx ){
+						if (xcount&0xffff0000){
+							source+=xcount>>16;
+							xcount &= 0xffff;
+							pen = *source;
+							if (pen && (zbf[x]<=pri_sp)){
+								dest[x] = pal_data[pen];
+								zbf[x] = pri_sp;
+							}
+						}
+						xcount += sprite->zoomx_re;
 					}
-					pen = *source;
-					if ((xcount < sprite->tile_width) && pen && (zbf[x]<=pri_sp))
-					{
-						dest[x] = pal_data[pen];
-						zbf[x] = pri_sp;
-					}
-					xcount += sprite->tile_width;
 				}
-skip:
-				ycount += sprite->tile_height;
+				ycount += sprite->zoomy_re;
 				dest += pitch;
 				zbf += pitchz;
 			}
@@ -1873,132 +1916,337 @@ else
 	while(sprite_table[priority][i])
 		do_blit_8_cave_zb( sprite_table[priority][i++] );
 }
-//ks s
+
 
 /***************************************************************************
 
 								Screen Drawing
 
 ***************************************************************************/
+
+struct tilemap_mask {
+	struct osd_bitmap *bitmask;
+	int line_offset;
+	UINT8 *data;
+	UINT8 **data_row;
+};
+
+struct tilemap {
+	UINT32 (*get_memory_offset)( UINT32 col, UINT32 row, UINT32 num_cols, UINT32 num_rows );
+	int *memory_offset_to_cached_indx;
+	UINT32 *cached_indx_to_memory_offset;
+	int logical_flip_to_cached_flip[4];
+
+	/* callback to interpret video VRAM for the tilemap */
+	void (*tile_get_info)( int memory_offset );
+
+	UINT32 max_memory_offset;
+	UINT32 num_tiles;
+	UINT32 num_logical_rows, num_logical_cols;
+	UINT32 num_cached_rows, num_cached_cols;
+	UINT32 cached_tile_width, cached_tile_height;
+	UINT32 cached_width, cached_height;
+
+	struct cached_tile_info *cached_tile_info;
+
+	int dx, dx_if_flipped;
+	int dy, dy_if_flipped;
+	int scrollx_delta, scrolly_delta;
+
+	int enable;
+	int attributes;
+
+	int type;
+	int transparent_pen;
+	unsigned int transmask[4];
+
+	int bNeedRender;
+
+	void (*draw)( int, int );
+	void (*draw_opaque)( int, int );
+	void (*draw_alpha)( int, int );
+
+	UINT8 *priority,	/* priority for each tile */
+		**priority_row;
+
+	UINT8 *visible; /* boolean flag for each tile */
+
+	UINT8 *dirty_vram; /* boolean flag for each tile */
+
+	UINT8 *dirty_pixels;
+
+	int scroll_rows, scroll_cols;
+	int *rowscroll, *colscroll;
+
+	int orientation;
+	int clip_left,clip_right,clip_top,clip_bottom;
+
+	UINT16 tile_depth, tile_granularity;
+	UINT8 *tile_dirty_map;
+
+	/* cached color data */
+	struct osd_bitmap *pixmap;
+	int pixmap_line_offset;
+
+	struct tilemap_mask *foreground;
+	/* for transparent layers, or the front half of a split layer */
+
+	struct tilemap_mask *background;
+	/* for the back half of a split layer */
+
+	struct tilemap *next; /* resource tracking */
+};
+
+enum {
+	TILE_TRANSPARENT,
+	TILE_MASKED,
+	TILE_OPAQUE
+};
+
+
+
+/***********************************************************************************/
+static struct {
+	int clip_left, clip_top, clip_right, clip_bottom;
+	int source_width, source_height;
+	int dest_line_offset,source_line_offset,mask_line_offset;
+	int dest_row_offset,source_row_offset,mask_row_offset;
+	struct osd_bitmap *screen, *pixmap, *bitmask;
+	UINT8 **mask_data_row;
+	UINT8 **priority_data_row;
+	int tile_priority;
+//d	int tilemap_priority_code;
+} tmblt;
+
+
+#define DEPTH 8
+#define TILE_WIDTH	8
+#define TILE_HEIGHT	8
+#define DATA_TYPE UINT8
+#define DECLARE(function,args,body) static void function##8x8x8BPP args body
+#include "vidhrdw/cave.c"
+
+#define TILE_WIDTH	16
+#define TILE_HEIGHT	16
+#define DATA_TYPE UINT8
+#define DECLARE(function,args,body) static void function##16x16x8BPP args body
+#include "vidhrdw/cave.c"
+
+#undef DEPTH
+
+#define DEPTH 16
+#define TILE_WIDTH	8
+#define TILE_HEIGHT	8
+#define DATA_TYPE UINT16
+#define blend blend16
+#define blendbitmask blendbitmask16
+#define DECLARE(function,args,body) static void function##8x8x16BPP args body
+#include "vidhrdw/cave.c"
+
+#define TILE_WIDTH	16
+#define TILE_HEIGHT	16
+#define DATA_TYPE UINT16
+#define DECLARE(function,args,body) static void function##16x16x16BPP args body
+#include "vidhrdw/cave.c"
+
+#undef DEPTH
+
+/*********************************************************************************/
+
+static void cave_tilemap_set_scrollx( struct tilemap *tilemap, int which, int value, int valuedy ){
+	value = tilemap->scrollx_delta-value;
+
+	if( tilemap->orientation & ORIENTATION_SWAP_XY ){
+		if( tilemap->orientation & ORIENTATION_FLIP_X ){
+			which = tilemap->scroll_cols-1 - which;
+			valuedy = -valuedy;
+		}
+		if( tilemap->orientation & ORIENTATION_FLIP_Y ) value = screen_height-tilemap->cached_height-value;
+		tilemap->colscroll[which] = (value&0xffff)|(valuedy<<16);
+	}
+	else {
+		if( tilemap->orientation & ORIENTATION_FLIP_Y ){
+			which = tilemap->scroll_rows-1 - which;
+			valuedy = -valuedy;
+		}
+		if( tilemap->orientation & ORIENTATION_FLIP_X ) value = screen_width-tilemap->cached_width-value;
+		tilemap->rowscroll[which] = (value&0xffff)|(valuedy<<16);
+	}
+}
+
+/*********************************************************************************/
+
+static void tilemap_draw_x( struct osd_bitmap *dest, struct tilemap *tilemap, UINT32 flags, UINT32 priority ){
+	int xpos,ypos;
+profiler_mark(PROFILER_TILEMAP_DRAW);
+	tilemap_get_pixmap( tilemap );
+
+	if( tilemap->enable ){
+		void (*draw)( int, int );
+
+		int rows = tilemap->scroll_rows;
+		const int *rowscroll = tilemap->rowscroll;
+		int cols = tilemap->scroll_cols;
+		const int *colscroll = tilemap->colscroll;
+
+		int left = tilemap->clip_left;
+		int right = tilemap->clip_right;
+		int top = tilemap->clip_top;
+		int bottom = tilemap->clip_bottom;
+
+		int tile_height = tilemap->cached_tile_height;
+
+		tmblt.screen = dest;
+		tmblt.dest_line_offset = dest->line[1] - dest->line[0];
+		tmblt.pixmap = tilemap->pixmap;
+		tmblt.source_line_offset = tilemap->pixmap_line_offset;
+		tmblt.bitmask = tilemap->foreground->bitmask;
+		tmblt.mask_line_offset = tilemap->foreground->line_offset;
+		tmblt.mask_data_row = tilemap->foreground->data_row;
+		tmblt.mask_row_offset = tile_height*tmblt.mask_line_offset;
+
+		if( dest->depth==16 || dest->depth==15 ){
+			tmblt.dest_line_offset /= 2;
+			tmblt.source_line_offset /= 2;
+			if(tilemap->cached_tile_width==8){draw=draw8x8x16BPP;}
+			else{draw=draw16x16x16BPP;}
+		}
+		else{
+			if(tilemap->cached_tile_width==8){draw=draw8x8x8BPP;}
+			else{draw=draw16x16x8BPP;}
+		}
+
+		tmblt.source_row_offset = tile_height*tmblt.source_line_offset;
+		tmblt.dest_row_offset = tile_height*tmblt.dest_line_offset;
+
+		tmblt.priority_data_row = tilemap->priority_row;
+		tmblt.source_width = tilemap->cached_width;
+		tmblt.source_height = tilemap->cached_height;
+		tmblt.tile_priority = flags&0xf;
+
+		if( rows == 1 && cols == 1 ){ /* XY scrolling playfield */
+			int scrollx = rowscroll[0] % tmblt.source_width;
+			int scrolly = colscroll[0] % tmblt.source_height;
+	 		tmblt.clip_left = left;
+	 		tmblt.clip_top = top;
+	 		tmblt.clip_right = right;
+	 		tmblt.clip_bottom = bottom;
+			for(
+				ypos = scrolly - tmblt.source_height;
+				ypos < tmblt.clip_bottom;
+				ypos += tmblt.source_height
+			){
+				for(
+					xpos = scrollx - tmblt.source_width;
+					xpos < tmblt.clip_right;
+					xpos += tmblt.source_width
+				){
+					draw( xpos,ypos );
+				}
+			}
+		}
+		else if( rows == 1 ){ /* scrolling columns + horizontal scroll */
+			int col = 0;
+			int colwidth = (right-left) / cols;
+			tmblt.clip_top = top;
+			tmblt.clip_bottom = bottom;
+			while( col < cols ){
+				int cons = 1;
+				int scrolly = colscroll[col];
+				int scrollx = (rowscroll[0] + (scrolly>>16)) % tilemap->cached_width;
+				while( col + cons < cols &&	colscroll[col + cons] == scrolly ) cons++;
+				scrolly %= tmblt.source_height;
+				tmblt.clip_left = left + col * colwidth;
+				tmblt.clip_right = tmblt.clip_left + cons * colwidth;
+				if (tmblt.clip_right > right) tmblt.clip_right = right;
+				for(
+					ypos = scrolly - tmblt.source_height;
+					ypos < tmblt.clip_bottom;
+					ypos += tmblt.source_height
+				){
+					draw( scrollx,ypos );
+				}
+				for(
+					ypos = scrolly - tmblt.source_height;
+					ypos < tmblt.clip_bottom;
+					ypos += tmblt.source_height
+				){
+					draw( scrollx - tmblt.source_width,ypos );
+				}
+				col += cons;
+			}
+		}
+		else if( cols == 1 ){ /* scrolling rows + vertical scroll */
+			int row = 0;
+			int rowheight = (bottom - top) / rows;
+			tmblt.clip_left = left;
+			tmblt.clip_right = right;
+			while( row < rows ){
+				int cons = 1;
+				int scrollx = rowscroll[row];
+				int scrolly = (colscroll[0] + (scrollx>>16)) % tilemap->cached_height;
+				while( row + cons < rows &&	rowscroll[row + cons] == scrollx ) cons++;
+				scrollx %= tmblt.source_width;
+				tmblt.clip_top = top + row * rowheight;
+				tmblt.clip_bottom = tmblt.clip_top + cons * rowheight;
+				if (tmblt.clip_bottom > bottom) tmblt.clip_bottom = bottom;
+				for(
+					xpos = scrollx - tmblt.source_width;
+					xpos < tmblt.clip_right;
+					xpos += tmblt.source_width
+				){
+					draw( xpos,scrolly );
+				}
+				for(
+					xpos = scrollx - tmblt.source_width;
+					xpos < tmblt.clip_right;
+					xpos += tmblt.source_width
+				){
+					draw( xpos,scrolly - tmblt.source_height );
+				}
+				row += cons;
+			}
+		}
+	}
+profiler_mark(PROFILER_END);
+}
+/*********************************************************************************/
+
 static UINT16 scrollx_0,scrolly_0,scrollx_1,scrolly_1,scrollx_2,scrolly_2;
 
 #define CAVE_TILEMAP_SET_SCROLLX(_n_) \
-	if ((cave_vctrl_##_n_[0] & 0x4000)&&(!(cave_vctrl_##_n_[1] & 0x4000))) \
-	{ \
-		int line; \
-		int sdy = (cave_videoregs[ 1 ] & 0x8000) ? -0x100 : -0x11; \
-		tilemap_set_scroll_rows(tilemap_##_n_,512); \
-		for(line = 0; line < 240; line++) \
-			tilemap_set_scrollx(tilemap_##_n_, \
-								(line + scrolly_##_n_ - sdy) & 511, \
-								scrollx_##_n_ + cave_vram_##_n_[(0x1000+((line*4)&0x7ff))/2] ); \
-	} \
-	else \
-	{ \
-		tilemap_set_scroll_rows(tilemap_##_n_,1); \
-		tilemap_set_scrollx(tilemap_##_n_, 0, scrollx_##_n_ ); \
-	}
-
-
-//ks s
-#if 1 /* 1:old tilemap manager  0:new tilemap manager */
-
-#define CAVE_TILEMAP_DRAW(_n_) \
-INLINE void cave_tilemap_draw_##_n_(struct osd_bitmap *bitmap, int priority, int delta) \
 { \
-	if (cave_vctrl_##_n_[1] & 0x4000) \
+	const int num_lines = Machine->drv->screen_height; \
+	int line; \
+	switch (((cave_vctrl_##_n_[0] & 0x4000)>>14) + ((cave_vctrl_##_n_[1] & 0x4000)>>13)) \
 	{ \
-		struct rectangle clip; \
-		int sy, startline, endline, vramdata0, vramdata1; \
-		int sdy = (cave_videoregs[ 1 ] & 0x8000) ? -0x100 : -0x11; \
- \
-		clip.min_x = Machine->visible_area.min_x; \
-		clip.max_x = Machine->visible_area.max_x; \
-		for(startline = 0; startline < 240;) \
-		{ \
-			vramdata0 = vramdata1 = cave_vram_##_n_[(0x1000+(((2+((startline+delta)*4))&0x7ff)))/2]; \
-			for(endline = startline + 1; endline < 241; endline++) \
-				if((++vramdata1) != cave_vram_##_n_[(0x1000+(((2+((endline+delta)*4))&0x7ff)))/2]) break; \
- \
-			sy = scrolly_##_n_ + vramdata0 - startline; \
-			tilemap_set_scrolly(tilemap_##_n_, 0, sy ); \
-			if (cave_vctrl_##_n_[0] & 0x4000) \
-			{ \
-				int line; \
-				tilemap_set_scroll_rows(tilemap_##_n_,512); \
-				for(line = startline; line < endline; line++) \
-					tilemap_set_scrollx(tilemap_##_n_, \
-										(line + sy - sdy) & 511, \
-										scrollx_##_n_ + cave_vram_##_n_[(0x1000+((line*4)&0x7ff))/2] ); \
-			} \
-			clip.min_y = startline; \
-			clip.max_y = endline - 1; \
-			tilemap_set_clip(tilemap_##_n_,&clip); \
-			tilemap_draw(bitmap, tilemap_##_n_, priority,0); \
- \
-			startline = endline; \
-		} \
-		tilemap_set_clip(tilemap_##_n_,&Machine->visible_area); \
-	} \
-	else \
-	{ \
-		tilemap_draw(bitmap, tilemap_##_n_, priority, 0); \
+		case 1:		/* x */ \
+			tilemap_set_scroll_rows(tilemap_##_n_,num_lines); \
+			for(line = 0; line < num_lines; line++) \
+				cave_tilemap_set_scrollx(tilemap_##_n_, line, \
+								scrollx_##_n_ + cave_vram_##_n_[(0x1000+((line*4)&0x7ff))/2], \
+								0 ); \
+			break; \
+		case 2:		/* y */ \
+			tilemap_set_scroll_rows(tilemap_##_n_,num_lines); \
+			for(line = 0; line < num_lines; line++) \
+				cave_tilemap_set_scrollx(tilemap_##_n_, line, \
+								scrollx_##_n_, \
+								line - cave_vram_##_n_[(0x1000+(((2+((line+delta)*4))&0x7ff)))/2] ); \
+			break; \
+		case 3:		/* x,y */ \
+			tilemap_set_scroll_rows(tilemap_##_n_,num_lines); \
+			for(line = 0; line < num_lines; line++) \
+				cave_tilemap_set_scrollx(tilemap_##_n_, line, \
+								scrollx_##_n_ + cave_vram_##_n_[(0x1000+((line*4)&0x7ff))/2], \
+								line - cave_vram_##_n_[(0x1000+(((2+((line+delta)*4))&0x7ff)))/2] ); \
+			break; \
+		default: \
+		case 0: \
+			tilemap_set_scroll_rows(tilemap_##_n_,1); \
+			tilemap_set_scrollx(tilemap_##_n_, 0, scrollx_##_n_ ); \
 	} \
 }
-
-#else		//new tilemap manager
-
-#define CAVE_TILEMAP_DRAW(_n_) \
-INLINE void cave_tilemap_draw_##_n_(struct osd_bitmap *bitmap, int priority, int delta) \
-{ \
-	if (cave_vctrl_##_n_[1] & 0x4000) \
-	{ \
-		struct rectangle clip; \
-		int sy, startline, endline, vramdata0, vramdata1; \
-		int sdy = (cave_videoregs[ 1 ] & 0x8000) ? -0x100 : -0x11; \
- \
-		clip.min_x = Machine->visible_area.min_x; \
-		clip.max_x = Machine->visible_area.max_x; \
-		for(startline = 0; startline < 240;) \
-		{ \
-			vramdata0 = vramdata1 = cave_vram_##_n_[(0x1000+(((2+((startline+delta)*4))&0x7ff)))/2]; \
-			for(endline = startline + 1; endline < 241; endline++) \
-				if((++vramdata1) != cave_vram_##_n_[(0x1000+(((2+((endline+delta)*4))&0x7ff)))/2]) break; \
- \
-			sy = scrolly_##_n_ + vramdata0 - startline; \
-			tilemap_set_scrolly(tilemap_##_n_, 0, sy ); \
-			if (cave_vctrl_##_n_[0] & 0x4000) \
-			{ \
-				int line; \
-				tilemap_set_scroll_rows(tilemap_##_n_,512); \
-				for(line = startline; line < endline; line++) \
-					tilemap_set_scrollx(tilemap_##_n_, \
-										(line + sy - sdy) & 511, \
-										scrollx_##_n_ + cave_vram_##_n_[(0x1000+((line*4)&0x7ff))/2] ); \
-			} \
-			clip.min_y = startline; \
-			clip.max_y = endline - 1; \
-			tilemap_set_clip(tilemap_##_n_,&clip); \
-			tilemap_update(tilemap_##_n_); \
-			tilemap_draw(bitmap, tilemap_##_n_, priority,0); \
- \
-			startline = endline; \
-		} \
-		tilemap_set_clip(tilemap_##_n_,&Machine->visible_area); \
-	} \
-	else \
-	{ \
-		tilemap_draw(bitmap, tilemap_##_n_, priority, 0); \
-	} \
-}
-#endif		//new tilemap manager
-//ks e
-
-
-CAVE_TILEMAP_DRAW(0)
-CAVE_TILEMAP_DRAW(1)
-CAVE_TILEMAP_DRAW(2)
-
 
 
 #ifdef MAME_DEBUG
@@ -2088,19 +2336,20 @@ INLINE void screenrefresh_debug(struct osd_bitmap *bitmap, int delta)
 	for ( pri = 0; pri < 4; pri++ )
 	{
 		if ((layers_ctrl&(1<<(pri+12))))			(*cave_sprite_draw)( pri );
-		if ((layers_ctrl&(1<<(pri+0))))				cave_tilemap_draw_0(bitmap, pri, delta);
-		if ((layers_ctrl&(1<<(pri+4)))&&tilemap_1)	cave_tilemap_draw_1(bitmap, pri, delta);
-		if ((layers_ctrl&(1<<(pri+8)))&&tilemap_2)	cave_tilemap_draw_2(bitmap, pri, delta);
+		if ((layers_ctrl&(1<<(pri+0))))				tilemap_draw_x(bitmap, tilemap_0, pri,0);
+		if ((layers_ctrl&(1<<(pri+4)))&&tilemap_1)	tilemap_draw_x(bitmap, tilemap_1, pri,0);
+		if ((layers_ctrl&(1<<(pri+8)))&&tilemap_2)	tilemap_draw_x(bitmap, tilemap_2, pri,0);
 	}
 }
 #endif
-
 
 
 /**************************************************************************/
 
 void donpachi_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
+	int delta = 0;
+
 	{		/* scroll hack */
 		UINT32 addr = (cave_wkram[0x13CC/2]<<15)+(cave_wkram[0x13CE/2]>>1);
 		UINT16 *scroll_delta;
@@ -2127,8 +2376,8 @@ void donpachi_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	CAVE_TILEMAP_SET_SCROLLX(0)
 
 	tilemap_set_enable( tilemap_1,    cave_vctrl_1[2] & 1 );
-	tilemap_set_scrollx(tilemap_1, 0, scrollx_1 );
 	tilemap_set_scrolly(tilemap_1, 0, scrolly_1 );
+	CAVE_TILEMAP_SET_SCROLLX(1)
 
 	tilemap_set_enable( tilemap_2,    cave_vctrl_2[2] & 1 );
 	tilemap_set_scrollx(tilemap_2, 0, scrollx_2 );
@@ -2137,14 +2386,14 @@ void donpachi_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	tilemap_update(ALL_TILEMAPS);
 
-	if(Machine->color_depth == 8) palette_init_used_colors();			//ks
+	if(Machine->color_depth == 8) palette_init_used_colors();
 
 	(*get_sprite_info)();
 
 	sprite_update_cave();
 
 //#ifdef MAME_DEBUG
-	if(Machine->color_depth == 8) palette_recalc();			//ks
+	if(Machine->color_depth == 8) palette_recalc();
 //#endif
 
 	fillbitmap(bitmap,Machine->remapped_colortable[0x0f00],&Machine->visible_area);
@@ -2153,21 +2402,21 @@ void donpachi_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	screenrefresh_debug(bitmap, 0);
 #else
 	(*cave_sprite_draw)( 0 );
-	tilemap_draw(bitmap, tilemap_0, 0,0);
-	cave_tilemap_draw_1(bitmap, 0, 0);
-	tilemap_draw(bitmap, tilemap_2, 0,0);
+	tilemap_draw_x(bitmap, tilemap_0, 0,0);
+	tilemap_draw_x(bitmap, tilemap_1, 0,0);
+	tilemap_draw_x(bitmap, tilemap_2, 0,0);
 	(*cave_sprite_draw)( 1 );
-	tilemap_draw(bitmap, tilemap_0, 1,0);
-	cave_tilemap_draw_1(bitmap, 1, 0);
-	tilemap_draw(bitmap, tilemap_2, 1,0);
+	tilemap_draw_x(bitmap, tilemap_0, 1,0);
+	tilemap_draw_x(bitmap, tilemap_1, 1,0);
+	tilemap_draw_x(bitmap, tilemap_2, 1,0);
 	(*cave_sprite_draw)( 2 );
-	tilemap_draw(bitmap, tilemap_0, 2,0);
-	cave_tilemap_draw_1(bitmap, 2, 0);
-	tilemap_draw(bitmap, tilemap_2, 2,0);
+	tilemap_draw_x(bitmap, tilemap_0, 2,0);
+	tilemap_draw_x(bitmap, tilemap_1, 2,0);
+	tilemap_draw_x(bitmap, tilemap_2, 2,0);
 	(*cave_sprite_draw)( 3 );
-	tilemap_draw(bitmap, tilemap_0, 3,0);
-	cave_tilemap_draw_1(bitmap, 3, 0);
-	tilemap_draw(bitmap, tilemap_2, 3,0);
+	tilemap_draw_x(bitmap, tilemap_0, 3,0);
+	tilemap_draw_x(bitmap, tilemap_1, 3,0);
+	tilemap_draw_x(bitmap, tilemap_2, 3,0);
 #endif
 }
 
@@ -2209,14 +2458,14 @@ void ddonpach_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	tilemap_update(ALL_TILEMAPS);
 
-	if(Machine->color_depth == 8) palette_init_used_colors();			//ks
+	if(Machine->color_depth == 8) palette_init_used_colors();
 
 	(*get_sprite_info)();
 
 	sprite_update_cave();
 
 //#ifdef MAME_DEBUG
-	if(Machine->color_depth == 8) palette_recalc();			//ks
+	if(Machine->color_depth == 8) palette_recalc();
 //#endif
 
 	fillbitmap(bitmap,Machine->remapped_colortable[0x4000 + 0x0f00],&Machine->visible_area);
@@ -2225,21 +2474,21 @@ void ddonpach_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	screenrefresh_debug(bitmap, 0);
 #else
 	(*cave_sprite_draw)( 0 );
-	tilemap_draw(bitmap, tilemap_0, 0,0);
-	tilemap_draw(bitmap, tilemap_1, 0,0);
-	tilemap_draw(bitmap, tilemap_2, 0,0);
+	tilemap_draw_x(bitmap, tilemap_0, 0,0);
+	tilemap_draw_x(bitmap, tilemap_1, 0,0);
+	tilemap_draw_x(bitmap, tilemap_2, 0,0);
 	(*cave_sprite_draw)( 1 );
-	tilemap_draw(bitmap, tilemap_0, 1,0);
-	tilemap_draw(bitmap, tilemap_1, 1,0);
-	tilemap_draw(bitmap, tilemap_2, 1,0);
+	tilemap_draw_x(bitmap, tilemap_0, 1,0);
+	tilemap_draw_x(bitmap, tilemap_1, 1,0);
+	tilemap_draw_x(bitmap, tilemap_2, 1,0);
 	(*cave_sprite_draw)( 2 );
-	tilemap_draw(bitmap, tilemap_0, 2,0);
-	tilemap_draw(bitmap, tilemap_1, 2,0);
-	tilemap_draw(bitmap, tilemap_2, 2,0);
+	tilemap_draw_x(bitmap, tilemap_0, 2,0);
+	tilemap_draw_x(bitmap, tilemap_1, 2,0);
+	tilemap_draw_x(bitmap, tilemap_2, 2,0);
 	(*cave_sprite_draw)( 3 );
-	tilemap_draw(bitmap, tilemap_0, 3,0);
-	tilemap_draw(bitmap, tilemap_1, 3,0);
-	tilemap_draw(bitmap, tilemap_2, 3,0);
+	tilemap_draw_x(bitmap, tilemap_0, 3,0);
+	tilemap_draw_x(bitmap, tilemap_1, 3,0);
+	tilemap_draw_x(bitmap, tilemap_2, 3,0);
 #endif
 }
 
@@ -2281,14 +2530,14 @@ void esprade_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	tilemap_update(ALL_TILEMAPS);
 
-	if(Machine->color_depth == 8) palette_init_used_colors();			//ks
+	if(Machine->color_depth == 8) palette_init_used_colors();
 
 	(*get_sprite_info)();
 
 	sprite_update_cave();
 
 //#ifdef MAME_DEBUG
-	if(Machine->color_depth == 8) palette_recalc();			//ks
+	if(Machine->color_depth == 8) palette_recalc();
 //#endif
 
 	fillbitmap(bitmap,Machine->remapped_colortable[0x3f00],&Machine->visible_area);
@@ -2297,21 +2546,21 @@ void esprade_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	screenrefresh_debug(bitmap, 0);
 #else
 	(*cave_sprite_draw)( 0 );
-	tilemap_draw(bitmap, tilemap_0, 0,0);
-	tilemap_draw(bitmap, tilemap_1, 0,0);
-	tilemap_draw(bitmap, tilemap_2, 0,0);
+	tilemap_draw_x(bitmap, tilemap_0, 0,0);
+	tilemap_draw_x(bitmap, tilemap_1, 0,0);
+	tilemap_draw_x(bitmap, tilemap_2, 0,0);
 	(*cave_sprite_draw)( 1 );
-	tilemap_draw(bitmap, tilemap_0, 1,0);
-	tilemap_draw(bitmap, tilemap_1, 1,0);
-	tilemap_draw(bitmap, tilemap_2, 1,0);
+	tilemap_draw_x(bitmap, tilemap_0, 1,0);
+	tilemap_draw_x(bitmap, tilemap_1, 1,0);
+	tilemap_draw_x(bitmap, tilemap_2, 1,0);
 	(*cave_sprite_draw)( 2 );
-	tilemap_draw(bitmap, tilemap_0, 2,0);
-	tilemap_draw(bitmap, tilemap_1, 2,0);
-	tilemap_draw(bitmap, tilemap_2, 2,0);
+	tilemap_draw_x(bitmap, tilemap_0, 2,0);
+	tilemap_draw_x(bitmap, tilemap_1, 2,0);
+	tilemap_draw_x(bitmap, tilemap_2, 2,0);
 	(*cave_sprite_draw)( 3 );
-	tilemap_draw(bitmap, tilemap_0, 3,0);
-	tilemap_draw(bitmap, tilemap_1, 3,0);
-	tilemap_draw(bitmap, tilemap_2, 3,0);
+	tilemap_draw_x(bitmap, tilemap_0, 3,0);
+	tilemap_draw_x(bitmap, tilemap_1, 3,0);
+	tilemap_draw_x(bitmap, tilemap_2, 3,0);
 #endif
 }
 
@@ -2355,23 +2604,23 @@ void guwange_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	tilemap_set_scrolly(tilemap_0, 0, scrolly_0 );
 
 	tilemap_set_enable( tilemap_1,    cave_vctrl_1[2] & 1 );
-	tilemap_set_scrollx(tilemap_1, 0, scrollx_1 );
 	tilemap_set_scrolly(tilemap_1, 0, scrolly_1 );
+	CAVE_TILEMAP_SET_SCROLLX(1)
 
 	tilemap_set_enable( tilemap_2,    cave_vctrl_2[2] & 1 );
-	tilemap_set_scrollx(tilemap_2, 0, scrollx_2 );
 	tilemap_set_scrolly(tilemap_2, 0, scrolly_2 );
+	CAVE_TILEMAP_SET_SCROLLX(2)
 
 	tilemap_update(ALL_TILEMAPS);
 
-	if(Machine->color_depth == 8) palette_init_used_colors();			//ks
+	if(Machine->color_depth == 8) palette_init_used_colors();
 
 	(*get_sprite_info)();
 
 	sprite_update_cave();
 
 //#ifdef MAME_DEBUG
-	if(Machine->color_depth == 8) palette_recalc();			//ks
+	if(Machine->color_depth == 8) palette_recalc();
 //#endif
 
 	fillbitmap(bitmap,Machine->remapped_colortable[0x3f00],&Machine->visible_area);
@@ -2380,27 +2629,29 @@ void guwange_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	screenrefresh_debug(bitmap, delta);
 #else
 	(*cave_sprite_draw)( 0 );
-	tilemap_draw(bitmap, tilemap_0, 0,0);
-	cave_tilemap_draw_1(bitmap, 0, delta);
-	cave_tilemap_draw_2(bitmap, 0, delta);
+	tilemap_draw_x(bitmap, tilemap_0, 0,0);
+	tilemap_draw_x(bitmap, tilemap_1, 0,0);
+	tilemap_draw_x(bitmap, tilemap_2, 0,0);
 	(*cave_sprite_draw)( 1 );
-	tilemap_draw(bitmap, tilemap_0, 1,0);
-	cave_tilemap_draw_1(bitmap, 1, delta);
-	cave_tilemap_draw_2(bitmap, 1, delta);
+	tilemap_draw_x(bitmap, tilemap_0, 1,0);
+	tilemap_draw_x(bitmap, tilemap_1, 1,0);
+	tilemap_draw_x(bitmap, tilemap_2, 1,0);
 	(*cave_sprite_draw)( 2 );
-	tilemap_draw(bitmap, tilemap_0, 2,0);
-	cave_tilemap_draw_1(bitmap, 2, delta);
-	cave_tilemap_draw_2(bitmap, 2, delta);
+	tilemap_draw_x(bitmap, tilemap_0, 2,0);
+	tilemap_draw_x(bitmap, tilemap_1, 2,0);
+	tilemap_draw_x(bitmap, tilemap_2, 2,0);
 	(*cave_sprite_draw)( 3 );
-	tilemap_draw(bitmap, tilemap_0, 3,0);
-	cave_tilemap_draw_1(bitmap, 3, delta);
-	cave_tilemap_draw_2(bitmap, 3, delta);
+	tilemap_draw_x(bitmap, tilemap_0, 3,0);
+	tilemap_draw_x(bitmap, tilemap_1, 3,0);
+	tilemap_draw_x(bitmap, tilemap_2, 3,0);
 #endif
 }
 
 
 void dfeveron_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
+	int delta = 0;
+
 	{		/* scroll hack */
 		UINT32 addr = (cave_wkram[0x1762/2]<<15)+(cave_wkram[0x1764/2]>>1);
 		UINT16 *scroll_delta;
@@ -2430,14 +2681,14 @@ void dfeveron_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	tilemap_update(ALL_TILEMAPS);
 
-	if(Machine->color_depth == 8) palette_init_used_colors();			//ks
+	if(Machine->color_depth == 8) palette_init_used_colors();
 
 	(*get_sprite_info)();
 
 	sprite_update_cave();
 
 //#ifdef MAME_DEBUG
-	if(Machine->color_depth == 8) palette_recalc();			//ks
+	if(Machine->color_depth == 8) palette_recalc();
 //#endif
 
 	fillbitmap(bitmap,Machine->remapped_colortable[0x3f00],&Machine->visible_area);
@@ -2446,23 +2697,25 @@ void dfeveron_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	screenrefresh_debug(bitmap, 0);
 #else
 	(*cave_sprite_draw)( 0 );
-	cave_tilemap_draw_0(bitmap, 0, 0);
-	cave_tilemap_draw_1(bitmap, 0, 0);
+	tilemap_draw_x(bitmap, tilemap_0, 0,0);
+	tilemap_draw_x(bitmap, tilemap_1, 0,0);
 	(*cave_sprite_draw)( 1 );
-	cave_tilemap_draw_0(bitmap, 1, 0);
-	cave_tilemap_draw_1(bitmap, 1, 0);
+	tilemap_draw_x(bitmap, tilemap_0, 1,0);
+	tilemap_draw_x(bitmap, tilemap_1, 1,0);
 	(*cave_sprite_draw)( 2 );
-	cave_tilemap_draw_0(bitmap, 2, 0);
-	cave_tilemap_draw_1(bitmap, 2, 0);
+	tilemap_draw_x(bitmap, tilemap_0, 2,0);
+	tilemap_draw_x(bitmap, tilemap_1, 2,0);
 	(*cave_sprite_draw)( 3 );
-	cave_tilemap_draw_0(bitmap, 3, 0);
-	cave_tilemap_draw_1(bitmap, 3, 0);
+	tilemap_draw_x(bitmap, tilemap_0, 3,0);
+	tilemap_draw_x(bitmap, tilemap_1, 3,0);
 #endif
 }
 
 
 void uopoko_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
+	int delta = 0;
+
 	scrollx_0=cave_vctrl_0[0];
 	scrolly_0=cave_vctrl_0[1];
 
@@ -2474,14 +2727,14 @@ void uopoko_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	tilemap_update(ALL_TILEMAPS);
 
-	if(Machine->color_depth == 8) palette_init_used_colors();			//ks
+	if(Machine->color_depth == 8) palette_init_used_colors();
 
 	(*get_sprite_info)();
 
 	sprite_update_cave();
 
 //#ifdef MAME_DEBUG
-	if(Machine->color_depth == 8) palette_recalc();			//ks
+	if(Machine->color_depth == 8) palette_recalc();
 //#endif
 
 	fillbitmap(bitmap,Machine->remapped_colortable[0x3f00],&Machine->visible_area);
@@ -2490,13 +2743,13 @@ void uopoko_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	screenrefresh_debug(bitmap, 0);
 #else
 	(*cave_sprite_draw)( 0 );
-	tilemap_draw(bitmap, tilemap_0, 0,0);
+	tilemap_draw_x(bitmap, tilemap_0, 0,0);
 	(*cave_sprite_draw)( 1 );
-	tilemap_draw(bitmap, tilemap_0, 1,0);
+	tilemap_draw_x(bitmap, tilemap_0, 1,0);
 	(*cave_sprite_draw)( 2 );
-	tilemap_draw(bitmap, tilemap_0, 2,0);
+	tilemap_draw_x(bitmap, tilemap_0, 2,0);
 	(*cave_sprite_draw)( 3 );
-	tilemap_draw(bitmap, tilemap_0, 3,0);
+	tilemap_draw_x(bitmap, tilemap_0, 3,0);
 #endif
 }
 
@@ -2526,14 +2779,14 @@ void hotdogst_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	tilemap_update(ALL_TILEMAPS);
 
-	if(Machine->color_depth == 8) palette_init_used_colors();			//ks
+	if(Machine->color_depth == 8) palette_init_used_colors();
 
 	(*get_sprite_info)();
 
 	sprite_update_cave();
 
 //#ifdef MAME_DEBUG
-	if(Machine->color_depth == 8) palette_recalc();			//ks
+	if(Machine->color_depth == 8) palette_recalc();
 //#endif
 
 	fillbitmap(bitmap,Machine->remapped_colortable[0x3f00],&Machine->visible_area);
@@ -2542,21 +2795,21 @@ void hotdogst_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	screenrefresh_debug(bitmap, 0);
 #else
 	(*cave_sprite_draw)( 0 );
-	tilemap_draw(bitmap, tilemap_0, 0,0);
-	tilemap_draw(bitmap, tilemap_1, 0,0);
-	tilemap_draw(bitmap, tilemap_2, 0,0);
+	tilemap_draw_x(bitmap, tilemap_0, 0,0);
+	tilemap_draw_x(bitmap, tilemap_1, 0,0);
+	tilemap_draw_x(bitmap, tilemap_2, 0,0);
 	(*cave_sprite_draw)( 1 );
-	tilemap_draw(bitmap, tilemap_0, 1,0);
-	tilemap_draw(bitmap, tilemap_1, 1,0);
-	tilemap_draw(bitmap, tilemap_2, 1,0);
+	tilemap_draw_x(bitmap, tilemap_0, 1,0);
+	tilemap_draw_x(bitmap, tilemap_1, 1,0);
+	tilemap_draw_x(bitmap, tilemap_2, 1,0);
 	(*cave_sprite_draw)( 2 );
-	tilemap_draw(bitmap, tilemap_0, 2,0);
-	tilemap_draw(bitmap, tilemap_1, 2,0);
-	tilemap_draw(bitmap, tilemap_2, 2,0);
+	tilemap_draw_x(bitmap, tilemap_0, 2,0);
+	tilemap_draw_x(bitmap, tilemap_1, 2,0);
+	tilemap_draw_x(bitmap, tilemap_2, 2,0);
 	(*cave_sprite_draw)( 3 );
-	tilemap_draw(bitmap, tilemap_0, 3,0);
-	tilemap_draw(bitmap, tilemap_1, 3,0);
-	tilemap_draw(bitmap, tilemap_2, 3,0);
+	tilemap_draw_x(bitmap, tilemap_0, 3,0);
+	tilemap_draw_x(bitmap, tilemap_1, 3,0);
+	tilemap_draw_x(bitmap, tilemap_2, 3,0);
 #endif
 }
 
@@ -2590,17 +2843,17 @@ void mazinger_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	screenrefresh_debug(bitmap, 0);
 #else
 	(*cave_sprite_draw)( 0 );
-	tilemap_draw(bitmap, tilemap_0, 0,0);
-	tilemap_draw(bitmap, tilemap_1, 0,0);
+	tilemap_draw_x(bitmap, tilemap_0, 0,0);
+	tilemap_draw_x(bitmap, tilemap_1, 0,0);
 	(*cave_sprite_draw)( 1 );
-	tilemap_draw(bitmap, tilemap_0, 1,0);
-	tilemap_draw(bitmap, tilemap_1, 1,0);
+	tilemap_draw_x(bitmap, tilemap_0, 1,0);
+	tilemap_draw_x(bitmap, tilemap_1, 1,0);
 	(*cave_sprite_draw)( 2 );
-	tilemap_draw(bitmap, tilemap_0, 2,0);
-	tilemap_draw(bitmap, tilemap_1, 2,0);
+	tilemap_draw_x(bitmap, tilemap_0, 2,0);
+	tilemap_draw_x(bitmap, tilemap_1, 2,0);
 	(*cave_sprite_draw)( 3 );
-	tilemap_draw(bitmap, tilemap_0, 3,0);
-	tilemap_draw(bitmap, tilemap_1, 3,0);
+	tilemap_draw_x(bitmap, tilemap_0, 3,0);
+	tilemap_draw_x(bitmap, tilemap_1, 3,0);
 #endif
 }
 
@@ -2618,3 +2871,193 @@ void cave_vh_stop(void)
 	free(sprite_zbuf);
 	sprite_zbuf = NULL;
 }
+
+
+/*********************************************************************************/
+#else // DECLARE
+
+DECLARE( draw, (int xpos, int ypos),
+{
+	int x1 = xpos;
+	int y1 = ypos;
+	int x2 = xpos+tmblt.source_width;
+	int y2 = ypos+tmblt.source_height;
+
+	/* clip source coordinates */
+	if( x1<tmblt.clip_left ) x1 = tmblt.clip_left;
+	if( x2>tmblt.clip_right ) x2 = tmblt.clip_right;
+	if( y1<tmblt.clip_top ) y1 = tmblt.clip_top;
+	if( y2>tmblt.clip_bottom ) y2 = tmblt.clip_bottom;
+
+	if( x1<x2 && y1<y2 ){ /* do nothing if totally clipped */
+		DATA_TYPE *dest_baseaddr = xpos + (DATA_TYPE *)tmblt.screen->line[y1];
+		DATA_TYPE *dest_next;
+
+		int priority = tmblt.tile_priority;
+		const DATA_TYPE *source_baseaddr;
+		const DATA_TYPE *source_next;
+		const UINT8 *mask_baseaddr;
+		const UINT8 *mask_next;
+
+		int c1;
+		int c2; /* leftmost and rightmost visible columns in source tilemap */
+		int y; /* current screen line to render */
+		int y_next;
+
+		/* convert screen coordinates to source tilemap coordinates */
+		x1 -= xpos;
+		y1 -= ypos;
+		x2 -= xpos;
+		y2 -= ypos;
+
+		source_baseaddr = (DATA_TYPE *)tmblt.pixmap->line[y1];
+		mask_baseaddr = tmblt.bitmask->line[y1];
+
+		c1 = x1/TILE_WIDTH; /* round down */
+		c2 = (x2+TILE_WIDTH-1)/TILE_WIDTH; /* round up */
+
+		y = y1;
+		y_next = TILE_HEIGHT*(y1/TILE_HEIGHT) + TILE_HEIGHT;
+		if( y_next>y2 ) y_next = y2;
+
+		{
+			int dy = y_next-y;
+			dest_next = dest_baseaddr + dy*tmblt.dest_line_offset;
+			source_next = source_baseaddr + dy*tmblt.source_line_offset;
+			mask_next = mask_baseaddr + dy*tmblt.mask_line_offset;
+		}
+
+		for(;;){
+			int row = y/TILE_HEIGHT;
+			UINT8 *mask_data = tmblt.mask_data_row[row];
+			UINT8 *priority_data = tmblt.priority_data_row[row];
+
+			int tile_type;
+			int prev_tile_type = TILE_TRANSPARENT;
+
+			int x_start = x1;
+			int x_end;
+
+			int column;
+			for( column=c1; column<=c2; column++ ){
+				if( column==c2 || priority_data[column]!=priority )
+					tile_type = TILE_TRANSPARENT;
+				else
+					tile_type = mask_data[column];
+
+				if( tile_type!=prev_tile_type ){
+					x_end = column*TILE_WIDTH;
+					if( x_end<x1 ) x_end = x1;
+					if( x_end>x2 ) x_end = x2;
+
+					if( prev_tile_type != TILE_TRANSPARENT ){
+						if( prev_tile_type == TILE_MASKED ){
+							const UINT8 *mask0 = mask_baseaddr;
+							const DATA_TYPE *source0 = source_baseaddr;
+							DATA_TYPE *dest0 = dest_baseaddr;
+							const UINT8 *mask1;
+							const DATA_TYPE *source1;
+							DATA_TYPE *dest1;
+							int i = y;
+							int j;
+							int cnt = x_end-x_start;
+							int cnt1 = (-x_start)&7;
+							int cnt2;
+							int cnt3;
+							if(cnt1>=cnt){
+								cnt1=cnt;cnt2=0;cnt3=0;
+							}
+							else{
+								cnt3 = x_end&7;
+								if(cnt1+cnt3==cnt){
+									cnt2=0;
+								}
+								else{
+									cnt2=(cnt-cnt1)/8;
+								}
+							}
+							for(;;){
+								int xp=x_start;
+
+								for(j=cnt1;j>0;j--){
+									if( mask0[xp/8]&(0x80>>(xp&7)) ) dest0[xp] = source0[xp];
+									xp++;
+								}
+
+								if(cnt2){
+									source1 = &source0[xp];
+									dest1 = &dest0[xp];
+									mask1 = &mask0[xp/8];
+									for(j=cnt2;j>0;j--){
+										UINT8 data = *mask1++;
+										if( data&0x80 ) dest1[0] = source1[0];
+										if( data&0x40 ) dest1[1] = source1[1];
+										if( data&0x20 ) dest1[2] = source1[2];
+										if( data&0x10 ) dest1[3] = source1[3];
+										if( data&0x08 ) dest1[4] = source1[4];
+										if( data&0x04 ) dest1[5] = source1[5];
+										if( data&0x02 ) dest1[6] = source1[6];
+										if( data&0x01 ) dest1[7] = source1[7];
+										source1+=8;
+										dest1+=8;
+									}
+									xp+=cnt2*8;
+								}
+
+								for(j=cnt3;j>0;j--){
+									if( mask0[xp/8]&(0x80>>(xp&7)) ) dest0[xp] = source0[xp];
+									xp++;
+								}
+
+								if( ++i == y_next ) break;
+								dest0 += tmblt.dest_line_offset;
+								source0 += tmblt.source_line_offset;
+								mask0 += tmblt.mask_line_offset;
+							}
+						}
+						else { /* TILE_OPAQUE */
+							int num_pixels = x_end - x_start;
+							DATA_TYPE *dest0 = dest_baseaddr+x_start;
+							const DATA_TYPE *source0 = source_baseaddr+x_start;
+							int i = y;
+							for(;;){
+								memcpy( dest0, source0, num_pixels*sizeof(DATA_TYPE) );
+								if( ++i == y_next ) break;
+								dest0 += tmblt.dest_line_offset;
+								source0 += tmblt.source_line_offset;
+							}
+						}
+					}
+					x_start = x_end;
+				}
+				prev_tile_type = tile_type;
+			}
+
+			if( y_next==y2 ) break; /* we are done! */
+
+			dest_baseaddr = dest_next;
+			source_baseaddr = source_next;
+			mask_baseaddr = mask_next;
+
+			y = y_next;
+			y_next += TILE_HEIGHT;
+
+			if( y_next>=y2 ){
+				y_next = y2;
+			}
+			else {
+				dest_next += tmblt.dest_row_offset;
+				source_next += tmblt.source_row_offset;
+				mask_next += tmblt.mask_row_offset;
+			}
+		} /* process next row */
+	} /* not totally clipped */
+})
+
+
+#undef TILE_WIDTH
+#undef TILE_HEIGHT
+#undef DATA_TYPE
+#undef DECLARE
+
+#endif /* DECLARE */

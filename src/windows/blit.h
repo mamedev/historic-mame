@@ -14,7 +14,23 @@
 
 // maximum X/Y scale values
 #define MAX_X_MULTIPLY		3
-#define MAX_Y_MULTIPLY		3
+#define MAX_Y_MULTIPLY		4
+
+// standard effects
+#define EFFECT_NONE			0
+#define EFFECT_SCANLINE_25	1
+#define EFFECT_SCANLINE_50	2
+#define EFFECT_SCANLINE_75	3
+
+// custom effects
+#define EFFECT_CUSTOM		10
+#define EFFECT_RGB16		10
+#define EFFECT_RGB6			11
+#define EFFECT_RGB4			12
+#define EFFECT_RGB4V		13
+#define EFFECT_RGB3			14
+#define EFFECT_RGB_TINY		15
+#define EFFECT_SCANLINE_75V	16
 
 
 
@@ -32,7 +48,8 @@ struct blit_params
 	int			dstxscale;
 	int			dstyscale;
 	int			dstyskip;
-	
+	int			dsteffect;
+
 	void *		srcdata;
 	int			srcpitch;
 	int			srcdepth;
@@ -41,7 +58,7 @@ struct blit_params
 	int			srcyoffs;
 	int			srcwidth;
 	int			srcheight;
-	
+
 	void *		dirtydata;
 	int			dirtypitch;
 };

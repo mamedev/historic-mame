@@ -5,63 +5,22 @@
 
 #define TC0100SCN_GFX_NUM 1
 
+void asuka_vh_stop(void);
+
 static UINT16 sprite_ctrl = 0;
 static UINT16 sprites_flipscreen = 0;
 
-struct tempsprite
-{
-	int gfx;
-	int code,color;
-	int flipx,flipy;
-	int x,y;
-	int zoomx,zoomy;
-	int primask;
-};
-static struct tempsprite *spritelist;
-
-static int taito_hide_pixels;
-void asuka_vh_stop(void);
-
 /**********************************************************/
 
-static int has_TC0110PCR(void)
+int asuka_core_vh_start (int x_offs)
 {
-	const struct Memory_WriteAddress16 *mwa;
-
-	/* scan the memory handlers and see if the TC0110PCR is used */
-
-	mwa = Machine->drv->cpu[0].memory_write;
-	if (mwa)
+	if (TC0100SCN_vh_start(1,TC0100SCN_GFX_NUM,x_offs,0,0,0,0,0,0))
 	{
-		while (!IS_MEMPORT_END(mwa))
-		{
-			if (!IS_MEMPORT_MARKER(mwa))
-			{
-				if (mwa->handler == TC0110PCR_step1_word_w)
-					return 1;
-			}
-			mwa++;
-		}
+		asuka_vh_stop();
+		return 1;
 	}
 
-	return 0;
-}
-
-
-int asuka_core_vh_start (void)
-{
-	if (TC0100SCN_vh_start(1,TC0100SCN_GFX_NUM,taito_hide_pixels))
-		return 1;
-
-	if (has_TC0110PCR())
-		if (TC0110PCR_vh_start())
-		{
-			asuka_vh_stop();
-			return 1;
-		}
-
-	spritelist = malloc(0x100 * sizeof(*spritelist));
-	if (!spritelist)
+	if (TC0110PCR_vh_start())
 	{
 		asuka_vh_stop();
 		return 1;
@@ -75,25 +34,19 @@ int asuka_core_vh_start (void)
 
 int asuka_vh_start (void)
 {
-	taito_hide_pixels = 0;
-	return (asuka_core_vh_start());
+	return (asuka_core_vh_start(0));
 }
 
 int galmedes_vh_start (void)
 {
-	taito_hide_pixels = 1;
-	return (asuka_core_vh_start());
+	return (asuka_core_vh_start(1));
 }
 
 void asuka_vh_stop (void)
 {
-	free(spritelist);
-	spritelist = 0;
-
 	TC0100SCN_vh_stop();
 
-	if (has_TC0110PCR())
-		TC0110PCR_vh_stop();
+	TC0110PCR_vh_stop();
 }
 
 
@@ -132,10 +85,7 @@ void asuka_update_palette (void)
 		data = spriteram16[offs+2];
 		tilenum = data &0x1fff;
 
-		if (tilenum)
-		{
-			palette_map[color] |= Machine->gfx[0]->pen_usage[tilenum];
-		}
+		palette_map[color] |= Machine->gfx[0]->pen_usage[tilenum % Machine->gfx[0]->total_elements];
 	}
 
 	/* Tell MAME about the color usage */
@@ -218,92 +168,50 @@ void asuka_update_palette (void)
 ********************************************************/
 
 
-static void asuka_draw_sprites(struct osd_bitmap *bitmap,int *primasks,int y_offs)
+static void asuka_draw_sprites(struct osd_bitmap *bitmap)
 {
-	int offs, flipx, flipy;
-	int x, y, curx, cury;
-	UINT8 color, sprite_colbank = (sprite_ctrl & 0x3c) << 2;
-	UINT16 data, code, tilenum;
+	int offs;
+	int sprite_colbank = (sprite_ctrl & 0x3c) << 2;
 
 	/* Mofflot sets this, I haven't seen the other games do so */
 	int priority = (sprite_ctrl & 0x2000) >> 13;	/* 1 = sprites under top bg layer */
 
-	/* pdrawgfx() needs us to draw sprites front to back, so we have to build a list
-	   while processing sprite ram and then draw them all at the end */
-	struct tempsprite *sprite_ptr = spritelist;
-
-	for (offs = (spriteram_size/2)-4;offs >=0;offs -= 4)
+	for (offs = 0;offs < spriteram_size/2;offs += 4)
 	{
+		int flipx, flipy;
+		int x, y;
+		int data,code,color;
+
 		data = spriteram16[offs+0];
 		flipy = (data & 0x8000) >> 15;
 		flipx = (data & 0x4000) >> 14;
 		color = (data & 0x000f) | sprite_colbank;
 
-		data = spriteram16[offs+1];
-		y = data & 0x1ff;   // correct mask?
-
-		data = spriteram16[offs+2];
-		tilenum = data & 0x1fff;
-
-		data = spriteram16[offs+3];
-		x = data & 0x1ff;   // correct mask?
-
-		if (!tilenum) continue;
-
-		y += y_offs;
+		code = spriteram16[offs+2] & 0x1fff;
+		x = spriteram16[offs+3] & 0x1ff;   // correct mask?
+		y = spriteram16[offs+1] & 0x1ff;   // correct mask?
+		y += 8;
 
 		/* treat coords as signed */
 		if (x>0x140) x -= 0x200;
 		if (y>0x140) y -= 0x200;
 
-		code = tilenum;
-		curx = x;
-		cury = y;
-
 		if ((sprites_flipscreen &1) == 0)
 		{
-			curx = 320 - curx - 16;
-			cury = 256 - cury;
+			x = 320 - x - 16;
+			y = 256 - y;
 			flipx = !flipx;
 			flipy = !flipy;
 		}
 
-		sprite_ptr->code = code;
-		sprite_ptr->color = color;
-		sprite_ptr->flipx = flipx;
-		sprite_ptr->flipy = flipy;
-		sprite_ptr->x = curx;
-		sprite_ptr->y = cury;
-
-		if (primasks)
-		{
-			sprite_ptr->primask = primasks[priority];
-			sprite_ptr++;
-		}
-		else
-		{
-			drawgfx(bitmap,Machine->gfx[0],
-					sprite_ptr->code,
-					sprite_ptr->color,
-					sprite_ptr->flipx,sprite_ptr->flipy,
-					sprite_ptr->x,sprite_ptr->y,
-					&Machine->visible_area,TRANSPARENCY_PEN,0);
-		}
-
-	}
-
-	/* this happens only if primsks != NULL */
-	while (sprite_ptr != spritelist)
-	{
-		sprite_ptr--;
-
+		/* Sprites can be under/over the layer below text layer */
 		pdrawgfx(bitmap,Machine->gfx[0],
-				sprite_ptr->code,
-				sprite_ptr->color,
-				sprite_ptr->flipx,sprite_ptr->flipy,
-				sprite_ptr->x,sprite_ptr->y,
+				code,
+				color,
+				flipx,flipy,
+				x,y,
 				&Machine->visible_area,TRANSPARENCY_PEN,0,
-				sprite_ptr->primask);
+				priority ? 0xfc : 0xf0);
 	}
 }
 
@@ -336,11 +244,7 @@ void asuka_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	TC0100SCN_tilemap_draw(bitmap,0,layer[1],0,2);
 	TC0100SCN_tilemap_draw(bitmap,0,layer[2],0,4);
 
-	/* Sprites can be under/over the layer below text layer */
-	{
-		int primasks[2] = {0xf0,0xfc};
-		asuka_draw_sprites(bitmap,primasks,8);
-	}
+	asuka_draw_sprites(bitmap);
 
 #if 0
 	{

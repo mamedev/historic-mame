@@ -57,8 +57,7 @@ Note:	if MAME_DEBUG is defined, pressing Z with:
 		Spriteram16_2 + 0x400.w
 
 						fedc b--- ---- ----		Color
-						---- -a-- ---- ----		?Code (Upper Bits)?
-						---- --9- ---- ----		Code (Upper Bits)
+						---- -a9- ---- ----		Code (Upper Bits)
 						---- ---8 7654 3210		X
 
 		Spriteram16   + 0x000.w
@@ -85,8 +84,7 @@ Note:	if MAME_DEBUG is defined, pressing Z with:
 		Spriteram16_2 + 0xc00 + 0x40 * I:
 
 						fedc b--- ---- ----		Color
-						---- -a-- ---- ----		? Code (Upper Bits) ?
-						---- --9- ---- ----		Code (Upper Bits)
+						---- -a9- ---- ----		Code (Upper Bits)
 						---- ---8 7654 3210		-
 
 	Each column	has a variable horizontal position and a vertical scrolling
@@ -266,8 +264,7 @@ static void get_tile_info_##_n_( int tile_index ) \
 { \
 	data16_t code =	seta_vram_##_n_[ tile_index ]; \
 	data16_t attr =	seta_vram_##_n_[ tile_index + DIM_NX * DIM_NY ]; \
-	SET_TILE_INFO( 1 + _n_/2, seta_tiles_offset + (code & 0x3fff), attr & 0x1f ); \
-	tile_info.flags = TILE_FLIPXY( code >> (16-2) ); \
+	SET_TILE_INFO( 1 + _n_/2, seta_tiles_offset + (code & 0x3fff), attr & 0x1f, TILE_FLIPXY( code >> (16-2) )) \
 } \
 \
 WRITE16_HANDLER( seta_vram_##_n_##_w ) \
@@ -432,6 +429,21 @@ void blandia_vh_init_palette(unsigned char *palette, unsigned short *colortable,
 
 
 
+/* layers have 6 bits per pixel, but the color code has a 16 colors granularity,
+   even if the low 2 bits are ignored (so there are only 4 different palettes) */
+void gundhara_vh_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+{
+	int color, pen;
+	for( color = 0; color < 32; color++ )
+		for( pen = 0; pen < 64; pen++ )
+		{
+			colortable[color * 64 + pen + 32*16 + 32*64*0] = (((color&~3) * 16 + pen)%(32*16)) + 32*16*2;
+			colortable[color * 64 + pen + 32*16 + 32*64*1] = (((color&~3) * 16 + pen)%(32*16)) + 32*16*1;
+		}
+}
+
+
+
 /* layers have 6 bits per pixel, but the color code has a 16 colors granularity */
 void jjsquawk_vh_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
@@ -531,7 +543,7 @@ static void seta_draw_sprites_map(struct osd_bitmap *bitmap)
 			int	flipx	=	code & 0x8000;
 			int	flipy	=	code & 0x4000;
 
-			int bank	=	color & 0x0200;
+			int bank	=	(color & 0x0600) >> 9;
 
 /*
 twineagl:	010 02d 0f 10	(ship)
@@ -561,7 +573,7 @@ oisipuzl:	059 020 00 00	(game - yes, flip on!)
 			}
 
 			color	=	( color >> (16-5) ) % total_color_codes;
-			code	=	(code & 0x3fff) + (bank ? 0x4000 : 0);
+			code	=	(code & 0x3fff) + (bank * 0x4000);
 
 #define DRAWTILE(_x_,_y_)  \
 			drawgfx(bitmap,Machine->gfx[0], \
@@ -622,7 +634,7 @@ static void seta_draw_sprites(struct osd_bitmap *bitmap)
 		int	flipx	=	code & 0x8000;
 		int	flipy	=	code & 0x4000;
 
-		int bank	=	 x & 0x0200;
+		int bank	=	(x & 0x0600) >> 9;
 		int color	=	( x >> (16-5) ) % total_color_codes;
 
 		if (flip)
@@ -634,7 +646,7 @@ static void seta_draw_sprites(struct osd_bitmap *bitmap)
 			flipy = !flipy;
 		}
 
-		code = (code & 0x3fff) + (bank ? 0x4000 : 0);
+		code = (code & 0x3fff) + (bank * 0x4000);
 
 		drawgfx(bitmap,Machine->gfx[0],
 				code,

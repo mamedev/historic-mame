@@ -244,8 +244,11 @@ static void get_bg_tile_info(int tile_index)
 {
 	data16_t code_hi = kaneko16_bgram[ 2 * tile_index + 0];
 	data16_t code_lo = kaneko16_bgram[ 2 * tile_index + 1];
-	SET_TILE_INFO(BG_GFX, code_lo,(code_hi >> 2) & 0x3f);
-	tile_info.flags 	=	TILE_FLIPXY( code_hi & 3 );
+	SET_TILE_INFO(
+			BG_GFX,
+			code_lo,
+			(code_hi >> 2) & 0x3f,
+			TILE_FLIPXY( code_hi & 3 ))
 	tile_info.priority	=	(code_hi >> 8) & 3;
 }
 
@@ -275,8 +278,11 @@ static void get_fg_tile_info(int tile_index)
 {
 	data16_t code_hi = kaneko16_fgram[ 2 * tile_index + 0];
 	data16_t code_lo = kaneko16_fgram[ 2 * tile_index + 1];
-	SET_TILE_INFO(FG_GFX, code_lo,(code_hi >> 2) & 0x3f);
-	tile_info.flags 	=	TILE_FLIPXY( code_hi & 3 );
+	SET_TILE_INFO(
+			FG_GFX,
+			code_lo,
+			(code_hi >> 2) & 0x3f,
+			TILE_FLIPXY( code_hi & 3 ))
 	tile_info.priority	=	(code_hi >> 8) & 3;
 }
 

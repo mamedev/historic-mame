@@ -120,6 +120,7 @@ Line ram memory map:
 	0xb200: Playfield 2 priority
 	0xb400: Playfield 3 priority
 	0xb600: Playfield 4 priority
+		0xf000 = Disable playfield (ElvAct2 second level)
 		0x8000 = Enable alpha-blending for this line
 		0x4000 = Disable line? (Darius Gaiden 0x5000 = disable, 0x3000, 0xb000 & 0x7000 = display)
 		0x2000 = ?
@@ -171,6 +172,7 @@ Line ram memory map:
 
 #define DARIUSG_KLUDGE
 #define DEBUG_F3 0
+#define TRY_ALPHA 0
 
 static struct tilemap *pf1_tilemap,*pf2_tilemap,*pf3_tilemap,*pf4_tilemap;
 static data32_t *gfx_base,*spriteram32_buffered;
@@ -223,10 +225,10 @@ static struct F3config f3_config_table[]=
 	{ QTHEATER,  1,      0,          0,         0,       0    },
 	{ HTHERO95,  0,      0,        -30,         1,       1    },
 	{ SPCINV95,  0,      0,        -30,         0,       0    },
-	{ EACTION2,  1,      0,        -23,         0,       0    }, //no,yes,?
+	{ EACTION2,  1,      0,        -23,         0,       1    }, //no,yes,?
 	{ QUIZHUHU,  1,      0,        -23,         0,       0    },
-	{ PBOBBLE2,  0,      1,          0,         0,       1    }, //no,no,?
-	{ GEKIRIDO,  0,      0,        -23,         0,       0    },
+	{ PBOBBLE2,  0,      1,          0,         1,       1    }, //no,no,?
+	{ GEKIRIDO,  0,      0,        -23,         0,       1    },
 	{ KTIGER2,   0,      1,        -24,         0,       0    },//no,yes,partial
 	{ BUBBLEM,   1,      0,        -30,         0,       0    },
 	{ CLEOPATR,  0,      0,        -30,         0,       0    },
@@ -236,7 +238,7 @@ static struct F3config f3_config_table[]=
 	{ PUCHICAR,  1,      0,        -23,         0,       0    },
 	{ PBOBBLE4,  0,      1,          0,         1,       1    },
 	{ POPNPOP,   1,      0,        -23,         0,       0    },
-	{ LANDMAKR,  1,      0,        -23,         0,       0    },
+	{ LANDMAKR,  1,      0,        -23,         0,       1    },
 	{0}
 };
 
@@ -786,9 +788,7 @@ static void f3_drawsprites(struct osd_bitmap *bitmap)
 	int multi=0;
 	int sprite_top;
 
-	/* Bryan: I took this from Taito F2 as it was better than my previous method
-
-		pdrawgfx() needs us to draw sprites front to back, so we have to build a list
+	/*	pdrawgfx() needs us to draw sprites front to back, so we have to build a list
 	   while processing sprite ram and then draw them all at the end */
 	struct tempsprite *sprite_ptr = spritelist;
 
@@ -805,7 +805,7 @@ static void f3_drawsprites(struct osd_bitmap *bitmap)
 			data32_t cntrl=(spriteram32_buffered[offs+2])&0xffff;
 			flipscreen=cntrl&0x2000;
 
-			/*	cntrl&0x1000 = disabled?  (From F2 driver)
+			/*	cntrl&0x1000 = disabled?  (From F2 driver, doesn't seem used anywhere)
 				cntrl&0x0010 = ???
 				cntrl&0x0020 = ???
 			*/
@@ -855,8 +855,8 @@ static void f3_drawsprites(struct osd_bitmap *bitmap)
 		sprite = (spriteram32_buffered[offs]>>16) | ((spriteram32_buffered[offs+2]&1)<<16);
 		spritecont = spriteram32_buffered[offs+2]>>24;
 
-/* These games don't set the XY control bits properly (68020 bug), this at least
-	displays some of the sprites */
+/* These games either don't set the XY control bits properly (68020 bug?), or
+	have some different mode from the others */
 #ifdef DARIUSG_KLUDGE
 		if (f3_game==DARIUSG || f3_game==GEKIRIDO || f3_game==CLEOPATR)
 			multi=spritecont&0xf0;
@@ -991,10 +991,16 @@ static void f3_drawsprites(struct osd_bitmap *bitmap)
 			sprite_ptr->flipx = flipx;
 			sprite_ptr->flipy = flipy;
 		}
+
+		if (DEBUG_F3 && keyboard_pressed(KEYCODE_A) && (color & 0xc0)==0xc0) color=rand()%0xff;
+		if (DEBUG_F3 && keyboard_pressed(KEYCODE_S) && (color & 0xc0)==0x80) color=rand()%0xff;
+		if (DEBUG_F3 && keyboard_pressed(KEYCODE_D) && (color & 0xc0)==0x40) color=rand()%0xff;
+		if (DEBUG_F3 && keyboard_pressed(KEYCODE_F) && (color & 0xc0)==0x00) color=rand()%0xff;
+
 		sprite_ptr->code = sprite;
 		sprite_ptr->color = color;
-		if (block_zoom_x) sprite_ptr->zoomx = (0x110-block_zoom_x)<<8; else sprite_ptr->zoomx=0x10000;
-		if (block_zoom_y) sprite_ptr->zoomy = (0x110-block_zoom_y)<<8; else sprite_ptr->zoomy=0x10000;
+		if (block_zoom_x) sprite_ptr->zoomx = ((0x10f-block_zoom_x)<<8)|0x80; else sprite_ptr->zoomx=0x10000;
+		if (block_zoom_y) sprite_ptr->zoomy = ((0x10f-block_zoom_y)<<8)|0x80; else sprite_ptr->zoomy=0x10000;
 		sprite_ptr->primask = primasks[(color & 0xc0) >> 6];
 		sprite_ptr++;
 	}
@@ -1171,7 +1177,7 @@ void f3_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			}
 
 			/* KTiger 2 needs the first _visible_ pri value - not a disabled line */
-			if (tpri[pos]!=0 && (tpri[pos]&0x0800)!=0x0800) need_t=0;
+			if (tpri[pos]!=0 && (tpri[pos]&0x0900)!=0x0800) need_t=0;
 			if (zoom[pos]!=0) need_z=0;
 			if (flipscreen) { t_pos-=2; z_pos-=2; } else { t_pos+=2; z_pos+=2; }
 			if (need_t==0 && need_z==0)
@@ -1184,29 +1190,29 @@ void f3_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	else if ((f3_line_ram[0x8164/4]&0xffff)!=0x80 && (f3_line_ram[0x8164/4]&0xffff)) use_custom[0]=1;
 	else if ((f3_line_ram[0x8038/4]>>16)!=0x80 && (f3_line_ram[0x8038/4]>>16)) use_custom[0]=1;
 	else if ((f3_line_ram[0x81a0/4]>>16)!=0x80 && (f3_line_ram[0x81a0/4]>>16)) use_custom[0]=1;
+	else if ((f3_line_ram[0x4040/4]&0xfff) || (f3_line_ram[0x4180/4]&0xfff) || (f3_line_ram[0x4080/4]&0xfff)) use_custom[0]=1;
 
 	if (zoom[1]!=0x80) use_custom[1]=1;
 	else if ((f3_line_ram[0x8300/4]&0xffff)!=0x80 && (f3_line_ram[0x8300/4]&0xffff)) use_custom[1]=1;
 	else if ((f3_line_ram[0x8238/4]>>16)!=0x80 && (f3_line_ram[0x8238/4]>>16)) use_custom[1]=1;
 	else if ((f3_line_ram[0x8390/4]>>16)!=0x80 && (f3_line_ram[0x8390/4]>>16)) use_custom[1]=1;
+	else if ((f3_line_ram[0x4240/4]&0xfff) || (f3_line_ram[0x4380/4]&0xfff) || (f3_line_ram[0x4280/4]&0xfff)) use_custom[1]=1;
 
 	if (zoom[2]!=0x80) use_custom[2]=1;
 	else if ((f3_line_ram[0x8500/4]&0xffff)!=0x80 && (f3_line_ram[0x8500/4]&0xffff)) use_custom[2]=1;
 	else if ((f3_line_ram[0x8438/4]>>16)!=0x80 && (f3_line_ram[0x8438/4]>>16)) use_custom[2]=1;
+	else if ((f3_line_ram[0x4440/4]&0xfff) || (f3_line_ram[0x4580/4]&0xfff) || (f3_line_ram[0x4480/4]&0xfff)) use_custom[2]=1;
 
 	if (zoom[3]!=0x80) use_custom[3]=1;
 	else if ((f3_line_ram[0x8700/4]&0xffff)!=0x80 && (f3_line_ram[0x8700/4]&0xffff)) use_custom[3]=1;
 	else if ((f3_line_ram[0x8638/4]>>16)!=0x80 && (f3_line_ram[0x8638/4]>>16)) use_custom[3]=1;
+	else if ((f3_line_ram[0x4640/4]&0xfff) || (f3_line_ram[0x4780/4]&0xfff) || (f3_line_ram[0x4680/4]&0xfff)) use_custom[3]=1;
 
-	/* Kludge - Space Invaders DX uses column scroll on the title screen only, check for it */
-	if (f3_game==SPCINVDX && ((f3_line_ram[0x4440/4]&0xfff) || (f3_line_ram[0x4640/4]&0xfff))) {
-		use_custom[2]=use_custom[3]=1;
-	}
 	enable[0]=enable[1]=enable[2]=enable[3]=1;
-	if ((tpri[0]&0xf000)==0 || (tpri[0]&0xf000)==0x1000 || (tpri[0]&0xf000)==0x5000) enable[0]=0;
-	if ((tpri[1]&0xf000)==0 || (tpri[1]&0xf000)==0x1000 || (tpri[1]&0xf000)==0x5000) enable[1]=0;
-	if ((tpri[2]&0xf000)==0 || (tpri[2]&0xf000)==0x1000 || (tpri[2]&0xf000)==0x5000) enable[2]=0;
-	if ((tpri[3]&0xf000)==0 || (tpri[3]&0xf000)==0x1000 || (tpri[3]&0xf000)==0x5000) enable[3]=0;
+	if ((tpri[0]&0xf000)==0 || (tpri[0]&0xf000)==0x1000 || (tpri[0]&0xf000)==0x5000 || (tpri[0]&0xf000)==0xf000) enable[0]=0;
+	if ((tpri[1]&0xf000)==0 || (tpri[1]&0xf000)==0x1000 || (tpri[1]&0xf000)==0x5000 || (tpri[1]&0xf000)==0xf000) enable[1]=0;
+	if ((tpri[2]&0xf000)==0 || (tpri[2]&0xf000)==0x1000 || (tpri[2]&0xf000)==0x5000 || (tpri[2]&0xf000)==0xf000) enable[2]=0;
+	if ((tpri[3]&0xf000)==0 || (tpri[3]&0xf000)==0x1000 || (tpri[3]&0xf000)==0x5000 || (tpri[3]&0xf000)==0xf000) enable[3]=0;
 
 #if TRY_ALPHA
 	alpha[0]=tpri[0]&0x8000;
@@ -1219,6 +1225,7 @@ void f3_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	/* These games have a solid white alpha layer which is of course opaque until we support it - disable for now */
 	if ((tpri[3]&0x8000) && (f3_game==TWINQIX || f3_game==POPNPOP || f3_game==ARKRETRN)) enable[3]=0;
+	if ((tpri[2]&0x8000) && f3_game==QUIZHUHU) enable[2]=0;
 	if ((tpri[3]&0x100) && f3_game==BUBBLEM) enable[3]=0; /* Bosses have an alpha layer on top of everything */
 
 	/* We don't need to mark pens in 16 or 24 bit modes, only transparent colours */
@@ -1408,8 +1415,11 @@ static void get_tile_info(int tile_index)
 	color=gfx_base[tile_index]>>16;
 	tile=gfx_base[tile_index];
 
-	SET_TILE_INFO(1,tile&0xffff,color&0x1ff)
-	tile_info.flags=TILE_FLIPYX( color >>14 );
+	SET_TILE_INFO(
+			1,
+			tile&0xffff,
+			color&0x1ff,
+			TILE_FLIPYX( color >>14 ))
 }
 
 WRITE32_HANDLER( f3_pf_data_w )

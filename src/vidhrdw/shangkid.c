@@ -61,8 +61,11 @@ static void get_bg_tile_info(int tile_index){
 		*/
 		color = attributes>>3;
 		color = (color&0x03)|((color&0x1c)<<1);
-		SET_TILE_INFO(0,tile_number,color )
-		tile_info.flags = (attributes&0x04)?TILE_FLIPX:0;
+		SET_TILE_INFO(
+				0,
+				tile_number,
+				color,
+				(attributes&0x04)?TILE_FLIPX:0)
 	}
 	else
 	{
@@ -72,8 +75,11 @@ static void get_bg_tile_info(int tile_index){
 			x-------	flipx?
 		*/
 		color = (attributes>>2)&0x1f;
-		SET_TILE_INFO(0,tile_number,color )
-		tile_info.flags = (attributes&0x80)?TILE_FLIPX:0;
+		SET_TILE_INFO(
+				0,
+				tile_number,
+				color,
+				(attributes&0x80)?TILE_FLIPX:0)
 	}
 
 	tile_info.priority =

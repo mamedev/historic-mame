@@ -9,6 +9,7 @@ driver by Nicola Salmoria
 
 TODO:
 
+- 053936 support in glfgreat and premsocr.
 - detatwin: sprites are left on screen during attract mode
 - sprite priorities in ssriders (protection)
 - sprite colors / zoomed placement in tmnt2 (protection)
@@ -38,6 +39,7 @@ WRITE16_HANDLER( lgtnfght_0a0018_w );
 WRITE16_HANDLER( detatwin_700300_w );
 WRITE16_HANDLER( glfgreat_122000_w );
 WRITE16_HANDLER( ssriders_1c0300_w );
+WRITE16_HANDLER( prmrsocr_122000_w );
 WRITE16_HANDLER( tmnt_priority_w );
 int mia_vh_start(void);
 int tmnt_vh_start(void);
@@ -51,6 +53,8 @@ int glfgreat_vh_start(void);
 void glfgreat_vh_stop(void);
 int thndrx2_vh_start(void);
 void thndrx2_vh_stop(void);
+int prmrsocr_vh_start(void);
+void prmrsocr_vh_stop(void);
 void mia_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void tmnt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void punkshot_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
@@ -196,6 +200,43 @@ static WRITE16_HANDLER( glfgreat_sound_w )
 		cpu_cause_interrupt(1,0xff);
 }
 
+static READ16_HANDLER( prmrsocr_sound_r )
+{
+	return soundlatch3_r(0);
+}
+
+static WRITE16_HANDLER( prmrsocr_sound_cmd_w )
+{
+	if (ACCESSING_LSB)
+	{
+		data &= 0xff;
+		if (offset == 0) soundlatch_w(0,data);
+		else soundlatch2_w(0,data);
+
+		/* If the sound CPU is not running, make the tests pass anyway */
+		if (offset == 0 && !Machine->sample_rate)
+		{
+			if (data == 0xfe)	/* ROM & RAM test */
+				soundlatch3_w(0,0x0f);
+			if (data == 0xfc)	/* sample ROM test */
+				soundlatch3_w(0,0x10);
+		}
+	}
+}
+
+static WRITE16_HANDLER( prmrsocr_sound_irq_w )
+{
+	cpu_cause_interrupt(1,0xff);
+}
+
+static WRITE_HANDLER( prmrsocr_s_bankswitch_w )
+{
+	data8_t *rom = memory_region(REGION_CPU2) + 0x10000;
+
+	cpu_setbank(1,rom + (data & 7) * 0x4000);
+}
+
+
 static READ16_HANDLER( tmnt2_sound_r )
 {
 	/* If the sound CPU is running, read the status, otherwise
@@ -275,6 +316,7 @@ static int tmnt_decode_sample(const struct MachineSound *msound)
 
 	return 0;
 }
+
 
 static int sound_nmi_enabled;
 
@@ -417,7 +459,8 @@ static READ16_HANDLER( ssriders_eeprom_r )
 
 static WRITE16_HANDLER( ssriders_eeprom_w )
 {
-	if (ACCESSING_LSB) {
+	if (ACCESSING_LSB)
+	{
 		/* bit 0 is data */
 		/* bit 1 is cs (active low) */
 		/* bit 2 is clock (active high) */
@@ -507,6 +550,46 @@ static WRITE16_HANDLER( thndrx2_eeprom_w )
 
 		/* bit 6 = enable char ROM reading through the video RAM */
 		K052109_set_RMRD_line((data & 0x40) ? ASSERT_LINE : CLEAR_LINE);
+	}
+}
+
+
+static READ16_HANDLER( prmrsocr_IN0_r )
+{
+	/* bit 9 is service button */
+	int res;
+
+	res = input_port_0_word_r(0,0);
+	if (init_eeprom_count)
+	{
+		init_eeprom_count--;
+		res &= 0xfdff;
+	}
+	return res;
+}
+
+static READ16_HANDLER( prmrsocr_eeprom_r )
+{
+	/* bit 8 is EEPROM data */
+	/* bit 9 is EEPROM ready */
+	return (EEPROM_read_bit() << 8) | input_port_1_word_r(0,0);
+}
+
+static WRITE16_HANDLER( prmrsocr_eeprom_w )
+{
+	if (ACCESSING_LSB)
+	{
+		prmrsocr_122000_w(offset,data,mem_mask);
+	}
+
+	if (ACCESSING_MSB)
+	{
+		/* bit 8 is data */
+		/* bit 9 is cs (active low) */
+		/* bit 10 is clock (active high) */
+		EEPROM_write_bit(data & 0x0100);
+		EEPROM_set_cs_line((data & 0x0200) ? CLEAR_LINE : ASSERT_LINE);
+		EEPROM_set_clock_line((data & 0x0400) ? ASSERT_LINE : CLEAR_LINE);
 	}
 }
 
@@ -900,6 +983,37 @@ static MEMORY_WRITE16_START( thndrx2_writemem )
 MEMORY_END
 
 
+static MEMORY_READ16_START( prmrsocr_readmem )
+	{ 0x000000, 0x07ffff, MRA16_ROM },
+	{ 0x100000, 0x103fff, MRA16_RAM },	/* main RAM */
+	{ 0x104000, 0x107fff, K053245_scattered_word_r },
+	{ 0x108000, 0x108fff, MRA16_RAM },
+	{ 0x10c000, 0x10cfff, MRA16_RAM },	/* 053936? */
+	{ 0x114000, 0x11401f, K053244_lsb_r },
+	{ 0x120000, 0x120001, prmrsocr_IN0_r },
+	{ 0x120002, 0x120003, prmrsocr_eeprom_r },
+	{ 0x121014, 0x121015, prmrsocr_sound_r },
+	{ 0x200000, 0x207fff, K052109_word_noA12_r },
+MEMORY_END
+
+static MEMORY_WRITE16_START( prmrsocr_writemem )
+	{ 0x000000, 0x07ffff, MWA16_ROM },
+	{ 0x100000, 0x103fff, MWA16_RAM },	/* main RAM */
+	{ 0x104000, 0x107fff, K053245_scattered_word_w, &spriteram16 },
+	{ 0x108000, 0x108fff, paletteram16_xBBBBBGGGGGRRRRR_word_w, &paletteram16 },
+	{ 0x10c000, 0x10cfff, MWA16_RAM },	/* 053936 3D rotation control? */
+	{ 0x110000, 0x11001f, K053244_word_noA1_w },	/* duplicate! */
+	{ 0x114000, 0x11401f, K053244_lsb_w },		/* duplicate! */
+	{ 0x118000, 0x11801f, MWA16_NOP },	/* 053936 control */
+	{ 0x11c000, 0x11c01f, K053251_msb_w },
+	{ 0x122000, 0x122001, prmrsocr_eeprom_w },	/* EEPROM + video control */
+	{ 0x12100c, 0x12100f, prmrsocr_sound_cmd_w },
+	{ 0x123000, 0x123001, prmrsocr_sound_irq_w },
+	{ 0x200000, 0x207fff, K052109_word_noA12_w },
+	{ 0x280000, 0x280001, watchdog_reset16_w },
+MEMORY_END
+
+
 
 static MEMORY_READ_START( mia_s_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
@@ -1013,6 +1127,34 @@ static MEMORY_WRITE_START( thndrx2_s_writemem )
 	{ 0xf811, 0xf811, YM2151_data_port_0_w },	/* mirror */
 	{ 0xfa00, 0xfa00, sound_arm_nmi_w },
 	{ 0xfc00, 0xfc2f, K053260_0_w },
+MEMORY_END
+
+static READ_HANDLER( K054539_0_ctrl_r )
+{
+	return K054539_0_r(0x200+offset);
+}
+static WRITE_HANDLER( K054539_0_ctrl_w )
+{
+	K054539_0_w(0x200+offset,data);
+}
+
+static MEMORY_READ_START( prmrsocr_s_readmem )
+	{ 0x0000, 0x7fff, MRA_ROM },
+	{ 0x8000, 0xbfff, MRA_BANK1 },
+	{ 0xc000, 0xdfff, MRA_RAM },
+	{ 0xe000, 0xe0ff, K054539_0_r },
+	{ 0xe100, 0xe12f, K054539_0_ctrl_r },
+	{ 0xf002, 0xf002, soundlatch_r },
+	{ 0xf003, 0xf003, soundlatch2_r },
+MEMORY_END
+
+static MEMORY_WRITE_START( prmrsocr_s_writemem )
+	{ 0x0000, 0xbfff, MWA_ROM },
+	{ 0xc000, 0xdfff, MWA_RAM },
+	{ 0xe000, 0xe0ff, K054539_0_w },
+	{ 0xe100, 0xe12f, K054539_0_ctrl_w },
+	{ 0xf000, 0xf000, soundlatch3_w },
+	{ 0xf800, 0xf800, prmrsocr_s_bankswitch_w },
 MEMORY_END
 
 
@@ -2069,6 +2211,52 @@ INPUT_PORTS_START( thndrx2 )
 	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( prmrsocr )
+	PORT_START
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BITX(0x0200, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_DIPNAME( 0x1000, 0x0000, "Sound" )
+	PORT_DIPSETTING(      0x1000, "Mono" )
+	PORT_DIPSETTING(      0x0000, "Stereo" )
+	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Unused ) )
+	PORT_DIPSETTING(      0x2000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Unused ) )
+	PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Unused ) )
+	PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+
+	PORT_START
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x0100, IP_ACTIVE_HIGH, IPT_SPECIAL )	/* EEPROM data */
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_SPECIAL )	/* EEPROM status? - always 1 */
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+INPUT_PORTS_END
+
 
 
 static struct YM2151interface ym2151_interface =
@@ -2606,6 +2794,68 @@ static const struct MachineDriver machine_driver_thndrx2 =
 		{
 			SOUND_K053260,
 			&k053260_interface_nmi
+		}
+	},
+
+	thndrx2_nvram_handler
+};
+
+
+static void sound_nmi(void)
+{
+	cpu_set_nmi_line(1, PULSE_LINE);
+}
+
+static struct K054539interface k054539_interface =
+{
+	1,			/* 1 chip */
+	48000,
+	{ REGION_SOUND1 },
+	{ { 100, 100 } },
+	{ 0 },
+	{ sound_nmi }
+};
+
+static const struct MachineDriver machine_driver_prmrsocr =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_M68000,
+			12000000,	/* ? */
+			prmrsocr_readmem,prmrsocr_writemem,0,0,
+			lgtnfght_interrupt,1
+		},
+		{
+			CPU_Z80 | CPU_AUDIO_CPU,
+			8000000,	/* ? */
+			prmrsocr_s_readmem,prmrsocr_s_writemem,0,0,
+			ignore_interrupt,0	/* IRQs are triggered by the main CPU */
+								/* NMIs are generated by the 054539 */
+		}
+	},
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
+	0,
+
+	/* video hardware */
+	64*8, 32*8, { 14*8, (64-14)*8-1, 2*8, 30*8-1 },
+	glfgreat_gfxdecodeinfo,	/* gfx decoded by konamiic.c */
+	2048, 2048,
+	0,
+
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	0,
+	prmrsocr_vh_start,
+	prmrsocr_vh_stop,
+	glfgreat_vh_screenrefresh,
+
+	/* sound hardware */
+	SOUND_SUPPORTS_STEREO,0,0,0,
+	{
+		{
+			SOUND_K054539,
+			&k054539_interface
 		}
 	},
 
@@ -3414,6 +3664,34 @@ ROM_START( thndrx2 )
 	ROM_LOAD( "073-b04.2d",   0x0000, 0x80000, 0x05287a0b )
 ROM_END
 
+ROM_START( prmrsocr )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "101jab08.1h", 0x000000, 0x40000, 0xc22b528c )
+	ROM_LOAD16_BYTE( "101jab07.4h", 0x000001, 0x40000, 0x06e7acaf )
+
+	ROM_REGION( 0x30000, REGION_CPU2, 0 ) /* 64k for the audio CPU */
+	ROM_LOAD( "101_c05.5e",   0x00000, 0x20000, 0x02c3679f )
+	ROM_RELOAD(               0x10000, 0x20000 )
+
+    ROM_REGION( 0x080000, REGION_GFX1, 0 )	/* graphics (addressable by the main CPU) */
+	ROM_LOAD( "101a12.12l",   0x000000, 0x040000, 0x33530d7f )	/* tiles */
+	ROM_LOAD( "101a11.12k",   0x040000, 0x040000, 0x7f773271 )
+
+	ROM_REGION( 0x400000, REGION_GFX2, 0 )	/* graphics (addressable by the main CPU) */
+	ROM_LOAD( "101a09.3l",    0x000000, 0x200000, 0xb6a1b424 )	/* sprites */
+	ROM_LOAD( "101a10.8l",    0x200000, 0x200000, 0xbbd58adc )
+
+	ROM_REGION( 0x080000, REGION_GFX3, 0 )	/* 053936 tiles */
+	ROM_LOAD( "101a03.18f",   0x000000, 0x080000, 0x59a1a91c )
+
+	ROM_REGION( 0x040000, REGION_USER1, 0 )	/* unknown (further data for the 053936?) */
+	ROM_LOAD( "101a01.18d",   0x000000, 0x020000, 0x716f910f )
+	ROM_LOAD( "101a02.16d",   0x020000, 0x020000, 0x222869c7 )
+
+	ROM_REGION( 0x200000, REGION_SOUND1, 0 )	/* samples for the 054539 */
+	ROM_LOAD( "101a06.1d",    0x0000, 0x200000, 0x4f48e043 )
+ROM_END
+
 
 
 static void init_gfx(void)
@@ -3697,3 +3975,5 @@ GAMEX(1991, ssrdrabd, ssriders, ssriders, ssriders, gfx,      ROT0,  "Konami", "
 GAMEX(1991, ssrdrjbd, ssriders, ssriders, ssriders, gfx,      ROT0,  "Konami", "Sunset Riders (Japan 2 Players ver. JBD)", GAME_UNEMULATED_PROTECTION )
 
 GAME( 1991, thndrx2,  0,        thndrx2,  thndrx2,  gfx,      ROT0,  "Konami", "Thunder Cross II (Japan)" )
+
+GAMEX(1993, prmrsocr, 0,        prmrsocr, prmrsocr, glfgreat, ROT0,  "Konami", "Premier Soccer (Japan)", GAME_IMPERFECT_GRAPHICS )

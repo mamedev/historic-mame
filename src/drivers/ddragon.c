@@ -22,7 +22,7 @@ void ddragon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 WRITE_HANDLER( ddragon_bgvideoram_w );
 WRITE_HANDLER( ddragon_fgvideoram_w );
 extern unsigned char *ddragon_spriteram;
-extern int dd2_video;
+extern int technos_video_hw;
 /* end of extern code & data */
 
 /* private globals */
@@ -36,7 +36,7 @@ static void ddragon_init_machine( void )
 	sprite_irq = HD63701_INT_NMI;
 	sound_irq = M6809_INT_IRQ;
 	ym_irq = M6809_FIRQ_LINE;
-	dd2_video = 0;
+	technos_video_hw = 0;
 	dd_sub_cpu_busy = 0x10;
 	adpcm_idle[0] = adpcm_idle[1] = 1;
 }
@@ -46,7 +46,7 @@ static void ddragonb_init_machine( void )
 	sprite_irq = M6809_INT_NMI;
 	sound_irq = M6809_INT_IRQ;
 	ym_irq = M6809_FIRQ_LINE;
-	dd2_video = 0;
+	technos_video_hw = 0;
 	dd_sub_cpu_busy = 0x10;
 	adpcm_idle[0] = adpcm_idle[1] = 1;
 }
@@ -56,7 +56,7 @@ static void ddragon2_init_machine( void )
 	sprite_irq = Z80_NMI_INT;
 	sound_irq = Z80_NMI_INT;
 	ym_irq = 0;
-	dd2_video = 1;
+	technos_video_hw = 2;
 	dd_sub_cpu_busy = 0x10;
 }
 

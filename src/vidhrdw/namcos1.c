@@ -290,14 +290,22 @@ static int info_color;
 static void background_get_info(int tile_index)
 {
 	int code = info_vram[2*tile_index+1]+((info_vram[2*tile_index]&0x3f)<<8);
-	SET_TILE_INFO(1,code,info_color);
+	SET_TILE_INFO(
+			1,
+			code,
+			info_color,
+			0)
 	tile_info.mask_data = mask_ptr[code];
 }
 
 static void foreground_get_info(int tile_index)
 {
 	int code = info_vram[2*tile_index+1]+((info_vram[2*tile_index]&0x3f)<<8);
-	SET_TILE_INFO(1,code,info_color);
+	SET_TILE_INFO(
+			1,
+			code,
+			info_color,
+			0)
 	tile_info.mask_data = mask_ptr[code];
 }
 

@@ -58,9 +58,9 @@ Port I/O Write:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-extern unsigned char *galaxian_attributesram;
+extern unsigned char *thepit_attributesram;
 extern unsigned char *intrepid_sprite_bank_select;
-WRITE_HANDLER( galaxian_attributes_w );
+WRITE_HANDLER( thepit_attributes_w );
 
 void thepit_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void suprmous_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
@@ -99,7 +99,7 @@ static MEMORY_WRITE_START( thepit_writemem )
 	{ 0x8c00, 0x8fff, colorram_w },
 	{ 0x9000, 0x93ff, videoram_w, &videoram, &videoram_size },
 	{ 0x9400, 0x97ff, videoram_w },
-	{ 0x9800, 0x983f, galaxian_attributes_w, &galaxian_attributesram },
+	{ 0x9800, 0x983f, thepit_attributes_w, &thepit_attributesram },
 	{ 0x9840, 0x985f, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x9860, 0x98ff, MWA_RAM }, // Probably unused
 	{ 0xa000, 0xa000, MWA_NOP }, // Not hooked up according to the schematics
@@ -129,7 +129,7 @@ static MEMORY_WRITE_START( intrepid_writemem )
 	{ 0x8000, 0x87ff, MWA_RAM },
 	{ 0x9000, 0x93ff, videoram_w, &videoram, &videoram_size },
 	{ 0x9400, 0x97ff, colorram_w, &colorram },
-	{ 0x9800, 0x983f, galaxian_attributes_w, &galaxian_attributesram },
+	{ 0x9800, 0x983f, thepit_attributes_w, &thepit_attributesram },
 	{ 0x9840, 0x985f, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x9860, 0x98ff, MWA_RAM }, // Probably unused
 	{ 0xb000, 0xb000, interrupt_enable_w },

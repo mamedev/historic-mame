@@ -6,6 +6,8 @@
 #define TC0100SCN_GFX_NUM 1
 #define TC0480SCP_GFX_NUM 1
 
+void taitoz_vh_stop(void);
+
 struct tempsprite
 {
 	int gfx;
@@ -17,7 +19,6 @@ struct tempsprite
 };
 static struct tempsprite *spritelist;
 
-static int taito_hide_pixels;
 static int sci_spriteframe;
 extern data16_t *taitoz_sharedram;
 
@@ -217,7 +218,7 @@ static int has_TC0110PCR(void)
 	return 0;
 }
 
-static int taitoz_core_vh_start (void)
+static int taitoz_core_vh_start (int x_offs)
 {
 	/* Up to $2000/8 big sprites, requires 0x400 * sizeof(*spritelist)
 	   Multiply this by 32 to give room for the number of small sprites,
@@ -229,36 +230,46 @@ static int taitoz_core_vh_start (void)
 
 	if (has_TC0480SCP())	/* it's Dblaxle, a tc0480scp game */
 	{
-		if (TC0480SCP_vh_start(TC0480SCP_GFX_NUM,taito_hide_pixels,0x21,0x08,4,0,0,0,0))
+		if (TC0480SCP_vh_start(TC0480SCP_GFX_NUM,x_offs,0x21,0x08,4,0,0,0,0))
+		{
+			taitoz_vh_stop();
 			return 1;
+		}
 	}
 	else	/* it's a tc0100scn game */
 	{
-		if (TC0100SCN_vh_start(1,TC0100SCN_GFX_NUM,taito_hide_pixels))
+		if (TC0100SCN_vh_start(1,TC0100SCN_GFX_NUM,x_offs,0,0,0,0,0,0))
+		{
+			taitoz_vh_stop();
 			return 1;
+		}
 	}
 
 	if (has_TC0150ROD())
 		if (TC0150ROD_vh_start())
+		{
+			taitoz_vh_stop();
 			return 1;
+		}
 
 	if (has_TC0110PCR())
 		if (TC0110PCR_vh_start())
+		{
+			taitoz_vh_stop();
 			return 1;
+		}
 
 	return 0;
 }
 
 int taitoz_vh_start (void)
 {
-	taito_hide_pixels = 0;
-	return (taitoz_core_vh_start());
+	return (taitoz_core_vh_start(0));
 }
 
 int spacegun_vh_start (void)
 {
-	taito_hide_pixels = 4;
-	return (taitoz_core_vh_start());
+	return (taitoz_core_vh_start(4));
 }
 
 void taitoz_vh_stop (void)
@@ -1521,7 +1532,9 @@ void contcirc_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	layer[2] = 2;
 
 	fillbitmap(priority_bitmap,0,NULL);
-//	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);	/* wrong color? */
+
+	/* Ensure screen blanked even when bottom layer not drawn due to disable bit */
+	fillbitmap(bitmap, palette_transparent_pen, &Machine -> visible_area);
 
 	TC0100SCN_tilemap_draw(bitmap,0,layer[0],TILEMAP_IGNORE_TRANSPARENCY,0);
 	TC0100SCN_tilemap_draw(bitmap,0,layer[1],0,0);
@@ -1530,7 +1543,7 @@ void contcirc_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	TC0150ROD_draw(bitmap,0);
 	contcirc_draw_sprites_16x8(bitmap,0,3);
 
-	TC0100SCN_tilemap_draw(bitmap,0,layer[2],0,0);	// text layer
+	TC0100SCN_tilemap_draw(bitmap,0,layer[2],0,0);
 }
 
 
@@ -1552,7 +1565,9 @@ void chasehq_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	layer[2] = 2;
 
 	fillbitmap(priority_bitmap,0,NULL);
-//	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);	/* wrong color? */
+
+	/* Ensure screen blanked even when bottom layer not drawn due to disable bit */
+	fillbitmap(bitmap, palette_transparent_pen, &Machine -> visible_area);
 
 	TC0100SCN_tilemap_draw(bitmap,0,layer[0],TILEMAP_IGNORE_TRANSPARENCY,0);
 	TC0100SCN_tilemap_draw(bitmap,0,layer[1],0,0);
@@ -1561,7 +1576,7 @@ void chasehq_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	TC0150ROD_draw(bitmap,0);
 	chasehq_draw_sprites_16x16(bitmap,0,0);
 
-	TC0100SCN_tilemap_draw(bitmap,0,layer[2],0,0);	// text layer
+	TC0100SCN_tilemap_draw(bitmap,0,layer[2],0,0);
 }
 
 
@@ -1581,7 +1596,9 @@ void bshark_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	layer[2] = 2;
 
 	fillbitmap(priority_bitmap,0,NULL);
-//	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);	/* wrong color? */
+
+	/* Ensure screen blanked even when bottom layer not drawn due to disable bit */
+	fillbitmap(bitmap, palette_transparent_pen, &Machine -> visible_area);
 
 	TC0100SCN_tilemap_draw(bitmap,0,layer[0],TILEMAP_IGNORE_TRANSPARENCY,0);
 	TC0100SCN_tilemap_draw(bitmap,0,layer[1],0,0);
@@ -1590,7 +1607,7 @@ void bshark_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	TC0150ROD_draw(bitmap,0);
 	bshark_draw_sprites_16x8(bitmap,0,8);
 
-	TC0100SCN_tilemap_draw(bitmap,0,layer[2],0,0);	// text layer
+	TC0100SCN_tilemap_draw(bitmap,0,layer[2],0,0);
 }
 
 
@@ -1610,7 +1627,9 @@ void sci_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	layer[2] = 2;
 
 	fillbitmap(priority_bitmap,0,NULL);
-//	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);	/* wrong color? */
+
+	/* Ensure screen blanked even when bottom layer not drawn due to disable bit */
+	fillbitmap(bitmap, palette_transparent_pen, &Machine -> visible_area);
 
 	TC0100SCN_tilemap_draw(bitmap,0,layer[0],TILEMAP_IGNORE_TRANSPARENCY,0);
 	TC0100SCN_tilemap_draw(bitmap,0,layer[1],0,0);
@@ -1619,7 +1638,7 @@ void sci_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	TC0150ROD_draw(bitmap,0);
 	sci_draw_sprites_16x8(bitmap,0,6);
 
-	TC0100SCN_tilemap_draw(bitmap,0,layer[2],0,0);	// text layer
+	TC0100SCN_tilemap_draw(bitmap,0,layer[2],0,0);
 }
 
 
@@ -1639,7 +1658,9 @@ void aquajack_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	layer[2] = 2;
 
 	fillbitmap(priority_bitmap,0,NULL);
-//	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);	/* wrong color? */
+
+	/* Ensure screen blanked even when bottom layer not drawn due to disable bit */
+	fillbitmap(bitmap, palette_transparent_pen, &Machine -> visible_area);
 
 	TC0100SCN_tilemap_draw(bitmap,0,layer[0],TILEMAP_IGNORE_TRANSPARENCY,0);
 	TC0100SCN_tilemap_draw(bitmap,0,layer[1],0,0);
@@ -1648,7 +1669,7 @@ void aquajack_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	TC0150ROD_draw(bitmap,0);
 	aquajack_draw_sprites_16x8(bitmap,0,3);
 
-	TC0100SCN_tilemap_draw(bitmap,0,layer[2],0,0);	// text layer
+	TC0100SCN_tilemap_draw(bitmap,0,layer[2],0,0);
 }
 
 
@@ -1668,7 +1689,9 @@ void spacegun_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	layer[2] = 2;
 
 	fillbitmap(priority_bitmap,0,NULL);
-//	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);	/* wrong color? */
+
+	/* Ensure screen blanked even when bottom layer not drawn due to disable bit */
+	fillbitmap(bitmap, palette_transparent_pen, &Machine -> visible_area);
 
 	TC0100SCN_tilemap_draw(bitmap,0,layer[0],TILEMAP_IGNORE_TRANSPARENCY,1);
 	TC0100SCN_tilemap_draw(bitmap,0,layer[1],0,2);
@@ -1682,7 +1705,7 @@ void spacegun_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	/* See if we should draw artificial gun targets */
 
-	if (input_port_4_word_r(0,0) &0x1)	/* Fake DSW */
+	if (input_port_9_word_r(0,0) &0x1)	/* Fake DSW */
 	{
 		int rawx, rawy, centrex, centrey, screenx, screeny;
 
@@ -1819,8 +1842,9 @@ void dblaxle_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	layer[4] = 4;   /* text layer always over bg layers */
 
 	fillbitmap(priority_bitmap,0,NULL);
-	fillbitmap(bitmap,0,NULL);
-//	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
+
+	/* Ensure screen blanked - this shouldn't be necessary! */
+	fillbitmap(bitmap, palette_transparent_pen, &Machine -> visible_area);
 
 	TC0480SCP_tilemap_draw(bitmap,layer[0],TILEMAP_IGNORE_TRANSPARENCY,0);
 	TC0480SCP_tilemap_draw(bitmap,layer[1],0,0);

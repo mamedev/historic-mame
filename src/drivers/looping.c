@@ -93,7 +93,11 @@ static void get_tile_info( int offset )
 {
 	int tile_number = videoram[offset];
 	int color = colorram[(offset&0x1f)*2+1]&0x7;
-	SET_TILE_INFO(0,tile_number,color);
+	SET_TILE_INFO(
+			0,
+			tile_number,
+			color,
+			0)
 }
 
 WRITE_HANDLER( looping_colorram_w )

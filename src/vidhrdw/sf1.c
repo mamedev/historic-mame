@@ -21,8 +21,11 @@ static void get_bg_tile_info(int tile_index)
 	int attr = base[0x10000];
 	int color = base[0];
 	int code = (base[0x10000+1]<<8) | base[1];
-	SET_TILE_INFO (0, code, color);
-	tile_info.flags = TILE_FLIPYX(attr & 3);
+	SET_TILE_INFO(
+			0,
+			code,
+			color,
+			TILE_FLIPYX(attr & 3))
 }
 
 static void get_fg_tile_info(int tile_index)
@@ -31,15 +34,21 @@ static void get_fg_tile_info(int tile_index)
 	int attr = base[0x10000];
 	int color = base[0];
 	int code = (base[0x10000+1]<<8) | base[1];
-	SET_TILE_INFO (1, code, color);
-	tile_info.flags = TILE_FLIPYX(attr & 3);
+	SET_TILE_INFO(
+			1,
+			code,
+			color,
+			TILE_FLIPYX(attr & 3))
 }
 
 static void get_tx_tile_info(int tile_index)
 {
 	int code = sf1_videoram[tile_index];
-	SET_TILE_INFO (3, code & 0x3ff, code>>12);
-	tile_info.flags = TILE_FLIPYX((code & 0xc00)>>10);
+	SET_TILE_INFO(
+			3,
+			code & 0x3ff,
+			code>>12,
+			TILE_FLIPYX((code & 0xc00)>>10))
 }
 
 

@@ -213,4 +213,4 @@ static void init_hexa(void)
 }
 
 
-GAME( 19??, hexa, 0, hexa, hexa, hexa, ROT0, "D. R. Korea", "Hexa" )
+GAME( 1986?, hexa, 0, hexa, hexa, hexa, ROT0, "D. R. Korea", "Hexa" )

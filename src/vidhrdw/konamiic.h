@@ -127,7 +127,7 @@ READ16_HANDLER( K053244_lsb_r );
 WRITE16_HANDLER( K053244_lsb_w );
 READ16_HANDLER( K053244_word_r );
 WRITE16_HANDLER( K053244_word_w );
-void K053244_bankselect(int bank);	/* used by TMNT2 and Asterix for ROM testing */
+void K053244_bankselect(int bank);	/* used by TMNT2, Asterix and Premier Soccer for ROM testing */
 void K053245_sprites_draw(struct osd_bitmap *bitmap);
 void K053245_mark_sprites_colors(void);
 

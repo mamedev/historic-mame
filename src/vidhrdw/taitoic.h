@@ -27,7 +27,7 @@ void PC080SN_tilemap_draw(struct osd_bitmap *bitmap,int chip,int layer,int flags
 
 /***************************************************************************/
 
-int TC0080VCO_vh_start(int gfxnum,int has_text_layer,int zoom_xoffs,int zoom_yoffs);
+int TC0080VCO_vh_start(int gfxnum,int has_fg0,int bg_xoffs,int bg_yoffs,int bg_flip_yoffs);
 void TC0080VCO_vh_stop(void);
 
 READ16_HANDLER ( TC0080VCO_word_r );
@@ -40,7 +40,11 @@ void TC0080VCO_draw_sprites(void);
 
 /***************************************************************************/
 
-int TC0100SCN_vh_start(int chips,int gfxnum,int x_offset);
+/* When writing a driver pass zero for all the offsets initially then
+   tweak them later. Most TC0100SCN games have y_offset=0 */
+
+int TC0100SCN_vh_start(int chips,int gfxnum,int x_offset,int y_offset,int flip_xoffs,
+		int flip_yoffs,int flip_text_xoffs,int flip_text_yoffs,int multiscrn_xoffs);
 
 /* Function to set separate color banks for the three tilemapped layers.
    To change from the default (0,0,0) use after calling TC0100SCN_vh_start */
@@ -134,6 +138,9 @@ void TC0480SCP_tilemap_draw(struct osd_bitmap *bitmap,int layer,int flags,UINT32
    returned in the lowest four nibbles  (msn = bottom layer; lsn = top) */
 int TC0480SCP_get_bg_priority(void);
 
+/* Undrfire needs to read this for a sprite/tile priority hack */
+int TC0480SCP_pri_reg;
+
 
 /***************************************************************************/
 
@@ -161,6 +168,9 @@ WRITE16_HANDLER( TC0360PRI_halfword_swap_w );
 
 /***************************************************************************/
 
+/* I/O chips, all extremely similar. The TC0220IOC was sometimes addressed
+   through a port, typically on earlier games. */
+
 READ_HANDLER ( TC0220IOC_r );
 WRITE_HANDLER( TC0220IOC_w );
 READ_HANDLER ( TC0220IOC_port_r );
@@ -168,5 +178,32 @@ WRITE_HANDLER( TC0220IOC_port_w );
 READ_HANDLER ( TC0220IOC_portreg_r );
 WRITE_HANDLER( TC0220IOC_portreg_w );
 
+READ16_HANDLER ( TC0220IOC_halfword_port_r );
+WRITE16_HANDLER( TC0220IOC_halfword_port_w );
+READ16_HANDLER ( TC0220IOC_halfword_portreg_r );
+WRITE16_HANDLER( TC0220IOC_halfword_portreg_w );
+READ16_HANDLER ( TC0220IOC_halfword_byteswap_port_r );
+WRITE16_HANDLER( TC0220IOC_halfword_byteswap_port_w );
+READ16_HANDLER ( TC0220IOC_halfword_byteswap_portreg_r );
+WRITE16_HANDLER( TC0220IOC_halfword_byteswap_portreg_w );
+READ16_HANDLER ( TC0220IOC_halfword_r );
+WRITE16_HANDLER( TC0220IOC_halfword_w );
+READ16_HANDLER ( TC0220IOC_halfword_byteswap_r );
+WRITE16_HANDLER( TC0220IOC_halfword_byteswap_w );
+
 READ_HANDLER ( TC0510NIO_r );
 WRITE_HANDLER( TC0510NIO_w );
+
+READ16_HANDLER ( TC0510NIO_halfword_r );
+WRITE16_HANDLER( TC0510NIO_halfword_w );
+READ16_HANDLER ( TC0510NIO_halfword_wordswap_r );
+WRITE16_HANDLER( TC0510NIO_halfword_wordswap_w );
+
+READ_HANDLER ( TC0640FIO_r );
+WRITE_HANDLER( TC0640FIO_W );
+
+READ16_HANDLER ( TC0640FIO_halfword_r );
+WRITE16_HANDLER( TC0640FIO_halfword_w );
+READ16_HANDLER ( TC0640FIO_halfword_byteswap_r );
+WRITE16_HANDLER( TC0640FIO_halfword_byteswap_w );
+

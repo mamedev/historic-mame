@@ -13,14 +13,10 @@
 
 Hold P1 Start after a reset to skip the startup memory tests.
 
-Known Issues:
-
-The most obvious problem is the vertical scrolling.  It's jerky, and occasionally
-scrolls to the wrong row.  See notes in vidhrdw/ninjakid.c
-
 Change Log:
 5 Mar - Added Saved State Support (DJH)
-
+8 Jun - Added palette animation, Fixed FG priority. (Uki)
+9 Jun - Fixed BG scroll handling, Fixed CPU clock.
 *******************************************************************************/
 
 #include "driver.h"
@@ -30,6 +26,7 @@ Change Log:
 
 extern WRITE_HANDLER( ninjakid_bg_videoram_w );
 extern WRITE_HANDLER( ninjakid_fg_videoram_w );
+extern READ_HANDLER( ninjakid_bg_videoram_r );
 
 extern READ_HANDLER( ninjakun_io_8000_r );
 extern WRITE_HANDLER( ninjakun_io_8000_w );
@@ -37,6 +34,8 @@ extern WRITE_HANDLER( ninjakun_io_8000_w );
 extern int ninjakid_vh_start( void );
 extern void ninjakid_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 extern WRITE_HANDLER( ninjakun_flipscreen_w );
+
+extern WRITE_HANDLER( ninjakun_paletteram_w );
 
 /******************************************************************************/
 
@@ -86,7 +85,8 @@ static MEMORY_READ_START( ninjakid_primary_readmem )
 	{ 0xa000, 0xa000, input_port_0_r },
 	{ 0xa001, 0xa001, input_port_1_r },
 	{ 0xa002, 0xa002, ninjakun_io_A002_r },
-	{ 0xc000, 0xcfff, MRA_RAM },	/* tilemaps */
+	{ 0xc000, 0xc7ff, MRA_RAM },	/* tilemaps */
+	{ 0xc800, 0xcfff, ninjakid_bg_videoram_r },
     { 0xd000, 0xd7ff, MRA_RAM },	/* spriteram */
     { 0xd800, 0xd9ff, paletteram_r },
     { 0xe000, 0xe7ff, MRA_RAM },
@@ -101,7 +101,7 @@ static MEMORY_WRITE_START( ninjakid_primary_writemem )
 	{ 0xc000, 0xc7ff, ninjakid_fg_videoram_w, &videoram },
 	{ 0xc800, 0xcfff, ninjakid_bg_videoram_w },
 	{ 0xd000, 0xd7ff, MWA_RAM, &spriteram },
-	{ 0xd800, 0xd9ff, paletteram_BBGGRRII_w, &paletteram },
+	{ 0xd800, 0xd9ff, ninjakun_paletteram_w, &paletteram },
 	{ 0xe000, 0xe7ff, MWA_RAM, &shareram },
 MEMORY_END
 
@@ -112,7 +112,8 @@ static MEMORY_READ_START( ninjakid_secondary_readmem )
 	{ 0xa000, 0xa000, input_port_0_r },
 	{ 0xa001, 0xa001, input_port_1_r },
 	{ 0xa002, 0xa002, ninjakun_io_A002_r },
-	{ 0xc000, 0xcfff, videoram_r },		/* tilemaps */
+	{ 0xc000, 0xc7ff, videoram_r },		/* tilemaps */
+	{ 0xc800, 0xcfff, ninjakid_bg_videoram_r },
     { 0xd000, 0xd7ff, spriteram_r },	/* shareram */
     { 0xd800, 0xd9ff, paletteram_r },
     { 0xe000, 0xe7ff, shareram_r },
@@ -126,7 +127,7 @@ static MEMORY_WRITE_START( ninjakid_secondary_writemem )
 	{ 0xc000, 0xc7ff, ninjakid_fg_videoram_w },
 	{ 0xc800, 0xcfff, ninjakid_bg_videoram_w },
 	{ 0xd000, 0xd7ff, spriteram_w },	/* shareram */
-	{ 0xd800, 0xd9ff, paletteram_BBGGRRII_w },
+	{ 0xd800, 0xd9ff, ninjakun_paletteram_w },
     { 0xe000, 0xe7ff, shareram_w },
 MEMORY_END
 
@@ -166,7 +167,7 @@ static struct GfxDecodeInfo ninjakid_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tile_layout,		0x000, 0x10 },
 	{ REGION_GFX2, 0, &tile_layout,		0x100, 0x10 },
-	{ REGION_GFX1, 0, &sprite_layout,	0x000, 0x10 },
+	{ REGION_GFX1, 0, &sprite_layout,	0x200, 0x10 },
 	{ -1 }
 };
 
@@ -186,13 +187,13 @@ static const struct MachineDriver machine_driver_ninjakid =
     {
     	{
 			CPU_Z80,
-			4000000, /* ? */
+			3000000, /* 3.00MHz */
 			ninjakid_primary_readmem,ninjakid_primary_writemem,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80,
-			4000000, /* ? */
+			3000000, /* 3.00MHz */
 			ninjakid_secondary_readmem,ninjakid_secondary_writemem,0,0,
 			interrupt,4 /* ? */
 		}
@@ -205,7 +206,7 @@ static const struct MachineDriver machine_driver_ninjakid =
     /* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 4*8, (32-4)*8-1 },
     ninjakid_gfxdecodeinfo,
-    512,512,
+    512+256,512+256,
 	0,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
@@ -347,4 +348,4 @@ static void init_ninjakid(void)
  Game Drivers
 *******************************************************************************/
 
-GAME( 1984, ninjakun, 0, ninjakid, ninjakid, ninjakid, ROT0, "[UPL] (Taito license)", "Ninjakun Majou no Bouken" )
+GAME( 1984, ninjakun, 0, ninjakid, ninjakid, ninjakid, ROT0_16BIT, "[UPL] (Taito license)", "Ninjakun Majou no Bouken" )

@@ -739,7 +739,7 @@ unsigned Dasm6502(char *buffer, unsigned pc)
 
 #if (HAS_M65CE02 || HAS_M6509 || HAS_M6510 || HAS_M4510)
 
-#if (HAS_65CE02 || HAS_M6510)
+#if (HAS_M65CE02 || HAS_M6510)
 static int m6502_get_argword(int addr)
 {
 	return cpu_readop_arg(addr)+(cpu_readop_arg((addr+1)&0xffff) << 8);

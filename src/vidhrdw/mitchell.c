@@ -34,8 +34,11 @@ static void get_tile_info(int tile_index)
 {
 	unsigned char attr = pang_colorram[tile_index];
 	int code = pang_videoram[2*tile_index] + (pang_videoram[2*tile_index+1] << 8);
-	SET_TILE_INFO(0,code,attr & 0x7f)
-	tile_info.flags = (attr & 0x80) ? TILE_FLIPX : 0;
+	SET_TILE_INFO(
+			0,
+			code,
+			attr & 0x7f,
+			(attr & 0x80) ? TILE_FLIPX : 0)
 }
 
 

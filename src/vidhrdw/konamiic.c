@@ -97,7 +97,7 @@ The Simpsons        GX072*1991  053248 052109 051962 053247 053246 053251
 Thunder Cross 2     GX073*1991   68000 052109 051962 051960 051937 053251        054000 (collision)
 Vendetta /          GX081*1991  053248 052109 051962 053247 053246 053251        054000 (collision)
   Crime Fighters 2
-Premier Soccer      GX101+1993   68000 052109 051962 053245 053244 053251        053936 (3D) 054986
+Premier Soccer      GX101*1993   68000 052109 051962 053245 053244 053251        053936 (3D) 054986
 Hexion              GX122*1992     Z80                                           052591 (protection) 053252(*)
 Entapous /          GX123+1993   68000 054157 054156 055673 053246               053252(*) 054000 055555
   Gaiapolis
@@ -162,6 +162,7 @@ Xexex               pass
 Asterix             pass
 GiJoe				pass
 Vendetta            pass
+Premier Soccer		fails 16D 18D 18F (053936)
 Hexion              pass
 
 
@@ -1374,7 +1375,11 @@ static void K007342_get_tile_info(int tile_index)
 
 	(*K007342_callback)(active_layer, K007342_regs[1], &code, &color);
 
-	SET_TILE_INFO(K007342_gfxnum,code,color);
+	SET_TILE_INFO(
+			K007342_gfxnum,
+			code,
+			color,
+			tile_info.flags)
 }
 
 int K007342_vh_start(int gfx_index, void (*callback)(int tilemap, int bank, int *code, int *color))
@@ -1831,7 +1836,10 @@ if (has_extra_video_ram) bank = (color & 0x0c) >> 2;	/* kludge for X-Men */
 
 	(*K052109_callback)(active_layer,bank,&code,&color);
 
-	SET_TILE_INFO(K052109_gfxnum,code,color);
+	SET_TILE_INFO(
+			K052109_gfxnum,
+			code,
+			color,tile_info.flags);
 
 	/* if the callback set flip X but it is not enabled, turn it off */
 	if (!(K052109_tileflip_enable & 1)) tile_info.flags &= ~TILE_FLIPX;
@@ -3942,7 +3950,11 @@ static void K051316_get_tile_info(int tile_index)
 
 	(*K051316_callback[K051316_chip_selected])(&code,&color);
 
-	SET_TILE_INFO(K051316_gfxnum[K051316_chip_selected],code,color);
+	SET_TILE_INFO(
+			K051316_gfxnum[K051316_chip_selected],
+			code,
+			color,
+			tile_info.flags)
 }
 
 
@@ -4542,7 +4554,10 @@ static void K054157_get_tile_info(int tile_index)
 	tile_info.flags = 0;
 
 	(*K054157_callback)(K054157_cur_layer, &code, &attr);
-	SET_TILE_INFO (K054157_gfxnum, code, attr);
+	SET_TILE_INFO(K054157_gfxnum,
+			code,
+			attr,
+			tile_info.flags)
 }
 
 void K054157_vh_stop(void)

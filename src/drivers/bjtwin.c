@@ -762,7 +762,7 @@ static MEMORY_WRITE16_START( gunnail_writemem )
 	{ 0x09d000, 0x09dfff, nmk_txvideoram_w },	/* mirror */
 	{ 0x0f0000, 0x0f7fff, MWA16_RAM },	/* Work RAM */
 	{ 0x0f8000, 0x0f8fff, MWA16_RAM, &spriteram16, &spriteram_size },
-	{ 0x0f9000, 0x0fffff, MWA16_RAM },	/* Work RAM again */
+	{ 0x0f9000, 0x0fffff, MWA16_RAM, &ram }, /* Work RAM again */
 MEMORY_END
 
 static MEMORY_READ16_START( macross2_readmem )

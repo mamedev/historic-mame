@@ -142,18 +142,30 @@ WRITE_HANDLER( marvins_text_ram_w )
 
 static void get_bg_tilemap_info(int tile_index)
 {
-	SET_TILE_INFO(2,videoram[tile_index],0);
+	SET_TILE_INFO(
+			2,
+			videoram[tile_index],
+			0,
+			0)
 }
 
 static void get_fg_tilemap_info(int tile_index)
 {
-	SET_TILE_INFO(1,videoram[tile_index+0x1000],0);
+	SET_TILE_INFO(
+			1,
+			videoram[tile_index+0x1000],
+			0,
+			0)
 }
 
 static void get_tx_tilemap_info(int tile_index)
 {
 	int tile_number = videoram[tile_index+0x2000];
-	SET_TILE_INFO(0,tile_number,(tile_number>>5));
+	SET_TILE_INFO(
+			0,
+			tile_number,
+			(tile_number>>5),
+			0)
 }
 
 /***************************************************************************

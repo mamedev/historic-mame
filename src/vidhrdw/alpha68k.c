@@ -50,7 +50,11 @@ static void get_tile_info(int tile_index)
 
 	tile=tile | (bank_base<<8);
 
-	SET_TILE_INFO(0,tile,color)
+	SET_TILE_INFO(
+			0,
+			tile,
+			color,
+			0)
 }
 
 WRITE16_HANDLER( alpha68k_videoram_w )
@@ -609,7 +613,11 @@ static void get_kouyakyu_info( int tile_index )
 	int tile=videoram16[offs]&0xff;
 	int color=videoram16[offs+1]&0xf;
 
-	SET_TILE_INFO(0,tile,color)
+	SET_TILE_INFO(
+			0,
+			tile,
+			color,
+			0)
 }
 
 WRITE16_HANDLER( kouyakyu_video_w )

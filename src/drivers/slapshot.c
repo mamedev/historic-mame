@@ -48,9 +48,6 @@ TC0540OBN (IC54)	- known object chip
 TODO
 ====
 
-TC0480SCP problems: in flipscreen the bottom few pixels
-of tilemaps are often missing or messed up.
-
 Some hanging notes (try F2 while music is playing).
 
 Sprite colors issue: when you do a super-shot, on the cut
@@ -73,6 +70,7 @@ $854 marks start of service mode
 ***************************************************************************/
 
 #include "driver.h"
+#include "state.h"
 #include "cpu/m68000/m68000.h"
 #include "vidhrdw/generic.h"
 #include "vidhrdw/taitoic.h"
@@ -84,8 +82,6 @@ void slapshot_vh_stop (void);
 void slapshot_vh_screenrefresh (struct osd_bitmap *bitmap,int full_refresh);
 
 static data16_t *color_ram;
-
-//static data16_t *slapshot_ram;
 
 extern data16_t *taito_sprite_ext;
 extern size_t taito_spriteext_size;
@@ -163,69 +159,35 @@ static int slapshot_interrupt(void)
 				GAME INPUTS
 **********************************************************/
 
-static READ16_HANDLER( slapshot_input_r )
-{
-	switch (offset)
-	{
-		case 0x00:
-			return input_port_0_word_r(0,0) << 8;	/* IN0, unknown/unused */
-
-		case 0x01:
-			return input_port_1_word_r(0,0) << 8;	/* IN1 */
-
-		case 0x02:
-			return input_port_2_word_r(0,0) << 8;	/* IN2 */
-
-		case 0x03:
-			return input_port_3_word_r(0,0) << 8;	/* IN3 */
-
-		case 0x07:
-			return input_port_4_word_r(0,0) << 8;	/* IN4 */
-
-	}
-
-logerror("CPU #0 PC %06x: warning - read unmapped input offset %02x\n",cpu_get_pc(),offset);
-	return 0xff;
-}
-
 static READ16_HANDLER( slapshot_service_input_r )
 {
 	switch (offset)
 	{
-		case 0x00:
-			return input_port_0_word_r(0,0) << 8;	/* IN0, unknown/unused */
-
-		case 0x01:
-			return input_port_1_word_r(0,0) << 8;	/* IN1 */
-
-		case 0x02:
-			return input_port_2_word_r(0,0) << 8;	/* IN2 */
-
 		case 0x03:
 			return ((input_port_3_word_r(0,0) & 0xef) |
 				  (input_port_5_word_r(0,0) & 0x10))  << 8;	/* IN3 + service switch */
 
-		case 0x07:
-			return input_port_4_word_r(0,0) << 8;	/* IN4 */
-
+		default:
+			return TC0640FIO_r(offset) << 8;
 	}
-
-logerror("CPU #0 PC %06x: warning - read unmapped input offset %02x\n",cpu_get_pc(),offset);
-	return 0xff;
 }
 
 /*****************************************************
 				SOUND
 *****************************************************/
 
-static WRITE_HANDLER( bankswitch_w )
-{
-	unsigned char *RAM = memory_region(REGION_CPU2);
-	int banknum = (data - 1) & 7;
+static int banknum = -1;
 
-	cpu_setbank (10, &RAM [0x10000 + (banknum * 0x4000)]);
+static void reset_sound_region(void)
+{
+	cpu_setbank( 10, memory_region(REGION_CPU2) + (banknum * 0x4000) + 0x10000 );
 }
 
+static WRITE_HANDLER( sound_bankswitch_w )
+{
+	banknum = (data - 1) & 7;
+	reset_sound_region();
+}
 
 static WRITE16_HANDLER( slapshot_msb_sound_w )
 {
@@ -266,7 +228,7 @@ static MEMORY_READ16_START( slapshot_readmem )
 	{ 0x830000, 0x83002f, TC0480SCP_ctrl_word_r },
 	{ 0x900000, 0x907fff, color_ram_word_r },	/* 8bpg palette */
 	{ 0xa00000, 0xa03fff, MRA16_RAM },	/* nvram (only low bytes used) */
-	{ 0xc00000, 0xc0000f, slapshot_input_r },
+	{ 0xc00000, 0xc0000f, TC0640FIO_halfword_byteswap_r },
 	{ 0xc00020, 0xc0002f, slapshot_service_input_r },	/* service mirror */
 	{ 0xd00000, 0xd00003, slapshot_msb_sound_r },
 MEMORY_END
@@ -281,7 +243,7 @@ static MEMORY_WRITE16_START( slapshot_writemem )
 	{ 0x900000, 0x907fff, color_ram_word_w, &color_ram },
 	{ 0xa00000, 0xa03fff, MWA16_RAM, &slapshot_nvram, &slapshot_nvram_size },
 	{ 0xb00000, 0xb0001f, TC0360PRI_halfword_swap_w },	/* priority chip */
-	{ 0xc00000, 0xc00001, MWA16_NOP },	/* watchdog ?? */
+	{ 0xc00000, 0xc0000f, TC0640FIO_halfword_byteswap_w },
 	{ 0xd00000, 0xd00003, slapshot_msb_sound_w },
 MEMORY_END
 
@@ -312,7 +274,7 @@ static MEMORY_WRITE_START( z80_sound_writemem )
 	{ 0xe400, 0xe403, MWA_NOP }, /* pan */
 	{ 0xee00, 0xee00, MWA_NOP }, /* ? */
 	{ 0xf000, 0xf000, MWA_NOP }, /* ? */
-	{ 0xf200, 0xf200, bankswitch_w },
+	{ 0xf200, 0xf200, sound_bankswitch_w },
 MEMORY_END
 
 
@@ -555,6 +517,9 @@ static void init_slapshot(void)
 		gfx[offset] = (d3<<2) | (d4<<6);
 		offset++;
 	}
+
+	state_save_register_int("sound1", 0, "sound region", &banknum);
+	state_save_register_func_postload(reset_sound_region);
 }
 
 GAME( 1994, slapshot, 0, slapshot, slapshot, slapshot, ROT0_16BIT,  "Taito Corporation", "Slap Shot (Japan)" )

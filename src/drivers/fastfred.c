@@ -61,8 +61,8 @@ I/O write:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-extern unsigned char *galaxian_attributesram;
-WRITE_HANDLER( galaxian_attributes_w );
+extern unsigned char *fastfred_attributesram;
+WRITE_HANDLER( fastfred_attributes_w );
 
 void fastfred_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void fastfred_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
@@ -148,7 +148,7 @@ static MEMORY_WRITE_START( fastfred_writemem )
 	{ 0xc800, 0xcfff, MWA_NOP },
 	{ 0xd000, 0xd3ff, videoram_w, &videoram, &videoram_size },
 	{ 0xd400, 0xd7ff, videoram_w },  // Mirrored for above
-	{ 0xd800, 0xd83f, galaxian_attributes_w, &galaxian_attributesram },
+	{ 0xd800, 0xd83f, fastfred_attributes_w, &fastfred_attributesram },
 	{ 0xd840, 0xd85f, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xd860, 0xdbff, MWA_RAM }, // Unused, but initialized
 	{ 0xe000, 0xe000, fastfred_background_color_w },
@@ -181,7 +181,7 @@ static MEMORY_WRITE_START( jumpcoas_writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0xc000, 0xc7ff, MWA_RAM },
 	{ 0xc800, 0xcfff, MWA_NOP },
-	{ 0xd000, 0xd03f, galaxian_attributes_w, &galaxian_attributesram },
+	{ 0xd000, 0xd03f, fastfred_attributes_w, &fastfred_attributesram },
 	{ 0xd040, 0xd05f, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xd060, 0xd3ff, MWA_NOP },
 	{ 0xd800, 0xdbff, videoram_w, &videoram, &videoram_size },

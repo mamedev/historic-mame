@@ -9,39 +9,107 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-#define SPRITE_Y			0
-#define SPRITE_TILE 		1
-#define SPRITE_FLIP_X		1
-#define SPRITE_PAL_BANK 	2
-#define SPRITE_X			3
+static struct tilemap *background_layer,*foreground_layer,*text_layer;
 
-#define XBG1SCROLL_ADJUST(x) (-(x)+0x103)
-#define XBG2SCROLL_ADJUST(x) (-(x)+0x101)
-#define YBGSCROLL_ADJUST(x) (-(x)-1)
-
-data16_t *toki_foreground_videoram16;
 data16_t *toki_background1_videoram16;
 data16_t *toki_background2_videoram16;
-data16_t *toki_sprites_dataram16;
 data16_t *toki_scrollram16;
-signed char toki_linescroll[256];
+static unsigned int toki_background_xscroll[256];
+static unsigned int toki_foreground_xscroll[256];
 
-size_t toki_foreground_videoram16_size;
-size_t toki_background1_videoram16_size;
-size_t toki_background2_videoram16_size;
-size_t toki_sprites_dataram16_size;
+/*************************************************************************
+					RASTER EFFECTS
 
-static unsigned char *frg_dirtybuffer;		/* foreground */
-static unsigned char *bg1_dirtybuffer;		/* background 1 */
-static unsigned char *bg2_dirtybuffer;		/* background 2 */
+Xscroll can be altered per scanline to create rowscroll effect.
 
-static struct osd_bitmap *bitmap_frg;		/* foreground bitmap */
-static struct osd_bitmap *bitmap_bg1;		/* background bitmap 1 */
-static struct osd_bitmap *bitmap_bg2;		/* background bitmap 2 */
+(The driver does not implement rowscroll on the bootleg. It seems unlikely
+the bootleggers would have been able to do this on their chipset. They
+remapped the scroll registers, so obviously they were using a different
+chip.
 
-static int bg1_scrollx, bg1_scrolly;
-static int bg2_scrollx, bg2_scrolly;
+Why then would the old ghost of one of the remapped registers
+still cause rowscroll? Probably the bootleggers simply didn't bother to
+remove all the code writing the $a0000 area.)
 
+*************************************************************************/
+
+WRITE16_HANDLER( toki_control_w )
+{
+	int currline = cpu_getscanline();
+
+	COMBINE_DATA(&toki_scrollram16[offset]);
+
+	/* Keep a per-scanline record of X scroll offsets */
+	if (offset==0x15 || offset==0x16)
+		toki_foreground_xscroll[currline%256]=((toki_scrollram16[0x16] &0x7f) << 1)
+								 |((toki_scrollram16[0x16] &0x80) >> 7)
+								 |((toki_scrollram16[0x15] &0x10) << 4);
+
+	if (offset==0x05 || offset==0x06)
+		toki_background_xscroll[currline%256]=((toki_scrollram16[0x06] &0x7f) << 1)
+								 |((toki_scrollram16[0x06] &0x80) >> 7)
+								 |((toki_scrollram16[0x05] &0x10) << 4);
+}
+
+/* At EOF clear the previous frames scroll registers */
+void toki_eof_callback(void)
+{
+	int i;
+
+	toki_background_xscroll[0]=((toki_scrollram16[0x16] &0x7f) << 1)
+								 |((toki_scrollram16[0x16] &0x80) >> 7)
+								 |((toki_scrollram16[0x15] &0x10) << 4);
+	toki_foreground_xscroll[0]=((toki_scrollram16[0x06] &0x7f) << 1)
+								 |((toki_scrollram16[0x06] &0x80) >> 7)
+								 |((toki_scrollram16[0x05] &0x10) << 4);
+
+	for (i=1; i<256; i++)
+		toki_background_xscroll[i]=toki_foreground_xscroll[i]=0xffff;
+
+	buffer_spriteram16_w(0,0,0);
+}
+
+static void get_text_tile_info(int tile_index)
+{
+	int tile = videoram16[tile_index];
+	int color=(tile>>12)&0xf;
+
+	tile&=0xfff;
+
+	SET_TILE_INFO(
+			0,
+			tile,
+			color,
+			0)
+}
+
+static void get_back_tile_info(int tile_index)
+{
+	int tile = toki_background1_videoram16[tile_index];
+	int color=(tile>>12)&0xf;
+
+	tile&=0xfff;
+
+	SET_TILE_INFO(
+			2,
+			tile,
+			color,
+			0)
+}
+
+static void get_fore_tile_info(int tile_index)
+{
+	int tile = toki_background2_videoram16[tile_index];
+	int color=(tile>>12)&0xf;
+
+	tile&=0xfff;
+
+	SET_TILE_INFO(
+			3,
+			tile,
+			color,
+			0)
+}
 
 
 /*************************************
@@ -52,265 +120,252 @@ static int bg2_scrollx, bg2_scrolly;
 
 int toki_vh_start (void)
 {
-	if ((frg_dirtybuffer = malloc (toki_foreground_videoram16_size / 2)) == 0)
-	{
-		return 1;
-	}
-	if ((bg1_dirtybuffer = malloc (toki_background1_videoram16_size / 2)) == 0)
-	{
-		free (frg_dirtybuffer);
-		return 1;
-	}
-	if ((bg2_dirtybuffer = malloc (toki_background2_videoram16_size / 2)) == 0)
-	{
-		free (bg1_dirtybuffer);
-		free (frg_dirtybuffer);
-		return 1;
-	}
+	text_layer       = tilemap_create(get_text_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,  8,8,32,32);
+	background_layer = tilemap_create(get_back_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
+	foreground_layer = tilemap_create(get_fore_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
 
-	/* foreground bitmap */
-	if ((bitmap_frg = bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
-	{
-		free (bg1_dirtybuffer);
-		free (bg2_dirtybuffer);
-		free (frg_dirtybuffer);
-		return 1;
-	}
+	if (!text_layer || !background_layer || !foreground_layer) return 1;
 
-	/* background1 bitmap */
-	if ((bitmap_bg1 = bitmap_alloc(Machine->drv->screen_width*2,Machine->drv->screen_height*2)) == 0)
-	{
-		free (bg1_dirtybuffer);
-		free (bg2_dirtybuffer);
-		free (frg_dirtybuffer);
-		bitmap_free (bitmap_frg);
-		return 1;
-	}
+	tilemap_set_transparent_pen(text_layer,15);
+	tilemap_set_transparent_pen(background_layer,15);
+	tilemap_set_transparent_pen(foreground_layer,15);
+	tilemap_set_scroll_rows(foreground_layer,512);
+	tilemap_set_scroll_rows(background_layer,512);
 
-	/* background2 bitmap */
-	if ((bitmap_bg2 = bitmap_alloc(Machine->drv->screen_width*2,Machine->drv->screen_height*2)) == 0)
-	{
-		free (bg1_dirtybuffer);
-		free (bg2_dirtybuffer);
-		free (frg_dirtybuffer);
-		bitmap_free (bitmap_bg1);
-		bitmap_free (bitmap_frg);
-		return 1;
-	}
-	memset (frg_dirtybuffer,1,toki_foreground_videoram16_size / 2);
-	memset (bg2_dirtybuffer,1,toki_background1_videoram16_size / 2);
-	memset (bg1_dirtybuffer,1,toki_background2_videoram16_size / 2);
 	return 0;
-
 }
 
-void toki_vh_stop (void)
-{
-	bitmap_free (bitmap_frg);
-	bitmap_free (bitmap_bg1);
-	bitmap_free (bitmap_bg2);
-	free (bg1_dirtybuffer);
-	free (bg2_dirtybuffer);
-	free (frg_dirtybuffer);
-}
-
-
-
-/*************************************
- *
- *		Foreground RAM
- *
- *************************************/
+/*************************************/
 
 WRITE16_HANDLER( toki_foreground_videoram16_w )
 {
-	int oldword = toki_foreground_videoram16[offset];
-	COMBINE_DATA(&toki_foreground_videoram16[offset]);
-
-	if (oldword != toki_foreground_videoram16[offset])
-	{
-		frg_dirtybuffer[offset] = 1;
-	}
+	int oldword = videoram16[offset];
+	COMBINE_DATA(&videoram16[offset]);
+	if (oldword != videoram16[offset])
+		tilemap_mark_tile_dirty(text_layer,offset);
 }
-
-READ16_HANDLER( toki_foreground_videoram16_r )
-{
-	return toki_foreground_videoram16[offset];
-}
-
-
-
-/*************************************
- *
- *		Background 1 RAM
- *
- *************************************/
 
 WRITE16_HANDLER( toki_background1_videoram16_w )
 {
 	int oldword = toki_background1_videoram16[offset];
 	COMBINE_DATA(&toki_background1_videoram16[offset]);
-
 	if (oldword != toki_background1_videoram16[offset])
-	{
-		bg1_dirtybuffer[offset] = 1;
-	}
+		tilemap_mark_tile_dirty(background_layer,offset);
 }
-
-READ16_HANDLER( toki_background1_videoram16_r )
-{
-	return toki_background1_videoram16[offset];
-}
-
-
-
-/*************************************
- *
- *		Background 2 RAM
- *
- *************************************/
 
 WRITE16_HANDLER( toki_background2_videoram16_w )
 {
 	int oldword = toki_background2_videoram16[offset];
 	COMBINE_DATA(&toki_background2_videoram16[offset]);
-
 	if (oldword != toki_background2_videoram16[offset])
+		tilemap_mark_tile_dirty(foreground_layer,offset);
+}
+
+/**************************************************************************/
+
+void toki_mark_sprite_colours(void)
+{
+	UINT16 palette_map[16*4],usage;
+	data16_t *sprite_word;
+	int i,code,color,offs;
+
+	memset (palette_map, 0, sizeof (palette_map));
+
+	/* sprites */
+	for (offs = 0;offs < spriteram_size / 2;offs += 4)
 	{
-		bg2_dirtybuffer[offset] = 1;
+		sprite_word = &buffered_spriteram16[offs];
+
+		if ((sprite_word[2] != 0xf000) && (sprite_word[0] != 0xffff))
+		{
+			color = sprite_word[1] >> 12;
+			code  = (sprite_word[1] & 0xfff) + ((sprite_word[2] & 0x8000) >> 3);
+			palette_map[color] |= Machine->gfx[1]->pen_usage[code];
+		}
+	}
+
+	/* expand it */
+	for (color = 0; color < 16 * 4; color++)
+	{
+		usage = palette_map[color];
+
+		if (usage)
+		{
+			for (i = 0; i < 15; i++)
+				if (usage & (1 << i))
+					palette_used_colors[color * 16 + i] = PALETTE_COLOR_USED;
+			palette_used_colors[color * 16 + 15] = PALETTE_COLOR_TRANSPARENT;
+		}
 	}
 }
 
-READ16_HANDLER( toki_background2_videoram16_r )
+void tokib_mark_sprite_colours (void)
 {
-	return toki_background2_videoram16[offset];
+	UINT16 palette_map[16*4],usage;
+	data16_t *sprite_word;
+	int i,code,color,offs;
+
+	memset (palette_map, 0, sizeof (palette_map));
+
+	/* sprites */
+	for (offs = 0;offs < spriteram_size / 2;offs += 4)
+	{
+		sprite_word = &buffered_spriteram16[offs];
+
+		if (sprite_word[0] == 0xf100)
+			break;
+
+		color = sprite_word[2] >> 12;
+		code  = sprite_word[1] & 0x1fff;
+		palette_map[color] |= Machine->gfx[1]->pen_usage[code];
+	}
+
+	/* expand it */
+	for (color = 0; color < 16 * 4; color++)
+	{
+		usage = palette_map[color];
+
+		if (usage)
+		{
+			for (i = 0; i < 15; i++)
+				if (usage & (1 << i))
+					palette_used_colors[color * 16 + i] = PALETTE_COLOR_USED;
+			palette_used_colors[color * 16 + 15] = PALETTE_COLOR_TRANSPARENT;
+		}
+	}
 }
 
 
+/***************************************************************************
+					SPRITES
 
-/*************************************
- *
- *		Sprite rendering
- *
- *************************************/
+	Original Spriteram
+	------------------
 
-void toki_render_sprites (struct osd_bitmap *bitmap)
+	It's not clear what purpose is served by marking tiles as being part of
+	big sprites. (Big sprites in the attract abduction scene have all tiles
+	marked as "first" unlike big sprites in-game.)
+
+	We just ignore this top nibble (although perhaps in theory the bits
+	enable X/Y offsets in the low byte).
+
+	+0   x....... ........  sprite disable ??
+      +0   .xx..... ........  tile is part of big sprite (4=first, 6=middle, 2=last)
+	+0   .....x.. ........  ??? always set? (could be priority - see Bloodbro)
+	+0   .......x ........  Flip x
+	+0   ........ xxxx....  X offset: add (this * 16) to X coord
+	+0   ........ ....xxxx  Y offset: add (this * 16) to Y coord
+
+ 	+1   xxxx.... ........  Color bank
+	+1   ....xxxx xxxxxxxx  Tile number (lo bits)
+	+2   x....... ........  Tile number (hi bit)
+	+2   .???.... ........  (set in not yet used entries)
+	+2   .......x xxxxxxxx  X coordinate
+	+3   .......x xxxxxxxx  Y coordinate
+
+	f000 0000 f000 0000     entry not yet used: unless this is honored there
+	                        will be junk sprites in top left corner
+	ffff ???? ???? ????     sprite marked as dead: unless this is honored
+	                        there will be junk sprites after floating monkey machine
+
+
+	Bootleg Spriteram
+	-----------------
+
+	+0   .......x xxxxxxxx  Sprite Y coordinate
+	+1   ...xxxxx xxxxxxxx  Sprite tile number
+	+1   .x...... ........  Sprite flip x
+ 	+2   xxxx.... ........  Sprite color bank
+	+3   .......x xxxxxxxx  Sprite X coordinate
+
+	f100 ???? ???? ????     dead / unused sprite ??
+	???? ???? 0000 ????     dead / unused sprite ??
+
+
+***************************************************************************/
+
+
+void toki_draw_sprites (struct osd_bitmap *bitmap)
 {
-	int SprX,SprY,SprTile,SprFlipX,SprPalette,offs;
-	data16_t *SprRegs;
+	int x,y,xoffs,yoffs,tile,flipx,flipy,color,offs;
+	data16_t *sprite_word;
 
-	/* Draw the sprites. 256 sprites in total */
-
-	for (offs = 0;offs < toki_sprites_dataram16_size / 2;offs += 4)
+	for (offs = (spriteram_size/2)-4;offs >= 0;offs -= 4)
 	{
-		SprRegs = &toki_sprites_dataram16[offs];
+		sprite_word = &buffered_spriteram16[offs];
 
-		if (SprRegs[SPRITE_Y] == 0xf100)
-			break;
-		if (SprRegs[SPRITE_PAL_BANK])
+		if ((sprite_word[2] != 0xf000) && (sprite_word[0] != 0xffff))
 		{
+			xoffs = (sprite_word[0] &0xf0);
+			x = (sprite_word[2] + xoffs) & 0x1ff;
+			if (x > 256)
+				x -= 512;
 
-			SprX = SprRegs[SPRITE_X] & 0x1ff;
-			if (SprX > 256)
-				SprX -= 512;
+			yoffs = (sprite_word[0] &0xf) << 4;
+			y = (sprite_word[3] + yoffs) & 0x1ff;
+			if (y > 256)
+				y -= 512;
 
-			SprY = SprRegs[SPRITE_Y] & 0x1ff;
-			if (SprY > 256)
-				SprY = (512-SprY)+240;
-			else
-				SprY = 240-SprY;
+			color = sprite_word[1] >> 12;
+			flipx   = sprite_word[0] & 0x100;
+			flipy   = 0;
+			tile    = (sprite_word[1] & 0xfff) + ((sprite_word[2] & 0x8000) >> 3);
 
-			SprFlipX   = SprRegs[SPRITE_FLIP_X] & 0x4000;
-			SprTile    = SprRegs[SPRITE_TILE] & 0x1fff;
-			SprPalette = SprRegs[SPRITE_PAL_BANK] >> 12;
+			if (flip_screen) {
+				x=240-x;
+				y=240-y;
+				if (flipx) flipx=0; else flipx=1;
+				flipy=1;
+			}
 
 			drawgfx (bitmap,Machine->gfx[1],
-					SprTile,
-					SprPalette,
-					SprFlipX,0,
-					SprX,SprY-1,
+					tile,
+					color,
+					flipx,flipy,
+					x,y,
 					&Machine->visible_area,TRANSPARENCY_PEN,15);
 		}
 	}
 }
 
 
-
-/*************************************
- *
- *		Background rendering
- *
- *************************************/
-
-void toki_draw_background1 (struct osd_bitmap *bitmap)
+void tokib_draw_sprites (struct osd_bitmap *bitmap)
 {
-	int sx,sy,code,palette,offs;
+	int x,y,tile,flipx,color,offs;
+	data16_t *sprite_word;
 
-	for (offs = 0;offs < toki_background1_videoram16_size / 2;offs++)
+	for (offs = 0;offs < spriteram_size / 2;offs += 4)
 	{
-		if (bg1_dirtybuffer[offs])
+		sprite_word = &buffered_spriteram16[offs];
+
+		if (sprite_word[0] == 0xf100)
+			break;
+		if (sprite_word[2])
 		{
-			code = toki_background1_videoram16[offs];
-			palette = code >> 12;
-			sx = (offs	% 32) << 4;
-			sy = (offs >>  5) << 4;
-			bg1_dirtybuffer[offs] = 0;
-			drawgfx (bitmap,Machine->gfx[2],
-					code & 0xfff,
-					palette,
-					0,0,sx,sy,
-					0,TRANSPARENCY_NONE,0);
+
+			x = sprite_word[3] & 0x1ff;
+			if (x > 256)
+				x -= 512;
+
+			y = sprite_word[0] & 0x1ff;
+			if (y > 256)
+				y = (512-y)+240;
+			else
+				y = 240-y;
+
+			flipx   = sprite_word[1] & 0x4000;
+			tile    = sprite_word[1] & 0x1fff;
+			color   = sprite_word[2] >> 12;
+
+			drawgfx (bitmap,Machine->gfx[1],
+					tile,
+					color,
+					flipx,0,
+					x,y-1,
+					&Machine->visible_area,TRANSPARENCY_PEN,15);
 		}
 	}
 }
-
-
-void toki_draw_background2 (struct osd_bitmap *bitmap)
-{
-	int sx,sy,code,palette,offs;
-
-	for (offs = 0;offs < toki_background2_videoram16_size / 2;offs++)
-	{
-		if (bg2_dirtybuffer[offs])
-		{
-			code = toki_background2_videoram16[offs];
-			palette = code >> 12;
-			sx = (offs	% 32) << 4;
-			sy = (offs >>  5) << 4;
-			bg2_dirtybuffer[offs] = 0;
-			drawgfx (bitmap,Machine->gfx[3],
-					code & 0xfff,
-					palette,
-					0,0,sx,sy,
-					0,TRANSPARENCY_NONE,0);
-		}
-	}
-}
-
-
-void toki_draw_foreground (struct osd_bitmap *bitmap)
-{
-	int sx,sy,code,palette,offs;
-
-	for (offs = 0;offs < toki_foreground_videoram16_size / 2;offs++)
-	{
-		if (frg_dirtybuffer[offs])
-		{
-			code = toki_foreground_videoram16[offs];
-			palette = code >> 12;
-			sx = (offs % 32) << 3;
-			sy = (offs >> 5) << 3;
-			frg_dirtybuffer[offs] = 0;
-			drawgfx (bitmap,Machine->gfx[0],
-					code & 0xfff,
-					palette,
-					0,0,sx,sy,
-					0,TRANSPARENCY_NONE,0);
-		}
-	}
-}
-
-
 
 /*************************************
  *
@@ -320,142 +375,65 @@ void toki_draw_foreground (struct osd_bitmap *bitmap)
 
 void toki_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	int title_on;			/* title on screen flag */
+	int i,background_y_scroll,foreground_y_scroll,latch1,latch2;
 
-	bg1_scrolly = YBGSCROLL_ADJUST	(toki_scrollram16[0]);
-	bg1_scrollx = XBG1SCROLL_ADJUST (toki_scrollram16[1]);
-	bg2_scrolly = YBGSCROLL_ADJUST	(toki_scrollram16[2]);
-	bg2_scrollx = XBG2SCROLL_ADJUST (toki_scrollram16[3]);
+	background_y_scroll=((toki_scrollram16[0x0d]&0x10)<<4)+((toki_scrollram16[0x0e]&0x7f)<<1)+((toki_scrollram16[0x0e]&0x80)>>7);
+	foreground_y_scroll=((toki_scrollram16[0x1d]&0x10)<<4)+((toki_scrollram16[0x1e]&0x7f)<<1)+((toki_scrollram16[0x1e]&0x80)>>7);
+	tilemap_set_scrolly( background_layer, 0, background_y_scroll );
+	tilemap_set_scrolly( foreground_layer, 0, foreground_y_scroll );
 
-	/* Palette mapping first */
-	{
-		unsigned short palette_map[16*4];
-		int code, palette, offs;
+	latch1=toki_background_xscroll[0];
+	latch2=toki_foreground_xscroll[0];
+	for (i=0; i<256; i++) {
+		if (toki_background_xscroll[i]!=0xffff)
+			latch1=toki_background_xscroll[i];
+		if (toki_foreground_xscroll[i]!=0xffff)
+			latch2=toki_foreground_xscroll[i];
 
-		memset (palette_map, 0, sizeof (palette_map));
-
-		for (offs = 0; offs < toki_foreground_videoram16_size / 2; offs++)
-		{
-			/* foreground */
-			code = toki_foreground_videoram16[offs];
-			palette = code >> 12;
-			palette_map[16 + palette] |= Machine->gfx[0]->pen_usage[code & 0xfff];
-			/* background 1 */
-			code = toki_background1_videoram16[offs];
-			palette = code >> 12;
-			palette_map[32 + palette] |= Machine->gfx[2]->pen_usage[code & 0xfff];
-			/* background 2 */
-			code = toki_background2_videoram16[offs];
-			palette = code >> 12;
-			palette_map[48 + palette] |= Machine->gfx[3]->pen_usage[code & 0xfff];
-		}
-
-		/* sprites */
-		for (offs = 0;offs < toki_sprites_dataram16_size / 2;offs += 4)
-		{
-			data16_t *SprRegs = &toki_sprites_dataram16[offs];
-
-			if (SprRegs[SPRITE_Y] == 0xf100)
-				break;
-			palette = SprRegs[SPRITE_PAL_BANK];
-			if (palette)
-			{
-				code = SprRegs[SPRITE_TILE] & 0x1fff;
-				palette_map[0 + (palette >> 12)] |= Machine->gfx[1]->pen_usage[code];
-			}
-		}
-
-		/* expand it */
-		for (palette = 0; palette < 16 * 4; palette++)
-		{
-			unsigned short usage = palette_map[palette];
-
-			if (usage)
-			{
-				int i;
-
-				for (i = 0; i < 15; i++)
-					if (usage & (1 << i))
-						palette_used_colors[palette * 16 + i] = PALETTE_COLOR_USED;
-					else
-						palette_used_colors[palette * 16 + i] = PALETTE_COLOR_UNUSED;
-				palette_used_colors[palette * 16 + 15] = PALETTE_COLOR_TRANSPARENT;
-			}
-			else
-				memset (&palette_used_colors[palette * 16 + 0], PALETTE_COLOR_UNUSED, 16);
-		}
-
-		/* recompute */
-		if (palette_recalc ())
-		{
-			memset (frg_dirtybuffer, 1, toki_foreground_videoram16_size / 2);
-			memset (bg1_dirtybuffer, 1, toki_background1_videoram16_size / 2);
-			memset (bg2_dirtybuffer, 1, toki_background2_videoram16_size / 2);
-		}
+		tilemap_set_scrollx( background_layer, (i+background_y_scroll)%512, latch1 );
+		tilemap_set_scrollx( foreground_layer, (i+foreground_y_scroll)%512, latch2 );
 	}
 
+	flip_screen_set((toki_scrollram16[0x28]&0x8000)==0);
 
-	title_on = (toki_foreground_videoram16[0x710 >> 1]==0x44) ? 1:0;
+	tilemap_update(ALL_TILEMAPS);
+	palette_init_used_colors();
+	toki_mark_sprite_colours();
+	palette_recalc();
 
-	toki_draw_foreground (bitmap_frg);
-	toki_draw_background1 (bitmap_bg1);
-	toki_draw_background2 (bitmap_bg2);
-
-	if (title_on)
-	{
-		int i,scrollx[512];
-
-		for (i = 0;i < 256;i++)
-			scrollx[i] = bg2_scrollx - toki_linescroll[i];
-
-		copyscrollbitmap (bitmap,bitmap_bg1,1,&bg1_scrollx,1,&bg1_scrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);
-		if (bg2_scrollx!=-32768)
-			copyscrollbitmap (bitmap,bitmap_bg2,512,scrollx,1,&bg2_scrolly,&Machine->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
-	} else
-	{
-		copyscrollbitmap (bitmap,bitmap_bg2,1,&bg2_scrollx,1,&bg2_scrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);
-		copyscrollbitmap (bitmap,bitmap_bg1,1,&bg1_scrollx,1,&bg1_scrolly,&Machine->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
+	if (toki_scrollram16[0x28]&0x100) {
+		tilemap_draw(bitmap,background_layer,TILEMAP_IGNORE_TRANSPARENCY,0);
+		tilemap_draw(bitmap,foreground_layer,0,0);
+	} else {
+		tilemap_draw(bitmap,foreground_layer,TILEMAP_IGNORE_TRANSPARENCY,0);
+		tilemap_draw(bitmap,background_layer,0,0);
 	}
-
-	toki_render_sprites (bitmap);
-	copybitmap (bitmap,bitmap_frg,0,0,0,0,&Machine->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
+	toki_draw_sprites (bitmap);
+	tilemap_draw(bitmap,text_layer,0,0);
 }
 
-
-
-static int lastline,lastdata;
-
-WRITE16_HANDLER( toki_linescroll16_w )
+void tokib_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	if (offset == 1)
-	{
-		int currline;
+	tilemap_set_scroll_rows(foreground_layer,1);
+	tilemap_set_scroll_rows(background_layer,1);
+	tilemap_set_scrolly( background_layer, 0, toki_scrollram16[0]+1 );
+	tilemap_set_scrollx( background_layer, 0, toki_scrollram16[1]-0x103 );
+	tilemap_set_scrolly( foreground_layer, 0, toki_scrollram16[2]+1 );
+	tilemap_set_scrollx( foreground_layer, 0, toki_scrollram16[3]-0x101 );
 
-		currline = cpu_getscanline();
+	tilemap_update(ALL_TILEMAPS);
+	palette_init_used_colors();
+	tokib_mark_sprite_colours();
+	palette_recalc();
 
-		if (currline < lastline)
-		{
-			while (lastline < 256)
-				toki_linescroll[lastline++] = lastdata;
-			lastline = 0;
-		}
-		while (lastline < currline)
-			toki_linescroll[lastline++] = lastdata;
-
-		lastdata = data & 0x7f;
+	if (toki_scrollram16[3]&0x2000) {
+		tilemap_draw(bitmap,background_layer,TILEMAP_IGNORE_TRANSPARENCY,0);
+		tilemap_draw(bitmap,foreground_layer,0,0);
+	} else {
+		tilemap_draw(bitmap,foreground_layer,TILEMAP_IGNORE_TRANSPARENCY,0);
+		tilemap_draw(bitmap,background_layer,0,0);
 	}
-	else
-	{
-		/* this is the sign, it is either 0x00 or 0xff */
-		if (data) lastdata |= 0x80;
-	}
-}
 
-int toki_interrupt(void)
-{
-	while (lastline < 256)
-		toki_linescroll[lastline++] = lastdata;
-	lastline = 0;
-	return 1;  /*Interrupt vector 1*/
+	tokib_draw_sprites (bitmap);
+	tilemap_draw(bitmap,text_layer,0,0);
 }
-

@@ -2,7 +2,7 @@
 
 						  -= Yun Sung 8 Bit Games =-
 
-					driver by	Luca Elia (eliavit@unina.it)
+					driver by	Luca Elia (l.elia@tin.it)
 
 
 Note:	if MAME_DEBUG is defined, pressing Z with:
@@ -134,7 +134,11 @@ static void get_tile_info_0( int tile_index )
 {
 	int code  =  yunsung8_videoram_0[0x1000+tile_index * 2 + 0] + yunsung8_videoram_0[0x1000+tile_index * 2 + 1] * 256;
 	int color =  yunsung8_videoram_0[0x0800+ tile_index] & 0x07;
-	SET_TILE_INFO( 0, code, color );
+	SET_TILE_INFO(
+			0,
+			code,
+			color,
+			0)
 }
 
 /* Text Plane */
@@ -146,7 +150,11 @@ static void get_tile_info_1( int tile_index )
 {
 	int code  =  yunsung8_videoram_1[0x1000+ tile_index * 2 + 0] + yunsung8_videoram_1[0x1000+tile_index * 2 + 1] * 256;
 	int color =  yunsung8_videoram_1[0x0800+ tile_index] & 0x3f;
-	SET_TILE_INFO( 1, code, color );
+	SET_TILE_INFO(
+			1,
+			code,
+			color,
+			0)
 }
 
 

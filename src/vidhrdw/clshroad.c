@@ -91,7 +91,11 @@ static void get_tile_info_0a( int tile_index )
 	tile_index = (tile_index & 0x1f) + (tile_index & ~0x1f)*2;
 	code	=	clshroad_vram_0[ tile_index * 2 + 0x40 ];
 	color	=	clshroad_vram_0[ tile_index * 2 + 0x41 ];
-	SET_TILE_INFO(1, code, color & 0x0f );
+	SET_TILE_INFO(
+			1,
+			code,
+			color & 0x0f,
+			0)
 }
 
 static void get_tile_info_0b( int tile_index )
@@ -100,7 +104,11 @@ static void get_tile_info_0b( int tile_index )
 	tile_index = (tile_index & 0x1f) + (tile_index & ~0x1f)*2;
 	code	=	clshroad_vram_0[ tile_index * 2 + 0x00 ];
 	color	=	clshroad_vram_0[ tile_index * 2 + 0x01 ];
-	SET_TILE_INFO(1, code, color & 0x0f );
+	SET_TILE_INFO(
+			1,
+			code,
+			color & 0x0f,
+			0)
 }
 
 WRITE_HANDLER( clshroad_vram_0_w )
@@ -154,7 +162,11 @@ static void get_tile_info_1( int tile_index )
 {
 	data8_t code	=	clshroad_vram_1[ tile_index + 0x000 ];
 	data8_t color	=	clshroad_vram_1[ tile_index + 0x400 ];
-	SET_TILE_INFO(2, code + ((color & 0xf0)<<4), color & 0x0f );
+	SET_TILE_INFO(
+			2,
+			code + ((color & 0xf0)<<4),
+			color & 0x0f,
+			0)
 }
 
 WRITE_HANDLER( clshroad_vram_1_w )

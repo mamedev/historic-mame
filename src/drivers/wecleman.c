@@ -272,6 +272,7 @@ READ16_HANDLER( wecleman_txtram_r );
 WRITE16_HANDLER( wecleman_txtram_w );
 void wecleman_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 int  wecleman_vh_start(void);
+void wecleman_vh_stop(void);
 
 void hotchase_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 int  hotchase_vh_start(void);
@@ -1292,7 +1293,7 @@ static const struct MachineDriver machine_driver_wecleman =
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
 	wecleman_vh_start,
-	0,
+	wecleman_vh_stop,
 	wecleman_vh_screenrefresh,
 
 	/* sound hardware */

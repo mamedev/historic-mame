@@ -1,10 +1,47 @@
 /***************************************************************************
 
-  Video Hardware for Double Dragon (bootleg) & Double Dragon II
+  Video Hardware for some Technos games:
+    Double Dragon, Double Dragon bootleg, Double Dragon II and China Gate
+
+  Two Tile layers.
+	Background layer is 512x512 , tiles are 16x16
+	Top        layer is 256x256 , tiles are 8x8
+
+  Sprites are 16x16, 16x32, 32x16, or 32x32 (attribute bits set dimension)
+
+
+BG Tile Layout
+  0          1
+  ---- -xxx  xxxx xxxx  = Tile number
+  --xx x---  ---- ----  = Color
+  -x-- ----  ---- ----  = X Flip
+  x--- ----  ---- ----  = Y Flip
+
+
+Top Tile layout.
+  0          1
+  ---- xxxx  xxxx xxxx  = Tile number
+  xxxx ----  ---- ----  = Color (China Gate)
+  xxx- ----  ---- ----  = Color (Double Dragon)
+
+
+Sprite layout.
+  0          1          2          3          4
+  ---- ----  ---- ----  ---- xxxx  xxxx xxxx  ---- ----  = Sprite number
+  ---- ----  ---- ----  -xxx ----  ---- ----  ---- ----  = Color
+  xxxx xxxx  ---- ----  ---- ----  ---- ----  ---- ----  = Y position
+  ---- ----  ---- ---x  ---- ----  ---- ----  ---- ----  = Y MSb position ???
+  ---- ----  ---- ----  ---- ----  ---- ----  xxxx xxxx  = X position
+  ---- ----  ---- --x-  ---- ----  ---- ----  ---- ----  = X MSb position ???
+  ---- ----  ---- -x--  ---- ----  ---- ----  ---- ----  = Y Flip
+  ---- ----  ---- x---  ---- ----  ---- ----  ---- ----  = X Flip
+  ---- ----  --xx ----  ---- ----  ---- ----  ---- ----  = Sprite Dimension
+  ---- ----  x--- ----  ---- ----  ---- ----  ---- ----  = Visible
 
 ***************************************************************************/
 
 #include "driver.h"
+#include "vidhrdw/generic.h"
 
 
 unsigned char *ddragon_bgvideoram,*ddragon_fgvideoram;
@@ -12,7 +49,7 @@ int ddragon_scrollx_hi, ddragon_scrolly_hi;
 unsigned char *ddragon_scrollx_lo;
 unsigned char *ddragon_scrolly_lo;
 unsigned char *ddragon_spriteram;
-int dd2_video;
+int technos_video_hw;
 
 static struct tilemap *fg_tilemap,*bg_tilemap;
 
@@ -33,14 +70,31 @@ static UINT32 background_scan(UINT32 col,UINT32 row,UINT32 num_cols,UINT32 num_r
 static void get_bg_tile_info(int tile_index)
 {
 	unsigned char attr = ddragon_bgvideoram[2*tile_index];
-	SET_TILE_INFO(2,ddragon_bgvideoram[2*tile_index+1] + ((attr & 0x07) << 8),(attr >> 3) & 0x07)
-	tile_info.flags = TILE_FLIPYX((attr & 0xc0) >> 6);
+	SET_TILE_INFO(
+			2,
+			ddragon_bgvideoram[2*tile_index+1] + ((attr & 0x07) << 8),
+			(attr >> 3) & 0x07,
+			TILE_FLIPYX((attr & 0xc0) >> 6))
 }
 
 static void get_fg_tile_info(int tile_index)
 {
 	unsigned char attr = ddragon_fgvideoram[2*tile_index];
-	SET_TILE_INFO(0,ddragon_fgvideoram[2*tile_index+1] + ((attr & 0x07) << 8),attr >> 5)
+	SET_TILE_INFO(
+			0,
+			ddragon_fgvideoram[2*tile_index+1] + ((attr & 0x07) << 8),
+			attr >> 5,
+			0)
+}
+
+static void get_fg_16color_tile_info(int tile_index)
+{
+	unsigned char attr = ddragon_fgvideoram[2*tile_index];
+	SET_TILE_INFO(
+			0,
+			ddragon_fgvideoram[2*tile_index+1] + ((attr & 0x0f) << 8),
+			attr >> 4,
+			0)
 }
 
 
@@ -54,6 +108,19 @@ int ddragon_vh_start(void)
 {
 	bg_tilemap = tilemap_create(get_bg_tile_info,background_scan,  TILEMAP_OPAQUE,     16,16,32,32);
 	fg_tilemap = tilemap_create(get_fg_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8,32,32);
+
+	if (!bg_tilemap || !fg_tilemap)
+		return 1;
+
+	tilemap_set_transparent_pen(fg_tilemap,0);
+
+	return 0;
+}
+
+int chinagat_vh_start(void)
+{
+	bg_tilemap = tilemap_create(get_bg_tile_info,background_scan,  TILEMAP_OPAQUE,     16,16,32,32);
+	fg_tilemap = tilemap_create(get_fg_16color_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8,32,32);
 
 	if (!bg_tilemap || !fg_tilemap)
 		return 1;
@@ -89,7 +156,6 @@ WRITE_HANDLER( ddragon_fgvideoram_w )
 }
 
 
-
 /***************************************************************************
 
   Display refresh
@@ -105,8 +171,14 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 	const struct rectangle *clip = &Machine->visible_area;
 	const struct GfxElement *gfx = Machine->gfx[1];
 
-	unsigned char *src = &( ddragon_spriteram[0x800] );
+	data8_t *src;
 	int i;
+
+	if ( technos_video_hw == 1 ) {		/* China Gate Sprite RAM */
+		src = (data8_t *) (spriteram);
+	} else {
+		src = (data8_t *) (&( ddragon_spriteram[0x800] ));
+	}
 
 	for( i = 0; i < ( 64 * 5 ); i += 5 ) {
 		int attr = src[i+1];
@@ -121,10 +193,18 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 			int which;
 			int color;
 
-			if ( dd2_video ) {
+			if ( technos_video_hw == 2 )		/* Double Dragon 2 */
+			{
 				color = ( src[i+2] >> 5 );
 				which = src[i+3] + ( ( src[i+2] & 0x1f ) << 8 );
-			} else {
+			}
+			else
+			{
+				if ( technos_video_hw == 1 )		/* China Gate */
+				{
+					if ((sx < -7) && (sx > -16)) sx += 256; /* fix sprite clip */
+					if ((sy < -7) && (sy > -16)) sy += 256; /* fix sprite clip */
+				}
 				color = ( src[i+2] >> 4 ) & 0x07;
 				which = src[i+3] + ( ( src[i+2] & 0x0f ) << 8 );
 			}

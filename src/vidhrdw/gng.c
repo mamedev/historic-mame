@@ -26,15 +26,21 @@ static struct tilemap *bg_tilemap,*fg_tilemap;
 static void get_fg_tile_info(int tile_index)
 {
 	unsigned char attr = gng_fgvideoram[tile_index + 0x400];
-	SET_TILE_INFO(0,gng_fgvideoram[tile_index] + ((attr & 0xc0) << 2),attr & 0x0f)
-	tile_info.flags = TILE_FLIPYX((attr & 0x30) >> 4);
+	SET_TILE_INFO(
+			0,
+			gng_fgvideoram[tile_index] + ((attr & 0xc0) << 2),
+			attr & 0x0f,
+			TILE_FLIPYX((attr & 0x30) >> 4))
 }
 
 static void get_bg_tile_info(int tile_index)
 {
 	unsigned char attr = gng_bgvideoram[tile_index + 0x400];
-	SET_TILE_INFO(1,gng_bgvideoram[tile_index] + ((attr & 0xc0) << 2),attr & 0x07)
-	tile_info.flags = TILE_FLIPYX((attr & 0x30) >> 4) | TILE_SPLIT((attr & 0x08) >> 3);
+	SET_TILE_INFO(
+			1,
+			gng_bgvideoram[tile_index] + ((attr & 0xc0) << 2),
+			attr & 0x07,
+			TILE_FLIPYX((attr & 0x30) >> 4) | TILE_SPLIT((attr & 0x08) >> 3))
 }
 
 
@@ -55,8 +61,8 @@ int gng_vh_start(void)
 
 	tilemap_set_transparent_pen(fg_tilemap,3);
 
-	tilemap_set_transmask(bg_tilemap,0,0xff); /* split type 0 is totally transparent in front half */
-	tilemap_set_transmask(bg_tilemap,1,0x41); /* split type 1 has pens 0 and 6 transparent in front half */
+	tilemap_set_transmask(bg_tilemap,0,0xff,0x00); /* split type 0 is totally transparent in front half */
+	tilemap_set_transmask(bg_tilemap,1,0x41,0xbe); /* split type 1 has pens 0 and 6 transparent in front half */
 
 	return 0;
 }

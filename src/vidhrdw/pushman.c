@@ -23,14 +23,21 @@ static void get_back_tile_info( int tile_index )
 	int tile;
 
 	tile=bgMap[tile_index<<1]+(bgMap[(tile_index<<1)+1]<<8);
-	SET_TILE_INFO(2,(tile&0xff)|((tile&0x4000)>>6),(tile>>8)&0xf)
-	tile_info.flags = ((tile&0x2000) >> 13);  /* flip x*/
+	SET_TILE_INFO(
+			2,
+			(tile&0xff)|((tile&0x4000)>>6),
+			(tile>>8)&0xf,
+			((tile&0x2000) >> 13))	/* flip x*/
 }
 
 static void get_text_tile_info( int tile_index )
 {
 	int tile = videoram16[tile_index];
-	SET_TILE_INFO(0,(tile&0xff)|((tile&0x8000)>>6)|((tile&0x4000)>>6)|((tile&0x2000)>>4),(tile>>8)&0xf)
+	SET_TILE_INFO(
+			0,
+			(tile&0xff)|((tile&0x8000)>>6)|((tile&0x4000)>>6)|((tile&0x2000)>>4),
+			(tile>>8)&0xf,
+			0)
 }
 
 

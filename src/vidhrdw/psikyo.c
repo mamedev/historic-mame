@@ -72,12 +72,20 @@ Offset:
 static void get_tile_info_0( int tile_index )
 {
 	data16_t code = ((data16_t *)psikyo_vram_0)[BYTE_XOR_BE(tile_index)];
-	SET_TILE_INFO(1, (code & 0x1fff), (code >> 13) & 7 );
+	SET_TILE_INFO(
+			1,
+			(code & 0x1fff),
+			(code >> 13) & 7,
+			0)
 }
 static void get_tile_info_1( int tile_index )
 {
 	data16_t code = ((data16_t *)psikyo_vram_1)[BYTE_XOR_BE(tile_index)];
-	SET_TILE_INFO(2, (code & 0x1fff), (code >> 13) & 7 );
+	SET_TILE_INFO(
+			2,
+			(code & 0x1fff),
+			(code >> 13) & 7,
+			0)
 }
 
 

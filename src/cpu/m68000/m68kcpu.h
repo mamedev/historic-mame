@@ -40,6 +40,8 @@
 /* Check for > 32bit sizes */
 #if UINT_MAX > 0xffffffff
 	#define M68K_INT_GT_32_BIT  1
+#else
+	#define M68K_INT_GT_32_BIT  0
 #endif
 
 /* Data types used in this emulation core */
@@ -229,13 +231,13 @@
 #define MASK_OUT_BELOW_16(A) ((A) & ~0xffff)
 
 /* No need to mask if we are 32 bit */
-#if M68K_INT_GT_32BIT || M68K_USE_64_BIT
+#if M68K_INT_GT_32_BIT || M68K_USE_64_BIT
 	#define MASK_OUT_ABOVE_32(A) ((A) & 0xffffffff)
 	#define MASK_OUT_BELOW_32(A) ((A) & ~0xffffffff)
 #else
 	#define MASK_OUT_ABOVE_32(A) (A)
 	#define MASK_OUT_BELOW_32(A) 0
-#endif /* M68K_INT_GT_32BIT || M68K_USE_64_BIT */
+#endif /* M68K_INT_GT_32_BIT || M68K_USE_64_BIT */
 
 /* Simulate address lines of 68k family */
 #define ADDRESS_68K(A) ((A)&CPU_ADDRESS_MASK)
@@ -246,7 +248,7 @@
 #define LSR(A, C) ((A) >> (C))
 
 /* Some > 32-bit optimizations */
-#if M68K_INT_GT_32BIT
+#if M68K_INT_GT_32_BIT
 	/* Shift left and right */
 	#define LSR_32(A, C) ((A) >> (C))
 	#define LSL_32(A, C) ((A) << (C))
@@ -256,7 +258,7 @@
 	 */
 	#define LSR_32(A, C) ((C) < 32 ? (A) >> (C) : 0)
 	#define LSL_32(A, C) ((C) < 32 ? (A) << (C) : 0)
-#endif /* M68K_INT_GT_32BIT */
+#endif /* M68K_INT_GT_32_BIT */
 
 #if M68K_USE_64_BIT
 	#define LSL_32_64(A, C) ((A) << (C))

@@ -211,7 +211,11 @@ void karnov_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 static void get_fix_tile_info(int tile_index)
 {
 	int tile=videoram16[tile_index];
-	SET_TILE_INFO(0,tile&0xfff,tile>>14)
+	SET_TILE_INFO(
+			0,
+			tile&0xfff,
+			tile>>14,
+			0)
 }
 
 WRITE16_HANDLER( karnov_videoram_w )

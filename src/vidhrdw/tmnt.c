@@ -5,7 +5,7 @@
 static int layer_colorbase[3],sprite_colorbase,bg_colorbase;
 static int priorityflag;
 static int layerpri[3];
-
+static int prmrsocr_sprite_bank;
 
 
 /***************************************************************************
@@ -124,6 +124,19 @@ if (keyboard_pressed(KEYCODE_E) && (*color & 0x80)) *color = rand();
 	*color = sprite_colorbase + (*color & 0x1f);
 }
 
+static void prmrsocr_sprite_callback(int *code,int *color,int *priority_mask)
+{
+	int pri = 0x20 | ((*color & 0x60) >> 2);
+	if (pri <= layerpri[2])								*priority_mask = 0;
+	else if (pri > layerpri[2] && pri <= layerpri[1])	*priority_mask = 0xf0;
+	else if (pri > layerpri[1] && pri <= layerpri[0])	*priority_mask = 0xf0|0xcc;
+	else 												*priority_mask = 0xf0|0xcc|0xaa;
+
+	*code |= prmrsocr_sprite_bank << 14;
+
+	*color = sprite_colorbase + (*color & 0x1f);
+}
+
 
 
 /***************************************************************************
@@ -224,6 +237,18 @@ int thndrx2_vh_start(void)
 	return 0;
 }
 
+int prmrsocr_vh_start(void)
+{
+	if (K052109_vh_start(REGION_GFX1,NORMAL_PLANE_ORDER,tmnt_tile_callback))
+		return 1;
+	if (K053245_vh_start(REGION_GFX2,NORMAL_PLANE_ORDER,prmrsocr_sprite_callback))
+	{
+		K052109_vh_stop();
+		return 1;
+	}
+	return 0;
+}
+
 void punkshot_vh_stop(void)
 {
 	K052109_vh_stop();
@@ -252,6 +277,12 @@ void thndrx2_vh_stop(void)
 {
 	K052109_vh_stop();
 	K051960_vh_stop();
+}
+
+void prmrsocr_vh_stop(void)
+{
+	K052109_vh_stop();
+	K053245_vh_stop();
 }
 
 
@@ -402,6 +433,25 @@ WRITE16_HANDLER( ssriders_1c0300_w )
 		K052109_set_RMRD_line((data & 0x08) ? ASSERT_LINE : CLEAR_LINE);
 
 		/* other bits unknown (bits 4-6 used in TMNT2) */
+	}
+}
+
+WRITE16_HANDLER( prmrsocr_122000_w )
+{
+	if (ACCESSING_LSB)
+	{
+		/* bit 0,1 = coin counter */
+		coin_counter_w(0,data & 0x01);
+		coin_counter_w(1,data & 0x02);
+
+		/* bit 4 = enable char ROM reading through the video RAM */
+		K052109_set_RMRD_line((data & 0x10) ? ASSERT_LINE : CLEAR_LINE);
+
+		/* bit 6 = sprite ROM bank */
+		prmrsocr_sprite_bank = (data & 0x40) >> 6;
+		K053244_bankselect(prmrsocr_sprite_bank << 2);
+
+		/* other bits unknown (unused?) */
 	}
 }
 

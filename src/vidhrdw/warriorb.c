@@ -4,6 +4,8 @@
 
 #define TC0100SCN_GFX_NUM 1
 
+void warriorb_vh_stop(void);
+
 struct tempsprite
 {
 	int gfx;
@@ -14,8 +16,6 @@ struct tempsprite
 	int primask;
 };
 static struct tempsprite *spritelist;
-
-static int taito_hide_pixels;
 
 /**********************************************************/
 
@@ -89,23 +89,33 @@ static int has_second_TC0110PCR(void)
 }
 
 
-static int warriorb_core_vh_start (void)
+static int warriorb_core_vh_start (int x_offs,int multiscrn_xoffs)
 {
 
 	spritelist = malloc(0x800 * sizeof(*spritelist));
 	if (!spritelist)
 		return 1;
 
-	if (TC0100SCN_vh_start(has_two_TC0100SCN() ? 2 : 1,TC0100SCN_GFX_NUM,taito_hide_pixels))
+	if (TC0100SCN_vh_start(has_two_TC0100SCN() ? 2 : 1,TC0100SCN_GFX_NUM,x_offs,0,0,0,0,0,
+			multiscrn_xoffs))
+	{
+		warriorb_vh_stop();
 		return 1;
+	}
 
 	if (has_TC0110PCR())
 		if (TC0110PCR_vh_start())
+		{
+			warriorb_vh_stop();
 			return 1;
+		}
 
 	if (has_second_TC0110PCR())
 		if (TC0110PCR_1_vh_start())
+		{
+			warriorb_vh_stop();
 			return 1;
+		}
 
 	/* Ensure palette from correct TC0110PCR used for each screen */
 	TC0100SCN_set_chip_colbanks(0,0x100,0x0);
@@ -113,10 +123,14 @@ static int warriorb_core_vh_start (void)
 	return 0;
 }
 
+int darius2d_vh_start (void)
+{
+	return (warriorb_core_vh_start(4,0));
+}
+
 int warriorb_vh_start (void)
 {
-	taito_hide_pixels = 4;
-	return (warriorb_core_vh_start());
+	return (warriorb_core_vh_start(4,1));
 }
 
 void warriorb_vh_stop (void)
@@ -308,7 +322,9 @@ void warriorb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	layer[2] = 2;
 
 	fillbitmap(priority_bitmap,0,NULL);
-//	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);	/* wrong color? */
+
+	/* Ensure screen blanked even when bottom layers not drawn due to disable bit */
+	fillbitmap(bitmap, palette_transparent_pen, &Machine -> visible_area);
 
 	/* chip 0 does tilemaps on the left, chip 1 does the ones on the right */
 	TC0100SCN_tilemap_draw(bitmap,0,layer[0],TILEMAP_IGNORE_TRANSPARENCY,1);	/* left */

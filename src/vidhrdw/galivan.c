@@ -140,14 +140,22 @@ static void get_bg_tile_info(int tile_index)
 	unsigned char *BGROM = memory_region(REGION_GFX4);
 	int attr = BGROM[tile_index + 0x4000];
 	int code = BGROM[tile_index] | ((attr & 0x03) << 8);
-	SET_TILE_INFO(1,code,(attr & 0x78) >> 3);	/* seems correct */
+	SET_TILE_INFO(
+			1,
+			code,
+			(attr & 0x78) >> 3,		/* seems correct */
+			0)
 }
 
 static void get_tx_tile_info(int tile_index)
 {
 	int attr = colorram[tile_index];
 	int code = videoram[tile_index] | ((attr & 0x01) << 8);
-	SET_TILE_INFO(0,code,(attr & 0xe0) >> 5);	/* not sure */
+	SET_TILE_INFO(
+			0,
+			code,
+			(attr & 0xe0) >> 5,		/* not sure */
+			0)
 	tile_info.priority = attr & 8 ? 0 : 1;	/* wrong */
 }
 
@@ -156,14 +164,22 @@ static void ninjemak_get_bg_tile_info(int tile_index)
 	unsigned char *BGROM = memory_region(REGION_GFX4);
 	int attr = BGROM[tile_index + 0x4000];
 	int code = BGROM[tile_index] | ((attr & 0x03) << 8);
-	SET_TILE_INFO(1,code,((attr & 0x60) >> 3) | ((attr & 0x0c) >> 2));	/* seems correct */
+	SET_TILE_INFO(
+			1,
+			code,
+			((attr & 0x60) >> 3) | ((attr & 0x0c) >> 2),	/* seems correct */
+			0)
 }
 
 static void ninjemak_get_tx_tile_info(int tile_index)
 {
 	int attr = colorram[tile_index];
 	int code = videoram[tile_index] | ((attr & 0x03) << 8);
-	SET_TILE_INFO(0,code,(attr & 0x1c) >> 2);	/* seems correct ? */
+	SET_TILE_INFO(
+			0,
+			code,
+			(attr & 0x1c) >> 2,		/* seems correct ? */
+			0)
 }
 
 

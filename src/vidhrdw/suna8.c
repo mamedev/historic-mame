@@ -2,7 +2,7 @@
 
 							-=  SunA 8 Bit Games =-
 
-					driver by	Luca Elia (eliavit@unina.it)
+					driver by	Luca Elia (l.elia@tin.it)
 
 	These games have only sprites, of a peculiar type:
 
@@ -94,8 +94,11 @@ static void get_tile_info(int tile_index)
 	else
 	{	code = spriteram[ 2 * tile_index + 0 ];
 		attr = spriteram[ 2 * tile_index + 1 ];	}
-	SET_TILE_INFO(0, ( (attr & 0x03) << 8 ) + code + tiles*0x400,(attr >> 2) & 0xf);
-	tile_info.flags = TILE_FLIPYX( (attr >> 6) & 3 );
+	SET_TILE_INFO(
+			0,
+			( (attr & 0x03) << 8 ) + code + tiles*0x400,
+			(attr >> 2) & 0xf,
+			TILE_FLIPYX( (attr >> 6) & 3 ))
 }
 
 

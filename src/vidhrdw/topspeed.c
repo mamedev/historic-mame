@@ -19,10 +19,6 @@ static struct tempsprite *spritelist;
 
 int topspeed_vh_start (void)
 {
-	/* (chips, gfxnum, x_offs, y_offs, y_invert, opaque, dblwidth) */
-	if (PC080SN_vh_start(2,1,0,8,0,0,0))
-		return 1;
-
 	/* Up to $1000/8 big sprites, requires 0x200 * sizeof(*spritelist)
 	   Multiply this by 128 to give room for the number of small sprites,
 	   which are what actually get put in the structure. */
@@ -30,6 +26,14 @@ int topspeed_vh_start (void)
 	spritelist = malloc(0x10000 * sizeof(*spritelist));
 	if (!spritelist)
 		return 1;
+
+	/* (chips, gfxnum, x_offs, y_offs, y_invert, opaque, dblwidth) */
+	if (PC080SN_vh_start(2,1,0,8,0,0,0))
+	{
+		free(spritelist);
+		spritelist = 0;
+		return 1;
+	}
 
 	return 0;
 }
@@ -280,6 +284,7 @@ void topspeed_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	layer[3] = 0;
 
 	fillbitmap(priority_bitmap,0,NULL);
+	fillbitmap(bitmap, palette_transparent_pen, &Machine -> visible_area);
 
 #ifdef MAME_DEBUG
 	if (dislayer[3]==0)

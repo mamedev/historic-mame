@@ -124,7 +124,11 @@ static void get_bg0_tile_info(int tile_index)
 	color = hi & 0x0f;
 	tile = ( ((hi & 0x80) << 2) | ((hi & 0x40) << 2) |
 	         ((hi & 0x20) << 5) | ((hi & 0x10) << 7) ) | lo;
-	SET_TILE_INFO(0, tile, color)
+	SET_TILE_INFO(
+			0,
+			tile,
+			color,
+			0)
 	tile_info.priority = 0;
 }
 
@@ -139,7 +143,11 @@ static void get_bg1_tile_info(int tile_index)
 	color = hi & 0x0f;
 	tile = ( ((hi & 0x80) << 2) | ((hi & 0x40) << 2) |
 	         ((hi & 0x20) << 5) | ((hi & 0x10) << 7) ) | lo;
-	SET_TILE_INFO(1, tile, color)
+	SET_TILE_INFO(
+			1,
+			tile,
+			color,
+			0)
 	tile_info.priority = 0;
 }
 
@@ -154,7 +162,11 @@ static void get_bg2_tile_info(int tile_index)
 	color = hi & 0x0f;
 	tile = ( ((hi & 0x80) << 2) | ((hi & 0x40) << 2) |
 	         ((hi & 0x20) << 5) | ((hi & 0x10) << 7) ) | lo;
-	SET_TILE_INFO(2, tile, color)
+	SET_TILE_INFO(
+			2,
+			tile,
+			color,
+			0)
 	tile_info.priority = 0;
 }
 
@@ -169,7 +181,11 @@ static void robokid_get_bg0_tile_info(int tile_index)
 	color = hi & 0x0f;
 	tile = ( ((hi & 0x80) << 2) | ((hi & 0x40) << 2) |
 	         ((hi & 0x20) << 5) | ((hi & 0x10) << 7) ) | lo;
-	SET_TILE_INFO(0, tile, color)
+	SET_TILE_INFO(
+			0,
+			tile,
+			color,
+			0)
 	tile_info.priority = 0;
 }
 
@@ -184,7 +200,11 @@ static void robokid_get_bg1_tile_info(int tile_index)
 	color = hi & 0x0f;
 	tile = ( ((hi & 0x80) << 2) | ((hi & 0x40) << 2) |
 	         ((hi & 0x20) << 5) | ((hi & 0x10) << 7) ) | lo;
-	SET_TILE_INFO(1, tile, color)
+	SET_TILE_INFO(
+			1,
+			tile,
+			color,
+			0)
 	tile_info.priority = 0;
 }
 
@@ -199,7 +219,11 @@ static void robokid_get_bg2_tile_info(int tile_index)
 	color = hi & 0x0f;
 	tile = ( ((hi & 0x80) << 2) | ((hi & 0x40) << 2) |
 	         ((hi & 0x20) << 5) | ((hi & 0x10) << 7) ) | lo;
-	SET_TILE_INFO(2, tile, color)
+	SET_TILE_INFO(
+			2,
+			tile,
+			color,
+			0)
 	tile_info.priority = 0;
 }
 
@@ -212,7 +236,11 @@ static void get_fg_tile_info(int tile_index)
 	color  = hi & 0x0f;
 	tile = ( ((hi & 0x80) << 2) | ((hi & 0x40) << 2) |
 	         ((hi & 0x20) << 5) | ((hi & 0x10) << 7) ) | lo;
-	SET_TILE_INFO(5, tile, color)
+	SET_TILE_INFO(
+			5,
+			tile,
+			color,
+			0)
 	tile_info.priority = 0;
 }
 

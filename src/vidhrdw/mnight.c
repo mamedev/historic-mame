@@ -196,6 +196,10 @@ void mnight_draw_sprites(struct osd_bitmap *bitmap)
 					sx,sy,
 					&Machine->visible_area,
 					TRANSPARENCY_PEN, 15);
+
+			/* kludge to clear shots */
+			if (((spriteram[offs+2]==2) || (spriteram[offs+2]==0x12)) && (((tile>=0xd0) && (tile<=0xd5)) || ((tile>=0x20) && (tile<=0x25))))
+				spriteram[offs+2]=0;
 		}
 	}
 }

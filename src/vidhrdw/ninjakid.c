@@ -4,9 +4,10 @@
 
 static struct tilemap *bg_tilemap, *fg_tilemap;
 static int flipscreen;
+static UINT8 ninjakun_xscroll,ninjakun_yscroll;
 
 UINT8 ninjakun_io_8000_ctrl[4];
-static UINT8 old_scroll;
+// static UINT8 old_scroll;
 
 /*******************************************************************************
  Tilemap Callbacks
@@ -16,14 +17,22 @@ static void get_fg_tile_info(int tile_index){
 	unsigned int tile_number = videoram[tile_index] & 0xFF;
 	unsigned char attr  = videoram[tile_index+0x400];
 	tile_number += (attr & 0x20) << 3; /* bank */
-	SET_TILE_INFO(0,tile_number,(attr&0xf));
+	SET_TILE_INFO(
+			0,
+			tile_number,
+			(attr&0xf),
+			0)
 }
 
 static void get_bg_tile_info(int tile_index){
 	unsigned int tile_number = videoram[tile_index+0x800] & 0xFF;
 	unsigned char attr  = videoram[tile_index+0xc00];
 	tile_number += (attr & 0xC0) << 2; /* bank */
-	SET_TILE_INFO(1,tile_number,(attr&0xf));
+	SET_TILE_INFO(
+			1,
+			tile_number,
+			(attr&0xf),
+			0)
 }
 
 WRITE_HANDLER( ninjakid_fg_videoram_w ){
@@ -32,8 +41,22 @@ WRITE_HANDLER( ninjakid_fg_videoram_w ){
 }
 
 WRITE_HANDLER( ninjakid_bg_videoram_w ){
-	videoram[0x800+offset] = data;
-	tilemap_mark_tile_dirty(bg_tilemap,offset&0x3ff);
+
+	int y = (offset + ((ninjakun_yscroll & 0xf8) << 2) ) & 0x3e0;
+	int x = (offset + (ninjakun_xscroll >> 3) ) & 0x1f;
+	int offs = x+y+(offset & 0x400);
+
+	videoram[0x800+offs] = data;
+	tilemap_mark_tile_dirty(bg_tilemap,x+y);
+}
+
+READ_HANDLER( ninjakid_bg_videoram_r )
+{
+	int y = (offset + ((ninjakun_yscroll & 0xf8) << 2) ) & 0x3e0;
+	int x = (offset + (ninjakun_xscroll >> 3) ) & 0x1f;
+	int offs = x+y+(offset & 0x400);
+
+	return videoram[0x800+offs];
 }
 
 /******************************************************************************/
@@ -70,7 +93,8 @@ READ_HANDLER( ninjakun_io_8000_r ){
 	return 0xFF;
 }
 
-static void handle_scrolly( UINT8 new_scroll ){
+/* static void handle_scrolly( UINT8 new_scroll ){ */
+
 /*	HACK!!!
 **
 **	New rows are always written at fixed locations above and below the background
@@ -79,6 +103,8 @@ static void handle_scrolly( UINT8 new_scroll ){
 **  I don't know how this is handled by the actual NinjaKun hardware, but the
 **	following is a crude approximation, yielding a playable game.
 */
+
+/*
 	int old_row = old_scroll/8;
 	int new_row = new_scroll/8;
 	int i;
@@ -101,6 +127,7 @@ static void handle_scrolly( UINT8 new_scroll ){
 		old_scroll = new_scroll;
 	}
 }
+*/
 
 
 WRITE_HANDLER( ninjakun_io_8000_w ){
@@ -128,16 +155,40 @@ WRITE_HANDLER( ninjakun_io_8000_w ){
 		ninjakun_io_8000_ctrl[3] = data;
 		switch( ninjakun_io_8000_ctrl[2] ){
 		case 0xf:
-			handle_scrolly( data );
+				tilemap_set_scrolly( bg_tilemap, 0, data );
+				ninjakun_yscroll = data;
 			break;
 		case 0xe:
-			tilemap_set_scrollx( bg_tilemap, 0, data-8 );
+			if (flipscreen == 0)
+				tilemap_set_scrollx( bg_tilemap, 0, data-7 );
+			else
+				tilemap_set_scrollx( bg_tilemap, 0, data );
+				ninjakun_xscroll = data;
 			break;
 		default:
 			AY8910_write_port_1_w( 0,data );
 		}
 		break;
 	}
+}
+
+WRITE_HANDLER( ninjakun_paletteram_w )
+{
+	int i;
+
+	paletteram_BBGGRRII_w(offset,data);
+
+	if (offset > 15)
+		return;
+
+	if (offset != 1)
+	{
+		for (i=0; i<16; i++)
+		{
+			paletteram_BBGGRRII_w(0x200+offset+i*16,data);
+		}
+	}
+	paletteram_BBGGRRII_w(0x200+offset*16+1,data);
 }
 
 /*******************************************************************************
@@ -155,7 +206,7 @@ int ninjakid_vh_start( void ){
 
 	state_save_register_UINT8 ("NK_Video", 0, "ninjakun_io_8000_ctrl", ninjakun_io_8000_ctrl, 4);
 	state_save_register_int   ("NK_Video", 0, "flipscreen", &flipscreen);
-	state_save_register_UINT8 ("NK_Video", 0, "old_scroll", &old_scroll, 1);
+//	state_save_register_UINT8 ("NK_Video", 0, "old_scroll", &old_scroll, 1);
 
 	return 0;
 }
@@ -174,7 +225,7 @@ static void draw_sprites( struct osd_bitmap *bitmap ){
 		int attr = source[3];
 		int flipx = attr&0x10;
 		int flipy = attr&0x20;
-		int color = 0;
+		int color = attr&0x0f;
 
 		if( flipscreen ){
 			sx = 240-sx;
@@ -193,15 +244,63 @@ static void draw_sprites( struct osd_bitmap *bitmap ){
 			clip,
 			TRANSPARENCY_PEN,0
 		);
+		if (sx>240)
+			drawgfx(
+				bitmap,
+				gfx,
+				tile_number,
+				color,
+				flipx,flipy,
+				sx-256,sy,
+				clip,
+				TRANSPARENCY_PEN,0
+			);
 
 		source+=0x20;
 	}
 }
 
 void ninjakid_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
+	int offs,chr,col,px,py,x,y;
+
 	tilemap_update( ALL_TILEMAPS );
 	palette_recalc();
 	tilemap_draw( bitmap,bg_tilemap,0,0 );
-	draw_sprites( bitmap );
 	tilemap_draw( bitmap,fg_tilemap,0,0 );
+	draw_sprites( bitmap );
+
+	for (y=4; y<28; y++)
+	{
+		for (x=0; x<32; x++)
+		{
+			offs = y*32+x;
+			chr = videoram[offs];
+			col = videoram[offs + 0x400];
+			chr +=  (col & 0x20) << 3;
+
+			if ((col & 0x10) == 0)
+			{
+
+				if (flipscreen==0)
+				{
+					px = 8*x;
+					py = 8*y;
+				}
+				else
+				{
+					px = 248-8*x;
+					py = 248-8*y;
+				}
+
+				drawgfx(bitmap,Machine->gfx[0],
+					chr,
+					col & 0x0f,
+					flipscreen,flipscreen,
+					px,py,
+					&Machine->visible_area,TRANSPARENCY_PEN,0);
+			}
+		}
+	}
+
+
 }

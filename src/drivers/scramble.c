@@ -70,34 +70,42 @@ Notes:
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "cpu/s2650/s2650.h"
 #include "machine/8255ppi.h"
 
 
+extern unsigned char *galaxian_videoram;
+extern unsigned char *galaxian_spriteram;
 extern unsigned char *galaxian_attributesram;
 extern unsigned char *galaxian_bulletsram;
+extern size_t galaxian_spriteram_size;
 extern size_t galaxian_bulletsram_size;
-extern struct AY8910interface scobra_ay8910_interface;
-extern struct AY8910interface hustler_ay8910_interface;
-extern const struct Memory_ReadAddress scobra_sound_readmem[];
-extern const struct Memory_ReadAddress hustler_sound_readmem[];
-extern const struct Memory_WriteAddress scobra_sound_writemem[];
-extern const struct Memory_WriteAddress hustler_sound_writemem[];
-extern const struct IO_ReadPort scobra_sound_readport[];
-extern const struct IO_ReadPort hustler_sound_readport[];
-extern const struct IO_WritePort scobra_sound_writeport[];
-extern const struct IO_WritePort hustler_sound_writeport[];
 
-void galaxian_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+extern struct AY8910interface scobra_ay8910_interface;
+extern struct AY8910interface frogger_ay8910_interface;
+extern const struct Memory_ReadAddress scobra_sound_readmem[];
+extern const struct Memory_ReadAddress frogger_sound_readmem[];
+extern const struct Memory_WriteAddress scobra_sound_writemem[];
+extern const struct Memory_WriteAddress frogger_sound_writemem[];
+extern const struct IO_ReadPort scobra_sound_readport[];
+extern const struct IO_ReadPort frogger_sound_readport[];
+extern const struct IO_WritePort scobra_sound_writeport[];
+extern const struct IO_WritePort frogger_sound_writeport[];
+
+extern struct GfxDecodeInfo galaxian_gfxdecodeinfo[];
+
+void scramble_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void mariner_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-WRITE_HANDLER( galaxian_attributes_w );
-WRITE_HANDLER( galaxian_stars_w );
-WRITE_HANDLER( scramble_background_w );
+void frogger_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+WRITE_HANDLER( galaxian_videoram_w );
+READ_HANDLER( galaxian_videoram_r );
+WRITE_HANDLER( galaxian_stars_enable_w );
+WRITE_HANDLER( scramble_background_blue_w );
 
 void init_scobra(void);
 void init_scramble(void);
 void init_scrambls(void);
+void init_theend(void);
 void init_ckongs(void);
 void init_mariner(void);
 void init_froggers(void);
@@ -107,20 +115,20 @@ void init_cavelon(void);
 
 void scramble_init_machine(void);
 
-int  scramble_vh_start(void);
-int  mariner_vh_start(void);
-int  ckongs_vh_start(void);
-int  pisces_vh_start(void);
+int scramble_vh_start(void);
+int theend_vh_start(void);
+int mariner_vh_start(void);
+int ckongs_vh_start(void);
+int pisces_vh_start(void);
+int froggers_vh_start(void);
 
 void galaxian_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 WRITE_HANDLER( pisces_gfxbank_w );
 
-int  scramble_vh_interrupt(void);
-int  mariner_vh_interrupt(void);
-int  hunchbks_vh_interrupt(void);
-WRITE_HANDLER( scramble_flip_screen_x_w );
-WRITE_HANDLER( scramble_flip_screen_y_w );
+int hunchbks_vh_interrupt(void);
+WRITE_HANDLER( galaxian_flip_screen_x_w );
+WRITE_HANDLER( galaxian_flip_screen_y_w );
 
 WRITE_HANDLER( hotshock_sh_irqtrigger_w );
 
@@ -169,7 +177,8 @@ WRITE_HANDLER( hunchbks_mirror_w )
 static MEMORY_READ_START( scramble_readmem )
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x4000, 0x4bff, MRA_RAM },
-	{ 0x4c00, 0x4fff, videoram_r },	/* mirror address */
+	{ 0x4c00, 0x4fff, galaxian_videoram_r },	/* mirror */
+	{ 0x5000, 0x50ff, MRA_RAM },
 	{ 0x7000, 0x7000, watchdog_reset_r },
 	{ 0x7800, 0x7800, watchdog_reset_r },
 	{ 0x8100, 0x8103, ppi8255_0_r },
@@ -180,18 +189,18 @@ MEMORY_END
 static MEMORY_WRITE_START( scramble_writemem )
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x4000, 0x47ff, MWA_RAM },
-	{ 0x4800, 0x4bff, videoram_w, &videoram, &videoram_size },
-	{ 0x4c00, 0x4fff, videoram_w },	/* mirror address */
-	{ 0x5000, 0x503f, galaxian_attributes_w, &galaxian_attributesram },
-	{ 0x5040, 0x505f, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0x4800, 0x4bff, MWA_RAM, &galaxian_videoram },
+	{ 0x4c00, 0x4fff, galaxian_videoram_w },	/* mirror address */
+	{ 0x5000, 0x503f, MWA_RAM, &galaxian_attributesram },
+	{ 0x5040, 0x505f, MWA_RAM, &galaxian_spriteram, &galaxian_spriteram_size },
 	{ 0x5060, 0x507f, MWA_RAM, &galaxian_bulletsram, &galaxian_bulletsram_size },
 	{ 0x5080, 0x50ff, MWA_RAM },
 	{ 0x6801, 0x6801, interrupt_enable_w },
 	{ 0x6802, 0x6802, scramble_coin_counter_1_w },
-	{ 0x6803, 0x6803, scramble_background_w },
-	{ 0x6804, 0x6804, galaxian_stars_w },
-	{ 0x6806, 0x6806, scramble_flip_screen_x_w },
-	{ 0x6807, 0x6807, scramble_flip_screen_y_w },
+	{ 0x6803, 0x6803, scramble_background_blue_w },
+	{ 0x6804, 0x6804, galaxian_stars_enable_w },
+	{ 0x6806, 0x6806, galaxian_flip_screen_x_w },
+	{ 0x6807, 0x6807, galaxian_flip_screen_y_w },
 	{ 0x8100, 0x8103, ppi8255_0_w },
 	{ 0x8200, 0x8203, ppi8255_1_w },
 MEMORY_END
@@ -203,6 +212,7 @@ static MEMORY_READ_START( ckongs_readmem )
 	{ 0x7000, 0x7003, ppi8255_0_r },
 	{ 0x7800, 0x7803, ppi8255_1_r },
 	{ 0x9000, 0x93ff, MRA_RAM },
+	{ 0x9800, 0x98ff, MRA_RAM },
 	{ 0xb000, 0xb000, watchdog_reset_r },
 MEMORY_END
 
@@ -211,23 +221,23 @@ static MEMORY_WRITE_START( ckongs_writemem )
 	{ 0x6000, 0x6bff, MWA_RAM },
 	{ 0x7000, 0x7003, ppi8255_0_w },
 	{ 0x7800, 0x7803, ppi8255_1_w },
-	{ 0x9000, 0x93ff, videoram_w, &videoram, &videoram_size },
-	{ 0x9800, 0x983f, galaxian_attributes_w, &galaxian_attributesram },
-	{ 0x9840, 0x985f, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0x9000, 0x93ff, MWA_RAM, &galaxian_videoram },
+	{ 0x9800, 0x983f, MWA_RAM, &galaxian_attributesram },
+	{ 0x9840, 0x985f, MWA_RAM, &galaxian_spriteram, &galaxian_spriteram_size },
 	{ 0x9860, 0x987f, MWA_RAM, &galaxian_bulletsram, &galaxian_bulletsram_size },
 	{ 0x9880, 0x98ff, MWA_RAM },
 	{ 0xa801, 0xa801, interrupt_enable_w },
 	{ 0xa802, 0xa802, scramble_coin_counter_1_w },
-	{ 0xa804, 0xa804, galaxian_stars_w },
-	{ 0xa806, 0xa806, scramble_flip_screen_x_w },
-	{ 0xa807, 0xa807, scramble_flip_screen_y_w },
+	{ 0xa806, 0xa806, galaxian_flip_screen_x_w },
+	{ 0xa807, 0xa807, galaxian_flip_screen_y_w },
 MEMORY_END
 
 
 static MEMORY_READ_START( mars_readmem )
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x4000, 0x4bff, MRA_RAM },
-	{ 0x4c00, 0x4fff, videoram_r },
+	{ 0x4c00, 0x4fff, galaxian_videoram_r },
+	{ 0x5000, 0x50ff, MRA_RAM },
 	{ 0x7000, 0x7000, watchdog_reset_r },
 	{ 0x8100, 0x810f, mars_ppi8255_0_r },
 	{ 0x8200, 0x820f, mars_ppi8255_1_r },
@@ -236,17 +246,17 @@ MEMORY_END
 static MEMORY_WRITE_START( mars_writemem )
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x4000, 0x47ff, MWA_RAM },
-	{ 0x4800, 0x4bff, videoram_w, &videoram, &videoram_size },
-	{ 0x5000, 0x503f, galaxian_attributes_w, &galaxian_attributesram },
-	{ 0x5040, 0x505f, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0x4800, 0x4bff, MWA_RAM, &galaxian_videoram },
+	{ 0x5000, 0x503f, MWA_RAM, &galaxian_attributesram },
+	{ 0x5040, 0x505f, MWA_RAM, &galaxian_spriteram, &galaxian_spriteram_size },
 	{ 0x5060, 0x507f, MWA_RAM, &galaxian_bulletsram, &galaxian_bulletsram_size },
 	{ 0x5080, 0x50ff, MWA_RAM },
 	{ 0x6800, 0x6800, scramble_coin_counter_2_w },
-	{ 0x6801, 0x6801, galaxian_stars_w },
+	{ 0x6801, 0x6801, galaxian_stars_enable_w },
 	{ 0x6802, 0x6802, interrupt_enable_w },
 	{ 0x6808, 0x6808, scramble_coin_counter_1_w },
-	{ 0x6809, 0x6809, scramble_flip_screen_x_w },
-	{ 0x680b, 0x680b, scramble_flip_screen_y_w },
+	{ 0x6809, 0x6809, galaxian_flip_screen_x_w },
+	{ 0x680b, 0x680b, galaxian_flip_screen_y_w },
 	{ 0x8100, 0x810f, mars_ppi8255_0_w },
 	{ 0x8200, 0x820f, mars_ppi8255_1_w },
 MEMORY_END
@@ -255,7 +265,8 @@ MEMORY_END
 static MEMORY_READ_START( newsin7_readmem )
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x4000, 0x4bff, MRA_RAM },
-	{ 0x4c00, 0x4fff, videoram_r },
+	{ 0x4c00, 0x4fff, galaxian_videoram_r },
+	{ 0x5000, 0x50ff, MRA_RAM },
 	{ 0x7000, 0x7000, watchdog_reset_r },
 	{ 0x8200, 0x820f, mars_ppi8255_1_r },
 	{ 0xa000, 0xafff, MRA_ROM },
@@ -265,17 +276,17 @@ MEMORY_END
 static MEMORY_WRITE_START( newsin7_writemem )
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x4000, 0x47ff, MWA_RAM },
-	{ 0x4800, 0x4bff, videoram_w, &videoram, &videoram_size },
-	{ 0x5000, 0x503f, galaxian_attributes_w, &galaxian_attributesram },
-	{ 0x5040, 0x505f, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0x4800, 0x4bff, MWA_RAM, &galaxian_videoram },
+	{ 0x5000, 0x503f, MWA_RAM, &galaxian_attributesram },
+	{ 0x5040, 0x505f, MWA_RAM, &galaxian_spriteram, &galaxian_spriteram_size },
 	{ 0x5060, 0x507f, MWA_RAM, &galaxian_bulletsram, &galaxian_bulletsram_size },
 	{ 0x5080, 0x50ff, MWA_RAM },
 	{ 0x6800, 0x6800, scramble_coin_counter_2_w },
-	{ 0x6801, 0x6801, galaxian_stars_w },
+	{ 0x6801, 0x6801, galaxian_stars_enable_w },
 	{ 0x6802, 0x6802, interrupt_enable_w },
 	{ 0x6808, 0x6808, scramble_coin_counter_1_w },
-	{ 0x6809, 0x6809, scramble_flip_screen_x_w },
-	{ 0x680b, 0x680b, scramble_flip_screen_y_w },
+	{ 0x6809, 0x6809, galaxian_flip_screen_x_w },
+	{ 0x680b, 0x680b, galaxian_flip_screen_y_w },
 	{ 0x8200, 0x820f, mars_ppi8255_1_w },
 	{ 0xa000, 0xafff, MWA_ROM },
 	{ 0xc100, 0xc10f, mars_ppi8255_0_w },
@@ -285,7 +296,8 @@ MEMORY_END
 static MEMORY_READ_START( hotshock_readmem )
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x4000, 0x4bff, MRA_RAM },
-	{ 0x4c00, 0x4fff, videoram_r },
+	{ 0x4c00, 0x4fff, galaxian_videoram_r },
+	{ 0x5000, 0x50ff, MRA_RAM },
 	{ 0x8000, 0x8000, input_port_0_r },
 	{ 0x8001, 0x8001, input_port_1_r },
 	{ 0x8002, 0x8002, input_port_2_r },
@@ -295,9 +307,9 @@ MEMORY_END
 static MEMORY_WRITE_START( hotshock_writemem )
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x4000, 0x47ff, MWA_RAM },
-	{ 0x4800, 0x4bff, videoram_w, &videoram, &videoram_size },
-	{ 0x5000, 0x503f, galaxian_attributes_w, &galaxian_attributesram },
-	{ 0x5040, 0x505f, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0x4800, 0x4bff, MWA_RAM, &galaxian_videoram },
+	{ 0x5000, 0x503f, MWA_RAM, &galaxian_attributesram },
+	{ 0x5040, 0x505f, MWA_RAM, &galaxian_spriteram, &galaxian_spriteram_size },
 	{ 0x5060, 0x507f, MWA_RAM, &galaxian_bulletsram, &galaxian_bulletsram_size },
 	{ 0x5080, 0x50ff, MWA_RAM },
 	{ 0x6000, 0x6000, scramble_coin_counter_3_w },
@@ -315,6 +327,7 @@ MEMORY_END
 static MEMORY_READ_START( hunchbks_readmem )
 	{ 0x0000, 0x0fff, MRA_ROM },
 	{ 0x1210, 0x1213, ppi8255_1_r },
+	{ 0x1400, 0x14ff, MRA_RAM },
 	{ 0x1500, 0x1503, ppi8255_0_r },
 	{ 0x1680, 0x1680, watchdog_reset_r },
 	{ 0x1800, 0x1fff, MRA_RAM },
@@ -329,14 +342,14 @@ MEMORY_END
 static MEMORY_WRITE_START( hunchbks_writemem )
 	{ 0x0000, 0x0fff, MWA_ROM },
 	{ 0x1210, 0x1213, ppi8255_1_w },
-	{ 0x1400, 0x143f, galaxian_attributes_w, &galaxian_attributesram },
-	{ 0x1440, 0x145f, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0x1400, 0x143f, MWA_RAM, &galaxian_attributesram },
+	{ 0x1440, 0x145f, MWA_RAM, &galaxian_spriteram, &galaxian_spriteram_size },
 	{ 0x1460, 0x147f, MWA_RAM, &galaxian_bulletsram, &galaxian_bulletsram_size },
 	{ 0x1480, 0x14ff, MWA_RAM },
 	{ 0x1500, 0x1503, ppi8255_0_w },
-	{ 0x1606, 0x1606, scramble_flip_screen_x_w },
-	{ 0x1607, 0x1607, scramble_flip_screen_y_w },
-	{ 0x1800, 0x1bff, videoram_w, &videoram, &videoram_size },
+	{ 0x1606, 0x1606, galaxian_flip_screen_x_w },
+	{ 0x1607, 0x1607, galaxian_flip_screen_y_w },
+	{ 0x1800, 0x1bff, MWA_RAM, &galaxian_videoram },
 	{ 0x1c00, 0x1fff, MWA_RAM },
 	{ 0x2000, 0x2fff, MWA_ROM },
 	{ 0x3000, 0x3fff, hunchbks_mirror_w },
@@ -382,7 +395,7 @@ INPUT_PORTS_START( scramble )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
@@ -456,12 +469,11 @@ INPUT_PORTS_START( atlantis )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
-/* same as scramble, dip switches are different */
 INPUT_PORTS_START( theend )
 	PORT_START	/* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
@@ -482,7 +494,7 @@ INPUT_PORTS_START( theend )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
 
 	PORT_START	/* IN2 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_DIPNAME( 0x06, 0x00, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( 3C_1C ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ) )
@@ -491,17 +503,14 @@ INPUT_PORTS_START( theend )
 	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Cocktail ) )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* protection check? */
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* protection check? */
+	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )		/* output bits */
 INPUT_PORTS_END
 
 INPUT_PORTS_START( froggers )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* 1P shoot2 - unused */
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* read - function unknown */
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY )
@@ -541,7 +550,7 @@ INPUT_PORTS_START( amidars )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* 1P shoot2 - unused */
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY )
@@ -587,7 +596,7 @@ INPUT_PORTS_START( triplep )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY )
@@ -675,8 +684,8 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( mars )
 	PORT_START	/* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_UP     | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_UP     | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_RIGHT | IPF_8WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_LEFT  | IPF_8WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_RIGHT  | IPF_8WAY )
@@ -691,18 +700,18 @@ INPUT_PORTS_START( mars )
 	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_RIGHT | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_LEFT  | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_RIGHT  | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_LEFT   | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_LEFT  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_RIGHT  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_LEFT   | IPF_8WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
 
 	PORT_START	/* IN2 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_DOWN   | IPF_8WAY | IPF_COCKTAIL )  /* this also control cocktail mode */
-	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_DOWN   | IPF_8WAY | IPF_PLAYER2 )  /* this also control cocktail mode */
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Cocktail ) )
 	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -716,9 +725,9 @@ INPUT_PORTS_START( mars )
 
 	PORT_START	/* IN3 */
 	PORT_BIT( 0x1f, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_DOWN  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_DOWN  | IPF_8WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_UP    | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_UP    | IPF_8WAY | IPF_PLAYER2 )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( devilfsh )
@@ -761,8 +770,6 @@ INPUT_PORTS_START( devilfsh )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
-
-	PORT_START	/* IN3 - unused */
 INPUT_PORTS_END
 
 INPUT_PORTS_START( newsin7 )
@@ -804,8 +811,6 @@ INPUT_PORTS_START( newsin7 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
-
-	PORT_START	/* IN3 - unused */
 INPUT_PORTS_END
 
 INPUT_PORTS_START( hotshock )
@@ -822,7 +827,7 @@ INPUT_PORTS_START( hotshock )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN2 )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN3 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_SERVICE1 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* pressing this disables the coins */
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START2 )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_START1 )
@@ -930,7 +935,6 @@ INPUT_PORTS_START( hunchbks )
 
     PORT_START /* Sense */
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )
-
 INPUT_PORTS_END
 
 INPUT_PORTS_START( cavelon )
@@ -974,50 +978,7 @@ INPUT_PORTS_START( cavelon )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* protection check? */
 INPUT_PORTS_END
 
-static struct GfxLayout charlayout =
-{
-	8,8,	/* 8*8 characters */
-	256,	/* 256 characters */
-	2,	/* 2 bits per pixel */
-	{ 0, 256*8*8 },	/* the two bitplanes are separated */
-	{ 0, 1, 2, 3, 4, 5, 6, 7 },
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	8*8	/* every char takes 8 consecutive bytes */
-};
-static struct GfxLayout spritelayout =
-{
-	16,16,	/* 16*16 sprites */
-	64,	/* 64 sprites */
-	2,	/* 2 bits per pixel */
-	{ 0, 64*16*16 },	/* the two bitplanes are separated */
-	{ 0, 1, 2, 3, 4, 5, 6, 7,
-			8*8+0, 8*8+1, 8*8+2, 8*8+3, 8*8+4, 8*8+5, 8*8+6, 8*8+7 },
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
-			16*8, 17*8, 18*8, 19*8, 20*8, 21*8, 22*8, 23*8 },
-	32*8	/* every sprite takes 32 consecutive bytes */
-};
-static struct GfxLayout mariner_charlayout =
-{
-	8,8,	/* 8*8 characters */
-	512,	/* 512 characters */
-	2,	/* 2 bits per pixel */
-	{ 0, 512*8*8 },	/* the two bitplanes are separated */
-	{ 0, 1, 2, 3, 4, 5, 6, 7 },
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	8*8	/* every char takes 8 consecutive bytes */
-};
-static struct GfxLayout mariner_spritelayout =
-{
-	16,16,	/* 16*16 sprites */
-	128,	/* 128 sprites */
-	2,	/* 2 bits per pixel */
-	{ 0, 128*16*16 },	/* the two bitplanes are separated */
-	{ 0, 1, 2, 3, 4, 5, 6, 7,
-			8*8+0, 8*8+1, 8*8+2, 8*8+3, 8*8+4, 8*8+5, 8*8+6, 8*8+7 },
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
-			16*8, 17*8, 18*8, 19*8, 20*8, 21*8, 22*8, 23*8 },
-	32*8	/* every sprite takes 32 consecutive bytes */
-};
+
 static struct GfxLayout devilfsh_charlayout =
 {
 	8,8,	/* 8*8 characters */
@@ -1062,83 +1023,19 @@ static struct GfxLayout newsin7_spritelayout =
 			16*8, 17*8, 18*8, 19*8, 20*8, 21*8, 22*8, 23*8 },
 	32*8	/* every sprite takes 32 consecutive bytes */
 };
-static struct GfxLayout bulletlayout =
-{
-	/* there is no gfx ROM for this one, it is generated by the hardware */
-	7,1,	/* it's just 1 pixel, but we use 7*1 to position it correctly */
-	1,	/* just one */
-	1,	/* 1 bit per pixel */
-	{ 0 },
-	{ 3, 0, 0, 0, 0, 0, 0 },	/* I "know" that this bit of the */
-	{ 0 },						/* graphics ROMs is 1 */
-	0	/* no use */
-};
-static struct GfxLayout theend_bulletlayout =
-{
-	/* there is no gfx ROM for this one, it is generated by the hardware */
-	7,1,	/* 4*1 line, I think - 7*1 to position it correctly */
-	1,	/* just one */
-	1,	/* 1 bit per pixel */
-	{ 0 },
-	{ 2, 2, 2, 2, 0, 0, 0 },	/* I "know" that this bit of the */
-	{ 0 },						/* graphics ROMs is 1 */
-	0	/* no use */
-};
-static struct GfxLayout backgroundlayout =
-{
-	/* there is no gfx ROM for this one, it is generated by the hardware */
-	8,8,
-	32,	/* one for each column */
-	7,	/* 128 colors max */
-	{ 1, 2, 3, 4, 5, 6, 7 },
-	{ 0*8*8, 1*8*8, 2*8*8, 3*8*8, 4*8*8, 5*8*8, 6*8*8, 7*8*8 },
-	{ 0, 8, 16, 24, 32, 40, 48, 56 },
-	8*8*8	/* each character takes 64 bytes */
-};
 
-
-static struct GfxDecodeInfo scramble_gfxdecodeinfo[] =
-{
-	{ REGION_GFX1, 0, &charlayout,             0, 8 },
-	{ REGION_GFX1, 0, &spritelayout,           0, 8 },
-	{ REGION_GFX1, 0, &bulletlayout,         8*4, 2 },
-	{ 0,           0, &backgroundlayout, 8*4+2*2, 1 },	/* this will be dynamically created */
-	{ -1 } /* end of array */
-};
-
-static struct GfxDecodeInfo theend_gfxdecodeinfo[] =
-{
-	{ REGION_GFX1, 0, &charlayout,             0, 8 },
-	{ REGION_GFX1, 0, &spritelayout,           0, 8 },
-	{ REGION_GFX1, 0, &theend_bulletlayout,  8*4, 2 },
-	{ 0,           0, &backgroundlayout, 8*4+2*2, 1 },	/* this will be dynamically created */
-	{ -1 } /* end of array */
-};
-
-static struct GfxDecodeInfo mariner_gfxdecodeinfo[] =
-{
-	{ REGION_GFX1, 0, &mariner_charlayout,     0, 8 },
-	{ REGION_GFX1, 0, &mariner_spritelayout,   0, 8 },
-	{ REGION_GFX1, 0, &bulletlayout,         8*4, 2 },
-	{ 0,           0, &backgroundlayout, 8*4+2*2, 1 },	/* this will be dynamically created */
-	{ -1 } /* end of array */
-};
 
 static struct GfxDecodeInfo devilfsh_gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0x0000, &devilfsh_charlayout,    0, 8 },
-	{ REGION_GFX1, 0x0800, &devilfsh_spritelayout,  0, 8 },
-	{ REGION_GFX1, 0x0000, &bulletlayout,         8*4, 2 },
-	{ 0,           0x0000, &backgroundlayout, 8*4+2*2, 1 },	/* this will be dynamically created */
+	{ REGION_GFX1, 0x0000, &devilfsh_charlayout,   0, 8 },
+	{ REGION_GFX1, 0x0800, &devilfsh_spritelayout, 0, 8 },
 	{ -1 } /* end of array */
 };
 
 static struct GfxDecodeInfo newsin7_gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0x0000, &newsin7_charlayout,     0, 4 },
-	{ REGION_GFX1, 0x0800, &newsin7_spritelayout,   0, 4 },
-	{ REGION_GFX1, 0x0000, &bulletlayout,         8*4, 2 },
-	{ 0,           0x0000, &backgroundlayout, 8*4+2*2, 1 },	/* this will be dynamically created */
+	{ REGION_GFX1, 0x0000, &newsin7_charlayout,   0, 4 },
+	{ REGION_GFX1, 0x0800, &newsin7_spritelayout, 0, 4 },
 	{ -1 } /* end of array */
 };
 
@@ -1162,8 +1059,8 @@ static struct AY8910interface triplep_ay8910_interface =
 #define hotshock_ay8910_interface	scobra_ay8910_interface
 
 
-#define DRIVER_2CPU(NAME, GFXDECODE, MAINMEM, SOUND, VHSTART)	\
-static const struct MachineDriver machine_driver_##NAME =				\
+#define DRIVER_2CPU(NAME, GFXDECODE, MAINMEM, SOUND, VHSTART, COLORPROM)	\
+static const struct MachineDriver machine_driver_##NAME =		\
 {																\
 	/* basic machine hardware */								\
 	{															\
@@ -1171,7 +1068,7 @@ static const struct MachineDriver machine_driver_##NAME =				\
 			CPU_Z80,											\
 			18432000/6,	/* 3.072 MHz */							\
 			MAINMEM##_readmem,MAINMEM##_writemem,0,0,			\
-			scramble_vh_interrupt,1								\
+			nmi_interrupt,1										\
 		},														\
 		{														\
 			CPU_Z80 | CPU_AUDIO_CPU,							\
@@ -1187,13 +1084,13 @@ static const struct MachineDriver machine_driver_##NAME =				\
 	/* video hardware */										\
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },					\
 	GFXDECODE##_gfxdecodeinfo,									\
-	32+64+1,8*4+2*2+128*1,	/* 32 for the characters, 64 for the stars, 1 for background */					\
-	galaxian_vh_convert_color_prom,								\
+	32+64+2+2,8*4,	/* 32 for characters, 64 for stars, 2 for bullets, 2 for background */	\
+	COLORPROM##_vh_convert_color_prom,							\
 																\
 	VIDEO_TYPE_RASTER,											\
 	0,															\
 	VHSTART##_vh_start,											\
-	generic_vh_stop,											\
+	0,															\
 	galaxian_vh_screenrefresh,									\
 																\
 	/* sound hardware */										\
@@ -1206,16 +1103,16 @@ static const struct MachineDriver machine_driver_##NAME =				\
 	}															\
 }
 
-/*			NAME      GFXDECODE  MAINMEM   SOUND     VHSTART 	*/
-DRIVER_2CPU(scramble, scramble,  scramble, scobra,   scramble);
-DRIVER_2CPU(theend,   theend,    scramble, scobra,   scramble);
-DRIVER_2CPU(froggers, scramble,  scramble, hustler,  scramble);
-DRIVER_2CPU(mars,     scramble,  mars,     scobra,   scramble);
-DRIVER_2CPU(devilfsh, devilfsh,  mars,     scobra,   scramble);
-DRIVER_2CPU(newsin7,  newsin7,   newsin7,  scobra,   scramble);
-DRIVER_2CPU(ckongs,   mariner,   ckongs,   scobra,   ckongs);
-DRIVER_2CPU(hotshock, mariner,   hotshock, hotshock, pisces);
-DRIVER_2CPU(cavelon,  mariner,   scramble, scobra,   ckongs);
+/*			NAME      GFXDECODE  MAINMEM   SOUND     VHSTART   CONV_COLORPROM */
+DRIVER_2CPU(scramble, galaxian,  scramble, scobra,   scramble, scramble);
+DRIVER_2CPU(theend,   galaxian,  scramble, scobra,   theend,   scramble);
+DRIVER_2CPU(froggers, galaxian,  scramble, frogger,  froggers, frogger);
+DRIVER_2CPU(mars,     galaxian,  mars,     scobra,   scramble, scramble);
+DRIVER_2CPU(devilfsh, devilfsh,  mars,     scobra,   scramble, scramble);
+DRIVER_2CPU(newsin7,  newsin7,   newsin7,  scobra,   scramble, scramble);
+DRIVER_2CPU(ckongs,   galaxian,  ckongs,   scobra,   ckongs,   scramble);
+DRIVER_2CPU(hotshock, galaxian,  hotshock, hotshock, pisces,   scramble);
+DRIVER_2CPU(cavelon,  galaxian,  scramble, scobra,   ckongs,   scramble);
 
 /* Triple Punch and Mariner are different - only one CPU, one 8910 */
 static const struct MachineDriver machine_driver_triplep =
@@ -1226,7 +1123,7 @@ static const struct MachineDriver machine_driver_triplep =
 			CPU_Z80,
 			18432000/6,	/* 3.072 MHz */
 			scramble_readmem,scramble_writemem,triplep_readport,triplep_writeport,
-			scramble_vh_interrupt,1
+			nmi_interrupt,1
 		}
 	},
 	16000.0/132/2, 2500,	/* frames per second, vblank duration */
@@ -1235,14 +1132,14 @@ static const struct MachineDriver machine_driver_triplep =
 
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	scramble_gfxdecodeinfo,
-	32+64+1,8*4+2*2+128*1,	/* 32 for the characters, 64 for the stars, 1 for background */
-	galaxian_vh_convert_color_prom,
+	galaxian_gfxdecodeinfo,
+	32+64+2+2,8*4,	/* 32 for characters, 64 for stars, 2 for bullets, 2 for background */	\
+	scramble_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
 	0,
 	scramble_vh_start,
-	generic_vh_stop,
+	0,
 	galaxian_vh_screenrefresh,
 
 	/* sound hardware */
@@ -1263,7 +1160,7 @@ static const struct MachineDriver machine_driver_mariner =
 			CPU_Z80,
 			18432000/6,	/* 3.072 MHz */
 			scramble_readmem,scramble_writemem,triplep_readport,triplep_writeport,
-			mariner_vh_interrupt,1
+			nmi_interrupt,1
 		}
 	},
 	16000.0/132/2, 2500,	/* frames per second, vblank duration */
@@ -1272,14 +1169,14 @@ static const struct MachineDriver machine_driver_mariner =
 
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	mariner_gfxdecodeinfo,
-	32+64+16,8*4+2*2+128*1,	/* 32 for the characters, 64 for the stars, 16 for background */
+	galaxian_gfxdecodeinfo,
+	32+64+2+16,8*4,	/* 32 for characters, 64 for stars, 2 for bullets, 16 for background */
 	mariner_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
 	0,
 	mariner_vh_start,
-	generic_vh_stop,
+	0,
 	galaxian_vh_screenrefresh,
 
 	/* sound hardware */
@@ -1320,14 +1217,14 @@ static const struct MachineDriver machine_driver_hunchbks =
 
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	scramble_gfxdecodeinfo,
-	32+64+10,8*4+2*2+128*1,	/* 32 for the characters, 64 for the stars, 10 for background */
-	galaxian_vh_convert_color_prom,
+	galaxian_gfxdecodeinfo,
+	32+64+2+2,8*4,	/* 32 for characters, 64 for stars, 2 for bullets, 2 for background */	\
+	scramble_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
 	0,
 	scramble_vh_start,
-	generic_vh_stop,
+	0,
 	galaxian_vh_screenrefresh,
 
 	/* sound hardware */
@@ -1577,7 +1474,7 @@ ROM_START( mariner )
 	ROM_LOAD( "t6.6p",        0x0000, 0x0100, 0xad208ccc )	/* background color prom */
 
 	ROM_REGION( 0x0020, REGION_USER2, 0 )
-	ROM_LOAD( "t5.7p",        0x0000, 0x0020, 0x1bd88cff )	/* star placement (not emulated) */
+	ROM_LOAD( "t5.7p",        0x0000, 0x0020, 0x1bd88cff )	/* char banking and star placement */
 ROM_END
 
 ROM_START( 800fath )
@@ -1600,7 +1497,7 @@ ROM_START( 800fath )
 	ROM_LOAD( "t6.6p",        0x0000, 0x0100, 0xad208ccc )	/* background color prom */
 
 	ROM_REGION( 0x0020, REGION_USER2, 0 )
-	ROM_LOAD( "t5.7p",        0x0000, 0x0020, 0x1bd88cff )	/* star placement (not emulated) */
+	ROM_LOAD( "t5.7p",        0x0000, 0x0020, 0x1bd88cff )	/* char banking and star placement */
 ROM_END
 
 ROM_START( ckongs )
@@ -1638,7 +1535,7 @@ ROM_START( mars )
 	ROM_LOAD( "u51.10",       0x0800, 0x0800, 0x75fd7720 )
 	ROM_LOAD( "u78.11",       0x1000, 0x0800, 0x72a492da )
 
-	ROM_REGION( 0x3000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "u72.1",        0x0000, 0x0800, 0x279789d0 )
 	ROM_LOAD( "u101.2",       0x0800, 0x0800, 0xc5dc627f )
 
@@ -1662,7 +1559,7 @@ ROM_START( devilfsh )
 	ROM_LOAD( "u51.10",       0x0800, 0x0800, 0x1e2b1471 )
 	ROM_LOAD( "u78.11",       0x1000, 0x0800, 0x45279aaa )
 
-	ROM_REGION( 0x3000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "u72.12",       0x0000, 0x1000, 0x5406508e )
 	ROM_LOAD( "u101.13",      0x1000, 0x1000, 0x8c4018b6 )
 
@@ -1756,12 +1653,12 @@ GAME( 1981, scramble, 0,        scramble, scramble, scramble, ROT90, "Konami", "
 GAME( 1981, scrambls, scramble, scramble, scramble, scrambls, ROT90, "[Konami] (Stern license)", "Scramble (Stern)" )
 GAME( 1981, atlantis, 0,        scramble, atlantis, scobra,   ROT90, "Comsoft", "Battle of Atlantis (set 1)" )
 GAME( 1981, atlants2, atlantis, scramble, atlantis, scobra,   ROT90, "Comsoft", "Battle of Atlantis (set 2)" )
-GAME( 1980, theend,   0,        theend,   theend,   scobra,   ROT90, "Konami", "The End" )
-GAME( 1980, theends,  theend,   theend,   theend,   scobra,   ROT90, "[Konami] (Stern license)", "The End (Stern)" )
+GAME( 1980, theend,   0,        theend,   theend,   theend,   ROT90, "Konami", "The End" )
+GAME( 1980, theends,  theend,   theend,   theend,   theend,   ROT90, "[Konami] (Stern license)", "The End (Stern)" )
 GAME( 1981, froggers, frogger,  froggers, froggers, froggers, ROT90, "bootleg", "Frog" )
 GAME( 1982, amidars,  amidar,   scramble, amidars,  scobra,   ROT90, "Konami", "Amidar (Scramble hardware)" )
 GAME( 1982, triplep,  0,        triplep,  triplep,  scobra,   ROT90, "KKI", "Triple Punch" )
-GAME( 1982, knockout, triplep,  triplep,  triplep,  scobra,   ROT90, "KKK", "Knock Out !!" )
+GAME( 1982, knockout, triplep,  triplep,  triplep,  scobra,   ROT90, "KKK", "Knock Out!!" )
 GAME( 1981, mariner,  0,        mariner,  scramble, mariner,  ROT90, "Amenip", "Mariner" )
 GAME( 1981, 800fath,  mariner,  mariner,  scramble, mariner,  ROT90, "Amenip (US Billiards Inc. license)", "800 Fathoms" )
 GAME( 1981, ckongs,   ckong,    ckongs,   ckongs,   ckongs,   ROT90, "bootleg", "Crazy Kong (Scramble hardware)" )

@@ -3,14 +3,23 @@
 ** File: ymdeltat.c
 **
 ** YAMAHA DELTA-T adpcm sound emulation subroutine
-** used by fmopl.c(v0.36e-) and fm.c(v0.36c-)
+** used by fmopl.c(v0.37c-) and fm.c(v0.37a-)
 **
 ** Base program is YM2610 emulator by Hiromitsu Shioya.
 ** Written by Tatsuyuki Satoh
 **
-** Version 0.36b
+** History:
+** 12-06-2001 Jarek Burczynski:
+**  - corrected end of sample bug in YM_DELTAT_ADPCM_CALC.
+**    Checked on real YM2610 chip - address register is 24 bits wide.
+**    Thanks go to Stefan Jokisch (stefan.jokisch@gmx.de) for tracking down the problem.
 **
-** sound chips who has this unit
+** TO DO:
+**		Check size of the address register on the other chips....
+**
+** Version 0.37d
+**
+** sound chips that have this unit
 **
 ** YM2608   OPNA
 ** YM2610/B OPNB
@@ -22,6 +31,7 @@
 #ifndef YM_INLINE_BLOCK
 
 #include "driver.h"
+#include "state.h"
 #include "ymdeltat.h"
 
 /* -------------------- log output  -------------------- */
@@ -68,22 +78,18 @@ void YM_DELTAT_ADPCM_Write(YM_DELTAT *DELTAT,int r,int v)
 			DELTAT->volume_w_step = (double)DELTAT->volume * DELTAT->step / (1<<YM_DELTAT_SHIFT);
 			DELTAT->now_addr = (DELTAT->start)<<1;
 			DELTAT->now_step = (1<<YM_DELTAT_SHIFT)-DELTAT->step;
-			/*adpcm->adpcmm   = 0;*/
 			DELTAT->adpcmx   = 0;
 			DELTAT->adpcml   = 0;
 			DELTAT->adpcmd   = YM_DELTAT_DELTA_DEF;
 			DELTAT->next_leveling=0;
-			DELTAT->flag     = 1; /* start ADPCM */
 
 			if( !DELTAT->step )
 			{
-				DELTAT->flag = 0;
 				DELTAT->portstate = 0x00;
 			}
 			/**** PCM memory check & limit check ****/
 			if(DELTAT->memory == 0){			// Check memory Mapped
 				LOG(LOG_ERR,("YM Delta-T ADPCM rom not mapped\n"));
-				DELTAT->flag = 0;
 				DELTAT->portstate = 0x00;
 				//logerror("DELTAT memory 0\n");
 			}else{
@@ -96,18 +102,15 @@ void YM_DELTAT_ADPCM_Write(YM_DELTAT *DELTAT,int r,int v)
 				if( DELTAT->start >= DELTAT->memory_size )
 				{		// Check Start in Range
 					LOG(LOG_ERR,("YM Delta-T ADPCM start out of range: $%08x\n",DELTAT->start));
-					DELTAT->flag = 0;
 					DELTAT->portstate = 0x00;
 					//logerror("DELTAT start under\n");
 				}
 			}
 		} else if( v&0x01 ){
-			DELTAT->flag = 0;
 			DELTAT->portstate = 0x00;
 		}
 		break;
 	case 0x01:	/* L,R,-,-,SAMPLE,DA/AD,RAMTYPE,ROM */
-		DELTAT->portcontrol = v&0xff;
 		DELTAT->pan = &DELTAT->output_pointer[(v>>6)&0x03];
 		break;
 	case 0x02:	/* Start Address L */
@@ -155,18 +158,40 @@ void YM_DELTAT_ADPCM_Reset(YM_DELTAT *DELTAT,int pan)
 	DELTAT->volume    = 0;
 	DELTAT->pan       = &DELTAT->output_pointer[pan];
 	/* DELTAT->flagMask  = 0; */
-	DELTAT->arrivedFlag = 0;
-	DELTAT->flag      = 0;
 	DELTAT->adpcmx    = 0;
 	DELTAT->adpcmd    = 127;
 	DELTAT->adpcml    = 0;
-	/*DELTAT->adpcmm    = 0;*/
 	DELTAT->volume_w_step = 0;
-    DELTAT->next_leveling = 0;
+	DELTAT->next_leveling = 0;
 	DELTAT->portstate = 0;
 	/* DELTAT->portshift = 8; */
 }
 
+void YM_DELTAT_postload(YM_DELTAT *DELTAT,UINT8 *regs)
+{
+	int r;
+
+	/* to keep adpcml and sample_step */
+	DELTAT->volume = 0;
+	/* update */
+	for(r=1;r<16;r++)
+		YM_DELTAT_ADPCM_Write(DELTAT,r,regs[r]);
+	DELTAT->reg[0] = regs[0];
+	/* current rom data */
+	DELTAT->now_data = *(ym_deltat_memory+(DELTAT->now_addr>>1));
+
+}
+void YM_DELTAT_savestate(const char *statename,int num,YM_DELTAT *DELTAT)
+{
+	state_save_register_UINT8 (statename, num, "DeltaT.portstate" , &DELTAT->portstate , 1);
+	state_save_register_UINT32(statename, num, "DeltaT.address"   , &DELTAT->now_addr  , 1);
+	state_save_register_UINT32(statename, num, "DeltaT.step"      , &DELTAT->now_step  , 1);
+	state_save_register_INT32 (statename, num, "DeltaT.adpcmx"    , &DELTAT->adpcmx    , 1);
+	state_save_register_INT32 (statename, num, "DeltaT.adpcmd"    , &DELTAT->adpcmd    , 1);
+	state_save_register_INT32 (statename, num, "DeltaT.adpcml"    , &DELTAT->adpcml    , 1);
+	state_save_register_INT32 (statename, num, "DeltaT.next_leveling", &DELTAT->next_leveling , 1);
+	state_save_register_INT32 (statename, num, "DeltaT.sample_step", &DELTAT->sample_step , 1);
+}
 #else /* YM_INLINE_BLOCK */
 
 /* ---------- inline block ---------- */
@@ -204,17 +229,17 @@ INLINE void YM_DELTAT_ADPCM_CALC(YM_DELTAT *DELTAT)
 		step = DELTAT->now_step >> YM_DELTAT_SHIFT;
 		DELTAT->now_step &= (1<<YM_DELTAT_SHIFT)-1;
 		do{
-			if ( DELTAT->now_addr > (DELTAT->end<<1) ) {
+			if ( DELTAT->now_addr == (DELTAT->end<<1) ) {	/* 12-06-2001 JB: corrected comparison. Was > instead of == */
 				if( DELTAT->portstate&0x10 ){
 					/**** repeat start ****/
 					DELTAT->now_addr = DELTAT->start<<1;
 					DELTAT->adpcmx   = 0;
 					DELTAT->adpcmd   = YM_DELTAT_DELTA_DEF;
 					DELTAT->next_leveling = 0;
-					DELTAT->flag     = 1;
 				}else{
-					DELTAT->arrivedFlag |= DELTAT->flagMask;
-					DELTAT->flag = 0;
+					if(DELTAT->arrivedFlagPtr)
+						(*DELTAT->arrivedFlagPtr) |= DELTAT->flagMask;
+					DELTAT->portstate = 0;
 					DELTAT->adpcml = 0;
 					now_leveling = 0;
 					return;
@@ -226,10 +251,17 @@ INLINE void YM_DELTAT_ADPCM_CALC(YM_DELTAT *DELTAT)
 				DELTAT->now_data = *(ym_deltat_memory+(DELTAT->now_addr>>1));
 				data = DELTAT->now_data >> 4;
 			}
+
 			DELTAT->now_addr++;
+			/* 12-06-2001 JB: */
+			/* YM2610 address register is 24 bits wide.*/
+			/* The "+1" is there because we use 1 bit more for nibble calculations.*/
+			/* WARNING: */
+			/* Side effect: we should take the size of the mapped ROM into account */
+			DELTAT->now_addr &= ( (1<<(24+1))-1);
+
 			/* shift Measurement value */
-			old_m      = DELTAT->adpcmx/*adpcmm*/;
-			/* ch->adpcmm = YM_DELTAT_Limit( ch->adpcmx + (decode_tableB3[data] * ch->adpcmd / 8) ,YM_DELTAT_DECODE_MAX, YM_DELTAT_DECODE_MIN ); */
+			old_m      = DELTAT->adpcmx;
 			/* Forecast to next Forecast */
 			DELTAT->adpcmx += (ym_deltat_decode_tableB1[data] * DELTAT->adpcmd / 8);
 			YM_DELTAT_Limit(DELTAT->adpcmx,YM_DELTAT_DECODE_MAX, YM_DELTAT_DECODE_MIN);
@@ -237,14 +269,14 @@ INLINE void YM_DELTAT_ADPCM_CALC(YM_DELTAT *DELTAT)
 			DELTAT->adpcmd = (DELTAT->adpcmd * ym_deltat_decode_tableB2[data] ) / 64;
 			YM_DELTAT_Limit(DELTAT->adpcmd,YM_DELTAT_DELTA_MAX, YM_DELTAT_DELTA_MIN );
 			/* shift leveling value */
-			delta_next        = DELTAT->adpcmx/*adpcmm*/ - old_m;
+			delta_next        = DELTAT->adpcmx - old_m;
 			now_leveling      = DELTAT->next_leveling;
 			DELTAT->next_leveling = old_m + (delta_next / 2);
 		}while(--step);
-//#define YM_DELTAT_CUT_RE_SAMPLING
+/* #define YM_DELTAT_CUT_RE_SAMPLING */
 #ifdef YM_DELTAT_CUT_RE_SAMPLING
 		DELTAT->adpcml  = DELTAT->next_leveling * DELTAT->volume;
-		DELTAT->adpcml  = DELTAT->adpcmx/*adpcmm*/ * DELTAT->volume;
+		DELTAT->adpcml  = DELTAT->adpcmx * DELTAT->volume;
 	}
 #else
 		/* delta step of re-sampling */

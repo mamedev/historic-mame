@@ -98,7 +98,11 @@ static void get_fg_tile_info(int tile_index)
 
 	code = firetrap_fgvideoram[tile_index];
 	color = firetrap_fgvideoram[tile_index + 0x400];
-	SET_TILE_INFO(0, code | ((color & 0x01) << 8), color >> 4);
+	SET_TILE_INFO(
+			0,
+			code | ((color & 0x01) << 8),
+			color >> 4,
+			0)
 }
 
 INLINE void get_bg_tile_info(int tile_index, unsigned char *bgvideoram, int gfx_region)
@@ -107,8 +111,11 @@ INLINE void get_bg_tile_info(int tile_index, unsigned char *bgvideoram, int gfx_
 
 	code = bgvideoram[tile_index];
 	color = bgvideoram[tile_index + 0x100];
-	SET_TILE_INFO(gfx_region, code + ((color & 0x03) << 8), (color & 0x30) >> 4);
-	tile_info.flags = TILE_FLIPXY((color & 0x0c) >> 2);
+	SET_TILE_INFO(
+			gfx_region,
+			code + ((color & 0x03) << 8),
+			(color & 0x30) >> 4,
+			TILE_FLIPXY((color & 0x0c) >> 2))
 }
 
 static void get_bg1_tile_info(int tile_index)

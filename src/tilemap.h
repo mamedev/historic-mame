@@ -3,23 +3,23 @@
 #ifndef TILEMAP_H
 #define TILEMAP_H
 
-struct tilemap;
+struct tilemap; /* appease compiler */
 
 #define ALL_TILEMAPS	0
 /* ALL_TILEMAPS may be used with:
 	tilemap_update, tilemap_set_flip, tilemap_mark_all_tiles_dirty
 */
 
-#define TILEMAP_OPAQUE				0x00
-#define TILEMAP_TRANSPARENT			0x01
-#define TILEMAP_SPLIT				0x02
-#define TILEMAP_BITMASK				0x04
-#define TILEMAP_TRANSPARENT_COLOR	0x08
+#define TILEMAP_OPAQUE					0x00
+#define TILEMAP_TRANSPARENT				0x01
+#define TILEMAP_SPLIT					0x02
+#define TILEMAP_BITMASK					0x04
+#define TILEMAP_TRANSPARENT_COLOR		0x08
 /*
 	TILEMAP_SPLIT should be used if the pixels from a single tile
 	can appear in more than one plane.
 
-	TILEMAP_BITMASK is needed for Namco SystemI
+	TILEMAP_BITMASK is used by Namco System1, Namco System2, NamcoNA1/2, Namco NB1
 */
 
 #define TILEMAP_IGNORE_TRANSPARENCY		0x10
@@ -36,42 +36,53 @@ struct tilemap;
 	available in alpha mode, ignore_transparency isn't.
 */
 
+/* These are special values that may be provided for TILEMAP_MASK to designate a wholly
+ * opaque or transparent tile, when this is known in advance.  You don't have to use these
+ * if you don't want to, but a bit of computation can be avoided when they are used.
+ */
 #define TILEMAP_BITMASK_TRANSPARENT (0)
 #define TILEMAP_BITMASK_OPAQUE ((UINT8 *)~0)
 
-extern struct tile_info {
+extern struct tile_info
+{
 	/*
 		you must set tile_info.pen_data, tile_info.pal_data and tile_info.pen_usage
 		in the callback.  You can use the SET_TILE_INFO() macro below to do this.
 		tile_info.flags and tile_info.priority will be automatically preset to 0,
 		games that don't need them don't need to explicitly set them to 0
 	*/
-	UINT32 tile_number; /* for cache key */
 	const UINT8 *pen_data;
 	const UINT32 *pal_data;
+	UINT32 tile_number;
 	UINT32 pen_usage;
 	UINT32 flags;	/* flipx, flipy, ignore_transparency, split */
 	UINT32 priority;
 	UINT8 *mask_data; /* for TILEMAP_BITMASK transparency */
+	int skip;
 } tile_info;
 
-#define SET_TILE_INFO(GFX,CODE,COLOR) { \
+#define SET_TILE_INFO(GFX,CODE,COLOR,FLAGS) { \
 	const struct GfxElement *gfx = Machine->gfx[(GFX)]; \
 	int _code = (CODE) % gfx->total_elements; \
 	tile_info.tile_number = _code; \
 	tile_info.pen_data = gfx->gfxdata + _code*gfx->char_modulo; \
 	tile_info.pal_data = &gfx->colortable[gfx->color_granularity * (COLOR)]; \
 	tile_info.pen_usage = gfx->pen_usage?gfx->pen_usage[_code]:0; \
+	tile_info.flags = FLAGS; \
+	if (gfx->flags & GFX_PACKED) tile_info.flags |= TILE_4BPP; \
+	if (gfx->flags & GFX_SWAPXY) tile_info.flags |= TILE_SWAPXY; \
 }
 
 /* tile flags, set by get_tile_info callback */
+/* TILE_IGNORE_TRANSPARENCY is used if you need an opaque tile in a transparent layer */
+/* TILE_SPLIT is for use with TILEMAP_SPLIT layers.  It selects transparency type. */
 #define TILE_FLIPX					0x01
 #define TILE_FLIPY					0x02
-#define TILE_SPLIT(T)				((T)<<2)
-/* TILE_SPLIT is for use with TILEMAP_SPLIT layers.  It selects transparency type. */
-#define TILE_IGNORE_TRANSPARENCY	0x10
-/* TILE_IGNORE_TRANSPARENCY is used if you need an opaque tile in a transparent layer */
-
+#define TILE_SWAPXY					0x04
+#define TILE_IGNORE_TRANSPARENCY	0x08
+#define TILE_4BPP					0x10
+#define TILE_SPLIT_OFFSET			5
+#define TILE_SPLIT(T)				((T)<<TILE_SPLIT_OFFSET)
 #define TILE_FLIPYX(YX)				(YX)
 #define TILE_FLIPXY(XY)				((((XY)>>1)|((XY)<<1))&3)
 /*
@@ -81,12 +92,6 @@ extern struct tile_info {
 */
 
 #define TILE_LINE_DISABLED 0x80000000
-
-#if 0
-#ifndef OSD_CPU_H
-#include "osd_cpu.h"
-#endif
-#endif
 
 extern struct osd_bitmap *priority_bitmap;
 
@@ -111,7 +116,7 @@ void tilemap_dispose( struct tilemap *tilemap );
 */
 
 void tilemap_set_transparent_pen( struct tilemap *tilemap, int pen );
-void tilemap_set_transmask( struct tilemap *tilemap, int which, UINT32 penmask );
+void tilemap_set_transmask( struct tilemap *tilemap, int which, UINT32 fgmask, UINT32 bgmask );
 void tilemap_set_depth( struct tilemap *tilemap, int tile_depth, int tile_granularity );
 
 void tilemap_mark_tile_dirty( struct tilemap *tilemap, int memory_offset );

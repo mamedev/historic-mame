@@ -26,7 +26,11 @@ static int flipscreen;
 static void get_bg_tile_info(int tile_index)
 {
 	unsigned char attr = gundealr_bg_videoram[2*tile_index+1];
-	SET_TILE_INFO(0,gundealr_bg_videoram[2*tile_index] + ((attr & 0x07) << 8),(attr & 0xf0) >> 4)
+	SET_TILE_INFO(
+			0,
+			gundealr_bg_videoram[2*tile_index] + ((attr & 0x07) << 8),
+			(attr & 0xf0) >> 4,
+			0)
 }
 
 static UINT32 gundealr_scan(UINT32 col,UINT32 row,UINT32 num_cols,UINT32 num_rows)
@@ -38,7 +42,11 @@ static UINT32 gundealr_scan(UINT32 col,UINT32 row,UINT32 num_cols,UINT32 num_row
 static void get_fg_tile_info(int tile_index)
 {
 	unsigned char attr = gundealr_fg_videoram[2*tile_index+1];
-	SET_TILE_INFO(1,gundealr_fg_videoram[2*tile_index] + ((attr & 0x03) << 8),(attr & 0xf0) >> 4)
+	SET_TILE_INFO(
+			1,
+			gundealr_fg_videoram[2*tile_index] + ((attr & 0x03) << 8),
+			(attr & 0xf0) >> 4,
+			0)
 }
 
 

@@ -2,14 +2,14 @@
 
 							  -= Cave Games =-
 
-				driver by	Luca Elia (l.elia@tin.it)
+					driver by	Luca Elia (l.elia@tin.it)
 
 
 Main  CPU   :	MC68000
 Sound CPU   :	Z80 [Optional]
 Sound Chips :	YMZ280B
 		 Or :	OKIM6295 x (1|2) + YM2203 [Optional]
-Other       :	EEPROM
+Other       :	93C46 EEPROM
 
 ---------------------------------------------------------------------------
 Board		Tilemaps			Sprites				Sound		Other
@@ -35,8 +35,6 @@ To Do:
 
 - Alignment issues between sprites and layers: see uopoko!
 - scroll offsets in hotdogst not verified accurately
-- In Mazinger the EEPROM interface is slightly wrong, it's probably something
-  minor but the game doesn't recover the data it writes.
 
 ***************************************************************************/
 
@@ -85,10 +83,10 @@ void dfeveron_vh_init_palette(unsigned char *palette, unsigned short *colortable
 
 void donpachi_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void ddonpach_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void esprade_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void guwange_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void esprade_vh_screenrefresh (struct osd_bitmap *bitmap,int full_refresh);
+void guwange_vh_screenrefresh (struct osd_bitmap *bitmap,int full_refresh);
 void dfeveron_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void uopoko_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void uopoko_vh_screenrefresh  (struct osd_bitmap *bitmap,int full_refresh);
 void hotdogst_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void mazinger_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
@@ -104,7 +102,7 @@ static data8_t cave_default_eeprom_type1[]=	{0x00,0x0C,0x11,0x0D,0xFF,0xFF,0xFF,
 static data8_t cave_default_eeprom_type2[] ={0x00,0x0C,0xFF,0xFB,0xFF,0xFF,0xFF,0xFF,0x00,0x00,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF};  /* Esprade, DonPachi, DDonPachi */
 static data8_t cave_default_eeprom_type3[] ={0x00,0x03,0x08,0x00,0xFF,0xFF,0xFF,0xFF,0x08,0x00,0x00,0x00,0xFF,0xFF,0xFF,0xFF};  /* UoPoko */
 static data8_t cave_default_eeprom_type4[] ={0xF3,0xFE,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF};  /* Hotdog Storm */
-static data8_t cave_default_eeprom_type5[] ={0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00};  /* Mazinger */
+static data8_t cave_default_eeprom_type5[] ={0xED,0xFF,0x00,0x00,0x12,0x30,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00};  /* Mazinger */
 static data8_t *cave_default_eeprom;
 
 /***************************************************************************
@@ -231,35 +229,25 @@ WRITE16_HANDLER( cave_oki_1_w )
 
 /***************************************************************************
 
+
 									EEPROM
+
 
 ***************************************************************************/
 
-
-static struct EEPROM_interface eeprom_interface =
+READ16_HANDLER( cave_input1_r )
 {
-	6,				// address bits
-	16,				// data bits
-	"0110",			// read command
-	"0101",			// write command
-	0,				// erase command
-	0,				// lock command
-	"0100110000" 	// unlock command
-};
+	return readinputport(1) | ((EEPROM_read_bit() & 0x01) << 11);
+}
 
-static struct EEPROM_interface hotdogst_eeprom_interface =
+
+READ16_HANDLER( guwange_input1_r )
 {
-	6,				// address bits
-	16,				// data bits
-	"0110",			// read command
-	"0101",			// write command
-	0,				// erase command
-	0,				// lock command
-	"10100110000" 	// unlock command,
-};
+	return readinputport(1) | ((EEPROM_read_bit() & 0x01) << 7);
+}
 
 
-WRITE16_HANDLER( cave_eeprom_w )
+WRITE16_HANDLER( cave_eeprom_msb_w )
 {
 	if ( ACCESSING_MSB )  // even address
 	{
@@ -274,7 +262,22 @@ WRITE16_HANDLER( cave_eeprom_w )
 	}
 }
 
-WRITE16_HANDLER( guwange_eeprom_w )
+WRITE16_HANDLER( hotdogst_eeprom_msb_w )
+{
+	if ( ACCESSING_MSB )  // even address
+	{
+		// latch the bit
+		EEPROM_write_bit(data & 0x0800);
+
+		// reset line asserted: reset.
+		EEPROM_set_cs_line((data & 0x0200) ? CLEAR_LINE : ASSERT_LINE );
+
+		// clock line asserted: write latch or select next bit to read
+		EEPROM_set_clock_line((data & 0x0400) ? CLEAR_LINE: ASSERT_LINE );
+	}
+}
+
+WRITE16_HANDLER( cave_eeprom_lsb_w )
 {
 	if ( ACCESSING_LSB )  // odd address
 	{
@@ -289,14 +292,13 @@ WRITE16_HANDLER( guwange_eeprom_w )
 	}
 }
 
-
 void cave_nvram_handler(void *file,int read_or_write)
 {
 	if (read_or_write)
 		EEPROM_save(file);
 	else
 	{
-		EEPROM_init(&eeprom_interface);
+		EEPROM_init(&eeprom_interface_93C46);
 
 		if (file) EEPROM_load(file);
 		else
@@ -306,39 +308,6 @@ void cave_nvram_handler(void *file,int read_or_write)
 	}
 }
 
-void hotdogst_nvram_handler(void *file,int read_or_write)
-{
-	if (read_or_write)
-		EEPROM_save(file);
-	else
-	{
-		EEPROM_init(&hotdogst_eeprom_interface);
-
-		if (file) EEPROM_load(file);
-		else
-		{
-			EEPROM_set_data(cave_default_eeprom,16);  /* Set the EEPROM to Factory Defaults */
-		}
-	}
-}
-
-
-/***************************************************************************
-
-								Inputs
-
-***************************************************************************/
-
-READ16_HANDLER( cave_input1_r )
-{
-	return readinputport(1) | ((EEPROM_read_bit() & 0x01) << 11);
-}
-
-
-READ16_HANDLER( guwange_input1_r )
-{
-	return readinputport(1) | ((EEPROM_read_bit() & 0x01) << 7);
-}
 
 /***************************************************************************
 
@@ -389,7 +358,7 @@ static MEMORY_WRITE16_START( dfeveron_writemem )
 	{ 0x800000, 0x80007f, MWA16_RAM, &cave_videoregs	},	// Video Regs?
 	{ 0x900000, 0x900005, MWA16_RAM, &cave_vctrl_0		},	// Layer 0 Control
 	{ 0xa00000, 0xa00005, MWA16_RAM, &cave_vctrl_1		},	// Layer 1 Control
-	{ 0xc00000, 0xc00001, cave_eeprom_w					},	// EEPROM
+	{ 0xc00000, 0xc00001, cave_eeprom_msb_w				},	// EEPROM
 MEMORY_END
 
 
@@ -431,7 +400,7 @@ static MEMORY_WRITE16_START( ddonpach_writemem )
 	{ 0xa00000, 0xa00005, MWA16_RAM, &cave_vctrl_1			},	// Layer 1 Control
 	{ 0xb00000, 0xb00005, MWA16_RAM, &cave_vctrl_2			},	// Layer 2 Control
 	{ 0xc00000, 0xc0ffff, paletteram16_xGGGGGRRRRRBBBBB_word_w, &paletteram16 },	// Palette
-	{ 0xe00000, 0xe00001, cave_eeprom_w						},	// EEPROM
+	{ 0xe00000, 0xe00001, cave_eeprom_msb_w					},	// EEPROM
 MEMORY_END
 
 
@@ -497,7 +466,6 @@ static WRITE16_HANDLER( nmk_oki6295_bankswitch_w )
 }
 
 
-
 static MEMORY_READ16_START( donpachi_readmem )
 	{ 0x000000, 0x07ffff, MRA16_ROM					},	// ROM
 	{ 0x100000, 0x10ffff, MRA16_RAM					},	// RAM
@@ -533,7 +501,7 @@ static MEMORY_WRITE16_START( donpachi_writemem )
 	{ 0xb00000, 0xb00003, cave_oki_0_w								},	// Sound
 	{ 0xb00010, 0xb00013, cave_oki_1_w								},	//
 	{ 0xb00020, 0xb0002f, nmk_oki6295_bankswitch_w					},	//
-	{ 0xd00000, 0xd00001, cave_eeprom_w								},	// EEPROM
+	{ 0xd00000, 0xd00001, cave_eeprom_msb_w							},	// EEPROM
 MEMORY_END
 
 
@@ -575,7 +543,7 @@ static MEMORY_WRITE16_START( esprade_writemem )
 	{ 0xa00000, 0xa00005, MWA16_RAM, &cave_vctrl_1					},	// Layer 1 Control
 	{ 0xb00000, 0xb00005, MWA16_RAM, &cave_vctrl_2					},	// Layer 2 Control
 	{ 0xc00000, 0xc0ffff, paletteram16_xGGGGGRRRRRBBBBB_word_w, &paletteram16 },	// Palette
-	{ 0xe00000, 0xe00001, cave_eeprom_w								},	// EEPROM
+	{ 0xe00000, 0xe00001, cave_eeprom_msb_w							},	// EEPROM
 MEMORY_END
 
 
@@ -616,7 +584,7 @@ static MEMORY_WRITE16_START( guwange_writemem )
 	{ 0xa00000, 0xa00005, MWA16_RAM, &cave_vctrl_1					},	// Layer 1 Control
 	{ 0xb00000, 0xb00005, MWA16_RAM, &cave_vctrl_2					},	// Layer 2 Control
 	{ 0xc00000, 0xc0ffff, paletteram16_xGGGGGRRRRRBBBBB_word_w, &paletteram16 },	// Palette
-	{ 0xd00010, 0xd00011, guwange_eeprom_w							},	// EEPROM
+	{ 0xd00010, 0xd00011, cave_eeprom_lsb_w							},	// EEPROM
 //	{ 0xd00012, 0xd00013, MWA16_NOP				},	// ?
 //	{ 0xd00014, 0xd00015, MWA16_NOP				},	// ? $800068 in dfeveron ?
 MEMORY_END
@@ -652,7 +620,7 @@ static MEMORY_WRITE16_START( uopoko_writemem )
 	{ 0x600000, 0x60007f, MWA16_RAM, &cave_videoregs				},	// Video Regs?
 	{ 0x700000, 0x700005, MWA16_RAM, &cave_vctrl_0					},	// Layer 0 Control
 	{ 0x800000, 0x80ffff, paletteram16_xGGGGGRRRRRBBBBB_word_w, &paletteram16 },	// Palette
-	{ 0xa00000, 0xa00001, cave_eeprom_w								},	// EEPROM
+	{ 0xa00000, 0xa00001, cave_eeprom_msb_w							},	// EEPROM
 MEMORY_END
 
 
@@ -706,7 +674,7 @@ static MEMORY_WRITE16_START( hotdogst_writemem )
 	{ 0xb00000, 0xb00005, MWA16_RAM, &cave_vctrl_0					},	// Layer 0 Control
 	{ 0xb80000, 0xb80005, MWA16_RAM, &cave_vctrl_1					},	// Layer 1 Control
 	{ 0xc00000, 0xc00005, MWA16_RAM, &cave_vctrl_2					},	// Layer 2 Control
-	{ 0xd00000, 0xd00001, cave_eeprom_w								},	// EEPROM
+	{ 0xd00000, 0xd00001, hotdogst_eeprom_msb_w						},	// EEPROM
 	{ 0xd00002, 0xd00003, MWA16_NOP									},	// ???
 	{ 0xf00000, 0xf07fff, MWA16_RAM, &spriteram16, &spriteram_size	},	// Sprites
 	{ 0xf08000, 0xf0ffff, MWA16_RAM									},	// Sprites?
@@ -735,6 +703,7 @@ static PORT_WRITE_START( hotdogst_sound_writeport )
 	{ 0x51, 0x51, YM2203_write_port_0_w },
 	{ 0x60, 0x60, OKIM6295_data_0_w },
 PORT_END
+
 
 /***************************************************************************
 								Mazinger Z
@@ -771,7 +740,7 @@ static MEMORY_WRITE16_START( mazinger_writemem )
 	{ 0x504000, 0x507fff, cave_vram_1_w, &cave_vram_1				},	// Layer 1 (size?)
 	{ 0x600000, 0x600005, MWA16_RAM, &cave_vctrl_0					},	// Layer 0 Control
 	{ 0x700000, 0x700005, MWA16_RAM, &cave_vctrl_1					},	// Layer 1 Control
-	{ 0x900000, 0x900001, cave_eeprom_w								},	// EEPROM
+	{ 0x900000, 0x900001, cave_eeprom_msb_w							},	// EEPROM
 	{ 0xc08000, 0xc0ffff, paletteram16_xGGGGGRRRRRBBBBB_word_w, &paletteram16 },	// Palette
 	{ 0xd00000, 0xd7ffff, MWA16_ROM									},	// ROM
 MEMORY_END
@@ -805,7 +774,9 @@ PORT_END
 
 /***************************************************************************
 
+
 								Input Ports
+
 
 ***************************************************************************/
 
@@ -1097,7 +1068,7 @@ static struct GfxDecodeInfo mazinger_gfxdecodeinfo[] =
 
 	{ REGION_GFX1, 0, &layout_8x8x4,         0x4000, 0x40 }, // [0] Tiles
 	{ REGION_GFX2, 0, &layout_8x8x8,         0x4000, 0x40 }, // [1] Tiles
-//	{ REGION_GFX4, 0, &layout_spritemanager, 0x0000, 0x40 }, // [2] 4 Bit Sprites
+{ REGION_GFX4, 0, &layout_16x16x8, 0x0000, 0x40 }, // [2] 4 Bit Sprites
 	{ -1 }
 };
 
@@ -1243,10 +1214,7 @@ static const struct MachineDriver machine_driver_donpachi =
 	/* sound hardware */
 	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
-		{
-			SOUND_OKIM6295,
-			&donpachi_okim6295_interface
-		}
+		{	SOUND_OKIM6295,	&donpachi_okim6295_interface	}
 	},
 
 	cave_nvram_handler
@@ -1437,17 +1405,11 @@ static const struct MachineDriver machine_driver_hotdogst =
 	/* sound hardware */
 	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
-		{
-			SOUND_YM2203,
-			&hotdogst_ym2203_interface
-		},
-		{
-			SOUND_OKIM6295,
-			&hotdogst_okim6295_interface
-		}
+		{	SOUND_YM2203,	&hotdogst_ym2203_interface		},
+		{	SOUND_OKIM6295,	&hotdogst_okim6295_interface	}
 	},
 
-	hotdogst_nvram_handler
+	cave_nvram_handler
 };
 
 static const struct MachineDriver machine_driver_mazinger =
@@ -1484,14 +1446,8 @@ static const struct MachineDriver machine_driver_mazinger =
 	/* sound hardware */
 	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
-		{
-			SOUND_YM2203,
-			&hotdogst_ym2203_interface
-		},
-		{
-			SOUND_OKIM6295,
-			&hotdogst_okim6295_interface
-		}
+		{	SOUND_YM2203,	&hotdogst_ym2203_interface		},
+		{	SOUND_OKIM6295,	&hotdogst_okim6295_interface	}
 	},
 
 	cave_nvram_handler
@@ -1945,11 +1901,11 @@ void init_mazinger(void)
 
 ***************************************************************************/
 
-GAME( 1995, donpachi, 0, donpachi, cave,    ddonpach, ROT270_16BIT, "Atlus/Cave", "DonPachi (Japan)" )
-GAME( 1996, hotdogst, 0, hotdogst, cave,    hotdogst, ROT90_16BIT,  "Marble", "Hotdog Storm" )
-GAME( 1997, ddonpach, 0, ddonpach, cave,    ddonpach, ROT270_16BIT, "Atlus/Cave", "DoDonPachi (Japan)" )
-GAME( 1998, dfeveron, 0, dfeveron, cave,    dfeveron, ROT270_16BIT, "Cave (Nihon System license)", "Dangun Feveron (Japan)" )
-GAME( 1998, esprade,  0, esprade,  cave,    esprade,  ROT270_16BIT, "Atlus/Cave", "ESP Ra.De. (Japan)" )
-GAME( 1998, uopoko,   0, uopoko,   cave,    uopoko,   ROT0_16BIT,   "Cave (Jaleco license)", "Uo Poko (Japan)" )
-GAME( 1999, guwange,  0, guwange,  guwange, guwange,  ROT270_16BIT, "Atlus/Cave", "Guwange (Japan)" )
-GAMEX(1994, mazinger, 0, mazinger, cave,    mazinger, ROT90_16BIT,  "Banpresto", "Mazinger Z", GAME_NOT_WORKING )
+GAME ( 1995, donpachi, 0, donpachi, cave,    ddonpach, ROT270_16BIT, "Atlus/Cave",                  "DonPachi (Japan)"       )
+GAME ( 1996, hotdogst, 0, hotdogst, cave,    hotdogst, ROT90_16BIT,  "Marble",                      "Hotdog Storm"           )
+GAME ( 1997, ddonpach, 0, ddonpach, cave,    ddonpach, ROT270_16BIT, "Atlus/Cave",                  "DoDonPachi (Japan)"     )
+GAME ( 1998, dfeveron, 0, dfeveron, cave,    dfeveron, ROT270_16BIT, "Cave (Nihon System license)", "Dangun Feveron (Japan)" )
+GAME ( 1998, esprade,  0, esprade,  cave,    esprade,  ROT270_16BIT, "Atlus/Cave",                  "ESP Ra.De. (Japan)"     )
+GAME ( 1998, uopoko,   0, uopoko,   cave,    uopoko,   ROT0_16BIT,   "Cave (Jaleco license)",       "Uo Poko (Japan)"        )
+GAME ( 1999, guwange,  0, guwange,  guwange, guwange,  ROT270_16BIT, "Atlus/Cave",                  "Guwange (Japan)"        )
+GAMEX( 1994, mazinger, 0, mazinger, cave,    mazinger, ROT90_16BIT,  "Banpresto",                   "Mazinger Z", GAME_NOT_WORKING )

@@ -8,6 +8,9 @@ Ernesto Corvi
 TODO:
 - Dip switches mapping is not complete. ( Anyone has the manual handy? )
 - Missing drums, they might be internal to the YM2608.
+- wc90t has wrong graphics. Different hardware? It is also missing the color
+  bars on startup.
+
 
 CPU #1 : Handles background & foreground tiles, controllers, dipswitches.
 CPU #2 : Handles sprites and palette
@@ -163,7 +166,7 @@ static MEMORY_WRITE_START( wc90_writemem1 )
 	{ 0xfc46, 0xfc46, MWA_RAM, &wc90_scroll2xlo },
 	{ 0xfc47, 0xfc47, MWA_RAM, &wc90_scroll2xhi },
 	{ 0xfcc0, 0xfcc0, wc90_sound_command_w },
-	{ 0xfcd0, 0xfcd0, MWA_NOP },	/* ??? */
+	{ 0xfcd0, 0xfcd0, watchdog_reset_w },
 	{ 0xfce0, 0xfce0, wc90_bankswitch_w },
 MEMORY_END
 
@@ -176,7 +179,7 @@ static MEMORY_WRITE_START( wc90_writemem2 )
 	{ 0xf000, 0xf7ff, MWA_ROM },
 	{ 0xf800, 0xfbff, wc90_shared_w },
 	{ 0xfc00, 0xfc00, wc90_bankswitch1_w },
-	{ 0xfc01, 0xfc01, MWA_NOP },	/* ??? */
+	{ 0xfc01, 0xfc01, watchdog_reset_w },
 MEMORY_END
 
 static MEMORY_READ_START( sound_readmem )
@@ -284,46 +287,46 @@ INPUT_PORTS_END
 
 static struct GfxLayout charlayout =
 {
-	8,8,	/* 8*8 characters */
-	2048,	/* 1024 characters */
-	4,	/* 8 bits per pixel */
-	{ 0, 1, 2, 3 },	/* the bitplanes are packed in one nibble */
+	8,8,
+	RGN_FRAC(1,1),
+	4,
+	{ 0, 1, 2, 3 },
 	{ 0*4, 1*4, 2*4, 3*4, 4*4, 5*4, 6*4, 7*4 },
 	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32 },
-	32*8	/* every char takes 32 consecutive bytes */
+	32*8
 };
 
 static struct GfxLayout tilelayout =
 {
-	16,16,	/* 16*16 sprites */
-	2048,	/* 2048 tiles */
-	4,	/* 4 bits per pixel */
-	{ 0, 1, 2, 3 },	/* the bitplanes are packed in one nibble */
+	16,16,
+	RGN_FRAC(1,1),
+	4,
+	{ 0, 1, 2, 3 },
 	{ 0*4, 1*4, 2*4, 3*4, 4*4, 5*4, 6*4, 7*4,
 			32*8+0*4, 32*8+1*4, 32*8+2*4, 32*8+3*4, 32*8+4*4, 32*8+5*4, 32*8+6*4, 32*8+7*4 },
 	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32,
 			16*32, 17*32, 18*32, 19*32, 20*32, 21*32, 22*32, 23*32 },
-	128*8	/* every sprite takes 128 consecutive bytes */
+	128*8
 };
 
 static struct GfxLayout spritelayout =
 {
-	16,16,	/* 16*16 sprites */
-	4096,	/* 1024 sprites */
-	4,	/* 4 bits per pixel */
-	{ 0, 1, 2, 3 },	/* the bitplanes are packed in one nibble */
-	{ 0*4, 1*4, 1024*256*8+0*4, 1024*256*8+1*4, 2*4, 3*4, 1024*256*8+2*4, 1024*256*8+3*4,
-			16*8+0*4, 16*8+1*4, 1024*256*8+16*8+0*4, 1024*256*8+16*8+1*4, 16*8+2*4, 16*8+3*4, 1024*256*8+16*8+2*4, 1024*256*8+16*8+3*4 },
+	16,16,
+	RGN_FRAC(1,2),
+	4,
+	{ 0, 1, 2, 3 },
+	{ 0*4, 1*4, RGN_FRAC(1,2)+0*4, RGN_FRAC(1,2)+1*4, 2*4, 3*4, RGN_FRAC(1,2)+2*4, RGN_FRAC(1,2)+3*4,
+			16*8+0*4, 16*8+1*4, RGN_FRAC(1,2)+16*8+0*4, RGN_FRAC(1,2)+16*8+1*4, 16*8+2*4, 16*8+3*4, RGN_FRAC(1,2)+16*8+2*4, RGN_FRAC(1,2)+16*8+3*4 },
 	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
 			16*16, 17*16, 18*16, 19*16, 20*16, 21*16, 22*16, 23*16 },
-	64*8	/* every sprite takes 128 consecutive bytes */
+	64*8
 };
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x00000, &charlayout,      	1*16*16, 16*16 },
-	{ REGION_GFX2, 0x00000, &tilelayout,			2*16*16, 16*16 },
-	{ REGION_GFX3, 0x00000, &tilelayout,			3*16*16, 16*16 },
+	{ REGION_GFX2, 0x00000, &tilelayout,		2*16*16, 16*16 },
+	{ REGION_GFX3, 0x00000, &tilelayout,		3*16*16, 16*16 },
 	{ REGION_GFX4, 0x00000, &spritelayout,		0*16*16, 16*16 }, // sprites
 	{ -1 } /* end of array */
 };
@@ -338,16 +341,16 @@ static void irqhandler(int irq)
 
 static struct YM2608interface ym2608_interface =
 {
-        1,
-        8000000,
-        { 50 },
+	1,
+	8000000,
+	{ 50 },
 	{ 0 },
 	{ 0 },
 	{ 0 },
 	{ 0 },
-        { irqhandler },
-        { REGION_SOUND1 },
-        { YM3012_VOL(50,MIXER_PAN_LEFT,50,MIXER_PAN_RIGHT) }
+	{ irqhandler },
+	{ REGION_SOUND1 },
+	{ YM3012_VOL(50,MIXER_PAN_LEFT,50,MIXER_PAN_RIGHT) }
 };
 
 static const struct MachineDriver machine_driver_wc90 =
@@ -394,8 +397,8 @@ static const struct MachineDriver machine_driver_wc90 =
 	0,0,0,0,
 	{
 		{
-                        SOUND_YM2608,
-                        &ym2608_interface
+			SOUND_YM2608,
+			&ym2608_interface
 		}
 	}
 };
@@ -435,5 +438,74 @@ ROM_START( wc90 )
 	ROM_LOAD( "ic82_06.bin",  0x00000, 0x20000, 0x2fd692ed )
 ROM_END
 
+ROM_START( wc90a )
+	ROM_REGION( 0x20000, REGION_CPU1, 0 )	/* 128k for code */
+	ROM_LOAD( "wc90-1.bin",   0x00000, 0x08000, 0xd1804e1a )	/* c000-ffff is not used */
+	ROM_LOAD( "ic95_02.bin",  0x10000, 0x10000, 0x847d439c )	/* banked at f000-f7ff */
 
-GAMEX( 1989, wc90, 0, wc90, wc90, 0, ROT0, "Tecmo", "World Cup '90", GAME_IMPERFECT_SOUND | GAME_NO_COCKTAIL )
+	ROM_REGION( 0x20000, REGION_CPU2, 0 )	/* 96k for code */  /* Second CPU */
+	ROM_LOAD( "ic67_04.bin",  0x00000, 0x10000, 0xdc6eaf00 )	/* c000-ffff is not used */
+	ROM_LOAD( "ic56_03.bin",  0x10000, 0x10000, 0x1ac02b3b )	/* banked at f000-f7ff */
+
+	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* 64k for the audio CPU */
+	ROM_LOAD( "ic54_05.bin",  0x00000, 0x10000, 0x27c348b3 )
+
+	ROM_REGION( 0x010000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "ic85_07v.bin", 0x00000, 0x10000, 0xc5219426 )	/* characters */
+
+	ROM_REGION( 0x040000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "ic86_08v.bin", 0x00000, 0x20000, 0x8fa1a1ff )	/* tiles #1 */
+	ROM_LOAD( "ic90_09v.bin", 0x20000, 0x20000, 0x99f8841c )	/* tiles #2 */
+
+	ROM_REGION( 0x040000, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_LOAD( "ic87_10v.bin", 0x00000, 0x20000, 0x8232093d )	/* tiles #3 */
+	ROM_LOAD( "ic91_11v.bin", 0x20000, 0x20000, 0x188d3789 )	/* tiles #4 */
+
+	ROM_REGION( 0x080000, REGION_GFX4, ROMREGION_DISPOSE )
+	ROM_LOAD( "ic50_12v.bin", 0x00000, 0x20000, 0xda1fe922 )	/* sprites  */
+	ROM_LOAD( "ic54_13v.bin", 0x20000, 0x20000, 0x9ad03c2c )	/* sprites  */
+	ROM_LOAD( "ic60_14v.bin", 0x40000, 0x20000, 0x499dfb1b )	/* sprites  */
+	ROM_LOAD( "ic65_15v.bin", 0x60000, 0x20000, 0xd8ea5c81 )	/* sprites  */
+
+	ROM_REGION( 0x20000, REGION_SOUND1, 0 )	/* 64k for ADPCM samples */
+	ROM_LOAD( "ic82_06.bin",  0x00000, 0x20000, 0x2fd692ed )
+ROM_END
+
+ROM_START( wc90t )
+	ROM_REGION( 0x20000, REGION_CPU1, 0 )	/* 128k for code */
+	ROM_LOAD( "wc90a-1.bin",  0x00000, 0x08000, 0xb6f51a68 )	/* c000-ffff is not used */
+	ROM_LOAD( "wc90a-2.bin",  0x10000, 0x10000, 0xc50f2a98 )	/* banked at f000-f7ff */
+
+	ROM_REGION( 0x20000, REGION_CPU2, 0 )	/* 96k for code */  /* Second CPU */
+	ROM_LOAD( "ic67_04.bin",  0x00000, 0x10000, 0xdc6eaf00 )	/* c000-ffff is not used */
+	ROM_LOAD( "wc90a-3.bin",  0x10000, 0x10000, 0x8c7a9542 )	/* banked at f000-f7ff */
+
+	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* 64k for the audio CPU */
+	ROM_LOAD( "ic54_05.bin",  0x00000, 0x10000, 0x27c348b3 )
+
+	ROM_REGION( 0x010000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "ic85_07v.bin", 0x00000, 0x10000, 0xc5219426 )	/* characters */
+
+	ROM_REGION( 0x040000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "ic86_08v.bin", 0x00000, 0x20000, 0x8fa1a1ff )	/* tiles #1 */
+	ROM_LOAD( "ic90_09v.bin", 0x20000, 0x20000, 0x99f8841c )	/* tiles #2 */
+
+	ROM_REGION( 0x040000, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_LOAD( "ic87_10v.bin", 0x00000, 0x20000, 0x8232093d )	/* tiles #3 */
+	ROM_LOAD( "ic91_11v.bin", 0x20000, 0x20000, 0x188d3789 )	/* tiles #4 */
+
+	ROM_REGION( 0x080000, REGION_GFX4, ROMREGION_DISPOSE )
+	ROM_LOAD( "ic50_12v.bin", 0x00000, 0x20000, 0xda1fe922 )	/* sprites  */
+	ROM_LOAD( "ic54_13v.bin", 0x20000, 0x20000, 0x9ad03c2c )	/* sprites  */
+	ROM_LOAD( "ic60_14v.bin", 0x40000, 0x20000, 0x499dfb1b )	/* sprites  */
+	ROM_LOAD( "ic65_15v.bin", 0x60000, 0x20000, 0xd8ea5c81 )	/* sprites  */
+
+	ROM_REGION( 0x20000, REGION_SOUND1, 0 )	/* 64k for ADPCM samples */
+	ROM_LOAD( "ic82_06.bin",  0x00000, 0x20000, 0x2fd692ed )
+ROM_END
+
+
+
+GAMEX( 1989, wc90,  0,    wc90, wc90, 0, ROT0, "Tecmo", "World Cup '90 (set 1)", GAME_IMPERFECT_SOUND | GAME_NO_COCKTAIL )
+GAMEX( 1989, wc90a, wc90, wc90, wc90, 0, ROT0, "Tecmo", "World Cup '90 (set 2)", GAME_IMPERFECT_SOUND | GAME_NO_COCKTAIL )
+GAMEX( 1989, wc90t, wc90, wc90, wc90, 0, ROT0, "Tecmo", "World Cup '90 (trackball)", GAME_IMPERFECT_SOUND | GAME_NO_COCKTAIL )

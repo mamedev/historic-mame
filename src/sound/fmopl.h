@@ -1,6 +1,7 @@
 #ifndef __FMOPL_H_
 #define __FMOPL_H_
 
+/* --- select emulation chips --- */
 #define BUILD_YM3812 (HAS_YM3812)
 #define BUILD_YM3526 (HAS_YM3526)
 #define BUILD_Y8950  (HAS_Y8950)
@@ -45,6 +46,7 @@ typedef unsigned char (*OPL_PORTHANDLER_R)(int param);
 #define OPL_TYPE_KEYBOARD  0x04  /* keyboard interface */
 #define OPL_TYPE_IO        0x08  /* I/O port */
 
+/* Saving is necessary for member of the 'R' mark for suspend/resume */
 /* ---------- OPL one of slot  ---------- */
 typedef struct fm_opl_slot {
 	INT32 TL;		/* total level     :TL << 8            */
@@ -65,9 +67,9 @@ typedef struct fm_opl_slot {
 	INT32 evc;		/* envelope counter                    */
 	INT32 eve;		/* envelope counter end point          */
 	INT32 evs;		/* envelope counter step               */
-	INT32 evsa;	/* envelope step for AR :AR[ksr]       */
-	INT32 evsd;	/* envelope step for DR :DR[ksr]       */
-	INT32 evsr;	/* envelope step for RR :RR[ksr]       */
+	INT32 evsa;	/* envelope step for AR :AR[ksr]           */
+	INT32 evsd;	/* envelope step for DR :DR[ksr]           */
+	INT32 evsr;	/* envelope step for RR :RR[ksr]           */
 	/* LFO */
 	UINT8 ams;		/* ams flag                            */
 	UINT8 vib;		/* vibrate flag                        */
@@ -93,7 +95,7 @@ typedef struct fm_opl_channel {
 
 /* OPL state */
 typedef struct fm_opl_f {
-	UINT8 type;			/* chip type                        */
+	UINT8 type;			/* chip type                         */
 	int clock;			/* master clock  (Hz)                */
 	int rate;			/* sampling rate (Hz)                */
 	double freqbase;	/* frequency base                    */
@@ -103,11 +105,11 @@ typedef struct fm_opl_f {
 	UINT8 statusmask;	/* status mask                       */
 	UINT32 mode;		/* Reg.08 : CSM , notesel,etc.       */
 	/* Timer */
-	int T[2];			/* timer counter       */
-	UINT8 st[2];		/* timer enable        */
+	int T[2];			/* timer counter                     */
+	UINT8 st[2];		/* timer enable                      */
 	/* FM channel slots */
-	OPL_CH *P_CH;		/* pointer of CH       */
-	int	max_ch;			/* maximum channel     */
+	OPL_CH *P_CH;		/* pointer of CH                     */
+	int	max_ch;			/* maximum channel                   */
 	/* Rythm sention */
 	UINT8 rythm;		/* Rythm mode , key flag */
 #if BUILD_Y8950

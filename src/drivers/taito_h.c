@@ -59,6 +59,14 @@ TODO :
  - Text layer scroll if exists.
  - Speed up and clean up the code [some of video routines now in taitoic.c]
 
+Dleague: junky sprites (sometimes) at bottom of screen in
+flipscreen.
+
+Recordbr: missing hand of opponent when he ends in swimming
+race and you're still on the blocks. Bug?
+
+Recordbr: loads of unmapped IOC reads and writes.
+
 ****************************************************************************/
 
 
@@ -142,39 +150,6 @@ static READ16_HANDLER( taitoh_mirrorram_r )
 	return taitoh_68000_mainram[offset];
 }
 
-static READ16_HANDLER( TC0220IOC_halfword_port_r )
-{
-	return TC0220IOC_port_r( offset );
-}
-
-static WRITE16_HANDLER( TC0220IOC_halfword_port_w )
-{
-	if (ACCESSING_LSB)
-		TC0220IOC_port_w( offset, data & 0xff );
-}
-
-static READ16_HANDLER( TC0220IOC_halfword_portreg_r )
-{
-	return TC0220IOC_portreg_r( offset );
-}
-
-static WRITE16_HANDLER( TC0220IOC_halfword_portreg_w )
-{
-	if (ACCESSING_LSB)
-		TC0220IOC_portreg_w( offset, data & 0xff );
-}
-
-static READ16_HANDLER( TC0220IOC_halfword_r )
-{
-	return TC0220IOC_r( offset );
-}
-
-static WRITE16_HANDLER( TC0220IOC_halfword_w )
-{
-	if (ACCESSING_LSB)
-		TC0220IOC_w( offset, data & 0xff );
-}
-
 static READ16_HANDLER( syvalion_input_bypass_r )
 {
 	/* Bypass TC0220IOC controller for analog input */
@@ -254,7 +229,7 @@ static MEMORY_READ16_START( syvalion_readmem )
 	{ 0x300000, 0x300001, MRA16_NOP },
 	{ 0x300002, 0x300003, taitosound_comm16_lsb_r },
 	{ 0x400000, 0x420fff, TC0080VCO_word_r },
-	{ 0x500800, 0x500c1f, paletteram16_word_r },
+	{ 0x500800, 0x500fff, paletteram16_word_r },
 MEMORY_END
 
 static MEMORY_WRITE16_START( syvalion_writemem )
@@ -265,7 +240,7 @@ static MEMORY_WRITE16_START( syvalion_writemem )
 	{ 0x300000, 0x300001, taitosound_port16_lsb_w },
 	{ 0x300002, 0x300003, taitosound_comm16_lsb_w },
 	{ 0x400000, 0x420fff, TC0080VCO_word_w },
-	{ 0x500800, 0x500c1f, paletteram16_xBBBBBGGGGGRRRRR_word_w, &paletteram16 },
+	{ 0x500800, 0x500fff, paletteram16_xBBBBBGGGGGRRRRR_word_w, &paletteram16 },
 MEMORY_END
 
 static MEMORY_READ16_START( recordbr_readmem )
@@ -277,7 +252,7 @@ static MEMORY_READ16_START( recordbr_readmem )
 	{ 0x300000, 0x300001, MRA16_NOP },
 	{ 0x300002, 0x300003, taitosound_comm16_lsb_r },
 	{ 0x400000, 0x420fff, TC0080VCO_word_r },
-	{ 0x500800, 0x500bff, paletteram16_word_r },
+	{ 0x500800, 0x500fff, paletteram16_word_r },
 MEMORY_END
 
 static MEMORY_WRITE16_START( recordbr_writemem )
@@ -288,7 +263,7 @@ static MEMORY_WRITE16_START( recordbr_writemem )
 	{ 0x300000, 0x300001, taitosound_port16_lsb_w },
 	{ 0x300002, 0x300003, taitosound_comm16_lsb_w },
 	{ 0x400000, 0x420fff, TC0080VCO_word_w },
-	{ 0x500800, 0x500bff, paletteram16_xBBBBBGGGGGRRRRR_word_w, &paletteram16 },
+	{ 0x500800, 0x500fff, paletteram16_xBBBBBGGGGGRRRRR_word_w, &paletteram16 },
 MEMORY_END
 
 static MEMORY_READ16_START( dleague_readmem )
@@ -299,7 +274,7 @@ static MEMORY_READ16_START( dleague_readmem )
 	{ 0x300000, 0x300001, MRA16_NOP },
 	{ 0x300002, 0x300003, taitosound_comm16_lsb_r },
 	{ 0x400000, 0x420fff, TC0080VCO_word_r },
-	{ 0x500800, 0x500c1f, paletteram16_word_r },
+	{ 0x500800, 0x500fff, paletteram16_word_r },
 MEMORY_END
 
 static MEMORY_WRITE16_START( dleague_writemem )
@@ -309,7 +284,8 @@ static MEMORY_WRITE16_START( dleague_writemem )
 	{ 0x300000, 0x300001, taitosound_port16_lsb_w },
 	{ 0x300002, 0x300003, taitosound_comm16_lsb_w },
 	{ 0x400000, 0x420fff, TC0080VCO_word_w },
-	{ 0x500800, 0x500c1f, paletteram16_xBBBBBGGGGGRRRRR_word_w, &paletteram16 },
+	{ 0x500800, 0x500fff, paletteram16_xBBBBBGGGGGRRRRR_word_w, &paletteram16 },
+	{ 0x600000, 0x600001, MWA16_NOP },	/* ?? writes zero once per frame */
 MEMORY_END
 
 

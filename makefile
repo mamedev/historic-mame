@@ -74,8 +74,6 @@ endif
 
 # build the targets in different object dirs, since mess changes
 # some structures and thus they can't be linked against each other.
-# cleantiny isn't needed anymore, because the tiny build has its
-# own object directory too.
 OBJ = obj/$(NAME)
 
 EMULATOR = $(NAME)$(EXE)
@@ -83,19 +81,18 @@ EMULATOR = $(NAME)$(EXE)
 DEFS = -DX86_ASM -DLSB_FIRST -DINLINE="static __inline__" -Dasm=__asm__
 
 ifdef SYMBOLS
-CFLAGS = -Isrc -Isrc/$(MAMEOS) -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000 \
+CFLAGS = -Isrc -Isrc/includes -Isrc/$(MAMEOS) -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000 \
 	-O0 -Wall -Werror -Wno-unused -g
 else
-CFLAGS = -Isrc -Isrc/$(MAMEOS) -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000 \
+CFLAGS = -Isrc -Isrc/includes -Isrc/$(MAMEOS) -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000 \
 	-DNDEBUG \
 	$(ARCH) -O3 -fomit-frame-pointer -fstrict-aliasing \
 	-Werror -Wall -Wno-sign-compare -Wunused \
 	-Wpointer-arith -Wbad-function-cast -Wcast-align -Waggregate-return \
-	-Wshadow \
-	-Wstrict-prototypes
+	-Wshadow -Wstrict-prototypes -Wundef \
+#	try with gcc 3.0 -Wpadded -Wunreachable-code -Wdisabled-optimization
 #	-W had to remove because of the "missing initializer" warning
-#	-Wredundant-decls \
-#	-Wlarger-than-27648 \
+#	-Wlarger-than-262144  \
 #	-Wcast-qual \
 #	-Wwrite-strings \
 #	-Wconversion \

@@ -133,8 +133,11 @@ static void get_fg_tile_info(int tile_index)
 	int code;
 
 	code = current_videoram_pg[tile_index];
-	SET_TILE_INFO(1, code, (code >> 5) | (palette_bank << 3));
-	tile_info.flags = (tile_index & 0x1f) ? 0 : TILE_IGNORE_TRANSPARENCY;	/* first row (column) is opaque */
+	SET_TILE_INFO(
+			1,
+			code,
+			(code >> 5) | (palette_bank << 3),
+			(tile_index & 0x1f) ? 0 : TILE_IGNORE_TRANSPARENCY)	/* first row (column) is opaque */
 }
 
 static void get_bg_tile_info(int tile_index)
@@ -142,7 +145,11 @@ static void get_bg_tile_info(int tile_index)
 	int code;
 
 	code = current_videoram_pg[tile_index + 0x800];
-	SET_TILE_INFO(0, code, (code >> 5) | (palette_bank << 3));
+	SET_TILE_INFO(
+			0,
+			code,
+			(code >> 5) | (palette_bank << 3),
+			0)
 }
 
 

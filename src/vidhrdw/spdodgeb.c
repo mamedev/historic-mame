@@ -63,7 +63,11 @@ static void get_bg_tile_info(int tile_index)
 {
 	unsigned char code = spdodgeb_videoram[tile_index];
 	unsigned char attr = spdodgeb_videoram[tile_index + 0x800];
-	SET_TILE_INFO(0,code + ((attr & 0x1f) << 8),((attr & 0xe0) >> 5) + 8 * tile_palbank)
+	SET_TILE_INFO(
+			0,
+			code + ((attr & 0x1f) << 8),
+			((attr & 0xe0) >> 5) + 8 * tile_palbank,
+			0)
 }
 
 

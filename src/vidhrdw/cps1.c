@@ -95,25 +95,14 @@ CPS2:
   msh (lava level, early in attract mode) and maybe others (xmcotaj, vsavj).
   IRQ4 is some sort of scanline interrupt used for that purpose.
 
-* Sprite palette needs to be delayed by one frame to put it in sync with sprites on
-  as they are already delayed by one frame.
+* Its unknown what CPS2_OBJ_BASE register (0x400000) does but it is not a object base
+  register. All games use 0x7000 even if 0x7080 is used at this register (checked on
+  real HW). Maybe it sets the object bank used when cps2_objram_bank is set?
 
-* Some games set the CPS2_OBJ_BASE register to 0x7000 instead of 0x7080. However using
-  0x7000 makes sprites not sync with the background, so we use 0x7080 anyway. Known
-  games using 0x7000 are AvsP and SFZ. There could be more to.
-
-Dungeons & Dragons: Tower of Doom
-* Going into test mode while the dragon flies across screen (attract mode) results in
-  it not being deleted once test mode menu is up (dosent happen on original hardware).
-
-Super Puzzle Fighter 2X
-* Sprite priorities go wrong on the high score screen making the botton scores appear
-  behind the wall.
-
-Powered Gear
-* gfx glitch in attrach mode, the bottom of one of the robots which fire at you is
-  bad.
-
+* The sprite palette needs to be delayed by one frame putting it in sync with sprites
+  as they are already delayed by one frame. The error caused by this can be seen in SFZ
+  attract mode while choosing characters (swap between characters and palette goes
+  wrong for one frame as gfx change.
 
 CPS1:
 
@@ -167,13 +156,6 @@ The games seem to use them to mark platforms, kill zones and no-go areas.
 #define VERBOSE 0
 
 #define CPS1_DUMP_VIDEO 0
-
-#if MAME_DEBUG
-extern int cps_tileviewer_start(void);
-extern void cps_tileviewer_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-extern void cps_tileviewer_stop(void);
-static int cps_view_tiles=0;
-#endif
 
 /********************************************************************
 
@@ -370,6 +352,7 @@ static struct CPS1config cps1_config_table[]=
 	{"xmcota",  NOBATTRY, 4,4,4, 0x0000,0xffff,0x0000,0xffff, 8 },
 	{"xmcotaj", NOBATTRY, 4,4,4, 0x0000,0xffff,0x0000,0xffff, 8 },
 	{"xmcotaj1",NOBATTRY, 4,4,4, 0x0000,0xffff,0x0000,0xffff, 8 },
+	{"xmcotajr",NOBATTRY, 4,4,4, 0x0000,0xffff,0x0000,0xffff, 8 },
 	{0}		/* End of table */
 };
 
@@ -378,11 +361,6 @@ static int cps_version;
 void cps_setversion(int v)
 {
     cps_version=v;
-}
-
-int cps_getversion(void)
-{
-    return cps_version;
 }
 
 
@@ -415,10 +393,6 @@ static void cps_init_machine(void)
         }
         cps1_game_config=pCFG;
    }
-
-#if MAME_DEBUG
-    cps_view_tiles=0;
-#endif
 
 	if (strcmp(gamename, "sf2rb" )==0)
 	{
@@ -609,15 +583,6 @@ static struct osd_bitmap *cps1_scroll2_bitmap;
 CPS1 VIDEO RENDERER
 
 */
-static UINT8 *cps1_gfx;		 /* Converted GFX memory */
-static UINT32 *cps1_char_pen_usage;	/* pen usage array */
-static UINT32 *cps1_tile16_pen_usage;      /* pen usage array */
-static UINT32 *cps1_tile32_pen_usage;      /* pen usage array */
-static int cps1_max_char;	       /* Maximum number of 8x8 chars */
-static int cps1_max_tile16;	     /* Maximum number of 16x16 tiles */
-static int cps1_max_tile32;	     /* Maximum number of 32x32 tiles */
-static UINT8 *stars_rom;
-
 /* first 0x4000 of gfx ROM are used, but 0x0000-0x1fff is == 0x2000-0x3fff */
 const int stars_rom_size = 0x2000;
 
@@ -628,11 +593,12 @@ data16_t *cps2_output;
 
 size_t cps2_output_size;
 static data16_t *cps2_buffered_obj;
+static int pri_ctrl;				/* Sprite layer priorities */
 static int cps2_objram_bank;
+static int cps2_objram_bank_lagged;
 static int cps2_last_sprite_offset;     /* Offset of the last sprite */
 
-
-#define CPS2_OBJ_BASE	0x00	/* Base address of objects? Usually 0x7080, 0x7000 in avsp */
+#define CPS2_OBJ_BASE	0x00	/* Unknown (not base address of objects). Could be bass address of bank used when object swap bit set? */
 #define CPS2_OBJ_UK1	0x02	/* Unknown (nearly always 0x807d) */
 #define CPS2_OBJ_PRI	0x04	/* Layers priorities */
 #define CPS2_OBJ_UK2	0x06	/* Unknown (usually 0x0000, 0x1101 in ssf2, 0x0001 in 19XX) */
@@ -651,10 +617,8 @@ static void cps1_gfx_decode(void)
 {
 	int size=memory_region_length(REGION_GFX1);
 	int i,j,gfxsize;
-	static struct GfxElement gfx[3];
+	UINT8 *cps1_gfx = memory_region(REGION_GFX1);
 
-
-	cps1_gfx = memory_region(REGION_GFX1);
 
 	gfxsize=size/4;
 
@@ -662,7 +626,6 @@ static void cps1_gfx_decode(void)
 	{
 		UINT32 src = cps1_gfx[4*i] + (cps1_gfx[4*i+1]<<8) + (cps1_gfx[4*i+2]<<16) + (cps1_gfx[4*i+3]<<24);
 		UINT32 dwval = 0;
-		int penusage = 0;
 
 		for (j = 0;j < 8;j++)
 		{
@@ -675,65 +638,12 @@ static void cps1_gfx_decode(void)
 			if (mask & 0xff000000) n |= 8;
 
 			dwval |= n << (j * 4);
-			penusage |= 1 << n;
 		}
 		cps1_gfx[4*i  ] = dwval>>0;
 		cps1_gfx[4*i+1] = dwval>>8;
 		cps1_gfx[4*i+2] = dwval>>16;
 		cps1_gfx[4*i+3] = dwval>>24;
-		cps1_char_pen_usage[i/16]    |= penusage;
-		cps1_tile16_pen_usage[i/32]  |= penusage;
-		cps1_tile32_pen_usage[i/128] |= penusage;
 	}
-
-
-	gfx[0].width = 8;
-	gfx[0].height = 8;
-	gfx[0].total_elements = memory_region_length(REGION_GFX1)/64;
-	gfx[0].color_granularity = 16;
-	gfx[0].colortable = Machine->remapped_colortable;
-	gfx[0].total_colors = 0x100;
-	gfx[0].pen_usage = cps1_char_pen_usage;
-	/* 8x8 tiles are taken from the RIGHT side of the 16x16 tile
-	   (fixes cawing which uses character 0x0002 as space, typo instead of 0x20?) */
-	gfx[0].gfxdata = memory_region(REGION_GFX1) + 4;
-	gfx[0].line_modulo = 8;
-	gfx[0].char_modulo = 64;
-	gfx[0].flags = GFX_PACKED;
-	if (Machine->orientation & ORIENTATION_SWAP_XY)
-		gfx[0].flags |= GFX_SWAPXY;
-
-	gfx[1].width = 16;
-	gfx[1].height = 16;
-	gfx[1].total_elements = memory_region_length(REGION_GFX1)/128;
-	gfx[1].color_granularity = 16;
-	gfx[1].colortable = Machine->remapped_colortable;
-	gfx[1].total_colors = 0x100;
-	gfx[1].pen_usage = cps1_tile16_pen_usage;
-	gfx[1].gfxdata = memory_region(REGION_GFX1);
-	gfx[1].line_modulo = 8;
-	gfx[1].char_modulo = 128;
-	gfx[1].flags = GFX_PACKED;
-	if (Machine->orientation & ORIENTATION_SWAP_XY)
-		gfx[1].flags |= GFX_SWAPXY;
-
-	gfx[2].width = 32;
-	gfx[2].height = 32;
-	gfx[2].total_elements = memory_region_length(REGION_GFX1)/512;
-	gfx[2].color_granularity = 16;
-	gfx[2].colortable = Machine->remapped_colortable;
-	gfx[2].total_colors = 0x100;
-	gfx[2].pen_usage = cps1_tile32_pen_usage;
-	gfx[2].gfxdata = memory_region(REGION_GFX1);
-	gfx[2].line_modulo = 16;
-	gfx[2].char_modulo = 512;
-	gfx[2].flags = GFX_PACKED;
-	if (Machine->orientation & ORIENTATION_SWAP_XY)
-		gfx[2].flags |= GFX_SWAPXY;
-
-	Machine->gfx[0] = &gfx[0];
-	Machine->gfx[1] = &gfx[1];
-	Machine->gfx[2] = &gfx[2];
 }
 
 static void unshuffle(UINT64 *buf,int len)
@@ -771,69 +681,25 @@ static void cps2_gfx_decode(void)
 }
 
 
-int cps1_gfx_start(void)
+void init_cps1(void)
 {
-	int size=memory_region_length(REGION_GFX1);
-	int gfxsize;
-
-	gfxsize=size/4;
-
-	/* Set up maximum values */
-	cps1_max_char  =(gfxsize/2)/8;
-	cps1_max_tile16=(gfxsize/4)/8;
-	cps1_max_tile32=(gfxsize/16)/8;
-
-	cps1_char_pen_usage=malloc(cps1_max_char*sizeof(int));
-	if (!cps1_char_pen_usage)
-	{
-		return -1;
-	}
-	memset(cps1_char_pen_usage, 0, cps1_max_char*sizeof(int));
-
-	cps1_tile16_pen_usage=malloc(cps1_max_tile16*sizeof(int));
-	if (!cps1_tile16_pen_usage)
-		return -1;
-	memset(cps1_tile16_pen_usage, 0, cps1_max_tile16*sizeof(int));
-
-	cps1_tile32_pen_usage=malloc(cps1_max_tile32*sizeof(int));
-	if (!cps1_tile32_pen_usage)
-	{
-		return -1;
-	}
-	memset(cps1_tile32_pen_usage, 0, cps1_max_tile32*sizeof(int));
-
-	stars_rom = malloc(4*stars_rom_size);
-	if (!stars_rom) return -1;
-	memcpy(stars_rom,memory_region(REGION_GFX1),4*stars_rom_size);
-
-    if (cps_version == 1)
-        cps1_gfx_decode();
-    else
-        cps2_gfx_decode();
-#if MAME_DEBUG
-    cps_tileviewer_start();
-#endif
-	return 0;
+	cps1_gfx_decode();
 }
 
-void cps1_gfx_stop(void)
+void init_cps2(void)
 {
-	Machine->gfx[0] = NULL;
-	Machine->gfx[1] = NULL;
-	Machine->gfx[2] = NULL;
+	data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
+	data16_t *xor = (data16_t *)memory_region(REGION_USER1);
+	int i;
 
-	cps1_gfx = NULL;
-	free(cps1_char_pen_usage);
-	cps1_char_pen_usage = NULL;
-	free(cps1_tile16_pen_usage);
-	cps1_tile16_pen_usage = NULL;
-	free(cps1_tile32_pen_usage);
-	cps1_tile32_pen_usage = NULL;
-	free(stars_rom);
-	stars_rom = NULL;
-#if MAME_DEBUG
-    cps_tileviewer_start();
-#endif
+
+	for (i = 0;i < memory_region_length(REGION_CPU1)/2;i++)
+		xor[i] ^= rom[i];
+
+	memory_set_opcode_base(0,xor);
+	memory_set_encrypted_opcode_range(0,0,memory_region_length(REGION_CPU1));
+
+	cps2_gfx_decode();
 }
 
 
@@ -977,14 +843,14 @@ INLINE void cps1_draw_scroll1(
 		cps1_draw_gfx16(dest,
 			1,
 			code,color,flipx,flipy,sx,sy,
-			tpens,cps1_char_pen_usage,8, cps1_max_char, 16, 1);
+			tpens,Machine->gfx[0]->pen_usage,8, Machine->gfx[0]->total_elements, 16, 1);
 	}
 	else
 	{
 		cps1_draw_gfx(dest,
 			1,
 			code,color,flipx,flipy,sx,sy,
-			tpens,cps1_char_pen_usage,8, cps1_max_char, 16, 1);
+			tpens,Machine->gfx[0]->pen_usage,8, Machine->gfx[0]->total_elements, 16, 1);
 	}
 }
 
@@ -999,14 +865,14 @@ INLINE void cps1_draw_tile16(struct osd_bitmap *dest,
 		cps1_draw_gfx16(dest,
 			palette_bank,
 			code,color,flipx,flipy,sx,sy,
-			tpens,cps1_tile16_pen_usage,16, cps1_max_tile16, 16*2,0);
+			tpens,Machine->gfx[1]->pen_usage,16, Machine->gfx[1]->total_elements, 16*2,0);
 	}
 	else
 	{
 		cps1_draw_gfx(dest,
 			palette_bank,
 			code,color,flipx,flipy,sx,sy,
-			tpens,cps1_tile16_pen_usage,16, cps1_max_tile16, 16*2,0);
+			tpens,Machine->gfx[1]->pen_usage,16, Machine->gfx[1]->total_elements, 16*2,0);
 	}
 }
 
@@ -1020,14 +886,14 @@ INLINE void cps1_draw_tile32(struct osd_bitmap *dest,
 		cps1_draw_gfx16(dest,
 			palette_bank,
 			code,color,flipx,flipy,sx,sy,
-			tpens,cps1_tile32_pen_usage,32, cps1_max_tile32, 16*2*4,0);
+			tpens,Machine->gfx[2]->pen_usage,32, Machine->gfx[2]->total_elements, 16*2*4,0);
 	}
 	else
 	{
 		cps1_draw_gfx(dest,
 			palette_bank,
 			code,color,flipx,flipy,sx,sy,
-			tpens,cps1_tile32_pen_usage,32, cps1_max_tile32, 16*2*4,0);
+			tpens,Machine->gfx[2]->pen_usage,32, Machine->gfx[2]->total_elements, 16*2*4,0);
 	}
 }
 
@@ -1089,14 +955,14 @@ INLINE void cps1_draw_tile16_bmp(struct osd_bitmap *dest,
 		cps1_draw_gfx_opaque16(dest,
 			palette_bank,
 			code,color,flipx,flipy,sx,sy,
-			-1,cps1_tile16_pen_usage,16, cps1_max_tile16, 16*2,0);
+			-1,Machine->gfx[1]->pen_usage,16, Machine->gfx[1]->total_elements, 16*2,0);
 	}
 	else
 	{
 		cps1_draw_gfx_opaque(dest,
 			palette_bank,
 			code,color,flipx,flipy,sx,sy,
-			-1,cps1_tile16_pen_usage,16, cps1_max_tile16, 16*2,0);
+			-1,Machine->gfx[1]->pen_usage,16, Machine->gfx[1]->total_elements, 16*2,0);
 	}
 }
 
@@ -1300,6 +1166,415 @@ if (keyboard_pressed(KEYCODE_Z))
 }
 
 
+//ks s
+/***************************************************************************
+
+  cps2 sprite handler											by Shiriru
+
+***************************************************************************/
+static int orientation, screen_width, screen_height;
+
+static struct {
+	int clip_left, clip_right, clip_top, clip_bottom;
+	unsigned char *baseaddr;
+	int line_offset;
+} blit;
+
+static UINT16 *sprite_zbuf;
+static int sprite_zbuf_size;
+static int sprite_zbuf_baseval = 0;
+static int num_sprites;
+
+#define SPRITE_TILE_WIDTH 16
+#define SPRITE_TILE_HEIGHT 16
+#define SWAP(X,Y) { int temp = X; X = Y; Y = temp; }
+
+static int cps2_sprite_init(void)
+{
+	struct osd_bitmap *bitmap = Machine->scrbitmap;
+	const struct rectangle *clip = &Machine->visible_area;
+	int left, top, right, bottom;
+
+	orientation = Machine->orientation;
+	screen_width = Machine->scrbitmap->width;
+	screen_height = Machine->scrbitmap->height;
+
+	blit.baseaddr = bitmap->line[0];
+	blit.line_offset = bitmap->line[1]-bitmap->line[0];
+
+	left = clip->min_x;
+	top = clip->min_y;
+	right = clip->max_x+1;
+	bottom = clip->max_y+1;
+	if( orientation & ORIENTATION_SWAP_XY ){
+		SWAP(left,top)
+		SWAP(right,bottom)
+	}
+	if( orientation & ORIENTATION_FLIP_X ){
+		SWAP(left,right)
+		left = screen_width-left;
+		right = screen_width-right;
+	}
+	if( orientation & ORIENTATION_FLIP_Y ){
+		SWAP(top,bottom)
+		top = screen_height-top;
+		bottom = screen_height-bottom;
+	}
+	blit.clip_left = left;
+	blit.clip_top = top;
+	blit.clip_right = right;
+	blit.clip_bottom = bottom;
+
+	sprite_zbuf_size = Machine->drv->screen_width * Machine->drv->screen_height * 2;
+	if(!(sprite_zbuf = malloc(sprite_zbuf_size))) return 1;
+
+	num_sprites = cps2_obj_size/8;
+
+	return 0;
+}
+
+
+/*****************************************************/
+static void do_blit_16_cps2_zb(const unsigned char *pen_data,const UINT32 *pal_data,int flipx,int flipy,int sx,int sy, int pri_sp)
+{
+	int x1,x2, y1,y2, dx,dy;
+	int xcount0 = 0, ycount0 = 0;
+
+	if( flipx ){
+		x2 = sx;
+		x1 = x2+SPRITE_TILE_WIDTH;
+		dx = -1;
+		if( x2<blit.clip_left ) x2 = blit.clip_left;
+		if( x1>blit.clip_right ){
+			xcount0 = x1-blit.clip_right;
+			x1 = blit.clip_right;
+		}
+		if( x2>=x1 ) return;
+		x1--; x2--;
+	}
+	else {
+		x1 = sx;
+		x2 = x1+SPRITE_TILE_WIDTH;
+		dx = 1;
+		if( x1<blit.clip_left ){
+			xcount0 = blit.clip_left-x1;
+			x1 = blit.clip_left;
+		}
+		if( x2>blit.clip_right ) x2 = blit.clip_right;
+		if( x1>=x2 ) return;
+	}
+	if( flipy ){
+		y2 = sy;
+		y1 = y2+SPRITE_TILE_HEIGHT;
+		dy = -1;
+		if( y2<blit.clip_top ) y2 = blit.clip_top;
+		if( y1>blit.clip_bottom ){
+			ycount0 = y1-blit.clip_bottom;
+			y1 = blit.clip_bottom;
+		}
+		if( y2>=y1 ) return;
+		y1--; y2--;
+	}
+	else {
+		y1 = sy;
+		y2 = y1+SPRITE_TILE_HEIGHT;
+		dy = 1;
+		if( y1<blit.clip_top ){
+			ycount0 = blit.clip_top-y1;
+			y1 = blit.clip_top;
+		}
+		if( y2>blit.clip_bottom ) y2 = blit.clip_bottom;
+		if( y1>=y2 ) return;
+	}
+
+	{
+		int x,y;
+		unsigned char pen;
+		int pitch = blit.line_offset*dy/2;
+		UINT16 *dest = (UINT16 *)(blit.baseaddr + blit.line_offset*y1);
+		int pitchz = (blit.clip_right-blit.clip_left)*dy;
+		UINT16 *zbf = (UINT16 *)((unsigned char *)sprite_zbuf + (blit.clip_right-blit.clip_left)*y1*2);
+
+		if( orientation & ORIENTATION_SWAP_XY ){ /* manually rotate the sprite graphics */
+			int pen_data_off0=SPRITE_TILE_WIDTH*xcount0+ycount0;
+			for( x=x1; x!=x2; x+=dx ){
+				UINT16 *dest1;
+				UINT16 *zbf1;
+				int pen_data_off1=pen_data_off0;
+				dest1 = &dest[x];
+				zbf1 = &zbf[x];
+				for( y=y1; y!=y2; y+=dy ){
+					pen = ((*(pen_data+(pen_data_off1>>1))) >> ((pen_data_off1&1)*4)) & 0xf;
+					if (pen!=15 && (*zbf1<=pri_sp))
+					{
+						*dest1 = pal_data[pen];
+						*zbf1 = pri_sp;
+					}
+					pen_data_off1++;
+					dest1 += pitch;
+					zbf1 += pitchz;
+				}
+				pen_data_off0 += SPRITE_TILE_WIDTH;
+			}
+		}
+		else {
+			int pen_data_off0=SPRITE_TILE_WIDTH*ycount0+xcount0;
+			for( y=y1; y!=y2; y+=dy ){
+				int pen_data_off1=pen_data_off0;
+				for( x=x1; x!=x2; x+=dx ){
+					pen = ((*(pen_data+(pen_data_off1>>1))) >> ((pen_data_off1&1)*4)) & 0xf;
+					if ( pen!=15 && (zbf[x]<=pri_sp))
+					{
+						dest[x] = pal_data[pen];
+						zbf[x] = pri_sp;
+					}
+					pen_data_off1++;
+				}
+				pen_data_off0 += SPRITE_TILE_WIDTH;
+				dest += pitch;
+				zbf += pitchz;
+			}
+		}
+	}
+}
+
+
+
+static void do_blit_8_cps2_zb(const unsigned char *pen_data,const UINT32 *pal_data,int flipx,int flipy,int sx,int sy, int pri_sp)
+{
+	int x1,x2, y1,y2, dx,dy;
+	int xcount0 = 0, ycount0 = 0;
+
+	if( flipx ){
+		x2 = sx;
+		x1 = x2+SPRITE_TILE_WIDTH;
+		dx = -1;
+		if( x2<blit.clip_left ) x2 = blit.clip_left;
+		if( x1>blit.clip_right ){
+			xcount0 = x1-blit.clip_right;
+			x1 = blit.clip_right;
+		}
+		if( x2>=x1 ) return;
+		x1--; x2--;
+	}
+	else {
+		x1 = sx;
+		x2 = x1+SPRITE_TILE_WIDTH;
+		dx = 1;
+		if( x1<blit.clip_left ){
+			xcount0 = blit.clip_left-x1;
+			x1 = blit.clip_left;
+		}
+		if( x2>blit.clip_right ) x2 = blit.clip_right;
+		if( x1>=x2 ) return;
+	}
+	if( flipy ){
+		y2 = sy;
+		y1 = y2+SPRITE_TILE_HEIGHT;
+		dy = -1;
+		if( y2<blit.clip_top ) y2 = blit.clip_top;
+		if( y1>blit.clip_bottom ){
+			ycount0 = y1-blit.clip_bottom;
+			y1 = blit.clip_bottom;
+		}
+		if( y2>=y1 ) return;
+		y1--; y2--;
+	}
+	else {
+		y1 = sy;
+		y2 = y1+SPRITE_TILE_HEIGHT;
+		dy = 1;
+		if( y1<blit.clip_top ){
+			ycount0 = blit.clip_top-y1;
+			y1 = blit.clip_top;
+		}
+		if( y2>blit.clip_bottom ) y2 = blit.clip_bottom;
+		if( y1>=y2 ) return;
+	}
+
+	{
+		int x,y;
+		unsigned char pen;
+		int pitch = blit.line_offset*dy;
+		UINT8 *dest = blit.baseaddr + blit.line_offset*y1;
+		int pitchz = (blit.clip_right-blit.clip_left)*dy;
+		UINT16 *zbf = (UINT16 *)((unsigned char *)sprite_zbuf + (blit.clip_right-blit.clip_left)*y1*2);
+
+		if( orientation & ORIENTATION_SWAP_XY ){ /* manually rotate the sprite graphics */
+			int pen_data_off0=SPRITE_TILE_WIDTH*xcount0+ycount0;
+			for( x=x1; x!=x2; x+=dx ){
+				UINT8 *dest1;
+				UINT16 *zbf1;
+				int pen_data_off1=pen_data_off0;
+				dest1 = &dest[x];
+				zbf1 = &zbf[x];
+				for( y=y1; y!=y2; y+=dy ){
+					pen = ((*(pen_data+(pen_data_off1>>1))) >> ((pen_data_off1&1)*4)) & 0xf;
+					if (pen!=15 && (*zbf1<=pri_sp))
+					{
+						*dest1 = pal_data[pen];
+						*zbf1 = pri_sp;
+					}
+					pen_data_off1++;
+					dest1 += pitch;
+					zbf1 += pitchz;
+				}
+				pen_data_off0 += SPRITE_TILE_WIDTH;
+			}
+		}
+		else {
+			int pen_data_off0=SPRITE_TILE_WIDTH*ycount0+xcount0;
+			for( y=y1; y!=y2; y+=dy ){
+				int pen_data_off1=pen_data_off0;
+				for( x=x1; x!=x2; x+=dx ){
+					pen = ((*(pen_data+(pen_data_off1>>1))) >> ((pen_data_off1&1)*4)) & 0xf;
+					if ( pen!=15 && (zbf[x]<=pri_sp))
+					{
+						dest[x] = pal_data[pen];
+						zbf[x] = pri_sp;
+					}
+					pen_data_off1++;
+				}
+				pen_data_off0 += SPRITE_TILE_WIDTH;
+				dest += pitch;
+				zbf += pitchz;
+			}
+		}
+	}
+}
+
+static void do_blit_zb(const unsigned char *pen_data,int flipx,int flipy,int sx,int sy, int pri_sp)
+{
+	int x1,x2, y1,y2, dx,dy;
+	int xcount0 = 0, ycount0 = 0;
+
+	if( flipx ){
+		x2 = sx;
+		x1 = x2+SPRITE_TILE_WIDTH;
+		dx = -1;
+		if( x2<blit.clip_left ) x2 = blit.clip_left;
+		if( x1>blit.clip_right ){
+			xcount0 = x1-blit.clip_right;
+			x1 = blit.clip_right;
+		}
+		if( x2>=x1 ) return;
+		x1--; x2--;
+	}
+	else {
+		x1 = sx;
+		x2 = x1+SPRITE_TILE_WIDTH;
+		dx = 1;
+		if( x1<blit.clip_left ){
+			xcount0 = blit.clip_left-x1;
+			x1 = blit.clip_left;
+		}
+		if( x2>blit.clip_right ) x2 = blit.clip_right;
+		if( x1>=x2 ) return;
+	}
+	if( flipy ){
+		y2 = sy;
+		y1 = y2+SPRITE_TILE_HEIGHT;
+		dy = -1;
+		if( y2<blit.clip_top ) y2 = blit.clip_top;
+		if( y1>blit.clip_bottom ){
+			ycount0 = y1-blit.clip_bottom;
+			y1 = blit.clip_bottom;
+		}
+		if( y2>=y1 ) return;
+		y1--; y2--;
+	}
+	else {
+		y1 = sy;
+		y2 = y1+SPRITE_TILE_HEIGHT;
+		dy = 1;
+		if( y1<blit.clip_top ){
+			ycount0 = blit.clip_top-y1;
+			y1 = blit.clip_top;
+		}
+		if( y2>blit.clip_bottom ) y2 = blit.clip_bottom;
+		if( y1>=y2 ) return;
+	}
+
+	{
+		int x,y;
+		unsigned char pen;
+		int pitchz = (blit.clip_right-blit.clip_left)*dy;
+		UINT16 *zbf = (UINT16 *)((unsigned char *)sprite_zbuf + (blit.clip_right-blit.clip_left)*y1*2);
+
+		if( orientation & ORIENTATION_SWAP_XY ){ /* manually rotate the sprite graphics */
+			int pen_data_off0=SPRITE_TILE_WIDTH*xcount0+ycount0;
+			for( x=x1; x!=x2; x+=dx ){
+				UINT16 *zbf1;
+				int pen_data_off1=pen_data_off0;
+				zbf1 = &zbf[x];
+				for( y=y1; y!=y2; y+=dy ){
+					pen = ((*(pen_data+(pen_data_off1>>1))) >> ((pen_data_off1&1)*4)) & 0xf;
+					if (pen!=15 && (*zbf1<=pri_sp))
+					{
+						*zbf1 = pri_sp;
+					}
+					pen_data_off1++;
+					zbf1 += pitchz;
+				}
+				pen_data_off0 += SPRITE_TILE_WIDTH;
+			}
+		}
+		else {
+			int pen_data_off0=SPRITE_TILE_WIDTH*ycount0+xcount0;
+			for( y=y1; y!=y2; y+=dy ){
+				int pen_data_off1=pen_data_off0;
+				for( x=x1; x!=x2; x+=dx ){
+					pen = ((*(pen_data+(pen_data_off1>>1))) >> ((pen_data_off1&1)*4)) & 0xf;
+					if ( pen!=15 && (zbf[x]<=pri_sp))
+					{
+						zbf[x] = pri_sp;
+					}
+					pen_data_off1++;
+				}
+				pen_data_off0 += SPRITE_TILE_WIDTH;
+				zbf += pitchz;
+			}
+		}
+	}
+}
+
+
+/*****************************************************/
+void cps2_drawsprite(const struct GfxElement *gfx, unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy, int pri_sp,int flag)
+{
+	if( orientation & ORIENTATION_SWAP_XY ){
+		SWAP(sx, sy)
+		SWAP(flipx, flipy)
+	}
+	if( orientation & ORIENTATION_FLIP_X ){
+		sx = screen_width - (sx+SPRITE_TILE_WIDTH);
+		flipx = !flipx;
+	}
+	if( orientation & ORIENTATION_FLIP_Y ){
+		sy = screen_height - (sy+SPRITE_TILE_HEIGHT);
+		flipy = !flipy;
+	}
+
+	if (flag)
+	{
+		if (Machine->scrbitmap->depth == 8)
+			do_blit_8_cps2_zb(gfx->gfxdata + code * gfx->char_modulo,
+								&gfx->colortable[gfx->color_granularity * color],
+								flipx, flipy, sx, sy, pri_sp);
+		else
+			do_blit_16_cps2_zb(gfx->gfxdata + code * gfx->char_modulo,
+								&gfx->colortable[gfx->color_granularity * color],
+								flipx, flipy, sx, sy, pri_sp);
+	}
+	else
+	{
+		do_blit_zb(gfx->gfxdata + code * gfx->char_modulo,
+					flipx, flipy, sx, sy, pri_sp);
+	}
+}
+//ks e
+
+
 /***************************************************************************
 
   Start the video hardware emulation.
@@ -1311,11 +1586,6 @@ int cps_vh_start(void)
 	int i;
 
     cps_init_machine();
-
-	if (cps1_gfx_start())
-	{
-		return -1;
-	}
 
 	cps1_scroll2_bitmap=bitmap_alloc(CPS1_SCROLL2_WIDTH*16,CPS1_SCROLL2_HEIGHT*16);
 	if (!cps1_scroll2_bitmap)
@@ -1405,6 +1675,12 @@ int cps2_vh_start(void)
     {
         cps_version=2;
     }
+//ks s
+	if (cps2_sprite_init())
+	{
+		return -1;
+	}
+//ks e
     return cps_vh_start();
 }
 
@@ -1425,7 +1701,6 @@ void cps1_vh_stop(void)
 		free(cps1_buffered_obj);
     if (cps2_buffered_obj)
         free(cps2_buffered_obj);
-	cps1_gfx_stop();
 }
 
 /***************************************************************************
@@ -1507,10 +1782,10 @@ INLINE void cps1_palette_scroll1(unsigned short *base)
 			offs &= 0x3fff;
 			code=basecode+cps1_scroll1[offs/2];
 			colour=cps1_scroll1[(offs+2)/2];
-			if (code < cps1_max_char)
+			if (code < Machine->gfx[0]->total_elements)
 			{
 				base[colour&0x1f] |=
-					  cps1_char_pen_usage[code]&0x7fff;
+					  Machine->gfx[0]->pen_usage[code]&0x7fff;
 			}
 		}
 	}
@@ -1689,7 +1964,7 @@ void cps_palette_sprites(unsigned short *base, data16_t *objram, int last)
 						{
 							int cod=code+(nx-1)-nxs+0x10*(ny-1-nys);
 							base[col] |=
-							cps1_tile16_pen_usage[cod % cps1_max_tile16];
+							Machine->gfx[1]->pen_usage[cod % Machine->gfx[1]->total_elements];
 						}
 					}
 				}
@@ -1701,7 +1976,7 @@ void cps_palette_sprites(unsigned short *base, data16_t *objram, int last)
 						{
 							int cod=code+nxs+0x10*(ny-1-nys);
 							base[col] |=
-							cps1_tile16_pen_usage[cod % cps1_max_tile16];
+							Machine->gfx[1]->pen_usage[cod % Machine->gfx[1]->total_elements];
 						}
 					}
 				}
@@ -1716,7 +1991,7 @@ void cps_palette_sprites(unsigned short *base, data16_t *objram, int last)
 						{
 							int cod=code+(nx-1)-nxs+0x10*nys;
 							base[col] |=
-							cps1_tile16_pen_usage[cod % cps1_max_tile16];
+							Machine->gfx[1]->pen_usage[cod % Machine->gfx[1]->total_elements];
 						}
 					}
 				}
@@ -1728,7 +2003,7 @@ void cps_palette_sprites(unsigned short *base, data16_t *objram, int last)
 						{
 							int cod=code+nxs+0x10*nys;
 							base[col] |=
-							cps1_tile16_pen_usage[cod % cps1_max_tile16];
+							Machine->gfx[1]->pen_usage[cod % Machine->gfx[1]->total_elements];
 						}
 					}
 				}
@@ -1737,8 +2012,7 @@ void cps_palette_sprites(unsigned short *base, data16_t *objram, int last)
 			}
 			else
 			{
-				base[col] |=
-				cps1_tile16_pen_usage[code % cps1_max_tile16]&0x7fff;
+				base[col] |= Machine->gfx[1]->pen_usage[code % Machine->gfx[1]->total_elements]&0x7fff;
 			}
 		}
 	}
@@ -1924,13 +2198,9 @@ WRITE16_HANDLER( cps2_objram2_w )
 static data16_t *cps2_objbase(void)
 {
 	int baseptr;
+	baseptr = 0x7000;
 
-//	baseptr = cps2_port(CPS2_OBJ_BASE);
-// the above makes sprites in avsp not sync with the background, all other games
-// seem to set the register to 0x7080.
-	baseptr = 0x7080;
-
-	if (cps2_objram_bank & 1) baseptr ^= 0x0080;
+	if (cps2_objram_bank_lagged & 1) baseptr ^= 0x0080;
 
 //usrintf_showmessage("%04x %d",cps2_port(CPS2_OBJ_BASE),cps2_objram_bank&1);
 
@@ -1948,8 +2218,8 @@ void cps2_find_last_sprite(void)    /* Find the offset of last sprite */
 	/* Locate the end of table marker */
 	while (offset < cps2_obj_size/2)
 	{
-		if (base[offset+1]==0x8000
-				|| base[offset+3]==0xff00)
+		if (base[offset+1]>=0x8000
+				|| base[offset+3]>=0xff00)
 		{
 			/* Marker found. This is the last sprite. */
 			cps2_last_sprite_offset=offset-4;
@@ -1961,7 +2231,7 @@ void cps2_find_last_sprite(void)    /* Find the offset of last sprite */
 	cps2_last_sprite_offset=cps2_obj_size/2-4;
 }
 
-void cps2_render_sprites(struct osd_bitmap *bitmap,int minpri,int maxpri)
+void cps2_render_sprites(struct osd_bitmap *bitmap,int minpri,int maxpri,int flag)		//ks
 {
 	int i;
 	data16_t *base=cps2_objbase();
@@ -1981,6 +2251,7 @@ void cps2_render_sprites(struct osd_bitmap *bitmap,int minpri,int maxpri)
 		int x=*(base+0);
 		int y=*(base+1);
 		int priority=(x>>13)&0x07;
+		int pri_sp=i/4+sprite_zbuf_baseval;			//ks
 
 		if (priority >= minpri && priority <= maxpri)
 		{
@@ -2010,13 +2281,14 @@ void cps2_render_sprites(struct osd_bitmap *bitmap,int minpri,int maxpri)
 							{
 								sx = (x+nxs*16+xoffs) & 0x3ff;
 								sy = (y+nys*16) & 0x3ff;
-
-								drawgfx(bitmap,Machine->gfx[1],
+//ks s
+								cps2_drawsprite(Machine->gfx[1],
 										code+(nx-1)-nxs+0x10*(ny-1-nys),
 										(col&0x1f) + palette_basecolor[0],
 										1,1,
 										sx,sy,
-										&Machine->visible_area,TRANSPARENCY_PEN,15);
+										pri_sp,flag);
+//ks e
 							}
 						}
 					}
@@ -2029,12 +2301,14 @@ void cps2_render_sprites(struct osd_bitmap *bitmap,int minpri,int maxpri)
 								sx = (x+nxs*16+xoffs) & 0x3ff;
 								sy = (y+nys*16) & 0x3ff;
 
-								drawgfx(bitmap,Machine->gfx[1],
+//ks s
+								cps2_drawsprite(Machine->gfx[1],
 										code+nxs+0x10*(ny-1-nys),
 										(col&0x1f) + palette_basecolor[0],
 										0,1,
 										sx,sy,
-										&Machine->visible_area,TRANSPARENCY_PEN,15);
+										pri_sp,flag);
+//ks e
 							}
 						}
 					}
@@ -2050,12 +2324,14 @@ void cps2_render_sprites(struct osd_bitmap *bitmap,int minpri,int maxpri)
 								sx = (x+nxs*16+xoffs) & 0x3ff;
 								sy = (y+nys*16) & 0x3ff;
 
-								drawgfx(bitmap,Machine->gfx[1],
+//ks s
+								cps2_drawsprite(Machine->gfx[1],
 										code+(nx-1)-nxs+0x10*nys,
 										(col&0x1f) + palette_basecolor[0],
 										1,0,
 										sx,sy,
-										&Machine->visible_area,TRANSPARENCY_PEN,15);
+										pri_sp,flag);
+//ks e
 							}
 						}
 					}
@@ -2068,12 +2344,15 @@ void cps2_render_sprites(struct osd_bitmap *bitmap,int minpri,int maxpri)
 								sx = (x+nxs*16+xoffs) & 0x3ff;
 								sy = (y+nys*16) & 0x3ff;
 
-								drawgfx(bitmap,Machine->gfx[1],
-										code+nxs+0x10*nys,
+//ks s
+								cps2_drawsprite(Machine->gfx[1],
+//										code+nxs+0x10*nys,
+										(code & ~0xf) + ((code + nxs) & 0xf) + 0x10*nys,	//	pgear fix
 										(col&0x1f) + palette_basecolor[0],
 										0,0,
 										sx,sy,
-										&Machine->visible_area,TRANSPARENCY_PEN,15);
+										pri_sp,flag);
+//ks e
 							}
 						}
 					}
@@ -2082,12 +2361,14 @@ void cps2_render_sprites(struct osd_bitmap *bitmap,int minpri,int maxpri)
 			else
 			{
 				/* Simple case... 1 sprite */
-				drawgfx(bitmap,Machine->gfx[1],
+//ks s
+				cps2_drawsprite(Machine->gfx[1],
 						code,
 						(col&0x1f) + palette_basecolor[0],
 						colour&0x20,colour&0x40,
 						(x+xoffs) & 0x3ff,y & 0x3ff,
-						&Machine->visible_area,TRANSPARENCY_PEN,15);
+						pri_sp,flag);
+//ks e
 			}
 		}
 		base += 4;
@@ -2130,9 +2411,9 @@ INLINE void cps1_palette_scroll2(unsigned short *base)
 	{
 		code=basecode+cps1_scroll2[offs/2];
 		colour=cps1_scroll2[(offs+2)/2]&0x1f;
-		if (code < cps1_max_tile16)
+		if (code < Machine->gfx[1]->total_elements)
 		{
-			base[colour] |= cps1_tile16_pen_usage[code];
+			base[colour] |= Machine->gfx[1]->pen_usage[code];
 		}
 	}
 }
@@ -2351,9 +2632,9 @@ void cps1_palette_scroll3(unsigned short *base)
 				code += 0x4000;
 			}
 			colour=cps1_scroll3[(offs+2)/2];
-			if (code < cps1_max_tile32)
+			if (code < Machine->gfx[2]->total_elements)
 			{
-				base[colour&0x1f] |= cps1_tile32_pen_usage[code];
+				base[colour&0x1f] |= Machine->gfx[2]->pen_usage[code];
 			}
 		}
 	}
@@ -2433,6 +2714,15 @@ void cps1_render_stars(struct osd_bitmap *bitmap)
 	if (cps1_stars_enabled)
 	{
 		int offs;
+		UINT8 *stars_rom = memory_region(REGION_GFX2);
+
+		if (!stars_rom)
+		{
+#ifdef MAME_DEBUG
+			usrintf_showmessage("stars enabled but no stars ROM");
+#endif
+			return;
+		}
 
 
 		for (offs = 0;offs < stars_rom_size/2;offs++)
@@ -2548,19 +2838,6 @@ void cps1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	int old_flip;
 
 
-#if MAME_DEBUG
-    if (keyboard_pressed_memory(KEYCODE_T))
-    {
-        cps_view_tiles=~cps_view_tiles;
-    }
-    if (cps_view_tiles || cps_version == 99)
-    {
-        memset(palette_used_colors, PALETTE_COLOR_VISIBLE, 4096);
-        cps_tileviewer_screenrefresh(bitmap, full_refresh);
-        return;
-    }
-#endif
-
 	old_flip=cps1_flip_screen;
 	cps1_flip_screen=videocontrol&0x8000;
 	if (old_flip != cps1_flip_screen)
@@ -2651,10 +2928,11 @@ void cps1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	l1 = (layercontrol >> 0x08) & 03;
 	l2 = (layercontrol >> 0x0a) & 03;
 	l3 = (layercontrol >> 0x0c) & 03;
-	fillbitmap(priority_bitmap,0,NULL);
+//ks	fillbitmap(priority_bitmap,0,NULL);
 
 	if (cps_version == 1)
 	{
+		fillbitmap(priority_bitmap,0,NULL);				//ks
 		cps1_render_layer(bitmap,l0,distort_scroll2);
 		if (l1 == 0) cps1_render_high_layer(bitmap,l0); /* prepare mask for sprites */
 		cps1_render_layer(bitmap,l1,distort_scroll2);
@@ -2665,9 +2943,7 @@ void cps1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	}
 	else
 	{
-		int pri_ctrl = cps2_port(CPS2_OBJ_PRI);
 		int l0pri,l1pri,l2pri,l3pri;
-
 		l0pri = (pri_ctrl >> 4*l0) & 0x0f;
 		l1pri = (pri_ctrl >> 4*l1) & 0x0f;
 		l2pri = (pri_ctrl >> 4*l2) & 0x0f;
@@ -2696,13 +2972,25 @@ if (keyboard_pressed(KEYCODE_Z))
 //		if (l1pri < l0pri) usrintf_showmessage("l1pri < l0pri!");
 //		if (l2pri < l1pri) usrintf_showmessage("l2pri < l1pri!");
 
-		cps2_render_sprites(bitmap,0,l0pri);
+//ks s
+profiler_mark(PROFILER_USER1);
+		sprite_zbuf_baseval += num_sprites;
+		if(sprite_zbuf_baseval & 0xffff0000)
+		{
+			sprite_zbuf_baseval = 0;
+			memset( sprite_zbuf, 0x00, sprite_zbuf_size );
+		}
+
+		cps2_render_sprites(bitmap,0,0,0);
+		cps2_render_sprites(bitmap,1,l0pri,1);
 		cps1_render_layer(bitmap,l0,distort_scroll2);
-		cps2_render_sprites(bitmap,l0pri+1,l1pri);
+		cps2_render_sprites(bitmap,l0pri+1,l1pri,1);
 		cps1_render_layer(bitmap,l1,distort_scroll2);
-		cps2_render_sprites(bitmap,l1pri+1,l2pri);
+		cps2_render_sprites(bitmap,l1pri+1,l2pri,1);
 		cps1_render_layer(bitmap,l2,distort_scroll2);
-		cps2_render_sprites(bitmap,l2pri+1,7);
+		cps2_render_sprites(bitmap,l2pri+1,7,1);
+profiler_mark(PROFILER_END);
+//ks e
 	}
 
 #if CPS1_DUMP_VIDEO
@@ -2724,11 +3012,12 @@ void cps1_eof_callback(void)
 	{
 		memcpy(cps2_buffered_obj,                cps2_objram1,cps2_obj_size);
 		memcpy(cps2_buffered_obj+cps2_obj_size/2,cps2_objram2,cps2_obj_size);
+
+		pri_ctrl = cps2_port(CPS2_OBJ_PRI); 		/* delay sprite priorities also */
+		cps2_objram_bank_lagged = cps2_objram_bank; 	/* delay object bank by 1 frame */
 	}
 }
 
-
-#include "cps2.c"
 
 
 
@@ -2751,7 +3040,7 @@ void cps1_eof_callback(void)
 
 	/* 8x8 tiles (srcdelta == 1) are taken from the RIGHT side of the 16x16 tile
 	   (fixes cawing which uses character 0x0002 as space, typo instead of 0x20?) */
-	src = cps1_gfx+4*(code*delta + srcdelta);
+	src = memory_region(REGION_GFX1)+4*(code*delta + srcdelta);
 
 	if (Machine->orientation & ORIENTATION_SWAP_XY)
 	{

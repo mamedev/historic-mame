@@ -147,6 +147,7 @@ void darius_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void darius_vh_stop(void);
 
 static UINT16 cpua_ctrl;
+static UINT16 coin_word=0;
 
 extern data16_t *darius_fg_ram;
 READ16_HANDLER ( darius_fg_layer_r );
@@ -166,7 +167,7 @@ static WRITE16_HANDLER( sharedram_w )
 	COMBINE_DATA(&sharedram[offset]);
 }
 
-void parse_control( void)
+void parse_control( void )	/* assumes Z80 sandwiched between 68Ks */
 {
 	/* bit 0 enables cpu B */
 	/* however this fails when recovering from a save state
@@ -175,7 +176,7 @@ void parse_control( void)
 
 }
 
-static WRITE16_HANDLER( cpua_ctrl_w )	/* assumes Z80 sandwiched between 68Ks */
+static WRITE16_HANDLER( cpua_ctrl_w )
 {
 	if ((data &0xff00) && ((data &0xff) == 0))
 		data = data >> 8;	/* for Wgp */
@@ -186,18 +187,15 @@ static WRITE16_HANDLER( cpua_ctrl_w )	/* assumes Z80 sandwiched between 68Ks */
 	logerror("CPU #0 PC %06x: write %04x to cpu control\n",cpu_get_pc(),data);
 }
 
+static WRITE16_HANDLER( darius_watchdog_w )
+{
+	watchdog_reset_w(0,data);
+}
 
 static READ16_HANDLER( paletteram16_r )
 {
 	return paletteram16[offset];
 }
-
-#if 0
-static WRITE16_HANDLER( dump_message )
-{
-	usrintf_showmessage(" address %08x value %04x", offset, data );
-}
-#endif
 
 
 /***********************************************************
@@ -236,7 +234,7 @@ static READ16_HANDLER( darius_ioc_r )
 			return input_port_2_word_r(0,mem_mask);	/* IN2 */
 
 		case 0x07:
-			return 0xe7;	/* bits 3&4 coin lockouts, must return zero */
+			return coin_word;	/* bits 3&4 coin lockouts, must return zero */
 
 		case 0x08:
 			return input_port_3_word_r(0,mem_mask);	/* DSW */
@@ -261,14 +259,23 @@ static WRITE16_HANDLER( darius_ioc_w )
 			taitosound_comm_w (0, data & 0xff);
 			return;
 
-		case 0x28:	/* unknown, both cpus */
+		case 0x28:	/* unknown, written by both cpus - always 0? */
+//usrintf_showmessage(" address %04x value %04x",offset,data);
 			return;
 
-		case 0x30:	/* unknown */
+		case 0x30:	/* coin control */
+			/* bits 7,5,4,0 used on reset */
+			/* bit 4 used whenever bg is blanked ? */
+			coin_lockout_w(0, ~data & 0x02);
+			coin_lockout_w(1, ~data & 0x04);
+			coin_counter_w(0, data & 0x08);
+			coin_counter_w(1, data & 0x40);
+			coin_word = data &0xffff;
+//usrintf_showmessage(" address %04x value %04x",offset,data);
 			return;
 	}
 
-logerror("CPU #0 PC %06x: warning - write unmapped ioc offset %06x\n",cpu_get_pc(),offset);
+logerror("CPU #0 PC %06x: warning - write unmapped ioc offset %06x with %04x\n",cpu_get_pc(),offset,data);
 }
 
 
@@ -292,7 +299,7 @@ static MEMORY_WRITE16_START( darius_writemem )
 	{ 0x000000, 0x05ffff, MWA16_ROM },
 	{ 0x080000, 0x08ffff, MWA16_RAM },
 	{ 0x0a0000, 0x0a0001, cpua_ctrl_w },
-	{ 0x0b0000, 0x0b0001, MWA16_NOP },	/* watchdog ??? */
+	{ 0x0b0000, 0x0b0001, darius_watchdog_w },
 	{ 0xc00000, 0xc0007f, darius_ioc_w },	/* coin ctr & lockout, sound */
 	{ 0xd00000, 0xd0ffff, PC080SN_word_0_w },
 	{ 0xd20000, 0xd20003, PC080SN_yscroll_word_0_w },
@@ -303,7 +310,6 @@ static MEMORY_WRITE16_START( darius_writemem )
 	{ 0xe01000, 0xe02fff, sharedram_w, &sharedram, &sharedram_size },
 	{ 0xe08000, 0xe0ffff, darius_fg_layer_w, &darius_fg_ram },
 	{ 0xe10000, 0xe10fff, MWA16_RAM },
-//	{ 0x000000, 0xffffff, dump_message },
 MEMORY_END
 
 static MEMORY_READ16_START( darius_cpub_readmem )
@@ -320,7 +326,6 @@ static MEMORY_WRITE16_START( darius_cpub_writemem )
 	{ 0xe00100, 0xe00fff, spriteram16_w },	/* some writes */
 	{ 0xe01000, 0Xe02fff, sharedram_w },
 	{ 0xe08000, 0xe0ffff, darius_fg_layer_w },	/* a few writes */
-//	{ 0x000000, 0xffffff, dump_message },
 MEMORY_END
 
 

@@ -95,11 +95,11 @@ static void get_bg_tile_info(int tile_index)
 	int attr = videoram[2*tile_index+1];
 	int code = videoram[2*tile_index] + ((attr & 0xc0) << 2) + (tile_bank << 10);
 
-	SET_TILE_INFO(0,code,attr & 0xf)
-
-	tile_info.flags =
-		((attr & 0x10) ? TILE_FLIPY : 0) |
-		((attr & 0x20) ? TILE_FLIPX : 0);
+	SET_TILE_INFO(
+			0,
+			code,
+			attr & 0xf,
+			TILE_FLIPXY((attr & 0x30) >> 4))
 }
 
 

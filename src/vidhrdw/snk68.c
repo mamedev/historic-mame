@@ -32,7 +32,11 @@ static void get_pow_tile_info(int tile_index)
 	tile=((color&0xf0)<<4) | tile;
 	color&=0xf;
 
-	SET_TILE_INFO(0,tile,color)
+	SET_TILE_INFO(
+			0,
+			tile,
+			color,
+			0)
 }
 
 static void get_sar_tile_info(int tile_index)
@@ -42,7 +46,11 @@ static void get_sar_tile_info(int tile_index)
 
 	tile=tile&0xfff;
 
-	SET_TILE_INFO(0,tile,color)
+	SET_TILE_INFO(
+			0,
+			tile,
+			color,
+			0)
 }
 
 static void get_ikari3_tile_info(int tile_index)
@@ -57,7 +65,11 @@ static void get_ikari3_tile_info(int tile_index)
 	} else
 		tile=tile&0xfff;
 
-	SET_TILE_INFO(0,tile,color)
+	SET_TILE_INFO(
+			0,
+			tile,
+			color,
+			0)
 }
 
 /***************************************************************************

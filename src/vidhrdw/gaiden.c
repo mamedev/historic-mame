@@ -22,21 +22,33 @@ static void get_bg_tile_info(int tile_index)
 {
 	UINT16 *videoram1 = &gaiden_videoram3[0x0800];
 	UINT16 *videoram2 = gaiden_videoram3;
-	SET_TILE_INFO(1,videoram1[tile_index] & 0xfff,(videoram2[tile_index] & 0xf0) >> 4)
+	SET_TILE_INFO(
+			1,
+			videoram1[tile_index] & 0xfff,
+			(videoram2[tile_index] & 0xf0) >> 4,
+			0)
 }
 
 static void get_fg_tile_info(int tile_index)
 {
 	UINT16 *videoram1 = &gaiden_videoram2[0x0800];
 	UINT16 *videoram2 = gaiden_videoram2;
-	SET_TILE_INFO(2,videoram1[tile_index] & 0xfff,(videoram2[tile_index] & 0xf0) >> 4)
+	SET_TILE_INFO(
+			2,
+			videoram1[tile_index] & 0xfff,
+			(videoram2[tile_index] & 0xf0) >> 4,
+			0)
 }
 
 static void get_tx_tile_info(int tile_index)
 {
 	UINT16 *videoram1 = &gaiden_videoram[0x0400];
 	UINT16 *videoram2 = gaiden_videoram;
-	SET_TILE_INFO(0,videoram1[tile_index] & 0x7ff,(videoram2[tile_index] & 0xf0) >> 4)
+	SET_TILE_INFO(
+			0,
+			videoram1[tile_index] & 0x7ff,
+			(videoram2[tile_index] & 0xf0) >> 4,
+			0)
 }
 
 

@@ -1021,15 +1021,15 @@ void cpu_loadsave_reset(void)
   onwards, if you don't call it at least once every 2 seconds, the machine
   will be reset.
 
-  The 2 seconds delay is targeted at dondokod, which during boot stays more
-  than 1 second without resetting the watchdog.
+  The 3 seconds delay is targeted at qzshowby, which otherwise would reset
+  at the start of a game.
 
 ***************************************************************************/
 
 static void watchdog_reset(void)
 {
 	if (watchdog_counter == -1) logerror("watchdog armed\n");
-	watchdog_counter = 2*Machine->drv->frames_per_second;
+	watchdog_counter = 3*Machine->drv->frames_per_second;
 }
 
 WRITE_HANDLER( watchdog_reset_w )
@@ -2099,9 +2099,6 @@ static void cpu_generate_interrupt(int cpunum, int (*func)(void), int num)
 #endif
 #if (HAS_S2650)
 			case CPU_S2650: 			irq_line = 0; LOG(("S2650 IRQ\n")); break;
-#endif
-#if (HAS_F8)
-			case CPU_F8:				irq_line = 0; LOG(("F8 INTR\n")); break;
 #endif
 #if (HAS_TMS34010)
 			case CPU_TMS34010:

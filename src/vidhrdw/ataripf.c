@@ -1357,8 +1357,19 @@ static void pf_init_gfx(struct ataripf_data *pf, int gfxindex)
 		/* loop over all pixels, marking pens */
 		for (y = 0; y < gfx->element.height; y++)
 		{
-			for (x = 0; x < gfx->element.width; x++)
-				usage->bits[src[x] >> 5] |= 1 << (src[x] & 31);
+			/* if the graphics are 4bpp packed, do it one way */
+			if (gfx->element.flags & GFX_PACKED)
+				for (x = 0; x < gfx->element.width / 2; x++)
+				{
+					usage->bits[0] |= 1 << (src[x] & 15);
+					usage->bits[0] |= 1 << (src[x] >> 4);
+				}
+
+			/* otherwise, do it the original way */
+			else
+				for (x = 0; x < gfx->element.width; x++)
+					usage->bits[src[x] >> 5] |= 1 << (src[x] & 31);
+
 			src += gfx->element.line_modulo;
 		}
 

@@ -12,17 +12,14 @@
 // standard includes
 #include <time.h>
 #include <ctype.h>
-#include <stdarg.h>
 
 // MAME headers
 #include "driver.h"
 #include "window.h"
 
 // from config.c
-int parse_config_and_cmdline(int argc, char **argv);
-extern int errorlog;
-
-
+int  cli_frontend_init (int argc, char **argv);
+void cli_frontend_exit (void);
 
 //============================================================
 //	GLOBAL VARIABLES
@@ -37,8 +34,6 @@ int _CRT_glob = 0;
 //============================================================
 //	LOCAL VARIABLES
 //============================================================
-
-static FILE *logfile;
 
 static char mapfile_name[MAX_PATH];
 static LPTOP_LEVEL_EXCEPTION_FILTER pass_thru_filter;
@@ -74,40 +69,17 @@ int main(int argc, char **argv)
 	else
 		strcat(mapfile_name, ".map");
 	pass_thru_filter = SetUnhandledExceptionFilter(exception_filter);
-	
+
 	// remember the initial LED states
 	original_leds = osd_get_leds();
 
 	// parse config and cmdline options
-	game_index = parse_config_and_cmdline(argc, argv);
+	game_index = cli_frontend_init (argc, argv);
 
-	// provide errorlog from here on 
-	if (errorlog)
-	{
-		logfile = fopen("error.log","wa");
-		if (!logfile)
-		{
-			perror("unable to open log file\n");
-			exit (1);
-		}
-	}
-
-	// set the vector width based on the specified width
-	options.vector_width = gfx_width;
-	options.vector_height = gfx_height;
-	
 	// have we decided on a game?
 	if (game_index != -1)
 		res = run_game(game_index);
 
-	// close open files
-	if (logfile) fclose(logfile);
-
-	// hmm, no better place for these three to be found?
-	if (options.playback) osd_fclose(options.playback);
-	if (options.record)   osd_fclose(options.record);
-	if (options.language_file) osd_fclose(options.language_file);
-	
 	// restore the original LED state
 	osd_set_leds(original_leds);
 	exit(res);
@@ -123,7 +95,7 @@ int osd_init(void)
 {
 	extern int win32_init_input(void);
 	int result;
-	
+
 	result = win32_init_window();
 	if (result == 0)
 		result = win32_init_input();
@@ -142,24 +114,6 @@ void osd_exit(void)
 	win32_shutdown_input();
 	osd_set_leds(0);
 }
-
-
-
-//============================================================
-//	logerror
-//============================================================
-
-void CLIB_DECL logerror(const char *text,...)
-{
-	va_list arg;
-	
-	// standard vfprintf stuff here
-	va_start(arg, text);
-	if (errorlog)
-		vfprintf(logfile, text, arg);
-	va_end(arg);
-}
-
 
 
 //============================================================
@@ -200,22 +154,22 @@ static LONG CALLBACK exception_filter(struct _EXCEPTION_POINTERS *info)
 	};
 	static int already_hit = 0;
 	int i;
-	
+
 	// if we're hitting this recursively, just exit
 	if (already_hit)
 		return EXCEPTION_EXECUTE_HANDLER;
 	already_hit = 1;
-	
+
 	// find our man
 	for (i = 0; exception_table[i].code != 0; i++)
 		if (info->ExceptionRecord->ExceptionCode == exception_table[i].code)
 			break;
-	
+
 	// print the exception type and address
 	fprintf(stderr, "\n-----------------------------------------------------\n");
-	fprintf(stderr, "Exception at EIP=%08X%s: %s\n", (UINT32)info->ExceptionRecord->ExceptionAddress, 
+	fprintf(stderr, "Exception at EIP=%08X%s: %s\n", (UINT32)info->ExceptionRecord->ExceptionAddress,
 			lookup_symbol((UINT32)info->ExceptionRecord->ExceptionAddress), exception_table[i].string);
-	
+
 	// for access violations, print more info
 	if (info->ExceptionRecord->ExceptionCode == EXCEPTION_ACCESS_VIOLATION)
 		fprintf(stderr, "While attempting to %s memory at %08X\n",
@@ -240,7 +194,7 @@ fprintf(stderr, "esp = %08x  ebp = %08x\n", esp, ebp);
 	}
 */
 	// exit
-	return EXCEPTION_EXECUTE_HANDLER;		
+	return EXCEPTION_EXECUTE_HANDLER;
 }
 
 
@@ -256,15 +210,15 @@ static const char *lookup_symbol(UINT32 address)
 	char	symbol[1024], best_symbol[1024];
 	UINT32	addr, best_addr = 0;
 	char	line[1024];
-	
+
 	// if no file, return nothing
 	if (map == NULL)
 		return "";
-	
+
 	// reset the bests
 	*best_symbol = 0;
 	best_addr = 0;
-	
+
 	// parse the file, looking for map entries
 	while (fgets(line, sizeof(line) - 1, map))
 		if (!strncmp(line, "                0x", 18))
@@ -274,7 +228,7 @@ static const char *lookup_symbol(UINT32 address)
 					best_addr = addr;
 					strcpy(best_symbol, symbol);
 				}
-	
+
 	// create the final result
 	if (address - best_addr > 0x10000)
 		return "";

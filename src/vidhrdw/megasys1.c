@@ -317,13 +317,13 @@ int megasys1_vh_start(void)
 void megasys1_get_scroll_##_n_##_tile_info_8x8(int tile_index) \
 { \
 	data16_t code = megasys1_scrollram_##_n_[tile_index]; \
-	SET_TILE_INFO( _n_ , (code & 0xfff) * megasys1_8x8_scroll_##_n_##_factor, code >> (16 - megasys1_bits_per_color_code) ) \
+	SET_TILE_INFO( _n_ , (code & 0xfff) * megasys1_8x8_scroll_##_n_##_factor, code >> (16 - megasys1_bits_per_color_code), 0 ) \
 } \
 \
 void megasys1_get_scroll_##_n_##_tile_info_16x16(int tile_index) \
 { \
 	data16_t code = megasys1_scrollram_##_n_[tile_index/4]; \
-	SET_TILE_INFO( _n_ , (code & 0xfff) * megasys1_16x16_scroll_##_n_##_factor + (tile_index & 3), code >> (16-megasys1_bits_per_color_code) ); \
+	SET_TILE_INFO( _n_ , (code & 0xfff) * megasys1_16x16_scroll_##_n_##_factor + (tile_index & 3), code >> (16-megasys1_bits_per_color_code), 0 ); \
 } \
 \
 UINT32 megasys1_##_n_##_scan_8x8(UINT32 col,UINT32 row,UINT32 num_cols,UINT32 num_rows) \

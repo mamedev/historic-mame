@@ -31,26 +31,42 @@ static UINT32 bg_scan(UINT32 col,UINT32 row,UINT32 num_cols,UINT32 num_rows)
 static void macross_get_bg_tile_info(int tile_index)
 {
 	int code = nmk_bgvideoram[tile_index];
-	SET_TILE_INFO(1,(code & 0xfff) + (bgbank << 12),code >> 12)
+	SET_TILE_INFO(
+			1,
+			(code & 0xfff) + (bgbank << 12),
+			code >> 12,
+			0)
 }
 
 static void strahl_get_fg_tile_info(int tile_index)
 {
 	int code = nmk_fgvideoram[tile_index];
-	SET_TILE_INFO(3,(code & 0xfff),code >> 12)
+	SET_TILE_INFO(
+			3,
+			(code & 0xfff),
+			code >> 12,
+			0)
 }
 
 static void macross_get_tx_tile_info(int tile_index)
 {
 	int code = nmk_txvideoram[tile_index];
-	SET_TILE_INFO(0,code & 0xfff,code >> 12)
+	SET_TILE_INFO(
+			0,
+			code & 0xfff,
+			code >> 12,
+			0)
 }
 
 static void bjtwin_get_bg_tile_info(int tile_index)
 {
 	int code = nmk_bgvideoram[tile_index];
 	int bank = (code & 0x800) ? 1 : 0;
-	SET_TILE_INFO(bank,(code & 0x7ff) + ((bank) ? (bgbank << 11) : 0),code >> 12)
+	SET_TILE_INFO(
+			bank,
+			(code & 0x7ff) + ((bank) ? (bgbank << 11) : 0),
+			code >> 12,
+			0)
 }
 
 

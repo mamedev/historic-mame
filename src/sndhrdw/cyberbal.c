@@ -6,7 +6,6 @@
 
 #include "driver.h"
 #include "machine/atarigen.h"
-#include "sound/ym2151.h"
 
 #include <math.h>
 
@@ -64,7 +63,8 @@ WRITE_HANDLER( cyberbal_sound_bank_select_w )
 	coin_counter_w(1, (data >> 5) & 1);
 	coin_counter_w(0, (data >> 4) & 1);
 	cpu_set_reset_line(3, (data & 0x08) ? CLEAR_LINE : ASSERT_LINE);
-	if (!(data & 0x01)) YM2151ResetChip(0);
+	if (!(data & 0x01)) YM2151_sh_reset();
+
 }
 
 

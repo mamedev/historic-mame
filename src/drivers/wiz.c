@@ -24,6 +24,7 @@ E800-E83F  Attributes RAM (Background)
 E840-E85F  Sprite RAM 2
 
 I/O read:
+d400 Protection (Wiz)
 f000 DIP SW#1
 f008 DIP SW#2
 f010 Input Port 1
@@ -68,23 +69,20 @@ I/O write:
 TODO:
 
 - Verify sprite colors in stinger/scion
-- background noise in scion (but not scionc). Note that the sound program is
+- Background noise in scion (but not scionc). Note that the sound program is
   almost identical, except for three patches affecting noise period, noise
   channel C enable and channel C volume. So it looks just like a bug in the
   original (weird), or some strange form of protection.
 
 Wiz:
-- Sprite banking. I have a hack in wiz_vh_screenrefresh.
 - Possible sprite/char priority issues.
-- Player dies suddenly at the moment "Brain" enemy appear.
-- Position of checkpoint is wrong. As side effect, boss appears at strange.
-  point. In real machine, it should appear at G (goal - rightmost of the map)
-  of heaven area.
-- After gameover, the game is set to freeplay.
-- MCU issues? There is unknown device (Sony CXK5808-55) on the board.
+- There is unknown device (Sony CXK5808-55) on the board.
 - And the supplier of the screenshot says there still may be some wrong
-  colors.
+  colors. Just before the break on Level 2 there is a cresent moon,
+  the background should probably be black.
 
+
+2001-Jun-24 Fixed protection and added save states (SJ)
 
 ***************************************************************************/
 
@@ -101,12 +99,25 @@ WRITE_HANDLER( wiz_char_bank_select_w );
 WRITE_HANDLER( wiz_attributes_w );
 WRITE_HANDLER( wiz_palettebank_w );
 WRITE_HANDLER( wiz_bgcolor_w );
+WRITE_HANDLER( wiz_flipx_w );
+WRITE_HANDLER( wiz_flipy_w );
+int  wiz_vh_start(void);
 void wiz_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void wiz_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void stinger_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-WRITE_HANDLER( wiz_flipx_w );
-WRITE_HANDLER( wiz_flipy_w );
 
+
+static READ_HANDLER( wiz_protection_r )
+{
+	switch (wiz_colorram2[0])
+	{
+	case 0x35: return 0x25; /* FIX: sudden player death + free play afterwards   */
+	case 0x8f: return 0x1f; /* FIX: early boss appearance with corrupt graphics  */
+	case 0xa0: return 0x00; /* FIX: executing junk code after defeating the boss */
+	}
+
+	return wiz_colorram2[0];
+}
 
 static WRITE_HANDLER( sound_command_w )
 {
@@ -217,10 +228,10 @@ INPUT_PORTS_START( wiz )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x18, DEF_STR( 2C_3C ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( 1C_2C ) )
-	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Free_Play ) )
@@ -296,6 +307,78 @@ INPUT_PORTS_START( stinger )
 	PORT_DIPSETTING(    0x00, "None" )
 
 	PORT_START	/* DSW1 */
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0e, 0x0e, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x0a, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(    0x0e, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 1C_2C ) )
+	PORT_DIPNAME( 0x30, 0x20, "Bongo Time" )
+	PORT_DIPSETTING(    0x00, "1 second" )
+	PORT_DIPSETTING(    0x10, "2 seconds" )
+	PORT_DIPSETTING(    0x20, "4 seconds" )
+	PORT_DIPSETTING(    0x30, "8 seconds" )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x00, "Normal" )
+	PORT_DIPSETTING(    0x40, "Hard" )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( stinger2 )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON2 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
+
+	PORT_START	/* DSW0 */
+	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(    0x07, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x05, DEF_STR( 1C_3C ) )
+	PORT_DIPNAME( 0x18, 0x08, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_DIPSETTING(    0x08, "3" )
+	PORT_DIPSETTING(    0x10, "4" )
+	PORT_DIPSETTING(    0x18, "5" )
+	PORT_DIPNAME( 0xe0, 0xe0, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0xe0, "20000 50000" )
+	PORT_DIPSETTING(    0xc0, "20000 60000" )
+	PORT_DIPSETTING(    0xa0, "20000 70000" )
+	PORT_DIPSETTING(    0x80, "20000 80000" )
+	PORT_DIPSETTING(    0x60, "20000 90000" )
+	PORT_DIPSETTING(    0x40, "30000 80000" )
+	PORT_DIPSETTING(    0x20, "30000 90000" )
+	PORT_DIPSETTING(    0x00, "None" )
+
+	PORT_START	/* DSW1 */
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Free_Play ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
@@ -324,24 +407,24 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( scion )
 	PORT_START	/* IN0 */
-    PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
-    PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_COCKTAIL )
-    PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON2 )
-    PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START2 )
-    PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_START1 )
-    PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN2 )
-    PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON1 )
-    PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON2 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
 
 	PORT_START	/* IN1 */
-    PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-    PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
-    PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
-    PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
-    PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY )
-    PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY )
-    PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
-    PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
 
 	PORT_START	/* DSW0 */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Cabinet ) )
@@ -420,9 +503,6 @@ static struct GfxLayout spritelayout =
 };
 
 
-// I don't know how the 32 colors are used. I'm making the
-// forest and the title screen green/brown, and the ice and sky levels
-// white/blue. What we need is screenshots.
 static struct GfxDecodeInfo wiz_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &charlayout,   0, 32 },
@@ -501,7 +581,7 @@ static const struct MachineDriver machine_driver_##NAME =				\
 																\
 	VIDEO_TYPE_RASTER,											\
 	0,															\
-	generic_vh_start,											\
+	wiz_vh_start,												\
 	generic_vh_stop,											\
 	NAME##_vh_screenrefresh,									\
 																\
@@ -583,6 +663,33 @@ ROM_END
 
 ROM_START( stinger )
 	ROM_REGION( 2*0x10000, REGION_CPU1, 0 )	/* 64k for code + 64k for decrypted opcodes */
+	ROM_LOAD( "1-5j.bin",     0x0000, 0x2000, 0x1a2ca600 )	/* encrypted */
+	ROM_LOAD( "2-6j.bin",     0x2000, 0x2000, 0x957cd39c )	/* encrypted */
+	ROM_LOAD( "3-8j.bin",     0x4000, 0x2000, 0x404c932e )	/* encrypted */
+	ROM_LOAD( "4-9j.bin",     0x6000, 0x2000, 0x2d570f91 )	/* encrypted */
+	ROM_LOAD( "5-10j.bin",    0x8000, 0x2000, 0xc841795c )	/* encrypted */
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for sound cpu */
+	ROM_LOAD( "6-9f.bin",     0x0000, 0x2000, 0x79757f0c )
+
+	ROM_REGION( 0x6000,  REGION_GFX1, ROMREGION_DISPOSE )	/* sprites/chars */
+	ROM_LOAD( "7-9e.bin",     0x0000, 0x2000, 0x775489be )
+	ROM_LOAD( "8-11e.bin",    0x2000, 0x2000, 0x43c61b3f )
+	ROM_LOAD( "9-14e.bin",    0x4000, 0x2000, 0xc9ed8fc7 )
+
+	ROM_REGION( 0x6000,  REGION_GFX2, ROMREGION_DISPOSE )	/* sprites/chars */
+	ROM_LOAD( "10-9h.bin",    0x0000, 0x2000, 0x6fc3a22d )
+	ROM_LOAD( "11-11h.bin",   0x2000, 0x2000, 0x3df1f57e )
+	ROM_LOAD( "12-14h.bin",   0x4000, 0x2000, 0x2fbe1391 )
+
+	ROM_REGION( 0x0300,  REGION_PROMS, 0 )
+	ROM_LOAD( "stinger.a7",   0x0000, 0x0100, 0x52c06fc2 )	/* red component */
+	ROM_LOAD( "stinger.b7",   0x0100, 0x0100, 0x9985e575 )	/* green component */
+	ROM_LOAD( "stinger.a8",   0x0200, 0x0100, 0x76b57629 )	/* blue component */
+ROM_END
+
+ROM_START( stinger2 )
+	ROM_REGION( 2*0x10000, REGION_CPU1, 0 )	/* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "n1.bin",       0x0000, 0x2000, 0xf2d2790c )	/* encrypted */
 	ROM_LOAD( "n2.bin",       0x2000, 0x2000, 0x8fd2d8d8 )	/* encrypted */
 	ROM_LOAD( "n3.bin",       0x4000, 0x2000, 0xf1794d36 )	/* encrypted */
@@ -590,12 +697,12 @@ ROM_START( stinger )
 	ROM_LOAD( "n5.bin",       0x8000, 0x2000, 0xa03a01da )	/* encrypted */
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for sound cpu */
-	ROM_LOAD( "6.bin",        0x0000, 0x2000, 0x79757f0c )
+	ROM_LOAD( "6-9f.bin",     0x0000, 0x2000, 0x79757f0c )
 
 	ROM_REGION( 0x6000,  REGION_GFX1, ROMREGION_DISPOSE )	/* sprites/chars */
-	ROM_LOAD( "7.bin",        0x0000, 0x2000, 0x775489be )
-	ROM_LOAD( "8.bin",        0x2000, 0x2000, 0x43c61b3f )
-	ROM_LOAD( "9.bin",        0x4000, 0x2000, 0xc9ed8fc7 )
+	ROM_LOAD( "7-9e.bin",     0x0000, 0x2000, 0x775489be )
+	ROM_LOAD( "8-11e.bin",    0x2000, 0x2000, 0x43c61b3f )
+	ROM_LOAD( "9-14e.bin",    0x4000, 0x2000, 0xc9ed8fc7 )
 
 	ROM_REGION( 0x6000,  REGION_GFX2, ROMREGION_DISPOSE )	/* sprites/chars */
 	ROM_LOAD( "10.bin",       0x0000, 0x2000, 0xf6721930 )
@@ -710,9 +817,15 @@ static void init_stinger(void)
 }
 
 
+static void init_wiz(void)
+{
+	install_mem_read_handler(0, 0xd400, 0xd400, wiz_protection_r);
+}
 
-GAMEX(1983, stinger, 0,     stinger, stinger, stinger, ROT90,  "Seibu Denshi", "Stinger", GAME_IMPERFECT_COLORS )
-GAMEX(1984, scion,   0,     stinger, scion,   0,       ROT0,   "Seibu Denshi", "Scion", GAME_IMPERFECT_COLORS )
-GAMEX(1984, scionc,  scion, stinger, scion,   0,       ROT0,   "Seibu Denshi (Cinematronics license)", "Scion (Cinematronics)", GAME_IMPERFECT_COLORS )
-GAME( 1985, wiz,     0,     wiz,     wiz,     0,       ROT270, "Seibu Kaihatsu Inc.", "Wiz" )
-GAME( 1985, wizt,    wiz,   wiz,     wiz,     0,       ROT270, "[Seibu] (Taito license)", "Wiz (Taito)" )
+
+GAME (1983, stinger,  0,       stinger, stinger,  stinger, ROT90,  "Seibu Denshi", "Stinger" )
+GAME (1983, stinger2, stinger, stinger, stinger2, stinger, ROT90,  "Seibu Denshi", "Stinger (prototype?)" )
+GAMEX(1984, scion,    0,       stinger, scion,    0,       ROT0,   "Seibu Denshi", "Scion", GAME_IMPERFECT_SOUND )
+GAMEX(1984, scionc,   scion,   stinger, scion,    0,       ROT0,   "Seibu Denshi (Cinematronics license)", "Scion (Cinematronics)", GAME_IMPERFECT_COLORS )
+GAME( 1985, wiz,      0,       wiz,     wiz,      wiz,     ROT270, "Seibu Kaihatsu Inc.", "Wiz" )
+GAME( 1985, wizt,     wiz,     wiz,     wiz,      wiz,     ROT270, "[Seibu] (Taito license)", "Wiz (Taito)" )

@@ -87,6 +87,8 @@ unused parts of the palette.
 
 CPUA (on all variants) could have a spin_until_int at $63a.
 
+Motor CPU: appears to be identical to one in ChaseHQ.
+
 DIPs
 
 
@@ -113,11 +115,11 @@ WRITE_HANDLER( rastan_d000_w );
 static UINT16 cpua_ctrl = 0xff;
 static int ioc220_port = 0;
 
-//static data16_t *topspeed_ram;
 extern data16_t *topspeed_spritemap;
 
 static size_t sharedram_size;
 static data16_t *sharedram;
+
 
 static READ16_HANDLER( sharedram_r )
 {
@@ -189,11 +191,12 @@ static int topspeed_cpub_interrupt(void)
 				GAME INPUTS
 **********************************************************/
 
-static READ16_HANDLER( topspeed_ioc_r )
+static READ16_HANDLER( topspeed_input_bypass_r )
 {
+	UINT8 port = TC0220IOC_port_r(0);	/* read port number */
 	int steer = 0;
-	int analogue_steer = input_port_4_word_r(0,0);
-	int fake = input_port_5_word_r(0,0);
+	int analogue_steer = input_port_5_word_r(0,0);
+	int fake = input_port_6_word_r(0,0);
 
 	if (!(fake &0x10))	/* Analogue steer (the real control method) */
 	{
@@ -218,58 +221,42 @@ static READ16_HANDLER( topspeed_ioc_r )
 			steer = analogue_steer;
 	}
 
-	switch (offset)
+	switch (port)
 	{
-		case 0x00:
-		{
-			switch (ioc220_port & 0xf)
-			{
-				case 0x00:
-					return input_port_2_word_r(0,mem_mask);	/* DSW A */
+		case 0x0c:
+			return steer &0xff;
 
-				case 0x01:
-					return input_port_3_word_r(0,mem_mask);	/* DSW B */
+		case 0x0d:
+			return steer >> 8;
 
-				case 0x02:
-					return input_port_0_word_r(0,mem_mask);	/* IN0 */
-
-				case 0x03:
-					return input_port_1_word_r(0,mem_mask);	/* IN1 */
-
-				case 0x0c:
-					return steer &0xff;
-
-				case 0x0d:
-					return steer >> 8;
-			}
-
-logerror("CPU #1 PC %06x: warning - read unmapped ioc220 port %02x\n",cpu_get_pc(),ioc220_port);
-					return 0;
-		}
-
-		case 0x01:
-			return ioc220_port;
-	}
-
-	return 0x00;	// keep compiler happy
-}
-
-static WRITE16_HANDLER( topspeed_ioc_w )
-{
-	switch (offset)
-	{
-		case 0x00:
-			// write to ioc [coin lockout etc.?]
-			break;
-
-		case 0x01:
-			ioc220_port = data &0xff;
+		default:
+			return TC0220IOC_portreg_r(offset);
 	}
 }
 
-static READ16_HANDLER( topspeed_unknown_r )
+
+static READ16_HANDLER( topspeed_motor_r )
 {
-	return 0x55;
+	switch (offset)
+	{
+		case 0x0:
+			return (rand() &0xff);	/* motor status ?? */
+
+		case 0x101:
+			return 0x55;	/* motor cpu status ? */
+
+		default:
+logerror("CPU #0 PC %06x: warning - read from motor cpu %03x\n",cpu_get_pc(),offset);
+			return 0;
+	}
+}
+
+static WRITE16_HANDLER( topspeed_motor_w )
+{
+	/* Writes $900000-25 and $900200-219 */
+
+logerror("CPU #0 PC %06x: warning - write %04x to motor cpu %03x\n",cpu_get_pc(),data,offset);
+
 }
 
 
@@ -332,15 +319,17 @@ MEMORY_END
 static MEMORY_READ16_START( topspeed_cpub_readmem )
 	{ 0x000000, 0x01ffff, MRA16_ROM },
 	{ 0x400000, 0x40ffff, sharedram_r },
-	{ 0x880000, 0x880003, topspeed_ioc_r },
-	{ 0x900202, 0x900203, topspeed_unknown_r },	/* cockpit status ? */
+	{ 0x880000, 0x880001, topspeed_input_bypass_r },
+	{ 0x880002, 0x880003, TC0220IOC_halfword_port_r },
+	{ 0x900000, 0x9003ff, topspeed_motor_r },	/* motor CPU */
 MEMORY_END
 
 static MEMORY_WRITE16_START( topspeed_cpub_writemem )
 	{ 0x000000, 0x01ffff, MWA16_ROM },
 	{ 0x400000, 0X40ffff, sharedram_w, &sharedram },
-	{ 0x880000, 0x880003, topspeed_ioc_w },
-//	{ 0x900000, 0x90002f, topspeed_unknown_w },	/* cockpit motors ? */
+	{ 0x880000, 0x880001, TC0220IOC_halfword_portreg_w },
+	{ 0x880002, 0x880003, TC0220IOC_halfword_port_w },
+	{ 0x900000, 0x9003ff, topspeed_motor_w },	/* motor CPU */
 MEMORY_END
 
 
@@ -416,28 +405,6 @@ MEMORY_END
 	PORT_DIPSETTING(    0x00, "Hardest" )
 
 INPUT_PORTS_START( topspeed )
-	PORT_START      /* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW,  IPT_UNKNOWN )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW,  IPT_UNKNOWN )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN2 )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN1 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW,  IPT_SERVICE1 )
-	/* Next bit is brake key (active low) for non-cockpit */
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON6 | IPF_PLAYER1 )	/* 3 for brake [7 levels] */
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON8 | IPF_PLAYER1 )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER1 )	/* main brake key */
-
-	PORT_START      /* IN1 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW,  IPT_BUTTON3 | IPF_PLAYER1 )	/* nitro */
-	PORT_BIT( 0x02, IP_ACTIVE_LOW,  IPT_UNKNOWN )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW,  IPT_TILT )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW,  IPT_START1 )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON4 | IPF_PLAYER1 )	/* gear shift lo/hi */
-	/* Next bit is accel key (active low/high, depends on cab DSW) for non-cockpit */
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON5 | IPF_PLAYER1 )	/* 3 for accel [7 levels] */
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON7 | IPF_PLAYER1 )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER1 )	/* main accel key */
-
 	PORT_START /* DSW A */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x03, "Deluxe Motorized Cockpit" )
@@ -468,6 +435,30 @@ INPUT_PORTS_START( topspeed )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW,  IPT_SERVICE1 )
+	/* Next bit is brake key (active low) for non-cockpit */
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON6 | IPF_PLAYER1 )	/* 3 for brake [7 levels] */
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON8 | IPF_PLAYER1 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER1 )	/* main brake key */
+
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW,  IPT_BUTTON3 | IPF_PLAYER1 )	/* nitro */
+	PORT_BIT( 0x02, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW,  IPT_TILT )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW,  IPT_START1 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON4 | IPF_PLAYER1 )	/* gear shift lo/hi */
+	/* Next bit is accel key (active low/high, depends on cab DSW) for non-cockpit */
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON5 | IPF_PLAYER1 )	/* 3 for accel [7 levels] */
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON7 | IPF_PLAYER1 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER1 )	/* main accel key */
+
+	PORT_START      /* IN2, unused */
 
 	/* Note that sensitivity is chosen to suit keyboard control (for
 	   sound selection in test mode and hi score name entry). With
@@ -487,28 +478,6 @@ INPUT_PORTS_START( topspeed )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( topspedu )
-	PORT_START      /* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW,  IPT_UNKNOWN )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW,  IPT_UNKNOWN )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN2 )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN1 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW,  IPT_SERVICE1 )
-	/* Next bit is brake key (active low) for non-cockpit */
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON6 | IPF_PLAYER1 )	/* 3 for brake [7 levels] */
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON8 | IPF_PLAYER1 )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER1 )	/* main brake key */
-
-	PORT_START      /* IN1 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW,  IPT_BUTTON3 | IPF_PLAYER1 )	/* nitro */
-	PORT_BIT( 0x02, IP_ACTIVE_LOW,  IPT_UNKNOWN )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW,  IPT_TILT )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW,  IPT_START1 )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON4 | IPF_PLAYER1 )	/* gear shift lo/hi */
-	/* Next bit is accel key (active low/high, depends on cab DSW) for non-cockpit */
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON5 | IPF_PLAYER1 )	/* 3 for accel [7 levels] */
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON7 | IPF_PLAYER1 )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER1 )	/* main accel key */
-
 	PORT_START /* DSW A */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x03, "Deluxe Motorized Cockpit" )
@@ -539,6 +508,30 @@ INPUT_PORTS_START( topspedu )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW,  IPT_SERVICE1 )
+	/* Next bit is brake key (active low) for non-cockpit */
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON6 | IPF_PLAYER1 )	/* 3 for brake [7 levels] */
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON8 | IPF_PLAYER1 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER1 )	/* main brake key */
+
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW,  IPT_BUTTON3 | IPF_PLAYER1 )	/* nitro */
+	PORT_BIT( 0x02, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW,  IPT_TILT )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW,  IPT_START1 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON4 | IPF_PLAYER1 )	/* gear shift lo/hi */
+	/* Next bit is accel key (active low/high, depends on cab DSW) for non-cockpit */
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON5 | IPF_PLAYER1 )	/* 3 for accel [7 levels] */
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON7 | IPF_PLAYER1 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER1 )	/* main accel key */
+
+	PORT_START      /* IN2, unused */
 
 	/* Note that sensitivity is chosen to suit keyboard control (for
 	   sound selection in test mode and hi score name entry). With
@@ -558,28 +551,6 @@ INPUT_PORTS_START( topspedu )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( fullthrl )
-	PORT_START      /* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW,  IPT_UNKNOWN )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW,  IPT_UNKNOWN )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN2 )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN1 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW,  IPT_SERVICE1 )
-	/* Next bit is brake key (active low) for non-cockpit */
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON6 | IPF_PLAYER1 )	/* 3 for brake [7 levels] */
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON8 | IPF_PLAYER1 )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER1 )	/* main brake key */
-
-	PORT_START      /* IN1 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW,  IPT_BUTTON3 | IPF_PLAYER1 )	/* nitro */
-	PORT_BIT( 0x02, IP_ACTIVE_LOW,  IPT_UNKNOWN )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW,  IPT_TILT )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW,  IPT_START1 )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON4 | IPF_PLAYER1 )	/* gear shift lo/hi */
-	/* Next bit is accel key (active low/high, depends on cab DSW) for non-cockpit */
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON5 | IPF_PLAYER1 )	/* 3 for accel [7 levels] */
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON7 | IPF_PLAYER1 )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER1 )	/* main accel key */
-
 	PORT_START /* DSW A */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x03, "Deluxe Motorized Cockpit" )
@@ -610,6 +581,30 @@ INPUT_PORTS_START( fullthrl )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW,  IPT_SERVICE1 )
+	/* Next bit is brake key (active low) for non-cockpit */
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON6 | IPF_PLAYER1 )	/* 3 for brake [7 levels] */
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON8 | IPF_PLAYER1 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER1 )	/* main brake key */
+
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW,  IPT_BUTTON3 | IPF_PLAYER1 )	/* nitro */
+	PORT_BIT( 0x02, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW,  IPT_TILT )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW,  IPT_START1 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON4 | IPF_PLAYER1 )	/* gear shift lo/hi */
+	/* Next bit is accel key (active low/high, depends on cab DSW) for non-cockpit */
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON5 | IPF_PLAYER1 )	/* 3 for accel [7 levels] */
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON7 | IPF_PLAYER1 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER1 )	/* main accel key */
+
+	PORT_START      /* IN2, unused */
 
 	/* Note that sensitivity is chosen to suit keyboard control (for
 	   sound selection in test mode and hi score name entry). With

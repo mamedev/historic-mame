@@ -31,6 +31,8 @@ extern int			gfx_refresh;
 extern int			matchrefresh;
 extern int			syncrefresh;
 extern float		gfx_brightness;
+extern int			bliteffect;
+extern float		screen_aspect;
 
 // windows
 extern HWND			video_window;
@@ -74,6 +76,8 @@ void process_events(void);
 void process_events_periodic(void);
 void osd_set_leds(int state);
 int osd_get_leds(void);
+
+int lookup_effect(const char *arg);
 
 
 

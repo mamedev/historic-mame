@@ -42,30 +42,44 @@ static struct tilemap *tx_tilemap, *bg_tilemap, *fg_tilemap;
 static void get_bg_tile_info(int tile_index)
 {
 	int attr = bionicc_bgvideoram[2*tile_index+1];
-	SET_TILE_INFO(1,(bionicc_bgvideoram[2*tile_index] & 0xff) + ((attr & 0x07) << 8),(attr & 0x18) >> 3);
-	tile_info.flags = TILE_FLIPXY((attr & 0xc0) >> 6);
+	SET_TILE_INFO(
+			1,
+			(bionicc_bgvideoram[2*tile_index] & 0xff) + ((attr & 0x07) << 8),
+			(attr & 0x18) >> 3,
+			TILE_FLIPXY((attr & 0xc0) >> 6))
 }
 
 static void get_fg_tile_info(int tile_index)
 {
 	int attr = bionicc_fgvideoram[2*tile_index+1];
-	SET_TILE_INFO(2,(bionicc_fgvideoram[2*tile_index] & 0xff) + ((attr & 0x07) << 8),(attr & 0x18) >> 3);
+	int flags;
+
 	if ((attr & 0xc0) == 0xc0)
 	{
 		tile_info.priority = 1;
-		tile_info.flags = TILE_SPLIT(0);
+		flags = TILE_SPLIT(0);
 	}
 	else
 	{
 		tile_info.priority = 0;
-		tile_info.flags = TILE_SPLIT((attr & 0x20) >> 5) | TILE_FLIPXY((attr & 0xc0) >> 6);
+		flags = TILE_SPLIT((attr & 0x20) >> 5) | TILE_FLIPXY((attr & 0xc0) >> 6);
 	}
+
+	SET_TILE_INFO(
+			2,
+			(bionicc_fgvideoram[2*tile_index] & 0xff) + ((attr & 0x07) << 8),
+			(attr & 0x18) >> 3,
+			flags)
 }
 
 static void get_tx_tile_info(int tile_index)
 {
 	int attr = bionicc_txvideoram[tile_index + 0x400];
-	SET_TILE_INFO(0,(bionicc_txvideoram[tile_index] & 0xff) + ((attr & 0x00c0) << 2),attr & 0x3f);
+	SET_TILE_INFO(
+			0,
+			(bionicc_txvideoram[tile_index] & 0xff) + ((attr & 0x00c0) << 2),
+			attr & 0x3f,
+			0)
 }
 
 
@@ -79,16 +93,15 @@ static void get_tx_tile_info(int tile_index)
 int bionicc_vh_start(void)
 {
 	tx_tilemap = tilemap_create(get_tx_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,  8,8,32,32);
-	fg_tilemap = tilemap_create(get_fg_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT | TILEMAP_SPLIT,16,16,64,64);
+	fg_tilemap = tilemap_create(get_fg_tile_info,tilemap_scan_rows,TILEMAP_SPLIT,      16,16,64,64);
 	bg_tilemap = tilemap_create(get_bg_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,  8,8,64,64);
 
 	if (!fg_tilemap || !bg_tilemap || !tx_tilemap)
 		return 1;
 
 	tilemap_set_transparent_pen(tx_tilemap,3);
-	tilemap_set_transparent_pen(fg_tilemap,15);
-	tilemap_set_transmask(fg_tilemap,0,0xffff); /* split type 0 is completely transparent in front half */
-	tilemap_set_transmask(fg_tilemap,1,0xffc1); /* split type 1 has pens 1-5 opaque in front half */
+	tilemap_set_transmask(fg_tilemap,0,0xffff,0x8000); /* split type 0 is completely transparent in front half */
+	tilemap_set_transmask(fg_tilemap,1,0xffc1,0x803e); /* split type 1 has pens 1-5 opaque in front half */
 	tilemap_set_transparent_pen(bg_tilemap,15);
 
 	return 0;

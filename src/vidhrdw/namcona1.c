@@ -31,7 +31,11 @@ static void tilemap_get_info( int tile_index )
 	int data = tilemap_videoram[tile_index];
 	int tile = data&0xfff;
 
-	SET_TILE_INFO( 0,tile,tilemap_color );
+	SET_TILE_INFO(
+			0,
+			tile,
+			tilemap_color,
+			0)
 
 #ifdef LSB_FIRST
 /* hack for tilemap manager */

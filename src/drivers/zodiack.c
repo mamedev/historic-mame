@@ -23,16 +23,16 @@ TODO:
 
 
 extern unsigned char *zodiack_videoram2;
-extern unsigned char *galaxian_attributesram;
-extern unsigned char *galaxian_bulletsram;
-extern size_t galaxian_bulletsram_size;
+extern unsigned char *zodiack_attributesram;
+extern unsigned char *zodiack_bulletsram;
+extern size_t zodiack_bulletsram_size;
 
 int percuss_hardware;
 
 void zodiack_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void zodiack_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void zodiack_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-WRITE_HANDLER( galaxian_attributes_w );
+WRITE_HANDLER( zodiack_attributes_w );
 WRITE_HANDLER( zodiac_flipscreen_w );
 WRITE_HANDLER( zodiac_control_w );
 
@@ -79,9 +79,9 @@ static MEMORY_WRITE_START( writemem )
 	{ 0x7000, 0x7000, watchdog_reset_w },
 	{ 0x7100, 0x7100, zodiac_master_interrupt_enable_w },
 	{ 0x7200, 0x7200, zodiac_flipscreen_w },
-	{ 0x9000, 0x903f, galaxian_attributes_w, &galaxian_attributesram },
+	{ 0x9000, 0x903f, zodiack_attributes_w, &zodiack_attributesram },
 	{ 0x9040, 0x905f, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x9060, 0x907f, MWA_RAM, &galaxian_bulletsram, &galaxian_bulletsram_size },
+	{ 0x9060, 0x907f, MWA_RAM, &zodiack_bulletsram, &zodiack_bulletsram_size },
 	{ 0x9080, 0x93ff, MWA_RAM },
 	{ 0xa000, 0xa3ff, videoram_w, &videoram, &videoram_size },
 	{ 0xb000, 0xb3ff, MWA_RAM, &zodiack_videoram2 },

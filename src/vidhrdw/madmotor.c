@@ -37,7 +37,11 @@ static void get_pf1_tile_info(int tile_index)
 	color=tile >> 12;
 	tile=tile&0xfff;
 
-	SET_TILE_INFO(0,tile,color)
+	SET_TILE_INFO(
+			0,
+			tile,
+			color,
+			0)
 }
 
 /* 512 by 512 playfield, 16 by 16 tiles */
@@ -55,7 +59,11 @@ static void get_pf2_tile_info(int tile_index)
 	color=tile >> 12;
 	tile=tile&0xfff;
 
-	SET_TILE_INFO(1,tile,color)
+	SET_TILE_INFO(
+			1,
+			tile,
+			color,
+			0)
 }
 
 /* 512 by 1024 playfield, 16 by 16 tiles */
@@ -73,7 +81,11 @@ static void get_pf3_tile_info(int tile_index)
 	color=tile >> 12;
 	tile=tile&0xfff;
 
-	SET_TILE_INFO(2,tile,color)
+	SET_TILE_INFO(
+			2,
+			tile,
+			color,
+			0)
 }
 
 /* 2048 by 256 playfield, 16 by 16 tiles */
@@ -91,7 +103,11 @@ static void get_pf3a_tile_info(int tile_index)
 	color=tile >> 12;
 	tile=tile&0xfff;
 
-	SET_TILE_INFO(2,tile,color)
+	SET_TILE_INFO(
+			2,
+			tile,
+			color,
+			0)
 }
 
 /******************************************************************************/

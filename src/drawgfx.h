@@ -38,6 +38,22 @@ struct GfxLayout
 	UINT16 charincrement; /* distance between two consecutive characters/sprites (in bits) */
 };
 
+#define GFX_RAW 0x12345678
+/* When planeoffset[0] is set to GFX_RAW, the gfx data is left as-is, with no conversion.
+   No buffer is allocated for the decoded data, and gfxdata is set to point to the source
+   data; therefore, you must not use ROMREGION_DISPOSE.
+   xoffset[0] is an optional displacement (*8) from the beginning of the source data, while
+   yoffset[0] is the line modulo (*8) and charincrement the char modulo (*8). They are *8
+   for consistency with the usual behaviour, but the bottom 3 bits are not used.
+   GFX_PACKED is automatically set if planes is <= 4.
+
+   This special mode can be used to save memory in games that require several different
+   handlings of the same ROM data (e.g. metro.c can use both 4bpp and 8bpp tiles, and both
+   8x8 and 16x16; cps.c has 8x8, 16x16 and 32x32 tiles all fetched from the same ROMs).
+   Note, however, that performance will suffer in rotated games, since the gfx data will
+   not be prerotated and will rely on GFX_SWAPXY.
+*/
+
 struct GfxElement
 {
 	int width,height;
@@ -58,8 +74,9 @@ struct GfxElement
 	int flags;
 };
 
-#define GFX_PACKED	1		/* two 4bpp pixels are packed in one byte of gfxdata */
-#define GFX_SWAPXY	2		/* characters are mirrored along the top-left/bottom-right diagonal */
+#define GFX_PACKED				1	/* two 4bpp pixels are packed in one byte of gfxdata */
+#define GFX_SWAPXY				2	/* characters are mirrored along the top-left/bottom-right diagonal */
+#define GFX_DONT_FREE_GFXDATA	4	/* gfxdata was not malloc()ed, so don't free it on exit */
 
 
 struct GfxDecodeInfo

@@ -3390,6 +3390,50 @@ INPUT_PORTS_END
 
 
 
+static struct GfxLayout layout8x8 =
+{
+	8,8,
+	RGN_FRAC(1,1),
+	4,
+	{ GFX_RAW },
+	{ 4*8 },	/* org displacement - 8x8 tiles are taken from the RIGHT side of the 16x16 tile
+				   (fixes cawing which uses character 0x0002 as space, typo instead of 0x20?) */
+	{ 8*8 },	/* line modulo */
+	64*8		/* char modulo */
+};
+
+static struct GfxLayout layout16x16 =
+{
+	16,16,
+	RGN_FRAC(1,1),
+	4,
+	{ GFX_RAW },
+	{ 0 },		/* org displacement */
+	{ 8*8 },	/* line modulo */
+	128*8		/* char modulo */
+};
+
+static struct GfxLayout layout32x32 =
+{
+	32,32,
+	RGN_FRAC(1,1),
+	4,
+	{ GFX_RAW },
+	{ 0 },		/* org displacement */
+	{ 16*8 },	/* line modulo */
+	512*8		/* char modulo */
+};
+
+static struct GfxDecodeInfo gfxdecodeinfo[] =
+{
+	{ REGION_GFX1, 0, &layout8x8,   0, 0x100 },
+	{ REGION_GFX1, 0, &layout16x16, 0, 0x100 },
+	{ REGION_GFX1, 0, &layout32x32, 0, 0x100 },
+	{ -1 }
+};
+
+
+
 static void cps1_irq_handler_mus(int irq)
 {
 	cpu_set_irq_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
@@ -3454,8 +3498,7 @@ static const struct MachineDriver machine_driver_##DRVNAME =				\
 																			\
 	/* video hardware */													\
 	0x30*8+32*2, 0x1c*8+32*3, { 32, 32+0x30*8-1, 32+16, 32+16+0x1c*8-1 },	\
-																			\
-	0,																		\
+	gfxdecodeinfo,															\
 	4096, 4096,																\
 	0,																		\
 																			\
@@ -3496,8 +3539,7 @@ static const struct MachineDriver machine_driver_qsound =
 
 	/* video hardware */
 	0x30*8+32*2, 0x1c*8+32*3, { 32, 32+0x30*8-1, 32+16, 32+16+0x1c*8-1 },
-
-	0,
+	gfxdecodeinfo,
 	4096, 4096,
 	0,
 
@@ -3554,6 +3596,9 @@ ROM_START( forgottn )
 	ROMX_LOAD( "lw-05",         0x200004, 0x80000, 0xe4552fd7, ROM_GROUPWORD | ROM_SKIP(6) )
 	ROMX_LOAD( "lw-12",         0x200006, 0x80000, 0x8e6a832b, ROM_GROUPWORD | ROM_SKIP(6) )
 
+	ROM_REGION( 0x8000, REGION_GFX2, 0 )
+	ROM_COPY( REGION_GFX1, 0x000000, 0x000000, 0x8000 )	/* stars */
+
 	ROM_REGION( 0x18000, REGION_CPU2, 0 ) /* 64k for the audio CPU */
 	ROM_LOAD( "lwu00",         0x00000, 0x08000, 0x59df2a63 )
 	ROM_CONTINUE(              0x10000, 0x08000 )
@@ -3580,6 +3625,9 @@ ROM_START( lostwrld )
 	ROMX_LOAD( "lw-08",         0x200002, 0x80000, 0x25a8e43c, ROM_GROUPWORD | ROM_SKIP(6) )
 	ROMX_LOAD( "lw-05",         0x200004, 0x80000, 0xe4552fd7, ROM_GROUPWORD | ROM_SKIP(6) )
 	ROMX_LOAD( "lw-12",         0x200006, 0x80000, 0x8e6a832b, ROM_GROUPWORD | ROM_SKIP(6) )
+
+	ROM_REGION( 0x8000, REGION_GFX2, 0 )
+	ROM_COPY( REGION_GFX1, 0x000000, 0x000000, 0x8000 )	/* stars */
 
 	ROM_REGION( 0x18000, REGION_CPU2, 0 ) /* 64k for the audio CPU */
 	ROM_LOAD( "lwu00",         0x00000, 0x08000, 0x59df2a63 )
@@ -3713,6 +3761,9 @@ ROM_START( strider )
 	ROMX_LOAD( "strider.01",   0x200004, 0x80000, 0xb7d04e8b, ROM_GROUPWORD | ROM_SKIP(6) )
 	ROMX_LOAD( "strider.03",   0x200006, 0x80000, 0x6b4713b4, ROM_GROUPWORD | ROM_SKIP(6) )
 
+	ROM_REGION( 0x8000, REGION_GFX2, 0 )
+	ROM_COPY( REGION_GFX1, 0x000000, 0x000000, 0x8000 )	/* stars */
+
 	ROM_REGION( 0x18000, REGION_CPU2, 0 ) /* 64k for the audio CPU (+banks) */
 	ROM_LOAD( "strider.09",    0x00000, 0x08000, 0x2ed403bc )
 	ROM_CONTINUE(              0x10000, 0x08000 )
@@ -3736,6 +3787,9 @@ ROM_START( striderj )
 	ROMX_LOAD( "strider.07",   0x200002, 0x80000, 0xb9441519, ROM_GROUPWORD | ROM_SKIP(6) )
 	ROMX_LOAD( "strider.01",   0x200004, 0x80000, 0xb7d04e8b, ROM_GROUPWORD | ROM_SKIP(6) )
 	ROMX_LOAD( "strider.03",   0x200006, 0x80000, 0x6b4713b4, ROM_GROUPWORD | ROM_SKIP(6) )
+
+	ROM_REGION( 0x8000, REGION_GFX2, 0 )
+	ROM_COPY( REGION_GFX1, 0x000000, 0x000000, 0x8000 )	/* stars */
 
 	ROM_REGION( 0x18000, REGION_CPU2, 0 ) /* 64k for the audio CPU (+banks) */
 	ROM_LOAD( "strider.09",    0x00000, 0x08000, 0x2ed403bc )
@@ -3763,6 +3817,9 @@ ROM_START( stridrja )
 	ROMX_LOAD( "strider.07",   0x200002, 0x80000, 0xb9441519, ROM_GROUPWORD | ROM_SKIP(6) )
 	ROMX_LOAD( "strider.01",   0x200004, 0x80000, 0xb7d04e8b, ROM_GROUPWORD | ROM_SKIP(6) )
 	ROMX_LOAD( "strider.03",   0x200006, 0x80000, 0x6b4713b4, ROM_GROUPWORD | ROM_SKIP(6) )
+
+	ROM_REGION( 0x8000, REGION_GFX2, 0 )
+	ROM_COPY( REGION_GFX1, 0x000000, 0x000000, 0x8000 )	/* stars */
 
 	ROM_REGION( 0x18000, REGION_CPU2, 0 ) /* 64k for the audio CPU (+banks) */
 	ROM_LOAD( "strider.09",    0x00000, 0x08000, 0x2ed403bc )
@@ -6123,21 +6180,25 @@ ROM_END
 static void init_wof(void)
 {
 	wof_decode();
+	init_cps1();
 }
 
 static void init_dino(void)
 {
 	dino_decode();
+	init_cps1();
 }
 
 static void init_punisher(void)
 {
 	punisher_decode();
+	init_cps1();
 }
 
 static void init_slammast(void)
 {
 	slammast_decode();
+	init_cps1();
 }
 
 static void init_pang3(void)
@@ -6160,81 +6221,83 @@ static void init_pang3(void)
 		if (~src & 0x80) dst ^= 0x88;
 		rom[A/2] = dst;
 	}
+
+	init_cps1();
 }
 
 
 
-GAME( 1988, forgottn, 0,        forgottn, forgottn, 0,        ROT0,       "Capcom", "Forgotten Worlds (US)" )
-GAME( 1988, lostwrld, forgottn, forgottn, forgottn, 0,        ROT0,       "Capcom", "Lost Worlds (Japan)" )
-GAME( 1988, ghouls,   0,        cps1,     ghouls,   0,        ROT0,       "Capcom", "Ghouls'n Ghosts (World)" )
-GAME( 1988, ghoulsu,  ghouls,   cps1,     ghouls,   0,        ROT0,       "Capcom", "Ghouls'n Ghosts (US)" )
-GAME( 1988, daimakai, ghouls,   cps1,     ghouls,   0,        ROT0,       "Capcom", "Dai Makai-Mura (Japan)" )
-GAME( 1989, strider,  0,        cps1,     strider,  0,        ROT0,       "Capcom", "Strider (US)" )
-GAME( 1989, striderj, strider,  cps1,     strider,  0,        ROT0,       "Capcom", "Strider Hiryu (Japan set 1)" )
-GAME( 1989, stridrja, strider,  cps1,     strider,  0,        ROT0,       "Capcom", "Strider Hiryu (Japan set 2)" )
-GAME( 1989, dwj,      0,        cps1,     dwj,      0,        ROT0,       "Capcom", "Tenchi wo Kurau (Japan)" )
-GAME( 1989, willow,   0,        cps1,     willow,   0,        ROT0,       "Capcom", "Willow (Japan, English)" )
-GAME( 1989, willowj,  willow,   cps1,     willow,   0,        ROT0,       "Capcom", "Willow (Japan, Japanese)" )
-GAME( 1989, unsquad,  0,        cps1,     unsquad,  0,        ROT0,       "Capcom", "U.N. Squadron (US)" )
-GAME( 1989, area88,   unsquad,  cps1,     unsquad,  0,        ROT0,       "Capcom", "Area 88 (Japan)" )
-GAME( 1989, ffight,   0,        cps1,     ffight,   0,        ROT0,       "Capcom", "Final Fight (World)" )
-GAME( 1989, ffightu,  ffight,   cps1,     ffight,   0,        ROT0,       "Capcom", "Final Fight (US)" )
-GAME( 1989, ffightj,  ffight,   cps1,     ffight,   0,        ROT0,       "Capcom", "Final Fight (Japan)" )
-GAME( 1990, 1941,     0,        cps1,     1941,     0,        ROT270,     "Capcom", "1941 - Counter Attack (World)" )
-GAME( 1990, 1941j,    1941,     cps1,     1941,     0,        ROT270,     "Capcom", "1941 - Counter Attack (Japan)" )
-GAME( 1990, mercs,    0,        cps1,     mercs,    0,        ROT270,     "Capcom", "Mercs (World)" )
-GAME( 1990, mercsu,   mercs,    cps1,     mercs,    0,        ROT270,     "Capcom", "Mercs (US)" )
-GAME( 1990, mercsj,   mercs,    cps1,     mercs,    0,        ROT270,     "Capcom", "Senjo no Ookami II (Japan)" )
-GAME( 1990, mtwins,   0,        cps1,     mtwins,   0,        ROT0,       "Capcom", "Mega Twins (World)" )
-GAME( 1990, chikij,   mtwins,   cps1,     mtwins,   0,        ROT0,       "Capcom", "Chiki Chiki Boys (Japan)" )
-GAME( 1990, msword,   0,        cps1,     msword,   0,        ROT0,       "Capcom", "Magic Sword - Heroic Fantasy (World)" )
-GAME( 1990, mswordu,  msword,   cps1,     msword,   0,        ROT0,       "Capcom", "Magic Sword - Heroic Fantasy (US)" )
-GAME( 1990, mswordj,  msword,   cps1,     msword,   0,        ROT0,       "Capcom", "Magic Sword (Japan)" )
-GAME( 1990, cawing,   0,        cps1,     cawing,   0,        ROT0,       "Capcom", "Carrier Air Wing (World)" )
-GAME( 1990, cawingj,  cawing,   cps1,     cawing,   0,        ROT0,       "Capcom", "U.S. Navy (Japan)" )
-GAME( 1990, nemo,     0,        cps1,     nemo,     0,        ROT0,       "Capcom", "Nemo (World)" )
-GAME( 1990, nemoj,    nemo,     cps1,     nemo,     0,        ROT0,       "Capcom", "Nemo (Japan)" )
-GAME( 1991, sf2,      0,        sf2,      sf2,      0,        ROT0_16BIT, "Capcom", "Street Fighter II - The World Warrior (World 910214)" )
-GAME( 1991, sf2ua,    sf2,      sf2,      sf2,      0,        ROT0_16BIT, "Capcom", "Street Fighter II - The World Warrior (US 910206)" )
-GAME( 1991, sf2ub,    sf2,      sf2,      sf2,      0,        ROT0_16BIT, "Capcom", "Street Fighter II - The World Warrior (US 910214)" )
-GAME( 1991, sf2ue,    sf2,      sf2,      sf2,      0,        ROT0_16BIT, "Capcom", "Street Fighter II - The World Warrior (US 910228)" )
-GAME( 1991, sf2ui,    sf2,      sf2,      sf2,      0,        ROT0_16BIT, "Capcom", "Street Fighter II - The World Warrior (US 910522)" )
-GAME( 1991, sf2j,     sf2,      sf2,      sf2j,     0,        ROT0_16BIT, "Capcom", "Street Fighter II - The World Warrior (Japan 911210)" )
-GAME( 1991, sf2ja,    sf2,      sf2,      sf2j,     0,        ROT0_16BIT, "Capcom", "Street Fighter II - The World Warrior (Japan 910214)" )
-GAME( 1991, sf2jc,    sf2,      sf2,      sf2j,     0,        ROT0_16BIT, "Capcom", "Street Fighter II - The World Warrior (Japan 910306)" )
-GAME( 1991, 3wonders, 0,        cps1,     3wonders, 0,        ROT0_16BIT, "Capcom", "Three Wonders (World)" )
-GAME( 1991, 3wonderu, 3wonders, cps1,     3wonders, 0,        ROT0_16BIT, "Capcom", "Three Wonders (US)" )
-GAME( 1991, wonder3,  3wonders, cps1,     3wonders, 0,        ROT0_16BIT, "Capcom", "Wonder 3 (Japan)" )
-GAME( 1991, kod,      0,        cps1,     kod,      0,        ROT0,       "Capcom", "The King of Dragons (World)" )
-GAME( 1991, kodu,     kod,      cps1,     kod,      0,        ROT0,       "Capcom", "The King of Dragons (US)" )
-GAME( 1991, kodj,     kod,      cps1,     kod,      0,        ROT0,       "Capcom", "The King of Dragons (Japan)" )
-GAMEX(1991, kodb,     kod,      cps1,     kod,      0,        ROT0,       "Capcom", "The King of Dragons (bootleg)", GAME_NOT_WORKING )
-GAME( 1991, captcomm, 0,        cps1,     captcomm, 0,        ROT0_16BIT, "Capcom", "Captain Commando (World)" )
-GAME( 1991, captcomu, captcomm, cps1,     captcomm, 0,        ROT0_16BIT, "Capcom", "Captain Commando (US)" )
-GAME( 1991, captcomj, captcomm, cps1,     captcomm, 0,        ROT0_16BIT, "Capcom", "Captain Commando (Japan)" )
-GAME( 1991, knights,  0,        cps1,     knights,  0,        ROT0_16BIT, "Capcom", "Knights of the Round (World)" )
-GAME( 1991, knightsu, knights,  cps1,     knights,  0,        ROT0_16BIT, "Capcom", "Knights of the Round (US)" )
-GAME( 1991, knightsj, knights,  cps1,     knights,  0,        ROT0_16BIT, "Capcom", "Knights of the Round (Japan)" )
-GAME( 1992, sf2ce,    0,        sf2,      sf2,      0,        ROT0_16BIT, "Capcom", "Street Fighter II' - Champion Edition (World)" )
-GAME( 1992, sf2ceua,  sf2ce,    sf2,      sf2,      0,        ROT0_16BIT, "Capcom", "Street Fighter II' - Champion Edition (US rev A)" )
-GAME( 1992, sf2ceub,  sf2ce,    sf2,      sf2,      0,        ROT0_16BIT, "Capcom", "Street Fighter II' - Champion Edition (US rev B)" )
-GAME( 1992, sf2cej,   sf2ce,    sf2,      sf2j,     0,        ROT0_16BIT, "Capcom", "Street Fighter II' - Champion Edition (Japan)" )
-GAME( 1992, sf2rb,    sf2ce,    sf2,      sf2,      0,        ROT0_16BIT, "hack",  "Street Fighter II' - Champion Edition (Rainbow set 1)" )
-GAME( 1992, sf2rb2,   sf2ce,    sf2,      sf2,      0,        ROT0_16BIT, "hack",  "Street Fighter II' - Champion Edition (Rainbow set 2)" )
-GAME( 1992, sf2red,   sf2ce,    sf2,      sf2,      0,        ROT0_16BIT, "hack",  "Street Fighter II' - Champion Edition (Red Wave)" )
-GAME( 1992, sf2v004,  sf2ce,    sf2,      sf2,      0,        ROT0_16BIT, "hack",  "Street Fighter II! - Champion Edition (V004)" )
-GAME( 1992, sf2accp2, sf2ce,    sf2accp2, sf2,      0,        ROT0_16BIT, "hack",  "Street Fighter II' - Champion Edition (Accelerator Pt.II)" )
-GAME( 1992, varth,    0,        cps1,     varth,    0,        ROT270,     "Capcom", "Varth - Operation Thunderstorm (World)" )
-GAME( 1992, varthu,   varth,    cps1,     varth,    0,        ROT270,     "Capcom (Romstar license)", "Varth - Operation Thunderstorm (US)" )
-GAME( 1992, varthj,   varth,    cps1,     varth,    0,        ROT270,     "Capcom", "Varth - Operation Thunderstorm (Japan)" )
-GAME( 1992, cworld2j, 0,        cps1,     cworld2j, 0,        ROT0_16BIT, "Capcom", "Capcom World 2 (Japan)" )
-GAME( 1992, sf2t,     sf2ce,    sf2,      sf2,      0,        ROT0_16BIT, "Capcom", "Street Fighter II' - Hyper Fighting (US)" )
-GAME( 1992, sf2tj,    sf2ce,    sf2,      sf2j,     0,        ROT0_16BIT, "Capcom", "Street Fighter II' Turbo - Hyper Fighting (Japan)" )
-GAME( 1992, qad,      0,        cps1,     qad,      0,        ROT0,       "Capcom", "Quiz & Dragons (US)" )
-GAME( 1994, qadj,     qad,      cps1,     qadj,     0,        ROT0,       "Capcom", "Quiz & Dragons (Japan)" )
-GAME( 1995, qtono2,   0,        cps1,     qtono2,   0,        ROT0,       "Capcom", "Quiz Tonosama no Yabou 2 Zenkoku-ban (Japan)" )
-GAME( 1995, megaman,  0,        cps1,     megaman,  0,        ROT0_16BIT, "Capcom", "Mega Man - The Power Battle (Asia)" )
-GAME( 1995, rockmanj, megaman,  cps1,     megaman,  0,        ROT0_16BIT, "Capcom", "Rockman - The Power Battle (Japan)" )
+GAME( 1988, forgottn, 0,        forgottn, forgottn, cps1,     ROT0,       "Capcom", "Forgotten Worlds (US)" )
+GAME( 1988, lostwrld, forgottn, forgottn, forgottn, cps1,     ROT0,       "Capcom", "Lost Worlds (Japan)" )
+GAME( 1988, ghouls,   0,        cps1,     ghouls,   cps1,     ROT0,       "Capcom", "Ghouls'n Ghosts (World)" )
+GAME( 1988, ghoulsu,  ghouls,   cps1,     ghouls,   cps1,     ROT0,       "Capcom", "Ghouls'n Ghosts (US)" )
+GAME( 1988, daimakai, ghouls,   cps1,     ghouls,   cps1,     ROT0,       "Capcom", "Dai Makai-Mura (Japan)" )
+GAME( 1989, strider,  0,        cps1,     strider,  cps1,     ROT0,       "Capcom", "Strider (US)" )
+GAME( 1989, striderj, strider,  cps1,     strider,  cps1,     ROT0,       "Capcom", "Strider Hiryu (Japan set 1)" )
+GAME( 1989, stridrja, strider,  cps1,     strider,  cps1,     ROT0,       "Capcom", "Strider Hiryu (Japan set 2)" )
+GAME( 1989, dwj,      0,        cps1,     dwj,      cps1,     ROT0,       "Capcom", "Tenchi wo Kurau (Japan)" )
+GAME( 1989, willow,   0,        cps1,     willow,   cps1,     ROT0,       "Capcom", "Willow (Japan, English)" )
+GAME( 1989, willowj,  willow,   cps1,     willow,   cps1,     ROT0,       "Capcom", "Willow (Japan, Japanese)" )
+GAME( 1989, unsquad,  0,        cps1,     unsquad,  cps1,     ROT0,       "Capcom", "U.N. Squadron (US)" )
+GAME( 1989, area88,   unsquad,  cps1,     unsquad,  cps1,     ROT0,       "Capcom", "Area 88 (Japan)" )
+GAME( 1989, ffight,   0,        cps1,     ffight,   cps1,     ROT0,       "Capcom", "Final Fight (World)" )
+GAME( 1989, ffightu,  ffight,   cps1,     ffight,   cps1,     ROT0,       "Capcom", "Final Fight (US)" )
+GAME( 1989, ffightj,  ffight,   cps1,     ffight,   cps1,     ROT0,       "Capcom", "Final Fight (Japan)" )
+GAME( 1990, 1941,     0,        cps1,     1941,     cps1,     ROT270,     "Capcom", "1941 - Counter Attack (World)" )
+GAME( 1990, 1941j,    1941,     cps1,     1941,     cps1,     ROT270,     "Capcom", "1941 - Counter Attack (Japan)" )
+GAME( 1990, mercs,    0,        cps1,     mercs,    cps1,     ROT270,     "Capcom", "Mercs (World)" )
+GAME( 1990, mercsu,   mercs,    cps1,     mercs,    cps1,     ROT270,     "Capcom", "Mercs (US)" )
+GAME( 1990, mercsj,   mercs,    cps1,     mercs,    cps1,     ROT270,     "Capcom", "Senjo no Ookami II (Japan)" )
+GAME( 1990, mtwins,   0,        cps1,     mtwins,   cps1,     ROT0,       "Capcom", "Mega Twins (World)" )
+GAME( 1990, chikij,   mtwins,   cps1,     mtwins,   cps1,     ROT0,       "Capcom", "Chiki Chiki Boys (Japan)" )
+GAME( 1990, msword,   0,        cps1,     msword,   cps1,     ROT0,       "Capcom", "Magic Sword - Heroic Fantasy (World)" )
+GAME( 1990, mswordu,  msword,   cps1,     msword,   cps1,     ROT0,       "Capcom", "Magic Sword - Heroic Fantasy (US)" )
+GAME( 1990, mswordj,  msword,   cps1,     msword,   cps1,     ROT0,       "Capcom", "Magic Sword (Japan)" )
+GAME( 1990, cawing,   0,        cps1,     cawing,   cps1,     ROT0,       "Capcom", "Carrier Air Wing (World)" )
+GAME( 1990, cawingj,  cawing,   cps1,     cawing,   cps1,     ROT0,       "Capcom", "U.S. Navy (Japan)" )
+GAME( 1990, nemo,     0,        cps1,     nemo,     cps1,     ROT0,       "Capcom", "Nemo (World)" )
+GAME( 1990, nemoj,    nemo,     cps1,     nemo,     cps1,     ROT0,       "Capcom", "Nemo (Japan)" )
+GAME( 1991, sf2,      0,        sf2,      sf2,      cps1,     ROT0_16BIT, "Capcom", "Street Fighter II - The World Warrior (World 910214)" )
+GAME( 1991, sf2ua,    sf2,      sf2,      sf2,      cps1,     ROT0_16BIT, "Capcom", "Street Fighter II - The World Warrior (US 910206)" )
+GAME( 1991, sf2ub,    sf2,      sf2,      sf2,      cps1,     ROT0_16BIT, "Capcom", "Street Fighter II - The World Warrior (US 910214)" )
+GAME( 1991, sf2ue,    sf2,      sf2,      sf2,      cps1,     ROT0_16BIT, "Capcom", "Street Fighter II - The World Warrior (US 910228)" )
+GAME( 1991, sf2ui,    sf2,      sf2,      sf2,      cps1,     ROT0_16BIT, "Capcom", "Street Fighter II - The World Warrior (US 910522)" )
+GAME( 1991, sf2j,     sf2,      sf2,      sf2j,     cps1,     ROT0_16BIT, "Capcom", "Street Fighter II - The World Warrior (Japan 911210)" )
+GAME( 1991, sf2ja,    sf2,      sf2,      sf2j,     cps1,     ROT0_16BIT, "Capcom", "Street Fighter II - The World Warrior (Japan 910214)" )
+GAME( 1991, sf2jc,    sf2,      sf2,      sf2j,     cps1,     ROT0_16BIT, "Capcom", "Street Fighter II - The World Warrior (Japan 910306)" )
+GAME( 1991, 3wonders, 0,        cps1,     3wonders, cps1,     ROT0_16BIT, "Capcom", "Three Wonders (World)" )
+GAME( 1991, 3wonderu, 3wonders, cps1,     3wonders, cps1,     ROT0_16BIT, "Capcom", "Three Wonders (US)" )
+GAME( 1991, wonder3,  3wonders, cps1,     3wonders, cps1,     ROT0_16BIT, "Capcom", "Wonder 3 (Japan)" )
+GAME( 1991, kod,      0,        cps1,     kod,      cps1,     ROT0,       "Capcom", "The King of Dragons (World)" )
+GAME( 1991, kodu,     kod,      cps1,     kod,      cps1,     ROT0,       "Capcom", "The King of Dragons (US)" )
+GAME( 1991, kodj,     kod,      cps1,     kod,      cps1,     ROT0,       "Capcom", "The King of Dragons (Japan)" )
+GAMEX(1991, kodb,     kod,      cps1,     kod,      cps1,     ROT0,       "Capcom", "The King of Dragons (bootleg)", GAME_NOT_WORKING )
+GAME( 1991, captcomm, 0,        cps1,     captcomm, cps1,     ROT0_16BIT, "Capcom", "Captain Commando (World)" )
+GAME( 1991, captcomu, captcomm, cps1,     captcomm, cps1,     ROT0_16BIT, "Capcom", "Captain Commando (US)" )
+GAME( 1991, captcomj, captcomm, cps1,     captcomm, cps1,     ROT0_16BIT, "Capcom", "Captain Commando (Japan)" )
+GAME( 1991, knights,  0,        cps1,     knights,  cps1,     ROT0_16BIT, "Capcom", "Knights of the Round (World)" )
+GAME( 1991, knightsu, knights,  cps1,     knights,  cps1,     ROT0_16BIT, "Capcom", "Knights of the Round (US)" )
+GAME( 1991, knightsj, knights,  cps1,     knights,  cps1,     ROT0_16BIT, "Capcom", "Knights of the Round (Japan)" )
+GAME( 1992, sf2ce,    0,        sf2,      sf2,      cps1,     ROT0_16BIT, "Capcom", "Street Fighter II' - Champion Edition (World)" )
+GAME( 1992, sf2ceua,  sf2ce,    sf2,      sf2,      cps1,     ROT0_16BIT, "Capcom", "Street Fighter II' - Champion Edition (US rev A)" )
+GAME( 1992, sf2ceub,  sf2ce,    sf2,      sf2,      cps1,     ROT0_16BIT, "Capcom", "Street Fighter II' - Champion Edition (US rev B)" )
+GAME( 1992, sf2cej,   sf2ce,    sf2,      sf2j,     cps1,     ROT0_16BIT, "Capcom", "Street Fighter II' - Champion Edition (Japan)" )
+GAME( 1992, sf2rb,    sf2ce,    sf2,      sf2,      cps1,     ROT0_16BIT, "hack",  "Street Fighter II' - Champion Edition (Rainbow set 1)" )
+GAME( 1992, sf2rb2,   sf2ce,    sf2,      sf2,      cps1,     ROT0_16BIT, "hack",  "Street Fighter II' - Champion Edition (Rainbow set 2)" )
+GAME( 1992, sf2red,   sf2ce,    sf2,      sf2,      cps1,     ROT0_16BIT, "hack",  "Street Fighter II' - Champion Edition (Red Wave)" )
+GAME( 1992, sf2v004,  sf2ce,    sf2,      sf2,      cps1,     ROT0_16BIT, "hack",  "Street Fighter II! - Champion Edition (V004)" )
+GAME( 1992, sf2accp2, sf2ce,    sf2accp2, sf2,      cps1,     ROT0_16BIT, "hack",  "Street Fighter II' - Champion Edition (Accelerator Pt.II)" )
+GAME( 1992, varth,    0,        cps1,     varth,    cps1,     ROT270,     "Capcom", "Varth - Operation Thunderstorm (World)" )
+GAME( 1992, varthu,   varth,    cps1,     varth,    cps1,     ROT270,     "Capcom (Romstar license)", "Varth - Operation Thunderstorm (US)" )
+GAME( 1992, varthj,   varth,    cps1,     varth,    cps1,     ROT270,     "Capcom", "Varth - Operation Thunderstorm (Japan)" )
+GAME( 1992, cworld2j, 0,        cps1,     cworld2j, cps1,     ROT0_16BIT, "Capcom", "Capcom World 2 (Japan)" )
+GAME( 1992, sf2t,     sf2ce,    sf2,      sf2,      cps1,     ROT0_16BIT, "Capcom", "Street Fighter II' - Hyper Fighting (US)" )
+GAME( 1992, sf2tj,    sf2ce,    sf2,      sf2j,     cps1,     ROT0_16BIT, "Capcom", "Street Fighter II' Turbo - Hyper Fighting (Japan)" )
+GAME( 1992, qad,      0,        cps1,     qad,      cps1,     ROT0,       "Capcom", "Quiz & Dragons (US)" )
+GAME( 1994, qadj,     qad,      cps1,     qadj,     cps1,     ROT0,       "Capcom", "Quiz & Dragons (Japan)" )
+GAME( 1995, qtono2,   0,        cps1,     qtono2,   cps1,     ROT0,       "Capcom", "Quiz Tonosama no Yabou 2 Zenkoku-ban (Japan)" )
+GAME( 1995, megaman,  0,        cps1,     megaman,  cps1,     ROT0_16BIT, "Capcom", "Mega Man - The Power Battle (Asia)" )
+GAME( 1995, rockmanj, megaman,  cps1,     megaman,  cps1,     ROT0_16BIT, "Capcom", "Rockman - The Power Battle (Japan)" )
 
 GAME( 1992, wof,      0,        qsound,   wof,      wof,      ROT0,       "Capcom", "Warriors of Fate (World)" )
 GAME( 1992, wofa,     wof,      qsound,   wof,      wof,      ROT0,       "Capcom", "Sangokushi II (Asia)" )
@@ -6251,7 +6314,7 @@ GAME( 1993, mbomberj, slammast, qsound,   slammast, slammast, ROT0_16BIT, "Capco
 GAME( 1993, mbombrd,  slammast, qsound,   slammast, slammast, ROT0_16BIT, "Capcom", "Muscle Bomber Duo - Ultimate Team Battle (World)" )
 GAME( 1993, mbombrdj, slammast, qsound,   slammast, slammast, ROT0_16BIT, "Capcom", "Muscle Bomber Duo - Heat Up Warriors (Japan)" )
 
-GAME( 1994, pnickj,   0,        cps1,     pnickj,   0,        ROT0,       "Compile (Capcom license)", "Pnickies (Japan)" )
+GAME( 1994, pnickj,   0,        cps1,     pnickj,   cps1,     ROT0,       "Compile (Capcom license)", "Pnickies (Japan)" )
 /* Japanese version of Pang 3 is encrypted, Euro version is not */
-GAME( 1995, pang3,    0,        pang3,    pang3,    0,        ROT0_16BIT, "Mitchell", "Pang! 3 (Euro)" )
+GAME( 1995, pang3,    0,        pang3,    pang3,    cps1,     ROT0_16BIT, "Mitchell", "Pang! 3 (Euro)" )
 GAME( 1995, pang3j,   pang3,    pang3,    pang3,    pang3,    ROT0_16BIT, "Mitchell", "Pang! 3 (Japan)" )

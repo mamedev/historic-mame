@@ -54,10 +54,10 @@ static void get_bg_tilemap_info(int tile_index)
 	const UINT8 *source = &videoram[tile_index];
 	UINT8 attributes = source[0x400]; /* CCC??BBB */
 	SET_TILE_INFO(
-		1+(attributes&0x7), /* bank */
-		source[0],  /* tile_number */
-		attributes>>5 /* color */
-	)
+			1+(attributes&0x7),
+			source[0],
+			attributes>>5,
+			0)
 }
 
 static void get_fg_tilemap_info(int tile_index)
@@ -65,10 +65,10 @@ static void get_fg_tilemap_info(int tile_index)
 	const UINT8 *source = &renegade_textram[tile_index];
 	UINT8 attributes = source[0x400];
 	SET_TILE_INFO(
-		0,
-		(attributes&3)*256 + source[0], /* tile_number */
-		attributes>>6
-	)
+			0,
+			(attributes&3)*256 + source[0],
+			attributes>>6,
+			0)
 }
 
 int renegade_vh_start( void )

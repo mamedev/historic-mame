@@ -15,8 +15,8 @@
 
 	To access test mode, reset with both start buttons held.
 
-	Coins are controlled by the sound cpu, there is a small kludge to allow
-	the game to coin up if sound is off.
+	Coin inputs are handled by the sound CPU, so they don't work with sound
+	disabled. Just put the game in Free Play mode.
 
 	The country byte is stored at 0xffffd in the main cpu region,
 	(that's 0x1fffe in program rom 4).
@@ -60,39 +60,16 @@ extern unsigned char *raiden_back_data,*raiden_fore_data,*raiden_scroll_ram;
 static READ_HANDLER( raiden_shared_r ) { return raiden_shared_ram[offset]; }
 static WRITE_HANDLER( raiden_shared_w ) { raiden_shared_ram[offset]=data; }
 
-static READ_HANDLER( raiden_sound_r )
-{
-	static int latch=0;
-	int erg,orig,coin=readinputport(4);
-	orig=seibu_shared_sound_ram[offset];
-
-	/* Small kludge to allows coins with sound off */
-	if (coin==0) latch=0;
-	if (offset==4 && (!Machine->sample_rate) && coin && latch==0) {
-		latch=1;
-		return coin;
- 	}
-
-	switch (offset)
-	{/* misusing $d006 as a latch...but it works !*/
-		case 0x04:{erg=seibu_shared_sound_ram[6];seibu_shared_sound_ram[6]=0;break;} /* just 1 time */
-		case 0x06:{erg=0xa0;break;}
-		case 0x0a:{erg=0;break;}
-		default: erg=seibu_shared_sound_ram[offset];
-	}
-	return erg;
-}
-
 /******************************************************************************/
 
 static MEMORY_READ_START( readmem )
 	{ 0x00000, 0x07fff, MRA_RAM },
 	{ 0x0a000, 0x0afff, raiden_shared_r },
-	{ 0x0b000, 0x0b000, input_port_0_r },
-	{ 0x0b001, 0x0b001, input_port_1_r },
-	{ 0x0b002, 0x0b002, input_port_2_r },
-	{ 0x0b003, 0x0b003, input_port_3_r },
-	{ 0x0d000, 0x0d00f, raiden_sound_r },
+	{ 0x0b000, 0x0b000, input_port_1_r },
+	{ 0x0b001, 0x0b001, input_port_2_r },
+	{ 0x0b002, 0x0b002, input_port_3_r },
+	{ 0x0b003, 0x0b003, input_port_4_r },
+	{ 0x0d000, 0x0d00d, seibu_main_v30_r },
 	{ 0xa0000, 0xfffff, MRA_ROM },
 MEMORY_END
 
@@ -102,7 +79,7 @@ static MEMORY_WRITE_START( writemem )
 	{ 0x0a000, 0x0afff, raiden_shared_w, &raiden_shared_ram },
 	{ 0x0b000, 0x0b007, raiden_control_w },
 	{ 0x0c000, 0x0c7ff, raiden_text_w, &videoram },
-	{ 0x0d000, 0x0d00f, seibu_soundlatch_w, &seibu_shared_sound_ram },
+	{ 0x0d000, 0x0d00d, seibu_main_v30_w },
 	{ 0x0d060, 0x0d067, MWA_RAM, &raiden_scroll_ram },
 	{ 0xa0000, 0xfffff, MWA_ROM },
 MEMORY_END
@@ -131,11 +108,11 @@ MEMORY_END
 static MEMORY_READ_START( alt_readmem )
 	{ 0x00000, 0x07fff, MRA_RAM },
 	{ 0x08000, 0x08fff, raiden_shared_r },
-	{ 0x0a000, 0x0a00f, raiden_sound_r },
-	{ 0x0e000, 0x0e000, input_port_0_r },
-	{ 0x0e001, 0x0e001, input_port_1_r },
-	{ 0x0e002, 0x0e002, input_port_2_r },
-	{ 0x0e003, 0x0e003, input_port_3_r },
+	{ 0x0a000, 0x0a00d, seibu_main_v30_r },
+	{ 0x0e000, 0x0e000, input_port_1_r },
+	{ 0x0e001, 0x0e001, input_port_2_r },
+	{ 0x0e002, 0x0e002, input_port_3_r },
+	{ 0x0e003, 0x0e003, input_port_4_r },
 	{ 0xa0000, 0xfffff, MRA_ROM },
 MEMORY_END
 
@@ -143,7 +120,7 @@ static MEMORY_WRITE_START( alt_writemem )
 	{ 0x00000, 0x06fff, MWA_RAM },
 	{ 0x07000, 0x07fff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x08000, 0x08fff, raiden_shared_w, &raiden_shared_ram },
-	{ 0x0a000, 0x0a00f, seibu_soundlatch_w, &seibu_shared_sound_ram },
+	{ 0x0a000, 0x0a00d, seibu_main_v30_w },
 	{ 0x0b000, 0x0b007, raiden_control_w },
 	{ 0x0c000, 0x0c7ff, raidena_text_w, &videoram },
 	{ 0x0f000, 0x0f035, MWA_RAM, &raiden_scroll_ram },
@@ -152,11 +129,9 @@ MEMORY_END
 
 /******************************************************************************/
 
-SEIBU_SOUND_SYSTEM_YM3812_MEMORY_MAP(input_port_4_r) /* Coin port */
-
-/******************************************************************************/
-
 INPUT_PORTS_START( raiden )
+	SEIBU_COIN_INPUTS	/* Must be port 0: coin inputs read through sound cpu */
+
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
@@ -244,10 +219,6 @@ INPUT_PORTS_START( raiden )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
-
-	PORT_START	/* Coins */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
 INPUT_PORTS_END
 
 /******************************************************************************/
@@ -404,9 +375,10 @@ ROM_START( raiden )
 	ROM_LOAD16_BYTE( "rai5.bin",   0x0c0000, 0x20000, 0x7aca6d61 )
 	ROM_LOAD16_BYTE( "rai6a.bin",  0x0c0001, 0x20000, 0xe3d35cc2 )
 
-	ROM_REGION( 0x18000, REGION_CPU3, 0 ) /* 64k code for sound Z80 */
-	ROM_LOAD( "rai6.bin", 0x000000, 0x08000, 0x723a483b )
-	ROM_CONTINUE(         0x010000, 0x08000 )
+	ROM_REGION( 0x20000, REGION_CPU3, 0 ) /* 64k code for sound Z80 */
+	ROM_LOAD( "rai6.bin",     0x000000, 0x08000, 0x723a483b )
+	ROM_CONTINUE(             0x010000, 0x08000 )
+	ROM_COPY( REGION_CPU3, 0, 0x018000, 0x08000 )
 
 	ROM_REGION( 0x010000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "rai9.bin",     0x00000, 0x08000, 0x1922b25e ) /* chars */
@@ -436,9 +408,10 @@ ROM_START( raidena )
 	ROM_LOAD16_BYTE( "raiden05.rom",   0x0c0000, 0x20000, 0xed03562e )
 	ROM_LOAD16_BYTE( "raiden06.rom",   0x0c0001, 0x20000, 0xa19d5b5d )
 
-	ROM_REGION( 0x18000, REGION_CPU3, 0 ) /* 64k code for sound Z80 */
+	ROM_REGION( 0x20000*2, REGION_CPU3, 0 ) /* 64k code for sound Z80 */
 	ROM_LOAD( "raiden08.rom", 0x000000, 0x08000, 0x731adb43 )
 	ROM_CONTINUE(             0x010000, 0x08000 )
+	ROM_COPY( REGION_CPU3, 0, 0x018000, 0x08000 )
 
 	ROM_REGION( 0x010000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "rai9.bin",     0x00000, 0x08000, 0x1922b25e ) /* chars */
@@ -468,9 +441,10 @@ ROM_START( raidenk )
 	ROM_LOAD16_BYTE( "raiden05.rom",   0x0c0000, 0x20000, 0xed03562e )
 	ROM_LOAD16_BYTE( "raiden06.rom",   0x0c0001, 0x20000, 0xa19d5b5d )
 
-	ROM_REGION( 0x18000, REGION_CPU3, 0 ) /* 64k code for sound Z80 */
+	ROM_REGION( 0x20000, REGION_CPU3, 0 ) /* 64k code for sound Z80 */
 	ROM_LOAD( "8b",           0x000000, 0x08000, 0x99ee7505 )
 	ROM_CONTINUE(             0x010000, 0x08000 )
+	ROM_COPY( REGION_CPU3, 0, 0x018000, 0x08000 )
 
 	ROM_REGION( 0x010000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "rai9.bin",     0x00000, 0x08000, 0x1922b25e ) /* chars */
@@ -521,13 +495,11 @@ static READ_HANDLER( sub_cpu_spina_r )
 static void init_raiden(void)
 {
 	install_mem_read_handler(1, 0x4008, 0x4009, sub_cpu_spin_r);
-	install_seibu_sound_speedup(2);
 }
 
 static void memory_patcha(void)
 {
 	install_mem_read_handler(1, 0x4008, 0x4009, sub_cpu_spina_r);
-	install_seibu_sound_speedup(2);
 }
 
 /* This is based on code by Niclas Karlsson Mate, who figured out the
@@ -600,11 +572,11 @@ static void init_raidena(void)
 {
 	memory_patcha();
 	common_decrypt();
-	seibu_sound_decrypt();
+	seibu_sound_decrypt(REGION_CPU3,0x20000);
 }
 
 /***************************************************************************/
 
 GAME( 1990, raiden,  0,      raiden,  raiden, raiden,  ROT270, "Seibu Kaihatsu", "Raiden" )
-GAMEX(1990, raidena, raiden, raidena, raiden, raidena, ROT270, "Seibu Kaihatsu", "Raiden (Alternate Hardware)", GAME_NO_SOUND )
+GAME( 1990, raidena, raiden, raidena, raiden, raidena, ROT270, "Seibu Kaihatsu", "Raiden (Alternate Hardware)" )
 GAME( 1990, raidenk, raiden, raidena, raiden, raidenk, ROT270, "Seibu Kaihatsu (IBL Corporation license)", "Raiden (Korea)" )
