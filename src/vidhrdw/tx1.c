@@ -38,11 +38,13 @@ WRITE8_HANDLER( tx1_vram_w )
 
 static void get_tx1_tile_info(int tile_index)
 {
-  	tile_index <<= 1;
-        int bit15 = (tx1_vram[tile_index+1] & 0x80)<<6;
-        int upper = (tx1_vram[tile_index+1]&0x03)<<11;
-        int lower = (tx1_vram[tile_index]<<3);
-	int tileno = (bit15 | upper | lower)/8;
+	int bit15, upper, lower, tileno;
+
+	tile_index <<= 1;
+	bit15 = (tx1_vram[tile_index+1] & 0x80)<<6;
+	upper = (tx1_vram[tile_index+1]&0x03)<<11;
+	lower = (tx1_vram[tile_index]<<3);
+	tileno = (bit15 | upper | lower)/8;
 
 	SET_TILE_INFO(0,tileno,0,0)
 }
@@ -179,24 +181,28 @@ WRITE8_HANDLER( buggyboy_vram_w )
 
 static void get_buggyb1_tile_info(int tile_index)
 {
-  	tile_index <<= 1;
- 	int color = ((buggyb1_vram[tile_index+1] >>2) & 0x3f);
-        int bit15 = (buggyb1_vram[tile_index+1] & 0x80);
-        int upper = (buggyb1_vram[tile_index+1]&0x03)<<11;
-        int lower = (buggyb1_vram[tile_index]<<3);
-	int tileno = ((bit15 << 6) | upper | lower)/8;
+	int color, bit15, upper, lower, tileno;
 
-        SET_TILE_INFO(0,tileno,color,0);
+	tile_index <<= 1;
+	color = ((buggyb1_vram[tile_index+1] >>2) & 0x3f);
+	bit15 = (buggyb1_vram[tile_index+1] & 0x80);
+	upper = (buggyb1_vram[tile_index+1]&0x03)<<11;
+	lower = (buggyb1_vram[tile_index]<<3);
+	tileno = ((bit15 << 6) | upper | lower)/8;
+
+	SET_TILE_INFO(0,tileno,color,0);
 }
 
 static void get_buggyboy_tile_info(int tile_index)
 {
-  	tile_index <<= 1;
- 	int color = ((buggyboy_vram[tile_index+1] >>2) & 0x3f);
-        int bit15 = (buggyboy_vram[tile_index+1] & 0x80)<<6;
-        int upper = (buggyboy_vram[tile_index+1]&0x03)<<11;
-        int lower = (buggyboy_vram[tile_index]<<3);
-	int tileno = (bit15 | upper | lower)/8;
+  	int color, bit15, upper, lower, tileno;
+
+	tile_index <<= 1;
+	color = ((buggyboy_vram[tile_index+1] >>2) & 0x3f);
+	bit15 = (buggyboy_vram[tile_index+1] & 0x80)<<6;
+	upper = (buggyboy_vram[tile_index+1]&0x03)<<11;
+	lower = (buggyboy_vram[tile_index]<<3);
+	tileno = (bit15 | upper | lower)/8;
 
 	SET_TILE_INFO(0,tileno,color,0)
 }
@@ -244,7 +250,12 @@ static void bb_draw_objects(struct mame_bitmap *bitmap,const struct rectangle *c
 
 	for (offs = 0x0; offs <= (bb_objectram_size); offs += 16)
 	{
-          if(bb_objram[offs+1] == 0xff)   /* End of object list marker? */
+		int inc,last;
+		int bit_12, PSA0_12, PSA, object_flip_x;
+		int index_y,index_x,index=0;
+
+		  
+		  if(bb_objram[offs+1] == 0xff)   /* End of object list marker? */
                 return;
 
           /* The object code is fed into ROM and PROM to generate a lookup into a pair of ROMs */
@@ -254,15 +265,14 @@ static void bb_draw_objects(struct mame_bitmap *bitmap,const struct rectangle *c
 	  if(rom_lut[ROM_lookup] == 0xff) /* Do not draw object  */
            	continue;
 
+
           /* Calculate 13-bit index into object lookup ROMs that holds 8x8 chunk sequence */
-          int bit_12 = (((bb_objram[offs]>>7)&0x1) | ((bb_objram[offs]>>6)&0x1)) <<12;
-          int PSA0_12 = ( ( (prom_lut[PROM_lookup]&0xf)<<8) | rom_lut[ROM_lookup] | bit_12) & 0x1fff;
+          bit_12 = (((bb_objram[offs]>>7)&0x1) | ((bb_objram[offs]>>6)&0x1)) <<12;
+          PSA0_12 = ( ( (prom_lut[PROM_lookup]&0xf)<<8) | rom_lut[ROM_lookup] | bit_12) & 0x1fff;
 
-          int PSA = (PSA0_12 << 2);
-          int index_y,index_x,index=0;
+          PSA = (PSA0_12 << 2);
 
-          int object_flip_x = (bb_objram[offs+5]>>7)&0x1;
-          int inc,last;
+          object_flip_x = (bb_objram[offs+5]>>7)&0x1;
 
           for (index_y=0; index_y<16; index_y++)
           {
@@ -310,11 +320,6 @@ static void bb_draw_objects(struct mame_bitmap *bitmap,const struct rectangle *c
                         int color = (tmp + tmp2 + tmp3);
                         int trans;
 
-                        if(!(OPCD & 0x80))  /* Seems to work! */
-                             trans = TRANSPARENCY_PEN;
-                        else
-                             trans = TRANSPARENCY_NONE;
-
 
                         /* 8x8 chunk ROM bank (0-2) */
                         int bank = (((bb_objram[offs+5]>>3)&0x2) | ((chunk_number>>13)&0x1))+1;
@@ -324,6 +329,11 @@ static void bb_draw_objects(struct mame_bitmap *bitmap,const struct rectangle *c
 			int flipy = 0;
 
 			const struct GfxElement *gfx = Machine->gfx[bank];
+
+                        if(!(OPCD & 0x80))  /* Seems to work! */
+                             trans = TRANSPARENCY_PEN;
+                        else
+                             trans = TRANSPARENCY_NONE;
 
                         index_x+=inc;
                 	index++;

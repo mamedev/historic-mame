@@ -530,7 +530,7 @@ static UINT16 latch_clear_value = 0x00;
 static UINT16 latched_value[4];
 static UINT8 latch_read[4];
 
-static void *wavfile;
+static wav_file *wavfile;
 
 
 
@@ -945,10 +945,10 @@ void sound_stop(void)
 	for (spknum = 0; spknum < totalspeakers; spknum++)
 	{
 		struct speaker_info *spk = &speaker[spknum];
-		printf("Speaker \"%s\" - max = %d (gain *= %f) - %d%% samples clipped\n", spk->speaker->tag, spk->max_sample, 32767.0 / (spk->max_sample ? spk->max_sample : 1), (int)((double)spk->clipped_samples * 100.0 / spk->total_samples));
+		logerror("Speaker \"%s\" - max = %d (gain *= %f) - %d%% samples clipped\n", spk->speaker->tag, spk->max_sample, 32767.0 / (spk->max_sample ? spk->max_sample : 1), (int)((double)spk->clipped_samples * 100.0 / spk->total_samples));
 	}
 }
-#endif
+#endif /* MAME_DEBUG */
 
 	/* stop all the sound chips */
 	for (sndnum = 0; sndnum < MAX_SOUND; sndnum++)

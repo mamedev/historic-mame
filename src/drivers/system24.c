@@ -1175,6 +1175,7 @@ static DRIVER_INIT(crkdown)
 	system24temp_sys16_io_set_callbacks(hotrod_io_r, hotrod_io_w, resetcontrol_w, iod_r, iod_w);
 	mlatch_table = 0;
 	track_size = 0x2d00;
+	s24_fd1094_driver_init();
 }
 
 static NVRAM_HANDLER(system24)
@@ -1983,8 +1984,11 @@ ROM_START( crkdown )
 	ROM_LOAD16_BYTE( "epr12187.ic2", 0x000000, 0x20000, CRC(e83783f3) SHA1(4b3b32df7de85aef9cd77c8a4ffc17e10466b638) )
 	ROM_LOAD16_BYTE( "epr12186.ic1", 0x000001, 0x20000, CRC(ce76319d) SHA1(0ede61f0700f9161285c768fa97636f0e42b96f8) )
 
+	ROM_REGION( 0x2000, REGION_USER3, 0 )	/* decryption key */
+	ROM_LOAD( "317-0058-04d.key", 0x0000, 0x2000,  CRC(6a993af2) SHA1(8fcfb08e3d84dfd3572b83d2362b825911ab3b84) )
+
 	ROM_REGION( 0x1c2000, REGION_USER2, 0)
-	ROM_LOAD( "ds3-5000-04d.bin",    0x000000, 0x1c2000, CRC(b95bcdb7) SHA1(25c465349972ec5e57765ca6446883943daf3890) )
+	ROM_LOAD( "ds3-5000-04d.bin",    0x000000, 0x1c2000, CRC(8679032c) SHA1(887b245a70652897fbda736b60e81a123866ec12) )
 ROM_END
 
 ROM_START( dcclub )
@@ -2065,12 +2069,12 @@ GAME( 1994, qrouka,   0,        system24, qgh,      qrouka,   ROT0,   "Sega", "Q
 GAME( 1994, mahmajn2, 0,        system24, mahmajn,  mahmajn2, ROT0,   "Sega", "Tokoro San no MahMahjan 2")
 GAME( 1988, sspirits, 0,        system24, sspirits, sspirits, ROT270, "Sega", "Scramble Spirits" )
 GAMEX(1989, sgmastc,  sgmast,   system24, bnzabros, sgmast,   ROT0,   "Sega", "Jumbo Ozaki Super Masters Golf (FD1094 317-0058-05c)", GAME_NOT_WORKING) // decrypted
-GAME (1988, gground,  0,        system24, gground,  gground,  ROT270, "Sega", "Gain Ground (FD1094 317-0058-03?") // decrypted
+GAME (1988, gground,  0,        system24, gground,  gground,  ROT270, "Sega", "Gain Ground (FD1094 317-0058-03?)") // decrypted
+GAMEX(1989, crkdown,  0,        system24, bnzabros, crkdown,  ROT0,   "Sega", "Crackdown (US, FD1094 317-0058-04d)", GAME_IMPERFECT_GRAPHICS)
 
 /* Encrypted */
 GAMEX( ????, sgmast,   0, system24, bnzabros, sgmast,   ROT0,	"Sega", "Super Masters Golf (FD1094 317-0058-05d?)", GAME_NOT_WORKING|GAME_UNEMULATED_PROTECTION)
 GAMEX( ????, qsww,     0, system24, bnzabros, qsww,     ROT0, 	"Sega", "Quiz Syukudai wo Wasuremashita", GAME_NOT_WORKING|GAME_UNEMULATED_PROTECTION)
-GAMEX( ????, crkdown,  0, system24, bnzabros, crkdown,  ROT0,	"Sega", "Crackdown", GAME_NOT_WORKING|GAME_UNEMULATED_PROTECTION)
 
 /* decrypted but missing disk images */
 GAMEX(1988, sspirtfc, sspirits,        system24, sspirits, sspirits, ROT270, "Sega", "Scramble Spirits (FD1094 317-0058-02c)",GAME_NOT_WORKING )

@@ -62,6 +62,7 @@ static WRITE8_HANDLER( polaris_sh_port4_w );
 static WRITE8_HANDLER( polaris_sh_port6_w );
 
 
+mame_timer *schaser_effect_555_timer;
 static double schaser_effect_555_time_remain;
 static int schaser_effect_555_is_low;
 static int explosion;

@@ -3202,6 +3202,105 @@ INPUT_PORTS_START ( mp_twc )
 
 INPUT_PORTS_END
 
+INPUT_PORTS_START ( mp_sor2 )
+	GENESIS_PORTS
+	MEGAPLAY_TEST
+	MEGAPLAY_COIN
+	MEGAPLAY_DSWA
+	MEGAPLAY_DSWB
+
+	PORT_START
+	// DSW C  (per game settings)
+	PORT_DIPNAME( 0x03, 0x01, DEF_STR( Lives ) )
+    PORT_DIPSETTING( 0x00, "4" )
+    PORT_DIPSETTING( 0x01, "3" )
+    PORT_DIPSETTING( 0x02, "2" )
+    PORT_DIPSETTING( 0x03, "1" )
+
+	PORT_DIPNAME( 0xc, 0x0c, DEF_STR ( Difficulty ) )
+    PORT_DIPSETTING( 0x00, DEF_STR ( Hardest ) )
+    PORT_DIPSETTING( 0x04, DEF_STR ( Hard ) )
+    PORT_DIPSETTING( 0x08, DEF_STR ( Easy ) )
+    PORT_DIPSETTING( 0x0c, DEF_STR ( Normal ) )
+
+INPUT_PORTS_END
+
+INPUT_PORTS_START ( mp_bio )
+	GENESIS_PORTS
+	MEGAPLAY_TEST
+	MEGAPLAY_COIN
+	MEGAPLAY_DSWA
+	MEGAPLAY_DSWB
+
+	PORT_START
+	// DSW C  (per game settings)
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
+    PORT_DIPSETTING( 0x00, "5" )
+    PORT_DIPSETTING( 0x01, "4" )
+    PORT_DIPSETTING( 0x02, "2" )
+    PORT_DIPSETTING( 0x03, "3" )
+
+	PORT_DIPNAME( 0xc, 0x0c, DEF_STR ( Difficulty ) )
+    PORT_DIPSETTING( 0x00, DEF_STR ( Hardest ) )
+    PORT_DIPSETTING( 0x04, DEF_STR ( Hard ) )
+    PORT_DIPSETTING( 0x08, DEF_STR ( Easy ) )
+    PORT_DIPSETTING( 0x0c, DEF_STR ( Normal ) )
+
+INPUT_PORTS_END
+
+INPUT_PORTS_START ( mp_gslam )
+	GENESIS_PORTS
+	MEGAPLAY_TEST
+	MEGAPLAY_COIN
+	MEGAPLAY_DSWA
+	MEGAPLAY_DSWB
+
+	PORT_START
+	// DSW C  (per game settings)
+	PORT_DIPNAME( 0x07, 0x04, DEF_STR ( Game_Time ) )
+    PORT_DIPSETTING( 0x00, "5:00" )
+    PORT_DIPSETTING( 0x01, "4:30" )
+    PORT_DIPSETTING( 0x02, "4:00" )
+    PORT_DIPSETTING( 0x03, "3:30" )
+    PORT_DIPSETTING( 0x04, "3:00" )
+    PORT_DIPSETTING( 0x05, "2:30" )
+    PORT_DIPSETTING( 0x06, "2:00" )
+    PORT_DIPSETTING( 0x07, "1:30" )
+
+
+	PORT_DIPNAME( 0x08, 0x08, "2P-Play Continue" )
+    PORT_DIPSETTING( 0x00, "1 Credit" )
+    PORT_DIPSETTING( 0x08, "2 Credits" )
+
+INPUT_PORTS_END
+
+INPUT_PORTS_START ( mp_mazin )
+	GENESIS_PORTS
+	MEGAPLAY_TEST
+	MEGAPLAY_COIN
+	MEGAPLAY_DSWA
+	MEGAPLAY_DSWB
+
+	PORT_START
+	// DSW C  (per game settings)
+	PORT_DIPNAME( 0x01, 0x01, "DSW C-1" )
+    PORT_DIPSETTING( 0x01, DEF_STR ( Off ) )
+    PORT_DIPSETTING( 0x00, DEF_STR ( On ) )
+
+	PORT_DIPNAME( 0x02, 0x02, "DSW C-2" )
+    PORT_DIPSETTING( 0x02, DEF_STR ( Off ) )
+    PORT_DIPSETTING( 0x00, DEF_STR ( On ) )
+
+	PORT_DIPNAME( 0x04, 0x04, "DSW C-3" )
+    PORT_DIPSETTING( 0x04, DEF_STR ( Off ) )
+    PORT_DIPSETTING( 0x00, DEF_STR ( On ) )
+
+	PORT_DIPNAME( 0x08, 0x08, "DSW C-4" )
+    PORT_DIPSETTING( 0x08, DEF_STR ( Off ) )
+    PORT_DIPSETTING( 0x00, DEF_STR ( On ) )
+
+INPUT_PORTS_END
+
 /******************************************************************************
 	Sound interfaces
 ******************************************************************************/
@@ -4422,6 +4521,20 @@ ROM_START( mp_bio ) /* Bio Hazard Battle */
 	MEGAPLAY_BIOS
 ROM_END
 
+ROM_START( mp_soni2 ) /* Sonic The Hedgehog 2 */
+	ROM_REGION( 0x400000, REGION_CPU1, 0 )
+	ROM_LOAD16_WORD_SWAP( "mpr-16011.ic1", 0x000000, 0x100000, CRC(3d7bf98a) SHA1(dce0e4e8f2573e0ffe851edaa235e4ed9e61ee2d) )
+	/* Game Instruction rom copied to 0x300000 - 0x310000 (odd / even bytes equal) */
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* z80 */
+
+	ROM_REGION( 0x8000, REGION_USER1, 0 ) /* Game Instructions */
+	ROM_LOAD( "epr-15175-07.ic1", 0x000000, 0x08000, CRC(bb5f67f0) SHA1(33b7a5d14015a5fcf41976a8f648f8f48ce9bb03) )
+
+	ROM_REGION( 0x28000, REGION_CPU3, 0 ) /* Bios */
+	MEGAPLAY_BIOS
+ROM_END
+
 ROM_START( mp_mazin ) /* Mazin Wars */
 	ROM_REGION( 0x400000, REGION_CPU1, 0 )
 	ROM_LOAD16_WORD_SWAP( "mpr-16460.ic1", 0x000000, 0x100000, CRC(e9635a83) SHA1(ab3afa11656f0ae3a50c957dce012fb15d3992e0) )
@@ -4949,18 +5062,18 @@ static DRIVER_INIT (megaplay)
 /* -- */ GAMEBX(1993, megaplay, 0,        megaplay, megaplay, megaplay, megaplay, ROT0, "Sega",                  "Mega Play BIOS", NOT_A_DRIVER )
 /* 01 */ GAMEB( 1993, mp_sonic, megaplay, megaplay, megaplay, mp_sonic, megaplay, ROT0, "Sega",                  "Sonic The Hedgehog (Mega Play)"  )
 /* 02 */ GAMEB( 1993, mp_gaxe2, megaplay, megaplay, megaplay, mp_gaxe2, megaplay, ROT0, "Sega",                  "Golden Axe II (Mega Play)"  )
-/* 03 */ GAMEBX(1993, mp_gslam, megaplay, megaplay, megaplay, mp_twc,	megaplay, ROT0, "Sega",                  "Grand Slam (Mega Play)",GAME_NOT_WORKING  )
+/* 03 */ GAMEBX(1993, mp_gslam, megaplay, megaplay, megaplay, mp_gslam,	megaplay, ROT0, "Sega",                  "Grand Slam (Mega Play)",GAME_NOT_WORKING  )
 /* 04 */ GAMEB( 1993, mp_twc,   megaplay, megaplay, megaplay, mp_twc,	megaplay, ROT0, "Sega",                  "Tecmo World Cup (Mega Play)"  )
-/* 05 */ GAMEB( 1993, mp_sor2,  megaplay, megaplay, megaplay, mp_twc,	megaplay, ROT0, "Sega",                  "Streets of Rage II (Mega Play)"  )
-/* 06 */ GAMEB( 1993, mp_bio,   megaplay, megaplay, megaplay, mp_twc,	megaplay, ROT0, "Sega",                  "Bio-hazard Battle (Mega Play)"  )
-/* 07 */
+/* 05 */ GAMEB( 1993, mp_sor2,  megaplay, megaplay, megaplay, mp_sor2,	megaplay, ROT0, "Sega",                  "Streets of Rage II (Mega Play)"  )
+/* 06 */ GAMEB( 1993, mp_bio,   megaplay, megaplay, megaplay, mp_bio,	megaplay, ROT0, "Sega",                  "Bio-hazard Battle (Mega Play)"  )
+/* 07 */ GAMEB( 1993, mp_soni2, megaplay, megaplay, megaplay, mp_sonic, megaplay, ROT0, "Sega",                  "Sonic The Hedgehog 2 (Mega Play)"  )
 /* 08 */
 /* 09 */
 /* 10 */
-/* 11 */ GAMEBX(1993, mp_mazin,   megaplay, megaplay, megaplay, mp_twc,	megaplay, ROT0, "Sega",                  "Mazin Wars (Mega Play)",GAME_NOT_WORKING  )
+/* 11 */ GAMEBX(1993, mp_mazin,   megaplay, megaplay, megaplay, mp_mazin,	megaplay, ROT0, "Sega",                  "Mazin Wars (Mega Play)",GAME_NOT_WORKING  )
 
 /* Also known to exist:
-Bio Hazard Battle
 Gunstar Heroes
-Streets of Rage 2
++ at least 2 others?
+
 */

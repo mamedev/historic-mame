@@ -21,12 +21,6 @@ World Beach Volley:
 - The histogram functions don't seem to work.
 - Sound is controlled by a pic16c57 whose ROM is missing for this game.
 
-Excelsior:
-- bitmap position is wrong at the end of the level and it should be trasparent
-- bitmap should be entirely visible in test mode and after the level end
-- sprite/tile priority issue during high scores (text should go behind rocks)
-  and on title screen (stars should be behind title)
-
 ***************************************************************************/
 
 #include "driver.h"
@@ -43,7 +37,6 @@ static data8_t playmark_oki_command;
 
 
 extern data16_t *bigtwin_bgvideoram;
-extern size_t bigtwin_bgvideoram_size;
 extern data16_t *wbeachvl_videoram1,*wbeachvl_videoram2,*wbeachvl_videoram3;
 extern data16_t *wbeachvl_rowscroll;
 
@@ -243,7 +236,7 @@ static ADDRESS_MAP_START( bigtwin_main_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x504000, 0x50ffff) AM_WRITE(MWA16_NOP)	/* unused RAM? */
 	AM_RANGE(0x510000, 0x51000b) AM_WRITE(bigtwin_scroll_w)
 	AM_RANGE(0x51000c, 0x51000d) AM_WRITENOP	/* always 3? */
-	AM_RANGE(0x600000, 0x67ffff) AM_WRITE(bigtwin_bgvideoram_w) AM_BASE(&bigtwin_bgvideoram) AM_SIZE(&bigtwin_bgvideoram_size)
+	AM_RANGE(0x600000, 0x67ffff) AM_RAM AM_BASE(&bigtwin_bgvideoram)
 	AM_RANGE(0x700010, 0x700011) AM_READ(input_port_0_word_r)
 	AM_RANGE(0x700012, 0x700013) AM_READ(input_port_1_word_r)
 	AM_RANGE(0x700014, 0x700015) AM_READ(input_port_2_word_r)
@@ -286,7 +279,7 @@ static ADDRESS_MAP_START( excelsr_main_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x501000, 0x501fff) AM_RAM AM_WRITE(wbeachvl_txvideoram_w) AM_BASE(&wbeachvl_videoram1)
 	AM_RANGE(0x510000, 0x51000b) AM_WRITE(excelsr_scroll_w)
 	AM_RANGE(0x51000c, 0x51000d) AM_WRITENOP	/* 2 and 3 */
-	AM_RANGE(0x600000, 0x67ffff) AM_RAM AM_WRITE(bigtwin_bgvideoram_w) AM_BASE(&bigtwin_bgvideoram) AM_SIZE(&bigtwin_bgvideoram_size)
+	AM_RANGE(0x600000, 0x67ffff) AM_RAM AM_BASE(&bigtwin_bgvideoram)
 	AM_RANGE(0x700010, 0x700011) AM_READ(input_port_0_word_r)
 	AM_RANGE(0x700012, 0x700013) AM_READ(input_port_1_word_r)
 	AM_RANGE(0x700014, 0x700015) AM_READ(input_port_2_word_r)
@@ -689,7 +682,7 @@ static MACHINE_DRIVER_START( bigtwin )
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_SCREEN_SIZE(64*8, 64*8)
 	MDRV_VISIBLE_AREA(0*8, 40*8-1, 2*8, 32*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(1024)
@@ -724,7 +717,7 @@ static MACHINE_DRIVER_START( wbeachvl )
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_SCREEN_SIZE(64*8, 64*8)
 	MDRV_VISIBLE_AREA(0*8, 40*8-1, 2*8, 32*8-1)
 	MDRV_GFXDECODE(wbeachvl_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(2048)
@@ -756,7 +749,7 @@ static MACHINE_DRIVER_START( excelsr )
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_SCREEN_SIZE(64*8, 64*8)
 	MDRV_VISIBLE_AREA(0*8, 40*8-1, 2*8, 32*8-1)
 	MDRV_GFXDECODE(excelsr_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(1024)
@@ -970,4 +963,4 @@ static DRIVER_INIT( bigtwin )
 
 GAMEX( 1995, bigtwin,  0, bigtwin,  bigtwin,  bigtwin, ROT0, "Playmark", "Big Twin", GAME_NO_COCKTAIL )
 GAMEX( 1995, wbeachvl, 0, wbeachvl, wbeachvl, 0,       ROT0, "Playmark", "World Beach Volley", GAME_NO_COCKTAIL | GAME_NO_SOUND )
-GAMEX( 199?, excelsr,  0, excelsr,  excelsr,  bigtwin, ROT0, "Playmark", "Excelsior", GAME_IMPERFECT_GRAPHICS )
+GAME(  199?, excelsr,  0, excelsr,  excelsr,  bigtwin, ROT0, "Playmark", "Excelsior" )

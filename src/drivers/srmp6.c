@@ -133,14 +133,14 @@ VIDEO_UPDATE(srmp6)
 	// parse sprite list
 	while( source<finish )
 	{
-		if (source[0]&0x8000) break;	// end of list
-
 		int num  = source[1];
 		int xpos = source[2];
 		int ypos = source[3];
 		int color = 0;
 		int flipx = 0;
 		int flipy = 0;
+
+		if (source[0]&0x8000) break;	// end of list
 
 		drawgfx(
 				bitmap,

@@ -22,17 +22,17 @@ Notes(general):
 -In all the games there are square gaps during gameplay.
 -Fix kakumei2 GFX3 rom region,maybe bad dump (half length)?
 -Fully understand priorities...
--Rename the tilemaps according to mjzoomin test mode.
--Fix daireika work ram error.mjzoomin has a similar issue after that you press the
- more(M) button.
 -Fix daireika/urashima GFX rom loading.
--Some video banking issues in suchipi.(Check this,it seems to be fixed)
 -Fix the dip-switches in the first version of this board.
 -There could be timing issues caused by MCU simulation at $80004.
+-daireika/kakumei2 have problems with the tx layer vertical scrolling during the attract
+ mode, likely to be a paging issue...
 
 Notes (1st MCU ver.):
 -$f000e is bogus,maybe the program snippets can modify this value,or the MCU itself can
  do that,returning the contents of D0 register seems enough for now...
+ Update: Improved it for the new mcu simulation,now it pulls all the values from 0x00 to
+ 0x0f,it seems
 -$f030e is a mirror for $f000e in urashima.
 -Why urashima A0/7 registers parameters seems to have wrong source/destination addresses
  during MCU operations?Different HW?
@@ -40,15 +40,9 @@ Notes (1st MCU ver.):
  into mcu code,so we can debug the first version freely without being teased about
  memory space...
  BTW,the real HW is using a sort of bankswitch or I'm missing something?
--mjzoomin/daireika hangs on the gameplay,the program waits that a RAM address changes(most
- likely another MCU protection issue),if you play with the debugger you can pass it but
- then the program expects that the MCU do the pseudo-random job(i.e the tiles come in order
- instead of shuffled).
- Update:It seems that the pseudo-random thing is controlled by the RAM address $f000c.
- Luckily fixing one thing have fixed the other one too ;)
 -$f0020 is for the sound program,same for all games,for example mjzoomin hasn't any clear
  write to $80040 area and the program jumps to $f0020 when there should be a sample.
--urashima scroll registers aren't properly used.Investigate on it...
+-urashima scroll registers aren't used at all.Investigate on it...
 -mjzoomin controls during the gameplay don't react as expected,something to do
  with the protection(it probably reads a button pressed).
 
@@ -112,11 +106,11 @@ OSC:	12.000MHz
 #include "machine/random.h"
 #include "sound/okim6295.h"
 
-static struct tilemap *tx_tilemap, *fg_tilemap,*md_tilemap,*bg_tilemap;
-data16_t *jm_txvideoram, *jm_fgvideoram,*jm_mdvideoram,*jm_bgvideoram;
+static struct tilemap *sc3_tilemap, *sc0_tilemap,*sc1_tilemap,*sc2_tilemap;
+data16_t *sc3_vram, *sc0_vram,*sc1_vram,*sc2_vram;
 data16_t *jm_regs,*jm_ram,*jm_mcu_code;
 data16_t *jm_scrollram,*jm_vregs;
-static UINT16 fgbank,pri;
+static UINT16 sc0bank,pri;
 /*
 MCU program number,different for each game(n.b. the numbering scheme is *mine*,do not
 take it seriously...):
@@ -131,15 +125,12 @@ xxxx ---- MCU program revision
 ---- xxxx MCU program number assignment for each game.
 */
 static UINT8 mcu_prg;
-#define DAIREIKA_MCU (mcu_prg == 0x11)
-#define URASHIMA_MCU (mcu_prg == 0x12)
-#define MJZOOMIN_MCU (mcu_prg == 0x13)
-#define KAKUMEI_MCU  (mcu_prg == 0x21)
-#define KAKUMEI2_MCU (mcu_prg == 0x22)
-#define SUCHIPI_MCU  (mcu_prg == 0x23)
-#define FIRST_MCU    ((mcu_prg & 0x30) == 0x10)
-#define SECOND_MCU	 ((mcu_prg & 0x30) == 0x20)
-
+#define DAIREIKA_MCU (0x11)
+#define URASHIMA_MCU (0x12)
+#define MJZOOMIN_MCU (0x13)
+#define KAKUMEI_MCU  (0x21)
+#define KAKUMEI2_MCU (0x22)
+#define SUCHIPI_MCU  (0x23)
 
 static int respcount;
 
@@ -149,19 +140,19 @@ static UINT32 bg_scan(UINT32 col,UINT32 row,UINT32 num_cols,UINT32 num_rows)
 	return (row & 0x0f) + ((col & 0xff) << 4) + ((row & 0x70) << 8);
 }
 
-static void jm_get_fg_tile_info(int tile_index)
+static void get_sc0_tile_info(int tile_index)
 {
-	int code = jm_fgvideoram[tile_index];
+	int code = sc0_vram[tile_index];
 	SET_TILE_INFO(
 			3,
-			(code & 0xfff) + ((fgbank & 3) << 12),
+			(code & 0xfff) + ((sc0bank & 3) << 12),
 			code >> 12,
 			0)
 }
 
-static void jm_get_tx_tile_info(int tile_index)
+static void get_sc3_tile_info(int tile_index)
 {
-	int code = jm_txvideoram[tile_index];
+	int code = sc3_vram[tile_index];
 	SET_TILE_INFO(
 			0,
 			code & 0xfff,
@@ -169,9 +160,9 @@ static void jm_get_tx_tile_info(int tile_index)
 			0)
 }
 
-static void jm_get_bg_tile_info(int tile_index)
+static void get_sc2_tile_info(int tile_index)
 {
-	int code = jm_bgvideoram[tile_index];
+	int code = sc2_vram[tile_index];
 	SET_TILE_INFO(
 			1,
 			code & 0xfff,
@@ -179,9 +170,9 @@ static void jm_get_bg_tile_info(int tile_index)
 			0)
 }
 
-static void jm_get_md_tile_info(int tile_index)
+static void get_sc1_tile_info(int tile_index)
 {
-	int code = jm_mdvideoram[tile_index];
+	int code = sc1_vram[tile_index];
 	SET_TILE_INFO(
 			2,
 			code & 0xfff,
@@ -191,12 +182,12 @@ static void jm_get_md_tile_info(int tile_index)
 
 VIDEO_START( jalmah )
 {
-	bg_tilemap = tilemap_create(jm_get_bg_tile_info,bg_scan,TILEMAP_TRANSPARENT,16,16,256,32);
-	fg_tilemap = tilemap_create(jm_get_fg_tile_info,bg_scan,TILEMAP_TRANSPARENT,16,16,256,32);
-	tx_tilemap = tilemap_create(jm_get_tx_tile_info,tilemap_scan_cols,TILEMAP_TRANSPARENT,8,8,256,32);
-	md_tilemap = tilemap_create(jm_get_md_tile_info,bg_scan,TILEMAP_TRANSPARENT,16,16,256,32);
+	sc0_tilemap = tilemap_create(get_sc0_tile_info,bg_scan,TILEMAP_TRANSPARENT,16,16,256,32);
+	sc1_tilemap = tilemap_create(get_sc1_tile_info,bg_scan,TILEMAP_TRANSPARENT,16,16,256,32);
+	sc2_tilemap = tilemap_create(get_sc2_tile_info,bg_scan,TILEMAP_TRANSPARENT,16,16,256,32);
+	sc3_tilemap = tilemap_create(get_sc3_tile_info,tilemap_scan_cols,TILEMAP_TRANSPARENT,8,8,256,32);
 
-	if(!bg_tilemap || !tx_tilemap || !fg_tilemap || !md_tilemap)
+	if(!sc2_tilemap || !sc3_tilemap || !sc0_tilemap || !sc1_tilemap)
 		return 1;
 
 	jm_scrollram = auto_malloc(0x80);
@@ -205,12 +196,144 @@ VIDEO_START( jalmah )
 	if (!jm_scrollram || !jm_vregs)
 		return 1;
 
-	tilemap_set_transparent_pen(bg_tilemap,15);
-	tilemap_set_transparent_pen(fg_tilemap,15);
-	tilemap_set_transparent_pen(tx_tilemap,15);
-	tilemap_set_transparent_pen(md_tilemap,15);
+	tilemap_set_transparent_pen(sc0_tilemap,15);
+	tilemap_set_transparent_pen(sc1_tilemap,15);
+	tilemap_set_transparent_pen(sc2_tilemap,15);
+	tilemap_set_transparent_pen(sc3_tilemap,15);
 
 	return 0;
+}
+
+#define MCU_READ(_number_,_bit_,_offset_,_retval_)\
+if((0xffff - input_port_##_number_##_word_r(0,0)) & _bit_) { jm_regs[_offset_] = _retval_; }
+
+/*RAM-based protection handlings*/
+static void daireika_mcu_run(void)
+{
+	static UINT16 prg_prot;
+
+	if((0xffff - input_port_0_word_r(0,0)) & 0x0008)//service_mode
+	{
+		jm_regs[0x000/2] = input_port_2_word_r(0,0);
+		jm_regs[0x002/2] = input_port_3_word_r(0,0);
+		jm_regs[0x004/2] = input_port_4_word_r(0,0);
+		jm_regs[0x006/2] = input_port_5_word_r(0,0);
+		jm_regs[0x008/2] = input_port_6_word_r(0,0);
+		jm_regs[0x00a/2] = input_port_7_word_r(0,0);
+	}
+	else
+	{
+		jm_regs[0x000/2] = 0x0000;
+		MCU_READ(3,0x0001,0x000/2,0x00);/*FF*/
+		MCU_READ(4,0x0400,0x000/2,0x01);/*A*/
+		MCU_READ(4,0x1000,0x000/2,0x02);/*B*/
+		MCU_READ(4,0x0200,0x000/2,0x03);/*C*/
+		MCU_READ(4,0x0800,0x000/2,0x04);/*D*/
+		MCU_READ(4,0x0004,0x000/2,0x05);/*E*/
+		MCU_READ(4,0x0010,0x000/2,0x06);/*F*/
+		MCU_READ(4,0x0002,0x000/2,0x07);/*G*/
+		MCU_READ(4,0x0008,0x000/2,0x08);/*H*/
+		MCU_READ(3,0x0400,0x000/2,0x09);/*I*/
+		MCU_READ(3,0x1000,0x000/2,0x0a);/*J*/
+		MCU_READ(3,0x0200,0x000/2,0x0b);/*K*/
+		MCU_READ(3,0x0800,0x000/2,0x0c);/*L*/
+		MCU_READ(3,0x0004,0x000/2,0x0d);/*M*/
+		MCU_READ(3,0x0010,0x000/2,0x0e);/*N*/
+		MCU_READ(2,0x0200,0x000/2,0x0f);/*RON   (trusted)*/
+		MCU_READ(2,0x1000,0x000/2,0x10);/*REACH (trusted)*/
+		MCU_READ(2,0x0400,0x000/2,0x11);/*KAN            */
+		MCU_READ(3,0x0008,0x000/2,0x12);/*PON            */
+		MCU_READ(3,0x0002,0x000/2,0x13);/*CHI 	(trusted)*/
+		MCU_READ(2,0x0004,0x000/2,0x14);/*START1*/
+	}
+	jm_regs[0x00c/2] = mame_rand() & 0xffff;
+	prg_prot++;
+	if(prg_prot > 0x10) { prg_prot = 0; }
+	jm_regs[0x00e/2] = prg_prot;
+
+}
+
+static void urashima_mcu_run(void)
+{
+	static UINT16 prg_prot;
+
+	if((0xffff - input_port_0_word_r(0,0)) & 0x0008)//service_mode
+	{
+		jm_regs[0x300/2] = input_port_2_word_r(0,0);
+		jm_regs[0x302/2] = input_port_3_word_r(0,0);
+		jm_regs[0x304/2] = input_port_4_word_r(0,0);
+		jm_regs[0x306/2] = input_port_5_word_r(0,0);
+		jm_regs[0x308/2] = input_port_6_word_r(0,0);
+		jm_regs[0x30a/2] = input_port_7_word_r(0,0);
+	}
+	else
+	{
+		jm_regs[0x300/2] = 0x0000;
+		MCU_READ(3,0x0001,0x300/2,0x00);/*FF*/
+		MCU_READ(4,0x0400,0x300/2,0x01);/*A*/
+		MCU_READ(4,0x1000,0x300/2,0x02);/*B*/
+		MCU_READ(4,0x0200,0x300/2,0x03);/*C*/
+		MCU_READ(4,0x0800,0x300/2,0x04);/*D*/
+		MCU_READ(4,0x0004,0x300/2,0x05);/*E*/
+		MCU_READ(4,0x0010,0x300/2,0x06);/*F*/
+		MCU_READ(4,0x0002,0x300/2,0x07);/*G*/
+		MCU_READ(4,0x0008,0x300/2,0x08);/*H*/
+		MCU_READ(3,0x0400,0x300/2,0x09);/*I*/
+		MCU_READ(3,0x1000,0x300/2,0x0a);/*J*/
+		MCU_READ(3,0x0200,0x300/2,0x0b);/*K*/
+		MCU_READ(3,0x0800,0x300/2,0x0c);/*L*/
+		MCU_READ(3,0x0004,0x300/2,0x0d);/*M*/
+		MCU_READ(3,0x0010,0x300/2,0x0e);/*N*/
+		MCU_READ(2,0x0200,0x300/2,0x0f);/*RON   (trusted)*/
+		MCU_READ(2,0x1000,0x300/2,0x10);/*REACH (trusted)*/
+		MCU_READ(2,0x0400,0x300/2,0x11);/*KAN            */
+		MCU_READ(3,0x0008,0x300/2,0x12);/*PON            */
+		MCU_READ(3,0x0002,0x300/2,0x13);/*CHI 	(trusted)*/
+		MCU_READ(2,0x0004,0x300/2,0x14);/*START1*/
+	}
+	jm_regs[0x30c/2] = mame_rand() & 0xffff;
+	prg_prot++;
+	if(prg_prot > 0x10) { prg_prot = 0; }
+	jm_regs[0x30e/2] = prg_prot;
+}
+
+static void second_mcu_run(void)
+{
+	if((0xffff - input_port_1_word_r(0,0)) & 0x0004)//service_mode
+	{
+		jm_regs[0x200/2] = input_port_2_word_r(0,0);
+		jm_regs[0x202/2] = input_port_3_word_r(0,0);
+		jm_regs[0x204/2] = input_port_4_word_r(0,0);
+	}
+	else
+	{
+		jm_regs[0x200/2] = 0x0000;
+		MCU_READ(3,0x0001,0x200/2,0x00);/*FF*/
+		MCU_READ(4,0x0400,0x200/2,0x01);/*A*/
+		MCU_READ(4,0x1000,0x200/2,0x02);/*B*/
+		MCU_READ(4,0x0200,0x200/2,0x03);/*C*/
+		MCU_READ(4,0x0800,0x200/2,0x04);/*D*/
+		MCU_READ(4,0x0004,0x200/2,0x05);/*E*/
+		MCU_READ(4,0x0010,0x200/2,0x06);/*F*/
+		MCU_READ(4,0x0002,0x200/2,0x07);/*G*/
+		MCU_READ(4,0x0008,0x200/2,0x08);/*H*/
+		MCU_READ(3,0x0400,0x200/2,0x09);/*I*/
+		MCU_READ(3,0x1000,0x200/2,0x0a);/*J*/
+		MCU_READ(3,0x0200,0x200/2,0x0b);/*K*/
+		MCU_READ(3,0x0800,0x200/2,0x0c);/*L*/
+		MCU_READ(3,0x0004,0x200/2,0x0d);/*M*/
+		MCU_READ(3,0x0010,0x200/2,0x0e);/*N*/
+		MCU_READ(2,0x0200,0x200/2,0x0f);/*RON*/
+		MCU_READ(2,0x1000,0x200/2,0x10);/*REACH*/
+		MCU_READ(2,0x0400,0x200/2,0x11);/*KAN*/
+		MCU_READ(3,0x0008,0x200/2,0x12);/*PON*/
+		MCU_READ(3,0x0002,0x200/2,0x13);/*CHI*/
+		MCU_READ(2,0x0004,0x200/2,0x14);/*START1*/
+
+//		MCU_READ(2,0x0004,0x7b8/2,0x03);/*START1(correct?)  */
+	}
+	jm_regs[0x20c/2] = mame_rand() & 0xffff; //kakumei2
+
 }
 
 #define jalmah_tilemap_draw(_tilemap_) \
@@ -220,95 +343,131 @@ VIDEO_START( jalmah )
 VIDEO_UPDATE( jalmah )
 {
 	int opaque = 0;
+	#ifdef MAME_DEBUG
 	static UINT8 sc_db;
-	tilemap_set_scrollx( fg_tilemap, 0, jm_scrollram[0] + ((jm_vregs[0] & 3) ? ((jm_scrollram[4] & 0x200) * 4) : 0));
-	tilemap_set_scrollx( md_tilemap, 0, jm_scrollram[1] + ((jm_vregs[1] & 3) ? ((jm_scrollram[5] & 0x200) * 4) : 0));
-	tilemap_set_scrollx( bg_tilemap, 0, jm_scrollram[2] + ((jm_vregs[2] & 3) ? ((jm_scrollram[6] & 0x200) * 4) : 0));
-	tilemap_set_scrollx( tx_tilemap, 0, jm_scrollram[3] + ((jm_vregs[3] & 3) ? ((jm_scrollram[7] & 0x200) * 4) : 0));
-	tilemap_set_scrolly( fg_tilemap, 0, jm_scrollram[4] & 0x1ff);
-	tilemap_set_scrolly( md_tilemap, 0, jm_scrollram[5] & 0x1ff);
-	tilemap_set_scrolly( bg_tilemap, 0, jm_scrollram[6] & 0x1ff);
-	tilemap_set_scrolly( tx_tilemap, 0, jm_scrollram[7] & 0x1ff);
+	#endif
 
+	switch(mcu_prg)
+	{
+		/*
+		#define DAIREIKA_MCU (0x11)
+		#define URASHIMA_MCU (0x12)
+		#define MJZOOMIN_MCU (0x13)
+		#define KAKUMEI_MCU  (0x21)
+		#define KAKUMEI2_MCU (0x22)
+		#define SUCHIPI_MCU  (0x23)
+		*/
+		case MJZOOMIN_MCU:
+		case DAIREIKA_MCU: daireika_mcu_run(); break;
+		case URASHIMA_MCU: urashima_mcu_run(); break;
+		case KAKUMEI_MCU:
+		case KAKUMEI2_MCU:
+		case SUCHIPI_MCU:  second_mcu_run(); break;
+	}
+	tilemap_set_scrollx( sc0_tilemap, 0, jm_scrollram[0] + ((jm_vregs[0] & 3) ? ((jm_scrollram[4] & 0x200) * 4) : 0));
+	tilemap_set_scrollx( sc1_tilemap, 0, jm_scrollram[1] + ((jm_vregs[1] & 3) ? ((jm_scrollram[5] & 0x200) * 4) : 0));
+	tilemap_set_scrollx( sc2_tilemap, 0, jm_scrollram[2] + ((jm_vregs[2] & 3) ? ((jm_scrollram[6] & 0x200) * 4) : 0));
+	tilemap_set_scrollx( sc3_tilemap, 0, jm_scrollram[3] + ((jm_vregs[3] & 3) ? ((jm_scrollram[7] & 0x200) * 4) : 0));
+	tilemap_set_scrolly( sc0_tilemap, 0, jm_scrollram[4] & 0x1ff);
+	tilemap_set_scrolly( sc1_tilemap, 0, jm_scrollram[5] & 0x1ff);
+	tilemap_set_scrolly( sc2_tilemap, 0, jm_scrollram[6] & 0x1ff);
+	tilemap_set_scrolly( sc3_tilemap, 0, jm_scrollram[7] & 0x1ff);
+
+	#ifdef MAME_DEBUG
 	if(code_pressed_memory(JOYCODE_1_UP))
 		sc_db++;
 	if(code_pressed_memory(JOYCODE_1_DOWN))
 		sc_db--;
 	if(sc_db > 3)
 		sc_db = 3;
-	//usrintf_showmessage("%04x %04x %04x %04x %04x %04x",jm_vregs[0],jm_vregs[1],jm_vregs[2],jm_vregs[3],fgbank,pri);
-	usrintf_showmessage("%04d %04d %04x %02x",jm_scrollram[0+sc_db],jm_scrollram[4+sc_db],jm_vregs[0+sc_db],sc_db);
+	//usrintf_showmessage("%04x %04x %04x %04x %04x %04x",jm_vregs[0],jm_vregs[1],jm_vregs[2],jm_vregs[3],sc0bank,pri);
+	usrintf_showmessage("%04d %04d %04x %02x %01x",jm_scrollram[0+sc_db],jm_scrollram[4+sc_db],jm_vregs[0+sc_db],sc_db,pri);
+	#endif
 	/*
-	Argh,priorities are going to make me crazy,fixing one thing will break another,
-	probably I'm missing something but what?
-	|-----|----------------|
-	|pri n|0123456789abcdef|
-	|-----|----------------|
-	|bg   |101x1x0xx1xxx2xx|
-	|fg   |010x0x3xx0xxx0xx|
-	|tx   |232x3x1xx3xxx3xx|
-	|md   |323x2x2xx2xxx1xx|
-	|----------------------|
+	Case by case priorities:
+	kakumei: title screen     = 0/23  (0-1 unused)
+			 attract mode     = 0/0123 (?)
+			 card table       = 0/013 (2 unused)
+			 gameplay         = 0/0123
+	kakumei2:title screen     = 0/0123
+	         attract mode     = 4/013 (2 unused) also 4/0213
+	         card table       = 9/013 (2 unused)
+	         character screen = 9/013 (2 unused)
+	         gameplay         = 2/03  (1-2 unused) also 2/013 (2 unused)
+	         continue screen  = 9/013 (2 unused)
+	suchipi: title screen     = 0/03  (1-2 unused)
+	         attract mode     = 6/103 (2 unused) also 6/1023
+	         card table       = 1/013 (2 unused)
+	         character screen = 4/0213
+	         victory screen   = 6/0123 also 6/1023
+	         gameplay         = d/0123
+	mjzoomin doesn't seem to use the priority number (0/0123)
+	daireika/urashima uses priority number with the protection device
+	daireika: gameplay        = x/103 (2 unused),might be 6
+	good results:
+	0/0123
+	4/0213
+	6/1023
 	*/
-	if(!(pri & 2)) { jalmah_tilemap_draw(fg_tilemap); }
-	if(!(pri & 1)) { jalmah_tilemap_draw(bg_tilemap); }
-	if(!(pri & 4)) { jalmah_tilemap_draw(tx_tilemap); }
-	jalmah_tilemap_draw(md_tilemap);
-	if(pri & 2) { jalmah_tilemap_draw(fg_tilemap); }
-	if(pri & 1) { jalmah_tilemap_draw(bg_tilemap); }
-	if(pri & 4) { jalmah_tilemap_draw(tx_tilemap); }
+	if(!(pri & 2) || (pri & 0x8)) { jalmah_tilemap_draw(sc0_tilemap); }
+	if(!(pri & 4) || (pri & 0x8)) { jalmah_tilemap_draw(sc1_tilemap); }
+	if(!(pri & 2) || (pri & 0x8)) { jalmah_tilemap_draw(sc2_tilemap); }
+	if(pri & 4 && (!(pri & 0x8))) { jalmah_tilemap_draw(sc1_tilemap); }
+	if(pri & 2 && (!(pri & 0x8))) { jalmah_tilemap_draw(sc0_tilemap); }
+	if(pri & 2 && (!(pri & 0x8))) { jalmah_tilemap_draw(sc2_tilemap); }
+	jalmah_tilemap_draw(sc3_tilemap);
 }
 
 
-WRITE16_HANDLER( jm_fgvideoram_w )
+WRITE16_HANDLER( sc0_vram_w )
 {
-	int oldword = jm_fgvideoram[offset];
+	int oldword = sc0_vram[offset];
 	int newword = oldword;
 	COMBINE_DATA(&newword);
 
 	if (oldword != newword)
 	{
-		jm_fgvideoram[offset] = newword;
-		tilemap_mark_tile_dirty(fg_tilemap,offset);
+		sc0_vram[offset] = newword;
+		tilemap_mark_tile_dirty(sc0_tilemap,offset);
 	}
 }
 
-WRITE16_HANDLER( jm_mdvideoram_w )
+WRITE16_HANDLER( sc1_vram_w )
 {
-	int oldword = jm_mdvideoram[offset];
+	int oldword = sc1_vram[offset];
 	int newword = oldword;
 	COMBINE_DATA(&newword);
 
 	if (oldword != newword)
 	{
-		jm_mdvideoram[offset] = newword;
-		tilemap_mark_tile_dirty(md_tilemap,offset);
+		sc1_vram[offset] = newword;
+		tilemap_mark_tile_dirty(sc1_tilemap,offset);
 	}
 }
 
-WRITE16_HANDLER( jm_txvideoram_w )
+WRITE16_HANDLER( sc3_vram_w )
 {
-	int oldword = jm_txvideoram[offset];
+	int oldword = sc3_vram[offset];
 	int newword = oldword;
 	COMBINE_DATA(&newword);
 
 	if (oldword != newword)
 	{
-		jm_txvideoram[offset] = newword;
-		tilemap_mark_tile_dirty(tx_tilemap,offset);
+		sc3_vram[offset] = newword;
+		tilemap_mark_tile_dirty(sc3_tilemap,offset);
 	}
 }
 
-WRITE16_HANDLER( jm_bgvideoram_w )
+WRITE16_HANDLER( sc2_vram_w )
 {
-	int oldword = jm_bgvideoram[offset];
+	int oldword = sc2_vram[offset];
 	int newword = oldword;
 	COMBINE_DATA(&newword);
 
 	if (oldword != newword)
 	{
-		jm_bgvideoram[offset] = newword;
-		tilemap_mark_tile_dirty(bg_tilemap,offset);
+		sc2_vram[offset] = newword;
+		tilemap_mark_tile_dirty(sc2_tilemap,offset);
 
 	}
 }
@@ -322,224 +481,14 @@ WRITE16_HANDLER( jalmah_tilebank_w )
 	//usrintf_showmessage("Write to tilebank %02x",data);
 	if (ACCESSING_LSB)
 	{
-		if (fgbank != ((data & 0xf0) >> 4))
+		if (sc0bank != ((data & 0xf0) >> 4))
 		{
-			fgbank = (data & 0xf0) >> 4;
-			tilemap_mark_all_tiles_dirty(fg_tilemap);
+			sc0bank = (data & 0xf0) >> 4;
+			tilemap_mark_all_tiles_dirty(sc0_tilemap);
 		}
 		if (pri != (data & 0x0f))
 			pri = data & 0x0f;
 	}
-}
-
-#define MCU_READ(_number_,_bit_,_offset_,_retval_)\
-if((0xffff - input_port_##_number_##_word_r(0,0)) & _bit_) { jm_regs[_offset_] = _retval_; }
-
-/*For debug purpose,will be better handled...*/
-static READ16_HANDLER( jalmah_reg_r )
-{
-	#ifdef MAME_DEBUG
-	if(offset != 0x404/2 && offset != 0x400/2 &&
-	   offset != 0x7b4/2 && offset != 0x7d4/2 && offset != 0x7b2/2 &&
-	   offset != 0x7aa/2 && offset != 0x452/2 && offset != 0x450/2)
-		logerror("Read to input area %06x %04x\n",activecpu_get_previouspc(),offset*2);
-	#endif
-	switch(offset)
-	{
-		case (0x000/2):
-			if(MJZOOMIN_MCU || DAIREIKA_MCU)
-			{
-				//MCU_READ(2,0x0004,0x000/2,0x14);
-				if((0xffff - input_port_2_word_r(0,0)) & 0x0004)/*START1*/
-					return 0x14;/*probably some sort of state machine...*/
-				else
-					return input_port_2_word_r(0,0);
-			}
-			else
-				return jm_regs[offset];
-		case (0x002/2):
-			if(MJZOOMIN_MCU || DAIREIKA_MCU)
-				return input_port_3_word_r(0,0);
-			else
-				return jm_regs[offset];
-		case (0x004/2):
-			if(MJZOOMIN_MCU || DAIREIKA_MCU)
-				return input_port_4_word_r(0,0);
-			else
-				return jm_regs[offset];
-		case (0x006/2):
-			if(MJZOOMIN_MCU || DAIREIKA_MCU)
-				return input_port_5_word_r(0,0);
-			else
-				return jm_regs[offset];
-		case (0x008/2):
-			if(MJZOOMIN_MCU || DAIREIKA_MCU)
-				return input_port_6_word_r(0,0);
-			else
-				return jm_regs[offset];
-		case (0x00a/2):
-			if(MJZOOMIN_MCU || DAIREIKA_MCU)
-				return input_port_7_word_r(0,0);
-			else
-				return jm_regs[offset];
-		case (0x00c/2):
-			if(MJZOOMIN_MCU || DAIREIKA_MCU)
-				return mame_rand() & 0xffff;
-			else
-				return jm_regs[offset];
-		case (0x00e/2):
-			if(MJZOOMIN_MCU || DAIREIKA_MCU)
-				return activecpu_get_reg(M68K_D0);
-			else
-				return jm_regs[offset];
-		case (0x200/2):
-			if(SECOND_MCU)
-				return input_port_2_word_r(0,0);
-			else
-				return jm_regs[offset];
-		case (0x202/2):
-			if(SECOND_MCU)
-				return input_port_3_word_r(0,0);
-			else
-				return jm_regs[offset];
-		case (0x204/2):
-			if(SECOND_MCU)
-				return input_port_4_word_r(0,0);
-			else
-				return jm_regs[offset];
-		case (0x20c/2):
-			if(SECOND_MCU)
-				return mame_rand() & 0xffff;
-			else
-				return jm_regs[offset];
-		case (0x300/2):
-			if(URASHIMA_MCU)
-				return input_port_2_word_r(0,0);
-			else
-				return jm_regs[offset];
-		case (0x302/2):
-			if(URASHIMA_MCU)
-				return input_port_3_word_r(0,0);
-			else
-				return jm_regs[offset];
-		case (0x304/2):
-			if(URASHIMA_MCU)
-				return input_port_4_word_r(0,0);
-			else
-				return jm_regs[offset];
-		case (0x306/2):
-			if(URASHIMA_MCU)
-				return input_port_5_word_r(0,0);
-			else
-				return jm_regs[offset];
-		case (0x308/2):
-			if(URASHIMA_MCU)
-				return input_port_6_word_r(0,0);
-			else
-				return jm_regs[offset];
-		case (0x30a/2):
-			if(URASHIMA_MCU)
-				return input_port_7_word_r(0,0);
-			else
-				return jm_regs[offset];
-		case (0x30c/2):
-			if(URASHIMA_MCU)
-				return mame_rand() & 0xffff;
-			else
-				return jm_regs[offset];
-		case (0x30e/2):
-			if(URASHIMA_MCU)
-				return activecpu_get_reg(M68K_D0);
-			else
-				return jm_regs[offset];
-		/*kakumei 1/2 protection work-around*/
-		case (0x446/2):
-			if(KAKUMEI_MCU || KAKUMEI2_MCU)
-			{
-				MCU_READ(3,0x0001,0x446/2,0x00);/*FF*/
-				MCU_READ(4,0x0400,0x446/2,0x01);/*A*/
-				MCU_READ(4,0x1000,0x446/2,0x02);/*B*/
-				MCU_READ(4,0x0200,0x446/2,0x03);/*C*/
-				MCU_READ(4,0x0800,0x446/2,0x04);/*D*/
-				MCU_READ(4,0x0004,0x446/2,0x05);/*E*/
-				MCU_READ(4,0x0010,0x446/2,0x06);/*F*/
-				MCU_READ(4,0x0002,0x446/2,0x07);/*G*/
-				MCU_READ(4,0x0008,0x446/2,0x08);/*H*/
-				MCU_READ(3,0x0400,0x446/2,0x09);/*I*/
-				MCU_READ(3,0x1000,0x446/2,0x0a);/*J*/
-				MCU_READ(3,0x0200,0x446/2,0x0b);/*K*/
-				MCU_READ(3,0x0800,0x446/2,0x0c);/*L*/
-				MCU_READ(3,0x0004,0x446/2,0x0d);/*M*/
-				MCU_READ(3,0x0010,0x446/2,0x0e);/*N*/
-				MCU_READ(2,0x0200,0x446/2,0x0f);/*RON   (trusted)*/
-				MCU_READ(2,0x1000,0x446/2,0x10);/*REACH (trusted)*/
-				MCU_READ(2,0x0400,0x446/2,0x11);/*KAN            */
-				MCU_READ(3,0x0008,0x446/2,0x12);/*PON            */
-				MCU_READ(3,0x0002,0x446/2,0x13);/*CHI 	(trusted)*/
-				MCU_READ(2,0x0004,0x446/2,0x14);/*START1*/
-			}
-			return jm_regs[offset];
-		/*suchipi protection work-around*/
-		case (0x44a/2):
-			if(SUCHIPI_MCU)
-			{
-				MCU_READ(3,0x0001,0x44a/2,0x00);/*FF*/
-				MCU_READ(4,0x0400,0x44a/2,0x01);/*A*/
-				MCU_READ(4,0x1000,0x44a/2,0x02);/*B*/
-				MCU_READ(4,0x0200,0x44a/2,0x03);/*C*/
-				MCU_READ(4,0x0800,0x44a/2,0x04);/*D*/
-				MCU_READ(4,0x0004,0x44a/2,0x05);/*E*/
-				MCU_READ(4,0x0010,0x44a/2,0x06);/*F*/
-				MCU_READ(4,0x0002,0x44a/2,0x07);/*G*/
-				MCU_READ(4,0x0008,0x44a/2,0x08);/*H*/
-				MCU_READ(3,0x0400,0x44a/2,0x09);/*I*/
-				MCU_READ(3,0x1000,0x44a/2,0x0a);/*J*/
-				MCU_READ(3,0x0200,0x44a/2,0x0b);/*K*/
-				MCU_READ(3,0x0800,0x44a/2,0x0c);/*L*/
-				MCU_READ(3,0x0004,0x44a/2,0x0d);/*M*/
-				MCU_READ(3,0x0010,0x44a/2,0x0e);/*N*/
-				MCU_READ(2,0x0200,0x44a/2,0x0f);/*RON*/
-				MCU_READ(2,0x1000,0x44a/2,0x10);/*REACH*/
-				MCU_READ(2,0x0400,0x44a/2,0x11);/*KAN*/
-				MCU_READ(3,0x0008,0x44a/2,0x12);/*PON*/
-				MCU_READ(3,0x0002,0x44a/2,0x13);/*CHI*/
-				//MCU_READ(2,0x0004,0x44a/2,0x14);/*START1(wrong)  */
-			}
-			return jm_regs[offset];
-		case (0x7b8/2):
-			if(SUCHIPI_MCU)
-			{
-				MCU_READ(2,0x0004,0x7b8/2,0x03);/*START1(correct?)  */
-			}
-			return jm_regs[offset];
-		case (0xbe0/2):
-			if(MJZOOMIN_MCU || DAIREIKA_MCU)
-			{
-				MCU_READ(3,0x0001,0xbe0/2,0x00);/*FF*/
-				MCU_READ(4,0x0400,0xbe0/2,0x01);/*A*/
-				MCU_READ(4,0x1000,0xbe0/2,0x02);/*B*/
-				MCU_READ(4,0x0200,0xbe0/2,0x03);/*C*/
-				MCU_READ(4,0x0800,0xbe0/2,0x04);/*D*/
-				MCU_READ(4,0x0004,0xbe0/2,0x05);/*E*/
-				MCU_READ(4,0x0010,0xbe0/2,0x06);/*F*/
-				MCU_READ(4,0x0002,0xbe0/2,0x07);/*G*/
-				MCU_READ(4,0x0008,0xbe0/2,0x08);/*H*/
-				MCU_READ(3,0x0400,0xbe0/2,0x09);/*I*/
-				MCU_READ(3,0x1000,0xbe0/2,0x0a);/*J*/
-				MCU_READ(3,0x0200,0xbe0/2,0x0b);/*K*/
-				MCU_READ(3,0x0800,0xbe0/2,0x0c);/*L*/
-				MCU_READ(3,0x0004,0xbe0/2,0x0d);/*M*/
-				MCU_READ(3,0x0010,0xbe0/2,0x0e);/*N*/
-				MCU_READ(2,0x0200,0xbe0/2,0x0f);/*RON   (trusted)*/
-				MCU_READ(2,0x1000,0xbe0/2,0x10);/*REACH (trusted)*/
-				MCU_READ(2,0x0400,0xbe0/2,0x11);/*KAN            */
-				MCU_READ(3,0x0008,0xbe0/2,0x12);/*PON            */
-				MCU_READ(3,0x0002,0xbe0/2,0x13);/*CHI 	(trusted)*/
-				//MCU_READ(2,0x0004,0xbe0/2,0x14);/*START1*/
-			}
-			return jm_regs[offset];
-	}
-	return jm_regs[offset];
 }
 
 static WRITE16_HANDLER( jalmah_reg_w )
@@ -616,19 +565,20 @@ static ADDRESS_MAP_START( jalmah, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x080010, 0x080011) AM_WRITE(jalmah_flip_screen_w)
 	//       0x080012, 0x080013  MCU write related,same for each game
 	//       0x080014, 0x080015  MCU write related,same for each game
-	AM_RANGE(0x080016, 0x080017) AM_WRITE(jalmah_tilebank_w)
+/**/AM_RANGE(0x080016, 0x080017) AM_READ(MRA16_RAM) AM_WRITE(jalmah_tilebank_w)
 	AM_RANGE(0x080018, 0x080019) AM_WRITE(jalmah_okibank_w)
 	AM_RANGE(0x08001a, 0x08001b) AM_WRITE(jalmah_okirom_w)
-	AM_RANGE(0x080020, 0x08003f) AM_WRITE(jalmah_scroll_w)
+	//		 0x08001c, 0x08001d  write 1 by urashima (?)
+/**/AM_RANGE(0x080020, 0x08003f) AM_READ(MRA16_RAM) AM_WRITE(jalmah_scroll_w)
 	AM_RANGE(0x080040, 0x080041) AM_READWRITE(OKIM6295_status_0_lsb_r, OKIM6295_data_0_lsb_w)
 	//       0x084000, 0x084001  ?
 	AM_RANGE(0x088000, 0x0887ff) AM_READWRITE(MRA16_RAM, paletteram16_RRRRGGGGBBBBRGBx_word_w) AM_BASE(&paletteram16) /* Palette RAM */
-	AM_RANGE(0x090000, 0x093fff) AM_READWRITE(MRA16_RAM, jm_fgvideoram_w) AM_BASE(&jm_fgvideoram)
-	AM_RANGE(0x094000, 0x097fff) AM_READWRITE(MRA16_RAM, jm_mdvideoram_w) AM_BASE(&jm_mdvideoram)
-	AM_RANGE(0x098000, 0x09bfff) AM_READWRITE(MRA16_RAM, jm_bgvideoram_w) AM_BASE(&jm_bgvideoram)
-	AM_RANGE(0x09c000, 0x09ffff) AM_READWRITE(MRA16_RAM, jm_txvideoram_w) AM_BASE(&jm_txvideoram)
-	AM_RANGE(0x0a0000, 0x0a3fff) AM_READWRITE(MRA16_RAM, jm_txvideoram_w) /*urashima mirror*/
-	AM_RANGE(0x0f0000, 0x0f0fff) AM_RAM AM_READ(jalmah_reg_r) AM_WRITE(jalmah_reg_w) AM_BASE(&jm_regs)/*shared with MCU*/
+	AM_RANGE(0x090000, 0x093fff) AM_READWRITE(MRA16_RAM, sc0_vram_w) AM_BASE(&sc0_vram)
+	AM_RANGE(0x094000, 0x097fff) AM_READWRITE(MRA16_RAM, sc1_vram_w) AM_BASE(&sc1_vram)
+	AM_RANGE(0x098000, 0x09bfff) AM_READWRITE(MRA16_RAM, sc2_vram_w) AM_BASE(&sc2_vram)
+	AM_RANGE(0x09c000, 0x09ffff) AM_READWRITE(MRA16_RAM, sc3_vram_w) AM_BASE(&sc3_vram)
+	AM_RANGE(0x0a0000, 0x0a3fff) AM_READWRITE(MRA16_RAM, sc3_vram_w) /*urashima mirror*/
+	AM_RANGE(0x0f0000, 0x0f0fff) AM_RAM AM_BASE(&jm_regs)/*shared with MCU*/
 	AM_RANGE(0x0f1000, 0x0fffff) AM_RAM AM_BASE(&jm_ram)
 	AM_RANGE(0x100000, 0x10ffff) AM_RAM AM_BASE(&jm_mcu_code)/*extra RAM for MCU code prg (NOT ON REAL HW!!!)*/
 ADDRESS_MAP_END
@@ -1003,7 +953,7 @@ ROM_START ( urashima )
 	ROM_LOAD( "um-3.22c",	   0x00000, 0x80000, CRC(9fd8c8fa) SHA1(0346f74c03a4daa7a84b64c9edf0e54297c82fd9) )
 	ROM_RELOAD(                0x40000, 0x80000 )
 
-	ROM_REGION( 0x020000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "um-5.22j",		0x000000, 0x020000, CRC(991776a2) SHA1(56740553d7d26aaeb9bec8557727030950bb01f7) )	/* 8x8 tiles */
 
 	ROM_REGION( 0x080000, REGION_GFX2, ROMREGION_DISPOSE ) /* 16x16 Tiles */
@@ -1012,9 +962,9 @@ ROM_START ( urashima )
 
 	ROM_REGION( 0x100000, REGION_GFX4, ROMREGION_DISPOSE ) /* BG3 */
 	ROM_LOAD( "um-6.2l",	0x000000, 0x080000, CRC(076be5b5) SHA1(77444025f149a960137d3c79abecf9b30defa341) )
-	ROM_LOAD( "um-7.4l",	0x080000, 0x080000, CRC(d2a68cfb) SHA1(eb6cb1fad306b697b2035a31ad48e8996722a032) )
+	ROM_LOAD( "um-7.4l",    0x080000, 0x080000, CRC(d2a68cfb) SHA1(eb6cb1fad306b697b2035a31ad48e8996722a032) )
 
-	ROM_REGION( 0x0240, REGION_PROMS, 0 )
+	ROM_REGION( 0x0240, REGION_USER1, 0 )
 	ROM_LOAD( "um-10.2b",      0x0000, 0x0100, CRC(cfdbb86c) SHA1(588822f6308a860937349c9106c2b4b1a75823ec) )	/* unknown */
 	ROM_LOAD( "um-11.2c",      0x0100, 0x0100, CRC(ff5660cf) SHA1(a4635dcf9d6dd637ea4f36f1ad233db0bd039731) )	/* unknown */
 	ROM_LOAD( "um-12.20c",     0x0200, 0x0020, CRC(bdb66b02) SHA1(8755244de638d7e835e35e08c62b0612958e6ca5) )	/* unknown */
@@ -1051,7 +1001,7 @@ ROM_START( daireika )
 	ROM_COPY( REGION_GFX4, 0x20000, 0x20000, 0x20000 )/*mj10.bin*/
 
 	ROM_REGION( 0x40000, REGION_GFX2, 0 ) /* BG1 */
-	ROM_COPY( REGION_GFX3, 0x00000, 0x00000, 0x20000 )/*mj11.bin*/
+	ROM_COPY( REGION_GFX3, 0x00000, 0x00000, 0x20000 )/*mj10.bin*/
 	ROM_LOAD( "mj12.bin", 0x20000, 0x20000, CRC(236f809f) SHA1(9e15dd8a810a9d4f7f75f084d6bd277ea7d0e40a) )
 
 	ROM_REGION( 0x220, REGION_USER1, 0 ) /* Proms */
@@ -1273,7 +1223,7 @@ logerror("%04x: mcu_r %02x\n",activecpu_get_pc(),res);
 }
 
 /*
-data value is REQ under mjzoomin video test menu.It is related to MCU?
+data value is REQ under mjzoomin video test menu.It is related to the MCU?
 */
 static WRITE16_HANDLER( urashima_mcu_w )
 {
@@ -1286,8 +1236,29 @@ static WRITE16_HANDLER( urashima_mcu_w )
 		/*******************************************************
 		1st M68k code uploaded by the MCU (sound prg)
 		*******************************************************/
-		jm_regs[0x0320/2] = 0x4e75;
+		jm_regs[0x0320/2] = 0x4ef9;
+		jm_regs[0x0322/2] = 0x0010;
+		jm_regs[0x0324/2] = 0x2000;//jmp $102000
 
+		jm_mcu_code[0x2000/2] = 0x0040;
+		jm_mcu_code[0x2002/2] = 0x0080;//ori $80,D0
+		jm_mcu_code[0x2004/2] = 0x33c0;
+		jm_mcu_code[0x2006/2] = 0x0008;
+		jm_mcu_code[0x2008/2] = 0x0040;
+		jm_mcu_code[0x200a/2] = 0x4e71;//0x6100;
+		jm_mcu_code[0x200c/2] = 0x4e71;//0x000c;
+		jm_mcu_code[0x200e/2] = 0x33fc;
+		jm_mcu_code[0x2010/2] = 0x0010;
+		jm_mcu_code[0x2012/2] = 0x0008;
+		jm_mcu_code[0x2014/2] = 0x0040;
+		jm_mcu_code[0x2016/2] = 0x4e75;
+		jm_mcu_code[0x2018/2] = 0x3239;
+		jm_mcu_code[0x201a/2] = 0x0008;
+		jm_mcu_code[0x201c/2] = 0x0040;
+		jm_mcu_code[0x201e/2] = 0x0241;
+		jm_mcu_code[0x2020/2] = 0x0001;
+		jm_mcu_code[0x2022/2] = 0x66f4;
+		jm_mcu_code[0x2024/2] = 0x4e75;
 		/*******************************************************
 		1st alt M68k code uploaded by the MCU (Input test mode)
 		*******************************************************/
@@ -1331,37 +1302,52 @@ static WRITE16_HANDLER( urashima_mcu_w )
 		jm_regs[0x03c0/2] = 0x4ef9;
 		jm_regs[0x03c2/2] = 0x0010;
 		jm_regs[0x03c4/2] = 0x1000;//jmp $101000
-		jm_mcu_code[0x1000/2] = 0xd2fc;
-		jm_mcu_code[0x1002/2] = 0x0400;//adda.w $400,A1 (?)
-		jm_mcu_code[0x1004/2] = 0x33c2;
-		jm_mcu_code[0x1006/2] = 0x0010;
-		jm_mcu_code[0x1008/2] = 0x17fe; //move.w D2,$1017fe
-		jm_mcu_code[0x100a/2] = 0x33c1;
-		jm_mcu_code[0x100c/2] = 0x0010;
-		jm_mcu_code[0x100e/2] = 0x17fc; //move.w D1,$1017fc
-		jm_mcu_code[0x1010/2] = 0x720f;
-		jm_mcu_code[0x1012/2] = 0x740f; //moveq $07,D2
-		jm_mcu_code[0x1014/2] = 0x23c8;
+		/*
+		palette additional protection:
+		A1:88200 = x:88000
+		A1:88000 = x:88600
+		TODO: optimize this...
+		*/
+		jm_mcu_code[0x1000/2] = 0x92fc;
+		jm_mcu_code[0x1002/2] = 0x0200;//suba.w $200,A1
+		jm_mcu_code[0x1004/2] = 0xb3fc;
+		jm_mcu_code[0x1006/2] = 0x0008;
+		jm_mcu_code[0x1008/2] = 0x8000;
+		jm_mcu_code[0x100a/2] = 0x6d00;
+		jm_mcu_code[0x100c/2] = 0x003c;
+		jm_mcu_code[0x100e/2] = 0x33c2;
+		jm_mcu_code[0x1010/2] = 0x0010;
+		jm_mcu_code[0x1012/2] = 0x17fe; //move.w D2,$1017fe
+		jm_mcu_code[0x1014/2] = 0x33c1;
 		jm_mcu_code[0x1016/2] = 0x0010;
-		jm_mcu_code[0x1018/2] = 0x17f0;
-		jm_mcu_code[0x101a/2] = 0x2050; //movea (A0),A0
-		jm_mcu_code[0x101c/2] = 0x32d8;
-		jm_mcu_code[0x101e/2] = 0x51ca;
-		jm_mcu_code[0x1020/2] = 0xfffc;
-		jm_mcu_code[0x1022/2] = 0x2079;
-		jm_mcu_code[0x1024/2] = 0x0010;
-		jm_mcu_code[0x1026/2] = 0x17f0;
-		jm_mcu_code[0x1028/2] = 0xd0fc;
-		jm_mcu_code[0x102a/2] = 0x0004;//adda.w $4,A0
-		jm_mcu_code[0x102c/2] = 0x51c9;
-		jm_mcu_code[0x102e/2] = 0xffe4;
-		jm_mcu_code[0x1030/2] = 0x3439;
-		jm_mcu_code[0x1032/2] = 0x0010;
-		jm_mcu_code[0x1034/2] = 0x17fe;
-		jm_mcu_code[0x1036/2] = 0x3239;
-		jm_mcu_code[0x1038/2] = 0x0010;
-		jm_mcu_code[0x103a/2] = 0x17fc;
-		jm_mcu_code[0x103c/2] = 0x4e75;
+		jm_mcu_code[0x1018/2] = 0x17fc; //move.w D1,$1017fc
+		jm_mcu_code[0x101a/2] = 0x720f;
+		jm_mcu_code[0x101c/2] = 0x740f; //moveq $07,D2
+		jm_mcu_code[0x101e/2] = 0x23c8;
+		jm_mcu_code[0x1020/2] = 0x0010;
+		jm_mcu_code[0x1022/2] = 0x17f0;
+		jm_mcu_code[0x1024/2] = 0x2050; //movea (A0),A0
+		jm_mcu_code[0x1026/2] = 0x32d8;
+		jm_mcu_code[0x1028/2] = 0x51ca;
+		jm_mcu_code[0x102a/2] = 0xfffc;
+		jm_mcu_code[0x102c/2] = 0x2079;
+		jm_mcu_code[0x102e/2] = 0x0010;
+		jm_mcu_code[0x1030/2] = 0x17f0;
+		jm_mcu_code[0x1032/2] = 0xd0fc;
+		jm_mcu_code[0x1034/2] = 0x0004;//adda.w $4,A0
+		jm_mcu_code[0x1036/2] = 0x51c9;
+		jm_mcu_code[0x1038/2] = 0xffe4;
+		jm_mcu_code[0x103a/2] = 0x3439;
+		jm_mcu_code[0x103c/2] = 0x0010;
+		jm_mcu_code[0x103e/2] = 0x17fe;
+		jm_mcu_code[0x1040/2] = 0x3239;
+		jm_mcu_code[0x1042/2] = 0x0010;
+		jm_mcu_code[0x1044/2] = 0x17fc;
+		jm_mcu_code[0x1046/2] = 0x4e75;
+		jm_mcu_code[0x1048/2] = 0xd2fc;
+		jm_mcu_code[0x104a/2] = 0x0800;
+		jm_mcu_code[0x104c/2] = 0x6000;
+		jm_mcu_code[0x104e/2] = 0xffc0;
 	}
 }
 
@@ -1388,7 +1374,7 @@ static READ16_HANDLER( daireika_mcu_r )
 }
 
 /*
-data value is REQ under mjzoomin video test menu.It is related to MCU?
+data value is REQ under mjzoomin video test menu.It is related to the MCU?
 */
 static WRITE16_HANDLER( daireika_mcu_w )
 {
@@ -1478,7 +1464,7 @@ static WRITE16_HANDLER( daireika_mcu_w )
 
 		jm_mcu_code[0x8800/2] = 0x4df9;
 		jm_mcu_code[0x8802/2] = 0x0009;
-		jm_mcu_code[0x8804/2] = 0x0000; //lea.w #94000,A6
+		jm_mcu_code[0x8804/2] = 0x0000; //lea.w #90000,A6
 		jm_mcu_code[0x8806/2] = 0x323c;
 		jm_mcu_code[0x8808/2] = 0x1fff; //move.w #$1fff,D1
 		jm_mcu_code[0x880a/2] = 0x3cbc;
@@ -1528,7 +1514,7 @@ static WRITE16_HANDLER( daireika_mcu_w )
 		jm_mcu_code[0x8906/2] = 0x323c;
 		jm_mcu_code[0x8908/2] = 0x1fff; //move.w #$1fff,D1
 		jm_mcu_code[0x890a/2] = 0x3cbc;
-		jm_mcu_code[0x890c/2] = 0x0000; //move.w #$0020,(A6)
+		jm_mcu_code[0x890c/2] = 0xf0ff; //move.w #$f0ff,(A6)
 		jm_mcu_code[0x890e/2] = 0xdcfc;
 		jm_mcu_code[0x8910/2] = 0x0002; //adda.w #$0002,A6
 		jm_mcu_code[0x8912/2] = 0x51c9;
@@ -1549,7 +1535,7 @@ static WRITE16_HANDLER( daireika_mcu_w )
 		jm_mcu_code[0x8980/2] = 0x33fc;
 		jm_mcu_code[0x8982/2] = 0x0006;
 		jm_mcu_code[0x8984/2] = 0x000f;
-		jm_mcu_code[0x8986/2] = 0x0590; //move.w #$6,$f0590
+		jm_mcu_code[0x8986/2] = 0x0590; //move.w #$6,$f0590 (pri n)
 		jm_mcu_code[0x8988/2] = 0x4df9;
 		jm_mcu_code[0x898a/2] = 0x0009;
 		jm_mcu_code[0x898c/2] = 0xc000; //lea.w #9c000,A6
@@ -1635,10 +1621,18 @@ static WRITE16_HANDLER( daireika_mcu_w )
 		jm_regs[0x00cc/2] = 0x0010;
 		jm_regs[0x00ce/2] = 0x1800;//jmp $101800
 		//jm_regs[0x00c6/2] = 0x4e75;//rts
-		jm_mcu_code[0x1800/2] = 0x12da;//move.l (A2)+,(A1)+
-		jm_mcu_code[0x1802/2] = 0x51c8;
-		jm_mcu_code[0x1804/2] = 0xfffc;//dbra D0,f00ca
-		jm_mcu_code[0x1806/2] = 0x4e75;//rts
+
+		jm_mcu_code[0x1800/2] = 0x22da;//move.l (A2)+,(A1)+
+		jm_mcu_code[0x1802/2] = 0xb5fc;
+		jm_mcu_code[0x1804/2] = 0x0002;
+		jm_mcu_code[0x1806/2] = 0x6600;
+		jm_mcu_code[0x1808/2] = 0x6706;
+		jm_mcu_code[0x180a/2] = 0x51c8;
+		jm_mcu_code[0x180c/2] = 0xfff4;//dbra D0,f00ca
+		jm_mcu_code[0x180e/2] = 0x4e75;//rts
+		jm_mcu_code[0x1810/2] = 0xd4fc;
+		jm_mcu_code[0x1812/2] = 0x0a00;
+		jm_mcu_code[0x1814/2] = 0x60ea;
 	}
 }
 
@@ -1665,7 +1659,7 @@ static READ16_HANDLER( mjzoomin_mcu_r )
 
 /*4eb9*/
 /*
-data value is REQ under mjzoomin video test menu.It is related to MCU?
+data value is REQ under mjzoomin video test menu.It is related to the MCU?
 */
 static WRITE16_HANDLER( mjzoomin_mcu_w )
 {
@@ -1857,16 +1851,14 @@ static DRIVER_INIT( suchipi )
 }
 
 /*First version of the MCU*/
-/*MCU error at gameplay after that the tiles are on the table,tilemap positioning/priorities are mostly wrong*/
+/*Pseudo-random stuff is not 100% working*/
 GAMEX( 1989, daireika, 0, jalmah, jalmah, daireika, ROT0, "Jaleco / NMK", "Mahjong Daireikai",			        GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-/*Protection controls tilemap scrolling on this,colors are offset as everything else...*/
+/*Protection controls tilemap scrolling on this,you can't see anything unless you use fake scroll register values...*/
 GAMEX( 1989, urashima, 0, jalmah, jalmah, urashima, ROT0, "UPL",	      "Urashima Mahjong", 					GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-/*You must keep the button pressed during gameplay to take some effect.*/
-GAMEX( 1990, mjzoomin, 0, jalmah, jalmah, mjzoomin, ROT0, "Jaleco",       "Mahjong Channel Zoom In",            GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_GRAPHICS )
 
+/*No known gameplay bugs for the following games:*/
+GAMEX( 1990, mjzoomin, 0, jalmah, jalmah, mjzoomin, ROT0, "Jaleco",       "Mahjong Channel Zoom In",            GAME_IMPERFECT_GRAPHICS )
 /*Second version of the MCU*/
-/*The continue counter is too fast,likely that the program reads a button pressed on these two*/
-GAMEX( 1990, kakumei,  0, jalmah, jalmah2, kakumei,  ROT0, "Jaleco",       "Mahjong Kakumei",                      GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1992, kakumei2, 0, jalmah, jalmah2, kakumei2, ROT0, "Jaleco",       "Mahjong Kakumei 2 - Princess League",  GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_GRAPHICS )
-/*Can't play with the cards when you win,and sometimes when there are multiple CHI/PON/KAN decisions and the game waits for something,maybe is waiting for a button to be pressed or a RAM address to be changed...*/
-GAMEX( 1993, suchipi,  0, jalmah, jalmah2, suchipi,  ROT0, "Jaleco",       "Idol Janshi Su-Chi-Pie Special",        GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1990, kakumei,  0, jalmah, jalmah2, kakumei,  ROT0, "Jaleco",       "Mahjong Kakumei",                      GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1992, kakumei2, 0, jalmah, jalmah2, kakumei2, ROT0, "Jaleco",       "Mahjong Kakumei 2 - Princess League",  GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1993, suchipi,  0, jalmah, jalmah2, suchipi,  ROT0, "Jaleco",       "Idol Janshi Su-Chi-Pie Special",       GAME_IMPERFECT_GRAPHICS )

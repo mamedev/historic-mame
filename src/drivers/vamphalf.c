@@ -607,16 +607,32 @@ Notes:
 */
 
 
-ROM_START( suplup )
+ROM_START( luplup )
 	ROM_REGION16_BE( 0x100000, REGION_USER1, ROMREGION_ERASE00 ) /* Hyperstone CPU Code */
-	ROM_LOAD( "rom1.bin", 0x00000, 0x80000, CRC(61fb2dbe) SHA1(21cb8f571b2479de6779b877b656d1ffe5b3516f) )
-	ROM_LOAD( "rom2.bin", 0x80000, 0x80000, CRC(0c176c57) SHA1(f103a1afc528c01cbc18639273ab797fb9afacb1) )
+	ROM_LOAD( "luplup-rom1.bin", 0x00000, 0x80000, CRC(9ea67f87) SHA1(73d16c056a8d64743181069a01559a43fee529a3) )
+	ROM_LOAD( "luplup-rom2.bin", 0x80000, 0x80000, CRC(99840155) SHA1(e208f8731c06b634e84fb73e04f6cdbb8b504b94))
 
 	ROM_REGION( 0x800000, REGION_GFX1, ROMREGION_DISPOSE ) /* 16x16x8 Sprites */
-	ROM_LOAD32_WORD( "roml00.bin", 0x000000, 0x200000, CRC(7848e183) SHA1(1db8f0ea8f73f42824423d382b37b4d75fa3e54c) )
-	ROM_LOAD32_WORD( "romu00.bin", 0x000002, 0x200000, CRC(13e3ab7f) SHA1(d5b6b15ca5aef2e2788d2b81e0418062f42bf2f2) )
-	ROM_LOAD32_WORD( "roml01.bin", 0x400000, 0x200000, CRC(15769f55) SHA1(2c13e8da2682ccc7878218aaebe3c3c67d163fd2) )
-	ROM_LOAD32_WORD( "romu01.bin", 0x400002, 0x200000, CRC(6687bc6f) SHA1(cf842dfb2bcdfda0acc0859985bdba91d4a80434) )
+	ROM_LOAD32_WORD( "luplup-roml00.bin", 0x000000, 0x200000, NO_DUMP )
+	ROM_LOAD32_WORD( "luplup-romu00.bin", 0x000002, 0x200000, NO_DUMP )
+	ROM_LOAD32_WORD( "luplup-roml01.bin", 0x400000, 0x200000, NO_DUMP )
+	ROM_LOAD32_WORD( "luplup-romu01.bin", 0x400002, 0x200000, NO_DUMP )
+
+	ROM_REGION( 0x40000, REGION_SOUND1, 0 ) /* Oki Samples */
+	ROM_LOAD( "vrom1.bin", 0x00000, 0x40000, CRC(34a56987) SHA1(4d8983648a7f0acf43ff4c9c8aa6c8640ee2bbfe) )
+ROM_END
+
+
+ROM_START( suplup )
+	ROM_REGION16_BE( 0x100000, REGION_USER1, ROMREGION_ERASE00 ) /* Hyperstone CPU Code */
+	ROM_LOAD( "suplup-rom1.bin", 0x00000, 0x80000, CRC(61fb2dbe) SHA1(21cb8f571b2479de6779b877b656d1ffe5b3516f) )
+	ROM_LOAD( "suplup-rom2.bin", 0x80000, 0x80000, CRC(0c176c57) SHA1(f103a1afc528c01cbc18639273ab797fb9afacb1) )
+
+	ROM_REGION( 0x800000, REGION_GFX1, ROMREGION_DISPOSE ) /* 16x16x8 Sprites */
+	ROM_LOAD32_WORD( "suplup-roml00.bin", 0x000000, 0x200000, CRC(7848e183) SHA1(1db8f0ea8f73f42824423d382b37b4d75fa3e54c) )
+	ROM_LOAD32_WORD( "suplup-romu00.bin", 0x000002, 0x200000, CRC(13e3ab7f) SHA1(d5b6b15ca5aef2e2788d2b81e0418062f42bf2f2) )
+	ROM_LOAD32_WORD( "suplup-roml01.bin", 0x400000, 0x200000, CRC(15769f55) SHA1(2c13e8da2682ccc7878218aaebe3c3c67d163fd2) )
+	ROM_LOAD32_WORD( "suplup-romu01.bin", 0x400002, 0x200000, CRC(6687bc6f) SHA1(cf842dfb2bcdfda0acc0859985bdba91d4a80434) )
 
 	ROM_REGION( 0x40000, REGION_SOUND1, 0 ) /* Oki Samples */
 	ROM_LOAD( "vrom1.bin", 0x00000, 0x40000, CRC(34a56987) SHA1(4d8983648a7f0acf43ff4c9c8aa6c8640ee2bbfe) )
@@ -716,7 +732,8 @@ DRIVER_INIT( suplup )
 	/* no flipscreen */
 }
 
-GAME( 1999, suplup,   0, suplup,   common, suplup,   ROT0,  "Omega System",      "Super Lup Lup Puzzle / Zhuan Zhuan Puzzle (version 4.0 / 990518)" ) // also has 'Puzzle Bang Bang' title but it can't be selected
-GAME( 1999, vamphalf, 0, vamphalf, common, vamphalf, ROT0,  "Danbi & F2 System", "Vamp 1/2 (Korea)" )
-GAMEX(2000, misncrft, 0, misncrft, common, misncrft, ROT90, "Sun",               "Mission Craft (version 2.4)",	GAME_NO_SOUND )
-GAMEX(19??, coolmini, 0, coolmini, common, coolmini, ROT0,  "Semicom",           "Cool Mini",					GAME_NOT_WORKING )
+GAME( 1999, suplup,   0,      suplup,   common, suplup,   ROT0,  "Omega System",      "Super Lup Lup Puzzle / Zhuan Zhuan Puzzle (version 4.0 / 990518)" ) // also has 'Puzzle Bang Bang' title but it can't be selected
+GAMEX(1999, luplup,   suplup, suplup,   common, suplup,   ROT0,  "Omega System",      "Lup Lup Puzzle / Zhuan Zhuan Puzzle (version 3.0 / 990128)", GAME_NOT_WORKING )
+GAME( 1999, vamphalf, 0,      vamphalf, common, vamphalf, ROT0,  "Danbi & F2 System", "Vamp 1/2 (Korea)" )
+GAMEX(2000, misncrft, 0,      misncrft, common, misncrft, ROT90, "Sun",               "Mission Craft (version 2.4)",	GAME_NO_SOUND )
+GAMEX(19??, coolmini, 0,      coolmini, common, coolmini, ROT0,  "Semicom",           "Cool Mini",					GAME_NOT_WORKING )

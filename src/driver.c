@@ -2565,8 +2565,9 @@ V-V                           TP-027
 	DRIVER( tekken2a )	/* Tekken 2 Ver.B (TES2/VER.B) */
 	DRIVER( tekken2b )	/* Tekken 2 (TES2/VER.A) */
 	DRIVER( souledge )	/* Soul Edge Ver. II (SO4/VER.C) */
-	DRIVER( souledga )	/* Soul Edge (SO3/VER.A) */
-	DRIVER( souledgb )	/* Soul Edge (SO1/VER.A) */
+	DRIVER( souledga )	/* Soul Edge Ver. II (SO3/VER.C) */
+	DRIVER( souledgb )	/* Soul Edge (SO3/VER.A) */
+	DRIVER( souledgc )	/* Soul Edge (SO1/VER.A) */
 	DRIVER( dunkmnia )	/* Dunk Mania (DM1/VER.C) */
 	DRIVER( dunkmnic )	/* Dunk Mania (DM1/VER.C) */
 	DRIVER( xevi3dg )	/* Xevious 3D/G (XV31/VER.A) */
@@ -2578,10 +2579,12 @@ V-V                           TP-027
 
 	/* Namco System 12 */
 	DRIVER( tekken3 )	/* Tekken 3 (TET1/VER.E1) */
+	DRIVER( tekken3a )	/* Tekken 3 (TET2/VER.A) */
 	DRIVER( lbgrande )	/* Libero Grande (LG1/VER.A) */
 	DRIVER( soulclbr )	/* Soul Calibur (SOC14/VER.C) */
 	DRIVER( soulclba )	/* Soul Calibur (SOC11/VER.A2) */
 	DRIVER( ehrgeiz )	/* Ehrgeiz (EG3/VER.A) */
+	DRIVER( ehrgeiza )	/* Ehrgeiz (EG2/VER.A) */
 	DRIVER( mdhorse )	/* Derby Quiz My Dream Horse (MDH1/VER.A2) */
 	DRIVER( fgtlayer )	/* Fighting Layer (FTL0/VER.A) */
 	DRIVER( pacapp )	/* Paca Paca Passion (PPP1/VER.A2) */
@@ -3477,7 +3480,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( mp_twc )	/* 04 */
 	DRIVER( mp_sor2 )	/* 05 */
 	DRIVER( mp_bio )	/* 06 */
-						/* 07 */
+	DRIVER( mp_soni2 )	/* 07 */
 						/* 08 */
 						/* 09 */
 						/* 10 */
@@ -6061,6 +6064,7 @@ Other Sun games
 	/* Afega games */
 	DRIVER( stagger1 )	/* (c) 1998 */
 	DRIVER( redhawk )	/* (c) 1997 */
+	DRIVER( redhawkb )	/* (c) 1997 */
 	DRIVER( grdnstrm )	/* (c) 1998 */
 	DRIVER( bubl2000 )	/* (c) 1998 Tuning */
 	DRIVER( hotbubl )	/* (c) Pandora */
@@ -6445,6 +6449,7 @@ Other Sun games
 	DRIVER( ltcasino )	/* (c) 1982 Digital Controls Inc */
 	DRIVER( ltcasin2 )	/* (c) 1984 Digital Controls Inc */
 	DRIVER( vamphalf )	/* DanBi */
+	DRIVER( luplup )	/* Omega System */
 	DRIVER( suplup )	/* Omega System */
 	DRIVER( hidnctch )	/* Eolith */
 	DRIVER( landbrk )	/* Eolith */

@@ -11,6 +11,7 @@ void flicky_decode(void);
 void futspy_decode(void);
 void wmatch_decode(void);
 void bullfgtj_decode(void);
+void pbaction_decode(void);
 void spatter_decode(void);
 void pitfall2_decode(void);
 void nprinces_decode(void);

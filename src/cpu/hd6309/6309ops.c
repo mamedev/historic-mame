@@ -265,11 +265,13 @@ INLINE void sync( void )
 /* $14 sexw inherent */
 INLINE void sexw( void )
 {
-	UINT16 t;
-	t = SIGNED(F);
-	W = t;
-	CLR_NZ;
-	SET_NZ16(t);
+	PAIR q;
+	q.d = SIGNED_16(W);
+	D = q.w.h;
+	W = q.w.l;
+	CLR_NZV;
+	SET_N16(D);
+	SET_Z(q.d);
 }
 
 /* $15 ILLEGAL */

@@ -339,6 +339,37 @@ if ( code_pressed(KEYCODE_Z) || code_pressed(KEYCODE_X) )
 	if (layers_ctrl & 4)	tilemap_draw(bitmap,cliprect,tilemap_1,0,0);
 }
 
+VIDEO_UPDATE( redhawkb )
+{
+	int layers_ctrl = -1;
+
+	/* Horizintal and vertical screen flip are hardwired to 2 dip switches */
+//	flip_screen_x_set(~readinputport(2) & 0x0100);
+//	flip_screen_y_set(~readinputport(2) & 0x0200);
+
+	tilemap_set_scrolly(tilemap_0, 0, afega_scroll_0[0]+0x100);
+	tilemap_set_scrollx(tilemap_0, 0, afega_scroll_0[1]);
+
+	tilemap_set_scrolly(tilemap_1, 0, afega_scroll_1[0]);
+	tilemap_set_scrollx(tilemap_1, 0, afega_scroll_1[1]);
+
+#ifdef MAME_DEBUG
+if ( code_pressed(KEYCODE_Z) || code_pressed(KEYCODE_X) )
+{	int msk = 0;
+	if (code_pressed(KEYCODE_Q))	msk |= 1;
+	if (code_pressed(KEYCODE_W))	msk |= 2;
+	if (code_pressed(KEYCODE_E))	msk |= 4;
+	if (msk != 0) layers_ctrl &= msk;	}
+#endif
+
+	if (layers_ctrl & 1)	tilemap_draw(bitmap,cliprect,tilemap_0,0,0);
+	else					fillbitmap(bitmap,get_black_pen(),cliprect);
+
+	if (layers_ctrl & 2) 	afega_draw_sprites(bitmap,cliprect);
+
+	if (layers_ctrl & 4)	tilemap_draw(bitmap,cliprect,tilemap_1,0,0);
+}
+
 /* Same as 'afega', but no screen flip support */
 VIDEO_UPDATE( bubl2000 )
 {

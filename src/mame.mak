@@ -1102,6 +1102,7 @@ $(OBJ)/igs.a: \
 	$(OBJ)/drivers/lordgun.o \
 	$(OBJ)/vidhrdw/pgm.o $(OBJ)/drivers/pgm.o \
 	$(OBJ)/machine/pgmprot.o $(OBJ)/machine/pgmcrypt.o \
+	$(OBJ)/machine/pgmy2ks.o \
 	$(OBJ)/drivers/vbowl.o \
 	$(OBJ)/drivers/chmplst2.o \
 

@@ -207,7 +207,7 @@ int opDIVFS(void)
 
 	F2LOADOPFLOAT(2);
 
-	appf *= u2f(f2Op1);
+	appf /= u2f(f2Op1);
 
 	appw = f2u(appf);
 	_OV = _CY = 0;

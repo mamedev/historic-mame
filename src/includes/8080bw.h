@@ -58,7 +58,7 @@ extern struct Samplesinterface invad2ct_samples_interface;
 extern struct discrete_sound_block polaris_discrete_interface[];
 extern struct discrete_sound_block schaser_discrete_interface[];
 void schaser_effect_555_cb(int effect);
-mame_timer *schaser_effect_555_timer;
+extern mame_timer *schaser_effect_555_timer;
 extern struct SN76477interface schaser_sn76477_interface;
 extern struct Samplesinterface seawolf_samples_interface;
 

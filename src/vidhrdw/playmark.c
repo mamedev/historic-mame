@@ -4,12 +4,10 @@
 
 
 data16_t *bigtwin_bgvideoram;
-size_t bigtwin_bgvideoram_size;
 data16_t *wbeachvl_videoram1,*wbeachvl_videoram2,*wbeachvl_videoram3;
 data16_t *wbeachvl_rowscroll;
 
-static struct mame_bitmap *bgbitmap;
-static int bgscrollx,bgscrolly,bg_enable,bg_transparent;
+static int bgscrollx,bgscrolly,bg_enable,bg_full_size;
 static int fgscrollx,fg_rowscroll_enable;
 static struct tilemap *tx_tilemap,*fg_tilemap,*bg_tilemap;
 
@@ -87,12 +85,10 @@ static void wbeachvl_get_bg_tile_info(int tile_index)
 
 VIDEO_START( bigtwin )
 {
-	bgbitmap = auto_bitmap_alloc(512,512);
-
 	tx_tilemap = tilemap_create(bigtwin_get_tx_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8,64,32);
 	fg_tilemap = tilemap_create(bigtwin_get_fg_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,     16,16,32,32);
 
-	if (!tx_tilemap || !fg_tilemap || !bgbitmap)
+	if (!tx_tilemap || !fg_tilemap)
 		return 1;
 
 	tilemap_set_transparent_pen(tx_tilemap,0);
@@ -118,12 +114,10 @@ VIDEO_START( wbeachvl )
 
 VIDEO_START( excelsr )
 {
-	bgbitmap = auto_bitmap_alloc(512,512);
-
 	tx_tilemap = tilemap_create(bigtwin_get_tx_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
 	fg_tilemap = tilemap_create(bigtwin_get_fg_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,     16,16,32,32);
 
-	if (!tx_tilemap || !fg_tilemap || !bgbitmap)
+	if (!tx_tilemap || !fg_tilemap)
 		return 1;
 
 	tilemap_set_transparent_pen(tx_tilemap,0);
@@ -184,21 +178,6 @@ WRITE16_HANDLER( bigtwin_paletteram_w )
 	palette_set_color(offset,r,g,b);
 }
 
-WRITE16_HANDLER( bigtwin_bgvideoram_w )
-{
-	int sx,sy,color;
-
-	COMBINE_DATA(&bigtwin_bgvideoram[offset]);
-
-	sx = offset % 512;
-	sy = offset / 512;
-
-	color = bigtwin_bgvideoram[offset] & 0xff;
-
-	plot_pixel(bgbitmap,sx,sy,Machine->pens[256 + color]);
-}
-
-
 WRITE16_HANDLER( bigtwin_scroll_w )
 {
 	static data16_t scroll[6];
@@ -212,7 +191,7 @@ WRITE16_HANDLER( bigtwin_scroll_w )
 		case 2: bgscrollx = -(data+4);                    break;
 		case 3: bgscrolly = (-data) & 0x1ff;
 				bg_enable = data & 0x0200;
-				bg_transparent = data & 0x0400;	// just a guess
+				bg_full_size = data & 0x0400;
 				break;
 		case 4: tilemap_set_scrollx(fg_tilemap,0,data+6); break;
 		case 5: tilemap_set_scrolly(fg_tilemap,0,data);   break;
@@ -249,9 +228,9 @@ WRITE16_HANDLER( excelsr_scroll_w )
 		case 0: tilemap_set_scrollx(tx_tilemap,0,data+2); break;
 		case 1: tilemap_set_scrolly(tx_tilemap,0,data);   break;
 		case 2: bgscrollx = -data;                        break;
-		case 3: bgscrolly = (-data-2)& 0x1ff;
+		case 3: bgscrolly = (-data+2)& 0x1ff;
 				bg_enable = data & 0x0200;
-				bg_transparent = data & 0x0400;	// just a guess
+				bg_full_size = data & 0x0400;
 				break;
 		case 4: tilemap_set_scrollx(fg_tilemap,0,data+6); break;
 		case 5: tilemap_set_scrolly(fg_tilemap,0,data);   break;
@@ -282,27 +261,63 @@ static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *clip
 		sx = (spriteram16[offs+1] & 0x01ff) - 16-7;
 		sy = (256-8-height - sy) & 0xff;
 		code = spriteram16[offs+2] >> codeshift;
-		color = (spriteram16[offs+1] & 0x3e00) >> 9;
+		color = ((spriteram16[offs+1] & 0x3e00) >> 9) / colordiv;
 		pri = (spriteram16[offs+1] & 0x8000) >> 15;
+
+		if(!pri && (color & 0x0c) == 0x0c)
+			pri = 2;
 
 		if (pri != priority)
 			continue;
 
 		drawgfx(bitmap,Machine->gfx[0],
 				code,
-				color/colordiv,
+				color,
 				flipx,0,
 				sx,sy,
 				cliprect,TRANSPARENCY_PEN,0);
 	}
 }
 
+static void draw_bitmap(struct mame_bitmap *bitmap)
+{
+	int x,y,count;
+	int color;
+
+	count = 0;
+	for (y=0;y<512;y++)
+	{
+		for (x=0;x<512;x++)
+		{
+			color = bigtwin_bgvideoram[count] & 0xff;
+
+			if(color)
+			{
+				if(bg_full_size)
+				{
+					plot_pixel(bitmap, (x + bgscrollx) & 0x1ff, (y + bgscrolly) & 0x1ff, Machine->pens[0x100 + color]);
+				}
+				else
+				{
+					/* 50% size */
+					if(!(x % 2) && !(y % 2))
+					{
+						plot_pixel(bitmap, (x / 2 + bgscrollx) & 0x1ff, (y / 2 + bgscrolly) & 0x1ff, Machine->pens[0x100 + color]);
+					}
+				}
+			}
+			
+			count++;
+		}
+	}
+}
 
 VIDEO_UPDATE( bigtwin )
 {
 	tilemap_draw(bitmap,cliprect,fg_tilemap,0,0);
 	if (bg_enable)
-		copyscrollbitmap(bitmap,bgbitmap,1,&bgscrollx,1,&bgscrolly,cliprect,bg_transparent ? TRANSPARENCY_PEN : TRANSPARENCY_NONE,0x100);
+		draw_bitmap(bitmap);
+	draw_sprites(bitmap,cliprect,2,4);
 	draw_sprites(bitmap,cliprect,1,4);
 	draw_sprites(bitmap,cliprect,0,4);
 	tilemap_draw(bitmap,cliprect,tx_tilemap,0,0);
@@ -311,9 +326,10 @@ VIDEO_UPDATE( bigtwin )
 VIDEO_UPDATE( excelsr )
 {
 	tilemap_draw(bitmap,cliprect,fg_tilemap,0,0);
-	if (bg_enable)
-		copyscrollbitmap(bitmap,bgbitmap,1,&bgscrollx,1,&bgscrolly,cliprect,bg_transparent ? TRANSPARENCY_PEN : TRANSPARENCY_NONE,0x100);
 	draw_sprites(bitmap,cliprect,1,2);
+	if (bg_enable)
+		draw_bitmap(bitmap);
+	draw_sprites(bitmap,cliprect,2,2);
 	tilemap_draw(bitmap,cliprect,tx_tilemap,0,0);
 	draw_sprites(bitmap,cliprect,0,2);
 }
@@ -337,6 +353,7 @@ VIDEO_UPDATE( wbeachvl )
 	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
 	draw_sprites(bitmap,cliprect,1,0);
 	tilemap_draw(bitmap,cliprect,fg_tilemap,0,0);
+	draw_sprites(bitmap,cliprect,2,0);
 	draw_sprites(bitmap,cliprect,0,0);
 	tilemap_draw(bitmap,cliprect,tx_tilemap,0,0);
 }

@@ -123,13 +123,18 @@ WRITE16_HANDLER( pgm_asic3_reg_w )
 		asic3_reg = data & 0xff;
 }
 
-/*** Knights of Valour / Sango Protection (from ElSemi) (ASIC28) ***/
+/*** Knights of Valour / Sango / PhotoY2k Protection (from ElSemi) (ASIC28) ***/
 
 static unsigned short ASIC28KEY;
 static unsigned short ASIC28REGS[10];
 static unsigned short ASICPARAMS[256];
 static unsigned short ASIC28RCNT=0;
 static unsigned int B0TABLE[16]={2,0,1,4,3}; //maps char portraits to tables
+
+// photo2yk bonus stage
+unsigned int AETABLE[16]={0x00,0x0a,0x14,
+		0x01,0x0b,0x15,
+		0x02,0x0c,0x16};
 
 //Not sure if BATABLE is complete
 static unsigned int BATABLE[0x40]=
@@ -165,81 +170,133 @@ READ16_HANDLER (sango_protram_r)
 	return 0x0000;
 }
 
+static unsigned int photoy2k_seqpos;
+static unsigned int photoy2k_trf[3], photoy2k_soff;
+
+#define BITSWAP10(val,B9,B8,B7,B6,B5,B4,B3,B2,B1,B0) \
+                ((BIT(val, B9) <<  9) | \
+                 (BIT(val, B8) <<  8) | \
+                 (BIT(val, B7) <<  7) | \
+                 (BIT(val, B6) <<  6) | \
+                 (BIT(val, B5) <<  5) | \
+                 (BIT(val, B4) <<  4) | \
+                 (BIT(val, B3) <<  3) | \
+                 (BIT(val, B2) <<  2) | \
+                 (BIT(val, B1) <<  1) | \
+                 (BIT(val, B0) <<  0))
+
+static unsigned int photoy2k_spritenum(void)
+{
+	unsigned int base = photoy2k_seqpos & 0xffc00;
+	unsigned int low  = photoy2k_seqpos & 0x003ff;
+
+	switch((photoy2k_seqpos >> 10) & 0xf) {
+	case 0x0:
+	case 0xa:
+		return base | (BITSWAP10(low, 0,8,3,1,5,9,4,2,6,7) ^ 0x124);
+	case 0x1:
+	case 0xb:
+		return base | (BITSWAP10(low, 5,1,7,4,0,8,3,6,9,2) ^ 0x088);
+	case 0x2:
+	case 0x8:
+		return base | (BITSWAP10(low, 3,5,9,7,6,4,1,8,2,0) ^ 0x011);
+	case 0x3:
+	case 0x9:
+		return base | (BITSWAP10(low, 1,8,3,6,0,4,5,2,9,7) ^ 0x154);
+	case 0x4:
+	case 0xe:
+		return base | (BITSWAP10(low, 2,1,7,4,5,8,3,6,9,0) ^ 0x0a9);
+	case 0x5:
+	case 0xf:
+		return base | (BITSWAP10(low, 9,4,6,8,2,1,7,5,3,0) ^ 0x201);
+	case 0x6:
+	case 0xd:
+		return base | (BITSWAP10(low, 4,6,0,8,9,7,3,5,1,2) ^ 0x008);
+	case 0x7:
+	case 0xc:
+		return base | (BITSWAP10(low, 8,9,3,2,0,1,6,7,5,4) ^ 0x000);
+	}
+	return 0;
+}
+
 READ16_HANDLER (ASIC28_r16)
 //unsigned short ASIC28_r16(unsigned int addr)
 {
-
 	unsigned int val=(ASIC28REGS[1]<<16)|(ASIC28REGS[0]);
 
 //logerror("Asic28 Read PC = %06x Command = %02x ??\n",activecpu_get_pc(), ASIC28REGS[1]);
 
 	switch(ASIC28REGS[1]&0xff)
 	{
+
+		case 0x20: // PhotoY2k spritenum conversion 4/4
+			if(!ASIC28RCNT)
+				logerror("ASIC28: PhotoY2K spr4 %04x %06x (%06x)\n", val & 0xffff, photoy2k_trf[2], activecpu_get_pc());
+			val = photoy2k_soff >> 16;
+			break;
+
+		case 0x21: // PhotoY2k spritenum conversion 3/4
+			if(!ASIC28RCNT) {
+				extern unsigned int pgmy2ks[];
+				photoy2k_trf[2] = val & 0xffff;
+				logerror("ASIC28: PhotoY2K spr3 %04x %06x (%06x)\n", val & 0xffff, photoy2k_trf[1], activecpu_get_pc());
+				if(photoy2k_trf[0] < 0x3c00)
+					photoy2k_soff = pgmy2ks[photoy2k_trf[0]];
+				else
+					photoy2k_soff = 0;
+				logerror("ASIC28: spriteval %04x, %06x -> %06x\n", photoy2k_trf[0], (photoy2k_trf[2]<<16)|photoy2k_trf[1], photoy2k_soff);
+			}
+			val = photoy2k_soff & 0xffff;
+			break;
+
+		case 0x22: // PhotoY2k spritenum conversion 2/4
+			if(!ASIC28RCNT) {
+				photoy2k_trf[1] = val & 0xffff;
+				logerror("ASIC28: PhotoY2K spr2 %04x %06x (%06x)\n", val & 0xffff, photoy2k_trf[0], activecpu_get_pc());
+			}
+			val = photoy2k_trf[0] | 0x880000;
+			break;
+
+		case 0x23: // PhotoY2k spritenum conversion 1/4
+			if(!ASIC28RCNT) {
+				photoy2k_trf[0] = val & 0xffff;
+				logerror("ASIC28: PhotoY2K spr1 %04x (%06x)\n", val & 0xffff, activecpu_get_pc());
+			}
+			val = 0x880000;
+			break;
+
+		case 0x30: // PhotoY2k next element
+			if(!ASIC28RCNT)
+				photoy2k_seqpos++;
+			val = photoy2k_spritenum();
+			if(!ASIC28RCNT)
+				logerror("ASIC28: PhotoY2K seq_next  %05x -> %06x (%06x)\n", photoy2k_seqpos, val, activecpu_get_pc());
+			break;
+
+		case 0x32: // PhotoY2k start of sequence
+			if(!ASIC28RCNT)
+				photoy2k_seqpos = (val & 0xffff) << 4;
+			val = photoy2k_spritenum();
+			if(!ASIC28RCNT)
+				logerror("ASIC28: PhotoY2K seq_start %05x -> %06x (%06x)\n", photoy2k_seqpos, val, activecpu_get_pc());
+			break;
+
 		case 0x99:
 			val=0x880000;
 			break;
-		case 0xd0:	//txt palette
-			val=0xa01000+(ASIC28REGS[0]<<5);
-			break;
-		case 0xdc:	//bg palette
-			val=0xa00800+(ASIC28REGS[0]<<6);
-			break;
-		case 0x9d:
-		case 0xe0:	//spr palette
+
+		case 0x9d:	// spr palette
 			val=0xa00000+((ASIC28REGS[0]&0x1f)<<6);
 			break;
-		case 0xc0:
-			val=0x880000;
+
+		case 0xae:  //Photo Y2k Bonus stage
+			val=AETABLE[ASIC28REGS[0]&0xf];
 			break;
-		case 0xc3:	//TXT tile position Uses C0 to select column
-			{
-				val=0x904000+(ASICPARAMS[0xc0]+ASICPARAMS[0xc3]*64)*4;
-			}
-			break;
-		case 0xcb:
-			val=0x880000;
-			break;
-		case 0xe7:
-			val=0x880000;
-			break;
-		case 0xe5:
-			val=0x880000;
-			break;
-		case 0xB0:
+
+		case 0xb0:
 			val=B0TABLE[ASIC28REGS[0]&0xf];
 			break;
-		case 0xBA:
-			val=BATABLE[ASIC28REGS[0]&0x3f];
-			if(ASIC28REGS[0]>0x2f)
-			{
-//				PutMessage("Unmapped BA com, report ElSemi",60);
-				usrintf_showmessage	("Unmapped BA com %02x, contact ElSemi / MameDev", ASIC28REGS[0]);
-			}
-			break;
-		case 0xfe:	//todo
-			val=0x880000;
-			break;
-		case 0xfc:	//Adjust damage level to char experience level
-			{
-			val=(ASICPARAMS[0xfc]*ASICPARAMS[0xfe])>>6;
-			break;
-			}
-		case 0xf8:
-			val=E0REGS[ASIC28REGS[0]&0xf]&0xffffff;
-			break;
-		case 0xcc: //BG
-   			{
-   	 		int y=ASICPARAMS[0xcc];
-    		if(y&0x400)    //y is signed (probably x too and it also applies to TXT, but I've never seen it used)
-     			y=-(0x400-(y&0x3ff));
-    		val=0x900000+(((ASICPARAMS[0xcb]+(y)*64)*4)/*&0x1fff*/);
-   			}
-   			break;
-		case 0xf0:
-			{
-				val=0x00C000;
-			}
-			break;
+
 		case 0xb4:
 			{
 				int v2=ASIC28REGS[0]&0x0f;
@@ -255,6 +312,43 @@ READ16_HANDLER (ASIC28_r16)
 				val=0x880000;
 			}
 			break;
+
+		case 0xba:
+			val=BATABLE[ASIC28REGS[0]&0x3f];
+			if(ASIC28REGS[0]>0x2f)
+			{
+//				PutMessage("Unmapped BA com, report ElSemi",60);
+				usrintf_showmessage	("Unmapped BA com %02x, contact ElSemi / MameDev", ASIC28REGS[0]);
+			}
+			break;
+
+		case 0xc0:
+			val=0x880000;
+			break;
+
+		case 0xc3:	//TXT tile position Uses C0 to select column
+			{
+				val=0x904000+(ASICPARAMS[0xc0]+ASICPARAMS[0xc3]*64)*4;
+			}
+			break;
+
+		case 0xcb:
+			val=0x880000;
+			break;
+
+		case 0xcc: //BG
+   			{
+   	 		int y=ASICPARAMS[0xcc];
+    		if(y&0x400)    //y is signed (probably x too and it also applies to TXT, but I've never seen it used)
+     			y=-(0x400-(y&0x3ff));
+    		val=0x900000+(((ASICPARAMS[0xcb]+(y)*64)*4)/*&0x1fff*/);
+   			}
+   			break;
+
+		case 0xd0:	//txt palette
+			val=0xa01000+(ASIC28REGS[0]<<5);
+			break;
+
 		case 0xd6:	//???? check it
 			{
 				int v2=ASIC28REGS[0]&0xf;
@@ -264,6 +358,44 @@ READ16_HANDLER (ASIC28_r16)
 				val=0x880000;
 			}
 			break;
+
+		case 0xdc:	//bg palette
+			val=0xa00800+(ASIC28REGS[0]<<6);
+			break;
+
+		case 0xe0:	//spr palette
+			val=0xa00000+((ASIC28REGS[0]&0x1f)<<6);
+			break;
+
+		case 0xe5:
+			val=0x880000;
+			break;
+
+		case 0xe7:
+			val=0x880000;
+			break;
+
+		case 0xf0:
+			{
+				val=0x00C000;
+			}
+			break;
+
+		case 0xf8:
+			val=E0REGS[ASIC28REGS[0]&0xf]&0xffffff;
+			break;
+
+		case 0xfc:	//Adjust damage level to char experience level
+			{
+			val=(ASICPARAMS[0xfc]*ASICPARAMS[0xfe])>>6;
+			break;
+			}
+
+		case 0xfe:	//todo
+			val=0x880000;
+			break;
+
+
 		default:
 			{
 				val=0x880000;
@@ -289,8 +421,7 @@ READ16_HANDLER (ASIC28_r16)
 		realkey|=ASIC28KEY;
 		d^=realkey;
 		ASIC28RCNT++;
-		ASIC28RCNT&=0xf;	//16 busy states
-		if(ASIC28RCNT==0)
+		if(!(ASIC28RCNT&0xf))
 		{
 			ASIC28KEY+=0x100;
 			ASIC28KEY&=0xFF00;

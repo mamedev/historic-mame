@@ -12,73 +12,82 @@
     - golgo13 needs the gun figured out.  also, what is the "sensor" input listed in the test menu?
     - golgo13 assumes the test switch is a switch, not a button - must hold down F2 to stay in test mode
 
-Game                        Company/Year              CPU board    Mother board          Daughter board     Keycus
--------------------------------------------------------------------------------------------------------------------
-*Aerosmith - Quest for Fame (C) Namco,        2001
-Aqua Rush                   (C) Namco,        1999    COH 700      SYSTEM12 MOTHER(C)    SYSTEM12 M5F2      KC053
-*Attack Pla-Rail            (C) Tomy/Namco    199?
-Derby Quiz My Dream Horse   (C) Namco,        1998    COH 700      SYSTEM12 MOTHER(B)    SYSTEM12 M10X64    KC035
-Ehrgeiz                     (C) Square/Namco, 1998    COH 700      SYSTEM12 MOTHER(B)    SYSTEM12 M4F6      KC021
-Fighting Layer              (C) Arika/Namco,  1998    COH 700      SYSTEM12 MOTHER(B)    SYSTEM12 M5F4      KC037
-*Fighting Spirit Biography 3(C) Namco,        1997
-*Ghoul Panic                (C) Namco/Raizing 1999
-Golgo 13                    (C) Raizing/Namco,1999    COH 700      SYSTEM12 MOTHER(C)    SYSTEM12 M8F6      KC054
-*Kaiun Quiz                 (C) Namco,        199?
-*Kart Duel                  (C) Namco,        2000
-Libero Grande               (C) Namco,        1997    COH 700      SYSTEM12 MOTHER(B)    SYSTEM12 M8F2F     KC014
-Mr Driller                  (C) Namco,        1999    COH 700      SYSTEM12 MOTHER(C)    SYSTEM12 M8F2F     KC048
-*Oh Bakyuuun                (C) Namco/Raizing 1999
-*Over Kuhn                  (C) Namco         1999
-Paca Paca Passion           (C) Produce/Namco,1999    COH 700      SYSTEM12 MOTHER(B)    SYSTEM12 M8F2F     KC038
-*Paca Paca Passion Special  (C) Produce/Namco,1999
-*Paca Paca Passion 2        (C) Produce/Namco,1999
-Soul Calibur                (C) Namco,        1998    COH 700      SYSTEM12 MOTHER(B)    SYSTEM12 M5F2      KC020
-*Soul Calibur Ver.B         (C) Namco,        199?
-*Submarines                 (C) Namco,        199?
-*Super World Stadium '98    (C) Namco,        1998
-Super World Stadium '99     (C) Namco,        1999    COH 700      SYSTEM12 MOTHER(B)    SYSTEM12 M5F4      KC043
-*Super World Stadium 2000   (C) Namco,        2000
-*Super World Stadium 2001   (C) Namco,        2001
-*Techno Drive               (C) Namco,        1998
-*TeknoWerk                  (C) Namco,        1999
-*Tenkomori Shooting         (C) Namco,        1998
-Tekken 3                    (C) Namco,        1996    COH 700      SYSTEM12 MOTHER(B)    SYSTEM12 M8F2F     KC006
-Tekken Tag Tournament       (C) Namco,        1999    COH 700      SYSTEM12 MOTHER(B)    SYSTEM12 M8F4      KC044
-*Toukon Retsuden 3          (C) Namco,        199?
-*Truck Kyosokyoku           (C) Namco,        2000
-*Um Jammer Lammy            (C) Namco,        1999
+Game & software revision                 Company/Year              CPU board    Mother board          Daughter board     Keycus
+-------------------------------------------------------------------------------------------------------------------------------
+*Aerosmith - Quest for Fame              (C) Namco,        2001
+Aqua Rush (AQ1/VER.A1)                   (C) Namco,        1999    COH 700      SYSTEM12 MOTHER(C)    SYSTEM12 M5F2      KC053
+*Attack Pla-Rail                         (C) Tomy/Namco    199?
+Derby Quiz My Dream Horse (MDH1/VER.A2)  (C) Namco,        1998    COH 700      SYSTEM12 MOTHER(B)    SYSTEM12 M10X64    KC035
+Ehrgeiz (EG2/VER.A)                      (C) Square/Namco, 1998    COH 700      SYSTEM12 MOTHER(B)    SYSTEM12 M4F6      KC021
+Ehrgeiz (EG3/VER.A)                      (C) Square/Namco, 1998    COH 700      SYSTEM12 MOTHER(B)    SYSTEM12 M4F6      KC021
+Fighting Layer (FTL0/VER.A)              (C) Arika/Namco,  1998    COH 700      SYSTEM12 MOTHER(B)    SYSTEM12 M5F4      KC037
+*Fighting Spirit Biography 3             (C) Namco,        1997
+*Ghoul Panic                             (C) Namco/Raizing 1999
+Golgo 13 (GLG1/VER.A)                    (C) Raizing/Namco,1999    COH 700      SYSTEM12 MOTHER(C)    SYSTEM12 M8F6      KC054
+*Kaiun Quiz                              (C) Namco,        199?
+*Kart Duel                               (C) Namco,        2000
+Libero Grande (LG2/VER.A)                (C) Namco,        1997    COH 700      SYSTEM12 MOTHER(B)    SYSTEM12 M8F2F     KC014
+Mr Driller (DRI1/VER.A2)                 (C) Namco,        1999    COH 700      SYSTEM12 MOTHER(C)    SYSTEM12 M8F2F     KC048
+*Oh Bakyuuun                             (C) Namco/Raizing 1999
+*Over Kuhn                               (C) Namco         1999
+Paca Paca Passion (PPP1/VER.A2)          (C) Produce/Namco,1999    COH 700      SYSTEM12 MOTHER(B)    SYSTEM12 M8F2F     KC038
+*Paca Paca Passion Special               (C) Produce/Namco,1999
+*Paca Paca Passion 2                     (C) Produce/Namco,1999
+Soul Calibur (SOC11/VER.A2)              (C) Namco,        1998    COH 700      SYSTEM12 MOTHER(B)    SYSTEM12 M5F2      KC020
+Soul Calibur (SOC11/VER.B)               (C) Namco,        1998    COH 700      SYSTEM12 MOTHER(B)    SYSTEM12 M5F2      KC020
+Soul Calibur (SOC14/VER.C)               (C) Namco,        1998    COH 700      SYSTEM12 MOTHER       JO 11-04-98        none
+*Soul Calibur Ver.B                      (C) Namco,        199?
+*Submarines                              (C) Namco,        199?
+*Super World Stadium '98                 (C) Namco,        1998
+Super World Stadium '99 (SS91/VER.A3)    (C) Namco,        1999    COH 700      SYSTEM12 MOTHER(B)    SYSTEM12 M5F4      KC043
+*Super World Stadium 2000                (C) Namco,        2000
+*Super World Stadium 2001                (C) Namco,        2001
+*Techno Drive                            (C) Namco,        1998
+*TeknoWerk                               (C) Namco,        1999
+*Tenkomori Shooting                      (C) Namco,        1998
+Tekken 3 (TET1/VER.E1)                   (C) Namco,        1996    COH 700      SYSTEM12 MOTHER(B)    SYSTEM12 M8F2F     KC006
+Tekken 3 (TET2/VER.A)                    (C) Namco,        1996    COH 700      SYSTEM12 MOTHER       SYSTEM12 M8F2F     KC006
+Tekken 3 (TET3/VER.A)                    (C) Namco,        1996    COH 700      SYSTEM12 MOTHER       SYSTEM12 M8F2F     KC006
+Tekken Tag Tournament (TEG3/VER.B)       (C) Namco,        1999    COH 700      SYSTEM12 MOTHER(B)    SYSTEM12 M8F4      KC044
+*Toukon Retsuden 3                       (C) Namco,        199?
+*Truck Kyosokyoku                        (C) Namco,        2000
+*Um Jammer Lammy                         (C) Namco,        1999
 
 * - denotes not dumped yet. If you can help with the remaining undumped S12 games,
     please contact http://unemulated.emuunlim.com or http://targets.mame.net
 
 
 The Namco System 12 system comprises 4 PCB's....
-MOTHER PCB  - This is the main PCB. It holds all sound circuitry, sound ROMs, program ROMs, shared RAM, bank-switching logic,
-              controller/input logic (including sound CPU) and some video output circuitry.
-              There are three known revisions of this PCB. The 3rd revision has some extra circuitry for analog controls, some of the PALs
-              are different and it has the capability to use 1x TSOP56 ROM in the program location, instead of the regular TSOP40/48 ROMs.
-              The first 2 revisions appear to be identical.
+MOTHER PCB  - This is the main PCB. It holds all sound circuitry, sound ROMs, program ROMs, shared RAM, bank-switching
+              logic, controller/input logic (including sound CPU) and some video output circuitry.
+              There are three known revisions of this PCB. The 3rd revision has some extra circuitry for analog controls,
+              some of the PALs are different and it has the capability to use 1x TSOP56 ROM in the program location, 
+              instead of the regular TSOP40/48 ROMs. The first 2 revisions appear to be identical.
 CPU PCB     - All games use the exact same PCB. Contains main CPU/RAM and GPU/Video RAM
-ROM PCB     - There are eight known revisions of this PCB (so far). They're mostly identical except for the type and number of ROMs used.
-              Most have a PAL and a CPLD known as a 'KEYCUS'. Some also have an additional CPLD for protection.
-NETWORK PCB - Used to connect 2 PCBs together using standard USB cables. The board plugs in where the CPU board would normally be, and the
-              CPU board plugs into another connector on the Network PCB. Seems to be only used on Libero Grande (so far?)
+ROM PCB     - There are eight known revisions of this PCB (so far). They're mostly identical except for the type and 
+              number of ROMs used. Most have a PAL and a CPLD known as a 'KEYCUS'. Some also have an additional CPLD for
+              protection.
+NETWORK PCB - Used to connect 2 PCBs together using standard USB cables. The board plugs in where the CPU board would 
+              normally be, and the CPU board plugs into another connector on the Network PCB. Seems to be only used on 
+              Libero Grande, Tekken 3 and Ehrgeiz (so far?)
 
-Each game has a 3 or 4 digit letter code assigned to it which is printed on a small sticker and placed on the underside of the main PCB.
-The 4 digit code is then proceeded by a number (generally 1, 2 or 3), then 'Rev.' then A/B/C/D/E which denotes the software revision,
-and in some cases a sub-revision such as 1 or 2 (usually only listed in the test mode)
-The first 1 denotes a Japanese version. 2 (and maybe 3) denotes a World version. So far there are no other numbers used other than 1, 2, or 3.
+Each game has a 3 or 4 digit letter code assigned to it which is printed on a small sticker and placed on the underside
+of the main PCB.
+The 4 digit code is then proceeded by a number (generally 1, 2 or 3), then 'Rev.' then A/B/C/D/E which denotes the software
+revision, and in some cases a sub-revision such as 1 or 2 (usually only listed in the test mode).
+The first 1 denotes a Japanese version. 2 (and maybe 3) denotes a World version. So far there are no other numbers used 
+other than 1, 2, or 3.
 For World versions, usually only the main program uses a '2' or '3', the rest of the ROMs use the Japanese region code '1'.
 See the Main PCB and ROM Daughterboard PCB texts below for more details.
 
 Main PCB
 --------
 1st Revision
-SYSTEM12 MOTHER PCB 8661960105 (8661970105)
-SYSTEM12 MOTHER PCB 8661960106 (8661970106)
+SYSTEM12 MOTHER PCB 8661960105 (8661970105) 
+SYSTEM12 MOTHER PCB 8661960106 (8661970106) 
 
 2nd Revision
-SYSTEM12 MOTHER (B) PCB 8661961000 (8661971000)
+SYSTEM12 MOTHER (B) PCB 8661961000 (8661971000) 
 
 3rd Revision
 SYSTEM12 MOTHER (C) PCB (System11 Plus) 8661961101 (8661971101)
@@ -160,63 +169,66 @@ Notes:
       PQ30RV21     : Sharp PQ30RV21 5V to 3.3V Voltage Regulator
       3V_BATT      : Sony CR2032 3 volt coin battery
       D6345        : NEC uPD6345 Serial 8-bit shift register IC (SOIC16)
-
+      
       PRG.2L/PRG.2P: Main program ROMs, Intel 28F016S5 2M x8 FLASHROM (both TSOP40)
                      These ROMs are populated on the following games....
 
                                                             Test Mode S/W
                      Game                      Sticker      Revision         MOTHER PCB
                      --------------------------------------------------------------------
-                     Aqua Rush                 AQ1 Ver.A    AQ1/VER.A1       MOTHER(C) (ROMs serialised)
-                     Derby Quiz My Dream Horse MDH1 Ver.A   MDH1/VER.A2      MOTHER(B)
+                     Aqua Rush                 AQ1 Ver.A    AQ1/VER.A1       MOTHER(C) (ROMs serialised)                            
+                     Derby Quiz My Dream Horse MDH1 Ver.A   MDH1/VER.A2      MOTHER(B)                  
                      Ehrgeiz                   EG3 Ver.A    EG3/VER.A        MOTHER(B)
-                     Golgo 13                  GLG1 Ver.A   GLG1/VER.A       MOTHER(C) (ROMs serialised)
+                     Golgo 13                  GLG1 Ver.A   GLG1/VER.A       MOTHER(C) (ROMs serialised) 
                      Libero Grande             LG2 Ver.A    LG2/VER.A        MOTHER(B)
-                     Mr Driller                DRI1 Ver.A   DRI1/VER.A2      MOTHER(C) (ROMs serialised)
-                     Paca Paca Passion         PPP1 Ver.A   PPP1/VER.A2      MOTHER(B)
-                     Soul Calibur              SOC1 Ver.A   SOC11/VER.A2     MOTHER(B)
-                     Tekken Tag Tournament     TEG3 Ver.B   TEG3/VER.B       MOTHER(B)
+                     Mr Driller                DRI1 Ver.A   DRI1/VER.A2      MOTHER(C) (ROMs serialised)                 
+                     Paca Paca Passion         PPP1 Ver.A   PPP1/VER.A2      MOTHER(B)                  
+                     Soul Calibur              SOC1 Ver.A   SOC11/VER.A2     MOTHER(B)                   
+                     Tekken Tag Tournament     TEG3 Ver.B   TEG3/VER.B       MOTHER(B)                 
 
       PRG.2N/PRG.2R: Main program ROMs \ Intel 28F016S5 2M x8 FLASHROM (for 2N, TSOP40)
                                        / Intel 28F008SA 1M x8 FLASHROM (for 2R, TSOP40)
                      These ROMs are not populated on any System12 PCB dumped so far. Probably they are completely
                      unused on any game since they were phased out with the Rev (C) main board.
-
+      
              PRG.2F: Main program ROM (only on MOTHER (C) PCB) - Intel E28F0320 4M x8 FLASHROM (TSOP56)
                      This ROM is not populated on any System12 PCB dumped so far.
 
-      PRG.2J/PRG.2E: Main program ROMs, Fujitsu 29F016 2M x8 FLASHROM (both TSOP48)
-                     These ROMs are populated on the following games....
-
-                                                            Test Mode S/W
-                     Game                      Sticker      Revision         MOTHER PCB
-                     --------------------------------------------------------------------
-                     Fighting Layer            FTL1 Ver.A   FTL0/VER.A       MOTHER(B)
-                     Soul Calibur              SOC1 Ver.B   SOC11/VER.A2     MOTHER(B)
-                     Soul Calibur              TET1 Ver.C   SOC14/VER.C      MOTHER    (factory upgraded from Tekken 3 to Soul Calibur)
+      PRG.2J/PRG.2E: Main program ROMs, Fujitsu 29F016 2M x8 FLASHROM (both TSOP48) 
+                     These ROMs are populated on the following games....                                  
+                                                                                                          
+                                                            Test Mode S/W                                 
+                     Game                      Sticker      Revision         MOTHER PCB                   
+                     --------------------------------------------------------------------                 
+                     Ehrgeiz                   EG2 Ver.A    EG2/VER.A        MOTHER(B)
+                     Fighting Layer            FTL1 Ver.A   FTL0/VER.A       MOTHER(B)                    
+                     Soul Calibur              SOC1 Ver.B   SOC11/VER.B      MOTHER(B)                   
+                     Soul Calibur              TET1 Ver.C   SOC14/VER.C      MOTHER  (factory upgraded from Tekken 3 to Soul Calibur)
                      Super World Stadium '99   SS91 Ver.A   SS91/VER.A3      MOTHER(B)
                      Tekken 3                  TET1 Ver.A   TET1/VER.E1      MOTHER(B)
+                     Tekken 3                  TET2 Ver.A   TET2/VER.A       MOTHER
                      Tekken 3                  TET3 Ver.A   TET3/VER.A       MOTHER
-
+                     
       SOUND.11S    : Fujitsu 29F400TA-90 512K x8 EEPROM (holds H8/3002 program, SOP44)
-                     This ROM is not labelled with any other markings except the manufacturer and chip type. The ROM labels in the archives
-                     are simply made up for convenience.
+                     This ROM is not labelled with any other markings except the manufacturer and chip type. The ROM labels
+                     in the archives are simply made up for convenience.
 
 
 
 ROM Daughterboard PCB
 ----------------------
-This PCB holds the remainder of the ROMs, used for graphics and the 3D geometry.
+This PCB holds the remainder of the ROMs, used for graphics and the 3D geometry. 
 There are 8 known types of ROM daughterboards used on S12 games (so far).
-All of the PCBs are the same size (approx 2" x 7") containing one custom connector and some MASKROMs/FlashROMs, a PLCC PAL and a KEYCUS
-(which is a PLCC CPLD) and in some cases an extra TQFP CPLD.
-The PCBs are named with a special coding. First a letter M, denoting MASKROM (always SOP44), then a number denoting how many ROMs of that type,
-then another letter F, denoting FLASHROM (always TSOP40/48/56), then a number denoting how many ROMs of that type.
+All of the PCBs are the same size (approx 2" x 7") containing one custom connector and some MASKROMs/FlashROMs, a PLCC 
+PAL and a KEYCUS (which is a PLCC CPLD) and in some cases an extra TQFP CPLD.
+The PCBs are named with a special coding. First a letter M, denoting MASKROM (always SOP44), then a number denoting how 
+many ROMs of that type, then another letter F, denoting FLASHROM (always TSOP40/48/56), then a number denoting how many
+ROMs of that type.
 
 ********
 *Type 1*
 ********
-SYSTEM 12 M4F6 PCB 8661960901 (8661970901)
+SYSTEM 12 M4F6 PCB 8661960901 (8661970901)  
 |----------------------------------------------------------|
 |WAVE0.IC2      IC4  FL3L.IC5                              |
 |                       FL3U.IC6                           |
@@ -236,21 +248,26 @@ Notes:
       | WAVE 32M | X  | O  |   |  NORMAL  | X  |
       |      64M | O  | X  |   |32M FLASH | O  |
       |----------|----|----|   |----------|----|
-
+      
       WAVEx: 64M SOP44 MASKROM (R6 populated)
       FLx  : Intel E28F016 TSOP40 16M FlashROM (R8 not populated)
       ROM0x: 64M SOP44 MASKROM (size fixed at 64M, no configure options)
       IC3  : MACH211 CPLD (PLCC44, labelled 'KEYCUS' and stamped with 'KC' & a 3-digit number which is different per game.)
       IC4  : PALCE 16V8H (PLCC20, PCB labelled 'A_DECO', chip stamped 'A DECO')
-
+      
 This PCB is used on:
-
-              Software
+      
+              Software         
 Game          Revision     PCB                                            KEYCUS   ROMs Populated
 ------------------------------------------------------------------------------------------------------------------
-Ehrgeiz       EG3 Ver.A    SYSTEM 12 M4F6 PCB 8661960901 (8661970901)     KC021    EG1 WAVE0
+Ehrgeiz       EG2/VER.A    SYSTEM 12 M4F6 PCB 8661960901 (8661970901)     KC021    EG1 WAVE0
                                                                                    EG1 ROM0U, EG1ROM0L.12
-                                                                                   EG1 FL1U, EG1 FL1L, EG1 FL2U
+                                                                                   EG1 FL1U, EG1 FL1L, EG1 FL2U  
+                                                                                   EG1 FL2L, EG1 FL3U, EG1 FL3L
+
+Ehrgeiz       EG3/VER.A    SYSTEM 12 M4F6 PCB 8661960901 (8661970901)     KC021    EG1 WAVE0
+                                                                                   EG1 ROM0U, EG1ROM0L.12
+                                                                                   EG1 FL1U, EG1 FL1L, EG1 FL2U  
                                                                                    EG1 FL2L, EG1 FL3U, EG1 FL3L
 
 ********
@@ -273,42 +290,43 @@ Notes:
       |----------|----|----|
       |  MASK    | R6 | R7 |
       |----------|----|----|
-      | WAVE 32M | X  | O  |
+      | WAVE 32M | X  | O  | 
       |      64M | O  | X  |
       |----------|----|----|
-
-      |----------|----|    |------|---|---|---|---|---|----|   The Flash ROMs can be configured to 3.3V 64M Strata Flash
+      
+      |----------|----|    |------|---|---|---|---|---|----|   The Flash ROMs can be configured to 3.3V 64M Strata Flash 
       |  FLASH   | R8 |    |FLASH |R11|R12|C1 |C2 |D1 |REG1|   when used with some extra components (voltage regulator/diode
-      |----------|----|    |------|---|---|---|---|---|----|   /resistors/caps etc). However, the extra component positions
+      |----------|----|    |------|---|---|---|---|---|----|   /resistors/caps etc). However, the extra component positions 
       |  NORMAL  | X  |    | 5V   | O | O | X | X | X | X  |   are not populated on any of the games dumped so far.
       |64M STRATA| O  |    | 3.3V | X | X | O | O | O | O  |
       |----------|----|    |------|---|---|---|---|---|----|
-
+      
       WAVEx: 64M SOP44 MASKROM (R6 populated)
       FLx  : Intel E28F320J5 TSOP56 32M FlashROM (R11 & R12 populated)
       ROMx : 64M SOP44 MASKROM (size fixed at 64M, no configure options)
-      IC3  : MACH211 CPLD or Cypress CY37064 CPLD (PLCC44, labelled 'KEYCUS' and stamped with 'KC' & a 3-digit number which is different per game.)
+      IC3  : MACH211 CPLD or Cypress CY37064 CPLD (PLCC44, labelled 'KEYCUS' and stamped with 'KC' & a 3-digit number which
+             is different per game.)
       IC4  : PALCE 16V8H (PLCC20, PCB labelled 'A_DECO', chip stamped 'M5F4')
-
+      
 This PCB is used on:
-
-              Software
+      
+              Software         
 Game          Revision     PCB                                            KEYCUS   ROMs Populated
 ------------------------------------------------------------------------------------------------------------------
-Soul Calibur  SOC1 Ver.A   SYSTEM 12 M5F2 PCB 8661961300 (8661971300)     KC020    SOC1 WAVE0
+Soul Calibur  SOC11/VER.A2 SYSTEM 12 M5F2 PCB 8661961300 (8661971300)     KC020    SOC1 WAVE0
                                                                                    SOC1 ROM0, SOC1 ROM1, SOC1 ROM2
                                                                                    SOC1 FL3, SOC1 FL4
-Soul Calibur  SOC1 Ver.B   SYSTEM 12 M5F2 PCB 8661961300 (8661971300)     KC020    SOC1 WAVE0
+Soul Calibur  SOC11/VER.B  SYSTEM 12 M5F2 PCB 8661961300 (8661971300)     KC020    SOC1 WAVE0                     
                                                                                    SOC1 ROM0, SOC1 ROM1, SOC1 ROM2
-                                                                                   SOC1 FL3, SOC1 FL4
-Aqua Rush     AQ1 Ver.A    Same PCB but sticker says....                  KC053    AQ1 WAVE0
+                                                                                   SOC1 FL3, SOC1 FL4             
+Aqua Rush     AQ1/VER.A1   Same PCB but sticker says....                  KC053    AQ1 WAVE0
                            'SYSTEM 12 M5F0 PCB 8661962200'                         AQ1 ROM0, AQ1 ROM1
                            (i.e no FlashROMs)
-
+                           
 ********
 *Type 3*
 ********
-SYSTEM 12 M5F4 PCB 8661961200 (8661971200)
+SYSTEM 12 M5F4 PCB 8661961200 (8661971200)  
 |----------------------------------------------------------|
 |WAVE0.IC2      IC4                                        |
 |                    FL4L.IC5              ROM0.IC9        |
@@ -328,24 +346,24 @@ Notes:
       | WAVE 32M | X  | O  |   |  NORMAL  | X  |
       |      64M | O  | X  |   |64M STRATA| O  |
       |----------|----|----|   |----------|----|
-
+      
       WAVEx: 64M SOP44 MASKROM (R6 populated)
       FLx  : Fujitsu 29F016 TSOP48 16M FlashROM (R8 not populated)
       ROMx : 64M SOP44 MASKROM (size fixed at 64M, no configure options)
       IC3  : MACH211 CPLD (PLCC44, labelled 'KEYCUS' and stamped with 'KC' & a 3-digit number which is different per game.)
       IC4  : PALCE 16V8H (PLCC20, PCB labelled 'A_DECO', chip stamped 'M5F4')
-
+      
 This PCB is used on:
-
-               Software
+      
+               Software         
 Game           Revision     PCB                                            KEYCUS   ROMs Populated
 -------------------------------------------------------------------------------------------------------------------
-Fighting Layer FTL1 Ver. A  SYSTEM 12 M5F4 PCB 8661961200 (8661971200)     KC037    FTL1 WAVE0, FTL1 WAVE1
+Fighting Layer FTL0/VER.A  SYSTEM 12 M5F4 PCB 8661961200 (8661971200)     KC037    FTL1 WAVE0, FTL1 WAVE1
                                                                                     FTL1 ROM0, FTL1 ROM1, FTL1 ROM2
                                                                                     FTL1 FL4L, FTL1 FL4H
                                                                                     FTL1 FL3L, FTL1 FL3H
-
-Super World    SS91 Ver. A  SYSTEM 12 M5F4 PCB 8661961200 (8661971200)     KC027    SS91 WAVE0, SS91 WAVE1
+                                                                                    
+Super World    SS91/VER.A3 SYSTEM 12 M5F4 PCB 8661961200 (8661971200)     KC027    SS91 WAVE0, SS91 WAVE1         
 Stadium '99                                                         (sticker KC043) SS91 ROM0, SS91 ROM1
                                                                                     SS91 FL4L, SS91 FL4H
                                                                                     SS91 FL3L, SS91 FL3H
@@ -353,7 +371,7 @@ Stadium '99                                                         (sticker KC0
 ********
 *Type 4*
 ********
-SYSTEM 12 M8F2F PCB 8661960301 (8661970301)
+SYSTEM 12 M8F2F PCB 8661960301 (8661970301)  
 |----------------------------------------------------------|
 |WAVE0.IC5   ROM0L.IC6        ROM0U.IC9                    |
 |                                                          |
@@ -374,48 +392,55 @@ Notes:
       |  M64M | R6 | MASK ROMs are 64M if R6 is populated
       |  M32M | R7 | MASK ROMs are 32M if R7 is populated
       |-------|----|
-
+      
       WAVEx: 32M/64M SOP44 MASKROM
       FLx  : Fujitsu 29F016 TSOP48 16M FlashROM (size fixed at 16M, no configure options)
       ROMx : 32M/64M SOP44 MASKROM
-      IC1  : MACH211 CPLD or Cypress CY37064 CPLD (PLCC44, labelled 'KEYCUS' and stamped with 'KC' & a 3-digit number which is different per game.)
+      IC1  : MACH211 CPLD or Cypress CY37064 CPLD (PLCC44, labelled 'KEYCUS' and stamped with 'KC' & a 3-digit number which
+             is different per game.)
       IC2  : 74F139 logic IC
       IC3  : 74HC157 logic IC
-
+     
 This PCB is used on:
-
-               Software
+      
+               Software         
 Game           Revision      PCB                                            KEYCUS   ROMs Populated           Jumpers
 ---------------------------------------------------------------------------------------------------------------------
-Tekken 3       TET1 Ver. E1  SYSTEM 12 M8F2F PCB 8661960301 (8661970301)    KC006    TET1 WAVE0, TET1 WAVE1   R4, R7
+Tekken 3       TET1/VER.E1   SYSTEM 12 M8F2F PCB 8661960301 (8661970301)    KC006    TET1 WAVE0, TET1 WAVE1   R4, R7
                                                                                      TET1 ROM0U, TET1 ROM1U
                                                                                      TET1 ROM2U, TET1 ROM0L
                                                                                      TET1 ROM1L, TET1 ROM2L
-                                                                                     TET1 FL3L, TET1 FL3U
+                                                                                     TET1 FL3L, TET1 FL3U  
+                                                                                     
+Tekken 3       TET2/VER.A    SYSTEM 12 M8F2F PCB 8661960301 (8661970301)    KC006    TET1 WAVE0, TET1 WAVE1   R4, R7
+                                                                                     TET1 ROM0U, TET1 ROM1U 
+                                                                                     TET1 ROM2U, TET1 ROM0L 
+                                                                                     TET1 ROM1L, TET1 ROM2L 
+                                                                                     TET1 FL3L, TET1 FL3U  
 
-Tekken 3       TET3 Ver. A   SYSTEM 12 M8F2F PCB 8661960301 (8661970301)    KC006    TET1 WAVE0, TET1 WAVE1   R4, R7
-                                                                                     TET1 ROM0U, TET1 ROM1U
-                                                                                     TET1 ROM2U, TET1 ROM0L
-                                                                                     TET1 ROM1L, TET1 ROM2L
-                                                                                     TET1 FL3L, TET1 FL3U
-
-Paca Paca      PPP1 Ver. A   Same PCB but sticker says....                  KC038    PPP1 WAVE0, PPP1 WAVE1   R5, R7
+Tekken 3       TET3/VER.A    SYSTEM 12 M8F2F PCB 8661960301 (8661970301)    KC006    TET1 WAVE0, TET1 WAVE1   R4, R7
+                                                                                     TET1 ROM0U, TET1 ROM1U 
+                                                                                     TET1 ROM2U, TET1 ROM0L 
+                                                                                     TET1 ROM1L, TET1 ROM2L 
+                                                                                     TET1 FL3L, TET1 FL3U  
+                                                                                      
+Paca Paca      PPP1/VER.A2   Same PCB but sticker says....                  KC038    PPP1 WAVE0, PPP1 WAVE1   R5, R7
 Passion                      'SYSTEM 12 M8F0 PCB 8661961700'                         PPP1 ROM0U, PPP1 ROM1U
                              (i.e no FlashROMs)                                      PPP1 ROM2U, PPP1 ROM0L
                                                                                      PPP1 ROM1L, PPP1 ROM2L
 
-Mr Driller     DRI1 Ver.A    Same as Paca Paca Passion                      KC048    DRI1 WAVE0               R5, R7
+Mr Driller     DRI1/VER.A2   Same as Paca Paca Passion                      KC048    DRI1 WAVE0               R5, R7
                                                                                      DRI1 ROM0U, DRI1 ROM0L
 
-Libero Grande  LG2 Ver.A     SYSTEM 12 M8F2F PCB 8661960301 (8661970301)    KC014    LG1 WAVE0                R4, R7
+Libero Grande  LG2/VER.A     SYSTEM 12 M8F2F PCB 8661960301 (8661970301)    KC014    LG1 WAVE0                R4, R7
                                                                                      LG1 ROM0U, LG1 ROM0L
-                                                                                     LG1 FL3L, LG1 FL3U
+                                                                                     LG1 FL3L, LG1 FL3U 
 
 
 ********
 *Type 5*
 ********
-SYSTEM 12 M8F4 PCB 8661961901 (8661971901)
+SYSTEM 12 M8F4 PCB 8661961901 (8661971901)  
 |----------------------------------------------------------|
 |          IC3                              *ROM0O.IC13    |
 |               FLEL.IC4    FLOL.IC6         ROM0E.IC9     |
@@ -435,7 +460,7 @@ Notes:
       | WAVE 32M | O  | X  |
       |      64M | X  | O  |
       |----------|----|----|
-
+      
       *    : These parts on other side of PCB
       WAVEx: 32M/64M SOP44 MASKROM
       FLx  : Fujitsu 29F016 TSOP48 16M FlashROM (size fixed at 16M, no configure options)
@@ -443,13 +468,13 @@ Notes:
       IC2  : MACH211 CPLD (PLCC44, labelled 'KEYCUS' and stamped with 'KC' & a 3-digit number which is different per game.)
       IC3  : PALCE 22V10H (PLCC28, labelled 'S12M840A')
       IC8  : ALTERA MAX EPM7128STC100-10 (TQFP100, labelled 'S12M841')
-
+      
 This PCB is used on:
-
-               Software
+      
+               Software         
 Game           Revision      PCB                                            KEYCUS   ROMs Populated           Jumper
 ---------------------------------------------------------------------------------------------------------------------
-Tekken Tag     TEG3 Ver. B   SYSTEM 12 M8F4 PCB 8661961901 (8661971901)     KC044    TEG1 WAVE0, TEG1 WAVE1   R3
+Tekken Tag     TEG3/VER.B    SYSTEM 12 M8F4 PCB 8661961901 (8661971901)     KC044    TEG1 WAVE0, TEG1 WAVE1   R3
 Tournament                                                                           TEG1 ROM0E, TEG1 ROM1E
                                                                                      TEG1 ROM2E, TEG1 ROM0O
                                                                                      TEG1 ROM1O, TEG1 ROM2O
@@ -459,7 +484,7 @@ Tournament                                                                      
 ********
 *Type 6*
 ********
-SYSTEM 12 M8F6 PCB 8661961800 (8661971800)
+SYSTEM 12 M8F6 PCB 8661961800 (8661971800)  
 |----------------------------------------------------------|
 |          IC3                              *ROM0U.IC14    |
 |               FL3L.IC4    FL4U.IC7         ROM0L.IC10    |
@@ -479,20 +504,21 @@ Notes:
       | WAVE 32M | O  | X  |
       |      64M | X  | O  |
       |----------|----|----|
-
+      
       *    : These parts on other side of PCB
       WAVEx: 32M/64M SOP44 MASKROM
       FLx  : Fujitsu 29F016 TSOP48 16M FlashROM (size fixed at 16M, no configure options)
       ROMx : 64M SOP44 MASKROM (size fixed at 64M, no configure options)
-      IC2  : Cypress CY37064 CPLD (PLCC44, labelled 'KEYCUS' and stamped with 'KC' & a 3-digit number which is different per game.)
+      IC2  : Cypress CY37064 CPLD (PLCC44, labelled 'KEYCUS' and stamped with 'KC' & a 3-digit number which is different 
+             per game.)
       IC3  : PALCE 22V10H (PLCC28, PCB labelled 'A_DECO', chip stamped 'S12M8F6')
-
+      
 This PCB is used on:
-
-               Software
+      
+               Software         
 Game           Revision      PCB                                            KEYCUS   ROMs Populated           Jumper
 ---------------------------------------------------------------------------------------------------------------------
-Golgo 13       GLG1 Ver.A    SYSTEM 12 M8F6 PCB 8661961800 (8661971800)     KC054    GLG1 WAVE0, GLG1 WAVE1   R3
+Golgo 13       GLG1/VER.A    SYSTEM 12 M8F6 PCB 8661961800 (8661971800)     KC054    GLG1 WAVE0, GLG1 WAVE1   R3
                                                                                      GLG1 ROM0L, GLG1 ROM1L
                                                                                      GLG1 ROM2L, GLG1 ROM0U
                                                                                      GLG1 ROM1U, GLG1 ROM2U
@@ -503,7 +529,7 @@ Golgo 13       GLG1 Ver.A    SYSTEM 12 M8F6 PCB 8661961800 (8661971800)     KC05
 ********
 *Type 7*
 ********
-SYSTEM 12 M10X64 PCB ?????????? (??????????)
+SYSTEM 12 M10X64 PCB ?????????? (??????????)  
 |----------------------------------------------------------|
 |WAVE0                                                     |
 |                ROM0L    ROM0U     ROM2L   ROM3L    ROM4L |
@@ -515,22 +541,22 @@ SYSTEM 12 M10X64 PCB ?????????? (??????????)
 |                  |-------------------|                   |
 |----------------------------------------------------------|
 Notes:
-      This PCB probably has zero Ohm resistor jumpers to set the ROM sizes,
+      This PCB probably has zero Ohm resistor jumpers to set the ROM sizes, 
       however that information was not documented by the dumper. The locations
       of the ROMs and KEYCUS are also unknown, for the same reason. The PCB number
       is also unknown for the same reason. The presence or absence of a PAL is also
-      unknown for the same reason.
-
+      unknown for the same reason. 
+      
       WAVEx : 64M SOP44 MASKROM
       ROMx  : 64M SOP44 MASKROM
       KEYCUS: MACH211 CPLD (PLCC44, labelled 'KEYCUS' and stamped with 'KC' & a 3-digit number which is different per game.)
-
+      
 This PCB is used on:
-
-               Software
-Game           Revision      PCB                                            KEYCUS   ROMs Populated
+      
+               Software         
+Game           Revision      PCB                                            KEYCUS   ROMs Populated         
 -----------------------------------------------------------------------------------------------------------
-Derby Quiz My  MDH1 Ver.A    SYSTEM 12 M10X64 PCB ?????????? (??????????)   KC035    MDH1 WAVE0
+Derby Quiz My  MDH1/VER.A2   SYSTEM 12 M10X64 PCB ?????????? (??????????)   KC035    MDH1 WAVE0
 Dream Horse                                                                          MDH1 ROM0L, MDH1 ROM1L
                                                                                      MDH1 ROM2L, MDH1 ROM0U
                                                                                      MDH1 ROM1U, MDH1 ROM2U
@@ -551,25 +577,25 @@ JO 11-04-98
 |----------------------------------------------------------|
 Notes:
       This PCB _almost_ looks like a bootleg. There are no Namco markings, no Namco part numbers, and all ROMs are unmarked
-      except for the original manufacturer part number. The PCB does not have zero Ohm resistor jumpers, but instead, blobs of
-      solder to jumper pads which are not labelled anywhere on the PCB.
-      There is a location for a KEYCUS chip, but it's not populated. There is a PAL but it's not marked except for the original
-      manufacturer part number. The main PCB used by this game was a Tekken 3 which has been converted. The game it was converted
-      to (Soul Calibur) was more popular but has an unusual ROM board that might not have been available and this PCB might have
-      been produced to replace it, perhaps at a lower cost as well?
-      The actual dump of the ROMs on this PCB match the original Soul Calibur dump exactly (a type 2 ROM PCB), even though the ROM
-      sizes and types are different.
-
+      except for the original manufacturer part number. The PCB does not have zero Ohm resistor jumpers, but instead, blobs
+      of solder to jumper pads which are not labelled anywhere on the PCB.
+      There is a location for a KEYCUS chip, but it's not populated. There is a PAL but it's not marked except for the 
+      original manufacturer part number. The main PCB used by this game was a Tekken 3 which has been converted. The game 
+      it was converted to (Soul Calibur) was more popular but has an unusual ROM board that might not have been available 
+      and this PCB might have been produced to replace it, perhaps at a lower cost as well?
+      The actual dump of the ROMs on this PCB match the original Soul Calibur dump exactly (a type 2 ROM PCB), even though
+      the ROM sizes and types are different.
+      
       WAVEx : MR27C3252CZ 32M SOP44 MASKROM
       ROMx  : MR27C3252CZ 32M SOP44 MASKROM
       FLx   : MR27C3252CZ 32M SOP44 MASKROM
       KEYCUS: Not populated
       IC4   : GAL16V8B (PLCC20, no other markings)
-
+      
 This PCB is used on:
-
-               Software
-Game           Revision      PCB                                            KEYCUS   ROMs Populated
+      
+               Software         
+Game           Revision      PCB                                            KEYCUS   ROMs Populated         
 -----------------------------------------------------------------------------------------------------------
 Soul Calibur   SOC14/VER.C   JO 11-04-98                                    -----    WAVE0, WAVE1
                                                                                      ROM0, ROM0-1, ROM1
@@ -652,8 +678,14 @@ Notes:
       S12HSC3A : PALCE 22V10H (PLCC28, labelled 'S12HSC3A')
       J2       : Custom Namco connector for plug-in CPU PCB
 
-      This PCB is used on Libero Grande only (so far). The game will also work without this PCB.
-*/
+      This PCB was found on the following games (so far)....
+
+      Libero Grande (LG2/VER.A)
+      Tekken 3      (TET2/VER.A)
+      Ehrgeiz       (EG2/VER.A)
+       
+      Note that the games will also work without this PCB.
+ */
 
 #include "driver.h"
 #include "state.h"
@@ -1255,6 +1287,28 @@ ROM_START( ehrgeiz )
 	ROM_LOAD( "eg1wave0.2",          0x0000000, 0x800000, CRC(961fe69f) SHA1(0189a061959a8d94b9d2db627911264faf9f28fd) )
 ROM_END
 
+ROM_START( ehrgeiza )
+	ROM_REGION32_LE( 0x00400000, REGION_USER1, 0 ) /* main prg */
+	ROM_LOAD16_BYTE( "eg2vera.2e",   0x0000000, 0x200000, CRC(9174ec90) SHA1(273bb9c9f0a7eb48470601a0eadf450908ac4d92) )
+	ROM_LOAD16_BYTE( "eg2vera.2j",   0x0000001, 0x200000, CRC(a8388248) SHA1(89eeb6095cc8c7ad6cdc8480cff6f688f07f64d7) )
+
+	ROM_REGION32_LE( 0x1c00000, REGION_USER2, 0 ) /* main data */
+	ROM_LOAD16_BYTE( "eg1rom0l.12",  0x0000000, 0x800000, CRC(fe11a48e) SHA1(bdb2af5949bb4a324dab01489e9488aa5b9bd129) )
+	ROM_LOAD16_BYTE( "eg1rom0u.11",  0x0000001, 0x800000, CRC(7cb90c25) SHA1(0ff6f7bf8b7eb2e0706bd235fcb9a95ea639fae6) )
+	ROM_LOAD16_BYTE( "eg1fl1l.9",    0x1000000, 0x200000, CRC(dd4cac2b) SHA1(f49d0055303b3d8639e94f93bce6bf160cc99913) )
+	ROM_LOAD16_BYTE( "eg1fl1u.10",   0x1000001, 0x200000, CRC(e3348407) SHA1(829bf1be0f74fd385e325d774f1449e28aba1e4d) )
+	ROM_LOAD16_BYTE( "eg1fl2l.7",    0x1400000, 0x200000, CRC(34493262) SHA1(9dd5b1b25e7232460bf5ee5b339d9f536ec26979) )
+	ROM_LOAD16_BYTE( "eg1fl2u.8",    0x1400001, 0x200000, CRC(4fb84f1d) SHA1(714e0ef56871d7b4568bc6dda08bbb1c01dbba37) )
+	ROM_LOAD16_BYTE( "eg1fl3l.5",    0x1800000, 0x200000, CRC(f9441f87) SHA1(70944160620ba2fc80b4fc3a7b61c33622298a8b) )
+	ROM_LOAD16_BYTE( "eg1fl3u.6",    0x1800001, 0x200000, CRC(cea397de) SHA1(3791dbadb5699c805c27930e59c61af4d62f77f7) )
+
+	ROM_REGION( 0x0080000, REGION_CPU2, 0 ) /* sound prg */
+	ROM_LOAD16_WORD_SWAP( "eg3vera.11s", 0x0000000, 0x080000, CRC(9e44645e) SHA1(374eb4a4c09d6b5b7af5ff0efec16b4d2aacbe2b) )
+
+	ROM_REGION( 0x0800000, REGION_SOUND1, 0 ) /* samples */
+	ROM_LOAD( "eg1wave0.2",          0x0000000, 0x800000, CRC(961fe69f) SHA1(0189a061959a8d94b9d2db627911264faf9f28fd) )
+ROM_END
+
 ROM_START( fgtlayer )
 	ROM_REGION32_LE( 0x00400000, REGION_USER1, 0 ) /* main prg */
 	ROM_LOAD16_BYTE( "ftl1vera.2e",  0x0000000, 0x200000, CRC(f4156e79) SHA1(cedb917940be8c74fa4ddb48213ce6917444e306) )
@@ -1462,6 +1516,29 @@ ROM_START( tekken3 )
 	ROM_LOAD( "tet1wave1.4",         0x0400000, 0x400000, CRC(ffeba79f) SHA1(941412bbe9d0305d9a23c224c1bb774c4321f6df) )
 ROM_END
 
+ROM_START( tekken3a )
+	ROM_REGION32_LE( 0x00400000, REGION_USER1, 0 ) /* main prg */
+	ROM_LOAD16_BYTE( "tet2vera.2e",  0x0000000, 0x200000, CRC(7270f157) SHA1(e73c5970e58f9e8c5696f4e3b15908fbec6c21ce) ) 
+	ROM_LOAD16_BYTE( "tet2vera.2j",  0x0000001, 0x200000, CRC(94ceb446) SHA1(c730eb5c770991ae3ae0b9ba63681ce037e46746) ) 
+
+	ROM_REGION32_LE( 0x1c00000, REGION_USER2, 0 ) /* main data */
+	ROM_LOAD16_BYTE( "tet1rom0l.6",  0x0000000, 0x400000, CRC(2886bb32) SHA1(08ad9da2df25ad8c933a812ac238c81135072929) )
+	ROM_LOAD16_BYTE( "tet1rom0u.9",  0x0000001, 0x400000, CRC(c5705b92) SHA1(20df20c8d18eb4712d565a3df9a8d9270dee6aaa) )
+	ROM_LOAD16_BYTE( "tet1rom1l.7",  0x0800000, 0x400000, CRC(0397d283) SHA1(ebafcd14cdb2601214129a84fc6830846f5cd274) )
+	ROM_LOAD16_BYTE( "tet1rom1u.10", 0x0800001, 0x400000, CRC(502ba5cd) SHA1(19c1282245c6dbfc945c0bd0f3918968c3e5c3ed) )
+	ROM_LOAD16_BYTE( "tet1rom2l.8",  0x1000000, 0x400000, CRC(e03b1c24) SHA1(8579b95a8fd06b7d2893ff88b228fd794162dff1) )
+	ROM_LOAD16_BYTE( "tet1rom2u.11", 0x1000001, 0x400000, CRC(75eb2ab3) SHA1(dee43884e542391903f6aaae2c166e7921a86fb4) )
+	ROM_LOAD16_BYTE( "tet1fl3l.12",  0x1800000, 0x200000, CRC(45513073) SHA1(8a36f58ee2d292b50e00c6bf275f9def358032d8) )
+	ROM_LOAD16_BYTE( "tet1fl3u.13",  0x1800001, 0x200000, CRC(1917d993) SHA1(cabc44514a3e62a18a7f8f883603241447d6948b) )
+
+	ROM_REGION( 0x0080000, REGION_CPU2, 0 ) /* sound prg */
+	ROM_LOAD16_WORD_SWAP( "tet1vere.11s", 0x0000000, 0x080000, CRC(c92b98d1) SHA1(8ae6fba8c5b6b9a2ab9541eac8553b282f35750d) )
+
+	ROM_REGION( 0x0800000, REGION_SOUND1, 0 ) /* samples */
+	ROM_LOAD( "tet1wave0.5",         0x0000000, 0x400000, CRC(77ba7975) SHA1(fe9434dcf0fb232c85efaaae1b4b13d36099620a) )
+	ROM_LOAD( "tet1wave1.4",         0x0400000, 0x400000, CRC(ffeba79f) SHA1(941412bbe9d0305d9a23c224c1bb774c4321f6df) )
+ROM_END
+
 ROM_START( tekkentt )
 	ROM_REGION32_LE( 0x00400000, REGION_USER1, 0 ) /* main prg */
 	ROM_LOAD16_BYTE( "teg3verb.2l",  0x0000000, 0x200000, CRC(1efb7b85) SHA1(0623bb6571caf046ff7b4f83f11ee84a92c4b462) )
@@ -1488,10 +1565,12 @@ ROM_START( tekkentt )
 ROM_END
 
 GAMEX( 1996, tekken3,   0,        coh700, namcos12, namcos12, ROT0, "Namco",         "Tekken 3 (TET1/VER.E1)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1996, tekken3a,  tekken3,  coh700, namcos12, namcos12, ROT0, "Namco",         "Tekken 3 (TET2/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAMEX( 1997, lbgrande,  0,        coh700, namcos12, namcos12, ROT0, "Namco",         "Libero Grande (LG2/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAMEX( 1998, soulclbr,  0,        coh700, namcos12, namcos12, ROT0, "Namco",         "Soul Calibur (SOC14/VER.C)", GAME_NOT_WORKING | GAME_IMPERFECT_SOUND )
 GAMEX( 1998, soulclba,  soulclbr, coh700, namcos12, namcos12, ROT0, "Namco",         "Soul Calibur (SOC11/VER.A2)", GAME_NOT_WORKING | GAME_IMPERFECT_SOUND )
 GAMEX( 1998, ehrgeiz,   0,        coh700, namcos12, namcos12, ROT0, "Square/Namco",  "Ehrgeiz (EG3/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1998, ehrgeiza,  ehrgeiz,  coh700, namcos12, namcos12, ROT0, "Square/Namco",  "Ehrgeiz (EG2/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAMEX( 1998, mdhorse,   0,        coh700, namcos12, namcos12, ROT0, "Namco",         "Derby Quiz My Dream Horse (MDH1/VER.A2)", GAME_NOT_WORKING | GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAMEX( 1998, fgtlayer,  0,        coh700, namcos12, namcos12, ROT0, "Arika/Namco",   "Fighting Layer (FTL0/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAMEX( 1999, pacapp,    0,        coh700, namcos12, namcos12, ROT0, "Produce/Namco", "Paca Paca Passion (PPP1/VER.A2)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) /* id */

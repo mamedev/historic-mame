@@ -225,7 +225,11 @@ mame_file *mame_fopen(const char *gamename, const char *filename, int filetype, 
 
 		/* screenshot files */
 		case FILETYPE_SCREENSHOT:
+#ifndef MESS
 			return generic_fopen(filetype, NULL, filename, 0, FILEFLAG_OPENWRITE);
+#else
+			return generic_fopen(filetype, NULL, filename, 0, FILEFLAG_ALLOW_ABSOLUTE | FILEFLAG_OPENWRITE);
+#endif
 
 		/* history files */
 		case FILETYPE_HISTORY:

@@ -37,6 +37,7 @@ Notes:
 #include "vidhrdw/generic.h"
 #include "machine/z80fmly.h"
 #include "sound/ay8910.h"
+#include "machine/segacrpt.h"
 
 
 extern UINT8 *pbaction_videoram2,*pbaction_colorram2;
@@ -59,9 +60,11 @@ static WRITE8_HANDLER( pbaction_sh_command_w )
 }
 
 
+static data8_t *work_ram;
+
 
 static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x9fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x0000, 0xbfff) AM_READ(MRA8_ROM)
 	AM_RANGE(0xc000, 0xdfff) AM_READ(MRA8_RAM)
 	AM_RANGE(0xe000, 0xe07f) AM_READ(MRA8_RAM)
 	AM_RANGE(0xe400, 0xe5ff) AM_READ(MRA8_RAM)
@@ -74,8 +77,8 @@ static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x9fff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0xc000, 0xcfff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xcfff) AM_WRITE(MWA8_RAM) AM_BASE(&work_ram)
 	AM_RANGE(0xd000, 0xd3ff) AM_WRITE(pbaction_videoram2_w) AM_BASE(&pbaction_videoram2)
 	AM_RANGE(0xd400, 0xd7ff) AM_WRITE(pbaction_colorram2_w) AM_BASE(&pbaction_colorram2)
 	AM_RANGE(0xd800, 0xdbff) AM_WRITE(pbaction_videoram_w) AM_BASE(&videoram)
@@ -363,16 +366,13 @@ ROM_START( pbactio2 )
 ROM_END
 
 ROM_START( pbactio3 )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "12.bin",     0x0000, 0x4000, CRC(ec3c64c6) SHA1(6130b80606d717f95e219316c2d3fa0a1980ea1d) )
-	ROM_LOAD( "13.bin",     0x4000, 0x4000, CRC(c93c851e) SHA1(b41077708fce4ccbcecdeae32af8821ca5322e87) )
-	ROM_LOAD( "14.bin",     0x8000, 0x4000, CRC(f17a62eb) SHA1(8dabfc0ad127c154c0293a65df32d52d57dd9755) )
+	ROM_REGION( 2*0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "14.bin",     0x0000, 0x4000, CRC(f17a62eb) SHA1(8dabfc0ad127c154c0293a65df32d52d57dd9755) )
+	ROM_LOAD( "12.bin",     0x4000, 0x4000, CRC(ec3c64c6) SHA1(6130b80606d717f95e219316c2d3fa0a1980ea1d) )
+	ROM_LOAD( "13.bin",     0x8000, 0x4000, CRC(c93c851e) SHA1(b41077708fce4ccbcecdeae32af8821ca5322e87) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for sound board */
 	ROM_LOAD( "pba1.bin",     0x0000,  0x2000, CRC(8b69b933) SHA1(eb0762579d52ed9f5b1a002ffe7e517c59650e22) )
-
-	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* 64k for a third Z80 (not emulated) */
-	ROM_LOAD( "pba17.bin",    0x0000,  0x4000, CRC(2734ae60) SHA1(4edcdfac1611c49c4f890609efbe8352b8161f8e) )
 
 	ROM_REGION( 0x06000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "a-s6.bin",     0x00000, 0x2000, CRC(9a74a8e1) SHA1(bd27439b91f41db3fd7eedb44e828d61b793bda0) )
@@ -391,6 +391,35 @@ ROM_START( pbactio3 )
 	ROM_LOAD( "b-f7.bin",     0x04000, 0x2000, CRC(af6e9817) SHA1(56f47d25761b3850c49a3a81b5ea35f12bd77b14) )
 ROM_END
 
-GAME( 1985, pbaction, 0,        pbaction, pbaction, 0, ROT90, "Tehkan", "Pinball Action (set 1)" )
-GAME( 1985, pbactio2, pbaction, pbaction, pbaction, 0, ROT90, "Tehkan", "Pinball Action (set 2)" )
-GAMEX(1985, pbactio3, pbaction, pbaction, pbaction, 0, ROT90, "Tehkan", "Pinball Action (set 3, encrypted?)",GAME_NOT_WORKING )
+
+static READ8_HANDLER( pbactio3_prot_kludge_r )
+{
+	/* on startup, the game expect this location to NOT act as RAM */
+	if (activecpu_get_pc() == 0xab80)
+		return 0;
+
+	return work_ram[0];
+}
+
+static DRIVER_INIT( pbactio3 )
+{
+	int i;
+	UINT8 *rom = memory_region(REGION_CPU1);
+
+	/* first of all, do a simple bitswap */
+	for (i = 0;i < 0xc000;i++)
+	{
+		rom[i] = BITSWAP8(rom[i], 7,6,5,4,1,2,3,0);
+	}
+
+	/* then do the standard Sega decryption */
+	pbaction_decode();
+
+	/* install a protection (?) workaround */
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc000, 0xc000, 0, 0, pbactio3_prot_kludge_r );
+}
+
+
+GAME( 1985, pbaction, 0,        pbaction, pbaction, 0,        ROT90, "Tehkan", "Pinball Action (set 1)" )
+GAME( 1985, pbactio2, pbaction, pbaction, pbaction, 0,        ROT90, "Tehkan", "Pinball Action (set 2)" )
+GAME( 1985, pbactio3, pbaction, pbaction, pbaction, pbactio3, ROT90, "Tehkan", "Pinball Action (set 3, encrypted)" )

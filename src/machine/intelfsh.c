@@ -12,6 +12,7 @@
 */
 
 #include "driver.h"
+#include "state.h"
 #include "intelfsh.h"
 
 enum
@@ -94,6 +95,10 @@ void intelflash_init(int chip, int type, void *data)
 	c->flash_mode = FM_NORMAL;
 	c->flash_master_lock = 0;
 	c->flash_memory = data;
+
+	state_save_register_int( "intelfsh", chip, "flash_mode", &c->flash_mode );
+	state_save_register_int( "intelfsh", chip, "flash_master_lock", &c->flash_master_lock );
+	state_save_register_UINT8( "intelfsh", chip, "flash_memory", c->flash_memory, c->size );
 }
 
 data32_t intelflash_read(int chip, data32_t address)
@@ -115,15 +120,13 @@ data32_t intelflash_read(int chip, data32_t address)
 		{
 		case 8:
 			{
-				data8_t *flash_memory;
-				flash_memory = c->flash_memory;
+				data8_t *flash_memory = c->flash_memory;
 				data = flash_memory[ address ];
 			}
 			break;
 		case 16:
 			{
-				data16_t *flash_memory;
-				flash_memory = c->flash_memory;
+				data16_t *flash_memory = c->flash_memory;
 				data = flash_memory[ address ];
 			}
 			break;
@@ -255,24 +258,36 @@ void intelflash_write(int chip, data32_t address, data32_t data)
 			{
 				data8_t *flash_memory = c->flash_memory;
 				flash_memory[ address ] = data;
-				break;
 			}
+			break;
 		case 16:
 			{
 				data16_t *flash_memory = c->flash_memory;
 				flash_memory[ address ] = data;
-				break;
 			}
+			break;
 		}
 		c->flash_mode = FM_READSTATUS;
 		break;
 	case FM_CLEARPART1:
 		if( ( data & 0xff ) == 0xd0 )
 		{
-			// clear the 64k block containing the current address
-			// to all 0xffs
-			data8_t *flash_memory = c->flash_memory;
-			memset( &flash_memory[ address & 0xff0000 ], 0xff, 64 * 1024 );
+			// clear the 64k block containing the current address to all 0xffs
+			switch( c->bits )
+			{
+			case 8:
+				{
+					data8_t *flash_memory = c->flash_memory;
+					memset( &flash_memory[ address & ~0xffff ], 0xff, 64 * 1024 );
+				}
+				break;
+			case 16:
+				{
+					data16_t *flash_memory = c->flash_memory;
+					memset( &flash_memory[ address & ~0x7fff ], 0xff, 64 * 1024 );
+				}
+				break;
+			}
 			c->flash_mode = FM_READSTATUS;
 			break;
 		}
@@ -323,6 +338,41 @@ NVRAM_HANDLER( intelflash_4 ) { nvram_handler_intelflash( 4, file, read_or_write
 NVRAM_HANDLER( intelflash_5 ) { nvram_handler_intelflash( 5, file, read_or_write ); }
 NVRAM_HANDLER( intelflash_6 ) { nvram_handler_intelflash( 6, file, read_or_write ); }
 NVRAM_HANDLER( intelflash_7 ) { nvram_handler_intelflash( 7, file, read_or_write ); }
+NVRAM_HANDLER( intelflash_8 ) { nvram_handler_intelflash( 8, file, read_or_write ); }
+NVRAM_HANDLER( intelflash_9 ) { nvram_handler_intelflash( 9, file, read_or_write ); }
+NVRAM_HANDLER( intelflash_10 ) { nvram_handler_intelflash( 10, file, read_or_write ); }
+NVRAM_HANDLER( intelflash_11 ) { nvram_handler_intelflash( 11, file, read_or_write ); }
+NVRAM_HANDLER( intelflash_12 ) { nvram_handler_intelflash( 12, file, read_or_write ); }
+NVRAM_HANDLER( intelflash_13 ) { nvram_handler_intelflash( 13, file, read_or_write ); }
+NVRAM_HANDLER( intelflash_14 ) { nvram_handler_intelflash( 14, file, read_or_write ); }
+NVRAM_HANDLER( intelflash_15 ) { nvram_handler_intelflash( 15, file, read_or_write ); }
+NVRAM_HANDLER( intelflash_16 ) { nvram_handler_intelflash( 16, file, read_or_write ); }
+NVRAM_HANDLER( intelflash_17 ) { nvram_handler_intelflash( 17, file, read_or_write ); }
+NVRAM_HANDLER( intelflash_18 ) { nvram_handler_intelflash( 18, file, read_or_write ); }
+NVRAM_HANDLER( intelflash_19 ) { nvram_handler_intelflash( 19, file, read_or_write ); }
+NVRAM_HANDLER( intelflash_20 ) { nvram_handler_intelflash( 20, file, read_or_write ); }
+NVRAM_HANDLER( intelflash_21 ) { nvram_handler_intelflash( 21, file, read_or_write ); }
+NVRAM_HANDLER( intelflash_22 ) { nvram_handler_intelflash( 22, file, read_or_write ); }
+NVRAM_HANDLER( intelflash_23 ) { nvram_handler_intelflash( 23, file, read_or_write ); }
+NVRAM_HANDLER( intelflash_24 ) { nvram_handler_intelflash( 24, file, read_or_write ); }
+NVRAM_HANDLER( intelflash_25 ) { nvram_handler_intelflash( 25, file, read_or_write ); }
+NVRAM_HANDLER( intelflash_26 ) { nvram_handler_intelflash( 26, file, read_or_write ); }
+NVRAM_HANDLER( intelflash_27 ) { nvram_handler_intelflash( 27, file, read_or_write ); }
+NVRAM_HANDLER( intelflash_28 ) { nvram_handler_intelflash( 28, file, read_or_write ); }
+NVRAM_HANDLER( intelflash_29 ) { nvram_handler_intelflash( 29, file, read_or_write ); }
+NVRAM_HANDLER( intelflash_30 ) { nvram_handler_intelflash( 30, file, read_or_write ); }
+NVRAM_HANDLER( intelflash_31 ) { nvram_handler_intelflash( 31, file, read_or_write ); }
+NVRAM_HANDLER( intelflash_32 ) { nvram_handler_intelflash( 32, file, read_or_write ); }
+NVRAM_HANDLER( intelflash_33 ) { nvram_handler_intelflash( 33, file, read_or_write ); }
+NVRAM_HANDLER( intelflash_34 ) { nvram_handler_intelflash( 34, file, read_or_write ); }
+NVRAM_HANDLER( intelflash_35 ) { nvram_handler_intelflash( 35, file, read_or_write ); }
+NVRAM_HANDLER( intelflash_36 ) { nvram_handler_intelflash( 36, file, read_or_write ); }
+NVRAM_HANDLER( intelflash_37 ) { nvram_handler_intelflash( 37, file, read_or_write ); }
+NVRAM_HANDLER( intelflash_38 ) { nvram_handler_intelflash( 38, file, read_or_write ); }
+NVRAM_HANDLER( intelflash_39 ) { nvram_handler_intelflash( 39, file, read_or_write ); }
+NVRAM_HANDLER( intelflash_40 ) { nvram_handler_intelflash( 40, file, read_or_write ); }
+NVRAM_HANDLER( intelflash_41 ) { nvram_handler_intelflash( 41, file, read_or_write ); }
+NVRAM_HANDLER( intelflash_42 ) { nvram_handler_intelflash( 42, file, read_or_write ); }
 
 static void nvram_handler_intelflash_16le( int chip, mame_file *file, int read_or_write )
 {
@@ -355,3 +405,38 @@ NVRAM_HANDLER( intelflash_16le_4 ) { nvram_handler_intelflash_16le( 4, file, rea
 NVRAM_HANDLER( intelflash_16le_5 ) { nvram_handler_intelflash_16le( 5, file, read_or_write ); }
 NVRAM_HANDLER( intelflash_16le_6 ) { nvram_handler_intelflash_16le( 6, file, read_or_write ); }
 NVRAM_HANDLER( intelflash_16le_7 ) { nvram_handler_intelflash_16le( 7, file, read_or_write ); }
+NVRAM_HANDLER( intelflash_16le_8 ) { nvram_handler_intelflash_16le( 8, file, read_or_write ); }
+NVRAM_HANDLER( intelflash_16le_9 ) { nvram_handler_intelflash_16le( 9, file, read_or_write ); }
+NVRAM_HANDLER( intelflash_16le_10 ) { nvram_handler_intelflash_16le( 10, file, read_or_write ); }
+NVRAM_HANDLER( intelflash_16le_11 ) { nvram_handler_intelflash_16le( 11, file, read_or_write ); }
+NVRAM_HANDLER( intelflash_16le_12 ) { nvram_handler_intelflash_16le( 12, file, read_or_write ); }
+NVRAM_HANDLER( intelflash_16le_13 ) { nvram_handler_intelflash_16le( 13, file, read_or_write ); }
+NVRAM_HANDLER( intelflash_16le_14 ) { nvram_handler_intelflash_16le( 14, file, read_or_write ); }
+NVRAM_HANDLER( intelflash_16le_15 ) { nvram_handler_intelflash_16le( 15, file, read_or_write ); }
+NVRAM_HANDLER( intelflash_16le_16 ) { nvram_handler_intelflash_16le( 16, file, read_or_write ); }
+NVRAM_HANDLER( intelflash_16le_17 ) { nvram_handler_intelflash_16le( 17, file, read_or_write ); }
+NVRAM_HANDLER( intelflash_16le_18 ) { nvram_handler_intelflash_16le( 18, file, read_or_write ); }
+NVRAM_HANDLER( intelflash_16le_19 ) { nvram_handler_intelflash_16le( 19, file, read_or_write ); }
+NVRAM_HANDLER( intelflash_16le_20 ) { nvram_handler_intelflash_16le( 20, file, read_or_write ); }
+NVRAM_HANDLER( intelflash_16le_21 ) { nvram_handler_intelflash_16le( 21, file, read_or_write ); }
+NVRAM_HANDLER( intelflash_16le_22 ) { nvram_handler_intelflash_16le( 22, file, read_or_write ); }
+NVRAM_HANDLER( intelflash_16le_23 ) { nvram_handler_intelflash_16le( 23, file, read_or_write ); }
+NVRAM_HANDLER( intelflash_16le_24 ) { nvram_handler_intelflash_16le( 24, file, read_or_write ); }
+NVRAM_HANDLER( intelflash_16le_25 ) { nvram_handler_intelflash_16le( 25, file, read_or_write ); }
+NVRAM_HANDLER( intelflash_16le_26 ) { nvram_handler_intelflash_16le( 26, file, read_or_write ); }
+NVRAM_HANDLER( intelflash_16le_27 ) { nvram_handler_intelflash_16le( 27, file, read_or_write ); }
+NVRAM_HANDLER( intelflash_16le_28 ) { nvram_handler_intelflash_16le( 28, file, read_or_write ); }
+NVRAM_HANDLER( intelflash_16le_29 ) { nvram_handler_intelflash_16le( 29, file, read_or_write ); }
+NVRAM_HANDLER( intelflash_16le_30 ) { nvram_handler_intelflash_16le( 30, file, read_or_write ); }
+NVRAM_HANDLER( intelflash_16le_31 ) { nvram_handler_intelflash_16le( 31, file, read_or_write ); }
+NVRAM_HANDLER( intelflash_16le_32 ) { nvram_handler_intelflash_16le( 32, file, read_or_write ); }
+NVRAM_HANDLER( intelflash_16le_33 ) { nvram_handler_intelflash_16le( 33, file, read_or_write ); }
+NVRAM_HANDLER( intelflash_16le_34 ) { nvram_handler_intelflash_16le( 34, file, read_or_write ); }
+NVRAM_HANDLER( intelflash_16le_35 ) { nvram_handler_intelflash_16le( 35, file, read_or_write ); }
+NVRAM_HANDLER( intelflash_16le_36 ) { nvram_handler_intelflash_16le( 36, file, read_or_write ); }
+NVRAM_HANDLER( intelflash_16le_37 ) { nvram_handler_intelflash_16le( 37, file, read_or_write ); }
+NVRAM_HANDLER( intelflash_16le_38 ) { nvram_handler_intelflash_16le( 38, file, read_or_write ); }
+NVRAM_HANDLER( intelflash_16le_39 ) { nvram_handler_intelflash_16le( 39, file, read_or_write ); }
+NVRAM_HANDLER( intelflash_16le_40 ) { nvram_handler_intelflash_16le( 40, file, read_or_write ); }
+NVRAM_HANDLER( intelflash_16le_41 ) { nvram_handler_intelflash_16le( 41, file, read_or_write ); }
+NVRAM_HANDLER( intelflash_16le_42 ) { nvram_handler_intelflash_16le( 42, file, read_or_write ); }

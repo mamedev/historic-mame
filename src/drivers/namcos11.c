@@ -24,8 +24,9 @@ tekken2    Tekken 2 Ver.B (TES3/VER.B)             COH 100             SYSTEM11 
 tekken2a   Tekken 2 Ver.B (TES2/VER.B)             COH 100             "                        "                       "        "
 tekken2b   Tekken 2 (TES2/VER.A)                   COH 100             "                        "                       "        "
 souledge   Soul Edge Ver. II (SO4/VER.C)           COH 100 / COH 110   SYSTEM11 MOTHER PCB      SYSTEM11 ROM8 PCB       C409     6
-souledga   Soul Edge (SO3/VER.A)                   COH 100 / COH 110   "                        "                       "        "
-souledgb   Soul Edge (SO1/VER.A)                   COH 100 / COH 110   "                        "                       "        "
+souledga   Soul Edge Ver. II (SO3/VER.C)           COH 100 / COH 110   "                        "                       "        "
+souledgb   Soul Edge (SO3/VER.A)                   COH 100 / COH 110   "                        "                       "        "
+souledgc   Soul Edge (SO1/VER.A)                   COH 100 / COH 110   "                        "                       "        "
 dunkmnia   Dunk Mania (DM2/VER.C)                  COH 100 / COH 110   SYSTEM11 MOTHER PCB      SYSTEM11 ROM8 PCB       C410     5
 dunkmnic   Dunk Mania (DM1/VER.C)                  COH 100 / COH 110   SYSTEM11 MOTHER PCB      SYSTEM11 ROM8 PCB       C410     5
 xevi3dg    Xevious 3D/G (XV31/VER.A)               COH 100 / COH 110   SYSTEM11 MOTHER PCB      SYSTEM11 ROM8 PCB       C430     5
@@ -740,6 +741,7 @@ static struct
 	{ "souledge", keycus_c409_r, 32 },
 	{ "souledga", keycus_c409_r, 32 },
 	{ "souledgb", keycus_c409_r, 32 },
+	{ "souledgc", keycus_c409_r, 32 },
 	{ "dunkmnia", keycus_c410_r, 32 },
 	{ "dunkmnic", keycus_c410_r, 32 },
 	{ "xevi3dg",  keycus_c430_r, 32 },
@@ -1382,6 +1384,30 @@ ROM_END
 
 ROM_START( souledga )
 	ROM_REGION32_LE( 0x0400000, REGION_USER1, 0 ) /* main prg */
+	ROM_LOAD16_BYTE( "so3verc.2l",   0x0000000, 0x100000, CRC(c90e343b) SHA1(83bd2fc67493c34b408b13148f6a2feba9a44ed0) )
+	ROM_LOAD16_BYTE( "so3verc.2j",   0x0000001, 0x100000, CRC(b7466db5) SHA1(c7a4c66e61812fb6de582fe555755293d78771c7) )
+	ROM_LOAD16_BYTE( "so1verc.2k",   0x0200000, 0x100000, CRC(1789e399) SHA1(2e11869124cdfa7a66107b0e642bdc72ee0c306a) )
+	ROM_LOAD16_BYTE( "so1verc.2f",   0x0200001, 0x100000, CRC(8cffe1c3) SHA1(d54a0b1d55f33db2890bfa70c411cca3e446fccf) )
+
+	ROM_REGION32_LE( 0x1000000, REGION_USER2, 0 ) /* main data */
+	ROM_LOAD16_BYTE( "so1rom0u.ic5", 0x0000000, 0x200000, CRC(e364d673) SHA1(70fd58fb912939c57e3a5fadd01c1467df08d4ac) )
+	ROM_LOAD16_BYTE( "so1rom0l.ic6", 0x0000001, 0x200000, CRC(9c5b0858) SHA1(f3ac726f1167551beea7edc46e43b826b7baaf62) )
+	ROM_LOAD16_BYTE( "so1rom1u.ic3", 0x0400000, 0x200000, CRC(8f9d8c5b) SHA1(ac1da70854eee344a645749f564366ceac571767) )
+	ROM_LOAD16_BYTE( "so1rom1l.ic8", 0x0400001, 0x200000, CRC(4406ef16) SHA1(c86f199fdb1db23e5944ca51e6518b9cd0dafb71) )
+	ROM_LOAD16_BYTE( "so1rom2u.ic4", 0x0800000, 0x200000, CRC(b4baa886) SHA1(0432692a4d71a3f1b47707efb6858927744940e4) )
+	ROM_LOAD16_BYTE( "so1rom2l.ic7", 0x0800001, 0x200000, CRC(37c1f66e) SHA1(13a8a73fce142ea5ebe3f0c1050e44a027ab42a6) )
+	ROM_LOAD16_BYTE( "so1rom3u.ic1", 0x0c00000, 0x200000, CRC(f11bd521) SHA1(baf936dec58cebfeef1c74f95e455b2fe74eb982) )
+	ROM_LOAD16_BYTE( "so1rom3l.ic9", 0x0c00001, 0x200000, CRC(84465bcc) SHA1(d8be888d41cfe194c3a1853d9146d3a74ef7bab1) )
+
+	ROM_REGION( 0x0040000, REGION_CPU2, 0 ) /* sound prg */
+	ROM_LOAD( "so1sprogc.6d", 0x0000000, 0x040000, CRC(2bbc118c) SHA1(4168a9aa525f1f0ce6cf6e14cfe4c118c4c0d773) )
+
+	ROM_REGION( 0x0400000, REGION_SOUND1, 0 ) /* samples */
+	ROM_LOAD( "so1wave.8k",   0x0000000, 0x400000, CRC(0e68836b) SHA1(c392b370a807803c7ab060105861253e1b407f49) )
+ROM_END
+
+ROM_START( souledgb )
+	ROM_REGION32_LE( 0x0400000, REGION_USER1, 0 ) /* main prg */
 	ROM_LOAD16_BYTE( "so3vera.2l",   0x0000000, 0x100000, CRC(19b39096) SHA1(9188cd1fd9b15e5545eb41ea2768a8bd42113379) )
 	ROM_LOAD16_BYTE( "so3vera.2j",   0x0000001, 0x100000, CRC(09eda46f) SHA1(24d04d2ba51af508ddc0656e8bb5e1335b08cc8a) )
 	ROM_LOAD16_BYTE( "so1vera.2k",   0x0200000, 0x100000, CRC(29bdc6bb) SHA1(9047792c1a21a0001024939f1c6a8c3d86948973) )
@@ -1404,7 +1430,7 @@ ROM_START( souledga )
 	ROM_LOAD( "so1wave.8k",   0x0000000, 0x400000, CRC(0e68836b) SHA1(c392b370a807803c7ab060105861253e1b407f49) )
 ROM_END
 
-ROM_START( souledgb )
+ROM_START( souledgc )
 	ROM_REGION32_LE( 0x0400000, REGION_USER1, 0 ) /* main prg */
 	ROM_LOAD16_BYTE( "so1vera.2l",   0x0000000, 0x100000, CRC(bafb94c8) SHA1(92461ce74a537a9801a024280e18fc3d0a5e6e5c) )
 	ROM_LOAD16_BYTE( "so1vera.2j",   0x0000001, 0x100000, CRC(abe2d28e) SHA1(e9d858c8f8651b04bc72eb6de423da4925e94250) )
@@ -1632,8 +1658,9 @@ GAMEX( 1995, tekken2,   0,        coh100, tekken,   namcos11, ROT0, "Namco", "Te
 GAMEX( 1995, tekken2a,  tekken2,  coh100, tekken,   namcos11, ROT0, "Namco", "Tekken 2 Ver.B (TES2/VER.B)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
 GAMEX( 1995, tekken2b,  tekken2,  coh100, tekken,   namcos11, ROT0, "Namco", "Tekken 2 (TES2/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
 GAMEX( 1996, souledge,  0,        coh110, souledge, namcos11, ROT0, "Namco", "Soul Edge Ver. II (SO4/VER.C)", GAME_NOT_WORKING | GAME_NO_SOUND )
-GAMEX( 1995, souledga,  souledge, coh110, souledge, namcos11, ROT0, "Namco", "Soul Edge (SO3/VER.A)", GAME_NOT_WORKING | GAME_NO_SOUND )
-GAMEX( 1995, souledgb,  souledge, coh110, souledge, namcos11, ROT0, "Namco", "Soul Edge (SO1/VER.A)", GAME_NOT_WORKING | GAME_NO_SOUND )
+GAMEX( 1995, souledga,  souledge, coh110, souledge, namcos11, ROT0, "Namco", "Soul Edge Ver. II (SO3/VER.C)", GAME_NOT_WORKING | GAME_NO_SOUND )
+GAMEX( 1995, souledgb,  souledge, coh110, souledge, namcos11, ROT0, "Namco", "Soul Edge (SO3/VER.A)", GAME_NOT_WORKING | GAME_NO_SOUND )
+GAMEX( 1995, souledgc,  souledge, coh110, souledge, namcos11, ROT0, "Namco", "Soul Edge (SO1/VER.A)", GAME_NOT_WORKING | GAME_NO_SOUND )
 GAMEX( 1995, dunkmnia,  0,        coh110, namcos11, namcos11, ROT0, "Namco", "Dunk Mania (DM2/VER.C)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
 GAMEX( 1995, dunkmnic,  dunkmnia, coh110, namcos11, namcos11, ROT0, "Namco", "Dunk Mania (DM1/VER.C)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
 GAMEX( 1995, xevi3dg,   0,        coh110, namcos11, namcos11, ROT0, "Namco", "Xevious 3D/G (XV31/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )

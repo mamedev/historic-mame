@@ -872,10 +872,11 @@ static MACHINE_INIT( buggyboy )
 
 static MACHINE_INIT( tx1 )
 {
-       ppi8255_init(&tx1_ppi8255_intf);
-
-       data8_t *rom = (data8_t *)memory_region(REGION_CPU1);
+        data8_t *rom = (data8_t *)memory_region(REGION_CPU1);
        data8_t *rom_b = (data8_t *)memory_region(REGION_CPU2);
+
+	   ppi8255_init(&tx1_ppi8255_intf);
+
 
        /* Needed to skip the startup tests */
 

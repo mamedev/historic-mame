@@ -528,7 +528,7 @@ static UINT8 ccounts_page0_em[256] =    /* Cycle Counts Page zero, Emulated 6809
 {
 /*	         0xX0, 0xX1, 0xX2, 0xX3, 0xX4, 0xX5, 0xX6, 0xX7, 0xX8, 0xX9, 0xXA, 0xXB, 0xXC, 0xXD, 0xXE, 0xXF */
 /* 0x0X */     6,    6,    6,    6,    6,    6,    6,    6,    6,    6,    6,    6,    6,    6,    3,    6,
-/* 0x1X */     0,    0,    2,    4,    2, IIP0,    5,    9, IIP0,    2,    3, IIP0,    3,    2,    8,    6,
+/* 0x1X */     0,    0,    2,    4,    4, IIP0,    5,    9, IIP0,    2,    3, IIP0,    3,    2,    8,    6,
 /* 0x2X */     3,    3,    3,    3,    3,    3,    3,    3,    3,    3,    3,    3,    3,    3,    3,    3,
 /* 0x3X */     4,    4,    4,    4,    5,    5,    5,    5, IIP0,    5,    3,    6,   20,   11, IIP0,   19,
 /* 0x4X */     2, IIP0, IIP0,    2,    2, IIP0,    2,    2,    2,    2,    2, IIP0,    2,    2, IIP0,    2,
@@ -549,7 +549,7 @@ static UINT8 ccounts_page0_na[256] =   /* Cycle Counts Page zero, Native 6309 */
 {
 /*	         0xX0, 0xX1, 0xX2, 0xX3, 0xX4, 0xX5, 0xX6, 0xX7, 0xX8, 0xX9, 0xXA, 0xXB, 0xXC, 0xXD, 0xXE, 0xXF */
 /* 0x0X */     5,    6,    6,    5,    5,    6,    5,    5,    5,    5,    5,    6,    5,    4,    2,    5,
-/* 0x1X */     0,    0,    1,    4,    1, IIP0,    4,    7, IIP0,    1,    2, IIP0,    3,    1,    5,    4,
+/* 0x1X */     0,    0,    1,    4,    4, IIP0,    4,    7, IIP0,    1,    2, IIP0,    3,    1,    5,    4,
 /* 0x2X */     3,    3,    3,    3,    3,    3,    3,    3,    3,    3,    3,    3,    3,    3,    3,    3,
 /* 0x3X */     4,    4,    4,    4,    4,    4,    4,    4, IIP0,    4,    1,    6,   22,   10, IIP0,   21,
 /* 0x4X */     1, IIP0, IIP0,    1,    1, IIP0,    1,    1,    1,    1,    1, IIP0,    1,    1, IIP0,    1,

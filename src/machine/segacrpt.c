@@ -120,6 +120,7 @@
   315-5064      Water Match            used Mister Viking for k.p.a.
   315-5065      Bull Fight
   315-5069      Star Force             game by Tehkan; same key as Super Locomotive
+  ???-????      Pinball Action         game by Tehkan; also has a simple bitswap on top
   ???-????      Spatter
   315-5093      Pitfall II
   315-5098      Ninja Princess         unencrypted version available; same key as Up'n Down
@@ -256,38 +257,20 @@ static void sega_decode(const unsigned char convtable[32][4])
 	unsigned char *rom = memory_region(REGION_CPU1);
 	int diff = memory_region_length(REGION_CPU1) / 2;
 
-{
-	int i;
-	for (i = 0;i < 32;i++)
-	{
-		if ((convtable[i][0] & 8) != (convtable[i][1] & 8) &&
-				(convtable[i][1] & 8) == (convtable[i][2] & 8))
-		{
-			printf("%02x %02x %02x %02x\n",
-					convtable[i][0],
-					convtable[i][1],
-					convtable[i][2],
-					convtable[i][3]);
-			exit(0);
-		}
-	}
-}
 
 	memory_set_opcode_base(0,rom+diff);
 
 	for (A = 0x0000;A < 0x8000;A++)
 	{
-		int row,col,xor = 0;
-		unsigned char src;
+		int xor = 0;
 
-
-		src = rom[A];
+		UINT8 src = rom[A];
 
 		/* pick the translation table from bits 0, 4, 8 and 12 of the address */
-		row = (A & 1) + (((A >> 4) & 1) << 1) + (((A >> 8) & 1) << 2) + (((A >> 12) & 1) << 3);
+		int row = (A & 1) + (((A >> 4) & 1) << 1) + (((A >> 8) & 1) << 2) + (((A >> 12) & 1) << 3);
 
 		/* pick the offset in the table from bits 3 and 5 of the source data */
-		col = ((src >> 3) & 1) + (((src >> 5) & 1) << 1);
+		int col = ((src >> 3) & 1) + (((src >> 5) & 1) << 1);
 		/* the bottom half of the translation table is the mirror image of the top */
 		if (src & 0x80)
 		{
@@ -684,6 +667,35 @@ void bullfgtj_decode(void)
 		{ 0x88,0x08,0xa8,0x28 }, { 0x20,0x28,0x00,0x08 },	/* ...1...1...0...1 */
 		{ 0x08,0x28,0x00,0x20 }, { 0x80,0xa0,0x00,0x20 },	/* ...1...1...1...0 */
 		{ 0x08,0x28,0x00,0x20 }, { 0x88,0x08,0xa8,0x28 }	/* ...1...1...1...1 */
+	};
+
+
+	sega_decode(convtable);
+}
+
+
+void pbaction_decode(void)
+{
+	static const unsigned char convtable[32][4] =
+	{
+		/*       opcode                   data                     address      */
+		/*  A    B    C    D         A    B    C    D                           */
+		{ 0xa8,0xa0,0x88,0x80 }, { 0x28,0xa8,0x08,0x88 },	/* ...0...0...0...0 */
+		{ 0x28,0x08,0xa8,0x88 }, { 0xa8,0xa0,0x88,0x80 },	/* ...0...0...0...1 */
+		{ 0x28,0x20,0xa8,0xa0 }, { 0x28,0xa8,0x08,0x88 },	/* ...0...0...1...0 */
+		{ 0x28,0x08,0xa8,0x88 }, { 0x28,0x20,0xa8,0xa0 },	/* ...0...0...1...1 */
+		{ 0xa8,0xa0,0x88,0x80 }, { 0xa8,0xa0,0x88,0x80 },	/* ...0...1...0...0 */
+		{ 0x28,0x20,0xa8,0xa0 }, { 0x28,0x20,0xa8,0xa0 },	/* ...0...1...0...1 */
+		{ 0x28,0x20,0xa8,0xa0 }, { 0x28,0x20,0xa8,0xa0 },	/* ...0...1...1...0 */
+		{ 0xa8,0xa0,0x88,0x80 }, { 0x28,0x20,0xa8,0xa0 },	/* ...0...1...1...1 */
+		{ 0xa8,0xa0,0x88,0x80 }, { 0x28,0x20,0xa8,0xa0 },	/* ...1...0...0...0 */
+		{ 0x28,0x20,0xa8,0xa0 }, { 0xa8,0xa0,0x88,0x80 },	/* ...1...0...0...1 */
+		{ 0x28,0x20,0xa8,0xa0 }, { 0xa0,0x80,0xa8,0x88 },	/* ...1...0...1...0 */
+		{ 0x28,0x08,0xa8,0x88 }, { 0x28,0x08,0xa8,0x88 },	/* ...1...0...1...1 */
+		{ 0xa0,0x80,0xa8,0x88 }, { 0xa8,0xa0,0x88,0x80 },	/* ...1...1...0...0 */
+		{ 0x28,0x20,0xa8,0xa0 }, { 0xa8,0x28,0xa0,0x20 },	/* ...1...1...0...1 */
+		{ 0xa0,0x80,0xa8,0x88 }, { 0xa8,0xa0,0x88,0x80 },	/* ...1...1...1...0 */
+		{ 0xa8,0xa0,0x88,0x80 }, { 0xa8,0x28,0xa0,0x20 }	/* ...1...1...1...1 */
 	};
 
 
