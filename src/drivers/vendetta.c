@@ -198,7 +198,7 @@ READ_HANDLER( vendetta_sound_r )
 {
 	/* If the sound CPU is running, read the status, otherwise
 	   just make it pass the test */
-	if (Machine->sample_rate != 0) 	return K053260_r(2 + offset);
+	if (Machine->sample_rate != 0) 	return K053260_0_r(2 + offset);
 	else
 	{
 		static int res = 0x00;
@@ -217,6 +217,8 @@ static MEMORY_READ_START( readmem )
 	{ 0x5f80, 0x5f9f, K054000_r },
 	{ 0x5fc0, 0x5fc0, input_port_0_r },
 	{ 0x5fc1, 0x5fc1, input_port_1_r },
+	{ 0x5fc2, 0x5fc2, input_port_4_r },
+	{ 0x5fc3, 0x5fc3, input_port_5_r },
 	{ 0x5fd0, 0x5fd0, vendetta_eeprom_r }, /* vblank, service */
 	{ 0x5fd1, 0x5fd1, input_port_2_r },
 	{ 0x5fe4, 0x5fe4, vendetta_sound_interrupt_r },
@@ -238,7 +240,7 @@ static MEMORY_WRITE_START( writemem )
 	{ 0x5fe0, 0x5fe0, vendetta_5fe0_w },
 	{ 0x5fe2, 0x5fe2, vendetta_eeprom_w },
 	{ 0x5fe4, 0x5fe4, z80_irq_w },
-	{ 0x5fe6, 0x5fe7, K053260_w },
+	{ 0x5fe6, 0x5fe7, K053260_0_w },
 	{ 0x4000, 0x4fff, MWA_BANK3 },
 	{ 0x6000, 0x6fff, MWA_BANK2 },
 	{ 0x4000, 0x7fff, K052109_w },
@@ -249,7 +251,7 @@ static MEMORY_READ_START( readmem_sound )
 	{ 0x0000, 0xefff, MRA_ROM },
 	{ 0xf000, 0xf7ff, MRA_RAM },
 	{ 0xf801, 0xf801, YM2151_status_port_0_r },
-	{ 0xfc00, 0xfc2f, K053260_r },
+	{ 0xfc00, 0xfc2f, K053260_0_r },
 MEMORY_END
 
 static MEMORY_WRITE_START( writemem_sound )
@@ -258,7 +260,7 @@ static MEMORY_WRITE_START( writemem_sound )
 	{ 0xf800, 0xf800, YM2151_register_port_0_w },
 	{ 0xf801, 0xf801, YM2151_data_port_0_w },
 	{ 0xfa00, 0xfa00, z80_arm_nmi_w },
-	{ 0xfc00, 0xfc2f, K053260_w },
+	{ 0xfc00, 0xfc2f, K053260_0_w },
 MEMORY_END
 
 
@@ -267,6 +269,65 @@ MEMORY_END
 	Input Ports
 
 ***************************************************************************/
+
+INPUT_PORTS_START( vendet4p )
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* EEPROM data */
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* EEPROM ready */
+	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_VBLANK ) /* not really vblank, object related. Its timed, otherwise sprites flicker */
+	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER3 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER3 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER3 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER3 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER3 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER3 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN3 )
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER4 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER4 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER4 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER4 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER4 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER4 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN4 )
+INPUT_PORTS_END
 
 INPUT_PORTS_START( vendetta )
 	PORT_START
@@ -294,7 +355,7 @@ INPUT_PORTS_START( vendetta )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -325,10 +386,11 @@ static struct YM2151interface ym2151_interface =
 
 static struct K053260_interface k053260_interface =
 {
-	3579545,
-	REGION_SOUND1, /* memory region */
-	{ MIXER(75,MIXER_PAN_LEFT), MIXER(75,MIXER_PAN_RIGHT) },
-	0
+	1,
+	{ 3579545 },
+	{ REGION_SOUND1 }, /* memory region */
+	{ { MIXER(75,MIXER_PAN_LEFT), MIXER(75,MIXER_PAN_RIGHT) } },
+	{ 0 }
 };
 
 static int vendetta_irq( void )
@@ -396,6 +458,28 @@ static const struct MachineDriver machine_driver_vendetta =
 
 ROM_START( vendetta )
 	ROM_REGION( 0x49000, REGION_CPU1, 0 ) /* code + banked roms + banked ram */
+	ROM_LOAD( "081t01", 0x10000, 0x38000, 0xe76267f5 )
+	ROM_CONTINUE(		0x08000, 0x08000 )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* 64k for the sound CPU */
+	ROM_LOAD( "081b02", 0x000000, 0x10000, 0x4c604d9b )
+
+	ROM_REGION( 0x100000, REGION_GFX1, 0 ) /* graphics ( don't dispose as the program can read them, 0 ) */
+	ROM_LOAD( "081a09", 0x000000, 0x080000, 0xb4c777a9 ) /* characters */
+	ROM_LOAD( "081a08", 0x080000, 0x080000, 0x272ac8d9 ) /* characters */
+
+	ROM_REGION( 0x400000, REGION_GFX2, 0 ) /* graphics ( don't dispose as the program can read them, 0 ) */
+	ROM_LOAD( "081a04", 0x000000, 0x100000, 0x464b9aa4 ) /* sprites */
+	ROM_LOAD( "081a05", 0x100000, 0x100000, 0x4e173759 ) /* sprites */
+	ROM_LOAD( "081a06", 0x200000, 0x100000, 0xe9fe6d80 ) /* sprites */
+	ROM_LOAD( "081a07", 0x300000, 0x100000, 0x8a22b29a ) /* sprites */
+
+	ROM_REGION( 0x100000, REGION_SOUND1, 0 ) /* 053260 samples */
+	ROM_LOAD( "081a03", 0x000000, 0x100000, 0x14b6baea )
+ROM_END
+
+ROM_START( vendetas )
+	ROM_REGION( 0x49000, REGION_CPU1, 0 ) /* code + banked roms + banked ram */
 	ROM_LOAD( "081u01", 0x10000, 0x38000, 0xb4d9ade5 )
 	ROM_CONTINUE(		0x08000, 0x08000 )
 
@@ -416,7 +500,7 @@ ROM_START( vendetta )
 	ROM_LOAD( "081a03", 0x000000, 0x100000, 0x14b6baea )
 ROM_END
 
-ROM_START( vendett2 )
+ROM_START( vendeta2 )
 	ROM_REGION( 0x49000, REGION_CPU1, 0 ) /* code + banked roms + banked ram */
 	ROM_LOAD( "081d01", 0x10000, 0x38000, 0x335da495 )
 	ROM_CONTINUE(		0x08000, 0x08000 )
@@ -499,6 +583,7 @@ static void init_vendetta(void)
 
 
 
-GAME( 1991, vendetta, 0,        vendetta, vendetta, vendetta, ROT0, "Konami", "Vendetta (Asia set 1)" )
-GAME( 1991, vendett2, vendetta, vendetta, vendetta, vendetta, ROT0, "Konami", "Vendetta (Asia set 2)" )
+GAME( 1991, vendetta, 0,        vendetta, vendet4p, vendetta, ROT0, "Konami", "Vendetta (US)" )
+GAME( 1991, vendetas, vendetta, vendetta, vendetta, vendetta, ROT0, "Konami", "Vendetta (Asia set 1)" )
+GAME( 1991, vendeta2, vendetta, vendetta, vendetta, vendetta, ROT0, "Konami", "Vendetta (Asia set 2)" )
 GAME( 1991, vendettj, vendetta, vendetta, vendetta, vendetta, ROT0, "Konami", "Crime Fighters 2 (Japan)" )

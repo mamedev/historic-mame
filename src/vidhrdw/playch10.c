@@ -114,40 +114,9 @@ void playch10_vh_screenrefresh( struct osd_bitmap *bitmap,int full_refresh )
 		{
 			int x_center = readinputport( 5 );
 			int y_center = readinputport( 6 ) + 30*8;
-			UINT16 color;
-			int x, y;
-			int minmax_x[2], minmax_y[2];
 
-			minmax_x[0] = Machine->visible_area.min_x;
-			minmax_x[1] = Machine->visible_area.max_x;
-			minmax_y[0] = Machine->visible_area.min_y + 30*8;
-			minmax_y[1] = Machine->visible_area.max_y;
+			draw_crosshair(bitmap,x_center,y_center,&Machine->visible_area);
 
-			color = Machine->pens[1]; /* white */
-
-		    if ( x_center < ( minmax_x[0] + 2 ) )
-		    	x_center = minmax_x[0] + 2;
-
-		    if ( x_center > ( minmax_x[1] - 2 ) )
-		    	x_center = minmax_x[1] - 2;
-
-		    if ( y_center < ( minmax_y[0] + 2 ) )
-		    	y_center = minmax_y[0] + 2;
-
-		    if ( y_center > ( minmax_y[1] - 2 ) )
-		    	y_center = minmax_y[1] - 2;
-
-			for( y = y_center-5; y < y_center+6; y++ )
-			{
-				if ( ( y >= minmax_y[0] ) && ( y <= minmax_y[1] ) )
-					plot_pixel( bitmap, x_center, y, color );
-			}
-
-			for( x = x_center-5; x < x_center+6; x++ )
-			{
-				if( ( x >= minmax_x[0] ) && ( x <= minmax_x[1] ) )
-					plot_pixel( bitmap, x, y_center, color );
-			}
 		}
 	}
 	else

@@ -1,3 +1,9 @@
+/*
+must fix:
+	callm
+	chk
+	chk2cmp2
+*/
 /* ======================================================================== */
 /* ========================= LICENSING & COPYRIGHT ======================== */
 /* ======================================================================== */
@@ -474,9 +480,15 @@ chk       16  .     d     0100...110000...  ..........  U U U   10   8   8
 chk       16  .     .     0100...110......  A+-DXWLdxI  U U U   10   8   8
 chk       32  .     d     0100...100000...  ..........  . . U    .   .   8
 chk       32  .     .     0100...100......  A+-DXWLdxI  . . U    .   .   8
-chk2cmp2   8  .     .     0000000011......  A..DXWLdx.  . . U    .   .  18
-chk2cmp2  16  .     .     0000001011......  A..DXWLdx.  . . U    .   .  18
-chk2cmp2  32  .     .     0000010011......  A..DXWLdx.  . . U    .   .  18
+chk2cmp2   8  .     pcdi  0000000011111010  ..........  . . U    .   .  23
+chk2cmp2   8  .     pcix  0000000011111011  ..........  . . U    .   .  23
+chk2cmp2   8  .     .     0000000011......  A..DXWL...  . . U    .   .  18
+chk2cmp2  16  .     pcdi  0000001011111010  ..........  . . U    .   .  23
+chk2cmp2  16  .     pcix  0000001011111011  ..........  . . U    .   .  23
+chk2cmp2  16  .     .     0000001011......  A..DXWL...  . . U    .   .  18
+chk2cmp2  32  .     pcdi  0000010011111010  ..........  . . U    .   .  23
+chk2cmp2  32  .     pcix  0000010011111011  ..........  . . U    .   .  23
+chk2cmp2  32  .     .     0000010011......  A..DXWL...  . . U    .   .  18
 clr        8  .     d     0100001000000...  ..........  U U U    4   4   2
 clr        8  .     .     0100001000......  A+-DXWL...  U U U    8   4   4
 clr       16  .     d     0100001001000...  ..........  U U U    4   4   2
@@ -662,9 +674,13 @@ movem     16  re    .     0100100010......  A..DXWL...  U U U    8   8   4
 movem     32  re    pd    0100100011100...  ..........  U U U    8   8   4
 movem     32  re    .     0100100011......  A..DXWL...  U U U    8   8   4
 movem     16  er    pi    0100110010011...  ..........  U U U   12  12   8
-movem     16  er    .     0100110010......  A..DXWLdx.  U U U   12  12   8
+movem     16  er    pcdi  0100110010111010  ..........  U U U   16  16   9
+movem     16  er    pcix  0100110010111011  ..........  U U U   18  18  11
+movem     16  er    .     0100110010......  A..DXWL...  U U U   12  12   8
 movem     32  er    pi    0100110011011...  ..........  U U U   12  12   8
-movem     32  er    .     0100110011......  A..DXWLdx.  U U U   12  12   8
+movem     32  er    pcdi  0100110011111010  ..........  U U U   20  20   9
+movem     32  er    pcix  0100110011111011  ..........  U U U   22  22  11
+movem     32  er    .     0100110011......  A..DXWL...  U U U   12  12   8
 movep     16  er    .     0000...100001...  ..........  U U U   16  16  12
 movep     32  er    .     0000...101001...  ..........  U U U   24  24  18
 movep     16  re    .     0000...110001...  ..........  U U U   16  16  11
@@ -3173,6 +3189,7 @@ M68KMAKE_OP(btst, 8, s, .)
 
 M68KMAKE_OP(callm, 32, ., .)
 {
+	/* note: watch out for pcrelative modes */
 	if(CPU_TYPE_IS_020_VARIANT(CPU_TYPE))
 	{
 		uint ea = M68KMAKE_GET_EA_AY_32;
@@ -3432,6 +3449,72 @@ M68KMAKE_OP(chk, 32, ., .)
 }
 
 
+M68KMAKE_OP(chk2cmp2, 8, ., pcdi)
+{
+	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
+	{
+		uint word2 = OPER_I_16();
+		uint compare = REG_DA[(word2 >> 12) & 15];
+		uint ea = EA_PCDI_8();
+		uint lower_bound = m68ki_read_pcrel_8(ea);
+		uint upper_bound = m68ki_read_pcrel_8(ea + 1);
+
+		if(!BIT_F(word2))
+			compare = MAKE_INT_8(compare);
+
+		FLAG_C = compare - lower_bound;
+		FLAG_Z = MASK_OUT_ABOVE_8(FLAG_C);
+		if(COND_CS())
+		{
+			if(BIT_B(word2))
+				m68ki_exception_trap(EXCEPTION_CHK);
+			return;
+		}
+
+		FLAG_C = upper_bound - compare;
+		FLAG_Z = MASK_OUT_ABOVE_8(FLAG_C);
+		if(COND_CS() && BIT_B(word2))
+				m68ki_exception_trap(EXCEPTION_CHK);
+
+		return;
+	}
+	m68ki_exception_illegal();
+}
+
+
+M68KMAKE_OP(chk2cmp2, 8, ., pcix)
+{
+	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
+	{
+		uint word2 = OPER_I_16();
+		uint compare = REG_DA[(word2 >> 12) & 15];
+		uint ea = EA_PCIX_8();
+		uint lower_bound = m68ki_read_pcrel_8(ea);
+		uint upper_bound = m68ki_read_pcrel_8(ea + 1);
+
+		if(!BIT_F(word2))
+			compare = MAKE_INT_8(compare);
+
+		FLAG_C = compare - lower_bound;
+		FLAG_Z = MASK_OUT_ABOVE_8(FLAG_C);
+		if(COND_CS())
+		{
+			if(BIT_B(word2))
+				m68ki_exception_trap(EXCEPTION_CHK);
+			return;
+		}
+
+		FLAG_C = upper_bound - compare;
+		FLAG_Z = MASK_OUT_ABOVE_8(FLAG_C);
+		if(COND_CS() && BIT_B(word2))
+				m68ki_exception_trap(EXCEPTION_CHK);
+
+		return;
+	}
+	m68ki_exception_illegal();
+}
+
+
 M68KMAKE_OP(chk2cmp2, 8, ., .)
 {
 	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
@@ -3456,6 +3539,76 @@ M68KMAKE_OP(chk2cmp2, 8, ., .)
 
 		FLAG_C = upper_bound - compare;
 		FLAG_Z = MASK_OUT_ABOVE_8(FLAG_C);
+		if(COND_CS() && BIT_B(word2))
+				m68ki_exception_trap(EXCEPTION_CHK);
+
+		return;
+	}
+	m68ki_exception_illegal();
+}
+
+
+M68KMAKE_OP(chk2cmp2, 16, ., pcdi)
+{
+	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
+	{
+		uint word2 = OPER_I_16();
+		uint compare = REG_DA[(word2 >> 12) & 15];
+		uint ea = EA_PCDI_16();
+		uint lower_bound = m68ki_read_pcrel_16(ea);
+		uint upper_bound = m68ki_read_pcrel_16(ea + 1);
+
+		if(!BIT_F(word2))
+			compare = MAKE_INT_16(compare);
+
+		FLAG_C = compare - lower_bound;
+		FLAG_Z = MASK_OUT_ABOVE_16(FLAG_C);
+		FLAG_C = CFLAG_16(FLAG_C);
+		if(COND_CS())
+		{
+			if(BIT_B(word2))
+				m68ki_exception_trap(EXCEPTION_CHK);
+			return;
+		}
+
+		FLAG_C = upper_bound - compare;
+		FLAG_Z = MASK_OUT_ABOVE_16(FLAG_C);
+		FLAG_C = CFLAG_16(FLAG_C);
+		if(COND_CS() && BIT_B(word2))
+				m68ki_exception_trap(EXCEPTION_CHK);
+
+		return;
+	}
+	m68ki_exception_illegal();
+}
+
+
+M68KMAKE_OP(chk2cmp2, 16, ., pcix)
+{
+	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
+	{
+		uint word2 = OPER_I_16();
+		uint compare = REG_DA[(word2 >> 12) & 15];
+		uint ea = EA_PCIX_16();
+		uint lower_bound = m68ki_read_pcrel_16(ea);
+		uint upper_bound = m68ki_read_pcrel_16(ea + 1);
+
+		if(!BIT_F(word2))
+			compare = MAKE_INT_16(compare);
+
+		FLAG_C = compare - lower_bound;
+		FLAG_Z = MASK_OUT_ABOVE_16(FLAG_C);
+		FLAG_C = CFLAG_16(FLAG_C);
+		if(COND_CS())
+		{
+			if(BIT_B(word2))
+				m68ki_exception_trap(EXCEPTION_CHK);
+			return;
+		}
+
+		FLAG_C = upper_bound - compare;
+		FLAG_Z = MASK_OUT_ABOVE_16(FLAG_C);
+		FLAG_C = CFLAG_16(FLAG_C);
 		if(COND_CS() && BIT_B(word2))
 				m68ki_exception_trap(EXCEPTION_CHK);
 
@@ -3491,6 +3644,70 @@ M68KMAKE_OP(chk2cmp2, 16, ., .)
 		FLAG_C = upper_bound - compare;
 		FLAG_Z = MASK_OUT_ABOVE_16(FLAG_C);
 		FLAG_C = CFLAG_16(FLAG_C);
+		if(COND_CS() && BIT_B(word2))
+				m68ki_exception_trap(EXCEPTION_CHK);
+
+		return;
+	}
+	m68ki_exception_illegal();
+}
+
+
+M68KMAKE_OP(chk2cmp2, 32, ., pcdi)
+{
+	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
+	{
+		uint word2 = OPER_I_16();
+		uint compare = REG_DA[(word2 >> 12) & 15];
+		uint ea = EA_PCDI_32();
+		uint lower_bound = m68ki_read_pcrel_32(ea);
+		uint upper_bound = m68ki_read_pcrel_32(ea + 1);
+
+		FLAG_C = compare - lower_bound;
+		FLAG_Z = MASK_OUT_ABOVE_32(FLAG_C);
+		FLAG_C = CFLAG_SUB_32(lower_bound, compare, FLAG_C);
+		if(COND_CS())
+		{
+			if(BIT_B(word2))
+				m68ki_exception_trap(EXCEPTION_CHK);
+			return;
+		}
+
+		FLAG_C = upper_bound - compare;
+		FLAG_Z = MASK_OUT_ABOVE_32(FLAG_C);
+		FLAG_C = CFLAG_SUB_32(compare, upper_bound, FLAG_C);
+		if(COND_CS() && BIT_B(word2))
+				m68ki_exception_trap(EXCEPTION_CHK);
+
+		return;
+	}
+	m68ki_exception_illegal();
+}
+
+
+M68KMAKE_OP(chk2cmp2, 32, ., pcix)
+{
+	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
+	{
+		uint word2 = OPER_I_16();
+		uint compare = REG_DA[(word2 >> 12) & 15];
+		uint ea = EA_PCIX_32();
+		uint lower_bound = m68ki_read_pcrel_32(ea);
+		uint upper_bound = m68ki_read_pcrel_32(ea + 1);
+
+		FLAG_C = compare - lower_bound;
+		FLAG_Z = MASK_OUT_ABOVE_32(FLAG_C);
+		FLAG_C = CFLAG_SUB_32(lower_bound, compare, FLAG_C);
+		if(COND_CS())
+		{
+			if(BIT_B(word2))
+				m68ki_exception_trap(EXCEPTION_CHK);
+			return;
+		}
+
+		FLAG_C = upper_bound - compare;
+		FLAG_Z = MASK_OUT_ABOVE_32(FLAG_C);
+		FLAG_C = CFLAG_SUB_32(compare, upper_bound, FLAG_C);
 		if(COND_CS() && BIT_B(word2))
 				m68ki_exception_trap(EXCEPTION_CHK);
 
@@ -6709,6 +6926,44 @@ M68KMAKE_OP(movem, 16, er, pi)
 }
 
 
+M68KMAKE_OP(movem, 16, er, pcdi)
+{
+	uint i = 0;
+	uint register_list = OPER_I_16();
+	uint ea = EA_PCDI_16();
+	uint count = 0;
+
+	for(; i < 16; i++)
+		if(register_list & (1 << i))
+		{
+			REG_DA[i] = MAKE_INT_16(MASK_OUT_ABOVE_16(m68ki_read_pcrel_16(ea)));
+			ea += 2;
+			count++;
+		}
+
+	USE_CYCLES(count<<CYC_MOVEM_W);
+}
+
+
+M68KMAKE_OP(movem, 16, er, pcix)
+{
+	uint i = 0;
+	uint register_list = OPER_I_16();
+	uint ea = EA_PCIX_16();
+	uint count = 0;
+
+	for(; i < 16; i++)
+		if(register_list & (1 << i))
+		{
+			REG_DA[i] = MAKE_INT_16(MASK_OUT_ABOVE_16(m68ki_read_pcrel_16(ea)));
+			ea += 2;
+			count++;
+		}
+
+	USE_CYCLES(count<<CYC_MOVEM_W);
+}
+
+
 M68KMAKE_OP(movem, 16, er, .)
 {
 	uint i = 0;
@@ -6743,6 +6998,44 @@ M68KMAKE_OP(movem, 32, er, pi)
 			count++;
 		}
 	AY = ea;
+
+	USE_CYCLES(count<<CYC_MOVEM_L);
+}
+
+
+M68KMAKE_OP(movem, 32, er, pcdi)
+{
+	uint i = 0;
+	uint register_list = OPER_I_16();
+	uint ea = EA_PCDI_32();
+	uint count = 0;
+
+	for(; i < 16; i++)
+		if(register_list & (1 << i))
+		{
+			REG_DA[i] = m68ki_read_pcrel_32(ea);
+			ea += 4;
+			count++;
+		}
+
+	USE_CYCLES(count<<CYC_MOVEM_L);
+}
+
+
+M68KMAKE_OP(movem, 32, er, pcix)
+{
+	uint i = 0;
+	uint register_list = OPER_I_16();
+	uint ea = EA_PCIX_32();
+	uint count = 0;
+
+	for(; i < 16; i++)
+		if(register_list & (1 << i))
+		{
+			REG_DA[i] = m68ki_read_pcrel_32(ea);
+			ea += 4;
+			count++;
+		}
 
 	USE_CYCLES(count<<CYC_MOVEM_L);
 }
@@ -9649,8 +9942,7 @@ M68KMAKE_OP(tst, 8, ., d)
 
 M68KMAKE_OP(tst, 8, ., .)
 {
-	uint ea = M68KMAKE_GET_EA_AY_8;
-	uint res = m68ki_read_8(ea);
+	uint res = M68KMAKE_GET_OPER_AY_8;
 
 	FLAG_N = NFLAG_8(res);
 	FLAG_Z = res;

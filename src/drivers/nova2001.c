@@ -167,7 +167,7 @@ static struct GfxLayout charlayout =
 static struct GfxLayout spritelayout =
 {
 	16,16,    /* 16*16 characters */
-	64,    /* 64 sprites */
+	128,      /* 128 sprites */
 	4,       /* 4 bits per pixel */
 	{0,1,2,3}, /* the bitplanes are packed in one nibble */
 	{0,  4,  8192*8+0,  8192*8+4,  8, 12,  8192*8+8, 8192*8+12,
@@ -181,8 +181,8 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &charlayout,       0, 16 },
 	{ REGION_GFX2, 0x0000, &charlayout,   16*16, 16 },
-	{ REGION_GFX1, 0x1000, &spritelayout,     0, 16 },
-	{ REGION_GFX2, 0x1000, &spritelayout,     0, 16 },
+	{ REGION_GFX1, 0x0000, &spritelayout,     0, 16 },
+	{ REGION_GFX2, 0x0000, &spritelayout,     0, 16 },
 	{ -1 } /* end of array */
 };
 

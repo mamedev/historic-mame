@@ -550,16 +550,33 @@ static void check_timer_event(void)
 /****************************************************************************
  * Reset registers to their initial values
  ****************************************************************************/
+static void state_register(const char *type)
+{
+	int cpu = cpu_getactivecpu();
+	state_save_register_UINT8 (type, cpu, "A",  &m6800.d.b.h, 1);
+	state_save_register_UINT8 (type, cpu, "B",  &m6800.d.b.l, 1);
+	state_save_register_UINT16(type, cpu, "PC", &m6800.pc.w.l, 1);
+	state_save_register_UINT16(type, cpu, "S",  &m6800.s.w.l, 1);
+	state_save_register_UINT16(type, cpu, "X",  &m6800.x.w.l, 1);
+	state_save_register_UINT8 (type, cpu, "CC", &m6800.cc, 1);
+	state_save_register_UINT8 (type, cpu, "NMI_STATE", &m6800.nmi_state, 1);
+	state_save_register_UINT8 (type, cpu, "IRQ_STATE", &m6800.irq_state[M6800_IRQ_LINE], 1);
+	state_save_register_UINT8 (type, cpu, "TIN_STATE", &m6800.irq_state[M6800_TIN_LINE], 1);
+}
+
+void m6800_init(void)
+{
+//	m6800.subtype   = SUBTYPE_M6800;
+	m6800.insn = m6800_insn;
+	m6800.cycles = cycles_6800;
+	state_register("m6800");
+}
+
 void m6800_reset(void *param)
 {
 	SEI;				/* IRQ disabled */
 	PCD = RM16( 0xfffe );
 	CHANGE_PC();
-
-	/* HJB 990417 set CPU subtype (other reset functions override this) */
-//	m6800.subtype   = SUBTYPE_M6800;
-	m6800.insn = m6800_insn;
-	m6800.cycles = cycles_6800;
 
 	m6800.wai_state = 0;
 	m6800.nmi_state = 0;
@@ -732,7 +749,7 @@ void m6800_set_irq_line(int irqline, int state)
 		eddge = (state == CLEAR_LINE ) ? 2 : 0;
 		if( ((m6800.tcsr&TCSR_IEDG) ^ (state==CLEAR_LINE ? TCSR_IEDG : 0))==0 )
 			return;
-		/* active eddge in */
+		/* active edge in */
 		m6800.tcsr |= TCSR_ICF;
 		m6800.pending_tcsr |= TCSR_ICF;
 		m6800.input_capture = CT;
@@ -750,37 +767,6 @@ void m6800_set_irq_callback(int (*callback)(int irqline))
 {
 	m6800.irq_callback = callback;
 }
-
-static void state_save(void *file, const char *module)
-{
-	int cpu = cpu_getactivecpu();
-	state_save_UINT8(file,module,cpu,"A", &m6800.d.b.h, 1);
-	state_save_UINT8(file,module,cpu,"B", &m6800.d.b.l, 1);
-	state_save_UINT16(file,module,cpu,"PC", &m6800.pc.w.l, 1);
-	state_save_UINT16(file,module,cpu,"S", &m6800.s.w.l, 1);
-	state_save_UINT16(file,module,cpu,"X", &m6800.x.w.l, 1);
-	state_save_UINT8(file,module,cpu,"CC", &m6800.cc, 1);
-	state_save_UINT8(file,module,cpu,"NMI_STATE", &m6800.nmi_state, 1);
-	state_save_UINT8(file,module,cpu,"IRQ_STATE", &m6800.irq_state[M6800_IRQ_LINE], 1);
-	state_save_UINT8(file,module,cpu,"TIN_STATE", &m6800.irq_state[M6800_TIN_LINE], 1);
-}
-
-static void state_load(void *file, const char *module)
-{
-	int cpu = cpu_getactivecpu();
-	state_load_UINT8(file,module,cpu,"A", &m6800.d.b.h, 1);
-	state_load_UINT8(file,module,cpu,"B", &m6800.d.b.l, 1);
-	state_load_UINT16(file,module,cpu,"PC", &m6800.pc.w.l, 1);
-	state_load_UINT16(file,module,cpu,"S", &m6800.s.w.l, 1);
-	state_load_UINT16(file,module,cpu,"X", &m6800.x.w.l, 1);
-	state_load_UINT8(file,module,cpu,"CC", &m6800.cc, 1);
-	state_load_UINT8(file,module,cpu,"NMI_STATE", &m6800.nmi_state, 1);
-	state_load_UINT8(file,module,cpu,"IRQ_STATE", &m6800.irq_state[M6800_IRQ_LINE], 1);
-	state_load_UINT8(file,module,cpu,"TIN_STATE", &m6800.irq_state[M6800_TIN_LINE], 1);
-}
-
-void m6800_state_save(void *file) { state_save(file,"m6800"); }
-void m6800_state_load(void *file) { state_load(file,"m6800"); }
 
 /****************************************************************************
  * Execute cycles CPU cycles. Return number of cycles really executed
@@ -1152,13 +1138,15 @@ unsigned m6800_dasm(char *buffer, unsigned pc)
  * M6801 almost (fully?) equal to the M6803
  ****************************************************************************/
 #if (HAS_M6801)
-void m6801_reset(void *param)
+void m6801_init(void)
 {
-	m6800_reset(param);
 //	m6800.subtype = SUBTYPE_M6801;
 	m6800.insn = m6803_insn;
 	m6800.cycles = cycles_6803;
+	state_register("m6801");
 }
+
+void m6801_reset(void *param) { m6800_reset(param); }
 void m6801_exit(void) { m6800_exit(); }
 int  m6801_execute(int cycles) { return m6803_execute(cycles); }
 unsigned m6801_get_context(void *dst) { return m6800_get_context(dst); }
@@ -1172,8 +1160,6 @@ void m6801_set_reg(int regnum, unsigned val) { m6800_set_reg(regnum,val); }
 void m6801_set_nmi_line(int state) { m6800_set_nmi_line(state); }
 void m6801_set_irq_line(int irqline, int state) { m6800_set_irq_line(irqline,state); }
 void m6801_set_irq_callback(int (*callback)(int irqline)) { m6800_set_irq_callback(callback); }
-void m6801_state_save(void *file) { state_save(file,"m6801"); }
-void m6801_state_load(void *file) { state_load(file,"m6801"); }
 const char *m6801_info(void *context, int regnum)
 {
 	/* Layout of the registers in the debugger */
@@ -1215,11 +1201,14 @@ unsigned m6801_dasm(char *buffer, unsigned pc)
  * M6802 almost (fully?) equal to the M6800
  ****************************************************************************/
 #if (HAS_M6802)
-void m6802_reset(void *param)
+void m6802_init(void)
 {
-	m6800_reset(param);
-//	m6800.subtype = SUBTYPE_M6802;
+//	m6800.subtype   = SUBTYPE_M6802;
+	m6800.insn = m6800_insn;
+	m6800.cycles = cycles_6800;
+	state_register("m6802");
 }
+void m6802_reset(void *param) { m6800_reset(param); }
 void m6802_exit(void) { m6800_exit(); }
 int  m6802_execute(int cycles) { return m6800_execute(cycles); }
 unsigned m6802_get_context(void *dst) { return m6800_get_context(dst); }
@@ -1233,8 +1222,6 @@ void m6802_set_reg(int regnum, unsigned val) { m6800_set_reg(regnum,val); }
 void m6802_set_nmi_line(int state) { m6800_set_nmi_line(state); }
 void m6802_set_irq_line(int irqline, int state) { m6800_set_irq_line(irqline,state); }
 void m6802_set_irq_callback(int (*callback)(int irqline)) { m6800_set_irq_callback(callback); }
-void m6802_state_save(void *file) { state_save(file,"m6802"); }
-void m6802_state_load(void *file) { state_load(file,"m6802"); }
 const char *m6802_info(void *context, int regnum)
 {
 	/* Layout of the registers in the debugger */
@@ -1277,13 +1264,14 @@ unsigned m6802_dasm(char *buffer, unsigned pc)
  * M6803 almost (fully?) equal to the M6801
  ****************************************************************************/
 #if (HAS_M6803)
-void m6803_reset(void *param)
+void m6803_init(void)
 {
-	m6800_reset(param);
 //	m6800.subtype = SUBTYPE_M6803;
 	m6800.insn = m6803_insn;
 	m6800.cycles = cycles_6803;
+	state_register("m6803");
 }
+void m6803_reset(void *param) {	m6800_reset(param); }
 void m6803_exit(void) { m6800_exit(); }
 #endif
 /****************************************************************************
@@ -1594,8 +1582,6 @@ void m6803_set_reg(int regnum, unsigned val) { m6800_set_reg(regnum,val); }
 void m6803_set_nmi_line(int state) { m6800_set_nmi_line(state); }
 void m6803_set_irq_line(int irqline, int state) { m6800_set_irq_line(irqline,state); }
 void m6803_set_irq_callback(int (*callback)(int irqline)) { m6800_set_irq_callback(callback); }
-void m6803_state_save(void *file) { state_save(file,"m6803"); }
-void m6803_state_load(void *file) { state_load(file,"m6803"); }
 const char *m6803_info(void *context, int regnum)
 {
 	/* Layout of the registers in the debugger */
@@ -1637,11 +1623,14 @@ unsigned m6803_dasm(char *buffer, unsigned pc)
  * M6808 almost (fully?) equal to the M6800
  ****************************************************************************/
 #if (HAS_M6808)
-void m6808_reset(void *param)
+void m6808_init(void)
 {
-	m6800_reset(param);
 //	m6800.subtype = SUBTYPE_M6808;
+	m6800.insn = m6800_insn;
+	m6800.cycles = cycles_6800;
+	state_register("m6808");
 }
+void m6808_reset(void *param) { m6800_reset(param); }
 void m6808_exit(void) { m6800_exit(); }
 int  m6808_execute(int cycles) { return m6800_execute(cycles); }
 unsigned m6808_get_context(void *dst) { return m6800_get_context(dst); }
@@ -1655,8 +1644,6 @@ void m6808_set_reg(int regnum, unsigned val) { m6800_set_reg(regnum,val); }
 void m6808_set_nmi_line(int state) { m6800_set_nmi_line(state); }
 void m6808_set_irq_line(int irqline, int state) { m6800_set_irq_line(irqline,state); }
 void m6808_set_irq_callback(int (*callback)(int irqline)) { m6800_set_irq_callback(callback); }
-void m6808_state_save(void *file) { state_save(file,"m6808"); }
-void m6808_state_load(void *file) { state_load(file,"m6808"); }
 const char *m6808_info(void *context, int regnum)
 {
 	/* Layout of the registers in the debugger */
@@ -1698,13 +1685,14 @@ unsigned m6808_dasm(char *buffer, unsigned pc)
  * HD63701 similiar to the M6800
  ****************************************************************************/
 #if (HAS_HD63701)
-void hd63701_reset(void *param)
+void hd63701_init(void)
 {
-	m6800_reset(param);
 //	m6800.subtype = SUBTYPE_HD63701;
 	m6800.insn = hd63701_insn;
 	m6800.cycles = cycles_63701;
+	state_register("hd63701");
 }
+void hd63701_reset(void *param) { m6800_reset(param); }
 void hd63701_exit(void) { m6800_exit(); }
 /****************************************************************************
  * Execute cycles CPU cycles. Return number of cycles really executed
@@ -2011,8 +1999,6 @@ void hd63701_set_reg(int regnum, unsigned val) { m6800_set_reg(regnum,val); }
 void hd63701_set_nmi_line(int state) { m6800_set_nmi_line(state); }
 void hd63701_set_irq_line(int irqline, int state) { m6800_set_irq_line(irqline,state); }
 void hd63701_set_irq_callback(int (*callback)(int irqline)) { m6800_set_irq_callback(callback); }
-void hd63701_state_save(void *file) { state_save(file,"hd63701"); }
-void hd63701_state_load(void *file) { state_load(file,"hd63701"); }
 const char *hd63701_info(void *context, int regnum)
 {
 	/* Layout of the registers in the debugger */
@@ -2077,13 +2063,14 @@ unsigned hd63701_dasm(char *buffer, unsigned pc)
  * is at least one new opcode ($fc)
  ****************************************************************************/
 #if (HAS_NSC8105)
-void nsc8105_reset(void *param)
+void nsc8105_init(void)
 {
-	m6800_reset(param);
 //	m6800.subtype = SUBTYPE_NSC8105;
 	m6800.insn = nsc8105_insn;
 	m6800.cycles = cycles_nsc8105;
+	state_register("nsc8105");
 }
+void nsc8105_reset(void *param) { m6800_reset(param); }
 void nsc8105_exit(void) { m6800_exit(); }
 /****************************************************************************
  * Execute cycles CPU cycles. Return number of cycles really executed
@@ -2390,8 +2377,6 @@ void nsc8105_set_reg(int regnum, unsigned val) { m6800_set_reg(regnum,val); }
 void nsc8105_set_nmi_line(int state) { m6800_set_nmi_line(state); }
 void nsc8105_set_irq_line(int irqline, int state) { m6800_set_irq_line(irqline,state); }
 void nsc8105_set_irq_callback(int (*callback)(int irqline)) { m6800_set_irq_callback(callback); }
-void nsc8105_state_save(void *file) { state_save(file,"nsc8105"); }
-void nsc8105_state_load(void *file) { state_load(file,"nsc8105"); }
 const char *nsc8105_info(void *context, int regnum)
 {
 	/* Layout of the registers in the debugger */

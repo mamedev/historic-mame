@@ -198,9 +198,9 @@ void zodiack_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 
 		x = galaxian_bulletsram[offs + 3] + Machine->drv->gfxdecodeinfo[2].gfxlayout->width;
-		y = galaxian_bulletsram[offs + 1];
+		y = 255 - galaxian_bulletsram[offs + 1];
 
-		if (!percuss_hardware)
+		if (flipscreen && percuss_hardware)
 		{
 			y = 255 - y;
 		}
@@ -226,7 +226,7 @@ void zodiack_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		flipy =   spriteram[offs + 1] & 0x80;
 		spritecode = spriteram[offs + 1] & 0x3f;
 
-		if (percuss_hardware)
+		if (flipscreen && percuss_hardware)
 		{
 			sy = 240 - sy;
 			flipy = !flipy;

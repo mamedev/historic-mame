@@ -717,5 +717,41 @@ void print_mame_info(FILE* out, const struct GameDriver* games[]) {
 	fprintf(out, L2P "crc c205bca6" L2N);
 	fprintf(out, L2E L1N);
 	fprintf(out, L1E);
-	#endif
+
+    /* DECO Cassette System */
+	fprintf(out, "resource" L1B);
+    fprintf(out, L1P "name decocass" L1N);
+    fprintf(out, L1P "description \"DECO Cassette System\"" L1N);
+    fprintf(out, L1P "rom" L2B);
+    fprintf(out, L2P "name rms8.cpu" L2N);
+    fprintf(out, L2P "size 4096" L2N);
+    fprintf(out, L2P "crc 23d929b7" L2N);
+	fprintf(out, L2E L1N);
+	fprintf(out, L1P "rom" L2B);
+    fprintf(out, L2P "name rms8.snd" L2N);
+	fprintf(out, L2P "size 2048" L2N);
+    fprintf(out, L2P "crc b66b2c2a" L2N);
+    fprintf(out, L2E L1N);
+    fprintf(out, L1P "rom" L2B);
+    fprintf(out, L2P "name cass8041.bin" L2N);
+    fprintf(out, L2P "size 1024" L2N);
+    fprintf(out, L2P "crc a6df18fd" L2N);
+	fprintf(out, L2E L1N);
+	fprintf(out, L1P "rom" L2B);
+    fprintf(out, L2P "name dsp8.3m" L2N);
+    fprintf(out, L2P "size 32" L2N);
+    fprintf(out, L2P "crc 238fdb40" L2N);
+    fprintf(out, L2E L1N);
+    fprintf(out, L1P "rom" L2B);
+    fprintf(out, L2P "name dsp8.10d" L2N);
+    fprintf(out, L2P "size 32" L2N);
+    fprintf(out, L2P "crc 3b5836b4" L2N);
+    fprintf(out, L2E L1N);
+    fprintf(out, L1P "rom" L2B);
+    fprintf(out, L2P "name rms8.j3" L2N);
+    fprintf(out, L2P "size 32" L2N);
+    fprintf(out, L2P "crc 51eef657" L2N);
+    fprintf(out, L2E L1N);
+    fprintf(out, L1E);
+    #endif
 }

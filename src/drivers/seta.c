@@ -760,7 +760,7 @@ WRITE16_HANDLER( kiwame_nvram_w )
 
 READ16_HANDLER( kiwame_input_r )
 {
-	int row_select = kiwame_nvram_r( 0x10a/2 ) & 0x1f;
+	int row_select = kiwame_nvram_r( 0x10a/2,0 ) & 0x1f;
 	int i;
 
 	for(i = 0; i < 5; i++)
@@ -2394,11 +2394,11 @@ INPUT_PORTS_START( qzkklogy )
 	PORT_DIPNAME( 0x0800, 0x0800, "Unknown 2-3" )
 	PORT_DIPSETTING(      0x0800, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x3000, 0x3000, "Unknown 2-4&5*" )
-	PORT_DIPSETTING(      0x3000, "0" )
-	PORT_DIPSETTING(      0x2000, "1" )
-	PORT_DIPSETTING(      0x1000, "2" )
-	PORT_DIPSETTING(      0x0000, "3" )
+	PORT_DIPNAME( 0x3000, 0x3000, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(      0x2000, "Easy" )
+	PORT_DIPSETTING(      0x3000, "Normal" )
+	PORT_DIPSETTING(      0x1000, "Hard" )
+	PORT_DIPSETTING(      0x0000, "Very Hard" )
 	PORT_DIPNAME( 0xc000, 0xc000, DEF_STR( Lives ) )
 	PORT_DIPSETTING(      0x8000, "2" )
 	PORT_DIPSETTING(      0xc000, "3" )

@@ -15,6 +15,7 @@
 #define v20_ICount i86_ICount
 
 /* Public functions */
+#define v20_init v30_init
 #define v20_reset v30_reset
 #define v20_exit i86_exit
 #define v20_execute v30_execute

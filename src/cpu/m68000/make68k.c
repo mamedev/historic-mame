@@ -132,11 +132,11 @@
 #undef  STALLCHECK      /* Affects fetching of Opcode */
 #define SAVEPPC         /* Save Previous PC */
 #define ENCRYPTED       /* PC relative = decrypted */
-#define ASMBANK         /* Memory banking algorithm to use */
+#undef  ASMBANK         /* Memory banking algorithm to use */
 #define A7ROUTINE       /* Define to use separate routines for -(a7)/(a7)+ */
 #define ALIGNMENT 4     /* Alignment to use for branches */
 #undef  MASKCCR         /* Mask the status register to filter out unused bits */
-#undef  KEEPHIGHPC      /* Keep or Ignore bits 24-31 */
+#define KEEPHIGHPC      /* Keep or Ignore bits 24-31 */
 
 
 #include <stdio.h>
@@ -1456,7 +1456,7 @@ void ExtensionDecode(int SaveEDX)
       fprintf(fp, "%s_f:\n",Label);
 //    fprintf(fp, "\t\t pop   eax\n");		// Why ? (matched with above)
       fprintf(fp, "\t\t test  dl,3\n");
-      fprintf(fp, "\t\t jz    short %s_7a\n",Label);
+      fprintf(fp, "\t\t jz    near %s_7a\n",Label);
       // pre or post indirect
       fprintf(fp, "\t\t test  dl,4\n");
       fprintf(fp, "\t\t jnz   short %s_g\n",Label);

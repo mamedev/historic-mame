@@ -455,7 +455,6 @@ INLINE void Interrupt(void)
 
 void z8000_reset(void *param)
 {
-    z8000_init();
 	memset(&Z, 0, sizeof(z8000_Regs));
 	FCW = RDMEM_W( 2 ); /* get reset FCW */
 	PC	= RDMEM_W( 4 ); /* get reset PC  */

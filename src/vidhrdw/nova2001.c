@@ -19,13 +19,14 @@
      Sprite memory is made of 32 byte records:
 
         Sprite+0, 0x80 = Sprite Bank
-        Sprite+0, 0x40 = Sprite Enable
-        Sprite+0, 0x3f = Sprite Character Code
+        Sprite+0, 0x7f = Sprite Character Code
         Sprite+1, 0xff = X location
         Sprite+2, 0xff = Y location
-        Sprite+3, 0x40 = Y Flip
-        Sprite+3, 0x20 = X Flip
-        Sprite+4, 0x0f = pen for "color 1" taken from the first 16 colors
+        Sprite+3, 0x20 = Y Flip
+        Sprite+3, 0x10 = X Flip
+        Sprite+3, 0x0f = pen for "color 1" taken from the first 16 colors
+	Sprite+3, 0x80
+	Sprite+3, 0x40
 
         All the rest are unknown and/or uneccessary.
 
@@ -166,7 +167,7 @@ void nova2001_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		}
 		else
 		{
-			scrollx = -nova2001_xscroll;
+			scrollx = -nova2001_xscroll+7;
 			scrolly = -nova2001_yscroll;
 		}
 
@@ -177,8 +178,7 @@ void nova2001_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	/* Next, draw the sprites */
 	for (offs = 0;offs < spriteram_size;offs += 32)
 	{
-		if (spriteram[offs+0] & 0x40)
-		{
+
 			int sx,sy,flipx,flipy;
 
 
@@ -195,12 +195,12 @@ void nova2001_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			}
 
 			drawgfx(bitmap,Machine->gfx[2 + ((spriteram[offs+0] & 0x80) >> 7)],
-					spriteram[offs+0] & 0x3f,
+					spriteram[offs+0] & 0x7f,
 					spriteram[offs+3] & 0x0f,
 					flipx,flipy,
 					sx,sy,
 					&Machine->visible_area,TRANSPARENCY_PEN,0);
-		}
+
 	}
 
 

@@ -125,8 +125,10 @@ static void mcr68_update_sprites(struct osd_bitmap *bitmap, int priority)
 	sprite_clip.min_x += mcr68_sprite_clip;
 	sprite_clip.max_x -= mcr68_sprite_clip;
 
+	fillbitmap(priority_bitmap,1,NULL);
+
 	/* loop over sprite RAM */
-	for (offs = 0; offs < spriteram_size / 2; offs += 4)
+	for (offs = spriteram_size / 2 - 4;offs >= 0;offs -= 4)
 	{
 		int code, color, flipx, flipy, x, y, sx, sy, xcount, ycount, flags;
 
@@ -151,23 +153,17 @@ static void mcr68_update_sprites(struct osd_bitmap *bitmap, int priority)
 		/* allow sprites to clip off the left side */
 		if (x > 0x1f0) x -= 0x200;
 
-		/* draw the sprite */
-		drawgfx(bitmap, Machine->gfx[1], code, color, flipx, flipy, x, y,
-				&sprite_clip, TRANSPARENCY_PEN, 0);
-
 		/* sprites use color 0 for background pen and 8 for the 'under tile' pen.
 			The color 8 is used to cover over other sprites. */
-		if (Machine->gfx[1]->pen_usage[code] & 0x0100)
-		{
-			struct rectangle clip;
 
-			clip.min_x = x;
-			clip.max_x = x + 31;
-			clip.min_y = y;
-			clip.max_y = y + 31;
+		/* first draw the sprite, visible */
+		pdrawgfx(bitmap, Machine->gfx[1], code, color, flipx, flipy, x, y,
+				&sprite_clip, TRANSPARENCY_PENS, 0x0101, 0x00);
 
-			copybitmap(bitmap, tmpbitmap, 0, 0, 0, 0, &clip, TRANSPARENCY_THROUGH, Machine->pens[8 + color * 16]);
-		}
+		/* then draw the mask, behind the background but obscuring following sprites */
+		pdrawgfx(bitmap, Machine->gfx[1], code, color, flipx, flipy, x, y,
+				&sprite_clip, TRANSPARENCY_PENS, 0xfeff, 0x02);
+
 
 		/* mark tiles underneath as dirty for overrendering */
 		if (priority == 0)
@@ -455,8 +451,10 @@ static void zwackery_update_sprites(struct osd_bitmap *bitmap, int priority)
 {
 	int offs;
 
+	fillbitmap(priority_bitmap,1,NULL);
+
 	/* loop over sprite RAM */
-	for (offs = 0; offs < spriteram_size / 2; offs += 4)
+	for (offs = spriteram_size / 2 - 4;offs >= 0;offs -= 4)
 	{
 		int code, color, flipx, flipy, x, y, sx, sy, xcount, ycount, flags;
 
@@ -491,23 +489,17 @@ static void zwackery_update_sprites(struct osd_bitmap *bitmap, int priority)
 
 		if (x <= -32) x += 512;
 
-		/* draw the sprite */
-		drawgfx(bitmap, Machine->gfx[1], code, color, flipx, flipy, x, y,
-				&Machine->visible_area, TRANSPARENCY_PEN, 0);
-
 		/* sprites use color 0 for background pen and 8 for the 'under tile' pen.
 			The color 8 is used to cover over other sprites. */
-		if (Machine->gfx[1]->pen_usage[code] & 0x0100)
-		{
-			struct rectangle clip;
 
-			clip.min_x = x;
-			clip.max_x = x + 31;
-			clip.min_y = y;
-			clip.max_y = y + 31;
+		/* first draw the sprite, visible */
+		pdrawgfx(bitmap, Machine->gfx[1], code, color, flipx, flipy, x, y,
+				&Machine->visible_area, TRANSPARENCY_PENS, 0x0101, 0x00);
 
-			copybitmap(bitmap, tmpbitmap, 0, 0, 0, 0, &clip, TRANSPARENCY_THROUGH, Machine->pens[8 + color * 16]);
-		}
+		/* then draw the mask, behind the background but obscuring following sprites */
+		pdrawgfx(bitmap, Machine->gfx[1], code, color, flipx, flipy, x, y,
+				&Machine->visible_area, TRANSPARENCY_PENS, 0xfeff, 0x02);
+
 
 		/* mark tiles underneath as dirty for overrendering */
 		if (priority == 0)

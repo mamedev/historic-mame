@@ -179,6 +179,28 @@ WRITE_HANDLER( srdarwin_control_w )
 
 WRITE_HANDLER( lastmiss_control_w )
 {
+	unsigned char *RAM = memory_region(REGION_CPU1);
+
+	/*
+		Bit 0x0f - ROM bank switch.
+		Bit 0x10 - Unused
+		Bit 0x20 - X scroll MSB
+		Bit 0x40 - Y scroll MSB
+		Bit 0x80 - Hold subcpu reset line high if clear, else low
+	*/
+	cpu_setbank(1,&RAM[0x10000 + (data & 0x0f) * 0x4000]);
+
+	scroll2[0]=(data>>5)&1;
+	scroll2[2]=(data>>6)&1;
+
+	if (data&0x80)
+		cpu_set_reset_line(1,CLEAR_LINE);
+	else
+		cpu_set_reset_line(1,ASSERT_LINE);
+}
+
+WRITE_HANDLER( shackled_control_w )
+{
 	int bankaddress;
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
@@ -188,11 +210,6 @@ WRITE_HANDLER( lastmiss_control_w )
 
 	scroll2[0]=(data>>5)&1;
 	scroll2[2]=(data>>6)&1;
-
-if (cpu_get_pc()==0xfa51) cpu_set_reset_line(1,PULSE_LINE); /* No way this can be right... */
-if (cpu_get_pc()==0xf9d2) cpu_set_reset_line(1,PULSE_LINE); /* No way this can be right... */
-
-//logerror("PC %06x - Write %02x to %04x\n",cpu_get_pc(),data,offset+0x1802);
 }
 
 WRITE_HANDLER( lastmiss_scrollx_w )

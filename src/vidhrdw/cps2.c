@@ -183,10 +183,10 @@ void cps1_debug_tiles_f(struct osd_bitmap *bitmap, int layer, int width)
                     cps1_draw_scroll1(bitmap, n, 0, 0, 0, 32+x*8, 32+y*8, 0xffff);
                     break;
                 case 2:
-                    cps1_draw_tile16(bitmap, Machine->gfx[2], n, 0, 0, 0, 32+x*16, 32+y*16, 0xffff);
+                    cps1_draw_tile16(bitmap, 2, n, 0, 0, 0, 32+x*16, 32+y*16, 0xffff);
                     break;
                 case 3:
-                    cps1_draw_tile32(bitmap, Machine->gfx[3], n, 0, 0, 0, 32+x*32, 32+y*32, 0xffff);
+                    cps1_draw_tile32(bitmap, 3, n, 0, 0, 0, 32+x*32, 32+y*32, 0xffff);
                     break;
             }
             n++;

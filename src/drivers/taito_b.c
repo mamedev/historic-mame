@@ -12,18 +12,18 @@ The board uses TC0220IOC, TC0260DAR, TC0180VCU, and TC0140SYT.
 TODO:
 - should use the TC0220IOC functions in vidhrdw/taitoic.
 - masterw: title screen is incomplete, has wrong colors and misses palette marking
-- silentd: wrong scroll in attract mode, jerky background in level 1
 
 The Taito B system is a fairly flexible hardware platform. It supports 4
 separate layers of graphics - one 64x64 tiled scrolling background plane
 of 8x8 tiles, a similar foreground plane, a sprite plane capable of sprite
-zooming and a text plane which may be 'pageable.
+zooming and 'pageable' text plane.
 
-Sound is handled by a Z80 with a YM2610 connected to it.
+Sound is handled by a Z80 with a YM2610 or YM2610B or YM2203's connected to it.
+Different sound chips - depending on game.
 
 The memory map for each of the games is similar but not identical.
 
-Memory map for Rastan Saga 2 / Nastar / Nastar Warrior
+Memory map for Rastan Saga 2 / Nastar / Nastar Warrior :
 
 CPU 1 : 68000, uses irqs 2 & 4. One of the IRQs just sets a flag which is
 checked in the other IRQ routine. Could be timed to vblank...
@@ -31,7 +31,7 @@ checked in the other IRQ routine. Could be timed to vblank...
   0x000000 - 0x07ffff : ROM
   0x200000 - 0x201fff : palette RAM, 4096 total colors (0x1000 words)
   0x400000 - 0x403fff : 64x64 foreground layer (offsets 0x0000-0x1fff tile codes; offsets 0x2000-0x3fff tile attributes)
-  0x404000 - 0x807fff : 64x64 background layer (offsets 0x0000-0x1fff tile codes; offsets 0x2000-0x3fff tile attributes)
+  0x404000 - 0x407fff : 64x64 background layer (offsets 0x0000-0x1fff tile codes; offsets 0x2000-0x3fff tile attributes)
   0x408000 - 0x408fff : 64x64 text layer
   0x410000 - 0x41197f : ??k of sprite RAM (this is the range that Rastan Saga II tests at startup time)
   0x413800 - 0x413bff : foreground control RAM (413800.w - foreground x scroll, 413802.w - foreground y scroll)
@@ -42,20 +42,27 @@ checked in the other IRQ routine. Could be timed to vblank...
   0xa00000 - 0xa0000f : input ports and dipswitches (writes may be IRQ acknowledge)
 
 
+List of known B-System games:
 
-*XXX.1988 Rastan Saga II (B81, , )
-Ashura Blaster
-Crime City
-Rambo 3 (two different versions)
-Tetris
-Violence Fight (YM2203)
-Hit The Ice (YM2203 sound)
-Master of Weapons (YM2203 sound)
-Puzzle Bobble
-Silent Dragon
+	Rastan Saga II					(YM2610 sound)
+	Ashura Blaster					(YM2610 sound)
+	Crime City						(YM2610 sound)
+	Rambo 3 (two different versions)(YM2610 sound)
+	Tetris							(YM2610 sound)
+	Space Invaders DX				(YM2610 sound)
+	Silent Dragon					(YM2610 sound)
+	Sel Feena						(YM2610 sound)
 
-Other possible B-Sys games:
-???
+	Violence Fight					(YM2203 sound, 2xMSM6295 )
+	Hit The Ice						(YM2203 sound, 2xMSM6295 )
+	Master of Weapons				(YM2203 sound)
+
+	Quiz Sekai wa SHOW by shobai	(YM2610-B sound)
+	Puzzle Bobble					(YM2610-B sound, MB87078P - electronic volume control)
+	Sonic Blast Man					(YM2610-B sound)
+
+Other possible B-System games:
+	??????
 
 ***************************************************************************/
 
@@ -65,21 +72,16 @@ Other possible B-Sys games:
 #include "machine/eeprom.h"
 #include "sndhrdw/taitosnd.h"
 
-extern data16_t *taitob_fscroll;
-extern data16_t *taitob_bscroll;
+extern data16_t *b_fscroll;
+extern data16_t *b_bscroll;
 extern data16_t *b_backgroundram;
 extern data16_t *b_foregroundram;
 extern data16_t *b_textram;
 extern data16_t *b_videoram;
 extern data16_t *b_pixelram;
 
-extern size_t b_backgroundram_size;
-extern size_t b_foregroundram_size;
-extern size_t b_textram_size;
 extern size_t b_pixelram_size;
-extern size_t b_videoram_size;
-extern size_t b_paletteram_size;
-
+//extern size_t b_videoram_size;
 
 
 int  taitob_vh_start_color_order0 (void);
@@ -87,37 +89,25 @@ int  taitob_vh_start_color_order1 (void);
 int  taitob_vh_start_color_order2 (void);
 void taitob_vh_stop (void);
 
-void taitob_vh_screenrefresh_tm  (struct osd_bitmap *bitmap,int full_refresh);
-void ashura_vh_screenrefresh_tm  (struct osd_bitmap *bitmap,int full_refresh);
-void crimec_vh_screenrefresh_tm  (struct osd_bitmap *bitmap,int full_refresh);
-void tetrist_vh_screenrefresh    (struct osd_bitmap *bitmap,int full_refresh);
-void hitice_vh_screenrefresh_tm  (struct osd_bitmap *bitmap,int full_refresh);
-void rambo3_vh_screenrefresh_tm  (struct osd_bitmap *bitmap,int full_refresh);
-void puzbobb_vh_screenrefresh_tm (struct osd_bitmap *bitmap,int full_refresh);
-void qzshowby_vh_screenrefresh_tm(struct osd_bitmap *bitmap,int full_refresh);
-void masterw_vh_screenrefresh_tm (struct osd_bitmap *bitmap,int full_refresh);
-void silentd_vh_screenrefresh_tm (struct osd_bitmap *bitmap,int full_refresh);
+void taitob_vh_screenrefresh  (struct osd_bitmap *bitmap,int full_refresh);
+void ashura_vh_screenrefresh  (struct osd_bitmap *bitmap,int full_refresh);
+void crimec_vh_screenrefresh  (struct osd_bitmap *bitmap,int full_refresh);
+void tetrist_vh_screenrefresh (struct osd_bitmap *bitmap,int full_refresh);
+void masterw_vh_screenrefresh (struct osd_bitmap *bitmap,int full_refresh);
 
-WRITE16_HANDLER( taitob_text_w_tm );
-WRITE16_HANDLER( taitob_background_w_tm );
-WRITE16_HANDLER( taitob_foreground_w_tm );
-READ16_HANDLER( taitob_text_r );
-READ16_HANDLER( taitob_background_r );
-READ16_HANDLER( taitob_foreground_r );
-
-
+WRITE16_HANDLER( taitob_text_w );
+WRITE16_HANDLER( taitob_background_w );
+WRITE16_HANDLER( taitob_foreground_w );
+READ16_HANDLER ( taitob_text_r );
+READ16_HANDLER ( taitob_background_r );
+READ16_HANDLER ( taitob_foreground_r );
 
 WRITE16_HANDLER( taitob_pixelram_w );
-
 WRITE16_HANDLER( masterw_pixelram_w);
 WRITE16_HANDLER( hitice_pixelram_w );/*this doesn't look like a pixel layer*/
 
-
-READ16_HANDLER( taitob_text_video_control_r );
-WRITE16_HANDLER( taitob_text_video_control_w );
-READ16_HANDLER( taitob_video_control_r );
-WRITE16_HANDLER( taitob_video_control_w );
-
+WRITE16_HANDLER( taitob_v_control_w );
+READ16_HANDLER ( taitob_v_control_r );
 
 
 static WRITE_HANDLER( bankswitch_w )
@@ -125,7 +115,7 @@ static WRITE_HANDLER( bankswitch_w )
 	unsigned char *RAM = memory_region(REGION_CPU2);
 	int banknum = (data - 1) & 3;
 
-	cpu_setbank (2, &RAM [0x10000 + (banknum * 0x4000)]);
+	cpu_setbank (1, &RAM [0x10000 + (banknum * 0x4000)]);
 }
 
 
@@ -232,21 +222,33 @@ static int selfeena_interrupt(void)
 	return MC68000_IRQ_6;
 }
 
+void sbm_interrupt6(int x)//4
+{
+	cpu_cause_interrupt(0,MC68000_IRQ_5);
+}
+
+static int sbm_interrupt(void)//5
+{
+	timer_set(TIME_IN_CYCLES(10000,0),0,sbm_interrupt6);
+	return MC68000_IRQ_4;
+}
+
+
+
 static MEMORY_READ16_START( rastsag2_readmem )
 	{ 0x000000, 0x07ffff, MRA16_ROM },
 	{ 0x600000, 0x607fff, MRA16_RAM },			/* Main RAM */
-	{ 0x200000, 0x201fff, MRA16_RAM },	/*palette*/
+
+	{ 0x200000, 0x201fff, MRA16_RAM },			/* palette */
 
 	{ 0x400000, 0x403fff, taitob_foreground_r },
 	{ 0x404000, 0x407fff, taitob_background_r },
-	{ 0x408000, 0x408fff, taitob_text_r },		/*text ram*/
-	{ 0x409000, 0x409fff, MRA16_RAM },			/*ashura only (textram continue ?)*/
-	{ 0x410000, 0x41197f, MRA16_RAM },			/*sprite ram*/
-	{ 0x411980, 0x411fff, MRA16_RAM },			/*ashura only (spriteram continue ?)*/
-
-	{ 0x413800, 0x413bff, MRA16_RAM }, /*1st.w foreground x, 2nd.w foreground y scroll*/
-	{ 0x413c00, 0x413fff, MRA16_RAM }, /*1st.w background x, 2nd.w background y scroll*/
-	{ 0x41800e, 0x41800f, taitob_video_control_r },
+	{ 0x408000, 0x40bfff, taitob_text_r },
+	{ 0x410000, 0x41197f, MRA16_RAM },
+	{ 0x411980, 0x411fff, MRA16_RAM },
+	{ 0x413800, 0x413bff, MRA16_RAM },
+	{ 0x413c00, 0x413fff, MRA16_RAM },
+	{ 0x418000, 0x41801f, taitob_v_control_r },
 
 	{ 0xa00000, 0xa00001, input_port_3_word_r },
 	{ 0xa00002, 0xa00003, input_port_4_word_r },
@@ -262,19 +264,17 @@ static MEMORY_WRITE16_START( rastsag2_writemem )
 	{ 0x000000, 0x07ffff, MWA16_ROM },
 	{ 0x600000, 0x607fff, MWA16_RAM },	/* Main RAM */ /*ashura up to 603fff only*/
 
-	{ 0x200000, 0x201fff, paletteram16_RRRRGGGGBBBBxxxx_word_w, &paletteram16, &b_paletteram_size },
-	{ 0x400000, 0x403fff, taitob_foreground_w_tm, &b_foregroundram, &b_foregroundram_size }, /* foreground layer */
-	{ 0x404000, 0x407fff, taitob_background_w_tm, &b_backgroundram, &b_backgroundram_size }, /* background layer */
-	{ 0x408000, 0x408fff, taitob_text_w_tm, &b_textram, &b_textram_size }, /* text layer */
-	{ 0x409000, 0x409fff, MWA16_RAM }, /*ashura clears this area only*/
+	{ 0x200000, 0x201fff, paletteram16_RRRRGGGGBBBBxxxx_word_w, &paletteram16 },
 
-	{ 0x410000, 0x41197f, MWA16_RAM, &b_videoram, &b_videoram_size  },
+	{ 0x400000, 0x403fff, taitob_foreground_w, &b_foregroundram },	/* foreground layer */
+	{ 0x404000, 0x407fff, taitob_background_w, &b_backgroundram },	/* background layer */
+	{ 0x408000, 0x40bfff, taitob_text_w, &b_textram },				/* text layer */
+	{ 0x410000, 0x41197f, MWA16_RAM, &b_videoram },
 	{ 0x411980, 0x411fff, MWA16_RAM }, /*ashura clears this area only*/
+	{ 0x413800, 0x413bff, MWA16_RAM, &b_fscroll },
+	{ 0x413c00, 0x413fff, MWA16_RAM, &b_bscroll },
 
-	{ 0x413800, 0x413bff, MWA16_RAM, &taitob_fscroll }, /*1st.w foreground x scroll, 2nd.w foreground y scroll */
-	{ 0x413c00, 0x413fff, MWA16_RAM, &taitob_bscroll }, /*1st.w background x scroll, 2nd.w background y scroll */
-
-	{ 0x41800e, 0x41800f, taitob_video_control_w },
+	{ 0x418000, 0x41801f, taitob_v_control_w },
 
 	{ 0x440000, 0x47ffff, taitob_pixelram_w, &b_pixelram, &b_pixelram_size }, /* ashura(US) pixel layer*/
 
@@ -290,13 +290,14 @@ static MEMORY_READ16_START( crimec_readmem )
 	{ 0xa00000, 0xa0ffff, MRA16_RAM },	/* Main RAM */
 
 	{ 0x800000, 0x801fff, MRA16_RAM },
+
 	{ 0x400000, 0x403fff, taitob_foreground_r },
 	{ 0x404000, 0x407fff, taitob_background_r },
-	{ 0x408000, 0x408fff, taitob_text_r },
+	{ 0x408000, 0x40bfff, taitob_text_r },
 	{ 0x410000, 0x41197f, MRA16_RAM },
-
-	{ 0x413800, 0x413bff, MRA16_RAM }, /*1st.w foreground x, 2nd.w foreground y scroll*/
-	{ 0x413c00, 0x413fff, MRA16_RAM }, /*1st.w background x, 2nd.w background y scroll*/
+	{ 0x413800, 0x413bff, MRA16_RAM },
+	{ 0x413c00, 0x413fff, MRA16_RAM },
+	{ 0x418000, 0x41801f, taitob_v_control_r },
 
 	{ 0x200000, 0x200001, input_port_3_word_r },
 	{ 0x200002, 0x200003, input_port_4_word_r },
@@ -312,18 +313,14 @@ static MEMORY_WRITE16_START( crimec_writemem )
 	{ 0x000000, 0x07ffff, MWA16_ROM },
 	{ 0xa00000, 0xa0ffff, MWA16_RAM },	/* Main RAM */
 
-	{ 0x800000, 0x801fff, paletteram16_RRRRGGGGBBBBxxxx_word_w, &paletteram16, &b_paletteram_size },
-	{ 0x400000, 0x403fff, taitob_foreground_w_tm, &b_foregroundram, &b_foregroundram_size },
-	{ 0x404000, 0x407fff, taitob_background_w_tm, &b_backgroundram, &b_backgroundram_size },
-	{ 0x408000, 0x408fff, taitob_text_w_tm, &b_textram, &b_textram_size },
-	{ 0x409000, 0x40ffff, MWA16_NOP }, /* unused (just set to zero at startup), not read by the game */
-	{ 0x410000, 0x41197f, MWA16_RAM, &b_videoram, &b_videoram_size  },
-
-	{ 0x413800, 0x413bff, MWA16_RAM, &taitob_fscroll }, /*1st.w foreground x scroll, 2nd.w foreground y scroll*/
-	{ 0x413c00, 0x413fff, MWA16_RAM, &taitob_bscroll }, /*1st.w background x scroll, 2nd.w background y scroll*/
-
-	{ 0x41800e, 0x41800f, taitob_video_control_w },
-
+	{ 0x800000, 0x801fff, paletteram16_RRRRGGGGBBBBxxxx_word_w, &paletteram16 },
+	{ 0x400000, 0x403fff, taitob_foreground_w, &b_foregroundram },
+	{ 0x404000, 0x407fff, taitob_background_w, &b_backgroundram },
+	{ 0x408000, 0x40bfff, taitob_text_w, &b_textram },
+	{ 0x410000, 0x41197f, MWA16_RAM, &b_videoram },
+	{ 0x413800, 0x413bff, MWA16_RAM, &b_fscroll },
+	{ 0x413c00, 0x413fff, MWA16_RAM, &b_bscroll },
+	{ 0x418000, 0x41801f, taitob_v_control_w },
 	{ 0x440000, 0x47ffff, taitob_pixelram_w, &b_pixelram, &b_pixelram_size }, /* pixel layer */
 
 	{ 0x200000, 0x20000f, MWA16_NOP }, /**/
@@ -340,14 +337,14 @@ static MEMORY_READ16_START( tetrist_readmem )
 	{ 0xa00000, 0xa01fff, MRA16_RAM }, /*palette*/
 //	{ 0x400000, 0x403fff, taitob_foreground_r },
 //	{ 0x404000, 0x407fff, taitob_background_r },
-//	{ 0x408000, 0x408fff, taitob_text_r }, /*text ram*/
-	{ 0x400000, 0x408fff, MRA16_RAM },
+//	{ 0x408000, 0x40bfff, taitob_text_r },
+	{ 0x400000, 0x40bfff, MRA16_RAM },
+	{ 0x410000, 0x41197f, MRA16_RAM },
+	{ 0x413800, 0x413bff, MRA16_RAM },
+	{ 0x413c00, 0x413fff, MRA16_RAM },
+	{ 0x418000, 0x41801f, taitob_v_control_r },
 
 	{ 0x440000, 0x47ffff, MRA16_RAM },	/* Pixel Layer */
-	{ 0x410000, 0x41197f, MRA16_RAM },
-
-	{ 0x413800, 0x413bff, MRA16_RAM }, /*1st.w foreground x, 2nd.w foreground y scroll*/
-	{ 0x413c00, 0x413fff, MRA16_RAM }, /*1st.w background x, 2nd.w background y scroll*/
 
 	{ 0x600000, 0x600001, input_port_3_word_r },
 	{ 0x600002, 0x600003, input_port_4_word_r },
@@ -363,18 +360,16 @@ static MEMORY_WRITE16_START( tetrist_writemem )
 	{ 0x000000, 0x07ffff, MWA16_ROM },
 	{ 0x800000, 0x807fff, MWA16_RAM },	/* Main RAM */
 
-	{ 0xa00000, 0xa01fff, paletteram16_RRRRGGGGBBBBxxxx_word_w, &paletteram16, &b_paletteram_size },
-//	{ 0x400000, 0x403fff, taitob_foreground_w_tm, &b_foregroundram, &b_foregroundram_size },
-//	{ 0x404000, 0x407fff, taitob_background_w_tm, &b_backgroundram, &b_backgroundram_size },
-//	{ 0x408000, 0x408fff, taitob_text_w_tm, &b_textram, &b_textram_size },
-	{ 0x400000, 0x408fff, MWA16_RAM },
+	{ 0xa00000, 0xa01fff, paletteram16_RRRRGGGGBBBBxxxx_word_w, &paletteram16 },
+//	{ 0x400000, 0x403fff, taitob_foreground_w, &b_foregroundram },
+//	{ 0x404000, 0x407fff, taitob_background_w, &b_backgroundram },
+//	{ 0x408000, 0x40bfff, taitob_text_w, &b_textram },
+	{ 0x400000, 0x40bfff, MWA16_RAM },
+	{ 0x410000, 0x41197f, MWA16_RAM, &b_videoram },
+	{ 0x413800, 0x413bff, MWA16_RAM, &b_fscroll },
+	{ 0x413c00, 0x413fff, MWA16_RAM, &b_bscroll },
+	{ 0x418000, 0x41801f, taitob_v_control_w },
 	{ 0x440000, 0x47ffff, taitob_pixelram_w, &b_pixelram, &b_pixelram_size }, /* pixel layer */
-	{ 0x410000, 0x41197f, MWA16_RAM, &b_videoram, &b_videoram_size  },
-
-	{ 0x413800, 0x413bff, MWA16_RAM, &taitob_fscroll }, /*1st.w foreground x scroll, 2nd.w foreground y scroll*/
-	{ 0x413c00, 0x413fff, MWA16_RAM, &taitob_bscroll }, /*1st.w background x scroll, 2nd.w background y scroll*/
-
-	{ 0x41800e, 0x41800f, taitob_video_control_w },
 
 	{ 0x600000, 0x60000f, MWA16_NOP }, // ??
 
@@ -388,15 +383,16 @@ static MEMORY_READ16_START( hitice_readmem )
 	{ 0x800000, 0x803fff, MRA16_RAM },	/* Main RAM */
 
 	{ 0xa00000, 0xa01fff, MRA16_RAM },
+
 	{ 0x400000, 0x403fff, taitob_foreground_r },
 	{ 0x404000, 0x407fff, taitob_background_r },
 	{ 0x408000, 0x40bfff, taitob_text_r },
-	{ 0xb00000, 0xb7ffff, MRA16_RAM },	/* Pixel Layer ???????????? */
-	{ 0x410000, 0x411fff /*97f*/, MRA16_RAM },
-	{ 0x413800, 0x413bff, MRA16_RAM }, /*1st.w foreground x, 2nd.w foreground y scroll*/
-	{ 0x413c00, 0x413fff, MRA16_RAM }, /*1st.w background x, 2nd.w background y scroll*/
+	{ 0x410000, 0x411fff, MRA16_RAM },
+	{ 0x413800, 0x413bff, MRA16_RAM },
+	{ 0x413c00, 0x413fff, MRA16_RAM },
+	{ 0x418000, 0x41801f, taitob_v_control_r },
 
-	{ 0x41800e, 0x41800f, taitob_video_control_r },
+	{ 0xb00000, 0xb7ffff, MRA16_RAM },	/* Pixel Layer ???????????? */
 
 	{ 0x600000, 0x600001, input_port_3_word_r },
 	{ 0x600002, 0x600003, input_port_4_word_r },
@@ -413,19 +409,15 @@ static MEMORY_WRITE16_START( hitice_writemem )
 	{ 0x000000, 0x05ffff, MWA16_ROM },
 	{ 0x800000, 0x803fff, MWA16_RAM },	/* Main RAM */
 
-	{ 0xa00000, 0xa01fff, paletteram16_RRRRGGGGBBBBxxxx_word_w, &paletteram16, &b_paletteram_size },
-	{ 0x400000, 0x403fff, taitob_foreground_w_tm, &b_foregroundram, &b_foregroundram_size },
-	{ 0x404000, 0x407fff, taitob_background_w_tm, &b_backgroundram, &b_backgroundram_size },
-	{ 0x408000, 0x40bfff, taitob_text_w_tm, &b_textram, &b_textram_size },
-	{ 0x410000, 0x411fff /*97f*/, MWA16_RAM, &b_videoram, &b_videoram_size  },
+	{ 0xa00000, 0xa01fff, paletteram16_RRRRGGGGBBBBxxxx_word_w, &paletteram16 },
 
-	//{ 0x411980, 0x411fff, MWA16_RAM }, /*ashura and hitice*/
-
-	{ 0x413800, 0x413bff, MWA16_RAM, &taitob_fscroll }, /*1st.w foreground x scroll, 2nd.w foreground y scroll*/
-	{ 0x413c00, 0x413fff, MWA16_RAM, &taitob_bscroll }, /*1st.w background x scroll, 2nd.w background y scroll*/
-
-	{ 0x41800c, 0x41800d, taitob_text_video_control_w },
-	{ 0x41800e, 0x41800f, taitob_video_control_w },
+	{ 0x400000, 0x403fff, taitob_foreground_w, &b_foregroundram },
+	{ 0x404000, 0x407fff, taitob_background_w, &b_backgroundram },
+	{ 0x408000, 0x40bfff, taitob_text_w, &b_textram },
+	{ 0x410000, 0x411fff, MWA16_RAM, &b_videoram },
+	{ 0x413800, 0x413bff, MWA16_RAM, &b_fscroll },
+	{ 0x413c00, 0x413fff, MWA16_RAM, &b_bscroll },
+	{ 0x418000, 0x41801f, taitob_v_control_w },
 
 	{ 0xb00000, 0xb7ffff, hitice_pixelram_w, &b_pixelram, &b_pixelram_size }, /* pixel layer ????????*/
 
@@ -437,35 +429,35 @@ MEMORY_END
 
 READ16_HANDLER( tracky1_hi_r )
 {
-	return input_port_5_word_r(0);
+	return input_port_5_word_r(0,0);
 }
 READ16_HANDLER( tracky1_lo_r )
 {
-	return (input_port_5_word_r(0) & 0xff) <<8;
+	return (input_port_5_word_r(0,0) & 0xff) <<8;
 }
 READ16_HANDLER( trackx1_hi_r )
 {
-	return input_port_6_word_r(0);
+	return input_port_6_word_r(0,0);
 }
 READ16_HANDLER( trackx1_lo_r )
 {
-	return (input_port_6_word_r(0) & 0xff) <<8;
+	return (input_port_6_word_r(0,0) & 0xff) <<8;
 }
 READ16_HANDLER( tracky2_hi_r )
 {
-	return input_port_7_word_r(0);
+	return input_port_7_word_r(0,0);
 }
 READ16_HANDLER( tracky2_lo_r )
 {
-	return (input_port_7_word_r(0) & 0xff) <<8;
+	return (input_port_7_word_r(0,0) & 0xff) <<8;
 }
 READ16_HANDLER( trackx2_hi_r )
 {
-	return input_port_8_word_r(0);
+	return input_port_8_word_r(0,0);
 }
 READ16_HANDLER( trackx2_lo_r )
 {
-	return (input_port_8_word_r(0) & 0xff) <<8;
+	return (input_port_8_word_r(0,0) & 0xff) <<8;
 }
 
 static MEMORY_READ16_START( rambo3_readmem )
@@ -473,15 +465,14 @@ static MEMORY_READ16_START( rambo3_readmem )
 	{ 0x800000, 0x803fff, MRA16_RAM },	/* Main RAM */
 
 	{ 0xa00000, 0xa01fff, MRA16_RAM },
+
 	{ 0x400000, 0x403fff, taitob_foreground_r },
 	{ 0x404000, 0x407fff, taitob_background_r },
-	{ 0x408000, 0x40ffff, taitob_text_r },
+	{ 0x408000, 0x40bfff, taitob_text_r },
 	{ 0x410000, 0x411fff /*97f*/, MRA16_RAM },
-	{ 0x413800, 0x413bff, MRA16_RAM }, /*1st.w foreground x, 2nd.w foreground y scroll*/
-	{ 0x413c00, 0x413fff, MRA16_RAM }, /*1st.w background x, 2nd.w background y scroll*/
-
-	{ 0x41800c, 0x41800d, taitob_text_video_control_r },
-	{ 0x41800e, 0x41800f, taitob_video_control_r },
+	{ 0x413800, 0x413bff, MRA16_RAM },
+	{ 0x413c00, 0x413fff, MRA16_RAM },
+	{ 0x418000, 0x41801f, taitob_v_control_r },
 
 	{ 0x600000, 0x600001, input_port_3_word_r },
 	{ 0x600002, 0x600003, input_port_4_word_r },
@@ -506,16 +497,15 @@ static MEMORY_WRITE16_START( rambo3_writemem )
 	{ 0x000000, 0x07ffff, MWA16_ROM },
 	{ 0x800000, 0x803fff, MWA16_RAM },	/* Main RAM */
 
-	{ 0xa00000, 0xa01fff, paletteram16_RRRRGGGGBBBBxxxx_word_w, &paletteram16, &b_paletteram_size },
-	{ 0x400000, 0x403fff, taitob_foreground_w_tm, &b_foregroundram, &b_foregroundram_size },
-	{ 0x404000, 0x407fff, taitob_background_w_tm, &b_backgroundram, &b_backgroundram_size },
-	{ 0x408000, 0x40ffff, taitob_text_w_tm, &b_textram, &b_textram_size },
-	{ 0x410000, 0x411fff /*97f*/, MWA16_RAM, &b_videoram, &b_videoram_size  },
-	{ 0x413800, 0x413bff, MWA16_RAM, &taitob_fscroll }, /*1st.w foreground x scroll, 2nd.w foreground y scroll*/
-	{ 0x413c00, 0x413fff, MWA16_RAM, &taitob_bscroll }, /*1st.w background x scroll, 2nd.w background y scroll*/
+	{ 0xa00000, 0xa01fff, paletteram16_RRRRGGGGBBBBxxxx_word_w, &paletteram16 },
 
-	{ 0x41800c, 0x41800d, taitob_text_video_control_w },
-	{ 0x41800e, 0x41800f, taitob_video_control_w },
+	{ 0x400000, 0x403fff, taitob_foreground_w, &b_foregroundram },
+	{ 0x404000, 0x407fff, taitob_background_w, &b_backgroundram },
+	{ 0x408000, 0x40bfff, taitob_text_w, &b_textram },
+	{ 0x410000, 0x411fff /*97f*/, MWA16_RAM, &b_videoram },
+	{ 0x413800, 0x413bff, MWA16_RAM, &b_fscroll },
+	{ 0x413c00, 0x413fff, MWA16_RAM, &b_bscroll },
+	{ 0x418000, 0x41801f, taitob_v_control_w },
 
 	{ 0x600000, 0x60000f, MWA16_NOP }, // ??
 
@@ -582,7 +572,7 @@ static READ16_HANDLER( eeprom_r )
 	int res;
 
 	res = (EEPROM_read_bit() & 0x01)<<8;
-	res |= input_port_4_word_r(0) & 0xfe00; /* coin inputs */
+	res |= input_port_4_word_r(0,0) & 0xfe00; /* coin inputs */
 
 	return res;
 }
@@ -636,12 +626,14 @@ static MEMORY_READ16_START( puzbobb_readmem )
 	{ 0x900000, 0x90ffff, MRA16_RAM },	/* Main RAM */
 
 	{ 0x800000, 0x801fff, MRA16_RAM },
+
 	{ 0x400000, 0x403fff, taitob_foreground_r },
 	{ 0x404000, 0x407fff, taitob_background_r },
 	{ 0x408000, 0x40bfff, taitob_text_r },
 	{ 0x410000, 0x41197f, MRA16_RAM },
-	{ 0x413800, 0x413bff, MRA16_RAM }, /*1st.w foreground x, 2nd.w foreground y scroll*/
-	{ 0x413c00, 0x413fff, MRA16_RAM }, /*1st.w background x, 2nd.w background y scroll*/
+	{ 0x413800, 0x413bff, MRA16_RAM },
+	{ 0x413c00, 0x413fff, MRA16_RAM },
+	{ 0x418000, 0x41801f, taitob_v_control_r },
 
 	{ 0x500010, 0x50002f, p_read }, //????
 
@@ -660,17 +652,15 @@ static MEMORY_WRITE16_START( puzbobb_writemem )
 	{ 0x000000, 0x07ffff, MWA16_ROM },
 	{ 0x900000, 0x90ffff, MWA16_RAM },	/* Main RAM */
 
-	{ 0x800000, 0x801fff, taitob_paletteram16_RRRRGGGGBBBBRGBx_word_w, &paletteram16, &b_paletteram_size },
-	{ 0x400000, 0x403fff, taitob_foreground_w_tm, &b_foregroundram, &b_foregroundram_size },
-	{ 0x404000, 0x407fff, taitob_background_w_tm, &b_backgroundram, &b_backgroundram_size },
-	{ 0x408000, 0x40bfff, taitob_text_w_tm, &b_textram, &b_textram_size },
-	{ 0x410000, 0x41197f, MWA16_RAM, &b_videoram, &b_videoram_size  },
-	{ 0x413800, 0x413bff, MWA16_RAM, &taitob_fscroll }, /*1st.w foreground x scroll, 2nd.w foreground y scroll*/
-	{ 0x413c00, 0x413fff, MWA16_RAM, &taitob_bscroll }, /*1st.w background x scroll, 2nd.w background y scroll*/
+	{ 0x800000, 0x801fff, taitob_paletteram16_RRRRGGGGBBBBRGBx_word_w, &paletteram16 },
 
-	{ 0x418000, 0x41800d, MWA16_NOP }, //temporarily disabled
-	{ 0x41800e, 0x41800f, taitob_video_control_w },
-	{ 0x418014, 0x418017, MWA16_NOP }, //temporarily disabled
+	{ 0x400000, 0x403fff, taitob_foreground_w, &b_foregroundram },
+	{ 0x404000, 0x407fff, taitob_background_w, &b_backgroundram },
+	{ 0x408000, 0x40bfff, taitob_text_w, &b_textram },
+	{ 0x410000, 0x41197f, MWA16_RAM, &b_videoram },
+	{ 0x413800, 0x413bff, MWA16_RAM, &b_fscroll },
+	{ 0x413c00, 0x413fff, MWA16_RAM, &b_bscroll },
+	{ 0x418000, 0x41801f, taitob_v_control_w },
 
 	{ 0x500028, 0x50002f, p_write }, //?????
 
@@ -687,15 +677,14 @@ static MEMORY_READ16_START( spacedx_readmem )
 	{ 0x900000, 0x90ffff, MRA16_RAM },	/* Main RAM */
 
 	{ 0x800000, 0x801fff, MRA16_RAM },
+
 	{ 0x400000, 0x403fff, taitob_foreground_r },
 	{ 0x404000, 0x407fff, taitob_background_r },
-	{ 0x408000, 0x40ffff, taitob_text_r },
+	{ 0x408000, 0x40bfff, taitob_text_r },
 	{ 0x410000, 0x41197f, MRA16_RAM },
-	{ 0x413800, 0x413bff, MRA16_RAM }, /*1st.w foreground x, 2nd.w foreground y scroll*/
-	{ 0x413c00, 0x413fff, MRA16_RAM }, /*1st.w background x, 2nd.w background y scroll*/
-
-	{ 0x41800c, 0x41800d, taitob_text_video_control_r },
-	{ 0x41800e, 0x41800f, taitob_video_control_r },
+	{ 0x413800, 0x413bff, MRA16_RAM },
+	{ 0x413c00, 0x413fff, MRA16_RAM },
+	{ 0x418000, 0x41801f, taitob_v_control_r },
 	{ 0x440000, 0x47ffff, MRA16_RAM }, /* pixel layer */
 
 	{ 0x500010, 0x500025, p_read }, //????
@@ -719,18 +708,15 @@ static MEMORY_WRITE16_START( spacedx_writemem )
 	{ 0x000000, 0x07ffff, MWA16_ROM },
 	{ 0x900000, 0x90ffff, MWA16_RAM },	/* Main RAM */
 
-	{ 0x800000, 0x801fff, taitob_paletteram16_RRRRGGGGBBBBRGBx_word_w, &paletteram16, &b_paletteram_size },
-	{ 0x400000, 0x403fff, taitob_foreground_w_tm, &b_foregroundram, &b_foregroundram_size },
-	{ 0x404000, 0x407fff, taitob_background_w_tm, &b_backgroundram, &b_backgroundram_size },
-	{ 0x408000, 0x40ffff, taitob_text_w_tm, &b_textram, &b_textram_size },
-	{ 0x410000, 0x41197f, MWA16_RAM, &b_videoram, &b_videoram_size  },
-	{ 0x413800, 0x413bff, MWA16_RAM, &taitob_fscroll }, /*1st.w foreground x scroll, 2nd.w foreground y scroll*/
-	{ 0x413c00, 0x413fff, MWA16_RAM, &taitob_bscroll }, /*1st.w background x scroll, 2nd.w background y scroll*/
+	{ 0x800000, 0x801fff, taitob_paletteram16_RRRRGGGGBBBBRGBx_word_w, &paletteram16 },
 
-	{ 0x41800c, 0x41800d, taitob_text_video_control_w },
-	{ 0x41800e, 0x41800f, taitob_video_control_w },
-	{ 0x418014, 0x418017, MWA16_NOP }, //temporarily disabled
-
+	{ 0x400000, 0x403fff, taitob_foreground_w, &b_foregroundram },
+	{ 0x404000, 0x407fff, taitob_background_w, &b_backgroundram },
+	{ 0x408000, 0x40bfff, taitob_text_w, &b_textram },
+	{ 0x410000, 0x41197f, MWA16_RAM, &b_videoram },
+	{ 0x413800, 0x413bff, MWA16_RAM, &b_fscroll },
+	{ 0x413c00, 0x413fff, MWA16_RAM, &b_bscroll },
+	{ 0x418000, 0x41801f, taitob_v_control_w },
 	{ 0x440000, 0x47ffff, taitob_pixelram_w, &b_pixelram, &b_pixelram_size }, /* pixel layer */
 
 	{ 0x500028, 0x50002f, p_write }, //?????
@@ -750,12 +736,14 @@ static MEMORY_READ16_START( qzshowby_readmem )
 	{ 0x900000, 0x90ffff, MRA16_RAM },	/* Main RAM */
 
 	{ 0x800000, 0x801fff, MRA16_RAM },
+
 	{ 0x400000, 0x403fff, taitob_foreground_r },
 	{ 0x404000, 0x407fff, taitob_background_r },
 	{ 0x408000, 0x40bfff, taitob_text_r },
 	{ 0x410000, 0x41197f, MRA16_RAM },
-	{ 0x413800, 0x413bff, MRA16_RAM }, /*1st.w foreground x, 2nd.w foreground y scroll*/
-	{ 0x413c00, 0x413fff, MRA16_RAM }, /*1st.w background x, 2nd.w background y scroll*/
+	{ 0x413800, 0x413bff, MRA16_RAM },
+	{ 0x413c00, 0x413fff, MRA16_RAM },
+	{ 0x418000, 0x41801f, taitob_v_control_r },
 
 	{ 0x200000, 0x200001, input_port_3_word_r },
 	{ 0x200002, 0x200003, eeprom_r },	/*EEP bit 8, bits9-15 input_port_4 */
@@ -774,17 +762,15 @@ static MEMORY_WRITE16_START( qzshowby_writemem )
 	{ 0x000000, 0x0fffff, MWA16_ROM },
 	{ 0x900000, 0x90ffff, MWA16_RAM },	/* Main RAM */
 
-	{ 0x800000, 0x801fff, taitob_paletteram16_RRRRGGGGBBBBRGBx_word_w, &paletteram16, &b_paletteram_size },
-	{ 0x400000, 0x403fff, taitob_foreground_w_tm, &b_foregroundram, &b_foregroundram_size },
-	{ 0x404000, 0x407fff, taitob_background_w_tm, &b_backgroundram, &b_backgroundram_size },
-	{ 0x408000, 0x40bfff, taitob_text_w_tm, &b_textram, &b_textram_size },
-	{ 0x410000, 0x41197f, MWA16_RAM, &b_videoram, &b_videoram_size  },
-	{ 0x413800, 0x413bff, MWA16_RAM, &taitob_fscroll }, /*1st.w foreground x scroll, 2nd.w foreground y scroll*/
-	{ 0x413c00, 0x413fff, MWA16_RAM, &taitob_bscroll }, /*1st.w background x scroll, 2nd.w background y scroll*/
+	{ 0x800000, 0x801fff, taitob_paletteram16_RRRRGGGGBBBBRGBx_word_w, &paletteram16 },
 
-	{ 0x418000, 0x41800d, MWA16_NOP }, //temporarily disabled
-	{ 0x41800e, 0x41800f, taitob_video_control_w },
-	{ 0x418014, 0x418017, MWA16_NOP }, //temporarily disabled
+	{ 0x400000, 0x403fff, taitob_foreground_w, &b_foregroundram },
+	{ 0x404000, 0x407fff, taitob_background_w, &b_backgroundram },
+	{ 0x408000, 0x40bfff, taitob_text_w, &b_textram },
+	{ 0x410000, 0x41197f, MWA16_RAM, &b_videoram },
+	{ 0x413800, 0x413bff, MWA16_RAM, &b_fscroll },
+	{ 0x413c00, 0x413fff, MWA16_RAM, &b_bscroll },
+	{ 0x418000, 0x41801f, taitob_v_control_w },
 
 //{ 0x200028, 0x20002f, p_write }, //?????
 
@@ -801,14 +787,14 @@ static MEMORY_READ16_START( viofight_readmem )
 	{ 0xa00000, 0xa03fff, MRA16_RAM },	/* Main RAM */
 
 	{ 0x600000, 0x601fff, MRA16_RAM },
+
 	{ 0x400000, 0x403fff, taitob_foreground_r },
 	{ 0x404000, 0x407fff, taitob_background_r },
-	{ 0x408000, 0x40ffff, taitob_text_r },
+	{ 0x408000, 0x40bfff, taitob_text_r },
 	{ 0x410000, 0x41197f, MRA16_RAM },
-
-	{ 0x413800, 0x413bff, MRA16_RAM }, /*1st.w foreground x, 2nd.w foreground y scroll*/
-	{ 0x413c00, 0x413fff, MRA16_RAM }, /*1st.w background x, 2nd.w background y scroll*/
-	{ 0x41800e, 0x41800f, taitob_video_control_r },
+	{ 0x413800, 0x413bff, MRA16_RAM },
+	{ 0x413c00, 0x413fff, MRA16_RAM },
+	{ 0x418000, 0x41801f, taitob_v_control_r },
 
 	{ 0x800000, 0x800001, input_port_3_word_r },
 	{ 0x800002, 0x800003, input_port_4_word_r },
@@ -824,18 +810,14 @@ static MEMORY_WRITE16_START( viofight_writemem )
 	{ 0x000000, 0x07ffff, MWA16_ROM },
 	{ 0xa00000, 0xa03fff, MWA16_RAM },	/* Main RAM */
 
-	{ 0x600000, 0x601fff, paletteram16_RRRRGGGGBBBBxxxx_word_w, &paletteram16, &b_paletteram_size },
-	{ 0x400000, 0x403fff, taitob_foreground_w_tm, &b_foregroundram, &b_foregroundram_size },
-	{ 0x404000, 0x407fff, taitob_background_w_tm, &b_backgroundram, &b_backgroundram_size },
-	{ 0x408000, 0x40ffff, taitob_text_w_tm, &b_textram, &b_textram_size },
-	{ 0x410000, 0x41197f, MWA16_RAM, &b_videoram, &b_videoram_size  },
-
-	{ 0x413800, 0x413bff, MWA16_RAM, &taitob_fscroll }, /*1st.w foreground x scroll, 2nd.w foreground y scroll*/
-	{ 0x413c00, 0x413fff, MWA16_RAM, &taitob_bscroll }, /*1st.w background x scroll, 2nd.w background y scroll*/
-
-	{ 0x41800c, 0x41800d, taitob_text_video_control_w },
-	{ 0x41800e, 0x41800f, taitob_video_control_w },
-
+	{ 0x600000, 0x601fff, paletteram16_RRRRGGGGBBBBxxxx_word_w, &paletteram16 },
+	{ 0x400000, 0x403fff, taitob_foreground_w, &b_foregroundram },
+	{ 0x404000, 0x407fff, taitob_background_w, &b_backgroundram },
+	{ 0x408000, 0x40bfff, taitob_text_w, &b_textram },
+	{ 0x410000, 0x41197f, MWA16_RAM, &b_videoram },
+	{ 0x413800, 0x413bff, MWA16_RAM, &b_fscroll },
+	{ 0x413c00, 0x413fff, MWA16_RAM, &b_bscroll },
+	{ 0x418000, 0x41801f, taitob_v_control_w },
 	//{ 0x440000, 0x47ffff, taitob_pixelram_w, &b_pixelram }, /* pixel layer */
 
 	{ 0x800000, 0x80000f, MWA16_NOP }, /**/
@@ -860,19 +842,19 @@ static READ16_HANDLER( taitob_input_mux_r )
    	switch (device_no)
 	{
 		case 0x00:
-			return input_port_3_word_r(0); /*DSW A*/
+			return input_port_3_word_r(0,mem_mask); /*DSW A*/
 		case 0x01:
-			return input_port_4_word_r(0); /*DSW B*/
+			return input_port_4_word_r(0,mem_mask); /*DSW B*/
 		case 0x02:
-			return input_port_0_word_r(0); /*player 1*/
+			return input_port_0_word_r(0,mem_mask); /*player 1*/
 		case 0x03:
-			return input_port_1_word_r(0); /*player 2*/
+			return input_port_1_word_r(0,mem_mask); /*player 2*/
 		case 0x04:
         case 0x05:
         case 0x06:
              return rand()&0xffff;
         case 0x07:
-			return input_port_2_word_r(0); /*tilt, coins*/
+			return input_port_2_word_r(0,mem_mask); /*tilt, coins*/
 		default:
             logerror("WARNING: mow read input offs=%2x PC=%08x\n", offset, cpu_get_pc());
 			return ~0;
@@ -885,21 +867,19 @@ static MEMORY_READ16_START( masterw_readmem )
 	{ 0x200000, 0x203fff, MRA16_RAM },			/* Main RAM */
 
 	{ 0x600000, 0x6007ff, MRA16_RAM },	/*palette*/
+
 	{ 0x400000, 0x403fff, taitob_foreground_r },
 	{ 0x404000, 0x407fff, taitob_background_r },
-	{ 0x408000, 0x408fff, taitob_text_r },		/*text ram*/
-	{ 0x409000, 0x40bfff, MRA16_RAM },			/*ashura only (textram continue ?)*/
-
+	{ 0x408000, 0x40bfff, taitob_text_r },
 	{ 0x40c000, 0x40ffff, MRA16_RAM },	/* Pixel Layer ???*/
-	{ 0x410000, 0x41197f, MRA16_RAM },			/*sprite ram*/
-	{ 0x411980, 0x411fff, MRA16_RAM },			/*ashura only (spriteram continue ?)*/
-
-	{ 0x413800, 0x413bff, MRA16_RAM }, /*1st.w foreground x, 2nd.w foreground y scroll*/
-	{ 0x413c00, 0x413fff, MRA16_RAM }, /*1st.w background x, 2nd.w background y scroll*/
-	{ 0x41800c, 0x41800d, taitob_text_video_control_r },
-	{ 0x41800e, 0x41800f, taitob_video_control_r },
+	{ 0x410000, 0x41197f, MRA16_RAM },
+//	{ 0x411980, 0x411fff, MRA16_RAM },			/*ashura only (spriteram continue ?)*/
+	{ 0x413800, 0x413bff, MRA16_RAM },
+	{ 0x413c00, 0x413fff, MRA16_RAM },
+	{ 0x418000, 0x41801f, taitob_v_control_r },
 
 	{ 0x800000, 0x800001, taitob_input_mux_r },	/* DSW A/B, player inputs*/
+//	{ 0x800002, 0x800003, MRA16_RAM }, /*unkown location*/
 
 	{ 0xa00000, 0xa00001, MRA16_NOP },
 	{ 0xa00002, 0xa00003, taitosound_comm16_msb_r },
@@ -908,21 +888,21 @@ MEMORY_END
 
 static MEMORY_WRITE16_START( masterw_writemem )
 	{ 0x000000, 0x07ffff, MWA16_ROM },
-	{ 0x200000, 0x203fff, MWA16_RAM },	/* Main RAM */ /*ashura up to 603fff only*/
+	{ 0x200000, 0x203fff, MWA16_RAM },	/* Main RAM */
 
-	{ 0x600000, 0x6007ff, paletteram16_RRRRGGGGBBBBxxxx_word_w, &paletteram16, &b_paletteram_size },
-	{ 0x400000, 0x403fff, taitob_foreground_w_tm, &b_foregroundram, &b_foregroundram_size }, /* foreground layer */
-	{ 0x404000, 0x407fff, taitob_background_w_tm, &b_backgroundram, &b_backgroundram_size }, /* background layer */
-	{ 0x408000, 0x408fff, taitob_text_w_tm, &b_textram, &b_textram_size }, /* text layer */
-{ 0x409000, 0x40bfff, MWA16_RAM }, /*ashura clears this area only*/
+	{ 0x600000, 0x6007ff, paletteram16_RRRRGGGGBBBBxxxx_word_w, &paletteram16 },
+
+	{ 0x400000, 0x403fff, taitob_foreground_w, &b_foregroundram },
+	{ 0x404000, 0x407fff, taitob_background_w, &b_backgroundram },
+	{ 0x408000, 0x40bfff, taitob_text_w, &b_textram },
 	{ 0x40c000, 0x40ffff, masterw_pixelram_w, &b_pixelram, &b_pixelram_size },	/* Pixel Layer ???*/
-	{ 0x410000, 0x41197f, MWA16_RAM, &b_videoram, &b_videoram_size  },
-	{ 0x411980, 0x411fff, MWA16_RAM }, /*ashura clears this area only*/
-	{ 0x413800, 0x413bff, MWA16_RAM, &taitob_fscroll }, /*1st.w foreground x scroll, 2nd.w foreground y scroll */
-	{ 0x413c00, 0x413fff, MWA16_RAM, &taitob_bscroll }, /*1st.w background x scroll, 2nd.w background y scroll */
-	{ 0x41800c, 0x41800d, taitob_text_video_control_w },
-	{ 0x41800e, 0x41800f, taitob_video_control_w },
+	{ 0x410000, 0x41197f, MWA16_RAM, &b_videoram },
+//	{ 0x411980, 0x411fff, MWA16_RAM }, /*ashura clears this area only*/
+	{ 0x413800, 0x413bff, MWA16_RAM, &b_fscroll },
+	{ 0x413c00, 0x413fff, MWA16_RAM, &b_bscroll },
+	{ 0x418000, 0x41801f, taitob_v_control_w },
 
+//	{ 0x800000, 0x800001, MWA16_RAM }, /*unknown location*/
 	{ 0x800002, 0x800003, taitob_input_mux_w },
 
 	{ 0xa00000, 0xa00001, taitosound_port16_msb_w },
@@ -935,18 +915,16 @@ static MEMORY_READ16_START( silentd_readmem )
 	{ 0x400000, 0x403fff, MRA16_RAM },	/* Main RAM */
 
 	{ 0x300000, 0x301fff, MRA16_RAM },
+
 	{ 0x500000, 0x503fff, taitob_foreground_r },
 	{ 0x504000, 0x507fff, taitob_background_r },
 	{ 0x508000, 0x50bfff, taitob_text_r },
-	{ 0x50c000, 0x50ffff, MRA16_RAM }, //????
-	{ 0x510000, 0x511fff /*97f*/, MRA16_RAM },
+	{ 0x50c000, 0x50ffff, MRA16_RAM }, //needed for attract mode to work (used as a temporary ram)
+	{ 0x510000, 0x511fff, MRA16_RAM },
 	{ 0x512000, 0x5137ff, MRA16_RAM },
-
-	{ 0x513800, 0x513bff, MRA16_RAM }, /*1st.w foreground x, 2nd.w foreground y scroll*/
-	{ 0x513c00, 0x513fff, MRA16_RAM }, /*1st.w background x, 2nd.w background y scroll*/
-
-	{ 0x51800c, 0x51800d, taitob_text_video_control_r },
-	{ 0x51800e, 0x51800f, taitob_video_control_r },
+	{ 0x513800, 0x513bff, MRA16_RAM },
+	{ 0x513c00, 0x513fff, MRA16_RAM },
+	{ 0x518000, 0x51801f, taitob_v_control_r },
 
 	{ 0x200000, 0x200001, input_port_3_word_r },
 	{ 0x200002, 0x200003, input_port_4_word_r },
@@ -966,19 +944,17 @@ static MEMORY_WRITE16_START( silentd_writemem )
 	{ 0x000000, 0x07ffff, MWA16_ROM },
 	{ 0x400000, 0x403fff, MWA16_RAM },	/* Main RAM */
 
-	{ 0x300000, 0x301fff, taitob_paletteram16_RRRRGGGGBBBBRGBx_word_w, &paletteram16, &b_paletteram_size },
-	{ 0x500000, 0x503fff, taitob_foreground_w_tm, &b_foregroundram, &b_foregroundram_size },
-	{ 0x504000, 0x507fff, taitob_background_w_tm, &b_backgroundram, &b_backgroundram_size },
-	{ 0x508000, 0x50bfff, taitob_text_w_tm, &b_textram, &b_textram_size },
-	{ 0x50c000, 0x50ffff, MWA16_RAM }, //????
-	{ 0x510000, 0x511fff /*97f*/, MWA16_RAM, &b_videoram, &b_videoram_size  },
+	{ 0x300000, 0x301fff, taitob_paletteram16_RRRRGGGGBBBBRGBx_word_w, &paletteram16 },
+
+	{ 0x500000, 0x503fff, taitob_foreground_w, &b_foregroundram },
+	{ 0x504000, 0x507fff, taitob_background_w, &b_backgroundram },
+	{ 0x508000, 0x50bfff, taitob_text_w, &b_textram },
+	{ 0x50c000, 0x50ffff, MWA16_RAM },
+	{ 0x510000, 0x511fff, MWA16_RAM, &b_videoram },
 	{ 0x512000, 0x5137ff, MWA16_RAM },
-
-	{ 0x513800, 0x513bff, MWA16_RAM, &taitob_fscroll }, /*1st.w foreground x scroll, 2nd.w foreground y scroll*/
-	{ 0x513c00, 0x513fff, MWA16_RAM, &taitob_bscroll }, /*1st.w background x scroll, 2nd.w background y scroll*/
-
-	{ 0x51800c, 0x51800d, taitob_text_video_control_w },
-	{ 0x51800e, 0x51800f, taitob_video_control_w },
+	{ 0x513800, 0x513bff, MWA16_RAM, &b_fscroll },
+	{ 0x513c00, 0x513fff, MWA16_RAM, &b_bscroll },
+	{ 0x518000, 0x51801f, taitob_v_control_w },
 
 	{ 0x200000, 0x20000f, MWA16_NOP }, // ??
 	{ 0x240000, 0x240001, MWA16_NOP }, // ??
@@ -992,17 +968,15 @@ static MEMORY_READ16_START( selfeena_readmem )
 	{ 0x100000, 0x103fff, MRA16_RAM },	/* Main RAM */
 
 	{ 0x300000, 0x301fff, MRA16_RAM },
+
 	{ 0x200000, 0x203fff, taitob_foreground_r },
 	{ 0x204000, 0x207fff, taitob_background_r },
-	{ 0x208000, 0x208fff, taitob_text_r },
-	{ 0x209000, 0x20ffff, MRA16_RAM },
+	{ 0x208000, 0x20bfff, taitob_text_r },
+//	{ 0x20c000, 0x20ffff, MRA16_RAM },
 	{ 0x210000, 0x21197f, MRA16_RAM },
-
-	{ 0x213800, 0x213bff, MRA16_RAM }, /*1st.w foreground x, 2nd.w foreground y scroll*/
-	{ 0x213c00, 0x213fff, MRA16_RAM }, /*1st.w background x, 2nd.w background y scroll*/
-
-	{ 0x21800c, 0x21800d, taitob_text_video_control_r },
-	{ 0x21800e, 0x21800f, taitob_video_control_r },
+	{ 0x213800, 0x213bff, MRA16_RAM },
+	{ 0x213c00, 0x213fff, MRA16_RAM },
+	{ 0x218000, 0x21801f, taitob_v_control_r },
 
 	{ 0x400000, 0x400001, input_port_3_word_r },
 	{ 0x400002, 0x400003, input_port_4_word_r },
@@ -1020,33 +994,76 @@ static MEMORY_WRITE16_START( selfeena_writemem )
 	{ 0x000000, 0x07ffff, MWA16_ROM },
 	{ 0x100000, 0x103fff, MWA16_RAM },	/* Main RAM */
 
-	{ 0x300000, 0x301fff, taitob_paletteram16_RRRRGGGGBBBBRGBx_word_w, &paletteram16, &b_paletteram_size },
-	{ 0x200000, 0x203fff, taitob_foreground_w_tm, &b_foregroundram, &b_foregroundram_size },
-	{ 0x204000, 0x207fff, taitob_background_w_tm, &b_backgroundram, &b_backgroundram_size },
-	{ 0x208000, 0x208fff, taitob_text_w_tm, &b_textram, &b_textram_size },
-	{ 0x209000, 0x20ffff, MWA16_RAM },
-	{ 0x210000, 0x21197f, MWA16_RAM, &b_videoram, &b_videoram_size  },
+	{ 0x300000, 0x301fff, taitob_paletteram16_RRRRGGGGBBBBRGBx_word_w, &paletteram16 },
 
-	{ 0x213800, 0x213bff, MWA16_RAM, &taitob_fscroll }, /*1st.w foreground x scroll, 2nd.w foreground y scroll*/
-	{ 0x213c00, 0x213fff, MWA16_RAM, &taitob_bscroll }, /*1st.w background x scroll, 2nd.w background y scroll*/
-
-	{ 0x21800c, 0x21800d, taitob_text_video_control_w },
-	{ 0x21800e, 0x21800f, taitob_video_control_w },
+	{ 0x200000, 0x203fff, taitob_foreground_w, &b_foregroundram },
+	{ 0x204000, 0x207fff, taitob_background_w, &b_backgroundram },
+	{ 0x208000, 0x20bfff, taitob_text_w, &b_textram },
+//	{ 0x20c000, 0x20ffff, MWA16_RAM },
+	{ 0x210000, 0x21197f, MWA16_RAM, &b_videoram },
+	{ 0x213800, 0x213bff, MWA16_RAM, &b_fscroll },
+	{ 0x213c00, 0x213fff, MWA16_RAM, &b_bscroll },
+	{ 0x218000, 0x21801f, taitob_v_control_w },
 
 	{ 0x400000, 0x40000f, MWA16_NOP }, // ??
 
 	{ 0x410008, 0x410009, MWA16_RAM }, // lots of bit 0 and bit 1 writes
 
-//	{ 0x440000, 0x47ffff, taitob_pixelram_w, &b_pixelram, &b_pixelram_size }, /* pixel layer */
-
 	{ 0x500000, 0x500001, taitosound_port16_msb_w },
 	{ 0x500002, 0x500003, taitosound_comm16_msb_w },
+MEMORY_END
+
+static MEMORY_READ16_START( sbm_readmem )
+	{ 0x000000, 0x07ffff, MRA16_ROM },
+	{ 0x100000, 0x10ffff, MRA16_RAM },	/* Main RAM */
+
+	{ 0x200000, 0x201fff, MRA16_RAM },
+
+	{ 0x900000, 0x903fff, taitob_foreground_r },
+	{ 0x904000, 0x907fff, taitob_background_r },
+	{ 0x908000, 0x90bfff, taitob_text_r },
+//	{ 0x90c000, 0x90ffff, MRA16_RAM },
+	{ 0x910000, 0x91197f, MRA16_RAM },
+	{ 0x913800, 0x913bff, MRA16_RAM },
+	{ 0x913c00, 0x913fff, MRA16_RAM },
+	{ 0x918000, 0x91801f, taitob_v_control_r },
+
+	{ 0x300000, 0x300001, input_port_4_word_r },
+	{ 0x300002, 0x300003, input_port_3_word_r },
+	{ 0x300004, 0x300005, input_port_0_word_r },
+	{ 0x300006, 0x300007, input_port_1_word_r },
+	{ 0x30000a, 0x30000b, input_port_5_word_r },
+	{ 0x30000c, 0x30000d, input_port_2_word_r },
+
+	{ 0x320000, 0x320001, MRA16_NOP },
+	{ 0x320002, 0x320003, taitosound_comm16_msb_r },
+MEMORY_END
+
+static MEMORY_WRITE16_START( sbm_writemem )
+	{ 0x000000, 0x07ffff, MWA16_ROM },
+	{ 0x100000, 0x10ffff, MWA16_RAM },	/* Main RAM */
+
+	{ 0x200000, 0x201fff, taitob_paletteram16_RRRRGGGGBBBBRGBx_word_w, &paletteram16 },
+
+	{ 0x900000, 0x903fff, taitob_foreground_w, &b_foregroundram },
+	{ 0x904000, 0x907fff, taitob_background_w, &b_backgroundram },
+	{ 0x908000, 0x90bfff, taitob_text_w, &b_textram },
+//	{ 0x90c000, 0x90ffff, MWA16_RAM },
+	{ 0x910000, 0x91197f, MWA16_RAM, &b_videoram },
+	{ 0x913800, 0x913bff, MWA16_RAM, &b_fscroll },
+	{ 0x913c00, 0x913fff, MWA16_RAM, &b_bscroll },
+	{ 0x918000, 0x91801f, taitob_v_control_w },
+
+	{ 0x300000, 0x30000f, MWA16_NOP }, // ??
+
+	{ 0x320000, 0x320001, taitosound_port16_msb_w },
+	{ 0x320002, 0x320003, taitosound_comm16_msb_w },
 MEMORY_END
 
 
 static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x4000, 0x7fff, MRA_BANK2 },
+	{ 0x4000, 0x7fff, MRA_BANK1 },
 	{ 0xc000, 0xdfff, MRA_RAM },
 	{ 0xe000, 0xe000, YM2610_status_port_0_A_r },
 	{ 0xe001, 0xe001, YM2610_read_port_0_r },
@@ -1074,7 +1091,7 @@ MEMORY_END
 
 static MEMORY_READ_START( hitice_sound_readmem )
 	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x4000, 0x7fff, MRA_BANK2 },
+	{ 0x4000, 0x7fff, MRA_BANK1 },
 	{ 0x8000, 0x8fff, MRA_RAM },
 	{ 0x9000, 0x9000, YM2203_status_port_0_r },
 	{ 0xb000, 0xb000, OKIM6295_status_0_r },
@@ -1094,7 +1111,7 @@ MEMORY_END
 
 static MEMORY_READ_START( masterw_sound_readmem )
 	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x4000, 0x7fff, MRA_BANK2 },
+	{ 0x4000, 0x7fff, MRA_BANK1 },
 	{ 0x8000, 0x8fff, MRA_RAM },
 	{ 0x9000, 0x9000, YM2203_status_port_0_r },
 	{ 0xa001, 0xa001, taitosound_slave_comm_r },
@@ -1197,6 +1214,7 @@ MEMORY_END
 	PORT_DIPNAME( 0x0800, 0x0800, DEF_STR( Demo_Sounds ) ) \
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off )) \
 	PORT_DIPSETTING(      0x0800, DEF_STR( On ))
+
 
 INPUT_PORTS_START( rastsag2 )
 	PORT_START      /* IN0 */
@@ -2322,6 +2340,106 @@ INPUT_PORTS_START( selfeena )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
 INPUT_PORTS_END
 
+INPUT_PORTS_START( sbm )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )//select; ok (1P in object test)
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )//start ; ok (2P in object test)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )//sound select UP
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )//sound select DOWN
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )//ok (object test)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )//ok (object test)
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )//-- unused in test modes
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )//-- unused in test modes
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )//BEN IN (ticket dispenser)
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )//LADY ????
+
+	PORT_START      /* IN2 */
+	PORT_BIT(         0x01, IP_ACTIVE_LOW, IPT_TILT )       //ok
+	PORT_BIT_IMPULSE( 0x02, IP_ACTIVE_LOW, IPT_SERVICE1, 2 )//ok
+	PORT_BIT_IMPULSE( 0x04, IP_ACTIVE_LOW, IPT_COIN1, 2 )   //ok
+	PORT_BIT_IMPULSE( 0x08, IP_ACTIVE_LOW, IPT_COIN2, 2 )   //ok
+
+	/* BUTTON1 ACTIVE LOW, - game thinks that punching pad has already been raised */
+	PORT_BIT(         0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )//PHOTO 1 (punching pad photosensor 1)
+	PORT_BIT(         0x20, IP_ACTIVE_HIGH,IPT_BUTTON2 | IPF_PLAYER1 )//PHOTO 2 (punching pad photosensor 2)
+	PORT_BIT(         0x40, IP_ACTIVE_HIGH,IPT_BUTTON3 | IPF_PLAYER1 )//PHOTO 3	(punching pad photosensor 3)
+ 	/*To simulate a punch:
+		- wait for "READY GO!" message,
+		- press button1 + button 2 (LCTRL + ALT) (you'll hear a "punching" sound),
+  		- THEN  press button 3 (SPACE)
+ 		The time passed between the presses will be used to calculate the power of your punch.
+		The longer the time - the less power.
+	*/
+	PORT_BIT(         0x80, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER1 )//PHOTO 4  ??? ACTIVE_LOW  ??? (punching pad photosensor 4)
+
+	PORT_START /* DSW A *///+-ok
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x00, DEF_STR( On ))
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x00, DEF_STR( On ))
+	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x08, DEF_STR( On ))
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START /* DSW B */ //+-ok
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x03, "Medium" )
+	PORT_DIPSETTING(    0x02, "Easy" )
+	PORT_DIPSETTING(    0x01, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x00, DEF_STR( On ))
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x00, DEF_STR( On ))
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x00, DEF_STR( On ))
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x00, DEF_STR( On ))
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x00, DEF_STR( On ))
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x00, DEF_STR( On ))
+
+	PORT_START      /* IN5 */ /* all bits below unknown (port is read) - here just to try them */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START3 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER3 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER3 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER3 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER3 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER3 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER3 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER3 )
+
+INPUT_PORTS_END
+
 static struct GfxLayout charlayout =
 {
 	8,8,	/* 8*8 characters */
@@ -2345,7 +2463,7 @@ static struct GfxLayout tilelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0x0, &charlayout,  0, 256 },  /* sprites & playfield */
+	{ REGION_GFX1, 0x0, &charlayout,  0, 256 },  /* text */
 	{ REGION_GFX1, 0x0, &tilelayout,  0, 256 },  /* sprites & playfield */
 	{ -1 } /* end of array */
 };
@@ -2373,11 +2491,10 @@ static struct GfxLayout rambo3_tilelayout =
 
 static struct GfxDecodeInfo rambo3_gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0x0, &rambo3_charlayout,  0, 256 },  /* sprites & playfield */
+	{ REGION_GFX1, 0x0, &rambo3_charlayout,  0, 256 },  /* text */
 	{ REGION_GFX1, 0x0, &rambo3_tilelayout,  0, 256 },  /* sprites & playfield */
 	{ -1 } /* end of array */
 };
-
 
 static struct GfxLayout qzshowby_charlayout =
 {
@@ -2402,7 +2519,7 @@ static struct GfxLayout qzshowby_tilelayout =
 
 static struct GfxDecodeInfo qzshowby_gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0x1000*64, &qzshowby_charlayout,  0, 256 },  /* sprites & playfield */
+	{ REGION_GFX1, 0x1000*64, &qzshowby_charlayout,  0, 256 },  /* text */
 	{ REGION_GFX1, 0x0, &qzshowby_tilelayout,  0, 256 },  /* sprites & playfield */
 	{ -1 } /* end of array */
 };
@@ -2430,7 +2547,7 @@ static struct GfxLayout viofight_tilelayout =
 
 static struct GfxDecodeInfo viofight_gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0x0, &viofight_charlayout,  0, 256 },  /* sprites & playfield */
+	{ REGION_GFX1, 0x0, &viofight_charlayout,  0, 256 },  /* text */
 	{ REGION_GFX1, 0x0, &viofight_tilelayout,  0, 256 },  /* sprites & playfield */
 	{ -1 } /* end of array */
 };
@@ -2440,7 +2557,7 @@ static struct GfxLayout silentd_charlayout =
 	8,8,	/* 8*8 characters */
 	4096,	/* 4096 characters */
 	4,	/* 4 bits per pixel */
-	{ 0, 8 , 2048*1024*8 , 2048*1024*8+8},
+	{ 0, 8 , 64*1024*8 , 64*1024*8+8},
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16 },
 	16*8	/* every sprite takes 16 consecutive bytes */
@@ -2458,28 +2575,34 @@ static struct GfxLayout silentd_tilelayout =
 
 static struct GfxDecodeInfo silentd_gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0x0, &silentd_charlayout,  0, 256 },  /* sprites & playfield */
+	{ REGION_GFX1, 0x400000, &silentd_charlayout,  0, 256 },  /* text */
 	{ REGION_GFX1, 0x0, &silentd_tilelayout,  0, 256 },  /* sprites & playfield */
 	{ -1 } /* end of array */
 };
 
-static struct GfxLayout selfeena_charlayout =
-{
-	8,8,	/* 8*8 characters */
-	4096,	/* 4096 characters */
-	4,	/* 4 bits per pixel */
-	{ 0, 8 , 64*1024*8 , 64*1024*8+8},
-	{ 0, 1, 2, 3, 4, 5, 6, 7 },
-	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16 },
-	16*8	/* every sprite takes 16 consecutive bytes */
-};
 static struct GfxDecodeInfo selfeena_gfxdecodeinfo[] =
 {
-	{ REGION_GFX2, 0x0, &selfeena_charlayout,  0, 256 },  /* sprites & playfield */
+	{ REGION_GFX1, 0x100000, &silentd_charlayout,  0, 256 },  /* text */
 	{ REGION_GFX1, 0x0, &tilelayout,  0, 256 },  /* sprites & playfield */
 	{ -1 } /* end of array */
 };
 
+static struct GfxLayout sbm_tilelayout =
+{
+	16,16,	/* 16*16 tiles */
+	16384+16384,	/* 16384 + 4096 in real; 2*16384 - to simplify sprite palette marking*/
+	4,	/* 4 bits per pixel */
+	{ 0, 8 , 2048*1024*8 , 2048*1024*8+8},
+	{ 0, 1, 2, 3, 4, 5, 6, 7, 128+0, 128+1, 128+2, 128+3, 128+4, 128+5, 128+6, 128+7 },
+	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16, 16*16, 17*16, 18*16, 19*16, 20*16, 21*16, 22*16, 23*16 },
+	64*8	/* every sprite takes 64 consecutive bytes */
+};
+static struct GfxDecodeInfo sbm_gfxdecodeinfo[] =
+{
+	{ REGION_GFX1, 0x0, &qzshowby_charlayout,  0, 256 },  /* text */
+	{ REGION_GFX1, 0x0, &sbm_tilelayout,  0, 256 },  /* sprites & playfield */
+	{ -1 } /* end of array */
+};
 
 
 /* handler called by the YM2610 emulator when the internal timers cause an IRQ */
@@ -2526,7 +2649,7 @@ WRITE_HANDLER( portAwrite )
 	int banknum = (data - 1) & 1;
 
 	if (a!=data)
-		cpu_setbank (2, &RAM [0x10000 + (banknum * 0x4000)]);
+		cpu_setbank (1, &RAM [0x10000 + (banknum * 0x4000)]);
 
 	a=data;
 
@@ -2538,8 +2661,8 @@ WRITE_HANDLER( portAwrite )
 static struct YM2203interface ym2203_interface =
 {
 	1,
-	4000000,				/* 3.5 MHz complete guess*/
-	{ YM2203_VOL(80,25) },	/* complete guess */
+	4000000,				/* ?? */
+	{ YM2203_VOL(80,25) },	/* ?? */
 	{ 0 },
 	{ 0 },
 	{ portAwrite },
@@ -2550,9 +2673,9 @@ static struct YM2203interface ym2203_interface =
 static struct OKIM6295interface okim6295_interface =
 {
 	2,
-	{ 8000,8000 },			/* complete guess */
+	{ 8000,8000 },			/* ?? */
 	{ REGION_SOUND1,REGION_SOUND1 }, /* memory regions */
-	{ 50,65 }				/*complete guess */
+	{ 50,65 }				/* ?? */
 };
 
 
@@ -2588,7 +2711,7 @@ static const struct MachineDriver machine_driver_rastsag2 =
 	0,
 	taitob_vh_start_color_order0,
 	taitob_vh_stop,
-	taitob_vh_screenrefresh_tm,
+	taitob_vh_screenrefresh,
 
 	/* sound hardware */
 	0,0,0,0,
@@ -2632,7 +2755,7 @@ static const struct MachineDriver machine_driver_ashura =
 	0,
 	taitob_vh_start_color_order0,
 	taitob_vh_stop,
-	ashura_vh_screenrefresh_tm,
+	ashura_vh_screenrefresh,
 
 	/* sound hardware */
 	0,0,0,0,
@@ -2676,7 +2799,7 @@ static const struct MachineDriver machine_driver_crimec =
 	0,
 	taitob_vh_start_color_order1,
 	taitob_vh_stop,
-	crimec_vh_screenrefresh_tm,
+	crimec_vh_screenrefresh,
 
 	/* sound hardware */
 	0,0,0,0,
@@ -2765,7 +2888,7 @@ static const struct MachineDriver machine_driver_hitice =
 	0,
 	taitob_vh_start_color_order0,
 	taitob_vh_stop,
-	hitice_vh_screenrefresh_tm,
+	taitob_vh_screenrefresh,
 
 	/* sound hardware */
 	0,0,0,0,
@@ -2813,7 +2936,7 @@ static const struct MachineDriver machine_driver_rambo3 =
 	0,
 	taitob_vh_start_color_order0,
 	taitob_vh_stop,
-	rambo3_vh_screenrefresh_tm,
+	taitob_vh_screenrefresh,
 
 	/* sound hardware */
 	0,0,0,0,
@@ -2857,7 +2980,7 @@ static const struct MachineDriver machine_driver_rambo3a =
 	0,
 	taitob_vh_start_color_order2,
 	taitob_vh_stop,
-	rambo3_vh_screenrefresh_tm,
+	taitob_vh_screenrefresh,
 
 	/* sound hardware */
 	0,0,0,0,
@@ -2902,7 +3025,7 @@ static const struct MachineDriver machine_driver_puzbobb =
 	0,
 	taitob_vh_start_color_order1,
 	taitob_vh_stop,
-	puzbobb_vh_screenrefresh_tm,
+	taitob_vh_screenrefresh,
 
 	/* sound hardware */
 	0,0,0,0,
@@ -2936,7 +3059,7 @@ static const struct MachineDriver machine_driver_spacedx =
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	10,
-	0, /*patch_puzzb,*/
+	0,
 
 	/* video hardware */
 	64*8, 32*8, { 0*8, 40*8-1, 2*8, 30*8-1 },
@@ -2949,7 +3072,7 @@ static const struct MachineDriver machine_driver_spacedx =
 	0,
 	taitob_vh_start_color_order1,
 	taitob_vh_stop,
-	crimec_vh_screenrefresh_tm, //puzbobb_vh_screenrefresh_tm,
+	crimec_vh_screenrefresh,
 
 	/* sound hardware */
 	0,0,0,0,
@@ -2997,7 +3120,7 @@ static const struct MachineDriver machine_driver_qzshowby =
 	0,
 	taitob_vh_start_color_order1,
 	taitob_vh_stop,
-	qzshowby_vh_screenrefresh_tm,
+	taitob_vh_screenrefresh,
 
 	/* sound hardware */
 	0,0,0,0,
@@ -3044,7 +3167,7 @@ static const struct MachineDriver machine_driver_viofight =
 	0,
 	taitob_vh_start_color_order2,
 	taitob_vh_stop,
-	hitice_vh_screenrefresh_tm,
+	taitob_vh_screenrefresh,
 
 	/* sound hardware */
 	0,0,0,0,
@@ -3092,7 +3215,7 @@ static const struct MachineDriver machine_driver_masterw =
 	0,
 	taitob_vh_start_color_order2,
 	taitob_vh_stop,
-	masterw_vh_screenrefresh_tm,
+	masterw_vh_screenrefresh,
 
 	/* sound hardware */
 	0,0,0,0,
@@ -3136,7 +3259,7 @@ static const struct MachineDriver machine_driver_silentd =
 	0,
 	taitob_vh_start_color_order2,
 	taitob_vh_stop,
-	silentd_vh_screenrefresh_tm,
+	taitob_vh_screenrefresh,
 
 	/* sound hardware */
 	0,0,0,0,
@@ -3181,13 +3304,64 @@ static const struct MachineDriver machine_driver_selfeena =
 	0,
 	taitob_vh_start_color_order2,
 	taitob_vh_stop,
-	taitob_vh_screenrefresh_tm,
+	taitob_vh_screenrefresh,
 
 	/* sound hardware */
 	0,0,0,0,
 	{
 		{
 			SOUND_YM2610,
+			&ym2610_interface_crimec
+		}
+	}
+};
+
+
+static void sbm_patch(void)
+{
+	data16_t *rom = (data16_t*)memory_region(REGION_CPU1);
+	rom[ 0x7ffff/2 ] = 2; //US version
+}
+
+static const struct MachineDriver machine_driver_sbm =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_M68000,
+			12000000,	/* 12 MHz */
+			sbm_readmem,sbm_writemem,0,0,
+			sbm_interrupt,1
+		},
+		{
+			CPU_Z80,
+			4000000,	/* 4 MHz */
+			sound_readmem, sound_writemem,0,0,
+			ignore_interrupt,0	/* IRQs are triggered by the YM2610B */
+		}
+	},
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	10,
+	0, /*sbm_patch,*/
+
+	/* video hardware */
+	64*8, 32*8, { 0*8, 40*8-1, 2*8, 30*8-1 },
+
+	sbm_gfxdecodeinfo,
+	4096, 4096,
+	0,
+
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	0,
+	taitob_vh_start_color_order0,
+	taitob_vh_stop,
+	taitob_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_YM2610B,
 			&ym2610_interface_crimec
 		}
 	}
@@ -3567,11 +3741,19 @@ ROM_START( silentd )
 	ROM_LOAD(  "sr_13.rom", 0x00000, 0x04000, 0x651861ab )
 	ROM_CONTINUE(           0x10000, 0x0c000 ) /* banked stuff */
 
-	ROM_REGION( 0x400000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_REGION( 0x518000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "sd_m04.rom", 0x000000, 0x100000, 0x53237217 )
+	ROM_RELOAD  (           0x400000, 0x008000 )			/*load characters into continuous memory space*/
+	ROM_CONTINUE(           0x420000, 0x0f8000 )			/*not characters data, so skip it*/
 	ROM_LOAD( "sd_m06.rom", 0x100000, 0x100000, 0xe6e6dfa7 )
+	ROM_RELOAD  (           0x420000, 0x0f8000 )			/*not characters data, so skip it*/
+	ROM_CONTINUE(           0x408000, 0x008000 )			/*load characters into continuous memory space*/
 	ROM_LOAD( "sd_m03.rom", 0x200000, 0x100000, 0x1b9b2846 )
+	ROM_RELOAD  (           0x410000, 0x008000 )			/*load characters into continuous memory space*/
+	ROM_CONTINUE(           0x420000, 0x0f8000 )			/*not characters data, so skip it*/
 	ROM_LOAD( "sd_m05.rom", 0x300000, 0x100000, 0xe02472c5 )
+	ROM_RELOAD  (           0x420000, 0x0f8000 )			/*not characters data, so skip it*/
+	ROM_CONTINUE(           0x418000, 0x008000 )			/*load characters into continuous memory space*/
 
 	ROM_REGION( 0x80000, REGION_SOUND1, 0 )
 	ROM_LOAD( "sd_m02.rom", 0x00000, 0x80000, 0xe0de5c39 )
@@ -3591,11 +3773,19 @@ ROM_START( silentdj )
 	ROM_LOAD(  "sr_13.rom", 0x00000, 0x04000, 0x651861ab )
 	ROM_CONTINUE(           0x10000, 0x0c000 ) /* banked stuff */
 
-	ROM_REGION( 0x400000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_REGION( 0x518000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "sd_m04.rom", 0x000000, 0x100000, 0x53237217 )
+	ROM_RELOAD  (           0x400000, 0x008000 )			/*load characters into continuous memory space*/
+	ROM_CONTINUE(           0x420000, 0x0f8000 )			/*not characters data, so skip it*/
 	ROM_LOAD( "sd_m06.rom", 0x100000, 0x100000, 0xe6e6dfa7 )
+	ROM_RELOAD  (           0x420000, 0x0f8000 )			/*not characters data, so skip it*/
+	ROM_CONTINUE(           0x408000, 0x008000 )			/*load characters into continuous memory space*/
 	ROM_LOAD( "sd_m03.rom", 0x200000, 0x100000, 0x1b9b2846 )
+	ROM_RELOAD  (           0x410000, 0x008000 )			/*load characters into continuous memory space*/
+	ROM_CONTINUE(           0x420000, 0x0f8000 )			/*not characters data, so skip it*/
 	ROM_LOAD( "sd_m05.rom", 0x300000, 0x100000, 0xe02472c5 )
+	ROM_RELOAD  (           0x420000, 0x0f8000 )			/*not characters data, so skip it*/
+	ROM_CONTINUE(           0x418000, 0x008000 )			/*load characters into continuous memory space*/
 
 	ROM_REGION( 0x80000, REGION_SOUND1, 0 )
 	ROM_LOAD( "sd_m02.rom", 0x00000, 0x80000, 0xe0de5c39 )
@@ -3613,57 +3803,73 @@ ROM_START( selfeena )
 	ROM_LOAD( "se-03.39",0x00000, 0x4000, 0x675998be )
 	ROM_CONTINUE(        0x10000, 0xc000 ) /* banked stuff */
 
-#if 0
-/*this reports: "wrong rom length: expected F8000" */
-
 	ROM_REGION( 0x270000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "se-04.2",  0x000000, 0x80000, 0x920ad100 )
-	ROM_RELOAD  (         0x100000, 0x08000 )/*just to load characters into continuous memory space*/
+	ROM_RELOAD  (         0x100000, 0x08000 )/*load characters into continuous memory space*/
 	ROM_CONTINUE(         0x200000, 0x70000 )/*not characters data, so skip it*/
-	ROM_CONTINUE(         0x108000, 0x08000 )/*just to load characters into continuous memory space*/
-
+	ROM_CONTINUE(         0x108000, 0x08000 )/*load characters into continuous memory space*/
 	ROM_LOAD( "se-05.1",  0x080000, 0x80000, 0xd297c995 )
-	ROM_RELOAD(           0x110000, 0x08000 )/*just to load characters into continuous memory space*/
+	ROM_RELOAD(           0x110000, 0x08000 )/*load characters into continuous memory space*/
 	ROM_CONTINUE(         0x200000, 0x70000 )/*not characters data, so skip it*/
-	ROM_CONTINUE(         0x118000, 0x08000 )/*just to load characters into continuous memory space*/
-#endif
-
-	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "se-04.2",  0x000000, 0x80000, 0x920ad100 )
-	ROM_LOAD( "se-05.1",  0x080000, 0x80000, 0xd297c995 )
-
-	ROM_REGION( 0x170000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "se-04.2",  0x000000, 0x08000, 0x920ad100 )/*just to load characters into continuous memory space*/
-	ROM_CONTINUE(         0x100000, 0x70000 )/*not characters data, so skip it*/
-	ROM_CONTINUE(         0x008000, 0x08000 )/*just to load characters into continuous memory space*/
-
-	ROM_LOAD( "se-05.1",  0x010000, 0x08000, 0xd297c995 )/*just to load characters into continuous memory space*/
-	ROM_CONTINUE(         0x100000, 0x70000 )/*not characters data, so skip it*/
-	ROM_CONTINUE(         0x018000, 0x08000 )/*just to load characters into continuous memory space*/
+	ROM_CONTINUE(         0x118000, 0x08000 )/*load characters into continuous memory space*/
 
 	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* adpcm samples */
 	ROM_LOAD( "se-06.11", 0x00000, 0x80000, 0x80d5e772 )
 ROM_END
 
+ROM_START( sbm )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 )     /* 256k for 68000 code */
+	ROM_LOAD16_BYTE( "c69-20-1.10", 0x00000, 0x20000, 0xb40e4910 )
+	ROM_LOAD16_BYTE( "c69-22-1.12", 0x00001, 0x20000, 0xecbcf830 )
+	ROM_LOAD16_BYTE( "c69-19-1.9" , 0x40000, 0x20000, 0x5719c158 )
+	ROM_LOAD16_BYTE( "c69-21-1.11", 0x40001, 0x20000, 0x73562394 )
+
+	ROM_REGION( 0x1c000, REGION_CPU2, 0 )     /* 64k for Z80 code */
+	ROM_LOAD( "c69-23.28",0x00000, 0x4000, 0xb2fce13e )
+	ROM_CONTINUE(         0x10000, 0xc000 ) /* banked stuff */
+
+	ROM_REGION( 0x400000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD       ( "c69-01.ic5", 0x000000, 0x100000, 0x521fabe3 )
+	ROM_LOAD16_BYTE( "c69-13.ic2", 0x100000, 0x020000, 0xd1550884 )
+	ROM_LOAD16_BYTE( "c69-12.ic1", 0x100001, 0x020000, 0xeb56582c )
+	/* a hole */
+	ROM_LOAD       ( "c69-02.ic6", 0x200000, 0x100000, 0xf0e20d35 )
+	ROM_LOAD16_BYTE( "c69-15.ic4", 0x300000, 0x020000, 0x9761d316 )
+	ROM_LOAD16_BYTE( "c69-14.ic3", 0x300001, 0x020000, 0x0ed0272a )
+
+	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* adpcm samples */
+	ROM_LOAD( "c69-03.36", 0x00000, 0x80000, 0x63e6b6e7 )
+ROM_END
+
 
 /*     year  rom       parent   machine   inp       init */
-GAMEX( 1989, masterw,  0,       masterw,  masterw,  0, ROT270,      "Taito Corporation Japan", "Master of Weapon (World)", GAME_NO_COCKTAIL)
-GAMEX( 1988, nastar,   0,       rastsag2, nastar,   0, ROT0,        "Taito Corporation Japan", "Nastar (World)", GAME_NO_COCKTAIL )
-GAMEX( 1988, nastarw,  nastar,  rastsag2, nastarw,  0, ROT0,        "Taito America Corporation", "Nastar Warrior (US)", GAME_NO_COCKTAIL )
-GAMEX( 1988, rastsag2, nastar,  rastsag2, rastsag2, 0, ROT0,        "Taito Corporation", "Rastan Saga 2 (Japan)", GAME_NO_COCKTAIL )
-GAMEX( 1989, rambo3,   0,       rambo3,   rambo3,   0, ROT180,      "Taito Europe Corporation", "Rambo III (set 1, Europe)", GAME_NO_COCKTAIL )
-GAMEX( 1989, rambo3a,  rambo3,  rambo3a,  rambo3a,  0, ROT180,      "Taito America Corporation", "Rambo III (set 2, US)", GAME_NO_COCKTAIL)
-GAMEX( 1989, crimec,   0,       crimec,   crimec,   0, ROT0,        "Taito Corporation Japan", "Crime City (World)", GAME_NO_COCKTAIL )
-GAMEX( 1989, crimecu,  crimec,  crimec,   crimecu,  0, ROT0,        "Taito America Corporation", "Crime City (US)", GAME_NO_COCKTAIL )
-GAMEX( 1989, crimecj,  crimec,  crimec,   crimecj,  0, ROT0,        "Taito Corporation", "Crime City (Japan)", GAME_NO_COCKTAIL )
-GAMEX( 1989, tetrist,  tetris,  tetrist,  tetrist,  0, ROT0,        "Sega", "Tetris (Japan, B-System)", GAME_NO_COCKTAIL )
-GAMEX( 1989, viofight, 0,       viofight, viofight, 0, ROT180,      "Taito Corporation Japan", "Violence Fight (World)", GAME_NO_COCKTAIL)
-GAMEX( 1990, ashura,   0,       ashura,   ashura,   0, ROT270,      "Taito Corporation", "Ashura Blaster (Japan)", GAME_NO_COCKTAIL )
-GAMEX( 1990, ashurau,  ashura,  ashura,   ashurau,  0, ROT270,      "Taito America Corporation", "Ashura Blaster (US)", GAME_NO_COCKTAIL )
-GAMEX( 1990, hitice,   0,       hitice,   hitice,   0, ROT180,      "Williams", "Hit the Ice (US)", GAME_NO_COCKTAIL )
-GAMEX( 1993, qzshowby, 0,       qzshowby, qzshowby, 0, ROT0,        "Taito Corporation", "Quiz Sekai wa SHOW by shobai (Japan)", GAME_NO_COCKTAIL )
-GAMEX( 1994, puzbobb,  pbobble, puzbobb,  puzbobb,  0, ROT0,        "Taito Corporation", "Puzzle Bobble (Japan, B-System)", GAME_NO_COCKTAIL )
-GAMEX( 1994, spacedx,  0,       spacedx,  puzbobb,  0, ROT0,        "Taito Corporation", "Space Invaders DX (Japan)", GAME_NO_COCKTAIL )
-GAMEX( 1992, silentd,  0,       silentd,  silentd,  0, ROT0_16BIT,  "Taito Corporation Japan", "Silent Dragon (World)", GAME_NO_COCKTAIL )
-GAMEX( 1992, silentdj, silentd, silentd,  silentdj, 0, ROT0_16BIT,  "Taito Corporation", "Silent Dragon (Japan)", GAME_NO_COCKTAIL )
-GAMEX( 1991, selfeena, 0,       selfeena, selfeena, 0, ROT0,        "East Technology", "Sel Feena", GAME_NO_COCKTAIL )
+GAMEX( 1989, masterw,  0,       masterw,  masterw,  0, ROT270,     "Taito Corporation Japan", "Master of Weapon (World)", GAME_NO_COCKTAIL)
+GAMEX( 1988, nastar,   0,       rastsag2, nastar,   0, ROT0,       "Taito Corporation Japan", "Nastar (World)", GAME_NO_COCKTAIL )
+GAMEX( 1988, nastarw,  nastar,  rastsag2, nastarw,  0, ROT0,       "Taito America Corporation", "Nastar Warrior (US)", GAME_NO_COCKTAIL )
+GAMEX( 1988, rastsag2, nastar,  rastsag2, rastsag2, 0, ROT0,       "Taito Corporation", "Rastan Saga 2 (Japan)", GAME_NO_COCKTAIL )
+GAMEX( 1989, rambo3,   0,       rambo3,   rambo3,   0, ROT180,     "Taito Europe Corporation", "Rambo III (set 1, Europe)", GAME_NO_COCKTAIL )
+GAMEX( 1989, rambo3a,  rambo3,  rambo3a,  rambo3a,  0, ROT180,     "Taito America Corporation", "Rambo III (set 2, US)", GAME_NO_COCKTAIL)
+GAMEX( 1989, crimec,   0,       crimec,   crimec,   0, ROT0,       "Taito Corporation Japan", "Crime City (World)", GAME_NO_COCKTAIL )
+GAMEX( 1989, crimecu,  crimec,  crimec,   crimecu,  0, ROT0,       "Taito America Corporation", "Crime City (US)", GAME_NO_COCKTAIL )
+GAMEX( 1989, crimecj,  crimec,  crimec,   crimecj,  0, ROT0,       "Taito Corporation", "Crime City (Japan)", GAME_NO_COCKTAIL )
+GAMEX( 1989, tetrist,  tetris,  tetrist,  tetrist,  0, ROT0,       "Sega", "Tetris (Japan, B-System)", GAME_NO_COCKTAIL )
+GAMEX( 1989, viofight, 0,       viofight, viofight, 0, ROT180,     "Taito Corporation Japan", "Violence Fight (World)", GAME_NO_COCKTAIL)
+GAMEX( 1990, ashura,   0,       ashura,   ashura,   0, ROT270,     "Taito Corporation", "Ashura Blaster (Japan)", GAME_NO_COCKTAIL )
+GAMEX( 1990, ashurau,  ashura,  ashura,   ashurau,  0, ROT270,     "Taito America Corporation", "Ashura Blaster (US)", GAME_NO_COCKTAIL )
+GAMEX( 1990, hitice,   0,       hitice,   hitice,   0, ROT180,     "Williams", "Hit the Ice (US)", GAME_NO_COCKTAIL )
+GAMEX( 1993, qzshowby, 0,       qzshowby, qzshowby, 0, ROT0,       "Taito Corporation", "Quiz Sekai wa SHOW by shobai (Japan)", GAME_NO_COCKTAIL )
+GAMEX( 1994, puzbobb,  pbobble, puzbobb,  puzbobb,  0, ROT0,       "Taito Corporation", "Puzzle Bobble (Japan, B-System)", GAME_NO_COCKTAIL )
+GAMEX( 1994, spacedx,  0,       spacedx,  puzbobb,  0, ROT0,       "Taito Corporation", "Space Invaders DX (Japan)", GAME_NO_COCKTAIL )
+GAMEX( 1992, silentd,  0,       silentd,  silentd,  0, ROT0_16BIT, "Taito Corporation Japan", "Silent Dragon (World)", GAME_NO_COCKTAIL )
+GAMEX( 1992, silentdj, silentd, silentd,  silentdj, 0, ROT0_16BIT, "Taito Corporation", "Silent Dragon (Japan)", GAME_NO_COCKTAIL )
+GAMEX( 1991, selfeena, 0,       selfeena, selfeena, 0, ROT0,       "East Technology", "Sel Feena", GAME_NO_COCKTAIL )
+
+/*
+	Sonic Blast Man is a ticket dipensing game.
+	(Japanese version however does not dispense them, only US does - try the "sbm_patch" in the machine_driver).
+	It is a bit different from other games running on this system,
+	in that it has a punching pad that player needs to punch to hit
+ 	the enemy.
+*/
+GAME(  1990, sbm,      0,       sbm,      sbm,      0, ROT0,       "Taito Corporation", "Sonic Blast Man (Japan)" )
+

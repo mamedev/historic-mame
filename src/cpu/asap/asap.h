@@ -48,6 +48,7 @@ extern int asap_icount;
 **	PUBLIC FUNCTIONS
 **#################################################################################################*/
 
+extern void asap_init(void);
 extern void asap_reset(void *param);
 extern void asap_exit(void);
 extern int asap_execute(int cycles);

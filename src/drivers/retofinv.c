@@ -4,6 +4,8 @@ Return of the Invaders
 
 driver by Jarek Parchanski, Andrea Mazzoleni
 
+the game was developed by UPL for Taito.
+
 ***************************************************************************/
 
 #include "driver.h"

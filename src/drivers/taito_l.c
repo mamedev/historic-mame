@@ -25,6 +25,8 @@ Notes:
   be a prototype. It also doesn't have service mode (or has it disabled).
 
 TODO:
+- champwr ADPCM interface is not entirely understood, it involves also addresses
+  0xd000 and 0xe000, and maybe also YM2203 port B.
 - slowdowns in fhawk, probably the interrupts have to be generated at a
   different time.
 - plgirls doesn't work without a kludge because of an interrupt issue. This
@@ -536,6 +538,32 @@ static WRITE_HANDLER( mux_ctrl_w )
 
 
 
+
+static int champwr_adpcm_start;
+
+static WRITE_HANDLER( champwr_adpcm_lo_w )
+{
+	champwr_adpcm_start = (champwr_adpcm_start & 0xff00ff) | (data << 8);
+}
+
+static WRITE_HANDLER( champwr_adpcm_hi_w )
+{
+	UINT8 *rom = memory_region(REGION_SOUND1);
+	int romlen = memory_region_length(REGION_SOUND1);
+	int length;
+	int i;
+
+	champwr_adpcm_start = ((champwr_adpcm_start & 0x00ffff) | (data << 16)) & (romlen-1);
+	i = champwr_adpcm_start + 0x20;
+	while (i < romlen && (rom[i] || rom[i+1] || rom[i+2] || rom[i+3]))
+		i += 4;
+	length = i - champwr_adpcm_start;
+
+	ADPCM_play(0,champwr_adpcm_start,length*2);
+}
+
+
+
 static int trackx,tracky;
 
 static READ_HANDLER( horshoes_tracky_reset_r )
@@ -791,6 +819,10 @@ static MEMORY_WRITE_START( champwr_3_writemem )
 	{ 0x9001, 0x9001, YM2203_write_port_0_w },
 	{ 0xa000, 0xa000, taitosound_slave_port_w },
 	{ 0xa001, 0xa001, taitosound_slave_comm_w },
+	{ 0xb000, 0xb000, champwr_adpcm_hi_w },
+	{ 0xc000, 0xc000, champwr_adpcm_lo_w },
+	{ 0xd000, 0xd000, MWA_NOP },	/* ADPCM related */
+	{ 0xe000, 0xe000, MWA_NOP },	/* ADPCM related */
 MEMORY_END
 
 
@@ -2045,6 +2077,14 @@ static struct YM2203interface ym2203_interface_triple =
 	{ irqhandler }
 };
 
+static struct ADPCMinterface adpcm_interface =
+{
+	1,			/* 1 channel */
+	8000,		/* 8000Hz playback? */
+	REGION_SOUND1,	/* memory region */
+	{ 80 } 	/* volume */
+};
+
 
 static struct YM2610interface ym2610_interface =
 {
@@ -2129,6 +2169,57 @@ static const struct MachineDriver machine_driver_##name =		\
 		{													\
 			SOUND_YM2203,									\
 			&ym2203_interface_triple						\
+		}													\
+	}														\
+};
+
+#define MCH_TRIPLE_ADPCM(name) \
+static const struct MachineDriver machine_driver_##name =		\
+{															\
+	{														\
+		{													\
+			CPU_Z80,										\
+			6000000,	/* ? xtal is 13.33056 */			\
+			name ## _readmem, name ## _writemem, 0, 0,		\
+			vbl_interrupt,3									\
+		},													\
+		{													\
+			CPU_Z80 | CPU_AUDIO_CPU,						\
+			4000000,	/* ? xtal is 13.33056 */			\
+			name ## _3_readmem, name ## _3_writemem, 0, 0,	\
+			ignore_interrupt, 0								\
+		},													\
+		{													\
+			CPU_Z80,										\
+			6000000,	/* ? xtal is 13.33056 */			\
+			name ## _2_readmem, name ## _2_writemem, 0, 0,	\
+			interrupt, 1									\
+		}													\
+	},														\
+	60, DEFAULT_60HZ_VBLANK_DURATION,						\
+	100,													\
+	name ## _init,											\
+															\
+	40*8, 32*8, { 0*8, 40*8-1, 2*8, 30*8-1 },				\
+	gfxdecodeinfo2,											\
+	256, 256,												\
+	0,														\
+															\
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,				\
+	taitol_eof_callback,									\
+	taitol_vh_start,										\
+	0,														\
+	taitol_vh_screenrefresh,								\
+															\
+	0,0,0,0,												\
+	{														\
+		{													\
+			SOUND_YM2203,									\
+			&ym2203_interface_triple						\
+		},													\
+		{													\
+			SOUND_ADPCM,									\
+			&adpcm_interface								\
 		}													\
 	}														\
 };
@@ -2259,7 +2350,7 @@ static const struct MachineDriver machine_driver_##name =	\
 
 MCH_TRIPLE_2610(raimais)
 MCH_TRIPLE(fhawk)
-MCH_TRIPLE(champwr)
+MCH_TRIPLE_ADPCM(champwr)
 
 MCH_DOUBLE(kurikint)
 
@@ -2316,7 +2407,6 @@ ROM_START( champwr )
 	ROM_LOAD( "c01-13.rom", 0x00000, 0x20000, 0x7ef47525 )
 	ROM_RELOAD(             0x10000, 0x20000 )
 	ROM_LOAD( "c01-04.rom", 0x30000, 0x20000, 0x358bd076 )
-	ROM_LOAD( "c01-05.rom", 0x50000, 0x20000, 0x22efad4a )
 
 	ROM_REGION( 0x1c000, REGION_CPU2, 0 )	/* sound (sndhrdw/rastan.c wants it as #2 */
 	ROM_LOAD( "c01-08.rom", 0x00000, 0x4000, 0x810efff8 )
@@ -2330,6 +2420,9 @@ ROM_START( champwr )
 	ROM_LOAD( "c01-01.rom", 0x000000, 0x80000, 0xf302e6e9 )
 	ROM_LOAD( "c01-02.rom", 0x080000, 0x80000, 0x1e0476c4 )
 	ROM_LOAD( "c01-03.rom", 0x100000, 0x80000, 0x2a142dbc )
+
+	ROM_REGION( 0x20000, REGION_SOUND1, 0 )	/* ADPCM samples */
+	ROM_LOAD( "c01-05.rom", 0x00000, 0x20000, 0x22efad4a )
 ROM_END
 
 ROM_START( champwru )
@@ -2337,7 +2430,6 @@ ROM_START( champwru )
 	ROM_LOAD( "c01-12.rom", 0x00000, 0x20000, 0x09f345b3 )
 	ROM_RELOAD(             0x10000, 0x20000 )
 	ROM_LOAD( "c01-04.rom", 0x30000, 0x20000, 0x358bd076 )
-	ROM_LOAD( "c01-05.rom", 0x50000, 0x20000, 0x22efad4a )
 
 	ROM_REGION( 0x1c000, REGION_CPU2, 0 )	/* sound (sndhrdw/rastan.c wants it as #2 */
 	ROM_LOAD( "c01-08.rom", 0x00000, 0x4000, 0x810efff8 )
@@ -2351,6 +2443,9 @@ ROM_START( champwru )
 	ROM_LOAD( "c01-01.rom", 0x000000, 0x80000, 0xf302e6e9 )
 	ROM_LOAD( "c01-02.rom", 0x080000, 0x80000, 0x1e0476c4 )
 	ROM_LOAD( "c01-03.rom", 0x100000, 0x80000, 0x2a142dbc )
+
+	ROM_REGION( 0x20000, REGION_SOUND1, 0 )	/* ADPCM samples */
+	ROM_LOAD( "c01-05.rom", 0x00000, 0x20000, 0x22efad4a )
 ROM_END
 
 ROM_START( champwrj )
@@ -2358,7 +2453,6 @@ ROM_START( champwrj )
 	ROM_LOAD( "c01-06.bin", 0x00000, 0x20000, 0x90fa1409 )
 	ROM_RELOAD(             0x10000, 0x20000 )
 	ROM_LOAD( "c01-04.rom", 0x30000, 0x20000, 0x358bd076 )
-	ROM_LOAD( "c01-05.rom", 0x50000, 0x20000, 0x22efad4a )
 
 	ROM_REGION( 0x1c000, REGION_CPU2, 0 )	/* sound (sndhrdw/rastan.c wants it as #2 */
 	ROM_LOAD( "c01-08.rom", 0x00000, 0x4000, 0x810efff8 )
@@ -2372,6 +2466,9 @@ ROM_START( champwrj )
 	ROM_LOAD( "c01-01.rom", 0x000000, 0x80000, 0xf302e6e9 )
 	ROM_LOAD( "c01-02.rom", 0x080000, 0x80000, 0x1e0476c4 )
 	ROM_LOAD( "c01-03.rom", 0x100000, 0x80000, 0x2a142dbc )
+
+	ROM_REGION( 0x20000, REGION_SOUND1, 0 )	/* ADPCM samples */
+	ROM_LOAD( "c01-05.rom", 0x00000, 0x20000, 0x22efad4a )
 ROM_END
 
 

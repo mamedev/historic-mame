@@ -3,9 +3,10 @@
 Chequered Flag / Checkered Flag (GX717) (c) Konami 1988
 
 Notes:
-	* Some background tiles are missing. Hopefully this is because of the bad ROMS.
-	* The enemies appear and dissapear randomly because of the K051733 protection.
-	* The sound is not working properly.
+	* The enemies might not appear correctly because of the K051733 protection.
+	* Bg/sprite priority not implemented (probably bit 7 of the tile gfx data
+	  controls priority over sprites)
+	* 007232 volume & panning control is almost certainly wrong
 
 ***************************************************************************/
 
@@ -232,19 +233,19 @@ INPUT_PORTS_START( chqflag )
 //	PORT_DIPSETTING(    0x00, "Coin Slot 2 Invalidity" )
 
 	PORT_START	/* DSW #2 (according to the manual SW1 thru SW5 are not used) */
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unused ) )
 	PORT_DIPSETTING(	0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unused ) )
 	PORT_DIPSETTING(	0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unused ) )
 	PORT_DIPSETTING(	0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unused ) )
 	PORT_DIPSETTING(	0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unused ) )
 	PORT_DIPSETTING(	0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x60, 0x40, DEF_STR( Difficulty ) )
@@ -258,7 +259,7 @@ INPUT_PORTS_START( chqflag )
 
 	PORT_START
 	PORT_BIT( 0x7f, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )	/* DIPSW #3 - SW4 */
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )	/* DIPSW #3 - SW4 */
 	PORT_DIPSETTING(	0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 
@@ -268,11 +269,9 @@ INPUT_PORTS_START( chqflag )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	/* DIPSW #3 */
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unused ) )
 	PORT_DIPSETTING(	0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x40, 0x40, "Title" )
@@ -281,18 +280,19 @@ INPUT_PORTS_START( chqflag )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 
 	PORT_START	/* Brake, Shift + ??? */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_TOGGLE | IPF_PLAYER1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_TOGGLE | IPF_PLAYER1 )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_TOGGLE )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
 	PORT_BIT( 0x0c, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* if this is set, it goes directly to test mode */
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* if bit 7 == 0, the game resets */
 
 	PORT_START	/* Accelerator */
-	PORT_ANALOG( 0xff, 0x00, IPT_PEDAL | IPF_PLAYER1, 50, 5, 0, 0xff)
+	PORT_ANALOG( 0xff, 0x00, IPT_PEDAL, 50, 5, 0, 0xff )
 
 	PORT_START	/* Driving wheel */
 	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_X | IPF_CENTER, 80, 8, 0, 0xff)
-
 INPUT_PORTS_END
+
+
 
 static void chqflag_ym2151_irq_w(int data)
 {
@@ -311,19 +311,18 @@ static struct YM2151interface ym2151_interface =
 
 static void volume_callback0(int v)
 {
-	K007232_set_volume(0,0,(v >> 4)*0x11,0);
-	K007232_set_volume(0,1,0,(v & 0x0f)*0x11);
+	K007232_set_volume(0,0,(v & 0x0f)*0x11,0);
+	K007232_set_volume(0,1,0,(v >> 4)*0x11);
 }
 
 static WRITE_HANDLER( k007232_extvolume_w )
 {
-	K007232_set_volume(0,0,(data >> 4)*0x11/2,(data & 0x0f)*0x11/2);
+	K007232_set_volume(1,1,(data & 0x0f)*0x11/2,(data >> 4)*0x11/2);
 }
 
 static void volume_callback1(int v)
 {
-	//K007232_set_volume(1,0,(v & 0x0f)*0x11/2,(v & 0x0f)*0x11/2);
-	K007232_set_volume(1,1,(v & 0x0f)*0x11/2,(v >> 4)*0x11/2);
+	K007232_set_volume(1,0,(v & 0x0f)*0x11/2,(v >> 4)*0x11/2);
 }
 
 static struct K007232_interface k007232_interface =
@@ -356,7 +355,7 @@ static const struct MachineDriver machine_driver_chqflag =
 	0,
 
 	/* video hardware */
-	64*8, 32*8, { 11*8, (63-14)*8, 2*8, 30*8-1 },
+	64*8, 32*8, { 12*8, (64-14)*8-1, 2*8, 30*8-1 },
 	0,	/* gfx decoded by konamiic.c */
 	1024, 1024,
 	0,
@@ -398,9 +397,9 @@ ROM_START( chqflag )
 	ROM_LOAD( "717e06",		0x000000, 0x020000, 0x1ec26c7a )	/* zoom/rotate (N16) */
 
 	ROM_REGION( 0x100000, REGION_GFX3, 0 )	/* graphics (addressable by the main CPU) */
-	ROM_LOAD( "717e07",		0x000000, 0x040000, BADCRC (0xa8d538a8) )	/* BAD DUMP! */
+	ROM_LOAD( "717e07",		0x000000, 0x040000, 0xb9a565a8 )	/* zoom/rotate (L20) */
 	ROM_LOAD( "717e08",		0x040000, 0x040000, 0xb68a212e )	/* zoom/rotate (L22) */
-	ROM_LOAD( "717e11",		0x080000, 0x040000, BADCRC (0x84f8de54) )	/* BAD DUMP! */
+	ROM_LOAD( "717e11",		0x080000, 0x040000, 0xebb171ec )	/* zoom/rotate (N20) */
 	ROM_LOAD( "717e12",		0x0c0000, 0x040000, 0x9269335d )	/* zoom/rotate (N22) */
 
 	ROM_REGION( 0x080000, REGION_SOUND1, 0 )	/* 007232 data (chip 1) */
@@ -412,7 +411,7 @@ ROM_END
 
 ROM_START( chqflagj )
 	ROM_REGION( 0x58800, REGION_CPU1, 0 )	/* 052001 code */
-	ROM_LOAD( "717j02.bin",	0x050000, 0x008000, 0x1 )	/* banked ROM */
+	ROM_LOAD( "717j02.bin",	0x050000, 0x008000, 0x05355daa )	/* banked ROM */
 	ROM_CONTINUE(			0x008000, 0x008000 )				/* fixed ROM */
 	ROM_LOAD( "717e10",		0x010000, 0x040000, 0x72fc56f6 )	/* banked ROM */
 	/* extra memory for banked RAM */
@@ -428,9 +427,9 @@ ROM_START( chqflagj )
 	ROM_LOAD( "717e06",		0x000000, 0x020000, 0x1ec26c7a )	/* zoom/rotate (N16) */
 
 	ROM_REGION( 0x100000, REGION_GFX3, 0 )	/* graphics (addressable by the main CPU) */
-	ROM_LOAD( "717e07",		0x000000, 0x040000, BADCRC (0xa8d538a8) )	/* BAD DUMP! */
+	ROM_LOAD( "717e07",		0x000000, 0x040000, 0xb9a565a8 )	/* zoom/rotate (L20) */
 	ROM_LOAD( "717e08",		0x040000, 0x040000, 0xb68a212e )	/* zoom/rotate (L22) */
-	ROM_LOAD( "717e11",		0x080000, 0x040000, BADCRC (0x84f8de54) )	/* BAD DUMP! */
+	ROM_LOAD( "717e11",		0x080000, 0x040000, 0xebb171ec )	/* zoom/rotate (N20) */
 	ROM_LOAD( "717e12",		0x0c0000, 0x040000, 0x9269335d )	/* zoom/rotate (N22) */
 
 	ROM_REGION( 0x080000, REGION_SOUND1, 0 )	/* 007232 data (chip 1) */
@@ -450,5 +449,5 @@ static void init_chqflag(void)
 	paletteram = &RAM[0x58000];
 }
 
-GAMEX( 1988, chqflag,        0, chqflag, chqflag, chqflag, ROT90, "Konami", "Chequered Flag", GAME_NOT_WORKING )
-GAMEX( 1988, chqflagj, chqflag, chqflag, chqflag, chqflag, ROT90, "Konami", "Chequered Flag (Japan)", GAME_NOT_WORKING  )
+GAMEX( 1988, chqflag,        0, chqflag, chqflag, chqflag, ROT90, "Konami", "Chequered Flag", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1988, chqflagj, chqflag, chqflag, chqflag, chqflag, ROT90, "Konami", "Chequered Flag (Japan)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )

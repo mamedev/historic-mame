@@ -13,6 +13,7 @@
 #define v30_ICount i86_ICount
 
 /* Public functions */
+extern void v30_init(void);
 extern void v30_reset(void *param);
 #define v30_exit i86_exit
 extern int v30_execute(int cycles);

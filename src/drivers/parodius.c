@@ -97,7 +97,7 @@ static READ_HANDLER( parodius_sound_r )
 {
 	/* If the sound CPU is running, read the status, otherwise
 	   just make it pass the test */
-	if (Machine->sample_rate != 0) 	return K053260_r(2 + offset);
+	if (Machine->sample_rate != 0) 	return K053260_0_r(2 + offset);
 	else return offset ? 0x00 : 0x80;
 }
 
@@ -165,7 +165,7 @@ static MEMORY_WRITE_START( parodius_writemem )
 	{ 0x3fc0, 0x3fc0, parodius_3fc0_w },
 	{ 0x3fc4, 0x3fc4, parodius_videobank_w },
 	{ 0x3fc8, 0x3fc8, parodius_sh_irqtrigger_w },
-	{ 0x3fcc, 0x3fcd, K053260_w },
+	{ 0x3fcc, 0x3fcd, K053260_0_w },
 	{ 0x2000, 0x27ff, parodius_052109_053245_w },
 	{ 0x2000, 0x5fff, K052109_w },
 	{ 0x6000, 0x9fff, MWA_ROM },					/* banked ROM */
@@ -176,7 +176,7 @@ static MEMORY_READ_START( parodius_readmem_sound )
 	{ 0x0000, 0xefff, MRA_ROM },
 	{ 0xf000, 0xf7ff, MRA_RAM },
 	{ 0xf801, 0xf801, YM2151_status_port_0_r },
-	{ 0xfc00, 0xfc2f, K053260_r },
+	{ 0xfc00, 0xfc2f, K053260_0_r },
 MEMORY_END
 
 static MEMORY_WRITE_START( parodius_writemem_sound )
@@ -185,7 +185,7 @@ static MEMORY_WRITE_START( parodius_writemem_sound )
 	{ 0xf800, 0xf800, YM2151_register_port_0_w },
 	{ 0xf801, 0xf801, YM2151_data_port_0_w },
 	{ 0xfa00, 0xfa00, sound_arm_nmi_w },
-	{ 0xfc00, 0xfc2f, K053260_w },
+	{ 0xfc00, 0xfc2f, K053260_0_w },
 MEMORY_END
 
 /***************************************************************************
@@ -309,10 +309,11 @@ static struct YM2151interface ym2151_interface =
 
 static struct K053260_interface k053260_interface =
 {
-	3579545,
-	REGION_SOUND1, /* memory region */
-	{ MIXER(70,MIXER_PAN_LEFT), MIXER(70,MIXER_PAN_RIGHT) },
-//	sound_nmi_callback
+	1,
+	{ 3579545 },
+	{ REGION_SOUND1 }, /* memory region */
+	{ { MIXER(70,MIXER_PAN_LEFT), MIXER(70,MIXER_PAN_RIGHT) } },
+//	{ sound_nmi_callback }
 };
 
 

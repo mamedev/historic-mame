@@ -1,23 +1,23 @@
 /****************************************************************************
-  
+
 	NEC V20/V30/V33 emulator
 
 	(Re)Written June-September 2000 by Bryan McPhail (mish@tendril.co.uk) based
-	on code by Oliver Bergmann (Raul_Bloodworth@hotmail.com) who based code 
+	on code by Oliver Bergmann (Raul_Bloodworth@hotmail.com) who based code
 	on the i286 emulator by Fabrice Frances which had initial work based on
 	David Hedley's pcemu(!).
-	
+
 	This new core features 99% accurate cycle counts for each processor,
-	there are still some complex situations where cycle counts are wrong, 
-	typically where a few instructions have differing counts for odd/even 
+	there are still some complex situations where cycle counts are wrong,
+	typically where a few instructions have differing counts for odd/even
 	source and odd/even destination memory operands.
 
 	Flag settings are also correct for the NEC processors rather than the
 	I86 versions.
 
-	Nb:  This emulation should be faster than previous NEC cores, but 
-	because the old cycle count values were far too high in many cases 
-	the processor has to do more 'work' than before, so the overall effect 
+	Nb:  This emulation should be faster than previous NEC cores, but
+	because the old cycle count values were far too high in many cases
+	the processor has to do more 'work' than before, so the overall effect
 	may	be a slower core.
 
 ****************************************************************************/
@@ -63,9 +63,9 @@ typedef struct
 {
 	necbasicregs regs;
  	UINT16	sregs[4];
- 
+
 	UINT16	ip;
-	
+
 	INT32	SignVal;
     UINT32  AuxVal, OverVal, ZeroVal, CarryVal, ParityVal; /* 0 or non-0 valued flags */
 	UINT8	TF, IF, DF, MF; 	/* 0 or 1 valued flags */	/* OB[19.07.99] added Mode Flag V30 */
@@ -241,7 +241,7 @@ OP( 0x0f, i_pre_nec  ) { UINT32 ModRM, tmp, tmp2;
 		case 0x2a : ModRM = FETCH; tmp = GetRMByte(ModRM); tmp2 = (I.regs.b[AL] & 0xf)<<4; I.regs.b[AL] = (I.regs.b[AL] & 0xf0) | (tmp&0xf); tmp = tmp2 | (tmp>>4);	PutbackRMByte(ModRM,tmp); CLKM(17,17,13,32,32,19); break;
 		case 0x31 : ModRM = FETCH; ModRM=0; logerror("%06x: Unimplemented bitfield INS\n",cpu_get_pc()); break;
 		case 0x33 : ModRM = FETCH; ModRM=0; logerror("%06x: Unimplemented bitfield EXT\n",cpu_get_pc()); break;
-		case 0x92 : CLK(2); break; /* V25/35 FINT */ 
+		case 0x92 : CLK(2); break; /* V25/35 FINT */
 		case 0xe0 : ModRM = FETCH; ModRM=0; logerror("%06x: V33 unimplemented BRKXA (break to expansion address)\n",cpu_get_pc()); break;
 		case 0xf0 : ModRM = FETCH; ModRM=0; logerror("%06x: V33 unimplemented RETXA (return from expansion address)\n",cpu_get_pc()); break;
 		case 0xff : ModRM = FETCH; ModRM=0; logerror("%06x: unimplemented BRKEM (break to 8080 emulation mode)\n",cpu_get_pc()); break;
@@ -323,7 +323,7 @@ OP( 0x4f, i_dec_di  ) { DecWordReg(IY);						CLK(2);	}
 
 OP( 0x50, i_push_ax ) { PUSH(I.regs.w[AW]);					CLKS(12,8,3); }
 OP( 0x51, i_push_cx ) { PUSH(I.regs.w[CW]);					CLKS(12,8,3); }
-OP( 0x52, i_push_dx ) { PUSH(I.regs.w[DW]);					CLKS(12,8,3); } 
+OP( 0x52, i_push_dx ) { PUSH(I.regs.w[DW]);					CLKS(12,8,3); }
 OP( 0x53, i_push_bx ) { PUSH(I.regs.w[BW]);					CLKS(12,8,3); }
 OP( 0x54, i_push_sp ) { PUSH(I.regs.w[SP]);					CLKS(12,8,3); }
 OP( 0x55, i_push_bp ) { PUSH(I.regs.w[BP]);					CLKS(12,8,3); }
@@ -339,7 +339,7 @@ OP( 0x5d, i_pop_bp  ) { POP(I.regs.w[BP]);					CLKS(12,8,5); }
 OP( 0x5e, i_pop_si  ) { POP(I.regs.w[IX]);					CLKS(12,8,5); }
 OP( 0x5f, i_pop_di  ) { POP(I.regs.w[IY]);					CLKS(12,8,5); }
 
-OP( 0x60, i_pusha  ) { 
+OP( 0x60, i_pusha  ) {
 	unsigned tmp=I.regs.w[SP];
 	PUSH(I.regs.w[AW]);
 	PUSH(I.regs.w[CW]);
@@ -349,9 +349,9 @@ OP( 0x60, i_pusha  ) {
 	PUSH(I.regs.w[BP]);
 	PUSH(I.regs.w[IX]);
 	PUSH(I.regs.w[IY]);
-	CLKS(67,35,20); 
+	CLKS(67,35,20);
 }
-OP( 0x61, i_popa  ) { 
+OP( 0x61, i_popa  ) {
     unsigned tmp;
 	POP(I.regs.w[IY]);
 	POP(I.regs.w[IX]);
@@ -361,11 +361,11 @@ OP( 0x61, i_popa  ) {
 	POP(I.regs.w[DW]);
 	POP(I.regs.w[CW]);
 	POP(I.regs.w[AW]);
-	CLKS(75,43,22); 
+	CLKS(75,43,22);
 }
 OP( 0x62, i_chkind  ) {
 	UINT32 low,high,tmp;
-	GetModRM; 
+	GetModRM;
     low = GetRMWord(ModRM);
     high= GetnextRMWord;
     tmp= RegWord(ModRM);
@@ -410,7 +410,7 @@ OP( 0x65, i_repc  ) { 	UINT32 next = FETCHOP;	UINT16 c = I.regs.w[CW];
 	    case 0x36:	seg_prefix=TRUE;	prefix_base=I.sregs[SS]<<4;	next = FETCHOP;	CLK(2); break;
 	    case 0x3e:	seg_prefix=TRUE;	prefix_base=I.sregs[DS]<<4;	next = FETCHOP;	CLK(2); break;
 	}
- 
+
     switch(next) {
 	    case 0x6c:	CLK(2); if (c) do { i_insb();  c--; } while (c>0 && CF);	I.regs.w[CW]=c;	break;
 	    case 0x6d:  CLK(2); if (c) do { i_insw();  c--; } while (c>0 && CF);	I.regs.w[CW]=c;	break;
@@ -527,15 +527,15 @@ OP( 0x8d, i_lea       ) { UINT16 ModRM = FETCH; (void)(*GetEA[ModRM])(); RegWord
 OP( 0x8e, i_mov_sregw ) { UINT16 src; GetModRM; src = GetRMWord(ModRM); CLKR(15,15,7,15,11,5,2);
     switch (ModRM & 0x38) {
 	    case 0x00: I.sregs[ES] = src; break; /* mov es,ew */
-		case 0x08: I.sregs[CS] = src; break; /* mov cs,ew */ 
+		case 0x08: I.sregs[CS] = src; break; /* mov cs,ew */
 	    case 0x10: I.sregs[SS] = src; break; /* mov ss,ew */
 	    case 0x18: I.sregs[DS] = src; break; /* mov ds,ew */
 		default:   logerror("%06x: Mov Sreg - Invalid register\n",cpu_get_pc());
     }
-	no_interrupt=1; 
+	no_interrupt=1;
 }
 OP( 0x8f, i_popw ) { UINT16 tmp; GetModRM; POP(tmp); PutRMWord(ModRM,tmp); nec_ICount-=21; }
-OP( 0x90, i_nop  ) { CLK(3); 
+OP( 0x90, i_nop  ) { CLK(3);
 	/* Cycle skip for idle loops (0: NOP  1:  JMP 0) */
 	if ((PEEKOP((I.sregs[CS]<<4)+I.ip))==0xeb && (PEEK((I.sregs[CS]<<4)+I.ip+1))==0xfd)
 		nec_ICount=0;
@@ -593,11 +593,11 @@ OP( 0xbd, i_mov_bpd16 ) { I.regs.b[BPL] = FETCH; I.regs.b[BPH] = FETCH; CLKW(15,
 OP( 0xbe, i_mov_sid16 ) { I.regs.b[IXL] = FETCH; I.regs.b[IXH] = FETCH;	CLKW(15,15,7,15,11,5); }
 OP( 0xbf, i_mov_did16 ) { I.regs.b[IYL] = FETCH; I.regs.b[IYH] = FETCH;	CLKW(15,15,7,15,11,5); }
 
-OP( 0xc0, i_rotshft_bd8 ) { 
-	UINT32 src, dst; UINT8 c; 
+OP( 0xc0, i_rotshft_bd8 ) {
+	UINT32 src, dst; UINT8 c;
 	GetModRM; src = (unsigned)GetRMByte(ModRM); dst=src;
 	c=FETCH;
-	CLKM(7,7,2,19,19,6); 
+	CLKM(7,7,2,19,19,6);
 	if (c) switch (ModRM & 0x38) {
 		case 0x00: do { ROL_BYTE;  c--; CLK(1); } while (c>0); PutbackRMByte(ModRM,(BYTE)dst); break;
 		case 0x08: do { ROR_BYTE;  c--; CLK(1); } while (c>0); PutbackRMByte(ModRM,(BYTE)dst); break;
@@ -611,10 +611,10 @@ OP( 0xc0, i_rotshft_bd8 ) {
 }
 
 OP( 0xc1, i_rotshft_wd8 ) {
-	UINT32 src, dst;  UINT8 c; 
-	GetModRM; src = (unsigned)GetRMWord(ModRM); dst=src; 
+	UINT32 src, dst;  UINT8 c;
+	GetModRM; src = (unsigned)GetRMWord(ModRM); dst=src;
 	c=FETCH;
-	CLKM(7,7,2,27,19,6); 
+	CLKM(7,7,2,27,19,6);
     if (c) switch (ModRM & 0x38) {
 		case 0x00: do { ROL_WORD;  c--; CLK(1); } while (c>0); PutbackRMWord(ModRM,(WORD)dst); break;
 		case 0x08: do { ROR_WORD;  c--; CLK(1); } while (c>0); PutbackRMWord(ModRM,(WORD)dst); break;
@@ -634,7 +634,7 @@ OP( 0xc5, i_lds_dw   ) { GetModRM; WORD tmp = GetRMWord(ModRM); RegWord(ModRM)=t
 OP( 0xc6, i_mov_bd8  ) { GetModRM; PutImmRMByte(ModRM); nec_ICount-=(ModRM >=0xc0 )?4:11; }
 OP( 0xc7, i_mov_wd16 ) { GetModRM; PutImmRMWord(ModRM); nec_ICount-=(ModRM >=0xc0 )?4:15; }
 
-OP( 0xc8, i_enter ) { 
+OP( 0xc8, i_enter ) {
     UINT32 nb = FETCH;
     UINT32 i,level;
 
@@ -650,7 +650,7 @@ OP( 0xc8, i_enter ) {
     }
     if (level) PUSH(I.regs.w[BP]);
 }
-OP( 0xc9, i_leave ) { 
+OP( 0xc9, i_leave ) {
 	I.regs.w[SP]=I.regs.w[BP];
 	POP(I.regs.w[BP]);
 	nec_ICount-=8;
@@ -662,7 +662,7 @@ OP( 0xcd, i_int       ) { nec_interrupt(FETCH,0); CLKS(50,50,24); }
 OP( 0xce, i_into      ) { if (OF) { nec_interrupt(4,0); CLKS(52,52,26); } else CLK(3); }
 OP( 0xcf, i_iret      ) { POP(I.ip); POP(I.sregs[CS]); i_popf(); CHANGE_PC; CLKS(39,39,19); }
 
-OP( 0xd0, i_rotshft_b ) { 
+OP( 0xd0, i_rotshft_b ) {
 	UINT32 src, dst; GetModRM; src = (UINT32)GetRMByte(ModRM); dst=src;
 	CLKM(6,6,2,16,16,7);
     switch (ModRM & 0x38) {
@@ -670,7 +670,7 @@ OP( 0xd0, i_rotshft_b ) {
 		case 0x08: ROR_BYTE;  PutbackRMByte(ModRM,(BYTE)dst); I.OverVal = (src^dst)&0x80; break;
 		case 0x10: ROLC_BYTE; PutbackRMByte(ModRM,(BYTE)dst); I.OverVal = (src^dst)&0x80; break;
 		case 0x18: RORC_BYTE; PutbackRMByte(ModRM,(BYTE)dst); I.OverVal = (src^dst)&0x80; break;
-		case 0x20: SHL_BYTE(1); I.OverVal = (src^dst)&0x80; break; 
+		case 0x20: SHL_BYTE(1); I.OverVal = (src^dst)&0x80; break;
 		case 0x28: SHR_BYTE(1); I.OverVal = (src^dst)&0x80; break;
 		case 0x30: logerror("%06x: Undefined opcode 0xd0 0x30 (SHLA)\n",cpu_get_pc()); break;
 		case 0x38: SHRA_BYTE(1); I.OverVal = 0; break;
@@ -692,10 +692,10 @@ OP( 0xd1, i_rotshft_w ) {
 	}
 }
 
-OP( 0xd2, i_rotshft_bcl ) { 
+OP( 0xd2, i_rotshft_bcl ) {
 	UINT32 src, dst; UINT8 c; GetModRM; src = (UINT32)GetRMByte(ModRM); dst=src;
 	c=I.regs.b[CL];
-	CLKM(7,7,2,19,19,6); 
+	CLKM(7,7,2,19,19,6);
 	if (c) switch (ModRM & 0x38) {
 		case 0x00: do { ROL_BYTE;  c--; CLK(1); } while (c>0); PutbackRMByte(ModRM,(BYTE)dst); break;
 		case 0x08: do { ROR_BYTE;  c--; CLK(1); } while (c>0); PutbackRMByte(ModRM,(BYTE)dst); break;
@@ -711,7 +711,7 @@ OP( 0xd2, i_rotshft_bcl ) {
 OP( 0xd3, i_rotshft_wcl ) {
 	UINT32 src, dst; UINT8 c; GetModRM; src = (UINT32)GetRMWord(ModRM); dst=src;
 	c=I.regs.b[CL];
-	CLKM(7,7,2,27,19,6); 
+	CLKM(7,7,2,27,19,6);
     if (c) switch (ModRM & 0x38) {
 		case 0x00: do { ROL_WORD;  c--; CLK(1); } while (c>0); PutbackRMWord(ModRM,(WORD)dst); break;
 		case 0x08: do { ROR_WORD;  c--; CLK(1); } while (c>0); PutbackRMWord(ModRM,(WORD)dst); break;
@@ -760,7 +760,7 @@ OP( 0xf2, i_repne    ) { UINT32 next = FETCHOP; UINT16 c = I.regs.w[CW];
 	    case 0x3e:	seg_prefix=TRUE;	prefix_base=I.sregs[DS]<<4;	next = FETCHOP;	CLK(2); break;
 	}
 
-    switch(next) { 
+    switch(next) {
 	    case 0x6c:	CLK(2); if (c) do { i_insb();  c--; } while (c>0);	I.regs.w[CW]=c;	break;
 	    case 0x6d:  CLK(2); if (c) do { i_insw();  c--; } while (c>0);	I.regs.w[CW]=c;	break;
 	    case 0x6e:	CLK(2); if (c) do { i_outsb(); c--; } while (c>0);	I.regs.w[CW]=c;	break;
@@ -846,7 +846,7 @@ OP( 0xfe, i_fepre ) { UINT32 tmp, tmp1; GetModRM; tmp=GetRMByte(ModRM);
     switch(ModRM & 0x38) {
     	case 0x00: tmp1 = tmp+1; I.OverVal = (tmp==0x7f); SetAF(tmp1,tmp,1); SetSZPF_Byte(tmp1); PutbackRMByte(ModRM,(BYTE)tmp1); CLKM(2,2,2,16,16,7); break; /* INC */
 		case 0x08: tmp1 = tmp-1; I.OverVal = (tmp==0x80); SetAF(tmp1,tmp,1); SetSZPF_Byte(tmp1); PutbackRMByte(ModRM,(BYTE)tmp1); CLKM(2,2,2,16,16,7); break; /* DEC */
-		default:   logerror("%06x: FE Pre with unimplemented mod\n",cpu_get_pc());			
+		default:   logerror("%06x: FE Pre with unimplemented mod\n",cpu_get_pc());
 	}
 }
 OP( 0xff, i_ffpre ) { UINT32 tmp, tmp1; GetModRM; tmp=GetRMWord(ModRM);
@@ -858,7 +858,7 @@ OP( 0xff, i_ffpre ) { UINT32 tmp, tmp1; GetModRM; tmp=GetRMWord(ModRM);
 		case 0x20: I.ip = tmp; CHANGE_PC; nec_ICount-=13; break; /* JMP */
 		case 0x28: I.ip = tmp; I.sregs[CS] = GetnextRMWord; CHANGE_PC; nec_ICount-=15; break; /* JMP FAR */
 		case 0x30: PUSH(tmp); nec_ICount-=4; break;
-		default:   logerror("%06x: FF Pre with unimplemented mod\n",cpu_get_pc());		
+		default:   logerror("%06x: FF Pre with unimplemented mod\n",cpu_get_pc());
 	}
 }
 
@@ -1032,19 +1032,20 @@ unsigned nec_dasm(char *buffer, unsigned pc)
 }
 
 /* Wrappers for the different CPU types */
+void v20_init(void) { }
 void v20_reset(void *param) { nec_reset(param); }
 void v20_exit(void) { nec_exit(); }
-int v20_execute(int cycles) 
-{ 
+int v20_execute(int cycles)
+{
 	nec_ICount=cycles;
 	cpu_type=V20;
 
 	while(nec_ICount>0) {
 		if (I.pending_irq) {
 			/* No interrupt allowed between last instruction and this one */
-			if (no_interrupt) 
+			if (no_interrupt)
 				no_interrupt=0;
-			else			
+			else
 				external_int();
 		}
 
@@ -1127,18 +1128,19 @@ const char *v20_info(void *context, int regnum)
 }
 unsigned v20_dasm(char *buffer, unsigned pc) { return nec_dasm(buffer,pc); }
 
+void v30_init(void) { }
 void v30_reset(void *param) { nec_reset(param); }
 void v30_exit(void) { nec_exit(); }
-int v30_execute(int cycles) { 
+int v30_execute(int cycles) {
 	nec_ICount=cycles;
 	cpu_type=V30;
 
 	while(nec_ICount>0) {
 		if (I.pending_irq) {
 			/* No interrupt allowed between last instruction and this one */
-			if (no_interrupt) 
+			if (no_interrupt)
 				no_interrupt=0;
-			else			
+			else
 				external_int();
 		}
 
@@ -1177,19 +1179,20 @@ const char *v30_info(void *context, int regnum)
 }
 unsigned v30_dasm(char *buffer, unsigned pc) { return nec_dasm(buffer,pc); }
 
+void v33_init(void) { }
 void v33_reset(void *param) { nec_reset(param); }
 void v33_exit(void) { nec_exit(); }
-int v33_execute(int cycles) 
-{ 
+int v33_execute(int cycles)
+{
 	nec_ICount=cycles;
 	cpu_type=V33;
 
 	while(nec_ICount>0) {
 		if (I.pending_irq) {
 			/* No interrupt allowed between last instruction and this one */
-			if (no_interrupt) 
+			if (no_interrupt)
 				no_interrupt=0;
-			else			
+			else
 				external_int();
 		}
 

@@ -2079,9 +2079,10 @@ void sys16_outrun_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
 		tilemap_draw( bitmap, background, 0, 0 );
 		tilemap_draw( bitmap, foreground, 0, 0 );
 		render_grv2(bitmap,0);
-		tilemap_draw( bitmap, text_layer, 0, 0 );
 
 		draw_sprites( bitmap, 1 );
+
+		tilemap_draw( bitmap, text_layer, 0, 0 );
 	}
 }
 

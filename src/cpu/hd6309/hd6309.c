@@ -617,6 +617,23 @@ void hd6309_set_reg(int regnum, unsigned val)
 	}
 }
 
+void hd6309_init(void)
+{
+	int cpu = cpu_getactivecpu();
+	state_save_register_UINT16("hd6309", cpu, "PC", &PC, 1);
+	state_save_register_UINT16("hd6309", cpu, "U", &U, 1);
+	state_save_register_UINT16("hd6309", cpu, "S", &S, 1);
+	state_save_register_UINT16("hd6309", cpu, "X", &X, 1);
+	state_save_register_UINT16("hd6309", cpu, "Y", &Y, 1);
+	state_save_register_UINT16("hd6309", cpu, "V", &V, 1);
+	state_save_register_UINT8("hd6309", cpu, "DP", &DP, 1);
+	state_save_register_UINT8("hd6309", cpu, "CC", &CC, 1);
+	state_save_register_UINT8("hd6309", cpu, "MD", &MD, 1);
+	state_save_register_UINT8("hd6309", cpu, "INT", &hd6309.int_state, 1);
+	state_save_register_UINT8("hd6309", cpu, "NMI", &hd6309.nmi_state, 1);
+	state_save_register_UINT8("hd6309", cpu, "IRQ", &hd6309.irq_state[0], 1);
+	state_save_register_UINT8("hd6309", cpu, "FIRQ", &hd6309.irq_state[1], 1);
+}
 
 /****************************************************************************/
 /* Reset registers to their initial values									*/
@@ -708,51 +725,6 @@ void hd6309_set_irq_callback(int (*callback)(int irqline))
 {
 	hd6309.irq_callback = callback;
 }
-
-/****************************************************************************
- * Save CPU state
- ****************************************************************************/
-static void state_save(void *file, const char *module)
-{
-	int cpu = cpu_getactivecpu();
-	state_save_UINT16(file, module, cpu, "PC", &PC, 1);
-	state_save_UINT16(file, module, cpu, "U", &U, 1);
-	state_save_UINT16(file, module, cpu, "S", &S, 1);
-	state_save_UINT16(file, module, cpu, "X", &X, 1);
-	state_save_UINT16(file, module, cpu, "Y", &Y, 1);
-	state_save_UINT16(file, module, cpu, "V", &V, 1);
-	state_save_UINT8(file, module, cpu, "DP", &DP, 1);
-	state_save_UINT8(file, module, cpu, "CC", &CC, 1);
-	state_save_UINT8(file, module, cpu, "MD", &MD, 1);
-	state_save_UINT8(file, module, cpu, "INT", &hd6309.int_state, 1);
-	state_save_UINT8(file, module, cpu, "NMI", &hd6309.nmi_state, 1);
-	state_save_UINT8(file, module, cpu, "IRQ", &hd6309.irq_state[0], 1);
-	state_save_UINT8(file, module, cpu, "FIRQ", &hd6309.irq_state[1], 1);
-}
-
-/****************************************************************************
- * Load CPU state
- ****************************************************************************/
-static void state_load(void *file, const char *module)
-{
-	int cpu = cpu_getactivecpu();
-	state_load_UINT16(file, module, cpu, "PC", &PC, 1);
-	state_load_UINT16(file, module, cpu, "U", &U, 1);
-	state_load_UINT16(file, module, cpu, "S", &S, 1);
-	state_load_UINT16(file, module, cpu, "X", &X, 1);
-	state_load_UINT16(file, module, cpu, "Y", &Y, 1);
-	state_load_UINT16(file, module, cpu, "V", &V, 1);
-	state_load_UINT8(file, module, cpu, "DP", &DP, 1);
-	state_load_UINT8(file, module, cpu, "CC", &CC, 1);
-	state_load_UINT8(file, module, cpu, "MD", &MD, 1); UpdateState();
-	state_load_UINT8(file, module, cpu, "INT", &hd6309.int_state, 1);
-	state_load_UINT8(file, module, cpu, "NMI", &hd6309.nmi_state, 1);
-	state_load_UINT8(file, module, cpu, "IRQ", &hd6309.irq_state[0], 1);
-	state_load_UINT8(file, module, cpu, "FIRQ", &hd6309.irq_state[1], 1);
-}
-
-void hd6309_state_save(void *file) { state_save(file, "hd6309"); }
-void hd6309_state_load(void *file) { state_load(file, "hd6309"); }
 
 /****************************************************************************
  * Return a formatted string for a register

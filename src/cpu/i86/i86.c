@@ -98,20 +98,10 @@ static struct i86_timing cycles;
 #undef I86
 
 /***************************************************************************/
-
-void i86_reset(void *param)
+void i86_init(void)
 {
 	unsigned int i, j, c;
 	BREGS reg_name[8] = {AL, CL, DL, BL, AH, CH, DH, BH};
-
-	memset(&I, 0, sizeof (I));
-
-	I.sregs[CS] = 0xf000;
-	I.base[CS] = SegBase(CS);
-	I.pc = 0xffff0 & AMASK;
-
-	change_pc20(I.pc);
-
 	for (i = 0; i < 256; i++)
 	{
 		for (j = i, c = 0; j > 0; j >>= 1)
@@ -120,8 +110,6 @@ void i86_reset(void *param)
 
 		parity_table[i] = !(c & 1);
 	}
-
-	I.ZeroVal = I.ParityVal = 1;
 
 	for (i = 0; i < 256; i++)
 	{
@@ -134,6 +122,20 @@ void i86_reset(void *param)
 		Mod_RM.RM.w[i] = (WREGS) (i & 7);
 		Mod_RM.RM.b[i] = (BREGS) reg_name[i & 7];
 	}
+
+}
+
+void i86_reset(void *param)
+{
+	memset(&I, 0, sizeof (I));
+
+	I.sregs[CS] = 0xf000;
+	I.base[CS] = SegBase(CS);
+	I.pc = 0xffff0 & AMASK;
+
+	change_pc20(I.pc);
+
+	I.ZeroVal = I.ParityVal = 1;
 }
 
 void i86_exit(void)

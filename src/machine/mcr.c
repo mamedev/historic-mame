@@ -764,11 +764,11 @@ WRITE16_HANDLER( mcr68_6840_lower_w )
 
 READ16_HANDLER( mcr68_6840_upper_r )
 {
-	return (mcr68_6840_r_common(offset) << 8) | 0x00ff;
+	return (mcr68_6840_r_common(offset,0) << 8) | 0x00ff;
 }
 
 
 READ16_HANDLER( mcr68_6840_lower_r )
 {
-	return mcr68_6840_r_common(offset) | 0xff00;
+	return mcr68_6840_r_common(offset,0) | 0xff00;
 }

@@ -144,10 +144,6 @@ WRITE_HANDLER( carnival_sh_port1_w )
 	{
 		PLAY( SND_CLANG, 0 );
 	}
-	if ( bitsGoneHigh & OUT_PORT_1_CLANG )
-	{
-		STOP( SND_CLANG );
-	}
 
 	if ( bitsGoneLow & OUT_PORT_1_DUCK_1 )
 	{

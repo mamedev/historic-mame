@@ -5,8 +5,8 @@
 #include "driver.h"
 #include "mamedbg.h"
 #include "m68000.h"
+#include "state.h"
 
-/* global access */
 struct m68k_memory_interface a68k_memory_intf;
 
 #ifdef A68K0
@@ -26,6 +26,7 @@ enum
 	M68K_CPU_TYPE_68040		/* Supported by disassembler ONLY */
 };
 
+#define A68K_SET_PC_CALLBACK(A)     (*a68k_memory_intf.changepc)(A)
 
 int illegal_op = 0 ;
 int illegal_pc = 0 ;
@@ -48,36 +49,37 @@ unsigned int m68k_disassemble(char* str_buff, unsigned int pc, unsigned int cpu_
 /* Use the x86 assembly core */
 typedef struct
 {
-    int d[8];             /* 0x0004 8 Data registers */
-    int a[8];             /* 0x0024 8 Address registers */
+    UINT32 d[8];             /* 0x0004 8 Data registers */
+    UINT32 a[8];             /* 0x0024 8 Address registers */
 
-    int isp;              /* 0x0048 */
+    UINT32 isp;              /* 0x0048 */
 
-    int sr_high;          /* 0x004C System registers */
-    int ccr;              /* 0x0050 CCR in Intel Format */
-    int x_carry;          /* 0x0054 Extended Carry */
+    UINT32 sr_high;          /* 0x004C System registers */
+    UINT32 ccr;              /* 0x0050 CCR in Intel Format */
+    UINT32 x_carry;          /* 0x0054 Extended Carry */
 
-    int pc;               /* 0x0058 Program Counter */
+    UINT32 pc;               /* 0x0058 Program Counter */
 
-    int IRQ_level;        /* 0x005C IRQ level you want the MC68K process (0=None)  */
+    UINT32 IRQ_level;        /* 0x005C IRQ level you want the MC68K process (0=None)  */
 
     /* Backward compatible with C emulator - Only set in Debug compile */
 
-    int sr;
+    UINT16 sr;
+    UINT16 filler;
 
     int (*irq_callback)(int irqline);
 
-    int previous_pc;      /* last PC used */
+    UINT32 previous_pc;      /* last PC used */
 
     int (*reset_callback)(void);
 
-    int sfc;              /* Source Function Code. (68010) */
-    int dfc;              /* Destination Function Code. (68010) */
-    int usp;              /* User Stack (All) */
-    int vbr;              /* Vector Base Register. (68010) */
+    UINT32 sfc;              /* Source Function Code. (68010) */
+    UINT32 dfc;              /* Destination Function Code. (68010) */
+    UINT32 usp;              /* User Stack (All) */
+    UINT32 vbr;              /* Vector Base Register. (68010) */
 
-    int BankID;			  /* Memory bank in use */
-    int CPUtype;		  /* CPU Type 0=68000,1=68010,2=68020 */
+    UINT32 BankID;			  /* Memory bank in use */
+    UINT32 CPUtype;		  /* CPU Type 0=68000,1=68010,2=68020 */
 
 	struct m68k_memory_interface Memory_Interface;
 
@@ -110,6 +112,7 @@ extern a68k_cpu_context M68000_regs;
 
 extern void CONVENTION M68000_RUN(void);
 extern void CONVENTION M68000_RESET(void);
+
 #endif
 
 #ifdef A68K2
@@ -118,6 +121,66 @@ extern a68k_cpu_context M68020_regs;
 extern void CONVENTION M68020_RUN(void);
 extern void CONVENTION M68020_RESET(void);
 #endif
+
+/***************************************************************************/
+/* Save State stuff                                                        */
+/***************************************************************************/
+
+static int IntelFlag[32] = {
+	0x0000,0x0001,0x0800,0x0801,0x0040,0x0041,0x0840,0x0841,
+    0x0080,0x0081,0x0880,0x0881,0x00C0,0x00C1,0x08C0,0x08C1,
+    0x0100,0x0101,0x0900,0x0901,0x0140,0x0141,0x0940,0x0941,
+    0x0180,0x0181,0x0980,0x0981,0x01C0,0x01C1,0x09C0,0x09C1
+};
+
+
+// The assembler engine only keeps flags in intel format, so ...
+
+static void a68k_prepare_substate(void)
+{
+	M68000_regs.sr = ((M68000_regs.ccr >> 4) & 0x1C)
+                   | (M68000_regs.ccr & 0x01)
+                   | ((M68000_regs.ccr >> 10) & 0x02)
+                   | (M68000_regs.sr_high << 8);
+}
+
+static void a68k_post_load(void)
+{
+	int intel = M68000_regs.sr & 0x1f;
+
+    M68000_regs.sr_high = M68000_regs.sr >> 8;
+    M68000_regs.x_carry = (IntelFlag[intel] >> 8) & 0x01;
+    M68000_regs.ccr     = IntelFlag[intel] & 0x0EFF;
+}
+
+void a68k_state_register(const char *type)
+{
+	int cpu = cpu_getactivecpu();
+    UINT32 zero = 0;
+    int stopped = ((M68000_regs.IRQ_level & 0x80) != 0);
+
+	state_save_register_UINT32(type, cpu, "D"         , &M68000_regs.d[0], 8);
+	state_save_register_UINT32(type, cpu, "A"         , &M68000_regs.d[0], 8);
+	state_save_register_UINT32(type, cpu, "PPC"       , &M68000_regs.previous_pc, 1);
+	state_save_register_UINT32(type, cpu, "PC"        , &M68000_regs.pc, 1);
+	state_save_register_UINT32(type, cpu, "USP"       , &M68000_regs.usp, 1);
+	state_save_register_UINT32(type, cpu, "ISP"       , &M68000_regs.isp, 1);
+	state_save_register_UINT32(type, cpu, "MSP"       , &zero, 1);
+	state_save_register_UINT32(type, cpu, "VBR"       , &M68000_regs.vbr, 1);
+	state_save_register_UINT32(type, cpu, "SFC"       , &M68000_regs.sfc, 1);
+	state_save_register_UINT32(type, cpu, "DFC"       , &M68000_regs.dfc, 1);
+	state_save_register_UINT32(type, cpu, "CACR"      , &zero, 1);
+	state_save_register_UINT32(type, cpu, "CAAR"      , &zero, 1);
+	state_save_register_UINT16(type, cpu, "SR"        , &M68000_regs.sr, 1);
+	state_save_register_UINT32(type, cpu, "INT_LEVEL" , &M68000_regs.IRQ_level, 1);
+	state_save_register_UINT32(type, cpu, "INT_CYCLES", (UINT32 *)&M68000_ICount, 1);
+	state_save_register_int   (type, cpu, "STOPPED"   , &stopped);
+	state_save_register_int   (type, cpu, "HALTED"    , (int *)&zero);
+	state_save_register_UINT32(type, cpu, "PREF_ADDR" , &zero, 1);
+	state_save_register_UINT32(type, cpu, "PREF_DATA" , &zero, 1);
+  	state_save_register_func_presave(a68k_prepare_substate);
+  	state_save_register_func_postload(a68k_post_load);
+}
 
 /****************************************************************************
  * 24-bit address, 16-bit data memory interface
@@ -139,6 +202,7 @@ static void writelong_a24_d16(offs_t address, data32_t data)
 
 static void changepc_a24_d16(offs_t pc)
 {
+	logerror("Change PC - %6.6x\n",pc);
 	change_pc24bew(pc);
 }
 
@@ -347,6 +411,13 @@ static const struct m68k_memory_interface interface_a32_d32 =
 
 #ifdef A68K0
 
+static int m68000_memintf_flag[5] = {0,0,0,0,0};
+
+void m68000_init(void)
+{
+	a68k_state_register("m68000");
+}
+
 static void m68k16_reset_common(void)
 {
 	memset(&M68000_regs,0,sizeof(M68000_regs));
@@ -373,34 +444,45 @@ void m68000_memory_interface_set(int entry,void *MemRoutine)
     switch( entry )
     {
 		case  8: a68k_memory_intf.read8pc  = (tdef_memory_read8)MemRoutine;
+ 				 m68000_memintf_flag[0] = 1;
                  break;
 
 		case  9: a68k_memory_intf.read16pc = (tdef_memory_read16)MemRoutine;
+ 				 m68000_memintf_flag[1] = 1;
                  break;
 
 		case 10: a68k_memory_intf.read32pc = (tdef_memory_read32)MemRoutine;
+ 				 m68000_memintf_flag[2] = 1;
                  break;
 
 		case 11: a68k_memory_intf.read16d  = (tdef_memory_read16)MemRoutine;
+ 				 m68000_memintf_flag[3] = 1;
                  break;
 
 		case 12: a68k_memory_intf.read32d  = (tdef_memory_read32)MemRoutine;
+ 				 m68000_memintf_flag[4] = 1;
                  break;
-
     }
 }
 
 void m68000_reset(void *param)
 {
     // Default Memory Routines
-    a68k_memory_intf = interface_a24_d16;
 
-    // Check for Override
-	if(Machine->drv->init_machine)
-    {
-	    // Driver Over-ride
-        (*Machine->drv->init_machine)();
-    }
+ 	a68k_memory_intf.opcode_xor = interface_a24_d16.opcode_xor;
+ 	a68k_memory_intf.read8 = interface_a24_d16.read8;
+ 	a68k_memory_intf.read16 = interface_a24_d16.read16;
+ 	a68k_memory_intf.read32 = interface_a24_d16.read32;
+ 	a68k_memory_intf.write8 = interface_a24_d16.write8;
+ 	a68k_memory_intf.write16 = interface_a24_d16.write16;
+ 	a68k_memory_intf.write32 = interface_a24_d16.write32;
+ 	a68k_memory_intf.changepc = interface_a24_d16.changepc;
+
+ 	if (m68000_memintf_flag[0]) m68000_memintf_flag[0] = 0; else a68k_memory_intf.read8pc = interface_a24_d16.read8pc;
+ 	if (m68000_memintf_flag[1]) m68000_memintf_flag[1] = 0; else a68k_memory_intf.read16pc = interface_a24_d16.read16pc;
+ 	if (m68000_memintf_flag[2]) m68000_memintf_flag[2] = 0; else a68k_memory_intf.read32pc = interface_a24_d16.read32pc;
+ 	if (m68000_memintf_flag[3]) m68000_memintf_flag[3] = 0; else a68k_memory_intf.read16d = interface_a24_d16.read16d;
+ 	if (m68000_memintf_flag[4]) m68000_memintf_flag[4] = 0; else a68k_memory_intf.read32d = interface_a24_d16.read32d;
 
 	m68k16_reset_common();
 
@@ -450,7 +532,7 @@ int m68000_execute(int cycles)
             }
             #endif
 
-            m68k_memory_intf = a68k_memory_intf;
+//	        m68k_memory_intf = a68k_memory_intf;
 			MAME_Debug();
             M68000_RUN();
 
@@ -722,7 +804,8 @@ const char *m68000_info(void *context, int regnum)
 
 unsigned m68000_dasm(char *buffer, unsigned pc)
 {
-//	change_pc24bew(pc);
+	A68K_SET_PC_CALLBACK(pc);
+
 #ifdef MAME_DEBUG
 	return m68k_disassemble(buffer, pc, M68K_CPU_TYPE_68000);
 #else
@@ -748,6 +831,7 @@ void m68010_reset(void *param)
     M68000_regs.Memory_Interface = a68k_memory_intf;
 }
 
+void m68010_init(void) { m68000_init(); }
 void m68010_exit(void) { m68000_exit(); }
 int  m68010_execute(int cycles) { return m68000_execute(cycles); }
 unsigned m68010_get_context(void *dst) { return m68000_get_context(dst); }
@@ -782,7 +866,8 @@ const char *m68010_info(void *context, int regnum)
 
 unsigned m68010_dasm(char *buffer, unsigned pc)
 {
-	change_pc24bew(pc);
+	A68K_SET_PC_CALLBACK(pc);
+
 #ifdef MAME_DEBUG
 	return m68k_disassemble(buffer, pc, M68K_CPU_TYPE_68010);
 #else
@@ -868,7 +953,7 @@ int m68020_execute(int cycles)
             }
             #endif
 
-            m68k_memory_intf = a68k_memory_intf;
+//	        m68k_memory_intf = a68k_memory_intf;
 			MAME_Debug();
             M68020_RUN();
 
@@ -1075,7 +1160,8 @@ const char *m68020_info(void *context, int regnum)
 
 unsigned m68020_dasm(char *buffer, unsigned pc)
 {
-	change_pc24bew(pc);
+	A68K_SET_PC_CALLBACK(pc);
+
 #ifdef MAME_DEBUG
 	return m68k_disassemble(buffer, pc, M68K_CPU_TYPE_68020);
 #else
@@ -1132,7 +1218,8 @@ const char *m68ec020_info(void *context, int regnum)
 
 unsigned m68ec020_dasm(char *buffer, unsigned pc)
 {
-	change_pc24bew(pc);
+	A68K_SET_PC_CALLBACK(pc);
+
 #ifdef MAME_DEBUG
 	return m68k_disassemble(buffer, pc, M68K_CPU_TYPE_68EC020);
 #else

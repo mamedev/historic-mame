@@ -229,9 +229,9 @@ READ_HANDLER( wardner_videoram_r )
 {
 	int shift = 8 * (offset & 1);
 	switch (offset/2) {
-		case 0: return twincobr_txram_r(0) >> shift; break;
-		case 1: return twincobr_bgram_r(0) >> shift; break;
-		case 2: return twincobr_fgram_r(0) >> shift; break;
+		case 0: return twincobr_txram_r(0,0) >> shift; break;
+		case 1: return twincobr_bgram_r(0,0) >> shift; break;
+		case 2: return twincobr_fgram_r(0,0) >> shift; break;
 	}
 	return 0;
 }

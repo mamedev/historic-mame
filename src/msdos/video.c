@@ -1966,9 +1966,6 @@ static int init_direct_mapped(unsigned int totalcolors,
 		else /* use forced mmx= setting from mame.cfg at own risk!!! */
 			mmxlfb = use_mmx;
 
-/* MMX functions for 32-bit modes are broken */
-mmxlfb = 0;
-
 		update_screen = updaters32[xmultiply-1][ymultiply-1][scanlines?1:0][use_dirty?1:0];
 		update_screen_debugger = updaters32[0][0][0][0];
 	}

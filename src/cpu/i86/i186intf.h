@@ -14,6 +14,7 @@
 #define i186_ICount i86_ICount
 
 /* Public functions */
+#define i186_init i86_init
 #define i186_reset i86_reset
 #define i186_exit i86_exit
 extern int i186_execute(int cyclecount);

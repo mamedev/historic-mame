@@ -527,6 +527,13 @@ unsigned Dasm6809 (char *buffer, unsigned pc)
                 buffer += sprintf (buffer, "%s,%s", sym1, regs_6809[reg]);
 			}
 			else
+			if( pb2 == 0x8f )
+			{
+				sym1 = set_ea_info(1, offset, EA_INT16, EA_VALUE);
+				ea = offset;
+                buffer += sprintf (buffer, "%s", sym1);
+			}
+			else
 			{
 				sym1 = set_ea_info(1, offset, EA_INT16, EA_VALUE);
 				ea = (cpu_get_reg(regid_6809[reg]) + offset) & 0xffff;

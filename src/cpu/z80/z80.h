@@ -26,6 +26,7 @@ extern int z80_ICount;              /* T-state count                        */
 #define Z80_NMI_INT 	-2			/* Execute NMI							*/
 #define Z80_IRQ_INT 	-1000		/* Execute IRQ							*/
 
+extern void z80_init(void);
 extern void z80_reset (void *param);
 extern void z80_exit (void);
 extern int z80_execute(int cycles);
@@ -43,8 +44,6 @@ extern void z80_set_reg (int regnum, unsigned val);
 extern void z80_set_nmi_line(int state);
 extern void z80_set_irq_line(int irqline, int state);
 extern void z80_set_irq_callback(int (*irq_callback)(int));
-extern void z80_state_save(void *file);
-extern void z80_state_load(void *file);
 extern const char *z80_info(void *context, int regnum);
 extern unsigned z80_dasm(char *buffer, unsigned pc);
 

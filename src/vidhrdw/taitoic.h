@@ -38,6 +38,9 @@ void TC0100SCN_set_colbanks(int bg0,int bg1,int fg);
    To change from the default (0,0,0) use after calling TC0100SCN_vh_start */
 void TC0100SCN_set_chip_colbanks(int chip0,int chip1,int chip2);
 
+/* Function to set bg tilemask < 0xffff */
+void TC0100SCN_set_bg_tilemask(int mask);
+
 void TC0100SCN_vh_stop(void);
 READ16_HANDLER ( TC0100SCN_word_0_r );
 WRITE16_HANDLER( TC0100SCN_word_0_w );
@@ -51,6 +54,12 @@ READ16_HANDLER ( TC0100SCN_word_2_r );
 WRITE16_HANDLER( TC0100SCN_word_2_w );
 READ16_HANDLER ( TC0100SCN_ctrl_word_2_r );
 WRITE16_HANDLER( TC0100SCN_ctrl_word_2_w );
+
+/* Functions for use with 68020 (Under Fire) */
+READ32_HANDLER ( TC0100SCN_long_r );
+WRITE32_HANDLER( TC0100SCN_long_w );
+READ32_HANDLER ( TC0100SCN_ctrl_long_r );
+WRITE32_HANDLER( TC0100SCN_ctrl_long_w );
 
 /* Functions to write multiple TC0100SCNs with the same data */
 WRITE16_HANDLER( TC0100SCN_dual_screen_w );
@@ -82,15 +91,26 @@ WRITE16_HANDLER( TC0430GRW_ctrl_word_w );
 void TC0430GRW_tilemap_update(int base_color);
 void TC0430GRW_zoom_draw(struct osd_bitmap *bitmap,int xoffset,int yoffset,UINT32 priority);
 
-
 /***************************************************************************/
 
-int TC0480SCP_vh_start(int gfxnum,int pixels,int x_offset,int y_offset,int text_xoffs,int text_yoffs,int col_base);
+/* When writing a driver, pass zero for the text and flip offsets initially:
+   then tweak them once you have the 4 bg layer positions correct. Col_base
+   may be needed when tilemaps use a palette area from sprites. */
+
+int TC0480SCP_vh_start(int gfxnum,int pixels,int x_offset,int y_offset,int text_xoffs,int text_yoffs,int flip_xoffs,int flip_yoffs,int col_base);
 void TC0480SCP_vh_stop(void);
 READ16_HANDLER ( TC0480SCP_word_r );
 WRITE16_HANDLER( TC0480SCP_word_w );
 READ16_HANDLER ( TC0480SCP_ctrl_word_r );
 WRITE16_HANDLER( TC0480SCP_ctrl_word_w );
+
+/* Functions for use with 68020 (Super-Z system) */
+READ32_HANDLER ( TC0480SCP_long_r );
+WRITE32_HANDLER( TC0480SCP_long_w );
+READ32_HANDLER ( TC0480SCP_ctrl_long_r );
+WRITE32_HANDLER( TC0480SCP_ctrl_long_w );
+
+void TC0480SCP_mark_transparent_colors(int opaque_layer);
 void TC0480SCP_tilemap_update(void);
 void TC0480SCP_tilemap_draw(struct osd_bitmap *bitmap,int layer,int flags,UINT32 priority);
 

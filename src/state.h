@@ -3,47 +3,44 @@
 
 #include "osd_cpu.h"
 
-/* Amount of memory to allocate while reading variable size arrays */
-/* Tradeoff between calling realloc all the time and wasting memory */
-#define CHUNK_SIZE  64
+/* Initializes the save state registrations */
+void state_save_reset(void);
 
-/* Interface to state save/load functions */
+/* Registering functions */
+void state_save_register_UINT8 (const char *module, int instance,
+								const char *name, UINT8 *val, unsigned size);
+void state_save_register_INT8  (const char *module, int instance,
+								const char *name, INT8 *val, unsigned size);
+void state_save_register_UINT16(const char *module, int instance,
+								const char *name, UINT16 *val, unsigned size);
+void state_save_register_INT16 (const char *module, int instance,
+								const char *name, INT16 *val, unsigned size);
+void state_save_register_UINT32(const char *module, int instance,
+								const char *name, UINT32 *val, unsigned size);
+void state_save_register_INT32 (const char *module, int instance,
+								const char *name, INT32 *val, unsigned size);
+void state_save_register_double(const char *module, int instance,
+								const char *name, double *val, unsigned size);
+void state_save_register_int   (const char *module, int instance,
+								const char *name, int *val);
 
-/* Close a state file; free temporary memory at the same time */
-void state_close(void *state);
 
-/* Create a new state file; name should normally be the games name */
-void *state_create(const char *name);
+void state_save_register_func_presave(void (*func)(void));
+void state_save_register_func_postload(void (*func)(void));
 
-/* Open an existing state file */
-void *state_open(const char *name);
+/* Save and load functions */
+/* The tags are a hack around the current cpu structures */
+void state_save_save_begin(void *file);
+int  state_save_load_begin(void *file);
 
-/* Save data of various element size and signedness */
-void state_save_UINT8(void *state, const char *module,int instance,
-	const char *name, const UINT8 *val, unsigned size);
-void state_save_INT8(void *state, const char *module,int instance,
-	const char *name, const INT8 *val, unsigned size);
-void state_save_UINT16(void *state, const char *module,int instance,
-	const char *name, const UINT16 *val, unsigned size);
-void state_save_INT16(void *state, const char *module,int instance,
-	const char *name, const INT16 *val, unsigned size);
-void state_save_UINT32(void *state, const char *module,int instance,
-	const char *name, const UINT32 *val, unsigned size);
-void state_save_INT32(void *state, const char *module,int instance,
-	const char *name, const INT32 *val, unsigned size);
+void state_save_set_current_tag(int tag);
+void state_save_save_continue(void);
+void state_save_load_continue(void);
 
-/* Load data of various element size and signedness */
-void state_load_UINT8(void *state, const char *module,int instance,
-	const char *name, UINT8 *val, unsigned size);
-void state_load_INT8(void *state, const char *module,int instance,
-	const char *name, INT8 *val, unsigned size);
-void state_load_UINT16(void *state, const char *module,int instance,
-	const char *name, UINT16 *val, unsigned size);
-void state_load_INT16(void *state, const char *module,int instance,
-	const char *name, INT16 *val, unsigned size);
-void state_load_UINT32(void *state, const char *module,int instance,
-	const char *name, UINT32 *val, unsigned size);
-void state_load_INT32(void *state, const char *module,int instance,
-	const char *name, INT32 *val, unsigned size);
+void state_save_save_finish(void);
+void state_save_load_finish(void);
+
+/* Display function */
+void state_save_dump_registry(void);
 
 #endif

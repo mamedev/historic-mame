@@ -72,6 +72,7 @@ enum {
 
 extern int m6502_ICount;				/* cycle count */
 
+extern void m6502_init(void);
 extern void m6502_reset(void *param);
 extern void m6502_exit(void);
 extern int	m6502_execute(int cycles);
@@ -86,8 +87,6 @@ extern void m6502_set_reg(int regnum, unsigned val);
 extern void m6502_set_nmi_line(int state);
 extern void m6502_set_irq_line(int irqline, int state);
 extern void m6502_set_irq_callback(int (*callback)(int irqline));
-extern void m6502_state_save(void *file);
-extern void m6502_state_load(void *file);
 extern const char *m6502_info(void *context, int regnum);
 extern unsigned m6502_dasm(char *buffer, unsigned pc);
 
@@ -116,6 +115,7 @@ extern unsigned m6502_dasm(char *buffer, unsigned pc);
 
 #define m6510_ICount					m6502_ICount
 
+extern void m6510_init(void);
 extern void m6510_reset(void *param);
 extern void m6510_exit(void);
 extern int	m6510_execute(int cycles);
@@ -130,8 +130,6 @@ extern void m6510_set_reg(int regnum, unsigned val);
 extern void m6510_set_nmi_line(int state);
 extern void m6510_set_irq_line(int irqline, int state);
 extern void m6510_set_irq_callback(int (*callback)(int irqline));
-extern void m6510_state_save(void *file);
-extern void m6510_state_load(void *file);
 extern const char *m6510_info(void *context, int regnum);
 extern unsigned m6510_dasm(char *buffer, unsigned pc);
 
@@ -293,6 +291,7 @@ extern const char *m8502_info(void *context, int regnum);
 
 #define n2a03_ICount					m6502_ICount
 
+extern void n2a03_init(void);
 extern void n2a03_reset(void *param);
 extern void n2a03_exit(void);
 extern int	n2a03_execute(int cycles);
@@ -307,8 +306,6 @@ extern void n2a03_set_reg (int regnum, unsigned val);
 extern void n2a03_set_nmi_line(int state);
 extern void n2a03_set_irq_line(int irqline, int state);
 extern void n2a03_set_irq_callback(int (*callback)(int irqline));
-extern void n2a03_state_save(void *file);
-extern void n2a03_state_load(void *file);
 extern const char *n2a03_info(void *context, int regnum);
 extern unsigned n2a03_dasm(char *buffer, unsigned pc);
 
@@ -348,6 +345,7 @@ extern void n2a03_irq(void);
 
 #define m65c02_ICount					m6502_ICount
 
+extern void m65c02_init(void);
 extern void m65c02_reset(void *param);
 extern void m65c02_exit(void);
 extern int	m65c02_execute(int cycles);
@@ -362,8 +360,6 @@ extern void m65c02_set_reg(int regnum, unsigned val);
 extern void m65c02_set_nmi_line(int state);
 extern void m65c02_set_irq_line(int irqline, int state);
 extern void m65c02_set_irq_callback(int (*callback)(int irqline));
-extern void m65c02_state_save(void *file);
-extern void m65c02_state_load(void *file);
 extern const char *m65c02_info(void *context, int regnum);
 extern unsigned m65c02_dasm(char *buffer, unsigned pc);
 #endif
@@ -393,6 +389,7 @@ extern unsigned m65c02_dasm(char *buffer, unsigned pc);
 
 #define m65sc02_ICount					m6502_ICount
 
+extern void m65sc02_init(void);
 extern void m65sc02_reset(void *param);
 extern void m65sc02_exit(void);
 extern int	m65sc02_execute(int cycles);
@@ -407,8 +404,6 @@ extern void m65sc02_set_reg(int regnum, unsigned val);
 extern void m65sc02_set_nmi_line(int state);
 extern void m65sc02_set_irq_line(int irqline, int state);
 extern void m65sc02_set_irq_callback(int (*callback)(int irqline));
-extern void m65sc02_state_save(void *file);
-extern void m65sc02_state_load(void *file);
 extern const char *m65sc02_info(void *context, int regnum);
 extern unsigned m65sc02_dasm(char *buffer, unsigned pc);
 #endif

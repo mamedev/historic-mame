@@ -109,7 +109,7 @@ READ_HANDLER( simpsons_sound_r )
 {
 	/* If the sound CPU is running, read the status, otherwise
 	   just make it pass the test */
-	if (Machine->sample_rate != 0) 	return K053260_r(2 + offset);
+	if (Machine->sample_rate != 0) 	return K053260_0_r(2 + offset);
 	else
 	{
 		static int res = 0x80;

@@ -299,19 +299,19 @@ static READ16_HANDLER( wgp_input_r )
 	switch (offset)
 	{
 		case 0x00:
-			return input_port_3_word_r(0) << 8;	/* DSW A */
+			return input_port_3_word_r(0,0) << 8;	/* DSW A */
 
 		case 0x01:
-			return input_port_4_word_r(0) << 8;	/* DSW B */
+			return input_port_4_word_r(0,0) << 8;	/* DSW B */
 
 		case 0x02:
-			return input_port_0_word_r(0) << 8;	/* IN0 */
+			return input_port_0_word_r(0,0) << 8;	/* IN0 */
 
 		case 0x03:
-			return input_port_1_word_r(0) << 8;	/* IN1 */
+			return input_port_1_word_r(0,0) << 8;	/* IN1 */
 
 		case 0x07:
-			return input_port_2_word_r(0) << 8;	/* IN2 */
+			return input_port_2_word_r(0,0) << 8;	/* IN2 */
 	}
 
 if (offset!=4)	// fills log too much
@@ -324,23 +324,23 @@ static READ16_HANDLER( wgp_adinput_r )
 {
 	UINT16 steer = 0x40;
 
-	if (input_port_5_word_r(0) & 0x8)	/* pressing down */
+	if (input_port_5_word_r(0,0) & 0x8)	/* pressing down */
 		steer = 0x0d;
 
-	if (input_port_5_word_r(0) & 0x4)	/* pressing up */
+	if (input_port_5_word_r(0,0) & 0x4)	/* pressing up */
 		steer = 0x73;
 
-	if (input_port_5_word_r(0) & 0x2)	/* pressing right */
+	if (input_port_5_word_r(0,0) & 0x2)	/* pressing right */
 		steer = 0x00;
 
-	if (input_port_5_word_r(0) & 0x1)	/* pressing left */
+	if (input_port_5_word_r(0,0) & 0x1)	/* pressing left */
 		steer = 0x80;
 
 	switch (offset)
 	{
 		case 0x00:
 		{
-			if (input_port_5_word_r(0) &0x40)	/* pressing accel */
+			if (input_port_5_word_r(0,0) &0x40)	/* pressing accel */
 				return 0xff;
 			else
 				return 0x00;
@@ -357,14 +357,14 @@ static READ16_HANDLER( wgp_adinput_r )
 
 		case 0x04:
 		{
-			if (input_port_5_word_r(0) &0x80)	/* pressing brake */
+			if (input_port_5_word_r(0,0) &0x80)	/* pressing brake */
 				return 0xcf;
 			else
 				return 0xff;
 		}
 
 		case 0x05:
-			return input_port_6_word_r(0);	/* unknown */
+			return input_port_6_word_r(0,0);	/* unknown */
 	}
 
 logerror("CPU #0 PC %06x: warning - read unmapped a/d input offset %06x\n",cpu_get_pc(),offset);

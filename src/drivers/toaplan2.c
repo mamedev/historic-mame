@@ -4209,6 +4209,6 @@ GAMEX( 1993, batugnsp, batsugun, batsugun, batsugun, toaplan3, ROT270_16BIT, "To
 GAME ( 1994, snowbro2, 0,        snowbro2, snowbro2, snowbro2, ROT0_16BIT,   "[Toaplan] Hanafram", "Snow Bros. 2 - With New Elves" )
 GAME ( 1993, mahoudai, 0,        mahoudai, mahoudai, raizing,  ROT270_16BIT, "Raizing (Able license)", "Mahou Daisakusen (Japan)" )
 GAME ( 1994, shippumd, 0,        shippumd, shippumd, raizing,  ROT270_16BIT, "Raizing/8ing", "Shippu Mahou Daisakusen (Japan)" )
-GAME ( 1996, battleg,  0,        battleg,  battleg,  battleg,  ROT270_16BIT, "Raizing/8ing", "Battle Garegga (Japan)" )
+GAME ( 1996, battleg,  0,        battleg,  battleg,  battleg,  ROT270_16BIT, "Raizing/8ing", "Battle Garegga" )
 GAME ( 1998, batrider, 0,        batrider, batrider, battleg,  ROT270_16BIT, "Raizing/8ing", "Armed Police Batrider (Japan, version B)" )
 GAME ( 1998, batridra, batrider, batrider, batrider, battleg,  ROT270_16BIT, "Raizing/8ing", "Armed Police Batrider (Japan, version A)" )

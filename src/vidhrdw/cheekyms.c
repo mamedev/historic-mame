@@ -14,7 +14,7 @@ Functions to emulate the video hardware of the machine.
 
 static int redraw_man = 0;
 static int man_scroll = -1;
-static int sprites[0x20];
+static data8_t sprites[0x20];
 static int char_palette = 0;
 
 
@@ -132,7 +132,7 @@ void cheekyms_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	/* Draw the sprites first, because they're supposed to appear below
 	   the characters */
-	for (offs = 0; offs < sizeof(sprites); offs += 4)
+	for (offs = 0; offs < sizeof(sprites)/sizeof(sprites[0]); offs += 4)
 	{
 		int v1, sx, sy, col, code;
 

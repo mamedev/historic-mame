@@ -43,6 +43,7 @@ extern	int tms320c10_icount;		/* T-state count */
 										/* can address up to 0xffff (incase  */
 										/* their support is ever added).	 */
 
+void tms320c10_init(void);
 void tms320c10_reset  (void *param);			/* Reset processor & registers	*/
 void tms320c10_exit(void);						/* Shutdown CPU core			*/
 int tms320c10_execute(int cycles);				/* Execute cycles T-States -	*/

@@ -225,16 +225,6 @@ static void do_blit_unpack( const struct sprite *sprite ){
 			#undef COLOR
 			#undef NEXTLINE
 		}
-		else if( sprite->flags&SPRITE_TRANSPARENCY_THROUGH ){
-			int color = Machine->pens[palette_transparent_pen];
-			#define OPAQUE(X) (dest[x]==color && source[X]!=transparent_pen)
-			#define COLOR(X) (pal_data[source[X]])
-			#define NEXTLINE
-			BLIT
-			#undef OPAQUE
-			#undef COLOR
-			#undef NEXTLINE
-		}
 		else if( pal_data ){
 			#define OPAQUE(X) (source[X]!=transparent_pen)
 			#define COLOR(X) (pal_data[source[X]])
@@ -319,16 +309,6 @@ static void do_blit_stack( const struct sprite *sprite ){
 					#define OPAQUE(X) (mask[x]==0 && source[X]!=transparent_pen)
 					#define COLOR(X) (pal_data[source[X]])
 					#define NEXTLINE mask+=sprite->total_width;
-					BLIT
-					#undef OPAQUE
-					#undef COLOR
-					#undef NEXTLINE
-				}
-				else if( sprite->flags&SPRITE_TRANSPARENCY_THROUGH ){
-					int color = Machine->pens[palette_transparent_pen];
-					#define OPAQUE(X) (dest[x]==color && source[X]!=transparent_pen)
-					#define COLOR(X) (pal_data[source[X]])
-					#define NEXTLINE
 					BLIT
 					#undef OPAQUE
 					#undef COLOR

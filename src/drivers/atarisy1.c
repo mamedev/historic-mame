@@ -499,9 +499,9 @@ static OPBASE_HANDLER( indytemp_setopbase )
 	 */
 
 	if (address & 0x80000)
-		atarigen_slapstic_r(0);
+		atarigen_slapstic_r(0,0);
 	else if (prevpc & 0x80000)
-		atarigen_slapstic_r((prevpc >> 1) & 0x3fff);
+		atarigen_slapstic_r((prevpc >> 1) & 0x3fff,0);
 
 	return address;
 }

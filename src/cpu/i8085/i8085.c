@@ -1181,13 +1181,38 @@ static void init_tables (void)
 }
 
 /****************************************************************************
+ * Init the 8085 emulation
+ ****************************************************************************/
+void i8085_init(void)
+{
+	int cpu = cpu_getactivecpu();
+	init_tables();
+	I.cputype = 1;
+
+	state_save_register_UINT16("i8085", cpu, "AF", &I.AF.w.l, 1);
+	state_save_register_UINT16("i8085", cpu, "BC", &I.BC.w.l, 1);
+	state_save_register_UINT16("i8085", cpu, "DE", &I.DE.w.l, 1);
+	state_save_register_UINT16("i8085", cpu, "HL", &I.HL.w.l, 1);
+	state_save_register_UINT16("i8085", cpu, "SP", &I.SP.w.l, 1);
+	state_save_register_UINT16("i8085", cpu, "PC", &I.PC.w.l, 1);
+	state_save_register_UINT8("i8085", cpu, "HALT", &I.HALT, 1);
+	state_save_register_UINT8("i8085", cpu, "IM", &I.IM, 1);
+	state_save_register_UINT8("i8085", cpu, "IREQ", &I.IREQ, 1);
+	state_save_register_UINT8("i8085", cpu, "ISRV", &I.ISRV, 1);
+	state_save_register_UINT32("i8085", cpu, "INTR", &I.INTR, 1);
+	state_save_register_UINT32("i8085", cpu, "IRQ2", &I.IRQ2, 1);
+	state_save_register_UINT32("i8085", cpu, "IRQ1", &I.IRQ1, 1);
+	state_save_register_INT8("i8085", cpu, "NMI_STATE", &I.nmi_state, 1);
+	state_save_register_INT8("i8085", cpu, "IRQ_STATE", I.irq_state, 4);
+}
+
+/****************************************************************************
  * Reset the 8085 emulation
  ****************************************************************************/
 void i8085_reset(void *param)
 {
 	init_tables();
 	memset(&I, 0, sizeof(i8085_Regs));
-	I.cputype = 1;
 	change_pc16(I.PC.d);
 }
 
@@ -1494,46 +1519,6 @@ void i8085_set_irq_callback(int (*callback)(int))
 	I.irq_callback = callback;
 }
 
-void i8085_state_save(void *file)
-{
-	int cpu = cpu_getactivecpu();
-	state_save_UINT16(file, "i8085", cpu, "AF", &I.AF.w.l, 1);
-	state_save_UINT16(file, "i8085", cpu, "BC", &I.BC.w.l, 1);
-	state_save_UINT16(file, "i8085", cpu, "DE", &I.DE.w.l, 1);
-	state_save_UINT16(file, "i8085", cpu, "HL", &I.HL.w.l, 1);
-	state_save_UINT16(file, "i8085", cpu, "SP", &I.SP.w.l, 1);
-	state_save_UINT16(file, "i8085", cpu, "PC", &I.PC.w.l, 1);
-	state_save_UINT8(file, "i8085", cpu, "HALT", &I.HALT, 1);
-	state_save_UINT8(file, "i8085", cpu, "IM", &I.IM, 1);
-	state_save_UINT8(file, "i8085", cpu, "IREQ", &I.IREQ, 1);
-	state_save_UINT8(file, "i8085", cpu, "ISRV", &I.ISRV, 1);
-	state_save_UINT32(file, "i8085", cpu, "INTR", &I.INTR, 1);
-	state_save_UINT32(file, "i8085", cpu, "IRQ2", &I.IRQ2, 1);
-	state_save_UINT32(file, "i8085", cpu, "IRQ1", &I.IRQ1, 1);
-	state_save_INT8(file, "i8085", cpu, "NMI_STATE", &I.nmi_state, 1);
-	state_save_INT8(file, "i8085", cpu, "IRQ_STATE", I.irq_state, 4);
-}
-
-void i8085_state_load(void *file)
-{
-	int cpu = cpu_getactivecpu();
-	state_load_UINT16(file, "i8085", cpu, "AF", &I.AF.w.l, 1);
-	state_load_UINT16(file, "i8085", cpu, "BC", &I.BC.w.l, 1);
-	state_load_UINT16(file, "i8085", cpu, "DE", &I.DE.w.l, 1);
-	state_load_UINT16(file, "i8085", cpu, "HL", &I.HL.w.l, 1);
-	state_load_UINT16(file, "i8085", cpu, "SP", &I.SP.w.l, 1);
-	state_load_UINT16(file, "i8085", cpu, "PC", &I.PC.w.l, 1);
-	state_load_UINT8(file, "i8085", cpu, "HALT", &I.HALT, 1);
-	state_load_UINT8(file, "i8085", cpu, "IM", &I.IM, 1);
-	state_load_UINT8(file, "i8085", cpu, "IREQ", &I.IREQ, 1);
-	state_load_UINT8(file, "i8085", cpu, "ISRV", &I.ISRV, 1);
-	state_load_UINT32(file, "i8085", cpu, "INTR", &I.INTR, 1);
-	state_load_UINT32(file, "i8085", cpu, "IRQ2", &I.IRQ2, 1);
-	state_load_UINT32(file, "i8085", cpu, "IRQ1", &I.IRQ1, 1);
-	state_load_INT8(file, "i8085", cpu, "NMI_STATE", &I.nmi_state, 1);
-	state_load_INT8(file, "i8085", cpu, "IRQ_STATE", I.irq_state, 4);
-}
-
 /****************************************************************************
  * Return a formatted string for a register
  ****************************************************************************/
@@ -1618,12 +1603,29 @@ static UINT8 i8080_win_layout[] = {
 	 0,23,80, 1,	/* command line window (bottom rows) */
 };
 
-
-void i8080_reset(void *param)
+void i8080_init(void)
 {
-	i8085_reset(param);
+	int cpu = cpu_getactivecpu();
+	init_tables();
 	I.cputype = 0;
+
+	state_save_register_UINT16("i8080", cpu, "AF", &I.AF.w.l, 1);
+	state_save_register_UINT16("i8080", cpu, "BC", &I.BC.w.l, 1);
+	state_save_register_UINT16("i8080", cpu, "DE", &I.DE.w.l, 1);
+	state_save_register_UINT16("i8080", cpu, "HL", &I.HL.w.l, 1);
+	state_save_register_UINT16("i8080", cpu, "SP", &I.SP.w.l, 1);
+	state_save_register_UINT16("i8080", cpu, "PC", &I.PC.w.l, 1);
+	state_save_register_UINT8("i8080", cpu, "HALT", &I.HALT, 1);
+	state_save_register_UINT8("i8080", cpu, "IREQ", &I.IREQ, 1);
+	state_save_register_UINT8("i8080", cpu, "ISRV", &I.ISRV, 1);
+	state_save_register_UINT32("i8080", cpu, "INTR", &I.INTR, 1);
+	state_save_register_UINT32("i8080", cpu, "IRQ2", &I.IRQ2, 1);
+	state_save_register_UINT32("i8080", cpu, "IRQ1", &I.IRQ1, 1);
+	state_save_register_INT8("i8080", cpu, "nmi_state", &I.nmi_state, 1);
+	state_save_register_INT8("i8080", cpu, "irq_state", I.irq_state, 1);
 }
+
+void i8080_reset(void *param) { i8085_reset(param); }
 void i8080_exit(void) { i8085_exit(); }
 int i8080_execute(int cycles) { return i8085_execute(cycles); }
 unsigned i8080_get_context(void *dst) { return i8085_get_context(dst); }
@@ -1650,45 +1652,6 @@ void i8080_set_irq_line(int irqline, int state)
 	}
 }
 void i8080_set_irq_callback(int (*callback)(int irqline)) { i8085_set_irq_callback(callback); }
-
-void i8080_state_save(void *file)
-{
-	int cpu = cpu_getactivecpu();
-	state_save_UINT16(file, "i8080", cpu, "AF", &I.AF.w.l, 1);
-	state_save_UINT16(file, "i8080", cpu, "BC", &I.BC.w.l, 1);
-	state_save_UINT16(file, "i8080", cpu, "DE", &I.DE.w.l, 1);
-	state_save_UINT16(file, "i8080", cpu, "HL", &I.HL.w.l, 1);
-	state_save_UINT16(file, "i8080", cpu, "SP", &I.SP.w.l, 1);
-	state_save_UINT16(file, "i8080", cpu, "PC", &I.PC.w.l, 1);
-	state_save_UINT8(file, "i8080", cpu, "HALT", &I.HALT, 1);
-	state_save_UINT8(file, "i8080", cpu, "IREQ", &I.IREQ, 1);
-	state_save_UINT8(file, "i8080", cpu, "ISRV", &I.ISRV, 1);
-	state_save_UINT32(file, "i8080", cpu, "INTR", &I.INTR, 1);
-	state_save_UINT32(file, "i8080", cpu, "IRQ2", &I.IRQ2, 1);
-	state_save_UINT32(file, "i8080", cpu, "IRQ1", &I.IRQ1, 1);
-	state_save_INT8(file, "i8080", cpu, "NMI_STATE", &I.nmi_state, 1);
-	state_save_INT8(file, "i8080", cpu, "IRQ_STATE", I.irq_state, 1);
-}
-
-void i8080_state_load(void *file)
-{
-	int cpu = cpu_getactivecpu();
-	state_load_UINT16(file, "i8080", cpu, "AF", &I.AF.w.l, 1);
-	state_load_UINT16(file, "i8080", cpu, "BC", &I.BC.w.l, 1);
-	state_load_UINT16(file, "i8080", cpu, "DE", &I.DE.w.l, 1);
-	state_load_UINT16(file, "i8080", cpu, "HL", &I.HL.w.l, 1);
-	state_load_UINT16(file, "i8080", cpu, "SP", &I.SP.w.l, 1);
-	state_load_UINT16(file, "i8080", cpu, "PC", &I.PC.w.l, 1);
-	state_load_UINT8(file, "i8080", cpu, "HALT", &I.HALT, 1);
-	state_load_UINT8(file, "i8080", cpu, "IREQ", &I.IREQ, 1);
-	state_load_UINT8(file, "i8080", cpu, "ISRV", &I.ISRV, 1);
-	state_load_UINT32(file, "i8080", cpu, "INTR", &I.INTR, 1);
-	state_load_UINT32(file, "i8080", cpu, "IRQ2", &I.IRQ2, 1);
-	state_load_UINT32(file, "i8080", cpu, "IRQ1", &I.IRQ1, 1);
-	state_load_INT8(file, "i8080", cpu, "NMI_STATE", &I.nmi_state, 1);
-	state_load_INT8(file, "i8080", cpu, "IRQ_STATE", I.irq_state, 1);
-}
-
 const char *i8080_info(void *context, int regnum)
 {
 	switch( regnum )

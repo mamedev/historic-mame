@@ -200,27 +200,27 @@ INPUT_PORTS_END
 
 static struct GfxLayout charlayout =
 {
-	8,8,	/* 8*8 characters */
-	1024,	/* 1024 characters */
-	2,	/* 2 bits per pixel */
-	{ 1024*8*8, 0 },	/* the two bitplanes are separated */
-	{ 0, 1, 2, 3, 4, 5, 6, 7 },	/* pretty straightforward layout */
+	8,8,
+	RGN_FRAC(1,2),
+	2,
+	{ RGN_FRAC(1,2), RGN_FRAC(0,2) },
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	8*8	/* every char takes 8 consecutive bytes */
-};
-static struct GfxLayout spritelayout =
-{
-	16,16,	/* 16*16 sprites */
-	512,	/* 512 sprites */
-	3,	/* 3 bits per pixel */
-	{ 2*2048*8*8, 2048*8*8, 0 },	/* the two bitplanes are separated */
-        { 8*16+7, 8*16+6, 8*16+5, 8*16+4, 8*16+3, 8*16+2, 8*16+1, 8*16+0,	/* pretty straightforward layout */
-	   7, 6, 5, 4, 3, 2, 1, 0 },
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
-            8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },
-	32*8	/* every sprite takes 32 consecutive bytes */
+	8*8
 };
 
+static struct GfxLayout spritelayout =
+{
+	16,16,
+	RGN_FRAC(1,3),
+	3,
+	{ RGN_FRAC(2,3), RGN_FRAC(1,3), RGN_FRAC(0,3) },
+	{ 8*16+7, 8*16+6, 8*16+5, 8*16+4, 8*16+3, 8*16+2, 8*16+1, 8*16+0,
+			7, 6, 5, 4, 3, 2, 1, 0 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
+			8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },
+	32*8
+};
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
@@ -234,7 +234,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct AY8910interface ay8910_interface =
 {
 	2,	/* 2 chips */
-	1500000,	/* 1.5 MHz ? */
+	12000000/8,	/* 1.5 MHz ? */
 	{ 30, 30 },
 	{ 0 },
 	{ 0 },
@@ -250,13 +250,13 @@ static const struct MachineDriver machine_driver_sonson =
 	{
 		{
 			CPU_M6809,
-			2000000,	/* 2 MHz (?) */
+			12000000/6,	/* 2 MHz ??? */
 			readmem,writemem,0,0,
 			interrupt,1
 		},
 		{
 			CPU_M6809 | CPU_AUDIO_CPU,
-			2000000,	/* 2 MHz (?) */
+			12000000/6,	/* 2 MHz ??? */
 			sound_readmem,sound_writemem,0,0,
 			interrupt,4	/* FIRQs are triggered by the main CPU */
 		},
@@ -302,25 +302,60 @@ ROM_START( sonson )
 	ROM_LOAD( "ss.03e",       0xc000, 0x4000, 0x1fd0e729 )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
-	ROM_LOAD( "ss3.v12",      0xe000, 0x2000, 0x1135c48a )
+	ROM_LOAD( "ss_6.c11",     0xe000, 0x2000, 0x1135c48a )
 
 	ROM_REGION( 0x04000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "ss5.v12",      0x00000, 0x2000, 0x990890b1 )	/* characters */
-	ROM_LOAD( "ss6.v12",      0x02000, 0x2000, 0x9388ff82 )
+	ROM_LOAD( "ss_7.b6",      0x00000, 0x2000, 0x990890b1 )	/* characters */
+	ROM_LOAD( "ss_8.b5",      0x02000, 0x2000, 0x9388ff82 )
 
 	ROM_REGION( 0x0c000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "ss7.v12",      0x00000, 0x4000, 0x32b14b8e )	/* sprites */
-	ROM_LOAD( "ss8.v12",      0x04000, 0x4000, 0x9f59014e )
-	ROM_LOAD( "ss9.v12",      0x08000, 0x4000, 0xe240345a )
+	ROM_LOAD( "ss_9.m5",      0x00000, 0x2000, 0x8cb1cacf )	/* sprites */
+	ROM_LOAD( "ss_10.m6",     0x02000, 0x2000, 0xf802815e )
+	ROM_LOAD( "ss_11.m3",     0x04000, 0x2000, 0x4dbad88a )
+	ROM_LOAD( "ss_12.m4",     0x06000, 0x2000, 0xaa05e687 )
+	ROM_LOAD( "ss_13.m1",     0x08000, 0x2000, 0x66119bfa )
+	ROM_LOAD( "ss_14.m2",     0x0a000, 0x2000, 0xe14ef54e )
 
 	ROM_REGION( 0x0340, REGION_PROMS, 0 )
-	ROM_LOAD( "ss12.bin",     0x0000, 0x0020, 0xc8eaf234 )	/* red/green component */
-	ROM_LOAD( "ss13.bin",     0x0020, 0x0020, 0x0e434add )	/* blue component */
-	ROM_LOAD( "ssb2.bin",     0x0040, 0x0100, 0xc53321c6 )	/* character lookup table */
-	ROM_LOAD( "ssb.bin",      0x0140, 0x0100, 0x7d2c324a )	/* sprite lookup table */
-	ROM_LOAD( "ss4.bin",      0x0240, 0x0100, 0xa04b0cfe )	/* unknown (not used) */
+	ROM_LOAD( "ssb4.b2",      0x0000, 0x0020, 0xc8eaf234 )	/* red/green component */
+	ROM_LOAD( "ssb5.b1",      0x0020, 0x0020, 0x0e434add )	/* blue component */
+	ROM_LOAD( "ssb2.c4",      0x0040, 0x0100, 0xc53321c6 )	/* character lookup table */
+	ROM_LOAD( "ssb3.h7",      0x0140, 0x0100, 0x7d2c324a )	/* sprite lookup table */
+	ROM_LOAD( "ssb1.k11",     0x0240, 0x0100, 0xa04b0cfe )	/* unknown (not used) */
+ROM_END
+
+ROM_START( sonsonj )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code + 3*16k for the banked ROMs images */
+	ROM_LOAD( "ss_0.l9",      0x4000, 0x2000, 0x705c168f )
+	ROM_LOAD( "ss_1.j9",      0x6000, 0x2000, 0x0f03b57d )
+	ROM_LOAD( "ss_2.l8",      0x8000, 0x2000, 0xa243a15d )
+	ROM_LOAD( "ss_3.j8",      0xa000, 0x2000, 0xcb64681a )
+	ROM_LOAD( "ss_4.l7",      0xc000, 0x2000, 0x4c3e9441 )
+	ROM_LOAD( "ss_5.j7",      0xe000, 0x2000, 0x847f660c )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
+	ROM_LOAD( "ss_6.c11",     0xe000, 0x2000, 0x1135c48a )
+
+	ROM_REGION( 0x04000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "ss_7.b6",      0x00000, 0x2000, 0x990890b1 )	/* characters */
+	ROM_LOAD( "ss_8.b5",      0x02000, 0x2000, 0x9388ff82 )
+
+	ROM_REGION( 0x0c000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "ss_9.m5",      0x00000, 0x2000, 0x8cb1cacf )	/* sprites */
+	ROM_LOAD( "ss_10.m6",     0x02000, 0x2000, 0xf802815e )
+	ROM_LOAD( "ss_11.m3",     0x04000, 0x2000, 0x4dbad88a )
+	ROM_LOAD( "ss_12.m4",     0x06000, 0x2000, 0xaa05e687 )
+	ROM_LOAD( "ss_13.m1",     0x08000, 0x2000, 0x66119bfa )
+	ROM_LOAD( "ss_14.m2",     0x0a000, 0x2000, 0xe14ef54e )
+
+	ROM_REGION( 0x0340, REGION_PROMS, 0 )
+	ROM_LOAD( "ssb4.b2",      0x0000, 0x0020, 0xc8eaf234 )	/* red/green component */
+	ROM_LOAD( "ssb5.b1",      0x0020, 0x0020, 0x0e434add )	/* blue component */
+	ROM_LOAD( "ssb2.c4",      0x0040, 0x0100, 0xc53321c6 )	/* character lookup table */
+	ROM_LOAD( "ssb3.h7",      0x0140, 0x0100, 0x7d2c324a )	/* sprite lookup table */
+	ROM_LOAD( "ssb1.k11",     0x0240, 0x0100, 0xa04b0cfe )	/* unknown (not used) */
 ROM_END
 
 
-
-GAMEX( 1984, sonson, 0, sonson, sonson, 0, ROT0, "Capcom", "Son Son", GAME_NO_COCKTAIL )
+GAMEX( 1984, sonson,  0,      sonson, sonson, 0, ROT0, "Capcom", "Son Son", GAME_NO_COCKTAIL )
+GAMEX( 1984, sonsonj, sonson, sonson, sonson, 0, ROT0, "Capcom", "Son Son (Japan)", GAME_NO_COCKTAIL )

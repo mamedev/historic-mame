@@ -18,6 +18,8 @@ enum {
 extern int i86_ICount;
 
 /* Public functions */
+
+extern void i86_init(void);
 extern void i86_reset(void *param);
 extern void i86_exit(void);
 extern int i86_execute(int cycles);

@@ -22,14 +22,14 @@ static void gijoe_tile_callback(int layer, int *code, int *color)
 	*color = layer_colorbase[layer] | ((*color & 0xf0) >> 4);
 }
 
-static int gijoe_scrolld[2][4][2] = {
+static int scrolld[2][4][2] = {
  	{{ 20-112, 0 }, { 20-112, 0}, { 20-112, 0}, { 20-112, 0}},
  	{{-76-112, 0 }, {-76-112, 0}, {-76-112, 0}, {-76-112, 0}}
 };
 
 int gijoe_vh_start(void)
 {
-	K054157_vh_start(REGION_GFX1, 0, gijoe_scrolld, NORMAL_PLANE_ORDER, gijoe_tile_callback);
+	K054157_vh_start(REGION_GFX1, 0, scrolld, NORMAL_PLANE_ORDER, gijoe_tile_callback);
 	if (K053247_vh_start(REGION_GFX2, 48, 23, NORMAL_PLANE_ORDER, gijoe_sprite_callback))
 	{
 		K054157_vh_stop();
@@ -65,25 +65,16 @@ void gijoe_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	int layer[3];
 	int new_base;
 
-#if 0
-if (keyboard_pressed(KEYCODE_D))
-{
-	FILE *fp;
-	fp=fopen("bg.dmp", "w+b");
-	if (fp)
-	{
-		fwrite(cpu_bankbase[4], 0x8000, 1, fp);
-		usrintf_showmessage("saved");
-		fclose(fp);
-	}
-}
-#endif
-
-
 	new_base = K053251_get_palette_index(K053251_CI1);
 	if(layer_colorbase[0] != new_base) {
 		layer_colorbase[0] = new_base;
 		K054157_mark_plane_dirty(0);
+	}
+
+	new_base = K053251_get_palette_index(K053251_CI2);
+	if(layer_colorbase[1] != new_base) {
+		layer_colorbase[1] = new_base;
+		K054157_mark_plane_dirty(1);
 	}
 
 	new_base = K053251_get_palette_index(K053251_CI3);
@@ -105,10 +96,12 @@ if (keyboard_pressed(KEYCODE_D))
 	palette_init_used_colors();
 	K053247_mark_sprites_colors();
 
+	if(palette_used_colors)
+		palette_used_colors[0] |= PALETTE_COLOR_VISIBLE;
 	palette_recalc();
 
-	layer[0] = 0;
-	layerpri[0] = K053251_get_priority(K053251_CI1);
+	layer[0] = 1;
+	layerpri[0] = K053251_get_priority(K053251_CI2);
 	layer[1] = 2;
 	layerpri[1] = K053251_get_priority(K053251_CI3);
 	layer[2] = 3;
@@ -118,11 +111,12 @@ if (keyboard_pressed(KEYCODE_D))
 
 	fillbitmap(priority_bitmap, 0, NULL);
 	fillbitmap(bitmap, Machine->pens[0], &Machine->visible_area);
+
 	K054157_tilemap_draw(bitmap, layer[0], 0, 1);
 	K054157_tilemap_draw(bitmap, layer[1], 0, 2);
 	K054157_tilemap_draw(bitmap, layer[2], 0, 4);
 
 	K053247_sprites_draw(bitmap);
 
-	//	K054157_tilemap_draw(bitmap, 3, 0);
+	K054157_tilemap_draw(bitmap, 0, 0, 0);
 }

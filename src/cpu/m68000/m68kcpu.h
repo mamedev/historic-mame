@@ -1342,6 +1342,14 @@ INLINE void m68ki_set_sm_flag(uint value)
 	REG_SP = REG_SP_BASE[FLAG_S | ((FLAG_S>>1) & FLAG_M)];
 }
 
+/* Set the S and M flags.  Don't touch the stack pointer. */
+INLINE void m68ki_set_sm_flag_nosp(uint value)
+{
+	/* Set the S and M flags */
+	FLAG_S = value & SFLAG_SET;
+	FLAG_M = value & MFLAG_SET;
+}
+
 
 /* Set the condition code register */
 INLINE void m68ki_set_ccr(uint value)
@@ -1365,6 +1373,22 @@ INLINE void m68ki_set_sr_noint(uint value)
 	FLAG_INT_MASK = value & 0x0700;
 	m68ki_set_ccr(value);
 	m68ki_set_sm_flag((value >> 11) & 6);
+}
+
+/* Set the status register but don't check for interrupts nor
+ * change the stack pointer
+ */
+INLINE void m68ki_set_sr_noint_nosp(uint value)
+{
+	/* Mask out the "unimplemented" bits */
+	value &= CPU_SR_MASK;
+
+	/* Now set the status register */
+	FLAG_T1 = BIT_F(value);
+	FLAG_T0 = BIT_E(value);
+	FLAG_INT_MASK = value & 0x0700;
+	m68ki_set_ccr(value);
+	m68ki_set_sm_flag_nosp((value >> 11) & 6);
 }
 
 /* Set the status register and check for interrupts */

@@ -52,7 +52,7 @@ dst_offset	equ 28						; offset to next framebuffer row
 %assign MX  %1						; X-Stretch factor
 %assign MY  %2						; Y-Stretch factor
 %assign SL  %3						; emulate scanlines
-%assign BPP %4						; bits per pixel (16bpp or 8bpp)
+%assign BPP %4						; bits per pixel (8/16/32 bpp)
 
 ; decide wether palettized blit by the number of parameters passed
 
@@ -162,6 +162,11 @@ align 16								; align the loop
 			punpckhwd mm2, mm2
 			punpcklwd mm4, mm4
 			punpckhwd mm6, mm6
+		%elif (BPP = 32)
+			punpckldq mm0, mm0
+			punpckhdq mm2, mm2
+			punpckldq mm4, mm4
+			punpckhdq mm6, mm6
 		%endif
 	%endif
 %endif

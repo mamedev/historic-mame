@@ -1,13 +1,20 @@
 /********************************************************************
 
-Mustang                 UPL        68000 Z80           YM3812 OKIM6295
-Acrobat Mission         UPL        68000 <unknown cpu> <unknown sound>
+Urashima Mahjong        UPL        68000 <unknown cpu> OKIM6295
+Task Force Harrier      UPL        68000 Z80           YM2203 2xOKIM6295
+Mustang                 UPL        68000 NMK004        YM2203 2xOKIM6295
+Mustang (bootleg)       UPL        68000 Z80           YM3812 OKIM6295
 Bio-ship Paladin        UPL        68000 <unknown cpu> YM2203(?) 2xOKIM6295
+Vandyke                 UPL        68000 NMK004        YM2203 2xOKIM6295
+Black Heart             UPL        68000 NMK004        YM2203 2xOKIM6295
+Acrobat Mission         UPL        68000 <unknown cpu> <unknown sound>
 Strahl                  UPL        68000 <unknown cpu> YM2203 2xOKIM6295
+Thunder Dragon          NMK/Tecmo  68000 <unknown cpu> YM2203 2xOKIM6295
 Hacha Mecha Fighter     NMK        68000 <unknown cpu> YM2203 2xOKIM6295
 Macross                 Banpresto  68000 <unknown cpu> YM2203 2xOKIM6295
+GunNail                 NMK/Tecmo  68000 <unknown cpu> YM2203 2xOKIM6295
 Macross II              Banpresto  68000 Z80           YM2203 2xOKIM6295
-Saboten Bombers         NMK        68000               2xOKIM6295
+Saboten Bombers         NMK/Tecmo  68000               2xOKIM6295
 Bombjack Twin           NMK        68000               2xOKIM6295
 Nouryoku Koujou Iinkai  Tecmo      68000               2xOKIM6295
 
@@ -21,19 +28,20 @@ tilemap), and the games rely on mirror addresses to access the tilemap
 sequentially.
 
 TODO:
+- Protection is patched in several games, it's the same chip as Macross/Task
+  Force Harrier so it can probably be emulated.  I don't think it's an actual MCU,
+  just some type of state machine (Bryan).
 - Input ports in Acrobat Mission, Bio-ship Paladin, Strahl
 - Sound communication in Mustang might be incorrectly implemented
-- Bio-ship Paladin is missing player shot sprites
-- Both hachamf and macross use an unknown (custom?) CPU to drive sound and
-  for protection. In macross it's just checked on startup and easy to work
-  around. hachamf is more complex, it seems that the two CPUs share some RAM
-  (fe000-fefff), and the main CPU fetches pointers from that shared RAM to
-  do important operations like reading the input ports. Some of them are
-  easily deduced checking for similarities in macross and bjtwin; however
-  another protection check involves (see the routine at 01429a) writing data
-  to the fe100-fe1ff range, and then jumping to subroutines in that range (most
-  likely function pointers since each one is only 0x10 bytes long), and heaven
-  knows what those should do.
+- Several games use an unknown (custom?) CPU to drive sound and for protection.
+  In macross and gunnail it's easy to work around, the others are more complex.
+  In hachamf it seems that the two CPUs share some RAM (fe000-fefff), and the
+  main CPU fetches pointers from that shared RAM to do important operations
+  like reading the input ports. Some of them are easily deduced checking for
+  similarities in macross and bjtwin; however another protection check involves
+  (see the routine at 01429a) writing data to the fe100-fe1ff range, and then
+  jumping to subroutines in that range (most likely function pointers since
+  each one is only 0x10 bytes long), and heaven knows what those should do.
   On startup, hachamf does a RAM test, then copies some stuff and jumps to
   RAM at 0xfef00, where it sits in a loop. Maybe the RAM is shared with the
   sound CPU, and used as a protection. We patch around that by replacing the
@@ -42,6 +50,8 @@ TODO:
   visible areas.
 - Macross2 is overflowing the palette, but this might be just a problem
   with tilemap.c.
+- GunNail has dramatic slowdowns in 8-bit mode, due to tilemap.c. We have to use
+  16-bit even if it's probably not necessary.
 - Macross2 dip switches (the ones currently listed match macross)
 - Macross2 background is wrong in level 2 at the end of the vertical scroll.
   The tilemap layout is probably different from the one I used, the dimensions
@@ -51,9 +61,6 @@ TODO:
 ----
 
 IRQ1 controls audio output and coin/joysticks reads
-I haven't yet figured out why music stops so soon, but it's
-surely due to interrupt timing (the hardware is so simple!).
-
 IRQ4 controls DSW reads and vblank.
 IRQ2 points to RTE (not used).
 
@@ -63,6 +70,11 @@ mustang and hachamf test mode:
 
 1)  Press player 2 buttons 1+2 during reset.  "Ready?" will appear
 2)	Press player 1 button 2 14 (!) times
+
+gunnail test mode:
+
+1)  Press player 2 buttons 1+2 during reset.  "Ready?" will appear
+2)	Press player 2 button 1 3 times
 
 bjtwin test mode:
 
@@ -74,6 +86,16 @@ bjtwin test mode:
 Some code has to be patched out for this to work (see below). The program
 remaps button 2 and 3 to button 1, so you can't enter the above sequence.
 
+---
+
+Questions / Notes
+The 2nd cpu program roms .. anyone got any idea what cpu they run on
+areas 0x0000 - 0x3fff in several of them look like they contain nothing
+of value.. maybe this area wouldn't be accessable really and there is
+ram there in that cpu's address space (shared with the main cpu ?)
+.. maybe the roms are bitswapped like the gfx.. needs investigating
+really..
+
 ********************************************************************/
 
 #include "driver.h"
@@ -81,6 +103,7 @@ remaps button 2 and 3 to button 1, so you can't enter the above sequence.
 
 
 extern data16_t *nmk_bgvideoram,*nmk_fgvideoram,*nmk_txvideoram;
+extern data16_t *gunnail_scrollram;
 
 READ16_HANDLER( nmk_bgvideoram_r );
 WRITE16_HANDLER( nmk_bgvideoram_w );
@@ -91,6 +114,8 @@ WRITE16_HANDLER( nmk_txvideoram_w );
 WRITE16_HANDLER( nmk_paletteram_w );
 WRITE16_HANDLER( nmk_scroll_w );
 WRITE16_HANDLER( nmk_scroll_2_w );
+WRITE16_HANDLER( gunnail_scrollx_w );
+WRITE16_HANDLER( gunnail_scrolly_w );
 WRITE16_HANDLER( nmk_flipscreen_w );
 WRITE16_HANDLER( nmk_tilebank_w );
 WRITE16_HANDLER( bioship_scroll_w );
@@ -98,6 +123,7 @@ WRITE16_HANDLER( bioship_bank_w );
 WRITE16_HANDLER( mustang_scroll_w );
 
 int macross_vh_start(void);
+int gunnail_vh_start(void);
 int macross2_vh_start(void);
 int bjtwin_vh_start(void);
 int bioship_vh_start(void);
@@ -106,6 +132,7 @@ void nmk_vh_stop(void);
 void bioship_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void strahl_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void macross_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void gunnail_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void bjtwin_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void nmk_eof_callback(void);
 
@@ -203,7 +230,7 @@ static WRITE_HANDLER( mustang_sound_irq_ack_w )
 
 static READ_HANDLER( mustang_soundlatch_r )
 {
-	return (soundlatch_word_r(0) >> (offset * 8)) & 0xff;
+	return (soundlatch_word_r(0,0) >> (offset * 8)) & 0xff;
 }
 
 static WRITE_HANDLER( mustang_soundlatch2_w )
@@ -221,7 +248,7 @@ static data16_t *ram;
 
 static WRITE16_HANDLER( macross_mcu_w )
 {
-//logerror("%04x: mcu_w %02x\n",cpu_get_pc(),data);
+logerror("%04x: mcu_w %02x\n",cpu_get_pc(),data);
 }
 
 static READ16_HANDLER( macross_mcu_r )
@@ -234,16 +261,54 @@ static READ16_HANDLER( macross_mcu_r )
 							0x8b, 0xc7, 0x00 };
 	int res;
 
-	if (cpu_get_pc() == 0x0332) res = ram[0x0f6/2];
+	if (cpu_get_pc()==0x8aa) res = (ram[0x064/2])|0x20; /* Task Force Harrier */
+	else if (cpu_get_pc()==0x8ce) res = (ram[0x064/2])|0x60; /* Task Force Harrier */
+	else if (cpu_get_pc() == 0x0332	/* Macross */
+			||	cpu_get_pc() == 0x64f4)	/* GunNail */
+		res = ram[0x0f6/2];
 	else
 	{
 		res = resp[respcount++];
-		if (respcount >= 15) respcount = 0;
+		if (respcount >= sizeof(resp)/sizeof(resp[0])) respcount = 0;
 	}
 
-//logerror("%04x: mcu_r %02x\n",cpu_get_pc(),res);
+logerror("%04x: mcu_r %02x\n",cpu_get_pc(),res);
 
 	return res;
+}
+
+static READ16_HANDLER( urashima_mcu_r )
+{
+	static int respcount = 0;
+	static int resp[] = {	0x99, 0xd8, 0x00,
+							0x2a, 0x6a, 0x00,
+							0x9c, 0xd8, 0x00,
+							0x2f, 0x6f, 0x00,
+							0x22, 0x62, 0x00,
+							0x25, 0x65, 0x00 };
+	int res;
+
+	res = resp[respcount++];
+	if (respcount >= sizeof(resp)/sizeof(resp[0])) respcount = 0;
+
+logerror("%04x: mcu_r %02x\n",cpu_get_pc(),res);
+
+	return res;
+}
+
+static WRITE16_HANDLER( tharrier_mcu_control_w )
+{
+//	logerror("%04x: mcu_control_w %02x\n",cpu_get_pc(),data);
+}
+
+static READ16_HANDLER( tharrier_mcu_r )
+{
+	/* The MCU is mapped as the top byte for byte accesses only,
+		all word accesses are to the input port */
+	if (ACCESSING_MSB && !ACCESSING_LSB)
+		return macross_mcu_r(offset,0)<<8;
+	else
+		return ~input_port_1_word_r(0,0);
 }
 
 static WRITE16_HANDLER( macross2_sound_command_w )
@@ -291,8 +356,6 @@ static WRITE16_HANDLER( bjtwin_oki6295_bankswitch_w )
 		macross2_oki6295_bankswitch_w(offset,data & 0xff);
 }
 
-
-
 static READ16_HANDLER( hachamf_protection_hack_r )
 {
 	/* adresses for the input ports */
@@ -303,12 +366,157 @@ static READ16_HANDLER( hachamf_protection_hack_r )
 
 /***************************************************************************/
 
-static MEMORY_READ16_START( mustang_readmem )
+static MEMORY_READ16_START( urashima_readmem )
+	{ 0x000000, 0x03ffff, MRA16_ROM },
+	{ 0x080004, 0x080005, urashima_mcu_r },
+	{ 0x09e000, 0x09e7ff, nmk_txvideoram_r },
+	{ 0x0f0000, 0x0f7fff, MRA16_RAM },
+	{ 0x0f8000, 0x0f8fff, MRA16_RAM },
+	{ 0x0f9000, 0x0fffff, MRA16_RAM },
+#if 0
+	{ 0x080000, 0x080001, input_port_0_word_r },
+	{ 0x080002, 0x080003, input_port_1_word_r },
+	{ 0x080008, 0x080009, input_port_2_word_r },
+	{ 0x08000a, 0x08000b, input_port_3_word_r },
+	{ 0x088000, 0x0887ff, MRA16_RAM },
+	{ 0x09e000, 0x0a1fff, nmk_bgvideoram_r },
+#endif
+MEMORY_END
+
+static MEMORY_WRITE16_START( urashima_writemem )
+	{ 0x000000, 0x03ffff, MWA16_ROM },
+	{ 0x080014, 0x080015, macross_mcu_w },
+	{ 0x09e000, 0x09e7ff, nmk_txvideoram_w, &nmk_txvideoram },
+	{ 0x0f0000, 0x0f7fff, MWA16_RAM },	/* Work RAM */
+	{ 0x0f8000, 0x0f8fff, MWA16_RAM, &spriteram16, &spriteram_size },
+	{ 0x0f9000, 0x0fffff, MWA16_RAM, &ram },	/* Work RAM again */
+#if 0
+	{ 0x080014, 0x080015, nmk_flipscreen_w },
+	{ 0x080016, 0x080017, MWA16_NOP },	/* IRQ enable? */
+	{ 0x080018, 0x080019, nmk_tilebank_w },
+	{ 0x088000, 0x0887ff, nmk_paletteram_w, &paletteram16 },
+	{ 0x08c000, 0x08c007, nmk_scroll_w },
+	{ 0x09e000, 0x0a1fff, nmk_bgvideoram_w, &nmk_bgvideoram },
+#endif
+MEMORY_END
+
+
+static MEMORY_READ16_START( vandyke_readmem )
 	{ 0x000000, 0x03ffff, MRA16_ROM },
 	{ 0x080000, 0x080001, input_port_0_word_r },
 	{ 0x080002, 0x080003, input_port_1_word_r },
-	{ 0x080004, 0x080005, input_port_2_word_r },
+	{ 0x080008, 0x080009, input_port_2_word_r },
+	{ 0x08000a, 0x08000b, input_port_3_word_r },
+	{ 0x08000e, 0x08000f, macross_mcu_r },
+	{ 0x088000, 0x0887ff, MRA16_RAM },
+	{ 0x090000, 0x093fff, nmk_bgvideoram_r },
+	{ 0x09d000, 0x09d7ff, nmk_txvideoram_r },
+	{ 0x0f0000, 0x0f7fff, MRA16_RAM },
+	{ 0x0f8000, 0x0f8fff, MRA16_RAM },
+	{ 0x0f9000, 0x0fffff, MRA16_RAM },
+MEMORY_END
+
+static MEMORY_WRITE16_START( vandyke_writemem )
+	{ 0x000000, 0x03ffff, MWA16_ROM },
+	{ 0x080016, 0x080017, MWA16_NOP },	/* IRQ enable? */
+	{ 0x080018, 0x080019, nmk_tilebank_w },
+	{ 0x08001e, 0x08001f, macross_mcu_w },
+	{ 0x088000, 0x0887ff, nmk_paletteram_w, &paletteram16 },
+	{ 0x08c000, 0x08c007, nmk_scroll_w },
+	{ 0x090000, 0x093fff, nmk_bgvideoram_w, &nmk_bgvideoram },
+	{ 0x094000, 0x097fff, MWA16_RAM },
+	{ 0x09d000, 0x09d7ff, nmk_txvideoram_w, &nmk_txvideoram },
+	{ 0x0f0000, 0x0f7fff, MWA16_RAM },
+	{ 0x0f8000, 0x0f8fff, MWA16_RAM, &spriteram16, &spriteram_size },
+	{ 0x0f9000, 0x0fffff, MWA16_RAM }, /* Mostly Unused? */
+MEMORY_END
+
+static READ16_HANDLER(logr)
+{
+//logerror("Read input port 1 %05x\n",cpu_get_pc());
+return ~input_port_0_word_r(0,0);
+}
+
+static MEMORY_READ16_START( tharrier_readmem )
+	{ 0x000000, 0x03ffff, MRA16_ROM },
+	{ 0x080000, 0x080001, logr },//input_port_0_word_r },
+	{ 0x080002, 0x080003, tharrier_mcu_r }, //input_port_1_word_r },
+//	{ 0x080004, 0x080005, input_port_2_word_r },
 	{ 0x08000e, 0x08000f, soundlatch2_word_r },	/* from Z80 */
+	{ 0x088000, 0x0883ff, MRA16_RAM },
+	{ 0x090000, 0x093fff, nmk_bgvideoram_r },
+	{ 0x09d000, 0x09d7ff, nmk_txvideoram_r },
+	{ 0x0f0000, 0x0f7fff, MRA16_RAM },
+	{ 0x0f8000, 0x0f8fff, MRA16_RAM },
+	{ 0x0f9000, 0x0fffff, MRA16_RAM },
+MEMORY_END
+
+static MEMORY_WRITE16_START( tharrier_writemem )
+	{ 0x000000, 0x03ffff, MWA16_ROM },
+	{ 0x080010, 0x080011, tharrier_mcu_control_w },
+	{ 0x080012, 0x080013, macross_mcu_w },
+//	{ 0x080014, 0x080015, nmk_flipscreen_w },
+//	{ 0x080018, 0x080019, nmk_tilebank_w },
+	{ 0x088000, 0x0883ff, nmk_paletteram_w, &paletteram16 },
+	{ 0x08c000, 0x08c007, nmk_scroll_w },
+	{ 0x090000, 0x093fff, nmk_bgvideoram_w, &nmk_bgvideoram },
+	{ 0x09c000, 0x09c7ff, MWA16_NOP }, /* Unused txvideoram area? */
+	{ 0x09d000, 0x09d7ff, nmk_txvideoram_w, &nmk_txvideoram },
+	{ 0x0f0000, 0x0f7fff, MWA16_RAM },	/* Work RAM */
+	{ 0x0f8000, 0x0f8fff, MWA16_RAM, &spriteram16, &spriteram_size },
+	{ 0x0f9000, 0x0fffff, MWA16_RAM, &ram },	/* Work RAM again (fe000-fefff is shared with the sound CPU) */
+MEMORY_END
+
+static MEMORY_READ_START( tharrier_sound_readmem )
+	{ 0x0000, 0x7fff, MRA_ROM },
+	{ 0xc000, 0xc7ff, MRA_RAM },
+
+//	{ 0x4008, 0x4008, YM3812_status_port_0_r },
+//	{ 0x4010, 0x4011, mustang_soundlatch_r },	/* from 68000 */
+//	{ 0x6000, 0x6000, OKIM6295_status_0_r },
+//	{ 0x8000, 0xffff, MRA_ROM },
+MEMORY_END
+
+static MEMORY_WRITE_START( tharrier_sound_writemem )
+	{ 0x0000, 0x7fff, MWA_ROM },
+	{ 0xc000, 0xc7ff, MWA_RAM },
+
+//	{ 0x4002, 0x4002, mustang_ym3812_irq_ack_w },
+//	{ 0x4003, 0x4003, mustang_sound_irq_ack_w },
+//	{ 0x4007, 0x4007, sound ROM bank?
+	//{ 0x4008, 0x4008, YM3812_control_port_0_w },
+	//{ 0x4009, 0x4009, YM3812_write_port_0_w },
+//	{ 0x4018, 0x4019, mustang_soundlatch2_w },	/* to 68000 */
+//	{ 0x6000, 0x6000, OKIM6295_data_0_w },
+//	{ 0x8000, 0xffff, MWA_ROM },
+MEMORY_END
+
+static PORT_READ_START( tharrier_sound_readport )
+	{ 0x00, 0x00, YM2203_status_port_0_r },
+	{ 0x01, 0x01, YM2203_read_port_0_r },
+//	{ 0x80, 0x80, OKIM6295_status_0_r },
+//	{ 0x88, 0x88, OKIM6295_status_1_r },
+PORT_END
+
+static PORT_WRITE_START( tharrier_sound_writeport )
+	{ 0x00, 0x00, YM2203_control_port_0_w },
+	{ 0x01, 0x01, YM2203_write_port_0_w },
+//	{ 0x80, 0x80, OKIM6295_data_0_w },
+//	{ 0x88, 0x88, OKIM6295_data_1_w },
+//	{ 0x90, 0x97, macross2_oki6295_bankswitch_w },
+PORT_END
+
+
+//Read input port 1 030c8/  BAD
+//3478  GOOD
+
+static MEMORY_READ16_START( mustang_readmem )
+	{ 0x000000, 0x03ffff, MRA16_ROM },
+	{ 0x080000, 0x080001, input_port_0_word_r },
+	{ 0x080002, 0x080003, logr }, //input_port_1_word_r },
+	{ 0x080004, 0x080005, input_port_2_word_r },
+	{ 0x08000e, 0x08000f, macross_mcu_r },
+//	{ 0x08000e, 0x08000f, soundlatch2_word_r },	/* from Z80 bootleg only? */
 	{ 0x088000, 0x0887ff, MRA16_RAM },
 	{ 0x090000, 0x093fff, nmk_bgvideoram_r },
 	{ 0x09c000, 0x09c7ff, nmk_txvideoram_r },
@@ -321,7 +529,8 @@ static MEMORY_WRITE16_START( mustang_writemem )
 	{ 0x000000, 0x03ffff, MWA16_ROM },
 	{ 0x080014, 0x080015, nmk_flipscreen_w },
 { 0x080016, 0x080017, MWA16_NOP },
-	{ 0x08001e, 0x08001f, mustang_sound_command_w },	/* to Z80 */
+	{ 0x08001e, 0x08001f, macross_mcu_w },
+//	{ 0x08001e, 0x08001f, mustang_sound_command_w },	/* to Z80 bootleg only? */
 	{ 0x088000, 0x0887ff, nmk_paletteram_w, &paletteram16 },
 //	{ 0x08c000, 0x08c007, mustang_scroll_w },
 { 0x08c000, 0x08c001, MWA16_NOP },
@@ -329,7 +538,7 @@ static MEMORY_WRITE16_START( mustang_writemem )
 	{ 0x09c000, 0x09c7ff, nmk_txvideoram_w, &nmk_txvideoram },
 	{ 0x0f0000, 0x0f7fff, MWA16_RAM },	/* Work RAM */
 	{ 0x0f8000, 0x0f8fff, MWA16_RAM, &spriteram16, &spriteram_size },
-	{ 0x0f9000, 0x0fffff, MWA16_RAM },	/* Work RAM */
+	{ 0x0f9000, 0x0fffff, MWA16_RAM, &ram },	/* Work RAM */
 MEMORY_END
 
 static MEMORY_READ_START( mustang_sound_readmem )
@@ -407,7 +616,8 @@ static MEMORY_READ16_START( bioship_readmem )
 	{ 0x000000, 0x03ffff, MRA16_ROM },
 	{ 0x080000, 0x080001, input_port_0_word_r },
 	{ 0x080002, 0x080003, input_port_1_word_r },
-	{ 0x080004, 0x080005, input_port_2_word_r },
+	{ 0x080008, 0x080009, input_port_2_word_r },
+	{ 0x08000a, 0x08000b, input_port_3_word_r },
 	{ 0x088000, 0x0887ff, MRA16_RAM },
 	{ 0x090000, 0x093fff, nmk_bgvideoram_r },
 	{ 0x09c000, 0x09c7ff, nmk_txvideoram_r },
@@ -428,6 +638,35 @@ static MEMORY_WRITE16_START( bioship_writemem )
 	{ 0x0f0000, 0x0f7fff, MWA16_RAM },	/* Work RAM */
 	{ 0x0f8000, 0x0f8fff, MWA16_RAM, &spriteram16, &spriteram_size },
 	{ 0x0f9000, 0x0fffff, MWA16_RAM },	/* Work RAM again (fe000-fefff is shared with the sound CPU) */
+MEMORY_END
+
+static MEMORY_READ16_START( tdragon_readmem )
+	{ 0x000000, 0x03ffff, MRA16_ROM },
+	{ 0x044022, 0x044023, MRA16_NOP },  /* No Idea */
+	{ 0x0b0000, 0x0b7fff, MRA16_RAM },	/* Work RAM */
+	{ 0x0b8000, 0x0b8fff, MRA16_RAM },	/* Sprite RAM */
+	{ 0x0b9000, 0x0bffff, MRA16_RAM },	/* Work RAM */
+	{ 0x0c8000, 0x0c87ff, MRA16_RAM },  /* Palette RAM */
+	{ 0x0c0000, 0x0c0001, input_port_0_word_r },
+	{ 0x0c0002, 0x0c0003, input_port_1_word_r },
+	{ 0x0c0008, 0x0c0009, input_port_2_word_r },
+	{ 0x0c000a, 0x0c000b, input_port_3_word_r },
+	{ 0x0cc000, 0x0cffff, nmk_bgvideoram_r },
+	{ 0x0d0000, 0x0d07ff, nmk_txvideoram_r },
+MEMORY_END
+
+static MEMORY_WRITE16_START( tdragon_writemem )
+	{ 0x000000, 0x03ffff, MWA16_ROM },
+	{ 0x0b0000, 0x0b7fff, MWA16_RAM },	/* Work RAM */
+	{ 0x0b8000, 0x0b8fff, MWA16_RAM, &spriteram16, &spriteram_size },	/* Sprite RAM */
+	{ 0x0b9000, 0x0bffff, MWA16_RAM },	/* Work RAM */
+	{ 0x0c0014, 0x0c0015, nmk_flipscreen_w }, /* Maybe */
+	{ 0x0c0018, 0x0c0019, nmk_tilebank_w }, /* Tile Bank ? */
+	{ 0x0c001e, 0x0c001f, MWA16_NOP },
+	{ 0x0c4000, 0x0c4007, nmk_scroll_w },
+	{ 0x0c8000, 0x0c87ff, nmk_paletteram_w, &paletteram16 },
+	{ 0x0cc000, 0x0cffff, nmk_bgvideoram_w, &nmk_bgvideoram },
+	{ 0x0d0000, 0x0d07ff, nmk_txvideoram_w, &nmk_txvideoram },
 MEMORY_END
 
 static MEMORY_READ16_START( strahl_readmem )
@@ -488,6 +727,40 @@ static MEMORY_WRITE16_START( macross_writemem )
 	{ 0x0f0000, 0x0f7fff, MWA16_RAM },	/* Work RAM */
 	{ 0x0f8000, 0x0f8fff, MWA16_RAM, &spriteram16, &spriteram_size },
 	{ 0x0f9000, 0x0fffff, MWA16_RAM, &ram },	/* Work RAM again */
+MEMORY_END
+
+static MEMORY_READ16_START( gunnail_readmem )
+	{ 0x000000, 0x07ffff, MRA16_ROM },
+	{ 0x080000, 0x080001, input_port_0_word_r },
+	{ 0x080002, 0x080003, input_port_1_word_r },
+	{ 0x080008, 0x080009, input_port_2_word_r },
+	{ 0x08000a, 0x08000b, input_port_3_word_r },
+	{ 0x08000e, 0x08000f, macross_mcu_r },
+	{ 0x088000, 0x0887ff, MRA16_RAM }, /* palette ram */
+	{ 0x090000, 0x093fff, nmk_bgvideoram_r },
+	{ 0x09c000, 0x09cfff, nmk_txvideoram_r },
+	{ 0x09d000, 0x09dfff, nmk_txvideoram_r },	/* mirror */
+	{ 0x0f0000, 0x0f7fff, MRA16_RAM },
+	{ 0x0f8000, 0x0f8fff, MRA16_RAM },
+	{ 0x0f9000, 0x0fffff, MRA16_RAM },
+MEMORY_END
+
+static MEMORY_WRITE16_START( gunnail_writemem )
+	{ 0x000000, 0x07ffff, MWA16_ROM },
+	{ 0x08001e, 0x08001f, macross_mcu_w },
+	{ 0x080014, 0x080015, nmk_flipscreen_w },
+	{ 0x080016, 0x080017, MWA16_NOP },	/* IRQ enable? */
+	{ 0x080018, 0x080019, nmk_tilebank_w },
+	{ 0x088000, 0x0887ff, nmk_paletteram_w, &paletteram16 },
+	{ 0x08c000, 0x08c1ff, gunnail_scrollx_w, &gunnail_scrollram },
+	{ 0x08c200, 0x08c201, gunnail_scrolly_w },
+//	{ 0x08c202, 0x08c7ff, MWA16_RAM },	// unknown
+	{ 0x090000, 0x093fff, nmk_bgvideoram_w, &nmk_bgvideoram },
+	{ 0x09c000, 0x09cfff, nmk_txvideoram_w, &nmk_bgvideoram },
+	{ 0x09d000, 0x09dfff, nmk_txvideoram_w },	/* mirror */
+	{ 0x0f0000, 0x0f7fff, MWA16_RAM },	/* Work RAM */
+	{ 0x0f8000, 0x0f8fff, MWA16_RAM, &spriteram16, &spriteram_size },
+	{ 0x0f9000, 0x0fffff, MWA16_RAM },	/* Work RAM again */
 MEMORY_END
 
 static MEMORY_READ16_START( macross2_readmem )
@@ -587,6 +860,175 @@ static MEMORY_WRITE16_START( bjtwin_writemem )
 MEMORY_END
 
 
+INPUT_PORTS_START( vandyke )
+	PORT_START		/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* Maybe unused */
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* Maybe unused */
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* Maybe unused */
+
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_START1 ) //guess
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_START2 ) //guess
+
+	PORT_START	/* DSW 1 */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(	0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x00, DEF_STR( On ) )
+
+	PORT_START	/* DSW 2 */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x00, DEF_STR( On ) )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( tharrier )
+	PORT_START		/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x8000, IP_ACTIVE_HIGH, IPT_SPECIAL ) /* Mcu status? */
+
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
+
+	PORT_START	/* DSW */
+	PORT_DIPNAME( 0x0001, 0x0001, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0002, 0x0002, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0004, 0x0004, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0004, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0008, 0x0008, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0008, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0010, 0x0010, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0010, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0020, 0x0020, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0020, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0080, 0x0080, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0100, 0x0100, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(      0x0100, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0200, 0x0200, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0200, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0400, 0x0400, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0400, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0800, 0x0800, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0800, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x1000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x2000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+INPUT_PORTS_END
 
 INPUT_PORTS_START( mustang )
 	PORT_START		/* IN0 */
@@ -855,52 +1297,185 @@ INPUT_PORTS_START( bioship )
 	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START  /* DSW A */
-	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
-	PORT_DIPSETTING(    0x02, "2" )
-	PORT_DIPSETTING(    0x03, "3" )
-	PORT_DIPSETTING(    0x01, "4" )
-	PORT_DIPSETTING(    0x00, "5" )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_SERVICE( 0x10, IP_ACTIVE_LOW )
-	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x80, "Easy" )
-	PORT_DIPSETTING(    0xc0, "Medium" )
-	PORT_DIPSETTING(    0x40, "Hard" )
-	PORT_DIPSETTING(    0x00, "Hardest" )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0001, 0x0001, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0002, 0x0002, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0004, 0x0004, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0004, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0008, 0x0008, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0008, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0010, 0x0010, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0010, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0020, 0x0020, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0020, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0080, 0x0080, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 
 	PORT_START  /* DSW B */
-	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 5C_1C ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( 4C_1C ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(    0x03, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x07, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x06, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x05, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( 1C_4C ) )
-	PORT_DIPNAME( 0x38, 0x38, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 5C_1C ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( 4C_1C ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(    0x18, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x38, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x30, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x28, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( 1C_4C ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0001, 0x0001, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0002, 0x0002, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0004, 0x0004, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0004, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0008, 0x0008, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0008, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0010, 0x0010, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0010, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0020, 0x0020, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0020, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0080, 0x0080, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( tdragon )
+	PORT_START		/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )	// TEST in service mode
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* DSW 1 */
+	PORT_DIPNAME( 0x0003, 0x0003, DEF_STR( Lives ) )
+	PORT_DIPSETTING(      0x0000, "1" )
+	PORT_DIPSETTING(      0x0002, "2" )
+	PORT_DIPSETTING(      0x0003, "3" )
+	PORT_DIPSETTING(      0x0001, "4" )
+	PORT_DIPNAME( 0x0004, 0x0004, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0004, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0008, 0x0008, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0008, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0010, 0x0010, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0010, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0020, 0x0020, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0020, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0080, 0x0080, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0100, 0x0100, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0100, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0200, 0x0200, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0200, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0400, 0x0400, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0400, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0800, 0x0800, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0800, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x1000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x2000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+
+	PORT_START	/* DSW 2 */
+	PORT_DIPNAME( 0x0007, 0x0007, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(      0x0004, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(      0x0005, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x0006, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x0007, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x0003, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Free_Play ) )
+	PORT_DIPNAME( 0x0038, 0x0038, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(      0x0020, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(      0x0028, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x0030, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x0038, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x0018, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x0010, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x0008, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Free_Play ) )
+	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0080, 0x0080, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0100, 0x0100, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0100, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0200, 0x0200, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0200, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0400, 0x0400, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0400, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0800, 0x0800, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0800, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x1000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x2000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( macross )
@@ -991,6 +1566,88 @@ INPUT_PORTS_START( macross )
 	PORT_DIPSETTING(    0x50, DEF_STR( 1C_6C ) )
 	PORT_DIPSETTING(    0x90, DEF_STR( 1C_7C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( gunnail )
+	PORT_START		/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* Maybe unused */
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* Maybe unused */
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* Maybe unused */
+
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* DSW A */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START	/* DSW B */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( sabotenb )
@@ -1251,6 +1908,14 @@ static struct GfxLayout tilelayout =
 	32*32
 };
 
+static struct GfxDecodeInfo tharrier_gfxdecodeinfo[] =
+{
+	{ REGION_GFX1, 0, &charlayout, 0x000, 16 },	/* color 0x200-0x2ff */
+	{ REGION_GFX2, 0, &tilelayout, 0x000, 16 },	/* color 0x000-0x0ff */
+	{ REGION_GFX3, 0, &tilelayout, 0x100, 16 },	/* color 0x100-0x1ff */
+	{ -1 } /* end of array */
+};
+
 static struct GfxDecodeInfo macross_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout, 0x200, 16 },	/* color 0x200-0x2ff */
@@ -1343,6 +2008,129 @@ static int nmk_interrupt(void)
 	return 2;
 }
 
+
+static const struct MachineDriver machine_driver_urashima =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_M68000,
+			10000000, /* 10 MHz ? */
+			urashima_readmem,urashima_writemem,0,0,
+			ignore_interrupt,1,//m68_level4_irq,1,
+//			m68_level1_irq,112	/* ???????? */
+		}
+	},
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	1,
+	0,
+
+	/* video hardware */
+	256, 256, { 0*8, 32*8-1, 2*8, 30*8-1 },
+	macross_gfxdecodeinfo,
+	1024, 1024,
+	0,
+
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	nmk_eof_callback,
+	macross_vh_start,
+	nmk_vh_stop,
+	macross_vh_screenrefresh,
+
+	0,0,0,0,
+	{
+		{
+			SOUND_OKIM6295,
+			&okim6295_interface
+		}
+	}
+};
+
+static const struct MachineDriver machine_driver_vandyke =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_M68000,
+			10000000, /* 10 MHz ? */
+			vandyke_readmem,vandyke_writemem,0,0,
+			m68_level4_irq,1,
+			m68_level1_irq,112	/* ???????? */
+		}
+	},
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	1,
+	0,
+
+	/* video hardware */
+	256, 256, { 0*8, 32*8-1, 2*8, 30*8-1 },
+	macross_gfxdecodeinfo,
+	1024, 1024,
+	0,
+
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	nmk_eof_callback,
+	macross_vh_start,
+	nmk_vh_stop,
+	macross_vh_screenrefresh,
+
+	0,0,0,0,
+	{
+		/* there's also a YM2203 */
+		{
+			SOUND_OKIM6295,
+			&okim6295_interface
+		}
+	}
+};
+
+static const struct MachineDriver machine_driver_tharrier =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_M68000,
+			10000000, /* 10 MHz */
+			tharrier_readmem,tharrier_writemem,0,0,
+			nmk_interrupt,2,
+			m68_level1_irq,112	/* ???????? */
+		},
+		{
+			CPU_Z80 | CPU_AUDIO_CPU,
+			4000000, /* 4 MHz */
+			tharrier_sound_readmem,tharrier_sound_writemem,tharrier_sound_readport,tharrier_sound_writeport,
+			ignore_interrupt,1
+		}
+	},
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	1,
+	mustang_init_sound,
+
+	/* video hardware */
+	256, 256, { 0*8, 32*8-1, 2*8, 30*8-1 },
+	tharrier_gfxdecodeinfo,
+	512, 512,
+	0,
+
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	nmk_eof_callback,
+	macross_vh_start,
+	nmk_vh_stop,
+	macross_vh_screenrefresh,
+
+	0,0,0,0,
+	{
+		{
+			SOUND_YM2203,
+			&ym2203_interface
+		},
+		{
+			SOUND_OKIM6295,
+			&okim6295_interface_single
+		}
+	}
+};
+
 static const struct MachineDriver machine_driver_mustang =
 {
 	/* basic machine hardware */
@@ -1355,7 +2143,7 @@ static const struct MachineDriver machine_driver_mustang =
 			m68_level1_irq,112	/* ???????? */
 		},
 		{
-			CPU_Z80 | CPU_AUDIO_CPU,
+			CPU_Z80 | CPU_AUDIO_CPU,  /* the Z80 is only on the bootleg, change later */
 			4000000, /* 4 MHz ? */
 			mustang_sound_readmem,mustang_sound_writemem,0,0,
 			ignore_interrupt,1
@@ -1459,6 +2247,43 @@ static const struct MachineDriver machine_driver_bioship =
 	0,0,0,0,
 	{
 		/* there's also a YM2203 */
+		{
+			SOUND_OKIM6295,
+			&okim6295_interface
+		}
+	}
+};
+
+static const struct MachineDriver machine_driver_tdragon =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_M68000,
+			10000000,
+			tdragon_readmem,tdragon_writemem,0,0,
+			m68_level4_irq,1,
+			m68_level1_irq,112	/* ?? drives music */
+		}
+	},
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	1,
+	0,
+
+	/* video hardware */
+	256, 256, { 0*8, 32*8-1, 2*8, 30*8-1 },
+	macross_gfxdecodeinfo,
+	1024, 1024,
+	0,
+
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	nmk_eof_callback,
+	macross_vh_start,
+	nmk_vh_stop,
+	macross_vh_screenrefresh,
+
+	0,0,0,0,
+	{
 		{
 			SOUND_OKIM6295,
 			&okim6295_interface
@@ -1580,6 +2405,43 @@ static const struct MachineDriver machine_driver_macross =
 	}
 };
 
+static const struct MachineDriver machine_driver_gunnail =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_M68000,
+			10000000, /* 10 MHz? */
+			gunnail_readmem,gunnail_writemem,0,0,
+			m68_level4_irq,1,
+			m68_level1_irq,112
+		}
+	},
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	1,
+	0,
+
+	/* video hardware */
+	512, 256, { 0*8, 48*8-1, 2*8, 30*8-1 },
+	macross_gfxdecodeinfo,
+	1024, 1024,
+	0,
+
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	nmk_eof_callback,
+	gunnail_vh_start,
+	nmk_vh_stop,
+	gunnail_vh_screenrefresh,
+
+	0,0,0,0,
+	{
+		{
+			SOUND_OKIM6295,
+			&okim6295_interface
+		}
+	}
+};
+
 static const struct MachineDriver machine_driver_macross2 =
 {
 	/* basic machine hardware */
@@ -1665,32 +2527,138 @@ static const struct MachineDriver machine_driver_bjtwin =
 };
 
 
+
+ROM_START ( urashima )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 )		/* 68000 code */
+	ROM_LOAD16_BYTE( "um-2.15d",  0x00000, 0x20000, 0xa90a47e3 )
+	ROM_LOAD16_BYTE( "um-1.15c",  0x00001, 0x20000, 0x5f5c8f39 )
+
+	ROM_REGION( 0x020000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "um-5.22j",		0x000000, 0x020000, 0x991776a2 )	/* 8x8 tiles */
+
+	ROM_REGION( 0x080000, REGION_GFX2, ROMREGION_DISPOSE ) /* 16x16 Tiles */
+	ROM_LOAD( "um-7.4l",	0x000000, 0x080000, 0xd2a68cfb )
+
+	ROM_REGION( 0x080000, REGION_GFX3, ROMREGION_DISPOSE ) /* Maybe there are no Sprites? */
+	ROM_LOAD( "um-6.2l",	0x000000, 0x080000, 0x076be5b5 )
+
+	ROM_REGION( 0x0240, REGION_PROMS, 0 )
+	ROM_LOAD( "um-10.2b",      0x0000, 0x0100, 0xcfdbb86c )	/* unknown */
+	ROM_LOAD( "um-11.2c",      0x0100, 0x0100, 0xff5660cf )	/* unknown */
+	ROM_LOAD( "um-12.20c",     0x0200, 0x0020, 0xbdb66b02 )	/* unknown */
+	ROM_LOAD( "um-13.10l",     0x0220, 0x0020, 0x4ce07ec0 )	/* unknown */
+
+	ROM_REGION( 0x080000, REGION_SOUND1, 0 )	/* OKIM6295 samples */
+	ROM_LOAD( "um-3.22c",		0x000000, 0x080000, 0x9fd8c8fa )
+ROM_END
+
+ROM_START( vandyke )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 )		/* 68000 code */
+	ROM_LOAD16_BYTE( "vdk-1.16",  0x00000, 0x20000, 0xc1d01c59 )
+	ROM_LOAD16_BYTE( "vdk-2.15",  0x00001, 0x20000, 0x9d741cc2 )
+
+	ROM_REGION(0x10000, REGION_CPU2, 0 ) /* 64k for sound cpu code */
+	ROM_LOAD( "vdk-4.127",    0x00000, 0x10000, 0xeba544f0)
+
+	ROM_REGION( 0x010000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "vdk-3.222",		0x000000, 0x010000, 0x5a547c1b )	/* 8x8 tiles */
+
+	ROM_REGION( 0x080000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "vdk-01.13",		0x000000, 0x080000, 0x195a24be )	/* 16x16 tiles */
+
+	ROM_REGION( 0x200000, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_LOAD16_BYTE( "vdk-04.2-1",	0x000000, 0x080000, 0x0a730547 )	/* Sprites */
+	ROM_LOAD16_BYTE( "vdk-05.3-1",	0x000001, 0x080000, 0xba456d27 )	/* Sprites */
+	ROM_LOAD16_BYTE( "vdk-07.202",	0x100000, 0x080000, 0x42d41f06 )	/* Sprites */
+	ROM_LOAD16_BYTE( "vdk-06.203",	0x100001, 0x080000, 0xd54722a8 )	/* Sprites */
+
+	ROM_REGION( 0x080000, REGION_SOUND1, 0 )	/* OKIM6295 samples */
+	ROM_LOAD( "vdk-02.126",     0x000000, 0x080000, 0xb2103274 )	/* all banked */
+
+	ROM_REGION( 0x080000, REGION_SOUND2, 0 )	/* OKIM6295 samples */
+	ROM_LOAD( "vdk-03.165",     0x000000, 0x080000, 0x631776d3 )	/* all banked */
+
+	ROM_REGION( 0x0200, REGION_PROMS, 0 )
+	ROM_LOAD( "ic100.bpr", 0x0000, 0x0100, 0x98ed1c97 )	/* V-sync hw (unused) */
+	ROM_LOAD( "ic101.bpr", 0x0100, 0x0100, 0xcfdbb86c )	/* H-sync hw (unused) */
+ROM_END
+
+ROM_START( tharrier )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "2" ,   0x00000, 0x20000, 0x78923aaa )
+	ROM_LOAD16_BYTE( "3" ,   0x00001, 0x20000, 0x99cea259 )
+
+	ROM_REGION( 0x010000, REGION_CPU2, 0 )
+	ROM_LOAD( "12" ,   0x00000, 0x10000, 0xb959f837 )
+
+	ROM_REGION( 0x020000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "1" ,        0x000000, 0x10000, 0xc7402e4a )
+
+	ROM_REGION( 0x080000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "89050-4" ,  0x000000, 0x80000, 0x64d7d687 )
+
+	ROM_REGION( 0x100000, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_LOAD16_BYTE( "89050-13",	0x000000, 0x80000, 0x24db3fa4 )	/* Sprites */
+	ROM_LOAD16_BYTE( "89050-17",	0x000001, 0x80000, 0x7f715421 )
+
+	ROM_REGION(0x80000, REGION_SOUND1, 0 )	/* Oki sample data */
+	ROM_LOAD( "89050-8",   0x00000, 0x80000, 0x11ee4c39 )
+
+	ROM_REGION(0x80000, REGION_SOUND2, 0 )	/* Oki sample data */
+	ROM_LOAD( "89050-10",  0x00000, 0x80000, 0x893552ab )
+
+	ROM_REGION( 0x140, REGION_PROMS, 0 )
+	ROM_LOAD( "25",  0x00000, 0x100, 0xe0a009fe )
+	ROM_LOAD( "23",  0x00100, 0x020, 0xfc3569f4 )
+	ROM_LOAD( "26",  0x00120, 0x020, 0x0cbfb33e )
+ROM_END
+
 ROM_START( mustang )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 )
-	ROM_LOAD16_BYTE( "mustang.13",    0x00001, 0x20000, 0xd8ccce31 )
+	ROM_LOAD16_BYTE( "90058-2",    0x00000, 0x20000, 0x833aa458 )
+	ROM_LOAD16_BYTE( "90058-3",    0x00001, 0x20000, 0xe4b80f06 )
+
+	ROM_REGION(0x10000, REGION_CPU2, 0 )	/* 64k for sound cpu code */
+	ROM_LOAD( "90058-7",    0x00000, 0x10000, 0x920a93c8 )
+
+	ROM_REGION( 0x020000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "90058-1",    0x00000, 0x20000, 0x81ccfcad )
+
+	ROM_REGION( 0x080000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "90058-4",    0x000000, 0x80000, 0xa07a2002 )
+
+	ROM_REGION( 0x100000, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_LOAD16_BYTE( "90058-8",    0x00000, 0x80000, 0x560bff04 )
+	ROM_LOAD16_BYTE( "90058-9",    0x00001, 0x80000, 0xb9d72a03 )
+
+	ROM_REGION( 0x080000, REGION_SOUND1, 0 )	/* OKIM6295 samples */
+	ROM_LOAD( "90058-5",    0x000000, 0x80000, 0xc60c883e )
+
+	ROM_REGION( 0x080000, REGION_SOUND2, 0 )	/* OKIM6295 samples */
+	ROM_LOAD( "90058-6",    0x000000, 0x80000, 0x233c1776 )
+
+	ROM_REGION( 0x200, REGION_PROMS, 0 )
+	ROM_LOAD( "90058-10",  0x00000, 0x100, 0xde156d99 ) /* unknown */
+	ROM_LOAD( "90058-11",  0x00100, 0x100, 0xcfdbb86c ) /* unknown */
+ROM_END
+
+ROM_START( mustangb )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 )
 	ROM_LOAD16_BYTE( "mustang.14",    0x00000, 0x20000, 0x13c6363b )
+	ROM_LOAD16_BYTE( "mustang.13",    0x00001, 0x20000, 0xd8ccce31 )
 
 	ROM_REGION(0x10000, REGION_CPU2, 0 )	/* 64k for sound cpu code */
 	ROM_LOAD( "mustang.16",    0x00000, 0x10000, 0x99ee7505 )
 
 	ROM_REGION( 0x020000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "mustang.15",    0x00000, 0x20000, 0x81ccfcad )
+	ROM_LOAD( "90058-1",    0x00000, 0x20000, 0x81ccfcad )
 
 	ROM_REGION( 0x080000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "mustang.09",    0x000000, 0x20000, 0x5f8fdfb1 )  //these are bootleg graphics roms
-	ROM_LOAD( "mustang.12",    0x020000, 0x20000, 0x39757d6a )  //real ones are 0x80000 mask roms
-	ROM_LOAD( "mustang.10",    0x040000, 0x20000, 0xb3dd5243 )
-	ROM_LOAD( "mustang.11",    0x060000, 0x20000, 0xc6c9752f )
+	ROM_LOAD( "90058-4",    0x000000, 0x80000, 0xa07a2002 )
 
 	ROM_REGION( 0x100000, REGION_GFX3, ROMREGION_DISPOSE )
-	ROM_LOAD16_BYTE( "mustang.01",    0x000000, 0x20000, 0xd13f0722 )
-	ROM_LOAD16_BYTE( "mustang.06",    0x000001, 0x20000, 0x54773f95 )
-	ROM_LOAD16_BYTE( "mustang.02",    0x040000, 0x20000, 0x87c1fb43 )
-	ROM_LOAD16_BYTE( "mustang.05",    0x040001, 0x20000, 0x932d3e33 )
-	ROM_LOAD16_BYTE( "mustang.03",    0x080000, 0x20000, 0x23d03ad5 )
-	ROM_LOAD16_BYTE( "mustang.04",    0x080001, 0x20000, 0xa62b2f87 )
-	ROM_LOAD16_BYTE( "mustang.07",    0x0c0000, 0x20000, 0x42a6cfc2 )
-	ROM_LOAD16_BYTE( "mustang.08",    0x0c0001, 0x20000, 0x9d3bee66 )
+	ROM_LOAD16_BYTE( "90058-8",    0x00000, 0x80000, 0x560bff04 )
+	ROM_LOAD16_BYTE( "90058-9",    0x00001, 0x80000, 0xb9d72a03 )
 
 	ROM_REGION( 0x010000, REGION_SOUND1, 0 )	/* OKIM6295 samples */
 	ROM_LOAD( "mustang.17",    0x00000, 0x10000, 0xf6f6c4bf )
@@ -1746,6 +2714,81 @@ ROM_START( bioship )
 	ROM_REGION16_BE(0x20000, REGION_USER1, 0 )	/* Background tilemap */
 	ROM_LOAD16_BYTE( "8",    0x00000, 0x10000, 0x75a46fea )
 	ROM_LOAD16_BYTE( "9",    0x00001, 0x10000, 0xd91448ee )
+ROM_END
+
+ROM_START( blkheart )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 )		/* 68000 code */
+	ROM_LOAD16_BYTE( "7.bin",  0x00000, 0x20000, 0xe0a5c667 )
+	ROM_LOAD16_BYTE( "6.bin",  0x00001, 0x20000, 0x7cce45e8 )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )		/* Code for (unknown?) CPU */
+	ROM_LOAD( "4.bin",      0x00000, 0x10000, 0x7cefa295 )
+
+	ROM_REGION( 0x020000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "3.bin",    0x000000, 0x020000, 0xa1ab3a16 )	/* 8x8 tiles */
+
+	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "90068-5.bin", 0x000000, 0x100000, 0xa1ab4f24 )	/* 16x16 tiles */
+
+	ROM_REGION( 0x100000, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_LOAD16_WORD_SWAP( "90068-8.bin", 0x000000, 0x100000, 0x9d3204b2 )	/* Sprites */
+
+	ROM_REGION( 0x080000, REGION_SOUND1, 0 )	/* OKIM6295 samples */
+	ROM_LOAD( "90068-1.bin", 0x000000, 0x080000, 0xe7af69d2 )	/* all banked */
+
+	ROM_REGION( 0x080000, REGION_SOUND2, 0 )	/* OKIM6295 samples */
+	ROM_LOAD( "90068-2.bin", 0x000000, 0x080000, 0x3a583184 )	/* all banked */
+
+	ROM_REGION( 0x0200, REGION_PROMS, 0 )
+	ROM_LOAD( "9.bpr",      0x0000, 0x0100, 0x98ed1c97 )	/* unknown */
+	ROM_LOAD( "10.bpr",     0x0100, 0x0100, 0xcfdbb86c )	/* unknown */
+ROM_END
+
+ROM_START( tdragon )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 )		/* 68000 code -bitswapped- */
+	ROM_LOAD16_BYTE( "thund.8",  0x00000, 0x20000, 0xedd02831 )
+	ROM_LOAD16_BYTE( "thund.7",  0x00001, 0x20000, 0x52192fe5 )
+
+	ROM_REGION( 0x020000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "thund.6",		0x000000, 0x20000, 0xfe365920 )	/* 8x8 tiles */
+
+	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "thund.5",		0x000000, 0x100000, 0xd0bde826 )	/* 16x16 tiles */
+
+	ROM_REGION( 0x100000, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_LOAD16_WORD_SWAP( "thund.4",	0x000000, 0x100000, 0x3eedc2fe )	/* Sprites */
+
+	ROM_REGION( 0x010000, REGION_CPU2, 0 )		/* Code for (unknown?) CPU */
+	ROM_LOAD( "thund.1",      0x00000, 0x10000, 0xbf493d74 )
+
+	ROM_REGION( 0x100000, REGION_SOUND1, 0 )	/* OKIM6295 samples? */
+	ROM_LOAD( "thund.2",     0x00000, 0x80000, 0xecfea43e )
+	ROM_LOAD( "thund.3",     0x80000, 0x80000, 0xae6875a8 )
+
+	ROM_REGION( 0x0200, REGION_PROMS, 0 )
+	ROM_LOAD( "9.bin",  0x0000, 0x0100, 0xcfdbb86c )	/* unknown */
+	ROM_LOAD( "10.bin", 0x0100, 0x0100, 0xe6ead349 )	/* unknown */
+ROM_END
+
+ROM_START( tdragonb )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 )		/* 68000 code -bitswapped- */
+	ROM_LOAD16_BYTE( "td_04.bin",  0x00000, 0x20000, 0xe8a62d3e )
+	ROM_LOAD16_BYTE( "td_03.bin",  0x00001, 0x20000, 0x2fa1aa04 )
+
+	ROM_REGION( 0x020000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "td_08.bin",		0x000000, 0x20000, 0x5144dc69 )	/* 8x8 tiles */
+
+	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "td_06.bin",		0x000000, 0x80000, 0xc1be8a4d )	/* 16x16 tiles */
+	ROM_LOAD( "td_07.bin",		0x080000, 0x80000, 0x2c3e371f )	/* 16x16 tiles */
+
+	ROM_REGION( 0x100000, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_LOAD16_BYTE( "td_10.bin",	0x000000, 0x080000, 0xbfd0ec5d )	/* Sprites */
+	ROM_LOAD16_BYTE( "td_09.bin",	0x000001, 0x080000, 0xb6e074eb )	/* Sprites */
+
+	ROM_REGION( 0x20000, REGION_USER1, 0 )		/* Unused Roms (Probably Sound Related) */
+	ROM_LOAD( "td_02.bin",     0x00000, 0x10000, 0x99ee7505 )
+	ROM_LOAD( "td_01.bin",     0x10000, 0x10000, 0xf6f6c4bf )
 ROM_END
 
 ROM_START( strahl )
@@ -1827,6 +2870,35 @@ ROM_START( macross )
 	ROM_LOAD( "921a08",      0x0000, 0x0100, 0xcfdbb86c )	/* unknown */
 	ROM_LOAD( "921a09",      0x0100, 0x0100, 0x633ab1c9 )	/* unknown */
 	ROM_LOAD( "921a10",      0x0200, 0x0020, 0x8371e42d )	/* unknown */
+ROM_END
+
+ROM_START( gunnail )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 )		/* 68000 code */
+	ROM_LOAD16_BYTE( "3e.bin",  0x00000, 0x40000, 0x61d985b2 )
+	ROM_LOAD16_BYTE( "3o.bin",  0x00001, 0x40000, 0xf114e89c )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )		/* Code for (unknown?) CPU */
+	ROM_LOAD( "92077_2.bin",      0x00000, 0x10000, 0xcd4e55f8 )
+
+	ROM_REGION( 0x020000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "1.bin",    0x000000, 0x020000, 0x3d00a9f4 )	/* 8x8 tiles */
+
+	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "92077-4.bin", 0x000000, 0x100000, 0xa9ea2804 )	/* 16x16 tiles */
+
+	ROM_REGION( 0x200000, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_LOAD16_WORD_SWAP( "92077-7.bin", 0x000000, 0x200000, 0xd49169b3 )	/* Sprites */
+
+	ROM_REGION( 0x080000, REGION_SOUND1, 0 )	/* OKIM6295 samples */
+	ROM_LOAD( "92077-6.bin", 0x000000, 0x080000, 0x6d133f0d )	/* all banked */
+
+	ROM_REGION( 0x080000, REGION_SOUND2, 0 )	/* OKIM6295 samples */
+	ROM_LOAD( "92077-5.bin", 0x000000, 0x080000, 0xfeb83c73 )	/* all banked */
+
+	ROM_REGION( 0x0220, REGION_PROMS, 0 )
+	ROM_LOAD( "8.bpr",      0x0000, 0x0100, 0x4299776e )	/* unknown */
+	ROM_LOAD( "9.bpr",      0x0100, 0x0100, 0x633ab1c9 )	/* unknown */
+	ROM_LOAD( "10.bpr",     0x0200, 0x0020, 0xc60103c8 )	/* unknown */
 ROM_END
 
 ROM_START( macross2 )
@@ -2007,7 +3079,46 @@ static void decode_gfx(void)
 	}
 }
 
+static void decode_tdragonb(void)
+{
+	/* Descrambling Info Again Taken from Raine, Huge Thanks to Antiriad and the Raine Team for
+	   going Open Source, best of luck in future development. */
 
+	unsigned char *rom;
+	int A;
+
+	/* The Main 68k Program of the Bootleg is Bitswapped */
+	static unsigned char decode_data_tdragonb[1][16] =
+	{
+		{0xe,0xc,0xa,0x8,0x7,0x5,0x3,0x1,0xf,0xd,0xb,0x9,0x6,0x4,0x2,0x0},
+	};
+
+	/* Graphic Roms Could Also Do With Rearranging to make things simpler */
+	static unsigned char decode_data_tdragonbgfx[1][8] =
+	{
+		{0x7,0x6,0x5,0x3,0x4,0x2,0x1,0x0},
+	};
+
+	rom = memory_region(REGION_CPU1);
+	for (A = 0;A < memory_region_length(REGION_CPU1);A += 2)
+	{
+		unsigned short tmp = decode_word( rom[A+1]*256 + rom[A], decode_data_tdragonb[0]);
+		rom[A+1] = tmp >> 8;
+		rom[A] = tmp & 0xff;
+	}
+
+	rom = memory_region(REGION_GFX2);
+	for (A = 0;A < memory_region_length(REGION_GFX2);A++)
+	{
+		rom[A] = decode_byte( rom[A], decode_data_tdragonbgfx[0]);
+	}
+
+	rom = memory_region(REGION_GFX3);
+	for (A = 0;A < memory_region_length(REGION_GFX3);A++)
+	{
+		rom[A] = decode_byte( rom[A], decode_data_tdragonbgfx[0]);
+	}
+}
 
 static void init_nmk(void)
 {
@@ -2028,6 +3139,25 @@ static void init_acrobatm(void)
 	RAM[0x724/2] = 0x4e71; /* Protection */
 	RAM[0x726/2] = 0x4e71;
 	RAM[0x728/2] = 0x4e71;
+}
+
+static void init_tdragonb(void)
+{
+	data16_t *ROM = (data16_t *)memory_region(REGION_CPU1);
+
+	decode_tdragonb();
+
+	/* The Following Patch is taken from Raine, Otherwise the game has no Sprites in Attract Mode or After Level 1
+	   which is rather odd considering its a bootleg.. */
+	ROM[0x00308/2] = 0x4e71; /* Sprite Problem */
+}
+
+static void init_tdragon(void)
+{
+	data16_t *RAM = (data16_t *)memory_region(REGION_CPU1);
+
+	RAM[0x94b0/2] = 0; /* Patch out JMP to shared memory (protection) */
+	RAM[0x94b2/2] = 0x92f4;
 }
 
 static void init_strahl(void)
@@ -2068,7 +3198,7 @@ static void init_bjtwin(void)
  *	008F68: 0041 BFBF                ori.w   #-$4041, D1		|   buttons 2 and 3 to
  *	008F6C: E441                     asr.w   #2, D1				|   button 1, so
  *	008F6E: 0040 DFDF                ori.w   #-$2021, D0		|   you can't enter
- *	008F72: E240                     asr.w   #1, D0				|   service mode
+ *	008F72: E240                     asr.w   #1, D0				|   service mode7
  *	008F74: C640                     and.w   D0, D3				|
  *	008F76: C641                     and.w   D1, D3				/
  *	008F78: 33C3 000F FFFE           move.w  D3, $ffffe.l
@@ -2082,13 +3212,21 @@ static void init_bjtwin(void)
 
 
 
-GAMEX( 1990, mustang,  0, mustang,  mustang,  0,        ROT0,   "UPL", "US AAF Mustang", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND )
-GAMEX( 1991, acrobatm, 0, acrobatm, strahl,   acrobatm, ROT270, "UPL (Taito license)", "Acrobat Mission", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEX( 1991?,bioship,  0, bioship,  bioship,  bioship,  ROT0,   "UPL (American Sammy license)", "Bio-ship Paladin", GAME_NO_SOUND )
-GAMEX( 1991, hachamf,  0, hachamf,  hachamf,  hachamf,  ROT0,   "NMK", "Hacha Mecha Fighter", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND )
-GAMEX( 1992, strahl,   0, strahl,   strahl,   strahl,   ROT0,   "UPL", "Strahl", GAME_NO_SOUND )
-GAMEX( 1992, macross,  0, macross,  macross,  nmk,      ROT270, "Banpresto", "Macross", GAME_NO_SOUND )
-GAMEX( 1993, macross2, 0, macross2, macross,  0,        ROT0,   "Banpresto", "Macross II", GAME_NO_COCKTAIL )
-GAMEX( 1992, sabotenb, 0, bjtwin,   sabotenb, nmk,      ROT0,   "NMK / Tecmo", "Saboten Bombers", GAME_NO_COCKTAIL )
-GAMEX( 1993, bjtwin,   0, bjtwin,   bjtwin,   bjtwin,   ROT270, "NMK", "Bombjack Twin", GAME_NO_COCKTAIL )
-GAMEX( 1995, nouryoku, 0, bjtwin,   nouryoku, nmk,      ROT0,   "Tecmo", "Nouryoku Koujou Iinkai", GAME_NO_COCKTAIL )
+GAMEX( 1989, urashima, 0,       urashima, macross,  0,        ROT0,         "UPL",							"Urashima Mahjong", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING ) /* Similar Hardware? */
+GAMEX( 1989, tharrier, 0,       tharrier, tharrier, 0,        ROT270,       "UPL (American Sammy license)",	"Task Force Harrier", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND )
+GAMEX( 1990, mustang,  0,       mustang,  mustang,  0,        ROT0,         "UPL",							"US AAF Mustang", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND )
+GAMEX( 1990, mustangb, mustang, mustang,  mustang,  0,        ROT0,         "bootleg",						"US AAF Mustang (bootleg)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND )
+GAMEX( 1990, bioship,  0,       bioship,  bioship,  bioship,  ROT0,         "UPL (American Sammy license)",	"Bio-ship Paladin", GAME_NO_SOUND )
+GAMEX( 1990, vandyke,  0,       vandyke,  vandyke,  0,        ROT270,       "UPL",							"Vandyke (Japan)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAMEX( 1991, blkheart, 0,       macross,  vandyke,  0,        ROT0,         "UPL",							"Black Heart (Japan)", GAME_NO_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAMEX( 1991, acrobatm, 0,       acrobatm, strahl,   acrobatm, ROT270,       "UPL (Taito license)",			"Acrobat Mission", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1992, strahl,   0,       strahl,   strahl,   strahl,   ROT0,         "UPL",							"Strahl", GAME_NO_SOUND )
+GAMEX( 1991, tdragon,  0,       tdragon,  tdragon,  tdragon,  ROT270,       "NMK / Tecmo",					"Thunder Dragon", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAMEX( 1991, tdragonb, tdragon, tdragon,  tdragon,  tdragonb, ROT270,       "NMK / Tecmo",					"Thunder Dragon (Bootleg)", GAME_NO_SOUND )
+GAMEX( 1991, hachamf,  0,       hachamf,  hachamf,  hachamf,  ROT0,         "NMK",							"Hacha Mecha Fighter", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND )
+GAMEX( 1992, macross,  0,       macross,  macross,  nmk,      ROT270,       "Banpresto",					"Macross", GAME_NO_SOUND )
+GAMEX( 1993, gunnail,  0,       gunnail,  gunnail,  nmk,      ROT270_16BIT, "NMK / Tecmo",					"GunNail", GAME_NO_SOUND )
+GAMEX( 1993, macross2, 0,       macross2, macross,  0,        ROT0_16BIT,   "Banpresto",					"Macross II", GAME_NO_COCKTAIL )
+GAMEX( 1992, sabotenb, 0,       bjtwin,   sabotenb, nmk,      ROT0,         "NMK / Tecmo",					"Saboten Bombers", GAME_NO_COCKTAIL )
+GAMEX( 1993, bjtwin,   0,       bjtwin,   bjtwin,   bjtwin,   ROT270,       "NMK",							"Bombjack Twin", GAME_NO_COCKTAIL )
+GAMEX( 1995, nouryoku, 0,       bjtwin,   nouryoku, nmk,      ROT0,         "Tecmo",						"Nouryoku Koujou Iinkai", GAME_NO_COCKTAIL )

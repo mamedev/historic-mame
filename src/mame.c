@@ -4,6 +4,7 @@
 #include "ui_text.h" /* LBO 042400 */
 #include "mamedbg.h"
 #include "artwork.h"
+#include "state.h"
 #include "vidhrdw/generic.h"
 #include "palette.h"
 
@@ -465,22 +466,39 @@ int run_game(int game)
 	Machine->drv = drv = gamedrv->drv;
 
 	/* copy configuration */
-	if (!options.color_depth)
+	if (drv->video_attributes & VIDEO_RGB_DIRECT)
 	{
-		if (drv->video_attributes & VIDEO_RGB_DIRECT)
-		{
-			if (drv->video_attributes & VIDEO_NEEDS_6BITS_PER_GUN)
-				Machine->color_depth = 32;
-			else
-				Machine->color_depth = 15;
-		}
-		else if (Machine->gamedrv->flags & GAME_REQUIRES_16BIT)
-			Machine->color_depth = 16;
+		if (drv->video_attributes & VIDEO_NEEDS_6BITS_PER_GUN)
+			Machine->color_depth = 32;
 		else
-			Machine->color_depth = 8;
+			Machine->color_depth = 15;
 	}
+	else if (Machine->gamedrv->flags & GAME_REQUIRES_16BIT)
+		Machine->color_depth = 16;
 	else
-		Machine->color_depth = options.color_depth;
+		Machine->color_depth = 8;
+
+	switch (options.color_depth)
+	{
+		case 8:
+			/* -depth 8 is a request for speed, so always comply */
+			Machine->color_depth = options.color_depth;
+			break;
+
+		case 16:
+			/* comply to -depth 16 only if we don't need a direct RGB mode */
+			if (!(drv->video_attributes & VIDEO_RGB_DIRECT))
+				Machine->color_depth = options.color_depth;
+			break;
+
+		case 15:
+		case 32:
+			/* comply to -depth 15/32 only if we need a direct RGB mode */
+			if (drv->video_attributes & VIDEO_RGB_DIRECT)
+				Machine->color_depth = options.color_depth;
+			break;
+	}
+
 
 	if (Machine->color_depth == 15 || Machine->color_depth == 32)
 	{
@@ -558,6 +576,11 @@ int run_game(int game)
 	if (get_filenames())
 		return err;
 	#endif
+
+	if (options.savegame)
+		cpu_loadsave_schedule(LOADSAVE_LOAD, options.savegame);
+	else
+		cpu_loadsave_reset();
 
 	if (osd_init() == 0)
 	{
@@ -715,6 +738,7 @@ void shutdown_machine(void)
 	code_close();
 
 	uistring_shutdown (); /* LBO 042400 */
+	state_save_reset();
 }
 
 
@@ -1040,6 +1064,9 @@ static int bitmap_dirty;
 
 void draw_screen(void)
 {
+	if (bitmap_dirty)
+		osd_mark_dirty(Machine->uixmin,Machine->uiymin,Machine->uixmin+Machine->uiwidth-1,Machine->uiymin+Machine->uiheight-1);
+
 	(*Machine->drv->vh_update)(Machine->scrbitmap,bitmap_dirty);  /* update screen */
 
 	if (artwork_backdrop || artwork_overlay)

@@ -108,7 +108,9 @@
 
 #ifndef MESS
 #ifndef TINY_COMPILE
+#ifndef CPSMAME
 extern struct GameDriver driver_neogeo;
+#endif
 #endif
 #endif
 
@@ -1597,12 +1599,14 @@ static int build_tables (int cpu)
 #endif
 #ifndef MESS
 #ifndef TINY_COMPILE
+#ifndef CPSMAME
 	if (Machine->gamedrv->clone_of == &driver_neogeo)
 	{
 		/* games based on NEOGEO driver */
 		CpuToScan = 0;
 		BankToScanTable[1] = 1;
 	}
+#endif
 #endif
 #endif
 

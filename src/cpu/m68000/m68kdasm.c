@@ -1304,7 +1304,7 @@ static void d68000_cmpi_8(void)
 static void d68020_cmpi_pcdi_8(void)
 {
 	char* str;
-	LIMIT_CPU_TYPES(M68020_PLUS);
+	LIMIT_CPU_TYPES(M68010_PLUS);
 	str = get_imm_str_s8();
 	sprintf(g_dasm_str, "cmpi.b  %s, %s; (2+)", str, get_ea_mode_str_8(g_cpu_ir));
 }
@@ -1312,7 +1312,7 @@ static void d68020_cmpi_pcdi_8(void)
 static void d68020_cmpi_pcix_8(void)
 {
 	char* str;
-	LIMIT_CPU_TYPES(M68020_PLUS);
+	LIMIT_CPU_TYPES(M68010_PLUS);
 	str = get_imm_str_s8();
 	sprintf(g_dasm_str, "cmpi.b  %s, %s; (2+)", str, get_ea_mode_str_8(g_cpu_ir));
 }
@@ -1327,7 +1327,7 @@ static void d68000_cmpi_16(void)
 static void d68020_cmpi_pcdi_16(void)
 {
 	char* str;
-	LIMIT_CPU_TYPES(M68020_PLUS);
+	LIMIT_CPU_TYPES(M68010_PLUS);
 	str = get_imm_str_s16();
 	sprintf(g_dasm_str, "cmpi.w  %s, %s; (2+)", str, get_ea_mode_str_16(g_cpu_ir));
 }
@@ -1335,7 +1335,7 @@ static void d68020_cmpi_pcdi_16(void)
 static void d68020_cmpi_pcix_16(void)
 {
 	char* str;
-	LIMIT_CPU_TYPES(M68020_PLUS);
+	LIMIT_CPU_TYPES(M68010_PLUS);
 	str = get_imm_str_s16();
 	sprintf(g_dasm_str, "cmpi.w  %s, %s; (2+)", str, get_ea_mode_str_16(g_cpu_ir));
 }
@@ -1350,7 +1350,7 @@ static void d68000_cmpi_32(void)
 static void d68020_cmpi_pcdi_32(void)
 {
 	char* str;
-	LIMIT_CPU_TYPES(M68020_PLUS);
+	LIMIT_CPU_TYPES(M68010_PLUS);
 	str = get_imm_str_s32();
 	sprintf(g_dasm_str, "cmpi.l  %s, %s; (2+)", str, get_ea_mode_str_32(g_cpu_ir));
 }
@@ -1358,7 +1358,7 @@ static void d68020_cmpi_pcdi_32(void)
 static void d68020_cmpi_pcix_32(void)
 {
 	char* str;
-	LIMIT_CPU_TYPES(M68020_PLUS);
+	LIMIT_CPU_TYPES(M68010_PLUS);
 	str = get_imm_str_s32();
 	sprintf(g_dasm_str, "cmpi.l  %s, %s; (2+)", str, get_ea_mode_str_32(g_cpu_ir));
 }

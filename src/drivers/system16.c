@@ -2779,7 +2779,7 @@ static READ16_HANDLER( ga_io_players_r ) {
 	return (readinputport(0) << 8) | readinputport(1);
 }
 static READ16_HANDLER( ga_io_service_r ){
-	return (input_port_2_word_r(0) << 8) | (sys16_workingram[0x2c96/2] & 0x00ff);
+	return (input_port_2_word_r(0,0) << 8) | (sys16_workingram[0x2c96/2] & 0x00ff);
 }
 
 static MEMORY_READ16_START( goldnaxe_readmem )
@@ -3635,7 +3635,7 @@ static int passht4b_io2_val;
 static int passht4b_io3_val;
 
 static READ16_HANDLER( passht4b_service_r ){
-	data16_t val=input_port_2_word_r(offset);
+	data16_t val=input_port_2_word_r(offset,0);
 	if(!(readinputport(0) & 0x40)) val&=0xef;
 	if(!(readinputport(1) & 0x40)) val&=0xdf;
 	if(!(readinputport(5) & 0x40)) val&=0xbf;
@@ -5963,7 +5963,7 @@ ROM_END
 /***************************************************************************/
 
 static READ16_HANDLER( ww_io_service_r ){
-	return input_port_2_word_r(offset) | (sys16_workingram[0x2082/2] & 0xff00);
+	return input_port_2_word_r(offset,0) | (sys16_workingram[0x2082/2] & 0xff00);
 }
 
 static MEMORY_READ16_START( wrestwar_readmem )

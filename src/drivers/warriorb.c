@@ -51,6 +51,7 @@ the usual space, as its height is halved.
 The double palette generator (one for each screen) is probably just a
 result of the way the hardware works: they both have the same colors.
 
+
 Dumper's Info
 -------------
 
@@ -70,7 +71,23 @@ TC0100SCN x2
 TC0390LHC-1
 TC0130LNB x8
 
-[Function of these last two unknown].
+Warrior Blade (JPN Ver.)
+(c)1991 Taito
+J1100295A
+K1100710A (Label K11J0710A)
+
+CPU 	:MC68000P12F(16MHz),Z80A
+Sound	:YM2610B
+OSC 	:26.686MHz,16.000MHz
+Other	:
+TC0140SYT
+TC0510NIO
+TC0110PCR x2
+TC0100SCN x2
+TC0390LHC-1
+TC0130LNB x8
+
+[The 390LHC/130LNB functions are unknown].
 
 TODO
 ====
@@ -133,19 +150,19 @@ static READ16_HANDLER( warriorb_input_r )
 	switch (offset)
 	{
 		case 0x00:
-			return input_port_3_word_r(0);	/* DSW A */
+			return input_port_3_word_r(0,mem_mask);	/* DSW A */
 
 		case 0x01:
-			return input_port_4_word_r(0);	/* DSW B */
+			return input_port_4_word_r(0,mem_mask);	/* DSW B */
 
 		case 0x02:
-			return input_port_0_word_r(0);	/* IN0 */
+			return input_port_0_word_r(0,mem_mask);	/* IN0 */
 
 		case 0x03:
-			return input_port_1_word_r(0);	/* IN1 */
+			return input_port_1_word_r(0,mem_mask);	/* IN1 */
 
 		case 0x07:
-			return input_port_2_word_r(0);	/* IN2 */
+			return input_port_2_word_r(0,mem_mask);	/* IN2 */
 	}
 
 logerror("CPU #0 PC %06x: warning - read unmapped input offset %06x\n",cpu_get_pc(),offset);
@@ -636,7 +653,7 @@ ROM_START( darius2d )
 	ROM_LOAD( "c07-10.95", 0x00000, 0x80000, 0x4bbe0ed9 )
 	ROM_LOAD( "c07-11.96", 0x80000, 0x80000, 0x3c815699 )
 
-	ROM_REGION( 0x080000, REGION_SOUND2, 0 )	/* delta-t samples */
+	ROM_REGION( 0x080000, REGION_SOUND2, 0 )	/* Delta-T samples */
 	ROM_LOAD( "c07-12.107", 0x00000, 0x80000, 0xe0b71258 )
 
 	ROM_REGION( 0x001000, REGION_USER1, 0 )	/* unknown roms */
@@ -682,7 +699,7 @@ ROM_START( drius2do )
 	ROM_LOAD( "c07-10.95", 0x00000, 0x80000, 0x4bbe0ed9 )
 	ROM_LOAD( "c07-11.96", 0x80000, 0x80000, 0x3c815699 )
 
-	ROM_REGION( 0x080000, REGION_SOUND2, 0 )	/* delta-t samples */
+	ROM_REGION( 0x080000, REGION_SOUND2, 0 )	/* Delta-T samples */
 	ROM_LOAD( "c07-12.107", 0x00000, 0x80000, 0xe0b71258 )
 
 	ROM_REGION( 0x001000, REGION_USER1, 0 )	/* unknown roms */
@@ -692,38 +709,44 @@ ROM_END
 
 ROM_START( warriorb )
 	ROM_REGION( 0x200000, REGION_CPU1, 0 )	/* 1024K for 68000 code */
-	ROM_LOAD16_BYTE( "d24-20", 0x000000, 0x40000, 0x4452dc25 )
-	ROM_LOAD16_BYTE( "d24-19", 0x000001, 0x40000, 0x15c16016 )
-	ROM_LOAD16_BYTE( "d24-21", 0x080000, 0x40000, 0x783ef8e1 )
-	ROM_LOAD16_BYTE( "d24-18", 0x080001, 0x40000, 0x4502db60 )
+	ROM_LOAD16_BYTE( "d24_20-1.74", 0x000000, 0x40000, 0x4452dc25 )
+	ROM_LOAD16_BYTE( "d24_19-1.73", 0x000001, 0x40000, 0x15c16016 )
+	ROM_LOAD16_BYTE( "d24_21-1.76", 0x080000, 0x40000, 0x783ef8e1 )
+	ROM_LOAD16_BYTE( "d24_18-1.71", 0x080001, 0x40000, 0x4502db60 )
 
-	ROM_LOAD16_WORD_SWAP( "d24-09",   0x100000, 0x100000, 0xece5cc59 )	/* data rom */
+	ROM_LOAD16_WORD_SWAP( "d24-09.75",   0x100000, 0x100000, 0xece5cc59 )	/* data rom */
 	/* Note: Raine wrongly doubles up d24-09 as delta-t samples */
 
 	ROM_REGION( 0x2c000, REGION_CPU2, 0 )	/* sound cpu */
-	ROM_LOAD( "d24-17",  0x00000, 0x04000, 0xe41e4aae )
-	ROM_CONTINUE(        0x10000, 0x1c000 ) /* banked stuff */
+	ROM_LOAD( "d24_17.69",  0x00000, 0x04000, 0xe41e4aae )
+	ROM_CONTINUE(           0x10000, 0x1c000 ) /* banked stuff */
 
 	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "d24-02", 0x000000, 0x100000, 0x9f50c271 )	/* SCR A, screen 1 */
-	ROM_LOAD( "d24-01", 0x100000, 0x100000, 0x326dcca9 )
+	ROM_LOAD( "d24-02.12", 0x000000, 0x100000, 0x9f50c271 )	/* SCR A, screen 1 */
+	ROM_LOAD( "d24-01.11", 0x100000, 0x100000, 0x326dcca9 )
 
 	ROM_REGION( 0x400000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD32_BYTE( "d24-06", 0x000000, 0x100000, 0x918486fe )	/* OBJ */
-	ROM_LOAD32_BYTE( "d24-03", 0x000001, 0x100000, 0x46db9fd7 )
-	ROM_LOAD32_BYTE( "d24-04", 0x000002, 0x100000, 0x148e0493 )
-	ROM_LOAD32_BYTE( "d24-05", 0x000003, 0x100000, 0x9f414317 )
+	ROM_LOAD32_BYTE( "d24-06.27", 0x000000, 0x100000, 0x918486fe )	/* OBJ */
+	ROM_LOAD32_BYTE( "d24-03.24", 0x000001, 0x100000, 0x46db9fd7 )
+	ROM_LOAD32_BYTE( "d24-04.25", 0x000002, 0x100000, 0x148e0493 )
+	ROM_LOAD32_BYTE( "d24-05.26", 0x000003, 0x100000, 0x9f414317 )
 
 	ROM_REGION( 0x200000, REGION_GFX3, ROMREGION_DISPOSE )
-	ROM_LOAD( "d24-07", 0x000000, 0x100000, 0x9f50c271 )	/* SCR B, screen 2 */
-	ROM_LOAD( "d24-08", 0x100000, 0x100000, 0x1e6d1528 )
+	ROM_LOAD( "d24-07.47", 0x000000, 0x100000, 0x9f50c271 )	/* SCR B, screen 2 */
+	ROM_LOAD( "d24-08.48", 0x100000, 0x100000, 0x1e6d1528 )
 
 	ROM_REGION( 0x300000, REGION_SOUND1, 0 )	/* ADPCM samples */
-	ROM_LOAD( "d24-12", 0x000000, 0x100000, 0x279203a1 )
-	ROM_LOAD( "d24-10", 0x100000, 0x100000, 0x0e0c716d )
-	ROM_LOAD( "d24-11", 0x200000, 0x100000, 0x15362573 )
+	ROM_LOAD( "d24-12.107", 0x000000, 0x100000, 0x279203a1 )
+	ROM_LOAD( "d24-10.95",  0x100000, 0x100000, 0x0e0c716d )
+	ROM_LOAD( "d24-11.118", 0x200000, 0x100000, 0x15362573 )
 
 	/* No Delta-T samples */
+
+	ROM_REGION( 0x01000, REGION_USER1, 0 )	/* unknown roms */
+	ROM_LOAD( "d24-13.37", 0x00000, 0x400, 0x3ca18eb3 )
+	ROM_LOAD( "d24-14.38", 0x00000, 0x400, 0xbaf2a193 )
+//	ROM_LOAD( "d24-15.78", 0x00000, 0xa??, 0x00000000 )	/* Pals */
+//	ROM_LOAD( "d24-16.79", 0x00000, 0xa??, 0x00000000 )
 ROM_END
 
 

@@ -17,7 +17,8 @@ struct tempsprite
 static struct tempsprite *spritelist;
 
 static int taito_hide_pixels;
-static int chq2_spriteframe;
+static int sci_spriteframe;
+extern data16_t *taitoz_sharedram;
 
 
 /**********************************************************
@@ -226,7 +227,7 @@ int taitoz_core_vh_start (void)
 
 	if (has_TC0480SCP())	/* it's a tc0480scp game */
 	{
-		if (TC0480SCP_vh_start(TC0480SCP_GFX_NUM,taito_hide_pixels,0x26,0x08,-1,0,0))
+		if (TC0480SCP_vh_start(TC0480SCP_GFX_NUM,taito_hide_pixels,0x26,0x08,-1,0,0,0,0))
 			return 1;
 	}
 	else	/* it's a tc0100scn game */
@@ -285,14 +286,14 @@ void taitoz_vh_stop (void)
 ********************************************************/
 
 
-READ16_HANDLER( chq2_spriteframe_r )
+READ16_HANDLER( sci_spriteframe_r )
 {
-	return (chq2_spriteframe << 8);
+	return (sci_spriteframe << 8);
 }
 
-WRITE16_HANDLER( chq2_spriteframe_w )
+WRITE16_HANDLER( sci_spriteframe_w )
 {
-	chq2_spriteframe = (data >> 8) &0xff;
+	sci_spriteframe = (data >> 8) &0xff;
 }
 
 
@@ -589,7 +590,8 @@ void spacegun_update_palette (void)
 These draw a series of small tiles ("chunks") together to
 create each big sprite. The spritemap rom provides the lookup
 table for this. E.g. Spacegun looks up 16x8 sprite chunks
-from the spritemap rom, creating this 64x64 sprite:
+from the spritemap rom, creating this 64x64 sprite (numbers
+are the word offset into the spritemap rom):
 
 	 0  1  2  3
 	 4  5  6  7
@@ -605,18 +607,14 @@ tiles. They are also more complicated to draw, as they have
 3 different aggregation formats [32/64/128 x 128]
 whereas the other games stick to one, typically 64x64.
 
-All the games make heavy use of sprite zooming. The MAME cpu
-load increases *significantly* when there are a lot on screen;
-ChaseHQ2 suffers a very noticeable speed hit.
+All the games make heavy use of sprite zooming.
 
-Since the road lines cannot be gfxdecoded and are
-not suitable for the tilemapper, we cannot use the
-pdrawgfx stuff to achieve the two levels of sprite priority
-(under and over the road).
+It is thought that there are just two levels of sprite
+priority - under and over the road - but this isn't
+certain.
 
-Instead, all the games which use a road have to call
-draw_sprites in two passes like Raine does; plotting low
-sprites, then road, then high sprites.
+The road games will need to be moved to pdrawgfx() and use
+pdrawscanline() for the road.
 
 		***
 
@@ -665,7 +663,7 @@ spriteram is being tested, take no notice of that.]
 		 6 | ........ .xxxxxxx | ZoomX
 		---+-------------------+--------------
 
-		 Bshark/Chasehq/Nightstr/Chasehq2 (modified Raine table): similar format.
+		 Bshark/Chasehq/Nightstr/SCI (modified Raine table): similar format.
 		 The zoom msb is only used for 128x128 sprites.
 
 		-----+--------+------------------------
@@ -1151,7 +1149,7 @@ logerror("Sprite number %04x had %02x invalid chunks\n",tilenum,bad_chunks);
 
 
 
-static void chasehq2_draw_sprites_16x8(struct osd_bitmap *bitmap,int pri,int y_offs)
+static void sci_draw_sprites_16x8(struct osd_bitmap *bitmap,int pri,int y_offs)
 {
 	data16_t *spritemap = (data16_t *)memory_region(REGION_USER1);
 	int offs, start_offs, data, tilenum, color, flipx, flipy;
@@ -1163,13 +1161,13 @@ static void chasehq2_draw_sprites_16x8(struct osd_bitmap *bitmap,int pri,int y_o
 
 	struct tempsprite *sprite_ptr = spritelist;
 
-	/* Chasehq2 alternates between two areas of its spriteram */
+	/* SCI alternates between two areas of its spriteram */
 
 	// This gave back to front frames causing bad flicker... but
 	// reversing it now only gives us sprite updates on alternate
 	// frames. So we probably have to partly buffer spriteram :(
 
-	start_offs = (chq2_spriteframe &1) * 0x800;
+	start_offs = (sci_spriteframe &1) * 0x800;
 	start_offs = 0x800 - start_offs;
 
 	for (offs = start_offs;offs < (start_offs+0x800);offs += 4)
@@ -1596,7 +1594,7 @@ void bshark_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 }
 
 
-void chasehq2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void sci_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int layer[3];
 
@@ -1616,9 +1614,9 @@ void chasehq2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	TC0100SCN_tilemap_draw(bitmap,0,layer[0],0,0);
 	TC0100SCN_tilemap_draw(bitmap,0,layer[1],0,0);
 
-	chasehq2_draw_sprites_16x8(bitmap,1,6);
+	sci_draw_sprites_16x8(bitmap,1,6);
 	TC0150ROD_draw(bitmap,0);
-	chasehq2_draw_sprites_16x8(bitmap,0,6);
+	sci_draw_sprites_16x8(bitmap,0,6);
 
 	TC0100SCN_tilemap_draw(bitmap,0,layer[2],0,0);	// text layer
 }
@@ -1681,20 +1679,117 @@ void spacegun_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	/* See if we should draw artificial gun targets */
 
-	if (input_port_4_word_r(0) &0x1)	/* Fake DSW */
+	if (input_port_4_word_r(0,0) &0x1)	/* Fake DSW */
 	{
-		char buf[80];
+		int rawx, rawy, centrex, centrey, screenx, screeny;
 
-		sprintf(buf,"Gun targets");
-		usrintf_showmessage(buf);
+		/* A lag of one frame can be seen with the scope pickup and on the test
+		   screen, however there is conflicting evidence so this isn't emulated
+		   During high score entry the scope is displayed slightly offset
+		   from the crosshair, close inspection shows the crosshair location
+		   being used to target letters. */
 
-		// Draw gun targets //
+		/* calculate p1 screen co-ords by matching routine at $195D4 */
+		rawx = taitoz_sharedram[0xd94/2];
+		centrex = taitoz_sharedram[0x26/2];
+		if (rawx <= centrex)
+		{
+			rawx = centrex - rawx;
+			screenx = rawx * taitoz_sharedram[0x2e/2] +
+				(((rawx * taitoz_sharedram[0x30/2]) &0xffff0000) >> 16);
+			screenx = 0xa0 - screenx;
+			if (screenx < 0) screenx = 0;
+		}
+		else
+		{
+			if (rawx > taitoz_sharedram[0x8/2]) rawx = taitoz_sharedram[0x8/2];
+			rawx -= centrex;
+			screenx = rawx * taitoz_sharedram[0x36/2] +
+				(((rawx * taitoz_sharedram[0x38/2]) &0xffff0000) >> 16);
+			screenx += 0xa0;
+			if (screenx > 0x140) screenx = 0x140;
+		}
+		rawy = taitoz_sharedram[0xd96/2];
+		centrey = taitoz_sharedram[0x28/2];
+		if (rawy <= centrey)
+		{
+			rawy = centrey - rawy;
+			screeny = rawy * taitoz_sharedram[0x32/2] +
+				(((rawy * taitoz_sharedram[0x34/2]) &0xffff0000) >> 16);
+			screeny = 0x78 - screeny;
+			if (screeny < 0) screeny = 0;
+		}
+		else
+		{
+			if (rawy > taitoz_sharedram[0x10/2]) rawy = taitoz_sharedram[0x10/2];
+			rawy -= centrey;
+			screeny = rawy * taitoz_sharedram[0x3a/2] +
+				(((rawy * taitoz_sharedram[0x3c/2]) &0xffff0000) >> 16);
+			screeny += 0x78;
+			if (screeny > 0xf0) screeny = 0xf0;
+		}
+
+		//fudge x and y to show in centre of scope, note that screenx, screeny
+		//are confirmed to match those stored by the game at $317540, $317542
+		--screenx;
+		screeny += 15;
+
+		draw_crosshair(bitmap,screenx,screeny,&Machine->visible_area);
+
+		/* calculate p2 screen co-ords by matching routine at $196EA */
+		rawx = taitoz_sharedram[0xd98/2];
+		centrex = taitoz_sharedram[0x2a/2];
+		if (rawx <= centrex)
+		{
+			rawx = centrex - rawx;
+			screenx = rawx * taitoz_sharedram[0x3e/2] +
+				(((rawx * taitoz_sharedram[0x40/2]) &0xffff0000) >> 16);
+			screenx = 0xa0 - screenx;
+			if (screenx < 0) screenx = 0;
+		}
+		else
+		{
+			if (rawx > taitoz_sharedram[0x18/2]) rawx = taitoz_sharedram[0x18/2];
+			rawx -= centrex;
+			screenx = rawx * taitoz_sharedram[0x46/2] +
+				(((rawx * taitoz_sharedram[0x48/2]) &0xffff0000) >> 16);
+			screenx += 0xa0;
+			if (screenx > 0x140) screenx = 0x140;
+		}
+		rawy = taitoz_sharedram[0xd9a/2];
+		centrey = taitoz_sharedram[0x2c/2];
+		if (rawy <= centrey)
+		{
+			rawy = centrey - rawy;
+			screeny = rawy * taitoz_sharedram[0x42/2] +
+				(((rawy * taitoz_sharedram[0x44/2]) &0xffff0000) >> 16);
+			screeny = 0x78 - screeny;
+			if (screeny < 0) screeny = 0;
+		}
+		else
+		{
+			if (rawy > taitoz_sharedram[0x20/2]) rawy = taitoz_sharedram[0x20/2];
+			rawy -= centrey;
+			screeny = rawy * taitoz_sharedram[0x4a/2] +
+				(((rawy * taitoz_sharedram[0x4c/2]) &0xffff0000) >> 16);
+			screeny += 0x78;
+			if (screeny > 0xf0) screeny = 0xf0;
+		}
+
+		//fudge x and y to show in centre of scope, note that screenx, screeny
+		//are confirmed to match those stored by the game at $317544, $317546
+		--screenx;
+		screeny += 15;
+
+		draw_crosshair(bitmap,screenx,screeny,&Machine->visible_area);
 	}
 }
 
+
 void dblaxle_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	int layer[5];
+	UINT8 layer[5];
+	UINT16 priority;
 
 	TC0480SCP_tilemap_update();
 
@@ -1711,12 +1806,13 @@ void dblaxle_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	}
 	palette_recalc();
 
-	/* I assume this priority order is fixed */
-	layer[0] = 0;	/* bottom bg */
-	layer[1] = 1;
-	layer[2] = 2;
-	layer[3] = 3;	/* top bg */
-	layer[4] = 4;	/* text */
+	priority = TC0480SCP_get_bg_priority();
+
+	layer[0] = (priority &0xf000) >> 12;	/* tells us which bg layer is bottom */
+	layer[1] = (priority &0x0f00) >>  8;
+	layer[2] = (priority &0x00f0) >>  4;
+	layer[3] = (priority &0x000f) >>  0;	/* tells us which is top */
+	layer[4] = 4;   /* text layer always over bg layers */
 
 	fillbitmap(priority_bitmap,0,NULL);
 	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);

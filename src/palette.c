@@ -1,6 +1,6 @@
 #include "driver.h"
 #include "artwork.h"
-
+#include "state.h"
 
 #define VERBOSE 0
 
@@ -25,7 +25,7 @@ static int colormode;
 #define DIRECT_32BIT        4
 
 static int total_shrinked_pens;
-static UINT32 *shrinked_pens;
+UINT32 *shrinked_pens;
 static UINT8 *shrinked_palette;
 static UINT16 *palette_map;	/* map indexes from game_palette to shrinked_palette */
 static UINT16 pen_usage_count[DYNAMIC_MAX_PENS];
@@ -46,6 +46,12 @@ UINT16 palette_transparent_pen;
 UINT16 *palette_shadow_table;
 
 
+static void palette_reset_32_direct(void);
+static void palette_reset_15_direct(void);
+static void palette_reset_16_static(void);
+static void palette_reset_16_palettized(void);
+static void palette_presave_8(void);
+static void palette_reset_8(void);
 
 int palette_start(void)
 {
@@ -93,8 +99,8 @@ int palette_start(void)
 		case PALETTIZED_16BIT:
 			total_shrinked_pens = Machine->drv->total_colors + RESERVED_PENS;
 			break;
-        case DIRECT_15BIT:
-        case DIRECT_32BIT:
+		case DIRECT_15BIT:
+		case DIRECT_32BIT:
 			total_shrinked_pens = 3;
 			break;
 		default:
@@ -181,12 +187,37 @@ int palette_start(void)
 		return 1;
 	}
 
+	if (Machine->drv->video_attributes & VIDEO_MODIFIES_PALETTE)
+	{
+		state_save_register_UINT8("palette", 0, "colors", game_palette, Machine->drv->total_colors*3);
+		switch (colormode)
+		{
+			case PALETTIZED_8BIT:
+				//				state_save_register_func_presave(palette_presave_8);
+				state_save_register_func_postload(palette_reset_8);
+				break;
+			case STATIC_16BIT:
+				state_save_register_func_postload(palette_reset_16_static);
+				break;
+			case PALETTIZED_16BIT:
+				state_save_register_func_postload(palette_reset_16_palettized);
+				break;
+			case DIRECT_15BIT:
+				state_save_register_func_postload(palette_reset_15_direct);
+				break;
+			case DIRECT_32BIT:
+				state_save_register_func_postload(palette_reset_32_direct);
+				break;
+		}
+	}
 	return 0;
 }
 
 void palette_stop(void)
 {
 	free(palette_used_colors);
+	if(alpha_active)
+		free(just_remapped);
 	palette_used_colors = old_used_colors = just_remapped = new_palette = palette_dirty = 0;
 	free(pen_visiblecount);
 	pen_visiblecount = 0;
@@ -505,6 +536,20 @@ INLINE void palette_change_color_15_direct(int color,UINT8 red,UINT8 green,UINT8
 	just_remapped[color] = 1;
 }
 
+static void palette_reset_15_direct(void)
+{
+	int color;
+	for(color = 0; color < Machine->drv->total_colors; color++)
+		Machine->pens[Machine->game_colortable[color]] =
+			Machine->remapped_colortable[color] =
+				(game_palette[3*color + 0]>>3) * (shrinked_pens[0] / 0x1f) +
+				(game_palette[3*color + 1]>>3) * (shrinked_pens[1] / 0x1f) +
+				(game_palette[3*color + 2]>>3) * (shrinked_pens[2] / 0x1f);
+
+	has_remap = 1;
+	memset(just_remapped, 1, Machine->drv->total_colors);
+}
+
 INLINE void palette_change_color_32_direct(int color,UINT8 red,UINT8 green,UINT8 blue)
 {
 	if (	game_palette[3*color + 0] == red &&
@@ -524,6 +569,20 @@ INLINE void palette_change_color_32_direct(int color,UINT8 red,UINT8 green,UINT8
 	just_remapped[color] = 1;
 }
 
+static void palette_reset_32_direct(void)
+{
+	int color;
+	for(color = 0; color < Machine->drv->total_colors; color++)
+		Machine->pens[Machine->game_colortable[color]] =
+			Machine->remapped_colortable[color] =
+				game_palette[3*color + 0] * (shrinked_pens[0] / 0xff) +
+				game_palette[3*color + 1] * (shrinked_pens[1] / 0xff) +
+				game_palette[3*color + 2] * (shrinked_pens[2] / 0xff);
+
+	has_remap = 1;
+	memset(just_remapped, 1, Machine->drv->total_colors);
+}
+
 INLINE void palette_change_color_16_static(int color,UINT8 red,UINT8 green,UINT8 blue)
 {
 	if (	game_palette[3*color + 0] == red &&
@@ -540,6 +599,14 @@ INLINE void palette_change_color_16_static(int color,UINT8 red,UINT8 green,UINT8
 		old_used_colors[color] |= PALETTE_COLOR_NEEDS_REMAP;
 }
 
+static void palette_reset_16_static(void)
+{
+	int color;
+	for (color=0; color<Machine->drv->total_colors; color++)
+		if (old_used_colors[color] & PALETTE_COLOR_VISIBLE)
+			old_used_colors[color] |= PALETTE_COLOR_NEEDS_REMAP;
+}
+
 INLINE void palette_change_color_16_palettized(int color,UINT8 red,UINT8 green,UINT8 blue)
 {
 	if (	game_palette[3*color + 0] == red &&
@@ -553,6 +620,16 @@ INLINE void palette_change_color_16_palettized(int color,UINT8 red,UINT8 green,U
 	game_palette[3*color + 0] = red;
 	game_palette[3*color + 1] = green;
 	game_palette[3*color + 2] = blue;
+}
+
+static void palette_reset_16_palettized(void)
+{
+	int color;
+	for (color=0; color<Machine->drv->total_colors; color++)
+		osd_modify_pen(shrinked_pens[color + RESERVED_PENS],
+					   game_palette[3*color + 0],
+					   game_palette[3*color + 1],
+					   game_palette[3*color + 2]);
 }
 
 INLINE void palette_change_color_8(int color,UINT8 red,UINT8 green,UINT8 blue)
@@ -584,6 +661,16 @@ INLINE void palette_change_color_8(int color,UINT8 red,UINT8 green,UINT8 blue)
 		game_palette[3*color + 1] = green;
 		game_palette[3*color + 2] = blue;
 	}
+}
+
+static void palette_presave_8(void)
+{
+}
+
+static void palette_reset_8(void)
+{
+	memcpy(new_palette, game_palette, 3*Machine->drv->total_colors);
+	memset(palette_dirty, 1, Machine->drv->total_colors);
 }
 
 void palette_change_color(int color,UINT8 red,UINT8 green,UINT8 blue)
@@ -982,8 +1069,7 @@ static const UINT8 *palette_recalc_8(void)
 					/* have been changed to the same value */
 					for (i = 0;i < Machine->drv->total_colors;i++)
 					{
-						if ((old_used_colors[i] & PALETTE_COLOR_VISIBLE) &&
-								palette_map[i] == pen)
+						if (palette_map[i] == pen)
 						{
 							if (palette_dirty[i] == 0 ||
 									new_palette[3*i + 0] != r ||

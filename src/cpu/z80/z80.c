@@ -3987,11 +3987,11 @@ static void take_interrupt(void)
 }
 
 /****************************************************************************
- * Reset registers to their initial values
+ * Processor initialization
  ****************************************************************************/
-void z80_reset(void *param)
+void z80_init(void)
 {
-	Z80_DaisyChain *daisy_chain = (Z80_DaisyChain *)param;
+	int cpu = cpu_getactivecpu();
 	int i, p;
 #if BIG_FLAGS_ARRAY
 	if( !SZHVC_add || !SZHVC_sub )
@@ -4089,6 +4089,40 @@ void z80_reset(void *param)
 		if( (i & 0x0f) == 0x0f ) SZHV_dec[i] |= HF;
 	}
 
+	state_save_register_UINT16("z80", cpu, "AF", &Z80.AF.w.l, 1);
+	state_save_register_UINT16("z80", cpu, "BC", &Z80.BC.w.l, 1);
+	state_save_register_UINT16("z80", cpu, "DE", &Z80.DE.w.l, 1);
+	state_save_register_UINT16("z80", cpu, "HL", &Z80.HL.w.l, 1);
+	state_save_register_UINT16("z80", cpu, "IX", &Z80.IX.w.l, 1);
+	state_save_register_UINT16("z80", cpu, "IY", &Z80.IY.w.l, 1);
+	state_save_register_UINT16("z80", cpu, "PC", &Z80.PC.w.l, 1);
+	state_save_register_UINT16("z80", cpu, "SP", &Z80.SP.w.l, 1);
+	state_save_register_UINT16("z80", cpu, "AF2", &Z80.AF2.w.l, 1);
+	state_save_register_UINT16("z80", cpu, "BC2", &Z80.BC2.w.l, 1);
+	state_save_register_UINT16("z80", cpu, "DE2", &Z80.DE2.w.l, 1);
+	state_save_register_UINT16("z80", cpu, "HL2", &Z80.HL2.w.l, 1);
+	state_save_register_UINT8("z80", cpu, "R", &Z80.R, 1);
+	state_save_register_UINT8("z80", cpu, "R2", &Z80.R2, 1);
+	state_save_register_UINT8("z80", cpu, "IFF1", &Z80.IFF1, 1);
+	state_save_register_UINT8("z80", cpu, "IFF2", &Z80.IFF2, 1);
+	state_save_register_UINT8("z80", cpu, "HALT", &Z80.HALT, 1);
+	state_save_register_UINT8("z80", cpu, "IM", &Z80.IM, 1);
+	state_save_register_UINT8("z80", cpu, "I", &Z80.I, 1);
+	state_save_register_UINT8("z80", cpu, "irq_max", &Z80.irq_max, 1);
+	state_save_register_INT8("z80", cpu, "request_irq", &Z80.request_irq, 1);
+	state_save_register_INT8("z80", cpu, "service_irq", &Z80.service_irq, 1);
+	state_save_register_UINT8("z80", cpu, "int_state", Z80.int_state, 4);
+	state_save_register_UINT8("z80", cpu, "nmi_state", &Z80.nmi_state, 1);
+	state_save_register_UINT8("z80", cpu, "irq_state", &Z80.irq_state, 1);
+	/* daisy chain needs to be saved by z80ctc.c somehow */
+}
+
+/****************************************************************************
+ * Reset registers to their initial values
+ ****************************************************************************/
+void z80_reset(void *param)
+{
+	Z80_DaisyChain *daisy_chain = (Z80_DaisyChain *)param;
 	memset(&Z80, 0, sizeof(Z80));
 	_IX = _IY = 0xffff; /* IX and IY are FFFF after a reset! */
 	_F = ZF;			/* Zero flag is set */
@@ -4397,74 +4431,6 @@ void z80_set_irq_callback(int (*callback)(int))
 {
 	LOG(("Z80 #%d set_irq_callback $%08x\n",cpu_getactivecpu() , (int)callback));
 	Z80.irq_callback = callback;
-}
-
-/****************************************************************************
- * Save CPU state
- ****************************************************************************/
-void z80_state_save(void *file)
-{
-	int cpu = cpu_getactivecpu();
-	state_save_UINT16(file, "z80", cpu, "AF", &Z80.AF.w.l, 1);
-	state_save_UINT16(file, "z80", cpu, "BC", &Z80.BC.w.l, 1);
-	state_save_UINT16(file, "z80", cpu, "DE", &Z80.DE.w.l, 1);
-	state_save_UINT16(file, "z80", cpu, "HL", &Z80.HL.w.l, 1);
-	state_save_UINT16(file, "z80", cpu, "IX", &Z80.IX.w.l, 1);
-	state_save_UINT16(file, "z80", cpu, "IY", &Z80.IY.w.l, 1);
-	state_save_UINT16(file, "z80", cpu, "PC", &Z80.PC.w.l, 1);
-	state_save_UINT16(file, "z80", cpu, "SP", &Z80.SP.w.l, 1);
-	state_save_UINT16(file, "z80", cpu, "AF2", &Z80.AF2.w.l, 1);
-	state_save_UINT16(file, "z80", cpu, "BC2", &Z80.BC2.w.l, 1);
-	state_save_UINT16(file, "z80", cpu, "DE2", &Z80.DE2.w.l, 1);
-	state_save_UINT16(file, "z80", cpu, "HL2", &Z80.HL2.w.l, 1);
-	state_save_UINT8(file, "z80", cpu, "R", &Z80.R, 1);
-	state_save_UINT8(file, "z80", cpu, "R2", &Z80.R2, 1);
-	state_save_UINT8(file, "z80", cpu, "IFF1", &Z80.IFF1, 1);
-	state_save_UINT8(file, "z80", cpu, "IFF2", &Z80.IFF2, 1);
-	state_save_UINT8(file, "z80", cpu, "HALT", &Z80.HALT, 1);
-	state_save_UINT8(file, "z80", cpu, "IM", &Z80.IM, 1);
-	state_save_UINT8(file, "z80", cpu, "I", &Z80.I, 1);
-	state_save_UINT8(file, "z80", cpu, "irq_max", &Z80.irq_max, 1);
-	state_save_INT8(file, "z80", cpu, "request_irq", &Z80.request_irq, 1);
-	state_save_INT8(file, "z80", cpu, "service_irq", &Z80.service_irq, 1);
-	state_save_UINT8(file, "z80", cpu, "int_state", Z80.int_state, 4);
-	state_save_UINT8(file, "z80", cpu, "nmi_state", &Z80.nmi_state, 1);
-	state_save_UINT8(file, "z80", cpu, "irq_state", &Z80.irq_state, 1);
-	/* daisy chain needs to be saved by z80ctc.c somehow */
-}
-
-/****************************************************************************
- * Load CPU state
- ****************************************************************************/
-void z80_state_load(void *file)
-{
-	int cpu = cpu_getactivecpu();
-	state_load_UINT16(file, "z80", cpu, "AF", &Z80.AF.w.l, 1);
-	state_load_UINT16(file, "z80", cpu, "BC", &Z80.BC.w.l, 1);
-	state_load_UINT16(file, "z80", cpu, "DE", &Z80.DE.w.l, 1);
-	state_load_UINT16(file, "z80", cpu, "HL", &Z80.HL.w.l, 1);
-	state_load_UINT16(file, "z80", cpu, "IX", &Z80.IX.w.l, 1);
-	state_load_UINT16(file, "z80", cpu, "IY", &Z80.IY.w.l, 1);
-	state_load_UINT16(file, "z80", cpu, "PC", &Z80.PC.w.l, 1);
-	state_load_UINT16(file, "z80", cpu, "SP", &Z80.SP.w.l, 1);
-	state_load_UINT16(file, "z80", cpu, "AF2", &Z80.AF2.w.l, 1);
-	state_load_UINT16(file, "z80", cpu, "BC2", &Z80.BC2.w.l, 1);
-	state_load_UINT16(file, "z80", cpu, "DE2", &Z80.DE2.w.l, 1);
-	state_load_UINT16(file, "z80", cpu, "HL2", &Z80.HL2.w.l, 1);
-	state_load_UINT8(file, "z80", cpu, "R", &Z80.R, 1);
-	state_load_UINT8(file, "z80", cpu, "R2", &Z80.R2, 1);
-	state_load_UINT8(file, "z80", cpu, "IFF1", &Z80.IFF1, 1);
-	state_load_UINT8(file, "z80", cpu, "IFF2", &Z80.IFF2, 1);
-	state_load_UINT8(file, "z80", cpu, "HALT", &Z80.HALT, 1);
-	state_load_UINT8(file, "z80", cpu, "IM", &Z80.IM, 1);
-	state_load_UINT8(file, "z80", cpu, "I", &Z80.I, 1);
-	state_load_UINT8(file, "z80", cpu, "irq_max", &Z80.irq_max, 1);
-	state_load_INT8(file, "z80", cpu, "request_irq", &Z80.request_irq, 1);
-	state_load_INT8(file, "z80", cpu, "service_irq", &Z80.service_irq, 1);
-	state_load_UINT8(file, "z80", cpu, "int_state", Z80.int_state, 4);
-	state_load_UINT8(file, "z80", cpu, "nmi_state", &Z80.nmi_state, 1);
-	state_load_UINT8(file, "z80", cpu, "irq_state", &Z80.irq_state, 1);
-	/* daisy chain needs to be restored by z80ctc.c somehow */
 }
 
 /****************************************************************************

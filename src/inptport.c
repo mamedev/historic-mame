@@ -157,6 +157,8 @@ struct ipd inputport_defaults[] =
 	{ IPT_UI_PAN_LEFT,          "Pan Left",          SEQ_DEF_2(KEYCODE_PGUP, KEYCODE_LSHIFT) },
 	{ IPT_UI_PAN_RIGHT,         "Pan Right",         SEQ_DEF_2(KEYCODE_PGDN, KEYCODE_LSHIFT) },
 	{ IPT_UI_TOGGLE_DEBUG,      "Toggle Debugger",   SEQ_DEF_1(KEYCODE_F5) },
+	{ IPT_UI_SAVE_STATE,        "Save state",        SEQ_DEF_1(KEYCODE_F7) },
+	{ IPT_UI_LOAD_STATE,        "Load state",        SEQ_DEF_1(KEYCODE_F1) },
 	{ IPT_START1, "1 Player Start",  SEQ_DEF_1(KEYCODE_1) },
 	{ IPT_START2, "2 Players Start", SEQ_DEF_1(KEYCODE_2) },
 	{ IPT_START3, "3 Players Start", SEQ_DEF_1(KEYCODE_3) },

@@ -341,7 +341,7 @@ logerror("CPU #0 PC %06x: warning - write to MSB of TC0510NIO address %02x\n",cp
 
 static READ16_HANDLER( TC0510NIO_halfword_wordswap_r )
 {
-	return TC0510NIO_halfword_r(offset ^ 1);
+	return TC0510NIO_halfword_r(offset ^ 1,mem_mask);
 }
 
 static WRITE16_HANDLER( TC0510NIO_halfword_wordswap_w )
@@ -354,10 +354,10 @@ static READ16_HANDLER( growl_dsw_r )
     switch (offset)
     {
          case 0x00:
-              return input_port_3_word_r(0); /* DSW A */
+              return input_port_3_word_r(0,mem_mask); /* DSW A */
 
          case 0x01:
-              return input_port_4_word_r(0); /* DSW B */
+              return input_port_4_word_r(0,mem_mask); /* DSW B */
     }
 
 logerror("CPU #0 PC %06x: warning - read unmapped dsw_r offset %06x\n",cpu_get_pc(),offset);
@@ -370,13 +370,13 @@ static READ16_HANDLER( growl_input_r )
     switch (offset)
     {
          case 0x00:
-              return input_port_0_word_r(0); /* IN0 */
+              return input_port_0_word_r(0,mem_mask); /* IN0 */
 
          case 0x01:
-              return input_port_1_word_r(0); /* IN1 */
+              return input_port_1_word_r(0,mem_mask); /* IN1 */
 
          case 0x02:
-              return input_port_2_word_r(0); /* IN2 */
+              return input_port_2_word_r(0,mem_mask); /* IN2 */
 
     }
 
@@ -390,25 +390,25 @@ static READ16_HANDLER( footchmp_input_r )
     switch (offset)
     {
          case 0x00:
-              return input_port_3_word_r(0); /* DSW A */
+              return input_port_3_word_r(0,mem_mask); /* DSW A */
 
          case 0x01:
-              return input_port_4_word_r(0); /* DSW B */
+              return input_port_4_word_r(0,mem_mask); /* DSW B */
 
          case 0x02:
-              return input_port_2_word_r(0); /* IN2 */
+              return input_port_2_word_r(0,mem_mask); /* IN2 */
 
          case 0x05:
-              return input_port_0_word_r(0); /* IN0 */
+              return input_port_0_word_r(0,mem_mask); /* IN0 */
 
          case 0x06:
-              return input_port_1_word_r(0); /* IN1 */
+              return input_port_1_word_r(0,mem_mask); /* IN1 */
 
          case 0x07:
-              return input_port_5_word_r(0); /* IN3 */
+              return input_port_5_word_r(0,mem_mask); /* IN3 */
 
          case 0x08:
-              return input_port_6_word_r(0); /* IN4 */
+              return input_port_6_word_r(0,mem_mask); /* IN4 */
     }
 
 logerror("CPU #0 PC %06x: warning - read unmapped input offset %06x\n",cpu_get_pc(),offset);
@@ -421,25 +421,25 @@ static READ16_HANDLER( ninjak_input_r )
     switch (offset)
     {
          case 0x00:
-              return (input_port_3_word_r(0) << 8); /* DSW A */
+              return (input_port_3_word_r(0,0) << 8); /* DSW A */
 
          case 0x01:
-              return (input_port_4_word_r(0) << 8); /* DSW B */
+              return (input_port_4_word_r(0,0) << 8); /* DSW B */
 
          case 0x02:
-              return (input_port_0_word_r(0) << 8); /* IN 0 */
+              return (input_port_0_word_r(0,0) << 8); /* IN 0 */
 
          case 0x03:
-              return (input_port_1_word_r(0) << 8); /* IN 1 */
+              return (input_port_1_word_r(0,0) << 8); /* IN 1 */
 
          case 0x04:
-              return (input_port_5_word_r(0) << 8); /* IN 3 */
+              return (input_port_5_word_r(0,0) << 8); /* IN 3 */
 
          case 0x05:
-              return (input_port_6_word_r(0) << 8); /* IN 4 */
+              return (input_port_6_word_r(0,0) << 8); /* IN 4 */
 
          case 0x06:
-              return (input_port_2_word_r(0) << 8); /* IN 2 */
+              return (input_port_2_word_r(0,0) << 8); /* IN 2 */
 
     }
 
@@ -456,13 +456,13 @@ static READ16_HANDLER( cameltry_paddle_r )
 	switch (offset)
 	{
 		case 0x00:
-			curr = input_port_5_word_r(0); /* Paddle A */
+			curr = input_port_5_word_r(0,0); /* Paddle A */
 			res = curr - last[0];
 			last[0] = curr;
 			break;
 
 		case 0x02:
-			curr = input_port_6_word_r(0); /* Paddle B */
+			curr = input_port_6_word_r(0,0); /* Paddle B */
 			res = curr - last[1];
 			last[1] = curr;
 			break;
@@ -478,10 +478,10 @@ static READ16_HANDLER( driftout_paddle_r )
     switch (offset)
     {
          case 0x00:
-              return input_port_5_word_r(0); /* Paddle A */
+              return input_port_5_word_r(0,mem_mask); /* Paddle A */
 
          case 0x01:
-              return input_port_6_word_r(0); /* Paddle B */
+              return input_port_6_word_r(0,mem_mask); /* Paddle B */
     }
 
 logerror("CPU #0 PC %06x: warning - read unmapped paddle offset %06x\n",cpu_get_pc(),offset);
@@ -494,25 +494,25 @@ static READ16_HANDLER( deadconx_input_r )
     switch (offset)
     {
          case 0x00:
-              return input_port_3_word_r(0); /* DSW A */
+              return input_port_3_word_r(0,mem_mask); /* DSW A */
 
          case 0x01:
-              return input_port_4_word_r(0); /* DSW B */
+              return input_port_4_word_r(0,mem_mask); /* DSW B */
 
          case 0x02:
-              return input_port_2_word_r(0); /* IN2 */
+              return input_port_2_word_r(0,mem_mask); /* IN2 */
 
          case 0x05:
-              return input_port_0_word_r(0); /* IN0 */
+              return input_port_0_word_r(0,mem_mask); /* IN0 */
 
          case 0x06:
-              return input_port_1_word_r(0); /* IN1 */
+              return input_port_1_word_r(0,mem_mask); /* IN1 */
 
          case 0x07:
-              return input_port_5_word_r(0); /* IN3 */
+              return input_port_5_word_r(0,mem_mask); /* IN3 */
 
          case 0x08:
-              return input_port_6_word_r(0); /* IN4 */
+              return input_port_6_word_r(0,mem_mask); /* IN4 */
     }
 
 logerror("CPU #0 PC %06x: warning - read unmapped input offset %06x\n",cpu_get_pc(),offset);
@@ -526,12 +526,12 @@ static READ16_HANDLER( mjnquest_dsw_r )
     {
         case 0x00:
         {
-			return (input_port_5_word_r(0) << 8) + input_port_7_word_r(0); /* DSW A + coin */
+			return (input_port_5_word_r(0,0) << 8) + input_port_7_word_r(0,0); /* DSW A + coin */
         }
 
         case 0x01:
         {
-			return (input_port_6_word_r(0) << 8) + input_port_8_word_r(0); /* DSW B + coin */
+			return (input_port_6_word_r(0,0) << 8) + input_port_8_word_r(0,0); /* DSW B + coin */
         }
     }
 
@@ -545,19 +545,19 @@ static READ16_HANDLER( mjnquest_input_r )
     switch (mjnquest_input)
     {
          case 0x01:
-              return input_port_0_word_r(0); /* IN0 */
+              return input_port_0_word_r(0,mem_mask); /* IN0 */
 
          case 0x02:
-              return input_port_1_word_r(0); /* IN1 */
+              return input_port_1_word_r(0,mem_mask); /* IN1 */
 
          case 0x04:
-              return input_port_2_word_r(0); /* IN2 */
+              return input_port_2_word_r(0,mem_mask); /* IN2 */
 
          case 0x08:
-              return input_port_3_word_r(0); /* IN3 */
+              return input_port_3_word_r(0,mem_mask); /* IN3 */
 
          case 0x10:
-              return input_port_4_word_r(0); /* IN4 */
+              return input_port_4_word_r(0,mem_mask); /* IN4 */
 
     }
 
@@ -576,10 +576,10 @@ static READ16_HANDLER( quizhq_input1_r )
     switch (offset)
     {
          case 0x00:
-              return input_port_4_word_r(0); /* DSW B */
+              return input_port_4_word_r(0,mem_mask); /* DSW B */
 
          case 0x01:
-              return input_port_0_word_r(0); /* IN0 */
+              return input_port_0_word_r(0,mem_mask); /* IN0 */
     }
 
 logerror("CPU #0 PC %06x: warning - read unmapped input_r offset %06x\n",cpu_get_pc(),offset);
@@ -592,13 +592,13 @@ static READ16_HANDLER( quizhq_input2_r )
     switch (offset)
     {
          case 0x00:
-              return input_port_3_word_r(0); /* DSW A */
+              return input_port_3_word_r(0,mem_mask); /* DSW A */
 
          case 0x01:
-              return input_port_1_word_r(0); /* IN1 */
+              return input_port_1_word_r(0,mem_mask); /* IN1 */
 
          case 0x02:
-              return input_port_2_word_r(0); /* IN2 */
+              return input_port_2_word_r(0,mem_mask); /* IN2 */
     }
 
 logerror("CPU #0 PC %06x: warning - read unmapped input_r offset %06x\n",cpu_get_pc(),offset);
@@ -611,12 +611,12 @@ static READ16_HANDLER( yesnoj_input_r )
     switch (offset)
     {
          case 0x00:
-              return input_port_0_word_r(0); /* IN0 */
+              return input_port_0_word_r(0,mem_mask); /* IN0 */
 
 // case 0x01 only used if "service" "DSW" bit is clear...
 
          case 0x02:
-              return input_port_1_word_r(0); /* IN1 */
+              return input_port_1_word_r(0,mem_mask); /* IN1 */
     }
 
 logerror("CPU #0 PC %06x: warning - read unmapped input_r offset %06x\n",cpu_get_pc(),offset);
@@ -634,11 +634,11 @@ static READ16_HANDLER( yesnoj_dsw_r )
 
 	if (yesnoj_dsw)
 	{
-		return input_port_2_word_r(0);
+		return input_port_2_word_r(0,mem_mask);
 	}
 	else
 	{
-		return input_port_3_word_r(0);
+		return input_port_3_word_r(0,mem_mask);
 	}
 }
 
@@ -817,14 +817,14 @@ static WRITE_HANDLER( bankswitch_w )
 READ16_HANDLER( taitof2_sound_r )
 {
 	if (offset == 1)
-		return (taitosound_comm16_lsb_r(0));
+		return (taitosound_comm16_lsb_r(0,mem_mask));
 	else return 0;
 }
 
 READ16_HANDLER( taitof2_msb_sound_r )
 {
 	if (offset == 1)
-		return (taitosound_comm16_msb_r(0));
+		return (taitosound_comm16_msb_r(0,mem_mask));
 	else return 0;
 }
 

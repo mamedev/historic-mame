@@ -51,7 +51,7 @@ static READ_HANDLER( rollerg_sound_r )
 {
 	/* If the sound CPU is running, read the status, otherwise
 	   just make it pass the test */
-	if (Machine->sample_rate != 0) 	return K053260_r(2 + offset);
+	if (Machine->sample_rate != 0) 	return K053260_0_r(2 + offset);
 	else return 0x00;
 }
 
@@ -97,8 +97,9 @@ MEMORY_END
 static MEMORY_WRITE_START( writemem )
 	{ 0x0010, 0x0010, rollerg_0010_w },
 	{ 0x0020, 0x0020, watchdog_reset_w },
-	{ 0x0030, 0x0031, K053260_w },
+	{ 0x0030, 0x0031, K053260_0_w },
 	{ 0x0040, 0x0040, soundirq_w },
+	{ 0x0100, 0x010f, MWA_NOP },	/* 053252? */
 	{ 0x0200, 0x020f, K051316_ctrl_0_w },
 	{ 0x0300, 0x030f, K053244_w },
 	{ 0x0800, 0x0fff, K051316_0_w },
@@ -111,14 +112,14 @@ MEMORY_END
 static MEMORY_READ_START( readmem_sound )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x87ff, MRA_RAM },
-	{ 0xa000, 0xa02f, K053260_r },
+	{ 0xa000, 0xa02f, K053260_0_r },
 	{ 0xc000, 0xc000, YM3812_status_port_0_r },
 MEMORY_END
 
 static MEMORY_WRITE_START( writemem_sound )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x87ff, MWA_RAM },
-	{ 0xa000, 0xa02f, K053260_w },
+	{ 0xa000, 0xa02f, K053260_0_w },
 	{ 0xc000, 0xc000, YM3812_control_port_0_w },
 	{ 0xc001, 0xc001, YM3812_write_port_0_w },
 	{ 0xfc00, 0xfc00, sound_arm_nmi_w },
@@ -246,10 +247,11 @@ static struct YM3812interface ym3812_interface =
 
 static struct K053260_interface k053260_interface =
 {
-	3579545,
-	REGION_SOUND1, /* memory region */
-	{ MIXER(100,MIXER_PAN_LEFT), MIXER(100,MIXER_PAN_RIGHT) },
-	0
+	1,
+	{ 3579545 },
+	{ REGION_SOUND1 }, /* memory region */
+	{ { MIXER(100,MIXER_PAN_LEFT), MIXER(100,MIXER_PAN_RIGHT) } },
+	{ 0 }
 };
 
 static const struct MachineDriver machine_driver_rollerg =

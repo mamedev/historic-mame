@@ -25,7 +25,6 @@ void cps1_eof_callback(void);
 
 int cps1_qsound_interrupt(void);
 
-extern struct GfxDecodeInfo cps1_gfxdecodeinfo[];
 extern struct QSound_interface qsound_interface;
 
 #endif

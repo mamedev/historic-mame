@@ -5,7 +5,6 @@
 #define SPRITE_FLIPY					0x02
 #define SPRITE_FLICKER					0x04
 #define SPRITE_VISIBLE					0x08
-#define SPRITE_TRANSPARENCY_THROUGH		0x10
 #define SPRITE_SPECIAL					0x20
 
 #define SPRITE_SHADOW					0x40

@@ -8,7 +8,7 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-
+#include "state.h"
 
 
 static int background_image;
@@ -36,7 +36,18 @@ WRITE_HANDLER( bombjack_flipscreen_w )
 	}
 }
 
+static void dirty_all(void)
+{
+	memset(dirtybuffer,1,videoram_size);
+}
 
+int bombjack_vh_start(void)
+{
+	state_save_register_int ("video", 0, "background_image", &background_image);
+	state_save_register_int ("video", 0, "flipscreen",       &flipscreen);
+	state_save_register_func_postload (dirty_all);
+	return generic_vh_start();
+}
 
 /***************************************************************************
 

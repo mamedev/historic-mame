@@ -8,7 +8,6 @@
 #define TC0430GRW_GFX_NUM 2
 
 extern UINT8 TC0360PRI_regs[16];
-extern int TC0480SCP_pri_reg;
 
 data16_t *f2_sprite_extension;
 size_t f2_spriteext_size;
@@ -65,8 +64,8 @@ static int sprites_flipscreen = 0;
 static int f2_pivot_xdisp = 0;   /* Needed in games with a pivot layer */
 static int f2_pivot_ydisp = 0;
 
-static int f2_xkludge = 0;   /* Needed in TC0480SCP games: Deadconx, Metalb, Footchmp */
-static int f2_ykludge = 0;
+static int f2_tilemap_xoffs = 0;   /* Needed in TC0480SCP games: Deadconx, Metalb, Footchmp */
+static int f2_tilemap_yoffs = 0;
 static int f2_text_xkludge = 0;
 
 
@@ -195,11 +194,10 @@ int taitof2_core_vh_start (void)
 	if (!spriteram_delayed || !spriteram_buffered || !spritelist)
 		return 1;
 
-	/* we only call tc0100scn_vh_start if NOT Deadconx, Footchmp, MetalB */
-
 	if (has_TC0480SCP())	/* it's a tc0480scp game */
 	{
-		if (TC0480SCP_vh_start(TC0480SCP_GFX_NUM,f2_hide_pixels,f2_xkludge,f2_ykludge,f2_text_xkludge,0,f2_tilemap_col_base))
+		if (TC0480SCP_vh_start(TC0480SCP_GFX_NUM,f2_hide_pixels,f2_tilemap_xoffs,
+		   f2_tilemap_yoffs,f2_text_xkludge,0,-1,0,f2_tilemap_col_base))
 			return 1;
 	}
 	else	/* it's a tc0100scn game */
@@ -317,16 +315,22 @@ int taitof2_thundfox_vh_start (void)
 
 int taitof2_mjnquest_vh_start (void)
 {
+	int failed;
+
 	f2_hide_pixels = 0;
 	f2_spriteext = 0;
-	return (taitof2_core_vh_start());
+	failed = (taitof2_core_vh_start());	/* non-zero means failure */
+
+	if (!failed)  TC0100SCN_set_bg_tilemask(0x7fff);
+
+	return failed;
 }
 
 int taitof2_footchmp_vh_start (void)
 {
 	f2_hide_pixels = 3;
-	f2_xkludge = 0x1d;
-	f2_ykludge = 0x08;
+	f2_tilemap_xoffs = 0x1d;
+	f2_tilemap_yoffs = 0x08;
 	f2_text_xkludge = -1;
 	f2_tilemap_col_base = 0;
 	f2_spriteext = 0;
@@ -336,8 +340,8 @@ int taitof2_footchmp_vh_start (void)
 int taitof2_hthero_vh_start (void)
 {
 	f2_hide_pixels = 3;
-	f2_xkludge = 0x33;   // needs different kludges from Footchmp
-	f2_ykludge = - 0x04;
+	f2_tilemap_xoffs = 0x33;   // needs different kludges from Footchmp
+	f2_tilemap_yoffs = - 0x04;
 	f2_text_xkludge = -1;
 	f2_tilemap_col_base = 0;
 	f2_spriteext = 0;
@@ -347,8 +351,8 @@ int taitof2_hthero_vh_start (void)
 int taitof2_deadconx_vh_start (void)
 {
 	f2_hide_pixels = 3;
-	f2_xkludge = 0x1e;
-	f2_ykludge = 0x08;
+	f2_tilemap_xoffs = 0x1e;
+	f2_tilemap_yoffs = 0x08;
 	f2_text_xkludge = -1;
 	f2_tilemap_col_base = 0;
 	f2_spriteext = 0;
@@ -358,8 +362,8 @@ int taitof2_deadconx_vh_start (void)
 int taitof2_deadconj_vh_start (void)
 {
 	f2_hide_pixels = 3;
-	f2_xkludge = 0x34;
-	f2_ykludge = - 0x05;
+	f2_tilemap_xoffs = 0x34;
+	f2_tilemap_yoffs = - 0x05;
 	f2_text_xkludge = -1;
 	f2_tilemap_col_base = 0;
 	f2_spriteext = 0;
@@ -369,8 +373,8 @@ int taitof2_deadconj_vh_start (void)
 int taitof2_metalb_vh_start (void)
 {
 	f2_hide_pixels = 3;
-	f2_xkludge = 0x32;
-	f2_ykludge = - 0x04;
+	f2_tilemap_xoffs = 0x32;
+	f2_tilemap_yoffs = - 0x04;
 	f2_text_xkludge = 1;	/* text layer is offset from the norm */
 	f2_tilemap_col_base = 256;   /* uses separate palette area for tilemaps */
 	f2_spriteext = 0;

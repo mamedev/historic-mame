@@ -168,7 +168,7 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 }
 
 
-void gyruss_vh_screenrefresh(struct osd_bitmap *bitmap)
+void gyruss_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 

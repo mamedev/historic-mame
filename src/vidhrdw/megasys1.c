@@ -492,7 +492,7 @@ READ16_HANDLER( megasys1_vregs_C_r )
 {
 	switch (offset)
 	{
-		case 0x8000/2:	return soundlatch2_word_r(0);
+		case 0x8000/2:	return soundlatch2_word_r(0,0);
 		default:		return megasys1_vregs[offset];
 	}
 }
@@ -806,7 +806,6 @@ extern struct GameDriver driver_64street;
 extern struct GameDriver driver_astyanax;
 extern struct GameDriver driver_bigstrik;
 extern struct GameDriver driver_chimerab;
-extern struct GameDriver driver_cybattlr;
 extern struct GameDriver driver_hachoo;
 extern struct GameDriver driver_iganinju;
 extern struct GameDriver driver_kickoff;
@@ -848,10 +847,6 @@ static struct priority priorities[] =
 	{	&driver_chimerab,
 		{ 0x14032,0x04132,0x14032,0x04132,0xfffff,0xfffff,0xfffff,0xfffff,
 		  0xfffff,0xfffff,0x01324,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff }
-	},
-	{	&driver_cybattlr,
-		{ 0x04132,0xfffff,0xfffff,0xfffff,0x14032,0xfffff,0xfffff,0xfffff,
-		  0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0x04132 }
 	},
 	{	&driver_hachoo,
 		{ 0x24130,0x01423,0xfffff,0x02413,0x04132,0xfffff,0x24130,0x13240,

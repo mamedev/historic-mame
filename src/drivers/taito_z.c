@@ -9,6 +9,11 @@ David Graves
 Nicola Salmoria. Thanks to Richard Bush and the Raine team, whose open
 source was very helpful in many areas particularly the sprites.)
 
+- Changes Log -
+
+02-18-01 Added Spacegun gunsights (Insideoutboy)
+
+
 				*****
 
 The Taito Z system has a number of similarities with the Taito F2 system, as
@@ -19,15 +24,15 @@ background plane of 8x8 tiles, a similar foreground plane, another optional
 plane used for drawing a road (e.g. Chasehq), a sprite plane [with varying
 properties], and a text plane with character definitions held in ram.
 
-(Double Axle has *four* rather than two background planes, and they contain
+(Double Axle has four rather than two background planes, and they contain
 32x32 16x16 tiles. This is because it has a TC0480SCP rather than the
 older TC0100SCN tilemap generator used in previous Taito Z games. The
 hardware for Taito's Super Chase was a further development of this, with a
-68020 for main CPU and Ensoniq sound - both standard features of Taito's F3
-system. Taito's F3 system effectively superceded Taito B, Taito F2 *and*
-Taito Z systems, although Super Chase and Under Fire were Taito Z / F3
-hybrids which had the extra cpu power needed for their demanding
-graphics.)
+68020 for main CPU and Ensoniq sound [entailing an extra 68000] - both
+standard features of Taito's F3 system. Taito's F3 system effectively
+superceded both Taito B and F2 systems, but the Taito Z system was enhanced
+with F3 features and lived on in games like Super Chase and Under Fire up
+to the mid 1990s.)
 
 The sprites are typically 16x8 tiles aggregated through a spritemap rom
 into bigger sizes. Spacegun has 64x64 sprites, but some of the games use
@@ -48,7 +53,7 @@ or	(ii) the "road" which features in almost all TaitoZ games
 	[except Spacegun].
 
 Most Z system games have a Z80 as well, which takes over sound duties.
-Commands are written to it by the one of the 68000s (the same as in
+Commands are written to it by the one of the 68000s (the same as
 the Taito F2 games).
 
 The memory map for the Taito Z games is similar in outline but usually
@@ -318,7 +323,7 @@ No road. Wheel control poor-ish.
 
 Sprite frames were plotted in opposite order so flickered.
 Reversing this has lost us alternate frames: probably we have
-to buffer at least one half of sprite ram?
+to buffer sprite ram by one frame to solve this?
 
 
 Night Striker
@@ -374,18 +379,6 @@ exotic input device...
 Spacegun
 --------
 
-Fake aim documentation:
-
-$9d74: Code from here works out coords for P1 aim sprite and
-puts it in spriteram +0x20. [$9b8c is entry for whole sub.]
-
-$9fa6: Code from here works out coords for P2 aim sprite and
-puts it in spriteram +0x28. [$9de8 is entry for whole sub.]
-
-Both call subroutines (P1 $195d4, P2 $196ea) which do quite a
-lot of calculations on the raw a/d input coords, using the eerom
-calibration data to turn them into standard sprite coordinates.
-
 Problem with the zoomed sprites not matching up very well
 when forming the background. They jerk a bit relative to
 each other... could be a cpu sync thing.
@@ -411,7 +404,7 @@ be an int6 timing/number issue?)
 
 Offsets of TC0480SCP bg layers correct?
 
-No sprite/tile variable priority implemented, I guess it is
+No sprite/tile variable priority implemented, I'm hoping it is
 only sprite/road priority that changes.
 
 
@@ -431,64 +424,60 @@ void taitoz_vh_stop (void);
 void contcirc_vh_screenrefresh (struct osd_bitmap *bitmap,int full_refresh);
 void chasehq_vh_screenrefresh  (struct osd_bitmap *bitmap,int full_refresh);
 void bshark_vh_screenrefresh   (struct osd_bitmap *bitmap,int full_refresh);
-void chasehq2_vh_screenrefresh (struct osd_bitmap *bitmap,int full_refresh);
+void sci_vh_screenrefresh      (struct osd_bitmap *bitmap,int full_refresh);
 void aquajack_vh_screenrefresh (struct osd_bitmap *bitmap,int full_refresh);
 void spacegun_vh_screenrefresh (struct osd_bitmap *bitmap,int full_refresh);
 void dblaxle_vh_screenrefresh  (struct osd_bitmap *bitmap,int full_refresh);
 
-READ16_HANDLER ( chq2_spriteframe_r );
-WRITE16_HANDLER( chq2_spriteframe_w );
+READ16_HANDLER ( sci_spriteframe_r );
+WRITE16_HANDLER( sci_spriteframe_w );
 
 //  These TC0150ROD prototypes will go in taitoic.h  //
 READ16_HANDLER ( TC0150ROD_word_r );	/* Road generator */
 WRITE16_HANDLER( TC0150ROD_word_w );
 
 static int old_cpua_ctrl = 0xff;
-static int chasehq2_int6 = 0;
+static int sci_int6 = 0;
 static int dblaxle_int6 = 0;
 static int ioc220_port = 0;
 static data16_t eep_latch = 0;
 
 //static data16_t *taitoz_ram;
 
-static size_t sharedram_size;
-static data16_t *sharedram;
+static size_t taitoz_sharedram_size;
+data16_t *taitoz_sharedram;	/* read externally to draw Spacegun crosshair */
 
 static READ16_HANDLER( sharedram_r )
 {
-	return sharedram[offset];
+	return taitoz_sharedram[offset];
 }
 
 static WRITE16_HANDLER( sharedram_w )
 {
-	COMBINE_DATA(&sharedram[offset]);
+	COMBINE_DATA(&taitoz_sharedram[offset]);
 }
 
-static WRITE16_HANDLER( cpua_ctrl_w )	// assumes Z80 sandwiched between 68Ks
+static WRITE16_HANDLER( cpua_ctrl_w )	/* assumes Z80 sandwiched between 68Ks */
 {
 	if ((data &0xff00) && ((data &0xff) == 0))
 		data = data >> 8;	/* for Wgp, no longer necessary */
 
 	/* bit 0 enables cpu B */
+	cpu_set_reset_line(2,(data &0x1) ? CLEAR_LINE : ASSERT_LINE);
 
-	if ((data &0x1)!=(old_cpua_ctrl &0x1))	// perhaps unnecessary but it's often written with same value
-		cpu_set_reset_line(2,(data &0x1) ? CLEAR_LINE : ASSERT_LINE);
-
-	/* is there an irq enable ??? */
+	/* is there an irq enable ? */
 
 	old_cpua_ctrl = data;
 
 	logerror("CPU #0 PC %06x: write %04x to cpu control\n",cpu_get_pc(),data);
 }
 
-static WRITE16_HANDLER( cpua_noz80_ctrl_w )	// assumes no Z80
+static WRITE16_HANDLER( cpua_noz80_ctrl_w )	/* assumes no Z80 */
 {
 	/* bit 0 enables cpu B */
+	cpu_set_reset_line(1,(data &0x1) ? CLEAR_LINE : ASSERT_LINE);
 
-	if ((data &0x1)!=(old_cpua_ctrl &0x1))	// perhaps unnecessary but it's often written with same value
-		cpu_set_reset_line(1,(data &0x1) ? CLEAR_LINE : ASSERT_LINE);
-
-	/* is there an irq enable ??? */
+	/* is there an irq enable ? */
 
 	old_cpua_ctrl = data;
 
@@ -567,20 +556,20 @@ static int bshark_cpub_interrupt(void)
 	return 4;
 }
 
-static int chasehq2_interrupt(void)
+static int sci_interrupt(void)
 {
 	/* Need 2 int4's per int6 else (-$6b63,A5) never set to 1 which
 	   causes all sprites to vanish! Spriteram has areas for 2 frames
 	   so in theory only needs updating every other frame. */
 
-	chasehq2_int6 = !chasehq2_int6;
+	sci_int6 = !sci_int6;
 
-	if (chasehq2_int6)
+	if (sci_int6)
 		timer_set(TIME_IN_CYCLES(200000-500,0),0, taitoz_interrupt6);
 	return 4;
 }
 
-static int chq2_cpub_interrupt(void)
+static int sci_cpub_interrupt(void)
 {
 	return 4;
 }
@@ -621,7 +610,7 @@ static int spacegun_cpub_interrupt(void)
 
 static int dblaxle_interrupt(void)
 {
-	// Unsure how many int6's per frame, this copies Chasehq2
+	// Unsure how many int6's per frame, this copies SCI
 	dblaxle_int6 = !dblaxle_int6;
 
 	if (dblaxle_int6)
@@ -711,22 +700,22 @@ static READ16_HANDLER( contcirc_ioc_r )
 				switch (ioc220_port & 0xf)
 				{
 					case 0x00:
-						return input_port_2_word_r(0);	/* DSW A */
+						return input_port_2_word_r(0,mem_mask);	/* DSW A */
 
 					case 0x01:
-						return input_port_3_word_r(0);	/* DSW B */
+						return input_port_3_word_r(0,mem_mask);	/* DSW B */
 
 					case 0x02:
-						return input_port_0_word_r(0);	/* IN0 */
+						return input_port_0_word_r(0,mem_mask);	/* IN0 */
 
 					case 0x03:
-						return input_port_1_word_r(0);	/* IN1 */
+						return input_port_1_word_r(0,mem_mask);	/* IN1 */
 
 					case 0x08:
-						return input_port_4_word_r(0) &0xff;	/* steer */
+						return input_port_4_word_r(0,mem_mask) &0xff;	/* steer */
 
 					case 0x09:
-						return input_port_4_word_r(0) >> 8;	/* steer */
+						return input_port_4_word_r(0,mem_mask) >> 8;	/* steer */
 				}
 
 logerror("CPU #1 PC %06x: warning - read unmapped ioc220 port %02x\n",cpu_get_pc(),ioc220_port);
@@ -763,34 +752,34 @@ static READ16_HANDLER( chasehq_ioc_r )
 				switch (ioc220_port & 0xf)
 				{
 					case 0x00:
-						return input_port_2_word_r(0);	/* DSW A */
+						return input_port_2_word_r(0,mem_mask);	/* DSW A */
 
 					case 0x01:
-						return input_port_3_word_r(0);	/* DSW B */
+						return input_port_3_word_r(0,mem_mask);	/* DSW B */
 
 					case 0x02:
-						return input_port_0_word_r(0);	/* IN0 */
+						return input_port_0_word_r(0,mem_mask);	/* IN0 */
 
 					case 0x03:
-						return input_port_1_word_r(0);	/* IN1 */
+						return input_port_1_word_r(0,mem_mask);	/* IN1 */
 
 					case 0x08:
-						return input_port_4_word_r(0);	/* IN2 */
+						return input_port_4_word_r(0,mem_mask);	/* IN2 */
 
 					case 0x09:
-						return input_port_5_word_r(0);	/* etc. */
+						return input_port_5_word_r(0,mem_mask);	/* etc. */
 
 					case 0x0a:
-						return input_port_6_word_r(0);
+						return input_port_6_word_r(0,mem_mask);
 
 					case 0x0b:
-						return input_port_7_word_r(0);
+						return input_port_7_word_r(0,mem_mask);
 
 					case 0x0c:
-						return input_port_8_word_r(0) &0xff;	/* steer */
+						return input_port_8_word_r(0,mem_mask) &0xff;	/* steer */
 
 					case 0x0d:
-						return input_port_8_word_r(0) >> 8;	/* steer */
+						return input_port_8_word_r(0,mem_mask) >> 8;	/* steer */
 				}
 
 logerror("CPU #0 PC %06x: warning - read unmapped ioc220 port %02x\n",cpu_get_pc(),ioc220_port);
@@ -823,19 +812,19 @@ static READ16_HANDLER( taitoz_input_r )
 	switch (offset)
 	{
 		case 0x00:
-			return input_port_3_word_r(0);	/* DSW A */
+			return input_port_3_word_r(0,mem_mask);	/* DSW A */
 
 		case 0x01:
-			return input_port_4_word_r(0);	/* DSW B */
+			return input_port_4_word_r(0,mem_mask);	/* DSW B */
 
 		case 0x02:
-			return input_port_0_word_r(0);	/* IN0 */
+			return input_port_0_word_r(0,mem_mask);	/* IN0 */
 
 		case 0x03:
-			return input_port_1_word_r(0);	/* IN1 */
+			return input_port_1_word_r(0,mem_mask);	/* IN1 */
 
 		case 0x07:
-			return input_port_2_word_r(0);	/* IN2 */
+			return input_port_2_word_r(0,mem_mask);	/* IN2 */
 	}
 
 logerror("CPU #0 PC %06x: warning - read unmapped input offset %06x\n",cpu_get_pc(),offset);
@@ -848,16 +837,16 @@ static READ16_HANDLER( bshark_input_r )
 	switch (offset)
 	{
 		case 0x00:
-			return input_port_2_word_r(0);	/* DSW A */
+			return input_port_2_word_r(0,mem_mask);	/* DSW A */
 
 		case 0x01:
-			return input_port_3_word_r(0);	/* DSW B */
+			return input_port_3_word_r(0,mem_mask);	/* DSW B */
 
 		case 0x02:
-			return input_port_0_word_r(0);	/* IN0 */
+			return input_port_0_word_r(0,mem_mask);	/* IN0 */
 
 		case 0x07:
-			return input_port_1_word_r(0);	/* IN1 */
+			return input_port_1_word_r(0,mem_mask);	/* IN1 */
 	}
 
 logerror("CPU #0 PC %06x: warning - read unmapped input offset %06x\n",cpu_get_pc(),offset);
@@ -870,16 +859,16 @@ static READ16_HANDLER( bshark_stick_r )
 	switch (offset)
 	{
 		case 0x00:
-			return input_port_5_word_r(0);	/* IN5 */
+			return input_port_5_word_r(0,mem_mask);	/* IN5 */
 
 		case 0x01:
-			return input_port_6_word_r(0);	/* IN6 */
+			return input_port_6_word_r(0,mem_mask);	/* IN6 */
 
 		case 0x02:
-			return input_port_7_word_r(0);	/* IN7 */
+			return input_port_7_word_r(0,mem_mask);	/* IN7 */
 
 		case 0x03:
-			return input_port_8_word_r(0);	/* IN8 */
+			return input_port_8_word_r(0,mem_mask);	/* IN8 */
 	}
 
 logerror("CPU #0 PC %06x: warning - read unmapped stick offset %06x\n",cpu_get_pc(),offset);
@@ -898,23 +887,23 @@ static WRITE16_HANDLER( bshark_stick_w )
 	timer_set(TIME_IN_CYCLES(10000,0),0, taitoz_interrupt6);
 }
 
-static READ16_HANDLER( chasehq2_input_r )
+static READ16_HANDLER( sci_input_r )
 {
-	int steer = input_port_4_word_r(0) - 0x80;	/* IN2 */
+	int steer = input_port_4_word_r(0,0) - 0x80;	/* IN2 */
 
 	switch (offset)
 	{
 		case 0x00:
-			return input_port_2_word_r(0);	/* DSW A */
+			return input_port_2_word_r(0,mem_mask);	/* DSW A */
 
 		case 0x01:
-			return input_port_3_word_r(0);	/* DSW B */
+			return input_port_3_word_r(0,mem_mask);	/* DSW B */
 
 		case 0x02:
-			return input_port_0_word_r(0);	/* IN0 */
+			return input_port_0_word_r(0,mem_mask);	/* IN0 */
 
 		case 0x03:
-			return input_port_1_word_r(0);	/* IN1 */
+			return input_port_1_word_r(0,mem_mask);	/* IN1 */
 
 		case 0x0c:
 			return (steer & 0xff);
@@ -938,19 +927,19 @@ static READ16_HANDLER( spacegun_input_r )
 	switch (offset)
 	{
 		case 0x00:
-			return input_port_2_word_r(0);	/* DSW A */
+			return input_port_2_word_r(0,mem_mask);	/* DSW A */
 
 		case 0x01:
-			return input_port_3_word_r(0);	/* DSW B */
+			return input_port_3_word_r(0,mem_mask);	/* DSW B */
 
 		case 0x02:
-			return input_port_0_word_r(0);	/* IN0 */
+			return input_port_0_word_r(0,mem_mask);	/* IN0 */
 
 		case 0x03:
 			return eeprom_r();
 
 		case 0x07:
-			return input_port_1_word_r(0);	/* IN1 */
+			return input_port_1_word_r(0,mem_mask);	/* IN1 */
 	}
 
 logerror("CPU #1 PC %06x: warning - read unmapped input offset %06x\n",cpu_get_pc(),offset);
@@ -963,16 +952,16 @@ static READ16_HANDLER( spacegun_lightgun_r )
 	switch (offset)
 	{
 		case 0x00:
-			return input_port_5_word_r(0);	/* P1X */
+			return input_port_5_word_r(0,mem_mask);	/* P1X */
 
 		case 0x01:
-			return input_port_6_word_r(0);	/* P1Y */
+			return input_port_6_word_r(0,mem_mask);	/* P1Y */
 
 		case 0x02:
-			return input_port_7_word_r(0);	/* P2X */
+			return input_port_7_word_r(0,mem_mask);	/* P2X */
 
 		case 0x03:
-			return input_port_8_word_r(0);	/* P2Y */
+			return input_port_8_word_r(0,mem_mask);	/* P2Y */
 	}
 
 	return 0x0;
@@ -996,25 +985,25 @@ static READ16_HANDLER( dblaxle_input_r )
 	switch (offset)
 	{
 		case 0x00:
-			return input_port_3_word_r(0);	/* DSW B */
+			return input_port_3_word_r(0,mem_mask);	/* DSW B */
 
 		case 0x01:
-			return input_port_2_word_r(0);	/* DSW A */
+			return input_port_2_word_r(0,mem_mask);	/* DSW A */
 
 		case 0x02:
-			return input_port_1_word_r(0);	/* IN1 */
+			return input_port_1_word_r(0,mem_mask);	/* IN1 */
 
 		case 0x03:
-			return input_port_0_word_r(0);	/* IN0 */
+			return input_port_0_word_r(0,mem_mask);	/* IN0 */
 
 		case 0x05:
-			return input_port_4_word_r(0);	/* IN2 */
+			return input_port_4_word_r(0,mem_mask);	/* IN2 */
 
 		case 0x0c:
-			return input_port_5_word_r(0) >> 8;	/* steer */
+			return input_port_5_word_r(0,mem_mask) >> 8;	/* steer */
 
 		case 0x0d:
-			return input_port_5_word_r(0) &0xff;	/* steer */
+			return input_port_5_word_r(0,mem_mask) &0xff;	/* steer */
 	}
 
 logerror("CPU #0 PC %06x: warning - read unmapped input offset %02x\n",cpu_get_pc(),offset);
@@ -1107,7 +1096,7 @@ MEMORY_END
 static MEMORY_WRITE16_START( contcirc_writemem )
 	{ 0x000000, 0x03ffff, MWA16_ROM },
 	{ 0x080000, 0x083fff, MWA16_RAM },
-	{ 0x084000, 0x087fff, sharedram_w, &sharedram, &sharedram_size },
+	{ 0x084000, 0x087fff, sharedram_w, &taitoz_sharedram, &taitoz_sharedram_size },
 //	{ 0x090000, 0x090001, MWA16_NOP },	/* ??? */
 	{ 0x100000, 0x100007, TC0110PCR_step1_rbswap_word_w },	/* palette */
 	{ 0x200000, 0x20ffff, TC0100SCN_word_0_w },	/* tilemaps */
@@ -1127,7 +1116,7 @@ MEMORY_END
 static MEMORY_WRITE16_START( contcirc_cpub_writemem )
 	{ 0x000000, 0x03ffff, MWA16_ROM },
 	{ 0x080000, 0x083fff, MWA16_RAM },
-	{ 0x084000, 0x087fff, sharedram_w, &sharedram },
+	{ 0x084000, 0x087fff, sharedram_w, &taitoz_sharedram },
 	{ 0x100000, 0x100003, contcirc_ioc_w },
 	{ 0x200000, 0x200003, taitoz_sound_w },
 MEMORY_END
@@ -1149,7 +1138,7 @@ MEMORY_END
 static MEMORY_WRITE16_START( chasehq_writemem )
 	{ 0x000000, 0x07ffff, MWA16_ROM },
 	{ 0x100000, 0x107fff, MWA16_RAM },
-	{ 0x108000, 0x10bfff, sharedram_w, &sharedram, &sharedram_size },
+	{ 0x108000, 0x10bfff, sharedram_w, &taitoz_sharedram, &taitoz_sharedram_size },
 	{ 0x10c000, 0x10ffff, MWA16_RAM },
 	{ 0x400000, 0x400003, chasehq_ioc_w },
 	{ 0x800000, 0x800001, cpua_ctrl_w },
@@ -1170,7 +1159,7 @@ MEMORY_END
 static MEMORY_WRITE16_START( chq_cpub_writemem )
 	{ 0x000000, 0x01ffff, MWA16_ROM },
 	{ 0x100000, 0x103fff, MWA16_RAM },
-	{ 0x108000, 0x10bfff, sharedram_w, &sharedram },
+	{ 0x108000, 0x10bfff, sharedram_w, &taitoz_sharedram },
 	{ 0x800000, 0x801fff, TC0150ROD_word_w },
 MEMORY_END
 
@@ -1190,7 +1179,7 @@ MEMORY_END
 static MEMORY_WRITE16_START( bshark_writemem )
 	{ 0x000000, 0x07ffff, MWA16_ROM },
 	{ 0x100000, 0x10ffff, MWA16_RAM },
-	{ 0x110000, 0x113fff, sharedram_w, &sharedram, &sharedram_size },
+	{ 0x110000, 0x113fff, sharedram_w, &taitoz_sharedram, &taitoz_sharedram_size },
 	{ 0x400000, 0x400001, MWA16_NOP },	/* watchdog ?? */
 	{ 0x600000, 0x600001, cpua_noz80_ctrl_w },
 	{ 0x800000, 0x800007, bshark_stick_w },
@@ -1228,24 +1217,24 @@ static MEMORY_WRITE16_START( bshark_cpub_writemem )
 MEMORY_END
 
 
-static MEMORY_READ16_START( chasehq2_readmem )
+static MEMORY_READ16_START( sci_readmem )
 	{ 0x000000, 0x07ffff, MRA16_ROM },
 	{ 0x100000, 0x107fff, MRA16_RAM },	/* main CPUA ram */
 	{ 0x108000, 0x10bfff, sharedram_r },	/* extent ?? */
 	{ 0x10c000, 0x10ffff, MRA16_RAM },	/* extra CPUA ram */
-	{ 0x200000, 0x20001f, chasehq2_input_r },
+	{ 0x200000, 0x20001f, sci_input_r },
 	{ 0x420000, 0x420003, taitoz_sound_r },
 	{ 0x800000, 0x801fff, paletteram16_word_r },
 	{ 0xa00000, 0xa0ffff, TC0100SCN_word_0_r },	/* tilemaps */
 	{ 0xa20000, 0xa2000f, TC0100SCN_ctrl_word_0_r },
 	{ 0xc00000, 0xc03fff, MRA16_RAM },	/* spriteram */	// Raine draws only 0x1000
-	{ 0xc08000, 0xc08001, chq2_spriteframe_r },	// debugging
+	{ 0xc08000, 0xc08001, sci_spriteframe_r },	// debugging
 MEMORY_END
 
-static MEMORY_WRITE16_START( chasehq2_writemem )
+static MEMORY_WRITE16_START( sci_writemem )
 	{ 0x000000, 0x07ffff, MWA16_ROM },
 	{ 0x100000, 0x107fff, MWA16_RAM },
-	{ 0x108000, 0x10bfff, sharedram_w, &sharedram, &sharedram_size },
+	{ 0x108000, 0x10bfff, sharedram_w, &taitoz_sharedram, &taitoz_sharedram_size },
 	{ 0x10c000, 0x10ffff, MWA16_RAM },
 //	{ 0x400000, 0x400001, cpua_ctrl_w },	// ?? doesn't seem to fit what is written to it
 	{ 0x420000, 0x420003, taitoz_sound_w },
@@ -1253,20 +1242,20 @@ static MEMORY_WRITE16_START( chasehq2_writemem )
 	{ 0xa00000, 0xa0ffff, TC0100SCN_word_0_w },	/* tilemaps */
 	{ 0xa20000, 0xa2000f, TC0100SCN_ctrl_word_0_w },
 	{ 0xc00000, 0xc03fff, MWA16_RAM, &spriteram16, &spriteram_size },
-	{ 0xc08000, 0xc08001, chq2_spriteframe_w },
+	{ 0xc08000, 0xc08001, sci_spriteframe_w },
 MEMORY_END
 
-static MEMORY_READ16_START( chq2_cpub_readmem )
+static MEMORY_READ16_START( sci_cpub_readmem )
 	{ 0x000000, 0x01ffff, MRA16_ROM },
 	{ 0x200000, 0x203fff, MRA16_RAM },
 	{ 0x208000, 0x20bfff, sharedram_r },
 	{ 0xa00000, 0xa01fff, TC0150ROD_word_r },
 MEMORY_END
 
-static MEMORY_WRITE16_START( chq2_cpub_writemem )
+static MEMORY_WRITE16_START( sci_cpub_writemem )
 	{ 0x000000, 0x01ffff, MWA16_ROM },
 	{ 0x200000, 0x203fff, MWA16_RAM },
-	{ 0x208000, 0x20bfff, sharedram_w, &sharedram },
+	{ 0x208000, 0x20bfff, sharedram_w, &taitoz_sharedram },
 	{ 0xa00000, 0xa01fff, TC0150ROD_word_w },
 MEMORY_END
 
@@ -1287,7 +1276,7 @@ MEMORY_END
 static MEMORY_WRITE16_START( nightstr_writemem )
 	{ 0x000000, 0x07ffff, MWA16_ROM },
 	{ 0x100000, 0x10ffff, MWA16_RAM },
-	{ 0x110000, 0x113fff, sharedram_w, &sharedram, &sharedram_size },
+	{ 0x110000, 0x113fff, sharedram_w, &taitoz_sharedram, &taitoz_sharedram_size },
 	{ 0x400000, 0x40000f, MWA16_NOP },	/* writes to 0x0, 0x6, 0x8 */
 	{ 0x800000, 0x800001, cpua_ctrl_w },
 	{ 0x820000, 0x820003, taitoz_sound_w },
@@ -1311,7 +1300,7 @@ MEMORY_END
 static MEMORY_WRITE16_START( nightstr_cpub_writemem )
 	{ 0x000000, 0x03ffff, MWA16_ROM },
 	{ 0x100000, 0x103fff, MWA16_RAM },
-	{ 0x104000, 0x107fff, sharedram_w, &sharedram },
+	{ 0x104000, 0x107fff, sharedram_w, &taitoz_sharedram },
 	{ 0x800000, 0x801fff, TC0150ROD_word_w },	/* "root ram" */
 MEMORY_END
 
@@ -1330,7 +1319,7 @@ MEMORY_END
 static MEMORY_WRITE16_START( aquajack_writemem )
 	{ 0x000000, 0x03ffff, MWA16_ROM },
 	{ 0x100000, 0x103fff, MWA16_RAM },
-	{ 0x104000, 0x107fff, sharedram_w, &sharedram, &sharedram_size },
+	{ 0x104000, 0x107fff, sharedram_w, &taitoz_sharedram, &taitoz_sharedram_size },
 	{ 0x200000, 0x200001, cpua_ctrl_w },	// not needed, but it's probably like the others
 	{ 0x300000, 0x300007, TC0110PCR_step1_word_w },	/* palette */
 	{ 0x800000, 0x801fff, TC0150ROD_word_w },
@@ -1353,7 +1342,7 @@ MEMORY_END
 static MEMORY_WRITE16_START( aquajack_cpub_writemem )
 	{ 0x000000, 0x03ffff, MWA16_ROM },
 	{ 0x100000, 0x103fff, MWA16_RAM },
-	{ 0x104000, 0x107fff, sharedram_w, &sharedram },
+	{ 0x104000, 0x107fff, sharedram_w, &taitoz_sharedram },
 	{ 0x300000, 0x300003, taitoz_sound_w },
 //	{ 0x800800, 0x800801, taitoz_unknown_w },
 //	{ 0x900000, 0x900007, taitoz_unknown_w },
@@ -1373,7 +1362,7 @@ MEMORY_END
 static MEMORY_WRITE16_START( spacegun_writemem )
 	{ 0x000000, 0x07ffff, MWA16_ROM },
 	{ 0x30c000, 0x30ffff, MWA16_RAM },
-	{ 0x310000, 0x31ffff, sharedram_w, &sharedram, &sharedram_size  },
+	{ 0x310000, 0x31ffff, sharedram_w, &taitoz_sharedram, &taitoz_sharedram_size  },
 	{ 0x500000, 0x5005ff, MWA16_RAM, &spriteram16, &spriteram_size },
 	{ 0x900000, 0x90ffff, TC0100SCN_word_0_w },	/* tilemaps */
 	{ 0x920000, 0x92000f, TC0100SCN_ctrl_word_0_w },
@@ -1422,13 +1411,13 @@ static MEMORY_READ16_START( dblaxle_readmem )
 	{ 0xa00000, 0xa0ffff, TC0480SCP_word_r },	  /* tilemaps */
 	{ 0xa30000, 0xa3002f, TC0480SCP_ctrl_word_r },
 	{ 0xc00000, 0xc03fff, MRA16_RAM },	/* spriteram */
-	{ 0xc08000, 0xc08001, chq2_spriteframe_r },	// debugging
+	{ 0xc08000, 0xc08001, sci_spriteframe_r },	// debugging
 MEMORY_END
 
 static MEMORY_WRITE16_START( dblaxle_writemem )
 	{ 0x000000, 0x07ffff, MWA16_ROM },
 	{ 0x200000, 0x203fff, MWA16_RAM },
-	{ 0x210000, 0x21ffff, sharedram_w, &sharedram, &sharedram_size },
+	{ 0x210000, 0x21ffff, sharedram_w, &taitoz_sharedram, &taitoz_sharedram_size },
 	{ 0x400000, 0x40000f, MWA16_NOP },	/* irq ack, other things ?? */
 	{ 0x600000, 0x600001, cpua_ctrl_w },
 	{ 0x620000, 0x620003, taitoz_sound_w },
@@ -1437,7 +1426,7 @@ static MEMORY_WRITE16_START( dblaxle_writemem )
 	{ 0xa00000, 0xa0ffff, TC0480SCP_word_w },	  /* tilemaps */
 	{ 0xa30000, 0xa3002f, TC0480SCP_ctrl_word_w },
 	{ 0xc00000, 0xc03fff, MWA16_RAM, &spriteram16, &spriteram_size }, /* mostly unused ? */
-	{ 0xc08000, 0xc08001, chq2_spriteframe_w },	/* set in int6, seems to stay zero */
+	{ 0xc08000, 0xc08001, sci_spriteframe_w },	/* set in int6, seems to stay zero */
 MEMORY_END
 
 static MEMORY_READ16_START( dblaxle_cpub_readmem )
@@ -1450,7 +1439,7 @@ MEMORY_END
 static MEMORY_WRITE16_START( dblaxle_cpub_writemem )
 	{ 0x000000, 0x03ffff, MWA16_ROM },
 	{ 0x100000, 0x103fff, MWA16_RAM },
-	{ 0x110000, 0x11ffff, sharedram_w, &sharedram },
+	{ 0x110000, 0x11ffff, sharedram_w, &taitoz_sharedram },
 	{ 0x300000, 0x301fff, TC0150ROD_word_w },
 MEMORY_END
 
@@ -1752,7 +1741,7 @@ INPUT_PORTS_START( bshark )
 	PORT_ANALOG( 0xff, 0x00, IPT_AD_STICK_Y | IPF_PLAYER1, 20, 4, 0xd4, 0x31)
 INPUT_PORTS_END
 
-INPUT_PORTS_START( chasehq2 )
+INPUT_PORTS_START( sci )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )	// fire
@@ -2226,7 +2215,7 @@ static struct GfxDecodeInfo chasehq_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo chasehq2_gfxdecodeinfo[] =
+static struct GfxDecodeInfo sci_gfxdecodeinfo[] =
 {
 	{ REGION_GFX2, 0x0, &tile16x8_layout,  0, 256 },	/* sprite parts */
 	{ REGION_GFX1, 0x0, &charlayout,  0, 256 },		/* sprites & playfield */
@@ -2448,7 +2437,7 @@ static struct MachineDriver machine_driver_bshark =
 	/* video hardware */
 	40*8, 32*8, { 0*8, 40*8-1, 2*8, 32*8-1 },
 
-	chasehq2_gfxdecodeinfo,
+	sci_gfxdecodeinfo,
 	4096, 4096,
 	0,
 
@@ -2468,14 +2457,14 @@ static struct MachineDriver machine_driver_bshark =
 	}
 };
 
-static struct MachineDriver machine_driver_chasehq2 =
+static struct MachineDriver machine_driver_sci =
 {
 	{
 		{
 			CPU_M68000,
 			12000000,	/* 12 MHz ??? */
-			chasehq2_readmem,chasehq2_writemem,0,0,
-			chasehq2_interrupt, 1
+			sci_readmem,sci_writemem,0,0,
+			sci_interrupt, 1
 		},
 		{																			\
 			CPU_Z80 | CPU_AUDIO_CPU,												\
@@ -2486,8 +2475,8 @@ static struct MachineDriver machine_driver_chasehq2 =
 		{
 			CPU_M68000,
 			12000000,	/* 12 MHz ??? */
-			chq2_cpub_readmem,chq2_cpub_writemem,0,0,
-			chq2_cpub_interrupt, 1
+			sci_cpub_readmem,sci_cpub_writemem,0,0,
+			sci_cpub_interrupt, 1
 		},
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
@@ -2497,7 +2486,7 @@ static struct MachineDriver machine_driver_chasehq2 =
 	/* video hardware */
 	40*8, 32*8, { 0*8, 40*8-1, 2*8, 32*8-1 },
 
-	chasehq2_gfxdecodeinfo,
+	sci_gfxdecodeinfo,
 	4096, 4096,
 	0,
 
@@ -2505,7 +2494,7 @@ static struct MachineDriver machine_driver_chasehq2 =
 	0,
 	taitoz_vh_start,
 	taitoz_vh_stop,
-	chasehq2_vh_screenrefresh,
+	sci_vh_screenrefresh,
 
 	/* sound hardware */
 	SOUND_SUPPORTS_STEREO,0,0,0,
@@ -2595,7 +2584,7 @@ static struct MachineDriver machine_driver_aquajack =
 	/* video hardware */
 	40*8, 32*8, { 0*8, 40*8-1, 2*8, 32*8-1 },
 
-	chasehq2_gfxdecodeinfo,
+	sci_gfxdecodeinfo,
 	4096, 4096,
 	0,
 
@@ -2743,14 +2732,14 @@ ROM_START( contcirc )	// The US set had better naming conventions, copied here
 	ROM_REGION( 0x80000, REGION_GFX3, 0 )	/* don't dispose */
 	ROM_LOAD( "b33_01", 0x00000, 0x80000, 0xf11f2be8 )	/* ROD, road lines */
 
-	ROM_REGION( 0x80000, REGION_USER1, 0 )
+	ROM_REGION16_LE( 0x80000, REGION_USER1, 0 )
 	ROM_LOAD16_WORD( "b33_07", 0x00000, 0x80000, 0x151e1f52 )	/* STY, index used to create 128x128 sprites on the fly */
 
 	ROM_REGION( 0x100000, REGION_SOUND1, 0 )	/* ADPCM samples */
 	ROM_LOAD( "b33_09", 0x00000, 0x80000, 0x1e6724b5 )
 	ROM_LOAD( "b33_10", 0x80000, 0x80000, 0xe9ce03ab )
 
-	ROM_REGION( 0x80000, REGION_SOUND2, 0 )	/* delta-t samples */
+	ROM_REGION( 0x80000, REGION_SOUND2, 0 )	/* Delta-T samples */
 	ROM_LOAD( "b33_08", 0x00000, 0x80000, 0xcaa1c4c8 )
 
 	ROM_REGION( 0x10000, REGION_USER2, 0 )
@@ -2783,14 +2772,14 @@ ROM_START( contcrcu )
 	ROM_REGION( 0x80000, REGION_GFX3, 0 )	/* don't dispose */
 	ROM_LOAD( "b33_01", 0x00000, 0x80000, 0xf11f2be8 )	/* ROD, road lines */
 
-	ROM_REGION( 0x80000, REGION_USER1, 0 )
+	ROM_REGION16_LE( 0x80000, REGION_USER1, 0 )
 	ROM_LOAD16_WORD( "b33_07", 0x00000, 0x80000, 0x151e1f52 )	/* STY, index used to create 128x128 sprites on the fly */
 
 	ROM_REGION( 0x100000, REGION_SOUND1, 0 )	/* ADPCM samples */
 	ROM_LOAD( "b33_09", 0x00000, 0x80000, 0x1e6724b5 )
 	ROM_LOAD( "b33_10", 0x80000, 0x80000, 0xe9ce03ab )
 
-	ROM_REGION( 0x80000, REGION_SOUND2, 0 )	/* delta-t samples */
+	ROM_REGION( 0x80000, REGION_SOUND2, 0 )	/* Delta-T samples */
 	ROM_LOAD( "b33_08", 0x00000, 0x80000, 0xcaa1c4c8 )
 
 	ROM_REGION( 0x10000, REGION_USER2, 0 )
@@ -2831,7 +2820,7 @@ ROM_START( chasehq )
 	ROM_LOAD32_BYTE( "b52-m32.rom", 0x000002, 0x080000, 0x8620780c )	/* These are grouped according to a sprite map */
 	ROM_LOAD32_BYTE( "b52-m33.rom", 0x000003, 0x080000, 0xe6f4b8c4 )	/* rom to create the big sprites the game uses. */
 
-	ROM_REGION( 0x80000, REGION_USER1, 0 )
+	ROM_REGION16_LE( 0x80000, REGION_USER1, 0 )
 	ROM_LOAD16_WORD( "b52-m38.fix", 0x00000, 0x80000, 0x5b5bf7f6 )	/* STY, index used to create big sprites on the fly */
 
 	ROM_REGION( 0x180000, REGION_SOUND1, 0 )	/* ADPCM samples */
@@ -2839,7 +2828,7 @@ ROM_START( chasehq )
 	ROM_LOAD( "b52-m114.rom", 0x080000, 0x080000, 0x3a73d6b1 )
 	ROM_LOAD( "b52-m113.rom", 0x100000, 0x080000, 0x2c6a3a05 )
 
-	ROM_REGION( 0x80000, REGION_SOUND2, 0 )	/* delta-t samples */
+	ROM_REGION( 0x80000, REGION_SOUND2, 0 )	/* Delta-T samples */
 	ROM_LOAD( "b52-m116.rom", 0x00000, 0x80000, 0xad46983c )
 
 	ROM_REGION( 0x10000, REGION_USER2, 0 )
@@ -2883,7 +2872,7 @@ ROM_START( chasehqj )
 	ROM_LOAD32_BYTE( "b52-m32.rom", 0x000002, 0x080000, 0x8620780c )	/* These are grouped according to a sprite map */
 	ROM_LOAD32_BYTE( "b52-m33.rom", 0x000003, 0x080000, 0xe6f4b8c4 )	/* rom to create the big sprites the game uses. */
 
-	ROM_REGION( 0x80000, REGION_USER1, 0 )
+	ROM_REGION16_LE( 0x80000, REGION_USER1, 0 )
 	ROM_LOAD16_WORD( "b52-m38.fix", 0x00000, 0x80000, 0x5b5bf7f6 )	/* STY, index used to create big sprites on the fly */
 
 	ROM_REGION( 0x180000, REGION_SOUND1, 0 )	/* ADPCM samples */
@@ -2891,7 +2880,7 @@ ROM_START( chasehqj )
 	ROM_LOAD( "b52-40", 0x080000, 0x80000, 0xf0551055 )
 	ROM_LOAD( "b52-39", 0x100000, 0x80000, 0xac9cbbd3 )
 
-	ROM_REGION( 0x80000, REGION_SOUND2, 0 )	/* delta-t samples */
+	ROM_REGION( 0x80000, REGION_SOUND2, 0 )	/* Delta-T samples */
 	ROM_LOAD( "b52-42", 0x00000, 0x80000, 0x6e617df1 )
 
 	ROM_REGION( 0x10000, REGION_USER2, 0 )
@@ -2924,13 +2913,13 @@ ROM_START( bshark )
 	ROM_REGION( 0x80000, REGION_GFX3, 0 )	/* don't dispose */
 	ROM_LOAD( "c34_07.42", 0x00000, 0x80000, 0xedb07808 )	/* ROD, road lines */
 
-	ROM_REGION( 0x80000, REGION_USER1, 0 )
+	ROM_REGION16_LE( 0x80000, REGION_USER1, 0 )
 	ROM_LOAD16_WORD( "c34_06.12", 0x00000, 0x80000, 0xd200b6eb )	/* STY, index used to create 64x64 sprites on the fly */
 
 	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* ADPCM samples */
 	ROM_LOAD( "c34_08.127", 0x00000, 0x80000, 0x89a30450 )
 
-	ROM_REGION( 0x80000, REGION_SOUND2, 0 )	/* delta-t samples */
+	ROM_REGION( 0x80000, REGION_SOUND2, 0 )	/* Delta-T samples */
 	ROM_LOAD( "c34_09.126", 0x00000, 0x80000, 0x39d12b50 )
 
 	ROM_REGION( 0x10000, REGION_USER2, 0 )
@@ -2966,13 +2955,13 @@ ROM_START( bsharkj )
 	ROM_REGION( 0x80000, REGION_GFX3, 0 )	/* don't dispose */
 	ROM_LOAD( "c34_07.42", 0x00000, 0x80000, 0xedb07808 )	/* ROD, road lines */
 
-	ROM_REGION( 0x80000, REGION_USER1, 0 )
+	ROM_REGION16_LE( 0x80000, REGION_USER1, 0 )
 	ROM_LOAD16_WORD( "c34_06.12", 0x00000, 0x80000, 0xd200b6eb )	/* STY, index used to create 64x64 sprites on the fly */
 
 	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* ADPCM samples */
 	ROM_LOAD( "c34_08.127", 0x00000, 0x80000, 0x89a30450 )
 
-	ROM_REGION( 0x80000, REGION_SOUND2, 0 )	/* delta-t samples */
+	ROM_REGION( 0x80000, REGION_SOUND2, 0 )	/* Delta-T samples */
 	ROM_LOAD( "c34_09.126", 0x00000, 0x80000, 0x39d12b50 )
 
 	ROM_REGION( 0x10000, REGION_USER2, 0 )
@@ -2983,7 +2972,7 @@ ROM_START( bsharkj )
 	ROM_LOAD( "c34_22.8",  0x00000, 0x00400, 0x643e8bfc )
 ROM_END
 
-ROM_START( chasehq2 )
+ROM_START( sci )
 	ROM_REGION( 0x80000, REGION_CPU1, 0 )	/* 512K for 68000 code (CPU A) */
 	ROM_LOAD16_BYTE( "c09-37.rom", 0x00000, 0x20000, 0x0fecea17 )
 	ROM_LOAD16_BYTE( "c09-40.rom", 0x00001, 0x20000, 0xe46ebd9b )
@@ -3010,7 +2999,7 @@ ROM_START( chasehq2 )
 	ROM_REGION( 0x80000, REGION_GFX3, 0 )	/* don't dispose */
 	ROM_LOAD( "c09-07.rom", 0x00000, 0x80000, 0x963bc82b )	/* ROD, road lines */
 
-	ROM_REGION( 0x80000, REGION_USER1, 0 )
+	ROM_REGION16_LE( 0x80000, REGION_USER1, 0 )
 	ROM_LOAD16_WORD( "c09-06.rom", 0x00000, 0x80000, 0x12df6d7b )	/* STY, index used to create 64x64 sprites on the fly */
 
 	ROM_REGION( 0x180000, REGION_SOUND1, 0 )	/* ADPCM samples */
@@ -3018,7 +3007,7 @@ ROM_START( chasehq2 )
 	ROM_LOAD( "c09-13.rom", 0x080000, 0x080000, 0xd57c41d3 )
 	ROM_LOAD( "c09-12.rom", 0x100000, 0x080000, 0x56c99fa5 )
 
-	ROM_REGION( 0x80000, REGION_SOUND2, 0 )	/* delta-t samples */
+	ROM_REGION( 0x80000, REGION_SOUND2, 0 )	/* Delta-T samples */
 	ROM_LOAD( "c09-15.rom", 0x00000, 0x80000, 0xe63b9095 )
 
 	ROM_REGION( 0x10000, REGION_USER2, 0 )
@@ -3031,7 +3020,7 @@ ROM_START( chasehq2 )
 //	ROM_LOAD( "c09-26.rom", 0x00000, 0x00???, 0x00000000 )
 ROM_END
 
-ROM_START( chashq2a )
+ROM_START( scia )
 	ROM_REGION( 0x80000, REGION_CPU1, 0 )	/* 512K for 68000 code (CPU A) */
 	ROM_LOAD16_BYTE( "c09-28.bin",  0x00000, 0x20000, 0x630dbaad )
 	ROM_LOAD16_BYTE( "c09-30.bin",  0x00001, 0x20000, 0x68b1a97d )
@@ -3058,7 +3047,7 @@ ROM_START( chashq2a )
 	ROM_REGION( 0x80000, REGION_GFX3, 0 )	/* don't dispose */
 	ROM_LOAD( "c09-07.rom", 0x00000, 0x80000, 0x963bc82b )	/* ROD, road lines */
 
-	ROM_REGION( 0x80000, REGION_USER1, 0 )
+	ROM_REGION16_LE( 0x80000, REGION_USER1, 0 )
 	ROM_LOAD16_WORD( "c09-06.rom", 0x00000, 0x80000, 0x12df6d7b )	/* STY, index used to create 64x64 sprites on the fly */
 
 	ROM_REGION( 0x180000, REGION_SOUND1, 0 )	/* ADPCM samples */
@@ -3066,7 +3055,7 @@ ROM_START( chashq2a )
 	ROM_LOAD( "c09-13.rom", 0x080000, 0x080000, 0xd57c41d3 )
 	ROM_LOAD( "c09-12.rom", 0x100000, 0x080000, 0x56c99fa5 )
 
-	ROM_REGION( 0x80000, REGION_SOUND2, 0 )	/* delta-t samples */
+	ROM_REGION( 0x80000, REGION_SOUND2, 0 )	/* Delta-T samples */
 	ROM_LOAD( "c09-15.rom", 0x00000, 0x80000, 0xe63b9095 )
 
 	ROM_REGION( 0x10000, REGION_USER2, 0 )
@@ -3074,7 +3063,7 @@ ROM_START( chashq2a )
 	ROM_LOAD( "c09-23.rom", 0x00000, 0x00100, 0xfbf81f30 )
 ROM_END
 
-ROM_START( chashq2u )
+ROM_START( sciu )
 	ROM_REGION( 0x80000, REGION_CPU1, 0 )	/* 512K for 68000 code (CPU A) */
 	ROM_LOAD16_BYTE( "c09-43.37",  0x00000, 0x20000, 0x20a9343e )
 	ROM_LOAD16_BYTE( "c09-44.40",  0x00001, 0x20000, 0x7524338a )
@@ -3101,7 +3090,7 @@ ROM_START( chashq2u )
 	ROM_REGION( 0x80000, REGION_GFX3, 0 )	/* don't dispose */
 	ROM_LOAD( "c09-07.rom", 0x00000, 0x80000, 0x963bc82b )	/* ROD, road lines */
 
-	ROM_REGION( 0x80000, REGION_USER1, 0 )
+	ROM_REGION16_LE( 0x80000, REGION_USER1, 0 )
 	ROM_LOAD16_WORD( "c09-06.rom", 0x00000, 0x80000, 0x12df6d7b )	/* STY, index used to create 64x64 sprites on the fly */
 
 	ROM_REGION( 0x180000, REGION_SOUND1, 0 )	/* ADPCM samples */
@@ -3109,7 +3098,7 @@ ROM_START( chashq2u )
 	ROM_LOAD( "c09-13.rom", 0x080000, 0x080000, 0xd57c41d3 )
 	ROM_LOAD( "c09-12.rom", 0x100000, 0x080000, 0x56c99fa5 )
 
-	ROM_REGION( 0x80000, REGION_SOUND2, 0 )	/* delta-t samples */
+	ROM_REGION( 0x80000, REGION_SOUND2, 0 )	/* Delta-T samples */
 	ROM_LOAD( "c09-15.rom", 0x00000, 0x80000, 0xe63b9095 )
 
 	ROM_REGION( 0x10000, REGION_USER2, 0 )
@@ -3150,14 +3139,14 @@ ROM_START( nightstr )
 	ROM_LOAD32_BYTE( "b91-06.bin", 0x000002, 0x080000, 0xa34dc839 )
 	ROM_LOAD32_BYTE( "b91-05.bin", 0x000003, 0x080000, 0x5e72ac90 )
 
-	ROM_REGION( 0x80000, REGION_USER1, 0 )
+	ROM_REGION16_LE( 0x80000, REGION_USER1, 0 )
 	ROM_LOAD16_WORD( "b91-09.bin", 0x00000, 0x80000, 0x5f247ca2 )	/* STY, index used to create big sprites on the fly */
 
 	ROM_REGION( 0x100000, REGION_SOUND1, 0 )	/* ADPCM samples */
 	ROM_LOAD( "b91-13.bin", 0x00000, 0x80000, 0x8c7bf0f5 )
 	ROM_LOAD( "b91-12.bin", 0x80000, 0x80000, 0xda77c7af )
 
-	ROM_REGION( 0x80000, REGION_SOUND2, 0 )	/* delta-t samples */
+	ROM_REGION( 0x80000, REGION_SOUND2, 0 )	/* Delta-T samples */
 	ROM_LOAD( "b91-14.bin", 0x00000, 0x80000, 0x6bc314d3 )
 
 	ROM_REGION( 0x10000, REGION_USER2, 0 )
@@ -3196,13 +3185,13 @@ ROM_START( aquajack )
 	ROM_REGION( 0x80000, REGION_GFX3, 0 )	/* don't dispose */
 	ROM_LOAD( "b77-07.rom", 0x000000, 0x80000, 0x7db1fc5e )	/* ROD, road lines */
 
-	ROM_REGION( 0x80000, REGION_USER1, 0 )
+	ROM_REGION16_LE( 0x80000, REGION_USER1, 0 )
 	ROM_LOAD16_WORD( "b77-06.rom", 0x00000, 0x80000, 0xce2aed00 )	/* STY, index used to create 64x64 sprites on the fly */
 
 	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* ADPCM samples */
 	ROM_LOAD( "b77-09.rom", 0x00000, 0x80000, 0x948e5ad9 )
 
-	ROM_REGION( 0x80000, REGION_SOUND2, 0 )	/* delta-t samples */
+	ROM_REGION( 0x80000, REGION_SOUND2, 0 )	/* Delta-T samples */
 	ROM_LOAD( "b77-08.rom", 0x00000, 0x80000, 0x119b9485 )
 
 /*	(no unused roms in my set, there should be an 0x10000 one like the rest) */
@@ -3233,13 +3222,13 @@ ROM_START( aquajckj )
 	ROM_REGION( 0x80000, REGION_GFX3, 0 )	/* don't dispose */
 	ROM_LOAD( "b77-07.rom", 0x000000, 0x80000, 0x7db1fc5e )	/* ROD, road lines */
 
-	ROM_REGION( 0x80000, REGION_USER1, 0 )
+	ROM_REGION16_LE( 0x80000, REGION_USER1, 0 )
 	ROM_LOAD16_WORD( "b77-06.rom", 0x00000, 0x80000, 0xce2aed00 )	/* STY, index used to create 64x64 sprites on the fly */
 
 	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* ADPCM samples */
 	ROM_LOAD( "b77-09.rom", 0x00000, 0x80000, 0x948e5ad9 )
 
-	ROM_REGION( 0x80000, REGION_SOUND2, 0 )	/* delta-t samples */
+	ROM_REGION( 0x80000, REGION_SOUND2, 0 )	/* Delta-T samples */
 	ROM_LOAD( "b77-08.rom", 0x00000, 0x80000, 0x119b9485 )
 
 /*	(no unused roms in my set, there should be an 0x10000 one like the rest) */
@@ -3265,13 +3254,13 @@ ROM_START( spacegun )
 	ROM_LOAD32_BYTE( "c57-03", 0x000002, 0x100000, 0xfafca86f )
 	ROM_LOAD32_BYTE( "c57-04", 0x000003, 0x100000, 0xa9787090 )
 
-	ROM_REGION( 0x80000, REGION_USER1, 0 )
+	ROM_REGION16_LE( 0x80000, REGION_USER1, 0 )
 	ROM_LOAD16_WORD( "c57-05", 0x00000, 0x80000, 0x6a70eb2e )	/* STY, index used to create 64x64 sprites on the fly */
 
 	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* ADPCM samples */
 	ROM_LOAD( "c57-07", 0x00000, 0x80000, 0xad653dc1 )
 
-	ROM_REGION( 0x80000, REGION_SOUND2, 0 )	/* delta-t samples */
+	ROM_REGION( 0x80000, REGION_SOUND2, 0 )	/* Delta-T samples */
 	ROM_LOAD( "c57-08", 0x00000, 0x80000, 0x22593550 )
 
 /*	(there probably should be an unused 0x10000 rom like the rest) */
@@ -3286,10 +3275,10 @@ ROM_END
 
 ROM_START( dblaxle )
 	ROM_REGION( 0x80000, REGION_CPU1, 0 )	/* 512K for 68000 code (CPU A) */
-	ROM_LOAD16_BYTE( "ic3-c78.41",  0x00000, 0x20000, 0xcf297fe4 )
-	ROM_LOAD16_BYTE( "ic5-c78.43",  0x00001, 0x20000, 0x38a8bad6 )
-	ROM_LOAD16_BYTE( "ic4-c78.42",  0x40000, 0x20000, 0x4124ab2b )
-	ROM_LOAD16_BYTE( "ic6-c78.44",  0x40001, 0x20000, 0x50a55b6e )
+	ROM_LOAD16_BYTE( "c78-41.3",  0x00000, 0x20000, 0xcf297fe4 )
+	ROM_LOAD16_BYTE( "c78-43.5",  0x00001, 0x20000, 0x38a8bad6 )
+	ROM_LOAD16_BYTE( "c78-42.4",  0x40000, 0x20000, 0x4124ab2b )
+	ROM_LOAD16_BYTE( "c78-44.6",  0x40001, 0x20000, 0x50a55b6e )
 
 	ROM_REGION( 0x40000, REGION_CPU3, 0 )	/* 256K for 68000 code (CPU B) */
 	ROM_LOAD16_BYTE( "c78-30-1.35", 0x00000, 0x20000, 0x026aac18 )
@@ -3307,22 +3296,22 @@ ROM_START( dblaxle )
 	ROM_LOAD32_BYTE( "c78-08.25", 0x000000, 0x100000, 0x6c725211 )	/* OBJ: each rom has 1 bitplane, forming 16x8 tiles */
 	ROM_LOAD32_BYTE( "c78-07.33", 0x000001, 0x100000, 0x9da00d5b )
 	ROM_LOAD32_BYTE( "c78-06.23", 0x000002, 0x100000, 0x8309e91b )
-	ROMX_LOAD      ( "ic01-c78.05l", 0x000003, 0x080000, 0xf24bf972, ROM_SKIP(7) )
-	ROMX_LOAD      ( "ic02-c78.05h", 0x000007, 0x080000, 0xc01039b5, ROM_SKIP(7) )
+	ROMX_LOAD      ( "c78-05l.1", 0x000003, 0x080000, 0xf24bf972, ROM_SKIP(7) )
+	ROMX_LOAD      ( "c78-05h.2", 0x000007, 0x080000, 0xc01039b5, ROM_SKIP(7) )
 
 	ROM_REGION( 0x80000, REGION_GFX3, 0 )	/* don't dispose */
 	ROM_LOAD( "c78-09.12", 0x000000, 0x80000, 0x0dbde6f5 )	/* ROD, road lines */
 
-	ROM_REGION( 0x80000, REGION_USER1, 0 )
+	ROM_REGION16_LE( 0x80000, REGION_USER1, 0 )
 	ROM_LOAD16_WORD( "c78-04.3", 0x00000, 0x80000, 0xcc1aa37c )	/* STY, index used to create 64x64 sprites on the fly */
 
 	ROM_REGION( 0x180000, REGION_SOUND1, 0 )	/* ADPCM samples */
-	ROM_LOAD( "ic33-c78.12", 0x000000, 0x80000, 0xfbb39585 )	// Half size ??
+	ROM_LOAD( "c78-12.33", 0x000000, 0x80000, 0xfbb39585 )	// Half size ??
 	// ??? gap 0x80000-fffff //
-	ROM_LOAD( "ic46-c78.13", 0x100000, 0x80000, 0x1b363aa2 )
+	ROM_LOAD( "c78-13.46", 0x100000, 0x80000, 0x1b363aa2 )
 
-	ROM_REGION( 0x80000, REGION_SOUND2, 0 )	/* delta-t samples */
-	ROM_LOAD( "ic31-c78.14",  0x00000, 0x80000, 0x9cad4dfb )
+	ROM_REGION( 0x80000, REGION_SOUND2, 0 )	/* Delta-T samples */
+	ROM_LOAD( "c78-14.31",  0x00000, 0x80000, 0x9cad4dfb )
 
 	ROM_REGION( 0x10000, REGION_USER2, 0 )	/* unused roms */
 	ROM_LOAD( "c78-25.15",  0x00000, 0x10000, 0x7245a6f6 )	// 98% compression
@@ -3332,7 +3321,6 @@ ROM_START( dblaxle )
 	ROM_LOAD( "c84-11.17",  0x00000, 0x00400, 0x10728853 )
 ROM_END
 
-// Prog roms and sound roms are different; we need to standardize on naming //
 ROM_START( pwheelsj )
 	ROM_REGION( 0x80000, REGION_CPU1, 0 )	/* 512K for 68000 code (CPU A) */
 	ROM_LOAD16_BYTE( "c78-26-2.2",  0x00000, 0x20000, 0x25c8eb2e )
@@ -3361,14 +3349,14 @@ ROM_START( pwheelsj )
 	ROM_REGION( 0x80000, REGION_GFX3, 0 )	/* don't dispose */
 	ROM_LOAD( "c78-09.12", 0x000000, 0x80000, 0x0dbde6f5 )	/* ROD, road lines */
 
-	ROM_REGION( 0x80000, REGION_USER1, 0 )
+	ROM_REGION16_LE( 0x80000, REGION_USER1, 0 )
 	ROM_LOAD16_WORD( "c78-04.3", 0x00000, 0x80000, 0xcc1aa37c )	/* STY, index used to create 64x64 sprites on the fly */
 
 	ROM_REGION( 0x180000, REGION_SOUND1, 0 )	/* ADPCM samples */
 	ROM_LOAD( "c78-01.33", 0x000000, 0x100000, 0x90ff1e72 )
 	ROM_LOAD( "c78-02.46", 0x100000, 0x080000, 0x8882d2b7 )
 
-	ROM_REGION( 0x80000, REGION_SOUND2, 0 )	/* delta-t samples */
+	ROM_REGION( 0x80000, REGION_SOUND2, 0 )	/* Delta-T samples */
 	ROM_LOAD( "c78-03.31",  0x00000, 0x80000, 0x9b926a2f )
 
 	ROM_REGION( 0x10000, REGION_USER2, 0 )	/* unused roms */
@@ -3405,9 +3393,9 @@ GAMEX( 1988, chasehq,  0,        chasehq,  chasehq,  taitoz,   ROT0,            
 GAMEX( 1988, chasehqj, chasehq,  chasehq,  chasehq,  taitoz,   ROT0,               "Taito Corporation", "Chase HQ (Japan)", GAME_NOT_WORKING )
 GAMEX( 1989, bshark,   0,        bshark,   bshark,   bshark,   ORIENTATION_FLIP_X, "Taito America Corporation", "Battle Shark (US)", GAME_NOT_WORKING )
 GAMEX( 1989, bsharkj,  bshark,   bshark,   bshark,   bshark,   ORIENTATION_FLIP_X, "Taito Corporation", "Battle Shark (Japan)", GAME_NOT_WORKING )
-GAMEX( 1989, chasehq2, 0,        chasehq2, chasehq2, taitoz,   ROT0,               "Taito Corporation Japan", "Chase HQ 2: SCI (World set 1)", GAME_NOT_WORKING )
-GAMEX( 1989, chashq2a, chasehq2, chasehq2, chasehq2, taitoz,   ROT0,               "Taito Corporation Japan", "Chase HQ 2: SCI (World set 2)", GAME_NOT_WORKING )
-GAMEX( 1989, chashq2u, chasehq2, chasehq2, chasehq2, taitoz,   ROT0,               "Taito America Corporation", "Chase HQ 2: SCI (US)", GAME_NOT_WORKING )
+GAMEX( 1989, sci,      0,        sci,      sci,      taitoz,   ROT0,               "Taito Corporation Japan", "Special Criminal Investigation (World set 1)", GAME_NOT_WORKING )
+GAMEX( 1989, scia,     sci,      sci,      sci,      taitoz,   ROT0,               "Taito Corporation Japan", "Special Criminal Investigation (World set 2)", GAME_NOT_WORKING )
+GAMEX( 1989, sciu,     sci,      sci,      sci,      taitoz,   ROT0,               "Taito America Corporation", "Special Criminal Investigation (US)", GAME_NOT_WORKING )
 GAMEX( 1989, nightstr, 0,        nightstr, nightstr, taitoz,   ROT0,               "Taito America Corporation", "Night Striker (US)", GAME_NOT_WORKING )
 GAMEX( 1990, aquajack, 0,        aquajack, aquajack, taitoz,   ROT0,               "Taito Corporation Japan", "Aqua Jack (World)", GAME_NOT_WORKING )
 GAMEX( 1990, aquajckj, aquajack, aquajack, aquajack, taitoz,   ROT0,               "Taito Corporation", "Aqua Jack (Japan)", GAME_NOT_WORKING )

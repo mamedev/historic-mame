@@ -210,6 +210,9 @@ static const struct m68k_memory_interface interface_a32_d32 =
 	changepc_a32_d32
 };
 
+/* global access */
+struct m68k_memory_interface m68k_memory_intf;
+
 #endif // A68K2
 
 /****************************************************************************
@@ -239,11 +242,15 @@ static UINT8 m68000_win_layout[] = {
 	 0,23,80, 1 	/* command line window (bottom rows) */
 };
 
-void m68000_reset(void* param)
+void m68000_init(void)
 {
 	m68k_set_cpu_type(M68K_CPU_TYPE_68000);
-	if (m68k_memory_intf.read8 != cpu_readmem24bew)
-		m68k_memory_intf = interface_a24_d16;
+	m68k_memory_intf = interface_a24_d16;
+	m68k_state_register("m68000");
+}
+
+void m68000_reset(void* param)
+{
 	m68k_pulse_reset();
 }
 
@@ -365,32 +372,6 @@ void m68000_set_reg(int regnum, unsigned val)
 	}
 }
 
-
-static void* m68000_file;
-static unsigned int m68000_load_value(char* identifier)
-{
-	unsigned int value;
-	state_load_UINT32(m68000_file, "m68000", cpu_getactivecpu(), identifier, &value, 1);
-	return value;
-}
-
-static void m68000_save_value(char* identifier, unsigned int value)
-{
-	state_save_UINT32(m68000_file, "m68000", cpu_getactivecpu(), identifier, &value, 1);
-}
-
-void m68000_state_load(void *file)
-{
-	m68000_file = file;
-	m68k_load_context(m68000_load_value);
-}
-
-void m68000_state_save(void *file)
-{
-	m68000_file = file;
-	m68k_save_context(m68000_save_value);
-}
-
 void m68000_set_nmi_line(int state)
 {
 	switch(state)
@@ -496,7 +477,7 @@ const char *m68000_info(void *context, int regnum)
 
 unsigned m68000_dasm(char *buffer, unsigned pc)
 {
-	change_pc32bew(pc);
+	M68K_SET_PC_CALLBACK(pc);
 #ifdef MAME_DEBUG
 	return m68k_disassemble( buffer, pc, M68K_CPU_TYPE_68000 );
 #else
@@ -535,11 +516,15 @@ static UINT8 m68010_win_layout[] = {
 };
 
 
-void m68010_reset(void* param)
+void m68010_init(void)
 {
 	m68k_set_cpu_type(M68K_CPU_TYPE_68010);
-	if (m68k_memory_intf.read8 != cpu_readmem24bew)
-		m68k_memory_intf = interface_a24_d16;
+	m68k_memory_intf = interface_a24_d16;
+	m68k_state_register("m68010");
+}
+
+void m68010_reset(void* param)
+{
 	m68k_pulse_reset();
 }
 
@@ -667,31 +652,6 @@ void m68010_set_reg(int regnum, unsigned val)
 	}
 }
 
-static void* m68010_file;
-static unsigned int m68010_load_value(char* identifier)
-{
-	unsigned int value;
-	state_load_UINT32(m68010_file, "m68010", cpu_getactivecpu(), identifier, &value, 1);
-	return value;
-}
-
-static void m68010_save_value(char* identifier, unsigned int value)
-{
-	state_save_UINT32(m68010_file, "m68010", cpu_getactivecpu(), identifier, &value, 1);
-}
-
-void m68010_state_load(void *file)
-{
-	m68010_file = file;
-	m68k_load_context(m68010_load_value);
-}
-
-void m68010_state_save(void *file)
-{
-	m68010_file = file;
-	m68k_save_context(m68010_save_value);
-}
-
 void m68010_set_nmi_line(int state)
 {
 	switch(state)
@@ -800,7 +760,7 @@ const char *m68010_info(void *context, int regnum)
 
 unsigned m68010_dasm(char *buffer, unsigned pc)
 {
-	change_pc32bew(pc);
+	M68K_SET_PC_CALLBACK(pc);
 #ifdef MAME_DEBUG
 	return m68k_disassemble(buffer, pc, M68K_CPU_TYPE_68010);
 #else
@@ -845,11 +805,15 @@ static UINT8 m68ec020_win_layout[] = {
 };
 
 
-void m68ec020_reset(void* param)
+void m68ec020_init(void)
 {
 	m68k_set_cpu_type(M68K_CPU_TYPE_68EC020);
-	if (m68k_memory_intf.read8 != cpu_readmem24bedw)
-		m68k_memory_intf = interface_a24_d32;
+	m68k_memory_intf = interface_a24_d32;
+	m68k_state_register("m68ec020");
+}
+
+void m68ec020_reset(void* param)
+{
 	m68k_pulse_reset();
 }
 
@@ -983,31 +947,6 @@ void m68ec020_set_reg(int regnum, unsigned val)
 	}
 }
 
-static void* m68ec020_file;
-static unsigned int m68ec020_load_value(char* identifier)
-{
-	unsigned int value;
-	state_load_UINT32(m68ec020_file, "m68ec020", cpu_getactivecpu(), identifier, &value, 1);
-	return value;
-}
-
-static void m68ec020_save_value(char* identifier, unsigned int value)
-{
-	state_save_UINT32(m68ec020_file, "m68ec020", cpu_getactivecpu(), identifier, &value, 1);
-}
-
-void m68ec020_state_load(void *file)
-{
-	m68ec020_file = file;
-	m68k_load_context(m68ec020_load_value);
-}
-
-void m68ec020_state_save(void *file)
-{
-	m68ec020_file = file;
-	m68k_save_context(m68ec020_save_value);
-}
-
 void m68ec020_set_nmi_line(int state)
 {
 	switch(state)
@@ -1118,7 +1057,7 @@ const char *m68ec020_info(void *context, int regnum)
 
 unsigned m68ec020_dasm(char *buffer, unsigned pc)
 {
-	change_pc32bew(pc);
+	M68K_SET_PC_CALLBACK(pc);
 #ifdef MAME_DEBUG
 	return m68k_disassemble(buffer, pc, M68K_CPU_TYPE_68020);
 #else
@@ -1157,11 +1096,15 @@ static UINT8 m68020_win_layout[] = {
 };
 
 
-void m68020_reset(void* param)
+void m68020_init(void)
 {
 	m68k_set_cpu_type(M68K_CPU_TYPE_68020);
-	if (m68k_memory_intf.read8 != cpu_readmem32bedw)
-		m68k_memory_intf = interface_a32_d32;
+	m68k_memory_intf = interface_a32_d32;
+	m68k_state_register("m68020");
+}
+
+void m68020_reset(void* param)
+{
 	m68k_pulse_reset();
 }
 
@@ -1295,31 +1238,6 @@ void m68020_set_reg(int regnum, unsigned val)
 	}
 }
 
-static void* m68020_file;
-static unsigned int m68020_load_value(char* identifier)
-{
-	unsigned int value;
-	state_load_UINT32(m68020_file, "m68020", cpu_getactivecpu(), identifier, &value, 1);
-	return value;
-}
-
-static void m68020_save_value(char* identifier, unsigned int value)
-{
-	state_save_UINT32(m68020_file, "m68020", cpu_getactivecpu(), identifier, &value, 1);
-}
-
-void m68020_state_load(void *file)
-{
-	m68020_file = file;
-	m68k_load_context(m68020_load_value);
-}
-
-void m68020_state_save(void *file)
-{
-	m68020_file = file;
-	m68k_save_context(m68020_save_value);
-}
-
 void m68020_set_nmi_line(int state)
 {
 	switch(state)
@@ -1430,7 +1348,7 @@ const char *m68020_info(void *context, int regnum)
 
 unsigned m68020_dasm(char *buffer, unsigned pc)
 {
-	change_pc32bew(pc);
+	M68K_SET_PC_CALLBACK(pc);
 #ifdef MAME_DEBUG
 	return m68k_disassemble(buffer, pc, M68K_CPU_TYPE_68020);
 #else

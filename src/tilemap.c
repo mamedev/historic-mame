@@ -50,7 +50,7 @@
 
 #include "driver.h"
 #include "tilemap.h"
-
+#include "state.h"
 
 struct cached_tile_info {
 	const UINT8 *pen_data;
@@ -701,34 +701,45 @@ static void install_draw_handlers( struct tilemap *tilemap ){
 		if( tile_width==8 && tile_height==8 ){
 			tilemap->draw = draw8x8x16BPP;
 			tilemap->draw_opaque = draw_opaque8x8x16BPP;
+			tilemap->draw_alpha = draw8x8x16BPP;
 		}
 		else if( tile_width==16 && tile_height==16 ){
 			tilemap->draw = draw16x16x16BPP;
 			tilemap->draw_opaque = draw_opaque16x16x16BPP;
+			tilemap->draw_alpha = draw16x16x16BPP;
 		}
 		else if( tile_width==32 && tile_height==32 ){
 			tilemap->draw = draw32x32x16BPP;
 			tilemap->draw_opaque = draw_opaque32x32x16BPP;
+			tilemap->draw_alpha = draw32x32x16BPP;
 		}
 		break;
 	case 8:
 		if( tile_width==8 && tile_height==8 ){
 			tilemap->draw = draw8x8x8BPP;
 			tilemap->draw_opaque = draw_opaque8x8x8BPP;
+			tilemap->draw_alpha = draw8x8x8BPP;
 		}
 		else if( tile_width==16 && tile_height==16 ){
 			tilemap->draw = draw16x16x8BPP;
 			tilemap->draw_opaque = draw_opaque16x16x8BPP;
+			tilemap->draw_alpha = draw16x16x8BPP;
 		}
 		else if( tile_width==32 && tile_height==32 ){
 			tilemap->draw = draw32x32x8BPP;
 			tilemap->draw_opaque = draw_opaque32x32x8BPP;
+			tilemap->draw_alpha = draw32x32x8BPP;
 		}
 		break;
 	}
 }
 
 /***********************************************************************************/
+
+static void tilemap_reset(void)
+{
+	tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
+}
 
 int tilemap_init( void ){
 	UINT32 value, data, bit;
@@ -740,6 +751,7 @@ int tilemap_init( void ){
 	screen_width = Machine->scrbitmap->width;
 	screen_height = Machine->scrbitmap->height;
 	first_tilemap = 0;
+	state_save_register_func_postload(tilemap_reset);
 	priority_bitmap = create_tmpbitmap( screen_width, screen_height, 8 );
 	if( priority_bitmap ){
 		priority_bitmap_line_offset = priority_bitmap->line[1] - priority_bitmap->line[0];
@@ -905,7 +917,6 @@ static void register_pens( struct cached_tile_info *cached_tile_info, int num_pe
 /***********************************************************************************/
 
 void tilemap_set_enable( struct tilemap *tilemap, int enable ){
-	logerror( "tilemap[%08x] enable := %d\n", tilemap, enable );
 	tilemap->enable = enable?1:0;
 }
 
@@ -2262,6 +2273,7 @@ DECLARE( draw_alpha, (int xpos, int ypos),
 #include <string.h>
 #include "driver.h"
 #include "tilemap.h"
+#include "state.h"
 
 enum
 {
@@ -3902,6 +3914,11 @@ static int install_draw_handlers( struct tilemap *tilemap )
 
 /***********************************************************************************/
 
+static void tilemap_reset(void)
+{
+	tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
+}
+
 int tilemap_init( void )
 {
 	UINT32 value, data, bit;
@@ -3918,6 +3935,7 @@ int tilemap_init( void )
 	screen_width = Machine->scrbitmap->width;
 	screen_height = Machine->scrbitmap->height;
 	first_tilemap = 0;
+	state_save_register_func_postload(tilemap_reset);
 	priority_bitmap = osd_alloc_bitmap( screen_width,screen_height,8 );
 	if( priority_bitmap )
 	{
@@ -4645,7 +4663,6 @@ static void update_tile( void *data, UINT32 indx )
 		tilemap->tile_get_info( memory_offset );
 		tilemap->cached_tile[indx] = get_cached_tile( (struct tilemap *)data );
 	}
-//	logerror( "update_tile[%d]\n", indx );
 }
 
 void tilemap_update( struct tilemap *tilemap )

@@ -18,6 +18,7 @@
 
 #include "driver.h"
 #include "osd_cpu.h"
+#include "state.h"
 
 #include <stdarg.h>
 
@@ -193,6 +194,7 @@ static int verify_ports(void);
 static int allocate_memory(void);
 static int populate_memory(void);
 static int populate_ports(void);
+static void register_banks(void);
 static int address_bits_of_cpu(int cpu);
 static int init_static(void);
 
@@ -238,6 +240,8 @@ int memory_init(void)
 		return 0;
 	if (!populate_ports())
 		return 0;
+
+	register_banks();
 
 #ifdef MEM_DUMP
 	/* dump the final memory configuration */
@@ -1360,6 +1364,267 @@ static int populate_ports(void)
 
 
 /*-------------------------------------------------
+	register_banks - Registers all memory banks
+    into the state save system
+-------------------------------------------------*/
+typedef struct rg_map_entry {
+	struct rg_map_entry *next;
+	UINT32 start;
+	UINT32 end;
+	int flags;
+} rg_map_entry;
+
+static rg_map_entry *rg_map = 0;
+
+enum {
+	RG_SAVE_READ  = 0x0001,
+	RG_DROP_READ  = 0x0002,
+	RG_READ_MASK  = 0x00ff,
+
+	RG_SAVE_WRITE = 0x0100,
+	RG_DROP_WRITE = 0x0200,
+	RG_WRITE_MASK = 0xff00
+};
+
+static void rg_add_entry(UINT32 start, UINT32 end, int mode)
+{
+	rg_map_entry **cur;
+	cur = &rg_map;
+	while(*cur && ((*cur)->end < start))
+		cur = &(*cur)->next;
+
+	while(start <= end)
+	{
+		int mask;
+		if(!*cur || ((*cur)->start > start))
+		{
+			rg_map_entry *e = malloc(sizeof(rg_map_entry));
+			e->start = start;
+			e->end = *cur && (*cur)->start <= end ? (*cur)->start - 1 : end;
+			e->flags = mode;
+			e->next = *cur;
+			*cur = e;
+			cur = &(*cur)->next;
+			start = e->end + 1;
+			if(start > end)
+				return;
+		}
+
+		if((*cur)->start < start)
+		{
+			rg_map_entry *e = malloc(sizeof(rg_map_entry));
+			e->start = (*cur)->start;
+			e->end = start - 1;
+			e->flags = (*cur)->flags;
+			e->next = *cur;
+			(*cur)->start = start;
+			*cur = e;
+			cur = &(*cur)->next;
+		}
+
+		if((*cur)->end > end)
+		{
+			rg_map_entry *e = malloc(sizeof(rg_map_entry));
+			e->start = start;
+			e->end = end;
+			e->flags = (*cur)->flags;
+			e->next = *cur;
+			(*cur)->start = end+1;
+			*cur = e;
+		}
+
+		mask = 0;
+
+		if (mode & RG_READ_MASK)
+			mask |= RG_READ_MASK;
+		if (mode & RG_WRITE_MASK)
+			mask |= RG_WRITE_MASK;
+
+		(*cur)->flags = ((*cur)->flags & ~mask) | mode;
+		start = (*cur)->end + 1;
+		cur = &(*cur)->next;
+	}
+}
+
+static void rg_map_clear(void)
+{
+	rg_map_entry *e = rg_map;
+	while(e)
+	{
+		rg_map_entry *n = e->next;
+		free(e);
+		e = n;
+	}
+	rg_map = 0;
+}
+
+static void register_zone(int cpu, UINT32 start, UINT32 end)
+{
+	char name[256];
+	sprintf (name, "%08x-%08x", start, end);
+	switch (cpunum_databus_width(cpu))
+	{
+	case 8:
+		state_save_register_UINT8 ("memory", cpu, name, memory_find_base(cpu, start), end-start+1);
+		break;
+	case 16:
+		state_save_register_UINT16("memory", cpu, name, memory_find_base(cpu, start), (end-start+1)/2);
+		break;
+	case 32:
+		state_save_register_UINT32("memory", cpu, name, memory_find_base(cpu, start), (end-start+1)/4);
+		break;
+	}
+}
+
+void register_banks(void)
+{
+	int cpu, i;
+	int banksize[MAX_BANKS];
+	int bankcpu[MAX_BANKS];
+
+	for (i=0; i<MAX_BANKS; i++)
+	{
+		banksize[i] = 0;
+		bankcpu[i] = -1;
+	}
+
+	/* loop over CPUs */
+	for (cpu = 0; cpu < cpu_gettotalcpu(); cpu++)
+	{
+		const struct Memory_ReadAddress *mra, *mra_start = Machine->drv->cpu[cpu].memory_read;
+		const struct Memory_WriteAddress *mwa, *mwa_start = Machine->drv->cpu[cpu].memory_write;
+		int bits = cpudata[cpu].mem.abits;
+//		int width = cpunum_databus_width(cpu);
+
+		if (!IS_SPARSE(bits))
+		{
+			UINT32 size = memory_region_length(REGION_CPU1 + cpu);
+			if (size > (1<<bits))
+				size = 1 << bits;
+			rg_add_entry(0, size-1, RG_SAVE_READ|RG_SAVE_WRITE);
+		}
+
+
+		if (mra_start)
+		{
+			for (mra = mra_start; !IS_MEMPORT_END(mra); mra++);
+			mra--;
+			for (;mra != mra_start; mra--)
+			{
+				if (!IS_MEMPORT_MARKER (mra))
+				{
+					int mode;
+					mem_read_handler h = mra->handler;
+					if (!HANDLER_IS_STATIC (h))
+						mode = RG_DROP_READ;
+					else if (HANDLER_IS_RAM(h))
+						mode = RG_SAVE_READ;
+					else if (HANDLER_IS_ROM(h))
+						mode = RG_DROP_READ;
+					else if (HANDLER_IS_RAMROM(h))
+						mode = RG_SAVE_READ;
+					else if (HANDLER_IS_NOP(h))
+						mode = RG_DROP_READ;
+					else if (HANDLER_IS_BANK(h))
+					{
+						int size = mra->end-mra->start+1;
+						if (banksize[HANDLER_TO_BANK(h)] < size)
+							banksize[HANDLER_TO_BANK(h)] = size;
+						bankcpu[HANDLER_TO_BANK(h)] = cpu;
+						mode = RG_DROP_READ;
+					}
+					else
+						abort();
+					rg_add_entry(mra->start, mra->end, mode);
+				}
+			}
+		}
+		if (mwa_start)
+		{
+			for (mwa = mwa_start; !IS_MEMPORT_END(mwa); mwa++);
+			mwa--;
+			for (;mwa != mwa_start; mwa--)
+			{
+				if (!IS_MEMPORT_MARKER (mwa))
+				{
+					int mode;
+					mem_write_handler h = mwa->handler;
+					if (!HANDLER_IS_STATIC (h))
+						mode = mwa->base ? RG_SAVE_WRITE : RG_DROP_WRITE;
+					else if (HANDLER_IS_RAM(h))
+						mode = RG_SAVE_WRITE;
+					else if (HANDLER_IS_ROM(h))
+						mode = RG_DROP_WRITE;
+					else if (HANDLER_IS_RAMROM(h))
+						mode = RG_SAVE_WRITE;
+					else if (HANDLER_IS_NOP(h))
+						mode = RG_DROP_WRITE;
+					else if (HANDLER_IS_BANK(h))
+					{
+						int size = mwa->end-mwa->start+1;
+						if (banksize[HANDLER_TO_BANK(h)] < size)
+							banksize[HANDLER_TO_BANK(h)] = size;
+						bankcpu[HANDLER_TO_BANK(h)] = cpu;
+						mode = RG_DROP_WRITE;;
+					}
+					else
+						abort();
+					rg_add_entry(mwa->start, mwa->end, mode);
+				}
+			}
+		}
+
+		{
+			rg_map_entry *e = rg_map;
+			UINT32 start = 0, end = 0;
+			int active = 0;
+			while (e)
+			{
+				if(e && (e->flags & (RG_SAVE_READ|RG_SAVE_WRITE)))
+				{
+					if (!active)
+					{
+						active = 1;
+						start = e->start;
+					}
+					end = e->end;
+				}
+				else if (active)
+				{
+					register_zone (cpu, start, end);
+					active = 0;
+				}
+
+				if (active && (!e->next || (e->end+1 != e->next->start)))
+				{
+					register_zone (cpu, start, end);
+					active = 0;
+				}
+				e = e->next;
+			}
+		}
+
+		rg_map_clear();
+	}
+
+	for (i=0; i<MAX_BANKS; i++)
+		if (banksize[i])
+			switch (cpunum_databus_width(bankcpu[i]))
+			{
+			case 8:
+				state_save_register_UINT8 ("bank", i, "ram",           cpu_bankbase[i], banksize[i]);
+				break;
+			case 16:
+				state_save_register_UINT16("bank", i, "ram", (UINT16 *)cpu_bankbase[i], banksize[i]/2);
+				break;
+			case 32:
+				state_save_register_UINT32("bank", i, "ram", (UINT32 *)cpu_bankbase[i], banksize[i]/4);
+				break;
+			}
+
+}
+
+/*-------------------------------------------------
 	READBYTE - generic byte-sized read handler
 -------------------------------------------------*/
 
@@ -1411,7 +1676,7 @@ data8_t name(offs_t address)															\
 	{																					\
 		int shift = 8 * (~address & 1);													\
 		read16_handler handler = (read16_handler)handlist[entry].handler;				\
-		MEMREADEND((*handler)(address >> 1) >> shift)									\
+		MEMREADEND((*handler)(address >> 1, ~(0xff << shift)) >> shift)					\
 	}																					\
 	return 0;																			\
 }																						\
@@ -1438,7 +1703,7 @@ data8_t name(offs_t address)															\
 	{																					\
 		int shift = 8 * (address & 1);													\
 		read16_handler handler = (read16_handler)handlist[entry].handler;				\
-		MEMREADEND((*handler)(address >> 1) >> shift)									\
+		MEMREADEND((*handler)(address >> 1, ~(0xff << shift)) >> shift)					\
 	}																					\
 	return 0;																			\
 }																						\
@@ -1465,7 +1730,7 @@ data8_t name(offs_t address)															\
 	{																					\
 		int shift = 8 * (~address & 3);													\
 		read32_handler handler = (read32_handler)handlist[entry].handler;				\
-		MEMREADEND((*handler)(address >> 2) >> shift) 									\
+		MEMREADEND((*handler)(address >> 2, ~(0xff << shift)) >> shift) 				\
 	}																					\
 	return 0;																			\
 }																						\
@@ -1492,7 +1757,7 @@ data8_t name(offs_t address)															\
 	{																					\
 		int shift = 8 * (address & 3);													\
 		read32_handler handler = (read32_handler)handlist[entry].handler;				\
-		MEMREADEND((*handler)(address >> 2) >> shift) 									\
+		MEMREADEND((*handler)(address >> 2, ~(0xff << shift)) >> shift) 				\
 	}																					\
 	return 0;																			\
 }																						\
@@ -1524,7 +1789,7 @@ data16_t name(offs_t address)															\
 	else																				\
 	{																					\
 		read16_handler handler = (read16_handler)handlist[entry].handler;				\
-		MEMREADEND((*handler)(address >> 1))										 	\
+		MEMREADEND((*handler)(address >> 1,0))										 	\
 	}																					\
 	return 0;																			\
 }																						\
@@ -1551,7 +1816,7 @@ data16_t name(offs_t address)															\
 	{																					\
 		int shift = 8 * (~address & 2);													\
 		read32_handler handler = (read32_handler)handlist[entry].handler;				\
-		MEMREADEND((*handler)(address >> 2) >> shift)									\
+		MEMREADEND((*handler)(address >> 2, ~(0xffff << shift)) >> shift)				\
 	}																					\
 	return 0;																			\
 }																						\
@@ -1578,7 +1843,7 @@ data16_t name(offs_t address)															\
 	{																					\
 		int shift = 8 * (address & 2);													\
 		read32_handler handler = (read32_handler)handlist[entry].handler;				\
-		MEMREADEND((*handler)(address >> 2) >> shift)									\
+		MEMREADEND((*handler)(address >> 2, ~(0xffff << shift)) >> shift)				\
 	}																					\
 	return 0;																			\
 }																						\
@@ -1610,7 +1875,7 @@ data32_t name(offs_t address)															\
 	else																				\
 	{																					\
 		read32_handler handler = (read32_handler)handlist[entry].handler;				\
-		MEMREADEND((*handler)(address >> 2))										 	\
+		MEMREADEND((*handler)(address >> 2,0))										 	\
 	}																					\
 	return 0;																			\
 }																						\
@@ -2077,13 +2342,13 @@ static READ_HANDLER( mrh8_bad )
 }
 static READ16_HANDLER( mrh16_bad )
 {
-	logerror("cpu #%d (PC=%08X): unmapped memory word read from %08X\n", cpu_getactivecpu(), cpu_get_pc(), offset*2);
+	logerror("cpu #%d (PC=%08X): unmapped memory word read from %08X & %04X\n", cpu_getactivecpu(), cpu_get_pc(), offset*2, mem_mask ^ 0xffff);
 	if (cpu_address_bits() <= SPARSE_THRESH) return ((data16_t *)cpu_bankbase[STATIC_RAM])[offset];
 	return 0;
 }
 static READ32_HANDLER( mrh32_bad )
 {
-	logerror("cpu #%d (PC=%08X): unmapped memory dword read from %08X\n", cpu_getactivecpu(), cpu_get_pc(), offset*4);
+	logerror("cpu #%d (PC=%08X): unmapped memory dword read from %08X & %08X\n", cpu_getactivecpu(), cpu_get_pc(), offset*4, mem_mask ^ 0xffffffff);
 	if (cpu_address_bits() <= SPARSE_THRESH) return ((data32_t *)cpu_bankbase[STATIC_RAM])[offset];
 	return 0;
 }
@@ -2111,12 +2376,12 @@ static READ_HANDLER( prh8_bad )
 }
 static READ16_HANDLER( prh16_bad )
 {
-	logerror("cpu #%d (PC=%08X): unmapped port word read from %08X\n", cpu_getactivecpu(), cpu_get_pc(), offset*2);
+	logerror("cpu #%d (PC=%08X): unmapped port word read from %08X & %04X\n", cpu_getactivecpu(), cpu_get_pc(), offset*2, mem_mask ^ 0xffff);
 	return 0;
 }
 static READ32_HANDLER( prh32_bad )
 {
-	logerror("cpu #%d (PC=%08X): unmapped port dword read from %08X\n", cpu_getactivecpu(), cpu_get_pc(), offset*4);
+	logerror("cpu #%d (PC=%08X): unmapped port dword read from %08X & %08X\n", cpu_getactivecpu(), cpu_get_pc(), offset*4, mem_mask ^ 0xffffffff);
 	return 0;
 }
 

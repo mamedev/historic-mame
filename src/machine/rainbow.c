@@ -172,10 +172,10 @@ READ16_HANDLER( rainbow_c_chip_r )
 	{
 		switch (offset)
 		{
-			case 0x003: return input_port_2_word_r(offset);
-			case 0x004: return input_port_3_word_r(offset);
-			case 0x005: return input_port_4_word_r(offset);
-			case 0x006: return input_port_5_word_r(offset);
+			case 0x003: return input_port_2_word_r(offset,mem_mask);
+			case 0x004: return input_port_3_word_r(offset,mem_mask);
+			case 0x005: return input_port_4_word_r(offset,mem_mask);
+			case 0x006: return input_port_5_word_r(offset,mem_mask);
 		}
 	}
 

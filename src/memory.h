@@ -56,9 +56,9 @@ typedef UINT32			offs_t;
 /* ----- typedefs for the various common memory/port handlers ----- */
 typedef data8_t			(*read8_handler)  (UNUSEDARG offs_t offset);
 typedef void			(*write8_handler) (UNUSEDARG offs_t offset, UNUSEDARG data8_t data);
-typedef data16_t		(*read16_handler) (UNUSEDARG offs_t offset);
+typedef data16_t		(*read16_handler) (UNUSEDARG offs_t offset, UNUSEDARG data16_t mem_mask);
 typedef void			(*write16_handler)(UNUSEDARG offs_t offset, UNUSEDARG data16_t data, UNUSEDARG data16_t mem_mask);
-typedef data32_t		(*read32_handler) (UNUSEDARG offs_t offset);
+typedef data32_t		(*read32_handler) (UNUSEDARG offs_t offset, UNUSEDARG data32_t mem_mask);
 typedef void			(*write32_handler)(UNUSEDARG offs_t offset, UNUSEDARG data32_t data, UNUSEDARG data32_t mem_mask);
 typedef offs_t			(*opbase_handler) (UNUSEDARG offs_t address);
 
@@ -97,9 +97,9 @@ struct ExtMemory
 /* ----- macros for declaring the various common memory/port handlers ----- */
 #define READ_HANDLER(name) 		data8_t  name(UNUSEDARG offs_t offset)
 #define WRITE_HANDLER(name) 	void     name(UNUSEDARG offs_t offset, UNUSEDARG data8_t data)
-#define READ16_HANDLER(name)	data16_t name(UNUSEDARG offs_t offset)
+#define READ16_HANDLER(name)	data16_t name(UNUSEDARG offs_t offset, UNUSEDARG data16_t mem_mask)
 #define WRITE16_HANDLER(name)	void     name(UNUSEDARG offs_t offset, UNUSEDARG data16_t data, UNUSEDARG data16_t mem_mask)
-#define READ32_HANDLER(name)	data32_t name(UNUSEDARG offs_t offset)
+#define READ32_HANDLER(name)	data32_t name(UNUSEDARG offs_t offset, UNUSEDARG data32_t mem_mask)
 #define WRITE32_HANDLER(name)	void     name(UNUSEDARG offs_t offset, UNUSEDARG data32_t data, UNUSEDARG data32_t mem_mask)
 #define OPBASE_HANDLER(name)	offs_t   name(UNUSEDARG offs_t address)
 
@@ -658,10 +658,12 @@ void     cpu_setopbase##abits##ledw     (offs_t pc);					\
 
 /* ----- declare 8-bit handlers ----- */
 DECLARE_HANDLERS_8BIT(16)
+DECLARE_HANDLERS_8BIT(17)
 DECLARE_HANDLERS_8BIT(20)
 DECLARE_HANDLERS_8BIT(21)
 DECLARE_HANDLERS_8BIT(24)
 #define change_pc16(pc)			change_pc_generic(pc, 16, 0, cpu_setopbase16)
+#define change_pc17(pc) 		change_pc_generic(pc, 17, 0, cpu_setopbase17)
 #define change_pc20(pc)			change_pc_generic(pc, 20, 0, cpu_setopbase20)
 #define change_pc21(pc)			change_pc_generic(pc, 21, 0, cpu_setopbase21)
 #define change_pc24(pc)			change_pc_generic(pc, 24, 0, cpu_setopbase24)
@@ -740,9 +742,9 @@ void     cpu_writeport16lew_dword        (offs_t offset, data32_t data);
 data8_t  cpu_readport16bedw              (offs_t offset);
 void     cpu_writeport16bedw             (offs_t offset, data8_t data);
 data16_t cpu_readport16bedw_word         (offs_t offset);
-void     cpu_writeport16bew_word         (offs_t offset, data16_t data);
-data32_t cpu_readport16bew_dword         (offs_t offset);
-void     cpu_writeport16bew_dword        (offs_t offset, data32_t data);
+void	 cpu_writeport16bedw_word		 (offs_t offset, data16_t data);
+data32_t cpu_readport16bedw_dword		 (offs_t offset);
+void	 cpu_writeport16bedw_dword		 (offs_t offset, data32_t data);
 
 /***************************************************************************
 

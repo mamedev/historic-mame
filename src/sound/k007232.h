@@ -30,7 +30,7 @@ void K007232_bankswitch(int chip,unsigned char *ptr_A,unsigned char *ptr_B);
 
 /*
   The 007232 has two channels and produces two outputs. The volume control
-  is external, however to makes it easier to use we handle that inside the
+  is external, however to make it easier to use we handle that inside the
   emulation. You can control volume and panning: for each of the two channels
   you can set the volume of the two outputs. If panning is not required,
   then volumeB will be 0 for channel 0, and volumeA will be 0 for channel 1.

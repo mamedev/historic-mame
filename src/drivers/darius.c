@@ -134,19 +134,19 @@ static READ16_HANDLER( darius_ioc_r )
 			return (taitosound_comm_r(0) & 0xff);	/* sound interface read */
 
 		case 0x04:
-			return input_port_0_word_r(0);	/* IN0 */
+			return input_port_0_word_r(0,mem_mask);	/* IN0 */
 
 		case 0x05:
-			return input_port_1_word_r(0);	/* IN1 */
+			return input_port_1_word_r(0,mem_mask);	/* IN1 */
 
 		case 0x06:
-			return input_port_2_word_r(0);	/* IN2 */
+			return input_port_2_word_r(0,mem_mask);	/* IN2 */
 
 		case 0x07:
 			return 0xe7;	/* bits 3&4 coin lockouts, must return zero */
 
 		case 0x08:
-			return input_port_3_word_r(0);	/* DSW */
+			return input_port_3_word_r(0,mem_mask);	/* DSW */
 	}
 
 logerror("CPU #0 PC %06x: warning - read unmapped ioc offset %06x\n",cpu_get_pc(),offset);

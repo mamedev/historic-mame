@@ -22,6 +22,7 @@ extern int  konami_ICount;
 extern void (*konami_cpu_setlines_callback)( int lines ); /* callback called when A16-A23 are set */
 
 /* PUBLIC FUNCTIONS */
+extern void konami_init(void);
 extern void konami_reset(void *param);
 extern void konami_exit(void);
 extern int konami_execute(int cycles);  /* NS 970908 */
@@ -36,8 +37,6 @@ extern void konami_set_reg(int regnum, unsigned val);
 extern void konami_set_nmi_line(int state);
 extern void konami_set_irq_line(int irqline, int state);
 extern void konami_set_irq_callback(int (*callback)(int irqline));
-extern void konami_state_save(void *file);
-extern void konami_state_load(void *file);
 extern const char *konami_info(void *context,int regnum);
 extern unsigned konami_dasm(char *buffer, unsigned pc);
 

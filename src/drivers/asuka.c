@@ -149,15 +149,15 @@ static READ16_HANDLER( asuka_input_r )
 	switch (offset)
 	{
 		case 0x00:
-			return input_port_3_word_r(0);	/* DSW A */
+			return input_port_3_word_r(0,mem_mask);	/* DSW A */
 		case 0x01:
-			return input_port_4_word_r(0);	/* DSW B */
+			return input_port_4_word_r(0,mem_mask);	/* DSW B */
 		case 0x02:
-			return input_port_0_word_r(0);	/* IN0 */
+			return input_port_0_word_r(0,mem_mask);	/* IN0 */
 		case 0x03:
-			return input_port_1_word_r(0);	/* IN1 */
+			return input_port_1_word_r(0,mem_mask);	/* IN1 */
 		case 0x07:
-			return input_port_2_word_r(0);	/* IN2 */
+			return input_port_2_word_r(0,mem_mask);	/* IN2 */
 	}
 
 if (offset!=4)	// fills up log too much

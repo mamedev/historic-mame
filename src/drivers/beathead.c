@@ -338,7 +338,7 @@ static READ32_HANDLER( input_3_r )
 
 static READ32_HANDLER( sound_data_r )
 {
-	return atarigen_sound_r(offset);
+	return atarigen_sound_r(offset,0);
 }
 
 

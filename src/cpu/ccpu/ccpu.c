@@ -71,6 +71,10 @@ extern UINT16 ioSwitches;
 extern UINT16 ioInputs;
 
 
+void ccpu_init(void)
+{
+}
+
 void ccpu_reset(void *param)
 {
 	cineReset();

@@ -5,629 +5,580 @@
 #include <ctype.h>
 #include <stdarg.h>
 #include "osd_cpu.h"
-#include "memory.h"
-#include "mamedbg.h"
 #include "osdepend.h"
-#include "state.h"
 #include "mame.h"
+#include "driver.h"
+
+/* Save state file format:
+ *
+ *	0.. 7  'MAMESAVE"
+ *	8	   Format version (this is format 1)
+ *	9	   Flags
+ *	a..13  Game name padded with \0
+ * 14..17  Signature
+ * 18..end Save game data
+ */
+
+/* Available flags */
+enum {
+	SS_NO_SOUND = 0x01,
+	SS_MSB_FIRST = 0x02
+};
+
+#define VERBOSE
+
+#ifdef VERBOSE
+#define TRACE(x) do {x;} while(0)
+#else
+#define TRACE(x)
+#endif
+
+enum {MAX_INSTANCES = 25};
+
+enum {
+	SS_INT8,
+	SS_UINT8,
+	SS_INT16,
+	SS_UINT16,
+	SS_INT32,
+	SS_UINT32,
+	SS_INT,
+	SS_DOUBLE
+};
+
+static const char *ss_type[] =	{ "i8", "u8", "i16", "u16", "i32", "u32", "int", "dbl" };
+static int		   ss_size[] =	{	 1,    1,	  2,	 2, 	4,	   4,	  4,	 8 };
+
+static void ss_c2(unsigned char *, unsigned);
+static void ss_c4(unsigned char *, unsigned);
+static void ss_c8(unsigned char *, unsigned);
+
+static void (*ss_conv[])(unsigned char *, unsigned) = {
+	0, 0, ss_c2, ss_c2, ss_c4, ss_c4, 0, ss_c8
+};
 
 
-/* A forward linked list of the contents of a section */
-typedef struct tag_state_var {
-    struct tag_state_var *next;
-    char *name;
-    unsigned size;
-    unsigned chunk;
-    void *data;
-}   state_var;
+typedef struct ss_entry {
+	struct ss_entry *next;
+	char *name;
+	int type;
+	void *data;
+	unsigned size;
+	int tag;
+	unsigned offset;
+} ss_entry;
 
-/* Our state handling structure */
-typedef struct {
-    void *file;
-    const char *cur_module;
-    int cur_instance;
-    state_var *list;
-}   state_handle;
+typedef struct ss_module {
+	struct ss_module *next;
+	char *name;
+	ss_entry *instances[MAX_INSTANCES];
+} ss_module;
 
-INLINE unsigned xtoul(char **p, int *size)
+static ss_module *ss_registry;
+
+typedef struct ss_func {
+	struct ss_func *next;
+	void (*func)(void);
+	int tag;
+} ss_func;
+
+static ss_func *ss_prefunc_reg;
+static ss_func *ss_postfunc_reg;
+static int ss_current_tag;
+
+static unsigned char *ss_dump_array;
+static void *ss_dump_file;
+static unsigned int ss_dump_size;
+
+extern unsigned int crc32 (unsigned int crc, const char *buf, unsigned int len);
+
+static UINT32 ss_get_signature(void)
 {
-	unsigned val = 0, digit;
+	ss_module *m;
+	unsigned int size = 0, pos = 0;
+	char *info;
+	UINT32 signature;
 
-    if (size) *size = 0;
-	while( isxdigit(**p) )
-	{
-		digit = toupper(**p) - '0';
-		if( digit > 9 ) digit -= 7;
-		val = (val << 4) | digit;
-		if( size ) (*size)++;
-		*p += 1;
-	}
-	while( isspace(**p) ) *p += 1;
-	if (size) (*size) >>= 1;
-	return val;
-}
+	// Pass 1 : compute size
 
-INLINE char *ultox(unsigned val, unsigned size)
-{
-	static char buffer[32+1];
-	static char digit[] = "0123456789ABCDEF";
-	char *p = &buffer[size];
-	*p-- = '\0';
-	while( size-- > 0 )
-	{
-		*p-- = digit[val & 15];
-		val >>= 4;
-	}
-	return buffer;
-}
-
-/**************************************************************************
- * my_stricmp
- * Compare strings case insensitive
- **************************************************************************/
-INLINE int my_stricmp( const char *dst, const char *src)
-{
-	while( *src && *dst )
-	{
-		if( tolower(*src) != tolower(*dst) ) return *dst - *src;
-		src++;
-		dst++;
-	}
-	return *dst - *src;
-}
-
-/* free a linked list of state_vars (aka section) */
-void state_free_section( void *s )
-{
-	state_handle *state = (state_handle *)s;
-    state_var *v1, *v2;
-    v2 = state->list;
-    while( v2 )
-    {
-        if( v2->name ) free( v2->name );
-        if( v2->data ) free( v2->data );
-        v1 = v2;
-        v2 = v2->next;
-        free( v1 );
-    }
-    state->list = NULL;
-}
-
-void *state_create(const char *name)
-{
-	state_handle *state;
-	state = (state_handle *) malloc( sizeof(state_handle) );
-	if( !state ) return NULL;
-	state->cur_module = NULL;
-	state->cur_instance = 0;
-	state->list = NULL;
-	state->file = osd_fopen( name, NULL, OSD_FILETYPE_STATE, 1 );
-	if( !state->file )
-	{
-		free(state);
-		return NULL;
-	}
-	return state;
-}
-
-void *state_open(const char *name)
-{
-	state_handle *state;
-	state = (state_handle *) malloc( sizeof(state_handle) );
-	if( !state ) return NULL;
-	state->cur_module = NULL;
-	state->cur_instance = 0;
-	state->list = NULL;
-	state->file = osd_fopen( name, NULL, OSD_FILETYPE_STATE, 0 );
-	if( !state->file )
-	{
-		free(state);
-		return NULL;
-	}
-	return state;
-}
-
-void state_close( void *s )
-{
-	state_handle *state = (state_handle *)s;
-    if( !state ) return;
-	state_free_section( state );
-	if( state->file ) osd_fclose( state->file );
-	free( state );
-}
-
-/* Output a formatted string to the state file */
-static void CLIB_DECL emit(void *s, const char *fmt, ...)
-{
-    static char buffer[128+1];
-	state_handle *state = (state_handle *)s;
-    va_list arg;
-	int length;
-
-    va_start(arg,fmt);
-	length = vsprintf(buffer, fmt, arg);
-	va_end(arg);
-
-	if( osd_fwrite(state->file, buffer, length) != length )
-	{
-		logerror("emit: Error while saving state '%s'\n", buffer);
-	}
-}
-
-void state_save_section( void *s, const char *module, int instance )
-{
-	state_handle *state = (state_handle *)s;
-    if( !state->cur_module ||
-		(state->cur_module && my_stricmp(state->cur_module, module)) ||
-		state->cur_instance != instance )
-    {
-		if( state->cur_module )
-			emit(state,"\n");
-		state->cur_module = module;
-		state->cur_instance = instance;
-		emit(state,"[%s.%d]\n", module, instance);
-    }
-}
-
-void state_save_UINT8( void *s, const char *module,int instance,
-	const char *name, const UINT8 *val, unsigned size )
-{
-	state_handle *state = (state_handle *)s;
-
-    state_save_section( state, module, instance );
-
-    /* If this is to much for a single line use the dump format */
-	if( size > 16 )
-	{
-		unsigned offs = 0;
-		while( size-- > 0 )
-		{
-			if( (offs & 15 ) == 0 )
-				emit( state, "%s.%s=", name, ultox(offs,4) );
-			emit( state, "%s", ultox(*val++,2) );
-			if( (++offs & 15) == 0)
-				emit( state, "\n" );
-			else
-				emit( state, " " );
+	for(m = ss_registry; m; m=m->next) {
+		int i;
+		size += strlen(m->name) + 1;
+		for(i=0; i<MAX_INSTANCES; i++) {
+			ss_entry *e;
+			size++;
+			for(e = m->instances[i]; e; e=e->next)
+				size += strlen(e->name) + 1 + 1 + 4;
 		}
-		if( offs & 15 ) emit( state, "\n" );
 	}
-	else
-	{
-		emit( state, "%s=", name );
-		while( size-- > 0 )
-		{
-			emit( state, "%s", ultox(*val++,2) );
-			if( size ) emit( state, " " );
-        }
-		emit( state, "\n" );
-    }
-}
 
-void state_save_INT8( void *s, const char *module,int instance,
-	const char *name, const INT8 *val, unsigned size )
-{
-	state_save_UINT8( s, module, instance, name, (UINT8*)val, size );
-}
+	info = malloc(size);
 
-void state_save_UINT16(void *s, const char *module,int instance,
-	const char *name, const UINT16 *val, unsigned size)
-{
-	state_handle *state = (state_handle *)s;
+	// Pass 2 : write signature info
 
-    state_save_section( state, module, instance );
-
-    /* If this is to much for a single line use the dump format */
-	if( size > 8 )
-	{
-		unsigned offs = 0;
-		while( size-- > 0 )
-		{
-			if( (offs & 7 ) == 0 )
-				emit( state, "%s.%s=", name, ultox(offs,4) );
-			emit( state, "%s", ultox(*val++,4) );
-			if( (++offs & 7) == 0)
-				emit( state, "\n" );
-			else
-				emit( state, " " );
-		}
-		if( offs & 7 ) emit( state, "\n" );
-	}
-	else
-	{
-		emit( state, "%s=", name );
-		while( size-- > 0 )
-		{
-			emit( state, "%s", ultox(*val++,4) );
-			if( size ) emit( state, " " );
-        }
-		emit( state, "\n" );
-    }
-}
-
-void state_save_INT16( void *s, const char *module,int instance,
-	const char *name, const INT16 *val, unsigned size )
-{
-	state_save_UINT16( s, module, instance, name, (UINT16*)val, size );
-}
-
-void state_save_UINT32( void *s, const char *module,int instance,
-	const char *name, const UINT32 *val, unsigned size )
-{
-	state_handle *state = (state_handle *)s;
-
-    state_save_section( state, module, instance );
-
-    /* If this is to much for a single line use the dump format */
-	if( size > 4 )
-	{
-		unsigned offs = 0;
-		while( size-- > 0 )
-		{
-			if( (offs & 3 ) == 0 )
-				emit( state, "%s.%s=", name, ultox(offs,4) );
-			emit( state, "%s", ultox(*val++,8) );
-			if( (++offs & 3) == 0)
-				emit( state, "\n" );
-			else
-				emit( state, " " );
-		}
-		if( offs & 3 ) emit( state, "\n" );
-	}
-	else
-	{
-		emit( state, "%s=", name );
-		while( size-- > 0 )
-		{
-			emit( state, "%s", ultox(*val++,8) );
-			if( size ) emit( state, " " );
-        }
-		emit( state, "\n" );
-    }
-}
-
-void state_save_INT32( void *s, const char *module,int instance,
-	const char *name, const INT32 *val, unsigned size )
-{
-	state_save_UINT32( s, module, instance, name, (UINT32*)val, size );
-}
-
-/* load a linked list of state_vars (aka section) */
-void state_load_section( void *s, const char *module, int instance )
-{
-	state_handle *state = (state_handle *)s;
-
-    /* Make the buffer twice as big as it was while saving
-       the state, so we should always catch a [section] */
-
-    static char buffer[256+1];
-    char section[128+1], *p, *d;
-	int length, element_size, rewind_file = 1;
-	unsigned offs, data;
-
-	if( state->cur_module &&
-		!my_stricmp(state->cur_module, module) &&
-		state->cur_instance == instance )
-		return; /* fine, we already got it */
-
-	if( !state->list )
-		state_free_section(state);
-
-	sprintf(section, "[%s.%d]", module, instance);
-
-	for( ; ; )
-	{
-		length = osd_fread(state->file, buffer, sizeof(buffer) - 1);
-		if( length <= 0 )
-		{
-			if( rewind_file )
-			{
-				logerror("state_load_section: Section '%s' not found\n", section);
-				return;
-			}
-
-			rewind_file = 0;
-			osd_fseek(state->file, 0, SEEK_SET);
-			length = osd_fread(state->file, buffer, sizeof(buffer) - 1);
-			if( length <= 0 )
-			{
-				logerror("state_load_section: Truncated state while loading state '%s'\n", section);
-				return;
+	for(m = ss_registry; m; m=m->next) {
+		int i;
+		strcpy(info+pos, m->name);
+		pos += strlen(m->name) + 1;
+		for(i=0; i<MAX_INSTANCES; i++) {
+			ss_entry *e;
+			info[pos++] = i;
+			for(e = m->instances[i]; e; e=e->next) {
+				strcpy(info+pos, e->name);
+				pos += strlen(e->name) + 1;
+				info[pos++] = e->type;
+				info[pos++] = e->size;
+				info[pos++] = e->size >> 8;
+				info[pos++] = e->size >> 16;
+				info[pos++] = e->size >> 24;
 			}
 		}
-		buffer[ length ] = '\0';
-		p = strchr(buffer, '[');
-		if( p && !my_stricmp(p, section) )
+	}
+
+	// Pass 3 : Compute the crc32
+	signature = crc32(0, info, size);
+
+	free(info);
+	return signature;
+}
+
+void state_save_reset(void)
+{
+	if(ss_registry) {
+		ss_module *m = ss_registry;
+		while(m) {
+			ss_module *mn = m->next;
+			int i;
+			for(i=0; i<MAX_INSTANCES; i++) {
+				ss_entry *e = m->instances[i];
+				while(e) {
+					ss_entry *en = e->next;
+					free(e->name);
+					free(e);
+					e = en;
+				}
+			}
+			free(m->name);
+			m = mn;
+		}
+		ss_registry = 0;
+	}
+	ss_current_tag = 0;
+	ss_dump_array = 0;
+	ss_dump_file = 0;
+	ss_dump_size = 0;
+}
+
+static ss_module *ss_get_module(const char *name)
+{
+	int i;
+	ss_module **mp = &ss_registry;
+	ss_module *m;
+	while((m = *mp) != 0) {
+		int pos = strcmp(m->name, name);
+		if(!pos)
+			return m;
+		if(pos>0)
+			break;
+		mp = &((*mp)->next);
+	}
+	*mp = malloc(sizeof(ss_module));
+	(*mp)->name = strdup(name);
+	(*mp)->next = m;
+	for(i=0; i<MAX_INSTANCES; i++)
+		(*mp)->instances[i] = 0;
+	return *mp;
+}
+
+static ss_entry *ss_register_entry(const char *module, int instance, const char *name, int type, void *data, unsigned size)
+{
+	ss_module *m = ss_get_module(module);
+	ss_entry **ep = &(m->instances[instance]);
+	ss_entry *e = *ep;
+	while((e = *ep) != 0) {
+		int pos = strcmp(e->name, name);
+		if(!pos) {
+			logerror("Duplicate save state registration entry (%s, %d, %s)\n", module, instance, name);
+			return NULL;
+		}
+		if(pos>0)
+			break;
+		ep = &((*ep)->next);
+	}
+	*ep = malloc(sizeof(ss_entry));
+	(*ep)->name   = strdup(name);
+	(*ep)->next   = e;
+	(*ep)->type   = type;
+	(*ep)->data   = data;
+	(*ep)->size   = size;
+	(*ep)->offset = 0;
+	(*ep)->tag	  = ss_current_tag;
+	return *ep;
+}
+
+void state_save_register_UINT8 (const char *module, int instance,
+								const char *name, UINT8 *val, unsigned size)
+{
+	ss_register_entry(module, instance, name, SS_UINT8, val, size);
+}
+
+void state_save_register_INT8  (const char *module, int instance,
+								const char *name, INT8 *val, unsigned size)
+{
+	ss_register_entry(module, instance, name, SS_INT8, val, size);
+}
+
+void state_save_register_UINT16(const char *module, int instance,
+								const char *name, UINT16 *val, unsigned size)
+{
+	ss_register_entry(module, instance, name, SS_UINT16, val, size);
+}
+
+void state_save_register_INT16 (const char *module, int instance,
+								const char *name, INT16 *val, unsigned size)
+{
+	ss_register_entry(module, instance, name, SS_INT16, val, size);
+}
+
+void state_save_register_UINT32(const char *module, int instance,
+								const char *name, UINT32 *val, unsigned size)
+{
+	ss_register_entry(module, instance, name, SS_UINT32, val, size);
+}
+
+void state_save_register_INT32 (const char *module, int instance,
+								const char *name, INT32 *val, unsigned size)
+{
+	ss_register_entry(module, instance, name, SS_INT32, val, size);
+}
+
+void state_save_register_int   (const char *module, int instance,
+								const char *name, int *val)
+{
+	ss_register_entry(module, instance, name, SS_INT, val, 1);
+}
+
+void state_save_register_double(const char *module, int instance,
+								const char *name, double *val, unsigned size)
+{
+	ss_register_entry(module, instance, name, SS_DOUBLE, val, size);
+}
+
+
+
+static void ss_register_func(ss_func **root, void (*func)(void))
+{
+	ss_func *next = *root;
+	while (next)
+	{
+		if (next->func == func)
 		{
-			/* skip CR, LF or both */
-			p += strlen(section);
-			if( *p == '\r' || *p == '\n' ) p++; /* skip CR or LF */
-			if( *p == '\r' || *p == '\n' ) p++; /* in any order */
-			state->cur_module = module;
-			state->cur_instance = instance;
-			/* now read all state_vars until the next section or end of state */
-			for( ; ; )
-			{
-				state_var *v;
+			logerror("Duplicate save state function (0x%x)\n", func);
+			return;
+		}
+		next = next->next;
+	}
+	next = *root;
+	*root = malloc(sizeof(ss_func));
+	(*root)->next = next;
+	(*root)->func = func;
+	(*root)->tag  = ss_current_tag;
+}
 
-				/* seek back to the end of line state position */
-				osd_fseek( state->file, (int)(p - &buffer[length]), SEEK_CUR );
+void state_save_register_func_presave(void (*func)(void))
+{
+	ss_register_func(&ss_prefunc_reg, func);
+}
 
-				length = osd_fread( state->file, buffer, sizeof(buffer) - 1 );
+void state_save_register_func_postload(void (*func)(void))
+{
+	ss_register_func(&ss_postfunc_reg, func);
+}
 
-                if( length <= 0 )
-                    return;
-				buffer[ length ] = '\0';
+void state_save_set_current_tag(int tag)
+{
+	ss_current_tag = tag;
+}
 
-				p = strchr(buffer, '\n');
-				if( !p ) p = strchr(buffer, '\r');
-				if( !p )
-				{
-					logerror("state_load_section: Line to long in section '%s'\n", section);
-					return;
-				}
+static void ss_c2(unsigned char *data, unsigned size)
+{
+	unsigned i;
+	for(i=0; i<size; i++) {
+		unsigned char v;
+		v = data[0];
+		data[0] = data[1];
+		data[1] = v;
+		data += 2;
+	}
+}
 
-				*p = '\0';                  /* cut buffer here */
-				p = strchr(buffer, '\n');   /* do we still have a CR? */
-				if( p ) *p = '\0';
-				p = strchr(buffer, '\r');   /* do we still have a LF? */
-				if( p ) *p = '\0';
+static void ss_c4(unsigned char *data, unsigned size)
+{
+	unsigned i;
+	for(i=0; i<size; i++) {
+		unsigned char v;
+		v = data[0];
+		data[0] = data[3];
+		data[3] = v;
+		v = data[1];
+		data[1] = data[2];
+		data[2] = v;
+		data += 4;
+	}
+}
+
+static void ss_c8(unsigned char *data, unsigned size)
+{
+	unsigned i;
+	for(i=0; i<size; i++) {
+		unsigned char v;
+		v = data[0];
+		data[0] = data[7];
+		data[7] = v;
+		v = data[1];
+		data[1] = data[6];
+		data[6] = v;
+		v = data[2];
+		data[2] = data[5];
+		data[5] = v;
+		v = data[3];
+		data[3] = data[4];
+		data[4] = v;
+		data += 8;
+	}
+}
 
 
-				if( *buffer == '[' )        /* next section ? */
-					return;
-
-				if( *buffer == '\0' ||      /* empty line or comment ? */
-					*buffer == '#' ||
-					*buffer == ';' )
-					continue;
-
-				/* find the state_var data */
-				p = strchr(buffer, '=');
-				if( !p )
-				{
-					logerror("state_load_section: Line contains no '=' character\n");
-					return;
-				}
-
-				/* buffer = state_var[.offs], p = data */
-				*p++ = '\0';
-
-				/* is there an offs defined ? */
-                d = strchr(buffer, '.');
-				if( d )
-				{
-					/* buffer = state_var, d = offs, p = data */
-					*d++ = '\0';
-					offs = xtoul(&d,NULL);
-					if( offs )
-					{
-						v = state->list;
-						while( v && my_stricmp(v->name, buffer) )
-							v = v->next;
-						if( !v )
-						{
-							logerror("state_load_section: Invalid variable continuation found '%s.%04X'\n", buffer, offs);
-							return;
-						}
-					}
-				}
-				else
-				{
-					offs = 0;
-				}
-
-				if( state->list )
-				{
-					/* next state_var */
-					v = state->list;
-					while( v->next ) v = v->next;
-					v->next = malloc( sizeof(state_var) );
-					v = v->next;
-				}
-				else
-				{
-					/* first state_var */
-					state->list = malloc(sizeof(state_var));
-					v = state->list;
-				}
-				if( !v )
-				{
-					logerror("state_load_section: Out of memory while reading '%s'\n", section);
-					return;
-				}
-				v->name = malloc(strlen(buffer) + 1);
-				if( !v->name )
-				{
-					logerror("state_load_section: Out of memory while reading '%s'\n", section);
-					return;
-				}
-				strcpy(v->name, buffer);
-				v->size = 0;
-				v->data = NULL;
-
-                /* convert the line back into data */
-				data = xtoul( &p, &element_size );
-				do
-				{
-					v->size++;
-					/* need to allocate first/next chunk of memory? */
-					if( v->size * element_size >= v->chunk )
-					{
-						v->chunk += CHUNK_SIZE;
-						if( v->data )
-							v->data = realloc(v->data, v->chunk);
-						else
-							v->data = malloc(v->chunk);
-					}
-					/* check if the (re-)allocation failed */
-					if( !v->data )
-					{
-						logerror("state_load_section: Out of memory while reading '%s'\n", section);
-						return;
-					}
-					/* store element */
-					switch( element_size )
-					{
-						case 1: *((UINT8*)v->data + v->size) = data;
-						case 2: *((UINT16*)v->data + v->size) = data;
-						case 4: *((UINT32*)v->data + v->size) = data;
-					}
-					data = xtoul( &p, NULL );
-				} while( *p );
+void state_save_save_begin(void *file)
+{
+	ss_module *m;
+	TRACE(logerror("Beginning save\n"));
+	ss_dump_size = 0x18;
+	ss_dump_file = file;
+	for(m = ss_registry; m; m=m->next) {
+		int i;
+		for(i=0; i<MAX_INSTANCES; i++) {
+			ss_entry *e;
+			for(e = m->instances[i]; e; e=e->next) {
+				e->offset = ss_dump_size;
+				ss_dump_size += ss_size[e->type]*e->size;
 			}
 		}
-		else
-		{
-			/* skip back a half buffer size */
-			osd_fseek( state->file, - (sizeof(buffer)-1) / 2, SEEK_CUR );
+	}
+
+	TRACE(logerror("   total size %u\n", ss_dump_size));
+	ss_dump_array = malloc(ss_dump_size);
+}
+
+void state_save_save_continue(void)
+{
+	ss_module *m;
+	ss_func * f;
+	int count = 0;
+	TRACE(logerror("Saving tag %d\n", ss_current_tag));
+	TRACE(logerror("  calling pre-save functions\n"));
+	f = ss_prefunc_reg;
+	while(f) {
+		if(f->tag == ss_current_tag) {
+			count++;
+			(f->func)();
+		}
+		f = f->next;
+	}
+	TRACE(logerror("    %d functions called\n", count));
+	TRACE(logerror("  copying data\n"));
+	for(m = ss_registry; m; m=m->next) {
+		int i;
+		for(i=0; i<MAX_INSTANCES; i++) {
+			ss_entry *e;
+			for(e = m->instances[i]; e; e=e->next)
+				if(e->tag == ss_current_tag) {
+					if(e->type == SS_INT) {
+						int v = *(int *)(e->data);
+						ss_dump_array[e->offset]   = v ;
+						ss_dump_array[e->offset+1] = v >> 8;
+						ss_dump_array[e->offset+2] = v >> 16;
+						ss_dump_array[e->offset+3] = v >> 24;
+						TRACE(logerror("    %s.%d.%s: %x..%x\n", m->name, i, e->name, e->offset, e->offset+3));
+					} else {
+						memcpy(ss_dump_array + e->offset, e->data, ss_size[e->type]*e->size);
+						TRACE(logerror("    %s.%d.%s: %x..%x\n", m->name, i, e->name, e->offset, e->offset+ss_size[e->type]*e->size-1));
+					}
+				}
 		}
 	}
 }
 
-void state_load_UINT8( void *s, const char *module, int instance,
-	const char *name, UINT8 *val, unsigned size )
+void state_save_save_finish(void)
 {
-	state_handle *state = (state_handle *)s;
-    state_var *v;
+	UINT32 signature;
+	unsigned char flags = 0;
 
-	state_load_section( state, module, instance );
+	TRACE(logerror("Finishing save\n"));
 
-	v = state->list;
-	while( v && my_stricmp(v->name, name) ) v = v->next;
+	signature = ss_get_signature();
+	if(!Machine->sample_rate)
+		flags |= SS_NO_SOUND;
 
-    if( v )
+#ifndef LSB_FIRST
+	flags |= SS_MSB_FIRST;
+#endif
+
+	memcpy(ss_dump_array, "MAMESAVE", 8);
+	ss_dump_array[8] = 1;
+	ss_dump_array[9] = flags;
+	memset(ss_dump_array+0xa, 0, 10);
+	strcpy((char *)ss_dump_array+0xa, Machine->gamedrv->name);
+
+	ss_dump_array[0x14] = signature;
+	ss_dump_array[0x15] = signature >> 8;
+	ss_dump_array[0x16] = signature >> 16;
+	ss_dump_array[0x17] = signature >> 24;
+
+	osd_fwrite(ss_dump_file, ss_dump_array, ss_dump_size);
+	free(ss_dump_array);
+	ss_dump_array = 0;
+	ss_dump_size = 0;
+	ss_dump_file = 0;
+}
+
+int state_save_load_begin(void *file)
+{
+	ss_module *m;
+	unsigned int offset = 0;
+	UINT32 signature, file_sig;
+
+	TRACE(logerror("Beginning load\n"));
+
+	signature = ss_get_signature();
+
+	ss_dump_size = osd_fsize(file);
+	ss_dump_array = malloc(ss_dump_size);
+	ss_dump_file = file;
+	osd_fread(ss_dump_file, ss_dump_array, ss_dump_size);
+
+	if(memcmp(ss_dump_array, "MAMESAVE", 8)) {
+		usrintf_showmessage("Error: This is not a mame save file");
+		goto bad;
+	}
+
+	if(ss_dump_array[8] != 1) {
+		usrintf_showmessage("Error: Wrong version in save file (%d, 1 expected)",
+							ss_dump_array[8]);
+		goto bad;
+	}
+
+	file_sig = ss_dump_array[0x14]
+		| (ss_dump_array[0x15] << 8)
+		| (ss_dump_array[0x16] << 16)
+		| (ss_dump_array[0x17] << 24);
+
+	if(file_sig != signature) {
+		usrintf_showmessage("Error: Incompatible save file (signature %08x, expected %08x)",
+							file_sig, signature);
+		goto bad;
+	}
+
+	if(ss_dump_array[9] & SS_NO_SOUND)
 	{
-		unsigned offs;
-		for( offs = 0; offs < size && offs < v->size; offs++ )
-			*val++ = *((UINT8*)v->data + offs);
+		if(Machine->sample_rate)
+			usrintf_showmessage("Warning: Game was saved with sound off, but sound is on.  Result may be interesting.");
 	}
 	else
 	{
-		logerror("state_load_UINT8: variable '%s' not found in section [%s.%d]\n", name, module, instance);
-		memset(val, 0, size);
+		if(!Machine->sample_rate)
+			usrintf_showmessage("Warning: Game was saved with sound on, but sound is off.  Result may be interesting.");
 	}
+
+	offset = 0x18;
+	for(m = ss_registry; m; m=m->next) {
+		int i;
+		for(i=0; i<MAX_INSTANCES; i++) {
+			ss_entry *e;
+			for(e = m->instances[i]; e; e=e->next) {
+				e->offset = offset;
+				offset += ss_size[e->type]*e->size;
+			}
+		}
+	}
+	return 0;
+
+ bad:
+	free(ss_dump_array);
+	return 1;
 }
 
-void state_load_INT8( void *s, const char *module, int instance,
-	const char *name, INT8 *val, unsigned size )
+void state_save_load_continue(void)
 {
-	state_handle *state = (state_handle *)s;
-    state_var *v;
+	ss_module *m;
+	ss_func * f;
+	int count = 0;
+	int need_convert;
 
-	state_load_section( state, module, instance );
+#ifdef LSB_FIRST
+	need_convert = (ss_dump_array[9] & SS_MSB_FIRST) != 0;
+#else
+	need_convert = (ss_dump_array[9] & SS_MSB_FIRST) == 0;
+#endif
 
-	v = state->list;
-	while( v && my_stricmp(v->name, name) ) v = v->next;
-
-    if( v )
-	{
-		unsigned offs;
-		for( offs = 0; offs < size && offs < v->size; offs++ )
-			*val++ = *((INT8*)v->data + offs);
+	TRACE(logerror("Loading tag %d\n", ss_current_tag));
+	TRACE(logerror("  copying data\n"));
+	for(m = ss_registry; m; m=m->next) {
+		int i;
+		for(i=0; i<MAX_INSTANCES; i++) {
+			ss_entry *e;
+			for(e = m->instances[i]; e; e=e->next)
+				if(e->tag == ss_current_tag) {
+					if(e->type == SS_INT) {
+						int v;
+						v = ss_dump_array[e->offset]
+							| (ss_dump_array[e->offset+1] << 8)
+							| (ss_dump_array[e->offset+2] << 16)
+							| (ss_dump_array[e->offset+3] << 24);
+						TRACE(logerror("    %s.%d.%s: %x..%x\n", m->name, i, e->name, e->offset, e->offset+3));
+						*(int *)(e->data) = v;
+					} else {
+						memcpy(e->data, ss_dump_array + e->offset, ss_size[e->type]*e->size);
+						if (need_convert && ss_conv[e->type])
+							ss_conv[e->type](e->data, e->size);
+						TRACE(logerror("    %s.%d.%s: %x..%x\n", m->name, i, e->name, e->offset, e->offset+ss_size[e->type]*e->size-1));
+					}
+				}
+		}
 	}
-	else
-	{
-		logerror("state_load_INT8: variable '%s' not found in section [%s.%d]\n", name, module, instance);
-		memset(val, 0, size);
-    }
+	TRACE(logerror("  calling post-load functions\n"));
+	f = ss_postfunc_reg;
+	while(f) {
+		if(f->tag == ss_current_tag) {
+			count++;
+			(f->func)();
+		}
+		f = f->next;
+	}
+	TRACE(logerror("    %d functions called\n", count));
 }
 
-void state_load_UINT16( void *s, const char *module, int instance,
-	const char *name, UINT16 *val, unsigned size )
+void state_save_load_finish(void)
 {
-	state_handle *state = (state_handle *)s;
-    state_var *v;
-
-    state_load_section( state, module, instance );
-
-    v = state->list;
-	while( v && my_stricmp(v->name, name) ) v = v->next;
-
-    if( v )
-	{
-		unsigned offs;
-		for( offs = 0; offs < size && offs < v->size; offs++ )
-			*val++ = *((UINT16*)v->data + offs);
-	}
-	else
-	{
-		logerror("state_load_UINT16: variable '%s' not found in section [%s.%d]\n", name, module, instance);
-		memset(val, 0, size * 2);
-    }
+	TRACE(logerror("Finishing load\n"));
+	free(ss_dump_array);
+	ss_dump_array = 0;
+	ss_dump_size = 0;
+	ss_dump_file = 0;
 }
 
-void state_load_INT16( void *s, const char *module, int instance,
-	const char *name, INT16 *val, unsigned size )
+void state_save_dump_registry(void)
 {
-	state_handle *state = (state_handle *)s;
-    state_var *v;
-
-    state_load_section( state, module, instance );
-
-    v = state->list;
-	while( v && my_stricmp(v->name, name) ) v = v->next;
-
-    if( v )
-	{
-		unsigned offs;
-		for( offs = 0; offs < size && offs < v->size; offs++ )
-			*val++ = *((INT16*)v->data + offs);
+#ifdef VERBOSE
+	ss_module *m;
+	for(m = ss_registry; m; m=m->next) {
+		int i;
+		for(i=0; i<MAX_INSTANCES; i++) {
+			ss_entry *e;
+			for(e = m->instances[i]; e; e=e->next)
+				logerror("%d %s.%d.%s: %s, %x\n", e->tag, m->name, i, e->name, ss_type[e->type], e->size);
+		}
 	}
-	else
-	{
-		logerror("state_load_INT16: variable '%s' not found in section [%s.%d]\n", name, module, instance);
-		memset(val, 0, size * 2);
-    }
+#endif
 }
-
-void state_load_UINT32( void *s, const char *module, int instance,
-	const char *name, UINT32 *val, unsigned size )
-{
-	state_handle *state = (state_handle *)s;
-    state_var *v;
-
-    state_load_section( state, module, instance );
-
-    v = state->list;
-	while( v && my_stricmp(v->name, name) ) v = v->next;
-
-    if( v )
-	{
-		unsigned offs;
-		for( offs = 0; offs < size && offs < v->size; offs++ )
-			*val++ = *((UINT32*)v->data + offs);
-	}
-	else
-	{
-		logerror("state_load_UINT32: variable'%s' not found in section [%s.%d]\n", name, module, instance);
-		memset(val, 0, size * 4);
-    }
-}
-
-void state_load_INT32( void *s, const char *module, int instance,
-	const char *name, INT32 *val, unsigned size )
-{
-	state_handle *state = (state_handle *)s;
-    state_var *v;
-
-    state_load_section( state, module, instance );
-
-    v = state->list;
-	while( v && my_stricmp(v->name, name) ) v = v->next;
-
-    if( v )
-	{
-		unsigned offs;
-		for( offs = 0; offs < size && offs < v->size; offs++ )
-			*val++ = *((INT32*)v->data + offs);
-	}
-	else
-	{
-		logerror("state_load_INT32: variable'%s' not found in section [%s.%d]\n", name, module, instance);
-		memset(val, 0, size * 4);
-    }
-}
-
-
 

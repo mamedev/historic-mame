@@ -337,7 +337,8 @@ int ASTROCADE_num(const struct MachineSound *msound) { return ((struct astrocade
 int K051649_clock(const struct MachineSound *msound) { return ((struct k051649_interface*)msound->sound_interface)->master_clock; }
 #endif
 #if (HAS_K053260)
-int K053260_clock(const struct MachineSound *msound) { return ((struct K053260_interface*)msound->sound_interface)->clock; }
+int K053260_clock(const struct MachineSound *msound) { return ((struct K053260_interface*)msound->sound_interface)->clock[0]; }
+int K053260_num(const struct MachineSound *msound) { return ((struct K053260_interface*)msound->sound_interface)->num; }
 #endif
 #if (HAS_K054539)
 int K054539_clock(const struct MachineSound *msound) { return ((struct K054539interface*)msound->sound_interface)->clock; }
@@ -820,7 +821,7 @@ struct snd_interface sndintf[] =
     {
 		SOUND_K053260,
 		"053260",
-		0,
+		K053260_num,
 		K053260_clock,
 		K053260_sh_start,
 		K053260_sh_stop,

@@ -163,6 +163,7 @@
   315-5162 4D Warriors            used I'm Sorry for k.p.a.
   315-5177 Wonder Boy (set 3)     not decoded yet
   315-5178 Wonder Boy (set 4)     used Wonder Boy Deluxe for k.p.a.
+  315-5179 Robo-Wrestle 2001      not decoded yet
   ???-???? Gardia                 not decoded yet
 
 

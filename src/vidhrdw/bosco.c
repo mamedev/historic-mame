@@ -330,6 +330,25 @@ void bosco_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	}
 
 
+	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
+
+
+	/* draw the sprites */
+	for (offs = 0;offs < spriteram_size;offs += 2)
+	{
+		sx = spriteram[offs + 1] - displacement;
+if (flipscreen) sx += 32;
+		sy = 225 - spriteram_2[offs] - displacement;
+
+		drawgfx(bitmap,Machine->gfx[1],
+				(spriteram[offs] & 0xfc) >> 2,
+				spriteram_2[offs + 1] & 0x3f,
+				spriteram[offs] & 1,spriteram[offs] & 2,
+				sx,sy,
+				flipscreen ? &spritevisibleareaflip : &spritevisiblearea,TRANSPARENCY_COLOR,0);
+	}
+
+
 	/* copy the temporary bitmap to the screen */
 	{
 		int scrollx,scrolly;
@@ -346,7 +365,7 @@ void bosco_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			scrolly = -(bosco_scrolly + 16);
 		}
 
-		copyscrollbitmap(bitmap,tmpbitmap1,1,&scrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);
+		copyscrollbitmap(bitmap,tmpbitmap1,1,&scrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_COLOR,0);
 	}
 
 
@@ -355,22 +374,6 @@ void bosco_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		copybitmap(bitmap,tmpbitmap,0,0,0,0,&radarvisibleareaflip,TRANSPARENCY_NONE,0);
 	else
 		copybitmap(bitmap,tmpbitmap,0,0,28*8,0,&radarvisiblearea,TRANSPARENCY_NONE,0);
-
-
-	/* draw the sprites */
-	for (offs = 0;offs < spriteram_size;offs += 2)
-	{
-		sx = spriteram[offs + 1] - displacement;
-if (flipscreen) sx += 32;
-		sy = 225 - spriteram_2[offs] - displacement;
-
-		drawgfx(bitmap,Machine->gfx[1],
-				(spriteram[offs] & 0xfc) >> 2,
-				spriteram_2[offs + 1] & 0x3f,
-				spriteram[offs] & 1,spriteram[offs] & 2,
-				sx,sy,
-				flipscreen ? &spritevisibleareaflip : &spritevisiblearea,TRANSPARENCY_THROUGH,Machine->pens[0]);
-	}
 
 
 	/* draw the dots on the radar and the bullets */

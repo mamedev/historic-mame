@@ -26,6 +26,7 @@ extern int i8085_ICount;
 
 extern void i8085_set_SID(int state);
 extern void i8085_set_SOD_callback(void (*callback)(int state));
+extern void i8085_init(void);
 extern void i8085_reset(void *param);
 extern void i8085_exit(void);
 extern int i8085_execute(int cycles);
@@ -40,8 +41,6 @@ extern void i8085_set_reg(int regnum, unsigned val);
 extern void i8085_set_nmi_line(int state);
 extern void i8085_set_irq_line(int irqline, int state);
 extern void i8085_set_irq_callback(int (*callback)(int irqline));
-extern void i8085_state_save(void *file);
-extern void i8085_state_load(void *file);
 extern const char *i8085_info(void *context, int regnum);
 extern unsigned i8085_dasm(char *buffer, unsigned pc);
 
@@ -75,6 +74,7 @@ extern unsigned i8085_dasm(char *buffer, unsigned pc);
 #define I8080_NONE				I8085_NONE
 
 #define     i8080_ICount            i8085_ICount
+extern void i8080_init(void);
 extern void i8080_reset(void *param);
 extern void i8080_exit(void);
 extern int i8080_execute(int cycles);
@@ -89,8 +89,6 @@ extern void i8080_set_reg(int regnum, unsigned val);
 extern void i8080_set_nmi_line(int state);
 extern void i8080_set_irq_line(int irqline, int state);
 extern void i8080_set_irq_callback(int (*callback)(int irqline));
-extern void i8080_state_save(void *file);
-extern void i8080_state_load(void *file);
 extern const char *i8080_info(void *context, int regnum);
 extern unsigned i8080_dasm(char *buffer, unsigned pc);
 #endif

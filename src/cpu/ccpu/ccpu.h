@@ -46,6 +46,7 @@ extern int ccpu_icount;
 #define CCPU_PGM_OFFSET     0x8000
 
 /* MAME interface functions */
+void ccpu_init(void);
 void ccpu_reset(void *param);
 void ccpu_exit(void);
 int ccpu_execute(int cycles);

@@ -77,6 +77,7 @@ Tons of thanks to the guy who posted these, whoever he is...
 #if (TMS99XX_MODEL == TMS9900_ID)
 
 	#define TMS99XX_ICOUNT tms9900_ICount
+	#define TMS99XX_INIT tms9900_init
 	#define TMS99XX_RESET tms9900_reset
 	#define TMS99XX_EXIT tms9900_exit
 	#define TMS99XX_EXECUTE tms9900_execute
@@ -97,6 +98,7 @@ Tons of thanks to the guy who posted these, whoever he is...
 #elif (TMS99XX_MODEL == TMS9940_ID)
 
 	#define TMS99XX_ICOUNT tms9940_ICount
+	#define TMS99XX_INIT tms9940_init
 	#define TMS99XX_RESET tms9940_reset
 	#define TMS99XX_EXIT tms9940_exit
 	#define TMS99XX_EXECUTE tms9940_execute
@@ -119,6 +121,7 @@ Tons of thanks to the guy who posted these, whoever he is...
 #elif (TMS99XX_MODEL == TMS9980_ID)
 
 	#define TMS99XX_ICOUNT tms9980a_ICount
+	#define TMS99XX_INIT tms9980a_init
 	#define TMS99XX_RESET tms9980a_reset
 	#define TMS99XX_EXIT tms9980a_exit
 	#define TMS99XX_EXECUTE tms9980a_execute
@@ -139,6 +142,7 @@ Tons of thanks to the guy who posted these, whoever he is...
 #elif (TMS99XX_MODEL == TMS9985_ID)
 
 	#define TMS99XX_ICOUNT tms9985_ICount
+	#define TMS99XX_INIT tms9985_init
 	#define TMS99XX_RESET tms9985_reset
 	#define TMS99XX_EXIT tms9985_exit
 	#define TMS99XX_EXECUTE tms9985_execute
@@ -161,6 +165,7 @@ Tons of thanks to the guy who posted these, whoever he is...
 #elif (TMS99XX_MODEL == TMS9989_ID)
 
 	#define TMS99XX_ICOUNT tms9989_ICount
+	#define TMS99XX_INIT tms9989_init
 	#define TMS99XX_RESET tms9989_reset
 	#define TMS99XX_EXIT tms9989_exit
 	#define TMS99XX_EXECUTE tms9989_execute
@@ -183,6 +188,7 @@ Tons of thanks to the guy who posted these, whoever he is...
 #elif (TMS99XX_MODEL == TMS9995_ID)
 
 	#define TMS99XX_ICOUNT tms9995_ICount
+	#define TMS99XX_INIT tms9995_init
 	#define TMS99XX_RESET tms9995_reset
 	#define TMS99XX_EXIT tms9995_exit
 	#define TMS99XX_EXECUTE tms9995_execute
@@ -203,6 +209,7 @@ Tons of thanks to the guy who posted these, whoever he is...
 #elif (TMS99XX_MODEL == TMS99105A_ID)
 
 	#define TMS99XX_ICOUNT tms99105a_ICount
+	#define TMS99XX_INIT tms99105a_init
 	#define TMS99XX_RESET tms99105a_reset
 	#define TMS99XX_EXIT tms99105a_exit
 	#define TMS99XX_EXECUTE tms99105a_execute
@@ -225,6 +232,7 @@ Tons of thanks to the guy who posted these, whoever he is...
 #elif (TMS99XX_MODEL == TMS99110A_ID)
 
 	#define TMS99XX_ICOUNT tms99110a_ICount
+	#define TMS99XX_INIT tms99110a_init
 	#define TMS99XX_RESET tms99110a_reset
 	#define TMS99XX_EXIT tms99110a_exit
 	#define TMS99XX_EXECUTE tms99110a_execute
@@ -697,6 +705,10 @@ static void set_flag1(int val);
 /*
 	TMS9900 hard reset
 */
+void TMS99XX_INIT(void)
+{
+}
+
 void TMS99XX_RESET(void *param)
 {
 	contextswitch(0x0000);
@@ -1464,7 +1476,7 @@ static void set_flag1(int val)
 #endif
 
 #if (TMS99XX_MODEL == TMS9900_ID)
-#define WRITEPORT(Port, data) cpu_writeport16bew_word((Port)<<1, (data))	
+#define WRITEPORT(Port, data) cpu_writeport16bew_word((Port)<<1, (data))
 #else
 #define WRITEPORT(Port, data) cpu_writeport16(Port, data)
 #endif

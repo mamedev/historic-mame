@@ -321,7 +321,7 @@ static const struct MachineDriver machine_driver_arabian =
 	32,32,
 	arabian_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_RASTER,
 	0,
 	arabian_vh_start,
 	arabian_vh_stop,

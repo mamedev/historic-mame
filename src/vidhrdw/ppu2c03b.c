@@ -53,7 +53,7 @@ enum {
 };
 
 /* default monochromatic colortable */
-UINT16 default_colortable_mono[] =
+UINT32 default_colortable_mono[] =
 {
 	0,1,2,3,
 	0,1,2,3,
@@ -901,7 +901,7 @@ void ppu2c03b_reset( int num, int scan_scale )
 	{
 		int color_base = intf->color_base[num];
 
-		for( i = 0; i < ( sizeof( default_colortable_mono ) / sizeof( UINT16 ) ); i++ )
+		for( i = 0; i < ( sizeof( default_colortable_mono ) / sizeof( default_colortable_mono[0] ) ); i++ )
 		{
 			/* monochromatic table */
 			chips[num].colortable_mono[i] = Machine->pens[default_colortable_mono[i] + color_base];

@@ -1,4 +1,5 @@
 #include "driver.h"
+#include "state.h"
 #include "vidhrdw/generic.h"
 #include "vidhrdw/konamiic.h"
 
@@ -14,6 +15,8 @@ int xexexbg_vh_start(int region)
 	xexexbg_rammax = xexexbg_ram + 0x800;
 	xexexbg_rommask = memory_region_length(region) - 1;
 
+	state_save_register_UINT16("xexexbg", 0, "memory",    xexexbg_ram,  0x800);
+	state_save_register_UINT8 ("xexexbg", 0, "registers", xexexbg_regs, 8);
 	return 0;
 }
 
@@ -35,7 +38,9 @@ READ16_HANDLER( xexexbg_r )
 
 WRITE16_HANDLER( xexexbg_ram_w )
 {
+	int off1;
 	COMBINE_DATA( xexexbg_ram + offset);
+	off1 = offset & ~3;
 }
 
 READ16_HANDLER( xexexbg_ram_r )
@@ -49,14 +54,6 @@ READ16_HANDLER( xexexbg_rom_r )
 		logerror("Back: Reading rom memory with enable=0\n");
 	return *(xexexbg_base + 2048*xexexbg_regs[7] + (offset>>1));
 }
-
-#if 1
-int ddy = -358;
-int ddx = -19;
-#else
-int ddy = -358 + 299 - (-201);
-int ddx = -19 - 201 - 299;
-#endif
 
 void xexexbg_mark_colors(int colorbase)
 {
@@ -79,6 +76,7 @@ void xexexbg_draw(struct osd_bitmap *bitmap, int colorbase, int pri)
 	data16_t *line;
 	int delta, dim1, dim1_max, dim2_max;
 	UINT32 mask1, mask2;
+	int sp;
 
 	int orientation = (xexexbg_regs[4] & 8 ? ORIENTATION_FLIP_X : 0)\
 		| (xexexbg_regs[4] & 16 ? ORIENTATION_FLIP_Y : 0)
@@ -92,8 +90,9 @@ void xexexbg_draw(struct osd_bitmap *bitmap, int colorbase, int pri)
 	if(orientation & ORIENTATION_SWAP_XY) {
 		dim1_max = area.max_x - area.min_x + 1;
 		dim2_max = area.max_y - area.min_y + 1;
-		delta = cur_y + ddy;
-		line = xexexbg_ram + (((area.min_x + cur_x + ddx) & 0x1ff) << 2);
+		// -358 for level 1 boss, huh?
+		delta = cur_y - 495;
+		line = xexexbg_ram + (((area.min_x + cur_x - 19) & 0x1ff) << 2);
 	} else {
 		dim1_max = area.max_y - area.min_y + 1;
 		dim2_max = area.max_x - area.min_x + 1;
@@ -101,12 +100,38 @@ void xexexbg_draw(struct osd_bitmap *bitmap, int colorbase, int pri)
 		line = xexexbg_ram + (((area.min_y + cur_y + 16) & 0x1ff) << 2);
 	}
 
-	if(xexexbg_regs[4] & 0x80) {
-		mask1 = 0xffffc000;
-		mask2 = 0x00003fff;
-	} else {
+	switch(xexexbg_regs[4] & 0xe0) {
+	case 0x00: // Not sure.  Warp level
 		mask1 = 0xffff0000;
 		mask2 = 0x0000ffff;
+		sp = 0;
+		break;
+	case 0x20:
+		mask1 = 0xffff8000;
+		mask2 = 0x00007fff;
+		sp = 0;
+		break;
+	case 0x40:
+		mask1 = 0xffff0000;
+		mask2 = 0x0000ffff;
+		sp = 0;
+		break;
+	case 0x80:
+		mask1 = 0xffffc000;
+		mask2 = 0x00003fff;
+		sp = 0;
+		break;
+	case 0xe0:
+		mask1 = 0xffff0000;
+		mask2 = 0x0000ffff;
+		sp = 1;
+		break;
+	default:
+		logerror("Unknown mode %02x\n", xexexbg_regs[4] & 0xe0);
+		mask1 = 0xffff0000;
+		mask2 = 0x0000ffff;
+		sp = 0;
+		break;
 	}
 
 	if(xexexbg_regs[4] & 4)
@@ -134,15 +159,20 @@ void xexexbg_draw(struct osd_bitmap *bitmap, int colorbase, int pri)
 
 		for(dim2 = 0; dim2 < dim2_max; dim2++) {
 			int romp;
-			if(cpos & mask1) {
+			UINT32 rcpos = cpos;
+
+			if(sp && (rcpos & mask1))
+				rcpos += inc << 9;
+
+			if(rcpos & mask1) {
 				*pixel++ = 0;
 				cpos += inc;
 				continue;
 			}
 
-			romp = xexexbg_base[(((cpos & mask2)>>7) + start) & xexexbg_rommask];
+			romp = xexexbg_base[(((rcpos & mask2)>>7) + start) & xexexbg_rommask];
 
-			if(cpos & 0x40)
+			if(rcpos & 0x40)
 				romp &= 0xf;
 			else
 				romp >>= 4;
@@ -194,9 +224,9 @@ static void xexex_tile_callback(int layer, int *code, int *color)
 	*color = layer_colorbase[layer] | ((*color & 0xf0) >> 4);
 }
 
-static int xexex_scrolld[2][4][2] = {
- 	{{ 42-64, 16 }, {42-64-4, 16}, {42-64-2, 16}, {42-64, 16}},
- 	{{ 53-64, 16 }, {53-64-4, 16}, {53-64-2, 16}, {53-64, 16}}
+static int scrolld[2][4][2] = {
+ 	{{ 42-64, 16 }, {42-64, 16}, {42-64-2, 16}, {42-64-4, 16}},
+ 	{{ 53-64, 16 }, {53-64, 16}, {53-64-2, 16}, {53-64-4, 16}}
 };
 
 int xexex_vh_start(void)
@@ -207,7 +237,7 @@ int xexex_vh_start(void)
 	K053251_vh_start();
 
 	xexexbg_vh_start(REGION_GFX3);
-	if (K054157_vh_start(REGION_GFX1, 1, xexex_scrolld, NORMAL_PLANE_ORDER, xexex_tile_callback))
+	if (K054157_vh_start(REGION_GFX1, 1, scrolld, NORMAL_PLANE_ORDER, xexex_tile_callback))
 	{
 		xexexbg_vh_stop();
 		return 1;
@@ -219,6 +249,8 @@ int xexex_vh_start(void)
 		return 1;
 	}
 
+	// cur_alpha is saved as part of "control2" in the main driver
+	state_save_register_int ("video", 0, "alpha", &cur_alpha_level);
 	return 0;
 }
 
@@ -254,39 +286,12 @@ void xexex_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	int layer[4];
 	int plane;
 
-#if 0
-if (keyboard_pressed(KEYCODE_D))
-{
-	xdump = 1;
-#if 0
-	FILE *fp;
-	fp=fopen("bg.dmp", "w+b");
-	if (fp)
-	{
-		fwrite(cpu_bankbase[4], 0x8000, 1, fp);
-		usrintf_showmessage("saved");
-		fclose(fp);
-	}
-#endif
-#if 0
-	int i, j;
-	for(i=0; i<16*64; i+=16) {
-		fprintf(stderr, "%03x:", i*2);
-		for(j=0; j<16; j++)
-			fprintf(stderr, " %04x", xexexbg_ram[i+j]);
-		fprintf(stderr, "\n");
-	}
-	fprintf(stderr, "\n");
-#endif
-}
-#endif
-
-	bg_colorbase       = K053251_get_palette_index(K053251_CI1);
 	sprite_colorbase   = K053251_get_palette_index(K053251_CI0);
-	layer_colorbase[0] = K053251_get_palette_index(K053251_CI2);
-	layer_colorbase[1] = K053251_get_palette_index(K053251_CI4);
+	bg_colorbase       = K053251_get_palette_index(K053251_CI1);
+	layer_colorbase[0] = 0x70;
+	layer_colorbase[1] = K053251_get_palette_index(K053251_CI2);
 	layer_colorbase[2] = K053251_get_palette_index(K053251_CI3);
-	layer_colorbase[3] = 0x70;
+	layer_colorbase[3] = K053251_get_palette_index(K053251_CI4);
 
 	K054157_tilemap_update();
 
@@ -296,12 +301,12 @@ if (keyboard_pressed(KEYCODE_D))
 
 	palette_recalc();
 
-	layer[0] = 0;
+	layer[0] = 1;
 	layerpri[0] = K053251_get_priority(K053251_CI2);
-	layer[1] = 1;
-	layerpri[1] = K053251_get_priority(K053251_CI4);
-	layer[2] = 2;
-	layerpri[2] = K053251_get_priority(K053251_CI3);
+	layer[1] = 2;
+	layerpri[1] = K053251_get_priority(K053251_CI3);
+	layer[2] = 3;
+	layerpri[2] = K053251_get_priority(K053251_CI4);
 	layer[3] = -1;
 	layerpri[3] = K053251_get_priority(K053251_CI1);
 
@@ -312,15 +317,15 @@ if (keyboard_pressed(KEYCODE_D))
 	for(plane=0; plane<4; plane++)
 		if(layer[plane] < 0)
 			xexexbg_draw(bitmap, bg_colorbase, 1<<plane);
-		else if(!cur_alpha || (layer[plane] != 0))
+		else if(!cur_alpha || (layer[plane] != 1))
 			K054157_tilemap_draw(bitmap, layer[plane], 0, 1<<plane);
 
 	K053247_sprites_draw(bitmap);
 
 	if(cur_alpha) {
 		alpha_set_level(cur_alpha_level);
-		K054157_tilemap_draw(bitmap, 0, TILEMAP_ALPHA, 0);
+		K054157_tilemap_draw(bitmap, 1, TILEMAP_ALPHA, 0);
 	}
 
-	K054157_tilemap_draw(bitmap, 3, 0, 0);
+	K054157_tilemap_draw(bitmap, 0, 0, 0);
 }

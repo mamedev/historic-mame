@@ -643,16 +643,16 @@ static READ16_HANDLER( outrun_analog_r )
 	switch (selected_analog)
 	{
 		default:
-		case 0: return or_io_acc_steer_r(0) >> 8;
-		case 1: return or_io_acc_steer_r(0) & 0xff;
-		case 2: return or_io_brake_r(0) >> 8;
-		case 3: return or_io_brake_r(0) & 0xff;
+		case 0: return or_io_acc_steer_r(0,0) >> 8;
+		case 1: return or_io_acc_steer_r(0,0) & 0xff;
+		case 2: return or_io_brake_r(0,0) >> 8;
+		case 3: return or_io_brake_r(0,0) & 0xff;
 	}
 }
 
 static WRITE16_HANDLER( outrun_analog_select_w )
 {
-	if ((data & 0x00ff0000) == 0)
+	if ( ACCESSING_LSB )
 	{
 		selected_analog = (data & 0x0c) >> 2;
 	}
@@ -824,7 +824,7 @@ static void outrun_init_machine( void ){
 	sys16_gr_colorflip[1][2]=0x02 / 2;
 	sys16_gr_colorflip[1][3]=0x00 / 2;
 
-	sys16_gr_second_road = &sys16_extraram[0x10000];
+	sys16_gr_second_road = &sys16_extraram[0x8000];
 }
 
 static void outruna_init_machine( void ){

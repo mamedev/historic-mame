@@ -15,6 +15,7 @@ enum { M6805_PC=1, M6805_S, M6805_CC, M6805_A, M6805_X, M6805_IRQ_STATE };
 extern int  m6805_ICount;
 
 /* PUBLIC FUNCTIONS */
+extern void m6805_init(void);
 extern void m6805_reset(void *param);
 extern void m6805_exit(void);
 extern int	m6805_execute(int cycles);
@@ -29,8 +30,6 @@ extern void m6805_set_reg(int regnum, unsigned val);
 extern void m6805_set_nmi_line(int state);
 extern void m6805_set_irq_line(int irqline, int state);
 extern void m6805_set_irq_callback(int (*callback)(int irqline));
-extern void m6805_state_save(void *file);
-extern void m6805_state_load(void *file);
 extern const char *m6805_info(void *context, int regnum);
 extern unsigned m6805_dasm(char *buffer, unsigned pc);
 
@@ -49,6 +48,7 @@ extern unsigned m6805_dasm(char *buffer, unsigned pc);
 #define M68705_INT_IRQ				M6805_INT_IRQ
 
 #define m68705_ICount				m6805_ICount
+extern void m68705_init(void);
 extern void m68705_reset(void *param);
 extern void m68705_exit(void);
 extern int	m68705_execute(int cycles);
@@ -63,8 +63,6 @@ extern void m68705_set_reg(int regnum, unsigned val);
 extern void m68705_set_nmi_line(int state);
 extern void m68705_set_irq_line(int irqline, int state);
 extern void m68705_set_irq_callback(int (*callback)(int irqline));
-extern void m68705_state_save(void *file);
-extern void m68705_state_load(void *file);
 extern const char *m68705_info(void *context, int regnum);
 extern unsigned m68705_dasm(char *buffer, unsigned pc);
 #endif
@@ -99,6 +97,7 @@ extern unsigned m68705_dasm(char *buffer, unsigned pc);
 #define	HD63705_INT_ADCONV			0x07
 
 #define hd63705_ICount				m6805_ICount
+extern void hd63705_init(void);
 extern void hd63705_reset(void *param);
 extern void hd63705_exit(void);
 extern int	hd63705_execute(int cycles);
@@ -113,8 +112,6 @@ extern void hd63705_set_reg(int regnum, unsigned val);
 extern void hd63705_set_nmi_line(int state);
 extern void hd63705_set_irq_line(int irqline, int state);
 extern void hd63705_set_irq_callback(int (*callback)(int irqline));
-extern void hd63705_state_save(void *file);
-extern void hd63705_state_load(void *file);
 extern const char *hd63705_info(void *context, int regnum);
 extern unsigned hd63705_dasm(char *buffer, unsigned pc);
 #endif

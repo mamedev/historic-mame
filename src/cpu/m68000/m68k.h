@@ -291,18 +291,8 @@ unsigned int m68k_get_context(void* dst);
 /* set the current cpu context */
 void m68k_set_context(void* dst);
 
-/* Save the current cpu context to disk.
- * You must provide a function pointer of the form:
- * void save_value(char* identifier, unsigned int value)
- */
-void m68k_save_context(	void (*save_value)(char* identifier, unsigned int value));
-
-/* Load a cpu context from disk.
- * You must provide a function pointer of the form:
- * unsigned int load_value(char* identifier)
- */
-void m68k_load_context(unsigned int (*load_value)(char* identifier));
-
+/* Register the CPU state information */
+void m68k_state_register(const char *type);
 
 
 /* Peek at the internals of a CPU context.  This can either be a context

@@ -14,6 +14,7 @@
 #define v33_ICount i86_ICount
 
 /* Public functions */
+#define v33_init v30_init
 #define v33_reset v30_reset
 #define v33_exit i86_exit
 #define v33_execute v30_execute

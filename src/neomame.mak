@@ -21,5 +21,4 @@ $(OBJ)/neogeo.a: \
 	$(OBJ)/machine/neogeo.o $(OBJ)/machine/pd4990a.o $(OBJ)/vidhrdw/neogeo.o $(OBJ)/drivers/neogeo.o \
 
 # MAME specific core objs
-COREOBJS += $(OBJ)/driver.o
-
+COREOBJS += $(OBJ)/driver.o $(OBJ)/cheat.o

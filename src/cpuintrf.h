@@ -19,7 +19,7 @@ struct MachineCPU
 	const void *port_read;
 	const void *port_write;
 	int (*vblank_interrupt)(void);
-    int vblank_interrupts_per_frame;    /* usually 1 */
+	int vblank_interrupts_per_frame;	/* usually 1 */
 /* use this for interrupts which are not tied to vblank 	*/
 /* usually frequency in Hz, but if you need 				*/
 /* greater precision you can give the period in nanoseconds */
@@ -35,9 +35,6 @@ enum
 	CPU_DUMMY,
 #if (HAS_Z80)
 	CPU_Z80,
-#endif
-#if (HAS_SH2)
-	CPU_SH2,
 #endif
 #if (HAS_Z80GB)
 	CPU_Z80GB,
@@ -122,6 +119,9 @@ enum
 #endif
 #if (HAS_N7751)
 	CPU_N7751,
+#endif
+#if (HAS_I8X41)
+	CPU_I8X41,
 #endif
 #if (HAS_M6800)
 	CPU_M6800,
@@ -237,6 +237,9 @@ enum
 #if (HAS_PSXCPU)
 	CPU_PSXCPU,
 #endif
+#if (HAS_SH2)
+	CPU_SH2,
+#endif
 #if (HAS_SC61860)
 	CPU_SC61860,
 #endif
@@ -252,7 +255,19 @@ enum
 #if (HAS_ASAP)
 	CPU_ASAP,
 #endif
-	CPU_COUNT
+#if (HAS_LH5801)
+	CPU_LH5801,
+#endif
+#if (HAS_SATURN)
+	CPU_SATURN,
+#endif
+#if (HAS_APEXC)
+	CPU_APEXC,
+#endif
+#if (HAS_UPD7810)
+	CPU_UPD7810,
+#endif
+    CPU_COUNT
 };
 
 /* set this if the CPU is used as a slave for audio. It will not be emulated if */
@@ -267,13 +282,13 @@ enum
 
 
 /* The old system is obsolete and no longer supported by the core */
-#define NEW_INTERRUPT_SYSTEM    1
+#define NEW_INTERRUPT_SYSTEM	1
 
-#define MAX_IRQ_LINES   8       /* maximum number of IRQ lines per CPU */
+#define MAX_IRQ_LINES	8		/* maximum number of IRQ lines per CPU */
 
 #define CLEAR_LINE		0		/* clear (a fired, held or pulsed) line */
-#define ASSERT_LINE     1       /* assert an interrupt immediately */
-#define HOLD_LINE       2       /* hold interrupt line until enable is true */
+#define ASSERT_LINE 	1		/* assert an interrupt immediately */
+#define HOLD_LINE		2		/* hold interrupt line until enable is true */
 #define PULSE_LINE		3		/* pulse interrupt line for one instruction */
 
 #define MAX_REGS		128 	/* maximum number of register of any CPU */
@@ -318,6 +333,7 @@ enum {
 struct cpu_interface
 {
 	unsigned cpu_num;
+	void (*init)(void);
 	void (*reset)(void *param);
 	void (*exit)(void);
 	int (*execute)(int cycles);
@@ -326,7 +342,7 @@ struct cpu_interface
 	void (*set_context)(void *reg);
 	void *(*get_cycle_table)(int which);
 	void (*set_cycle_table)(int which, void *new_table);
-    unsigned (*get_pc)(void);
+	unsigned (*get_pc)(void);
 	void (*set_pc)(unsigned val);
 	unsigned (*get_sp)(void);
 	void (*set_sp)(unsigned val);
@@ -336,8 +352,6 @@ struct cpu_interface
 	void (*set_irq_line)(int irqline, int linestate);
 	void (*set_irq_callback)(int(*callback)(int irqline));
 	void (*internal_interrupt)(int type);
-	void (*cpu_state_save)(void *file);
-	void (*cpu_state_load)(void *file);
 	const char* (*cpu_info)(void *context,int regnum);
 	unsigned (*cpu_dasm)(char *buffer,unsigned pc);
 	unsigned num_irqs;
@@ -653,18 +667,27 @@ const char *cpunum_core_credits(int cpunum);
 /* Dump all of the running machines CPUs state to stderr */
 void cpu_dump_states(void);
 
+/* Load or save the game state */
+enum {
+	LOADSAVE_NONE = 0,
+	LOADSAVE_SAVE = 1,
+	LOADSAVE_LOAD = 2
+};
+void cpu_loadsave_schedule(int type, char id);
+void cpu_loadsave_reset(void);
+
 /* daisy-chain link */
 typedef struct {
-	void (*reset)(int);             /* reset callback     */
-	int  (*interrupt_entry)(int);   /* entry callback     */
-	void (*interrupt_reti)(int);    /* reti callback      */
-	int irq_param;                  /* callback paramater */
+	void (*reset)(int); 			/* reset callback	  */
+	int  (*interrupt_entry)(int);	/* entry callback	  */
+	void (*interrupt_reti)(int);	/* reti callback	  */
+	int irq_param;					/* callback paramater */
 }	Z80_DaisyChain;
 
 #define Z80_MAXDAISY	4		/* maximum of daisy chan device */
 
-#define Z80_INT_REQ     0x01    /* interrupt request mask       */
-#define Z80_INT_IEO     0x02    /* interrupt disable mask(IEO)  */
+#define Z80_INT_REQ 	0x01	/* interrupt request mask		*/
+#define Z80_INT_IEO 	0x02	/* interrupt disable mask(IEO)	*/
 
 #define Z80_VECTOR(device,state) (((device)<<8)|(state))
 
@@ -673,3 +696,4 @@ typedef struct {
 #endif
 
 #endif	/* CPUINTRF_H */
+

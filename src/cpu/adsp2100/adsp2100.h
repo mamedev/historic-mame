@@ -91,6 +91,7 @@ extern int adsp2100_icount;
 **	PUBLIC FUNCTIONS
 **#################################################################################################*/
 
+extern void adsp2100_init(void);
 extern void adsp2100_reset(void *param);
 extern void adsp2100_exit(void);
 extern int adsp2100_execute(int cycles);    /* NS 970908 */
@@ -147,6 +148,7 @@ extern unsigned DasmADSP2100(char *buffer, unsigned pc);
 #define ADSP2105_IRQ1		1		/* IRQ1 */
 #define ADSP2105_IRQ2		2		/* IRQ2 */
 
+extern void adsp2105_init(void);
 extern void adsp2105_reset(void *param);
 extern void adsp2105_exit(void);
 extern int adsp2105_execute(int cycles);    /* NS 970908 */

@@ -7,6 +7,7 @@ driver by Nicola Salmoria
 The Last Day  Z80     Z80 2xYM2203
 Pollux        Z80     Z80 2xYM2203
 Blue Hawk     Z80     Z80 YM2151 OKI6295
+Sadari        Z80     Z80 YM2151 OKI6295
 Primella      Z80     Z80 YM2151 OKI6295
 R-Shark       68000   Z80 YM2151 OKI6295
 
@@ -1139,7 +1140,7 @@ ROM_START( pollux )
 	ROM_REGION( 0x80000, REGION_GFX4, ROMREGION_DISPOSE )	/* tiles */
 	ROM_LOAD16_BYTE( "pollux6.bin",  0x00000, 0x20000, 0xb0391db5 )
 	ROM_LOAD16_BYTE( "pollux7.bin",  0x00001, 0x20000, 0x632f6e10 )
-	/* 40000-7ffff empty, it will be filled with 0xff to avoid garbage */
+	ROM_FILL(                        0x40000, 0x40000, 0xff )
 
 	ROM_REGION( 0x20000, REGION_GFX5, 0 )	/* bg tilemaps */
 	ROM_LOAD16_BYTE( "pollux9.bin",  0x00000, 0x10000, 0x378d8914 )
@@ -1176,6 +1177,35 @@ ROM_START( bluehawk )
 
 	ROM_REGION( 0x20000, REGION_SOUND1, 0 )	/* OKI6295 samples */
 	ROM_LOAD( "rom4",         0x00000, 0x20000, 0xf7318919 )
+ROM_END
+
+ROM_START( sadari )
+	ROM_REGION( 0x30000, REGION_CPU1, 0 )	/* 64k for code + 128k for banks */
+	ROM_LOAD( "1.3d",         0x00000, 0x20000, 0xbd953217 )
+	ROM_RELOAD(               0x10000, 0x20000 )				/* banked at 0x8000-0xbfff */
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* sound */
+	ROM_LOAD( "3.6r",         0x0000, 0x10000, 0x4786fca6 )
+
+	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )	/* chars */
+	ROM_LOAD( "2.4c",         0x0000, 0x20000, 0xb2a3f1c6 )
+
+	/* no sprites */
+
+	ROM_REGION( 0x80000, REGION_GFX2, 0 )	/* tiles + tilemaps (together!) */
+	ROM_LOAD16_BYTE( "10.10l",       0x00000, 0x20000, 0x70269ab1 )
+	ROM_LOAD16_BYTE( "5.8l",         0x00001, 0x20000, 0xceceb4c3 )
+	ROM_LOAD16_BYTE( "9.10n",        0x40000, 0x20000, 0x21bd1bda )
+	ROM_LOAD16_BYTE( "4.8n",         0x40001, 0x20000, 0xcd318ae5 )
+
+	ROM_REGION( 0x80000, REGION_GFX3, 0 )	/* tiles + tilemaps (together!) */
+	ROM_LOAD16_BYTE( "11.10j",       0x00000, 0x20000, 0x62a1d580 )
+	ROM_LOAD16_BYTE( "6.8j",         0x00001, 0x20000, 0xc4b13ed7 )
+	ROM_LOAD16_BYTE( "12.10g",       0x40000, 0x20000, 0x547b7645 )
+	ROM_LOAD16_BYTE( "7.8g",         0x40001, 0x20000, 0x14f20fa3 )
+
+	ROM_REGION( 0x20000, REGION_SOUND1, 0 )	/* OKI6295 samples */
+	ROM_LOAD( "8.10r",        0x00000, 0x20000, 0x9c29a093 )
 ROM_END
 
 ROM_START( primella )
@@ -1246,21 +1276,12 @@ ROM_END
 
 
 
-static void init_pollux(void)
-{
-	unsigned char *gfx = memory_region(REGION_GFX4);
-	int len = memory_region_length(REGION_GFX4);
-
-	/* only half of the ROM space is populated, need to fill the second half */
-	/* with 0xff to make it transparent. */
-	memset(gfx + len/2,0xff,len/2);
-}
-
 /* The differences between the two lastday sets are only in the sound program
    and graphics. The main program is the same. */
-GAME( 1990, lastday,  0,       lastday,  lastday,  0,      ROT270_16BIT, "Dooyong", "The Last Day (set 1)" )
-GAME( 1990, lastdaya, lastday, lastday,  lastday,  0,      ROT270_16BIT, "Dooyong", "The Last Day (set 2)" )
-GAME( 1991, pollux,   0,       pollux,   pollux,   pollux, ROT270_16BIT, "Dooyong", "Pollux" )
-GAME( 1993, bluehawk, 0,       bluehawk, bluehawk, 0,      ROT270_16BIT, "Dooyong", "Blue Hawk" )
-GAME( 1994, primella, 0,       primella, primella, 0,      ROT0_16BIT,   "NTC", "Primella" )
-GAME( 1995, rshark,   0,       rshark,   rshark,   0,      ROT270_16BIT, "Dooyong", "R-Shark" )
+GAME( 1990, lastday,  0,       lastday,  lastday,  0, ROT270_16BIT, "Dooyong", "The Last Day (set 1)" )
+GAME( 1990, lastdaya, lastday, lastday,  lastday,  0, ROT270_16BIT, "Dooyong", "The Last Day (set 2)" )
+GAME( 1991, pollux,   0,       pollux,   pollux,   0, ROT270_16BIT, "Dooyong", "Pollux" )
+GAME( 1993, bluehawk, 0,       bluehawk, bluehawk, 0, ROT270_16BIT, "Dooyong", "Blue Hawk" )
+GAME( 1993, sadari,   0,       primella, primella, 0, ROT0_16BIT,   "[Dooyong] (NTC license)", "Sadari" )
+GAME( 1994, primella, 0,       primella, primella, 0, ROT0_16BIT,   "[Dooyong] (NTC license)", "Primella" )
+GAME( 1995, rshark,   0,       rshark,   rshark,   0, ROT270_16BIT, "Dooyong", "R-Shark" )

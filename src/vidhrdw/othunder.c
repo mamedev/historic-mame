@@ -366,7 +366,7 @@ void othunder_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	/* See if we should draw artificial gun targets */
 
-	if (input_port_4_word_r(0) & 0x1)	/* Fake DSW */
+	if (input_port_4_word_r(0,0) & 0x1)	/* Fake DSW */
 	{
 		int rawx, rawy, centrex, centrey, screenx, screeny;
 

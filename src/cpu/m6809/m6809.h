@@ -22,6 +22,7 @@ extern int  m6809_ICount;
 
 
 /* PUBLIC FUNCTIONS */
+extern void m6809_init(void);
 extern void m6809_reset(void *param);
 extern void m6809_exit(void);
 extern int m6809_execute(int cycles);  /* NS 970908 */
@@ -36,8 +37,6 @@ extern void m6809_set_reg(int regnum, unsigned val);
 extern void m6809_set_nmi_line(int state);
 extern void m6809_set_irq_line(int irqline, int state);
 extern void m6809_set_irq_callback(int (*callback)(int irqline));
-extern void m6809_state_save(void *file);
-extern void m6809_state_load(void *file);
 extern const char *m6809_info(void *context,int regnum);
 extern unsigned m6809_dasm(char *buffer, unsigned pc);
 

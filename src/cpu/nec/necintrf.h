@@ -19,6 +19,7 @@ extern int nec_ICount;
 /* Public functions */
 
 #define v20_ICount nec_ICount
+extern void v20_init(void);
 extern void v20_reset(void *param);
 extern void v20_exit(void);
 extern int v20_execute(int cycles);
@@ -37,6 +38,7 @@ extern const char *v20_info(void *context, int regnum);
 extern unsigned v20_dasm(char *buffer, unsigned pc);
 
 #define v30_ICount nec_ICount
+extern void v30_init(void);
 extern void v30_reset(void *param);
 extern void v30_exit(void);
 extern int v30_execute(int cycles);
@@ -55,6 +57,7 @@ extern const char *v30_info(void *context, int regnum);
 extern unsigned v30_dasm(char *buffer, unsigned pc);
 
 #define v33_ICount nec_ICount
+extern void v33_init(void);
 extern void v33_reset(void *param);
 extern void v33_exit(void);
 extern int v33_execute(int cycles);

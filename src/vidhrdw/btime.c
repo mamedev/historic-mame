@@ -527,7 +527,7 @@ static void decode_modified(unsigned char *sprite_ram, int interleave)
         }
     }
 
-    for (i = 0; i < sizeof(char_dirty); i++)
+    for (i = 0; i < sizeof(char_dirty)/sizeof(char_dirty[0]); i++)
     {
         if (char_dirty[i] == 2)  char_dirty[i] = 0;
     }
@@ -758,25 +758,4 @@ void disco_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
     copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 
     drawsprites(bitmap, btime_palette, 0, 0, spriteram, 1);
-}
-
-
-
-
-
-
-
-void decocass_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
-{
-    if (palette_recalc() || full_refresh)
-        memset(dirtybuffer,1,videoram_size);
-
-    decode_modified(videoram, 0x20);
-
-    drawchars(tmpbitmap, TRANSPARENCY_NONE, 0, -1);
-
-    /* copy the temporary bitmap to the screen */
-    copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
-
-    drawsprites(bitmap, 0, 0, 0, videoram, 0x20);
 }

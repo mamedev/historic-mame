@@ -149,8 +149,11 @@ void mcr3_update_sprites(struct osd_bitmap *bitmap, int color_mask, int code_xor
 {
 	int offs;
 
+
+	fillbitmap(priority_bitmap,1,NULL);
+
 	/* loop over sprite RAM */
-	for (offs = 0; offs < spriteram_size; offs += 4)
+	for (offs = spriteram_size-4;offs >= 0;offs -= 4)
 	{
 		int code, color, flipx, flipy, sx, sy, flags;
 
@@ -172,26 +175,27 @@ void mcr3_update_sprites(struct osd_bitmap *bitmap, int color_mask, int code_xor
 		sx += dx;
 		sy += dy;
 
-		/* draw the sprite */
-		if (!mcr_cocktail_flip)
-			drawgfx(bitmap, Machine->gfx[1], code, color, flipx, flipy, sx, sy,
-					&Machine->visible_area, TRANSPARENCY_PEN, 0);
-		else
-			drawgfx(bitmap, Machine->gfx[1], code, color, !flipx, !flipy, 480 - sx, 452 - sy,
-					&Machine->visible_area, TRANSPARENCY_PEN, 0);
-
 		/* sprites use color 0 for background pen and 8 for the 'under tile' pen.
 			The color 8 is used to cover over other sprites. */
-		if (Machine->gfx[1]->pen_usage[code] & 0x0100)
+		if (!mcr_cocktail_flip)
 		{
-			struct rectangle clip;
+			/* first draw the sprite, visible */
+			pdrawgfx(bitmap, Machine->gfx[1], code, color, flipx, flipy, sx, sy,
+					&Machine->visible_area, TRANSPARENCY_PENS, 0x0101, 0x00);
 
-			clip.min_x = sx;
-			clip.max_x = sx + 31;
-			clip.min_y = sy;
-			clip.max_y = sy + 31;
+			/* then draw the mask, behind the background but obscuring following sprites */
+			pdrawgfx(bitmap, Machine->gfx[1], code, color, flipx, flipy, sx, sy,
+					&Machine->visible_area, TRANSPARENCY_PENS, 0xfeff, 0x02);
+		}
+		else
+		{
+			/* first draw the sprite, visible */
+			pdrawgfx(bitmap, Machine->gfx[1], code, color, !flipx, !flipy, 480 - sx, 452 - sy,
+					&Machine->visible_area, TRANSPARENCY_PENS, 0x0101, 0x00);
 
-			copybitmap(bitmap, tmpbitmap, 0, 0, 0, 0, &clip, TRANSPARENCY_THROUGH, Machine->pens[8 + color * 16]);
+			/* then draw the mask, behind the background but obscuring following sprites */
+			pdrawgfx(bitmap, Machine->gfx[1], code, color, !flipx, !flipy, 480 - sx, 452 - sy,
+					&Machine->visible_area, TRANSPARENCY_PENS, 0xfeff, 0x02);
 		}
 	}
 }

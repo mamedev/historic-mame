@@ -527,11 +527,13 @@ static void init_tables(void)
 	}
 }
 
+void asap_init(void)
+{
+	init_tables();
+}
 
 void asap_reset(void *param)
 {
-	init_tables();
-
 	/* initialize the state */
 	src2val[REGBASE + 0] = 0;
 	asap.pc = 0;

@@ -80,6 +80,7 @@ struct tms34010_config
 
 
 /* PUBLIC FUNCTIONS - 34010 */
+void		tms34010_init(void);
 void		tms34010_reset(void *param);
 void		tms34010_exit(void);
 int			tms34010_execute(int cycles);
@@ -98,13 +99,12 @@ void 		tms34010_internal_interrupt(int type);
 const char *tms34010_info(void *context, int regnum);
 unsigned 	tms34010_dasm(char *buffer, unsigned pc);
 
-void 		tms34010_state_save(int cpunum, void *f);
-void 		tms34010_state_load(int cpunum, void *f);
 int 		tms34010_io_display_blanked(int cpu);
 int 		tms34010_get_DPYSTRT(int cpu);
 
 
 /* PUBLIC FUNCTIONS - 34020 */
+void		tms34020_init(void);
 void 		tms34020_reset(void *param);
 void 		tms34020_exit(void);
 int			tms34020_execute(int cycles);
@@ -123,8 +123,6 @@ void 		tms34020_internal_interrupt(int type);
 const char *tms34020_info(void *context, int regnum);
 unsigned 	tms34020_dasm(char *buffer, unsigned pc);
 
-void 		tms34020_state_save(int cpunum, void *f);
-void 		tms34020_state_load(int cpunum, void *f);
 int 		tms34020_io_display_blanked(int cpu);
 int 		tms34020_get_DPYSTRT(int cpu);
 

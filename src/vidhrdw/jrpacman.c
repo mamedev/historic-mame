@@ -189,6 +189,7 @@ WRITE_HANDLER( jrpacman_flipscreen_w )
 void jrpacman_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int i,offs;
+	int scrolly[36];
 
 
 	/* for every character in the Video RAM, check if it has been modified */
@@ -275,9 +276,6 @@ void jrpacman_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	/* copy the temporary bitmap to the screen */
 	{
-		int scrolly[36];
-
-
 		for (i = 0;i < 2;i++)
 			scrolly[i] = 0;
 		for (i = 2;i < 34;i++)
@@ -290,10 +288,12 @@ void jrpacman_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			for (i = 0;i < 36;i++)
 				scrolly[i] = 224 - scrolly[i];
 		}
-
-		copyscrollbitmap(bitmap,tmpbitmap,0,0,36,scrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);
 	}
 
+	if (*jrpacman_bgpriority & 1)
+		fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
+	else
+		copyscrollbitmap(bitmap,tmpbitmap,0,0,36,scrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);
 
 	/* Draw the sprites. Note that it is important to draw them exactly in this */
 	/* order, to have the correct priorities. */
@@ -305,9 +305,7 @@ void jrpacman_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 						+ 0x40 * (*jrpacman_palettebank & 1),
 				spriteram[offs] & 1,spriteram[offs] & 2,
 				272 - spriteram_2[offs + 1],spriteram_2[offs]-31,
-				&Machine->visible_area,
-				(*jrpacman_bgpriority & 1) ? TRANSPARENCY_THROUGH : TRANSPARENCY_COLOR,
-				(*jrpacman_bgpriority & 1) ? Machine->pens[0]     : 0);
+				&Machine->visible_area,TRANSPARENCY_COLOR,0);
 	}
 	/* the first two sprites must be offset one pixel to the left */
 	for (offs = 2*2;offs > 0;offs -= 2)
@@ -318,8 +316,9 @@ void jrpacman_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 						+ 0x40 * (*jrpacman_palettebank & 1),
 				spriteram[offs] & 1,spriteram[offs] & 2,
 				272 - spriteram_2[offs + 1],spriteram_2[offs]-30,
-				&Machine->visible_area,
-				(*jrpacman_bgpriority & 1) ? TRANSPARENCY_THROUGH : TRANSPARENCY_COLOR,
-				(*jrpacman_bgpriority & 1) ? Machine->pens[0]     : 0);
+				&Machine->visible_area,TRANSPARENCY_COLOR,0);
 	}
+
+	if (*jrpacman_bgpriority & 1)
+		copyscrollbitmap(bitmap,tmpbitmap,0,0,36,scrolly,&Machine->visible_area,TRANSPARENCY_COLOR,0);
 }

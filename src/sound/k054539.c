@@ -8,6 +8,7 @@
 *********************************************************/
 
 #include "driver.h"
+#include "state.h"
 #include "k054539.h"
 #include <math.h>
 
@@ -318,6 +319,10 @@ static void K054539_init_chip(int chip, const struct MachineSound *msound)
 	vol[0] = MIXER(K054539_chips.intf->mixing_level[chip][0], MIXER_PAN_LEFT);
 	vol[1] = MIXER(K054539_chips.intf->mixing_level[chip][1], MIXER_PAN_RIGHT);
 	K054539_chips.chip[chip].stream = stream_init_multi(2, bufp, vol, Machine->sample_rate, chip, K054539_update);
+
+	state_save_register_UINT8("K054539", chip, "registers", K054539_chips.chip[chip].regs, 0x230);
+	state_save_register_UINT8("K054539", chip, "ram",       K054539_chips.chip[chip].ram,  0x4000);
+	state_save_register_int  ("K054539", chip, "cur_ptr",  &K054539_chips.chip[chip].cur_ptr);
 }
 
 static void K054539_stop_chip(int chip)
@@ -383,7 +388,6 @@ static void K054539_w(int chip, offs_t offset, data8_t data)
 	}
 }
 
-#if 0
 static void reset_zones(void)
 {
 	int chip;
@@ -395,7 +399,6 @@ static void reset_zones(void)
 		K054539_chips.chip[chip].cur_limit = data == 0x80 ? 0x4000 : 0x20000;
 	}
 }
-#endif
 
 static data8_t K054539_r(int chip, offs_t offset)
 {
@@ -443,6 +446,8 @@ int K054539_sh_start(const struct MachineSound *msound)
 
 	for(i=0; i<K054539_chips.intf->num; i++)
 		K054539_init_chip(i, msound);
+
+	state_save_register_func_postload(reset_zones);
 	return 0;
 }
 

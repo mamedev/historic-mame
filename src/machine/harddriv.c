@@ -1413,9 +1413,9 @@ READ16_HANDLER( racedriv_asic61_r )
 			asic61_addr = (asic61_addr & 0xffff0000) | (++asic61_addr & 0x0000ffff);
 
 			/* special case: reading from 0x613e08 seems to be a flag */
-			if (orig_addr == 0x613e08 && asic61_r(orig_addr) == 1)
+			if (orig_addr == 0x613e08 && asic61_r(orig_addr,0) == 1)
 				return 0;
-			return asic61_r(orig_addr);
+			return asic61_r(orig_addr,0);
 
 		default:
 //			if (asic61_log) fprintf(asic61_log, "%06X:R@%02X\n", cpu_getpreviouspc(), offset);

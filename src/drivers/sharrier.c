@@ -173,10 +173,10 @@ static READ16_HANDLER( ho_io_y_r ){ return (input_port_1_r( offset ) << 8) + inp
 static READ16_HANDLER( ho_io_highscoreentry_r ){
 	int mode= sys16_extraram4[0x3000/2];
 	if( mode&4 ){	// brake
-		if(ho_io_y_r(0) & 0x00ff) return 0xffff;
+		if(ho_io_y_r(0,0) & 0x00ff) return 0xffff;
 	}
 	else if( mode&8 ){ // button
-		if(ho_io_y_r(0) & 0xff00) return 0xffff;
+		if(ho_io_y_r(0,0) & 0xff00) return 0xffff;
 	}
 	return 0;
 }
@@ -462,7 +462,7 @@ static void harrier_update_proc( void ){
 	sys16_bg_page[3] = (data>>4)&0xf;
 	sys16_bg_page[2] = data&0xf;
 
-	sys16_extraram[0x492/2] = sh_io_joy_r(0);
+	sys16_extraram[0x492/2] = sh_io_joy_r(0,0);
 }
 
 static void harrier_init_machine( void ){

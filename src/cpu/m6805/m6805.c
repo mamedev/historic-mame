@@ -390,6 +390,22 @@ static void Interrupt(void)
 	}
 }
 
+static void state_register(const char *type)
+{
+	int cpu = cpu_getactivecpu();
+	state_save_register_UINT8(type, cpu, "A", &A, 1);
+	state_save_register_UINT16(type, cpu, "PC", &PC, 1);
+	state_save_register_UINT16(type, cpu, "S", &S, 1);
+	state_save_register_UINT8(type, cpu, "X", &X, 1);
+	state_save_register_UINT8(type, cpu, "CC", &CC, 1);
+	state_save_register_UINT8(type, cpu, "PENDING", &m6805.pending_interrupts, 1);
+	state_save_register_INT32(type, cpu, "IRQ_STATE", &m6805.irq_state[0], 1);
+}
+
+void m6805_init(void)
+{
+	state_register("m6805");
+}
 
 void m6805_reset(void *param)
 {
@@ -543,33 +559,6 @@ void m6805_set_irq_callback(int (*callback)(int irqline))
 {
 	m6805.irq_callback = callback;
 }
-
-static void state_save(void *file, const char *module)
-{
-	int cpu = cpu_getactivecpu();
-	state_save_UINT8(file,module,cpu,"A", &A, 1);
-	state_save_UINT16(file,module,cpu,"PC", &PC, 1);
-	state_save_UINT16(file,module,cpu,"S", &S, 1);
-	state_save_UINT8(file,module,cpu,"X", &X, 1);
-	state_save_UINT8(file,module,cpu,"CC", &CC, 1);
-	state_save_UINT8(file,module,cpu,"PENDING", &m6805.pending_interrupts, 1);
-	state_save_INT32(file,module,cpu,"IRQ_STATE", &m6805.irq_state[0], 1);
-}
-
-static void state_load(void *file, const char *module)
-{
-	int cpu = cpu_getactivecpu();
-	state_load_UINT8(file,module,cpu,"A", &A, 1);
-	state_load_UINT16(file,module,cpu,"PC", &PC, 1);
-	state_load_UINT16(file,module,cpu,"S", &S, 1);
-	state_load_UINT8(file,module,cpu,"X", &X, 1);
-	state_load_UINT8(file,module,cpu,"CC", &CC, 1);
-	state_load_UINT8(file,module,cpu,"PENDING", &m6805.pending_interrupts, 1);
-	state_load_INT32(file,module,cpu,"IRQ_STATE", &m6805.irq_state[0], 1);
-}
-
-void m6805_state_save(void *file) { state_save(file,"m6805"); }
-void m6805_state_load(void *file) { state_load(file,"m6805"); }
 
 #include "6805ops.c"
 
@@ -931,6 +920,11 @@ static UINT8 m68705_win_layout[] = {
      0,23,80, 1,    /* command line window (bottom rows) */
 };
 
+void m68705_init(void)
+{
+	state_register("m68705");
+}
+
 void m68705_reset(void *param)
 {
 	UINT32 *p_amask = param;
@@ -956,8 +950,6 @@ void m68705_set_reg(int regnum, unsigned val)  { m6805_set_reg(regnum,val); }
 void m68705_set_nmi_line(int state)  { m6805_set_nmi_line(state); }
 void m68705_set_irq_line(int irqline, int state)  { m6805_set_irq_line(irqline,state); }
 void m68705_set_irq_callback(int (*callback)(int irqline))	{ m6805_set_irq_callback(callback); }
-void m68705_state_save(void *file) { state_save(file,"m68705"); }
-void m68705_state_load(void *file) { state_load(file,"m68705"); }
 
 const char *m68705_info(void *context, int regnum)
 {
@@ -999,6 +991,20 @@ static UINT8 hd63705_win_layout[] = {
 	27,14,53, 8,	/* memory #2 window (right, lower middle) */
      0,23,80, 1,    /* command line window (bottom rows) */
 };
+
+void hd63705_init(void)
+{
+	int cpu = cpu_getactivecpu();
+	state_register("hd63705");
+	state_save_register_INT32("hd63705",cpu,"IRQ1_STATE", &m6805.irq_state[0], 1);
+	state_save_register_INT32("hd63705",cpu,"IRQ2_STATE", &m6805.irq_state[1], 1);
+	state_save_register_INT32("hd63705",cpu,"TIMER1_STATE", &m6805.irq_state[2], 1);
+	state_save_register_INT32("hd63705",cpu,"TIMER2_STATE", &m6805.irq_state[3], 1);
+	state_save_register_INT32("hd63705",cpu,"TIMER3_STATE", &m6805.irq_state[4], 1);
+	state_save_register_INT32("hd63705",cpu,"PCI_STATE", &m6805.irq_state[5], 1);
+	state_save_register_INT32("hd63705",cpu,"SCI_STATE", &m6805.irq_state[6], 1);
+	state_save_register_INT32("hd63705",cpu,"ADCONV_STATE", &m6805.irq_state[7], 1);
+}
 
 void hd63705_reset(void *param)
 {
@@ -1043,36 +1049,6 @@ void hd63705_set_irq_line(int irqline, int state)
 }
 
 void hd63705_set_irq_callback(int (*callback)(int irqline))  { m6805_set_irq_callback(callback); }
-
-void hd63705_state_save(void *file)
-{
-	int cpu = cpu_getactivecpu();
-	char module[8]="hd63705";
-	state_save(file,module);
-	state_save_INT32(file,module,cpu,"IRQ1_STATE", &m6805.irq_state[0], 1);
-	state_save_INT32(file,module,cpu,"IRQ2_STATE", &m6805.irq_state[1], 1);
-	state_save_INT32(file,module,cpu,"TIMER1_STATE", &m6805.irq_state[2], 1);
-	state_save_INT32(file,module,cpu,"TIMER2_STATE", &m6805.irq_state[3], 1);
-	state_save_INT32(file,module,cpu,"TIMER3_STATE", &m6805.irq_state[4], 1);
-	state_save_INT32(file,module,cpu,"PCI_STATE", &m6805.irq_state[5], 1);
-	state_save_INT32(file,module,cpu,"SCI_STATE", &m6805.irq_state[6], 1);
-	state_save_INT32(file,module,cpu,"ADCONV_STATE", &m6805.irq_state[7], 1);
-}
-
-void hd63705_state_load(void *file)
-{
-	int cpu = cpu_getactivecpu();
-	char module[8]="hd63705";
-	state_load(file,module);
-	state_load_INT32(file,module,cpu,"IRQ1_STATE", &m6805.irq_state[0], 1);
-	state_load_INT32(file,module,cpu,"IRQ2_STATE", &m6805.irq_state[1], 1);
-	state_load_INT32(file,module,cpu,"TIMER1_STATE", &m6805.irq_state[2], 1);
-	state_load_INT32(file,module,cpu,"TIMER2_STATE", &m6805.irq_state[3], 1);
-	state_load_INT32(file,module,cpu,"TIMER3_STATE", &m6805.irq_state[4], 1);
-	state_load_INT32(file,module,cpu,"PCI_STATE", &m6805.irq_state[5], 1);
-	state_load_INT32(file,module,cpu,"SCI_STATE", &m6805.irq_state[6], 1);
-	state_load_INT32(file,module,cpu,"ADCONV_STATE", &m6805.irq_state[7], 1);
-}
 
 const char *hd63705_info(void *context, int regnum)
 {

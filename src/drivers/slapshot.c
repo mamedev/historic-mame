@@ -168,19 +168,19 @@ static READ16_HANDLER( slapshot_input_r )
 	switch (offset)
 	{
 		case 0x00:
-			return input_port_0_word_r(0) << 8;	/* IN0, unknown/unused */
+			return input_port_0_word_r(0,0) << 8;	/* IN0, unknown/unused */
 
 		case 0x01:
-			return input_port_1_word_r(0) << 8;	/* IN1 */
+			return input_port_1_word_r(0,0) << 8;	/* IN1 */
 
 		case 0x02:
-			return input_port_2_word_r(0) << 8;	/* IN2 */
+			return input_port_2_word_r(0,0) << 8;	/* IN2 */
 
 		case 0x03:
-			return input_port_3_word_r(0) << 8;	/* IN3 */
+			return input_port_3_word_r(0,0) << 8;	/* IN3 */
 
 		case 0x07:
-			return input_port_4_word_r(0) << 8;	/* IN4 */
+			return input_port_4_word_r(0,0) << 8;	/* IN4 */
 
 	}
 
@@ -193,20 +193,20 @@ static READ16_HANDLER( slapshot_service_input_r )
 	switch (offset)
 	{
 		case 0x00:
-			return input_port_0_word_r(0) << 8;	/* IN0, unknown/unused */
+			return input_port_0_word_r(0,0) << 8;	/* IN0, unknown/unused */
 
 		case 0x01:
-			return input_port_1_word_r(0) << 8;	/* IN1 */
+			return input_port_1_word_r(0,0) << 8;	/* IN1 */
 
 		case 0x02:
-			return input_port_2_word_r(0) << 8;	/* IN2 */
+			return input_port_2_word_r(0,0) << 8;	/* IN2 */
 
 		case 0x03:
-			return ((input_port_3_word_r(0) & 0xef) |
-				  (input_port_5_word_r(0) & 0x10))  << 8;	/* IN3 + service switch */
+			return ((input_port_3_word_r(0,0) & 0xef) |
+				  (input_port_5_word_r(0,0) & 0x10))  << 8;	/* IN3 + service switch */
 
 		case 0x07:
-			return input_port_4_word_r(0) << 8;	/* IN4 */
+			return input_port_4_word_r(0,0) << 8;	/* IN4 */
 
 	}
 

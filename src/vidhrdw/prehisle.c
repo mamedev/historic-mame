@@ -212,7 +212,7 @@ palette_change_color(pal_base + 16 * color +15 ,0,0,0);
 			my++;
 		}
 		tile = videoram16[offs];
-		if ((tile & 0xff) != 0x20)
+		if ((tile & 0xff) == 0x20)
 			continue;
 		color = tile >> 12;
 		drawgfx(bitmap,Machine->gfx[0],
@@ -230,6 +230,10 @@ int prehisle_vh_start (void)
 {
 	pf1_bitmap = bitmap_alloc(256+16,512);
 	pf2_bitmap = bitmap_alloc(256+16,512);
+
+	if (!pf1_bitmap || !pf2_bitmap)
+		return 1;
+
 	return 0;
 }
 

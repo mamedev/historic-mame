@@ -181,20 +181,20 @@ static READ16_HANDLER( topspeed_ioc_r )
 {
 	UINT16 steer = 0;
 
-	if (input_port_4_word_r(0) & 0x8)	/* pressing down */
+	if (input_port_4_word_r(0,0) & 0x8)	/* pressing down */
 		steer = 0xff40;
 
-	if (input_port_4_word_r(0) & 0x2)	/* pressing right */
+	if (input_port_4_word_r(0,0) & 0x2)	/* pressing right */
 		steer = 0x007f;
 
-	if (input_port_4_word_r(0) & 0x1)	/* pressing left */
+	if (input_port_4_word_r(0,0) & 0x1)	/* pressing left */
 		steer = 0xff80;
 
 	/* To allow hiscore input we must let you return to
 	   continuous input type while you press up */
 
-	if (input_port_4_word_r(0) & 0x4)	/* pressing up */
-		steer = input_port_5_word_r(0);
+	if (input_port_4_word_r(0,0) & 0x4)	/* pressing up */
+		steer = input_port_5_word_r(0,0);
 
 	switch (offset)
 	{
@@ -203,16 +203,16 @@ static READ16_HANDLER( topspeed_ioc_r )
 				switch (ioc220_port & 0xf)
 				{
 					case 0x00:
-						return input_port_2_word_r(0);	/* DSW A */
+						return input_port_2_word_r(0,mem_mask);	/* DSW A */
 
 					case 0x01:
-						return input_port_3_word_r(0);	/* DSW B */
+						return input_port_3_word_r(0,mem_mask);	/* DSW B */
 
 					case 0x02:
-						return input_port_0_word_r(0);	/* IN0 */
+						return input_port_0_word_r(0,mem_mask);	/* IN0 */
 
 					case 0x03:
-						return input_port_1_word_r(0);	/* IN1 */
+						return input_port_1_word_r(0,mem_mask);	/* IN1 */
 
 					case 0x0c:
 						return steer &0xff;

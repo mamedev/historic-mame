@@ -27,6 +27,7 @@ extern int i8039_ICount;        /* T-state count                          */
 #define I8039_TIMER_INT 	2	/* Execute a Timer interrupt			*/
 #define I8039_COUNT_INT 	4	/* Execute a Counter interrupt			*/
 
+extern void i8039_init(void);
 extern void i8039_reset(void *param);			/* Reset processor & registers	*/
 extern void i8039_exit(void);					/* Shut down CPU emulation		*/
 extern int i8039_execute(int cycles);			/* Execute cycles T-States - returns number of cycles actually run */
@@ -85,6 +86,7 @@ extern unsigned i8039_dasm(char *buffer, unsigned pc);
 
 #define i8035_ICount            i8039_ICount
 
+extern void i8035_init(void);
 extern void i8035_reset(void *param);
 extern void i8035_exit(void);
 extern int i8035_execute(int cycles);
@@ -128,6 +130,7 @@ extern unsigned i8035_dasm(char *buffer, unsigned pc);
 
 #define i8048_ICount            i8039_ICount
 
+extern void i8048_init(void);
 extern void i8048_reset(void *param);
 extern void i8048_exit(void);
 extern int i8048_execute(int cycles);
@@ -171,6 +174,7 @@ extern unsigned i8048_dasm(char *buffer, unsigned pc);
 
 #define n7751_ICount            i8039_ICount
 
+extern void n7751_init(void);
 extern void n7751_reset(void *param);
 extern void n7751_exit(void);
 extern int n7751_execute(int cycles);

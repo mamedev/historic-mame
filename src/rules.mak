@@ -11,17 +11,6 @@ else
 CPUDEFS += -DHAS_Z80=0
 endif
 
-CPU=$(strip $(findstring SH2@,$(CPUS)))
-ifneq ($(CPU),)
-OBJDIRS += $(OBJ)/cpu/sh2
-CPUDEFS += -DHAS_SH2=1
-CPUOBJS += $(OBJ)/cpu/sh2/sh2.o
-DBGOBJS += $(OBJ)/cpu/sh2/sh2dasm.o
-$(OBJ)/cpu/sh2/sh2.o: sh2.c sh2.h
-else
-CPUDEFS += -DHAS_SH2=0
-endif
-
 CPU=$(strip $(findstring Z80GB@,$(CPUS)))
 ifneq ($(CPU),)
 OBJDIRS += $(OBJ)/cpu/z80gb
@@ -327,6 +316,17 @@ DBGOBJS += $(OBJ)/cpu/i8039/8039dasm.o
 $(OBJ)/cpu/i8039/i8039.o: i8039.c i8039.h
 else
 CPUDEFS += -DHAS_N7751=0
+endif
+
+CPU=$(strip $(findstring I8X41@,$(CPUS)))
+ifneq ($(CPU),)
+OBJDIRS += $(OBJ)/cpu/i8x41
+CPUDEFS += -DHAS_I8X41=1
+CPUOBJS += $(OBJ)/cpu/i8x41/i8x41.o
+DBGOBJS += $(OBJ)/cpu/i8x41/8x41dasm.o
+$(OBJ)/cpu/i8x41/i8x41.o: i8x41.c i8x41.h
+else
+CPUDEFS += -DHAS_I8X41=0
 endif
 
 CPU=$(strip $(findstring M6800@,$(CPUS)))
@@ -781,6 +781,17 @@ else
 CPUDEFS += -DHAS_PSXCPU=0
 endif
 
+CPU=$(strip $(findstring SH2@,$(CPUS)))
+ifneq ($(CPU),)
+OBJDIRS += $(OBJ)/cpu/sh2
+CPUDEFS += -DHAS_SH2=1
+CPUOBJS += $(OBJ)/cpu/sh2/sh2.o
+DBGOBJS += $(OBJ)/cpu/sh2/sh2dasm.o
+$(OBJ)/cpu/sh2/sh2.o: sh2.c sh2.h
+else
+CPUDEFS += -DHAS_SH2=0
+endif
+
 CPU=$(strip $(findstring SC61860@,$(CPUS)))
 ifneq ($(CPU),)
 OBJDIRS += $(OBJ)/cpu/sc61860
@@ -845,6 +856,50 @@ DBGOBJS += $(OBJ)/cpu/asap/asapdasm.o
 $(OBJ)/cpu/asap/asap.o: asap.c asap.h
 else
 CPUDEFS += -DHAS_ASAP=0
+endif
+
+CPU=$(strip $(findstring LH5801@,$(CPUS)))
+ifneq ($(CPU),)
+OBJDIRS += $(OBJ)/cpu/lh5801
+CPUDEFS += -DHAS_LH5801=1
+CPUOBJS += $(OBJ)/cpu/lh5801/lh5801.o
+DBGOBJS += $(OBJ)/cpu/lh5801/5801dasm.o
+$(OBJ)/cpu/lh5801/lh5801.o: lh5801.c 5801tbl.c lh5801.h
+else
+CPUDEFS += -DHAS_LH5801=0
+endif
+
+CPU=$(strip $(findstring SATURN@,$(CPUS)))
+ifneq ($(CPU),)
+OBJDIRS += $(OBJ)/cpu/saturn
+CPUDEFS += -DHAS_SATURN=1
+CPUOBJS += $(OBJ)/cpu/saturn/saturn.o
+DBGOBJS += $(OBJ)/cpu/saturn/saturnds.o
+$(OBJ)/cpu/saturn/saturn.o: saturn.c sattable.c satops.c saturn.h sat.h
+else
+CPUDEFS += -DHAS_SATURN=0
+endif
+
+CPU=$(strip $(findstring APEXC@,$(CPUS)))
+ifneq ($(CPU),)
+OBJDIRS += $(OBJ)/cpu/apexc
+CPUDEFS += -DHAS_APEXC=1
+CPUOBJS += $(OBJ)/cpu/apexc/apexc.o
+DBGOBJS += $(OBJ)/cpu/apexc/apexcdsm.o
+$(OBJ)/cpu/apexc/apexc.o: apexc.c apexc.h
+else
+CPUDEFS += -DHAS_APEXC=0
+endif
+
+CPU=$(strip $(findstring UPD7810@,$(CPUS)))
+ifneq ($(CPU),)
+OBJDIRS += $(OBJ)/cpu/upd7810
+CPUDEFS += -DHAS_UPD7810=1
+CPUOBJS += $(OBJ)/cpu/upd7810/upd7810.o
+DBGOBJS += $(OBJ)/cpu/upd7810/7810dasm.o
+$(OBJ)/cpu/upd7810/upd7810.o: upd7810.c 7810tbl.c 7810ops.c upd7810.h
+else
+CPUDEFS += -DHAS_UPD7810=0
 endif
 
 

@@ -271,11 +271,11 @@ static READ16_HANDLER( ip_select_r )
 
 	switch (i)
 	{
-			case 0 :	return coins_r(0);		break;
-			case 1 :	return player1_r(0);	break;
-			case 2 :	return player2_r(0);	break;
-			case 3 :	return dsw1_r(0);		break;
-			case 4 :	return dsw2_r(0);		break;
+			case 0 :	return coins_r(0,0);		break;
+			case 1 :	return player1_r(0,0);	break;
+			case 2 :	return player2_r(0,0);	break;
+			case 3 :	return dsw1_r(0,0);		break;
+			case 4 :	return dsw2_r(0,0);		break;
 			default	 :	return 0x0006;
 	}
 }
@@ -1756,7 +1756,7 @@ ROM_START( cybattlr )
 	ROM_LOAD( "cb_10.rom", 0x000000, 0x040000, 0x8af95eed )
 
 	ROM_REGION( 0x0200, REGION_PROMS, 0 )		/* Priority PROM */
-	ROM_LOAD( "prom",         0x0000, 0x0200, 0x00000000 )
+	ROM_LOAD( "pr-91028.12",  0x0000, 0x0200, 0xcfe90082 )
 ROM_END
 
 INPUT_PORTS_START( cybattlr )
@@ -2753,8 +2753,8 @@ READ16_HANDLER( protection_peekaboo_r )
 	switch (protection_val)
 	{
 		case 0x02:	return 0x03;
-		case 0x51:	return player1_r(0);
-		case 0x52:	return player2_r(0);
+		case 0x51:	return player1_r(0,0);
+		case 0x52:	return player2_r(0,0);
 		default:	return protection_val;
 	}
 }

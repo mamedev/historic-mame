@@ -442,7 +442,7 @@ static READ16_HANDLER( sound_r )
 	atarigen_update_interrupts();
 
 	/* handle it normally otherwise */
-	return atarigen_sound_r(offset);
+	return atarigen_sound_r(offset,0);
 }
 
 

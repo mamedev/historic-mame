@@ -121,12 +121,12 @@ void namcos2_mark_used_ROZ_colours(void){
 		int right_dx,right_dy,down_dx,down_dy,start_x,start_y;
 
 		/* These need to be sign extended for arithmetic useage */
-		right_dx = namcos2_68k_roz_ctrl_r(0x06);
-		right_dy = namcos2_68k_roz_ctrl_r(0x02);
-		down_dx  = namcos2_68k_roz_ctrl_r(0x04);
-		down_dy  = namcos2_68k_roz_ctrl_r(0x00);
-		start_y  = namcos2_68k_roz_ctrl_r(0x0a);
-		start_x  = namcos2_68k_roz_ctrl_r(0x08);
+		right_dx = namcos2_68k_roz_ctrl_r(0x06,0);
+		right_dy = namcos2_68k_roz_ctrl_r(0x02,0);
+		down_dx  = namcos2_68k_roz_ctrl_r(0x04,0);
+		down_dy  = namcos2_68k_roz_ctrl_r(0x00,0);
+		start_y  = namcos2_68k_roz_ctrl_r(0x0a,0);
+		start_x  = namcos2_68k_roz_ctrl_r(0x08,0);
 
 		/* Sign extend the deltas */
 		if(right_dx&0x8000) right_dx|=0xffff0000;
@@ -186,7 +186,7 @@ void namcos2_mark_used_ROZ_colours(void){
 		}
 	}
 	/* Set the correct colour code */
-	colour_code=(namcos2_68k_sprite_bank_r(0)>>8)&0x000f;
+	colour_code=(namcos2_68k_sprite_bank_r(0,0)>>8)&0x000f;
 	colour_code*=256;
 
 	/* Now we have an array with all visible tiles marked, scan it and mark the used colours */
@@ -225,7 +225,7 @@ void namcos2_mark_used_sprite_colours(void){
 	memset(done_array,0,0x1000/8);
 
 	/* Mark off all of the colour codes used by the sprites */
-	offset=(namcos2_68k_sprite_bank_r(0)&0x000f)*(128*8);
+	offset=(namcos2_68k_sprite_bank_r(0,0)&0x000f)*(128*8);
 	for(loop=0;loop<128;loop++)
 	{
 		int sizey = (namcos2_sprite_ram[(offset+(loop*8))/2]>>10)&0x3f;
@@ -430,12 +430,12 @@ static void draw_layerROZ( struct osd_bitmap *dest_bitmap)
 	int colour;
 
 	/* These need to be sign extended for arithmetic useage */
-	right_dx = namcos2_68k_roz_ctrl_r(0x06/2);
-	right_dy = namcos2_68k_roz_ctrl_r(0x02/2);
-	down_dx  = namcos2_68k_roz_ctrl_r(0x04/2);
-	down_dy  = namcos2_68k_roz_ctrl_r(0x00/2);
-	start_y  = namcos2_68k_roz_ctrl_r(0x0a/2);
-	start_x  = namcos2_68k_roz_ctrl_r(0x08/2);
+	right_dx = namcos2_68k_roz_ctrl_r(0x06/2,0);
+	right_dy = namcos2_68k_roz_ctrl_r(0x02/2,0);
+	down_dx  = namcos2_68k_roz_ctrl_r(0x04/2,0);
+	down_dy  = namcos2_68k_roz_ctrl_r(0x00/2,0);
+	start_y  = namcos2_68k_roz_ctrl_r(0x0a/2,0);
+	start_x  = namcos2_68k_roz_ctrl_r(0x08/2,0);
 
 	/* Sign extend the deltas */
 	if(right_dx&0x8000) right_dx|=0xffff0000;
@@ -456,7 +456,7 @@ static void draw_layerROZ( struct osd_bitmap *dest_bitmap)
 	start_y+=38*right_dy;
 
 	/* Pre-calculate the colour palette array pointer */
-	colour=(namcos2_68k_sprite_bank_r(0)>>8)&0x000f;
+	colour=(namcos2_68k_sprite_bank_r(0,0)>>8)&0x000f;
 	paldata = &rozgfx->colortable[rozgfx->color_granularity * colour];
 
 	/* Select correct drawing code based on destination bitmap pixel depth */
@@ -561,7 +561,7 @@ static void draw_sprites_default( struct osd_bitmap *bitmap, int priority )
 	int loop,spr_region;
 	struct rectangle rect;
 
-	offset=(namcos2_68k_sprite_bank_r(0)&0x000f)*(128*8);
+	offset=(namcos2_68k_sprite_bank_r(0,0)&0x000f)*(128*8);
 
 	for(loop=0;loop < 128;loop++)
 	{
@@ -661,7 +661,7 @@ static void draw_sprites_finallap( struct osd_bitmap *bitmap, int priority )
 	int loop,spr_region;
 	struct rectangle rect;
 
-	offset=(namcos2_68k_sprite_bank_r(0)&0x000f)*(128*8);
+	offset=(namcos2_68k_sprite_bank_r(0,0)&0x000f)*(128*8);
 
 	for(loop=0;loop < 128;loop++)
 	{
@@ -775,7 +775,7 @@ void namcos2_vh_update_default(struct osd_bitmap *bitmap, int full_refresh)
 
 	/* Mark any colours in the palette_used_colors array */
 	/* Only process ROZ if she is enabled */
-	if(((namcos2_68k_sprite_bank_r(0)>>12)&0x07)>0) namcos2_mark_used_ROZ_colours();
+	if(((namcos2_68k_sprite_bank_r(0,0)>>12)&0x07)>0) namcos2_mark_used_ROZ_colours();
 	/* Finally the sprites */
 	namcos2_mark_used_sprite_colours();
 
@@ -787,15 +787,15 @@ void namcos2_vh_update_default(struct osd_bitmap *bitmap, int full_refresh)
 	/* Render the screen */
 	for(priority=0;priority<=7;priority++)
 	{
-		if((namcos2_68k_vram_ctrl_r(0x20/2)&0x07)==priority && show[0]) tilemap_draw(bitmap,namcos2_tilemap0,0,0);
-		if((namcos2_68k_vram_ctrl_r(0x22/2)&0x07)==priority && show[1]) tilemap_draw(bitmap,namcos2_tilemap1,0,0);
-		if((namcos2_68k_vram_ctrl_r(0x24/2)&0x07)==priority && show[2]) tilemap_draw(bitmap,namcos2_tilemap2,0,0);
-		if((namcos2_68k_vram_ctrl_r(0x26/2)&0x07)==priority && show[3]) tilemap_draw(bitmap,namcos2_tilemap3,0,0);
-		if((namcos2_68k_vram_ctrl_r(0x28/2)&0x07)==priority && show[4]) tilemap_draw(bitmap,namcos2_tilemap4,0,0);
-		if((namcos2_68k_vram_ctrl_r(0x2a/2)&0x07)==priority && show[5]) tilemap_draw(bitmap,namcos2_tilemap5,0,0);
+		if((namcos2_68k_vram_ctrl_r(0x20/2,0)&0x07)==priority && show[0]) tilemap_draw(bitmap,namcos2_tilemap0,0,0);
+		if((namcos2_68k_vram_ctrl_r(0x22/2,0)&0x07)==priority && show[1]) tilemap_draw(bitmap,namcos2_tilemap1,0,0);
+		if((namcos2_68k_vram_ctrl_r(0x24/2,0)&0x07)==priority && show[2]) tilemap_draw(bitmap,namcos2_tilemap2,0,0);
+		if((namcos2_68k_vram_ctrl_r(0x26/2,0)&0x07)==priority && show[3]) tilemap_draw(bitmap,namcos2_tilemap3,0,0);
+		if((namcos2_68k_vram_ctrl_r(0x28/2,0)&0x07)==priority && show[4]) tilemap_draw(bitmap,namcos2_tilemap4,0,0);
+		if((namcos2_68k_vram_ctrl_r(0x2a/2,0)&0x07)==priority && show[5]) tilemap_draw(bitmap,namcos2_tilemap5,0,0);
 
 		/* Draw ROZ if enabled */
-		if(priority>=1 && ((namcos2_68k_sprite_bank_r(0)>>12)&0x07)==priority && show[6]) draw_layerROZ(bitmap);
+		if(priority>=1 && ((namcos2_68k_sprite_bank_r(0,0)>>12)&0x07)==priority && show[6]) draw_layerROZ(bitmap);
 
 		/* Sprites */
 		draw_sprites_default( bitmap,priority );
@@ -828,12 +828,12 @@ void namcos2_vh_update_finallap(struct osd_bitmap *bitmap, int full_refresh)
 	/* Render the screen */
 	for(priority=0;priority<=15;priority++)
 	{
-		if((namcos2_68k_vram_ctrl_r(0x20/2)&0x0f)==priority && show[0]) tilemap_draw(bitmap,namcos2_tilemap0,0,0);
-		if((namcos2_68k_vram_ctrl_r(0x22/2)&0x0f)==priority && show[1]) tilemap_draw(bitmap,namcos2_tilemap1,0,0);
-		if((namcos2_68k_vram_ctrl_r(0x24/2)&0x0f)==priority && show[2]) tilemap_draw(bitmap,namcos2_tilemap2,0,0);
-		if((namcos2_68k_vram_ctrl_r(0x26/2)&0x0f)==priority && show[3]) tilemap_draw(bitmap,namcos2_tilemap3,0,0);
-		if((namcos2_68k_vram_ctrl_r(0x28/2)&0x0f)==priority && show[4]) tilemap_draw(bitmap,namcos2_tilemap4,0,0);
-		if((namcos2_68k_vram_ctrl_r(0x2a/2)&0x0f)==priority && show[5]) tilemap_draw(bitmap,namcos2_tilemap5,0,0);
+		if((namcos2_68k_vram_ctrl_r(0x20/2,0)&0x0f)==priority && show[0]) tilemap_draw(bitmap,namcos2_tilemap0,0,0);
+		if((namcos2_68k_vram_ctrl_r(0x22/2,0)&0x0f)==priority && show[1]) tilemap_draw(bitmap,namcos2_tilemap1,0,0);
+		if((namcos2_68k_vram_ctrl_r(0x24/2,0)&0x0f)==priority && show[2]) tilemap_draw(bitmap,namcos2_tilemap2,0,0);
+		if((namcos2_68k_vram_ctrl_r(0x26/2,0)&0x0f)==priority && show[3]) tilemap_draw(bitmap,namcos2_tilemap3,0,0);
+		if((namcos2_68k_vram_ctrl_r(0x28/2,0)&0x0f)==priority && show[4]) tilemap_draw(bitmap,namcos2_tilemap4,0,0);
+		if((namcos2_68k_vram_ctrl_r(0x2a/2,0)&0x0f)==priority && show[5]) tilemap_draw(bitmap,namcos2_tilemap5,0,0);
 		/* Not sure if priority should be 0x07 or 0x0f */
 
 		/* Sprites */

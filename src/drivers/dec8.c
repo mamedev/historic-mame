@@ -28,9 +28,7 @@ Various Data East 8 bit games:
 	Emulation by Bryan McPhail, mish@tendril.co.uk
 
 To do:
-	Weird cpu race condition in Last Mission.
 	Support coinage options for all i8751 emulations.
-	Dips needed to be worked on several games
 	Super Real Darwin 'Double' sprites appearing from the top of the screen are clipped
 	Strangely coloured butterfly on Garyo Retsuden water levels!
 
@@ -72,6 +70,7 @@ WRITE_HANDLER( dec8_scroll1_w );
 WRITE_HANDLER( dec8_scroll2_w );
 WRITE_HANDLER( srdarwin_control_w );
 WRITE_HANDLER( gondo_scroll_w );
+WRITE_HANDLER( shackled_control_w );
 WRITE_HANDLER( lastmiss_control_w );
 WRITE_HANDLER( lastmiss_scrollx_w );
 WRITE_HANDLER( lastmiss_scrolly_w );
@@ -305,9 +304,9 @@ static WRITE_HANDLER( lastmiss_i8751_w )
 	/* Coins are controlled by the i8751 */
  	if ((readinputport(2)&3)==3 && !latch) latch=1;
  	if ((readinputport(2)&3)!=3 && latch) {coin++; latch=0;snd=0x400;i8751_return=0x400;return;}
-
 	if (i8751_value==0x007b) i8751_return=0x0184; //???
-	if (i8751_value==0x0000) {i8751_return=0x0184; coin=snd=0;}//???
+	if (i8751_value==0x0001) {coin=snd=0;}//???
+	if (i8751_value==0x0000) {i8751_return=0x0184;}//???
 	if (i8751_value==0x0401) i8751_return=0x0184; //???
 	if ((i8751_value>>8)==0x01) i8751_return=0x0184; /* Coinage setup */
 	if ((i8751_value>>8)==0x02) {i8751_return=snd | ((coin / 10) << 4) | (coin % 10); snd=0;} /* Coin return */
@@ -400,15 +399,16 @@ static WRITE_HANDLER( ghostb_bank_w )
 
 WRITE_HANDLER( csilver_control_w )
 {
-	int bankaddress;
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
-	/* Bottom 4 bits - bank switch */
-	bankaddress = 0x10000 + (data & 0x0f) * 0x4000;
-	cpu_setbank(1,&RAM[bankaddress]);
-
-	/* There are unknown bits in the top half of the byte! */
- //logerror("PC %06x - Write %02x to %04x\n",cpu_get_pc(),data,offset+0x1802);
+	/*
+		Bit 0x0f - ROM bank switch.
+		Bit 0x10 - Always set(?)
+		Bit 0x20 - Unused.
+		Bit 0x40 - Unused.
+		Bit 0x80 - Hold subcpu reset line high if clear, else low?  (Not needed anyway)
+	*/
+	cpu_setbank(1,&RAM[0x10000 + (data & 0x0f) * 0x4000]);
 }
 
 static WRITE_HANDLER( dec8_sound_w )
@@ -461,14 +461,16 @@ static WRITE_HANDLER( oscar_int_w )
 	/* Deal with interrupts, coins also generate NMI to CPU 0 */
 	switch (offset) {
 		case 0: /* IRQ2 */
-			cpu_cause_interrupt (1, M6809_INT_IRQ);
+			cpu_set_irq_line(1,M6809_IRQ_LINE,ASSERT_LINE);
 			return;
 		case 1: /* IRC 1 */
+			cpu_set_irq_line(0,M6809_IRQ_LINE,CLEAR_LINE);
 			return;
 		case 2: /* IRQ 1 */
-			cpu_cause_interrupt (0, M6809_INT_IRQ);
+			cpu_set_irq_line(0,M6809_IRQ_LINE,ASSERT_LINE);
 			return;
 		case 3: /* IRC 2 */
+			cpu_set_irq_line(1,M6809_IRQ_LINE,CLEAR_LINE);
 			return;
 	}
 }
@@ -476,6 +478,28 @@ static WRITE_HANDLER( oscar_int_w )
 /* Used by Shackled, Last Mission, Captain Silver */
 static WRITE_HANDLER( shackled_int_w )
 {
+#if 0
+/* This is correct, but the cpus in Shackled need an interleave of about 5000!
+	With lower interleave CPU 0 misses an interrupt at the start of the game
+	(The last interrupt has not finished and been ack'd when the new one occurs */
+	switch (offset) {
+		case 0: /* CPU 2 - IRQ acknowledge */
+			cpu_set_irq_line(1,M6809_IRQ_LINE,CLEAR_LINE);
+            return;
+        case 1: /* CPU 1 - IRQ acknowledge */
+			cpu_set_irq_line(0,M6809_IRQ_LINE,CLEAR_LINE);
+        	return;
+        case 2: /* i8751 - FIRQ acknowledge */
+            return;
+        case 3: /* IRQ 1 */
+			cpu_set_irq_line(0,M6809_IRQ_LINE,ASSERT_LINE);
+			return;
+        case 4: /* IRQ 2 */
+            cpu_set_irq_line(1,M6809_IRQ_LINE,ASSERT_LINE);
+            return;
+	}
+#endif
+
 	switch (offset) {
 		case 0: /* CPU 2 - IRQ acknowledge */
             return;
@@ -500,11 +524,7 @@ static WRITE_HANDLER( dec8_share_w ) { dec8_shared_ram[offset]=data; }
 static WRITE_HANDLER( dec8_share2_w ) { dec8_shared2_ram[offset]=data; }
 static READ_HANDLER( shackled_sprite_r ) { return spriteram[offset]; }
 static WRITE_HANDLER( shackled_sprite_w ) { spriteram[offset]=data; }
-
-static WRITE_HANDLER( flip_screen_w )
-{
-	flip_screen_set(data);
-}
+static WRITE_HANDLER( flip_screen_w ) {	flip_screen_set(data); }
 
 /******************************************************************************/
 
@@ -781,7 +801,7 @@ static MEMORY_WRITE_START( shackled_writemem )
 	{ 0x1809, 0x1809, lastmiss_scrollx_w }, /* Scroll LSB */
 	{ 0x180b, 0x180b, lastmiss_scrolly_w }, /* Scroll LSB */
 	{ 0x180c, 0x180c, oscar_sound_w },
-	{ 0x180d, 0x180d, lastmiss_control_w }, /* Bank switch + Scroll MSB */
+	{ 0x180d, 0x180d, shackled_control_w }, /* Bank switch + Scroll MSB */
 	{ 0x2000, 0x27ff, dec8_videoram_w },
 	{ 0x2800, 0x2fff, shackled_sprite_w },
 	{ 0x3000, 0x37ff, dec8_share2_w, &dec8_shared2_ram },
@@ -817,7 +837,7 @@ static MEMORY_WRITE_START( shackled_sub_writemem )
 	{ 0x1809, 0x1809, lastmiss_scrollx_w }, /* Scroll LSB */
 	{ 0x180b, 0x180b, lastmiss_scrolly_w }, /* Scroll LSB */
 	{ 0x180c, 0x180c, oscar_sound_w },
-	{ 0x180d, 0x180d, lastmiss_control_w }, /* Bank switch + Scroll MSB */
+	{ 0x180d, 0x180d, shackled_control_w }, /* Bank switch + Scroll MSB */
 	{ 0x180e, 0x180f, shackled_i8751_w },
 	{ 0x2000, 0x27ff, dec8_videoram_w, &videoram, &videoram_size },
 	{ 0x2800, 0x2fff, MWA_RAM, &spriteram, &spriteram_size },
@@ -867,8 +887,6 @@ static MEMORY_READ_START( csilver_sub_readmem )
 	{ 0x0000, 0x0fff, dec8_share_r },
 	{ 0x1000, 0x13ff, paletteram_r },
 	{ 0x1400, 0x17ff, paletteram_2_r },
-//	{ 0x1800, 0x1800, input_port_0_r },
-//	{ 0x1801, 0x1801, input_port_1_r },
 	{ 0x1803, 0x1803, input_port_2_r },
 	{ 0x1804, 0x1804, input_port_4_r },
 	{ 0x1805, 0x1805, input_port_3_r },
@@ -886,7 +904,6 @@ static MEMORY_WRITE_START( csilver_sub_writemem )
 	{ 0x1800, 0x1804, shackled_int_w },
 	{ 0x1805, 0x1805, buffer_spriteram_w }, /* DMA */
 	{ 0x180c, 0x180c, oscar_sound_w },
-	{ 0x180d, 0x180d, lastmiss_control_w }, /* Bank switch + Scroll MSB */
 	{ 0x2000, 0x27ff, dec8_videoram_w, &videoram, &videoram_size },
 	{ 0x2800, 0x2fff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x3000, 0x37ff, dec8_share2_w },
@@ -1491,31 +1508,31 @@ INPUT_PORTS_START( lastmiss )
 	PORT_BITX( 0x40,    0x40, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x00, "Cabinet?" )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Cocktail ) )
 
 	PORT_START	/* Dip switch bank 2 */
-	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
-	PORT_DIPSETTING(    0x03, "3" )
-	PORT_DIPSETTING(    0x02, "4" )
-	PORT_DIPSETTING(    0x01, "5" )
-	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
-	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x04, "Easy" )
-	PORT_DIPSETTING(    0x0c, "Normal" )
-	PORT_DIPSETTING(    0x08, "Hard" )
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x01, "3" )
+	PORT_DIPSETTING(    0x00, "5" )
+	PORT_DIPNAME( 0x06, 0x06, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x06, "30000 70000, 70000" )
+	PORT_DIPSETTING(    0x04, "90000 90000, 90000" )
+	PORT_DIPSETTING(    0x02, "90000 80000, 90000" )
+	PORT_DIPSETTING(    0x00, "50000" ) /* These values change between revisions */
+	PORT_DIPNAME( 0x18, 0x18, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x08, "Easy" )
+	PORT_DIPSETTING(    0x18, "Normal" )
+	PORT_DIPSETTING(    0x10, "Hard" )
 	PORT_DIPSETTING(    0x00, "Hardest" )
-	PORT_DIPNAME( 0x10, 0x10, "Allow Continue?" )
-	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unused ) ) /* Unused according to the manual */
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
@@ -1525,43 +1542,43 @@ INPUT_PORTS_START( shackled )
 	PLAYER1_JOYSTICK
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
  	PORT_START	/* Player 2 controls */
 	PLAYER2_JOYSTICK
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )
 
 	PORT_START /* Dip switch bank 1 */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unused ) ) /* All marked as unused in the manual */
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )	/* game doesn't boot when this is On */
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unused ) )	/* game doesn't boot when this is On */
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x80, "Freeze" )
@@ -1591,7 +1608,7 @@ INPUT_PORTS_START( shackled )
 	PORT_DIPSETTING(    0x20, "Hard" )
 	PORT_DIPSETTING(    0x10, "Very Hard" )
 	PORT_DIPSETTING(    0x00, "Hardest" )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
@@ -2025,7 +2042,7 @@ static const struct MachineDriver machine_driver_cobracom =
 	256,256,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_BUFFERS_SPRITERAM,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_BUFFERS_SPRITERAM,
 	0,
 	cobracom_vh_start,
 	0,
@@ -2074,7 +2091,7 @@ static const struct MachineDriver machine_driver_ghostb =
 	1024,1024,
 	ghostb_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_BUFFERS_SPRITERAM,
+	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
 	dec8_eof_callback,
 	ghostb_vh_start,
 	0,
@@ -2123,7 +2140,7 @@ static const struct MachineDriver machine_driver_srdarwin =
 	144,144,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_BUFFERS_SPRITERAM,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_BUFFERS_SPRITERAM,
 	0,
 	srdarwin_vh_start,
 	0,
@@ -2172,7 +2189,7 @@ static const struct MachineDriver machine_driver_gondo =
 	1024,1024,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_BUFFERS_SPRITERAM,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_BUFFERS_SPRITERAM,
 	dec8_eof_callback,
 	gondo_vh_start,
 	0,
@@ -2227,7 +2244,7 @@ static const struct MachineDriver machine_driver_oscar =
 	512,512,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_BUFFERS_SPRITERAM,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_BUFFERS_SPRITERAM,
 	0,
 	oscar_vh_start,
 	0,
@@ -2282,7 +2299,7 @@ static const struct MachineDriver machine_driver_lastmiss =
 	1024,1024,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_BUFFERS_SPRITERAM,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_BUFFERS_SPRITERAM,
 	0,
 	lastmiss_vh_start,
 	0,
@@ -2337,7 +2354,7 @@ static const struct MachineDriver machine_driver_shackled =
 	1024,1024,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_BUFFERS_SPRITERAM,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_BUFFERS_SPRITERAM,
 	0,
 	shackled_vh_start,
 	0,
@@ -2382,7 +2399,7 @@ static const struct MachineDriver machine_driver_csilver =
 		}
 	},
 	58, 529, /* 58Hz, 529ms Vblank duration */
-	60,
+	100,
 	0,	/* init machine */
 
 	/* video hardware */
@@ -2392,7 +2409,7 @@ static const struct MachineDriver machine_driver_csilver =
 	1024,1024,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_AFTER_VBLANK | VIDEO_BUFFERS_SPRITERAM,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_BUFFERS_SPRITERAM,
 	0,
 	lastmiss_vh_start,
 	0,
@@ -2445,7 +2462,7 @@ static const struct MachineDriver machine_driver_garyoret =
 	1024,1024,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_BUFFERS_SPRITERAM,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_BUFFERS_SPRITERAM,
 	dec8_eof_callback,
 	garyoret_vh_start,
 	0,

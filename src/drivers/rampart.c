@@ -126,7 +126,7 @@ static OPBASE_HANDLER( opbase_override )
 
 	/* tweak the slapstic at the source PC */
 	if (oldpc >= 0x140000 && oldpc < 0x148000)
-		slapstic_bank_r(oldpc - 0x140000);
+		slapstic_bank_r(oldpc - 0x140000,0);
 
 	/* tweak the slapstic at the destination PC */
 	if (address >= 0x140000 && address < 0x148000)

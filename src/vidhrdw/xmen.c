@@ -48,6 +48,8 @@ static void xmen_sprite_callback(int *code,int *color,int *priority_mask)
 
 int xmen_vh_start(void)
 {
+	K053251_vh_start();
+
 	if (K052109_vh_start(REGION_GFX1,NORMAL_PLANE_ORDER,xmen_tile_callback))
 		return 1;
 	if (K053247_vh_start(REGION_GFX2,53,-2,NORMAL_PLANE_ORDER,xmen_sprite_callback))
@@ -104,7 +106,8 @@ void xmen_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	palette_init_used_colors();
 	K053247_mark_sprites_colors();
-	if (palette_used_colors)
+
+	if(palette_used_colors)
 		palette_used_colors[16 * bg_colorbase+1] |= PALETTE_COLOR_VISIBLE;
 	palette_recalc();
 

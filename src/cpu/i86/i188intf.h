@@ -13,6 +13,7 @@
 #define i188_ICount i86_ICount
 
 /* Public functions */
+#define i188_init i86_init
 #define i188_reset i86_reset
 #define i188_exit i86_exit
 #define i188_execute i186_execute

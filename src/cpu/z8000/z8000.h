@@ -22,6 +22,7 @@ enum {
 #define Z8000_INT_NONE  0x0000
 
 /* PUBLIC FUNCTIONS */
+extern void z8000_init(void);
 extern unsigned z8000_get_context(void *dst);
 extern void z8000_set_context(void *src);
 extern unsigned z8000_get_pc(void);
@@ -38,9 +39,6 @@ extern void z8000_set_irq_line(int irqline, int state);
 extern void z8000_set_irq_callback(int (*callback)(int irqline));
 extern const char *z8000_info(void *context, int regnum);
 extern unsigned z8000_dasm(char *buffer, unsigned pc);
-
-extern void z8000_State_Save(int cpunum, void *f);
-extern void z8000_State_Load(int cpunum, void *f);
 
 /* PUBLIC GLOBALS */
 extern int z8000_ICount;

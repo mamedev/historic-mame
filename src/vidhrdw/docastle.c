@@ -14,7 +14,6 @@
 
 
 static struct osd_bitmap *tmpbitmap1;
-static char sprite_transparency[256];
 
 
 /***************************************************************************
@@ -115,41 +114,24 @@ static void convert_color_prom(unsigned char *palette, unsigned short *colortabl
 	/* plane is used for transparency. */
 	for (i = 0;i < 32;i++)
 	{
-		for (j = 0;j < 8;j++)
+		/* build two versions of the colortable, one with the covering color
+		   mapped to transparent, and one with all colors but the covering one
+		   mapped to transparent. */
+		for (j = 0;j < 16;j++)
 		{
-			colortable[64*16+16*i+j] = 256;	/* high bit clear means transparent */
-			if (j != 7)
-				colortable[64*16+16*i+j+8] = 8*i+j;
+			if (j < 8)
+				colortable[64*16+16*i+j] = 256;	/* high bit clear means transparent */
+			else if (j == 15)
+				colortable[64*16+16*i+j] = 256;	/* sprite covering color */
 			else
-				colortable[64*16+16*i+j+8] = 257;	/* sprite covering color */
+				colortable[64*16+16*i+j] = 8*i+(j&7);
 		}
-	}
-
-
-   /* now check our sprites and mark which ones have color 15 ('draw under') */
-	{
-		struct GfxElement *gfx;
-		int x,y;
-		unsigned char *dp;
-
-		gfx = Machine->gfx[1];
-		for (i=0;i<gfx->total_elements;i++)
+		for (j = 0;j < 16;j++)
 		{
-			sprite_transparency[i] = 0;
-
-			dp = gfx->gfxdata + i * gfx->char_modulo;
-			for (y=0;y<gfx->height;y++)
-			{
-				for (x=0;x<gfx->width;x++)
-				{
-					if (dp[x] == 15)
-						sprite_transparency[i] = 1;
-				}
-				dp += gfx->line_modulo;
-			}
-
-			if (sprite_transparency[i])
-logerror("sprite %i has transparency.\n",i);
+			if (j == 15)
+				colortable[64*16+32*16+16*i+j] = 257;	/* sprite covering color */
+			else
+				colortable[64*16+32*16+16*i+j] = 256;
 		}
 	}
 }
@@ -286,9 +268,11 @@ void docastle_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 
 
-	/* Draw the sprites. Note that it is important to draw them exactly in this */
-	/* order, to have the correct priorities. */
-	for (offs = 0;offs < spriteram_size;offs += 4)
+	fillbitmap(priority_bitmap,1,NULL);
+
+
+	/* Draw the sprites */
+	for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
 	{
 		int sx,sy,flipx,flipy,code,color;
 
@@ -309,30 +293,23 @@ void docastle_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			flipy = !flipy;
 		}
 
-		drawgfx(bitmap,Machine->gfx[1],
+		/* first draw the sprite, visible */
+		pdrawgfx(bitmap,Machine->gfx[1],
 				code,
 				color,
 				flipx,flipy,
 				sx,sy,
-				&Machine->visible_area,TRANSPARENCY_COLOR,256);
+				&Machine->visible_area,TRANSPARENCY_COLOR,256,
+				0x00);
 
-
-		/* sprites use color 0 for background pen and 8 for the 'under tile' pen.
-		   The color 7 is used to cover over other sprites.
-
-		   At the beginning we scanned all sprites and marked the ones that contained
-		   at least one pixel of color 7, so we only need to worry about these few. */
-		if (sprite_transparency[code])
-		{
-			struct rectangle clip;
-
-			clip.min_x = sx;
-			clip.max_x = sx+31;
-			clip.min_y = sy;
-			clip.max_y = sy+31;
-
-			copybitmap(bitmap,tmpbitmap,0,0,0,0,&clip,TRANSPARENCY_THROUGH,Machine->pens[257]);
-		}
+		/* then draw the mask, behind the background but obscuring following sprites */
+		pdrawgfx(bitmap,Machine->gfx[1],
+				code,
+				color + 32,
+				flipx,flipy,
+				sx,sy,
+				&Machine->visible_area,TRANSPARENCY_COLOR,256,
+				0x02);
 	}
 
 

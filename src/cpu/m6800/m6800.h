@@ -28,6 +28,7 @@ enum {
 extern int m6800_ICount;
 
 /* PUBLIC FUNCTIONS */
+void m6800_init(void);
 void m6800_reset(void *param);
 void m6800_exit(void);
 int	m6800_execute(int cycles);
@@ -42,8 +43,6 @@ void m6800_set_reg(int regnum, unsigned val);
 void m6800_set_nmi_line(int state);
 void m6800_set_irq_line(int irqline, int state);
 void m6800_set_irq_callback(int (*callback)(int irqline));
-void m6800_state_save(void *file);
-void m6800_state_load(void *file);
 const char *m6800_info(void *context, int regnum);
 unsigned m6800_dasm(char *buffer, unsigned pc);
 
@@ -68,6 +67,7 @@ unsigned m6800_dasm(char *buffer, unsigned pc);
 #define M6801_IRQ_LINE				M6800_IRQ_LINE
 
 #define m6801_ICount				m6800_ICount
+void m6801_init(void);
 void m6801_reset(void *param);
 void m6801_exit(void);
 int	m6801_execute(int cycles);
@@ -82,8 +82,6 @@ void m6801_set_reg(int regnum, unsigned val);
 void m6801_set_nmi_line(int state);
 void m6801_set_irq_line(int irqline, int state);
 void m6801_set_irq_callback(int (*callback)(int irqline));
-void m6801_state_save(void *file);
-void m6801_state_load(void *file);
 const char *m6801_info(void *context, int regnum);
 unsigned m6801_dasm(char *buffer, unsigned pc);
 #endif
@@ -109,6 +107,7 @@ unsigned m6801_dasm(char *buffer, unsigned pc);
 #define M6802_IRQ_LINE				M6800_IRQ_LINE
 
 #define m6802_ICount				m6800_ICount
+void m6802_init(void);
 void m6802_reset(void *param);
 void m6802_exit(void);
 int	m6802_execute(int cycles);
@@ -123,8 +122,6 @@ void m6802_set_reg(int regnum, unsigned val);
 void m6802_set_nmi_line(int state);
 void m6802_set_irq_line(int irqline, int state);
 void m6802_set_irq_callback(int (*callback)(int irqline));
-void m6802_state_save(void *file);
-void m6802_state_load(void *file);
 const char *m6802_info(void *context, int regnum);
 unsigned m6802_dasm(char *buffer, unsigned pc);
 #endif
@@ -151,6 +148,7 @@ unsigned m6802_dasm(char *buffer, unsigned pc);
 #define M6803_TIN_LINE				M6800_TIN_LINE
 
 #define m6803_ICount				m6800_ICount
+void m6803_init(void);
 void m6803_reset(void *param);
 void m6803_exit(void);
 int	m6803_execute(int cycles);
@@ -165,8 +163,6 @@ void m6803_set_reg(int regnum, unsigned val);
 void m6803_set_nmi_line(int state);
 void m6803_set_irq_line(int irqline, int state);
 void m6803_set_irq_callback(int (*callback)(int irqline));
-void m6803_state_save(void *file);
-void m6803_state_load(void *file);
 const char *m6803_info(void *context, int regnum);
 unsigned m6803_dasm(char *buffer, unsigned pc);
 #endif
@@ -206,6 +202,7 @@ WRITE_HANDLER( m6803_internal_registers_w );
 #define M6808_IRQ_LINE              M6800_IRQ_LINE
 
 #define m6808_ICount                m6800_ICount
+void m6808_init(void);
 void m6808_reset(void *param);
 void m6808_exit(void);
 int	m6808_execute(int cycles);
@@ -220,8 +217,6 @@ void m6808_set_reg(int regnum, unsigned val);
 void m6808_set_nmi_line(int state);
 void m6808_set_irq_line(int irqline, int state);
 void m6808_set_irq_callback(int (*callback)(int irqline));
-void m6808_state_save(void *file);
-void m6808_state_load(void *file);
 const char *m6808_info(void *context, int regnum);
 unsigned m6808_dasm(char *buffer, unsigned pc);
 #endif
@@ -249,6 +244,7 @@ unsigned m6808_dasm(char *buffer, unsigned pc);
 #define HD63701_TIN_LINE			 M6800_TIN_LINE
 
 #define hd63701_ICount				 m6800_ICount
+void hd63701_init(void);
 void hd63701_reset(void *param);
 void hd63701_exit(void);
 int	hd63701_execute(int cycles);
@@ -263,8 +259,6 @@ void hd63701_set_reg(int regnum, unsigned val);
 void hd63701_set_nmi_line(int state);
 void hd63701_set_irq_line(int irqline, int state);
 void hd63701_set_irq_callback(int (*callback)(int irqline));
-void hd63701_state_save(void *file);
-void hd63701_state_load(void *file);
 const char *hd63701_info(void *context, int regnum);
 unsigned hd63701_dasm(char *buffer, unsigned pc);
 
@@ -303,6 +297,7 @@ WRITE_HANDLER( hd63701_internal_registers_w );
 #define NSC8105_TIN_LINE			 M6800_TIN_LINE
 
 #define nsc8105_ICount				 m6800_ICount
+void nsc8105_init(void);
 void nsc8105_reset(void *param);
 void nsc8105_exit(void);
 int	nsc8105_execute(int cycles);
@@ -317,8 +312,6 @@ void nsc8105_set_reg(int regnum, unsigned val);
 void nsc8105_set_nmi_line(int state);
 void nsc8105_set_irq_line(int irqline, int state);
 void nsc8105_set_irq_callback(int (*callback)(int irqline));
-void nsc8105_state_save(void *file);
-void nsc8105_state_load(void *file);
 const char *nsc8105_info(void *context, int regnum);
 unsigned nsc8105_dasm(char *buffer, unsigned pc);
 #endif

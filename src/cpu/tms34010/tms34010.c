@@ -830,6 +830,10 @@ static void check_interrupt(void)
 **	Reset the CPU emulation
 **#################################################################################################*/
 
+void tms34010_init(void)
+{
+}
+
 void tms34010_reset(void *param)
 {
 	struct tms34010_config *config = param ? param : &default_config;
@@ -854,6 +858,10 @@ void tms34010_reset(void *param)
 	state.reset_deferred = config->halt_on_reset;
 	if (config->halt_on_reset)
 		tms34010_io_register_w(REG_HSTCTLH, 0x8000, 0);
+}
+
+void tms34020_init(void)
+{
 }
 
 void tms34020_reset(void *param)

@@ -600,7 +600,7 @@ void ssriders_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	int i;
 
 	for (i = 0;i < 128;i++)
-		if ((K053245_word_r(8*i) & 0x8000) && !(K053245_word_r(8*i+1) & 0x8000)) {
+		if ((K053245_word_r(8*i,0) & 0x8000) && !(K053245_word_r(8*i+1,0) & 0x8000)) {
 			K053245_word_w(8*i,i,0xff00);	/* workaround for protection */
 		}
 

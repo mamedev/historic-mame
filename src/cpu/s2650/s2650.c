@@ -745,6 +745,10 @@ static void ABS_EA(void) _ABS_EA()
 static void BRA_EA(void) _BRA_EA()
 #endif
 
+void s2650_init(void)
+{
+}
+
 void s2650_reset(void *param)
 {
 	memset(&S, 0, sizeof(S));
@@ -1452,7 +1456,7 @@ int s2650_execute(int cycles)
 
 	return cycles - s2650_ICount;
 }
-
+#if 0
 void s2650_state_save(void *file)
 {
 	int cpu = cpu_getactivecpu();
@@ -1478,7 +1482,7 @@ void s2650_state_load(void *file)
 	state_load_UINT16(file,"s2650",cpu,"RAS",S.ras,8);
 	state_load_UINT8(file,"s2650",cpu,"IRQ_STATE",&S.irq_state,1);
 }
-
+#endif
 /****************************************************************************
  * Return a formatted string for a register
  ****************************************************************************/

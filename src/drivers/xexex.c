@@ -24,6 +24,7 @@ ca003		8046a		00
 ***************************************************************************/
 
 #include "driver.h"
+#include "state.h"
 
 #include "vidhrdw/generic.h"
 #include "vidhrdw/konamiic.h"
@@ -85,15 +86,12 @@ static WRITE16_HANDLER( K053251_halfword_w )
 /* A1, A5 and A6 don't go to the 053247. */
 static READ16_HANDLER( K053247_scattered_word_r )
 {
-	if (offset & 0x0031) {
-		//		fprintf(stderr, "Read1 %x [%04x]\n", 0x90000+offset*2, spriteram16[offset]);
+	if (offset & 0x0031)
 		return spriteram16[offset];
-	} else
+	else
 	{
-		//int xo = offset;
 		offset = ((offset & 0x000e) >> 1) | ((offset & 0x3fc0) >> 3);
-		//		fprintf(stderr, "Read2 %x [%04x]\n", 0x90000+xo*2, K053247_word_r(offset));
-		return K053247_word_r(offset);
+		return K053247_word_r(offset,mem_mask);
 	}
 }
 
@@ -476,12 +474,18 @@ static void init_xexex(void)
 	konami_rom_deinterleave_4(REGION_GFX2);
 
 	/* Invulnerability */
-	if(0 && !strcmp(Machine->gamedrv->name, "xexex")) {
+#if 0
+	if(1 && !strcmp(Machine->gamedrv->name, "xexex")) {
 		*(data16_t *)(memory_region(REGION_CPU1) + 0x648d4) = 0x4a79;
 		*(data16_t *)(memory_region(REGION_CPU1) + 0x00008) = 0x5500;
 	}
-}
+#endif
 
+	state_save_register_UINT16("main", 0, "control2", &cur_control2, 1);
+	state_save_register_func_postload(parse_control2);
+	state_save_register_int("main", 0, "sound region", &cur_sound_region);
+	state_save_register_func_postload(reset_sound_region);
+}
 
 GAME( 1991, xexex,  0,     xexex, xexex, xexex, ROT0, "Konami", "Xexex (World)" )
 GAME( 1991, xexexj, xexex, xexex, xexex, xexex, ROT0, "Konami", "Xexex (Japan)" )

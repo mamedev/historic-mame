@@ -483,12 +483,15 @@ void adsp2100_set_sp(unsigned val)
 **	INITIALIZATION AND SHUTDOWN
 **#################################################################################################*/
 
-void adsp2100_reset(void *param)
+void adsp2100_init(void)
 {
 	/* create the tables */
 	if (!create_tables())
 		exit(-1);
+}
 
+void adsp2100_reset(void *param)
+{
 	/* ensure that zero is zero */
 	adsp2100.core.zero.u = adsp2100.alt.zero.u = 0;
 
@@ -1801,6 +1804,11 @@ static UINT8 adsp2105_win_layout[] =
 	31,15,48, 7,	/* memory #2 window (right, lower middle) */
 	 0,23,80, 1,	/* command line window (bottom rows) */
 };
+
+void adsp2105_init(void)
+{
+	adsp2100_init();
+}
 
 void adsp2105_reset(void *param)
 {

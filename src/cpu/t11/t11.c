@@ -306,6 +306,10 @@ void t11_SetBank(int offset, unsigned char *base)
 }
 
 
+void t11_init(void)
+{
+}
+
 void t11_reset(void *param)
 {
 	int i;

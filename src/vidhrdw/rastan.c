@@ -242,7 +242,7 @@ void opwolf_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	PC080SN_tilemap_draw(bitmap,0,layer[1],0,0);
 
 	/* See if we should draw artificial gun targets */
-	if (input_port_4_word_r(0) &0x1)	/* Fake DSW */
+	if (input_port_4_word_r(0,0) &0x1)	/* Fake DSW */
 	{
 		/* Draw an aiming crosshair (after exidy440) */
 		int beamx,beamy;

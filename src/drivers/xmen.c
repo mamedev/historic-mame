@@ -9,7 +9,7 @@ driver by Nicola Salmoria
 #include "vidhrdw/konamiic.h"
 #include "machine/eeprom.h"
 #include "cpu/z80/z80.h"
-
+#include "state.h"
 
 int xmen_vh_start(void);
 void xmen_vh_stop(void);
@@ -62,7 +62,7 @@ logerror("%06x eeprom_r\n",cpu_get_pc());
 	/* bit 6 is EEPROM data */
 	/* bit 7 is EEPROM ready */
 	/* bit 14 is service button */
-	res = (EEPROM_read_bit() << 6) | input_port_2_word_r(0);
+	res = (EEPROM_read_bit() << 6) | input_port_2_word_r(0,0);
 	if (init_eeprom_count)
 	{
 		init_eeprom_count--;
@@ -124,14 +124,17 @@ static WRITE16_HANDLER( xmen_18fa00_w )
 	}
 }
 
+static data8_t sound_curbank;
+
+static void sound_reset_bank(void)
+{
+	cpu_setbank(4, memory_region(REGION_CPU2) + 0x10000 + (sound_curbank & 0x07) * 0x4000);
+}
+
 static WRITE_HANDLER( sound_bankswitch_w )
 {
-	int bankaddress;
-	unsigned char *RAM = memory_region(REGION_CPU2);
-
-
-	bankaddress = 0x10000 + (data & 0x07) * 0x4000;
-	cpu_setbank(4,&RAM[bankaddress]);
+	sound_curbank = data;
+	sound_reset_bank();
 }
 
 
@@ -459,6 +462,9 @@ static void init_xmen(void)
 {
 	konami_rom_deinterleave_2(REGION_GFX1);
 	konami_rom_deinterleave_4(REGION_GFX2);
+
+	state_save_register_UINT8("main", 0, "sound bank", &sound_curbank, 1);
+	state_save_register_func_postload(sound_reset_bank);
 }
 
 static void init_xmen6p(void)

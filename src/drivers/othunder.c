@@ -151,19 +151,19 @@ static READ16_HANDLER( othunder_input_r )
 	switch (offset)
 	{
 		case 0x00:
-			return input_port_2_word_r(0);	/* DSW A */
+			return input_port_2_word_r(0,mem_mask);	/* DSW A */
 
 		case 0x01:
-			return input_port_3_word_r(0);	/* DSW B */
+			return input_port_3_word_r(0,mem_mask);	/* DSW B */
 
 		case 0x02:
-			return input_port_0_word_r(0);	/* IN0 */
+			return input_port_0_word_r(0,mem_mask);	/* IN0 */
 
 		case 0x03:
 			return eeprom_r();
 
 		case 0x07:
-			return input_port_1_word_r(0);	/* IN1 */
+			return input_port_1_word_r(0,mem_mask);	/* IN1 */
 	}
 
 logerror("CPU #0 PC %06x: warning - read unmapped input offset %06x\n",cpu_get_pc(),offset);
@@ -176,16 +176,16 @@ static READ16_HANDLER( othunder_lightgun_r )
 	switch (offset)
 	{
 		case 0x00:
-			return input_port_5_word_r(0);	/* P1X */
+			return input_port_5_word_r(0,mem_mask);	/* P1X */
 
 		case 0x01:
-			return input_port_6_word_r(0);	/* P1Y */
+			return input_port_6_word_r(0,mem_mask);	/* P1Y */
 
 		case 0x02:
-			return input_port_7_word_r(0);	/* P2X */
+			return input_port_7_word_r(0,mem_mask);	/* P2X */
 
 		case 0x03:
-			return input_port_8_word_r(0);	/* P2Y */
+			return input_port_8_word_r(0,mem_mask);	/* P2Y */
 	}
 
 logerror("CPU #0 lightgun_r offset %06x: warning - read unmapped memory address %06x\n",cpu_get_pc(),offset);

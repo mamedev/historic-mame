@@ -136,22 +136,68 @@ const struct KeyboardInfo *osd_get_key_list(void)
 }
 
 
+/*
+  since the keyboard controller is slow, it is not capable of reporting multiple
+  key presses fast enough. We have to delay them in order not to lose special moves
+  tied to simultaneous button presses.
+ */
+
+static int oldkey[KEY_MAX],currkey[KEY_MAX];
+
+static void updatekeyboard(void)
+{
+	int i,changed;
+
+	changed = 0;
+	for (i = 0;i < KEY_MAX;i++)
+	{
+		if (key[i] != oldkey[i])
+		{
+			changed = 1;
+
+			if (key[i] == 0 && currkey[i] == 0)
+			/* keypress was missed, turn it on for one frame */
+				currkey[i] = -1;
+		}
+	}
+
+	/* if keyboard state is stable, copy it over */
+	if (!changed)
+	{
+		for (i = 0;i < KEY_MAX;i++)
+			currkey[i] = key[i];
+	}
+
+	for (i = 0;i < KEY_MAX;i++)
+		oldkey[i] = key[i];
+}
+
+
 int osd_is_key_pressed(int keycode)
 {
 	if (keycode >= KEY_MAX) return 0;
+
+	/* if update_video_and_audio() is not being called yet, copy key array */
+	if (!Machine->scrbitmap)
+	{
+		int i;
+
+		for (i = 0;i < KEY_MAX;i++)
+			currkey[i] = key[i];
+	}
 
 	if (keycode == KEY_PAUSE)
 	{
 		static int pressed,counter;
 		int res;
 
-		res = key[KEY_PAUSE] ^ pressed;
+		res = currkey[KEY_PAUSE] ^ pressed;
 		if (res)
 		{
 			if (counter > 0)
 			{
 				if (--counter == 0)
-					pressed = key[KEY_PAUSE];
+					pressed = currkey[KEY_PAUSE];
 			}
 			else counter = 10;
 		}
@@ -159,7 +205,7 @@ int osd_is_key_pressed(int keycode)
 		return res;
 	}
 
-	return key[keycode];
+	return currkey[keycode];
 }
 
 
@@ -411,6 +457,8 @@ int osd_is_joy_pressed(int joycode)
 
 void poll_joysticks(void)
 {
+	updatekeyboard();
+
 	if (joystick > JOY_TYPE_NONE)
 		poll_joystick();
 }
@@ -546,8 +594,10 @@ void osd_trak_read(int player,int *deltax,int *deltay)
 
 #ifndef MESS
 #ifndef TINY_COMPILE
+#ifndef CPSMAME
 extern int no_of_tiles;
 extern struct GameDriver driver_neogeo;
+#endif
 #endif
 #endif
 
@@ -593,6 +643,7 @@ void osd_customize_inputport_defaults(struct ipd *defaults)
 
 #ifndef MESS
 #ifndef TINY_COMPILE
+#ifndef CPSMAME
 			if (use_hotrod == 2 &&
 					(Machine->gamedrv->clone_of == &driver_neogeo ||
 					(Machine->gamedrv->clone_of && Machine->gamedrv->clone_of->clone_of == &driver_neogeo)))
@@ -614,6 +665,7 @@ void osd_customize_inputport_defaults(struct ipd *defaults)
 				if (defaults->type == (IPT_BUTTON7 | IPF_PLAYER2)) seq_set_1(&defaults->seq,KEYCODE_NONE);
 				if (defaults->type == (IPT_BUTTON8 | IPF_PLAYER2)) seq_set_1(&defaults->seq,KEYCODE_NONE);
 			}
+#endif
 #endif
 #endif
 

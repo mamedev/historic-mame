@@ -14,16 +14,19 @@
 
 	- Effects created using the Raster Interrupt are probably not 100% correct,
 	  e.g.:
-	  - spinmast requires IRQ2 to work, but it's not clear why
 	  - there is currently a kludge to get zedblade working correctly. It seems
-	    to control the line IRQ2 happens on differently from the other games. Even
-		with the kludge effects are off by 1 pixel, but this is a minor issue.
-		It hangs at the end of level 1, polling the scanline register.
-	  - overtop hangs at the beginning of the race, polling neo_control_16_r()
-	    waiting for a value that never comes.
+	    to control the line IRQ2 happens on differently from the other games.
 	  - trally, neodrift and tpgolf need to use the raster driver, however that
 	    way full screen zoom does NOT work correctly (the video driver has kludges
 		to make it work without the raster driver).
+	  - garoup enables IRQ2 on Terry's stage, but with no noticeable effect. Note
+	    that it is NOT enabled in 2 players mode, only vs cpu.
+	  - ridhero requires 262 raster lines to work correctly. However the aodk 100
+		mega shock logo works better with 261.
+	  - spinmast uses IRQ2 with no noticeable effect (it seems to be always near
+	    the bottom of the screen).
+	  - strhoop enables IRQ2 on every scanline during attract mode, with no
+	    noticeable effect.
 
 	- Gururin has bad tiles all over the place (used to work ..)
 
@@ -34,7 +37,7 @@
 
 	- Zooming is not perfect, sometimes things that are meant to be zoomed down
 	  to be invisible end up being a single line of pixels
-		(tophuntr for example)
+		(tophuntr how to play, kuizkof map)
 
 	AUDIO ISSUES :
 
@@ -190,13 +193,12 @@ Points to note, known and proven information deleted from this map:
 #include "cpu/z80/z80.h"
 
 
-#define RASTER_LINES 261	/* guess! 270 is good for viewpoin */
+#define RASTER_LINES 262	/* almost certainly correct */
 #define FIRST_VISIBLE_LINE 16
 #define LAST_VISIBLE_LINE 239
 
 
 extern data16_t *neogeo_vidram16;
-extern data16_t *neogeo_ram16;
 extern data16_t *neogeo_sram16;
 
 WRITE16_HANDLER( neogeo_sram16_lock_w );
@@ -245,9 +247,38 @@ unsigned int neogeo_frame_counter_speed=4;
 
 /******************************************************************************/
 
-static int irq2enable,irq2start,irq2repeat=1000,irq2control;
-static int lastirq2line = 1000;
-static int current_scanline,scanline_read;
+static int irq2start=1000,irq2control;
+static int current_scanline,current_rasterline,scanline_read;
+static UINT32 irq2pos_value;
+static int vblank_int,scanline_int;
+static int irq2taken;
+int neogeo_raster_enable = 1;
+
+
+static void update_interrupts(void)
+{
+	int level = 0;
+
+	/* determine which interrupt is active */
+	if (vblank_int) level = 1;
+	if (scanline_int) level = 2;
+
+	/* either set or clear the appropriate lines */
+	if (level)
+		cpu_set_irq_line(0, level, ASSERT_LINE);
+	else
+		cpu_set_irq_line(0, 7, CLEAR_LINE);
+}
+
+static WRITE16_HANDLER( neo_irqack_w )
+{
+	if (ACCESSING_LSB)
+	{
+		if (data & 4) vblank_int = 0;
+		if (data & 2) scanline_int = 0;
+		update_interrupts();
+	}
+}
 
 
 static int neogeo_interrupt(void)
@@ -255,55 +286,98 @@ static int neogeo_interrupt(void)
 	static int fc=0;
 	int line = RASTER_LINES - cpu_getiloops();
 
+	current_rasterline = line;
 	current_scanline = line - (RASTER_LINES-(LAST_VISIBLE_LINE+1));
 
 	if (line == RASTER_LINES)	/* vblank */
 	{
+		current_rasterline = 0;
+
 		/* Add a timer tick to the pd4990a */
 		pd4990a_addretrace();
 
 		/* Animation counter, 1 once per frame is too fast, every 4 seems good */
-			if (!(irq2control & 0x8))
+		if (!(irq2control & 0x8))
+		{
+			if (fc>neogeo_frame_counter_speed)
 			{
-				if (fc>neogeo_frame_counter_speed)
-				{
-					fc=0;
-					neogeo_frame_counter++;
-				}
-				fc++;
+				fc=0;
+				neogeo_frame_counter++;
 			}
+			fc++;
+		}
 
-		if (irq2enable)
+		if (irq2control & 0x10)
 			usrintf_showmessage("IRQ2 enabled, need raster driver");
 
 		/* return a standard vblank interrupt */
-		return 1;	   /* vertical blank */
+		vblank_int = 1;	   /* vertical blank */
 	}
 
+	update_interrupts();
 	return 0;
 }
+
 
 static int raster_interrupt(int busy)
 {
 	static int fc=0;
-	static int raster_enable=1;
 	int line = RASTER_LINES - cpu_getiloops();
+	int do_refresh = 0;
 
+	current_rasterline = line;
 	current_scanline = line - (RASTER_LINES-(LAST_VISIBLE_LINE+1));
+
+	irq2taken = 0;
 
 /* kludge to get zedblade working correctly without breaking everything else */
 if (!strcmp(Machine->gamedrv->name,"zedblade"))
-	current_scanline = line;// - (RASTER_LINES-(LAST_VISIBLE_LINE+1));
+	current_scanline = line-4;// - (RASTER_LINES-(LAST_VISIBLE_LINE+1));
+
+	if (busy)
+	{
+		if (neogeo_raster_enable && scanline_read)
+		{
+			do_refresh = 1;
+//logerror("partial refresh at raster line %d (screen line %d)\n",line,current_scanline);
+			scanline_read = 0;
+		}
+	}
+
+	if (irq2control & 0x10)
+	{
+		if (line == irq2start)
+		{
+			logerror("trigger IRQ2 at raster line %d (screen line %d)\n",line,current_scanline);
+			if (!busy)
+			{
+				if (neogeo_raster_enable)
+					do_refresh = 1;
+			}
+
+			if (irq2control & 0x80)
+				irq2start += (irq2pos_value + 3) / 0x180;	/* ridhero gives 0x17d */
+
+			scanline_int = 1;
+			irq2taken = 1;
+		}
+	}
 
 	if (line == RASTER_LINES)	/* vblank */
 	{
+		current_rasterline = 0;
+
 		if (keyboard_pressed_memory(KEYCODE_F1))
 		{
-			raster_enable ^= 1;
-			usrintf_showmessage("raster effects %sabled",raster_enable ? "en" : "dis");
+			neogeo_raster_enable = (neogeo_raster_enable + 1) % 3;
+			usrintf_showmessage("raster effects %sabled",neogeo_raster_enable ? "en" : "dis");
 		}
 
-		lastirq2line = 1000;
+		if (irq2control & 0x40)
+			irq2start = (irq2pos_value + 3) / 0x180;	/* ridhero gives 0x17d */
+		else
+			irq2start = 1000;
+
 
 		/* Add a timer tick to the pd4990a */
 		pd4990a_addretrace();
@@ -319,41 +393,17 @@ if (!strcmp(Machine->gamedrv->name,"zedblade"))
 			fc++;
 		}
 
-		if (osd_skip_this_frame()==0)
-			neogeo_vh_raster_partial_refresh(Machine->scrbitmap,current_scanline-1);
+		do_refresh = 1;
 
 		/* return a standard vblank interrupt */
 logerror("trigger IRQ1\n");
-		return 1;	   /* vertical blank */
+		vblank_int = 1;	   /* vertical blank */
 	}
 
-	if (busy)
-	{
-		if (raster_enable && osd_skip_this_frame()==0 && scanline_read)
-		{
-//logerror("partial refresh at raster line %d (screen line %d)\n",line,current_scanline);
-			neogeo_vh_raster_partial_refresh(Machine->scrbitmap,current_scanline-1);
-			scanline_read = 0;
-		}
-	}
+	if (do_refresh && osd_skip_this_frame() == 0)
+		neogeo_vh_raster_partial_refresh(Machine->scrbitmap,current_scanline);
 
-	if (irq2enable)
-	{
-		if (line == irq2start || line == lastirq2line + irq2repeat)
-		{
-			logerror("trigger IRQ2 at raster line %d (screen line %d)\n",line,current_scanline);
-			if (!busy)
-			{
-				if (raster_enable && osd_skip_this_frame()==0)
-					neogeo_vh_raster_partial_refresh(Machine->scrbitmap,current_scanline-1);
-			}
-
-			lastirq2line = line;
-
-			return 2;
-		}
-	}
-
+	update_interrupts();
 	return 0;
 }
 
@@ -503,7 +553,7 @@ static READ16_HANDLER( neo_control_16_r )
 	line = current_scanline;
 	scanline_read = 1;	/* needed for raster_busy optimization */
 
-	irq_bit = (irq2enable && (line == irq2start || line == lastirq2line + irq2repeat))
+	irq_bit = irq2taken
 			|| (line < FIRST_VISIBLE_LINE) || (line > LAST_VISIBLE_LINE);
 
 	res = ((line * 0x80) & 0x7f80)				/* scanline */
@@ -516,31 +566,13 @@ static READ16_HANDLER( neo_control_16_r )
 }
 
 
-int neogeo_irq2type;
-static UINT32 irq2pos_value;
-
 /* this does much more than this, but I'm not sure exactly what */
 WRITE16_HANDLER( neo_control_16_w )
 {
-	/* Games which definitely need IRQ2:
-	neocup98
-	ssideki4
-	ssideki3
-	sengoku2
-	spinmast
-	ridhero
-	turfmast
-	karnovr
-	galaxyfg
-	zedblade
-	mslug2 (dunes at the beginning)
-	*/
-
-
 	logerror("%06x: neo_control_16_w %04x\n",cpu_get_pc(),data);
 
-	/* Auto-Anim Speed Control? */
-	neogeo_frame_counter_speed = (data >> 8) & 0xff;  /* kof95 */
+	/* Auto-Anim Speed Control */
+	neogeo_frame_counter_speed = (data >> 8) & 0xff;
 
 /*	0x01 - 0x80 flags:
 
@@ -553,95 +585,38 @@ WRITE16_HANDLER( neo_control_16_w )
 	0x10 irq2 enable, tile engine scanline irq that is triggered
 	when a certain scanline is reached.
 
-	0x20 reset tile engine irq register at vblank ?
-	almost all games set this except ridhero and ssideki4
+	0x20 when set, the next values written in the irq position register
+	sets irq2 to happen N lines after the current one
 
-	0x40 move lower byte from irq register to scanline counter ?
-	zedblade, ridhero and ssideki4 set this, these are games
-	that could use an offset until the irq gets triggered repeatly
+	0x40 when set, irq position register is automatically loaded at vblank to
+	set the irq2 line.
 
-	0x80 repeat, the higher byte of the irq register is added to the
-	scanline counter each time the irq is triggered
+	0x80 when set, every time irq2 is triggered the irq position register is
+	automatically loaded to set the next irq2 line.
 
-	i hacked it in this way but it didnt work..
-	its here so someone else doesnt have to start all over..
+	0x80 and 0x40 may be set at the same time (Viewpoint does this).
 */
-
-
-	if (data & 0x10)
-		irq2enable = 1;
-	else
-	{
-		irq2enable = 0;
-		lastirq2line = 1000;
-		return;
-	}
-
-	if (data & 0x40)
-		lastirq2line = 1000;
-
-	if (~data & 0x80)
-		irq2repeat = 1000;
-	else
-	{
-		if (~irq2control & 0x80)
-			irq2repeat = (irq2pos_value + 3) / 0x180;
-	}
-
-
 	irq2control = data & 0xff;
 }
 
 static WRITE16_HANDLER( neo_irq2pos_16_w )
 {
-	int line;
-
 	logerror("%06x: neo_irq2pos_16_w offset %d %04x\n",cpu_get_pc(),offset,data);
 
 	if (offset)
-	{
 		irq2pos_value = (irq2pos_value & 0xffff0000) | (UINT32)data;
-		if (neogeo_irq2type) return;
-	}
 	else
-	{
 		irq2pos_value = (irq2pos_value & 0x0000ffff) | ((UINT32)data << 16);
-		if (!neogeo_irq2type) return;
-	}
 
-	line = (irq2pos_value + 3) / 0x180;	/* ridhero gives 0x17d */
-
-	/*
-	  ssideki2 keeps this bit clear all the time, and triggers interrupts one by one.
-	  karnovr and galaxyfg clear it at vblank, set the line where interrupts have to
-	  begin, then set it and specify the repeat period.
-	  turfmast, however, clears it, specifies the repeat period, then sets it and
-	  expects interrupts to happen repeatedly without writing it again.
-	 */
-	if (~irq2control & 0x80)
+	if (irq2control & 0x20)
 	{
-		/*
-		   Good places to check the alignment of irq2start and of raster effects in general:
-		   - turfmast (especially hole 4 of the Japan course)
-		   - planet Mani in galaxyfg
-		  */
+//		int line = (irq2pos_value + 3) / 0x180;	/* ridhero gives 0x17d */
+		int line = (irq2pos_value + 0x3b) / 0x180;	/* turfmast goes as low as 0x145 */
 
-		if (lastirq2line == 1000)
-			irq2start = line;
-		else
-			irq2start = lastirq2line + line;
-	}
-	else
-	{
-		if (line <= 16) irq2repeat = line;
-		else
-		{
-			irq2start = line;
-			irq2repeat = 1000;
-		}
-	}
+		irq2start = current_rasterline + line;
 
-	logerror("irq2start = %d, irq2repeat = %d, current_scanline = %d\n",irq2start,irq2repeat,current_scanline);
+		logerror("irq2start = %d, current_rasterline = %d, current_scanline = %d\n",irq2start,current_rasterline,current_scanline);
+	}
 }
 
 
@@ -649,7 +624,7 @@ static WRITE16_HANDLER( neo_irq2pos_16_w )
 
 static MEMORY_READ16_START( neogeo_readmem )
 	{ 0x000000, 0x0fffff, MRA16_ROM },			/* Rom bank 1 */
-    { 0x100000, 0x10ffff, MRA16_BANK1 },          /* Ram bank 1 */
+	{ 0x100000, 0x10ffff, MRA16_BANK1 },		/* Ram bank 1 */
 	{ 0x200000, 0x2fffff, MRA16_BANK4 },		/* Rom bank 2 */
 
 	{ 0x300000, 0x300001, controller1_16_r },
@@ -673,7 +648,7 @@ MEMORY_END
 
 static MEMORY_WRITE16_START( neogeo_writemem )
 	{ 0x000000, 0x0fffff, MWA16_ROM },	  /* ghost pilots writes to ROM */
-    { 0x100000, 0x10ffff, MWA16_BANK1 },   // WORK RAM
+	{ 0x100000, 0x10ffff, MWA16_BANK1 },	// WORK RAM
 /*	{ 0x200000, 0x200fff, whp copies ROM data here. Why? Is there RAM in the banked ROM space? */
 /* trally writes to 200000-200003 as well, probably looking for a serial link */
 /* both games write to 0000fe before writing to 200000. The two things could be related. */
@@ -707,11 +682,7 @@ static MEMORY_WRITE16_START( neogeo_writemem )
 
 	{ 0x3c0006, 0x3c0007, neo_control_16_w },	/* IRQ2 control */
 	{ 0x3c0008, 0x3c000b, neo_irq2pos_16_w },	/* IRQ2 position */
-
-	{ 0x3c000c, 0x3c000d, MWA16_NOP },	/* IRQ acknowledge */
-										/* 4 = IRQ 1 */
-										/* 2 = IRQ 2 */
-										/* 1 = IRQ 3 (does any game use this?) */
+	{ 0x3c000c, 0x3c000d, neo_irqack_w },		/* IRQ acknowledge */
 //	{ 0x3c000e, 0x3c000f }, /* Unknown, see control_r */
 
 	{ 0x400000, 0x401fff, neogeo_paletteram16_w },	// COLOR RAM BANK1
@@ -1145,7 +1116,7 @@ static const struct MachineDriver machine_driver_raster =
 	4096,4096,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_RGB_DIRECT,
 	0,
 	neogeo_mvs_vh_start,
 	neogeo_vh_stop,
@@ -1187,7 +1158,7 @@ static const struct MachineDriver machine_driver_raster_busy =
 	4096,4096,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_RGB_DIRECT,
 	0,
 	neogeo_mvs_vh_start,
 	neogeo_vh_stop,
@@ -4436,11 +4407,13 @@ ROM_START( kof99 ) /* Original Version - Encrypted Code(?) & GFX */
 
 	NEO_BIOS_SOUND_128K( "kof99_m1.rom", 0x5e74539c )
 
-	ROM_REGION( 0x0e00000, REGION_SOUND1, ROMREGION_SOUNDONLY )
+	ROM_REGION( 0x0c00000, REGION_SOUND1, ROMREGION_SOUNDONLY )
 	ROM_LOAD( "kof99_v1.rom", 0x000000, 0x400000, 0xef2eecc8 )
 	ROM_LOAD( "kof99_v2.rom", 0x400000, 0x400000, 0x73e211ca )
 	ROM_LOAD( "kof99_v3.rom", 0x800000, 0x400000, 0x821901da )
-	ROM_LOAD( "kof99_v4.rom", 0xc00000, 0x200000, 0xb49e6178 )
+
+	ROM_REGION( 0x0200000, REGION_SOUND2, ROMREGION_SOUNDONLY )
+	ROM_LOAD( "kof99_v4.rom", 0x000000, 0x200000, 0xb49e6178 )
 
 	NO_DELTAT_REGION
 
@@ -4469,13 +4442,13 @@ ROM_START( kof99p ) /* Prototype Version - Possibly Hacked */
 	/* Did the Prototype really use the same sound program / voice roms, sound isn't great .. */
 	NEO_BIOS_SOUND_128K( "kof99_m1.rom", 0x5e74539c )
 
-	ROM_REGION( 0x0e00000, REGION_SOUND1, ROMREGION_SOUNDONLY )
+	ROM_REGION( 0x0c00000, REGION_SOUND1, ROMREGION_SOUNDONLY )
 	ROM_LOAD( "kof99_v1.rom", 0x000000, 0x400000, 0xef2eecc8 )
 	ROM_LOAD( "kof99_v2.rom", 0x400000, 0x400000, 0x73e211ca )
 	ROM_LOAD( "kof99_v3.rom", 0x800000, 0x400000, 0x821901da )
-	ROM_LOAD( "kof99_v4.rom", 0xc00000, 0x200000, 0xb49e6178 )
 
-	NO_DELTAT_REGION
+	ROM_REGION( 0x0200000, REGION_SOUND2, ROMREGION_SOUNDONLY )
+	ROM_LOAD( "kof99_v4.rom", 0x000000, 0x200000, 0xb49e6178 )
 
 	ROM_REGION( 0x4000000, REGION_GFX2, 0 )
 	/* these are probably decrypted versions of the roms found in the final */
@@ -4584,7 +4557,7 @@ GAME( 1991, gpilots,  neogeo,   neogeo, neogeo,  neogeo, ROT0,       "SNK", "Gho
 GAME( 1990, joyjoy,   neogeo,   neogeo, neogeo,  neogeo, ROT0,       "SNK", "Puzzled / Joy Joy Kid" )
 GAME( 1991, quizdais, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "SNK", "Quiz Daisousa Sen - The Last Count Down" )
 GAME( 1992, lresort,  neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "Last Resort" )
-GAME( 1991, eightman, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "SNK / Pallas", "Eight Man" )
+GAME( 1991, eightman, neogeo,   raster, neogeo,  neogeo, ROT0_16BIT, "SNK / Pallas", "Eight Man" )
 GAME( 1991, legendos, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "SNK", "Legend of Success Joe / Ashitano Joe Densetsu" )
 GAME( 1991, 2020bb,   neogeo,   neogeo, neogeo,  neogeo, ROT0,       "SNK / Pallas", "2020 Super Baseball (set 1)" )
 GAME( 1991, 2020bbh,  2020bb,   neogeo, neogeo,  neogeo, ROT0,       "SNK / Pallas", "2020 Super Baseball (set 2)" )
@@ -4597,9 +4570,9 @@ GAME( 1993, sengoku2, neogeo,   raster, neogeo,  neogeo, ROT0_16BIT, "SNK", "Sen
 GAME( 1992, bstars2,  neogeo,   neogeo, neogeo,  neogeo, ROT0,       "SNK", "Baseball Stars 2" )
 GAME( 1992, quizdai2, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "SNK", "Quiz Meintantei Neo Geo - Quiz Daisousa Sen Part 2" )
 GAME( 1993, 3countb,  neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "3 Count Bout / Fire Suplex" )
-GAME( 1992, aof,      neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "Art of Fighting / Ryuuko no Ken" )
+GAME( 1992, aof,      neogeo,   raster, neogeo,  neogeo, ROT0_16BIT, "SNK", "Art of Fighting / Ryuuko no Ken" )
 GAME( 1993, samsho,   neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "Samurai Shodown / Samurai Spirits" )
-GAME( 1994, tophuntr, neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "Top Hunter - Roddy & Cathy" )
+GAME( 1994, tophuntr, neogeo,   raster, neogeo,  neogeo, ROT0_16BIT, "SNK", "Top Hunter - Roddy & Cathy" )
 GAME( 1992, fatfury2, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "SNK", "Fatal Fury 2 / Garou Densetsu 2 - arata-naru tatakai" )
 GAME( 1992, ssideki,  neogeo,   neogeo, neogeo,  neogeo, ROT0,       "SNK", "Super Sidekicks / Tokuten Ou" )
 GAME( 1994, kof94,    neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "The King of Fighters '94" )
@@ -4630,7 +4603,7 @@ GAME( 1998, neocup98, neogeo,   raster, neogeo,  neogeo, ROT0_16BIT, "SNK", "Neo
 GAME( 1999, mslugx,   neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "Metal Slug X - Super Vehicle-001" )
 GAMEX(1999, kof99,    neogeo,   raster, neogeo,  neogeo, ROT0_16BIT, "SNK", "The King of Fighters '99 - Millennium Battle", GAME_NOT_WORKING ) /* Encrypted Code & GFX, Bad Dump */
 GAME( 1999, kof99p,   kof99,    raster, neogeo,  neogeo, ROT0_16BIT, "SNK", "The King of Fighters '99 - Millennium Battle (prototype)" )
-GAME( 1999, garoup,   neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "Garou - Mark of the Wolves (prototype)" )
+GAME( 1999, garoup,   neogeo,   raster, neogeo,  neogeo, ROT0_16BIT, "SNK", "Garou - Mark of the Wolves (prototype)" )
 GAMEX(1999, preisle2, neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK / Yumekobo", "Prehistoric Isle 2", GAME_NOT_WORKING ) /* Encrypted GFX, Incomplete Dump */
 
 /* Alpha Denshi Co. / ADK (changed name in 1993) */
@@ -4644,7 +4617,7 @@ GAME( 1992, ncommand, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Alpha Dens
 GAME( 1992, wh1,      neogeo,   raster, neogeo,  neogeo, ROT0_16BIT, "Alpha Denshi Co.", "World Heroes" )
 GAME( 1993, wh2,      neogeo,   raster, neogeo,  neogeo, ROT0_16BIT, "ADK",              "World Heroes 2" )
 GAME( 1994, wh2j,     neogeo,   raster, neogeo,  neogeo, ROT0_16BIT, "ADK / SNK",        "World Heroes 2 Jet" )
-GAME( 1994, aodk,     neogeo,   neogeo, neogeo,  neogeo, ROT0,       "ADK / SNK",        "Aggressors of Dark Kombat / Tsuukai GANGAN Koushinkyoku" )
+GAME( 1994, aodk,     neogeo,   raster, neogeo,  neogeo, ROT0_16BIT, "ADK / SNK",        "Aggressors of Dark Kombat / Tsuukai GANGAN Koushinkyoku" )
 GAME( 1995, whp,      neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "ADK / SNK",        "World Heroes Perfect" )
 GAME( 1995, mosyougi, neogeo,   raster_busy, neogeo,  neogeo, ROT0_16BIT, "ADK / SNK",        "Syougi No Tatsujin - Master of Syougi" )
 GAME( 1996, overtop,  neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "ADK",              "Over Top" )
@@ -4653,13 +4626,13 @@ GAME( 1996, twinspri, neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "ADK",     
 
 /* Aicom */
 GAME( 1994, janshin,  neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Aicom", "Jyanshin Densetsu - Quest of Jongmaster" )
-GAME( 1995, pulstar,  neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "Aicom", "Pulstar" )
+GAME( 1995, pulstar,  neogeo,   raster, neogeo,  neogeo, ROT0_16BIT, "Aicom", "Pulstar" )
 
 /* Data East Corporation */
 GAME( 1993, spinmast, neogeo,   raster, neogeo,  neogeo, ROT0_16BIT, "Data East Corporation", "Spinmaster / Miracle Adventure" )
 GAME( 1994, wjammers, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Data East Corporation", "Windjammers / Flying Power Disc" )
 GAME( 1994, karnovr,  neogeo,   raster, neogeo,  neogeo, ROT0_16BIT, "Data East Corporation", "Karnov's Revenge / Fighter's History Dynamite" )
-GAME( 1994, strhoop,  neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Data East Corporation", "Street Hoop / Street Slam / Dunk Dream" )
+GAME( 1994, strhoop,  neogeo,   raster, neogeo,  neogeo, ROT0_16BIT, "Data East Corporation", "Street Hoop / Street Slam / Dunk Dream" )
 GAME( 1996, magdrop2, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Data East Corporation", "Magical Drop II" )
 GAME( 1997, magdrop3, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Data East Corporation", "Magical Drop III" )
 
@@ -4708,9 +4681,9 @@ GAME( 1999, pbobbl2n, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Taito (SNK
 GAME( 1995, marukodq, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Takara", "Chibi Marukochan Deluxe Quiz" )
 
 /* Technos */
-GAME( 1995, doubledr, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Technos", "Double Dragon (Neo-Geo)" )
+GAME( 1995, doubledr, neogeo,   raster, neogeo,  neogeo, ROT0_16BIT, "Technos", "Double Dragon (Neo-Geo)" )
 GAME( 1995, gowcaizr, neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "Technos", "Voltage Fighter - Gowcaizer / Choujin Gakuen Gowcaizer")
-GAME( 1996, sdodgeb,  neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "Technos", "Super Dodge Ball / Kunio no Nekketsu Toukyuu Densetsu" )
+GAME( 1996, sdodgeb,  neogeo,   raster, neogeo,  neogeo, ROT0_16BIT, "Technos", "Super Dodge Ball / Kunio no Nekketsu Toukyuu Densetsu" )
 
 /* Tecmo */
 GAME( 1996, tws96,    neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Tecmo", "Tecmo World Soccer '96" )
@@ -4722,7 +4695,7 @@ GAME( 1998, blazstar, neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "Yumekobo",
 GAME( 1994, fightfev, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Viccom", "Fight Fever / Crystal Legacy" )
 
 /* Video System Co. */
-GAME( 1994, pspikes2, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Video System Co.", "Power Spikes II" )
+GAME( 1994, pspikes2, neogeo,   raster, neogeo,  neogeo, ROT0_16BIT, "Video System Co.", "Power Spikes II" )
 GAME( 1994, sonicwi2, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Video System Co.", "Aero Fighters 2 / Sonic Wings 2" )
 GAME( 1995, sonicwi3, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Video System Co.", "Aero Fighters 3 / Sonic Wings 3" )
 GAME( 1997, popbounc, neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "Video System Co.", "Pop 'n Bounce / Gapporin" )

@@ -509,6 +509,10 @@ void konami_set_reg(int regnum, unsigned val)
 /****************************************************************************/
 /* Reset registers to their initial values									*/
 /****************************************************************************/
+void konami_init(void)
+{
+}
+
 void konami_reset(void *param)
 {
 	konami.int_state = 0;
@@ -588,7 +592,7 @@ void konami_set_irq_callback(int (*callback)(int irqline))
 {
 	konami.irq_callback = callback;
 }
-
+#if 0
 /****************************************************************************
  * Save CPU state
  ****************************************************************************/
@@ -629,7 +633,7 @@ static void state_load(void *file, const char *module)
 
 void konami_state_save(void *file) { state_save(file, "konami"); }
 void konami_state_load(void *file) { state_load(file, "konami"); }
-
+#endif
 /****************************************************************************
  * Return a formatted string for a register
  ****************************************************************************/

@@ -32,6 +32,7 @@ extern int  t11_ICount;
 
 
 /* PUBLIC FUNCTIONS */
+extern void t11_init(void);
 extern void t11_reset(void *param);
 extern void t11_exit(void);
 extern int t11_execute(int cycles);    /* NS 970908 */

@@ -6,7 +6,7 @@
 unsigned char *lastday_txvideoram;
 unsigned char *lastday_bgscroll,*lastday_fgscroll,*bluehawk_fg2scroll;
 data16_t *rshark_scroll1,*rshark_scroll2,*rshark_scroll3,*rshark_scroll4;
-static int tx_disable;
+static int tx_pri;
 
 
 WRITE_HANDLER( lastday_ctrl_w )
@@ -47,7 +47,7 @@ WRITE_HANDLER( primella_ctrl_w )
 	cpu_setbank(1,&RAM[bankaddress]);
 
 	/* bit 3 disables tx layer */
-	tx_disable = data & 0x08;
+	tx_pri = data & 0x08;
 
 	/* bit 4 flips screen */
 	flip_screen_set(data & 0x10);
@@ -435,9 +435,10 @@ void primella_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	palette_recalc();
 
-	bluehawk_draw_layer(bitmap,1,lastday_bgscroll,memory_region(REGION_GFX2)+0x38000,TRANSPARENCY_NONE);
-	bluehawk_draw_layer(bitmap,2,lastday_fgscroll,memory_region(REGION_GFX3)+0x38000,TRANSPARENCY_PEN);
-	if (!tx_disable) bluehawk_draw_tx(bitmap);
+	bluehawk_draw_layer(bitmap,1,lastday_bgscroll,memory_region(REGION_GFX2)+memory_region_length(REGION_GFX2)-0x8000,TRANSPARENCY_NONE);
+	if (tx_pri) bluehawk_draw_tx(bitmap);
+	bluehawk_draw_layer(bitmap,2,lastday_fgscroll,memory_region(REGION_GFX3)+memory_region_length(REGION_GFX3)-0x8000,TRANSPARENCY_PEN);
+	if (!tx_pri) bluehawk_draw_tx(bitmap);
 }
 
 void rshark_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)

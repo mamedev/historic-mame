@@ -65,7 +65,7 @@ static MEMORY_WRITE_START( writemem )
 	{ 0x1fb0, 0x1fbf, K053251_w },
 	{ 0x1fc0, 0x1fc0, simpsons_coin_counter_w },
 	{ 0x1fc2, 0x1fc2, simpsons_eeprom_w },
-	{ 0x1fc6, 0x1fc7, K053260_w },
+	{ 0x1fc6, 0x1fc7, K053260_0_w },
 	{ 0x2000, 0x3fff, MWA_BANK4 },
 	{ 0x0000, 0x3fff, K052109_w },
 	{ 0x4000, 0x5fff, MWA_RAM },
@@ -108,7 +108,7 @@ static MEMORY_READ_START( z80_readmem )
 	{ 0x8000, 0xbfff, MRA_BANK2 },
 	{ 0xf000, 0xf7ff, MRA_RAM },
 	{ 0xf801, 0xf801, YM2151_status_port_0_r },
-	{ 0xfc00, 0xfc2f, K053260_r },
+	{ 0xfc00, 0xfc2f, K053260_0_r },
 MEMORY_END
 
 static MEMORY_WRITE_START( z80_writemem )
@@ -118,7 +118,7 @@ static MEMORY_WRITE_START( z80_writemem )
 	{ 0xf800, 0xf800, YM2151_register_port_0_w },
 	{ 0xf801, 0xf801, YM2151_data_port_0_w },
 	{ 0xfa00, 0xfa00, z80_arm_nmi_w },
-	{ 0xfc00, 0xfc2f, K053260_w },
+	{ 0xfc00, 0xfc2f, K053260_0_w },
 	{ 0xfe00, 0xfe00, z80_bankswitch_w },
 MEMORY_END
 
@@ -258,10 +258,11 @@ static struct YM2151interface ym2151_interface =
 
 static struct K053260_interface k053260_interface =
 {
-	3579545,
-	REGION_SOUND1, /* memory region */
-	{ MIXER(75,MIXER_PAN_LEFT), MIXER(75,MIXER_PAN_RIGHT) },
-//	nmi_callback
+	1,
+	{ 3579545 },
+	{ REGION_SOUND1 }, /* memory region */
+	{ { MIXER(75,MIXER_PAN_LEFT), MIXER(75,MIXER_PAN_RIGHT) } },
+//	{ nmi_callback }
 };
 
 static int simpsons_irq(void)

@@ -42,6 +42,7 @@ enum {
 
 extern int h6280_ICount;				/* cycle count */
 
+extern void h6280_init(void);
 extern void h6280_reset(void *param);			/* Reset registers to the initial values */
 extern void h6280_exit(void);					/* Shut down CPU */
 extern int h6280_execute(int cycles);			/* Execute cycles - returns number of cycles actually run */

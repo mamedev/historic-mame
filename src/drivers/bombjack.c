@@ -68,12 +68,14 @@ NMI interrupts for music timing
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "state.h"
 
 
 
 WRITE_HANDLER( bombjack_background_w );
 WRITE_HANDLER( bombjack_flipscreen_w );
 void bombjack_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+int bombjack_vh_start(void);
 
 
 
@@ -336,7 +338,7 @@ static const struct MachineDriver machine_driver_bombjack =
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
-	generic_vh_start,
+	bombjack_vh_start,
 	generic_vh_stop,
 	bombjack_vh_screenrefresh,
 
@@ -418,7 +420,11 @@ ROM_START( bombjac2 )
 	ROM_LOAD( "02_p04t.bin",  0x0000, 0x1000, 0x398d4a02 )
 ROM_END
 
+static void init_bombjack(void)
+{
+	state_save_register_int ("main", 0, "sound latch", &latch);
+}
 
 
-GAME( 1984, bombjack, 0,        bombjack, bombjack, 0, ROT90, "Tehkan", "Bomb Jack (set 1)" )
-GAME( 1984, bombjac2, bombjack, bombjack, bombjack, 0, ROT90, "Tehkan", "Bomb Jack (set 2)" )
+GAME( 1984, bombjack, 0,        bombjack, bombjack, bombjack, ROT90, "Tehkan", "Bomb Jack (set 1)" )
+GAME( 1984, bombjac2, bombjack, bombjack, bombjack, bombjack, ROT90, "Tehkan", "Bomb Jack (set 2)" )

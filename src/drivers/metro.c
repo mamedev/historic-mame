@@ -22,33 +22,44 @@ Year + Game						PCB			Issues / Notes
 92	Last Fortress - Toride		VG420
 92	Pang Poms					VG420
 92	Sky Alert					VG420
+93? Moeyo Gonta!!               VG460-(B)
 93	Poitto!						MTR5260-A
 94	Dharma Doujou				?
 94  Toride II Adauchi Gaiden	MTR5260-A
 95	Daitoride					MTR5260-A
+95	Puzzli 						MTR5260-A
 95	Pururun						MTR5260-A
 96	Bal Cube					?			Preliminary: wrong colors, some wrong sprites
+94  Blazing Tornado             ?           Also has Konami 053936 gfx chip
 ---------------------------------------------------------------------------
 Not dumped yet:
 94	Gun Master
 94	Toride II
-95	Puzzli
 
 To Do:
 
--	Priorities (pdrawgfxzoom)
--	Support for 8 bit sprites and tiles (14220 Chip)
+-	Priorities (pdrawgfxzoom). Priorities are particularly bad in blzntrnd.
+-	Sprite palette marking doesn't know about 8bpp.
 -	1 pixel granularity in the window's placement (8 pixels now, see daitorid)
 -	Sound (as soon as the NEC78C10 gets emulated)
 -	Coin lockout
 -	Most games, in service mode, seem to require that you press
 	start1&2 *exactly at once* in order to advance to the next
 	screen (e.g. holding 1 then pressing 2 doesn't work)
+-	Some gfx problems in ladykill
+-	To save memory, 8bpp tiles are handled fetching data directly from the ROMs,
+	without decoding them to a separate buffer, so screen rotation is not
+	supported.
+
+Notes:
+- To enter service mode in Lady Killer, toggle the dip switch and reset keeping
+  start 2 pressed.
 
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "cpu/upd7810/upd7810.h"
 
 /* Variables defined in vidhrdw: */
 
@@ -58,10 +69,13 @@ extern data16_t *metro_scroll;
 extern data16_t *metro_tiletable;
 extern data16_t *metro_vram_0, *metro_vram_1, *metro_vram_2;
 extern data16_t *metro_window;
+extern data16_t *metro_K053936_ram,*metro_K053936_ctrl;
+WRITE16_HANDLER( metro_K053936_w );
+
 
 /* Functions defined in vidhrdw: */
 
-WRITE16_HANDLER( paletteram16_GGGGGRRRRRBBBBBx_word_w );
+WRITE16_HANDLER( metro_paletteram_w );
 
 WRITE16_HANDLER( metro_tiletable_w );
 WRITE16_HANDLER( metro_window_w );
@@ -73,9 +87,8 @@ WRITE16_HANDLER( metro_vram_2_w );
 
 int  metro_vh_start_14100(void);
 int  metro_vh_start_14220(void);
+int  blzntrnd_vh_start(void);
 void metro_vh_stop(void);
-
-void balcube_vh_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 
 void metro_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
@@ -120,7 +133,7 @@ READ16_HANDLER( metro_irq_cause_r )
 /* Update the IRQ state based on all possible causes */
 static void update_irq_state(void)
 {
-	int state =	(metro_irq_cause_r(0) & ~irq_enable) ? ASSERT_LINE : CLEAR_LINE;
+	int state =	(metro_irq_cause_r(0,0) & ~irq_enable) ? ASSERT_LINE : CLEAR_LINE;
 	cpu_set_irq_line(0, irq_line, state);
 }
 
@@ -137,7 +150,7 @@ WRITE16_HANDLER( metro_irq_cause_w )
 		if (data & 0x04)	blitter_irq  = 0;
 		if (data & 0x08)	unknown2_irq = 0;	// KARATOUR
 		if (data & 0x10)	unknown3_irq = 0;
-		if (data & 0x20)	unknown4_irq = 0;	// KARATOUR
+		if (data & 0x20)	unknown4_irq = 0;	// KARATOUR, BLZNTRND
 	}
 
 	update_irq_state();
@@ -195,11 +208,29 @@ int karatour_interrupt(void)
 
 ***************************************************************************/
 
+static int metro_io_callback(int ioline, int state)
+{
+	data8_t data;
+
+    switch ( ioline )
+	{
+	case UPD7810_RXD:	/* read the RxD line */
+		data = soundlatch_r(0);
+		state = data & 1;
+		soundlatch_w(0, data >> 1);
+		break;
+	default:
+		logerror("upd7810 ioline %d not handled\n", ioline);
+    }
+	return state;
+}
+
 WRITE16_HANDLER( metro_soundlatch_w )
 {
 	if ( ACCESSING_LSB && (Machine->sample_rate != 0) )
 	{
-//		soundlatch_w(0,data & 0xff);
+		soundlatch_w(0,data & 0xff);
+		cpu_set_nmi_line( 1, PULSE_LINE );
 	}
 }
 
@@ -217,18 +248,118 @@ WRITE16_HANDLER( metro_soundstatus_w )
 
 READ16_HANDLER( metro_soundstatus_r )
 {
-//	return metro_soundstatus & 1;
-	return rand() & 1;
+	return metro_soundstatus & 1;
 }
 
 
 READ16_HANDLER( dharma_soundstatus_r )
 {
-//	return readinputport(0) | (metro_soundstatus ? 0x80 : 0);
-	return readinputport(0) | (0);
+	return readinputport(0) | (metro_soundstatus ? 0x80 : 0);
 }
 
+static WRITE_HANDLER( daitorid_sound_rombank_w )
+{
+	unsigned char *RAM = memory_region(REGION_CPU2);
+	int bank = (data >> 4) & 0x07;
 
+	if ( data & ~0x70 ) 	logerror("CPU #1 - PC %04X: unknown bank bits: %02X\n",cpu_get_pc(),data);
+
+	if (bank < 2)	RAM = &RAM[0x4000 * bank];
+	else			RAM = &RAM[0x4000 * (bank-2) + 0x10000];
+
+	cpu_setbank(1, RAM);
+}
+
+static data8_t chip_select;
+
+static READ_HANDLER( daitorid_sound_chip_data_r )
+{
+	/* fake status to get the 7810 out of the tight loop waiting for a chip */
+    static data8_t toggle_bit7;
+    switch( chip_select )
+	{
+	case 0xb7: return YM2151_status_port_0_r(0);
+	case 0xe7: return OKIM6295_status_0_r(0);
+	default:
+		logerror("CPU #1 PC %04X : reading from unknown chip: %02X\n",cpu_get_pc(),chip_select);
+		toggle_bit7 ^= 0x80;
+        return toggle_bit7;
+	}
+}
+
+static WRITE_HANDLER( daitorid_sound_chip_data_w )
+{
+	soundlatch2_w(0,data);	// for debugging, the latch is internal
+}
+
+static READ_HANDLER( daitorid_sound_chip_select_r )
+{
+	return chip_select;
+}
+
+static WRITE_HANDLER( daitorid_sound_chip_select_w )
+{
+	chip_select = data;
+
+	if ((chip_select & 0xf0) == 0xf0)	return;
+
+	switch( chip_select )
+	{
+	case 0x7f: metro_soundstatus = 0; break;
+	case 0xb9: YM2151_register_port_0_w(0,soundlatch2_r(0)); break;
+	case 0xbb: YM2151_data_port_0_w(0,soundlatch2_r(0)); break;
+	case 0xeb: OKIM6295_data_0_w(0,soundlatch2_r(0)); break;
+	default:
+		logerror("CPU #1 PC %04X : writing to unknown chip: %02X\n",cpu_get_pc(),chip_select);
+	}
+}
+
+static MEMORY_READ_START( upd7810_readmem )
+    { 0x0000, 0x3fff, MRA_ROM               },  /* External ROM */
+    { 0x4000, 0x7fff, MRA_BANK1             },  /* External ROM (Banked) */
+    { 0x8000, 0x87ff, MRA_RAM               },  /* External RAM */
+    { 0xff00, 0xffff, MRA_RAM               },  /* Internal RAM */
+MEMORY_END
+
+static MEMORY_WRITE_START( upd7810_writemem )
+    { 0x0000, 0x3fff, MWA_ROM               },  /* External ROM */
+    { 0x4000, 0x7fff, MWA_ROM               },  /* External ROM (Banked) */
+    { 0x8000, 0x87ff, MWA_RAM               },  /* External RAM */
+    { 0xff00, 0xffff, MWA_RAM               },  /* Internal RAM */
+MEMORY_END
+
+static PORT_READ_START( upd7810_readport )
+	{ UPD7810_PORTA, UPD7810_PORTA, daitorid_sound_chip_data_r		},
+	{ UPD7810_PORTB, UPD7810_PORTB, daitorid_sound_chip_select_r	},
+PORT_END
+
+static PORT_WRITE_START( upd7810_writeport )
+	{ UPD7810_PORTA, UPD7810_PORTA, daitorid_sound_chip_data_w		},
+	{ UPD7810_PORTB, UPD7810_PORTB, daitorid_sound_chip_select_w	},
+	{ UPD7810_PORTC, UPD7810_PORTC, daitorid_sound_rombank_w		},
+PORT_END
+
+static void metro_sound_irq_handler(int state)
+{
+	cpu_set_irq_line(1, UPD7810_INTF2, HOLD_LINE);
+}
+
+static struct YM2151interface daitorid_ym2151_interface =
+{
+	1,
+	2000000,			/* ? */
+	{ YM3012_VOL(50,MIXER_PAN_LEFT,50,MIXER_PAN_RIGHT) },
+	{ metro_sound_irq_handler },	/* irq handler */
+	{ 0 }							/* port_write */
+};
+
+static struct OKIM6295interface daitorid_okim6295_interface =
+{
+	1,
+	{ 8000 },	/* ? */
+	{ REGION_SOUND1 },
+	{ 50 }
+};
 
 /***************************************************************************
 
@@ -287,7 +418,7 @@ READ16_HANDLER( metro_bankedrom_r )
 
 	offset = offset * 2 + 0x10000 * (*metro_rombank);
 
-	if ( offset < len )	return (ROM[offset+0]<<8)+ROM[offset+1];
+	if ( offset < len )	return ((ROM[offset+0]<<8)+ROM[offset+1])^0xffff;
 	else				return 0xffff;
 }
 
@@ -350,7 +481,7 @@ void metro_blit_done(int param)
 
 INLINE int blt_read(const data8_t *ROM, const int offs)
 {
-	return ROM[offs];
+	return ROM[offs] ^ 0xff;
 }
 
 INLINE void blt_write(const int tmap, const offs_t offs, const data16_t data, const data16_t mask)
@@ -572,7 +703,7 @@ static MEMORY_WRITE16_START( balcube_writemem )
 	{ 0xf00000, 0xf0ffff, MWA16_RAM						},	// RAM
 	{ 0x300000, 0x30000b, MWA16_NOP						},	// Sound
 	{ 0x500002, 0x500009, metro_coin_lockout_4words_w	},	// Coin Lockout
-	{ 0x670000, 0x673fff, paletteram16_GGGGGRRRRRBBBBBx_word_w, &paletteram16	},	// Palette
+	{ 0x670000, 0x673fff, metro_paletteram_w, &paletteram16	},	// Palette
 	{ 0x674000, 0x674fff, MWA16_RAM, &spriteram16, &spriteram_size				},	// Sprites
 	{ 0x600000, 0x61ffff, metro_vram_0_w, &metro_vram_0	},	// Layer 0
 	{ 0x620000, 0x63ffff, metro_vram_1_w, &metro_vram_1	},	// Layer 1
@@ -618,7 +749,7 @@ static MEMORY_WRITE16_START( daitorid_writemem )
 	{ 0x400000, 0x41ffff, metro_vram_0_w, &metro_vram_0	},	// Layer 0
 	{ 0x420000, 0x43ffff, metro_vram_1_w, &metro_vram_1	},	// Layer 1
 	{ 0x440000, 0x45ffff, metro_vram_2_w, &metro_vram_2	},	// Layer 2
-	{ 0x470000, 0x473fff, paletteram16_GGGGGRRRRRBBBBBx_word_w, &paletteram16	},	// Palette
+	{ 0x470000, 0x473fff, metro_paletteram_w, &paletteram16	},	// Palette
 	{ 0x474000, 0x474fff, MWA16_RAM, &spriteram16, &spriteram_size				},	// Sprites
 	{ 0x478000, 0x4787ff, metro_tiletable_w, &metro_tiletable	},	// Tiles Set
 	{ 0x478840, 0x47884d, metro_blitter_w, &metro_blitter_regs	},	// Tiles Blitter
@@ -664,7 +795,7 @@ static MEMORY_WRITE16_START( dharma_writemem )
 	{ 0x800000, 0x81ffff, metro_vram_0_w, &metro_vram_0	},	// Layer 0
 	{ 0x820000, 0x83ffff, metro_vram_1_w, &metro_vram_1	},	// Layer 1
 	{ 0x840000, 0x85ffff, metro_vram_2_w, &metro_vram_2	},	// Layer 2
-	{ 0x870000, 0x873fff, paletteram16_GGGGGRRRRRBBBBBx_word_w, &paletteram16	},	// Palette
+	{ 0x870000, 0x873fff, metro_paletteram_w, &paletteram16	},	// Palette
 	{ 0x874000, 0x874fff, MWA16_RAM, &spriteram16, &spriteram_size				},	// Sprites
 	{ 0x878000, 0x8787ff, metro_tiletable_w, &metro_tiletable	},	// Tiles Set
 	{ 0x878840, 0x87884d, metro_blitter_w, &metro_blitter_regs	},	// Tiles Blitter
@@ -731,7 +862,7 @@ static MEMORY_WRITE16_START( karatour_writemem )
 	{ 0xffc000, 0xffffff, MWA16_RAM						},	// RAM
 	{ 0x400000, 0x400001, metro_soundstatus_w			},	// To Sound CPU
 	{ 0x400002, 0x400003, metro_coin_lockout_1word_w	},	// Coin Lockout
-	{ 0x870000, 0x873fff, paletteram16_GGGGGRRRRRBBBBBx_word_w, &paletteram16	},	// Palette
+	{ 0x870000, 0x873fff, metro_paletteram_w, &paletteram16	},	// Palette
 	{ 0x874000, 0x874fff, MWA16_RAM, &spriteram16, &spriteram_size				},	// Sprites
 	{ 0x875000, 0x875fff, karatour_vram_0_w				},	// Layer 0 (Part of)
 	{ 0x876000, 0x876fff, karatour_vram_1_w				},	// Layer 1 (Part of)
@@ -782,7 +913,7 @@ static MEMORY_WRITE16_START( lastfort_writemem )
 	{ 0x800000, 0x81ffff, metro_vram_0_w, &metro_vram_0	},	// Layer 0
 	{ 0x820000, 0x83ffff, metro_vram_1_w, &metro_vram_1	},	// Layer 1
 	{ 0x840000, 0x85ffff, metro_vram_2_w, &metro_vram_2	},	// Layer 2
-	{ 0x870000, 0x873fff, paletteram16_GGGGGRRRRRBBBBBx_word_w, &paletteram16	},	// Palette
+	{ 0x870000, 0x873fff, metro_paletteram_w, &paletteram16	},	// Palette
 	{ 0x874000, 0x874fff, MWA16_RAM, &spriteram16, &spriteram_size				},	// Sprites
 	{ 0x878000, 0x8787ff, metro_tiletable_w, &metro_tiletable	},	// Tiles Set
 	{ 0x878800, 0x878813, MWA16_RAM, &metro_videoregs	},	// Video Registers
@@ -832,7 +963,7 @@ static MEMORY_WRITE16_START( pangpoms_writemem )
 	{ 0x400000, 0x41ffff, metro_vram_0_w, &metro_vram_0	},	// Layer 0
 	{ 0x420000, 0x43ffff, metro_vram_1_w, &metro_vram_1	},	// Layer 1
 	{ 0x440000, 0x45ffff, metro_vram_2_w, &metro_vram_2	},	// Layer 2
-	{ 0x470000, 0x473fff, paletteram16_GGGGGRRRRRBBBBBx_word_w, &paletteram16	},	// Palette
+	{ 0x470000, 0x473fff, metro_paletteram_w, &paletteram16	},	// Palette
 	{ 0x474000, 0x474fff, MWA16_RAM, &spriteram16, &spriteram_size				},	// Sprites
 	{ 0x478000, 0x4787ff, metro_tiletable_w, &metro_tiletable	},	// Tiles Set
 	{ 0x478800, 0x478813, MWA16_RAM, &metro_videoregs	},	// Video Registers
@@ -878,7 +1009,7 @@ static MEMORY_WRITE16_START( poitto_writemem )
 	{ 0xc00000, 0xc1ffff, metro_vram_0_w, &metro_vram_0	},	// Layer 0
 	{ 0xc20000, 0xc3ffff, metro_vram_1_w, &metro_vram_1	},	// Layer 1
 	{ 0xc40000, 0xc5ffff, metro_vram_2_w, &metro_vram_2	},	// Layer 2
-	{ 0xc70000, 0xc73fff, paletteram16_GGGGGRRRRRBBBBBx_word_w, &paletteram16	},	// Palette
+	{ 0xc70000, 0xc73fff, metro_paletteram_w, &paletteram16	},	// Palette
 	{ 0xc74000, 0xc74fff, MWA16_RAM, &spriteram16, &spriteram_size				},	// Sprites
 	{ 0xc78000, 0xc787ff, metro_tiletable_w, &metro_tiletable	},	// Tiles Set
 	{ 0xc78800, 0xc78813, MWA16_RAM, &metro_videoregs	},	// Video Registers
@@ -928,7 +1059,7 @@ static MEMORY_WRITE16_START( skyalert_writemem )
 	{ 0x800000, 0x81ffff, metro_vram_0_w, &metro_vram_0	},	// Layer 0
 	{ 0x820000, 0x83ffff, metro_vram_1_w, &metro_vram_1	},	// Layer 1
 	{ 0x840000, 0x85ffff, metro_vram_2_w, &metro_vram_2	},	// Layer 2
-	{ 0x870000, 0x873fff, paletteram16_GGGGGRRRRRBBBBBx_word_w, &paletteram16	},	// Palette
+	{ 0x870000, 0x873fff, metro_paletteram_w, &paletteram16	},	// Palette
 	{ 0x874000, 0x874fff, MWA16_RAM, &spriteram16, &spriteram_size				},	// Sprites
 	{ 0x878000, 0x8787ff, metro_tiletable_w, &metro_tiletable	},	// Tiles Set
 	{ 0x878800, 0x878813, MWA16_RAM, &metro_videoregs	},	// Video Registers
@@ -974,7 +1105,7 @@ static MEMORY_WRITE16_START( pururun_writemem )
 	{ 0xc00000, 0xc1ffff, metro_vram_0_w, &metro_vram_0	},	// Layer 0
 	{ 0xc20000, 0xc3ffff, metro_vram_1_w, &metro_vram_1	},	// Layer 1
 	{ 0xc40000, 0xc5ffff, metro_vram_2_w, &metro_vram_2	},	// Layer 2
-	{ 0xc70000, 0xc73fff, paletteram16_GGGGGRRRRRBBBBBx_word_w, &paletteram16	},	// Palette
+	{ 0xc70000, 0xc73fff, metro_paletteram_w, &paletteram16	},	// Palette
 	{ 0xc74000, 0xc74fff, MWA16_RAM, &spriteram16, &spriteram_size				},	// Sprites
 	{ 0xc78000, 0xc787ff, metro_tiletable_w, &metro_tiletable	},	// Tiles Set
 	{ 0xc78840, 0xc7884d, metro_blitter_w, &metro_blitter_regs	},	// Tiles Blitter
@@ -1020,7 +1151,7 @@ static MEMORY_WRITE16_START( toride2g_writemem )
 	{ 0xc00000, 0xc1ffff, metro_vram_0_w, &metro_vram_0	},	// Layer 0
 	{ 0xc20000, 0xc3ffff, metro_vram_1_w, &metro_vram_1	},	// Layer 1
 	{ 0xc40000, 0xc5ffff, metro_vram_2_w, &metro_vram_2	},	// Layer 2
-	{ 0xc70000, 0xc73fff, paletteram16_GGGGGRRRRRBBBBBx_word_w, &paletteram16	},	// Palette
+	{ 0xc70000, 0xc73fff, metro_paletteram_w, &paletteram16	},	// Palette
 	{ 0xc74000, 0xc74fff, MWA16_RAM, &spriteram16, &spriteram_size				},	// Sprites
 	{ 0xc78000, 0xc787ff, metro_tiletable_w, &metro_tiletable	},	// Tiles Set
 	{ 0xc78840, 0xc7884d, metro_blitter_w, &metro_blitter_regs	},	// Tiles Blitter
@@ -1040,6 +1171,59 @@ MEMORY_END
 
 
 /***************************************************************************
+							Blazing Tornado
+***************************************************************************/
+
+static MEMORY_READ16_START( blzntrnd_readmem )
+	{ 0x000000, 0x1fffff, MRA16_ROM				},	// ROM
+	{ 0xff0000, 0xffffff, MRA16_RAM				},	// RAM
+//	{ 0x300000, 0x300001, MRA16_NOP				},	// Sound
+	{ 0x200000, 0x21ffff, MRA16_RAM				},	// Layer 0
+	{ 0x220000, 0x23ffff, MRA16_RAM				},	// Layer 1
+	{ 0x240000, 0x25ffff, MRA16_RAM				},	// Layer 2
+	{ 0x260000, 0x26ffff, metro_bankedrom_r		},	// Banked ROM
+	{ 0x270000, 0x273fff, MRA16_RAM				},	// Palette
+	{ 0x274000, 0x274fff, MRA16_RAM				},	// Sprites
+	{ 0x278000, 0x2787ff, MRA16_RAM				},	// Tiles Set
+	{ 0x2788a2, 0x2788a3, metro_irq_cause_r		},	// IRQ Cause
+	{ 0xe00000, 0xe00001, input_port_0_word_r	},	// Inputs
+	{ 0xe00002, 0xe00003, input_port_1_word_r	},	//
+	{ 0xe00004, 0xe00005, input_port_2_word_r	},	//
+	{ 0xe00006, 0xe00007, input_port_3_word_r	},	//
+	{ 0xe00008, 0xe00009, input_port_4_word_r	},	//
+	{ 0x400000, 0x43ffff, MRA16_RAM				},	// 053936
+MEMORY_END
+
+static MEMORY_WRITE16_START( blzntrnd_writemem )
+	{ 0x000000, 0x1fffff, MWA16_ROM						},	// ROM
+	{ 0xff0000, 0xffffff, MWA16_RAM						},	// RAM
+//	{ 0x300000, 0x30000b, MWA16_NOP						},	// Sound
+	{ 0xe00000, 0xe00001, MWA16_NOP						},	// ??????
+//	{ 0xe00002, 0xe00009, metro_coin_lockout_4words_w	},	// Coin Lockout
+	{ 0x270000, 0x273fff, metro_paletteram_w, &paletteram16	},	// Palette
+	{ 0x274000, 0x274fff, MWA16_RAM, &spriteram16, &spriteram_size				},	// Sprites
+	{ 0x200000, 0x21ffff, metro_vram_0_w, &metro_vram_0	},	// Layer 0
+	{ 0x220000, 0x23ffff, metro_vram_1_w, &metro_vram_1	},	// Layer 1
+	{ 0x240000, 0x25ffff, metro_vram_2_w, &metro_vram_2	},	// Layer 2
+	{ 0x278000, 0x2787ff, metro_tiletable_w, &metro_tiletable		},	// Tiles Set
+//	{ 0x278840, 0x27884d, metro_blitter_w, &metro_blitter_regs		},	// Tiles Blitter
+	{ 0x278860, 0x27886b, metro_window_w, &metro_window				},	// Tilemap Window
+	{ 0x278870, 0x27887b, MWA16_RAM, &metro_scroll		},	// Scroll
+//	{ 0x278880, 0x278881, MWA16_NOP						},	// ? increasing
+	{ 0x278890, 0x278891, MWA16_NOP						},	// ? increasing
+	{ 0x2788a2, 0x2788a3, metro_irq_cause_w				},	// IRQ Acknowledge
+	{ 0x2788a4, 0x2788a5, metro_irq_enable_w			},	// IRQ Enable
+	{ 0x2788aa, 0x2788ab, MWA16_RAM, &metro_rombank		},	// Rom Bank
+	{ 0x2788ac, 0x2788ad, MWA16_RAM, &metro_screenctrl	},	// Screen Control
+	{ 0x279700, 0x279713, MWA16_RAM, &metro_videoregs	},	// Video Registers
+	{ 0x260000, 0x26ffff, MWA16_NOP						},	// ??????
+	{ 0x400000, 0x43ffff, metro_K053936_w, &metro_K053936_ram	},	// 053936
+	{ 0x500000, 0x500fff, MWA16_RAM						},	// 053936 3D rotation control?
+	{ 0x600000, 0x60001f, MWA16_RAM, &metro_K053936_ctrl},	// 053936 control
+MEMORY_END
+
+
+/***************************************************************************
 
 
 								Input Ports
@@ -1048,7 +1232,7 @@ MEMORY_END
 ***************************************************************************/
 
 
-#define JOY_LSB(_n_, _b1_, _b2_, _b3_) \
+#define JOY_LSB(_n_, _b1_, _b2_, _b3_, _b4_) \
 	PORT_BIT(  0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER##_n_ ) \
 	PORT_BIT(  0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN	 | IPF_PLAYER##_n_ ) \
 	PORT_BIT(  0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER##_n_ ) \
@@ -1056,10 +1240,10 @@ MEMORY_END
 	PORT_BIT(  0x0010, IP_ACTIVE_LOW, IPT_##_b1_         | IPF_PLAYER##_n_ ) \
 	PORT_BIT(  0x0020, IP_ACTIVE_LOW, IPT_##_b2_         | IPF_PLAYER##_n_ ) \
 	PORT_BIT(  0x0040, IP_ACTIVE_LOW, IPT_##_b3_         | IPF_PLAYER##_n_ ) \
-	PORT_BIT(  0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x0080, IP_ACTIVE_LOW, IPT_##_b4_         | IPF_PLAYER##_n_ ) \
 
 
-#define JOY_MSB(_n_, _b1_, _b2_, _b3_) \
+#define JOY_MSB(_n_, _b1_, _b2_, _b3_, _b4_) \
 	PORT_BIT(  0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER##_n_ ) \
 	PORT_BIT(  0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN	 | IPF_PLAYER##_n_ ) \
 	PORT_BIT(  0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER##_n_ ) \
@@ -1067,7 +1251,7 @@ MEMORY_END
 	PORT_BIT(  0x1000, IP_ACTIVE_LOW, IPT_##_b1_         | IPF_PLAYER##_n_ ) \
 	PORT_BIT(  0x2000, IP_ACTIVE_LOW, IPT_##_b2_         | IPF_PLAYER##_n_ ) \
 	PORT_BIT(  0x4000, IP_ACTIVE_LOW, IPT_##_b3_         | IPF_PLAYER##_n_ ) \
-	PORT_BIT(  0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x8000, IP_ACTIVE_LOW, IPT_##_b4_         | IPF_PLAYER##_n_ ) \
 
 
 #define COINS \
@@ -1117,8 +1301,8 @@ INPUT_PORTS_START( balcube )
 	COINS
 
 	PORT_START	// IN1 - $500002
-	JOY_LSB(1, BUTTON1, UNKNOWN, UNKNOWN)
-	JOY_MSB(2, BUTTON1, UNKNOWN, UNKNOWN)
+	JOY_LSB(1, BUTTON1, UNKNOWN, UNKNOWN, UNKNOWN)
+	JOY_MSB(2, BUTTON1, UNKNOWN, UNKNOWN, UNKNOWN)
 
 	PORT_START	// IN2 - Strangely mapped in the 0x400000-0x41ffff range
 	COINAGE_DSW
@@ -1135,12 +1319,12 @@ INPUT_PORTS_START( balcube )
 	PORT_DIPSETTING(      0x0800, "2" )
 	PORT_DIPSETTING(      0x0000, "3" )
 	PORT_DIPNAME( 0x1000, 0x1000, "Allow Continue" )
-	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x1000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x2000, 0x2000, "Unknown 1-5" )
+	PORT_DIPSETTING(      0x0000, DEF_STR( No ) )
+	PORT_DIPSETTING(      0x1000, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(      0x2000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x4000, 0x4000, "Unknown 1-6" )
+	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 	PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Demo_Sounds ) )
@@ -1160,33 +1344,80 @@ INPUT_PORTS_START( daitorid )
 	COINS
 
 	PORT_START	// IN1 - $c00002
-	JOY_LSB(1, BUTTON1, UNKNOWN, UNKNOWN)
-	JOY_MSB(2, BUTTON1, UNKNOWN, UNKNOWN)
+	JOY_LSB(1, BUTTON1, UNKNOWN, UNKNOWN, UNKNOWN)
+	JOY_MSB(2, BUTTON1, UNKNOWN, UNKNOWN, UNKNOWN)
 
 	PORT_START	// IN2 - $c00004
 	COINAGE_DSW
 
-	PORT_DIPNAME( 0x0300, 0x0300, "Unknown 1-0&1" )
+	PORT_DIPNAME( 0x0300, 0x0300, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(      0x0000, "00" )
 	PORT_DIPSETTING(      0x0100, "01" )
 	PORT_DIPSETTING(      0x0200, "10" )
 	PORT_DIPSETTING(      0x0300, "11" )
-	PORT_DIPNAME( 0x0400, 0x0400, "Unknown 1-2" )
+	PORT_DIPNAME( 0x0400, 0x0400, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(      0x0400, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0800, 0x0800, "Unknown 1-3*" )
+	PORT_DIPNAME( 0x0800, 0x0800, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(      0x0800, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x1000, 0x1000, "Unknown 1-4*" )
+	PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(      0x1000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 	PORT_DIPNAME( 0x2000, 0x2000, "Allow Continue" )
-	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x2000, DEF_STR( On ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( No ) )
+	PORT_DIPSETTING(      0x2000, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x4000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x8000, 0x8000, "Unknown 1-7" )
+	PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+
+	PORT_START	// IN3 - $c00006
+	PORT_BIT(  0xffff, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+INPUT_PORTS_END
+
+
+/***************************************************************************
+								Puzzli
+***************************************************************************/
+
+INPUT_PORTS_START( puzzli )
+
+	PORT_START	// IN0 - $c00000
+	COINS
+
+	PORT_START	// IN1 - $c00002
+	JOY_LSB(1, BUTTON1, BUTTON2, BUTTON3, UNKNOWN)
+	JOY_MSB(2, BUTTON1, BUTTON3, BUTTON3, UNKNOWN)
+
+	PORT_START	// IN2 - $c00004
+	COINAGE_DSW
+
+	PORT_DIPNAME( 0x0100, 0x0100, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0100, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0200, 0x0200, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0200, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0400, 0x0400, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0400, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0800, 0x0800, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0800, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x1000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x2000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 
@@ -1206,13 +1437,13 @@ INPUT_PORTS_START( dharma )
 	COINS
 
 	PORT_START	// IN1 - $c00002
-	JOY_LSB(1, BUTTON1, UNKNOWN, UNKNOWN)
-	JOY_MSB(2, BUTTON1, UNKNOWN, UNKNOWN)
+	JOY_LSB(1, BUTTON1, UNKNOWN, UNKNOWN, UNKNOWN)
+	JOY_MSB(2, BUTTON1, UNKNOWN, UNKNOWN, UNKNOWN)
 
 	PORT_START	// IN2 - $c00004
 	COINAGE_DSW
 
-	PORT_DIPNAME( 0x0300, 0x0300, "Unknown 1-0&1" )	// affects the following!!
+	PORT_DIPNAME( 0x0300, 0x0300, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(      0x0000, "00" )
 	PORT_DIPSETTING(      0x0100, "01" )
 	PORT_DIPSETTING(      0x0200, "10" )
@@ -1226,12 +1457,12 @@ INPUT_PORTS_START( dharma )
 	PORT_DIPSETTING(      0x1000, "2 Credits" )
 	PORT_DIPSETTING(      0x0000, "1 Credit" )
 	PORT_DIPNAME( 0x2000, 0x2000, "Allow Continue" )
-	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x2000, DEF_STR( On ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( No ) )
+	PORT_DIPSETTING(      0x2000, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x4000, DEF_STR( On ) )
-	PORT_BITX(    0x8000, 0x8000, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Freeze Screen", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_BITX(    0x8000, 0x8000, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Freeze", IP_KEY_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 
@@ -1248,7 +1479,7 @@ INPUT_PORTS_END
 INPUT_PORTS_START( karatour )
 
 	PORT_START	// IN0 - $400002
-	JOY_LSB(2, BUTTON1, BUTTON2, UNKNOWN)
+	JOY_LSB(2, BUTTON1, BUTTON2, UNKNOWN, UNKNOWN)
 
 	PORT_START	// IN1 - $400004
 	COINS
@@ -1259,7 +1490,7 @@ INPUT_PORTS_START( karatour )
 	PORT_DIPSETTING(      0x0000, "2" )
 	PORT_DIPSETTING(      0x0003, "3" )
 	PORT_DIPSETTING(      0x0002, "4" )
-	PORT_DIPNAME( 0x000c, 0x000c, "Unknown 1-2&3*" )
+	PORT_DIPNAME( 0x000c, 0x000c, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(      0x000c, "11" )
 	PORT_DIPSETTING(      0x0008, "10" )
 	PORT_DIPSETTING(      0x0004, "01" )
@@ -1271,8 +1502,8 @@ INPUT_PORTS_START( karatour )
 	PORT_DIPSETTING(      0x0020, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 	PORT_DIPNAME( 0x0040, 0x0040, "Allow Continue" )
-	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0040, DEF_STR( On ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( No ) )
+	PORT_DIPSETTING(      0x0040, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x0080, 0x0000, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
@@ -1302,7 +1533,74 @@ INPUT_PORTS_START( karatour )
 	PORT_SERVICE( 0x0080, IP_ACTIVE_LOW )
 
 	PORT_START	// IN4 - $40000c
-	JOY_LSB(1, BUTTON1, BUTTON2, UNKNOWN)
+	JOY_LSB(1, BUTTON1, BUTTON2, UNKNOWN, UNKNOWN)
+
+
+INPUT_PORTS_END
+
+
+/***************************************************************************
+								Lady Killer
+***************************************************************************/
+
+INPUT_PORTS_START( ladykill )
+
+	PORT_START	// IN0 - $400002
+	JOY_LSB(2, BUTTON1, BUTTON2, UNKNOWN, UNKNOWN)
+
+	PORT_START	// IN1 - $400004
+	COINS
+
+	PORT_START	// IN2 - $400006
+	PORT_DIPNAME( 0x0003, 0x0003, DEF_STR( Lives ) )
+	PORT_DIPSETTING(      0x0001, "1" )
+	PORT_DIPSETTING(      0x0000, "2" )
+	PORT_DIPSETTING(      0x0003, "3" )
+	PORT_DIPSETTING(      0x0002, "4" )
+	PORT_DIPNAME( 0x000c, 0x000c, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(      0x0008, "Easy" )
+	PORT_DIPSETTING(      0x000c, "Normal" )
+	PORT_DIPSETTING(      0x0004, "Hard" )
+	PORT_DIPSETTING(      0x0000, "Very Hard" )
+	PORT_DIPNAME( 0x0010, 0x0010, DEF_STR( Unused ) )
+	PORT_DIPSETTING(      0x0010, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_SERVICE( 0x0020, IP_ACTIVE_LOW )
+	PORT_DIPNAME( 0x0040, 0x0040, "Allow Continue" )
+	PORT_DIPSETTING(      0x0000, DEF_STR( No ) )
+	PORT_DIPSETTING(      0x0040, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x0080, 0x0000, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+
+	PORT_START	// IN3 - $40000a
+	PORT_DIPNAME( 0x0007, 0x0007, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x0007, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x0006, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x0005, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x0004, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(      0x0003, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( 1C_6C ) )
+	PORT_DIPNAME( 0x0038, 0x0038, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x0008, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x0038, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x0030, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x0028, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x0020, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(      0x0018, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(      0x0010, DEF_STR( 1C_6C ) )
+	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0080, 0x0080, DEF_STR( Unused ) )
+	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+
+	PORT_START	// IN4 - $40000c
+	JOY_LSB(1, BUTTON1, BUTTON2, UNKNOWN, UNKNOWN)
 
 
 INPUT_PORTS_END
@@ -1318,10 +1616,10 @@ INPUT_PORTS_START( lastfort )
 	COINS
 
 	PORT_START	// IN1 - $c00006
-	JOY_LSB(1, BUTTON1, UNKNOWN, UNKNOWN)
+	JOY_LSB(1, BUTTON1, UNKNOWN, UNKNOWN, UNKNOWN)
 
 	PORT_START	// IN2 - $c00008
-	JOY_LSB(2, BUTTON1, UNKNOWN, UNKNOWN)
+	JOY_LSB(2, BUTTON1, UNKNOWN, UNKNOWN, UNKNOWN)
 
 	PORT_START	// IN3 - $c0000a
 	COINAGE_DSW
@@ -1332,22 +1630,22 @@ INPUT_PORTS_START( lastfort )
 	PORT_DIPSETTING(      0x0001, "Easy" )
 	PORT_DIPSETTING(      0x0003, "Normal" )
 	PORT_DIPSETTING(      0x0002, "Hard" )
-	PORT_DIPNAME( 0x0004, 0x0004, "Unknown 1-2" )
+	PORT_DIPNAME( 0x0004, 0x0004, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(      0x0004, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0008, 0x0008, "Unknown 1-3*" )
+	PORT_DIPNAME( 0x0008, 0x0008, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(      0x0008, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 	PORT_DIPNAME( 0x0010, 0x0010, "2 Player Game" )
 	PORT_DIPSETTING(      0x0010, "2 Credits" )
 	PORT_DIPSETTING(      0x0000, "1 Credit" )
 	PORT_DIPNAME( 0x0020, 0x0020, "Allow Continue" )
-	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0020, DEF_STR( On ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( No ) )
+	PORT_DIPSETTING(      0x0020, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0040, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0080, 0x0080, "Unknown 1-7*" )
+	PORT_DIPNAME( 0x0080, 0x0080, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 
@@ -1367,10 +1665,10 @@ INPUT_PORTS_START( lastfero )
 	COINS
 
 	PORT_START	// IN1 - $c00006
-	JOY_LSB(1, BUTTON1, UNKNOWN, UNKNOWN)
+	JOY_LSB(1, BUTTON1, UNKNOWN, UNKNOWN, UNKNOWN)
 
 	PORT_START	// IN2 - $c00008
-	JOY_LSB(2, BUTTON1, UNKNOWN, UNKNOWN)
+	JOY_LSB(2, BUTTON1, UNKNOWN, UNKNOWN, UNKNOWN)
 
 	PORT_START	// IN3 - $c0000a
 	COINAGE_DSW
@@ -1381,18 +1679,18 @@ INPUT_PORTS_START( lastfero )
 	PORT_DIPSETTING(      0x0001, "Easy" )
 	PORT_DIPSETTING(      0x0003, "Normal" )
 	PORT_DIPSETTING(      0x0002, "Hard" )
-	PORT_DIPNAME( 0x0004, 0x0004, "Unknown 1-2" )
+	PORT_DIPNAME( 0x0004, 0x0004, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(      0x0004, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0008, 0x0008, "Unknown 1-3*" )
+	PORT_DIPNAME( 0x0008, 0x0008, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(      0x0008, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 	PORT_DIPNAME( 0x0010, 0x0010, "2 Player Game" )
 	PORT_DIPSETTING(      0x0010, "2 Credits" )
 	PORT_DIPSETTING(      0x0000, "1 Credit" )
 	PORT_DIPNAME( 0x0020, 0x0020, "Allow Continue" )
-	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0020, DEF_STR( On ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( No ) )
+	PORT_DIPSETTING(      0x0020, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0040, DEF_STR( On ) )
@@ -1416,10 +1714,10 @@ INPUT_PORTS_START( pangpoms )
 	COINS
 
 	PORT_START	// IN1 - $800006
-	JOY_LSB(1, BUTTON1, BUTTON2, UNKNOWN)
+	JOY_LSB(1, BUTTON1, BUTTON2, UNKNOWN, UNKNOWN)
 
 	PORT_START	// IN2 - $800008
-	JOY_LSB(2, BUTTON1, BUTTON2, UNKNOWN)
+	JOY_LSB(2, BUTTON1, BUTTON2, UNKNOWN, UNKNOWN)
 
 	PORT_START	// IN3 - $80000a
 	COINAGE_DSW
@@ -1435,14 +1733,14 @@ INPUT_PORTS_START( pangpoms )
 	PORT_DIPSETTING(      0x0004, "2" )
 	PORT_DIPSETTING(      0x000c, "3" )
 	PORT_DIPSETTING(      0x0000, "4" )
-	PORT_DIPNAME( 0x0030, 0x0030, "Unknown 1-4&5*" )
+	PORT_DIPNAME( 0x0030, 0x0030, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(      0x0030, "11" )
 	PORT_DIPSETTING(      0x0020, "10" )
 	PORT_DIPSETTING(      0x0010, "01" )
 	PORT_DIPSETTING(      0x0000, "00" )
 	PORT_DIPNAME( 0x0040, 0x0040, "Allow Continue" )
-	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0040, DEF_STR( On ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( No ) )
+	PORT_DIPSETTING(      0x0040, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x0080, 0x0080, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0080, DEF_STR( On ) )
@@ -1463,8 +1761,8 @@ INPUT_PORTS_START( poitto )
 	COINS
 
 	PORT_START	// IN1 - $800002
-	JOY_LSB(1, BUTTON1, UNKNOWN, UNKNOWN)
-	JOY_MSB(2, BUTTON1, UNKNOWN, UNKNOWN)
+	JOY_LSB(1, BUTTON1, UNKNOWN, UNKNOWN, UNKNOWN)
+	JOY_MSB(2, BUTTON1, UNKNOWN, UNKNOWN, UNKNOWN)
 
 	PORT_START	// IN2 - $800004
 	COINAGE_DSW
@@ -1474,22 +1772,22 @@ INPUT_PORTS_START( poitto )
 	PORT_DIPSETTING(      0x0300, "Normal" )
 	PORT_DIPSETTING(      0x0200, "Hard" )
 	PORT_DIPSETTING(      0x0100, "Hardest" )
-	PORT_DIPNAME( 0x0400, 0x0400, "Unknown 1-2" )
+	PORT_DIPNAME( 0x0400, 0x0400, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(      0x0400, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0800, 0x0800, "Unknown 1-3" )
+	PORT_DIPNAME( 0x0800, 0x0800, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(      0x0800, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x1000, 0x1000, "Unknown 1-4" )
+	PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(      0x1000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 	PORT_DIPNAME( 0x2000, 0x2000, "Allow Continue" )
-	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x2000, DEF_STR( On ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( No ) )
+	PORT_DIPSETTING(      0x2000, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x4000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x8000, 0x8000, "Unknown 1-7" )
+	PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 
@@ -1509,16 +1807,16 @@ INPUT_PORTS_START( skyalert )
 	COINS
 
 	PORT_START	// IN1 - $400006
-	JOY_LSB(1, BUTTON1, BUTTON2, UNKNOWN)
+	JOY_LSB(1, BUTTON1, BUTTON2, UNKNOWN, UNKNOWN)
 
 	PORT_START	// IN2 - $400008
-	JOY_LSB(2, BUTTON1, BUTTON2, UNKNOWN)
+	JOY_LSB(2, BUTTON1, BUTTON2, UNKNOWN, UNKNOWN)
 
 	PORT_START	// IN3 - $40000a
 	COINAGE_DSW
 
 	PORT_START	// IN4 - $40000c
-	PORT_DIPNAME( 0x0003, 0x0003, "Unknown 1-0&1" )
+	PORT_DIPNAME( 0x0003, 0x0003, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(      0x0002, "006" )
 	PORT_DIPSETTING(      0x0003, "106" )
 	PORT_DIPSETTING(      0x0001, "206" )
@@ -1532,10 +1830,10 @@ INPUT_PORTS_START( skyalert )
 	PORT_DIPSETTING(      0x0030, "100K, Every 400K" )	// c <- other effect (difficulty?)
 	PORT_DIPSETTING(      0x0020, "200K, Every 400K" )	// d
 	PORT_DIPSETTING(      0x0010, "200K"  )				// e
-	PORT_DIPSETTING(      0x0000, "Never" )				// f
+	PORT_DIPSETTING(      0x0000, "None" )				// f
 	PORT_DIPNAME( 0x0040, 0x0040, "Allow Continue" )
-	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0040, DEF_STR( On ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( No ) )
+	PORT_DIPSETTING(      0x0040, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x0080, 0x0080, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0080, DEF_STR( On ) )
@@ -1556,8 +1854,8 @@ INPUT_PORTS_START( pururun )
 	COINS
 
 	PORT_START	// IN1 - $400002
-	JOY_LSB(1, BUTTON1, BUTTON2, UNKNOWN)
-	JOY_MSB(2, BUTTON1, BUTTON2, UNKNOWN)
+	JOY_LSB(1, BUTTON1, BUTTON2, UNKNOWN, UNKNOWN)
+	JOY_MSB(2, BUTTON1, BUTTON2, UNKNOWN, UNKNOWN)
 
 	PORT_START	// IN2 - $400004
 	COINAGE_DSW
@@ -1567,22 +1865,22 @@ INPUT_PORTS_START( pururun )
 	PORT_DIPSETTING(      0x0100, "Easy" )
 	PORT_DIPSETTING(      0x0300, "Normal" )
 	PORT_DIPSETTING(      0x0000, "Hard" )
-	PORT_DIPNAME( 0x0400, 0x0400, "Unknown 1-2*" )
+	PORT_DIPNAME( 0x0400, 0x0400, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(      0x0400, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 	PORT_DIPNAME( 0x0800, 0x0800, "2 Player Game" )
 	PORT_DIPSETTING(      0x0800, "2 Credits" )
 	PORT_DIPSETTING(      0x0000, "1 Credit" )
 	PORT_DIPNAME( 0x1000, 0x1000, "Bombs" )
-	PORT_DIPSETTING(      0x0000, "2" )
 	PORT_DIPSETTING(      0x1000, "1" )
+	PORT_DIPSETTING(      0x0000, "2" )
 	PORT_DIPNAME( 0x2000, 0x2000, "Allow Continue" )
-	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x2000, DEF_STR( On ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( No ) )
+	PORT_DIPSETTING(      0x2000, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x4000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x8000, 0x8000, "Unknown 1-7" )
+	PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 
@@ -1602,8 +1900,8 @@ INPUT_PORTS_START( toride2g )
 	COINS
 
 	PORT_START	// IN1 - $800002
-	JOY_LSB(1, BUTTON1, UNKNOWN, UNKNOWN)
-	JOY_MSB(2, BUTTON1, UNKNOWN, UNKNOWN)
+	JOY_LSB(1, BUTTON1, UNKNOWN, UNKNOWN, UNKNOWN)
+	JOY_MSB(2, BUTTON1, UNKNOWN, UNKNOWN, UNKNOWN)
 
 	PORT_START	// IN2 - $800004
 	COINAGE_DSW
@@ -1619,16 +1917,16 @@ INPUT_PORTS_START( toride2g )
 	PORT_DIPNAME( 0x0800, 0x0800, "Clear On Continue" )
 	PORT_DIPSETTING(      0x0800, "Always" )
 	PORT_DIPSETTING(      0x0000, "Ask Player" )
-	PORT_DIPNAME( 0x1000, 0x1000, "2 Player Game" )
+	PORT_DIPNAME( 0x1000, 0x1000, "2 Players Game" )
 	PORT_DIPSETTING(      0x1000, "2 Credits" )
 	PORT_DIPSETTING(      0x0000, "1 Credit" )
 	PORT_DIPNAME( 0x2000, 0x2000, "Allow Continue" )
-	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x2000, DEF_STR( On ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( No ) )
+	PORT_DIPSETTING(      0x2000, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x4000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x8000, 0x8000, "Unknown 1-7" )
+	PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 
@@ -1637,6 +1935,125 @@ INPUT_PORTS_START( toride2g )
 
 INPUT_PORTS_END
 
+
+/***************************************************************************
+							Blazing Tornado
+***************************************************************************/
+
+INPUT_PORTS_START( blzntrnd )
+	PORT_START
+	PORT_DIPNAME( 0x0007, 0x0004, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(      0x0007, "Beginner" )
+	PORT_DIPSETTING(      0x0006, "Easiest" )
+	PORT_DIPSETTING(      0x0005, "Easy" )
+	PORT_DIPSETTING(      0x0004, "Normal" )
+	PORT_DIPSETTING(      0x0003, "Hard" )
+	PORT_DIPSETTING(      0x0002, "Hardest" )
+	PORT_DIPSETTING(      0x0001, "Expert" )
+	PORT_DIPSETTING(      0x0000, "Master" )
+	PORT_DIPNAME( 0x0008, 0x0008, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(      0x0008, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0010, 0x0000, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(      0x0010, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0020, 0x0000, "Allow Continue" )
+	PORT_DIPSETTING(      0x0020, DEF_STR( No ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x00c0, 0x0000, "Control Panel" )
+	PORT_DIPSETTING(      0x0000, "4 Players" )
+//	PORT_DIPSETTING(      0x0040, "4 Players" )
+	PORT_DIPSETTING(      0x0080, "1P & 2P Tag only" )
+	PORT_DIPSETTING(      0x00c0, "1P & 2P vs only" )
+	PORT_DIPNAME( 0x0300, 0x0300, "Half Continue" )
+	PORT_DIPSETTING(      0x0000, "6C to start, 3C to continue" )
+	PORT_DIPSETTING(      0x0100, "4C to start, 2C to continue" )
+	PORT_DIPSETTING(      0x0200, "2C to start, 1C to continue" )
+	PORT_DIPSETTING(      0x0300, "Disabled" )
+	PORT_DIPNAME( 0x0400, 0x0400, DEF_STR( Unused ) )
+	PORT_DIPSETTING(      0x0400, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0800, 0x0800, DEF_STR( Unused ) )
+	PORT_DIPSETTING(      0x0800, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Unused ) )
+	PORT_DIPSETTING(      0x1000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Unused ) )
+	PORT_DIPSETTING(      0x2000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Unused ) )
+	PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Unused ) )
+	PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+
+	PORT_START
+	PORT_DIPNAME( 0x0007, 0x0007, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(      0x0004, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(      0x0005, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x0006, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x0007, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x0003, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( 1C_5C ) )
+	PORT_DIPNAME( 0x0038, 0x0038, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(      0x0020, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(      0x0028, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x0030, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x0038, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x0018, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x0010, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x0008, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( 1C_5C ) )
+	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Free_Play ) )
+	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_BITX(0x0080, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
+//	PORT_DIPNAME( 0x0080, 0x0080, DEF_STR( Service_Mode ) )
+//	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
+//	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0300, 0x0300, "CP Single" )
+	PORT_DIPSETTING(      0x0300, "2:00" )
+	PORT_DIPSETTING(      0x0200, "2:30" )
+	PORT_DIPSETTING(      0x0100, "3:00" )
+	PORT_DIPSETTING(      0x0000, "3:30" )
+	PORT_DIPNAME( 0x0c00, 0x0c00, "CP Tag" )
+	PORT_DIPSETTING(      0x0c00, "2:00" )
+	PORT_DIPSETTING(      0x0800, "2:30" )
+	PORT_DIPSETTING(      0x0400, "3:00" )
+	PORT_DIPSETTING(      0x0000, "3:30" )
+	PORT_DIPNAME( 0x3000, 0x3000, "Vs Single" )
+	PORT_DIPSETTING(      0x3000, "2:30" )
+	PORT_DIPSETTING(      0x2000, "3:00" )
+	PORT_DIPSETTING(      0x1000, "4:00" )
+	PORT_DIPSETTING(      0x0000, "5:00" )
+	PORT_DIPNAME( 0xc000, 0xc000, "Vs Tag" )
+	PORT_DIPSETTING(      0xc000, "2:30" )
+	PORT_DIPSETTING(      0x8000, "3:00" )
+	PORT_DIPSETTING(      0x4000, "4:00" )
+	PORT_DIPSETTING(      0x0000, "5:00" )
+
+	PORT_START
+	JOY_LSB(1, BUTTON1, BUTTON2, BUTTON3, BUTTON4)
+	JOY_MSB(2, BUTTON1, BUTTON3, BUTTON3, BUTTON4)
+
+	PORT_START
+	JOY_LSB(3, BUTTON1, BUTTON2, BUTTON3, BUTTON4)
+	JOY_MSB(4, BUTTON1, BUTTON3, BUTTON3, BUTTON4)
+
+	PORT_START
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BITX(0x0002, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
+	PORT_BIT_IMPULSE(  0x0004, IP_ACTIVE_LOW, IPT_COIN1, 2    )
+	PORT_BIT_IMPULSE(  0x0008, IP_ACTIVE_LOW, IPT_COIN2, 2    )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_START3 )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_START4 )
+INPUT_PORTS_END
 
 
 
@@ -1682,9 +2099,18 @@ static struct GfxDecodeInfo gfxdecodeinfo_4bit[] =
 
 static struct GfxDecodeInfo gfxdecodeinfo_8bit[] =
 {
-	{ REGION_GFX1, 0, &layout_8x8x4,    0x0, 0x200 }, // [0] 4 Bit Tiles
-	{ REGION_GFX2, 0, &layout_8x8x4,    0x0, 0x200 }, // [1] Fake Tiles
-	{ REGION_GFX1, 0, &layout_8x8x8, 0x2000, 0x200 }, // [2] 8 Bit Tiles
+	{ REGION_GFX1, 0, &layout_8x8x4, 0x0, 0x200 }, // [0] 4 Bit Tiles
+	{ REGION_GFX2, 0, &layout_8x8x4, 0x0, 0x200 }, // [1] Fake Tiles
+//	{ REGION_GFX1, 0, &layout_8x8x8, 0x0,  0x20 }, // [2] 8 Bit Tiles (handled directly from ROM data, no decoding)
+	{ -1 }
+};
+
+static struct GfxDecodeInfo gfxdecodeinfo_blzntrnd[] =
+{
+	{ REGION_GFX1, 0, &layout_8x8x4, 0x0, 0x200 }, // [0] 4 Bit Tiles
+	{ REGION_GFX2, 0, &layout_8x8x4, 0x0, 0x200 }, // [1] Fake Tiles
+	{ REGION_GFX3, 0, &layout_8x8x8, 0x0,  0x20 }, // [3] 053936 Tiles
+//	{ REGION_GFX1, 0, &layout_8x8x8, 0x0,  0x20 }, // [2] 8 Bit Tiles (handled directly from ROM data, no decoding)
 	{ -1 }
 };
 
@@ -1714,8 +2140,8 @@ static const struct MachineDriver machine_driver_balcube =
 	/* video hardware */
 	320, 224, { 0, 320-1, 0, 224-1 },
 	gfxdecodeinfo_8bit,
-	0x2000, 0x2000 + 0x200 * 256,
-	balcube_vh_init_palette,
+	0x2000, 0x2000,
+	0,
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
 	metro_vh_start_14220,
@@ -1739,8 +2165,14 @@ static const struct MachineDriver machine_driver_daitorid =
 			daitorid_readmem, daitorid_writemem,0,0,
 			metro_interrupt, 10	/* ? */
 		},
-
-		/* Sound CPU is unemulated */
+		{
+			CPU_UPD7810,
+			12000000,
+			upd7810_readmem, upd7810_writemem, upd7810_readport, upd7810_writeport,
+			ignore_interrupt, 0,
+			0, 0,
+			(void *)metro_io_callback
+        },
 	},
 	60,DEFAULT_60HZ_VBLANK_DURATION,
 	1,
@@ -1760,7 +2192,8 @@ static const struct MachineDriver machine_driver_daitorid =
 	/* sound hardware */
 	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
-		{ 0 },	// M6295, YM2151
+        {   SOUND_YM2151,   &daitorid_ym2151_interface      },
+		{	SOUND_OKIM6295, &daitorid_okim6295_interface	}
 	},
 };
 
@@ -2045,6 +2478,47 @@ static const struct MachineDriver machine_driver_toride2g =
 	},
 };
 
+static const struct MachineDriver machine_driver_blzntrnd =
+{
+	{
+		{
+			CPU_M68000,
+			16000000,
+			blzntrnd_readmem, blzntrnd_writemem,0,0,
+//			metro_interrupt, 10	/* ? */
+			karatour_interrupt, 10	/* ? */
+		},
+#if 0
+		{
+			CPU_Z80 | CPU_AUDIO_CPU,
+			16000000/2,
+			sound_readmem,sound_writemem,0,0,
+			ignore_interrupt,1
+		}
+#endif
+	},
+	60,DEFAULT_60HZ_VBLANK_DURATION,
+	1,
+	0,
+
+	/* video hardware */
+	320, 224, { 8, 320-8-1, 0, 224-1 },
+	gfxdecodeinfo_blzntrnd,
+	0x2000, 0x2000,
+	0,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	0,
+	blzntrnd_vh_start,
+	metro_vh_stop,
+	metro_vh_screenrefresh,
+
+	/* sound hardware */
+	SOUND_SUPPORTS_STEREO,0,0,0,
+	{
+		{ 0 },	/* YMF286K (unemulated) + YRW801-M? (Standard Samples ROM) */
+	},
+};
+
 
 
 /***************************************************************************
@@ -2057,6 +2531,21 @@ static const struct MachineDriver machine_driver_toride2g =
 
 static void init_metro(void)
 {
+	int i;
+
+	/*
+	  Tiles can be either 4-bit or 8-bit, and both depths can be used at the same
+	  time. The transparent pen is the last one, that is 15 or 255. To make
+	  tilemap.c handle that, we invert gfx data so the transparent pen becomes 0
+	  for both tile depths.
+	*/
+	for (i = 0;i < memory_region_length(REGION_GFX1);i++)
+		memory_region(REGION_GFX1)[i] ^= 0xff;
+
+	if (memory_region(REGION_GFX3))	/* blzntrnd */
+		for (i = 0;i < memory_region_length(REGION_GFX3);i++)
+			memory_region(REGION_GFX3)[i] ^= 0xff;
+
 	vblank_irq   = 0;
 	blitter_irq  = 0;
 	unknown1_irq = 0;
@@ -2068,6 +2557,15 @@ static void init_metro(void)
 	irq_enable = 0;
 }
 
+
+void init_karatour(void)
+{
+	data16_t *RAM = (data16_t *) memory_region( REGION_USER1 );
+	metro_vram_0 = RAM + (0x20000/2) * 0;
+	metro_vram_1 = RAM + (0x20000/2) * 1;
+	metro_vram_2 = RAM + (0x20000/2) * 2;
+	init_metro();
+}
 
 /* Unscramble the GFX ROMs */
 static void init_balcube(void)
@@ -2095,27 +2593,34 @@ static void init_balcube(void)
 }
 
 
+static void init_blzntrnd(void)
+{
+	init_metro();
+	irq_line = 1;
+}
+
+
 /* Fake Tiles used to support a feature of this hardware: it can draw tiles
    filled with one single color (e.g. not stored in the GFX ROMs) */
 
 #define METRO_FAKE_TILES(_rgn_)	\
 	ROM_REGION( 0x200, _rgn_, ROMREGION_DISPOSE ) \
-	ROM_FILL( 0x000, 0x20, 0x00 ) \
-	ROM_FILL( 0x020, 0x20, 0x11 ) \
-	ROM_FILL( 0x040, 0x20, 0x22 ) \
-	ROM_FILL( 0x060, 0x20, 0x33 ) \
-	ROM_FILL( 0x080, 0x20, 0x44 ) \
-	ROM_FILL( 0x0a0, 0x20, 0x55 ) \
-	ROM_FILL( 0x0c0, 0x20, 0x66 ) \
-	ROM_FILL( 0x0e0, 0x20, 0x77 ) \
-	ROM_FILL( 0x100, 0x20, 0x88 ) \
-	ROM_FILL( 0x120, 0x20, 0x99 ) \
-	ROM_FILL( 0x140, 0x20, 0xaa ) \
-	ROM_FILL( 0x160, 0x20, 0xbb ) \
-	ROM_FILL( 0x180, 0x20, 0xcc ) \
-	ROM_FILL( 0x1a0, 0x20, 0xdd ) \
-	ROM_FILL( 0x1c0, 0x20, 0xee ) \
-	ROM_FILL( 0x1e0, 0x20, 0xff )
+	ROM_FILL( 0x000, 0x20, 0xff ) \
+	ROM_FILL( 0x020, 0x20, 0xee ) \
+	ROM_FILL( 0x040, 0x20, 0xdd ) \
+	ROM_FILL( 0x060, 0x20, 0xcc ) \
+	ROM_FILL( 0x080, 0x20, 0xbb ) \
+	ROM_FILL( 0x0a0, 0x20, 0xaa ) \
+	ROM_FILL( 0x0c0, 0x20, 0x99 ) \
+	ROM_FILL( 0x0e0, 0x20, 0x88 ) \
+	ROM_FILL( 0x100, 0x20, 0x77 ) \
+	ROM_FILL( 0x120, 0x20, 0x66 ) \
+	ROM_FILL( 0x140, 0x20, 0x55 ) \
+	ROM_FILL( 0x160, 0x20, 0x44 ) \
+	ROM_FILL( 0x180, 0x20, 0x33 ) \
+	ROM_FILL( 0x1a0, 0x20, 0x22 ) \
+	ROM_FILL( 0x1c0, 0x20, 0x11 ) \
+	ROM_FILL( 0x1e0, 0x20, 0x00 )
 
 
 
@@ -2140,7 +2645,6 @@ Metro 1996
 ***************************************************************************/
 
 ROM_START( balcube )
-
 	ROM_REGION( 0x080000, REGION_CPU1, 0 )		/* 68000 Code */
 	ROM_LOAD16_BYTE( "6", 0x000000, 0x040000, 0xc400f84d )
 	ROM_LOAD16_BYTE( "5", 0x000001, 0x040000, 0x15313e3f )
@@ -2158,7 +2662,6 @@ ROM_START( balcube )
 
 	ROM_REGION( 0x200000, REGION_SOUND2, ROMREGION_SOUNDONLY )	/* ? YRW801-M ? */
 	ROM_LOAD( "yrw801m", 0x000000, 0x200000, 0x00000000 )	// Yamaha YRW801 2MB ROM with samples for the OPL4.
-
 ROM_END
 
 
@@ -2184,7 +2687,6 @@ MTR5260-A
 ***************************************************************************/
 
 ROM_START( daitorid )
-
 	ROM_REGION( 0x040000, REGION_CPU1, 0 )		/* 68000 Code */
 	ROM_LOAD16_BYTE( "dt-ja-5.19e", 0x000000, 0x020000, 0x441efd77 )
 	ROM_LOAD16_BYTE( "dt-ja-6.19c", 0x000001, 0x020000, 0x494f9cc3 )
@@ -2202,7 +2704,6 @@ ROM_START( daitorid )
 
 	ROM_REGION( 0x040000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
 	ROM_LOAD( "dt-ja-7.3f", 0x000000, 0x040000, 0x0d888cde )
-
 ROM_END
 
 
@@ -2230,7 +2731,6 @@ Metro 1994
 ***************************************************************************/
 
 ROM_START( dharma )
-
 	ROM_REGION( 0x040000, REGION_CPU1, 0 )		/* 68000 Code */
 	ROM_LOAD16_BYTE( "jc-5", 0x000000, 0x020000, 0xb5d44426 )
 	ROM_LOAD16_BYTE( "jc-6", 0x000001, 0x020000, 0xbc5a202e )
@@ -2248,7 +2748,6 @@ ROM_START( dharma )
 
 	ROM_REGION( 0x040000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
 	ROM_LOAD( "ja-7", 0x000000, 0x040000, 0x7ce817eb )
-
 ROM_END
 
 
@@ -2289,7 +2788,6 @@ KTMASK4.BIN	361A07 9239D	17D
 ***************************************************************************/
 
 ROM_START( karatour )
-
 	ROM_REGION( 0x080000, REGION_CPU1, 0 )		/* 68000 Code */
 	ROM_LOAD16_BYTE( "kt002.8g",  0x000000, 0x040000, 0x316a97ec )
 	ROM_LOAD16_BYTE( "kt003.10g", 0x000001, 0x040000, 0xabe1b991 )
@@ -2310,17 +2808,59 @@ ROM_START( karatour )
 
 	/* Additional memory for the layers' ram */
 	ROM_REGION( 0x20000*3, REGION_USER1, 0 )
-
 ROM_END
 
-void init_karatour(void)
-{
-	data16_t *RAM = (data16_t *) memory_region( REGION_USER1 );
-	metro_vram_0 = RAM + (0x20000/2) * 0;
-	metro_vram_1 = RAM + (0x20000/2) * 1;
-	metro_vram_2 = RAM + (0x20000/2) * 2;
-	init_metro();
-}
+
+/***************************************************************************
+
+Moeyo Gonta!! (Lady Killer)
+(c)1993 Yanyaka
+VG460-(B)
+
+CPU  : TMP68HC000P-16
+Sound: D78C10ACW YM2413 M6295
+OSC  : 3.579545MHz(XTAL1) 20.0000MHz(XTAL2) 24.0000MHz(XTAL3)
+
+ROMs:
+e1.1i - Sound program (27c010)
+
+j2.8g  - Main programs (27c020)
+j3.10g /
+
+ladyj-4.15f - Graphics (mask, read as 27c800)
+ladyj-5.17f |
+ladyj-6.15d |
+ladyj-7.17d /
+
+e8j.1d - Samples (27c020)
+
+Others:
+Imagetek I4100 052 9330EK712
+
+***************************************************************************/
+
+ROM_START( ladykill )
+	ROM_REGION( 0x080000, REGION_CPU1, 0 )		/* 68000 Code */
+	ROM_LOAD16_BYTE( "j2.8g",     0x000000, 0x040000, 0xaa18d130 )
+	ROM_LOAD16_BYTE( "j3.10g",    0x000001, 0x040000, 0xb555e6ab )
+
+	ROM_REGION( 0x020000, REGION_CPU2, 0 )		/* NEC78C10 Code */
+	ROM_LOAD( "e1.1i",    0x000000, 0x020000, 0xa4d95cfb )	// 11xxxxxxxxxxxxxxx = 0xFF
+
+	ROM_REGION( 0x400000, REGION_GFX1, 0 )	/* Gfx + Data (Addressable by CPU & Blitter) */
+	ROMX_LOAD( "ladyj-4.15f", 0x000000, 0x100000, 0x65e5906c, ROM_GROUPWORD | ROM_SKIP(6))
+	ROMX_LOAD( "ladyj-7.17d", 0x000002, 0x100000, 0x56bd64a5, ROM_GROUPWORD | ROM_SKIP(6))
+	ROMX_LOAD( "ladyj-5.17f", 0x000004, 0x100000, 0xa81ffaa3, ROM_GROUPWORD | ROM_SKIP(6))
+	ROMX_LOAD( "ladyj-6.15d", 0x000006, 0x100000, 0x3a34913a, ROM_GROUPWORD | ROM_SKIP(6))
+
+	METRO_FAKE_TILES( REGION_GFX2 )
+
+	ROM_REGION( 0x040000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_LOAD( "e8j.1d",   0x000000, 0x040000, 0xf66c2a80 )
+
+	/* Additional memory for the layers' ram */
+	ROM_REGION( 0x20000*3, REGION_USER1, 0 )
+ROM_END
 
 
 /***************************************************************************
@@ -2346,7 +2886,6 @@ VG420
 ***************************************************************************/
 
 ROM_START( lastfort )
-
 	ROM_REGION( 0x040000, REGION_CPU1, 0 )		/* 68000 Code */
 	ROM_LOAD16_BYTE( "tr_jc09", 0x000000, 0x020000, 0x8b98a49a )
 	ROM_LOAD16_BYTE( "tr_jc10", 0x000001, 0x020000, 0x8d04da04 )
@@ -2368,7 +2907,6 @@ ROM_START( lastfort )
 
 	ROM_REGION( 0x020000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
 	ROM_LOAD( "tr_jb11", 0x000000, 0x020000, 0x83786a09 )
-
 ROM_END
 
 
@@ -2387,7 +2925,6 @@ OSC: 24.000 MHz
 ***************************************************************************/
 
 ROM_START( lastfero )
-
 	ROM_REGION( 0x040000, REGION_CPU1, 0 )		/* 68000 Code */
 	ROM_LOAD16_BYTE( "tre_jc09", 0x000000, 0x020000, 0x32f43390 )
 	ROM_LOAD16_BYTE( "tre_jc10", 0x000001, 0x020000, 0x9536369c )
@@ -2409,7 +2946,6 @@ ROM_START( lastfero )
 
 	ROM_REGION( 0x020000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
 	ROM_LOAD( "tr_jb11", 0x000000, 0x020000, 0x83786a09 )
-
 ROM_END
 
 
@@ -2508,7 +3044,6 @@ AMD MACH110-20 (CPLD)
 ***************************************************************************/
 
 ROM_START( poitto )
-
 	ROM_REGION( 0x040000, REGION_CPU1, 0 )		/* 68000 Code */
 	ROM_LOAD16_BYTE( "pt-jd05.20e", 0x000000, 0x020000, 0x6b1be034 )
 	ROM_LOAD16_BYTE( "pt-jd06.20c", 0x000001, 0x020000, 0x3092d9d4 )
@@ -2526,7 +3061,49 @@ ROM_START( poitto )
 
 	ROM_REGION( 0x040000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
 	ROM_LOAD( "pt-jc07.3g", 0x000000, 0x040000, 0x5ae28b8d )
+ROM_END
 
+
+/***************************************************************************
+
+Puzzli
+Metro/Banpresto 1995
+
+MTR5260-A                3.5759MHz  12MHz
+               YM2151                         6116
+   26.666MHz           M6295    PZ.JB7  PZ.JB8
+                                     78C10
+      7C199         Imagetek
+      7C199           14220
+      61C64
+
+                                          PZ.JB1
+           68000-16                       PZ.JB2
+               32MHz   6164               PZ.JB3
+                       6164               PZ.JB4
+    SW      PZ.JB6 PZ.JB5
+    SW
+
+***************************************************************************/
+
+ROM_START( puzzli )
+	ROM_REGION( 0x040000, REGION_CPU1, 0 )		/* 68000 Code */
+	ROM_LOAD16_BYTE( "pz.jb5",       0x000000, 0x020000, 0x33bbbd28 )
+	ROM_LOAD16_BYTE( "pz.jb6",       0x000001, 0x020000, 0xe0bdea18 )
+
+	ROM_REGION( 0x020000, REGION_CPU2, 0 )		/* NEC78C10 Code */
+	ROM_LOAD( "pz.jb8",      0x000000, 0x020000, 0xc652da32 )
+
+	ROM_REGION( 0x200000, REGION_GFX1, 0 )	/* Gfx + Data (Addressable by CPU & Blitter) */
+	ROMX_LOAD( "pz.jb2",       0x000000, 0x080000, 0x0c0997d4, ROM_GROUPWORD | ROM_SKIP(6))
+	ROMX_LOAD( "pz.jb4",       0x000002, 0x080000, 0x576bc5c2, ROM_GROUPWORD | ROM_SKIP(6))
+	ROMX_LOAD( "pz.jb1",       0x000004, 0x080000, 0x29f01eb3, ROM_GROUPWORD | ROM_SKIP(6))
+	ROMX_LOAD( "pz.jb3",       0x000006, 0x080000, 0x6753e282, ROM_GROUPWORD | ROM_SKIP(6))
+
+	METRO_FAKE_TILES( REGION_GFX2 )
+
+	ROM_REGION( 0x040000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_LOAD( "pz.jb7",      0x000000, 0x040000, 0xb3aab610 )
 ROM_END
 
 
@@ -2562,7 +3139,6 @@ AMD MACH110-20 (CPLD)
 ***************************************************************************/
 
 ROM_START( pururun )
-
 	ROM_REGION( 0x040000, REGION_CPU1, 0 )		/* 68000 Code */
 	ROM_LOAD16_BYTE( "pu9-19-5.20e", 0x000000, 0x020000, 0x5a466a1b )
 	ROM_LOAD16_BYTE( "pu9-19-6.20c", 0x000001, 0x020000, 0xd155a53c )
@@ -2580,7 +3156,6 @@ ROM_START( pururun )
 
 	ROM_REGION( 0x040000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
 	ROM_LOAD( "pu9-19-7.3g", 0x000000, 0x040000, 0x51ae4926 )
-
 ROM_END
 
 
@@ -2598,7 +3173,6 @@ other	:D78C10ACW,Imagetek Inc 14100 052
 ***************************************************************************/
 
 ROM_START( skyalert )
-
 	ROM_REGION( 0x040000, REGION_CPU1, 0 )		/* 68000 Code */
 	ROM_LOAD16_BYTE( "sa_c_09.bin", 0x000000, 0x020000, 0x6f14d9ae )
 	ROM_LOAD16_BYTE( "sa_c_10.bin", 0x000001, 0x020000, 0xf10bb216 )
@@ -2620,7 +3194,6 @@ ROM_START( skyalert )
 
 	ROM_REGION( 0x020000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
 	ROM_LOAD( "sa_a_11.bin", 0x000000, 0x020000, 0x04842a60 )
-
 ROM_END
 
 
@@ -2656,7 +3229,6 @@ AMD MACH110-20 (CPLD)
 ***************************************************************************/
 
 ROM_START( toride2g )
-
 	ROM_REGION( 0x080000, REGION_CPU1, 0 )		/* 68000 Code */
 	ROM_LOAD16_BYTE( "tr2aja-5.20e", 0x000000, 0x040000, 0xb96a52f6 )
 	ROM_LOAD16_BYTE( "tr2aja-6.20c", 0x000001, 0x040000, 0x2918b6b4 )
@@ -2674,7 +3246,59 @@ ROM_START( toride2g )
 
 	ROM_REGION( 0x020000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
 	ROM_LOAD( "tr2aja-7.3g", 0x000000, 0x020000, 0x630c6193 )
+ROM_END
 
+
+/***************************************************************************
+
+Blazing Tornado
+(c)1994 Human
+
+CPU:	68000-16
+Sound:	Z80-8
+	YMF286K
+OSC:	16.0000MHz
+	26.666MHz
+Chips:	Imagetek 14220 071
+	Konami 053936 (PSAC2)
+
+***************************************************************************/
+
+ROM_START( blzntrnd )
+	ROM_REGION( 0x200000, REGION_CPU1, 0 )	/* 68000 */
+	ROM_LOAD16_BYTE( "1k.bin", 0x000000, 0x80000, 0xb007893b )
+	ROM_LOAD16_BYTE( "2k.bin", 0x000001, 0x80000, 0xec173252 )
+	ROM_LOAD16_BYTE( "3k.bin", 0x100000, 0x80000, 0x1e230ba2 )
+	ROM_LOAD16_BYTE( "4k.bin", 0x100001, 0x80000, 0xe98ca99e )
+
+	ROM_REGION( 0x20000, REGION_CPU2, 0 )	/* Z80 */
+	ROM_LOAD( "rom5.bin", 0x0000, 0x20000, 0x7e90b774 )
+
+	ROM_REGION( 0x1800000, REGION_GFX1, 0 )	/* Gfx + Data (Addressable by CPU & Blitter) */
+	ROMX_LOAD( "rom142.bin", 0x0000000, 0x200000, 0xa7200598, ROM_GROUPWORD | ROM_SKIP(6))
+	ROMX_LOAD( "rom186.bin", 0x0000002, 0x200000, 0x6ee28ea7, ROM_GROUPWORD | ROM_SKIP(6))
+	ROMX_LOAD( "rom131.bin", 0x0000004, 0x200000, 0xc77e75d3, ROM_GROUPWORD | ROM_SKIP(6))
+	ROMX_LOAD( "rom175.bin", 0x0000006, 0x200000, 0x04a84f9b, ROM_GROUPWORD | ROM_SKIP(6))
+	ROMX_LOAD( "rom242.bin", 0x0800000, 0x200000, 0x1182463f, ROM_GROUPWORD | ROM_SKIP(6))
+	ROMX_LOAD( "rom286.bin", 0x0800002, 0x200000, 0x384424fc, ROM_GROUPWORD | ROM_SKIP(6))
+	ROMX_LOAD( "rom231.bin", 0x0800004, 0x200000, 0xf0812362, ROM_GROUPWORD | ROM_SKIP(6))
+	ROMX_LOAD( "rom275.bin", 0x0800006, 0x200000, 0x184cb129, ROM_GROUPWORD | ROM_SKIP(6))
+	ROMX_LOAD( "rom342.bin", 0x1000000, 0x200000, 0xe527fee5, ROM_GROUPWORD | ROM_SKIP(6))
+	ROMX_LOAD( "rom386.bin", 0x1000002, 0x200000, 0xd10b1401, ROM_GROUPWORD | ROM_SKIP(6))
+	ROMX_LOAD( "rom331.bin", 0x1000004, 0x200000, 0x4d909c28, ROM_GROUPWORD | ROM_SKIP(6))
+	ROMX_LOAD( "rom375.bin", 0x1000006, 0x200000, 0x6eb4f97c, ROM_GROUPWORD | ROM_SKIP(6))
+
+	METRO_FAKE_TILES( REGION_GFX2 )
+
+	ROM_REGION( 0x200000, REGION_GFX3, ROMREGION_DISPOSE )	/* 053936 gfx data */
+	ROM_LOAD( "rom9.bin", 0x000000, 0x200000, 0x37ca3570 )
+
+	ROM_REGION( 0x080000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_LOAD( "rom8.bin", 0x000000, 0x080000, 0x565a4086 )
+
+	ROM_REGION( 0x400000, REGION_SOUND2, ROMREGION_SOUNDONLY )	/* ? YRW801-M ? */
+	ROM_LOAD( "rom6.bin", 0x000000, 0x200000, 0x8b8819fc )
+	ROM_LOAD( "rom7.bin", 0x200000, 0x200000, 0x0089a52b )
 ROM_END
 
 
@@ -2688,6 +3312,7 @@ ROM_END
 ***************************************************************************/
 
 GAMEX( 1992, karatour, 0,        karatour, karatour, karatour, ROT0,       "Mitchell",           "The Karate Tournament",    GAME_NO_SOUND )
+GAMEX( 1993?,ladykill, 0,        karatour, ladykill, karatour, ROT90,      "Yanyaka",            "Moeyo Gonta!! (Japan)",    GAME_NO_SOUND )
 GAMEX( 1992, pangpoms, 0,        pangpoms, pangpoms, metro,    ROT0,       "Metro",              "Pang Poms",                GAME_NO_SOUND )
 GAMEX( 1992, pangpomm, pangpoms, pangpoms, pangpoms, metro,    ROT0,       "Metro (Mitchell license)", "Pang Poms (Mitchell)", GAME_NO_SOUND )
 GAMEX( 1992, skyalert, 0,        skyalert, skyalert, metro,    ROT270,     "Metro",              "Sky Alert",                GAME_NO_SOUND )
@@ -2697,5 +3322,8 @@ GAMEX( 1994, lastfort, 0,        lastfort, lastfort, metro,    ROT0,       "Metr
 GAMEX( 1994, lastfero, lastfort, lastfort, lastfero, metro,    ROT0,       "Metro",              "Last Fortress - Toride (Erotic)", GAME_NO_SOUND )
 GAMEX( 1994, toride2g, 0,        toride2g, toride2g, metro,    ROT0,       "Metro",              "Toride II Adauchi Gaiden", GAME_NO_SOUND )
 GAMEX( 1995, daitorid, 0,        daitorid, daitorid, metro,    ROT0,       "Metro",              "Dai Toride",               GAME_NO_SOUND )
+GAMEX( 1995, puzzli,   0,        daitorid, puzzli,   metro,    ROT0_16BIT, "Metro / Banpresto",  "Puzzli",                   GAME_NO_SOUND )
 GAMEX( 1995, pururun,  0,        pururun,  pururun,  metro,    ROT0,       "Metro / Banpresto",  "Pururun",                  GAME_NO_SOUND )
-GAMEX( 1996, balcube,  0,        balcube,  balcube,  balcube,  ROT0_16BIT, "Metro",              "Bal Cube",                 GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1996, balcube,  0,        balcube,  balcube,  balcube,  ROT0_16BIT, "Metro",              "Bal Cube",                 GAME_NO_SOUND )
+
+GAMEX( 1994, blzntrnd, 0,        blzntrnd, blzntrnd, blzntrnd, ROT0_16BIT, "Human Amusement",    "Blazing Tornado",          GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )

@@ -370,7 +370,7 @@ static void handle_68k_sound_command(int command)
 	int temp;
 
 	/* read the data to reset the latch */
-	cyberbal_sound_68k_r(0);
+	cyberbal_sound_68k_r(0,0);
 
 	switch (command)
 	{

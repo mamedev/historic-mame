@@ -433,7 +433,7 @@ static READ16_HANDLER( syvalion_input_bypass_r )
 {
 	/* Bypass TC0220IOC controller for analog input */
 
-	data8_t	port = TC0220IOC_halfword_port_r(0);	/* read port number */
+	data8_t	port = TC0220IOC_port_r(0);	/* read port number */
 
 	switch( port )
 	{

@@ -25,6 +25,7 @@
 #include "png.h"
 
 extern char build_version[];
+extern UINT32 *shrinked_pens; /* Used to determine the RGB layout in direct modes */
 
 /* convert_uint is here so we don't have to deal with byte-ordering issues */
 static UINT32 convert_from_network_order (UINT8 *v)
@@ -578,10 +579,31 @@ static int png_write_chunk(void *fp, UINT32 chunk_type, UINT8 *chunk_data, UINT3
 	return 1;
 }
 
+static int png_write_text(void *fp, const char *keyword, const char *text)
+{
+	char *chunk;
+	int chunklength;
+
+	chunklength = strlen(keyword) + strlen(text) + 1;
+	if ((chunk = malloc(chunklength + 1)) == NULL)
+		return 0;
+
+	strcpy (chunk, keyword);
+	strcpy (chunk + strlen(keyword) + 1, text);
+
+	if (png_write_chunk(fp, PNG_CN_tEXt, (UINT8 *)chunk, chunklength)==0)
+	{
+		free (chunk);
+		return 0;
+	}
+	free (chunk);
+	return 1;
+}
+
 static int png_write_file(void *fp, struct png_info *p)
 {
 	UINT8 ihdr[13];
-	char text[256];
+	char text[1024];
 
 	/* PNG Signature */
 	if (osd_fwrite(fp, PNG_Signature, 8) != 8)
@@ -590,7 +612,7 @@ static int png_write_file(void *fp, struct png_info *p)
 		return 0;
 	}
 
-	/* PNG_CN_IHDR */
+	/* IHDR */
 	convert_to_network_order(p->width, ihdr);
 	convert_to_network_order(p->height, ihdr+4);
 	*(ihdr+8) = p->bit_depth;
@@ -602,26 +624,29 @@ static int png_write_file(void *fp, struct png_info *p)
 	if (png_write_chunk(fp, PNG_CN_IHDR, ihdr, 13)==0)
 		return 0;
 
-	/* PNG_CN_PLTE */
+	/* PLTE */
 	if (p->num_palette > 0)
 		if (png_write_chunk(fp, PNG_CN_PLTE, p->palette, p->num_palette*3)==0)
 			return 0;
 
-	/* PNG_CN_IDAT */
+	/* IDAT */
 	if (png_write_chunk(fp, PNG_CN_IDAT, p->zimage, p->zlength)==0)
 		return 0;
 
-	/* PNG_CN_tEXt */
-	sprintf (text, "Software");
+	/* tEXt */
 #ifdef MESS
-	sprintf (text+9, "MESS %s", build_version);
+	sprintf (text, "MESS %s", build_version);
 #else
-	sprintf (text+9, "MAME %s", build_version);
+	sprintf (text, "MAME %s", build_version);
 #endif
-	if (png_write_chunk(fp, PNG_CN_tEXt, (UINT8 *)text, 14+strlen(build_version))==0)
+	if (png_write_text(fp, "Software", text) == 0)
 		return 0;
 
-	/* PNG_CN_IEND */
+	sprintf (text, "%s %s", Machine->gamedrv->manufacturer, Machine->gamedrv->description);
+	if (png_write_text(fp, "Game", text) == 0)
+		return 0;
+
+	/* IEND */
 	if (png_write_chunk(fp, PNG_CN_IEND, NULL, 0)==0)
 		return 0;
 
@@ -712,9 +737,12 @@ static int png_pack_buffer (struct png_info *p)
   color type 2 true color RGB PNG is written.
 
  *********************************************************************/
+
 int png_write_bitmap(void *fp, struct osd_bitmap *bitmap)
 {
 	int i, j, c;
+	int r, g, b;
+	UINT32 color;
 	UINT8 *ip;
 	struct png_info p;
 
@@ -723,7 +751,7 @@ int png_write_bitmap(void *fp, struct osd_bitmap *bitmap)
 	p.palette = p.trans = p.image = p.zimage = p.fimage = NULL;
 	p.width = bitmap->width;
 	p.height = bitmap->height;
-	p.color_type = (bitmap->depth == 8 ? 3: 2);
+	p.color_type = (Machine->color_depth == 8 ? 3: 2);
 
 	if (p.color_type == 3)
 	{
@@ -769,14 +797,51 @@ int png_write_bitmap(void *fp, struct osd_bitmap *bitmap)
 
 		ip = p.image;
 
-		for (i = 0; i < p.height; i++)
-			for (j = 0; j < p.width; j++)
-			{
-				osd_get_pen(((UINT16 *)bitmap->line[i])[j],ip, ip+1, ip+2);
-				ip += 3;
-			}
-	}
+		switch (Machine->color_depth)
+		{
+		case 16: /* 16BIT */
+			for (i = 0; i < p.height; i++)
+				for (j = 0; j < p.width; j++)
+				{
+					osd_get_pen(((UINT16 *)bitmap->line[i])[j],ip, ip+1, ip+2);
+					ip += 3;
+				}
+			break;
+		case 15: /* DIRECT_15BIT */
+			for (i = 0; i < p.height; i++)
+				for (j = 0; j < p.width; j++)
+				{
+					color = ((UINT16 *)bitmap->line[i])[j];
 
+					r = (color & shrinked_pens[0]) / (shrinked_pens[0] / 0x1f);
+					g = (color & shrinked_pens[1]) / (shrinked_pens[1] / 0x1f);
+					b = (color & shrinked_pens[2]) / (shrinked_pens[2] / 0x1f);
+
+					*ip++ = (r << 3) | (r >> 2);
+					*ip++ = (g << 3) | (g >> 2);
+					*ip++ = (b << 3) | (b >> 2);
+				}
+			break;
+		case 32: /* DIRECT_32BIT */
+			for (i = 0; i < p.height; i++)
+				for (j = 0; j < p.width; j++)
+				{
+					color = ((UINT32 *)bitmap->line[i])[j];
+
+					r = (color & shrinked_pens[0]) / (shrinked_pens[0] / 0xff);
+					g = (color & shrinked_pens[1]) / (shrinked_pens[1] / 0xff);
+					b = (color & shrinked_pens[2]) / (shrinked_pens[2] / 0xff);
+
+					*ip++ = r;
+					*ip++ = g;
+					*ip++ = b;
+				}
+			break;
+		default:
+			logerror("Unknown color depth\n");
+			break;
+		}
+	}
 	if(png_filter (&p)==0)
 		return 0;
 
@@ -784,10 +849,8 @@ int png_write_bitmap(void *fp, struct osd_bitmap *bitmap)
 		return 0;
 
 	if (png_write_file(fp, &p)==0)
-	{
-		printf ("error\n");
 		return 0;
-	}
+
 	if (p.palette) free (p.palette);
 	if (p.image) free (p.image);
 	if (p.zimage) free (p.zimage);

@@ -1,5 +1,13 @@
 /*******************************************************************************
 
+Taito Custom ICs
+================
+
+Thanks to Suzuki2go for his videos of Metal Black which made better
+emulation of TC0480SCP row and column effects possible.
+
+				---
+
 PC080SN
 -------
 Tilemap generator. Two tilemaps, with gfx data fetched from ROM.
@@ -89,8 +97,8 @@ Control registers
         ----------x----- unknown (set in most of the TaitoZ games and Cadash)
 00e-00f ---------------x flip screen
         ----------x----- this TC0100SCN is subsidiary [= not the main one]
-                              (Multi-screen games only. Could it mean: "use
-                               main TC0100SCN text layer as my text layer" ?)
+                              (Multi-screen games only. Could it mean: "write
+                               through what is written into main TC0100SCN" ?)
         --x------------- unknown (thunderfox)
 
 
@@ -227,21 +235,29 @@ Tilemap generator, has four zoomable tilemaps with 16x16 tiles.
 It also has a front tilemap with 8x8 tiles which fetches gfx data
 from RAM.
 
+BG2 and 3 are "special" layers which have row zoom and source
+columnscroll. The selectable layer priority order is a function
+of the need to have the "special" layers in particular priority
+positions.
+
 Standard memory layout (four 32x32 bg tilemaps, one 64x64 fg tilemap)
 
 0000-0fff BG0
 1000-1fff BG1
 2000-2fff BG2
 3000-3fff BG3
-4000-41ff BG0 row horiz'tl magnification (0 = none) [see notes below]
-4400-45ff BG1 row horiz'tl magnification
-4800-49ff BG2 row horiz'tl magnification
-4c00-4dff BG3 row horiz'tl magnification
-6000-61ff BG0 row vertical magnification (0 = none)
-6400-65ff BG1 row vertical magnification
-6800-69ff BG2 row vertical magnification
-6c00-6dff BG3 row vertical magnification
-[map for row effects is preliminary: code at $1b4a in Slapshot may disprove it]
+4000-43ff BG0 rowscroll
+4400-47ff BG1 rowscroll
+4800-4bff BG2 rowscroll
+4c00-4fff BG3 rowscroll
+5000-53ff BG0 rowscroll low order bytes (see info below)
+5400-57ff BG1 rowscroll low order bytes
+5800-5bff BG2 rowscroll low order bytes
+5c00-5fff BG3 rowscroll low order bytes
+6000-63ff BG2 row zoom
+6400-67ff BG3 row zoom
+6800-6bff BG2 source colscroll
+6c00-6fff BG3 source colscroll
 7000-bfff unknown/unused?
 c000-dfff FG0
 e000-ffff gfx data for FG0 (4bpp)
@@ -252,32 +268,41 @@ Double width tilemaps memory layout (four 64x32 bg tilemaps, one 64x64 fg tilema
 2000-3fff BG1
 4000-5fff BG2
 6000-7fff BG3
-8000-81ff [*] BG0 row horiz'tl magnification? (0 = none)
-8400-85ff     BG1 row horiz'tl magnification?
-8800-89ff     BG2 row horiz'tl magnification?
-8c00-8dff     BG3 row horiz'tl magnification?
-9000-91ff     BG0 row vertical magnification? (0 = none)
-9400-95ff     BG1 row vertical magnification?
-9800-99ff     BG2 row vertical magnification?
-9c00-9dff     BG3 row vertical magnification?
-a000-a1ff     ??
-a400-a5ff     ??
-[gaps above seem to be unused]
-b000-bfff unknown/unused?
+8000-83ff BG0 rowscroll
+8400-87ff BG1 rowscroll
+8800-8bff BG2 rowscroll
+8c00-8fff BG3 rowscroll
+9000-93ff BG0 rowscroll low order bytes (used for accuracy with row zoom or layer zoom)
+9400-97ff BG1 rowscroll low order bytes [*]
+9800-9bff BG2 rowscroll low order bytes
+9c00-9fff BG3 rowscroll low order bytes
+a000-a3ff BG2 row zoom [+]
+a400-a7ff BG3 row zoom
+a800-abff BG2 source colscroll
+ac00-afff BG3 source colscroll
+b000-bfff unknown (Slapshot and Superchs poke in TBA OVER error message in FG0 format)
 c000-dfff FG0
 e000-ffff gfx data for FG0 (4bpp)
 
-(* NB: this row effect map suggested by Slapshot code at $1b4a)
+[* Gunbustr suggests that high bytes are irrelevant: it leaves them
+all zeroed. Superchs is the only game which uses high bytes that
+aren't the low byte of the main rowscroll (Footchmp/Undrfire have
+this verified in the code).]
+
+[+ Usual row zoom values are 0 - 0x7f. Gunbustr also uses 0x80-d0
+approx. Undrfire keeps to the 0-0x7f range but oddly also uses
+the high byte with a mask of 0x3f. Meaning of this high byte is
+unknown.]
 
 Bg layers tile word layout
 
-+0x00   %yx..bbbb cccccccc      b=control bits(?) c=colour .=unused(?)
++0x00   %yx..bbbb cccccccc      b=control bits(?) c=color .=unused(?)
 +0x02   tilenum
-[y=yflip x=xflip b=unknown]
+[y=yflip x=xflip b=unknown seen in Metalb]
 
 Control registers
 
-000-001 BG0 x scroll     (layer priority order definable)
+000-001 BG0 x scroll    (layer priority order is definable)
 002-003 BG1 x scroll
 004-005 BG2 x scroll
 006-007 BG3 x scroll
@@ -285,8 +310,8 @@ Control registers
 00a-00b BG1 y scroll
 00c-00d BG2 y scroll
 00e-00f BG3 y scroll
-010-011 BG0 zoom  <0x7f = shrunk e.g. 0x1a in Footchmp hiscore; 0x7f = normal;
-012-013 BG1 zoom   0xffff = max zoom (Slapshot initial attract puck hit)
+010-011 BG0 zoom        (high byte = X zoom, low byte = Y zoom,
+012-013 BG1 zoom         compression is allowed on Y axis only)
 014-015 BG2 zoom
 016-017 BG3 zoom
 018-019 Text layer x scroll
@@ -305,30 +330,30 @@ Control registers
 				0x0, 0x20, 0x40, 0x60 poked in (via ram buffer) to control reg,
 				dependent on byte in prg ROM $7fffd and whether screen is flipped.
 
-		---xxxxx	BG layer priority order (?)
+		---xxx--	BG layer priority order
 
-				In Metalb this takes various values [see Raine lookup table in
-				vidhrdw\taito_f2.c]. Other games leave it at zero.
+		...000..	0  1  2  3
+		...001..	1  2  3  0  (no evidence of this)
+		...010..	2  3  0  1  (no evidence of this)
+		...011..	3  0  1  2
+		...100..	3  2  1  0
+		...101..	2  1  0  3  [Gunbustr attract and Metalb (c) screen]
+		...110..	1  0  3  2  (no evidence of this)
+		...111..	0  3  2  1
 
-020-021 BG0 dx	(provides extra precision to x-scroll)
+		------x-	BG3 row zoom enable
+		-------x	BG2 row zoom enable
+
+020-021 BG0 dx	(provides extra precision to x-scroll, only changed with xscroll)
 022-023 BG1 dx
 024-025 BG2 dx
 026-027 BG3 dx
-028-029 BG0 dy	(provides extra precision to y-scroll)
+028-029 BG0 dy	(provides extra precision to y-scroll, only changed with yscroll)
 02a-02b BG1 dy
 02c-02d BG2 dy
 02e-02f BG3 dy
 
-Row magnification
-=================
-Currently we treat the horizontal row magnification as simple rowscroll.
-This is wrong! e.g. MetalB stage1 has parallax scrolling effect for the
-background which we completely miss. This is achieved by setting
-increasing row horizontal magnification from centre row thru to top row.
-These values are unchanged until the round 1 boss.
-
-AFAICS from the MetalB videos there is NO equivalent magnification
-effect for individual columns.
+[see code at $1b4a in Slapshot and $xxxxx in Undrfire for evidence of row areas]
 
 
 TC0110PCR
@@ -783,7 +808,7 @@ static struct tilemap *TC0100SCN_tilemap[TC0100SCN_MAX_CHIPS][3][2];
 static char *TC0100SCN_char_dirty[TC0100SCN_MAX_CHIPS];
 static int TC0100SCN_chars_dirty[TC0100SCN_MAX_CHIPS];
 static int TC0100SCN_bg_gfx[TC0100SCN_MAX_CHIPS],TC0100SCN_tx_gfx[TC0100SCN_MAX_CHIPS];
-static int TC0100SCN_bg_col_mult = 0;
+static int TC0100SCN_bg_col_mult = 0,TC0100SCN_bg_tilemask = 0;
 static int TC0100SCN_chip_colbank[3],TC0100SCN_colbank[3];
 static int TC0100SCN_dblwidth[TC0100SCN_MAX_CHIPS];
 
@@ -795,12 +820,12 @@ INLINE void common_get_bg0_tile_info(data16_t *ram,int gfxnum,int tile_index,int
 	if (!dblwidth)
 	{
 		/* Mahjong Quest (F2 system) inexplicably has a banking feature */
-		code = (ram[2*tile_index + 1] & 0x7fff) + (taitof2_scrbank << 15);
+		code = (ram[2*tile_index + 1] & TC0100SCN_bg_tilemask) + (taitof2_scrbank << 15);
 		attr = ram[2*tile_index];
 	}
 	else
 	{
-		code = ram[2*tile_index + 1];
+		code = ram[2*tile_index + 1] & TC0100SCN_bg_tilemask;
 		attr = ram[2*tile_index];
 	}
 	SET_TILE_INFO(gfxnum,code,(((attr * TC0100SCN_bg_col_mult) +
@@ -816,12 +841,12 @@ INLINE void common_get_bg1_tile_info(data16_t *ram,int gfxnum,int tile_index,int
 	if (!dblwidth)
 	{
 		/* Mahjong Quest (F2 system) inexplicably has a banking feature */
-		code = (ram[2*tile_index + 1] & 0x7fff) + (taitof2_scrbank << 15);
+		code = (ram[2*tile_index + 1] & TC0100SCN_bg_tilemask) + (taitof2_scrbank << 15);
 		attr = ram[2*tile_index];
 	}
 	else
 	{
-		code = ram[2*tile_index + 1];
+		code = ram[2*tile_index + 1] & TC0100SCN_bg_tilemask;
 		attr = ram[2*tile_index];
 	}
 	SET_TILE_INFO(gfxnum,code,(((attr * TC0100SCN_bg_col_mult) +
@@ -934,6 +959,11 @@ void TC0100SCN_set_colbanks(int bg0,int bg1,int fg)
 	TC0100SCN_colbank[2] = fg;	/* text */
 }
 
+void TC0100SCN_set_bg_tilemask(int mask)
+{
+	TC0100SCN_bg_tilemask = mask;
+}
+
 void TC0100SCN_set_layer_ptrs(int i)
 {
 	if (!TC0100SCN_dblwidth[i])
@@ -1002,9 +1032,12 @@ int TC0100SCN_vh_start(int chips,int gfxnum,int x_offset)
 			myclip.max_y = 256;
 		}
 
-		tilemap_set_clip(TC0100SCN_tilemap[i][0][1],&myclip);
-		tilemap_set_clip(TC0100SCN_tilemap[i][1][1],&myclip);
-		tilemap_set_clip(TC0100SCN_tilemap[i][2][1],&myclip);
+		if (chips>1)	/* Single screen games (Cameltru) need no clipping */
+		{
+			tilemap_set_clip(TC0100SCN_tilemap[i][0][1],&myclip);
+			tilemap_set_clip(TC0100SCN_tilemap[i][1][1],&myclip);
+			tilemap_set_clip(TC0100SCN_tilemap[i][2][1],&myclip);
+		}
 
 		TC0100SCN_ram[i] = malloc(TC0100SCN_RAM_SIZE);
 		TC0100SCN_char_dirty[i] = malloc(TC0100SCN_TOTAL_CHARS);
@@ -1106,7 +1139,8 @@ int TC0100SCN_vh_start(int chips,int gfxnum,int x_offset)
 		TC0100SCN_chip_colbank[i]=0;
 	}
 
-	taitof2_scrbank = 0;	/* only Mjnquest changes this */
+	taitof2_scrbank = 0;	/* only Mjnquest banks tiles and has 0x7fff tilemask */
+	TC0100SCN_bg_tilemask = 0xffff;
 
 	TC0100SCN_bg_col_mult = 1;	/* multiplier for when bg gfx != 4bpp */
 
@@ -1303,6 +1337,47 @@ WRITE16_HANDLER( TC0100SCN_ctrl_word_2_w )
 }
 
 
+READ32_HANDLER( TC0100SCN_ctrl_long_r )
+{
+	return (TC0100SCN_ctrl_word_0_r(offset*2,0)<<16)|TC0100SCN_ctrl_word_0_r(offset*2+1,0);
+}
+
+WRITE32_HANDLER( TC0100SCN_ctrl_long_w )
+{
+	if (ACCESSING_MSW32) TC0100SCN_ctrl_word_w(0,offset*2,data>>16,mem_mask>>16);
+	if (ACCESSING_LSW32) TC0100SCN_ctrl_word_w(0,(offset*2)+1,data&0xffff,mem_mask&0xffff);
+}
+
+READ32_HANDLER( TC0100SCN_long_r )
+{
+	return (TC0100SCN_word_0_r(offset*2,0)<<16)|TC0100SCN_word_0_r(offset*2+1,0);
+}
+
+WRITE32_HANDLER( TC0100SCN_long_w )
+{
+	if (((mem_mask & 0xff000000) == 0) || ((mem_mask & 0x00ff0000) == 0))
+	{
+		int oldword = TC0100SCN_word_0_r(offset*2,0);
+		int newword = data>>16;
+		if ((mem_mask & 0x00ff0000) != 0)
+			newword |= (oldword &0x00ff);
+		if ((mem_mask & 0xff000000) != 0)
+			newword |= (oldword &0xff00);
+		TC0100SCN_word_0_w(offset*2,newword,0);
+	}
+	if (((mem_mask & 0x0000ff00) == 0) || ((mem_mask & 0x000000ff) == 0))
+	{
+		int oldword = TC0100SCN_word_0_r((offset*2)+1,0);
+		int newword = data&0xffff;
+		if ((mem_mask & 0x000000ff) != 0)
+			newword |= (oldword &0x00ff);
+		if ((mem_mask & 0x0000ff00) != 0)
+			newword |= (oldword &0xff00);
+		TC0100SCN_word_0_w((offset*2)+1,newword,0);
+	}
+}
+
+
 void TC0100SCN_tilemap_update(void)
 {
 	int chip,j;
@@ -1438,7 +1513,7 @@ READ16_HANDLER( TC0280GRD_word_r )
 
 READ16_HANDLER( TC0430GRW_word_r )
 {
-	return TC0280GRD_word_r(offset);
+	return TC0280GRD_word_r(offset,mem_mask);
 }
 
 WRITE16_HANDLER( TC0280GRD_word_w )
@@ -1580,7 +1655,9 @@ static data16_t *TC0480SCP_ram,
 		*TC0480SCP_bg_ram[4],
 		*TC0480SCP_tx_ram,
 		*TC0480SCP_char_ram,
-		*TC0480SCP_bgscroll_ram[4];
+		*TC0480SCP_bgscroll_ram[4],
+		*TC0480SCP_rowzoom_ram[4],
+		*TC0480SCP_bgcolumn_ram[4];
 static int TC0480SCP_bgscrollx[4];
 static int TC0480SCP_bgscrolly[4];
 
@@ -1592,8 +1669,9 @@ static int TC0480SCP_bg_gfx,TC0480SCP_tx_gfx;
 static int TC0480SCP_tile_colbase,TC0480SCP_dblwidth;
 static int TC0480SCP_x_offs,TC0480SCP_y_offs;
 static int TC0480SCP_text_xoffs,TC0480SCP_text_yoffs;
+static int TC0480SCP_flip_xoffs,TC0480SCP_flip_yoffs;
 
-int TC0480SCP_pri_reg;   // read externally in vidhrdw\taito_f2.c
+int TC0480SCP_pri_reg;   // TODO: I don't think this IS read externally any more
 
 
 INLINE void common_get_tc0480bg_tile_info(data16_t *ram,int gfxnum,int tile_index)
@@ -1607,7 +1685,7 @@ INLINE void common_get_tc0480bg_tile_info(data16_t *ram,int gfxnum,int tile_inde
 INLINE void common_get_tc0480tx_tile_info(data16_t *ram,int gfxnum,int tile_index)
 {
 	int attr = ram[tile_index];
-	SET_TILE_INFO(gfxnum,attr & 0xff,((attr & 0x3f00) >> 8) + TC0480SCP_tile_colbase);   // >> 8 not 6 as 4bpp
+	SET_TILE_INFO(gfxnum,attr & 0xff,((attr & 0x3f00) >> 8) + TC0480SCP_tile_colbase);
 	tile_info.flags = TILE_FLIPYX((attr & 0xc000) >> 14);
 }
 
@@ -1669,6 +1747,10 @@ void TC0480SCP_set_layer_ptrs(void)
 		TC0480SCP_bgscroll_ram[1] = TC0480SCP_ram + 0x2200; //4400
 		TC0480SCP_bgscroll_ram[2] = TC0480SCP_ram + 0x2400; //4800
 		TC0480SCP_bgscroll_ram[3] = TC0480SCP_ram + 0x2600; //4c00
+		TC0480SCP_rowzoom_ram[2]  = TC0480SCP_ram + 0x3000; //6000
+		TC0480SCP_rowzoom_ram[3]  = TC0480SCP_ram + 0x3200; //6400
+		TC0480SCP_bgcolumn_ram[2] = TC0480SCP_ram + 0x3400; //6800
+		TC0480SCP_bgcolumn_ram[3] = TC0480SCP_ram + 0x3600; //6c00
 		TC0480SCP_tx_ram		  = TC0480SCP_ram + 0x6000; //c000
 		TC0480SCP_char_ram	  = TC0480SCP_ram + 0x7000; //e000
 	}
@@ -1678,16 +1760,20 @@ void TC0480SCP_set_layer_ptrs(void)
 		TC0480SCP_bg_ram[1]	  = TC0480SCP_ram + 0x1000; //2000
 		TC0480SCP_bg_ram[2]	  = TC0480SCP_ram + 0x2000; //4000
 		TC0480SCP_bg_ram[3]	  = TC0480SCP_ram + 0x3000; //6000
-		TC0480SCP_bgscroll_ram[0] = TC0480SCP_ram + 0x4000; //8000 ??
-		TC0480SCP_bgscroll_ram[1] = TC0480SCP_ram + 0x4200; //8400 ??
-		TC0480SCP_bgscroll_ram[2] = TC0480SCP_ram + 0x4400; //8800 ??
-		TC0480SCP_bgscroll_ram[3] = TC0480SCP_ram + 0x4600; //8c00 ??
+		TC0480SCP_bgscroll_ram[0] = TC0480SCP_ram + 0x4000; //8000
+		TC0480SCP_bgscroll_ram[1] = TC0480SCP_ram + 0x4200; //8400
+		TC0480SCP_bgscroll_ram[2] = TC0480SCP_ram + 0x4400; //8800
+		TC0480SCP_bgscroll_ram[3] = TC0480SCP_ram + 0x4600; //8c00
+		TC0480SCP_rowzoom_ram[2]  = TC0480SCP_ram + 0x5000; //a000
+		TC0480SCP_rowzoom_ram[3]  = TC0480SCP_ram + 0x5200; //a400
+		TC0480SCP_bgcolumn_ram[2] = TC0480SCP_ram + 0x5400; //a800
+		TC0480SCP_bgcolumn_ram[3] = TC0480SCP_ram + 0x5600; //ac00
 		TC0480SCP_tx_ram		  = TC0480SCP_ram + 0x6000; //c000
 		TC0480SCP_char_ram	  = TC0480SCP_ram + 0x7000; //e000
 	}
 }
 
-int TC0480SCP_vh_start(int gfxnum,int pixels,int x_offset,int y_offset,int text_xoffs,int text_yoffs,int col_base)
+int TC0480SCP_vh_start(int gfxnum,int pixels,int x_offset,int y_offset,int text_xoffs,int text_yoffs,int flip_xoffs,int flip_yoffs,int col_base)
 {
 	int gfx_index;
 
@@ -1695,6 +1781,8 @@ int TC0480SCP_vh_start(int gfxnum,int pixels,int x_offset,int y_offset,int text_
 		TC0480SCP_tile_colbase = col_base;
 		TC0480SCP_text_xoffs = text_xoffs;
 		TC0480SCP_text_yoffs = text_yoffs;
+		TC0480SCP_flip_xoffs = flip_xoffs;	/* for most games (-1,0) */
+		TC0480SCP_flip_yoffs = flip_yoffs;
 		TC0480SCP_dblwidth=0;
 
 		/* Single width versions */
@@ -1769,35 +1857,35 @@ int TC0480SCP_vh_start(int gfxnum,int pixels,int x_offset,int y_offset,int text_
 		xd = -TC0480SCP_x_offs;
 		yd =  TC0480SCP_y_offs;
 
-		/* I suspect that Metalb in screenflip needs (320-xd) for bg
-		   and we will have to pass an offset per game to get all
-		   games correct in screenflip... */
+		/* Metalb and Deadconx have minor screenflip issues: blue planet
+		   is off on x axis by 1 and in Deadconx the dark blue screen
+		   between stages also seems off by 1 pixel. */
 
 		/* It's not possible to get the text scrolldx calculations
 		   harmonised with the other layers: xd-2, 315-xd is the
 		   next valid pair:- the numbers diverge from xd, 319-xd */
 
 		/* Single width offsets */
-		tilemap_set_scrolldx(TC0480SCP_tilemap[0][0], xd,   319-xd);	// 40*8 = 320 (screen width)
-		tilemap_set_scrolldy(TC0480SCP_tilemap[0][0], yd,   256-yd);
-		tilemap_set_scrolldx(TC0480SCP_tilemap[1][0], xd,   319-xd);
-		tilemap_set_scrolldy(TC0480SCP_tilemap[1][0], yd,   256-yd);
-		tilemap_set_scrolldx(TC0480SCP_tilemap[2][0], xd,   319-xd);
-		tilemap_set_scrolldy(TC0480SCP_tilemap[2][0], yd,   256-yd);
-		tilemap_set_scrolldx(TC0480SCP_tilemap[3][0], xd,   319-xd);
-		tilemap_set_scrolldy(TC0480SCP_tilemap[3][0], yd,   256-yd);
+		tilemap_set_scrolldx(TC0480SCP_tilemap[0][0], xd,   320-xd +TC0480SCP_flip_xoffs );
+		tilemap_set_scrolldy(TC0480SCP_tilemap[0][0], yd,   256-yd +TC0480SCP_flip_yoffs );
+		tilemap_set_scrolldx(TC0480SCP_tilemap[1][0], xd,   320-xd +TC0480SCP_flip_xoffs );
+		tilemap_set_scrolldy(TC0480SCP_tilemap[1][0], yd,   256-yd +TC0480SCP_flip_yoffs );
+		tilemap_set_scrolldx(TC0480SCP_tilemap[2][0], xd,   320-xd +TC0480SCP_flip_xoffs );
+		tilemap_set_scrolldy(TC0480SCP_tilemap[2][0], yd,   256-yd +TC0480SCP_flip_yoffs );
+		tilemap_set_scrolldx(TC0480SCP_tilemap[3][0], xd,   320-xd +TC0480SCP_flip_xoffs );
+		tilemap_set_scrolldy(TC0480SCP_tilemap[3][0], yd,   256-yd +TC0480SCP_flip_yoffs );
 		tilemap_set_scrolldx(TC0480SCP_tilemap[4][0], xd-3, 316-xd);	/* text layer */
 		tilemap_set_scrolldy(TC0480SCP_tilemap[4][0], yd,   256-yd);	/* text layer */
 
 		/* Double width offsets */
-		tilemap_set_scrolldx(TC0480SCP_tilemap[0][1], xd,   320-xd);
-		tilemap_set_scrolldy(TC0480SCP_tilemap[0][1], yd,   258-yd);
-		tilemap_set_scrolldx(TC0480SCP_tilemap[1][1], xd,   320-xd);
-		tilemap_set_scrolldy(TC0480SCP_tilemap[1][1], yd,   258-yd);
-		tilemap_set_scrolldx(TC0480SCP_tilemap[2][1], xd,   320-xd);
-		tilemap_set_scrolldy(TC0480SCP_tilemap[2][1], yd,   258-yd);
-		tilemap_set_scrolldx(TC0480SCP_tilemap[3][1], xd,   320-xd);
-		tilemap_set_scrolldy(TC0480SCP_tilemap[3][1], yd,   258-yd);
+		tilemap_set_scrolldx(TC0480SCP_tilemap[0][1], xd,   320-xd +TC0480SCP_flip_xoffs );
+		tilemap_set_scrolldy(TC0480SCP_tilemap[0][1], yd,   256-yd +TC0480SCP_flip_yoffs );
+		tilemap_set_scrolldx(TC0480SCP_tilemap[1][1], xd,   320-xd +TC0480SCP_flip_xoffs );
+		tilemap_set_scrolldy(TC0480SCP_tilemap[1][1], yd,   256-yd +TC0480SCP_flip_yoffs );
+		tilemap_set_scrolldx(TC0480SCP_tilemap[2][1], xd,   320-xd +TC0480SCP_flip_xoffs );
+		tilemap_set_scrolldy(TC0480SCP_tilemap[2][1], yd,   256-yd +TC0480SCP_flip_yoffs );
+		tilemap_set_scrolldx(TC0480SCP_tilemap[3][1], xd,   320-xd +TC0480SCP_flip_xoffs );
+		tilemap_set_scrolldy(TC0480SCP_tilemap[3][1], yd,   256-yd +TC0480SCP_flip_yoffs );
 		tilemap_set_scrolldx(TC0480SCP_tilemap[4][1], xd-3, 317-xd);	/* text layer */
 		tilemap_set_scrolldy(TC0480SCP_tilemap[4][1], yd,   256-yd);	/* text layer */
 
@@ -1815,10 +1903,52 @@ int TC0480SCP_vh_start(int gfxnum,int pixels,int x_offset,int y_offset,int text_
 
 void TC0480SCP_vh_stop(void)
 {
-		free(TC0480SCP_ram);
-		TC0480SCP_ram = 0;
-		free(TC0480SCP_char_dirty);
-		TC0480SCP_char_dirty = 0;
+	free(TC0480SCP_ram);
+	TC0480SCP_ram = 0;
+	free(TC0480SCP_char_dirty);
+	TC0480SCP_char_dirty = 0;
+}
+
+READ32_HANDLER( TC0480SCP_ctrl_long_r )
+{
+	return (TC0480SCP_ctrl_word_r(offset*2,0)<<16)|TC0480SCP_ctrl_word_r(offset*2+1,0);
+}
+
+/* TODO: byte access ? */
+
+WRITE32_HANDLER( TC0480SCP_ctrl_long_w )
+{
+	if (ACCESSING_MSW32) TC0480SCP_ctrl_word_w(offset*2,data>>16,mem_mask>>16);
+	if (ACCESSING_LSW32) TC0480SCP_ctrl_word_w((offset*2)+1,data&0xffff,mem_mask&0xffff);
+}
+
+READ32_HANDLER( TC0480SCP_long_r )
+{
+	return (TC0480SCP_word_r(offset*2,0)<<16)|TC0480SCP_word_r(offset*2+1,0);
+}
+
+WRITE32_HANDLER( TC0480SCP_long_w )
+{
+	if (((mem_mask & 0xff000000) == 0) || ((mem_mask & 0x00ff0000) == 0))
+	{
+		int oldword = TC0480SCP_word_r(offset*2,0);
+		int newword = data>>16;
+		if ((mem_mask & 0x00ff0000) != 0)
+			newword |= (oldword &0x00ff);
+		if ((mem_mask & 0xff000000) != 0)
+			newword |= (oldword &0xff00);
+		TC0480SCP_word_w(offset*2,newword,0);
+	}
+	if (((mem_mask & 0x0000ff00) == 0) || ((mem_mask & 0x000000ff) == 0))
+	{
+		int oldword = TC0480SCP_word_r((offset*2)+1,0);
+		int newword = data&0xffff;
+		if ((mem_mask & 0x000000ff) != 0)
+			newword |= (oldword &0x00ff);
+		if ((mem_mask & 0x0000ff00) != 0)
+			newword |= (oldword &0xff00);
+		TC0480SCP_word_w((offset*2)+1,newword,0);
+	}
 }
 
 READ16_HANDLER( TC0480SCP_word_r )
@@ -1837,7 +1967,8 @@ static void TC0480SCP_word_write(offs_t offset,data16_t data,UINT32 mem_mask)
 		{
 			if (offset < 0x2000)
 			{
-				tilemap_mark_tile_dirty(TC0480SCP_tilemap[(offset / 0x800)][TC0480SCP_dblwidth],((offset % 0x800) / 2));
+				tilemap_mark_tile_dirty(TC0480SCP_tilemap[(offset /
+					0x800)][TC0480SCP_dblwidth],((offset % 0x800) / 2));
 			}
 			else if (offset < 0x6000)
 			{   /* do nothing */
@@ -1856,7 +1987,8 @@ static void TC0480SCP_word_write(offs_t offset,data16_t data,UINT32 mem_mask)
 		{
 			if (offset < 0x4000)
 			{
-				tilemap_mark_tile_dirty(TC0480SCP_tilemap[(offset / 0x1000)][TC0480SCP_dblwidth],((offset % 0x1000) / 2));
+				tilemap_mark_tile_dirty(TC0480SCP_tilemap[(offset /
+					0x1000)][TC0480SCP_dblwidth],((offset % 0x1000) / 2));
 			}
 			else if (offset < 0x6000)
 			{   /* do nothing */
@@ -2002,7 +2134,25 @@ static void TC0480SCP_ctrl_word_write(offs_t offset,data16_t data,UINT32 mem_mas
 			break;
 		}
 
-		/* Rest are layer specific delta x and y, used while scrolling that layer (?) */
+		/* Rest are layer specific delta x and y, used while scrolling that layer */
+	}
+}
+
+void TC0480SCP_mark_transparent_colors(int opaque_layer)
+{
+	int i,layer;
+
+	/* We really only need to mark the two custom layers */
+	for (layer=0; layer<4; layer++)
+	{
+		if (layer==opaque_layer) continue; /* Don't mark opaque layer colors */
+
+		for (i=0x800*(TC0480SCP_dblwidth+1)*layer; i<(0x800*(TC0480SCP_dblwidth+1)*layer) +
+			(TC0480SCP_dblwidth+1)*0x800; i+=2)
+		{
+			data16_t color = TC0480SCP_ram[i] & 0xff;
+			palette_used_colors[color*16] = PALETTE_COLOR_TRANSPARENT;
+		}
 	}
 }
 
@@ -2021,27 +2171,24 @@ void TC0480SCP_tilemap_update(void)
 		tilemap_set_scrolly(TC0480SCP_tilemap[layer][TC0480SCP_dblwidth],0,TC0480SCP_bgscrolly[layer]);
 		zoom = 0x10000 + 0x7f - TC0480SCP_ctrl[0x08 + layer];
 
-		if (zoom != 0x10000)	/* currently we can't use scroll rows when zooming */
+		if (zoom != 0x10000)	/* can't use scroll rows when zooming */
 		{
 			tilemap_set_scrollx(TC0480SCP_tilemap[layer][TC0480SCP_dblwidth],
 					0, TC0480SCP_bgscrollx[layer]);
 		}
 		else
 		{
-			for (j = 0;j < 256;j++)
+			for (j = 0;j < 512;j++)
 			{
 				i = TC0480SCP_bgscroll_ram[layer][j];
 
-// DG: possible issues: check yellow bg layer when you kill metalb round 1 boss.
-// Top part doesn't behave like rest. But these are right for Footchmp+clones.
-
 				if (!flip)
 				tilemap_set_scrollx(TC0480SCP_tilemap[layer][TC0480SCP_dblwidth],
-						(j + TC0480SCP_bgscrolly[layer] + (16 - TC0480SCP_y_offs)) & 0x1ff,
+						j & 0x1ff,
 						TC0480SCP_bgscrollx[layer] - i);
 				if (flip)
 				tilemap_set_scrollx(TC0480SCP_tilemap[layer][TC0480SCP_dblwidth],
-						(j + TC0480SCP_bgscrolly[layer] + 0x100 + (16 + TC0480SCP_y_offs)) & 0x1ff,
+						j & 0x1ff,
 						TC0480SCP_bgscrollx[layer] + i);
 			}
 		}
@@ -2077,7 +2224,19 @@ void TC0480SCP_tilemap_update(void)
 
 
 /*********************************************************************
-			LAYER ZOOM (still a WIP)
+				BG0,1 LAYER DRAW
+
+This is sped up by only using copyrozbitmap() when necessary.
+
+TODO
+----
+
+We need to custom draw in order to have row effects while
+BG0/1 are zooming. :(
+
+
+Historical Issues
+-----------------
 
 1) bg layers got too far left and down, the greater the magnification.
    Largely fixed by adding offsets (to startx&y) which get bigger as
@@ -2087,19 +2246,23 @@ void TC0480SCP_tilemap_update(void)
    Fixed by bringing tc0480scp_x&y_offs into calculations.
 
 3) Metalb "TAITO" text in attract too far to the right.
-   Fixed(?) by bringing (layer*4) into offset calculations.
+   Fixed by bringing (layer*4) into offset calculations.
+
 **********************************************************************/
 
-static void zoomtilemap_draw(struct osd_bitmap *bitmap,int layer,int flags,UINT32 priority)
+static void TC0480SCP_bg01_draw(struct osd_bitmap *bitmap,int layer,int flags,UINT32 priority)
 {
-	/* <0x7f = shrunk e.g. 0x1a in Footchmp hiscore; 0x7f = normal;
-		0xfefe = max(?) zoom e.g. start of game in Metalb */
+	/* X-axis zoom offers expansion only: 0 = no zoom, 0xff = max
+	   Y-axis zoom offers expansion/compression: 0x7f = no zoom, 0xff = max
+	   (0x1a in Footchmp hiscore = shrunk) */
 
-	int zoom = 0x10000 + 0x7f - TC0480SCP_ctrl[0x08 + layer];
+	int zoomx = 0x10000 - (TC0480SCP_ctrl[0x08 + layer] &0xff00);
+	int zoomy = 0x10000 - (((TC0480SCP_ctrl[0x08 + layer] &0xff) - 0x7f) * 512);
 
-	if (zoom == 0x10000)	/* no zoom, so we won't need copyrozbitmap */
+	if ((zoomx == 0x10000) && (zoomy == 0x10000))	/* no zoom, so we won't need copyrozbitmap */
 	{
-		tilemap_set_clip(TC0480SCP_tilemap[layer][TC0480SCP_dblwidth],&Machine->visible_area);	// prevent bad things
+		/* Prevent bad things */
+		tilemap_set_clip(TC0480SCP_tilemap[layer][TC0480SCP_dblwidth],&Machine->visible_area);
 		tilemap_draw(bitmap,TC0480SCP_tilemap[layer][TC0480SCP_dblwidth],flags,priority);
 	}
 	else	/* zoom */
@@ -2113,34 +2276,34 @@ static void zoomtilemap_draw(struct osd_bitmap *bitmap,int layer,int flags,UINT3
 
 		if (!flip)
 		{
-			startx = ((TC0480SCP_bgscrollx[layer] + 16 + layer*4) << 16)
-				- ((TC0480SCP_ctrl[0x10 + layer] & 0xff) << 8);	// low order byte
+			startx = ((TC0480SCP_bgscrollx[layer] + 15 + layer*4) << 16)
+				+ ((255 - (TC0480SCP_ctrl[0x10 + layer] & 0xff)) << 8);	/* low order byte */
 
-			incxx = zoom;
+			incxx = zoomx;
 			incyx = 0;
 
 			starty = (TC0480SCP_bgscrolly[layer] << 16)
-				+ ((TC0480SCP_ctrl[0x14 + layer] & 0xff) << 8);	// low order byte
+				+ ((TC0480SCP_ctrl[0x14 + layer] & 0xff) << 8);	/* low order byte */
 			incxy = 0;
-			incyy = zoom;
+			incyy = zoomy;
 
-			startx += (TC0480SCP_x_offs - 16 - layer*4) * incxx;
+			startx += (TC0480SCP_x_offs - 15 - layer*4) * incxx;
 			starty -= (TC0480SCP_y_offs) * incyy;
 		}
 		else
 		{
-			startx = ((-TC0480SCP_bgscrollx[layer] + 16 + layer*4) << 16)
-				- ((TC0480SCP_ctrl[0x10 + layer] & 0xff) << 8);	// low order byte
+			startx = ((-TC0480SCP_bgscrollx[layer] + 15 + layer*4 + TC0480SCP_flip_xoffs ) << 16)
+				+ ((255 - (TC0480SCP_ctrl[0x10 + layer] & 0xff)) << 8);
 
-			incxx = zoom;
+			incxx = zoomx;
 			incyx = 0;
 
-			starty = (-TC0480SCP_bgscrolly[layer] << 16)
-				+ ((TC0480SCP_ctrl[0x14 + layer] & 0xff) << 8);	// low order byte
+			starty = ((-TC0480SCP_bgscrolly[layer] + TC0480SCP_flip_yoffs) << 16)
+				+ ((TC0480SCP_ctrl[0x14 + layer] & 0xff) << 8);
 			incxy = 0;
-			incyy = zoom;
+			incyy = zoomy;
 
-			startx += (TC0480SCP_x_offs - 16 - layer*4) * incxx;
+			startx += (TC0480SCP_x_offs - 15 - layer*4) * incxx;
 			starty -= (TC0480SCP_y_offs) * incyy;
 		}
 
@@ -2151,24 +2314,256 @@ static void zoomtilemap_draw(struct osd_bitmap *bitmap,int layer,int flags,UINT3
 	}
 }
 
+
+/****************************************************************
+				BG2,3 LAYER DRAW
+
+This is unavoidably a CPU intensive routine which slows down game
+emulation considerably.
+
+TODO
+----
+
+Broken for any rotation other than ROT0. Does that matter?
+Only 8/16 bit color support.
+
+Low order words for overall layer zoom are not really understood.
+In Metalbj initial text screen zoom you can see they ARE words
+(not separate bytes); however, I just use the low byte to smooth
+the zooming sequences. This is noticeably imperfect on the Y axis.
+
+Verify behaviour of Taito logo (Gunbustr) against real machine
+to perfect the row zoom emulation.
+
+What do high bytes of row zoom do in UndrFire?
+
+Why does Undrfire want an extra offset on which part of its
+colscroll ram is read.
+
+
+Historical Issues
+-----------------
+
+Sometimes BG2/3 were misaligned by 1 pixel horizontally: this
+was due to low order byte of 0 causing different (sx >> 16) than
+when it was 1-255. To prevent this we use (255-byte) so
+(sx >> 16) no longer depends on the low order byte.
+
+In flipscreen we have to bring in extra offsets, since various
+games don't have exactly (320-,256-) tilemap scroll deltas in
+flipscreen.
+
+****************************************************************/
+
+static void TC0480SCP_bg23_draw(struct osd_bitmap *bitmap,int layer,int flags,UINT32 priority)
+{
+	struct osd_bitmap *srcbitmap = tilemap_get_pixmap(TC0480SCP_tilemap[layer][TC0480SCP_dblwidth]);
+	UINT8  *dst8, *src8;
+	UINT16 *dst16,*src16;
+//	UINT32 *dst32,*src32;		/* in future add 24/32 bit color support */
+	int y,y_index,src_y_index,row_index,row_zoom;
+	int sx,x_index,x_step,x_max;
+	UINT32 zoomx,zoomy,rot=Machine->orientation;
+	UINT8 scanline8[512];
+	UINT16 scanline[512];
+	int flipscreen = TC0480SCP_pri_reg & 0x40;
+	int machine_flip = 0;	/* for  ROT 180 ? */
+
+	int width_mask=0x1ff;
+	if (TC0480SCP_dblwidth)	width_mask=0x3ff;
+
+	/* X-axis zoom offers expansion only: 0 = no zoom, 0xff = max
+	   Y-axis zoom offers expansion/compression: 0x7f = no zoom, 0xff = max
+	   (0x1a in Footchmp hiscore = shrunk) */
+
+	zoomx = 0x10000 - (TC0480SCP_ctrl[0x08 + layer] &0xff00);
+	zoomy = 0x10000 - (((TC0480SCP_ctrl[0x08 + layer] &0xff) - 0x7f) * 512);
+
+	if (!flipscreen)
+	{
+		if ((rot &ORIENTATION_FLIP_X)==0)
+		{
+			sx = ((TC0480SCP_bgscrollx[layer] + 15 + layer*4) << 16)
+				+ ((255-(TC0480SCP_ctrl[0x10 + layer] & 0xff)) << 8);
+			sx += (TC0480SCP_x_offs - 15 - layer*4) * zoomx;
+		}
+		else	/* orientation flip X (Gunbustr) */
+		{
+			// Bryan's method of simply reversing sx sign may be correct //
+			// but I'm not sure so I'm doing it the long way for now //
+
+			sx = ((-TC0480SCP_bgscrollx[layer] - 15 - layer*4) << 16)
+			        - ((255-(TC0480SCP_ctrl[0x10 + layer] & 0xff)) << 8);
+			sx += (-TC0480SCP_x_offs + 15 + layer*4) * zoomx;
+			sx -= (320 + TC0480SCP_flip_xoffs) * zoomx;
+		}
+
+		y_index = (TC0480SCP_bgscrolly[layer] << 16)
+			+ ((TC0480SCP_ctrl[0x14 + layer] & 0xff) << 8);
+		y_index -= (TC0480SCP_y_offs) * zoomy;
+	}
+	else	/* TC0480SCP tiles flipscreen */
+	{
+		sx = ((-TC0480SCP_bgscrollx[layer] + 15 + layer*4 + TC0480SCP_flip_xoffs ) << 16)
+			+ ((255-(TC0480SCP_ctrl[0x10 + layer] & 0xff)) << 8);
+		sx += (TC0480SCP_x_offs - 15 - layer*4) * zoomx;
+
+		y_index = ((-TC0480SCP_bgscrolly[layer] + TC0480SCP_flip_yoffs) << 16)
+			+ ((TC0480SCP_ctrl[0x14 + layer] & 0xff) << 8);
+		y_index -= (TC0480SCP_y_offs) * zoomy;
+	}
+
+
+	if (!machine_flip) y=0; else y=255;
+
+	if (Machine->scrbitmap->depth == 8)
+	{
+		do
+		{
+			if (!flipscreen)
+				src_y_index = ((y_index>>16) + TC0480SCP_bgcolumn_ram[layer][(y -
+							TC0480SCP_y_offs) &0x1ff]) &0x1ff;
+			else	/* colscroll area is back to front in flipscreen */
+				src_y_index = ((y_index>>16) + TC0480SCP_bgcolumn_ram[layer][0x1ff -
+							((y - TC0480SCP_y_offs) &0x1ff)]) &0x1ff;
+
+			/* row areas are the same in flipscreen, so we must read in reverse */
+			row_index = src_y_index;
+			if (flipscreen)	row_index = 0x1ff - row_index;
+
+			if ((rot &ORIENTATION_FLIP_X)==0)
+			{
+				x_index = sx - ((TC0480SCP_bgscroll_ram[layer][row_index] << 16))
+					- ((TC0480SCP_bgscroll_ram[layer][row_index+0x800] << 8) &0xffff);
+			}
+			else	/* Orientation flip X (Gunbustr) */
+			{
+				x_index = sx + ((TC0480SCP_bgscroll_ram[layer][row_index] << 16))
+					+ ((TC0480SCP_bgscroll_ram[layer][row_index+0x800] << 8) &0xffff);
+			}
+
+			src8 = (UINT8 *)srcbitmap->line[src_y_index];
+			dst8 = scanline8;
+
+			if (TC0480SCP_pri_reg & (layer-1))	/* bit0 enables for BG2, bit1 for BG3 */
+			{
+				row_zoom = TC0480SCP_rowzoom_ram[layer][row_index];
+				if (!(row_zoom &0xff00))
+					x_step = zoomx - ((row_zoom * 270) &0xffff);
+				else	/* speculative, Undrfire uses the hi byte */
+					x_step = zoomx + ((row_zoom * 270) &0xffff);
+
+				if ((rot &ORIENTATION_FLIP_X)!=0)
+				{
+					x_index += (320 + TC0480SCP_flip_xoffs) * ((row_zoom * 270) &0xffff);
+				}
+			}
+			else 	x_step = zoomx;
+
+			x_max = x_index + 320 * x_step;
+
+			while (x_index<x_max)
+			{
+				*dst8++ = src8[(x_index >> 16) &width_mask];
+				x_index += x_step;
+			}
+
+			if ((rot &ORIENTATION_FLIP_X)!=0)
+				pdraw_scanline8(bitmap,512-160,y,320,scanline8,0,palette_transparent_pen,rot,priority);
+			else
+				pdraw_scanline8(bitmap,0,y,320,scanline8,0,palette_transparent_pen,rot,priority);
+
+			y_index += zoomy;
+			if (!machine_flip) y++; else y--;
+		}
+		while ( (!machine_flip && y<256) || (machine_flip && y>=0) );
+	}
+	else if (Machine->scrbitmap->depth == 16)
+	{
+		do
+		{
+			if (!flipscreen)
+				src_y_index = ((y_index>>16) + TC0480SCP_bgcolumn_ram[layer][(y -
+							TC0480SCP_y_offs) &0x1ff]) &0x1ff;
+			else	/* colscroll area is back to front in flipscreen */
+				src_y_index = ((y_index>>16) + TC0480SCP_bgcolumn_ram[layer][0x1ff -
+							((y - TC0480SCP_y_offs) &0x1ff)]) &0x1ff;
+
+			/* row areas are the same in flipscreen, so we must read in reverse */
+			row_index = src_y_index;
+			if (flipscreen)	row_index = 0x1ff - row_index;
+
+			if ((rot &ORIENTATION_FLIP_X)==0)
+			{
+				x_index = sx - ((TC0480SCP_bgscroll_ram[layer][row_index] << 16))
+					- ((TC0480SCP_bgscroll_ram[layer][row_index+0x800] << 8) &0xffff);
+			}
+			else	/* Orientation flip X (Gunbustr) */
+			{
+				x_index = sx + ((TC0480SCP_bgscroll_ram[layer][row_index] << 16))
+					+ ((TC0480SCP_bgscroll_ram[layer][row_index+0x800] << 8) &0xffff);
+			}
+
+			src16 = (UINT16 *)srcbitmap->line[src_y_index];
+			dst16 = scanline;
+
+/* There seems to be a sweet spot between 256 and 290 which helps Superchs road
+  and also helps center the parallax center of the "tube" at Metalb round 3 start */
+
+			if (TC0480SCP_pri_reg & (layer-1))	/* bit0 enables for BG2, bit1 for BG3 */
+			{
+				row_zoom = TC0480SCP_rowzoom_ram[layer][row_index];
+				if (!(row_zoom &0xff00))
+					x_step = zoomx - ((row_zoom * 270) &0xffff);
+				else	/* speculative, Undrfire uses the hi byte */
+					x_step = zoomx + ((row_zoom * 270) &0xffff);
+
+				if ((rot &ORIENTATION_FLIP_X)!=0)
+				{
+					x_index += (320 + TC0480SCP_flip_xoffs) * ((row_zoom * 270) &0xffff);
+				}
+			}
+			else 	x_step = zoomx;
+
+			x_max = x_index + 320 * x_step;
+
+			while (x_index<x_max)
+			{
+				*dst16++ = src16[(x_index >> 16) &width_mask];
+				x_index += x_step;
+			}
+
+			if ((rot &ORIENTATION_FLIP_X)!=0)
+				pdraw_scanline16(bitmap,512-160,y,320,scanline,0,palette_transparent_pen,rot,priority);
+			else
+				pdraw_scanline16(bitmap,0,y,320,scanline,0,palette_transparent_pen,rot,priority);
+
+			y_index += zoomy;
+			if (!machine_flip) y++; else y--;
+		}
+		while ( (!machine_flip && y<256) || (machine_flip && y>=0) );
+	}
+}
+
+
+
 void TC0480SCP_tilemap_draw(struct osd_bitmap *bitmap,int layer,int flags,UINT32 priority)
 {
-
-/* apparently no layer disable bits: the selectable priority must suffice */
+	/* no layer disable bits */
 
 	switch (layer)
 	{
 		case 0:
-			zoomtilemap_draw(bitmap,0,flags,priority);
+			TC0480SCP_bg01_draw(bitmap,0,flags,priority);
 			break;
 		case 1:
-			zoomtilemap_draw(bitmap,1,flags,priority);
+			TC0480SCP_bg01_draw(bitmap,1,flags,priority);
 			break;
 		case 2:
-			zoomtilemap_draw(bitmap,2,flags,priority);
+			TC0480SCP_bg23_draw(bitmap,2,flags,priority);
 			break;
 		case 3:
-			zoomtilemap_draw(bitmap,3,flags,priority);
+			TC0480SCP_bg23_draw(bitmap,3,flags,priority);
 			break;
 		case 4:
 			tilemap_draw(bitmap,TC0480SCP_tilemap[4][TC0480SCP_dblwidth],flags,priority);
@@ -2178,23 +2573,7 @@ void TC0480SCP_tilemap_draw(struct osd_bitmap *bitmap,int layer,int flags,UINT32
 
 /***************************************************************
 
-TC0480SCP bg layer priority
----------------------------
-
-...000..   0  1  2  3
-...001..   1  2  3  0  (no evidence of this)
-...010..   2  3  0  1  (no evidence of this)
-...011..   3  0  1  2
-...100..   3  2  1  0
-...101..   2  1  0  3  [0 undefined: in mb (c) screen is taito logo(1) over zooming mouth(2)?]
-...110..   1  0  3  2  (no evidence of this)
-...111..   0  3  2  1
-
-Perhaps bottom two bits relate to row effect enable/disable? Old
-priority table included here for reference until we figure that.
-As we never see a layer that should clearly be hidden, I don't
-think there are layer disable bits. [There are layer opacity issues
-in Super Chase though.]
+Old TC0480SCP bg layer priority table (kept for reference)
 
 	// mb = seen during metal black game
 	// ss = seen during slap shot game

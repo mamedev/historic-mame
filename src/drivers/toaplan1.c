@@ -21,9 +21,6 @@ Supported games:
 	samesame	TP-017		Same Same Same! (Japan)	 [1989]
 	fireshrk	TP-017		Fire Shark (World)		 [1990]
 	outzone		TP-018		Out Zone
-	outzonep	??????		Out Zone (Pirate).  Note this uses different ROM
-							  layout for GFX ROMs. Result is the same though.
-							  See ROM load for details.
 	vimana		TP-019		Vimana
 	vimana2		TP-019		Vimana (alternate)
 	vimanan		TP-019		Vimana (Nova Apparate GMBH & Co  license)
@@ -1891,7 +1888,7 @@ ROM_START( outzone )
 	ROM_LOAD( "rom4.bin",  0x60000, 0x20000, 0x50cbf1a8 )
 ROM_END
 
-ROM_START( outzonep )
+ROM_START( outzonea )
 	ROM_REGION( 0x040000, REGION_CPU1, 0 )	/* Main 68K code */
 	ROM_LOAD16_BYTE( "18.bin",  0x000000, 0x20000, 0x31a171bb )
 	ROM_LOAD16_BYTE( "19.bin",  0x000001, 0x20000, 0x804ecfd1 )
@@ -1902,7 +1899,7 @@ ROM_START( outzonep )
 	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "rom5.bin",  0x00000, 0x80000, 0xc64ec7b6 )
 	ROM_LOAD( "rom6.bin",  0x80000, 0x80000, 0x64b6c5ac )
-/* same data, different layout
+/* one pirate board uses the same data in a different layout
 	ROM_LOAD16_BYTE( "04.bin",  0x000000, 0x10000, 0x3d11eae0 )
 	ROM_LOAD16_BYTE( "08.bin",  0x000001, 0x10000, 0xc7628891 )
 	ROM_LOAD16_BYTE( "13.bin",  0x080000, 0x10000, 0xb23dd87e )
@@ -2009,8 +2006,8 @@ GAME ( 1989, zerowing, 0,        zerowing, zerowing, 0, ROT0,   "Toaplan", "Zero
 GAME ( 1989, demonwld, 0,        demonwld, demonwld, 0, ROT0,   "Toaplan (Taito license)", "Demon's World / Horror Story" )
 GAMEX( 1990, fireshrk, 0,        samesame, fireshrk, 0, ROT270, "Toaplan", "Fire Shark", GAME_NO_SOUND )
 GAMEX( 1989, samesame, fireshrk, samesame, samesame, 0, ROT270, "Toaplan", "Same! Same! Same!", GAME_NO_SOUND )
-GAME ( 1990, outzone,  0,        outzone,  outzone,  0, ROT270, "Toaplan", "Out Zone" )
-GAME ( 1990, outzonep, outzone,  outzone,  outzone,  0, ROT270, "bootleg", "Out Zone (bootleg)" )
+GAME ( 1990, outzone,  0,        outzone,  outzone,  0, ROT270, "Toaplan", "Out Zone (set 1)" )
+GAME ( 1990, outzonea, outzone,  outzone,  outzone,  0, ROT270, "bootleg", "Out Zone (set 2)" )
 GAMEX( 1991, vimana,   0,        vimana,   vimana,   0, ROT270, "Toaplan", "Vimana (set 1)", GAME_NO_SOUND )
 GAMEX( 1991, vimana2,  vimana,   vimana,   vimana,   0, ROT270, "Toaplan", "Vimana (set 2)", GAME_NO_SOUND )
 GAMEX( 1991, vimanan,  vimana,   vimana,   vimanan,  0, ROT270, "Toaplan (Nova Apparate GMBH & Co license)", "Vimana (Nova Apparate GMBH & Co)", GAME_NO_SOUND )

@@ -95,9 +95,9 @@ static READ16_HANDLER( opwolf_lightgun_r )
 	switch (offset)
 	{
 		case 0x00:
-			return (input_port_5_word_r(0) + 0x18 + opwolf_gun_x);	/* P1X */
+			return (input_port_5_word_r(0,mem_mask) + 0x18 + opwolf_gun_x);	/* P1X */
 		case 0x01:
-			return (input_port_6_word_r(0) - 0x10 + opwolf_gun_y);	/* P1Y */
+			return (input_port_6_word_r(0,mem_mask) - 0x10 + opwolf_gun_y);	/* P1Y */
 	}
 
 	return 0xff;
@@ -105,12 +105,12 @@ static READ16_HANDLER( opwolf_lightgun_r )
 
 static READ_HANDLER( z80_input1_r )
 {
-	return input_port_0_word_r(1);	/* probably an irrelevant mirror */
+	return input_port_0_word_r(0,0);	/* probably an irrelevant mirror */
 }
 
 static READ_HANDLER( z80_input2_r )
 {
-	return input_port_0_word_r(0);	/* needed for coins */
+	return input_port_0_word_r(0,0);	/* needed for coins */
 }
 
 
@@ -661,4 +661,4 @@ void init_opwolfb(void)
 
 /*    year  rom       parent    machine   inp       init */
 GAME( 1987, opwolf,   0,        opwolf,   opwolf,   opwolf,   ROT0, "Taito America Corp", "Operation Wolf (US)" )
-GAME( 1988, opwolfb,  opwolf,   opwolfb,  opwolf,   opwolfb,  ROT0, "Bear Corporation Korea", "Operation Wolf (bootleg)" )
+GAME( 1987, opwolfb,  opwolf,   opwolfb,  opwolf,   opwolfb,  ROT0, "bootleg", "Operation Bear" )

@@ -1114,7 +1114,7 @@ WRITE16_HANDLER( bloodstm_video_w )
 
 READ16_HANDLER( bloodstm_video_r )
 {
-	return itech32_video_r(offset / 2);
+	return itech32_video_r(offset / 2,0);
 }
 
 
@@ -1129,7 +1129,7 @@ WRITE32_HANDLER( itech020_video_w )
 
 READ32_HANDLER( itech020_video_r )
 {
-	int result = itech32_video_r(offset);
+	int result = itech32_video_r(offset,0);
 	return (result << 16) | result;
 }
 

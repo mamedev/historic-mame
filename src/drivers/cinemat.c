@@ -1268,7 +1268,7 @@ INPUT_PORTS_END
 
 static READ16_HANDLER( boxingb_input_port_1_r )
 {
-	if (cinemat_output_port_r(0)  & 0x80)
+	if (cinemat_output_port_r(0,0) & 0x80)
 		return ((input_port_4_r(0) & 0x0f) << 12) + input_port_1_r(0);
 	else
 		return ((input_port_4_r(0) & 0xf0) << 8)  + input_port_1_r(0);

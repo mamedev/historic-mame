@@ -112,7 +112,7 @@ static READ16_HANDLER( zwackery_6840_r )
 	/* make this happen, we must assume that reads from the */
 	/* 6840 take 14 additional cycles                       */
 	*cpuintf[Machine->drv->cpu[0].cpu_type & ~CPU_FLAGS_MASK].icount -= 14;
-	return mcr68_6840_upper_r(offset);
+	return mcr68_6840_upper_r(offset,0);
 }
 
 

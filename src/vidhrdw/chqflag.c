@@ -46,7 +46,7 @@ static void zoom_callback_1(int *code,int *color)
 {
 	tile_info.flags = TILE_FLIPYX((*color & 0xc0) >> 6);
 	*code |= ((*color & 0x0f) << 8);
-	*color = zoom_colorbase[1] + ((*color & 0x30) >> 4);
+	*color = zoom_colorbase[1] + ((*color & 0x10) >> 4);
 }
 
 /***************************************************************************
@@ -59,7 +59,7 @@ int chqflag_vh_start( void )
 {
 	sprite_colorbase = 0;
 	zoom_colorbase[0] = 0x10;
-	zoom_colorbase[1] = 0x04;	/* not sure yet, because of bad dumps */
+	zoom_colorbase[1] = 0x02;
 
 	if (K051960_vh_start(SPRITEROM_MEM_REGION,NORMAL_PLANE_ORDER,sprite_callback))
 	{
@@ -72,15 +72,15 @@ int chqflag_vh_start( void )
 		return 1;
 	}
 
-	if (K051316_vh_start_1(ZOOMROM1_MEM_REGION,7,zoom_callback_1))
+	if (K051316_vh_start_1(ZOOMROM1_MEM_REGION,8,zoom_callback_1))
 	{
 		K051960_vh_stop();
 		K051316_vh_stop_0();
 		return 1;
 	}
 
-	K051316_set_offset(0, 8, 0);
-	K051316_wraparound_enable(1, 1);
+	K051316_set_offset(0,7,0);
+	K051316_wraparound_enable(1,1);
 
 	return 0;
 }

@@ -1114,9 +1114,9 @@ if (keyboard_pressed(KEYCODE_Z))
 {	char buf[80];
 	sprintf(buf, "Cmd: %04X Pos:%04X Lim:%04X Inp:%04X",
 				scudhamm_motor_command,
-				scudhamm_motor_pos_r(0),
-				scudhamm_motor_status_r(0),
-				scudhamm_analog_r(0) );
+				scudhamm_motor_pos_r(0,0),
+				scudhamm_motor_status_r(0,0),
+				scudhamm_analog_r(0,0) );
 	usrintf_showmessage(buf);	}
 #endif
 }

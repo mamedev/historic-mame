@@ -206,7 +206,7 @@ READ16_HANDLER( wms_wolfu_io_r )
 			return readinputport(offset);
 
 		case 4:
-			return (security_status << 12) | wms_wolfu_sound_state_r(0);
+			return (security_status << 12) | wms_wolfu_sound_state_r(0,0);
 
 		default:
 			logerror("%08X:Unknown I/O read from %d\n", cpu_get_pc(), offset);

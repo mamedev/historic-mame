@@ -250,6 +250,10 @@ static void mips_exception( int exception )
 	}
 }
 
+void mips_init( void )
+{
+}
+
 void mips_reset( void *param )
 {
 	mips_set_cp0r( CP0_SR, ( mipscpu.cp0r[ CP0_SR ] & ~( SR_TS | SR_SWC | SR_KUC | SR_IEC ) ) | SR_BEV );

@@ -12,6 +12,7 @@
 #include "datafile.h"
 #include <stdarg.h>
 #include "ui_text.h"
+#include "state.h"
 
 #ifdef MESS
   #include "mess.h"
@@ -27,12 +28,14 @@ extern unsigned int coinlockedout[COIN_COUNTERS];
 /* MARTINEZ.F 990207 Memory Card */
 #ifndef MESS
 #ifndef TINY_COMPILE
+#ifndef CPSMAME
 int 		memcard_menu(struct osd_bitmap *bitmap, int);
 extern int	mcd_action;
 extern int	mcd_number;
 extern int	memcard_status;
 extern int	memcard_number;
 extern int	memcard_manager;
+#endif
 #endif
 #endif
 
@@ -427,7 +430,7 @@ struct GfxElement *builduifont(void)
 
 static void erase_screen(struct osd_bitmap *bitmap)
 {
-	fillbitmap(bitmap,Machine->uifont->colortable[0],NULL);
+	fillbitmap(Machine->scrbitmap,Machine->uifont->colortable[0],NULL);
 	schedule_full_refresh();
 }
 
@@ -443,7 +446,7 @@ void displaytext(struct osd_bitmap *bitmap,const struct DisplayText *dt)
 {
 	switch_ui_orientation();
 
-	osd_mark_dirty(0,0,Machine->uiwidth-1,Machine->uiheight-1);
+	osd_mark_dirty(Machine->uixmin,Machine->uiymin,Machine->uixmin+Machine->uiwidth-1,Machine->uiymin+Machine->uiheight-1);
 
 	while (dt->text)
 	{
@@ -960,6 +963,7 @@ void ui_displaymessagewindow(struct osd_bitmap *bitmap,const char *text)
 
 #ifndef MESS
 #ifndef TINY_COMPILE
+#ifndef CPSMAME
 extern int no_of_tiles;
 void NeoMVSDrawGfx(unsigned char **line,const struct GfxElement *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
@@ -968,6 +972,7 @@ void NeoMVSDrawGfx16(unsigned char **line,const struct GfxElement *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
 		int zx,int zy,const struct rectangle *clip);
 extern struct GameDriver driver_neogeo;
+#endif
 #endif
 #endif
 
@@ -992,10 +997,12 @@ static void showcharset(struct osd_bitmap *bitmap)
 
 #ifndef MESS
 #ifndef TINY_COMPILE
+#ifndef CPSMAME
 	if (Machine->gamedrv->clone_of == &driver_neogeo ||
 			(Machine->gamedrv->clone_of &&
 				Machine->gamedrv->clone_of->clone_of == &driver_neogeo))
 		game_is_neogeo=1;
+#endif
 #endif
 #endif
 
@@ -1024,7 +1031,7 @@ static void showcharset(struct osd_bitmap *bitmap)
 
 			erase_screen(bitmap);
 
-			/* validity chack after char bank change */
+			/* validity check after char bank change */
 			if (bank >= 0)
 			{
 				if (firstdrawn >= Machine->gfx[bank]->total_elements)
@@ -1121,6 +1128,7 @@ static void showcharset(struct osd_bitmap *bitmap)
 			}
 #ifndef MESS
 #ifndef TINY_COMPILE
+#ifndef CPSMAME
 			else	/* neogeo sprite tiles */
 			{
 				struct rectangle clip;
@@ -1158,6 +1166,7 @@ static void showcharset(struct osd_bitmap *bitmap)
 					lastdrawn = i+firstdrawn;
 				}
 			}
+#endif
 #endif
 #endif
 
@@ -2706,6 +2715,7 @@ static int displayhistory (struct osd_bitmap *bitmap, int selected)
 
 #ifndef MESS
 #ifndef TINY_COMPILE
+#ifndef CPSMAME
 int memcard_menu(struct osd_bitmap *bitmap, int selection)
 {
 	int sel;
@@ -2825,6 +2835,7 @@ int memcard_menu(struct osd_bitmap *bitmap, int selection)
 }
 #endif
 #endif
+#endif
 
 
 #ifndef MESS
@@ -2898,12 +2909,14 @@ static void setup_menu_init(void)
 
 #ifndef MESS
 #ifndef TINY_COMPILE
+#ifndef CPSMAME
 	if (Machine->gamedrv->clone_of == &driver_neogeo ||
 			(Machine->gamedrv->clone_of &&
 				Machine->gamedrv->clone_of->clone_of == &driver_neogeo))
 	{
 		menu_item[menu_total] = ui_getstring (UI_memorycard); menu_action[menu_total++] = UI_MEMCARD;
 	}
+#endif
 #endif
 #endif
 
@@ -2969,9 +2982,11 @@ static int setup_menu(struct osd_bitmap *bitmap, int selected)
 				break;
 #ifndef MESS
 #ifndef TINY_COMPILE
+#ifndef CPSMAME
 			case UI_MEMCARD:
 				res = memcard_menu(bitmap, sel >> SEL_BITS);
 				break;
+#endif
 #endif
 #endif
 		}
@@ -3430,10 +3445,10 @@ void CLIB_DECL usrintf_showmessage_secs(int seconds, const char *text,...)
 	messagecounter = seconds * Machine->drv->frames_per_second;
 }
 
-
 int handle_user_interface(struct osd_bitmap *bitmap)
 {
 	static int show_profiler;
+	int request_loadsave = LOADSAVE_NONE;
 #ifdef MAME_DEBUG
 	static int show_total_colors;
 #endif
@@ -3585,6 +3600,57 @@ if (Machine->gamedrv->flags & GAME_COMPUTER)
 	if (input_ui_pressed(IPT_UI_RESET_MACHINE))
 		machine_reset();
 
+	if (input_ui_pressed(IPT_UI_SAVE_STATE))
+		request_loadsave = LOADSAVE_SAVE;
+
+	if (input_ui_pressed(IPT_UI_LOAD_STATE))
+		request_loadsave = LOADSAVE_LOAD;
+
+	if (request_loadsave != LOADSAVE_NONE)
+	{
+		int file = 0;
+		int i;
+		InputSeq seq;
+
+		for(i=0; i<SEQ_MAX; i++)
+			seq[i] = CODE_NONE;
+
+		osd_sound_enable(0);
+		osd_pause(1);
+		seq_read_async_start();
+
+		do
+		{
+			int ret;
+			update_video_and_audio();
+			ret = seq_read_async(&seq, 1);
+
+			if (ret == 1)
+				file = -1;
+			else if (ret == 0)
+			{
+				if (seq[1] != CODE_NONE)
+				{
+					for(i=0; i<SEQ_MAX; i++)
+						seq[i] = CODE_NONE;
+					seq_read_async_start();
+				} else if (seq[0] >= KEYCODE_A && seq[0] <= KEYCODE_Z)
+					file = 'a' + (seq[0] - KEYCODE_A);
+				else if (seq[0] >= KEYCODE_0 && seq[0] <= KEYCODE_9)
+					file = '0' + (seq[0] - KEYCODE_0);
+				else if (seq[0] >= KEYCODE_0_PAD && seq[0] <= KEYCODE_9_PAD)
+					file = '0' + (seq[0] - KEYCODE_0);
+			}
+		}
+		while (!file);
+
+		osd_pause(0);
+		osd_sound_enable(1);
+
+
+		if (file > 0)
+			cpu_loadsave_schedule(request_loadsave, file);
+	}
 
 	if (single_step || input_ui_pressed(IPT_UI_PAUSE)) /* pause the game */
 	{

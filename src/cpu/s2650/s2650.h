@@ -26,6 +26,7 @@ enum {
 
 extern int s2650_ICount;
 
+extern void s2650_init(void);
 extern void s2650_reset(void *param);
 extern void s2650_exit(void);
 extern int s2650_execute(int cycles);

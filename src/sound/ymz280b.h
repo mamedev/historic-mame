@@ -10,6 +10,10 @@
 
 #define MAX_YMZ280B 			2
 
+#ifndef VOL_YM3012
+#define YM3012_VOL(LVol,LPan,RVol,RPan) (MIXER(LVol,LPan)|(MIXER(RVol,RPan) << 16))
+#endif
+
 struct YMZ280Binterface
 {
 	int num;                  						/* total number of chips */

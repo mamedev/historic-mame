@@ -34,6 +34,7 @@ static const char* copyright_notice =
 
 #include "m68kops.h"
 #include "m68kcpu.h"
+#include "state.h"
 
 /* ======================================================================== */
 /* ================================= DATA ================================= */
@@ -597,7 +598,7 @@ void m68k_set_cpu_type(unsigned int cpu_type)
 			CYC_DBCC_F_EXP   = 4;
 			CYC_SCC_R_FALSE  = 0;
 			CYC_MOVEM_W      = 2;
-			CYC_MOVEM_L      = 2; 
+			CYC_MOVEM_L      = 2;
 			CYC_SHIFT        = 0;
 			CYC_RESET        = 518;
 			return;
@@ -799,92 +800,53 @@ void m68k_set_context(void* src)
 	if(src) m68ki_cpu = *(m68ki_cpu_core*)src;
 }
 
-void m68k_save_context(	void (*save_value)(char*, unsigned int))
-{
-	if(!save_value)
-		return;
 
-	save_value("CPU_TYPE"  , m68k_get_reg(NULL, M68K_REG_CPU_TYPE));
-	save_value("D0"        , REG_D[0]);
-	save_value("D1"        , REG_D[1]);
-	save_value("D2"        , REG_D[2]);
-	save_value("D3"        , REG_D[3]);
-	save_value("D4"        , REG_D[4]);
-	save_value("D5"        , REG_D[5]);
-	save_value("D6"        , REG_D[6]);
-	save_value("D7"        , REG_D[7]);
-	save_value("A0"        , REG_A[0]);
-	save_value("A1"        , REG_A[1]);
-	save_value("A2"        , REG_A[2]);
-	save_value("A3"        , REG_A[3]);
-	save_value("A4"        , REG_A[4]);
-	save_value("A5"        , REG_A[5]);
-	save_value("A6"        , REG_A[6]);
-	save_value("A7"        , REG_A[7]);
-	save_value("PPC"       , REG_PPC);
-	save_value("PC"        , REG_PC);
-	save_value("USP"       , REG_USP);
-	save_value("ISP"       , REG_ISP);
-	save_value("MSP"       , REG_MSP);
-	save_value("VBR"       , REG_VBR);
-	save_value("SFC"       , REG_SFC);
-	save_value("DFC"       , REG_DFC);
-	save_value("CACR"      , REG_CACR);
-	save_value("CAAR"      , REG_CAAR);
-	save_value("SR"        , m68ki_get_sr());
-	save_value("INT_LEVEL" , CPU_INT_LEVEL);
-	save_value("INT_CYCLES", CPU_INT_CYCLES);
-	save_value("STOPPED"   , (CPU_STOPPED & STOP_LEVEL_STOP) != 0);
-	save_value("HALTED"    , (CPU_STOPPED & STOP_LEVEL_HALT) != 0);
-	save_value("PREF_ADDR" , CPU_PREF_ADDR);
-	save_value("PREF_DATA" , CPU_PREF_DATA);
+static struct {
+	UINT16 sr;
+	int stopped;
+	int halted;
+} m68k_substate;
+
+static void m68k_prepare_substate(void)
+{
+	m68k_substate.sr = m68ki_get_sr();
+	m68k_substate.stopped = (CPU_STOPPED & STOP_LEVEL_STOP) != 0;
+	m68k_substate.halted  = (CPU_STOPPED & STOP_LEVEL_HALT) != 0;
 }
 
-void m68k_load_context(unsigned int (*load_value)(char*))
+static void m68k_post_load(void)
 {
-	unsigned int temp;
-
-	m68k_set_cpu_type(load_value("CPU_TYPE"));
-	REG_PPC = load_value("PPC");
-	REG_PC = load_value("PC");
+	m68ki_set_sr_noint_nosp(m68k_substate.sr);
+	CPU_STOPPED = m68k_substate.stopped ? STOP_LEVEL_STOP : 0
+		        | m68k_substate.halted  ? STOP_LEVEL_HALT : 0;
 	m68ki_jump(REG_PC);
-	CPU_INT_LEVEL = 0;
-	m68ki_set_sr_noint(load_value("SR"));
-	REG_D[0]       = load_value("D0");
-	REG_D[1]       = load_value("D1");
-	REG_D[2]       = load_value("D2");
-	REG_D[3]       = load_value("D3");
-	REG_D[4]       = load_value("D4");
-	REG_D[5]       = load_value("D5");
-	REG_D[6]       = load_value("D6");
-	REG_D[7]       = load_value("D7");
-	REG_A[0]       = load_value("A0");
-	REG_A[1]       = load_value("A1");
-	REG_A[2]       = load_value("A2");
-	REG_A[3]       = load_value("A3");
-	REG_A[4]       = load_value("A4");
-	REG_A[5]       = load_value("A5");
-	REG_A[6]       = load_value("A6");
-	REG_A[7]       = load_value("A7");
-	REG_USP        = load_value("USP");
-	REG_ISP        = load_value("ISP");
-	REG_MSP        = load_value("MSP");
-	REG_VBR        = load_value("VBR");
-	REG_SFC        = load_value("SFC");
-	REG_DFC        = load_value("DFC");
-	REG_CACR       = load_value("CACR");
-	REG_CAAR       = load_value("CAAR");
-	CPU_INT_LEVEL  = load_value("INT_LEVEL");
-	CPU_INT_CYCLES = load_value("INT_CYCLES");
+}
 
-	CPU_STOPPED = 0;
-	temp           = load_value("STOPPED");
-	if(temp) CPU_STOPPED |= STOP_LEVEL_STOP;
-	temp           = load_value("HALTED");
-	if(temp) CPU_STOPPED |= STOP_LEVEL_HALT;
+void m68k_state_register(const char *type)
+{
+	int cpu = cpu_getactivecpu();
 
-	CPU_PREF_ADDR  = load_value("PREF_ADDR");
-	CPU_PREF_DATA  = load_value("PREF_DATA");
+	state_save_register_UINT32(type, cpu, "D"         , REG_D, 8);
+	state_save_register_UINT32(type, cpu, "A"         , REG_A, 8);
+	state_save_register_UINT32(type, cpu, "PPC"       , &REG_PPC, 1);
+	state_save_register_UINT32(type, cpu, "PC"        , &REG_PC, 1);
+	state_save_register_UINT32(type, cpu, "USP"       , &REG_USP, 1);
+	state_save_register_UINT32(type, cpu, "ISP"       , &REG_ISP, 1);
+	state_save_register_UINT32(type, cpu, "MSP"       , &REG_MSP, 1);
+	state_save_register_UINT32(type, cpu, "VBR"       , &REG_VBR, 1);
+	state_save_register_UINT32(type, cpu, "SFC"       , &REG_SFC, 1);
+	state_save_register_UINT32(type, cpu, "DFC"       , &REG_DFC, 1);
+	state_save_register_UINT32(type, cpu, "CACR"      , &REG_CACR, 1);
+	state_save_register_UINT32(type, cpu, "CAAR"      , &REG_CAAR, 1);
+	state_save_register_UINT16(type, cpu, "SR"        , &m68k_substate.sr, 1);
+	state_save_register_UINT32(type, cpu, "INT_LEVEL" , &CPU_INT_LEVEL, 1);
+	state_save_register_UINT32(type, cpu, "INT_CYCLES", &CPU_INT_CYCLES, 1);
+	state_save_register_int   (type, cpu, "STOPPED"   , &m68k_substate.stopped);
+	state_save_register_int   (type, cpu, "HALTED"    , &m68k_substate.halted);
+	state_save_register_UINT32(type, cpu, "PREF_ADDR" , &CPU_PREF_ADDR, 1);
+	state_save_register_UINT32(type, cpu, "PREF_DATA" , &CPU_PREF_DATA, 1);
+	state_save_register_func_presave(m68k_prepare_substate);
+	state_save_register_func_postload(m68k_post_load);
 }
 
 

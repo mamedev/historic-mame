@@ -2,6 +2,9 @@
 #include "vidhrdw/generic.h"
 
 data16_t *nmk_bgvideoram,*nmk_fgvideoram,*nmk_txvideoram;
+data16_t *gunnail_scrollram;
+static data16_t gunnail_scrolly;
+
 static int redraw_bitmap;
 
 static data16_t *spriteram_old,*spriteram_old2;
@@ -78,8 +81,8 @@ int bioship_vh_start(void)
 	if (!bg_tilemap || !spriteram_old || !spriteram_old2 || !background_bitmap)
 		return 1;
 
-	tilemap_set_transparent_pen(bg_tilemap, 15);
-	tilemap_set_transparent_pen(tx_tilemap, 15);
+	tilemap_set_transparent_pen(bg_tilemap,15);
+	tilemap_set_transparent_pen(tx_tilemap,15);
 	bioship_background_bank=0;
 
 	memset(spriteram_old,0,spriteram_size);
@@ -101,8 +104,8 @@ int strahl_vh_start(void)
 	if (!bg_tilemap || !fg_tilemap || !spriteram_old || !spriteram_old2)
 		return 1;
 
-	tilemap_set_transparent_pen(fg_tilemap, 15);
-	tilemap_set_transparent_pen(tx_tilemap, 15);
+	tilemap_set_transparent_pen(fg_tilemap,15);
+	tilemap_set_transparent_pen(tx_tilemap,15);
 
 	memset(spriteram_old,0,spriteram_size);
 	memset(spriteram_old2,0,spriteram_size);
@@ -122,12 +125,35 @@ int macross_vh_start(void)
 	if (!bg_tilemap || !spriteram_old || !spriteram_old2)
 		return 1;
 
-	tilemap_set_transparent_pen(tx_tilemap, 15);
+	tilemap_set_transparent_pen(tx_tilemap,15);
 
 	memset(spriteram_old,0,spriteram_size);
 	memset(spriteram_old2,0,spriteram_size);
 
 	videoshift =  0;	/* 256x224 screen, no shift */
+	background_bitmap = NULL;
+
+	return 0;
+}
+
+int gunnail_vh_start(void)
+{
+	bg_tilemap = tilemap_create(macross_get_bg_tile_info,bg_scan,TILEMAP_OPAQUE,16,16,256,32);
+	tx_tilemap = tilemap_create(macross_get_tx_tile_info,tilemap_scan_cols,TILEMAP_TRANSPARENT,8,8,64,32);
+	spriteram_old = malloc(spriteram_size);
+	spriteram_old2 = malloc(spriteram_size);
+
+	if (!bg_tilemap || !spriteram_old || !spriteram_old2)
+		return 1;
+
+	tilemap_set_transparent_pen(tx_tilemap,15);
+	tilemap_set_scroll_rows(bg_tilemap,512);
+
+	memset(spriteram_old,0,spriteram_size);
+	memset(spriteram_old2,0,spriteram_size);
+
+	videoshift = 64;	/* 384x224 screen, leftmost 64 pixels have to be retrieved */
+						/* from the other side of the tilemap (!) */
 	background_bitmap = NULL;
 
 	return 0;
@@ -143,7 +169,7 @@ int macross2_vh_start(void)
 	if (!bg_tilemap || !spriteram_old || !spriteram_old2)
 		return 1;
 
-	tilemap_set_transparent_pen(tx_tilemap, 15);
+	tilemap_set_transparent_pen(tx_tilemap,15);
 
 	memset(spriteram_old,0,spriteram_size);
 	memset(spriteram_old2,0,spriteram_size);
@@ -334,6 +360,16 @@ WRITE16_HANDLER( bioship_bank_w )
 	}
 }
 
+WRITE16_HANDLER( gunnail_scrollx_w )
+{
+	COMBINE_DATA(&gunnail_scrollram[offset]);
+}
+
+WRITE16_HANDLER( gunnail_scrolly_w )
+{
+	COMBINE_DATA(&gunnail_scrolly);
+}
+
 /***************************************************************************
 
   Display refresh
@@ -455,6 +491,17 @@ void macross_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	tilemap_draw(bitmap,tx_tilemap,0,0);
 }
 
+void gunnail_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
+	int i;
+
+	for (i = 0;i < 256;i++)
+		tilemap_set_scrollx(bg_tilemap,(i+gunnail_scrolly) & 0x1ff,gunnail_scrollram[0] + gunnail_scrollram[i] - videoshift);
+	tilemap_set_scrolly(bg_tilemap,0,gunnail_scrolly);
+
+	macross_vh_screenrefresh(bitmap,full_refresh);
+}
+
 void bioship_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	data16_t *tilerom = (data16_t *)memory_region(REGION_USER1);
@@ -506,9 +553,9 @@ void bioship_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	tilemap_update(ALL_TILEMAPS);
 	copyscrollbitmap(bitmap,background_bitmap,1,&scrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);
-	draw_sprites(bitmap,5,~5); /* Is this right? */
+//	draw_sprites(bitmap,5,~5); /* Is this right? */
 	tilemap_draw(bitmap,bg_tilemap,0,0);
-	draw_sprites(bitmap,5,5);
+	draw_sprites(bitmap,0,0);
 	tilemap_draw(bitmap,tx_tilemap,0,0);
 }
 

@@ -9,6 +9,7 @@
 		* Time Killers (2 sets)
 		* Bloodstorm (3 sets)
 		* Hard Yardage (2 sets)
+		* Pairs
 		* Street Fighter: The Movie (2 sets)
 
 	Games not supported because IT is still selling them:
@@ -24,7 +25,6 @@
 		* Poker Dice
 		* Neck & Neck
 		* Driver's Edge
-		* Pairs
 
 ****************************************************************************
 
@@ -488,32 +488,32 @@ static WRITE32_HANDLER( itech020_watchdog_w )
 
 static READ32_HANDLER( input_port_0_msw_r )
 {
-	return input_port_0_word_r(offset) << 16;
+	return input_port_0_word_r(offset,0) << 16;
 }
 
 static READ32_HANDLER( input_port_1_msw_r )
 {
-	return input_port_1_word_r(offset) << 16;
+	return input_port_1_word_r(offset,0) << 16;
 }
 
 static READ32_HANDLER( input_port_2_msw_r )
 {
-	return input_port_2_word_r(offset) << 16;
+	return input_port_2_word_r(offset,0) << 16;
 }
 
 static READ32_HANDLER( input_port_3_msw_r )
 {
-	return input_port_3_word_r(offset) << 16;
+	return input_port_3_word_r(offset,0) << 16;
 }
 
 static READ32_HANDLER( input_port_4_msw_r )
 {
-	return special_port4_r(offset) << 16;
+	return special_port4_r(offset,0) << 16;
 }
 
 static READ32_HANDLER( input_port_5_msw_r )
 {
-	return input_port_5_word_r(offset) << 16;
+	return input_port_5_word_r(offset,0) << 16;
 }
 
 static WRITE32_HANDLER( int1_ack32_w )
@@ -619,6 +619,36 @@ static MEMORY_WRITE16_START( bloodstm_writemem )
 	{ 0x580000, 0x59ffff, bloodstm_paletteram_w, &paletteram16 },
 	{ 0x700000, 0x700001, bloodstm_plane_w },
 	{ 0x800000, 0x87ffff, MWA16_ROM, &main_rom },
+MEMORY_END
+
+
+/*------ Pairs memory layout ------*/
+static MEMORY_READ16_START( pairs_readmem )
+	{ 0x000000, 0x00ffff, MRA16_RAM },
+	{ 0x080000, 0x080001, input_port_0_word_r },
+	{ 0x100000, 0x100001, input_port_1_word_r },
+	{ 0x180000, 0x180001, input_port_2_word_r },
+	{ 0x200000, 0x200001, input_port_3_word_r },
+	{ 0x280000, 0x280001, special_port4_r },
+	{ 0x500000, 0x5000ff, bloodstm_video_r },
+	{ 0x580000, 0x59ffff, MRA16_RAM },
+	{ 0x780000, 0x780001, input_port_5_word_r },
+	{ 0xd00000, 0xd7ffff, MRA16_ROM },
+MEMORY_END
+
+
+static MEMORY_WRITE16_START( pairs_writemem )
+	{ 0x000000, 0x00ffff, MWA16_RAM, &main_ram, &main_ram_size },
+	{ 0x080000, 0x080001, int1_ack_w },
+	{ 0x200000, 0x200001, watchdog_reset16_w },
+	{ 0x300000, 0x300001, bloodstm_color1_w },
+	{ 0x380000, 0x380001, bloodstm_color2_w },
+	{ 0x400000, 0x400001, watchdog_reset16_w },
+	{ 0x480000, 0x480001, sound_data_w },
+	{ 0x500000, 0x5000ff, bloodstm_video_w, &itech32_video },
+	{ 0x580000, 0x59ffff, bloodstm_paletteram_w, &paletteram16 },
+	{ 0x700000, 0x700001, bloodstm_plane_w },
+	{ 0xd00000, 0xd7ffff, MWA16_ROM, &main_rom },
 MEMORY_END
 
 
@@ -891,6 +921,56 @@ INPUT_PORTS_START( hardyard )
 INPUT_PORTS_END
 
 
+INPUT_PORTS_START( pairs )
+	PORT_START	/* 080000 */
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_BUTTON1        | IPF_PLAYER1 )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER1 )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER1 )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER1 )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER1 )
+
+	PORT_START	/* 100000 */
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_BUTTON1        | IPF_PLAYER2 )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER2 )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER2 )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER2 )
+
+	PORT_START	/* 180000 */
+	PORT_BIT( 0x00ff, IP_ACTIVE_HIGH, IPT_UNUSED )
+
+	PORT_START	/* 200000 */
+	PORT_BIT( 0x00ff, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* 280000 */
+	PORT_SERVICE_NO_TOGGLE( 0x0001, IP_ACTIVE_LOW )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_VBLANK )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_SPECIAL )
+	PORT_DIPNAME( 0x0010, 0x0000, DEF_STR( Unknown ))
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ))
+	PORT_DIPSETTING(      0x0010, DEF_STR( On ))
+	PORT_DIPNAME( 0x0020, 0x0000, DEF_STR( Flip_Screen ))
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ))
+	PORT_DIPSETTING(      0x0020, DEF_STR( On ))
+	PORT_DIPNAME( 0x0040, 0x0000, "Modesty" )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ))
+	PORT_DIPSETTING(      0x0040, DEF_STR( On ))
+	PORT_DIPNAME( 0x0080, 0x0000, "Force Test Mode" )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ))
+	PORT_DIPSETTING(      0x0080, DEF_STR( On ))
+
+	PORT_START	/* 780000 */
+	PORT_BIT( 0x00ff, IP_ACTIVE_LOW, IPT_UNUSED )
+INPUT_PORTS_END
+
+
 INPUT_PORTS_START( sftm )
 	PORT_START	/* 080000 */
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_COIN1 )
@@ -1021,6 +1101,7 @@ static struct MachineDriver machine_driver_##NAME =								\
 /*           NAME,     CPU,          CPUCLOCK,    MAINMEM,  SOUNDMEM,  SOUNDINT,         COLORS,YMAX,NVRAM) */
 ITECH_DRIVER(timekill, CPU_M68000,   CLOCK_12MHz, timekill, sound,     ignore_interrupt,  8192, 239, nvram_handler)
 ITECH_DRIVER(bloodstm, CPU_M68000,   CLOCK_12MHz, bloodstm, sound,     ignore_interrupt, 32768, 239, nvram_handler)
+ITECH_DRIVER(pairs,    CPU_M68000,   CLOCK_12MHz, pairs,    sound,     ignore_interrupt, 32768, 239, nvram_handler)
 ITECH_DRIVER(sftm,     CPU_M68EC020, CLOCK_25MHz, itech020, sound_020, generate_firq,    32768, 254, nvram_handler_itech020)
 
 
@@ -1275,6 +1356,35 @@ ROM_START( hardyd10 )
 ROM_END
 
 
+ROM_START( pairs )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )
+
+	ROM_REGION16_BE( 0x40000, REGION_USER1, ROMREGION_DISPOSE )
+	ROM_LOAD16_BYTE( "pair0", 0x00000, 0x20000, 0x774995a3 )
+	ROM_LOAD16_BYTE( "pair1", 0x00001, 0x20000, 0x85d0b73a )
+
+	ROM_REGION( 0x28000, REGION_CPU2, 0 )
+	ROM_LOAD( "pairsnd", 0x10000, 0x18000, 0x7a514cfd )
+	ROM_CONTINUE(        0x08000, 0x08000 )
+
+	ROM_REGION( 0x880000, REGION_GFX1, 0 )
+	ROM_LOAD32_BYTE( "grom0",  0x000000, 0x80000, 0xbaf1c2dd )
+	ROM_LOAD32_BYTE( "grom5",  0x000001, 0x80000, 0x30e993f3 )
+	ROM_LOAD32_BYTE( "grom10", 0x000002, 0x80000, 0x3f52f50d )
+	ROM_LOAD32_BYTE( "grom15", 0x000003, 0x80000, 0xfd38aa36 )
+	ROM_LOAD32_BYTE( "grom1",  0x200000, 0x80000, 0xe4a11687 )
+	ROM_LOAD32_BYTE( "grom6",  0x200001, 0x80000, 0x1fbda5f2 )
+	ROM_LOAD32_BYTE( "grom11", 0x200002, 0x80000, 0xaed4a84d )
+	ROM_LOAD32_BYTE( "grom16", 0x200003, 0x80000, 0x3be7031b )
+
+	ROM_REGION16_BE( 0x400000, REGION_SOUND1, ROMREGION_ERASE00 )
+	ROM_LOAD16_BYTE( "fbrom0.bin", 0x000000, 0x200000, 0x9fdc4825 )
+
+	ROM_REGION16_BE( 0x400000, REGION_SOUND3, ROMREGION_ERASE00 )
+	ROM_LOAD16_BYTE( "srom0", 0x000000, 0x80000, 0x1d96c581 )
+ROM_END
+
+
 ROM_START( sftm )
 	ROM_REGION( 0x8000, REGION_CPU1, 0 )
 
@@ -1427,5 +1537,6 @@ GAME( 1993, hardyd10, hardyard, bloodstm, hardyard, hardyard, ROT0_16BIT,  "Stra
 GAME( 1994, bloodstm, 0,        bloodstm, bloodstm, bloodstm, ROT0_16BIT,  "Strata/Incredible Technologies", "Blood Storm (v2.22)" )
 GAME( 1994, bloods22, bloodstm, bloodstm, bloodstm, bloodstm, ROT0_16BIT,  "Strata/Incredible Technologies", "Blood Storm (v2.20)" )
 GAME( 1994, bloods21, bloodstm, bloodstm, bloodstm, bloodstm, ROT0_16BIT,  "Strata/Incredible Technologies", "Blood Storm (v2.10)" )
+GAME( 1994, pairs,    0,        pairs,    pairs,    bloodstm, ROT0_16BIT,  "Strata/Incredible Technologies", "Pairs" )
 GAME( 1995, sftm,     0,        sftm,     sftm,     sftm,     ROT0_16BIT,  "Capcom/Incredible Technologies", "Street Fighter: The Movie (v1.1)" )
 GAME( 1995, sftmj,    sftm,     sftm,     sftm,     sftmj,    ROT0_16BIT,  "Capcom/Incredible Technologies", "Street Fighter: The Movie (v1.12N, Japan)" )

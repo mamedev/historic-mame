@@ -580,6 +580,12 @@ static int Ext_IRQ(void)
 }
 
 
+/****************************************************************************
+ * Initialize emulation
+ ****************************************************************************/
+void i8039_init (void)
+{
+}
 
 /****************************************************************************
  * Reset registers to their initial values
@@ -915,6 +921,7 @@ static UINT8 i8035_win_layout[] = {
 	 0,23,80, 1,	/* command line window (bottom rows) */
 };
 
+void i8035_init(void) { }
 void i8035_reset(void *param) { i8039_reset(param); }
 void i8035_exit(void) { i8039_exit(); }
 int i8035_execute(int cycles) { return i8039_execute(cycles); }
@@ -972,6 +979,7 @@ static UINT8 i8048_win_layout[] = {
 	 0,23,80, 1,	/* command line window (bottom rows) */
 };
 
+void i8048_init(void) { }
 void i8048_reset(void *param) { i8039_reset(param); }
 void i8048_exit(void) { i8039_exit(); }
 int i8048_execute(int cycles) { return i8039_execute(cycles); }
@@ -1027,6 +1035,7 @@ static UINT8 n7751_win_layout[] = {
 	 0,23,80, 1,	/* command line window (bottom rows) */
 };
 
+void n7751_init(void) { }
 void n7751_reset(void *param) { i8039_reset(param); }
 void n7751_exit(void) { i8039_exit(); }
 int n7751_execute(int cycles) { return i8039_execute(cycles); }

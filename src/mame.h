@@ -109,6 +109,7 @@ struct GameOptions {
 	int translucency;
 	int antialias;
 	int use_artwork;
+	char savegame;
 
 	#ifdef MESS
 	int append_no_file_extension;

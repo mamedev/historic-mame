@@ -599,7 +599,7 @@ static struct GfxLayout spritelayout =
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,       0, 64 },
-	{ REGION_GFX2, 0, &spritelayout, 64*16, 32 },
+	{ REGION_GFX2, 0, &spritelayout, 64*16, 32*2 },
 	{ -1 } /* end of array */
 };
 
@@ -638,7 +638,7 @@ static const struct MachineDriver machine_driver_docastle =
 	/* video hardware */
 	32*8, 32*8, { 1*8, 31*8-1, 4*8, 28*8-1 },
 	gfxdecodeinfo,
-	258, 96*16,
+	258, 64*16+2*32*16,
 	docastle_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
@@ -681,7 +681,7 @@ static const struct MachineDriver machine_driver_dorunrun =
 	/* video hardware */
 	32*8, 32*8, { 1*8, 31*8-1, 4*8, 28*8-1 },
 	gfxdecodeinfo,
-	258, 96*16,
+	258, 64*16+2*32*16,
 	dorunrun_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,

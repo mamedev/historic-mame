@@ -7,7 +7,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-static data16_t *dirty_f;
+static unsigned char *dirty_f;
 static struct osd_bitmap *bitmap_f;
 data16_t karnov_scroll[2], *karnov_pf_data;
 static struct tilemap *fix_tilemap;

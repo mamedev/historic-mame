@@ -63,7 +63,7 @@ CPU0(M7501,    m7501,    1,  0,1.00,M7501_INT_NONE,    M7501_INT_IRQ,  M7501_INT
 CPU0(M8502,    m8502,    1,  0,1.00,M8502_INT_NONE,    M8502_INT_IRQ,  M8502_INT_NMI,  8, 16,     0,16,LE,1, 3),
 	n2a03_interface=
 CPU0(N2A03,    n2a03,    1,  0,1.00,N2A03_INT_NONE,    N2A03_INT_IRQ,  N2A03_INT_NMI,  8, 16,     0,16,LE,1, 3);
-	
+
 extern void m6502_runtime_loader_init(void)
 {
 	cpuintf[CPU_M6502]=m6502_interface;
@@ -155,11 +155,32 @@ static m6502_Regs m6502;
  *
  *****************************************************************************/
 
-void m6502_reset(void *param)
+static void m6502_state_register(const char *type)
+{
+	int cpu = cpu_getactivecpu();
+
+	state_save_register_UINT16(type, cpu, "PC", &m6502.pc.w.l, 2);
+	state_save_register_UINT16(type, cpu, "SP", &m6502.sp.w.l, 2);
+	state_save_register_UINT8 (type, cpu, "P", &m6502.p, 1);
+	state_save_register_UINT8 (type, cpu, "A", &m6502.a, 1);
+	state_save_register_UINT8 (type, cpu, "X", &m6502.x, 1);
+	state_save_register_UINT8 (type, cpu, "Y", &m6502.y, 1);
+	state_save_register_UINT8 (type, cpu, "pending", &m6502.pending_irq, 1);
+	state_save_register_UINT8 (type, cpu, "after_cli", &m6502.after_cli, 1);
+	state_save_register_UINT8 (type, cpu, "nmi_state", &m6502.nmi_state, 1);
+	state_save_register_UINT8 (type, cpu, "irq_state", &m6502.irq_state, 1);
+	state_save_register_UINT8 (type, cpu, "so_state", &m6502.so_state, 1);
+}
+
+void m6502_init(void)
 {
 	m6502.subtype = SUBTYPE_6502;
 	m6502.insn = insn6502;
+	m6502_state_register("m6502");
+}
 
+void m6502_reset(void *param)
+{
 	/* wipe out the rest of the m6502 structure */
 	/* read the reset vector into PC */
 	PCL = RDMEM(M6502_RST_VEC);
@@ -393,63 +414,6 @@ void m6502_set_irq_callback(int (*callback)(int))
 	m6502.irq_callback = callback;
 }
 
-void m6502_state_save(void *file)
-{
-	int cpu = cpu_getactivecpu();
-	state_save_UINT8(file,"m6502",cpu,"TYPE",&m6502.subtype,1);
-	/* insn is set at restore since it's a pointer */
-	state_save_UINT16(file,"m6502",cpu,"PC",&m6502.pc.w.l,2);
-	state_save_UINT16(file,"m6502",cpu,"SP",&m6502.sp.w.l,2);
-	state_save_UINT8(file,"m6502",cpu,"P",&m6502.p,1);
-	state_save_UINT8(file,"m6502",cpu,"A",&m6502.a,1);
-	state_save_UINT8(file,"m6502",cpu,"X",&m6502.x,1);
-	state_save_UINT8(file,"m6502",cpu,"Y",&m6502.y,1);
-	state_save_UINT8(file,"m6502",cpu,"PENDING",&m6502.pending_irq,1);
-	state_save_UINT8(file,"m6502",cpu,"AFTER_CLI",&m6502.after_cli,1);
-	state_save_UINT8(file,"m6502",cpu,"NMI_STATE",&m6502.nmi_state,1);
-	state_save_UINT8(file,"m6502",cpu,"IRQ_STATE",&m6502.irq_state,1);
-	state_save_UINT8(file,"m6502",cpu,"SO_STATE",&m6502.so_state,1);
-}
-
-void m6502_state_load(void *file)
-{
-	int cpu = cpu_getactivecpu();
-	state_load_UINT8(file,"m6502",cpu,"TYPE",&m6502.subtype,1);
-	/* insn is set at restore since it's a pointer */
-	switch (m6502.subtype)
-	{
-#if (HAS_M65C02)
-		case SUBTYPE_65C02:
-			m6502.insn = insn65c02;
-			break;
-#endif
-#if (HAS_M65SC02)
-		case SUBTYPE_65SC02:
-			m6502.insn = insn65sc02;
-			break;
-#endif
-#if (HAS_M6510)
-		case SUBTYPE_6510:
-			m6502.insn = insn6510;
-			break;
-#endif
-		default:
-			m6502.insn = insn6502;
-			break;
-	}
-	state_load_UINT16(file,"m6502",cpu,"PC",&m6502.pc.w.l,2);
-	state_load_UINT16(file,"m6502",cpu,"SP",&m6502.sp.w.l,2);
-	state_load_UINT8(file,"m6502",cpu,"P",&m6502.p,1);
-	state_load_UINT8(file,"m6502",cpu,"A",&m6502.a,1);
-	state_load_UINT8(file,"m6502",cpu,"X",&m6502.x,1);
-	state_load_UINT8(file,"m6502",cpu,"Y",&m6502.y,1);
-	state_load_UINT8(file,"m6502",cpu,"PENDING",&m6502.pending_irq,1);
-	state_load_UINT8(file,"m6502",cpu,"AFTER_CLI",&m6502.after_cli,1);
-	state_load_UINT8(file,"m6502",cpu,"NMI_STATE",&m6502.nmi_state,1);
-	state_load_UINT8(file,"m6502",cpu,"IRQ_STATE",&m6502.irq_state,1);
-	state_load_UINT8(file,"m6502",cpu,"SO_STATE",&m6502.so_state,1);
-}
-
 /****************************************************************************
  * Return a formatted string for a register
  ****************************************************************************/
@@ -529,12 +493,14 @@ static UINT8 n2a03_win_layout[] = {
 	 0,23,80, 1,	/* command line window (bottom rows) */
 };
 
-void n2a03_reset (void *param)
+void n2a03_init(void)
 {
-	m6502_reset(param);
 	m6502.subtype = SUBTYPE_2A03;
 	m6502.insn = insn2a03;
+	m6502_state_register("n2a03");
 }
+
+void n2a03_reset(void *param) { m6502_reset(param); }
 void n2a03_exit  (void) { m6502_exit(); }
 int  n2a03_execute(int cycles) { return m6502_execute(cycles); }
 unsigned n2a03_get_context (void *dst) { return m6502_get_context(dst); }
@@ -548,8 +514,6 @@ void n2a03_set_reg (int regnum, unsigned val) { m6502_set_reg(regnum,val); }
 void n2a03_set_nmi_line(int state) { m6502_set_nmi_line(state); }
 void n2a03_set_irq_line(int irqline, int state) { m6502_set_irq_line(irqline,state); }
 void n2a03_set_irq_callback(int (*callback)(int irqline)) { m6502_set_irq_callback(callback); }
-void n2a03_state_save(void *file) { m6502_state_save(file); }
-void n2a03_state_load(void *file) { m6502_state_load(file); }
 const char *n2a03_info(void *context, int regnum)
 {
 	switch( regnum )
@@ -601,13 +565,14 @@ static UINT8 m6510_win_layout[] = {
 	 0,23,80, 1,	/* command line window (bottom rows) */
 };
 
-void m6510_reset (void *param)
+void m6510_init ()
 {
-	m6502_reset(param);
 	m6502.subtype = SUBTYPE_6510;
 	m6502.insn = insn6510;
+	m6502_state_register("m6510");
 }
 
+void m6510_reset(void *param) { m6502_reset(param); }
 void m6510_exit  (void) { m6502_exit(); }
 int  m6510_execute(int cycles) { return m6502_execute(cycles); }
 unsigned m6510_get_context (void *dst) { return m6502_get_context(dst); }
@@ -621,8 +586,6 @@ void m6510_set_reg (int regnum, unsigned val) { m6502_set_reg(regnum,val); }
 void m6510_set_nmi_line(int state) { m6502_set_nmi_line(state); }
 void m6510_set_irq_line(int irqline, int state) { m6502_set_irq_line(irqline,state); }
 void m6510_set_irq_callback(int (*callback)(int irqline)) { m6502_set_irq_callback(callback); }
-void m6510_state_save(void *file) { m6502_state_save(file); }
-void m6510_state_load(void *file) { m6502_state_load(file); }
 const char *m6510_info(void *context, int regnum)
 {
 	switch( regnum )
@@ -699,13 +662,17 @@ static UINT8 m65c02_win_layout[] = {
 	 0,23,80, 1,	/* command line window (bottom rows) */
 };
 
+void m65c02_init(void)
+{
+	m6502.subtype = SUBTYPE_65C02;
+	m6502.insn = insn65c02;
+	m6502_state_register("m65c02");
+}
 
 void m65c02_reset (void *param)
 {
 	m6502_reset(param);
 	P &=~F_D;
-	m6502.subtype = SUBTYPE_65C02;
-	m6502.insn = insn65c02;
 }
 
 void m65c02_exit  (void) { m6502_exit(); }
@@ -806,8 +773,6 @@ void m65c02_set_nmi_line(int state)
 
 void m65c02_set_irq_line(int irqline, int state) { m6502_set_irq_line(irqline,state); }
 void m65c02_set_irq_callback(int (*callback)(int irqline)) { m6502_set_irq_callback(callback); }
-void m65c02_state_save(void *file) { m6502_state_save(file); }
-void m65c02_state_load(void *file) { m6502_state_load(file); }
 const char *m65c02_info(void *context, int regnum)
 {
 	switch( regnum )
@@ -851,12 +816,13 @@ static UINT8 m65sc02_win_layout[] = {
 };
 
 
-void m65sc02_reset (void *param)
+void m65sc02_init(void)
 {
-	m6502_reset(param);
 	m6502.subtype = SUBTYPE_65SC02;
 	m6502.insn = insn65sc02;
+	m6502_state_register("m65sc02");
 }
+void m65sc02_reset(void *param) { m6502_reset(param); }
 void m65sc02_exit  (void) { m6502_exit(); }
 int  m65sc02_execute(int cycles) { return m65c02_execute(cycles); }
 unsigned m65sc02_get_context (void *dst) { return m6502_get_context(dst); }
@@ -870,8 +836,6 @@ void m65sc02_set_reg (int regnum, unsigned val) { m6502_set_reg(regnum,val); }
 void m65sc02_set_nmi_line(int state) { m6502_set_nmi_line(state); }
 void m65sc02_set_irq_line(int irqline, int state) { m6502_set_irq_line(irqline,state); }
 void m65sc02_set_irq_callback(int (*callback)(int irqline)) { m6502_set_irq_callback(callback); }
-void m65sc02_state_save(void *file) { m6502_state_save(file); }
-void m65sc02_state_load(void *file) { m6502_state_load(file); }
 const char *m65sc02_info(void *context, int regnum)
 {
 	switch( regnum )
