@@ -75,11 +75,13 @@ struct GfxElement *decodegfx(const unsigned char *src,const struct GfxLayout *gl
 void freegfx(struct GfxElement *gfx);
 void drawgfx(struct osd_bitmap *dest,const struct GfxElement *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
-		struct rectangle *clip,int transparency,int transparent_color);
+		const struct rectangle *clip,int transparency,int transparent_color);
 void copybitmap(struct osd_bitmap *dest,struct osd_bitmap *src,int flipx,int flipy,int sx,int sy,
-		struct rectangle *clip,int transparency,int transparent_color);
+		const struct rectangle *clip,int transparency,int transparent_color);
+void clearbitmap(struct osd_bitmap *bitmap);
 void setdipswitches(void);
 void displaytext(const struct DisplayText *dt,int erase);
+void showcharset(void);
 
 
 #endif

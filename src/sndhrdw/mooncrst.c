@@ -1,10 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include "mame.h"
 #include "driver.h"
-#include "osdepend.h"
-
 
 
 #define SOUND_CLOCK 1536000 /* 1.536 Mhz */

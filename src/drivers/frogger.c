@@ -61,8 +61,6 @@ d002      sound control?
 ***************************************************************************/
 
 #include "driver.h"
-#include "machine.h"
-#include "common.h"
 
 
 extern unsigned char *frogger_videoram;
@@ -167,11 +165,32 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
+#define BLACK 0x00
+#define LTGREEN 0x3c
+#define DKRED 0x17
+#define DKBROWN 0x5c
+#define DKPINK 0xd7
+#define LTBROWN 0x5e
+#define PURPLE 0xc4
+#define BLUE 0xc0
+#define RED 0x07
+#define MAGENTA 0xc7
+#define GREEN 0x39
+#define CYAN 0xf8
+#define YELLOW 0x3f
+#define WHITE 0xf6
+
 static unsigned char color_prom[] =
 {
 	/* palette */
-	0x00,0xF6,0x79,0x4F,0x00,0xC0,0x3F,0x17,0x00,0x87,0xF8,0x7F,0x00,0xC1,0x7F,0x38,
-	0x00,0x7F,0xCF,0xF9,0x00,0x57,0xB7,0xC3,0x00,0xFF,0x7F,0x87,0x00,0x79,0x4F,0xFF
+	BLACK,BLUE,RED,WHITE,
+	BLACK,DKRED,GREEN,CYAN,
+	BLACK,LTBROWN,WHITE,DKBROWN,
+	BLACK,MAGENTA,GREEN,YELLOW,
+	BLACK,LTGREEN,CYAN,DKPINK,
+	BLACK,RED,WHITE,GREEN,
+	BLACK,PURPLE,BLUE,RED,
+	BLACK,RED,YELLOW,PURPLE
 };
 
 
@@ -187,13 +206,13 @@ const struct MachineDriver frogger_driver =
 	nmi_interrupt,
 
 	/* video hardware */
-	256,256,
+	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
 	gfxdecodeinfo,
 	32,64,
 	color_prom,frogger_vh_convert_color_prom,0,0,
 	0,17,
-	0x00,0x01,
-	8*13,8*16,0x05,
+	0x00,0x03,
+	8*13,8*16,0x06,
 	0,
 	frogger_vh_start,
 	frogger_vh_stop,

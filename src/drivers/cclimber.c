@@ -106,8 +106,6 @@ I/O C  ;AY-3-8910 Data Read Reg.
 ***************************************************************************/
 
 #include "driver.h"
-#include "machine.h"
-#include "common.h"
 
 
 extern unsigned char *cclimber_videoram;
@@ -286,7 +284,7 @@ const struct MachineDriver cclimber_driver =
 	nmi_interrupt,
 
 	/* video hardware */
-	256,256,
+	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
 	96,4*24,
 	color_prom,cclimber_vh_convert_color_prom,0,0,

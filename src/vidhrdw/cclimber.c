@@ -6,15 +6,7 @@
 
 ***************************************************************************/
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include "mame.h"
-#include "common.h"
 #include "driver.h"
-#include "machine.h"
-#include "osdepend.h"
-
 
 
 #define VIDEO_RAM_SIZE 0x400
@@ -34,13 +26,6 @@ static unsigned char dirtybuffer[VIDEO_RAM_SIZE];	/* keep track of modified port
 static unsigned char bsdirtybuffer[BIGSPRITE_SIZE];
 
 static struct osd_bitmap *tmpbitmap,*bsbitmap;
-
-
-static struct rectangle visiblearea =
-{
-	0*8, 32*8-1,
-	2*8, 30*8-1
-};
 
 
 
@@ -96,9 +81,6 @@ void cclimber_vh_convert_color_prom(unsigned char *palette, unsigned char *color
 
 int cclimber_vh_start(void)
 {
-	int i;
-
-
 	if ((tmpbitmap = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 		return 1;
 
@@ -107,12 +89,6 @@ int cclimber_vh_start(void)
 		osd_free_bitmap(tmpbitmap);
 		return 1;
 	}
-
-	for (i = 0;i < tmpbitmap->height;i++)
-		memset(tmpbitmap->line[i],Machine->background_pen,tmpbitmap->width);
-
-	for (i = 0;i < bsbitmap->height;i++)
-		memset(bsbitmap->line[i],Machine->background_pen,bsbitmap->width);
 
 	return 0;
 }
@@ -216,8 +192,8 @@ void cclimber_vh_screenrefresh(struct osd_bitmap *bitmap)
 		struct rectangle clip;
 
 
-		clip.min_y = visiblearea.min_y;
-		clip.max_y = visiblearea.max_y;
+		clip.min_y = Machine->drv->visible_area.min_y;
+		clip.max_y = Machine->drv->visible_area.max_y;
 
 		i = 0;
 		while (i < 8 * 32)
@@ -275,7 +251,7 @@ void cclimber_vh_screenrefresh(struct osd_bitmap *bitmap)
 		copybitmap(bitmap,bsbitmap,
 				cclimber_bigspriteram[1] & 0x10,cclimber_bigspriteram[1] & 0x20,
 				136 - cclimber_bigspriteram[3],128 - cclimber_bigspriteram[2],
-				&visiblearea,TRANSPARENCY_COLOR,Machine->background_pen);
+				&Machine->drv->visible_area,TRANSPARENCY_COLOR,Machine->background_pen);
 	}
 
 	/* draw sprites (must be done after the "big sprite" to obtain the correct priority) */
@@ -285,6 +261,6 @@ void cclimber_vh_screenrefresh(struct osd_bitmap *bitmap)
 				cclimber_spriteram[i] & 0x3f,cclimber_spriteram[i + 1] & 0x0f,
 				cclimber_spriteram[i] & 0x40,cclimber_spriteram[i] & 0x80,
 				cclimber_spriteram[i + 3],240 - cclimber_spriteram[i + 2],
-				&visiblearea,TRANSPARENCY_PEN,0);
+				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}
 }

@@ -8,15 +8,7 @@
 
 ***************************************************************************/
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include "mame.h"
-#include "common.h"
 #include "driver.h"
-#include "machine.h"
-#include "osdepend.h"
-
 
 
 /***************************************************************************

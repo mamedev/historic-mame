@@ -1,9 +1,5 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include "mame.h"
 #include "driver.h"
-#include "osdepend.h"
+
 
 #define AY8910_CLOCK (1536000000)       /* 1.536000000 MHZ */
 #include "psg.c"

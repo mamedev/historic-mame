@@ -86,8 +86,6 @@ OUT on port $0 sets the interrupt vector
 ***************************************************************************/
 
 #include "driver.h"
-#include "machine.h"
-#include "common.h"
 
 
 extern int pacman_init_machine(const char *gamename);
@@ -311,7 +309,7 @@ const struct MachineDriver pacman_driver =
 	pacman_interrupt,
 
 	/* video hardware */
-	224,288,
+	28*8, 36*8, { 0*8, 28*8-1, 0*8, 36*8-1 },
 	gfxdecodeinfo,
 	16,4*32,
 	color_prom,pacman_vh_convert_color_prom,0,0,
@@ -344,7 +342,7 @@ const struct MachineDriver mspacman_driver =
 	pacman_interrupt,
 
 	/* video hardware */
-	224,288,
+	28*8,36*8, { 0*8, 28*8-1, 0*8, 36*8-1 },
 	gfxdecodeinfo,
 	16,4*32,
 	color_prom,pacman_vh_convert_color_prom,0,0,

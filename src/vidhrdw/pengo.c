@@ -6,15 +6,7 @@
 
 ***************************************************************************/
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include "mame.h"
-#include "common.h"
 #include "driver.h"
-#include "machine.h"
-#include "osdepend.h"
-
 
 
 #define VIDEO_RAM_SIZE 0x400
@@ -96,17 +88,10 @@ void pengo_vh_convert_color_prom(unsigned char *palette, unsigned char *colortab
 
 int pengo_vh_start(void)
 {
-	int i;
-
-
 	gfx_bank = 0;
 
 	if ((tmpbitmap = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 		return 1;
-
-
-	for (i = 0;i < tmpbitmap->height;i++)
-		memset(tmpbitmap->line[i],Machine->background_pen,tmpbitmap->width);
 
 	return 0;
 }
@@ -212,12 +197,12 @@ void pengo_vh_screenrefresh(struct osd_bitmap *bitmap)
 					pengo_videoram[offs],
 					pengo_colorram[offs],
 					0,0,8*sx,8*sy,
-					0,TRANSPARENCY_NONE,0);
+					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 		}
 	}
 
 	/* copy the character mapped graphics */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,0,TRANSPARENCY_NONE,0);
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 
 	/* Draw the sprites. Note that it is important to draw them exactly in this */
 	/* order, to have the correct priorities. */

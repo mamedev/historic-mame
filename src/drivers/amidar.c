@@ -68,8 +68,6 @@ a008      interrupt enable
 ***************************************************************************/
 
 #include "driver.h"
-#include "machine.h"
-#include "common.h"
 
 
 extern unsigned char *amidar_videoram;
@@ -180,18 +178,6 @@ static struct GfxLayout spritelayout =
 			8*8+0, 8*8+1, 8*8+2, 8*8+3, 8*8+4, 8*8+5, 8*8+6, 8*8+7 },
 	32*8	/* every sprite takes 32 consecutive bytes */
 };
-/* there's nothing here, this is just a placeholder to let the video hardware */
-/* pick the color table */
-static struct GfxLayout starslayout =
-{
-	0,0,
-	0,
-	1,	/* 1 star = 1 color */
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	0
-};
 
 
 
@@ -199,7 +185,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	{ 0x10000, &charlayout,     0, 8 },
 	{ 0x10000, &spritelayout,   0, 8 },
-	{ 0,       &starslayout,   32, 64 },
 	{ -1 } /* end of array */
 };
 
@@ -207,32 +192,40 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static unsigned char palette[] =
 {
-	0x00,0x00,0x00,	/* BLACK */
-	0xff,0x00,0x00,	/* RED */
-	0xdb,0x92,0xdb, /* PINK */
-	0x00,0xff,0xdb,	/* CYAN, */
-	0xff,0xff,0x00,	/* YELLOW, */
-	0x24,0x24,0xdb,	/* BLUE */
-	0x00,0xff,0x00,	/* GREEN */
-	0xdb,0xdb,0xdb,	/* WHITE */
-	0xff,0xb6,0x49,	/* ORANGE */
+	0x00,0x00,0x00,   /* black      */
+	0x94,0x00,0xd8,   /* darkpurple */
+	0xd8,0x00,0x00,   /* darkred    */
+	0xf8,0x64,0xd8,   /* pink       */
+	0x00,0xd8,0x00,   /* darkgreen  */
+	0x00,0xf8,0xd8,   /* darkcyan   */
+	0xd8,0xd8,0x94,   /* darkyellow */
+	0xd8,0xf8,0xd8,   /* darkwhite  */
+	0xf8,0x94,0x44,   /* orange     */
+	0x00,0x00,0xd8,   /* blue   */
+	0xf8,0x00,0x00,   /* red    */
+	0xff,0x00,0xff,   /* purple */
+	0x00,0xf8,0x00,   /* green  */
+	0x00,0xff,0xff,   /* cyan   */
+	0xf8,0xf8,0x00,   /* yellow */
+	0xff,0xff,0xff    /* white  */
 };
 
 enum
 {
-	black, red, pink, cyan, yellow, blue, green, white, orange
+	black, darkpurple, darkred, pink, darkgreen, darkcyan, darkyellow,
+		darkwhite, orange, blue, red, purple, green, cyan, yellow, white
 };
 
 static unsigned char colortable[] =
 {
-	black, red, blue, white,	/* white text */
-	black, green, pink, orange,	/* fruit */
-	black, green, red, yellow,	/* yellow line on title screen */
-	black, red, green, yellow,	/* enemy vulnerable body, mouth, eyes */
-	black, yellow, green, red,	/* monkey body, stomach, arms */
-	black, green, orange, yellow,	/* enemy body, mouth, eyes */
-	black, white, red, pink,	/* pink pig */
-	black, cyan, red, white	/* white pig */
+	black, darkred,   blue,       darkyellow,   /* Area, white text */
+	black, green,     darkpurple, orange,       /* fruit */
+	black, darkgreen, darkred,    yellow,       /* yellow line on title screen */
+	black, darkred,   darkgreen,  yellow,       /* enemy vulnerable body, mouth, eyes */
+	black, yellow,    darkgreen,  red,          /* monkey body, stomach, arms */
+	black, green,     orange,     yellow,       /* enemy body, mouth, eyes */
+	black, darkwhite, red,        pink,         /* pink pig */
+	black, darkcyan,  red,        darkwhite     /* white pig */
 };
 
 
@@ -248,13 +241,13 @@ const struct MachineDriver amidar_driver =
 	nmi_interrupt,
 
 	/* video hardware */
-	256,256,
+	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
 	gfxdecodeinfo,
 	sizeof(palette)/3,sizeof(colortable),
 	0,0,palette,colortable,
 	0,17,
-	0x07,0x01,
-	8*13,8*16,0x06,
+	0x06,0x04,
+	8*13,8*16,0x00,
 	0,
 	amidar_vh_start,
 	amidar_vh_stop,
@@ -281,7 +274,7 @@ const struct MachineDriver turtles_driver =
 	nmi_interrupt,
 
 	/* video hardware */
-	256,256,
+	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
 	gfxdecodeinfo,
 	sizeof(palette)/3,sizeof(colortable),
 	0,0,palette,colortable,

@@ -86,8 +86,6 @@ f800      playfield 0 X scroll position
 ***************************************************************************/
 
 #include "driver.h"
-#include "machine.h"
-#include "common.h"
 
 
 extern int mrdo_SECRE_r(int offset);
@@ -256,7 +254,7 @@ const struct MachineDriver mrdo_driver =
 	interrupt,
 
 	/* video hardware */
-	256,256,
+	32*8, 32*8, { 4*8, 28*8-1, 1*8, 31*8-1 },
 	gfxdecodeinfo,
 	256,4*144,
 	color_prom,mrdo_vh_convert_color_prom,0,0,

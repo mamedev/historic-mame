@@ -49,8 +49,7 @@ read-only:
 ***************************************************************************/
 
 #include "driver.h"
-#include "machine.h"
-#include "common.h"
+
 
 extern unsigned char *phoenix_videoram1;
 extern unsigned char *phoenix_videoram2;
@@ -227,7 +226,7 @@ const struct MachineDriver phoenix_driver =
 	phoenix_interrupt,
 
 	/* video hardware */
-	256,256,
+	32*8, 32*8, { 3*8, 29*8-1, 0*8, 31*8-1 },
 	gfxdecodeinfo,
 	sizeof(palette)/3,sizeof(colortable),
 	0,0,palette,colortable,

@@ -1,9 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include "mame.h"
 #include "driver.h"
-#include "osdepend.h"
 
 
 #define SND_CLOCK 4000000	/* 4 Mhz */

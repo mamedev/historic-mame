@@ -5,7 +5,7 @@ DEFS   = -DX86_ASM -DLSB_FIRST
 CFLAGS = -Isrc -Isrc/z80 -fstrength-reduce -funroll-loops -fomit-frame-pointer -O3 -m486 -Wall
 #CFLAGS = -pg -Isrc -Isrc/z80 -fstrength-reduce -funroll-loops -O3 -m486 -Wall
 LIBS   = -lalleg
-OBJS   = obj/mame.o obj/common.o obj/machine.o obj/driver.o obj/osdepend.o \
+OBJS   = obj/mame.o obj/common.o obj/driver.o obj/osdepend.o \
          obj/machine/pacman.o obj/vidhrdw/pacman.o obj/drivers/pacman.o \
 		 obj/drivers/crush.o \
          obj/vidhrdw/pengo.o obj/sndhrdw/pengo.o obj/drivers/pengo.o \
@@ -18,6 +18,7 @@ OBJS   = obj/mame.o obj/common.o obj/machine.o obj/driver.o obj/osdepend.o \
          obj/vidhrdw/wow.o obj/drivers/wow.o \
          obj/drivers/galaxian.o \
          obj/vidhrdw/mooncrst.o obj/sndhrdw/mooncrst.o obj/drivers/mooncrst.o \
+         obj/vidhrdw/moonqsr.o obj/drivers/moonqsr.o \
          obj/drivers/theend.o \
          obj/vidhrdw/frogger.o obj/drivers/frogger.o \
          obj/machine/scramble.o obj/vidhrdw/scramble.o obj/drivers/scramble.o \
@@ -26,6 +27,10 @@ OBJS   = obj/mame.o obj/common.o obj/machine.o obj/driver.o obj/osdepend.o \
          obj/vidhrdw/rallyx.o obj/drivers/rallyx.o \
          obj/vidhrdw/pooyan.o obj/drivers/pooyan.o \
          obj/machine/phoenix.o obj/vidhrdw/phoenix.o obj/drivers/phoenix.o \
+         obj/machine/carnival.o obj/vidhrdw/carnival.o obj/drivers/carnival.o \
+         obj/machine/invaders.o obj/vidhrdw/invaders.o obj/drivers/invaders.o \
+         obj/vidhrdw/mario.o obj/drivers/mario.o \
+         obj/vidhrdw/zaxxon.o obj/drivers/zaxxon.o \
          obj/Z80/Z80.o
 
 VPATH = src src/z80
@@ -39,7 +44,7 @@ mame.exe:  $(OBJS)
 obj/osdepend.o: src/msdos/msdos.c
 	 $(CC) $(DEFS) $(CFLAGS) -Isrc/msdos -o $@ -c $<
 
-obj/%.o: src/%.c common.h machine.h driver.h
+obj/%.o: src/%.c mame.h common.h driver.h
 	 $(CC) $(DEFS) $(CFLAGS) -o $@ -c $<
 
 # dependencies

@@ -74,9 +74,6 @@ blitter registers:
 ***************************************************************************/
 
 #include "driver.h"
-#include "machine.h"
-#include "common.h"
-
 
 
 extern unsigned char *wow_videoram;
@@ -227,7 +224,7 @@ const struct MachineDriver wow_driver =
 	interrupt,
 
 	/* video hardware */
-	320,204,
+	320, 204, { 0, 320-1, 0, 204-1 },
 	gfxdecodeinfo,
 	sizeof(palette)/3,sizeof(colortable),
 	0,0,palette,colortable,

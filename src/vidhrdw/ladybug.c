@@ -6,15 +6,7 @@
 
 ***************************************************************************/
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include "mame.h"
-#include "common.h"
 #include "driver.h"
-#include "machine.h"
-#include "osdepend.h"
-
 
 
 #define VIDEO_RAM_SIZE 0x400
@@ -28,13 +20,6 @@ static unsigned char dirtybuffer[VIDEO_RAM_SIZE];	/* keep track of modified port
 
 static struct osd_bitmap *tmpbitmap;
 
-
-
-static struct rectangle visiblearea =
-{
-	4*8, 28*8-1,
-	1*8, 31*8-1
-};
 
 
 
@@ -112,15 +97,8 @@ void ladybug_vh_convert_color_prom(unsigned char *palette, unsigned char *colort
 
 int ladybug_vh_start(void)
 {
-	int i;
-
-
 	if ((tmpbitmap = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 		return 1;
-
-
-	for (i = 0;i < tmpbitmap->height;i++)
-		memset(tmpbitmap->line[i],Machine->background_pen,tmpbitmap->width);
 
 	return 0;
 }
@@ -193,13 +171,13 @@ void ladybug_vh_screenrefresh(struct osd_bitmap *bitmap)
 					ladybug_videoram[offs] + 32 * (ladybug_colorram[offs] & 8),
 					ladybug_colorram[offs],
 					0,0,sx,sy,
-					0,TRANSPARENCY_NONE,0);
+					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 		}
 	}
 
 
 	/* copy the character mapped graphics */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&visiblearea,TRANSPARENCY_NONE,0);
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 
 
 	/* Draw the sprites. Note that it is important to draw them exactly in this */
@@ -234,7 +212,7 @@ void ladybug_vh_screenrefresh(struct osd_bitmap *bitmap)
 					ladybug_spriteram[offs + i] & 0x10,ladybug_spriteram[offs + i] & 0x20,
 					offs / 4 - 8 + (ladybug_spriteram[offs + i] & 0x0f),
 					240 - ladybug_spriteram[offs + i + 3],
-					&visiblearea,TRANSPARENCY_PEN,0);
+					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 		}
 	}
 }

@@ -6,15 +6,7 @@
 
 ***************************************************************************/
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include "mame.h"
-#include "common.h"
 #include "driver.h"
-#include "machine.h"
-#include "osdepend.h"
-
 
 
 #define VIDEO_RAM_SIZE 0x400
@@ -54,14 +46,8 @@ static struct rectangle radarvisiblearea =
 
 int rallyx_vh_start(void)
 {
-	int i;
-
-
 	if ((tmpbitmap = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 		return 1;
-
-	for (i = 0;i < tmpbitmap->height;i++)
-		memset(tmpbitmap->line[i],Machine->background_pen,tmpbitmap->width);
 
 	return 0;
 }

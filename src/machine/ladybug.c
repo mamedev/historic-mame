@@ -7,12 +7,7 @@
 
 ***************************************************************************/
 
-#include <stdio.h>
-#include <string.h>
-#include "mame.h"
 #include "driver.h"
-#include "osdepend.h"
-
 
 
 #define IN1_VBLANK (1<<7)
@@ -103,7 +98,7 @@ int ladybug_IN1_r(int offset)
 
   Lady Bug doesn't have VBlank interrupts; the software polls port IN0 to
   know when a vblank is happening. Therefore we set a flag here, to let
-  ladybug_IN0_r() know when it has to report a vblank.
+  ladybug_IN1_r() know when it has to report a vblank.
   Interrupts are still used by the game: but they are related to coin
   slots. Left chute generates an interrupt, Right chute a NMI.
 
@@ -113,7 +108,7 @@ int ladybug_interrupt(void)
 	static int coin;
 
 
-	/* let ladybug_IN0_r() know that it is time to report a vblank */
+	/* let ladybug_IN1_r() know that it is time to report a vblank */
 	vblank = 1;
 
 	/* wait for the user to release the key before allowing another coin to */

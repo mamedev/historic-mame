@@ -69,8 +69,6 @@ Note: 9n reg,other bits  used on moon cresta for extra graphics rom control.
 ***************************************************************************/
 
 #include "driver.h"
-#include "machine.h"
-#include "common.h"
 
 
 extern unsigned char *mooncrst_videoram;
@@ -216,7 +214,6 @@ static struct DSW galaxian_dsw[] =
 {
 	{ 2, 0x04, "LIVES", { "3", "5" } },
 	{ 2, 0x03, "BONUS", { "7000", "10000", "12000", "20000" } },
-	{ 2, 0x08, "SW6", { "OFF", "ON" } },
 	{ -1 }
 };
 
@@ -382,7 +379,7 @@ const struct MachineDriver galaxian_driver =
 	nmi_interrupt,
 
 	/* video hardware */
-	256,256,
+	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
 	galaxian_gfxdecodeinfo,
 	32+64,32+64,	/* 32 for the characters, 64 for the stars */
 	galaxian_color_prom,mooncrst_vh_convert_color_prom,0,0,
@@ -415,7 +412,7 @@ const struct MachineDriver pisces_driver =
 	nmi_interrupt,
 
 	/* video hardware */
-	256,256,
+	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
 	pisces_gfxdecodeinfo,
 	32+64,32+64,	/* 32 for the characters, 64 for the stars */
 	galaxian_color_prom,mooncrst_vh_convert_color_prom,0,0,
@@ -448,7 +445,7 @@ const struct MachineDriver japirem_driver =
 	nmi_interrupt,
 
 	/* video hardware */
-	256,256,
+	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
 	pisces_gfxdecodeinfo,
 	32+64,32+64,	/* 32 for the characters, 64 for the stars */
 	japirem_color_prom,mooncrst_vh_convert_color_prom,0,0,
@@ -481,7 +478,7 @@ const struct MachineDriver warofbug_driver =
 	nmi_interrupt,
 
 	/* video hardware */
-	256,256,
+	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
 	galaxian_gfxdecodeinfo,
 	32+64,32+64,	/* 32 for the characters, 64 for the stars */
 	japirem_color_prom,mooncrst_vh_convert_color_prom,0,0,

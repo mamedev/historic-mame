@@ -17,15 +17,21 @@ extern struct MachineDriver pisces_driver;
 extern struct MachineDriver japirem_driver;
 extern struct MachineDriver warofbug_driver;
 extern struct MachineDriver mooncrst_driver;
+extern struct MachineDriver moonqsr_driver;
 extern struct MachineDriver theend_driver;
 extern struct MachineDriver frogger_driver;
 extern struct MachineDriver scramble_driver;
+extern struct MachineDriver atlantis_driver;
 extern struct MachineDriver scobra_driver;
 extern struct MachineDriver amidar_driver;
 extern struct MachineDriver turtles_driver;
 extern struct MachineDriver rallyx_driver;
 extern struct MachineDriver pooyan_driver;
 extern struct MachineDriver phoenix_driver;
+extern struct MachineDriver carnival_driver;
+extern struct MachineDriver invaders_driver;
+extern struct MachineDriver mario_driver;
+extern struct MachineDriver zaxxon_driver;
 
 
 
@@ -778,6 +784,23 @@ static struct RomModule scramble_rom[] =
 
 
 
+static struct RomModule atlantis_rom[] =
+{
+	/* code */
+	{ "2c", 0x00000, 0x0800 },
+	{ "2e", 0x00800, 0x0800 },
+	{ "2f", 0x01000, 0x0800 },
+	{ "2h", 0x01800, 0x0800 },
+	{ "2j", 0x02000, 0x0800 },
+	{ "2l", 0x02800, 0x0800 },
+	/* gfx */
+	{ "5f", 0x10000, 0x0800 },
+	{ "5h", 0x10800, 0x0800 },
+	{ 0, 0, 0 }	/* end of table */
+};
+
+
+
 static struct RomModule scobra_rom[] =
 {
 	/* code */
@@ -914,14 +937,14 @@ static struct RomModule pooyan_rom[] =
 static struct RomModule phoenix_rom[] =
 {
 	/* code */
-	{"phoenix.45", 0x0000, 0x0800},
-	{"phoenix.46", 0x0800, 0x0800},
-	{"phoenix.47", 0x1000, 0x0800},
-	{"phoenix.48", 0x1800, 0x0800},
+	{"phoenix.45", 0x00000, 0x0800},
+	{"phoenix.46", 0x00800, 0x0800},
+	{"phoenix.47", 0x01000, 0x0800},
+	{"phoenix.48", 0x01800, 0x0800},
 	{"phoenix.49", 0x2000, 0x0800},
-	{"phoenix.50", 0x2800, 0x0800},
-	{"phoenix.51", 0x3000, 0x0800},
-	{"phoenix.52", 0x3800, 0x0800},
+	{"phoenix.50", 0x02800, 0x0800},
+	{"phoenix.51", 0x03000, 0x0800},
+	{"phoenix.52", 0x03800, 0x0800},
 	/* gfx */
 	{"phoenix.39", 0x10000, 0x0800},
 	{"phoenix.40", 0x10800, 0x0800},
@@ -935,20 +958,188 @@ static struct RomModule phoenix_rom[] =
 static struct RomModule pleiades_rom[] =
 {
 	/* code */
-	{ "pleiades.47", 0x0000, 0x0800},
-	{ "pleiades.48", 0x0800, 0x0800},
-	{ "pleiades.49", 0x1000, 0x0800},
-	{ "pleiades.50", 0x1800, 0x0800},
-	{ "pleiades.51", 0x2000, 0x0800},
-	{ "pleiades.52", 0x2800, 0x0800},
-	{ "pleiades.53", 0x3000, 0x0800},
-	{ "pleiades.54", 0x3800, 0x0800},
+	{ "pleiades.47", 0x00000, 0x0800},
+	{ "pleiades.48", 0x00800, 0x0800},
+	{ "pleiades.49", 0x01000, 0x0800},
+	{ "pleiades.50", 0x01800, 0x0800},
+	{ "pleiades.51", 0x02000, 0x0800},
+	{ "pleiades.52", 0x02800, 0x0800},
+	{ "pleiades.53", 0x03000, 0x0800},
+	{ "pleiades.54", 0x03800, 0x0800},
 	/* gfx */
 	{ "pleiades.27", 0x10000, 0x0800},
 	{ "pleiades.26", 0x10800, 0x0800},
 	{ "pleiades.45", 0x11000, 0x0800},
 	{ "pleiades.44", 0x11800, 0x0800},
 	{ 0, 0, 0 }	/* end of table */
+};
+
+
+
+static struct RomModule carnival_rom[] =
+{
+	/* code */
+	{ "651u33.cpu", 0x00000, 0x0400 },
+	{ 0,            0x04000, 0x0400 },
+	{ "652u32.cpu", 0x00400, 0x0400 },
+	{ 0,            0x04400, 0x0400 },
+	{ "653u31.cpu", 0x00800, 0x0400 },
+	{ 0,            0x04800, 0x0400 },
+	{ "654u30.cpu", 0x00c00, 0x0400 },
+	{ 0,            0x04c00, 0x0400 },
+	{ "655u29.cpu", 0x01000, 0x0400 },
+	{ 0,            0x05000, 0x0400 },
+	{ "656u28.cpu", 0x01400, 0x0400 },
+	{ 0,            0x05400, 0x0400 },
+	{ "657u27.cpu", 0x01800, 0x0400 },
+	{ 0,            0x05800, 0x0400 },
+	{ "658u26.cpu", 0x01c00, 0x0400 },
+	{ 0,            0x05c00, 0x0400 },
+	{ "659u8.cpu",  0x02000, 0x0400 },
+	{ 0,            0x06000, 0x0400 },
+	{ "660u7.cpu",  0x02400, 0x0400 },
+	{ 0,            0x06400, 0x0400 },
+	{ "661u6.cpu",  0x02800, 0x0400 },
+	{ 0,            0x06800, 0x0400 },
+	{ "662u5.cpu",  0x02c00, 0x0400 },
+	{ 0,            0x06c00, 0x0400 },
+	{ "663u4.cpu",  0x03000, 0x0400 },
+	{ 0,            0x07000, 0x0400 },
+	{ "664u3.cpu",  0x03400, 0x0400 },
+	{ 0,            0x07400, 0x0400 },
+	{ "665u2.cpu",  0x03800, 0x0400 },
+	{ 0,            0x07800, 0x0400 },
+	{ "666u1.cpu",  0x03c00, 0x0400 },
+	{ 0,            0x07c00, 0x0400 },
+	{ 0, 0, 0 }	/* end of table */
+};
+
+
+
+static struct RomModule invaders_rom[] =
+{
+	/* code */
+	{ "invaders.h", 0x00000, 0x0800},
+	{ "invaders.g", 0x00800, 0x0800},
+	{ "invaders.f", 0x01000, 0x0800},
+	{ "invaders.e", 0x01800, 0x0800},
+	{ 0, 0, 0 }	/* end of table */
+};
+
+
+
+static struct RomModule spaceatt_rom[] =
+{
+	/* code */
+	{ "spaceatt.h", 0x00000, 0x0800},
+	{ "spaceatt.g", 0x00800, 0x0800},
+	{ "spaceatt.f", 0x01000, 0x0800},
+	{ "spaceatt.e", 0x01800, 0x0800},
+	{ 0, 0, 0 }	/* end of table */
+};
+
+
+
+static struct RomModule invdelux_rom[] =
+{
+	/* code */
+	{ "invdelux.h", 0x00000, 0x0800},
+	{ "invdelux.g", 0x00800, 0x0800},
+	{ "invdelux.f", 0x01000, 0x0800},
+	{ "invdelux.e", 0x01800, 0x0800},
+	{ "invdelux.d", 0x04000, 0x0800},
+	{ 0, 0, 0 }	/* end of table */
+};
+
+
+
+static struct RomModule galxwars_rom[] =
+{
+	/* code */
+	{ "galxwars.0", 0x00000, 0x0400},
+	{ "galxwars.1", 0x00400, 0x0400},
+	{ "galxwars.2", 0x00800, 0x0400},
+	{ "galxwars.3", 0x00c00, 0x0400},
+	{ "galxwars.4", 0x04000, 0x0400},
+	{ "galxwars.5", 0x04400, 0x0400},
+	{ 0, 0, 0 }	/* end of table */
+};
+
+
+
+static struct RomModule lrescue_rom[] =
+{
+	/* code */
+	{ "lrescue.1", 0x00000, 0x0800},
+	{ "lrescue.2", 0x00800, 0x0800},
+	{ "lrescue.3", 0x01000, 0x0800},
+	{ "lrescue.4", 0x01800, 0x0800},
+	{ "lrescue.5", 0x04000, 0x0800},
+	{ "lrescue.6", 0x04800, 0x0800},
+	{ 0, 0, 0 }	/* end of table */
+};
+
+
+
+static struct RomModule desterth_rom[] =
+{
+	/* code */
+	{ "36_h.bin", 0x00000, 0x0800},
+	{ "35_g.bin", 0x00800, 0x0800},
+	{ "34_f.bin", 0x01000, 0x0800},
+	{ "33_e.bin", 0x01800, 0x0800},
+	{ "32_d.bin", 0x04000, 0x0800},
+	{ "31_c.bin", 0x04800, 0x0800},
+	{ "42_b.bin", 0x05000, 0x0800},
+	{ 0, 0, 0 }	/* end of table */
+};
+
+
+
+const struct RomModule mario_rom[] =
+{
+	/* code */
+	{ "%s.7f", 0x00000, 0x2000 },
+	{ "%s.7e", 0x02000, 0x2000 },
+	{ "%s.7d", 0x04000, 0x2000 },
+	{ "%s.7c", 0x0f000, 0x1000 },
+	/* gfx */
+	{ "%s.3f", 0x10000, 0x1000 },
+	{ "%s.3j", 0x11000, 0x1000 },
+	{ "%s.7m", 0x12000, 0x1000 },
+	{ "%s.7n", 0x13000, 0x1000 },
+	{ "%s.7p", 0x14000, 0x1000 },
+	{ "%s.7s", 0x15000, 0x1000 },
+	{ "%s.7t", 0x16000, 0x1000 },
+	{ "%s.7u", 0x17000, 0x1000 },
+	/* sound */
+	{ "%s.6k", 0x18000, 0x1000 },
+	{ 0, 0, 0 }     /* end of table */
+};
+
+
+
+const struct RomModule zaxxon_rom[] =
+{
+	/* code */
+	{ "%s.3",  0x00000, 0x2000 },
+	{ "%s.2",  0x02000, 0x2000 },
+	{ "%s.1",  0x04000, 0x1000 },
+	/* gfx */
+	{ "%s.14", 0x10000, 0x0800 },
+	{ "%s.15", 0x10800, 0x0800 },
+	{ "%s.6",  0x11000, 0x2000 },
+	{ "%s.5",  0x13000, 0x2000 },
+	{ "%s.4",  0x15000, 0x2000 },
+	{ "%s.11", 0x17000, 0x2000 },
+	{ "%s.12", 0x19000, 0x2000 },
+	{ "%s.13", 0x1b000, 0x2000 },
+	/* sound */
+//	{ "%s.8",  0x20000, 0x2000 },
+//	{ "%s.7",  0x22000, 0x2000 },
+//	{ "%s.10", 0x24000, 0x2000 },
+//	{ "%s.9",  0x26000, 0x2000 },
+	{ 0, 0, 0 }     /* end of table */
 };
 
 
@@ -990,9 +1181,10 @@ struct GameDriver drivers[] =
 	{ "uniwars",  uniwars_rom,  0,               &japirem_driver },
 	{ "warofbug", galaxian_rom, 0,               &warofbug_driver },
 	{ "mooncrst", mooncrst_rom, 0,               &mooncrst_driver },
-	{ "moonqsr",  moonqsr_rom,  moonqsr_decode,  &mooncrst_driver },
+	{ "moonqsr",  moonqsr_rom,  moonqsr_decode,  &moonqsr_driver },
 	{ "theend",   theend_rom,   0,               &theend_driver },
 	{ "scramble", scramble_rom, 0,               &scramble_driver },
+	{ "atlantis", atlantis_rom, 0,               &atlantis_driver },
 	{ "scobra",   scobra_rom,   0,               &scobra_driver },
 	{ "frogger",  frogger_rom,  0,               &frogger_driver },
 	{ "froggers", froggers_rom, 0,               &scramble_driver },
@@ -1003,5 +1195,15 @@ struct GameDriver drivers[] =
 	{ "pooyan",   pooyan_rom,   0,               &pooyan_driver },
 	{ "phoenix",  phoenix_rom,  0,               &phoenix_driver },
 	{ "pleiades", pleiades_rom, 0,               &phoenix_driver },
+	{ "carnival", carnival_rom, 0,               &carnival_driver },
+	{ "invaders", invaders_rom, 0,               &invaders_driver },
+	{ "earthinv", invaders_rom, 0,               &invaders_driver },
+	{ "spaceatt", spaceatt_rom, 0,               &invaders_driver },
+	{ "invdelux", invdelux_rom, 0,               &invaders_driver },
+	{ "galxwars", galxwars_rom, 0,               &invaders_driver },
+	{ "lrescue",  lrescue_rom,  0,               &invaders_driver },
+	{ "desterth", desterth_rom, 0,               &invaders_driver },
+	{ "mario",    mario_rom,    0,               &mario_driver },
+	{ "zaxxon",   zaxxon_rom,   0,               &zaxxon_driver },
 	{ 0	}	/* end of array */
 };

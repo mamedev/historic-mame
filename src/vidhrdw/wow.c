@@ -6,15 +6,7 @@
 
 ***************************************************************************/
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include "mame.h"
-#include "common.h"
 #include "driver.h"
-#include "machine.h"
-#include "osdepend.h"
-
 
 
 unsigned char *wow_videoram;
@@ -23,24 +15,11 @@ int mask,unknown,collision;
 static struct osd_bitmap *tmpbitmap;
 
 
-static struct rectangle visiblearea =
-{
-	0*8, 40*8-1,
-	0*8, 204-1
-};
-
-
 
 int wow_vh_start(void)
 {
-	int i;
-
-
 	if ((tmpbitmap = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 		return 1;
-
-	for (i = 0;i < tmpbitmap->height;i++)
-		memset(tmpbitmap->line[i],Machine->background_pen,tmpbitmap->width);
 
 	return 0;
 }
@@ -360,5 +339,5 @@ else dest++;				/* backwards */
 void wow_vh_screenrefresh(struct osd_bitmap *bitmap)
 {
 	/* copy the character mapped graphics */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&visiblearea,TRANSPARENCY_NONE,0);
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 }

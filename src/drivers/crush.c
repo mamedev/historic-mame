@@ -84,8 +84,6 @@ write:
 ***************************************************************************/
 
 #include "driver.h"
-#include "machine.h"
-#include "common.h"
 
 
 extern unsigned char *pengo_videoram;
@@ -308,7 +306,7 @@ const struct MachineDriver crush_driver =
 	interrupt,
 
 	/* video hardware */
-	224,288,
+	28*8, 36*8, { 0*8, 28*8-1, 0*8, 36*8-1 },
 	gfxdecodeinfo,
 	sizeof(palette)/3,sizeof(colortable),
 	0,0,palette,colortable,

@@ -64,8 +64,6 @@ a002      protection check control?
 ***************************************************************************/
 
 #include "driver.h"
-#include "machine.h"
-#include "common.h"
 
 
 extern int scramble_IN2_r(int offset);
@@ -211,7 +209,7 @@ const struct MachineDriver scobra_driver =
 	nmi_interrupt,
 
 	/* video hardware */
-	256,256,
+	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
 	gfxdecodeinfo,
 	32+64,32+64,	/* 32 for the characters, 64 for the stars */
 	color_prom,scramble_vh_convert_color_prom,0,0,

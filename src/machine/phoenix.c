@@ -7,12 +7,7 @@
 
 ***************************************************************************/
 
-#include <stdio.h>
-#include <string.h>
-#include "mame.h"
 #include "driver.h"
-#include "osdepend.h"
-
 
 
 static int vblank;

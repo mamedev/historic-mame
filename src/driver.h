@@ -4,7 +4,7 @@
 
 #include "Z80.h"
 #include "common.h"
-#include "machine.h"
+#include "mame.h"
 
 
 /***************************************************************************
@@ -128,6 +128,7 @@ struct MachineDriver
 
 	/* video hardware */
 	int screen_width,screen_height;
+	struct rectangle visible_area;
 	struct GfxDecodeInfo *gfxdecodeinfo;
 	int total_colors;	/* palette is 3*total_colors bytes long */
 	int color_table_len;	/* length in bytes of the color lookup table */

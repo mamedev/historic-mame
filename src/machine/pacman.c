@@ -7,12 +7,7 @@
 
 ***************************************************************************/
 
-#include <stdio.h>
-#include <string.h>
-#include "mame.h"
 #include "driver.h"
-#include "osdepend.h"
-
 
 
 static int speedcheat = 0;	/* a well known hack allows to make Pac Man run at four times */

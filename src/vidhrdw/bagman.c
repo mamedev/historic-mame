@@ -6,15 +6,7 @@
 
 ***************************************************************************/
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include "mame.h"
-#include "common.h"
 #include "driver.h"
-#include "machine.h"
-#include "osdepend.h"
-
 
 
 #define VIDEO_RAM_SIZE 0x400
@@ -30,24 +22,11 @@ static struct osd_bitmap *tmpbitmap;
 int video_enable;
 
 
-static struct rectangle visiblearea =
-{
-	2*8, 30*8-1,
-	0*8, 32*8-1
-};
-
-
 
 int bagman_vh_start(void)
 {
-	int i;
-
-
 	if ((tmpbitmap = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 		return 1;
-
-	for (i = 0;i < tmpbitmap->height;i++)
-		memset(tmpbitmap->line[i],Machine->background_pen,tmpbitmap->width);
 
 	return 0;
 }
@@ -111,8 +90,7 @@ void bagman_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 	if (video_enable == 0)
 	{
-		for (i = 0;i < bitmap->height;i++)
-			memset(bitmap->line[i],Machine->background_pen,bitmap->width);
+		clearbitmap(bitmap);
 
 		return;
 	}
@@ -137,13 +115,13 @@ void bagman_vh_screenrefresh(struct osd_bitmap *bitmap)
 					bagman_colorram[offs] & 0x0f,
 					0,0,
 					sx,sy,
-					&visiblearea,TRANSPARENCY_NONE,0);
+					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 		}
 	}
 
 
 	/* copy the character mapped graphics */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&visiblearea,TRANSPARENCY_NONE,0);
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 
 
 	/* Draw the sprites. */
@@ -155,6 +133,6 @@ void bagman_vh_screenrefresh(struct osd_bitmap *bitmap)
 					bagman_spriteram[i+1] & 0x1f,
 					bagman_spriteram[i] & 0x80,bagman_spriteram[i] & 0x40,
 					bagman_spriteram[i+2] + 1,bagman_spriteram[i+3] - 1,
-					&visiblearea,TRANSPARENCY_PEN,0);
+					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}
 }

@@ -58,14 +58,13 @@ write:
 6805      ? (POUT2)
 6806      screen vertical flip
 6807      screen horizontal flip
-8200      To AY-3-8910 port A (commands for the second Z80?)
+8200      To AY-3-8910 port A (commands for the audio CPU?)
+8201      bit 3 = interrupt trigger on audio CPU  bit 4 = AMPM (?)
 8202      protection check control?
 
 ***************************************************************************/
 
 #include "driver.h"
-#include "machine.h"
-#include "common.h"
 
 
 extern int scramble_IN2_r(int offset);
@@ -107,6 +106,8 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x5060, 0x507f, MWA_RAM, &scramble_bulletsram },
 	{ 0x6801, 0x6801, interrupt_enable_w },
 	{ 0x6804, 0x6804, scramble_stars_w },
+	{ 0x6802, 0x6802, MWA_NOP },
+	{ 0x6806, 0x6807, MWA_NOP },
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
@@ -117,7 +118,7 @@ static struct InputPort input_ports[] =
 {
 	{	/* IN0 */
 		0xff,
-		{ 0, OSD_KEY_ALT, OSD_KEY_3, OSD_KEY_CONTROL, OSD_KEY_RIGHT, OSD_KEY_LEFT, 0, 0 },
+		{ 0, OSD_KEY_ALT, 0, OSD_KEY_CONTROL, OSD_KEY_RIGHT, OSD_KEY_LEFT, OSD_KEY_3, 0 },
 		{ 0, OSD_JOY_FIRE2, 0, OSD_JOY_FIRE1, OSD_JOY_RIGHT, OSD_JOY_LEFT, 0, 0 }
 	},
 	{	/* IN1 */
@@ -135,9 +136,19 @@ static struct InputPort input_ports[] =
 
 
 
-static struct DSW dsw[] =
+static struct DSW scramble_dsw[] =
 {
 	{ 1, 0x03, "LIVES", { "3", "4", "5", "256" } },
+	{ -1 }
+};
+
+static struct DSW atlantis_dsw[] =
+{
+	{ 1, 0x02, "LIVES", { "5", "3" }, 1 },
+	{ 1, 0x01, "SW1", { "OFF", "ON" } },
+	{ 2, 0x02, "SW3", { "OFF", "ON" } },
+	{ 2, 0x04, "SW4", { "OFF", "ON" } },
+	{ 2, 0x08, "SW5", { "OFF", "ON" } },
 	{ -1 }
 };
 
@@ -205,12 +216,43 @@ const struct MachineDriver scramble_driver =
 	3072000,	/* 3.072 Mhz */
 	60,
 	readmem,writemem,0,0,
-	input_ports,dsw,
+	input_ports,scramble_dsw,
 	0,
 	nmi_interrupt,
 
 	/* video hardware */
-	256,256,
+	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
+	gfxdecodeinfo,
+	32+64,32+64,	/* 32 for the characters, 64 for the stars */
+	color_prom,scramble_vh_convert_color_prom,0,0,
+	0,17,
+	0x00,0x01,
+	8*13,8*16,0x04,
+	0,
+	scramble_vh_start,
+	scramble_vh_stop,
+	scramble_vh_screenrefresh,
+
+	/* sound hardware */
+	0,
+	0,
+	0,
+	0,
+	0
+};
+
+const struct MachineDriver atlantis_driver =
+{
+	/* basic machine hardware */
+	3072000,	/* 3.072 Mhz */
+	60,
+	readmem,writemem,0,0,
+	input_ports,atlantis_dsw,
+	0,
+	nmi_interrupt,
+
+	/* video hardware */
+	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
 	gfxdecodeinfo,
 	32+64,32+64,	/* 32 for the characters, 64 for the stars */
 	color_prom,scramble_vh_convert_color_prom,0,0,

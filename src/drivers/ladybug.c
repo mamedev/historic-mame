@@ -85,8 +85,6 @@ Coin insertion in left slot generates an interrupt, in right slot a NMI.
 ***************************************************************************/
 
 #include "driver.h"
-#include "machine.h"
-#include "common.h"
 
 
 extern int ladybug_IN0_r(int offset);
@@ -243,7 +241,7 @@ const struct MachineDriver ladybug_driver =
 	ladybug_interrupt,
 
 	/* video hardware */
-	256,256,
+	32*8, 32*8, { 4*8, 28*8-1, 1*8, 31*8-1 },
 	gfxdecodeinfo,
 	32,4*24,
 	color_prom,ladybug_vh_convert_color_prom,0,0,

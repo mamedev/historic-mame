@@ -4,8 +4,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "machine.h"
-#include "common.h"
 
 
 extern unsigned char *mooncrst_videoram;
@@ -269,7 +267,7 @@ const struct MachineDriver theend_driver =
 	nmi_interrupt,
 
 	/* video hardware */
-	256,256,
+	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
 	gfxdecodeinfo,
 	sizeof(palette)/3,sizeof(colortable),
 	0,0,palette,colortable,

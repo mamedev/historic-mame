@@ -5,8 +5,14 @@
 
                   by Nicola Salmoria (MC6489@mclink.it)
 
+please note that many people helped with this project, either directly or
+by making source code available which I examined to write the drivers. I am
+not trying to appropriate merit which isn't mine. See the acknowledgemnts
+section for a list of contributors.
+
 
 Here is a quick list of ther currently supported games; read on for details.
+The list doesn't include variants of the same game.
 
 
 Game                         Playable?   Accurate colors?    Sound?
@@ -30,22 +36,26 @@ Pisces                         Yes            Yes           Limited
 "Japanese Irem game"           Yes             No           Limited
 War of the Bugs                Yes             No           Limited
 Moon Cresta                    Yes             No           Limited
-Moon Quasar                           not implemented yet
+Moon Quasar                    Yes             No           Limited
 The End                        Yes             No              No
 Scramble                       Yes            Yes              No
 Super Cobra                    Yes             ?               No
-Frogger                        Yes             No              No
-Amidar                         Yes             No              No
+Frogger                        Yes           Close             No
+Amidar                         Yes           Close             No
 Turtles                        Yes             No              No
 Rally X                   Yes (slowdowns)      No              No
 Pooyan                         Yes             No              No
 Phoenix                        Yes           Close             No
 Pleiades                       Yes             No              No
+Space Invaders                 Yes            Yes              No
+Carnival                        No             No              No
+Mario Bros.                    Yes             No              No
+Zaxxon                      Not really         No              No
 
 
 
-Acknoledgements
----------------
+Acknowledgements
+----------------
 
 First of all, thanks to Allard van der Bas (avdbas@wi.leidenuniv.nl) for
 starting the Arcade Emulation Programming Repository at
@@ -81,11 +91,20 @@ Special thanks to Brad Thomas (bradt@nol.net) and Gary Shepherdson for the
 Info on Bagman, Galaxian, Moon Cresta and many other games taken from Arcade
    Emulator by Robert Anschuetz.
 Pooyan information provided by Michael Cuddy and Allard van der Bas
+Thanks to Mirko Buffoni for the Amidar and Frogger colors.
 Phoenix driver provided by Brad Oliver (bradman@primenet.com) and Mirko
    Buffoni (mix@lim.dsi.unimi.it)
+Mario Bros. and Zaxxon driver provided by Mirko Buffoni (mix@lim.dsi.unimi.it)
 Thanks to Mike@Dissfulfils.co.uk for the information on the Moon Quasar
    encryption scheme.
+Space Invaders information gathered from the Space Invaders Emulator by
+   Michael Strutt (mstrutt@pixie.co.za)
 Many thanks to Jim Hernandez for the information on Wizard of Wor hardware.
+Thanks to Mike Coates (mike@dissfulfils.co.uk) for Carnival ROM placement
+   indications.
+Colors for Donkey Kong, Donkey Kong Jr. and Mario Bros. derived from Kong
+   emulator by Gary Shepherdson.
+Colors for Amidar and Frogger derived from SPARCADE by Dave Spicer.
 Thanks to Dave W. for all his help.
 
 
@@ -105,7 +124,8 @@ options:
 -vesa         use standard 640x480x256 VESA mode instead of custom video mode.
               Use this as a last resort if -noscanlines doesn't solve your
 			  video problems.
--nosound      turn off sound
+-soundcard n  select sound card (if this is not specified, you will be asked
+              interactively)
 -nojoy        don't poll joystick
 -log          create a log of illegal memory accesses in ERROR.LOG
 -frameskip n  skip frames to speed up the emulation. For example, if the game
@@ -125,6 +145,7 @@ The following keys work in all emulators:
 Tab     Change dip switch settings
 P       Pause
 F3      Reset
+F4      Show the game graphics. Use cursor keys to change set/color, F4 to exit.
 F11     Activate fps counter
 F12     Save a screen snapshot
 ESC     Exit emulator
@@ -268,9 +289,6 @@ Donkey Kong ("dkong")
 Arrows  Move around
 CTRL    Jump
 
-Known issues:
-- I can't find the color RAM!
-
 
 
 Donkey Kong Jr. ("dkongjr")
@@ -278,9 +296,6 @@ Donkey Kong Jr. ("dkongjr")
 
 Arrows  Move around
 CTRL    Jump
-
-Known issues:
-- I can't find the color RAM!
 
 
 
@@ -353,7 +368,6 @@ one. The dip switch menu might display wrong settings.
 
 Known issues:
 - Only one sound channel is emulated, and I'm not sure it's correct
-- What does dip switch 6 do?
 
 
 
@@ -416,6 +430,20 @@ Known issues:
 
 
 
+Moon Quasar ("moonqsr")
+-----------------------
+
+This runs on a modified Moon Cresta board.
+
+Arrows  Move around
+CTRL    Fire
+
+Known issues:
+- Only one sound channel is emulated, and I'm not sure it's correct
+- What do the dip switches do?
+
+
+
 The End ("theend")
 ------------------
 
@@ -441,6 +469,10 @@ Arrows  Move around
 CTRL    Fire
 ALT     Bomb
 
+Clones supported:
+  Battle of Atlantis ("atlantis") [I don't know what most of the dip switches
+                                   do, and you get 9 credits per coin.]
+
 Known issues:
 - The background stars don't blink. Maybe they should also be clipped to the top
   and bottom of the screen?
@@ -458,8 +490,8 @@ CTRL    Fire
 ALT     Bomb
 
 Known issues:
-- The background stars don't blink. Maybe they should also be clipped to the top
-  and bottom of the screen?
+- The background stars don't blink. Maybe they should also be clipped to the
+  top and bottom of the screen?
 - Two players mode doesn't work
 
 
@@ -540,3 +572,56 @@ This runs on the same hardware as Phoenix.
 Arrows  Move around
 CTRL    Fire
 ALT     Teleport
+
+
+
+Space Invaders ("invaders")
+---------------------------
+
+Arrows  Move around
+CTRL    Fire
+
+Clones supported (some of these have wrong colors, and the dip switch menu
+      doesn't work):
+  Super Earth Invasion ("earthinv")
+  Space Attack II ("spaceatt")
+  Space Invaders Deluxe ("invdelux") (doesn't work yet)
+  Galaxy Wars ("galxwars")
+  Lunar Rescur ("lrescue")
+  Destination Earth ("desterth")
+
+Known issues:
+- The color stripes are not placed correctly
+- Bullets and aliens sometimes stop for an instant
+- Interrupts are not handled well. You should run the game with
+  "-frameskip 1", otherwise it will try to refresh at 120 fps.
+
+
+
+Carnival ("carnival")
+---------------------
+
+Doesn't work yet!
+
+
+
+Mario Bros. ("mario")
+---------------------
+
+Arrows  Move around player 1
+CTRL    Jump player 1
+Z,X     Move around player 2
+SPACE   Jump player 2
+F1      Test (keep it pressed - very nice, try it!)
+
+
+
+Zaxxon ("zaxxon")
+---------------------
+
+Arrows  Move around
+CTRL    Fire
+
+Known issues:
+- The game is playable, but the background graphics layer is missing, so you
+  run into walls without seeing them ;-)

@@ -72,8 +72,6 @@ IM 2 and IM 0)
 ***************************************************************************/
 
 #include "driver.h"
-#include "machine.h"
-#include "common.h"
 
 
 extern unsigned char *rallyx_videoram1;
@@ -270,7 +268,7 @@ const struct MachineDriver rallyx_driver =
 	interrupt,
 
 	/* video hardware */
-	320,256,
+	320,256, {},	/* visible_area is not used by the video driver */
 	gfxdecodeinfo,
 	sizeof(palette)/3,sizeof(colortable),
 	0,0,palette,colortable,

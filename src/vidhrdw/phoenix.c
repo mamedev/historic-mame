@@ -6,14 +6,7 @@
 
 ***************************************************************************/
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include "mame.h"
-#include "common.h"
 #include "driver.h"
-#include "machine.h"
-#include "osdepend.h"
 
 
 #define VIDEO_RAM_SIZE	0x400
@@ -29,12 +22,6 @@ static int scrollreg;
 static int palette_bank;
 //static int bankreg;
 
-
-static struct rectangle visiblearea =
-{
-	3*8, 29*8-1,
-	0*8, 31*8-1
-};
 
 static struct rectangle backvisiblearea =
 {
@@ -52,9 +39,6 @@ static struct rectangle backtmparea =
 
 int phoenix_vh_start(void)
 {
-	int i;
-
-
 	scrollreg = 0;
 	palette_bank = 0;
 //	bankreg = 0;
@@ -68,11 +52,6 @@ int phoenix_vh_start(void)
 		osd_free_bitmap(tmpbitmap2);
 		return 1;
 	}
-
-	for (i = 0;i < tmpbitmap1->height;i++)
-		memset(tmpbitmap1->line[i],Machine->background_pen,tmpbitmap1->width);
-	for (i = 0;i < tmpbitmap2->height;i++)
-		memset(tmpbitmap2->line[i],Machine->background_pen,tmpbitmap2->width);
 
 	return 0;
 }
@@ -193,7 +172,7 @@ void phoenix_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 			drawgfx(tmpbitmap1,Machine->gfx[0],
 					phoenix_videoram1[offs],
-					(phoenix_videoram1[offs] >> 5) + 8 * palette_bank,
+					phoenix_videoram1[offs] >> 5,
 					0,0,sx,sy,
 					0,TRANSPARENCY_NONE,0);
 		}
@@ -203,7 +182,7 @@ void phoenix_vh_screenrefresh(struct osd_bitmap *bitmap)
 	/* copy the character mapped graphics */
 	copybitmap(bitmap,tmpbitmap2,0,0,0,256-scrollreg,&backvisiblearea,TRANSPARENCY_NONE,0);
 	copybitmap(bitmap,tmpbitmap2,0,0,0,-scrollreg,&backvisiblearea,TRANSPARENCY_NONE,0);
-	copybitmap(bitmap,tmpbitmap1,0,0,0,0,&visiblearea,TRANSPARENCY_NONE,0);
+	copybitmap(bitmap,tmpbitmap1,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 
 
 	/* draw the frontmost playfield. They are characters, but draw them as sprites */
@@ -220,6 +199,6 @@ void phoenix_vh_screenrefresh(struct osd_bitmap *bitmap)
 					phoenix_videoram1[offs],
 					(phoenix_videoram1[offs] >> 5) + 8 * palette_bank,
 					0,0,sx,sy,
-					&visiblearea,TRANSPARENCY_PEN,0);
+					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}
 }

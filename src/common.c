@@ -6,13 +6,7 @@
 
 ***************************************************************************/
 
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
 #include "driver.h"
-#include "machine.h"
-#include "common.h"
-#include "osdepend.h"
 
 
 /***************************************************************************
@@ -213,7 +207,7 @@ void freegfx(struct GfxElement *gfx)
 ***************************************************************************/
 void drawgfx(struct osd_bitmap *dest,const struct GfxElement *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
-		struct rectangle *clip,int transparency,int transparent_color)
+		const struct rectangle *clip,int transparency,int transparent_color)
 {
 	int ox,oy,ex,ey,x,y,start;
 	const unsigned char *sd;
@@ -622,7 +616,7 @@ void drawgfx(struct osd_bitmap *dest,const struct GfxElement *gfx,
 
 ***************************************************************************/
 void copybitmap(struct osd_bitmap *dest,struct osd_bitmap *src,int flipx,int flipy,int sx,int sy,
-		struct rectangle *clip,int transparency,int transparent_color)
+		const struct rectangle *clip,int transparency,int transparent_color)
 {
 	static struct GfxElement mygfx =
 	{
@@ -634,6 +628,17 @@ void copybitmap(struct osd_bitmap *dest,struct osd_bitmap *src,int flipx,int fli
 	mygfx.height = src->height;
 	mygfx.gfxdata = src;
 	drawgfx(dest,&mygfx,0,0,flipx,flipy,sx,sy,clip,transparency,transparent_color);
+}
+
+
+
+void clearbitmap(struct osd_bitmap *bitmap)
+{
+	int i;
+
+
+	for (i = 0;i < bitmap->height;i++)
+		memset(bitmap->line[i],Machine->background_pen,bitmap->width);
 }
 
 
@@ -744,8 +749,7 @@ void setdipswitches(void)
 	}
 
 	/* clear the screen before returning */
-	for (i = 0;i < Machine->scrbitmap->height;i++)
-		memset(Machine->scrbitmap->line[i],Machine->background_pen,Machine->scrbitmap->width);
+	clearbitmap(Machine->scrbitmap);
 }
 
 
@@ -761,33 +765,34 @@ void setdipswitches(void)
 ***************************************************************************/
 void displaytext(const struct DisplayText *dt,int erase)
 {
-	if (erase)
-	{
-		int i;
-
-
-		for (i = 0;i < Machine->scrbitmap->height;i++)
-			memset(Machine->scrbitmap->line[i],Machine->background_pen,Machine->scrbitmap->width);
-	}
+	if (erase) clearbitmap(Machine->scrbitmap);
 
 	while (dt->text)
 	{
-		int x;
+		int x,y;
 		const char *c;
 
 
 		x = dt->x;
+		y = dt->y;
 		c = dt->text;
 
 		while (*c)
 		{
-			if (*c != ' ')
+			if (*c != ' ' && *c != '\n')
 			{
 				if (*c >= '0' && *c <= '9')
-					drawgfx(Machine->scrbitmap,Machine->gfx[0],*c - '0' + Machine->drv->numbers_start,dt->color,0,0,x,dt->y,0,TRANSPARENCY_NONE,0);
-				else drawgfx(Machine->scrbitmap,Machine->gfx[0],*c - 'A' + Machine->drv->letters_start,dt->color,0,0,x,dt->y,0,TRANSPARENCY_NONE,0);
+					drawgfx(Machine->scrbitmap,Machine->gfx[0],*c - '0' + Machine->drv->numbers_start,dt->color,0,0,x,y,0,TRANSPARENCY_NONE,0);
+				else drawgfx(Machine->scrbitmap,Machine->gfx[0],*c - 'A' + Machine->drv->letters_start,dt->color,0,0,x,y,0,TRANSPARENCY_NONE,0);
 			}
-			x += 8;
+
+			x += Machine->gfx[0]->width;
+			if (*c == '\n' || x + Machine->gfx[0]->width > Machine->drv->screen_width)
+			{
+				x = dt->x;
+				y += Machine->gfx[0]->height + 1;
+			}
+
 			c++;
 		}
 
@@ -795,4 +800,71 @@ void displaytext(const struct DisplayText *dt,int erase)
 	}
 
 	osd_update_display();
+}
+
+
+
+void showcharset(void)
+{
+	int i,key,cpl;
+	struct DisplayText dt[2];
+	char buf[80];
+	int bank,color;
+
+
+	bank = 0;
+	color = 0;
+
+	do
+	{
+		sprintf(buf,"GFXSET %d  COLOR %d",bank,color);
+		dt[0].text = buf;
+		dt[0].color = Machine->drv->paused_color;
+		dt[0].x = 0;
+		dt[0].y = 0;
+		dt[1].text = 0;
+		displaytext(dt,1);
+
+		cpl = Machine->scrbitmap->width / Machine->gfx[bank]->width;
+
+		for (i = 0;i < Machine->drv->gfxdecodeinfo[bank].gfxlayout->total;i++)
+		{
+			drawgfx(Machine->scrbitmap,Machine->gfx[bank],
+					i,color,
+					0,0,
+					(i % cpl) * Machine->gfx[bank]->width,
+					Machine->gfx[0]->height+1 + (i / cpl) * Machine->gfx[bank]->height,
+					0,TRANSPARENCY_NONE,0);
+		}
+		osd_update_display();
+
+		key = osd_read_key();
+
+		switch (key)
+		{
+			case OSD_KEY_RIGHT:
+				if (Machine->gfx[bank + 1]) bank++;
+				break;
+
+			case OSD_KEY_LEFT:
+				if (bank > 0) bank--;
+				break;
+
+			case OSD_KEY_UP:
+				if (color < Machine->drv->gfxdecodeinfo[bank].total_color_codes - 1)
+					color++;
+				break;
+
+			case OSD_KEY_DOWN:
+				if (color > 0) color--;
+				break;
+		}
+	} while (key != OSD_KEY_F4 && key != OSD_KEY_ESC);
+
+	while (osd_key_pressed(key));	/* wait for key release */
+
+	if (key == OSD_KEY_ESC) Z80_Running = 0;
+
+	/* clear the screen before returning */
+	clearbitmap(Machine->scrbitmap);
 }

@@ -6,14 +6,7 @@
 
 ***************************************************************************/
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include "mame.h"
-#include "common.h"
 #include "driver.h"
-#include "machine.h"
-#include "osdepend.h"
 
 
 #define VIDEO_RAM_SIZE 0x400
@@ -31,14 +24,6 @@ static int scroll_x;
 
 
 static struct osd_bitmap *tmpbitmap,*tmpbitmap1,*tmpbitmap2;
-
-
-
-static struct rectangle visiblearea =
-{
-	4*8, 28*8-1,
-	1*8, 31*8-1
-};
 
 
 
@@ -134,9 +119,6 @@ void mrdo_vh_convert_color_prom(unsigned char *palette, unsigned char *colortabl
 
 int mrdo_vh_start(void)
 {
-	int i;
-
-
 	if ((tmpbitmap = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 		return 1;
 
@@ -152,11 +134,6 @@ int mrdo_vh_start(void)
 		osd_free_bitmap(tmpbitmap1);
 		return 1;
 	}
-
-	for (i = 0;i < tmpbitmap1->height;i++)
-		memset(tmpbitmap1->line[i],Machine->background_pen,tmpbitmap1->width);
-	for (i = 0;i < tmpbitmap2->height;i++)
-		memset(tmpbitmap2->line[i],Machine->background_pen,tmpbitmap2->width);
 
 	return 0;
 }
@@ -279,12 +256,12 @@ void mrdo_vh_screenrefresh(struct osd_bitmap *bitmap)
 					mrdo_videoram1[offs] + 2 * (mrdo_colorram1[offs] & 0x80),
 					mrdo_colorram1[offs] & 0x7f,
 					0,0,sx,sy,
-					0,TRANSPARENCY_NONE,0);
+					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 			drawgfx(tmpbitmap,Machine->gfx[0],
 					mrdo_videoram2[offs] + 2 * (mrdo_colorram2[offs] & 0x80),
 					mrdo_colorram2[offs] & 0x7f,
 					0,0,sx,sy,
-					0,(mrdo_colorram2[offs] & 0x40) ? TRANSPARENCY_NONE : TRANSPARENCY_PEN,0);
+					&Machine->drv->visible_area,(mrdo_colorram2[offs] & 0x40) ? TRANSPARENCY_NONE : TRANSPARENCY_PEN,0);
 		}
 	}
 
@@ -292,13 +269,13 @@ void mrdo_vh_screenrefresh(struct osd_bitmap *bitmap)
 	/* copy the character mapped graphics */
 	if (scroll_x)
 	{
-		copybitmap(bitmap,tmpbitmap1,0,0,256-scroll_x,0,&visiblearea,TRANSPARENCY_NONE,0);
-		copybitmap(bitmap,tmpbitmap1,0,0,-scroll_x,0,&visiblearea,TRANSPARENCY_NONE,0);
+		copybitmap(bitmap,tmpbitmap1,0,0,256-scroll_x,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		copybitmap(bitmap,tmpbitmap1,0,0,-scroll_x,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 
-		copybitmap(bitmap,tmpbitmap2,0,0,0,0,&visiblearea,TRANSPARENCY_COLOR,Machine->background_pen);
+		copybitmap(bitmap,tmpbitmap2,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_COLOR,Machine->background_pen);
 	}
 	else
-		copybitmap(bitmap,tmpbitmap,0,0,0,0,&visiblearea,TRANSPARENCY_NONE,0);
+		copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 
 
 	/* Draw the sprites. Note that it is important to draw them exactly in this */
@@ -311,7 +288,7 @@ void mrdo_vh_screenrefresh(struct osd_bitmap *bitmap)
 					mrdo_spriteram[i],mrdo_spriteram[i + 2] & 0x0f,
 					mrdo_spriteram[i + 2] & 0x20,mrdo_spriteram[i + 2] & 0x10,
 					256 - mrdo_spriteram[i + 1],240 - mrdo_spriteram[i + 3],
-					&visiblearea,TRANSPARENCY_PEN, 0);
+					&Machine->drv->visible_area,TRANSPARENCY_PEN, 0);
 		}
 	}
 }

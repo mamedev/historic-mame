@@ -6,15 +6,7 @@
 
 ***************************************************************************/
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include "mame.h"
-#include "common.h"
 #include "driver.h"
-#include "machine.h"
-#include "osdepend.h"
-
 
 
 #define VIDEO_RAM_SIZE 0x400
@@ -40,14 +32,6 @@ static struct star stars[MAX_STARS];
 static int total_stars;
 
 static struct osd_bitmap *tmpbitmap;
-
-
-
-static struct rectangle visiblearea =
-{
-	2*8, 30*8-1,
-	0*8, 32*8-1
-};
 
 
 
@@ -132,7 +116,6 @@ void mooncrst_vh_convert_color_prom(unsigned char *palette, unsigned char *color
 
 int mooncrst_vh_start(void)
 {
-	int i;
 	int generator;
 	int x,y;
 
@@ -143,10 +126,6 @@ int mooncrst_vh_start(void)
 
 	if ((tmpbitmap = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 		return 1;
-
-
-	for (i = 0;i < tmpbitmap->height;i++)
-		memset(tmpbitmap->line[i],Machine->background_pen,tmpbitmap->width);
 
 
 	/* precalculate the star background */
@@ -166,7 +145,8 @@ int mooncrst_vh_start(void)
 
 			if (bit1 ^ bit2) generator |= 1;
 
-			if (x >= 16 && x < 240 &&
+			if (x >= Machine->drv->visible_area.min_x &&
+					x <= Machine->drv->visible_area.max_x &&
 					((~generator >> 16) & 1) &&
 					(generator & 0xff) == 0xff)
 			{
@@ -298,8 +278,8 @@ void mooncrst_vh_screenrefresh(struct osd_bitmap *bitmap)
 		struct rectangle clip;
 
 
-		clip.min_x = visiblearea.min_x;
-		clip.max_x = visiblearea.max_x;
+		clip.min_x = Machine->drv->visible_area.min_x;
+		clip.max_x = Machine->drv->visible_area.max_x;
 
 		for (i = 0;i < 32 * 8;i += 8)
 		{
@@ -329,7 +309,7 @@ void mooncrst_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 		x = mooncrst_bulletsram[offs + 1];
 
-		if (x >= visiblearea.min_x && x <= visiblearea.max_x)
+		if (x >= Machine->drv->visible_area.min_x && x <= Machine->drv->visible_area.max_x)
 		{
 			y = 256 - mooncrst_bulletsram[offs + 3] - 4;
 
@@ -364,7 +344,7 @@ void mooncrst_vh_screenrefresh(struct osd_bitmap *bitmap)
 					mooncrst_spriteram[offs + 2],
 					mooncrst_spriteram[offs + 1] & 0x80,mooncrst_spriteram[offs + 1] & 0x40,
 					mooncrst_spriteram[offs],mooncrst_spriteram[offs + 3],
-					&visiblearea,TRANSPARENCY_PEN,0);
+					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 		}
 	}
 

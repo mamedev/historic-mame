@@ -86,8 +86,6 @@ write:
 ***************************************************************************/
 
 #include "driver.h"
-#include "machine.h"
-#include "common.h"
 
 
 extern unsigned char *pengo_videoram;
@@ -282,7 +280,7 @@ const struct MachineDriver pengo_driver =
 	interrupt,
 
 	/* video hardware */
-	224,288,
+	28*8, 36*8, { 0*8, 28*8-1, 0*8, 36*8-1 },
 	gfxdecodeinfo,
 	32,4*64,
 	color_prom,pengo_vh_convert_color_prom,0,0,

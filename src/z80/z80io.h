@@ -46,7 +46,7 @@ void Z80_WRMEM(dword A,byte V);
 /* used to greatly speed up emulation                                       */
 /****************************************************************************/
 /*#define Z80_RDOP(A)		Z80_RDMEM(A)*/
-extern byte RAM[];
+extern byte *RAM;
 extern unsigned (*opcode_decode)(dword A);
 #define Z80_RDOP(A) (opcode_decode ? (*opcode_decode)(A) : RAM[A])
 
