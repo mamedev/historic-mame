@@ -260,6 +260,7 @@ struct CPS1config *cps1_game_config;
 #define QSOUND_3 0x4e,0x0c00, 0x00,0x00,0x00,0x00, 0x52,{0x54,0x56,0x48,0x4a},0x4c, {0x04,0x02,0x20,0x00,0x00}
 #define QSOUND_4 0x6e,0x0c01, 0x00,0x00,0x00,0x00, 0x56,{0x40,0x42,0x68,0x6a},0x6c, {0x04,0x08,0x10,0x00,0x00}
 #define QSOUND_5 0x5e,0x0c02, 0x00,0x00,0x00,0x00, 0x6a,{0x6c,0x6e,0x70,0x72},0x5c, {0x04,0x08,0x10,0x00,0x00}
+#define HACK_B_1 0x00,0x0000, 0x00,0x00,0x00,0x00, 0x54,{0x52,0x50,0x4e,0x4c},0x5c, {0xff,0xff,0xff,0x00,0x00}
 
 
 static struct CPS1config cps1_config_table[]=
@@ -341,12 +342,12 @@ static struct CPS1config cps1_config_table[]=
 	{"sf2m1",   NOBATTRY, 2,2,2, 0x0000,0xffff,0x0000,0xffff },
 	{"sf2m2",   NOBATTRY, 2,2,2, 0x0000,0xffff,0x0000,0xffff },
 	{"sf2m3",   NOBATTRY, 2,2,2, 0x0000,0xffff,0x0000,0xffff },
-	{"sf2m4",   NOBATTRY, 2,2,2, 0x0000,0xffff,0x0000,0xffff },
-	{"sf2m5",   NOBATTRY, 2,2,2, 0x0000,0xffff,0x0000,0xffff },
-	{"sf2m6",   NOBATTRY, 2,2,2, 0x0000,0xffff,0x0000,0xffff },
-	{"sf2m7",   NOBATTRY, 2,2,2, 0x0000,0xffff,0x0000,0xffff },
-	{"sf2yyc",  NOBATTRY, 2,2,2, 0x0000,0xffff,0x0000,0xffff },
-	{"sf2koryu",NOBATTRY, 2,2,2, 0x0000,0xffff,0x0000,0xffff },
+	{"sf2m4",   HACK_B_1, 2,2,2, 0x0000,0xffff,0x0000,0xffff, 10 },
+	{"sf2m5",   NOBATTRY, 2,2,2, 0x0000,0xffff,0x0000,0xffff, 10 },
+	{"sf2m6",   NOBATTRY, 2,2,2, 0x0000,0xffff,0x0000,0xffff, 10 },
+	{"sf2m7",   NOBATTRY, 2,2,2, 0x0000,0xffff,0x0000,0xffff, 10 },
+	{"sf2yyc",  NOBATTRY, 2,2,2, 0x0000,0xffff,0x0000,0xffff, 10 },
+	{"sf2koryu",NOBATTRY, 2,2,2, 0x0000,0xffff,0x0000,0xffff, 10 },
 	{"varth",   CPS_B_04, 0,0,0, 0x0000,0xffff,0x0c00,0x0fff },	/* CPSB test has been patched out (60=0008) */
 	{"varthu",  CPS_B_04, 0,0,0, 0x0000,0xffff,0x0c00,0x0fff },	/* CPSB test has been patched out (60=0008) */
 	{"varthj",  BATTRY_5, 0,0,0, 0x0000,0xffff,0x0c00,0x0fff },	/* CPSB test has been patched out (72=0001) */
@@ -853,7 +854,7 @@ void cps1_dump_video(void)
 
 static void cps1_get_video_base(void )
 {
-	int layercontrol;
+	int layercontrol, scroll1xoff, scroll2xoff, scroll3xoff;
 
 	/* Re-calculate the VIDEO RAM base */
 	if (cps1_scroll1 != cps1_base(CPS1_SCROLL1_BASE,cps1_scroll_size))
@@ -872,16 +873,31 @@ static void cps1_get_video_base(void )
 		tilemap_mark_all_tiles_dirty(tilemap[2]);
 	}
 
-	cps1_obj=cps1_base(CPS1_OBJ_BASE, cps1_obj_size);
+	/* Some of the sf2 hacks use only sprite port 0x9100 and the scroll layers are offset */
+	if (cps1_game_config->kludge == 10)
+	{
+		cps1_output[CPS1_OBJ_BASE/2] = 0x9100;
+		cps1_obj=cps1_base(CPS1_OBJ_BASE, cps1_obj_size);
+		scroll1xoff = -0x0c;
+		scroll2xoff = -0x0e;
+		scroll3xoff = -0x10;
+	}
+	else
+	{
+		cps1_obj=cps1_base(CPS1_OBJ_BASE, cps1_obj_size);
+		scroll1xoff = 0;
+		scroll2xoff = 0;
+		scroll3xoff = 0;
+	}
 	cps1_palette=cps1_base(CPS1_PALETTE_BASE,cps1_palette_align);
 	cps1_other=cps1_base(CPS1_OTHER_BASE,cps1_other_size);
 
 	/* Get scroll values */
-	scroll1x=cps1_port(CPS1_SCROLL1_SCROLLX);
+	scroll1x=cps1_port(CPS1_SCROLL1_SCROLLX) + scroll1xoff;
 	scroll1y=cps1_port(CPS1_SCROLL1_SCROLLY);
-	scroll2x=cps1_port(CPS1_SCROLL2_SCROLLX);
+	scroll2x=cps1_port(CPS1_SCROLL2_SCROLLX) + scroll2xoff;
 	scroll2y=cps1_port(CPS1_SCROLL2_SCROLLY);
-	scroll3x=cps1_port(CPS1_SCROLL3_SCROLLX);
+	scroll3x=cps1_port(CPS1_SCROLL3_SCROLLX) + scroll3xoff;
 	scroll3y=cps1_port(CPS1_SCROLL3_SCROLLY);
 	stars1x =cps1_port(CPS1_STARS1_SCROLLX);
 	stars1y =cps1_port(CPS1_STARS1_SCROLLY);
@@ -1315,8 +1331,20 @@ void cps1_render_sprites(struct mame_bitmap *bitmap, const struct rectangle *cli
 }
 
 
-	int i;
+	int i, baseadd;
 	data16_t *base=cps1_buffered_obj;
+
+	/* some sf2 hacks draw the sprites in reverse order */
+	if (cps1_game_config->kludge == 10)
+	{
+		base += cps1_last_sprite_offset;
+		baseadd = -4;
+	}
+	else
+	{
+		baseadd = 4;
+	}
+
 	for (i=cps1_last_sprite_offset; i>=0; i-=4)
 	{
 		int x=*(base+0);
@@ -1438,7 +1466,7 @@ void cps1_render_sprites(struct mame_bitmap *bitmap, const struct rectangle *cli
 						x & 0x1ff,y & 0x1ff);
 			}
 		}
-		base += 4;
+		base += baseadd;
 	}
 #undef DRAWSPRITE
 }

@@ -180,6 +180,9 @@ static struct stv_vdp2_sprite_list
 
 } stv2_current_sprite;
 
+int stvvdp1_local_x;
+int stvvdp1_local_y;
+
 /* we should actually draw to the framebuffer then process that with vdp.. note that if we're drawing
 to the framebuffer we CAN'T frameskip the vdp1 drawing as the hardware can READ the framebuffer
 and if we skip the drawing the content could be incorrect when it reads it, although i have no idea
@@ -206,8 +209,8 @@ void stv_vpd1_draw_normal_sprite(struct mame_bitmap *bitmap, const struct rectan
 	if (y & 0x200) y-=0x400;
 
 	/* shift a bit ..*/
-	x+= 128+32;
-	y+= 128-16;
+	x+= stvvdp1_local_x;
+	y+= stvvdp1_local_y;
 
 	direction = (stv2_current_sprite.CMDCTRL & 0x0030)>>4;
 
@@ -459,8 +462,9 @@ void stv_vdp1_process_list(struct mame_bitmap *bitmap, const struct rectangle *c
 				}
 				else
 				{
-					if (vdp1_sprite_log) logerror ("Attempted return from no subroutine, ignoring\n");
+					if (vdp1_sprite_log) logerror ("Attempted return from no subroutine, aborting\n");
 					position++;
+					goto end; // end of list
 				}
 				break;
 			case 0x4000:
@@ -499,8 +503,9 @@ void stv_vdp1_process_list(struct mame_bitmap *bitmap, const struct rectangle *c
 				}
 				else
 				{
-					if (vdp1_sprite_log) logerror ("Attempted return from no subroutine, ignoring\n");
+					if (vdp1_sprite_log) logerror ("Attempted return from no subroutine, aborting\n");
 					position++;
+					goto end; // end of list
 				}
 				break;
 		}
@@ -526,7 +531,7 @@ void stv_vdp1_process_list(struct mame_bitmap *bitmap, const struct rectangle *c
 					break;
 
 				case 0x0004:
-					if (vdp1_sprite_log) logerror ("Sprite List Polygon and doesn't want a cracker anymore\n");
+					if (vdp1_sprite_log) logerror ("Sprite List Polygon\n");
 					break;
 
 				case 0x0005:
@@ -547,6 +552,8 @@ void stv_vdp1_process_list(struct mame_bitmap *bitmap, const struct rectangle *c
 
 				case 0x000a:
 					if (vdp1_sprite_log) logerror ("Sprite List Local Co-Ordinate Set\n");
+					stvvdp1_local_x = stv2_current_sprite.CMDXA;
+					stvvdp1_local_y = stv2_current_sprite.CMDYA;
 					break;
 
 				default:

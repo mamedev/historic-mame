@@ -3627,15 +3627,16 @@ ROM_START( gorkans )
 	ROM_LOAD( "gorkans5.rom",        0x3000, 0x0800, CRC(122969b2) SHA1(0803e1ec5e5ed742ea83ff156ae75a2d48530f71) )
 	ROM_LOAD( "gorkans1.rom",        0x3800, 0x0800, CRC(f2524b11) SHA1(1216b963e73c1de63cc323e361875f6810d83a05) )
 
-	/* where are the gfx ?!, if we use the gfx from mrtnt we get the playfield but titlescreen and sprites are corrupt */
 	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "gorkgfx.1",        0x0000, 0x1000, NO_DUMP )
+	ROM_LOAD( "gorkgfx4.rom",        0x0000, 0x0800, CRC(39cd0dbc) SHA1(8d6882dad94b26da8f0737e7f7f99946fe273f1b) )
+	ROM_LOAD( "gorkgfx2.rom",        0x0800, 0x0800, CRC(33d52535) SHA1(e78ac5afa1ce996c41005c619ba2d2aa718497fc) )
 
 	ROM_REGION( 0x1000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "gorkgfx.2",        0x0000, 0x1000, NO_DUMP )
+	ROM_LOAD( "gorkgfx3.rom",        0x0000, 0x0800, CRC(4b6b7970) SHA1(1d8b65cad0b834fb920135fc907432042bc83db2) )
+	ROM_LOAD( "gorkgfx1.rom",        0x0800, 0x0800, CRC(ed70bb3c) SHA1(7e51ddcf496f3b80fe186acc8bc6a0e574340346) )
 
 	ROM_REGION( 0x0120, REGION_PROMS, 0 )
-	ROM_LOAD( "gorkprom.4",  0x0000, 0x0020, NO_DUMP )
+	ROM_LOAD( "gorkprom.4",   0x0000, 0x0020, CRC(2fc650bd) SHA1(8d0268dee78e47c712202b0ec4f1f51109b1f2a5) )
 	ROM_LOAD( "gorkprom.1",   0x0020, 0x0100, CRC(3eb3a8e4) SHA1(19097b5f60d1030f8b82d9f1d3a241f93e5c75d6) )
 
 	ROM_REGION( 0x0200, REGION_SOUND1, 0 )	/* sound PROMs */
@@ -4316,22 +4317,6 @@ static DRIVER_INIT( porky )
 
 }
 
-static DRIVER_INIT( gorkans )
-{
-	int i;
-	unsigned char *RAM;
-
-
-	/* Graphics ROMs  (from MRTNT)*/
-
-	/* Data lines D4 and D6 and address lines A0 and A2 are swapped */
-	RAM = memory_region(REGION_GFX1);
-	for (i = 0;i < memory_region_length(REGION_GFX1);i += 8)
-		eyes_decode(&RAM[i]);
-	RAM = memory_region(REGION_GFX2);
-	for (i = 0;i < memory_region_length(REGION_GFX2);i += 8)
-		eyes_decode(&RAM[i]);
-}
 
 /*************************************
  *
@@ -4378,7 +4363,7 @@ GAME( 1982, ponpokov, ponpoko,  pacman,   ponpoko,  ponpoko,  ROT0,   "Sigma Ent
 GAME( 1982, eyes,     0,        pacman,   eyes,     eyes,     ROT90,  "Digitrex Techstar (Rock-ola license)", "Eyes (Digitrex Techstar)" )
 GAME( 1982, eyes2,    eyes,     pacman,   eyes,     eyes,     ROT90,  "Techstar (Rock-ola license)", "Eyes (Techstar)" )
 GAMEX(1983, mrtnt,    0,        pacman,   mrtnt,    eyes,     ROT90,  "Telko", "Mr. TNT", GAME_WRONG_COLORS )
-GAMEX(1983, gorkans,  mrtnt,    pacman,   mrtnt,    gorkans,  ROT90,  "Techstar", "Gorkans", GAME_WRONG_COLORS | GAME_IMPERFECT_GRAPHICS   )
+GAME( 1983, gorkans,  mrtnt,    pacman,   mrtnt,    0,        ROT90,  "Techstar", "Gorkans" )
 GAMEX(1983, eggor,    0,        pacman,   mrtnt,    eyes,     ROT90,  "Telko", "Eggor", GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND  )
 GAME( 1985, lizwiz,   0,        pacman,   lizwiz,   0,        ROT90,  "Techstar (Sunn license)", "Lizard Wizard" )
 GAME( 1983, theglobp, suprglob, theglobp, theglobp, 0,        ROT90,  "Epos Corporation", "The Glob (Pac-Man hardware)" )

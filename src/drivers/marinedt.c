@@ -92,7 +92,7 @@ have i been using x/y consistently, ie non rotated or rotated origin?
 	yes, seems to be best using xy raw (ie non-rotated)
 */
 
-#include "vidhrdw\generic.h"
+#include "vidhrdw/generic.h"
 
 static int marinedt_obj1_a, marinedt_obj1_x, marinedt_obj1_y, marinedt_music, marinedt_sound, marinedt_obj2_a, marinedt_obj2_x, marinedt_obj2_y, marinedt_pd, marinedt_pf;
 static	int coll,cx,cyr,cyq;

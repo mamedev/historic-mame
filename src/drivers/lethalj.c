@@ -76,7 +76,7 @@ static MEMORY_WRITE16_START( lethalj_writemem )
 	{ TOBYTE(0x04400000), TOBYTE(0x0440000f), MWA16_NOP },	/* clocks bits through here */
 	{ TOBYTE(0x04700000), TOBYTE(0x047000ff), lethalj_blitter_w },
 	{ TOBYTE(0xc0000000), TOBYTE(0xc00001ff), tms34010_io_register_w },
-	{ TOBYTE(0xc0000240), TOBYTE(0xc000025f), MWA16_NOP },		/* seems to be a bug in their code */
+	{ TOBYTE(0xc0000240), TOBYTE(0xc000025f), MWA16_NOP },		/* seems to be a bug in their code, one of many. */
 	{ TOBYTE(0xff800000), TOBYTE(0xffffffff), MWA16_ROM, &code_rom },
 MEMORY_END
 
@@ -92,8 +92,8 @@ INPUT_PORTS_START( lethalj )
 	PORT_START
 	PORT_BIT( 0x0003, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
-	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_UNKNOWN )		/* ??? */
-	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_UNKNOWN )		/* ??? Seems to be rigged up to the auto scroll, and acts as a fast forward*/
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 ) 
 	PORT_BIT( 0xffe0, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START
@@ -176,9 +176,9 @@ INPUT_PORTS_START( eggventr )
 	PORT_DIPSETTING(      0x0400, "Easy" )
 	PORT_DIPSETTING(      0x0800, "Medium" )
 	PORT_DIPSETTING(      0x0000, "Hard" )
-	PORT_DIPNAME( 0x1000, 0x1000, "Slot Machine" ) // Verified Correct - Unused for the Deluxe version??
-	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x1000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x1000, 0x1000, "Slot Machine" ) // Verified Correct - Unused for the Deluxe version?? Yes, the slot machine
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) ) // is present in the code as a 'bonus stage' (when the egg reaches Vegas?), 
+	PORT_DIPSETTING(      0x1000, DEF_STR( On ) ) // but not actually called (EC). 
 	PORT_BIT( 0xe000, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START
@@ -203,6 +203,57 @@ INPUT_PORTS_START( eggventr )
 	PORT_ANALOG( 0xff, 0x80, IPT_LIGHTGUN_Y | IPF_PLAYER2, 70, 10, 0, 255 )
 INPUT_PORTS_END
 
+
+INPUT_PORTS_START( eggventdx )
+	PORT_START
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_DIPNAME( 0x0070, 0x0000, DEF_STR( Coinage ))
+	PORT_DIPSETTING(      0x0040, DEF_STR( 8C_1C ))
+	PORT_DIPSETTING(      0x0030, DEF_STR( 4C_1C ))
+	PORT_DIPSETTING(      0x0020, DEF_STR( 3C_1C ))
+	PORT_DIPSETTING(      0x0010, DEF_STR( 2C_1C ))
+	PORT_DIPSETTING(      0x0000, DEF_STR( 1C_1C ))
+	PORT_DIPSETTING(      0x0050, DEF_STR( 1C_2C ))
+	PORT_DIPSETTING(      0x0060, DEF_STR( 1C_4C ))
+	PORT_DIPSETTING(      0x0070, DEF_STR( Free_Play ))
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_DIPNAME( 0x0300, 0x0300, DEF_STR( Lives ) ) // Verified Correct
+	PORT_DIPSETTING(      0x0000, "3" )
+	PORT_DIPSETTING(      0x0100, "4" )
+	PORT_DIPSETTING(      0x0200, "5" )
+	PORT_DIPSETTING(      0x0300, "6" )
+	PORT_DIPNAME( 0x0c00, 0x0800, DEF_STR( Difficulty ) ) // According to info from The Gameroom
+	PORT_DIPSETTING(      0x0c00, "Very Easy" )
+	PORT_DIPSETTING(      0x0400, "Easy" )
+	PORT_DIPSETTING(      0x0800, "Medium" )
+	PORT_DIPSETTING(      0x0000, "Hard" )
+	PORT_BIT( 0x0080, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0xe000, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START
+	PORT_BIT( 0x000f, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x7f00, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_START2 )
+
+	PORT_START				/* fake analog X */
+	PORT_ANALOG( 0xff, 0x80, IPT_LIGHTGUN_X, 50, 10, 0, 255 )
+
+	PORT_START				/* fake analog Y */
+	PORT_ANALOG( 0xff, 0x80, IPT_LIGHTGUN_Y, 70, 10, 0, 255 )
+
+	PORT_START				/* fake analog X */
+	PORT_ANALOG( 0xff, 0x80, IPT_LIGHTGUN_X | IPF_PLAYER2, 50, 10, 0, 255 )
+
+	PORT_START				/* fake analog Y */
+	PORT_ANALOG( 0xff, 0x80, IPT_LIGHTGUN_Y | IPF_PLAYER2, 70, 10, 0, 255 )
+INPUT_PORTS_END
 
 
 /*************************************
@@ -394,4 +445,4 @@ static DRIVER_INIT( lethalj )
 
 GAME( 1996, lethalj,  0,        lethalj,  lethalj,  lethalj, ROT0, "The Game Room", "Lethal Justice" )
 GAME( 1997, eggventr, 0,        eggventr, eggventr, lethalj, ROT0, "The Game Room", "Egg Venture" )
-GAME( 1997, eggvntdx, eggventr, eggventr, eggventr, lethalj, ROT0, "The Game Room", "Egg Venture Deluxe" )
+GAME( 1997, eggvntdx, eggventr, eggventr, eggventdx, lethalj, ROT0, "The Game Room", "Egg Venture Deluxe" )

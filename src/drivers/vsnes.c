@@ -7,6 +7,7 @@ Nintendo VS UniSystem and DualSystem - (c) 1984 Nintendo of America
 
 RP2C04-001:
 - Baseball
+- Freedom Force
 - Gradius
 - Hogan's Alley
 - Mach Rider (Japan, Fighting Course)
@@ -61,38 +62,44 @@ RC2C05-03:
 RC2C05-04:
 - Top Gun
 
+Graphic hack games:
+- Skate Kids								(by Two-Bit Score, 1988; hack of Vs. Super Mario Bros.)
+
 Needed roms:
 - Babel no Tou								(by Namco, 198?)
 - Family Boxing								(by Namco/Woodplace, 198?)
 - Family Stadium '87						(by Namco, 1987)
 - Family Stadium '88						(by Namco, 1988)
 - Family Tennis								(by Namco, 198?)
+- Head to Head Baseball						(ever finished/released?, by Nintendo, 1986)
 - Japanese version of Vs. Tennis			(1984)
 - Japanese version of Vs. Soccer			(1985)
 - Japanese version of Vs. Super Mario Bros. (1986)
-- Madoula no Tsubasa						(by Sunsoft, 198?)
+- Lionex ?									(title uncertain, prototype by Sunsoft, 1986)
+- Madoula no Tsubasa						(prototype by Sunsoft, 1985)
+- Predators									(prototype by Williams, 84)
 - Pro Yakyuu Family Stadium					(by Namco, 1986?)
 - Quest of Ki								(by Namco/Game Studio, 198?)
-- Skate Kids								(by Two-Bit Score, 198?; hack of Vs. Super Mario Bros.)
-- Sky Kid									(by Namco, 1985; marquee at Klov.com)
 - Super Chinese								(by Namco/Culture Brain, 1988)
+- Toukaidou 53tsugi							(prototype by Sunsoft, 1985)
 - Trojan									(by Capcom, 1987)
 - Urban Champion							(1984)
 - Volleyball								(1986)
 - Walkure no Bouken							(by Namco, 198?)
 - Wild Gunman								(1984, light gun game)
-- Xevious
-
 
 TO DO:
-	- Fix some mirroring in games with ppuRC2C05_protection (jajamaru, topgun, ...)
-	- Add unknown dip-switches, some of them could be Bonus or Difficulty
-	- Test cstlevna bonus dip, iceclimb bear dip
 	- Check others bits in coin counter
 	- Check other values in bnglngby irq
 	- Top Gun: cpu #0 (PC=00008016): unmapped memory byte read from 00007FFF ???
 
 Changes:
+
+  16/10/2003 Pierpaolo Prazzoli
+
+  - Added
+		- Vs. Freedom Force
+		- Vs. Super Xevious
 
   24/12/2002 Pierpaolo Prazzoli
 
@@ -111,7 +118,7 @@ Changes:
   - Added Extra Ram in vstetris
   - Added Demo Sound in vsmahjng
   - Fixed vsskykid inputs
-  - Fixed protection in Super Xevious (?)
+  - Fixed protection in Vs. Super Xevious
   - Corrected or checked dip-switches in Castlevania, Duck Hunt, Excitebike,
 	Gradius, Hogan's Alley, Ice Climber, R.B.I. Baseball, Slalom, Soccer,
 	Super Mario Bros., Top Gun, BaseBall, Tennis, Stroke and Match Golf
@@ -156,14 +163,14 @@ extern DRIVER_INIT( tkoboxng );
 extern DRIVER_INIT( topgun );
 extern DRIVER_INIT( vsgradus );
 extern DRIVER_INIT( vspinbal );
-extern DRIVER_INIT( vsskykid );
+extern DRIVER_INIT( MMC3 );
 extern DRIVER_INIT( platoon );
 extern DRIVER_INIT( vstennis );
 extern DRIVER_INIT( wrecking );
 extern DRIVER_INIT( balonfgt );
 extern DRIVER_INIT( vsbball );
 extern DRIVER_INIT( iceclmrj );
-extern DRIVER_INIT( xevious );
+extern DRIVER_INIT( supxevs );
 extern DRIVER_INIT( btlecity );
 extern DRIVER_INIT( vstetris );
 extern DRIVER_INIT( bnglngby );
@@ -1585,15 +1592,15 @@ INPUT_PORTS_START( vsfdf )
 	VS_ZAPPER
 
 	PORT_START /* DSW0 - bit 0 and 1 read from bit 3 and 4 on $4016, rest of the bits read on $4017 */
-	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x01, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x02, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x04, DEF_STR( On ) )
+	PORT_DIPNAME( 0x07, 0x00, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(	0x03, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(	0x05, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(	0x01, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(	0x06, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(	0x04, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(	0x02, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(	0x07, DEF_STR( Free_Play ) )
 	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x08, DEF_STR( On ) )
@@ -2014,6 +2021,62 @@ INPUT_PORTS_START( mightybj )
 	PORT_DIPSETTING(	0x80, DEF_STR( On ) )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( supxevs )
+	PORT_START	/* IN0 */
+	PORT_BIT ( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER1 )	/* BUTTON A on a nes */
+	PORT_BIT ( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER1 )	/* BUTTON B on a nes */
+	PORT_BIT ( 0x04, IP_ACTIVE_HIGH, IPT_START1 )				/* SELECT on a nes */
+	PORT_BIT ( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )				/* START on a nes */
+	PORT_BIT ( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_PLAYER1 )
+	PORT_BIT ( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_PLAYER1 )
+	PORT_BIT ( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_PLAYER1 )
+	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_PLAYER1 )
+
+	PORT_START	/* IN1 */
+	PORT_BIT ( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER2 )	/* BUTTON A on a nes */
+	PORT_BIT ( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2 )	/* BUTTON B on a nes */
+	PORT_BIT ( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )				/* SELECT on a nes */
+	PORT_BIT ( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )				/* START on a nes */
+	PORT_BIT ( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_PLAYER2 )
+	PORT_BIT ( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_PLAYER2 )
+	PORT_BIT ( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_PLAYER2 )
+	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 )
+
+	PORT_START	/* IN2 */
+	PORT_BIT ( 0x01, IP_ACTIVE_HIGH, IPT_UNUSED ) /* serial pin from controller */
+	PORT_BIT ( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT ( 0x04, IP_ACTIVE_HIGH, IPT_SERVICE1 ) /* service credit? */
+	PORT_BIT ( 0x08, IP_ACTIVE_HIGH, IPT_UNUSED )	/* bit 0 of dsw goes here */
+	PORT_BIT ( 0x10, IP_ACTIVE_HIGH, IPT_UNUSED )	/* bit 1 of dsw goes here */
+	PORT_BIT ( 0x20, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT ( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START /* DSW0 - bit 0 and 1 read from bit 3 and 4 on $4016, rest of the bits read on $4017 */
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x01, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x02, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x04, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x08, DEF_STR( On ) )
+	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(	0x30, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(	0x20, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(	0x10, DEF_STR( 1C_2C ) )
+	PORT_DIPNAME( 0xc0, 0x00, "Color Palette" )
+	PORT_DIPSETTING(	0x00, "Normal" )
+	PORT_DIPSETTING(    0x40, "Wrong 1" )
+	PORT_DIPSETTING(    0x80, "Wrong 2" )
+	PORT_DIPSETTING(    0xc0, "Wrong 3" )
+INPUT_PORTS_END
+
 static struct GfxDecodeInfo nes_gfxdecodeinfo[] =
 {
 	/* none, the ppu generates one */
@@ -2123,7 +2186,6 @@ ROM_START( suprmrio)
 	ROM_LOAD( "2a",  0x2000, 0x2000, CRC(15506b86) SHA1(69ecf7a3cc8bf719c1581ec7c0d68798817d416f) )
 ROM_END
 
-
 ROM_START( iceclimb )
 	ROM_REGION( 0x10000,REGION_CPU1, 0 ) /* 6502 memory */
 	ROM_LOAD( "ic-1d",  0x8000, 0x2000, CRC(65e21765) SHA1(900f1efe5e8005ee8cdccbf5039914dfe466aa3d) )
@@ -2187,11 +2249,11 @@ ROM_END
 
 ROM_START( vsfdf )
 	ROM_REGION( 0x30000,REGION_CPU1, 0 ) /* 6502 memory */
-	ROM_LOAD( "prg2", 0x10000, 0x10000, CRC(3bce8f0f) )
-	ROM_LOAD( "prg1", 0x20000, 0x10000, CRC(c74499ce) )
+	ROM_LOAD( "prg2", 0x10000, 0x10000, CRC(3bce8f0f) SHA1(5a9b91bae4b28c1df54fb290efdec4805f4f217e) )
+	ROM_LOAD( "prg1", 0x20000, 0x10000, CRC(c74499ce) SHA1(14f50d4d11c363e761a6472a6e57a5e5a6dab9ce) )
 
 	ROM_REGION( 0x10000,REGION_GFX1, 0 ) /* PPU memory */
-	ROM_LOAD( "cha2.1",  0x00000, 0x10000, CRC(a2f88df0) )
+	ROM_LOAD( "cha2.1",  0x00000, 0x10000, CRC(a2f88df0) SHA1(10ef432d3132b01a1fcb38d8f521edd2a029ac5e) )
 ROM_END
 
 ROM_START( goonies )
@@ -2338,8 +2400,9 @@ ROM_START( smgolfb )
 	ROM_LOAD( "gf4-2.1bf",  0xc000, 0x2000, CRC(6783652f) )
 	ROM_LOAD( "gf4-2.1af",  0xe000, 0x2000, CRC(ce788209) )
 
-	ROM_REGION( 0x2000, REGION_GFX1, 0 ) /* PPU memory */
-	ROM_LOAD( "gf4-2.2af",  0x0000, 0x2000, CRC(47e9b8c6) )
+	ROM_REGION( 0x4000, REGION_GFX1, 0 ) /* PPU memory */
+	ROM_LOAD( "gf4-2.2bf",  0x0000, 0x2000, NO_DUMP )
+	ROM_LOAD( "gf4-2.2af",  0x2000, 0x2000, CRC(47e9b8c6) )
 ROM_END
 
 ROM_START( vspinbal )
@@ -2450,8 +2513,8 @@ ROM_START( rbibb )
 ROM_END
 
 ROM_START( vsskykid )
-	ROM_REGION( 0x10000,REGION_CPU1,0 ) /* 6502 memory */
-	ROM_LOAD( "sk-prg1",  0x08000, 0x08000, CRC(cf36261e) SHA1(e4a3d2a223f066c231631d92504f08e60b303dfd) )
+	ROM_REGION( 0x18000,REGION_CPU1,0 ) /* 6502 memory */
+	ROM_LOAD( "sk-prg1",  0x10000, 0x08000, CRC(cf36261e) SHA1(e4a3d2a223f066c231631d92504f08e60b303dfd) )
 
 	ROM_REGION( 0x8000,REGION_GFX1 , 0) /* PPU memory */
 	ROM_LOAD( "sk-cha",  0x0000, 0x8000, CRC(9bd44dad) SHA1(bf33d175b6ab991d63a0acaf83ba22d5b7ab11b9) )
@@ -2482,11 +2545,11 @@ ROM_END
 
 ROM_START( supxevs )
 	ROM_REGION( 0x30000,REGION_CPU1, 0 ) /* 6502 memory */
-	ROM_LOAD( "prg2",  0x10000, 0x10000, CRC(645669f0) )
-	ROM_LOAD( "prg1",  0x20000, 0x10000, CRC(ff762ceb) )
+	ROM_LOAD( "prg2",  0x10000, 0x10000, CRC(645669f0) SHA1(3b18c0bb33dd5a95f52a2de7b9a5730990517ad9) )
+	ROM_LOAD( "prg1",  0x20000, 0x10000, CRC(ff762ceb) SHA1(04ca386ef4ad79f99d1efdc0a4d908ef0e523d75) )
 
 	ROM_REGION( 0x8000,REGION_GFX1, 0 ) /* PPU memory */
-	ROM_LOAD( "cha",  0x00000, 0x8000, CRC(e27c7434) )
+	ROM_LOAD( "cha",   0x00000, 0x08000, CRC(e27c7434) SHA1(a033bbaf0c28504ed2a641dea28f016a88ef03ac) )
 ROM_END
 
 ROM_START( mightybj )
@@ -2614,7 +2677,7 @@ ROM_START( vsbbaljb )
 	ROM_LOAD( "ba_1c_a3.bin",  0x0a000, 0x02000, CRC(ca1a9591) )
 	ROM_LOAD( "ba_1b_a3.bin",  0x0c000, 0x02000, CRC(50e1f6cf) )
 	ROM_LOAD( "ba_1a_a3.bin",  0x0e000, 0x02000, BAD_DUMP CRC(4312aa6d) ) //FIXED BITS (xxxxxxx1)
-																	 //BAD?
+
 	ROM_REGION( 0x4000,REGION_GFX1, 0 ) /* PPU memory */
 	ROM_LOAD( "ba_2b_a.bin",  0x0000, 0x2000, CRC(919147d0) SHA1(9fccdfccc2a3ec634e350880ded7053f36c377bc) )
 	ROM_LOAD( "ba_2a_a.bin",  0x2000, 0x2000, CRC(3f7edb00) SHA1(f59d24f15bdb8903187eabc1578dcb60443614ed) )
@@ -2712,25 +2775,27 @@ GAME( 1985, hogalley, 0,        vsnes,   hogalley, hogalley, ROT0, "Nintendo",  
 GAME( 1984, iceclimb, 0,        vsnes,   iceclimb, suprmrio, ROT0, "Nintendo",  "Vs. Ice Climber" )
 GAME( 1984, iceclmbj, iceclimb, vsnes,   iceclmbj, suprmrio, ROT0, "Nintendo",  "Vs. Ice Climber (Japan)" )
 GAME( 1984, ladygolf, 0,        vsnes,   golf,     machridr, ROT0, "Nintendo",  "Vs. Stroke and Match Golf (Ladies Version)" )
-GAME( 1985, machridr, 0,        vsnes,   machridr, machridr, ROT0, "Nintendo",  "Vs. Mach Rider (Endurance Course Version)" )
-GAME( 1985, machridj, machridr, vsnes,   machridj, vspinbal, ROT0, "Nintendo",  "Vs. Mach Rider (Japan, Fighting Course Version)" )
+GAMEX(1985, machridr, 0,        vsnes,   machridr, machridr, ROT0, "Nintendo",  "Vs. Mach Rider (Endurance Course Version)", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1985, machridj, machridr, vsnes,   machridj, vspinbal, ROT0, "Nintendo",  "Vs. Mach Rider (Japan, Fighting Course Version)", GAME_IMPERFECT_GRAPHICS )
 GAME( 1986, rbibb,    0,        vsnes,   rbibb,    rbibb,    ROT0, "Namco",     "Vs. Atari R.B.I. Baseball" )
 GAME( 1986, suprmrio, 0,        vsnes,   suprmrio, suprmrio, ROT0, "Nintendo",  "Vs. Super Mario Bros." )
-GAME( 1985, vsskykid, 0,        vsnes,   vsskykid, vsskykid, ROT0, "Namco",     "Vs. Super SkyKid"  )
-GAMEX(1987, tkoboxng, 0,        vsnes,   tkoboxng, tkoboxng, ROT0, "Namco LTD.","Vs. TKO Boxing", GAME_WRONG_COLORS )
+GAME( 1985, vsskykid, 0,        vsnes,   vsskykid, MMC3,	 ROT0, "Namco",     "Vs. Super SkyKid"  )
+GAMEX(1987, tkoboxng, 0,        vsnes,   tkoboxng, tkoboxng, ROT0, "Namco LTD.","Vs. TKO Boxing", GAME_WRONG_COLORS | GAME_IMPERFECT_GRAPHICS )
 GAME( 1984, smgolf,   0,        vsnes,   golf4s,   machridr, ROT0, "Nintendo",  "Vs. Stroke and Match Golf (Men Version)" )
 GAME( 1984, smgolfj,  smgolf,   vsnes,   golf,     vsnormal, ROT0, "Nintendo",  "Vs. Stroke and Match Golf (Men Version) (Japan)" )
 GAME( 1984, vspinbal, 0,        vsnes,   vspinbal, vspinbal, ROT0, "Nintendo",  "Vs. Pinball" )
 GAME( 1984, vspinblj, vspinbal, vsnes,   vspinblj, vsnormal, ROT0, "Nintendo",  "Vs. Pinball (Japan)" )
-GAME( 1986, vsslalom, 0,        vsnes,   vsslalom, vsslalom, ROT0, "Rare LTD.", "Vs. Slalom" )
+GAMEX(1986, vsslalom, 0,        vsnes,   vsslalom, vsslalom, ROT0, "Rare LTD.", "Vs. Slalom", GAME_IMPERFECT_GRAPHICS )
 GAME( 1985, vssoccer, 0,        vsnes,   vssoccer, excitebk, ROT0, "Nintendo",  "Vs. Soccer" )
 GAME( 1986, vsgradus, 0,        vsnes,   vsgradus, vsgradus, ROT0, "Konami",    "Vs. Gradius" )
 GAMEX(1987, platoon,  0,        vsnes,   platoon,  platoon,  ROT0, "Ocean Software Limited", "Vs. Platoon", GAME_WRONG_COLORS )
 GAMEX(1987, vstetris, 0,        vsnes,   vstetris, vstetris, ROT0, "Academysoft-Elory", "Vs. Tetris" , GAME_IMPERFECT_COLORS )
 GAME( 1986, mightybj, 0,        vsnes,   mightybj, mightybj, ROT0, "Tecmo",     "Vs. Mighty Bomb Jack (Japan)" )
-GAME( 1985, jajamaru, 0,        vsnes,   jajamaru, jajamaru, ROT0, "Jaleco",    "Vs. Ninja Jajamaru Kun (Japan)" )
+GAMEX(1985, jajamaru, 0,        vsnes,   jajamaru, jajamaru, ROT0, "Jaleco",    "Vs. Ninja Jajamaru Kun (Japan)", GAME_IMPERFECT_GRAPHICS )
 GAME( 1987, topgun,   0,        vsnes,   topgun,   topgun,   ROT0, "Konami",    "Vs. Top Gun")
 GAME( 1985, bnglngby, 0,        vsnes,   bnglngby, bnglngby, ROT0, "Nintendo / Broderbund Software Inc.",  "Vs. Raid on Bungeling Bay (Japan)" )
+GAME( 1986, supxevs,  0,        vsnes,   supxevs,  supxevs,  ROT0, "Namco",		"Vs. Super Xevious" )
+GAME( 1988, vsfdf,    0,        vsnes,   vsfdf,    vsfdf,	 ROT0, "Konami",	"Vs. Freedom Force" )
 
 /* Dual games */
 GAME( 1984, vstennis, 0,        vsdual,  vstennis, vstennis, ROT0, "Nintendo",  "Vs. Tennis"  )
@@ -2746,7 +2811,5 @@ GAME( 1984, iceclmrj, 0,        vsdual,  iceclmrj, iceclmrj, ROT0, "Nintendo",  
 GAME( 1986, vsgshoe,  0,        vsnes,   vsgshoe,  vsgshoe,  ROT0, "Nintendo",  "Vs. Gumshoe" )
 
 /* Not Working */
-GAMEX( 19??, supxevs,  0,        vsnes,   vsnes,	xevious,  ROT0, "Namco?",   "Vs. Super Xevious", GAME_NOT_WORKING )
-GAMEX(1988?, vsfdf,    0,        vsnes,   vsfdf,    vsfdf   , ROT0, "Konami",   "Vs. Freedom Force", GAME_NOT_WORKING )
-GAMEX( 1985, smgolfb,  smgolf,   vsnes,   golf,     machridr, ROT0, "Nintendo", "Vs. Stroke and Match Golf (Men set 2)", GAME_NOT_WORKING )
-GAMEX( 1984, vsbbaljb, vsbball,  vsdual,  vsbballj, vsbball,  ROT0, "Nintendo of America",  "Vs. BaseBall (Japan set 3)", GAME_NOT_WORKING )
+GAMEX(1985, smgolfb,  smgolf,   vsnes,   golf,     machridr, ROT0, "Nintendo",	"Vs. Stroke and Match Golf (Men set 2)", GAME_NOT_WORKING )
+GAMEX(1984, vsbbaljb, vsbball,  vsdual,  vsbballj, vsbball,  ROT0, "Nintendo of America",  "Vs. BaseBall (Japan set 3)", GAME_NOT_WORKING )

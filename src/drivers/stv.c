@@ -69,6 +69,17 @@ Preliminary Memory map:
                   at every start-up.Missing/wrong irq I guess.
 -vmahjong:locks up the emulation due to various DMA/irq issues.
 
+
+----------------------- 14 Oct 2003, notes -----------
+
+most (all) of the remaining non ic-13 games which don't boot appear to use a fairly
+common sega boot sequence.
+
+the master cpu is sending 2 commands to the slave (with MINIT) and then no more.
+
+prikura sprites are controlled by the second cpu, it we patch out the frt wait loop
+then we get sprites, the main cpu never does an MINIT, i guess it should somewhere?
+
 */
 
 #include "driver.h"
@@ -107,15 +118,17 @@ static UINT32 scu_src_0,		/* Source DMA lv 0 address*/
 			  scu_dst_0,		/* Destination DMA lv 0 address*/
 			  scu_dst_1,		/* lv 1*/
 			  scu_dst_2,		/* lv 2*/
-			  scu_size_0,		/* Transfer DMA size lv 0*/
-			  scu_size_1,		/* lv 1*/
-			  scu_size_2,		/* lv 2*/
 			  scu_src_add_0,	/* Source Addition for DMA lv 0*/
 			  scu_src_add_1,	/* lv 1*/
 			  scu_src_add_2,	/* lv 2*/
 			  scu_dst_add_0,	/* Destination Addition for DMA lv 0*/
 			  scu_dst_add_1,	/* lv 1*/
 			  scu_dst_add_2;	/* lv 2*/
+static INT32  scu_size_0,		/* Transfer DMA size lv 0*/
+			  scu_size_1,		/* lv 1*/
+			  scu_size_2;		/* lv 2*/
+
+
 static void dma_direct_lv0(void);	/*DMA level 0 direct transfer function*/
 static void dma_direct_lv1(void);   /*DMA level 1 direct transfer function*/
 static void dma_direct_lv2(void);   /*DMA level 2 direct transfer function*/
@@ -1517,16 +1530,14 @@ static void dma_scsp()
 static WRITE32_HANDLER( minit_w )
 {
 	logerror("cpu #%d (PC=%08X) MINIT write = %08x\n",cpu_getactivecpu(), activecpu_get_pc(),data);
-	// causes data to be written to internal st-2 register + interrupt?
-	// frt input capture (level 1, addr 0x64) (not sure about the 64/164 bits ..might be reversed)
+	cpu_boost_interleave(0, TIME_IN_USEC(400));
 	sh2_set_frt_input(1, PULSE_LINE);
 }
 
 static WRITE32_HANDLER( sinit_w )
 {
 	logerror("cpu #%d (PC=%08X) SINIT write = %08x\n",cpu_getactivecpu(), activecpu_get_pc(),data);
-	// causes data to be written to internal st-2 register + interrupt?
-	// frt input capture (level 1, addr 0x164) (not sure about the 64/164 bits ..might be reversed)
+	cpu_boost_interleave(0, TIME_IN_USEC(400));
 	sh2_set_frt_input(0, PULSE_LINE);
 }
 
@@ -1851,6 +1862,24 @@ static READ32_HANDLER( stv_speedup2_r )
 	return stv_workram_h[0x0335bc/4];
 }
 
+
+WRITE32_HANDLER ( w60ffc44_write )
+{
+	COMBINE_DATA(&stv_workram_h[0xffc44/4]);
+
+	logerror("cpu #%d (PC=%08X): 60ffc44_write write = %08X & %08X\n", cpu_getactivecpu(), activecpu_get_pc(), data, mem_mask ^ 0xffffffff);
+
+}
+
+WRITE32_HANDLER ( w60ffc48_write )
+{
+	COMBINE_DATA(&stv_workram_h[0xffc48/4]);
+
+	logerror("cpu #%d (PC=%08X): 60ffc48_write write = %08X & %08X\n", cpu_getactivecpu(), activecpu_get_pc(), data, mem_mask ^ 0xffffffff);
+
+}
+
+
 DRIVER_INIT ( stv )
 {
 	unsigned char *ROM = memory_region(REGION_USER1);
@@ -1873,6 +1902,13 @@ DRIVER_INIT ( stv )
 /* idle skip bios? .. not 100% sure this is safe .. we'll see */
 	install_mem_read32_handler(0, 0x60335d0, 0x60335d3, stv_speedup_r );
 	install_mem_read32_handler(0, 0x60335bc, 0x60335bf, stv_speedup2_r );
+
+	/* debug .. watch the command buffer rsgun, cottonbm etc. appear to use to communicate between cpus */
+	install_mem_write32_handler(0, 0x60ffc44, 0x60ffc47, w60ffc44_write );
+	install_mem_write32_handler(0, 0x60ffc48, 0x60ffc4b, w60ffc48_write );
+	install_mem_write32_handler(1, 0x60ffc44, 0x60ffc47, w60ffc44_write );
+	install_mem_write32_handler(1, 0x60ffc48, 0x60ffc4b, w60ffc48_write );
+
 }
 
 static READ32_HANDLER( shienryu_slave_speedup_r )
@@ -2041,11 +2077,11 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ REGION_GFX1, 0, &tiles8x8x8_layout,   0x00, 0x10  },
 	{ REGION_GFX1, 0, &tiles16x16x8_layout,   0x00, 0x10  },
 
-	/* vdp1 .. pointless but .. */
-//	{ REGION_GFX5, 0, &tiles8x8x4_layout,   0x00, 0x100  },
-//	{ REGION_GFX5, 0, &tiles8x8x8_layout,   0x00, 0x20  },
-//	{ REGION_GFX5, 0, &tiles16x16x4_layout,   0x00, 0x100  },
-//	{ REGION_GFX5, 0, &tiles16x16x8_layout,   0x00, 0x20  },
+	/* vdp1 .. pointless for drawing but can help us debug */
+	{ REGION_GFX2, 0, &tiles8x8x4_layout,   0x00, 0x100  },
+	{ REGION_GFX2, 0, &tiles16x16x4_layout,   0x00, 0x100  },
+	{ REGION_GFX2, 0, &tiles8x8x8_layout,   0x00, 0x20  },
+	{ REGION_GFX2, 0, &tiles16x16x8_layout,   0x00, 0x20  },
 
 	{ -1 } /* end of array */
 };
@@ -2077,9 +2113,8 @@ static MACHINE_DRIVER_START( stv )
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK | VIDEO_RGB_DIRECT )
-	MDRV_SCREEN_SIZE(32*16, 32*16)
-	MDRV_VISIBLE_AREA(0*8, 512-1, 0*8, 512-1) // we need to use a resolution as high as the max size it can change to
-//	MDRV_VISIBLE_AREA(0*8, 320-1, 0*8, 224-1)
+	MDRV_SCREEN_SIZE(1024, 512)
+	MDRV_VISIBLE_AREA(0*8, 703, 0*8, 479) // we need to use a resolution as high as the max size it can change to
 	MDRV_PALETTE_LENGTH(2048)
 	MDRV_GFXDECODE(gfxdecodeinfo)
 
@@ -2724,6 +2759,7 @@ ROM_START( mausuke )
 
 	ROM_REGION32_BE( 0x2000000, REGION_USER1, 0 ) /* SH2 code */
 	ROM_LOAD(             "ic13.bin",      0x0000000, 0x0100000, CRC(b456f4cd) )
+	ROM_RELOAD ( 0x0100000, 0x0100000 )
 	ROM_LOAD16_WORD_SWAP( "mcj-00.2",      0x0400000, 0x0200000, CRC(4eeacd6f) )// good
 	ROM_LOAD16_WORD_SWAP( "mcj-01.3",      0x0800000, 0x0200000, CRC(365a494b) )// good
 	ROM_LOAD16_WORD_SWAP( "mcj-02.4",      0x0c00000, 0x0200000, CRC(8b8e4931) )// good
@@ -2772,14 +2808,81 @@ ROM_START( batmanfr )
 	ROM_LOAD( "snd3.u51",   0x600000, 0x200000, CRC(31af26ae) )
 ROM_END
 
+/* Hack the boot vectors .. not right but allows several IC13 games (which fail the checksums before hacking) to boot */
+
+DRIVER_INIT(col97)
+{
+		data32_t *rom = (data32_t *)memory_region(REGION_USER1);
+//		rom[0xf10/4] = 0x22001000;
+		rom[0xf20/4] = 0x22001000;
+//		rom[0xf30/4] = 0x22001000;
+		init_stv();
+}
+
+DRIVER_INIT(puyosun)
+{
+		data32_t *rom = (data32_t *)memory_region(REGION_USER1);
+	//	rom[0xf10/4] = 0x22002000;
+		rom[0xf20/4] = 0x22002000;
+	//.	rom[0xf30/4] = 0x22002000;
+		init_stv();
+}
+
+DRIVER_INIT(winterht)
+{
+		data32_t *rom = (data32_t *)memory_region(REGION_USER1);
+//		rom[0xf10/4] = 0x22004000;
+		rom[0xf20/4] = 0x22004000;
+//		rom[0xf30/4] = 0x22004000;
+		init_stv();
+}
+
+DRIVER_INIT( suikoenb )
+{
+		data32_t *rom = (data32_t *)memory_region(REGION_USER1);
+//		rom[0xf10/4] = 0x22004000;
+		rom[0xf20/4] = 0x22010000;
+//		rom[0xf30/4] = 0x22004000;
+		init_stv();
+}
+
+DRIVER_INIT( zpw )
+{
+		data32_t *rom = (data32_t *)memory_region(REGION_USER1);
+//		rom[0xf10/4] = 0x22004000;
+		rom[0xf20/4] = 0x22001020;
+//		rom[0xf30/4] = 0x22004000;
+		init_stv();
+}
+
 /* Playable */
 GAMEBX( 1998, hanagumi,  stvbios, stvbios, stv, stv,  hanagumi,  ROT0, "Sega", "Hanagumi Taisen Columns - Sakura Wars", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
+
+/* Almost */
+GAMEBX( 1997, shienryu,  stvbios, stvbios, stv, stv,  shienryu,  ROT270, "Warashi",  "Shienryu", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS ) /* black sprites, missing bomb effects, missing bitmap mode */
 
 /* Doing Something.. but not much enough yet */
 GAMEBX( 1996, prikura,   stvbios, stvbios, stv, stv,  prikura,   ROT0, "Atlus",    "Prikura Daisakusen", GAME_NO_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1995, shanhigw,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Sunsoft / Activision", "Shanghai - The Great Wall / Shanghai Triple Threat", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1997, shienryu,  stvbios, stvbios, stv, stv,  shienryu,  ROT0, "Warashi",  "Shienryu", GAME_NO_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1996, groovef,   stvbios, stvbios, stv, stv,  stv,       ROT0, "Atlus",    "Power Instinct 3 - Groove On Fight", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1996, colmns97,  stvbios, stvbios, stv, stv,  col97,     ROT0, "Sega", 	   "Columns 97", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1997, cotton2,   stvbios, stvbios, stv, stv,  stv,       ROT0, "Success",  "Cotton 2", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1998, cottonbm,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Success",  "Cotton Boomerang", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1999, danchih,   stvbios, stvbios, stv, stv,  stv,       ROT0, "Altron (distributed by Tecmo)", "Danchi de Hanafuda", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1995, ejihon,    stvbios, stvbios, stv, stv,  col97,     ROT0, "Sega", 	   "Ejihon Tantei Jimusyo", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1998, grdforce,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Success",  "Guardian Force", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1998, elandore,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Sai-Mate", "Fighting Dragon Legend Elan Doree", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1995, kiwames,   stvbios, stvbios, stv, stv,  col97,     ROT0, "Athena",   "Pro Mahjong Kiwame S", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1995, mausuke,   stvbios, stvbios, stv, stv,  winterht,  ROT0, "Data East","Mausuke no Ojama the World", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1998, myfairld,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Micronet", "Virtual Mahjong 2 - My Fair Lady", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1998, othellos,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Tsukuda Original",	"Othello Shiyouyo", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1996, puyosun,   stvbios, stvbios, stv, stv,  puyosun,   ROT0, "Compile",  "Puyo Puyo Sun", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1998, rsgun,     stvbios, stvbios, stv, stv,  stv,       ROT0, "Treasure", "Radiant Silvergun", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1996, sassisu,   stvbios, stvbios, stv, stv,  col97,     ROT0, "Sega", 	   "Taisen Tanto-R 'Sasshissu!'", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1995, suikoenb,  stvbios, stvbios, stv, stv,  suikoenb,  ROT0, "Data East","Suikoenbu", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1996, vfkids,    stvbios, stvbios, stv, stv,  winterht,  ROT0, "Sega", 	   "Virtua Fighter Kids", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1995, vfremix,   stvbios, stvbios, stv, stv,  col97,     ROT0, "Sega", 	   "Virtua Fighter Remix", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1997, winterht,  stvbios, stvbios, stv, stv,  winterht,  ROT0, "Sega", 	   "Winter Heat", GAME_NO_SOUND | GAME_NOT_WORKING )
 
 /* not working */
 
@@ -2789,43 +2892,25 @@ GAMEBX( 1996, stvbios,   0,       stvbios, stv, stv,  stv,       ROT0, "Sega",  
 GAMEBX( 1998, astrass,   stvbios, stvbios, stv, stv,  stv,       ROT0, "Sunsoft",  "Astra SuperStars", GAME_NO_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1996, bakubaku,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Sega", 	   "Baku Baku Animal", GAME_NO_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1996, batmanfr,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Acclaim",  "Batman Forever", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1996, colmns97,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Sega", 	   "Columns 97", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1997, cotton2,   stvbios, stvbios, stv, stv,  stv,       ROT0, "Success",  "Cotton 2", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1998, cottonbm,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Success",  "Cotton Boomerang", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1999, danchih,   stvbios, stvbios, stv, stv,  stv,       ROT0, "Altron (distributed by Tecmo)", "Danchi de Hanafuda", GAME_NO_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1995, decathlt,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Sega", 	   "Decathlete", GAME_NO_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1996, diehard,   stvbios, stvbios, stv, stv,  stv,       ROT0, "Sega", 	   "Die Hard Arcade (US)", GAME_NO_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1996, dnmtdeka,  diehard, stvbios, stv, stv,  stv,       ROT0, "Sega", 	   "Dynamite Deka (Japan)", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1995, ejihon,    stvbios, stvbios, stv, stv,  stv,       ROT0, "Sega", 	   "Ejihon Tantei Jimusyo", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1998, elandore,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Sai-Mate", "Fighting Dragon Legend Elan Doree", GAME_NO_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1999, ffreveng,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Capcom",   "Final Fight Revenge", GAME_NO_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1995, fhboxers,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Sega", 	   "Funky Head Boxers", GAME_NO_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1996, findlove,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Daiki",	   "Find Love", GAME_NO_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1995, finlarch,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Sega", 	   "Final Arch (Japan)", GAME_NO_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1994, gaxeduel,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Sega", 	   "Golden Axe - The Duel", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1998, grdforce,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Success",  "Guardian Force", GAME_NO_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1996, introdon,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Sunsoft / Success", "Karaoke Quiz Intro Don Don!", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1995, kiwames,   stvbios, stvbios, stv, stv,  stv,       ROT0, "Athena",   "Pro Mahjong Kiwame S", GAME_NO_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1997, maruchan,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Sega", 	   "Maru-Chan de Goo!", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1995, mausuke,   stvbios, stvbios, stv, stv,  stv,       ROT0, "Data East","Mausuke no Ojama the World", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1998, myfairld,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Micronet", "Virtual Mahjong 2 - My Fair Lady", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1998, othellos,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Tsukuda Original",	"Othello Shiyouyo", GAME_NO_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1995, pblbeach,  stvbios, stvbios, stv, stv,  stv,       ROT0, "T&E Soft", "Pebble Beach - The Great Shot", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1996, puyosun,   stvbios, stvbios, stv, stv,  stv,       ROT0, "Compile",  "Puyo Puyo Sun", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1998, rsgun,     stvbios, stvbios, stv, stv,  stv,       ROT0, "Treasure", "Radiant Silvergun", GAME_NO_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1995, sandor,    stvbios, stvbios, stv, stv,  stv,       ROT0, "Sega", 	   "Sando-R", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1996, sassisu,   stvbios, stvbios, stv, stv,  stv,       ROT0, "Sega", 	   "Taisen Tanto-R 'Sasshissu!'", GAME_NO_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1998, seabass,   stvbios, stvbios, stv, stv,  stv,       ROT0, "A Wave inc. (Able license)", "Sea Bass Fishing", GAME_NO_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1995, sleague,   stvbios, stvbios, stv, stv,  stv,       ROT0, "Sega", 	   "Super Major League (US)", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1996, sokyugrt,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Raizing",  "Soukyugurentai / Terra Diver", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1996, sokyugrt,  stvbios, stvbios, stv, stv,  col97,     ROT0, "Raizing",  "Soukyugurentai / Terra Diver", GAME_NO_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1998, sss,       stvbios, stvbios, stv, stv,  stv,       ROT0, "Victor / Cave / Capcom", "Steep Slope Sliders", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1995, suikoenb,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Data East","Suikoenbu", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1998, twcup98,   stvbios, stvbios, stv, stv,  stv,       ROT0, "Tecmo",    "Tecmo World Cup '98", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1996, vfkids,    stvbios, stvbios, stv, stv,  stv,       ROT0, "Sega", 	   "Virtua Fighter Kids", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1995, vfremix,   stvbios, stvbios, stv, stv,  stv,       ROT0, "Sega", 	   "Virtua Fighter Remix", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1998, twcup98,   stvbios, stvbios, stv, stv,  winterht,  ROT0, "Tecmo",    "Tecmo World Cup '98", GAME_NO_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1997, vmahjong,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Micronet", "Virtual Mahjong", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1997, winterht,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Sega", 	   "Winter Heat", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1997, znpwfv,    stvbios, stvbios, stv, stv,  stv,       ROT0, "Sega", 	   "Zen Nippon Pro-Wrestling Featuring Virtua", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1997, znpwfv,    stvbios, stvbios, stv, stv,  zpw,       ROT0, "Sega", 	   "Zen Nippon Pro-Wrestling Featuring Virtua", GAME_NO_SOUND | GAME_NOT_WORKING )
 
 /* there are probably a bunch of other games (some fishing games with cd-rom,Print Club 2 etc.) */
 

@@ -12,6 +12,7 @@ Nintendo VS UniSystem and DualSystem - (c) 1984 Nintendo of America
 
 /* Globals */
 int vsnes_gun_controller;
+int vsnes_do_vrom_bank;
 
 /* Locals */
 static int input_latch[4];
@@ -25,10 +26,11 @@ static int sound_fix=0;
  *************************************/
 
 /* RP2C04-001 */
+/* check 0x08 */
 static UINT8 rp2c04001_colortable[] =
 {
 	0x35, 0xff, 0x16, 0x22, 0x1c, 0xff, 0xff, 0x15, /* 0x00 - 0x07 */
-	0xff, 0x00, 0x27, 0x05, 0x04, 0x27, 0x08, 0x30, /* 0x08 - 0x0f */
+	0x20, 0x00, 0x27, 0x05, 0x04, 0x27, 0x08, 0x30, /* 0x08 - 0x0f */
 	0x21, 0xff, 0xff, 0x29, 0x3c, 0xff, 0x36, 0x12, /* 0x10 - 0x17 */
 	0xff, 0x2b, 0xff, 0xff, 0xff, 0xff, 0xff, 0x01, /* 0x18 - 0x1f */
 	0xff, 0x31, 0xff, 0x2a, 0x2c, 0x0c, 0xff, 0xff, /* 0x20 - 0x27 */
@@ -95,7 +97,7 @@ static int remap_colors( int num, int addr, int data )
 
 		#ifdef MAME_DEBUG
 		else
-			usrintf_showmessage( "Unmatched color %02x, at address %04x\n", data & 0x3f, addr );
+			usrintf_showmessage( "Unmatched color %02x, at address %04x", data & 0x3f, addr );
 		#endif
 	}
 
@@ -327,12 +329,15 @@ DRIVER_INIT( suprmrio )
 
 /* Gun Games - VROM Banking in controller 0 write */
 
-static WRITE_HANDLER( duckhunt_vrom_banking )
+static WRITE_HANDLER( gun_in0_w )
 {
 	static int zapstore;
 
-	/* switch vrom */
-	ppu2c03b_set_videorom_bank( 0, 0, 8, ( data & 4 ) ? 1 : 0, 512 );
+	if (vsnes_do_vrom_bank)
+	{
+		/* switch vrom */
+		ppu2c03b_set_videorom_bank( 0, 0, 8, ( data & 4 ) ? 1 : 0, 512 );
+	}
 
 	/* here we do things a little different */
 	if ( data & 1 )
@@ -380,13 +385,14 @@ DRIVER_INIT( duckhunt )
 {
 	install_mem_read_handler ( 0, 0x4016, 0x4016, gun_in0_r);
 	/* vrom switching is enabled with bit 2 of $4016 */
-	install_mem_write_handler( 0, 0x4016, 0x4016, duckhunt_vrom_banking );
+	install_mem_write_handler( 0, 0x4016, 0x4016, gun_in0_w );
 
 	/* common init */
 	init_vsnes();
 
 	/* enable gun controller */
 	vsnes_gun_controller = 1;
+	vsnes_do_vrom_bank = 1;
 }
 
 /**********************************************************************************/
@@ -472,13 +478,14 @@ DRIVER_INIT( hogalley )
 
 	install_mem_read_handler ( 0, 0x4016, 0x4016, gun_in0_r);
 	/* vrom switching is enabled with bit 2 of $4016 */
-	install_mem_write_handler( 0, 0x4016, 0x4016, duckhunt_vrom_banking );
+	install_mem_write_handler( 0, 0x4016, 0x4016, gun_in0_w );
 
 	/* common init */
 	init_vsnes();
 
 	/* enable gun controller */
 	vsnes_gun_controller = 1;
+	vsnes_do_vrom_bank = 1;
 
 	/* now override the vidaccess callback */
 	remapped_colortable = rp2c04001_colortable;
@@ -511,13 +518,13 @@ DRIVER_INIT( vsgshoe )
 
 	install_mem_read_handler ( 0, 0x4016, 0x4016, gun_in0_r);
 	/* vrom switching is enabled with bit 2 of $4016 */
-	install_mem_write_handler( 0, 0x4016, 0x4016, duckhunt_vrom_banking );
+	install_mem_write_handler( 0, 0x4016, 0x4016, gun_in0_w );
 
 	/* common init */
 	init_vsnes();
 
 	vsnes_gun_controller = 1;
-
+	vsnes_do_vrom_bank = 1;
 }
 
 /**********************************************************************************/
@@ -659,37 +666,6 @@ DRIVER_INIT( drmario )
 
 /***********************************************************************/
 
-/* Vs. Freedom Force */
-
-DRIVER_INIT( vsfdf )
-{
-	//It doesn't work due to the jump at location 0xe63e
-
-	/* We do manual banking, in case the code falls through */
-	/* Copy the initial banks */
-	memcpy( &memory_region( REGION_CPU1 )[0x08000], &memory_region( REGION_CPU1 )[0x10000], 0x4000 );
-	memcpy( &memory_region( REGION_CPU1 )[0x0c000], &memory_region( REGION_CPU1 )[0x2c000], 0x4000 );
-
-	install_mem_read_handler ( 0, 0x4016, 0x4016, gun_in0_r );
-	/* vrom switching is enabled with bit 2 of $4016 */
-	install_mem_write_handler( 0, 0x4016, 0x4016, duckhunt_vrom_banking );
-
-	/* MMC1 mapper at writes to $8000-$ffff */
-	install_mem_write_handler( 0, 0x8000, 0xffff, drmario_rom_banking );
-
-	drmario_shiftreg = 0;
-	drmario_shiftcount = 0;
-
-	init_vsnes();
-
-	vsnes_gun_controller = 1;
-
-	remapped_colortable = rp2c04001_colortable;
-
-}
-
-/**********************************************************************************/
-
 /* Excite Bike */
 
 DRIVER_INIT( excitebk )
@@ -810,28 +786,191 @@ DRIVER_INIT( topgun )
 
 /**********************************************************************************/
 
-/* RBI Baseball: ROMs bankings at $8000-$ffff */
+static int MMC3_cmd, MMC3_prg0, MMC3_prg1;
+static int MMC3_chr[6];
+static int MMC3_prg_chunks, MMC3_prg_mask;
+static int IRQ_enable, IRQ_count, IRQ_count_latch;
 
-static int rbibb_scanline_counter;
-static int rbibb_scanline_latch;
-static int mmc3_bank;
-static int supxev_protection;
-
-static void rbibb_scanline_cb( int num, int scanline, int vblank, int blanked )
+static void mapper4_set_prg (void)
 {
-	if ( !vblank && !blanked )
+	MMC3_prg0 &= MMC3_prg_mask;
+	MMC3_prg1 &= MMC3_prg_mask;
+
+	if (MMC3_cmd & 0x40)
 	{
-		if ( --rbibb_scanline_counter <= 0 )
+		memcpy( &memory_region( REGION_CPU1 )[0x8000], &memory_region( REGION_CPU1 )[(MMC3_prg_chunks-1) * 0x4000 + 0x10000], 0x2000 );
+		memcpy( &memory_region( REGION_CPU1 )[0xc000], &memory_region( REGION_CPU1 )[0x2000 * (MMC3_prg0) + 0x10000], 0x2000 );
+	}
+	else
+	{
+		memcpy( &memory_region( REGION_CPU1 )[0x8000], &memory_region( REGION_CPU1 )[0x2000 * (MMC3_prg0) + 0x10000], 0x2000 );
+		memcpy( &memory_region( REGION_CPU1 )[0xc000], &memory_region( REGION_CPU1 )[(MMC3_prg_chunks-1) * 0x4000 + 0x10000], 0x2000 );
+	}
+	memcpy( &memory_region( REGION_CPU1 )[0xa000], &memory_region( REGION_CPU1 )[0x2000 * (MMC3_prg1) + 0x10000], 0x2000 );
+}
+
+static void mapper4_set_chr (void)
+{
+	UINT8 chr_page = (MMC3_cmd & 0x80) >> 5;
+	ppu2c03b_set_videorom_bank(0, chr_page ^ 0, 2, MMC3_chr[0], 1);
+	ppu2c03b_set_videorom_bank(0, chr_page ^ 2, 2, MMC3_chr[1], 1);
+	ppu2c03b_set_videorom_bank(0, chr_page ^ 4, 1, MMC3_chr[2], 1);
+	ppu2c03b_set_videorom_bank(0, chr_page ^ 5, 1, MMC3_chr[3], 1);
+	ppu2c03b_set_videorom_bank(0, chr_page ^ 6, 1, MMC3_chr[4], 1);
+	ppu2c03b_set_videorom_bank(0, chr_page ^ 7, 1, MMC3_chr[5], 1);
+}
+
+#define BOTTOM_VISIBLE_SCANLINE	239		/* The bottommost visible scanline */
+#define NUM_SCANLINE 262
+
+static void mapper4_irq ( int num, int scanline, int vblank, int blanked )
+{
+	printf("entra\n");
+	if ((scanline < BOTTOM_VISIBLE_SCANLINE) || (scanline == NUM_SCANLINE-1))
+	{
+		if ((IRQ_enable) && !blanked)
 		{
-			rbibb_scanline_counter = rbibb_scanline_latch;
-			cpu_set_irq_line( 0, 0, PULSE_LINE );
+			if (IRQ_count == 0)
+			{
+				IRQ_count = IRQ_count_latch;
+				cpu_set_irq_line (0, 0, HOLD_LINE);
+			}
+			IRQ_count --;
 		}
 	}
 }
 
+static WRITE_HANDLER( mapper4_w )
+{
+	static UINT8 last_bank = 0xff;
+
+	switch (offset & 0x7001)
+	{
+		case 0x0000: /* $8000 */
+			MMC3_cmd = data;
+
+			/* Toggle between switching $8000 and $c000 */
+			if (last_bank != (data & 0xc0))
+			{
+				/* Reset the banks */
+				mapper4_set_prg ();
+				mapper4_set_chr ();
+
+			}
+			last_bank = data & 0xc0;
+			break;
+
+		case 0x0001: /* $8001 */
+		{
+			UINT8 cmd = MMC3_cmd & 0x07;
+			switch (cmd)
+			{
+				case 0: case 1:
+					data &= 0xfe;
+					MMC3_chr[cmd] = data * 64;
+					mapper4_set_chr ();
+
+					break;
+
+				case 2: case 3: case 4: case 5:
+					MMC3_chr[cmd] = data * 64;
+					mapper4_set_chr ();
+
+					break;
+
+				case 6:
+					MMC3_prg0 = data;
+					mapper4_set_prg ();
+					break;
+
+				case 7:
+					MMC3_prg1 = data;
+					mapper4_set_prg ();
+					break;
+			}
+			break;
+		}
+		case 0x2000: /* $a000 */
+			if (data & 0x40)
+				ppu2c03b_set_mirroring(0, PPU_MIRROR_HIGH);
+			else
+			{
+				if (data & 0x01)
+					ppu2c03b_set_mirroring(0, PPU_MIRROR_HORZ);
+				else
+					ppu2c03b_set_mirroring(0, PPU_MIRROR_VERT);
+			}
+			break;
+
+		case 0x2001: /* $a001 - extra RAM enable/disable */
+			/* ignored - we always enable it */
+
+		break;
+
+		case 0x4000: /* $c000 - IRQ scanline counter */
+			IRQ_count = data;
+
+			break;
+
+		case 0x4001: /* $c001 - IRQ scanline latch */
+			IRQ_count_latch = data;
+
+			break;
+
+		case 0x6000: /* $e000 - Disable IRQs */
+			IRQ_enable = 0;
+			IRQ_count = IRQ_count_latch;
+
+			ppu2c03b_set_scanline_callback (0, 0);
+
+			break;
+
+		case 0x6001: /* $e001 - Enable IRQs */
+			IRQ_enable = 1;
+			ppu2c03b_set_scanline_callback (0, mapper4_irq);
+
+			break;
+
+		default:
+			logerror("mapper4_w uncaught: %04x value: %02x\n", offset + 0x8000, data);
+			break;
+	}
+}
+
+/* Common init for MMC3 games */
+
+DRIVER_INIT( MMC3 )
+{
+	IRQ_enable = IRQ_count = IRQ_count_latch = 0;
+	MMC3_prg0 = 0xfe;
+	MMC3_prg1 = 0xff;
+	MMC3_cmd = 0;
+
+	MMC3_prg_chunks = (memory_region_length(REGION_CPU1) - 0x10000) / 0x4000;
+
+	MMC3_prg_mask = ((MMC3_prg_chunks << 1) - 1);
+
+	memcpy( &memory_region( REGION_CPU1 )[0x8000], &memory_region( REGION_CPU1 )[(MMC3_prg_chunks-1) * 0x4000 + 0x10000], 0x2000 );
+	memcpy( &memory_region( REGION_CPU1 )[0xa000], &memory_region( REGION_CPU1 )[(MMC3_prg_chunks-1) * 0x4000 + 0x12000], 0x2000 );
+	memcpy( &memory_region( REGION_CPU1 )[0xc000], &memory_region( REGION_CPU1 )[(MMC3_prg_chunks-1) * 0x4000 + 0x10000], 0x2000 );
+	memcpy( &memory_region( REGION_CPU1 )[0xe000], &memory_region( REGION_CPU1 )[(MMC3_prg_chunks-1) * 0x4000 + 0x12000], 0x2000 );
+
+	/* MMC3 mapper at writes to $8000-$ffff */
+	install_mem_write_handler( 0, 0x8000, 0xffff, mapper4_w );
+
+	/* extra ram at $6000-$7fff */
+	install_mem_read_handler( 0, 0x6000, 0x7fff, MRA_RAM );
+	install_mem_write_handler( 0, 0x6000, 0x7fff, MWA_RAM );
+
+	/* common init */
+	init_vsnes();
+}
+
+/* Vs. RBI Baseball */
+
 static READ_HANDLER( rbi_hack_r)
 {
-/* Supplied by Ben Parnell <xodnizel@home.com> of FCE Ultra fame */
+	/* Supplied by Ben Parnell <xodnizel@home.com> of FCE Ultra fame */
 
 	static int VSindex;
 
@@ -860,204 +999,70 @@ static READ_HANDLER( rbi_hack_r)
 	}
 }
 
-static WRITE_HANDLER( rbibb_rom_switch_w )
-{
-	/* basically, a MMC3 mapper from the nes */
-	static int last_bank = 0xff;
-	static int rbibb_command;
-
-	switch( offset & 0x7001 )
-	{
-		case 0x0000:
-			rbibb_command = data;
-			if ( last_bank != ( data & 0xc0 ) )
-			{
-				/* reset the banks */
-				memcpy( &memory_region( REGION_CPU1 )[0x08000], &memory_region( REGION_CPU1 )[mmc3_bank], 0x2000 );
-				memcpy( &memory_region( REGION_CPU1 )[0x0c000], &memory_region( REGION_CPU1 )[mmc3_bank], 0x2000 );
-
-				last_bank = data & 0xc0;
-			}
-		break;
-
-		case 0x0001:
-			{
-				UINT8 cmd = rbibb_command & 0x07;
-				int page = ( rbibb_command & 0x80 ) >> 5;
-
-				switch( cmd )
-				{
-					case 0:	/* char banking */
-					case 1: /* char banking */
-						data &= 0xfe;
-						page ^= ( cmd << 1 );
-						ppu2c03b_set_videorom_bank( 0, page, 2, data, 64 );
-
-					break;
-
-					case 2: /* char banking */
-					case 3: /* char banking */
-					case 4: /* char banking */
-					case 5: /* char banking */
-						page ^= cmd + 2;
-						ppu2c03b_set_videorom_bank( 0, page, 1, data, 64 );
-
-					break;
-
-					case 6: /* program banking */
-						if ( rbibb_command & 0x40 )
-						{
-							/* high bank */
-							int bank = ( data & 0x07 ) * 0x2000 + 0x10000;
-
-							memcpy( &memory_region( REGION_CPU1 )[0x08000], &memory_region( REGION_CPU1 )[mmc3_bank], 0x2000 );
-							memcpy( &memory_region( REGION_CPU1 )[0x0c000], &memory_region( REGION_CPU1 )[bank], 0x2000 );
-
-						}
-						else
-						{
-							/* low bank */
-							int bank = ( data & 0x07 ) * 0x2000 + 0x10000;
-
-							memcpy( &memory_region( REGION_CPU1 )[0x08000], &memory_region( REGION_CPU1 )[bank], 0x2000 );
-							memcpy( &memory_region( REGION_CPU1 )[0x0c000], &memory_region( REGION_CPU1 )[mmc3_bank], 0x2000 );
-
-						}
-					break;
-
-					case 7: /* program banking */
-						{
-							int bank = ( data & 0x07 ) * 0x2000 + 0x10000;
-
-							memcpy( &memory_region( REGION_CPU1 )[0x0a000], &memory_region( REGION_CPU1 )[bank], 0x2000 );
-
-						}
-					break;
-				}
-			}
-		break;
-
-		case 0x2000: /* mirroring */
-			if ( data & 0x40 )
-				ppu2c03b_set_mirroring( 0, PPU_MIRROR_HIGH );
-			else
-				ppu2c03b_set_mirroring( 0, ( data & 1 ) ? PPU_MIRROR_HORZ : PPU_MIRROR_VERT );
-
-		break;
-
-		case 0x2001: /* enable ram at $6000 */
-			/* ignored - we always enable it */
-		break;
-
-		case 0x4000: /* scanline counter */
-			rbibb_scanline_counter = data;
-		break;
-
-		case 0x4001: /* scanline latch */
-			rbibb_scanline_latch = data;
-		break;
-
-		case 0x6000: /* disable irqs */
-			ppu2c03b_set_scanline_callback( 0, 0 );
-		break;
-
-		case 0x6001: /* enable irqs */
-			ppu2c03b_set_scanline_callback( 0, rbibb_scanline_cb );
-		break;
-	}
-}
-
 DRIVER_INIT( rbibb )
 {
-	mmc3_bank = 0x1c000;
-
-	/* We do manual banking, in case the code falls through */
-	/* Copy the initial banks */
-	memcpy( &memory_region( REGION_CPU1 )[0x08000], &memory_region( REGION_CPU1 )[mmc3_bank], 0x4000 );
-	memcpy( &memory_region( REGION_CPU1 )[0x0c000], &memory_region( REGION_CPU1 )[mmc3_bank], 0x4000 );
+	init_MMC3();
 
 	/* RBI Base ball hack */
 	install_mem_read_handler(0,0x5e00, 0x5e01, rbi_hack_r) ;
 
-	/* MMC3 mapper at writes to $8000-$ffff */
-	install_mem_write_handler( 0, 0x8000, 0xffff, rbibb_rom_switch_w );
-
-	/* extra ram at $6000-$7fff */
-	install_mem_read_handler( 0, 0x6000, 0x7fff, MRA_RAM );
-	install_mem_write_handler( 0, 0x6000, 0x7fff, MWA_RAM );
-
-	/* common init */
-	init_vsnes();
-
 	remapped_colortable = rp2c04003_colortable;
 }
 
-/**********************************************************************************/
 /* Vs. Super Xevious */
 
-static READ_HANDLER( xevious_hack_r )
+static int supxevs_prot_index = 0;
+
+static READ_HANDLER( supxevs_read_prot_1_r )
 {
 	return 0x05;
 }
 
-static READ_HANDLER( xevious_hack_r1 )
+static READ_HANDLER( supxevs_read_prot_2_r )
 {
-	if( supxev_protection )
+	if( supxevs_prot_index )
 		return 0;
 	else
 		return 0x01;
 }
 
-static READ_HANDLER( xevious_hack_r2 )
+static READ_HANDLER( supxevs_read_prot_3_r )
 {
-	if( supxev_protection )
+	if( supxevs_prot_index )
 		return 0xd1;
 	else
 		return 0x89;
 }
 
-static READ_HANDLER( xevious_hack_r3 )
+static READ_HANDLER( supxevs_read_prot_4_r )
 {
-	if( supxev_protection )
+	if( supxevs_prot_index )
 	{
-		supxev_protection = 0;
+		supxevs_prot_index = 0;
 		return 0x3e;
 	}
 	else
 	{
-		supxev_protection = 1;
+		supxevs_prot_index = 1;
 		return 0x37;
 	}
 }
 
-DRIVER_INIT( xevious )
+
+DRIVER_INIT( supxevs )
 {
-	mmc3_bank = 0x2c000;
+	init_MMC3();
 
-	/* We do manual banking, in case the code falls through */
-	/* Copy the initial banks */
-	memcpy( &memory_region( REGION_CPU1 )[0x08000], &memory_region( REGION_CPU1 )[mmc3_bank], 0x4000 );
-	memcpy( &memory_region( REGION_CPU1 )[0x0c000], &memory_region( REGION_CPU1 )[mmc3_bank], 0x4000 );
-
-	/* MMC3 mapper at writes to $8000-$ffff */
-	install_mem_write_handler( 0, 0x8000, 0xffff, rbibb_rom_switch_w );
-
-	install_mem_read_handler( 0, 0x54ff, 0x54ff, xevious_hack_r );
-	install_mem_read_handler( 0, 0x5678, 0x5678, xevious_hack_r1 );
-	install_mem_read_handler( 0, 0x578f, 0x578f, xevious_hack_r2 );
-	install_mem_read_handler( 0, 0x5567, 0x5567, xevious_hack_r3 );
-
-	supxev_protection = 0;
-
-	/* extra ram at $6000-$7fff */
-	install_mem_read_handler( 0, 0x6000, 0x7fff, MRA_RAM );
-	install_mem_write_handler( 0, 0x6000, 0x7fff, MWA_RAM );
-
-	/* common init */
-	init_vsnes();
+	/* Vs. Super Xevious Protection */
+	install_mem_read_handler( 0, 0x54ff, 0x54ff, supxevs_read_prot_1_r );
+	install_mem_read_handler( 0, 0x5678, 0x5678, supxevs_read_prot_2_r );
+	install_mem_read_handler( 0, 0x578f, 0x578f, supxevs_read_prot_3_r );
+	install_mem_read_handler( 0, 0x5567, 0x5567, supxevs_read_prot_4_r );
 
 	remapped_colortable = rp2c04001_colortable;
 }
+
+/* Vs. TKO Boxing */
 
 static READ_HANDLER( tko_security_r )
 {
@@ -1081,25 +1086,10 @@ static READ_HANDLER( tko_security_r )
 
 DRIVER_INIT( tkoboxng )
 {
-	mmc3_bank  = 0x1c000;
-
-	/* We do manual banking, in case the code falls through */
-	/* Copy the initial banks */
-	memcpy( &memory_region( REGION_CPU1 )[0x08000], &memory_region( REGION_CPU1 )[mmc3_bank], 0x4000 );
-	memcpy( &memory_region( REGION_CPU1 )[0x0c000], &memory_region( REGION_CPU1 )[mmc3_bank], 0x4000 );
-
-	/* MMC3 mapper at writes to $8000-$ffff */
-	install_mem_write_handler( 0, 0x8000, 0xffff, rbibb_rom_switch_w );
-
-	/* extra ram at $6000-$7fff */
-	install_mem_read_handler( 0, 0x6000, 0x7fff, MRA_RAM );
-	install_mem_write_handler( 0, 0x6000, 0x7fff, MWA_RAM );
+	init_MMC3();
 
 	/* security device at $5e00-$5e01 */
 	install_mem_read_handler( 0, 0x5e00, 0x5e01, tko_security_r );
-
-	/* common init */
-	init_vsnes();
 
 	/* now override the vidaccess callback */
 	/* we need to remap color tables */
@@ -1107,68 +1097,19 @@ DRIVER_INIT( tkoboxng )
 	remapped_colortable = rp2c04003_colortable;
 }
 
-/**********************************************************************************/
+/* Vs. Freedom Force */
 
-/* VS SkyKid: ROMs bankings at $8000-$ffff */
-
-static WRITE_HANDLER( vsskykid_rom_switch_w )
+DRIVER_INIT( vsfdf )
 {
+	init_MMC3();
 
-	/* basically, a MMC3 mapper from the nes with out the program rom banking */
+	install_mem_read_handler ( 0, 0x4016, 0x4016, gun_in0_r );
+	install_mem_write_handler( 0, 0x4016, 0x4016, gun_in0_w );
 
-	static int mapper_command;
+	vsnes_gun_controller = 1;
+	vsnes_do_vrom_bank = 0;
 
-	switch( offset & 0x7001 )
-	{
-		case 0x0000:
-
-			mapper_command = data;
-
-			break;
-
-		case 0x0001:
-			{
-
-				UINT8 cmd = mapper_command & 0x07;
-				int page = ( mapper_command & 0x80 ) >> 5;
-
-				switch( cmd )
-				{
-					case 0:	/* char banking */
-					case 1:	/* char banking */
-
-						data &= 0xfe;
-						page ^= ( cmd << 1 );
-						ppu2c03b_set_videorom_bank( 0, page, 2, data, 64 );
-
-					break;
-
-					case 2: /* char banking */
-					case 3: /* char banking */
-					case 4: /* char banking */
-					case 5: /* char banking */
-
-						page ^= cmd + 2;
-						ppu2c03b_set_videorom_bank( 0, page, 1, data, 64 );
-
-					break;
-
-				}
-			}
-		break;
-
-	}
-
-}
-
-DRIVER_INIT( vsskykid )
-{
-	/* ??? mapper at writes to $8000-$ffff */
-	install_mem_write_handler( 0, 0x8000, 0xffff, vsskykid_rom_switch_w );
-
-	/* common init */
-	init_vsnes();
-
+	remapped_colortable = rp2c04001_colortable;
 }
 
 /**********************************************************************************/
@@ -1409,8 +1350,3 @@ DRIVER_INIT( vstetris )
 	init_vsnormal();
 	remapped_colortable = rp2c04003_colortable;
 }
-
-//remapped_colortable = rp2c04001_colortable;
-//remapped_colortable = rp2c04002_colortable;
-//remapped_colortable = rp2c04003_colortable;
-//remapped_colortable = rp2c05004_colortable;

@@ -40,7 +40,7 @@ J1100072A
 
                                  41464            2148
   93422                          41464            2148
-  93422                          41464            2148 
+  93422                          41464            2148
   93422                          41464
   93422                          41464
                                  41464
@@ -52,7 +52,7 @@ J1100072A
        A67-13-1
        A67-14-1     2016
        A67-15-1                      18.432MHz
- 
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -97,7 +97,7 @@ static UINT8 sound_state = 0;
 static WRITE_HANDLER( beg_banking_w )
 {
 	beg_bank = data;
-	
+
 /* d0-d3 connect to A11-A14 of the ROMs (via ls273 latch)
    d4-d7 select one of ROMs (via ls273(above) and then ls154)
 */
@@ -226,14 +226,14 @@ static WRITE_HANDLER( beg_sharedram_w )
 INPUT_PORTS_START( bigevglf )
 
 	PORT_START	/* port 00 on sub cpu */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN3 ) 
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN4 ) 
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )	
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )	
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START2 )	
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START1 )	
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_TILT )	
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SERVICE1 )	
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN4 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_TILT )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SERVICE1 )
 
 	PORT_START	/* port 04 on sub cpu - bit 0 and bit 1 are coin inputs */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
@@ -276,8 +276,8 @@ INPUT_PORTS_START( bigevglf )
 	PORT_DIPSETTING(    0xa0, "5" )
 	PORT_DIPSETTING(    0x80, "6" )
 	PORT_DIPSETTING(    0x60, "7" )
-	PORT_DIPSETTING(    0x50, "8" )
-	PORT_DIPSETTING(    0x40, "9" )
+	PORT_DIPSETTING(    0x40, "8" )
+	PORT_DIPSETTING(    0x20, "9" )
 	PORT_DIPSETTING(    0x00, "10" )
 
 	PORT_START  /* TRACKBALL X - port 02 on sub cpu */
@@ -285,7 +285,7 @@ INPUT_PORTS_START( bigevglf )
 
 	PORT_START  /* TRACKBALL Y - port 03 on sub cpu */
 	PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_REVERSE, 30, 10, 0, 0 )
-INPUT_PORTS_END 	
+INPUT_PORTS_END
 
 
 /*****************************************************************************/
@@ -296,9 +296,9 @@ static MEMORY_READ_START( readmem )
 	{ 0xd000, 0xd7ff, MRA_BANK1 },
 	{ 0xd800, 0xdbff, beg_sharedram_r }, /* only half of the RAM is accessible, line a10 of IC73 (6116) is GNDed */
 	{ 0xf000, 0xf0ff, bigevglf_vidram_r }, /* 41464 (64kB * 8 chips), addressed using ports 1 and 5 */
-	{ 0xf840, 0xf8ff, MRA_RAM }, 
-MEMORY_END     
-     
+	{ 0xf840, 0xf8ff, MRA_RAM },
+MEMORY_END
+
 static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xcfff, MWA_RAM },
@@ -328,14 +328,14 @@ PORT_END
 /* Sub CPU */
 
 static MEMORY_READ_START( readmem_sub )
-	{ 0x0000, 0x3fff, MRA_ROM }, 
-	{ 0x4000, 0x47ff, MRA_RAM }, 
+	{ 0x0000, 0x3fff, MRA_ROM },
+	{ 0x4000, 0x47ff, MRA_RAM },
 	{ 0x8000, 0x83ff, beg_sharedram_r }, /* shared with main CPU */
 MEMORY_END
 
 static MEMORY_WRITE_START( writemem_sub )
-	{ 0x0000, 0x3fff, MWA_ROM }, 
-	{ 0x4000, 0x47ff, MWA_RAM }, 
+	{ 0x0000, 0x3fff, MWA_ROM },
+	{ 0x4000, 0x47ff, MWA_RAM },
 	{ 0x8000, 0x83ff, beg_sharedram_w }, /* shared with main CPU */
 MEMORY_END
 
@@ -356,7 +356,7 @@ static READ_HANDLER( sub_cpu_mcu_coin_port_r )
 	static int bit5=0;
 	/*
 			bit 0 and bit 1 = coin inputs
-			bit 3 and bit 4 = MCU status 
+			bit 3 and bit 4 = MCU status
 			bit 5           = must toggle, vblank ?
 
 	*/
@@ -401,7 +401,7 @@ static MEMORY_WRITE_START( sound_writemem )
 	{ 0xd800, 0xd800, beg_fromsound_w },	/* write to D800 sets bit 1 in status */
 	{ 0xda00, 0xda00, nmi_enable_w },
 	{ 0xdc00, 0xdc00, nmi_disable_w },
-	{ 0xde00, 0xde00, MWA_NOP }, 
+	{ 0xde00, 0xde00, MWA_NOP },
 MEMORY_END
 
 
@@ -456,7 +456,7 @@ static struct AY8910interface ay8910_interface =
 {
 	1,	/* 1 chip */
 	8000000/4,	/* 2 MHz ? */
-	{ 15 }, 
+	{ 15 },
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -531,15 +531,15 @@ ROM_START( bigevglf )
 	ROM_LOAD( "a67-09",   0x40000, 0x8000, CRC(a9d4263e) SHA1(8c3f2d541583e8e4b22e0beabcd04c5765508535))
 	ROM_LOAD( "a67-10",   0x48000, 0x8000, CRC(7c35f4a3) SHA1(de60dc991c67fb7d48314bc8b2c1a27ad040bf1e))
 
-	ROM_REGION( 0x10000, REGION_CPU2, 0 )	
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
 	ROM_LOAD( "a67-11",   0x00000, 0x4000, CRC(a2660d20) SHA1(3d8b670c071862d677d4e30655dcb6b8d830648a))
- 
- 	ROM_REGION( 0x10000, REGION_CPU3, 0 )	
+
+ 	ROM_REGION( 0x10000, REGION_CPU3, 0 )
 	ROM_LOAD( "a67-16",   0x0000, 0x4000, CRC(5fb6d22e) SHA1(1701aa94b7f524187fd7213a94535bed3e8b6cc9))
 	ROM_LOAD( "a67-17",   0x4000, 0x4000, CRC(9f57deae) SHA1(dbdb3d77c3de0113ef6671aec854e4e44ee162ef))
 	ROM_LOAD( "a67-18",   0x8000, 0x4000, CRC(40d54fed) SHA1(bfa0922809bffafec15d3ef59ac8b8ad653860a1))
 
-	ROM_REGION( 0x0800, REGION_CPU4, 0 )	
+	ROM_REGION( 0x0800, REGION_CPU4, 0 )
 	ROM_LOAD( "a67_19-1", 0x0000, 0x0800, CRC(25691658) SHA1(aabf47abac43abe2ffed18ead1cb94e587149e6e))
 
 	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )

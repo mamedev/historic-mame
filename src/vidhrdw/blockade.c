@@ -10,6 +10,12 @@ WRITE_HANDLER( blockade_videoram_w )
 		videoram[offset] = data;
 		tilemap_mark_tile_dirty(bg_tilemap, offset);
 	}
+
+	if (input_port_3_r(0) & 0x80)
+	{
+		logerror("blockade_videoram_w: scanline %d\n", cpu_getscanline());
+		cpu_spinuntil_int();
+	}
 }
 
 static void get_bg_tile_info(int tile_index)
@@ -21,7 +27,7 @@ static void get_bg_tile_info(int tile_index)
 
 VIDEO_START( blockade )
 {
-	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows, 
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows,
 		TILEMAP_OPAQUE, 8, 8, 32, 32);
 
 	if ( !bg_tilemap )

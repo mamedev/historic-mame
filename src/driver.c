@@ -1274,9 +1274,11 @@ const struct GameDriver *test_drivers[] =
 	/* Gottlieb/Mylstar games (Gottlieb became Mylstar in 1983) */
 	DRIVER( reactor )	/* GV-100 (c) 1982 Gottlieb */
 	DRIVER( mplanets )	/* GV-102 (c) 1983 Gottlieb */
+	DRIVER( mplanuk )	/* GV-102 (c) 1983 Gottlieb */
 	DRIVER( qbert )		/* GV-103 (c) 1982 Gottlieb */
 	DRIVER( qbertjp )	/* GV-103 (c) 1982 Gottlieb + Konami license */
 	DRIVER( myqbert )	/* GV-103?(c) 1982 Gottlieb */
+	DRIVER( qberttst )	/* GV-103 (c) 1982 Gottlieb */
 	DRIVER( insector )	/* GV-??? (c) 1982 Gottlieb - never released */
 	DRIVER( krull )		/* GV-105 (c) 1983 Gottlieb */
 	DRIVER( sqbert )	/* GV-??? (c) 1983 Mylstar - never released */
@@ -3029,6 +3031,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( kchampvs )	/* (c) 1984 Data East USA (US) */
 	DRIVER( karatevs )	/* (c) 1984 Data East Corporation (Japan) */
 	DRIVER( compgolf )	/* (c) 1985 Data East Corporation (Japan) */
+	DRIVER( tryout )	/* (c) 1985 Data East Corporation (Japan) */
 	DRIVER( firetrap )	/* (c) 1986 Data East USA (US) */
 	DRIVER( firetpbl )	/* bootleg */
 	DRIVER( metlclsh )	/* (c) 1985 Data East */
@@ -3512,6 +3515,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( slmdunkj )	/* GX247 (c) 1993 (Japan) */
 	DRIVER( dbz )		/* (c) 1993 Banpresto */
 	DRIVER( dbz2 )		/* (c) 1994 Banpresto */
+	DRIVER( bishi )		/* GX575 (c) 1996 (Japan) */
 
 	/* Konami dual 68000 games */
 	DRIVER( overdriv )	/* GX789 (c) 1990 */
@@ -3759,12 +3763,43 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( hdrivaip )	/* (proto) */
 
 	/* later Atari games */
+
+	/* Gauntlet Hardware */
+	/* Gauntlet */
 	DRIVER( gauntlet )	/* 136037			(c) 1985 */
-	DRIVER( gauntir1 )	/* 136037			(c) 1985 */
-	DRIVER( gauntir2 )	/* 136037			(c) 1985 */
-	DRIVER( gaunt2p )	/*     ??			(c) 1985 */
+	DRIVER( gaunts )	/* 136037			(c) 1985 */
+	DRIVER( gauntj )	/* 136037			(c) 1985 */
+	DRIVER( gauntg )	/* 136037			(c) 1985 */
+	DRIVER( gauntj12 )	/* 136037			(c) 1985 */
+	DRIVER( gauntr9 )	/* 136037			(c) 1985 */
+	DRIVER( gauntgr8 )	/* 136037			(c) 1985 */
+	DRIVER( gauntr7 )	/* 136037			(c) 1985 */
+	DRIVER( gauntgr6 )	/* 136037			(c) 1985 */
+	DRIVER( gauntr5 )	/* 136037			(c) 1985 */
+	DRIVER( gauntr4 )	/* 136037			(c) 1985 */
+	DRIVER( gauntgr3 )	/* 136037			(c) 1985 */
+	DRIVER( gauntr2 )	/* 136037			(c) 1985 */
+	DRIVER( gauntr1 )	/* 136037			(c) 1985 */
+	/* Gauntlet - 2 Player */
+	DRIVER( gaunt2p )	/* 136037			(c) 1985 */
+	DRIVER( gaunt2pj )	/* 136037			(c) 1985 */
+	DRIVER( gaunt2pg )	/* 136037			(c) 1985 */
+	DRIVER( gaun2pr3 )	/* 136037			(c) 1985 */
+	DRIVER( gaun2pj2 )	/* 136037			(c) 1985 */
+	DRIVER( gaun2pg1 )	/* 136037			(c) 1985 */
+	/* Gauntlet 2 */
 	DRIVER( gaunt2 )	/* 136043			(c) 1986 */
+	DRIVER( gaunt2g )	/* 136043			(c) 1986 */
+	/* Gauntlet 2 - 2 Player */
+	DRIVER( gaunt22p )	/* 136043			(c) 1986 */
+	DRIVER( gaun22p1 )	/* 136043			(c) 1986 */
+	DRIVER( gaun22pg )	/* 136043			(c) 1986 */
+	/* Vindicators Part II */
 	DRIVER( vindctr2 )	/*     ??			(c) 1988 */
+	DRIVER( vindc2r2 )	/*     ??			(c) 1988 */
+	DRIVER( vindc2r1 )	/*     ??			(c) 1988 */
+
+	/* Other Hardware */
 	DRIVER( xybots )	/* 136054			(c) 1987 */
 	DRIVER( blstroid )	/* 136057			(c) 1987 */
 	DRIVER( blstroi2 )	/* 136057			(c) 1987 */

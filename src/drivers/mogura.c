@@ -1,10 +1,5 @@
 /* Mogura Desse */
 
-/* todo:
- discrete sound
-
- */
-
 #include "driver.h"
 
 data8_t *mogura_tileram;
@@ -97,13 +92,19 @@ static PORT_READ_START( readport )
 	{ 0x0e, 0x0e, input_port_3_r },
 	{ 0x0f, 0x0f, input_port_4_r },
 	{ 0x10, 0x10, input_port_5_r },
-
 PORT_END
 
+
+static WRITE_HANDLER(dac_w)
+{
+	DAC_0_data_w(0, data & 0xf0 );	/* left */
+	DAC_1_data_w(0, (data & 0x0f)<<4 );	/* right */
+}
+
+
 static PORT_WRITE_START( writeport )
-	/* i imagine these are sound related, game uses discrete sound */
 	{ 0x00, 0x00, MWA_NOP }, // ??
-	{ 0x14, 0x14, MWA_NOP },
+	{ 0x14, 0x14, dac_w },	/* 4 bit DAC x 2. MSB = left, LSB = right */
 PORT_END
 
 
@@ -119,7 +120,6 @@ WRITE_HANDLER ( mogura_gfxram_w )
 
 static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
-
 	{ 0xc000, 0xdfff, MRA_RAM }, // main ram
 	{ 0xe000, 0xefff, MRA_RAM }, // ram based characters
 	{ 0xf000, 0xffff, MRA_RAM }, // tilemap
@@ -154,7 +154,7 @@ INPUT_PORTS_START( mogura )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1)
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
 
-	PORT_START      /* IN1 */
+	PORT_START      /* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
@@ -164,7 +164,7 @@ INPUT_PORTS_START( mogura )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2)
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
 
-	PORT_START      /* IN1 */
+	PORT_START      /* IN3 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER3 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER3 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER3 )
@@ -174,7 +174,7 @@ INPUT_PORTS_START( mogura )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER3)
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START3 )
 
-	PORT_START      /* IN1 */
+	PORT_START      /* IN4 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER4 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER4 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER4 )
@@ -208,6 +208,12 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 }
 };
 
+static struct DACinterface dac_interface =
+{
+	2,
+	{ MIXER(50, MIXER_PAN_LEFT), MIXER(50, MIXER_PAN_RIGHT) }
+};
+
 static MACHINE_DRIVER_START( mogura )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80,3000000)		 /* 3 MHz */
@@ -223,12 +229,16 @@ static MACHINE_DRIVER_START( mogura )
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(512, 512)
-	MDRV_VISIBLE_AREA(0, 320-1, 0+2*8, 256-2*8-1)
+	MDRV_VISIBLE_AREA(0, 320-1, 0, 256-1)
 	MDRV_PALETTE_LENGTH(32)
 
 	MDRV_PALETTE_INIT(mogura)
 	MDRV_VIDEO_START(mogura)
 	MDRV_VIDEO_UPDATE(mogura)
+
+	/* sound hardware */
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(DAC, dac_interface)
 MACHINE_DRIVER_END
 
 ROM_START( mogura )
@@ -240,7 +250,6 @@ ROM_START( mogura )
 
 	ROM_REGION( 0x20, REGION_PROMS, 0 )
 	ROM_LOAD( "gx141.7j", 0x00, 0x20,  CRC(b21c5d5f) SHA1(6913c840dd69a7d4687f4c4cbe3ff12300f62bc2) )
-
 ROM_END
 
-GAMEX( 1991, mogura, 0, mogura, mogura, 0, ROT0, "Konami", "Mogura Desse (Cabinet Test Board)", GAME_NO_SOUND  )
+GAME( 1991, mogura, 0, mogura, mogura, 0, ROT0, "Konami", "Mogura Desse" )

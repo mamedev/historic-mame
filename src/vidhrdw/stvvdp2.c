@@ -106,6 +106,7 @@ static void stv_vdp2_dynamic_res_change(void);
 
 	#define STV_VDP2_TVMD ((stv_vdp2_regs[0x000/4] >> 16)&0x0000ffff)
 
+	#define STV_VDP2_LSMD ((STV_VDP2_TVMD & 0x00c0) >> 6)
 	#define STV_VDP2_VRES ((STV_VDP2_TVMD & 0x0030) >> 4)
 	#define STV_VDP2_HRES ((STV_VDP2_TVMD & 0x0007) >> 0)
 
@@ -1473,11 +1474,51 @@ static struct stv_vdp2_tilemap_capabilities
 	UINT8  colour_ram_address_offset;
 
 	UINT8  real_map_offset[16];
+
+	int layer_name; /* just to keep track */
 } stv2_current_tilemap;
 
 
 static void stv_vdp2_draw_basic_bitmap(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
 {
+//	logerror ("bitmap enable %02x size %08x depth %08x\n",	stv2_current_tilemap.layer_name, stv2_current_tilemap.bitmap_size, stv2_current_tilemap.colour_depth);
+
+	/* really just for shienryu at the moment .. needs _lots_ of work */
+	int xsize = 0;
+	int ysize = 0;
+	int xcnt,ycnt;
+	data8_t* gfxdata = memory_region(REGION_GFX1);
+	UINT16 *destline;
+
+	/* size for n0 / n1 */
+	switch (stv2_current_tilemap.bitmap_size)
+	{
+		case 0: xsize=512; ysize=256; break;
+		case 1: xsize=512; ysize=512; break;
+		case 2: xsize=1024; ysize=256; break;
+		case 3: xsize=1024; ysize=512; break;
+	}
+
+	for (ycnt = 0; ycnt <ysize;ycnt++)
+	{
+		destline = (UINT16 *)(bitmap->line[ycnt]);
+
+		for (xcnt = 0; xcnt <xsize;xcnt++)
+		{
+			int r,g,b;
+
+			b = ((gfxdata[0] & 0x7c)>>2);
+			g = ((gfxdata[0] & 0x03) << 3) | ((gfxdata[1] & 0xe0) >> 5);
+			r = ((gfxdata[1] & 0x1f));
+
+			destline[xcnt] = b | g << 5 | r << 10;
+
+			gfxdata+=2;
+		}
+	}
+
+
+
 	/* not done */
 }
 
@@ -1535,6 +1576,8 @@ static void stv_vdp2_draw_basic_tilemap(struct mame_bitmap *bitmap, const struct
 			(0x1ff >> (temp)))*
 			(0x800 << (temp))
 			);//&0x7ffff;
+
+	base &= 0x7ffff; /* shienryu needs this for the text layer, is there a problem elsewhere or is it just right without the ram cart */
 
 //	usrintf_showmessage("E %02x t%01x dp%01x ts%01x mp%08x ds%02x ps%02x", STV_VDP2_xxON, STV_VDP2_N3TPON, STV_VDP2_N3CHCN, STV_VDP2_N3CHSZ, base,STV_VDP2_N3PNB,STV_VDP2_N3PLSZ   );
 
@@ -1737,6 +1780,8 @@ static void stv_vdp2_draw_NBG0(struct mame_bitmap *bitmap, const struct rectangl
 	stv2_current_tilemap.plane_size = STV_VDP2_N0PLSZ;
 	stv2_current_tilemap.colour_ram_address_offset = STV_VDP2_N0CAOS;
 
+	stv2_current_tilemap.layer_name=0;
+
 	stv_vdp2_check_tilemap(bitmap, cliprect);
 }
 
@@ -1783,6 +1828,8 @@ static void stv_vdp2_draw_NBG1(struct mame_bitmap *bitmap, const struct rectangl
 	stv2_current_tilemap.plane_size = STV_VDP2_N1PLSZ;
 	stv2_current_tilemap.colour_ram_address_offset = STV_VDP2_N1CAOS;
 
+	stv2_current_tilemap.layer_name=1;
+
 	stv_vdp2_check_tilemap(bitmap, cliprect);
 }
 
@@ -1806,6 +1853,10 @@ static void stv_vdp2_draw_NBG2(struct mame_bitmap *bitmap, const struct rectangl
 	*/
 
 	stv2_current_tilemap.enabled = STV_VDP2_N2ON;
+
+	/* these modes for N0 disable this layer */
+	if (STV_VDP2_N0CHCN == 0x03) stv2_current_tilemap.enabled = 0;
+	if (STV_VDP2_N0CHCN == 0x04) stv2_current_tilemap.enabled = 0;
 
 	if (!stv2_current_tilemap.enabled) return; // stop right now if its disabled ...
 
@@ -1832,6 +1883,8 @@ static void stv_vdp2_draw_NBG2(struct mame_bitmap *bitmap, const struct rectangl
 
 	stv2_current_tilemap.plane_size = 0;
 	stv2_current_tilemap.colour_ram_address_offset = STV_VDP2_N2CAOS;
+
+	stv2_current_tilemap.layer_name=2;
 
 //	stv2_current_tilemap.plane_size = STV_VDP2_N3PLSZ;
 	stv_vdp2_check_tilemap(bitmap, cliprect);
@@ -1883,6 +1936,8 @@ static void stv_vdp2_draw_NBG3(struct mame_bitmap *bitmap, const struct rectangl
 
 	stv2_current_tilemap.plane_size = 0;
 	stv2_current_tilemap.colour_ram_address_offset = STV_VDP2_N3CAOS;
+
+	stv2_current_tilemap.layer_name=3;
 
 //	stv2_current_tilemap.plane_size = STV_VDP2_N3PLSZ;
 	stv_vdp2_check_tilemap(bitmap, cliprect);
@@ -1973,7 +2028,7 @@ READ32_HANDLER ( stv_vdp2_regs_r )
 		/*VBLANK & HBLANK(bit 3 & 2 of high word),fake for now*/
 		/*VBLANK is always one when the DISP is 0*/
 		//	stv_vdp2_regs[offset] ^= 0x000c0000;
-		   stv_vdp2_regs[offset] = (stv_vblank<<19) | ((rand()&1)<<18);
+		   stv_vdp2_regs[offset] = (stv_vblank<<19) | ((rand()&1)<<18) | (1 << 17 /* ODD */);
 
 		break;
 		case 3:
@@ -2022,17 +2077,22 @@ static void stv_vdp2_dynamic_res_change()
 		case 1: vert = 240; break;
 		case 2: vert = 256; break;
 		case 3:
-		logerror("WARNING: V Res setting (3) not allowed!\n");
-		vert = 256;
-		break;
+			logerror("WARNING: V Res setting (3) not allowed!\n");
+			vert = 256;
+			break;
 	}
+
+	/*Double-density interlace mode,doubles the vertical res*/
+	if((STV_VDP2_LSMD & 3) == 3) { vert*=2;  }
+
 	switch( STV_VDP2_HRES & 7 )
 	{
 		case 0: horz = 320; break;
 		case 1: horz = 352; break;
 		case 2: horz = 640; break;
 		case 3: horz = 704; break;
-/*Exclusive modes,they sets the Vertical Resolution without considering the VRES register.*/
+		/*Exclusive modes,they sets the Vertical Resolution without considering the
+			VRES register.*/
 		case 4: horz = 320; vert = 480; break;
 		case 5: horz = 352; vert = 480; break;
 		case 6: horz = 640; vert = 480; break;
@@ -2058,8 +2118,55 @@ VIDEO_UPDATE( stv_vdp2 )
 		if(pri==6)               video_update_vdp1(bitmap,cliprect);
 	}
 
+#ifndef MAME_DEBUG
 	stv_vdp2_dynamic_res_change();
+#endif
 
+#ifdef MAME_DEBUG
+	if ( keyboard_pressed_memory(KEYCODE_W) )
+	{
+		int tilecode;
+
+		for (tilecode = 0;tilecode<0x8000;tilecode++)
+		{
+			decodechar(Machine->gfx[0], tilecode,  (data8_t*)memory_region(REGION_GFX1), Machine->drv->gfxdecodeinfo[0].gfxlayout); ;
+		}
+
+		for (tilecode = 0;tilecode<0x2000;tilecode++)
+		{
+			decodechar(Machine->gfx[1], tilecode,  (data8_t*)memory_region(REGION_GFX1), Machine->drv->gfxdecodeinfo[1].gfxlayout); ;
+		}
+
+		for (tilecode = 0;tilecode<0x4000;tilecode++)
+		{
+			decodechar(Machine->gfx[2], tilecode,  (data8_t*)memory_region(REGION_GFX1), Machine->drv->gfxdecodeinfo[2].gfxlayout); ;
+		}
+
+		for (tilecode = 0;tilecode<0x1000;tilecode++)
+		{
+			decodechar(Machine->gfx[3], tilecode,  (data8_t*)memory_region(REGION_GFX1), Machine->drv->gfxdecodeinfo[3].gfxlayout); ;
+		}
+
+		/* vdp 1 ... doesn't have to be tile based */
+
+		for (tilecode = 0;tilecode<0x8000;tilecode++)
+		{
+			decodechar(Machine->gfx[4], tilecode,  (data8_t*)memory_region(REGION_GFX2), Machine->drv->gfxdecodeinfo[4].gfxlayout); ;
+		}
+			for (tilecode = 0;tilecode<0x2000;tilecode++)
+		{
+			decodechar(Machine->gfx[5], tilecode,  (data8_t*)memory_region(REGION_GFX2), Machine->drv->gfxdecodeinfo[5].gfxlayout); ;
+		}
+			for (tilecode = 0;tilecode<0x4000;tilecode++)
+		{
+			decodechar(Machine->gfx[6], tilecode,  (data8_t*)memory_region(REGION_GFX2), Machine->drv->gfxdecodeinfo[6].gfxlayout); ;
+		}
+			for (tilecode = 0;tilecode<0x1000;tilecode++)
+		{
+			decodechar(Machine->gfx[7], tilecode,  (data8_t*)memory_region(REGION_GFX2), Machine->drv->gfxdecodeinfo[7].gfxlayout); ;
+		}
+	}
+#endif
 /*
 	if ( keyboard_pressed_memory(KEYCODE_W) )
 	{
