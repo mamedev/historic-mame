@@ -18,7 +18,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
+#include "driver.h"
 #include "psg.h"
+#include "ym2203.h"
 
 /*
 ** some globals ...
@@ -33,6 +35,9 @@ static AY8910 *AYPSG;		/* array of PSG's */
 static int _AYInitChip(int num, SAMPLE *buf);
 static void _AYFreeChip(int num);
 
+unsigned char RegistersYM[264*5];   /* max 5 YM-2203 */
+
+extern unsigned char No_FM;
 
 /*
 ** Initialize AY8910 emulator(s).
@@ -47,10 +52,27 @@ int AYInit(int num, int clock, int rate, int bufsiz, ... )
     va_list ap;
     SAMPLE *userbuffer = 0;
     int moreargs = 1;
+    char *blaster_env;
 
     va_start(ap,bufsiz);
 
     if (AYPSG) return (-1);	/* duplicate init. */
+
+    /* Get Soundblaster base address from environment variabler BLASTER   */
+    /* Soundblaster OPL base port, at some compatibles this must be 0x388 */
+
+    if (!No_FM) {
+       blaster_env = getenv("BLASTER");
+       BaseSb = i = 0;
+       while ((blaster_env[i] & 0x5f) != 0x41) i++;        /* Look for 'A' char */
+       while (blaster_env[++i] != 0x20) {
+         BaseSb = (BaseSb << 4) + (blaster_env[i]-0x30);
+       }
+
+       DelayReg=4;   /* Delay after an OPL register write increase it to avoid problems ,but you'll lose speed */
+       DelayData=7;  /* same as above but after an OPL data write this usually is greater than above */
+       InitYM();     /* inits OPL in mode OPL3 and 4ops per channel,also reset YM2203 registers */
+    }
 
     AYNumChips = num;
     AYClockFreq = clock;
@@ -83,6 +105,12 @@ void AYShutdown()
 	_AYFreeChip(i);
     }
     free(AYPSG); AYPSG = NULL;
+
+    if (!No_FM) {
+        InitOpl();  /* Do this only before quiting , or some cards will make noise during playing */
+                    /* It resets entire OPL registers to zero */
+    }
+
     AYSoundRate = AYBufSize = 0;
 }
 
@@ -181,9 +209,15 @@ static unsigned char _AYEnvForms[16][32] = {
 /* write a register on AY8910 chip number 'n' */
 void AYWriteReg(int n, int r, int v)
 {
+
     AY8910 *PSG = &(AYPSG[n]);
 
-	if (r > 15) return;
+    if (r > 15 && !No_FM) {
+        YMNumber = n;
+        RegistersYM[r+264*n] = v;
+        if (r == 0x28) SlotCh();
+        return;
+    }
 
     PSG->Regs[r] = v;
 

@@ -61,7 +61,7 @@ struct ay8910_f {
     SAMPLE *Buf;	/* sound buffer */
     int UserBuffer;	/* if user provided buffers */
     AYPortHandler Port[2];	/* 'A' and 'B' port */
-    unsigned char Regs[16];
+    unsigned char Regs[264];
 
     /* state variables */
     int Incr0, Incr1, Incr2;

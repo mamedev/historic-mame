@@ -29,7 +29,7 @@ static int popeye_portA_r(int offset)
 static struct AY8910interface interface =
 {
 	1,	/* 1 chip */
-	1536000000,	/* 1.536000000 MHZ ????? */
+	1832727040,	/* 1.832727040 MHZ ????? */
 	{ 255 },
 	{ popeye_portA_r },
 	{ },

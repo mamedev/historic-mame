@@ -68,7 +68,7 @@ The list doesn't include variants of the same game.
 |-----------------------------|--------|--------|--------|--------|----------|
 | Centipede                   |  Yes   |  Yes   |  Yes   |  Yes   | centiped |
 |-----------------------------|--------|--------|--------|--------|----------|
-| Commando                    |  Yes   |  Yes   |Partial.|  Yes   | commando |
+| Commando                    |  Yes   |  Yes   | Yes(2) |  Yes   | commando |
 |-----------------------------|--------|--------|--------|--------|----------|
 | Congo Bongo                 |  Yes   |   No   |   No   |  Yes   | congo    |
 |-----------------------------|--------|--------|--------|--------|----------|
@@ -78,7 +78,7 @@ The list doesn't include variants of the same game.
 |-----------------------------|--------|--------|--------|--------|----------|
 | Crush Roller                |  Yes   |  Yes   |  Yes   |  Yes   | crush    |
 |-----------------------------|--------|--------|--------|--------|----------|
-| Diamond Run                 |  Yes   |  Yes   |  Yes   |   No   | diamond  |
+| Diamond Run                 |  Yes   |  Yes   | Yes(2) |   No   | diamond  |
 |-----------------------------|--------|--------|--------|--------|----------|
 | Donkey Kong                 |  Yes   | Close  | Yes(1) |  Yes   | dkong    |
 |-----------------------------|--------|--------|--------|--------|----------|
@@ -94,13 +94,13 @@ The list doesn't include variants of the same game.
 |-----------------------------|--------|--------|--------|--------|----------|
 | Frogger                     |  Yes   | Close  |  Yes   |  Yes   | frogger  |
 |-----------------------------|--------|--------|--------|--------|----------|
-| Galaga                      |  Yes   |  Yes   | Yes(1) |   No   | galaga   |
+| Galaga                      |  Yes   |  Yes   | Yes(1) |  Yes   | galaga   |
 |-----------------------------|--------|--------|--------|--------|----------|
-| Galaga - Bootleg            |  Yes   |  Yes   | Yes(1) |   No   | galagabl |
+| Galaga - Bootleg            |  Yes   |  Yes   | Yes(1) |  Yes   | galagabl |
 |-----------------------------|--------|--------|--------|--------|----------|
 | Galaxian                    |  Yes   |  Yes   | Limited|  Yes   | galaxian |
 |-----------------------------|--------|--------|--------|--------|----------|
-| Ghost 'n Goblin             |  Yes   |  Yes   | Partial|   No   | gng      |
+| Ghosts 'n Goblins           |  Yes   |  Yes   | Yes(2) |   No   | gng      |
 |-----------------------------|--------|--------|--------|--------|----------|
 | Gorf                        |   No   |   No   |   No   |  n/a   | gorf     |
 |-----------------------------|--------|--------|--------|--------|----------|
@@ -110,6 +110,8 @@ The list doesn't include variants of the same game.
 |-----------------------------|--------|--------|--------|--------|----------|
 | Gingateikoku No Gyakushu    |  Yes   |  Yes   | Limited|   No   | japirem  |
 |-----------------------------|--------|--------|--------|--------|----------|
+| Joust                       |  Yes   |  Yes?  |   No   |  Yes   | joust    |
+|-----------------------------|--------|--------|--------|--------|----------|
 | Jump Bug                    |  Yes   |   No   |  Yes   |   No   | jumpbug  |
 |-----------------------------|--------|--------|--------|--------|----------|
 | Jungle King                 |  Yes   | Close  |   No   |   No   | junglek  |
@@ -117,6 +119,8 @@ The list doesn't include variants of the same game.
 | Kangaroo                    |  Yes   |   No   |  Yes   |  n/a   | kangaroo |
 |-----------------------------|--------|--------|--------|--------|----------|
 | Krull                       |  Yes   |  Yes   |   No   |  n/a   | krull    |
+|-----------------------------|--------|--------|--------|--------|----------|
+| Kung Fu Master              |  Yes   |   No   |   No   |  n/a   | kungfum  |
 |-----------------------------|--------|--------|--------|--------|----------|
 | Lady Bug                    |  Yes   |  Yes   |  Yes   |  Yes   | ladybug  |
 |-----------------------------|--------|--------|--------|--------|----------|
@@ -142,7 +146,7 @@ The list doesn't include variants of the same game.
 |-----------------------------|--------|--------|--------|--------|----------|
 | Ms Pac Man (bootleg)        |  Yes   |  Yes   |  Yes   |  Yes   | mspacman |
 |-----------------------------|--------|--------|--------|--------|----------|
-| Nibbler                     |  Yes   |   No   |   No   |  Yes   | nibbler  |
+| Nibbler                     |  Yes   |  Yes   |   No   |  Yes   | nibbler  |
 |-----------------------------|--------|--------|--------|--------|----------|
 | Pac Man                     |  Yes   |  Yes   |  Yes   |  Yes   | pacman   |
 |-----------------------------|--------|--------|--------|--------|----------|
@@ -150,27 +154,33 @@ The list doesn't include variants of the same game.
 |-----------------------------|--------|--------|--------|--------|----------|
 | Pepper II                   |Partial.|   No   |   No   |   No   | pepper2  |
 |-----------------------------|--------|--------|--------|--------|----------|
-| Phoenix                     |  Yes   | Close  | Yes(1) |   No   | phoenix  |
+| Phoenix                     |  Yes   | Close  | Yes(1) |  Yes   | phoenix  |
 |-----------------------------|--------|--------|--------|--------|----------|
 | Pisces                      |  Yes   |  Yes   | Limited|   No   | pisces   |
 |-----------------------------|--------|--------|--------|--------|----------|
-| Pleiads                     |  Yes   |   No   | Limited|   No   | pleiads  |
+| Pleiads                     |  Yes   |   No   | Limited|  Yes   | pleiads  |
 |-----------------------------|--------|--------|--------|--------|----------|
 | Pooyan                      |  Yes   | Close  |  Yes   |  Yes   | pooyan   |
 |-----------------------------|--------|--------|--------|--------|----------|
 | Popeye - Bootleg            |  Yes   |  Yes   |  Yes   |  Yes   | popeyebl |
 |-----------------------------|--------|--------|--------|--------|----------|
+| Qix                         |  Yes   |  Yes   |   No   |  Yes   | qix      |
+|-----------------------------|--------|--------|--------|--------|----------|
 | Q*Bert                      |  Yes   |  Yes   | Yes(1) |   No   | qbert    |
 |-----------------------------|--------|--------|--------|--------|----------|
 | Rally X                     |  Yes   |   No   |Partial.|   No   | rallyx   |
 |-----------------------------|--------|--------|--------|--------|----------|
+| Robotron                    |  Yes   |  Yes?  |   No   |  Yes   | robotron |
+|-----------------------------|--------|--------|--------|--------|----------|
 | Scramble                    |  Yes   |  Yes   |  Yes   |   No   | scramble |
 |-----------------------------|--------|--------|--------|--------|----------|
-| Seicross                    |   No   |   No   |  Yes   |  n/a   | seicross |
+| Seicross                    |  Yes   |   No   |  Yes   |  n/a   | seicross |
 |-----------------------------|--------|--------|--------|--------|----------|
 | Space Invaders              |  Yes   |  Yes   | Yes(1) |  Yes   | invaders |
 |-----------------------------|--------|--------|--------|--------|----------|
 | Space Panic                 |  Yes   | Close  |   No   |  Yes   | panic    |
+|-----------------------------|--------|--------|--------|--------|----------|
+| Stargate (Defender II)      |  Yes   |  Yes?  |   No   |  Yes   | stargate |
 |-----------------------------|--------|--------|--------|--------|----------|
 | Super Cobra                 |  Yes   |   No   |  Yes   |   No   | scobra   |
 |-----------------------------|--------|--------|--------|--------|----------|
@@ -200,6 +210,7 @@ The list doesn't include variants of the same game.
 |-----------------------------|--------|--------|--------|--------|----------|
 
 (1) Need samples provided separately
+(2) Requires OPL chip for FM Music
 
 
 
@@ -307,9 +318,6 @@ Commando ("commando")
 Arrows  Move around
 CTRL    Fire
 Press CTRL during the startup message to enter the test screen
-
-known issues:
-- The YM2203 sound chip is emulated as a 8910. Music is missing.
 
 
 
@@ -442,7 +450,6 @@ Clone supported:
 
 Known issues:
 - Explosions are implemented in a tricky way (reset game and you'll see!)
-- Hiscore support not ready yet
 
 
 
@@ -468,8 +475,8 @@ Known issues:
 
 
 
-Ghost 'n Goblin ("gng")
-=======================
+Ghosts 'n Goblins ("gng")
+=========================
 Arrows  Move around
 CTRL    Fire
 ALT     Jump
@@ -477,12 +484,6 @@ F2      Test mode
 
 Known issues:
 - To continue a game, insert coin and keep pressed CTRL+1 (or CTRL+2)
-- Music is missing.  Maybe the original arcade uses YM2203 sound chips.
-- Original machine has 4096 colors.  We now simulate them with a palette of
-  256.  We need a skilled player, with a powerful machine (Pentium 133 or
-  better, so he doesn't have to skip frames), that can finish the game with
-  the -log option and send us the log file so we can implement 100% correct
-  colors.
 
 
 
@@ -535,6 +536,17 @@ Known issues:
 
 
 
+Joust ("joust")
+====================
+Arrows  Move around
+CTRL    Flap
+
+Known issues:
+- The sprites sometimes disappear.
+- Where the characters are stored?
+
+
+
 Jump Bug ("jumpbug")
 ====================
 Arrows  Move around
@@ -584,6 +596,15 @@ F2      Select
 
 
 
+Kung Fu Master ("kungfum")
+==========================
+Arrows  Move around
+Ctrl    Kick
+Alt     Punch
+F1+F3   Test mode
+
+
+
 Lady Bug ("ladybug")
 ====================
 Arrows  Move around
@@ -607,9 +628,7 @@ Runs on the same hardware as Q*Bert
 
 Arrows  Move around
 CTRL    Fire
-
-Known issues:
-- The dialer (used to rotate the ship) is not supported.
+Z,X     Dialer control
 
 
 
@@ -794,6 +813,7 @@ ALT     Barrier
 
 Clones supported:
   Phoenix Amstar ("phoenixa")
+  Phoenix T.P.N. ("phoenix3")
 
 
 
@@ -842,6 +862,39 @@ Q,W,E   Fire
 
 
 
+Qix ("qix")
+===========
+Arrows  Move around
+CTRL    Fast draw
+ALT     Slow draw
+
+While in the configuration screens:
+F1      Next screen
+F2      Next line
+F3      Reset/Start game
+F5      Up
+F6      Down
+
+Press F3 to skip the configuration screens at the beginning.
+
+In the DIP switch menu, "CONFIGURE CMOS" lets you change the game's
+settings by using the configuration screens.  Change the value to "YES"
+while not in a game.  Change the configuration as desired, then re-enter
+the DIP switch menu and change the value back to "NO".  Your configuration
+is saved automatically and will be reloaded the next time you play.  To
+leave the configuration screens, press F3.
+
+To change the language, delete the QIX.HI file from the Qix directory
+and re-run the program.
+
+Known Issues:
+ - No sound.
+ - Emulation will be slow on anything less than a Pentium 133.
+ - Interrupt timing should be exact now (NdMix)
+ - Player 2 controls don't work right.
+
+
+
 Q*Bert ("qbert")
 ================
 Arrows  Move around
@@ -863,6 +916,16 @@ Known issues:
 - Cars are now displayed on the radar screen, but right color mapping
   must be done.
 - I don't know if I reproduced the layout of the screen correctly.
+
+
+
+Robotron ("robotron")
+=====================
+Arrows  Move around
+E,S,D,F Fire
+
+Known issues:
+- Controls don't work right yet
 
 
 
@@ -891,7 +954,11 @@ Seicross ("seicross")
 =====================
 Runs on almost the same hardware as Crazy Climber, but not exactly the same.
 
-Not playable.
+Arrows  Move around
+
+Known issues:
+- You must remember to setup "Debug and Demo" mode to OFF
+- Colors are wrong
 
 
 
@@ -899,16 +966,46 @@ Space Invaders ("invaders")
 ===========================
 Arrows  Move around
 CTRL    Fire
+T       Activate Tilt
 
 Clones supported (some of these have wrong colors, and the dip switch menu
       doesn't work):
   Super Earth Invasion ("earthinv")
   Space Attack II ("spaceatt")
-  Space Invaders Deluxe ("invdelux")
   Invaders Revenge ("invrvnge")
   Galaxy Wars ("galxwars")
   Lunar Rescur ("lrescue")
   Destination Earth ("desterth")
+
+
+
+Space Invaders Deluxe ("invdelux")
+==================================
+Arrows  Move around
+CTRL    Fire
+T       Activate Tilt
+N       Reset the name of the person with the highest score to MIDWAY
+
+Preset mode:
+
+Space Invaders Deluxe provided a way the operator could
+enter his/her name each time the machine was turned on.
+
+HIGH SCORE AND NAME DISPLAY PROGRAM
+
+1.  Turn preset mode ON in the DIP switch screen
+2.  Insert one credit
+3.  Depress one player select button 'Preset Mode' will be displayed on screen
+4.  Depress one player select button again to increase score until previous
+    high-score is beaten.
+
+    Note:
+    If you press the two player select button you can skip the starting
+    level as well.
+
+5.  Depress fire button to start game. After all bases have been destroyed
+    the alphabet will be displayed on screen. A new name may now be entered.
+6.  Turn preset mode OFF in the DIP switch screen to re-establish game mode.
 
 
 
@@ -936,6 +1033,19 @@ Clones supported:
 Known issues:
 - The star background is probably not entirely accurate. Also, maybe it should
   be clipped at the top and bottom of the screen?
+
+
+
+Stargate ("stargate")
+=====================
+S       Up
+X       Down
+A       Reverse
+I       Thrust
+O       Fire
+J       Smart bomb
+M       Inviso
+SPACE   Hyperspace
 
 
 
@@ -1105,6 +1215,7 @@ Video modes created using Tweak 1.6b by Robert Schmidt, who also wrote
   (v.verrando@mclink.it)
 AY-3-8910 emulation by Ville Hallik (ville@physic.ut.ee) and Michael Cuddy
   (mcuddy@FensEnde.com).
+YM-2203 emulation by Ishmair (ishmair@vnet.es).
 POKEY emulator by Ron Fries (rfries@tcmail.frco.com).
 UNIX port by Allard van der Bas (avdbas@wi.leidenuniv.nl) and Dick de Ridder
   (dick@ph.tn.tudelft.nl).
@@ -1119,11 +1230,15 @@ Arabian driver provided by Jarek Burczynski (pbk01@ikp.atm.com.pl).
 Congo Bongo and Kangaroo drivers provided by Ville Laitinen (ville@sms.fi).
 Millipede driver provided by Ivan Mackintosh (ivan@rcp.co.uk).
 Donkey Kong sound emulation by Ron Fries (rfries@tcmail.frco.com).
+Thanks to John Butler (jcbutler@worldnet.att.net) and Ed. Mueller
+  (emueller@ti.com) for the Qix driver.
 Vanguard driver by Brad Oliver and Mirko Buffoni, based on code by Brian
    Levine.
 Carnival driver completed by Mike Coates and Richard Davies.
 Warp warp driver completed by Chris Hardy (chrish@kcbbs.gen.nz).
 Popeye driver provided by Marc LaFontaine and Nicola Salmoria.
+Stargate, Joust, Robotron and generic Williams drivers provided by
+   Steven Hugg <hugg@pobox.com>
 Jump Bug driver by Richard Davies (R.Davies@dcs.hull.ac.uk) and Brad Oliver
    (bradman@primenet.com).
 Venture, Mouse Trap and Pepper II drivers by Marc Lafontaine
@@ -1172,6 +1287,7 @@ Thanks to Paul Leaman (paull@phonelink.com) for exaustive documentation on
 Many thanks to Jim Hernandez for the information on Wizard of Wor hardware.
 Thanks to Mike Coates (mike@dissfulfils.co.uk) for Carnival ROM placement
    indications and gfx info.
+Colors log file for Ghosts 'n Goblins provided by Gabrio Secco.
 Colors for Donkey Kong, Donkey Kong Jr. and Mario Bros. derived from Kong
    emulator by Gary Shepherdson.
 Colors for Amidar, Frogger and Zaxxon derived from SPARCADE by Dave Spicer.
@@ -1183,6 +1299,7 @@ Thanks to Marc Lafontaine for Congo Bongo colors and Popeye bootleg.
 Centipede information taken from Centipede emulator by Ivan Mackintosh, MageX
    0.3 by Edward Massey and memory map by Pete Rittwage.
 Info on Burger Time taken from Replay 0.01a by Kevin Brisley (kevin@isgtec.com)
+Thanks to Tormod Tjaberg (tormod@sn.no) for Invaders saga modifications.
 Thanks to Chris Hardy (chrish@kcbbs.gen.nz) for info on Moon Patrol.
 Thanks to Dave W. (hbbuse08@csun.edu) for all his help.
 Thanks to Doug Jefferys (djeffery@multipath.com) for Crazy Kong color
@@ -1249,6 +1366,7 @@ options:
 -soundcard n  select sound card (if this is not specified, you will be asked
               interactively)
 -nojoy        don't poll joystick
+-nofm         disable FM sound synthesis (if you don't have Adlib/Sb card)
 -log          create a log of illegal memory accesses in ERROR.LOG
 -list         display a list of currently supported games
 -frameskip n  skip frames to speed up the emulation. For example, if the game
@@ -1265,11 +1383,10 @@ The following keys work in all emulators:
 3       Insert coin
 1       Start 1 player game
 2       Start 2 players game
-Tab     Change dip switch settings
+Tab     Enter dip switch settings and keys assignment menu
 P       Pause
 F3      Reset
 F4      Show the game graphics. Use cursor keys to change set/color, F4 to exit
-F8      To select keys assignment.
 F9      To change volume percentage thru 100,75,50,25,0 values
 F10     Toggle speed throttling
 F11     Toggle fps counter

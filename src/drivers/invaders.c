@@ -21,12 +21,78 @@ write:
 05        ?
 06        ?
 
+Space Invaders
+--------------
+Input:
+Port 1
+   
+   bit 0 = CREDIT (0 if deposit)
+   bit 1 = 2P start(1 if pressed)
+   bit 2 = 1P start(1 if pressed)
+   bit 3 = 0 if TILT 
+   bit 4 = shot(1 if pressed)
+   bit 5 = left(1 if pressed)
+   bit 6 = right(1 if pressed)
+   bit 7 = Always 1
+   
+Port 2
+   bit 0 = 00 = 3 ships  10 = 5 ships
+   bit 1 = 01 = 4 ships  11 = 6 ships
+   bit 2 = Always 0 (1 if TILT)  
+   bit 3 = 0 = extra ship at 1500, 1 = extra ship at 1000 
+   bit 4 = shot player 2 (1 if pressed) 
+   bit 5 = left player 2 (1 if pressed) 
+   bit 6 = right player 2 (1 if pressed)
+   bit 7 = Coin info if 0, last screen
+
+
+Space Invaders Deluxe
+---------------------
+
+This info was gleaned from examining the schematics of the SID
+manual which Mitchell M. Rohde keeps at:
+
+http://www.eecs.umich.edu/~bovine/space_invaders/index.html
+
+Input:
+Port 0
+   bit 0 = SW 8 unused 
+   bit 1 = Always 0
+   bit 2 = Always 1
+   bit 3 = Always 0
+   bit 4 = Always 1
+   bit 5 = Always 1
+   bit 6 = 1, Name Reset when set to zero
+   bit 7 = Always 1
+
+Port 1
+   bit 0 = CREDIT (0 if deposit)
+   bit 1 = 2P start(1 if pressed)
+   bit 2 = 1P start(1 if pressed)
+   bit 3 = 0 if TILT 
+   bit 4 = shot(1 if pressed)
+   bit 5 = left(1 if pressed)
+   bit 6 = right(1 if pressed)
+   bit 7 = Always 1
+   
+Port 2
+   bit 0 = Number of bases 0 - 3 , 1 - 4  (SW 4)
+   bit 1 = 1 or 0 connected to SW 3 not used
+   bit 2 = Always 0  (1 if TILT)  
+   bit 3 = Preset         (SW 2)
+   bit 4 = shot player 2 (1 if pressed)  These are also used
+   bit 5 = left player 2 (1 if pressed)  to enter the name in the
+   bit 6 = right player 2 (1 if pressed) high score field. 
+   bit 7 = Coin info if 0 (SW 1) last screen
+
+Invaders and Invaders Deluxe both write to I/O port 6 but
+I don't know why.
+
+
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-
-
 
 extern int invaders_shift_data_r(int offset);
 extern void invaders_shift_amount_w(int offset,int data);
@@ -92,15 +158,40 @@ static struct IOReadPort readport[] =
 	{ -1 }	/* end of table */
 };
 
-static struct IOWritePort writeport[] =
+
+static struct IOReadPort invdelux_readport[] =
 {
-	{ 0x02, 0x02, invaders_shift_amount_w },
-        { 0x03, 0x03, invaders_sh_port3_w },
-	{ 0x04, 0x04, invaders_shift_data_w },
-        { 0x05, 0x05, invaders_sh_port5_w },
+	{ 0x00, 0x00, input_port_0_r },
+	{ 0x01, 0x01, input_port_1_r },
+	{ 0x02, 0x02, input_port_2_r },
+	{ 0x03, 0x03, invaders_shift_data_r },
 	{ -1 }	/* end of table */
 };
 
+/* Catch the write to unmapped I/O port 6 */
+void invaders_dummy_write(int offset,int data)
+{
+}
+
+static struct IOWritePort writeport[] =
+{
+	{ 0x02, 0x02, invaders_shift_amount_w },
+   { 0x03, 0x03, invaders_sh_port3_w },
+	{ 0x04, 0x04, invaders_shift_data_w },
+   { 0x05, 0x05, invaders_sh_port5_w },
+   { 0x06, 0x06, invaders_dummy_write },
+	{ -1 }	/* end of table */
+};
+
+static struct IOWritePort invdelux_writeport[] =
+{
+	{ 0x02, 0x02, invaders_shift_amount_w },
+   { 0x03, 0x03, invaders_sh_port3_w },
+	{ 0x04, 0x04, invaders_shift_data_w },
+   { 0x05, 0x05, invaders_sh_port5_w },
+   { 0x06, 0x06, invaders_dummy_write },
+	{ -1 }	/* end of table */
+};
 
 
 static struct InputPort input_ports[] =
@@ -113,14 +204,38 @@ static struct InputPort input_ports[] =
 				OSD_JOY_FIRE, OSD_JOY_LEFT, OSD_JOY_RIGHT, 0 }
 	},
 	{	/* IN1 */
-		0x00,
+		0x00,  
 		{ 0, 0, OSD_KEY_T, 0,
 				OSD_KEY_CONTROL, OSD_KEY_LEFT, OSD_KEY_RIGHT, 0 },
 		{ 0, 0, 0, 0,
 				OSD_JOY_FIRE, OSD_JOY_LEFT, OSD_JOY_RIGHT, 0 }
+	}, 
+	{ -1 }
+};
+
+static struct InputPort invdelux_input_ports[] =
+{
+	{	/* IN0 */
+		0xf4,
+		{ 0, 0, 0, 0, 0, 0, OSD_KEY_N, 0 },
+		{ 0, 0, 0, 0, 0, 0, 0, 0 }
+	},
+	{	/* IN1 */
+		0x81,
+		{ OSD_KEY_3, OSD_KEY_2, OSD_KEY_1, 0,
+				OSD_KEY_CONTROL, OSD_KEY_LEFT, OSD_KEY_RIGHT, 0 },
+		{ 0, 0, 0, 0,
+				OSD_JOY_FIRE, OSD_JOY_LEFT, OSD_JOY_RIGHT, 0 }
+	},
+	{	/* IN2 */
+		0x00,
+		{ 0, 0, OSD_KEY_T, 0,
+            OSD_KEY_CONTROL, OSD_KEY_LEFT, OSD_KEY_RIGHT, 0 },
+		{ 0, 0, 0, 0, OSD_JOY_FIRE,    OSD_JOY_LEFT, OSD_JOY_RIGHT, 0 }
 	},
 	{ -1 }
 };
+
 
 
 static struct KEYSet keys[] =
@@ -134,6 +249,29 @@ static struct KEYSet keys[] =
         { -1 }
 };
 
+static struct KEYSet invaders_keys[] =
+{
+        { 0, 5, "PL1 MOVE LEFT"  },
+        { 0, 6, "PL1 MOVE RIGHT" },
+        { 0, 4, "PL1 FIRE"       },
+        { 1, 5, "PL2 MOVE LEFT"  },
+        { 1, 6, "PL2 MOVE RIGHT" },
+        { 1, 4, "PL2 FIRE"       },
+        { -1 }
+};
+
+/* Deluxe uses set two to input the name */
+static struct KEYSet invdelux_keys[] =
+{
+        { 1, 5, "PL1 MOVE LEFT"  },
+        { 1, 6, "PL1 MOVE RIGHT" },
+        { 1, 4, "PL1 FIRE"       },
+        { 2, 5, "PL2 MOVE LEFT"  },
+        { 2, 6, "PL2 MOVE RIGHT" },
+        { 2, 4, "PL2 FIRE"       },
+        { -1 }
+};
+
 
 static struct DSW dsw[] =
 {
@@ -142,7 +280,21 @@ static struct DSW dsw[] =
 	{ -1 }
 };
 
+static struct DSW invaders_dsw[] =
+{
+	{ 1, 0x03, "BASES", { "3", "4", "5", "6" } },
+	{ 1, 0x08, "BONUS", { "1500", "1000" }, 1 },
+	{ 1, 0x80, "COIN INFO", { "ON", "OFF" }, 0 },
+	{ -1 }
+};
 
+static struct DSW invdelux_dsw[] =
+{
+	{ 2, 0x01, "BASES", { "3", "4" }, 0},
+	{ 2, 0x08, "PRESET MODE", { "OFF", "ON" }, 0 },
+	{ 2, 0x80, "COIN INFO", { "ON", "OFF" }, 0 },
+	{ -1 }
+};
 
 /* Space Invaders doesn't have character mapped graphics, this definition is here */
 /* only for the dip switch menu */
@@ -197,6 +349,41 @@ static struct MachineDriver machine_driver =
 			2000000,	/* 2 Mhz? */
 			0,
 			readmem,writemem,readport,writeport,
+			invaders_interrupt,2	/* two interrupts per frame */
+		}
+	},
+	60,
+	invaders_init_machine,
+
+	/* video hardware */
+	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
+	gfxdecodeinfo,
+	sizeof(palette)/3,sizeof(colortable),
+	0,
+
+	0,
+	generic_vh_start,
+	generic_vh_stop,
+	invaders_vh_screenrefresh,
+
+	/* sound hardware */
+	0,
+	0,
+	0,
+	0,
+	invaders_sh_update
+};
+
+
+static struct MachineDriver invdelux_machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_Z80,
+			2000000,	/* 2 Mhz? */
+			0,
+			readmem,writemem,invdelux_readport, invdelux_writeport,
 			invaders_interrupt,2	/* two interrupts per frame */
 		}
 	},
@@ -319,7 +506,6 @@ static int invaders_hiload(const char *name)
 	{
 		FILE *f;
 
-
 		if ((f = fopen(name,"rb")) != 0)
 		{
 			fread(&RAM[0x20f4],1,2,f);
@@ -332,15 +518,49 @@ static int invaders_hiload(const char *name)
 }
 
 
-
 static void invaders_hisave(const char *name)
 {
 	FILE *f;
 
-
 	if ((f = fopen(name,"wb")) != 0)
 	{
 		fwrite(&RAM[0x20f4],1,2,f);
+		fclose(f);
+	}
+}
+
+
+static int invdelux_hiload(const char *name)
+{
+	/* check if the hi score table has already been initialized */
+	if (memcmp(&RAM[0x2340],"\x1b\x1b",2) == 0)
+	{
+		FILE *f;
+
+		if ((f = fopen(name,"rb")) != 0)
+		{
+         /* Load the actual score */
+		   fread(&RAM[0x20f4],1, 0x2,f);
+         /* Load the name */
+		   fread(&RAM[0x2340],1, 0xa,f);
+			fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;	/* we can't load the hi scores yet */
+}
+
+static void invdelux_hisave(const char *name)
+{
+	FILE *f;
+
+	if ((f = fopen(name,"wb")) != 0)
+	{
+      /* Save the actual score */
+		fwrite(&RAM[0x20f4],1, 0x2,f);
+      /* Save the name */
+		fwrite(&RAM[0x2340],1, 0xa,f);
 		fclose(f);
 	}
 }
@@ -356,7 +576,7 @@ struct GameDriver invaders_driver =
 	0, 0,
 	invaders_sample_names,
 
-	input_ports, dsw, keys,
+	input_ports, invaders_dsw, invaders_keys,
 
 	0, palette, colortable,
 	{ 0x1a,0x1b,0x1c,0x1d,0x1e,0x1f,0x20,0x21,0x22,0x23,	/* numbers */
@@ -435,13 +655,13 @@ struct GameDriver invrvnge_driver =
 struct GameDriver invdelux_driver =
 {
 	"invdelux",
-	&machine_driver,
+	&invdelux_machine_driver,
 
 	invdelux_rom,
 	0, 0,
 	invaders_sample_names,
 
-	input_ports, dsw, keys,
+	invdelux_input_ports, invdelux_dsw, invdelux_keys,
 
 	0, palette, colortable,
 	{ 0x1c,0x1d,0x1e,0x1f,0x20,0x21,0x22,0x23,0x24,0x25,	/* numbers */
@@ -450,7 +670,7 @@ struct GameDriver invdelux_driver =
 	0, 3,
 	8*13, 8*16, 2,
 
-	0, 0
+	invdelux_hiload, invdelux_hisave
 };
 
 struct GameDriver galxwars_driver =

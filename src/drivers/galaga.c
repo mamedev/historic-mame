@@ -67,6 +67,7 @@ CPU #3 NMI (@120Hz)
 #include "vidhrdw/generic.h"
 
 extern unsigned char *galaga_sharedram;
+extern int galaga_hiscore_print_r(int offset);
 extern int galaga_sharedram_r(int offset);
 extern void galaga_sharedram_w(int offset,int data);
 extern int galaga_dsw_r(int offset);
@@ -92,12 +93,12 @@ extern void pengo_sh_update(void);
 extern unsigned char *pengo_soundregs;
 
 
-
 static struct MemoryReadAddress readmem_cpu1[] =
 {
 	{ 0x8000, 0x9fff, galaga_sharedram_r, &galaga_sharedram },
 	{ 0x6800, 0x6807, galaga_dsw_r },
 	{ 0x7100, 0x7100, galaga_customio_r },
+        { 0x02b9, 0x02bd, galaga_hiscore_print_r },
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ -1 }	/* end of table */
 };
@@ -417,6 +418,44 @@ static const char *galaga_sample_names[] =
 };
 
 
+static int hiload(const char *name)
+{
+   FILE *f;
+
+   /* get RAM pointer (this game is multiCPU, we can't assume the global */
+   /* RAM pointer is pointing to the right place) */
+   unsigned char *RAM = Machine->memory_region[0];
+
+   /* check if the hi score table has already been initialized */
+   if (memcmp(&RAM[0x8a4c],"\x18\x6e",2) == 0)
+   {
+      if ((f = fopen(name,"rb")) != 0)
+      {
+         fread(&RAM[0x8A20],1,45,f);
+         fclose(f);
+      }
+
+      return 1;
+   }
+   else return 0; /* we can't load the hi scores yet */
+}
+
+
+static void hisave(const char *name)
+{
+   FILE *f;
+
+   /* get RAM pointer (this game is multiCPU, we can't assume the global */
+   /* RAM pointer is pointing to the right place) */
+   unsigned char *RAM = Machine->memory_region[0];
+
+   if ((f = fopen(name,"wb")) != 0)
+   {
+      fwrite(&RAM[0x8A20],1,45,f);
+      fclose(f);
+   }
+}
+
 
 struct GameDriver galaga_driver =
 {
@@ -437,7 +476,7 @@ struct GameDriver galaga_driver =
 	1, 5,
 	8*11, 8*20, 4,
 
-	0, 0
+	hiload, hisave
 };
 
 struct GameDriver galagabl_driver =
@@ -459,5 +498,5 @@ struct GameDriver galagabl_driver =
 	1, 5,
 	8*11, 8*20, 4,
 
-	0, 0
+	hiload, hisave
 };

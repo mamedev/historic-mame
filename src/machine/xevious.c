@@ -11,46 +11,26 @@
 #include "Z80.h"
 
 
-unsigned char *galaga_sharedram;
+unsigned char *xevious_sharedram;
 static unsigned char interrupt_enable_1,interrupt_enable_2,interrupt_enable_3;
-static int do_nmi, testdone;
 
 
-int galaga_hiscore_print_r(int offset)
+
+int xevious_sharedram_r(int offset)
 {
-        if (cpu_getpc() == 0x031e || cpu_getpc() == 0xe1) {
-          if (offset == 4)
-            RAM[0x83f2] = RAM[0x8a25];  /* Adjust the 6th digit */
-
-          return RAM[0x8a20+offset];    /* return HISCORE */
-        }
-        else
-          return RAM[0x2b9+offset];     /* bypass ROM test */
-}
-
-int galaga_sharedram_r(int offset)
-{
-	return galaga_sharedram[offset];
+	return xevious_sharedram[offset];
 }
 
 
 
-void galaga_sharedram_w(int offset,int data)
+void xevious_sharedram_w(int offset,int data)
 {
-	galaga_sharedram[offset] = data;
-        if (offset == 0x1ab9 && Machine->samples) {
-          if (data && testdone && Machine->samples->sample[0]) {
-                osd_play_sample(7,Machine->samples->sample[0]->data,
-                        Machine->samples->sample[0]->length,
-                        Machine->samples->sample[0]->smpfreq,
-                        Machine->samples->sample[0]->volume,0);
-          }
-        }
+	xevious_sharedram[offset] = data;
 }
 
 
 
-int galaga_dsw_r(int offset)
+int xevious_dsw_r(int offset)
 {
 	int bit0,bit1;
 
@@ -67,19 +47,23 @@ int galaga_dsw_r(int offset)
 
  Emulate the custom IO chip.
 
- In the real Galaga machine, the chip would cause an NMI on CPU #1 to ask
+ In the real xevious machine, the chip would cause an NMI on CPU #1 to ask
  for data to be transferred. We don't bother causing the NMI, we just look
  into the CPU register to see where the data has to be read/written to, and
  emulate the behaviour of the NMI interrupt.
 
 ***************************************************************************/
-extern void galaga_customio_w(int offset,int data)
+extern void xevious_customio_w(int offset,int data)
 {
 	static int mode,credits;
 	Z80_Regs regs;
 
 
 	Z80_GetRegs(&regs);
+
+
+if (errorlog) fprintf(errorlog,"%04x: custom IO command %02x, HL = %04x DE = %04x BC = %04x\n",
+		cpu_getpc(),data,regs.HL2.D,regs.DE2.D,regs.BC2.D);
 
 	switch (data)
 	{
@@ -125,6 +109,7 @@ extern void galaga_customio_w(int offset,int data)
 				}
 				else fire = 0;
 
+
 				if (mode)	/* switch mode */
 /* TODO: investigate what each bit does. bit 7 is the service switch */
 					cpu_writemem(regs.DE2.D,0x80);
@@ -137,35 +122,18 @@ extern void galaga_customio_w(int offset,int data)
 			break;
 
 		case 0xb1:	/* status? */
-                        testdone = 1;
 			credits = 0;	/* this is a good time to reset the credits counter */
 			cpu_writemem(regs.DE2.D,0);
 			cpu_writemem(regs.DE2.D + 1,0);
 			cpu_writemem(regs.DE2.D + 2,0);
 			break;
 
-                case 0xa8:
-                        testdone = 0;
-                        break;
-#if 0
-                case 0xa8:
-                        if (Machine->samples->sample[0])
-                         osd_play_sample(7,Machine->samples->sample[0]->data,
-                                      Machine->samples->sample[0]->length,
-                                      Machine->samples->sample[0]->smpfreq,
-                                      Machine->samples->sample[0]->volume,0);
-                        break;
-#endif
 		case 0xa1:	/* go into switch mode */
 			mode = 1;
 			break;
 
 		case 0xe1:	/* go into credit mode */
 			mode = 0;
-			break;
-
-		case 0x61:	/* generate an NMI to recover from DI/HALT */
-			do_nmi = 1;
 			break;
 
 		default:
@@ -176,14 +144,14 @@ if (errorlog) fprintf(errorlog,"%04x: warning: unknown custom IO command %02x\n"
 
 
 
-extern int galaga_customio_r(int offset)
+extern int xevious_customio_r(int offset)
 {
 	return 0x10;	/* everything is handled by customio_w() */
 }
 
 
 
-void galaga_halt_w(int offset,int data)
+void xevious_halt_w(int offset,int data)
 {
 	cpu_halt(1,data);
 	cpu_halt(2,data);
@@ -191,35 +159,29 @@ void galaga_halt_w(int offset,int data)
 
 
 
-void galaga_interrupt_enable_1_w(int offset,int data)
+void xevious_interrupt_enable_1_w(int offset,int data)
 {
 	interrupt_enable_1 = data;
 }
 
 
 
-int galaga_interrupt_1(void)
+int xevious_interrupt_1(void)
 {
-	if (do_nmi)
-	{
-		do_nmi = 0;
-		return Z80_NMI_INT;
-	}
-
 	if (interrupt_enable_1) return 0xff;
 	else return Z80_IGNORE_INT;
 }
 
 
 
-void galaga_interrupt_enable_2_w(int offset,int data)
+void xevious_interrupt_enable_2_w(int offset,int data)
 {
 	interrupt_enable_2 = data;
 }
 
 
 
-int galaga_interrupt_2(void)
+int xevious_interrupt_2(void)
 {
 	if (interrupt_enable_2) return 0xff;
 	else return Z80_IGNORE_INT;
@@ -227,14 +189,14 @@ int galaga_interrupt_2(void)
 
 
 
-void galaga_interrupt_enable_3_w(int offset,int data)
+void xevious_interrupt_enable_3_w(int offset,int data)
 {
 	interrupt_enable_3 = data;
 }
 
 
 
-int galaga_interrupt_3(void)
+int xevious_interrupt_3(void)
 {
 	if (interrupt_enable_3) return Z80_IGNORE_INT;
 	else return Z80_NMI_INT;

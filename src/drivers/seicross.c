@@ -1,20 +1,23 @@
 /***************************************************************************
 
-Seicross memory map (preliminary)
+Seicross memory map (preliminary by Mirko)
 
 0000-6fff ROM
 7800-7fff RAM
-8800-88ff Bigsprite RAM.
-9000-93ff Video RAM
-9800-981f Row scroll
-9880-989f Sprites
-9c00-9fff Color RAM
+9000-93ff videoram
+9c00-9fff colorram
 
-read:
-b800      watchdog reset?
+Read:
+7814-7815 Protection check
+A000      Joystick + Players start button
+A800      player #2 controls + coin + ?
+B000      test switches
+B800      watchdog reset?
 
-write:
-98dc-98df Bigsprite contrll
+Write:
+8820-887f Sprite ram
+9800-981f Scroll control
+9880-989f ? (always 0?)
 
 I/O ports:
 0         8910 control
@@ -29,61 +32,40 @@ I/O ports:
 
 
 
-extern int seicross_init_machine(const char *gamename);
+extern int seicross_protection_r(int offset);
 
-extern unsigned char *ckong_bsvideoram;
-extern unsigned char *ckong_bigspriteram;
-extern unsigned char *ckong_row_scroll;
-extern void ckong_colorram_w(int offset,int data);
-extern void ckong_bigsprite_videoram_w(int offset,int data);
+extern unsigned char *seicross_row_scroll;
+extern void seicross_colorram_w(int offset,int data);
 extern void cclimber_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
-extern int ckong_vh_start(void);
-extern void ckong_vh_stop(void);
-extern void ckong_vh_screenrefresh(struct osd_bitmap *bitmap);
+extern void seicross_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-extern void cclimber_sample_trigger_w(int offset,int data);
-extern void cclimber_sample_rate_w(int offset,int data);
-extern void cclimber_sample_volume_w(int offset,int data);
-extern int cclimber_sh_start(void);
-
+extern int seicross_sh_start(void);
 
 
 static struct MemoryReadAddress readmem[] =
 {
+	{ 0x7814, 0x7815, seicross_protection_r },	/* ??? */
+	{ 0x7800, 0x7fff, MRA_RAM },
 	{ 0x0000, 0x6fff, MRA_ROM },
-	{ 0x7800, 0x7813, MRA_RAM },
-	{ 0x7816, 0x7fff, MRA_RAM },
 	{ 0x9000, 0x93ff, MRA_RAM },	/* video RAM */
-	{ 0x9800, 0x981f, MRA_RAM },	/* column scroll */
-	{ 0x9880, 0x989f, MRA_RAM },	/* sprite registers */
+	{ 0x9800, 0x981f, MRA_RAM },
 	{ 0x9c00, 0x9fff, MRA_RAM },	/* color RAM */
 	{ 0xa000, 0xa000, input_port_0_r },	/* IN0 */
 	{ 0xa800, 0xa800, input_port_1_r },	/* IN1 */
-	{ 0xb000, 0xb000, input_port_2_r },	/* DSW1 */
-	{ 0xb800, 0xb800, input_port_2_r },	/* IN2 */
-	{ 0x98dc, 0x98df, MRA_RAM },	/* bigsprite registers */
+	{ 0xb000, 0xb000, input_port_2_r },	/* test */
+	{ 0xb800, 0xb800, MRA_NOP },
 	{ -1 }	/* end of table */
 };
 
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0x6fff, MWA_ROM },
-	{ 0x7800, 0x7813, MWA_RAM },
-	{ 0x7816, 0x7fff, MWA_RAM },
+	{ 0x7800, 0x7fff, MWA_RAM },
 	{ 0x9000, 0x93ff, videoram_w, &videoram },
-	{ 0x9c00, 0x9fff, ckong_colorram_w, &colorram },
-	{ 0x9800, 0x981f, MWA_RAM, &ckong_row_scroll },
-	{ 0x9880, 0x989f, MWA_RAM, &spriteram },
-	{ 0x8800, 0x88ff, ckong_bigsprite_videoram_w, &ckong_bsvideoram },
-	{ 0x98dc, 0x98df, MWA_RAM, &ckong_bigspriteram },
-#if 0
-	{ 0xa000, 0xa000, interrupt_enable_w },
-	{ 0x9400, 0x97ff, videoram_w },	/* mirror address, used to draw windows */
-	{ 0xa004, 0xa004, cclimber_sample_trigger_w },
-	{ 0xb000, 0xb000, cclimber_sample_volume_w },
-	{ 0xa800, 0xa800, cclimber_sample_rate_w },
-	{ 0xa001, 0xa002, MWA_NOP },
-#endif
+	{ 0x9800, 0x981f, MWA_RAM, &seicross_row_scroll },
+	{ 0x8820, 0x887f, MWA_RAM, &spriteram },
+	{ 0x9c00, 0x9fff, seicross_colorram_w, &colorram },
+	{ 0x9880, 0x989f, MWA_NOP },	/* ? */
 	{ -1 }	/* end of table */
 };
 
@@ -101,29 +83,28 @@ static struct IOWritePort writeport[] =
 };
 
 
-
 static struct InputPort input_ports[] =
 {
 	{	/* IN0 */
 		0x00,
-		{ OSD_KEY_E, OSD_KEY_D, OSD_KEY_S, OSD_KEY_F,
-				OSD_KEY_I, OSD_KEY_K, OSD_KEY_J, OSD_KEY_L },
+		{ OSD_KEY_UP, OSD_KEY_DOWN, OSD_KEY_LEFT, OSD_KEY_RIGHT,
+				0, 0, OSD_KEY_1, OSD_KEY_2 },
 		{ OSD_JOY_UP, OSD_JOY_DOWN, OSD_JOY_LEFT, OSD_JOY_RIGHT,
-				OSD_JOY_FIRE2, OSD_JOY_FIRE3, OSD_JOY_FIRE1, OSD_JOY_FIRE4 }
+				0, 0, 0, 0 }
 	},
 	{	/* IN1 */
+		0x00,	/* standup cabinet */
+		{ 0, 0, 0, 0, OSD_KEY_3, 0, 0, 0 },
+		{ 0, 0, 0, 0, 0, 0, 0, 0 }
+	},
+	{	/* test */
 		0x00,
+		{ OSD_KEY_F1, OSD_KEY_F2, 0, 0, 0, 0, 0, 0 },
+		{ 0, 0, 0, 0, 0, 0, 0, 0 }
+	},
+	{	/* ? */
+		0x60,
 		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* DSW1 */
-		0x00,
-		{ 0, 0, 0, OSD_KEY_F1, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* IN2 */
-		0x10,	/* standup cabinet */
-		{ 0, OSD_KEY_3, OSD_KEY_1, OSD_KEY_2, 0, 0, 0, 0 },
 		{ 0, 0, 0, 0, 0, 0, 0, 0 }
 	},
 	{ -1 }	/* end of table */
@@ -132,14 +113,19 @@ static struct InputPort input_ports[] =
 
 static struct KEYSet keys[] =
 {
+        { 0, 0, "MOVE UP" },
+        { 0, 2, "MOVE LEFT" },
+        { 0, 3, "MOVE RIGHT" },
+        { 0, 1, "MOVE DOWN" },
         { -1 }
 };
 
 
 static struct DSW dsw[] =
 {
-	{ 2, 0x03, "LIVES", { "3", "4", "5", "6" } },
-	{ 2, 0x04, "BONUS", { "30000", "50000" } },
+	{ 3, 0x40, "DEMO MODE", { "ON", "OFF" }, 1 },
+	{ 3, 0x20, "DEBUG MODE", { "ON", "OFF" }, 1 },
+	{ 3, 0x80, "SW7B", { "0", "1" } },
 	{ -1 }
 };
 
@@ -174,7 +160,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	{ 1, 0x0000, &charlayout,   0, 16 },
 	{ 1, 0x1000, &charlayout,   0, 16 },
-{ 1, 0x1000, &charlayout,   0, 16 },
+        { 1, 0x1000, &charlayout,   0, 16 },
 	{ 1, 0x2000, &spritelayout, 0, 16 },
 	{ 1, 0x3000, &spritelayout, 0, 16 },
 	{ -1 } /* end of array */
@@ -209,7 +195,7 @@ static struct MachineDriver machine_driver =
 		}
 	},
 	60,
-	seicross_init_machine,
+	0,
 
 	/* video hardware */
 	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
@@ -218,14 +204,14 @@ static struct MachineDriver machine_driver =
 	cclimber_vh_convert_color_prom,
 
 	0,
-	ckong_vh_start,
-	ckong_vh_stop,
-	ckong_vh_screenrefresh,
+	generic_vh_start,
+	generic_vh_stop,
+	seicross_vh_screenrefresh,
 
 	/* sound hardware */
 	0,
 	0,
-	cclimber_sh_start,
+	seicross_sh_start,
 	AY8910_sh_stop,
 	AY8910_sh_update
 };

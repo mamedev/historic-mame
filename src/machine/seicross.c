@@ -10,10 +10,7 @@
 #include "driver.h"
 
 
-int seicross_init_machine(const char *gamename)
+int seicross_protection_r(int offset)
 {
-	/* patch the roms to pass startup test */
-	RAM[0x2225] = 0x2f;
-
-	return 0;
+        return offset+2;
 }

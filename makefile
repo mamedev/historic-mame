@@ -7,14 +7,14 @@ CFLAGS = -Isrc -Isrc/Z80 -Isrc/M6502 -Isrc/I86 -Isrc/M6809 \
 LIBS   = -lalleg
 OBJS   = obj/mame.o obj/common.o obj/driver.o obj/cpuintrf.o obj/osdepend.o \
          obj/vidhrdw/generic.o obj/sndhrdw/generic.o \
-         obj/sndhrdw/psg.o obj/sndhrdw/8910intf.o obj/sndhrdw/pokey.o obj/sndhrdw/sn76496.o \
+         obj/sndhrdw/ym2203.opm obj/sndhrdw/psg.o obj/sndhrdw/8910intf.o obj/sndhrdw/pokey.o obj/sndhrdw/sn76496.o \
          obj/machine/pacman.o obj/vidhrdw/pacman.o obj/drivers/pacman.o \
          obj/vidhrdw/pengo.o obj/sndhrdw/pengo.o obj/drivers/pengo.o \
          obj/machine/ladybug.o obj/vidhrdw/ladybug.o obj/sndhrdw/ladybug.o obj/drivers/ladybug.o \
          obj/machine/mrdo.o obj/vidhrdw/mrdo.o obj/drivers/mrdo.o \
          obj/machine/docastle.o obj/vidhrdw/docastle.o obj/drivers/docastle.o \
          obj/vidhrdw/cclimber.o obj/sndhrdw/cclimber.o obj/drivers/cclimber.o \
-         obj/machine/seicross.o obj/drivers/seicross.o \
+         obj/machine/seicross.o obj/sndhrdw/seicross.o obj/vidhrdw/seicross.o obj/drivers/seicross.o \
          obj/vidhrdw/ckong.o obj/drivers/ckong.o \
          obj/drivers/ckongs.o \
          obj/vidhrdw/dkong.o obj/sndhrdw/dkong.o obj/drivers/dkong.o \
@@ -66,6 +66,9 @@ OBJS   = obj/mame.o obj/common.o obj/driver.o obj/cpuintrf.o obj/osdepend.o \
          obj/vidhrdw/commando.o obj/drivers/commando.o \
          obj/machine/gng.o obj/vidhrdw/gng.o obj/drivers/gng.o \
          obj/machine/vulgus.o obj/sndhrdw/vulgus.o obj/vidhrdw/vulgus.o obj/drivers/vulgus.o \
+         obj/vidhrdw/kungfum.o obj/drivers/kungfum.o \
+         obj/machine/qix.o obj/vidhrdw/qix.o obj/drivers/qix.o \
+         obj/machine/williams.o obj/sndhrdw/williams.o obj/vidhrdw/williams.o obj/drivers/williams.o \
          obj/Z80/Z80.o obj/M6502/M6502.o obj/I86/I86.o obj/M6809/M6809.o
 
 VPATH = src src/Z80 src/M6502 src/I86 src/M6809
@@ -84,7 +87,7 @@ obj/%.o: src/%.c mame.h common.h driver.h
 # dependencies
 obj/Z80/Z80.o:  Z80.c Z80.h Z80Codes.h Z80IO.h Z80DAA.h
 obj/M6502/M6502.o:	M6502.c M6502.h Tables.h Codes.h
-obj/I86/I86.o:	I86.c I86.h global.h instr.h mytypes.h
+obj/I86/I86.o:  I86.c I86.h global.h instr.h mytypes.h
 obj/M6809/M6809.o:  M6809.c M6809.h
 
 

@@ -24,15 +24,14 @@ static int clock=0;
 
 int kangaroo_sec_chip_r(int offset)
 {
-  clock = (clock << 1) + 1;
-  clock&=0xff;
-  return (clock);
+/*  clock = (clock << 1) + 1; */
+  clock++;
+  return (clock & 0xff);
 }
 
 void kangaroo_sec_chip_w(int offset, int val)
 {
-  clock = val & 0xff;
-
+/*  clock = val & 0xff; */
 }
 
 /* This is not really necessary ? after all it does nothing ;) -V-

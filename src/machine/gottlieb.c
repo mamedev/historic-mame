@@ -48,7 +48,7 @@ int krull_IN1_r(int offset)
 int mplanets_dial_r(int offset)
 {
 	int res = 0;
-	const speed = 1;
+	const speed = 2;
 
 	if (osd_key_pressed(OSD_KEY_Z) || osd_joy_pressed(OSD_JOY_FIRE3))
 		res = -speed;  

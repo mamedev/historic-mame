@@ -115,6 +115,8 @@ void copyscrollbitmap(struct osd_bitmap *dest,struct osd_bitmap *src,
 		int rows,int *rowscroll,int cols,int *colscroll,
 		const struct rectangle *clip,int transparency,int transparent_color);
 void clearbitmap(struct osd_bitmap *bitmap);
+
+int setup_menu(void);
 int setdipswitches(void);
 int setkeysettings(void);
 void displaytext(const struct DisplayText *dt,int erase);

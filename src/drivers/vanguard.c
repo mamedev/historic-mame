@@ -147,8 +147,8 @@ static struct GfxLayout charlayout2 =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 0, 0xf000, &vanguard_charlayout, 0,16 },	/* the game dynamically modifies this */
-	{ 1, 0x0000, &charlayout2,         0,16 },
+	{ 0, 0xf000, &vanguard_charlayout, 0,8 },	/* the game dynamically modifies this */
+	{ 1, 0x0000, &charlayout2,       8*4,8 },
 	{ -1 } /* end of array */
 };
 

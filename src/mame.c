@@ -56,9 +56,9 @@ static char hiscorename[50];
 
 
 int frameskip;
-int VolumiDefault[] = {100, 75, 50, 25, 0};
+int DefaultVolumes[] = {100, 75, 50, 25, 0};
 int VolumePTR = 0;
-int ActualVolume = 100;
+int CurrentVolume = 100;
 
 
 #define MAX_COLORS 256	/* can't handle more than 256 colors on screen */
@@ -378,8 +378,8 @@ int updatescreen(void)
 
         if (osd_key_pressed(OSD_KEY_F9)) {
                 if (++VolumePTR > 4) VolumePTR = 0;
-                ActualVolume = VolumiDefault[VolumePTR];
-                osd_set_mastervolume(ActualVolume);
+                CurrentVolume = DefaultVolumes[VolumePTR];
+                osd_set_mastervolume(CurrentVolume);
 		while (osd_key_pressed(OSD_KEY_F9)) {
                   if (*drv->sh_update) {
 		     (*drv->sh_update)();	/* update sound */
@@ -402,13 +402,10 @@ int updatescreen(void)
 		displaytext(dt,0);
 
                 osd_set_mastervolume(0);
-		while (osd_key_pressed(OSD_KEY_P)) {
-                  if (*drv->sh_update) {
-		     (*drv->sh_update)();	/* update sound */
-		     osd_update_audio();
-                  }
-                }
-                	/* wait for key release */
+
+		while (osd_key_pressed(OSD_KEY_P))
+			osd_update_audio();	/* give time to the sound hardware to apply the volume change */
+
 		do
 		{
 			key = osd_read_key();
@@ -422,50 +419,35 @@ int updatescreen(void)
 			}
 		} while (key != OSD_KEY_P);
 		while (osd_key_pressed(key));
-                osd_set_mastervolume(ActualVolume);
+                osd_set_mastervolume(CurrentVolume);
 	}
 
-	/* if the user pressed TAB, go to dipswitch setup menu */
+	/* if the user pressed TAB, go to the setup menu */
 	if (osd_key_pressed(OSD_KEY_TAB))
 	{
-                osd_set_mastervolume(0);
-		while (osd_key_pressed(OSD_KEY_TAB)) {
-                  if (*drv->sh_update) {
-		     (*drv->sh_update)();	/* update sound */
-		     osd_update_audio();
-                  }
-                }
-		if (setdipswitches()) return 1;
-                osd_set_mastervolume(ActualVolume);
-	}
+		osd_set_mastervolume(0);
 
-	/* if the user pressed F8, go to keys setup menu */
-	if (osd_key_pressed(OSD_KEY_F8))
-	{
-                osd_set_mastervolume(0);
-		while (osd_key_pressed(OSD_KEY_F8)) {
-                  if (*drv->sh_update) {
-		     (*drv->sh_update)();	/* update sound */
-		     osd_update_audio();
-                  }
-                }
-                if (setkeysettings()) return 1;
-                osd_set_mastervolume(ActualVolume);
+		while (osd_key_pressed(OSD_KEY_TAB))
+			osd_update_audio();	/* give time to the sound hardware to apply the volume change */
+
+		if (setup_menu()) return 1;
+
+		osd_set_mastervolume(CurrentVolume);
 	}
 
 	/* if the user pressed F4, show the character set */
 	if (osd_key_pressed(OSD_KEY_F4))
 	{
                 osd_set_mastervolume(0);
-		while (osd_key_pressed(OSD_KEY_F4)) {
-                  if (*drv->sh_update) {
-		     (*drv->sh_update)();	/* update sound */
-		     osd_update_audio();
-                  }
-                }
+
+		while (osd_key_pressed(OSD_KEY_F4))
+			osd_update_audio();	/* give time to the sound hardware to apply the volume change */
+
 		if (showcharset()) return 1;
-                osd_set_mastervolume(ActualVolume);
+
+		osd_set_mastervolume(CurrentVolume);
 	}
+
 
 	if (*drv->sh_update)
 	{

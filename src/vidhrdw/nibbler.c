@@ -84,12 +84,12 @@ void nibbler_vh_screenrefresh(struct osd_bitmap *bitmap)
 			sy = (offs % 32);
 
 			drawgfx(tmpbitmap,Machine->gfx[1],
-					nibbler_videoram2[offs],colorram[offs] >> 4,
+					nibbler_videoram2[offs],colorram[offs] >> 3,
 					0,0,8*sx,8*sy,
 					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 
 			drawgfx(tmpbitmap,Machine->gfx[0],
-					charcode,colorram[offs] & 0x0f,
+					charcode,colorram[offs] & 0x07,
 					0,0,8*sx,8*sy,
 					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 		}

@@ -8,6 +8,12 @@
 ***************************************************************************/
 
 #include "driver.h"
+/* JB 970527 */
+#ifdef __MWERKS__
+#	include "m6809.h"
+#else
+#	include "m6809/m6809.h"
+#endif
 
 
 
@@ -22,6 +28,9 @@ int superpac_init_machine(const char *gamename)
 	RAM[0xe042] = 0x12;
 	RAM[0xe3c5] = 0x12;
 	RAM[0xe3c6] = 0x12;
+	
+	/* Set optimization flags for M6809 */
+	m6809_Flags = M6809_FAST_OP | M6809_FAST_S | M6809_FAST_U;
 
 	return 0;
 }

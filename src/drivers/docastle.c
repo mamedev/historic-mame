@@ -1,99 +1,39 @@
 /***************************************************************************
 
-Mr Do's Castle memory map (preliminary)
-
-CPU # 1
-
-0000-7fff ROM
-8000-97ff RAM
-9800-99ff sprites??
-b000-b3ff video RAM
-b400-b7ff color RAM
-b800-bfff mirror address for the above
-
-memory mapped ports:
-
-read:
-a000-a008 second CPU data exchange ?
-
-write:
-a000-a008 second CPU data exchange ?
-a800      watchdog reset
-e000      ?
-
-I/O ports:
-
-write:
-00        ?
-02        ?
-
-interrupts:
-interrupt mode 1
-
-
-CPU # 2
-
-0000-3fff ROM
-8000-87ff RAM
-
-memory mapped ports:
-
-read:
-a000-a008 ?
-c001-c007 ?
-c081      ?
-c085      ?
-
-write:
-a000-a008 ?
-e000      ?
-e400      ?
-e800      ?
-ec00      ?
-
-interrupts:
-Both interrupt mode 1 and NMI (I *think* the NMI is triggered by the main CPU).
 
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-
 extern unsigned char *docastle_sharedram;
 extern unsigned char *docastle_sharedram2;
-extern int docastle_sharedram_r(int offset);
-extern void docastle_sharedram_w(int offset,int data);
 extern int docastle_sharedram2_r(int offset);
 extern void docastle_sharedram2_w(int offset,int data);
+extern int docastle_sharedram_r(int offset);
+extern void docastle_sharedram_w(int offset,int data);
 
 extern int docastle_init_machine(const char *gamename);
-
-extern int docastle_vh_start(void);
-extern void docastle_vh_stop(void);
 extern void docastle_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 
 static struct MemoryReadAddress readmem[] =
 {
-        { 0xe000, 0xefff, docastle_sharedram2_r, &docastle_sharedram2 },
         { 0xa000, 0xa008, docastle_sharedram_r, &docastle_sharedram },
 	{ 0x8000, 0x99ff, MRA_RAM },
 	{ 0xb000, 0xb7ff, MRA_RAM },	/* video and color RAM */
-	{ 0xb800, 0xbbff, videoram_r },	/* mirror address */
-	{ 0xbc00, 0xbfff, colorram_r },	/* mirror address */
+        { 0xb800, 0xbbff, videoram_r }, /* mirror of video ram */
+        { 0xbc00, 0xbfff, colorram_r }, /* mirror of color ram */
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ -1 }	/* end of table */
 };
 
 static struct MemoryWriteAddress writemem[] =
 {
-        { 0xe000, 0xefff, docastle_sharedram2_w },
         { 0xa000, 0xa008, docastle_sharedram_w },
 	{ 0x8000, 0x97ff, MWA_RAM },
 	{ 0xb000, 0xb3ff, videoram_w, &videoram },
 	{ 0xb400, 0xb7ff, colorram_w, &colorram },
-	{ 0x9800, 0x99ff, MWA_RAM, &spriteram },
 	{ 0xa800, 0xa800, MWA_NOP },
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ -1 }	/* end of table */
@@ -103,7 +43,6 @@ static struct MemoryWriteAddress writemem[] =
 
 static struct MemoryReadAddress readmem2[] =
 {
-        { 0xe000, 0xefff, docastle_sharedram2_r },
         { 0xa000, 0xa008, docastle_sharedram_r },
 	{ 0x8000, 0x87ff, MRA_RAM },
 	{ 0x0000, 0x3fff, MRA_ROM },
@@ -112,7 +51,6 @@ static struct MemoryReadAddress readmem2[] =
 
 static struct MemoryWriteAddress writemem2[] =
 {
-        { 0xe000, 0xefff, docastle_sharedram2_w },
         { 0xa000, 0xa008, docastle_sharedram_w },
 	{ 0x8000, 0x87ff, MWA_RAM },
 	{ 0x0000, 0x3fff, MWA_ROM },

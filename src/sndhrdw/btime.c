@@ -8,7 +8,7 @@
 static struct AY8910interface interface =
 {
 	2,	/* 2 chips */
-	1000000000,	/* 1 MHZ ? */
+	1536000000,	/* 1 MHZ ? */
 	{ 255, 255 },
 	{ },
 	{ },

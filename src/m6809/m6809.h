@@ -11,6 +11,10 @@
 /***     You are not allowed to distribute this software commercially     ***/
 /****************************************************************************/
 
+/*	Changes since MAME 0.21:
+	18-MAY-97  JB	- define INT_FIRQ 2
+*/
+
 #ifndef _M6809_H
 #define _M6809_H
 
@@ -41,6 +45,7 @@ typedef struct
 
 #define INT_NONE  0            /* No interrupt required */
 #define INT_IRQ	  1            /* Standard IRQ interrupt */
+#define INT_FIRQ  2				/* Fast IRQ */
 
 /* PUBLIC FUNCTIONS */
 extern void m6809_SetRegs(m6809_Regs *Regs);
@@ -54,16 +59,17 @@ extern int	m6809_IPeriod;
 extern int	m6809_ICount;
 extern int	m6809_IRequest;
 
+
 /****************************************************************************/
 /* Read a byte from given memory location                                   */
 /****************************************************************************/
-extern int cpu_readmem(int Address);
+extern int cpu_readmem(int address);
 #define M6809_RDMEM(A) ((unsigned)cpu_readmem(A))
 
 /****************************************************************************/
 /* Write a byte to given memory location                                    */
 /****************************************************************************/
-extern void cpu_writemem(int Address, int data);
+extern void cpu_writemem(int address, int data);
 #define M6809_WRMEM(A,V) (cpu_writemem(A,V))
 
 /****************************************************************************/
@@ -83,6 +89,25 @@ extern byte *ROM;
 /*#define Z80_RDOP_ARG(A)		Z80_RDOP(A)*/
 #define M6809_RDOP_ARG(A) (RAM[A])
 
+/****************************************************************************/
+/* Flags for optimizing memory access. Game drivers should set m6809_Flags  */
+/* to a combination of these flags depending on what can be safely          */
+/* optimized. For example, if M6809_FAST_OP is set, opcodes are fetched     */
+/* directly from the ROM array, and cpu_readmem() is not called.            */
+/* The flags affect reads and writes.                                       */
+/****************************************************************************/
+extern int m6809_Flags;
+#define M6809_FAST_NONE	0x00	/* no memory optimizations */
+#define M6809_FAST_OP	0x01	/* opcode fetching */
+#define M6809_FAST_S	0x02	/* stack */
+#define M6809_FAST_U	0x04	/* user stack */
+
+#ifndef FALSE
+#    define FALSE 0
+#endif
+#ifndef TRUE
+#    define TRUE (!FALSE)
+#endif
 
 #endif /* _M6809_H */
 

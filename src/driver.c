@@ -68,6 +68,7 @@ extern struct GameDriver spaceplt_driver;
 extern struct GameDriver pooyan_driver;
 extern struct GameDriver phoenix_driver;
 extern struct GameDriver phoenixa_driver;
+extern struct GameDriver phoenix3_driver;
 extern struct GameDriver pleiads_driver;
 extern struct GameDriver carnival_driver;
 extern struct GameDriver invaders_driver;
@@ -121,6 +122,11 @@ extern struct GameDriver commando_driver;
 extern struct GameDriver vulgus_driver;
 extern struct GameDriver gng_driver;
 extern struct GameDriver diamond_driver;
+extern struct GameDriver kungfum_driver;
+extern struct GameDriver robotron_driver;
+extern struct GameDriver stargate_driver;
+extern struct GameDriver joust_driver;
+extern struct GameDriver qix_driver;
 
 const struct GameDriver *drivers[] =
 {
@@ -190,6 +196,7 @@ const struct GameDriver *drivers[] =
 	&pooyan_driver,
 	&phoenix_driver,
 	&phoenixa_driver,
+	&phoenix3_driver,
 	&pleiads_driver,
 	&carnival_driver,
 	&invaders_driver,
@@ -242,5 +249,10 @@ const struct GameDriver *drivers[] =
         &vulgus_driver,
         &gng_driver,
         &diamond_driver,
+        &kungfum_driver,
+        &robotron_driver,
+        &stargate_driver,
+        &joust_driver,
+        &qix_driver,
 	0	/* end of array */
 };

@@ -82,6 +82,7 @@ extern unsigned char *nibbler_characterram;
 extern void nibbler_videoram2_w(int offset,int data);
 extern void nibbler_characterram_w(int offset,int data);
 extern void nibbler_vh_screenrefresh(struct osd_bitmap *bitmap);
+extern void vanguard_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 
 
 
@@ -180,59 +181,25 @@ static struct GfxLayout charlayout2 =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 0, 0xf000, &nibbler_charlayout, 0, 16 },	/* the game dynamically modifies this */
-	{ 1, 0x0800, &charlayout2,        0, 16 },
+	{ 0, 0xf000, &nibbler_charlayout, 0, 8 },	/* the game dynamically modifies this */
+	{ 1, 0x0800, &charlayout2,        8*4, 8 },
 	{ -1 } /* end of array */
 };
 
 
-
-static unsigned char palette[] =
+static unsigned char color_prom[] =
 {
-	0x00,0x00,0x00,   /* black      */
-	0x94,0x00,0xd8,   /* darkpurple */
-	0xd8,0x00,0x00,   /* darkred    */
-	0xf8,0x64,0xd8,   /* pink       */
-	0x00,0xd8,0x00,   /* darkgreen  */
-	0x00,0xf8,0xd8,   /* darkcyan   */
-	0xd8,0xd8,0x94,   /* darkyellow */
-	0xd8,0xf8,0xd8,   /* darkwhite  */
-	0xf8,0x94,0x44,   /* orange     */
-	0x00,0x00,0xd8,   /* blue   */
-	0xf8,0x00,0x00,   /* red    */
-	0xff,0x00,0xff,   /* purple */
-	0x00,0xf8,0x00,   /* green  */
-	0x00,0xff,0xff,   /* cyan   */
-	0xf8,0xf8,0x00,   /* yellow */
-	0xff,0xff,0xff    /* white  */
+        /* foreground colors */
+        0x00, 0x07, 0xff, 0xC5, 0x00, 0x38, 0xad, 0xA8,
+        0x00, 0xad, 0x3f, 0xC0, 0x00, 0xff, 0x07, 0xFF,
+        0x00, 0x3f, 0xc0, 0xAD, 0x00, 0xff, 0xc5, 0x3F,
+        0x00, 0xff, 0x3f, 0x07, 0x00, 0x07, 0xc5, 0x3F,
+        /* background colors */
+        0x00, 0x3f, 0xff, 0xC0, 0x00, 0xc7, 0x38, 0x05,
+        0x00, 0x07, 0xc0, 0x3F, 0x00, 0x3f, 0xe0, 0x05,
+        0x00, 0x07, 0xac, 0xC0, 0x00, 0xff, 0xc5, 0x2F,
+        0x00, 0xc0, 0x05, 0x2F, 0x00, 0x3f, 0x05, 0xC7
 };
-
-enum
-{
-	black, darkpurple, darkred, pink, darkgreen, darkcyan, darkyellow,
-		darkwhite, orange, blue, red, purple, green, cyan, yellow, white
-};
-
-static unsigned char colortable[] =
-{
-	black, darkred,   blue,       darkyellow,
-	black, green,     darkpurple, orange,
-	black, darkgreen, darkred,    yellow,
-	black, darkred,   darkgreen,  yellow,
-	black, yellow,    darkgreen,  red,
-	black, green,     orange,     yellow,
-	black, darkwhite, red,        pink,
-	black, darkcyan,  red,        darkwhite,
-	black, darkred,   blue,       darkyellow,
-	black, green,     darkpurple, orange,
-	black, darkgreen, darkred,    yellow,
-	black, darkred,   darkgreen,  yellow,
-	black, yellow,    darkgreen,  red,
-	black, green,     orange,     yellow,
-	black, darkwhite, red,        pink,
-	black, darkcyan,  red,        darkwhite
-};
-
 
 
 static struct MachineDriver machine_driver =
@@ -253,8 +220,8 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
 	gfxdecodeinfo,
-	sizeof(palette)/3,sizeof(colortable),
-	0,
+	256,16*4,
+	vanguard_vh_convert_color_prom,
 
 	0,
 	generic_vh_start,
@@ -376,7 +343,7 @@ struct GameDriver nibbler_driver =
 
 	input_ports, dsw, keys,
 
-	0, palette, colortable,
+	color_prom, 0, 0,
 	{ 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,	/* numbers */
 		0x0a,0x0b,0x0c,0x0d,0x0e,0x0f,0x10,0x11,0x12,0x13,0x14,0x15,0x16,	/* letters */
 		0x17,0x18,0x19,0x1a,0x1b,0x1c,0x1d,0x1e,0x1f,0x20,0x21,0x22,0x23 },
@@ -397,7 +364,7 @@ struct GameDriver fantasy_driver =
 
 	input_ports, dsw, keys,
 
-	0, palette, colortable,
+	color_prom, 0, 0,
 	{ 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,	/* numbers */
 		0x0a,0x0b,0x0c,0x0d,0x0e,0x0f,0x10,0x11,0x12,0x13,0x14,0x15,0x16,	/* letters */
 		0x17,0x18,0x19,0x1a,0x1b,0x1c,0x1d,0x1e,0x1f,0x20,0x21,0x22,0x23 },

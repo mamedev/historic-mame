@@ -9,6 +9,7 @@
 ***************************************************************************/
 
 #include <pc.h>
+#include <conio.h>
 #include <sys/farptr.h>
 #include <go32.h>
 #include "TwkUser.c"
@@ -45,6 +46,7 @@ HAC hVoice[NUMVOICES];
 LPAUDIOWAVE lpWave[NUMVOICES];
 int Volumi[NUMVOICES];
 int MasterVolume = 100;
+unsigned char No_FM = 0;
 
 
 /* put here anything you need to do when the program is started. Return 0 if */
@@ -120,6 +122,8 @@ int osd_init(int argc,char **argv)
 			video_sync = 1;
 		if (stricmp(argv[i],"-nojoy") == 0)
 			use_joystick = 0;
+                if (stricmp(argv[i],"-nofm") == 0)
+                        No_FM = 1;
 	}
 
 	if (play_sound)
@@ -141,7 +145,13 @@ int osd_init(int argc,char **argv)
 				}
 				printf("\n");
 
-				scanf("%d",&soundcard);
+                                if (i < 10)
+                                {
+                                   i = getch();
+                                   soundcard = i - '0';
+                                }
+                                else
+				   scanf("%d",&soundcard);
 			}
 
 			if (soundcard == 0)	/* silence */
@@ -415,7 +425,7 @@ struct osd_bitmap *osd_create_display(int width,int height)
  			vesa_width=800;
  			vesa_height=600;
   		}
- 		
+
  		if (set_gfx_mode(vesa_mode,vesa_width,vesa_height,0,0) != 0)
   			return 0;
  	
@@ -575,7 +585,7 @@ inline void update_vesa(void)
 	int y, vesa_line, width4;
 	unsigned long *lb, address;
 
- 	src_seg	= _my_ds();	
+ 	src_seg	= _my_ds();
 	dest_seg = screen->seg;
 	vesa_line = vesa_yoffset;
 	width4 = bitmap->width /4;
@@ -787,19 +797,20 @@ int osd_read_key(void)
         /* wait for all keys to be released */
         do
         {
-                for (key = 0;key <= OSD_MAX_KEY;key++)
-                        if (osd_key_pressed(key)) break;
-        } while (key <= OSD_MAX_KEY);
+              for (key = OSD_MAX_KEY;key >= 0;key--)
+              if (osd_key_pressed(key)) break;
+        } while (key >= 0);
 
         /* wait for a key press */
         do
         {
-                for (key = 0;key <= OSD_MAX_KEY;key++)
-                        if (osd_key_pressed(key)) break;
-        } while (key > OSD_MAX_KEY);
+              for (key = OSD_MAX_KEY;key >= 0;key--)
+              if (osd_key_pressed(key)) break;
+        } while (key < 0);
 
         return key;
 }
+
 
 
 /* Wait for a key press and return keycode.  Support repeat */

@@ -258,7 +258,7 @@ static struct MachineDriver machine_driver =
 	{
 		{
 			CPU_Z80,
-			1000000,	/* 1 Mhz ? */
+			3072000,	/* 3 Mhz ? */
 			0,
 			readmem,writemem,0,0,
 			phoenix_interrupt,1
@@ -338,6 +338,24 @@ ROM_START( phoenixa_rom )
 	ROM_LOAD("ic24", 0x1800, 0x0800)
 ROM_END
 
+ROM_START( phoenix3_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD("%s.45", 0x0000, 0x0800)
+	ROM_LOAD("%s.46", 0x0800, 0x0800)
+	ROM_LOAD("%s.47", 0x1000, 0x0800)
+	ROM_LOAD("%s.48", 0x1800, 0x0800)
+	ROM_LOAD("%s.49", 0x2000, 0x0800)
+	ROM_LOAD("%s.50", 0x2800, 0x0800)
+	ROM_LOAD("%s.51", 0x3000, 0x0800)
+	ROM_LOAD("%s.52", 0x3800, 0x0800)
+
+	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD("%s.39", 0x0000, 0x0800)
+	ROM_LOAD("%s.40", 0x0800, 0x0800)
+	ROM_LOAD("%s.23", 0x1000, 0x0800)
+	ROM_LOAD("%s.24", 0x1800, 0x0800)
+ROM_END
+
 ROM_START( pleiads_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "pleiades.47", 0x0000, 0x0800)
@@ -355,6 +373,70 @@ ROM_START( pleiads_rom )
 	ROM_LOAD( "pleiades.45", 0x1000, 0x0800)
 	ROM_LOAD( "pleiades.44", 0x1800, 0x0800)
 ROM_END
+
+
+static int hiload(const char *name)
+{
+   FILE *f;
+
+   /* get RAM pointer (this game is multiCPU, we can't assume the global */
+   /* RAM pointer is pointing to the right place) */
+   unsigned char *RAM = Machine->memory_region[0];
+
+   /* check if the hi score table has already been initialized */
+   if (memcmp(&RAM[0x438a],"\x00\x00\x0f",3) == 0)
+   {
+      if ((f = fopen(name,"rb")) != 0)
+      {
+         fread(&RAM[0x4388],1,4,f);
+
+/*       // I suppose noone can do such an HISCORE!!! ;)
+         phoenix_videoram2_w(0x0221, (RAM[0x4388] >> 4)+0x20);
+         phoenix_videoram2_w(0x0201, (RAM[0x4388] & 0xf)+0x20);
+*/
+         phoenix_videoram2_w(0x01e1, (RAM[0x4389] >> 4)+0x20);
+         phoenix_videoram2_w(0x01c1, (RAM[0x4389] & 0xf)+0x20);
+         phoenix_videoram2_w(0x01a1, (RAM[0x438a] >> 4)+0x20);
+         phoenix_videoram2_w(0x0181, (RAM[0x438a] & 0xf)+0x20);
+         phoenix_videoram2_w(0x0161, (RAM[0x438b] >> 4)+0x20);
+         phoenix_videoram2_w(0x0141, (RAM[0x438b] & 0xf)+0x20);
+         fclose(f);
+      }
+
+      return 1;
+   }
+   else return 0; /* we can't load the hi scores yet */
+}
+
+unsigned long get_score(char *score)
+{
+   return (score[3])+(256*score[2])+((unsigned long)(65536)*score[1])+((unsigned long)(65536)*256*score[0]);
+//   return (score[3])+(154*score[2])+((unsigned long)(39322)*score[1])+((unsigned long)(39322)*154*score[0]);
+}
+
+static void hisave(const char *name)
+{
+   unsigned long score1,score2,hiscore;
+   FILE *f;
+
+   /* get RAM pointer (this game is multiCPU, we can't assume the global */
+   /* RAM pointer is pointing to the right place) */
+   unsigned char *RAM = Machine->memory_region[0];
+
+   score1 = get_score(&RAM[0x4380]);
+   score2 = get_score(&RAM[0x4384]);
+   hiscore = get_score(&RAM[0x4388]);
+
+   if (score1 > hiscore) RAM += 0x4380;         /* check consistency */
+   else if (score2 > hiscore) RAM += 0x4384;
+   else RAM += 0x4388;
+
+   if ((f = fopen(name,"wb")) != 0)
+   {
+      fwrite(&RAM[0],1,4,f);
+      fclose(f);
+   }
+}
 
 
 
@@ -376,7 +458,7 @@ struct GameDriver phoenix_driver =
 	0x00, 0x04,
 	8*13, 8*16, 0x01,
 
-	0, 0
+	hiload, hisave
 };
 
 struct GameDriver phoenixa_driver =
@@ -397,7 +479,28 @@ struct GameDriver phoenixa_driver =
 	0x00, 0x04,
 	8*13, 8*16, 0x01,
 
-	0, 0
+	hiload, hisave
+};
+
+struct GameDriver phoenix3_driver =
+{
+	"phoenix3",
+	&machine_driver,
+
+	phoenix3_rom,
+	0, 0,
+        phoenix_sample_names,
+
+	input_ports, dsw, keys,
+
+	0, palette, colortable,
+	{ 0x20,0x21,0x22,0x23,0x24,0x25,0x26,0x27,0x28,0x29,	/* numbers */
+		0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0a,0x0b,0x0c,0x0d,	/* letters */
+		0x0e,0x0f,0x10,0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x18,0x19,0x1a },
+	0x00, 0x04,
+	8*13, 8*16, 0x01,
+
+	hiload, hisave
 };
 
 struct GameDriver pleiads_driver =
@@ -418,5 +521,5 @@ struct GameDriver pleiads_driver =
 	0x00, 0x04,
 	8*13, 8*16, 0x01,
 
-	0, 0
+	hiload, hisave
 };

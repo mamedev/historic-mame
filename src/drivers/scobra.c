@@ -191,6 +191,59 @@ static struct DSW dsw[] =
 };
 
 
+/*
+	JRT: Order is 0 -> 7
+	IN0					IN1:				IN2:
+		0: Start2			0: (DIP) Free Play	0:
+		1: Start1			1: (DIP) Demo Mode	1:
+		2: Up 				2: Fire U			2:
+		3: Down				3: Fire D			3:
+		4: Left				4: Fire R			4:
+		5: Right			5: Fire L			5:
+		6: Coin (2?)		6: Whip				6:
+		7: Coin (1?)		7:					7:
+
+*/
+static struct InputPort LTinput_ports[] =
+{
+	{	/* IN0 */
+		0xff,
+		{ OSD_KEY_2, OSD_KEY_1, OSD_KEY_UP, OSD_KEY_DOWN, OSD_KEY_RIGHT, OSD_KEY_LEFT, OSD_KEY_3, OSD_KEY_4 },
+		{ 0, 0, 0, 0, 0, 0, 0, 0 }
+	},
+	{	/* IN1 */
+		0xff,
+		{ OSD_KEY_7, OSD_KEY_8, OSD_KEY_W, OSD_KEY_S, OSD_KEY_D, OSD_KEY_A, OSD_KEY_CONTROL, OSD_KEY_1 },
+		{ 0, 0, 0, 0, 0, 0, 0, 0 }
+	},
+	{	/* IN2 */
+		0xff,
+		{ OSD_KEY_Z, OSD_KEY_X, OSD_KEY_C, OSD_KEY_V, OSD_KEY_B, OSD_KEY_N, OSD_KEY_M, OSD_KEY_O },
+		{ 0, 0, 0, 0, 0, 0, 0, 0 }
+	},
+	{ -1 }	/* end of table */
+};
+
+
+static struct DSW LTdsw[] =
+{
+	{ 1, 0x02, "FREE PLAY", { "NO", "YES" } },
+	{ 1, 0x01, "PLAYER CAN DIE", { "NO", "YES" } },
+	{ -1 }
+};
+
+
+static struct KEYSet LTkeys[] =
+{
+        { 0, 2, "MOVE UP" },
+        { 0, 5, "MOVE LEFT"  },
+        { 0, 4, "MOVE RIGHT" },
+        { 0, 3, "MOVE DOWN" },
+        { 1, 6, "WHIP" },
+        { -1 }
+};
+
+
 
 static struct GfxLayout charlayout =
 {
@@ -453,7 +506,7 @@ struct GameDriver losttomb_driver =
 	0, 0,
 	0,
 
-	input_ports, dsw, keys,
+	LTinput_ports, LTdsw, LTkeys,
 
 	color_prom, 0, 0,
 	{ 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,	/* numbers */

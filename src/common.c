@@ -1096,11 +1096,91 @@ void clearbitmap(struct osd_bitmap *bitmap)
 
 
 
+int setup_menu(void)
+{
+	struct DisplayText dt[10];
+	int i,s,key,done;
+	int total;
+
+
+	total = 3;
+	dt[0].text = "DIP SWITCH SETUP";
+	dt[0].x = (Machine->drv->screen_width - Machine->gfx[0]->width * strlen(dt[0].text)) / 2;
+	dt[0].y = 0 * 2*Machine->gfx[0]->height + (Machine->drv->screen_height - 2*Machine->gfx[0]->height * (total - 1)) / 2;
+	dt[1].text = "KEYBOARD SETUP";
+	dt[1].x = (Machine->drv->screen_width - Machine->gfx[0]->width * strlen(dt[1].text)) / 2;
+	dt[1].y = 1 * 2*Machine->gfx[0]->height + (Machine->drv->screen_height - 2*Machine->gfx[0]->height * (total - 1)) / 2;
+	dt[2].text = "RETURN TO GAME";
+	dt[2].x = (Machine->drv->screen_width - Machine->gfx[0]->width * strlen(dt[2].text)) / 2;
+	dt[2].y = 3 * 2*Machine->gfx[0]->height + (Machine->drv->screen_height - 2*Machine->gfx[0]->height * (total - 1)) / 2;
+	dt[3].text = 0;	/* terminate array */
+
+	s = 0;
+	done = 0;
+	do
+	{
+		for (i = 0;i < total;i++)
+		{
+			dt[i].color = (i == s) ? Machine->gamedrv->yellow_text : Machine->gamedrv->white_text;
+		}
+
+		displaytext(dt,1);
+
+		key = osd_read_keyrepeat();
+
+		switch (key)
+		{
+			case OSD_KEY_DOWN:
+				if (s < total - 1) s++;
+				else s = 0;
+				break;
+
+			case OSD_KEY_UP:
+				if (s > 0) s--;
+				else s = total - 1;
+				break;
+
+			case OSD_KEY_ENTER:
+				switch (s)
+				{
+					case 0:
+						if (setdipswitches())
+							done = 2;
+						break;
+
+					case 1:
+						if (setkeysettings())
+							done = 2;
+						break;
+
+					case 2:
+						done = 1;
+						break;
+				}
+				break;
+
+			case OSD_KEY_ESC:
+				done = 2;
+				break;
+		}
+	} while (done == 0);
+
+	while (osd_key_pressed(key));	/* wait for key release */
+
+	/* clear the screen before returning */
+	clearbitmap(Machine->scrbitmap);
+
+	if (done == 2) return 1;
+	else return 0;
+}
+
+
+
 int setdipswitches(void)
 {
 	struct DisplayText dt[40];
 	int settings[20];
-	int i,s,key;
+	int i,s,key,done;
 	int total;
 	const struct DSW *dswsettings;
 
@@ -1126,21 +1206,34 @@ int setdipswitches(void)
 		total++;
 	}
 
+	for (i = 0;i < total;i++)
+	{
+		dt[2 * i].text = dswsettings[i].name;
+		dt[2 * i].x = 2*Machine->gfx[0]->width;
+		dt[2 * i].y = 2*Machine->gfx[0]->height * i + (Machine->drv->screen_height - 2*Machine->gfx[0]->height * (total + 1)) / 2;
+	}
+
+	dt[2 * total].text = "RETURN TO MAIN MENU";
+	dt[2 * total].x = (Machine->drv->screen_width - Machine->gfx[0]->width * strlen(dt[2 * total].text)) / 2;
+	dt[2 * total].y = 2*Machine->gfx[0]->height * (total+1) + (Machine->drv->screen_height - 2*Machine->gfx[0]->height * (total + 1)) / 2;
+	dt[2 * total + 1].text = 0;	/* terminate array */
+	total++;
+
 	s = 0;
+	done = 0;
 	do
 	{
 		for (i = 0;i < total;i++)
 		{
 			dt[2 * i].color = (i == s) ? Machine->gamedrv->yellow_text : Machine->gamedrv->white_text;
-			dt[2 * i].text = dswsettings[i].name;
-			dt[2 * i].x = 2*Machine->gfx[0]->width;
-			dt[2 * i].y = 2*Machine->gfx[0]->height * i + (Machine->drv->screen_height - 2*Machine->gfx[0]->height * (total - 1)) / 2;
-			dt[2 * i + 1].color = (i == s) ? Machine->gamedrv->yellow_text : Machine->gamedrv->white_text;
-			dt[2 * i + 1].text = dswsettings[i].values[settings[i]];
-			dt[2 * i + 1].x = Machine->drv->screen_width - 2*Machine->gfx[0]->width - Machine->gfx[0]->width*strlen(dt[2 * i + 1].text);
-			dt[2 * i + 1].y = dt[2 * i].y;
+			if (i < total - 1)
+			{
+				dt[2 * i + 1].color = (i == s) ? Machine->gamedrv->yellow_text : Machine->gamedrv->white_text;
+				dt[2 * i + 1].text = dswsettings[i].values[settings[i]];
+				dt[2 * i + 1].x = Machine->drv->screen_width - 2*Machine->gfx[0]->width - Machine->gfx[0]->width*strlen(dt[2 * i + 1].text);
+				dt[2 * i + 1].y = dt[2 * i].y;
+			}
 		}
-		dt[2 * i].text = 0;	/* terminate array */
 
 		displaytext(dt,1);
 
@@ -1150,37 +1243,55 @@ int setdipswitches(void)
 		{
 			case OSD_KEY_DOWN:
 				if (s < total - 1) s++;
+				else s = 0;
 				break;
 
 			case OSD_KEY_UP:
 				if (s > 0) s--;
+				else s = total - 1;
 				break;
 
 			case OSD_KEY_RIGHT:
-				if (dswsettings[s].reverse == 0)
+				if (s < total - 1)
 				{
-					if (dswsettings[s].values[settings[s] + 1] != 0) settings[s]++;
-				}
-				else
-				{
-					if (settings[s] > 0) settings[s]--;
+					if (dswsettings[s].reverse == 0)
+					{
+						if (dswsettings[s].values[settings[s] + 1] != 0) settings[s]++;
+					}
+					else
+					{
+						if (settings[s] > 0) settings[s]--;
+					}
 				}
 				break;
 
 			case OSD_KEY_LEFT:
-				if (dswsettings[s].reverse == 0)
+				if (s < total - 1)
 				{
-					if (settings[s] > 0) settings[s]--;
-				}
-				else
-				{
-					if (dswsettings[s].values[settings[s] + 1] != 0) settings[s]++;
+					if (dswsettings[s].reverse == 0)
+					{
+						if (settings[s] > 0) settings[s]--;
+					}
+					else
+					{
+						if (dswsettings[s].values[settings[s] + 1] != 0) settings[s]++;
+					}
 				}
 				break;
+
+			case OSD_KEY_ENTER:
+				if (s == total - 1) done = 1;
+				break;
+
+			case OSD_KEY_ESC:
+				done = 2;
+				break;
 		}
-	} while (key != OSD_KEY_TAB && key != OSD_KEY_ESC);
+	} while (done == 0);
 
 	while (osd_key_pressed(key));	/* wait for key release */
+
+	total--;
 
 	while (--total >= 0)
 	{
@@ -1202,7 +1313,7 @@ int setdipswitches(void)
 	/* clear the screen before returning */
 	clearbitmap(Machine->scrbitmap);
 
-	if (key == OSD_KEY_ESC) return 1;
+	if (done == 2) return 1;
 	else return 0;
 }
 
@@ -1210,7 +1321,7 @@ int setdipswitches(void)
 int setkeysettings(void)
 {
 	struct DisplayText dt[40];
-	int i,s,key;
+	int i,s,key,done;
 	int total;
 	const struct KEYSet *keysettings;
 
@@ -1222,21 +1333,34 @@ int setkeysettings(void)
 
         if (total == 0) return 0;
 
+	for (i = 0;i < total;i++)
+	{
+		dt[2 * i].text = keysettings[i].name;
+		dt[2 * i].x = 2*Machine->gfx[0]->width;
+		dt[2 * i].y = 2*Machine->gfx[0]->height * i + (Machine->drv->screen_height - 2*Machine->gfx[0]->height * (total + 1)) / 2;
+	}
+
+	dt[2 * total].text = "RETURN TO MAIN MENU";
+	dt[2 * total].x = (Machine->drv->screen_width - Machine->gfx[0]->width * strlen(dt[2 * total].text)) / 2;
+	dt[2 * total].y = 2*Machine->gfx[0]->height * (total+1) + (Machine->drv->screen_height - 2*Machine->gfx[0]->height * (total + 1)) / 2;
+	dt[2 * total + 1].text = 0;	/* terminate array */
+	total++;
+
 	s = 0;
+	done = 0;
 	do
 	{
 		for (i = 0;i < total;i++)
 		{
 			dt[2 * i].color = (i == s) ? Machine->gamedrv->yellow_text : Machine->gamedrv->white_text;
-			dt[2 * i].text = keysettings[i].name;
-			dt[2 * i].x = 2*Machine->gfx[0]->width;
-			dt[2 * i].y = 2*Machine->gfx[0]->height * i + (Machine->drv->screen_height - 2*Machine->gfx[0]->height * (total - 1)) / 2;
-			dt[2 * i + 1].color = (i == s) ? Machine->gamedrv->yellow_text : Machine->gamedrv->white_text;
-			dt[2 * i + 1].text = osd_key_name( Machine->gamedrv->input_ports[ keysettings[i].num ].keyboard[ keysettings[i].mask ] );
-			dt[2 * i + 1].x = Machine->drv->screen_width - 2*Machine->gfx[0]->width - Machine->gfx[0]->width*strlen(dt[2 * i + 1].text);
-			dt[2 * i + 1].y = dt[2 * i].y;
+			if (i < total - 1)
+			{
+				dt[2 * i + 1].color = (i == s) ? Machine->gamedrv->yellow_text : Machine->gamedrv->white_text;
+				dt[2 * i + 1].text = osd_key_name( Machine->gamedrv->input_ports[ keysettings[i].num ].keyboard[ keysettings[i].mask ] );
+				dt[2 * i + 1].x = Machine->drv->screen_width - 2*Machine->gfx[0]->width - Machine->gfx[0]->width*strlen(dt[2 * i + 1].text);
+				dt[2 * i + 1].y = dt[2 * i].y;
+			}
 		}
-		dt[2 * i].text = 0;	/* terminate array */
 
 		displaytext(dt,1);
 
@@ -1246,31 +1370,42 @@ int setkeysettings(void)
 		{
 			case OSD_KEY_DOWN:
 				if (s < total - 1) s++;
+				else s = 0;
 				break;
 
 			case OSD_KEY_UP:
 				if (s > 0) s--;
+				else s = total - 1;
 				break;
 
-                        case OSD_KEY_ENTER: {
-			        dt[2 * s + 1].text = "            ";
-			        dt[2 * s + 1].x = Machine->drv->screen_width - 2*Machine->gfx[0]->width - Machine->gfx[0]->width*strlen(dt[2 * s + 1].text);
-		                displaytext(dt,1);
-		                key = osd_read_key();
-                                if (key != OSD_KEY_ESC)
-                                  Machine->gamedrv->input_ports[ keysettings[s].num ].keyboard[ keysettings[s].mask ] = key;
-                                key = OSD_KEY_ENTER;
-                                }
-                                break;
+			case OSD_KEY_ENTER:
+				if (s == total - 1) done = 1;
+				else
+				{
+					int newkey;
+
+
+					dt[2 * s + 1].text = "            ";
+					dt[2 * s + 1].x = Machine->drv->screen_width - 2*Machine->gfx[0]->width - Machine->gfx[0]->width*strlen(dt[2 * s + 1].text);
+					displaytext(dt,1);
+					newkey = osd_read_key();
+					if (newkey != OSD_KEY_ESC)
+						Machine->gamedrv->input_ports[ keysettings[s].num ].keyboard[ keysettings[s].mask ] = newkey;
+				}
+				break;
+
+			case OSD_KEY_ESC:
+				done = 2;
+				break;
 		}
-	} while (key != OSD_KEY_F8 && key != OSD_KEY_ESC);
+	} while (done == 0);
 
 	while (osd_key_pressed(key));	/* wait for key release */
 
 	/* clear the screen before returning */
 	clearbitmap(Machine->scrbitmap);
 
-	if (key == OSD_KEY_ESC) return 1;
+	if (done == 2) return 1;
 	else return 0;
 }
 

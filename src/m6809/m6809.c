@@ -46,12 +46,25 @@
    
    Note: BIG_ENDIAN option is no longer needed.   
 */
+
+/*	Changes since MAME 0.21:
+	26-MAY-97  JB	- add m6809_Flags global to conditionally optimize for opcodes,
+					  stack and user stack
+	25-MAY-97  JB	- avoid reading same memory twice in codes_0X() thru codes_FX()
+	18-MAY-97  JB	- implement FIRQ -- m6809_FIRQ(), check for in m6809_execute();
+					  adjust ICount in m6809_Interrupt(); in m6809_execute, use
+					  ireg=M_RDOP(ipcreg++) instead of M_RDMEM(ipcreg++); in
+					  fetch_effective_address(), use postbyte=M_RDOP instead of M_RDMEM;
+					  in codes_3X(), adjust ICount;
+*/
+					
   
 #include <stdio.h>
 #include <stdlib.h> /* DS */
 
 #include "m6809.h" /* DS */
 
+static void m6809_FIRQ( void );
 INLINE void fetch_effective_address( void );
 INLINE void codes_0X( void );
 INLINE void codes_1X( void );
@@ -90,12 +103,26 @@ int	m6809_IPeriod=50000;
 int	m6809_ICount=50000;
 int	m6809_IRequest=INT_NONE;
 
+int m6809_Flags;	/* flags for speed optimization */ /* JB 970526 */
+
+/* flag, handlers for speed optimization */ /* JB 970526 */
+static int fastopcodes;
+static int (*rd_op_handler)();
+static int (*rd_op_handler_wd)();
+static int (*rd_u_handler)();
+static int (*rd_u_handler_wd)();
+static int (*rd_s_handler)();
+static int (*rd_s_handler_wd)();
+static void (*wr_u_handler)();
+static void (*wr_u_handler_wd)();
+static void (*wr_s_handler)();
+static void (*wr_s_handler_wd)();
+
 /* DS -- THESE ARE RE-DEFINED IN m6809.h TO RAM, ROM or FUNCTIONS IN cpuintrf.c */
 #define M_RDMEM(A)      M6809_RDMEM(A)
 #define M_WRMEM(A,V)    M6809_WRMEM(A,V)
 #define M_RDOP(A)       M6809_RDOP(A)
 #define M_RDOP_ARG(A)   M6809_RDOP_ARG(A)
-
 
 /* DS ... */
 #define GETWORD(a) M_RDMEM_WORD(a);
@@ -105,18 +132,18 @@ int	m6809_IRequest=INT_NONE;
 */   
 #define SETWORD(a,n) M_WRMEM_WORD(a,n);
 
-#define IMMBYTE(b) {b=M_RDMEM(ipcreg);ipcreg++;}
-#define IMMWORD(w) {w=M_RDMEM_WORD(ipcreg);ipcreg+=2;}
-
-#define PUSHBYTE(b) {--isreg;M_WRMEM(isreg,b);}
-#define PUSHWORD(w) {isreg-=2;M_WRMEM_WORD(isreg,w);}
-#define PULLBYTE(b) {b=M_RDMEM(isreg);isreg++;}
-#define PULLWORD(w) {w=M_RDMEM_WORD(isreg);isreg+=2;}
-#define PSHUBYTE(b) {--iureg;M_WRMEM(iureg,b);}
-#define PSHUWORD(w) {iureg-=2;M_WRMEM_WORD(iureg,w);}
-#define PULUBYTE(b) {b=M_RDMEM(iureg);iureg++;}
-#define PULUWORD(w) {w=M_RDMEM_WORD(iureg);iureg+=2;}
-/* ...DS */
+/* JB 970526 */
+#define IMMBYTE(b)	{b=(*rd_op_handler)(ipcreg);ipcreg++;}
+#define IMMWORD(w)	{w=(*rd_op_handler_wd)(ipcreg);ipcreg+=2;}
+#define PUSHBYTE(b) {--isreg;(*wr_s_handler)(isreg,b);}
+#define PUSHWORD(w) {isreg-=2;(*wr_s_handler_wd)(isreg,w);}
+#define PULLBYTE(b) {b=(*rd_s_handler)(isreg);isreg++;}
+#define PULLWORD(w) {w=(*rd_s_handler_wd)(isreg);isreg+=2;}
+#define PSHUBYTE(b) {--iureg;(*wr_u_handler)(iureg,b);}
+#define PSHUWORD(w) {iureg-=2;(*wr_u_handler_wd)(iureg,w);}
+#define PULUBYTE(b) {b=(*rd_u_handler)(iureg);iureg++;}
+#define PULUWORD(w) {w=(*rd_u_handler_wd)(iureg);iureg+=2;}
+/* ...JB */
 
 #define SIGNED(b) ((Word)(b&0x80?b|0xff00:b))
 
@@ -234,6 +261,56 @@ static unsigned char cycles[] =
 };
 /* ...DS */
 
+/* JB 970526 */
+static int rd_slow( int addr )
+{
+	return M_RDMEM(addr);
+}
+
+/* JB 970526 */
+static int rd_slow_wd( int addr )
+{
+	return( (M_RDMEM(addr)<<8) | (M_RDMEM((addr+1)&0xffff)) );
+}
+
+/* JB 970526 */
+static int rd_fast( int addr )
+{
+	return RAM[addr];
+}
+
+/* JB 970526 */
+static int rd_fast_wd( int addr )
+{
+	return( (RAM[addr]<<8) | (RAM[(addr+1)&0xffff]) );
+}
+
+/* JB 970526 */
+static void wr_slow( int addr, int v )
+{
+	M_WRMEM(addr,v);
+}
+
+/* JB 970526 */
+static void wr_slow_wd( int addr, int v )
+{
+	M_WRMEM(addr,v>>8);
+	M_WRMEM(((addr)+1)&0xFFFF,v&255);
+}
+
+/* JB 970526 */
+static void wr_fast( int addr, int v )
+{
+	RAM[addr] = v;
+}
+
+/* JB 970526 */
+static void wr_fast_wd( int addr, int v )
+{
+	RAM[addr] = v>>8;
+	RAM[(addr+1)&0xffff] = v&255;
+}
+
 /* DS -- modified from Z80.c */
 INLINE unsigned M_RDMEM_WORD (dword A)
 {
@@ -249,26 +326,6 @@ INLINE void M_WRMEM_WORD (dword A,word V)
 {
  M_WRMEM (((A)+1)&0xFFFF,V&255);
  M_WRMEM (A,V>>8);
-}
-
-/* DS */
-/* Get next opcode argument and increment program counter */
-INLINE unsigned M_RDMEM_OPCODE (void)
-{
- unsigned retval;
- retval=M_RDOP_ARG(ipcreg);
- ipcreg++;
- return retval;
-}
-
-/* DS -- modified from Z80.c */
-INLINE unsigned M_RDMEM_OPCODE_WORD (void)
-{
- int i;
-
- i = M_RDMEM_OPCODE()<<8;
- i |= M_RDMEM_OPCODE();
- return i;
 }
 
 /* DS */
@@ -330,13 +387,13 @@ void m6809_Interrupt()
 		PUSHBYTE(iccreg)
 		iccreg|=0x90;
 		ipcreg=GETWORD(0xfff8);
+		m6809_ICount -= 19;
 	}
 	else
 		m6809_IRequest = INT_IRQ;
 }
 
-/* DS -- not implemented now */
-#if 0
+/* DS */
 static void m6809_FIRQ( void )
 {
 	/* FIRQ */
@@ -348,9 +405,9 @@ static void m6809_FIRQ( void )
 		iccreg&=0x7f;
 		iccreg|=0x50;
 		ipcreg=GETWORD(0xfff6);
+		m6809_ICount -= 10;
 	}
 }
-#endif
 
 /* DS */
 void m6809_reset(void)
@@ -365,6 +422,38 @@ void m6809_reset(void)
 	ibreg = 0x00;		/* clear accumulator b */
 	m6809_ICount=m6809_IPeriod;
 	m6809_IRequest=INT_NONE;
+
+	/* JB 970526 */
+	/* default to unoptimized memory access */
+	fastopcodes = FALSE;
+	rd_op_handler = rd_slow;
+	rd_op_handler_wd = rd_slow_wd;
+	rd_u_handler = rd_slow;
+	rd_u_handler_wd = rd_slow_wd;
+	rd_s_handler = rd_slow;
+	rd_s_handler_wd = rd_slow_wd;
+	wr_u_handler = wr_slow;
+	wr_u_handler_wd = wr_slow_wd;
+	wr_s_handler = wr_slow;
+	wr_s_handler_wd = wr_slow_wd;
+
+	/* JB 970526 */
+	/* optimize memory access according to flags */
+	if( m6809_Flags & M6809_FAST_OP )
+	{
+		fastopcodes = TRUE;
+		rd_op_handler = rd_fast; rd_op_handler_wd = rd_fast_wd;
+	}
+	if( m6809_Flags & M6809_FAST_U )
+	{
+		rd_u_handler=rd_fast; rd_u_handler_wd=rd_fast_wd;
+		wr_u_handler=wr_fast; wr_u_handler_wd=wr_fast_wd;
+	}
+	if( m6809_Flags & M6809_FAST_S )
+	{
+		rd_s_handler=rd_fast; rd_s_handler_wd=rd_fast_wd;
+		wr_s_handler=wr_fast; wr_s_handler_wd=wr_fast_wd;
+	}
 }
 
 
@@ -415,7 +504,8 @@ void m6809_execute(void) /* DS */
 #endif
 	iflag=0;
 flaginstr:  /* $10 and $11 instructions return here */
-	ireg=M_RDMEM(ipcreg++);
+	if( fastopcodes ) ireg=M_RDOP(ipcreg++); /* JB 970526 */
+	else ireg=M_RDMEM(ipcreg++);
 	if(haspostbyte[ireg]) fetch_effective_address(); /* DS */
 	if( ireg==0x10 ){ iflag = 1; goto flaginstr;}	/* DS */
 	else if( ireg==0x11 ){ iflag = 2; goto flaginstr;}	/* DS */
@@ -441,6 +531,13 @@ flaginstr:  /* $10 and $11 instructions return here */
 		case 0xf0: codes_FX(); break;
 	}
 	/* ..DS */
+
+	/* JB 970518 */
+	if( m6809_IRequest==INT_FIRQ )
+	{
+		m6809_IRequest = INT_NONE;
+		m6809_FIRQ();
+	}
 	
 	/* DS ... */
 	m6809_ICount -= cycles[ireg&0xFF];
@@ -464,7 +561,11 @@ flaginstr:  /* $10 and $11 instructions return here */
 /* DS */
 INLINE void fetch_effective_address( void )
 {
-		Byte postbyte=M_RDMEM(ipcreg++);
+		Byte postbyte;
+		
+		if( fastopcodes ) postbyte=M_RDOP(ipcreg++); /* JB 970526 */
+		else postbyte = M_RDMEM(ipcreg++);
+		
 		switch(postbyte)
 		{
 		    case 0x00: eaddr=ixreg;break;
@@ -736,13 +837,13 @@ INLINE void fetch_effective_address( void )
 
 INLINE void codes_0X( void )
 {
-	word tw;
-	byte tb;
+	word tw, sw;
+	byte tb, sb;
 	
 	switch( ireg )
 	{
-		case 0x00: /*NEG direct*/ DIRECT tw=-M_RDMEM(eaddr);SETSTATUS(0,M_RDMEM(eaddr),tw)
-								 SETBYTE(eaddr,tw)break;
+		case 0x00: /*NEG direct*/ DIRECT sw = M_RDMEM(eaddr); tw=-sw;
+								 SETSTATUS(0,sw,tw) SETBYTE(eaddr,tw)break;
 		case 0x01: break;/*ILLEGAL*/
 		case 0x02: break;/*ILLEGAL*/
 		case 0x03: /*COM direct*/ DIRECT  tb=~M_RDMEM(eaddr);SETNZ8(tb);SEC CLV
@@ -751,17 +852,17 @@ INLINE void codes_0X( void )
 		                         if(tb&0x10)SEH else CLH tb>>=1;SETNZ8(tb)
 		                         SETBYTE(eaddr,tb)break;
 		case 0x05: break;/* ILLEGAL*/
-		case 0x06: /*ROR direct*/ DIRECT tb=(iccreg&0x01)<<7;
-		                         if(M_RDMEM(eaddr)&0x01)SEC else CLC
-		                         tw=(M_RDMEM(eaddr)>>1)+tb;SETNZ8(tw)
+		case 0x06: /*ROR direct*/ DIRECT tb=(iccreg&0x01)<<7; sb=M_RDMEM(eaddr);
+		                         if(sb&0x01)SEC else CLC
+		                         tw=(sb>>1)+tb;SETNZ8(tw)
 		                         SETBYTE(eaddr,tw)
 		                   	     break;
 		case 0x07: /*ASR direct*/ DIRECT tb=M_RDMEM(eaddr);if(tb&0x01)SEC else CLC
 		                         if(tb&0x10)SEH else CLH tb>>=1;
 		                         if(tb&0x40)tb|=0x80;SETBYTE(eaddr,tb)SETNZ8(tb)
 		                         break;
-		case 0x08: /*ASL direct*/ DIRECT tw=M_RDMEM(eaddr)<<1;
-		                         SETSTATUS(M_RDMEM(eaddr),M_RDMEM(eaddr),tw)
+		case 0x08: /*ASL direct*/ DIRECT sw=M_RDMEM(eaddr); tw=sw<<1;
+		                         SETSTATUS(sw,sw,tw)
 		                         SETBYTE(eaddr,tw)break;
 		case 0x09: /*ROL direct*/ DIRECT tb=M_RDMEM(eaddr);tw=iccreg&0x01;
 		                         if(tb&0x80)SEC else CLC
@@ -910,6 +1011,7 @@ INLINE void codes_3X( void )
 				PULLBYTE(iccreg)
 				if(tb)
 				{
+				 m6809_ICount -= 9;
 				 PULLBYTE(iareg)
 				 PULLBYTE(ibreg)
 				 PULLBYTE(idpreg)
@@ -1052,12 +1154,12 @@ INLINE void codes_5X( void )
 
 INLINE void codes_6X( void )
 {
-	word tw;
-	byte tb;
+	word sw, tw;
+	byte sb, tb;
 	
 	switch( ireg )
 	{
-		case 0x60: /*NEG indexed*/  tw=-M_RDMEM(eaddr);SETSTATUS(0,M_RDMEM(eaddr),tw)
+		case 0x60: /*NEG indexed*/  sw=M_RDMEM(eaddr); tw=-sw;SETSTATUS(0,sw,tw)
 		                         SETBYTE(eaddr,tw)break;
 		case 0x61: break;/*ILLEGAL*/
 		case 0x62: break;/*ILLEGAL*/
@@ -1067,17 +1169,17 @@ INLINE void codes_6X( void )
 		                         if(tb&0x10)SEH else CLH tb>>=1;SETNZ8(tb)
 		                         SETBYTE(eaddr,tb)break;
 		case 0x65: break;/* ILLEGAL*/
-		case 0x66: /*ROR indexed*/  tb=(iccreg&0x01)<<7;
-		                         if(M_RDMEM(eaddr)&0x01)SEC else CLC
-		                         tw=(M_RDMEM(eaddr)>>1)+tb;SETNZ8(tw)
+		case 0x66: /*ROR indexed*/  tb=(iccreg&0x01)<<7; sb = M_RDMEM(eaddr);
+		                         if(sb&0x01)SEC else CLC
+		                         tw=(sb>>1)+tb;SETNZ8(tw)
 		                         SETBYTE(eaddr,tw)
 		                   	     break;
 		case 0x67: /*ASR indexed*/  tb=M_RDMEM(eaddr);if(tb&0x01)SEC else CLC
 		                         if(tb&0x10)SEH else CLH tb>>=1;
 		                         if(tb&0x40)tb|=0x80;SETBYTE(eaddr,tb)SETNZ8(tb)
 		                         break;
-		case 0x68: /*ASL indexed*/  tw=M_RDMEM(eaddr)<<1;
-		                         SETSTATUS(M_RDMEM(eaddr),M_RDMEM(eaddr),tw)
+		case 0x68: /*ASL indexed*/  sw=M_RDMEM(eaddr); tw=sw<<1;
+		                         SETSTATUS(sw,sw,tw)
 		                         SETBYTE(eaddr,tw)break;
 		case 0x69: /*ROL indexed*/  tb=M_RDMEM(eaddr);tw=iccreg&0x01;
 		                         if(tb&0x80)SEC else CLC
@@ -1096,12 +1198,12 @@ INLINE void codes_6X( void )
 
 INLINE void codes_7X( void )
 {
-	word tw;
-	byte tb;
+	word sw, tw;
+	byte sb, tb;
 	
 	switch( ireg )
 	{
-		case 0x70: /*NEG ext*/ EXTENDED tw=-M_RDMEM(eaddr);SETSTATUS(0,M_RDMEM(eaddr),tw)
+		case 0x70: /*NEG ext*/ EXTENDED sw=M_RDMEM(eaddr);tw=-sw;SETSTATUS(0,sw,tw)
 		                         SETBYTE(eaddr,tw)break;
 		case 0x71: break;/*ILLEGAL*/
 		case 0x72: break;/*ILLEGAL*/
@@ -1111,17 +1213,17 @@ INLINE void codes_7X( void )
 		                         if(tb&0x10)SEH else CLH tb>>=1;SETNZ8(tb)
 		                         SETBYTE(eaddr,tb)break;
 		case 0x75: break;/* ILLEGAL*/
-		case 0x76: /*ROR ext*/ EXTENDED tb=(iccreg&0x01)<<7;
-		                         if(M_RDMEM(eaddr)&0x01)SEC else CLC
-		                         tw=(M_RDMEM(eaddr)>>1)+tb;SETNZ8(tw)
+		case 0x76: /*ROR ext*/ EXTENDED tb=(iccreg&0x01)<<7; sb = M_RDMEM(eaddr);
+		                         if(sb&0x01)SEC else CLC
+		                         tw=(sb>>1)+tb;SETNZ8(tw)
 		                         SETBYTE(eaddr,tw)
 		                   	     break;
 		case 0x77: /*ASR ext*/ EXTENDED tb=M_RDMEM(eaddr);if(tb&0x01)SEC else CLC
 		                         if(tb&0x10)SEH else CLH tb>>=1;
 		                         if(tb&0x40)tb|=0x80;SETBYTE(eaddr,tb)SETNZ8(tb)
 		                         break;
-		case 0x78: /*ASL ext*/ EXTENDED tw=M_RDMEM(eaddr)<<1;
-		                         SETSTATUS(M_RDMEM(eaddr),M_RDMEM(eaddr),tw)
+		case 0x78: /*ASL ext*/ EXTENDED sw=M_RDMEM(eaddr);tw=sw<<1;
+		                         SETSTATUS(sw,sw,tw)
 		                         SETBYTE(eaddr,tw)break;
 		case 0x79: /*ROL ext*/ EXTENDED tb=M_RDMEM(eaddr);tw=iccreg&0x01;
 		                         if(tb&0x80)SEC else CLC
@@ -1140,18 +1242,18 @@ INLINE void codes_7X( void )
 
 INLINE void codes_8X( void )
 {
-	word tw;
+	word sw,tw;
 	byte tb;
 	
 	switch( ireg )
 	{
-		case 0x80: /*SUBA immediate*/ IMM8 tw=iareg-M_RDMEM(eaddr);
-		                             SETSTATUS(iareg,M_RDMEM(eaddr),tw)
+		case 0x80: /*SUBA immediate*/ IMM8 sw=M_RDMEM(eaddr);tw=iareg-sw;
+		                             SETSTATUS(iareg,sw,tw)
 		                             iareg=tw;break;
-		case 0x81: /*CMPA immediate*/ IMM8 tw=iareg-M_RDMEM(eaddr);
-					 SETSTATUS(iareg,M_RDMEM(eaddr),tw) break;
-		case 0x82: /*SBCA immediate*/ IMM8 tw=iareg-M_RDMEM(eaddr)-(iccreg&0x01);
-					 SETSTATUS(iareg,M_RDMEM(eaddr),tw)
+		case 0x81: /*CMPA immediate*/ IMM8 sw=M_RDMEM(eaddr);tw=iareg-sw;
+					 SETSTATUS(iareg,sw,tw) break;
+		case 0x82: /*SBCA immediate*/ IMM8 sw=M_RDMEM(eaddr);tw=iareg-sw-(iccreg&0x01);
+					 SETSTATUS(iareg,sw,tw)
 					 iareg=tw;break;
 		case 0x83: /*SUBD (CMPD CMPU) immediate*/ IMM16
 		                             {unsigned long res,dreg,breg;
@@ -1171,13 +1273,13 @@ INLINE void codes_8X( void )
 		                             SETNZ8(iareg) CLV STOREAC(iareg) break;
 		case 0x88: /*EORA immediate*/ IMM8 iareg=iareg^M_RDMEM(eaddr);SETNZ8(iareg)
 					 CLV break;
-		case 0x89: /*ADCA immediate*/ IMM8 tw=iareg+M_RDMEM(eaddr)+(iccreg&0x01);
-		                             SETSTATUS(iareg,M_RDMEM(eaddr),tw)
+		case 0x89: /*ADCA immediate*/ IMM8 sw=M_RDMEM(eaddr);tw=iareg+sw+(iccreg&0x01);
+		                             SETSTATUS(iareg,sw,tw)
 		                             iareg=tw;break;   				 
 		case 0x8A: /*ORA immediate*/  IMM8 iareg=iareg|M_RDMEM(eaddr);SETNZ8(iareg)
 					 CLV break;
-		case 0x8B: /*ADDA immediate*/ IMM8 tw=iareg+M_RDMEM(eaddr);
-					 SETSTATUS(iareg,M_RDMEM(eaddr),tw)
+		case 0x8B: /*ADDA immediate*/ IMM8 sw=M_RDMEM(eaddr);tw=iareg+sw;
+					 SETSTATUS(iareg,sw,tw)
 					 iareg=tw;break;
 		case 0x8C: /*CMPX (CMPY CMPS) immediate */ IMM16 
 		                             {unsigned long dreg,breg,res;
@@ -1199,18 +1301,18 @@ INLINE void codes_8X( void )
 
 INLINE void codes_9X( void )
 {
-	word tw;
+	word sw,tw;
 	byte tb;
 	
 	switch( ireg )
 	{
-		case 0x90: /*SUBA direct*/ DIRECT tw=iareg-M_RDMEM(eaddr);
-		                             SETSTATUS(iareg,M_RDMEM(eaddr),tw)
+		case 0x90: /*SUBA direct*/ DIRECT sw=M_RDMEM(eaddr);tw=iareg-sw;
+		                             SETSTATUS(iareg,sw,tw)
 		                             iareg=tw;break;
-		case 0x91: /*CMPA direct*/ DIRECT tw=iareg-M_RDMEM(eaddr);
-					 SETSTATUS(iareg,M_RDMEM(eaddr),tw) break;
-		case 0x92: /*SBCA direct*/ DIRECT tw=iareg-M_RDMEM(eaddr)-(iccreg&0x01);
-					 SETSTATUS(iareg,M_RDMEM(eaddr),tw)
+		case 0x91: /*CMPA direct*/ DIRECT sw=M_RDMEM(eaddr);tw=iareg-sw;
+					 SETSTATUS(iareg,sw,tw) break;
+		case 0x92: /*SBCA direct*/ DIRECT sw=M_RDMEM(eaddr);tw=iareg-sw-(iccreg&0x01);
+					 SETSTATUS(iareg,sw,tw)
 					 iareg=tw;break;
 		case 0x93: /*SUBD (CMPD CMPU) direct*/ DIRECT
 		                             {unsigned long res,dreg,breg;
@@ -1230,13 +1332,13 @@ INLINE void codes_9X( void )
 		                             SETNZ8(iareg) CLV STOREAC(iareg) break;
 		case 0x98: /*EORA direct*/ DIRECT iareg=iareg^M_RDMEM(eaddr);SETNZ8(iareg)
 					 CLV break;
-		case 0x99: /*ADCA direct*/ DIRECT tw=iareg+M_RDMEM(eaddr)+(iccreg&0x01);
-		                             SETSTATUS(iareg,M_RDMEM(eaddr),tw)
+		case 0x99: /*ADCA direct*/ DIRECT sw=M_RDMEM(eaddr);tw=iareg+sw+(iccreg&0x01);
+		                             SETSTATUS(iareg,sw,tw)
 		                             iareg=tw;break;   				 
 		case 0x9A: /*ORA direct*/  DIRECT iareg=iareg|M_RDMEM(eaddr);SETNZ8(iareg)
 					 CLV break;
-		case 0x9B: /*ADDA direct*/ DIRECT tw=iareg+M_RDMEM(eaddr);
-					 SETSTATUS(iareg,M_RDMEM(eaddr),tw)
+		case 0x9B: /*ADDA direct*/ DIRECT sw=M_RDMEM(eaddr);tw=iareg+sw;
+					 SETSTATUS(iareg,sw,tw)
 					 iareg=tw;break;
 		case 0x9C: /*CMPX (CMPY CMPS) direct */ DIRECT 
 		                             {unsigned long dreg,breg,res;
@@ -1258,18 +1360,18 @@ INLINE void codes_9X( void )
 
 INLINE void codes_AX( void )
 {
-	word tw;
+	word sw,tw;
 	byte tb;
 	
 	switch( ireg )
 	{
-		case 0xA0: /*SUBA indexed*/  tw=iareg-M_RDMEM(eaddr);
-		                             SETSTATUS(iareg,M_RDMEM(eaddr),tw)
+		case 0xA0: /*SUBA indexed*/  sw=M_RDMEM(eaddr);tw=iareg-sw;
+		                             SETSTATUS(iareg,sw,tw)
 		                             iareg=tw;break;
-		case 0xA1: /*CMPA indexed*/  tw=iareg-M_RDMEM(eaddr);
-					 SETSTATUS(iareg,M_RDMEM(eaddr),tw) break;
-		case 0xA2: /*SBCA indexed*/  tw=iareg-M_RDMEM(eaddr)-(iccreg&0x01);
-					 SETSTATUS(iareg,M_RDMEM(eaddr),tw)
+		case 0xA1: /*CMPA indexed*/  sw=M_RDMEM(eaddr);tw=iareg-sw;
+					 SETSTATUS(iareg,sw,tw) break;
+		case 0xA2: /*SBCA indexed*/  sw=M_RDMEM(eaddr);tw=iareg-sw-(iccreg&0x01);
+					 SETSTATUS(iareg,sw,tw)
 					 iareg=tw;break;
 		case 0xA3: /*SUBD (CMPD CMPU) indexed*/ 
 		                             {unsigned long res,dreg,breg;
@@ -1289,13 +1391,13 @@ INLINE void codes_AX( void )
 		                             SETNZ8(iareg) CLV STOREAC(iareg) break;
 		case 0xA8: /*EORA indexed*/  iareg=iareg^M_RDMEM(eaddr);SETNZ8(iareg)
 					 CLV break;
-		case 0xA9: /*ADCA indexed*/  tw=iareg+M_RDMEM(eaddr)+(iccreg&0x01);
-		                             SETSTATUS(iareg,M_RDMEM(eaddr),tw)
+		case 0xA9: /*ADCA indexed*/  sw=M_RDMEM(eaddr);tw=iareg+sw+(iccreg&0x01);
+		                             SETSTATUS(iareg,sw,tw)
 		                             iareg=tw;break;   				 
 		case 0xAA: /*ORA indexed*/   iareg=iareg|M_RDMEM(eaddr);SETNZ8(iareg)
 					 CLV break;
-		case 0xAB: /*ADDA indexed*/  tw=iareg+M_RDMEM(eaddr);
-					 SETSTATUS(iareg,M_RDMEM(eaddr),tw)
+		case 0xAB: /*ADDA indexed*/  sw=M_RDMEM(eaddr);tw=iareg+sw;
+					 SETSTATUS(iareg,sw,tw)
 					 iareg=tw;break;
 		case 0xAC: /*CMPX (CMPY CMPS) indexed */  
 		                             {unsigned long dreg,breg,res;
@@ -1317,18 +1419,18 @@ INLINE void codes_AX( void )
 
 INLINE void codes_BX( void )
 {
-	word tw;
+	word sw,tw;
 	byte tb;
 	
 	switch( ireg )
 	{
-		case 0xB0: /*SUBA ext*/ EXTENDED tw=iareg-M_RDMEM(eaddr);
-		                             SETSTATUS(iareg,M_RDMEM(eaddr),tw)
+		case 0xB0: /*SUBA ext*/ EXTENDED sw=M_RDMEM(eaddr);tw=iareg-sw;
+		                             SETSTATUS(iareg,sw,tw)
 		                             iareg=tw;break;
-		case 0xB1: /*CMPA ext*/ EXTENDED tw=iareg-M_RDMEM(eaddr);
-					 SETSTATUS(iareg,M_RDMEM(eaddr),tw) break;
-		case 0xB2: /*SBCA ext*/ EXTENDED tw=iareg-M_RDMEM(eaddr)-(iccreg&0x01);
-					 SETSTATUS(iareg,M_RDMEM(eaddr),tw)
+		case 0xB1: /*CMPA ext*/ EXTENDED sw=M_RDMEM(eaddr);tw=iareg-sw;
+					 SETSTATUS(iareg,sw,tw) break;
+		case 0xB2: /*SBCA ext*/ EXTENDED sw=M_RDMEM(eaddr);tw=iareg-sw-(iccreg&0x01);
+					 SETSTATUS(iareg,sw,tw)
 					 iareg=tw;break;
 		case 0xB3: /*SUBD (CMPD CMPU) ext*/ EXTENDED
 		                             {unsigned long res,dreg,breg;
@@ -1348,13 +1450,13 @@ INLINE void codes_BX( void )
 		                             SETNZ8(iareg) CLV STOREAC(iareg) break;
 		case 0xB8: /*EORA ext*/ EXTENDED iareg=iareg^M_RDMEM(eaddr);SETNZ8(iareg)
 					 CLV break;
-		case 0xB9: /*ADCA ext*/ EXTENDED tw=iareg+M_RDMEM(eaddr)+(iccreg&0x01);
-		                             SETSTATUS(iareg,M_RDMEM(eaddr),tw)
+		case 0xB9: /*ADCA ext*/ EXTENDED sw=M_RDMEM(eaddr);tw=iareg+sw+(iccreg&0x01);
+		                             SETSTATUS(iareg,sw,tw)
 		                             iareg=tw;break;   				 
 		case 0xBA: /*ORA ext*/  EXTENDED iareg=iareg|M_RDMEM(eaddr);SETNZ8(iareg)
 					 CLV break;
-		case 0xBB: /*ADDA ext*/ EXTENDED tw=iareg+M_RDMEM(eaddr);
-					 SETSTATUS(iareg,M_RDMEM(eaddr),tw)
+		case 0xBB: /*ADDA ext*/ EXTENDED sw=M_RDMEM(eaddr);tw=iareg+sw;
+					 SETSTATUS(iareg,sw,tw)
 					 iareg=tw;break;
 		case 0xBC: /*CMPX (CMPY CMPS) ext */ EXTENDED 
 		                             {unsigned long dreg,breg,res;
@@ -1376,18 +1478,18 @@ INLINE void codes_BX( void )
 
 INLINE void codes_CX( void )
 {
-	word tw;
+	word sw,tw;
 	byte tb;
 	
 	switch( ireg )
 	{
-		case 0xC0: /*SUBB immediate*/ IMM8 tw=ibreg-M_RDMEM(eaddr);
-		                             SETSTATUS(ibreg,M_RDMEM(eaddr),tw)
+		case 0xC0: /*SUBB immediate*/ IMM8 sw=M_RDMEM(eaddr);tw=ibreg-sw;
+		                             SETSTATUS(ibreg,sw,tw)
 		                             ibreg=tw;break;
-		case 0xC1: /*CMPB immediate*/ IMM8 tw=ibreg-M_RDMEM(eaddr);
-					 SETSTATUS(ibreg,M_RDMEM(eaddr),tw) break;
-		case 0xC2: /*SBCB immediate*/ IMM8 tw=ibreg-M_RDMEM(eaddr)-(iccreg&0x01);
-					 SETSTATUS(ibreg,M_RDMEM(eaddr),tw)
+		case 0xC1: /*CMPB immediate*/ IMM8 sw=M_RDMEM(eaddr);tw=ibreg-sw;
+					 SETSTATUS(ibreg,sw,tw) break;
+		case 0xC2: /*SBCB immediate*/ IMM8 sw=M_RDMEM(eaddr);tw=ibreg-sw-(iccreg&0x01);
+					 SETSTATUS(ibreg,sw,tw)
 					 ibreg=tw;break;
 		case 0xC3: /*ADDD immediate*/ IMM16
 		                             {unsigned long res,dreg,breg;
@@ -1407,13 +1509,13 @@ INLINE void codes_CX( void )
 		                             SETNZ8(ibreg) CLV STOREAC(ibreg) break;
 		case 0xC8: /*EORB immediate*/ IMM8 ibreg=ibreg^M_RDMEM(eaddr);SETNZ8(ibreg)
 					 CLV break;
-		case 0xC9: /*ADCB immediate*/ IMM8 tw=ibreg+M_RDMEM(eaddr)+(iccreg&0x01);
-		                             SETSTATUS(ibreg,M_RDMEM(eaddr),tw)
+		case 0xC9: /*ADCB immediate*/ IMM8 sw=M_RDMEM(eaddr);tw=ibreg+sw+(iccreg&0x01);
+		                             SETSTATUS(ibreg,sw,tw)
 		                             ibreg=tw;break;
 		case 0xCA: /*ORB immediate*/  IMM8 ibreg=ibreg|M_RDMEM(eaddr);SETNZ8(ibreg)
 					 CLV break;
-		case 0xCB: /*ADDB immediate*/ IMM8 tw=ibreg+M_RDMEM(eaddr);
-					 SETSTATUS(ibreg,M_RDMEM(eaddr),tw)
+		case 0xCB: /*ADDB immediate*/ IMM8 sw=M_RDMEM(eaddr);tw=ibreg+sw;
+					 SETSTATUS(ibreg,sw,tw)
 					 ibreg=tw;break;
 		case 0xCC: /*LDD immediate */ IMM16 tw=GETWORD(eaddr);SETNZ16(tw)
 				         CLV SETDREG(tw) break;   				 		                  
@@ -1431,18 +1533,18 @@ INLINE void codes_CX( void )
 
 INLINE void codes_DX( void )
 {
-	word tw;
+	word sw,tw;
 	byte tb;
 	
 	switch( ireg )
 	{
-		case 0xD0: /*SUBB direct*/ DIRECT tw=ibreg-M_RDMEM(eaddr);
-		                             SETSTATUS(ibreg,M_RDMEM(eaddr),tw)
+		case 0xD0: /*SUBB direct*/ DIRECT sw=M_RDMEM(eaddr);tw=ibreg-sw;
+		                             SETSTATUS(ibreg,sw,tw)
 		                             ibreg=tw;break;
-		case 0xD1: /*CMPB direct*/ DIRECT tw=ibreg-M_RDMEM(eaddr);
-					 SETSTATUS(ibreg,M_RDMEM(eaddr),tw) break;
-		case 0xD2: /*SBCB direct*/ DIRECT tw=ibreg-M_RDMEM(eaddr)-(iccreg&0x01);
-					 SETSTATUS(ibreg,M_RDMEM(eaddr),tw)
+		case 0xD1: /*CMPB direct*/ DIRECT sw=M_RDMEM(eaddr);tw=ibreg-sw;
+					 SETSTATUS(ibreg,sw,tw) break;
+		case 0xD2: /*SBCB direct*/ DIRECT sw=M_RDMEM(eaddr);tw=ibreg-sw-(iccreg&0x01);
+					 SETSTATUS(ibreg,sw,tw)
 					 ibreg=tw;break;
 		case 0xD3: /*ADDD direct*/ DIRECT
 		                             {unsigned long res,dreg,breg;
@@ -1462,13 +1564,13 @@ INLINE void codes_DX( void )
 		                             SETNZ8(ibreg) CLV STOREAC(ibreg) break;
 		case 0xD8: /*EORB direct*/ DIRECT ibreg=ibreg^M_RDMEM(eaddr);SETNZ8(ibreg)
 					 CLV break;
-		case 0xD9: /*ADCB direct*/ DIRECT tw=ibreg+M_RDMEM(eaddr)+(iccreg&0x01);
-		                             SETSTATUS(ibreg,M_RDMEM(eaddr),tw)
+		case 0xD9: /*ADCB direct*/ DIRECT sw=M_RDMEM(eaddr);tw=ibreg+sw+(iccreg&0x01);
+		                             SETSTATUS(ibreg,sw,tw)
 		                             ibreg=tw;break;   				 
 		case 0xDA: /*ORB direct*/  DIRECT ibreg=ibreg|M_RDMEM(eaddr);SETNZ8(ibreg)
 					 CLV break;
-		case 0xDB: /*ADDB direct*/ DIRECT tw=ibreg+M_RDMEM(eaddr);
-					 SETSTATUS(ibreg,M_RDMEM(eaddr),tw)
+		case 0xDB: /*ADDB direct*/ DIRECT sw=M_RDMEM(eaddr);tw=ibreg+sw;
+					 SETSTATUS(ibreg,sw,tw)
 					 ibreg=tw;break;
 		case 0xDC: /*LDD direct */ DIRECT tw=GETWORD(eaddr);SETNZ16(tw)
 				         CLV SETDREG(tw) break;   				 		                  
@@ -1486,18 +1588,18 @@ INLINE void codes_DX( void )
 
 INLINE void codes_EX( void )
 {
-	word tw;
+	word sw,tw;
 	byte tb;
 	
 	switch( ireg )
 	{
-		case 0xE0: /*SUBB indexed*/  tw=ibreg-M_RDMEM(eaddr);
-		                             SETSTATUS(ibreg,M_RDMEM(eaddr),tw)
+		case 0xE0: /*SUBB indexed*/  sw=M_RDMEM(eaddr);tw=ibreg-sw;
+		                             SETSTATUS(ibreg,sw,tw)
 		                             ibreg=tw;break;
-		case 0xE1: /*CMPB indexed*/  tw=ibreg-M_RDMEM(eaddr);
-					 SETSTATUS(ibreg,M_RDMEM(eaddr),tw) break;
-		case 0xE2: /*SBCB indexed*/  tw=ibreg-M_RDMEM(eaddr)-(iccreg&0x01);
-					 SETSTATUS(ibreg,M_RDMEM(eaddr),tw)
+		case 0xE1: /*CMPB indexed*/  sw=M_RDMEM(eaddr);tw=ibreg-sw;
+					 SETSTATUS(ibreg,sw,tw) break;
+		case 0xE2: /*SBCB indexed*/  sw=M_RDMEM(eaddr);tw=ibreg-sw-(iccreg&0x01);
+					 SETSTATUS(ibreg,sw,tw)
 					 ibreg=tw;break;
 		case 0xE3: /*ADDD indexed*/ 
 		                             {unsigned long res,dreg,breg;
@@ -1517,13 +1619,13 @@ INLINE void codes_EX( void )
 		                             SETNZ8(ibreg) CLV STOREAC(ibreg) break;
 		case 0xE8: /*EORB indexed*/  ibreg=ibreg^M_RDMEM(eaddr);SETNZ8(ibreg)
 					 CLV break;
-		case 0xE9: /*ADCB indexed*/  tw=ibreg+M_RDMEM(eaddr)+(iccreg&0x01);
-		                             SETSTATUS(ibreg,M_RDMEM(eaddr),tw)
+		case 0xE9: /*ADCB indexed*/  sw=M_RDMEM(eaddr);tw=ibreg+sw+(iccreg&0x01);
+		                             SETSTATUS(ibreg,sw,tw)
 		                             ibreg=tw;break;   				 
 		case 0xEA: /*ORB indexed*/   ibreg=ibreg|M_RDMEM(eaddr);SETNZ8(ibreg)
 					 CLV break;
-		case 0xEB: /*ADDB indexed*/  tw=ibreg+M_RDMEM(eaddr);
-					 SETSTATUS(ibreg,M_RDMEM(eaddr),tw)
+		case 0xEB: /*ADDB indexed*/  sw=M_RDMEM(eaddr);tw=ibreg+sw;
+					 SETSTATUS(ibreg,sw,tw)
 					 ibreg=tw;break;
 		case 0xEC: /*LDD indexed */  tw=GETWORD(eaddr);SETNZ16(tw)
 				         CLV SETDREG(tw) break;   				 		                  
@@ -1541,18 +1643,18 @@ INLINE void codes_EX( void )
 
 INLINE void codes_FX( void )
 {
-	word tw;
+	word sw,tw;
 	byte tb;
 	
 	switch( ireg )
 	{
-		case 0xF0: /*SUBB ext*/ EXTENDED tw=ibreg-M_RDMEM(eaddr);
-		                             SETSTATUS(ibreg,M_RDMEM(eaddr),tw)
+		case 0xF0: /*SUBB ext*/ EXTENDED sw=M_RDMEM(eaddr);tw=ibreg-sw;
+		                             SETSTATUS(ibreg,sw,tw)
 		                             ibreg=tw;break;
-		case 0xF1: /*CMPB ext*/ EXTENDED tw=ibreg-M_RDMEM(eaddr);
-					 SETSTATUS(ibreg,M_RDMEM(eaddr),tw) break;
-		case 0xF2: /*SBCB ext*/ EXTENDED tw=ibreg-M_RDMEM(eaddr)-(iccreg&0x01);
-					 SETSTATUS(ibreg,M_RDMEM(eaddr),tw)
+		case 0xF1: /*CMPB ext*/ EXTENDED sw=M_RDMEM(eaddr);tw=ibreg-sw;
+					 SETSTATUS(ibreg,sw,tw) break;
+		case 0xF2: /*SBCB ext*/ EXTENDED sw=M_RDMEM(eaddr);tw=ibreg-sw-(iccreg&0x01);
+					 SETSTATUS(ibreg,sw,tw)
 					 ibreg=tw;break;
 		case 0xF3: /*ADDD ext*/ EXTENDED
 		                             {unsigned long res,dreg,breg;
@@ -1572,13 +1674,13 @@ INLINE void codes_FX( void )
 		                             SETNZ8(ibreg) CLV STOREAC(ibreg) break;
 		case 0xF8: /*EORB ext*/ EXTENDED ibreg=ibreg^M_RDMEM(eaddr);SETNZ8(ibreg)
 					 CLV break;
-		case 0xF9: /*ADCB ext*/ EXTENDED tw=ibreg+M_RDMEM(eaddr)+(iccreg&0x01);
-		                             SETSTATUS(ibreg,M_RDMEM(eaddr),tw)
+		case 0xF9: /*ADCB ext*/ EXTENDED sw=M_RDMEM(eaddr);tw=ibreg+sw+(iccreg&0x01);
+		                             SETSTATUS(ibreg,sw,tw)
 		                             ibreg=tw;break;
 		case 0xFA: /*ORB ext*/  EXTENDED ibreg=ibreg|M_RDMEM(eaddr);SETNZ8(ibreg)
 					 CLV break;
-		case 0xFB: /*ADDB ext*/ EXTENDED tw=ibreg+M_RDMEM(eaddr);
-					 SETSTATUS(ibreg,M_RDMEM(eaddr),tw)
+		case 0xFB: /*ADDB ext*/ EXTENDED sw=M_RDMEM(eaddr);tw=ibreg+sw;
+					 SETSTATUS(ibreg,sw,tw)
 					 ibreg=tw;break;
 		case 0xFC: /*LDD ext */ EXTENDED tw=GETWORD(eaddr);SETNZ16(tw)
 				         CLV SETDREG(tw) break;
