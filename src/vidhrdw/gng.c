@@ -12,10 +12,6 @@
 
 
 
-#define VIDEO_RAM_SIZE 0x400
-#define BACKGROUND_SIZE 0x400
-#define SPRITES_SIZE (96*4)
-
 #define GFX_CHAR 0
 #define GFX_TILE 1
 #define GFX_SPRITE 5
@@ -25,6 +21,7 @@ static const unsigned char *colors;
 static unsigned char dirtycolor[8];	/* keep track of modified background colors */
 
 unsigned char *gng_bgvideoram,*gng_bgcolorram;
+int gng_bgvideoram_size;
 unsigned char *gng_scrollx, *gng_scrolly;
 static unsigned char *dirtybuffer2;
 static unsigned char *spritebuffer1,*spritebuffer2;
@@ -88,6 +85,17 @@ void gng_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable
 		bit3 = (color_prom[2*i+1] >> 7) & 0x01;
 		palette[3*i + 2] = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 	}
+
+	/* initialize the colortable so the power on self test can be seen */
+	for (i = 0;i < Machine->drv->color_table_len;i++)
+	{
+		int j;
+
+
+		j = rand() % Machine->drv->total_colors;
+		gng_paletteram[i] = colors[2*j];
+		gng_paletteram[i + 0x100] = colors[2*j+1];
+	}
 }
 
 
@@ -102,21 +110,21 @@ int gng_vh_start(void)
 	if (generic_vh_start() != 0)
 		return 1;
 
-	if ((dirtybuffer2 = malloc(BACKGROUND_SIZE)) == 0)
+	if ((dirtybuffer2 = malloc(gng_bgvideoram_size)) == 0)
 	{
 		generic_vh_stop();
 		return 1;
 	}
-	memset(dirtybuffer,0,BACKGROUND_SIZE);
+	memset(dirtybuffer2,0,gng_bgvideoram_size);
 
-	if ((spritebuffer1 = malloc(SPRITES_SIZE)) == 0)
+	if ((spritebuffer1 = malloc(spriteram_size)) == 0)
 	{
 		free(dirtybuffer2);
 		generic_vh_stop();
 		return 1;
 	}
 
-	if ((spritebuffer2 = malloc(SPRITES_SIZE)) == 0)
+	if ((spritebuffer2 = malloc(spriteram_size)) == 0)
 	{
 		free(spritebuffer1);
 		free(dirtybuffer2);
@@ -197,8 +205,8 @@ int gng_interrupt(void)
 	/* we must store previous sprite data in a buffer and draw that instead of */
 	/* the latest one, otherwise sprites will not be synchronized with */
 	/* background scrolling */
-	memcpy(spritebuffer2,spritebuffer1,SPRITES_SIZE);
-	memcpy(spritebuffer1,spriteram,SPRITES_SIZE);
+	memcpy(spritebuffer2,spritebuffer1,spriteram_size);
+	memcpy(spritebuffer1,spriteram,spriteram_size);
 
 	return INT_IRQ;
 }
@@ -239,17 +247,16 @@ void gng_vh_screenrefresh(struct osd_bitmap *bitmap)
 				offs--;
 			}
 
-                        if (errorlog && offs == 0 &&
-				(gng_paletteram[64*j+i] || gng_paletteram[64*j+i + 0x100]))
-		        fprintf(errorlog,"warning: unknown color %02x %02x\n",
-				gng_paletteram[64*j+i],gng_paletteram[64*j+i + 0x100]);
+if (errorlog && offs == 0 && (gng_paletteram[64*j+i] || gng_paletteram[64*j+i + 0x100]))
+	fprintf(errorlog,"warning: unknown color %02x %02x\n",
+			gng_paletteram[64*j+i],gng_paletteram[64*j+i + 0x100]);
 
 			Machine->gfx[conv[j]]->colortable[i] = Machine->pens[offs];
 		}
 	}
 
 
-	for (offs = 0;offs < BACKGROUND_SIZE;offs++)
+	for (offs = gng_bgvideoram_size - 1;offs >= 0;offs--)
 	{
 		int sx,sy;
 
@@ -289,7 +296,7 @@ void gng_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 	/* Draw the sprites. Note that it is important to draw them exactly in this */
 	/* order, to have the correct priorities. */
-	for (offs = 95*4;offs >= 0;offs -= 4)
+	for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
 	{
 		int bank;
 
@@ -315,7 +322,7 @@ void gng_vh_screenrefresh(struct osd_bitmap *bitmap)
 		scrollx = -(gng_scrollx[0] + 256 * gng_scrollx[1]);
 		scrolly = -(gng_scrolly[0] + 256 * gng_scrolly[1]);
 
-		for (offs = 0;offs < BACKGROUND_SIZE;offs++)
+		for (offs = gng_bgvideoram_size - 1;offs >= 0;offs--)
 		{
 			int sx,sy;
 
@@ -337,7 +344,7 @@ void gng_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 
 	/* draw the frontmost playfield. They are characters, but draw them as sprites */
-	for (offs = 0;offs < VIDEO_RAM_SIZE;offs++)
+	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
 		int charcode;
 

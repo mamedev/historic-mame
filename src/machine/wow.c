@@ -31,19 +31,32 @@ int GorfDelay;
 
 void wow_interrupt_enable_w(int offset, int data)
 {
-	InterruptFlag = data;
+ InterruptFlag = data;
 
     if (data == 0) Z80_IRQ=Z80_IGNORE_INT;
 
-    if (data & 0x10)
-	{
-		GorfDelay =(CurrentScan + 10) & 0xFF;
+    /* Does bit 0 enable/disable interrupts? */
 
-    	if (errorlog) fprintf(errorlog,"Gorf Delay set to %02x\n",GorfDelay);
+    if (data & 0x01) interrupt_enable_w(0,0);
+    else interrupt_enable_w(0,1);
+
+    if (data & 0x10)
+ {
+  GorfDelay =(CurrentScan + 10) & 0xFF;
+
+        /* Gorf Special *MUST* occur before next scanline interrupt */
+
+        if ((NextScanInt > CurrentScan) && (NextScanInt < GorfDelay))
+        {
+         GorfDelay = NextScanInt - 1;
+        }
+
+     if (errorlog) fprintf(errorlog,"Gorf Delay set to %02x\n",GorfDelay);
     }
 
-	if (errorlog) fprintf(errorlog,"Interrupt flag set to %02x\n",data);
+ if (errorlog) fprintf(errorlog,"Interrupt flag set to %02x\n",data);
 }
+
 
 void wow_interrupt_w(int offset, int data)
 {

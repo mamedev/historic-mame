@@ -586,6 +586,7 @@ static struct InputPort robotron_input_ports[] =
 	{ -1 }  /* end of table */
 };
 
+
 static struct TrakPort trak_ports[] =
 {
         { -1 }
@@ -915,34 +916,6 @@ static struct KEYSet keys[] =
 
 
 
-
-
-
-
-/* Not really used. See williams_vh_start() in VIDHRDW/WILLIAMS.C */
-static struct GfxLayout charlayout =
-{
-	8,8,    /* 8*8 characters */
-	40,     /* 40 characters */
-	1,      /* 1 bits per pixel */
-	{ 0 },
-	{ 7, 6, 5, 4, 3, 2, 1, 0 },     /* pretty straightforward layout */
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8, 8*8, 9*8 },
-	8*8     /* every char takes 8 consecutive bytes */
-};
-
-/*  Just to allocate the memory  */
-static struct GfxDecodeInfo gfxdecodeinfo[] =
-{
-	{ 1, 0x0000, &charlayout, 0, 4 },
-	{ -1 } /* end of array */
-};
-
-
-
-
-
-
 static struct MachineDriver robotron_machine_driver =
 {
 	/* basic machine hardware  */
@@ -970,7 +943,7 @@ static struct MachineDriver robotron_machine_driver =
 	304, 256,                               /* screen_width, screen_height */
 	{ 0, 304-1, 0, 256-1 },                 /* struct rectangle visible_area */
 #endif
-	gfxdecodeinfo,                          /* GfxDecodeInfo * */
+	0,                          /* GfxDecodeInfo * */
 	256,                                    /* total colors */
 	6,                                      /* color table length */
 	williams_vh_convert_color_prom,         /* convert color prom routine */
@@ -1018,7 +991,7 @@ static struct MachineDriver joust_machine_driver =
 	304, 256,                               /* screen_width, screen_height */
 	{ 0, 304-1, 0, 256-1 },                 /* struct rectangle visible_area */
 #endif
-	gfxdecodeinfo,                          /* GfxDecodeInfo * */
+	0,                          /* GfxDecodeInfo * */
 	256,                                    /* total colors */
 	6,                                      /* color table length */
 	williams_vh_convert_color_prom,         /* convert color prom routine */
@@ -1066,7 +1039,7 @@ static struct MachineDriver stargate_machine_driver =
 	304, 256,                               /* screen_width, screen_height */
 	{ 0, 304-1, 0, 256-1 },                 /* struct rectangle visible_area */
 #endif
-	gfxdecodeinfo,                          /* GfxDecodeInfo * */
+	0,                          /* GfxDecodeInfo * */
 	256,                                    /* total colors */
 	6,                                      /* color table length */
 	williams_vh_convert_color_prom,         /* convert color prom routine */
@@ -1114,7 +1087,7 @@ static struct MachineDriver sinistar_machine_driver =
 	304, 256,                               /* screen_width, screen_height */
 	{ 0, 304-1, 0, 256-1 },                 /* struct rectangle visible_area */
 #endif
-	gfxdecodeinfo,                          /* GfxDecodeInfo * */
+	0,                          /* GfxDecodeInfo * */
 	256,                                    /* total colors */
 	6,                                      /* color table length */
 	williams_vh_convert_color_prom,         /* convert color prom routine */
@@ -1162,7 +1135,7 @@ static struct MachineDriver defender_machine_driver =
 	304, 256,                               /* screen_width, screen_height */
 	{ 0, 304-1, 0, 256-1 },                 /* struct rectangle visible_area */
 #endif
-	gfxdecodeinfo,                          /* GfxDecodeInfo * */
+	0,                          /* GfxDecodeInfo * */
 	256,                                    /* total colors */
 	6,                                      /* color table length */
 	williams_vh_convert_color_prom,         /* convert color prom routine */
@@ -1210,7 +1183,7 @@ static struct MachineDriver splat_machine_driver =
 	304, 256,                               /* screen_width, screen_height */
 	{ 0, 304-1, 0, 256-1 },                 /* struct rectangle visible_area */
 #endif
-	gfxdecodeinfo,                          /* GfxDecodeInfo * */
+	0,                          /* GfxDecodeInfo * */
 	256,                                    /* total colors */
 	6,                                      /* color table length */
 	williams_vh_convert_color_prom,         /* convert color prom routine */
@@ -1258,7 +1231,7 @@ static struct MachineDriver bubbles_machine_driver =
 	304, 256,                               /* screen_width, screen_height */
 	{ 0, 304-1, 0, 256-1 },                 /* struct rectangle visible_area */
 #endif
-	gfxdecodeinfo,                          /* GfxDecodeInfo * */
+	0,                          /* GfxDecodeInfo * */
 	256,                                    /* total colors */
 	6,                                      /* color table length */
 	williams_vh_convert_color_prom,         /* convert color prom routine */
@@ -1306,7 +1279,7 @@ static struct MachineDriver blaster_machine_driver =
 	304, 256,                               /* screen_width, screen_height */
 	{ 0, 304-1, 0, 256-1 },                 /* struct rectangle visible_area */
 #endif
-	gfxdecodeinfo,                          /* GfxDecodeInfo * */
+	0,                          /* GfxDecodeInfo * */
 	256,                                    /* total colors */
 	6,                                      /* color table length */
 	williams_vh_convert_color_prom,         /* convert color prom routine */
@@ -1526,10 +1499,6 @@ ROM_START( robotron_rom )
 	ROM_LOAD( "ROBOTRON.SBa", 0xd000, 0x1000 )
 	ROM_LOAD( "ROBOTRON.SBb", 0xe000, 0x1000 )
 	ROM_LOAD( "ROBOTRON.SBc", 0xf000, 0x1000 )
-
-	ROM_REGION(0x200)       /* 512 byte for fonts */
-	ROM_LOAD( "williams.fnt",  0x0000, 0x0120 )
-
 ROM_END
 
 
@@ -1589,10 +1558,6 @@ ROM_START( joust_rom )
 	ROM_LOAD( "JOUST.SGb", 0xe000, 0x1000 )
 	ROM_LOAD( "JOUST.SGc", 0xf000, 0x1000 )
 */
-
-	ROM_REGION(0x200)       /* 512 byte for fonts */
-	ROM_LOAD( "williams.fnt",  0x0000, 0x0120 )
-
 ROM_END
 
 struct GameDriver joust_driver =
@@ -1647,10 +1612,6 @@ ROM_START( sinistar_rom )
 
 	ROM_LOAD( "SINISTAR.10", 0xe000, 0x1000 )
 	ROM_LOAD( "SINISTAR.11", 0xf000, 0x1000 )
-
-	ROM_REGION(0x200)       /* 512 byte for fonts */
-	ROM_LOAD( "williams.fnt",  0x0000, 0x0120 )
-
 ROM_END
 
 struct GameDriver sinistar_driver =
@@ -1692,10 +1653,6 @@ ROM_START( bubbles_rom )
 	ROM_LOAD( "BUBBLES.10B", 0xd000, 0x1000 )
 	ROM_LOAD( "BUBBLES.11B", 0xe000, 0x1000 )
 	ROM_LOAD( "BUBBLES.12B", 0xf000, 0x1000 )
-
-	ROM_REGION(0x200)       /* 512 byte for fonts */
-	ROM_LOAD( "williams.fnt",  0x0000, 0x0120 )
-
 ROM_END
 
 struct GameDriver bubbles_driver =
@@ -1737,10 +1694,6 @@ ROM_START( stargate_rom )
 	ROM_LOAD( "10", 0xd000, 0x1000 )
 	ROM_LOAD( "11", 0xe000, 0x1000 )
 	ROM_LOAD( "12", 0xf000, 0x1000 )
-
-	ROM_REGION(0x200)       /* 512 byte for fonts */
-	ROM_LOAD( "williams.fnt",  0x0000, 0x0120 )
-
 ROM_END
 
 struct GameDriver stargate_driver =
@@ -1783,10 +1736,6 @@ ROM_START( defender_rom )
 	ROM_LOAD( "defend.10",0x13800, 0x0800 )
 	ROM_LOAD( "defend.6", 0x14000, 0x0800 )
 	ROM_LOAD( "defend.10",0x14800, 0x0800 )
-
-	ROM_REGION(0x200)       /* 512 byte for fonts */
-	ROM_LOAD( "williams.fnt",  0x0000, 0x0120 )
-
 ROM_END
 
 struct GameDriver defender_driver =
@@ -1830,10 +1779,6 @@ ROM_START( splat_rom )
 	ROM_LOAD( "SPLAT.10", 0xd000, 0x1000 )
 	ROM_LOAD( "SPLAT.11", 0xe000, 0x1000 )
 	ROM_LOAD( "SPLAT.12", 0xf000, 0x1000 )
-
-	ROM_REGION(0x200)       /* 512 byte for fonts */
-	ROM_LOAD( "williams.fnt",  0x0000, 0x0120 )
-
 ROM_END
 
 
@@ -1892,10 +1837,6 @@ ROM_START( blaster_rom )
 	ROM_LOAD( "blaster.11", 0x44000, 0x2000 )
 	ROM_LOAD( "blaster.12", 0x46000, 0x2000 )
 	ROM_LOAD( "blaster.17", 0x48000, 0x1000 )
-
-	ROM_REGION(0x200)       /* 512 byte for fonts */
-	ROM_LOAD( "williams.fnt",  0x0000, 0x0120 )
-
 ROM_END
 
 

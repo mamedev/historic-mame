@@ -9,9 +9,10 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
+
+
 unsigned char *warpwarp_bulletsram;
 
-#define VIDEO_RAM_SIZE 0x400
 
 
 /***************************************************************************
@@ -21,7 +22,6 @@ unsigned char *warpwarp_bulletsram;
   the main emulation engine.
 
 ***************************************************************************/
-
 void warpwarp_vh_screenrefresh(struct osd_bitmap *bitmap)
 {
 	int offs;
@@ -29,7 +29,7 @@ void warpwarp_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
-	for (offs = 0;offs < VIDEO_RAM_SIZE;offs++)
+	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
 		if (dirtybuffer[offs])
 		{
@@ -65,8 +65,10 @@ void warpwarp_vh_screenrefresh(struct osd_bitmap *bitmap)
 		}
 	}
 
+
 	/* copy the character mapped graphics */
 	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+
 
 	{
 		int x,y;

@@ -56,7 +56,7 @@ static struct MemoryReadAddress readmem[] =
 
 static struct MemoryWriteAddress writemem[] =
 {
-	{ 0xe000, 0xe3ff, videoram_w, &videoram },
+	{ 0xe000, 0xe3ff, videoram_w, &videoram, &videoram_size },
 	{ 0xe400, 0xe7ff, MWA_RAM },
 	{ 0xe800, 0xefff, carnival_characterram_w, &carnival_characterram },
 	{ 0x4000, 0x7fff, MWA_ROM },
@@ -111,6 +111,7 @@ static struct TrakPort trak_ports[] =
         { -1 }
 };
 
+
 static struct KEYSet keys[] =
 {
         { 1, 4, "MOVE LEFT"  },
@@ -128,7 +129,7 @@ static struct DSW dsw[] =
 
 
 
-struct GfxLayout carnival_charlayout =
+static struct GfxLayout charlayout =
 {
 	8,8,	/* 8*8 characters */
 	256,	/* 256 characters */
@@ -136,14 +137,14 @@ struct GfxLayout carnival_charlayout =
 	{ 0 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8, 8*8, 9*8 },
 	{ 7, 6, 5, 4, 3, 2, 1, 0 },	/* pretty straightforward layout */
-	8*8	/* every char takes 10 consecutive bytes */
+	8*8	/* every char takes 8 consecutive bytes */
 };
 
 
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 0, 0xe800, &carnival_charlayout, 0, 8 },	/* the game dynamically modifies this */
+	{ 0, 0xe800, &charlayout, 0, 8 },	/* the game dynamically modifies this */
 	{ -1 } /* end of array */
 };
 
@@ -152,9 +153,9 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static unsigned char palette[] =
 {
 	0x00,0x00,0x00,	/* BLACK */
-        0xff,0x00,0x00, /* RED */
-        0x00,0xff,0x00, /* GREEN */
-        0xff,0xff,0x00, /* YELLOW */
+    0xff,0x00,0x00, /* RED */
+    0x00,0xff,0x00, /* GREEN */
+    0xff,0xff,0x00, /* YELLOW */
 	0x00,0xff,0xff, /* CYAN */
 	0x00,0x00,0xff, /* BLUE */
 	0xff,0xff,0xff	/* WHITE */

@@ -11,10 +11,8 @@
 
 
 
-#define VIDEO_RAM_SIZE	0x400
-
 unsigned char *phoenix_videoram2;
-static unsigned char dirtybuffer2[VIDEO_RAM_SIZE];
+static unsigned char *dirtybuffer2;
 static struct osd_bitmap *tmpbitmap2;
 
 static int scrollreg;
@@ -50,9 +48,17 @@ int phoenix_vh_start(void)
 	if (generic_vh_start() != 0)
 		return 1;
 
+	if ((dirtybuffer2 = malloc(videoram_size)) == 0)
+	{
+		generic_vh_stop();
+		return 1;
+	}
+	memset(dirtybuffer2,0,videoram_size);
+
 	/* small temp bitmap for the score display */
 	if ((tmpbitmap2 = osd_create_bitmap(Machine->drv->screen_width,3*8)) == 0)
 	{
+		free(dirtybuffer2);
 		generic_vh_stop();
 		return 1;
 	}
@@ -70,6 +76,7 @@ int phoenix_vh_start(void)
 void phoenix_vh_stop(void)
 {
 	osd_free_bitmap(tmpbitmap2);
+	free(dirtybuffer2);
 	generic_vh_stop();
 }
 
@@ -98,16 +105,10 @@ void phoenix_videoreg_w (int offset,int data)
 {
 	if (palette_bank != ((data >> 1) & 1))
 	{
-		int offs;
-
-
 		palette_bank = (data >> 1) & 1;
 
-		for (offs = 0;offs < VIDEO_RAM_SIZE;offs++)
-		{
-			dirtybuffer[offs] = 1;
-			dirtybuffer2[offs] = 1;
-		}
+		memset(dirtybuffer,1,videoram_size);
+		memset(dirtybuffer2,1,videoram_size);
 	}
 }
 
@@ -127,7 +128,7 @@ void phoenix_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
-	for (offs = 0;offs < VIDEO_RAM_SIZE;offs++)
+	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
 		/* background */
 		if (dirtybuffer[offs])
@@ -149,7 +150,7 @@ void phoenix_vh_screenrefresh(struct osd_bitmap *bitmap)
 	}
 
 	/* score */
-	for (offs = 0;offs < VIDEO_RAM_SIZE;offs++)
+	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
 		if (dirtybuffer2[offs])
 		{
@@ -183,7 +184,7 @@ void phoenix_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 
 	/* draw the frontmost playfield. They are characters, but draw them as sprites */
-	for (offs = 0;offs < VIDEO_RAM_SIZE;offs++)
+	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
 		int sx,sy;
 

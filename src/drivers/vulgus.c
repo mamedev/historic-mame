@@ -46,6 +46,7 @@ c001      YM2203 #2 write
 extern int c1942_interrupt(void);
 
 extern unsigned char *vulgus_bgvideoram,*vulgus_bgcolorram;
+extern int vulgus_bgvideoram_size;
 extern unsigned char *vulgus_scrolllow,*vulgus_scrollhigh;
 extern void vulgus_bgvideoram_w(int offset,int data);
 extern void vulgus_bgcolorram_w(int offset,int data);
@@ -73,11 +74,11 @@ static struct MemoryReadAddress readmem[] =
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0xe000, 0xefff, MWA_RAM },
-	{ 0xd000, 0xd3ff, videoram_w, &videoram },
+	{ 0xd000, 0xd3ff, videoram_w, &videoram, &videoram_size },
 	{ 0xd400, 0xd7ff, colorram_w, &colorram },
-	{ 0xd800, 0xdbff, vulgus_bgvideoram_w, &vulgus_bgvideoram },
+	{ 0xd800, 0xdbff, vulgus_bgvideoram_w, &vulgus_bgvideoram, &vulgus_bgvideoram_size },
 	{ 0xdc00, 0xdfff, vulgus_bgcolorram_w, &vulgus_bgcolorram },
-	{ 0xcc00, 0xcc7f, MWA_RAM, &spriteram },
+	{ 0xcc00, 0xcc7f, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xc802, 0xc803, MWA_RAM, &vulgus_scrolllow },
 	{ 0xc902, 0xc903, MWA_RAM, &vulgus_scrollhigh },
 	{ 0xc800, 0xc800, sound_command_w },
@@ -144,6 +145,7 @@ static struct TrakPort trak_ports[] =
 {
         { -1 }
 };
+
 
 static struct KEYSet keys[] =
 {

@@ -11,8 +11,6 @@
 
 
 
-#define VIDEO_RAM_SIZE 0x800
-
 unsigned char *gberet_scroll;
 unsigned char *gberet_spritebank;
 
@@ -127,7 +125,7 @@ void gberet_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
-	for (offs = 0;offs < VIDEO_RAM_SIZE;offs++)
+	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
 		if (dirtybuffer[offs])
 		{
@@ -170,7 +168,7 @@ void gberet_vh_screenrefresh(struct osd_bitmap *bitmap)
 			sr = spriteram;
 		else sr = spriteram_2;
 
-		for (offs = 0;offs < 48*4;offs += 4)
+		for (offs = 0;offs < spriteram_size;offs += 4)
 		{
 			if (sr[offs+3])
 			{

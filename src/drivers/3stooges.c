@@ -46,7 +46,7 @@ NMI connected to vertical blank
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-extern int reactor_vh_start(void);
+extern int stooges_vh_start(void);
 extern void gottlieb_vh_init_basic_color_palette(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 extern void gottlieb_sh_w(int offset, int data);
 extern void gottlieb_sh_update(void);
@@ -54,12 +54,8 @@ extern const char *gottlieb_sample_names[];
 extern void gottlieb_output(int offset, int data);
 extern int stooges_IN1_r(int offset);
 extern int stooges_joysticks(int offset);
-extern int mplanets_dial_r(int offset);
-extern unsigned char *gottlieb_videoram;
 extern unsigned char *gottlieb_characterram;
 extern unsigned char *gottlieb_paletteram;
-extern unsigned char *gottlieb_spriteram;
-extern void gottlieb_videoram_w(int offset,int data);
 extern void gottlieb_characterram_w(int offset,int data);
 extern void gottlieb_paletteram_w(int offset,int data);
 extern void gottlieb_vh_screenrefresh(struct osd_bitmap *bitmap);
@@ -83,9 +79,9 @@ static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0x1fff, MWA_RAM },
 	{ 0x2000, 0x2fff, MWA_ROM },
-	{ 0x3000, 0x37ff, MWA_RAM, &gottlieb_spriteram },
-	{ 0x3800, 0x3fff, gottlieb_videoram_w, &gottlieb_videoram },
-	{ 0x4000, 0x4fff, gottlieb_characterram_w, &gottlieb_characterram }, 
+	{ 0x3000, 0x37ff, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0x3800, 0x3fff, videoram_w, &videoram, &videoram_size },
+	{ 0x4000, 0x4fff, gottlieb_characterram_w, &gottlieb_characterram },
 	{ 0x5000, 0x57ff, gottlieb_paletteram_w, &gottlieb_paletteram },
 	{ 0x5800, 0x5800, MWA_RAM },    /* watchdog timer clear */
 	{ 0x5801, 0x5801, MWA_RAM },    /* trackball output not used */
@@ -106,7 +102,7 @@ static struct InputPort input_ports[] =
 	{       /* buttons */
 		0x11, /* tilt off, test mode off */
 		{ 0, OSD_KEY_F2, /* test mode, select */
-		  OSD_KEY_4,OSD_KEY_3, /* coin 1 & 2 */                  
+		  OSD_KEY_4,OSD_KEY_3, /* coin 1 & 2 */
 		  OSD_KEY_T, /* tilt : does someone really want that ??? */
 		  0,0,0 },
 		{ 0, 0, 0, 0, 0, 0, 0, 0 }
@@ -125,20 +121,19 @@ static struct InputPort input_ports[] =
 		0x00,
 		{ OSD_KEY_I, OSD_KEY_L, OSD_KEY_K, OSD_KEY_J,
 		OSD_KEY_ALT,0,0,0 },
-		{ OSD_JOY_UP, OSD_JOY_RIGHT, OSD_JOY_DOWN, OSD_JOY_LEFT,
-					OSD_JOY_FIRE1, 0, 0, 0 }
+		{ 0, 0, 0, 0, 0, 0, 0, 0 }
 	},
 	{       /* joystick 1 (Curly) */
 		0x00,
-		{ OSD_KEY_UP, OSD_KEY_RIGHT, OSD_KEY_DOWN, OSD_KEY_LEFT,
-		0,OSD_KEY_CONTROL,0,0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
+		{ OSD_KEY_E, OSD_KEY_F, OSD_KEY_D, OSD_KEY_S,
+		0,OSD_KEY_CONTROL,0,0 },	/* Larry fire */
+		{ 0, 0, 0, 0, 0, OSD_JOY_FIRE, 0, 0 }
 	},
 	{       /* joystick 3 (Larry) */
 		0x00,
-		{ OSD_KEY_E, OSD_KEY_F, OSD_KEY_D, OSD_KEY_S,
-		0,0,OSD_KEY_ENTER,0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
+		{ OSD_KEY_UP, OSD_KEY_RIGHT, OSD_KEY_DOWN, OSD_KEY_LEFT,
+		0,0,OSD_KEY_ENTER,0 },	/* Curly fire */
+		{ OSD_JOY_UP, OSD_JOY_RIGHT, OSD_JOY_DOWN, OSD_JOY_LEFT, 0, 0, 0, 0 }
 	},
 	{ -1 }  /* end of table */
 };
@@ -159,12 +154,12 @@ static struct KEYSet keys[] =
 	{ 5, 3, "CURLY LEFT"  },
 	{ 5, 1, "CURLY RIGHT" },
 	{ 5, 2, "CURLY DOWN" },
-	{ 5, 5, "CURLY FIRE"     },
+	{ 6, 6, "CURLY FIRE"     },
 	{ 6, 0, "LARRY UP" },
 	{ 6, 3, "LARRY LEFT"  },
 	{ 6, 1, "LARRY RIGHT" },
 	{ 6, 2, "LARRY DOWN" },
-	{ 6, 6, "LARRY FIRE" },
+	{ 5, 5, "LARRY FIRE" },
 	{ -1 }
 };
 
@@ -208,23 +203,11 @@ static struct GfxLayout spritelayout =
 	32*8    /* every sprite takes 32 consecutive bytes */
 };
 
-static struct GfxLayout fakelayout =
-{
-	1,1,
-	0,
-	1,
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	0
-};
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,   16, 2 }, /* white & yellow palettes for Mame's texts */
 	{ 1, 0x0000, &charlayout,   0, 1 }, /* 1 palette for the game */
 	{ 1, 0x0000, &spritelayout, 0, 1 },
-	{ 0, 0, &fakelayout, 3*16, 16 }, /* 256 colors to pick in */
 	{ -1 } /* end of array */
 };
 
@@ -246,11 +229,11 @@ static const struct MachineDriver machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 0*8, 30*8-1 },
 	gfxdecodeinfo,
-	256,256+3*16,        /* 256 for colormap, 1*16 for the game, 2*16 for the dsw menu. Silly, isn't it ? */
+	256,256,        /* 256 for colormap, 1*16 for the game, 2*16 for the dsw menu. Silly, isn't it ? */
 	gottlieb_vh_init_basic_color_palette,
 
 	0,      /* init vh */
-	reactor_vh_start,
+	stooges_vh_start,
 	generic_vh_stop,
 	gottlieb_vh_screenrefresh,
 

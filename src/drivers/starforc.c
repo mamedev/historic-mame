@@ -43,6 +43,7 @@ extern unsigned char *starforc_paletteram;
 extern unsigned char *starforc_tilebackground2;
 extern unsigned char *starforc_tilebackground3;
 extern unsigned char *starforc_tilebackground4;
+extern int starforc_bgvideoram_size;
 extern void starforc_tiles2_w(int offset,int data);
 extern void starforc_tiles3_w(int offset,int data);
 extern void starforc_tiles4_w(int offset,int data);
@@ -73,16 +74,16 @@ static struct MemoryReadAddress readmem[] =
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x8000, 0x8fff, MWA_RAM },
-	{ 0x9000, 0x93ff, videoram_w, &videoram },
+	{ 0x9000, 0x93ff, videoram_w, &videoram, &videoram_size },
 	{ 0x9400, 0x97ff, colorram_w, &colorram },
-	{ 0xa000, 0xa1ff, starforc_tiles2_w, &starforc_tilebackground2 },
+	{ 0xa000, 0xa1ff, starforc_tiles2_w, &starforc_tilebackground2, &starforc_bgvideoram_size },
 	{ 0xa800, 0xa9ff, starforc_tiles3_w, &starforc_tilebackground3 },
 	{ 0xb000, 0xb1ff, starforc_tiles4_w, &starforc_tilebackground4 },
 	{ 0x9e20, 0x9e21, MWA_RAM, &starforc_scrollx2 },
 	{ 0x9e30, 0x9e31, MWA_RAM, &starforc_scrollx3 },
 	{ 0x9e25, 0x9e25, MWA_RAM, &starforc_scrolly2 },
 	{ 0x9e35, 0x9e35, MWA_RAM, &starforc_scrolly3 },
-	{ 0x9800, 0x987f, MWA_RAM, &spriteram },
+	{ 0x9800, 0x987f, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x9c00, 0x9d7f, starforc_paletteram_w, &starforc_paletteram },
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ -1 }  /* end of table */
@@ -136,6 +137,7 @@ static struct TrakPort trak_ports[] =
 {
         { -1 }
 };
+
 
 static struct KEYSet keys[] =
 {

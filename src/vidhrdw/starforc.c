@@ -11,15 +11,13 @@
 
 
 
-#define VIDEO_RAM_SIZE 0x400
-#define BACKGROUND_SIZE 0x200
-
 unsigned char *starforc_scrollx2,*starforc_scrolly2;
 unsigned char *starforc_scrollx3,*starforc_scrolly3;
 unsigned char *starforc_paletteram;
 unsigned char *starforc_tilebackground2;
 unsigned char *starforc_tilebackground3;
 unsigned char *starforc_tilebackground4;
+int starforc_bgvideoram_size;
 unsigned char *dirtybuffer2,*dirtybuffer3;
 static struct osd_bitmap *tmpbitmap2,*tmpbitmap3;
 static unsigned char dirtycolor[48];	/* keep track of modified colors */
@@ -64,20 +62,20 @@ int starforc_vh_start(void)
 	if (generic_vh_start() != 0)
 		return 1;
 
-	if ((dirtybuffer2 = malloc(BACKGROUND_SIZE)) == 0)
+	if ((dirtybuffer2 = malloc(starforc_bgvideoram_size)) == 0)
 	{
 		generic_vh_stop();
 		return 1;
 	}
-	memset(dirtybuffer2,0,BACKGROUND_SIZE);
+	memset(dirtybuffer2,0,starforc_bgvideoram_size);
 
-	if ((dirtybuffer3 = malloc(BACKGROUND_SIZE)) == 0)
+	if ((dirtybuffer3 = malloc(starforc_bgvideoram_size)) == 0)
 	{
 		free(dirtybuffer2);
 		generic_vh_stop();
 		return 1;
 	}
-	memset(dirtybuffer3,0,BACKGROUND_SIZE);
+	memset(dirtybuffer3,0,starforc_bgvideoram_size);
 
 	/* the background area is twice as large as the screen */
 	if ((tmpbitmap2 = osd_create_bitmap(2*Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
@@ -184,7 +182,7 @@ void starforc_vh_screenrefresh(struct osd_bitmap *bitmap)
 		Machine->gfx[0]->colortable[i] = col;
 	}
 
-	for (offs = 0;offs < BACKGROUND_SIZE; offs++)
+	for (offs = starforc_bgvideoram_size - 1;offs >= 0;offs--)
 	{
 		int col,code;
 		static int colormap[8] = { 0,2,4,6,1,3,5,7 };
@@ -273,7 +271,7 @@ void starforc_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 	/* Draw the sprites. Note that it is important to draw them exactly in this */
 	/* order, to have the correct priorities. */
-	for (offs = 31*4;offs >= 0;offs -= 4)
+	for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
 	{
 		drawgfx(bitmap,Machine->gfx[((spriteram[offs] & 0xc0) == 0xc0) ? 5 : 4],
 				spriteram[offs],
@@ -285,7 +283,7 @@ void starforc_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 
 	/* draw the frontmost playfield. They are characters, but draw them as sprites */
-	for (offs = 0;offs < VIDEO_RAM_SIZE; offs++)
+	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
 		int sx,sy;
 		int charcode;

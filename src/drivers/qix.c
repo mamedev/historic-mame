@@ -251,28 +251,7 @@ static struct DSW qix_dsw[] =
 	{ -1 }
 };
 
-/* Qix does not use character mapped graphics. Decoding for MAME text use. */
-static struct GfxLayout charlayout =
-{
-	8,8,	/* 8*8 characters */
-	59,		/* 58 characters */
-	1,		/* 1 bit per pixel */
-	{ 0 },	/* start of every bitplane */
-	/* Characters need to be rotated -90 degrees */
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	{ 7, 6, 5, 4, 3, 2, 1, 0 },
-	8*8		/* every char takes 8 consecutive bytes */
-};
 
-struct GfxDecodeInfo gfxdecodeinfo[] =
-{
-	{ 2,			/* memory region where the data resides (usually 1) */
-	 0xfe00,		/* beginning of data to decode */
-	 &charlayout,	/* struct GfxLayout * */
-	 0,				/* offset in the color lookup table where color codes start */
-	 4 },			/* total number of color codes */
-	{ -1 } /* end of array */
-};
 
 /* This is not accurate for Qix but is just a placeholder for now. */
 static unsigned char palette[] =
@@ -290,8 +269,7 @@ enum { BLACK,YELLOW,BLUE,RED,WHITE };
 /* This is not accurate for Qix but is just a placeholder for now. */
 static unsigned char colortable[] =
 {
-	BLACK,YELLOW,BLUE,RED,
-	BLACK,WHITE,BLACK,RED	/* not used by the game, here only for the dip switch menu */
+	BLACK,YELLOW,BLUE,RED
 };
 
 static struct MachineDriver machine_driver =
@@ -324,7 +302,7 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	256, 256,				/* screen_width, screen_height */
 	{ 0, 256-1, 0, 256-1 },		        /* struct rectangle visible_area */
-	gfxdecodeinfo,				/* GfxDecodeInfo * */
+	0,				/* GfxDecodeInfo * */
 	sizeof(palette)/3,			/* total colors */
 	sizeof(colortable),			/* color table length */
 	0,					/* convert color prom routine */

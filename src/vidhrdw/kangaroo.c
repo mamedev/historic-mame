@@ -92,10 +92,10 @@ void kangaroo_spriteramw(int offset,int val)
        for (x=ofsx; x<=xb; x++, src++)
        {
          if(pl & 0x0c)
-           drawgfx(tmpbitmap2,Machine->gfx[1],src,0,0,0,\
+           drawgfx(tmpbitmap2,Machine->gfx[0],src,0,0,0,\
              x , y  ,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
          if(pl & 0x03)
-           drawgfx(tmpbitmap,Machine->gfx[1],src,0,0,0,\
+           drawgfx(tmpbitmap,Machine->gfx[0],src,0,0,0,\
              x , y ,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
         }
 
@@ -115,7 +115,7 @@ static void kangaroo_color_shadew(int val)
    0(0x01)        sprite         Blue
    1(0x02)        sprite         Green
    2(0x04)        sprite         Red
-   3(0x08)        playfield      Blue 
+   3(0x08)        playfield      Blue
    4(0x10)        playfield      Green
    5(0x20)        playfield      Red
    normal value for the latch seems to be 0x14.
@@ -156,23 +156,23 @@ void kangaroo_videoramw(int offset, int val)
      bm = pom;
 
      if (plane2)
-     {	
+     {
 	*bm &= 0xfc;
         if (val & 0x80) *bm |= 2;
         if (val & 0x08) *bm |= 1;
 	bm = tmpbitmap->line[sy+1] + sx;
-        
+
 	*bm &= 0xfc;
         if (val & 0x40) *bm |= 2;
         if (val & 0x04) *bm |= 1;
         bm = tmpbitmap->line[sy+2] + sx;
-        
+
 
 	*bm &= 0xfc;
         if (val & 0x20) *bm |= 2;
         if (val & 0x02) *bm |= 1;
         bm = tmpbitmap->line[sy+3] + sx;
-        
+
 
 	*bm &= 0xfc;
         if (val & 0x10) *bm |= 2;
@@ -183,24 +183,24 @@ void kangaroo_videoramw(int offset, int val)
 
      bm=pom;
      if (plane1)
-     {	
+     {
 	*bm &= 0xf3;
         if (val & 0x80) *bm |= 8;
         if (val & 0x08) *bm |= 4;
 	bm = tmpbitmap->line[sy+1] + sx;
-        
+
 
 	*bm &= 0xf3;
         if (val & 0x40) *bm |= 8;
         if (val & 0x04) *bm |= 4;
         bm = tmpbitmap->line[sy+2] + sx;
-        
+
 
 	*bm &= 0xf3;
         if (val & 0x20) *bm |= 8;
         if (val & 0x02) *bm |= 4;
         bm = tmpbitmap->line[sy+3] + sx;
-        
+
 
 	*bm &= 0xf3;
         if (val & 0x10) *bm |= 8;
@@ -214,24 +214,24 @@ void kangaroo_videoramw(int offset, int val)
      bm = pom;
 
      if (plane4)
-     {	
+     {
         *bm &= 0xfc;
         if (val & 0x80) *bm |= 2;
         if (val & 0x08) *bm |= 1;
         bm = tmpbitmap2->line[sy+1] + sx;
-        
+
 
         *bm &= 0xfc;
         if (val & 0x40) *bm |= 2;
         if (val & 0x04) *bm |= 1;
         bm = tmpbitmap2->line[sy+2] + sx;
-        
+
 
         *bm &= 0xfc;
         if (val & 0x20) *bm |= 2;
         if (val & 0x02) *bm |= 1;
         bm = tmpbitmap2->line[sy+3] + sx;
-        
+
 
         *bm &= 0xfc;
         if (val & 0x10) *bm |= 2;
@@ -242,24 +242,24 @@ void kangaroo_videoramw(int offset, int val)
 
      bm=pom;
      if (plane3)
-     {	
+     {
         *bm &= 0xf3;
         if (val & 0x80) *bm |= 8;
         if (val & 0x08) *bm |= 4;
         bm = tmpbitmap2->line[sy+1] + sx;
-        
+
 
         *bm &= 0xf3;
         if (val & 0x40) *bm |= 8;
         if (val & 0x04) *bm |= 4;
         bm = tmpbitmap2->line[sy+2] + sx;
-        
+
 
         *bm &= 0xf3;
         if (val & 0x20) *bm |= 8;
         if (val & 0x02) *bm |= 4;
         bm = tmpbitmap2->line[sy+3] + sx;
-        
+
         *bm &= 0xf3;
         if (val & 0x10) *bm |= 8;
         if (val & 0x01) *bm |= 4;

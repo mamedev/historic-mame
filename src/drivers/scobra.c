@@ -609,6 +609,8 @@ ROM_END
 
 
 
+
+
 static int bit(int i,int n)
 {
 	return ((i >> n) & 1);
@@ -802,6 +804,39 @@ struct GameDriver losttomb_driver =
 	0, 0
 };
 
+
+static int anteater_hiload(const char *name)
+{
+  unsigned char *RAM = Machine->memory_region[0];
+  FILE *f;
+  
+  /* Wait for machine initialization to be done. */
+  if (memcmp(&RAM[0x146a], "\x01\x04\x80", 3) != 0) return 0;
+
+  if ((f = fopen(name,"rb")) != 0)
+    {
+      /* Load and set hiscore table. */
+      fread(&RAM[0x146a],1,6*10,f);
+      fclose(f);
+    }
+
+  return 1;
+}
+
+static void anteater_hisave(const char *name)
+{
+  unsigned char *RAM = Machine->memory_region[0];
+  FILE *f;
+
+  if ((f = fopen(name,"wb")) != 0)
+    {
+      /* Write hiscore table. */
+      fwrite(&RAM[0x80ef],1,6*10,f);
+      fclose(f);
+    }
+}
+
+
 struct GameDriver anteater_driver =
 {
 	"Ant Eater",
@@ -818,7 +853,7 @@ struct GameDriver anteater_driver =
 	color_prom, 0, 0,
 	8*13, 8*16,
 
-	0, 0
+	anteater_hiload, anteater_hisave
 };
 
 

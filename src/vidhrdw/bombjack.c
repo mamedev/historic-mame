@@ -11,8 +11,6 @@
 
 
 
-#define VIDEO_RAM_SIZE 0x400
-
 unsigned char *bombjack_paletteram;
 static const unsigned char *colors;
 static unsigned char dirtycolor[16];	/* keep track of modified colors */
@@ -99,11 +97,7 @@ void bombjack_background_w(int offset,int data)
 {
 	if (background_image != data)
 	{
-		int i;
-
-		for (i = 0;i < VIDEO_RAM_SIZE;i++)
-			dirtybuffer[i] = 1;
-
+		memset(dirtybuffer,1,videoram_size);
 		background_image = data;
 	}
 }
@@ -151,7 +145,7 @@ if (errorlog && offs == 0 &&
 
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
-	for (offs = 0;offs < VIDEO_RAM_SIZE;offs++)
+	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
 		int sx,sy;
 		int bx,by;
@@ -236,7 +230,7 @@ if (errorlog && offs == 0 &&
 
 
 	/* Draw the sprites. */
-	for (offs = 4*23;offs >= 0;offs -= 4)
+	for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
 	{
 /*
  abbbbbbb cdefgggg hhhhhhhh iiiiiiii

@@ -160,10 +160,10 @@ static struct MemoryReadAddress readmem[] =
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x8000, 0x87ff, MWA_RAM },
-	{ 0xc400, 0xc7ff, videoram_w, &videoram },
+	{ 0xc400, 0xc7ff, videoram_w, &videoram, &videoram_size },
 	{ 0xc800, 0xcbff, elevator_videoram2_w, &elevator_videoram2 },
 	{ 0xcc00, 0xcfff, elevator_videoram3_w, &elevator_videoram3 },
-	{ 0xd100, 0xd17f, MWA_RAM, &spriteram },
+	{ 0xd100, 0xd17f, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xd000, 0xd01f, MWA_RAM, &elevator_scroll1 },
 	{ 0xd020, 0xd03f, MWA_RAM, &elevator_scroll2 },
 	{ 0xd040, 0xd05f, MWA_RAM, &elevator_scroll3 },
@@ -177,7 +177,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xd40e, 0xd40e, MWA_RAM, &taito_dsw23_select },
 	{ 0xd600, 0xd600, MWA_RAM, &elevator_video_priority },
 	{ 0xd600, 0xd600, MWA_RAM, &elevator_video_enable },
-{ 0x8800, 0x8800, MWA_NOP },
+        { 0x8800, 0x8800, MWA_NOP },
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
@@ -250,11 +250,12 @@ static struct InputPort input_ports[] =
 	{ -1 }	/* end of table */
 };
 
-
 static struct TrakPort trak_ports[] =
 {
         { -1 }
 };
+
+
 
 static struct KEYSet keys[] =
 {
@@ -283,7 +284,7 @@ static struct DSW dsw[] =
 
 
 
-struct GfxLayout elevator_charlayout =
+static struct GfxLayout charlayout =
 {
 	8,8,	/* 8*8 characters */
 	256,	/* 256 characters */
@@ -293,7 +294,7 @@ struct GfxLayout elevator_charlayout =
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	8*8	/* every char takes 8 consecutive bytes */
 };
-struct GfxLayout elevator_spritelayout =
+static struct GfxLayout spritelayout =
 {
 	16,16,	/* 16*16 sprites */
 	64,	/* 64 sprites */
@@ -310,10 +311,10 @@ struct GfxLayout elevator_spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 0, 0x9000, &elevator_charlayout,   0, 16 },	/* the game dynamically modifies this */
-	{ 0, 0x9000, &elevator_spritelayout, 0,  8 },	/* the game dynamically modifies this */
-	{ 0, 0xa800, &elevator_charlayout,   0,  8 },	/* the game dynamically modifies this */
-	{ 0, 0xa800, &elevator_spritelayout, 0,  8 },	/* the game dynamically modifies this */
+	{ 0, 0x9000, &charlayout,   0, 16 },	/* the game dynamically modifies this */
+	{ 0, 0x9000, &spritelayout, 0,  8 },	/* the game dynamically modifies this */
+	{ 0, 0xa800, &charlayout,   0,  8 },	/* the game dynamically modifies this */
+	{ 0, 0xa800, &spritelayout, 0,  8 },	/* the game dynamically modifies this */
 	{ -1 } /* end of array */
 };
 

@@ -11,8 +11,6 @@
 
 
 
-#define VIDEO_RAM_SIZE 0x400
-
 unsigned char *bagman_video_enable;
 
 
@@ -26,7 +24,7 @@ unsigned char *bagman_video_enable;
 ***************************************************************************/
 void bagman_vh_screenrefresh(struct osd_bitmap *bitmap)
 {
-	int i,offs;
+	int offs;
 
 
 	if (*bagman_video_enable == 0)
@@ -39,7 +37,7 @@ void bagman_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
-	for (offs = 0;offs < VIDEO_RAM_SIZE;offs++)
+	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
 		if (dirtybuffer[offs])
 		{
@@ -66,14 +64,14 @@ void bagman_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 
 	/* Draw the sprites. */
-	for (i = 4*7;i >= 0;i -= 4)
+	for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
 	{
-		if (spriteram[i+2] && spriteram[i+3])
+		if (spriteram[offs + 2] && spriteram[offs + 3])
 			drawgfx(bitmap,Machine->gfx[2],
-					(spriteram[i] & 0x3f) + 2 * (spriteram[i+1] & 0x20),
-					spriteram[i+1] & 0x1f,
-					spriteram[i] & 0x80,spriteram[i] & 0x40,
-					spriteram[i+2] + 1,spriteram[i+3] - 1,
+					(spriteram[offs] & 0x3f) + 2 * (spriteram[offs + 1] & 0x20),
+					spriteram[offs + 1] & 0x1f,
+					spriteram[offs] & 0x80,spriteram[offs] & 0x40,
+					spriteram[offs + 2] + 1,spriteram[offs + 3] - 1,
 					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}
 }

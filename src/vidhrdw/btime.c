@@ -11,8 +11,6 @@
 
 
 
-#define VIDEO_RAM_SIZE 0x400
-
 static int background_image;
 
 
@@ -70,17 +68,17 @@ void btime_background_w(int offset,int data)
 {
 	if (background_image != data)
 	{
-		int i;
-
-		for (i = 0;i < VIDEO_RAM_SIZE;i++)
-			dirtybuffer[i] = 1;
+		memset(dirtybuffer,1,videoram_size);
 
 		background_image = data;
 
 		/* kludge to make the sprites disappear when the screen is cleared */
 		if (data == 0)
 		{
-			for (i = 0;i < 8*4;i += 4)
+			int i;
+
+
+			for (i = 0;i < spriteram_size;i += 4)
 				spriteram[i] = 0;
 		}
 	}
@@ -102,7 +100,7 @@ void btime_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
-	for (offs = 0;offs < VIDEO_RAM_SIZE;offs++)
+	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
 		if (dirtybuffer[offs])
 		{
@@ -165,15 +163,15 @@ void btime_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 
 	/* Draw the sprites */
-	for (offs = 0;offs < 8*4;offs += 4)
+	for (offs = 0;offs < spriteram_size;offs += 4)
 	{
 		if (spriteram[offs] & 0x01)
 		{
 			drawgfx(bitmap,Machine->gfx[3],
-					spriteram[offs+1],
+					spriteram[offs + 1],
 					0,
 					spriteram[offs] & 0x02,0,
-					239 - spriteram[offs+2],spriteram[offs+3],
+					239 - spriteram[offs + 2],spriteram[offs + 3],
 					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 		}
 	}

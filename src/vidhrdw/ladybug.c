@@ -11,10 +11,6 @@
 
 
 
-#define VIDEO_RAM_SIZE 0x400
-
-
-
 /***************************************************************************
 
   Convert the color PROMs into a more useable format.
@@ -101,7 +97,7 @@ void ladybug_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
-	for (offs = 0;offs < VIDEO_RAM_SIZE;offs++)
+	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
 		if (dirtybuffer[offs])
 		{
@@ -129,7 +125,7 @@ void ladybug_vh_screenrefresh(struct osd_bitmap *bitmap)
 	/* Draw the sprites. Note that it is important to draw them exactly in this */
 	/* order, to have the correct priorities. */
 	/* sprites in the columns 15, 1 and 0 are outside of the visible area */
-	for (offs = 14 * 0x40;offs >= 2;offs -= 0x40)
+	for (offs = spriteram_size - 2*0x40;offs >= 2*0x40;offs -= 0x40)
 	{
 		i = 0;
 		while (i < 0x40 && spriteram[offs + i] != 0)

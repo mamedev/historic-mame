@@ -700,6 +700,7 @@ int updatescreen(void)
 int run_machine(const char *gamename)
 {
 	int res = 1, videostat;
+        float temp;
 
 	videostat = vh_open();
 	if (videostat == 0)
@@ -710,7 +711,7 @@ int run_machine(const char *gamename)
 			{
 				FILE *f;
 				char name[100];
-				int i,j,len,incount,keycount;
+				int i,j,len,incount,keycount,trakcount;
 
 
 				incount = 0;
@@ -719,11 +720,14 @@ int run_machine(const char *gamename)
 				keycount = 0;
 				while (gamedrv->keysettings[keycount].num != -1) keycount++;
 
+                                trakcount = 0;
+                                while (gamedrv->trak_ports[trakcount].axis != -1) trakcount++;
+
                                 /* find the configuration file */
                                 sprintf(name,"%s/%s.cfg",gamename,gamename);
                                 if ((f = fopen(name,"rb")) != 0)
                                 {
-                                  for (j=0; j < 3; j++)
+                                  for (j=0; j < 4; j++)
                                   {
                                      if ((len = fread(name,1,4,f)) == 4)
                                      {
@@ -746,6 +750,14 @@ int run_machine(const char *gamename)
 					  {
 						  for (i = 0;i < keycount;i++)
 							  gamedrv->input_ports[ gamedrv->keysettings[i].num ].joystick[ gamedrv->keysettings[i].mask ] = ((unsigned char)name[i]);
+                                          }
+                                        } else if (stricmp(name,"trk") == 0) {
+                                          if ((len == trakcount) && (fread(name,sizeof(float),trakcount,f) == trakcount))
+					  {
+						  for (i = 0;i < trakcount;i++) {
+                                                      memcpy(&temp, &name[i*sizeof(float)], sizeof(float));
+						      gamedrv->trak_ports[i].scale = temp;
+                                                  }
                                           }
 					}
                                      }
@@ -836,6 +848,14 @@ int run_machine(const char *gamename)
 					for (i = 0;i < keycount;i++)
 						name[i] = gamedrv->input_ports[ gamedrv->keysettings[i].num ].joystick[ gamedrv->keysettings[i].mask ];
 					fwrite(name,1,keycount,f);
+
+                                        sprintf(name, "trk ");
+                                        name[3] = trakcount;
+                                        fwrite(name,1,4,f);
+					/* use name as temporary buffer */
+					for (i = 0;i < trakcount;i++)
+                                            memcpy(&name[i*sizeof(float)], &gamedrv->trak_ports[i].scale, sizeof(float));
+					fwrite(name,sizeof(float),trakcount,f);
                                         fclose(f);
                                 }
 #if 0

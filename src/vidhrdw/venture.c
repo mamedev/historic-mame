@@ -10,7 +10,6 @@
 #include "vidhrdw/generic.h"
 
 
-#define VIDEO_RAM_SIZE 0x400
 
 unsigned char *venture_characterram;
 static unsigned char dirtycharacter[256];
@@ -41,21 +40,11 @@ void venture_characterram_w(int offset,int data)
 void venture_vh_screenrefresh(struct osd_bitmap *bitmap)
 {
 	int offs,i;
-	extern struct GfxLayout venture_charlayout;
 
-
-	for(offs = 0;offs < 256;offs++)
-	{
-			if (dirtycharacter[offs] == 1)
-			{
-				decodechar(Machine->gfx[1],offs,venture_characterram,&venture_charlayout);
-				dirtycharacter[offs] = 2;
-			}
-	}
 
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
-	for (offs = 0;offs < VIDEO_RAM_SIZE;offs++)
+	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
 		int charcode;
 
@@ -70,7 +59,7 @@ void venture_vh_screenrefresh(struct osd_bitmap *bitmap)
 		/* decode modified characters */
 			if (dirtycharacter[charcode] == 1)
 			{
-				decodechar(Machine->gfx[1],charcode,venture_characterram,&venture_charlayout);
+				decodechar(Machine->gfx[0],charcode,venture_characterram,Machine->drv->gfxdecodeinfo[0].gfxlayout);
 				dirtycharacter[charcode] = 2;
 			}
 
@@ -80,7 +69,7 @@ void venture_vh_screenrefresh(struct osd_bitmap *bitmap)
 			sx = 8 * (offs % 32);
 			sy = 8 * (offs / 32);
 
-			drawgfx(tmpbitmap,Machine->gfx[1],
+			drawgfx(tmpbitmap,Machine->gfx[0],
 					charcode,(charcode>>6)+1,
 					0,0,sx,sy,
 					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
@@ -106,7 +95,7 @@ void venture_vh_screenrefresh(struct osd_bitmap *bitmap)
 			sx = 236-RAM[0x5000]-4;
 			sy = 244-RAM[0x5040]-4;
 
-			drawgfx(bitmap,Machine->gfx[2],
+			drawgfx(bitmap,Machine->gfx[1],
 					(*venture_sprite_no & 0x0F)+(((*venture_sprite_enable>>7)&1)*16),0,
 					0,0,
 					sx,sy,
@@ -116,7 +105,7 @@ void venture_vh_screenrefresh(struct osd_bitmap *bitmap)
 			sx = 236-RAM[0x5080]-4;
 			sy = 244-RAM[0x50c0]-4;
 
-			drawgfx(bitmap,Machine->gfx[2],
+			drawgfx(bitmap,Machine->gfx[1],
 					((*venture_sprite_no>>4) & 0x0F)+(((*venture_sprite_enable>>6)&1)*16)+32,1,
 					0,0,
 					sx,sy,

@@ -11,10 +11,7 @@
 
 
 
-#define VIDEO_RAM_SIZE 0x400
-
 static int gfx_bank;
-
 
 
 static struct rectangle spritevisiblearea =
@@ -107,12 +104,12 @@ void pengo_gfxbank_w(int offset,int data)
 ***************************************************************************/
 void pengo_vh_screenrefresh(struct osd_bitmap *bitmap)
 {
-	int i,offs;
+	int offs;
 
 
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
-	for (offs = 0;offs < VIDEO_RAM_SIZE;offs++)
+	for (offs = videoram_size-1;offs >= 0;offs--)
 	{
 		if (dirtybuffer[offs])
 		{
@@ -154,18 +151,19 @@ void pengo_vh_screenrefresh(struct osd_bitmap *bitmap)
 		}
 	}
 
+
 	/* copy the character mapped graphics */
 	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 
+
 	/* Draw the sprites. Note that it is important to draw them exactly in this */
 	/* order, to have the correct priorities. */
-	/* sprites #0 and #7 are not used */
-	for (i = 6;i > 0;i--)
+	for (offs = spriteram_size - 2;offs >= 0;offs -= 2)
 	{
 		drawgfx(bitmap,Machine->gfx[gfx_bank ? 3 : 1],
-				spriteram[2*i] >> 2,spriteram[2*i + 1],
-				spriteram[2*i] & 2,spriteram[2*i] & 1,
-				239 - spriteram_2[2*i],272 - spriteram_2[2*i + 1],
+				spriteram[offs] >> 2,spriteram[offs + 1],
+				spriteram[offs] & 2,spriteram[offs] & 1,
+				239 - spriteram_2[offs],272 - spriteram_2[offs + 1],
 				&spritevisiblearea,TRANSPARENCY_COLOR,Machine->background_pen);
 	}
 }

@@ -176,6 +176,7 @@ extern int gng_interrupt(void);
 extern unsigned char *gng_paletteram;
 extern void gng_paletteram_w(int offset,int data);
 extern unsigned char *gng_bgvideoram,*gng_bgcolorram;
+extern int gng_bgvideoram_size;
 extern unsigned char *gng_scrollx,*gng_scrolly;
 extern void gng_bgvideoram_w(int offset,int data);
 extern void gng_bgcolorram_w(int offset,int data);
@@ -184,7 +185,6 @@ void gng_vh_stop(void);
 extern void gng_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 extern void gng_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-extern int gng_init_machine(const char *gamename);
 extern int c1942_sh_start(void);
 
 
@@ -206,14 +206,14 @@ static struct MemoryReadAddress readmem[] =
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0x1dff, MWA_RAM },
-	{ 0x2000, 0x23ff, videoram_w, &videoram },
+	{ 0x2000, 0x23ff, videoram_w, &videoram, &videoram_size },
 	{ 0x2400, 0x27ff, colorram_w, &colorram },
-	{ 0x2800, 0x2bff, gng_bgvideoram_w, &gng_bgvideoram },
+	{ 0x2800, 0x2bff, gng_bgvideoram_w, &gng_bgvideoram, &gng_bgvideoram_size },
 	{ 0x2c00, 0x2fff, gng_bgcolorram_w, &gng_bgcolorram },
 	{ 0x3c00, 0x3c00, MWA_NOP },   /* watchdog? */
 	{ 0x3800, 0x39ff, gng_paletteram_w, &gng_paletteram },
 	{ 0x3e00, 0x3e00, gng_bankswitch_w },
-	{ 0x1e00, 0x1fff, MWA_RAM, &spriteram },
+	{ 0x1e00, 0x1fff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x3b08, 0x3b09, MWA_RAM, &gng_scrollx },
 	{ 0x3b0a, 0x3b0b, MWA_RAM, &gng_scrolly },
 	{ 0x3a00, 0x3a00, sound_command_w },
@@ -425,7 +425,7 @@ static struct MachineDriver machine_driver =
 		}
 	},
 	60,
-	gng_init_machine,
+	0,
 
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
@@ -504,73 +504,56 @@ ROM_END
 
 
 
-static int hiload(const char *name)
+static int gng_hiload(const char *name)
 {
-  unsigned char *RAM = Machine->memory_region[0];
-  FILE *f;
-  int i;
-  
-  /* Wait for machine initialization to be done. */
-  if (RAM[0x00d1] == 0x00) return 0;
+	/* get RAM pointer (this game is multiCPU, we can't assume the global */
+	/* RAM pointer is pointing to the right place) */
+	unsigned char *RAM = Machine->memory_region[0];
 
-  if ((f = fopen(name,"rb")) != 0)
-    {
-      /* Load and set hiscore table. */
-      fread(&RAM[0x152c],1,0x1572-0x152c,f);
-      fclose(f);
 
-      /* Set the "current hiscore" value. */
-      for (i=0; i < 4; i++) RAM[0x00d0+i] = RAM[0x152c+i];
-    }
+	/* check if the hi score table has already been initialized */
+	if (memcmp(&RAM[0x152c],"\x00\x01\x00\x00",4) == 0 &&
+			memcmp(&RAM[0x156b],"\x00\x01\x00\x00",4) == 0)
+	{
+		FILE *f;
 
-  return 1;
+
+		if ((f = fopen(name,"rb")) != 0)
+		{
+			int offs;
+
+
+			fread(&RAM[0x1518],1,9*10,f);
+			offs = RAM[0x1518] * 256 + RAM[0x1519];
+			RAM[0x00d0] = RAM[offs];
+			RAM[0x00d1] = RAM[offs+1];
+			RAM[0x00d2] = RAM[offs+2];
+			RAM[0x00d3] = RAM[offs+3];
+			fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;	/* we can't load the hi scores yet */
 }
 
-static void hisave(const char *name)
+
+
+static void gng_hisave(const char *name)
 {
-  unsigned char *RAM = Machine->memory_region[0], tmp;
-  FILE *f;
-  unsigned long pos0, pos1;
-  int i, j, done = 0;
+	/* get RAM pointer (this game is multiCPU, we can't assume the global */
+	/* RAM pointer is pointing to the right place) */
+	unsigned char *RAM = Machine->memory_region[0];
+	FILE *f;
 
-  if ((f = fopen(name,"wb")) != 0)
-    {
-      /* Bubble-sort hiscore table. */
-      while(!done)
-        {
-          done = 1;
-          for (i=0; i < 10-1; i++)
-            {
-              pos0 =
-                RAM[0x152c + i*7]*0x01000000 +
-                RAM[0x152d + i*7]*0x00010000 +
-                RAM[0x152e + i*7]*0x00000100 +
-                RAM[0x152f + i*7]*0x00000001;
 
-              pos1 =
-                RAM[0x152c + i*7 + 7]*0x01000000 +
-                RAM[0x152d + i*7 + 7]*0x00010000 +
-                RAM[0x152e + i*7 + 7]*0x00000100 +
-                RAM[0x152f + i*7 + 7]*0x00000001;
-
-              if(pos1 > pos0)
-                {
-                  done = 0;
-                  for(j=0; j < 7; j++)
-                    {
-                      tmp = RAM[0x152c + i*7 + j];
-                      RAM[0x152c + i*7 + j] = RAM[0x152c + i*7 + 7 + j];
-                      RAM[0x152c + i*7 + 7 + j] = tmp;
-                    }
-                }
-            }
-        }
-
-      /* Write hiscore table. */
-      fwrite(&RAM[0x152c],1,0x1572-0x152c,f);
-      fclose(f);
-    }
+	if ((f = fopen(name,"wb")) != 0)
+	{
+		fwrite(&RAM[0x1518],1,9*10,f);
+		fclose(f);
+	}
 }
+
 
 
 struct GameDriver gng_driver =
@@ -589,7 +572,7 @@ struct GameDriver gng_driver =
 	gng_color_prom, 0, 0,
 	8*13, 8*16,
 
-        hiload, hisave
+	gng_hiload, gng_hisave
 };
 
 struct GameDriver diamond_driver =

@@ -50,7 +50,9 @@ write:
 6830      Watchdog reset?
 7000-     custom IO chip parameters
 7100      custom IO chip command (see machine/galaga.c for more details)
-a000-a002 starfield scroll direction/speed (only bit 0 is significant)
+a000      starfield scroll direction (0 = backwards) (only bit 0 is significant)
+a001      ?
+a002      starfield scroll (1 = stop) (only bit 0 is significant)
 a003-a005 starfield blink?
 a007      flip screen
 
@@ -132,10 +134,10 @@ static struct MemoryWriteAddress writemem_cpu1[] =
 	{ 0x6822, 0x6822, galaga_interrupt_enable_3_w },
 	{ 0x6823, 0x6823, galaga_halt_w },
 	{ 0x0000, 0x3fff, MWA_ROM },
-	{ 0x8b80, 0x8bff, MWA_RAM, &spriteram },	/* these three are here just to initialize */
+	{ 0x8b80, 0x8bff, MWA_RAM, &spriteram, &spriteram_size },	/* these three are here just to initialize */
 	{ 0x9380, 0x93ff, MWA_RAM, &spriteram_2 },	/* the pointers. The actual writes are */
 	{ 0x9b80, 0x9bff, MWA_RAM, &spriteram_3 },	/* handled by galaga_sharedram_w() */
-	{ 0x8000, 0x83ff, MWA_RAM, &videoram },	/* dirtybuffer[] handling is not needed because */
+	{ 0x8000, 0x83ff, MWA_RAM, &videoram, &videoram_size },	/* dirtybuffer[] handling is not needed because */
 	{ 0x8400, 0x87ff, MWA_RAM, &colorram },	/* characters are redrawn every frame */
 	{ -1 }	/* end of table */
 };

@@ -96,6 +96,7 @@ extern int scramble_protection_r(int offset);
 
 extern unsigned char *scramble_attributesram;
 extern unsigned char *scramble_bulletsram;
+extern int scramble_bulletsram_size;
 extern void scramble_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 extern void scramble_attributes_w(int offset,int data);
 extern void scramble_stars_w(int offset,int data);
@@ -123,10 +124,10 @@ static struct MemoryReadAddress readmem[] =
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x4000, 0x47ff, MWA_RAM },
-	{ 0x4800, 0x4bff, videoram_w, &videoram },
+	{ 0x4800, 0x4bff, videoram_w, &videoram, &videoram_size },
 	{ 0x5000, 0x503f, scramble_attributes_w, &scramble_attributesram },
-	{ 0x5040, 0x505f, MWA_RAM, &spriteram },
-	{ 0x5060, 0x507f, MWA_RAM, &scramble_bulletsram },
+	{ 0x5040, 0x505f, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0x5060, 0x507f, MWA_RAM, &scramble_bulletsram, &scramble_bulletsram_size },
 	{ 0x6801, 0x6801, interrupt_enable_w },
 	{ 0x6804, 0x6804, scramble_stars_w },
 	{ 0x6802, 0x6802, MWA_NOP },
@@ -201,18 +202,19 @@ static struct TrakPort trak_ports[] =
         { -1 }
 };
 
+
 static struct KEYSet keys[] =
 {
-        { 0, 0, "PL1 MOVE UP" },
+        { 2, 4, "PL1 MOVE UP" },
         { 0, 5, "PL1 MOVE LEFT"  },
         { 0, 4, "PL1 MOVE RIGHT" },
-        { 2, 0, "PL1 MOVE DOWN" },
+        { 2, 6, "PL1 MOVE DOWN" },
         { 0, 3, "PL1 FIRE FRONT" },
         { 0, 1, "PL1 FIRE DOWN" },
-        { 2, 4, "PL2 MOVE UP" },
+        { 0, 0, "PL2 MOVE UP" },
         { 1, 5, "PL2 MOVE LEFT"  },
         { 1, 4, "PL2 MOVE RIGHT" },
-        { 2, 6, "PL2 MOVE DOWN" },
+        { 2, 0, "PL2 MOVE DOWN" },
         { 1, 3, "PL2 FIRE FRONT" },
         { 1, 2, "PL2 FIRE DOWN" },
         { -1 }

@@ -477,13 +477,13 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static unsigned char color_prom[] =
 {
 	0x00,0x00,0x00, /* BLACK */
-	0x00,0x00,0xff, /* BLUE */
-	0x00,0xff,0x00, /* GREEN */
-	0x00,0xff,0xff, /* CYAN */
-	0xff,0x00,0x00, /* RED */
-	0xff,0x00,0xff, /* MAGENTA */
-	0xff,0xff,0x00, /* YELLOW */
-	0xff,0xff,0xff	/* WHITE */
+	0x00,0x00,0x02, /* BLUE */
+	0x00,0x02,0x00, /* GREEN */
+	0x00,0x02,0x02, /* CYAN */
+	0x02,0x00,0x00, /* RED */
+	0x02,0x00,0x02, /* MAGENTA */
+	0x02,0x02,0x00, /* YELLOW */
+	0x02,0x02,0x02	/* WHITE */
 };
 
 static struct MachineDriver machine_driver =
@@ -502,7 +502,7 @@ static struct MachineDriver machine_driver =
 	0,
 
 	/* video hardware */
-	540, 480, { 0, 540, 0, 480 },
+	640, 480, { 0, 640, 0, 480 },
 	gfxdecodeinfo,
 	128, 128,
 	bzone_vh_init_colors,
@@ -536,7 +536,7 @@ static struct MachineDriver spacduel_machine_driver =
 	0,
 
 	/* video hardware */
-	540, 480, { 0, 540, 0, 480 },
+	640, 480, { 0, 640, 0, 480 },
 	gfxdecodeinfo,
 	128, 128,
 	bzone_vh_init_colors,
@@ -585,7 +585,8 @@ struct GameDriver bwidow_driver =
 {
 	"Black Widow",
 	"bwidow",
-	"BRAD OLIVER\nAL KOSSOW\nHEDLEY RAINNIE\nERIC SMITH\nBERND WIEBELT",
+	"BRAD OLIVER\nAL KOSSOW\nHEDLEY RAINNIE\nERIC SMITH\n"
+	"ALLARD VAN DER BAS\nBERND WIEBELT",
 	&machine_driver,
 
 	bwidow_rom,
@@ -629,7 +630,8 @@ struct GameDriver gravitar_driver =
 {
 	"Gravitar",
 	"gravitar",
-	"BRAD OLIVER\nAL KOSSOW\nHEDLEY RAINNIE\nERIC SMITH",
+	"BRAD OLIVER\nAL KOSSOW\nHEDLEY RAINNIE\nERIC SMITH"
+	"ALLARD VAN DER BAS\nBERND WIEBELT",
 	&machine_driver,
 
 	gravitar_rom,
@@ -670,7 +672,8 @@ struct GameDriver spacduel_driver =
 {
 	"Space Duel",
 	"spacduel",
-	"BRAD OLIVER\nAL KOSSOW\nHEDLEY RAINNIE\nERIC SMITH",
+	"BRAD OLIVER\nAL KOSSOW\nHEDLEY RAINNIE\nERIC SMITH\n"
+	"ALLARD VAN DER BAS\nBERND WIEBELT",
 	&spacduel_machine_driver,
 
 	spacduel_rom,

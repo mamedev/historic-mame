@@ -10,7 +10,6 @@
 #include "vidhrdw/generic.h"
 
 
-#define VIDEO_RAM_SIZE 0x400
 
 unsigned char *gyruss_spritebank,*gyruss_6809_drawplanet,*gyruss_6809_drawship;
 
@@ -250,7 +249,7 @@ void gyruss_vh_screenrefresh(struct osd_bitmap *bitmap)
 		else sr = spriteram_2;
 
 
-		for (offs = 96*4-8;offs >= 0;offs -= 8)
+		for (offs = spriteram_size - 8;offs >= 0;offs -= 8)
 		{
 			if (sr[2 + offs] & 0x10)	/* double height */
 			{
@@ -291,7 +290,7 @@ void gyruss_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 
 	/* draw the frontmost playfield. They are characters, but draw them as sprites */
-	for (offs = 0;offs < VIDEO_RAM_SIZE;offs++)
+	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
 		int sx,sy,charcode;
 

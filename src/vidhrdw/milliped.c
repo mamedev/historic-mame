@@ -11,10 +11,6 @@
 
 
 
-#define VIDEO_RAM_SIZE 0x400
-
-
-
 /***************************************************************************
 
   Draw the game screen in the given osd_bitmap.
@@ -29,7 +25,7 @@ void milliped_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
-	for (offs = 0;offs < VIDEO_RAM_SIZE;offs++)
+	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
 		if (dirtybuffer[offs])
 		{

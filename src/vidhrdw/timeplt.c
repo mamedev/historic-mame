@@ -11,10 +11,6 @@
 
 
 
-#define VIDEO_RAM_SIZE 0x400
-
-
-
 static struct rectangle spritevisiblearea =
 {
 	2*8, 30*8-1,
@@ -107,7 +103,7 @@ void timeplt_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
-	for (offs = 0;offs < VIDEO_RAM_SIZE;offs++)
+	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
 		if (dirtybuffer[offs])
 		{
@@ -138,11 +134,11 @@ void timeplt_vh_screenrefresh(struct osd_bitmap *bitmap)
 	/* character. This feature is used to limit the sprite visibility area, and */
 	/* as a sort of copyright notice protection ("KONAMI" on the title screen */
 	/* alternates between characters and sprites, but they are both white so you */
-	/* can't see it). To speed up video refresh, we clip the sprites for ourselves. */
+	/* can't see it). To speed up video refresh, we do the sprite clipping ourselves. */
 
 	/* Draw the sprites. Note that it is important to draw them exactly in this */
 	/* order, to have the correct priorities. */
-	for (offs = 23*2;offs >= 0;offs -= 2)
+	for (offs = spriteram_size - 2;offs >= 0;offs -= 2)
 	{
 		/* handle double width sprites (clouds) */
 		if (offs <= 2*2 || offs >= 19*2)

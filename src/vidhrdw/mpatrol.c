@@ -11,8 +11,6 @@
 
 
 
-#define VIDEO_RAM_SIZE 0x400
-
 #define BGHEIGHT (64+16)
 
 static unsigned char scrollreg[4];
@@ -137,7 +135,7 @@ void mpatrol_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
-	for (offs = 0;offs < VIDEO_RAM_SIZE;offs++)
+	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
 		if (dirtybuffer[offs])
 		{
@@ -239,7 +237,7 @@ void mpatrol_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 	/* draw the remaining part of the frontmost playfield. They are characters, */
 	/* but draw them as sprites */
-	for (offs = 0;offs < VIDEO_RAM_SIZE;offs++)
+	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
 		int sx,sy,charcode;
 
@@ -259,7 +257,7 @@ void mpatrol_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 
 	/* Draw the sprites. */
-	for (offs = 4*23;offs >= 0;offs -= 4)
+	for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
 	{
 		drawgfx(bitmap,Machine->gfx[1],
 				spriteram_2[offs + 2],
@@ -268,7 +266,7 @@ void mpatrol_vh_screenrefresh(struct osd_bitmap *bitmap)
 				spriteram_2[offs + 3],241 - spriteram_2[offs],
 				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}
-	for (offs = 4*23;offs >= 0;offs -= 4)
+	for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
 	{
 		drawgfx(bitmap,Machine->gfx[1],
 				spriteram[offs + 2],

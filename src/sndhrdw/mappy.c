@@ -3,7 +3,7 @@
 
 #define DEBUG_IT 0
 
-#define SND_CLOCK 1000000 /* 1.000 Mhz */
+#define SND_CLOCK 775000 /* .775 Mhz */
 
 
 unsigned char *mappy_soundregs;

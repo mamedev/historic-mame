@@ -94,7 +94,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x4000, 0x43ff, phoenix_videoram2_w, &phoenix_videoram2 },
 	{ 0x4400, 0x47ff, MWA_RAM },
-	{ 0x4800, 0x4bff, videoram_w, &videoram },
+	{ 0x4800, 0x4bff, videoram_w, &videoram, &videoram_size },
 	{ 0x4C00, 0x4fff, MWA_RAM },
 	{ 0x5000, 0x53ff, phoenix_videoreg_w },
 	{ 0x5400, 0x57ff, MWA_RAM },

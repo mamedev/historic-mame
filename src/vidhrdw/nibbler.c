@@ -11,8 +11,6 @@
 
 
 
-#define VIDEO_RAM_SIZE 0x400
-
 unsigned char *nibbler_videoram2;
 unsigned char *nibbler_characterram;
 static unsigned char dirtycharacter[256];
@@ -53,12 +51,11 @@ void nibbler_characterram_w(int offset,int data)
 void nibbler_vh_screenrefresh(struct osd_bitmap *bitmap)
 {
 	int offs,i;
-	extern struct GfxLayout nibbler_charlayout;
 
 
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
-	for (offs = 0;offs < VIDEO_RAM_SIZE;offs++)
+	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
 		int charcode;
 
@@ -73,7 +70,7 @@ void nibbler_vh_screenrefresh(struct osd_bitmap *bitmap)
 		/* decode modified characters */
 			if (dirtycharacter[charcode] == 1)
 			{
-				decodechar(Machine->gfx[0],charcode,nibbler_characterram,&nibbler_charlayout);
+				decodechar(Machine->gfx[0],charcode,nibbler_characterram,Machine->drv->gfxdecodeinfo[0].gfxlayout);
 				dirtycharacter[charcode] = 2;
 			}
 

@@ -55,7 +55,7 @@ static struct MemoryReadAddress readmem[] =
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0x03ff, MWA_RAM },
-        { 0x0400, 0x07ff, videoram_w, &videoram },
+        { 0x0400, 0x07ff, videoram_w, &videoram, &videoram_size },
 	{ 0x0800, 0x0bff, vanguard_vh_videoram2_w, &vanguard_videoram2 },
 	{ 0x0c00, 0x0fff, colorram_w, &colorram },
 	{ 0x1000, 0x1fff, vanguard_characterram_w, &vanguard_characterram },
@@ -101,6 +101,7 @@ static struct TrakPort trak_ports[] =
         { -1 }
 };
 
+
 static struct KEYSet keys[] =
 {
         { 0, 5, "MOVE UP" },
@@ -125,7 +126,7 @@ static struct DSW dsw[] =
 
 
 
-struct GfxLayout vanguard_charlayout =
+static struct GfxLayout charlayout =
 {
         8,8,    /* 8*8 characters */
         256,    /* 256 characters */
@@ -151,8 +152,8 @@ static struct GfxLayout charlayout2 =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 0, 0xf000, &vanguard_charlayout, 0,8 },	/* the game dynamically modifies this */
-	{ 1, 0x0000, &charlayout2,       8*4,8 },
+	{ 0, 0xf000, &charlayout,    0, 8 },	/* the game dynamically modifies this */
+	{ 1, 0x0000, &charlayout2, 8*4, 8 },
 	{ -1 } /* end of array */
 };
 

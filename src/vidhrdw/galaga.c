@@ -11,8 +11,6 @@
 
 
 
-#define VIDEO_RAM_SIZE 0x400
-
 #define MAX_STARS 250
 #define STARS_COLOR_BASE 32
 
@@ -163,56 +161,56 @@ int galaga_vh_start(void)
 ***************************************************************************/
 void galaga_vh_screenrefresh(struct osd_bitmap *bitmap)
 {
-	int offs,i;
+	int offs;
 
 
 	clearbitmap(bitmap);
 
 
 	/* Draw the sprites. */
-	for (i = 0;i < 64;i++)
+	for (offs = 0;offs < spriteram_size;offs += 2)
 	{
-		if ((spriteram_3[2*i+1] & 2) == 0)
+		if ((spriteram_3[offs + 1] & 2) == 0)
 		{
-			if (spriteram_3[2*i] & 8)	/* double width */
+			if (spriteram_3[offs] & 8)	/* double width */
 			{
 				drawgfx(bitmap,Machine->gfx[1],
-						spriteram[2*i]+2,spriteram[2*i+1],
-						spriteram_3[2*i] & 2,spriteram_3[2*i] & 1,
-						spriteram_2[2*i]-16,spriteram_2[2*i+1]-40 + 0x100*(spriteram_3[2*i+1] & 1),
+						spriteram[offs]+2,spriteram[offs + 1],
+						spriteram_3[offs] & 2,spriteram_3[offs] & 1,
+						spriteram_2[offs]-16,spriteram_2[offs + 1]-40 + 0x100*(spriteram_3[offs + 1] & 1),
 						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 				drawgfx(bitmap,Machine->gfx[1],
-						spriteram[2*i],spriteram[2*i+1],
-						spriteram_3[2*i] & 2,spriteram_3[2*i] & 1,
-						spriteram_2[2*i],spriteram_2[2*i+1]-40 + 0x100*(spriteram_3[2*i+1] & 1),
+						spriteram[offs],spriteram[offs + 1],
+						spriteram_3[offs] & 2,spriteram_3[offs] & 1,
+						spriteram_2[offs],spriteram_2[offs + 1]-40 + 0x100*(spriteram_3[offs + 1] & 1),
 						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 
-				if (spriteram_3[2*i] & 4)	/* double height */
+				if (spriteram_3[offs] & 4)	/* double height */
 				{
 					drawgfx(bitmap,Machine->gfx[1],
-							spriteram[2*i]+3,spriteram[2*i+1],
-							spriteram_3[2*i] & 2,spriteram_3[2*i] & 1,
-							spriteram_2[2*i]-16,spriteram_2[2*i+1]-24 + 0x100*(spriteram_3[2*i+1] & 1),
+							spriteram[offs]+3,spriteram[offs + 1],
+							spriteram_3[offs] & 2,spriteram_3[offs] & 1,
+							spriteram_2[offs]-16,spriteram_2[offs + 1]-24 + 0x100*(spriteram_3[offs + 1] & 1),
 							&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 					drawgfx(bitmap,Machine->gfx[1],
-							spriteram[2*i]+1,spriteram[2*i+1],
-							spriteram_3[2*i] & 2,spriteram_3[2*i] & 1,
-							spriteram_2[2*i],spriteram_2[2*i+1]-24 + 0x100*(spriteram_3[2*i+1] & 1),
+							spriteram[offs]+1,spriteram[offs + 1],
+							spriteram_3[offs] & 2,spriteram_3[offs] & 1,
+							spriteram_2[offs],spriteram_2[offs + 1]-24 + 0x100*(spriteram_3[offs + 1] & 1),
 							&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 				}
 			}
 			else	/* normal */
 				drawgfx(bitmap,Machine->gfx[1],
-						spriteram[2*i],spriteram[2*i+1],
-						spriteram_3[2*i] & 2,spriteram_3[2*i] & 1,
-						spriteram_2[2*i]-16,spriteram_2[2*i+1]-40 + 0x100*(spriteram_3[2*i+1] & 1),
+						spriteram[offs],spriteram[offs + 1],
+						spriteram_3[offs] & 2,spriteram_3[offs] & 1,
+						spriteram_2[offs]-16,spriteram_2[offs + 1]-40 + 0x100*(spriteram_3[offs + 1] & 1),
 						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 		}
 	}
 
 
 	/* draw the frontmost playfield. They are characters, but draw them as sprites */
-	for (offs = 0;offs < VIDEO_RAM_SIZE;offs++)
+	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
 		if (videoram[offs] != 0x24)	/* don't draw spaces */
 		{
@@ -272,14 +270,13 @@ void galaga_vh_screenrefresh(struct osd_bitmap *bitmap)
 				bitmap->line[y][x] = stars[offs].col;
 		}
 
-		if (galaga_starcontrol[2] & 1) speed = -1;
-		else speed = 0;
-		if (galaga_starcontrol[1] & 1) speed |= 2;
-		else speed &= ~2;
-		if (galaga_starcontrol[0] & 1) speed |= 1;
-		else speed &= ~1;
+		if (galaga_starcontrol[0] & 1) speed = 0;
+		else
+		{
+			if (galaga_starcontrol[2] & 1) speed = -2;
+			else speed = 4;
+		}
 
-		speed++;
 		stars_scroll -= speed * (frameskip+1);
 	}
 }

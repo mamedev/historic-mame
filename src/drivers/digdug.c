@@ -676,7 +676,7 @@ struct GameDriver digdugnm_driver =
 struct GameDriver digdug_driver =
 {
 	"Dig Dug - Atari",
-	"digdug",
+	"digdugat",
 	"AARON GILES\nMARTIN SCRAGG\nNICOLA SALMORIA\nMIRKO BUFFONI",
 	&machine_driver,
 

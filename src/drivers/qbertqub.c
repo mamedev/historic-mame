@@ -12,10 +12,7 @@ extern void gottlieb_sh_w(int offset, int data);
 extern void gottlieb_sh_update(void);
 extern void gottlieb_output(int offset, int data);
 extern int qbert_IN1_r(int offset);
-extern unsigned char *gottlieb_videoram;
 extern unsigned char *gottlieb_paletteram;
-extern unsigned char *gottlieb_spriteram;
-extern void gottlieb_videoram_w(int offset,int data);
 extern void gottlieb_paletteram_w(int offset,int data);
 extern void gottlieb_vh_screenrefresh(struct osd_bitmap *bitmap);
 extern const char *gottlieb_sample_names[];
@@ -36,8 +33,8 @@ static struct MemoryReadAddress readmem[] =
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0x2fff, MWA_RAM },
-	{ 0x3000, 0x37ff, MWA_RAM, &gottlieb_spriteram },
-	{ 0x3800, 0x3fff, gottlieb_videoram_w, &gottlieb_videoram },
+	{ 0x3000, 0x37ff, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0x3800, 0x3fff, videoram_w, &videoram, &videoram_size },
 	{ 0x4000, 0x4fff, MWA_RAM }, /* bg object ram... ? not used ? */
 	{ 0x5000, 0x57ff, gottlieb_paletteram_w, &gottlieb_paletteram },
 	{ 0x5800, 0x5800, MWA_RAM },    /* watchdog timer clear */
@@ -88,6 +85,7 @@ static struct TrakPort trak_ports[] =
 {
         { -1 }
 };
+
 
 static struct KEYSet keys[] =
 {
@@ -144,25 +142,16 @@ static struct GfxLayout spritelayout =
 	32*8    /* every sprite takes 32 consecutive bytes */
 };
 
-static struct GfxLayout fakelayout =
-{
-	1,1,
-	0,
-	1,
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	0
-};
+
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,   16, 2 }, /* white & yellow palettes for Mame's messages */
 	{ 1, 0x0000, &charlayout,   0, 1 },
 	{ 1, 0x2000, &spritelayout, 0, 1 },
-	{ 0, 0, &fakelayout, 3*16, 16 },
 	{ -1 } /* end of array */
 };
+
+
 
 static const struct MachineDriver machine_driver =
 {
@@ -182,7 +171,7 @@ static const struct MachineDriver machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 30*8-1, 0*8, 32*8-1 },
 	gfxdecodeinfo,
-	256,256+3*16,        /* 256 for colormap, 1*16 for the game, 2*16 for the dsw menu. Silly, isn't it ? */
+	256, 16,
 	gottlieb_vh_init_optimized_color_palette,
 
 	0,      /* init vh */

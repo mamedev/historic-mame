@@ -136,9 +136,9 @@ static struct MemoryReadAddress turtles_readmem[] =
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x8000, 0x87ff, MWA_RAM },
-	{ 0x9000, 0x93ff, videoram_w, &videoram },
+	{ 0x9000, 0x93ff, videoram_w, &videoram, &videoram_size },
 	{ 0x9800, 0x983f, amidar_attributes_w, &amidar_attributesram },
-	{ 0x9840, 0x985f, MWA_RAM, &spriteram },
+	{ 0x9840, 0x985f, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x9860, 0x987f, MWA_NOP },
 	{ 0xa008, 0xa008, interrupt_enable_w },
 	{ 0xb800, 0xb800, sound_command_w },
@@ -217,6 +217,7 @@ static struct TrakPort trak_ports[] =
 {
         { -1 }
 };
+
 
 static struct KEYSet amidar_keys[] =
 {

@@ -34,22 +34,32 @@ int tempest_IN0_r(int offset)
 	
 	return res;
 }
+	
 
 int tempest_IN3_r(int offset)
 {
-	static spinner = 0;
-	int res;
+	static int spinner = 0;
+	int res, trak_in;
 
 	res = readinputport(3);
 	if (res & 1) 
 		spinner--;
 	if (res & 2)
 		spinner++;
+	trak_in = readtrakport(0);
+	spinner += trak_in;
 	spinner &= 0x0f;	
-	return ((res | 0xf0) | spinner);
+	return ((res & 0xf0) | spinner);
 }
 
-
+int tempest_spinner(int data)
+{
+	if (data>7)
+		data=7;
+	if (data<-7)
+		data=-7;
+	return (data);
+}	
 
 
 int tempest_interrupt(void)

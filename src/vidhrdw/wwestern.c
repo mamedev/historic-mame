@@ -11,8 +11,6 @@
 
 
 
-#define VIDEO_RAM_SIZE 0x400
-
 unsigned char *wwestern_videoram2,*wwestern_videoram3;
 unsigned char *wwestern_characterram;
 unsigned char *wwestern_scrollx1,*wwestern_scrollx2,*wwestern_scrollx3;
@@ -201,7 +199,6 @@ void wwestern_characterram_w(int offset,int data)
 void wwestern_vh_screenrefresh(struct osd_bitmap *bitmap)
 {
 	int offs,i;
-	extern struct GfxLayout wwestern_charlayout,wwestern_spritelayout;
 
 
 	/* decode modified characters */
@@ -209,12 +206,12 @@ void wwestern_vh_screenrefresh(struct osd_bitmap *bitmap)
 	{
 		if (dirtycharacter1[offs] == 1)
 		{
-			decodechar(Machine->gfx[0],offs,wwestern_characterram,&wwestern_charlayout);
+			decodechar(Machine->gfx[0],offs,wwestern_characterram,Machine->drv->gfxdecodeinfo[0].gfxlayout);
 			dirtycharacter1[offs] = 0;
 		}
 		if (dirtycharacter2[offs] == 1)
 		{
-			decodechar(Machine->gfx[2],offs,wwestern_characterram + 0x1800,&wwestern_charlayout);
+			decodechar(Machine->gfx[2],offs,wwestern_characterram + 0x1800,Machine->drv->gfxdecodeinfo[2].gfxlayout);
 			dirtycharacter2[offs] = 0;
 		}
 	}
@@ -223,12 +220,12 @@ void wwestern_vh_screenrefresh(struct osd_bitmap *bitmap)
 	{
 		if (dirtysprite1[offs] == 1)
 		{
-			decodechar(Machine->gfx[1],offs,wwestern_characterram,&wwestern_spritelayout);
+			decodechar(Machine->gfx[1],offs,wwestern_characterram,Machine->drv->gfxdecodeinfo[1].gfxlayout);
 			dirtysprite1[offs] = 0;
 		}
 		if (dirtysprite2[offs] == 1)
 		{
-			decodechar(Machine->gfx[3],offs,wwestern_characterram + 0x1800,&wwestern_spritelayout);
+			decodechar(Machine->gfx[3],offs,wwestern_characterram + 0x1800,Machine->drv->gfxdecodeinfo[3].gfxlayout);
 			dirtysprite2[offs] = 0;
 		}
 	}
@@ -263,13 +260,13 @@ void wwestern_vh_screenrefresh(struct osd_bitmap *bitmap)
 		}
 
 		/* redraw everything */
-		for (offs = 0;offs < VIDEO_RAM_SIZE;offs++) dirtybuffer[offs] = 1;
+		memset(dirtybuffer,1,videoram_size);
 	}
 
 
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
-	for (offs = 0;offs < VIDEO_RAM_SIZE;offs++)
+	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
 		if (dirtycolor || dirtybuffer[offs])
 		{
@@ -333,7 +330,7 @@ void wwestern_vh_screenrefresh(struct osd_bitmap *bitmap)
 	/* order, to have the correct priorities. */
 	if (*wwestern_video_enable & 0x80)
 	{
-		for (offs = 31*4;offs >= 0;offs -= 4)
+		for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
 		{
 			drawgfx(bitmap,Machine->gfx[(spriteram[offs + 3] & 0x40) ? 3 : 1],
 					spriteram[offs + 3] & 0x3f,
@@ -363,7 +360,7 @@ void wwestern_vh_screenrefresh(struct osd_bitmap *bitmap)
 	/* draw the frontmost playfield. They are characters, but draw them as sprites */
 	if (*wwestern_video_enable & 0x10)
 	{
-		for (offs = 0;offs < VIDEO_RAM_SIZE;offs++)
+		for (offs = videoram_size - 1;offs >= 0;offs--)
 		{
 			if (videoram[offs] != 0xbb)	/* don't draw spaces */
 			{

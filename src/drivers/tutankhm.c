@@ -283,6 +283,7 @@ static struct TrakPort trak_ports[] =
         { -1 }
 };
 
+
 static struct DSW dsw[] =
 {
 
@@ -331,29 +332,6 @@ static struct KEYSet keys[] =
 	{ -1 }
 };
 
-/* Tutankhm's video is all bitmapped, no characters ... */
-/* this is here to decode the chartable for MAME's use  */
-static struct GfxLayout charlayout =
-{
-	8,8,    	/* 8*8 characters */
-	48,		/* 43 characters */
-	4,      	/* 4 bits per pixel */
-	{ 0, 1, 2, 3 },	/* bits are consecutive */
-	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32 }, /* x bit positions */
-	{ 24, 28, 16, 20, 8, 12, 0, 4},                     /* y bit positions */
-	32*8    /* every char takes 32 consecutive bytes */
-};
-
-
-/* Tutankhm's video is all bitmapped, no characters ... */
-/* this is here to decode the chartable for MAME's use  */
-/* and for the color table for the game bitmap		*/
-static struct GfxDecodeInfo gfxdecodeinfo[] =
-{
-	/* Characters for MAME's use */
-	{ 0, 0xf000, &charlayout, 0, 4 },
-	{ -1 } /* end of array */
-};
 
 
 static struct MachineDriver machine_driver =
@@ -389,9 +367,8 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	32*8, 32*8,			                /* screen_width, screen_height */
 	{ 2, 8*32-3, 0*32, 8*32-1 },			/* struct rectangle visible_area */
-	gfxdecodeinfo,					/* GfxDecodeInfo * */
-	256,						/* total colors */
-	256 + 16, 					/* color table length ( 256 for text, 16 for bitmap ) */
+	0,					/* GfxDecodeInfo * */
+	256, 0,
 	tut_vh_convert_color_prom,			/* convert color prom routine */
 
 	0,						/* vh_init routine */

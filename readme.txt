@@ -65,9 +65,9 @@ The list doesn't include variants of the same game.
 |-----------------------------|--------|--------|--------|--------|----------|
 | Amidar                      |  Yes   |  Yes   |  Yes   |  Yes   | amidar   |
 |-----------------------------|--------|--------|--------|--------|----------|
-| Anteater                    |  Yes   |   No   |  Yes   |   No   | anteater |
+| Anteater                    |  Yes   |   No   |  Yes   |  Yes   | anteater |
 |-----------------------------|--------|--------|--------|--------|----------|
-| Arabian                     |  Yes   | Close  |  Yes   |   No   | arabian  |
+| Arabian                     |  Yes   | Close  |  Yes   |  Yes   | arabian  |
 |-----------------------------|--------|--------|--------|--------|----------|
 | Asteroids                   |  Yes   |  Yes   |   No   |   No   | asteroid |
 |-----------------------------|--------|--------|--------|--------|----------|
@@ -107,9 +107,9 @@ The list doesn't include variants of the same game.
 |-----------------------------|--------|--------|--------|--------|----------|
 | Diamond Run                 |  Yes   |  Yes   | Yes(2) |   No   | diamond  |
 |-----------------------------|--------|--------|--------|--------|----------|
-| Dig Dug - Atari             |  Yes   |  Yes   |  Yes   |   No   | digdug   |
+| Dig Dug - Atari             |  Yes   |  Yes   |  Yes   |  Yes   | digdugat |
 |-----------------------------|--------|--------|--------|--------|----------|
-| Dig Dug - Namco             |  Yes   |  Yes   |  Yes   |   No   | digdugnm |
+| Dig Dug - Namco             |  Yes   |  Yes   |  Yes   |  Yes   | digdugnm |
 |-----------------------------|--------|--------|--------|--------|----------|
 | Donkey Kong                 |  Yes   | Close  | Yes(1) |  Yes   | dkong    |
 |-----------------------------|--------|--------|--------|--------|----------|
@@ -124,8 +124,6 @@ The list doesn't include variants of the same game.
 | Fantasy                     |   No   |   No   |   No   |   No   | fantasy  |
 |-----------------------------|--------|--------|--------|--------|----------|
 | Frogger                     |  Yes   | Close  |  Yes   |  Yes   | frogger  |
-|-----------------------------|--------|--------|--------|--------|----------|
-| Frontline                   |   No   |   No   |  Yes   |   No   | frontlin |
 |-----------------------------|--------|--------|--------|--------|----------|
 | Galaga                      |  Yes   |  Yes   | Yes(1) |  Yes   | galaga   |
 |-----------------------------|--------|--------|--------|--------|----------|
@@ -145,8 +143,6 @@ The list doesn't include variants of the same game.
 |-----------------------------|--------|--------|--------|--------|----------|
 | Gingateikoku No Gyakushu    |  Yes   |  Yes   | Limited|   No   | japirem  |
 |-----------------------------|--------|--------|--------|--------|----------|
-| Hunchback                   |   No   |   No   |  Yes   |   No   | hunchy   |
-|-----------------------------|--------|--------|--------|--------|----------|
 | Jr. Pacman                  |  Yes   |  Yes   |  Yes   |  Yes   | jrpacman |
 |-----------------------------|--------|--------|--------|--------|----------|
 | Joust                       |  Yes   |  Yes?  | Yes(1) |  Yes   | joust    |
@@ -156,6 +152,8 @@ The list doesn't include variants of the same game.
 | Jungle King                 |  Yes   | Close  |   No   |   No   | junglek  |
 |-----------------------------|--------|--------|--------|--------|----------|
 | Kangaroo                    |  Yes   |   No   |  Yes   |  n/a   | kangaroo |
+|-----------------------------|--------|--------|--------|--------|----------|
+| Kick Raider                 |  Yes   |  Yes   |  Yes   |  Yes   | kickridr |
 |-----------------------------|--------|--------|--------|--------|----------|
 | Krull                       |  Yes   |  Yes   |   No   |  n/a   | krull    |
 |-----------------------------|--------|--------|--------|--------|----------|
@@ -189,7 +187,7 @@ The list doesn't include variants of the same game.
 |-----------------------------|--------|--------|--------|--------|----------|
 | Mr. Do!                     |  Yes   |  Yes   |  Yes   |  Yes   | mrdo     |
 |-----------------------------|--------|--------|--------|--------|----------|
-| Mr. Do's Castle             |  Yes   |   No   |  Yes   |  Yes   | docastle |
+| Mr. Do's Castle             |  Yes   |  Yes   |  Yes   |  Yes   | docastle |
 |-----------------------------|--------|--------|--------|--------|----------|
 | Mr. Do! Run Run             |  Yes   |  Yes   |  Yes   |  Yes   | dorunrun |
 |-----------------------------|--------|--------|--------|--------|----------|
@@ -259,7 +257,7 @@ The list doesn't include variants of the same game.
 |-----------------------------|--------|--------|--------|--------|----------|
 | Super Cobra                 |  Yes   |   No   |  Yes   |   No   | scobra   |
 |-----------------------------|--------|--------|--------|--------|----------|
-| Super PacMan                |  Yes   | Close  |  Yes   |   No   | superpac |
+| Super PacMan                |  Yes   | Close  |  Yes   |  Yes   | superpac |
 |-----------------------------|--------|--------|--------|--------|----------|
 | Tempest                     |  Yes   |  Yes   |  Yes   |   No   | tempest  |
 |-----------------------------|--------|--------|--------|--------|----------|
@@ -287,7 +285,7 @@ The list doesn't include variants of the same game.
 |-----------------------------|--------|--------|--------|--------|----------|
 | Wizard of Wor               |  Yes   | Maybe  |   No   |   No   | wow      |
 |-----------------------------|--------|--------|--------|--------|----------|
-| Wild Wstern                 |   No   |  Yes   |   No   |   No   | wwestern |
+| Yie Ar Kung Fu              |  Yes   | Close  |   No   |   No   | yiear    |
 |-----------------------------|--------|--------|--------|--------|----------|
 | Zaxxon                      |  Yes   | Close  |   No   |  Yes   | zaxxon   |
 |-----------------------------|--------|--------|--------|--------|----------|
@@ -330,7 +328,7 @@ Known issues:
 - Graphics are now perfect
 - I don't know where coin counter is located.  The game requires 4 credits
   to start
-- Free play switch doesn't work
+
 
 
 Arabian ("arabian")
@@ -370,18 +368,6 @@ Black Widow ("bwidow")
 ======================
 A,W,S,D Move around
 Arrows  Fire around
-
-
-
-Blaster ("blaster")
-======================
-Arrows  Move around
-CTRL    Blast
-ALT     Thrust panel
-Z       Thrust joystick
-5       Auto Up
-6       Advance
-7       Hiscore reset
 
 
 
@@ -554,10 +540,7 @@ Arrows  Move around
 CTRL    Pump
 
 Clones supported:
-  Dig Dug by Atari ("digdug")
-
-Known issues:
-- The Atari version has some glitches on sprites/chars
+  Dig Dug by Atari ("digdugat")
 
 
 
@@ -626,12 +609,6 @@ Clones supported:
 
 
 
-Frontline ("frontlin")
-======================
-Not playable yet.
-
-
-
 Galaga ("galaga")
 =====================
 Original version with Namco copyright
@@ -686,7 +663,7 @@ Known issues:
 Gorf ("gorf")
 =============
 This game runs on the same hardware as Wizard of Wor, but doesn't work yet.
-It start, enter in attract mode and hangs when inserting a credit.
+It is partially played, but enemies are garbled on the screen.
 
 
 
@@ -737,12 +714,6 @@ Clones supported:
 Known issues:
 - The star background is probably not entirely accurate.
 - What does dip switch 6 do?
-
-
-
-Hunchback ("hunchy")
-====================
-Runs on hardware similar to super cobra.  Still unplayable
 
 
 
@@ -809,6 +780,13 @@ CTRL    Punch
 
 
 
+Kick Raider ("kickridr")
+========================
+Arrows  Move around
+CTRL    Kick
+
+
+
 Krull ("krull")
 ========================
 Runs on the same hardware as Q*Bert
@@ -823,8 +801,8 @@ F2      Select
 Kung Fu Master ("kungfum")
 ==========================
 Arrows  Move around
-Alt     Kick
-Ctrl    Punch
+Ctrl    Kick
+Alt     Punch
 F1+F3   Test mode
 
 Clones supported:
@@ -925,6 +903,7 @@ Known issues:
 
 Missile Command ("missile"
 ==========================
+Arrows  Move around
 A,S,D   Left, Central, Right shot
 
 Known issues:
@@ -946,8 +925,6 @@ Clones supported:
 
 Known issues:
 - The star background is probably not entirely accurate.
-- In bootleg version, the highscore should show Gremlin logo.  But probably
-  available rom images are corrupted.
 
 
 
@@ -1008,9 +985,6 @@ Mr. Do's Castle ("docastle")
 ============================
 Arrows  Move around
 CTRL    Fire
-
-Known issues:
-- Colors are wrong unless I find a correct color prom
 
 
 
@@ -1347,12 +1321,6 @@ Known issues:
 
 
 
-Sinistar ("sinistar")
-======================
-Not playable yet
-
-
-
 Space Duel ("spacduel")
 =======================
 Arrows  Left & Right rotate ship, Up trust
@@ -1443,19 +1411,6 @@ ALT     Fire2 (Direction arrow must be pressed together)
 
 
 
-Splat ("splat")
-======================
-W,A,S,D Walk around
-UP      Throw UP
-DOWN    Throw DOWN
-LEFT    Throw LEFT
-RIGHT   Throw RIGHT
-5       AutoUp
-6       Advance
-7       Hiscore reset
-
-
-
 Super Cobra ("scobra")
 ======================
 Runs on the same hardware as Scramble.
@@ -1507,9 +1462,6 @@ Arrows  Move around
 CTRL    Speed
 
 Known issues:
-- Large sprites in main sprite RAM (0x0810) do not work right. This
-  affects the intermissions.
-- Adding credits does not work right.
 - Some colors are almost right but still off (i.e., orange is too light
   in the logo).
 - Bonus star is blue (should be yellow?). GAME OVER is white (should be
@@ -1663,16 +1615,11 @@ Known issues:
 
 
 
-Warp Warp ("warpwarp")
-======================
+Yie Ar Kung Fu ("yiear")
+========================
 Arrows  Move around
-CTRL    Fire
-
-
-
-Wild Western ("wwestern")
-=========================
-Not playable yet
+CTRL    Punch
+ALT     Kick
 
 
 
@@ -1895,7 +1842,7 @@ options:
               Note that when this option is turned on, speed will NOT
               downgrade nicely if your system is not fast enough.
 -rotate       is obsolete and no longer supported
--ror          rotate the display clockwise by 90 degrees. 
+-ror          rotate the display clockwise by 90 degrees.
               This implies '-vesa -800x600' if not specified otherwise
               on the command line. It also provides authentic *vertical*
               scanlines, given you turn your monitor to its side.
@@ -1916,6 +1863,7 @@ options:
 -nojoy        don't poll joystick
 -nofm         suppress FM support.  If you have problems and don't have a
               soundblaster I suggest you to use this option
+-dir4         enable diagonal resolving algorithm
 -log          create a log of illegal memory accesses in ERROR.LOG
 -help, -?     display current mame version and copyright notice
 -list         display a list of currently supported games
@@ -1923,6 +1871,7 @@ options:
 -listroms     display selected game required roms
 -listsamples  display selected game required samples
 -mouse        enable mouse support
+-trak         enable trackball support
 -frameskip n  skip frames to speed up the emulation. For example, if the game
               normally runs at 60 fps, "-frameskip 1" will make it run at 30
               fps, and "-frameskip 2" at 20 fps. Use F11 to check the fps your

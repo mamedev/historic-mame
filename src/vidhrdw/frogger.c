@@ -11,8 +11,6 @@
 
 
 
-#define VIDEO_RAM_SIZE 0x400
-
 unsigned char *frogger_attributesram;
 
 
@@ -91,7 +89,7 @@ void frogger_attributes_w(int offset,int data)
 		int i;
 
 
-		for (i = offset / 2;i < VIDEO_RAM_SIZE;i += 32)
+		for (i = offset / 2;i < videoram_size;i += 32)
 			dirtybuffer[i] = 1;
 	}
 
@@ -114,7 +112,7 @@ void frogger_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
-	for (offs = 0;offs < VIDEO_RAM_SIZE;offs++)
+	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
 		if (dirtybuffer[offs])
 		{
@@ -152,7 +150,7 @@ void frogger_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 	/* Draw the sprites. Note that it is important to draw them exactly in this */
 	/* order, to have the correct priorities. */
-	for (offs = 7*4;offs >= 0;offs -= 4)
+	for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
 	{
 		if (spriteram[offs + 3] != 0)
 		{

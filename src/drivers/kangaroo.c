@@ -238,6 +238,7 @@ static struct TrakPort trak_ports[] =
         { -1 }
 };
 
+
 static struct KEYSet keys[] =
 {
         { 1, 2, "PL1 MOVE UP" },
@@ -268,16 +269,8 @@ static struct DSW dsw[] =
 	{ -1 }
 };
 
-static struct GfxLayout charlayout =
-{
-        5,8,    /* 7*8 characters */
-	48,	/* 40 characters */
-	1,	/* 1 bit per pixel */
-	{ 0 },	/* the bitplanes are separated */
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8 },
-	{ 0, 1, 2, 3, 4, 5, 6 ,7 },	/* pretty straightforward layout */
-        5*8     /* every char takes 8 consecutive bytes */
-};
+
+
 static struct GfxLayout sprlayout =
 {
         1,4,    /* 4 * 1 lines */
@@ -288,12 +281,15 @@ static struct GfxLayout sprlayout =
         { 0,1,2,3 },
         1*8
 };
+
+
+
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-        { 0, 3670, &charlayout,   0, 16 },   /*fonts*/
         { 2, 0 , &sprlayout, 32, 1 },
         { -1 } /* end of array */
 };
+
 
 
 static unsigned char palette[] =

@@ -10,9 +10,8 @@
 #include "vidhrdw/generic.h"
 
 
-#define VIDEO_RAM_SIZE 0x400
 
-static unsigned char dirtybuffer2[VIDEO_RAM_SIZE];
+static unsigned char *dirtybuffer2;
 static struct osd_bitmap *tmpbitmap2;
 
 unsigned char *vanguard_videoram2;
@@ -62,9 +61,17 @@ int vanguard_vh_start(void)
 	if (generic_vh_start() != 0)
 		return 1;
 
+	if ((dirtybuffer2 = malloc(videoram_size)) == 0)
+	{
+		generic_vh_stop();
+		return 1;
+	}
+	memset(dirtybuffer2,0,videoram_size);
+
 	/* small temp bitmap for the score display */
 	if ((tmpbitmap2 = osd_create_bitmap(Machine->drv->screen_width,3*8)) == 0)
 	{
+		free(dirtybuffer2);
 		generic_vh_stop();
 		return 1;
 	}
@@ -82,6 +89,7 @@ int vanguard_vh_start(void)
 void vanguard_vh_stop(void)
 {
 	osd_free_bitmap(tmpbitmap2);
+	free(dirtybuffer2);
 	generic_vh_stop();
 }
 
@@ -132,7 +140,6 @@ void vanguard_characterram_w(int offset,int data)
 ***************************************************************************/
 void vanguard_vh_screenrefresh(struct osd_bitmap *bitmap)
 {
-	extern struct GfxLayout vanguard_charlayout;
 	int offs,i;
 	int sx,sy;
 
@@ -164,7 +171,7 @@ void vanguard_vh_screenrefresh(struct osd_bitmap *bitmap)
         }
 
 	/* draw the frontmost playfield. They are characters, but draw them as sprites */
-	for (offs = 0;offs < VIDEO_RAM_SIZE;offs++)
+	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
 		int charcode;
 
@@ -178,7 +185,7 @@ void vanguard_vh_screenrefresh(struct osd_bitmap *bitmap)
                         /* decode modified characters */
 			if (dirtycharacter[charcode] == 1)
 			{
-				decodechar(Machine->gfx[0],charcode,vanguard_characterram,&vanguard_charlayout);
+				decodechar(Machine->gfx[0],charcode,vanguard_characterram,Machine->drv->gfxdecodeinfo[0].gfxlayout);
 				dirtycharacter[charcode] = 2;
 			}
 

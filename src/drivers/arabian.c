@@ -199,23 +199,6 @@ static struct DSW dsw[] =
 	{ -1 }
 };
 
-static struct GfxLayout charlayout =
-{
-	7,8,	/* 7*8 characters */
-	48,	/* 40 characters */
-	1,	/* 1 bit per pixel */
-	{ 0 },	/* the bitplanes are separated */
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8 },
-	{ 0, 1, 2, 3, 4, 5, 6 ,7 },	/* pretty straightforward layout */
-	7*8	/* every char takes 8 consecutive bytes */
-};
-
-
-static struct GfxDecodeInfo gfxdecodeinfo[] =
-{
-        { 0, 0x1201, &charlayout,   0, 4 },   /*fonts*/
-	{ -1 } /* end of array */
-};
 
 
 
@@ -286,7 +269,7 @@ static struct MachineDriver machine_driver =
 
 	/* video hardware */
 	32*8, 32*8, { 0x0b, 0xf2, 0, 32*8-1 },
-	gfxdecodeinfo,
+        0,
 	sizeof(palette)/3,sizeof(colortable),
 	0,
 
@@ -329,6 +312,39 @@ ROM_START( arabian_rom )
 
 ROM_END
 
+
+static int arabian_hiload(const char *name)
+{
+  unsigned char *RAM = Machine->memory_region[0];
+  FILE *f;
+  
+  /* Wait for hiscore table initialization to be done. */
+  if (memcmp(&RAM[0xd384], "\x00\x00\x00\x01\x00\x00", 6) != 0)
+    return 0;
+
+  if ((f = fopen(name,"rb")) != 0)
+    {
+      /* Load and set hiscore table. */
+      fread(&RAM[0xd384],1,6*10,f);
+      fclose(f);
+    }
+
+  return 1;
+}
+
+static void arabian_hisave(const char *name)
+{
+  unsigned char *RAM = Machine->memory_region[0];
+  FILE *f;
+
+  if ((f = fopen(name,"wb")) != 0)
+    {
+      /* Write hiscore table. */
+      fwrite(&RAM[0xd384],1,6*10,f);
+      fclose(f);
+    }
+}
+
 struct GameDriver arabian_driver =
 {
 	"Arabian",
@@ -345,6 +361,6 @@ struct GameDriver arabian_driver =
 	0, palette, colortable,
 	8*13, 8*16,
 
-	0, 0
+	arabian_hiload, arabian_hisave
 };
 

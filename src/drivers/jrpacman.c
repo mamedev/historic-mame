@@ -185,6 +185,7 @@ static struct TrakPort trak_ports[] =
         { -1 }
 };
 
+
 static struct KEYSet keys[] =
 {
         { 0, 0, "MOVE UP" },

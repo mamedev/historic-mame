@@ -175,8 +175,10 @@ static struct InputPort superpac_input_ports[] =
 	},
 	{	/* IN0 */
 		0x00,
-		{ OSD_KEY_UP, OSD_KEY_RIGHT, OSD_KEY_DOWN, OSD_KEY_LEFT, OSD_KEY_CONTROL, 0, 0, 0 },
-		{ OSD_JOY_UP, OSD_JOY_RIGHT, OSD_JOY_DOWN, OSD_JOY_LEFT, OSD_JOY_FIRE, 0, 0, 0 },
+		{ OSD_KEY_UP, OSD_KEY_RIGHT, OSD_KEY_DOWN, OSD_KEY_LEFT, 0, 
+OSD_KEY_CONTROL, 0, 0 },
+		{ OSD_JOY_UP, OSD_JOY_RIGHT, OSD_JOY_DOWN, OSD_JOY_LEFT, 0, 
+OSD_JOY_FIRE, 0, 0 },
 	},
 	{	/* IN1 */
 		0x00,
@@ -200,7 +202,7 @@ static struct KEYSet keys[] =
         { 2, 3, "MOVE LEFT"  },
         { 2, 1, "MOVE RIGHT" },
         { 2, 2, "MOVE DOWN" },
-        { 2, 4, "FIRE" },
+        { 2, 5, "FIRE" },
         { -1 }
 };
 

@@ -4,7 +4,6 @@
 extern unsigned char *videoram;
 extern int videoram_size;
 extern unsigned char *colorram;
-extern int colorram_size;
 extern unsigned char *spriteram;
 extern int spriteram_size;
 extern unsigned char *spriteram_2;

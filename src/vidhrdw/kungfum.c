@@ -11,8 +11,6 @@
 
 
 
-#define VIDEO_RAM_SIZE 0x800
-
 unsigned char *kungfum_scroll_low;
 unsigned char *kungfum_scroll_high;
 
@@ -50,7 +48,7 @@ void kungfum_vh_convert_color_prom(unsigned char *palette, unsigned char *colort
 	/* The game has 512 colors, but we are limited to a maximum of 256. */
 	/* Luckily, many of the colors are duplicated, so the total number of */
 	/* different colors is less than 256. We select the unique colors and */
-	/* put them in out palette. */
+	/* put them in our palette. */
 
 	memset(palette,0,3 * Machine->drv->total_colors);
 
@@ -105,15 +103,10 @@ void kungfum_vh_convert_color_prom(unsigned char *palette, unsigned char *colort
 ***************************************************************************/
 int kungfum_vh_start(void)
 {
-	int len;
-
-
 	/* Kung Fu Master has a virtual screen twice as large as the visible screen */
-	len = 2 * (Machine->drv->screen_width/8) * (Machine->drv->screen_height/8);
-
-	if ((dirtybuffer = malloc(len)) == 0)
+	if ((dirtybuffer = malloc(videoram_size)) == 0)
 		return 1;
-	memset(dirtybuffer,0,len);
+	memset(dirtybuffer,0,videoram_size);
 
 	if ((tmpbitmap = osd_create_bitmap(2 * Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 	{
@@ -153,7 +146,7 @@ void kungfum_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
-	for (offs = 0;offs < VIDEO_RAM_SIZE;offs++)
+	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
 		if (dirtybuffer[offs])
 		{
@@ -190,12 +183,12 @@ void kungfum_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 
 	/* Draw the sprites. */
-	for (offs = 0;offs < 24*8;offs += 8)
+	for (offs = 0;offs < spriteram_size;offs += 8)
 	{
 		int bank,i,code,col,flipx,sx,sy;
 		static unsigned char sprite_height_prom[] =
 		{
-			/* B-5F - spite height, one entry per 32 sprites */
+			/* B-5F - sprite height, one entry per 32 sprites */
 			0x00,0x00,0x01,0x01,0x01,0x01,0x01,0x01,0x00,0x00,0x01,0x01,0x02,0x02,0x02,0x02,
 			0x00,0x01,0x01,0x01,0x01,0x01,0x01,0x00,0x00,0x01,0x01,0x00,0x01,0x01,0x01,0x01,
 		};

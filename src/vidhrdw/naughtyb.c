@@ -11,8 +11,6 @@
 
 
 
-#define VIDEO_RAM_SIZE  0x800
-
 unsigned char *naughtyb_videoram2;
 
 /* use these to draw charset B */
@@ -60,8 +58,8 @@ int naughtyb_vh_start(void)
 	videoctlreg = 0;
 
 	/* Naughty Boy has a virtual screen twice as large as the visible screen */
-	if ((dirtybuffer = malloc(VIDEO_RAM_SIZE)) == 0) return 1;
-	memset(dirtybuffer,0,VIDEO_RAM_SIZE);
+	if ((dirtybuffer = malloc(videoram_size)) == 0) return 1;
+	memset(dirtybuffer,0,videoram_size);
 
 	if ((tmpbitmap = osd_create_bitmap(28*8,68*8)) == 0)
 	{
@@ -173,7 +171,7 @@ void naughtyb_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
-	for (offs = 0;offs < VIDEO_RAM_SIZE;offs++)
+	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
 		if (dirtybuffer[offs])
 		{

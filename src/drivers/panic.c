@@ -62,7 +62,7 @@ static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x5C00, 0x5FFF, MWA_RAM },
 	{ 0x4000, 0x5BFF, panic_videoram_w, &panic_videoram },
-	{ 0x6000, 0x601F, MWA_RAM, &spriteram },
+	{ 0x6000, 0x601F, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
@@ -129,20 +129,6 @@ static struct DSW dsw[] =
 };
 
 
-/* Space Panic doesn't have character mapped */
-/* graphics, this definition is here only    */
-/* only for the dip switch menu              */
-
-static struct GfxLayout charlayout =
-{
-	7,8, /* 7*8 characters */
-	36,	 /* 36 characters */
-	1,	 /* 1 bit per pixel */
-	{ 0 },
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8, 8*8, 9*8 },
-	{ 7, 6, 5, 4, 3, 2, 1, 0 },	/* pretty straightforward layout */
-	8*7	/* every char takes 7 consecutive bytes */
-};
 
 /* Main Sprites */
 
@@ -172,7 +158,6 @@ static struct GfxLayout spritelayout1 =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 0, 751, &charlayout, 0, 8 },
 	{ 1, 0x0A00, &spritelayout0, 0, 8 },	/* Monsters             */
 	{ 1, 0x0200, &spritelayout0, 0, 8 },    /* Monsters eating Man  */
 	{ 1, 0x0800, &spritelayout1, 0, 8 },    /* Man                  */
@@ -265,7 +250,7 @@ static int panic_hiload(const char *name)
         	RAM[0x4004] = 0x01;	/* Prevent program resetting high score */
 
 			fread(&RAM[0x40C1],1,5,f);
-            fread(&RAM[0x5C00],1,12,f);
+                fread(&RAM[0x5C00],1,12,f);
 			fclose(f);
 		}
 

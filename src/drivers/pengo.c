@@ -322,18 +322,18 @@ static struct MachineDriver machine_driver =
 
 ROM_START( pengo_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "pengopop.u8",  0x0000, 0x1000 )
-	ROM_LOAD( "pengopop.u7",  0x1000, 0x1000 )
-	ROM_LOAD( "pengopop.u15", 0x2000, 0x1000 )
-	ROM_LOAD( "pengopop.u14", 0x3000, 0x1000 )
-	ROM_LOAD( "pengopop.u21", 0x4000, 0x1000 )
-	ROM_LOAD( "pengopop.u20", 0x5000, 0x1000 )
-	ROM_LOAD( "pengopop.u32", 0x6000, 0x1000 )
-	ROM_LOAD( "pengopop.u31", 0x7000, 0x1000 )
+	ROM_LOAD( "pengo.u8",  0x0000, 0x1000 )
+	ROM_LOAD( "pengo.u7",  0x1000, 0x1000 )
+	ROM_LOAD( "pengo.u15", 0x2000, 0x1000 )
+	ROM_LOAD( "pengo.u14", 0x3000, 0x1000 )
+	ROM_LOAD( "pengo.u21", 0x4000, 0x1000 )
+	ROM_LOAD( "pengo.u20", 0x5000, 0x1000 )
+	ROM_LOAD( "pengo.u32", 0x6000, 0x1000 )
+	ROM_LOAD( "pengo.u31", 0x7000, 0x1000 )
 
 	ROM_REGION(0x4000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "pengopop.u92", 0x0000, 0x2000 )
-	ROM_LOAD( "pengopop.105", 0x2000, 0x2000 )
+	ROM_LOAD( "pengo.u92", 0x0000, 0x2000 )
+	ROM_LOAD( "pengo.105", 0x2000, 0x2000 )
 ROM_END
 
 ROM_START( penta_rom )

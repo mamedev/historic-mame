@@ -349,9 +349,13 @@ static void frogger_decode(void)
 	unsigned char *RAM;
 
 
-	/* ROM 1 of the second CPU has data lines D0 and D1 swapped. Decode it. */
+	/* the first ROM of the second CPU has data lines D0 and D1 swapped. Decode it. */
 	RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+	for (A = 0;A < 0x0800;A++)
+		RAM[A] = (RAM[A] & 0xfc) | ((RAM[A] & 1) << 1) | ((RAM[A] & 2) >> 1);
 
+	/* likewise, the first gfx ROM has data lines D0 and D1 swapped. Decode it. */
+	RAM = Machine->memory_region[1];
 	for (A = 0;A < 0x0800;A++)
 		RAM[A] = (RAM[A] & 0xfc) | ((RAM[A] & 1) << 1) | ((RAM[A] & 2) >> 1);
 }

@@ -11,8 +11,6 @@
 
 
 
-#define VIDEO_RAM_SIZE 0x400
-
 unsigned char *mrdo_videoram2;
 unsigned char *mrdo_colorram2;
 unsigned char *mrdo_scroll_x;
@@ -185,12 +183,12 @@ void mrdo_colorram2_w(int offset,int data)
 ***************************************************************************/
 void mrdo_vh_screenrefresh(struct osd_bitmap *bitmap)
 {
-	int i,offs;
+	int offs;
 
 
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
-	for (offs = 0;offs < VIDEO_RAM_SIZE;offs++)
+	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
 		if (dirtybuffer[offs])
 		{
@@ -248,15 +246,15 @@ void mrdo_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 	/* Draw the sprites. Note that it is important to draw them exactly in this */
 	/* order, to have the correct priorities. */
-	for (i = 4 * 63;i >= 0;i -= 4)
+	for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
 	{
-		if (spriteram[i + 1] != 0)
+		if (spriteram[offs + 1] != 0)
 		{
 			drawgfx(bitmap,Machine->gfx[2],
-					spriteram[i],spriteram[i + 2] & 0x0f,
-					spriteram[i + 2] & 0x20,spriteram[i + 2] & 0x10,
-					256 - spriteram[i + 1],240 - spriteram[i + 3],
-					&Machine->drv->visible_area,TRANSPARENCY_PEN, 0);
+					spriteram[offs],spriteram[offs + 2] & 0x0f,
+					spriteram[offs + 2] & 0x20,spriteram[offs + 2] & 0x10,
+					256 - spriteram[offs + 1],240 - spriteram[offs + 3],
+					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 		}
 	}
 }

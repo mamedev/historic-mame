@@ -174,6 +174,7 @@ extern struct GameDriver redbaron_driver;
 extern struct GameDriver spacduel_driver;
 extern struct GameDriver tempest_driver;
 extern struct GameDriver missile_driver;
+extern struct GameDriver kickridr_driver;
 
 const struct GameDriver *drivers[] =
 {
@@ -344,5 +345,6 @@ const struct GameDriver *drivers[] =
 	&spacduel_driver,
 	&tempest_driver,
         &missile_driver,
+        &kickridr_driver,
 	0	/* end of array */
 };

@@ -171,6 +171,7 @@ High Scores:
 extern int tempest_IN0_r(int offset);
 extern int tempest_IN3_r(int offset);
 extern int tempest_interrupt(void);
+extern int tempest_spinner(int);
 
 extern int bzone_vh_start(void);
 extern void bzone_vh_stop(void);
@@ -246,7 +247,7 @@ static struct InputPort input_ports[] =
 		{ OSD_JOY_LEFT, OSD_JOY_RIGHT, 0, 0, 0, 0, 0, 0 }
 	},
 	{       /* IN4 */
-		0x87,
+		0x03,
 		{ 0, 0, 0, OSD_KEY_ALT, OSD_KEY_CONTROL, OSD_KEY_1, OSD_KEY_2, 0 },
 		{ 0, 0, 0, OSD_JOY_FIRE2, OSD_JOY_FIRE1, 0, 0, 0 }
 	},
@@ -255,6 +256,12 @@ static struct InputPort input_ports[] =
 
 static struct TrakPort trak_ports[] =
 {
+	{
+		X_AXIS,
+		1,
+		1.0,
+		tempest_spinner
+	},			
         { -1 }
 };
 
@@ -286,13 +293,13 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static unsigned char color_prom[] =
 {
-	0xff,0xff,0xff,	/* WHITE */
-	0xff,0xff,0x00, /* YELLOW */
-	0xff,0x00,0xff, /* MAGENTA */
-	0xff,0x00,0x00, /* RED */
-	0x00,0xff,0xff, /* CYAN */
-	0x00,0xff,0x00, /* GREEN */
-	0x00,0x00,0xff, /* BLUE */
+	0x02,0x02,0x02,	/* WHITE */
+	0x02,0x02,0x00, /* YELLOW */
+	0x02,0x00,0x02, /* MAGENTA */
+	0x02,0x00,0x00, /* RED */
+	0x00,0x02,0x02, /* CYAN */
+	0x00,0x02,0x00, /* GREEN */
+	0x00,0x00,0x02, /* BLUE */
 	0x00,0x00,0x00,	/* BLACK */
 };
 
@@ -312,7 +319,7 @@ static struct MachineDriver machine_driver =
 	0,
 
 	/* video hardware */
-	420, 512, { 0, 420, 0, 512 },
+	404, 600, { 0, 404, 0, 600 },
 	gfxdecodeinfo,
 	128,128,
 	bzone_vh_init_colors,

@@ -2,13 +2,20 @@
  * vector.c: Atari DVG and AVG simulators
  *
  * Copyright 1991, 1992, 1996 Eric Smith
+ * Modified for the MAME project 1997 by Brad Oliver & Bernd Wiebelt
+ *  
  */
 
 #include "driver.h"
 #include "vector.h"
 
 int dvg = 0;
-int portrait = 0;
+
+int x_res;	/* X-resolution of the display device */
+int y_res;	/* Y-resolution of the display device */
+int portrait;   /* for Tempest and Major Havoc */
+
+#define BASE 16384L	/* Precision of vector instructions */
 
 #ifdef VG_DEBUG
 int trace_vgo = 0;
@@ -60,303 +67,251 @@ char *dvg_mnem[] = { "????", "vct1", "vct2", "vct3",
 
 static void vector_timer (long deltax, long deltay)
 {
-  deltax = labs (deltax);
-  deltay = labs (deltay);
-  vg_done_cyc -= max (deltax, deltay) >> 17; /* LBO 062797 */
+	deltax = labs (deltax);
+	deltay = labs (deltay);
+	vg_done_cyc -= max (deltax, deltay) >> 17; /* LBO 062797 */
 }
 
 
 static void dvg_vector_timer (int scale)
 {
-  vg_done_cyc -= 4 << scale; /* LBO 062797 */
+	vg_done_cyc -= 4 << scale; /* LBO 062797 */
 }
 
 
 static void dvg_draw_vector_list (void)
 {
-  static int pc;
-  static int sp;
-  static int stack [MAXSTACK];
+	int pc;
+	int sp;
+	int stack [MAXSTACK];
 
-  static long scale;
-  static int statz;
+	int scale;
+	int statz;
 
-  static long currentx;
-  static long currenty;
+	int currentx, currenty;
 
-  int done = 0;
+	int done = 0;
 
-  int firstwd, secondwd;
-  int opcode;
+	int firstwd;
+	int secondwd = 0; /* Initialize to tease the compiler */
+	int opcode;
 
-  long x, y;
-  int z, temp;
-  int a;
+	long x, y;
+	int z, temp;
+	int a;
 
-  long oldx, oldy;
-  long deltax, deltay;
-
-#if 0
-  if (!cont)
-#endif
-    {
-      pc = 0;
-      sp = 0;
-      scale = 0;
-      statz = 0;
-      if (portrait)
-	{
-	  currentx = 1023 * 8192;
-	  currenty = 511 * 8192;
-	}
-      else
-	{
-	  currentx = 511 * 8192;
-	  currenty = 1023 * 8192;
-	}
-    }
+	long deltax, deltay;
+	
+	pc = 0;
+	sp = 0;
+	scale = 0;
+	statz = 0;
 
 #ifdef VG_DEBUG
-  portrait = open_page (vg_step);
+	open_page (&x_res,&y_res,&portrait,vg_step);
 #else
-  portrait = open_page (0);
+	open_page (&x_res,&y_res,&portrait,0);
+#endif
+	
+	currentx=511*8192;
+	currenty=1023*8192;
+
+  	while (!done)
+	{  
+		vg_done_cyc -= 8; /* LBO 062797 */
+#ifdef VG_DEBUG
+		if (vg_step)
+		{
+	  		if (errorlog)
+				fprintf (errorlog,"Current beam position: (%d, %d)\n",
+			currentx, currenty);
+	  		getchar();
+		}
 #endif
 
-  while (!done)
-    {
-      vg_done_cyc -= 8; /* LBO 062797 */
+		firstwd = memrdwd (map_addr (pc), 0, 0);
+		opcode = firstwd >> 12;
 #ifdef VG_DEBUG
-      if (vg_step)
-	{
-	  if (errorlog) fprintf (errorlog,"Current beam position: (%d, %d)\n",
-		  currentx, currenty);
-	  getchar();
-	}
+		if (vg_print && errorlog)
+			fprintf (errorlog,"%4x: %4x ", map_addr (pc), firstwd);
 #endif
-      firstwd = memrdwd (map_addr (pc), 0, 0);
-      opcode = firstwd >> 12;
+		pc++;
+		if ((opcode >= 0 /* DVCTR */) && (opcode <= DLABS))
+		{
+			secondwd = memrdwd (map_addr (pc), 0, 0);
+			pc++;
 #ifdef VG_DEBUG
-      if (vg_print)
-	if (errorlog) fprintf (errorlog,"%4x: %4x ", map_addr (pc), firstwd);
+			if (vg_print && errorlog)
+				fprintf (errorlog,"%4x  ", secondwd);
 #endif
-      pc++;
-      if ((opcode >= 0 /* DVCTR */) && (opcode <= DLABS))
-	{
-	  secondwd = memrdwd (map_addr (pc), 0, 0);
-	  pc++;
+		}
 #ifdef VG_DEBUG
-	  if (vg_print)
-	    if (errorlog) fprintf (errorlog,"%4x  ", secondwd);
-#endif
-	}
-#ifdef VG_DEBUG
-      else
-	if (vg_print)
-	  if (errorlog) fprintf (errorlog,"      ");
+		else
+		if (vg_print && errorlog)
+			fprintf (errorlog,"whatever Brad wanted to put here ;-) \n");
 #endif
 
 #ifdef VG_DEBUG
-      if (vg_print)
-	if (errorlog) fprintf (errorlog,"%s ", dvg_mnem [opcode]);
+		if (vg_print && errorlog)
+			fprintf (errorlog,"%s ", dvg_mnem [opcode]);
 #endif
 
-      switch (opcode)
-	{
-	case 0:
+		switch (opcode)
+		{
+			case 0:
 #ifdef DVG_OP_0_ERR
-	  if (errorlog) fprintf (errorlog,"Error: DVG opcode 0!  Addr %4x Instr %4x %4x\n", map_addr (pc-2), firstwd, secondwd);
-	  done = 1;
-	  break;
+	 			if (errorlog) fprintf (errorlog,"Error: DVG opcode 0!  Addr %4x Instr %4x %4x\n", map_addr (pc-2), firstwd, secondwd);
+				done = 1;
+				break;
 #endif
-	case 1:
-	case 2:
-	case 3:
-	case 4:
-	case 5:
-	case 6:
-	case 7:
-	case 8:
-	case 9:
-	  y = firstwd & 0x03ff;
-	  if (firstwd & 0x0400)
-	    y = -y;
-	  x = secondwd & 0x03ff;
-	  if (secondwd & 0x400)
-	    x = -x;
-	  z = secondwd >> 12;
+			case 1:
+			case 2:
+			case 3:
+			case 4:
+			case 5:
+			case 6:
+			case 7:
+			case 8:
+			case 9:
+	  			y = firstwd & 0x03ff;
+				if (firstwd & 0x400)
+					y=-y;
+				x = secondwd & 0x3ff;
+				if (secondwd & 0x400)
+					x=-x;
+				z = secondwd >> 12;
 #ifdef VG_DEBUG
-	  if (vg_print)
-	    {
-	      if (errorlog) fprintf (errorlog,"(%d,%d) z: %d scal: %d", x, y, z, opcode);
-	    }
+				if (vg_print && errorlog)
+					fprintf (errorlog,"(%d,%d) z: %d scal: %d", x, y, z, opcode);
 #endif
-#if 0
-	  if (vg_step)
-	    {
-	      if (errorlog) fprintf (errorlog,"\nx: %x  x<<21: %x  (x<<21)>>%d: %x\n", x, x<<21, 30-(scale+opcode), (x<<21)>>(30-(scale+opcode)));
-	      if (errorlog) fprintf (errorlog,"y: %x  y<<21: %x  (y<<21)>>%d: %x\n", y, y<<21, 30-(scale+opcode), (y<<21)>>(30-(scale+opcode)));
-	    }
-#endif
-	  oldx = currentx; oldy = currenty;
-	  temp = (scale + opcode) & 0x0f;
-	  if (temp > 9)
-	    temp = -1;
-	  deltax = (x << 21) >> (30 - temp);
-	  deltay = (y << 21) >> (30 - temp);
-#if 0
-	  if (vg_step)
-	    {
-	      if (errorlog) fprintf (errorlog,"deltax: %x  deltay: %x\n", deltax, deltay);
-	    }
-#endif
-	  currentx += deltax;
-	  currenty -= deltay;
-	  dvg_vector_timer (temp);
-	  draw_line (oldx>>1, oldy>>1, currentx>>1, currenty>>1, 7, z);
-	  break;
+	  			temp = ((scale + opcode) & 0x0f);
+	  			if (temp > 9)
+					temp = -1;
+	  			deltax = (x << 21) >> (30-temp);
+				deltay = (y << 21) >> (30-temp);
+	  			currentx += deltax;
+				currenty -= deltay;
+				dvg_vector_timer (temp);
+				draw_to (currentx >> 1, currenty >> 1, 7, z);
+				break;
 
-	case DLABS:
-	  x = twos_comp_val (secondwd, 12);
-	  y = twos_comp_val (firstwd, 12);
-/*
-	  x = secondwd & 0x07ff;
-	  if (secondwd & 0x0800)
-	    x = x - 0x1000;
-	  y = firstwd & 0x07ff;
-	  if (firstwd & 0x0800)
-	    y = y - 0x1000;
-*/
-	  scale = secondwd >> 12;
-	  currentx = x;
-	  currenty = (896 - y);
+			case DLABS:
+				x = twos_comp_val (secondwd, 12);
+				y = twos_comp_val (firstwd, 12);
+	  			scale = (secondwd >> 12);
+				currentx = x;
+				currenty = (930-y);
 #ifdef VG_DEBUG
-	  if (vg_print)
-	    {
-	      if (errorlog) fprintf (errorlog,"(%d,%d) scal: %d", x, y, secondwd >> 12);
-	    }
+				if (vg_print && errorlog)
+					fprintf (errorlog,"(%d,%d) scal: %d", x, y, secondwd >> 12);
 #endif
-	  break;
+				break;
 
-	case DHALT:
+			case DHALT:
 #ifdef VG_DEBUG
-	  if (vg_print)
-	    if ((firstwd & 0x0fff) != 0)
-	      if (errorlog) fprintf (errorlog,"(%d?)", firstwd & 0x0fff);
+				if ((vg_print) && ((firstwd & 0x0fff) != 0) &&
+					(errorlog))
+	      				fprintf (errorlog,"(%d?)", firstwd & 0x0fff);
 #endif
-	  done = 1;
-	  break;
+				done = 1;
+				break;
 
-	case DJSRL:
-	  a = firstwd & 0x0fff;
+			case DJSRL:
+				a = firstwd & 0x0fff;
 #ifdef VG_DEBUG
-	  if (vg_print)
-	    if (errorlog) fprintf (errorlog,"%4x", map_addr(a));
+				if (vg_print && errorlog)
+					fprintf (errorlog,"%4x", map_addr(a));
 #endif
-	  stack [sp] = pc;
-	  if (sp == (MAXSTACK - 1))
-	    {
-	      if (errorlog) fprintf (errorlog,"\n*** Vector generator stack overflow! ***\n");
-	      done = 1;
-	      sp = 0;
-	    }
-	  else
-	    sp++;
-	  pc = a;
-	  break;
+				stack [sp] = pc;
+				if (sp == (MAXSTACK - 1))
+	    			{
+					if (errorlog) fprintf (errorlog,"\n*** Vector generator stack overflow! ***\n");
+					done = 1;
+					sp = 0;
+				}
+				else
+					sp++;
+				pc = a;
+				break;
 	
-	case DRTSL:
+			case DRTSL:
 #ifdef VG_DEBUG
-	  if (vg_print)
-	    if ((firstwd & 0x0fff) != 0)
-	      if (errorlog) fprintf (errorlog,"(%d?)", firstwd & 0x0fff);
+				if ((vg_print) && ((firstwd & 0x0fff) != 0) &&
+					(errorlog))
+					 fprintf (errorlog,"(%d?)", firstwd & 0x0fff);
 #endif
-	  if (sp == 0)
-	    {
-	      if (errorlog) fprintf (errorlog,"\n*** Vector generator stack underflow! ***\n");
-	      done = 1;
-	      sp = MAXSTACK - 1;
-	    }
-	  else
-	    sp--;
-	  pc = stack [sp];
-	  break;
+				if (sp == 0)
+	    			{
+					if (errorlog) fprintf (errorlog,"\n*** Vector generator stack underflow! ***\n");
+					done = 1;
+					sp = MAXSTACK - 1;
+				}
+				else
+					sp--;
+				pc = stack [sp];
+				break;
 
-	case DJMPL:
-	  a = firstwd & 0x0fff;
+			case DJMPL:
+				a = firstwd & 0x0fff;
 #ifdef VG_DEBUG
-	  if (vg_print)
-	    if (errorlog) fprintf (errorlog,"%4x", map_addr(a));
+				if (vg_print && errorlog)
+					fprintf (errorlog,"%4x", map_addr(a));
 #endif
-	  pc = a;
-	  break;
+				pc = a;
+				break;
 	
-	case DSVEC:
-	  y = firstwd & 0x0300;
-	  if (firstwd & 0x0400)
-	    y = -y;
-	  x = (firstwd & 0x03) << 8;
-	  if (firstwd & 0x04)
-	    x = -x;
-	  z = (firstwd >> 4) & 0x0f;
-	  temp = 2 + ((firstwd >> 2) & 0x02) + ((firstwd >> 11) & 0x01);
+			case DSVEC:
+				y = firstwd & 0x0300;
+				if (firstwd & 0x0400)
+					y = -y;
+				x = (firstwd & 0x03) << 8;
+				if (firstwd & 0x04)
+					x = -x;
+				z = (firstwd >> 4) & 0x0f;
 #ifdef VG_DEBUG
-	  if (vg_print)
-	    {
-	      if (errorlog) fprintf (errorlog,"(%d,%d) z: %d scal: %d", x, y, z, temp);
-	    }
+				if (vg_print && errorlog)
+	      				fprintf (errorlog,"(%d,%d) z: %d scal: %d", x, y, z, temp);
 #endif
-#if 0
-	  if (vg_step)
-	    {
-	      if (errorlog) fprintf (errorlog,"\nx: %x  x<<21: %x  (x<<21)>>%d: %x\n", x, x<<21, 30-(scale+temp), (x<<21)>>(30-(scale+temp)));
-	      if (errorlog) fprintf (errorlog,"y: %x  y<<21: %x  (y<<21)>>%d: %x\n", y, y<<21, 30-(scale+temp), (y<<21)>>(30-(scale+temp)));
-	    }
-#endif
-	  oldx = currentx; oldy = currenty;
-	  temp = (scale + temp) & 0x0f;
-	  if (temp > 9)
-	    temp = -1;
-	  deltax = (x << 21) >> (30 - temp);
-	  deltay = (y << 21) >> (30 - temp);
-#if 0
-	  if (vg_step)
-	    {
-	      if (errorlog) fprintf (errorlog,"deltax: %x  deltay: %x\n", deltax, deltay);
-	    }
-#endif
-	  currentx += deltax;
-	  currenty -= deltay;
-	  dvg_vector_timer (temp);
-	  draw_line (oldx>>1, oldy>>1, currentx>>1, currenty>>1, 7, z);
-	  break;
+				temp = 2 + ((firstwd >> 2) & 0x02) + ((firstwd >>11) & 0x01);
+	  			temp = ((scale + temp) & 0x0f);
+				if (temp > 9)
+					temp = -1;
+				deltax = (x << 21) >> (30-temp);
+				deltay = (y << 21) >> (30-temp);
+	  			currentx += deltax;
+				currenty -= deltay;
+				dvg_vector_timer (temp);
+				draw_to (currentx>>1, currenty>>1, 7, z);
+				break;
 
-	default:
-	  if (errorlog) fprintf (errorlog,"internal error\n");
-	  done = 1;
+			default:
+				if (errorlog)
+					fprintf (errorlog,"internal error\n");
+				done = 1;
+		}
+#ifdef VG_DEBUG
+      		if (vg_print && errorlog)
+			fprintf (errorlog,"\n");
+#endif
 	}
-#ifdef VG_DEBUG
-      if (vg_print)
-	if (errorlog) fprintf (errorlog,"\n");
-#endif
-    }
-
-  close_page ();
+	close_page ();
 }
 
 
 static void avg_draw_vector_list (void) {
 
-	static int pc;
-	static int sp;
-	static int stack [MAXSTACK];
+	int pc;
+	int sp;
+	int stack [MAXSTACK];
 
-	static long scale;
-	static int statz;
-	static int color;
+	int x_init_scale, y_init_scale;
+	int xscale, yscale;
 
-	static long currentx;
-	static long currenty;
+	int statz;
+	int color;
 
+	int currentx, currenty;
+	int xcenter, ycenter;
 	int done = 0;
 
 	int firstwd, secondwd;
@@ -364,8 +319,7 @@ static void avg_draw_vector_list (void) {
 
 	int x, y, z, b, l, d, a;
 
-	long oldx, oldy;
-	long deltax, deltay;
+	int deltax, deltay;
 
 #if 0
 	if (!cont)
@@ -373,17 +327,8 @@ static void avg_draw_vector_list (void) {
 	{
 		pc = 0;
 		sp = 0;
-		scale = 16384;
 		statz = 0;
 		color = 0;
-		if (portrait) {
-			currentx = 550 * 8192;
-			currenty = 440 * 8192;
-			}
-		else {
-			currentx = 511 * 8192;
-			currenty = 511 * 8192;
-			}
 
 		firstwd = memrdwd (map_addr (pc), 0, 0);
 		secondwd = memrdwd (map_addr (pc+1), 0, 0);
@@ -394,10 +339,29 @@ static void avg_draw_vector_list (void) {
 	}
 
 #ifdef VG_DEBUG
-	portrait = open_page (vg_step);
+	open_page (&x_res,&y_res,&portrait,vg_step);
 #else
-	portrait = open_page (0);
+	open_page (&x_res,&y_res,&portrait,0);
 #endif
+
+	if (portrait)
+	{
+		x_init_scale = (x_res * BASE) / 580;
+		y_init_scale = (y_res * BASE) / 520;	
+		xcenter = 290 * x_init_scale;
+		ycenter = 260 * y_init_scale;
+	}
+	else
+	{
+		x_init_scale = (x_res * BASE) / 520;
+		y_init_scale = (y_res * BASE) / 460;	
+		xcenter = 260 * x_init_scale;
+		ycenter = 230 * y_init_scale;
+	}
+	xscale = x_init_scale;
+	yscale = y_init_scale;
+	currentx = xcenter;
+	currenty = xcenter;
 
 	while (!done) {
 		vg_done_cyc -= 8; /* LBO 062797 */
@@ -460,15 +424,11 @@ static void avg_draw_vector_list (void) {
 				else if (vg_print)
 					if (errorlog) fprintf (errorlog,"%d", z);
 #endif
-				oldx = currentx; oldy = currenty;
-				deltax = x * scale; deltay = y * scale;
+				deltax = x * xscale; deltay = y * yscale;
 				currentx += deltax;
 				currenty -= deltay;
 				vector_timer (deltax, deltay);
-				if (portrait)
-					draw_line (oldx>>15, oldy>>14, currentx>>15, currenty>>14, color, z);
-				else
-					draw_line (oldx>>14, oldy>>14, currentx>>14, currenty>>14, color, z);
+				draw_to (currentx>>14, currenty>>14, color, z);
 				break;
 	
 			case SVEC:
@@ -496,15 +456,11 @@ static void avg_draw_vector_list (void) {
 				else if (vg_print)
 					if (errorlog) fprintf (errorlog,"%d", z);
 #endif
-				oldx = currentx; oldy = currenty;
-				deltax = x * scale; deltay = y * scale;
+				deltax = x * xscale; deltay = y * yscale;
 				currentx += deltax;
 				currenty -= deltay;
 				vector_timer (labs (deltax), labs (deltay));
-				if (portrait)
-					draw_line (oldx>>15, oldy>>14, currentx>>15, currenty>>14, color, z);
-				else
-					draw_line (oldx>>14, oldy>>14, currentx>>14, currenty>>14, color, z);
+				draw_to (currentx>>14, currenty>>14, color, z);
 				break;
 	
 			case STAT:
@@ -520,10 +476,8 @@ static void avg_draw_vector_list (void) {
 			case SCAL:
 				b = (firstwd >> 8) & 0x07;
 				l = firstwd & 0xff;
-				scale = (16384 - (l << 6)) >> b;
-#ifdef 0
-				scale = (1.0-(l/256.0)) * (2.0 / (1 << b));
-#endif
+				xscale = (x_init_scale - (l * x_init_scale/256)) >> b;
+				yscale = (y_init_scale - (l * y_init_scale/256)) >> b;
 
 #ifdef VG_DEBUG
 				if (vg_print) {
@@ -532,7 +486,7 @@ static void avg_draw_vector_list (void) {
 						if (errorlog) fprintf (errorlog,"(%d?)", l);
 					else
 						if (errorlog) fprintf (errorlog,"%d", l);
-					if (errorlog) fprintf (errorlog," scale: %f", (scale/8192.0));
+					if (errorlog) fprintf (errorlog," scale: %f", (scale/(float)(FIXBASE));
 					}
 #endif
 				break;
@@ -545,14 +499,8 @@ static void avg_draw_vector_list (void) {
 						if (errorlog) fprintf (errorlog,"%d", d);
 					}
 #endif
-				if (portrait) {
-					currentx = 550 * 8192;
-					currenty = 440 * 8192;
-					}
-				else {
-					currentx = 511 * 8192;
-					currenty = 511 * 8192;
-					}
+				currentx = xcenter;
+				currenty = ycenter;
 				break;
 	
 			case RTSL:

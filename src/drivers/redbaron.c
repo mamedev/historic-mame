@@ -121,7 +121,10 @@ extern void bzone_vh_init_colors(unsigned char *palette, unsigned char *colortab
 extern int bzone_interrupt(void);
 extern int bzone_IN0_r(int offset);
 extern int bzone_rand_r(int offset);
-
+/*
+extern void redbaron_joyselect (int offset, int data);
+extern int redbaron_joy_r (int offset);
+*/
 extern void milliped_pokey1_w(int offset,int data);
 extern int milliped_sh_start(void);
 extern void milliped_sh_stop(void);
@@ -138,6 +141,7 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x0800, 0x0800, bzone_IN0_r },	/* IN0 */
 	{ 0x0a00, 0x0a00, input_port_1_r },	/* DSW1 */
 	{ 0x0c00, 0x0c00, input_port_2_r },	/* DSW2 */
+/*      { 0x1818, 0x1818, redbaron_joy_r },	*//* IN3 */
 	{ 0x1818, 0x1818, input_port_3_r },	/* IN1 */
 	{ 0x1802, 0x1802, input_port_4_r },	/* IN2 */
 	{ 0x1800, 0x1800, mb_status_r },
@@ -151,6 +155,7 @@ static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0x03ff, MWA_RAM },
 	{ 0x2000, 0x2fff, MWA_RAM, &vectorram },
+/*	{ 0x1808, 0x1808, redbaron_joyselect },*/
 	{ 0x1810, 0x181f, milliped_pokey1_w },
 	{ 0x1860, 0x187f, mb_go },
 	{ 0x1200, 0x1200, vg_go },
@@ -180,14 +185,14 @@ static struct InputPort input_ports[] =
 		{ 0, 0, 0, 0, 0, 0, 0, 0 },
 		{ 0, 0, 0, 0, 0, 0, 0, 0 }
 	},
-	{       /* IN1 */
-		0xff,
-		{ OSD_KEY_E, OSD_KEY_F, OSD_KEY_G, OSD_KEY_LEFT, OSD_KEY_H, OSD_KEY_I, OSD_KEY_J, OSD_KEY_RIGHT },
-		{ 0, 0, 0, OSD_JOY_LEFT, 0, 0, 0, OSD_JOY_RIGHT }
+	{       /* IN3 */
+		0x00,
+		{ OSD_KEY_LEFT, OSD_KEY_RIGHT, OSD_KEY_UP, OSD_KEY_DOWN, 0, 0, 0, 0 },
+		{ OSD_JOY_LEFT, OSD_JOY_RIGHT, OSD_JOY_UP, OSD_JOY_DOWN, 0, 0, 0, 0 }
 	},
-	{       /* IN2 */
-		0xff,
-		{ 0, 0, 0, 0, 0, 0, 0, OSD_KEY_CONTROL },
+	{       /* IN4 */
+		0x00,
+		{ 0, 0, 0, 0, 0, 0, OSD_KEY_1, OSD_KEY_CONTROL },
 		{ 0, 0, 0, 0, 0, 0, 0, OSD_JOY_FIRE1 }
 	},
 	{ -1 }
@@ -201,8 +206,10 @@ static struct TrakPort trak_ports[] =
 
 static struct KEYSet keys[] =
 {
-        { 3, 3, "TURN LEFT" },
-        { 3, 7, "TURN RIGHT" },
+        { 3, 0, "TURN LEFT" },
+	{ 3, 1, "TURN RIGHT" },
+        { 3, 2, "ASCEND" },
+	{ 3, 3, "DIVE" },
         { 4, 7, "FIRE" },
         { -1 }
 };
@@ -225,13 +232,13 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static unsigned char color_prom[] =
 {
-	0x00,0xff,0xff, /* CYAN */
-	0x00,0x00,0xff, /* BLUE */
-	0x00,0xff,0x00, /* GREEN */
-	0xff,0x00,0x00, /* RED */
-	0xff,0x00,0xff, /* MAGENTA */
-	0xff,0xff,0x00, /* YELLOW */
-	0xff,0xff,0xff,	/* WHITE */
+	0x00,0x02,0x02, /* CYAN */
+	0x00,0x00,0x02, /* BLUE */
+	0x00,0x02,0x00, /* GREEN */
+	0x02,0x00,0x00, /* RED */
+	0x02,0x00,0x02, /* MAGENTA */
+	0x02,0x02,0x00, /* YELLOW */
+	0x02,0x02,0x02,	/* WHITE */
 	0x00,0x00,0x00	/* BLACK */
 };
 
@@ -251,7 +258,7 @@ static struct MachineDriver machine_driver =
 	0,
 
 	/* video hardware */
-	512, 420, { 0, 512, 0, 420 },
+	512, 480, { 0, 512, 0, 480 },
 	gfxdecodeinfo,
 	128,128,
 	bzone_vh_init_colors,
@@ -298,7 +305,7 @@ struct GameDriver redbaron_driver =
 {
 	"Red Baron",
 	"redbaron",
-	"BRAD OLIVER\nAL KOSSOW\nHEDLEY RAINNIE\nERIC SMITH"
+	"BRAD OLIVER\nAL KOSSOW\nHEDLEY RAINNIE\nERIC SMITH\n"
 	"ALLARD VAN DER BAS\nBERND WIEBELT",
 	&machine_driver,
 

@@ -192,13 +192,13 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static unsigned char color_prom[] =
 {
-	0x00,0xff,0x00, /* GREEN */
-	0x00,0xff,0xff, /* CYAN */
-	0x00,0x00,0xff, /* BLUE */
-	0xff,0x00,0x00, /* RED */
-	0xff,0x00,0xff, /* MAGENTA */
-	0xff,0xff,0x00, /* YELLOW */
-	0xff,0xff,0xff,	/* WHITE */
+	0x00,0x02,0x00, /* GREEN */
+	0x00,0x02,0x02, /* CYAN */
+	0x00,0x00,0x02, /* BLUE */
+	0x02,0x00,0x00, /* RED */
+	0x02,0x00,0x02, /* MAGENTA */
+	0x02,0x02,0x00, /* YELLOW */
+	0x02,0x02,0x02,	/* WHITE */
 	0x00,0x00,0x00	/* BLACK */
 };
 
@@ -218,7 +218,7 @@ static struct MachineDriver machine_driver =
 	0,
 
 	/* video hardware */
-	512, 420, { 0, 512, 0, 420 },
+	512, 480, { 0, 512, 0, 480 },
 	gfxdecodeinfo,
 	128,128,
 	bzone_vh_init_colors,
@@ -264,7 +264,8 @@ struct GameDriver bzone_driver =
 {
 	"Battlezone",
 	"bzone",
-	"BRAD OLIVER\nAL KOSSOW\nHEDLEY RAINNIE\nERIC SMITH\nALLARD VAN DER BAS",
+	"BRAD OLIVER\nAL KOSSOW\nHEDLEY RAINNIE\nERIC SMITH\n"
+	"ALLARD VAN DER BAS\nBERND WIEBELT",
 	&machine_driver,
 
 	bzone_rom,

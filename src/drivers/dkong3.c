@@ -73,8 +73,7 @@ write:
 
 
 
-extern void dkong3_gfxbank_w(int offset,int data);
-extern int  dkong3_vh_start(void);
+extern unsigned char *dkong3_gfxbank;
 extern void dkong3_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 
@@ -96,9 +95,9 @@ static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x6000, 0x68ff, MWA_RAM },
 	{ 0x6a80, 0x6fff, MWA_RAM },
-	{ 0x6900, 0x6a7f, MWA_RAM, &spriteram },
-	{ 0x7400, 0x77ff, videoram_w, &videoram },
-	{ 0x7e81, 0x7e81, dkong3_gfxbank_w },
+	{ 0x6900, 0x6a7f, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0x7400, 0x77ff, videoram_w, &videoram, &videoram_size },
+	{ 0x7e81, 0x7e81, MWA_RAM, &dkong3_gfxbank },
 	{ 0x7e84, 0x7e84, interrupt_enable_w },
 	{ 0x0000, 0x5fff, MWA_ROM },
 	{ 0x8000, 0x9fff, MWA_ROM },
@@ -137,6 +136,7 @@ static struct TrakPort trak_ports[] =
 {
         { -1 }
 };
+
 
 static struct KEYSet keys[] =
 {
@@ -432,7 +432,7 @@ static struct MachineDriver machine_driver =
 	0,
 
 	0,
-	dkong3_vh_start,
+	generic_vh_start,
 	generic_vh_stop,
 	dkong3_vh_screenrefresh,
 

@@ -149,10 +149,10 @@ static struct MemoryReadAddress readmem[] =
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x8000, 0x87ff, MWA_RAM },
-	{ 0xc400, 0xc7ff, videoram_w, &videoram },
+	{ 0xc400, 0xc7ff, videoram_w, &videoram, &videoram_size },
 	{ 0xc800, 0xcbff, junglek_videoram2_w, &junglek_videoram2 },
 	{ 0xcc00, 0xcfff, junglek_videoram3_w, &junglek_videoram3 },
-	{ 0xd100, 0xd17f, MWA_RAM, &spriteram },
+	{ 0xd100, 0xd17f, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xd000, 0xd01f, MWA_RAM, &junglek_colscrolly1 },
 	{ 0xd020, 0xd03f, MWA_RAM, &junglek_colscrolly2 },
 	{ 0xd040, 0xd05f, MWA_RAM, &junglek_colscrolly3 },
@@ -166,7 +166,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xd509, 0xd50a, MWA_RAM, &junglek_gfxpointer },
 	{ 0xd50b, 0xd50b, sound_command_w },
 	{ 0xd50d, 0xd50d, MWA_NOP },
-{ 0xd50e, 0xd50e, MWA_NOP },
+        { 0xd50e, 0xd50e, MWA_NOP },
 	{ 0xd200, 0xd27f, junglek_paletteram_w, &junglek_paletteram },
 	{ 0x9000, 0xbfff, junglek_characterram_w, &junglek_characterram },
 	{ 0xd40e, 0xd40e, MWA_RAM, &taito_dsw23_select },
@@ -249,6 +249,7 @@ static struct TrakPort trak_ports[] =
         { -1 }
 };
 
+
 static struct KEYSet keys[] =
 {
         { 0, 3, "MOVE UP" },
@@ -276,7 +277,7 @@ static struct DSW dsw[] =
 
 
 
-struct GfxLayout junglek_charlayout =
+static struct GfxLayout charlayout =
 {
 	8,8,	/* 8*8 characters */
 	256,	/* 256 characters */
@@ -286,7 +287,7 @@ struct GfxLayout junglek_charlayout =
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	8*8	/* every char takes 8 consecutive bytes */
 };
-struct GfxLayout junglek_spritelayout =
+static struct GfxLayout spritelayout =
 {
 	16,16,	/* 16*16 sprites */
 	64,	/* 64 sprites */
@@ -303,10 +304,10 @@ struct GfxLayout junglek_spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 0, 0x9000, &junglek_charlayout,   0, 16 },	/* the game dynamically modifies this */
-	{ 0, 0x9000, &junglek_spritelayout, 0,  8 },	/* the game dynamically modifies this */
-	{ 0, 0xa800, &junglek_charlayout,   0,  8 },	/* the game dynamically modifies this */
-	{ 0, 0xa800, &junglek_spritelayout, 0,  8 },	/* the game dynamically modifies this */
+	{ 0, 0x9000, &charlayout,   0, 16 },	/* the game dynamically modifies this */
+	{ 0, 0x9000, &spritelayout, 0,  8 },	/* the game dynamically modifies this */
+	{ 0, 0xa800, &charlayout,   0,  8 },	/* the game dynamically modifies this */
+	{ 0, 0xa800, &spritelayout, 0,  8 },	/* the game dynamically modifies this */
 	{ -1 } /* end of array */
 };
 

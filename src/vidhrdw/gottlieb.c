@@ -8,17 +8,14 @@
 
 #include "driver.h"
 #include "common.h"
+#include "vidhrdw/generic.h"
 
 
-#define VIDEO_RAM_SIZE 0x400
 
 extern int generic_vh_start(void);
 extern struct osd_bitmap *tmpbitmap;
-unsigned char *gottlieb_videoram;
 unsigned char *gottlieb_paletteram;
-unsigned char *gottlieb_spriteram;
 unsigned char *gottlieb_characterram;
-static unsigned char dirtybuffer[VIDEO_RAM_SIZE];       /* keep track of modified portions of the screen */
 static unsigned char dirtycharacter[256];
 static int dirtypalette;
 static unsigned char color_to_lookup[16*16*16];
@@ -29,29 +26,70 @@ static unsigned char bottomupchars;
 static int rotated90;
 static int optimized_palette;
 static int currentbank;
-	  
+
 int qbert_vh_start(void)
 {
-      rotated90=1; bottomupchars=0;
-      return generic_vh_start();
+	int offs;
+
+
+	rotated90 = 1;
+	bottomupchars = 0;
+	for (offs = 0;offs < 256;offs++)
+		dirtycharacter[offs] = 0;
+
+	return generic_vh_start();
 }
 
 int mplanets_vh_start(void)
 {
-      rotated90=1; bottomupchars=255;
-      return generic_vh_start();
+	int offs;
+
+
+	rotated90 = 1;
+	bottomupchars = 255;
+	for (offs = 0;offs < 256;offs++)
+		dirtycharacter[offs] = 0;
+
+	return generic_vh_start();
 }
 
 int reactor_vh_start(void)
 {
-      rotated90=0; bottomupchars=0;
-      return generic_vh_start();
+	int offs;
+
+
+	rotated90 = 0;
+	bottomupchars = 0;
+	for (offs = 0;offs < 256;offs++)
+		dirtycharacter[offs] = 0;
+
+	return generic_vh_start();
+}
+
+int stooges_vh_start(void)
+{
+	int offs;
+
+
+	rotated90 = 0;
+	bottomupchars = 0;
+	for (offs = 0;offs < 256;offs++)
+		dirtycharacter[offs] = 1;
+
+	return generic_vh_start();
 }
 
 int krull_vh_start(void)
 {
-      rotated90=1; bottomupchars=0;
-      return generic_vh_start();
+	int offs;
+
+
+	rotated90 = 1;
+	bottomupchars = 0;
+	for (offs = 0;offs < 256;offs++)
+		dirtycharacter[offs] = 0;
+
+	return generic_vh_start();
 }
 
 void gottlieb_vh_init_optimized_color_palette(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
@@ -70,13 +108,6 @@ void gottlieb_vh_init_optimized_color_palette(unsigned char *palette, unsigned c
 		palette[3*i+2]=(blue<<4) | blue;
 		if (colors[i]) color_to_lookup[colors[i]]=i;
 	}
-
-	colortable[16]=colortable[32]=0;
-	for (i=1;i<16;i++) {
-		colortable[16+i]=1;     /* white */
-		colortable[32+i]=2; /* yellow */
-	}
-	for (i = 0;i < 256;i++) colortable[3*16+i] = i;
 }
 
 void gottlieb_vh_init_basic_color_palette(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
@@ -95,40 +126,21 @@ void gottlieb_vh_init_basic_color_palette(unsigned char *palette, unsigned char 
 		bits = (i >> 6) & 0x03;
 		palette[3*i + 2] = bits | (bits >> 2) | (bits << 4) | (bits << 6);
 	}
-
-
-	colortable[16]=colortable[32]=0;
-	for (i=1;i<16;i++) {
-		colortable[i]=0xFF;     /* white */
-		colortable[16+i]=0xFF;  /* white */
-		colortable[32+i]=0x3F; /* yellow */
-	}
-	for (i = 0;i < 256;i++) colortable[3*16+i] = i;
 }
 
-
-void gottlieb_videoram_w(int offset,int data)
-{
-	if (gottlieb_videoram[offset] != data)
-	{
-		dirtybuffer[offset] = 1;
-
-		gottlieb_videoram[offset] = data;
-	}
-}
 
 void gottlieb_video_outputs(int data)
 {
-      static int last=0;
-      int offs;
-      background_priority= data & 1;
-      hflip= (data&2)?255:0;
-      vflip= (data&4)?255:0;
-      currentbank= (data&0x10)?256:0;
-      if ((data&6)!=(last&6))
-	      for (offs = 0;offs < VIDEO_RAM_SIZE;offs++)
-		      dirtybuffer[offs] = 1;
-      last=data;
+	static int last = 0;
+
+	background_priority = data & 1;
+	hflip = (data & 2) ? 255 : 0;
+	vflip = (data & 4) ? 255 : 0;
+	currentbank = (data & 0x10) ? 256 : 0;
+
+	if ((data & 6) != (last & 6))
+		memset(dirtybuffer,1,videoram_size);
+	last = data;
 }
 
 
@@ -163,33 +175,29 @@ void gottlieb_vh_screenrefresh(struct osd_bitmap *bitmap)
 	if (optimized_palette)
 	    for (i=0;i<16;i++) {
 		col = gottlieb_paletteram[2*i] + ((gottlieb_paletteram[2*i+1]&0x0F) << 8);
-		Machine->gfx[1]->colortable[i] =
-			Machine->gfx[2]->colortable[i] =
-				Machine->gfx[3]->colortable[color_to_lookup[col]];
+		Machine->gfx[0]->colortable[i] = Machine->pens[color_to_lookup[col]];
 	    }
-	else 
+	else
 	    for (i = 0;i < 16;i++) {
 		col = (gottlieb_paletteram[2*i+1] >> 1) & 0x07;   /* red component */
 		col |= (gottlieb_paletteram[2*i] >> 2) & 0x38;  /* green component */
 		col |= (gottlieb_paletteram[2*i] << 4) & 0xc0;      /* blue component */
-		Machine->gfx[1]->colortable[i] =
-			Machine->gfx[2]->colortable[i] =
-				Machine->gfx[3]->colortable[col];
+		Machine->gfx[0]->colortable[i] = Machine->pens[col];
 	    }
     }
 
     /* recompute character graphics */
     for (offs=0;offs<256;offs++)
 	if (dirtycharacter[offs])
-		decodechar(Machine->gfx[1],offs,gottlieb_characterram,Machine->drv->gfxdecodeinfo[1].gfxlayout);
+		decodechar(Machine->gfx[0],offs,gottlieb_characterram,Machine->drv->gfxdecodeinfo[0].gfxlayout);
 
     /* for every character in the Video RAM, check if it has been modified */
     /* since last time and update it accordingly. */
-    for (offs = 0;offs < VIDEO_RAM_SIZE;offs++) {
-	if (dirtypalette || dirtybuffer[offs] || dirtycharacter[gottlieb_videoram[offs]]) {
+    for (offs = videoram_size - 1;offs >= 0;offs--) {
+	if (dirtypalette || dirtybuffer[offs] || dirtycharacter[videoram[offs]]) {
 	    int sx,sy;
 
-	    dirtybuffer[offs] = 0; 
+	    dirtybuffer[offs] = 0;
 
 	    if (rotated90) {
 		if (hflip) sx=29-offs/32;
@@ -203,8 +211,8 @@ void gottlieb_vh_screenrefresh(struct osd_bitmap *bitmap)
 		else sy=offs/32;
 	    }
 
-	    drawgfx(tmpbitmap,Machine->gfx[1],
-			gottlieb_videoram[offs],  /* code */
+	    drawgfx(tmpbitmap,Machine->gfx[0],
+			videoram[offs],  /* code */
 			0, /* color tuple */
 			hflip^bottomupchars, vflip^bottomupchars,
 			sx*8,sy*8,
@@ -218,39 +226,37 @@ void gottlieb_vh_screenrefresh(struct osd_bitmap *bitmap)
     dirtypalette=0;
     for (offs=0;offs<256;offs++) dirtycharacter[offs]=0;
 
-    if (!background_priority)
 	/* copy the character mapped graphics */
-		copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-    else
-	/* or clear it if sprites are to be drawn first */
-		clearbitmap(bitmap);
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 
 	/* Draw the sprites. Note that it is important to draw them exactly in this */
 	/* order, to have the correct priorities. */
-    for (offs = 0;offs<62*4 ;offs += 4)     /* it seems there's something strange with sprites #62 and #63 */
+    for (offs = 0;offs < spriteram_size - 8;offs += 4)     /* it seems there's something strange with sprites #62 and #63 */
 	{
 	    int sx,sy;
-	    if (rotated90) {
-		sx=(hflip^gottlieb_spriteram[offs])-12;
-		if (vflip) sy=(gottlieb_spriteram[offs+1])+4;
-		else sy=(255^gottlieb_spriteram[offs+1])-12;
-	    } else {
-		if (hflip) sx=(hflip^gottlieb_spriteram[offs+1])-24;
-		else sx=(gottlieb_spriteram[offs+1])-4;
-		sy=(vflip^gottlieb_spriteram[offs])-12;
+
+
+	    if (rotated90)
+		{
+			sx = (hflip ^ spriteram[offs]) - 12;
+			if (vflip) sy = (spriteram[offs+1]) + 4;
+			else sy = (255 ^ spriteram[offs+1]) - 12;
+		}
+		else
+		{
+			if (hflip) sx = (hflip ^ spriteram[offs+1]) - 24;
+			else sx = (spriteram[offs+1]) - 4;
+			sy = (vflip ^ spriteram[offs]) - 12;
 	    }
 
-	    if (gottlieb_spriteram[offs]||gottlieb_spriteram[offs+1])
-		drawgfx(bitmap,Machine->gfx[2],
-				currentbank+(255^gottlieb_spriteram[offs+2]), /* object # */
-				0, /* color tuple */
-				hflip, vflip,
-				sx,sy,
-				&Machine->drv->visible_area,
-				TRANSPARENCY_PEN,
-				0);
+	    if (spriteram[offs] || spriteram[offs+1])
+			drawgfx(bitmap,Machine->gfx[1],
+					currentbank+(255^spriteram[offs+2]), /* object # */
+					0, /* color tuple */
+					hflip, vflip,
+					sx,sy,
+					&Machine->drv->visible_area,
+					background_priority ? TRANSPARENCY_THROUGH : TRANSPARENCY_PEN,
+					background_priority ? Machine->background_pen : 0);
 	}
-    if (background_priority)
-		copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 }
- 

@@ -83,7 +83,7 @@ static struct MemoryReadAddress readmem[] =
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0x03ff, MWA_RAM },
-	{ 0x4000, 0x43ff, videoram_w, &videoram },
+	{ 0x4000, 0x43ff, videoram_w, &videoram, &videoram_size },
 	{ 0x5100, 0x5100, MWA_RAM, &venture_sprite_no },
 	{ 0x5101, 0x5101, MWA_RAM, &venture_sprite_enable },
 	{ 0x6000, 0x6fff, venture_characterram_w, &venture_characterram },
@@ -120,6 +120,7 @@ static struct TrakPort trak_ports[] =
         { -1 }
 };
 
+
 static struct KEYSet keys[] =
 {
         { -1 }
@@ -135,20 +136,10 @@ static struct DSW dsw[] =
 
 
 
-struct GfxLayout pepper2_charlayout =
-{
-	8,8,	/* 8*8 characters */
-	256,	/* 256 characters */
-	1,	/* 1 bit per pixel */
-	{ 0 },
-	{ 0, 1, 2, 3, 4, 5, 6, 7 },
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	8*8	/* every char takes 8 consecutive bytes */
-};
 static struct GfxLayout charlayout =
 {
 	8,8,	/* 8*8 characters */
-	43,	/* 43 characters */
+	256,	/* 256 characters */
 	1,	/* 1 bit per pixel */
 	{ 0 },
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
@@ -169,9 +160,8 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 0, 0xdc42, &charlayout,         0, 1 },	/* not used by the game, here only for the dip switch menu */
-	{ 0, 0x6000, &pepper2_charlayout, 0, 4 },	/* the game dynamically modifies this */
-	{ 1, 0x0000, &spritelayout,      10, 2 },  /* Sprites */
+	{ 0, 0x6000, &charlayout,     0, 4 },	/* the game dynamically modifies this */
+	{ 1, 0x0000, &spritelayout, 4*2, 2 },  /* Sprites */
 	{ -1 } /* end of array */
 };
 
@@ -209,7 +199,7 @@ static unsigned char colortable[] =
 	black, blue,
 	black, green,
 	black, red,
-	black, white,
+
 	black, cyan,
 	black, purple,
 

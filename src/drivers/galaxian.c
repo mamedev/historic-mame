@@ -75,6 +75,7 @@ Note: 9n reg,other bits  used on moon cresta for extra graphics rom control.
 
 extern unsigned char *mooncrst_attributesram;
 extern unsigned char *mooncrst_bulletsram;
+extern int mooncrst_bulletsram_size;
 extern void mooncrst_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 extern void mooncrst_attributes_w(int offset,int data);
 extern void mooncrst_stars_w(int offset,int data);
@@ -105,10 +106,10 @@ static struct MemoryReadAddress readmem[] =
 
 static struct MemoryWriteAddress galaxian_writemem[] =
 {
-	{ 0x5000, 0x53ff, videoram_w, &videoram },
+	{ 0x5000, 0x53ff, videoram_w, &videoram, &videoram_size },
 	{ 0x5800, 0x583f, mooncrst_attributes_w, &mooncrst_attributesram },
-	{ 0x5840, 0x585f, MWA_RAM, &spriteram },
-	{ 0x5860, 0x5880, MWA_RAM, &mooncrst_bulletsram },
+	{ 0x5840, 0x585f, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0x5860, 0x5880, MWA_RAM, &mooncrst_bulletsram, &mooncrst_bulletsram_size },
 	{ 0x7001, 0x7001, interrupt_enable_w },
 	{ 0x7800, 0x7800, mooncrst_sound_freq_w },
 	{ 0x6803, 0x6803, mooncrst_noise_w },
@@ -119,10 +120,10 @@ static struct MemoryWriteAddress galaxian_writemem[] =
 };
 static struct MemoryWriteAddress pisces_writemem[] =
 {
-	{ 0x5000, 0x53ff, videoram_w, &videoram },
+	{ 0x5000, 0x53ff, videoram_w, &videoram, &videoram_size },
 	{ 0x5800, 0x583f, mooncrst_attributes_w, &mooncrst_attributesram },
-	{ 0x5840, 0x585f, MWA_RAM, &spriteram },
-	{ 0x5860, 0x5880, MWA_RAM, &mooncrst_bulletsram },
+	{ 0x5840, 0x585f, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0x5860, 0x5880, MWA_RAM, &mooncrst_bulletsram, &mooncrst_bulletsram_size },
 	{ 0x7001, 0x7001, interrupt_enable_w },
 	{ 0x7800, 0x7800, mooncrst_sound_freq_w },
 	{ 0x6803, 0x6803, mooncrst_noise_w },

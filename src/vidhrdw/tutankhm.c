@@ -32,7 +32,6 @@ unsigned char *tut_scrollx;
 void tut_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
 {
 	int i;
-        int mame_pal[] = { 0xff, 0x3f, 0x07 };
 
 	for( i = 0; i < 256; i++ )
 	{
@@ -51,11 +50,6 @@ void tut_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable
 		bit2 = ( i >> 7 ) & 0x01;
 		palette[ 3 * i + 2 ] = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 	}
-
-	/* Colors for mame messages */
-        for (i = 0; i <= 48; i++)
-          if ((i % 16) == 0) colortable[i] = 0;
-          else colortable[i] = mame_pal[i/16];
 }
 
 

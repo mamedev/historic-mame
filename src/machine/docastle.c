@@ -19,31 +19,6 @@ static int nmi;
 
 
 
-int docastle_intkludge1_r(int offset)
-{
-
-	/* to speed up the emulation, detect when the program is looping waiting */
-	/* for an interrupt, and force it in that case */
-	if (cpu_getpc() == 0x09ba)
-		cpu_seticount(0);
-
-	return *docastle_intkludge1;
-}
-
-
-
-int docastle_intkludge2_r(int offset)
-{
-	/* to speed up the emulation, detect when the program is looping waiting */
-	/* for an interrupt, and force it in that case */
-	if (cpu_getpc() == 0x0218)
-		cpu_seticount(0);
-
-	return *docastle_intkludge2;
-}
-
-
-
 int docastle_shared0_r(int offset)
 {
 if (errorlog && offset == 8) fprintf(errorlog,"shared0r\n");

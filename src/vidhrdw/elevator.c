@@ -11,8 +11,6 @@
 
 
 
-#define VIDEO_RAM_SIZE 0x400
-
 unsigned char *elevator_videoram2,*elevator_videoram3;
 unsigned char *elevator_characterram;
 unsigned char *elevator_scroll1,*elevator_scroll2,*elevator_scroll3;
@@ -78,18 +76,6 @@ void elevator_vh_convert_color_prom(unsigned char *palette, unsigned char *color
 		bit2 = (~color_prom[2*i+1] >> 2) & 0x01;
 		palette[3*i + 2] = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 	}
-
-
-	for (i = 0;i < Machine->drv->total_colors;i++)
-		colortable[11*8 + i] = i;
-
-
-	/* set up colors for the dip switch menu */
-	for (i = 0;i < 8*3;i++)
-		colortable[8*8 + i] = 0;
-	colortable[8*8 + 2] = 36;	/* white */
-	colortable[9*8 + 2] = 34;	/* yellow */
-	colortable[10*8 + 2] = 27;	/* red */
 }
 
 
@@ -104,20 +90,20 @@ int elevator_vh_start(void)
 	if (generic_vh_start() != 0)
 		return 1;
 
-	if ((dirtybuffer2 = malloc(VIDEO_RAM_SIZE)) == 0)
+	if ((dirtybuffer2 = malloc(videoram_size)) == 0)
 	{
 		generic_vh_stop();
 		return 1;
 	}
-	memset(dirtybuffer2,0,VIDEO_RAM_SIZE);
+	memset(dirtybuffer2,0,videoram_size);
 
-	if ((dirtybuffer3 = malloc(VIDEO_RAM_SIZE)) == 0)
+	if ((dirtybuffer3 = malloc(videoram_size)) == 0)
 	{
 		free(dirtybuffer2);
 		generic_vh_stop();
 		return 1;
 	}
-	memset(dirtybuffer3,0,VIDEO_RAM_SIZE);
+	memset(dirtybuffer3,0,videoram_size);
 
 	if ((tmpbitmap2 = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 	{
@@ -214,9 +200,9 @@ extern void elevator_colorbank_w(int offset,int data)
 {
 	if (elevator_colorbank[offset] != data)
 	{
-		memset(dirtybuffer,1,VIDEO_RAM_SIZE);
-		memset(dirtybuffer2,1,VIDEO_RAM_SIZE);
-		memset(dirtybuffer3,1,VIDEO_RAM_SIZE);
+		memset(dirtybuffer,1,videoram_size);
+		memset(dirtybuffer2,1,videoram_size);
+		memset(dirtybuffer3,1,videoram_size);
 
 		elevator_colorbank[offset] = data;
 	}
@@ -255,7 +241,6 @@ void elevator_characterram_w(int offset,int data)
 void elevator_vh_screenrefresh(struct osd_bitmap *bitmap)
 {
 	int offs,i;
-	extern struct GfxLayout elevator_charlayout,elevator_spritelayout;
 
 
 	/* decode modified characters */
@@ -263,12 +248,12 @@ void elevator_vh_screenrefresh(struct osd_bitmap *bitmap)
 	{
 		if (dirtycharacter1[offs] == 1)
 		{
-			decodechar(Machine->gfx[0],offs,elevator_characterram,&elevator_charlayout);
+			decodechar(Machine->gfx[0],offs,elevator_characterram,Machine->drv->gfxdecodeinfo[0].gfxlayout);
 			dirtycharacter1[offs] = 0;
 		}
 		if (dirtycharacter2[offs] == 1)
 		{
-			decodechar(Machine->gfx[2],offs,elevator_characterram + 0x1800,&elevator_charlayout);
+			decodechar(Machine->gfx[2],offs,elevator_characterram + 0x1800,Machine->drv->gfxdecodeinfo[2].gfxlayout);
 			dirtycharacter2[offs] = 0;
 		}
 	}
@@ -277,12 +262,12 @@ void elevator_vh_screenrefresh(struct osd_bitmap *bitmap)
 	{
 		if (dirtysprite1[offs] == 1)
 		{
-			decodechar(Machine->gfx[1],offs,elevator_characterram,&elevator_spritelayout);
+			decodechar(Machine->gfx[1],offs,elevator_characterram,Machine->drv->gfxdecodeinfo[1].gfxlayout);
 			dirtysprite1[offs] = 0;
 		}
 		if (dirtysprite2[offs] == 1)
 		{
-			decodechar(Machine->gfx[3],offs,elevator_characterram + 0x1800,&elevator_spritelayout);
+			decodechar(Machine->gfx[3],offs,elevator_characterram + 0x1800,Machine->drv->gfxdecodeinfo[3].gfxlayout);
 			dirtysprite2[offs] = 0;
 		}
 	}
@@ -315,15 +300,15 @@ void elevator_vh_screenrefresh(struct osd_bitmap *bitmap)
 		}
 
 		/* redraw everything */
-		memset(dirtybuffer,1,VIDEO_RAM_SIZE);
-		memset(dirtybuffer2,1,VIDEO_RAM_SIZE);
-		memset(dirtybuffer3,1,VIDEO_RAM_SIZE);
+		memset(dirtybuffer,1,videoram_size);
+		memset(dirtybuffer2,1,videoram_size);
+		memset(dirtybuffer3,1,videoram_size);
 	}
 
 
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
-	for (offs = 0;offs < VIDEO_RAM_SIZE;offs++)
+	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
 		if (dirtybuffer[offs])
 		{
@@ -343,7 +328,7 @@ void elevator_vh_screenrefresh(struct osd_bitmap *bitmap)
 		}
 	}
 
-	for (offs = 0;offs < VIDEO_RAM_SIZE;offs++)
+	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
 		if (dirtybuffer2[offs])
 		{
@@ -363,7 +348,7 @@ void elevator_vh_screenrefresh(struct osd_bitmap *bitmap)
 		}
 	}
 
-	for (offs = 0;offs < VIDEO_RAM_SIZE;offs++)
+	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
 		if (dirtybuffer3[offs])
 		{
@@ -415,7 +400,7 @@ void elevator_vh_screenrefresh(struct osd_bitmap *bitmap)
 	/* order, to have the correct priorities. */
 	if (*elevator_video_enable & 0x80)
 	{
-		for (offs = 31*4;offs >= 0;offs -= 4)
+		for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
 		{
 			drawgfx(bitmap,Machine->gfx[(spriteram[offs + 3] & 0x40) ? 3 : 1],
 					spriteram[offs + 3] & 0x3f,
@@ -449,7 +434,7 @@ void elevator_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 		/* draw the remaining part of the frontmost playfield. */
 		/* They are characters, but draw them as sprites */
-		for (offs = 0;offs < VIDEO_RAM_SIZE;offs++)
+		for (offs = videoram_size - 1;offs >= 0;offs--)
 		{
 			if (videoram[offs])	/* don't draw spaces */
 			{

@@ -147,7 +147,7 @@ extern void pengo_sh_update(void);
 
 static struct MemoryReadAddress readmem[] =
 {
-	{ 0x4c00, 0x4fff, MRA_RAM },	/* includeing sprite codes at 4ff0-4fff */
+	{ 0x4c00, 0x4fff, MRA_RAM },	/* including sprite codes at 4ff0-4fff */
 	{ 0x4000, 0x47ff, MRA_RAM },	/* video and color RAM */
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x8000, 0x9fff, MRA_ROM },	/* Ms. Pac Man only */
@@ -160,10 +160,10 @@ static struct MemoryReadAddress readmem[] =
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x4c00, 0x4fef, MWA_RAM },
-	{ 0x4000, 0x43ff, videoram_w, &videoram },
+	{ 0x4000, 0x43ff, videoram_w, &videoram, &videoram_size },
 	{ 0x4400, 0x47ff, colorram_w, &colorram },
 	{ 0x5040, 0x505f, pengo_sound_w, &pengo_soundregs },
-	{ 0x4ff0, 0x4fff, MWA_RAM, &spriteram },
+	{ 0x4ff0, 0x4fff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x5060, 0x506f, MWA_RAM, &spriteram_2 },
 	{ 0xc000, 0xc3ff, videoram_w },	/* mirror address for video ram, */
 	{ 0xc400, 0xc7ef, colorram_w },	/* used to display HIGH SCORE and CREDITS */

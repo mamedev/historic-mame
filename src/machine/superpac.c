@@ -96,7 +96,7 @@ void superpac_update_credits (void)
 
 int superpac_customio_r_1(int offset)
 {
-/*	static int testvals[] = { 8, 4, 6, 14, 13, 9, 13 }; */
+/*	static int testvals[] = { 8, 4, 6, 14, 13, 9, 13 };*/
 	int val, temp;
 
 	switch (superpac_customio_1[8])
@@ -116,17 +116,16 @@ int superpac_customio_r_1(int offset)
 					temp = readinputport (1) & 7;
 					val = (credits * crednum[temp] / credden[temp]) % 10;
 					break;
-
+					
 				case 4:
 					val = readinputport (2) & 0x0f;
 					break;
 
 				case 5:
 					val = readinputport (2) >> 4;
-					if (val & 1)
+					if (val & 2)
 					{
-						if (fire) val &= ~1;
-						else fire = 1;
+						if (!fire) val |= 1, fire = 1;
 					}
 					else fire = 0;
 					break;

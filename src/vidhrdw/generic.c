@@ -13,7 +13,6 @@
 unsigned char *videoram;
 int videoram_size;
 unsigned char *colorram;
-int colorram_size;
 unsigned char *spriteram;	/* not used in this module... */
 unsigned char *spriteram_2;	/* ... */
 unsigned char *spriteram_3;	/* ... */

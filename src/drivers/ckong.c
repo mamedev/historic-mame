@@ -59,6 +59,7 @@ Notable differences are: (thanks to Ville Laitinen)
 
 
 extern unsigned char *ckong_bsvideoram;
+extern int ckong_bsvideoram_size;
 extern unsigned char *ckong_bigspriteram;
 extern unsigned char *ckong_row_scroll;
 extern void ckong_colorram_w(int offset,int data);
@@ -93,11 +94,11 @@ static struct MemoryReadAddress readmem[] =
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x6000, 0x6bff, MWA_RAM },
-	{ 0x9880, 0x989f, MWA_RAM, &spriteram },
+	{ 0x9880, 0x989f, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xa000, 0xa000, interrupt_enable_w },
-	{ 0x9000, 0x93ff, videoram_w, &videoram },
+	{ 0x9000, 0x93ff, videoram_w, &videoram, &videoram_size },
 	{ 0x9c00, 0x9fff, ckong_colorram_w, &colorram },
-	{ 0x8800, 0x88ff, ckong_bigsprite_videoram_w, &ckong_bsvideoram },
+	{ 0x8800, 0x88ff, ckong_bigsprite_videoram_w, &ckong_bsvideoram, &ckong_bsvideoram_size },
 	{ 0x98dc, 0x98df, MWA_RAM, &ckong_bigspriteram },
 	{ 0x9800, 0x981f, MWA_RAM, &ckong_row_scroll },
 	{ 0xa004, 0xa004, cclimber_sample_trigger_w },
@@ -154,6 +155,7 @@ static struct TrakPort trak_ports[] =
 {
         { -1 }
 };
+
 
 static struct KEYSet keys[] =
 {

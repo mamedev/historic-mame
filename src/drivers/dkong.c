@@ -144,9 +144,9 @@ static struct MemoryWriteAddress dkong_writemem[] =
 {
 	{ 0x6000, 0x68ff, MWA_RAM },
 	{ 0x6a80, 0x6fff, MWA_RAM },
-	{ 0x6900, 0x6a7f, MWA_RAM, &spriteram },
+	{ 0x6900, 0x6a7f, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x7d84, 0x7d84, interrupt_enable_w },
-	{ 0x7400, 0x77ff, videoram_w, &videoram },
+	{ 0x7400, 0x77ff, videoram_w, &videoram, &videoram_size },
 	{ 0x7c80, 0x7c80, dkongjr_gfxbank_w },
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x7800, 0x7803, MWA_RAM },	/* ???? */
@@ -162,9 +162,9 @@ static struct MemoryWriteAddress dkongjr_writemem[] =
 {
 	{ 0x6000, 0x68ff, MWA_RAM },
 	{ 0x6a80, 0x6fff, MWA_RAM },
-	{ 0x6900, 0x6a7f, MWA_RAM, &spriteram },
+	{ 0x6900, 0x6a7f, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x7d84, 0x7d84, interrupt_enable_w },
-	{ 0x7400, 0x77ff, videoram_w, &videoram },
+	{ 0x7400, 0x77ff, videoram_w, &videoram, &videoram_size },
 	{ 0x7c80, 0x7c80, dkongjr_gfxbank_w },
 	{ 0x0000, 0x5fff, MWA_ROM },
 	{ 0x7800, 0x7803, MWA_RAM },	/* ???? */
@@ -209,6 +209,7 @@ static struct TrakPort trak_ports[] =
 {
         { -1 }
 };
+
 
 static struct KEYSet keys[] =
 {

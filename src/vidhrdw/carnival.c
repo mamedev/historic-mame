@@ -14,8 +14,6 @@
 unsigned char *carnival_characterram;
 static unsigned char dirtycharacter[256];
 
-#define VIDEO_RAM_SIZE 0x400
-
 
 
 void carnival_characterram_w(int offset,int data)
@@ -39,13 +37,12 @@ void carnival_characterram_w(int offset,int data)
 ***************************************************************************/
 void carnival_vh_screenrefresh(struct osd_bitmap *bitmap)
 {
-	int offs,i;
-	extern struct GfxLayout carnival_charlayout;
+	int offs;
 
 
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
-	for (offs = 0;offs < VIDEO_RAM_SIZE;offs++)
+	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
 		int charcode;
 
@@ -60,7 +57,7 @@ void carnival_vh_screenrefresh(struct osd_bitmap *bitmap)
 		/* decode modified characters */
 			if (dirtycharacter[charcode] == 1)
 			{
-				decodechar(Machine->gfx[0],charcode,carnival_characterram,&carnival_charlayout);
+				decodechar(Machine->gfx[0],charcode,carnival_characterram,Machine->drv->gfxdecodeinfo[0].gfxlayout);
 				dirtycharacter[charcode] = 2;
 			}
 
@@ -79,9 +76,9 @@ void carnival_vh_screenrefresh(struct osd_bitmap *bitmap)
 	}
 
 
-	for (i = 0;i < 256;i++)
+	for (offs = 0;offs < 256;offs++)
 	{
-		if (dirtycharacter[i] == 2) dirtycharacter[i] = 0;
+		if (dirtycharacter[offs] == 2) dirtycharacter[offs] = 0;
 	}
 
 

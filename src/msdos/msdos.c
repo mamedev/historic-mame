@@ -1539,41 +1539,44 @@ inline void draw_pixel (int x, int y, int col)
 	pixel[p_index]=address;
 }
 
-/* 
- * open_page() returns
- * 0 - game has normal orientation
- * 1 - game normally uses a turned monitor
- */
-int open_page (int dummy)
+void open_page (int *x_res, int *y_res, int *portrait, int step)
 {
-	int i,res;
+	int i;
 	unsigned char bg;
 	
-	if (bitmap->height > bitmap->width)
-		res = 1;
-	else
-		res = 0;
-
+	*x_res=bitmap->width;
+	*y_res=bitmap->height;
+	*portrait=(bitmap->height > bitmap->width) ? 1 : 0;		
 	bg=Machine->background_pen;
 	for (i=p_index; i>=0; i--)
 	{
 		*(pixel[i])=bg;
 	}
 	p_index=-1;
-	return (res);
 }
 
 void close_page (void)
 {
 }
 
-void draw_line (int x1,int y1,int x2,int y2,int col, int z)
+void draw_to (int x2, int y2, int col, int z)
 {
+	static int x1=0;
+	static int y1=0;
+
+	int temp_x, temp_y;
 	int dx,dy,cx,cy,sx,sy;
+	
+	if (!z)
+	{
+		x1=x2;
+		y1=y2;
+		return;
+	}
 
-	if (!z) return;
-
+	temp_x = x2; temp_y = y2;
 	col += (z << 3);
+	col &= 0x7f;
 	
 #ifdef 0
 	if (x1<0 || y1<0 || x2<0 || y2<0 ||
@@ -1618,7 +1621,7 @@ void draw_line (int x1,int y1,int x2,int y2,int col, int z)
 			x1+=sx;
 			cx-=dy;
 			if (cx < 0)
-			{	
+			{
 				y1+=sy;
 				cx+=dx;
 			}
@@ -1638,4 +1641,6 @@ void draw_line (int x1,int y1,int x2,int y2,int col, int z)
 			}
 		}
 	}	
+	x1 = temp_x;
+	y1 = temp_y;
 }

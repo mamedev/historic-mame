@@ -68,7 +68,7 @@ static struct MemoryReadAddress readmem[] =
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x8000, 0x83FF, MWA_RAM },
-	{ 0x4000, 0x43ff, videoram_w, &videoram },
+	{ 0x4000, 0x43ff, videoram_w, &videoram, &videoram_size },
 	{ 0x4400, 0x47ff, colorram_w, &colorram },
 	{ 0xC000, 0xC001, MWA_RAM, &warpwarp_bulletsram },
 
@@ -102,10 +102,12 @@ static struct InputPort input_ports[] =
 	{ -1 }	/* end of table */
 };
 
+
 static struct TrakPort trak_ports[] =
 {
         { -1 }
 };
+
 
 static struct KEYSet keys[] =
 {

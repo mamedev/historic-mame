@@ -109,7 +109,7 @@ static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x4000, 0x7fff, MWA_RAM },
 	{ 0x8800, 0x8fff, naughtyb_videoram2_w, &naughtyb_videoram2 },
-	{ 0x8000, 0x87ff, videoram_w, &videoram },
+	{ 0x8000, 0x87ff, videoram_w, &videoram, &videoram_size },
 	{ 0x9000, 0x97ff, naughtyb_videoreg_w },
 	{ 0x9800, 0x9fff, MWA_RAM, &naughtyb_scrollreg },
 //        { 0xa000, 0xa7ff, naughtyb_sound_control_a_w },
@@ -141,6 +141,7 @@ static struct TrakPort trak_ports[] =
 {
         { -1 }
 };
+
 
 static struct KEYSet keys[] =
 {

@@ -229,7 +229,8 @@ struct GameDriver llander_driver =
 {
 	"Lunar Lander",
 	"llander",
-	"BRAD OLIVER\nAL KOSSOW\nHEDLEY RAINNIE\nERIC SMITH\nALLARD VAN DER BAS",
+	"BRAD OLIVER\nAL KOSSOW\nHEDLEY RAINNIE\nERIC SMITH\n"
+	"ALLARD VAN DER BAS\nBernd Wiebelt",
 	&machine_driver,
 
 	llander_rom,

@@ -11,8 +11,6 @@
 
 
 
-#define VIDEO_RAM_SIZE 0x400
-
 unsigned char *zaxxon_background_position;
 unsigned char *zaxxon_background_color;
 unsigned char *zaxxon_background_enable;
@@ -167,7 +165,7 @@ void zaxxon_vh_screenrefresh(struct osd_bitmap *bitmap)
 #if 0
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
-	for (offs = 0;offs < VIDEO_RAM_SIZE;offs++)
+	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
 		if (dirtybuffer[offs])
 		{
@@ -220,7 +218,7 @@ void zaxxon_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 	/* Draw the sprites. Note that it is important to draw them exactly in this */
 	/* order, to have the correct priorities. */
-	for (offs = 4*63;offs >= 0;offs -= 4)
+	for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
 	{
 		if (spriteram[offs] != 0xff)
 		{
@@ -239,7 +237,7 @@ void zaxxon_vh_screenrefresh(struct osd_bitmap *bitmap)
 #endif
 
 	/* draw the frontmost playfield. They are characters, but draw them as sprites */
-	for (offs = 0;offs < VIDEO_RAM_SIZE;offs++)
+	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
 		int sx,sy;
 

@@ -412,11 +412,11 @@ static struct InputPort input_ports[] =
 	{ -1 }	/* end of table */
 };
 
-
 static struct TrakPort trak_ports[] =
 {
         { -1 }
 };
+
 
 static struct KEYSet keys[] =
 {

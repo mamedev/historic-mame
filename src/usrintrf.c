@@ -715,6 +715,119 @@ static int setjoysettings(void)
 }
 
 
+static int settraksettings(void)
+{
+	struct DisplayText dt[40];
+	int i,s,key,done;
+	int total;
+	struct TrakPort *traksettings;
+	char number[10][6];
+
+	traksettings = Machine->gamedrv->trak_ports;
+
+	total = 0;
+	while (traksettings[total].axis != -1) total++;
+
+	if (total == 0) return 0;
+
+	for (i = 0;i < total;i++)
+	{
+	        switch(traksettings[i].axis) {
+		case X_AXIS:
+		  dt[2*i].text = "X AXIS";
+		  break;
+		case Y_AXIS:
+		  dt[2*i].text = "Y AXIS";
+		  break;
+		}
+		dt[2 * i].x = 2*Machine->uifont->width;
+		dt[2 * i].y = 2*Machine->uifont->height * i + (Machine->drv->screen_height - 2*Machine->uifont->height * (total + 1)) / 2;
+	}
+
+	dt[2 * total].text = "RETURN TO MAIN MENU";
+	dt[2 * total].x = (Machine->drv->screen_width - Machine->uifont->width * strlen(dt[2 * total].text)) / 2;
+	dt[2 * total].y = 2*Machine->uifont->height * (total+1) + (Machine->drv->screen_height - 2*Machine->uifont->height * (total + 1)) / 2;
+	dt[2 * total + 1].text = 0;     /* terminate array */
+	total++;
+
+	s = 0;
+	done = 0;
+	do
+	{
+		for (i = 0;i < total;i++)
+		{
+			dt[2 * i].color = (i == s) ? DT_COLOR_YELLOW : DT_COLOR_WHITE;
+			if (i < total - 1)
+			{
+				dt[2 * i + 1].color = (i == s) ? DT_COLOR_YELLOW : DT_COLOR_WHITE;
+				sprintf(number[i],"%3.1f",traksettings[i].scale);
+				dt[2 * i + 1].text = number[i];
+				dt[2 * i + 1].x = Machine->drv->screen_width - 2*Machine->uifont->width - Machine->uifont->width*strlen(dt[2 * i + 1].text);
+				dt[2 * i + 1].y = dt[2 * i].y;
+			}
+		}
+
+		displaytext(dt,1);
+
+		key = osd_read_keyrepeat();
+
+		switch (key)
+		{
+			case OSD_KEY_DOWN:
+				if (s < total - 1) s++;
+				else s = 0;
+				break;
+
+			case OSD_KEY_UP:
+				if (s > 0) s--;
+				else s = total - 1;
+				break;
+
+			case OSD_KEY_RIGHT:
+				if (s < total - 1)
+				{
+				  traksettings[s].scale += 0.1;
+
+				  if (traksettings[s].scale > 10.0 ) {
+				    traksettings[s].scale = 10.0;
+				  }
+				}
+				break;
+
+			case OSD_KEY_LEFT:
+				if (s < total - 1)
+				{
+				  traksettings[s].scale -= 0.1;
+
+				  if (traksettings[s].scale < -10.0 ) {
+				    traksettings[s].scale = -10.0;
+				  }
+				}
+				break;
+
+			case OSD_KEY_ENTER:
+				if (s == total - 1) done = 1;
+				break;
+
+			case OSD_KEY_TAB:
+				done = 1;
+				break;
+
+			case OSD_KEY_ESC:
+				done = 2;
+				break;
+		}
+	} while (done == 0);
+
+	while (osd_key_pressed(key));   /* wait for key release */
+
+	/* clear the screen before returning */
+	clearbitmap(Machine->scrbitmap);
+
+	if (done == 2) return 1;
+	else return 0;
+}
+
 
 static int showcredits(void)
 {
@@ -748,19 +861,20 @@ int setup_menu(void)
 	int total;
 
 
-	total = 5;
+	total = 6;
 	dt[0].text = "DIP SWITCH SETUP";
 	dt[1].text = "KEYBOARD SETUP";
 	dt[2].text = "JOYSTICK SETUP";
-	dt[3].text = "CREDITS";
-	dt[4].text = "RETURN TO GAME";
+        dt[3].text = "TRACKBALL SETUP";
+	dt[4].text = "CREDITS";
+	dt[5].text = "RETURN TO GAME";
 	for (i = 0;i < total;i++)
 	{
 		dt[i].x = (Machine->drv->screen_width - Machine->uifont->width * strlen(dt[i].text)) / 2;
 		dt[i].y = i * 2*Machine->uifont->height + (Machine->drv->screen_height - 2*Machine->uifont->height * (total - 1)) / 2;
 		if (i == total-1) dt[i].y += 2*Machine->uifont->height;
 	}
-	dt[5].text = 0; /* terminate array */
+	dt[6].text = 0; /* terminate array */
 
 	s = 0;
 	done = 0;
@@ -805,12 +919,17 @@ int setup_menu(void)
 							done = 2;
 						break;
 
-					case 3:
+				        case 3:
+					        if(settraksettings())
+						        done = 2;
+						break;
+
+					case 4:
 						if (showcredits())
 							done = 2;
 						break;
 
-					case 4:
+					case 5:
 						done = 1;
 						break;
 				}
