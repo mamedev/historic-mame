@@ -23,7 +23,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "osd_dbg.h"
-#include "m6809.h"
+#include "M6809.h"
 #include "driver.h"
 
 INLINE void fetch_effective_address( void );
@@ -72,12 +72,12 @@ static void (*wr_s_handler_wd)(int,int);
 #define IMMBYTE(b)	{b = M_RDOP_ARG(pcreg++);}
 #define IMMWORD(w)	{w = (M_RDOP_ARG(pcreg)<<8) + M_RDOP_ARG(pcreg+1); pcreg+=2;}
 
-#define PUSHBYTE(b) {--sreg;(*wr_s_handler)(sreg,b);}
-#define PUSHWORD(w) {sreg-=2;(*wr_s_handler_wd)(sreg,w);}
+#define PUSHBYTE(b) {--sreg;(*wr_s_handler)(sreg,(b));}
+#define PUSHWORD(w) {sreg-=2;(*wr_s_handler_wd)(sreg,(w));}
 #define PULLBYTE(b) {b=(*rd_s_handler)(sreg);sreg++;}
 #define PULLWORD(w) {w=(*rd_s_handler_wd)(sreg);sreg+=2;}
-#define PSHUBYTE(b) {--ureg;(*wr_u_handler)(ureg,b);}
-#define PSHUWORD(w) {ureg-=2;(*wr_u_handler_wd)(ureg,w);}
+#define PSHUBYTE(b) {--ureg;(*wr_u_handler)(ureg,(b));}
+#define PSHUWORD(w) {ureg-=2;(*wr_u_handler_wd)(ureg,(w));}
 #define PULUBYTE(b) {b=(*rd_u_handler)(ureg);ureg++;}
 #define PULUWORD(w) {w=(*rd_u_handler_wd)(ureg);ureg+=2;}
 

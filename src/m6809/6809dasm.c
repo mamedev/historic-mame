@@ -15,7 +15,7 @@
 /* sriddle@ionet.net */
 #include <stdio.h>
 #include <strings.h>
-#include "m6809.h"
+#include "M6809.h"
 
 #ifndef TRUE
 #define TRUE         -1
@@ -375,7 +375,7 @@ int Dasm6809 (char *buffer, int pc)
 {
 	int i, j, k, page, opcode, numoperands, mode;
 	unsigned char operandarray[4];
-	unsigned char *opname;
+	char *opname;
 	int p = 0;
 
 	buffer[0] = 0;

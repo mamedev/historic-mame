@@ -221,13 +221,92 @@ void stooges_output(int offset,int data)
 	gottlieb_video_outputs(offset,data);
 }
 
+
+static int current_frame = 0x00001;
+static int laserdisc_playing;
+static int lasermpx;
+
 int gottlieb_laserdisc_status_r(int offset)
 {
-	/* this covers 3 consecutive bytes, to form a 24 bit number. */
-	/* the low 20 bits are the frame number played by the disc. */
-	/* the top 4 bits contain at least a "disc ready" signal (bit 23?), and */
-	/* maybe something else as well. */
-	return rand();
+	switch (offset)
+	{
+		case 0:
+			return (current_frame >> 0) & 0xff;
+			break;
+		case 1:
+			return (current_frame >> 8) & 0xff;
+			break;
+		case 2:
+			if (lasermpx == 1)
+				/* bits 0-2 frame number MSN */
+				/* bit 3 audio buffer ready */
+				/* bit 4 ready to send new laserdisc command */
+				/* bit 5 disc ready */
+				/* bit 6 break in audio trasmission */
+				/* bit 7 missing audio clock */
+				return ((current_frame >> 16) & 0x07) | 0x18 | (rand() & 0x20);
+			else	/* read audio buffer */
+				return rand();
+			break;
+	}
+
+	return 0;
+}
+
+void gottlieb_laserdisc_mpx_w(int offset,int data)
+{
+	lasermpx = data & 1;
+}
+
+void gottlieb_laserdisc_command_w(int offset,int data)
+{
+	static int loop;
+	int cmd;
+	static int lastcmd;
+
+
+	/* commands are written in three steps, the first two the command is */
+	/* written (maybe one to load the latch, the other to start the send), */
+	/* the third 0 (maybe to clear the latch) */
+	if (data == 0) return;
+	if (loop++ & 1) return;
+
+	if ((data & 0xe0) != 0x20)
+	{
+if (errorlog) fprintf(errorlog,"error: laserdisc command %02x\n",data);
+		return;
+	}
+
+	cmd =	((data & 0x10) >> 4) |
+			((data & 0x08) >> 2) |
+			((data & 0x04) >> 0) |
+			((data & 0x02) << 2) |
+			((data & 0x01) << 4);
+
+if (errorlog) fprintf(errorlog,"laserdisc command %02x -> %02x\n",data,cmd);
+	if (lastcmd == 0x0b && (cmd & 0x10))	/* seek frame # */
+	{
+		current_frame = (current_frame << 4) | (cmd & 0x0f);
+	}
+	else
+	{
+		if (cmd == 0x04)	/* step forward */
+		{
+			laserdisc_playing = 0;
+			current_frame++;
+		}
+		if (cmd == 0x05) laserdisc_playing = 1;	/* play */
+		if (cmd == 0x0f) laserdisc_playing = 0;	/* stop */
+		if (cmd == 0x0b) laserdisc_playing = 0;	/* seek frame */
+		lastcmd = cmd;
+	}
+}
+
+int gottlieb_interrupt(void)
+{
+	if (laserdisc_playing) current_frame++;
+
+	return nmi_interrupt();
 }
 
 
@@ -298,7 +377,7 @@ static struct MemoryWriteAddress gottlieb_writemem[] =
 };
 
 
-/* same as above, different video_outputs */
+/* same as above, different video_outputs plus laser disc control outputs */
 static struct MemoryWriteAddress usvsthem_writemem[] =
 {
 	{ 0x0000, 0x0fff, MWA_RAM },
@@ -313,6 +392,8 @@ static struct MemoryWriteAddress usvsthem_writemem[] =
 	{ 0x5801, 0x5801, gottlieb_track_reset_w },
 	{ 0x5802, 0x5802, gottlieb_sh_w }, /* sound/speech command */
 	{ 0x5803, 0x5803, usvsthem_video_outputs },       /* OUT1 */
+	{ 0x5805, 0x5805, gottlieb_laserdisc_command_w },	/* command for the player */
+	{ 0x5806, 0x5806, gottlieb_laserdisc_mpx_w },
 	{ 0x6000, 0xffff, MWA_ROM },
 	{ -1 }  /* end of table */
 };
@@ -397,8 +478,7 @@ static struct MemoryReadAddress stooges_sound_readmem[] =
 struct MemoryWriteAddress stooges_sound_writemem[] =
 {
 	{ 0x0000, 0x03ff, MWA_RAM },
-	{ 0x4000, 0x4000, MWA_NOP },	/* volume control, but what does it control? only */
-									/* the following DAC, or the whole sound section? */
+	{ 0x4000, 0x4000, MWA_NOP },	/* DAC volume control (TODO: support it) */
 	{ 0x4001, 0x4001, DAC_data_w },
 	{ 0xe000, 0xffff, MWA_ROM },
 	{ -1 }  /* end of table */
@@ -419,10 +499,11 @@ struct MemoryWriteAddress stooges_sound2_writemem[] =
 	{ 0x0000, 0x03ff, MWA_RAM },
 	{ 0x2000, 0x2000, MWA_NOP },	/* speech chip. The game sends strings */
 									/* of 15 bytes (clocked by 4000). The chip also */
-									/* requests data through a bit in 6000. */
+									/* checks a ready bit in 6000. */
 	{ 0x4000, 0x4000, stooges_sound_control_w },
 	{ 0x8000, 0x8000, stooges_8910_latch_w },
 	{ 0xa000, 0xa000, stooges_sound_timer_w },	/* the timer generates NMIs */
+/*	{ 0xb000, 0xb000 } should generate a NMI on the first CPU, I think */
 	{ 0xc000, 0xffff, MWA_ROM },
 	{ -1 }  /* end of table */
 };
@@ -705,11 +786,11 @@ INPUT_PORTS_END
 INPUT_PORTS_START( mach3_input_ports )
 	PORT_START      /* DSW0 */
 	/* TODO: values are different for 5 lives */
-	PORT_DIPNAME( 0x09, 0x00, "Cost", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Free" )
-	PORT_DIPSETTING(    0x08, "2" )
-	PORT_DIPSETTING(    0x01, "3" )
-	PORT_DIPSETTING(    0x09, "4" )
+	PORT_DIPNAME( 0x09, 0x08, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x08, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x01, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x09, "4 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x00, "Free Play" )
 	PORT_DIPNAME( 0x10, 0x00, "Lives", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x10, "5" )
@@ -807,9 +888,9 @@ INPUT_PORTS_START( usvsthem_input_ports )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON3 )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON1 )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON2 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON3 )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 INPUT_PORTS_END
 
@@ -1034,7 +1115,7 @@ static struct Samplesinterface samples_interface =
 static struct AY8910interface ay8910_interface =
 {
 	2,	/* 2 chips */
-	2000000,	/* 2 Mhz? Stated in the manual, but might not be accurate */
+	2000000,	/* 2 MHz */
 	{ 255, 255 },
 	{ 0 },
 	{ 0 },
@@ -1066,7 +1147,7 @@ static struct MachineDriver GAMENAME##_machine_driver =             \
 			5000000,        /* 5 Mhz */								\
 			0,														\
 			READMEM,WRITEMEM,0,0,									\
-			nmi_interrupt,1											\
+			gottlieb_interrupt,1									\
 		},		                                                    \
 		{		                                                    \
 			CPU_M6502 | CPU_AUDIO_CPU ,								\
@@ -1117,19 +1198,19 @@ static struct MachineDriver GAMENAME##_machine_driver =             \
 			5000000,        /* 5 Mhz */								\
 			0,														\
 			READMEM,WRITEMEM,0,0,									\
-			nmi_interrupt,1											\
+			gottlieb_interrupt,1									\
 		},		                                                    \
 		{		                                                    \
 			CPU_M6502 | CPU_AUDIO_CPU ,								\
-			1000000,	/* 1 MHz? Stated in the manual, but might not be accurate */	\
+			1000000,	/* 1 MHz */									\
 			2,	/* memory region #2 */								\
 			stooges_sound_readmem,stooges_sound_writemem,0,0,		\
 			ignore_interrupt,1	/* IRQs are triggered by the main CPU */			\
-								/* NMIs are triggered by the second sound CPU (really? I don't remember) */	\
+								/* NMIs are triggered by the second sound CPU */	\
 		},                                                   		\
 		{		                                                    \
 			CPU_M6502 | CPU_AUDIO_CPU ,								\
-			1000000,	/* 1 MHz? Stated in the manual, but might not be accurate */	\
+			1000000,	/* 1 MHz */									\
 			3,	/* memory region #3 */								\
 			stooges_sound2_readmem,stooges_sound2_writemem,0,0,		\
 			ignore_interrupt,1	/* IRQs are triggered by the main CPU */			\

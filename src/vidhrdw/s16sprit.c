@@ -93,8 +93,8 @@ void drawgfxpicture(
 
 		if( bitmap->depth!=16 ){
 			for( ypos = sy; ypos < sy+screenheight; ypos++ ){
-				char *dest = &bitmap->line[ypos][0];
-				const char *src = source + width*(ycount>>10);
+				unsigned char *dest = &bitmap->line[ypos][0];
+				const unsigned char *src = source + width*(ycount>>10);
 
 				int xcount = xcount0;
 				int xpos;
@@ -109,7 +109,7 @@ void drawgfxpicture(
 		else { /* 16 bit color */
 			for( ypos = sy; ypos < sy+screenheight; ypos++ ){
 				unsigned short *dest = (unsigned short *)&bitmap->line[ypos][0];
-				const char *src = source + width*(ycount>>10);
+				const unsigned char *src = source + width*(ycount>>10);
 
 				int xcount = xcount0;
 				int xpos;

@@ -183,10 +183,10 @@ void load_input_port_settings(void)
 		/* read in the coin/ticket counters */
 		for (i = 0; i < COIN_COUNTERS; i ++)
 		{
-			if (readint(f, &coins[i]) != 0)
+			if (readint(f, (int *)&coins[i]) != 0)
 				goto getout;
 		}
-		if (readint (f, &dispensed_tickets) != 0)
+		if (readint (f, (int *)&dispensed_tickets) != 0)
 			goto getout;
 
 getout:
@@ -663,6 +663,10 @@ if (errorlog && Machine->drv->vblank_duration == 0)
 					if ((key != 0 && key != IP_KEY_NONE && osd_key_pressed(key)) ||
 							(joy != 0 && joy != IP_JOY_NONE && osd_joy_pressed(joy)))
 					{
+						/* if IPF_RESET set, reset the first CPU */
+						if (in->type & IPF_RESETCPU && waspressed[ib] == 0)
+							cpu_reset(0);
+
 						if (in->type & IPF_IMPULSE)
 						{
 if (errorlog && in->arg == 0)

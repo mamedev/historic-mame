@@ -267,40 +267,40 @@ void galaga_vh_screenrefresh(struct osd_bitmap *bitmap)
 			{
 				drawgfx(bitmap,Machine->gfx[1],
 						code+2,color,flipx,flipy,sx+sfa,sy+sfa,
-						&Machine->drv->visible_area,TRANSPARENCY_THROUGH,0);
+						&Machine->drv->visible_area,TRANSPARENCY_THROUGH,Machine->pens[0]);
 				drawgfx(bitmap,Machine->gfx[1],
 						code,color,flipx,flipy,sx+sfb,sy+sfa,
-						&Machine->drv->visible_area,TRANSPARENCY_THROUGH,0);
+						&Machine->drv->visible_area,TRANSPARENCY_THROUGH,Machine->pens[0]);
 
 				drawgfx(bitmap,Machine->gfx[1],
 						code+3,color,flipx,flipy,sx+sfa,sy+sfb,
-						&Machine->drv->visible_area,TRANSPARENCY_THROUGH,0);
+						&Machine->drv->visible_area,TRANSPARENCY_THROUGH,Machine->pens[0]);
 				drawgfx(bitmap,Machine->gfx[1],
 						code+1,color,flipx,flipy,sx+sfb,sy+sfb,
-						&Machine->drv->visible_area,TRANSPARENCY_THROUGH,0);
+						&Machine->drv->visible_area,TRANSPARENCY_THROUGH,Machine->pens[0]);
 			}
 			else if (spriteram_3[offs] & 8)	/* double width */
 			{
 				drawgfx(bitmap,Machine->gfx[1],
 						code+2,color,flipx,flipy,sx+sfa,sy,
-						&Machine->drv->visible_area,TRANSPARENCY_THROUGH,0);
+						&Machine->drv->visible_area,TRANSPARENCY_THROUGH,Machine->pens[0]);
 				drawgfx(bitmap,Machine->gfx[1],
 						code,color,flipx,flipy,sx+sfb,sy,
-						&Machine->drv->visible_area,TRANSPARENCY_THROUGH,0);
+						&Machine->drv->visible_area,TRANSPARENCY_THROUGH,Machine->pens[0]);
 			}
 			else if (spriteram_3[offs] & 4)	/* double height */
 			{
 				drawgfx(bitmap,Machine->gfx[1],
 						code,color,flipx,flipy,sx,sy+sfa,
-						&Machine->drv->visible_area,TRANSPARENCY_THROUGH,0);
+						&Machine->drv->visible_area,TRANSPARENCY_THROUGH,Machine->pens[0]);
 				drawgfx(bitmap,Machine->gfx[1],
 						code+1,color,flipx,flipy,sx,sy+sfb,
-						&Machine->drv->visible_area,TRANSPARENCY_THROUGH,0);
+						&Machine->drv->visible_area,TRANSPARENCY_THROUGH,Machine->pens[0]);
 			}
 			else	/* normal */
 				drawgfx(bitmap,Machine->gfx[1],
 						code,color,flipx,flipy,sx,sy,
-						&Machine->drv->visible_area,TRANSPARENCY_THROUGH,0);
+						&Machine->drv->visible_area,TRANSPARENCY_THROUGH,Machine->pens[0]);
 		}
 	}
 

@@ -9,16 +9,11 @@
 
 #include "driver.h"
 
-
 extern unsigned char spacefb_vref;
 
 void spacefb_port_0_w(int offset,int data)
 {
 	spacefb_vref = (data & (1<<5)) ? 128 : 0;
-}
-
-void spacefb_port_1_w(int offset,int data)
-{
 }
 
 void spacefb_port_2_w(int offset,int data)

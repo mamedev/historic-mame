@@ -83,7 +83,7 @@ else if (errorlog) fprintf(errorlog,"PC %04x: warning - read 8910 #%d Port B\n",
 
 int PSG_sh_start(struct PSGinterface *interface , int type , int rate)
 {
-	int i;//,j;
+	int i;/*,j;*/
 
 	intf = interface;
 
@@ -112,7 +112,7 @@ int PSG_sh_start(struct PSGinterface *interface , int type , int rate)
 			while (--i >= 0) free(bufferAY[i]);
 			return 1;
 		}
-//		for (j = 0;j < buffer_lenAY ;j++) bufferAY[i][j] = AUDIO_CONV(0);
+/*		for (j = 0;j < buffer_lenAY ;j++) bufferAY[i][j] = AUDIO_CONV(0);*/
 	}
 	if (AYInit(intf->num,intf->clock,emulation_rateAY,sample_bits,buffer_lenAY,bufferAY) == 0)
 	{
@@ -148,7 +148,7 @@ int PSG_sh_start(struct PSGinterface *interface , int type , int rate)
 			for (i = 0;i < intf->num;i++) free(bufferAY[i]);
 			return 1;
 			}
-//			for (j = 0;j < buffer_lenFM ;j++) bufferFM[i][j] = FMOUT_0;
+/*			for (j = 0;j < buffer_lenFM ;j++) bufferFM[i][j] = FMOUT_0;*/
 		}
 
 		if (OPNInit(intf->num,intf->clock,emulation_rateFM,sample_bits,buffer_lenFM,bufferFM) == 0)
@@ -210,7 +210,7 @@ static void update_ay(int chip)
 	sample_posAY[chip] = newpos;
 }
 
-static inline void update_fm(int chip)
+INLINE void update_fm(int chip)
 {
 	int newpos;
 

@@ -21,7 +21,7 @@
 static int sample_pos;
 static int buffer_len;
 static int emulation_rate;
-static unsigned char *buffer;
+static signed char *buffer;
 
 static struct TMS5220interface *intf;
 static int channel;

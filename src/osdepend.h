@@ -1,6 +1,16 @@
 #ifndef OSDEPEND_H
 #define OSDEPEND_H
 
+/** suggested by  Scott Trent */
+#ifdef aix
+#include <sys/time.h>
+#endif
+
+#ifdef linux_alpha
+#define FPTR long   /* 64bit: sizeof(void *) is sizeof(long)  */
+#else
+#define FPTR int
+#endif
 
 struct osd_bitmap
 {

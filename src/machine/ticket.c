@@ -10,43 +10,50 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "machine/ticket.h"
 
+#define DEBUG_TICKET
 
-static int dispenser_status;
-static int dispenser_power;
-static int dispenser_time_msec;
+unsigned int dispensed_tickets = 0;
 
-/* Not currently used for anything, but seems like a good thing to keep */
-static long dispensed_tickets;
+static int status;
+static int power;
+static int time_msec;
+static int active;
+static void *timer;
+
+static int active_bit = 0x80;
 
 /* Callback routine used during ticket dispensing */
-static void ticket_dispenser_toggle(int foo);
+static void ticket_dispenser_toggle(int parm);
 
 
 /***************************************************************************
   ticket_dispenser_init
 
-  TODO:  Take in ACTIVE_LOW / ACTIVE_HIGH as a parameter?
 ***************************************************************************/
-void ticket_dispenser_init(int msec)
+void ticket_dispenser_init(int msec, int activehigh)
 {
-	dispenser_time_msec = msec;
-	dispensed_tickets = 0;
-	dispenser_status = 0x00;
-	dispenser_power = 0x00;
+	time_msec = msec;
+	active    = activehigh ? active_bit : 0;
+	status    = active;// ^ active_bit;  /* inactive */
+	power     = 0x00;
 }
 
 /***************************************************************************
   ticket_dispenser_r
 
   How I think this works:
-  A status of 0x80 means we're still dispensing the ticket.
-  A status of 0x00 means we're in a wait cycle after dispensing the ticket.
-  A status of 0x00 twice in a row means the power's off.
+  A status of 0x80 (or 0x00) means we're still dispensing the ticket.
+  A status of 0x00 (or 0x80) means we're in a wait cycle after dispensing the ticket.
+  A status of 0x00 (or 0x80) twice in a row means the power's off.
 ***************************************************************************/
 int ticket_dispenser_r(int offset)
 {
-	return dispenser_status;
+#ifdef DEBUG_TICKET
+	fprintf(errorlog, "PC: %04X  Ticket Status Read = %02X\n", cpu_getpc(), status);
+#endif
+	return status;
 }
 
 /***************************************************************************
@@ -59,13 +66,31 @@ int ticket_dispenser_r(int offset)
 void ticket_dispenser_w(int offset, int data)
 {
 	/* On an activate signal, start dispensing! */
-	if (data==0x00)
+	if ((data & active_bit) == active)
 	{
-		timer_set (TIME_IN_MSEC(dispenser_time_msec), 0, ticket_dispenser_toggle);
+		if (!power)
+		{
+#ifdef DEBUG_TICKET
+			fprintf(errorlog, "PC: %04X  Ticket Power On\n", cpu_getpc());
+#endif
+			timer = timer_set (TIME_IN_MSEC(time_msec), 0, ticket_dispenser_toggle);
+			power = 1;
+
+			status = active;// ^ active_bit;  /* inactive */
+		}
 	}
-
-	dispenser_power = data ^ 0x80;
-
+	else
+	{
+		if (power)
+		{
+#ifdef DEBUG_TICKET
+			fprintf(errorlog, "PC: %04X  Ticket Power Off\n", cpu_getpc());
+#endif
+			timer_remove(timer);
+			osd_led_w(2,0);
+			power = 0;
+		}
+	}
 }
 
 
@@ -76,21 +101,28 @@ void ticket_dispenser_w(int offset, int data)
   When a ticket dispenses, there is N milliseconds of status = high,
   and N milliseconds of status = low (a wait cycle?).
 ***************************************************************************/
-static void ticket_dispenser_toggle(int foo)
+static void ticket_dispenser_toggle(int parm)
 {
 
 	/* If we still have power, keep toggling ticket states. */
-	if (dispenser_power)
+	if (power)
 	{
-		dispenser_status ^= 0x80;
-		timer_set (TIME_IN_MSEC(dispenser_time_msec), 0, ticket_dispenser_toggle);
+		status ^= active_bit;
+#ifdef DEBUG_TICKET
+		fprintf(errorlog, "Ticket Status Changed to %02X\n", status);
+#endif
+		timer = timer_set (TIME_IN_MSEC(time_msec), 0, ticket_dispenser_toggle);
 	}
 
-	if (dispenser_status == 0x80)
+	if (status == active)
 	{
-		/* Dispense a ticket on every low to high change */
+		/* Dispense a ticket on every time the status goes active */
 		osd_led_w(2,1);
 		dispensed_tickets++;
+
+#ifdef DEBUG_TICKET
+		fprintf(errorlog, "Ticket Dispensed\n");
+#endif
 	}
 	else
 	{

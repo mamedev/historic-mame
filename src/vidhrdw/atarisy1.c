@@ -978,7 +978,7 @@ void atarisys1_render_mo (struct osd_bitmap *bitmap, struct rectangle *clip, uns
 		tclip.max_y = ypos + vsize * 8 - 1;
 		if (tclip.min_y < clip->min_y) tclip.min_y = clip->min_y;
 		if (tclip.max_y > clip->max_y) tclip.max_y = clip->max_y;
-		copybitmap (bitmap, tempbitmap, 0, 0, 0, 0, &tclip, TRANSPARENCY_THROUGH, atarigen_special_color);
+		copybitmap (bitmap, tempbitmap, 0, 0, 0, 0, &tclip, TRANSPARENCY_THROUGH, Machine->pens[atarigen_special_color]);
 	}
 }
 
@@ -1323,7 +1323,7 @@ void roadblst_vh_screenrefresh (struct osd_bitmap *bitmap)
 	/* WARNING: this code won't work rotated! */
 	shift = bitmap->depth / 8 - 1;
 	lasty = -1;
-	scroll = scrolllist;
+	scroll = (int *)scrolllist;
 
 	/* finish the scrolling list from the previous frame */
 	xscroll = READ_WORD (&atarigen_hscroll[0]) & 0x1ff;

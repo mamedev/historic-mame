@@ -799,16 +799,16 @@ ROM_START( tetrisbl_rom )
 	ROM_LOAD_EVEN( "rom2.bin", 0x00000, 0x8000, 0xc170a0f6 )
 
 	ROM_REGION(0x30000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "scr01.bin",  0x00000, 0x10000, 0x65864110 )        /* 8x8 0 */
-	ROM_LOAD( "scr02.bin",  0x10000, 0x10000, 0x24f4f4b4 )        /* 8x8 1 */
-	ROM_LOAD( "scr03.bin",  0x20000, 0x10000, 0xa19cfd40 )        /* 8x8 2 */
+	ROM_LOAD( "scr01.rom",  0x00000, 0x10000, 0x65864110 )        /* 8x8 0 */
+	ROM_LOAD( "scr02.rom",  0x10000, 0x10000, 0x24f4f4b4 )        /* 8x8 1 */
+	ROM_LOAD( "scr03.rom",  0x20000, 0x10000, 0xa19cfd40 )        /* 8x8 2 */
 
 	ROM_REGION(0x20000*2)
-	ROM_LOAD( "obj0-o.bin", 0x00000, 0x10000, 0x54463eb2 )     /* sprites */
-	ROM_LOAD( "obj0-e.bin", 0x10000, 0x10000, 0x5ef58537 )
+	ROM_LOAD( "obj0-o.rom", 0x00000, 0x10000, 0x54463eb2 )     /* sprites */
+	ROM_LOAD( "obj0-e.rom", 0x10000, 0x10000, 0x5ef58537 )
 
 	ROM_REGION(0x10000)		/* 64k for audio cpu */
-	ROM_LOAD( "s-prog.bin", 0x0000, 0x8000, 0x614b77e5 )
+	ROM_LOAD( "s-prog.rom", 0x0000, 0x8000, 0x614b77e5 )
 ROM_END
 
 

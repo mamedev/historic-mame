@@ -104,8 +104,8 @@ int VerifyRomSet(int game,verify_printf_proc verify_printf)
 			checksum = CalcCheckSum(f, romp, length, verify_printf);
 			if (checksum != expchecksum)
 			{
-				verify_printf("%-10s: %-12s %5d bytes   %08x INCORRECT CHECKSUM\n",
-						      gamedrv->name, name, length, expchecksum);
+				verify_printf("%-10s: %-12s %5d bytes   %08x INCORRECT CHECKSUM %08x\n",
+						      gamedrv->name, name, length, expchecksum, checksum);
 				badarchive = 1;
 			}
 			osd_fclose(f);

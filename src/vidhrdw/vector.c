@@ -93,7 +93,7 @@ static int vector_runs;	/* vector runs per refresh */
  * can be be replaced by an assembly routine in osinline.h
  */
 #ifndef vec_mult
-inline int vec_mult(int parm1, int parm2)
+INLINE int vec_mult(int parm1, int parm2)
 {
 	int temp,result;
 
@@ -114,7 +114,7 @@ inline int vec_mult(int parm1, int parm2)
 
 /* can be be replaced by an assembly routine in osinline.h */
 #ifndef vec_div
-inline int vec_div(int parm1, int parm2)
+INLINE int vec_div(int parm1, int parm2)
 {
 	if( (parm2>>12) )
 	{
@@ -313,9 +313,9 @@ void vector_vh_stop (void)
 /*
  * draws an anti-aliased pixel (blends pixel with background)
  */
-inline void vector_draw_aa_pixel (int x, int y, int col, int dirty)
+INLINE void vector_draw_aa_pixel (int x, int y, int col, int dirty)
 {
-	char *address;
+	unsigned char *address;
 
 	if (x < xmin || x >= xmax)
 		return;
@@ -323,7 +323,7 @@ inline void vector_draw_aa_pixel (int x, int y, int col, int dirty)
 		return;
 
 	address=&(vecbitmap->line[y][x]);
-	*address=(unsigned char)Tmerge((unsigned char)(*address),(unsigned char)(col));
+	*address=(unsigned char)Tmerge(*address,(unsigned char)(col));
 
 	if (p_index<MAX_PIXELS)
 	{
@@ -665,7 +665,7 @@ void vector_clear_list (void)
 static void clever_mark_dirty (void)
 {
 	int i, j, min_index, last_match = 0;
-	int *coords;
+	unsigned int *coords;
 	point *new, *old;
 	point newclip, oldclip;
 	int clips_match = 1;

@@ -157,9 +157,4 @@ void drawgfxzoom( struct osd_bitmap *dest_bmp,const struct GfxElement *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
 		const struct rectangle *clip,int scalex, int scaley );
 
-/* ASG 980209 - added: */
-#define rgbpenindex(r,g,b) ((Machine->scrbitmap->depth==16) ? ((((r)>>3)<<10)+(((g)>>3)<<5)+((b)>>3)) : ((((r)>>5)<<5)+(((g)>>5)<<2)+((b)>>6)))
-#define rgbpen(r,g,b) (Machine->pens[rgbpenindex(r,g,b)])
-#define setgfxcolorentry(gfx,i,r,g,b) ((gfx)->colortable[i] = rgbpen (r,g,b))
-
 #endif

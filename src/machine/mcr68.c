@@ -37,7 +37,11 @@ static pia6821_interface sg_pia_intf =
 	1,                /* 1 chip */
 	{ PIA_DDRA, PIA_NOP, PIA_DDRB, PIA_NOP, PIA_CTLA, PIA_NOP, PIA_CTLB, PIA_NOP }, /* offsets */
 	{ 0 },            /* input port A */
+	{ 0, 0, 0 },                                    /* input bit CA1 */
+	{ 0, 0, 0 },                                    /* input bit CA2 */
 	{ 0 },         	/* input port B */
+	{ 0, 0, 0 },                                    /* input bit CB1 */
+	{ 0, 0, 0 },                                    /* input bit CB2 */
 	{ sg_porta_w },   /* output port A */
 	{ sg_portb_w },   /* output port B */
 	{ 0 },            /* output CA2 */

@@ -231,7 +231,7 @@ int tms5220_int_read (void)
 
 ***********************************************************************************************/
 
-void tms5220_process(unsigned char *buffer, unsigned int size)
+void tms5220_process(signed char *buffer, unsigned int size)
 {
     int buf_count=0;
     int i, interp_period;
@@ -283,7 +283,7 @@ tryagain:
             /* is this a zero energy frame? */
             if (current_energy == 0)
             {
-                //printf("processing frame: zero energy\n");
+                /*printf("processing frame: zero energy\n");*/
                 target_energy = 0;
                 target_pitch = current_pitch;
                 for (i = 0; i < 10; i++)
@@ -293,7 +293,7 @@ tryagain:
             /* is this a stop frame? */
             else if (current_energy == (energytable[15] >> 6))
             {
-                //printf("processing frame: stop frame\n");
+                /*printf("processing frame: stop frame\n");*/
                 current_energy = energytable[0] >> 6;
                 target_energy = current_energy;
                 speak_external = talk_status = 0;
@@ -310,7 +310,7 @@ tryagain:
                 /* is this the ramp down frame? */
                 if (new_energy == (energytable[15] >> 6))
                 {
-                    //printf("processing frame: ramp down\n");
+                    /*printf("processing frame: ramp down\n");*/
                     target_energy = 0;
                     target_pitch = current_pitch;
                     for (i = 0; i < 10; i++)
@@ -319,9 +319,9 @@ tryagain:
                 /* Reset the step size */
                 else
                 {
-                    //printf("processing frame: Normal\n");
-                    //printf("*** Energy = %d\n",current_energy);
-                    //printf("proc: %d %d\n",last_fbuf_head,fbuf_head);
+                    /*printf("processing frame: Normal\n");*/
+                    /*printf("*** Energy = %d\n",current_energy);*/
+                    /*printf("proc: %d %d\n",last_fbuf_head,fbuf_head);*/
 
                     target_energy = new_energy;
                     target_pitch = new_pitch;
@@ -342,14 +342,14 @@ tryagain:
         else if (interp_count == 0)
         {
             /* Update values based on step values */
-            //printf("\n");
+            /*printf("\n");*/
 
             interp_period = sample_count / 25;
             current_energy += (target_energy - current_energy) / interp_coeff[interp_period];
             if (old_pitch != 0)
                 current_pitch += (target_pitch - current_pitch) / interp_coeff[interp_period];
 
-            //printf("*** Energy = %d\n",current_energy);
+            /*printf("*** Energy = %d\n",current_energy);*/
 
             for (i = 0; i < 10; i++)
             {

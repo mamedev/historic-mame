@@ -30,6 +30,8 @@ struct CPS1config
         int   space_scroll1;    /* Space character code for scroll 1 */
         int   space_scroll2;    /* Space character code for scroll 2 */
         int   space_scroll3;    /* Space character code for scroll 3 */
+        int   cpsb_addr;        /* CPS board B test register address */
+        int   cpsb_value;       /* CPS board B test register expected value */
         int   size_obj;         /* Size of obj RAM */
         int   gng_sprite_kludge;  /* Ghouls n Ghosts sprite kludge */
 };

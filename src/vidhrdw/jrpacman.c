@@ -263,7 +263,8 @@ void jrpacman_vh_screenrefresh(struct osd_bitmap *bitmap)
 				spriteram[offs] & 2,spriteram[offs] & 1,
 				239 - spriteram_2[offs],272 - spriteram_2[offs + 1],
 				&Machine->drv->visible_area,
-				(*jrpacman_bgpriority & 1) ? TRANSPARENCY_THROUGH : TRANSPARENCY_COLOR,0);
+				(*jrpacman_bgpriority & 1) ? TRANSPARENCY_THROUGH : TRANSPARENCY_COLOR,
+				(*jrpacman_bgpriority & 1) ? Machine->pens[0]     : 0);
 	}
 	/* the first two sprites must be offset one pixel to the left */
 	for (offs = 2*2;offs > 0;offs -= 2)
@@ -275,6 +276,7 @@ void jrpacman_vh_screenrefresh(struct osd_bitmap *bitmap)
 				spriteram[offs] & 2,spriteram[offs] & 1,
 				238 - spriteram_2[offs],272 - spriteram_2[offs + 1],
 				&Machine->drv->visible_area,
-				(*jrpacman_bgpriority & 1) ? TRANSPARENCY_THROUGH : TRANSPARENCY_COLOR,0);
+				(*jrpacman_bgpriority & 1) ? TRANSPARENCY_THROUGH : TRANSPARENCY_COLOR,
+				(*jrpacman_bgpriority & 1) ? Machine->pens[0]     : 0);
 	}
 }

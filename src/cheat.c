@@ -114,7 +114,7 @@
 #include <stdarg.h>
 #include <ctype.h>  /* for toupper() and tolower() */
 
-//#define ram_size 65536 /* JB 980407 */
+/*#define ram_size 65536    JB 980407   */
 
 /*      --------- Mame Action Replay version 1.00 ------------        */
 
@@ -223,34 +223,34 @@ int he_did_cheat;
 static unsigned char osd_key_chars[] =
 {
 /* 0    1    2    3    4    5    6    7    8    9 */
-   0 ,  0 , '1', '2', '3', '4', '5', '6', '7', '8',	// 0
-  '9', '0', '-', '=',  0 ,  0,  'q', 'w', 'e', 'r',	// 1
-  't', 'y', 'u', 'i', 'o', 'p', '[', ']',  0 ,  0 ,	// 2
-  'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';',	// 3
- '\'', '`',  0 ,  0 , 'z', 'x', 'c', 'v', 'b', 'n', // 4
-  'm', ',', '.', '/',  0 , '8',  0 , ' ',  0 ,  0 ,	// 5
-   0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 , // 6
-   0 ,  0 ,  0 ,  0 , '-',  0 , '5',  0 , '+',  0 , // 7
-   0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 , // 8
-   0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 , // 9
-   0 , '1', '2', '3', '4',  0 , '6', '7', '8', '9',	// 10
+   0 ,  0 , '1', '2', '3', '4', '5', '6', '7', '8',	/* 0*/
+  '9', '0', '-', '=',  0 ,  0,  'q', 'w', 'e', 'r',	/* 1*/
+  't', 'y', 'u', 'i', 'o', 'p', '[', ']',  0 ,  0 ,	/* 2*/
+  'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';',	/* 3*/
+ '\'', '`',  0 ,  0 , 'z', 'x', 'c', 'v', 'b', 'n', /* 4*/
+  'm', ',', '.', '/',  0 , '8',  0 , ' ',  0 ,  0 ,	/* 5*/
+   0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 , /* 6*/
+   0 ,  0 ,  0 ,  0 , '-',  0 , '5',  0 , '+',  0 , /* 7*/
+   0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 , /* 8*/
+   0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 , /* 9*/
+   0 , '1', '2', '3', '4',  0 , '6', '7', '8', '9',	/* 10*/
   '0',  0 , '=', '/', '*',  0
 };
 
 static unsigned char osd_key_caps[] =
 {
 /* 0    1    2    3    4    5    6    7    8    9 */
-   0 ,  0 , '!', '@', '#', '$', '%', '^', '&', '*',	// 0
-  '(', ')', '_', '+',  0 ,  0 , 'Q', 'W', 'E', 'R',	// 1
-  'T', 'Y', 'U', 'I', 'O', 'P', '{', '}',  0 ,  0 ,	// 2
-  'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', ':',	// 3
-  '"', '~',  0 ,  0 , 'Z', 'X', 'C', 'V', 'B', 'N',	// 4
-  'M', '<', '>', '?',  0 , '*',  0 , ' ',  0 ,  0 ,	// 5
-   0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 , // 6
-   0 ,  0 ,  0 ,  0 , '-',  0 , '5',  0 , '+',  0 , // 7
-   0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 , // 8
-   0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 , // 9
-   0 , '1', '2', '3', '4',  0 , '6', '7', '8', '9',	// 10
+   0 ,  0 , '!', '@', '#', '$', '%', '^', '&', '*',	/* 0*/
+  '(', ')', '_', '+',  0 ,  0 , 'Q', 'W', 'E', 'R',	/* 1*/
+  'T', 'Y', 'U', 'I', 'O', 'P', '{', '}',  0 ,  0 ,	/* 2*/
+  'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', ':',	/* 3*/
+  '"', '~',  0 ,  0 , 'Z', 'X', 'C', 'V', 'B', 'N',	/* 4*/
+  'M', '<', '>', '?',  0 , '*',  0 , ' ',  0 ,  0 ,	/* 5*/
+   0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 , /* 6*/
+   0 ,  0 ,  0 ,  0 , '-',  0 , '5',  0 , '+',  0 , /* 7*/
+   0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 , /* 8*/
+   0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 , /* 9*/
+   0 , '1', '2', '3', '4',  0 , '6', '7', '8', '9',	/* 10*/
   '0',  0 , '=', '/', '*',  0
 };
 /* END JB 980506 */
@@ -345,7 +345,7 @@ static unsigned char read_gameram (int cpu, int add)
    this code wasn't swapping in cpu 0's memory context because it thought
    it was already the current context. Consequently, it was probably
    calling cpu_readmem24() on a 6502 memory region -- kaboom. */
-//	if (cpu != save)
+/*	if (cpu != save)*/
 		memorycontextswap(cpu);
 
 	data = MEMORY_READ(cpu,add);
@@ -428,18 +428,18 @@ static int build_tables (void)
 		int (*handler)(int) = mra->handler;
 		int size;
 
-		switch ((int)handler)
+		switch ((FPTR)handler)
 		{
 			/* only track RAM areas */
-			case (int)MRA_RAM:
-			case (int)MRA_BANK1:
-			case (int)MRA_BANK2:
-			case (int)MRA_BANK3:
-			case (int)MRA_BANK4:
-			case (int)MRA_BANK5:
-			case (int)MRA_BANK6:
-			case (int)MRA_BANK7:
-			case (int)MRA_BANK8:
+			case (FPTR)MRA_RAM:
+			case (FPTR)MRA_BANK1:
+			case (FPTR)MRA_BANK2:
+			case (FPTR)MRA_BANK3:
+			case (FPTR)MRA_BANK4:
+			case (FPTR)MRA_BANK5:
+			case (FPTR)MRA_BANK6:
+			case (FPTR)MRA_BANK7:
+			case (FPTR)MRA_BANK8:
 				size = mra->end - mra->start + 1;
 
 				/* time to allocate */
@@ -468,7 +468,7 @@ static int build_tables (void)
 }
 /* END JB 980407 */
 
-void xprintf(int x,int y,va_list arg_list,...);
+void xprintf(int x,int y,char *fmt,...);
 void ContinueCheat(void);
 
 
@@ -502,7 +502,7 @@ void InitCheat(void)
 
 /* JRT6	- modified JB 980424 */
 	for(i=0;i<10;i++)
-		Watches[ i ] = MAX_ADDRESS(0);			// Set Unused Value For Watch
+		Watches[ i ] = MAX_ADDRESS(0);			/* Set Unused Value For Watch*/
 /* JRT6 */
 
   WatchX = Machine->uixmin;
@@ -604,9 +604,9 @@ void DoCheat(int CurrentVolume)
 		buf[0] = 0;
 		for (i=0;i<10;i++)
 		{
-			if( Watches[ i ] != MAX_ADDRESS(0)) 		// If Watch Is In Use
+			if( Watches[ i ] != MAX_ADDRESS(0)) 		/* If Watch Is In Use*/
 			{
-				//sprintf(buf2,"%02X ",Machine->memory_region[0][Watches[i]]);
+				/*sprintf(buf2,"%02X ",Machine->memory_region[0][Watches[i]]);*/
 				sprintf(buf2,"%02X ", RD_GAMERAM (0, Watches[i])); /* JB 980407 */
 				strcat(buf,buf2);
 			}
@@ -838,7 +838,7 @@ void DoCheat(int CurrentVolume)
  *  Print a string at the position x y
  * if x = 0 then center the string in the screen
  */
-void xprintf(int x,int y,va_list arg_list,...)
+void xprintf(int x,int y,char *fmt,...)
 {
 struct DisplayText dt[2];
 char s[80];
@@ -846,8 +846,8 @@ char s[80];
 va_list arg_ptr;
 char *format;
 
-  va_start(arg_ptr,arg_list);
-  format=arg_list;
+  va_start(arg_ptr,fmt);
+  format=fmt;
   (void) vsprintf(s,format,arg_ptr);
 
   dt[0].text = s;
@@ -866,7 +866,7 @@ char *format;
   displaytext(dt,0);
 }
 
-void xprintfForEdit(int x,int y,va_list arg_list,...)
+void xprintfForEdit(int x,int y,char *fmt,...)
 {
 struct DisplayText dt[2];
 char s[80];
@@ -874,8 +874,8 @@ char s[80];
 va_list arg_ptr;
 char *format;
 
-  va_start(arg_ptr,arg_list);
-  format=arg_list;
+  va_start(arg_ptr,fmt);
+  format=fmt;
   (void) vsprintf(s,format,arg_ptr);
 
   dt[0].text = s;
@@ -909,9 +909,9 @@ char *format;
 void EditCheat(int CheatNo)
 {
 /* JRT5 BEGIN Constants, And Menu Text Changes */
-#define		EDIT_CHEAT_LINES	11		// Lines In Blurb
-#define		TOTAL_CHEAT_TYPES	11		// Cheat Type Values
-#define		CHEAT_NAME_MAXLEN	25		// Cheat (Edit) Name MaxLen
+#define		EDIT_CHEAT_LINES	11		/* Lines In Blurb*/
+#define		TOTAL_CHEAT_TYPES	11		/* Cheat Type Values*/
+#define		CHEAT_NAME_MAXLEN	25		/* Cheat (Edit) Name MaxLen*/
 
  char	*paDisplayText[] = {
 		"To edit a Cheat name, press",
@@ -926,7 +926,7 @@ void EditCheat(int CheatNo)
 		"",
 		"<F10> To Show Help",
 		"\0" };
-// int flag;
+/* int flag;*/
 /* JRT5 END */
 
  int  iFontHeight = ( Machine -> uifont -> height );
@@ -1031,15 +1031,15 @@ void EditCheat(int CheatNo)
         break;
 
 	  case OSD_KEY_F10:
-		EditCheatHelp();								// Show Help
+		EditCheatHelp();								/* Show Help*/
 		break;
 
       case OSD_KEY_MINUS_PAD:
       case OSD_KEY_LEFT:	/* JB 980424 */
       	switch (s - FirstEditableItem)
       	{
-      		case 0:	// Name
-      			if (CurrentName == 0)						// wrap if necessary
+      		case 0:	/* Name*/
+      			if (CurrentName == 0)						/* wrap if necessary*/
       				while (CheatNameList[CurrentName][0])
       					CurrentName++;
       			CurrentName--;
@@ -1048,7 +1048,7 @@ void EditCheat(int CheatNo)
 				for (i=dt[FirstEditableItem].y; i< ( dt[FirstEditableItem].y + iFontHeight + 1); i++)
 					memset (Machine->scrbitmap->line[i], 0, Machine->uiwidth);
 				break;
-			case 1:	// CpuNo
+			case 1:	/* CpuNo*/
 				if (LoadedCheatTable[CheatNo].CpuNo == 0)
 					LoadedCheatTable[CheatNo].CpuNo = cpu_gettotalcpu() - 1;
 				else
@@ -1056,7 +1056,7 @@ void EditCheat(int CheatNo)
 
 				sprintf (str2[1], "CPU:        %1d", LoadedCheatTable[CheatNo].CpuNo);
 				break;
-			case 2:	// Address
+			case 2:	/* Address*/
 				if (LoadedCheatTable[CheatNo].Address == 0)
 					LoadedCheatTable[CheatNo].Address = MAX_ADDRESS(LoadedCheatTable[CheatNo].CpuNo);
 				else
@@ -1065,7 +1065,7 @@ void EditCheat(int CheatNo)
 		  		sprintf(str2[2], pAddrTemplate(LoadedCheatTable[CheatNo].CpuNo),
 		  			LoadedCheatTable[CheatNo].Address);
 		  		break;
-		  	case 3:	// Data
+		  	case 3:	/* Data*/
 				if (LoadedCheatTable[CheatNo].Data == 0)
 					LoadedCheatTable[CheatNo].Data = 0xFF;
 				else
@@ -1073,7 +1073,7 @@ void EditCheat(int CheatNo)
 
 				sprintf(str2[3], "Value:    %03d  (0x%02X)", LoadedCheatTable[CheatNo].Data, LoadedCheatTable[CheatNo].Data);
 				break;
-			case 4:	// Special
+			case 4:	/* Special*/
 				if (LoadedCheatTable[CheatNo].Special <= 0)
 					LoadedCheatTable[CheatNo].Special = TOTAL_CHEAT_TYPES;
 				else
@@ -1088,7 +1088,7 @@ void EditCheat(int CheatNo)
       case OSD_KEY_RIGHT:	/* JB 980424 */
       	switch (s - FirstEditableItem)
       	{
-      		case 0:	// Name
+      		case 0:	/* Name*/
 				CurrentName ++;
 				if (CheatNameList[CurrentName][0] == 0)
 					CurrentName = 0;
@@ -1097,27 +1097,27 @@ void EditCheat(int CheatNo)
 				for(i=dt[FirstEditableItem].y; i< ( dt[FirstEditableItem].y + iFontHeight + 1); i++)
 					memset(Machine->scrbitmap->line[i],0,Machine->uiwidth);
 				break;
-			case 1:	// CpuNo
+			case 1:	/* CpuNo*/
 				LoadedCheatTable[CheatNo].CpuNo ++;
 				if (LoadedCheatTable[CheatNo].CpuNo >= cpu_gettotalcpu())
 					LoadedCheatTable[CheatNo].CpuNo = 0;
 				sprintf(str2[1],"CPU:        %1d",LoadedCheatTable[CheatNo].CpuNo);
 				break;
-			case 2:	// Address
+			case 2:	/* Address*/
             	LoadedCheatTable[CheatNo].Address ++;
 				if (LoadedCheatTable[CheatNo].Address > MAX_ADDRESS(LoadedCheatTable[CheatNo].CpuNo))
 					LoadedCheatTable[CheatNo].Address = 0;
 				sprintf (str2[2], pAddrTemplate(LoadedCheatTable[CheatNo].CpuNo),
 					LoadedCheatTable[CheatNo].Address);
 				break;
-			case 3:	// Data
+			case 3:	/* Data*/
 				if(LoadedCheatTable[CheatNo].Data == 0xFF)
 					LoadedCheatTable[CheatNo].Data = 0;
 				else
 					LoadedCheatTable[CheatNo].Data ++;
 				sprintf(str2[3],"Value:    %03d  (0x%02X)",LoadedCheatTable[CheatNo].Data,LoadedCheatTable[CheatNo].Data);
 				break;
-			case 4: // Special
+			case 4: /* Special*/
 				LoadedCheatTable[CheatNo].Special ++;
 				if(LoadedCheatTable[CheatNo].Special > TOTAL_CHEAT_TYPES)
 					LoadedCheatTable[CheatNo].Special = 0;
@@ -1138,14 +1138,14 @@ void EditCheat(int CheatNo)
 		  /* these keys only apply to the address line */
 		  if (s == 2+FirstEditableItem)
 	      {
-	      		int addr = LoadedCheatTable[CheatNo].Address;	// copy address
-	      		int digit = (OSD_KEY_6 - key);	// if key is OSD_KEY_6, digit = 0
+	      		int addr = LoadedCheatTable[CheatNo].Address;	/* copy address*/
+	      		int digit = (OSD_KEY_6 - key);	/* if key is OSD_KEY_6, digit = 0*/
 	      		int mask;
 
 	      		/* adjust digit based on cpu address range */
 	      		digit -= (6 - ADDRESS_BITS(LoadedCheatTable[CheatNo].CpuNo) / 4);
 
-	      		mask = 0xF << (digit * 4);	// if digit is 1, mask = 0xf0
+	      		mask = 0xF << (digit * 4);	/* if digit is 1, mask = 0xf0*/
 
 	      		if ((addr & mask) == mask)
 	      			/* wrap hex digit around to 0 if necessary */
@@ -1397,7 +1397,7 @@ End of list
         else{
           s = total - 1;
 /* JRT5 Fixes Blank List When <UP> Hit With Exactly 10 Entries */
-//          if(LoadedCheatTotal < 10)
+/*          if(LoadedCheatTotal < 10)*/
           if(LoadedCheatTotal <= 10)
 /* JRT5 */
             break;
@@ -1405,7 +1405,7 @@ End of list
 /* Top of the list, page up */
           if(Index == 0)
 /* JRT5 Fixes Blank List When <UP> Hit With Exactly 10 Entries */
-//            Index = (LoadedCheatTotal/10)*10;
+/*            Index = (LoadedCheatTotal/10)*10;*/
             Index = ( LoadedCheatTotal - 1 );
 /* JRT5 */
           else if(Index > 10)
@@ -1507,8 +1507,8 @@ End of list
       case OSD_KEY_F3:
 /* Edit current cheat */
 /* JRT6 */
-		if( LoadedCheatTotal )								// If At Least One Cheat
-			EditCheat(s+Index);								// Edit It
+		if( LoadedCheatTotal )								/* If At Least One Cheat*/
+			EditCheat(s+Index);								/* Edit It*/
         break;
 /* JRT6 */
 
@@ -1784,7 +1784,7 @@ void StartCheat(void)
             break;
 
           case 6:
-            StartSearchHelp();								// Show Help
+            StartSearchHelp();								/* Show Help*/
 						break;
 
           case 8:
@@ -2156,7 +2156,7 @@ void ContinueCheat(void)
 
 /* Backup the ram because we ask how much the value changed since the last
    time, not in relation of the start value */
-    //memcpy (BackupRam, Machine->memory_region[0], ram_size);
+    /*memcpy (BackupRam, Machine->memory_region[0], ram_size);*/
 	backup_ram (BackupRam);	/* JB 980407 */
   }
 
@@ -2317,7 +2317,7 @@ void ContinueCheat(void)
 
 	/* Backup the ram because we ask how much the value changed since the last
 	   time, not in relation of the start value */
-	//memcpy (BackupRam, Machine->memory_region[0], ram_size);
+	/*memcpy (BackupRam, Machine->memory_region[0], ram_size);*/
 	backup_ram (BackupRam);	/* JB 980407 */
 
   }
@@ -2898,7 +2898,7 @@ void ContinueCheat(void)
         LoadedCheatTable[LoadedCheatTotal].Count = 0;
         sscanf(dt[s].text,"%X",&i);
         LoadedCheatTable[LoadedCheatTotal].Address = i;
-        //LoadedCheatTable[LoadedCheatTotal].Data = StartRam[i];
+        /*LoadedCheatTable[LoadedCheatTotal].Data = StartRam[i];*/
         LoadedCheatTable[LoadedCheatTotal].Data = RD_STARTRAM(i); /* JB 980407 */
         strcpy(LoadedCheatTable[LoadedCheatTotal].Name,dt[s].text);
         LoadedCheatTotal++;
@@ -2959,32 +2959,32 @@ void ChooseWatch(void)
   osd_clearbitmap(Machine->scrbitmap);
 
 /* JRT1 10-23-97 BEGIN */
-  //
-  // Add Menu Text To DisplayText Array
-  //
+  /**/
+  /* Add Menu Text To DisplayText Array*/
+  /**/
   for( i = 0; i < 8; i++ )
   {
-    if( i )                       // If Not First One
-      dt[ i ].y = ( dt[ i - 1 ].y + iFontHeight + 2 );  // Increment From Last One
-    else                          // If First One
-      dt[ i ].y = 35;                 // Set To Static Value
-    dt[ i ].color = DT_COLOR_WHITE;           // Draw As White
-    dt[ i ].text = paDisplayText[ i ];          // Assign String
+    if( i )                       /* If Not First One*/
+      dt[ i ].y = ( dt[ i - 1 ].y + iFontHeight + 2 );  /* Increment From Last One*/
+    else                          /* If First One*/
+      dt[ i ].y = 35;                 /* Set To Static Value*/
+    dt[ i ].color = DT_COLOR_WHITE;           /* Draw As White*/
+    dt[ i ].text = paDisplayText[ i ];          /* Assign String*/
     dt[i].x = (Machine->uiwidth - Machine->uifont->width * strlen(dt[i].text)) / 2;
     if(dt[i].x > Machine->uiwidth)
       dt[i].x = 0;
   }
-  y = ( dt[ 7 ].y + ( 3 * iFontHeight ) );          // Calculate Watch Start
-  total = 8;                        // Start Of Watch DT Locations
+  y = ( dt[ 7 ].y + ( 3 * iFontHeight ) );          /* Calculate Watch Start*/
+  total = 8;                        /* Start Of Watch DT Locations*/
 /* JRT1 10-23-97 END */
 
   for (i=0;i<10;i++){
 
 /* JRT1 10-23-97 BEGIN */
 /* JRT6/JB - modified JB 980424 */
-	sprintf(str2[ i ], pShortAddrTemplate(0), Watches[i]);		// Use Loop Index, Not "total"
+	sprintf(str2[ i ], pShortAddrTemplate(0), Watches[i]);		/* Use Loop Index, Not "total"*/
 /* JRT6/JB */
-	dt[total].text = str2[ i ];								// Use Loop Index, Not "total"
+	dt[total].text = str2[ i ];								/* Use Loop Index, Not "total"*/
 /* JRT1 10-23-97 END */
 
     dt[total].x = (Machine->uiwidth - Machine->uifont->width * 5) / 2;
@@ -2998,8 +2998,8 @@ void ChooseWatch(void)
   dt[total].text = 0; /* terminate array */
 
 /* JRT1 10-23-97 BEGIN */
-  s = 8;                          // Start Of Watch DT Locations
-  iSelectedWatch = ( s - 8 );               // Init First Selected Watch
+  s = 8;                          /* Start Of Watch DT Locations*/
+  iSelectedWatch = ( s - 8 );               /* Init First Selected Watch*/
 /* JRT1 10-23-97 END */
 
   done = 0;
@@ -3011,26 +3011,26 @@ void ChooseWatch(void)
 /* JRT6/JB - modified JB 980424 */
       if (Watches[i] != MAX_ADDRESS(0)){
 /* JRT6/JB */
-        //sprintf(buf2,"%02X ",Machine->memory_region[0][Watches[i]]);
+        /*sprintf(buf2,"%02X ",Machine->memory_region[0][Watches[i]]);*/
         sprintf (buf2, "%02X ", RD_GAMERAM(0,Watches[i]));	/* JB 980407 */
         strcat(buf,buf2);
       }
 
 /* JRT1 10-23-97 BEGIN */
-  //
-  // Clear Old Watch Space
-  //
+  /**/
+  /* Clear Old Watch Space*/
+  /**/
   for( i = ( WatchY ? WatchY - 1 : WatchY );
-     i < ( WatchY + iFontHeight + 1 ); i++ )      // For Watch Area
+     i < ( WatchY + iFontHeight + 1 ); i++ )      /* For Watch Area*/
   {
     memset( Machine -> scrbitmap -> line[ i ], 0,
-    Machine -> scrbitmap -> width );      // Clear Old Drawing
+    Machine -> scrbitmap -> width );      /* Clear Old Drawing*/
   }
     while( WatchX >= ( Machine->uiwidth -
-        ( iFontWidth * (int)strlen( buf ) ) ) )   // If Going To Draw OffScreen
+        ( iFontWidth * (int)strlen( buf ) ) ) )   /* If Going To Draw OffScreen*/
   {
-    if( !WatchX-- )                   // Adjust Drawing X Offset
-      break;                      // Stop If Too Small
+    if( !WatchX-- )                   /* Adjust Drawing X Offset*/
+      break;                      /* Stop If Too Small*/
   }
 /* JRT1 10-23-97 END */
 
@@ -3038,7 +3038,7 @@ void ChooseWatch(void)
     drawgfx(Machine->scrbitmap,Machine->uifont,buf[i],DT_COLOR_WHITE,0,0,WatchX+(i*Machine->uifont->width),WatchY,0,TRANSPARENCY_NONE,0);
 
 /* JRT1 10-23-97 BEGIN */
-    for (i = 8;i < total;i++)               // New Watch Start Location
+    for (i = 8;i < total;i++)               /* New Watch Start Location*/
       dt[i].color = (i == s) ? DT_COLOR_YELLOW : DT_COLOR_WHITE;
 /* JRT1 10-23-97 END */
 
@@ -3052,7 +3052,7 @@ void ChooseWatch(void)
         if (s < total - 1) s++;
         else s = 8;
 /* JRT1 10-23-97 BEGIN */
-		    iSelectedWatch = ( s - 8 );             // Calculate Selected Watch
+		    iSelectedWatch = ( s - 8 );             /* Calculate Selected Watch*/
 /* JRT1 10-23-97 END */
         break;
 
@@ -3060,7 +3060,7 @@ void ChooseWatch(void)
         if (s > 8) s--;
         else s = total - 1;
 /* JRT1 10-23-97 BEGIN */
-		    iSelectedWatch = ( s - 8 );             // Calculate Selected Watch
+		    iSelectedWatch = ( s - 8 );             /* Calculate Selected Watch*/
 /* JRT1 10-23-97 END */
         break;
 
@@ -3075,7 +3075,7 @@ void ChooseWatch(void)
 /* JRT1 10-23-97 END */
           WatchX++;
         break;
-      case OSD_KEY_K:                   // (Minus Extra One)
+      case OSD_KEY_K:                   /* (Minus Extra One)*/
 /* JRT1 10-23-97 BEGIN */
         if(WatchY <= (Machine->uiheight-Machine->uifont->height) - 1 )
 /* JRT1 10-23-97 END */
@@ -3086,7 +3086,7 @@ void ChooseWatch(void)
           WatchY--;
         break;
 
-/* JRT1 10-23-97 BEGIN */                 // Use iSelectedWatch As Watch Indexes
+/* JRT1 10-23-97 BEGIN */                 /* Use iSelectedWatch As Watch Indexes*/
 /* JRT6 : Begin Mass Changes By JB and JRT - modified JB 980424 */
       case OSD_KEY_MINUS_PAD:
       case OSD_KEY_LEFT:
@@ -3131,14 +3131,14 @@ void ChooseWatch(void)
       case OSD_KEY_2:
       case OSD_KEY_1:
 	      {
-	      		int addr = Watches[ iSelectedWatch ];	// copy address
-	      		int digit = (OSD_KEY_6 - key);	// if key is OSD_KEY_6, digit = 0
+	      		int addr = Watches[ iSelectedWatch ];	/* copy address*/
+	      		int digit = (OSD_KEY_6 - key);	/* if key is OSD_KEY_6, digit = 0*/
 	      		int mask;
 
 	      		/* adjust digit based on cpu address range */
 	      		digit -= (6 - ADDRESS_BITS(0) / 4);
 
-	      		mask = 0xF << (digit * 4);	// if digit is 1, mask = 0xf0
+	      		mask = 0xF << (digit * 4);	/* if digit is 1, mask = 0xf0*/
 
 	      		if ((addr & mask) == mask)
 	      			/* wrap hex digit around to 0 if necessary */
@@ -3158,7 +3158,7 @@ void ChooseWatch(void)
         break;
 
       case OSD_KEY_ENTER:
-        if(s == 8)                      // Start Of Watch DT Locations
+        if(s == 8)                      /* Start Of Watch DT Locations*/
           break;
         Watches[ iSelectedWatch ] = Watches[ iSelectedWatch - 1];
         sprintf (str2[ iSelectedWatch ], pShortAddrTemplate(0), Watches[ iSelectedWatch ]);
@@ -3210,7 +3210,7 @@ int cheat_menu(void)
     dt[i].x = (Machine->uiwidth - Machine->uifont->width * strlen(dt[i].text)) / 2;
     if(dt[i].x > Machine->uiwidth)
       dt[i].x = 0;
-    dt[i].y = i * ( Machine->uifont->height + 2 );//4*Machine->uifont->height;
+    dt[i].y = i * ( Machine->uifont->height + 2 );/*4*Machine->uifont->height;*/
     if (i == total-1) dt[i].y += Machine->uifont->height;
   }
 
@@ -3322,16 +3322,16 @@ static void ShowHelp (struct DisplayText *dt)
 		if (dt->text[0] == '@')
 		{
 			dt->color = DT_COLOR_YELLOW;
-			dt->text++;						// skip '@'
+			dt->text++;						/* skip '@'*/
 		}
 		else
 			dt->color = DT_COLOR_WHITE;
 		dt++;
 	}
-	osd_clearbitmap (Machine->scrbitmap);	// Clear Screen
-	displaytext (text, 0);					// Draw Help Text
-	osd_read_key ();						// Wait For A Key
-	osd_clearbitmap (Machine->scrbitmap);	// Clear Screen Again
+	osd_clearbitmap (Machine->scrbitmap);	/* Clear Screen*/
+	displaytext (text, 0);					/* Draw Help Text*/
+	osd_read_key ();						/* Wait For A Key*/
+	osd_clearbitmap (Machine->scrbitmap);	/* Clear Screen Again*/
 }
 
 /* JB 980505 */
@@ -3339,34 +3339,34 @@ void CheatListHelp (void)
 {
 	struct DisplayText	dtHelpText[] =
 	{
-		{ "@       Cheat List Help" },		// Header
-		{ "" },								// Space
-		{ "" },								// Space
-		{ "@Delete:" },						// Delete Cheat Info
+		{ "@       Cheat List Help" },		/* Header*/
+		{ "" },								/* Space*/
+		{ "" },								/* Space*/
+		{ "@Delete:" },						/* Delete Cheat Info*/
 		{ "  Delete the selected Cheat" },
 		{ "  from the Cheat List." },
 		{ "  (Not from the Cheat File!)" },
 		{ "" },
-		{ "@Add:" }, 						// Add Cheat Info
+		{ "@Add:" }, 						/* Add Cheat Info*/
 		{ "  Add a new (blank) Cheat to" },
 		{ "  the Cheat List." },
 		{ "" },
-		{ "@Save:" },						// Save Cheat Info
+		{ "@Save:" },						/* Save Cheat Info*/
 		{ "  Save the selected Cheat in" },
 		{ "  the Cheat File." },
 		{ "" },
-		{ "@Watch:" },						// Address Watcher Info
+		{ "@Watch:" },						/* Address Watcher Info*/
 		{ "  Activate a Memory Watcher" },
 		{ "  at the address that the" },
 		{ "  selected Cheat modifies." },
 		{ "" },
-		{ "@Edit:" },						// Edit Cheat Info
+		{ "@Edit:" },						/* Edit Cheat Info*/
 		{ "  Edit the Properties of the" },
 		{ "  selected Cheat." },
 		{ "" },
 		{ "" },
-		{ "@ Press any key to return..." },	// Return Prompt
-		{ 0 }								// End Of Text
+		{ "@ Press any key to return..." },	/* Return Prompt*/
+		{ 0 }								/* End Of Text*/
 	};
 
 	ShowHelp (dtHelpText);
@@ -3377,14 +3377,14 @@ void StartSearchHelp (void)
 {
 	struct DisplayText dtHelpText[] =
 	{
-		{ "@   Cheat Search Help 1" },		// Header
-		{ "" },								// Space
-		{ "" },								// Space
-		{ "@Lives Or Some Other Value:" },	// Lives/# Search Info
+		{ "@   Cheat Search Help 1" },		/* Header*/
+		{ "" },								/* Space*/
+		{ "" },								/* Space*/
+		{ "@Lives Or Some Other Value:" },	/* Lives/# Search Info*/
 		{ " Searches for a specific" },
 		{ " value that you specify." },
 		{ "" },
-		{ "@Timers:" }, 					// Timers Search Info
+		{ "@Timers:" }, 					/* Timers Search Info*/
 		{ " Starts by storing all of" },
 		{ " the game's memory, and then" },
 		{ " looking for values that" },
@@ -3393,7 +3393,7 @@ void StartSearchHelp (void)
 		{ " was stored when the search" },
 		{ " was started or continued." },
 		{ "" },
-		{ "@Energy:" },						// Energy Search Info
+		{ "@Energy:" },						/* Energy Search Info*/
 		{ " Similar to Timers. Searches" },
 		{ " for values that are Greater" },
 		{ " than, Less than, or Equal" },
@@ -3402,22 +3402,22 @@ void StartSearchHelp (void)
 		{ " continued." },
 		{ "" },
 		{ "" },
-		{ "@Press any key to continue..." },// Continue Prompt
-		{ 0 }								// End Of Text
+		{ "@Press any key to continue..." },/* Continue Prompt*/
+		{ 0 }								/* End Of Text*/
 	};
 
 	struct DisplayText dtHelpText2[] =
 	{
-		{ "@   Cheat Search Help 2" },		// Header
-		{ "" },								// Space
-		{ "" },								// Space
-		{ "@Status:" },						// Status Search Info
+		{ "@   Cheat Search Help 2" },		/* Header*/
+		{ "" },								/* Space*/
+		{ "" },								/* Space*/
+		{ "@Status:" },						/* Status Search Info*/
 		{ " Searches for a Bit or Flag" },
 		{ " that may or may not have" },
 		{ " toggled its value since" },
 		{ " the search was started." },
 		{ "" },
-		{ "@Slow But Sure:" },				// SBS Search Info
+		{ "@Slow But Sure:" },				/* SBS Search Info*/
 		{ " This search stores all of" },
 		{ " the game's memory, and then" },
 		{ " looks for values that are" },
@@ -3426,7 +3426,7 @@ void StartSearchHelp (void)
 		{ " the search was started." },
 		{ "" },
 		{ "" },
-		{ "@ Press any key to return..." },	// Return Prompt
+		{ "@ Press any key to return..." },	/* Return Prompt*/
 		{ 0 }
 	};
 
@@ -3439,10 +3439,10 @@ void EditCheatHelp (void)
 {
 	struct DisplayText	dtHelpText[] =
 	{
-		{ "@     Edit Cheat Help 1" },		// Header
-		{ "" },								// Space
-		{ "" },								// Space
-		{ "@Name:" },						// Cheat Name Info
+		{ "@     Edit Cheat Help 1" },		/* Header*/
+		{ "" },								/* Space*/
+		{ "" },								/* Space*/
+		{ "@Name:" },						/* Cheat Name Info*/
 		{ " Displays the Name of this" },
 		{ " Cheat. It can be edited by" },
 		{ " hitting <ENTER> while it is" },
@@ -3453,37 +3453,37 @@ void EditCheatHelp (void)
 		{ " only one character at a" },
 		{ " time!" },
 		{ "" },
-		{ "@CPU:" }, 						// Cheat CPU Info
+		{ "@CPU:" }, 						/* Cheat CPU Info*/
 		{ " Specifies the CPU (memory" },
 		{ " region) that gets affected." },
 		{ "" },
-		{ "@Address:" },					// Cheat Address Info
+		{ "@Address:" },					/* Cheat Address Info*/
 		{ " The Address of the location" },
 		{ " in memory that gets set to" },
 		{ " the new value." },
 		{ "" },
 		{ "" },
-		{ "@Press any key to continue..." },// Continue Prompt
-		{ 0 }								// End Of Text
+		{ "@Press any key to continue..." },/* Continue Prompt*/
+		{ 0 }								/* End Of Text*/
 	};
 
 	struct DisplayText	dtHelpText2[] =
 	{
-		{ "@     Edit Cheat Help 2" },		// Header
-		{ "" },								// Space
-		{ "" },								// Space
-		{ "@Value:" },						// Cheat Value Info
+		{ "@     Edit Cheat Help 2" },		/* Header*/
+		{ "" },								/* Space*/
+		{ "" },								/* Space*/
+		{ "@Value:" },						/* Cheat Value Info*/
 		{ " The new value that gets" },
 		{ " placed into the specified" },
 		{ " Address while the Cheat is" },
 		{ " active." },
 		{ "" },
-		{ "@Type:" },						// Cheat Type Info
+		{ "@Type:" },						/* Cheat Type Info*/
 		{ " Specifies how the Cheat" },
 		{ " will actually work. See the" },
 		{ " CHEAT.DOC file for details." },
 		{ "" },
-		{ "@Notes:" },						// Extra Notes
+		{ "@Notes:" },						/* Extra Notes*/
 		{ " Use the Right and Left" },
 		{ " arrow keys to increment and" },
 		{ " decrement values, or to" },
@@ -3495,7 +3495,7 @@ void EditCheatHelp (void)
 		{ " value." },
 		{ "" },
 		{ "" },
-		{ "@ Press any key to return..." },	// Return Prompt
+		{ "@ Press any key to return..." },	/* Return Prompt*/
 		{ 0 }
 	};
 

@@ -202,7 +202,7 @@ static char interp_coeff[8] = {
 };
 
 
-//////////////////////////////////////////////////////////
+/* //////////////////////////////////////////////////////// */
 
 /* check sample file */
 static int check_samplefile(int num)
@@ -331,16 +331,16 @@ static void vlm5030_process(unsigned char *buffer, int size)
 					/* is this a zero energy frame? */
 					if (current_energy == 0)
 					{
-						//printf("processing frame: zero energy\n");
+						/*printf("processing frame: zero energy\n");*/
 						target_energy = 0;
 						target_pitch = current_pitch;
 						memcpy( target_k , current_k , sizeof(target_k) );
 					}
 					else
 					{
-						//printf("processing frame: Normal\n");
-						//printf("*** Energy = %d\n",current_energy);
-						//printf("proc: %d %d\n",last_fbuf_head,fbuf_head);
+						/*printf("processing frame: Normal\n");*/
+						/*printf("*** Energy = %d\n",current_energy);*/
+						/*printf("proc: %d %d\n",last_fbuf_head,fbuf_head);*/
 						target_energy = new_energy;
 						target_pitch = new_pitch;
 						memcpy( target_k , new_k , sizeof(target_k) );
@@ -348,13 +348,13 @@ static void vlm5030_process(unsigned char *buffer, int size)
 				}
 				/* next interpolator */
 				/* Update values based on step values */
-				//printf("\n");
+				/*printf("\n");*/
 				interp_effect = (int)(interp_coeff[FR_SIZE - (interp_count%FR_SIZE)]);
 
 				current_energy += (target_energy - current_energy) / interp_effect;
 				if (old_pitch != 0)
 					current_pitch += (target_pitch - current_pitch) / interp_effect;
-				//printf("*** Energy = %d\n",current_energy);
+				/*printf("*** Energy = %d\n",current_energy);*/
 				current_k[0] += (target_k[0] - current_k[0]) / interp_effect;
 				current_k[1] += (target_k[1] - current_k[1]) / interp_effect;
 				current_k[2] += (target_k[2] - current_k[2]) / interp_effect;
@@ -429,7 +429,7 @@ static void vlm5030_process(unsigned char *buffer, int size)
 			/* size */
 			size--;
 		}
-//		return;
+/*		return;*/
 	}
 	/* stop phase */
 phase_stop:
@@ -502,7 +502,7 @@ int VLM5030_BSY(void)
 void VLM5030_data_w(int offset,int data)
 {
 	latch_data = data;
-};
+}
 
 /* set RST pin level : reset / set table address A8-A15 */
 void VLM5030_RST (int pin )
@@ -631,7 +631,7 @@ void VLM5030_sh_update( void )
 		if (sample_pos < buffer_len)
 			vlm5030_process (buffer + sample_pos, buffer_len - sample_pos);
 		sample_pos = 0;
-		osd_play_streamed_sample(channel,buffer,buffer_len,emulation_rate,intf->volume);
+		osd_play_streamed_sample(channel,(signed char *)buffer,buffer_len,emulation_rate,intf->volume);
 	}
 }
 

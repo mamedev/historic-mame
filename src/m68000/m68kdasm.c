@@ -208,9 +208,10 @@ static char *MakeRevRegList (char *p, unsigned short pm)
 
 int Dasm68000 (unsigned char *pBase, char *buffer, int pc)
 {
-	unsigned char *ea, *ea2, *p = pBase;
+	unsigned char *p = pBase;
 	unsigned short op, lo, rhi, rlo;
 	unsigned long pm;
+	char *ea, *ea2;
 	int count;
 
 	PARAM_WORD(op);

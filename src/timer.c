@@ -400,7 +400,7 @@ double timer_timeleft (void *which)
 /*
  *		return the current time
  */
-double timer_gettime (void)
+double timer_get_time (void)
 {
 	return getabsolutetime ();
 }

@@ -10,7 +10,7 @@ DEFS   = -DX86_ASM -DLSB_FIRST -DSIGNED_SAMPLES -DBETA_VERSION
 CFLAGS = -Isrc -Isrc/msdos -fomit-frame-pointer -O3 -mpentium -Werror -Wall \
 	-W -Wno-sign-compare -Wno-unused \
 	-Wpointer-arith -Wbad-function-cast -Wcast-align -Waggregate-return \
-        -Wstrict-prototypes
+	-Wstrict-prototypes
 #	-pedantic \
 #	-Wredundant-decls \
 #	-Wlarger-than-27648 \
@@ -110,7 +110,7 @@ OBJS   = obj/mame.o obj/common.o obj/usrintrf.o obj/driver.o \
          obj/vidhrdw/matmania.o obj/drivers/matmania.o \
          obj/vidhrdw/tutankhm.o obj/drivers/tutankhm.o \
          obj/drivers/junofrst.o \
-         obj/machine/spacefb.o obj/vidhrdw/spacefb.o obj/drivers/spacefb.o \
+         obj/machine/spacefb.o obj/vidhrdw/spacefb.o obj/sndhrdw/spacefb.o obj/drivers/spacefb.o \
          obj/machine/mappy.o obj/vidhrdw/mappy.o obj/drivers/mappy.o \
          obj/vidhrdw/ccastles.o obj/drivers/ccastles.o \
          obj/vidhrdw/yiear.o obj/sndhrdw/yiear.o obj/drivers/yiear.o \
@@ -149,7 +149,7 @@ OBJS   = obj/mame.o obj/common.o obj/usrintrf.o obj/driver.o \
          obj/machine/cloak.o obj/vidhrdw/cloak.o obj/drivers/cloak.o \
          obj/machine/lwings.o obj/vidhrdw/lwings.o obj/drivers/lwings.o \
          obj/machine/berzerk.o obj/vidhrdw/berzerk.o obj/sndhrdw/berzerk.o obj/drivers/berzerk.o \
-         obj/machine/capbowl.o obj/vidhrdw/capbowl.o obj/drivers/capbowl.o \
+         obj/machine/capbowl.o obj/vidhrdw/capbowl.o obj/vidhrdw/tms34061.o obj/drivers/capbowl.o \
          obj/vidhrdw/1943.o obj/drivers/1943.o \
          obj/vidhrdw/gunsmoke.o obj/drivers/gunsmoke.o \
          obj/vidhrdw/blktiger.o obj/drivers/blktiger.o \
@@ -212,6 +212,7 @@ OBJS   = obj/mame.o obj/common.o obj/usrintrf.o obj/driver.o \
          obj/vidhrdw/wc90b.o obj/drivers/wc90b.o \
          obj/drivers/twincobr.o \
          obj/machine/dec0.o obj/vidhrdw/dec0.o obj/drivers/dec0.o \
+         obj/vidhrdw/dec8.o obj/drivers/dec8.o \
          obj/vidhrdw/karnov.o obj/drivers/karnov.o \
          obj/machine/toobin.o obj/vidhrdw/toobin.o obj/drivers/toobin.o \
          obj/vidhrdw/tigeroad.o obj/drivers/tigeroad.o \
@@ -223,7 +224,6 @@ OBJS   = obj/mame.o obj/common.o obj/usrintrf.o obj/driver.o \
          obj/vidhrdw/pacland.o obj/drivers/pacland.o \
          obj/vidhrdw/tmnt.o obj/drivers/tmnt.o \
          obj/vidhrdw/sidepckt.o obj/drivers/sidepckt.o \
-         obj/vidhrdw/zarzon.o obj/drivers/zarzon.o \
          obj/vidhrdw/xain.o obj/drivers/xain.o \
          obj/machine/slapfght.o obj/vidhrdw/slapfght.o obj/drivers/slapfght.o \
          obj/vidhrdw/hexa.o obj/drivers/hexa.o \
@@ -237,6 +237,10 @@ OBJS   = obj/mame.o obj/common.o obj/usrintrf.o obj/driver.o \
          obj/vidhrdw/crbaloon.o obj/drivers/crbaloon.o \
          obj/vidhrdw/zaccaria.o obj/drivers/zaccaria.o \
          obj/vidhrdw/ssi.o obj/drivers/ssi.o \
+         obj/vidhrdw/nemesis.o obj/drivers/nemesis.o \
+         obj/vidhrdw/cosmica.o obj/drivers/cosmica.o \
+         obj/machine/spiders.o obj/vidhrdw/crtc6845.o obj/vidhrdw/spiders.o obj/drivers/spiders.o \
+         obj/vidhrdw/lastduel.o obj/drivers/lastduel.o \
          obj/Z80/Z80.o obj/M6502/M6502.o obj/I86/I86.o obj/I8039/I8039.o obj/I8085/I8085.o \
 		 obj/M6809/m6809.o obj/M6808/m6808.o obj/M6805/m6805.o \
          obj/T11/t11.o \

@@ -1,3 +1,24 @@
+/***************************************************************************
+
+GAME PLAN driver, used for games like MegaTack, Killer Comet, Kaos, Challenger
+
+Modifications by Santeri Saarimaa:
+
+3/6/1998: - CPU #2 is only for audio in all four games, added | CPU_AUDIO_CPU
+          - A little louder sounds
+          - Fixed MegaTack dip switches & input ports
+          - Fixed Killer Comet dip switches & input ports
+          - Fixed Challenger dip switches & input ports + coin slots
+          - Added hi-score saving/loading for Challenger
+          - Added hi-score saving/loading for MegaTack
+          - Added hi-score saving/loading for Killer Comet
+
+TO-DO: - Fix the input ports/dip switches of Kaos?
+       - Graphics are still somewhat scrambled sometimes (just look at
+         the tests with f2/f1)
+
+****************************************************************************/
+
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
@@ -278,7 +299,6 @@ INPUT_PORTS_START( kaos_input_ports )
 	PORT_DIPNAME(0x80, 0x80, "Cabinet", IP_KEY_NONE )
 	PORT_DIPSETTING(   0x80, "Upright" )
 	PORT_DIPSETTING(   0x00, "Cocktail" )
-
 INPUT_PORTS_END
 
 
@@ -309,11 +329,11 @@ INPUT_PORTS_START( killcom_input_ports )
 	PORT_START      /* IN2 - from "TEST NO.8 - status locator - player no.1" */
 	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER1,
 			  "P1 Hyperspace", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
-	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1,
+    PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1,
 			  "P1 Fire Up", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
-	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1,
+    PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1,
 			  "P1 Fire Right", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
-	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1,
+    PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1,
 			  "P1 Fire Left", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
 	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER1,
 			  "P1 Move Left", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
@@ -327,11 +347,11 @@ INPUT_PORTS_START( killcom_input_ports )
 	PORT_START      /* IN3 - from "TEST NO.8 - status locator - player no.2" */
 	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER2,
 			  "P2 Hyperspace", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
-	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2,
+    PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2,
 			  "P2 Fire Up", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
-	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2,
+    PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2,
 			  "P2 Fire Right", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
-	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2,
+    PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2,
 			  "P2 Fire Left", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
 	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER2,
 			  "P2 Move Left", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
@@ -342,29 +362,17 @@ INPUT_PORTS_START( killcom_input_ports )
 	PORT_BITX(0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER2,
 			  "P2 Move Up", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
 
-	PORT_START      /* IN4 - from "TEST NO.6 - dip switch A" */
+    PORT_START      /* IN4 - from "TEST NO.6 - dip switch A" */
 
-	PORT_DIPNAME(0x03, 0x03, "Coinage", IP_KEY_NONE )
-	PORT_DIPSETTING(   0x01, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(   0x02, "3 Coins/2 Credits" )
-	PORT_DIPSETTING(   0x03, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(   0x00, "Free Play" )
+    PORT_DIPNAME(0x03, 0x03, "Coinage 1p/2p", IP_KEY_NONE )
+    PORT_DIPSETTING(   0x00, "Free Play" )
+    PORT_DIPSETTING(   0x03, "1 Credit/2 Credits" )
+    PORT_DIPSETTING(   0x02, "2 Credits/3 Credits" )
+    PORT_DIPSETTING(   0x01, "2 Credits/4 Credits" )
 
-	PORT_DIPNAME(0x04, 0x04, "Dip A 3", IP_KEY_NONE )
-	PORT_DIPSETTING(   0x04, "Off" )
-	PORT_DIPSETTING(   0x00, "On" )
-
-	PORT_DIPNAME(0x08, 0x00, "Lives", IP_KEY_NONE )
+    PORT_DIPNAME(0x08, 0x08, "Lives", IP_KEY_NONE )
 	PORT_DIPSETTING(   0x00, "4" )
 	PORT_DIPSETTING(   0x08, "5" )
-
-	PORT_DIPNAME(0x10, 0x10, "Dip A 5", IP_KEY_NONE )
-	PORT_DIPSETTING(   0x10, "Off" )
-	PORT_DIPSETTING(   0x00, "On" )
-
-	PORT_DIPNAME(0x20, 0x20, "Dip A 6", IP_KEY_NONE )
-	PORT_DIPSETTING(   0x20, "Off" )
-	PORT_DIPSETTING(   0x00, "On" )
 
 	PORT_DIPNAME(0xc0, 0xc0, "Reaction", IP_KEY_NONE )
 	PORT_DIPSETTING(   0xc0, "Slowest" )
@@ -374,31 +382,7 @@ INPUT_PORTS_START( killcom_input_ports )
 
 	PORT_START      /* IN5 - from "TEST NO.6 - dip switch B" */
 
-	PORT_DIPNAME(0x01, 0x01, "Dip B 1", IP_KEY_NONE )
-	PORT_DIPSETTING(   0x01, "Off" )
-	PORT_DIPSETTING(   0x00, "On" )
-
-	PORT_DIPNAME(0x02, 0x02, "Dip B 2", IP_KEY_NONE )
-	PORT_DIPSETTING(   0x02, "Off" )
-	PORT_DIPSETTING(   0x00, "On" )
-
-	PORT_DIPNAME(0x04, 0x04, "Dip B 3", IP_KEY_NONE )
-	PORT_DIPSETTING(   0x04, "Off" )
-	PORT_DIPSETTING(   0x00, "On" )
-
-	PORT_DIPNAME(0x08, 0x08, "Dip B 4", IP_KEY_NONE )
-	PORT_DIPSETTING(   0x08, "Off" )
-	PORT_DIPSETTING(   0x00, "On" )
-
-	PORT_DIPNAME(0x10, 0x10, "Dip B 5", IP_KEY_NONE )
-	PORT_DIPSETTING(   0x10, "Off" )
-	PORT_DIPSETTING(   0x00, "On" )
-
-	PORT_DIPNAME(0x20, 0x20, "Dip B 6", IP_KEY_NONE )
-	PORT_DIPSETTING(   0x20, "Off" )
-	PORT_DIPSETTING(   0x00, "On" )
-
-	PORT_DIPNAME(0x40, 0x40, "Flip Screen", IP_KEY_NONE )
+    PORT_DIPNAME(0x40, 0x40, "Flip Screen", IP_KEY_NONE )
 	PORT_DIPSETTING(   0x40, "Off" )
 	PORT_DIPSETTING(   0x00, "On" )
 
@@ -407,215 +391,196 @@ INPUT_PORTS_START( killcom_input_ports )
 	PORT_DIPSETTING(   0x00, "Cocktail" )
 INPUT_PORTS_END
 
+
 INPUT_PORTS_START( megatack_input_ports )
-        PORT_START      /* IN0 - from "TEST NO.7 - status locator - coin-door" */
-        PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* unused */
-        PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* unused */
-        PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_TILT,
-                          "Slam", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
-        PORT_BITX(0x08, IP_ACTIVE_LOW, 0,
-                          "Do Tests", OSD_KEY_F1, IP_JOY_NONE, 0)
-        PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_SERVICE,
-                          "Select Test", OSD_KEY_F2, IP_JOY_NONE, 0)
-        PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN3 )      /* coin sw. no.3 */
-        PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_COIN2 )      /* coin sw. no.2 */
-        PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_COIN1 )      /* coin sw. no.1 */
+    PORT_START      /* IN0 - from "TEST NO.7 - status locator - coin-door" */
+    PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* unused */
+    PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* unused */
+    PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_TILT,
+                      "Slam", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+    PORT_BITX(0x08, IP_ACTIVE_LOW, 0,
+                      "Do Tests", OSD_KEY_F1, IP_JOY_NONE, 0)
+    PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_SERVICE,
+                      "Select Test", OSD_KEY_F2, IP_JOY_NONE, 0)
+    PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN3 )      /* coin sw. no.3 */
+    PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_COIN2 )      /* coin sw. no.2 */
+    PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_COIN1 )      /* coin sw. no.1 */
 
-        PORT_START      /* IN1 - from "TEST NO.7 - status locator - start sws." */
-        PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )  /* unused */
-        PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )  /* unused */
-        PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )  /* unused */
-        PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )  /* unused */
-        PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )  /* unused */
-        PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )  /* 2 player start */
-        PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* unused */
-        PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )  /* 1 player start */
+    PORT_START      /* IN1 - from "TEST NO.7 - status locator - start sws." */
+    PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )  /* unused */
+    PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )  /* unused */
+    PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )  /* unused */
+    PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )  /* unused */
+    PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )  /* unused */
+    PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )  /* 2 player start */
+    PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* unused */
+    PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )  /* 1 player start */
 
-        PORT_START      /* IN2 - from "TEST NO.8 - status locator - player no.1" */
-        PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )  /* unused */
-        PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1,
-                          "P1 Fire Up", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
-        PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1,
+    PORT_START      /* IN2 - from "TEST NO.8 - status locator - player no.1" */
+    PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )  /* unused */
+    PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1,
+                      "Player 1 Fire", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+/*        PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1,
                           "P1 Fire Right", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
-        PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1,
-                          "P1 Fire Left", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+        PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1,
+                          "P1 Fire Left", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)*/
         PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER1,
-                          "P1 Move Left", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
-        PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )  /* unused */
-        PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER1,
-                          "P1 Move Right", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
-        PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )  /* unused */
+                      "Player 1 Move Left", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+    PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )  /* unused */
+    PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER1,
+                      "Player 1 Move Right", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+    PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )  /* unused */
 
-        PORT_START      /* IN3 - from "TEST NO.8 - status locator - player no.2" */
-        PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )  /* unused */
-        PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2,
-                          "P2 Fire Up", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
-        PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2,
+    PORT_START      /* IN3 - from "TEST NO.8 - status locator - player no.2" */
+    PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )  /* unused */
+    PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2,
+                      "Player 2 Fire", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+/*        PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2,
                           "P2 Fire Right", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
-        PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2,
-                          "P2 Fire Left", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
-        PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER2,
-                          "P2 Move Left", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
-        PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )  /* unused */
-        PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2,
-                          "P2 Move Right", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
-        PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )  /* unused */
+        PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2,
+                          "P2 Fire Left", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)*/
+    PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER2,
+                      "Player 2 Move Left", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+    PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )  /* unused */
+    PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2,
+                      "Player 2 Move Right", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+    PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )  /* unused */
 
-        PORT_START      /* IN4 - from "TEST NO.6 - dip switch A" */
-        PORT_DIPNAME(0x03, 0x03, "Coinage", IP_KEY_NONE )
-        PORT_DIPSETTING(   0x01, "2 Coins/1 Credit" )
-        PORT_DIPSETTING(   0x02, "3 Coins/2 Credits" )
-        PORT_DIPSETTING(   0x03, "1 Coin/1 Credit" )
-        PORT_DIPSETTING(   0x00, "Free Play" )
-        PORT_DIPNAME(0x04, 0x04, "Dip A 3", IP_KEY_NONE )
-        PORT_DIPSETTING(   0x04, "Off" )
-        PORT_DIPSETTING(   0x00, "On" )
-        PORT_DIPNAME(0x08, 0x08, "Lives", IP_KEY_NONE )
-        PORT_DIPSETTING(   0x08, "3" )
-        PORT_DIPSETTING(   0x00, "4" )
-        PORT_DIPNAME(0x10, 0x10, "Dip A 5", IP_KEY_NONE )
-        PORT_DIPSETTING(   0x10, "Off" )
-        PORT_DIPSETTING(   0x00, "On" )
-        PORT_DIPNAME(0x20, 0x20, "Dip A 6", IP_KEY_NONE )
-        PORT_DIPSETTING(   0x20, "Off" )
-        PORT_DIPSETTING(   0x00, "On" )
-        PORT_DIPNAME(0x40, 0x40, "Dip A 7", IP_KEY_NONE )
-        PORT_DIPSETTING(   0x40, "Off" )
-        PORT_DIPSETTING(   0x00, "On" )
-        PORT_DIPNAME(0x80, 0x80, "Dip A 8", IP_KEY_NONE )
-        PORT_DIPSETTING(   0x80, "Off" )
-        PORT_DIPSETTING(   0x00, "On" )
+    PORT_START      /* IN4 - from "TEST NO.6 - dip switch A" */
 
-        PORT_START      /* IN5 - from "TEST NO.6 - dip switch B" */
-        PORT_DIPNAME(0x07, 0x07, "Bonus Life", IP_KEY_NONE )
-        PORT_DIPSETTING(   0x07, "20000" )
-        PORT_DIPSETTING(   0x06, "30000" )
-        PORT_DIPSETTING(   0x05, "40000" )
-        PORT_DIPSETTING(   0x04, "50000" )
-        PORT_DIPSETTING(   0x03, "60000" )
-        PORT_DIPSETTING(   0x02, "70000" )
-        PORT_DIPSETTING(   0x01, "80000" )
-        PORT_DIPSETTING(   0x00, "90000" )
-        PORT_DIPNAME(0x08, 0x08, "Dip B 4", IP_KEY_NONE )
-        PORT_DIPSETTING(   0x08, "Off" )
-        PORT_DIPSETTING(   0x00, "On" )
-        PORT_DIPNAME(0x10, 0x10, "Monitor View", IP_KEY_NONE )
-        PORT_DIPSETTING(   0x10, "Direct" )
-        PORT_DIPSETTING(   0x00, "Mirror" )
-        PORT_DIPNAME(0x20, 0x20, "Monitor Orientation", IP_KEY_NONE )
-        PORT_DIPSETTING(   0x20, "Horizontal" )
-        PORT_DIPSETTING(   0x00, "Vertical" )
-        PORT_DIPNAME(0x40, 0x40, "Flip Screen", IP_KEY_NONE )
-        PORT_DIPSETTING(   0x40, "Off" )
-        PORT_DIPSETTING(   0x00, "On" )
-        PORT_DIPNAME(0x80, 0x80, "Cabinet", IP_KEY_NONE )
-        PORT_DIPSETTING(   0x80, "Upright" )
-        PORT_DIPSETTING(   0x00, "Cocktail" )
+    PORT_DIPNAME(0x03, 0x03, "Coinage 1p/2p", IP_KEY_NONE )
+    PORT_DIPSETTING(   0x00, "Free Play" )
+    PORT_DIPSETTING(   0x03, "1 Credit/2 Credits" )
+    PORT_DIPSETTING(   0x02, "2 Credits/3 Credits" )
+    PORT_DIPSETTING(   0x01, "2 Credits/4 Credits" )
+
+    PORT_DIPNAME(0x08, 0x08, "Lives", IP_KEY_NONE )
+    PORT_DIPSETTING(   0x08, "3" )
+    PORT_DIPSETTING(   0x00, "4" )
+
+    PORT_START      /* IN5 - from "TEST NO.6 - dip switch B" */
+
+    PORT_DIPNAME(0x07, 0x07, "Bonus Life", IP_KEY_NONE )
+    PORT_DIPSETTING(   0x07, "20000" )
+    PORT_DIPSETTING(   0x06, "30000" )
+    PORT_DIPSETTING(   0x05, "40000" )
+    PORT_DIPSETTING(   0x04, "50000" )
+    PORT_DIPSETTING(   0x03, "60000" )
+    PORT_DIPSETTING(   0x02, "70000" )
+    PORT_DIPSETTING(   0x01, "80000" )
+    PORT_DIPSETTING(   0x00, "90000" )
+
+    PORT_DIPNAME(0x10, 0x10, "Monitor View", IP_KEY_NONE )
+    PORT_DIPSETTING(   0x10, "Direct" )
+    PORT_DIPSETTING(   0x00, "Mirror" )
+
+    PORT_DIPNAME(0x20, 0x20, "Monitor Orientation", IP_KEY_NONE )
+    PORT_DIPSETTING(   0x20, "Horizontal" )
+    PORT_DIPSETTING(   0x00, "Vertical" )
+
+    PORT_DIPNAME(0x40, 0x40, "Flip Screen", IP_KEY_NONE )
+    PORT_DIPSETTING(   0x40, "Off" )
+    PORT_DIPSETTING(   0x00, "On" )
+
+    PORT_DIPNAME(0x80, 0x80, "Cabinet", IP_KEY_NONE )
+    PORT_DIPSETTING(   0x80, "Upright" )
+    PORT_DIPSETTING(   0x00, "Cocktail" )
 INPUT_PORTS_END
 
+
 INPUT_PORTS_START( challeng_input_ports )
-        PORT_START      /* IN0 - from "TEST NO.7 - status locator - coin-door" */
-        PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* unused */
-        PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* unused */
-        PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_TILT,
-                          "Slam", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
-        PORT_BITX(0x08, IP_ACTIVE_LOW, 0,
-                          "Do Tests", OSD_KEY_F1, IP_JOY_NONE, 0)
-        PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_SERVICE,
-                          "Select Test", OSD_KEY_F2, IP_JOY_NONE, 0)
-        PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN3 )      /* coin sw. no.3 */
-        PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_COIN2 )      /* coin sw. no.2 */
-        PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_COIN1 )      /* coin sw. no.1 */
+    PORT_START      /* IN0 - from "TEST NO.7 - status locator - coin-door" */
+    PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* unused */
+    PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* unused */
+    PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_TILT,
+                      "Slam", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+    PORT_BITX(0x08, IP_ACTIVE_LOW, 0,
+                      "Do Tests", OSD_KEY_F1, IP_JOY_NONE, 0)
+    PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_SERVICE,
+                      "Select Test", OSD_KEY_F2, IP_JOY_NONE, 0)
+    PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN3 )      /* coin sw. no.3 */
+    PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )      /* coin sw. no.2 */
+    PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )      /* coin sw. no.1 */
 
-        PORT_START      /* IN1 - from "TEST NO.7 - status locator - start sws." */
-        PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )  /* unused */
-        PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )  /* unused */
-        PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )  /* unused */
-        PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )  /* unused */
-        PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )  /* unused */
-        PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )  /* 2 player start */
-        PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* unused */
-        PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )  /* 1 player start */
+    PORT_START      /* IN1 - from "TEST NO.7 - status locator - start sws." */
 
-        PORT_START      /* IN2 - from "TEST NO.8 - status locator - player no.1" */
-        PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )  /* unused */
-        PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1,
-                          "P1 Fire Up", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
-        PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1,
-                          "P1 Fire Right", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
-        PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1,
-                          "P1 Fire Left", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
-        PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER1,
+    PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )  /* unused */
+    PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )  /* unused */
+    PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )  /* unused */
+    PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )  /* unused */
+    PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )  /* unused */
+    PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )  /* 2 player start */
+    PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* unused */
+    PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )  /* 1 player start */
+
+    PORT_START      /* IN2 - from "TEST NO.8 - status locator - player no.1" */
+
+    PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1,
+                          "P1 Warp", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+    PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1,
+                          "P1 Fire", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+    PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )  /* unused */
+    PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1,
+                          "P1 Bomb", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+    PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER1,
                           "P1 Move Left", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
-        PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )  /* unused */
-        PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER1,
+    PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )  /* unused */
+    PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER1,
                           "P1 Move Right", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
-        PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )  /* unused */
+    PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )  /* unused */
 
-        PORT_START      /* IN3 - from "TEST NO.8 - status locator - player no.2" */
-        PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )  /* unused */
-        PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2,
-                          "P2 Fire Up", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
-        PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2,
-                          "P2 Fire Right", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
-        PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2,
-                          "P2 Fire Left", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
-        PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER2,
+    PORT_START      /* IN3 - from "TEST NO.8 - status locator - player no.2" */
+
+    PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2,
+                          "P2 Warp", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+    PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2,
+                          "P2 Fire", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+    PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )  /* unused */
+    PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2,
+                          "P2 Bomb", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+    PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER2,
                           "P2 Move Left", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
-        PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )  /* unused */
-        PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2,
+    PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )  /* unused */
+    PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2,
                           "P2 Move Right", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
-        PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )  /* unused */
+    PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )  /* unused */
 
-        PORT_START      /* IN4 - from "TEST NO.6 - dip switch A" */
-        PORT_DIPNAME(0x03, 0x03, "Coinage", IP_KEY_NONE )
-        PORT_DIPSETTING(   0x01, "2 Coins/1 Credit" )
-        PORT_DIPSETTING(   0x02, "2 Coins/3 Credits" )
-        PORT_DIPSETTING(   0x03, "1 Coin/1 Credit" )
-        PORT_DIPSETTING(   0x00, "Free Play" )
-        PORT_DIPNAME(0x04, 0x04, "Dip A 3", IP_KEY_NONE )
-        PORT_DIPSETTING(   0x00, "On" )
-        PORT_DIPSETTING(   0x04, "Off" )
-        PORT_DIPNAME(0x08, 0x00, "Dip A 4", IP_KEY_NONE )
-        PORT_DIPSETTING(   0x00, "On" )
-        PORT_DIPSETTING(   0x08, "Off" )
-        PORT_DIPNAME(0x10, 0x10, "Dip A 5", IP_KEY_NONE )
-        PORT_DIPSETTING(   0x00, "On" )
-        PORT_DIPSETTING(   0x10, "Off" )
-        PORT_DIPNAME(0x20, 0x00, "Dip A 6", IP_KEY_NONE )
-        PORT_DIPSETTING(   0x00, "On" )
-        PORT_DIPSETTING(   0x20, "Off" )
-        PORT_DIPNAME(0xc0, 0xc0, "Lives", IP_KEY_NONE )
-        PORT_DIPSETTING(   0xc0, "3" )
-        PORT_DIPSETTING(   0x80, "4" )
-        PORT_DIPSETTING(   0x40, "5" )
-        PORT_DIPSETTING(   0x00, "6" )
+    PORT_START      /* IN4 - from "TEST NO.6 - dip switch A" */
 
-        PORT_START      /* IN5 - from "TEST NO.6 - dip switch B" */
-        PORT_DIPNAME(0x07, 0x07, "Bonus Life", IP_KEY_NONE )
-        PORT_DIPSETTING(   0x01, "20000" )
-        PORT_DIPSETTING(   0x00, "30000" )
-        PORT_DIPSETTING(   0x07, "40000" )
-        PORT_DIPSETTING(   0x06, "50000" )
-        PORT_DIPSETTING(   0x05, "60000" )
-        PORT_DIPSETTING(   0x04, "70000" )
-        PORT_DIPSETTING(   0x03, "80000" )
-        PORT_DIPSETTING(   0x02, "90000" )
-        PORT_DIPNAME(0x08, 0x08, "Dip B 4", IP_KEY_NONE )
-        PORT_DIPSETTING(   0x08, "Off" )
-        PORT_DIPSETTING(   0x00, "On" )
-        PORT_DIPNAME(0x10, 0x10, "Monitor View", IP_KEY_NONE )
-        PORT_DIPSETTING(   0x10, "Direct" )
-        PORT_DIPSETTING(   0x00, "Mirror" )
-        PORT_DIPNAME(0x20, 0x20, "Monitor Orientation", IP_KEY_NONE )
-        PORT_DIPSETTING(   0x20, "Horizontal" )
-        PORT_DIPSETTING(   0x00, "Vertical" )
-        PORT_DIPNAME(0x40, 0x40, "Flip Screen", IP_KEY_NONE )
-        PORT_DIPSETTING(   0x40, "Off" )
-        PORT_DIPSETTING(   0x00, "On" )
-        PORT_DIPNAME(0x80, 0x80, "Cabinet", IP_KEY_NONE )
-        PORT_DIPSETTING(   0x80, "Upright" )
-        PORT_DIPSETTING(   0x00, "Cocktail" )
+    PORT_DIPNAME(0x03, 0x03, "Coinage 1p/2p", IP_KEY_NONE )
+    PORT_DIPSETTING(   0x00, "Free Play" )
+    PORT_DIPSETTING(   0x03, "1 Credit/2 Credits" )
+    PORT_DIPSETTING(   0x02, "2 Credits/3 Credits" )
+    PORT_DIPSETTING(   0x01, "2 Credits/4 Credits" )
+
+    PORT_DIPNAME(0xc0, 0xc0, "Lives", IP_KEY_NONE )
+    PORT_DIPSETTING(   0xc0, "3" )
+    PORT_DIPSETTING(   0x80, "4" )
+    PORT_DIPSETTING(   0x40, "5" )
+    PORT_DIPSETTING(   0x00, "6" )
+
+    PORT_START      /* IN5 - from "TEST NO.6 - dip switch B" */
+    PORT_DIPNAME(0x07, 0x07, "Bonus Life", IP_KEY_NONE )
+    PORT_DIPSETTING(   0x01, "20000" )
+    PORT_DIPSETTING(   0x00, "30000" )
+    PORT_DIPSETTING(   0x07, "40000" )
+    PORT_DIPSETTING(   0x06, "50000" )
+    PORT_DIPSETTING(   0x05, "60000" )
+    PORT_DIPSETTING(   0x04, "70000" )
+    PORT_DIPSETTING(   0x03, "80000" )
+    PORT_DIPSETTING(   0x02, "90000" )
+    PORT_DIPNAME(0x10, 0x10, "Monitor View", IP_KEY_NONE )
+    PORT_DIPSETTING(   0x10, "Direct" )
+    PORT_DIPSETTING(   0x00, "Mirror" )
+    PORT_DIPNAME(0x20, 0x20, "Monitor Orientation", IP_KEY_NONE )
+    PORT_DIPSETTING(   0x20, "Horizontal" )
+    PORT_DIPSETTING(   0x00, "Vertical" )
+    PORT_DIPNAME(0x40, 0x40, "Flip Screen", IP_KEY_NONE )
+    PORT_DIPSETTING(   0x40, "Off" )
+    PORT_DIPSETTING(   0x00, "On" )
+    PORT_DIPNAME(0x80, 0x80, "Cabinet", IP_KEY_NONE )
+    PORT_DIPSETTING(   0x80, "Upright" )
+    PORT_DIPSETTING(   0x00, "Cocktail" )
 INPUT_PORTS_END
 
 
@@ -643,7 +608,7 @@ static struct AY8910interface ay8910_interface =
 {
 	1,	/* 1 chips */
 	1500000,	/* 1.5 MHz ? */
-	{ 0x20 },
+    { 0xff },
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -663,7 +628,7 @@ static struct MachineDriver machine_driver =
 			gameplan_interrupt,1 /* 1 interrupt per frame */
 		},
 		{
-			CPU_M6502,
+            CPU_M6502 | CPU_AUDIO_CPU,
 			3579000 / 4,		/* 3.579 / 4 MHz */
 			1,					/* memory_region */
 			readmem_snd,writemem_snd,0,0,
@@ -813,8 +778,6 @@ static int kaos_hiload(void)
 	else return 0;  /* we can't load the hi scores yet */
 }
 
-
-
 static void kaos_hisave(void)
 {
 	void *f;
@@ -826,9 +789,6 @@ static void kaos_hisave(void)
 	}
 }
 
-
-/* I give up!  This doesn't work - the highscore is at 0x88 or 0x91 or something... */
-#if 0
 static int killcom_hiload(void)
 {
 	/* get RAM pointer (this game is multiCPU, we can't assume the global */
@@ -836,41 +796,107 @@ static int killcom_hiload(void)
 	unsigned char *RAM = Machine->memory_region[0];
 
 	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x0088], "\x47\x00", 2) == 0)
+    if (memcmp(&RAM[0x88], "\x47\x00", 2) == 0)
 	{
 		void *f;
 
 		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
-			osd_fread(f, &RAM[0x0088], 0x2);
+            osd_fread(f, &RAM[0x88], 0x2);
 			osd_fclose(f);
 		}
 
 		return 1;
 	}
-	else return 0;  /* we can't load the hi scores yet */
+    else return 0;  /* we can't load the hi scores yet */
 }
-
-
 
 static void killcom_hisave(void)
 {
-	void *f;
+    unsigned char *RAM = Machine->memory_region[0];
+    void *f;
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-		osd_fwrite(f, &RAM[0x0091], 0x2);
+        osd_fwrite(f, &RAM[0x88], 0x2);
 		osd_fclose(f);
 	}
 }
-#endif /* 0 */
+
+static int megatack_hiload(void)
+{
+	/* get RAM pointer (this game is multiCPU, we can't assume the global */
+	/* RAM pointer is pointing to the right place) */
+	unsigned char *RAM = Machine->memory_region[0];
+
+	/* check if the hi score table has already been initialized */
+    if (memcmp(&RAM[0xd0], "\x1f\x20\x1a", 3) == 0)
+	{
+		void *f;
+
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+            osd_fread(f, &RAM[0xc4], 0xf);
+			osd_fclose(f);
+		}
+
+		return 1;
+	}
+    else return 0;  /* we can't load the hi scores yet */
+}
+
+static void megatack_hisave(void)
+{
+    unsigned char *RAM = Machine->memory_region[0];
+    void *f;
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+        osd_fwrite(f, &RAM[0xc4], 0xf);
+		osd_fclose(f);
+	}
+}
+
+static int challeng_hiload(void)
+{
+	/* get RAM pointer (this game is multiCPU, we can't assume the global */
+	/* RAM pointer is pointing to the right place) */
+	unsigned char *RAM = Machine->memory_region[0];
+
+	/* check if the hi score table has already been initialized */
+    if (memcmp(&RAM[0xd8], "\x1f\x1f\x1f", 3) == 0)
+	{
+		void *f;
+
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+            osd_fread(f, &RAM[0xcc], 0xf);
+			osd_fclose(f);
+		}
+
+		return 1;
+	}
+    else return 0;  /* we can't load the hi scores yet */
+}
+
+static void challeng_hisave(void)
+{
+    unsigned char *RAM = Machine->memory_region[0];
+    void *f;
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+        osd_fwrite(f, &RAM[0xcc], 0xf);
+		osd_fclose(f);
+	}
+}
 
 
 struct GameDriver kaos_driver =
 {
 	"Kaos",
 	"kaos",
-	"Chris Moore (MAME driver)\n"
+    "Chris Moore      (MAME driver)\n"
 	"Santeri Saarimaa (not a sausage)",
 	&machine_driver,
 
@@ -890,9 +916,9 @@ struct GameDriver killcom_driver =
 {
 	"Killer Comet",
 	"killcom",
-	"Chris Moore (MAME driver)\n"
-	"Santeri Saarimaa (hardware info)",
-	&machine_driver,
+    "Chris Moore      (MAME driver)\n"
+    "Santeri Saarimaa (cleaning up, hi-scores)",
+    &machine_driver,
 
 	killcom_rom,
 	0, 0, 0, 0,					/* sound_prom */
@@ -902,7 +928,7 @@ struct GameDriver killcom_driver =
 	0, palette, colortable,
 	ORIENTATION_DEFAULT,
 
-	/* killcom_hiload, killcom_hisave */ 0, 0
+    killcom_hiload, killcom_hisave
 };
 
 
@@ -910,8 +936,8 @@ struct GameDriver megatack_driver =
 {
 	"MegaTack",
 	"megatack",
-	"Chris Moore (MAME driver)\n"
-	"Santeri Saarimaa (hardware info)",
+    "Chris Moore      (MAME driver)\n"
+    "Santeri Saarimaa (cleaning up, hi-scores)",
 	&machine_driver,
 
 	megatack_rom,
@@ -922,24 +948,25 @@ struct GameDriver megatack_driver =
 	0, palette, colortable,
 	ORIENTATION_DEFAULT,
 
-	0, 0
+    megatack_hiload, megatack_hisave
 };
 
 struct GameDriver challeng_driver =
 {
-        "Challenger",
-        "challeng",
-        "Chris Moore (MAME driver)\nSanteri Saarimaa (hardware info)",
-        &machine_driver,
+    "Challenger",
+    "challeng",
+    "Chris Moore      (MAME driver)\n"
+    "Santeri Saarimaa (cleaning up, hi-scores)",
+    &machine_driver,
 
-        challeng_rom,
-        0, 0, 0, 0,					/* sound_prom */
+    challeng_rom,
+    0, 0, 0, 0,                 /* sound_prom */
 
-        challeng_input_ports,
+    challeng_input_ports,
 
-        0, palette, colortable,
-        ORIENTATION_DEFAULT,
+    0, palette, colortable,
+    ORIENTATION_DEFAULT,
 
-        0, 0
+    challeng_hiload, challeng_hisave
 };
 

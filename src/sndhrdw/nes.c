@@ -447,11 +447,12 @@ if (errorlog) fprintf(errorlog,"error: read from NES PSG #%d register #%d\n",n,r
 void NESUpdateOne(int chip,int endp)
 {
 	struct NESPSG *PSG = &NESPSG[chip];
-	void *buffer;
+	unsigned char  *buffer_8;
+	unsigned short *buffer_16;
 	int length;
 
-	if( sample_16bit ) buffer = &((unsigned short *)PSG->Buf)[PSG->bufp];
-	else               buffer = &((unsigned char  *)PSG->Buf)[PSG->bufp];
+	buffer_8  = &((unsigned char  *)PSG->Buf)[PSG->bufp];
+	buffer_16 = &((unsigned short *)PSG->Buf)[PSG->bufp];
 
 	if( endp > NESBufSize ) endp = NESBufSize;
 	length = endp - PSG->bufp;
@@ -535,7 +536,7 @@ void NESUpdateOne(int chip,int endp)
 			left -= nextevent;
 		} while (left > 0);
 
-//		output = vola*PSG->VolA + volb*PSG->VolB + volc*PSG->VolC;
+/*		output = vola*PSG->VolA + volb*PSG->VolB + volc*PSG->VolC;*/
 		output = 0;
 		if (PSG->ActiveTimeA > 0)
 		{
@@ -552,8 +553,8 @@ void NESUpdateOne(int chip,int endp)
 			PSG->ActiveTimeC--;
 			output += volc*0x2aaa;
 		}
-		if( sample_16bit ) *((unsigned short *)buffer)++ = output / STEP;
-		else               *((unsigned char  *)buffer)++ = output / (STEP*256);
+		if( sample_16bit ) *buffer_16++ = output / STEP;
+		else               *buffer_8++  = output / (STEP*256);
 
 		length--;
 	}

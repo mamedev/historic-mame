@@ -241,10 +241,10 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	320, 256, { 0, 319, 8, 247 },
 	0,
-	256, 0,
+	512, 0,
 	0,
 
-	VIDEO_TYPE_RASTER,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
 	blockout_vh_start,
 	blockout_vh_stop,
@@ -254,7 +254,7 @@ static struct MachineDriver machine_driver =
 	0,0,0,0,
 	{
 		{
-			SOUND_YM2151_ALT,
+			SOUND_YM2151,
 			&ym2151_interface
 		},
 		{

@@ -64,11 +64,15 @@ static pia6821_interface pia_intf =
 {
 	6,                                             	/* 6 chips */
 	{ PIA_DDRA, PIA_CTLA, PIA_DDRB, PIA_CTLB },    	/* offsets */
-	{ input_port_0_r, 0, 0, 0, qix_sound_r, 0 },   	/* input port A */
-    { input_port_1_r, input_port_2_r, 0, 0, 0, 0 },              /* input port B */
-	{ 0, 0, 0, pia_5_porta_w, pia_4_porta_w, 0 },  	/* output port A */
-	{ 0, 0, 0, 0, qix_dac_w, 0 },                  	/* output port B */
-	{ 0, 0, 0, pia_5_ca1_w, pia_4_ca1_w, 0 },      	/* output CA2 */
+	{ input_port_0_r, 0, 0, 0, qix_sound_r, 0 },   	/* input port A  */
+	{ 0, 0, 0, 0, 0, 0 },                           /* input bit CA1 */
+	{ 0, 0, 0, 0, 0, 0 },                           /* input bit CA2 */
+	{ input_port_1_r, input_port_2_r, 0, 0, 0, 0 }, /* input port B  */
+	{ 0, 0, 0, 0, 0, 0 },                           /* input bit CB1 */
+	{ 0, 0, 0, 0, 0, 0 },                           /* input bit CB2 */
+	{ 0, 0, 0, pia_5_porta_w, pia_4_porta_w, 0 },   /* output port A */
+	{ 0, 0, 0, 0, qix_dac_w, 0 },                   /* output port B */
+	{ 0, 0, 0, pia_5_ca1_w, pia_4_ca1_w, 0 },       /* output CA2 */
 	{ 0, 0, 0, 0, 0, 0 },                          	/* output CB2 */
 	{ 0, 0, 0, 0/*qix_pia_dint*/, qix_pia_sint, 0 },/* IRQ A */
 	{ 0, 0, 0, 0/*qix_pia_dint*/, qix_pia_sint, 0 },/* IRQ B */

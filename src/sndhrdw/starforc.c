@@ -42,7 +42,7 @@ static z80ctc_interface ctc_intf =
 #define SINGLE_LENGTH 10000
 #define SINGLE_DIVIDER 8
 
-static char *single;
+static signed char *_single;
 static int single_rate = 1000;
 static int single_volume = 0;
 
@@ -108,17 +108,17 @@ int starforc_sh_start(void)
 */
 	}
 
-	if ((single = malloc(SINGLE_LENGTH)) == 0)
+	if ((_single = (signed char *)malloc(SINGLE_LENGTH)) == 0)
 	{
 		SN76496_sh_stop();
-		free(single);
+		free(_single);
 		return 1;
 	}
 	for (i = 0;i < SINGLE_LENGTH;i++)		/* freq = ctc2 zco / 8 */
-		single[i] = ((i/SINGLE_DIVIDER)&0x01)*(SINGLE_VOLUME/2);
+		_single[i] = ((i/SINGLE_DIVIDER)&0x01)*(SINGLE_VOLUME/2);
 
 	/* CTC2 single tone generator */
-	osd_play_sample(4,single,SINGLE_LENGTH,single_rate,single_volume,1);
+	osd_play_sample(4,_single,SINGLE_LENGTH,single_rate,single_volume,1);
 
 	return 0;
 }
@@ -128,7 +128,7 @@ int starforc_sh_start(void)
 void starforc_sh_stop(void)
 {
 	SN76496_sh_stop();
-	free(single);
+	free(_single);
 }
 
 

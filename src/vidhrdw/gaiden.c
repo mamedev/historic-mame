@@ -20,7 +20,6 @@ void gaiden_vh_stop (void);
 
 int gaiden_videoram_size;
 int gaiden_spriteram_size;
-int gaiden_paletteram_size;
 int gaiden_videoram2_size;
 int gaiden_videoram3_size;
 
@@ -30,9 +29,10 @@ static struct osd_bitmap *tmpbitmap3;
 static unsigned char *gaiden_dirty2;
 static unsigned char *gaiden_dirty3;
 
-unsigned char *gaiden_scrolla;
-unsigned char *gaiden_scrollb;
-static unsigned int col_test;
+unsigned char *gaiden_txscrollx,*gaiden_txscrolly;
+unsigned char *gaiden_fgscrollx,*gaiden_fgscrolly;
+unsigned char *gaiden_bgscrollx,*gaiden_bgscrolly;
+
 
 
 
@@ -53,7 +53,7 @@ void gaiden_paletteram_w(int offset,int data)
 	b = 0x11 * ((newword >> 8) & 0x0f);
 
 	palette_change_color(offset / 2,r,g,b);
-	if (offset == 0x0400)	/* background color */
+	if (offset / 2 == 0x0200)	/* background color */
 		palette_change_transparent_color(r,g,b);
 }
 
@@ -86,17 +86,16 @@ int gaiden_vh_start (void)
 	}
 
 	/* Allocate temporary bitmaps */
- 	if ((tmpbitmap2 = osd_new_bitmap (1024 , 512, Machine->scrbitmap->depth)) == 0)
+ 	if ((tmpbitmap2 = osd_create_bitmap(1024,512)) == 0)
 	{
-                gaiden_vh_stop ();
+		gaiden_vh_stop ();
 		return 1;
 	}
-	if ((tmpbitmap3 = osd_new_bitmap (1024 , 512, Machine->scrbitmap->depth)) == 0)
+	if ((tmpbitmap3 = osd_create_bitmap(1024,512)) == 0)
 	{
-                gaiden_vh_stop ();
+		gaiden_vh_stop ();
 		return 1;
 	}
-	if (Machine->scrbitmap->depth==8) col_test=2; else col_test = 1;
 	return 0;
 }
 
@@ -129,14 +128,29 @@ void gaiden_vh_stop (void)
  *   scroll write handlers
  */
 
-void gaiden_scrolla_w (int offset, int data)
+void gaiden_txscrollx_w(int offset,int data)
 {
-	COMBINE_WORD_MEM (&gaiden_scrolla[offset], data);
+	COMBINE_WORD_MEM (&gaiden_txscrollx[offset], data);
 }
-
-void gaiden_scrollb_w (int offset, int data)
+void gaiden_txscrolly_w(int offset,int data)
 {
-	COMBINE_WORD_MEM (&gaiden_scrollb[offset], data);
+	COMBINE_WORD_MEM (&gaiden_txscrolly[offset], data);
+}
+void gaiden_fgscrollx_w(int offset,int data)
+{
+	COMBINE_WORD_MEM (&gaiden_fgscrollx[offset], data);
+}
+void gaiden_fgscrolly_w(int offset,int data)
+{
+	COMBINE_WORD_MEM (&gaiden_fgscrolly[offset], data);
+}
+void gaiden_bgscrollx_w(int offset,int data)
+{
+	COMBINE_WORD_MEM (&gaiden_bgscrollx[offset], data);
+}
+void gaiden_bgscrolly_w(int offset,int data)
+{
+	COMBINE_WORD_MEM (&gaiden_bgscrolly[offset], data);
 }
 
 
@@ -271,90 +285,129 @@ void gaiden_vh_screenrefresh(struct osd_bitmap *bitmap)
 {
 	int offs;
 	int scrollx,scrolly;
-unsigned char used_colors[1024];
 
 
-memset(used_colors,PALETTE_COLOR_UNUSED,1024);
+memset(palette_used_colors,PALETTE_COLOR_UNUSED,Machine->drv->total_colors * sizeof(unsigned char));
 
-for (offs = (gaiden_videoram3_size / 2) - 2;offs >= 0;offs -= 2)
 {
 	int color,code,i;
+	int colmask[16];
+	int pal_base;
 
-	code = READ_WORD(&gaiden_videoram3[offs + 0x1000]) & 0x0fff;
-	color = (READ_WORD(&gaiden_videoram3[offs]) & 0x00f0) >> 4;
-	used_colors[768 + 16 * color] = PALETTE_COLOR_TRANSPARENT;
-	for (i = 1;i < 16;i++)
+
+	pal_base = Machine->drv->gfxdecodeinfo[1].color_codes_start;
+
+	for (color = 0;color < 16;color++) colmask[color] = 0;
+
+	for (offs = (gaiden_videoram3_size / 2) - 2;offs >= 0;offs -= 2)
 	{
-		if (Machine->gfx[1]->pen_usage[code] & (1 << i))
-			used_colors[768 + 16 * color + i] = PALETTE_COLOR_FIXED;
+		code = READ_WORD(&gaiden_videoram3[offs + 0x1000]) & 0x0fff;
+		color = (READ_WORD(&gaiden_videoram3[offs]) & 0x00f0) >> 4;
+		colmask[color] |= Machine->gfx[1]->pen_usage[code];
 	}
-}
 
-for (offs = (gaiden_videoram2_size / 2) - 2;offs >= 0;offs -= 2)
-{
-	int color,code,i;
-
-	code = READ_WORD(&gaiden_videoram2[offs + 0x1000]) & 0x0fff;
-	color = (READ_WORD(&gaiden_videoram2[offs]) & 0x00f0) >> 4;
-	used_colors[512 + 16 * color] = PALETTE_COLOR_TRANSPARENT;
-	for (i = 1;i < 16;i++)
+	for (color = 0;color < 16;color++)
 	{
-		if (Machine->gfx[2]->pen_usage[code] & (1 << i))
-			used_colors[512 + 16 * color + i] = PALETTE_COLOR_FIXED;
-	}
-}
-
-for (offs = 0; offs<0x800 ; offs += 16)
-{
-	int sx,sy,col,i;
-	int num,bank,flip,size;
-//		sx = -(READ_WORD(&gaiden_spriteram[offs+8])&0xff00)
-//		     + (READ_WORD(&gaiden_spriteram[offs+8])&0x00ff);
-	sx = READ_WORD(&gaiden_spriteram[offs+8]) & 0x1ff;
-	if (sx >= 256) sx -= 512;
-	sy = READ_WORD(&gaiden_spriteram[offs+6]) & 0x1ff;
-	if (sy >= 256) sy -= 512;
-	num = READ_WORD(&gaiden_spriteram[offs+2])>>4;
-	if ( (READ_WORD(&gaiden_spriteram[offs])&0x0004) && sx>=(-31) && sx < 256 && sy < 256)
-	{
-		num &= 0x7ff;
-		bank=num/0x200;
-		num&=0x1ff;
-		size = READ_WORD(&gaiden_spriteram[offs+4])&0x0003;
-		flip = READ_WORD(&gaiden_spriteram[offs])&0x0003;
-		col = ((READ_WORD(&gaiden_spriteram[offs+4])&0x00f0)>>4);
-		if (size==1)
-		{
-			num=(num<<2)+((READ_WORD(&gaiden_spriteram[offs+2])&0x000c)>>2);
-			bank+=4;
-		}
+		if (colmask[color] & (1 << 0))
+			palette_used_colors[pal_base + 16 * color] = PALETTE_COLOR_TRANSPARENT;
 		for (i = 1;i < 16;i++)
 		{
-			if (Machine->gfx[3+bank]->pen_usage[num] & (1 << i))
-				used_colors[16 * col + i] = PALETTE_COLOR_DYNAMIC;
+			if (colmask[color] & (1 << i))
+				palette_used_colors[pal_base + 16 * color + i] = PALETTE_COLOR_USED;
 		}
 	}
-}
 
-for (offs = (gaiden_videoram_size / 2) - 2;offs >= 0;offs -= 2)
-{
-	int color,code,i;
 
-	code = READ_WORD(&gaiden_videoram[offs + 0x800]) & 0x07ff;
-	color = (READ_WORD(&gaiden_videoram[offs]) & 0x00f0) >> 4;
-	for (i = 1;i < 16;i++)
+	pal_base = Machine->drv->gfxdecodeinfo[2].color_codes_start;
+
+	for (color = 0;color < 16;color++) colmask[color] = 0;
+
+	for (offs = (gaiden_videoram2_size / 2) - 2;offs >= 0;offs -= 2)
 	{
-		if (Machine->gfx[0]->pen_usage[code] & (1 << i))
-			used_colors[256 + 16 * color + i] = PALETTE_COLOR_DYNAMIC;
+		code = READ_WORD(&gaiden_videoram2[offs + 0x1000]) & 0x0fff;
+		color = (READ_WORD(&gaiden_videoram2[offs]) & 0x00f0) >> 4;
+		colmask[color] |= Machine->gfx[2]->pen_usage[code];
+	}
+
+	for (color = 0;color < 16;color++)
+	{
+		if (colmask[color] & (1 << 0))
+			palette_used_colors[pal_base + 16 * color] = PALETTE_COLOR_TRANSPARENT;
+		for (i = 1;i < 16;i++)
+		{
+			if (colmask[color] & (1 << i))
+				palette_used_colors[pal_base + 16 * color + i] = PALETTE_COLOR_USED;
+		}
+	}
+
+
+	pal_base = Machine->drv->gfxdecodeinfo[3].color_codes_start;
+
+	for (color = 0;color < 16;color++) colmask[color] = 0;
+
+	for (offs = 0; offs<0x800 ; offs += 16)
+	{
+		int sx,sy;
+		int bank,flip,size;
+
+		sx = READ_WORD(&gaiden_spriteram[offs+8]) & 0x1ff;
+		if (sx >= 256) sx -= 512;
+		sy = READ_WORD(&gaiden_spriteram[offs+6]) & 0x1ff;
+		if (sy >= 256) sy -= 512;
+		code = READ_WORD(&gaiden_spriteram[offs+2])>>4;
+		if ( (READ_WORD(&gaiden_spriteram[offs])&0x0004) && sx>=(-31) && sx < 256 && sy < 256)
+		{
+			code &= 0x7ff;
+			bank=code/0x200;
+			code&=0x1ff;
+			size = READ_WORD(&gaiden_spriteram[offs+4])&0x0003;
+			flip = READ_WORD(&gaiden_spriteram[offs])&0x0003;
+			color = ((READ_WORD(&gaiden_spriteram[offs+4])&0x00f0)>>4);
+			if (size==1)
+			{
+				code=(code<<2)+((READ_WORD(&gaiden_spriteram[offs+2])&0x000c)>>2);
+				bank+=4;
+			}
+			colmask[color] |= Machine->gfx[3+bank]->pen_usage[code];
+		}
+	}
+
+	for (color = 0;color < 16;color++)
+	{
+		for (i = 1;i < 16;i++)
+		{
+			if (colmask[color] & (1 << i))
+				palette_used_colors[pal_base + 16 * color + i] = PALETTE_COLOR_USED;
+		}
+	}
+
+
+	pal_base = Machine->drv->gfxdecodeinfo[0].color_codes_start;
+
+	for (color = 0;color < 16;color++) colmask[color] = 0;
+
+	for (offs = (gaiden_videoram_size / 2) - 2;offs >= 0;offs -= 2)
+	{
+		code = READ_WORD(&gaiden_videoram[offs + 0x800]) & 0x07ff;
+		color = (READ_WORD(&gaiden_videoram[offs]) & 0x00f0) >> 4;
+		colmask[color] |= Machine->gfx[0]->pen_usage[code];
+	}
+
+	for (color = 0;color < 16;color++)
+	{
+		for (i = 1;i < 16;i++)
+		{
+			if (colmask[color] & (1 << i))
+				palette_used_colors[pal_base + 16 * color + i] = PALETTE_COLOR_USED;
+		}
+	}
+
+	if (palette_recalc())
+	{
+		memset(gaiden_dirty2,1,gaiden_videoram2_size / 4);
+		memset(gaiden_dirty3,1,gaiden_videoram3_size / 4);
 	}
 }
-
-if (palette_recalc(used_colors))
-{
-	memset(gaiden_dirty2,1,gaiden_videoram2_size / 4);
-	memset(gaiden_dirty3,1,gaiden_videoram3_size / 4);
-}
-
 
 
 	/* update graphics tiles */
@@ -396,21 +449,24 @@ if (palette_recalc(used_colors))
 		}
 	}
 
-	scrollx = (-(READ_WORD(&gaiden_scrollb[0x0c]))%1024);
-	scrolly = -(READ_WORD(&gaiden_scrollb[0x04]));
+	scrollx = -READ_WORD(gaiden_bgscrollx);
+	scrolly = -READ_WORD(gaiden_bgscrolly);
 	copyscrollbitmap(bitmap,tmpbitmap3,1,&scrollx,1,&scrolly,&Machine->drv->visible_area, TRANSPARENCY_NONE,0);
 
 	/* draw occluded sprites */
 	gaiden_drawsprites(bitmap,1);
 
-	scrollx = (-(READ_WORD(&gaiden_scrolla[0x0c]))%1024);
-	scrolly = -(READ_WORD(&gaiden_scrolla[0x04]));
-	copyscrollbitmap(bitmap,tmpbitmap2,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_PEN, palette_transparent_pen);
+	scrollx = -READ_WORD(gaiden_fgscrollx);
+	scrolly = -READ_WORD(gaiden_fgscrolly);
+	copyscrollbitmap(bitmap,tmpbitmap2,1,&scrollx,1,&scrolly,
+			&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
 
 	/* draw non-occluded sprites */
 	gaiden_drawsprites(bitmap,0);
 
 	/* draw the frontmost playfield. They are characters, but draw them as sprites */
+	scrollx = -READ_WORD(gaiden_txscrollx);
+	scrolly = -READ_WORD(gaiden_txscrolly);
 	for (offs = (gaiden_videoram_size / 2) - 2;offs >= 0;offs -= 2)
 	{
 		int sx,sy;
@@ -422,7 +478,7 @@ if (palette_recalc(used_colors))
 				READ_WORD(&gaiden_videoram[offs + 0x0800]) & 0x07ff,
 				(READ_WORD(&gaiden_videoram[offs]) & 0x00f0) >> 4,
 				0,0,
-				8*sx,8*sy,
+				(8*sx + scrollx) & 0xff,(8*sy + scrolly) & 0xff,
 				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}
 }

@@ -112,6 +112,8 @@ enum { IPT_END=1,IPT_PORT,
 									/* it is the responsibility of the driver to call */
 									/* update_analog_port(int port). */
 
+#define IPF_RESETCPU   0x02000000	/* when the key is pressed, reset the first CPU */
+
 
 /* LBO - These 4 byte values are packed into the arg field and are typically used with analog ports */
 #define IPF_SENSITIVITY(percent)	(percent&0xff)

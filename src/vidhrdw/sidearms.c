@@ -14,44 +14,44 @@
 unsigned char *sidearms_bg_scrollx,*sidearms_bg_scrolly;
 unsigned char *sidearms_bg2_scrollx,*sidearms_bg2_scrolly;
 unsigned char *sidearms_paletteram;
-static int dirtypalette;
 static struct osd_bitmap *tmpbitmap2;
 static int flipscreen;
 
 
 
-/* Sidearms has a 2048 color palette RAM, but it doesn't seem to modify it */
-/* dynamically. The color space is 4x4x4, and the number of unique colors is */
-/* greater than 256; however, ignoring the least significant bit of the blue */
-/* component, we can squeeze them into 250 colors with no appreciable loss. */
-void sidearms_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+void sidearms_paletteram_w(int offset,int data)
 {
-	int i;
+	int bit0,bit1,bit2,bit3;
+	int r,g,b,val;
 
 
-	for (i = 0;i < Machine->drv->total_colors;i++)
-	{
-		int bit0,bit1,bit2,bit3;
+	sidearms_paletteram[offset] = data;
 
+	/* red component */
+	val = sidearms_paletteram[offset & ~0x400];
+	bit0 = (val >> 4) & 0x01;
+	bit1 = (val >> 5) & 0x01;
+	bit2 = (val >> 6) & 0x01;
+	bit3 = (val >> 7) & 0x01;
+	r = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 
-		bit0 = (color_prom[0] >> 4) & 0x01;
-		bit1 = (color_prom[0] >> 5) & 0x01;
-		bit2 = (color_prom[0] >> 6) & 0x01;
-		bit3 = (color_prom[0] >> 7) & 0x01;
-		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-		bit0 = (color_prom[0] >> 0) & 0x01;
-		bit1 = (color_prom[0] >> 1) & 0x01;
-		bit2 = (color_prom[0] >> 2) & 0x01;
-		bit3 = (color_prom[0] >> 3) & 0x01;
-		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-		bit0 = (color_prom[1] >> 0) & 0x01;
-		bit1 = (color_prom[1] >> 1) & 0x01;
-		bit2 = (color_prom[1] >> 2) & 0x01;
-		bit3 = (color_prom[1] >> 3) & 0x01;
-		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+	/* green component */
+	val = sidearms_paletteram[offset & ~0x400];
+	bit0 = (val >> 0) & 0x01;
+	bit1 = (val >> 1) & 0x01;
+	bit2 = (val >> 2) & 0x01;
+	bit3 = (val >> 3) & 0x01;
+	g = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 
-		color_prom += 2;
-	}
+	/* blue component */
+	val = sidearms_paletteram[offset | 0x400];
+	bit0 = (val >> 0) & 0x01;
+	bit1 = (val >> 1) & 0x01;
+	bit2 = (val >> 2) & 0x01;
+	bit3 = (val >> 3) & 0x01;
+	b = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+
+	palette_change_color(offset & ~0x400,r,g,b);
 }
 
 
@@ -92,19 +92,6 @@ void sidearms_vh_stop(void)
 
 
 
-void sidearms_paletteram_w(int offset,int data)
-{
-	if (sidearms_paletteram[offset] != data)
-	{
-		/* the palette is initialized at startup and never touched again, */
-		/* so we can mark it all dirty without causing a performance hit */
-		dirtypalette = 1;
-		sidearms_paletteram[offset] = data;
-	}
-}
-
-
-
 void sidearms_c804_w(int offset,int data)
 {
 	/* bit 4 probably resets the sound CPU */
@@ -135,51 +122,109 @@ void sidearms_vh_screenrefresh(struct osd_bitmap *bitmap)
 	int offs, sx, sy;
 	int scrollx,scrolly;
 	static int lastoffs;
+	int dirtypalette = 0;
 
 
-	if (dirtypalette)
+memset(palette_used_colors,PALETTE_COLOR_UNUSED,Machine->drv->total_colors * sizeof(unsigned char));
+
+
+{
+	int color,code,i;
+	int colmask[64];
+	int pal_base;
+	unsigned char *p=Machine->memory_region[3];
+
+
+	pal_base = Machine->drv->gfxdecodeinfo[1].color_codes_start;
+
+	for (color = 0;color < 32;color++) colmask[color] = 0;
+
+	scrollx = sidearms_bg_scrollx[0] + 256 * sidearms_bg_scrollx[1] + 64;
+	scrolly = sidearms_bg_scrolly[0] + 256 * sidearms_bg_scrolly[1];
+	offs = 2 * (scrollx >> 5) + 0x100 * (scrolly >> 5);
+	scrollx = -(scrollx & 0x1f);
+	scrolly = -(scrolly & 0x1f);
+
+	for (sy = 0;sy < 9;sy++)
 	{
-		int j, i;
-
-
-		/* rebuild the colour lookup table from RAM palette */
-		for (j = 0;j < 3;j++)
+		for (sx = 0; sx < 13; sx++)
 		{
-			/*
-				 0000-00ff:  background palette. (16x16 colours)
-				 0200-02ff:  sprites palette.    (16x16 colours)
-				 0300-03ff:  characters palette  (64x4 colours)
-			*/
-						/* CHARS  TILES   SPRITES */
-			int start[3]={0x0300, 0x0000, 0x0200};
-			int count[3]={0x0100, 0x0200, 0x0100};
-			int base=start[j];
-			int max=count[j];
-
-			for (i = 0;i < max;i++)
-			{
-				int blue, redgreen;
+			int offset;
 
 
-				redgreen=sidearms_paletteram[base];
-				blue=sidearms_paletteram[base + 0x400] & 0x0f;
+			offset = offs + 2 * sx;
 
-				for (offs = 0;offs < Machine->drv->total_colors-1;offs++)
-				{
-					if (Machine->gamedrv->color_prom[2*offs] == redgreen &&
-							(Machine->gamedrv->color_prom[2*offs+1] & 0x0e) == (blue & 0x0e))
-						break;
-				}
+			/* swap bits 1-7 and 8-10 of the address to compensate for the */
+			/* funny layout of the ROM data */
+			offset = (offset & 0xf801) | ((offset & 0x0700) >> 7) | ((offset & 0x00fe) << 3);
 
-				/* pen 15 for the tiles is transparent */
-				if (j == 1 && i % 16 == 15) offs = 1;
+			code = p[offset] + 256 * (p[offset+1] & 0x01);
+			color = (p[offset+1] & 0xf8) >> 3;
+			colmask[color] |= Machine->gfx[1]->pen_usage[code];
+		}
+		offs += 0x100;
+	}
 
-				Machine->gfx[j]->colortable[i] = Machine->pens[offs];
-
-				base++;
-			}
+	for (color = 0;color < 32;color++)
+	{
+		if (colmask[color] & (1 << 15))
+			palette_used_colors[pal_base + 16 * color + 15] = PALETTE_COLOR_TRANSPARENT;
+		for (i = 0;i < 15;i++)
+		{
+			if (colmask[color] & (1 << i))
+				palette_used_colors[pal_base + 16 * color + i] = PALETTE_COLOR_USED;
 		}
 	}
+
+
+	pal_base = Machine->drv->gfxdecodeinfo[2].color_codes_start;
+
+	for (color = 0;color < 16;color++) colmask[color] = 0;
+
+	for (offs = spriteram_size - 32;offs >= 0;offs -= 32)
+	{
+		code = spriteram[offs] + 8 * (spriteram[offs + 1] & 0xe0);
+		color =	spriteram[offs + 1] & 0x0f;
+		colmask[color] |= Machine->gfx[2]->pen_usage[code];
+	}
+
+	for (color = 0;color < 16;color++)
+	{
+		if (colmask[color] & (1 << 15))
+			palette_used_colors[pal_base + 16 * color + 15] = PALETTE_COLOR_TRANSPARENT;
+		for (i = 0;i < 15;i++)
+		{
+			if (colmask[color] & (1 << i))
+				palette_used_colors[pal_base + 16 * color + i] = PALETTE_COLOR_USED;
+		}
+	}
+
+
+	pal_base = Machine->drv->gfxdecodeinfo[0].color_codes_start;
+
+	for (color = 0;color < 64;color++) colmask[color] = 0;
+
+	for (offs = videoram_size - 1;offs >= 0;offs--)
+	{
+		code = videoram[offs] + 4 * (colorram[offs] & 0xc0);
+		color = colorram[offs] & 0x3f;
+		colmask[color] |= Machine->gfx[0]->pen_usage[code];
+	}
+
+	for (color = 0;color < 64;color++)
+	{
+		if (colmask[color] & (1 << 3))
+			palette_used_colors[pal_base + 4 * color + 3] = PALETTE_COLOR_TRANSPARENT;
+		for (i = 0;i < 3;i++)
+		{
+			if (colmask[color] & (1 << i))
+				palette_used_colors[pal_base + 4 * color + i] = PALETTE_COLOR_USED;
+		}
+	}
+}
+
+if (palette_recalc())
+	dirtypalette = 1;
 
 
 	/* There is a scrolling blinking star background behind the tile */
@@ -218,7 +263,7 @@ void sidearms_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 	if (offs != lastoffs || dirtypalette)
 	{
-        unsigned char *p=Machine->memory_region[3];
+		unsigned char *p=Machine->memory_region[3];
 
 
 		lastoffs = offs;
@@ -247,8 +292,6 @@ void sidearms_vh_screenrefresh(struct osd_bitmap *bitmap)
 			offs += 0x100;
 		}
 	}
-
-	dirtypalette = 0;
 
 
 #if IHAVETHEBACKGROUND

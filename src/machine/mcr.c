@@ -64,14 +64,18 @@ static pia6821_interface csd_pia_intf =
 {
 	1,                /* 1 chip */
 	{ PIA_DDRA, PIA_NOP, PIA_DDRB, PIA_NOP, PIA_CTLA, PIA_NOP, PIA_CTLB, PIA_NOP }, /* offsets */
-	{ 0 },            /* input port A */
-	{ 0 },            /* input port B */
+	{ 0 },            /* input port A  */
+	{ 0 },            /* input bit CA1 */
+	{ 0 },            /* input bit CA2 */
+	{ 0 },            /* input port B  */
+	{ 0 },            /* input bit CB1 */
+	{ 0 },            /* input bit CB2 */
 	{ csd_porta_w },  /* output port A */
 	{ csd_portb_w },  /* output port B */
-	{ 0 },            /* output CA2 */
-	{ 0 },            /* output CB2 */
-	{ csd_irq },      /* IRQ A */
-	{ csd_irq },      /* IRQ B */
+	{ 0 },            /* output CA2    */
+	{ 0 },            /* output CB2    */
+	{ csd_irq },      /* IRQ A         */
+	{ csd_irq },      /* IRQ B         */
 };
 
 
@@ -84,14 +88,18 @@ static pia6821_interface sg_pia_intf =
 {
 	1,                /* 1 chip */
 	{ PIA_DDRA, PIA_NOP, PIA_DDRB, PIA_NOP, PIA_CTLA, PIA_NOP, PIA_CTLB, PIA_NOP }, /* offsets */
-	{ 0 },            /* input port A */
-	{ 0 },         	/* input port B */
+	{ 0 },            /* input port A  */
+	{ 0 },            /* input bit CA1 */
+	{ 0 },            /* input bit CA2 */
+	{ 0 },            /* input port B  */
+	{ 0 },            /* input bit CB1 */
+	{ 0 },            /* input bit CB2 */
 	{ sg_porta_w },   /* output port A */
 	{ sg_portb_w },   /* output port B */
-	{ 0 },            /* output CA2 */
-	{ 0 },            /* output CB2 */
-	{ sg_irq },       /* IRQ A */
-	{ sg_irq },       /* IRQ B */
+	{ 0 },            /* output CA2    */
+	{ 0 },            /* output CB2    */
+	{ sg_irq },       /* IRQ A         */
+	{ sg_irq },       /* IRQ B         */
 };
 
 
@@ -102,14 +110,18 @@ static pia6821_interface tcs_pia_intf =
 {
 	1,                /* 1 chip */
 	{ PIA_DDRA, PIA_DDRB, PIA_CTLA, PIA_CTLB }, /* offsets */
-	{ 0 },            /* input port A */
-	{ 0 },         	/* input port B */
+	{ 0 },            /* input port A  */
+	{ 0 },            /* input bit CA1 */
+	{ 0 },            /* input bit CA2 */
+	{ 0 },            /* input port B  */
+	{ 0 },            /* input bit CB1 */
+	{ 0 },            /* input bit CB2 */
 	{ DAC_data_w },   /* output port A */
 	{ 0 },            /* output port B */
-	{ 0 },            /* output CA2 */
-	{ 0 },            /* output CB2 */
-	{ tcs_irq },      /* IRQ A */
-	{ tcs_irq },      /* IRQ B */
+	{ 0 },            /* output CA2    */
+	{ 0 },            /* output CB2    */
+	{ tcs_irq },      /* IRQ A         */
+	{ tcs_irq },      /* IRQ B         */
 };
 
 
@@ -123,14 +135,18 @@ static pia6821_interface snt_pia_intf =
 {
 	2,                              /* 2 chips */
 	{ PIA_DDRA, PIA_CTLA, PIA_DDRB, PIA_CTLB }, /* offsets */
-	{ 0, 0 },                       /* input port A */
-	{ 0, 0 },                       /* input port B */
+	{ 0, 0 },                       /* input port A  */
+	{ 0, 0 },                       /* input bit CA1 */
+	{ 0, 0 },                       /* input bit CA2 */
+	{ 0, 0 },                       /* input port B  */
+	{ 0, 0 },                       /* input bit CB1 */
+	{ 0, 0 },                       /* input bit CB2 */
 	{ snt_porta1_w, snt_porta2_w }, /* output port A */
 	{ 0, snt_portb2_w },            /* output port B */
-	{ 0, 0 },                       /* output CA2 */
-	{ 0, 0 },                       /* output CB2 */
-	{ snt_irq, snt_irq },           /* IRQ A */
-	{ snt_irq, snt_irq },           /* IRQ B */
+	{ 0, 0 },                       /* output CA2    */
+	{ 0, 0 },                       /* output CB2    */
+	{ snt_irq, snt_irq },           /* IRQ A         */
+	{ snt_irq, snt_irq },           /* IRQ B         */
 };
 
 

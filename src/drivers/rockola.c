@@ -63,6 +63,13 @@ Interrupts: VBlank causes an IRQ. Coin insertion causes a NMI.
 extern unsigned char *rockola_videoram2;
 extern unsigned char *rockola_characterram;
 extern unsigned char *rockola_scrollx,*rockola_scrolly;
+
+void satansat_b002_w(int offset,int data);
+void satansat_backcolor_w(int offset, int data);
+void satansat_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+void satansat_vh_screenrefresh(struct osd_bitmap *bitmap);
+void satansat_characterram_w(int offset,int data);
+
 void rockola_characterram_w(int offset,int data);
 void rockola_flipscreen_w(int offset,int data);
 void rockola_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
@@ -74,14 +81,42 @@ int rockola_sh_start(void);
 void rockola_sh_update(void);
 
 
+
+static struct MemoryReadAddress satansat_readmem[] =
+{
+	{ 0x0000, 0x1fff, MRA_RAM },
+	{ 0x4000, 0x97ff, MRA_ROM },
+	{ 0xb004, 0xb004, input_port_0_r }, /* IN0 */
+	{ 0xb005, 0xb005, input_port_1_r }, /* IN1 */
+	{ 0xb006, 0xb006, input_port_2_r }, /* DSW */
+	{ 0xb007, 0xb007, input_port_3_r }, /* IN2 */
+	{ 0xf800, 0xffff, MRA_ROM },
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryWriteAddress satansat_writemem[] =
+{
+	{ 0x0000, 0x03ff, MWA_RAM },
+	{ 0x0400, 0x07ff, MWA_RAM, &rockola_videoram2 },
+	{ 0x0800, 0x0bff, videoram_w, &videoram, &videoram_size },
+	{ 0x0c00, 0x0fff, colorram_w, &colorram },
+	{ 0x1000, 0x1fff, rockola_characterram_w, &rockola_characterram },
+	{ 0x4000, 0x97ff, MWA_ROM },
+//	{ 0xb000, 0xb000, satansat_sound0_w },
+//	{ 0xb001, 0xb001, satansat_sound1_w },
+	{ 0xb002, 0xb002, satansat_b002_w },	/* flip screen & irq enable */
+	{ 0xb003, 0xb003, satansat_backcolor_w },
+	{ -1 }	/* end of table */
+};
+
 static struct MemoryReadAddress vanguard_readmem[] =
 {
 	{ 0x0000, 0x1fff, MRA_RAM },
-	{ 0x4000, 0xbfff, MRA_ROM },
 	{ 0x3104, 0x3104, input_port_0_r },	/* IN0 */
 	{ 0x3105, 0x3105, input_port_1_r },	/* IN1 */
-	{ 0x3106, 0x3106, input_port_2_r },	/* DSW ?? */
+	{ 0x3106, 0x3106, input_port_2_r },	/* DSW */
 	{ 0x3107, 0x3107, input_port_3_r },	/* IN2 */
+	{ 0x4000, 0xbfff, MRA_ROM },
 	{ 0xf000, 0xffff, MRA_ROM },	/* for the reset / interrupt vectors */
 	{ -1 }	/* end of table */
 };
@@ -133,6 +168,18 @@ static struct MemoryWriteAddress fantasy_writemem[] =
 
 
 
+static int satansat_interrupt(void)
+{
+	if (cpu_getiloops() != 0)
+	{
+		/* user asks to insert coin: generate a NMI interrupt. */
+		if (readinputport(3) & 1)
+			return nmi_interrupt();
+		else return ignore_interrupt();
+	}
+	else return interrupt();	/* one IRQ per frame */
+}
+
 static int rockola_interrupt(void)
 {
 	if (cpu_getiloops() != 0)
@@ -145,6 +192,55 @@ static int rockola_interrupt(void)
 	else return interrupt();	/* one IRQ per frame */
 }
 
+
+
+INPUT_PORTS_START( satansat_input_ports )
+    PORT_START  /* IN0 */
+    PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY )
+    PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
+    PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+    PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY | IPF_COCKTAIL )
+    PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_COCKTAIL )
+    PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
+    PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON2 )
+    PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_COCKTAIL )
+
+	PORT_START	/* IN1 */
+    PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
+    PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
+    PORT_BIT( 0x7C, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+    PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+
+    PORT_START  /* DSW */
+	PORT_DIPNAME( 0x01, 0x01, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x01, "Upright")
+	PORT_DIPSETTING(    0x00, "Cocktail" )
+	PORT_DIPNAME (0x0a, 0x00, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x08, "2 Coins/1 Credit" )
+	PORT_DIPSETTING (   0x00, "1 Coin/1 Credit" )
+	PORT_DIPSETTING (   0x02, "1 Coin/2 Credits" )
+	/* 0x0a gives 2/1 again */
+	PORT_DIPNAME (0x04, 0x00, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "5000" )
+	PORT_DIPSETTING (   0x04, "10000" )
+	PORT_DIPNAME (0x30, 0x00, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "3" )
+	PORT_DIPSETTING (   0x10, "4" )
+	PORT_DIPSETTING (   0x20, "5" )
+	/* 0x30 gives 3 again */
+	PORT_DIPNAME (0x40, 0x00, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "Off" )
+	PORT_DIPSETTING (   0x40, "On" )
+	PORT_DIPNAME (0x80, 0x00, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "Off" )
+	PORT_DIPSETTING (   0x80, "On" )
+
+    PORT_START  /* IN2 */
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_COIN1 | IPF_IMPULSE,
+			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+    PORT_BIT( 0x0e, IP_ACTIVE_LOW, IPT_UNUSED )
+    PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* connected to a counter - random number generator? */
+INPUT_PORTS_END
 
 INPUT_PORTS_START( vanguard_input_ports )
 	PORT_START	/* IN0 */
@@ -380,21 +476,34 @@ static struct GfxLayout charlayout512 =
 
 
 
+static struct GfxDecodeInfo satansat_gfxdecodeinfo[] =
+{
+    { 0, 0x1000, &charlayout256,   0, 4 },	/* the game dynamically modifies this */
+    { 1, 0x0000, &charlayout256, 4*4, 4 },
+	{ -1 }
+};
+
 static struct GfxDecodeInfo vanguard_gfxdecodeinfo[] =
 {
-	{ 0, 0xf000, &charlayout256,   0, 8 },	/* the game dynamically modifies this */
+	{ 0, 0x1000, &charlayout256,   0, 8 },	/* the game dynamically modifies this */
 	{ 1, 0x0000, &charlayout256, 8*4, 8 },
 	{ -1 } /* end of array */
 };
 
 static struct GfxDecodeInfo fantasy_gfxdecodeinfo[] =
 {
-	{ 0, 0xf000, &charlayout256,   0, 8 },	/* the game dynamically modifies this */
+	{ 0, 0x1000, &charlayout256,   0, 8 },	/* the game dynamically modifies this */
 	{ 1, 0x0000, &charlayout512, 8*4, 8 },
 	{ -1 } /* end of array */
 };
 
 
+
+static unsigned char satansat_color_prom[] =
+{
+	0x00,0xF8,0x02,0xFF,0xF8,0x27,0xC0,0xF8,0xC0,0x80,0x07,0x07,0xFF,0xF8,0x3F,0xFF,
+	0x00,0xF8,0x02,0xFF,0xC0,0xC0,0x80,0x26,0x38,0xA0,0xA0,0x04,0x07,0xC6,0xC5,0x27
+};
 
 static unsigned char vanguard_color_prom[] =
 {
@@ -428,6 +537,38 @@ static unsigned char nibbler_color_prom[] =
 
 
 
+static struct MachineDriver satansat_machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_M6502,
+			11289000/16,    /* 700 kHz */
+			0,
+			satansat_readmem,satansat_writemem,0,0,
+			satansat_interrupt,2
+		},
+	},
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,	/* single CPU, no need for interleaving */
+	0,
+
+	/* video hardware */
+	32*8, 32*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
+	satansat_gfxdecodeinfo,
+	32,4*4 + 4*4,
+	satansat_vh_convert_color_prom,
+
+	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
+	0,
+	generic_vh_start,
+	generic_vh_stop,
+	satansat_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0
+};
+
 static struct MachineDriver vanguard_machine_driver =
 {
 	/* basic machine hardware */
@@ -447,7 +588,7 @@ static struct MachineDriver vanguard_machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
 	vanguard_gfxdecodeinfo,
-	16*4,16*4,
+	64,16*4,
 	rockola_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
@@ -482,7 +623,7 @@ static struct MachineDriver fantasy_machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
 	fantasy_gfxdecodeinfo,
-	16*4,16*4,
+	64,16*4,
 	rockola_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
@@ -505,6 +646,54 @@ static struct MachineDriver fantasy_machine_driver =
   Game driver(s)
 
 ***************************************************************************/
+
+ROM_START( zarzon_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "ZARZ122.07", 0x4000, 0x0800, 0xa260b9f8 )
+	ROM_LOAD( "ZARZ123.08", 0x4800, 0x0800, 0xf2b8072c )
+	ROM_LOAD( "ZARZ124.09", 0x5000, 0x0800, 0xdea47b9a )
+	ROM_LOAD( "ZARZ125.10", 0x5800, 0x0800, 0xa30532d5 )
+	ROM_LOAD( "ZARZ126.13", 0x6000, 0x0800, 0x043c84ba )
+	ROM_LOAD( "ZARZ127.14", 0x6800, 0x0800, 0xa3f1286b )
+	ROM_LOAD( "ZARZ128.15", 0x7000, 0x0800, 0xfbc89252 )
+	ROM_LOAD( "ZARZ129.16", 0x7800, 0x0800, 0xc7440c84 )
+	ROM_RELOAD(             0xf800, 0x0800 ) /* for the reset/interrupt vectors */
+	ROM_LOAD( "ZARZ130.22", 0x8000, 0x0800, 0x78362c82 )
+	ROM_LOAD( "ZARZ131.23", 0x8800, 0x0800, 0x566914b5 )
+	ROM_LOAD( "ZARZ132.24", 0x9000, 0x0800, 0x7c4f3143 )
+
+	ROM_REGION(0x1000)  /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "ZARZ135.73", 0x0000, 0x0800, 0xbc67fa61 )
+	ROM_LOAD( "ZARZ136.75", 0x0800, 0x0800, 0x2364fe46 )
+
+    ROM_REGION(0x1000)  /* sound data for Vanguard-style audio section */
+	ROM_LOAD( "ZARZ133.53", 0x0000, 0x0800, 0x4b404b14 )
+	ROM_LOAD( "ZARZ134.54", 0x0800, 0x0800, 0x01380400 )
+ROM_END
+
+ROM_START( satansat_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "SS1",  0x4000, 0x0800, 0x48ea6052 )
+	ROM_LOAD( "SS2",  0x4800, 0x0800, 0x15c02424 )
+	ROM_LOAD( "SS3",  0x5000, 0x0800, 0xd6a4739a )
+	ROM_LOAD( "SS4",  0x5800, 0x0800, 0x6de8e7f2 )
+	ROM_LOAD( "SS5",  0x6000, 0x0800, 0x2b0d3f3b )
+	ROM_LOAD( "SS6",  0x6800, 0x0800, 0x1ca8acee )
+	ROM_LOAD( "SS7",  0x7000, 0x0800, 0xfbc89252 )
+	ROM_LOAD( "SS8",  0x7800, 0x0800, 0xc7440c84 )
+	ROM_RELOAD(       0xf800, 0x0800 ) /* for the reset/interrupt vectors */
+	ROM_LOAD( "SS9",  0x8000, 0x0800, 0x78362c82 )
+	ROM_LOAD( "SS10", 0x8800, 0x0800, 0xa6dd58a9 )
+	ROM_LOAD( "SS11", 0x9000, 0x0800, 0xa9c2a90a )
+
+	ROM_REGION(0x1000)  /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "SS14", 0x0000, 0x0800, 0xbc67fa61 )
+	ROM_LOAD( "SS15", 0x0800, 0x0800, 0x2364fe46 )
+
+    ROM_REGION(0x1000)  /* sound data for Vanguard-style audio section */
+	ROM_LOAD( "SS12", 0x0000, 0x0800, 0xc7de2350 )
+	ROM_LOAD( "SS13", 0x0800, 0x0800, 0x01380400 )
+ROM_END
 
 ROM_START( vanguard_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
@@ -706,6 +895,46 @@ static void nibbler_hisave(void)
 
 
 
+struct GameDriver satansat_driver =
+{
+    "Satan of Saturn",
+    "satansat",
+    "Dan Boris\nTheo Philips",
+	&satansat_machine_driver,
+
+    satansat_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+    satansat_input_ports,
+
+    satansat_color_prom,0,0,
+    ORIENTATION_ROTATE_90,
+
+	0, 0
+};
+
+struct GameDriver zarzon_driver =
+{
+    "Zarzon",
+    "zarzon",
+    "Dan Boris\nTheo Philips",
+	&satansat_machine_driver,
+
+    zarzon_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+    satansat_input_ports,
+
+    satansat_color_prom,0,0,
+    ORIENTATION_ROTATE_90,
+
+	0, 0
+};
+
 struct GameDriver vanguard_driver =
 {
 	"Vanguard",
@@ -785,4 +1014,3 @@ struct GameDriver nibblera_driver =
 
 	nibbler_hiload, nibbler_hisave
 };
-

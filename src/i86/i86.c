@@ -79,13 +79,13 @@ void i86_Reset (void)
     for (i = 0; i < 256; i++)
     {
 	Mod_RM.reg.b[i] = reg_name[(i & 0x38) >> 3];
-	Mod_RM.reg.w[i] = (i & 0x38) >> 3;
+	Mod_RM.reg.w[i] = (WREGS) ( (i & 0x38) >> 3) ;
     }
 
     for (i = 0xc0; i < 0x100; i++)
     {
-	Mod_RM.RM.w[i] = i & 7;
-	Mod_RM.RM.b[i] = reg_name[i & 7];
+	Mod_RM.RM.w[i] = (WREGS)( i & 7 );
+	Mod_RM.RM.b[i] = (BREGS)reg_name[i & 7];
     }
 }
 
@@ -436,24 +436,22 @@ static void i_es(void)    /* Opcode 0x26 */
 
 static void i_daa(void)    /* Opcode 0x27 */
 {
-    if (AF || ((regs.b[AL] & 0xf) > 9))
-    {
-	regs.b[AL] += 6;
-	AuxVal = 1;
-    }
-    else
-	AuxVal = 0;
+	if (AF || ((regs.b[AL] & 0xf) > 9))
+	{
+		int tmp;
+		regs.b[AL] = tmp = regs.b[AL] + 6;
+		AuxVal = 1;
+		CarryVal |= tmp & 0x100;
+	}
 
-    if (CF || (regs.b[AL] > 0x9f))
-    {
-	regs.b[AL] += 0x60;
-	CarryVal = 1;
-    }
-    else
-	CarryVal = 0;
+	if (CF || (regs.b[AL] > 0x9f))
+	{
+		regs.b[AL] += 0x60;
+		CarryVal = 1;
+	}
 
-    SetSZPF_Byte(regs.b[AL]);
-    cycle_count-=4;
+	SetSZPF_Byte(regs.b[AL]);
+	cycle_count-=4;
 }
 
 static void i_sub_br8(void)    /* Opcode 0x28 */
@@ -514,24 +512,22 @@ static void i_cs(void)    /* Opcode 0x2e */
 
 static void i_das(void)    /* Opcode 0x2f */
 {
-    if (AF || ((regs.b[AL] & 0xf) > 9))
-    {
-	regs.b[AL] -= 6;
-	AuxVal = 1;
-    }
-    else
-	AuxVal = 0;
+	if (AF || ((regs.b[AL] & 0xf) > 9))
+	{
+		int tmp;
+		regs.b[AL] = tmp = regs.b[AL] - 6;
+		AuxVal = 1;
+		CarryVal |= tmp & 0x100;
+	}
 
-    if (CF || (regs.b[AL] > 0x9f))
-    {
-	regs.b[AL] -= 0x60;
-	CarryVal = 1;
-    }
-    else
-	CarryVal = 0;
+	if (CF || (regs.b[AL] > 0x9f))
+	{
+		regs.b[AL] -= 0x60;
+		CarryVal = 1;
+	}
 
-    SetSZPF_Byte(regs.b[AL]);
-    cycle_count-=4;
+	SetSZPF_Byte(regs.b[AL]);
+	cycle_count-=4;
 }
 
 static void i_xor_br8(void)    /* Opcode 0x30 */

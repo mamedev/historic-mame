@@ -226,6 +226,12 @@ static uint8  clip; /* LBO 101297 */
 /* Samp_n_cnt[1] gives me a 32-bit int 24 whole bits with 8 fractional bits, */
 /* while (uint32 *)((uint8 *)(&Samp_n_cnt[0])+3) gives me the 32-bit whole   */
 /* number only.                                                              */
+/*									     */
+/* JAMC note:							             */
+/* this strategy only works if ARCH allows use of unaligned integer pointers */
+/* So , i've changed it to:						     */
+/* Samp_n_cnt[0] stores whole part					     */
+/* Samp_n_cnt[1] stores fractional part					     */
 /*****************************************************************************/
 
 
@@ -573,10 +579,9 @@ void Update_pokey_sound (uint16 addr, uint8 val, uint8 chip, uint8 gain)
 /*                                                                           */
 /*****************************************************************************/
 
-void Pokey_process (register unsigned char *buffer, register uint16 n)
+void Pokey_process (register signed char *buffer, register uint16 n)
 {
     register uint32 *div_n_ptr;
-    register uint32 *samp_cnt_w_ptr;
     register uint32 event_min;
     register uint8 next_event;
 #ifdef CLIP                      /* if clipping is selected */
@@ -591,33 +596,8 @@ void Pokey_process (register unsigned char *buffer, register uint16 n)
     register uint8 *vol_ptr;
 
 /* GSL 980313 B'zarre defines to handle optimised non-dword-aligned load/stores on ARM etc processors */
-/* The shifts may look strange, but ARM has an inexpensive barrel shifter, and the following produces
-   quite reasonable code */
-
-#ifndef ACORN
-#define	READ_WHOLE_PORTION(address) *(uint32 *)address
-#define DECREMENT_WHOLE_PORTION(address, data) *(uint32 *)address -= data
-#else
-	uint32 temp_value;
-	uint32 temp_value2;
-#define READ_WHOLE_PORTION(address)	((*(uint32 *)((uint8 *)address-1)) >> 8) + \
-									 ((*(uint8 *)(address+3)) << 24)
-#define DECREMENT_WHOLE_PORTION(address, data) \
-		temp_value = *(uint32 *)((uint8 *)address-1); /* 24.8 value */\
-		temp_value2 = (temp_value >> 8) + *(uint8 *)(address+3)	- data;	/* updated whole portion */\
-		*(uint32 *)((uint8 *)address-1)	= (temp_value & 0xff) + (temp_value2 << 8);	\
-		*(uint8 *)(address+3) = (temp_value2 >> 24)
-
-#endif
-
-
-
-    /* set a pointer to the whole portion of the samp_n_cnt */
-#ifdef BIG_ENDIAN
-    samp_cnt_w_ptr = (uint32 *)((uint8 *)(&Samp_n_cnt[0])+3);
-#else
-    samp_cnt_w_ptr = (uint32 *)((uint8 *)(&Samp_n_cnt[0])+1);
-#endif
+/* HDG 980501 Removed and replaced by cleaner solution without ifdef's,
+   as in use with unix port for several versions now */
 
     /* set a pointer for optimization */
     out_ptr = Outvol;
@@ -665,7 +645,7 @@ void Pokey_process (register unsigned char *buffer, register uint16 n)
 
        /* find next smallest event (either sample or chan 1-4) */
        next_event = SAMPLE;
-       event_min = READ_WHOLE_PORTION(samp_cnt_w_ptr);
+       event_min = Samp_n_cnt[0];
 
        div_n_ptr = Div_n_cnt;
 
@@ -719,7 +699,7 @@ void Pokey_process (register unsigned char *buffer, register uint16 n)
           count--;
        } while (count);
 
-       DECREMENT_WHOLE_PORTION(samp_cnt_w_ptr, event_min);
+       Samp_n_cnt[0] -= event_min;
 
        /* since the polynomials require a mod (%) function which is
           division, I don't adjust the polynomials on the SAMPLE events,
@@ -820,11 +800,11 @@ void Pokey_process (register unsigned char *buffer, register uint16 n)
        {
           /* adjust the sample counter - note we're using the 24.8 integer
              which includes an 8 bit fraction for accuracy */
-#ifdef BIG_ENDIAN
-		  *(Samp_n_cnt + 1) += Samp_n_max;
-#else
-          *Samp_n_cnt += Samp_n_max;
-#endif
+	  Samp_n_cnt[1] += Samp_n_max;
+	  if ( Samp_n_cnt[1] & 0xffffff00 ) {
+	     Samp_n_cnt[0] += (Samp_n_cnt[1]>>8);
+	     Samp_n_cnt[1] &= 0x000000ff;
+	  }
 
 #ifdef CLIP                         /* if clipping is selected */
 		  if (clip) {
@@ -838,15 +818,15 @@ void Pokey_process (register unsigned char *buffer, register uint16 n)
               }
               else                      /* otherwise use raw value */
               {
-                 *buffer++ = (uint8)cur_val;
+                 *buffer++ = (int8)cur_val;
               }
           }
           else                      /* otherwise use raw value */
           {
-             *buffer++ = (uint8)cur_val;
+             *buffer++ = (int8)cur_val;
           }
 #else
-          *buffer++ = (uint8)cur_val;  /* clipping not selected, use value */
+          *buffer++ = (int8)cur_val;  /* clipping not selected, use value */
 #endif
 
           /* and indicate one less byte in the buffer */

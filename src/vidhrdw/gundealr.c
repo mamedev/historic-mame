@@ -12,7 +12,6 @@
 
 
 unsigned char *gundealr_paletteram;
-int gundealr_paletteram_size;
 unsigned char *gundealr_bsvideoram;
 unsigned char *gundealr_bigspriteram;
 
@@ -55,37 +54,10 @@ void gundealr_paletteram_w(int offset,int data)
 void gundealr_vh_screenrefresh(struct osd_bitmap *bitmap)
 {
 	int offs;
-unsigned char used_colors[512];
 
 
-memset(used_colors,PALETTE_COLOR_UNUSED,512);
-
-for (offs = videoram_size - 2;offs >= 0;offs -= 2)
-{
-	int color;
-
-	color = (videoram[offs + 1] & 0xf0) >> 4;
-	memset(&used_colors[16 * color],PALETTE_COLOR_FIXED,16);
-}
-
-{
-	int x,y;
-
-
-	for (y = 0;y < 16;y++)
-	{
-		for (x = 0;x < 16;x++)
-		{
-			int color;
-
-			color = (gundealr_bsvideoram[1 + 2*y + 0x20*x] & 0xf0) >> 4;
-			memset(&used_colors[256 + 16 * color],PALETTE_COLOR_DYNAMIC,15);
-		}
-	}
-}
-
-if (palette_recalc(used_colors))
-	memset(dirtybuffer,1,videoram_size);
+	if (palette_recalc())
+		memset(dirtybuffer,1,videoram_size);
 
 
 	/* for every character in the Video RAM, check if it has been modified */
@@ -116,6 +88,8 @@ if (palette_recalc(used_colors))
 	/* copy the character mapped graphics */
 	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 
+
+	/* draw the front layer */
 	{
 		int sx,sy,x,y;
 

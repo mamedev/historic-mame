@@ -271,7 +271,7 @@ void docastle_vh_screenrefresh(struct osd_bitmap *bitmap)
 			clip.min_y = sy;
 			clip.max_y = sy+31;
 
-			copybitmap(bitmap,tmpbitmap,0,0,0,0,&clip,TRANSPARENCY_THROUGH,7+(color*8));
+			copybitmap(bitmap,tmpbitmap,0,0,0,0,&clip,TRANSPARENCY_THROUGH,Machine->pens[7+(color*8)]);
 		}
 	}
 

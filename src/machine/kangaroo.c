@@ -15,7 +15,7 @@
 #include "driver.h"
 #include "Z80/Z80.h"
 
-static int clock=0;
+static int kangaroo_clock=0;
 
 
 /* I have no idea what the security chip is nor whether it really does,
@@ -24,12 +24,12 @@ static int clock=0;
 
 int kangaroo_sec_chip_r(int offset)
 {
-/*  clock = (clock << 1) + 1; */
-  clock++;
-  return (clock & 0xff);
+/*  kangaroo_clock = (kangaroo_clock << 1) + 1; */
+  kangaroo_clock++;
+  return (kangaroo_clock & 0xff);
 }
 
 void kangaroo_sec_chip_w(int offset, int val)
 {
-/*  clock = val & 0xff; */
+/*  kangaroo_clock = val & 0xff; */
 }

@@ -83,6 +83,34 @@ void zaxxon_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 		COLOR(0,i) = i;
 }
 
+/* handle rotation of the background bitmaps */
+static void copy_rotated_pixel (struct osd_bitmap *dst_bm, int dy, int dx,
+	struct osd_bitmap *src_bm, int sy, int sx)
+{
+	if (Machine->orientation & ORIENTATION_SWAP_XY)
+	{
+		int temp;
+
+		temp = dx;
+		dx = dy;
+		dy = temp;
+		temp = sx;
+		sx = sy;
+		sy = temp;
+	}
+	if (Machine->orientation & ORIENTATION_FLIP_X)
+	{
+		dx = dst_bm->width - 1 - dx;
+		sx = src_bm->width - 1 - sx;
+	}
+	if (Machine->orientation & ORIENTATION_FLIP_Y)
+	{
+		dy = dst_bm->height - 1 - dy;
+		sy = src_bm->height - 1 - sy;
+	}
+
+	dst_bm->line[dy][dx] = src_bm->line[sy][sx];
+}
 
 
 /***************************************************************************
@@ -150,8 +178,8 @@ int zaxxon_vh_start(void)
 		{
 			if (offs + sx >= 0 && offs + sx < 4096)
 			{
-				backgroundbitmap1->line[sy][sx] = prebitmap->line[sx/2][offs + sx];
-				backgroundbitmap1->line[sy][sx+1] = prebitmap->line[sx/2][offs + sx+1];
+				copy_rotated_pixel (backgroundbitmap1, sy, sx, prebitmap, sx/2, offs+sx);
+				copy_rotated_pixel (backgroundbitmap1, sy, sx+1, prebitmap, sx/2, offs+sx+1);
 			}
 		}
 	}
@@ -184,8 +212,8 @@ int zaxxon_vh_start(void)
 		{
 			if (offs + sx >= 0 && offs + sx < 4096)
 			{
-				backgroundbitmap2->line[sy][sx] = prebitmap->line[sx/2][offs + sx];
-				backgroundbitmap2->line[sy][sx+1] = prebitmap->line[sx/2][offs + sx+1];
+				copy_rotated_pixel (backgroundbitmap2, sy, sx, prebitmap, sx/2, offs+sx);
+				copy_rotated_pixel (backgroundbitmap2, sy, sx+1, prebitmap, sx/2, offs+sx+1);
 			}
 		}
 	}

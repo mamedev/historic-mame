@@ -1,10 +1,10 @@
 /**********************************************************************
 
 	Motorola 6821 PIA interface and emulation
-	
+
 	This function emulates all the functionality of up to 4 M6821
 	peripheral interface adapters.
-	
+
 **********************************************************************/
 
 
@@ -22,7 +22,11 @@ struct pia6821_interface
 	int offsets[8];
 
 	int (*in_a_func[MAX_PIA])(int offset);
+	int (*in_ca1_func[MAX_PIA])(int offset);
+	int (*in_ca2_func[MAX_PIA])(int offset);
 	int (*in_b_func[MAX_PIA])(int offset);
+	int (*in_cb1_func[MAX_PIA])(int offset);
+	int (*in_cb2_func[MAX_PIA])(int offset);
 	void (*out_a_func[MAX_PIA])(int offset, int val);
 	void (*out_b_func[MAX_PIA])(int offset, int val);
 	void (*out_ca2_func[MAX_PIA])(int offset, int val);

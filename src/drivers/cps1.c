@@ -31,6 +31,7 @@
                      "Aaron Giles (additional code)\n"\
 
 
+#define CPS1_DEFAULT_CPU_FAST_SPEED     12000000
 #define CPS1_DEFAULT_CPU_SPEED          10000000
 #define CPS1_DEFAULT_CPU_SLOW_SPEED      8000000
 
@@ -110,7 +111,6 @@ static struct MemoryReadAddress cps1_readmem[] =
         { 0x800100, 0x8001ff, MRA_BANK4 },  /* Output ports */
 	{ -1 }	/* end of table */
 };
-
 
 static struct MemoryWriteAddress cps1_writemem[] =
 {
@@ -289,31 +289,28 @@ static struct GfxLayout LAYOUT = \
         16*8    /* every sprite takes 32*8*2 consecutive bytes */ \
 };
 
-#define TILE32_LAYOUT2(LAYOUT, TILES, SEP) \
-        TILE32_LAYOUT3(LAYOUT, TILES, SEP, 0x80000*8)
+/* {3*PLANE_SEP,2*PLANE_SEP,PLANE_SEP, 0},    */
 
-#define TILE32_LAYOUT3(LAYOUT, TILES, SEP, PLANE_SEP) \
-static struct GfxLayout LAYOUT =                                   \
-{                                                                  \
-        32,32,   /* 32*32 tiles */                                 \
-        TILES,   /* ????  tiles */                                 \
-        4,       /* 4 bits per pixel */                            \
-        {2*PLANE_SEP, 3*PLANE_SEP, 0,PLANE_SEP  },                                  \
-        {                                                          \
-           SEP+0,SEP+1,SEP+2,SEP+3, SEP+4,SEP+5,SEP+6,SEP+7,       \
-           0,1,2,3,4,5,6,7,                                        \
-           16+SEP+0,16+SEP+1,16+SEP+2,                             \
-           16+SEP+3,16+SEP+4,16+SEP+5,                             \
-           16+SEP+6,16+SEP+7,                                      \
-           16+0,16+1,16+2,16+3,16+4,16+5,16+6,16+7                 \
-        },                                                         \
-        {                                                          \
-           0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32,         \
-           8*32, 9*32, 10*32, 11*32, 12*32, 13*32, 14*32, 15*32,   \
-           16*32, 17*32, 18*32, 19*32, 20*32, 21*32, 22*32, 23*32, \
-           24*32, 25*32, 26*32, 27*32, 28*32, 29*32, 30*32, 31*32  \
-        },                                                         \
-        4*32*8    /* every sprite takes 32*8*4 consecutive bytes */\
+#define TILE32_LAYOUT2(LAYOUT, TILES, SEP, PLANE_SEP) \
+static struct GfxLayout LAYOUT =                                  \
+{                                                                 \
+        32,32,   /* 32*32 tiles */                                \
+        TILES,   /* ????  tiles */                                \
+        4,       /* 4 bits per pixel */                           \
+        {2*PLANE_SEP,3*PLANE_SEP,0*PLANE_SEP, 1*PLANE_SEP},       \
+        {                                                         \
+           0,1,2,3,4,5,6,7,\
+           SEP+0, SEP+1, SEP+ 2, SEP+ 3, SEP+ 4, SEP+ 5, SEP+ 6, SEP+ 7, \
+           8,9,10,11,12,13,14,15,                  \
+           SEP+8, SEP+9, SEP+10, SEP+11, SEP+12, SEP+13, SEP+14, SEP+15, \
+        },                                                        \
+        {                                                         \
+           0*16, 1*16,  2*16,    3*16,  4*16,  5*16,  6*16,  7*16,\
+           8*16, 9*16,  10*16,  11*16, 12*16, 13*16, 14*16, 15*16,\
+           16*16, 17*16, 18*16, 19*16, 20*16, 21*16, 22*16, 23*16,\
+           24*16, 25*16, 26*16, 27*16, 28*16, 29*16, 30*16, 31*16,\
+        },                                                        \
+        16*32 /* every sprite takes 32*8*4 consecutive bytes */\
 };
 
 
@@ -325,25 +322,26 @@ static struct GfxLayout LAYOUT =                                   \
 
 static struct CPS1config cps1_config_table[]=
 {
-  /* DRIVER    START  START  START  START      SPACE  SPACE  SPACE
-      NAME     SCRL1   OBJ   SCRL2  SCRL3  A   SCRL1  SCRL2  SCRL3  */
-  {"strider",      0,0x0200,0x1000,     0, 4, 0x0020,0x0020,0x0020},
-  {"striderj",     0,0x0200,0x1000,     0, 4, 0x0020,0x0020,0x0020},
-  {"ffight",  0x0400,     0,0x2000,0x0200, 2, 0x4420,0x3000,0x0980},
-  {"ffightj", 0x0400,     0,0x2000,0x0200, 2, 0x4420,0x3000,0x0980},
-  {"mtwins",       0,     0,0x2000,0x0e00, 3, 0x0020,0x0000,0x0000},
-  {"chikij",       0,     0,0x2000,0x0e00, 3, 0x0020,0x0000,0x0000},
-  {"unsquad",      0,     0,0x2000,     0, 0, 0x0020,0x0000,0x0000},
-  {"willow",       0,     0,     0,0x0600, 1, 0x7020,0x0000,0x0a00},
-  {"willowj",      0,     0,     0,0x0600, 1, 0x7020,0x0000,0x0a00},
-  {"msword",       0,     0,0x2800,0x0e00, 3,     -1,    -1,    -1},
-  {"pnickj",       0,0x0800,0x0800,0xffff, 0,     -1,    -1,    -1},
-  {"knights", 0x0800,0x0000,0x4c00,0x1a00, 3,     -1,    -1,    -1},
-  {"cawingj",      0,     0,0x2c00,0x0600, 0,     -1,    -1,    -1},
-  {"ghouls",  0x0000,0x0000,0x2000,0x0500, 5, 0x2420,0x2000,0x0500, 0x0800, 1},
-
+  /* DRIVER    START  START  START  START      SPACE  SPACE  SPACE  CPSB CPSB
+      NAME     SCRL1   OBJ   SCRL2  SCRL3  A   SCRL1  SCRL2  SCRL3  ADDR VAL */
+  {"willow",       0,     0,     0,0x0600, 1, 0x7020,0x0000,0x0a00,0x00,0x0000},
+  {"willowj",      0,     0,     0,0x0600, 1, 0x7020,0x0000,0x0a00,0x00,0x0000},
+  {"ffight",  0x0400,     0,0x2000,0x0200, 2, 0x4420,0x3000,0x0980,0x60,0x0004},
+  {"ffightj", 0x0400,     0,0x2000,0x0200, 2, 0x4420,0x3000,0x0980,0x60,0x0004},
+  {"mtwins",       0,     0,0x2000,0x0e00, 3, 0x0020,0x0000,0x0000,0x5e,0x0404},
+  {"chikij",       0,     0,0x2000,0x0e00, 3, 0x0020,0x0000,0x0000,0x5e,0x0404},
+  {"knights", 0x0800,0x0000,0x4c00,0x1a00, 3,     -1,    -1,    -1,0x00,0x0000},
+  {"strider",      0,0x0200,0x1000,     0, 4, 0x0020,0x0020,0x0020,0x00,0x0000},
+  {"striderj",     0,0x0200,0x1000,     0, 4, 0x0020,0x0020,0x0020,0x00,0x0000},
+  {"ghouls",  0x0000,0x0000,0x2000,0x1000, 5, 0x2420,0x2000,0x1000,0x00,0x0000, 0x0800, 1},
+  {"1941",         0,     0,0x2400,0x0400, 6, 0x0020,0x0400,0x2420,0x60,0x0005},
+  {"msword",       0,     0,0x2800,0x0e00, 7,     -1,    -1,    -1,0x00,0x0000},
+  {"nemo",         0,     0,0x2400,0x0d00, 8, 0x4020,0x2400,0x0d00,0x4e,0x0405},
+  {"unsquad",      0,     0,0x2000,     0, 0, 0x0020,0x0000,0x0000,0x00,0x0000},
+  {"pnickj",       0,0x0800,0x0800,0x0c00, 0,     -1,    -1,    -1,0x00,0x0000},
+  {"cawingj",      0,     0,0x2c00,0x0600, 0,     -1,    -1,    -1,0x00,0x0000},
   /* End of table (default values) */
-  {0,              0,     0,     0,     0, 0,     -1,    -1,    -1},
+  {0,              0,     0,     0,     0, 0,     -1,    -1,    -1,0x00,0x0000},
 };
 
 static int cps1_sh_init(const char *gamename)
@@ -357,6 +355,12 @@ static int cps1_sh_init(const char *gamename)
                 }
                 pCFG++;
         }
+        cps1_game_config=pCFG;
+
+        if (pCFG->space_scroll1 != -1)
+        {
+                pCFG->space_scroll1 &= 0xfff;
+        }
 
         if (stricmp(gamename, "cawingj")==0)
         {
@@ -368,13 +372,14 @@ static int cps1_sh_init(const char *gamename)
                 WRITE_WORD(&RAM[0x04ca], 0x4e71);
                 WRITE_WORD(&RAM[0x04cc], 0x4e71);
         }
-
-        cps1_game_config=pCFG;
-
-        if (pCFG->space_scroll1 != -1)
+        else if (stricmp(gamename, "ghouls")==0)
         {
-                pCFG->space_scroll1 &= 0xfff;
+                /* Patch out self-test... it takes forever */
+                WRITE_WORD(&RAM[0x61964+0], 0x4ef9);
+                WRITE_WORD(&RAM[0x61964+2], 0x0000);
+                WRITE_WORD(&RAM[0x61964+4], 0x0400);
         }
+
 
         return 0;
 }
@@ -1556,6 +1561,365 @@ struct GameDriver chikij_driver =
 
 /********************************************************************
 
+                          Nemo
+
+********************************************************************/
+
+INPUT_PORTS_START( input_ports_nemo )
+        PORT_START      /* IN0 */
+        PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+        PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+        PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
+        PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+        PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
+        PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
+        PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+        PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+        PORT_START      /* DSWA */
+        PORT_DIPNAME( 0x07, 0x07, "Coin A", IP_KEY_NONE )
+        PORT_DIPSETTING(    0x00, "4 Coins/1 Credit" )
+        PORT_DIPSETTING(    0x01, "3 Coins/1 Credit" )
+        PORT_DIPSETTING(    0x02, "2 Coins/1 Credit" )
+        PORT_DIPSETTING(    0x07, "1 Coin/1 Credit" )
+        PORT_DIPSETTING(    0x06, "1 Coin/2 Credits" )
+        PORT_DIPSETTING(    0x05, "1 Coin/3 Credits" )
+        PORT_DIPSETTING(    0x04, "1 Coin/4 Credits" )
+        PORT_DIPSETTING(    0x03, "1 Coin/6 Credits" )
+        PORT_DIPNAME( 0x38, 0x38, "Coin B", IP_KEY_NONE )
+        PORT_DIPSETTING(    0x00, "4 Coins/1 Credit" )
+        PORT_DIPSETTING(    0x08, "3 Coins/1 Credit" )
+        PORT_DIPSETTING(    0x10, "2 Coins/1 Credit" )
+        PORT_DIPSETTING(    0x38, "1 Coin/1 Credit" )
+        PORT_DIPSETTING(    0x30, "1 Coin/2 Credits" )
+        PORT_DIPSETTING(    0x28, "1 Coin/3 Credits" )
+        PORT_DIPSETTING(    0x20, "1 Coin/4 Credits" )
+        PORT_DIPSETTING(    0x18, "1 Coin/6 Credits" )
+        PORT_DIPNAME( 0x40, 0x40, "Force 2 Coins/1 Credit (1 to continue if On)", IP_KEY_NONE )
+        PORT_DIPSETTING(    0x00, "On" )
+        PORT_DIPSETTING(    0x40, "Off" )
+        PORT_DIPNAME( 0x80, 0x80, "Unknown", IP_KEY_NONE )
+        PORT_DIPSETTING(    0x00, "On" )
+        PORT_DIPSETTING(    0x80, "Off" )
+
+        PORT_START      /* DSWB */
+        PORT_DIPNAME( 0x07, 0x07, "Difficulty", IP_KEY_NONE )
+        PORT_DIPSETTING(    0x07, "Very Easy" )
+        PORT_DIPSETTING(    0x06, "Easy 1" )
+        PORT_DIPSETTING(    0x05, "Easy 2" )
+        PORT_DIPSETTING(    0x04, "Normal" )
+        PORT_DIPSETTING(    0x03, "Difficult 1" )
+        PORT_DIPSETTING(    0x02, "Difficult 2" )
+        PORT_DIPSETTING(    0x01, "Difficult 3" )
+        PORT_DIPSETTING(    0x00, "Very Difficult" )
+        PORT_DIPNAME( 0x18, 0x18, "Life Bar", IP_KEY_NONE )
+        PORT_DIPSETTING(    0x00, "Minimun" )
+        PORT_DIPSETTING(    0x18, "Medium" )
+        PORT_DIPSETTING(    0x08, "Maximum" )
+        /* 0x10 gives Medium */
+        PORT_DIPNAME( 0x20, 0x20, "Unknown", IP_KEY_NONE )
+        PORT_DIPSETTING(    0x00, "On" )
+        PORT_DIPSETTING(    0x20, "Off" )
+        PORT_DIPNAME( 0x40, 0x40, "Unknown", IP_KEY_NONE )
+        PORT_DIPSETTING(    0x00, "On" )
+        PORT_DIPSETTING(    0x40, "Off" )
+        PORT_DIPNAME( 0x80, 0x80, "Unknown", IP_KEY_NONE )
+        PORT_DIPSETTING(    0x00, "On" )
+        PORT_DIPSETTING(    0x80, "Off" )
+        PORT_START      /* DSWC */
+        PORT_DIPNAME( 0x03, 0x03, "Lives", IP_KEY_NONE )
+        PORT_DIPSETTING(    0x02, "1" )
+        PORT_DIPSETTING(    0x03, "2" )
+        PORT_DIPSETTING(    0x01, "3" )
+        PORT_DIPSETTING(    0x00, "4" )
+        PORT_DIPNAME( 0x04, 0x04, "Free Play", IP_KEY_NONE )
+        PORT_DIPSETTING(    0x00, "On" )
+        PORT_DIPSETTING(    0x04, "Off")
+        PORT_DIPNAME( 0x08, 0x08, "Freeze Screen", IP_KEY_NONE )
+        PORT_DIPSETTING(    0x00, "On" )
+        PORT_DIPSETTING(    0x08, "Off")
+        PORT_DIPNAME( 0x10, 0x10, "Video Flip", IP_KEY_NONE )
+        PORT_DIPSETTING(    0x00, "On" )
+        PORT_DIPSETTING(    0x10, "Off")
+        PORT_DIPNAME( 0x20, 0x20, "Demo sound", IP_KEY_NONE )
+        PORT_DIPSETTING(    0x00, "On" )
+        PORT_DIPSETTING(    0x20, "Off")
+        PORT_DIPNAME( 0x40, 0x40, "Continue", IP_KEY_NONE )
+        PORT_DIPSETTING(    0x00, "On" )
+        PORT_DIPSETTING(    0x40, "Off")
+        PORT_DIPNAME( 0x80, 0x80, "Test Mode", IP_KEY_NONE )
+        PORT_DIPSETTING(    0x00, "On" )
+        PORT_DIPSETTING(    0x80, "Off")
+
+        PORT_START      /* Player 1 */
+        PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
+        PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER1 )
+        PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER1 )
+        PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER1 )
+        PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+        PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+        PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
+        PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+        PORT_START      /* Player 2 */
+        PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+        PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER2 )
+        PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER2 )
+        PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER2 )
+        PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+        PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+        PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
+        PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+INPUT_PORTS_END
+
+
+CHAR_LAYOUT(charlayout_nemo,  2048, 0x100000*8)
+SPRITE_LAYOUT(spritelayout_nemo, 4096*2, 0x80000*8, 0x100000*8)
+SPRITE_LAYOUT(tilelayout_nemo, 8192-2048, 0x80000*8, 0x100000*8)
+TILE32_LAYOUT(tilelayout32_nemo, 1024-256,  0x080000*8, 0x100000*8)
+
+static struct GfxDecodeInfo gfxdecodeinfo_nemo[] =
+{
+        /*   start    pointer          colour start   number of colours */
+        { 1, 0x040000, &charlayout_nemo,    0,                      32 },
+        { 1, 0x000000, &spritelayout_nemo,  32*16,                  32 },
+        { 1, 0x048000, &tilelayout_nemo,    32*16+32*16,            32 },
+        { 1, 0x068000, &tilelayout32_nemo,  32*16+32*16+32*16,      32 },
+	{ -1 } /* end of array */
+};
+
+MACHINE_DRIVER(
+        nemo_machine_driver,
+        cps1_interrupt2,
+        gfxdecodeinfo_nemo,
+        CPS1_DEFAULT_CPU_SPEED)
+
+
+ROM_START( nemo_rom )
+        ROM_REGION(0x100000)      /* 68000 code */
+
+        ROM_LOAD_EVEN("nme_30a.ROM", 0x00000, 0x20000, 0x0ea09c8e )
+        ROM_LOAD_ODD ("nme_35a.ROM", 0x00000, 0x20000, 0xa06e170e )
+        ROM_LOAD_EVEN("nme_31a.ROM", 0x40000, 0x20000, 0xd5358aab )
+        ROM_LOAD_ODD ("nme_36a.ROM", 0x40000, 0x20000, 0xbda37457 )
+        ROM_LOAD_WIDE_SWAP("nm_32.ROM", 0x80000, 0x80000, 0xdf80bd98 ) /* Tile map */
+
+        ROM_REGION(0x500000)     /* temporary space for graphics (disposed after conversion) */
+        ROM_LOAD( "nm_gfx1.ROM",   0x000000, 0x80000, 0x72382998 )
+        ROM_LOAD( "nm_gfx5.ROM",   0x080000, 0x80000, 0xeccabcae )
+        ROM_LOAD( "nm_gfx3.ROM",   0x100000, 0x80000, 0xb87c0e86 )
+        ROM_LOAD( "nm_gfx7.ROM",   0x180000, 0x80000, 0xa5fce4fc )
+
+        ROM_REGION(0x20000) /* 64k for the audio CPU (+banks) */
+        ROM_LOAD( "nm_09.ROM",      0x000000, 0x08000, 0xe572c960 )
+                ROM_CONTINUE(       0x010000, 0x08000 )
+
+        ROM_REGION(0x40000) /* Samples */
+        ROM_LOAD ("nm_18.ROM",    0x00000, 0x20000, 0x2094dafa )
+        ROM_LOAD ("nm_19.ROM",    0x20000, 0x20000, 0x551d35d9 )
+ROM_END
+
+struct GameDriver nemo_driver =
+{
+        "Nemo",
+        "nemo",
+        CPS1_CREDITS("Darren Olafson (Game Driver)\nMarco Cassili (Dip Switches)\nPaul Leaman"),
+        &nemo_machine_driver,
+
+        nemo_rom,
+        0,
+        0,0,
+        0,      /* sound_prom */
+
+        input_ports_nemo,
+        NULL, 0, 0,
+
+        ORIENTATION_DEFAULT,
+        NULL, NULL
+};
+
+/********************************************************************
+
+                          1941
+
+********************************************************************/
+
+INPUT_PORTS_START( input_ports_1941 )
+        PORT_START      /* IN0 */
+        PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+        PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+        PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
+        PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+        PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_START1 , "Left Player Start", IP_KEY_DEFAULT, IP_JOY_NONE, 0 )
+        PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_START2 , "Right Player Start", IP_KEY_DEFAULT, IP_JOY_NONE, 0 )
+        PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+        PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+        PORT_START      /* DSWA */
+        PORT_DIPNAME( 0x07, 0x07, "Coin A", IP_KEY_NONE )
+        PORT_DIPSETTING(    0x00, "4 Coins/1 Credit" )
+        PORT_DIPSETTING(    0x01, "3 Coins/1 Credit" )
+        PORT_DIPSETTING(    0x02, "2 Coins/1 Credit" )
+        PORT_DIPSETTING(    0x07, "1 Coin/1 Credit" )
+        PORT_DIPSETTING(    0x06, "1 Coin/2 Credits" )
+        PORT_DIPSETTING(    0x05, "1 Coin/3 Credits" )
+        PORT_DIPSETTING(    0x04, "1 Coin/4 Credits" )
+        PORT_DIPSETTING(    0x03, "1 Coin/6 Credits" )
+        PORT_DIPNAME( 0x38, 0x38, "Coin B", IP_KEY_NONE )
+        PORT_DIPSETTING(    0x00, "4 Coins/1 Credit" )
+        PORT_DIPSETTING(    0x08, "3 Coins/1 Credit" )
+        PORT_DIPSETTING(    0x10, "2 Coins/1 Credit" )
+        PORT_DIPSETTING(    0x38, "1 Coin/1 Credit" )
+        PORT_DIPSETTING(    0x30, "1 Coin/2 Credits" )
+        PORT_DIPSETTING(    0x28, "1 Coin/3 Credits" )
+        PORT_DIPSETTING(    0x20, "1 Coin/4 Credits" )
+        PORT_DIPSETTING(    0x18, "1 Coin/6 Credits" )
+        PORT_DIPNAME( 0x40, 0x40, "Force 2 Coins/1 Credit (1 to continue if On)", IP_KEY_NONE )
+        PORT_DIPSETTING(    0x00, "On" )
+        PORT_DIPSETTING(    0x40, "Off" )
+        PORT_DIPNAME( 0x80, 0x80, "Unknown", IP_KEY_NONE )
+        PORT_DIPSETTING(    0x00, "On" )
+        PORT_DIPSETTING(    0x80, "Off" )
+
+        PORT_START      /* DSWB */
+        PORT_DIPNAME( 0x07, 0x07, "Difficulty", IP_KEY_NONE )
+        PORT_DIPSETTING(    0x07, "0 (Easier)" )
+        PORT_DIPSETTING(    0x06, "1" )
+        PORT_DIPSETTING(    0x05, "2" )
+        PORT_DIPSETTING(    0x04, "3" )
+        PORT_DIPSETTING(    0x03, "4" )
+        PORT_DIPSETTING(    0x02, "5" )
+        PORT_DIPSETTING(    0x01, "6" )
+        PORT_DIPSETTING(    0x00, "7 (Harder)" )
+        PORT_DIPNAME( 0x18, 0x18, "Life Bar", IP_KEY_NONE )
+        PORT_DIPSETTING(    0x18, "More Slowly" )
+        PORT_DIPSETTING(    0x10, "Slowly" )
+        PORT_DIPSETTING(    0x08, "Quickly" )
+        PORT_DIPSETTING(    0x00, "More Quickly" )
+        PORT_DIPNAME( 0x60, 0x60, "Bullet's Speed", IP_KEY_NONE )
+        PORT_DIPSETTING(    0x60, "Very Slow" )
+        PORT_DIPSETTING(    0x40, "Slow" )
+        PORT_DIPSETTING(    0x20, "Fast" )
+        PORT_DIPSETTING(    0x00, "Very Fast" )
+        PORT_DIPNAME( 0x80, 0x80, "Initial Vitality", IP_KEY_NONE )
+        PORT_DIPSETTING(    0x80, "3 Bars" )
+        PORT_DIPSETTING(    0x00, "4 Bars" )
+        PORT_START      /* DSWC */
+        PORT_DIPNAME( 0x01, 0x01, "Unknown", IP_KEY_NONE )
+        PORT_DIPSETTING(    0x00, "On" )
+        PORT_DIPSETTING(    0x01, "Off" )
+        PORT_DIPNAME( 0x02, 0x02, "Unknown", IP_KEY_NONE )
+        PORT_DIPSETTING(    0x00, "On" )
+        PORT_DIPSETTING(    0x02, "Off" )
+        PORT_DIPNAME( 0x04, 0x04, "Free Play", IP_KEY_NONE )
+        PORT_DIPSETTING(    0x00, "On" )
+        PORT_DIPSETTING(    0x04, "Off")
+        PORT_DIPNAME( 0x08, 0x08, "Freeze Screen", IP_KEY_NONE )
+        PORT_DIPSETTING(    0x00, "On" )
+        PORT_DIPSETTING(    0x08, "Off")
+        PORT_DIPNAME( 0x10, 0x10, "Video Flip", IP_KEY_NONE )
+        PORT_DIPSETTING(    0x00, "On" )
+        PORT_DIPSETTING(    0x10, "Off")
+        PORT_DIPNAME( 0x20, 0x20, "Demo sound", IP_KEY_NONE )
+        PORT_DIPSETTING(    0x00, "On" )
+        PORT_DIPSETTING(    0x20, "Off")
+        PORT_DIPNAME( 0x40, 0x40, "Continue", IP_KEY_NONE )
+        PORT_DIPSETTING(    0x00, "On" )
+        PORT_DIPSETTING(    0x40, "Off")
+        PORT_DIPNAME( 0x80, 0x80, "Test Mode", IP_KEY_NONE )
+        PORT_DIPSETTING(    0x00, "On" )
+        PORT_DIPSETTING(    0x80, "Off")
+
+        PORT_START      /* Player 1 */
+        PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
+        PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER1 )
+        PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER1 )
+        PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER1 )
+        PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+        PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+        PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+        PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+        PORT_START      /* Player 2 */
+        PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+        PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER2 )
+        PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER2 )
+        PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER2 )
+        PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+        PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+        PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+        PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+INPUT_PORTS_END
+
+
+CHAR_LAYOUT(charlayout_1941,  2048, 0x100000*8)
+SPRITE_LAYOUT(spritelayout_1941, 4096*2-1024, 0x80000*8, 0x100000*8)
+SPRITE_LAYOUT(tilelayout_1941, 8192-1024,   0x80000*8, 0x100000*8)
+TILE32_LAYOUT(tilelayout32_1941, 1024,  0x080000*8, 0x100000*8)
+
+static struct GfxDecodeInfo gfxdecodeinfo_1941[] =
+{
+        /*   start    pointer               colour start   number of colours */
+        { 1, 0x040000, &charlayout_1941,    0,                      32 },
+        { 1, 0x000000, &spritelayout_1941,  32*16,                  32 },
+        { 1, 0x048000, &tilelayout_1941,    32*16+32*16,            32 },
+        { 1, 0x020000, &tilelayout32_1941,  32*16+32*16+32*16,      32 },
+	{ -1 } /* end of array */
+};
+
+MACHINE_DRIVER(
+        c1941_machine_driver,
+        cps1_interrupt2,
+        gfxdecodeinfo_1941,
+        CPS1_DEFAULT_CPU_SPEED)
+
+ROM_START( c1941_rom )
+        ROM_REGION(0x100000)      /* 68000 code */
+        ROM_LOAD_EVEN("41e_30.ROM",  0x00000, 0x20000, 0x6e4db1c3 )
+        ROM_LOAD_ODD ("41e_35.ROM",  0x00000, 0x20000, 0xc8938a93 )
+        ROM_LOAD_EVEN("41e_31.ROM",  0x40000, 0x20000, 0x06ed4375 )
+        ROM_LOAD_ODD ("41e_36.ROM",  0x40000, 0x20000, 0x2b7b9581 )
+        ROM_LOAD_WIDE_SWAP( "41_32.ROM", 0x80000, 0x80000, 0x719d7e13 )
+
+        ROM_REGION(0x200000)     /* temporary space for graphics (disposed after conversion) */
+        ROM_LOAD( "41_GFX1.ROM",   0x000000, 0x80000, 0x5ef283ec )
+        ROM_LOAD( "41_GFX5.ROM",   0x080000, 0x80000, 0xcded8f91 )
+        ROM_LOAD( "41_GFX3.ROM",   0x100000, 0x80000, 0xd76ef474 )
+        ROM_LOAD( "41_GFX7.ROM",   0x180000, 0x80000, 0xa163ecdd )
+
+        ROM_REGION(0x18000) /* 64k for the audio CPU (+banks) */
+        ROM_LOAD( "41_09.ROM",      0x000000, 0x08000, 0xd1a4b9de )
+                ROM_CONTINUE(       0x010000, 0x08000 )
+
+        ROM_REGION(0x40000) /* Samples */
+        ROM_LOAD ("41_18.ROM",    0x00000, 0x20000, 0x9b0dee37 )
+        ROM_LOAD ("41_19.ROM",    0x20000, 0x20000, 0x3644013c )
+ROM_END
+
+
+struct GameDriver c1941_driver =
+{
+        "1941",
+        "1941",
+        CPS1_CREDITS("Darren Olafson (Game Driver)\nMarco Cassili (Dip Switches)\nPaul Leaman"),
+        &c1941_machine_driver,
+
+        c1941_rom,
+        0,
+        0,0,
+        0,      /* sound_prom */
+
+        input_ports_1941,
+        NULL, 0, 0,
+
+        ORIENTATION_ROTATE_270,
+        NULL, NULL
+};
+
+
+
+/********************************************************************
+
                           Magic Sword
 
 ********************************************************************/
@@ -1857,7 +2221,7 @@ character set. There are two copies resident in memory.
 CHAR_LAYOUT2(charlayout_pnickj, 4096, 0x80000*8);
 SPRITE_LAYOUT2(spritelayout_pnickj, 0x2800);
 SPRITE_LAYOUT2(tilelayout_pnickj,   0x2800);
-TILE32_LAYOUT2(tilelayout32_pnickj, 1,  0x40000*8 );
+TILE32_LAYOUT2(tilelayout32_pnickj, 512,  0x40000*8, 0x80000*8 );
 
 static struct GfxDecodeInfo gfxdecodeinfo_pnickj[] =
 {
@@ -2122,56 +2486,116 @@ struct GameDriver knights_driver =
                           GHOULS AND GHOSTS
 
   Sprites are split across 2 different graphics layouts.
-
+  32x32 tiles appear to be doubled.
 
 ********************************************************************/
 
 INPUT_PORTS_START( input_ports_ghouls )
-        PORT_START      /* IN0 */
+PORT_START      /* IN0 */
         PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
         PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
-        PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
+        PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )  /* Service, but it doesn't give any credit */
         PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
         PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
         PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
         PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
         PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
-
         PORT_START      /* DSWA */
-        PORT_DIPNAME (0xff, 0xff, "DIP A", IP_KEY_NONE)
-        PORT_DIPSETTING(    0xff, "OFF" )
-        PORT_DIPSETTING(    0x00, "ON" )
+        PORT_DIPNAME( 0x07, 0x07, "Coin A", IP_KEY_NONE )
+        PORT_DIPSETTING(    0x00, "4 Coins/1 Credit" )
+        PORT_DIPSETTING(    0x01, "3 Coins/1 Credit" )
+        PORT_DIPSETTING(    0x02, "2 Coins/1 Credit" )
+        PORT_DIPSETTING(    0x07, "1 Coin/1 Credit" )
+        PORT_DIPSETTING(    0x06, "1 Coin/2 Credits" )
+        PORT_DIPSETTING(    0x05, "1 Coin/3 Credits" )
+        PORT_DIPSETTING(    0x04, "1 Coin/4 Credits" )
+        PORT_DIPSETTING(    0x03, "1 Coin/6 Credits" )
+        PORT_DIPNAME( 0x38, 0x38, "Coin B", IP_KEY_NONE )
+        PORT_DIPSETTING(    0x00, "4 Coins/1 Credit" )
+        PORT_DIPSETTING(    0x08, "3 Coins/1 Credit" )
+        PORT_DIPSETTING(    0x10, "2 Coins/1 Credit" )
+        PORT_DIPSETTING(    0x38, "1 Coin/1 Credit" )
+        PORT_DIPSETTING(    0x30, "1 Coin/2 Credits" )
+        PORT_DIPSETTING(    0x28, "1 Coin/3 Credits" )
+        PORT_DIPSETTING(    0x20, "1 Coin/4 Credits" )
+        PORT_DIPSETTING(    0x18, "1 Coin/6 Credits" )
+        PORT_DIPNAME( 0x40, 0x40, "Unknown", IP_KEY_NONE )
+        PORT_DIPSETTING(    0x40, "On" )
+        PORT_DIPSETTING(    0x00, "Off" )
+        PORT_DIPNAME( 0x80, 0x80, "Cabinet", IP_KEY_NONE )
+        PORT_DIPSETTING(    0x80, "Upright" )
+        PORT_DIPSETTING(    0x00, "Cocktail" )
 
         PORT_START      /* DSWB */
-        PORT_DIPNAME (0xff, 0xff, "DIP B", IP_KEY_NONE)
-        PORT_DIPSETTING(    0xff, "OFF" )
-        PORT_DIPSETTING(    0x00, "ON" )
+        PORT_DIPNAME( 0x01, 0x01, "Unknown", IP_KEY_NONE )
+        PORT_DIPSETTING(    0x01, "On" )
+        PORT_DIPSETTING(    0x00, "Off")
+        PORT_DIPNAME( 0x02, 0x02, "Unknown", IP_KEY_NONE )
+        PORT_DIPSETTING(    0x02, "On" )
+        PORT_DIPSETTING(    0x00, "Off")
+        PORT_DIPNAME( 0x04, 0x04, "Unknown", IP_KEY_NONE )
+        PORT_DIPSETTING(    0x04, "On" )
+        PORT_DIPSETTING(    0x00, "Off")
+        PORT_DIPNAME( 0x08, 0x08, "Unknown", IP_KEY_NONE )
+        PORT_DIPSETTING(    0x08, "On" )
+        PORT_DIPSETTING(    0x00, "Off")
+        PORT_DIPNAME( 0x30, 0x30, "Bonus", IP_KEY_NONE )
+        PORT_DIPSETTING(    0x20, "10K, 30K and every 30K" )
+        PORT_DIPSETTING(    0x10, "20K, 50K and every 70K" )
+        PORT_DIPSETTING(    0x30, "30K, 60K and every 70K")
+        PORT_DIPSETTING(    0x00, "40K, 70K and every 80K" )
+        PORT_DIPNAME( 0x40, 0x40, "Unknown", IP_KEY_NONE )
+        PORT_DIPSETTING(    0x40, "On" )
+        PORT_DIPSETTING(    0x00, "Off")
+        PORT_DIPNAME( 0x80, 0x80, "Unknown", IP_KEY_NONE )
+        PORT_DIPSETTING(    0x80, "On" )
+        PORT_DIPSETTING(    0x00, "Off")
 
         PORT_START      /* DSWC */
-        PORT_DIPNAME (0xff, 0xff, "DIP C", IP_KEY_NONE)
-        PORT_DIPSETTING(    0xff, "OFF" )
-        PORT_DIPSETTING(    0x00, "ON" )
+        PORT_DIPNAME( 0x03, 0x03, "Lives", IP_KEY_NONE )
+        PORT_DIPSETTING(    0x03, "3" )
+        PORT_DIPSETTING(    0x02, "4" )
+        PORT_DIPSETTING(    0x01, "5" )
+        PORT_DIPSETTING(    0x00, "6" )
+        PORT_DIPNAME( 0x04, 0x04, "Unknown", IP_KEY_NONE )
+        PORT_DIPSETTING(    0x04, "On" )
+        PORT_DIPSETTING(    0x00, "Off")
+        PORT_DIPNAME( 0x08, 0x08, "Unknown", IP_KEY_NONE )
+        PORT_DIPSETTING(    0x08, "On" )
+        PORT_DIPSETTING(    0x00, "Off")
+        PORT_DIPNAME( 0x10, 0x10, "Unknown", IP_KEY_NONE )
+        PORT_DIPSETTING(    0x10, "On" )
+        PORT_DIPSETTING(    0x00, "Off")
+        PORT_DIPNAME( 0x20, 0x20, "Demo Sound", IP_KEY_NONE )
+        PORT_DIPSETTING(    0x20, "On")
+        PORT_DIPSETTING(    0x00, "Off" )
+        PORT_DIPNAME( 0x40, 0x40, "Continue", IP_KEY_NONE )
+        PORT_DIPSETTING(    0x40, "On")
+        PORT_DIPSETTING(    0x00, "Off" )
+        PORT_DIPNAME( 0x80, 0x80, "Test Mode", IP_KEY_NONE )
+        PORT_DIPSETTING(    0x00, "On" )
+        PORT_DIPSETTING(    0x80, "Off")
 
         PORT_START      /* Player 1 */
-        PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_PLAYER1)
-        PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_PLAYER1)
-        PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_PLAYER1)
-        PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_PLAYER1)
-        PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1)
-        PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1)
-        PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1)
+        PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
+        PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
+        PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
+        PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
+        PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+        PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
+        PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 )
         PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
-
         PORT_START      /* Player 2 */
-        PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_PLAYER2)
-        PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_PLAYER2)
-        PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_PLAYER2)
-        PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_PLAYER2)
-        PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2)
-        PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2)
-        PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2)
+        PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
+        PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_COCKTAIL )
+        PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
+        PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
+        PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+        PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
+        PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_COCKTAIL )
         PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
+
 
 #define SPRITE_SEP (0x040000*8)
 static struct GfxLayout spritelayout2_ghouls =
@@ -2194,36 +2618,8 @@ static struct GfxLayout spritelayout2_ghouls =
 
 CHAR_LAYOUT(charlayout_ghouls,     4096*2,   0x100000*8)
 SPRITE_LAYOUT(spritelayout_ghouls, 4096,     0x080000*8, 0x100000*8 )
-SPRITE_LAYOUT(tilelayout_ghouls,   4096*3,   0x080000*8, 0x100000*8 )
-
-
-/* Can't work out the bottom half of this */
-#define SEP2 16*8
-#define TILE32_LAYOUT4(LAYOUT, TILES, SEP, PLANE_SEP) \
-static struct GfxLayout LAYOUT =                                   \
-{                                                                  \
-        32,32,   /* 32*32 tiles */                                 \
-        TILES,   /* ????  tiles */                                 \
-        4,       /* 4 bits per pixel */                            \
-        {0x30000*8,0x20000*8, 0x10000*8, 0},                       \
-        {                                                          \
-           0,1,2,3,4,5,6,7,8,\
-           SEP+0, SEP+1, SEP+ 2, SEP+ 3, SEP+ 4, SEP+ 5, SEP+ 6, SEP+ 7, \
-           9,10,11,12,13,14,15,                  \
-           SEP+8, SEP+9, SEP+10, SEP+11, SEP+12, SEP+13, SEP+14, SEP+15, \
-        },                                                         \
-        {                                                          \
-           0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32,         \
-           8*32, 9*32, 10*32, 11*32, 12*32, 13*32, 14*32, 15*32,   \
-           SEP2+0*32, SEP2+1*32, SEP2+2*32, SEP2+3*32,\
-           SEP2+4*32, SEP2+5*32, SEP2+6*32, SEP2+7*32,\
-           SEP2+8*32, SEP2+9*32, SEP2+10*32, SEP2+11*32,\
-           SEP2+12*32, SEP2+13*32, SEP2+14*32, SEP2+15*32,   \
-        },                                                         \
-        16*32 /* every sprite takes 32*8*4 consecutive bytes */\
-};
-
-TILE32_LAYOUT4(tilelayout32_ghouls, 1 /*4096*4-1*/,    0x040000*8, 0x020000*8 )
+SPRITE_LAYOUT(tilelayout_ghouls,   4096*2,   0x080000*8, 0x100000*8 )
+TILE32_LAYOUT2(tilelayout32_ghouls, 1024,    0x040000*8, 0x10000*8 )
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
@@ -2244,22 +2640,11 @@ MACHINE_DRV(
 
 ROM_START( ghouls_rom )
         ROM_REGION(0x100000)
-#if 1
+
         ROM_LOAD_EVEN("GHL29.BIN",   0x00000, 0x20000, 0x8821a2b3 ) /* 68000 code */
         ROM_LOAD_ODD ("GHL30.BIN",   0x00000, 0x20000, 0xaff1cd13 ) /* 68000 code */
         ROM_LOAD_EVEN("GHL27.BIN",   0x40000, 0x20000, 0x82a7d49d ) /* 68000 code */
         ROM_LOAD_ODD ("GHL28.BIN",   0x40000, 0x20000, 0xe32cdaa6 ) /* 68000 code */
-#else
-        /*
-         Alternative set - boots up faster, game will reboot due to
-         incorrect tile map data.
-        */
-
-        ROM_LOAD_EVEN("DMU.29",   0x00000, 0x20000, 0x90efb087 ) /* 68000 code */
-        ROM_LOAD_ODD ("DMU.30",   0x00000, 0x20000, 0xac09ca89 ) /* 68000 code */
-        ROM_LOAD_EVEN("DMU.27",   0x40000, 0x20000, 0x7bc0c8d8 ) /* 68000 code */
-        ROM_LOAD_ODD ("DMU.28",   0x40000, 0x20000, 0xc07d69e3 ) /* 68000 code */
-#endif
 
         ROM_LOAD_WIDE("GHL17.BIN",   0x80000, 0x80000, 0x12eee9a4 ) /* Tile map */
 
@@ -2280,18 +2665,18 @@ ROM_START( ghouls_rom )
         ROM_LOAD( "GHL16.BIN",      0x260000, 0x10000, 0xc47e04ba )
         ROM_LOAD( "GHL21.BIN",      0x270000, 0x10000, 0x30cecdb6 )
 
-
         /* 32 * 32 tiles - left half */
-        ROM_LOAD( "GHL09.BIN",      0x280000, 0x10000, 0x3d57242d ) /* Plane x */
-        ROM_LOAD( "GHL18.BIN",      0x290000, 0x10000, 0x237eb922 ) /* Plane x */
-        ROM_LOAD( "GHL13.BIN",      0x2a0000, 0x10000, 0x18a99b29 ) /* Plane x */
-        ROM_LOAD( "GHL22.BIN",      0x2b0000, 0x10000, 0x08a71d8f ) /* Plane x */
+        ROM_LOAD( "GHL18.BIN",      0x280000, 0x10000, 0x237eb922 ) /* Plane x */
+        ROM_LOAD( "GHL09.BIN",      0x290000, 0x10000, 0x3d57242d ) /* Plane x */
+        ROM_LOAD( "GHL22.BIN",      0x2a0000, 0x10000, 0x08a71d8f ) /* Plane x */
+        ROM_LOAD( "GHL13.BIN",      0x2b0000, 0x10000, 0x18a99b29 ) /* Plane x */
+
 
         /* 32 * 32 tiles - right half */
-        ROM_LOAD( "GHL11.BIN",      0x2c0000, 0x10000, 0x11957991 ) /* Plane x */
-        ROM_LOAD( "GHL20.BIN",      0x2d0000, 0x10000, 0xf2757633 ) /* Plane x */
-        ROM_LOAD( "GHL15.BIN",      0x2e0000, 0x10000, 0xdfcd0bfb ) /* Plane x */
-        ROM_LOAD( "GHL24.BIN",      0x2f0000, 0x10000, 0x3cf07f7a ) /* Plane x */
+        ROM_LOAD( "GHL20.BIN",      0x2c0000, 0x10000, 0xf2757633 ) /* Plane x */
+        ROM_LOAD( "GHL11.BIN",      0x2d0000, 0x10000, 0x11957991 ) /* Plane x */
+        ROM_LOAD( "GHL24.BIN",      0x2e0000, 0x10000, 0x3cf07f7a ) /* Plane x */
+        ROM_LOAD( "GHL15.BIN",      0x2f0000, 0x10000, 0xdfcd0bfb ) /* Plane x */
 
         ROM_REGION(0x18000) /* 64k for the audio CPU */
         ROM_LOAD( "GHL26.BIN",      0x000000, 0x08000, 0x8df5e803 )
@@ -2302,7 +2687,7 @@ struct GameDriver ghouls_driver =
 {
         "Ghouls and Ghosts",
         "ghouls",
-        CPS1_CREDITS("Paul Leaman"),
+        CPS1_CREDITS("Paul Leaman\nMarco Cassili (dip switches)"),
         &ghouls_machine_driver,
 
         ghouls_rom,
@@ -2435,20 +2820,19 @@ INPUT_PORTS_START( input_ports_cawing )
 INPUT_PORTS_END
 
 CHAR_LAYOUT2  (charlayout_cawingj,   2048,   0x80000*8);
-SPRITE_LAYOUT2(spritelayout_cawingj, 0x2800);
-SPRITE_LAYOUT2(tilelayout_cawingj,   0x2800);
-TILE32_LAYOUT2(tilelayout32_cawingj, 0x200,  0x40000*8);
+SPRITE_LAYOUT2(spritelayout_cawingj, 0x1800);
+SPRITE_LAYOUT2(tilelayout_cawingj,   0x2400); //0x2800);
+TILE32_LAYOUT2(tilelayout32_cawingj, 0x400,  0x40000*8, 0x80000*8);
 
 static struct GfxDecodeInfo gfxdecodeinfo_cawingj[] =
 {
         /*   start    pointer          colour start   number of colours */
         { 1, 0x028000, &charlayout_cawingj,    0,                      32 },
         { 1, 0x000000, &spritelayout_cawingj,  32*16,                  32 },
-        { 1, 0x030000, &tilelayout_cawingj,    32*16+32*16,            32 },
+        { 1, 0x02c000, &tilelayout_cawingj,    32*16+32*16,            32 },
         { 1, 0x018000, &tilelayout32_cawingj,  32*16+32*16+32*16,      32 },
 	{ -1 } /* end of array */
 };
-
 
 
 MACHINE_DRIVER(
@@ -2464,7 +2848,6 @@ ROM_START( cawingj_rom )
         ROM_LOAD_ODD ("CAJ42A.BIN", 0x00000, 0x20000, 0xa66f132d )
         ROM_LOAD_EVEN("CAJ37A.BIN", 0x40000, 0x20000, 0x00435ecb )
         ROM_LOAD_ODD ("CAJ43A.BIN", 0x40000, 0x20000, 0xb7dcf07a )
-
 
         /* what about these 4 ? They could be correct */
         ROM_LOAD_EVEN("CAJ34.BIN",  0x80000, 0x20000, 0xf148094e )
@@ -2495,8 +2878,8 @@ ROM_START( cawingj_rom )
         ROM_LOAD( "CAJ39.BIN",   0x1e0000, 0x20000, 0xf7c731c1 )
 
         ROM_REGION(0x18000) /* 64k for the audio CPU (+banks) */
-        ROM_LOAD( "CAJ-S.BIN",    0x00000, 0x10000, 0xa7fe4540 )
-        ROM_LOAD( "CAJ-S.BIN",    0x08000, 0x10000, 0xa7fe4540 )
+        ROM_LOAD( "CAJ-S.BIN",    0x00000, 0x08000, 0xa7fe4540 )
+                   ROM_CONTINUE(  0x10000, 0x08000 )
 
         ROM_REGION(0x40000) /* Samples */
         ROM_LOAD ("CAJ30.BIN",    0x00000, 0x20000, 0x71b13751 )
@@ -2521,4 +2904,80 @@ struct GameDriver cawingj_driver =
         ORIENTATION_DEFAULT,
         NULL, NULL
 };
+
+
+/********************************************************************
+
+                       Super Street Fighter 2
+
+  Not finished yet.
+
+********************************************************************/
+
+CHAR_LAYOUT(charlayout_sf2, 1*4096, 0x100000*8);
+SPRITE_LAYOUT(spritelayout_sf2, 6*4096, 0x80000*8, 0x100000*8);
+TILE32_LAYOUT(tile32layout_sf2, 1,    0x080000*8, 0x100000*8);
+TILE_LAYOUT2(tilelayout_sf2, 1,     0x080000*8, 0x020000*8 );
+
+static struct GfxDecodeInfo gfxdecodeinfo_sf2[] =
+{
+        /*   start    pointer                 start   number of colours */
+        { 1, 0x400000, &charlayout_sf2,       0,                      32 },
+        { 1, 0x000000, &spritelayout_sf2,     32*16,                  32 },
+        { 1, 0x200000, &tilelayout_sf2,       32*16+32*16,            32 },
+        { 1, 0x050000, &tile32layout_sf2,     32*16+32*16+32*16,      32 },
+	{ -1 } /* end of array */
+};
+
+MACHINE_DRIVER(
+        sf2_machine_driver,
+        cps1_interrupt2,
+        gfxdecodeinfo_sf2,
+        12000000);              /* 12 MHz */
+
+ROM_START( sf2_rom )
+        ROM_REGION(0x180000)      /* 68000 code */
+
+        ROM_LOAD_WIDE_SWAP("SF2.23", 0x000000, 0x80000, 0x6c67bfcf )
+        ROM_LOAD_WIDE_SWAP("SF2.22", 0x080000, 0x80000, 0x06b81390 )
+        ROM_LOAD_WIDE_SWAP("SF2.21", 0x100000, 0x80000, 0xac363d78 )
+
+        ROM_REGION(0x600000)     /* temporary space for graphics (disposed after conversion) */
+        ROM_LOAD( "SF2.01",   0x000000, 0x80000, 0x352afe30 ) /* sprites */
+        ROM_LOAD( "SF2.05",   0x080000, 0x80000, 0x768c375a ) /* sprites */
+        ROM_LOAD( "SF2.03",   0x100000, 0x80000, 0x3c9240f4 ) /* sprites */
+        ROM_LOAD( "SF2.07",   0x180000, 0x80000, 0x95e77d43 ) /* sprites */
+
+        ROM_LOAD( "SF2.02",   0x200000, 0x80000, 0x352afe30 ) /* sprites */
+        ROM_LOAD( "SF2.06",   0x280000, 0x80000, 0x768c375a ) /* sprites */
+        ROM_LOAD( "SF2.04",   0x300000, 0x80000, 0x3c9240f4 ) /* sprites */
+        ROM_LOAD( "SF2.08",   0x380000, 0x80000, 0x95e77d43 ) /* sprites */
+        ROM_LOAD( "SF2.10",   0x400000, 0x80000, 0x352afe30 ) /* sprites */
+        ROM_LOAD( "SF2.12",   0x480000, 0x80000, 0x768c375a ) /* sprites */
+        ROM_LOAD( "SF2.11",   0x500000, 0x80000, 0x3c9240f4 ) /* sprites */
+        ROM_LOAD( "SF2.13",   0x580000, 0x80000, 0x95e77d43 ) /* sprites */
+
+        ROM_REGION(0x18000) /* 64k for the audio CPU (+banks) */
+        ROM_LOAD( "SF2.09",    0x00000, 0x10000, 0x56014501 )
+        ROM_LOAD( "SF2.18",    0x08000, 0x10000, 0x56014501 )
+
+        ROM_REGION(0x40000) /* Samples */
+        ROM_LOAD ("SF2.18",    0x00000, 0x20000, 0x58bb142b )
+        ROM_LOAD ("SF2.19",    0x20000, 0x20000, 0xc575f23d )
+ROM_END
+
+struct GameDriver sf2_driver =
+{
+        "Street Fighter 2",
+        "sf2",
+        CPS1_CREDITS("Paul Leaman"),
+        &sf2_machine_driver,
+        sf2_rom,
+        0,0,0,0,
+        input_ports_strider,
+        NULL, 0, 0,
+        ORIENTATION_DEFAULT,
+        NULL, NULL
+};
+
 

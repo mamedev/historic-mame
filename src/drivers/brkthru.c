@@ -46,7 +46,7 @@ Sound: YM2203 and YM3526 driven by 6809.  Sound added by Bryan McPhail, 1/4/98.
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "M6809/m6809.h"
+#include "M6809/M6809.h"
 
 
 unsigned char *brkthru_nmi_enable; /* needs to be tracked down */
@@ -104,7 +104,7 @@ static struct MemoryReadAddress readmem[] =
 
 static struct MemoryWriteAddress writemem[] =
 {
-	{ 0x0000, 0x03ff, MWA_RAM, &brkthru_videoram, &brkthru_videoram_size },
+	{ 0x0000, 0x03ff, MWA_RAM, &brkthru_videoram, (int *)&brkthru_videoram_size },
 	{ 0x0400, 0x0bff, MWA_RAM },
 	{ 0x0c00, 0x0fff, videoram_w, &videoram, &videoram_size },
 	{ 0x1000, 0x10ff, MWA_RAM, &spriteram, &spriteram_size },

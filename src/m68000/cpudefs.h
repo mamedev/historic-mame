@@ -9,11 +9,15 @@
 #include <stdlib.h>
 #include "memory.h"
 
+#ifndef INLINE
+#define INLINE static inline
+#endif
+
 #ifndef __WATCOMC__
 #ifdef WIN32
 #define __inline__ __inline
 #else
-#define __inline__  inline
+#define __inline__  INLINE
 #endif
 #endif
 #ifdef __WATCOMC__
@@ -75,8 +79,7 @@ typedef union
 
 extern void Exception(int nr, CPTR oldpc);
 
-
-typedef void cpuop_func(LONG);
+typedef void cpuop_func(ULONG);
 extern cpuop_func *cpufunctbl[65536];
 
 
@@ -168,7 +171,7 @@ extern ULONG aslmask_ulong[];
 #define VFLG (regflags.flags.v)
 
 #ifdef ASM_MEMORY
-static __inline__ UWORD nextiword_opcode(void)
+__inline__ UWORD nextiword_opcode(void)
 {
         asm(" \
                 movzwl  _regs+88,%ecx \
@@ -181,32 +184,32 @@ static __inline__ UWORD nextiword_opcode(void)
 }
 #endif
 
-static __inline__ UWORD nextiword(void)
+__inline__ UWORD nextiword(void)
 {
     unsigned int i=regs.pc&0xffffff;
     regs.pc+=2;
     return (cpu_readop16(i));
 }
 
-static __inline__ ULONG nextilong(void)
+__inline__ ULONG nextilong(void)
 {
     unsigned int i=regs.pc&0xffffff;
     regs.pc+=4;
     return ((cpu_readop16(i)<<16) | cpu_readop16(i+2));
 }
 
-static __inline__ void m68k_setpc(CPTR newpc)
+__inline__ void m68k_setpc(CPTR newpc)
 {
     regs.pc = newpc;
     change_pc24(regs.pc&0xffffff);
 }
 
-static __inline__ CPTR m68k_getpc(void)
+__inline__ CPTR m68k_getpc(void)
 {
     return regs.pc;
 }
 
-static __inline__ ULONG get_disp_ea (ULONG base)
+__inline__ ULONG get_disp_ea (ULONG base)
 {
    UWORD dp = nextiword();
         int reg = (dp >> 12) & 7;
@@ -216,7 +219,7 @@ static __inline__ ULONG get_disp_ea (ULONG base)
         return base + (BYTE)(dp) + regd;
 }
 
-static __inline__ int cctrue(const int cc)
+__inline__ int cctrue(const int cc)
 {
             switch(cc){
               case 0: return 1;                       /* T */
@@ -239,7 +242,8 @@ static __inline__ int cctrue(const int cc)
              abort();
              return 0;
 }
-static __inline__ void MakeSR(void)
+
+__inline__ void MakeSR(void)
 {
     regs.sr = ((regs.t1 << 15) | (regs.t0 << 14)
       | (regs.s << 13) | (regs.m << 12) | (regs.intmask << 8)
@@ -247,7 +251,7 @@ static __inline__ void MakeSR(void)
       |  CFLG);
 }
 
-static __inline__ void MakeFromSR(void)
+__inline__ void MakeFromSR(void)
 {
   /*  int oldm = regs.m; */
     int olds = regs.s;

@@ -17,9 +17,14 @@
 
 #include "memory.h"
 #include "osd_dbg.h"
-#include "i8085/i8085.h"
-#include "i8085/i8085cpu.h"
-#include "i8085/i8085daa.h"
+#include "I8085/I8085.h"
+#include "I8085/I8085cpu.h"
+#include "I8085/I8085daa.h"
+
+#ifndef INLINE
+#define INLINE static inline
+#endif
+
 
 int     I8085_ICount = 0;
 
@@ -42,7 +47,7 @@ extern  FILE * errorlog;
 #endif
 }
 
-static  inline  void ExecOne(int opcode)
+INLINE void ExecOne(int opcode)
 {
         switch (opcode)
         {

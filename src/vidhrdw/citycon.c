@@ -150,10 +150,9 @@ if (errorlog && (data & 0x0e) != 0) fprintf(errorlog,"background register = %02x
 void citycon_vh_screenrefresh(struct osd_bitmap *bitmap)
 {
 	int offs;
-unsigned char used_colors[640];
 
 
-memset(used_colors,PALETTE_COLOR_UNUSED,640);
+memset(palette_used_colors,PALETTE_COLOR_UNUSED,Machine->drv->total_colors * sizeof(unsigned char));
 
 for (offs = videoram_size - 1;offs >= 0;offs--)
 {
@@ -161,25 +160,25 @@ for (offs = videoram_size - 1;offs >= 0;offs--)
 
 	code = Machine->memory_region[2][0x1000 * bg_image + offs];
 	color = Machine->memory_region[2][0xc000 + 0x100 * bg_image + code],
-	memset(&used_colors[256 + 16 * color],PALETTE_COLOR_FIXED,16);
+	memset(&palette_used_colors[256 + 16 * color],PALETTE_COLOR_USED,16);
 }
 for (offs = 0;offs < 256;offs++)
 {
 	int color;
 
 	color = citycon_charlookup[offs];
-	used_colors[512 + 4 * color] = PALETTE_COLOR_TRANSPARENT;
-	memset(&used_colors[512 + 4 * color + 1],PALETTE_COLOR_FIXED,3);
+	palette_used_colors[512 + 4 * color] = PALETTE_COLOR_TRANSPARENT;
+	memset(&palette_used_colors[512 + 4 * color + 1],PALETTE_COLOR_USED,3);
 }
 for (offs = spriteram_size-4;offs >= 0;offs -= 4)
 {
 	int color;
 
 	color = spriteram[offs + 2] & 0x0f;
-	memset(&used_colors[16 * color + 1],PALETTE_COLOR_DYNAMIC,15);
+	memset(&palette_used_colors[16 * color + 1],PALETTE_COLOR_USED,15);
 }
 
-if (palette_recalc(used_colors))
+if (palette_recalc())
 {
 	memset(dirtybuffer,1,videoram_size);
 	dirty_background = 1;

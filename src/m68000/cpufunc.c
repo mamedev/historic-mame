@@ -1878,7 +1878,7 @@ struct mnemolookup lookuptab[] = {
 
 struct instr *table68k;
 
-static __inline__ amodes mode_from_str(const char *str)
+__inline__ amodes mode_from_str(const char *str)
 {
     if (strncmp(str,"Dreg",4) == 0) return Dreg;
     if (strncmp(str,"Areg",4) == 0) return Areg;
@@ -1896,7 +1896,7 @@ static __inline__ amodes mode_from_str(const char *str)
     return(Dreg);
 }
 
-static __inline__ amodes mode_from_mr(int mode, int reg)
+__inline__ amodes mode_from_mr(int mode, int reg)
 {
     switch(mode) {
      case 0: return Dreg;
@@ -2612,7 +2612,7 @@ LONG ShowEA(int reg, amodes mode, wordsizes size)
                 if ((dp & 0x3) == 0x3) outer = nextilong();
 
                 if (!(dp & 4)) base += dispreg;
-//                if (dp & 3) base = get_long (base);
+/*                if (dp & 3) base = get_long (base);*/
                 if (dp & 4) base += dispreg;
 
                 addr = base + outer;
@@ -2662,7 +2662,7 @@ LONG ShowEA(int reg, amodes mode, wordsizes size)
 								if ((dp & 0x3) == 0x3) outer = nextilong();
 
 								if (!(dp & 4)) base += dispreg;
-//                if (dp & 3) base = get_long (base);
+/*                if (dp & 3) base = get_long (base);*/
 								if (dp & 4) base += dispreg;
 
 								addr = base + outer;

@@ -74,6 +74,9 @@ static int gfx_display_columns;
 static int doubling = 0;
 int throttle = 1;       /* toggled by F10 */
 
+static int gone_to_gfx_mode;
+
+
 struct { int x, y; Register *reg; int reglen; int syncvgafreq; int scanlines; }
 vga_tweaked[] = {
 	{ 288, 224, scr288x224scanlines, sizeof(scr288x224scanlines)/sizeof(Register), 0, 1},
@@ -356,12 +359,8 @@ static void select_display_mode(void)
 					gfx_width=800;
 					gfx_height=600;
 				}
-				/* see if pixel doubling can be applied at 1024x768 */
-				else if (height <= 384 && width <= 512)
-				{
-					gfx_width=1024;
-					gfx_height=768;
-				}
+				/* we don't want to use pixel doubling at 1024x768 */
+
 				/* no pixel doubled modes fit, revert to not doubled */
 				else
 					use_double = 0;
@@ -369,7 +368,12 @@ static void select_display_mode(void)
 
 			if (use_double == 0)
 			{
-				if (height <= 480 && width <= 640)
+				if (height <= 384 && width <= 512)
+				{
+					gfx_width = 512;
+					gfx_height = 384;
+				}
+				else if (height <= 480 && width <= 640)
 				{
 					gfx_width = 640;
 					gfx_height = 480;
@@ -522,6 +526,8 @@ struct osd_bitmap *osd_create_display(int width,int height,int attributes)
 	if (errorlog)
 		fprintf (errorlog, "width %d, height %d\n", width,height);
 
+	gone_to_gfx_mode = 0;
+
 	/* Look if this is a vector game */
 	if (Machine->drv->video_attributes & VIDEO_TYPE_VECTOR)
 		vector_game = 1;
@@ -579,6 +585,7 @@ struct osd_bitmap *osd_create_display(int width,int height,int attributes)
 int osd_set_display(int width,int height, int attributes)
 {
 	int     i;
+
 
 	if (!gfx_height || !gfx_width)
 	{
@@ -710,7 +717,6 @@ int osd_set_display(int width,int height, int attributes)
 		}
 
 		gfx_mode = mode;
-
 	}
 	else
 	{
@@ -724,6 +730,9 @@ int osd_set_display(int width,int height, int attributes)
 
 		outRegArray(reg,reglen);
 	}
+
+
+	gone_to_gfx_mode = 1;
 
 
 	if (video_sync)
@@ -772,7 +781,8 @@ if (errorlog) fprintf(errorlog,"sample rate adjusted to match video freq: %d\n",
 /* shut up the display */
 void osd_close_display(void)
 {
-	set_gfx_mode(GFX_TEXT,80,25,0,0);
+	if (gone_to_gfx_mode != 0)
+		set_gfx_mode(GFX_TEXT,80,25,0,0);
 
 	if (scrbitmap)
 	{

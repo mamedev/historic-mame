@@ -204,6 +204,9 @@ int llander_sh_start(void)
 	int loop,lfsrtmp,nor1,nor2,bit14,bit6;
 	long fraction,remainder;
 
+        /* Dont initialise if no sound system */
+        if (Machine->sample_rate == 0) return 0;
+
 	/* Initialise the simple vars */
 
 	volume=0;
@@ -402,6 +405,8 @@ void llander_process(void *buffer,int start, int n)
 void llander_sh_update_partial(void)
 {
 	int newpos;
+
+	if (Machine->sample_rate == 0) return;
 
 	newpos = cpu_scalebyfcount(buffer_len); /* get current position based on the timer */
 

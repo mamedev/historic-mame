@@ -4,7 +4,7 @@
 **
 ** Copyright (C) 1998 Tatsuyuki Satoh , MultiArcadeMachineEmurator development
 **
-** Version 0.33a
+** Version 0.33b
 **
 */
 
@@ -253,36 +253,6 @@ static unsigned char KSL[32]=
 /* OPN key frequency number -> key code follow table */
 /* fnum higher 4bit -> keycode lower 2bit */
 static char OPN_FKTABLE[16]={0,0,0,0,0,0,0,1,2,3,3,3,3,3,3,3};
-
-#if 0
-
-/* OPM keycode -> frequency counter base tables */
-/* C#,D,D#,(E),E,F,F#,(G),G,G#,A,A#,A#,B,C,C# */
-#define ML ((1<<16)/(3580000/64))
-static int OPM_KCTABLE[16+1] =
-{ ML * 4434.9, /* C# */
-  ML * 4698.6, /* D  */
-  ML * 4978.0, /* D# */
-  ML * 5274.0, /* E  */
-  ML * 5274.0, /* E  */
-  ML * 5587.7, /* F  */
-  ML * 5919.9, /* F# */
-  ML * 6271.9, /* G  */
-  ML * 6271.9, /* G  */
-  ML * 6644.9, /* G# */
-  ML * 7040.0, /* A  */
-  ML * 7458.6, /* A# */
-  ML * 7458.6, /* A# */
-  ML * 7902.1, /* B# */
-  ML * 8372.0, /*+C  */
-  ML * 8868.0, /*+C# */
-
-  ML * 9397.2  /*+D  */
-};
-#undef ML
-
-
-#endif
 
 static int KC_TO_SEMITONE[16]={
 	/*translate note code KC into more usable number of semitone*/
@@ -1442,16 +1412,15 @@ void OPMInitTable( int num )
 	int i;
 	long int mult;
 	float pom;
-	float rate = 3580000.0 / FMOPM[num].ST.clock * FMOPM[num].ST.rate;
+	float rate = 3579545.0 / FMOPM[num].ST.clock * FMOPM[num].ST.rate;
 
 	mult = 1<<(FREQ_BITS-1);
 	for (i=0; i<8*13*64; i++)
 	{
-		/* this is made by jarek's emurator */
-		pom = 13.75 * pow (2, ((i+6*64)*1.5625/1200.0) ); //13.75Hz is note A 12semitones below A-0, so D#0 is 4 semitones above then
+		/* This calculation type was used from the Jarek's YM2151 emulator */
+		pom = 6.875 * pow (2, ((i+4*64)*1.5625/1200.0) ); //13.75Hz is note A 12semitones below A-0, so D#0 is 4 semitones above then
 		//calculate phase increment for above precounted Hertz value
 		OPM->KC_TABLE[i] = (pom/rate)*mult; /*fixed point*/
-
 
 //		if(errorlog) fprintf(errorlog,"OPM KC %d = %x\n",i,OPM->KC_TABLE[i]);
 	}

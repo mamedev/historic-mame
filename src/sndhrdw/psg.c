@@ -313,12 +313,13 @@ if (errorlog) fprintf(errorlog,"warning: read from 8910 #%d Port B set as output
 void AYUpdateOne(int chip,int endp)
 {
 	struct AY8910 *PSG = &AYPSG[chip];
-	void *buffer;
+	unsigned char  *buffer_8;
+	unsigned short *buffer_16;
 	int length;
 	int outn;
 
-	if( sample_16bit ) buffer = &((unsigned short *)PSG->Buf)[PSG->bufp];
-	else               buffer = &((unsigned char  *)PSG->Buf)[PSG->bufp];
+	buffer_8  = &((unsigned char  *)PSG->Buf)[PSG->bufp];
+	buffer_16 = &((unsigned short *)PSG->Buf)[PSG->bufp];
 
 	if( endp > AYBufSize ) endp = AYBufSize;
 	length = endp - PSG->bufp;
@@ -572,8 +573,8 @@ void AYUpdateOne(int chip,int endp)
 		}
 
 		output = vola*PSG->VolA + volb*PSG->VolB + volc*PSG->VolC;
-		if( sample_16bit ) *((unsigned short *)buffer)++ = output / STEP;
-		else               *((unsigned char  *)buffer)++ = output / (STEP*256);
+		if( sample_16bit ) *buffer_16++ = output / STEP;
+		else               *buffer_8++  = output / (STEP*256);
 
 		length--;
 	}

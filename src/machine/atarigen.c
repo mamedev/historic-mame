@@ -9,8 +9,8 @@
 
 #include "driver.h"
 #include "atarigen.h"
-#include "m6502/m6502.h"
-#include "m68000/m68000.h"
+#include "M6502/M6502.h"
+#include "M68000/M68000.h"
 
 
 void slapstic_init (int chip);
@@ -460,7 +460,7 @@ void atarigen_init_remap (int _colortype, int reuse)
 }
 
 
-inline int is_black (int color)
+INLINE int is_black (int color)
 {
 	if (colortype == COLOR_PALETTE_4444)
 		return ((color & 0xf000) == 0 || (color & 0x0fff) == 0);

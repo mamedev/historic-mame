@@ -24,17 +24,21 @@
 	#define BYTE_XOR_BE(a) ((a) ^ 1)
 	#define BYTE_XOR_LE(a) (a)
 	#define BIG_DWORD_BE(x) (((x) >> 16) + ((x) << 16))
+ 	/* GSL 980224 Shift values for bytes within a word, used by the misaligned word load/store code */
+	#define SHIFT0 16
+	#define SHIFT1 24
+	#define SHIFT2 0
+	#define SHIFT3 8
 #else
 	#define BYTE_XOR_BE(a) (a)
 	#define BYTE_XOR_LE(a) ((a) ^ 1)
 	#define BIG_DWORD_BE(x) (x)
+	/* GSL 980224 Shift values for bytes within a word, used by the misaligned word load/store code */
+	#define SHIFT0 24
+	#define SHIFT1 16
+	#define SHIFT2 8
+	#define SHIFT3 0
 #endif
-
-/* GSL 980224 Shift values for bytes within a word, used by the misaligned word load/store code */
-#define SHIFT0 16
-#define SHIFT1 24
-#define SHIFT2 0
-#define SHIFT3 8
 
 unsigned char *OP_RAM;
 unsigned char *OP_ROM;
@@ -97,7 +101,6 @@ MHELE *cur_mwhard;
 
 
 #ifdef macintosh
-#include "macmemory.c"
 #endif
 
 
@@ -106,6 +109,57 @@ MHELE *cur_mwhard;
   Memory handling
 
 ***************************************************************************/
+
+#ifdef ACORN
+/* 
+ * Previously READ_WORD and WRITE_WORDS were implemented as macros.
+ * However they assumed that unaligned loads are legal, which is not
+ * true on most non-x86 hardware.  Even on a Pentium, unaligned loads are
+ * slower than aligned loads.
+ */
+
+#ifdef LSB_FIRST
+
+int
+READ_WORD(void *dst)
+{
+  unsigned char *p = (unsigned char *) dst;
+  return (p[1] << 8) | p[0];
+}
+
+
+int
+WRITE_WORD(void *dst, int val)
+
+{
+  unsigned char *p = (unsigned char *) dst;
+  p[0] = val & 0xff;
+  p[1] = (val >> 8) & 0xff;
+  return val;
+}
+
+#else
+
+int
+READ_WORD(void *dst)
+{
+  unsigned char *p = (unsigned char *) dst;
+  return (p[0] << 8) | p[1];
+}
+
+
+int
+WRITE_WORD(void *dst, int val)
+
+{
+  unsigned char *p = (unsigned char *) dst;
+  p[1] = val & 0xff;
+  p[0] = (val >> 8) & 0xff;
+  return val;
+}
+#endif
+#endif
+
 int mrh_ram(int address){return RAM[address];}
 int mrh_bank1(int address){return cpu_bankbase[1][address];}
 int mrh_bank2(int address){return cpu_bankbase[2][address];}
@@ -468,12 +522,12 @@ int initmemoryhandlers(void)
 		mhmask[cpu][2]  = MHMASK(abits3);		/*3rd*/
 
 		/* allocate current element */
-		if( (cur_mr_element[cpu] = malloc(sizeof(MHELE)<<abits1)) == 0 )
+		if( (cur_mr_element[cpu] = (MHELE *)malloc(sizeof(MHELE)<<abits1)) == 0 )
 		{
 			shutdownmemoryhandler();
 			return 0;
 		}
-		if( (cur_mw_element[cpu] = malloc(sizeof(MHELE)<<abits1)) == 0 )
+		if( (cur_mw_element[cpu] = (MHELE *)malloc(sizeof(MHELE)<<abits1)) == 0 )
 		{
 			shutdownmemoryhandler();
 			return 0;
@@ -498,53 +552,53 @@ int initmemoryhandlers(void)
 		{
 			int (*handler)(int) = mra->handler;
 
-			switch ((int)handler)
+			switch ((FPTR)handler)
 			{
-			case (int)MRA_RAM:
-			case (int)MRA_ROM:
+			case (FPTR)MRA_RAM:
+			case (FPTR)MRA_ROM:
 				hardware = HT_RAM;	/* sprcial case ram read */
 				break;
-			case (int)MRA_BANK1:
+			case (FPTR)MRA_BANK1:
 				hardware = HT_BANK1;
 				memoryreadoffset[1] = bankreadoffset[1] = mra->start;
 				cpu_bankbase[1] = memory_find_base (cpu, mra->start);
 				break;
-			case (int)MRA_BANK2:
+			case (FPTR)MRA_BANK2:
 				hardware = HT_BANK2;
 				memoryreadoffset[2] = bankreadoffset[2] = mra->start;
 				cpu_bankbase[2] = memory_find_base (cpu, mra->start);
 				break;
-			case (int)MRA_BANK3:
+			case (FPTR)MRA_BANK3:
 				hardware = HT_BANK3;
 				memoryreadoffset[3] = bankreadoffset[3] = mra->start;
 				cpu_bankbase[3] = memory_find_base (cpu, mra->start);
 				break;
-			case (int)MRA_BANK4:
+			case (FPTR)MRA_BANK4:
 				hardware = HT_BANK4;
 				memoryreadoffset[4] = bankreadoffset[4] = mra->start;
 				cpu_bankbase[4] = memory_find_base (cpu, mra->start);
 				break;
-			case (int)MRA_BANK5:
+			case (FPTR)MRA_BANK5:
 				hardware = HT_BANK5;
 				memoryreadoffset[5] = bankreadoffset[5] = mra->start;
 				cpu_bankbase[5] = memory_find_base (cpu, mra->start);
 				break;
-			case (int)MRA_BANK6:
+			case (FPTR)MRA_BANK6:
 				hardware = HT_BANK6;
 				memoryreadoffset[6] = bankreadoffset[6] = mra->start;
 				cpu_bankbase[6] = memory_find_base (cpu, mra->start);
 				break;
-			case (int)MRA_BANK7:
+			case (FPTR)MRA_BANK7:
 				hardware = HT_BANK7;
 				memoryreadoffset[7] = bankreadoffset[7] = mra->start;
 				cpu_bankbase[7] = memory_find_base (cpu, mra->start);
 				break;
-			case (int)MRA_BANK8:
+			case (FPTR)MRA_BANK8:
 				hardware = HT_BANK8;
 				memoryreadoffset[8] = bankreadoffset[8] = mra->start;
 				cpu_bankbase[8] = memory_find_base (cpu, mra->start);
 				break;
-			case (int)MRA_NOP:
+			case (FPTR)MRA_NOP:
 				hardware = HT_NOP;
 				break;
 			default:
@@ -578,58 +632,58 @@ int initmemoryhandlers(void)
 		while (mwa >= memorywrite)
 		{
 			void (*handler)(int,int) = mwa->handler;
-			switch( (int)handler )
+			switch( (FPTR)handler )
 			{
-			case (int)MWA_RAM:
+			case (FPTR)MWA_RAM:
 				hardware = HT_RAM;	/* sprcial case ram write */
 				break;
-			case (int)MWA_BANK1:
+			case (FPTR)MWA_BANK1:
 				hardware = HT_BANK1;
 				memorywriteoffset[1] = bankwriteoffset[1] = mwa->start;
 				cpu_bankbase[1] = memory_find_base (cpu, mwa->start);
 				break;
-			case (int)MWA_BANK2:
+			case (FPTR)MWA_BANK2:
 				hardware = HT_BANK2;
 				memorywriteoffset[2] = bankwriteoffset[2] = mwa->start;
 				cpu_bankbase[2] = memory_find_base (cpu, mwa->start);
 				break;
-			case (int)MWA_BANK3:
+			case (FPTR)MWA_BANK3:
 				hardware = HT_BANK3;
 				memorywriteoffset[3] = bankwriteoffset[3] = mwa->start;
 				cpu_bankbase[3] = memory_find_base (cpu, mwa->start);
 				break;
-			case (int)MWA_BANK4:
+			case (FPTR)MWA_BANK4:
 				hardware = HT_BANK4;
 				memorywriteoffset[4] = bankwriteoffset[4] = mwa->start;
 				cpu_bankbase[4] = memory_find_base (cpu, mwa->start);
 				break;
-			case (int)MWA_BANK5:
+			case (FPTR)MWA_BANK5:
 				hardware = HT_BANK5;
 				memorywriteoffset[5] = bankwriteoffset[5] = mwa->start;
 				cpu_bankbase[5] = memory_find_base (cpu, mwa->start);
 				break;
-			case (int)MWA_BANK6:
+			case (FPTR)MWA_BANK6:
 				hardware = HT_BANK6;
 				memorywriteoffset[6] = bankwriteoffset[6] = mwa->start;
 				cpu_bankbase[6] = memory_find_base (cpu, mwa->start);
 				break;
-			case (int)MWA_BANK7:
+			case (FPTR)MWA_BANK7:
 				hardware = HT_BANK7;
 				memorywriteoffset[7] = bankwriteoffset[7] = mwa->start;
 				cpu_bankbase[7] = memory_find_base (cpu, mwa->start);
 				break;
-			case (int)MWA_BANK8:
+			case (FPTR)MWA_BANK8:
 				hardware = HT_BANK8;
 				memorywriteoffset[8] = bankwriteoffset[8] = mwa->start;
 				cpu_bankbase[8] = memory_find_base (cpu, mwa->start);
 				break;
-			case (int)MWA_NOP:
+			case (FPTR)MWA_NOP:
 				hardware = HT_NOP;
 				break;
-			case (int)MWA_RAMROM:
+			case (FPTR)MWA_RAMROM:
 				hardware = HT_RAMROM;
 				break;
-			case (int)MWA_ROM:
+			case (FPTR)MWA_ROM:
 				hardware = HT_ROM;
 				break;
 			default:
@@ -847,7 +901,7 @@ int cpu_readmem24_word (int address)
 
 int cpu_readmem24_dword (int address)
 {
-	unsigned long val;
+	unsigned int val;
 	MHELE hw;
 
 	/* 1st element link */
@@ -857,18 +911,18 @@ int cpu_readmem24_dword (int address)
 	  	#ifdef ACORN /* GSL 980224 misaligned dword load case */
 		if (address & 3)
 		{
-			char *addressbase = (char *)&cpu_bankbase[hw][address - memoryreadoffset[hw]];
+			unsigned char *addressbase = (unsigned char *)&cpu_bankbase[hw][address - memoryreadoffset[hw]];
 			return ((*addressbase)<<SHIFT0) + (*(addressbase+1)<<SHIFT1) + (*(addressbase+2)<<SHIFT2) + (*(addressbase+3)<<SHIFT3);
 		}
 		else
 		{
-			val = *(unsigned long *)&cpu_bankbase[hw][address - memoryreadoffset[hw]];
+			val = *(unsigned int *)&cpu_bankbase[hw][address - memoryreadoffset[hw]];
 			return BIG_DWORD_BE(val);
 		}
 
 		#else
 
-		val = *(unsigned long *)&cpu_bankbase[hw][address - memoryreadoffset[hw]];
+		val = *(unsigned int *)&cpu_bankbase[hw][address - memoryreadoffset[hw]];
 		return BIG_DWORD_BE(val);
 		#endif
 
@@ -882,18 +936,18 @@ int cpu_readmem24_dword (int address)
 		  	#ifdef ACORN
 			if (address & 3)
 			{
-				char *addressbase = (char *)&cpu_bankbase[hw][address - memoryreadoffset[hw]];
+				unsigned char *addressbase = (unsigned char *)&cpu_bankbase[hw][address - memoryreadoffset[hw]];
 				return ((*addressbase)<<SHIFT0) + (*(addressbase+1)<<SHIFT1) + (*(addressbase+2)<<SHIFT2) + (*(addressbase+3)<<SHIFT3);
 			}
 			else
 			{
-				val = *(unsigned long *)&cpu_bankbase[hw][address - memoryreadoffset[hw]];
+				val = *(unsigned int *)&cpu_bankbase[hw][address - memoryreadoffset[hw]];
 				return BIG_DWORD_BE(val);
 			}
 
 			#else
 
-			val = *(unsigned long *)&cpu_bankbase[hw][address - memoryreadoffset[hw]];
+			val = *(unsigned int *)&cpu_bankbase[hw][address - memoryreadoffset[hw]];
 			return BIG_DWORD_BE(val);
 			#endif
 
@@ -1099,7 +1153,7 @@ void cpu_writemem24_dword (int address, int data)
 	  	#ifdef ACORN /* GSL 980224 misaligned dword store case */
 		if (address & 3)
 		{
-			char *addressbase = (char *)&cpu_bankbase[hw][address - memorywriteoffset[hw]];
+			unsigned char *addressbase = (unsigned char *)&cpu_bankbase[hw][address - memorywriteoffset[hw]];
 			*addressbase = data >> SHIFT0;
 			*(addressbase+1) = data >> SHIFT1;
 			*(addressbase+2) = data >> SHIFT2;
@@ -1108,15 +1162,15 @@ void cpu_writemem24_dword (int address, int data)
 		}
 		else
 		{
-			data = BIG_DWORD_BE ((unsigned long)data);
-			*(unsigned long *)&cpu_bankbase[hw][address - memorywriteoffset[hw]] = data;
+			data = BIG_DWORD_BE ((unsigned int)data);
+			*(unsigned int *)&cpu_bankbase[hw][address - memorywriteoffset[hw]] = data;
 			return;
 		}
 
 		#else
 
-		data = BIG_DWORD_BE ((unsigned long)data);
-		*(unsigned long *)&cpu_bankbase[hw][address - memorywriteoffset[hw]] = data;
+		data = BIG_DWORD_BE ((unsigned int)data);
+		*(unsigned int *)&cpu_bankbase[hw][address - memorywriteoffset[hw]] = data;
 		return;
 		#endif
 
@@ -1130,7 +1184,7 @@ void cpu_writemem24_dword (int address, int data)
 		  	#ifdef ACORN
 			if (address & 3)
 			{
-				char *addressbase = (char *)&cpu_bankbase[hw][address - memorywriteoffset[hw]];
+				unsigned char *addressbase = (unsigned char *)&cpu_bankbase[hw][address - memorywriteoffset[hw]];
 				*addressbase = data >> SHIFT0;
 				*(addressbase+1) = data >> SHIFT1;
 				*(addressbase+2) = data >> SHIFT2;
@@ -1139,15 +1193,15 @@ void cpu_writemem24_dword (int address, int data)
 			}
 			else
 			{
-				data = BIG_DWORD_BE ((unsigned long)data);
-				*(unsigned long *)&cpu_bankbase[hw][address - memorywriteoffset[hw]] = data;
+				data = BIG_DWORD_BE ((unsigned int)data);
+				*(unsigned int *)&cpu_bankbase[hw][address - memorywriteoffset[hw]] = data;
 				return;
 			}
 
 			#else
 
-			data = BIG_DWORD_BE ((unsigned long)data);
-			*(unsigned long *)&cpu_bankbase[hw][address - memorywriteoffset[hw]] = data;
+			data = BIG_DWORD_BE ((unsigned int)data);
+			*(unsigned int *)&cpu_bankbase[hw][address - memorywriteoffset[hw]] = data;
 			return;
 			#endif
 
@@ -1252,45 +1306,45 @@ void cpu_setbankhandler_r(int bank,int (*handler)(int) )
 {
 	int offset = 0;
 
-	switch( (int)handler )
+	switch( (FPTR)handler )
 	{
-	case (int)MRA_RAM:
-	case (int)MRA_ROM:
+	case (FPTR)MRA_RAM:
+	case (FPTR)MRA_ROM:
 		handler = mrh_ram;
 		break;
-	case (int)MRA_BANK1:
+	case (FPTR)MRA_BANK1:
 		handler = mrh_bank1;
 		offset = bankreadoffset[1];
 		break;
-	case (int)MRA_BANK2:
+	case (FPTR)MRA_BANK2:
 		handler = mrh_bank2;
 		offset = bankreadoffset[2];
 		break;
-	case (int)MRA_BANK3:
+	case (FPTR)MRA_BANK3:
 		handler = mrh_bank3;
 		offset = bankreadoffset[3];
 		break;
-	case (int)MRA_BANK4:
+	case (FPTR)MRA_BANK4:
 		handler = mrh_bank4;
 		offset = bankreadoffset[4];
 		break;
-	case (int)MRA_BANK5:
+	case (FPTR)MRA_BANK5:
 		handler = mrh_bank5;
 		offset = bankreadoffset[5];
 		break;
-	case (int)MRA_BANK6:
+	case (FPTR)MRA_BANK6:
 		handler = mrh_bank6;
 		offset = bankreadoffset[6];
 		break;
-	case (int)MRA_BANK7:
+	case (FPTR)MRA_BANK7:
 		handler = mrh_bank7;
 		offset = bankreadoffset[7];
 		break;
-	case (int)MRA_BANK8:
+	case (FPTR)MRA_BANK8:
 		handler = mrh_bank8;
 		offset = bankreadoffset[8];
 		break;
-	case (int)MRA_NOP:
+	case (FPTR)MRA_NOP:
 		handler = mrh_nop;
 		break;
 	default:
@@ -1306,50 +1360,50 @@ void cpu_setbankhandler_w(int bank,void (*handler)(int,int) )
 {
 	int offset = 0;
 
-	switch( (int)handler )
+	switch( (FPTR)handler )
 	{
-	case (int)MWA_RAM:
+	case (FPTR)MWA_RAM:
 		handler = mwh_ram;
 		break;
-	case (int)MWA_BANK1:
+	case (FPTR)MWA_BANK1:
 		handler = mwh_bank1;
 		offset = bankwriteoffset[1];
 		break;
-	case (int)MWA_BANK2:
+	case (FPTR)MWA_BANK2:
 		handler = mwh_bank2;
 		offset = bankwriteoffset[2];
 		break;
-	case (int)MWA_BANK3:
+	case (FPTR)MWA_BANK3:
 		handler = mwh_bank3;
 		offset = bankwriteoffset[3];
 		break;
-	case (int)MWA_BANK4:
+	case (FPTR)MWA_BANK4:
 		handler = mwh_bank4;
 		offset = bankwriteoffset[4];
 		break;
-	case (int)MWA_BANK5:
+	case (FPTR)MWA_BANK5:
 		handler = mwh_bank5;
 		offset = bankwriteoffset[5];
 		break;
-	case (int)MWA_BANK6:
+	case (FPTR)MWA_BANK6:
 		handler = mwh_bank6;
 		offset = bankwriteoffset[6];
 		break;
-	case (int)MWA_BANK7:
+	case (FPTR)MWA_BANK7:
 		handler = mwh_bank7;
 		offset = bankwriteoffset[7];
 		break;
-	case (int)MWA_BANK8:
+	case (FPTR)MWA_BANK8:
 		handler = mwh_bank8;
 		offset = bankwriteoffset[8];
 		break;
-	case (int)MWA_NOP:
+	case (FPTR)MWA_NOP:
 		handler = mwh_nop;
 		break;
-	case (int)MWA_RAMROM:
+	case (FPTR)MWA_RAMROM:
 		handler = mwh_ramrom;
 		break;
-	case (int)MWA_ROM:
+	case (FPTR)MWA_ROM:
 		handler = mwh_rom;
 		break;
 	default:

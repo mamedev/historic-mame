@@ -59,7 +59,7 @@ int targ_sh_start(void)
     tone_offset=0;
     tone_vol=0;
     sound_a_freq = 0x00;
-    osd_play_sample(tone_channel,waveform1,32,1000,tone_vol,1);
+    osd_play_sample(tone_channel,(signed char*)waveform1,32,1000,tone_vol,1);
 	return 0;
 }
 

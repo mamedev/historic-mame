@@ -17,15 +17,6 @@
 
 #define BUFSIZE	0x1000
 
-#ifdef LSB_FIRST
-#define intelWord(x) (x)
-#define intelLong(x) (x)
-#else
-#define intelWord(x) ((x << 8) | (x >> 8))
-#define intelLong(x) (((x << 24) | (((unsigned long) x) >> 24) | (( x & 0x0000ff00) << 8) | (( x & 0x00ff0000) >> 8)))
-#endif
-
-
 typedef struct
 {
 	dword	end_of_cent_dir_sig;
@@ -747,11 +738,15 @@ static int get_file_length (FILE *fp, long *length)
 /* use these to avoid structure padding and byte-ordering problems */
 static word read_word (char *buf)
 {
-	return intelWord (*(word *)buf);
+   unsigned char *ubuf = (unsigned char *) buf;
+ 
+   return (ubuf[1] << 8) | ubuf[0];
 }
 
 /* use these to avoid structure padding and byte-ordering problems */
 static dword read_dword (char *buf)
 {
-	return intelLong (*(dword *)buf);
+   unsigned char *ubuf = (unsigned char *) buf;
+ 
+   return (ubuf[3] << 24) | (ubuf[2] << 16) | (ubuf[1] << 8) | ubuf[0];
 }

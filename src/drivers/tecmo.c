@@ -116,10 +116,10 @@ void tecmo_paletteram_w(int offset,int data);
 
 int rygar_vh_start(void);
 int silkworm_vh_start(void);
+int gemini_vh_start(void);
 
 void tecmo_vh_stop(void);
 void tecmo_vh_screenrefresh(struct osd_bitmap *bitmap);
-void gemini_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 
 
@@ -622,23 +622,23 @@ static struct GfxLayout rygar_spritelayout8x8 =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &tecmo_charlayout,        1*16*16, 16 },
-	{ 1, 0x08000, &silkworm_spritelayout8x8,0*16*16, 16 },	/* 8x8 sprites */
-	{ 1, 0x08000, &silkworm_spritelayout,   0*16*16, 16 },	/* 16x16 sprites */
-	{ 1, 0x08000, &silkworm_spritelayout2x, 0*16*16, 16 },	/* double size hack */
-	{ 1, 0x48000, &silkworm_spritelayout,   2*16*16, 16 },	/* bg #1 */
-	{ 1, 0x88000, &silkworm_spritelayout,   3*16*16, 16 },	/* bg #2 */
+	{ 1, 0x00000, &tecmo_charlayout,        256, 16 },	/* colors 256 - 511 */
+	{ 1, 0x08000, &silkworm_spritelayout8x8,  0, 16 },	/* colors   0 - 255 */
+	{ 1, 0x08000, &silkworm_spritelayout,     0, 16 },	/* 16x16 sprites */
+	{ 1, 0x08000, &silkworm_spritelayout2x,   0, 16 },	/* double size hack */
+	{ 1, 0x48000, &silkworm_spritelayout,   512, 16 },	/* bg#1 colors 512 - 767 */
+	{ 1, 0x88000, &silkworm_spritelayout,   768, 16 },	/* bg#2 colors 768 - 1023 */
 	{ -1 } /* end of array */
 };
 
 static struct GfxDecodeInfo rygar_gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &tecmo_charlayout,     1*16*16, 16 },
-	{ 1, 0x08000, &rygar_spritelayout8x8,0*16*16, 16 },	/* 8x8 sprites */
-	{ 1, 0x08000, &rygar_spritelayout,   0*16*16, 16 },	/* 16x16 sprites */
-	{ 1, 0x08000, &rygar_spritelayout2x, 0*16*16, 16 },	/* double size hack */
-	{ 1, 0x28000, &rygar_spritelayout,     2*16*16, 16 }, /* bg #1 */
-	{ 1, 0x48000, &rygar_spritelayout,     3*16*16, 16 }, /* bg #2 */
+	{ 1, 0x00000, &tecmo_charlayout,     256, 16 },	/* colors 256 - 511 */
+	{ 1, 0x08000, &rygar_spritelayout8x8,  0, 16 },	/* colors   0 - 255 */
+	{ 1, 0x08000, &rygar_spritelayout,     0, 16 },	/* 16x16 sprites */
+	{ 1, 0x08000, &rygar_spritelayout2x,   0, 16 },	/* double size hack */
+	{ 1, 0x28000, &rygar_spritelayout,   512, 16 },	/* bg#1 colors 512 - 767 */
+	{ 1, 0x48000, &rygar_spritelayout,   768, 16 },	/* bg#2 colors 768 - 1023 */
 	{ -1 } /* end of array */
 };
 
@@ -687,10 +687,10 @@ static struct MachineDriver silkworm_machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	256,4*16*16,
+	1024, 1024,
 	0,
 
-	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_16BIT,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
 	silkworm_vh_start,
 	tecmo_vh_stop,
@@ -737,10 +737,10 @@ static struct MachineDriver rygar_machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	rygar_gfxdecodeinfo,
-	256,4*16*16,
+	1024, 1024,
 	0,
 
-	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_16BIT,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
 	rygar_vh_start,
 	tecmo_vh_stop,
@@ -787,14 +787,14 @@ static struct MachineDriver gemini_machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	256,4*16*16,
+	1024, 1024,
 	0,
 
-	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_16BIT,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
-	silkworm_vh_start,
+	gemini_vh_start,
 	tecmo_vh_stop,
-	gemini_vh_screenrefresh,
+	tecmo_vh_screenrefresh,
 
 	/* sound hardware */
 	0,0,0,0,

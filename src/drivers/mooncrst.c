@@ -34,12 +34,12 @@ int moonqsr_vh_start(void);
 void galaxian_vh_screenrefresh(struct osd_bitmap *bitmap);
 int galaxian_vh_interrupt(void);
 
-void mooncrst_sound_freq_w(int offset,int data);
+void mooncrst_pitch_w(int offset,int data);
+void mooncrst_vol_w(int offset,int data);
 void mooncrst_noise_w(int offset,int data);
 void mooncrst_background_w(int offset,int data);
 void mooncrst_shoot_w(int offset,int data);
 void mooncrst_lfo_freq_w(int offset,int data);
-void mooncrst_sound_freq_sel_w(int offset,int data);
 int mooncrst_sh_start(void);
 void mooncrst_sh_stop(void);
 void mooncrst_sh_update(void);
@@ -80,15 +80,41 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xa800, 0xa800, mooncrst_background_w },
 	{ 0xa803, 0xa803, mooncrst_noise_w },
 	{ 0xa805, 0xa805, mooncrst_shoot_w },
-	{ 0xa806, 0xa807, mooncrst_sound_freq_sel_w },
+	{ 0xa806, 0xa807, mooncrst_vol_w },
 	{ 0xb000, 0xb000, interrupt_enable_w },	/* not Checkman */
 	{ 0xb001, 0xb001, interrupt_enable_w },	/* Checkman only */
 	{ 0xb004, 0xb004, galaxian_stars_w },
 	{ 0xb006, 0xb006, galaxian_flipx_w },
 	{ 0xb007, 0xb007, galaxian_flipy_w },
-	{ 0xb800, 0xb800, mooncrst_sound_freq_w },
+	{ 0xb800, 0xb800, mooncrst_pitch_w },
 	{ -1 }	/* end of table */
 };
+
+/* EXACTLY the same as above, but no gfxextend_w to avoid graphics problems */
+static struct MemoryWriteAddress moonal2_writemem[] =
+{
+	{ 0x0000, 0x3fff, MWA_ROM },
+	{ 0x8000, 0x83ff, MWA_RAM },
+	{ 0x9000, 0x93ff, videoram_w, &videoram, &videoram_size },
+	{ 0x9800, 0x983f, galaxian_attributes_w, &galaxian_attributesram },
+	{ 0x9840, 0x985f, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0x9860, 0x987f, MWA_RAM, &galaxian_bulletsram, &galaxian_bulletsram_size },
+/*	{ 0xa000, 0xa002, mooncrst_gfxextend_w },	* Moon Cresta only */
+	{ 0xa004, 0xa007, mooncrst_lfo_freq_w },
+	{ 0xa800, 0xa800, mooncrst_background_w },
+	{ 0xa803, 0xa803, mooncrst_noise_w },
+	{ 0xa805, 0xa805, mooncrst_shoot_w },
+	{ 0xa806, 0xa807, mooncrst_vol_w },
+	{ 0xb000, 0xb000, interrupt_enable_w },	/* not Checkman */
+	{ 0xb001, 0xb001, interrupt_enable_w },	/* Checkman only */
+	{ 0xb004, 0xb004, galaxian_stars_w },
+	{ 0xb006, 0xb006, galaxian_flipx_w },
+	{ 0xb007, 0xb007, galaxian_flipy_w },
+	{ 0xb800, 0xb800, mooncrst_pitch_w },
+	{ -1 }	/* end of table */
+};
+
+
 
 /* These sound structures are only used by Checkman */
 static struct IOWritePort writeport[] =
@@ -248,6 +274,49 @@ INPUT_PORTS_START( checkman_input_ports )
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( moonal2_input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_DIPNAME( 0x20, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x20, "Cocktail" )
+	PORT_BITX(    0x40, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x40, "On" )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_COIN3 )	/* works only in the Gremlin version */
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* probably unused */
+	PORT_DIPNAME( 0xc0, 0x00, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x40, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x80, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0xc0, "Free Play" )
+
+	PORT_START	/* DSW */
+	PORT_DIPNAME( 0x03, 0x00, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x01, "4000" )
+	PORT_DIPSETTING(    0x02, "5000" )
+	PORT_DIPSETTING(    0x03, "7000" )
+	PORT_DIPSETTING(    0x00, "None" )
+	PORT_DIPNAME( 0x04, 0x00, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x04, "5" )
+	PORT_DIPNAME( 0x08, 0x00, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x08, "On" )
+	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
+INPUT_PORTS_END
+
 
 
 static struct GfxLayout charlayout =
@@ -325,6 +394,12 @@ static unsigned char checkman_color_prom[] =
 	0x00,0xc0,0xb0,0x1f,0x00,0x1e,0x71,0x07,0x00,0xf6,0x07,0xf0,0x00,0x76,0x07,0xc6
 };
 
+static unsigned char moonal2_color_prom[] =
+{
+	0x00,0x00,0x00,0xF6,0x00,0x16,0xC0,0x3F,0x00,0xD8,0x07,0x3F,0x00,0xC0,0xC4,0x07,
+	0x00,0xC0,0xA0,0x07,0x00,0x00,0x00,0x07,0x00,0xF6,0x07,0xF0,0x00,0x76,0x07,0xC6,
+};
+
 
 
 static struct CustomSound_interface custom_interface =
@@ -374,7 +449,46 @@ static struct MachineDriver mooncrst_machine_driver =
 	}
 };
 
-/* identical to the above, only difference is vh_start */
+/* identical to moooncrst, only difference is writemem */
+static struct MachineDriver moonal2_machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_Z80,
+			18432000/6,	/* 3.072 Mhz */
+			0,
+			readmem,moonal2_writemem,0,0,
+			galaxian_vh_interrupt,1
+		}
+	},
+	60, 2500,	/* frames per second, vblank duration */
+	1,	/* single CPU, no need for interleaving */
+	0,
+
+	/* video hardware */
+	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
+	gfxdecodeinfo,
+	32+64,8*4+2*2,	/* 32 for the characters, 64 for the stars */
+	galaxian_vh_convert_color_prom,
+
+	VIDEO_TYPE_RASTER,
+	0,
+	galaxian_vh_start,
+	generic_vh_stop,
+	galaxian_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_CUSTOM,
+			&custom_interface
+		}
+	}
+};
+
+/* identical to mooncrst, only difference is vh_start */
 static struct MachineDriver moonqsr_machine_driver =
 {
 	/* basic machine hardware */
@@ -620,6 +734,43 @@ ROM_START( checkman_rom )
 	ROM_REGION(0x10000)	/* 64k for sound code */
 	ROM_LOAD( "cm13", 0x0000, 0x0800, 0x489360c5 )
 	ROM_LOAD( "cm14", 0x0800, 0x0800, 0x8c673289 )
+ROM_END
+
+ROM_START( moonal2_rom )
+	ROM_REGION(0x10000) /* 64k for code */
+	ROM_LOAD( "ali1",  0x0000, 0x0400, 0x1a3f23c1 )
+	ROM_LOAD( "ali2",  0x0400, 0x0400, 0x9d0a00ba )
+	ROM_LOAD( "ali3",  0x0800, 0x0400, 0xabd2cf90 )
+	ROM_LOAD( "ali4",  0x0c00, 0x0400, 0x1a807a06 )
+	ROM_LOAD( "ali5",  0x1000, 0x0400, 0xe14af8fe )
+	ROM_LOAD( "ali6",  0x1400, 0x0400, 0x2b77be15 )
+	ROM_LOAD( "ali7",  0x1800, 0x0400, 0x9bb5fe05 )
+	ROM_LOAD( "ali8",  0x1c00, 0x0400, 0xf55e7144 )
+	ROM_LOAD( "ali9",  0x2000, 0x0400, 0xe7545590 )
+	ROM_LOAD( "ali10", 0x2400, 0x0400, 0x0ce64696 )
+	ROM_LOAD( "ali11", 0x2800, 0x0400, 0x7abb0a83 )
+
+	ROM_REGION(0x2000) /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "ali13.1h", 0x0000, 0x0800, 0x879421ae )
+	/* 0800-0fff empty */
+	ROM_LOAD( "ali12.1k", 0x1000, 0x0800, 0xcfb52239 )
+	/* 1800-1fff empty */
+ROM_END
+
+ROM_START( moonal2b_rom )
+	ROM_REGION(0x10000) /* 64k for code */
+	ROM_LOAD( "MD-1", 0x0000, 0x0800, 0xb749237b )
+	ROM_LOAD( "MD-2", 0x0800, 0x0800, 0xd643a5a7 )
+	ROM_LOAD( "MD-3", 0x1000, 0x0800, 0x0cc146eb )
+	ROM_LOAD( "MD-4", 0x1800, 0x0800, 0x91138f41 )
+	ROM_LOAD( "MD-5", 0x2000, 0x0800, 0xf43a1306 )
+	ROM_LOAD( "MD-6", 0x2800, 0x0800, 0x225ff205 )
+
+	ROM_REGION(0x2000) /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "MD-13", 0x0000, 0x0800, 0x879421ae )
+	/* 0800-0fff empty */
+	ROM_LOAD( "MD-12", 0x1000, 0x0800, 0xcfb52239 )
+	/* 1800-1fff empty */
 ROM_END
 
 
@@ -1032,4 +1183,44 @@ struct GameDriver checkman_driver =
 	ORIENTATION_ROTATE_90,
 
 	checkman_hiload, checkman_hisave
+};
+
+struct GameDriver moonal2_driver =
+{
+	"Moon Alien Part 2",
+	"moonal2",
+	"ROBERT ANSCHUETZ\nNICOLA SALMORIA\nGARY WALTON\nSIMON WALLS\nANDREW SCOTT",
+	&moonal2_machine_driver,
+
+	moonal2_rom,
+	0, 0,
+	mooncrst_sample_names,
+	0, /* sound_prom */
+
+	moonal2_input_ports,
+
+	moonal2_color_prom, 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	0, 0
+};
+
+struct GameDriver moonal2b_driver =
+{
+	"Moon Alien Part 2 (alternate)",
+	"moonal2b",
+	"ROBERT ANSCHUETZ\nNICOLA SALMORIA\nGARY WALTON\nSIMON WALLS\nANDREW SCOTT",
+	&moonal2_machine_driver,
+
+	moonal2b_rom,
+	0, 0,
+	mooncrst_sample_names,
+	0, /* sound_prom */
+
+	moonal2_input_ports,
+
+	moonal2_color_prom, 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	0, 0
 };

@@ -1,0 +1,312 @@
+/***************************************************************************
+
+  vidhrdw.c
+
+  Functions to emulate the video hardware of the machine.
+
+***************************************************************************/
+
+#include "driver.h"
+#include "vidhrdw/generic.h"
+
+unsigned char *lastduel_sprites;
+unsigned char *lastduel_scroll1;
+unsigned char *lastduel_scroll2;
+unsigned char *lastduel_vram;
+unsigned char *lastduel_ram;
+unsigned char *lastduel_paletteram;
+
+static struct osd_bitmap *scroll1_bitmap;
+static struct osd_bitmap *scroll2_bitmap;
+static unsigned char *scroll1_dirty;
+static unsigned char *scroll2_dirty;
+static int scroll[16];
+
+void lastduel_scroll_w( int offset, int data )
+{
+	scroll[offset]=data&0xffff;  // Scroll data, other bits unknown
+}
+
+int lastduel_sprites_r(int offset)
+{
+  return READ_WORD(&lastduel_sprites[offset]);
+}
+
+void lastduel_sprites_w(int offset,int value)
+{
+  COMBINE_WORD_MEM(&lastduel_sprites[offset],value);
+}
+
+int lastduel_scroll1_r(int offset)
+{
+  return READ_WORD(&lastduel_scroll1[offset]);
+}
+
+void lastduel_scroll1_w(int offset,int value)
+{
+	int oldword = READ_WORD(&lastduel_scroll1[offset]);
+	int newword = COMBINE_WORD(oldword,value);
+
+  if (oldword != newword)
+	{
+  	WRITE_WORD(&lastduel_scroll1[offset],value);
+  	scroll1_dirty[offset/4]=1;
+  }
+}
+
+int lastduel_scroll2_r(int offset)
+{
+  return READ_WORD(&lastduel_scroll2[offset]);
+}
+
+void lastduel_scroll2_w(int offset,int value)
+{
+	int oldword = READ_WORD(&lastduel_scroll2[offset]);
+	int newword = COMBINE_WORD(oldword,value);
+
+  if (oldword != newword)
+	{
+  	WRITE_WORD(&lastduel_scroll2[offset],value);
+  	scroll2_dirty[offset/4]=1;
+  }
+}
+
+int lastduel_vram_r(int offset)
+{
+  return READ_WORD(&lastduel_vram[offset]);
+}
+
+void lastduel_vram_w(int offset,int value)
+{
+  COMBINE_WORD_MEM(&lastduel_vram[offset],value);
+}
+
+int lastduel_palette_r( int offset)
+{
+  return READ_WORD(&lastduel_paletteram[offset]);
+}
+
+void lastduel_palette_w( int offset, int data )
+{
+	int oldword = READ_WORD(&lastduel_paletteram[offset]);
+	int newword = COMBINE_WORD(oldword,data);
+	int r,g,b,bright;
+
+
+  	WRITE_WORD(&lastduel_paletteram[offset],newword);
+
+	r = (newword >> 12) & 0x0f;
+	g = (newword >> 8) & 0x0f;
+	b = (newword >> 4) & 0x0f;
+	bright = (newword >> 0) & 0x0f;
+
+	r = (r * bright) * 17 / 15;
+	g = (g * bright) * 17 / 15;
+	b = (b * bright) * 17 / 15;
+
+  	palette_change_color(offset / 2,r,g,b);
+}
+
+/***************************************************************************
+
+  Start the video hardware emulation.
+
+***************************************************************************/
+
+int lastduel_vh_start(void)
+{
+	scroll1_bitmap=osd_create_bitmap(1024,1024);
+  scroll2_bitmap=osd_create_bitmap(1024,1024);
+  scroll1_dirty=(char *)malloc(0x1000);
+  scroll2_dirty=(char *)malloc(0x1000);
+
+	return 0;
+}
+
+/***************************************************************************
+
+  Stop the video hardware emulation.
+
+***************************************************************************/
+
+void lastduel_vh_stop(void)
+{
+	osd_free_bitmap(scroll1_bitmap);
+  osd_free_bitmap(scroll2_bitmap);
+	free(scroll1_dirty);
+  free(scroll2_dirty);
+}
+
+/***************************************************************************/
+
+void lastduel_vh_screenrefresh(struct osd_bitmap *bitmap)
+{
+  int i,offs,color,code,tile;
+  int mx,my;
+
+  /* Build the dynamic palette */
+	memset(palette_used_colors,PALETTE_COLOR_UNUSED,Machine->drv->total_colors * sizeof(unsigned char));
+
+  /* Text layer colours */
+  for (offs = 0x1000 - 2;offs >= 0;offs -= 2)
+	{
+		int color,tile;
+
+  	tile=READ_WORD (&lastduel_vram[offs]);
+  	color = ((tile & 0xf000) >> 12);
+  	tile=tile&0xfff;
+
+    palette_used_colors[(192*4) + (4 * color)+3] = PALETTE_COLOR_TRANSPARENT;
+ 		for (i = 0;i < 3; i++)
+		{
+			if (Machine->gfx[1]->pen_usage[tile] & (1 << i))
+				palette_used_colors[(192*4) + (4 * color) + i] = PALETTE_COLOR_USED;
+		}
+	}
+
+/* No need to bother allocating scroll 1 colours just now as there are
+no roms....
+
+for (offs = 0x4000 - 4;offs >= 0;offs -= 4)
+	{
+		int color,code,i;
+
+  	color=READ_WORD(&lastduel_scroll1[offs+2])&0xf;
+    code=READ_WORD(&lastduel_scroll1[offs])&0xfff;
+
+  	palette_used_colors[(0*16) + (16 * color)] = PALETTE_COLOR_TRANSPARENT;
+ 		for (i = 1;i < 16;i++)
+		{
+			if (Machine->gfx[2]->pen_usage[code] & (1 << i))
+				palette_used_colors[(16*16) + (16 * color) + i] = PALETTE_COLOR_USED;
+		}
+	}
+*/
+
+  for (offs = 0x4000 - 4;offs >= 0;offs -= 4)
+	{
+		int color,code,i;
+
+  	color=READ_WORD(&lastduel_scroll2[offs+2])&0xf;
+    code=READ_WORD(&lastduel_scroll2[offs])&0xfff;
+
+  	palette_used_colors[(0*16) + (16 * color)] = PALETTE_COLOR_TRANSPARENT;
+ 		for (i = 1;i < 16;i++)
+		{
+			if (Machine->gfx[2]->pen_usage[code] & (1 << i))
+				palette_used_colors[(0*16) + (16 * color) + i] = PALETTE_COLOR_USED;
+		}
+	}
+
+  for(offs=0x500-8;offs>-1;offs-=8)
+  {
+   	int code=READ_WORD(&lastduel_sprites[offs]);
+    int attributes = READ_WORD(&lastduel_sprites[offs+2]);
+		int color = attributes&0xf;
+
+    palette_used_colors[(32*16) + (16 * color)+15] = PALETTE_COLOR_TRANSPARENT;
+ 		for (i = 0;i < 15;i++)
+		{
+			if (Machine->gfx[0]->pen_usage[code] & (1 << i))
+				palette_used_colors[(32*16) + (16 * color) + i] = PALETTE_COLOR_USED;
+		}
+	}
+
+  /* Check for complete remap and redirty if needed */
+	if (palette_recalc())
+	{
+		memset(scroll2_dirty,1,0x1000);
+//		memset(scroll1_dirty,1,0x1000);
+	}
+
+	/* Draw Background layer  */
+ 	mx=0; my=-1;
+  for (offs = 0 ;offs < 0x4000; offs += 4) {
+    	mx++;
+    	if (mx==64) {mx=0; my++;}
+
+      if (!scroll1_dirty[offs/4]) continue;
+      scroll1_dirty[offs/4]=0;
+
+      color=READ_WORD(&lastduel_scroll1[offs+2]);
+      code=READ_WORD(&lastduel_scroll1[offs]);
+		// THIS USES MISSING GRAPHICS ROMS!!!!!
+      drawgfx(scroll1_bitmap,Machine->gfx[2],code&0xfff,color&0xf,color&0x80,color&0x40,mx*16,my*16,0,TRANSPARENCY_NONE,0);
+    }
+
+  /* Foreground layer  */
+ 	mx=0; my=-1;
+  for (offs = 0 ;offs < 0x4000; offs += 4) {
+    	mx++;
+    	if (mx==64) {mx=0; my++;}
+
+      if (!scroll2_dirty[offs/4]) continue;
+      scroll2_dirty[offs/4]=0;
+
+      color=READ_WORD(&lastduel_scroll2[offs+2]);
+      code=READ_WORD(&lastduel_scroll2[offs]);
+
+      drawgfx(scroll2_bitmap,Machine->gfx[2],code&0xfff,color&0xf,color&0x80,color&0x40,mx*16,my*16,0,TRANSPARENCY_NONE,0);
+    }
+
+{
+	int scrollx,scrolly;
+
+  scrollx=-scroll[6];
+  scrolly=-scroll[4];
+	copyscrollbitmap(bitmap,scroll2_bitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+
+  scrollx=-scroll[2];
+  scrolly=-scroll[0];
+	copyscrollbitmap(bitmap,scroll1_bitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
+}
+
+	/* Sprites */
+  for(offs=0x500-8;offs>-1;offs-=8)
+  {
+    int attributes,sy,sx,flipx,flipy;
+    code=READ_WORD(&lastduel_sprites[offs]);
+    if (!code) continue;
+
+   	attributes = READ_WORD(&lastduel_sprites[offs+2]);
+		sy = READ_WORD(&lastduel_sprites[offs+4]) & 0x1ff;
+		sx = READ_WORD(&lastduel_sprites[offs+6]) & 0x1ff;
+
+		flipx = attributes&0x20;
+		flipy = attributes&0x40;
+		color = attributes&0xf;
+
+		if( sy>0x100 )
+    	sy -= 0x200;
+
+    sx+=16;
+    sy-=16;
+
+		drawgfx(bitmap,Machine->gfx[0],
+			code,
+			color,
+			flipx,flipy,
+			sx,sy,
+			&Machine->drv->visible_area,
+			TRANSPARENCY_PEN,15);
+  }
+
+  /* Text tiles */
+	mx=0; my=-1;
+  for (offs = 0 ;offs < 0x1000; offs += 2) {
+    mx++;
+    if (mx==64) {mx=0; my++;}
+
+    tile=READ_WORD (&lastduel_vram[offs]);
+
+    color = ((tile & 0xf000) >> 12);
+    tile=tile&0xfff;
+
+    if (tile==0x20) continue; // Transparent tile
+
+ 	 	drawgfx(bitmap,Machine->gfx[1],tile,
+			color, 0,0, (8*mx)+8,(8*my)-8,
+		 	&Machine->drv->visible_area,TRANSPARENCY_PEN,3);
+	}
+}
+

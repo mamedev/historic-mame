@@ -2174,6 +2174,28 @@ ROM_START( sinistar_rom )
 	ROM_LOAD( "SINISTAR.SND", 0xf000, 0x1000, 0x7400ae74 )
 ROM_END
 
+ROM_START( oldsin_rom )
+	ROM_REGION(0x10000) /* 64k for code */
+	ROM_LOAD( "SINOLD01.ROM", 0x0000, 0x1000, 0xebf346e5 )
+	ROM_LOAD( "SINOLD02.ROM", 0x1000, 0x1000, 0x4be17573 )
+	ROM_LOAD( "SINOLD03.ROM", 0x2000, 0x1000, 0x9ec1fddb )
+	ROM_LOAD( "SINOLD04.ROM", 0x3000, 0x1000, 0x8b9a77d2 )
+	ROM_LOAD( "SINOLD05.ROM", 0x4000, 0x1000, 0x46289976 )
+	ROM_LOAD( "SINOLD06.ROM", 0x5000, 0x1000, 0xe6e4b9b6 )
+	ROM_LOAD( "SINOLD07.ROM", 0x6000, 0x1000, 0x0c0bee55 )
+	ROM_LOAD( "SINOLD08.ROM", 0x7000, 0x1000, 0xba851ef5 )
+	ROM_LOAD( "SINOLD09.ROM", 0x8000, 0x1000, 0x2e4ff0b9 )
+	ROM_LOAD( "SINOLD10.ROM", 0xe000, 0x1000, 0xd9a9f2fb )
+	ROM_LOAD( "SINOLD11.ROM", 0xf000, 0x1000, 0xa5ea8a3e )
+
+	ROM_REGION(0x1000) /* temporary space for graphics (disposed after conversion) */
+	/* empty memory region - not used by the game, but needed because the main */
+	/* core currently always frees region #1 after initialization. */
+
+	ROM_REGION(0x10000) /* 64k for the sound CPU */
+	ROM_LOAD( "SINISTAR.SND", 0xf000, 0x1000, 0x7400ae74 )
+ROM_END
+
 /* Sinistar speech samples */
 const char *sinistar_sample_names[]=
 {
@@ -2200,6 +2222,26 @@ struct GameDriver sinistar_driver =
 	0, 0,                           /* ROM decrypt routines */
 	sinistar_sample_names,          /* samplenames */
 	0,      /* sound_prom */
+
+	sinistar_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_ROTATE_270,
+
+	cmos_load, cmos_save
+};
+
+struct GameDriver oldsin_driver =
+{
+	"Sinistar (prototype version)",
+	"oldsin",
+	"\nSinistar team:\nMarc Lafontaine\nSteven Hugg\nMirko Buffoni\nAaron Giles\nHowie Cohen\nSean Riddle\nPat Lawrence\nBrian Deuel (prototype driver)\n\nSpecial thanks to Peter Freeman",
+	&sinistar_machine_driver, /* MachineDriver * */
+
+	oldsin_rom, /* RomModule * */
+	0, 0, /* ROM decrypt routines; not sure if these are needed here */
+	sinistar_sample_names, /* samplenames */
+	0, /* sound_prom */
 
 	sinistar_input_ports,
 

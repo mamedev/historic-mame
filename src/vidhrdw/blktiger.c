@@ -25,7 +25,6 @@ unsigned char *blktiger_paletteram;
 unsigned char *blktiger_backgroundram;
 static unsigned char blktiger_video_control;
 unsigned char *blktiger_screen_layout;
-int blktiger_paletteram_size;
 int blktiger_backgroundram_size;
 void blktiger_scrollx_w(int offset,int data);
 void blktiger_scrolly_w(int offset,int data);
@@ -75,11 +74,6 @@ void blktiger_paletteram_w(int offset,int data)
 	bit2 = (val >> 2) & 0x01;
 	bit3 = (val >> 3) & 0x01;
 	b = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-
-	/* for tiles, pen 15 is the transparent color. However there */
-	/* is no other plane behind them, so we just set them to black */
-	if ((offset & 0x30f) == 0x00f)
-		r = g = b = 0;
 
 	palette_change_color(offset & ~0x400,r,g,b);
 }
@@ -233,74 +227,39 @@ void blktiger_screen_layout_w(int offset,int data)
 void blktiger_vh_screenrefresh(struct osd_bitmap *bitmap)
 {
 	int offs, sx, sy;
-	int black_pen;
-unsigned char used_colors[1024];
 
 
-memset(used_colors,PALETTE_COLOR_UNUSED,1024);
+memset(palette_used_colors,PALETTE_COLOR_UNUSED,Machine->drv->total_colors * sizeof(unsigned char));
 
-if (screen_layout)
 {
-	/* 8x4 screen */
-	int offsetbase;
-	int scrollx,scrolly, y;
-	scrollx = ((blktiger_scrollx[0]>>4) + 16 * blktiger_scrollx[1]);
-	scrolly = ((blktiger_scrolly[0]>>4) + 16 * blktiger_scrolly[1]);
+	int color,code,i;
+	int colmask[16];
+	int pal_base;
 
-	for (sy=0; sy<18; sy++)
+
+	pal_base = Machine->drv->gfxdecodeinfo[1].color_codes_start;
+
+	for (color = 0;color < 16;color++) colmask[color] = 0;
+
+	for (offs = blktiger_backgroundram_size * scroll_page_count - 2;offs >= 0;offs -= 2)
 	{
-		y=(scrolly+sy)&(16*4-1);
-		offsetbase=((y&0xf0)<<8)+32*(y&0x0f);
-		for (sx=0; sx<18; sx++)
-		{
-			int colour, attr, code, x;
-			x=(scrollx+sx)&(16*8-1);
-			offs=offsetbase + ((x&0xf0)<<5)+2*(x&0x0f);
+		int attr;
 
-			attr=scroll_ram[offs+1];
-			colour=(attr&0x78)>>3;
-			code=scroll_ram[offs];
-			code+=256*(attr&0x07);
-			for (x = 0;x < 15;x++)
-			{
-				if (Machine->gfx[1]->pen_usage[code] & (1 << x))
-					used_colors[16 * colour + x] = PALETTE_COLOR_FIXED;
-			}
-			used_colors[16 * colour + 15] = PALETTE_COLOR_CONSTANT;	/* black */
-			black_pen = 16 * colour + 15;	/* remember a black pen in case we have to fillbitmap() */
-		}
+		attr = scroll_ram[offs + 1];
+		color = (attr & 0x78) >> 3;
+		code = scroll_ram[offs] + ((attr & 0x07) << 8);
+		colmask[color] |= Machine->gfx[1]->pen_usage[code];
 	}
-}
-else
-{
-	/* 4x8 screen */
-	int offsetbase;
-	int scrollx,scrolly, y;
-	scrollx = ((blktiger_scrollx[0]>>4) + 16 * blktiger_scrollx[1]);
-	scrolly = ((blktiger_scrolly[0]>>4) + 16 * blktiger_scrolly[1]);
 
-	for (sy=0; sy<18; sy++)
+	for (color = 0;color < 16;color++)
 	{
-		y=(scrolly+sy)&(16*8-1);
-		offsetbase=((y&0xf0)<<7)+32*(y&0x0f);
-		for (sx=0; sx<18; sx++)
+		for (i = 0;i < 15;i++)
 		{
-			int colour, attr, code, x;
-			x=(scrollx+sx)&(16*4-1);
-			offs=offsetbase + ((x&0xf0)<<5)+2*(x&0x0f);
-
-			attr=scroll_ram[offs+1];
-			colour=(attr&0x78)>>3;
-			code=scroll_ram[offs];
-			code+=256*(attr&0x07);
-			for (x = 0;x < 15;x++)
-			{
-				if (Machine->gfx[1]->pen_usage[code] & (1 << x))
-					used_colors[16 * colour + x] = PALETTE_COLOR_FIXED;
-			}
-			used_colors[16 * colour + 15] = PALETTE_COLOR_CONSTANT;	/* black */
-			black_pen = 16 * colour + 15;	/* remember a black pen in case we have to fillbitmap() */
+			if (colmask[color] & (1 << i))
+				palette_used_colors[pal_base + 16 * color + i] = PALETTE_COLOR_USED;
 		}
+		if (colmask[color] & (1 << 15))
+			palette_used_colors[pal_base + 16 * color + 15] = PALETTE_COLOR_TRANSPARENT;
 	}
 }
 for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
@@ -324,7 +283,7 @@ for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
 		for (x = 0;x < 15;x++)
 		{
 			if (Machine->gfx[2]->pen_usage[code] & (1 << x))
-				used_colors[512 + 16 * colour + x] = PALETTE_COLOR_DYNAMIC;
+				palette_used_colors[512 + 16 * colour + x] = PALETTE_COLOR_USED;
 		}
 	}
 }
@@ -337,12 +296,12 @@ for (offs = videoram_size - 1;offs >= 0;offs--)
 	for (x = 0;x < 3;x++)
 	{
 		if (Machine->gfx[0]->pen_usage[code] & (1 << x))
-			used_colors[768 + 4 * colour + x] = PALETTE_COLOR_DYNAMIC;
+			palette_used_colors[768 + 4 * colour + x] = PALETTE_COLOR_USED;
 	}
 }
 
 
-if (palette_recalc(used_colors))
+if (palette_recalc())
 	memset(dirtybuffer2,1,blktiger_backgroundram_size * scroll_page_count);
 
 
@@ -455,7 +414,7 @@ if (palette_recalc(used_colors))
 			}
 		}
 	}
-	else fillbitmap(bitmap,Machine->pens[black_pen],&Machine->drv->visible_area);
+	else fillbitmap(bitmap,palette_transparent_pen,&Machine->drv->visible_area);
 
 
 	if (objon)

@@ -249,6 +249,7 @@ int frontend_help (int argc, char **argv)
                     {
                         case 0:         printf("        "); break;
                         case CPU_Z80:   printf("Z80     "); break;
+                        case CPU_8085A: printf("I8085   "); break;
                         case CPU_M6502: printf("M6502   "); break;
                         case CPU_I86:   printf("I86     "); break;
                         case CPU_I8039: printf("I8039   "); break;
@@ -256,8 +257,10 @@ int frontend_help (int argc, char **argv)
                         case CPU_M6805: printf("M6805   "); break;
                         case CPU_M6809: printf("M6809   "); break;
                         case CPU_M68000:printf("M68000  "); break;
+                        case CPU_T11   :printf("T-11    "); break;
 
                         case CPU_Z80   |CPU_AUDIO_CPU: printf("[Z80]   "); break; /* Brackets mean that the cpu is only needed for sound. In cpu flags, 0x8000 means it */
+                        case CPU_8085A |CPU_AUDIO_CPU: printf("[I8085] "); break;
                         case CPU_M6502 |CPU_AUDIO_CPU: printf("[M6502] "); break;
                         case CPU_I86   |CPU_AUDIO_CPU: printf("[I86]   "); break;
                         case CPU_I8039 |CPU_AUDIO_CPU: printf("[I8039] "); break;
@@ -265,6 +268,7 @@ int frontend_help (int argc, char **argv)
                         case CPU_M6805 |CPU_AUDIO_CPU: printf("[M6805] "); break;
                         case CPU_M6809 |CPU_AUDIO_CPU: printf("[M6809] "); break;
                         case CPU_M68000|CPU_AUDIO_CPU: printf("[M68000]"); break;
+                        case CPU_T11   |CPU_AUDIO_CPU: printf("[T-11]  "); break;
                     }
                 }
 

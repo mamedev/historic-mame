@@ -571,7 +571,7 @@ int layer_is_line_dirty(struct GfxLayer *layer,int miny)
 
 
 /* check if the given tile is totally covered by tiles in the above layers */
-static inline int is_tile_obscured(int layer_num,int minx,int miny)
+INLINE int is_tile_obscured(int layer_num,int minx,int miny)
 {
 	int i;
 
@@ -1911,7 +1911,7 @@ void layer_mark_rectangle_dirty_norotate(struct GfxLayer *layer,int minx,int max
 
 	for (y = miny & ~0x07;y <= maxy;y += 8)
 	{
-		layer_mark_blocks_dirty(layer,minx,y,(((maxx + 7) & 0x07) - (minx & 0x07)) / 8 + 1);
+		layer_mark_blocks_dirty(layer,minx,y,(((maxx + 7) & ~0x07) - (minx & ~0x07)) / 8 + 1);
 	}
 }
 

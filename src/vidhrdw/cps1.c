@@ -1,4 +1,3 @@
-
 /***************************************************************************
 
   vidhrdw.c
@@ -10,7 +9,6 @@
   Layer-sprite priority (almost there... masking not correct)
   Loads of unknown attribute bits on scroll 2.
   Entire unknown graphic RAM region
-  Final fight 32x32 tiles are not linear.
   Speed, speed, speed...
 
   OUTPUT PORTS (preliminary)
@@ -94,12 +92,12 @@ struct CPS1config *cps1_game_config;
 
 #define CPS1_LAYER_CONTROL      0x66    /* (or maybe not) */
 
-inline int cps1_port(int offset)
+INLINE int cps1_port(int offset)
 {
         return READ_WORD(&cps1_output[offset]);
 }
 
-inline unsigned char * cps1_base(int offset)
+INLINE unsigned char * cps1_base(int offset)
 {
         int base=cps1_port(offset)*256;
         return &cps1_gfxram[base&0x3ffff];
@@ -157,7 +155,7 @@ void cps1_dump_video(void)
 #endif
 
 
-inline void cps1_get_video_base(void)
+INLINE void cps1_get_video_base(void)
 {
         /* Re-calculate the VIDEO RAM base */
         cps1_scroll1=cps1_base(CPS1_SCROLL1_BASE);
@@ -188,20 +186,31 @@ int cps1_vh_start(void)
 
         cps1_get_video_base();   /* Calculate base pointers */
 
-        /*
-           Some games interrogate a couple of registers on bootup.
-           These are CPS1 board B self test checks.
-        */
-        WRITE_WORD(&cps1_output[0x40], 0x406);  /* Carrier Air Wing */
-        WRITE_WORD(&cps1_output[0x60], 0x004);  /* Final fight */
-        WRITE_WORD(&cps1_output[0x72], 0x800);  /* 3 Wonders */
-        WRITE_WORD(&cps1_output[0x4e], 0x405);  /* Nemo */
-        WRITE_WORD(&cps1_output[0x5e], 0x404);  /* Mega twins */
+        if (!cps1_game_config)
+        {
+           if (errorlog)
+           {
+                fprintf(errorlog, "cps1_game_config hasn't been set up yet");
+           }
+           return -1;
+        }
 
         /*
-            Note: Carrier air wing does not work because it writes
-                  over this value before it reads it.
+           Some games interrogate a couple of registers on bootup.
+           These are CPS1 board B self test checks. They wander from game to
+           game.
         */
+        if (cps1_game_config->cpsb_addr)
+        {
+                if (errorlog)
+                {
+                    fprintf(errorlog, "CPSB port %02x=%04x\n",
+                                cps1_game_config->cpsb_addr,
+                                cps1_game_config->cpsb_value);
+                }
+                WRITE_WORD(&cps1_output[cps1_game_config->cpsb_addr],
+                        cps1_game_config->cpsb_value);
+        }
 
 	return 0;
 }
@@ -225,14 +234,14 @@ void cps1_vh_stop(void)
 
 ***************************************************************************/
 
-inline void cps1_build_palette(void)
+INLINE void cps1_build_palette(void)
 {
                           /* Chars  Sprites   16*16   32*32 */
         static int start[4]={0x0400, 0x0000,  0x0800, 0x0c00};
         static int count[4]={0x0200, 0x0200,  0x0200, 0x0200};
 
         int j, i;
-        /* rebuild the colour lookup table from RAM palette */
+        /* rebuild the colour lookup tabl from RAM palette */
         for (j=0; j<4; j++)
 	{
               int max=count[j];
@@ -248,9 +257,9 @@ inline void cps1_build_palette(void)
                         red   = ((palette>>8)&0x0f);
                         green = ((palette>>4)&0x0f);
                         blue  = (palette&0x0f);
-                        red   = (red * bright ) + red ;
-                        green = (green * bright) + green ;
-                        blue  = (blue * bright) + blue ;
+                        red   = (red * bright ) * 17 / 15;
+                        green = (green * bright) * 17 / 15;
+                        blue  = (blue * bright) * 17 / 15;
 
                         setgfxcolorentry (Machine->gfx[j], i, red, green, blue);
                         WRITE_WORD(&cps1_old_palette[offset], palette);
@@ -285,7 +294,7 @@ inline void cps1_build_palette(void)
 
 ***************************************************************************/
 
-inline void cps1_render_scroll1(struct osd_bitmap *bitmap)
+INLINE void cps1_render_scroll1(struct osd_bitmap *bitmap)
 {
         int x,y, offs, offsx, sx, sy;
         int base_scroll1=cps1_game_config->base_scroll1;
@@ -355,7 +364,7 @@ inline void cps1_render_scroll1(struct osd_bitmap *bitmap)
 
 ***************************************************************************/
 
-inline void cps1_render_sprites(struct osd_bitmap *bitmap)
+INLINE void cps1_render_sprites(struct osd_bitmap *bitmap)
 {
         int i;
         int base_obj=cps1_game_config->base_obj;
@@ -492,6 +501,568 @@ inline void cps1_render_sprites(struct osd_bitmap *bitmap)
         }
 }
 
+#ifdef MAME_DEBUG
+void cps1_debug(int colour)
+{
+        static int s;
+        static int reset;
+        int pressed=0;
+        int n=0;
+        int i;
+        int keys[]={OSD_KEY_1, OSD_KEY_2, OSD_KEY_3, OSD_KEY_4,
+                    OSD_KEY_5, OSD_KEY_6, OSD_KEY_7, OSD_KEY_8};
+
+        for (i=0; i<8; i++)
+        {
+             if (osd_key_pressed(i))
+             {
+                        int no=0;
+                        if (osd_key_pressed(OSD_KEY_LSHIFT))
+                        {
+                                no+=8;
+                        }
+                     s++;
+                     setgfxcolorentry (Machine->gfx[2], colour*16+i-1+no, s,s,s);
+                     reset=1;
+                     pressed=1;
+             }
+        }
+        if (!pressed)
+        {
+             if (reset)
+             {
+                reset=0;
+                memset(cps1_old_palette, 0xff, cps1_palette_size);
+                cps1_build_palette();
+             }
+        }
+
+
+
+}
+#endif
+
+/*
+This is a test table.
+*/
+
+int cps1_transparency_table[512]=
+{
+   0x0000,                                                /* 0000 */
+   ~(0x0010|0x0008|0x0004|0x0002|0x0001),                 /* 0080 */
+   ~(0x0020|0x0010|0x0008),                               /* 0100 */
+   ~(0x1000|0x0800|0x0400|0x0200|0x0080|0x0040|0x0002),   /* 0180 .??X???? ??....?. */
+   0x8000,                                                /* 0200 */
+   0x8000,      /* 0280 */
+   0x8000,      /* 0300 */
+   0x8000,      /* 0380 */
+   0x8000,      /* 0400 */
+   0x8000,      /* 0480 */
+   0x8000,      /* 0500 */
+   0x8000,      /* 0580 */
+   0x8000,      /* 0600 */
+   0x8000,      /* 0680 */
+   0x8000,      /* 0700 */
+   0x8000,      /* 0780 */
+   0x8000,      /* 0800 */
+   0x8000,      /* 0880 */
+   ~(0x20|0x0010|0x0008|0x0004|0x0002),      /* 0900 - Willow forest floor */
+   0x8000,      /* 0980 */
+   0x8000,      /* 0a00 */
+   0x8000,      /* 0a80 */
+   0x8000,      /* 0b00 */
+   0x8000,      /* 0b80 */
+   0x8000,      /* 0c00 */
+   0x8000,      /* 0c80 */
+   0x8000,      /* 0d00 */
+   0x8000,      /* 0d80 */
+   0x8000,      /* 0e00 */
+   0x8000,      /* 0e80 */
+   0x8000,      /* 0f00 */
+   0x8000,      /* 0f80 */
+   0x8000,      /* 1000 */
+   0x8000,      /* 1080 */
+   0x8000,      /* 1100 */
+   0x8000,      /* 1180 */
+   0x8000,      /* 1200 */
+   0x8000,      /* 1280 */
+   0x8000,      /* 1300 */
+   0x8000,      /* 1380 */
+   0x8000,      /* 1400 */
+   0x8000,      /* 1480 */
+   0x8000,      /* 1500 */
+   0x8000,      /* 1580 */
+   0x8000,      /* 1600 */
+   0x8000,      /* 1680 */
+   0x8000,      /* 1700 */
+   0x8000,      /* 1780 */
+   0x8000,      /* 1800 */
+   0x0000,      /* 1880 */
+   0x8000,      /* 1900 */
+   0x8000,      /* 1980 */
+   0x8000,      /* 1a00 */
+   0x8000,      /* 1a80 */
+   0x8000,      /* 1b00 */
+   0x8000,      /* 1b80 */
+   0x8000,      /* 1c00 */
+   0x8000,      /* 1c80 */
+   0x8000,      /* 1d00 */
+   0x8000,      /* 1d80 */
+   0x8000,      /* 1e00 */
+   0x8000,      /* 1e80 */
+   0x8000,      /* 1f00 */
+   0x8000,      /* 1f80 */
+   0x8000,      /* 2000 */
+   0x8000,      /* 2080 */
+   0x8000,      /* 2100 */
+   0x8000,      /* 2180 */
+   0x8000,      /* 2200 */
+   0x8000,      /* 2280 */
+   0x8000,      /* 2300 */
+   0x8000,      /* 2380 */
+   0x8000,      /* 2400 */
+   0x8000,      /* 2480 */
+   0x8000,      /* 2500 */
+   0x8000,      /* 2580 */
+   0x8000,      /* 2600 */
+   0x8000,      /* 2680 */
+   0x8000,      /* 2700 */
+   0x8000,      /* 2780 */
+   0x8000,      /* 2800 */
+   0x8000,      /* 2880 */
+   0x8000,      /* 2900 */
+   0x8000,      /* 2980 */
+   0x8000,      /* 2a00 */
+   0x8000,      /* 2a80 */
+   0x8000,      /* 2b00 */
+   0x8000,      /* 2b80 */
+   0x8000,      /* 2c00 */
+   0x8000,      /* 2c80 */
+   0x8000,      /* 2d00 */
+   0x8000,      /* 2d80 */
+   0x8000,      /* 2e00 */
+   0x8000,      /* 2e80 */
+   0x8000,      /* 2f00 */
+   0x8000,      /* 2f80 */
+   0x8000,      /* 3000 */
+   0x8000,      /* 3080 */
+   0x8000,      /* 3100 */
+   0x8000,      /* 3180 */
+   0x8000,      /* 3200 */
+   0x8000,      /* 3280 */
+   0x8000,      /* 3300 */
+   0x8000,      /* 3380 */
+   0x8000,      /* 3400 */
+   0x8000,      /* 3480 */
+   0x8000,      /* 3500 */
+   0x8000,      /* 3580 */
+   0x8000,      /* 3600 */
+   0x8000,      /* 3680 */
+   0x8000,      /* 3700 */
+   0x8000,      /* 3780 */
+   0x8000,      /* 3800 */
+   0x8000,      /* 3880 */
+   0x8000,      /* 3900 */
+   0x8000,      /* 3980 */
+   0x8000,      /* 3a00 */
+   0x8000,      /* 3a80 */
+   0x8000,      /* 3b00 */
+   0x8000,      /* 3b80 */
+   0x8000,      /* 3c00 */
+   0x8000,      /* 3c80 */
+   0x8000,      /* 3d00 */
+   0x8000,      /* 3d80 */
+   0x8000,      /* 3e00 */
+   0x8000,      /* 3e80 */
+   0x8000,      /* 3f00 */
+   0x8000,      /* 3f80 */
+   0x8000,      /* 4000 */
+   0x8000,      /* 4080 */
+   0x8000,      /* 4100 */
+   0x8000,      /* 4180 */
+   0x8000,      /* 4200 */
+   0x8000,      /* 4280 */
+   0x8000,      /* 4300 */
+   0x8000,      /* 4380 */
+   0x8000,      /* 4400 */
+   0x8000,      /* 4480 */
+   0x8000,      /* 4500 */
+   0x8000,      /* 4580 */
+   0x8000,      /* 4600 */
+   0x8000,      /* 4680 */
+   0x8000,      /* 4700 */
+   0x8000,      /* 4780 */
+   0x8000,      /* 4800 */
+   0x8000,      /* 4880 */
+   0x8000,      /* 4900 */
+   0x8000,      /* 4980 */
+   0x8000,      /* 4a00 */
+   0x8000,      /* 4a80 */
+   0x8000,      /* 4b00 */
+   0x8000,      /* 4b80 */
+   0x8000,      /* 4c00 */
+   0x8000,      /* 4c80 */
+   0x8000,      /* 4d00 */
+   0x8000,      /* 4d80 */
+   0x8000,      /* 4e00 */
+   0x8000,      /* 4e80 */
+   0x8000,      /* 4f00 */
+   0x8000,      /* 4f80 */
+   0x8000,      /* 5000 */
+   0x8000,      /* 5080 */
+   0x8000,      /* 5100 */
+   0x8000,      /* 5180 */
+   0x8000,      /* 5200 */
+   0x8000,      /* 5280 */
+   0x8000,      /* 5300 */
+   0x8000,      /* 5380 */
+   0x8000,      /* 5400 */
+   0x8000,      /* 5480 */
+   0x8000,      /* 5500 */
+   0x8000,      /* 5580 */
+   0x8000,      /* 5600 */
+   0x8000,      /* 5680 */
+   0x8000,      /* 5700 */
+   0x8000,      /* 5780 */
+   0x8000,      /* 5800 */
+   0x8000,      /* 5880 */
+   0x8000,      /* 5900 */
+   0x8000,      /* 5980 */
+   0x8000,      /* 5a00 */
+   0x8000,      /* 5a80 */
+   0x8000,      /* 5b00 */
+   0x8000,      /* 5b80 */
+   0x8000,      /* 5c00 */
+   0x8000,      /* 5c80 */
+   0x8000,      /* 5d00 */
+   0x8000,      /* 5d80 */
+   0x8000,      /* 5e00 */
+   0x8000,      /* 5e80 */
+   0x8000,      /* 5f00 */
+   0x8000,      /* 5f80 */
+   0x8000,      /* 6000 */
+   0x8000,      /* 6080 */
+   0x8000,      /* 6100 */
+   0x8000,      /* 6180 */
+   0x8000,      /* 6200 */
+   0x8000,      /* 6280 */
+   0x8000,      /* 6300 */
+   0x8000,      /* 6380 */
+   0x8000,      /* 6400 */
+   0x8000,      /* 6480 */
+   0x8000,      /* 6500 */
+   0x8000,      /* 6580 */
+   0x8000,      /* 6600 */
+   0x8000,      /* 6680 */
+   0x8000,      /* 6700 */
+   0x8000,      /* 6780 */
+   0x8000,      /* 6800 */
+   0x8000,      /* 6880 */
+   0x8000,      /* 6900 */
+   0x8000,      /* 6980 */
+   0x8000,      /* 6a00 */
+   0x8000,      /* 6a80 */
+   0x8000,      /* 6b00 */
+   0x8000,      /* 6b80 */
+   0x8000,      /* 6c00 */
+   0x8000,      /* 6c80 */
+   0x8000,      /* 6d00 */
+   0x8000,      /* 6d80 */
+   0x8000,      /* 6e00 */
+   0x8000,      /* 6e80 */
+   0x8000,      /* 6f00 */
+   0x8000,      /* 6f80 */
+   0x8000,      /* 7000 */
+   0x8000,      /* 7080 */
+   0x8000,      /* 7100 */
+   0x8000,      /* 7180 */
+   0x8000,      /* 7200 */
+   0x8000,      /* 7280 */
+   0x8000,      /* 7300 */
+   0x8000,      /* 7380 */
+   0x8000,      /* 7400 */
+   0x8000,      /* 7480 */
+   0x8000,      /* 7500 */
+   0x8000,      /* 7580 */
+   0x8000,      /* 7600 */
+   0x8000,      /* 7680 */
+   0x8000,      /* 7700 */
+   0x8000,      /* 7780 */
+   0x8000,      /* 7800 */
+   0x8000,      /* 7880 */
+   0x8000,      /* 7900 */
+   0x8000,      /* 7980 */
+   0x8000,      /* 7a00 */
+   0x8000,      /* 7a80 */
+   0x8000,      /* 7b00 */
+   0x8000,      /* 7b80 */
+   0x8000,      /* 7c00 */
+   0x8000,      /* 7c80 */
+   0x8000,      /* 7d00 */
+   0x8000,      /* 7d80 */
+   0x8000,      /* 7e00 */
+   0x8000,      /* 7e80 */
+   0x8000,      /* 7f00 */
+   0x8000,      /* 7f80 */
+   0x8000,      /* 8000 */
+   0x8000,      /* 8080 */
+   0x8000,      /* 8100 */
+   0x0000,      /* 8180 - Un Squadron bottom of screen */
+   0x8000,      /* 8200 */
+   0x8000,      /* 8280 */
+   0x8000,      /* 8300 */
+   0x8000,      /* 8380 */
+   0x8000,      /* 8400 */
+   0x8000,      /* 8480 */
+   0x8000,      /* 8500 */
+   0x8000,      /* 8580 */
+   0x8000,      /* 8600 */
+   0x8000,      /* 8680 */
+   0x8000,      /* 8700 */
+   0x8000,      /* 8780 */
+   0x8000,      /* 8800 */
+   0x8000,      /* 8880 */
+   0x8000,      /* 8900 */
+   0x8000,      /* 8980 */
+   0x8000,      /* 8a00 */
+   0x8000,      /* 8a80 */
+   0x8000,      /* 8b00 */
+   0x8000,      /* 8b80 */
+   0x8000,      /* 8c00 */
+   0x8000,      /* 8c80 */
+   0x8000,      /* 8d00 */
+   0x8000,      /* 8d80 */
+   0x8000,      /* 8e00 */
+   0x8000,      /* 8e80 */
+   0x8000,      /* 8f00 */
+   0x8000,      /* 8f80 */
+   0x8000,      /* 9000 */
+   0x8000,      /* 9080 */
+   0x8000,      /* 9100 */
+   0x8000,      /* 9180 */
+   0x8000,      /* 9200 */
+   0x8000,      /* 9280 */
+   0x8000,      /* 9300 */
+   0x8000,      /* 9380 */
+   0x8000,      /* 9400 */
+   0x8000,      /* 9480 */
+   0x8000,      /* 9500 */
+   0x8000,      /* 9580 */
+   0x8000,      /* 9600 */
+   0x8000,      /* 9680 */
+   0x8000,      /* 9700 */
+   0x8000,      /* 9780 */
+   0x8000,      /* 9800 */
+   0x8000,      /* 9880 */
+   0x8000,      /* 9900 */
+   0x8000,      /* 9980 */
+   0x8000,      /* 9a00 */
+   0x8000,      /* 9a80 */
+   0x8000,      /* 9b00 */
+   0x8000,      /* 9b80 */
+   0x8000,      /* 9c00 */
+   0x8000,      /* 9c80 */
+   0x8000,      /* 9d00 */
+   0x8000,      /* 9d80 */
+   0x8000,      /* 9e00 */
+   0x8000,      /* 9e80 */
+   0x8000,      /* 9f00 */
+   0x8000,      /* 9f80 */
+   0x8000,      /* a000 */
+   0x0000,      /* a080 */
+   0x8000,      /* a100 */
+   0x0000,      /* a180 */
+   0x8000,      /* a200 */
+   0x8000,      /* a280 */
+   0x8000,      /* a300 */
+   0x8000,      /* a380 */
+   0x8000,      /* a400 */
+   0x8000,      /* a480 */
+   0x8000,      /* a500 */
+   0x8000,      /* a580 */
+   0x8000,      /* a600 */
+   0x8000,      /* a680 */
+   0x8000,      /* a700 */
+   0x8000,      /* a780 */
+   0x8000,      /* a800 */
+   0x8000,      /* a880 */
+   0x8000,      /* a900 */
+   0x8000,      /* a980 */
+   0x8000,      /* aa00 */
+   0x8000,      /* aa80 */
+   0x8000,      /* ab00 */
+   0x8000,      /* ab80 */
+   0x8000,      /* ac00 */
+   0x8000,      /* ac80 */
+   0x8000,      /* ad00 */
+   0x8000,      /* ad80 */
+   0x8000,      /* ae00 */
+   0x8000,      /* ae80 */
+   0x8000,      /* af00 */
+   0x8000,      /* af80 */
+   0x8000,      /* b000 */
+   0x8000,      /* b080 */
+   0x8000,      /* b100 */
+   0x8000,      /* b180 */
+   0x8000,      /* b200 */
+   0x8000,      /* b280 */
+   0x8000,      /* b300 */
+   0x8000,      /* b380 */
+   0x8000,      /* b400 */
+   0x8000,      /* b480 */
+   0x8000,      /* b500 */
+   0x8000,      /* b580 */
+   0x8000,      /* b600 */
+   0x8000,      /* b680 */
+   0x8000,      /* b700 */
+   0x8000,      /* b780 */
+   0x8000,      /* b800 */
+   0x8000,      /* b880 */
+   0x8000,      /* b900 */
+   0x8000,      /* b980 */
+   0x8000,      /* ba00 */
+   0x8000,      /* ba80 */
+   0x8000,      /* bb00 */
+   0x8000,      /* bb80 */
+   0x8000,      /* bc00 */
+   0x8000,      /* bc80 */
+   0x8000,      /* bd00 */
+   0x8000,      /* bd80 */
+   0x8000,      /* be00 */
+   0x8000,      /* be80 */
+   0x8000,      /* bf00 */
+   0x8000,      /* bf80 */
+   0x8000,      /* c000 */
+   0x8000,      /* c080 */
+   0x8000,      /* c100 */
+   0x8000,      /* c180 */
+   0x8000,      /* c200 */
+   0x8000,      /* c280 */
+   0x8000,      /* c300 */
+   0x8000,      /* c380 */
+   0x8000,      /* c400 */
+   0x8000,      /* c480 */
+   0x8000,      /* c500 */
+   0x8000,      /* c580 */
+   0x8000,      /* c600 */
+   0x8000,      /* c680 */
+   0x8000,      /* c700 */
+   0x8000,      /* c780 */
+   0x8000,      /* c800 */
+   0x8000,      /* c880 */
+   0x8000,      /* c900 */
+   0x8000,      /* c980 */
+   0x8000,      /* ca00 */
+   0x8000,      /* ca80 */
+   0x8000,      /* cb00 */
+   0x8000,      /* cb80 */
+   0x8000,      /* cc00 */
+   0x8000,      /* cc80 */
+   0x8000,      /* cd00 */
+   0x8000,      /* cd80 */
+   0x8000,      /* ce00 */
+   0x8000,      /* ce80 */
+   0x8000,      /* cf00 */
+   0x8000,      /* cf80 */
+   0x8000,      /* d000 */
+   0x8000,      /* d080 */
+   0x8000,      /* d100 */
+   0x8000,      /* d180 */
+   0x8000,      /* d200 */
+   0x8000,      /* d280 */
+   0x8000,      /* d300 */
+   0x8000,      /* d380 */
+   0x8000,      /* d400 */
+   0x8000,      /* d480 */
+   0x8000,      /* d500 */
+   0x8000,      /* d580 */
+   0x8000,      /* d600 */
+   0x8000,      /* d680 */
+   0x8000,      /* d700 */
+   0x8000,      /* d780 */
+   0x8000,      /* d800 */
+   0x8000,      /* d880 */
+   0x8000,      /* d900 */
+   0x8000,      /* d980 */
+   0x8000,      /* da00 */
+   0x8000,      /* da80 */
+   0x8000,      /* db00 */
+   0x8000,      /* db80 */
+   0x8000,      /* dc00 */
+   0x8000,      /* dc80 */
+   0x8000,      /* dd00 */
+   0x8000,      /* dd80 */
+   0x8000,      /* de00 */
+   0x8000,      /* de80 */
+   0x8000,      /* df00 */
+   0x8000,      /* df80 */
+   0x8000,      /* e000 */
+   0x8000,      /* e080 */
+   0x8000,      /* e100 */
+   0x8000,      /* e180 */
+   0x8000,      /* e200 */
+   0x8000,      /* e280 */
+   0x8000,      /* e300 */
+   0x8000,      /* e380 */
+   0x8000,      /* e400 */
+   0x8000,      /* e480 */
+   0x8000,      /* e500 */
+   0x8000,      /* e580 */
+   0x8000,      /* e600 */
+   0x8000,      /* e680 */
+   0x8000,      /* e700 */
+   0x8000,      /* e780 */
+   0x8000,      /* e800 */
+   0x8000,      /* e880 */
+   0x8000,      /* e900 */
+   0x8000,      /* e980 */
+   0x8000,      /* ea00 */
+   0x8000,      /* ea80 */
+   0x8000,      /* eb00 */
+   0x8000,      /* eb80 */
+   0x8000,      /* ec00 */
+   0x8000,      /* ec80 */
+   0x8000,      /* ed00 */
+   0x8000,      /* ed80 */
+   0x8000,      /* ee00 */
+   0x8000,      /* ee80 */
+   0x8000,      /* ef00 */
+   0x8000,      /* ef80 */
+   0x8000,      /* f000 */
+   0x8000,      /* f080 */
+   0x8000,      /* f100 */
+   0x8000,      /* f180 */
+   0x8000,      /* f200 */
+   0x8000,      /* f280 */
+   0x8000,      /* f300 */
+   0x8000,      /* f380 */
+   0x8000,      /* f400 */
+   0x8000,      /* f480 */
+   0x8000,      /* f500 */
+   0x8000,      /* f580 */
+   0x8000,      /* f600 */
+   0x8000,      /* f680 */
+   0x8000,      /* f700 */
+   0x8000,      /* f780 */
+   0x8000,      /* f800 */
+   0x8000,      /* f880 */
+   0x8000,      /* f900 */
+   0x8000,      /* f980 */
+   0x8000,      /* fa00 */
+   0x8000,      /* fa80 */
+   0x8000,      /* fb00 */
+   0x8000,      /* fb80 */
+   0x8000,      /* fc00 */
+   0x8000,      /* fc80 */
+   0x8000,      /* fd00 */
+   0x8000,      /* fd80 */
+   0x8000,      /* fe00 */
+   0x8000,      /* fe80 */
+   0x8000,      /* ff00 */
+   0x8000,      /* ff80 */
+
+};
+
 
 
 /***************************************************************************
@@ -506,8 +1077,8 @@ inline void cps1_render_sprites(struct osd_bitmap *bitmap)
   0x0010        colour
   0x0020        X Flip
   0x0040        Y Flip
-  0x0080
-  0x0100
+  0x0080        ??? Priority
+  0x0100        ??? Priority
   0x0200
   0x0400
   0x0800
@@ -519,7 +1090,8 @@ inline void cps1_render_sprites(struct osd_bitmap *bitmap)
 
 ***************************************************************************/
 
-inline void cps1_render_scroll2(struct osd_bitmap *bitmap, int priority)
+
+INLINE void cps1_render_scroll2(struct osd_bitmap *bitmap, int priority)
 {
          int base_scroll2=cps1_game_config->base_scroll2;
          int space_char=cps1_game_config->space_scroll2;
@@ -549,23 +1121,21 @@ inline void cps1_render_scroll2(struct osd_bitmap *bitmap, int priority)
                                 if (priority)
                                 {
                                         int mask=colour & 0x0180;
+
                                         if (mask)
                                         {
+
                                              int transp=0;
-                                             switch (mask)
+#ifdef MAME_DEBUG
+                                             cps1_debug(colour & 0x1f);
+                                             if (errorlog &&
+                                                osd_key_pressed(OSD_KEY_L))
                                              {
-                                                case 0x80:
-                                                        transp=0x8620;
-                                                        break;
-                                                case 0x0100:
-                                                        // 0x8e20
-                                                        transp=~0x8620;
-//                                                        transp=0x8000;
-                                                        break;
-                                                case 0x0180:
-                                                        transp=0x8000;
-                                                        break;
+                                                 fprintf(errorlog,
+                                                        "%04x\n", colour);
                                              }
+#endif
+                                             transp=cps1_transparency_table[colour>>7];
 
                                              drawgfx(bitmap,Machine->gfx[2],
                                                 code,
@@ -618,7 +1188,7 @@ inline void cps1_render_scroll2(struct osd_bitmap *bitmap, int priority)
 
 ***************************************************************************/
 
-inline void cps1_render_scroll3(struct osd_bitmap *bitmap, int priority)
+INLINE void cps1_render_scroll3(struct osd_bitmap *bitmap, int priority)
 {
         int base_scroll3=cps1_game_config->base_scroll3;
         int space_char=cps1_game_config->space_scroll3;
@@ -722,7 +1292,8 @@ void cps1_vh_screenrefresh(struct osd_bitmap *bitmap)
 
         /*
          Welcome to kludgesville... I have no idea how this is supposed
-         to work.
+         to work. The layer priority register is different from machine
+         to machine.
         */
         switch (cps1_game_config->alternative)
         {
@@ -771,12 +1342,9 @@ void cps1_vh_screenrefresh(struct osd_bitmap *bitmap)
                         scrl2on=layercontrol&0x08;      /* Not quite should probably */
                         scrl3on=layercontrol&0x08;      /* be individually turn-offable  */
 
-                        /*
-                         Scroll 2 / 3 priority (best kluge, so far)
-                         works on level 1 but not the in-between intermissions
-                        */
+                        /* Priority */
                         scroll2priority=(layercontrol&0x060)==0x40;
-                        if (layercontrol == 0x0e4e)
+                        if (layercontrol == 0x0e4e )
                         {
                             scroll2priority=0;
                         }
@@ -789,9 +1357,45 @@ void cps1_vh_screenrefresh(struct osd_bitmap *bitmap)
 
                         /* Layers on / off */
                         scrl1on=layercontrol&0x02;
-                        scrl2on=1;
-                        scrl3on=1;
+                        scrl2on=layercontrol&0x04;
+                        scrl3on=layercontrol&0x08;
                         scroll2priority=(layercontrol&0x060)==0x40;
+                        if (layercontrol == 0x12ca ||
+                                layercontrol == 0x3948)
+                        {
+                                scroll2priority=0;
+                        }
+                        break;
+                case 6: /* 1941 */
+                        layercontrolport=0x68;
+                        layercontrol=READ_WORD(&cps1_output[layercontrolport]);
+                        /* Layers on / off */
+                        scrl1on=1;
+                        scrl2on=1;
+                        scrl3on=layercontrol&0x20;
+                        scroll2priority=(layercontrol&0x040);
+                        break;
+
+                case 7: /* Magic sword */
+                        layercontrolport=0x62;
+                        layercontrol=READ_WORD(&cps1_output[layercontrolport]);
+                        /* Layers on / off */
+                        scrl1on=1;
+                        scrl2on=layercontrol&0x04;
+                        scrl3on=layercontrol&0x06;
+                        /* Priority */
+                        scroll2priority=(layercontrol&0x040);
+                        break;
+
+                case 8: /* Nemo */
+                        layercontrolport=0x42;
+                        layercontrol=READ_WORD(&cps1_output[layercontrolport]);
+                        /* Layers on / off */
+                        scrl1on=1;
+                        scrl2on=1; //layercontrol&0x04;
+                        scrl3on=1; //layercontrol&0x06;
+                        /* Priority */
+                        scroll2priority=(layercontrol&0x040);
                         break;
 
                 default:
@@ -800,6 +1404,8 @@ void cps1_vh_screenrefresh(struct osd_bitmap *bitmap)
                         scrl1on=1;
                         scrl2on=layercontrol&0x08;      /* Not quite should probably */
                         scrl3on=layercontrol&0x08;      /* be individually turn-offable  */
+
+                        layercontrol|=0x0080;           /* Force scroll1 priority */
 
                         /* Scroll 2 / 3 priority */
                         scroll2priority=1;
@@ -874,7 +1480,6 @@ void cps1_vh_screenrefresh(struct osd_bitmap *bitmap)
         {
                 cps1_render_scroll1(bitmap);
         }
-
 #if 0
         {
                 int i;

@@ -92,7 +92,7 @@ static void initCPU(void)
 
 }
 
-inline void Exception(int nr, CPTR oldpc)
+void Exception(int nr, CPTR oldpc)
 {
    MakeSR();
 
@@ -111,7 +111,7 @@ inline void Exception(int nr, CPTR oldpc)
    regs.t1 = regs.t0 = regs.m = 0;
 }
 
-inline void Interrupt68k(int level)
+INLINE void Interrupt68k(int level)
 {
    int ipl=(regs.sr&0xf00)>>8;
    if(level>ipl)

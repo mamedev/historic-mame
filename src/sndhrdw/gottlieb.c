@@ -128,10 +128,13 @@ static void *nmi_timer;
 
 int stooges_sound_input_r(int offset)
 {
-	/* bits 4 & 5 are (probably) two dip switches. Unused? */
+	/* bits 0-3 are probably unused (future expansion) */
+
+	/* bits 4 & 5 are two dip switches. Unused? */
+
 	/* bit 6 is the test switch. When 0, the CPU plays a pulsing tone. */
-	/* bit 7 is (probably) a ready signal from the speech processor */
-	/* other bits probably unused (future expansion) */
+
+	/* bit 7 is a ready signal from the speech chip */
 
 	return 0xc0;
 }
@@ -149,16 +152,15 @@ void stooges_sound_control_w(int offset,int data)
 	/* bit 0 = NMI enable */
 	nmi_enable = data & 1;
 
-	/* bit 1 toggles regularly, maybe it's a clock to some chip. After toggling */
-	/* it, the code checks bit 6 of 6000 and produces a tone if it is set. */
+	/* bit 1 lights a led on the sound board */
 
-	/* bit 2 = psg latch clock; high then low to make the chip read it */
+	/* bit 2 goes to 8913 BDIR pin  */
 	if ((last & 0x04) == 0x04 && (data & 0x04) == 0x00)
 	{
-		/* bit 3 = chip */
+		/* bit 3 selects which of the two 8913 to enable */
 		if (data & 0x08)
 		{
-			/* bit 4 = register select */
+			/* bit 4 goes to the 8913 BC1 pin */
 			if (data & 0x10)
 				AY8910_control_port_0_w(0,psg_latch);
 			else
@@ -166,7 +168,7 @@ void stooges_sound_control_w(int offset,int data)
 		}
 		else
 		{
-			/* bit 4 = register select */
+			/* bit 4 goes to the 8913 BC1 pin */
 			if (data & 0x10)
 				AY8910_control_port_1_w(0,psg_latch);
 			else
@@ -174,14 +176,14 @@ void stooges_sound_control_w(int offset,int data)
 		}
 	}
 
-	/* bit 5 seems to be unused */
+	/* bit 5 goes to pin 7 of the speech chip */
 
-	/* bit 6 = speech chip (?) latch clock; high then low to make the chip read it */
+	/* bit 6 = speech chip latch clock; high then low to make the chip read it */
 	if ((last & 0x40) == 0x40 && (data & 0x40) == 0x00)
 	{
 	}
 
-	/* bit 7 is always on apart from just after boot */
+	/* bit 7 resets the speech chip */
 
 	last = data & 0x44;
 }

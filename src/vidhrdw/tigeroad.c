@@ -2,11 +2,35 @@
 
 int tigeroad_base_bank;
 unsigned char *tigeroad_scrollram;
+unsigned char *tigeroad_paletteram;
 
 
 
-static void render_background( struct osd_bitmap *bitmap, int priority );
-static void render_background( struct osd_bitmap *bitmap, int priority ){
+void tigeroad_paletteram_w(int offset,int data)
+{
+	int oldword = READ_WORD(&tigeroad_paletteram[offset]);
+	int newword = COMBINE_WORD(oldword,data);
+	int r,g,b;
+
+
+	WRITE_WORD(&tigeroad_paletteram[offset],newword);
+
+	r = 0x11 * ((newword >> 8) & 0x0f);
+	g = 0x11 * ((newword >> 4) & 0x0f);
+	b = 0x11 * ((newword >> 0) & 0x0f);
+
+	palette_change_color(offset / 2,r,g,b);
+}
+
+int tigeroad_paletteram_r(int offset)
+{
+	return READ_WORD(&tigeroad_paletteram[offset]);
+}
+
+
+
+static void render_background( struct osd_bitmap *bitmap, int priority )
+{
 	int scrollx = 	READ_WORD(&tigeroad_scrollram[0]) & 0xfff; /* 0..4096 */
 	int scrolly =	READ_WORD(&tigeroad_scrollram[2]) & 0xfff; /* 0..4096 */
 
@@ -62,8 +86,8 @@ static void render_background( struct osd_bitmap *bitmap, int priority ){
 	}
 }
 
-static void render_sprites( struct osd_bitmap *bitmap );
-static void render_sprites( struct osd_bitmap *bitmap ){
+static void render_sprites( struct osd_bitmap *bitmap )
+{
 	unsigned char *source = &spriteram[spriteram_size] - 8;
 	unsigned char *finish = spriteram;
 
@@ -93,8 +117,8 @@ static void render_sprites( struct osd_bitmap *bitmap ){
 	}
 }
 
-static void render_text( struct osd_bitmap *bitmap );
-static void render_text( struct osd_bitmap *bitmap ){
+static void render_text( struct osd_bitmap *bitmap )
+{
 	unsigned char *source = videoram;
 	int sx,sy;
 	for( sy=0; sy<256; sy+=8 ) for( sx=0; sx<256; sx+=8 ){
@@ -121,40 +145,14 @@ static void render_text( struct osd_bitmap *bitmap ){
 	}
 }
 
-void tigeroad_vh_screenrefresh(struct osd_bitmap *bitmap);
-void tigeroad_vh_screenrefresh(struct osd_bitmap *bitmap){
+
+
+void tigeroad_vh_screenrefresh(struct osd_bitmap *bitmap)
+{
+	palette_recalc();
+
 	render_background( bitmap,0 );
 	render_sprites( bitmap );
 	render_background( bitmap,1 );
 	render_text( bitmap );
-}
-
-
-void tigeroad_SetPaletteEntry( int offset, int data );
-void tigeroad_SetPaletteEntry( int offset, int data ){
-	int red		= (data>>8) & 0xf;
-	int green	= (data>>4) & 0xF;
-	int blue	= data & 0xf;
-
-	int index = offset/2;
-
-	red			= (red << 4) + red;
-	green		= (green << 4) + green;
-	blue		= (blue << 4) + blue;
-
-	if( index<256 ){ /* background */
-		setgfxcolorentry (Machine->gfx[0], index, red, green, blue);
-	}
-	else {
-		index -= 256;
-		if( index<256 ){ /* sprite */
-			setgfxcolorentry( Machine->gfx[1], index, red, green, blue );
-		}
-		else {
-			index -= 256;
-			if( index<64 ){ /* text */
-				setgfxcolorentry( Machine->gfx[2], index, red, green, blue );
-			}
-		}
-	}
 }

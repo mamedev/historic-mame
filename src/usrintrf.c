@@ -1392,8 +1392,8 @@ int showgameinfo(void)
 		{
 			sprintf(&buf[strlen(buf)],"%d colors",Machine->drv->total_colors);
 			if (Machine->drv->video_attributes & VIDEO_MODIFIES_PALETTE)
-				strcat(buf," (dynamic palette)");
-			strcat(buf,"\n");
+				strcat(buf," (dynamic)\n");
+			else strcat(buf," (static)\n");
 		}
 	}
 

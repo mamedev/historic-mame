@@ -1,10 +1,15 @@
 #ifndef CPUINTRF_H
 #define CPUINTRF_H
 
+#ifdef linux_alpha
+#define CPU_CONTEXT_SIZE 240            /* sizeof(pointer) is larger there
+                                           than on 32bit, CPG */
+#else
 #define CPU_CONTEXT_SIZE 200		/* ASG 971105 */
+#endif
 
 #include "timer.h"
-#include "z80/z80.h"
+#include "Z80/Z80.h"
 
 /* ASG 971222 -- added this generic structure */
 struct cpu_interface

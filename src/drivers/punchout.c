@@ -147,7 +147,7 @@ static void spunchout_prot_0_w( int offset, int data ) {
 
 static int spunchout_prot_2_r( int offset )
 {
-	if( cpu_getpc() == 0x0615 ) return 0x09; //write "JMP (HL)"code to 0d79fh
+	if( cpu_getpc() == 0x0615 ) return 0x09; /*write "JMP (HL)"code to 0d79fh*/
 	else return prot[2];
 }
 
@@ -188,14 +188,14 @@ static void spunchout_prot_6_w( int offset, int data ) {
 }
 
 /* test handlers */
-static int prot_t;
+static int punchout_prot_t;
 
 static int spunchout_prot_t_r( int offset ) {
-	return prot_t;
+	return punchout_prot_t;
 }
 
 static void spunchout_prot_t_w( int offset, int data ) {
-	prot_t = data;
+	punchout_prot_t = data;
 }
 
 
@@ -233,7 +233,7 @@ static struct IOReadPort readport[] =
 	{ 0x27, 0x27, spunchout_prot_2_r },
 	{ 0x37, 0x37, spunchout_prot_3_r },
 	{ 0x67, 0x67, spunchout_prot_4_r },
-	{ 0x97, 0x97, spunchout_prot_5_r }, // $d7
+	{ 0x97, 0x97, spunchout_prot_5_r }, /* $d7*/
 	{ 0xa7, 0xa7, spunchout_prot_6_r },
 	{ -1 }	/* end of table */
 };

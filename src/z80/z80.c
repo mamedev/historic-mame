@@ -1266,7 +1266,7 @@ static void ret_z(void) { if (M_Z) { M_RET; } else { M_SKIP_RET; } }
 
 /* search highest interrupt request device (next interrupt device) */
 /*    and highest interrupt service device (next reti      device) */
-static inline void check_daisy_chain( void )
+INLINE void check_daisy_chain( void )
 {
 	int device;
 

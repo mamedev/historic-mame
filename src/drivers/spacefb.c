@@ -32,6 +32,15 @@ Port 3 - Dipswitch
 OUT:
 Port 0 - RV,VREF and CREF
 Port 1 - Comms to the Sound card (-> 8212)
+    bit 0 = discrete sound
+    bit 1 = INT to 8035
+    bit 2 = T1 input to 8035
+    bit 3 = PB4 input to 8035
+    bit 4 = PB5 input to 8035
+    bit 5 = T0 input to 8035
+    bit 6 = discrete sound
+    bit 7 = discrete sound
+
 Port 2 - Video contrast values (used by sound board only)
 Port 3 - Unused
 
@@ -115,7 +124,12 @@ red flash effect when you die.
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "I8039/I8039.h"
 
+void spacefb_sh_putp1(int offset, int data);
+int  spacefb_sh_gett0(int offset);
+int  spacefb_sh_gett1(int offset);
+int  spacefb_sh_getp2(int offset);
 
 void spacefb_vh_screenrefresh(struct osd_bitmap *bitmap);
 void spacefb_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
@@ -161,6 +175,31 @@ static struct IOWritePort writeport[] =
 	{ -1 }	/* end of table */
 };
 
+static struct MemoryReadAddress readmem_sound[] =
+{
+    { 0x0000, 0x03ff, MRA_ROM },
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryWriteAddress writemem_sound[] =
+{
+    { 0x0000, 0x03ff, MWA_ROM },
+	{ -1 }	/* end of table */
+};
+
+static struct IOReadPort readport_sound[] =
+{
+    { I8039_p2, I8039_p2, spacefb_sh_getp2 },
+    { I8039_t0, I8039_t0, spacefb_sh_gett0 },
+    { I8039_t1, I8039_t1, spacefb_sh_gett1 },
+	{ -1 }	/* end of table */
+};
+
+static struct IOWritePort writeport_sound[] =
+{
+    { I8039_p1, I8039_p1, spacefb_sh_putp1 },
+	{ -1 }	/* end of table */
+};
 
 
 INPUT_PORTS_START( input_ports )
@@ -230,6 +269,7 @@ static struct GfxLayout charlayout =
  * The bullests are stored in a 256x4bit PROM but the .bin file is
  * 256*8bit
  */
+
 static struct GfxLayout bulletlayout =
 {
 	4,8,	/* 4*4 characters */
@@ -255,20 +295,35 @@ static unsigned char colorprom[] =
 	0x00,0x3B,0xC0,0x16,0x00,0xDB,0xC0,0xC7,0x00,0x07,0xC7,0x37,0x00,0x3F,0xD8,0x07
 };
 
+static struct DACinterface dac_interface =
+{
+	1,
+	441000,
+	{255,255 },
+	{  1,  1 }
+};
+
 static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
 	{
+        {
+            CPU_Z80,
+            4000000,    /* 4 Mhz? */
+            0,
+            readmem,writemem,readport,writeport,
+            spacefb_interrupt,2 /* two int's per frame */
+        },
 		{
-			CPU_Z80,
-			4000000,	/* 4 Mhz? */
-			0,
-			readmem,writemem,readport,writeport,
-			spacefb_interrupt,2 /* two int's per frame */
-		}
+            CPU_I8035 | CPU_AUDIO_CPU,
+            6000000/15,
+            2,
+			readmem_sound,writemem_sound,readport_sound,writeport_sound,
+            ignore_interrupt,0
+        }
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* single CPU, no need for interleaving */
+    3,
 	0,
 
 	/* video hardware */
@@ -285,10 +340,13 @@ static struct MachineDriver machine_driver =
 	spacefb_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	0,
-	0,
-	0
+	0,0,0,0,
+	{
+		{
+			SOUND_DAC,
+            &dac_interface
+        }
+	}
 };
 
 
@@ -305,9 +363,13 @@ ROM_START( spacefb_rom )
 	ROM_LOAD( "5n.cpu", 0x3800, 0x0800, 0x79e64f86 )
 
 	ROM_REGION(0x1100)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "6k.vid", 0x0000, 0x0800, 0x5076d18e )
-	ROM_LOAD( "5k.vid", 0x0800, 0x0800, 0xe945e879 )
+	ROM_LOAD( "5k.vid", 0x0000, 0x0800, 0xe945e879 )
+	ROM_LOAD( "6k.vid", 0x0800, 0x0800, 0x5076d18e )
 	ROM_LOAD( "4i.vid", 0x1000, 0x0100, 0x75c90c07 )
+
+	ROM_REGION(0x1000)	/* sound */
+    ROM_LOAD( "IC20.SND",  0x0000, 0x0400, 0x3ee4a80c )
+
 ROM_END
 
 
@@ -401,7 +463,7 @@ struct GameDriver spacefb_driver =
 {
 	"Space Firebird",
 	"spacefb",
-	"Chris Hardy\nAndy Clark\nPaul Johnson\nChris Moore (high score save)\nMarco Cassili",
+    "Chris Hardy\nAndy Clark\nPaul Johnson\nChris Moore (high score save)\nMarco Cassili\nDan Boris (sound)",
 	&machine_driver,
 
 	spacefb_rom,

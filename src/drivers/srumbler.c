@@ -88,7 +88,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x400e, 0x400e, soundlatch_w},
 	{ 0x5000, 0x5fff, videoram_w, &videoram, &videoram_size },
 	{ 0x6000, 0x6fff, MWA_RAM }, /* Video RAM 2 ??? (not used) */
-	{ 0x7100, 0x73ff, srumbler_paletteram_w, &srumbler_paletteram, &srumbler_paletteram_size},
+	{ 0x7100, 0x73ff, srumbler_paletteram_w, &srumbler_paletteram },
 	{ 0x7400, 0xffff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
@@ -202,7 +202,7 @@ static struct GfxLayout charlayout =
 	2048,   /* 2048 characters */
 	2,	/* 2 bits per pixel */
 	{ 4, 0 },
-	{ 0,1,2,3, 8+0,8+1, 8+2, 8+3},
+	{ 0, 1, 2, 3, 8+0,8+1, 8+2, 8+3 },
 	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16 },
 	16*8
 };
@@ -213,10 +213,10 @@ static struct GfxLayout tilelayout =
 	2048,   /* 2048  tiles */
 	4,	/* 4 bits per pixel */
 	{ 0x20000*8+4, 0x20000*8+0, 4, 0 },
-	{      0,      1,      2,      3,    8+0,    8+1,    8+2,    8+3,
+	{ 0, 1, 2, 3, 8+0, 8+1, 8+2, 8+3,
 			32*8+0, 32*8+1, 32*8+2, 32*8+3, 33*8+0, 33*8+1, 33*8+2, 33*8+3 },
-	{   0*16,   1*16,   2*16,   3*16,   4*16,   5*16,   6*16,   7*16,
-			8*16,   9*16,  10*16,  11*16,  12*16,  13*16,  14*16,  15*16 },
+	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
+			8*16, 9*16, 10*16, 11*16, 12*16, 13*16, 14*16, 15*16 },
 	64*8
 };
 
@@ -226,14 +226,10 @@ static struct GfxLayout spritelayout =
 	2048,   /* 2048 sprites */
 	4,      /* 4 bits per pixel */
 	{ 0x30000*8, 0x20000*8, 0x10000*8, 0   },
-	{
-	   0,1,2,3,4,5,6,7,
-	   2*64+0,2*64+1,2*64+2,2*64+3,2*64+4,2*64+5,2*64+6,2*64+7,2*64+8,
-	},
-	{
-	   0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
-	   8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8,
-	},
+	{ 0, 1, 2, 3, 4, 5, 6, 7,
+			2*64+0, 2*64+1, 2*64+2, 2*64+3, 2*64+4, 2*64+5, 2*64+6, 2*64+7, 2*64+8 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
+			8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },
 	32*8    /* every sprite takes 32*8 consecutive bytes */
 };
 
@@ -241,9 +237,9 @@ static struct GfxLayout spritelayout =
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	/*   start    pointer       colour start   number of colours */
-	{ 1, 0x00000, &charlayout,             0,  32 },
-	{ 1, 0x10000, &tilelayout,          32*4,  16 },
-	{ 1, 0x50000, &spritelayout,  32*4+16*16,  16 },
+	{ 1, 0x00000, &charlayout,   320, 16 },	/* colors 320 - 383 */
+	{ 1, 0x10000, &tilelayout,     0,  8 },	/* colors   0 - 127 */
+	{ 1, 0x50000, &spritelayout, 128,  8 },	/* colors 128 - 255 */
 	{ -1 } /* end of array */
 };
 
@@ -362,10 +358,9 @@ static void srumbler_init_machine(void)
     }
 
     /* Patch out startup test */
-
-    RAM[0xe039]=12;
-    RAM[0xe03a]=12;
-    RAM[0xe03b]=12;
+//    RAM[0xe039]=12;
+//    RAM[0xe03a]=12;
+//    RAM[0xe03b]=12;
 }
 
 
@@ -402,19 +397,19 @@ static struct MachineDriver machine_driver =
 			interrupt,4
 		}
 	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	60, 2500,	/* frames per second, vblank duration */
+				/* hand tuned to get rid of sprite lag */
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	srumbler_init_machine,
 
 	/* video hardware */
-	46*8, 32*8, { 1*8, 46*8-1, 1*8, 31*8-1 },
+	64*8, 32*8, { 10*8, (64-10)*8-1, 1*8, 31*8-1 },
 
 	gfxdecodeinfo,
-	256,               /* 256 colours */
-	32*4+16*16+8*16,   /* Colour table length */
+	384, 384,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_16BIT,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
 	srumbler_vh_start,
 	srumbler_vh_stop,
@@ -439,45 +434,45 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( srumbler_rom )
-        ROM_REGION(0x10000+0x9000*16)  /* 64k for code + banked ROM images */
+	ROM_REGION(0x10000+0x9000*16)  /* 64k for code + banked ROM images */
 
-        ROM_REGION(0x90000)     /* temporary space for graphics (disposed after conversion) */
-        ROM_LOAD( "6g_sr10.bin",  0x00000, 0x8000, 0x19e40000 ) /* characters */
+	ROM_REGION(0x90000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "6g_sr10.bin",  0x00000, 0x8000, 0x19e40000 ) /* characters */
 
-        ROM_LOAD( "11a_sr11.bin", 0x10000, 0x8000, 0x0040f56a ) /* tiles */
-        ROM_LOAD( "13a_sr12.bin", 0x18000, 0x8000, 0x8fe26804 ) /* tiles */
-        ROM_LOAD( "14a_sr13.bin", 0x20000, 0x8000, 0x870463de ) /* tiles */
-        ROM_LOAD( "15a_sr14.bin", 0x28000, 0x8000, 0xa54705a5 ) /* tiles */
+	ROM_LOAD( "11a_sr11.bin", 0x10000, 0x8000, 0x0040f56a ) /* tiles */
+	ROM_LOAD( "13a_sr12.bin", 0x18000, 0x8000, 0x8fe26804 ) /* tiles */
+	ROM_LOAD( "14a_sr13.bin", 0x20000, 0x8000, 0x870463de ) /* tiles */
+	ROM_LOAD( "15a_sr14.bin", 0x28000, 0x8000, 0xa54705a5 ) /* tiles */
 
-        ROM_LOAD( "11c_sr15.bin", 0x30000, 0x8000, 0x27a36777 ) /* tiles */
-        ROM_LOAD( "13c_sr16.bin", 0x38000, 0x8000, 0xe3cc0e34 ) /* tiles */
-        ROM_LOAD( "14c_sr17.bin", 0x40000, 0x8000, 0xdb89249b ) /* tiles */
-        ROM_LOAD( "15c_sr18.bin", 0x48000, 0x8000, 0xda340646 ) /* tiles */
+	ROM_LOAD( "11c_sr15.bin", 0x30000, 0x8000, 0x27a36777 ) /* tiles */
+	ROM_LOAD( "13c_sr16.bin", 0x38000, 0x8000, 0xe3cc0e34 ) /* tiles */
+	ROM_LOAD( "14c_sr17.bin", 0x40000, 0x8000, 0xdb89249b ) /* tiles */
+	ROM_LOAD( "15c_sr18.bin", 0x48000, 0x8000, 0xda340646 ) /* tiles */
 
-        ROM_LOAD( "15e_sr20.bin", 0x50000, 0x8000, 0xa03c2da0 ) /* sprites */
-        ROM_LOAD( "14e_sr19.bin", 0x58000, 0x8000, 0xd09b1bed ) /* sprites */
+	ROM_LOAD( "15e_sr20.bin", 0x50000, 0x8000, 0xa03c2da0 ) /* sprites */
+	ROM_LOAD( "14e_sr19.bin", 0x58000, 0x8000, 0xd09b1bed ) /* sprites */
 
-        ROM_LOAD( "15f_sr22.bin", 0x60000, 0x8000, 0xd3aded73 ) /* sprites */
-        ROM_LOAD( "14f_sr21.bin", 0x68000, 0x8000, 0x9952805e ) /* sprites */
+	ROM_LOAD( "15f_sr22.bin", 0x60000, 0x8000, 0xd3aded73 ) /* sprites */
+	ROM_LOAD( "14f_sr21.bin", 0x68000, 0x8000, 0x9952805e ) /* sprites */
 
-        ROM_LOAD( "15h_sr24.bin", 0x70000, 0x8000, 0x880286d0 ) /* sprites */
-        ROM_LOAD( "14h_sr23.bin", 0x78000, 0x8000, 0xb164bfc4 ) /* sprites */
+	ROM_LOAD( "15h_sr24.bin", 0x70000, 0x8000, 0x880286d0 ) /* sprites */
+	ROM_LOAD( "14h_sr23.bin", 0x78000, 0x8000, 0xb164bfc4 ) /* sprites */
 
-        ROM_LOAD( "15j_sr26.bin", 0x80000, 0x8000, 0x7da24592 ) /* sprites */
-        ROM_LOAD( "14j_sr25.bin", 0x88000, 0x8000, 0xd1d62826 ) /* sprites */
+	ROM_LOAD( "15j_sr26.bin", 0x80000, 0x8000, 0x7da24592 ) /* sprites */
+	ROM_LOAD( "14j_sr25.bin", 0x88000, 0x8000, 0xd1d62826 ) /* sprites */
 
-        ROM_REGION(0x10000) /* 64k for the audio CPU */
-        ROM_LOAD( "2f_sr05.bin",   0x0000, 0x8000, 0x30549098 )
+	ROM_REGION(0x10000) /* 64k for the audio CPU */
+	ROM_LOAD( "2f_sr05.bin",   0x0000, 0x8000, 0x30549098 )
 
-        ROM_REGION(0x40000) /* Paged ROMs */
-        ROM_LOAD( "14e_sr04.bin", 0x00000, 0x08000, 0xa24cc7ce )  /* RC4 */
-        ROM_LOAD( "13e_sr03.bin", 0x08000, 0x08000, 0xf296e880 )  /* RC3 */
-        ROM_LOAD( "12e_sr02.bin", 0x10000, 0x08000, 0xe0461a72 )  /* RC2 */
-        ROM_LOAD( "11e_sr01.bin", 0x18000, 0x08000, 0xd7af9241 )  /* RC1 */
-        ROM_LOAD( "14f_sr09.bin", 0x20000, 0x08000, 0x9458f2b2 )  /* RC9 */
-        ROM_LOAD( "13f_sr08.bin", 0x28000, 0x08000, 0x9e90371e )  /* RC8 */
-        ROM_LOAD( "12f_sr07.bin", 0x30000, 0x08000, 0x869bd24f )  /* RC7 */
-        ROM_LOAD( "11f_sr06.bin", 0x38000, 0x08000, 0xee87973b )  /* RC6 */
+	ROM_REGION(0x40000) /* Paged ROMs */
+	ROM_LOAD( "14e_sr04.bin", 0x00000, 0x08000, 0xa24cc7ce )  /* RC4 */
+	ROM_LOAD( "13e_sr03.bin", 0x08000, 0x08000, 0xf296e880 )  /* RC3 */
+	ROM_LOAD( "12e_sr02.bin", 0x10000, 0x08000, 0xe0461a72 )  /* RC2 */
+	ROM_LOAD( "11e_sr01.bin", 0x18000, 0x08000, 0xd7af9241 )  /* RC1 */
+	ROM_LOAD( "14f_sr09.bin", 0x20000, 0x08000, 0x9458f2b2 )  /* RC9 */
+	ROM_LOAD( "13f_sr08.bin", 0x28000, 0x08000, 0x9e90371e )  /* RC8 */
+	ROM_LOAD( "12f_sr07.bin", 0x30000, 0x08000, 0x869bd24f )  /* RC7 */
+	ROM_LOAD( "11f_sr06.bin", 0x38000, 0x08000, 0xee87973b )  /* RC6 */
 ROM_END
 
 /*
@@ -488,45 +483,45 @@ The start button doesn't work on this version.
 
 */
 ROM_START( srumblr2_rom )
-        ROM_REGION(0x10000+0x9000*16)  /* 64k for code + banked ROM images */
+	ROM_REGION(0x10000+0x9000*16)  /* 64k for code + banked ROM images */
 
-        ROM_REGION(0x90000)     /* temporary space for graphics (disposed after conversion) */
-        ROM_LOAD( "rc10.6g",  0x00000, 0x4000, 0x8cf2d6d2 ) /* characters (different) */
+	ROM_REGION(0x90000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "rc10.6g",  0x00000, 0x4000, 0x8cf2d6d2 ) /* characters (different) */
 
-        ROM_LOAD( "rc11.11a", 0x10000, 0x8000, 0x0040f56a ) /* tiles */
-        ROM_LOAD( "rc12.13a", 0x18000, 0x8000, 0x8fe26804 ) /* tiles */
-        ROM_LOAD( "rc13.14a", 0x20000, 0x8000, 0x870463de ) /* tiles */
-        ROM_LOAD( "rc14.15a", 0x28000, 0x8000, 0xa54705a5 ) /* tiles */
+	ROM_LOAD( "rc11.11a", 0x10000, 0x8000, 0x0040f56a ) /* tiles */
+	ROM_LOAD( "rc12.13a", 0x18000, 0x8000, 0x8fe26804 ) /* tiles */
+	ROM_LOAD( "rc13.14a", 0x20000, 0x8000, 0x870463de ) /* tiles */
+	ROM_LOAD( "rc14.15a", 0x28000, 0x8000, 0xa54705a5 ) /* tiles */
 
-        ROM_LOAD( "rc15.11c", 0x30000, 0x8000, 0x27a36777 ) /* tiles */
-        ROM_LOAD( "rc16.13c", 0x38000, 0x8000, 0xe3cc0e34 ) /* tiles */
-        ROM_LOAD( "rc17.14c", 0x40000, 0x8000, 0xdb89249b ) /* tiles */
-        ROM_LOAD( "rc18.15c", 0x48000, 0x8000, 0xda340646 ) /* tiles */
+	ROM_LOAD( "rc15.11c", 0x30000, 0x8000, 0x27a36777 ) /* tiles */
+	ROM_LOAD( "rc16.13c", 0x38000, 0x8000, 0xe3cc0e34 ) /* tiles */
+	ROM_LOAD( "rc17.14c", 0x40000, 0x8000, 0xdb89249b ) /* tiles */
+	ROM_LOAD( "rc18.15c", 0x48000, 0x8000, 0xda340646 ) /* tiles */
 
-        ROM_LOAD( "rc20.15e", 0x50000, 0x8000, 0xa03c2da0 ) /* sprites */
-        ROM_LOAD( "rc19.14e", 0x58000, 0x8000, 0xd09b1bed ) /* sprites */
+	ROM_LOAD( "rc20.15e", 0x50000, 0x8000, 0xa03c2da0 ) /* sprites */
+	ROM_LOAD( "rc19.14e", 0x58000, 0x8000, 0xd09b1bed ) /* sprites */
 
-        ROM_LOAD( "rc22.15f", 0x60000, 0x8000, 0xd3aded73 ) /* sprites */
-        ROM_LOAD( "rc21.14f", 0x68000, 0x8000, 0x9952805e ) /* sprites */
+	ROM_LOAD( "rc22.15f", 0x60000, 0x8000, 0xd3aded73 ) /* sprites */
+	ROM_LOAD( "rc21.14f", 0x68000, 0x8000, 0x9952805e ) /* sprites */
 
-        ROM_LOAD( "rc24.15h", 0x70000, 0x8000, 0x880286d0 ) /* sprites */
-        ROM_LOAD( "rc23.14h", 0x78000, 0x8000, 0xb164bfc4 ) /* sprites */
+	ROM_LOAD( "rc24.15h", 0x70000, 0x8000, 0x880286d0 ) /* sprites */
+	ROM_LOAD( "rc23.14h", 0x78000, 0x8000, 0xb164bfc4 ) /* sprites */
 
-        ROM_LOAD( "rc26.15j", 0x80000, 0x8000, 0x7da24592 ) /* sprites */
-        ROM_LOAD( "rc25.14j", 0x88000, 0x8000, 0xd1d62826 ) /* sprites */
+	ROM_LOAD( "rc26.15j", 0x80000, 0x8000, 0x7da24592 ) /* sprites */
+	ROM_LOAD( "rc25.14j", 0x88000, 0x8000, 0xd1d62826 ) /* sprites */
 
-        ROM_REGION(0x10000) /* 64k for the audio CPU */
-        ROM_LOAD( "rc05.2f",   0x0000, 0x8000, 0x5e7ca050 )  /* AUDIO (different) */
+	ROM_REGION(0x10000) /* 64k for the audio CPU */
+	ROM_LOAD( "rc05.2f",   0x0000, 0x8000, 0x5e7ca050 )  /* AUDIO (different) */
 
-        ROM_REGION(0x40000) /* Paged ROMs */
-        ROM_LOAD( "rc04.14e", 0x00000, 0x08000, 0xa24cc7ce )  /* RC4 */
-        ROM_LOAD( "rc03.13e", 0x08000, 0x08000, 0x2a51f909 )  /* RC3 (different) */
-        ROM_LOAD( "rc02.12e", 0x10000, 0x08000, 0x086c4e68 )  /* RC2 (different) */
-        ROM_LOAD( "rc01.11e", 0x18000, 0x08000, 0x2a0eb616 )  /* RC1 (different) */
-        ROM_LOAD( "rc09.14f", 0x20000, 0x08000, 0x8832d4fa )  /* RC9 (different) */
-        ROM_LOAD( "rc08.13f", 0x28000, 0x08000, 0x6fc20c84 )  /* RC8 (different) */
-        ROM_LOAD( "rc07.12f", 0x30000, 0x08000, 0x869bd24f )  /* RC7 */
-        ROM_LOAD( "rc06.11f", 0x38000, 0x08000, 0xee87973b )  /* RC6 */
+	ROM_REGION(0x40000) /* Paged ROMs */
+	ROM_LOAD( "rc04.14e", 0x00000, 0x08000, 0xa24cc7ce )  /* RC4 */
+	ROM_LOAD( "rc03.13e", 0x08000, 0x08000, 0x2a51f909 )  /* RC3 (different) */
+	ROM_LOAD( "rc02.12e", 0x10000, 0x08000, 0x086c4e68 )  /* RC2 (different) */
+	ROM_LOAD( "rc01.11e", 0x18000, 0x08000, 0x2a0eb616 )  /* RC1 (different) */
+	ROM_LOAD( "rc09.14f", 0x20000, 0x08000, 0x8832d4fa )  /* RC9 (different) */
+	ROM_LOAD( "rc08.13f", 0x28000, 0x08000, 0x6fc20c84 )  /* RC8 (different) */
+	ROM_LOAD( "rc07.12f", 0x30000, 0x08000, 0x869bd24f )  /* RC7 */
+	ROM_LOAD( "rc06.11f", 0x38000, 0x08000, 0xee87973b )  /* RC6 */
 ROM_END
 
 

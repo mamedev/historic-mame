@@ -101,10 +101,10 @@ static struct MemoryReadAddress readmem[] =
 {
 	{ 0x000000, 0x03ffff, MRA_ROM },
 	{ 0x100000, 0x103fff, MRA_BANK1, &ram },
-	{ 0x700000, 0x701dff, snowbros_spriteram_r, &snowbros_spriteram, &videoram_size },
-	{ 0x600000, 0x6001ff, snowbros_paletteram_r, &snowbros_paletteram },
-    { 0x500000, 0x50000f, snowbros_input_r },
     { 0x300000, 0x300003, snowbros_68000_sound_r },
+    { 0x500000, 0x50000f, snowbros_input_r },
+	{ 0x600000, 0x6001ff, snowbros_paletteram_r, &snowbros_paletteram },
+	{ 0x700000, 0x701dff, snowbros_spriteram_r, &snowbros_spriteram, &videoram_size },
 	{ -1 }  /* end of table */
 };
 
@@ -113,13 +113,13 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x000000, 0x03ffff, MWA_ROM },
 	{ 0x100000, 0x103fff, MWA_BANK1 },
     { 0x200000, 0x200003, MWA_NOP },						/* Watchdog ? */
-	{ 0x700000, 0x701dff, snowbros_spriteram_w },
-	{ 0x600000, 0x6001ff, snowbros_paletteram_w },
     { 0x300000, 0x300003, snowbros_68000_sound_w },
+    { 0x400000, 0x400003, snowbros_interrupt_enable_w },
+	{ 0x600000, 0x6001ff, snowbros_paletteram_w },
+	{ 0x700000, 0x701dff, snowbros_spriteram_w },
     { 0x800000, 0x800003, snowbros_interrupt_4_w },			/* Int 4 */
     { 0x900000, 0x900003, snowbros_interrupt_3_w },			/* Int 3 */
     { 0xA00000, 0xA00003, snowbros_interrupt_2_w },			/* Int 2 */
-    { 0x400000, 0x400003, snowbros_interrupt_enable_w },
 	{ -1 }  /* end of table */
 };
 
@@ -351,25 +351,26 @@ static struct MachineDriver machine_driver =
 
 ROM_START( snowbros_rom )
 	ROM_REGION(0x40000)	/* 6*64k for 68000 code */
-	ROM_LOAD_ODD ( "snowbros.2a", 0x00000, 0x20000, 0xe13f9fdf )
 	ROM_LOAD_EVEN( "snowbros.3a", 0x00000, 0x20000, 0x254fde1f )
+	ROM_LOAD_ODD ( "snowbros.2a", 0x00000, 0x20000, 0xe13f9fdf )
 
 	ROM_REGION(0x80000)
-	ROM_LOAD( "ch0",   0x00000, 0x20000, 0xef931505 )
-	ROM_LOAD( "ch1",   0x20000, 0x20000, 0x17afaa2f )
-	ROM_LOAD( "ch2",   0x40000, 0x20000, 0x23a8394a )
-	ROM_LOAD( "ch3",   0x60000, 0x20000, 0xfb5633da )
+	ROM_LOAD( "ch0", 0x00000, 0x20000, 0xef931505 )
+	ROM_LOAD( "ch1", 0x20000, 0x20000, 0x17afaa2f )
+	ROM_LOAD( "ch2", 0x40000, 0x20000, 0x23a8394a )
+	ROM_LOAD( "ch3", 0x60000, 0x20000, 0xfb5633da )
 
 	ROM_REGION(0x10000)	/* 64k for z80 sound code */
 	ROM_LOAD( "snowbros.4", 0x0000, 0x8000, 0x185f25af )
-
 ROM_END
+
+
 
 struct GameDriver snowbros_driver =
 {
 	"Snow Bros",
 	"snowbros",
-	"Richard Bush (Raine & Info)\nMike Coates (Mame Driver)",
+	"Richard Bush (Raine & Info)\nMike Coates (MAME Driver)",
 	&machine_driver,
 
 	snowbros_rom,

@@ -213,9 +213,9 @@ void phoenix_sound_control_b_w(int offset,int data)
 
 int phoenix_sh_start(void)
 {
-	osd_play_sample(0,waveform1,32,1000,0,1);
-	osd_play_sample(1,waveform1,32,1000,0,1);
-	osd_play_sample(2,waveform2,128,1000,0,1);
+	osd_play_sample(0,(signed char*)waveform1,32,1000,0,1);
+	osd_play_sample(1,(signed char*)waveform1,32,1000,0,1);
+	osd_play_sample(2,(signed char*)waveform2,128,1000,0,1);
 	song_playing = 0;
 	return 0;
 }

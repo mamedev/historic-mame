@@ -128,7 +128,6 @@ int dec0_pf3_data_r(int offset);
 void dec0_palette_24bit_rg(int offset,int data);
 void dec0_palette_24bit_b(int offset,int data);
 void dec0_palette_12bit_w(int offset, int data);
-void robocop_palette_b(int offset, int data);
 
 /* System prototypes - from machine/dec0.c */
 extern int dec0_controls_read(int offset);
@@ -260,8 +259,7 @@ static struct MemoryWriteAddress robocop_writemem[] =
 	{ 0x30c010, 0x30c01f, dec0_30c010_w },	/* playfield priority at 30c010, */
 
 	{ 0x310000, 0x3107ff, dec0_palette_24bit_rg },	/* Red & Green bits */
-//	{ 0x314000, 0x3147ff, robocop_palette_b }, /* Blue bits */
-  { 0x314000, 0x3147ff, dec0_palette_24bit_b },
+	{ 0x314000, 0x3147ff, dec0_palette_24bit_b },
 	{ 0xff8000, 0xffbfff, MWA_BANK1, &dec0_mem },
 	{ 0xffc000, 0xffcfff, MWA_BANK2, &dec0_sprite },
 	{ -1 }  /* end of table */
@@ -962,12 +960,22 @@ static struct GfxLayout tilelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x000000, &charlayout, 0, 2*64 },	/* Characters 8x8 */
-	{ 1, 0x020000, &tilelayout, 0, 2*64 },	/* Tiles 16x16 */
-	{ 1, 0x0a0000, &tilelayout, 0, 2*64 },	/* Tiles 16x16 */
-	{ 1, 0x120000, &tilelayout, 0, 2*64 },	/* Sprites 16x16 */
+	{ 1, 0x000000, &charlayout,   0, 16 },	/* Characters 8x8 */
+	{ 1, 0x020000, &tilelayout, 512, 16 },	/* Tiles 16x16 */
+	{ 1, 0x0a0000, &tilelayout, 768, 16 },	/* Tiles 16x16 */
+	{ 1, 0x120000, &tilelayout, 256, 16 },	/* Sprites 16x16 */
 	{ -1 } /* end of array */
 };
+
+static struct GfxDecodeInfo midres_gfxdecodeinfo[] =
+{
+	{ 1, 0x000000, &charlayout, 256, 16 },	/* Characters 8x8 */
+	{ 1, 0x020000, &tilelayout, 512, 16 },	/* Tiles 16x16 */
+	{ 1, 0x0a0000, &tilelayout, 768, 16 },	/* Tiles 16x16 */
+	{ 1, 0x120000, &tilelayout,   0, 16 },	/* Sprites 16x16 */
+	{ -1 } /* end of array */
+};
+
 
 /******************************************************************************/
 
@@ -1026,7 +1034,7 @@ static struct MachineDriver robocop_machine_driver =
 	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
 
 	gfxdecodeinfo,
-	256,2*64*16,
+	1024, 1024,
 	0,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
@@ -1080,7 +1088,7 @@ static struct MachineDriver hippodrm_machine_driver =
  	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
 
 	gfxdecodeinfo,
-	256,2*64*16,
+	1024, 1024,
 	0,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
@@ -1134,7 +1142,7 @@ static struct MachineDriver baddudes_machine_driver =
  	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
 
 	gfxdecodeinfo,
-	256,2*64*16,
+	1024, 1024,
 	0,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
@@ -1188,7 +1196,7 @@ static struct MachineDriver slyspy_machine_driver =
  	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
 
 	gfxdecodeinfo,
-	256,2*64*16,
+	1024, 1024,
 	0,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
@@ -1227,8 +1235,8 @@ static struct MachineDriver midres_machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
 
-	gfxdecodeinfo,
-	256,2*64*16,
+	midres_gfxdecodeinfo,
+	1024, 1024,
 	0,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
@@ -1268,7 +1276,7 @@ static struct MachineDriver heavyb_machine_driver =
  	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
 
 	gfxdecodeinfo,
-	256,2*64*16,
+	1024, 1024,
 	0,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,

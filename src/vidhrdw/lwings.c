@@ -14,7 +14,6 @@
 unsigned char *lwings_paletteram;
 unsigned char *lwings_backgroundram;
 unsigned char *lwings_backgroundattribram;
-int lwings_paletteram_size;
 int lwings_backgroundram_size;
 unsigned char *lwings_scrolly;
 unsigned char *lwings_scrollx;
@@ -25,11 +24,48 @@ unsigned char *trojan_bk_scrolly;
 unsigned char *trojan_bk_scrollx;
 
 static unsigned char *dirtybuffer2;
-static unsigned char *dirtybuffer3;
 static unsigned char *dirtybuffer4;
 static struct osd_bitmap *tmpbitmap2;
 static struct osd_bitmap *tmpbitmap3;
-static unsigned char lwings_paletteram_dirty[0x40];
+
+
+
+void lwings_paletteram_w(int offset,int data)
+{
+	int bit0,bit1,bit2,bit3;
+	int r,g,b,val;
+
+
+	lwings_paletteram[offset] = data;
+
+	/* red component */
+	val = lwings_paletteram[offset & ~0x400];
+	bit0 = (val >> 4) & 0x01;
+	bit1 = (val >> 5) & 0x01;
+	bit2 = (val >> 6) & 0x01;
+	bit3 = (val >> 7) & 0x01;
+	r = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+
+	/* green component */
+	val = lwings_paletteram[offset & ~0x400];
+	bit0 = (val >> 0) & 0x01;
+	bit1 = (val >> 1) & 0x01;
+	bit2 = (val >> 2) & 0x01;
+	bit3 = (val >> 3) & 0x01;
+	g = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+
+	/* blue component */
+	val = lwings_paletteram[offset | 0x400];
+	bit0 = (val >> 4) & 0x01;
+	bit1 = (val >> 5) & 0x01;
+	bit2 = (val >> 6) & 0x01;
+	bit3 = (val >> 7) & 0x01;
+	b = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+
+	palette_change_color(offset & ~0x400,r,g,b);
+}
+
+
 
 /***************************************************************************
 
@@ -38,6 +74,9 @@ static unsigned char lwings_paletteram_dirty[0x40];
 ***************************************************************************/
 int lwings_vh_start(void)
 {
+	int i;
+
+
 	if (generic_vh_start() != 0)
 		return 1;
 
@@ -47,14 +86,6 @@ int lwings_vh_start(void)
 		return 1;
 	}
         memset(dirtybuffer2,1,lwings_backgroundram_size);
-
-        /* Palette RAM dirty buffer */
-        if ((dirtybuffer3 = malloc(lwings_paletteram_size)) == 0)
-	{
-		generic_vh_stop();
-		return 1;
-	}
-        memset(dirtybuffer3,1,lwings_paletteram_size);
 
         if ((dirtybuffer4 = malloc(lwings_backgroundram_size)) == 0)
 	{
@@ -72,8 +103,37 @@ int lwings_vh_start(void)
 		return 1;
 	}
 
-	return 0;
 
+#define COLORTABLE_START(gfxn,color_code) Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + \
+				color_code * Machine->gfx[gfxn]->color_granularity
+#define GFX_COLOR_CODES(gfxn) Machine->gfx[gfxn]->total_colors
+#define GFX_ELEM_COLORS(gfxn) Machine->gfx[gfxn]->color_granularity
+
+	memset(palette_used_colors,PALETTE_COLOR_UNUSED,Machine->drv->total_colors * sizeof(unsigned char));
+	/* chars */
+	for (i = 0;i < GFX_COLOR_CODES(0);i++)
+	{
+		memset(&palette_used_colors[COLORTABLE_START(0,i)],
+				PALETTE_COLOR_USED,
+				GFX_ELEM_COLORS(0));
+		palette_used_colors[COLORTABLE_START(0,i) + GFX_ELEM_COLORS(0)-1] = PALETTE_COLOR_TRANSPARENT;
+	}
+	/* bg tiles */
+	for (i = 0;i < GFX_COLOR_CODES(1);i++)
+	{
+		memset(&palette_used_colors[COLORTABLE_START(1,i)],
+				PALETTE_COLOR_USED,
+				GFX_ELEM_COLORS(1));
+	}
+	/* sprites */
+	for (i = 0;i < GFX_COLOR_CODES(2);i++)
+	{
+		memset(&palette_used_colors[COLORTABLE_START(2,i)],
+				PALETTE_COLOR_USED,
+				GFX_ELEM_COLORS(2));
+	}
+
+	return 0;
 }
 
 /***************************************************************************
@@ -83,44 +143,31 @@ int lwings_vh_start(void)
 ***************************************************************************/
 void lwings_vh_stop(void)
 {
-        osd_free_bitmap(tmpbitmap2);
-        free(dirtybuffer2);
-        free(dirtybuffer3);
-        free(dirtybuffer4);
+	osd_free_bitmap(tmpbitmap2);
+	free(dirtybuffer2);
+	free(dirtybuffer4);
 	generic_vh_stop();
 }
 
 void lwings_background_w(int offset,int data)
 {
-        if (lwings_backgroundram[offset] != data)
+	if (lwings_backgroundram[offset] != data)
 	{
+		lwings_backgroundram[offset] = data;
 		dirtybuffer2[offset] = 1;
-
-                lwings_backgroundram[offset] = data;
 	}
 }
 
 void lwings_backgroundattrib_w(int offset,int data)
 {
-        if (lwings_backgroundattribram[offset] != data)
+	if (lwings_backgroundattribram[offset] != data)
 	{
-                dirtybuffer4[offset] = 1;
-
-                lwings_backgroundattribram[offset] = data;
+		lwings_backgroundattribram[offset] = data;
+		dirtybuffer4[offset] = 1;
 	}
 }
 
 
-void lwings_paletteram_w(int offset,int data)
-{
-        if (lwings_paletteram[offset] != data)
-	{
-                dirtybuffer3[offset]=1;
-                lwings_paletteram[offset] = data;
-                /* Mark entire colour schemes dirty if touched */
-                lwings_paletteram_dirty[(offset>>4)&0x3f]=1;
-	}
-}
 
 /***************************************************************************
 
@@ -132,78 +179,50 @@ void lwings_paletteram_w(int offset,int data)
 
 void lwings_vh_screenrefresh(struct osd_bitmap *bitmap)
 {
-	int j, i, offs;
+	int offs;
 
-	/* rebuild the colour lookup table */
-	for (j=0; j<3; j++)
+
+	if (palette_recalc())
 	{
-		/*
-		0000-007f:  background palette. (8x16 colours)
-		0180-01ff:  sprite palette.     (8x16 colours)
-		0200-0240:  character palette   (16x4 colours)
-		*/
-		/* CHARS TILES SPRITES */
-		int start[3]={0x0200, 0x0000, 0x0180};
-		int count[3]={  0x40,   0x80,   0x80};
-		int base=start[j];
-		int max=count[j];
-
-		for (i=0; i<max; i++)
-		{
-			if (dirtybuffer3[base] || dirtybuffer3[base+0x0400])
-			{
-				int redgreen=lwings_paletteram[base];
-				int blue=lwings_paletteram[base+0x0400]>>4;
-				int red=redgreen >> 4;
-				int green=redgreen & 0x0f;
-
-				red = (red << 4) + red;
-				green = (green << 4) + green;
-				blue = (blue << 4) + blue;
-
-				dirtybuffer3[base] = dirtybuffer3[base+0x0400] = 0;
-
-				setgfxcolorentry (Machine->gfx[j], i, red, green, blue);
-			}
-			base++;
-		}
+		memset(dirtybuffer2,1,lwings_backgroundram_size);
+		memset(dirtybuffer4,1,lwings_backgroundram_size);
 	}
 
-        for (offs = lwings_backgroundram_size - 1;offs >= 0;offs--)
-        {
-                int sx,sy, colour;
-                /*
-                        Tiles
-                        =====
-                        0x80 Tile code MSB
-                        0x40 Tile code MSB
-                        0x20 Tile code MSB
-                        0x10 X flip
-                        0x08 Y flip
-                        0x04 Colour
-                        0x02 Colour
-                        0x01 Colour
-                */
 
-                colour=(lwings_backgroundattribram[offs] & 0x07);
-                if (dirtybuffer2[offs] != 0 || dirtybuffer4[offs] != 0 ||
-                      lwings_paletteram_dirty[colour])
-                {
-                      int code;
-                      dirtybuffer2[offs] = dirtybuffer4[offs] = 0;
+	for (offs = lwings_backgroundram_size - 1;offs >= 0;offs--)
+	{
+		int sx,sy, colour;
+		/*
+		Tiles
+		=====
+		0x80 Tile code MSB
+		0x40 Tile code MSB
+		0x20 Tile code MSB
+		0x10 X flip
+		0x08 Y flip
+		0x04 Colour
+		0x02 Colour
+		0x01 Colour
+		*/
 
-                      sx = offs / 32;
-                      sy = offs % 32;
-                      code=lwings_backgroundram[offs];
-                      code+=((((int)lwings_backgroundattribram[offs]) &0xe0) <<3);
+		colour=(lwings_backgroundattribram[offs] & 0x07);
+		if (dirtybuffer2[offs] != 0 || dirtybuffer4[offs] != 0)
+		{
+			int code;
+			dirtybuffer2[offs] = dirtybuffer4[offs] = 0;
 
-                      drawgfx(tmpbitmap2,Machine->gfx[1],
-                                   code,
-                                   colour,
-                                   (lwings_backgroundattribram[offs] & 0x08),
-                                   (lwings_backgroundattribram[offs] & 0x10),
-                                   16 * sx,16 * sy,
-                                   0,TRANSPARENCY_NONE,0);
+			sx = offs / 32;
+			sy = offs % 32;
+			code=lwings_backgroundram[offs];
+			code+=((((int)lwings_backgroundattribram[offs]) &0xe0) <<3);
+
+			drawgfx(tmpbitmap2,Machine->gfx[1],
+					code,
+					colour,
+					(lwings_backgroundattribram[offs] & 0x08),
+					(lwings_backgroundattribram[offs] & 0x10),
+					16 * sx,16 * sy,
+					0,TRANSPARENCY_NONE,0);
 		}
 	}
 
@@ -239,40 +258,36 @@ void lwings_vh_screenrefresh(struct osd_bitmap *bitmap)
 		*/
 		sx = spriteram[offs + 3] - 0x100 * (spriteram[offs + 1] & 0x01);
 		sy = spriteram[offs + 2];
-                if (sx && sy)
-                {
-                        code = spriteram[offs];
-                        code += (spriteram[offs + 1] & 0xc0) << 2;
+		if (sx && sy)
+		{
+			code = spriteram[offs];
+			code += (spriteram[offs + 1] & 0xc0) << 2;
 
-                        drawgfx(bitmap,Machine->gfx[2],
-				code,
-				(spriteram[offs + 1] & 0x38) >> 3,
-				spriteram[offs + 1] & 0x02,spriteram[offs + 1] & 0x04,
-				sx,sy,
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,15);
-                }
+			drawgfx(bitmap,Machine->gfx[2],
+					code,
+					(spriteram[offs + 1] & 0x38) >> 3,
+					spriteram[offs + 1] & 0x02,spriteram[offs + 1] & 0x04,
+					sx,sy,
+					&Machine->drv->visible_area,TRANSPARENCY_PEN,15);
+		}
 	}
 
 	/* draw the frontmost playfield. They are characters, but draw them as sprites */
 	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
-		int sx,sy,flipx,flipy;
+		int sx,sy;
 
 
 		sx = offs % 32;
 		sy = offs / 32;
-		flipx = colorram[offs] & 0x10;
-		flipy = colorram[offs] & 0x20;
 
 		drawgfx(bitmap,Machine->gfx[0],
 				videoram[offs] + 4 * (colorram[offs] & 0xc0),
 				colorram[offs] & 0x0f,
-				flipx,flipy,
+				colorram[offs] & 0x10,colorram[offs] & 0x20,
 				8*sx,8*sy,
 				&Machine->drv->visible_area,TRANSPARENCY_PEN,3);
 	}
-
-	memset(lwings_paletteram_dirty, 0, sizeof(lwings_paletteram_dirty));
 }
 
 /*
@@ -290,6 +305,9 @@ Extra scroll layer
 
 int  trojan_vh_start(void)
 {
+	int i;
+
+
 	if (generic_vh_start() != 0)
 		return 1;
 
@@ -300,14 +318,6 @@ int  trojan_vh_start(void)
 	}
         memset(dirtybuffer2,1,lwings_backgroundram_size);
 
-        /* Palette RAM dirty buffer */
-        if ((dirtybuffer3 = malloc(lwings_paletteram_size)) == 0)
-	{
-		free(dirtybuffer2);
-		generic_vh_stop();
-		return 1;
-	}
-        memset(dirtybuffer3,1,lwings_paletteram_size);
 
         if ((dirtybuffer4 = malloc(lwings_backgroundram_size)) == 0)
 	{
@@ -320,20 +330,56 @@ int  trojan_vh_start(void)
                 16*0x12,Machine->scrbitmap->depth)) == 0)
         {
 		free(dirtybuffer4);
-		free(dirtybuffer3);
 		free(dirtybuffer2);
 		generic_vh_stop();
 		return 1;
 
         }
-        return 0;
+
+
+#define COLORTABLE_START(gfxn,color_code) Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + \
+				color_code * Machine->gfx[gfxn]->color_granularity
+#define GFX_COLOR_CODES(gfxn) Machine->gfx[gfxn]->total_colors
+#define GFX_ELEM_COLORS(gfxn) Machine->gfx[gfxn]->color_granularity
+
+	memset(palette_used_colors,PALETTE_COLOR_UNUSED,Machine->drv->total_colors * sizeof(unsigned char));
+	/* chars */
+	for (i = 0;i < GFX_COLOR_CODES(0);i++)
+	{
+		memset(&palette_used_colors[COLORTABLE_START(0,i)],
+				PALETTE_COLOR_USED,
+				GFX_ELEM_COLORS(0));
+		palette_used_colors[COLORTABLE_START(0,i) + GFX_ELEM_COLORS(0)-1] = PALETTE_COLOR_TRANSPARENT;
+	}
+	/* fg tiles */
+	for (i = 0;i < GFX_COLOR_CODES(1);i++)
+	{
+		memset(&palette_used_colors[COLORTABLE_START(1,i)],
+				PALETTE_COLOR_USED,
+				GFX_ELEM_COLORS(1));
+	}
+	/* sprites */
+	for (i = 0;i < GFX_COLOR_CODES(2);i++)
+	{
+		memset(&palette_used_colors[COLORTABLE_START(2,i)],
+				PALETTE_COLOR_USED,
+				GFX_ELEM_COLORS(2));
+	}
+	/* bg tiles */
+	for (i = 0;i < GFX_COLOR_CODES(3);i++)
+	{
+		memset(&palette_used_colors[COLORTABLE_START(3,i)],
+				PALETTE_COLOR_USED,
+				GFX_ELEM_COLORS(3));
+	}
+
+	return 0;
 }
 
 void trojan_vh_stop(void)
 {
         osd_free_bitmap(tmpbitmap3);
 		free(dirtybuffer4);
-        free(dirtybuffer3);
 		free(dirtybuffer2);
         generic_vh_stop();
 }
@@ -388,40 +434,16 @@ void trojan_render_foreground( struct osd_bitmap *bitmap, int scrollx, int scrol
 
 void trojan_vh_screenrefresh(struct osd_bitmap *bitmap)
 {
-        int j, i, offs, sx, sy, scrollx, scrolly;
-        int offsy, offsx;
+	int offs, sx, sy, scrollx, scrolly;
+	int offsy, offsx;
 
-	/* rebuild the colour lookup table */
-        for (j=0; j<4; j++)
+
+	if (palette_recalc())
 	{
-		/*
-		*/
-		/* CHARS TILES SPRITES */
-                int start[4]={0x0300,  0x0100,  0x0280, 0x0000};
-                int count[4]={  0x40,    0x80,    0x80, 0x80};
-		int base=start[j];
-		int max=count[j];
-
-		for (i=0; i<max; i++)
-		{
-			if (dirtybuffer3[base] || dirtybuffer3[base+0x0400])
-			{
-				int redgreen=lwings_paletteram[base];
-				int blue=lwings_paletteram[base+0x0400]>>4;
-				int red=redgreen >> 4;
-				int green=redgreen & 0x0f;
-
-				red = (red << 4) + red;
-				green = (green << 4) + green;
-				blue = (blue << 4) + blue;
-
-				dirtybuffer3[base] = dirtybuffer3[base+0x0400] = 0;
-
-				setgfxcolorentry (Machine->gfx[j], i, red, green, blue);
-			}
-			base++;
-		}
+		memset(dirtybuffer2,1,lwings_backgroundram_size);
+		memset(dirtybuffer4,1,lwings_backgroundram_size);
 	}
+
 
         {
               static int oldoffsy=0xffff;
@@ -509,32 +531,23 @@ void trojan_vh_screenrefresh(struct osd_bitmap *bitmap)
                 }
 	}
 
-        trojan_render_foreground( bitmap, scrollx, scrolly, 1 );
+	trojan_render_foreground( bitmap, scrollx, scrolly, 1 );
 
 
 	/* draw the frontmost playfield. They are characters, but draw them as sprites */
 	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
-		int sx,sy,flipx,flipy;
-                int code, attrib;
-                attrib = colorram[offs];
-                code = videoram[offs] + 4 * (attrib & 0xc0);
-		if (code != 0x20)     /* don't draw spaces */
-		{
-			sx = offs % 32;
-			sy = offs / 32;
-                	flipx = colorram[offs] & 0x10;
-	                flipy = colorram[offs] & 0x20;
+		int sx,sy;
 
-			drawgfx(bitmap,Machine->gfx[0],
-				code,
+
+		sx = offs % 32;
+		sy = offs / 32;
+
+		drawgfx(bitmap,Machine->gfx[0],
+				videoram[offs] + 4 * (colorram[offs] & 0xc0),
 				colorram[offs] & 0x0f,
-				flipx,flipy,
+				colorram[offs] & 0x10,colorram[offs] & 0x20,
 				8*sx,8*sy,
-				&Machine->drv->visible_area,
-                                TRANSPARENCY_PEN,3);
-		}
+				&Machine->drv->visible_area,TRANSPARENCY_PEN,3);
 	}
-
-        memset(lwings_paletteram_dirty, 0, sizeof(lwings_paletteram_dirty));
 }

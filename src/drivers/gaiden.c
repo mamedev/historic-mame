@@ -22,8 +22,12 @@ read:
 see the input_ports definition below for details on the input bits
 
 write:
-07a200-07a211 Scrolling - right now I have these both mapped identically
-07a300-07a311 Scrolling - but that wil change when I implement backgrounds
+07a104-07a105 text layer Y scroll
+07a10c-07a10d text layer X scroll
+07a204-07a205 front layer Y scroll
+07a20c-07a20d front layer X scroll
+07a304-07a305 back layer Y scroll
+07a30c-07a30d back layer Xscroll
 
 ***************************************************************************/
 
@@ -37,13 +41,13 @@ extern unsigned char *gaiden_spriteram;
 extern unsigned char *gaiden_paletteram;
 extern unsigned char *gaiden_videoram2;
 extern unsigned char *gaiden_videoram3;
-extern unsigned char *gaiden_scrolla;
-extern unsigned char *gaiden_scrollb;
+extern unsigned char *gaiden_txscrollx,*gaiden_txscrolly;
+extern unsigned char *gaiden_fgscrollx,*gaiden_fgscrolly;
+extern unsigned char *gaiden_bgscrollx,*gaiden_bgscrolly;
 
 extern int gaiden_videoram_size;
 extern int gaiden_videoram2_size;
 extern int gaiden_videoram3_size;
-extern int gaiden_paletteram_size;
 extern int gaiden_spriteram_size;
 
 void gaiden_vh_screenrefresh(struct osd_bitmap *bitmap);
@@ -61,8 +65,12 @@ int gaiden_videoram3_r(int offset);
 void gaiden_spriteram_w(int offset,int data);
 int gaiden_spriteram_r(int offset);
 
-void gaiden_scrolla_w(int offset,int data);
-void gaiden_scrollb_w(int offset,int data);
+void gaiden_txscrollx_w(int offset,int data);
+void gaiden_txscrolly_w(int offset,int data);
+void gaiden_fgscrollx_w(int offset,int data);
+void gaiden_fgscrolly_w(int offset,int data);
+void gaiden_bgscrollx_w(int offset,int data);
+void gaiden_bgscrolly_w(int offset,int data);
 
 
 void gaiden_background_w(int offset,int data);
@@ -132,12 +140,16 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x072000, 0x073fff, gaiden_videoram2_w,  &gaiden_videoram2, &gaiden_videoram2_size },
 	{ 0x074000, 0x075fff, gaiden_videoram3_w,  &gaiden_videoram3, &gaiden_videoram3_size },
 	{ 0x076000, 0x077fff, gaiden_spriteram_w, &gaiden_spriteram, &gaiden_spriteram_size },
-	{ 0x078000, 0x0787ff, gaiden_paletteram_w, &gaiden_paletteram, &gaiden_paletteram_size },
+	{ 0x078000, 0x0787ff, gaiden_paletteram_w, &gaiden_paletteram },
 	{ 0x078800, 0x079fff, MWA_NOP },   /* extra portion of palette RAM, not really used */
 //	{ 0x07a000, 0x07a00f, MWA_NOP },   /* I'm not sure */
 //	{ 0x07a100, 0x07a111, MWA_BANK2 },  /* video? */
-	{ 0x07a200, 0x07a20f, gaiden_scrolla_w, &gaiden_scrolla },
-	{ 0x07a300, 0x07a30f, gaiden_scrollb_w, &gaiden_scrollb },
+	{ 0x07a104, 0x07a105, gaiden_txscrolly_w, &gaiden_txscrolly },
+	{ 0x07a10c, 0x07a10d, gaiden_txscrollx_w, &gaiden_txscrollx },
+	{ 0x07a204, 0x07a205, gaiden_fgscrolly_w, &gaiden_fgscrolly },
+	{ 0x07a20c, 0x07a20d, gaiden_fgscrollx_w, &gaiden_fgscrollx },
+	{ 0x07a304, 0x07a305, gaiden_bgscrolly_w, &gaiden_bgscrolly },
+	{ 0x07a30c, 0x07a30d, gaiden_bgscrollx_w, &gaiden_bgscrollx },
 //	{ 0x07a400, 0x07a809, MWA_NOP },   /* I'm not sure */
 	{ 0x07a800, 0x07a803, gaiden_sound_command_w },
 	{ 0x07a804, 0x07a807, MWA_NOP },	/* ??? */

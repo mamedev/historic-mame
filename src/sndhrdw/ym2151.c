@@ -97,9 +97,9 @@ static void (*envelope_calc[5])(OscilRec *);
 static void (*register_writes[256])(unsigned char , unsigned char, unsigned char);
 
 
-//save output as raw 16-bit sample - just in case you would like to listen to it offline ;-)
-//#define SAVE_SAMPLE
-//#define SAVE_SEPARATE_CHANNELS
+/*save output as raw 16-bit sample - just in case you would like to listen to it offline ;-)*/
+/*#define SAVE_SAMPLE*/
+/*#define SAVE_SEPARATE_CHANNELS*/
 
 #ifdef SAVE_SAMPLE
 #ifdef SAVE_SEPARATE_CHANNELS
@@ -126,10 +126,10 @@ static int decib45[16];
 
 static int attack_curve[ENV_RES];
 
-unsigned int divia[64]; //Attack dividers
-unsigned int divid[64]; //Decay dividers
-static unsigned int A_DELTAS[64+31]; //Attack deltas (64 keycodes + 31 RKS's = 95)
-static unsigned int D_DELTAS[64+31]; //Decay  deltas (64 keycodes + 31 RKS's = 95)
+unsigned int divia[64]; /*Attack dividers*/
+unsigned int divid[64]; /*Decay dividers*/
+static unsigned int A_DELTAS[64+31]; /*Attack deltas (64 keycodes + 31 RKS's = 95)*/
+static unsigned int D_DELTAS[64+31]; /*Decay  deltas (64 keycodes + 31 RKS's = 95)*/
 
 
 
@@ -224,7 +224,7 @@ void sin_init(void)
 			}
 		}
 		sin_tab[ i ] = &TL_TAB[(unsigned int)m];  /**/
-		//if (errorlog) fprintf(errorlog,"sin %i = %i\n",i,sin_tab[i] );
+		/*if (errorlog) fprintf(errorlog,"sin %i = %i\n",i,sin_tab[i] );*/
 	}
 
 	for( x=0; x<TL_TAB_LEN/2; x++ )
@@ -249,7 +249,7 @@ void sin_init(void)
 		}
 		TL_TAB[         x        ] = m;
 		TL_TAB[ x + TL_TAB_LEN/2 ] = -m;
-		//if (errorlog) fprintf(errorlog,"tl %04i =%08x\n",x,TL_TAB[x]);
+		/*if (errorlog) fprintf(errorlog,"tl %04i =%08x\n",x,TL_TAB[x]);*/
 	}
 
 
@@ -259,7 +259,7 @@ void sin_init(void)
 		m = (ENV_RES-1) / pow(10, i * (48.0/ENV_RES) /20);
 		x = m*(1<<ENV_SH);
 		attack_curve[ENV_RES-1-i] = x;
-		//if (errorlog) fprintf(errorlog,"attack [%04x] = %08x Volt=%08x\n", ENV_RES-1-i, x/(1<<ENV_SH), TL_TAB[x/(1<<ENV_SH)] );
+		/*if (errorlog) fprintf(errorlog,"attack [%04x] = %08x Volt=%08x\n", ENV_RES-1-i, x/(1<<ENV_SH), TL_TAB[x/(1<<ENV_SH)] );*/
 	}
 
 
@@ -268,7 +268,7 @@ void sin_init(void)
 		i = (x<15?x:x+16) * (3.0/ENV_STEP);  /*every 3 dB except for ALL '1' = 45dB+48dB*/
 		i<<=ENV_SH;
 		decib45[x]=i;
-		//if (errorlog) fprintf(errorlog,"decib45[%04x]=%08x\n",x,i );
+		/*if (errorlog) fprintf(errorlog,"decib45[%04x]=%08x\n",x,i );*/
 	}
 
 
@@ -308,24 +308,24 @@ void hertz(void)
 		pom2=((pom*SIN_LEN)/(float)YM2151_SAMPFREQ)*mult; /*fixed point*/
 
 		deltas[i+oct*4] = pom2*16;  /*oct 4 - center*/
-		deltas[i+oct*5] = deltas[oct*4+i]<<1; //oct 5
-		deltas[i+oct*6] = deltas[oct*4+i]<<2; //oct 6
-		deltas[i+oct*7] = deltas[oct*4+i]<<3; //oct 7
-		deltas[i+oct*8] = deltas[oct*4+i]<<4; //oct 8
+		deltas[i+oct*5] = deltas[oct*4+i]<<1; /*oct 5*/
+		deltas[i+oct*6] = deltas[oct*4+i]<<2; /*oct 6*/
+		deltas[i+oct*7] = deltas[oct*4+i]<<3; /*oct 7*/
+		deltas[i+oct*8] = deltas[oct*4+i]<<4; /*oct 8*/
 
-		deltas[i+oct*3] = deltas[oct*4+i]>>1; //oct 3
-		deltas[i+oct*2] = deltas[oct*4+i]>>2; //oct 2
-		deltas[i+oct*1] = deltas[oct*4+i]>>3; //oct 1
-		deltas[i+oct*0] = deltas[oct*4+i]>>4; //oct 0
+		deltas[i+oct*3] = deltas[oct*4+i]>>1; /*oct 3*/
+		deltas[i+oct*2] = deltas[oct*4+i]>>2; /*oct 2*/
+		deltas[i+oct*1] = deltas[oct*4+i]>>3; /*oct 1*/
+		deltas[i+oct*0] = deltas[oct*4+i]>>4; /*oct 0*/
 
-		//if (errorlog) fprintf(errorlog,"deltas[%04i] = %08x\n",i,deltas[i]);
+		/*if (errorlog) fprintf(errorlog,"deltas[%04i] = %08x\n",i,deltas[i]);*/
 	}
 	for (j=0; j<4; j++)
 	{
 		for (i=0; i<32; i++)
 		{
 			pom = scaler * DT1Tab[i][j];
-			//calculate phase increment for above precounted Hertz value
+			/*calculate phase increment for above precounted Hertz value*/
 			DT1deltas[i][j]=((pom*SIN_LEN)/(float)YM2151_SAMPFREQ)*mult; /*fixed point*/
 			DT1deltas[i][j+4]= -DT1deltas[i][j];
 		}
@@ -341,7 +341,7 @@ void hertz(void)
 		/*calculate phase increment for above precounted Hertz value*/
 		pom2=((pom*SIN_LEN)/(float)YM2151_SAMPFREQ)*mult; /*fixed point*/
 		LFOdeltas[0xff-i]=pom2;
-		//if (errorlog) fprintf(errorlog, "LFO[%02x] = %08x\n",0xff-i, LFOdeltas[0xff-i]);
+		/*if (errorlog) fprintf(errorlog, "LFO[%02x] = %08x\n",0xff-i, LFOdeltas[0xff-i]);*/
 	}
 
 
@@ -356,28 +356,28 @@ void hertz(void)
 		KC_TO_INDEX[i]=(i>>4)*12*64 +j*64 ;
 		if ((i&3)!=3) j++;	/* change note code */
 		if ((i&15)==15) j=0;	/* new octave */
-		//if (errorlog) fprintf(errorlog,"NOTE[%i] = %i\n",i,KC_TO_INDEX[i]);
+		/*if (errorlog) fprintf(errorlog,"NOTE[%i] = %i\n",i,KC_TO_INDEX[i]);*/
 	}
 
 /* precalculate envelope times */
 	for (i=0; i<64; i++)
 	{
 		pom=(16<<(i>>2))+(4<<(i>>2))*(i&0x03);
-		if ((i>>2)==0)	pom=1; //infinity
-		if ((i>>2)==15) pom=524288; //const
+		if ((i>>2)==0)	pom=1; /*infinity*/
+		if ((i>>2)==15) pom=524288; /*const*/
 		divid[i]=pom;
 	}
 
 	for (i=0; i<64; i++)
 	{
 		pom=((128+64+32)<<(i>>2))+((32+16+8)<<(i>>2))*(i&0x03);
-		if ((i>>2)==0)	pom=1;    //infinity
+		if ((i>>2)==0)	pom=1;    /*infinity*/
 		if ((i>>2)==15)
 		{
 			if ((i&0x03)==3)
-				pom=153293300; //zero attack time
+				pom=153293300; /*zero attack time*/
 			else
-				pom=6422528; //const attack time
+				pom=6422528; /*const attack time*/
 		}
 		divia[i]=pom;
 	}
@@ -386,22 +386,22 @@ void hertz(void)
 	for (i=0; i<64; i++)
 	{
 		if (divid[i]==1)
-			pom=0;  //infinity
+			pom=0;  /*infinity*/
 		else
 			pom=(scaler * ENV_RES * mult)/ ( (float)YM2151_SAMPFREQ*((float)YM2151_CLOCK/1000.0/(float)divid[i]));
-		//if (errorlog) fprintf(errorlog,"i=%03i div=%i time=%f delta=%f\n",i,divid[i],
-		//		(float)YM2151_CLOCK/1000.0/(float)divid[i], pom );
+		/*if (errorlog) fprintf(errorlog,"i=%03i div=%i time=%f delta=%f\n",i,divid[i],*/
+		/*		(float)YM2151_CLOCK/1000.0/(float)divid[i], pom );*/
 		D_DELTAS[i] = pom;
 	}
 
 	for (i=0; i<64; i++)
 	{
 		if (divia[i]==1)
-			pom=0;  //infinity
+			pom=0;  /*infinity*/
 		else
 			pom=(scaler * ENV_RES * mult)/ ( (float)YM2151_SAMPFREQ*((float)YM2151_CLOCK/1000.0/(float)divia[i]));
-		//if (errorlog) fprintf(errorlog,"i=%03i div=%i time=%f delta=%f\n",i,divia[i],
-		//		(float)YM2151_CLOCK/1000.0/(float)divia[i], pom );
+		/*if (errorlog) fprintf(errorlog,"i=%03i div=%i time=%f delta=%f\n",i,divia[i],*/
+		/*		(float)YM2151_CLOCK/1000.0/(float)divia[i], pom );*/
 		A_DELTAS[i] = pom;
 	}
 
@@ -441,7 +441,7 @@ void hertz(void)
 
 void envelope_attack(OscilRec *op)
 {
-	if ( (op->attack_volume -= op->delta_AR) < MIN_VOLUME_INDEX )  //is volume index min already ?
+	if ( (op->attack_volume -= op->delta_AR) < MIN_VOLUME_INDEX )  /*is volume index min already ?*/
 	{
 		op->volume = MIN_VOLUME_INDEX;
 		op->state++;
@@ -454,7 +454,7 @@ void envelope_decay(OscilRec *op)
 {
 	if ( (op->volume += op->delta_D1R) > op->D1L )
 	{
-		//op->volume = op->D1L;
+		/*op->volume = op->D1L;*/
 		op->state++;
 	}
 }
@@ -482,14 +482,14 @@ void envelope_nothing(OscilRec *op)
 {
 }
 
-inline void envelope_KOFF(OscilRec * op)
+INLINE void envelope_KOFF(OscilRec * op)
 {
 		op->state=3; /*release*/
 }
-inline void envelope_KON(OscilRec * op)
+INLINE void envelope_KON(OscilRec * op)
 {
 		 /*this is to remove the gap time if TL>0*/
-		op->volume = VOLUME_OFF; //(ENV_RES - op->TL)<<ENV_SH; /***  <-  SURE ABOUT IT ?  No, but let's give it a try...*/
+		op->volume = VOLUME_OFF; /*(ENV_RES - op->TL)<<ENV_SH;   **  <-  SURE ABOUT IT ?  No, but let's give it a try...  */
 		op->attack_volume = op->volume;
 		op->phase = 0;
 		op->state = 0;    /*KEY ON = attack*/
@@ -517,15 +517,15 @@ OscilRec * osc;
 		osc = &PSG->Oscils[ op ];
 
 /*calc freq begin*/
-		v = (PSG->Regs[YM_DT2_D2R_BASE+op]>>6) & 0x03;   //DT2 value
-	        kc_index_oscil = kc_index_channel + DT2Tab[ v ]; //DT2 offset
+		v = (PSG->Regs[YM_DT2_D2R_BASE+op]>>6) & 0x03;   /*DT2 value*/
+	        kc_index_oscil = kc_index_channel + DT2Tab[ v ]; /*DT2 offset*/
 		v = PSG->Regs[YM_DT1_MUL_BASE+op];
 		mul= (v&0x0f) << 1;
 		if (mul)
 			osc->freq = deltas[ kc_index_oscil ] * mul;
 		else
 			osc->freq = deltas[ kc_index_oscil ];
-		osc->freq += DT1deltas[ kc ][ (v>>4) & 0x07 ];  //DT1 value
+		osc->freq += DT1deltas[ kc ][ (v>>4) & 0x07 ];  /*DT1 value*/
 /*calc freq end*/
 
 
@@ -602,9 +602,9 @@ void write_YM_CLOCKSET(unsigned char n, unsigned char r, unsigned char v)
     YM2151 *PSG = &(YMPSG[n]);
 
     v &= 0xbf;
-    //PSG->Regs[r]=v;
-//	if (errorlog) fprintf(errorlog,"CSM= %01x FRESET=%02x, IRQEN=%02x, LOAD=%02x\n",v>>7,(v>>4)&0x03,(v>>2)&0x03,v&0x03 );
-    if (v&0x80) //CSM
+    /*PSG->Regs[r]=v;*/
+/*	if (errorlog) fprintf(errorlog,"CSM= %01x FRESET=%02x, IRQEN=%02x, LOAD=%02x\n",v>>7,(v>>4)&0x03,(v>>2)&0x03,v&0x03 );*/
+    if (v&0x80) /*CSM*/
 	{    }
 
 	/* ASG 980324: remove the timers if they exist */
@@ -613,7 +613,7 @@ void write_YM_CLOCKSET(unsigned char n, unsigned char r, unsigned char v)
 	PSG->TimATimer=0;
 	PSG->TimBTimer=0;
 
-    if (v&0x01) //LOAD A
+    if (v&0x01) /*LOAD A*/
     {
 		PSG->TimA=1;
 		PSG->TimAVal=TimerA[ (PSG->Regs[YM_CLOCKA1]<<2) | PSG->Regs[YM_CLOCKA2] ];
@@ -623,7 +623,7 @@ void write_YM_CLOCKSET(unsigned char n, unsigned char r, unsigned char v)
     }
     else
 	PSG->TimA=0;
-    if (v&0x02) //load B
+    if (v&0x02) /*load B*/
     {
 		PSG->TimB=1;
 		PSG->TimBVal=TimerB[ PSG->Regs[YM_CLOCKB] ];
@@ -633,15 +633,15 @@ void write_YM_CLOCKSET(unsigned char n, unsigned char r, unsigned char v)
     }
     else
 	PSG->TimB=0;
-    if (v&0x04) //IRQEN A
+    if (v&0x04) /*IRQEN A*/
 	{	}
-    if (v&0x08) //IRQEN B
+    if (v&0x08) /*IRQEN B*/
 	{       }
-    if (v&0x10) //FRESET A
+    if (v&0x10) /*FRESET A*/
     {
 		PSG->TimIRQ &= 0xfe;
     }
-    if (v&0x20) //FRESET B
+    if (v&0x20) /*FRESET B*/
     {
 		PSG->TimIRQ &= 0xfd;
     }
@@ -660,7 +660,7 @@ void write_YM_CONNECT_BASE(unsigned char n, unsigned char r, unsigned char v)
     YM2151 *PSG;
     PSG = &(YMPSG[n]);
 
-	//PSG->Regs[r] = v;
+	/*PSG->Regs[r] = v;*/
 
 	chan = r-YM_CONNECT_BASE;
 
@@ -672,13 +672,13 @@ void write_YM_CONNECT_BASE(unsigned char n, unsigned char r, unsigned char v)
 void write_YM_KC_BASE(unsigned char n, unsigned char r, unsigned char v)
 {
         YMPSG[n].KC[ r-YM_KC_BASE ] = v;
-	//freq_calc(chan,PSG);
+	/*freq_calc(chan,PSG);*/
 }
 
 void write_YM_KF_BASE(unsigned char n, unsigned char r, unsigned char v)
 {
 	YMPSG[n].KF[ r-YM_KF_BASE ] = v>>2;
-	//freq_calc(chan,PSG);
+	/*freq_calc(chan,PSG);*/
 }
 
 
@@ -691,12 +691,12 @@ void write_YM_PMS_AMS_BASE(unsigned char n, unsigned char r, unsigned char v)
 
 	chan = r - YM_PMS_AMS_BASE;
 
-	i = v>>4;  //PMS;
+	i = v>>4;  /*PMS;*/
 	PMTab[chan] = i;
 	if (i && errorlog)
 		fprintf(errorlog,"PMS CHN %02x =%02x\n",chan,i);
 
-	i = v&0x03; //AMS;
+	i = v&0x03; /*AMS;*/
 	AMTab[chan] = i;
 	if (i && errorlog)
 		fprintf(errorlog,"AMS CHN %02x =%02x\n",chan,i);
@@ -706,7 +706,7 @@ void write_YM_PMS_AMS_BASE(unsigned char n, unsigned char r, unsigned char v)
 void write_YM_DT1_MUL_BASE(unsigned char n, unsigned char r, unsigned char v)
 {
 	YMPSG[n].Regs[r] = v;
-	//freq_calc(chan,PSG);
+	/*freq_calc(chan,PSG);*/
 }
 
 void write_YM_TL_BASE(unsigned char n, unsigned char r, unsigned char v)
@@ -738,7 +738,7 @@ void write_YM_AMS_D1R_BASE(unsigned char n, unsigned char r, unsigned char v)
 	if ((v & 0x80) && errorlog)
 		fprintf(errorlog,"AMS ON oper%02x\n",op);
 
-     //HERE something to do with AMS;
+     /*HERE something to do with AMS;*/
 
 	YMPSG[n].Oscils[ op ].D1R =  (v&0x1f) << 1;
 }
@@ -752,7 +752,7 @@ void write_YM_DT2_D2R_BASE(unsigned char n, unsigned char r, unsigned char v)
 	PSG->Regs[r] = v;
 
 	osc->D2R =  (v&0x1f) << 1;
-	//freq_calc(chan,PSG);
+	/*freq_calc(chan,PSG);*/
 }
 
 
@@ -933,7 +933,7 @@ void YMResetChip(int num)
     {
 	memset(&PSG->Oscils[i],'\0',sizeof(OscilRec));
 	PSG->Oscils[i].volume=VOLUME_OFF;
-	PSG->Oscils[i].state=4;  //envelope off
+	PSG->Oscils[i].state=4;  /*envelope off*/
     }
 
     for ( i=0; i<8; i++)
@@ -951,7 +951,7 @@ void YMResetChip(int num)
 }
 
 
-static inline signed int op_calc(OscilRec *OP, signed int pm)
+INLINE signed int op_calc(OscilRec *OP, signed int pm)
 {
   return  sin_tab[ ( ((OP->phase+=OP->freq) >> FREQ_SH) + (pm) ) & SIN_MASK] [ OP->TL + (OP->volume>>ENV_SH) ];
 }
@@ -970,7 +970,7 @@ void YM2151UpdateOne(int num, int endp)
 
 	refresh_chip(PSG);
 
-	//calculate timers...
+	/*calculate timers...*/
 	if (PSG->TimA)
 	{
 		PSG->TimAVal -= ((endp - PSG->bufp)<<TIMER_SH);
@@ -1002,7 +1002,7 @@ OP3 = &PSG->Oscils[0 + 24];
 
 for( PSGBUF = &BuffTemp[PSG->bufp]; PSGBUF < &BuffTemp[endp]; PSGBUF++ )
 {
-//chan0
+/*chan0*/
 	envelope_calc[OP0->state](OP0);
 	envelope_calc[OP1->state](OP1);
 	envelope_calc[OP2->state](OP2);
@@ -1032,7 +1032,7 @@ fputc(((unsigned short)(*PSGBUF)>>8)&0xff,sample1);
 }
 
 
-//chan1
+/*chan1*/
 OP0 = &PSG->Oscils[1     ];
 OP1 = &PSG->Oscils[1 +  8];
 OP2 = &PSG->Oscils[1 + 16];
@@ -1073,7 +1073,7 @@ fputc(((unsigned short)((*PSGBUF)-pom)>>8)&0xff,sample2);
 }
 
 
-//chan2
+/*chan2*/
 	OP0 = &PSG->Oscils[2     ];
 	OP1 = &PSG->Oscils[2 +  8];
 	OP2 = &PSG->Oscils[2 + 16];
@@ -1112,7 +1112,7 @@ fputc(((unsigned short)((*PSGBUF)-pom)>>8)&0xff,sample3);
 #endif
 }
 
-//chan3
+/*chan3*/
 	OP0 = &PSG->Oscils[3     ];
 	OP1 = &PSG->Oscils[3 +  8];
 	OP2 = &PSG->Oscils[3 + 16];
@@ -1151,7 +1151,7 @@ fputc(((unsigned short)((*PSGBUF)-pom)>>8)&0xff,sample4);
 #endif
 }
 
-//chan4
+/*chan4*/
 	OP0 = &PSG->Oscils[4     ];
 	OP1 = &PSG->Oscils[4 +  8];
 	OP2 = &PSG->Oscils[4 + 16];
@@ -1190,7 +1190,7 @@ fputc(((unsigned short)((*PSGBUF)-pom)>>8)&0xff,sample5);
 #endif
 }
 
-//chan5
+/*chan5*/
 	OP0 = &PSG->Oscils[5     ];
 	OP1 = &PSG->Oscils[5 +  8];
 	OP2 = &PSG->Oscils[5 + 16];
@@ -1229,7 +1229,7 @@ fputc(((unsigned short)((*PSGBUF)-pom)>>8)&0xff,sample6);
 #endif
 }
 
-//chan6
+/*chan6*/
 	OP0 = &PSG->Oscils[6     ];
 	OP1 = &PSG->Oscils[6 +  8];
 	OP2 = &PSG->Oscils[6 + 16];
@@ -1261,7 +1261,7 @@ for( PSGBUF = &BuffTemp[PSG->bufp]; PSGBUF < &BuffTemp[endp]; PSGBUF++ )
 	}
 }
 
-//chan7
+/*chan7*/
 	OP0 = &PSG->Oscils[7     ];
 	OP1 = &PSG->Oscils[7 +  8];
 	OP2 = &PSG->Oscils[7 + 16];
@@ -1309,7 +1309,7 @@ for( i = PSG->bufp; i < endp; i++ )
 
 	if (sample_16bit)
 	{ /*16 bit mode*/
-		k >>= FINAL_SH16;  //AUDIO_CONV
+		k >>= FINAL_SH16;  /*AUDIO_CONV*/
 		k <<= 2;
 		if (k > 32767)
 			k = 32767;
@@ -1320,7 +1320,7 @@ for( i = PSG->bufp; i < endp; i++ )
 	}
 	else
 	{ /*8 bit mode*/
-		k >>= FINAL_SH8;  //AUDIO_CONV
+		k >>= FINAL_SH8;  /*AUDIO_CONV*/
 		if (k > 127)
 			k = 127;
 		else

@@ -102,7 +102,7 @@ static struct TMS3617_interface *interface;
 static int emulation_rate;
 static int buffer_len;
 static int sample_pos;
-static unsigned char *buffer;
+static signed char *buffer;
 
 static int channel;
 
@@ -113,9 +113,9 @@ static int pitch;
 
 static int counter[TMS3617_VOICES];
 
-static unsigned char *mixer_table;
-static unsigned char *mixer_lookup;
-static unsigned short *mixer_buffer;
+static signed char *mixer_table;
+static signed char *mixer_lookup;
+static signed short *mixer_buffer;
 
 
 /* note: gain is specified as gain*16 */

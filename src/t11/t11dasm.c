@@ -175,7 +175,7 @@ static char *MakeEA (int lo, int pc, int amode, int *count)
 
 int DasmT11 (unsigned char *pBase, char *buffer, int pc)
 {
-	unsigned char *ea, *ea2;
+	char *ea, *ea2;
 	unsigned short op, lo;
 	int count, pcbase = pc;
 

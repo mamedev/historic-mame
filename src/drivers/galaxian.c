@@ -86,12 +86,12 @@ int galaxian_vh_start(void);
 void galaxian_vh_screenrefresh(struct osd_bitmap *bitmap);
 int galaxian_vh_interrupt(void);
 
-void mooncrst_sound_freq_w(int offset,int data);
+void mooncrst_pitch_w(int offset,int data);
+void mooncrst_vol_w(int offset,int data);
 void mooncrst_noise_w(int offset,int data);
 void mooncrst_background_w(int offset,int data);
 void mooncrst_shoot_w(int offset,int data);
 void mooncrst_lfo_freq_w(int offset,int data);
-void mooncrst_sound_freq_sel_w(int offset,int data);
 int mooncrst_sh_start(void);
 void mooncrst_sh_stop(void);
 void mooncrst_sh_update(void);
@@ -100,8 +100,9 @@ void mooncrst_sh_update(void);
 
 static struct MemoryReadAddress readmem[] =
 {
-	{ 0x5000, 0x5fff, MRA_RAM },	/* video RAM, screen attributes, sprites, bullets */
 	{ 0x0000, 0x3fff, MRA_ROM },	/* not all games use all the space */
+	{ 0x4000, 0x43ff, MRA_RAM },
+	{ 0x5000, 0x5fff, MRA_RAM },	/* video RAM, screen attributes, sprites, bullets */
 	{ 0x6000, 0x6000, input_port_0_r },	/* IN0 */
 	{ 0x6800, 0x6800, input_port_1_r },	/* IN1 */
 	{ 0x7000, 0x7000, input_port_2_r },	/* DSW */
@@ -112,22 +113,23 @@ static struct MemoryReadAddress readmem[] =
 
 static struct MemoryWriteAddress galaxian_writemem[] =
 {
+	{ 0x0000, 0x27ff, MWA_ROM },
+	{ 0x4000, 0x43ff, MWA_RAM },
 	{ 0x5000, 0x53ff, videoram_w, &videoram, &videoram_size },
 	{ 0x5800, 0x583f, galaxian_attributes_w, &galaxian_attributesram },
 	{ 0x5840, 0x585f, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x5860, 0x587f, MWA_RAM, &galaxian_bulletsram, &galaxian_bulletsram_size },
 	{ 0x7001, 0x7001, interrupt_enable_w },
-	{ 0x7800, 0x7800, mooncrst_sound_freq_w },
+	{ 0x7800, 0x7800, mooncrst_pitch_w },
 	{ 0x6800, 0x6800, mooncrst_background_w },
 	{ 0x6803, 0x6803, mooncrst_noise_w },
 	{ 0x6805, 0x6805, mooncrst_shoot_w },
-	{ 0x6806, 0x6807, mooncrst_sound_freq_sel_w },
+	{ 0x6806, 0x6807, mooncrst_vol_w },
 	{ 0x6000, 0x6001, osd_led_w },
 	{ 0x6004, 0x6007, mooncrst_lfo_freq_w },
 	{ 0x7004, 0x7004, galaxian_stars_w },
 	{ 0x7006, 0x7006, galaxian_flipx_w },
 	{ 0x7007, 0x7007, galaxian_flipy_w },
-	{ 0x0000, 0x27ff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
 
@@ -138,11 +140,11 @@ static struct MemoryWriteAddress pisces_writemem[] =
 	{ 0x5840, 0x585f, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x5860, 0x587f, MWA_RAM, &galaxian_bulletsram, &galaxian_bulletsram_size },
 	{ 0x7001, 0x7001, interrupt_enable_w },
-	{ 0x7800, 0x7800, mooncrst_sound_freq_w },
+	{ 0x7800, 0x7800, mooncrst_pitch_w },
 	{ 0x6800, 0x6800, mooncrst_background_w },
 	{ 0x6803, 0x6803, mooncrst_noise_w },
 	{ 0x6805, 0x6805, mooncrst_shoot_w },
-	{ 0x6806, 0x6807, mooncrst_sound_freq_sel_w },
+	{ 0x6806, 0x6807, mooncrst_vol_w },
 	{ 0x6000, 0x6001, osd_led_w },
 	{ 0x6002, 0x6002, pisces_gfxbank_w },
 	{ 0x6004, 0x6007, mooncrst_lfo_freq_w },

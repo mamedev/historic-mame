@@ -9,7 +9,7 @@
 #include "driver.h"
 
 /* These globals are only kept on a machine basis - LBO 042898 */
-unsigned int dispensed_tickets;
+extern unsigned int dispensed_tickets;
 unsigned int coins[COIN_COUNTERS];
 unsigned int lastcoin[COIN_COUNTERS];
 
@@ -36,28 +36,41 @@ unsigned int lastcoin[COIN_COUNTERS];
 
 #ifdef ACORN /* GSL 980108 read/write nonaligned dword routine for ARM processor etc */
 
-static inline int read_dword(int *address)
+INLINE int read_dword(int *address)
 {
 	if ((int)address & 3)
 	{
-
-  		return (    *((char *)address) +
-  			   (*((char *)address+1) << 8)  +
-  		   	   (*((char *)address+2) << 16) +
-  		           (*((char *)address+3) << 24) );
+#ifdef LSB_FIRST  /* little endian version */
+  		return (    *((unsigned char *)address) +
+  			   (*((unsigned char *)address+1) << 8)  +
+  		   	   (*((unsigned char *)address+2) << 16) +
+  		           (*((unsigned char *)address+3) << 24) );
+#else             /* big endian version */
+  		return (    *((unsigned char *)address+3) +
+  			   (*((unsigned char *)address+2) << 8)  +
+  		   	   (*((unsigned char *)address+1) << 16) +
+  		           (*((unsigned char *)address)   << 24) );
+#endif
 	}
 	else
 		return *(int *)address;
 }
 
-static inline void write_dword(int *address, int data)
+INLINE void write_dword(int *address, int data)
 {
   	if ((int)address & 3)
 	{
-    		*((char *)address) =    data;
-    		*((char *)address+1) = (data >> 8);
-    		*((char *)address+2) = (data >> 16);
-    		*((char *)address+3) = (data >> 24);
+#ifdef LSB_FIRST
+    		*((unsigned char *)address) =    data;
+    		*((unsigned char *)address+1) = (data >> 8);
+    		*((unsigned char *)address+2) = (data >> 16);
+    		*((unsigned char *)address+3) = (data >> 24);
+#else
+    		*((unsigned char *)address+3) =  data;
+    		*((unsigned char *)address+2) = (data >> 8);
+    		*((unsigned char *)address+1) = (data >> 16);
+    		*((unsigned char *)address)   = (data >> 24);
+#endif
 		return;
   	}
   	else
@@ -681,7 +694,7 @@ void freegfx(struct GfxElement *gfx)
   									 transparent pens.
   transparency == TRANSPARENCY_COLOR - bits whose _remapped_ value is == Machine->pens[transparent_color]
                                      are transparent. This is used by e.g. Pac Man.
-  transparency == TRANSPARENCY_THROUGH - if the _destination_ pixel is == Machine->pens[transparent_color],
+  transparency == TRANSPARENCY_THROUGH - if the _destination_ pixel is == transparent_color,
                                      the source pixel is drawn over it. This is used by
 									 e.g. Jr. Pac Man to draw the sprites when the background
 									 has priority over them.
@@ -708,7 +721,7 @@ static void drawgfx_core8(struct osd_bitmap *dest,const struct GfxElement *gfx,
 	color %= gfx->total_colors;
 
 	/* if necessary, remap the transparent color */
-	if (transparency == TRANSPARENCY_COLOR || transparency == TRANSPARENCY_THROUGH)
+	if (transparency == TRANSPARENCY_COLOR)
 		transparent_color = Machine->pens[transparent_color];
 
 	if (gfx->pen_usage)
@@ -1277,7 +1290,7 @@ static void drawgfx_core16(struct osd_bitmap *dest,const struct GfxElement *gfx,
 	color %= gfx->total_colors;
 
 	/* if necessary, remap the transparent color */
-	if (transparency == TRANSPARENCY_COLOR || transparency == TRANSPARENCY_THROUGH)
+	if (transparency == TRANSPARENCY_COLOR)
 		transparent_color = Machine->pens[transparent_color];
 
 	if (gfx->pen_usage)

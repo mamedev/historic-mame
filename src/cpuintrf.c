@@ -17,8 +17,8 @@
 #include "M6808/M6808.h"
 #include "M6805/M6805.h"
 #include "M68000/M68000.h"
-#include "t11/t11.h"
-#include "I86/i86intrf.h"
+#include "T11/t11.h"
+#include "I86/I86intrf.h"
 #include "timer.h"
 
 
@@ -41,7 +41,11 @@ struct cpuinfo
 	void *timedint_timer;                      /* reference to this CPU's timer */
 	double timedint_period;                    /* timing period of the timed interrupt */
 	int save_context;                          /* need to context switch this CPU? yes or no */
+#ifdef linux_alpha
+	unsigned char context[CPU_CONTEXT_SIZE] __attribute__ ((__aligned__ (8)));
+#else
 	unsigned char context[CPU_CONTEXT_SIZE];   /* this CPU's context */
+#endif
 };
 
 static struct cpuinfo cpu[MAX_CPU];
@@ -766,7 +770,7 @@ int cpu_getscanline(void)
 double cpu_getscanlinetime(int scanline)
 {
 	double scantime = timer_starttime (refresh_timer) + (double)scanline * scanline_period;
-	double time = timer_gettime ();
+	double time = timer_get_time ();
 	if (time >= scantime) scantime += TIME_IN_HZ (Machine->drv->frames_per_second);
 	return scantime - time;
 }

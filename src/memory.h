@@ -179,8 +179,16 @@ void cpu_writemem24_word(int address,int data);
 void cpu_writemem24_dword(int address,int data);
 
 /* ----- 16-bit memory access macros ----- */
+
+#ifdef ACORN
+/* Use these to avoid alignment problems on non-x86 hardware. */
+extern int READ_WORD(void *dst);
+extern int WRITE_WORD(void *dst, int d);
+#else
 #define READ_WORD(a)          (*(unsigned short *)(a))
 #define WRITE_WORD(a,d)       (*(unsigned short *)(a) = (d))
+#endif
+
 #define COMBINE_WORD(w,d)     (((w) & ((d) >> 16)) | ((d) & 0xffff))
 #define COMBINE_WORD_MEM(a,d) (WRITE_WORD ((a), (READ_WORD (a) & ((d) >> 16)) | (d)))
 
@@ -209,8 +217,8 @@ extern MHELE ophw;
 extern unsigned char *cpu_bankbase[];
 
 #define cpu_readop(A) 		(OP_ROM[A])
-#define cpu_readop16(A)    (*(unsigned short *)&OP_ROM[A])
+#define cpu_readop16(A)         READ_WORD(&OP_ROM[A])
 #define cpu_readop_arg(A)	(OP_RAM[A])
-#define cpu_readop_arg16(A) (*(unsigned short *)&OP_RAM[A])
+#define cpu_readop_arg16(A)     READ_WORD(&OP_RAM[A])
 
 #endif

@@ -83,9 +83,12 @@ void crbaloon_0a_w(int offset,int data)
 
 int crbaloon_IN2_r(int offset)
 {
-/* simulate collision detection */
-if (osd_key_pressed(OSD_KEY_SPACE))
-	return (input_port_2_r(0) & 0xf0) | 0x08;
+	extern int BalloonCollision;
+
+	if (BalloonCollision != 0)
+	{
+		return (input_port_2_r(0) & 0xf0) | 0x08;
+    }
 
 	/* the following is needed for the game to boot up */
 	if (val06 & 0x80)

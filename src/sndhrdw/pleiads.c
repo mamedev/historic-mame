@@ -141,7 +141,7 @@ void pleiads_sound_control_a_w (int offset,int data)
 		}
 		lastnoise = noise;
 	}
-//	if (errorlog) fprintf(errorlog,"A:%X \n",data);
+/*	if (errorlog) fprintf(errorlog,"A:%X \n",data);*/
 }
 
 
@@ -179,10 +179,10 @@ void pleiads_sound_control_b_w (int offset,int data)
 
 int pleiads_sh_start (void)
 {
-	osd_play_sample (0,waveform1,32,1000,0,1);
-	osd_play_sample (1,waveform1,32,1000,0,1);
-	osd_play_sample (2,waveform1,32,1000,0,1);
-	osd_play_sample (3,waveform2,128,1000,0,1);
+	osd_play_sample (0,(signed char *)waveform1,32,1000,0,1);
+	osd_play_sample (1,(signed char *)waveform1,32,1000,0,1);
+	osd_play_sample (2,(signed char *)waveform1,32,1000,0,1);
+	osd_play_sample (3,(signed char *)waveform2,128,1000,0,1);
 	return 0;
 }
 

@@ -71,23 +71,23 @@ void mcr3_vh_convert_color_prom(unsigned char *palette, unsigned short *colortab
 
 void mcr3_palette_w(int offset,int data)
 {
-   int r;
-   int g;
-   int b;
+	int r;
+	int g;
+	int b;
 
-   mcr3_paletteram[offset] = data;
+	mcr3_paletteram[offset] = data;
 	offset &= 0x7f;
 
-   r = ((offset & 1) << 2) + (data >> 6);
-   g = (data >> 0) & 7;
-   b = (data >> 3) & 7;
+	r = ((offset & 1) << 2) + (data >> 6);
+	g = (data >> 0) & 7;
+	b = (data >> 3) & 7;
 
-   /* up to 8 bits */
-   r = (r << 5) | (r << 2) | (r >> 1);
-   g = (g << 5) | (g << 2) | (g >> 1);
-   b = (b << 5) | (b << 2) | (b >> 1);
+	/* up to 8 bits */
+	r = (r << 5) | (r << 2) | (r >> 1);
+	g = (g << 5) | (g << 2) | (g >> 1);
+	b = (b << 5) | (b << 2) | (b >> 1);
 
-   osd_modify_pen(Machine->gfx[0]->colortable[offset/2], r, g, b);
+	palette_change_color(offset/2,r,g,b);
 }
 
 
@@ -164,7 +164,7 @@ void mcr3_vh_screenrefresh(struct osd_bitmap *bitmap)
 			clip.min_y = sy;
 			clip.max_y = sy+31;
 
-			copybitmap(bitmap,tmpbitmap,0,0,0,0,&clip,TRANSPARENCY_THROUGH,8+(color*16));
+			copybitmap(bitmap,tmpbitmap,0,0,0,0,&clip,TRANSPARENCY_THROUGH,Machine->pens[8+(color*16)]);
       }
    }
 }
@@ -255,7 +255,7 @@ void rampage_vh_screenrefresh(struct osd_bitmap *bitmap)
 			clip.min_y = sy;
 			clip.max_y = sy+31;
 
-			copybitmap(bitmap,tmpbitmap,0,0,0,0,&clip,TRANSPARENCY_THROUGH,8+(color*16));
+			copybitmap(bitmap,tmpbitmap,0,0,0,0,&clip,TRANSPARENCY_THROUGH,Machine->pens[8+(color*16)]);
       }
    }
 }
@@ -416,7 +416,7 @@ void spyhunt_vh_screenrefresh(struct osd_bitmap *bitmap)
 			clip.min_y = sy;
 			clip.max_y = sy+31;
 
-			copybitmap(bitmap,tmpbitmap,0,0,0,0,&clip,TRANSPARENCY_THROUGH,8+16);
+			copybitmap(bitmap,tmpbitmap,0,0,0,0,&clip,TRANSPARENCY_THROUGH,Machine->pens[8+16]);
       }
    }
 

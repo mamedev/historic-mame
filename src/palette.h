@@ -19,7 +19,7 @@
   generate the display. PC users might want to think of them as the colors
   available in VGA, but be warned: the mapping of MAME pens to the VGA
   registers is not 1:1, so MAME's pen 10 will not necessarily be mapped to
-  VGA's color #10 (actually this is never the case). This is done to unsure
+  VGA's color #10 (actually this is never the case). This is done to ensure
   portability, since on some systems it is not possible to do a 1:1 mapping.
 
   So, to summarize, the three layers of palette abstraction are:
@@ -93,7 +93,7 @@
   (which many games use) is essentially free, while in 4) every palette change
   requires a screen refresh. The color quality in 3) is also better than in 4).
   The dynamic shrinking of the palette works this way: as colors are requested,
-  they are associated to a pen: When a color is no longer needed, the pen is
+  they are associated to a pen. When a color is no longer needed, the pen is
   freed and can be used for another color. When the code runs out of free pens,
   it compacts the palette, putting together colors with the same RGB
   components, then starts again to allocate pens for each new color. The bottom
@@ -114,27 +114,25 @@ int palette_start(void);
 void palette_stop(void);
 void palette_init(void);
 
-void palette_change_color(int color,unsigned char red, unsigned char green, unsigned char blue);
+void palette_change_color(int color,unsigned char red,unsigned char green,unsigned char blue);
 
-int palette_recalc(const unsigned char *used_colors);
+/* This array is used by palette_recalc() to know which colors are used, and which */
+/* ones are transparent (see defines below). By default, it is initialized to */
+/* PALETTE_COLOR_USED for all colors; this is enough in some cases. */
+extern unsigned char *palette_used_colors;
 
-#define PALETTE_COLOR_UNUSED 0		/* This color is not need for this frame */
-#define PALETTE_COLOR_CONSTANT 1	/* This color never changes. palette_recalc() */
-									/* is allowed to group CONSTANT colors together */
-									/* to save space. */
-#define PALETTE_COLOR_FIXED 2		/* This color is used for parts of the display */
-									/* which are cached inside the driver. */
-									/* palette_recalc() will try to use always the */
-									/* same pen for it; if it is forced to change pen, */
-									/* it will return TRUE to signal the driver that it */
-									/* must refresh the display. */
-#define PALETTE_COLOR_DYNAMIC 3		/* This color is used for parts of the display */
-									/* which are redrawn every frame, so palette_recalc() */
-									/* is free to move it around at will. */
-#define PALETTE_COLOR_TRANSPARENT 4	/* All colors using this attribute will be remapped to */
-									/* the same pen, and no other colors will be remapped to */
-									/* that pen. This way, transparencies can be handled */
-									/* by copybitmap(). */
+int palette_recalc(void);
+
+#define PALETTE_COLOR_UNUSED 0		/* This color is not needed for this frame */
+#define PALETTE_COLOR_USED 1		/* This color is currenly used, either in the */
+	/* visible screen itself, or for parts which are cached in temporary bitmaps */
+	/*by the driver. */
+	/* palette_recalc() will try to use always the same pens for the used colors; */
+	/* if it is forced to rearrange the pens, it will return TRUE to signal the */
+	/* driver that it must refresh the display. */
+#define PALETTE_COLOR_TRANSPARENT 2	/* All colors using this attribute will be */
+	/* mapped to the same pen, and no other colors will be mapped to that pen. */
+	/* This way, transparencies can be handled by copybitmap(). */
 
 /* if you use PALETTE_COLOR_TRANSPARENT, to do a transparency blit with copybitmap() */
 /* pass it TRANSPARENCY_PEN, palette_transparent_pen. */
@@ -143,6 +141,12 @@ extern unsigned short palette_transparent_pen;
 /* The transparent color can also be used as a background color, to avoid doing */
 /* a fillbitmap() + copybitmap() when there is nothing between the background and */
 /* the transparent layer. Use this function to set the background color. */
-void palette_change_transparent_color(unsigned char red, unsigned char green, unsigned char blue);
+void palette_change_transparent_color(unsigned char red,unsigned char green,unsigned char blue);
+
+
+/* helper macros for 16-bit support: */
+#define rgbpenindex(r,g,b) ((Machine->scrbitmap->depth==16) ? ((((r)>>3)<<10)+(((g)>>3)<<5)+((b)>>3)) : ((((r)>>5)<<5)+(((g)>>5)<<2)+((b)>>6)))
+#define rgbpen(r,g,b) (Machine->pens[rgbpenindex(r,g,b)])
+#define setgfxcolorentry(gfx,i,r,g,b) ((gfx)->colortable[i] = rgbpen (r,g,b))
 
 #endif

@@ -9,12 +9,10 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-
-
 static int spritectrl[3];
 static int flipscreen;
 
-
+int BalloonCollision=0;
 
 /***************************************************************************
 
@@ -75,19 +73,17 @@ void crbaloon_flipscreen_w(int offset,int data)
 	}
 }
 
-
-
 /***************************************************************************
 
   Draw the game screen in the given osd_bitmap.
   Do NOT call osd_update_display() from this function, it will be called by
   the main emulation engine.
 
-***************************************************************************/
+ ***************************************************************************/
+
 void crbaloon_vh_screenrefresh(struct osd_bitmap *bitmap)
 {
-	int offs;
-
+	int offs,i,j;
 
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
@@ -120,6 +116,26 @@ void crbaloon_vh_screenrefresh(struct osd_bitmap *bitmap)
 	/* copy the character mapped graphics */
 	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 
+
+    /* Check Collision - Draw balloon in background colour, if no */
+    /* collision occured, bitmap will be same as tmpbitmap        */
+
+	drawgfx(bitmap,Machine->gfx[1],
+			spritectrl[0] & 0x0f,
+			15,
+			0,0,
+			spritectrl[1],spritectrl[2],
+			&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+
+    BalloonCollision = 0;
+
+	for (i = 0;i < bitmap->height;i++)
+	{
+    	for(j = 0;j < bitmap->width;j++)
+        {
+        	if(bitmap->line[i][j] != tmpbitmap->line[i][j]) BalloonCollision = -1;
+        }
+	}
 
 	drawgfx(bitmap,Machine->gfx[1],
 			spritectrl[0] & 0x0f,

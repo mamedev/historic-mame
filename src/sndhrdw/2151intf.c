@@ -53,8 +53,8 @@ int YM2151_sh_start(struct YM2151interface *interface,int mode)
 	sample_bits = Machine->sample_bits;
 
 	FMMode = CHIP_YM2151_DAC;
-//	if( No_FM ) FMMode = CHIP_YM2151_DAC;
-//	else        FMMode = CHIP_YM2151_OPL;
+/*	if( No_FM ) FMMode = CHIP_YM2151_DAC;*/
+/*	else        FMMode = CHIP_YM2151_OPL;*/
 
 	if( emu_mode == 0 )
 	{	/* Tatsuyuki's */
@@ -72,7 +72,7 @@ int YM2151_sh_start(struct YM2151interface *interface,int mode)
 				while (--i >= 0) free(bufferFM[i]);
 				return 1;
 			}
-//			for (j = 0;j < buffer_len ;j++) bufferFM[i][j] = FMOUT_0;
+/*			for (j = 0;j < buffer_len ;j++) bufferFM[i][j] = FMOUT_0;*/
 		}
 		if (OPMInit(intf->num,intf->clock,emulation_rate,sample_bits,buffer_len,bufferFM) == 0)
 		{
@@ -87,7 +87,7 @@ int YM2151_sh_start(struct YM2151interface *interface,int mode)
 			}
 			if( vol_max > 255 ) gain = gain * vol_max / 255;
 			/* gain set */
-//			FMSetGain( gain );
+/*			FMSetGain( gain );*/
 			for (i = 0; i < intf->num; i++)
 			{
 				volume[i] = intf->volume[i] * 0xffff / gain;
@@ -145,7 +145,7 @@ void YM2151_sh_stop(void)
 	}
 }
 
-static inline void update_opm(int chip)
+INLINE void update_opm(int chip)
 {
 	int newpos;
 

@@ -1,9 +1,6 @@
 /***************************************************************************
 
 remaining issues:
-	sound not hooked up (YM2151 Z80)
-	sprites are out of sync while scrolling
-	(I haven't tried tweaking the vblank parameter)
 	busy loop should be patched out
 
 Please contact Phil Stroffolino (phil@maya.com) if there are any questions
@@ -29,20 +26,13 @@ Memory Overview:
 
 extern int tigeroad_base_bank;
 extern unsigned char *tigeroad_scrollram;
+extern unsigned char *tigeroad_paletteram;
 
+void tigeroad_paletteram_w(int offset,int data);
+int tigeroad_paletteram_r(int offset);
 void tigeroad_scrollram_w(int offset,int data);
 void tigeroad_vh_screenrefresh(struct osd_bitmap *bitmap);
-void tigeroad_SetPaletteEntry( int offset, int data );
 
-
-static unsigned char *tigeroad_paletteram;
-
-static int tigeroad_paletteram_r( int offset ){ return READ_WORD (&tigeroad_paletteram[offset]); }
-static void tigeroad_paletteram_w( int offset, int data );
-static void tigeroad_paletteram_w( int offset, int data ){
-	data = COMBINE_WORD_MEM (&tigeroad_paletteram[offset], data );
-	tigeroad_SetPaletteEntry( offset, data );
-}
 
 static void tigeroad_control_w( int offset, int data )
 {
@@ -86,7 +76,7 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xfe0d00, 0xfe1807, MRA_BANK2 },
 	{ 0xfe4000, 0xfe4007, tigeroad_input_r },
 	{ 0xfec000, 0xfec7ff, MRA_BANK3 },
-	{ 0xff8200, 0xffbfff, tigeroad_paletteram_r },
+	{ 0xff8200, 0xff867f, tigeroad_paletteram_r },
 	{ 0xffc000, 0xffffff, MRA_BANK5 },
 	{ -1 }  /* end of table */
 };
@@ -100,7 +90,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xfec000, 0xfec7ff, MWA_BANK3, &videoram, &videoram_size },
 	{ 0xfe8000, 0xfe8003, MWA_BANK4, &tigeroad_scrollram },
 	{ 0xfe800c, 0xfe800f, MWA_NOP },	/* fe800e = watchdog or IRQ acknowledge */
-	{ 0xff8200, 0xffbfff, tigeroad_paletteram_w, &tigeroad_paletteram },
+	{ 0xff8200, 0xff867f, tigeroad_paletteram_w, &tigeroad_paletteram },
 	{ 0xffc000, 0xffffff, MWA_BANK5 },
 	{ -1 }  /* end of table */
 };
@@ -125,6 +115,13 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ 0xc000, 0xc7ff, MWA_RAM },
 	{ -1 }	/* end of table */
 };
+
+static struct IOWritePort sound_writeport[] =
+{
+	{ 0x00, 0x01, IOWP_NOP },	/* ??? */
+	{ -1 }	/* end of table */
+};
+
 
 
 INPUT_PORTS_START( tigeroad_input_ports )
@@ -353,9 +350,9 @@ static struct GfxLayout sprite_layout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x000000, &tile_layout,   0,           16 },
-	{ 1, 0x100000, &sprite_layout, 16*16,       16 },
-	{ 1, 0x180000, &text_layout,   16*16+16*16, 16 },
+	{ 1, 0x000000, &tile_layout,     0, 16 },	/* colors   0-255 */
+	{ 1, 0x100000, &sprite_layout, 256, 16 },	/* colors 256-511 */
+	{ 1, 0x180000, &text_layout,   512, 16 },	/* colors 512-575 */
 	{ -1 } /* end of array */
 };
 
@@ -395,7 +392,7 @@ static struct MachineDriver machine_driver =
 			CPU_Z80 | CPU_AUDIO_CPU,
 			4000000,	/* 4 Mhz ??? */
 			3,	/* memory region #3 */
-			sound_readmem,sound_writemem,0,0,
+			sound_readmem,sound_writemem,0,sound_writeport,
 			ignore_interrupt,0	/* NMIs are triggered by the main CPU */
 								/* IRQs are triggered by the YM2203 */
 		}
@@ -408,10 +405,10 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	256,16*16+16*16+16*4,
+	576, 576,
 	0, /* convert color prom routine */
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_16BIT,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
 	0,
 	0,

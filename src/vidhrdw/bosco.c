@@ -331,7 +331,7 @@ void bosco_vh_screenrefresh(struct osd_bitmap *bitmap)
 				spriteram_2[offs + 1],
 				spriteram[offs] & 1,spriteram[offs] & 2,
 				spriteram[offs + 1] - 1,224 - spriteram_2[offs],
-				flipscreen ? &spritevisibleareaflip : &spritevisiblearea,TRANSPARENCY_THROUGH,0);
+				flipscreen ? &spritevisibleareaflip : &spritevisiblearea,TRANSPARENCY_THROUGH,Machine->pens[0]);
 	}
 
 

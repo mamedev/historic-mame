@@ -34,7 +34,7 @@ void timer_remove (void *which);
 int timer_enable (void *which, int enable);
 double timer_timeelapsed (void *which);
 double timer_timeleft (void *which);
-double timer_gettime (void);
+double timer_get_time (void);
 double timer_starttime (void *which);
 double timer_firetime (void *which);
 int timer_schedule_cpu (int *cpu, int *cycles);

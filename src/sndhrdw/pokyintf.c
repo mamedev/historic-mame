@@ -25,7 +25,7 @@ extern uint8 rng[MAXPOKEYS];
 static uint8 pokey_random[MAXPOKEYS];     /* The random number for each pokey */
 
 static struct POKEYinterface *intf;
-static unsigned char *buffer;
+static signed char *buffer;
 
 
 int pokey_sh_start (struct POKEYinterface *interface)
@@ -170,7 +170,7 @@ int quad_pokey_r (int offset)
     int control = (offset & 0x20) >> 2;
 	int pokey_reg = (offset % 8) | control;
 
-//    if (errorlog) fprintf (errorlog, "offset: %04x pokey_num: %02x pokey_reg: %02x\n", offset, pokey_num, pokey_reg);
+/*    if (errorlog) fprintf (errorlog, "offset: %04x pokey_num: %02x pokey_reg: %02x\n", offset, pokey_num, pokey_reg);*/
 	return Read_pokey_regs (pokey_reg,pokey_num);
 }
 

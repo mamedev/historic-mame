@@ -436,10 +436,7 @@ static struct MachineDriver blockade_machine_driver =
     blockade_vh_screenrefresh,
 
     /* sound hardware */
-    0,
-    0,          /* Start audio  */
-    0,          /* Stop audio   */
-    0,          /* Update audio */
+    0,0,0,0,
     {
         {
             SOUND_SAMPLES,
@@ -477,10 +474,7 @@ static struct MachineDriver comotion_machine_driver =
     comotion_vh_screenrefresh,
 
     /* sound hardware */
-    0,
-    0,          /* Start audio  */
-    0,          /* Stop audio   */
-    0,          /* Update audio */
+    0,0,0,0,
     {
         {
             SOUND_SAMPLES,
@@ -518,10 +512,7 @@ static struct MachineDriver blasto_machine_driver =
     blasto_vh_screenrefresh,
 
     /* sound hardware */
-    0,
-    0,          /* Start audio  */
-    0,          /* Stop audio   */
-    0,          /* Update audio */
+    0,0,0,0,
     {
         {
             SOUND_SAMPLES,
@@ -648,5 +639,3 @@ struct GameDriver blasto_driver =
     ORIENTATION_DEFAULT,
     0, 0
 };
-
-

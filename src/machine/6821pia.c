@@ -15,7 +15,6 @@
 #undef printf
 #endif
 
-
 /******************* internal PIA data structure *******************/
 
 struct pia6821
@@ -42,6 +41,10 @@ struct pia6821
 
 	int (*in_a_func)(int offset);
 	int (*in_b_func)(int offset);
+	int (*in_ca1_func)(int offset);
+	int (*in_ca2_func)(int offset);
+	int (*in_cb1_func)(int offset);
+	int (*in_cb2_func)(int offset);
 	void (*out_a_func)(int offset, int val);
 	void (*out_b_func)(int offset, int val);
 	void (*out_ca2_func)(int offset, int val);
@@ -95,11 +98,15 @@ int pia_startup (struct pia6821_interface *intf)
 	for (i = 0; i < intf->num; i++)
 	{
 		pia[i].in_a_func = intf->in_a_func[i];
+		pia[i].in_ca1_func = intf->in_ca1_func[i];
+		pia[i].in_ca2_func = intf->in_ca2_func[i];
 		pia[i].out_a_func = intf->out_a_func[i];
 		pia[i].out_ca2_func = intf->out_ca2_func[i];
 		pia[i].irq_a_func = intf->irq_a_func[i];
 
 		pia[i].in_b_func = intf->in_b_func[i];
+		pia[i].in_cb1_func = intf->in_cb1_func[i];
+		pia[i].in_cb2_func = intf->in_cb2_func[i];
 		pia[i].out_b_func = intf->out_b_func[i];
 		pia[i].out_cb2_func = intf->out_cb2_func[i];
 		pia[i].irq_b_func = intf->irq_b_func[i];
@@ -187,6 +194,10 @@ int pia_read (int which, int offset)
 		/******************* port A control read *******************/
 		case 2:
 
+			/* Update CA1 & CA2 if callback exists, these in turn may update IRQ's */
+			if (p->in_ca1_func) pia_set_input_ca1(which, p->in_ca1_func (0));
+			if (p->in_ca2_func) pia_set_input_ca2(which, p->in_ca2_func (0));
+
 			/* read control register */
 			val = p->ctl_a;
 
@@ -197,6 +208,10 @@ int pia_read (int which, int offset)
 
 		/******************* port B control read *******************/
 		case 3:
+
+			/* Update CB1 & CB2 if callback exists, these in turn may update IRQ's */
+			if (p->in_cb1_func) pia_set_input_cb1(which, p->in_cb1_func (0));
+			if (p->in_cb2_func) pia_set_input_cb2(which, p->in_cb2_func (0));
 
 			/* read control register */
 			val = p->ctl_b;

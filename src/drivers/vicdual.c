@@ -93,62 +93,6 @@ void carnival_sh_port2_w(int offset, int data);
 
 
 
-static int interrupt_2ports(void)
-{
-	static int coin;
-
-
-	if ((input_port_1_r(0) & 0x80) == 0)
-	{
-		if (coin == 0)
-		{
-			coin = 1;
-			cpu_reset(0);	/* cause a CPU reset, the port will be read and the coin acknowledged */
-		}
-	}
-	else coin = 0;
-
-	return ignore_interrupt();
-}
-
-static int interrupt_3ports(void)
-{
-	static int coin;
-
-
-	if ((input_port_2_r(0) & 0x80) == 0)
-	{
-		if (coin == 0)
-		{
-			coin = 1;
-			cpu_reset(0);	/* cause a CPU reset, the port will be read and the coin acknowledged */
-		}
-	}
-	else coin = 0;
-
-	return ignore_interrupt();
-}
-
-static int interrupt_4ports(void)
-{
-	static int coin;
-
-
-	if ((input_port_3_r(0) & 0x08) == 0)
-	{
-		if (coin == 0)
-		{
-			coin = 1;
-			cpu_reset(0);	/* cause a CPU reset, the port will be read and the coin acknowledged */
-		}
-	}
-	else coin = 0;
-
-	return ignore_interrupt();
-}
-
-
-
 static struct MemoryReadAddress readmem[] =
 {
 	{ 0x0000, 0x7fff, MRA_ROM },
@@ -166,7 +110,14 @@ static struct MemoryWriteAddress writemem[] =
 	{ -1 }  /* end of table */
 };
 
-static struct IOReadPort readport_2ports[] =
+static struct IOReadPort readport_2Aports[] =
+{
+	{ 0x01, 0x01, input_port_0_r },
+	{ 0x08, 0x08, input_port_1_r },
+	{ -1 }  /* end of table */
+};
+
+static struct IOReadPort readport_2Bports[] =
 {
 	{ 0x03, 0x03, input_port_0_r },
 	{ 0x08, 0x08, input_port_1_r },
@@ -200,6 +151,25 @@ static struct IOWritePort writeport[] =
 
 
 
+INPUT_PORTS_START( depthch_input_ports )
+	PORT_START	/* IN0 */
+    PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON2 )
+    PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 )
+    PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY )
+    PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_2WAY )
+	PORT_DIPNAME (0x30, 0x30, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "4 Coins/1 Credit" )
+	PORT_DIPSETTING (   0x10, "3 Coins/1 Credit" )
+	PORT_DIPSETTING (   0x20, "2 Coins/1 Credit" )
+	PORT_DIPSETTING (   0x30, "1 Coin/1 Credit" )
+    PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_VBLANK )
+    PORT_BIT( 0x7e, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
+	PORT_BITX(0x80, IP_ACTIVE_LOW, IPT_COIN1 | IPF_IMPULSE | IPF_RESETCPU, IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 30 )
+INPUT_PORTS_END
+
 INPUT_PORTS_START( safari_input_ports )
 	PORT_START	/* IN0 */
     PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
@@ -220,7 +190,7 @@ INPUT_PORTS_START( safari_input_ports )
 	PORT_DIPSETTING (   0x20, "2 Coins/1 Credit" )
 	PORT_DIPSETTING (   0x30, "1 Coin/1 Credit" )
     PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
-	PORT_BITX(0x80, IP_ACTIVE_LOW, IPT_COIN1 | IPF_IMPULSE, IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 30 )
+	PORT_BITX(0x80, IP_ACTIVE_LOW, IPT_COIN1 | IPF_IMPULSE | IPF_RESETCPU, IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 30 )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( sspaceat_input_ports )
@@ -259,7 +229,7 @@ INPUT_PORTS_START( sspaceat_input_ports )
 	PORT_START	/* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_VBLANK )
 	PORT_BIT( 0x7e, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
-	PORT_BITX(0x80, IP_ACTIVE_LOW, IPT_COIN1 | IPF_IMPULSE, IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 30 )
+	PORT_BITX(0x80, IP_ACTIVE_LOW, IPT_COIN1 | IPF_IMPULSE | IPF_RESETCPU, IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 30 )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( headon_input_ports )
@@ -274,12 +244,9 @@ INPUT_PORTS_START( headon_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY )
 
 	PORT_START	/* IN1 */
-	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
-
-	PORT_START	/* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_VBLANK )
 	PORT_BIT( 0x7e, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
-	PORT_BITX(0x80, IP_ACTIVE_LOW, IPT_COIN1 | IPF_IMPULSE, IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 30 )
+	PORT_BITX(0x80, IP_ACTIVE_LOW, IPT_COIN1 | IPF_IMPULSE | IPF_RESETCPU, IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 30 )
 INPUT_PORTS_END
 
 INPUT_PORTS_START ( invho2_input_ports )
@@ -327,7 +294,7 @@ INPUT_PORTS_START ( invho2_input_ports )
 	PORT_DIPNAME( 0x04, 0x00, "Unused", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x04, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_COIN1 | IPF_IMPULSE | IPF_RESETCPU, IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 30 )
 	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_TOGGLE, "Game Select", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -367,7 +334,7 @@ INPUT_PORTS_START( invinco_input_ports )
 	PORT_START	/* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_VBLANK )
 	PORT_BIT( 0x7e, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BITX(0x80, IP_ACTIVE_LOW, IPT_COIN1 | IPF_IMPULSE | IPF_RESETCPU, IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 30 )
 INPUT_PORTS_END
 
 INPUT_PORTS_START ( invds_input_ports )
@@ -413,7 +380,7 @@ INPUT_PORTS_START ( invds_input_ports )
 	PORT_DIPNAME( 0x04, 0x00, "Deep Scan Lives (2/2)", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x04, "+0" )
 	PORT_DIPSETTING(    0x00, "+2" )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_COIN1 | IPF_IMPULSE | IPF_RESETCPU, IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 30 )
 	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_TOGGLE, "Game Select", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -462,7 +429,7 @@ INPUT_PORTS_START ( tranqgun_input_ports )
 	PORT_DIPNAME( 0x04, 0x00, "Unknown", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x04, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_COIN1 | IPF_IMPULSE | IPF_RESETCPU, IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 30 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -510,7 +477,7 @@ INPUT_PORTS_START ( spacetrk_input_ports )
 	PORT_DIPNAME( 0x04, 0x00, "Unused", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x04, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_COIN1 | IPF_IMPULSE | IPF_RESETCPU, IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 30 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -558,7 +525,7 @@ INPUT_PORTS_START ( carnival_input_ports )
 	PORT_DIPNAME( 0x04, 0x00, "Unused", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x04, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_COIN1 | IPF_IMPULSE, IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 30 )
+	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_COIN1 | IPF_IMPULSE | IPF_RESETCPU, IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 30 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -606,7 +573,7 @@ INPUT_PORTS_START ( pulsar_input_ports )
 	PORT_DIPNAME( 0x04, 0x00, "Unused", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x04, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_COIN1 | IPF_IMPULSE | IPF_RESETCPU, IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 30 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -643,7 +610,7 @@ static struct Samplesinterface samples_interface =
 /* There are three version of the machine driver, identical apart from the readport */
 /* array and interrupt handler */
 
-#define MACHINEDRIVER(NAME,TYPE) 					\
+#define MACHINEDRIVER(NAME,PORT)					\
 static struct MachineDriver NAME =					\
 {													\
 	/* basic machine hardware */					\
@@ -652,8 +619,8 @@ static struct MachineDriver NAME =					\
 			CPU_Z80,								\
 			1933560,	/* 1.93356 Mhz ???? */		\
 			0,										\
-			readmem,writemem,readport_##TYPE,writeport,	\
-			interrupt_##TYPE,1						\
+			readmem,writemem,readport_##PORT,writeport,	\
+			ignore_interrupt,1						\
 		}											\
 	},												\
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */	\
@@ -682,7 +649,8 @@ static struct MachineDriver NAME =					\
 	}												\
 };
 
-MACHINEDRIVER( vicdual_2ports_machine_driver, 2ports )
+MACHINEDRIVER( vicdual_2Aports_machine_driver, 2Aports )
+MACHINEDRIVER( vicdual_2Bports_machine_driver, 2Bports )
 MACHINEDRIVER( vicdual_3ports_machine_driver, 3ports )
 MACHINEDRIVER( vicdual_4ports_machine_driver, 4ports )
 
@@ -693,6 +661,16 @@ MACHINEDRIVER( vicdual_4ports_machine_driver, 4ports )
   Game driver(s)
 
 ***************************************************************************/
+
+ROM_START( depthch_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "50A", 0x0000, 0x0400, 0x3ee2b370 )
+	ROM_LOAD( "51A", 0x0400, 0x0400, 0xff162d40 )
+	ROM_LOAD( "52",  0x0800, 0x0400, 0x83c5408f )
+	ROM_LOAD( "53",  0x0c00, 0x0400, 0x5c669d5e )
+	ROM_LOAD( "54A", 0x1000, 0x0400, 0x6eb911cd )
+	ROM_LOAD( "55A", 0x1400, 0x0400, 0xf5482cea )
+ROM_END
 
 ROM_START( safari_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
@@ -874,6 +852,13 @@ ROM_END
 
 
 
+static unsigned char depthch_color_prom[] =
+{
+	/* Depth Charge is a b/w game, here is the PROM for Head On */
+	0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,
+	0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,
+};
+
 static unsigned char safari_color_prom[] =
 {
 	/* Safari is a b/w game, here is the PROM for Head On */
@@ -1028,9 +1013,10 @@ struct GameDriver GAMENAME##_driver =				\
 	HILOAD,HISAVE									\
 };
 
-GAMEDRIVER( safari,   "Safari",              vicdual_2ports_machine_driver, 0, ORIENTATION_DEFAULT,    0, 0 )
+GAMEDRIVER( depthch,  "Depth Charge",        vicdual_2Aports_machine_driver, 0, ORIENTATION_DEFAULT,    0, 0 )
+GAMEDRIVER( safari,   "Safari",              vicdual_2Bports_machine_driver, 0, ORIENTATION_DEFAULT,    0, 0 )
 GAMEDRIVER( sspaceat, "Sega Space Attack",   vicdual_3ports_machine_driver, 0, ORIENTATION_ROTATE_270, 0, 0 )
-GAMEDRIVER( headon,   "Head On",             vicdual_3ports_machine_driver, 0, ORIENTATION_DEFAULT,    0, 0 )
+GAMEDRIVER( headon,   "Head On",             vicdual_2Aports_machine_driver, 0, ORIENTATION_DEFAULT,    0, 0 )
 GAMEDRIVER( invho2,   "Invinco / Head On 2", vicdual_4ports_machine_driver, 0, ORIENTATION_ROTATE_270, 0, 0 )
 GAMEDRIVER( invinco,  "Invinco",             vicdual_3ports_machine_driver, 0, ORIENTATION_ROTATE_270, 0, 0 )
 GAMEDRIVER( invds,    "Invinco / Deep Scan", vicdual_4ports_machine_driver, 0, ORIENTATION_ROTATE_270, 0, 0 )

@@ -146,11 +146,15 @@ void usvsthem_video_outputs(int offset,int data)
 {
 	background_priority = data & 1;
 
-	/* in most games, bits 1 and 2 flip screen, however they have probably */
-	/* a different function in the laserdisc games. In Us vs. Them, bit 1 */
-	/* controls the sprite bank. */
-	/* bit 2 could be a genlock control. */
+	/* in most games, bits 1 and 2 flip screen, however in the laser */
+	/* disc games they are different. */
+
+	/* bit 1 controls the sprite bank. */
 	spritebank = (data & 0x02) >> 1;
+
+	/* bit 2 video enable (0 = black screen) */
+
+	/* bit 3 genlock control (1 = show laserdisc image) */
 }
 
 
@@ -239,6 +243,7 @@ void gottlieb_vh_screenrefresh(struct osd_bitmap *bitmap)
 					hflip,vflip,
 					sx,sy,
 					&Machine->drv->visible_area,
-					background_priority ? TRANSPARENCY_THROUGH : TRANSPARENCY_PEN,0);
+					background_priority ? TRANSPARENCY_THROUGH : TRANSPARENCY_PEN,
+					background_priority ? Machine->pens[0]     : 0);
 	}
 }
