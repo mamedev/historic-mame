@@ -1073,8 +1073,7 @@ static void install_mem_handler(struct addrspace_data_t *space, int iswrite, int
 	/* sanity check */
 	if (space->dbits != databits)
 	{
-		printf("fatal: install_mem_handler called with a %d-bit handler for a %d-bit address space\n", databits, space->dbits);
-		exit(1);
+		osd_die("fatal: install_mem_handler called with a %d-bit handler for a %d-bit address space\n", databits, space->dbits);
 	}
 
 	/* if we're installing a new bank, make sure we mark it */
@@ -2663,8 +2662,16 @@ static void dump_map(FILE *file, const struct addrspace_data_t *space, const str
 		"bank 12",		"bank 13",		"bank 14",		"bank 15",
 		"bank 16",		"bank 17",		"bank 18",		"bank 19",
 		"bank 20",		"bank 21",		"bank 22",		"bank 23",
-		"bank 24",		"RAM",			"ROM",			"RAMROM",
-		"nop",			"unused 1",		"unused 2",		"unmapped"
+		"bank 24",		"bank 25",		"bank 26",		"bank 27",
+		"bank 28",		"bank 29",		"bank 30",		"bank 31",
+		"bank 32",		"bank 33",		"bank 34",		"bank 35",
+		"bank 36",		"bank 37",		"bank 38",		"bank 39",
+		"bank 40",		"bank 41",		"bank 42",		"bank 43",
+		"bank 44",		"bank 45",		"bank 46",		"bank 47",
+		"bank 48",		"bank 49",		"bank 50",		"bank 51",
+		"bank 52",		"bank 53",		"bank 54",		"bank 55",
+		"bank 56",		"bank 57",		"bank 58",		"RAM",
+		"ROM",			"RAMROM",		"nop",			"unmapped"
 	};
 
 	int l1count = 1 << LEVEL1_BITS;
@@ -2687,9 +2694,10 @@ static void dump_map(FILE *file, const struct addrspace_data_t *space, const str
 					i << LEVEL2_BITS,
 					((i+1) << LEVEL2_BITS) - 1, entry);
 			if (entry < STATIC_COUNT)
-				fprintf(file, "%s [offset=%08X]\n", strings[entry], table->handlers[entry].offset);
+				fprintf(file, "%s [offset=%08X]\n", (entry < sizeof(strings) / sizeof(strings[0]))
+					? strings[entry] : "???", table->handlers[entry].offset);
 			else if (entry < SUBTABLE_BASE)
-				fprintf(file, "handler(%08X) [offset=%08X]\n", (UINT32)table->handlers[entry].handler, table->handlers[entry].offset);
+				fprintf(file, "handler(%08X) [offset=%08X]\n", (UINT32)table->handlers[entry].handler.generic, table->handlers[entry].offset);
 			else
 			{
 				fprintf(file, "subtable %d\n", entry - SUBTABLE_BASE);
@@ -2706,7 +2714,7 @@ static void dump_map(FILE *file, const struct addrspace_data_t *space, const str
 						if (entry2 < STATIC_COUNT)
 							fprintf(file, "%s [offset=%08X]\n", strings[entry2], table->handlers[entry2].offset);
 						else if (entry2 < SUBTABLE_BASE)
-							fprintf(file, "handler(%08X) [offset=%08X]\n", (UINT32)table->handlers[entry2].handler, table->handlers[entry2].offset);
+							fprintf(file, "handler(%08X) [offset=%08X]\n", (UINT32)table->handlers[entry2].handler.generic, table->handlers[entry2].offset);
 						else
 							fprintf(file, "subtable %d???????????\n", entry2 - SUBTABLE_BASE);
 					}

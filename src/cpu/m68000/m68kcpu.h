@@ -155,9 +155,10 @@
 
 /* CPU types for deciding what to emulate */
 #define CPU_TYPE_000   1
-#define CPU_TYPE_010   2
-#define CPU_TYPE_EC020 4
-#define CPU_TYPE_020   8
+#define CPU_TYPE_008   2
+#define CPU_TYPE_010   4
+#define CPU_TYPE_EC020 8
+#define CPU_TYPE_020   16
 
 /* Different ways to stop the CPU */
 #define STOP_LEVEL_STOP 1
@@ -372,7 +373,7 @@
 
 #if M68K_EMULATE_EC020
 	#define CPU_TYPE_IS_EC020_PLUS(A)  ((A) & (CPU_TYPE_EC020 | CPU_TYPE_020))
-	#define CPU_TYPE_IS_EC020_LESS(A)  ((A) & (CPU_TYPE_000 | CPU_TYPE_010 | CPU_TYPE_EC020))
+	#define CPU_TYPE_IS_EC020_LESS(A)  ((A) & (CPU_TYPE_000 | CPU_TYPE_008 | CPU_TYPE_010 | CPU_TYPE_EC020))
 #else
 	#define CPU_TYPE_IS_EC020_PLUS(A)  CPU_TYPE_IS_020_PLUS(A)
 	#define CPU_TYPE_IS_EC020_LESS(A)  CPU_TYPE_IS_020_LESS(A)
@@ -381,7 +382,7 @@
 #if M68K_EMULATE_010
 	#define CPU_TYPE_IS_010(A)         ((A) == CPU_TYPE_010)
 	#define CPU_TYPE_IS_010_PLUS(A)    ((A) & (CPU_TYPE_010 | CPU_TYPE_EC020 | CPU_TYPE_020))
-	#define CPU_TYPE_IS_010_LESS(A)    ((A) & (CPU_TYPE_000 | CPU_TYPE_010))
+	#define CPU_TYPE_IS_010_LESS(A)    ((A) & (CPU_TYPE_000 | CPU_TYPE_008 |CPU_TYPE_010))
 #else
 	#define CPU_TYPE_IS_010(A)         0
 	#define CPU_TYPE_IS_010_PLUS(A)    CPU_TYPE_IS_EC020_PLUS(A)
@@ -395,7 +396,7 @@
 #endif
 
 #if M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_010
-	#define CPU_TYPE_IS_000(A)         ((A) == CPU_TYPE_000)
+	#define CPU_TYPE_IS_000(A)         ((A) == CPU_TYPE_000 || (A) == CPU_TYPE_008)
 #else
 	#define CPU_TYPE_IS_000(A)         1
 #endif
@@ -786,7 +787,7 @@
 
 typedef struct
 {
-	uint cpu_type;     /* CPU Type: 68000, 68010, 68EC020, or 68020 */
+	uint cpu_type;     /* CPU Type: 68000, 68008, 68010, 68EC020, or 68020 */
 	uint dar[16];      /* Data and Address Registers */
 	uint ppc;		   /* Previous program counter */
 	uint pc;           /* Program Counter */
@@ -1484,7 +1485,7 @@ INLINE void m68ki_stack_frame_3word(uint pc, uint sr)
 INLINE void m68ki_stack_frame_0000(uint pc, uint sr, uint vector)
 {
 	/* Stack a 3-word frame if we are 68000 */
-	if(CPU_TYPE == CPU_TYPE_000)
+	if(CPU_TYPE == CPU_TYPE_000 || CPU_TYPE == CPU_TYPE_008)
 	{
 		m68ki_stack_frame_3word(pc, sr);
 		return;

@@ -1248,6 +1248,30 @@ struct snd_interface sndintf[] =
 		0
 	},
 #endif
+#if (HAS_ICS2115)
+	{
+		SOUND_ICS2115,
+		"ICS2115",
+		0,
+		0,
+		ics2115_sh_start,
+		ics2115_sh_stop,
+		0,
+		0
+	},
+#endif
+#if (HAS_ST0016)
+	{
+		SOUND_ST0016,
+		"ST-0016",
+		0,
+		0,
+		st0016_sh_start,
+		st0016_sh_stop,
+		0,
+		0
+	},
+#endif
 
 
 

@@ -21,11 +21,13 @@
 
 static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x00000000, 0x0007ffff) AM_READ(MRA32_RAM)
+	AM_RANGE(0x40000000, 0x4007ffff) AM_READ(MRA32_RAM)
 	AM_RANGE(0xfff80000, 0xffffffff) AM_READ(MRA32_BANK1)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x00000000, 0x0007ffff) AM_WRITE(MWA32_RAM)
+	AM_RANGE(0x40000000, 0x4007ffff) AM_WRITE(MWA32_RAM)
 	AM_RANGE(0xfff80000, 0xffffffff) AM_WRITE(MWA32_ROM)
 ADDRESS_MAP_END
 
@@ -50,7 +52,9 @@ VIDEO_START( vamphalf )
 
 VIDEO_UPDATE( vamphalf )
 {
-
+	int x;
+	for (x=0;x<256;x++)
+		palette_set_color(x^0xff,x,x,x);
 }
 
 static struct GfxLayout vamphalf_layout =
@@ -353,6 +357,78 @@ ROM_START( xfiles )
 	ROM_LOAD16_WORD_SWAP("u10.bin", 0x00000000,    0x400000,   CRC(f2ef1eb9) SHA1(d033d140fce6716d7d78509aa5387829f0a1404c) )
 ROM_END
 
+
+/* Mission Craft ... different HW again */
+
+/*
+
+Mission Craft
+Sun, 2000
+
+PCB Layout
+----------
+
+SUN2000
+|---------------------------------------------|
+|       |------|  SND-ROM1     ROMH00  ROMH01 |
+|       |QDSP  |                              |
+|       |QS1001|                              |
+|DA1311A|------|  SND-ROM2                    |
+|       /------\                              |
+|       |QDSP  |               ROML00  ROML01 |
+|       |QS1000|                              |
+|  24MHz\------/                              |
+|                                 |---------| |
+|                                 | ACTEL   | |
+|J               62256            |A40MX04-F| |
+|A  *  PRG-ROM2  62256            |PL84     | |
+|M   PAL                          |         | |
+|M                    62256 62256 |---------| |
+|A                    62256 62256             |
+|             |-------|           |---------| |
+|             |GMS    |           | ACTEL   | |
+|  93C46      |30C2116|           |A40MX04-F| |
+|             |       | 62256     |PL84     | |
+|  HY5118164C |-------| 62256     |         | |
+|                                 |---------| |
+|SW2                                          |
+|SW1                                          |
+|   50MHz                              28MHz  |
+|---------------------------------------------|
+Notes:
+      GMS30C2116 - based on Hyperstone technology, clock running at 50.000MHz
+      QS1001A    - Wavetable audio chip, 1M ROM, manufactured by AdMOS (Now LG Semi.), SOP32
+      QS1000     - Wavetable audio chip manufactured by AdMOS (Now LG Semi.), QFP100
+                   provides Creative Waveblaster functionality and General Midi functions
+      SW1        - Used to enter test mode
+      SW2        - PCB Reset
+      *          - Empty socket for additional program ROM
+
+*/
+
+ROM_START( misncrft )
+	ROM_REGION( 0x400000, REGION_CPU1, 0 )
+
+	ROM_REGION32_BE( 0x80000, REGION_USER1, 0 ) /* Hyperstone CPU Code */
+	ROM_LOAD("prg-rom2.bin", 0x00000,    0x80000,   CRC(059ae8c1) SHA1(2c72fcf560166cb17cd8ad665beae302832d551c) )
+
+	ROM_REGION( 0x800000, REGION_GFX1, 0 )
+	ROM_LOAD32_WORD("roml00", 0x000000,    0x200000,   CRC(748c5ae5) SHA1(28005f655920e18c82eccf05c0c449dac16ee36e) )
+	ROM_LOAD32_WORD("romh00", 0x000002,    0x200000,   CRC(f34ae697) SHA1(2282e3ef2d100f3eea0167b25b66b35a64ddb0f8) )
+	ROM_LOAD32_WORD("roml01", 0x400000,    0x200000,   CRC(e37ece7b) SHA1(744361bb73905bc0184e6938be640d3eda4b758d) )
+	ROM_LOAD32_WORD("romh01", 0x400002,    0x200000,   CRC(71fe4bc3) SHA1(08110b02707e835bf428d343d5112b153441e255) )
+
+	ROM_REGION( 0x80000, REGION_SOUND1, 0 )
+	ROM_LOAD("snd-rom1.u15", 0x00000,    0x80000,   CRC(fb381da9) SHA1(2b1a5447ed856ab92e44d000f27a04d981e3ac52) )
+
+	ROM_REGION( 0x80000, REGION_SOUND2, 0 )
+	ROM_LOAD("qs1001a.u17", 0x00000,    0x80000,   CRC(d13c6407) SHA1(57b14f97c7d4f9b5d9745d3571a0b7115fbe3176) )
+
+	ROM_REGION( 0x400000, REGION_SOUND3, 0 )
+	ROM_LOAD("snd-rom2.us1", 0x00000,    0x20000,   CRC(8821e5b9) SHA1(4b8df97bc61b48aa16ed411614fcd7ed939cac33) )
+ROM_END
+
+
 DRIVER_INIT( vamphalf )
 {
 	cpu_setbank(1, memory_region(REGION_USER1));
@@ -364,3 +440,4 @@ GAMEX( 19??, hidnctch, 0,        vamphalf, vamphalf, vamphalf, ROT0, "Eolith", "
 GAMEX( 19??, landbrk,  0,        vamphalf, vamphalf, vamphalf, ROT0, "Eolith", "Land Breaker", GAME_NO_SOUND | GAME_NOT_WORKING )
 GAMEX( 19??, racoon,   0,        vamphalf, vamphalf, vamphalf, ROT0, "Eolith", "Racoon World", GAME_NO_SOUND | GAME_NOT_WORKING )
 GAMEX( 19??, xfiles,   0,        xfiles,   vamphalf, vamphalf, ROT0, "dfPIX Entertainment Inc.", "X-Files", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 2000, misncrft, 0,        vamphalf, vamphalf, vamphalf, ROT90, "Sun", "Mission Craft", GAME_NO_SOUND | GAME_NOT_WORKING )

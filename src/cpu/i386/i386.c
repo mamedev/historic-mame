@@ -8,6 +8,7 @@
 #include "mamedbg.h"
 #include "osd_cpu.h"
 #include "i386.h"
+#include "state.h"
 
 /*************************************************************************/
 
@@ -21,8 +22,8 @@ UINT32 i386_translate(int segment, UINT32 ip)
 		r = I.sreg[segment].base + ip;
 	} else {
 		r = (I.sreg[segment].selector << 4) + (ip & 0xffff);
-		/* TODO: A20 lines are initially set, but zeroed after first intra-segment jump */
-		if( segment == CS )
+		/* A20 lines are initially set, but zeroed after first intra-segment jump */
+		if( segment == CS && !I.performed_intersegment_jump )
 			r |= 0xfff00000;
 	}
 
@@ -32,19 +33,20 @@ UINT32 i386_translate(int segment, UINT32 ip)
 void i386_load_segment_descriptor( int segment )
 {
 	UINT32 v1,v2;
-	UINT32 base;
+	UINT32 base, limit;
 	int entry;
 
 	if( I.sreg[segment].selector & 0x4 ) {
-		if( I.ldtr.limit == 0 )
-			return;
 		base = I.ldtr.base;
+		limit = I.ldtr.limit;
 	} else {
-		if( I.gdtr.limit == 0 )
-			return;
 		base = I.gdtr.base;
+		limit = I.gdtr.limit;
 	}
-	entry = I.sreg[segment].selector & ~0x7;
+
+	if (limit == 0)
+		return;
+	entry = (I.sreg[segment].selector % limit) & ~0x7;
 
 	v1 = READ32( base + entry );
 	v2 = READ32( base + entry + 4 );
@@ -82,10 +84,10 @@ void set_flags( UINT32 f )
 	I.OF = (f & 0x800) ? 1 : 0;
 }
 
-static void sib_byte(UINT8 mod, UINT32* ea, UINT8* segment)
+static void sib_byte(UINT8 mod, UINT32* out_ea, UINT8* out_segment)
 {
-	UINT32 disp32;
-	UINT8 disp8;
+	UINT32 ea = 0;
+	UINT8 segment = 0;
 	UINT8 scale, i, base;
 	UINT8 sib = FETCH();
 	scale = (sib >> 6) & 0x3;
@@ -94,105 +96,117 @@ static void sib_byte(UINT8 mod, UINT32* ea, UINT8* segment)
 
 	switch( base )
 	{
-		case 0: *ea = REG32(EAX); *segment = DS; break;
-		case 1: *ea = REG32(ECX); *segment = DS; break;
-		case 2: *ea = REG32(EDX); *segment = DS; break;
-		case 3: *ea = REG32(EBX); *segment = DS; break;
-		case 4: *ea = REG32(ESP); *segment = SS; break;
+		case 0: ea = REG32(EAX); segment = DS; break;
+		case 1: ea = REG32(ECX); segment = DS; break;
+		case 2: ea = REG32(EDX); segment = DS; break;
+		case 3: ea = REG32(EBX); segment = DS; break;
+		case 4: ea = REG32(ESP); segment = SS; break;
 		case 5:
 			if( mod == 0 ) {
-				*ea = FETCH32();
-				*segment = DS;
+				ea = FETCH32();
+				segment = DS;
 			} else if( mod == 1 ) {
-				disp8 = FETCH();
-				*ea = REG32(EBP) + disp8;
-				*segment = SS;
+				ea = REG32(EBP);
+				segment = SS;
 			} else if( mod == 2 ) {
-				disp32 = FETCH32();
-				*ea = REG32(EBP) + disp32;
-				*segment = SS;
+				ea = REG32(EBP);
+				segment = SS;
 			}
 			break;
-		case 6: *ea = REG32(ESI); *segment = DS; break;
-		case 7: *ea = REG32(EDI); *segment = DS; break;
+		case 6: ea = REG32(ESI); segment = DS; break;
+		case 7: ea = REG32(EDI); segment = DS; break;
 	}
 	switch( i )
 	{
-		case 0: *ea += REG32(EAX) * (1 << scale); break;
-		case 1: *ea += REG32(ECX) * (1 << scale); break;
-		case 2: *ea += REG32(EDX) * (1 << scale); break;
-		case 3: *ea += REG32(EBX) * (1 << scale); break;
+		case 0: ea += REG32(EAX) * (1 << scale); break;
+		case 1: ea += REG32(ECX) * (1 << scale); break;
+		case 2: ea += REG32(EDX) * (1 << scale); break;
+		case 3: ea += REG32(EBX) * (1 << scale); break;
 		case 4: break;
-		case 5: *ea += REG32(EBP) * (1 << scale); break;
-		case 6: *ea += REG32(ESI) * (1 << scale); break;
-		case 7: *ea += REG32(EDI) * (1 << scale); break;
+		case 5: ea += REG32(EBP) * (1 << scale); break;
+		case 6: ea += REG32(ESI) * (1 << scale); break;
+		case 7: ea += REG32(EDI) * (1 << scale); break;
 	}
+	*out_ea = ea;
+	*out_segment = segment;
 }
 		
-static void modrm_to_EA(UINT8 mod_rm, UINT32* ea, UINT8* segment)
+static void modrm_to_EA(UINT8 mod_rm, UINT32* out_ea, UINT8* out_segment)
 {
 	INT8 disp8;
 	INT16 disp16;
 	INT32 disp32;
 	UINT8 mod = (mod_rm >> 6) & 0x3;
 	UINT8 rm = mod_rm & 0x7;
+	UINT32 ea;
+	UINT8 segment;
 
-	if( (mod == 0) && (rm == 5) ) {
-		if( I.address_size ) {
-			*segment = DS;
-			*ea = FETCH32();
-		} else {
-			*segment = DS;
-			*ea = FETCH16();
-		}
-		return;
-	}
+	if( mod_rm >= 0xc0 )
+		osd_die("i386: Called modrm_to_EA with modrm value %02X !\n",mod_rm);
 
 	if( I.address_size ) {
 		switch( rm )
 		{
-			case 0: *ea = REG32(EAX); *segment = DS; break;
-			case 1: *ea = REG32(ECX); *segment = DS; break;
-			case 2: *ea = REG32(EDX); *segment = DS; break;
-			case 3: *ea = REG32(EBX); *segment = DS; break;
-			case 4: sib_byte( mod, ea, segment ); break;
-			case 5: *ea = REG32(EBP); *segment = SS; break;
-			case 6: *ea = REG32(ESI); *segment = DS; break;
-			case 7: *ea = REG32(EDI); *segment = DS; break;
+			case 0: ea = REG32(EAX); segment = DS; break;
+			case 1: ea = REG32(ECX); segment = DS; break;
+			case 2: ea = REG32(EDX); segment = DS; break;
+			case 3: ea = REG32(EBX); segment = DS; break;
+			case 4: sib_byte( mod, &ea, &segment ); break;
+			case 5: 
+				if( mod == 0 ) {
+					ea = FETCH32(); segment = DS;
+				} else {
+					ea = REG32(EBP); segment = SS; 
+				}
+				break;
+			case 6: ea = REG32(ESI); segment = DS; break;
+			case 7: ea = REG32(EDI); segment = DS; break;
 		}
 		if( mod == 1 ) {
 			disp8 = FETCH();
-			*ea += disp8;
+			ea += (INT32)disp8;
 		} else if( mod == 2 ) {
 			disp32 = FETCH32();
-			*ea += disp32;
+			ea += disp32;
 		}
 
 		if( I.segment_prefix )
-			*segment = I.segment_override;
+			segment = I.segment_override;
+
+		*out_ea = ea;
+		*out_segment = segment;
 	
 	} else {
 		switch( rm )
 		{
-			case 0: *ea = REG16(BX) + REG16(SI); *segment = DS; break;
-			case 1: *ea = REG16(BX) + REG16(DI); *segment = DS; break;
-			case 2: *ea = REG16(BP) + REG16(SI); *segment = SS; break;
-			case 3: *ea = REG16(BP) + REG16(DI); *segment = SS; break;
-			case 4: *ea = REG16(SI); *segment = DS; break;
-			case 5: *ea = REG16(DI); *segment = DS; break;
-			case 6: *ea = REG16(BP); *segment = SS; break;
-			case 7: *ea = REG16(BX); *segment = DS; break;
+			case 0: ea = REG16(BX) + REG16(SI); segment = DS; break;
+			case 1: ea = REG16(BX) + REG16(DI); segment = DS; break;
+			case 2: ea = REG16(BP) + REG16(SI); segment = SS; break;
+			case 3: ea = REG16(BP) + REG16(DI); segment = SS; break;
+			case 4: ea = REG16(SI); segment = DS; break;
+			case 5: ea = REG16(DI); segment = DS; break;
+			case 6:
+				if( mod == 0 ) {
+					ea = FETCH16(); segment = DS;
+				} else {
+					ea = REG16(BP); segment = SS; 
+				}
+				break;
+			case 7: ea = REG16(BX); segment = DS; break;
 		}
 		if( mod == 1 ) {
 			disp8 = FETCH();
-			*ea += disp8;
+			ea += (INT32)disp8;
 		} else if( mod == 2 ) {
 			disp16 = FETCH16();
-			*ea += disp16;
+			ea += (INT32)disp16;
 		}
 
 		if( I.segment_prefix )
-			*segment = I.segment_override;
+			segment = I.segment_override;
+
+		*out_ea = ea & 0xffff;
+		*out_segment = segment;
 	}
 }
 
@@ -212,27 +226,51 @@ static UINT32 GetEA(UINT8 modrm)
 	return i386_translate( segment, ea );
 }
 
-static void i386_interrupt(int irq)
+static void i386_trap(int irq)
 {
+	/*	I386 Interrupts/Traps/Faults:
+	 *
+	 *	0x00	Divide by zero
+	 *	0x01	Debug exception
+	 *	0x02	NMI
+	 *	0x03	Int3
+	 *	0x04	Overflow
+	 *	0x05	Array bounds check
+	 *	0x06	Illegal Opcode
+	 *	0x07	FPU not available
+	 *	0x08	Double fault
+	 *	0x09	Coprocessor segment overrun
+	 *	0x0a	Invalid task state
+	 *	0x0b	Segment not present
+	 *	0x0c	Stack exception
+	 *	0x0d	General Protection Fault
+	 *	0x0e	Page fault
+	 *	0x0f	Reserved
+	 *	0x10	Coprocessor error
+	 */
 	UINT32 v1, v2;
 	UINT32 offset;
 	UINT16 segment;
-	int entry = irq * 8;
+	int entry = irq * (I.sreg[CS].d ? 8 : 4);
 
-	/* Check if the interrupts are enabled */
-	if( I.IF ) {
-		
-		/* Check if IRQ is out of IDTR's bounds */
-		if( entry > I.idtr.limit ) {
-			printf("I386 Interrupt: IRQ out of IDTR bounds (IRQ: %d, IDTR Limit: %d)\n", irq, I.idtr.limit);
-			exit(1);
-		}
+	/* Check if IRQ is out of IDTR's bounds */
+	if( entry > I.idtr.limit ) {
+		osd_die("I386 Interrupt: IRQ out of IDTR bounds (IRQ: %d, IDTR Limit: %d)\n", irq, I.idtr.limit);
+	}
 
-		if( !I.sreg[CS].d ) {
-			printf("I386: 16-bit interrupts are not supported !\n");
-			exit(1);
-		}
+	if( !I.sreg[CS].d )
+	{
+		/* 16-bit */
+		PUSH16( get_flags() & 0xffff );
+		PUSH16( I.sreg[CS].selector );
+		PUSH16( I.eip );
 
+		I.sreg[CS].selector = READ16( I.idtr.base + entry + 2 );
+		I.eip = READ32( I.idtr.base + entry );
+	}
+	else
+	{
+		/* 32-bit */
 		PUSH32( get_flags() & 0x00fcffff );
 		PUSH32( I.sreg[CS].selector );
 		PUSH32( I.eip );
@@ -244,9 +282,19 @@ static void i386_interrupt(int irq)
 
 		I.sreg[CS].selector = segment;
 		I.eip = offset;
-		CHANGE_PC(I.eip);
 	}
+	i386_load_segment_descriptor(CS);
+	CHANGE_PC(I.eip);
 }
+
+static void i386_interrupt(int irq)
+{
+	/* Check if the interrupts are enabled */
+	if( I.IF )
+		i386_trap(irq);
+}
+
+
 
 #include "i386ops.c"
 #include "i386op16.c"
@@ -275,12 +323,22 @@ static void I386OP(decode_two_byte)(void)
 
 /*************************************************************************/
 
+static void i386_postload(void)
+{
+	int i;
+	for (i = 0; i < 6; i++)
+		i386_load_segment_descriptor(i);
+	CHANGE_PC(I.eip);
+}
+
 void i386_init(void)
 {
 	int i, j;
 	int regs8[8] = {AL,CL,DL,BL,AH,CH,DH,BH};
 	int regs16[8] = {AX,CX,DX,BX,SP,BP,SI,DI};
 	int regs32[8] = {EAX,ECX,EDX,EBX,ESP,EBP,ESI,EDI};
+	int cpu = cpu_getactivecpu();
+	const char *state_type = "I386";
 
 	for( i=0; i < 256; i++ ) {
 		int c=0;
@@ -300,6 +358,34 @@ void i386_init(void)
 		MODRM_table[i].rm.w = regs16[i & 0x7];
 		MODRM_table[i].rm.d = regs32[i & 0x7];
 	}
+
+	state_save_register_UINT32(state_type, cpu,	"REGS",			I.reg.d, 8);
+	state_save_register_UINT16(state_type, cpu,	"ES",			&I.sreg[ES].selector, 1);
+	state_save_register_UINT16(state_type, cpu,	"CS",			&I.sreg[CS].selector, 1);
+	state_save_register_UINT16(state_type, cpu,	"SS",			&I.sreg[SS].selector, 1);
+	state_save_register_UINT16(state_type, cpu,	"DS",			&I.sreg[DS].selector, 1);
+	state_save_register_UINT16(state_type, cpu,	"FS",			&I.sreg[FS].selector, 1);
+	state_save_register_UINT16(state_type, cpu,	"GS",			&I.sreg[GS].selector, 1);
+	state_save_register_UINT32(state_type, cpu,	"EIP",			&I.eip, 1);
+	state_save_register_UINT32(state_type, cpu,	"PREV_EIP",		&I.prev_eip, 1);
+	state_save_register_UINT8(state_type, cpu,	"CF",			&I.CF, 1);
+	state_save_register_UINT8(state_type, cpu,	"DF",			&I.DF, 1);
+	state_save_register_UINT8(state_type, cpu,	"SF",			&I.SF, 1);
+	state_save_register_UINT8(state_type, cpu,	"OF",			&I.OF, 1);
+	state_save_register_UINT8(state_type, cpu,	"ZF",			&I.ZF, 1);
+	state_save_register_UINT8(state_type, cpu,	"PF",			&I.PF, 1);
+	state_save_register_UINT8(state_type, cpu,	"AF",			&I.AF, 1);
+	state_save_register_UINT8(state_type, cpu,	"IF",			&I.IF, 1);
+	state_save_register_UINT8(state_type, cpu,	"TF",			&I.TF, 1);
+	state_save_register_UINT32(state_type, cpu,	"CR",			I.cr, 4);
+	state_save_register_UINT32(state_type, cpu,	"DR",			I.dr, 8);
+	state_save_register_UINT32(state_type, cpu,	"TR",			I.tr, 8);
+	state_save_register_UINT32(state_type, cpu,	"IDTR_BASE",	&I.idtr.base, 1);
+	state_save_register_UINT16(state_type, cpu,	"IDTR_LIMIT",	&I.idtr.limit, 1);
+	state_save_register_UINT32(state_type, cpu,	"GDTR_BASE",	&I.gdtr.base, 1);
+	state_save_register_UINT16(state_type, cpu,	"GDTR_LIMIT",	&I.gdtr.limit, 1);
+	state_save_register_UINT8(state_type, cpu,	"ISEGJMP",		&I.performed_intersegment_jump, 1);
+	state_save_register_func_postload(i386_postload);
 }
 
 void i386_reset(void *param)
@@ -308,6 +394,9 @@ void i386_reset(void *param)
 	I.sreg[CS].selector = 0xf000;
 	I.sreg[CS].base		= 0xffff0000;
 	I.sreg[CS].limit	= 0xffff;
+
+	I.idtr.base = 0;
+	I.idtr.limit = 0x3ff;
 
 	I.cr[0] = 0;
 	I.eflags = 0;
@@ -418,7 +507,8 @@ void i386_set_reg(int regnum, unsigned value)
 
 void i386_set_irq_line(int irqline, int state)
 {
-	i386_interrupt( irqline );
+	if ( state )
+		i386_interrupt( irqline );
 }
 
 void i386_set_irq_callback(int (*callback)(int))
@@ -442,7 +532,7 @@ int i386_execute(int num_cycles)
 		I386OP(decode_opcode)();
 	}
 
-	return num_cycles;
+	return num_cycles - I.cycles;
 }
 
 /*************************************************************************/
@@ -480,8 +570,7 @@ static UINT8 i386_win_layout[] =
 unsigned i386_dasm(char *buffer, unsigned pc)
 {
 #ifdef MAME_DEBUG
-	extern unsigned DasmI386(char *, unsigned, unsigned, unsigned);
-	return DasmI386(buffer, pc, I.sreg[CS].d, I.sreg[CS].d);
+	return i386_dasm_one(buffer, pc, I.sreg[CS].d, I.sreg[CS].d);
 #else
 	sprintf( buffer, "$%02X", READ8(pc) );
 	return 1;
@@ -500,7 +589,7 @@ static void i386_set_info(UINT32 state, union cpuinfo *info)
 	{
 		/* --- the following bits of info are set as 64-bit signed integers --- */
 		case CPUINFO_INT_PC:							I.pc = info->i;break;
-		case CPUINFO_INT_REGISTER + I386_EIP:			I.eip = info->i; break;
+		case CPUINFO_INT_REGISTER + I386_EIP:			I.eip = info->i; CHANGE_PC(I.eip); break;
 		case CPUINFO_INT_REGISTER + I386_EAX:			REG32(EAX) = info->i; break;
 		case CPUINFO_INT_REGISTER + I386_EBX:			REG32(EBX) = info->i; break;
 		case CPUINFO_INT_REGISTER + I386_ECX:			REG32(ECX) = info->i; break;

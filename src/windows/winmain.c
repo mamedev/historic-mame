@@ -264,6 +264,29 @@ void osd_exit(void)
 }
 
 
+
+//============================================================
+//	osd_alloc_executable
+//============================================================
+
+void *osd_alloc_executable(size_t size)
+{
+	return VirtualAlloc(NULL, size, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+}
+
+
+
+//============================================================
+//	osd_free_executable
+//============================================================
+
+void osd_free_executable(void *ptr)
+{
+	VirtualFree(ptr, 0, MEM_RELEASE);
+}
+
+
+
 //============================================================
 //	exception_filter
 //============================================================

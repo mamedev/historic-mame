@@ -23,6 +23,8 @@
 #define AUD_DISK_NOT_FOUND			0x00000200
 #define AUD_DISK_BAD_MD5			0x00000400
 #define AUD_OPTIONAL_ROM_NOT_FOUND	0x00000800
+#define AUD_DISK_NOT_AVAILABLE		0x00001000
+#define AUD_DISK_NEED_DUMP			0x00002000
 
 #define AUD_MAX_ROMS		100	/* maximum roms per driver */
 #define AUD_MAX_SAMPLES		200	/* maximum samples per driver */

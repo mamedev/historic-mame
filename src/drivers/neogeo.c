@@ -4538,6 +4538,24 @@ ROM_START( stakwin2 )
 	ROM_LOAD16_BYTE( "227-c4.bin", 0x0800001, 0x200000, CRC(7efea43a) SHA1(3f2b1718fe7be06b6d75ec34badc2de2a3554d3e) ) /* Plane 2,3 */
 ROM_END
 
+ROM_START( ghostlop )
+	ROM_REGION( 0x200000, REGION_CPU1, 0 )
+	ROM_LOAD16_WORD_SWAP( "gl-p1.rom", 0x000000, 0x100000, CRC(6033172e) SHA1(f57fb706aa8dd9e5f9e992a5d35c1799578b59f8) )
+
+	NEO_SFIX_128K( "gl-s1.rom",  CRC(83c24e81) SHA1(585ef209d8bfc23bdccc1f37d8b764eeedfedc1c) )
+
+	NEO_BIOS_SOUND_128K( "gl-m1.rom", CRC(fd833b33) SHA1(ab6c218c42cba821654cbdae154efecb69f844f6) )
+
+	ROM_REGION( 0x200000, REGION_SOUND1, ROMREGION_SOUNDONLY )
+	ROM_LOAD( "gl-v1.rom", 0x000000, 0x200000, CRC(c603fce6) SHA1(5a866471d35895b2ae13cbd5d1cb41bf2e72e1b8) )
+
+	NO_DELTAT_REGION
+
+	ROM_REGION( 0x800000, REGION_GFX3, 0 )
+	ROM_LOAD16_BYTE( "gl-c1.rom",  0x000000, 0x400000, CRC(bfc99efe) SHA1(5cd2545310142080b8286e787cf5b859f627b3db) ) /* Plane 0,1 */
+	ROM_LOAD16_BYTE( "gl-c2.rom",  0x000001, 0x400000, CRC(69788082) SHA1(c3ecb42ddcbd9e16d0018a0c3adb56a911d813ca) ) /* Plane 2,3 */
+ROM_END
+
 ROM_START( breakers )
 	ROM_REGION( 0x200000, REGION_CPU1, 0 )
 	ROM_LOAD16_WORD_SWAP( "230-p1.bin", 0x100000, 0x100000, CRC(ed24a6e6) SHA1(3fb77ae696d92d2f9a5d589e08b708545c7cda0a) )
@@ -6299,6 +6317,7 @@ GAMEB( 1993, spinmast, neogeo,   neogeo, raster, neogeo,  neogeo,   ROT0, "Data 
 GAMEB( 1994, wjammers, neogeo,   neogeo, neogeo, neogeo,  neogeo,   ROT0, "Data East Corporation", "Windjammers / Flying Power Disc" )
 GAMEB( 1994, karnovr,  neogeo,   neogeo, raster, neogeo,  neogeo,   ROT0, "Data East Corporation", "Karnov's Revenge / Fighter's History Dynamite" )
 GAMEB( 1994, strhoop,  neogeo,   neogeo, raster, neogeo,  neogeo,   ROT0, "Data East Corporation", "Street Hoop / Street Slam / Dunk Dream" )
+GAMEB( 1996, ghostlop, neogeo,   neogeo, raster, neogeo,  neogeo,   ROT0, "Data East Corporation", "Ghostlop (prototype)" )
 GAMEB( 1996, magdrop2, neogeo,   neogeo, neogeo, neogeo,  neogeo,   ROT0, "Data East Corporation", "Magical Drop II" )
 GAMEB( 1997, magdrop3, neogeo,   neogeo, neogeo, neogeo,  neogeo,   ROT0, "Data East Corporation", "Magical Drop III" )
 

@@ -287,8 +287,14 @@ int AuditRomSet (int game, tAuditRecord **audit)
 					{
 						aud->status = AUD_MEM_ERROR;
 					}
+					else if (hash_data_has_info(aud->exphash, HASH_INFO_NO_DUMP))
+					{
+						/* not found but it's not good anyway */
+						aud->status = AUD_DISK_NOT_AVAILABLE;
+					}
 					else
 					{
+						/* not found */
 						aud->status = AUD_DISK_NOT_FOUND;
 					}
 				}
@@ -301,13 +307,17 @@ int AuditRomSet (int game, tAuditRecord **audit)
 					if (memcmp(nullhash, header.sha1, sizeof(header.sha1)))
 						hash_data_insert_binary_checksum(aud->hash, HASH_SHA1, header.sha1);
 					
-					if (hash_data_is_equal(aud->exphash, aud->hash, 0))
+					 if (hash_data_has_info(aud->exphash, HASH_INFO_NO_DUMP))
 					{
-						aud->status = AUD_DISK_GOOD;
+						aud->status = AUD_DISK_NEED_DUMP;
+					}
+					else if (!hash_data_is_equal(aud->exphash, aud->hash, 0))
+					{
+						aud->status = AUD_DISK_BAD_MD5;
 					}
 					else
 					{
-						aud->status = AUD_DISK_BAD_MD5;
+						aud->status = AUD_DISK_GOOD;
 					}
 
 					chd_close( source );
@@ -443,7 +453,7 @@ int VerifyRomSet (int game, verify_printf_proc verify_printf)
 #if 0    /* if you want a full accounting of roms */
 				verify_printf ("%-8s: %-12s GOOD\n",
 					drivers[game]->name, aud->rom);
-				VerifyDumpHashData(aud->hash, NULL, verify_printf);				
+				VerifyDumpHashData(aud->hash, NULL, verify_printf);
 #endif
 				break;
 			case AUD_DISK_NOT_FOUND:
@@ -457,13 +467,22 @@ int VerifyRomSet (int game, verify_printf_proc verify_printf)
 				VerifyDumpHashData(aud->exphash, "EXPECTED: ", verify_printf);
 				VerifyDumpHashData(aud->hash,    "   FOUND: ", verify_printf);
 				break;
+			case AUD_DISK_NOT_AVAILABLE:
+				verify_printf ("%-8s: %-12s NO GOOD DUMP KNOWN\n",
+					drivers[game]->name, aud->rom);
+				break;
+			case AUD_DISK_NEED_DUMP:
+				verify_printf ("%-8s: %-12s FOUND BUT NO GOOD DUMP KNOWN\n",
+					drivers[game]->name, aud->rom);
+				VerifyDumpHashData(aud->hash, NULL, verify_printf);
+				break;
 		}
 		aud++;
 	}
 
 	if (archive_status & (AUD_ROM_NOT_FOUND|AUD_BAD_CHECKSUM|AUD_MEM_ERROR|AUD_LENGTH_MISMATCH|AUD_DISK_NOT_FOUND|AUD_DISK_BAD_MD5))
 		return INCORRECT;
-	if (archive_status & (AUD_ROM_NEED_DUMP|AUD_ROM_NEED_REDUMP|AUD_NOT_AVAILABLE))
+	if (archive_status & (AUD_ROM_NEED_DUMP|AUD_ROM_NEED_REDUMP|AUD_NOT_AVAILABLE|AUD_DISK_NOT_AVAILABLE|AUD_DISK_NEED_DUMP))
 		return BEST_AVAILABLE;
 	if (archive_status & (AUD_OPTIONAL_ROM_NOT_FOUND))
 		return MISSING_OPTIONAL;

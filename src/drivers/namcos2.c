@@ -3649,6 +3649,51 @@ ROM_START( sgunnr2j)
 	ROM_LOAD( "sns_voi2.bin",  0x080000, 0x080000, CRC(562ec86b) SHA1(c9874c7e1f38c5b38d21f45a82028651cf9089a5) )
 ROM_END
 
+/* SUPER WORLD STADIUM */
+ROM_START( sws )
+	ROM_REGION( 0x040000, REGION_CPU1, 0 ) /* Master CPU */
+	ROM_LOAD16_BYTE( "ss1_mpr0.11d",	0x000000, 0x020000, CRC(d12bd020) SHA1(bae6250746ab1dbfffbf06a6099fa6aaa1680e98) )
+	ROM_LOAD16_BYTE( "ss1_mpr1.13d",	0x000001, 0x020000, CRC(e9ae14ce) SHA1(76a82219c0f663637f5cfcd8607186a972e68218) )
+
+	ROM_REGION( 0x040000, REGION_CPU2, 0 ) /* Slave CPU */
+	ROM_LOAD16_BYTE( "sst1spr0.bin",	0x000000, 0x020000, CRC(9777ee2f) SHA1(95b769402cea53c7f557aab97e0bea61edfd4a35) )
+	ROM_LOAD16_BYTE( "sst1spr1.bin",	0x000001, 0x020000, CRC(27a35c69) SHA1(cb23a357f6f608cb9afdeca9ea11d123b69272ef) )
+
+	ROM_REGION( 0x030000, REGION_CPU3, 0 ) /* Sound CPU (Banked) */
+	ROM_LOAD( "sst1snd0.bin",  0x00c000, 0x004000, CRC(8fc45114) SHA1(d0dc5c8af8733f1ac7cbe46f0f6cfbe188124d42) )
+	ROM_CONTINUE( 0x010000, 0x01c000 )
+	ROM_RELOAD(  0x010000, 0x020000 )
+
+	ROM_REGION( 0x010000, REGION_CPU4, 0 ) /* I/O MCU */
+	ROM_LOAD( "sys2mcpu.bin",  0x000000, 0x002000, CRC(a342a97e) SHA1(2c420d34dba21e409bf78ddca710fc7de65a6642) )
+	ROM_LOAD( "sys2c68.bin",  0x008000, 0x008000, CRC(ca64550a) SHA1(38d1ad1b1287cadef0c999aff9357927315f8e6b) )
+
+	ROM_REGION( 0x400000, REGION_GFX1, ROMREGION_DISPOSE ) /* Sprites */
+	ROM_LOAD( "ss1_obj0.5b",  0x000000, 0x80000, CRC(9bd6add1) SHA1(34595987670d7f64ba18a840e98667b96ae5e4bf) )
+	ROM_LOAD( "ss1_obj1.4b",  0x080000, 0x80000, CRC(a9db3d02) SHA1(63ff1ebc3fe27cd58fda0133bade9ca177ad2d89) )
+	ROM_LOAD( "ss1_obj2.5d",  0x100000, 0x80000, CRC(b4a73ced) SHA1(9d8476fb3db7fd2fce124dab09094f0ce0057116) )
+	ROM_LOAD( "ss1_obj3.4d",  0x180000, 0x80000, CRC(0a832b36) SHA1(56879a208e106105b8c0add3c7f7a69ce1ecbd9a) )
+
+	ROM_REGION( 0x400000, REGION_GFX2, ROMREGION_DISPOSE ) /* Tiles */
+	ROM_LOAD( "ss1_chr0.11n",  0x000000, 0x80000, CRC(ab0141de) SHA1(b63f5a1ca23a56f8da71741f64d410a323ff277f) )
+
+	ROM_REGION( 0x400000, REGION_GFX3, 0 ) /* ROZ Tiles */
+	ROM_LOAD( "ss_roz0.bin",  0x000000, 0x80000, CRC(40ce9a58) SHA1(240433e4fe31d333bcc8890c0a8e9ac84086fb07) )
+	ROM_LOAD( "ss_roz1.bin",  0x080000, 0x80000, CRC(c98902ff) SHA1(fef954e90552a09fa4c9a8e4acc18c1e0e762900) )
+	ROM_LOAD( "ss1_roz2.1c", 0x100000, 0x80000, CRC(b603e1a1) SHA1(bfe7ec0425c390390b3e3d17a9a57bca69346f98) )
+
+	ROM_REGION( 0x080000, REGION_GFX4, 0 ) /* Mask shape */
+	ROM_LOAD( "ss1_sha0.7n",  0x000000, 0x80000,  CRC(fea6952c) SHA1(3bf27ee1e7e4c5ee0d53f28d49ef063b3f8064ba) )
+
+	ROM_REGION16_BE( 0x200000, REGION_USER1, 0 ) /* Shared data roms */
+	NAMCOS2_DATA_LOAD_E_256K( "ss1_dat0.13s",  0x000000, CRC(6a360f91) SHA1(22597c6bf7c597cf554a27182b4748de43a87b0a)  )
+	NAMCOS2_DATA_LOAD_O_256K( "ss1_dat1.13p",  0x000000, CRC(ab1e487d) SHA1(b40ea6c28dd9adae4939f69fcbf53414ae4703c6) )
+
+	ROM_REGION( 0x100000, REGION_SOUND1, 0 ) /* Sound voices */
+	ROM_LOAD( "ss1_voi1.3m",  0x000000, 0x080000, CRC(b88278cb) SHA1(49fde0970ff6bc72343f0f72d5e4c112013c7e43) ) // couldn't get a good read i suspect the one from sws92 is right 99.9% the same
+//	ROM_LOAD( "ss_voi1.bin",  0x000000, 0x080000, CRC(503e51b7) SHA1(2e159fcc9bb0bef9a3476ae233bc8d61fabbb4bd) )
+ROM_END
+
 /* SUPER WORLD STADIUM 92 */
 ROM_START( sws92 )
 	ROM_REGION( 0x040000, REGION_CPU1, 0 ) /* Master CPU */
@@ -4349,6 +4394,10 @@ DRIVER_INIT( sgunner2 ){
 	namcos2_gametype=NAMCOS2_STEEL_GUNNER_2;
 }
 
+DRIVER_INIT( sws ){
+	namcos2_gametype=NAMCOS2_SUPER_WSTADIUM;
+}
+
 DRIVER_INIT( sws92 ){
 	namcos2_gametype=NAMCOS2_SUPER_WSTADIUM_92;
 }
@@ -4441,6 +4490,7 @@ GAMEX(1992, finalp3a, finalap3, finallap, finalap3, finalap3, ROT0,   "Namco", "
 GAMEX(1992, luckywld, 0,        luckywld, luckywld, luckywld, ROT0,   "Namco", "Lucky & Wild",GAME_IMPERFECT_GRAPHICS )
 GAMEX(1992, suzuka8h, 0,        luckywld, suzuka,   suzuka8h, ROT0,   "Namco", "Suzuka 8 Hours (World?)", GAME_IMPERFECT_GRAPHICS )
 GAMEX(1992, suzuk8hj, suzuka8h, luckywld, suzuka,   suzuka8h, ROT0,   "Namco", "Suzuka 8 Hours (Japan)", GAME_IMPERFECT_GRAPHICS  )
+GAME( 1992, sws,      0,        default,  default,  sws,      ROT0,   "Namco", "Super World Stadium (Japan)" )
 GAME( 1992, sws92,    0,        default,  default,  sws92,    ROT0,   "Namco", "Super World Stadium '92 (Japan)" )
 GAME( 1992, sws92g,   sws92,    default,  default,  sws92g,   ROT0,   "Namco", "Super World Stadium '92 Gekitouban (Japan)" )
 GAMEX(1993, suzuk8h2, 0,        luckywld, suzuka,   suzuk8h2, ROT0,   "Namco", "Suzuka 8 Hours 2 (Japan)", GAME_IMPERFECT_GRAPHICS )

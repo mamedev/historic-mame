@@ -71,6 +71,7 @@ enum
 {
 	M68K_CPU_TYPE_INVALID,
 	M68K_CPU_TYPE_68000,
+	M68K_CPU_TYPE_68008,
 	M68K_CPU_TYPE_68010,
 	M68K_CPU_TYPE_68EC020,
 	M68K_CPU_TYPE_68020,
@@ -258,8 +259,8 @@ void m68k_set_instr_hook_callback(void  (*callback)(void));
 /* ======================================================================== */
 
 /* Use this function to set the CPU type you want to emulate.
- * Currently supported types are: M68K_CPU_TYPE_68000, M68K_CPU_TYPE_68010,
- * M68K_CPU_TYPE_EC020, and M68K_CPU_TYPE_68020.
+ * Currently supported types are: M68K_CPU_TYPE_68000, M68K_CPU_TYPE_68008, 
+ * M68K_CPU_TYPE_68010, M68K_CPU_TYPE_EC020, and M68K_CPU_TYPE_68020.
  */
 void m68k_set_cpu_type(unsigned int cpu_type);
 

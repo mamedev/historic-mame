@@ -202,6 +202,11 @@ void RENDERFUNC(void)
 #endif
 			int startx, stopx;
 			float fpy;
+
+#if (RESOLUTION_DIVIDE_SHIFT != 0)
+			if (cheating_allowed && (effy & ((1 << RESOLUTION_DIVIDE_SHIFT) - 1)))
+				continue;
+#endif
 			
 			/* compute X endpoints */
 			fpy = (float)y + 0.5f;
@@ -244,6 +249,10 @@ void RENDERFUNC(void)
 				INT32 r = 0, g = 0, b = 0, a = 0, depthval;
 				UINT32 texel = 0, c_local = 0;
 				
+#if (RESOLUTION_DIVIDE_SHIFT != 0)
+				if (cheating_allowed && (x & ((1 << RESOLUTION_DIVIDE_SHIFT) - 1)))
+					goto skipdrawdepth;
+#endif
 				/* rotate stipple pattern */
 				if (!FBZMODE_BITS(12,1))
 					voodoo_regs[stipple] = (voodoo_regs[stipple] << 1) | (voodoo_regs[stipple] >> 31);

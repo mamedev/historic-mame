@@ -10,21 +10,9 @@
 
 ***************************************************************************/
 
-/*
- * Modified For OpenVMS By:  Robert Alan Byer
- *                           byer@mail.ourservers.net
- *                           Jun. 15, 2004
- */
-
 #include "driver.h"
-
-#if defined(__DECC) && defined(VMS)
-#  include "../src/includes/psx.h"
-#else
-#  include "includes/psx.h"
-#endif
-
 #include "state.h"
+#include "includes/psx.h"
 
 #define VERBOSE_LEVEL ( 0 )
 
@@ -366,7 +354,7 @@ void PSX_sh_stop( void )
 
 READ32_HANDLER( psx_spu_delay_r )
 {
-	verboselog( 1, "psx_spu_delay_r()\n", m_n_voiceon );
+	verboselog( 1, "psx_spu_delay_r()\n" );
 	return 0;
 }
 

@@ -25,6 +25,12 @@ extern data32_t *namcos22_cgram;
 extern data32_t *namcos22_textram;
 extern data32_t *namcos22_polygonram;
 extern data32_t *namcos22_gamma;
+extern data32_t *namcos22_vics_data;
+extern data32_t *namcos22_vics_control;
+
+WRITE16_HANDLER( namcos22_dspram16_bank_w );
+READ16_HANDLER( namcos22_dspram16_r );
+WRITE16_HANDLER( namcos22_dspram16_w );
 
 READ32_HANDLER( namcos22_cgram_r );
 WRITE32_HANDLER( namcos22_cgram_w );
@@ -45,3 +51,5 @@ VIDEO_UPDATE( namcos22 );
 
 VIDEO_START( namcos22s );
 VIDEO_UPDATE( namcos22s );
+
+void namcos22_UploadCodeToDSP( void );

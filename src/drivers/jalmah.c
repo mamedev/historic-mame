@@ -1,33 +1,13 @@
-/* Jaleco Mahjong Games */
-/* Board:	MJ-8956 */
+/*******************************************************************************************
 
-/*
+MJ-8956 HW games (c) 1989 Jaleco / NMK
 
-Board:	MJ-8956
+driver by Angelo Salese, based on early work by David Haywood
 
-CPU:	68000-8
-	M50747 (not dumped)
-Sound:	M6295
-OSC:	12.000MHz
-	4.000MHz
+Similar to the NMK16 board.
 
-
-done:
-rom loading
-gfx decode
-
-todo:
-
-everything else
-finish me :-)
-
-similar to nmk16.c?
-
-*/
-
-/*
-
-68k interrupts
+============================================================================================
+daireika 68k irq table vectors
 lev 1 : 0x64 : 0000 049e -
 lev 2 : 0x68 : 0000 049e -
 lev 3 : 0x6c : 0000 049e -
@@ -36,59 +16,242 @@ lev 5 : 0x74 : 0000 0924 -
 lev 6 : 0x78 : 0000 092e -
 lev 7 : 0x7c : 0000 0938 -
 
-*/
+mjzoomin 68k irq table vectors
+lev 1 : 0x64 : 0000 048a -
+lev 2 : 0x68 : 0000 049a - vblank
+lev 3 : 0x6c : 0000 048a -
+lev 4 : 0x70 : 0000 09ba - "write to Text RAM" (?)
+lev 5 : 0x74 : 0000 09c4 - "write to Text RAM" (?)
+lev 6 : 0x78 : 0000 09ce - "write to Text RAM" (?)
+lev 7 : 0x7c : 0000 09d8 - "write to Text RAM" (?)
+
+kakumei/kakumei2 68k irq table vectors
+lev 1 : 0x64 : 0000 0506 - rte
+lev 2 : 0x68 : 0000 050a - vblank
+lev 3 : 0x6c : 0000 051c - rte
+lev 4 : 0x70 : 0000 0520 - rte
+lev 5 : 0x74 : 0000 0524 - rte
+lev 6 : 0x78 : 0000 0524 - rte
+lev 7 : 0x7c : 0000 0524 - rte
+
+Board:	MJ-8956
+
+CPU:	68000-8
+		M50747 (not dumped)
+Sound:	M6295
+OSC:	12.000MHz
+		4.000MHz
+*******************************************************************************************/
 
 #include "driver.h"
+#include "vidhrdw/generic.h"
+
+static struct tilemap *tx_tilemap, *fg_tilemap;
+data16_t *jm_txvideoram, *jm_fgvideoram;
 
 static int respcount;
 
-static READ16_HANDLER( daireika_mcu_r )
+static UINT32 bg_scan(UINT32 col,UINT32 row,UINT32 num_cols,UINT32 num_rows)
 {
-	static int resp[] = {	0x99, 0xd8, 0x00,
-							0x2a, 0x6a, 0x00,
-							0x9c, 0xd8, 0x00,
-							0x2f, 0x6f, 0x00,
-							0x22, 0x62, 0x00,
-							0x25, 0x65, 0x00 };
-	int res;
-
-	res = resp[respcount++];
-	if (respcount >= sizeof(resp)/sizeof(resp[0])) respcount = 0;
-
-logerror("%04x: mcu_r %02x\n",activecpu_get_pc(),res);
-
-	return res;
+	/* logical (col,row) -> memory offset */
+	return (row & 0x0f) + ((col & 0xff) << 4) + ((row & 0x70) << 8);
 }
 
-static MACHINE_INIT (daireika)
+static void get_fg_tile_info(int tile_index)
 {
-	respcount = 0;
+	int code = jm_fgvideoram[tile_index];
+	SET_TILE_INFO(
+			3,
+			(code & 0xfff),
+			code >> 12,
+			0)
 }
 
-VIDEO_START(jalmah)
+static void jm_get_tx_tile_info(int tile_index)
 {
+	int code = jm_txvideoram[tile_index];
+	SET_TILE_INFO(
+			0,
+			code & 0xfff,
+			code >> 12,
+			0)
+}
+
+VIDEO_START( jalmah )
+{
+	fg_tilemap = tilemap_create(get_fg_tile_info,bg_scan,TILEMAP_OPAQUE,16,16,256,32);
+	tx_tilemap = tilemap_create(jm_get_tx_tile_info,tilemap_scan_cols,TILEMAP_TRANSPARENT,8,8,256,32);
+
+	if(!tx_tilemap || !fg_tilemap)
+		return 1;
+
+	tilemap_set_transparent_pen(tx_tilemap,15);
+
 	return 0;
 }
 
 
-VIDEO_UPDATE(jalmah)
+VIDEO_UPDATE( jalmah )
 {
-
+	tilemap_draw(bitmap,cliprect,fg_tilemap,0,0);
+	tilemap_draw(bitmap,cliprect,tx_tilemap,0,0);
 }
 
+
+WRITE16_HANDLER( jm_fgvideoram_w )
+{
+	int oldword = jm_fgvideoram[offset];
+	int newword = oldword;
+	COMBINE_DATA(&newword);
+
+	if (oldword != newword)
+	{
+		jm_fgvideoram[offset] = newword;
+		tilemap_mark_tile_dirty(fg_tilemap,offset);
+	}
+}
+
+
+WRITE16_HANDLER( jm_txvideoram_w )
+{
+	int oldword = jm_txvideoram[offset];
+	int newword = oldword;
+	COMBINE_DATA(&newword);
+
+	if (oldword != newword)
+	{
+		jm_txvideoram[offset] = newword;
+		tilemap_mark_tile_dirty(tx_tilemap,offset);
+	}
+}
+
+
+static ADDRESS_MAP_START( jalmah, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_ROM
+	AM_RANGE(0x080000, 0x080001) AM_READ(input_port_0_word_r)
+	AM_RANGE(0x080002, 0x080003) AM_READ(input_port_1_word_r)
+	AM_RANGE(0x080000, 0x08003f) AM_WRITE(MWA16_NOP)
+	AM_RANGE(0x080040, 0x080041) AM_READWRITE(OKIM6295_status_0_lsb_r, OKIM6295_data_0_lsb_w)
+	AM_RANGE(0x088000, 0x0887ff) AM_READWRITE(MRA16_RAM, paletteram16_RRRRGGGGBBBBRGBx_word_w) AM_BASE(&paletteram16) /* Palette RAM */
+	AM_RANGE(0x090000, 0x09bfff) AM_READWRITE(MRA16_RAM, jm_fgvideoram_w) AM_BASE(&jm_fgvideoram)
+	AM_RANGE(0x09c000, 0x09ffff) AM_READWRITE(MRA16_RAM, jm_txvideoram_w) AM_BASE(&jm_txvideoram)
+	AM_RANGE(0x0f0000, 0x0fffff) AM_RAM
+ADDRESS_MAP_END
+
 INPUT_PORTS_START( jalmah )
+	/*System port*/
+	PORT_START
+	PORT_DIPNAME( 0x0001, 0x0001, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0002, 0x0002, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0004, 0x0004, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0004, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0008, 0x0008, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0008, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0010, 0x0010, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0010, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_DIPNAME( 0x0100, 0x0100, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0100, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0200, 0x0200, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0200, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0400, 0x0400, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0400, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0800, 0x0800, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0800, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x1000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x2000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+
+	/*Dip-SW port*/
+	PORT_START
+	PORT_DIPNAME( 0x0001, 0x0001, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0002, 0x0002, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_SERVICE( 0x0004, IP_ACTIVE_LOW )
+	PORT_DIPNAME( 0x0008, 0x0008, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0008, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0010, 0x0010, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0010, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0020, 0x0020, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0020, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0080, 0x0080, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0700, 0x0700, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(      0x0100, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(      0x0200, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x0300, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x0700, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x0600, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x0500, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x0400, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(      0x0000, "1 Coin / 99 Credits" )
+	PORT_DIPNAME( 0x0800, 0x0800, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0800, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x1000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x2000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+
+	/*Mahjong Panel port*/
+	PORT_START
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_BUTTON1  | IPF_PLAYER1 )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_BUTTON2  | IPF_PLAYER1 )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_BUTTON3  | IPF_PLAYER1 )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_BUTTON4  | IPF_PLAYER1 )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON5  | IPF_PLAYER1 )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON6  | IPF_PLAYER1 )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_BUTTON7  | IPF_PLAYER1 )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_BUTTON8  | IPF_PLAYER1 )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_BUTTON9  | IPF_PLAYER1 )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_BUTTON10 | IPF_PLAYER1 )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_BUTTON1  | IPF_PLAYER2 )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_BUTTON2  | IPF_PLAYER2 )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON3  | IPF_PLAYER2 )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON4  | IPF_PLAYER2 )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON5  | IPF_PLAYER2 )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_BUTTON6  | IPF_PLAYER2 )
 INPUT_PORTS_END
-
-static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM)
-	AM_RANGE(0x080004, 0x080005) AM_READ(daireika_mcu_r)
-	AM_RANGE(0x0f0000, 0x0fffff) AM_READ(MRA16_RAM)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM)
-	AM_RANGE(0x0f0000, 0x0fffff) AM_WRITE(MWA16_RAM)
-ADDRESS_MAP_END
 
 static struct GfxLayout charlayout =
 {
@@ -116,18 +279,30 @@ static struct GfxLayout tilelayout =
 
 static struct GfxDecodeInfo jalmah_gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &charlayout, 0x000, 16 },
+	{ REGION_GFX1, 0, &charlayout, 0x300, 16 },
 	{ REGION_GFX2, 0, &tilelayout, 0x000, 16 },
 	{ REGION_GFX3, 0, &tilelayout, 0x000, 16 },
 	{ REGION_GFX4, 0, &tilelayout, 0x000, 16 },
 	{ -1 } /* end of array */
 };
 
-static MACHINE_DRIVER_START( jalmah )
-	MDRV_CPU_ADD(M68000, 8000000)
-	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
-//	MDRV_CPU_VBLANK_INT(irq1_line_hold,1)
+static MACHINE_INIT (daireika)
+{
+	respcount = 0;
+}
 
+static struct OKIM6295interface m6295_interface =
+{
+	1,              	/* 1 chip */
+	{ 4000000/4/165 },	/* ? unknown */
+	{ REGION_SOUND1 },	/* memory region */
+	{ 100 }				/* volume */
+};
+
+static MACHINE_DRIVER_START( jalmah )
+	MDRV_CPU_ADD(M68000, 12000000/2)
+	MDRV_CPU_PROGRAM_MAP(jalmah,0)
+	MDRV_CPU_VBLANK_INT(irq2_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -137,12 +312,13 @@ static MACHINE_DRIVER_START( jalmah )
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(40*8, 32*8)
 	MDRV_VISIBLE_AREA(0*8, 40*8-1, 1*8, 30*8-1)
-	MDRV_PALETTE_LENGTH(0x300)
-	MDRV_MACHINE_INIT ( daireika )
+	MDRV_PALETTE_LENGTH(0x400)
+	MDRV_MACHINE_INIT(daireika)
 
 	MDRV_VIDEO_START(jalmah)
 	MDRV_VIDEO_UPDATE(jalmah)
 
+	MDRV_SOUND_ADD(OKIM6295, m6295_interface)
 MACHINE_DRIVER_END
 
 
@@ -283,8 +459,106 @@ ROM_START( kakumei2 )
 ROM_END
 
 
+/******************************************************************************************
 
-GAMEX( 1989, daireika, 0, jalmah, jalmah, 0, ROT0, "Jaleco / NMK", "Mahjong Daireikai", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEX( 1990, mjzoomin, 0, jalmah, jalmah, 0, ROT0, "Jaleco",       "Mahjong Channel Zoom In", GAME_NO_SOUND | GAME_NOT_WORKING  )
-GAMEX( 1990, kakumei,  0, jalmah, jalmah, 0, ROT0, "Jaleco",       "Mahjong Kakumei", GAME_NO_SOUND | GAME_NOT_WORKING  )
-GAMEX( 1992, kakumei2, 0, jalmah, jalmah, 0, ROT0, "Jaleco",       "Mahjong Kakumei 2 - Princess League", GAME_NO_SOUND | GAME_NOT_WORKING  )
+MCU simulations
+
+******************************************************************************************/
+
+static READ16_HANDLER( daireika_mcu_r )
+{
+	static int resp[] = {	0x99, 0xd8, 0x00,
+							0x2a, 0x6a, 0x00,
+							0x9c, 0xd8, 0x00,
+							0x2f, 0x6f, 0x00,
+							0x22, 0x62, 0x00,
+							0x25, 0x65, 0x00 };
+	int res;
+
+	res = resp[respcount++];
+	if (respcount >= sizeof(resp)/sizeof(resp[0])) respcount = 0;
+
+	logerror("%04x: mcu_r %02x\n",activecpu_get_pc(),res);
+
+	return res;
+}
+
+static READ16_HANDLER( mjzoomin_mcu_r )
+{
+	static int resp[] = {	0x9c, 0xd8, 0x00,
+							0x2a, 0x6a, 0x00,
+							0x99, 0xd8, 0x00,
+							0x2f, 0x6f, 0x00,
+							0x22, 0x62, 0x00,
+							0x25, 0x65, 0x00,
+							0x35, 0x75, 0x00 };
+	int res;
+
+	res = resp[respcount++];
+	if (respcount >= sizeof(resp)/sizeof(resp[0])) respcount = 0;
+
+	logerror("%04x: mcu_r %02x\n",activecpu_get_pc(),res);
+
+	return res;
+}
+
+static READ16_HANDLER( kakumei_mcu_r )
+{
+	static int resp[] = {	0x8a, 0xd8, 0x00,
+							0x3c, 0x7c, 0x00,
+							0x99, 0xd8, 0x00,
+							0x25, 0x65, 0x00,
+							0x36, 0x76, 0x00,
+							0x35, 0x75, 0x00,
+							0x2f, 0x6f, 0x00,
+							0x31, 0x71, 0x00 };
+	int res;
+
+	res = resp[respcount++];
+	if (respcount >= sizeof(resp)/sizeof(resp[0])) respcount = 0;
+
+	logerror("%04x: mcu_r %02x\n",activecpu_get_pc(),res);
+
+	return res;
+}
+
+
+static DRIVER_INIT( daireika )
+{
+	install_mem_read16_handler( 0, 0x80004, 0x80005, daireika_mcu_r );
+}
+
+static DRIVER_INIT( mjzoomin )
+{
+	UINT16 *RAM = (data16_t *)memory_region(REGION_CPU1);
+
+	/*temp patch,program jumps to a RAM address???*/
+	RAM[0x2a5c/2] = 0x4e71;
+	RAM[0x2a5e/2] = 0x4e71;
+	RAM[0x2a60/2] = 0x4e71;
+
+	install_mem_read16_handler( 0, 0x80004, 0x80005, mjzoomin_mcu_r );
+}
+
+static DRIVER_INIT( kakumei )
+{
+	UINT16 *RAM = (data16_t *)memory_region(REGION_CPU1);
+
+	install_mem_read16_handler( 0, 0x80004, 0x80005, kakumei_mcu_r );
+
+	RAM[0x227e/2] = 0x4e71;
+}
+
+static DRIVER_INIT( kakumei2 )
+{
+	UINT16 *RAM = (data16_t *)memory_region(REGION_CPU1);
+
+	install_mem_read16_handler( 0, 0x80004, 0x80005, kakumei_mcu_r );
+
+	RAM[0x229a/2] = 0x4e71;
+}
+
+GAMEX( 1989, daireika, 0, jalmah, jalmah, daireika, ROT0, "Jaleco / NMK", "Mahjong Daireikai",					  GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAMEX( 1990, mjzoomin, 0, jalmah, jalmah, mjzoomin, ROT0, "Jaleco",       "Mahjong Channel Zoom In",              GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAMEX( 1990, kakumei,  0, jalmah, jalmah, kakumei,  ROT0, "Jaleco",       "Mahjong Kakumei",                      GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAMEX( 1992, kakumei2, 0, jalmah, jalmah, kakumei2, ROT0, "Jaleco",       "Mahjong Kakumei 2 - Princess League",  GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )

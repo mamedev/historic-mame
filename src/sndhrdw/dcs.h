@@ -23,3 +23,5 @@ int dcs_control_r(void);
 
 void dcs_data_w(int data);
 void dcs_reset_w(int state);
+
+void dcs_fifo_notify(int count, int max);

@@ -1280,9 +1280,9 @@ INPUT_PORTS_START( goldmedl )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Cocktail ) )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START3 )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )		// Called before "100m Dash" - Code at 0x005860
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )		// Table at 0x02ce34
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )			// Table at 0x02ce52
+	PORT_DIPNAME( 0x20, 0x20, "Speed For 100M Dash" )
+	PORT_DIPSETTING(    0x00, "10 Beats" )			/* 10 Beats for Max Speed */
+	PORT_DIPSETTING(    0x20, "14 Beats" )			/* 14 Beats for Max Speed */
 	PORT_DIPNAME( 0x40, 0x40, "Watch Computer Play" )
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Yes ) )

@@ -357,8 +357,9 @@ typedef struct
 	/* internal stuff */
 	UINT32			ppc; //previous pc
 	UINT16			op;	 //opcode
-	int				delay;
-	int				delay_pc;
+	UINT8			delay;
+	UINT32			delay_pc;
+	UINT8			page_size_code;
 
 } e132xs_regs;
 
@@ -432,21 +433,22 @@ static void (*e132xs_op[0x100])(void) = {
 	e132xs_br,   e132xs_trap, e132xs_trap,  e132xs_trap		/* BR, TRAPxx - TRAP */
 };
 
-static UINT32 entry_point = 0xffffff00;	//default @ MEM3
+static UINT32 trap_entry; /* entry point to get trap address */
 
 /* Return the entry point for a determinated trap */
-UINT32 get_trap_addr(UINT8 trap_no)
+UINT32 get_trap_addr(UINT8 trapno)
 {
 	UINT32 addr;
-	if( entry_point & 0xffffff00 ) /* @ MEM3 */
+	if( trap_entry == 0xffffff00 ) /* @ MEM3 */
 	{
-		addr = trap_no * 4;
+		addr = trapno * 4;
 	}
 	else
 	{
-		addr = (63 - trap_no) * 4;
+		addr = (63 - trapno) * 4;
 	}
-	addr |= entry_point;
+	addr |= trap_entry;
+
 	return addr;
 }
 
@@ -454,15 +456,45 @@ UINT32 get_trap_addr(UINT8 trap_no)
 UINT32 get_emu_code_addr(UINT8 num) /* num is OP */
 {
 	UINT32 addr;
-	if( entry_point & 0xffffff00 ) /* @ MEM3 */
+	if( trap_entry == 0xffffff00 ) /* @ MEM3 */
 	{
-		addr = (entry_point - 0x100) | (num << 4);
+		addr = (trap_entry - 0x100) | (num << 4);
 	}
 	else
 	{
-		addr = entry_point | (0x10c | ((0x0f - num) << 4));
+		addr = trap_entry | (0x10c | ((0x0f - num) << 4));
 	}
 	return addr;
+}
+
+void e132xs_set_trap_entry(int which)
+{
+	switch( which )
+	{
+		case E132XS_ENTRY_MEM0:
+			trap_entry = 0x00000000;
+			break;
+
+		case E132XS_ENTRY_MEM1:
+			trap_entry = 0x40000000;
+			break;
+
+		case E132XS_ENTRY_MEM2:
+			trap_entry = 0x80000000;
+			break;
+
+		case E132XS_ENTRY_MEM3:
+			trap_entry = 0xffffff00;
+			break;
+
+		case E132XS_ENTRY_IRAM:
+			trap_entry = 0xc0000000;
+			break;
+
+		default:
+			verboselog( 0, "Set entry point to a reserved value: %d\n",which);
+			break;
+	}
 }
 
 #define OP					e132xs.op
@@ -534,7 +566,6 @@ UINT32 get_emu_code_addr(UINT8 num) /* num is OP */
 #define SET_LOW_SR(val)			(SR = (SR & 0xffff0000) | ((val) & 0x0000ffff)) // when SR is addressed, only low 15 bits can be changed
 #define SET_FULL_SR(val)		(SR = val) // only a RET instruction replaces the full content of SR
 
-// TODO: do i need to use these?
 /* FER flags */
 #define GET_ACCRUED				(FER & 0x0000001f) //bits  4 - 0 //Floating-Point Accrued Exceptions
 #define GET_ACTUAL				(FER & 0x00001f00) //bits 12 - 8 //Floating-Point Actual  Exceptions
@@ -547,28 +578,219 @@ UINT32 get_emu_code_addr(UINT8 num) /* num is OP */
 #define REG_FCR			26
 #define REG_MCR			27
 
-#define GET_G_REG(code)			e132xs.global_regs[code]
-#define GET_L_REG(code)			e132xs.local_regs[(code) + GET_FP]
+UINT32 get_global_register(UINT8 code)
+{
+	if( code >= 16 )
+	{
+		switch( code )
+		{
+			case 18:
+				printf("read SP register @ %08X\n",PC);
+				break;
 
-#define SET_G_REG(code, val)					\
-		if( code == SR_CODE )					\
-		{										\
-			if( ret_istruction )				\
-			{									\
-				ret_istruction = 0;				\
-				SET_FULL_SR(val);				\
-			}									\
-			else								\
-			{									\
-				SET_LOW_SR(val);				\
-			}									\
-		}										\
-		else									\
-		{										\
-			e132xs.global_regs[code] = val;		\
+			case 19:
+				printf("read UB register @ %08X\n",PC);
+				break;
+
+			case 22:
+				printf("read TCR register @ %08X\n",PC);
+				break;
+
+			case 23:
+				printf("read TR register @ %08X\n",PC);
+				break;
+
+			case 24:
+				printf("read WCR register @ %08X\n",PC);
+				break;
+
+			case 25:
+				printf("read ISR register @ %08X\n",PC);
+				break;
+
+		case 16:
+		case 17:
+		case 28:
+		case 29:
+		case 30:
+		case 31:
+			printf("read _Reserved_ Global Register %d @ %08X\n",code,PC);
+			break;
+
+		case REG_BCR:
+			printf("read write-only BCR register @ %08X\n",PC);
+			break;
+
+		case REG_TPR:
+			printf("read write-only TPR register @ %08X\n",PC);
+			break;
+
+		case REG_FCR:
+			printf("read write-only FCR register @ %08X\n",PC);
+			break;
+
+		case REG_MCR:
+			printf("read write-only MCR register @ %08X\n",PC);
+			break;
 		}
+	}
+	
+	return e132xs.global_regs[code];
+}
 
-#define SET_L_REG(code, val)	e132xs.local_regs[(code) + GET_FP] = val
+#define GET_G_REG(code)			get_global_register(code)
+#define GET_L_REG(code)			e132xs.local_regs[((code) + GET_FP) % 64]
+
+void print_size(int size)
+{
+	switch(size & 3)
+	{
+	case 0:
+		printf(" = 32 bit\n");
+		break;
+	case 1:
+		printf(" = reserved\n");
+		break;
+	case 2:
+		printf(" = 16 bit\n");
+		break;
+	case 3:
+		printf(" = 8 bit\n");
+		break;
+	}
+}
+
+void set_global_register(UINT8 code, UINT32 val)
+{
+	int size;
+
+	if( code == SR_CODE )
+	{
+		if( ret_istruction )
+		{
+			ret_istruction = 0;
+			SET_FULL_SR(val);
+		}
+		else
+		{
+			SET_LOW_SR(val);
+		}
+	}
+	else
+	{
+		e132xs.global_regs[code] = val;
+
+		if( code >= 16 )
+		{
+			switch( code )
+			{
+			case 18:
+				printf("written %08X to SP register\n",val);
+				break;
+
+			case 19:
+				printf("written %08X to UB register\n",val);
+				break;
+
+			case 22:
+				printf("written %08X to TCR register\n",val);
+				break;
+
+			case 23:
+				printf("written %08X to TR register\n",val);
+				break;
+
+			case 24:
+				printf("written %08X to WCR register\n",val);
+				break;
+
+			case 25:
+				printf("written %08X to ISR register\n",val);
+				break;
+
+			case 16:
+			case 17:
+			case 28:
+			case 29:
+			case 30:
+			case 31:
+				printf("written %08X to _Reserved_ Global Register %d\n",val,code);
+				break;
+
+			case REG_BCR:
+				printf("written %08X to BCR register\n",val);
+
+				//13..11 RefreshSelect Refresh rate select (CAS before RAS refresh)
+				e132xs.page_size_code = (val & 0x70) >> 4;
+				printf("PSC = %d\n",e132xs.page_size_code);
+
+				break;
+
+			case REG_TPR:
+				printf("written %08X to TPR register\n",val);
+				break;
+
+			case REG_FCR:
+				printf("written %08X to FCR register\n",val);
+				break;
+
+			case REG_MCR:
+				printf("written %08X to MCR register\n",val);
+
+				//bit 22 DRAMType2
+				if(val & 0x400000)
+					printf("Mem0 DRAM type is according to MCR(15)\n");
+				else
+					printf("Mem0 DRAM type is SDRAM\n");
+
+				//bit 21 MEM0MemoryType
+				if(val & 200000)
+					printf("Non-DRAM\n");
+				else
+				{
+					printf("DRAM\n");
+
+					/* are these bits used only when MCR(21) == 0 ? */
+
+					//bit 15 DRAMType
+					if(val & 0x8000)
+						printf("Fast Page Mode DRAMs\n");
+					else
+						printf("EDO DRAMs\n");
+				}
+
+				//bits 14..12 EntryTableMap
+				e132xs_set_trap_entry((val & 0x7000) >> 12);
+				printf("trap_entry = %X\n", trap_entry);
+
+				//bits 7..6 MEM3BusSize
+				size = (val & 0xc0) >> 6;
+				printf("MEM3BusSize");
+				print_size(size);
+				
+				//bits 5..4 MEM2BusSize
+				size = (val & 0x30) >> 4;
+				printf("MEM2BusSize");
+				print_size(size);
+
+				//bits 3..2 MEM1BusSize
+				size = (val & 0x0c) >> 2;
+				printf("MEM1BusSize");
+				print_size(size);
+
+				//bits 1..0 MEM0BusSize
+				size = val & 0x03;
+				printf("MEM0BusSize");
+				print_size(size);
+
+				break;
+			}
+		}
+	}
+}
+
+#define SET_G_REG(code, val)	set_global_register(code, val)
+#define SET_L_REG(code, val)	e132xs.local_regs[((code) + GET_FP) % 64] = val
 
 #define S_BIT					((OP & 0x100) >> 8)
 #define N_BIT					S_BIT	//it's the same bit but with different name and use
@@ -650,36 +872,6 @@ UINT8 e132xs_win_layout[] =
 	35,16,46, 6, /* memory #2 window (right, lower middle) */
 	0,23,80, 1  /* command line window (bottom row) */
 };
-
-void e132xs_set_entry_point(int which)
-{
-	switch( which )
-	{
-		case E132XS_ENTRY_MEM0:
-			entry_point = 0x00000000;
-			break;
-
-		case E132XS_ENTRY_MEM1:
-			entry_point = 0x40000000;
-			break;
-
-		case E132XS_ENTRY_MEM2:
-			entry_point = 0x80000000;
-			break;
-
-		case E132XS_ENTRY_MEM3:
-			entry_point = 0xffffff00;
-			break;
-
-		case E132XS_ENTRY_IRAM:
-			entry_point = 0xc0000000;
-			break;
-
-		default:
-			verboselog( 0, "E1-32XS: Entry Point Error. Target not defined (= %d)\n",which);
-			break;
-	}
-}
 
 INT32 immediate_value(void)
 {
@@ -849,10 +1041,6 @@ INT32 get_dis(UINT32 val )
 
 void execute_br(INT32 rel)
 {
-	// Reip - TODO: if in get_pcrel() is read the next pc, do i need to increment the pc?
-	/* MooglyGuy - No, you need to decrement it by two, since after e132xs_execute() you'll
-	               be incrementing PC by two. If you don't decrement, it'll skip over the
-	               next opcode. See below. */
 	PPC = PC;
 	PC += rel;
 //	PC -= 2;
@@ -867,10 +1055,6 @@ void execute_br(INT32 rel)
 
 void execute_dbr(INT32 rel)
 {
-	// Reip - TODO: if in get_pcrel() is read the next pc, do i need to increment the pc?
-	//              block all the exception except the reset
-	/* MooglyGuy - Well, I'm not quite sure about that. */
-
 	e132xs.delay_pc = PC + rel;
 	e132xs.delay    = DELAY_TAKEN;
 
@@ -949,15 +1133,20 @@ static void e132xs_init(void)
 static void e132xs_reset(void *param)
 {
 	//TODO: other to do at reset?
+	//Add different reset initializations for BCR, MCR, FCR, TPR
 
 	memset(&e132xs, 0, sizeof(e132xs_regs));
 
 	h_clear = 0;
 	ret_istruction = 0;
+	e132xs_set_trap_entry(E132XS_ENTRY_MEM3); /* default entry point @ MEM3 */
+
+	BCR = ~0;
+	MCR = ~0;
 
 	PC = get_trap_addr(RESET);
-//	execute_exception(PC);
-	execute_trap(PC);
+//	execute_trap(PC);
+	execute_exception(PC);
 	PC += 2; /* because it's decremented in execute_trap */
 }
 
@@ -1006,8 +1195,9 @@ static int e132xs_execute(int cycles)
 
 		if( GET_T && GET_P && !e132xs.delay_pc ) /* Not in a Delayed Branch instructions */
 		{
+			UINT32 addr;
 			SET_P(0); // here?
-			UINT32 addr = get_trap_addr(TRACE_EXCEPTION);
+			addr = get_trap_addr(TRACE_EXCEPTION);
 			execute_exception(addr);
 		}
 
@@ -1061,7 +1251,7 @@ static void set_irq_line(int irqline, int state)
 static offs_t e132xs_dasm(char *buffer, offs_t pc)
 {
 #ifdef MAME_DEBUG
-	return dasm_e132xs( buffer, pc );
+	return dasm_e132xs( buffer, pc, GET_H );
 #else
 	sprintf(buffer, "$%08x", READ_OP(pc));
 	return 1;
@@ -1070,7 +1260,6 @@ static offs_t e132xs_dasm(char *buffer, offs_t pc)
 
 
 /* Opcodes */
-//TODO: Add the opcodes inline?
 
 void e132xs_chk(void)
 {
@@ -1100,12 +1289,12 @@ void e132xs_chk(void)
 	if( (!(S_CODE == SR_CODE && !S_BIT) && (val2 > val1)) || ((S_CODE == SR_CODE && !S_BIT) && (val2 == 0)) )
 	{
 		UINT32 addr = get_trap_addr(RANGE_ERROR);
-		execute_trap(addr);
+		execute_exception(addr);
 	}
 	if((S_CODE == PC_CODE && !S_BIT) && (D_CODE == PC_CODE && !D_BIT))
 	{
 		UINT32 addr = get_trap_addr(RANGE_ERROR);
-		execute_trap(addr);
+		execute_exception(addr);
 	}
 
 	e132xs_ICount -= 1;
@@ -1153,7 +1342,7 @@ void e132xs_movd(void)
 			if( (!old_s && GET_S) || (!GET_S && !old_l && GET_L))
 			{
 //				UINT32 addr = get_trap_addr(PRIVILEGE_ERROR);
-//				execute_trap(addr);
+//				execute_exception(addr);
 			}
 
 			difference = GET_FP - ((SP & 0x1fc) >> 2);
@@ -1266,7 +1455,7 @@ void e132xs_divu(void)
 				UINT32 addr;
 				SET_V(1);
 				addr = get_trap_addr(RANGE_ERROR);
-				execute_trap(addr);
+				execute_exception(addr);
 			}
 			else
 			{
@@ -1337,7 +1526,7 @@ void e132xs_divs(void)
 				UINT32 addr;
 				SET_V(1);
 				addr = get_trap_addr(RANGE_ERROR);
-				execute_trap(addr);
+				execute_exception(addr);
 			}
 			else
 			{
@@ -1405,7 +1594,7 @@ void e132xs_xm(void)
 			if( val > lim )
 			{
 				UINT32 addr = get_trap_addr(RANGE_ERROR);
-				execute_trap(addr);
+				execute_exception(addr);
 			}
 			else
 			{
@@ -1433,6 +1622,8 @@ void e132xs_mask(void)
 {
 	INT32 val, const_val;
 
+	const_val = get_const();
+
 	if( S_BIT )
 	{
 		val = GET_L_REG(S_CODE);
@@ -1441,8 +1632,6 @@ void e132xs_mask(void)
 	{
 		val = GET_G_REG(S_CODE);
 	}
-
-	const_val = get_const();
 
 	val &= const_val;
 
@@ -1458,6 +1647,8 @@ void e132xs_sum(void)
 	UINT32 op1;
 	INT32 const_val;
 
+	const_val = get_const();
+
 	if( S_BIT )
 	{
 		op1 = GET_L_REG(S_CODE);
@@ -1469,8 +1660,6 @@ void e132xs_sum(void)
 		else
 			op1 = GET_G_REG(S_CODE);
 	}
-
-	const_val = get_const();
 
 	if(D_CODE == PC_CODE && !D_BIT)
 		PC -= 2;
@@ -1489,6 +1678,8 @@ void e132xs_sums(void)
 {
 	INT32 op1, const_val;
 
+	const_val = get_const();
+
 	if( S_BIT )
 	{
 		op1 = GET_L_REG(S_CODE);
@@ -1501,8 +1692,6 @@ void e132xs_sums(void)
 			op1 = GET_G_REG(S_CODE);
 	}
 
-	const_val = get_const();
-
 	op1 += const_val;
 	SET_RD(op1, NOINC);
 	SET_Z((op1 == 0 ? 1: 0));
@@ -1514,7 +1703,7 @@ void e132xs_sums(void)
 	if( GET_V && S_CODE != 1 )
 	{
 		UINT32 addr = get_trap_addr(RANGE_ERROR);
-		execute_trap(addr);
+		execute_exception(addr);
 	}
 }
 
@@ -1602,7 +1791,7 @@ void e132xs_mov(void)
 		if( !GET_S && GET_H )
 		{
 			UINT32 addr = get_trap_addr(PRIVILEGE_ERROR);
-			execute_trap(addr);
+			execute_exception(addr);
 		}
 		else
 		{
@@ -1693,7 +1882,7 @@ void e132xs_adds(void)
 	if( GET_V )
 	{
 		UINT32 addr = get_trap_addr(RANGE_ERROR);
-		execute_trap(addr);
+		execute_exception(addr);
 	}
 }
 
@@ -1941,7 +2130,7 @@ void e132xs_subs(void)
 	if( GET_V )
 	{
 		UINT32 addr = get_trap_addr(RANGE_ERROR);
-		execute_trap(addr);
+		execute_exception(addr);
 	}
 }
 
@@ -2065,7 +2254,7 @@ void e132xs_negs(void)
 	if( GET_V && S_CODE != 1 ) //trap doesn't occur when source is SR
 	{
 		UINT32 addr = get_trap_addr(RANGE_ERROR);
-		execute_trap(addr);
+		execute_exception(addr);
 	}
 }
 
@@ -2121,7 +2310,7 @@ void e132xs_movi(void)
 		if( !GET_S && GET_H )
 		{
 			UINT32 addr = get_trap_addr(PRIVILEGE_ERROR);
-			execute_trap(addr);
+			execute_exception(addr);
 		}
 		else
 		{
@@ -2140,7 +2329,10 @@ void e132xs_movi(void)
 
 void e132xs_addi(void)
 {
-	UINT32 op1, op2;
+	UINT32 op1 = 0, op2;
+
+	if( N_VALUE )
+		op1 = immediate_value();
 
 	if( D_BIT )
 	{
@@ -2153,8 +2345,6 @@ void e132xs_addi(void)
 
 	if( !N_VALUE )
 		op1 = GET_C & ((GET_Z == 0 ? 1 : 0) | (op2 & 0x01));
-	else
-		op1 = immediate_value();
 
 	if(D_CODE == PC_CODE && !D_BIT)
 		PC -= 2;
@@ -2171,7 +2361,10 @@ void e132xs_addi(void)
 
 void e132xs_addsi(void)
 {
-	INT32 op1, op2;
+	INT32 op1 = 0, op2;
+
+	if( N_VALUE )
+		op1 = immediate_value();
 
 	if( D_BIT )
 	{
@@ -2184,8 +2377,6 @@ void e132xs_addsi(void)
 
 	if( !N_VALUE )
 		op1 = GET_C & ((GET_Z == 0 ? 1 : 0) | (op2 & 0x01));
-	else
-		op1 = immediate_value();
 
 	op2 += op1;
 	SET_RD(op2, NOINC);
@@ -2198,7 +2389,7 @@ void e132xs_addsi(void)
 	if( GET_V )
 	{
 		UINT32 addr = get_trap_addr(RANGE_ERROR);
-		execute_trap(addr);
+		execute_exception(addr);
 	}
 }
 
@@ -2698,7 +2889,14 @@ void e132xs_ldxx1(void)
 				}
 				else
 				{
-					load = (INT8) READ_B( GET_G_REG(D_CODE) + dis );
+					if(D_CODE == PC_CODE)
+					{
+						load = (INT8) READ_B( GET_G_REG(D_CODE) + dis + 2 );
+					}
+					else
+					{
+						load = (INT8) READ_B( GET_G_REG(D_CODE) + dis );
+					}
 				}
 				SET_RS( load, NOINC );
 
@@ -2712,7 +2910,14 @@ void e132xs_ldxx1(void)
 				}
 				else
 				{
-					load = (UINT8) READ_B( GET_G_REG(D_CODE) + dis );
+					if(D_CODE == PC_CODE)
+					{
+						load = (UINT8) READ_B( GET_G_REG(D_CODE) + dis + 2 );
+					}
+					else
+					{
+						load = (UINT8) READ_B( GET_G_REG(D_CODE) + dis );
+					}
 				}
 				SET_RS( load, NOINC );
 
@@ -2728,7 +2933,14 @@ void e132xs_ldxx1(void)
 					}
 					else
 					{
-						load = (INT16) READ_HW( GET_G_REG(D_CODE) + (dis & ~1) );
+						if(D_CODE == PC_CODE)
+						{
+							load = (INT16) READ_HW( GET_G_REG(D_CODE) + (dis & ~1) + 2 );
+						}
+						else
+						{
+							load = (INT16) READ_HW( GET_G_REG(D_CODE) + (dis & ~1) );
+						}
 					}
 					SET_RS( load, NOINC );
 				}
@@ -2741,7 +2953,14 @@ void e132xs_ldxx1(void)
 					}
 					else
 					{
-						load = (UINT16) READ_HW( GET_G_REG(D_CODE) + (dis & ~1) );
+						if(D_CODE == PC_CODE)
+						{
+							load = (UINT16) READ_HW( GET_G_REG(D_CODE) + (dis & ~1) + 2 );
+						}
+						else
+						{
+							load = (UINT16) READ_HW( GET_G_REG(D_CODE) + (dis & ~1) );
+						}
 					}
 					SET_RS( load, NOINC );
 				}
@@ -2800,7 +3019,14 @@ void e132xs_ldxx1(void)
 					}
 					else
 					{
-						load = READ_W( GET_G_REG(D_CODE) + (dis & ~1) );
+						if(D_CODE == PC_CODE)
+						{
+							load = READ_W( GET_G_REG(D_CODE) + (dis & ~1) + 2 );
+						}
+						else
+						{
+							load = READ_W( GET_G_REG(D_CODE) + (dis & ~1) );
+						}
 					}
 					SET_RS( load, NOINC );
 
@@ -2810,7 +3036,14 @@ void e132xs_ldxx1(void)
 					}
 					else
 					{
-						load = READ_W( GET_G_REG(D_CODE) + (dis & ~1) + 4 );
+						if(D_CODE == PC_CODE)
+						{
+							load = READ_W( GET_G_REG(D_CODE) + (dis & ~1) + 4 + 2 );
+						}
+						else
+						{
+							load = READ_W( GET_G_REG(D_CODE) + (dis & ~1) + 4 );
+						}
 					}
 					SET_RS( load, INC );
 
@@ -2825,9 +3058,17 @@ void e132xs_ldxx1(void)
 					}
 					else
 					{
-						load = READ_W( GET_G_REG(D_CODE) + (dis & ~1) );
+						if(D_CODE == PC_CODE)
+						{
+							load = READ_W( GET_G_REG(D_CODE) + (dis & ~1) + 2 );
+						}
+						else
+						{
+							load = READ_W( GET_G_REG(D_CODE) + (dis & ~1) );
+						}
 					}
 					SET_RS( load, NOINC );
+
 				}
 
 				break;
@@ -3106,7 +3347,14 @@ void e132xs_stxx1(void)
 				}
 				else
 				{
-					WRITE_B( GET_G_REG(D_CODE) + dis, (INT8) val );
+					if(D_CODE == PC_CODE)
+					{
+						WRITE_B( GET_G_REG(D_CODE) + dis + 2, (INT8) val );
+					}
+					else
+					{
+						WRITE_B( GET_G_REG(D_CODE) + dis, (INT8) val );
+					}
 				}
 
 				break;
@@ -3119,7 +3367,14 @@ void e132xs_stxx1(void)
 				}
 				else
 				{
-					WRITE_B( GET_G_REG(D_CODE) + dis, (UINT8) val );
+					if(D_CODE == PC_CODE)
+					{
+						WRITE_B( GET_G_REG(D_CODE) + dis + 2, (UINT8) val );
+					}
+					else
+					{
+						WRITE_B( GET_G_REG(D_CODE) + dis, (UINT8) val );
+					}
 				}
 
 				break;
@@ -3134,7 +3389,14 @@ void e132xs_stxx1(void)
 					}
 					else
 					{
-						WRITE_HW( GET_G_REG(D_CODE) + (dis & ~1), (INT16) val );
+						if(D_CODE == PC_CODE)
+						{
+							WRITE_HW( GET_G_REG(D_CODE) + (dis & ~1) + 2, (INT16) val );
+						}
+						else
+						{
+							WRITE_HW( GET_G_REG(D_CODE) + (dis & ~1), (INT16) val );
+						}
 					}
 				}
 				// STHU.D
@@ -3146,7 +3408,14 @@ void e132xs_stxx1(void)
 					}
 					else
 					{
-						WRITE_HW( GET_G_REG(D_CODE) + (dis & ~1), (UINT16) val );
+						if(D_CODE == PC_CODE)
+						{
+							WRITE_HW( GET_G_REG(D_CODE) + (dis & ~1) + 2, (UINT16) val );
+						}
+						else
+						{
+							WRITE_HW( GET_G_REG(D_CODE) + (dis & ~1), (UINT16) val );
+						}
 					}
 				}
 
@@ -3215,8 +3484,16 @@ void e132xs_stxx1(void)
 					}
 					else
 					{
-						WRITE_W( GET_G_REG(D_CODE) + (dis & ~1), val );
-						WRITE_W( GET_G_REG(D_CODE) + (dis & ~1) + 4, val2 );
+						if(D_CODE == PC_CODE)
+						{
+							WRITE_W( GET_G_REG(D_CODE) + (dis & ~1) + 2, val );
+							WRITE_W( GET_G_REG(D_CODE) + (dis & ~1) + 4 + 2, val2 );
+						}
+						else
+						{
+							WRITE_W( GET_G_REG(D_CODE) + (dis & ~1), val );
+							WRITE_W( GET_G_REG(D_CODE) + (dis & ~1) + 4, val2 );
+						}
 					}
 
 					e132xs_ICount -= 1; //extra cycle
@@ -3230,7 +3507,14 @@ void e132xs_stxx1(void)
 					}
 					else
 					{
-						WRITE_W( GET_G_REG(D_CODE) + (dis & ~1), val );
+						if(D_CODE == PC_CODE)
+						{
+							WRITE_W( GET_G_REG(D_CODE) + (dis & ~1) + 2, val );
+						}
+						else
+						{
+							WRITE_W( GET_G_REG(D_CODE) + (dis & ~1), val );
+						}
 					}
 				}
 
@@ -4542,10 +4826,7 @@ void e132xs_frame(void)
 
 	SET_FP(GET_FP - S_CODE);
 
-	if( D_CODE )
-		SET_FL( D_CODE );
-	else
-		SET_FL( 16 ); //when Ld is L0
+	SET_FL(D_CODE);
 
 	SET_M( 0 );
 
@@ -4570,7 +4851,7 @@ void e132xs_frame(void)
 		if( tmp_flag )
 		{
 			UINT32 addr = get_trap_addr(FRAME_ERROR);
-			execute_trap(addr);
+			execute_exception(addr);
 		}
 	}
 
@@ -4734,22 +5015,15 @@ void e132xs_br(void)
 
 void e132xs_trap(void)
 {
-	unsigned int code;
+	UINT8 code, trapno;
 	UINT32 addr;
 
-	addr = 0xffffff00 | (OP & 0xfc); //TODO: what do i need to use? 0xffffff00 or entry_point or GET_TRAP_ADDR ?
-	//TODO: what is the trapno ?
+	trapno = (OP & 0xfc) >> 2;
+	addr = get_trap_addr(trapno);
 	code = ((OP & 0x300) >> 6) | (OP & 0x03);
 
 	switch( code )
 	{
-	/*	case 0:
-		case 1:
-		case 2:
-		case 3:
-			verboselog( 0, "- Trap code not available (%d) @ %x\n", trapno, PC );
-			break;
-	*/
 		case TRAPLE:
 			if( GET_N || GET_Z )
 				execute_trap(addr);
@@ -5151,38 +5425,38 @@ void e132xs_get_info(UINT32 state, union cpuinfo *info)
 				GET_FP);
 			break;
 
-		case CPUINFO_STR_REGISTER + E132XS_PC:  		sprintf(info->s = cpuintrf_temp_str(), "PC :%08X", e132xs.global_regs[0]); break;
-		case CPUINFO_STR_REGISTER + E132XS_SR:  		sprintf(info->s = cpuintrf_temp_str(), "SR :%08X", e132xs.global_regs[1]); break;
-		case CPUINFO_STR_REGISTER + E132XS_FER: 		sprintf(info->s = cpuintrf_temp_str(), "FER:%08X", e132xs.global_regs[2]); break;
-		case CPUINFO_STR_REGISTER + E132XS_G3:  		sprintf(info->s = cpuintrf_temp_str(), "G3 :%08X", e132xs.global_regs[3]); break;
-		case CPUINFO_STR_REGISTER + E132XS_G4:  		sprintf(info->s = cpuintrf_temp_str(), "G4 :%08X", e132xs.global_regs[4]); break;
-		case CPUINFO_STR_REGISTER + E132XS_G5:  		sprintf(info->s = cpuintrf_temp_str(), "G5 :%08X", e132xs.global_regs[5]); break;
-		case CPUINFO_STR_REGISTER + E132XS_G6:  		sprintf(info->s = cpuintrf_temp_str(), "G6 :%08X", e132xs.global_regs[6]); break;
-		case CPUINFO_STR_REGISTER + E132XS_G7:  		sprintf(info->s = cpuintrf_temp_str(), "G7 :%08X", e132xs.global_regs[7]); break;
-		case CPUINFO_STR_REGISTER + E132XS_G8:  		sprintf(info->s = cpuintrf_temp_str(), "G8 :%08X", e132xs.global_regs[8]); break;
-		case CPUINFO_STR_REGISTER + E132XS_G9:  		sprintf(info->s = cpuintrf_temp_str(), "G9 :%08X", e132xs.global_regs[9]); break;
-		case CPUINFO_STR_REGISTER + E132XS_G10: 		sprintf(info->s = cpuintrf_temp_str(), "G10:%08X", e132xs.global_regs[10]); break;
-		case CPUINFO_STR_REGISTER + E132XS_G11: 		sprintf(info->s = cpuintrf_temp_str(), "G11:%08X", e132xs.global_regs[11]); break;
-		case CPUINFO_STR_REGISTER + E132XS_G12: 		sprintf(info->s = cpuintrf_temp_str(), "G12:%08X", e132xs.global_regs[12]); break;
-		case CPUINFO_STR_REGISTER + E132XS_G13: 		sprintf(info->s = cpuintrf_temp_str(), "G13:%08X", e132xs.global_regs[13]); break;
-		case CPUINFO_STR_REGISTER + E132XS_G14: 		sprintf(info->s = cpuintrf_temp_str(), "G14:%08X", e132xs.global_regs[14]); break;
-		case CPUINFO_STR_REGISTER + E132XS_G15: 		sprintf(info->s = cpuintrf_temp_str(), "G15:%08X", e132xs.global_regs[15]); break;
-		case CPUINFO_STR_REGISTER + E132XS_G16: 		sprintf(info->s = cpuintrf_temp_str(), "G15:%08X", e132xs.global_regs[16]); break;
-		case CPUINFO_STR_REGISTER + E132XS_G17: 		sprintf(info->s = cpuintrf_temp_str(), "G15:%08X", e132xs.global_regs[17]); break;
-		case CPUINFO_STR_REGISTER + E132XS_SP:  		sprintf(info->s = cpuintrf_temp_str(), "SP :%08X", e132xs.global_regs[18]); break;
-		case CPUINFO_STR_REGISTER + E132XS_UB:  		sprintf(info->s = cpuintrf_temp_str(), "UB :%08X", e132xs.global_regs[19]); break;
-		case CPUINFO_STR_REGISTER + E132XS_BCR: 		sprintf(info->s = cpuintrf_temp_str(), "BCR:%08X", e132xs.global_regs[20]); break;
-		case CPUINFO_STR_REGISTER + E132XS_TPR: 		sprintf(info->s = cpuintrf_temp_str(), "TPR:%08X", e132xs.global_regs[21]); break;
-		case CPUINFO_STR_REGISTER + E132XS_TCR: 		sprintf(info->s = cpuintrf_temp_str(), "TCR:%08X", e132xs.global_regs[22]); break;
-		case CPUINFO_STR_REGISTER + E132XS_TR:  		sprintf(info->s = cpuintrf_temp_str(), "TR :%08X", e132xs.global_regs[23]); break;
-		case CPUINFO_STR_REGISTER + E132XS_WCR: 		sprintf(info->s = cpuintrf_temp_str(), "WCR:%08X", e132xs.global_regs[24]); break;
-		case CPUINFO_STR_REGISTER + E132XS_ISR: 		sprintf(info->s = cpuintrf_temp_str(), "ISR:%08X", e132xs.global_regs[25]); break;
-		case CPUINFO_STR_REGISTER + E132XS_FCR: 		sprintf(info->s = cpuintrf_temp_str(), "FCR:%08X", e132xs.global_regs[26]); break;
-		case CPUINFO_STR_REGISTER + E132XS_MCR: 		sprintf(info->s = cpuintrf_temp_str(), "MCR:%08X", e132xs.global_regs[27]); break;
-		case CPUINFO_STR_REGISTER + E132XS_G28: 		sprintf(info->s = cpuintrf_temp_str(), "G15:%08X", e132xs.global_regs[28]); break;
-		case CPUINFO_STR_REGISTER + E132XS_G29: 		sprintf(info->s = cpuintrf_temp_str(), "G15:%08X", e132xs.global_regs[29]); break;
-		case CPUINFO_STR_REGISTER + E132XS_G30: 		sprintf(info->s = cpuintrf_temp_str(), "G15:%08X", e132xs.global_regs[30]); break;
-		case CPUINFO_STR_REGISTER + E132XS_G31: 		sprintf(info->s = cpuintrf_temp_str(), "G15:%08X", e132xs.global_regs[31]); break;
+		case CPUINFO_STR_REGISTER + E132XS_PC:  		sprintf(info->s = cpuintrf_temp_str(), "PC  :%08X", e132xs.global_regs[0]); break;
+		case CPUINFO_STR_REGISTER + E132XS_SR:  		sprintf(info->s = cpuintrf_temp_str(), "SR  :%08X", e132xs.global_regs[1]); break;
+		case CPUINFO_STR_REGISTER + E132XS_FER: 		sprintf(info->s = cpuintrf_temp_str(), "FER :%08X", e132xs.global_regs[2]); break;
+		case CPUINFO_STR_REGISTER + E132XS_G3:  		sprintf(info->s = cpuintrf_temp_str(), "G3  :%08X", e132xs.global_regs[3]); break;
+		case CPUINFO_STR_REGISTER + E132XS_G4:  		sprintf(info->s = cpuintrf_temp_str(), "G4  :%08X", e132xs.global_regs[4]); break;
+		case CPUINFO_STR_REGISTER + E132XS_G5:  		sprintf(info->s = cpuintrf_temp_str(), "G5  :%08X", e132xs.global_regs[5]); break;
+		case CPUINFO_STR_REGISTER + E132XS_G6:  		sprintf(info->s = cpuintrf_temp_str(), "G6  :%08X", e132xs.global_regs[6]); break;
+		case CPUINFO_STR_REGISTER + E132XS_G7:  		sprintf(info->s = cpuintrf_temp_str(), "G7  :%08X", e132xs.global_regs[7]); break;
+		case CPUINFO_STR_REGISTER + E132XS_G8:  		sprintf(info->s = cpuintrf_temp_str(), "G8  :%08X", e132xs.global_regs[8]); break;
+		case CPUINFO_STR_REGISTER + E132XS_G9:  		sprintf(info->s = cpuintrf_temp_str(), "G9  :%08X", e132xs.global_regs[9]); break;
+		case CPUINFO_STR_REGISTER + E132XS_G10: 		sprintf(info->s = cpuintrf_temp_str(), "G10 :%08X", e132xs.global_regs[10]); break;
+		case CPUINFO_STR_REGISTER + E132XS_G11: 		sprintf(info->s = cpuintrf_temp_str(), "G11 :%08X", e132xs.global_regs[11]); break;
+		case CPUINFO_STR_REGISTER + E132XS_G12: 		sprintf(info->s = cpuintrf_temp_str(), "G12 :%08X", e132xs.global_regs[12]); break;
+		case CPUINFO_STR_REGISTER + E132XS_G13: 		sprintf(info->s = cpuintrf_temp_str(), "G13 :%08X", e132xs.global_regs[13]); break;
+		case CPUINFO_STR_REGISTER + E132XS_G14: 		sprintf(info->s = cpuintrf_temp_str(), "G14 :%08X", e132xs.global_regs[14]); break;
+		case CPUINFO_STR_REGISTER + E132XS_G15: 		sprintf(info->s = cpuintrf_temp_str(), "G15 :%08X", e132xs.global_regs[15]); break;
+		case CPUINFO_STR_REGISTER + E132XS_G16: 		sprintf(info->s = cpuintrf_temp_str(), "G16 :%08X", e132xs.global_regs[16]); break;
+		case CPUINFO_STR_REGISTER + E132XS_G17: 		sprintf(info->s = cpuintrf_temp_str(), "G17 :%08X", e132xs.global_regs[17]); break;
+		case CPUINFO_STR_REGISTER + E132XS_SP:  		sprintf(info->s = cpuintrf_temp_str(), "SP  :%08X", e132xs.global_regs[18]); break;
+		case CPUINFO_STR_REGISTER + E132XS_UB:  		sprintf(info->s = cpuintrf_temp_str(), "UB  :%08X", e132xs.global_regs[19]); break;
+		case CPUINFO_STR_REGISTER + E132XS_BCR: 		sprintf(info->s = cpuintrf_temp_str(), "BCR :%08X", e132xs.global_regs[20]); break;
+		case CPUINFO_STR_REGISTER + E132XS_TPR: 		sprintf(info->s = cpuintrf_temp_str(), "TPR :%08X", e132xs.global_regs[21]); break;
+		case CPUINFO_STR_REGISTER + E132XS_TCR: 		sprintf(info->s = cpuintrf_temp_str(), "TCR :%08X", e132xs.global_regs[22]); break;
+		case CPUINFO_STR_REGISTER + E132XS_TR:  		sprintf(info->s = cpuintrf_temp_str(), "TR  :%08X", e132xs.global_regs[23]); break;
+		case CPUINFO_STR_REGISTER + E132XS_WCR: 		sprintf(info->s = cpuintrf_temp_str(), "WCR :%08X", e132xs.global_regs[24]); break;
+		case CPUINFO_STR_REGISTER + E132XS_ISR: 		sprintf(info->s = cpuintrf_temp_str(), "ISR :%08X", e132xs.global_regs[25]); break;
+		case CPUINFO_STR_REGISTER + E132XS_FCR: 		sprintf(info->s = cpuintrf_temp_str(), "FCR :%08X", e132xs.global_regs[26]); break;
+		case CPUINFO_STR_REGISTER + E132XS_MCR: 		sprintf(info->s = cpuintrf_temp_str(), "MCR :%08X", e132xs.global_regs[27]); break;
+		case CPUINFO_STR_REGISTER + E132XS_G28: 		sprintf(info->s = cpuintrf_temp_str(), "G28 :%08X", e132xs.global_regs[28]); break;
+		case CPUINFO_STR_REGISTER + E132XS_G29: 		sprintf(info->s = cpuintrf_temp_str(), "G29 :%08X", e132xs.global_regs[29]); break;
+		case CPUINFO_STR_REGISTER + E132XS_G30: 		sprintf(info->s = cpuintrf_temp_str(), "G30 :%08X", e132xs.global_regs[30]); break;
+		case CPUINFO_STR_REGISTER + E132XS_G31: 		sprintf(info->s = cpuintrf_temp_str(), "G31 :%08X", e132xs.global_regs[31]); break;
 		case CPUINFO_STR_REGISTER + E132XS_CL0:  		sprintf(info->s = cpuintrf_temp_str(), "CL0 :%08X", e132xs.local_regs[0+(GET_FP)]); break;
 		case CPUINFO_STR_REGISTER + E132XS_CL1:  		sprintf(info->s = cpuintrf_temp_str(), "CL1 :%08X", e132xs.local_regs[1+(GET_FP)]); break;
 		case CPUINFO_STR_REGISTER + E132XS_CL2:  		sprintf(info->s = cpuintrf_temp_str(), "CL2 :%08X", e132xs.local_regs[2+(GET_FP)]); break;
@@ -5199,69 +5473,69 @@ void e132xs_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_STR_REGISTER + E132XS_CL13: 		sprintf(info->s = cpuintrf_temp_str(), "CL13:%08X", e132xs.local_regs[13+(GET_FP)]); break;
 		case CPUINFO_STR_REGISTER + E132XS_CL14: 		sprintf(info->s = cpuintrf_temp_str(), "CL14:%08X", e132xs.local_regs[14+(GET_FP)]); break;
 		case CPUINFO_STR_REGISTER + E132XS_CL15: 		sprintf(info->s = cpuintrf_temp_str(), "CL15:%08X", e132xs.local_regs[15+(GET_FP)]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L0:  		sprintf(info->s = cpuintrf_temp_str(), "L0 :%08X", e132xs.local_regs[0]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L1:  		sprintf(info->s = cpuintrf_temp_str(), "L1 :%08X", e132xs.local_regs[1]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L2:  		sprintf(info->s = cpuintrf_temp_str(), "L2 :%08X", e132xs.local_regs[2]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L3:  		sprintf(info->s = cpuintrf_temp_str(), "L3 :%08X", e132xs.local_regs[3]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L4:  		sprintf(info->s = cpuintrf_temp_str(), "L4 :%08X", e132xs.local_regs[4]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L5:  		sprintf(info->s = cpuintrf_temp_str(), "L5 :%08X", e132xs.local_regs[5]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L6:  		sprintf(info->s = cpuintrf_temp_str(), "L6 :%08X", e132xs.local_regs[6]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L7:  		sprintf(info->s = cpuintrf_temp_str(), "L7 :%08X", e132xs.local_regs[7]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L8:  		sprintf(info->s = cpuintrf_temp_str(), "L8 :%08X", e132xs.local_regs[8]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L9:  		sprintf(info->s = cpuintrf_temp_str(), "L9 :%08X", e132xs.local_regs[9]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L10: 		sprintf(info->s = cpuintrf_temp_str(), "L10:%08X", e132xs.local_regs[10]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L11: 		sprintf(info->s = cpuintrf_temp_str(), "L11:%08X", e132xs.local_regs[11]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L12: 		sprintf(info->s = cpuintrf_temp_str(), "L12:%08X", e132xs.local_regs[12]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L13: 		sprintf(info->s = cpuintrf_temp_str(), "L13:%08X", e132xs.local_regs[13]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L14: 		sprintf(info->s = cpuintrf_temp_str(), "L14:%08X", e132xs.local_regs[14]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L15: 		sprintf(info->s = cpuintrf_temp_str(), "L15:%08X", e132xs.local_regs[15]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L16: 		sprintf(info->s = cpuintrf_temp_str(), "L16:%08X", e132xs.local_regs[16]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L17: 		sprintf(info->s = cpuintrf_temp_str(), "L17:%08X", e132xs.local_regs[17]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L18: 		sprintf(info->s = cpuintrf_temp_str(), "L18:%08X", e132xs.local_regs[18]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L19: 		sprintf(info->s = cpuintrf_temp_str(), "L19:%08X", e132xs.local_regs[19]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L20: 		sprintf(info->s = cpuintrf_temp_str(), "L20:%08X", e132xs.local_regs[20]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L21: 		sprintf(info->s = cpuintrf_temp_str(), "L21:%08X", e132xs.local_regs[21]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L22: 		sprintf(info->s = cpuintrf_temp_str(), "L22:%08X", e132xs.local_regs[22]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L23: 		sprintf(info->s = cpuintrf_temp_str(), "L23:%08X", e132xs.local_regs[23]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L24: 		sprintf(info->s = cpuintrf_temp_str(), "L24:%08X", e132xs.local_regs[24]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L25: 		sprintf(info->s = cpuintrf_temp_str(), "L25:%08X", e132xs.local_regs[25]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L26: 		sprintf(info->s = cpuintrf_temp_str(), "L26:%08X", e132xs.local_regs[26]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L27: 		sprintf(info->s = cpuintrf_temp_str(), "L27:%08X", e132xs.local_regs[27]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L28: 		sprintf(info->s = cpuintrf_temp_str(), "L28:%08X", e132xs.local_regs[28]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L29: 		sprintf(info->s = cpuintrf_temp_str(), "L29:%08X", e132xs.local_regs[29]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L30: 		sprintf(info->s = cpuintrf_temp_str(), "L30:%08X", e132xs.local_regs[30]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L31: 		sprintf(info->s = cpuintrf_temp_str(), "L31:%08X", e132xs.local_regs[31]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L32: 		sprintf(info->s = cpuintrf_temp_str(), "L32:%08X", e132xs.local_regs[32]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L33: 		sprintf(info->s = cpuintrf_temp_str(), "L33:%08X", e132xs.local_regs[33]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L34: 		sprintf(info->s = cpuintrf_temp_str(), "L34:%08X", e132xs.local_regs[34]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L35: 		sprintf(info->s = cpuintrf_temp_str(), "L35:%08X", e132xs.local_regs[35]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L36: 		sprintf(info->s = cpuintrf_temp_str(), "L36:%08X", e132xs.local_regs[36]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L37: 		sprintf(info->s = cpuintrf_temp_str(), "L37:%08X", e132xs.local_regs[37]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L38: 		sprintf(info->s = cpuintrf_temp_str(), "L38:%08X", e132xs.local_regs[38]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L39: 		sprintf(info->s = cpuintrf_temp_str(), "L39:%08X", e132xs.local_regs[39]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L40: 		sprintf(info->s = cpuintrf_temp_str(), "L40:%08X", e132xs.local_regs[40]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L41: 		sprintf(info->s = cpuintrf_temp_str(), "L41:%08X", e132xs.local_regs[41]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L42: 		sprintf(info->s = cpuintrf_temp_str(), "L42:%08X", e132xs.local_regs[42]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L43: 		sprintf(info->s = cpuintrf_temp_str(), "L43:%08X", e132xs.local_regs[43]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L44: 		sprintf(info->s = cpuintrf_temp_str(), "L44:%08X", e132xs.local_regs[44]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L45: 		sprintf(info->s = cpuintrf_temp_str(), "L45:%08X", e132xs.local_regs[45]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L46: 		sprintf(info->s = cpuintrf_temp_str(), "L46:%08X", e132xs.local_regs[46]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L47: 		sprintf(info->s = cpuintrf_temp_str(), "L47:%08X", e132xs.local_regs[47]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L48: 		sprintf(info->s = cpuintrf_temp_str(), "L48:%08X", e132xs.local_regs[48]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L49: 		sprintf(info->s = cpuintrf_temp_str(), "L49:%08X", e132xs.local_regs[49]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L50: 		sprintf(info->s = cpuintrf_temp_str(), "L50:%08X", e132xs.local_regs[50]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L51: 		sprintf(info->s = cpuintrf_temp_str(), "L51:%08X", e132xs.local_regs[51]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L52: 		sprintf(info->s = cpuintrf_temp_str(), "L52:%08X", e132xs.local_regs[52]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L53: 		sprintf(info->s = cpuintrf_temp_str(), "L53:%08X", e132xs.local_regs[53]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L54: 		sprintf(info->s = cpuintrf_temp_str(), "L54:%08X", e132xs.local_regs[54]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L55: 		sprintf(info->s = cpuintrf_temp_str(), "L55:%08X", e132xs.local_regs[55]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L56: 		sprintf(info->s = cpuintrf_temp_str(), "L56:%08X", e132xs.local_regs[56]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L57: 		sprintf(info->s = cpuintrf_temp_str(), "L57:%08X", e132xs.local_regs[57]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L58: 		sprintf(info->s = cpuintrf_temp_str(), "L58:%08X", e132xs.local_regs[58]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L59: 		sprintf(info->s = cpuintrf_temp_str(), "L59:%08X", e132xs.local_regs[59]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L60: 		sprintf(info->s = cpuintrf_temp_str(), "L60:%08X", e132xs.local_regs[60]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L61: 		sprintf(info->s = cpuintrf_temp_str(), "L61:%08X", e132xs.local_regs[61]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L62: 		sprintf(info->s = cpuintrf_temp_str(), "L62:%08X", e132xs.local_regs[62]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L63: 		sprintf(info->s = cpuintrf_temp_str(), "L63:%08X", e132xs.local_regs[63]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L0:  		sprintf(info->s = cpuintrf_temp_str(), "L0  :%08X", e132xs.local_regs[0]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L1:  		sprintf(info->s = cpuintrf_temp_str(), "L1  :%08X", e132xs.local_regs[1]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L2:  		sprintf(info->s = cpuintrf_temp_str(), "L2  :%08X", e132xs.local_regs[2]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L3:  		sprintf(info->s = cpuintrf_temp_str(), "L3  :%08X", e132xs.local_regs[3]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L4:  		sprintf(info->s = cpuintrf_temp_str(), "L4  :%08X", e132xs.local_regs[4]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L5:  		sprintf(info->s = cpuintrf_temp_str(), "L5  :%08X", e132xs.local_regs[5]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L6:  		sprintf(info->s = cpuintrf_temp_str(), "L6  :%08X", e132xs.local_regs[6]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L7:  		sprintf(info->s = cpuintrf_temp_str(), "L7  :%08X", e132xs.local_regs[7]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L8:  		sprintf(info->s = cpuintrf_temp_str(), "L8  :%08X", e132xs.local_regs[8]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L9:  		sprintf(info->s = cpuintrf_temp_str(), "L9  :%08X", e132xs.local_regs[9]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L10: 		sprintf(info->s = cpuintrf_temp_str(), "L10 :%08X", e132xs.local_regs[10]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L11: 		sprintf(info->s = cpuintrf_temp_str(), "L11 :%08X", e132xs.local_regs[11]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L12: 		sprintf(info->s = cpuintrf_temp_str(), "L12 :%08X", e132xs.local_regs[12]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L13: 		sprintf(info->s = cpuintrf_temp_str(), "L13 :%08X", e132xs.local_regs[13]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L14: 		sprintf(info->s = cpuintrf_temp_str(), "L14 :%08X", e132xs.local_regs[14]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L15: 		sprintf(info->s = cpuintrf_temp_str(), "L15 :%08X", e132xs.local_regs[15]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L16: 		sprintf(info->s = cpuintrf_temp_str(), "L16 :%08X", e132xs.local_regs[16]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L17: 		sprintf(info->s = cpuintrf_temp_str(), "L17 :%08X", e132xs.local_regs[17]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L18: 		sprintf(info->s = cpuintrf_temp_str(), "L18 :%08X", e132xs.local_regs[18]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L19: 		sprintf(info->s = cpuintrf_temp_str(), "L19 :%08X", e132xs.local_regs[19]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L20: 		sprintf(info->s = cpuintrf_temp_str(), "L20 :%08X", e132xs.local_regs[20]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L21: 		sprintf(info->s = cpuintrf_temp_str(), "L21 :%08X", e132xs.local_regs[21]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L22: 		sprintf(info->s = cpuintrf_temp_str(), "L22 :%08X", e132xs.local_regs[22]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L23: 		sprintf(info->s = cpuintrf_temp_str(), "L23 :%08X", e132xs.local_regs[23]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L24: 		sprintf(info->s = cpuintrf_temp_str(), "L24 :%08X", e132xs.local_regs[24]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L25: 		sprintf(info->s = cpuintrf_temp_str(), "L25 :%08X", e132xs.local_regs[25]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L26: 		sprintf(info->s = cpuintrf_temp_str(), "L26 :%08X", e132xs.local_regs[26]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L27: 		sprintf(info->s = cpuintrf_temp_str(), "L27 :%08X", e132xs.local_regs[27]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L28: 		sprintf(info->s = cpuintrf_temp_str(), "L28 :%08X", e132xs.local_regs[28]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L29: 		sprintf(info->s = cpuintrf_temp_str(), "L29 :%08X", e132xs.local_regs[29]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L30: 		sprintf(info->s = cpuintrf_temp_str(), "L30 :%08X", e132xs.local_regs[30]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L31: 		sprintf(info->s = cpuintrf_temp_str(), "L31 :%08X", e132xs.local_regs[31]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L32: 		sprintf(info->s = cpuintrf_temp_str(), "L32 :%08X", e132xs.local_regs[32]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L33: 		sprintf(info->s = cpuintrf_temp_str(), "L33 :%08X", e132xs.local_regs[33]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L34: 		sprintf(info->s = cpuintrf_temp_str(), "L34 :%08X", e132xs.local_regs[34]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L35: 		sprintf(info->s = cpuintrf_temp_str(), "L35 :%08X", e132xs.local_regs[35]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L36: 		sprintf(info->s = cpuintrf_temp_str(), "L36 :%08X", e132xs.local_regs[36]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L37: 		sprintf(info->s = cpuintrf_temp_str(), "L37 :%08X", e132xs.local_regs[37]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L38: 		sprintf(info->s = cpuintrf_temp_str(), "L38 :%08X", e132xs.local_regs[38]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L39: 		sprintf(info->s = cpuintrf_temp_str(), "L39 :%08X", e132xs.local_regs[39]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L40: 		sprintf(info->s = cpuintrf_temp_str(), "L40 :%08X", e132xs.local_regs[40]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L41: 		sprintf(info->s = cpuintrf_temp_str(), "L41 :%08X", e132xs.local_regs[41]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L42: 		sprintf(info->s = cpuintrf_temp_str(), "L42 :%08X", e132xs.local_regs[42]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L43: 		sprintf(info->s = cpuintrf_temp_str(), "L43 :%08X", e132xs.local_regs[43]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L44: 		sprintf(info->s = cpuintrf_temp_str(), "L44 :%08X", e132xs.local_regs[44]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L45: 		sprintf(info->s = cpuintrf_temp_str(), "L45 :%08X", e132xs.local_regs[45]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L46: 		sprintf(info->s = cpuintrf_temp_str(), "L46 :%08X", e132xs.local_regs[46]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L47: 		sprintf(info->s = cpuintrf_temp_str(), "L47 :%08X", e132xs.local_regs[47]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L48: 		sprintf(info->s = cpuintrf_temp_str(), "L48 :%08X", e132xs.local_regs[48]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L49: 		sprintf(info->s = cpuintrf_temp_str(), "L49 :%08X", e132xs.local_regs[49]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L50: 		sprintf(info->s = cpuintrf_temp_str(), "L50 :%08X", e132xs.local_regs[50]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L51: 		sprintf(info->s = cpuintrf_temp_str(), "L51 :%08X", e132xs.local_regs[51]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L52: 		sprintf(info->s = cpuintrf_temp_str(), "L52 :%08X", e132xs.local_regs[52]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L53: 		sprintf(info->s = cpuintrf_temp_str(), "L53 :%08X", e132xs.local_regs[53]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L54: 		sprintf(info->s = cpuintrf_temp_str(), "L54 :%08X", e132xs.local_regs[54]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L55: 		sprintf(info->s = cpuintrf_temp_str(), "L55 :%08X", e132xs.local_regs[55]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L56: 		sprintf(info->s = cpuintrf_temp_str(), "L56 :%08X", e132xs.local_regs[56]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L57: 		sprintf(info->s = cpuintrf_temp_str(), "L57 :%08X", e132xs.local_regs[57]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L58: 		sprintf(info->s = cpuintrf_temp_str(), "L58 :%08X", e132xs.local_regs[58]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L59: 		sprintf(info->s = cpuintrf_temp_str(), "L59 :%08X", e132xs.local_regs[59]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L60: 		sprintf(info->s = cpuintrf_temp_str(), "L60 :%08X", e132xs.local_regs[60]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L61: 		sprintf(info->s = cpuintrf_temp_str(), "L61 :%08X", e132xs.local_regs[61]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L62: 		sprintf(info->s = cpuintrf_temp_str(), "L62 :%08X", e132xs.local_regs[62]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L63: 		sprintf(info->s = cpuintrf_temp_str(), "L63 :%08X", e132xs.local_regs[63]); break;
 	}
 }

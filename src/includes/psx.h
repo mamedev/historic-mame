@@ -19,12 +19,14 @@ extern void psx_gpu_read( UINT32 *p_ram, INT32 n_size );
 extern void psx_gpu_write( UINT32 *p_ram, INT32 n_size );
 READ32_HANDLER( psx_gpu_r );
 WRITE32_HANDLER( psx_gpu_w );
+extern void psx_lightgun_set( int, int );
 
 /* machine */
 extern data32_t *g_p_n_psxram;
 extern size_t g_n_psxramsize;
 typedef void ( *psx_dma_read_handler )( UINT32, INT32 );
 typedef void ( *psx_dma_write_handler )( UINT32, INT32 );
+READ32_HANDLER( psx_com_delay_r );
 WRITE32_HANDLER( psx_irq_w );
 READ32_HANDLER( psx_irq_r );
 extern void psx_irq_set( UINT32 );
@@ -36,12 +38,18 @@ WRITE32_HANDLER( psx_counter_w );
 READ32_HANDLER( psx_counter_r );
 WRITE32_HANDLER( psx_sio_w );
 READ32_HANDLER( psx_sio_r );
-typedef void ( *psx_sio_write_handler )( int, int );
-#define PSX_SIO_SEL ( 0 )
-#define PSX_SIO_DATA ( 1 )
-extern void psx_sio_install_write_handler( int, psx_sio_write_handler );
-extern void psx_sio_send( int, data8_t );
-extern void psx_sio_dsr( int, int );
+typedef void ( *psx_sio_handler )( int );
+extern void psx_sio_install_handler( int, psx_sio_handler );
+extern void psx_sio_input( int, int, int );
+
+#define PSX_SIO_OUT_DATA ( 1 )	/* COMMAND */
+#define PSX_SIO_OUT_DTR ( 2 )	/* ATT */
+#define PSX_SIO_OUT_RTS ( 4 )
+#define PSX_SIO_OUT_CLOCK ( 8 )	/* CLOCK */
+#define PSX_SIO_IN_DATA ( 1 )	/* DATA */
+#define PSX_SIO_IN_DSR ( 2 )	/* ACK */
+#define PSX_SIO_IN_CTS ( 4 )
+	
 WRITE32_HANDLER( psx_mdec_w );
 READ32_HANDLER( psx_mdec_r );
 extern void psx_machine_init( void );

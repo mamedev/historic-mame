@@ -108,6 +108,9 @@
  * 68000
  * None - Let us know if you find any!
  *
+ * 68008
+ * Must use ROM_LOAD16_WORD_SWAP to load ROMs.
+ *
  * 68010
  * Instructions that are supervisor only as per 68000 spec.
  * move address space not implemented.

@@ -62,7 +62,7 @@ struct drccore *drc_init(UINT8 cpunum, struct drcconfig *config)
 	drc->fpcw_curr    = fp_control[0];
 
 	/* allocate cache */
-	drc->cache_base = malloc(config->cache_size);
+	drc->cache_base = osd_alloc_executable(config->cache_size);
 	if (!drc->cache_base)
 		return NULL;
 	drc->cache_end = drc->cache_base + config->cache_size;
@@ -160,7 +160,7 @@ void drc_exit(struct drccore *drc)
 
 	/* free the cache */
 	if (drc->cache_base)
-		free(drc->cache_base);
+		osd_free_executable(drc->cache_base);
 
 	/* free all the l2 tables allocated */
 	for (i = 0; i < (1 << drc->l1bits); i++)
@@ -253,10 +253,8 @@ void drc_register_code_at_cache_top(struct drccore *drc, UINT32 pc)
 {
 	struct pc_ptr_pair *pair = &drc->sequence_list[drc->sequence_count++];
 	if (drc->sequence_count > drc->sequence_count_max)
-	{
-		printf("drc_register_code_at_cache_top: too many instructions!\n");
-		exit(1);
-	}
+		osd_die("drc_register_code_at_cache_top: too many instructions!\n");
+
 	pair->target = drc->cache_top;
 	pair->pc = pc;
 }
@@ -417,10 +415,8 @@ void drc_append_tentative_fixed_dispatcher(struct drccore *drc, UINT32 newpc)
 {
 	struct pc_ptr_pair *pair = &drc->tentative_list[drc->tentative_count++];
 	if (drc->tentative_count > drc->tentative_count_max)
-	{
-		printf("drc_append_tentative_fixed_dispatcher: too many tentative branches!\n");
-		exit(1);
-	}
+		osd_die("drc_append_tentative_fixed_dispatcher: too many tentative branches!\n");
+
 	pair->target = drc->cache_top;
 	pair->pc = newpc;
 	drc_append_fixed_dispatcher(drc, newpc);

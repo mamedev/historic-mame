@@ -422,7 +422,7 @@ unsigned DasmMIPS( char *buffer, UINT32 oldpc )
 			case 1:
 				sprintf( buffer, "cop2    $%07x", INS_COFUN( op ) );
 
-				switch( GTE_OP( op ) )
+				switch( GTE_FUNCT( op ) )
 				{
 				case 0x01:
 					if( INS_CO( op ) == 0x0180001 )
@@ -430,131 +430,133 @@ unsigned DasmMIPS( char *buffer, UINT32 oldpc )
 						sprintf( buffer, "rtps" );
 					}
 					break;
-				case 0x02:
-					if( INS_CO( op ) == 0x0280030 )
+				case 0x06:
+					if( INS_CO( op ) == 0x1400006 )
 					{
-						sprintf( buffer, "rtpt" );
+						sprintf( buffer, "nclip" );
 					}
 					break;
-				case 0x04:
-					if( GTE_CT( op ) == 0x012 ||
-						GTE_CT( op ) == 0x412 )
+				case 0x0c:
+					if( GTE_OP( op ) == 0x17 )
+					{
+						sprintf( buffer, "op%s", s_gtesf[ GTE_SF( op ) ] );
+					}
+					break;
+				case 0x10:
+					if( INS_CO( op ) == 0x0780010 )
+					{
+						sprintf( buffer, "dpcs" );
+					}
+					break;
+				case 0x11:
+					if( INS_CO( op ) == 0x0980011 )
+					{
+						sprintf( buffer, "intpl" );
+					}
+					break;
+				case 0x12:
+					if( GTE_OP( op ) == 0x04 )
 					{
 						sprintf( buffer, "mvmva%s %s + %s * %s (lm=%s)",
 							s_gtesf[ GTE_SF( op ) ], s_gtecv[ GTE_CV( op ) ], s_gtemx[ GTE_MX( op ) ],
 							s_gtev[ GTE_V( op ) ],  s_gtelm[ GTE_LM( op ) ] );
 					}
 					break;
-				case 0x06:
-					if( INS_CO( op ) == 0x0680029 )
-					{
-						sprintf( buffer, "dcpl" );
-					}
-					break;
-				case 0x07:
-					if( INS_CO( op ) == 0x0780010 )
-					{
-						sprintf( buffer, "dpcs" );
-					}
-					break;
-				case 0x09:
-					if( INS_CO( op ) == 0x0980011 )
-					{
-						sprintf( buffer, "intpl" );
-					}
-					break;
-				case 0x0a:
-					if( GTE_CT( op ) == 0x428 )
-					{
-						sprintf( buffer, "sqr%s", s_gtesf[ GTE_SF( op ) ] );
-					}
-					break;
-				case 0x0c:
-					if( INS_CO( op ) == 0x0c8041e )
-					{
-						sprintf( buffer, "ncs" );
-					}
-					break;
-				case 0x0d:
-					if( INS_CO( op ) == 0x0d80420 )
-					{
-						sprintf( buffer, "nct" );
-					}
-					break;
-				case 0x0e:
+				case 0x13:
 					if( INS_CO( op ) == 0x0e80413 )
 					{
 						sprintf( buffer, "ncds" );
 					}
 					break;
-				case 0x0f:
-					if( INS_CO( op ) == 0x0f8002A )
-					{
-						sprintf( buffer, "dpct" );
-					}
-					else if( INS_CO( op ) == 0x0f80416 )
-					{
-						sprintf( buffer, "ncdt" );
-					}
-					break;
-				case 0x10:
-					if( INS_CO( op ) == 0x108041b )
-					{
-						sprintf( buffer, "nccs" );
-					}
-					break;
-				case 0x11:
-					if( INS_CO( op ) == 0x118043f )
-					{
-						sprintf( buffer, "ncct" );
-					}
-					break;
-				case 0x12:
+				case 0x14:
 					if( INS_CO( op ) == 0x1280414 )
 					{
 						sprintf( buffer, "cdp" );
 					}
 					break;
-				case 0x13:
+				case 0x16:
+					if( INS_CO( op ) == 0x0f80416 )
+					{
+						sprintf( buffer, "ncdt" );
+					}
+					break;
+				case 0x1b:
+					if( INS_CO( op ) == 0x108041b )
+					{
+						sprintf( buffer, "nccs" );
+					}
+					break;
+				case 0x1c:
 					if( INS_CO( op ) == 0x138041c )
 					{
 						sprintf( buffer, "cc" );
 					}
 					break;
-				case 0x14:
-					if( INS_CO( op ) == 0x1400006 )
+				case 0x1e:
+					if( INS_CO( op ) == 0x0c8041e )
 					{
-						sprintf( buffer, "nclip" );
+						sprintf( buffer, "ncs" );
 					}
 					break;
-				case 0x15:
+				case 0x20:
+					if( INS_CO( op ) == 0x0d80420 )
+					{
+						sprintf( buffer, "nct" );
+					}
+					break;
+				case 0x28:
+					if( GTE_OP( op ) == 0x0a && GTE_LM( op ) == 1 )
+					{
+						sprintf( buffer, "sqr%s", s_gtesf[ GTE_SF( op ) ] );
+					}
+					break;
+				case 0x29:
+					if( INS_CO( op ) == 0x0680029 )
+					{
+						sprintf( buffer, "dcpl" );
+					}
+					break;
+				case 0x2a:
+					if( INS_CO( op ) == 0x0f8002a )
+					{
+						sprintf( buffer, "dpct" );
+					}
+					break;
+				case 0x2d:
 					if( INS_CO( op ) == 0x158002d )
 					{
 						sprintf( buffer, "avsz3" );
 					}
 					break;
-				case 0x16:
+				case 0x2e:
 					if( INS_CO( op ) == 0x168002e )
 					{
 						sprintf( buffer, "avsz4" );
 					}
 					break;
-				case 0x17:
-					if( GTE_CT( op ) == 0x00c )
+				case 0x30:
+					if( INS_CO( op ) == 0x0280030 )
 					{
-						sprintf( buffer, "op%s", s_gtesf[ GTE_SF( op ) ] );
+						sprintf( buffer, "rtpt" );
 					}
 					break;
-				case 0x19:
-					if( GTE_CT( op ) == 0x03d )
+				case 0x3d:
+					if( GTE_OP( op ) == 0x19 )
 					{
 						sprintf( buffer, "gpf%s", s_gtesf[ GTE_SF( op ) ] );
 					}
 					break;
-				case 0x1a:
-					if( GTE_CT( op ) == 0x03e )
+				case 0x3e:
+					if( GTE_OP( op ) == 0x1a )
 					{
 						sprintf( buffer, "gpl%s", s_gtesf[ GTE_SF( op ) ] );
+					}
+					break;
+				case 0x3f:
+					if( INS_CO( op ) == 0x108043f ||
+						INS_CO( op ) == 0x118043f )
+					{
+						sprintf( buffer, "ncct" );
 					}
 					break;
 				}

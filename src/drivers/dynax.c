@@ -28,6 +28,7 @@ Year + Game					Board(s)					Sound						Palette
 91 Mahjong Dial Q2			D5212298L-1		    		              YM2413		PROM
 92 Quiz TV Gassyuukoku Q&Q	D5512068L1-2 + D6410288L-1	AY8912        YM2413 M5205	RAM
 94 Maya												    	  YM2203				PROM
+9? Inca                                                      TM2203               PROM
 ----------------------------------------------------------------------------------------
 (1) quite different from the others: it has a slave Z80 and *two* blitters
 
@@ -3352,6 +3353,25 @@ ROM_START( maya )
 	ROM_LOAD( "prom1.6b",  0x200, 0x200, CRC(e38eb360) SHA1(739960dd57ec3305edd57aa63816a81ddfbebf3e) )
 ROM_END
 
+ROM_START( inca )
+	ROM_REGION( 0x90000, REGION_CPU1, 0 )	/* Z80 Code */
+	ROM_LOAD( "am27c512.1", 0x00000, 0x10000, CRC(b0d513f7) SHA1(65ef4702302bbfc7c7a77f7353120ee3f5c94b31) )
+	ROM_LOAD( "2.15e", 0x28000, 0x10000, CRC(7ea5b49a) SHA1(aaae848669d9f88c0660f46cc801e4eb0f5e3b89) )
+
+	ROM_REGION( 0xc0000, REGION_USER1, ROMREGION_DISPOSE )	/* blitter data */
+	ROM_LOAD( "m27c2001.3", 0x00000, 0x40000, CRC(3a3c54ea) SHA1(2743c6a66d3eff60080c9183fa2bf9081207ac6b) )
+	ROM_LOAD( "am27c020.4", 0x40000, 0x40000, CRC(d3571d63) SHA1(5f0abb0da19af34bbd3eb93270311e824839deb4) )
+	ROM_LOAD( "m27c2001.5", 0x80000, 0x40000, CRC(bde60c29) SHA1(3ff7fbd5978bec27ff2ecf5977f640c66058e45d) )
+
+	ROM_REGION( 0xc0000, REGION_GFX1, 0 )
+	/* blitter data will be decrypted here*/
+
+	ROM_REGION( 0x400, REGION_PROMS, ROMREGION_DISPOSE )	/* Color PROMs */
+	ROM_LOAD( "n82s147n.2",  0x000, 0x200, CRC(268bd9d3) SHA1(1f77d9dc58ab29f013ee21d7ec521b90be72610d) )	// FIXED BITS (0xxxxxxx)
+	ROM_LOAD( "n82s147n.1",  0x200, 0x200, CRC(618dbeb3) SHA1(10c8a558430fd1c2cabf9133d3e4f0a5f80eab83) )
+ROM_END
+
+
 static DRIVER_INIT( maya )
 {
 	/* Address lines scrambling on 1 z80 rom */
@@ -4026,6 +4046,7 @@ GAME ( 1991, yarunara, 0,        yarunara, yarunara, 0,        ROT180, "Dynax", 
 GAME ( 1991, mjangels, 0,        yarunara, yarunara, 0,        ROT180, "Dynax",                   "Mahjong Angels - Comic Theater Vol.2 (Japan)"          )
 GAME ( 1992, quiztvqq, 0,        yarunara, quiztvqq, 0,        ROT180, "Dynax",                   "Quiz TV Gassyuukoku Q&Q (Japan)"                       )
 GAME ( 1994, maya,     0,        sprtmtch, sprtmtch, maya,     ROT0,   "Promat",                  "Maya"                                                  )
+GAME ( 199?, inca,     maya,     sprtmtch, sprtmtch, maya,     ROT0,   "unknown",                 "Inca"                                                  )
 GAME ( 1990, jantouki, 0,        jantouki, jantouki, 0,        ROT0,   "Dynax",                   "Jong Tou Ki (Japan)"                                   )
 GAMEX( 1993, mjelctrn, 0,        mjelctrn, mjelctrn, mjelct3,  ROT180, "Dynax",                   "Mahjong Electron Base (parts 2 & 4, Japan)",           GAME_IMPERFECT_GRAPHICS )	// part 4 title in the no_dump rom
 GAME ( 1990, mjelct3,  mjelctrn, mjelctrn, mjelct3,  mjelct3,  ROT180, "Dynax",                   "Mahjong Electron Base (parts 2 & 3, Japan)"            )

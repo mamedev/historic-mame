@@ -316,8 +316,10 @@ INLINE void MODIFY_ARP(int data) { R.STR1 &= ~ARB_REG; R.STR1 |= (R.STR0 & ARP_R
 								   R.STR0 &= ~ARP_REG; R.STR0 |= ((data << 13) & ARP_REG); R.STR0 |= 0x0400; }
 INLINE void MODIFY_ARB(int data) { R.STR1 &= ~ARB_REG; R.STR1 |= ((data << 13) & ARB_REG); R.STR1 |= 0x0180; }
 
+static int mHackIgnoreARP; /* special handling for lst, lst1 instructions */
+
 INLINE void MODIFY_AR_ARP(void)
-{
+{ /* modify address register referenced by ARP */
 	switch (R.opcode.b.l & 0x70)		/* Cases ordered by predicted useage */
 	{
 		case 0x00:		break;
@@ -330,10 +332,14 @@ INLINE void MODIFY_AR_ARP(void)
 		case 0x30:		break;	/* Reserved. Lets use it for LAR instruction */
 		default:		break;
 	}
-	if (R.opcode.b.l & 8)
+
+	if( !mHackIgnoreARP )
 	{
-//		MODIFY_ARB(ARP);
-		MODIFY_ARP(R.opcode.b.l & 7);
+		if (R.opcode.b.l & 8)
+		{
+	//		MODIFY_ARB(ARP);
+			MODIFY_ARP(R.opcode.b.l & 7);
+		}
 	}
 }
 
@@ -410,9 +416,6 @@ INLINE void SHIFT_Preg_TO_ALU(void)
 	}
 }
 
-
-
-
 INLINE void GETDATA(int shift,int signext)
 {
 	if (R.opcode.b.l & 0x80) memaccess = IND;
@@ -427,6 +430,7 @@ INLINE void GETDATA(int shift,int signext)
 
 	if (R.opcode.b.l & 0x80) MODIFY_AR_ARP();
 }
+
 INLINE void PUTDATA(UINT16 data)
 {
 	if (R.opcode.b.l & 0x80) {
@@ -938,7 +942,7 @@ static void ldp(void)
 }
 static void ldpk(void)
 {
-		MODIFY_DP(R.opcode.b.l & 0x1ff);
+		MODIFY_DP(R.opcode.w.l & 0x1ff);
 }
 static void lph(void)
 {
@@ -953,8 +957,10 @@ static void lrlk(void)
 }
 static void lst(void)
 {
-		R.opcode.b.l &= 0xf7;		/* Must ignore next ARP */
+		mHackIgnoreARP = 1;
 		GETDATA(0,0);
+		mHackIgnoreARP = 0;
+
 		R.ALU.w.l &= (~INTM_FLAG);
 		R.STR0 &= INTM_FLAG;
 		R.STR0 |= R.ALU.w.l;		/* Must not affect INTM */
@@ -962,8 +968,10 @@ static void lst(void)
 }
 static void lst1(void)
 {
-		R.opcode.b.l &= 0xf7;		/* Must ignore next ARP */
+		mHackIgnoreARP = 1;
 		GETDATA(0,0);
+		mHackIgnoreARP = 0;
+
 		R.STR1 = R.ALU.w.l;
 		R.STR1 |= 0x0180;
 		R.STR0 &= (~ARP_REG);		/* ARB also gets copied to ARP */
@@ -1239,12 +1247,14 @@ static void sar_ar4(void)	{ PUTDATA(R.AR[4]); }
 static void sar_ar5(void)	{ PUTDATA(R.AR[5]); }
 static void sar_ar6(void)	{ PUTDATA(R.AR[6]); }
 static void sar_ar7(void)	{ PUTDATA(R.AR[7]); }
+
 static void sblk(void)
 {
 		oldacc.d = R.ACC.d;
-		R.ALU.d = (M_RDOP_ARG(R.PC) << (R.opcode.b.h & 0xf));
+		if (SXM) R.ALU.d =  (INT16)M_RDOP_ARG(R.PC);
+		else     R.ALU.d = (UINT16)M_RDOP_ARG(R.PC);
 		R.PC++;
-		if (SXM && (R.ALU.d & 0x8000)) R.ALU.d = -R.ALU.d;
+		R.ALU.d <<= (R.opcode.b.h & 0xf);
 		R.ACC.d -= R.ALU.d;
 		CALCULATE_SUB_OVERFLOW(R.ALU.d);
 		CALCULATE_SUB_CARRY();
@@ -1655,6 +1665,8 @@ static opcode_fn opcode_CE_subset[256]=
 static void tms32025_init (void)
 {
 	int cpu = cpu_getactivecpu();
+	
+	R.intRAM = malloc(0x800*2);
 
 	state_save_register_UINT16("tms32025", cpu, "PC", &R.PC, 1);
 	state_save_register_UINT16("tms32025", cpu, "STR0", &R.STR0, 1);
@@ -1705,7 +1717,6 @@ static void tms32025_reset (void *param)
 
 	S_OUT(TMS32025_XF,ASSERT_LINE);	/* XF flag is high. Must set the pin */
 
-	R.intRAM = malloc(0x800*2);
 	/* Set the internal memory mapped registers */
 	GREG = 0;
 	TIM  = 0xffff;
@@ -1771,7 +1782,6 @@ static int process_IRQs(void)
 		|  5  |  4  |  3  |  2  |  1  |  0  |
 		| XINT| RINT| TINT| INT2| INT1| INT0|
 	*/
-
 	R.tms32025_irq_cycles = 0;
 
 	/* Dont service Interrupts if masked, or prev instruction was EINT ! */
@@ -1782,7 +1792,7 @@ static int process_IRQs(void)
 		PUSH_STACK(R.PC);
 
 		if ((R.IFR & 0x01) && (IMR & 0x01)) {		/* IRQ line 0 */
-			logerror("TMS32025:  Active INT0\n");
+			//logerror("TMS32025:  Active INT0\n");
 			R.PC = 0x0002;
 			(*R.irq_callback)(0);
 			R.idle = 0;
@@ -1791,7 +1801,7 @@ static int process_IRQs(void)
 			return R.tms32025_irq_cycles;
 		}
 		if ((R.IFR & 0x02) && (IMR & 0x02)) {		/* IRQ line 1 */
-			logerror("TMS32025:  Active INT1\n");
+			//logerror("TMS32025:  Active INT1\n");
 			R.PC = 0x0004;
 			(*R.irq_callback)(1);
 			R.idle = 0;
@@ -1800,7 +1810,7 @@ static int process_IRQs(void)
 			return R.tms32025_irq_cycles;
 		}
 		if ((R.IFR & 0x04) && (IMR & 0x04)) {		/* IRQ line 2 */
-			logerror("TMS32025:  Active INT2\n");
+			//logerror("TMS32025:  Active INT2\n");
 			R.PC = 0x0006;
 			(*R.irq_callback)(2);
 			R.idle = 0;
@@ -1817,7 +1827,8 @@ static int process_IRQs(void)
 			return R.tms32025_irq_cycles;
 		}
 		if ((R.IFR & 0x10) && (IMR & 0x10)) {		/* Serial port receive IRQ (internal) */
-			logerror("TMS32025:  Active RINT (Serial recieve)\n");
+//			logerror("TMS32025:  Active RINT (Serial recieve)\n");
+			DRR = S_IN(TMS32025_DR);
 			R.PC = 0x001A;
 			R.idle = 0;
 			R.IFR &= (~0x10);
@@ -1825,7 +1836,8 @@ static int process_IRQs(void)
 			return R.tms32025_irq_cycles;
 		}
 		if ((R.IFR & 0x20) && (IMR & 0x20)) {		/* Serial port transmit IRQ (internal) */
-			logerror("TMS32025:  Active XINT (Serial transmit)\n");
+//			logerror("TMS32025:  Active XINT (Serial transmit)\n");
+			S_OUT(TMS32025_DX,DXR);
 			R.PC = 0x001C;
 			R.idle = 0;
 			R.IFR &= (~0x20);
@@ -2056,7 +2068,7 @@ static void set_irq_line(int irqline, int state)
 	if (state != CLEAR_LINE)
 	{
 		R.IFR |= (1 << irqline);
-		R.IFR &= 0x07;
+//		R.IFR &= 0x07;
 	}
 }
 

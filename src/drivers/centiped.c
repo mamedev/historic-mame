@@ -1175,6 +1175,7 @@ INPUT_PORTS_START( bullsdrt )
 INPUT_PORTS_END
 
 
+
 /*************************************
  *
  *	Graphics layouts: Centipede/Millipede
@@ -1479,6 +1480,7 @@ static MACHINE_DRIVER_START( bullsdrt )
 MACHINE_DRIVER_END
 
 
+
 /*************************************
  *
  *	ROM definitions
@@ -1613,6 +1615,7 @@ ROM_START( warlords )
 	ROM_LOAD( "warlord.clr",  0x0000, 0x0100, CRC(a2c5c277) SHA1(f04de9fb6ee9619b4a4aae10c92b16b3123046cf) )
 ROM_END
 
+
 ROM_START( bullsdrt )
 	ROM_REGION( 0x8000, REGION_CPU1, 0 )	/* 32k for code */
 	ROM_LOAD( "27128.bin", 0x0000, 0x1000, CRC(2729f585) SHA1(6ffbfa5b62c497c3932ab71d0e3f407cae99cb59) )
@@ -1627,6 +1630,7 @@ ROM_START( bullsdrt )
 	ROM_REGION( 0x0200, REGION_PROMS, 0 ) /* unknown */
 	ROM_LOAD( "82s147.bin",   0x0000, 0x0200, CRC(d841b7e0) SHA1(aab32645a613cd027aed98437db24704763cc147) )
 ROM_END
+
 
 
 /*************************************

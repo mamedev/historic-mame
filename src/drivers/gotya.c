@@ -109,9 +109,9 @@ INPUT_PORTS_START( gotya )
 	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x40, "5" )
-	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, "Game Type" )	/* Manual Says:  Before main switch on: Test Pattern */
+	PORT_DIPSETTING(    0x80, "Normal" )	/*                After main switch on: Endless game */
+	PORT_DIPSETTING(    0x00, "Endless" )
 
 INPUT_PORTS_END
 

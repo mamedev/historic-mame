@@ -76,10 +76,10 @@ void timer_free(void);
 
 mame_time mame_timer_next_fire_time(void);
 void mame_timer_set_global_time(mame_time newbase);
-mame_timer *mame_timer_alloc(void (*callback)(int));
+mame_timer *_mame_timer_alloc(void (*callback)(int), const char *file, int line);
 void mame_timer_adjust(mame_timer *which, mame_time duration, int param, mame_time period);
-void mame_timer_pulse(mame_time period, int param, void (*callback)(int));
-void mame_timer_set(mame_time duration, int param, void (*callback)(int));
+void _mame_timer_pulse(mame_time period, int param, void (*callback)(int), const char *file, int line);
+void _mame_timer_set(mame_time duration, int param, void (*callback)(int), const char *file, int line);
 void mame_timer_reset(mame_timer *which, mame_time duration);
 void mame_timer_remove(mame_timer *which);
 int mame_timer_enable(mame_timer *which, int enable);
@@ -88,6 +88,16 @@ mame_time mame_timer_timeleft(mame_timer *which);
 mame_time mame_timer_get_time(void);
 mame_time mame_timer_starttime(mame_timer *which);
 mame_time mame_timer_firetime(mame_timer *which);
+
+
+
+/*-------------------------------------------------
+	macros to pass debugging information
+-------------------------------------------------*/
+
+#define mame_timer_alloc(c)				_mame_timer_alloc(c, __FILE__, __LINE__)
+#define mame_timer_pulse(e,p,c)			_mame_timer_pulse(e, p, c, __FILE__, __LINE__)
+#define mame_timer_set(d,p,c)			_mame_timer_set(d, p, c, __FILE__, __LINE__)
 
 
 

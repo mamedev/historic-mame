@@ -4,17 +4,17 @@
 
 ***************************************************************************/
 
-#include "osd_cpu.h"
-#include "driver.h"
-#include "harddisk.h"
-#include "cdrom.h"
+#include "chd.h"
 #include "md5.h"
 #include "sha1.h"
-#include <stdarg.h>
+#include "cdrom.h"
 #include <stdio.h>
-#include <string.h>
 #include <time.h>
+#include <string.h>
 #include <ctype.h>
+#ifdef _WIN32
+#include <windows.h>
+#endif
 
 /***************************************************************************
 	CONSTANTS & DEFINES
@@ -22,6 +22,12 @@
 
 #define EATWHITESPACE	\
 	while ((linebuffer[i] == ' ' || linebuffer[i] == 0x09 || linebuffer[i] == '\r') && (i < 512))	\
+	{	\
+		i++;	\
+	}
+
+#define EATQUOTE	\
+	while ((linebuffer[i] == '"' || linebuffer[i] == '\'') && (i < 512))	\
 	{	\
 		i++;	\
 	}
@@ -61,6 +67,50 @@ static char linebuffer[512];
 ***************************************************************************/
 
 /*-------------------------------------------------
+	get_file_size - returns the 64-bit file size
+	for a file
+-------------------------------------------------*/
+
+static UINT64 get_file_size(const char *file)
+{
+#ifdef _WIN32
+	DWORD highSize = 0, lowSize;
+	HANDLE handle;
+	UINT64 filesize;
+
+	/* attempt to open the file */
+	handle = CreateFile(file, GENERIC_READ, FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL);
+	if (handle == INVALID_HANDLE_VALUE)
+		return 0;
+
+	/* get the file size */
+	lowSize = GetFileSize(handle, &highSize);
+	filesize = lowSize | ((UINT64)highSize << 32);
+	if (lowSize == INVALID_FILE_SIZE && GetLastError() != NO_ERROR)
+		filesize = 0;
+
+	/* close the file and return */
+	CloseHandle(handle);
+	return filesize;
+#else
+	size_t filesize;
+	FILE *f;
+
+	/* attempt to open the file */
+	f = fopen(file, "rb");
+	if (!f)
+		return 0;
+
+	/* get the size */
+	fseek(f, 0, SEEK_END);
+	filesize = ftell(f);
+	fclose(f);
+
+	return filesize;
+#endif
+}
+
+/*-------------------------------------------------
 	cdrom_parse_toc - parse a CDRDAO format TOC file
 -------------------------------------------------*/
 
@@ -71,7 +121,7 @@ int cdrom_parse_toc(char *tocfname, struct cdrom_toc *outtoc, struct cdrom_track
 	static char token[128];
 
 	infile = fopen(tocfname, "rt");
-	
+
 	if (infile == (FILE *)NULL)
 	{
 		return CHDERR_FILE_NOT_FOUND;
@@ -94,15 +144,22 @@ int cdrom_parse_toc(char *tocfname, struct cdrom_toc *outtoc, struct cdrom_track
 			i = 0;
 			EATWHITESPACE
 			TOKENIZE
-		
+
 			if ((!strcmp(token, "DATAFILE")) || (!strcmp(token, "FILE")))
 			{
 				/* found the data file for a track */
 				EATWHITESPACE
+				EATQUOTE
 				TOKENIZE
 
+				/* remove trailing quote if any */
+				if (token[strlen(token)-1] == '"')
+				{
+					token[strlen(token)-1] = '\0';
+				}
+
 				/* keep the filename */
-				strncpy(&outinfo->fname[trknum][0], &token[1], strlen(&token[1])-1);
+				strncpy(&outinfo->fname[trknum][0], token, strlen(token));
 
 				/* get either the offset or the length */
 				EATWHITESPACE
@@ -117,7 +174,7 @@ int cdrom_parse_toc(char *tocfname, struct cdrom_toc *outtoc, struct cdrom_track
 					EATWHITESPACE
 					TOKENIZETOCOLON
 				}
-				else	
+				else
 				{
 					/* no offset, just M:S:F */
 					outinfo->offset[trknum] = 0;
@@ -127,22 +184,23 @@ int cdrom_parse_toc(char *tocfname, struct cdrom_toc *outtoc, struct cdrom_track
 				/*
 				   This is tricky: the next number can be either a raw
 				   number or an M:S:F number.  Check which it is.
-				   If a space occurs before a colon in the token,
+				   If a space or LF/CR/terminator occurs before a colon in the token,
 				   it's a raw number.
 				*/
 
 				foundcolon = 0;
 				for (k = 0; k < strlen(token); k++)
 				{
-					if (token[k] == ' ')
+					if (token[k] <= ' ')
 					{
 						break;
 					}
-				}
 
-				if (k == strlen(token))
-				{
-					foundcolon = 1;
+					if (token[k] == ':')
+					{
+						foundcolon = 1;
+						break;
+					}
 				}
 
 				if (!foundcolon)
@@ -154,6 +212,7 @@ int cdrom_parse_toc(char *tocfname, struct cdrom_toc *outtoc, struct cdrom_track
 					}
 
 					i++;
+					TOKENIZE
 
 					f = strtoul(token, NULL, 10);
 				}
@@ -164,7 +223,7 @@ int cdrom_parse_toc(char *tocfname, struct cdrom_toc *outtoc, struct cdrom_track
 					i++;	/* skip the colon */
 					TOKENIZETOCOLON
 					s = strtoul(token, NULL, 10);
-					i++;	/* skip the colon */ 
+					i++;	/* skip the colon */
 					TOKENIZE
 					f = strtoul(token, NULL, 10);
 
@@ -187,7 +246,7 @@ int cdrom_parse_toc(char *tocfname, struct cdrom_toc *outtoc, struct cdrom_track
 					i++;	/* skip the colon */
 					TOKENIZETOCOLON
 					s = strtoul(token, NULL, 10);
-					i++;	/* skip the colon */ 
+					i++;	/* skip the colon */
 					TOKENIZE
 					f = strtoul(token, NULL, 10);
 
@@ -196,7 +255,22 @@ int cdrom_parse_toc(char *tocfname, struct cdrom_toc *outtoc, struct cdrom_track
 					f += (s * 75);
 				}
 
-				outtoc->tracks[trknum].frames = f;
+				if (f)
+				{
+					outtoc->tracks[trknum].frames = f;
+				}
+				else	/* track can't be zero length, guesstimate it */
+				{
+					UINT64 tlen;
+
+					printf("Warning: Estimating length of track %d.  If this is not the final or only track\n on the disc, the estimate may be wrong.\n", trknum+1);
+
+					tlen = get_file_size(outinfo->fname[trknum]);
+
+					tlen /= (outtoc->tracks[trknum].datasize + outtoc->tracks[trknum].subsize);
+
+					outtoc->tracks[trknum].frames = tlen;
+				}
 			}
 			else if (!strcmp(token, "TRACK"))
 			{
@@ -216,6 +290,9 @@ int cdrom_parse_toc(char *tocfname, struct cdrom_toc *outtoc, struct cdrom_track
 				}
 				else if (!strcmp(token, "MODE1_RAW"))
 				{
+					printf("\nWarning: Track %d uses RAW format data.  Although such images may be created, MAME cannot read them at present.\n", trknum+1);
+					printf("To get usable data, burn this image to a disc or CD emulator and read as to a normal image with CDRDAO.\n\n");
+
 					outtoc->tracks[trknum].trktype = CD_TRACK_MODE1_RAW;
 					outtoc->tracks[trknum].datasize = 2352;
 					outtoc->tracks[trknum].subtype = CD_SUB_NONE;
@@ -251,6 +328,9 @@ int cdrom_parse_toc(char *tocfname, struct cdrom_toc *outtoc, struct cdrom_track
 				}
 				else if (!strcmp(token, "MODE2_RAW"))
 				{
+					printf("\nWarning: Track %d uses RAW format data.  Although such images may be created, MAME cannot read them at present.\n", trknum+1);
+					printf("To get usable data, burn this image to a disc or CD emulator and read it as a normal image with CDRDAO.\n");
+
 					outtoc->tracks[trknum].trktype = CD_TRACK_MODE2_RAW;
 					outtoc->tracks[trknum].datasize = 2352;
 					outtoc->tracks[trknum].subtype = CD_SUB_NONE;
@@ -263,7 +343,7 @@ int cdrom_parse_toc(char *tocfname, struct cdrom_toc *outtoc, struct cdrom_track
 					outtoc->tracks[trknum].subtype = CD_SUB_NONE;
 					outtoc->tracks[trknum].subsize = 0;
 				}
-				else 
+				else
 				{
 					printf("ERROR: Unknown track type [%s].  Contact MAMEDEV.\n", token);
 				}

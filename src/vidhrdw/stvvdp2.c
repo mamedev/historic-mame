@@ -74,6 +74,8 @@ data32_t* stv_vdp2_vram;
 data8_t*  stv_vdp2_vram_dirty_8x8x4;
 data8_t*  stv_vdp2_vram_dirty_8x8x8;
 
+static int stv_vdp2_render_rbg0;
+
 data32_t* stv_vdp2_cram;
 extern void video_update_vdp1(struct mame_bitmap *bitmap, const struct rectangle *cliprect);
 extern int stv_vdp1_start ( void );
@@ -1217,20 +1219,22 @@ bit->  /----15----|----14----|----13----|----12----|----11----|----10----|----09
        |    --    |    --    |    --    |    --    |    --    |    --    |    --    |    --    |
        \----------|----------|----------|----------|----------|----------|----------|---------*/
 
-/* 1800bc - Rotation Parameter Table Address (Rotation Parameter A,B)
+/* 1800bc - RPTAU - Rotation Parameter Table Address (Rotation Parameter A,B)
  bit-> /----15----|----14----|----13----|----12----|----11----|----10----|----09----|----08----\
        |    --    |    --    |    --    |    --    |    --    |    --    |    --    |    --    |
        |----07----|----06----|----05----|----04----|----03----|----02----|----01----|----00----|
-       |    --    |    --    |    --    |    --    |    --    |    --    |    --    |    --    |
+       |    --    |    --    |    --    |    --    |    --    |  RPTA18  |  RPTA17  |  RPTA16  |
        \----------|----------|----------|----------|----------|----------|----------|---------*/
+	#define STV_VDP2_RPTAU	((stv_vdp2_regs[0x0bc/4] >> 16) & 0x00000007)
 
-
-/* 1800be - Rotation Parameter Table Address (Rotation Parameter A,B)
+/* 1800be - RPTAL - Rotation Parameter Table Address (Rotation Parameter A,B)
  bit-> /----15----|----14----|----13----|----12----|----11----|----10----|----09----|----08----\
-       |    --    |    --    |    --    |    --    |    --    |    --    |    --    |    --    |
+       |  RPTA15  |  RPTA14  |  RPTA13  |  RPTA12  |  RPTA11  |  RPTA10  |   RPTA9  |   RPTA8  |
        |----07----|----06----|----05----|----04----|----03----|----02----|----01----|----00----|
-       |    --    |    --    |    --    |    --    |    --    |    --    |    --    |    --    |
+       |   RPTA7  |   RPTA6  |   RPTA5  |   RPTA4  |   RPTA3  |   RPTA2  |   RPTA1  |    --    |
        \----------|----------|----------|----------|----------|----------|----------|---------*/
+
+	#define STV_VDP2_RPTAL	((stv_vdp2_regs[0x0bc/4] >> 0) & 0x0000fffe)
 
 /* 1800c0 - Window Position (W0, Horizontal Start Point)
  bit-> /----15----|----14----|----13----|----12----|----11----|----10----|----09----|----08----\
@@ -1793,6 +1797,92 @@ static struct stv_vdp2_tilemap_capabilities
 	int layer_name; /* just to keep track */
 } stv2_current_tilemap;
 
+static struct rotation_table
+{
+	INT32	xst;
+	INT32	yst;
+	INT32	zst;
+	INT32	dxst;
+	INT32	dyst;
+	INT32	dx;
+	INT32	dy;
+	INT32	A;
+	INT32	B;
+	INT32	C;
+	INT32	D;
+	INT32	E;
+	INT32	F;
+	INT32	px;
+	INT32	py;
+	INT32	pz;
+	INT32	cx;
+	INT32	cy;
+	INT32	cz;
+	INT32	mx;
+	INT32	my;
+	INT32	kx;
+	INT32	ky;
+	UINT32	kast;
+	INT32	dkast;
+	INT32	dkax;
+
+} stv_current_rotation_parameter_table;
+
+static void stv_vdp2_fill_rotation_parameter_table( UINT8 rot_parameter )
+{
+	UINT32 address;
+
+	address = (((STV_VDP2_RPTAU << 16) | STV_VDP2_RPTAL) << 1);
+	if ( rot_parameter == 1 )
+	{
+		address &= ~0x00000080;
+	}
+	else if ( rot_parameter == 2 )
+	{
+		address |= 0x00000080;
+	}
+
+	stv_current_rotation_parameter_table.xst  = (stv_vdp2_vram[address/4] & 0x1fffffc0) | ((stv_vdp2_vram[address/4] & 0x10000000) ? 0xe0000000 : 0x00000000 );
+	stv_current_rotation_parameter_table.yst  = (stv_vdp2_vram[address/4 + 1] & 0x1fffffc0) | ((stv_vdp2_vram[address/4 + 1] & 0x10000000) ? 0xe0000000 : 0x00000000 );
+	stv_current_rotation_parameter_table.zst  = (stv_vdp2_vram[address/4 + 2] & 0x1fffffc0) | ((stv_vdp2_vram[address/4 + 2] & 0x10000000) ? 0xe0000000 : 0x00000000 );
+	stv_current_rotation_parameter_table.dxst = (stv_vdp2_vram[address/4 + 3] & 0x0007ffc0) | ((stv_vdp2_vram[address/4 + 3] & 0x00040000) ? 0xfff80000 : 0x00000000 );
+	stv_current_rotation_parameter_table.dyst = (stv_vdp2_vram[address/4 + 4] & 0x0007ffc0) | ((stv_vdp2_vram[address/4 + 4] & 0x00040000) ? 0xfff80000 : 0x00000000 );
+	stv_current_rotation_parameter_table.dx   = (stv_vdp2_vram[address/4 + 5] & 0x0007ffc0) | ((stv_vdp2_vram[address/4 + 5] & 0x00040000) ? 0xfff80000 : 0x00000000 );
+	stv_current_rotation_parameter_table.dy   = (stv_vdp2_vram[address/4 + 6] & 0x0007ffc0) | ((stv_vdp2_vram[address/4 + 6] & 0x00040000) ? 0xfff80000 : 0x00000000 );
+	stv_current_rotation_parameter_table.A	  = (stv_vdp2_vram[address/4 + 7] & 0x000fffc0) | ((stv_vdp2_vram[address/4 + 7] & 0x00080000) ? 0xfff00000 : 0x00000000 );
+	stv_current_rotation_parameter_table.B    = (stv_vdp2_vram[address/4 + 8] & 0x000fffc0) | ((stv_vdp2_vram[address/4 + 8] & 0x00080000) ? 0xfff00000 : 0x00000000 );
+	stv_current_rotation_parameter_table.C    = (stv_vdp2_vram[address/4 + 9] & 0x000fffc0) | ((stv_vdp2_vram[address/4 + 9] & 0x00080000) ? 0xfff00000 : 0x00000000 );
+	stv_current_rotation_parameter_table.D    = (stv_vdp2_vram[address/4 + 10] & 0x000fffc0) | ((stv_vdp2_vram[address/4 + 10] & 0x00080000) ? 0xfff00000 : 0x00000000 );
+	stv_current_rotation_parameter_table.E    = (stv_vdp2_vram[address/4 + 11] & 0x000fffc0) | ((stv_vdp2_vram[address/4 + 11] & 0x00080000) ? 0xfff00000 : 0x00000000 );
+	stv_current_rotation_parameter_table.F    = (stv_vdp2_vram[address/4 + 12] & 0x000fffc0) | ((stv_vdp2_vram[address/4 + 12] & 0x00080000) ? 0xfff00000 : 0x00000000 );
+	stv_current_rotation_parameter_table.px	  = (stv_vdp2_vram[address/4 + 13] & 0x3fff0000) | ((stv_vdp2_vram[address/4 + 13] & 0x30000000) ? 0xc0000000 : 0x00000000 );
+	stv_current_rotation_parameter_table.py	  = (stv_vdp2_vram[address/4 + 13] & 0x00003fff) << 16;
+	stv_current_rotation_parameter_table.pz   = (stv_vdp2_vram[address/4 + 14] & 0x3fff0000) | ((stv_vdp2_vram[address/4 + 14] & 0x30000000) ? 0xc0000000 : 0x00000000 );
+	stv_current_rotation_parameter_table.cx   = (stv_vdp2_vram[address/4 + 15] & 0x3fff0000) | ((stv_vdp2_vram[address/4 + 15] & 0x30000000) ? 0xc0000000 : 0x00000000 );
+	stv_current_rotation_parameter_table.cy   = (stv_vdp2_vram[address/4 + 15] & 0x00003fff) << 16;
+	stv_current_rotation_parameter_table.cz   = (stv_vdp2_vram[address/4 + 16] & 0x3fff0000) | ((stv_vdp2_vram[address/4 + 16] & 0x30000000) ? 0xc0000000 : 0x00000000 );
+	stv_current_rotation_parameter_table.mx   = (stv_vdp2_vram[address/4 + 17] & 0x3fffffc0) | ((stv_vdp2_vram[address/4 + 17] & 0x30000000) ? 0xc0000000 : 0x00000000 );
+	stv_current_rotation_parameter_table.my   = (stv_vdp2_vram[address/4 + 18] & 0x3fffffc0) | ((stv_vdp2_vram[address/4 + 18] & 0x30000000) ? 0xc0000000 : 0x00000000 );
+	stv_current_rotation_parameter_table.kx   = (stv_vdp2_vram[address/4 + 19] & 0x00ffffff) | ((stv_vdp2_vram[address/4 + 19] & 0x00800000) ? 0xff000000 : 0x00000000 );
+	stv_current_rotation_parameter_table.ky   = (stv_vdp2_vram[address/4 + 20] & 0x00ffffff) | ((stv_vdp2_vram[address/4 + 20] & 0x00800000) ? 0xff000000 : 0x00000000 );
+	stv_current_rotation_parameter_table.kast = (stv_vdp2_vram[address/4 + 21] & 0xffffffc0);
+	stv_current_rotation_parameter_table.dkast= (stv_vdp2_vram[address/4 + 22] & 0x03ffffc0) | ((stv_vdp2_vram[address/4 + 22] & 0x02000000) ? 0xfc000000 : 0x00000000 );
+	stv_current_rotation_parameter_table.dkax = (stv_vdp2_vram[address/4 + 23] & 0x03ffffc0) | ((stv_vdp2_vram[address/4 + 23] & 0x02000000) ? 0xfc000000 : 0x00000000 );
+
+#define RP	stv_current_rotation_parameter_table
+
+	logerror( "Rotation parameter table (%d)\n", rot_parameter );
+	logerror( "xst = %x, yst = %x, zst = %x\n", RP.xst, RP.yst, RP.zst );
+	logerror( "dxst = %x, dyst = %x\n", RP.dxst, RP.dyst );
+	logerror( "dx = %x, dy = %x\n", RP.dx, RP.dy );
+	logerror( "A = %x, B = %x, C = %x, D = %x, E = %x, F = %x\n", RP.A, RP.B, RP.C, RP.D, RP.E, RP.F );
+	logerror( "px = %x, py = %x, pz = %x\n", RP.px, RP.py, RP.pz );
+	logerror( "cx = %x, cy = %x, cz = %x\n", RP.cx, RP.cy, RP.cz );
+	logerror( "mx = %x, my = %x\n", RP.mx, RP.my );
+	logerror( "kx = %x, ky = %x\n", RP.kx, RP.ky );
+	logerror( "kast = %x, dkast = %x, dkax = %x\n", RP.kast, RP.dkast, RP.dkax );
+}
+
 static void stv_vdp2_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxElement *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
 		const struct rectangle *clip,int transparency,int transparent_color,int scalex, int scaley,
@@ -2148,7 +2238,7 @@ static void stv_vdp2_draw_basic_bitmap(struct mame_bitmap *bitmap, const struct 
 		--------BBBBBBBBGGGGGGGGRRRRRRRR
 		*/
 		case 4:
-			usrintf_showmessage("BITMAP type 4 enabled");
+			usrintf_showmessage("BITMAP type 4 enabled"); // shanhigw 'sunsoft' after gameover
 			for (ycnt = 0; ycnt <ysize;ycnt++)
 			{
 				destline = (UINT16 *)(bitmap->line[ycnt]);
@@ -2160,9 +2250,9 @@ static void stv_vdp2_draw_basic_bitmap(struct mame_bitmap *bitmap, const struct 
 					t_pen = ((gfxdata[0] & 0x80) >> 7);
 					if(stv2_current_tilemap.transparency == TRANSPARENCY_NONE) t_pen = 1;
 
-					b = ((gfxdata[1] & 0xff));
-					g = ((gfxdata[2] & 0xff));
-					r = ((gfxdata[3] & 0xff));
+					b = (gfxdata[1] & 0xf8) >> 3;
+					g = (gfxdata[2] & 0xf8) >> 3;
+					r = (gfxdata[3] & 0xf8) >> 3;
 
 					tw = stv_vdp2_window_process(xcnt,ycnt);
 					if(tw == 0)
@@ -3054,12 +3144,14 @@ static void stv_vdp2_draw_RBG0(struct mame_bitmap *bitmap, const struct rectangl
 	stv2_current_tilemap.supplementary_palette_bits = STV_VDP2_R0SPLT;
 	stv2_current_tilemap.supplementary_character_bits = STV_VDP2_R0SPCN;
 
+	stv_vdp2_fill_rotation_parameter_table(1);
+
 //	stv2_current_tilemap.scrollx = STV_VDP2_SCXIR0;
 //	stv2_current_tilemap.scrolly = STV_VDP2_SCYIR0;
 //	stv2_current_tilemap.incx = STV_VDP2_ZMXR0;
 //	stv2_current_tilemap.incy = STV_VDP2_ZMYR0;
-	stv2_current_tilemap.scrollx = 0;
-	stv2_current_tilemap.scrolly = 0;
+	stv2_current_tilemap.scrollx = stv_current_rotation_parameter_table.mx >> 16;
+	stv2_current_tilemap.scrolly = stv_current_rotation_parameter_table.my >> 16;
 	stv2_current_tilemap.incx = 0x10000;
 	stv2_current_tilemap.incy = 0x10000;
 
@@ -3076,6 +3168,8 @@ static void stv_vdp2_draw_RBG0(struct mame_bitmap *bitmap, const struct rectangl
 
 	/*Use 0x80 as a normal/rotate switch*/
 	stv2_current_tilemap.layer_name=0x80;
+
+	if ( !stv_vdp2_render_rbg0 ) return;
 
 	stv_vdp2_check_tilemap(bitmap, cliprect);
 }
@@ -3247,6 +3341,12 @@ int stv_vdp2_start ( void )
 	memset(stv_vdp2_vram, 0, 0x100000);
 	memset(stv_vdp2_cram, 0, 0x080000);
 
+	stv_vdp2_render_rbg0 = 1;
+	if ( !strcmp(Machine->gamedrv->name, "vfremix") ||
+		 !strcmp(Machine->gamedrv->name, "vfkids"))
+	{
+		stv_vdp2_render_rbg0 = 0;
+	}
 //	Machine->gfx[0]->color_granularity=4;
 //	Machine->gfx[1]->color_granularity=4;
 

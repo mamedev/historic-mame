@@ -147,6 +147,84 @@ INPUT_PORTS_START( leprechn )
 INPUT_PORTS_END
 
 
+INPUT_PORTS_START( piratetr )
+    // All of these ports are read indirectly through a VIA mapped at 0x2800
+    PORT_START      /* Input Port 0 */
+    PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_TILT ) // This is called "Slam" in the game
+    PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
+    PORT_BITX(0x10, IP_ACTIVE_LOW, 0, "Advance", KEYCODE_F1, IP_JOY_NONE )
+    PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
+    PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
+    PORT_BIT( 0x23, IP_ACTIVE_LOW, IPT_UNUSED )
+
+    PORT_START      /* Input Port 1 */
+    PORT_BIT( 0x0f, IP_ACTIVE_LOW, IPT_UNUSED )
+    PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
+    PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
+    PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+    PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
+
+    PORT_START      /* Input Port 2 */
+    PORT_BIT( 0x5f, IP_ACTIVE_LOW, IPT_UNUSED )
+    PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
+    PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
+
+    PORT_START      /* Input Port 3 */
+    PORT_BIT( 0x0f, IP_ACTIVE_LOW, IPT_UNUSED )
+    PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
+    PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
+    PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+    PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
+
+    PORT_START      /* DSW #1 */
+    PORT_DIPNAME( 0x09, 0x09, DEF_STR( Coin_B ) )
+    PORT_DIPSETTING(    0x09, DEF_STR( 1C_1C ) )
+    PORT_DIPSETTING(    0x01, DEF_STR( 1C_5C ) )
+    PORT_DIPSETTING(    0x08, DEF_STR( 1C_6C ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( 1C_7C ) )
+    PORT_DIPNAME( 0x22, 0x22, "Max Credits" )
+    PORT_DIPSETTING(    0x22, "10" )
+    PORT_DIPSETTING(    0x20, "20" )
+    PORT_DIPSETTING(    0x02, "30" )
+    PORT_DIPSETTING(    0x00, "40" )
+    PORT_DIPNAME( 0x04, 0x04, DEF_STR( Cabinet ) )
+    PORT_DIPSETTING(    0x04, DEF_STR( Upright ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+    PORT_DIPNAME( 0x10, 0x10, DEF_STR( Free_Play ) )
+    PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+    PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Coin_A ) )
+    PORT_DIPSETTING(    0xc0, DEF_STR( 1C_1C ) )
+    PORT_DIPSETTING(    0x40, DEF_STR( 1C_2C ) )
+    PORT_DIPSETTING(    0x80, DEF_STR( 1C_3C ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( 1C_4C ) )
+
+    PORT_START      /* DSW #2 */
+    PORT_DIPNAME( 0x01, 0x00, DEF_STR( Demo_Sounds ) )
+    PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+    PORT_DIPNAME( 0x02, 0x02, "Stringing Check" )
+    PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+    PORT_DIPNAME( 0x08, 0x08, DEF_STR( Lives ) )
+    PORT_DIPSETTING(    0x08, "3" )
+    PORT_DIPSETTING(    0x00, "4" )
+    PORT_DIPNAME( 0xc0, 0x40, DEF_STR( Bonus_Life ) )
+    PORT_DIPSETTING(    0x40, "30000" )
+    PORT_DIPSETTING(    0x80, "60000" )
+    PORT_DIPSETTING(    0x00, "90000" )
+    PORT_DIPSETTING(    0xc0, "None" )
+    PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+    PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+    PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+    PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+    PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+    PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+INPUT_PORTS_END
+
 
 static struct AY8910interface ay8910_interface =
 {
@@ -229,7 +307,38 @@ ROM_START( potogold )
 	ROM_LOAD( "pog.snd",      0xf000, 0x1000, CRC(ec61f0a4) SHA1(26944ecc3e7413259928c8b0a74b2260e67d2c4e) )
 ROM_END
 
+ROM_START( leprechp )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )  /* 64k for the main CPU */
+	ROM_LOAD( "lep1",         0x8000, 0x1000, CRC(2c4a46ca) SHA1(28a157c1514bc9f27cc27baddb83cf1a1887f3d1) )
+	ROM_LOAD( "lep2",         0x9000, 0x1000, CRC(6ed26b3e) SHA1(4ee5d09200d9e8f94ae29751c8ee838faa268f15) )
+	ROM_LOAD( "3u15.bin",     0xa000, 0x1000, CRC(b5f79fd8) SHA1(271f7b55ecda5bb99f40687264256b82649e2141) ) 
+	ROM_LOAD( "lep4",         0xb000, 0x1000, CRC(6c12a065) SHA1(2acae6a5b94cbdcc550cee88a7be9254fdae908c) )
+	ROM_LOAD( "lep5",         0xc000, 0x1000, CRC(21ddb539) SHA1(b4dd0a1916adc076fa6084c315459fcb2522161e) )
+	ROM_LOAD( "lep6",         0xd000, 0x1000, CRC(03c34dce) SHA1(6dff202e1a3d0643050f3287f6b5906613d56511) )
+	ROM_LOAD( "lep7",         0xe000, 0x1000, CRC(7e06d56d) SHA1(5f68f2047969d803b752a4cd02e0e0af916c8358) )
+	ROM_LOAD( "lep8",         0xf000, 0x1000, CRC(097ede60) SHA1(5509c41167c066fa4e7f4f4bd1ce9cd00773a82c) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )  /* 64k for the audio CPU */
+	ROM_LOAD( "lepsound",     0xf000, 0x1000, CRC(6651e294) SHA1(ce2875fc4df61a30d51d3bf2153864b562601151) )
+ROM_END
+
+ROM_START( piratetr )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )  /* 64k for the main CPU */
+	ROM_LOAD( "1u13.bin",     0x8000, 0x1000, CRC(4433bb61) SHA1(eee0d7f356118f8595dd7533541db744a63a8176) ) 
+	ROM_LOAD( "2u14.bin",     0x9000, 0x1000, CRC(9bdc4b77) SHA1(ebaab8b3024efd3d0b76647085d441ca204ad5d5) ) 
+	ROM_LOAD( "3u15.bin",     0xa000, 0x1000, CRC(ebced718) SHA1(3a2f4385347f14093360cfa595922254c9badf1a) ) 
+	ROM_LOAD( "4u16.bin",     0xb000, 0x1000, CRC(f494e657) SHA1(83a31849de8f4f70d7547199f229079f491ddc61) ) 
+	ROM_LOAD( "5u17.bin",     0xc000, 0x1000, CRC(2789d68e) SHA1(af8f334ce4938cd75143b729c97cfbefd68c9e13) ) 
+	ROM_LOAD( "6u18.bin",     0xd000, 0x1000, CRC(d91abb3a) SHA1(11170e69686c2a1f2dc31d41516f44b612f99bad) ) 
+	ROM_LOAD( "7u19.bin",     0xe000, 0x1000, CRC(6e8808c4) SHA1(d1f76fd37d8f78552a9d53467073cc9a571d96ce) ) 
+	ROM_LOAD( "8u20.bin",     0xf000, 0x1000, CRC(2802d626) SHA1(b0db688500076ee73e0001c00089a8d552c6f607) ) 
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )  /* 64k for the audio CPU */
+	ROM_LOAD( "su31.bin",     0xf000, 0x1000, CRC(2fe86a11) SHA1(aaafe411b9cb3d0221cc2af73d34ad8bb74f8327) ) 
+ROM_END
 
 
 GAME( 1982, leprechn, 0,        leprechn, leprechn, leprechn, ROT0, "Tong Electronic", "Leprechaun" )
 GAME( 1982, potogold, leprechn, leprechn, leprechn, leprechn, ROT0, "GamePlan", "Pot of Gold" )
+GAME( 1982, leprechp, leprechn, leprechn, leprechn, leprechn, ROT0, "Tong Electronic", "Leprechaun (Pacific Polytechnical license)" )
+GAME( 1982, piratetr, 0,        leprechn, piratetr, leprechn, ROT0, "Tong Electronic", "Pirate Treasure" )

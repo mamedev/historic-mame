@@ -320,10 +320,8 @@ static void ss_register_func(ss_func **root, void (*func)(void))
 	while (next)
 	{
 		if (next->func == func && next->tag == ss_current_tag)
-		{
-			logerror("Duplicate save state function (%d, 0x%x)\n", ss_current_tag, (int)func);
-			exit(1);
-		}
+			osd_die("Duplicate save state function (%d, 0x%x)\n", ss_current_tag, (int)func);
+
 		next = next->next;
 	}
 	next = *root;

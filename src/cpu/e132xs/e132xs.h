@@ -5,7 +5,7 @@
 extern void e132xs_get_info(UINT32 state, union cpuinfo *info);
 
 #ifdef MAME_DEBUG
-extern unsigned dasm_e132xs(char *buffer, unsigned pc);
+extern unsigned dasm_e132xs(char *buffer, unsigned pc, unsigned h_flag);
 #endif
 
 
@@ -13,16 +13,16 @@ extern unsigned dasm_e132xs(char *buffer, unsigned pc);
 /* read byte */
 #define READ_B(addr)          (program_read_byte_32be(addr))
 /* read half-word */
-#define READ_HW(addr)         (program_read_word_32be(addr))
+#define READ_HW(addr)         (program_read_word_32be((addr) & ~1))
 /* read word */
-#define READ_W(addr)          (program_read_dword_32be(addr))
+#define READ_W(addr)          (program_read_dword_32be((addr) & ~2))
 
 /* write byte */
 #define WRITE_B(addr, val)    (program_write_byte_32be(addr, val))
 /* write half-word */
-#define WRITE_HW(addr, val)   (program_write_word_32be(addr, val))
+#define WRITE_HW(addr, val)   (program_write_word_32be((addr) & ~1, val))
 /* write word */
-#define WRITE_W(addr, val)    (program_write_dword_32be(addr, val))
+#define WRITE_W(addr, val)    (program_write_dword_32be((addr) & ~2, val))
 
 /* I/O access */
 /* read word */
@@ -102,7 +102,7 @@ extern unsigned dasm_e132xs(char *buffer, unsigned pc);
 #define	E132XS_ENTRY_MEM0	0
 #define	E132XS_ENTRY_MEM1	1
 #define	E132XS_ENTRY_MEM2	2
-#define	E132XS_ENTRY_MEM3	3
-#define	E132XS_ENTRY_IRAM	4
+#define	E132XS_ENTRY_IRAM	3
+#define	E132XS_ENTRY_MEM3	7
 
 #endif /* E132XS_H */

@@ -1666,6 +1666,35 @@ WRITE16_HANDLER( paletteram16_xBBBBBGGGGGRRRRR_word_w )
 }
 
 
+INLINE void changecolor_xBBBBBRRRRRGGGGG(pen_t color,int data)
+{
+	int r,g,b;
+
+
+	r = (data >>  5) & 0x1f;
+	g = (data >>  0) & 0x1f;
+	b = (data >> 10) & 0x1f;
+
+	r = (r << 3) | (r >> 2);
+	g = (g << 3) | (g >> 2);
+	b = (b << 3) | (b >> 2);
+
+	palette_set_color(color,r,g,b);
+}
+
+WRITE_HANDLER( paletteram_xBBBBBRRRRRGGGGG_split1_w )
+{
+	paletteram[offset] = data;
+	changecolor_xBBBBBRRRRRGGGGG(offset,paletteram[offset] | (paletteram_2[offset] << 8));
+}
+
+WRITE_HANDLER( paletteram_xBBBBBRRRRRGGGGG_split2_w )
+{
+	paletteram_2[offset] = data;
+	changecolor_xBBBBBRRRRRGGGGG(offset,paletteram[offset] | (paletteram_2[offset] << 8));
+}
+
+
 INLINE void changecolor_xRRRRRGGGGGBBBBB(pen_t color,int data)
 {
 	int r,g,b;

@@ -244,7 +244,7 @@ static void ymf271_write_fm(YMF271Chip *chip, int grp, int adr, int data)
 			break;
 
 		case 10:
-			slot->fns &= ~0xff0000;
+			slot->fns &= ~0xff00;
 			slot->fns |= (data & 0xf)<<8;
 			slot->block = (data>>4)&0xf;
 			break;

@@ -3,7 +3,6 @@
 
 todo:
 
-cleanups
 colors, probably missing proms
 fix sound
 improve interrupts
@@ -11,9 +10,6 @@ sprite flipping is incorrect for one of the enemies so its probably wrong
 screenshots look like the game has sprite zooming
 http://emustatus.rainemu.com/games/flower.htm
 
-*/
-
-/*
 
         FLOWER   CHIP PLACEMENT
 
@@ -39,10 +35,12 @@ CHIP #  POSITION   TYPE
 
 #include "vidhrdw/generic.h"
 
-data8_t *flower_sharedram;
+extern data8_t *flower_textram, *flower_bg0ram, *flower_bg1ram, *flower_bg0_scroll, *flower_bg1_scroll;
 
-READ_HANDLER( flower_sharedram_r );
-WRITE_HANDLER( flower_sharedram_w );
+WRITE_HANDLER( flower_textram_w );
+WRITE_HANDLER( flower_bg0ram_w );
+WRITE_HANDLER( flower_bg1ram_w );
+WRITE_HANDLER( flower_flipscreen_w );
 VIDEO_UPDATE( flower );
 VIDEO_START( flower );
 
@@ -52,8 +50,6 @@ int flower_sh_start(const struct MachineSound *msound);
 void flower_sh_stop(void);
 WRITE_HANDLER( flower_sound1_w );
 WRITE_HANDLER( flower_sound2_w );
-
-
 
 
 static WRITE_HANDLER( flower_irq_ack )
@@ -89,53 +85,49 @@ static WRITE_HANDLER( sound_command_w )
 		cpu_set_nmi_line(2, PULSE_LINE);
 }
 
-
-static ADDRESS_MAP_START( flower_mn_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+static ADDRESS_MAP_START( flower_cpu1, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_ROM
+	AM_RANGE(0xa000, 0xa000) AM_WRITENOP	//watchdog?
+	AM_RANGE(0xa001, 0xa001) AM_WRITE(flower_flipscreen_w)
+	AM_RANGE(0xa002, 0xa002) AM_WRITE(flower_irq_ack)	//irq ack / enable, maybe?
+	AM_RANGE(0xa004, 0xa004) AM_WRITENOP	//nmi enable (routine is empty)
 	AM_RANGE(0xa102, 0xa102) AM_READ(input_port_0_r)
 	AM_RANGE(0xa103, 0xa103) AM_READ(input_port_1_r)
-	AM_RANGE(0xc000, 0xffff) AM_READ(flower_sharedram_r)
+	AM_RANGE(0xc000, 0xddff) AM_RAM AM_SHARE(1)
+	AM_RANGE(0xde00, 0xdfff) AM_RAM AM_SHARE(2) AM_BASE(&spriteram)
+	AM_RANGE(0xe000, 0xe7ff) AM_READWRITE(MRA8_RAM, flower_textram_w) AM_SHARE(3) AM_BASE(&flower_textram)
+	AM_RANGE(0xe000, 0xefff) AM_RAM //only cleared?
+	AM_RANGE(0xf000, 0xf1ff) AM_READWRITE(MRA8_RAM, flower_bg0ram_w)  AM_SHARE(4) AM_BASE(&flower_bg0ram)
+	AM_RANGE(0xf200, 0xf200) AM_RAM AM_SHARE(5) AM_BASE(&flower_bg0_scroll)
+	AM_RANGE(0xf800, 0xf9ff) AM_READWRITE(MRA8_RAM, flower_bg1ram_w)  AM_SHARE(6) AM_BASE(&flower_bg1ram)
+	AM_RANGE(0xfa00, 0xfa00) AM_RAM AM_SHARE(7) AM_BASE(&flower_bg1_scroll)
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( flower_mn_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0xa000, 0xa000) AM_WRITE(MWA8_NOP)	//watchdog?
-	AM_RANGE(0xa001, 0xa001) AM_WRITE(MWA8_NOP)	//flip screen - check code at 0x759f
-	AM_RANGE(0xa002, 0xa002) AM_WRITE(flower_irq_ack)	//irq ack / enable, maybe?
-	AM_RANGE(0xa004, 0xa004) AM_WRITE(MWA8_NOP)	//nmi enable (routine is empty)
-	AM_RANGE(0xc000, 0xffff) AM_WRITE(flower_sharedram_w) AM_BASE(&flower_sharedram)	//c23b-c62a cleared for something
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( flower_sl_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+static ADDRESS_MAP_START( flower_cpu2, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_ROM
+	AM_RANGE(0xa003, 0xa003) AM_WRITENOP	//irq enable
+	AM_RANGE(0xa005, 0xa005) AM_WRITENOP	//nmi enable (routine is empty)
 	AM_RANGE(0xa100, 0xa100) AM_READ(input_port_2_r)
 	AM_RANGE(0xa101, 0xa101) AM_READ(input_port_3_r)
-	AM_RANGE(0xc000, 0xffff) AM_READ(flower_sharedram_r)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( flower_sl_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0xa003, 0xa003) AM_WRITE(MWA8_NOP)	//irq enable
-	AM_RANGE(0xa005, 0xa005) AM_WRITE(MWA8_NOP)	//nmi enable (routine is empty)
 	AM_RANGE(0xa400, 0xa400) AM_WRITE(sound_command_w)
-	AM_RANGE(0xc000, 0xffff) AM_WRITE(flower_sharedram_w)
+	AM_RANGE(0xc000, 0xddff) AM_RAM AM_SHARE(1)
+	AM_RANGE(0xde00, 0xdfff) AM_RAM AM_SHARE(2)
+	AM_RANGE(0xe000, 0xe7ff) AM_READWRITE(MRA8_RAM, flower_textram_w) AM_SHARE(3)
+	AM_RANGE(0xf000, 0xf1ff) AM_READWRITE(MRA8_RAM, flower_bg0ram_w)  AM_SHARE(4)
+	AM_RANGE(0xf200, 0xf200) AM_RAM AM_SHARE(5)
+	AM_RANGE(0xf800, 0xf9ff) AM_READWRITE(MRA8_RAM, flower_bg1ram_w)  AM_SHARE(6)
+	AM_RANGE(0xfa00, 0xfa00) AM_RAM AM_SHARE(7)
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( flower_sn_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0x6000, 0x6000) AM_READ(soundlatch_r)
-	AM_RANGE(0xc000, 0xc7ff) AM_READ(MRA8_RAM)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( flower_sn_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA8_ROM)
+static ADDRESS_MAP_START( flower_sound_cpu, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_ROM
 	AM_RANGE(0x4000, 0x4000) AM_WRITE(sn_irq_enable_w)
 	AM_RANGE(0x4001, 0x4001) AM_WRITE(sn_nmi_enable_w)
+	AM_RANGE(0x6000, 0x6000) AM_READ(soundlatch_r)
 	AM_RANGE(0x8000, 0x803f) AM_WRITE(flower_sound1_w) AM_BASE(&flower_soundregs1)
 	AM_RANGE(0xa000, 0xa03f) AM_WRITE(flower_sound2_w) AM_BASE(&flower_soundregs2)
-	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xc000, 0xc7ff) AM_RAM
 ADDRESS_MAP_END
-
 
 
 INPUT_PORTS_START( flower )
@@ -205,8 +197,6 @@ INPUT_PORTS_START( flower )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
-
-
 static struct GfxLayout flower_charlayout =
 {
 	8,8,
@@ -246,25 +236,22 @@ static struct CustomSound_interface custom_interface =
 	0
 };
 
-
-
 static MACHINE_DRIVER_START( flower )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80,8000000)
-	MDRV_CPU_PROGRAM_MAP(flower_mn_readmem,flower_mn_writemem)
+	MDRV_CPU_PROGRAM_MAP(flower_cpu1,0)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,10)
 //	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1) //nmis stuff up the writes to shared ram
 
 	MDRV_CPU_ADD(Z80,8000000)
-	MDRV_CPU_PROGRAM_MAP(flower_sl_readmem,flower_sl_writemem)
+	MDRV_CPU_PROGRAM_MAP(flower_cpu2,0)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 //	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
 	MDRV_CPU_ADD(Z80,8000000)
-	MDRV_CPU_PROGRAM_MAP(flower_sn_readmem,flower_sn_writemem)
+	MDRV_CPU_PROGRAM_MAP(flower_sound_cpu,0)
 	MDRV_CPU_PERIODIC_INT(sn_irq,90)	/* periodic interrupt, don't know about the frequency */
-
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -320,4 +307,4 @@ ROM_START( flower )
 ROM_END
 
 
-GAMEX( 1986, flower, 0, flower, flower, 0, ROT0, "Komax", "Flower", GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND | GAME_NO_COCKTAIL )
+GAMEX( 1986, flower, 0, flower, flower, 0, ROT0, "Komax", "Flower", GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )

@@ -43,3 +43,8 @@ ifneq ($(WINUI),)
 CFLAGS+= -DWINUI=1
 include src/ui/ui.mak
 endif
+
+# if we are not using x86drc.o, we should be
+ifndef X86_MIPS3_DRC
+COREOBJS += $(OBJ)/x86drc.o
+endif

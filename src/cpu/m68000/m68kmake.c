@@ -132,8 +132,9 @@ const char* g_version = "3.3";
 /* ======================================================================== */
 
 #define CPU_TYPE_000 0
-#define CPU_TYPE_010 1
-#define CPU_TYPE_020 2
+#define CPU_TYPE_008 1
+#define CPU_TYPE_010 2
+#define CPU_TYPE_020 3
 
 #define UNSPECIFIED "."
 #define UNSPECIFIED_CH '.'
@@ -637,7 +638,7 @@ int get_oper_cycles(opcode_struct* op, int ea_mode, int cpu_type)
 
 		/* ASG: added these cases -- immediate modes take 2 extra cycles here */
 		/* SV: but only when operating on long, and also on register direct mode */
-		if(cpu_type == CPU_TYPE_000 && (ea_mode == EA_MODE_I || ea_mode == EA_MODE_NONE) && op->size == 32 &&
+		if((cpu_type == CPU_TYPE_000 || cpu_type == CPU_TYPE_008) && (ea_mode == EA_MODE_I || ea_mode == EA_MODE_NONE) && op->size == 32 &&
 		   ((strcmp(op->name, "add") == 0 && strcmp(op->spec_proc, "er") == 0) ||
 			strcmp(op->name, "adda")   == 0                                    ||
 			(strcmp(op->name, "and") == 0 && strcmp(op->spec_proc, "er") == 0) ||

@@ -20,6 +20,7 @@ extern data32_t *gx_psacram, *gx_subpaletteram32;
 
 static void (*game_tile_callback)(int, int *, int *);
 
+/* Run and Gun 2 / Rushing Heroes */
 static void get_gx_psac_tile_info(int tile_index)
 {
 	int tileno, colour, flipx;
@@ -32,27 +33,32 @@ static void get_gx_psac_tile_info(int tile_index)
 	SET_TILE_INFO(0, tileno, colour, TILE_FLIPYX(flipx))
 }
 
+/* Soccer Superstars (tile and flip bits now TRUSTED) */
 static void get_gx_psac3_tile_info(int tile_index)
 {
-	int tileno, colour;
+	int tileno, colour, flip;
 	unsigned char *tmap = memory_region(REGION_GFX4);
 
-	tileno = tmap[tile_index*2] | ((tmap[(tile_index*2)+1] & 0x3f)<<8);
-	colour = (psac_colorbase << 4);
+	tileno = tmap[tile_index*2] | ((tmap[(tile_index*2)+1] & 0x0f)<<8);
+	colour = (psac_colorbase << 8);
 
-	SET_TILE_INFO(0, tileno, colour, 0)
+	flip = 0;
+	if (tmap[(tile_index*2)+1] & 0x20) flip |= TILE_FLIPX;
+	if (tmap[(tile_index*2)+1] & 0x10) flip |= TILE_FLIPY;
+
+	SET_TILE_INFO(0, tileno, colour, flip)
 }
 
+/* PSAC4 */
 static void get_gx_psac1a_tile_info(int tile_index)
 {
 	int tileno, colour, flip;
-	data8_t *map = (data8_t *)&gx_psacram[tile_index*8];
+	data8_t *map = (data8_t *)&gx_psacram[tile_index*2];	// *8 / 4 (gx_psacram is data32_t)
 
-	tileno = map[1]<<8 | map[0];
+	// this should be &0x7f for opengolf, except that makes the tilemaps unrecognizable.  huh?
+	tileno = (map[1]&0x3f)<<8 | map[0];
 
-//	if (tileno) printf("1a map: %x\n", tileno);
-
-	colour = (psac_colorbase << 4);
+	colour = 0; //(psac_colorbase << 4);
 
 	flip = 0;
 	if (map[7] & 0x80) flip |= TILE_FLIPX;
@@ -64,13 +70,11 @@ static void get_gx_psac1a_tile_info(int tile_index)
 static void get_gx_psac1b_tile_info(int tile_index)
 {
 	int tileno, colour, flip;
-	data8_t *map = (data8_t *)&gx_psacram[tile_index*8];
+	data8_t *map = (data8_t *)&gx_psacram[tile_index*2];
 
-	tileno = map[5]<<8 | map[4];
+	tileno = (map[5]&0x3f)<<8 | map[4];
 
-//	if (tileno) printf("1b map: %x\n", tileno);
-
-	colour = (psac_colorbase << 4);
+	colour = 0; //(psac_colorbase << 4);
 
 	flip = 0;
 	if (map[7] & 0x20) flip |= TILE_FLIPX;
@@ -319,7 +323,7 @@ VIDEO_START(konamigx_type3)
 	gx_psac_tilemap = tilemap_create(get_gx_psac3_tile_info, tilemap_scan_rows, TILEMAP_TRANSPARENT, 16, 16, 256, 1024);
 	gx_rozenable = 1;
 
-	K053936_wraparound_enable(0, 0);
+	K053936_wraparound_enable(0, 1);
 	K053936GP_set_offset(0, 0, 0);
 
 	return 0;
@@ -427,7 +431,7 @@ VIDEO_START(racinfrc)
 
 VIDEO_UPDATE(konamigx)
 {
-	int i, newbank, newbase, dirty, unchained, blendmode;
+	int i, newbank, newbase, dirty, unchained;
 
 	/* if any banks are different from last render, we need to flush the planes */
 	for (dirty = 0, i = 0; i < 8; i++)
@@ -477,40 +481,10 @@ VIDEO_UPDATE(konamigx)
 
 	if (dirty) K056832_MarkAllTilemapsDirty();
 
-	if (konamigx_cfgport >= 0)
-	{
-		// background detail tuning
-		switch (readinputport(konamigx_cfgport))
-		{
-			// Low : disable linescroll and all blend effects
-			case 0 : blendmode = 0x0000f555; break;
-
-			// Med : only disable linescroll which is the most costly
-			case 1 : blendmode = 0x0000f000; break;
-
-			// High: enable all effects
-			default: blendmode = 0;
-		}
-
-		// character detail tuning
-		switch (readinputport(konamigx_cfgport+1))
-		{
-			// Low : disable shadows and turn off depth buffers
-			case 0 : blendmode |= GXMIX_NOSHADOW + GXMIX_NOZBUF; break;
-
-			// Med : only disable shadows
-			case 1 : blendmode |= GXMIX_NOSHADOW; break;
-
-			// High: enable all shadows and depth buffers
-			default: blendmode |= 0;
-		}
-	}
-	else blendmode = 0;
-
 	if (gx_rozenable)
-		konamigx_mixer(bitmap, cliprect, 0, 0, gx_psac_tilemap, GXSUB_8BPP, blendmode);
+		konamigx_mixer(bitmap, cliprect, 0, 0, gx_psac_tilemap, GXSUB_8BPP, 0);
 	else
-		konamigx_mixer(bitmap, cliprect, 0, 0, 0, 0, blendmode);
+		konamigx_mixer(bitmap, cliprect, 0, 0, 0, 0, 0);
 
 	if( gx_invertlayersBC )
 	{

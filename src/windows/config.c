@@ -851,6 +851,7 @@ void CLIB_DECL osd_die(const char *text,...)
 	/* standard vfprintf stuff here */
 	va_start(arg, text);
 	vlogerror(text, arg);
+	vprintf(text, arg);
 	va_end(arg);
 
 	exit(-1);

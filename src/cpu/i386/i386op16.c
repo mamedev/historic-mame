@@ -1,9 +1,7 @@
 static UINT16 I386OP(shift_rotate16)(UINT8 modrm, UINT32 value, UINT8 shift)
 {
-	int i;
 	UINT16 src = value;
 	UINT16 dst = value;
-	UINT32 tempCF;
 
 	if( shift == 0 ) {
 		CYCLES_RM(modrm, 3, 7);
@@ -12,55 +10,48 @@ static UINT16 I386OP(shift_rotate16)(UINT8 modrm, UINT32 value, UINT8 shift)
 		switch( (modrm >> 3) & 0x7 )
 		{
 			case 0:			/* ROL rm16, 1 */
-				tempCF = (src & 0x8000) ? 1 : 0;
+				I.CF = (src & 0x8000) ? 1 : 0;
 				dst = (src << 1) + I.CF;
-				I.CF = tempCF;
-				I.OF = ((dst & 0x8000) ? 1 : 0) ^ I.CF;
+				I.OF = ((src ^ dst) & 0x8000) ? 1 : 0;
 				CYCLES_RM(modrm, 3, 7);
 				break;
 			case 1:			/* ROR rm16, 1 */
-				tempCF = src & 0x1;
-				dst = (src >> 1) | (I.CF << 15);
-				I.CF = tempCF;
-				I.OF = ((dst & 0x8000) ? 1 : 0) ^ I.CF;
+				I.CF = (src & 0x1) ? 1 : 0;
+				dst = (I.CF << 15) | (src >> 1);
+				I.OF = ((src ^ dst) & 0x8000) ? 1 : 0;
 				CYCLES_RM(modrm, 3, 7);
 				break;
 			case 2:			/* RCL rm16, 1 */
-				tempCF = (src & 0x8000) ? 1 : 0;
 				dst = (src << 1) + I.CF;
-				I.CF = tempCF;
-				I.OF = ((dst & 0x8000) ? 1 : 0) ^ I.CF;
+				I.CF = (src & 0x8000) ? 1 : 0;
+				I.OF = ((src ^ dst) & 0x8000) ? 1 : 0;
 				CYCLES_RM(modrm, 9, 10);
 				break;
 			case 3:			/* RCR rm16, 1 */
-				tempCF = src & 0x1;
-				dst = (src >> 1) | (I.CF << 15);
-				I.CF = tempCF;
-				I.OF = ((dst & 0x8000) ? 1 : 0) ^ I.CF;
+				dst = (I.CF << 15) | (src >> 1);
+				I.CF = src & 0x1;
+				I.OF = ((src ^ dst) & 0x8000) ? 1 : 0;
 				CYCLES_RM(modrm, 9, 10);
 				break;
 			case 4:			/* SHL/SAL rm16, 1 */
-			case 7:
-				I.CF = (src & 0x8000) ? 1 : 0;
+			case 6:
 				dst = src << 1;
-				I.OF = ((dst & 0x8000) ? 1 : 0) ^ I.CF;
-				I.AF = 1;
+				I.CF = (src & 0x8000) ? 1 : 0;
+				I.OF = (((I.CF << 15) ^ dst) & 0x8000) ? 1 : 0;
 				SetSZPF16(dst);
 				CYCLES_RM(modrm, 3, 7);
 				break;
 			case 5:			/* SHR rm16, 1 */
-				I.CF = src & 0x1;
 				dst = src >> 1;
-				I.OF = ((dst & 0x8000) ? 1 : 0) ^ I.CF;
-				I.AF = 1;
+				I.CF = src & 0x1;
+				I.OF = (dst & 0x8000) ? 1 : 0;
 				SetSZPF16(dst);
 				CYCLES_RM(modrm, 3, 7);
 				break;
-			case 6:			/* SAR rm16, 1 */
-				I.CF = src & 0x1;
+			case 7:			/* SAR rm16, 1 */
 				dst = (INT16)(src) >> 1;
-				I.OF = ((dst & 0x8000) ? 1 : 0) ^ I.CF;
-				I.AF = 1;
+				I.CF = src & 0x1;
+				I.OF = 0;
 				SetSZPF16(dst);
 				CYCLES_RM(modrm, 3, 7);
 				break;
@@ -70,56 +61,47 @@ static UINT16 I386OP(shift_rotate16)(UINT8 modrm, UINT32 value, UINT8 shift)
 		switch( (modrm >> 3) & 0x7 )
 		{
 			case 0:			/* ROL rm16, i8 */
-				for( i=0; i < shift; i++ ) {
-					I.CF = (dst & 0x8000) ? 1 : 0;
-					dst = (dst << 1) + I.CF;
-				}
+				dst = ((src & ((UINT16)0xffff >> shift)) << shift) |
+					  ((src & ((UINT16)0xffff << (16-shift))) >> (16-shift));
+				I.CF = (src >> (16-shift)) & 0x1;
 				CYCLES_RM(modrm, 3, 7);
 				break;
 			case 1:			/* ROR rm16, i8 */
-				for( i=0; i < shift; i++ ) {
-					I.CF = dst & 0x1;
-					dst = (dst >> 1) + (I.CF << 15);
-				}
+				dst = ((src & ((UINT16)0xffff << shift)) >> shift) |
+					  ((src & ((UINT16)0xffff >> (16-shift))) << (16-shift));
+				I.CF = (src >> (shift-1)) & 0x1;
 				CYCLES_RM(modrm, 3, 7);
 				break;
 			case 2:			/* RCL rm16, i8 */
-				for( i=0; i < shift; i++ ) {
-					tempCF = (dst & 0x8000) ? 1 : 0;
-					dst = (dst << 1) + I.CF;
-					I.CF = tempCF;
-				}
+				dst = ((src & ((UINT16)0xffff >> shift)) << shift) |
+					  ((src & ((UINT16)0xffff << (17-shift))) >> (17-shift)) |
+					  (I.CF << (shift-1));
+				I.CF = (src >> (16-shift)) & 0x1;
 				CYCLES_RM(modrm, 9, 10);
 				break;
 			case 3:			/* RCR rm16, i8 */
-				for( i=0; i < shift; i++ ) {
-					tempCF = dst & 0x1;
-					dst = (dst >> 1) | (I.CF << 15);
-					I.CF = tempCF;
-				}
+				dst = ((src & ((UINT16)0xffff << shift)) >> shift) |
+					  ((src & ((UINT16)0xffff >> (16-shift))) << (17-shift)) |
+					  (I.CF << (16-shift));
+				I.CF = (src >> (shift-1)) & 0x1;
 				CYCLES_RM(modrm, 9, 10);
 				break;
 			case 4:			/* SHL/SAL rm16, i8 */
-			case 7:
-				dst <<= shift;
-				SetCF16(dst);
-				I.AF = 1;
+			case 6:
+				dst = src << shift;
+				I.CF = (src & (1 << (16-shift))) ? 1 : 0;
 				SetSZPF16(dst);
 				CYCLES_RM(modrm, 3, 7);
 				break;
 			case 5:			/* SHR rm16, i8 */
-				dst >>= shift - 1;
-				I.CF = dst & 0x1;
-				dst >>= 1;
-				I.AF = 1;
+				dst = src >> shift;
+				I.CF = (src & (1 << (shift-1))) ? 1 : 0;
 				SetSZPF16(dst);
 				CYCLES_RM(modrm, 3, 7);
 				break;
-			case 6:			/* SAR rm16, i8 */
-				dst = (INT16)(dst) >> (shift - 1);
-				I.CF = dst & 0x1;
-				dst = (INT16)(dst) >> 1;
-				I.AF = 1;
+			case 7:			/* SAR rm16, i8 */
+				dst = (INT16)src >> shift;
+				I.CF = (src & (1 << (shift-1))) ? 1 : 0;
 				SetSZPF16(dst);
 				CYCLES_RM(modrm, 3, 7);
 				break;
@@ -413,8 +395,7 @@ static void I386OP(call_abs16)(void)		// Opcode 0x9a
 
 	if( PROTECTED_MODE ) {
 		/* TODO */
-		printf("i386: call_abs16 in protected mode unimplemented\n");
-		exit(1);
+		osd_die("i386: call_abs16 in protected mode unimplemented\n");
 	} else {
 		PUSH32( I.sreg[CS].selector );
 		PUSH32( I.eip );
@@ -491,16 +472,16 @@ static void I386OP(cmpsw)(void)				// Opcode 0xa7
 	UINT32 eas, ead;
 	UINT16 src, dst;
 	if( I.segment_prefix ) {
-		eas = i386_translate( I.segment_override, REG32(ESI) );
+		eas = i386_translate( I.segment_override, I.sreg[CS].d ? REG32(ESI) : REG16(SI) );
 	} else {
-		eas = i386_translate( DS, REG32(ESI) );
+		eas = i386_translate( DS, I.sreg[CS].d ? REG32(ESI) : REG16(SI) );
 	}
-	ead = i386_translate( ES, REG32(EDI) );
+	ead = i386_translate( ES, I.sreg[CS].d ? REG32(EDI) : REG16(DI) );
 	src = READ16(eas);
 	dst = READ16(ead);
 	SUB16(dst, src);
-	REG32(ESI) += ((I.DF) ? -2 : 2);
-	REG32(EDI) += ((I.DF) ? -2 : 2);
+	BUMP_SI(2);
+	BUMP_DI(2);
 	CYCLES(10);
 }
 
@@ -584,17 +565,62 @@ static void I386OP(imul_r16_rm16)(void)		// Opcode 0x0f af
 	I.CF = I.OF = !(result == (INT32)(INT16)result);
 }
 
+static void I386OP(imul_r16_rm16_i16)(void)	// Opcode 0x69
+{
+	UINT8 modrm = FETCH();
+	INT32 result;
+	INT32 src, dst;
+	if( modrm >= 0xc0 ) {
+		dst = (INT32)(INT16)LOAD_RM16(modrm);
+		CYCLES(12);		/* TODO: Correct multiply timing */
+	} else {
+		UINT32 ea = GetEA(modrm);
+		dst = (INT32)(INT16)READ16(ea);
+		CYCLES(15);		/* TODO: Correct multiply timing */
+	}
+
+	src = (INT32)(INT16)FETCH16();
+	result = src * dst;
+
+	STORE_REG16(modrm, (UINT16)result);
+
+	I.CF = I.OF = !(result == (INT32)(INT16)result);
+}
+
+static void I386OP(imul_r16_rm16_i8)(void)	// Opcode 0x6b
+{
+	UINT8 modrm = FETCH();
+	INT32 result;
+	INT32 src, dst;
+	if( modrm >= 0xc0 ) {
+		dst = (INT32)(INT16)LOAD_RM16(modrm);
+		CYCLES(12);		/* TODO: Correct multiply timing */
+	} else {
+		UINT32 ea = GetEA(modrm);
+		dst = (INT32)(INT16)READ16(ea);
+		CYCLES(15);		/* TODO: Correct multiply timing */
+	}
+
+	src = (INT32)(INT8)FETCH();
+	result = src * dst;
+
+	STORE_REG16(modrm, (UINT16)result);
+
+	I.CF = I.OF = !(result == (INT32)(INT16)result);
+}
+
 static void I386OP(in_ax_i8)(void)			// Opcode 0xe5
 {
-	//UINT8 port = FETCH();
-	printf("i386: in_ax_i8 unimplemented !\n");
-	exit(1);
+	UINT16 port = FETCH();
+	UINT16 data = READPORT16(port);
+	REG16(AX) = data;
 }
 
 static void I386OP(in_ax_dx)(void)			// Opcode 0xed
 {
-	printf("i386: in_ax_dx unimplemented !\n");
-	exit(1);
+	UINT16 port = REG16(DX);
+	UINT16 data = READPORT16(port);
+	REG16(AX) = data;
 }
 
 static void I386OP(inc_ax)(void)			// Opcode 0x40
@@ -924,12 +950,12 @@ static void I386OP(lodsw)(void)				// Opcode 0xad
 {
 	UINT32 eas;
 	if( I.segment_prefix ) {
-		eas = i386_translate( I.segment_override, REG32(ESI) );
+		eas = i386_translate( I.segment_override, I.sreg[CS].d ? REG32(ESI) : REG16(SI) );
 	} else {
-		eas = i386_translate( DS, REG32(ESI) );
+		eas = i386_translate( DS, I.sreg[CS].d ? REG32(ESI) : REG16(SI) );
 	}
 	REG16(AX) = READ16(eas);
-	REG32(ESI) += ((I.DF) ? -2 : 2);
+	BUMP_SI(2);
 	CYCLES(5);
 }
 
@@ -1101,15 +1127,15 @@ static void I386OP(movsw)(void)				// Opcode 0xa5
 	UINT32 eas, ead;
 	UINT16 v;
 	if( I.segment_prefix ) {
-		eas = i386_translate( I.segment_override, REG32(ESI) );
+		eas = i386_translate( I.segment_override, I.sreg[CS].d ? REG32(ESI) : REG16(SI) );
 	} else {
-		eas = i386_translate( DS, REG32(ESI) );
+		eas = i386_translate( DS, I.sreg[CS].d ? REG32(ESI) : REG16(SI) );
 	}
-	ead = i386_translate( ES, REG32(EDI) );
+	ead = i386_translate( ES, I.sreg[CS].d ? REG32(EDI) : REG16(DI) );
 	v = READ16(eas);
 	WRITE16(ead, v);
-	REG32(ESI) += ((I.DF) ? -2 : 2);
-	REG32(EDI) += ((I.DF) ? -2 : 2);
+	BUMP_SI(2);
+	BUMP_DI(2);
 	CYCLES(8);
 }
 
@@ -1195,15 +1221,16 @@ static void I386OP(or_ax_i16)(void)			// Opcode 0x0d
 
 static void I386OP(out_ax_i8)(void)			// Opcode 0xe7
 {
-	//UINT8 port = FETCH();
-	printf("i386: out_ax_i8 unimplemented !\n");
-	exit(1);
+	UINT16 port = FETCH();
+	UINT16 data = REG16(AX);
+	WRITEPORT16(port, data);
 }
 
 static void I386OP(out_ax_dx)(void)			// Opcode 0xef
 {
-	printf("i386: out_ax_dx unimplemented !\n");
-	exit(1);
+	UINT16 port = REG16(DX);
+	UINT16 data = REG16(AX);
+	WRITEPORT16(port, data);
 }
 
 static void I386OP(pop_ax)(void)			// Opcode 0x58
@@ -1520,19 +1547,20 @@ static void I386OP(scasw)(void)				// Opcode 0xaf
 {
 	UINT32 eas;
 	UINT16 src, dst;
-	eas = i386_translate( ES, REG32(EDI) );
+	eas = i386_translate( ES, I.sreg[CS].d ? REG32(EDI) : REG16(DI) );
 	src = READ16(eas);
 	dst = REG16(AX);
 	SUB16(dst, src);
-	REG32(EDI) += ((I.DF) ? -2 : 2);
+	BUMP_DI(2);
 	CYCLES(8);
 }
 
 static void I386OP(stosw)(void)				// Opcode 0xab
 {
-	UINT32 eas = i386_translate( ES, REG32(EDI) );
-	WRITE16(eas, REG16(AX));
-	REG32(EDI) += ((I.DF) ? -2 : 2);
+	UINT32 ead;
+	ead = i386_translate( ES, I.sreg[CS].d ? REG32(EDI) : REG16(DI) );
+	WRITE16(ead, REG16(AX));
+	BUMP_DI(2);
 	CYCLES(5);
 }
 
@@ -2295,6 +2323,26 @@ static void I386OP(groupFF_16)(void)		// Opcode 0xff
 				CHANGE_PC(I.eip);
 			}
 			break;
+		case 3:			/* CALL FAR Rm16 */
+			{
+				UINT16 address, selector;
+				if( modrm >= 0xc0 ) {
+					osd_die("NYI");
+				} else {
+					UINT32 ea = GetEA(modrm);
+					address = READ16(ea + 0);
+					selector = READ16(ea + 2);
+					CYCLES(10 + 1);		/* TODO: Timing = 10 + m */
+				}
+				PUSH16( I.sreg[CS].selector );
+				PUSH16( I.eip );
+				I.sreg[CS].selector = selector;
+				i386_load_segment_descriptor( CS );
+				I.eip = address;
+				I.performed_intersegment_jump = 1;
+				CHANGE_PC(I.eip);
+			}
+			break;
 		case 4:			/* JMP Rm16 */
 			{
 				UINT16 address;
@@ -2307,6 +2355,24 @@ static void I386OP(groupFF_16)(void)		// Opcode 0xff
 					CYCLES(10 + 1);		/* TODO: Timing = 10 + m */
 				}
 				I.eip = address;
+				CHANGE_PC(I.eip);
+			}
+			break;
+		case 5:			/* JMP FAR Rm16 */
+			{
+				UINT16 address, selector;
+				if( modrm >= 0xc0 ) {
+					osd_die("NYI");
+				} else {
+					UINT32 ea = GetEA(modrm);
+					address = READ16(ea + 0);
+					selector = READ16(ea + 2);
+					CYCLES(10 + 1);		/* TODO: Timing = 10 + m */
+				}
+				I.sreg[CS].selector = selector;
+				i386_load_segment_descriptor( CS );
+				I.eip = address;
+				I.performed_intersegment_jump = 1;
 				CHANGE_PC(I.eip);
 			}
 			break;
@@ -2323,9 +2389,11 @@ static void I386OP(groupFF_16)(void)		// Opcode 0xff
 				CYCLES(5);
 			}
 			break;
+		case 7:
+			I386OP(invalid)();
+			break;
 		default:
-			printf("i386: groupFF_16 /%d unimplemented\n", (modrm >> 3) & 0x7);
-			exit(1);
+			osd_die("i386: groupFF_16 /%d unimplemented\n", (modrm >> 3) & 0x7);
 			break;
 	}
 }
@@ -2333,13 +2401,19 @@ static void I386OP(groupFF_16)(void)		// Opcode 0xff
 static void I386OP(group0F01_16)(void)		// Opcode 0x0f 01
 {
 	UINT8 modrm = FETCH();
+	UINT16 address;
+	UINT32 ea;
 
 	switch( (modrm >> 3) & 0x7 )
 	{
 		case 0:			/* SGDT */
 			{
-				UINT16 address = FETCH16();
-				UINT32 ea = i386_translate( CS, address );
+				if( modrm >= 0xc0 ) {
+					address = LOAD_RM16(modrm);
+					ea = i386_translate( CS, address );
+				} else {
+					ea = GetEA(modrm);
+				}
 				WRITE16(ea, I.gdtr.limit);
 				WRITE32(ea + 2, I.gdtr.base & 0xffffff);
 				CYCLES(9);
@@ -2347,8 +2421,12 @@ static void I386OP(group0F01_16)(void)		// Opcode 0x0f 01
 			}
 		case 2:			/* LGDT */
 			{
-				UINT16 address = FETCH16();
-				UINT32 ea = i386_translate( CS, address );
+				if( modrm >= 0xc0 ) {
+					address = LOAD_RM16(modrm);
+					ea = i386_translate( CS, address );
+				} else {
+					ea = GetEA(modrm);
+				}
 				I.gdtr.limit = READ16(ea);
 				I.gdtr.base = READ32(ea + 2) & 0xffffff;
 				CYCLES(11);
@@ -2356,16 +2434,34 @@ static void I386OP(group0F01_16)(void)		// Opcode 0x0f 01
 			}
 		case 3:			/* LIDT */
 			{
-				UINT16 address = FETCH16();
-				UINT32 ea = i386_translate( CS, address );
+				if( modrm >= 0xc0 ) {
+					address = LOAD_RM16(modrm);
+					ea = i386_translate( CS, address );
+				} else {
+					ea = GetEA(modrm);
+				}
 				I.idtr.limit = READ16(ea);
 				I.idtr.base = READ32(ea + 2) & 0xffffff;
 				CYCLES(11);
 				break;
 			}
+		case 6:			/* LMSW */
+			{
+				// TODO: Check for protection fault
+				UINT8 b;
+				if( modrm >= 0xc0 ) {
+					address = LOAD_RM16(modrm);
+					ea = i386_translate( CS, address );
+				} else {
+					ea = GetEA(modrm);
+				}
+				b = READ8(ea);
+				I.cr[0] &= ~0x03;
+				I.cr[0]= b & 0x03;
+				break;
+			}
 		default:
-			printf("i386: unimplemented opcode 0x0f 01 /%d at %08X\n", (modrm >> 3) & 0x7, I.eip - 2);
-			exit(1);
+			osd_die("i386: unimplemented opcode 0x0f 01 /%d at %08X\n", (modrm >> 3) & 0x7, I.eip - 2);
 			break;
 	}
 }
@@ -2485,8 +2581,67 @@ static void I386OP(group0FBA_16)(void)		// Opcode 0x0f ba
 			}
 			break;
 		default:
-			printf("i386: group0FBA_16 /%d unknown\n", (modrm >> 3) & 0x7);
-			exit(1);
+			osd_die("i386: group0FBA_16 /%d unknown\n", (modrm >> 3) & 0x7);
 			break;
 	}
 }
+
+static void I386OP(bound_r16_m16_m16)(void)	// Opcode 0x62
+{
+	UINT8 modrm;
+	INT16 val, low, high;
+
+	modrm = FETCH();
+
+	if (modrm >= 0xc0)
+	{
+		low = high = LOAD_RM16(modrm);
+	}
+	else
+	{
+		UINT32 ea = GetEA(modrm);
+		low = READ16(ea + 0);
+		high = READ16(ea + 2);
+	}
+	val = LOAD_REG16(modrm);
+
+	if ((val < low) || (val > high))
+		i386_trap(5);
+
+	CYCLES(1);	// TODO: Find out correct cycle count
+}
+
+static void I386OP(retf16)(void)			// Opcode 0xcb
+{
+	I.eip = POP16();
+	I.sreg[CS].selector = POP16();
+	CHANGE_PC(I.eip);
+	i386_load_segment_descriptor( CS );
+
+	CYCLES(1);	// TODO: deduct proper cycle count
+}
+
+static void I386OP(retf_i16)(void)			// Opcode 0xca
+{
+	UINT16 count = FETCH16();
+
+	I.eip = POP16();
+	I.sreg[CS].selector = POP16();
+	CHANGE_PC(I.eip);
+	i386_load_segment_descriptor( CS );
+
+	REG16(SP) += count;
+	CYCLES(1);	// TODO: deduct proper cycle count
+}
+
+static void I386OP(xlat16)(void)			// Opcode 0xd7
+{
+	UINT32 ea;
+	if( I.segment_prefix ) {
+		ea = i386_translate( I.segment_override, REG16(BX) + REG8(AL) );
+	} else {
+		ea = i386_translate( DS, REG16(BX) + REG8(AL) );
+	}
+	REG8(AL) = READ8(ea);
+}
+

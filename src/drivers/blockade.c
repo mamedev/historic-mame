@@ -446,7 +446,7 @@ static PALETTE_INIT( bw )
 static const char *blockade_sample_names[] =
 {
     "*blockade",
-    "BOOM.wav",
+    "boom.wav",
     0   /* end of array */
 };
 

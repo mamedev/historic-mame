@@ -85,6 +85,18 @@ static union
 	{
 		PAIR n_bgr;
 		PAIR n_coord;
+	} FlatRectangle8x8;
+
+	struct
+	{
+		PAIR n_bgr;
+		PAIR n_coord;
+	} FlatRectangle16x16;
+
+	struct
+	{
+		PAIR n_bgr;
+		PAIR n_coord;
 		PAIR n_texture;
 	} Sprite8x8;
 
@@ -167,6 +179,8 @@ static UINT32 m_n_displaystartx;
 static UINT32 m_n_displaystarty;
 static UINT32 m_n_gpustatus;
 static UINT32 m_n_gpuinfo;
+static UINT32 m_n_lightgun_x;
+static UINT32 m_n_lightgun_y;
 static UINT32 m_n_screenwidth;
 static UINT32 m_n_screenheight;
 static UINT32 m_n_drawmode;
@@ -206,6 +220,11 @@ static UINT16 m_p_n_nextpointlist4[] = { 1, 3, 0, 2 };
 static UINT16 m_p_n_prevpointlist4[] = { 2, 0, 3, 1 };
 static UINT16 m_p_n_nextpointlist3[] = { 1, 2, 0 };
 static UINT16 m_p_n_prevpointlist3[] = { 2, 0, 1 };
+
+static UINT16 m_p_n_g0r0[ 0x10000 ];
+static UINT16 m_p_n_b0[ 0x10000 ];
+static UINT16 m_p_n_r1[ 0x10000 ];
+static UINT16 m_p_n_b1g1[ 0x10000 ];
 
 #define SINT11( x ) ( ( (INT32)( x ) << 21 ) >> 21 )
 
@@ -484,6 +503,8 @@ static int psx_gpu_init( int n_width, int n_height )
 	m_n_drawmode = 0;
 	m_n_gpuinfo = 0;
 	m_n_gpu_buffer_offset = 0;
+	m_n_lightgun_x = 0;
+	m_n_lightgun_y = 0;
 
 	m_n_vram_size = n_width * n_height;
 	m_p_vram = auto_malloc( m_n_vram_size * 2 );
@@ -556,6 +577,11 @@ static int psx_gpu_init( int n_width, int n_height )
 		m_p_n_greenb1[ n_level ] = ( ( n_level >> 5 ) & ( MAX_LEVEL - 1 ) ) * MAX_LEVEL;
 		m_p_n_blueb1[ n_level ] = ( ( n_level >> 10 ) & ( MAX_LEVEL - 1 ) ) * MAX_LEVEL;
 
+		/* 24bit to 15 bit conversion */
+		m_p_n_g0r0[ n_level ] = ( ( ( n_level >> 11 ) & ( MAX_LEVEL - 1 ) ) << 5 ) | ( ( ( n_level >> 3 ) & ( MAX_LEVEL - 1 ) ) << 0 );
+		m_p_n_b0[ n_level ] = ( ( n_level >> 3 ) & ( MAX_LEVEL - 1 ) ) << 10;
+		m_p_n_r1[ n_level ] = ( ( n_level >> 11 ) & ( MAX_LEVEL - 1 ) ) << 0;
+		m_p_n_b1g1[ n_level ] = ( ( ( n_level >> 11 ) & ( MAX_LEVEL - 1 ) ) << 10 ) | ( ( ( n_level >> 3 ) & ( MAX_LEVEL - 1 ) ) << 5 );
 	}
 
 	for( n_level = 0; n_level < MAX_LEVEL; n_level++ )
@@ -607,6 +633,8 @@ static int psx_gpu_init( int n_width, int n_height )
 	state_save_register_UINT32( "psx", 0, "m_n_displaystarty", &m_n_displaystarty, 1 );
 	state_save_register_UINT32( "psx", 0, "m_n_gpustatus", &m_n_gpustatus, 1 );
 	state_save_register_UINT32( "psx", 0, "m_n_gpuinfo", &m_n_gpuinfo, 1 );
+	state_save_register_UINT32( "psx", 0, "m_n_lightgun_x", &m_n_lightgun_x, 1 );
+	state_save_register_UINT32( "psx", 0, "m_n_lightgun_y", &m_n_lightgun_y, 1 );
 	state_save_register_UINT32( "psx", 0, "m_n_screenwidth", &m_n_screenwidth, 1 );
 	state_save_register_UINT32( "psx", 0, "m_n_screenheight", &m_n_screenheight, 1 );
 	state_save_register_UINT32( "psx", 0, "m_n_drawmode", &m_n_drawmode, 1 );
@@ -640,6 +668,8 @@ VIDEO_UPDATE( psx )
 {
 	UINT32 n_x;
 	UINT32 n_y;
+	int n_top;
+	int n_lines;
 
 #if defined( MAME_DEBUG )
 	if( DebugMeshDisplay( bitmap, cliprect ) )
@@ -654,7 +684,7 @@ VIDEO_UPDATE( psx )
 	if( keyboard_pressed_memory( KEYCODE_I ) )
 	{
 		m_n_debugskip++;
-		if( m_n_debugskip > 13 )
+		if( m_n_debugskip > 14 )
 		{
 			m_n_debugskip = 0;
 		}
@@ -720,14 +750,62 @@ VIDEO_UPDATE( psx )
 			n_x = m_n_displaystartx;
 		}
 
-		if( ( m_n_gpustatus & ( 1 << 0x15 ) ) != 0 )
+#define OVERSCAN_TOP ( 16 )
+
+		n_top = m_n_vert_disstart - OVERSCAN_TOP;
+		if( n_top < 0 )
 		{
-			usrintf_showmessage_secs( 1, "24bit mode not supported" );
+			n_y = -n_top;
+			n_top = 0;
+			/* todo: draw top border */
+		}
+		else
+		{
+			n_y = 0;
+		}
+		n_lines = ( m_n_vert_disend - OVERSCAN_TOP ) - n_top;
+		if( ( m_n_gpustatus & ( 1 << 0x16 ) ) != 0 )
+		{
+			/* interlaced */
+			n_lines *= 2;
+		}
+		if( n_lines < m_n_screenheight - n_y )
+		{
+			/* todo: draw bottom border */
+		}
+		else
+		{
+			n_lines = m_n_screenheight - n_y;
 		}
 
-		for( n_y = 0; n_y < m_n_screenheight; n_y++ )
+		if( ( m_n_gpustatus & ( 1 << 0x15 ) ) != 0 )
 		{
-			draw_scanline16( bitmap, 0, n_y, m_n_screenwidth, m_p_p_vram[ n_y + m_n_displaystarty ] + n_x, Machine->pens, -1 );
+			/* 24bit */
+			while( n_y < n_lines )
+			{
+				data16_t *p_n_src = m_p_p_vram[ n_y + m_n_displaystarty ];
+				data16_t *p_n_dest = &( (data16_t *)bitmap->line[ n_y + n_top ] )[ 0 ];
+
+				for( n_x = 0; n_x < m_n_screenwidth / 2; n_x++ )
+				{
+					data32_t n_g0r0 = *( p_n_src++ );
+					data32_t n_r1b0 = *( p_n_src++ );
+					data32_t n_b1g1 = *( p_n_src++ );
+
+					*( p_n_dest++ ) = m_p_n_g0r0[ n_g0r0 ] | m_p_n_b0[ n_r1b0 ];
+					*( p_n_dest++ ) = m_p_n_r1[ n_r1b0 ] | m_p_n_b1g1[ n_b1g1 ];
+				}
+				n_y++;
+			}
+		}
+		else
+		{
+			/* 15bit */
+			while( n_y < n_lines )
+			{
+				draw_scanline16( bitmap, 0, n_y + n_top, m_n_screenwidth, m_p_p_vram[ n_y + m_n_displaystarty ] + n_x, Machine->pens, -1 );
+				n_y++;
+			}
 		}
 	}
 }
@@ -2427,6 +2505,138 @@ static void FlatRectangle( void )
 	}
 }
 
+static void FlatRectangle8x8( void )
+{
+	INT16 n_y;
+	INT16 n_x;
+
+	UINT8 n_cmd;
+	UINT32 n_abr;
+
+	UINT16 *p_n_f;
+	UINT16 *p_n_redb;
+	UINT16 *p_n_greenb;
+	UINT16 *p_n_blueb;
+	UINT16 *p_n_redtrans;
+	UINT16 *p_n_greentrans;
+	UINT16 *p_n_bluetrans;
+
+	PAIR n_r;
+	PAIR n_g;
+	PAIR n_b;
+
+	INT32 n_distance;
+	INT32 n_h;
+	UINT16 *p_vram;
+
+#if defined( MAME_DEBUG )
+	if( m_n_debugskip == 9 )
+	{
+		return;
+	}
+	DebugMesh( COORD_X( m_packet.FlatRectangle8x8.n_coord ) + m_n_drawoffset_x, COORD_Y( m_packet.FlatRectangle8x8.n_coord ) + m_n_drawoffset_y );
+	DebugMesh( COORD_X( m_packet.FlatRectangle8x8.n_coord ) + m_n_drawoffset_x + 8, COORD_Y( m_packet.FlatRectangle8x8.n_coord ) + m_n_drawoffset_y );
+	DebugMesh( COORD_X( m_packet.FlatRectangle8x8.n_coord ) + m_n_drawoffset_x, COORD_Y( m_packet.FlatRectangle8x8.n_coord ) + m_n_drawoffset_y + 8 );
+	DebugMesh( COORD_X( m_packet.FlatRectangle8x8.n_coord ) + m_n_drawoffset_x + 8, COORD_Y( m_packet.FlatRectangle8x8.n_coord ) + m_n_drawoffset_y + 8 );
+	DebugMeshEnd();
+#endif
+
+	n_cmd = BGR_C( m_packet.FlatRectangle8x8.n_bgr );
+
+	SOLIDSETUP( m_n_drawmode )
+
+	n_r.w.h = BGR_R( m_packet.FlatRectangle8x8.n_bgr ); n_r.w.l = 0;
+	n_g.w.h = BGR_G( m_packet.FlatRectangle8x8.n_bgr ); n_g.w.l = 0;
+	n_b.w.h = BGR_B( m_packet.FlatRectangle8x8.n_bgr ); n_b.w.l = 0;
+
+	n_y = COORD_Y( m_packet.FlatRectangle8x8.n_coord ) + m_n_drawoffset_y;
+	n_h = 8;
+
+	while( n_h > 0 )
+	{
+		n_x = COORD_X( m_packet.FlatRectangle8x8.n_coord ) + m_n_drawoffset_x;
+
+		n_distance = 8;
+		if( n_distance > 0 && n_y >= (INT32)m_n_drawarea_y1 && n_y <= (INT32)m_n_drawarea_y2 )
+		{
+			if( ( (INT32)m_n_drawarea_x1 - n_x ) > 0 )
+			{
+				n_distance -= ( m_n_drawarea_x1 - n_x );
+				n_x = m_n_drawarea_x1;
+			}
+			SOLIDFILL( FLATRECTANGEUPDATE )
+		}
+		n_y++;
+		n_h--;
+	}
+}
+
+static void FlatRectangle16x16( void )
+{
+	INT16 n_y;
+	INT16 n_x;
+
+	UINT8 n_cmd;
+	UINT32 n_abr;
+
+	UINT16 *p_n_f;
+	UINT16 *p_n_redb;
+	UINT16 *p_n_greenb;
+	UINT16 *p_n_blueb;
+	UINT16 *p_n_redtrans;
+	UINT16 *p_n_greentrans;
+	UINT16 *p_n_bluetrans;
+
+	PAIR n_r;
+	PAIR n_g;
+	PAIR n_b;
+
+	INT32 n_distance;
+	INT32 n_h;
+	UINT16 *p_vram;
+
+#if defined( MAME_DEBUG )
+	if( m_n_debugskip == 9 )
+	{
+		return;
+	}
+	DebugMesh( COORD_X( m_packet.FlatRectangle16x16.n_coord ) + m_n_drawoffset_x, COORD_Y( m_packet.FlatRectangle16x16.n_coord ) + m_n_drawoffset_y );
+	DebugMesh( COORD_X( m_packet.FlatRectangle16x16.n_coord ) + m_n_drawoffset_x + 16, COORD_Y( m_packet.FlatRectangle16x16.n_coord ) + m_n_drawoffset_y );
+	DebugMesh( COORD_X( m_packet.FlatRectangle16x16.n_coord ) + m_n_drawoffset_x, COORD_Y( m_packet.FlatRectangle16x16.n_coord ) + m_n_drawoffset_y + 16 );
+	DebugMesh( COORD_X( m_packet.FlatRectangle16x16.n_coord ) + m_n_drawoffset_x + 16, COORD_Y( m_packet.FlatRectangle16x16.n_coord ) + m_n_drawoffset_y + 16 );
+	DebugMeshEnd();
+#endif
+
+	n_cmd = BGR_C( m_packet.FlatRectangle16x16.n_bgr );
+
+	SOLIDSETUP( m_n_drawmode )
+
+	n_r.w.h = BGR_R( m_packet.FlatRectangle16x16.n_bgr ); n_r.w.l = 0;
+	n_g.w.h = BGR_G( m_packet.FlatRectangle16x16.n_bgr ); n_g.w.l = 0;
+	n_b.w.h = BGR_B( m_packet.FlatRectangle16x16.n_bgr ); n_b.w.l = 0;
+
+	n_y = COORD_Y( m_packet.FlatRectangle16x16.n_coord ) + m_n_drawoffset_y;
+	n_h = 16;
+
+	while( n_h > 0 )
+	{
+		n_x = COORD_X( m_packet.FlatRectangle16x16.n_coord ) + m_n_drawoffset_x;
+
+		n_distance = 16;
+		if( n_distance > 0 && n_y >= (INT32)m_n_drawarea_y1 && n_y <= (INT32)m_n_drawarea_y2 )
+		{
+			if( ( (INT32)m_n_drawarea_x1 - n_x ) > 0 )
+			{
+				n_distance -= ( m_n_drawarea_x1 - n_x );
+				n_x = m_n_drawarea_x1;
+			}
+			SOLIDFILL( FLATRECTANGEUPDATE )
+		}
+		n_y++;
+		n_h--;
+	}
+}
+
 static void FlatTexturedRectangle( void )
 {
 	INT16 n_y;
@@ -2464,7 +2674,7 @@ static void FlatTexturedRectangle( void )
 	UINT16 n_bgr;
 
 #if defined( MAME_DEBUG )
-	if( m_n_debugskip == 9 )
+	if( m_n_debugskip == 10 )
 	{
 		return;
 	}
@@ -2559,7 +2769,7 @@ static void Sprite8x8( void )
 	UINT16 n_bgr;
 
 #if defined( MAME_DEBUG )
-	if( m_n_debugskip == 10 )
+	if( m_n_debugskip == 11 )
 	{
 		return;
 	}
@@ -2644,7 +2854,7 @@ static void Sprite16x16( void )
 	UINT16 n_bgr;
 
 #if defined( MAME_DEBUG )
-	if( m_n_debugskip == 11 )
+	if( m_n_debugskip == 12 )
 	{
 		return;
 	}
@@ -2702,7 +2912,7 @@ static void Dot( void )
 	UINT16 *p_vram;
 
 #if defined( MAME_DEBUG )
-	if( m_n_debugskip == 12 )
+	if( m_n_debugskip == 13 )
 	{
 		return;
 	}
@@ -2738,7 +2948,7 @@ static void MoveImage( void )
 	INT16 n_dstx;
 
 #if defined( MAME_DEBUG )
-	if( m_n_debugskip == 13 )
+	if( m_n_debugskip == 14 )
 	{
 		return;
 	}
@@ -3033,6 +3243,7 @@ void psx_gpu_write( UINT32 *p_ram, INT32 n_size )
 			}
 			break;
 		case 0x68:
+		case 0x6a:
 			if( m_n_gpu_buffer_offset < 1 )
 			{
 				m_n_gpu_buffer_offset++;
@@ -3047,8 +3258,23 @@ void psx_gpu_write( UINT32 *p_ram, INT32 n_size )
 				m_n_gpu_buffer_offset = 0;
 			}
 			break;
+		case 0x70:
+			/* 8*8 rectangle */
+			if( m_n_gpu_buffer_offset < 1 )
+			{
+				m_n_gpu_buffer_offset++;
+			}
+			else
+			{
+				verboselog( 1, "%02x: 16x16 rectangle %08x %08x\n", m_packet.n_entry[ 0 ] >> 24,
+					m_packet.n_entry[ 0 ], m_packet.n_entry[ 1 ] );
+				FlatRectangle8x8();
+				m_n_gpu_buffer_offset = 0;
+			}
+			break;
 		case 0x74:
 		case 0x75:
+		case 0x76:
 		case 0x77:
 			if( m_n_gpu_buffer_offset < 2 )
 			{
@@ -3062,8 +3288,24 @@ void psx_gpu_write( UINT32 *p_ram, INT32 n_size )
 				m_n_gpu_buffer_offset = 0;
 			}
 			break;
+		case 0x78:
+		case 0x79:
+			/* 16*16 rectangle */
+			if( m_n_gpu_buffer_offset < 1 )
+			{
+				m_n_gpu_buffer_offset++;
+			}
+			else
+			{
+				verboselog( 1, "%02x: 16x16 rectangle %08x %08x\n", m_packet.n_entry[ 0 ] >> 24,
+					m_packet.n_entry[ 0 ], m_packet.n_entry[ 1 ] );
+				FlatRectangle16x16();
+				m_n_gpu_buffer_offset = 0;
+			}
+			break;
 		case 0x7c:
 		case 0x7d:
+		case 0x7e:
 		case 0x7f:
 			if( m_n_gpu_buffer_offset < 2 )
 			{
@@ -3244,6 +3486,10 @@ WRITE32_HANDLER( psx_gpu_w )
 			m_n_drawoffset_y = 0;
 			m_n_displaystartx = 0;
 			m_n_displaystarty = 0;
+			m_n_horiz_disstart = 0x260;
+			m_n_horiz_disend = 0xc60;
+			m_n_vert_disstart = 0x010;
+			m_n_vert_disend = 0x100;
 			m_n_screenwidth = 256;
 			m_n_screenheight = 240;
 			m_n_vramx = 0;
@@ -3333,11 +3579,15 @@ WRITE32_HANDLER( psx_gpu_w )
 		case 0x09:
 			verboselog( 1, "not handled: GPU Control 0x09: %08x\n", data );
 			break;
+		case 0x0d:
+			verboselog( 1, "GPU Lightgun Reset ? %08x\n", data );
+			m_n_lightgun_x = 0;
+			m_n_lightgun_y = 0;
+			break;
 		case 0x10:
-			switch( data & 7 )
+			switch( data & 0xff )
 			{
 			case 0x03:
-				verboselog( 1, "GPU Info - Draw area top left\n" );
 				if( m_n_gputype == 2 )
 				{
 					m_n_gpuinfo = m_n_drawarea_x1 | ( m_n_drawarea_y1 << 10 );
@@ -3346,9 +3596,9 @@ WRITE32_HANDLER( psx_gpu_w )
 				{
 					m_n_gpuinfo = m_n_drawarea_x1 | ( m_n_drawarea_y1 << 12 );
 				}
+				verboselog( 1, "GPU Info - Draw area top left %08x\n", m_n_gpuinfo );
 				break;
 			case 0x04:
-				verboselog( 1, "GPU Info - Draw area bottom right\n" );
 				if( m_n_gputype == 2 )
 				{
 					m_n_gpuinfo = m_n_drawarea_x2 | ( m_n_drawarea_y2 << 10 );
@@ -3357,9 +3607,9 @@ WRITE32_HANDLER( psx_gpu_w )
 				{
 					m_n_gpuinfo = m_n_drawarea_x2 | ( m_n_drawarea_y2 << 12 );
 				}
+				verboselog( 1, "GPU Info - Draw area bottom right %08x\n", m_n_gpuinfo );
 				break;
 			case 0x05:
-				verboselog( 1, "GPU Info - Draw offset\n" );
 				if( m_n_gputype == 2 )
 				{
 					m_n_gpuinfo = ( m_n_drawoffset_x & 2047 ) | ( ( m_n_drawoffset_y & 2047 ) << 11 );
@@ -3368,10 +3618,15 @@ WRITE32_HANDLER( psx_gpu_w )
 				{
 					m_n_gpuinfo = ( m_n_drawoffset_x & 2047 ) | ( ( m_n_drawoffset_y & 2047 ) << 12 );
 				}
+				verboselog( 1, "GPU Info - Draw offset %08x\n", m_n_gpuinfo );
 				break;
 			case 0x07:
-				verboselog( 1, "GPU Info - GPU Type\n" );
 				m_n_gpuinfo = m_n_gputype;
+				verboselog( 1, "GPU Info - GPU Type %08x\n", m_n_gpuinfo );
+				break;
+			case 0x08:
+				m_n_gpuinfo = m_n_lightgun_x | ( m_n_lightgun_y << 10 );
+				verboselog( 0, "GPU Info - Lightgun ? %08x\n", m_n_gpuinfo );
 				break;
 			default:
 				verboselog( 0, "GPU Info - unknown request (%08x)\n", data );
@@ -3475,4 +3730,10 @@ INTERRUPT_GEN( psx_vblank )
 void psx_gpu_reset( void )
 {
 	psx_gpu_w( 1, 0, 0 );
+}
+
+void psx_lightgun_set( int n_x, int n_y )
+{
+	m_n_lightgun_x = n_x;
+	m_n_lightgun_y = n_y;
 }

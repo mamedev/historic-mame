@@ -46,9 +46,9 @@
 #define LOG_CODE			0
 #endif
 
-#define STRIP_NOPS			1
-
-#define USE_SSE				0
+#define STRIP_NOPS			1		/* 1 is faster */
+#define OPTIMIZE_LUI		1		/* 1 is faster */
+#define USE_SSE				0		/* can't tell any speed difference here */
 
 #define CACHE_SIZE			(8 * 1024 * 1024)
 #define MAX_INSTRUCTIONS	512
@@ -66,7 +66,8 @@
 #define RECOMPILE_MAY_CAUSE_EXCEPTION	0x0002
 #define RECOMPILE_END_OF_STRING			0x0004
 #define RECOMPILE_CHECK_INTERRUPTS		0x0008
-#define RECOMPILE_ADD_DISPATCH			0x0010
+#define RECOMPILE_CHECK_SW_INTERRUPTS	0x0010
+#define RECOMPILE_ADD_DISPATCH			0x0020
 
 /* COP0 registers */
 #define COP0_Index			0
@@ -232,6 +233,7 @@ static UINT32 compile_one(struct drccore *drc, UINT32 pc);
 static void append_generate_exception(struct drccore *drc, UINT8 exception);
 static void append_update_cycle_counting(struct drccore *drc);
 static void append_check_interrupts(struct drccore *drc, int inline_generate);
+static void append_check_sw_interrupts(struct drccore *drc, int inline_generate);
 
 static UINT32 recompile_instruction(struct drccore *drc, UINT32 pc);
 static UINT32 recompile_special(struct drccore *drc, UINT32 pc, UINT32 op);
@@ -264,7 +266,7 @@ static mips3_regs mips3;
 static UINT64 dmult_temp1;
 static UINT64 dmult_temp2;
 
-#ifdef MAME_DEBUG
+#if LOG_CODE
 static FILE *symfile;
 #endif
 
@@ -332,6 +334,7 @@ static void mips3_set_context(void *src)
 
 static void compare_int_callback(int cpu)
 {
+logerror("%% compare_int_callback\n");
 	cpu_set_irq_line(cpu, 5, ASSERT_LINE);
 }
 
@@ -458,7 +461,7 @@ static void mips3_exit(void)
 		free(mips3.dcache);
 	mips3.dcache = NULL;
 
-#ifdef MAME_DEBUG
+#if LOG_CODE
 	if (symfile) fclose(symfile);
 #endif
 	drc_exit(mips3.drc);
@@ -541,8 +544,8 @@ INLINE void logonetlbentry(int which)
 	UINT64 vaddr = (UINT64)vpn * (UINT64)pagesize;
 	UINT64 paddr = (UINT64)pfn * (UINT64)pagesize;
 
-	logerror("pagesize = %08X  vaddr = %08X%08X  paddr = %08X%08X  asid = %02X  r = %X  c = %X  dvg=%c%c%c\n",
-			pagesize, (UINT32)(vaddr >> 32), (UINT32)vaddr, (UINT32)(paddr >> 32), (UINT32)paddr,
+	logerror("index = %08X  pagesize = %08X  vaddr = %08X%08X  paddr = %08X%08X  asid = %02X  r = %X  c = %X  dvg=%c%c%c\n",
+			(UINT32)mips3.cpr[0][COP0_Index], pagesize, (UINT32)(vaddr >> 32), (UINT32)vaddr, (UINT32)(paddr >> 32), (UINT32)paddr,
 			asid, r, c, (lo & 4) ? 'd' : '.', (lo & 2) ? 'v' : '.', (lo & 1) ? 'g' : '.');
 }
 
@@ -651,7 +654,7 @@ static UINT32 compile_one(struct drccore *drc, UINT32 pc)
 	change_pc(pc);
 	opptr = cpu_opptr(pc);
 	
-#ifdef MAME_DEBUG
+#if LOG_CODE
 {
 	char temp[256];
 	if (!symfile) symfile = fopen("code.sym", "w");
@@ -682,7 +685,7 @@ static UINT32 compile_one(struct drccore *drc, UINT32 pc)
 	/* absorb any NOPs following */
 	#if (STRIP_NOPS)
 	{
-		if (!(result & (RECOMPILE_END_OF_STRING | RECOMPILE_CHECK_INTERRUPTS)))
+		if (!(result & (RECOMPILE_END_OF_STRING | RECOMPILE_CHECK_INTERRUPTS | RECOMPILE_CHECK_SW_INTERRUPTS)))
 			while (pcdelta < 120 && opptr[pcdelta/4] == 0)
 			{
 				pcdelta += 4;
@@ -697,6 +700,8 @@ static UINT32 compile_one(struct drccore *drc, UINT32 pc)
 	/* check interrupts */
 	if (result & RECOMPILE_CHECK_INTERRUPTS)
 		append_check_interrupts(drc, 0);
+	if (result & RECOMPILE_CHECK_SW_INTERRUPTS)
+		append_check_sw_interrupts(drc, 0);
 	if (result & RECOMPILE_ADD_DISPATCH)
 		drc_append_dispatcher(drc);
 	
@@ -763,7 +768,7 @@ static void append_check_interrupts(struct drccore *drc, int inline_generate)
 	struct linkdata link1, link2, link3;
 	_mov_r32_m32abs(REG_EAX, &mips3.cpr[0][COP0_Cause]);				// mov	eax,[mips3.cpr[0][COP0_Cause]]
 	_and_r32_m32abs(REG_EAX, &mips3.cpr[0][COP0_Status]);				// and	eax,[mips3.cpr[0][COP0_Status]]
-	_and_r32_imm(REG_EAX, 0xff00);										// and	eax,0xff00
+	_and_r32_imm(REG_EAX, 0xfc00);										// and	eax,0xfc00
 	if (!inline_generate)
 		_jcc_short_link(COND_Z, &link1);								// jz	skip
 	else
@@ -784,6 +789,17 @@ static void append_check_interrupts(struct drccore *drc, int inline_generate)
 	}
 	_resolve_link(&link1);												// skip:
 	_resolve_link(&link2);
+}
+
+
+/*------------------------------------------------------------------
+	append_check_sw_interrupts
+------------------------------------------------------------------*/
+
+static void append_check_sw_interrupts(struct drccore *drc, int inline_generate)
+{
+	_test_m32abs_imm(&mips3.cpr[0][COP0_Cause], 0x300);					// test	[mips3.cpr[0][COP0_Cause]],0x300
+	_jcc(COND_NZ, mips3.generate_interrupt_exception);					// jnz	generate_interrupt_exception
 }
 
 
@@ -833,6 +849,12 @@ do { 												\
 		_mov_m64abs_r64(dst, REG_EDX, REG_EAX);		\
 	}												\
 } while (0)											\
+
+#define _save_pc_before_call()						\
+do { 												\
+	if (mips3.drcoptions & MIPS3DRC_FLUSH_PC)		\
+		_mov_m32abs_r32(drc->pcptr, REG_EDI);		\
+} while (0)
 
 
 /*###################################################################################################
@@ -893,12 +915,14 @@ static UINT32 recompile_lui(struct drccore *drc, UINT32 pc, UINT32 op)
 {
 	UINT32 address = UIMMVAL << 16;
 	UINT32 targetreg = RTREG;
+
+#if OPTIMIZE_LUI	
 	UINT32 nextop = cpu_readop32(pc + 4);
 	UINT8 nextrsreg = (nextop >> 21) & 31;
 	UINT8 nextrtreg = (nextop >> 16) & 31;
 	INT32 nextsimm = (INT16)nextop;
 	void *memory;
-	
+
 	/* if the next instruction is a load or store, see if we can consolidate */
 	if (!in_delay_slot)
 		switch (nextop >> 26)
@@ -942,7 +966,7 @@ static UINT32 recompile_lui(struct drccore *drc, UINT32 pc, UINT32 op)
 
 				/* see if this points to a RAM-like area */
 				if (mips3.bigendian)
-					memory = memory_get_read_ptr(cpu_getactivecpu(), ADDRESS_SPACE_PROGRAM, BYTE4_XOR_BE(address + nextsimm));
+					memory = memory_get_read_ptr(cpu_getactivecpu(), ADDRESS_SPACE_PROGRAM, WORD_XOR_BE(address + nextsimm));
 				else
 					memory = memory_get_read_ptr(cpu_getactivecpu(), ADDRESS_SPACE_PROGRAM, address + nextsimm);
 				if (!memory)
@@ -999,7 +1023,7 @@ static UINT32 recompile_lui(struct drccore *drc, UINT32 pc, UINT32 op)
 
 				/* see if this points to a RAM-like area */
 				if (mips3.bigendian)
-					memory = memory_get_read_ptr(cpu_getactivecpu(), ADDRESS_SPACE_PROGRAM, BYTE4_XOR_BE(address + nextsimm));
+					memory = memory_get_read_ptr(cpu_getactivecpu(), ADDRESS_SPACE_PROGRAM, WORD_XOR_BE(address + nextsimm));
 				else
 					memory = memory_get_read_ptr(cpu_getactivecpu(), ADDRESS_SPACE_PROGRAM, address + nextsimm);
 				if (!memory)
@@ -1135,7 +1159,7 @@ static UINT32 recompile_lui(struct drccore *drc, UINT32 pc, UINT32 op)
 
 				/* see if this points to a RAM-like area */
 				if (mips3.bigendian)
-					memory = memory_get_write_ptr(cpu_getactivecpu(), ADDRESS_SPACE_PROGRAM, BYTE4_XOR_BE(address + nextsimm));
+					memory = memory_get_write_ptr(cpu_getactivecpu(), ADDRESS_SPACE_PROGRAM, WORD_XOR_BE(address + nextsimm));
 				else
 					memory = memory_get_write_ptr(cpu_getactivecpu(), ADDRESS_SPACE_PROGRAM, address + nextsimm);
 				if (!memory)
@@ -1252,6 +1276,7 @@ static UINT32 recompile_lui(struct drccore *drc, UINT32 pc, UINT32 op)
 					_mov_m64abs_imm32(memory, 0);							// mov	[memory],0
 				return RECOMPILE_SUCCESSFUL_CP(2,8);
 		}
+#endif
 
 	/* default case: standard LUI */	
 	_mov_m64abs_imm32(&mips3.r[targetreg], address);					// mov	[rtreg],const << 16
@@ -1267,6 +1292,7 @@ static UINT32 recompile_ldlr_le(struct drccore *drc, UINT8 rtreg, UINT8 rsreg, I
 {
 	struct linkdata link1, link2;
 	_mov_m32abs_r32(&mips3_icount, REG_EBP);								// mov	[mips3_icount],ebp
+	_save_pc_before_call();													// save pc
 	_mov_r32_m32abs(REG_EAX, &mips3.r[rsreg]);								// mov	eax,[rsreg]
 	if (simmval)
 		_add_r32_imm(REG_EAX, simmval);										// add	eax,simmval
@@ -1308,6 +1334,7 @@ static UINT32 recompile_lwlr_le(struct drccore *drc, UINT8 rtreg, UINT8 rsreg, I
 {
 	struct linkdata link1;
 	_mov_m32abs_r32(&mips3_icount, REG_EBP);								// mov	[mips3_icount],ebp
+	_save_pc_before_call();													// save pc
 	_mov_r32_m32abs(REG_EAX, &mips3.r[rsreg]);								// mov	eax,[rsreg]
 	if (simmval)
 		_add_r32_imm(REG_EAX, simmval);										// add	eax,simmval
@@ -1812,6 +1839,7 @@ static UINT32 recompile_instruction(struct drccore *drc, UINT32 pc)
 					return recompile_ldlr_le(drc, RTREG, RSREG, SIMMVAL - 7);
 			}
 			_mov_m32abs_r32(&mips3_icount, REG_EBP);								// mov	[mips3_icount],ebp
+			_save_pc_before_call();													// save pc
 			_mov_r32_m32abs(REG_EAX, &mips3.r[RSREG]);								// mov	eax,[rsreg]
 			if (SIMMVAL)
 				_add_r32_imm(REG_EAX, SIMMVAL);										// add	eax,SIMMVAL
@@ -1869,6 +1897,7 @@ static UINT32 recompile_instruction(struct drccore *drc, UINT32 pc)
 					return recompile_ldlr_le(drc, RTREG, RSREG, SIMMVAL);
 			}
 			_mov_m32abs_r32(&mips3_icount, REG_EBP);								// mov	[mips3_icount],ebp
+			_save_pc_before_call();													// save pc
 			_mov_r32_m32abs(REG_EAX, &mips3.r[RSREG]);								// mov	eax,[rsreg]
 			if (SIMMVAL)
 				_add_r32_imm(REG_EAX, SIMMVAL);										// add	eax,SIMMVAL
@@ -1918,6 +1947,7 @@ static UINT32 recompile_instruction(struct drccore *drc, UINT32 pc)
 
 		case 0x20:	/* LB */
 			_mov_m32abs_r32(&mips3_icount, REG_EBP);								// mov	[mips3_icount],ebp
+			_save_pc_before_call();													// save pc
 			if (RSREG != 0 && SIMMVAL != 0)
 			{
 				_mov_r32_m32abs(REG_EAX, &mips3.r[RSREG]);							// mov	eax,[rsreg]
@@ -1926,7 +1956,7 @@ static UINT32 recompile_instruction(struct drccore *drc, UINT32 pc)
 			}
 			else if (RSREG != 0)
 				_push_m32abs(&mips3.r[RSREG]);										// push	[rsreg]
-			else if (SIMMVAL != 0)
+			else
 				_push_imm(SIMMVAL);													// push	SIMMVAL
 			_call(mips3.memory.readbyte);											// call	readbyte
 			_add_r32_imm(REG_ESP, 4);												// add  esp,4
@@ -1941,6 +1971,7 @@ static UINT32 recompile_instruction(struct drccore *drc, UINT32 pc)
 
 		case 0x21:	/* LH */
 			_mov_m32abs_r32(&mips3_icount, REG_EBP);								// mov	[mips3_icount],ebp
+			_save_pc_before_call();													// save pc
 			if (RSREG != 0 && SIMMVAL != 0)
 			{
 				_mov_r32_m32abs(REG_EAX, &mips3.r[RSREG]);							// mov	eax,[rsreg]
@@ -1949,7 +1980,7 @@ static UINT32 recompile_instruction(struct drccore *drc, UINT32 pc)
 			}
 			else if (RSREG != 0)
 				_push_m32abs(&mips3.r[RSREG]);										// push	[rsreg]
-			else if (SIMMVAL != 0)
+			else
 				_push_imm(SIMMVAL);													// push	SIMMVAL
 			_call(mips3.memory.readword);											// call	readword
 			_add_r32_imm(REG_ESP, 4);												// add  esp,4
@@ -1972,6 +2003,7 @@ static UINT32 recompile_instruction(struct drccore *drc, UINT32 pc)
 					return recompile_lwlr_le(drc, RTREG, RSREG, SIMMVAL - 3);
 			}
 			_mov_m32abs_r32(&mips3_icount, REG_EBP);								// mov	[mips3_icount],ebp
+			_save_pc_before_call();													// save pc
 			_mov_r32_m32abs(REG_EAX, &mips3.r[RSREG]);								// mov	eax,[rsreg]
 			if (SIMMVAL)
 				_add_r32_imm(REG_EAX, SIMMVAL);										// add	eax,SIMMVAL
@@ -2000,6 +2032,7 @@ static UINT32 recompile_instruction(struct drccore *drc, UINT32 pc)
 
 		case 0x23:	/* LW */
 			_mov_m32abs_r32(&mips3_icount, REG_EBP);								// mov	[mips3_icount],ebp
+			_save_pc_before_call();													// save pc
 			if (RSREG != 0 && SIMMVAL != 0)
 			{
 				_mov_r32_m32abs(REG_EAX, &mips3.r[RSREG]);							// mov	eax,[rsreg]
@@ -2008,7 +2041,7 @@ static UINT32 recompile_instruction(struct drccore *drc, UINT32 pc)
 			}
 			else if (RSREG != 0)
 				_push_m32abs(&mips3.r[RSREG]);										// push	[rsreg]
-			else if (SIMMVAL != 0)
+			else
 				_push_imm(SIMMVAL);													// push	SIMMVAL
 			_call(mips3.memory.readlong);											// call	readlong
 			_add_r32_imm(REG_ESP, 4);												// add  esp,4
@@ -2022,6 +2055,7 @@ static UINT32 recompile_instruction(struct drccore *drc, UINT32 pc)
 
 		case 0x24:	/* LBU */
 			_mov_m32abs_r32(&mips3_icount, REG_EBP);								// mov	[mips3_icount],ebp
+			_save_pc_before_call();													// save pc
 			if (RSREG != 0 && SIMMVAL != 0)
 			{
 				_mov_r32_m32abs(REG_EAX, &mips3.r[RSREG]);							// mov	eax,[rsreg]
@@ -2030,7 +2064,7 @@ static UINT32 recompile_instruction(struct drccore *drc, UINT32 pc)
 			}
 			else if (RSREG != 0)
 				_push_m32abs(&mips3.r[RSREG]);										// push	[rsreg]
-			else if (SIMMVAL != 0)
+			else
 				_push_imm(SIMMVAL);													// push	SIMMVAL
 			_call(mips3.memory.readbyte);											// call	readbyte
 			_add_r32_imm(REG_ESP, 4);												// add  esp,4
@@ -2045,6 +2079,7 @@ static UINT32 recompile_instruction(struct drccore *drc, UINT32 pc)
 
 		case 0x25:	/* LHU */
 			_mov_m32abs_r32(&mips3_icount, REG_EBP);								// mov	[mips3_icount],ebp
+			_save_pc_before_call();													// save pc
 			if (RSREG != 0 && SIMMVAL != 0)
 			{
 				_mov_r32_m32abs(REG_EAX, &mips3.r[RSREG]);							// mov	eax,[rsreg]
@@ -2053,7 +2088,7 @@ static UINT32 recompile_instruction(struct drccore *drc, UINT32 pc)
 			}
 			else if (RSREG != 0)
 				_push_m32abs(&mips3.r[RSREG]);										// push	[rsreg]
-			else if (SIMMVAL != 0)
+			else
 				_push_imm(SIMMVAL);													// push	SIMMVAL
 			_call(mips3.memory.readword);											// call	readword
 			_add_r32_imm(REG_ESP, 4);												// add  esp,4
@@ -2076,6 +2111,7 @@ static UINT32 recompile_instruction(struct drccore *drc, UINT32 pc)
 					return recompile_lwlr_le(drc, RTREG, RSREG, SIMMVAL);
 			}
 			_mov_m32abs_r32(&mips3_icount, REG_EBP);								// mov	[mips3_icount],ebp
+			_save_pc_before_call();													// save pc
 			_mov_r32_m32abs(REG_EAX, &mips3.r[RSREG]);								// mov	eax,[rsreg]
 			if (SIMMVAL)
 				_add_r32_imm(REG_EAX, SIMMVAL);										// add	eax,SIMMVAL
@@ -2104,6 +2140,7 @@ static UINT32 recompile_instruction(struct drccore *drc, UINT32 pc)
 
 		case 0x27:	/* LWU */
 			_mov_m32abs_r32(&mips3_icount, REG_EBP);								// mov	[mips3_icount],ebp
+			_save_pc_before_call();													// save pc
 			if (RSREG != 0 && SIMMVAL != 0)
 			{
 				_mov_r32_m32abs(REG_EAX, &mips3.r[RSREG]);							// mov	eax,[rsreg]
@@ -2112,7 +2149,7 @@ static UINT32 recompile_instruction(struct drccore *drc, UINT32 pc)
 			}
 			else if (RSREG != 0)
 				_push_m32abs(&mips3.r[RSREG]);										// push	[rsreg]
-			else if (SIMMVAL != 0)
+			else
 				_push_imm(SIMMVAL);													// push	SIMMVAL
 			_call(mips3.memory.readlong);											// call	readlong
 			_add_r32_imm(REG_ESP, 4);												// add  esp,4
@@ -2126,6 +2163,7 @@ static UINT32 recompile_instruction(struct drccore *drc, UINT32 pc)
 
 		case 0x28:	/* SB */
 			_mov_m32abs_r32(&mips3_icount, REG_EBP);								// mov	[mips3_icount],ebp
+			_save_pc_before_call();													// save pc
 			if (RTREG != 0)
 				_push_m32abs(&mips3.r[RTREG]);										// push	dword [rtreg]
 			else
@@ -2138,7 +2176,7 @@ static UINT32 recompile_instruction(struct drccore *drc, UINT32 pc)
 			}
 			else if (RSREG != 0)
 				_push_m32abs(&mips3.r[RSREG]);										// push	[rsreg]
-			else if (SIMMVAL != 0)
+			else
 				_push_imm(SIMMVAL);													// push	SIMMVAL
 			_call(mips3.memory.writebyte);											// call	writebyte
 			_add_r32_imm(REG_ESP, 8);												// add  esp,8
@@ -2147,6 +2185,7 @@ static UINT32 recompile_instruction(struct drccore *drc, UINT32 pc)
 
 		case 0x29:	/* SH */
 			_mov_m32abs_r32(&mips3_icount, REG_EBP);								// mov	[mips3_icount],ebp
+			_save_pc_before_call();													// save pc
 			if (RTREG != 0)
 				_push_m32abs(&mips3.r[RTREG]);										// push	dword [rtreg]
 			else
@@ -2159,7 +2198,7 @@ static UINT32 recompile_instruction(struct drccore *drc, UINT32 pc)
 			}
 			else if (RSREG != 0)
 				_push_m32abs(&mips3.r[RSREG]);										// push	[rsreg]
-			else if (SIMMVAL != 0)
+			else
 				_push_imm(SIMMVAL);													// push	SIMMVAL
 			_call(mips3.memory.writeword);											// call	writeword
 			_add_r32_imm(REG_ESP, 8);												// add  esp,8
@@ -2175,6 +2214,7 @@ if ((nextop >> 26) == 0x2e &&
 	_add_m32abs_imm(&swlr_hits, 1);
 }*/
 			_mov_m32abs_r32(&mips3_icount, REG_EBP);								// mov	[mips3_icount],ebp
+			_save_pc_before_call();													// save pc
 			_mov_r32_m32abs(REG_EAX, &mips3.r[RSREG]);								// mov	eax,[rsreg]
 			if (SIMMVAL)
 				_add_r32_imm(REG_EAX, SIMMVAL);										// add	eax,SIMMVAL
@@ -2237,6 +2277,7 @@ if ((nextop >> 26) == 0x2e &&
 */
 
 			_mov_m32abs_r32(&mips3_icount, REG_EBP);								// mov	[mips3_icount],ebp
+			_save_pc_before_call();													// save pc
 			if (RTREG != 0)
 				_push_m32abs(&mips3.r[RTREG]);										// push	dword [rtreg]
 			else
@@ -2249,7 +2290,7 @@ if ((nextop >> 26) == 0x2e &&
 			}
 			else if (RSREG != 0)
 				_push_m32abs(&mips3.r[RSREG]);										// push	[rsreg]
-			else if (SIMMVAL != 0)
+			else
 				_push_imm(SIMMVAL);													// push	SIMMVAL
 			_call(mips3.memory.writelong);											// call	writelong
 			_add_r32_imm(REG_ESP, 8);												// add  esp,8
@@ -2265,6 +2306,7 @@ if ((nextop >> 26) == 0x2d &&
 	_add_m32abs_imm(&sdlr_hits, 1);
 }*/
 			_mov_m32abs_r32(&mips3_icount, REG_EBP);								// mov	[mips3_icount],ebp
+			_save_pc_before_call();													// save pc
 			_mov_r32_m32abs(REG_EAX, &mips3.r[RSREG]);								// mov	eax,[rsreg]
 			if (SIMMVAL)
 				_add_r32_imm(REG_EAX, SIMMVAL);										// add	eax,SIMMVAL
@@ -2334,6 +2376,7 @@ if ((nextop >> 26) == 0x2c &&
 	_add_m32abs_imm(&sdlr_hits, 1);
 }*/
 			_mov_m32abs_r32(&mips3_icount, REG_EBP);								// mov	[mips3_icount],ebp
+			_save_pc_before_call();													// save pc
 			_mov_r32_m32abs(REG_EAX, &mips3.r[RSREG]);								// mov	eax,[rsreg]
 			if (SIMMVAL)
 				_add_r32_imm(REG_EAX, SIMMVAL);										// add	eax,SIMMVAL
@@ -2403,6 +2446,7 @@ if ((nextop >> 26) == 0x2a &&
 	_add_m32abs_imm(&swlr_hits, 1);
 }*/
 			_mov_m32abs_r32(&mips3_icount, REG_EBP);								// mov	[mips3_icount],ebp
+			_save_pc_before_call();													// save pc
 			_mov_r32_m32abs(REG_EAX, &mips3.r[RSREG]);								// mov	eax,[rsreg]
 			if (SIMMVAL)
 				_add_r32_imm(REG_EAX, SIMMVAL);										// add	eax,SIMMVAL
@@ -2444,6 +2488,7 @@ if ((nextop >> 26) == 0x2a &&
 
 		case 0x31:	/* LWC1 */
 			_mov_m32abs_r32(&mips3_icount, REG_EBP);								// mov	[mips3_icount],ebp
+			_save_pc_before_call();													// save pc
 			if (RSREG != 0 && SIMMVAL != 0)
 			{
 				_mov_r32_m32abs(REG_EAX, &mips3.r[RSREG]);							// mov	eax,[rsreg]
@@ -2452,7 +2497,7 @@ if ((nextop >> 26) == 0x2a &&
 			}
 			else if (RSREG != 0)
 				_push_m32abs(&mips3.r[RSREG]);										// push	[rsreg]
-			else if (SIMMVAL != 0)
+			else
 				_push_imm(SIMMVAL);													// push	SIMMVAL
 			_call(mips3.memory.readlong);											// call	readlong
 			_add_r32_imm(REG_ESP, 4);												// add  esp,4
@@ -2462,6 +2507,7 @@ if ((nextop >> 26) == 0x2a &&
 
 		case 0x32:	/* LWC2 */
 			_mov_m32abs_r32(&mips3_icount, REG_EBP);								// mov	[mips3_icount],ebp
+			_save_pc_before_call();													// save pc
 			if (RSREG != 0 && SIMMVAL != 0)
 			{
 				_mov_r32_m32abs(REG_EAX, &mips3.r[RSREG]);							// mov	eax,[rsreg]
@@ -2470,7 +2516,7 @@ if ((nextop >> 26) == 0x2a &&
 			}
 			else if (RSREG != 0)
 				_push_m32abs(&mips3.r[RSREG]);										// push	[rsreg]
-			else if (SIMMVAL != 0)
+			else
 				_push_imm(SIMMVAL);													// push	SIMMVAL
 			_call(mips3.memory.readlong);											// call	readlong
 			_add_r32_imm(REG_ESP, 4);												// add  esp,4
@@ -2491,6 +2537,7 @@ if ((nextop >> 26) == 0x2a &&
 
 		case 0x35:	/* LDC1 */
 			_mov_m32abs_r32(&mips3_icount, REG_EBP);								// mov	[mips3_icount],ebp
+			_save_pc_before_call();													// save pc
 			if (RSREG != 0 && SIMMVAL != 0)
 			{
 				_mov_r32_m32abs(REG_EAX, &mips3.r[RSREG]);							// mov	eax,[rsreg]
@@ -2499,30 +2546,22 @@ if ((nextop >> 26) == 0x2a &&
 			}
 			else if (RSREG != 0)
 				_push_m32abs(&mips3.r[RSREG]);										// push	[rsreg]
-			else if (SIMMVAL != 0)
+			else
 				_push_imm(SIMMVAL);													// push	SIMMVAL
 			_call((void *)mips3.memory.readlong);									// call	readlong
 			_mov_m32abs_r32(mips3.bigendian ? HI(&mips3.cpr[1][RTREG]) : LO(&mips3.cpr[1][RTREG]), REG_EAX);// mov	[rtreg].hi/lo,eax
 
-			if (RSREG != 0 && (SIMMVAL+4) != 0)
-			{
-				_mov_r32_m32abs(REG_EAX, &mips3.r[RSREG]);							// mov	eax,[rsreg]
-				_add_r32_imm(REG_EAX, SIMMVAL+4);									// add	eax,SIMMVAL+4
-				_push_r32(REG_EAX);													// push	eax
-			}
-			else if (RSREG != 0)
-				_push_m32abs(&mips3.r[RSREG]);										// push	[rsreg]
-			else if ((SIMMVAL+4) != 0)
-				_push_imm(SIMMVAL+4);												// push	SIMMVAL+4
+			_add_m32bd_imm(REG_ESP, 0, 4);											// add	[esp],4
 			_call((void *)mips3.memory.readlong);									// call	readlong
 			_mov_m32abs_r32(mips3.bigendian ? LO(&mips3.cpr[1][RTREG]) : HI(&mips3.cpr[1][RTREG]), REG_EAX);// mov	[rtreg].lo/hi,eax
 
-			_add_r32_imm(REG_ESP, 8);												// add	esp,8
+			_add_r32_imm(REG_ESP, 4);												// add	esp,4
 			_mov_r32_m32abs(REG_EBP, &mips3_icount);								// mov	ebp,[mips3_icount]
 			return RECOMPILE_SUCCESSFUL_CP(1,4);
 
 		case 0x36:	/* LDC2 */
 			_mov_m32abs_r32(&mips3_icount, REG_EBP);								// mov	[mips3_icount],ebp
+			_save_pc_before_call();													// save pc
 			if (RSREG != 0 && SIMMVAL != 0)
 			{
 				_mov_r32_m32abs(REG_EAX, &mips3.r[RSREG]);							// mov	eax,[rsreg]
@@ -2531,30 +2570,22 @@ if ((nextop >> 26) == 0x2a &&
 			}
 			else if (RSREG != 0)
 				_push_m32abs(&mips3.r[RSREG]);										// push	[rsreg]
-			else if (SIMMVAL != 0)
+			else
 				_push_imm(SIMMVAL);													// push	SIMMVAL
 			_call((void *)mips3.memory.readlong);									// call	readlong
 			_mov_m32abs_r32(mips3.bigendian ? HI(&mips3.cpr[2][RTREG]) : LO(&mips3.cpr[2][RTREG]), REG_EAX);// mov	[rtreg].hi/lo,eax
 
-			if (RSREG != 0 && (SIMMVAL+4) != 0)
-			{
-				_mov_r32_m32abs(REG_EAX, &mips3.r[RSREG]);							// mov	eax,[rsreg]
-				_add_r32_imm(REG_EAX, SIMMVAL+4);									// add	eax,SIMMVAL+4
-				_push_r32(REG_EAX);													// push	eax
-			}
-			else if (RSREG != 0)
-				_push_m32abs(&mips3.r[RSREG]);										// push	[rsreg]
-			else if ((SIMMVAL+4) != 0)
-				_push_imm(SIMMVAL+4);												// push	SIMMVAL+4
+			_add_m32bd_imm(REG_ESP, 0, 4);											// add	[esp],4
 			_call((void *)mips3.memory.readlong);									// call	readlong
 			_mov_m32abs_r32(mips3.bigendian ? LO(&mips3.cpr[2][RTREG]) : HI(&mips3.cpr[2][RTREG]), REG_EAX);// mov	[rtreg].lo/hi,eax
 
-			_add_r32_imm(REG_ESP, 8);												// add	esp,8
+			_add_r32_imm(REG_ESP, 4);												// add	esp,4
 			_mov_r32_m32abs(REG_EBP, &mips3_icount);								// mov	ebp,[mips3_icount]
 			return RECOMPILE_SUCCESSFUL_CP(1,4);
 
 		case 0x37:	/* LD */
 			_mov_m32abs_r32(&mips3_icount, REG_EBP);								// mov	[mips3_icount],ebp
+			_save_pc_before_call();													// save pc
 			if (RSREG != 0 && SIMMVAL != 0)
 			{
 				_mov_r32_m32abs(REG_EAX, &mips3.r[RSREG]);							// mov	eax,[rsreg]
@@ -2563,27 +2594,18 @@ if ((nextop >> 26) == 0x2a &&
 			}
 			else if (RSREG != 0)
 				_push_m32abs(&mips3.r[RSREG]);										// push	[rsreg]
-			else if (SIMMVAL != 0)
+			else
 				_push_imm(SIMMVAL);													// push	SIMMVAL
 			_call((void *)mips3.memory.readlong);									// call	readlong
 			if (RTREG != 0)
 				_mov_m32abs_r32(mips3.bigendian ? HI(&mips3.r[RTREG]) : LO(&mips3.r[RTREG]), REG_EAX);	// mov	[rtreg].hi/lo,eax
 
-			if (RSREG != 0 && (SIMMVAL+4) != 0)
-			{
-				_mov_r32_m32abs(REG_EAX, &mips3.r[RSREG]);							// mov	eax,[rsreg]
-				_add_r32_imm(REG_EAX, SIMMVAL+4);									// add	eax,SIMMVAL+4
-				_push_r32(REG_EAX);													// push	eax
-			}
-			else if (RSREG != 0)
-				_push_m32abs(&mips3.r[RSREG]);										// push	[rsreg]
-			else if ((SIMMVAL+4) != 0)
-				_push_imm(SIMMVAL+4);												// push	SIMMVAL+4
+			_add_m32bd_imm(REG_ESP, 0, 4);											// add	[esp],4
 			_call((void *)mips3.memory.readlong);									// call	readlong
 			if (RTREG != 0)
 				_mov_m32abs_r32(mips3.bigendian ? LO(&mips3.r[RTREG]) : HI(&mips3.r[RTREG]), REG_EAX);	// mov	[rtreg].lo/hi,eax
 
-			_add_r32_imm(REG_ESP, 8);												// add	esp,8
+			_add_r32_imm(REG_ESP, 4);												// add	esp,4
 			_mov_r32_m32abs(REG_EBP, &mips3_icount);								// mov	ebp,[mips3_icount]
 			return RECOMPILE_SUCCESSFUL_CP(1,4);
 
@@ -2591,6 +2613,7 @@ if ((nextop >> 26) == 0x2a &&
 
 		case 0x39:	/* SWC1 */
 			_mov_m32abs_r32(&mips3_icount, REG_EBP);								// mov	[mips3_icount],ebp
+			_save_pc_before_call();													// save pc
 			_push_m32abs(&mips3.cpr[1][RTREG]);										// push	dword [rtreg]
 			if (RSREG != 0 && SIMMVAL != 0)
 			{
@@ -2600,7 +2623,7 @@ if ((nextop >> 26) == 0x2a &&
 			}
 			else if (RSREG != 0)
 				_push_m32abs(&mips3.r[RSREG]);										// push	[rsreg]
-			else if (SIMMVAL != 0)
+			else
 				_push_imm(SIMMVAL);													// push	SIMMVAL
 			_call(mips3.memory.writelong);											// call	writelong
 			_add_r32_imm(REG_ESP, 8);												// add	esp,8
@@ -2609,6 +2632,7 @@ if ((nextop >> 26) == 0x2a &&
 
 		case 0x3a:	/* SWC2 */
 			_mov_m32abs_r32(&mips3_icount, REG_EBP);								// mov	[mips3_icount],ebp
+			_save_pc_before_call();													// save pc
 			_push_m32abs(&mips3.cpr[2][RTREG]);										// push	dword [rtreg]
 			if (RSREG != 0 && SIMMVAL != 0)
 			{
@@ -2618,7 +2642,7 @@ if ((nextop >> 26) == 0x2a &&
 			}
 			else if (RSREG != 0)
 				_push_m32abs(&mips3.r[RSREG]);										// push	[rsreg]
-			else if (SIMMVAL != 0)
+			else
 				_push_imm(SIMMVAL);													// push	SIMMVAL
 			_call(mips3.memory.writelong);											// call	writelong
 			_add_r32_imm(REG_ESP, 8);												// add	esp,8
@@ -2630,6 +2654,7 @@ if ((nextop >> 26) == 0x2a &&
 
 		case 0x3d:	/* SDC1 */
 			_mov_m32abs_r32(&mips3_icount, REG_EBP);								// mov	[mips3_icount],ebp
+			_save_pc_before_call();													// save pc
 			_push_m32abs(mips3.bigendian ? HI(&mips3.cpr[1][RTREG]) : LO(&mips3.cpr[1][RTREG]));// push	dword [rtreg].lo/hi
 			if (RSREG != 0 && SIMMVAL != 0)
 			{
@@ -2639,7 +2664,7 @@ if ((nextop >> 26) == 0x2a &&
 			}
 			else if (RSREG != 0)
 				_push_m32abs(&mips3.r[RSREG]);										// push	[rsreg]
-			else if (SIMMVAL != 0)
+			else
 				_push_imm(SIMMVAL);													// push	SIMMVAL
 			_call((void *)mips3.memory.writelong);									// call	writelong
 			
@@ -2662,6 +2687,7 @@ if ((nextop >> 26) == 0x2a &&
 
 		case 0x3e:	/* SDC2 */
 			_mov_m32abs_r32(&mips3_icount, REG_EBP);								// mov	[mips3_icount],ebp
+			_save_pc_before_call();													// save pc
 			_push_m32abs(mips3.bigendian ? HI(&mips3.cpr[2][RTREG]) : LO(&mips3.cpr[2][RTREG]));// push	dword [rtreg].lo/hi
 			if (RSREG != 0 && SIMMVAL != 0)
 			{
@@ -2671,7 +2697,7 @@ if ((nextop >> 26) == 0x2a &&
 			}
 			else if (RSREG != 0)
 				_push_m32abs(&mips3.r[RSREG]);										// push	[rsreg]
-			else if (SIMMVAL != 0)
+			else
 				_push_imm(SIMMVAL);													// push	SIMMVAL
 			_call((void *)mips3.memory.writelong);									// call	writelong
 			
@@ -2694,6 +2720,7 @@ if ((nextop >> 26) == 0x2a &&
 
 		case 0x3f:	/* SD */
 			_mov_m32abs_r32(&mips3_icount, REG_EBP);								// mov	[mips3_icount],ebp
+			_save_pc_before_call();													// save pc
 			if (RTREG != 0)
 				_push_m32abs(mips3.bigendian ? HI(&mips3.r[RTREG]) : LO(&mips3.r[RTREG]));// push	dword [rtreg].lo/hi
 			else
@@ -2706,7 +2733,7 @@ if ((nextop >> 26) == 0x2a &&
 			}
 			else if (RSREG != 0)
 				_push_m32abs(&mips3.r[RSREG]);										// push	[rsreg]
-			else if (SIMMVAL != 0)
+			else
 				_push_imm(SIMMVAL);													// push	SIMMVAL
 			_call((void *)mips3.memory.writelong);									// call	writelong
 			
@@ -4073,7 +4100,8 @@ static UINT32 recompile_set_cop0_reg(struct drccore *drc, UINT8 reg)
 			_and_r32_imm(REG_EBX, 0xfc00);											// and	ebx,0xfc00
 			_or_r32_r32(REG_EAX, REG_EBX);											// or	eax,ebx
 			_mov_m32abs_r32(&mips3.cpr[0][COP0_Cause], REG_EAX);					// mov	[mips3.cpr[0][COP0_Cause]],eax
-			return RECOMPILE_SUCCESSFUL_CP(1,4) | RECOMPILE_CHECK_INTERRUPTS;
+			_and_r32_m32abs(REG_EAX, &mips3.cpr[0][COP0_Status]);					// and	eax,[mips3.cpr[0][COP0_Status]]
+			return RECOMPILE_SUCCESSFUL_CP(1,4) | RECOMPILE_CHECK_SW_INTERRUPTS;
 		
 		case COP0_Status:
 			_mov_r32_m32abs(REG_EBX, &mips3.cpr[0][COP0_Status]);					// mov	ebx,[mips3.cpr[0][COP0_Status]]
@@ -5121,6 +5149,7 @@ static UINT32 recompile_cop1x(struct drccore *drc, UINT32 pc, UINT32 op)
 	{
 		case 0x00:		/* LWXC1 */
 			_mov_m32abs_r32(&mips3_icount, REG_EBP);								// mov	[mips3_icount],ebp
+			_save_pc_before_call();													// save pc
 			_mov_r32_m32abs(REG_EAX, &mips3.r[RSREG]);								// mov	eax,[rsreg]
 			_add_r32_m32abs(REG_EAX, &mips3.r[RTREG]);								// add	eax,[rtreg]
 			_push_r32(REG_EAX);														// push	eax
@@ -5132,6 +5161,7 @@ static UINT32 recompile_cop1x(struct drccore *drc, UINT32 pc, UINT32 op)
 
 		case 0x01:		/* LDXC1 */
 			_mov_m32abs_r32(&mips3_icount, REG_EBP);								// mov	[mips3_icount],ebp
+			_save_pc_before_call();													// save pc
 			_mov_r32_m32abs(REG_EAX, &mips3.r[RSREG]);								// mov	eax,[rsreg]
 			_add_r32_m32abs(REG_EAX, &mips3.r[RTREG]);								// add	eax,[rtreg]
 			_push_r32(REG_EAX);														// push	eax
@@ -5148,6 +5178,7 @@ static UINT32 recompile_cop1x(struct drccore *drc, UINT32 pc, UINT32 op)
 		
 		case 0x08:		/* SWXC1 */
 			_mov_m32abs_r32(&mips3_icount, REG_EBP);								// mov	[mips3_icount],ebp
+			_save_pc_before_call();													// save pc
 			_push_m32abs(&mips3.cpr[1][FSREG]);										// push	[fsreg]
 			_mov_r32_m32abs(REG_EAX, &mips3.r[RSREG]);								// mov	eax,[rsreg]
 			_add_r32_m32abs(REG_EAX, &mips3.r[RTREG]);								// add	eax,[rtreg]
@@ -5159,6 +5190,7 @@ static UINT32 recompile_cop1x(struct drccore *drc, UINT32 pc, UINT32 op)
 		
 		case 0x09:		/* SDXC1 */
 			_mov_m32abs_r32(&mips3_icount, REG_EBP);								// mov	[mips3_icount],ebp
+			_save_pc_before_call();													// save pc
 			_push_m32abs(mips3.bigendian ? HI(&mips3.cpr[1][FSREG]) : LO(&mips3.cpr[1][FSREG]));// push	[fsreg].hi/lo
 			_mov_r32_m32abs(REG_EAX, &mips3.r[RSREG]);								// mov	eax,[rsreg]
 			_add_r32_m32abs(REG_EAX, &mips3.r[RTREG]);								// add	eax,[rtreg]

@@ -346,6 +346,10 @@ cycles_t osd_profiling_ticks(void);
 
 ******************************************************************************/
 
+/* called to allocate/free memory that can contain executable code */
+void *osd_alloc_executable(size_t size);
+void osd_free_executable(void *ptr);
+
 /* called while loading ROMs. It is called a last time with name == 0 to signal */
 /* that the ROM loading process is finished. */
 /* return non-zero to abort loading */
@@ -360,7 +364,10 @@ void osd_pause(int paused);
 /* aborts the program in some unexpected fatal way */
 #ifdef __GNUC__
 void CLIB_DECL osd_die(const char *text,...)
-      __attribute__ ((format (printf, 1, 2)));
+#if (__GNUC__ > 2) || (__GNUC__ == 2 && __GNUC_MINOR__ >= 5)
+	__attribute__((noreturn))
+#endif
+	__attribute__ ((format (printf, 1, 2)));
 #else
 void CLIB_DECL osd_die(const char *text,...);
 #endif

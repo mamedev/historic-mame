@@ -56,7 +56,11 @@ struct pic_state
 	UINT8	buffer[0x10];
 	UINT8	nvram[PIC_NVRAM_SIZE];
 	UINT8 	default_nvram[PIC_NVRAM_SIZE];
+	UINT8	time_buf[8];
+	UINT8	time_index;
+	UINT8	time_just_written;
 	UINT16	yearoffs;
+	mame_timer *time_write_timer;
 };
 
 struct ioasic_state
@@ -231,9 +235,23 @@ INLINE UINT8 make_bcd(UINT8 data)
 }
 
 
+INLINE UINT8 unmake_bcd(UINT8 data)
+{
+	return ((data & 0xf0) >> 4) * 10 + (data & 0x0f);
+}
+
+
+static void reset_timer(int param)
+{
+	pic.time_just_written = 0;
+}
+
+
 void midway_serial_pic2_init(int upper, int yearoffs)
 {
 	pic.yearoffs = yearoffs;
+	pic.time_just_written = 0;
+	pic.time_write_timer = timer_alloc(reset_timer);
 	memset(pic.default_nvram, 0xff, sizeof(pic.default_nvram));
 	generate_serial_data(upper);
 }
@@ -328,24 +346,74 @@ void midway_serial_pic2_w(UINT8 data)
 			/* read the clock */
 			case 3:
 			{
-				/* get the time */
-				struct tm *exptime;
-				time_t curtime;
-				time(&curtime);
-				exptime = localtime(&curtime);
-
 				/* stuff it into the data bytes */
 				pic.index = 0;
 				pic.total = 0;
-				pic.buffer[pic.total++] = make_bcd(exptime->tm_sec);
-				pic.buffer[pic.total++] = make_bcd(exptime->tm_min);
-				pic.buffer[pic.total++] = make_bcd(exptime->tm_hour);
-				pic.buffer[pic.total++] = make_bcd(exptime->tm_wday + 1);
-				pic.buffer[pic.total++] = make_bcd(exptime->tm_mday);
-				pic.buffer[pic.total++] = make_bcd(exptime->tm_mon + 1);
-				pic.buffer[pic.total++] = make_bcd(exptime->tm_year - pic.yearoffs);
+				
+				/* if we haven't written a new time recently, use the real live time */
+				if (!pic.time_just_written)
+				{
+					struct tm *exptime;
+					time_t curtime;
+					time(&curtime);
+					exptime = localtime(&curtime);
+
+					pic.buffer[pic.total++] = make_bcd(exptime->tm_sec);
+					pic.buffer[pic.total++] = make_bcd(exptime->tm_min);
+					pic.buffer[pic.total++] = make_bcd(exptime->tm_hour);
+					pic.buffer[pic.total++] = make_bcd(exptime->tm_wday + 1);
+					pic.buffer[pic.total++] = make_bcd(exptime->tm_mday);
+					pic.buffer[pic.total++] = make_bcd(exptime->tm_mon + 1);
+					pic.buffer[pic.total++] = make_bcd(exptime->tm_year - pic.yearoffs);
+				}
+				
+				/* otherwise, just parrot back what was written to pass self tests */
+				else
+				{
+					pic.buffer[pic.total++] = pic.time_buf[0];
+					pic.buffer[pic.total++] = pic.time_buf[1];
+					pic.buffer[pic.total++] = pic.time_buf[2];
+					pic.buffer[pic.total++] = pic.time_buf[3];
+					pic.buffer[pic.total++] = pic.time_buf[4];
+					pic.buffer[pic.total++] = pic.time_buf[5];
+					pic.buffer[pic.total++] = pic.time_buf[6];
+				}
 				break;
 			}
+			
+			/* write the clock */
+			case 4:
+				
+				/* if coming from state 0, go to state 1 (this is just the command byte) */
+				if (pic.state == 0)
+				{
+					pic.state = 0x14;
+					pic.time_index = 0;
+				}
+				
+				/* if in states 1-2 put data in the buffer until it's full */
+				else if (pic.state == 0x14)
+				{
+					pic.time_buf[pic.time_index] = pic.latch & 0x0f;
+					pic.state = 0x24;
+				}
+				else if (pic.state == 0x24)
+				{
+					pic.time_buf[pic.time_index++] |= pic.latch << 4;
+					
+					/* if less than 7 bytes accumulated, go back to state 1 */
+					if (pic.time_index < 7)
+						pic.state = 0x14;
+					
+					/* otherwise, flag the time as having just been written for 1/2 second */
+					else
+					{
+						timer_adjust(pic.time_write_timer, TIME_IN_SEC(0.5), 0, TIME_NEVER);
+						pic.time_just_written = 1;
+						pic.state = 0;
+					}
+				}
+				break;
 
 			/* write to NVRAM */
 			case 5:
@@ -443,9 +511,9 @@ enum
 	IOASIC_PORT1,		/* 1: input port 1 */
 	IOASIC_PORT2,		/* 2: input port 2 */
 	IOASIC_PORT3,		/* 3: input port 3 */
-	IOASIC_UNKNOWN4,	/* 4: ??? */
-	IOASIC_DEBUGOUT,	/* 5: debugger output (UART likely) */
-	IOASIC_UNKNOWN6,	/* 6: ??? */
+	IOASIC_UARTCONTROL,	/* 4: controls some UART behavior */
+	IOASIC_UARTOUT,		/* 5: UART output */
+	IOASIC_UARTIN,		/* 6: UART input */
 	IOASIC_UNKNOWN7,	/* 7: ??? */
 	IOASIC_SOUNDCTL,	/* 8: sound communications control */
 	IOASIC_SOUNDOUT,	/* 9: sound output port */
@@ -476,7 +544,7 @@ void midway_ioasic_init(int shuffle, int upper, int yearoffs, void (*irq_callbac
 		{ 0x8,0x9,0xa,0xb,0x0,0x1,0x2,0x3,0xf,0xe,0xc,0xd,0x4,0x5,0x6,0x7 },	/* Calspeed, Gauntlet Legends */
 		{ 0xf,0xe,0xd,0xc,0x4,0x5,0x6,0x7,0x9,0x8,0xa,0xb,0x2,0x3,0x1,0x0 },	/* Mace */
 		{ 0xc,0xd,0xe,0xf,0x0,0x1,0x2,0x3,0x7,0x8,0x9,0xb,0xa,0x5,0x6,0x4 },	/* Gauntlet Dark Legacy */
-		{ 0x0,0x1,0x2,0x3,0x4,0x5,0x6,0x7,0x8,0x9,0xa,0xb,0xc,0xd,0xe,0xf },	/* Invasion */
+		{ 0x7,0x4,0x5,0x6,0x2,0x0,0x1,0x3,0x8,0x9,0xa,0xb,0xd,0xc,0xe,0xf },	/* Vapor TRX */
 	};
 
 	/* do we have a DCS2 sound chip connected? (most likely) */
@@ -522,6 +590,7 @@ void midway_ioasic_reset(void)
 	if (ioasic.has_dcs)
 		ioasic_fifo_reset_w(1);
 	update_ioasic_irq();
+	midway_serial_pic_reset_w(1);
 }
 
 
@@ -532,6 +601,8 @@ static void update_ioasic_irq(void)
 	UINT8 new_state;
 	
 	irqbits |= ioasic.sound_irq_state;
+	if (ioasic.reg[IOASIC_UARTIN] & 0x1000)
+		irqbits |= 0x1000;
 	if (fifo_state & 8)
 		irqbits |= 0x0008;
 	if (irqbits)
@@ -563,7 +634,7 @@ static void cage_irq_handler(int reason)
 
 static void ioasic_input_empty(int state)
 {
-	logerror("ioasic_input_empty(%d)\n", state);
+//	logerror("ioasic_input_empty(%d)\n", state);
 	if (state)
 		ioasic.sound_irq_state |= 0x0080;
 	else
@@ -574,7 +645,7 @@ static void ioasic_input_empty(int state)
 
 static void ioasic_output_full(int state)
 {
-	logerror("ioasic_output_full(%d)\n", state);
+//	logerror("ioasic_output_full(%d)\n", state);
 	if (state)
 		ioasic.sound_irq_state |= 0x0040;
 	else
@@ -686,6 +757,7 @@ void midway_ioasic_fifo_w(data16_t data)
 		if (LOG_FIFO)
 			logerror("fifo_w(%04X): out of space!\n", data);
 	}
+	dcs_fifo_notify(ioasic.fifo_bytes, FIFO_SIZE);
 }
 
 
@@ -740,6 +812,10 @@ READ32_HANDLER( midway_ioasic_r )
 			result = readinputport(3);
 			break;
 		
+		case IOASIC_UARTIN:
+			ioasic.reg[offset] &= ~0x1000;
+			break;
+		
 		case IOASIC_SOUNDSTAT:
 			/* status from sound CPU */
 			result = 0;
@@ -782,7 +858,7 @@ READ32_HANDLER( midway_ioasic_r )
 			break;
 	}
 
-	if (LOG_IOASIC)
+	if (LOG_IOASIC && offset != IOASIC_SOUNDSTAT && offset != IOASIC_SOUNDIN)
 		logerror("%06X:ioasic_r(%d) = %08X\n", activecpu_get_pc(), offset, result);
 
 	return result;
@@ -807,7 +883,7 @@ WRITE32_HANDLER( midway_ioasic_w )
 	COMBINE_DATA(&ioasic.reg[offset]);
 	newreg = ioasic.reg[offset];
 
-	if (LOG_IOASIC)
+	if (LOG_IOASIC && offset != IOASIC_SOUNDOUT)
 		logerror("%06X:ioasic_w(%d) = %08X\n", activecpu_get_pc(), offset, data);
 
 	switch (offset)
@@ -819,7 +895,7 @@ WRITE32_HANDLER( midway_ioasic_w )
 				ioasic.shuffle_active = 1;
 				logerror("*** I/O ASIC shuffling enabled!\n");
 				ioasic.reg[IOASIC_INTCTL] = 0;
-				ioasic.reg[IOASIC_UNKNOWN4] = 0;	/* bug in 10th Degree assumes this */
+				ioasic.reg[IOASIC_UARTCONTROL] = 0;	/* bug in 10th Degree assumes this */
 			}
 			break;
 			
@@ -829,9 +905,15 @@ WRITE32_HANDLER( midway_ioasic_w )
 			if (!ioasic.shuffle_active)
 				break;
 			break;
-	
-		case IOASIC_DEBUGOUT:
-			if (PRINTF_DEBUG)
+		
+		case IOASIC_UARTOUT:
+			if (ioasic.reg[IOASIC_UARTCONTROL] & 0x800)
+			{
+				/* we're in loopback mode -- copy to the input */
+				ioasic.reg[IOASIC_UARTIN] = (newreg & 0x00ff) | 0x1000;
+				update_ioasic_irq();
+			}
+			else if (PRINTF_DEBUG)
 				printf("%c", data & 0xff);
 			break;
 			
@@ -840,7 +922,6 @@ WRITE32_HANDLER( midway_ioasic_w )
 			if (ioasic.has_dcs)
 			{
 				dcs_reset_w(~newreg & 1);
-				
 			}
 			else if (ioasic.has_cage)
 			{
@@ -869,7 +950,10 @@ WRITE32_HANDLER( midway_ioasic_w )
 			break;
 
 		case IOASIC_PICOUT:
-			midway_serial_pic2_w(newreg);
+			if (ioasic.shuffle_type != MIDWAY_IOASIC_VAPORTRX)
+				midway_serial_pic2_w(newreg);
+			else
+				midway_serial_pic2_w(newreg ^ 0x0a);
 			break;
 		
 		case IOASIC_INTCTL:

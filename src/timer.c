@@ -62,6 +62,8 @@ struct _mame_timer
 	void (*callback)(int);
 	int callback_param;
 	int tag;
+	const char *file;
+	int line;
 	UINT8 enabled;
 	UINT8 temporary;
 	mame_time period;
@@ -333,7 +335,7 @@ void mame_timer_set_global_time(mame_time newbase)
 		/* call the callback */
 		if (was_enabled && timer->callback)
 		{
-			LOG(("Timer %08X fired (expire=%.9f)\n", (UINT32)timer, mame_time_to_double(timer->expire)));
+			LOG(("Timer %s:%d fired (expire=%.9f)\n", timer->file, timer->line, mame_time_to_double(timer->expire)));
 			profiler_mark(PROFILER_TIMER_CALLBACK);
 			(*timer->callback)(timer->callback_param);
 			profiler_mark(PROFILER_END);
@@ -369,7 +371,7 @@ void mame_timer_set_global_time(mame_time newbase)
 	isn't primed yet
 -------------------------------------------------*/
 
-mame_timer *mame_timer_alloc(void (*callback)(int))
+mame_timer *_mame_timer_alloc(void (*callback)(int), const char *file, int line)
 {
 	mame_time time = get_current_time();
 	mame_timer *timer = timer_new();
@@ -385,6 +387,8 @@ mame_timer *mame_timer_alloc(void (*callback)(int))
 	timer->temporary = 0;
 	timer->tag = get_resource_tag();
 	timer->period = time_zero;
+	timer->file = file;
+	timer->line = line;
 
 	/* compute the time of the next firing and insert into the list */
 	timer->start = time;
@@ -407,6 +411,14 @@ void mame_timer_adjust(mame_timer *which, mame_time duration, int param, mame_ti
 {
 	mame_time time = get_current_time();
 
+	/* error if this is an inactive timer */
+	if (which->tag == -1)
+	{
+		printf("mame_timer_adjust: adjusting an inactive timer!\n");
+		logerror("mame_timer_adjust: adjusting an inactive timer!\n");
+		return;
+	}
+
 	/* if this is the callback timer, mark it modified */
 	if (which == callback_timer)
 		callback_timer_modified = 1;
@@ -425,7 +437,7 @@ void mame_timer_adjust(mame_timer *which, mame_time duration, int param, mame_ti
 	timer_list_insert(which);
 
 	/* if this was inserted as the head, abort the current timeslice and resync */
-LOG(("timer_adjust %08X to expire @ %.9f\n", (UINT32)which, mame_time_to_double(which->expire)));
+	LOG(("timer_adjust %s:%d to expire @ %.9f\n", which->file, which->line, mame_time_to_double(which->expire)));
 	if (which == timer_head && cpu_getexecutingcpu() >= 0)
 		activecpu_abort_timeslice();
 }
@@ -438,9 +450,9 @@ LOG(("timer_adjust %08X to expire @ %.9f\n", (UINT32)which, mame_time_to_double(
 	period
 -------------------------------------------------*/
 
-void mame_timer_pulse(mame_time period, int param, void (*callback)(int))
+void _mame_timer_pulse(mame_time period, int param, void (*callback)(int), const char *file, int line)
 {
-	mame_timer *timer = timer_alloc(callback);
+	mame_timer *timer = _mame_timer_alloc(callback, file, line);
 
 	/* fail if we can't allocate */
 	if (!timer)
@@ -457,9 +469,9 @@ void mame_timer_pulse(mame_time period, int param, void (*callback)(int))
 	calls the callback after the given duration
 -------------------------------------------------*/
 
-void mame_timer_set(mame_time duration, int param, void (*callback)(int))
+void _mame_timer_set(mame_time duration, int param, void (*callback)(int), const char *file, int line)
 {
-	mame_timer *timer = timer_alloc(callback);
+	mame_timer *timer = _mame_timer_alloc(callback, file, line);
 
 	/* fail if we can't allocate */
 	if (!timer)
@@ -480,6 +492,14 @@ void mame_timer_set(mame_time duration, int param, void (*callback)(int))
 
 void mame_timer_reset(mame_timer *which, mame_time duration)
 {
+	/* error if this is an inactive timer */
+	if (which->tag == -1)
+	{
+		printf("mame_timer_reset: resetting an inactive timer!\n");
+		logerror("mame_timer_reset: resetting an inactive timer!\n");
+		return;
+	}
+
 	/* adjust the timer */
 	mame_timer_adjust(which, duration, which->callback_param, which->period);
 }
@@ -495,6 +515,7 @@ void mame_timer_remove(mame_timer *which)
 	/* error if this is an inactive timer */
 	if (which->tag == -1)
 	{
+		printf("timer_remove: removing an inactive timer!\n");
 		logerror("timer_remove: removed an inactive timer!\n");
 		return;
 	}

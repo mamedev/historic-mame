@@ -65,6 +65,23 @@ void m68000_get_info(UINT32 state, union cpuinfo *info);
 extern void m68000_memory_interface_set(int Entry,void * memory_routine);
 
 /****************************************************************************
+ * M68008 section
+ ****************************************************************************/
+#if HAS_M68008
+#define MC68008_IRQ_1					MC68000_IRQ_1
+#define MC68008_IRQ_2					MC68000_IRQ_2
+#define MC68008_IRQ_3					MC68000_IRQ_3
+#define MC68008_IRQ_4					MC68000_IRQ_4
+#define MC68008_IRQ_5					MC68000_IRQ_5
+#define MC68008_IRQ_6					MC68000_IRQ_6
+#define MC68008_IRQ_7					MC68000_IRQ_7
+#define MC68008_INT_ACK_AUTOVECTOR		MC68000_INT_ACK_AUTOVECTOR
+#define MC68008_INT_ACK_SPURIOUS		MC68000_INT_ACK_SPURIOUS
+
+void m68008_get_info(UINT32 state, union cpuinfo *info);
+#endif
+
+/****************************************************************************
  * M68010 section
  ****************************************************************************/
 #if HAS_M68010

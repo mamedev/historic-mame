@@ -62,7 +62,7 @@
   The chip starts by tranforming the state with TF2.  Then, for each
   input bit from 0 to 7:
     - the nth bit from the state is sent to the output
-    - the state is transformed by TF1 is the input bit is 0
+    - the state is transformed by TF1 if the input bit is 0
 
   TF2 is a fixed linear substitution box (* = and, + = xor):
     o = ff*s0 + fe*s1 + fc*s2 + f8*s3 + f0*s4 + e0*s5 + c0*s6 + 7f*s7
@@ -80,20 +80,13 @@
        c[n, bit=0..6] = Shift(c[n-1, (bit-1)&7])
        c[n, 7]        = Shift(c[n-1, 6])^c[n, 0]    
                       = Shift(c[n-1, 6])^Shift(c[n-1, 7])
-
-
-  A last feature of the chip is a disable capability activated when
-  all the inputs of the previous communication were zeroes.  The next
-  communication answers will be all ff.
 */
 
 typedef struct {
 	const unsigned char *transform;
 	unsigned char state;
-	int flags;
+	unsigned char bit;
 } znsec_state;
-
-enum { IS_ZERO = 1, WAS_ZERO = 2, HAD_DATA = 4 };
 
 static znsec_state zns[2];
 
@@ -152,49 +145,32 @@ void znsec_init(int chip, const unsigned char *transform)
 {
 	zns[chip].transform = transform;
 	zns[chip].state = 0xfc;
-	zns[chip].flags = 0;
+	zns[chip].bit = 0;
 }
 
 void znsec_start(int chip)
 {
-	if(zns[chip].flags & HAD_DATA) {
-		if(zns[chip].flags & IS_ZERO)
-			zns[chip].flags |= WAS_ZERO;
-		else
-			zns[chip].flags &= ~WAS_ZERO;
-	}
-
-	zns[chip].flags = (zns[chip].flags | IS_ZERO) & ~HAD_DATA;
-
 	zns[chip].state = 0xfc;
+	zns[chip].bit = 0;
 }
 
 unsigned char znsec_step(int chip, unsigned char input)
 {
 	unsigned char res;
-	int i;
 	static const unsigned char initial_sbox[8] = { 0xff, 0xfe, 0xfc, 0xf8, 0xf0, 0xe0, 0xc0, 0x7f };
-	unsigned char state;
 
-	// Disable capability
-	zns[chip].flags |= HAD_DATA;
-	if(input)
-		zns[chip].flags &= ~IS_ZERO;
-	if(zns[chip].flags & WAS_ZERO)
-		return 0xff;
-
-	// Apply the initial xbox
-	state = apply_sbox(zns[chip].state, initial_sbox);
-
-	// Compute the output and change the state
-	res = 0;
-	for(i=0; i<8; i++) {
-		res |= state & (1<<i);
-		if(!(input & (1<<i)))
-			state = apply_bit_sbox(chip, state, i);
+	if (zns[chip].bit==0)
+	{
+		// Apply the initial xbox
+		zns[chip].state = apply_sbox(zns[chip].state, initial_sbox);
 	}
 
-	zns[chip].state = state;
+	// Compute the output and change the state
+	res = (zns[chip].state>>zns[chip].bit) & 1;
+	if((input & 1)==0)
+		zns[chip].state = apply_bit_sbox(chip, zns[chip].state, zns[chip].bit);
 
+	zns[chip].bit++;
+	zns[chip].bit&=7;
 	return res;
 }

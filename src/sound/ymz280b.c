@@ -22,6 +22,9 @@
 #define FRAC_ONE			(1 << FRAC_BITS)
 #define FRAC_MASK			(FRAC_ONE - 1)
 
+#define INTERNAL_BUFFER_SIZE 	(1 << 15)
+#define INTERNAL_SAMPLE_RATE 	(chip->master_clock * 2.0)
+
 #if MAKE_WAVS
 #include "wavwrite.h"
 #endif
@@ -58,6 +61,7 @@ struct YMZ280BVoice
 	INT32 output_pos;		/* current fractional position */
 	INT16 last_sample;		/* last sample output */
 	INT16 curr_sample;		/* current sample target */
+	UINT8 irq_schedule;		/* 1 if the IRQ state is updated by timer */
 };
 
 struct YMZ280BChip
@@ -73,6 +77,15 @@ struct YMZ280BChip
 	double master_clock;			/* master clock frequency */
 	void (*irq_callback)(int);		/* IRQ callback */
 	struct YMZ280BVoice	voice[8];	/* the 8 voices */
+	void *update_timer;				/* timer for ymz280b_force_update */
+
+	INT16 *ibuffer[2];				/* internal buffer */
+	UINT32 ibuffer_pos_in;
+	UINT32 ibuffer_pos_out;			/* (32-FRAC_BITS).FRAC_BITS fix point */
+	UINT32 ibuffer_samples;
+	int ibuffer_step;				/* (32-FRAC_BITS).FRAC_BITS fix point */
+	int ibuffer_samples_per_frame;	/* (32-FRAC_BITS).FRAC_BITS fix point */
+	double samples_left_over;
 
 #if MAKE_WAVS
 	void *		wavresample;			/* resampled waveform */
@@ -82,12 +95,16 @@ struct YMZ280BChip
 static struct YMZ280BChip ymz280b[MAX_YMZ280B];
 static INT32 *accumulator;
 static INT16 *scratch;
+static int chip_num;
 
 /* step size index shift table */
 static int index_scale[8] = { 0x0e6, 0x0e6, 0x0e6, 0x0e6, 0x133, 0x199, 0x200, 0x266 };
 
 /* lookup table for the precomputed difference */
 static int diff_lookup[16];
+
+/* timer callback */
+static void update_irq_state_timer(int param);
 
 
 
@@ -105,14 +122,14 @@ INLINE void update_irq_state(struct YMZ280BChip *chip)
 		chip->irq_state = 1;
 		if (chip->irq_callback)
 			(*chip->irq_callback)(1);
-else logerror("ymz280 irq_callback = 0");
+		else logerror("YMZ280B: IRQ generated, but no callback specified!");
 	}
 	else if (!irq_bits && chip->irq_state)
 	{
 		chip->irq_state = 0;
 		if (chip->irq_callback)
 			(*chip->irq_callback)(0);
-else logerror("ymz280 irq_callback = 0");
+		else logerror("YMZ280B: IRQ generated, but no callback specified!");
 	}
 }
 
@@ -133,7 +150,7 @@ INLINE void update_step(struct YMZ280BChip *chip, struct YMZ280BVoice *voice)
 		frequency = chip->master_clock * (double)((voice->fnum & 0x0ff) + 1) * (1.0 / 256.0);
 	else
 		frequency = chip->master_clock * (double)((voice->fnum & 0x1ff) + 1) * (1.0 / 256.0);
-	voice->output_step = (UINT32)(frequency * (double)FRAC_ONE / (double)Machine->sample_rate);
+	voice->output_step = (UINT32)(frequency * (double)FRAC_ONE / INTERNAL_SAMPLE_RATE);
 }
 
 
@@ -154,6 +171,40 @@ INLINE void update_volumes(struct YMZ280BVoice *voice)
 		voice->output_left = voice->level * (15 - voice->pan) / 8;
 		voice->output_right = voice->level;
 	}
+}
+
+
+static void YMZ280B_state_save_update_step(void)
+{
+	int i,j;
+	for (i = 0; i < chip_num; i++)
+	{
+		struct YMZ280BChip *chip = &ymz280b[i];
+		for (j = 0; j < 8; j++)
+		{
+			struct YMZ280BVoice *voice = &chip->voice[j];
+			update_step(chip, voice);
+			if(voice->irq_schedule)
+				timer_set(0, (i<<3) | j, update_irq_state_timer);
+		}
+		timer_adjust(chip->update_timer, TIME_NEVER, 0, 0);
+	}
+}
+
+
+static void update_irq_state_timer(int param)
+{
+	int chipnum = param>>3;
+	int voicenum = param & 7;
+	struct YMZ280BChip *chip = &ymz280b[chipnum];
+	struct YMZ280BVoice *voice = &chip->voice[voicenum];
+
+	if(!voice->irq_schedule) return;
+
+	voice->playing = 0;
+	chip->status_register |= 1 << voicenum;
+	update_irq_state(chip);
+	voice->irq_schedule = 0;
 }
 
 
@@ -417,12 +468,28 @@ static int generate_pcm16(struct YMZ280BVoice *voice, UINT8 *base, INT16 *buffer
 
 ***********************************************************************************************/
 
-static void ymz280b_update(int num, INT16 **buffer, int length)
+static void ymz280b_force_update(int num)
 {
+	int length;
+
 	struct YMZ280BChip *chip = &ymz280b[num];
-	INT32 *lacc = accumulator;
-	INT32 *racc = accumulator + length;
+	INT32 *lacc;
+	INT32 *racc;
 	int v;
+	double time_last_update;
+
+	if (Machine->sample_rate == 0) return;
+
+	/* elapsed time since the last callback */
+	time_last_update = timer_timeelapsed(chip->update_timer);
+	if(time_last_update <= 0) return;
+
+	/* compute how many samples to generate */
+	length = (int)(chip->samples_left_over + time_last_update * INTERNAL_SAMPLE_RATE) - chip->ibuffer_samples;
+	if(length <= 0) return;
+
+	lacc = accumulator;
+	racc = accumulator + length;
 
 	/* clear out the accumulator */
 	memset(accumulator, 0, 2 * length * sizeof(accumulator[0]));
@@ -447,7 +514,7 @@ static void ymz280b_update(int num, INT16 **buffer, int length)
 			continue;
 
 		/* finish off the current sample */
-		if (voice->output_pos > 0)
+//		if (voice->output_pos > 0)
 		{
 			/* interpolate */
 			while (remaining > 0 && voice->output_pos < FRAC_ONE)
@@ -502,8 +569,10 @@ static void ymz280b_update(int num, INT16 **buffer, int length)
 			if (base != 0)
 			{
 				voice->playing = 0;
-				chip->status_register |= 1 << v;
-				update_irq_state(chip);
+
+				/* set update_irq_state_timer. IRQ is signaled on next CPU execution. */
+				timer_set(0, (num<<3) | v, update_irq_state_timer);
+				voice->irq_schedule = 1;
 			}
 		}
 
@@ -549,34 +618,80 @@ static void ymz280b_update(int num, INT16 **buffer, int length)
 		if (rsamp < -32768) rsamp = -32768;
 		else if (rsamp > 32767) rsamp = 32767;
 
-		buffer[0][v] = lsamp;
-		buffer[1][v] = rsamp;
+		chip->ibuffer[0][chip->ibuffer_pos_in] = lsamp;
+		chip->ibuffer[1][chip->ibuffer_pos_in] = rsamp;
+		chip->ibuffer_pos_in++;
+		chip->ibuffer_pos_in &= INTERNAL_BUFFER_SIZE - 1;
 	}
+
+	chip->ibuffer_samples += length;
+}
+
+
+static void ymz280b_update(int num, INT16 **buffer, int length)
+{
+	struct YMZ280BChip *chip = &ymz280b[num];
+	int step = chip->ibuffer_step;
+	int samples_per_frame = chip->ibuffer_samples_per_frame;
+	UINT32 pos1,pos2,internal_samples;
+	int pos_dif;
+	double time_last_update;
+
+	ymz280b_force_update(num);
+
+	/* elapsed time since the last callback */
+	time_last_update = timer_timeelapsed(chip->update_timer);
+	if(time_last_update <= 0)
+		return;
+
+	/* compute how many samples */
+	chip->samples_left_over += time_last_update * INTERNAL_SAMPLE_RATE;
+	internal_samples = (UINT32)chip->samples_left_over;
+	chip->samples_left_over -= (double)internal_samples;
+
+	pos2 = chip->ibuffer_pos_out;
+	for (pos1 = 0; pos1 < length ; pos1++)
+	{
+		buffer[0][pos1] = chip->ibuffer[0][pos2>>FRAC_BITS];
+		buffer[1][pos1] = chip->ibuffer[1][pos2>>FRAC_BITS];
+		pos2+=step;
+		pos2 &= (INTERNAL_BUFFER_SIZE<<FRAC_BITS)-1;
+	}
+	chip->ibuffer_pos_out = pos2;
+
+	pos_dif = (INTERNAL_BUFFER_SIZE<<FRAC_BITS) + chip->ibuffer_pos_out - (chip->ibuffer_pos_in<<FRAC_BITS);
+	pos_dif &= (INTERNAL_BUFFER_SIZE<<FRAC_BITS)-1;
+	if(pos_dif > (INTERNAL_BUFFER_SIZE<<FRAC_BITS)/2) pos_dif-=INTERNAL_BUFFER_SIZE<<FRAC_BITS;
+
+	if(pos_dif < -step * 32)
+		{
+		pos_dif += step/4;
+		chip->ibuffer_pos_out += step/4;
+		}
+	else if(pos_dif > -step * 16)
+	{
+		pos_dif -= step/4;
+		chip->ibuffer_pos_out -= step/4;
+	}
+
+	if(pos_dif > -step * 16)
+		chip->ibuffer_pos_out = (chip->ibuffer_pos_in<<FRAC_BITS) - samples_per_frame;
+	else if(pos_dif < -samples_per_frame)
+		chip->ibuffer_pos_out = (chip->ibuffer_pos_in<<FRAC_BITS) - step * 24;
+
+	chip->ibuffer_pos_out &= (INTERNAL_BUFFER_SIZE<<FRAC_BITS)-1;
+	chip->ibuffer_samples = 0;
+	timer_adjust(chip->update_timer, TIME_NEVER, 0, 0);
 
 #if MAKE_WAVS
 	/* log the resampled data */
-	if (chip->wavresample)
-		wav_add_data_16lr(chip->wavresample, buffer[0], buffer[1], length);
+	if (ymz280b[num].wavresample)
+		wav_add_data_16lr(ymz280b[num].wavresample, buffer[0], buffer[1], length);
 #endif
 }
 
 
-//ks s
-static int chip_num;
-static void YMZ280B_state_save_update_step(void)
-{
-	int i,j;
-	for (i = 0; i < chip_num; i++)
-	{
-		for (j = 0; j < 8; j++)
-		{
-			struct YMZ280BChip *chip = &ymz280b[i];
-			struct YMZ280BVoice *voice = &chip->voice[j];
-			update_step(chip, voice);
-		}
-	}
-}
-//ks e
+
 /**********************************************************************************************
 
      YMZ280B_sh_start -- start emulation of the YMZ280B
@@ -598,6 +713,8 @@ int YMZ280B_sh_start(const struct MachineSound *msound)
 	memset(&ymz280b, 0, sizeof(ymz280b));
 	for (i = 0; i < intf->num; i++)
 	{
+		struct YMZ280BChip *chip = &ymz280b[i];
+
 		/* generate the name and create the stream */
 		sprintf(stream_name[0], "%s #%d Ch1", sound_name(msound), i);
 		sprintf(stream_name[1], "%s #%d Ch2", sound_name(msound), i);
@@ -609,23 +726,35 @@ int YMZ280B_sh_start(const struct MachineSound *msound)
 		vol[1] = intf->mixing_level[i] >> 16;
 
 		/* create the stream */
-		ymz280b[i].stream = stream_init_multi(2, stream_name_ptrs, vol, Machine->sample_rate, i, ymz280b_update);
-		if (ymz280b[i].stream == -1)
+		chip->stream = stream_init_multi(2, stream_name_ptrs, vol, Machine->sample_rate, i, ymz280b_update);
+		if (chip->stream == -1)
 			return 1;
 
 		/* initialize the rest of the structure */
-		ymz280b[i].master_clock = (double)intf->baseclock[i] / 384.0;
-		ymz280b[i].region_base = memory_region(intf->region[i]);
-		ymz280b[i].irq_callback = intf->irq_callback[i];
+		chip->master_clock = (double)intf->baseclock[i] / 384.0;
+		chip->region_base = memory_region(intf->region[i]);
+		chip->irq_callback = intf->irq_callback[i];
+
+		chip->update_timer = timer_alloc(NULL);
+		timer_adjust(chip->update_timer, TIME_NEVER, 0, 0);
+
+		chip->ibuffer[0] = auto_malloc(sizeof(ymz280b[0].ibuffer[0][0]) * 2 * INTERNAL_BUFFER_SIZE);
+		if (!chip->ibuffer[0]) return 1;
+		chip->ibuffer[1] = chip->ibuffer[0] + INTERNAL_BUFFER_SIZE;
+
+		if (Machine->sample_rate == 0) chip->ibuffer_step = 0;
+		else chip->ibuffer_step = (UINT32)(INTERNAL_SAMPLE_RATE * (double)FRAC_ONE / (double)Machine->sample_rate + 0.5);
+		chip->ibuffer_samples_per_frame = (UINT32)(INTERNAL_SAMPLE_RATE * (double)FRAC_ONE / Machine->drv->frames_per_second + 0.5);
+		chip->ibuffer_pos_in = (chip->ibuffer_step * 24)>>FRAC_BITS;
+		chip->ibuffer_pos_out = 0;
 	}
 
 	/* allocate memory */
-	accumulator = malloc(sizeof(accumulator[0]) * 2 * MAX_SAMPLE_CHUNK);
-	scratch = malloc(sizeof(scratch[0]) * MAX_SAMPLE_CHUNK);
+	accumulator = auto_malloc(sizeof(accumulator[0]) * 2 * MAX_SAMPLE_CHUNK);
+	scratch = auto_malloc(sizeof(scratch[0]) * MAX_SAMPLE_CHUNK);
 	if (!accumulator || !scratch)
 		return 1;
 
-//ks s
 	/* state save */
 	for (i = 0; i < intf->num; i++)
 	{
@@ -636,6 +765,7 @@ int YMZ280B_sh_start(const struct MachineSound *msound)
 		state_save_register_UINT8("YMZ280B", i, "irq_mask", &ymz280b[i].irq_mask,1);
 		state_save_register_UINT8("YMZ280B", i, "irq_enable", &ymz280b[i].irq_enable,1);
 		state_save_register_UINT8("YMZ280B", i, "keyon_enable", &ymz280b[i].keyon_enable,1);
+		state_save_register_double("YMZ280B", i, "samples_left_over", &ymz280b[i].samples_left_over,1);
 		for (j = 0; j < 8; j++)
 		{
 			state_save_register_UINT8 ("YMZ280B.voice", i*8+j, "playing", &ymz280b[i].voice[j].playing,1);
@@ -660,11 +790,12 @@ int YMZ280B_sh_start(const struct MachineSound *msound)
 			state_save_register_INT32 ("YMZ280B.voice", i*8+j, "output_pos", &ymz280b[i].voice[j].output_pos,1);
 			state_save_register_INT16 ("YMZ280B.voice", i*8+j, "last_sample", &ymz280b[i].voice[j].last_sample,1);
 			state_save_register_INT16 ("YMZ280B.voice", i*8+j, "curr_sample", &ymz280b[i].voice[j].curr_sample,1);
+			state_save_register_UINT8 ("YMZ280B.voice", i*8+j, "irq_schedule", &ymz280b[i].voice[j].irq_schedule,1);
 		}
 	}
+
 	state_save_register_func_postload(YMZ280B_state_save_update_step);
 	chip_num = intf->num;
-//ks e
 
 #if MAKE_WAVS
 	ymz280b[0].wavresample = wav_open("resamp.wav", Machine->sample_rate, 2);
@@ -684,15 +815,6 @@ int YMZ280B_sh_start(const struct MachineSound *msound)
 
 void YMZ280B_sh_stop(void)
 {
-	/* free memory */
-	if (accumulator)
-		free(accumulator);
-	accumulator = NULL;
-
-	if (scratch)
-		free(scratch);
-	scratch = NULL;
-
 #if MAKE_WAVS
 {
 	int i;
@@ -718,9 +840,10 @@ static void write_to_register(struct YMZ280BChip *chip, int data)
 {
 	struct YMZ280BVoice *voice;
 	int i;
+	int chipnum = chip - ymz280b;
 
 	/* force an update */
-	stream_update(chip->stream, 0);
+	ymz280b_force_update(chipnum);
 
 	/* lower registers follow a pattern */
 	if (chip->current_register < 0x80)
@@ -745,14 +868,17 @@ static void write_to_register(struct YMZ280BChip *chip, int data)
 					voice->signal = voice->loop_signal = 0;
 					voice->step = voice->loop_step = 0x7f;
 					voice->loop_count = 0;
+
+					/* if update_irq_state_timer is set, cancel it. */
+					voice->irq_schedule = 0;
 				}
 				if (voice->keyon && !(data & 0x80) && !voice->looping)
-//ks start
 				{
 					voice->playing = 0;
-//					chip->status_register &= ~(1 << ((chip->current_register >> 2) & 7));
+
+					/* if update_irq_state_timer is set, cancel it. */
+					voice->irq_schedule = 0;
 				}
-//ks end
 				voice->keyon = (data & 0x80) >> 7;
 				update_step(chip, voice);
 				break;
@@ -834,16 +960,26 @@ static void write_to_register(struct YMZ280BChip *chip, int data)
 			case 0xff:		/* IRQ enable, test, etc */
 				chip->irq_enable = (data & 0x10) >> 4;
 				update_irq_state(chip);
-//ks start
+
 				if (chip->keyon_enable && !(data & 0x80))
+				{
 					for (i = 0; i < 8; i++)
+					{
 						chip->voice[i].playing = 0;
-				if (!chip->keyon_enable && (data & 0x80))
+
+						/* if update_irq_state_timer is set, cancel it. */
+						chip->voice[i].irq_schedule = 0;
+					}
+				}
+				else if (!chip->keyon_enable && (data & 0x80))
+				{
 					for (i = 0; i < 8; i++)
+					{
 						if (chip->voice[i].keyon && chip->voice[i].looping)
 							chip->voice[i].playing = 1;
+					}
+				}
 				chip->keyon_enable = (data & 0x80) >> 7;
-//ks end
 				break;
 
 			default:
@@ -863,10 +999,13 @@ static void write_to_register(struct YMZ280BChip *chip, int data)
 
 static int compute_status(struct YMZ280BChip *chip)
 {
-	UINT8 result = chip->status_register;
+	UINT8 result;
+	int chipnum = chip - ymz280b;
 
 	/* force an update */
-	stream_update(chip->stream, 0);
+	ymz280b_force_update(chipnum);
+
+	result = chip->status_register;
 
 	/* clear the IRQ state */
 	chip->status_register = 0;

@@ -35,7 +35,8 @@
  ****************************************************************************/
 /* Long(er) function names, short macro names... */
 #define ABITS	(activecpu_addrbus_width(ADDRESS_SPACE_PROGRAM))
-#define AMASK	(0xffffffffUL >> (32 - activecpu_addrbus_width(ADDRESS_SPACE_PROGRAM)))
+#define AMASK	(address_space[ADDRESS_SPACE_PROGRAM].addrmask | 3)
+#define AMASKS(s) (address_space[s].addrmask | 3)
 #define ASHIFT	(activecpu_addrbus_shift(ADDRESS_SPACE_PROGRAM))
 #define ALIGN	(activecpu_databus_width(ADDRESS_SPACE_PROGRAM)/8)
 #define INSTL	activecpu_max_instruction_bytes()
@@ -43,9 +44,22 @@
 
 #define RDMEM(a)	(program_read_byte(a))
 #define WRMEM(a,v)	(program_write_byte(a,v))
+INLINE data8_t RDSPC(int space, offs_t addr)
+{
+	switch (ALIGN)
+	{
+		case 1:
+			return (*address_space[space].accessors->read_byte)(addr);
+		case 2:
+			return (*address_space[space].accessors->read_word)(addr) >> (8 * ((addr & 1) ^ (ENDIAN == CPU_IS_BE ? 1 : 0)));
+		case 4:
+			return (*address_space[space].accessors->read_dword)(addr) >> (8 * ((addr & 3) ^ (ENDIAN == CPU_IS_BE ? 3 : 0)));
+	}
+	return 0;
+}
+#define WRSPC(s,a,v) do { if (address_space[s].accessors->write_byte) (*address_space[s].accessors->write_byte)(a,v); } while (0)
 #define RDINT(a)	(program_read_byte(a))
 #define WRINT(a,v)	(program_write_byte(a,v))
-#define PGM_MEMORY	(0)  /* fix me -- need to do right! cputype_get_interface(cputype)->pgm_memory_base */
 
 /****************************************************************************
  * Globals
@@ -406,7 +420,6 @@ typedef struct {
 	s_edit	edit[MAX_DATA]; 	/* list of x,y,w triplets for the memory elements */
 	UINT32	base;				/* current base address */
 	UINT32	address;			/* current cursor address */
-	UINT32	pgm_memory_base;	/* program/data memory base toggle */
 	INT32	offset; 			/* edit offset */
 	INT32	nibble; 			/* edit nibble */
 	INT32	bytes;				/* number of bytes per edit line */
@@ -414,7 +427,7 @@ typedef struct {
 	INT32	size;				/* number of bytes in the edit window */
 	UINT8	mode;				/* 0 bytes, 1 words, 2 dword */
 	UINT8	ascii;				/* display ASCII values */
-	UINT8	internal;			/* display CPU internal memory instead of ROM/RAM? */
+	UINT8	space;				/* address space (0xff = internal) */
 	UINT8	changed;
 }	s_mem;
 
@@ -2678,7 +2691,7 @@ static unsigned dump_dasm( unsigned pc )
 					break;
 				}
 			}
-			pc = lshift(rshift(pc_next) & AMASK);
+			pc = pc_next;
 			switch( dbg_dasm_case )
 			{
 			case 0: win_printf( win, "%-*.*s", w-l, w-l, dasm ); break;
@@ -2772,13 +2785,13 @@ static void dump_mem_hex( int which, unsigned len_addr, unsigned len_data )
 		switch( len_data )
 		{
 		case 2: /* UINT8 mode */
-			DBGMEM[which].address = (DBGMEM[which].base + order(offs,1)) & AMASK;
+			DBGMEM[which].address = (DBGMEM[which].base + order(offs,1)) & AMASKS(DBGMEM[which].space);
 			break;
 		case 4: /* UINT16 mode */
-			DBGMEM[which].address = (DBGMEM[which].base + order(offs,2)) & AMASK;
+			DBGMEM[which].address = (DBGMEM[which].base + order(offs,2)) & AMASKS(DBGMEM[which].space);
 			break;
 		case 8: /* UINT32 mode */
-			DBGMEM[which].address = (DBGMEM[which].base + order(offs,4)) & AMASK;
+			DBGMEM[which].address = (DBGMEM[which].base + order(offs,4)) & AMASKS(DBGMEM[which].space);
 			break;
 		}
 
@@ -2792,13 +2805,7 @@ static void dump_mem_hex( int which, unsigned len_addr, unsigned len_data )
 		if( DBGMEM[which].address == DBG.brk_data )
 			color = cur_col[E_BRK_DATA];
 
-		if( DBGMEM[which].internal )
-			*val = RDINT( DBGMEM[which].address );
-		else
-		if( DBGMEM[which].pgm_memory_base )
-			*val = cpu_readop(DBGMEM[which].pgm_memory_base + DBGMEM[which].address);
-		else
-			*val = RDMEM( DBGMEM[which].address );
+		*val = RDSPC( DBGMEM[which].space, DBGMEM[which].address );
 
 		if( *val != *old )
 		{
@@ -2862,10 +2869,10 @@ static void dump_mem( int which, int set_title )
 
 	if( set_title )
 	{
-		if( DBGMEM[which].internal )
-			win_set_title( WIN_MEM(active_cpu,which), "CPU internal" );
-		else
-			win_set_title( WIN_MEM(active_cpu,which), name_memory(DBGMEM[which].base + DBGMEM[which].pgm_memory_base) );
+//		if( DBGMEM[which].internal )
+//			win_set_title( WIN_MEM(active_cpu,which), "CPU internal" );
+//		else
+			win_set_title( WIN_MEM(active_cpu,which), name_memory(DBGMEM[which].base) );
 	}
 
 	switch( DBGMEM[which].mode )
@@ -3093,16 +3100,16 @@ static void edit_mem( int which )
 	switch( DBGMEM[which].mode )
 	{
 		case MODE_HEX_UINT8:
-			DBGMEM[which].address = (DBGMEM[which].base + DBGMEM[which].offset) & AMASK;
+			DBGMEM[which].address = (DBGMEM[which].base + DBGMEM[which].offset) & AMASKS(DBGMEM[which].space);
 			break;
 		case MODE_HEX_UINT16:
-			DBGMEM[which].address = (DBGMEM[which].base + (DBGMEM[which].offset & ~1) + pedit[DBGMEM[which].offset].n ) & AMASK;
+			DBGMEM[which].address = (DBGMEM[which].base + (DBGMEM[which].offset & ~1) + pedit[DBGMEM[which].offset].n ) & AMASKS(DBGMEM[which].space);
 			break;
 		case MODE_HEX_UINT32:
-			DBGMEM[which].address = (DBGMEM[which].base + (DBGMEM[which].offset & ~3) + pedit[DBGMEM[which].offset].n ) & AMASK;
+			DBGMEM[which].address = (DBGMEM[which].base + (DBGMEM[which].offset & ~3) + pedit[DBGMEM[which].offset].n ) & AMASKS(DBGMEM[which].space);
 			break;
 	}
-	win_set_title( win, name_memory(DBGMEM[which].address + DBGMEM[which].pgm_memory_base) );
+	win_set_title( win, name_memory(DBGMEM[which].address) );
 
 	i = readkey();
 	k = keyboard_name(i);
@@ -3122,15 +3129,7 @@ static void edit_mem( int which )
 			if( val > 9 ) val -= 7;
 			val <<= shift;
 			/* now modify the register */
-			if( DBGMEM[which].internal )
-			{
-//				if( cputype_get_interface(cputype)->internal_write )
-//					WRINT( DBGMEM[which].address, ( RDINT( DBGMEM[which].address ) & mask ) | val );
-			}
-			else
-			if( DBGMEM[which].pgm_memory_base == 0 )
-				WRMEM( DBGMEM[which].address, ( RDMEM( DBGMEM[which].address ) & mask ) | val );
-			/* we don't write to 'program memory' */
+			WRSPC(DBGMEM[which].space, DBGMEM[which].address, ( RDMEM( DBGMEM[which].address ) & mask ) | val);
 			update_window = 1;
 			i = KEYCODE_RIGHT;	/* advance to next nibble */
 		}
@@ -3143,7 +3142,7 @@ static void edit_mem( int which )
 		{
 			if( --DBGMEM[which].offset < 0 )
 			{
-				DBGMEM[which].base = (DBGMEM[which].base - DBGMEM[which].bytes) & AMASK;
+				DBGMEM[which].base = (DBGMEM[which].base - DBGMEM[which].bytes) & AMASKS(DBGMEM[which].space);
 				DBGMEM[which].offset += DBGMEM[which].bytes;
 				update_window = 1;
 			}
@@ -3157,7 +3156,7 @@ static void edit_mem( int which )
 			DBGMEM[which].nibble = 0;
 			if( ++DBGMEM[which].offset >= DBGMEM[which].size )
 			{
-				DBGMEM[which].base = (DBGMEM[which].base + DBGMEM[which].bytes) & AMASK;
+				DBGMEM[which].base = (DBGMEM[which].base + DBGMEM[which].bytes) & AMASKS(DBGMEM[which].space);
 				DBGMEM[which].offset -= DBGMEM[which].bytes;
 				update_window = 1;
 			}
@@ -3168,7 +3167,7 @@ static void edit_mem( int which )
 		DBGMEM[which].offset -= DBGMEM[which].bytes;
 		if( DBGMEM[which].offset < 0 )
 		{
-			DBGMEM[which].base = (DBGMEM[which].base - DBGMEM[which].bytes) & AMASK;
+			DBGMEM[which].base = (DBGMEM[which].base - DBGMEM[which].bytes) & AMASKS(DBGMEM[which].space);
 			DBGMEM[which].offset += DBGMEM[which].bytes;
 			update_window = 1;
 		}
@@ -3178,19 +3177,19 @@ static void edit_mem( int which )
 		DBGMEM[which].offset += DBGMEM[which].bytes;
 		if( DBGMEM[which].offset >= DBGMEM[which].size )
 		{
-			DBGMEM[which].base = (DBGMEM[which].base + DBGMEM[which].bytes) & AMASK;
+			DBGMEM[which].base = (DBGMEM[which].base + DBGMEM[which].bytes) & AMASKS(DBGMEM[which].space);
 			DBGMEM[which].offset -= DBGMEM[which].bytes;
 			update_window = 1;
 		}
 		break;
 
 	case KEYCODE_PGUP:
-		DBGMEM[which].base = (DBGMEM[which].base - DBGMEM[which].size) & AMASK;
+		DBGMEM[which].base = (DBGMEM[which].base - DBGMEM[which].size) & AMASKS(DBGMEM[which].space);
 		update_window = 1;
 		break;
 
 	case KEYCODE_PGDN:
-		DBGMEM[which].base = (DBGMEM[which].base + DBGMEM[which].size) & AMASK;
+		DBGMEM[which].base = (DBGMEM[which].base + DBGMEM[which].size) & AMASKS(DBGMEM[which].space);
 		update_window = 1;
 		break;
 
@@ -3202,7 +3201,7 @@ static void edit_mem( int which )
 
 	case KEYCODE_END:
 		DBGMEM[which].offset = DBGMEM[which].size - 1;
-		DBGMEM[which].base = (0xffffffff - DBGMEM[which].offset) & AMASK;
+		DBGMEM[which].base = (0xffffffff - DBGMEM[which].offset) & AMASKS(DBGMEM[which].space);
 		update_window = 1;
 		break;
 
@@ -3219,8 +3218,13 @@ static void edit_mem( int which )
 		break;
 
 	case KEYCODE_P: /* program memory */
-		DBGMEM[which].pgm_memory_base ^= PGM_MEMORY;
-		/* Reset cursor coordinates and sizes of the edit info */
+		DBGMEM[which].space = ADDRESS_SPACE_PROGRAM;
+		memset( DBGMEM[which].edit, 0, sizeof(DBGMEM[which].edit) );
+		update_window = 1;
+		break;
+
+	case KEYCODE_T: /* data memory */
+		DBGMEM[which].space = ADDRESS_SPACE_DATA;
 		memset( DBGMEM[which].edit, 0, sizeof(DBGMEM[which].edit) );
 		update_window = 1;
 		break;
@@ -3882,7 +3886,7 @@ static void cmd_display_memory( void )
 			address = which;
 			which = 0;
 		}
-		address = rshift(address) & AMASK;
+		address = rshift(address) & AMASKS(DBGMEM[which].space);
 		DBGMEM[which].base = address;
 		dump_mem( which, 1 );
 	}
@@ -4008,7 +4012,8 @@ static void cmd_dump_to_file( void )
 	int length;
 	FILE *file;
 	unsigned x, offs, address = 0, start, end, width, data;
-	unsigned datasize, asciimode, pgm_memory_base;
+	unsigned datasize, asciimode;
+	UINT8 space;
 
 	filename = get_file_name( &cmd, &length );
 	if( !length )
@@ -4037,7 +4042,7 @@ static void cmd_dump_to_file( void )
 	}
 	end = rshift(end);
 	asciimode = 1;			/* default to translation table */
-	pgm_memory_base = 0;	/* default to data mode (offset 0) */
+	space = ADDRESS_SPACE_PROGRAM;	/* default to data mode (offset 0) */
 	datasize = ALIGN*2; 	/* default to align unit of that CPU */
 	data = get_option_or_value( &cmd, &length, "BYTE\0WORD\0DWORD\0");
 	if( length )
@@ -4073,13 +4078,10 @@ static void cmd_dump_to_file( void )
 						"Wrong PROG/DATA mode. Only PROG or DATA\n(also 0,1) are supported");
 					data = 1;
 				}
-				pgm_memory_base = data;
+				space = data;
 			}
 		}
 	}
-
-	if( pgm_memory_base )
-		pgm_memory_base = PGM_MEMORY;
 
 	file = fopen(filename, "w");
 	if( !file )
@@ -4097,16 +4099,16 @@ static void cmd_dump_to_file( void )
 		switch( datasize )
 		{
 			case 2:
-				address = (start + order(offs,1)) & AMASK;
+				address = (start + order(offs,1)) & AMASKS(space);
 				break;
 			case 4:
-				address = (start + order(offs,2)) & AMASK;
+				address = (start + order(offs,2)) & AMASKS(space);
 				break;
 			case 8:
-				address = (start + order(offs,4)) & AMASK;
+				address = (start + order(offs,4)) & AMASKS(space);
 				break;
 		}
-		buffer[offs & 15] = RDMEM( address + pgm_memory_base );
+		buffer[offs & 15] = RDSPC( space, address );
 		if( (offs & 15) == 0 )
 			fprintf(file, "%0*X: ", width, lshift((start + offs) & AMASK) );
 		fprintf(file, "%02X", buffer[offs & 15] );
@@ -4153,6 +4155,7 @@ static void cmd_save_to_file( void )
 	FILE *file;
 	unsigned start, end, offs;
 	unsigned save_what;
+	UINT8 space = ADDRESS_SPACE_PROGRAM;
 
 	filename = get_file_name( &cmd, &length );
 	if( !length )
@@ -4192,11 +4195,11 @@ static void cmd_save_to_file( void )
 	}
 
 	if( save_what )
-		save_what = PGM_MEMORY;
+		space = ADDRESS_SPACE_DATA;
 
 	for( offs = 0; offs + start <= end; offs++ )
 	{
-		fputc( RDMEM( ( ( start + offs ) & AMASK ) + save_what ), file );
+		fputc( RDSPC( space, ( ( start + offs ) & AMASKS(space) ) + save_what ), file );
 	}
 
 	fclose( file );

@@ -10,8 +10,13 @@
 
 	Known bugs:
 		* some DIP switches not understood
-		* possible timing issue cuasing slight video flicker
 
+	Note:
+	Even though Egg Venture looks like it has a few extra scanlines at
+	the bottom, the video hardware is explicitly programmed to only
+	display 236 lines. Altering this will lead to bad flickering.
+	
+****************************************************************************
 
          EU21     EU18     EU20   32.000MHz
          M6295    M6295    M6295       Xilinx
@@ -43,9 +48,6 @@ Note 2: Lethal Justice uses a TMS34010FNL-50 instead of the TMS34010FNL-40
 #include "lethalj.h"
 
 
-static data16_t *code_rom;
-
-
 
 /*************************************
  *
@@ -53,31 +55,21 @@ static data16_t *code_rom;
  *
  *************************************/
 
-static ADDRESS_MAP_START( lethalj_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x00000000, 0x003fffff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x04000000, 0x0400000f) AM_READ(OKIM6295_status_0_lsb_r)
-	AM_RANGE(0x04000010, 0x0400001f) AM_READ(OKIM6295_status_1_lsb_r)
-	AM_RANGE(0x04100000, 0x0410000f) AM_READ(OKIM6295_status_2_lsb_r)
-	AM_RANGE(0x04100010, 0x0410001f) AM_READ(MRA16_NOP)	/* read but never examined */
+static ADDRESS_MAP_START( lethalj_map, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x00000000, 0x003fffff) AM_RAM
+	AM_RANGE(0x04000000, 0x0400000f) AM_READWRITE(OKIM6295_status_0_lsb_r, OKIM6295_data_0_lsb_w)
+	AM_RANGE(0x04000010, 0x0400001f) AM_READWRITE(OKIM6295_status_1_lsb_r, OKIM6295_data_1_lsb_w)
+	AM_RANGE(0x04100000, 0x0410000f) AM_READWRITE(OKIM6295_status_2_lsb_r, OKIM6295_data_2_lsb_w)
+	AM_RANGE(0x04100010, 0x0410001f) AM_READNOP		/* read but never examined */
+	AM_RANGE(0x04200000, 0x0420001f) AM_WRITENOP	/* clocks bits through here */
 	AM_RANGE(0x04300000, 0x0430007f) AM_READ(lethalj_gun_r)
+	AM_RANGE(0x04400000, 0x0440000f) AM_WRITENOP	/* clocks bits through here */
 	AM_RANGE(0x04500010, 0x0450001f) AM_READ(input_port_0_word_r)
 	AM_RANGE(0x04600000, 0x0460000f) AM_READ(input_port_1_word_r)
-	AM_RANGE(0xc0000000, 0xc00001ff) AM_READ(tms34010_io_register_r)
-	AM_RANGE(0xfc800000, 0xffffffff) AM_READ(MRA16_ROM)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( lethalj_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x00000000, 0x003fffff) AM_WRITE(MWA16_RAM)
-	AM_RANGE(0x04000000, 0x0400000f) AM_WRITE(OKIM6295_data_0_lsb_w)
-	AM_RANGE(0x04000010, 0x0400001f) AM_WRITE(OKIM6295_data_1_lsb_w)
-	AM_RANGE(0x04100000, 0x0410000f) AM_WRITE(OKIM6295_data_2_lsb_w)
-	AM_RANGE(0x04200000, 0x0420001f) AM_WRITE(MWA16_NOP)	/* clocks bits through here */
-	AM_RANGE(0x04400000, 0x0440000f) AM_WRITE(MWA16_NOP)	/* clocks bits through here */
 	AM_RANGE(0x04700000, 0x047000ff) AM_WRITE(lethalj_blitter_w)
-	AM_RANGE(0xc0000000, 0xc00001ff) AM_WRITE(tms34010_io_register_w)
-	AM_RANGE(0xc0000240, 0xc000025f) AM_WRITE(MWA16_NOP)		/* seems to be a bug in their code, one of many. */
-	AM_RANGE(0xff800000, 0xffffffff) AM_WRITE(MWA16_ROM) AM_BASE(&code_rom)
+	AM_RANGE(0xc0000000, 0xc00001ff) AM_READWRITE(tms34010_io_register_r, tms34010_io_register_w)
+	AM_RANGE(0xc0000240, 0xc000025f) AM_WRITENOP	/* seems to be a bug in their code, one of many. */
+	AM_RANGE(0xff800000, 0xffffffff) AM_ROM AM_REGION(REGION_USER1, 0)
 ADDRESS_MAP_END
 
 
@@ -204,7 +196,7 @@ INPUT_PORTS_START( eggventr )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( eggventdx )
+INPUT_PORTS_START( eggvntdx )
 	PORT_START
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -256,6 +248,7 @@ INPUT_PORTS_START( eggventdx )
 INPUT_PORTS_END
 
 
+
 /*************************************
  *
  *	Sound definition
@@ -301,19 +294,18 @@ MACHINE_DRIVER_START( lethalj )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(TMS34010, 40000000/TMS34010_CLOCK_DIVIDER)
 	MDRV_CPU_CONFIG(cpu_config)
-	MDRV_CPU_PROGRAM_MAP(lethalj_readmem,lethalj_writemem)
+	MDRV_CPU_PROGRAM_MAP(lethalj_map,0)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION((1000000 * (258 - 236)) / (60 * 258))
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_RGB_DIRECT)
 	MDRV_SCREEN_SIZE(512, 236)
 	MDRV_VISIBLE_AREA(0, 511, 0, 235)
 
 	MDRV_PALETTE_LENGTH(32768)
 
-	MDRV_PALETTE_INIT(lethalj)
 	MDRV_VIDEO_START(lethalj)
 	MDRV_VIDEO_UPDATE(lethalj)
 
@@ -321,19 +313,6 @@ MACHINE_DRIVER_START( lethalj )
 	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
 MACHINE_DRIVER_END
 
-
-MACHINE_DRIVER_START( eggventr )
-
-	/* basic machine hardware */
-	MDRV_IMPORT_FROM(lethalj)
-	MDRV_CPU_MODIFY("main")
-
-	/* Slightly different resolution then Lethal Justice */
-	MDRV_VBLANK_DURATION((1000000 * (258 - 239)) / (60 * 258))
-	MDRV_SCREEN_SIZE(512, 239)
-	MDRV_VISIBLE_AREA(0, 511, 0, 238)
-
-MACHINE_DRIVER_END
 
 
 /*************************************
@@ -343,9 +322,7 @@ MACHINE_DRIVER_END
  *************************************/
 
 ROM_START( lethalj )
-	ROM_REGION( TOBYTE(0x400000), REGION_CPU1, 0 )		/* 34010 dummy region */
-
-	ROM_REGION16_LE( 0x100000, REGION_USER1, ROMREGION_DISPOSE )	/* 34010 code */
+	ROM_REGION16_LE( 0x100000, REGION_USER1, 0 )		/* 34010 code */
 	ROM_LOAD16_BYTE( "vc8",  0x000000, 0x080000, CRC(8d568e1d) SHA1(e4dd3794789f9ccd7be8374978a3336f2b79136f) )
 	ROM_LOAD16_BYTE( "vc9",  0x000001, 0x080000, CRC(8f22add4) SHA1(e773d3ae9cf512810fc266e784d21ed115c8830c) )
 
@@ -369,9 +346,7 @@ ROM_END
 
 
 ROM_START( eggventr )
-	ROM_REGION( TOBYTE(0x400000), REGION_CPU1, 0 )		/* 34010 dummy region */
-
-	ROM_REGION16_LE( 0x100000, REGION_USER1, ROMREGION_DISPOSE )	/* 34010 code */
+	ROM_REGION16_LE( 0x100000, REGION_USER1, 0 )		/* 34010 code */
 	ROM_LOAD16_BYTE( "eggvc8.10", 0x000000, 0x020000, CRC(225d1164) SHA1(b0dc55f2e8ded1fe7874de05987fcf879772289e) )
 	ROM_LOAD16_BYTE( "eggvc9.10", 0x000001, 0x020000, CRC(42f6e904) SHA1(11be8e7383a218aac0e1a63236bbdb7cca0993bf) )
 	ROM_COPY( REGION_USER1, 0x000000, 0x040000, 0x040000 )
@@ -395,10 +370,9 @@ ROM_START( eggventr )
 	ROM_LOAD( "eu18.bin", 0x00000, 0x40000, CRC(3760b1db) SHA1(70e258a6036f9ce26b354c4df57e0e4d2c871bcb) )
 ROM_END
 
-ROM_START( eggvntdx )
-	ROM_REGION( TOBYTE(0x400000), REGION_CPU1, 0 )		/* 34010 dummy region */
 
-	ROM_REGION16_LE( 0x100000, REGION_USER1, ROMREGION_DISPOSE )	/* 34010 code */
+ROM_START( eggvntdx )
+	ROM_REGION16_LE( 0x100000, REGION_USER1, 0 )		/* 34010 code */
 	ROM_LOAD16_BYTE( "eggdlx.vc8", 0x000000, 0x080000, CRC(d7f56141) SHA1(3c16b509fd1c763e452c27084fb0e90cde3947f7) )
 	ROM_LOAD16_BYTE( "eggdlx.vc9", 0x000001, 0x080000, CRC(cc5f122e) SHA1(e719a3937378df605cdb86c59a534808473c8f90) )
 
@@ -422,27 +396,12 @@ ROM_END
 
 
 
-
-/*************************************
- *
- *	Driver init
- *
- *************************************/
-
-static DRIVER_INIT( lethalj )
-{
-	/* set up code ROMs */
-	memcpy(code_rom, memory_region(REGION_USER1), memory_region_length(REGION_USER1));
-}
-
-
-
 /*************************************
  *
  *	Game drivers
  *
  *************************************/
 
-GAME( 1996, lethalj,  0,        lethalj,  lethalj,  lethalj, ROT0, "The Game Room", "Lethal Justice" )
-GAME( 1997, eggventr, 0,        eggventr, eggventr, lethalj, ROT0, "The Game Room", "Egg Venture" )
-GAME( 1997, eggvntdx, eggventr, eggventr, eggventdx, lethalj, ROT0, "The Game Room", "Egg Venture Deluxe" )
+GAME( 1996, lethalj,  0,        lethalj, lethalj,  0, ROT0, "The Game Room", "Lethal Justice" )
+GAME( 1997, eggventr, 0,        lethalj, eggventr, 0, ROT0, "The Game Room", "Egg Venture" )
+GAME( 1997, eggvntdx, eggventr, lethalj, eggvntdx, 0, ROT0, "The Game Room", "Egg Venture Deluxe" )

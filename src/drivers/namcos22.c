@@ -1,60 +1,155 @@
 /**
- * driver\namcos22.c
+ * @file src/drivers/namcos22.c
  *
  * This driver describes Namco's System22 and Super System 22 hardware.
  * Currently, only Prop Cycle is fully playable.
  *
- * feel free to contact pstroffo@yahoo.com (Phil Stroffolino) with any questions.
+ * driver provided with thanks to:
+ * - pstroffo (at) yahoo.com (Phil Stroffolino)
+ * - trackmaster (at) gmx.net (Björn Sunder)
+ * - team vivanonno
  *
+ * Self Test Info:
+ *    Prop Cycle DSP tests:
+ *        MD ROM-PROGRAM      (not-yet-working)
+ *        MD-DOWNLOAD       - confirms that main CPU can upload custom code to master DSP
+ *        MD-EXTERNAL-RAM   - tests private RAM used by master DSP
+ *        C-RAM CHECK BY MD - tests communications RAM, shared by master DSP and main CPU
+ *        PDP LOOP TEST     - exercises multi-command DMA transfer
+ *        PDP BLOCK MOVE    - exercises DMA block transfer
+ *        POINT RAM         - RAM test for "Point RAM" (not directly accessible by any CPU)
+ *        CUSTOM IC STATUS  - currently hacked to always report "good"
+ *        SD ROM-PRG        - confirms that master DSP can upload custom code to run on slave DSP
+ *        SD EXTERNAL-RAM   - tests private RAM used by slave DSP
+ *        DATA FLOW TEST 1    (not-yet-working)
+ *        DATA FLOW TEST 2    (not-yet-working)
+ *        POINT ROM TEST    - checksums the "Point ROMs"
  *
- * Hardware Notes:
- * - Serial controller is C139 SCI (same as System21).
- * - S22 has two TI320C25 DSP (printed as C71).
- * - Main DSP performs handling display list and matrix operation, and kicks hardware.
- * - Sub DSP may calculates shadings and sub operations.
- * - main CPU copies some DSP code to shared RAM on start
+ *    Ridge Racer (Japan) tests:
+ *        TEST 1a: MD-EXTERNAL-RAM
+ *        TEST 1b: C-RAM CHECK BY MD
+ *        TEST 2:  (not-yet-working)
+ *        TEST 3:  SD EXTERNAL-RAM
+ *        TEST 4:  DATA FLOW TEST 1 (not-yet-working)
+ *        TEST 5:  DATA FLOW TEST 2 (not-yet-working)
+ *        TEST 6:  POINT RAM
+ *
+ * IO MCU:
+ * - not yet emulated
+ * - generates sound/music
+ * - provides input port management (copying to shared RAM)
+ * - coinage handling
+ * - manages external physical devides (i.e. lamps, fans, force feedback)
  * - C74 is sound MCU, Mitsubishi M37702 MCU with mask ROM
- * - some external subroutines for C74 is also embedded
- * - Super System22 has a different memory map, sound system, and an additional 2d sprite layer.
+ * - some external subroutines for C74 are also embedded
  *
+ * Master DSP DSP:
+ * - S22 has two TI320C25 DSP (printed as C71).
+ * - the master DSP provides display list parsing
+ * - currently, the slave DSP's behavior is largely simulated
+ * - TODO: "burst mode" used for DSP data transmission?
+ * - TODO: acquire real internal DSP code via trojan or other means
+ * - TODO: document "direct-drawn polygon" handling (main CPU talks directly to 'render device')
+ * - TODO: investigate each broken game, for clues about missing functionality
+ * - TODO: further study data flow tests
+ *
+ * Communications RAM
+ * - seen as 32 bit memory by main 68k CPU (namcos22_polygonram)
+ * - seen as 16 bit memory by master DSP (addr 0x8000..0xffff); upper/lower word is selectable
+ * - not addressable by slave DSP
+ *
+ * Point ROMs
+ * - encodes 3d model data
+ * - not directly addressable by any CPU
+ *
+ * Point RAM
+ * - same address space as Point ROMs
+ * - not directly addressable by any CPU
+ *
+ * Link Feature:
+ * - some (typically racing) games may be linked together
+ * - serial controller is C139 SCI (same as System21).
+ *
+ * "Super" System22
+ * - different memory map
+ * - different CPU controller register layout
+ * - differences in sound system
+ * - additional 2d sprite layer
+ * - Point RAM starts at 0xf80000 rather than 0xf00000
+ *
+ **********************************************************************************************************
+ * SYSTEM22 Known Custom Chips
+ *
+ * CPU PCB:
+ *
+ *  C71 TI TMS320C25 DSP
+ * 	C71 WEYW40116 (TMS320C25 Main/Sub DSP)
+ * 	C71 D72260FN 980 FE-5CA891W
+ *
+ * 	M5M5178AP-25 (CPU 16R, 17R, 19R, 20R) DSP Work RAM (8K x 8bit x 2 x 2)
+ *
+ * 	Notes:
+ * 		NOP opcode: 0x5500
+ * 		RET opcode: 0xce26
+ *
+ *  C74 Mitsubishi M37702 MCU
+ * 	C74 159 408600 (OLD SUB)
+ * 	C74 159 543100 (NEW SUB)
+ * 	C74 159 414600 (OLD I/O)
+ * 	C74 159 437600 (NEW I/O)
+ *
+ * C195 (Shared SRAM Controller)
+ * C196 CPP x 6
+ * C199 (CPU 18K) x 1
+ * C317 IDC (CPU 15E) x 1 (S21B)
+ * C337 PFP x 1
+ * C342 x 1 (S21B)
+ * C352 (32ch PCM)
+ * C353 x 1
+ *
+ *
+ * VIDEO PCB:
+ *
+ * C305 (Palette)
+ * C335
+ * 	9C, 10C
+ * 	12D, 12E
+ * 	14C
+ * C300
+ * 	18B, 18C, 20B, 20C, 22B, 22C
+ * Cxxx
+ * 	34R, 35R
+ *
+ * TI TBP28L22N (256 x 8bit PROM)
+ * 	VIDEO 2D, 3D, 4D (RGB Gamma LUT ROM)
+ *
+ * 	Notes: RR1.GAM (for Ridge Racer 1/2, Rave Racer)
  **********************************************************************************************************
  *
  * Known issues:
- * - no emulation of the MCU.  The MCU provides sound and input port handling.  Proper emulation will
- *   obviate the need for a great many hacks in this driver.
  *
- * - no emulation of the DSP processors.  The DSP processors are used as slaves to render 3d scenes.
- *   All current functionality is simulated based on a study of the raw scene description and known behaviors
- *   of the games running on real hardware.  A proper emulation of the DSP processors will provide two things:
- *   1. Eliminate guesswork and errors in our simulation.  In particular, depth BIAS feature, used to
- *      manage draw order is fairly complex.
- *   2. Allow any game-specific DSP code to function correctly.  It seems that the DSP functionality varies
- *      very little from one game to the next.  But each game includes one or more self tests that involve
- *      custom code.  And an understanding of the DSP code might help to fix games like Alpine Ski or Air Combat22.
- *
+ * - depth bias is not yet correctly emulated
+ * - text layer row placement may be incorrect
+ * - independent fader controls for sprite/polygon/text are not yet hooked up
+ * - depth cueing (fog) feature is not yet supported
+ * - polygon-tilemap priority is not yet implemented
+ * - the optional pre-vertex lighting feature is not yet implemented
+ * - translucency effects for text layer, sprites(?) are not yet hooked up
  * - the intensity values used with gouraud shading aren't being interpretted quite right.
  *   Cap of vivanonno team suggests to interpret it in two ways:
  *			(a) 0x00 <= value <= 0x40 : simple scaling for source color. 0x40 means original color.
  *			(b) 0x40 <  value <= 0xff : saturates to white color. (interpolation or add).
  * 			The master contrast fader at 0x90020000 also can be fed such a strong power used for white-out.
  *
- * - our video driver does not yet handle orthogonal fader controls, or polygon-tilemap priority.
- *   On real hardware, it is possible to fade the polygon layer as a whole independently from the sprite layer
- *   or tilemap layer.
- *   And on real hardware, it is possible for a polygon to be marked so that it appears in front or behind
- *   the tilemap layer.
- *
  * Time Crisis notes:
- * - some memory tests fail because of MCU/DSP hacks.  These can be patched out or skipped using MAME's debugger,
- *   but even if they all pass, the game does not start up.  It may be something simple - missing status bits or
- *   bad interrupt handling.
+ * - no collision detection(!?)
+ * - force feedback for gun
  *
  * Prop Cycle notes:
  * - motor output: fan, blows air towards player when flying fast
  * - lamp output: start button can light up
  * - steering yoke should be analog
  * - could use a new analog input port type for pedal speed
- * - needs nvmem save
  *
  *	The "dipswitch" settings are ignored - this isn't a bug.  The Prop Cycle software
  *  explicitly clears the chunk of work RAM used to cache the 8 bit dipswitch value
@@ -63,88 +158,949 @@
  *
  *	When the red namco logos slides in from top right and bottom left during splash screen,
  *	it is supposed to be translucent with respect to the polygon layer
+ */
+#include "namcos22.h"
+#include "cpu/tms32025/tms32025.h"
+
+enum namcos22_gametype namcos22_gametype; /* used for game-specific hacks */
+static int mbSuperSystem22; /* used to dispatch Sys22/SuperSys22 differences */
+
+static data32_t *namcos22_shareram;
+static data32_t *namcos22_C139_SCI;
+static data32_t *namcos22_system_controller;
+static data32_t *namcos22_nvmem;
+static size_t namcos22_nvmem_size;
+static data8_t namcos22_credits;
+static data16_t mMasterBIOZ;
+static data32_t *mpPointRAM;
+
+static void
+InitMasterDSP( void )
+{
+	data16_t pc = 0x0000;
+	data16_t *pMem = (data16_t *)memory_region(REGION_CPU2);
+
+	/* RESET */
+	pc = 0x0000;
+	pMem[pc++] = 0xff80; /* b */
+	pMem[pc++] = 0x0200;
+	pc = 0x200;
+	pMem[pc++] = 0xc804; /* ldpk 004h */
+	pMem[pc++] = 0xca00; /* zac */
+	pMem[pc++] = 0x6010; /* sacl $10,0 [used to signal "low word"] */
+	pMem[pc++] = 0x600c; /* sacl $0C,0 [draw counter-related]*/
+	pMem[pc++] = 0x6047; /* sacl $47,0 [busy flag] */
+	pMem[pc++] = 0x6045; /* sacl $45,0 */
+	pMem[pc++] = 0x6057; /* sacl $57,0 */
+	pMem[pc++] = 0x6013; /* sacl $13,0 */
+	pMem[pc++] = 0x6049; /* sacl $49,0 */
+
+	pMem[pc++] = 0xca01; /* lack 01h */
+	pMem[pc++] = 0x6011; /* sacl $11,0 [used to signal "high word"] */
+	pMem[pc++] = 0x600d; /* sacl $0d,0 [draw counter (0x1e..0x00)] */
+
+	pMem[pc++] = 0xca02; /* lack 02h */
+	pMem[pc++] = 0x601e; /* sacl $1e,0 [used to signal sign-extended 16 bit writes?] */
+
+	/* initial command to slave DSP (to wipe screen?) */
+	pMem[pc++] = 0xD001; pMem[pc++] = 0x0000; // lalk 0h,0
+	pMem[pc++] = 0x5588; // larp 0
+
+	pMem[pc++] = 0xD000; pMem[pc++] = 0x0280; // lrlk AR0,0280h
+	pMem[pc++] = 0x60A0; // sacl *+,0
+	pMem[pc++] = 0x60A0; // sacl *+,0
+	pMem[pc++] = 0x60A0; // sacl *+,0
+	pMem[pc++] = 0x60A0; // sacl *+,0
+
+	pMem[pc++] = 0xD000; pMem[pc++] = 0x02a0; // lrlk AR0,02a0h
+	pMem[pc++] = 0x60A0; // sacl *+,0
+	pMem[pc++] = 0x60A0; // sacl *+,0
+	pMem[pc++] = 0x60A0; // sacl *+,0
+	pMem[pc++] = 0x60A0; // sacl *+,0
+
+	pMem[pc++] = 0xC800;//ldpk 000h
+	pMem[pc++] = 0xCA01;//lack 01h (INT0)
+	pMem[pc++] = 0x6004;//sacl $04,0
+	pMem[pc++] = 0xC804;//ldpk 004h
+
+	pMem[pc++] = 0xD700;
+	pMem[pc++] = 0x027f; /* lrlk AR7,007fh */
+
+	pMem[pc++] = 0xD100; //lrlk AR1
+	pMem[pc++] = 0x4004; //4004
+	pMem[pc++] = 0x5589; //larp 1
+	pMem[pc++] = 0x2080; //lac  *,0h
+	pMem[pc++] = 0xCE25; //bacc
+
+	/* INT0 */
+	pc = 0x0002;
+	pMem[pc++] = 0xff80; /* b */
+	pMem[pc++] = 0x0100;
+	pc = 0x100;
+	pMem[pc++] = 0x558F; //larp 7
+	pMem[pc++] = 0x7990; //sst1 *-
+	pMem[pc++] = 0x7890; //sst  *-
+	pMem[pc++] = 0x6890; //sach *-,0
+	pMem[pc++] = 0x6090; //sacl *-,0
+	/* HACK! direct output for display list parsing */
+	pMem[pc++] = 0xD500; // lrlk AR5,8300h
+	pMem[pc++] = 0x8300;
+	pMem[pc++] = 0x7544; // sar  AR5,$44
+	/* branch indirect to address at ram[0x4003] */
+	pMem[pc++] = 0xC880; //ldpk 080h
+	pMem[pc++] = 0x2003; //lac  $03,0h (ram[0x4003])
+	pMem[pc++] = 0xC804; //ldpk 004h
+	pMem[pc++] = 0xCE25; //bacc
+
+	/* INT1 */
+	pc = 0x0004;
+	pMem[pc++] = 0xff80; /* b */
+	pMem[pc++] = 0x0110;
+	pc = 0x110;
+	pMem[pc++] = 0xCE26; /* ret */
+
+	/* INT2 */
+	pc = 0x0006;
+	pMem[pc++] = 0xff80; /* b */
+	pMem[pc++] = 0x0120;
+	pc = 0x120;
+	pMem[pc++] = 0xCE26; /* ret */
+
+	/* TINT */
+	pc = 0x0018;
+	pMem[pc++] = 0xff80; /* b */
+	pMem[pc++] = 0x0130;
+	pc = 0x130;
+	pMem[pc++] = 0xCE26; /* ret */
+
+	/* RINT (serial receive) */
+	pc = 0x001a;
+	pMem[pc++] = 0xff80; /* b */
+	pMem[pc++] = 0x0140;
+	pc = 0x140;
+	pMem[pc++] = 0x558F; //larp 7
+	pMem[pc++] = 0x7990; //sst1 *-
+	pMem[pc++] = 0x7890; //sst  *-
+	pMem[pc++] = 0x6890; //sach *-,0
+	pMem[pc++] = 0x6090; //sacl *-,0
+	pMem[pc++] = 0xC804; //ldpk 004h
+	pMem[pc++] = 0x203e; //lac  $3e,0h
+	pMem[pc++] = 0xCE25; //bacc
+
+	/* XINT (serial transmit) */
+	pc = 0x001c;
+	pMem[pc++] = 0xff80; /* b */
+	pMem[pc++] = 0x0150;
+	pc = 0x150;
+	pMem[pc++] = 0x558F; //larp 7
+	pMem[pc++] = 0x7990; //sst1 *-
+	pMem[pc++] = 0x7890; //sst  *-
+	pMem[pc++] = 0x6890; //sach *-,0
+	pMem[pc++] = 0x6090; //sacl *-,0
+	pMem[pc++] = 0xC804; //ldpk 004h
+	pMem[pc++] = 0x203f; //lac  $3f,0h
+	pMem[pc++] = 0xCE25; //bacc
+
+	cpunum_set_halt_line(1,ASSERT_LINE); /* master DSP */
+}
+
+static void
+InitSlaveDSP( void )
+{
+	data16_t pc = 0x0000;
+	data16_t *pMem = (data16_t *)memory_region(REGION_CPU3);
+
+	/* INT0 */
+	pc = 0x0002;
+	pMem[pc++] = 0xff80; /* b */
+	pMem[pc++] = 0x0100;
+	pc = 0x100;
+	pMem[pc++] = 0xCE26; /* ret */
+
+	/* INT1 */
+	pc = 0x0004;
+	pMem[pc++] = 0xff80; /* b */
+	pMem[pc++] = 0x0110;
+	pc = 0x110;
+	pMem[pc++] = 0xCE26; /* ret */
+
+	/* INT2 */
+	pc = 0x0006;
+	pMem[pc++] = 0xff80; /* b */
+	pMem[pc++] = 0x0120;
+	pc = 0x120;
+	pMem[pc++] = 0xCE26; /* ret */
+
+	/* TINT */
+	pc = 0x0018;
+	pMem[pc++] = 0xff80; /* b */
+	pMem[pc++] = 0x0130;
+	pc = 0x130;
+	pMem[pc++] = 0xCE26; /* ret */
+
+	/* RINT (serial receive) */
+	pc = 0x001a;
+	pMem[pc++] = 0xff80; /* b */
+	pMem[pc++] = 0x0140;
+	pc = 0x140;
+	pMem[pc++] = 0x558F; //larp 7
+	pMem[pc++] = 0x7990; //sst1 *-
+	pMem[pc++] = 0x7890; //sst  *-
+	pMem[pc++] = 0x6890; //sach *-,0
+	pMem[pc++] = 0x6090; //sacl *-,0
+	pMem[pc++] = 0xC804; //ldpk 004h
+	pMem[pc++] = 0x203e; //lac  $3e,0h
+	pMem[pc++] = 0xCE25; //bacc
+
+	/* XINT (serial transmit) */
+	pc = 0x001c;
+	pMem[pc++] = 0xff80; /* b */
+	pMem[pc++] = 0x0150;
+	pc = 0x150;
+	pMem[pc++] = 0x558F; //larp 7
+	pMem[pc++] = 0x7990; //sst1 *-
+	pMem[pc++] = 0x7890; //sst  *-
+	pMem[pc++] = 0x6890; //sach *-,0
+	pMem[pc++] = 0x6090; //sacl *-,0
+	pMem[pc++] = 0xC804; //ldpk 004h
+	pMem[pc++] = 0x203f; //lac  $3f,0h
+	pMem[pc++] = 0xCE25; //bacc (TBR)
+
+	/* RESET */
+	pc = 0x0000;
+	pMem[pc++] = 0xff80; /* b */
+	pMem[pc++] = 0x0200;
+	pc = 0x200;
+	pMem[pc++] = 0xc804; /* ldpk 004h */
+
+	pMem[pc++] = 0xca00; /* zac */
+	pMem[pc++] = 0x6010; /* sacl $10,0 (constant zero) */
+	pMem[pc++] = 0x6010; /* sacl $25,0 (???) */
+
+	pMem[pc++] = 0xca01; /* lack 01h */
+	pMem[pc++] = 0x6011; /* sacl $11,0 (constant one) */
+
+	pMem[pc++] = 0xD001; // lalk 8008
+	pMem[pc++] = 0x8008;
+	pMem[pc++] = 0xce24; // cala
+
+	pMem[pc++] = 0xD700;
+	pMem[pc++] = 0x027f; /* lrlk AR7,007fh */
+
+	pMem[pc++] = 0xff80; /* b */
+//	pMem[pc++] = pc-1; /* GCC doesn't like this */
+	pMem[pc]=pc; pc++;
+
+	cpunum_set_halt_line(2,ASSERT_LINE);
+}
+
+static void
+InitDSP( int bSuperSystem22 )
+{
+	mbSuperSystem22 = bSuperSystem22;
+	mpPointRAM = auto_malloc(0x20000*sizeof(*mpPointRAM));
+	InitMasterDSP();
+	InitSlaveDSP();
+}
+
+extern data32_t namcos22_point_rom_r( offs_t offs );
+
+static READ16_HANDLER( pdp_status_r )
+{
+	return mMasterBIOZ;
+}
+
+static void
+WriteToPointRAM( offs_t offs, data32_t data )
+{
+	offs &= 0xffffff; /* 24 bit addressing */
+	if( mbSuperSystem22 )
+	{
+		if( offs>=0xf80000 && offs<=0xf9ffff )
+		{
+			mpPointRAM[offs-0xf80000] = data;
+		}
+	}
+	else
+	{
+		if( offs>=0xf00000 && offs<=0xf1ffff )
+		{
+			mpPointRAM[offs-0xf00000] = data;
+		}
+	}
+}
+
+static data32_t
+ReadFromPointRAM( offs_t offs )
+{
+	offs &= 0xffffff; /* 24 bit addressing */
+	if( mbSuperSystem22 )
+	{
+		if( offs>=0xf80000 && offs<=0xf9ffff )
+		{
+			return mpPointRAM[offs-0xf80000];
+		}
+	}
+	else
+	{
+		if( offs>=0xf00000 && offs<=0xf1ffff )
+		{
+			return mpPointRAM[offs-0xf00000];
+		}
+	}
+	return namcos22_point_rom_r(offs);
+}
+
+static data32_t
+ReadFromCommRAM( offs_t offs )
+{
+	return namcos22_polygonram[offs&0x7fff];
+}
+
+static void
+WriteToCommRAM( offs_t offs, data32_t data )
+{
+	namcos22_polygonram[offs&0x7fff] = data;
+}
+
+#define SLAVE_BUFSIZE 0x1000
+static data32_t mSlaveBuf[SLAVE_BUFSIZE];
+static int mSlaveBufWriteIdx;
+static int mSlaveBufReadIdx;
+
+static void
+WriteDataToSlaveBuf( data32_t data )
+{
+	mSlaveBuf[mSlaveBufWriteIdx++] = data;
+	if( mSlaveBufWriteIdx>=SLAVE_BUFSIZE )
+	{
+		mSlaveBufWriteIdx = 0;
+	}
+}
+
+static int
+SlaveBufSize( void )
+{
+	return (mSlaveBufWriteIdx - mSlaveBufReadIdx)&(SLAVE_BUFSIZE-1);
+}
+
+static data32_t
+ReadDataFromSlaveBuf( void )
+{
+	data32_t result = mSlaveBuf[mSlaveBufReadIdx++];
+	if( mSlaveBufReadIdx>=SLAVE_BUFSIZE )
+	{
+		mSlaveBufReadIdx = 0;
+	}
+	return result;
+}
+
+static READ16_HANDLER( pdp_begin_r )
+{
+	/* this feature appears to be only used on Super System22 hardware */
+	if( mbSuperSystem22 )
+	{
+		/* last word in Comm RAM points to first command in chain */
+		data16_t offs = namcos22_polygonram[0x7fff];
+		data16_t next, marker;
+		mMasterBIOZ = 1;
+		for(;;)
+		{
+			data16_t cmd = ReadFromCommRAM(offs++);
+			data32_t srcAddr;
+			data32_t dstAddr;
+			data32_t numWords;
+			data32_t data;
+			switch( cmd )
+			{
+			case 0xfff0:
+				/* NOP? used in 'PDP LOOP TEST' */
+				break;
+
+			case 0xfff5: /* write to point ram */
+				dstAddr = ReadFromCommRAM(offs++); /* 32 bit PointRAM address */
+				data    = ReadFromCommRAM(offs++);    /* 24 bit data */
+				WriteToPointRAM( dstAddr, data );
+				break;
+
+			case 0xfff6: /* read word from point ram */
+				srcAddr = ReadFromCommRAM(offs++); /* 32 bit PointRAM address */
+				dstAddr = ReadFromCommRAM(offs++); /* CommRAM address; receives 24 bit PointRAM data */
+				data    = ReadFromPointRAM( srcAddr );
+				WriteToCommRAM( dstAddr, data );
+				break;
+
+			case 0xfff7: /* block move (CommRAM to CommRAM) */
+				srcAddr  = ReadFromCommRAM(offs++);
+				dstAddr  = ReadFromCommRAM(offs++);
+				numWords = ReadFromCommRAM(offs++);
+				while( numWords-- )
+				{
+					data = ReadFromCommRAM(srcAddr++);
+					WriteToCommRAM( dstAddr++, data );
+				}
+				break;
+
+			case 0xfffa: /* read block from point ram */
+				srcAddr  = ReadFromCommRAM(offs++);  /* 32 bit PointRAM address */
+				dstAddr  = ReadFromCommRAM(offs++);  /* CommRAM address; receives data */
+				numWords = ReadFromCommRAM(offs++); /* block size */
+				while( numWords-- )
+				{
+					data = ReadFromPointRAM( srcAddr++ );
+					WriteToCommRAM( dstAddr++, data );
+				}
+				break;
+
+			case 0xfffb: /* write block to point ram */
+				dstAddr  = ReadFromCommRAM(offs++);  /* 32 bit PointRAM address */
+				numWords = ReadFromCommRAM(offs++); /* block size */
+				while( numWords-- )
+				{
+					data = ReadFromCommRAM( offs++ ); /* 24 bit source data */
+					WriteToPointRAM( dstAddr++, data );
+				}
+				break;
+
+			case 0xfffc: /* point ram to point ram */
+				srcAddr  = ReadFromCommRAM(offs++);
+				dstAddr  = ReadFromCommRAM(offs++);
+				numWords = ReadFromCommRAM(offs++);
+				while( numWords-- )
+				{
+					data = ReadFromPointRAM( srcAddr++ );
+					WriteToPointRAM( dstAddr++, data );
+				}
+				break;
+
+			case 0xfffd: /* send data to slave? */
+				numWords = ReadFromCommRAM(offs++);
+				while( numWords-- )
+				{
+					data = ReadFromCommRAM(offs++);
+					WriteDataToSlaveBuf( data );
+				}
+				continue;
+
+			case 0xfffe:
+				/* What is this? It is used during Prop Cycle PointROM test. */
+				data = ReadFromCommRAM(offs++); /* ??? */
+				continue;
+
+			case 0xffff:
+				return 0;
+
+			default:
+				logerror( "unknown PDP cmd = 0x%04x!\n", cmd );
+				return 0;
+			}
+			marker = ReadFromCommRAM(offs++);
+			next = ReadFromCommRAM(offs++);
+			offs = next;
+		} /* for(;;) */
+	} /* mbSuperSystem22 */
+	return 0;
+} /* pdp_begin_r */
+
+/***************************************************************/
+static data16_t *mpSlaveExternalRAM;
+
+static READ16_HANDLER( slave_external_ram_r )
+{
+	return mpSlaveExternalRAM[offset];
+}
+
+static WRITE16_HANDLER( slave_external_ram_w )
+{
+	COMBINE_DATA( &mpSlaveExternalRAM[offset] );
+}
+/***************************************************************/
+
+// static offs_t mDspPointROMAddr; /* unused */
+
+extern void namcos22_dsp_enable( void );
+
+static void HaltSlaveDSP( void )
+{
+	cpunum_suspend(2, SUSPEND_REASON_HALT, 1);
+}
+
+static void EnableMasterDSP( void )
+{
+	cpunum_reset(1,NULL,NULL); /* immediate */
+	cpunum_resume(1, SUSPEND_REASON_HALT);
+}
+
+static void EnableSlaveDSP( void )
+{
+	cpunum_reset(2,NULL,NULL); /* immediate */
+	cpunum_resume(2, SUSPEND_REASON_HALT);
+}
+
+static data32_t
+ReadPointROM( offs_t addr )
+{
+	data32_t result = 0;
+	size_t size = memory_region_length(REGION_GFX4)/3;
+	if( addr<size )
+	{
+		const data8_t *pPolyL = memory_region(REGION_GFX4);
+		const data8_t *pPolyM = pPolyL + size;
+		const data8_t *pPolyH = pPolyM + size;
+		result = (pPolyH[addr]<<16)|(pPolyM[addr]<<8)|pPolyL[addr];
+		if( result&0x00800000 )
+		{
+			result |= 0xff000000; /* sign extend */
+		}
+	}
+	return result;
+} /* GetPolyData */
+
+static READ16_HANDLER( dsp_HOLD_signal_r )
+{
+	return 0;
+}
+
+static WRITE16_HANDLER( dsp_HOLD_ACK_w )
+{
+}
+
+static WRITE16_HANDLER( dsp_XF_output_w )
+{
+}
+
+/************************************************************/
+
+static data32_t mPointAddr;
+static data32_t mPointData;
+
+static WRITE16_HANDLER( point_ram_idx_w )
+{
+	mPointAddr<<=16;
+	mPointAddr |= data;
+}
+
+static WRITE16_HANDLER( point_ram_loword_iw )
+{
+	mPointData |= data;
+	WriteToPointRAM( mPointAddr++, mPointData );
+}
+
+static WRITE16_HANDLER( point_ram_hiword_w )
+{
+	mPointData = (data<<16);
+}
+
+static READ16_HANDLER( point_ram_loword_r )
+{
+	return ReadFromPointRAM(mPointAddr)&0xffff;
+}
+
+static READ16_HANDLER( point_ram_hiword_ir )
+{
+	return ReadFromPointRAM(mPointAddr++)>>16;
+}
+
+/************************************************************/
+
+static READ16_HANDLER( dsp_unk2_r )
+{
+	return 0;
+}
+
+static WRITE16_HANDLER( dsp_unk2_w )
+{
+}
+
+static enum
+{
+	eDSP_UPLOAD_READY,
+	eDSP_UPLOAD_DEST,
+	eDSP_UPLOAD_DATA
+} mDspUploadState;
+
+
+static READ16_HANDLER( dsp_unk_port3_r )
+{
+	mMasterBIOZ = 0;
+	mDspUploadState = eDSP_UPLOAD_READY;
+	return 0;
+}
+
+static WRITE16_HANDLER( upload_code_to_slave_dsp_w )
+{
+	static int mUploadDestIdx;
+
+	switch( mDspUploadState )
+	{
+	case eDSP_UPLOAD_READY:
+		logerror( "UPLOAD_READY; cmd = 0x%x\n", data );
+		if( data==0 )
+		{
+			HaltSlaveDSP();
+		}
+		else if( data==1 )
+		{
+			mDspUploadState = eDSP_UPLOAD_DEST;
+		}
+		else if( data==2 )
+		{
+			/* custom IC poke */
+		}
+		else if( data==3 )
+		{
+			EnableSlaveDSP();
+		}
+		else if( data==4 )
+		{
+		}
+		else if( data == 0x10 )
+		{ /* serial i/o related? */
+			EnableSlaveDSP();
+		}
+		else
+		{
+			logerror( "%08x: master port#7: 0x%04x\n",
+				activecpu_get_previouspc(), data );
+		}
+		break;
+
+	case eDSP_UPLOAD_DEST:
+		mUploadDestIdx = data-0x8000;
+		mDspUploadState = eDSP_UPLOAD_DATA;
+		break;
+
+	case eDSP_UPLOAD_DATA:
+		mpSlaveExternalRAM[mUploadDestIdx++] = data;
+		break;
+
+	default:
+		break;
+	}
+}
+
+static READ16_HANDLER( dsp_unk8_r )
+{
+	/* bit 0x0001 is busy signal */
+	return 0;
+}
+
+static WRITE16_HANDLER( dsp_unk8_w )
+{
+}
+
+static READ16_HANDLER( custom_ic_status_r )
+{
+	/* bit 0x0001 signals completion */
+	return 0x0063;
+}
+
+static READ16_HANDLER( dsp_upload_status_r )
+{
+	/**
+	 * bit 0x0001 is polled to confirm that code/data has been
+	 * successfully uploaded to the slave dsp via port 0x7.
+	 */
+	return 0x0000;
+}
+
+/***************************************************************/
+static data16_t *mpMasterExternalRAM;
+
+static READ16_HANDLER( master_external_ram_r )
+{
+	return mpMasterExternalRAM[offset];
+}
+
+static WRITE16_HANDLER( master_external_ram_w )
+{
+	COMBINE_DATA( &mpMasterExternalRAM[offset] );
+}
+
+/***************************************************************/
+
+#define SERIAL_IO_PERIOD 256
+
+static data16_t mSerialDataSlaveToMasterNext;
+static data16_t mSerialDataSlaveToMasterCurrent;
+
+static WRITE16_HANDLER( slave_serial_io_w )
+{
+	mSerialDataSlaveToMasterNext = data;
+	logerror( "slave_serial_io_w(%04x)\n", data );
+}
+
+static READ16_HANDLER( master_serial_io_r )
+{
+	logerror( "master_serial_io_r() == %04x\n",
+		mSerialDataSlaveToMasterCurrent );
+	return mSerialDataSlaveToMasterCurrent;
+}
+
+static INTERRUPT_GEN( dsp_serial_pulse1 )
+{
+	mSerialDataSlaveToMasterCurrent = mSerialDataSlaveToMasterNext;
+
+	if( cpu_getiloops()==0 )
+	{
+		//rnew = nthbyte(namcos22_system_controller,0x1c);
+		cpu_set_irq_line(1, TMS32025_INT0, HOLD_LINE);
+	}
+
+	cpu_set_irq_line(1, TMS32025_RINT, HOLD_LINE);
+	cpu_set_irq_line(1, TMS32025_XINT, HOLD_LINE);
+	cpu_set_irq_line(2, TMS32025_RINT, HOLD_LINE);
+	cpu_set_irq_line(2, TMS32025_XINT, HOLD_LINE);
+}
+
+/***************************************************************/
+
+static WRITE16_HANDLER( dsp_unk_porta_w )
+{
+	/**
+	 * main CPU related?
+	 * gets written 0x00, 0x01, 0x03
+	 */
+}
+
+static WRITE16_HANDLER( dsp_led_w )
+{
+	/* I believe this port controls diagnostic LEDs on the DSP PCB. */
+}
+
+/**
+ * master dsp usage pattern:
  *
- * TBA:
- *	- fix Alpine Racer (Super System22) - encrypted point ROMs
+ * 4059: out  $10,PA$8
+ * 405A: in   $09,PA$8; lac  $09,0h; andk 0001h,0h; bnz  $405A *
+ * 4060: out  $11,PA$8
  *
- * Special thanks to "team vivanonno" for System22 memory map, and insights on object list
- * parsing.
+ * 4061: out  $10,PA$F
+ * 4062: nop; rpt  *+; out  *+,PA$C // send data to 'render device'
+ * 4065: out  $11,PA$F
  *
- **********************************************************************************************************
- *
- * Detailed Hardware Notes:
- *
- * Following is a Memory Map for SYSTEM22 hardware courtesy of cap@vivanonno team (22/07/2003)
+ * 4066: out  $10,PA$9
+ * 4067: nop
+ * 4068: out  $11,PA$9
+ */
 
-0x00000000 - 0x001fffff	Program ROM (2M bytes)
+/***************************************************************/
 
-			Mounted position:
-				LLB: CPU 4D
-				LMB: CPU 2D
-				UMB: CPU 8D
-				UUB: CPU 6D
+static ADDRESS_MAP_START( master_dsp_program, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x0000, 0x0fff) AM_READ(MRA16_ROM) /* internal ROM (4k words) */
+	AM_RANGE(0x4000, 0x7fff) AM_READ(MRA16_ROM) AM_BASE(&mpMasterExternalRAM)
+ADDRESS_MAP_END
 
-			Known ROM chip type:
-				TI TMS27C040-10
-				ST M27C4001-10
-				M27C4001-12Z
+static ADDRESS_MAP_START( master_dsp_data, ADDRESS_SPACE_DATA, 16 )
+	AM_RANGE(0x1000, 0x3fff) AM_READ(MRA16_RAM) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x4000, 0x7fff) AM_READ(master_external_ram_r) AM_WRITE(master_external_ram_w)
+	AM_RANGE(0x8000, 0xffff) AM_READ(namcos22_dspram16_r) AM_WRITE(namcos22_dspram16_w)
+ADDRESS_MAP_END
 
-0x10000000 - 0x1001ffff	Main RAM (128K bytes)
+static ADDRESS_MAP_START( master_dsp_io, ADDRESS_SPACE_IO, 16 )
+	AM_RANGE(0x0,0x0) AM_WRITE(point_ram_loword_iw) AM_READ(point_ram_loword_r)
+	AM_RANGE(0x1,0x1) AM_WRITE(point_ram_hiword_w) AM_READ(point_ram_hiword_ir)
+	AM_RANGE(0x2,0x2) AM_WRITE(dsp_unk2_w) AM_READ(pdp_begin_r)
+	AM_RANGE(0x3,0x3) AM_WRITE(point_ram_idx_w) AM_READ(dsp_unk_port3_r)
+	AM_RANGE(0x4,0x4) AM_WRITE(MWA16_NOP)
+	AM_RANGE(0x7,0x7) AM_WRITE(upload_code_to_slave_dsp_w)
+	AM_RANGE(0x8,0x8) AM_WRITE(MWA16_NOP) AM_READ(dsp_unk8_r)         /* trigger irq? */
+	AM_RANGE(0x9,0x9) AM_WRITE(MWA16_NOP) AM_READ(custom_ic_status_r) /* trigger irq? */
+	AM_RANGE(0xa,0xa) AM_WRITE(dsp_unk_porta_w)
+	AM_RANGE(0xb,0xb) AM_WRITE(MWA16_NOP) /* RINT-related? */
+	AM_RANGE(0xc,0xc) AM_WRITE(MWA16_NOP) /* render device? */
+	AM_RANGE(0xd,0xd) AM_WRITE(namcos22_dspram16_bank_w)
+	AM_RANGE(0xe,0xe) AM_WRITE(dsp_led_w)
+	AM_RANGE(0xf,0xf) AM_WRITE(MWA16_NOP) AM_READ(dsp_upload_status_r)
+	AM_RANGE(TMS32025_HOLD,  TMS32025_HOLD)  AM_READ(dsp_HOLD_signal_r)
+	AM_RANGE(TMS32025_HOLDA, TMS32025_HOLDA) AM_WRITE(dsp_HOLD_ACK_w)
+	AM_RANGE(TMS32025_XF,    TMS32025_XF)    AM_WRITE(dsp_XF_output_w)
+	AM_RANGE(TMS32025_BIO,   TMS32025_BIO)   AM_READ(pdp_status_r)
+	AM_RANGE(TMS32025_DR,    TMS32025_DR)    AM_READ(master_serial_io_r)
+ADDRESS_MAP_END
 
-			Mounted position:
-				CPU 3D, 5D, 7D, 9D
+/**********************************************************************************/
 
-			Known DRAM chip type:
-				TC55328P-25
-				N3441256P-15
+static READ16_HANDLER( dsp_BIOZ_r )
+{
+	return 1;
+}
 
-0x18000000 - 0x1801ffff	Main RAM (Mirror or Another Bank)
+static READ16_HANDLER( dsp_slave_port3_r )
+{
+	return 0x0010; /* ? */
+}
 
-			Mounted position:
-				unknown
+static READ16_HANDLER( dsp_slave_port4_r )
+{
+	return ReadDataFromSlaveBuf();
+}
 
-0x20000000 - 0x2000000f	KEYCUS
+static READ16_HANDLER( dsp_slave_port5_r )
+{
+/*	int numWords = SlaveBufSize();
+	int mode = 2;
+	return (numWords<<4) | mode;
+*/
+	return 0;
+}
 
-			Mounted position:
-				CPU 13R
-			Known chip type:
-				C370 (Ridge Racer, Ridge Racer 2)
-				C388 (Rave Racer)
-				C389? (Cyber Cycles)
-				C392? (Ace Driver Victory Lap)
+static READ16_HANDLER( dsp_slave_port6_r )
+{
+	/**
+	 * bit 0x9 indicates whether device at port2 is ready to receive data
+	 * bit 0xd indicates whether data is available from port4
+	 */
+	return 0;
+}
 
-			Notes (game-specific hacks):
-			 Ridge Racer
-				0x20000008 = 0x0172 (= 370)
-			 Ridge Racer 2
-				0x20000000 = 0x0172 (= 370)
-				0x20000008 = 0x0172 (= 370)
-			 Rave Racer
-				hacked temporarily:
-				0x00018200 = 0x60 (-> BRA instruction) (RV2-B)
-			 Cyber Cycles
-				0x20000002 = 0x0185 (= 389)
-			 Ace Driver Victory Lap
-				0x20000004 = 0x0188 (= 392)
+static WRITE16_HANDLER( dsp_slave_portc_w )
+{
+	/* Unknown; used before transmitting a command sequence.
+	 */
+}
 
-0x20010000 - 0x20013fff	C139 SCI Buffer
+static READ16_HANDLER( dsp_slave_port8_r )
+{
+	/* This reports  status of the device mapped at port 0xb.
+	 *
+	 * The slave dsp waits for bit 0x0001 to be zero before writing
+	 * a new command sequence.
+	 */
+	return 0; /* status */
+}
 
-			Mounted position:
-				CPU 4N
-			Known chip type:
-				M5M5179AP-25 (8k x 9bit SRAM)
-			Note:
-				Boot time check:
-				20010000 - 20011fff / bits=0x000001ff
+static READ16_HANDLER( dsp_slave_portb_r )
+{
+	/* The slave DSP reads before transmitting a command sequence.
+	 */
+	return 0;
+}
 
-	20010000 - 20011fff	TX Buffer
-	20012000 - 20013fff	RX FIFO Buffer (also used for TX Buffer)
+static WRITE16_HANDLER( dsp_slave_portb_w )
+{
+	/* The slave dsp uses this to transmit a command sequence
+	 * to an external device.
+	 */
+}
+/*****************************************************/
 
-0x20020000 - 0x2002000f	C139 SCI Register
+static ADDRESS_MAP_START( slave_dsp_program, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x0000, 0x0fff) AM_READ(MRA16_ROM) /* internal ROM */
+	AM_RANGE(0x8000, 0x9fff) AM_READ(MRA16_ROM) AM_BASE(&mpSlaveExternalRAM)
+ADDRESS_MAP_END
 
-			Mounted position:
-				CPU 4R
+static ADDRESS_MAP_START( slave_dsp_data, ADDRESS_SPACE_DATA, 16 )
+	AM_RANGE(0x8000, 0x9fff) AM_READ(slave_external_ram_r) AM_WRITE(slave_external_ram_w)
+ADDRESS_MAP_END
 
+static ADDRESS_MAP_START( slave_dsp_io, ADDRESS_SPACE_IO, 16 )
+	/* unknown signal */
+	AM_RANGE(0x3,0x3) AM_READ(dsp_slave_port3_r)
+
+	AM_RANGE(0x4,0x4) AM_READ(dsp_slave_port4_r)
+	AM_RANGE(0x5,0x5) AM_READ(dsp_slave_port5_r)
+	AM_RANGE(0x6,0x6) AM_WRITE(MWA16_NOP) AM_READ(dsp_slave_port6_r)
+
+	/* render device state */
+	AM_RANGE(0x8,0x8) AM_WRITE(MWA16_NOP) AM_READ(dsp_slave_port8_r)
+
+	/* render device */
+	AM_RANGE(0xb,0xb) AM_WRITE(dsp_slave_portb_w) AM_READ(dsp_slave_portb_r)
+
+	AM_RANGE(0xc,0xc) AM_WRITE(dsp_slave_portc_w)
+
+	AM_RANGE(TMS32025_HOLD,  TMS32025_HOLD)  AM_READ(dsp_HOLD_signal_r)
+	AM_RANGE(TMS32025_HOLDA, TMS32025_HOLDA) AM_WRITE(dsp_HOLD_ACK_w)
+	AM_RANGE(TMS32025_XF,    TMS32025_XF)    AM_WRITE(dsp_XF_output_w)
+	AM_RANGE(TMS32025_BIO,   TMS32025_BIO)   AM_READ(dsp_BIOZ_r)
+	AM_RANGE(TMS32025_DX,    TMS32025_DX)    AM_WRITE(slave_serial_io_w)
+ADDRESS_MAP_END
+
+/************************************************************************************/
+
+static NVRAM_HANDLER( namcos22 )
+{
+	int i;
+	data8_t data[4];
+	if( read_or_write )
+	{
+		for( i=0; i<namcos22_nvmem_size/4; i++ )
+		{
+			data32_t dword = namcos22_nvmem[i];
+			data[0] = dword>>24;
+			data[1] = (dword&0x00ff0000)>>16;
+			data[2] = (dword&0x0000ff00)>>8;
+			data[3] = dword&0xff;
+			mame_fwrite( file, data, 4 );
+		}
+	}
+	else
+	{
+		if( file )
+		{
+			for( i=0; i<namcos22_nvmem_size/4; i++ )
+			{
+				mame_fread( file, data, 4 );
+				namcos22_nvmem[i] = (data[0]<<24)|(data[1]<<16)|(data[2]<<8)|data[3];
+			}
+		}
+		else
+		{
+			memset( namcos22_nvmem, 0x00, namcos22_nvmem_size );
+			if( namcos22_gametype == NAMCOS22_TIME_CRISIS )
+			{
+				/* TBA: default gun calibration */
+			}
+		}
+	}
+}
+
+/* Super System22 supports a sprite layer.
+ * Sprites are rendered as part of the polygon draw list, based on a per-sprite Z attribute.
+ * Each sprite has explicit placement/color/zoom controls.
+ */
+static struct GfxLayout sprite_layout =
+{
+	32,32,
+	RGN_FRAC(1,1),
+	8,
+	{ 0,1,2,3,4,5,6,7 },
+	{
+		0*8,1*8,2*8,3*8,4*8,5*8,6*8,7*8,
+		8*8,9*8,10*8,11*8,12*8,13*8,14*8,15*8,
+		16*8,17*8,18*8,19*8,20*8,21*8,22*8,23*8,
+		24*8,25*8,26*8,27*8,28*8,29*8,30*8,31*8 },
+	{
+		0*32*8,1*32*8,2*32*8,3*32*8,4*32*8,5*32*8,6*32*8,7*32*8,
+		8*32*8,9*32*8,10*32*8,11*32*8,12*32*8,13*32*8,14*32*8,15*32*8,
+		16*32*8,17*32*8,18*32*8,19*32*8,20*32*8,21*32*8,22*32*8,23*32*8,
+		24*32*8,25*32*8,26*32*8,27*32*8,28*32*8,29*32*8,30*32*8,31*32*8 },
+	32*32*8
+};
+
+static struct GfxDecodeInfo gfxdecodeinfo[] =
+{
+	{ REGION_GFX1, 0, &sprite_layout,  0, 0x80 },
+	{ -1 },
+};
+
+/*********************************************************************************/
+
+/* prelim! */
+static READ32_HANDLER( namcos22_C139_SCI_r )
+{
+	switch( offset )
+	{
+	case 0x0/4: return 0x0004<<16;
+	default: return 0;
+	}
+}
+
+static WRITE32_HANDLER( namcos22_C139_SCI_w )
+{
+	COMBINE_DATA( &namcos22_C139_SCI[offset] );
+	/*
 	20020000  2	R/W	RX Status
 				0x01 : Frame Error
 				0x02 : Frame Received
@@ -169,256 +1125,1009 @@
 	2002000a  2	W	TX Frame Size
 	2002000c  2	R/W	RX FIFO Pointer (0x0000 - 0x0fff)
 	2002000e  2	W	TX FIFO Pointer (0x0000 - 0x1fff)
+	*/
+}
 
-0x40000000 - 0x4000001f	System Controller
+/*********************************************************************************/
 
-			Note:
-				Interrupt Control
-				Peripheral Control
+/**
+ * helper function used to read a byte from a chunk of 32 bit memory
+ */
+static data8_t
+nthbyte( const data32_t *pSource, int offs )
+{
+	pSource += offs/4;
+	return (pSource[0]<<((offs&3)*8))>>24;
+}
 
-	40000000	IRQ (unknown)
-	40000001
-	40000002	SCI IRQ level
-	40000003	IRQ (unknown)
-	40000004	VSYNC IRQ level
+static READ32_HANDLER( namcos22_system_controller_r )
+{
+	return namcos22_system_controller[offset];
+}
 
-	40000005	IRQ (unknown) acknowledge
-	40000006
-	40000007	SCI IRQ acknowledge
-	40000008	IRQ (unknown) acknowledge
-	40000009	VSYNC IRQ acknowledge
+void
+namcos22_UploadCodeToDSP( void )
+{
+	if( namcos22_polygonram[0x2c/4] == 0xffffffff )
+	{
+		data32_t comm_ram_addr = 0xc00/4;
+		data32_t point_ram_idc = namcos22_polygonram[0x44/4];
+		data32_t numWords = 1 + namcos22_polygonram[0x48/4];
+		data32_t mode = namcos22_polygonram[0x4c/4];
 
-	4000000a
-	4000000b	?
-	4000000c	?
-	4000000d
-	4000000e	?
-	4000000f
-	40000010	?
-	40000011	?
-	40000012	?
-	40000013	?
-	40000014	?
-	40000015	? (cyc1)
-	40000016	Watchdog timer reset
-	40000017
-	40000018	0 or 1 -> DSP control (reset?)
-	40000019	sub cpu reset?
-	4000001a	0 or 1 or 0xff -> DSP control
-	4000001b	?
-	4000001c
-	4000001d
-	4000001e
-	4000001f
+		if( mode==0xffffffff )
+		{ /* write data to point ram */
+			logerror( "point ram upload (point_ram_idc = 0x%08x; numWords=%08x\n",
+				point_ram_idc, numWords);
 
-0x48000000 - 0x4800003f	unknown (option)
+			while( numWords-- )
+			{
+				WriteToPointRAM( point_ram_idc++, namcos22_polygonram[comm_ram_addr++] );
+			}
+		}
+		else
+		{ /* read data from point ram */
+			logerror( "point ram download (point_ram_idc = 0x%08x; numWords=%08x\n",
+				point_ram_idc, numWords);
 
-			Notes:
-				this device maybe optional.
-				zero means not-connected.
-				this may relate to device at 0x94000000
+			while( numWords-- )
+			{
+				namcos22_polygonram[comm_ram_addr++] = ReadFromPointRAM( point_ram_idc++ );
+			}
+		}
+		namcos22_polygonram[0x44/4] = point_ram_idc;
+		namcos22_polygonram[0x2c/4] = 0; /* signal upload complete */
+//		debug_key_pressed = 1;
+	}
 
-0x50000000 - 0x50000fff	DIPSW etc.
+	if( namcos22_polygonram[0x30/4] == 0xffffffff )
+	{
+		data8_t mode;
+		if( mbSuperSystem22 )
+		{
+			mode = nthbyte(namcos22_system_controller,0x1c);
+		}
+		else
+		{
+			mode = nthbyte(namcos22_system_controller,0x1a);
+		}
+		if( mode ) /* 0x00, 0xff, 0x01 */
+		{
+			data16_t *pUploadDest = NULL;
+			offs_t dstLoc = 0x4000; /* default */
+			offs_t srcLoc = 0xc00/4;
+			data16_t size = namcos22_polygonram[srcLoc++];
+			int uploadType = namcos22_polygonram[srcLoc];
+			if( uploadType<0x8000 ) /* HACK */
+			{ /* master dsp upload */
+				pUploadDest = mpMasterExternalRAM - 0x4000;
+				EnableMasterDSP();
+				namcos22_dsp_enable(); /* placeholder; begin simulation of slave dsp's gfx processing */
+				uploadType = 1;
+			}
+			else
+			{ /* slave dsp upload */
+				pUploadDest = mpSlaveExternalRAM - 0x8000;
+				dstLoc = namcos22_polygonram[srcLoc++];
+				uploadType = 2;
+			}
 
-	0x50000000		DIPSW3
-	0x50000001		DIPSW2
+			logerror( "uploading dsp%d code (dst=0x%04x; len=0x%04x)\n",
+				uploadType, dstLoc, size );
 
-0x58000000 - 0x58001fff	EEPROM
+			if( pUploadDest )
+			{
+				while( size-- )
+				{
+					pUploadDest[dstLoc++] = namcos22_polygonram[srcLoc++];
+				}
+			}
+			namcos22_polygonram[0x30/4] = 0; /* signal upload complete */
+//			debug_key_pressed = 1;
+		}
+	}
+} /* namcos22_UploadCodeToDSP */
 
-			Mounted position:
-				CPU 9E
+static WRITE32_HANDLER( namcos22_system_controller_w )
+{
+	COMBINE_DATA( &namcos22_system_controller[offset] );
+	namcos22_UploadCodeToDSP();
+}
 
-			Known chip type:
-				HN58C65P-25 (8k x 8bit EEPROM)
+static WRITE32_HANDLER( namcos22_super_system_controller_w )
+{
+	COMBINE_DATA( &namcos22_system_controller[offset] );
+	namcos22_UploadCodeToDSP();
 
-0x60004000 - 0x6000bfff	C74 (Mitsubishi M37702 MCU) Shared RAM
+	/*
+			TimeCrisA            PropCycle		AirCombat22
+		700000 04					04				24
+		700001						02				21
+		700002						03				23
+		700003						01				22
+		700004 ack
+		700005 ack
+		700006 ack
+		700007 ack
+		700008										ff
+		700009 62					62				62
+		70000a 62					62				62
+		70000b 57					57				57
+		70000c 40					40				40
+		70000d 10					12				51
+		70000e 50					52				50
+		70000f 72					72				72
+		700010 e0					e0				e0
+		700011 2c					2c				2c
+		700012 50					50				50
+		700013 ff					ff				ff
+		700014 watchdog
+		700015
+		700016 [SUBCPU related]
+		700017 0f					0f
+		700018 00
+		700019 [SUBCPU related]
+		70001a 00
+		70001b 00
+		70001c [DSP-related]
+		70001d
+		70001e
+		70001f
+	*/
+}
 
-			Mounted position:
-				CPU 11L, 12L
+/*********************************************************************************/
 
-			Known chip type:
-				TC55328P-25
-				N341256P-15
+static READ32_HANDLER( namcos22_keycus_r )
+{
+	/**
+	 * Vivanono Notes (game-specific hacks):
+	 *
+	 * Ridge Racer
+	 *     0x20000008 = 0x0172 (= 370)
+	 * Ridge Racer 2
+	 *     0x20000000 = 0x0172 (= 370)
+	 *     0x20000008 = 0x0172 (= 370)
+	 * Rave Racer
+	 *     hacked temporarily:
+	 *     0x00018200 = 0x60 (-> BRA instruction) (RV2-B)
+	 * Cyber Cycles
+	 *     0x20000002 = 0x0185 (= 389)
+	 * Ace Driver Victory Lap
+	 *     0x20000004 = 0x0188 (= 392)
+	 */
+	switch( namcos22_gametype )
+	{
+	case NAMCOS22_RIDGE_RACER:
+		return 0x0172<<16;
 
-			DATA ROM for C74 (SEQ data and external code):
-			Known chip type:
-				NEC D27C4096D-12
+	case NAMCOS22_ACE_DRIVER:
+		return 0x0173;
 
-			Notes:
-				C74(CPU PCB) sends/receives I/O data from C74(I/O PCB) by SIO.
+	case NAMCOS22_CYBER_COMMANDO:
+		return 0x0185;
 
-	0x60004020 b4 = 1 : ???
-	0x60004022.w		Volume(R)
-	0x60004024.w		Volume(L)
-	0x60004026.w		Volume(R) (maybe rear channels, not put on real PCB)
-	0x60004028.w		Volume(L) (maybe rear channels, not put on real PCB)
-	0x60004030 b0     : system type 0
-	0x60004030 b1 = 0 : COIN2
-	0x60004030 b2 = 0 : TEST SW
-	0x60004030 b3 = 0 : SERVICE SW
-	0x60004030 b4 = 0 : COIN1
-	0x60004030 b5     : system type 1
-				(system type on RR2 (00:50inch, 01:two in one, 20: standard, 21:
-deluxe))
-	0x60004031 b0 = 0 : SWITCH1 (for manual transmission)
-	0x60004031 b1 = 0 : SWITCH2
-	0x60004031 b2 = 0 : SWITCH3
-	0x60004031 b3 = 0 : SWITCH4
-	0x60004031 b4 = 0 : CLUTCH
-	0x60004031 b6 = 0 : VIEW SW
-	0x60004032.w		Handle A/D (=steering wheel, default of center value is
-different in each game)
-	0x60004034.w		Gas A/D
-	0x60004036.w		Brake A/D
-	0x60004038.w		A/D3 (reserved)
-				(some GOUT (general outputs for lamps, etc) is also mapped this
-area)
-	0x60004080		Data/Code for Sub-CPU
-	0x60004200		Data/Code for Sub-CPU
+	case NAMCOS22_ALPINE_RACER:
+		return 0x0187;
 
-	0x60005000 - 0x6000bfff	Sound Work
-	+0x0000 - 0x003f	Song Request #00 to 31
-	+0x0100 - 0x02ff	Parameter RAM from Main MPU (for SEs)
-	+0x0300 - 0x03ff?	Song Title (put messages here from Sound CPU)
+	case NAMCOS22_VICTORY_LAP:
+		return 0x0188<<16;
 
-0x70000000 - 0x70020000	C71 (TI TMS320C25 DSP) Shared RAM
+	case NAMCOS22_CYBER_CYCLES:
+		return 0x0387;
 
-			Mounted position:
-				C71: CPU 15R, 21R
-				RAM: CPU 15K, 13E, 12E
-			Known chip type:
-				TC55328P-25
-				N341256P-15
+	default:
+		/* unknown/unused */
+		return 0;
+	}
+}
 
-			Notes:
-				connected bits = 0x00ffffff (24bit)
+/*********************************************************************************/
 
-	0x70000040.l		Point RAM Write Enable (ff=enable)
-	0x70000044.l		Point RAM IDC (index count register)
-	0x70000c00 - 0x7000ffff	Point RAM Port
-				(Point RAM has 128K words, 512KB space (128K24bit))
-	0x70010000 - 0x700103ff Window Attribute Register #1 (0x808)
-	0x70010400 - 0x70017fff Display List Buffer #1
-	0x70018000 - 0x700183ff Window Attribute Register #2 (0x808)
-	0x70018400 - 0x7001ffff Display List Buffer #2
+/**
+ * Some port values are read serially one bit at a time via word reads at
+ * 0x50000008 and 0x5000000a
+ *
+ * Writes to 0x50000008 and 0x5000000a reset the state of the input buffer.
+ *
+ * Note that only the values read at 0x50000008 seem to be used in-game.
+ *
+ * Some of these values are redundant with respects to the work-RAM supplied input port
+ * values supplied by the IO CPU.  For example, the position of the stick shift is digital,
+ * and may be read through this mechanism or through shared IO RAM at 0x60004030.
+ *
+ * Other values seem to be digital versions of analog ports, for example "the gas pedal is
+ * pressed" as a boolean flag.  IO RAM supplies it as an analog value.
+ */
+static data32_t mSys22PortBits;
 
-0x90000000 - 0x90000000	LED on PCB(?)
+static READ32_HANDLER( namcos22_portbit_r )
+{
+	data32_t data = mSys22PortBits;
+	mSys22PortBits>>=1;
+	return data&0x10001;
+}
+static WRITE32_HANDLER( namcos22_portbit_w )
+{
+	unsigned dat50000008 = readinputport(4);
+	unsigned dat5000000a = 0xffff;
+	mSys22PortBits = (dat50000008<<16)|dat5000000a;
+}
 
-0x90010000 - 0x90017fff	Depth-cueing Look-up Table (fog density between
-near
-to far)
+static READ32_HANDLER( namcos22_dipswitch_r )
+{
+	return readinputport(0)<<16;
+}
 
-			Mounted position:
-				VIDEO 8P
-			Known chip type:
-				TC55328P-25
+static READ32_HANDLER( namcos22_mcuram_r )
+{
+	if( namcos22_gametype == NAMCOS22_TIME_CRISIS )
+	{ /* HACKS: work with TIME CRISIS version A */
+		int pc = activecpu_get_pc();
+		if( pc == 0x12c20 || pc==0x91fe )
+		{ /* SUB CPU TEST */
+			return 1<<(7+16);
+		}
+		else if( pc == 0x12c6e )
+		{ /* SUB CPU TEST */
+			return 0;
+		}
+		else if( pc==0x12bf2 || pc==0x910e || pc==0x92a8 )
+		{ /* ori.w   #$8000, $a0bd00.l */
+		}
+		else if( pc==0x140ca || pc==0x19b5c )
+		{
+			return readinputport(4)<<8;
+		}
+		else if( pc==0x19B70 || pc==0x019B14 || pc==0x19bea )
+		{
+			return namcos22_credits;
+		}
+	}
+	return namcos22_shareram[offset];
+}
 
-0x90020000 - 0x90027fff	C305 (Display Controller)
+/*********************************************************************************/
 
-			Mounted position:
-				VIDEO 7D (C305)
+/**
+ * I don't know what "SPOT RAM" is.  It isn't directly memory mapped,
+ * but rather some ports are used to populate and poll it.
+ *
+ * See Time Crisis "SPOT RAM" self test for sample use.
+ */
+#define SPOTRAM_SIZE (320*4)
 
-	+0x0002.w	Fader Enable(?) (0: disabled)
-	+0x0011.w	Display Fader (R) (0x0100 = 1.0)
-	+0x0013.w	Display Fader (G) (0x0100 = 1.0)
-	+0x0015.w	Display Fader (B) (0x0100 = 1.0)
-	+0x0100.b	Fog1 Color (R) (world fogging)
-	+0x0101.b	Fog2 Color (R) (used for heating of brake-disc on RV1)
-	+0x0180.b	Fog1 Color (G)
-	+0x0181.b	Fog2 Color (G)
-	+0x0200.b	Fog1 Color (B)
-	+0x0201.b	Fog2 Color (B)
-			(many unknown registers are here)
+static struct
+{
+	data16_t portR; /* next address for read */
+	data16_t portW; /* next address for write */
+	data16_t RAM[SPOTRAM_SIZE];
+} mSpotRAM;
 
-			Notes:
-				Boot time check: 0x90020100 - 0x9002027f
+static READ32_HANDLER( spotram_r )
+{ /* 0x860004: read */
+	if( offset==1 )
+	{
+		if( mSpotRAM.portR>=SPOTRAM_SIZE )
+		{
+			mSpotRAM.portR = 0;
+		}
+		return mSpotRAM.RAM[mSpotRAM.portR++]<<16;
+	}
+	return 0;
+}
 
-0x90028000 - 0x9002ffff	Palette (R)
-0x90030000 - 0x90037fff	Palette (G)
-0x90038000 - 0x9003ffff	Palette (B)
+static WRITE32_HANDLER( spotram_w )
+{ /* 0x860002: write */
+	if( offset==0 )
+	{
+		if( mem_mask&0xffff0000 )
+		{
+			if( mSpotRAM.portW>=SPOTRAM_SIZE )
+			{
+				mSpotRAM.portW = 0;
+			}
+			mSpotRAM.RAM[mSpotRAM.portW++] = data;
+		}
+		else
+		{
+			mSpotRAM.portR = 0;
+			mSpotRAM.portW = 0;
+		}
+	}
+}
 
-			Mounted position:
-				VIDEO 6B, 7B, 8B (near C305)
-			Note:
-				0xff00-0xffff are for Tilemap (16 x 16)
+/*********************************************************************************/
 
-0x90040000 - 0x9005ffff	unknown (option)
+static READ32_HANDLER( namcos22_gun_r )
+{
+	int xpos = readinputport(1)*640/0xff;
+	int ypos = readinputport(2)*480/0xff;
+	switch( offset )
+	{
+	case 0: /* 430000 */
+		return xpos<<16;
 
-			Note:
-				This device maybe optional.
-				this may relate to device at 0x40000000
+	case 1: /* 430004 */
+		return (ypos>>1)<<16;
 
-0x90080000 - 0x9009dfff	Tilemap PCG Memory
-0x9009e000 - 0x9009ffff	Tilemap Memory (64 x 64)
+	case 2: /* 430008 */
+		return (ypos>>1)<<16;
 
-			Mounted position:
-				VIDEO  2K
-			Known chip type:
-				HM511664 (64k x 16bit SRAM)
-			Note:
-				Self test: 90084000 - 9009ffff
+	case 3:
+	default:
+		return 0;
+	}
+}
 
-0x900a0000 - 0x900a000f	Tilemap Register
+/*********************************************************************************/
 
-			Mounted position:
-				unknown
+/* Namco Super System 22 */
 
-	+0x0000			Position X
-	+0x0002			Position Y
+static ADDRESS_MAP_START( namcos22s_am, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x000000, 0x3fffff) AM_READ(MRA32_ROM) AM_WRITE(MWA32_ROM)
+	AM_RANGE(0x400000, 0x40001f) AM_READ(namcos22_keycus_r) AM_WRITE(MWA32_NOP)
+	AM_RANGE(0x410000, 0x413fff) AM_READ(MRA32_RAM) AM_WRITE(MWA32_RAM) /* C139 SCI buffer */
+	AM_RANGE(0x420000, 0x42000f) AM_READ(MRA32_NOP) AM_WRITE(MWA32_NOP) /* C139 SCI registers */
+	AM_RANGE(0x430000, 0x43000f) AM_READ(namcos22_gun_r) AM_WRITE(MWA32_NOP)
+	AM_RANGE(0x440000, 0x440003) AM_READ(namcos22_dipswitch_r)
+	AM_RANGE(0x450008, 0x45000b) AM_READ(namcos22_portbit_r) AM_WRITE(namcos22_portbit_w)
+	AM_RANGE(0x460000, 0x463fff) AM_READ(MRA32_RAM) AM_WRITE(MWA32_RAM) AM_BASE(&namcos22_nvmem) AM_SIZE(&namcos22_nvmem_size)
+	AM_RANGE(0x700000, 0x70001f) AM_READ(namcos22_system_controller_r) AM_WRITE(namcos22_super_system_controller_w) AM_BASE(&namcos22_system_controller)
+	AM_RANGE(0x800000, 0x800003) AM_READ(MRA32_RAM) AM_WRITE(MWA32_RAM) /* C301 C399 */
+	AM_RANGE(0x810000, 0x81000f) AM_READ(MRA32_RAM) AM_WRITE(MWA32_RAM) /* ? */
+	AM_RANGE(0x810200, 0x8103ff) AM_READ(MRA32_RAM) AM_WRITE(MWA32_RAM) /* CZ RAM */
+		/* depth cueing; fog density, near to far */
+	AM_RANGE(0x810400, 0x810403) AM_READ(MRA32_RAM) AM_WRITE(MWA32_RAM) /* ? air combat22 */
+	AM_RANGE(0x820000, 0x8202ff) AM_READ(MRA32_RAM) AM_WRITE(MWA32_RAM)
+	AM_RANGE(0x824000, 0x8243ff) AM_READ(namcos22_gamma_r) AM_WRITE(namcos22_gamma_w) AM_BASE(&namcos22_gamma)
+	AM_RANGE(0x828000, 0x83ffff) AM_READ(namcos22_paletteram_r) AM_WRITE(namcos22_paletteram_w) AM_BASE(&paletteram32)
+	AM_RANGE(0x860000, 0x860007) AM_READ(spotram_r) AM_WRITE(spotram_w)
+	AM_RANGE(0x880000, 0x89dfff) AM_READ(namcos22_cgram_r) AM_WRITE(namcos22_cgram_w) AM_BASE(&namcos22_cgram)
+	AM_RANGE(0x89e000, 0x89ffff) AM_READ(namcos22_textram_r) AM_WRITE(namcos22_textram_w) AM_BASE(&namcos22_textram)
+	AM_RANGE(0x8a0000, 0x8a000f) AM_READ(MRA32_RAM) AM_WRITE(MWA32_RAM) /* tilemap attributes */
+		/* +0x0000			BG Position X
+		 * +0x0002			BG Position Y
+		 */
+	AM_RANGE(0x900000, 0x90ffff) AM_READ(MRA32_RAM) AM_WRITE(MWA32_RAM) AM_BASE(&namcos22_vics_data) /* VICS */
+	AM_RANGE(0x940000, 0x94007f) AM_READ(MRA32_RAM) AM_WRITE(MWA32_RAM) AM_BASE(&namcos22_vics_control)
+	AM_RANGE(0x980000, 0x9affff) AM_READ(MRA32_RAM) AM_WRITE(MWA32_RAM) AM_BASE(&spriteram32) /* C374 */
+		/* 980000: SPRITE RAM
+		 * 9a0000: ATTRIBUTE RAM
+		 */
+	AM_RANGE(0xa00000, 0xa0ffff) AM_READ(namcos22_mcuram_r) AM_WRITE(MWA32_RAM) AM_BASE(&namcos22_shareram) /* COM RAM */
+		/* 0xa0bd2f: 0x02 Prop Cycle: MOTOR ON */
+		/* 0xa0bd2f: 0x04 Prop Cycle: LAMP ON */
+	AM_RANGE(0xc00000, 0xc1ffff) AM_READ(namcos22_dspram_r) AM_WRITE(namcos22_dspram_w) AM_BASE(&namcos22_polygonram)
+	AM_RANGE(0xe00000, 0xe3ffff) AM_READ(MRA32_RAM) AM_WRITE(MWA32_RAM)
+ADDRESS_MAP_END
 
+static void
+SimulateAlpineRacerMCU( void )
+{
+	/* ori.b   #$80, $a0bd00.l: signal from main CPU
+	 * $a0bd01: bit 7 indicates mcu is busy
+	 *
+	 * $a0bd02 (byte)
+	 * $a0bd04 (byte)
+	 *
+	 * $a0bd0a: swing
+	 * $a0bd0c: edge
+	 *
+	 * move.w  #$0, $a0bd2e.l
+	 *
+	 * move.l  #$410000, $e05950.l
+	 * move.l  #$414000, $e05954.l
+	 *
+	 * move.l  #$a04000, $e05950.l
+	 * move.l  #$a0c000, $e05954.l
+	 */
+	if( namcos22_gametype == NAMCOS22_ALPINE_RACER )
+	{
+		namcos22_shareram[0x4300/4] = 0x7551<<16; /* protection? */
+		namcos22_shareram[0xbd00/4] = readinputport(1)<<8;
+		namcos22_shareram[0xbd0a/4] = (data16_t)(readinputport(2)-0x8000); /* swing */
+		namcos22_shareram[0xbd0c/4] = ((data16_t)(readinputport(3)-0x8000))<<16; /* edge */
+	}
+}
 
+static void
+SimulatePropCycleMCU( void )
+{
+	int dx,dy;
+	UINT16 data;
+	static data16_t pedal;
 
-SYSTEM22 Known Custom Chips
+	namcos22_shareram[0xbd00/4] = readinputport(1)<<8;
 
-CPU PCB:
+	data = 0;
+	if( readinputport( 2 ) & 0x20 ) data |= 0x0100;
+	namcos22_shareram[0xbd04/4] = data<<16; /* start1 */
 
-C71 TI TMS320C25 DSP
-	C71 WEYW40116 (TMS320C25 Main/Sub DSP)
-	C71 D72260FN 980 FE-5CA891W
+	dx = 0; dy = 0;
+	if( readinputport( 2 ) & 0x04 ) dx++;
+	if( readinputport( 2 ) & 0x08 ) dx--;
+	if( readinputport( 2 ) & 0x01 ) dy--;
+	if( readinputport( 2 ) & 0x02 ) dy++;
 
-	M5M5178AP-25 (CPU 16R, 17R, 19R, 20R) DSP Work RAM (8K x 8bit x 2 x 2)
+	if( readinputport( 2 ) & 0x10 ) pedal+=0x10;
 
-	Notes:
-		NOP opcode: 0x5500
-		RET opcode: 0xce26
+	namcos22_shareram[0xbd08/4] = (UINT16)(dx*0x7fff);
+	namcos22_shareram[0xbd0c/4] = (dy*0x7fff)<<16;
+	namcos22_shareram[0xbd1c/4] = pedal<<16;
+}
 
-C74 Mitsubishi M37702 MCU
-	C74 159 408600 (OLD SUB)
-	C74 159 543100 (NEW SUB)
-	C74 159 414600 (OLD I/O)
-	C74 159 437600 (NEW I/O)
+static void
+SimulateTimeCrisisMCU( void )
+{
+	static int oldPort;
+	int newPort = readinputport(4)&1;
+	if( newPort && !oldPort )
+	{
+		namcos22_credits++;
+	}
+	oldPort = newPort;
+}
 
-C195 (Shared SRAM Controller)
-C196 CPP x 6
-C199 (CPU 18K) x 1
-C317 IDC (CPU 15E) x 1 (S21B)
-C337 PFP x 1
-C342 x 1 (S21B)
-C352 (32ch PCM)
-C353 x 1
+static void
+SimulateCyberCyclesMCU( void )
+{
+	data32_t data = 0;
+return;
+	if( keyboard_pressed(KEYCODE_SPACE) ) data |= 0x01000; // "view switch"
+	namcos22_shareram[0xbd00/4] = data;
 
+	data = 0; /* ? */
+	namcos22_shareram[0xbd2e/4] = data;
+}
 
-VIDEO PCB:
+static INTERRUPT_GEN( namcos22s_interrupt )
+{
+	switch( namcos22_gametype )
+	{
+	case NAMCOS22_ALPINE_RACER:
+		SimulateAlpineRacerMCU();
+		break;
 
-C305 (Palette)
-C335
-	9C, 10C
-	12D, 12E
-	14C
-C300
-	18B, 18C, 20B, 20C, 22B, 22C
-Cxxx
-	34R, 35R
+	case NAMCOS22_PROP_CYCLE:
+		SimulatePropCycleMCU();
+		break;
 
-TI TBP28L22N (256 x 8bit PROM)
-	VIDEO 2D, 3D, 4D (RGB Gamma LUT ROM)
+	case NAMCOS22_CYBER_CYCLES:
+		SimulateCyberCyclesMCU();
+		break;
 
-	Notes:
-		RR1.GAM (for Ridge Raecr 1/2, Rave Racer)
+	case NAMCOS22_TIME_CRISIS:
+		SimulateTimeCrisisMCU();
+		break;
 
-**********************************************************************************************************
+	default:
+		break;
+	}
 
-Alpine Racer (VER. D)
+	switch( cpu_getiloops() )
+	{
+	case 0:
+		cpu_set_irq_line(0, 4, HOLD_LINE); /* vblank */
+		break;
+	case 1:
+		if( namcos22_gametype == NAMCOS22_CYBER_CYCLES )
+		{
+			cpu_set_irq_line(0, 2, HOLD_LINE); /* vblank */
+		}
+		else if( namcos22_gametype == NAMCOS22_AIR_COMBAT22 )
+		{
+			cpu_set_irq_line(0, 6, HOLD_LINE);
+		}
+		break;
+	}
+}
+
+static MACHINE_DRIVER_START( namcos22s )
+	MDRV_CPU_ADD(M68EC020,25000000) /* 25 MHz? */
+	MDRV_CPU_PROGRAM_MAP(namcos22s_am,0)
+	MDRV_CPU_VBLANK_INT(namcos22s_interrupt,2)
+
+	MDRV_CPU_ADD(TMS32025,24000000*2) /* ? */
+	MDRV_CPU_PROGRAM_MAP(master_dsp_program,0)
+	MDRV_CPU_DATA_MAP(master_dsp_data,0)
+	MDRV_CPU_IO_MAP(master_dsp_io,0)
+	MDRV_CPU_VBLANK_INT(dsp_serial_pulse1,SERIAL_IO_PERIOD)
+
+	MDRV_CPU_ADD(TMS32025,24000000*2) /* ? */
+	MDRV_CPU_PROGRAM_MAP(slave_dsp_program,0)
+	MDRV_CPU_DATA_MAP(slave_dsp_data,0)
+	MDRV_CPU_IO_MAP(slave_dsp_io,0)
+//	MDRV_CPU_VBLANK_INT(dsp_serial_pulse2,SERIAL_IO_PERIOD)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_NVRAM_HANDLER(namcos22)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_RGB_DIRECT)
+	MDRV_SCREEN_SIZE(NAMCOS22_NUM_COLS*16,NAMCOS22_NUM_ROWS*16)
+	MDRV_VISIBLE_AREA(0,NAMCOS22_NUM_COLS*16-1,0,NAMCOS22_NUM_ROWS*16-1)
+	MDRV_PALETTE_LENGTH(NAMCOS22_PALETTE_SIZE)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_VIDEO_START(namcos22s)
+	MDRV_VIDEO_UPDATE(namcos22s)
+MACHINE_DRIVER_END
+
+/*********************************************************************************/
+
+/* Namco System 22 */
+
+static ADDRESS_MAP_START( namcos22_am, ADDRESS_SPACE_PROGRAM, 32 )
+	/**
+	 * Program ROM (2M bytes)
+	 * Mounted position: LLB: CPU 4D, LMB: CPU 2D, UMB: CPU 8D, UUB: CPU 6D
+	 * Known ROM chip type: TI TMS27C040-10, ST M27C4001-10, M27C4001-12Z
+	 */
+	AM_RANGE(0x00000000, 0x001fffff) AM_READ(MRA32_ROM) AM_WRITE(MWA32_ROM)
+
+	/**
+	 * Main RAM (128K bytes)
+	 * Mounted position: CPU 3D, 5D, 7D, 9D
+	 * Known DRAM chip type: TC55328P-25, N3441256P-15
+	 */
+	AM_RANGE(0x10000000, 0x1001ffff) AM_READ(MRA32_RAM) AM_WRITE(MWA32_RAM)
+
+	/**
+	 * Main RAM (Mirror or Another Bank)
+	 * Mounted position: unknown
+	 */
+	AM_RANGE(0x18000000, 0x1801ffff) AM_READ(MRA32_RAM) AM_WRITE(MWA32_RAM)
+
+	/**
+	 * KEYCUS
+	 * Mounted position: CPU 13R
+	 * Known chip type:
+	 *     C370  (Ridge Racer, Ridge Racer 2)
+	 *     C388  (Rave Racer)
+	 *     C389? (Cyber Cycles)
+	 *     C392? (Ace Driver Victory Lap)
+	 */
+	AM_RANGE(0x20000000, 0x2000000f) AM_READ(namcos22_keycus_r) AM_WRITE(MWA32_NOP)
+
+	/**
+	 * C139 SCI Buffer
+	 * Mounted position: CPU 4N
+	 * Known chip type: M5M5179AP-25 (8k x 9bit SRAM)
+	 *
+	 * Note: Boot time check: 20010000 - 20011fff / bits=0x000001ff
+	 *
+	 *     20010000 - 20011fff	TX Buffer
+	 *     20012000 - 20013fff	RX FIFO Buffer (also used for TX Buffer)
+	 */
+	AM_RANGE(0x20010000, 0x20013fff) AM_READ(MRA32_RAM) AM_WRITE(MWA32_RAM)
+
+	/**
+	 * C139 SCI Register
+	 * Mounted position: CPU 4R
+	 *
+	 *     20020000  2	R/W	RX Status
+	 *         0x01 : Frame Error
+	 *         0x02 : Frame Received
+	 *         0x04 : ?
+	 *
+	 *     20020002  2	R/W	Status/Control Flags
+	 *         0x01 :
+	 *         0x02 : RX flag? (cleared every vsync)
+	 *         0x04 : RX flag? (cleared every vsync)
+	 *         0x08 :
+	 *
+	 *     20020004  2	W	FIFO Control Register
+	 *         0x01 : sync bit enable?
+	 *         0x02 : TX FIFO sync bit (bit-8)
+	 *
+	 *     20020006  2	W	TX Control Register
+	 *         0x01 : TX start/stop
+	 *         0x02 : ?
+	 *         0x10 : ?
+	 *
+	 *     20020008  2	W	-
+	 *     2002000a  2	W	TX Frame Size
+	 *     2002000c  2	R/W	RX FIFO Pointer (0x0000 - 0x0fff)
+	 *     2002000e  2	W	TX FIFO Pointer (0x0000 - 0x1fff)
+	 */
+	AM_RANGE(0x20020000, 0x2002000f) AM_READ(namcos22_C139_SCI_r) AM_WRITE(MWA32_RAM)
+
+	/**
+	 * System Controller: Interrupt Control, Peripheral Control
+	 *
+	 * 40000000	IRQ (unknown)
+	 * 40000001
+	 * 40000002	SCI IRQ level
+	 * 40000003	IRQ (unknown)
+	 * 40000004	VSYNC IRQ level
+	 * 40000005	IRQ (unknown) acknowledge
+	 * 40000006
+	 * 40000007	SCI IRQ acknowledge
+	 * 40000008	IRQ (unknown) acknowledge
+	 * 40000009	VSYNC IRQ acknowledge
+	 * 4000000a
+	 * 4000000b	?
+	 * 4000000c	?
+	 * 4000000d
+	 * 4000000e	?
+	 * 4000000f
+	 * 40000010	?
+	 * 40000011	?
+	 * 40000012	?
+	 * 40000013	?
+	 * 40000014	?
+	 * 40000015	? (cyc1)
+	 * 40000016	Watchdog timer reset
+	 * 40000017
+	 * 40000018	0 or 1 -> DSP control (reset?)
+	 * 40000019	sub cpu reset?
+	 * 4000001a	0 or 1 or 0xff -> DSP control
+	 * 4000001b	?
+	 * 4000001c
+	 * 4000001d
+	 * 4000001e
+	 * 4000001f
+	 */
+	AM_RANGE(0x40000000, 0x4000001f) AM_READ(namcos22_system_controller_r) AM_WRITE(namcos22_system_controller_w) AM_BASE(&namcos22_system_controller)
+
+	/**
+	 * Unknown Device (optional for diagnostics?)
+	 *
+	 * zero means not-connected.
+	 * may be related to device at 0x94000000
+	 */
+	AM_RANGE(0x48000000, 0x4800003f) AM_READ(MRA32_NOP) AM_WRITE(MWA32_NOP)
+
+	/**
+	 * DIPSW
+	 *     0x50000000 - DIPSW3
+	 *     0x50000001 - DIPSW2
+	 */
+	AM_RANGE(0x50000000, 0x50000003) AM_READ(namcos22_dipswitch_r) AM_WRITE(MWA32_NOP)
+	AM_RANGE(0x50000008, 0x5000000b) AM_READ(namcos22_portbit_r) AM_WRITE(namcos22_portbit_w)
+
+	/**
+	 * EEPROM
+	 * Mounted position: CPU 9E
+	 * Known chip type: HN58C65P-25 (8k x 8bit EEPROM)
+	 */
+	AM_RANGE(0x58000000, 0x58001fff) AM_READ(MRA32_RAM) AM_WRITE(MWA32_RAM) AM_BASE(&namcos22_nvmem) AM_SIZE(&namcos22_nvmem_size)
+
+	/**
+	 * C74 (Mitsubishi M37702 MCU) Shared RAM (0x60004000 - 0x6000bfff)
+	 * Mounted position: CPU 11L, 12L
+	 * Known chip type: TC55328P-25, N341256P-15
+	 *
+	 * DATA ROM for C74 (SEQ data and external code):
+	 * Known chip type: NEC D27C4096D-12
+	 * Notes: C74(CPU PCB) sends/receives I/O data from C74(I/O PCB) by SIO.
+	 *
+	 * 0x60004020 b4 = 1 : ???
+	 * 0x60004022.w		Volume(R)
+	 * 0x60004024.w		Volume(L)
+	 * 0x60004026.w		Volume(R) (maybe rear channels, not put on real PCB)
+	 * 0x60004028.w		Volume(L) (maybe rear channels, not put on real PCB)
+	 * 0x60004030 b0     : system type 0
+	 * 0x60004030 b1 = 0 : COIN2
+	 * 0x60004030 b2 = 0 : TEST SW
+	 * 0x60004030 b3 = 0 : SERVICE SW
+	 * 0x60004030 b4 = 0 : COIN1
+	 * 0x60004030 b5     : system type 1
+	 * (system type on RR2 (00:50inch, 01:two in one, 20:standard, 21:deluxe))
+	 * 0x60004031 b0 = 0 : SWITCH1 (for manual transmission)
+	 * 0x60004031 b1 = 0 : SWITCH2
+	 * 0x60004031 b2 = 0 : SWITCH3
+	 * 0x60004031 b3 = 0 : SWITCH4
+	 * 0x60004031 b4 = 0 : CLUTCH
+	 * 0x60004031 b6 = 0 : VIEW SW
+	 * 0x60004032.w		Handle A/D (=steering wheel, default of center value is different in each game)
+	 * 0x60004034.w		Gas A/D
+	 * 0x60004036.w		Brake A/D
+	 * 0x60004038.w		A/D3 (reserved)
+	 * (some GOUT (general outputs for lamps, etc) is also mapped this area)
+	 * 0x60004080		Data/Code for Sub-CPU
+	 * 0x60004200		Data/Code for Sub-CPU
+	 * 0x60005000 - 0x6000bfff	Sound Work
+	 * +0x0000 - 0x003f	Song Request #00 to 31
+	 * +0x0100 - 0x02ff	Parameter RAM from Main MPU (for SEs)
+	 * +0x0300 - 0x03ff?	Song Title (put messages here from Sound CPU)
+	 */
+	AM_RANGE(0x60000000, 0x60003fff) AM_WRITE(MWA32_NOP)
+	AM_RANGE(0x60000000, 0x6000ffff) AM_READ(MRA32_RAM) AM_WRITE(MWA32_RAM) AM_BASE(&namcos22_shareram) /* shareram */
+
+	/**
+	 * C71 (TI TMS320C25 DSP) Shared RAM (0x70000000 - 0x70020000)
+	 * Mounted position:
+	 *     C71: CPU 15R, 21R
+	 *     RAM: CPU 15K, 13E, 12E
+	 * Known chip type: TC55328P-25, N341256P-15
+	 * Notes: connected bits = 0x00ffffff (24bit)
+	 */
+	AM_RANGE(0x70000000, 0x7001ffff) AM_READ(namcos22_dspram_r) AM_WRITE(namcos22_dspram_w) AM_BASE(&namcos22_polygonram)
+
+	/**
+	 * LED on PCB(?)
+	 */
+	AM_RANGE(0x90000000, 0x90000003) AM_WRITE(MWA32_NOP)
+
+	/**
+	 * Depth-cueing Look-up Table (fog density between near to far)
+	 * Mounted position: VIDEO 8P
+	 * Known chip type: TC55328P-25
+	 */
+	AM_RANGE(0x90010000, 0x90017fff) AM_READ(MRA32_RAM) AM_WRITE(MWA32_RAM) /* depth-cueing */
+
+	/**
+	 * C305 (Display Controller)
+	 * Mounted position: VIDEO 7D (C305)
+	 *
+	 * +0x0002.w	Fader Enable(?) (0: disabled)
+	 * +0x0011.w	Display Fader (R) (0x0100 = 1.0)
+	 * +0x0013.w	Display Fader (G) (0x0100 = 1.0)
+	 * +0x0015.w	Display Fader (B) (0x0100 = 1.0)
+	 * +0x0100.b	Fog1 Color (R) (world fogging)
+	 * +0x0101.b	Fog2 Color (R) (used for heating of brake-disc on RV1)
+	 * +0x0180.b	Fog1 Color (G)
+	 * +0x0181.b	Fog2 Color (G)
+	 * +0x0200.b	Fog1 Color (B)
+	 * +0x0201.b	Fog2 Color (B)
+	 * (many unknown registers are here)
+ 	 *
+	 * Notes: Boot time check: 0x90020100 - 0x9002027f
+	 */
+	AM_RANGE(0x90020000, 0x90027fff) AM_READ(MRA32_RAM) AM_WRITE(MWA32_RAM)
+
+	/**
+	 * 0x90028000 - 0x9002ffff	Palette (R)
+	 * 0x90030000 - 0x90037fff	Palette (G)
+	 * 0x90038000 - 0x9003ffff	Palette (B)
+	 *
+	 * Mounted position: VIDEO 6B, 7B, 8B (near C305)
+	 * Note: 0xff00-0xffff are for Tilemap (16 x 16)
+	 */
+	AM_RANGE(0x90028000, 0x9003ffff) AM_READ(MRA32_RAM) AM_WRITE(namcos22_paletteram_w) AM_BASE(&paletteram32)
+
+	/**
+	 * unknown (option)
+	 * Note: This device may be optional. This may relate to device at 0x40000000
+	 */
+	AM_RANGE(0x90040000, 0x9007ffff) AM_READ(MRA32_RAM) AM_WRITE(MWA32_RAM) /* diagnostic ROM? */
+
+	/**
+	 * Tilemap PCG Memory
+	 */
+	AM_RANGE(0x90080000, 0x9009dfff) AM_READ(MRA32_RAM) AM_WRITE(namcos22_cgram_w) AM_BASE(&namcos22_cgram) /* bg tiles */
+
+	/**
+	 * Tilemap Memory (64 x 64)
+	 * Mounted position: VIDEO  2K
+	 * Known chip type: HM511664 (64k x 16bit SRAM)
+	 * Note: Self test: 90084000 - 9009ffff
+	 */
+	AM_RANGE(0x9009e000, 0x9009ffff) AM_READ(MRA32_RAM) AM_WRITE(namcos22_textram_w) AM_BASE(&namcos22_textram)
+
+	/**
+	 * Tilemap Register
+	 * Mounted position: unknown
+	 * +0x0000 Position X
+	 * +0x0002 Position Y
+	 */
+	AM_RANGE(0x900a0000, 0x900a000f) AM_READ(MRA32_RAM) AM_WRITE(MWA32_RAM)
+ADDRESS_MAP_END
+
+static INTERRUPT_GEN( namcos22_interrupt )
+{
+	int i;
+
+	for( i=0; i<5; i++ )
+	{
+		int irqlevel = nthbyte(namcos22_system_controller,i);
+		if( (irqlevel&0xf8)==0x30 )
+		{
+			if( i==4 || keyboard_pressed(KEYCODE_I) )
+			{
+				cpu_set_irq_line(0,irqlevel&7,/*ASSERT_LINE*/HOLD_LINE);
+			}
+		}
+	}
+
+	switch( namcos22_gametype )
+	{
+	case NAMCOS22_RIDGE_RACER:
+		namcos22_shareram[0x4000/4] = 0x10<<16; /* SUB CPU ready */
+		{
+			data16_t steer = 0x0960;
+			data16_t gas   = 0x0374;
+			data16_t brake = 0x0329;
+			data16_t flags = 0xffff;
+//			static int dir; /* unused */
+
+			if( keyboard_pressed(KEYCODE_5) ) flags ^= 0x1000; /* COIN1 */
+			if( keyboard_pressed(KEYCODE_6) ) flags ^= 0x0200; /* COIN2 */
+			if( keyboard_pressed(KEYCODE_9) ) flags ^= 0x0800; /* SERVICE */
+
+			if( keyboard_pressed(KEYCODE_Q) ) flags ^= 0x0100; // CLUTCH
+			if( keyboard_pressed(KEYCODE_W) ) flags ^= 0x0080;
+			if( keyboard_pressed(KEYCODE_R) ) flags ^= 0x0040;
+			if( keyboard_pressed(KEYCODE_T) ) flags ^= 0x0020;
+			if( keyboard_pressed(KEYCODE_Y) ) flags ^= 0x0010;
+
+			if( keyboard_pressed(KEYCODE_A) ) flags ^= 0x0001; /* SWITCH1 */
+			if( keyboard_pressed(KEYCODE_S) ) flags ^= 0x0002; /* SWITCH2 */
+			if( keyboard_pressed(KEYCODE_D) ) flags ^= 0x0004; /* SWITCH3 */
+			if( keyboard_pressed(KEYCODE_F) ) flags ^= 0x0008; /* SWITCH4 */
+
+			if( keyboard_pressed(KEYCODE_LEFT) )  steer -= 0xf00;
+			if( keyboard_pressed(KEYCODE_RIGHT) ) steer += 0xf00;
+			if( keyboard_pressed(KEYCODE_SPACE) ) gas += 0xf00;
+			if( keyboard_pressed(KEYCODE_Z) )     brake += 0xf00;
+
+			namcos22_shareram[0x4030/4] = (flags<<16)|steer;
+			namcos22_shareram[0x4034/4] = (gas<<16)|brake;
+		}
+		break;
+
+	case NAMCOS22_VICTORY_LAP:
+		namcos22_shareram[0x4000/4] = 0x10<<16; /* SUB CPU ready */
+		namcos22_shareram[0x4030/4] = (readinputport(4)<<16)|readinputport(3);
+		namcos22_shareram[0x4034/4] = (readinputport(1)<<16)|readinputport(2);
+		break;
+
+	case NAMCOS22_ACE_DRIVER:
+		namcos22_shareram[0x4000/4] = 0x10<<16; /* SUB CPU ready */
+		namcos22_shareram[0x4030/4] = (readinputport(4)<<16)|readinputport(3);
+		namcos22_shareram[0x4034/4] = (readinputport(1)<<16)|readinputport(2);
+		break;
+
+	case NAMCOS22_CYBER_COMMANDO:
+		namcos22_shareram[0x4030/4] = readinputport(0)<<16;
+		/**
+		 * ---- -x-- ---- ---- test switch
+		 */
+		break;
+
+	default:
+		break;
+	}
+}
+
+static MACHINE_DRIVER_START( namcos22 )
+	MDRV_CPU_ADD(M68020,25000000) /* 25 MHz? */
+	MDRV_CPU_PROGRAM_MAP(namcos22_am,0)
+	MDRV_CPU_VBLANK_INT(namcos22_interrupt,1)
+
+	MDRV_CPU_ADD(TMS32025,24000000*2) /* 24 MHz? */
+	MDRV_CPU_PROGRAM_MAP(master_dsp_program,0)
+	MDRV_CPU_DATA_MAP(master_dsp_data,0)
+	MDRV_CPU_IO_MAP(master_dsp_io,0)
+	MDRV_CPU_VBLANK_INT(dsp_serial_pulse1,SERIAL_IO_PERIOD)
+
+	MDRV_CPU_ADD(TMS32025,24000000*2) /* 24 MHz? */
+	MDRV_CPU_PROGRAM_MAP(slave_dsp_program,0)
+	MDRV_CPU_DATA_MAP(slave_dsp_data,0)
+	MDRV_CPU_IO_MAP(slave_dsp_io,0)
+//	MDRV_CPU_VBLANK_INT(dsp_serial_pulse2,SERIAL_IO_PERIOD)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_NVRAM_HANDLER(namcos22)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_RGB_DIRECT)
+	MDRV_SCREEN_SIZE(NAMCOS22_NUM_COLS*16,NAMCOS22_NUM_ROWS*16)
+	MDRV_VISIBLE_AREA(0,NAMCOS22_NUM_COLS*16-1,0,NAMCOS22_NUM_ROWS*16-1)
+	MDRV_PALETTE_LENGTH(NAMCOS22_PALETTE_SIZE)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_VIDEO_START(namcos22s)
+	MDRV_VIDEO_UPDATE(namcos22)
+MACHINE_DRIVER_END
+
+/*********************************************************************************/
+
+ROM_START( airco22b )
+	ROM_REGION( 0x400000, REGION_CPU1, 0 ) /* main program */
+	ROM_LOAD32_BYTE( "acs1verb.1", 0x00003, 0x100000, CRC(062c4f61) SHA1(98e1c75dd0f493eb6ebb64b46543217c1d40116e) )
+	ROM_LOAD32_BYTE( "acs1verb.2", 0x00002, 0x100000, CRC(8ae69711) SHA1(4c5323fa8f0419275e330fec66d1fb2b89bb3795) )
+	ROM_LOAD32_BYTE( "acs1verb.3", 0x00001, 0x100000, CRC(71738e67) SHA1(eb8c66dedbeff911b6166ebbda466fb9656ef0fb) )
+	ROM_LOAD32_BYTE( "acs1verb.4", 0x00000, 0x100000, CRC(3b193add) SHA1(5e3bca13905bfa3a2947f4f16ca01878b0a14a3a) )
+
+	ROM_REGION( 0x20000, REGION_CPU2, 0 ) /* Master DSP */
+
+	ROM_REGION( 0x20000, REGION_CPU3, 0 ) /* Slave DSP */
+
+	ROM_REGION( 0x080000, REGION_CPU4, 0 ) /* S22-BIOS ver1.30 */
+	ROM_LOAD( "acs1data.8k", 0, 0x080000, CRC(33824bc9) SHA1(80ec63883770e5eec1f5f1ddc16a85ef8f22a48b) )
+
+	ROM_REGION( 0x200000*2, REGION_GFX1, ROMREGION_DISPOSE ) /* 32x32x8bpp sprite tiles */
+	ROM_LOAD( "acs1scg0.12l", 0x200000*0, 0x200000,CRC(e5235404) SHA1(3133b71d1bde3a9815cd02e97382b8078b62b0bb) )
+	ROM_LOAD( "acs1scg1.10l", 0x200000*1, 0x200000,CRC(828e91e7) SHA1(8383b029cd29fbad107fd49e866defb50c11c99a) )
+
+	ROM_REGION( 0x200000*8, REGION_GFX2, 0 ) /* 16x16x8bpp texture tiles */
+	ROM_LOAD( "acs1cg0.8d",  0x200000*0x0, 0x200000,CRC(1f31343e) SHA1(25ba730cec74e0ed0b404f5c4430b7c3368c9b52) )
+	ROM_LOAD( "acs1cg1.10d", 0x200000*0x1, 0x200000,CRC(ccd5481d) SHA1(050e6fc7d4e0591f8ffc9552d140b6bd4533c06d) )
+	ROM_LOAD( "acs1cg2.12d", 0x200000*0x2, 0x200000,CRC(14e5d0d2) SHA1(3147ad11098030e9cfd93fbc0a1b3aafa8b8aba6) )
+	ROM_LOAD( "acs1cg3.13d", 0x200000*0x3, 0x200000,CRC(1a7bcc16) SHA1(bbc4ca5b208bea8394d1679e4e2d17d22331e2c8) )
+	ROM_LOAD( "acs1cg4.14d", 0x200000*0x4, 0x200000,CRC(1920b7fb) SHA1(56318f2a96c55998bb9a8d791d56be3dfb39867e) )
+	ROM_LOAD( "acs1cg5.16d", 0x200000*0x5, 0x200000,CRC(3dd109b7) SHA1(a7f914b9b80f1bca1afb6144698578a29ca74676) )
+	ROM_LOAD( "acs1cg6.18d", 0x200000*0x6, 0x200000,CRC(ec71c8a3) SHA1(86892a91883d483ca0d422b78fa36042e02f3ad3) )
+	ROM_LOAD( "acs1cg7.19d", 0x200000*0x7, 0x200000,CRC(82271757) SHA1(023c935e78b14da310e4c29da8785b82aa3241ac) )
+
+	ROM_REGION( 0x280000, REGION_GFX3, 0 ) /* texture tilemap */
+	ROM_LOAD( "acs1ccrl.3d",	 0x000000, 0x200000,CRC(07088ba1) SHA1(a962c0821d5af28ed508cfdbd613675454e306e3) )
+	ROM_LOAD( "acs1ccrh.1d",	 0x200000, 0x080000,CRC(62936af6) SHA1(ca80b68415aa2cd2ce4e90404f10640d0ae38be9) )
+
+	ROM_REGION( 0x80000*12, REGION_GFX4, 0 ) /* 3d model data */
+	ROM_LOAD( "acs1ptl0.18k", 0x80000*0x0, 0x80000,CRC(bd5896c7) SHA1(58ec7d0f1e0bfdbf4908e1d920bbd7f094993777) )
+	ROM_LOAD( "acs1ptl1.16k", 0x80000*0x1, 0x80000,CRC(e583b975) SHA1(beb0cc2b44bc69af057c2bb744cd7e1b95de577a) )
+	ROM_LOAD( "acs1ptl2.15k", 0x80000*0x2, 0x80000,CRC(802d737a) SHA1(3d99a369db70d13fb87c2ff26c82b4b39afe94d9) )
+	ROM_LOAD( "acs1ptl3.14k", 0x80000*0x3, 0x80000,CRC(fe556ecb) SHA1(9d9dbbb4f1d3688fb763001834640d79d9987d47) )
+
+	ROM_LOAD( "acs1ptm0.18j", 0x80000*0x4, 0x80000,CRC(949b6c58) SHA1(6ea016551b10f5d5764921dcc5a4b81d2b93d701) )
+	ROM_LOAD( "acs1ptm1.16j", 0x80000*0x5, 0x80000,CRC(8b2b99d9) SHA1(89c3545c4035509307728a9577018c1100ce3a54) )
+	ROM_LOAD( "acs1ptm2.15j", 0x80000*0x6, 0x80000,CRC(f1515080) SHA1(27a87217a140477a6840a610c95ae57abc0d01a6) )
+	ROM_LOAD( "acs1ptm3.14j", 0x80000*0x7, 0x80000,CRC(e364f4aa) SHA1(3af6a864765871664cccad82c4795f677be68d51) )
+
+	ROM_LOAD( "acs1ptu0.18f", 0x80000*0x8, 0x80000,CRC(746b3084) SHA1(73397d1f22300fb3a81a0a068da4d0a8cfdc0a36) )
+	ROM_LOAD( "acs1ptu1.16f", 0x80000*0x9, 0x80000,CRC(b44f1d3b) SHA1(f3f1a85c082053653e4da7d7f01f1baef1a013c8) )
+	ROM_LOAD( "acs1ptu2.15f", 0x80000*0xa, 0x80000,CRC(fdd2d778) SHA1(0269f971d778e908a1efb5a63b08fb3365d98c2a) )
+	ROM_LOAD( "acs1ptu3.14f", 0x80000*0xb, 0x80000,CRC(38b425d4) SHA1(8ff6dd6775d42afdff4c9fb2232e4d72b38e515a) )
+
+	ROM_REGION( 0x800000, REGION_USER2, 0 ) /* sound samples */
+	ROM_LOAD( "acs1wav0.1", 0x000000, 0x400000, CRC(52fb9762) SHA1(125c163e62d701c2e17ba0b572ed27c944ca0412) )
+	ROM_LOAD( "acs1wav1.2", 0x400000, 0x400000, CRC(b568dca2) SHA1(503deb277691d801acac1380ded2868a5d5ac501) )
+ROM_END
+
+ROM_START( alpinerc )
+	ROM_REGION( 0x400000, REGION_CPU1, 0 ) /* main program */
+	ROM_LOAD32_BYTE( "ar2ver-c.1", 0x00003, 0x100000, CRC(61323842) SHA1(e3c33248340bee252f230124fa9b7fa935a60565) )
+	ROM_LOAD32_BYTE( "ar2ver-c.2", 0x00002, 0x100000, CRC(43795b2d) SHA1(e060f3259661279a36300431c5ca7347bde8b6ec) )
+	ROM_LOAD32_BYTE( "ar2ver-c.3", 0x00001, 0x100000, CRC(acb3003b) SHA1(ea0cbf3a1607b06b108df051f38fec1f214f42d2) )
+	ROM_LOAD32_BYTE( "ar2ver-c.4", 0x00000, 0x100000, CRC(a57b4e60) SHA1(9dd8508f376711f55f8e7ae195de7d05367bcdee) )
+
+	ROM_REGION( 0x20000, REGION_CPU2, 0 ) /* Master DSP */
+
+	ROM_REGION( 0x20000, REGION_CPU3, 0 ) /* Slave DSP */
+
+	ROM_REGION( 0x080000, REGION_CPU4, 0 ) /* S22-BIOS ver1.30 */
+	ROM_LOAD( "ar1datab.8k", 0, 0x080000, CRC(c26306f8) SHA1(6d8d993c076d5ced523143a86bd0938b3794478d) )
+
+	ROM_REGION( 0x200000*2, REGION_GFX1, ROMREGION_DISPOSE ) /* 32x32x8bpp sprite tiles */
+	ROM_LOAD( "ar1scg0.12f", 0x200000*0, 0x200000,CRC(e7be830a) SHA1(60e2162eecd7401a0c26c525de2715cbfb10c1c5) ) /* identical to "ar1scg0.12l" */
+	ROM_LOAD( "ar1scg1.10f", 0x200000*1, 0x200000,CRC(8f15a686) SHA1(bce2d4380c6c39aa402566ddb0f62bbe6d7bfa1d) ) /* identical to "ar1scg1.10l" */
+
+	ROM_REGION( 0x200000*8, REGION_GFX2, 0 ) /* 16x16x8bpp texture tiles */
+	ROM_LOAD( "ar1cg0.12b",  0x200000*0x0, 0x200000,CRC(93f3a9d9) SHA1(7e94c81ad5ace98a2f0d00d101d464883d38c197) ) /* identical to "ar1cg0.8d" */
+	ROM_LOAD( "ar1cg1.10d",  0x200000*0x1, 0x200000,CRC(39828c8b) SHA1(424aa67eb0b898c9cab8a4749893a9c5696ac430) ) /* identical to "ar1cg1.13b" */
+	ROM_LOAD( "ar1cg2.12d",  0x200000*0x2, 0x200000,CRC(f7b058d1) SHA1(fffd0f01724a26dd47b1ecceecf4a139d5746f81) ) /* identical to "ar1cg2.14b" */
+	ROM_LOAD( "ar1cg3.13d",  0x200000*0x3, 0x200000,CRC(c28a3d2a) SHA1(cdc44fdbc99274e860c834e42b4cfafb478d4d26) ) /* identical to "ar1cg3.16b" */
+	ROM_LOAD( "ar1cg4.14d",  0x200000*0x4, 0x200000,CRC(abdb161f) SHA1(260bff9b0e94c1b2ea4b9d7fa170fbca212e85ee) ) /* identical to "ar1cg4.18b" */
+	ROM_LOAD( "ar1cg5.16d",  0x200000*0x5, 0x200000,CRC(2381cfea) SHA1(1de4c8b94df233fd74771fa47843290a3d8df0c8) ) /* identical to "ar1cg5.19b" */
+	ROM_LOAD( "ar1cg6.18a",  0x200000*0x6, 0x200000,CRC(ca0b6d23) SHA1(df969e0eeec557a95584b06995b0d55f2c6ec70a) ) /* identical to "ar1cg6.18d" */
+	ROM_LOAD( "ar1cg7.15a",	 0x200000*0x7, 0x200000,CRC(ffb9f9f9) SHA1(2b8c75b580f77e887df7d50909a3a95cda570e20) ) /* identical to "ar1cg7.19d" */
+
+	ROM_REGION( 0x280000, REGION_GFX3, 0 ) /* texture tilemap */
+	ROM_LOAD( "ar1ccrl.3d",	 0x000000, 0x200000,CRC(17387b2c) SHA1(dfd7cadaf97917347c0fa98f395364a543e49612) ) /* identical to "ar1ccrl.7b" */
+	ROM_LOAD( "ar1ccrh.1d",	 0x200000, 0x080000,CRC(ee7a4803) SHA1(8383c9a8ef5ed94df13446ca5cefa5f9e518f175) ) /* identical to "pr1ccrh.5b" */
+
+	ROM_REGION( 0x80000*12, REGION_GFX4, 0 ) /* 3d model data */
+	ROM_LOAD( "ar1ptrl0.18k", 0x80000*0x0, 0x80000,CRC(82405108) SHA1(0a40882a9bc8621c620bede404c78f6b1333f223) )
+	ROM_LOAD( "ar1ptrl1.16k", 0x80000*0x1, 0x80000,CRC(8739b09c) SHA1(cd603c4dc2f9ffc4185f891eb83e4c383c564294) )
+	ROM_LOAD( "ar1ptrl2.15k", 0x80000*0x2, 0x80000,CRC(bda693a9) SHA1(fe71dd3c63198737aa2d39527f0004e977e3be20) )
+	ROM_LOAD( "ar1ptrl3.14k", 0x80000*0x3, 0x80000,CRC(82797405) SHA1(2f205fee2d33e183c80a906fb38900167c011240) )
+
+	ROM_LOAD( "ar1ptrm0.18j", 0x80000*0x4, 0x80000,CRC(64bd6620) SHA1(2e33ff22208805ece304128be8887646fc890f6d) )
+	ROM_LOAD( "ar1ptrm1.16j", 0x80000*0x5, 0x80000,CRC(2232f0a5) SHA1(3fccf6d4a0c4100cc85e3051024d659c4a1c769e) )
+	ROM_LOAD( "ar1ptrm2.15j", 0x80000*0x6, 0x80000,CRC(8ee14e6f) SHA1(f6f1cbb748b109b365255378c18e710ba6270c1c) )
+	ROM_LOAD( "ar1ptrm3.14j", 0x80000*0x7, 0x80000,CRC(1094a970) SHA1(d41b10f48e1ef312bcaf09f27fabc7252c30e648) )
+
+	ROM_LOAD( "ar1ptru0.18f", 0x80000*0x8, 0x80000,CRC(26d88467) SHA1(d528f989fab4dd5ac1aec9b596a05fbadcc0587a) )
+	ROM_LOAD( "ar1ptru1.16f", 0x80000*0x9, 0x80000,CRC(c5e2c208) SHA1(152fde0b95a5df8c781e4a83577cfbbc7672ae0d) )
+	ROM_LOAD( "ar1ptru2.15f", 0x80000*0xa, 0x80000,CRC(1321ec59) SHA1(dbd3687a4c6b1aa0b18e336f99dabb9010d36639) )
+	ROM_LOAD( "ar1ptru3.14f", 0x80000*0xb, 0x80000,CRC(139d7dc1) SHA1(6d25e6ad552a91a0c5fc03db7e1a801ccf9c9556) )
+
+	ROM_REGION( 0x200000, REGION_USER2, 0 ) /* sound samples */
+	ROM_LOAD( "ar1wavea.2l", 0, 0x200000, CRC(dbf64562) SHA1(454fd7d5b860f0e5557d8900393be95d6c992ad1) )
+ROM_END
+
+/*
+ Alpine Racer (VER. D)
 Namco, 1995
 
   Player stands on steps, steering left/right.
@@ -548,691 +2257,6 @@ CUSTOM: 304 (x4, 120 PIN PQFP)
 	e000b2.l EDGE VR
 	e000ae.l SWING VR
 */
-
-#include "namcos22.h"
-
-enum namcos22_gametype namcos22_gametype; /* used for game-specific hacks */
-
-/* memory region pointers */
-static data32_t *namcos22_shareram;
-static data32_t *namcos22_C139_SCI;
-static data32_t *namcos22_system_controller;
-
-/* Super System22 supports a sprite layer.
- * Sprites are rendered as part of the polygon draw list, based on a per-sprite Z attribute.
- * Each sprite has explicit placement/color/zoom controls.
- */
-static struct GfxLayout sprite_layout =
-{
-	32,32,
-	RGN_FRAC(1,1),
-	8,
-	{ 0,1,2,3,4,5,6,7 },
-	{
-		0*8,1*8,2*8,3*8,4*8,5*8,6*8,7*8,
-		8*8,9*8,10*8,11*8,12*8,13*8,14*8,15*8,
-		16*8,17*8,18*8,19*8,20*8,21*8,22*8,23*8,
-		24*8,25*8,26*8,27*8,28*8,29*8,30*8,31*8 },
-	{
-		0*32*8,1*32*8,2*32*8,3*32*8,4*32*8,5*32*8,6*32*8,7*32*8,
-		8*32*8,9*32*8,10*32*8,11*32*8,12*32*8,13*32*8,14*32*8,15*32*8,
-		16*32*8,17*32*8,18*32*8,19*32*8,20*32*8,21*32*8,22*32*8,23*32*8,
-		24*32*8,25*32*8,26*32*8,27*32*8,28*32*8,29*32*8,30*32*8,31*32*8 },
-	32*32*8
-};
-
-static struct GfxDecodeInfo gfxdecodeinfo[] =
-{
-	{ REGION_GFX1, 0, &sprite_layout,  0, 0x80 },
-	{ -1 },
-};
-
-/*********************************************************************************/
-
-/* prelim! */
-static READ32_HANDLER( namcos22_C139_SCI_r )
-{
-	switch( offset )
-	{
-	case 0x0/4: return 0x0004<<16;
-	default: return 0;
-	}
-}
-
-static WRITE32_HANDLER( namcos22_C139_SCI_w )
-{
-	COMBINE_DATA( &namcos22_C139_SCI[offset] );
-	/*
-	20020000  2	R/W	RX Status
-				0x01 : Frame Error
-				0x02 : Frame Received
-				0x04 : ?
-
-	20020002  2	R/W	Status/Control Flags
-				0x01 :
-				0x02 : RX flag? (cleared every vsync)
-				0x04 : RX flag? (cleared every vsync)
-				0x08 :
-
-	20020004  2	W	FIFO Control Register
-				0x01 : sync bit enable?
-				0x02 : TX FIFO sync bit (bit-8)
-
-	20020006  2	W	TX Control Register
-				0x01 : TX start/stop
-				0x02 : ?
-				0x10 : ?
-
-	20020008  2	W	-
-	2002000a  2	W	TX Frame Size
-	2002000c  2	R/W	RX FIFO Pointer (0x0000 - 0x0fff)
-	2002000e  2	W	TX FIFO Pointer (0x0000 - 0x1fff)
-	*/
-}
-
-/*********************************************************************************/
-
-/**
- * helper function used to read a byte from a chunk of 32 bit memory
- */
-static data8_t
-nthbyte( const data32_t *pSource, int offs )
-{
-	pSource += offs/4;
-	return (pSource[0]<<((offs&3)*8))>>24;
-}
-
-static READ32_HANDLER( namcos22_system_controller_r )
-{
-	return namcos22_system_controller[offset];
-}
-
-static WRITE32_HANDLER( namcos22_system_controller_w )
-{
-	COMBINE_DATA( &namcos22_system_controller[offset] );
-	/*
-		40000000	IRQ (unknown)
-		40000001
-		40000002	SCI IRQ level
-		40000003	IRQ (unknown)
-		40000004	VSYNC IRQ level
-
-		40000005	IRQ (unknown) acknowledge
-		40000006
-		40000007	SCI IRQ acknowledge
-		40000008	IRQ (unknown) acknowledge
-		40000009	VSYNC IRQ acknowledge
-
-		4000000a
-		4000000b	?
-		4000000c	?
-		4000000d
-		4000000e	?
-		4000000f
-		40000010	?
-		40000011	?
-		40000012	?
-		40000013	?
-		40000014	?
-		40000015	? (cyc1)
-		40000016	Watchdog timer reset
-		40000017
-		40000018	0 or 1 -> DSP control (reset?)
-		40000019	?
-		4000001a	0 or 1 or 0xff -> DSP control
-		4000001b	?
-		4000001c
-		4000001d
-		4000001e
-		4000001f
-	 */
-}
-
-/*********************************************************************************/
-
-static READ32_HANDLER( namcos22_keycus_r )
-{
-	switch( namcos22_gametype )
-	{
-	case NAMCOS22_CYBER_COMMANDO:
-		return 0x185;
-
-	case NAMCOS22_RIDGE_RACER:
-		return 0x0172<<16;
-
-	case NAMCOS22_CYBER_CYCLES:
-		return 0x387;
-
-	case NAMCOS22_ALPINE_RACER:
-		return 0x0187;
-
-	case NAMCOS22_VICTORY_LAP:
-		return 0x0188<<16;
-
-	case NAMCOS22_ACE_DRIVER:
-		return 0x0173;
-
-	default:
-		/* unknown/unused */
-		return 0;
-	}
-}
-
-/*********************************************************************************/
-
-/**
- * Some port values are read serially one bit at a time via word reads at
- * 0x50000008 and 0x5000000a
- *
- * Writes to 0x50000008 and 0x5000000a reset the state of the input buffer.
- *
- * Note that only the values read at 0x50000008 seem to be used in-game.
- *
- * Some of these values are redundant with respects to the work-RAM supplied input port
- * values supplied by the IO CPU.  For example, the position of the stick shift is digital,
- * and may be read through this mechanism or through shared IO RAM at 0x60004030.
- *
- * Other values seem to be digital versions of analog ports, for example "the gas pedal is
- * pressed" as a boolean flag.  IO RAM supplies it as an analog value.
- */
-static data32_t mSys22PortBits;
-
-static READ32_HANDLER( namcos22_portbit_r )
-{
-	data32_t data = mSys22PortBits;
-	mSys22PortBits>>=1;
-	return data&0x10001;
-}
-static WRITE32_HANDLER( namcos22_portbit_w )
-{
-	unsigned dat50000008 = readinputport(4);
-	unsigned dat5000000a = 0xffff;
-	mSys22PortBits = (dat50000008<<16)|dat5000000a;
-}
-
-static READ32_HANDLER( namcos22_dipswitch_r )
-{
-	return readinputport(0)<<16;
-}
-
-static READ32_HANDLER( namcos22_mcuram_r )
-{
-	return namcos22_shareram[offset];
-}
-
-/*********************************************************************************/
-
-/* I don't know what "SPOT RAM" is.  It isn't directly memory mapped,
- * but rather some ports are used to populate and poll it.
- *
- * See Time Crisis "SPOT RAM" self test for sample use.
- */
-#define SPOTRAM_SIZE (320*4)
-
-static struct
-{
-	data16_t portR; /* next address for read */
-	data16_t portW; /* next address for write */
-	data16_t RAM[SPOTRAM_SIZE];
-} mSpotRAM;
-
-static READ32_HANDLER( spotram_r )
-{
-	/* 0x860004: read */
-	if( offset==1 )
-	{
-		if( mSpotRAM.portR>=SPOTRAM_SIZE ) mSpotRAM.portR = 0;
-		return mSpotRAM.RAM[mSpotRAM.portR++]<<16;
-	}
-	return 0;
-}
-
-static WRITE32_HANDLER( spotram_w )
-{
-	/* 0x860002: write */
-	if( offset==0 )
-	{
-		if( mem_mask&0xffff0000 )
-		{
-			if( mSpotRAM.portW>=SPOTRAM_SIZE ) mSpotRAM.portW = 0;
-			mSpotRAM.RAM[mSpotRAM.portW++] = data;
-		}
-		else
-		{
-			mSpotRAM.portR = 0;
-			mSpotRAM.portW = 0;
-		}
-	}
-}
-
-/*********************************************************************************/
-
-/* Namco Super System 22 */
-
-static ADDRESS_MAP_START( namcos22s_readmem, ADDRESS_SPACE_PROGRAM, 32 )
-	AM_RANGE(0x000000, 0x3fffff) AM_READ(MRA32_ROM)
-	AM_RANGE(0x400000, 0x40001f) AM_READ(namcos22_keycus_r)
-	AM_RANGE(0x410000, 0x413fff) AM_READ(MRA32_RAM) /* unused by Prop Cycle? */
-	AM_RANGE(0x420000, 0x42000f) AM_READ(MRA32_RAM)
-	AM_RANGE(0x430000, 0x430003) AM_READ(MRA32_RAM)
-	AM_RANGE(0x440000, 0x440003) AM_READ(namcos22_dipswitch_r)
-	AM_RANGE(0x450008, 0x45000b) AM_READ(namcos22_portbit_r)
-
-	AM_RANGE(0x460000, 0x463fff) AM_READ(MRA32_RAM) /* unknown */
-		/* possible nvmem?
-		 */
-
-	AM_RANGE(0x700000, 0x70001f) AM_READ(namcos22_system_controller_r)
-
-	AM_RANGE(0x800000, 0x800003) AM_READ(MRA32_RAM) /* 0x08380000 (always?) */
-	AM_RANGE(0x810000, 0x81000f) AM_READ(MRA32_RAM) /* 00000000 00000000 44440000 00000000 */
-
-	AM_RANGE(0x810200, 0x8103ff) AM_READ(MRA32_RAM) /* CZ RAM: depth cueing; fog density, near to far */
-	AM_RANGE(0x810400, 0x810403) AM_READ(MRA32_RAM) /* ? air combat22 */
-	AM_RANGE(0x820000, 0x8202ff) AM_READ(MRA32_RAM)
-
-	AM_RANGE(0x824000, 0x8243ff) AM_READ(namcos22_gamma_r) /* GAMMA */
-	AM_RANGE(0x828000, 0x83ffff) AM_READ(namcos22_paletteram_r) /* PALETTE */
-	AM_RANGE(0x860000, 0x860007) AM_READ(spotram_r)
-
-	AM_RANGE(0x880000, 0x89dfff) AM_READ(namcos22_cgram_r)
-	AM_RANGE(0x89e000, 0x89ffff) AM_READ(namcos22_textram_r)
-	AM_RANGE(0x8a0000, 0x8a000f) AM_READ(MRA32_RAM) /* tilemap attributes */
-		/*	+0x0000			BG Position X
-		 *	+0x0002			BG Position Y
-		 */
-	AM_RANGE(0x900000, 0x90ffff) AM_READ(MRA32_RAM)
-	AM_RANGE(0x940000, 0x94007f) AM_READ(MRA32_RAM)
-	AM_RANGE(0x980000, 0x9affff) AM_READ(MRA32_RAM) /* spriteram */
-	AM_RANGE(0xa03ffc, 0xa03fff) AM_READ(MRA32_RAM)
-	AM_RANGE(0xa04000, 0xa0bfff) AM_READ(namcos22_mcuram_r)
-	AM_RANGE(0xc00000, 0xc3ffff) AM_READ(namcos22_dspram_r)
-	AM_RANGE(0xe00000, 0xefffff) AM_READ(MRA32_RAM) /* workram */
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( namcos22s_writemem, ADDRESS_SPACE_PROGRAM, 32 )
-	AM_RANGE(0x000000, 0x3fffff) AM_WRITE(MWA32_ROM)
-	AM_RANGE(0x400000, 0x40001f) AM_WRITE(MWA32_NOP) /* cuskey? */
-	AM_RANGE(0x410000, 0x413fff) AM_WRITE(MWA32_RAM)
-	AM_RANGE(0x420000, 0x42000f) AM_WRITE(MWA32_RAM)
-	AM_RANGE(0x430000, 0x430003) AM_WRITE(MWA32_RAM) /* I/O related; bit select? */
-	AM_RANGE(0x450008, 0x45000b) AM_WRITE(namcos22_portbit_w)
-	AM_RANGE(0x460000, 0x463fff) AM_WRITE(MWA32_RAM)
-	AM_RANGE(0x700000, 0x70001f) AM_WRITE(namcos22_system_controller_w) AM_BASE(&namcos22_system_controller)
-	AM_RANGE(0x800000, 0x800003) AM_WRITE(MWA32_RAM) /* ? */
-	//0838
-	AM_RANGE(0x810000, 0x81000f) AM_WRITE(MWA32_RAM) /* ? */
-	AM_RANGE(0x810200, 0x8103ff) AM_WRITE(MWA32_RAM) /* depth cueing density */
-	AM_RANGE(0x810400, 0x810403) AM_WRITE(MWA32_RAM) /* ? air combat22 */
-	AM_RANGE(0x820000, 0x8202ff) AM_WRITE(MWA32_RAM) /* ? */
-	AM_RANGE(0x824000, 0x8243ff) AM_WRITE(namcos22_gamma_w) AM_BASE(&namcos22_gamma)
-	AM_RANGE(0x828000, 0x83ffff) AM_WRITE(namcos22_paletteram_w) AM_BASE(&paletteram32)
-	AM_RANGE(0x860000, 0x860007) AM_WRITE(spotram_w)
-	AM_RANGE(0x880000, 0x89dfff) AM_WRITE(namcos22_cgram_w) AM_BASE(&namcos22_cgram)
-	AM_RANGE(0x89e000, 0x89ffff) AM_WRITE(namcos22_textram_w) AM_BASE(&namcos22_textram)
-	AM_RANGE(0x8a0000, 0x8a000f) AM_WRITE(MWA32_RAM) /* tilemap attributes */
-		/* 035c0000 006e0000 01ff0000 0000000 */
-	AM_RANGE(0x900000, 0x90ffff) AM_WRITE(MWA32_RAM) /* VICS(?) */
-	AM_RANGE(0x940000, 0x94007f) AM_WRITE(MWA32_RAM)
-	AM_RANGE(0x980000, 0x9affff) AM_WRITE(MWA32_RAM) AM_BASE(&spriteram32)
-	AM_RANGE(0xa03ffc, 0xa03fff) AM_WRITE(MWA32_RAM)
-	AM_RANGE(0xa04000, 0xa0bfff) AM_WRITE(MWA32_RAM) AM_BASE(&namcos22_shareram) /* MCU */
-		/* 0xa0bd2f: 0x02 Prop Cycle: MOTOR ON */
-		/* 0xa0bd2f: 0x04 Prop Cycle: LAMP ON */
-	AM_RANGE(0xc00000, 0xc3ffff) AM_WRITE(namcos22_dspram_w) AM_BASE(&namcos22_polygonram)
-	AM_RANGE(0xe00000, 0xefffff) AM_WRITE(MWA32_RAM) /* WORK */
-	/* note that at least some of this is battery backed ADS RAM */
-ADDRESS_MAP_END
-
-static void
-SimulateAlpineRacerMCU( void )
-{
-	/* ori.b   #$80, $a0bd00.l: signal from main CPU
-	 * $a0bd01: bit 7 indicates mcu is busy
-	 *
-	 * $a0bd02 (byte)
-	 * $a0bd04 (byte)
-	 *
-	 * $a0bd0a: swing
-	 * $a0bd0c: edge
-	 *
-	 * move.w  #$0, $a0bd2e.l
-	 *
-	 * move.l  #$410000, $e05950.l
-	 * move.l  #$414000, $e05954.l
-	 *
-	 * move.l  #$a04000, $e05950.l
-	 * move.l  #$a0c000, $e05954.l
-	 */
-	if( namcos22_gametype == NAMCOS22_ALPINE_RACER )
-	{
-		namcos22_shareram[0x0300/4] = 0x7551<<16; /* protection? */
-		namcos22_shareram[0x7d00/4] = readinputport(1)<<8;
-		namcos22_shareram[(0xa0bd0a-0xa04000)/4] = (data16_t)(readinputport(2)-0x8000); /* swing */
-		namcos22_shareram[(0xa0bd0c-0xa04000)/4] = ((data16_t)(readinputport(3)-0x8000))<<16; /* edge */
-	}
-}
-
-static void
-SimulatePropCycleMCU( void )
-{
-		int dx,dy;
-		UINT16 data;
-		static data16_t pedal;
-
-		namcos22_shareram[(0xa0bd00-0xa04000)/4] = readinputport(1)<<8;
-
-		data = 0;
-		if( readinputport( 2 ) & 0x20 ) data |= 0x0100;
-		namcos22_shareram[(0xa0bd04-0xa04000)/4] = data<<16; // start1
-
-		dx = 0; dy = 0;
-		if( readinputport( 2 ) & 0x04 ) dx++;
-		if( readinputport( 2 ) & 0x08 ) dx--;
-		if( readinputport( 2 ) & 0x01 ) dy--;
-		if( readinputport( 2 ) & 0x02 ) dy++;
-
-		if( readinputport( 2 ) & 0x10 ) pedal+=0x10;
-
-		namcos22_shareram[(0xa0bd08-0xa04000)/4] = (UINT16)(dx*0x7fff);
-		namcos22_shareram[(0xa0bd0c-0xa04000)/4] = (dy*0x7fff)<<16;
-		namcos22_shareram[(0xa0bd1c-0xa04000)/4] = pedal<<16;
-}
-
-static void
-SimulateCyberCyclesMCU( void )
-{
-	data32_t data = 0;
-return;
-	if( keyboard_pressed(KEYCODE_SPACE) ) data |= 0x01000; // "view switch"
-	namcos22_shareram[(0xa0bd00 - 0xa04000)/4] = data;
-
-	data = 0; /* ? */
-	namcos22_shareram[(0xa0bd2e - 0xa04000)/4] = data;
-}
-
-static void
-SimulateTimeCrisisMCU( void )
-{
-	/* x------- -------- -------- -------- (w)
-	 * -------- x------- -------- -------- (r) status
-	 */
-//	namcos22_shareram[(0xa0b000 - 0xa04000)/4] ^= 0x00800000;
-}
-
-static INTERRUPT_GEN( namcos22s_interrupt )
-{
-	switch( namcos22_gametype )
-	{
-	case NAMCOS22_ALPINE_RACER:
-		SimulateAlpineRacerMCU();
-		break;
-
-	case NAMCOS22_PROP_CYCLE:
-		SimulatePropCycleMCU();
-		break;
-
-	case NAMCOS22_CYBER_CYCLES:
-		SimulateCyberCyclesMCU();
-		break;
-
-	case NAMCOS22_TIME_CRISIS:
-		SimulateTimeCrisisMCU();
-		break;
-
-	default:
-		break;
-	}
-
-	switch( cpu_getiloops() )
-	{
-	case 0:
-		cpu_set_irq_line(0, 4, HOLD_LINE); /* vblank */
-		break;
-	case 1:
-		if( namcos22_gametype == NAMCOS22_CYBER_CYCLES )
-		{
-			cpu_set_irq_line(0, 2, HOLD_LINE); /* vblank */
-		}
-		else if( namcos22_gametype == NAMCOS22_AIR_COMBAT22 )
-		{
-			cpu_set_irq_line(0, 6, HOLD_LINE);
-		}
-		break;
-	}
-}
-
-static MACHINE_DRIVER_START( namcos22s )
-	/* basic machine hardware */
-	MDRV_CPU_ADD(M68EC020,25000000) /* 25 MHz? */
-	MDRV_CPU_PROGRAM_MAP(namcos22s_readmem,namcos22s_writemem)
-	MDRV_CPU_VBLANK_INT(namcos22s_interrupt,2)
-
-	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
-
-	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_RGB_DIRECT)
-	MDRV_SCREEN_SIZE(NAMCOS22_NUM_COLS*16,NAMCOS22_NUM_ROWS*16)
-	MDRV_VISIBLE_AREA(0,NAMCOS22_NUM_COLS*16-1,0,NAMCOS22_NUM_ROWS*16-1)
-	MDRV_PALETTE_LENGTH(NAMCOS22_PALETTE_SIZE)
-	MDRV_GFXDECODE(gfxdecodeinfo)
-
-	MDRV_VIDEO_START(namcos22s)
-	MDRV_VIDEO_UPDATE(namcos22s)
-MACHINE_DRIVER_END
-
-/*********************************************************************************/
-
-/* Namco System 22 */
-
-static ADDRESS_MAP_START( namcos22_readmem, ADDRESS_SPACE_PROGRAM, 32 )
-	AM_RANGE(0x00000000, 0x001fffff) AM_READ(MRA32_ROM)
-	AM_RANGE(0x10000000, 0x1001ffff) AM_READ(MRA32_RAM)	/* work RAM */
-	AM_RANGE(0x18000000, 0x1801ffff) AM_READ(MRA32_RAM)	/* work RAM */
-	AM_RANGE(0x20000000, 0x2000000f) AM_READ(namcos22_keycus_r)
-	AM_RANGE(0x20010000, 0x20013fff) AM_READ(MRA32_RAM)  /* C139 SCI: serial controller (TX/RX buffer) - same as System21 */
-	AM_RANGE(0x20020000, 0x2002000f) AM_READ(namcos22_C139_SCI_r)
-	AM_RANGE(0x40000000, 0x4000001f) AM_READ(namcos22_system_controller_r)
-	AM_RANGE(0x48000000, 0x4800003f) AM_READ(MRA32_NOP)	/* unknown; possible for diagnostics */
-	AM_RANGE(0x50000000, 0x50000003) AM_READ(namcos22_dipswitch_r) /* DSW2,3 */
-	AM_RANGE(0x50000008, 0x5000000b) AM_READ(namcos22_portbit_r)
-	AM_RANGE(0x58000000, 0x58001fff) AM_READ(MRA32_RAM)	/* EPROM */
-	AM_RANGE(0x60004000, 0x6000bfff) AM_READ(MRA32_RAM)	/* shareram */
-	AM_RANGE(0x70000000, 0x7001ffff) AM_READ(namcos22_dspram_r)
-	AM_RANGE(0x90010000, 0x90017fff) AM_READ(MRA32_RAM)	/* depth-cueing */
-	AM_RANGE(0x90020000, 0x90027fff) AM_READ(MRA32_RAM)	/* C305 display controller */
-	AM_RANGE(0x90028000, 0x9003ffff) AM_READ(MRA32_RAM)	/* palette */
-	AM_RANGE(0x90040000, 0x9007ffff) AM_READ(MRA32_RAM)	/* diagnostic ROM? */
-	AM_RANGE(0x90080000, 0x9009dfff) AM_READ(MRA32_RAM)	/* bg tiles */
-	AM_RANGE(0x9009e000, 0x9009ffff) AM_READ(MRA32_RAM)	/* bg tilemap */
-	AM_RANGE(0x900a0000, 0x900a000f) AM_READ(MRA32_RAM)	/* bg control register */
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( namcos22_writemem, ADDRESS_SPACE_PROGRAM, 32 )
-	AM_RANGE(0x00000000, 0x001fffff) AM_WRITE(MWA32_ROM)
-	AM_RANGE(0x10000000, 0x1001ffff) AM_WRITE(MWA32_RAM)	/* work RAM */
-	AM_RANGE(0x18000000, 0x1801ffff) AM_WRITE(MWA32_RAM)	/* work RAM */
-	AM_RANGE(0x20000000, 0x2000000f) AM_WRITE(MWA32_NOP)	/* cuskey */
-	AM_RANGE(0x20010000, 0x20013fff) AM_WRITE(MWA32_RAM)	/* C139 SCI: TX/RX buffer (same as System21) */
-	AM_RANGE(0x20020000, 0x2002000f) AM_WRITE(MWA32_RAM)	/* serial controller (registers) */
-	AM_RANGE(0x40000000, 0x4000001f) AM_WRITE(namcos22_system_controller_w) AM_BASE(&namcos22_system_controller)
-	AM_RANGE(0x48000000, 0x4800003f) AM_WRITE(MWA32_NOP)	/* unknown; possible for diagnostics */
-	AM_RANGE(0x50000000, 0x50000007) AM_WRITE(MWA32_NOP)
-	AM_RANGE(0x50000008, 0x5000000b) AM_WRITE(namcos22_portbit_w)
-	AM_RANGE(0x58000000, 0x58001fff) AM_WRITE(MWA32_RAM)	/* EPROM */
-	AM_RANGE(0x60000000, 0x60003fff) AM_WRITE(MWA32_NOP)
-	AM_RANGE(0x60004000, 0x6000bfff) AM_WRITE(MWA32_RAM) AM_BASE(&namcos22_shareram)
-	AM_RANGE(0x70000000, 0x7001ffff) AM_WRITE(namcos22_dspram_w) AM_BASE(&namcos22_polygonram)
-	AM_RANGE(0x90000000, 0x90000003) AM_WRITE(MWA32_NOP)	/* LED on PCB(?) */
-	AM_RANGE(0x90010000, 0x90017fff) AM_WRITE(MWA32_RAM)	/* depth-cueing */
-	AM_RANGE(0x90020000, 0x90027fff) AM_WRITE(MWA32_RAM)	/* C305 display controller */
-	AM_RANGE(0x90028000, 0x9003ffff) AM_WRITE(namcos22_paletteram_w) AM_BASE(&paletteram32)
-	AM_RANGE(0x90040000, 0x9007ffff) AM_WRITE(MWA32_RAM)	/* victory lap */
-	AM_RANGE(0x90080000, 0x9009dfff) AM_WRITE(namcos22_cgram_w) AM_BASE(&namcos22_cgram)
-	AM_RANGE(0x9009e000, 0x9009ffff) AM_WRITE(namcos22_textram_w) AM_BASE(&namcos22_textram)
-	AM_RANGE(0x900a0000, 0x900a000f) AM_WRITE(MWA32_RAM)	/* bg control register */
-ADDRESS_MAP_END
-
-static INTERRUPT_GEN( namcos22_interrupt )
-{
-	int i;
-	for( i=0; i<5; i++ )
-	{
-		int irqlevel = nthbyte(namcos22_system_controller,i);
-		if( (irqlevel&0xf8)==0x30 )
-		{
-			if( i==4 || keyboard_pressed(KEYCODE_I) )
-			{
-				cpu_set_irq_line(0,irqlevel&7,/*ASSERT_LINE*/HOLD_LINE);
-			}
-		}
-	}
-
-	switch( namcos22_gametype )
-	{
-	case NAMCOS22_VICTORY_LAP:
-		namcos22_shareram[0x00/4] = 0x10<<16; /* SUB CPU ready */
-		namcos22_shareram[0x30/4] = (readinputport(4)<<16)|readinputport(3);
-		namcos22_shareram[0x34/4] = (readinputport(1)<<16)|readinputport(2);
-		break;
-
-	case NAMCOS22_ACE_DRIVER:
-		namcos22_shareram[0x00/4] = 0x10<<16; /* SUB CPU ready */
-		namcos22_shareram[0x30/4] = (readinputport(4)<<16)|readinputport(3);
-		namcos22_shareram[0x34/4] = (readinputport(1)<<16)|readinputport(2);
-		break;
-
-	case NAMCOS22_CYBER_COMMANDO:
-		namcos22_shareram[0x30/4] = readinputport(0)<<16;
-		/**
-		 * ---- -x-- ---- ---- test switch
-		 */
-		break;
-
-	default:
-		break;
-	}
-
-}
-
-static MACHINE_DRIVER_START( namcos22 )
-	/* basic machine hardware */
-	MDRV_CPU_ADD(M68020,25000000) /* 25 MHz? */
-	MDRV_CPU_PROGRAM_MAP(namcos22_readmem,namcos22_writemem)
-	MDRV_CPU_VBLANK_INT(namcos22_interrupt,1)
-
-	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
-
-	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_RGB_DIRECT)
-	MDRV_SCREEN_SIZE(NAMCOS22_NUM_COLS*16,NAMCOS22_NUM_ROWS*16)
-	MDRV_VISIBLE_AREA(0,NAMCOS22_NUM_COLS*16-1,0,NAMCOS22_NUM_ROWS*16-1)
-	MDRV_PALETTE_LENGTH(NAMCOS22_PALETTE_SIZE)
-	MDRV_GFXDECODE(gfxdecodeinfo)
-
-	MDRV_VIDEO_START(namcos22s)
-	MDRV_VIDEO_UPDATE(namcos22)
-MACHINE_DRIVER_END
-
-/*********************************************************************************/
-
-ROM_START( airco22b )
-	ROM_REGION( 0x400000, REGION_CPU1, 0 ) /* main program */
-	ROM_LOAD32_BYTE( "acs1verb.1", 0x00003, 0x100000, CRC(062c4f61) SHA1(98e1c75dd0f493eb6ebb64b46543217c1d40116e) )
-	ROM_LOAD32_BYTE( "acs1verb.2", 0x00002, 0x100000, CRC(8ae69711) SHA1(4c5323fa8f0419275e330fec66d1fb2b89bb3795) )
-	ROM_LOAD32_BYTE( "acs1verb.3", 0x00001, 0x100000, CRC(71738e67) SHA1(eb8c66dedbeff911b6166ebbda466fb9656ef0fb) )
-	ROM_LOAD32_BYTE( "acs1verb.4", 0x00000, 0x100000, CRC(3b193add) SHA1(5e3bca13905bfa3a2947f4f16ca01878b0a14a3a) )
-
-	ROM_REGION( 0x200000*2, REGION_GFX1, ROMREGION_DISPOSE ) /* 32x32x8bpp sprite tiles */
-	ROM_LOAD( "acs1scg0.12l", 0x200000*0, 0x200000,CRC(e5235404) SHA1(3133b71d1bde3a9815cd02e97382b8078b62b0bb) )
-	ROM_LOAD( "acs1scg1.10l", 0x200000*1, 0x200000,CRC(828e91e7) SHA1(8383b029cd29fbad107fd49e866defb50c11c99a) )
-
-	ROM_REGION( 0x200000*8, REGION_GFX2, 0 ) /* 16x16x8bpp texture tiles */
-	ROM_LOAD( "acs1cg0.8d",  0x200000*0x0, 0x200000,CRC(1f31343e) SHA1(25ba730cec74e0ed0b404f5c4430b7c3368c9b52) )
-	ROM_LOAD( "acs1cg1.10d", 0x200000*0x1, 0x200000,CRC(ccd5481d) SHA1(050e6fc7d4e0591f8ffc9552d140b6bd4533c06d) )
-	ROM_LOAD( "acs1cg2.12d", 0x200000*0x2, 0x200000,CRC(14e5d0d2) SHA1(3147ad11098030e9cfd93fbc0a1b3aafa8b8aba6) )
-	ROM_LOAD( "acs1cg3.13d", 0x200000*0x3, 0x200000,CRC(1a7bcc16) SHA1(bbc4ca5b208bea8394d1679e4e2d17d22331e2c8) )
-	ROM_LOAD( "acs1cg4.14d", 0x200000*0x4, 0x200000,CRC(1920b7fb) SHA1(56318f2a96c55998bb9a8d791d56be3dfb39867e) )
-	ROM_LOAD( "acs1cg5.16d", 0x200000*0x5, 0x200000,CRC(3dd109b7) SHA1(a7f914b9b80f1bca1afb6144698578a29ca74676) )
-	ROM_LOAD( "acs1cg6.18d", 0x200000*0x6, 0x200000,CRC(ec71c8a3) SHA1(86892a91883d483ca0d422b78fa36042e02f3ad3) )
-	ROM_LOAD( "acs1cg7.19d", 0x200000*0x7, 0x200000,CRC(82271757) SHA1(023c935e78b14da310e4c29da8785b82aa3241ac) )
-
-	ROM_REGION( 0x280000, REGION_GFX3, 0 ) /* texture tilemap */
-	ROM_LOAD( "acs1ccrl.3d",	 0x000000, 0x200000,CRC(07088ba1) SHA1(a962c0821d5af28ed508cfdbd613675454e306e3) )
-	ROM_LOAD( "acs1ccrh.1d",	 0x200000, 0x080000,CRC(62936af6) SHA1(ca80b68415aa2cd2ce4e90404f10640d0ae38be9) )
-
-	ROM_REGION( 0x80000*12, REGION_GFX4, 0 ) /* 3d model data */
-	ROM_LOAD( "acs1ptl0.18k", 0x80000*0x0, 0x80000,CRC(bd5896c7) SHA1(58ec7d0f1e0bfdbf4908e1d920bbd7f094993777) )
-	ROM_LOAD( "acs1ptl1.16k", 0x80000*0x1, 0x80000,CRC(e583b975) SHA1(beb0cc2b44bc69af057c2bb744cd7e1b95de577a) )
-	ROM_LOAD( "acs1ptl2.15k", 0x80000*0x2, 0x80000,CRC(802d737a) SHA1(3d99a369db70d13fb87c2ff26c82b4b39afe94d9) )
-	ROM_LOAD( "acs1ptl3.14k", 0x80000*0x3, 0x80000,CRC(fe556ecb) SHA1(9d9dbbb4f1d3688fb763001834640d79d9987d47) )
-
-	ROM_LOAD( "acs1ptm0.18j", 0x80000*0x4, 0x80000,CRC(949b6c58) SHA1(6ea016551b10f5d5764921dcc5a4b81d2b93d701) )
-	ROM_LOAD( "acs1ptm1.16j", 0x80000*0x5, 0x80000,CRC(8b2b99d9) SHA1(89c3545c4035509307728a9577018c1100ce3a54) )
-	ROM_LOAD( "acs1ptm2.15j", 0x80000*0x6, 0x80000,CRC(f1515080) SHA1(27a87217a140477a6840a610c95ae57abc0d01a6) )
-	ROM_LOAD( "acs1ptm3.14j", 0x80000*0x7, 0x80000,CRC(e364f4aa) SHA1(3af6a864765871664cccad82c4795f677be68d51) )
-
-	ROM_LOAD( "acs1ptu0.18f", 0x80000*0x8, 0x80000,CRC(746b3084) SHA1(73397d1f22300fb3a81a0a068da4d0a8cfdc0a36) )
-	ROM_LOAD( "acs1ptu1.16f", 0x80000*0x9, 0x80000,CRC(b44f1d3b) SHA1(f3f1a85c082053653e4da7d7f01f1baef1a013c8) )
-	ROM_LOAD( "acs1ptu2.15f", 0x80000*0xa, 0x80000,CRC(fdd2d778) SHA1(0269f971d778e908a1efb5a63b08fb3365d98c2a) )
-	ROM_LOAD( "acs1ptu3.14f", 0x80000*0xb, 0x80000,CRC(38b425d4) SHA1(8ff6dd6775d42afdff4c9fb2232e4d72b38e515a) )
-
-	ROM_REGION( 0x080000, REGION_CPU2, 0 ) /* S22-BIOS ver1.30 */
-	ROM_LOAD( "acs1data.8k", 0, 0x080000, CRC(33824bc9) SHA1(80ec63883770e5eec1f5f1ddc16a85ef8f22a48b) )
-	ROM_REGION( 0x800000, REGION_USER2, 0 ) /* sound samples */
-	ROM_LOAD( "acs1wav0.1", 0x000000, 0x400000, CRC(52fb9762) SHA1(125c163e62d701c2e17ba0b572ed27c944ca0412) )
-	ROM_LOAD( "acs1wav1.2", 0x400000, 0x400000, CRC(b568dca2) SHA1(503deb277691d801acac1380ded2868a5d5ac501) )
-ROM_END
-
-ROM_START( alpinerc )
-	ROM_REGION( 0x400000, REGION_CPU1, 0 ) /* main program */
-	ROM_LOAD32_BYTE( "ar2ver-c.1", 0x00003, 0x100000, CRC(61323842) SHA1(e3c33248340bee252f230124fa9b7fa935a60565) )
-	ROM_LOAD32_BYTE( "ar2ver-c.2", 0x00002, 0x100000, CRC(43795b2d) SHA1(e060f3259661279a36300431c5ca7347bde8b6ec) )
-	ROM_LOAD32_BYTE( "ar2ver-c.3", 0x00001, 0x100000, CRC(acb3003b) SHA1(ea0cbf3a1607b06b108df051f38fec1f214f42d2) )
-	ROM_LOAD32_BYTE( "ar2ver-c.4", 0x00000, 0x100000, CRC(a57b4e60) SHA1(9dd8508f376711f55f8e7ae195de7d05367bcdee) )
-
-	ROM_REGION( 0x200000*2, REGION_GFX1, ROMREGION_DISPOSE ) /* 32x32x8bpp sprite tiles */
-	ROM_LOAD( "ar1scg0.12f", 0x200000*0, 0x200000,CRC(e7be830a) SHA1(60e2162eecd7401a0c26c525de2715cbfb10c1c5) ) /* identical to "ar1scg0.12l" */
-	ROM_LOAD( "ar1scg1.10f", 0x200000*1, 0x200000,CRC(8f15a686) SHA1(bce2d4380c6c39aa402566ddb0f62bbe6d7bfa1d) ) /* identical to "ar1scg1.10l" */
-
-	ROM_REGION( 0x200000*8, REGION_GFX2, 0 ) /* 16x16x8bpp texture tiles */
-	ROM_LOAD( "ar1cg0.12b",  0x200000*0x0, 0x200000,CRC(93f3a9d9) SHA1(7e94c81ad5ace98a2f0d00d101d464883d38c197) ) /* identical to "ar1cg0.8d" */
-	ROM_LOAD( "ar1cg1.10d",  0x200000*0x1, 0x200000,CRC(39828c8b) SHA1(424aa67eb0b898c9cab8a4749893a9c5696ac430) ) /* identical to "ar1cg1.13b" */
-	ROM_LOAD( "ar1cg2.12d",  0x200000*0x2, 0x200000,CRC(f7b058d1) SHA1(fffd0f01724a26dd47b1ecceecf4a139d5746f81) ) /* identical to "ar1cg2.14b" */
-	ROM_LOAD( "ar1cg3.13d",  0x200000*0x3, 0x200000,CRC(c28a3d2a) SHA1(cdc44fdbc99274e860c834e42b4cfafb478d4d26) ) /* identical to "ar1cg3.16b" */
-	ROM_LOAD( "ar1cg4.14d",  0x200000*0x4, 0x200000,CRC(abdb161f) SHA1(260bff9b0e94c1b2ea4b9d7fa170fbca212e85ee) ) /* identical to "ar1cg4.18b" */
-	ROM_LOAD( "ar1cg5.16d",  0x200000*0x5, 0x200000,CRC(2381cfea) SHA1(1de4c8b94df233fd74771fa47843290a3d8df0c8) ) /* identical to "ar1cg5.19b" */
-	ROM_LOAD( "ar1cg6.18a",  0x200000*0x6, 0x200000,CRC(ca0b6d23) SHA1(df969e0eeec557a95584b06995b0d55f2c6ec70a) ) /* identical to "ar1cg6.18d" */
-	ROM_LOAD( "ar1cg7.15a",	 0x200000*0x7, 0x200000,CRC(ffb9f9f9) SHA1(2b8c75b580f77e887df7d50909a3a95cda570e20) ) /* identical to "ar1cg7.19d" */
-
-	ROM_REGION( 0x280000, REGION_GFX3, 0 ) /* texture tilemap */
-	ROM_LOAD( "ar1ccrl.3d",	 0x000000, 0x200000,CRC(17387b2c) SHA1(dfd7cadaf97917347c0fa98f395364a543e49612) ) /* identical to "ar1ccrl.7b" */
-	ROM_LOAD( "ar1ccrh.1d",	 0x200000, 0x080000,CRC(ee7a4803) SHA1(8383c9a8ef5ed94df13446ca5cefa5f9e518f175) ) /* identical to "pr1ccrh.5b" */
-
-	ROM_REGION( 0x80000*12, REGION_GFX4, 0 ) /* 3d model data */
-	ROM_LOAD( "ar1ptrl0.18k", 0x80000*0x0, 0x80000,CRC(82405108) SHA1(0a40882a9bc8621c620bede404c78f6b1333f223) )
-	ROM_LOAD( "ar1ptrl1.16k", 0x80000*0x1, 0x80000,CRC(8739b09c) SHA1(cd603c4dc2f9ffc4185f891eb83e4c383c564294) )
-	ROM_LOAD( "ar1ptrl2.15k", 0x80000*0x2, 0x80000,CRC(bda693a9) SHA1(fe71dd3c63198737aa2d39527f0004e977e3be20) )
-	ROM_LOAD( "ar1ptrl3.14k", 0x80000*0x3, 0x80000,CRC(82797405) SHA1(2f205fee2d33e183c80a906fb38900167c011240) )
-
-	ROM_LOAD( "ar1ptrm0.18j", 0x80000*0x4, 0x80000,CRC(29d92097) SHA1(2c492747b295dd715d3a19c8a2cd919b97d095a0) )
-	ROM_LOAD( "ar1ptrm1.16j", 0x80000*0x5, 0x80000,CRC(2232f0a5) SHA1(3fccf6d4a0c4100cc85e3051024d659c4a1c769e) )
-	ROM_LOAD( "ar1ptrm2.15j", 0x80000*0x6, 0x80000,CRC(8ee14e6f) SHA1(f6f1cbb748b109b365255378c18e710ba6270c1c) )
-	ROM_LOAD( "ar1ptrm3.14j", 0x80000*0x7, 0x80000,CRC(1094a970) SHA1(d41b10f48e1ef312bcaf09f27fabc7252c30e648) )
-
-	ROM_LOAD( "ar1ptru0.18f", 0x80000*0x8, 0x80000,CRC(26d88467) SHA1(d528f989fab4dd5ac1aec9b596a05fbadcc0587a) )
-	ROM_LOAD( "ar1ptru1.16f", 0x80000*0x9, 0x80000,CRC(c5e2c208) SHA1(152fde0b95a5df8c781e4a83577cfbbc7672ae0d) )
-	ROM_LOAD( "ar1ptru2.15f", 0x80000*0xa, 0x80000,CRC(1321ec59) SHA1(dbd3687a4c6b1aa0b18e336f99dabb9010d36639) )
-	ROM_LOAD( "ar1ptru3.14f", 0x80000*0xb, 0x80000,CRC(139d7dc1) SHA1(6d25e6ad552a91a0c5fc03db7e1a801ccf9c9556) )
-
-	ROM_REGION( 0x080000, REGION_CPU2, 0 ) /* S22-BIOS ver1.30 */
-	ROM_LOAD( "ar1datab.8k", 0, 0x080000, CRC(c26306f8) SHA1(6d8d993c076d5ced523143a86bd0938b3794478d) )
-	ROM_REGION( 0x200000, REGION_USER2, 0 ) /* sound samples */
-	ROM_LOAD( "ar1wavea.2l", 0, 0x200000, CRC(dbf64562) SHA1(454fd7d5b860f0e5557d8900393be95d6c992ad1) )
-ROM_END
-
 ROM_START( alpinerd )
 	ROM_REGION( 0x400000, REGION_CPU1, 0 ) /* main program */
 	ROM_LOAD32_BYTE( "ar2ver-d.1", 0x00003, 0x100000, CRC(fa3380b9) SHA1(2a46988745bd2672f8082399a68ae0d0ab3d28f2) )
@@ -1240,6 +2264,13 @@ ROM_START( alpinerd )
 	ROM_LOAD32_BYTE( "ar2ver-d.3", 0x00001, 0x100000, CRC(9beffe6a) SHA1(d8efd1e3829d32bb06537d7cecb59f8df9b6d663) )
 	ROM_LOAD32_BYTE( "ar2ver-d.4", 0x00000, 0x100000, CRC(1f3f1134) SHA1(0afa78444d1463d214f1afd7ec500af76d567489) )
 
+	ROM_REGION( 0x20000, REGION_CPU2, 0 ) /* Master DSP */
+
+	ROM_REGION( 0x20000, REGION_CPU3, 0 ) /* Slave DSP */
+
+	ROM_REGION( 0x080000, REGION_CPU4, 0 ) /* S22-BIOS ver1.30 */
+	ROM_LOAD( "ar1datab.8k", 0, 0x080000, CRC(c26306f8) SHA1(6d8d993c076d5ced523143a86bd0938b3794478d) )
+
 	ROM_REGION( 0x200000*2, REGION_GFX1, ROMREGION_DISPOSE ) /* 32x32x8bpp sprite tiles */
 	ROM_LOAD( "ar1scg0.12f", 0x200000*0, 0x200000,CRC(e7be830a) SHA1(60e2162eecd7401a0c26c525de2715cbfb10c1c5) ) /* identical to "ar1scg0.12l" */
 	ROM_LOAD( "ar1scg1.10f", 0x200000*1, 0x200000,CRC(8f15a686) SHA1(bce2d4380c6c39aa402566ddb0f62bbe6d7bfa1d) ) /* identical to "ar1scg1.10l" */
@@ -1264,7 +2295,7 @@ ROM_START( alpinerd )
 	ROM_LOAD( "ar1ptrl2.15k", 0x80000*0x2, 0x80000,CRC(bda693a9) SHA1(fe71dd3c63198737aa2d39527f0004e977e3be20) )
 	ROM_LOAD( "ar1ptrl3.14k", 0x80000*0x3, 0x80000,CRC(82797405) SHA1(2f205fee2d33e183c80a906fb38900167c011240) )
 
-	ROM_LOAD( "ar1ptrm0.18j", 0x80000*0x4, 0x80000,CRC(29d92097) SHA1(2c492747b295dd715d3a19c8a2cd919b97d095a0) )
+	ROM_LOAD( "ar1ptrm0.18j", 0x80000*0x4, 0x80000,CRC(64bd6620) SHA1(2e33ff22208805ece304128be8887646fc890f6d) )
 	ROM_LOAD( "ar1ptrm1.16j", 0x80000*0x5, 0x80000,CRC(2232f0a5) SHA1(3fccf6d4a0c4100cc85e3051024d659c4a1c769e) )
 	ROM_LOAD( "ar1ptrm2.15j", 0x80000*0x6, 0x80000,CRC(8ee14e6f) SHA1(f6f1cbb748b109b365255378c18e710ba6270c1c) )
 	ROM_LOAD( "ar1ptrm3.14j", 0x80000*0x7, 0x80000,CRC(1094a970) SHA1(d41b10f48e1ef312bcaf09f27fabc7252c30e648) )
@@ -1274,8 +2305,6 @@ ROM_START( alpinerd )
 	ROM_LOAD( "ar1ptru2.15f", 0x80000*0xa, 0x80000,CRC(1321ec59) SHA1(dbd3687a4c6b1aa0b18e336f99dabb9010d36639) )
 	ROM_LOAD( "ar1ptru3.14f", 0x80000*0xb, 0x80000,CRC(139d7dc1) SHA1(6d25e6ad552a91a0c5fc03db7e1a801ccf9c9556) )
 
-	ROM_REGION( 0x080000, REGION_CPU2, 0 ) /* S22-BIOS ver1.30 */
-	ROM_LOAD( "ar1datab.8k", 0, 0x080000, CRC(c26306f8) SHA1(6d8d993c076d5ced523143a86bd0938b3794478d) )
 	ROM_REGION( 0x200000, REGION_USER2, 0 ) /* sound samples */
 	ROM_LOAD( "ar1wavea.2l", 0, 0x200000, CRC(dbf64562) SHA1(454fd7d5b860f0e5557d8900393be95d6c992ad1) )
 ROM_END
@@ -1286,6 +2315,13 @@ ROM_START( cybrcomm )
 	ROM_LOAD32_BYTE( "cy1prglm.2d", 0x00002, 0x80000, CRC(884a5b0e) SHA1(0e27ae366b8a2695fe112b4740c8c9013bb97e26) )
 	ROM_LOAD32_BYTE( "cy1prgum.8d", 0x00001, 0x80000, CRC(c9c4a921) SHA1(76a52461165a8bd8d984a34063fbeb4cb73624af) )
 	ROM_LOAD32_BYTE( "cy1prguu.6d", 0x00000, 0x80000, CRC(5f22975b) SHA1(a1a5cb66358d64a3c564b912f2eeafa182786b1e) )
+
+	ROM_REGION( 0x20000, REGION_CPU2, 0 ) /* Master DSP */
+
+	ROM_REGION( 0x20000, REGION_CPU3, 0 ) /* Slave DSP */
+
+	ROM_REGION( 0x080000, REGION_CPU4, 0 ) /* BIOS */
+	ROM_LOAD( "cy1data.6r", 0, 0x020000, CRC(10d0005b) SHA1(10508eeaf74d24a611b44cd3bb12417ceb78904f) )
 
 	ROM_REGION( 0x4000, REGION_GFX1, ROMREGION_DISPOSE )
 
@@ -1313,8 +2349,6 @@ ROM_START( cybrcomm )
 	ROM_REGION( 0x2100, REGION_USER1, 0 )
 	ROM_LOAD( "cy1eeprm.9e", 0x0000, 0x2000, CRC(4e1d294b) SHA1(954ce04dcdba65214f5d0690ca59264f9090a1d6) ) /* EPROM */
 
-	ROM_REGION( 0x080000, REGION_CPU2, 0 ) /* MCU */
-	ROM_LOAD( "cy1data.6r", 0, 0x020000, CRC(10d0005b) SHA1(10508eeaf74d24a611b44cd3bb12417ceb78904f) )
 	ROM_REGION( 0x400000, REGION_USER2, 0 ) /* sound samples */
 	ROM_LOAD( "cy1wav0.10r", 0x000000, 0x100000, CRC(c6f366a2) SHA1(795dbee09df159d3501c748fb3de16cca81742d6) )
 	ROM_LOAD( "cy1wav1.10p", 0x100000, 0x100000, CRC(f30b5e37) SHA1(9f5a94d82741ef9688c6e415ebb9009c906737c9) )
@@ -1328,6 +2362,13 @@ ROM_START( cybrcycc )
 	ROM_LOAD32_BYTE( "cb2ver-c.2", 0x00002, 0x100000, CRC(054c504f) SHA1(9bde803ff09be0402f9b0388e55407362a2508e3) )
 	ROM_LOAD32_BYTE( "cb2ver-c.3", 0x00001, 0x100000, CRC(47e6306c) SHA1(39d6fc2c3cb9b4c9d3569cedb79b916a90537115) )
 	ROM_LOAD32_BYTE( "cb2ver-c.4", 0x00000, 0x100000, CRC(398426e4) SHA1(f20cd4892420e7b978baa51c9129b362422a3895) )
+
+	ROM_REGION( 0x20000, REGION_CPU2, 0 ) /* Master DSP */
+
+	ROM_REGION( 0x20000, REGION_CPU3, 0 ) /* Slave DSP */
+
+	ROM_REGION( 0x080000, REGION_CPU4, 0 ) /* S22-BIOS ver1.30 */
+	ROM_LOAD( "cb1datab.8k", 0, 0x080000, CRC(e2404221) SHA1(b88810dd45aee8a5475c30806cdfded25fa14e0e) )
 
 	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE ) /* 32x32x8bpp sprite tiles */
 	ROM_LOAD( "cb1scg0.12f", 0x200000*0, 0x200000,CRC(7aaca90d) SHA1(9808819db5d86d555a03bb20a2fbedf060d04f0e) ) /* identical to "cb1scg0.12l" */
@@ -1359,9 +2400,6 @@ ROM_START( cybrcycc )
 	ROM_LOAD( "cb1ptru2.15f", 0x80000*0xa, 0x80000,CRC(68ffcd50) SHA1(5ca5f71b6b079fde14d76c869d211a815bffae68) )
 	ROM_LOAD( "cb1ptru3.14f", 0x80000*0xb, 0x80000,CRC(d89c1c2b) SHA1(9c25df696b2d120ce33d7774381460297740007a) )
 
-	ROM_REGION( 0x080000, REGION_CPU2, 0 ) /* S22-BIOS ver1.30 */
-	ROM_LOAD( "cb1datab.8k", 0, 0x080000, CRC(e2404221) SHA1(b88810dd45aee8a5475c30806cdfded25fa14e0e) )
-
 	ROM_REGION( 0x600000, REGION_USER2, 0 ) /* sound samples */
 	ROM_LOAD( "cb1wavea.2l", 0x000000, 0x400000, CRC(b79a624d) SHA1(c0ee358a183ba6d0835731dbdd191b64718fde6e) )
 	ROM_LOAD( "cb1waveb.1l", 0x400000, 0x200000, CRC(33bf08f6) SHA1(bf9d68b26a8158ea1abfe8428b7454cac25242c5) )
@@ -1373,6 +2411,13 @@ ROM_START( propcycl )
 	ROM_LOAD32_BYTE( "pr2ver-a.2", 0x00002, 0x100000, CRC(c0da354a) SHA1(f27a71a62385b842404fcd8ed6513158e3639b8f) )
 	ROM_LOAD32_BYTE( "pr2ver-a.3", 0x00001, 0x100000, CRC(74bf4b74) SHA1(02713aa07238cc9e30163ae24d12c034aa972ff3) )
 	ROM_LOAD32_BYTE( "pr2ver-a.4", 0x00000, 0x100000, CRC(cf4d5638) SHA1(2ddd00d6ec3b85c234820507650d201e176c94a2) )
+
+	ROM_REGION( 0x20000, REGION_CPU2, 0 ) /* Master DSP */
+
+	ROM_REGION( 0x20000, REGION_CPU3, 0 ) /* Slave DSP */
+
+	ROM_REGION( 0x080000, REGION_CPU4, 0 ) /* SS22-BIOS ver1.41 */
+	ROM_LOAD( "pr1data.8k", 0, 0x080000, CRC(2e5767a4) SHA1(390bf05c90044d841fe2dd4a427177fa1570b9a6) )
 
 	ROM_REGION( 0x200000*2, REGION_GFX1, ROMREGION_DISPOSE ) /* 32x32x8bpp sprite tiles */
 	ROM_LOAD( "pr1scg0.12f", 0x200000*0, 0x200000,CRC(2d09a869) SHA1(ce8beabaac255e1de29d944c9866022bad713519) ) /* identical to "pr1scg0.12l" */
@@ -1406,15 +2451,15 @@ ROM_START( propcycl )
 	ROM_LOAD( "pr1ptrl0.18k", 0x80000*0, 0x80000,CRC(fddb27a2) SHA1(6e837b45e3f9ed7ca3d1a457d0f0124de5618d1f) )
 	ROM_LOAD( "pr1ptrl1.16k", 0x80000*1, 0x80000,CRC(6964dd06) SHA1(f38a550165504693d20892a7dcfaf01db19b04ef) )
 	ROM_LOAD( "pr1ptrl2.15k", 0x80000*2, 0x80000,CRC(4d7ed1d4) SHA1(8f72864a06ff8962e640cb36d062bddf5d110308) )
+
 	ROM_LOAD( "pr1ptrm0.18j", 0x80000*3, 0x80000,CRC(b6f204b7) SHA1(3b34f240b399b6406faaf338ae0ab536247e64a6) )
 	ROM_LOAD( "pr1ptrm1.16j", 0x80000*4, 0x80000,CRC(949588b7) SHA1(fdaf50ff2496200b9c981efc18b035f3c0a96ace) )
 	ROM_LOAD( "pr1ptrm2.15j", 0x80000*5, 0x80000,CRC(dc1cef0a) SHA1(8cbc02cf73fac3cc110b676d77602ae628385eae) )
+
 	ROM_LOAD( "pr1ptru0.18f", 0x80000*6, 0x80000,CRC(5d66a7c4) SHA1(c9ed1c18724192d45c1f6b40096f15d02baf2401) )
 	ROM_LOAD( "pr1ptru1.16f", 0x80000*7, 0x80000,CRC(e9a3f72b) SHA1(f967e1adf8eee4fffdf4288d36a93c5bb4f9a126) )
 	ROM_LOAD( "pr1ptru2.15f", 0x80000*8, 0x80000,CRC(c346a842) SHA1(299bc0a30d0e74d8adfa3dc605aebf6439f5bc18) )
 
-	ROM_REGION( 0x080000, REGION_CPU2, 0 ) /* SS22-BIOS ver1.41 */
-	ROM_LOAD( "pr1data.8k", 0, 0x080000, CRC(2e5767a4) SHA1(390bf05c90044d841fe2dd4a427177fa1570b9a6) )
 	ROM_REGION( 0x800000, REGION_USER2, 0 ) /* sound samples */
 	ROM_LOAD( "pr1wavea.2l", 0x000000, 0x400000, CRC(320f3913) SHA1(3887b7334ca7762794c14198dd24bab47fcd9505) )
 	ROM_LOAD( "pr1waveb.1l", 0x400000, 0x400000, CRC(d91acb26) SHA1(c2161e2d70e08aed15cbc875ffee685190611daf) )
@@ -1426,6 +2471,13 @@ ROM_START( acedrvrw )
 	ROM_LOAD32_BYTE( "ad2prglm.2d", 0x00002, 0x80000, CRC(5f726a10) SHA1(d077312c6a387fbdf906d278c73c6a3730687f32) )
 	ROM_LOAD32_BYTE( "ad2prgum.8d", 0x00001, 0x80000, CRC(d5042d6e) SHA1(9ae93e7ea7126302831a879ba0aadcb6e5b842f5) )
 	ROM_LOAD32_BYTE( "ad2prguu.6d", 0x00000, 0x80000, CRC(86d4661d) SHA1(2a1529a51ca5466994a2d0d84c7aab13cef95a11) )
+
+	ROM_REGION( 0x20000, REGION_CPU2, 0 ) /* Master DSP */
+
+	ROM_REGION( 0x20000, REGION_CPU3, 0 ) /* Slave DSP */
+
+	ROM_REGION( 0x080000, REGION_CPU4, 0 ) /* BIOS */
+	ROM_LOAD( "ad1data.6r", 0, 0x080000, CRC(82024f74) SHA1(711ab0c4f027716aeab18e3a5d3d06fa82af8007) )
 
 	ROM_REGION( 0x400, REGION_GFX1, ROMREGION_DISPOSE )
 
@@ -1447,11 +2499,8 @@ ROM_START( acedrvrw )
 	ROM_LOAD( "ad1potu0.5d", 0x80000*4, 0x80000,CRC(e0f44949) SHA1(ffdb64d600883974b05edaa9ed3071af355ee17f) )
 	ROM_LOAD( "ad1potu1.4d", 0x80000*5, 0x80000,CRC(f2cd2cbb) SHA1(19fe6e3454a1e4353c7fe0a0d7a71742fea946de) )
 
-	ROM_REGION( 0x080000, REGION_CPU2, 0 ) /* BIOS */
-	ROM_LOAD( "ad1data.6r", 0, 0x080000, CRC(82024f74) SHA1(711ab0c4f027716aeab18e3a5d3d06fa82af8007) )
-
 	ROM_REGION( 0x2000, REGION_USER1, 0 )
-	ROM_LOAD( "eeprom.9e",  0x0000, 0x2000, CRC(483d9237) SHA1(a696b22433a26f40f0839fa958fb26ad5cef9163) ) 
+	ROM_LOAD( "eeprom.9e",  0x0000, 0x2000, CRC(483d9237) SHA1(a696b22433a26f40f0839fa958fb26ad5cef9163) )
 
 	ROM_REGION( 0x400000, REGION_USER2, 0 ) /* sound samples */
 	ROM_LOAD( "ad1wave0.10r", 0x100000*0, 0x100000,CRC(c7879a72) SHA1(ae04d664858b0944583590ed0003a9420032d5ca) )
@@ -1466,6 +2515,13 @@ ROM_START( victlapw )
 	ROM_LOAD32_BYTE( "advprglm.2d", 0x00002, 0x80000, CRC(7b658bef) SHA1(cf982b49fde0c1897c4c16e77f9eb2a145d8cd42) )
 	ROM_LOAD32_BYTE( "advprgum.8d", 0x00001, 0x80000, CRC(af67f2fb) SHA1(f391843ee0d053e33660c60e3718871142d932f2) )
 	ROM_LOAD32_BYTE( "advprguu.6d", 0x00000, 0x80000, CRC(b60e5d2b) SHA1(f5740615c2864c5c6433275cf4388bda5122b7a7) )
+
+	ROM_REGION( 0x20000, REGION_CPU2, 0 ) /* Master DSP */
+
+	ROM_REGION( 0x20000, REGION_CPU3, 0 ) /* Slave DSP */
+
+	ROM_REGION( 0x080000, REGION_CPU4, 0 ) /* BIOS */
+	ROM_LOAD( "adv1data.6r", 0, 0x080000, CRC(10eecdb4) SHA1(aaedeed166614e6670e765e0d7e4e9eb5f38ad10) )
 
 	ROM_REGION( 0x4000, REGION_GFX1, ROMREGION_DISPOSE )
 
@@ -1497,8 +2553,6 @@ ROM_START( victlapw )
 	ROM_REGION( 8*1024, REGION_USER1, 0 ) /* EPROM */
 	ROM_LOAD( "eeprom.9e", 0, 8*1024, CRC(35fd9f7a) SHA1(7dc542795a6b0b9580c5fd1bf80e1e6f2c402078) )
 
-	ROM_REGION( 0x080000, REGION_CPU2, 0 ) /* MCU */
-	ROM_LOAD( "adv1data.6r", 0, 0x080000, CRC(10eecdb4) SHA1(aaedeed166614e6670e765e0d7e4e9eb5f38ad10) )
 	ROM_REGION( 0x400000, REGION_USER2, 0 ) /* sound samples */
 	ROM_LOAD( "adv1wav0.10r", 0x000000, 0x100000, CRC(f07b2d9d) SHA1(fd46c23b336d5e9a748f7f8d825c19737125d2fb) )
 	ROM_LOAD( "adv1wav1.10p", 0x100000, 0x100000, CRC(737f3c7a) SHA1(4737994f146c0076e7270785f41f3a85c53c7c5f) )
@@ -1512,6 +2566,13 @@ ROM_START( raveracw )
 	ROM_LOAD32_BYTE( "rv2prlmb.2d", 0x00002, 0x80000, CRC(894be0c3) SHA1(4dba93dc3ca1cf502c5f54018b64ad79bb2a632b) )
 	ROM_LOAD32_BYTE( "rv2prumb.8d", 0x00001, 0x80000, CRC(6414a800) SHA1(c278ff644909d12a43ba6fc2bf8d2092e469c3e6) )
 	ROM_LOAD32_BYTE( "rv2pruub.6d", 0x00000, 0x80000, CRC(a9f18714) SHA1(8e7b17749d151f92020f68d1ac06003cf1f5c573) )
+
+	ROM_REGION( 0x20000, REGION_CPU2, 0 ) /* Master DSP */
+
+	ROM_REGION( 0x20000, REGION_CPU3, 0 ) /* Slave DSP */
+
+	ROM_REGION( 0x80000, REGION_CPU4, 0 ) /* BIOS */
+	ROM_LOAD( "rv1data.6r", 0, 0x080000, CRC(d358ec20) SHA1(140c513349240417bb546dd2d151f3666b818e91) )
 
 	ROM_REGION( 0x4000, REGION_GFX1, ROMREGION_DISPOSE )
 
@@ -1547,8 +2608,6 @@ ROM_START( raveracw )
 	ROM_LOAD( "rv1eeprm.9e", 0x0000, 0x2000, CRC(801222e6) SHA1(a97ba76ad73f75fe7289e2c0d60b2dfdf2a99604) ) /* EPROM */
 	ROM_LOAD( "rr1gam.2d",   0x2000, 0x0100, CRC(b2161bce) SHA1(d2681cc0cf8e68df0d942d392b4eb4458c4bb356) ) /* identical to rr1gam.3d,rr1gam.4d */
 
-	ROM_REGION( 0x080000, REGION_CPU2, 0 ) /* MCU */
-	ROM_LOAD( "rv1data.6r", 0, 0x080000, CRC(d358ec20) SHA1(140c513349240417bb546dd2d151f3666b818e91) )
 	ROM_REGION( 0x400000, REGION_USER2, 0 ) /* sound samples */
 	ROM_LOAD( "rv1wav0.10r", 0x000000, 0x100000, CRC(5aef8143) SHA1(a75d31298e3ff9b290f238976a11e8b85cfb72d3) )
 	ROM_LOAD( "rv1wav1.10p", 0x100000, 0x100000, CRC(9ed9e6b3) SHA1(dd1da2b08d1b6aa0912daacc77744c9799aabb78) )
@@ -1562,6 +2621,13 @@ ROM_START( ridger2j )
 	ROM_LOAD32_BYTE( "rrs1prlm.2d", 0x00002, 0x80000, CRC(562f747a) SHA1(79d818b87c9a992fc9706fb39e6d560c2b0aa392) )
 	ROM_LOAD32_BYTE( "rrs1prum.8d", 0x00001, 0x80000, CRC(93259fb0) SHA1(c29787e873797a003db27adbd20d7b852e26d8c6) )
 	ROM_LOAD32_BYTE( "rrs1pruu.6d", 0x00000, 0x80000, CRC(31cdefe8) SHA1(ae836d389bed43dd156eb4cf3e97b6f1ad68181e) )
+
+	ROM_REGION( 0x20000, REGION_CPU2, 0 ) /* Master DSP */
+
+	ROM_REGION( 0x20000, REGION_CPU3, 0 ) /* Slave DSP */
+
+	ROM_REGION( 0x80000, REGION_CPU4, 0 ) /* BIOS */
+	ROM_LOAD( "rrs1data.6r", 0, 0x080000, CRC(b7063aa8) SHA1(08ff689e8dd529b91eee423c93f084945c6de417) )
 
 	ROM_REGION( 0x400, REGION_GFX1, ROMREGION_DISPOSE )
 
@@ -1583,13 +2649,6 @@ ROM_START( ridger2j )
 	ROM_LOAD( "rrs1pou0.5d", 0x80000*4, 0x80000,CRC(74d6ec84) SHA1(63f5beee51443c98100330ec04291f71e10716c4) )
 	ROM_LOAD( "rrs1pou1.4d", 0x80000*5, 0x80000,CRC(f527caaa) SHA1(f92bdd15323239d593ddac92a11d23a27e6635ed) )
 
-	ROM_REGION( 0x080000, REGION_CPU2, 0 ) /* BIOS/music data? */
-	ROM_LOAD( "rrs1data.6r", 0, 0x080000, CRC(b7063aa8) SHA1(08ff689e8dd529b91eee423c93f084945c6de417) )
-	/* 0x00000..0x001ff: data
-	 * 0x10000..0x1fc7f: music data?
-	 * 0x20000..0x2f57f: music data?
-	 * 0x30000..0x334ff: code? contains english text
-	 */
 	ROM_REGION( 0x400000, REGION_USER2, 0 ) /* sound samples */
 	ROM_LOAD( "rrs1wav0.10r", 0x100000*0, 0x100000,CRC(99d11a2d) SHA1(1f3db98a99be0f07c03b0a7817561459a58f310e) )
 	ROM_LOAD( "rrs1wav1.10p", 0x100000*1, 0x100000,CRC(ad28444a) SHA1(c31bbf3cae5015e5494fe4988b9b01d822224c69) )
@@ -1604,17 +2663,24 @@ ROM_START( ridgeraj )
 	ROM_LOAD32_BYTE( "rr1prum.8d", 0x00001, 0x80000, CRC(705ef78a) SHA1(881903413e66d6fd83d46eb18c4e1230531832ae) )
 	ROM_LOAD32_BYTE( "rr1pruu.6d", 0x00000, 0x80000, CRC(c1371f96) SHA1(a78e0bf6c147c034487a85efa0a8470f4e8f4bf0) )
 
-	ROM_REGION( 0x400, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_REGION( 0x20000, REGION_CPU2, 0 ) /* Master DSP */
 
+	ROM_REGION( 0x20000, REGION_CPU3, 0 ) /* Slave DSP */
+
+	ROM_REGION( 0x080000, REGION_CPU4, 0 ) /* BIOS */
+	ROM_LOAD( "rr1data.6r", 0, 0x080000, CRC(18f5f748) SHA1(e0d149a66de36156edd9b55f604c9a9801aaefa8) )
+
+
+	ROM_REGION( 0x400, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_REGION( 0x200000*8, REGION_GFX2, 0 ) /* 16x16x8bpp texture tiles */
-	ROM_LOAD( "rr1cg0.1a", 0x200000*0x4, 0x200000,CRC(d1b0eec6) SHA1(f66922c324dfc3ff408db7556c587ef90ca64c3b) )
-	ROM_LOAD( "rr1cg1.2a", 0x200000*0x5, 0x200000,CRC(bb695d89) SHA1(557bac9d2718519c1f69e374d0ef9a86a43fe86c) )
-	ROM_LOAD( "rr1cg2.3a", 0x200000*0x6, 0x200000,CRC(8f374c0a) SHA1(94ff8581de11a03ef86525155f8433bf5858b980) )
-	ROM_LOAD( "rr1cg3.5a", 0x200000*0x7, 0x200000,CRC(072a5c47) SHA1(86b8e973ae6b78197d685fe6d14722d8e2d0dfec) )
+	ROM_LOAD( "rr1cg0.bin", 0x200000*0x4, 0x200000, CRC(b557a795) )//,CRC(d1b0eec6) SHA1(f66922c324dfc3ff408db7556c587ef90ca64c3b) )
+	ROM_LOAD( "rr1cg1.bin", 0x200000*0x5, 0x200000, CRC(0fa212d9) )//,CRC(bb695d89) SHA1(557bac9d2718519c1f69e374d0ef9a86a43fe86c) )
+	ROM_LOAD( "rr1cg2.bin", 0x200000*0x6, 0x200000, CRC(18e2d2bd) )//,CRC(8f374c0a) SHA1(94ff8581de11a03ef86525155f8433bf5858b980) )
+	ROM_LOAD( "rr1cg3.bin", 0x200000*0x7, 0x200000, CRC(9564488b) )//,CRC(072a5c47) SHA1(86b8e973ae6b78197d685fe6d14722d8e2d0dfec) )
 
 	ROM_REGION( 0x280000, REGION_GFX3, 0 ) /* texture tilemap */
-	ROM_LOAD( "rr1ccrl.5a", 0x000000, 0x200000,CRC(c15cb257) SHA1(0cb8f231c62ea37955be5d452a436a6e815af8e8) )
-	ROM_LOAD( "rr1ccrh.5c", 0x200000, 0x080000,CRC(dd332fd5) SHA1(a7d9c1d6b5a8e3a937b525c1363880e404dcd147) )
+	ROM_LOAD( "rr1ccrl.bin",0x000000, 0x200000, CRC(6092d181) )//,CRC(c15cb257) SHA1(0cb8f231c62ea37955be5d452a436a6e815af8e8) )
+	ROM_LOAD( "rr1ccrh.bin",0x200000, 0x080000, CRC(dd332fd5) )//,CRC(dd332fd5) SHA1(a7d9c1d6b5a8e3a937b525c1363880e404dcd147) )
 
 	ROM_REGION( 0x80000*6, REGION_GFX4, 0 ) /* 3d model data */
 	ROM_LOAD( "rr1potl0.5b", 0x80000*0, 0x80000,CRC(3ac193e3) SHA1(ff213766f15e34dc1b25187b57d94e17930090a3) )
@@ -1623,9 +2689,6 @@ ROM_START( ridgeraj )
 	ROM_LOAD( "rr1potm1.4c", 0x80000*3, 0x80000,CRC(1bc1ea7b) SHA1(52c21eef4989c45acc5fa4deda2d0b63214731c8) )
 	ROM_LOAD( "rr1potu0.5d", 0x80000*4, 0x80000,CRC(5e367f72) SHA1(5887f011379dce865fef238b402678a3d2033de9) )
 	ROM_LOAD( "rr1potu1.4d", 0x80000*5, 0x80000,CRC(31d92475) SHA1(51d3c0baa223e1bc16ea2950f2e085597528f870) )
-
-	ROM_REGION( 0x080000, REGION_CPU2, 0 ) /* BIOS */
-	ROM_LOAD( "rr1data.6r", 0, 0x080000, CRC(18f5f748) SHA1(e0d149a66de36156edd9b55f604c9a9801aaefa8) )
 
 	ROM_REGION( 0x400000, REGION_USER2, 0 ) /* sound samples */
 	ROM_LOAD( "rr1wav0.10r", 0x100000*0, 0x100000,CRC(a8e85bde) SHA1(b56677e9f6c98f7b600043f5dcfef3a482ca7455) )
@@ -1641,6 +2704,13 @@ ROM_START( timecris )
 	ROM_LOAD32_BYTE( "ts2ver-b.3", 0x00001, 0x100000, CRC(9f4ced33) SHA1(32768b5ff263a9e3d11b7b36f6b2d7e951e07419) )
 	ROM_LOAD32_BYTE( "ts2ver-b.4", 0x00000, 0x100000, CRC(3e0cfb38) SHA1(3c56342bd73b1617ea579a0d53e19d59bb04fd99) )
 
+	ROM_REGION( 0x20000, REGION_CPU2, 0 ) /* Master DSP */
+
+	ROM_REGION( 0x20000, REGION_CPU3, 0 ) /* Slave DSP */
+
+	ROM_REGION( 0x80000, REGION_CPU4, 0 ) /* BIOS */
+	ROM_LOAD( "ts1data.8k", 0, 0x080000, CRC(e68aa973) SHA1(663e80d249be5d5841139d98a9d72e2396851272) )
+
 	ROM_REGION( 0x200000*6, REGION_GFX1, ROMREGION_DISPOSE ) /* 32x32x8bpp sprite tiles */
 	ROM_LOAD( "ts1scg0.12f",0x200000*0, 0x200000,CRC(14a3674d) SHA1(c5792a385572452b43bbc7eb8428335b19daa3c0) )
 	ROM_LOAD( "ts1scg1.10f",0x200000*1, 0x200000,CRC(11791dbf) SHA1(3d75b468d69a8bf398d45f310cdb8bc88b63f25c) )
@@ -1673,8 +2743,6 @@ ROM_START( timecris )
 	ROM_LOAD( "ts1ptru1.16f", 0x80000*7, 0x80000,CRC(993cde84) SHA1(c9cdcca1d60bcc41ad881c02dda9895563963ead) )
 	ROM_LOAD( "ts1ptru2.15f", 0x80000*8, 0x80000,CRC(7cb25c73) SHA1(616eab3ac238864a584394f7ec8736ece227974a) )
 
-	ROM_REGION( 0x080000, REGION_CPU2, 0 ) /* BIOS */
-	ROM_LOAD( "ts1data.8k", 0, 0x080000, CRC(e68aa973) SHA1(663e80d249be5d5841139d98a9d72e2396851272) )
 	ROM_REGION( 0x800000, REGION_USER2, 0 ) /* sound samples */
 	ROM_LOAD( "ts1wavea.2l", 0x000000, 0x400000, CRC(d1123301) SHA1(4bf1fd746fef4e6befa63c61a761971d729e1573) )
 	ROM_LOAD( "ts1waveb.1l", 0x400000, 0x200000, CRC(bf4d7272) SHA1(c7c7b3620e7b3176644b6784ee36e679c9e31cc1) )
@@ -1685,6 +2753,13 @@ ROM_START( timecrsa )
 	ROM_LOAD32_WORD_SWAP( "ts2ver-a.1", 0x00002, 0x200000, CRC(d57eb74b) SHA1(536dd9305d0ac44110c575776333310cc57b5242) )
 	ROM_LOAD32_WORD_SWAP( "ts2ver-a.2", 0x00000, 0x200000, CRC(671588af) SHA1(63f992c6795521fd263a0ebf230f8dc88cbfc443) )
 
+	ROM_REGION( 0x20000, REGION_CPU2, 0 ) /* Master DSP */
+
+	ROM_REGION( 0x20000, REGION_CPU3, 0 ) /* Slave DSP */
+
+	ROM_REGION( 0x80000, REGION_CPU4, 0 ) /* BIOS */
+	ROM_LOAD( "ts1data.8k", 0, 0x080000, CRC(e68aa973) SHA1(663e80d249be5d5841139d98a9d72e2396851272) )
+
 	ROM_REGION( 0x200000*6, REGION_GFX1, ROMREGION_DISPOSE ) /* 32x32x8bpp sprite tiles */
 	ROM_LOAD( "ts1scg0.12f",0x200000*0, 0x200000,CRC(14a3674d) SHA1(c5792a385572452b43bbc7eb8428335b19daa3c0) )
 	ROM_LOAD( "ts1scg1.10f",0x200000*1, 0x200000,CRC(11791dbf) SHA1(3d75b468d69a8bf398d45f310cdb8bc88b63f25c) )
@@ -1717,8 +2792,6 @@ ROM_START( timecrsa )
 	ROM_LOAD( "ts1ptru1.16f", 0x80000*7, 0x80000,CRC(993cde84) SHA1(c9cdcca1d60bcc41ad881c02dda9895563963ead) )
 	ROM_LOAD( "ts1ptru2.15f", 0x80000*8, 0x80000,CRC(7cb25c73) SHA1(616eab3ac238864a584394f7ec8736ece227974a) )
 
-	ROM_REGION( 0x080000, REGION_CPU2, 0 ) /* BIOS */
-	ROM_LOAD( "ts1data.8k", 0, 0x080000, CRC(e68aa973) SHA1(663e80d249be5d5841139d98a9d72e2396851272) )
 	ROM_REGION( 0x800000, REGION_USER2, 0 ) /* sound samples */
 	ROM_LOAD( "ts1wavea.2l", 0x000000, 0x400000, CRC(d1123301) SHA1(4bf1fd746fef4e6befa63c61a761971d729e1573) )
 	ROM_LOAD( "ts1waveb.1l", 0x400000, 0x200000, CRC(bf4d7272) SHA1(c7c7b3620e7b3176644b6784ee36e679c9e31cc1) )
@@ -2004,7 +3077,7 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( ridgera )
 	PORT_START /* 0: DIP2 and DIP3 */
-	PORT_DIPNAME( 0x0001, 0x0001, "DIP2-1" )
+	PORT_DIPNAME( 0x0001, 0x0001, "DIP2-1 (test mode?)" )
 	PORT_DIPSETTING(    0x0001, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x0000, DEF_STR( On ) )
 	PORT_DIPNAME( 0x0002, 0x0002, "DIP2-2" )
@@ -2237,235 +3310,58 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( timecris )
 	PORT_START
-	PORT_DIPNAME( 0x0001, 0x0001, "DIP2-1" )
-	PORT_DIPSETTING(    0x0001, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0002, 0x0002, "DIP2-2" )
-	PORT_DIPSETTING(    0x0002, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0004, 0x0004, "DIP2-3" )
-	PORT_DIPSETTING(    0x0004, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0008, 0x0008, "DIP2-4" )
-	PORT_DIPSETTING(    0x0008, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0010, 0x0010, "DIP2-5" )
-	PORT_DIPSETTING(    0x0010, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0020, 0x0020, "DIP2-6" )
-	PORT_DIPSETTING(    0x0020, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0040, 0x0040, "DIP2-7" )
-	PORT_DIPSETTING(    0x0040, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0080, 0x0080, "DIP2-8" )
-	PORT_DIPSETTING(    0x0080, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0100, 0x0100, "DIP3-1 (dump memory)" )
-	PORT_DIPSETTING(    0x0100, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0200, 0x0200, "DIP3-2" )
-	PORT_DIPSETTING(    0x0200, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0400, 0x0400, "DIP3-3" )
-	PORT_DIPSETTING(    0x0400, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0800, 0x0800, "DIP3-4" ) /* screen flip? */
-	PORT_DIPSETTING(    0x0800, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x1000, 0x1000, "DIP3-5" )
-	PORT_DIPSETTING(    0x1000, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x2000, 0x2000, "DIP3-6" )
-	PORT_DIPSETTING(    0x2000, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x4000, 0x4000, "DIP3-7" )
-	PORT_DIPSETTING(    0x4000, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x8000, 0x8000, "DIP3-8 (test mode)" )
-	PORT_DIPSETTING(    0x8000, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x01, 0x01, "DIP4-1" )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, "DIP4-2" )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, "DIP4-3" )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, "DIP4-4" )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, "DIP4-5" )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, "DIP4-6" )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, "DIP4-7" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, "DIP4-8" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
-	PORT_START /* 1:gas */
-	PORT_ANALOG( 0xffff, 0x8000, IPT_AD_STICK_Y|IPF_CENTER|IPF_PLAYER1,	100, 4, 0x00, 0xffff )
+	PORT_START
+	PORT_ANALOG( 0xff, 0x80, IPT_LIGHTGUN_X, 50, 4, 0, 255 )
+	PORT_START
+	PORT_ANALOG( 0xff, 0x80, IPT_LIGHTGUN_Y, 50, 4, 0, 255 )
 
-	PORT_START /* 2:brake */
-	PORT_ANALOG( 0xffff, 0x8000, IPT_AD_STICK_Y|IPF_CENTER|IPF_PLAYER2,	100, 4, 0x00, 0xffff )
-
-	PORT_START /* 3:steering */
-	PORT_ANALOG( 0xffff, 0x8000, IPT_AD_STICK_X|IPF_CENTER, 100, 4, 0x00, 0xffff )
+	PORT_START
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START /* 4 */
-	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_BUTTON1 )	/* stick shift down */
-	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_BUTTON2 )	/* stick shift up */
-	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_BUTTON3 )	/* view */
-	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_COIN2 )	/* (unused) */
-	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_SERVICE1 )
-	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_TILT )		/* motion stop (unused) */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_SERVICE1 )
+	PORT_BITX(0x08, IP_ACTIVE_HIGH, IPF_TOGGLE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 ) /* gun trigger */
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 ) /* foot pedal */
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 INPUT_PORTS_END
 
 /*****************************************************************************************************/
 
-/**
- * helper function for FixQuads
- */
-static unsigned
-GetPolyData( unsigned addr )
-{
-	size_t ptRomSize = memory_region_length(REGION_GFX4)/3;
-	data8_t *pPolyL = memory_region(REGION_GFX4);
-	data8_t *pPolyM = pPolyL + ptRomSize;
-	data8_t *pPolyH = pPolyM + ptRomSize;
-	return (pPolyH[addr]*256+pPolyM[addr])*256+pPolyL[addr];
-}
-
-/**
- * helper function for FixQuads
- */
-static void PutPolyData( unsigned addr, unsigned data )
-{
-	size_t ptRomSize = memory_region_length(REGION_GFX4)/3;
-	data8_t *pPolyL = memory_region(REGION_GFX4);
-	data8_t *pPolyM = pPolyL + ptRomSize;
-	data8_t *pPolyH = pPolyM + ptRomSize;
-	/* logerror( "%08x: %02x\n", addr, pPolyM[addr]^((data>>8)&0xff) ); */
-	pPolyH[addr] = data>>16;
-	pPolyM[addr] = (data>>8)&0xff;
-	pPolyL[addr] = data&0xff;
-}
-
-/**
- * helper function called from DecryptPointROMs
- *
- * This routine walks a polygon definition, and applies a heuristic to the middle byte of each X/Y/Z coordinate.
- * We look at the sign of the most significant byte.  If it is negative, we fill the middle byte with 0xff.
- * If it is positive, we fill the middle byte with 0x00.
- *
- * This is a crude "fix" at best.  But it preserves the most significant and least significant bytes,
- * and avoids absurdly-sized polygons which make scenes unrecognizable.
- */
-static void
-FixQuads( INT32 *pIndex )
-{
-	int i;
-	INT32 addr = *pIndex;
-	INT32 size = GetPolyData(addr++);
-
-	*pIndex = addr+(size&0xff);
-
-	while( addr<*pIndex )
-	{
-		size = GetPolyData(addr++);
-		size &= 0xff;
-
-		switch( size )
-		{
-		case 0x0d:
-			break;
-
-		case 0x10:
-			break;
-
-		case 0x17:
-			for( i=3+8; i<3+12+8; i++ )
-			{
-				UINT32 data = GetPolyData(addr+i);
-				if( data&0x800000 ) data |= 0x00ff00; else data &= 0xff00ff; /* replace middle byte with -1 or 0 */
-				PutPolyData( addr+i, data );
-			}
-			break;
-
-		case 0x18:
-			for( i=4+8; i<4+12+8; i++ )
-			{
-				UINT32 data = GetPolyData(addr+i);
-				if( data&0x800000 ) data |= 0x00ff00; else data &= 0xff00ff; /* replace middle byte with -1 or 0 */
-				PutPolyData( addr+i, data );
-			}
-			break;
-
-		default:
-			exit(1);
-			break;
-		}
-		addr += size;
-	}
-}
-
-/**
- * Alpine Racer is working for the most part, except that the middle byte of each 24 bit value in
- * Point ROMs is often scrambled.  If you attempt to render scenes using the value "as-is" you get
- * distorted polygons/textures or worse.
- *
- * The following routine walks through point ROM data, and applies several heuristics to help
- * correct the data.  It's far from perfect, but still 100% better than using the raw values.
- * This stuff could probably be hand corrected, especially if a "polygon viewer" program were written
- * for use on the main CPU, and someone were willing to collect a lot of screenshots.  But it's
- * a lot of trouble.
- */
-static void
-DecryptPointROMs( void )
-{
-	int i;
-	int prev = 0xe00;
-	/* walk the lookup tables in the Point ROM headers, and assume that it always increments. */
-	for( i = 0x45; i<0xe2d; i++ )
-	{
-		int iNext = GetPolyData(i)&0xff;
-		if( (iNext&0xff)<=(prev&0xff) )
-		{
-			prev += 0x100;
-		}
-		prev = (prev&0xffff00)|(iNext&0xff);
-		PutPolyData( i, prev );
-	}
-
-	/* process each polygon */
-	{
-		INT32 iFinish = GetPolyData(3);
-		INT32 iDest   = GetPolyData(0x45);
-		INT32 iIndex  = GetPolyData(iDest);
-		INT32 iMaster = 0x45;
-		while( iIndex<iFinish )
-		{
-			int count = GetPolyData(iMaster+1) - GetPolyData(iMaster) - 1;
-			while( count-- > 0 )
-			{
-				PutPolyData( iDest++, iIndex );
-				FixQuads( &iIndex );
-				if( iIndex>=iFinish ) break;
-			}
-			PutPolyData( iDest++, 0xffffff );
-			iMaster++;
-		}
-	}
-
-	/* the following patch hand-corrects the polygon used for the title screen */
-	PutPolyData( 0x0077d0+13, 0xfffd80 );
-	PutPolyData( 0x0077d0+14, 0x0001e0 );
-	PutPolyData( 0x0077d0+15, 0x000000 );
-
-	PutPolyData( 0x0077d0+16, 0x000280 );
-	PutPolyData( 0x0077d0+17, 0x0001e0 );
-	PutPolyData( 0x0077d0+18, 0x000000 );
-
-	PutPolyData( 0x0077d0+19, 0x000280 );
-	PutPolyData( 0x0077d0+20, 0xfffe20 );
-	PutPolyData( 0x0077d0+21, 0x000000 );
-
-	PutPolyData( 0x0077d0+22, 0xfffd80 );
-	PutPolyData( 0x0077d0+23, 0xfffe20 );
-	PutPolyData( 0x0077d0+24, 0x000000 );
-}
-
 DRIVER_INIT( alpiner )
 {
 	namcos22_gametype = NAMCOS22_ALPINE_RACER;
-	DecryptPointROMs();
-}
 
-/*****************************************************************************************************/
+	InitDSP(1);
+}
 
 DRIVER_INIT( airco22 )
 { /* patch DSP RAM test */
@@ -2481,6 +3377,8 @@ DRIVER_INIT( airco22 )
 	/* int5 rte */
 	/* int6 700004, 700014, proc */
 	/* int7 rte */
+
+	InitDSP(1);
 }
 
 DRIVER_INIT( propcycl )
@@ -2503,31 +3401,37 @@ DRIVER_INIT( propcycl )
 	pROM[0x22296/4] |= 0x00004e75;
 
 	namcos22_gametype = NAMCOS22_PROP_CYCLE;
+	InitDSP(1);
 }
 
 DRIVER_INIT( ridgeraj )
 {
 	namcos22_gametype = NAMCOS22_RIDGE_RACER;
+	InitDSP(0);
 }
 
 DRIVER_INIT( ridger2j )
 {
 	namcos22_gametype = NAMCOS22_RIDGE_RACER;
+	InitDSP(0);
 }
 
 DRIVER_INIT( acedrvr )
 {
 	namcos22_gametype = NAMCOS22_ACE_DRIVER;
+	InitDSP(0);
 }
 
 DRIVER_INIT( victlap )
 {
 	namcos22_gametype = NAMCOS22_VICTORY_LAP;
+	InitDSP(0);
 }
 
 DRIVER_INIT( raveracw )
 {
 	namcos22_gametype = NAMCOS22_RAVE_RACER;
+	InitDSP(0);
 }
 
 DRIVER_INIT( cybrcomm )
@@ -2540,6 +3444,7 @@ DRIVER_INIT( cybrcomm )
 	pROM[0x18aefc/4] = 0x4e714e71;
 
 	namcos22_gametype = NAMCOS22_CYBER_COMMANDO;
+	InitDSP(0);
 }
 
 DRIVER_INIT( cybrcyc )
@@ -2549,18 +3454,23 @@ DRIVER_INIT( cybrcyc )
 	pROM[0x355C/4] |= 0x4e710000;
 
 	namcos22_gametype = NAMCOS22_CYBER_CYCLES;
+	InitDSP(1);
 }
 
 DRIVER_INIT( timecris )
 {
 	namcos22_gametype = NAMCOS22_TIME_CRISIS;
+	InitDSP(1);
 }
+
+/************************************************************************************/
+
 
 /*     YEAR, NAME,    PARENT,    MACHINE,   INPUT,    INIT,     MNTR,  COMPANY, FULLNAME,                                    FLAGS */
 /* System22 games */
 GAMEX( 1995, cybrcomm, 0,        namcos22,  cybrcomm, cybrcomm, ROT0, "Namco", "Cyber Commando (Rev. CY1, Japan)"          , GAME_NO_SOUND|GAME_NOT_WORKING ) /* almost */
 GAMEX( 1995, raveracw, 0,        namcos22,  raveracw, raveracw, ROT0, "Namco", "Rave Racer (Rev. RV2, World)"              , GAME_NO_SOUND|GAME_NOT_WORKING ) /* almost */
-GAMEX( 1993, ridgeraj, 0,        namcos22,  ridgera,  ridgeraj, ROT0, "Namco", "Ridge Racer (Rev. RR1, Japan)"             , GAME_NO_SOUND|GAME_NOT_WORKING ) /* ? */
+GAMEX( 1993, ridgeraj, 0,        namcos22,  ridgera,  ridgeraj, ROT0, "Namco", "Ridge Racer (Rev. RR1, Japan)"             , GAME_NO_SOUND|GAME_NOT_WORKING ) /* ? */ /* 1993-10-07 */
 GAMEX( 1994, ridger2j, 0,        namcos22,  ridgera,  ridger2j, ROT0, "Namco", "Ridge Racer 2 (Rev. RRS1, Japan)"          , GAME_NO_SOUND|GAME_NOT_WORKING ) /* ? */
 GAMEX( 1994, acedrvrw, 0,        namcos22,  victlap,  acedrvr,  ROT0, "Namco", "Ace Driver (Rev. AD2, World)"              , GAME_NO_SOUND|GAME_NOT_WORKING ) /* almost */
 GAMEX( 1996, victlapw, 0,        namcos22,  victlap,  victlap,  ROT0, "Namco", "Ace Driver: Victory Lap (Rev. ADV2, World)", GAME_NO_SOUND|GAME_NOT_WORKING ) /* almost */
@@ -2572,7 +3482,7 @@ GAMEX( 1995, alpinerc, alpinerd, namcos22s, alpiner,  alpiner,  ROT0, "Namco", "
 GAMEX( 1995, cybrcycc, 0,        namcos22s, cybrcycc, cybrcyc,  ROT0, "Namco", "Cyber Cycles (Rev. CB2 Ver.C)"             , GAME_NO_SOUND|GAME_NOT_WORKING ) /* almost */
 //GAMEX( 1995, dirtdshx, "Dirt Dash")
 GAMEX( 1995, timecris, 0,        namcos22s, timecris, timecris, ROT0, "Namco", "Time Crisis (Rev. TS2 Ver.B)"              , GAME_NO_SOUND|GAME_NOT_WORKING ) /* locks up */
-GAMEX( 1995, timecrsa, timecris, namcos22s, timecris, timecris, ROT0, "Namco", "Time Crisis (Rev. TS2 Ver.A)"              , GAME_NO_SOUND|GAME_NOT_WORKING ) /* locks up */
+GAMEX( 1995, timecrsa, timecris, namcos22s, timecris, timecris, ROT0, "Namco", "Time Crisis (Rev. TS2 Ver.A)"              , GAME_NO_SOUND )
 GAMEX( 1996, propcycl, 0,        namcos22s, propcycl, propcycl, ROT0, "Namco", "Prop Cycle (Rev PR2 Ver.A)"                , GAME_NO_SOUND|GAME_IMPERFECT_GRAPHICS )
 //GAMEX( 1996, tokyowrx, "Tokyo Wars")
 //GAMEX( 1996, alpinr2x, "Alpine Racer 2")

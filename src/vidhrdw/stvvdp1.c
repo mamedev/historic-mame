@@ -1049,18 +1049,20 @@ static void vdp1_fill_quad(struct mame_bitmap *bitmap, const struct rectangle *c
 
 static int x2s(int v)
 {
-	int r = v & 0x7ff;
+	/*int r = v & 0x7ff;
 	if (r & 0x400)
 		r -= 0x800;
-	return r + stvvdp1_local_x;
+	return r + stvvdp1_local_x;*/
+	return (INT32)(INT16)v + stvvdp1_local_x;
 }
 
 static int y2s(int v)
 {
-	int r = v & 0x7ff;
+	/*int r = v & 0x7ff;
 	if (r & 0x400)
 		r -= 0x800;
-	return r + stvvdp1_local_y;
+	return r + stvvdp1_local_y;*/
+	return (INT32)(INT16)v + stvvdp1_local_y;
 }
 
 void stv_vpd1_draw_distorded_sprite(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
@@ -1493,8 +1495,8 @@ void stv_vdp1_process_list(struct mame_bitmap *bitmap, const struct rectangle *c
 
 				case 0x000a:
 					if (vdp1_sprite_log) logerror ("Sprite List Local Co-Ordinate Set\n");
-					stvvdp1_local_x = stv2_current_sprite.CMDXA;
-					stvvdp1_local_y = stv2_current_sprite.CMDYA;
+					stvvdp1_local_x = (INT16)stv2_current_sprite.CMDXA;
+					stvvdp1_local_y = (INT16)stv2_current_sprite.CMDYA;
 					break;
 
 				default:

@@ -11,6 +11,7 @@ source was very helpful in many areas particularly the sprites.)
 
 - Changes Log -
 
+05-01-04 Added Racing Beat
 01-26-02 Added Enforce
 10-17-01 TC0150ROD support improved (e.g. Aquajack)
 09-01-01 Preliminary TC0150ROD support
@@ -536,9 +537,9 @@ Contcirc video chips and the chips used on later boards). These
 64K roms compare as follows - makes sense as these groups
 comprise the three sprite layout types used in TaitoZ games:
 
-   Contcirc / Enforce      =IDENTICAL
-   ChaseHQ / Nightstr      =IDENTICAL
-   Bshark / SCI / Dblaxle  =IDENTICAL
+   Contcirc / Enforce                =IDENTICAL
+   ChaseHQ / Nightstr                =IDENTICAL
+   Bshark / SCI / Dblaxle / Racingb  =IDENTICAL
 
    Missing from Aquajack / Spacegun dumps (I would bet they are
    the same as Bshark). Can anyone dump these two along with any
@@ -680,6 +681,92 @@ though their entries in spriteram are being overwritten. (Perhaps
 an int6 timing/number issue: sprites seem to be ChaseHQ2ish with
 a spriteframe toggle - currently this never changes which may be
 wrong.)
+
+
+Racing Beat
+-----------
+
+Sprites (and main road) very wrong
+
+M43E0227A
+K11E0674A
+K1100650A J1100264A CPU PCB
+|-------------------------------------------------------------|
+|6264       62256        32MHz          DSWA   DSWB           |
+|           62256                                             |
+|C84-104.2                                                    |
+|C84-110.3  TC0170ABT                          TC0510NIO      |
+|C84-103.4                                                    |
+|C84-111.5                                     MB3771         |
+|                                   C84_101.42                |
+|6264                 TC0140SYT                               |
+|                                    6264                     |
+|                                                             |
+|                                                             |
+|                         C84-85.31         Z80               |
+|68000                                                        |
+|                                                             |
+|                                                             |
+|PAL     PAL                                YM2610            |
+|                         C84-86.33                           |
+|PAL                                                          |
+|                             6264          C84-87.46         |
+|                                                             |
+|                                                             |
+|                   PAL   C84-99.35         YM3016            |
+|6264   6264                                                  |
+|                                                             |
+|                   PAL   C84-100.36        TL074             |
+|           TC0150ROD                                         |
+|C84-84.12                    6264                            |
+|                   PAL                                       |
+|                                                TL074        |
+|    C84-07.22                                        MB3735  |
+|                  68000                                      |
+|-------------------------------------------------------------|
+Notes:
+      68000s running at 16MHz
+      Z80 running at 4MHz
+      YM2610 running at 8MHz
+
+
+K11X0675A
+K1100635A
+J1100256A VIDEO PCB
+|-------------------------------------------------------------|
+|                        26.686MHz       6264                 |
+|62256    C84-89.11                              TC0260DAR    |
+|                                                             |
+|62256    C84-90.12                                           |
+|                        TC0480SCP       6264                 |
+|                                                             |
+|                                        6264                 |
+|C84-88.3                                                     |
+|                                                             |
+|                                                             |
+|         C84-19.15                                           |
+|                        TC0370MSO     TC0300FLA    PAL       |
+|         C84-10.16                                           |
+|         C84-11.17                                           |
+|                                                    C84-09.74|
+|                                                             |
+|                    62256   62256   62256   62256            |
+|                                                             |
+|                                                             |
+|            62256   62256   62256   62256   62256            |
+|                                                             |
+|                                                             |
+|            62256   62256   62256   62256   62256            |
+|                                                             |
+|                                                             |
+|                                    62256   62256            |
+|  C84-91.23    C84-93.31                                     |
+|                                                             |
+|                              TC0380BSH           TC0270MOD  |
+|  C84-92.25    C84-94.33                                     |
+|                                                             |
+|-------------------------------------------------------------|
+
 
 ***************************************************************************/
 
@@ -1717,6 +1804,51 @@ static ADDRESS_MAP_START( dblaxle_cpub_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x110000, 0x11ffff) AM_WRITE(sharedram_w) AM_BASE(&taitoz_sharedram)
 	AM_RANGE(0x300000, 0x301fff) AM_WRITE(TC0150ROD_word_w)
 	AM_RANGE(0x500000, 0x503fff) AM_WRITE(MWA16_RAM)	/* network ram ? (see Gunbustr) */
+ADDRESS_MAP_END
+
+
+static ADDRESS_MAP_START( racingb_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x100000, 0x103fff) AM_READ(MRA16_RAM)	/* main CPUA ram */
+	AM_RANGE(0x110000, 0x11ffff) AM_READ(sharedram_r)
+	AM_RANGE(0x300000, 0x30000f) AM_READ(TC0510NIO_halfword_wordswap_r)
+	AM_RANGE(0x300010, 0x30001f) AM_READ(dblaxle_steer_input_r)
+	AM_RANGE(0x520000, 0x520003) AM_READ(taitoz_sound_r)
+	AM_RANGE(0x700000, 0x701fff) AM_READ(paletteram16_word_r)	/* palette */
+	AM_RANGE(0x900000, 0x90ffff) AM_READ(TC0480SCP_word_r)	  /* tilemaps */
+	AM_RANGE(0x930000, 0x93002f) AM_READ(TC0480SCP_ctrl_word_r)
+	AM_RANGE(0xb00000, 0xb03fff) AM_READ(MRA16_RAM)	/* spriteram */
+	AM_RANGE(0xb08000, 0xb08001) AM_READ(sci_spriteframe_r)	// debugging
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( racingb_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x100000, 0x103fff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x110000, 0x11ffff) AM_WRITE(sharedram_w) AM_BASE(&taitoz_sharedram) AM_SIZE(&taitoz_sharedram_size)
+	AM_RANGE(0x300000, 0x30000f) AM_WRITE(TC0510NIO_halfword_wordswap_w)
+	AM_RANGE(0x500002, 0x500003) AM_WRITE(cpua_ctrl_w)
+	AM_RANGE(0x520000, 0x520003) AM_WRITE(taitoz_sound_w)
+	AM_RANGE(0x700000, 0x701fff) AM_WRITE(paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x900000, 0x90ffff) AM_WRITE(TC0480SCP_word_w)	  /* tilemaps */
+	AM_RANGE(0x930000, 0x93002f) AM_WRITE(TC0480SCP_ctrl_word_w)
+	AM_RANGE(0xb00000, 0xb03fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size) /* mostly unused ? */
+	AM_RANGE(0xb08000, 0xb08001) AM_WRITE(sci_spriteframe_w)	/* alternates 0/0x100 */
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( racingb_cpub_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x400000, 0x403fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x410000, 0x41ffff) AM_READ(sharedram_r)
+	AM_RANGE(0xa00000, 0xa01fff) AM_READ(TC0150ROD_word_r)
+	AM_RANGE(0xd00000, 0xd03fff) AM_READ(MRA16_RAM)	/* network ram ? */
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( racingb_cpub_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x400000, 0x403fff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x410000, 0x41ffff) AM_WRITE(sharedram_w) AM_BASE(&taitoz_sharedram)
+	AM_RANGE(0xa00000, 0xa01fff) AM_WRITE(TC0150ROD_word_w)
+	AM_RANGE(0xd00000, 0xd03fff) AM_WRITE(MWA16_RAM)	/* network ram ? */
 ADDRESS_MAP_END
 
 
@@ -3070,6 +3202,9 @@ hangs.
 Dblaxle has 10 to boot up reliably but very occasionally gets
 a "root cpu error" still.
 
+Racingb inherited interleave from Dblaxle - other values not
+tested!
+
 Mostly it's the 2nd 68K which writes to road chip, so syncing
 between it and the master 68K may be important. Contcirc
 and ChaseHQ have interleave of only 1 - possible cause of
@@ -3387,6 +3522,41 @@ static MACHINE_DRIVER_START( dblaxle )
 MACHINE_DRIVER_END
 
 
+static MACHINE_DRIVER_START( racingb )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 16000000)	/* 16 MHz ??? */
+	MDRV_CPU_PROGRAM_MAP(racingb_readmem,racingb_writemem)
+	MDRV_CPU_VBLANK_INT(dblaxle_interrupt,1)
+
+	MDRV_CPU_ADD(Z80,16000000/4)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz ??? */
+	MDRV_CPU_PROGRAM_MAP(z80_sound_readmem,z80_sound_writemem)
+
+	MDRV_CPU_ADD(M68000, 16000000)	/* 16 MHz ??? */
+	MDRV_CPU_PROGRAM_MAP(racingb_cpub_readmem,racingb_cpub_writemem)
+	MDRV_CPU_VBLANK_INT(dblaxle_cpub_interrupt,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(40*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 2*8, 32*8-1)
+	MDRV_GFXDECODE(dblaxle_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(4096)
+
+	MDRV_VIDEO_START(taitoz)
+	MDRV_VIDEO_UPDATE(dblaxle)
+
+	/* sound hardware */
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2610, ym2610_interface)
+MACHINE_DRIVER_END
+
+
 /***************************************************************************
                                  DRIVERS
 
@@ -3441,6 +3611,46 @@ ROM_START( contcrcu )
 	ROM_REGION( 0x40000, REGION_CPU3, 0 )	/* 256K for 68000 code (CPU B) */
 	ROM_LOAD16_BYTE( "ic35", 0x00000, 0x20000, CRC(16522f2d) SHA1(1d2823d61518936d342df3ed712da5bdfdf6e55a) )
 	ROM_LOAD16_BYTE( "ic36", 0x00001, 0x20000, CRC(d6741e33) SHA1(8e86789e1664a34ceed85434fd3186f2571f0c4a) )
+
+	ROM_REGION( 0x1c000, REGION_CPU2, 0 )	/* Z80 sound cpu */
+	ROM_LOAD( "b33-30",   0x00000, 0x04000, CRC(d8746234) SHA1(39132eedfe2ff4e3133f8020304da0d04dd757db) )
+	ROM_CONTINUE(         0x10000, 0x0c000 )	/* banked stuff */
+
+	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "b33-02", 0x00000, 0x80000, CRC(f6fb3ba2) SHA1(19b7c4cf33c4737405ebe53e7342578454e6ef95) )	/* SCR 8x8 */
+
+	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD32_BYTE( "b33-06", 0x000000, 0x080000, CRC(2cb40599) SHA1(48b269610f80a42608f563742e5266dcf11638d1) )	/* OBJ 16x8 */
+	ROM_LOAD32_BYTE( "b33-05", 0x000001, 0x080000, CRC(bddf9eea) SHA1(284f4ba3dc107b4e26424963d8206c5ec4882983) )
+	ROM_LOAD32_BYTE( "b33-04", 0x000002, 0x080000, CRC(8df866a2) SHA1(6b87d8e683fe7d31070b16620ebfee4edf7711b8) )
+	ROM_LOAD32_BYTE( "b33-03", 0x000003, 0x080000, CRC(4f6c36d9) SHA1(18b15a991c3daf22b7f3f144edf3bd2abb3917eb) )
+
+	ROM_REGION( 0x80000, REGION_GFX3, 0 )	/* don't dispose */
+	ROM_LOAD( "b33-01", 0x00000, 0x80000, CRC(f11f2be8) SHA1(72ae08dc5bf5f6901fbb52d3b1dabcba90929b38) )	/* ROD, road lines */
+
+	ROM_REGION16_LE( 0x80000, REGION_USER1, 0 )
+	ROM_LOAD16_WORD( "b33-07", 0x00000, 0x80000, CRC(151e1f52) SHA1(118c673d74f27c4e76b321cc0e84f166d9f0d412) )	/* STY spritemap */
+
+	ROM_REGION( 0x100000, REGION_SOUND1, 0 )	/* ADPCM samples */
+	ROM_LOAD( "b33-09", 0x00000, 0x80000, CRC(1e6724b5) SHA1(48bb96b648605a9ceb88ff3b175a87226583c3d6) )
+	ROM_LOAD( "b33-10", 0x80000, 0x80000, CRC(e9ce03ab) SHA1(17324e8f0422118bc0912eba5750d80469f40b78) )
+
+	ROM_REGION( 0x80000, REGION_SOUND2, 0 )	/* Delta-T samples */
+	ROM_LOAD( "b33-08", 0x00000, 0x80000, CRC(caa1c4c8) SHA1(15ef4f36e56fab793d2249252c456677ca6a85c9) )
+
+	ROM_REGION( 0x10000, REGION_USER2, 0 )
+	ROM_LOAD( "b14-30", 0x00000, 0x10000, CRC(dccb0c7f) SHA1(42f0af72f559133b74912a4478e1323062be4b77) )	/* unused roms */
+	ROM_LOAD( "b14-31", 0x00000, 0x02000, CRC(5c6b013d) SHA1(6d02d4560076213b6fb6fe856143bb533090603e) )
+ROM_END
+
+ROM_START( contcrua )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 )	/* 256K for 68000 code (CPU A) */
+	ROM_LOAD16_BYTE( "b33-34.ic25", 0x00000, 0x20000, CRC(e1e016c1) SHA1(d6ca3bcf03828dc296eab73185f773860bbaaae6) )
+	ROM_LOAD16_BYTE( "b33-33.ic26", 0x00001, 0x20000, CRC(f539d44b) SHA1(1b77d97376f9bf3bbd728d459f0a0afbadc6d756) )
+
+	ROM_REGION( 0x40000, REGION_CPU3, 0 )	/* 256K for 68000 code (CPU B) */
+	ROM_LOAD16_BYTE( "21-2.ic35", 0x00000, 0x20000, CRC(2723f9e3) SHA1(18a86e352bb0aeec6ad6c537294ddd0d33823ea6) )
+	ROM_LOAD16_BYTE( "31-1.ic36", 0x00001, 0x20000, CRC(438431f7) SHA1(9be4ac6526d5aee01c3691f189583a2cfdad0e45) )
 
 	ROM_REGION( 0x1c000, REGION_CPU2, 0 )	/* Z80 sound cpu */
 	ROM_LOAD( "b33-30",   0x00000, 0x04000, CRC(d8746234) SHA1(39132eedfe2ff4e3133f8020304da0d04dd757db) )
@@ -3758,7 +3968,7 @@ ROM_START( sci )
 
 	ROM_REGION( 0x10000, REGION_USER2, 0 )
 	ROM_LOAD( "c09-16.rom", 0x00000, 0x10000, CRC(7245a6f6) SHA1(5bdde4e3bcde8c59dc84478c3cc079d7ef8ee9c5) )	/* unused roms */
-	ROM_LOAD( "c09-20.rom", 0x00000, 0x00100, CRC(cd8ffd80) SHA1(133bcd291a3751bce5293cb6b685f87258e8db19) ) 
+	ROM_LOAD( "c09-20.rom", 0x00000, 0x00100, CRC(cd8ffd80) SHA1(133bcd291a3751bce5293cb6b685f87258e8db19) )
 	ROM_LOAD( "c09-23.rom", 0x00000, 0x00100, CRC(fbf81f30) SHA1(c868452c334792345dcced075f6df69cff9e31ca) )
 //	ROM_LOAD( "c09-21.rom", 0x00000, 0x00???, NO_DUMP )	/* pals (Guru dump) */
 //	ROM_LOAD( "c09-22.rom", 0x00000, 0x00???, NO_DUMP )
@@ -3807,7 +4017,7 @@ ROM_START( scia )
 
 	ROM_REGION( 0x10000, REGION_USER2, 0 )
 	ROM_LOAD( "c09-16.rom", 0x00000, 0x10000, CRC(7245a6f6) SHA1(5bdde4e3bcde8c59dc84478c3cc079d7ef8ee9c5) )	/* unused roms */
-	ROM_LOAD( "c09-20.rom", 0x00000, 0x00100, CRC(cd8ffd80) SHA1(133bcd291a3751bce5293cb6b685f87258e8db19) ) 
+	ROM_LOAD( "c09-20.rom", 0x00000, 0x00100, CRC(cd8ffd80) SHA1(133bcd291a3751bce5293cb6b685f87258e8db19) )
 	ROM_LOAD( "c09-23.rom", 0x00000, 0x00100, CRC(fbf81f30) SHA1(c868452c334792345dcced075f6df69cff9e31ca) )
 ROM_END
 
@@ -3851,7 +4061,7 @@ ROM_START( sciu )
 
 	ROM_REGION( 0x10000, REGION_USER2, 0 )
 	ROM_LOAD( "c09-16.rom", 0x00000, 0x10000, CRC(7245a6f6) SHA1(5bdde4e3bcde8c59dc84478c3cc079d7ef8ee9c5) )	/* unused roms */
-	ROM_LOAD( "c09-20.rom", 0x00000, 0x00100, CRC(cd8ffd80) SHA1(133bcd291a3751bce5293cb6b685f87258e8db19) ) 
+	ROM_LOAD( "c09-20.rom", 0x00000, 0x00100, CRC(cd8ffd80) SHA1(133bcd291a3751bce5293cb6b685f87258e8db19) )
 	ROM_LOAD( "c09-23.rom", 0x00000, 0x00100, CRC(fbf81f30) SHA1(c868452c334792345dcced075f6df69cff9e31ca) )
 ROM_END
 
@@ -4117,6 +4327,52 @@ ROM_START( pwheelsj )
 	ROM_LOAD( "c84-11.17",  0x00000, 0x00400, CRC(10728853) SHA1(45d7cc8e06fbe01295cc2194bca9586f0ef8b12b) )
 ROM_END
 
+ROM_START( racingb )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 )	/* 512K for 68000 code (CPU A) */
+	ROM_LOAD16_BYTE( "c84-110.3",  0x00000, 0x20000, CRC(119a8d3b) SHA1(bcda256730c4427c25aab17d2178814289361a78) )
+	ROM_LOAD16_BYTE( "c84-111.5",  0x00001, 0x20000, CRC(1f095692) SHA1(6a36f3a62de9fc24724e68a23de782bc21c01734) )
+	ROM_LOAD16_BYTE( "c84-104.2",  0x40000, 0x20000, CRC(37077fc6) SHA1(3498db29936f806e1cb624031940fda2e7e601fe) )
+	ROM_LOAD16_BYTE( "c84-103.4",  0x40001, 0x20000, CRC(4ca1d1c2) SHA1(cd526db226362b7d4429a29392dee40bcc519556) )
+
+	ROM_REGION( 0x40000, REGION_CPU3, 0 )	/* 256K for 68000 code (CPU B) */
+	ROM_LOAD16_BYTE( "c84-99.35",  0x00000, 0x20000, CRC(24778f40) SHA1(5a588be1774af4e179bdc0e16cd118e74bb9f6ff) )
+	ROM_LOAD16_BYTE( "c84-100.36", 0x00001, 0x20000, CRC(2b99258a) SHA1(ff2da0f3a0391f55e20655554d72b82cc29fbc87) )
+
+	ROM_REGION( 0x2c000, REGION_CPU2, 0 )	/* sound cpu */
+	ROM_LOAD    ( "c84-101.42",    0x00000, 0x04000, CRC(9322106e) SHA1(6c42ee7b9c76483fec2e397ec2737c030a082267) )
+	ROM_CONTINUE(                  0x10000, 0x1c000 )	/* banked stuff */
+
+	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD16_BYTE( "c84-90.12",  0x00000, 0x80000, CRC(83ee0e8d) SHA1(a3b6067913f15656e1f74b30b4c0364a50d1846a) )	/* SCR 8x8 */
+	ROM_LOAD16_BYTE( "c84-89.11",  0x00001, 0x80000, CRC(aae43c87) SHA1(cfc05553f7a18132127ae5f1d181fcc582432b56) )
+
+	ROM_REGION( 0x400000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD32_BYTE( "c84-92.25", 0x000000, 0x100000, CRC(56e8fd55) SHA1(852446d4069a446dd9b88b29e461b83b8d626b2c) )	/* OBJ 16x8 */
+	ROM_LOAD32_BYTE( "c84-94.33", 0x000001, 0x100000, CRC(6117c19b) SHA1(6b9587fb864a325aec17a73046ba5b7be08a8dd2) )
+	ROM_LOAD32_BYTE( "c84-91.23", 0x000002, 0x100000, CRC(b1b0146c) SHA1(d01f08085d644b17445d904a4684c00f133f7bae) )
+	ROM_LOAD32_BYTE( "c84-93.31", 0x000003, 0x100000, CRC(8837bb4e) SHA1(c41fff198a3c87c6e1672174ede589434374c1b3) )
+
+	ROM_REGION( 0x80000, REGION_GFX3, 0 )	/* don't dispose */
+	ROM_LOAD( "c84-84.12", 0x000000, 0x80000, CRC(34dc486b) SHA1(2f503be67adbc5293f2d1218c838416fd931796c) )	/* ROD, road lines */
+
+	ROM_REGION16_LE( 0x80000, REGION_USER1, 0 )
+	ROM_LOAD16_WORD( "c84-88.3", 0x00000, 0x80000, CRC(edd1f49c) SHA1(f11c419dcc7da03ef1f1665c1344c27ff35fe867) )	/* STY spritemap */
+
+	ROM_REGION( 0x180000, REGION_SOUND1, 0 )	/* ADPCM samples */
+	ROM_LOAD( "c84-86.33", 0x000000, 0x100000, CRC(98d9771e) SHA1(0cbb6b08e1fa5e632309962d7ad7dca448ef4d78) )
+	ROM_LOAD( "c84-87.46", 0x100000, 0x080000, CRC(9c1dd80c) SHA1(e1bae4e02fd94413fac4683e39e530f9d508d658) )
+
+	ROM_REGION( 0x80000, REGION_SOUND2, 0 )	/* Delta-T samples */
+	ROM_LOAD( "c84-85.31",  0x00000, 0x80000, CRC(24cd838d) SHA1(18139f7df191ff2d005d76b3a85a6fafb630ea42) )
+
+	ROM_REGION( 0x10000, REGION_USER2, 0 )	/* unused roms */
+	ROM_LOAD( "c84-19.15",  0x00000, 0x10000, CRC(7245a6f6) SHA1(5bdde4e3bcde8c59dc84478c3cc079d7ef8ee9c5) )
+	ROM_LOAD( "c84-07.22",  0x00000, 0x00100, CRC(95a15c77) SHA1(10246020776cf23c0659f41db66ae2c86db09ed2) )
+	ROM_LOAD( "c84-09.74",  0x00000, 0x00100, CRC(71217472) SHA1(69352cd484b4d5b41b37697aea24107dff8f1b24) )
+	ROM_LOAD( "c84-10.16",  0x00000, 0x00400, CRC(643e8bfc) SHA1(a6e6086fb8fbd102e01ec72fe60a4232f5909565) )
+	ROM_LOAD( "c84-11.17",  0x00000, 0x00400, CRC(10728853) SHA1(45d7cc8e06fbe01295cc2194bca9586f0ef8b12b) )
+ROM_END
+
 
 static DRIVER_INIT( taitoz )
 {
@@ -4149,7 +4405,8 @@ static DRIVER_INIT( bshark )
 /* Release date order: contcirc 1989 (c) date is bogus */
 
 GAMEX( 1989, contcirc, 0,        contcirc, contcirc, taitoz,   ROT0,               "Taito Corporation Japan", "Continental Circus (World)", GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1987, contcrcu, contcirc, contcirc, contcrcu, taitoz,   ROT0,               "Taito America Corporation", "Continental Circus (US)", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1987, contcrcu, contcirc, contcirc, contcrcu, taitoz,   ROT0,               "Taito America Corporation", "Continental Circus (US set 1)", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1987, contcrua, contcirc, contcirc, contcrcu, taitoz,   ROT0,               "Taito America Corporation", "Continental Circus (US set 2)", GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1988, chasehq,  0,        chasehq,  chasehq,  taitoz,   ROT0,               "Taito Corporation Japan", "Chase H.Q. (World)", GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1988, chasehqj, chasehq,  chasehq,  chasehqj, taitoz,   ROT0,               "Taito Corporation", "Chase H.Q. (Japan)", GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1988, enforce,  0,        enforce,  enforce,  taitoz,   ROT0,               "Taito Corporation", "Enforce (Japan)", GAME_IMPERFECT_GRAPHICS )
@@ -4164,3 +4421,5 @@ GAMEX( 1990, aquajckj, aquajack, aquajack, aquajckj, taitoz,   ROT0,            
 GAME ( 1990, spacegun, 0,        spacegun, spacegun, bshark,   ORIENTATION_FLIP_X, "Taito Corporation Japan", "Space Gun (World)" )
 GAMEX( 1991, dblaxle,  0,        dblaxle,  dblaxle,  taitoz,   ROT0,               "Taito America Corporation", "Double Axle (US)", GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1991, pwheelsj, dblaxle,  dblaxle,  pwheelsj, taitoz,   ROT0,               "Taito Corporation", "Power Wheels (Japan)", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1991, racingb,  0,        racingb,  dblaxle,  taitoz,   ROT0,               "Taito Corporation Japan", "Racing Beat (World)", GAME_IMPERFECT_GRAPHICS | GAME_NOT_WORKING )
+

@@ -317,6 +317,16 @@ READ16_HANDLER( namcos2_68k_key_r )
 		}
 		break;
 
+	case NAMCOS2_SUPER_WSTADIUM:
+		switch(offset)
+		{
+	//	case 3: return 0x142;
+		case 4: return 0x142;
+	//	case 3: usrintf_showmessage("blah %08x",activecpu_get_pc());
+		default: return mame_rand();
+		}
+		break;
+
 	case NAMCOS2_SUPER_WSTADIUM_92:
 		switch(offset)
 		{

@@ -46,6 +46,60 @@ static READ_HANDLER( fastfred_custom_io_r )
     return 0x00;
 }
 
+static READ_HANDLER( flyboy_custom1_io_r )
+{
+
+	switch (activecpu_get_pc())
+	{
+	 case 0x049d: return 0xad;	/* compare */
+	 case 0x04b9:			/* compare with 0x9e ??? When ??? */
+	 case 0x0563: return 0x03;	/* $c085 compare - starts game */
+	 case 0x069b: return 0x69;	/* $c086 compare         */
+	 case 0x076b: return 0xbb;	/* $c087 compare         */
+	 case 0x0852: return 0xd9;	/* $c096 compare         */
+	 case 0x09d5: return 0xa4;	/* $c099 compare         */
+	 case 0x0a83: return 0xa4;	/* $c099 compare         */
+	 case 0x1028:			/* $c08a  bit 0  compare */
+	 case 0x1051:			/* $c08a  bit 3  compare */
+	 case 0x107d:			/* $c08c  bit 5  compare */
+	 case 0x10a7:			/* $c08e  bit 1  compare */
+	 case 0x10d0:			/* $c08d  bit 2  compare */
+	 case 0x10f6:			/* $c090  bit 0  compare */
+	 case 0x3fb6:			/* lddr */
+
+	 return 0x00;
+	}
+
+	logerror("Uncaught custom I/O read %04X at %04X\n", 0xc085+offset, activecpu_get_pc());
+	return 0x00;
+}
+
+static READ_HANDLER( flyboy_custom2_io_r )
+{
+
+	switch (activecpu_get_pc())
+	{
+	 case 0x0395: return 0xf7;	/* $C900 compare         */
+	 case 0x03f5:			/* $c8fd                 */
+	 case 0x043d:			/* $c8fd                 */
+	 case 0x0471:			/* $c900                 */
+	 case 0x1031: return 0x01;	/* $c8fe  bit 0  compare */
+	 case 0x1068: return 0x04;	/* $c8fe  bit 2  compare */
+	 case 0x1093: return 0x20;	/* $c8fe  bit 5  compare */
+	 case 0x10bd: return 0x80;	/* $c8fb  bit 7  compare */
+	 case 0x103f:			/* $c8fe                 */
+	 case 0x10e4:			/* $c900                 */
+	 case 0x110a:			/* $c900                 */
+	 case 0x3fc8:			/* ld a with c8fc-c900   */
+
+	 return 0x00;
+	}
+
+	logerror("Uncaught custom I/O read %04X at %04X\n", 0xc8fb+offset, activecpu_get_pc());
+	return 0x00;
+}
+
+
 static READ_HANDLER( jumpcoas_custom_io_r )
 {
 	if (offset == 0x100)  return 0x63;
@@ -435,7 +489,7 @@ INPUT_PORTS_START( imago )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(    0x30, DEF_STR( 1C_4C ) )	
+	PORT_DIPSETTING(    0x30, DEF_STR( 1C_4C ) )
 	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -563,7 +617,7 @@ static MACHINE_DRIVER_START( jumpcoas )
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( imago )
-	
+
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(fastfred)
 	MDRV_CPU_MODIFY("main")
@@ -759,29 +813,29 @@ ROM_END
 
 ROM_START( imago )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for main CPU */
-	ROM_LOAD( "11",    0x0000, 0x1000, CRC(3cce69b4) SHA1(e7d52e388e09e86abb597493f5807ee088cf7a40) ) 
+	ROM_LOAD( "11",    0x0000, 0x1000, CRC(3cce69b4) SHA1(e7d52e388e09e86abb597493f5807ee088cf7a40) )
 	ROM_CONTINUE(	   0x2000, 0x1000 )
-	ROM_LOAD( "12",    0x3000, 0x2000, CRC(8dff98c0) SHA1(e7311d9ca4544f1263e894e6d93ca52c87fc83bf) ) 
-	ROM_LOAD( "13",    0x5000, 0x2000, CRC(f0f14b4d) SHA1(92b82080575a9c95df926c404c19875ac66c2b00) ) 
+	ROM_LOAD( "12",    0x3000, 0x2000, CRC(8dff98c0) SHA1(e7311d9ca4544f1263e894e6d93ca52c87fc83bf) )
+	ROM_LOAD( "13",    0x5000, 0x2000, CRC(f0f14b4d) SHA1(92b82080575a9c95df926c404c19875ac66c2b00) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for audio CPU */
-	ROM_LOAD( "8",	   0x0000, 0x1000, CRC(4f77c2c9) SHA1(1e046786fbad7fb8c7c462b7bd5d80152c6b8779) ) 
-	
-	ROM_REGION( 0x3000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "2",     0x0000, 0x1000, CRC(71354480) SHA1(f5f5e1cc336cae1778b7f6c744eb1bdc4226f138) ) 
-	ROM_LOAD( "3",     0x1000, 0x1000, CRC(7aba3d98) SHA1(5d058f39bf1339d523fe015b67083d44ff6a81d4) ) 
-	ROM_FILL(	       0x2000, 0x1000, 0 )
-	
-	ROM_REGION( 0x6000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "4",     0x0000, 0x1000, CRC(ed987b3e) SHA1(2f88a0463b4323adb27467fb3d022144a4943793) ) 
-	ROM_LOAD( "5",     0x1000, 0x1000, CRC(77ee68ce) SHA1(a47af1bec81977d0f47463bd88e9f526fd2d6611) ) 
-	ROM_LOAD( "7",     0x2000, 0x1000, CRC(48b35190) SHA1(3a000264aad03f55fe67eed7c868acf87e804c0f) ) 
-	ROM_LOAD( "6",     0x3000, 0x1000, CRC(136990fc) SHA1(f3ecba92db25fbeb7df83c26667b7447c2d03b58) ) 
-	ROM_LOAD( "9",     0x4000, 0x1000, CRC(9efb806d) SHA1(504cc27cf071873714ec61835d9da676884fe1c8) ) 	
-	ROM_LOAD( "10",    0x5000, 0x1000, CRC(801a18d3) SHA1(f798978a47124f50be25ab4e5c6a4974d9003634) ) 
+	ROM_LOAD( "8",	   0x0000, 0x1000, CRC(4f77c2c9) SHA1(1e046786fbad7fb8c7c462b7bd5d80152c6b8779) )
 
-	ROM_REGION( 0x3000, REGION_GFX3, ROMREGION_DISPOSE ) 
-	ROM_LOAD( "14",    0x0000, 0x1000, CRC(eded37f6) SHA1(c2ff5d4c1b001740ec4453467f879035db196a9b) ) 
+	ROM_REGION( 0x3000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "2",     0x0000, 0x1000, CRC(71354480) SHA1(f5f5e1cc336cae1778b7f6c744eb1bdc4226f138) )
+	ROM_LOAD( "3",     0x1000, 0x1000, CRC(7aba3d98) SHA1(5d058f39bf1339d523fe015b67083d44ff6a81d4) )
+	ROM_FILL(	       0x2000, 0x1000, 0 )
+
+	ROM_REGION( 0x6000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "4",     0x0000, 0x1000, CRC(ed987b3e) SHA1(2f88a0463b4323adb27467fb3d022144a4943793) )
+	ROM_LOAD( "5",     0x1000, 0x1000, CRC(77ee68ce) SHA1(a47af1bec81977d0f47463bd88e9f526fd2d6611) )
+	ROM_LOAD( "7",     0x2000, 0x1000, CRC(48b35190) SHA1(3a000264aad03f55fe67eed7c868acf87e804c0f) )
+	ROM_LOAD( "6",     0x3000, 0x1000, CRC(136990fc) SHA1(f3ecba92db25fbeb7df83c26667b7447c2d03b58) )
+	ROM_LOAD( "9",     0x4000, 0x1000, CRC(9efb806d) SHA1(504cc27cf071873714ec61835d9da676884fe1c8) )
+	ROM_LOAD( "10",    0x5000, 0x1000, CRC(801a18d3) SHA1(f798978a47124f50be25ab4e5c6a4974d9003634) )
+
+	ROM_REGION( 0x3000, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_LOAD( "14",    0x0000, 0x1000, CRC(eded37f6) SHA1(c2ff5d4c1b001740ec4453467f879035db196a9b) )
 	ROM_FILL(		   0x1000, 0x2000, 0 )
 
 	ROM_REGION( 0x0300, REGION_PROMS, 0 )
@@ -789,7 +843,7 @@ ROM_START( imago )
 	ROM_LOAD( "green", 0x0100, 0x0100, NO_DUMP )
 	ROM_LOAD( "blue",  0x0200, 0x0100, NO_DUMP )
 
-	ROM_REGION( 0x2000, REGION_USER1, 0 )	
+	ROM_REGION( 0x2000, REGION_USER1, 0 )
 	ROM_LOAD( "1",      0x0000, 0x1000, CRC(b0a1fb54) SHA1(fbc746748947a7aa35a428dc862ff4ad53516d38) ) //contains the same 2 bytes
 	ROM_LOAD( "15",     0x1000, 0x1000, CRC(85fcc195) SHA1(a76f24201c037d1e6f909fb0ea4ad59b1d6ddd57) ) //unknown
 ROM_END
@@ -797,6 +851,13 @@ ROM_END
 extern int fastfred_hardware_type;
 
 static DRIVER_INIT( flyboy )
+{
+	install_mem_read_handler( 0, 0xc085, 0xc099, flyboy_custom1_io_r);
+	install_mem_read_handler( 0, 0xc8fb, 0xc900, flyboy_custom2_io_r);
+	fastfred_hardware_type = 1;
+}
+
+static DRIVER_INIT( flyboyb )
 {
 	fastfred_hardware_type = 1;
 }
@@ -827,8 +888,8 @@ static DRIVER_INIT( imago )
 	fastfred_hardware_type = 3;
 }
 
-GAMEX(1982, flyboy,   0,      fastfred, flyboy,   flyboy,   ROT90, "Kaneko", "Fly-Boy", GAME_NOT_WORKING )	/* protection */
-GAME( 1982, flyboyb,  flyboy, fastfred, flyboy,   flyboy,   ROT90, "Kaneko", "Fly-Boy (bootleg)" )
+GAME( 1982, flyboy,   0,      fastfred, flyboy,   flyboy,   ROT90, "Kaneko", "Fly-Boy" )
+GAME( 1982, flyboyb,  flyboy, fastfred, flyboy,   flyboyb,  ROT90, "Kaneko", "Fly-Boy (bootleg)" )
 GAME( 1982, fastfred, flyboy, fastfred, fastfred, fastfred, ROT90, "Atari", "Fast Freddie" )
 GAME( 1983, jumpcoas, 0,      jumpcoas, jumpcoas, jumpcoas, ROT90, "Kaneko", "Jump Coaster" )
 GAME( 1983, boggy84,  0,      jumpcoas, boggy84,  boggy84,  ROT90, "bootleg", "Boggy '84" )

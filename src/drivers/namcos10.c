@@ -5,7 +5,8 @@
   Driver by smf
 
   Only one rom for Mr Driller 2 is dumped, it is encrypted using an xor and then a bitswap.
-  All it currently does is try to access the link port.
+  All it currently does is output debug information to the asynchronous serial port and
+  crash with a blue screen.
 
 */
 
@@ -15,6 +16,7 @@
 
 static ADDRESS_MAP_START( namcos10_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x00000000, 0x003fffff) AM_RAM AM_SHARE(1) AM_BASE(&g_p_n_psxram) AM_SIZE(&g_n_psxramsize) /* ram */
+	AM_RANGE(0x1f400000, 0x1f7fffff) AM_ROM AM_REGION(REGION_USER1, 0x400000) /* ?? */
 	AM_RANGE(0x1f800000, 0x1f8003ff) AM_RAM /* scratchpad */
 	AM_RANGE(0x1f801000, 0x1f801007) AM_WRITENOP
 	AM_RANGE(0x1f801008, 0x1f80100b) AM_RAM /* ?? */
@@ -50,6 +52,8 @@ static DRIVER_INIT( namcos10 )
 			0xc, 0xd, 0xf, 0xe, 0xb, 0xa, 0x9, 0x8,
 			0x7, 0x6, 0x4, 0x1, 0x2, 0x5, 0x0, 0x3 );
 	}
+
+	psx_driver_init();
 }
 
 MACHINE_INIT( namcos10 )

@@ -122,12 +122,11 @@ ToDo / Notes:
 -some games (rsgun,myfairld) don't pass a sound ram address check if you
  enter then exit from the BIOS test mode,it is a recent issue as before wasn't like
  this...
--grdforce: missing scrolling/roz on RBG0 layer.
+-grdforce: missing roz on RBG0 layer.
 -ejihon: alpha effect is missing on the magifying glass.
 -kiwames: locks up after one match.
 -suikoenb: why the color RAM format doesn't change when you exit the test menu?
 -elandore: fix the bitmap transparency,heavily used (or not used) by this.
--groovef: missing sprites
 -introdon: game initializes palette RAM *without* the IC13 hack
 -pblbeach: not working due to missing timer 1 irq.
 -decathlt: sets invalid DMA size for the sound cpu and crashes due of that.
@@ -161,6 +160,7 @@ DRIVER_INIT(cotton2);
 DRIVER_INIT(fhboxers);
 DRIVER_INIT(dnmtdeka);
 DRIVER_INIT(groovef);
+DRIVER_INIT(danchih);
 
 /**************************************************************************************/
 /*to be added into a stv Header file,remember to remove all the static...*/
@@ -3539,7 +3539,9 @@ MACHINE_INIT( stv )
 
 	/* puyosun doesn't seem to care */
 	if ((!strcmp(Machine->gamedrv->name,"puyosun")) ||
-	    (!strcmp(Machine->gamedrv->name,"mausuke")))
+	    (!strcmp(Machine->gamedrv->name,"mausuke")) ||
+	    (!strcmp(Machine->gamedrv->name,"groovef")))
+
 	{
 		minit_boost = 0;
 		sinit_boost = 0;
@@ -4526,23 +4528,27 @@ GAMEBX( 1996, diehard,   stvbios, stvbios, stv, stv,  ic13,      ROT0,   "Sega",
 GAMEBX( 1996, dnmtdeka,  diehard, stvbios, stv, stv,  dnmtdeka,  ROT0,   "Sega", 	 "Dynamite Deka (Japan)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS  )
 GAMEBX( 1997, winterht,  stvbios, stvbios, stv, stv,  ic13,      ROT0,   "Sega", 	 "Winter Heat", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS  )
 GAMEBX( 1996, prikura,   stvbios, stvbios, stv, stv,  prikura,   ROT0,   "Atlus",    "Princess Clara Daisakusen", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEBX( 1996, groovef,   stvbios, stvbios, stv, stv,  groovef,   ROT0,   "Atlus",    "Power Instinct 3 - Groove On Fight", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEBX( 1998, othellos,  stvbios, stvbios, stv, stv,  stv,       ROT0,   "Success",  "Othello Shiyouyo", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEBX( 1999, danchih,   stvbios, stvbios, stv, stvmp,danchih,   ROT0, "Altron (Tecmo license)", "Danchi de Hanafuoda", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 
 /* Almost */
 GAMEBX( 1995, fhboxers,  stvbios, stvbios, stv, stv,  fhboxers,  ROT0,   "Sega", 	 "Funky Head Boxers", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1998, othellos,  stvbios, stvbios, stv, stv,  stv,       ROT0,   "Success",  "Othello Shiyouyo", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1995, kiwames,   stvbios, stvbios, stv, stvmp,ic13,      ROT0,   "Athena",   "Pro Mahjong Kiwame S", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1995, shanhigw,  stvbios, stvbios, stv, stv,  stv,	     ROT0,   "Sunsoft / Activision", "Shanghai - The Great Wall / Shanghai Triple Threat", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )/*This is jerky but (somewhat) playable*/
 GAMEBX( 1998, grdforce,  stvbios, stvbios, stv, stv,  stv,       ROT0,   "Success",  "Guardian Force", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 
 /* Doing Something.. but not enough yet */
-GAMEBX( 1996, groovef,   stvbios, stvbios, stv, stv,  groovef,   ROT0, "Atlus",      "Power Instinct 3 - Groove On Fight", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1999, danchih,   stvbios, stvbios, stv, stvmp,stv,       ROT0, "Altron (Tecmo license)", "Danchi de Hanafuoda", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1998, elandore,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Sai-Mate",   "Fighting Dragon Legend Elan Doree", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1998, myfairld,  stvbios, stvbios, stv, stvmp,stv,       ROT0, "Micronet",   "Virtual Mahjong 2 - My Fair Lady", GAME_NO_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1998, rsgun,     stvbios, stvbios, stv, stv,  stv,       ROT0, "Treasure",   "Radiant Silvergun", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1996, sassisu,   stvbios, stvbios, stv, stv,  ic13,      ROT0, "Sega", 	     "Taisen Tanto-R Sashissu!!", GAME_NO_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1995, sleague,   stvbios, stvbios, stv, stv,  ic13,      ROT0, "Sega", 	     "Super Major League (US)", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1995, finlarch,  sleague, stvbios, stv, stv,  ic13,      ROT0, "Sega", 	     "Final Arch (Japan)", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
+
+/* Sega Logo - hang */
+GAMEBX( 1997, maruchan,  stvbios, stvbios, stv, stv,  ic13,      ROT0, "Sega", 	     "Maru-Chan de Goo!", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
+
 
 // crashes
 GAMEBX( 1995, suikoenb,  stvbios, stvbios, stv, stv,  ic13,      ROT0, "Data East",  "Suikoenbu", GAME_NO_SOUND | GAME_NOT_WORKING )
@@ -4561,7 +4567,6 @@ GAMEBX( 1999, ffreveng,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Capcom",
 GAMEBX( 1996, findlove,  stvbios, stvbios, stv, stv,  ic13,      ROT0, "Daiki",	     "Find Love", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1994, gaxeduel,  stvbios, stvbios, stv, stv,  ic13,      ROT0, "Sega", 	     "Golden Axe - The Duel", GAME_NO_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1996, introdon,  stvbios, stvbios, stv, stv,  ic13,      ROT0, "Sunsoft / Success", "Karaoke Quiz Intro Don Don!", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1997, maruchan,  stvbios, stvbios, stv, stv,  ic13,      ROT0, "Sega", 	     "Maru-Chan de Goo!", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1995, pblbeach,  stvbios, stvbios, stv, stv,  ic13,      ROT0, "T&E Soft",   "Pebble Beach - The Great Shot", GAME_NO_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1995, sandor,    stvbios, stvbios, stv, stv,  ic13,      ROT0, "Sega", 	     "Sando-R", GAME_NO_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1995, thunt,     sandor,  stvbios, stv, stv,  ic13,      ROT0, "Sega", 	     "Treasure Hunt", GAME_NO_SOUND | GAME_NOT_WORKING ) // this one actually does something if you use the sandor gfx

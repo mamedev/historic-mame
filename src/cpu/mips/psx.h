@@ -102,13 +102,15 @@ enum
 #define INS_COFUN( op ) ( op & 0x1ffffff )
 #define INS_CF( op ) ( op & 63 )
 
-#define GTE_OP( op ) ( ( op >> 20 ) & 0x1f )
+#define GTE_OP( op ) ( ( op >> 20 ) & 31 )
 #define GTE_SF( op ) ( ( op >> 19 ) & 1 )
 #define GTE_MX( op ) ( ( op >> 17 ) & 3 )
 #define GTE_V( op ) ( ( op >> 15 ) & 3 )
 #define GTE_CV( op ) ( ( op >> 13 ) & 3 )
+#define GTE_CD( op ) ( ( op >> 11 ) & 3 ) /* not used */
 #define GTE_LM( op ) ( ( op >> 10 ) & 1 )
-#define GTE_CT( op ) ( ( op ) & 0x7ff )
+#define GTE_CT( op ) ( ( op >> 6 ) & 15 )
+#define GTE_FUNCT( op ) ( op & 63 )
 
 #define OP_SPECIAL ( 0 )
 #define OP_REGIMM ( 1 )

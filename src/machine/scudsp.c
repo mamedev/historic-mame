@@ -2,9 +2,14 @@
 #include "machine/scudsp.h"
 
 /*SCU DSP functions */
-/*V0.03*/
+/*V0.04*/
 
 /* 
+280304: Mariusz Wojcieszek
+- rewritten ALU and MUL operations using signed arithmetics
+- improved DMA
+- fixed MOV ALH,x
+
 031211: (Mariusz Wojcieszek changes)
 - result of ALU command is stored into ALU register 
 - X-Bus command: MOV [s],X can be executed in parallel to other X-Bus commands
@@ -22,8 +27,6 @@
  TODO:
 - make vfremix work...
 - ALU commands: complete the flags
-- ALU commands: rewrite it using signed arithmetic ?
-- DMA: find out how this should really work (especially add number)
 - Disassembler: complete it
 */
 
@@ -39,16 +42,22 @@
 #define ESF ((stv_scu[32] & 0x00020000) >> 17)
 #define EXF ((stv_scu[32] & 0x00010000) >> 16)
 #define LEF ((stv_scu[32] & 0x00008000) >> 15)
-#define SF_1 if(!(stv_scu[32] & 0x00400000)) stv_scu[32]^=0x00400000
-#define ZF_1 if(!(stv_scu[32] & 0x00200000)) stv_scu[32]^=0x00200000
-#define CF_1 if(!(stv_scu[32] & 0x00100000)) stv_scu[32]^=0x00100000
-#define VF_1 if(!(stv_scu[32] & 0x00080000)) stv_scu[32]^=0x00080000
-#define SF_0 if(stv_scu[32] & 0x00400000) stv_scu[32]^=0x00400000
-#define ZF_0 if(stv_scu[32] & 0x00200000) stv_scu[32]^=0x00200000
-#define CF_0 if(stv_scu[32] & 0x00100000) stv_scu[32]^=0x00100000
-#define VF_0 if(stv_scu[32] & 0x00080000) stv_scu[32]^=0x00080000
 #define T0F_1 if(!(stv_scu[32] & 0x00800000)) stv_scu[32]^=0x00800000
 #define T0F_0 if(stv_scu[32] & 0x00800000) stv_scu[32]^=0x00800000
+
+#define SET_C(_val) (stv_scu[32] = ((stv_scu[32] & ~0x00100000) | ((_val) ? 0x00100000 : 0)))
+#define SET_S(_val) (stv_scu[32] = ((stv_scu[32] & ~0x00400000) | ((_val) ? 0x00400000 : 0)))
+#define SET_Z(_val) (stv_scu[32] = ((stv_scu[32] & ~0x00200000) | ((_val) ? 0x00200000 : 0)))
+
+typedef union {
+	INT32  si;
+	UINT32 ui;
+} SCUDSPREG32;
+
+typedef union {
+	INT16  si;
+	UINT16 ui;
+} SCUDSPREG16;
 
 struct {
 	   UINT8 pc; 							           /*Program Counter*/
@@ -58,14 +67,14 @@ struct {
 	   UINT8  ct0,ct1,ct2,ct3;					       /*Index for RAM*/	  /*6-bits */
 	   UINT32 md0[0x40],md1[0x40],md2[0x40],md3[0x40]; /*RAM memory*/
 	   UINT8  ra;									   /*RAM selector*/
-	   UINT32 rx;									   /*X-Bus register*/
-	   UINT64 mul;                                     /*Multiplier register*//*48-bits*/
-	   UINT32 ry;									   /*Y-Bus register*/
-	   UINT64 alu;                                     /*ALU register*/       /*48-bits*/
-	   UINT16 ph;									   /*ALU high register*/
-	   UINT32 pl;									   /*ALU low register*/
-	   UINT16 ach;									   /*ALU external high register*/
-	   UINT32 acl;									   /*ALU external low register*/
+	   SCUDSPREG32 rx;								   /*X-Bus register*/
+	   INT64 mul;                                      /*Multiplier register*//*48-bits*/
+	   SCUDSPREG32 ry;								   /*Y-Bus register*/
+	   INT64  alu;                                     /*ALU register*/       /*48-bits*/
+	   SCUDSPREG16 ph;								   /*ALU high register*/
+	   SCUDSPREG32 pl;								   /*ALU low register*/
+	   SCUDSPREG16 ach;								   /*ALU external high register*/
+	   SCUDSPREG32 acl;								   /*ALU external low register*/
 	   UINT32 ra0,wa0;								   /*DSP DMA registers*/
 	   UINT32 internal_prg[0x100];
 } dsp_reg;
@@ -89,29 +98,33 @@ static UINT32 dsp_get_source_mem_value( UINT32 mode )
 
 	switch( mode )
 	{
-		case 0x0:
+		case 0x0:	/* M0 */
 			value = dsp_reg.md0[ dsp_reg.ct0 ];
 			break;
-		case 0x1:
+		case 0x1:	/* M1 */
 			value = dsp_reg.md1[ dsp_reg.ct1 ];
 			break;
-		case 0x2:
+		case 0x2:	/* M2 */
 			value = dsp_reg.md2[ dsp_reg.ct2 ];
 			break;
-		case 0x3:
+		case 0x3:	/* M3 */
 			value = dsp_reg.md3[ dsp_reg.ct3 ];
 			break;
-		case 0x4:
+		case 0x4:	/* MC0 */
 			value = dsp_reg.md0[ dsp_reg.ct0++ ];
+			dsp_reg.ct0 &= 0x3f;
 			break;
-		case 0x5:
+		case 0x5:	/* MC1 */
 			value = dsp_reg.md1[ dsp_reg.ct1++ ];
+			dsp_reg.ct1 &= 0x3f;
 			break;
-		case 0x6:
+		case 0x6:	/* MC2 */
 			value = dsp_reg.md2[ dsp_reg.ct2++ ];
+			dsp_reg.ct2 &= 0x3f;
 			break;
-		case 0x7:
+		case 0x7:	/* MC3 */
 			value = dsp_reg.md3[ dsp_reg.ct3++ ];
+			dsp_reg.ct3 &= 0x3f;
 			break;
 	}
 	return value;
@@ -128,9 +141,9 @@ static UINT32 dsp_get_source_mem_reg_value( UINT32 mode )
 		switch( mode )
 		{
 			case 0x9:
-				return (dsp_reg.alu & 0x00000000ffffffff) >> 0;
+				return (UINT32)((dsp_reg.alu & U64(0x00000000ffffffff)) >> 0);
 			case 0xA:
-				return (dsp_reg.alu & S64(0x0000ffff00000000)) >> 32;
+				return (UINT32)((dsp_reg.alu & U64(0x0000ffffffff0000)) >> 16);
 		}
 	}
 	return 0;
@@ -142,22 +155,27 @@ static void dsp_set_dest_mem_reg( UINT32 mode, UINT32 value )
 	{
 		case 0x0:	/* MC0 */
 			dsp_reg.md0[ dsp_reg.ct0++ ] = value;
+			dsp_reg.ct0 &= 0x3f;
 			break;
 		case 0x1:	/* MC1 */
 			dsp_reg.md1[ dsp_reg.ct1++ ] = value;
+			dsp_reg.ct1 &= 0x3f;
 			break;
 		case 0x2:	/* MC2 */
 			dsp_reg.md2[ dsp_reg.ct2++ ] = value;
+			dsp_reg.ct2 &= 0x3f;
 			break;
 		case 0x3:	/* MC3 */
 			dsp_reg.md3[ dsp_reg.ct3++ ] = value;
+			dsp_reg.ct3 &= 0x3f;
 			break;
 		case 0x4:	/* RX */
-			dsp_reg.rx = value;
+			dsp_reg.rx.ui = value;
 			update_mul = 1;
 			break;
 		case 0x5:	/* PL */
-			dsp_reg.pl = value;
+			dsp_reg.pl.ui = value;
+			dsp_reg.ph.si = (dsp_reg.pl.si < 0) ? -1 : 0;
 			break;
 		case 0x6:	/* RA0 */
 			dsp_reg.ra0 = value;
@@ -322,142 +340,102 @@ UINT32 dsp_ram_addr_r()
 
 static void dsp_operation(void)
 {
+	INT64 i1,i2;
+	INT32 i3;
+
 	/* ALU */
 	switch( (opcode & 0x3c000000) >> 26 )
 	{
 		case 0x0:	/* NOP */
 			break;
 		case 0x1:	/* AND */
-			dsp_reg.alu = dsp_reg.acl & dsp_reg.pl;
-			if ( dsp_reg.alu == 0 ) {ZF_1;} else {ZF_0;}
-			if ( dsp_reg.alu & 0x80000000 )
-			{
-				SF_1;
-				dsp_reg.alu |= S64(0xffff00000000);	/* sign extension */
-			}
-			else {SF_0;}
-			{CF_0;}
+			i3 = dsp_reg.acl.si & dsp_reg.pl.si;
+			dsp_reg.alu = i3;
+			SET_Z(i3 == 0);
+			SET_C(0);
+			SET_S(i3 < 0);
 			break;
 		case 0x2:	/* OR */
-			dsp_reg.alu = dsp_reg.acl | dsp_reg.pl;
-			if ( dsp_reg.alu == 0 ) {ZF_1;} else {ZF_0;}
-			if ( dsp_reg.alu & 0x80000000 )
-			{
-				SF_1;
-				dsp_reg.alu |= S64(0xffff00000000);	/* sign extension */
-			}
-			else {SF_0;}
-			{CF_0;}
+			i3 = dsp_reg.acl.si | dsp_reg.pl.si;
+			dsp_reg.alu = i3;
+			SET_Z(i3 == 0);
+			SET_C(0);
+			SET_S(i3 < 0);
 			break;
 		case 0x3:	/* XOR */
-			dsp_reg.alu = dsp_reg.acl ^ dsp_reg.pl;
-			if ( dsp_reg.alu == 0 ) {ZF_1;} else {ZF_0;}
-			if ( dsp_reg.alu & 0x80000000 )
-			{
-				SF_1;
-				dsp_reg.alu |= S64(0xffff00000000);	/* sign extension */
-			}
-			else {SF_0;}
-			{CF_0;}
+			i3 = dsp_reg.acl.si ^ dsp_reg.pl.si;
+			dsp_reg.alu = i3;
+			SET_Z(i3 == 0);
+			SET_C(0);
+			SET_S(i3 < 0);
 			break;
 		case 0x4:	/* ADD */
-			dsp_reg.alu = dsp_reg.acl + dsp_reg.pl;
-			if ( dsp_reg.alu == 0 ) {ZF_1;} else {ZF_0;}
-			if ( dsp_reg.alu & S64(0x100000000) ) { CF_1; } else { CF_0; };
-			if ( dsp_reg.alu & 0x80000000 )
-			{
-				SF_1;
-				dsp_reg.alu |= S64(0xffff00000000);	/* sign extension */
-			}
-			else {SF_0;}
-			/* TODO: V flag */
+			i3 = dsp_reg.acl.si + dsp_reg.pl.si;
+			dsp_reg.alu = i3;
+			SET_Z(i3 == 0);
+			SET_S(i3 < 0);
+			SET_C(0); 
+			/* TODO: C, V flag */
 			break;
 		case 0x5:	/* SUB */
-			dsp_reg.alu = dsp_reg.acl - dsp_reg.pl;
-			if ( dsp_reg.alu == 0 ) {ZF_1;} else {ZF_0;}
-			if ( dsp_reg.alu & S64(0x100000000) ) { CF_1; } else { CF_0; };
-			if ( dsp_reg.alu & 0x80000000 )
-			{
-				SF_1;
-				dsp_reg.alu |= S64(0xffff00000000);	/* sign extension */
-			}
-			else {SF_0;}
-			/* TODO: V flag */
+			i3 = dsp_reg.acl.si - dsp_reg.pl.si;
+			dsp_reg.alu = i3;
+			SET_Z(i3 == 0);
+			SET_C(0);
+			SET_S(i3 < 0);
+			/* TODO: C,V flag */
 			break;
 		case 0x6:	/* AD2 */
-			dsp_reg.alu = dsp_reg.acl + dsp_reg.pl;
-			dsp_reg.alu += ((UINT64)(dsp_reg.ach + dsp_reg.ph)) << 32;
-			if ( dsp_reg.alu == 0 ) {ZF_1;} else {ZF_0;}
-			if ( dsp_reg.alu & S64(0x800000000000) ) {SF_1;} else {SF_0;}
-			if ( dsp_reg.alu & S64(0x1000000000000) ) {CF_1; } else {CF_0;}
+			i1 = COMBINE_64_32_32((INT32)dsp_reg.ph.si,dsp_reg.pl.si);
+			i2 = COMBINE_64_32_32((INT32)dsp_reg.ach.si,dsp_reg.acl.si);
+			dsp_reg.alu = i1 + i2;
+			SET_Z(dsp_reg.alu == 0);
+			SET_S(dsp_reg.alu < 0);
+			SET_C(0);
 			/* TODO: V flag */
 			break;
 		case 0x7:	/* ??? */
 			/* Unrecognized opcode */
 			break;
 		case 0x8:	/* SR */
-			if ( dsp_reg.acl & 0x1 ) {CF_1;} else {CF_0;}
-			dsp_reg.alu = dsp_reg.acl >> 1;
-			if ( dsp_reg.alu & 0x40000000 ) dsp_reg.alu |= 0x80000000;
-			if ( dsp_reg.alu == 0 ) {ZF_1;} else {ZF_0;}
-			if ( dsp_reg.alu & 0x80000000 )
-			{
-				SF_1;
-				dsp_reg.alu |= S64(0xffff00000000);	/* sign extension */
-			}
-			else {SF_0;}
+			i3 = dsp_reg.acl.si >> 1;
+			dsp_reg.alu = i3;
+			SET_Z(i3 == 0);
+			SET_S(i3 < 0);
+			SET_C(dsp_reg.acl.ui & 0x80000000);
 			break;
 		case 0x9:	/* RR */
-			if ( dsp_reg.acl & 0x1 ) {CF_1;} else {CF_0;}
-			dsp_reg.alu = dsp_reg.acl >> 1;
-			if ( CF ) dsp_reg.alu |= 0x80000000;
-			if ( dsp_reg.alu == 0 ) {ZF_1;} else {ZF_0;}
-			if ( dsp_reg.alu & 0x80000000 )
-			{
-				SF_1;
-				dsp_reg.alu |= S64(0xffff00000000);	/* sign extension */
-			}
-			else {SF_0;}
+			i3 = ((dsp_reg.acl.ui >> 1) & 0x7fffffff) | ((dsp_reg.acl.ui << 31) & 0x80000000);
+			dsp_reg.alu = i3;
+			SET_Z( i3 == 0 );
+			SET_S( i3 < 0 );
+			SET_C( dsp_reg.acl.ui & 0x1 );
 			break;
-		case 0xA:	/* SL */
-			if ( dsp_reg.acl & 0x80000000 ) {CF_1;} else {CF_0;}
-			dsp_reg.alu = dsp_reg.acl << 1;
-			if ( dsp_reg.alu == 0 ) {ZF_1;} else {ZF_0;}
-			if ( dsp_reg.alu & 0x80000000 )
-			{
-				SF_1;
-				dsp_reg.alu |= S64(0xffff00000000);	/* sign extension */
-			}
-			else {SF_0;}
+		case 0xa:	/* SL */
+			i3 = dsp_reg.acl.si << 1;
+			dsp_reg.alu = i3;
+			SET_Z( i3 == 0 );
+			SET_S( i3 < 0 );
+			SET_C( dsp_reg.acl.ui & 0x80000000 );
 			break;
 		case 0xB:	/* RL */
-			if ( dsp_reg.acl & 0x80000000 ) {CF_1;} else {CF_0;}
-			dsp_reg.alu = dsp_reg.acl << 1;
-			if ( CF ) dsp_reg.alu |= 0x1;
-			if ( dsp_reg.alu == 0 ) {ZF_1;} else {ZF_0;}
-			if ( dsp_reg.alu & 0x80000000 )
-			{
-				SF_1;
-				dsp_reg.alu |= S64(0xffff00000000);	/* sign extension */
-			}
-			else {SF_0;}
+			i3 = ((dsp_reg.acl.si << 1) & 0xfffffffe) | ((dsp_reg.acl.si >> 31) & 0x1);
+			dsp_reg.alu = i3;
+			SET_Z( i3 == 0 );
+			SET_S( i3 < 0 );
+			SET_C( dsp_reg.acl.ui & 0x80000000 );
 			break;
-		case 0xC:
-		case 0xD:
-		case 0xE:
+		case 0xc:
+		case 0xd:
+		case 0xe:
 			/* Unrecognized opcode */
 			break;
 		case 0xF:	/* RL8 */
-			if ( dsp_reg.acl & 0x01000000 ) {CF_1;} else {CF_0;}
-			dsp_reg.alu = (dsp_reg.acl >> 24) | (dsp_reg.acl << 8);
-			if ( CF ) dsp_reg.alu |= 0x1;
-			if ( dsp_reg.alu == 0 ) {ZF_1;} else {ZF_0;}
-			if ( dsp_reg.alu & 0x80000000 )
-			{
-				SF_1;
-				dsp_reg.alu |= S64(0xffff00000000);	/* sign extension */
-			}
-			else {SF_0;}
+			i3 = ((dsp_reg.acl.si << 8) & 0xffffff00) | ((dsp_reg.acl.si >> 24) & 0xff);
+			dsp_reg.alu = i3;
+			SET_Z( i3 == 0 );
+			SET_S( i3 < 0 );
+			SET_C( dsp_reg.acl.si & 0x01000000 );
 			break;
 	}
 
@@ -465,7 +443,7 @@ static void dsp_operation(void)
 	if ( opcode & 0x2000000 )
 	{
 		/* MOV [s],X */
-		dsp_reg.rx = dsp_get_source_mem_value( (opcode & 0x700000) >> 20 );
+		dsp_reg.rx.ui = dsp_get_source_mem_value( (opcode & 0x700000) >> 20 );
 		update_mul = 1;
 	}
 	switch( (opcode & 0x1800000) >> 23 )
@@ -474,19 +452,12 @@ static void dsp_operation(void)
 		case 0x1:	/* NOP ? */
 			break;
 		case 0x2:	/* MOV MUL,P */
-			dsp_reg.ph = ((dsp_reg.mul & S64(0x0000ffff00000000)) >> 32);
-			dsp_reg.pl = ((dsp_reg.mul & 0x00000000ffffffff) >> 0);
+			dsp_reg.ph.ui = (UINT16)((dsp_reg.mul & U64(0x0000ffff00000000)) >> 32);
+			dsp_reg.pl.ui = (UINT32)((dsp_reg.mul & U64(0x00000000ffffffff)) >> 0);
 			break;
 		case 0x3:	/* MOV [s],P */
-			dsp_reg.pl = dsp_get_source_mem_value(  (opcode & 0x700000) >> 20 );
-			if ( dsp_reg.pl & 0x80000000 ) 
-			{
-				dsp_reg.ph = 0xffff;
-			}
-			else
-			{
-				dsp_reg.ph = 0x0;
-			}
+			dsp_reg.pl.ui = dsp_get_source_mem_value(  (opcode & 0x700000) >> 20 );
+			dsp_reg.ph.si = (dsp_reg.pl.si < 0) ? -1 : 0;
 			break;
 	}
 
@@ -494,7 +465,7 @@ static void dsp_operation(void)
 	if ( opcode & 0x80000 )
 	{
 		/* MOV [s],Y */
-		dsp_reg.ry = dsp_get_source_mem_value( (opcode & 0x1C000 ) >> 14 );
+		dsp_reg.ry.ui = dsp_get_source_mem_value( (opcode & 0x1C000 ) >> 14 );
 		update_mul = 1;
 	}
 	switch( (opcode & 0x60000) >> 17 )
@@ -502,23 +473,16 @@ static void dsp_operation(void)
 		case 0x0:	/* NOP */
 			break;
 		case 0x1:	/* CLR A */
-			dsp_reg.acl = 0;
-			dsp_reg.ach = 0;
+			dsp_reg.acl.ui = 0;
+			dsp_reg.ach.ui = 0;
 			break;
 		case 0x2:	/* MOV ALU,A */
-			dsp_reg.ach = ((dsp_reg.alu & S64(0x0000ffff00000000)) >> 32);
-			dsp_reg.acl = ((dsp_reg.alu & 0x00000000ffffffff) >> 0);
+			dsp_reg.ach.ui = (UINT16)((dsp_reg.alu & U64(0x0000ffff00000000)) >> 32);
+			dsp_reg.acl.ui = (UINT32)((dsp_reg.alu & U64(0x00000000ffffffff)) >> 0);
 			break;
 		case 0x3:	/* MOV [s], A */
-			dsp_reg.acl = dsp_get_source_mem_value( (opcode & 0x1C000 ) >> 14 );
-			if ( dsp_reg.acl & 0x80000000 )
-			{
-				dsp_reg.ach = 0xffff;
-			}
-			else
-			{
-				dsp_reg.ach = 0x0;
-			}
+			dsp_reg.acl.ui = dsp_get_source_mem_value( (opcode & 0x1C000 ) >> 14 );
+			dsp_reg.ach.si = ((dsp_reg.acl.si < 0) ? -1 : 0);
 			break;
 	}
 
@@ -528,13 +492,13 @@ static void dsp_operation(void)
 		case 0x0:	/* NOP */
 			break;
 		case 0x1:	/* MOV SImm,[d] */
-			dsp_set_dest_mem_reg( (opcode & 0xF00) >> 8, (INT32)(INT8)(opcode & 0xFF) );
+			dsp_set_dest_mem_reg( (opcode & 0xf00) >> 8, (INT32)(INT8)(opcode & 0xff) );
 			break;
 		case 0x2:
 			/* ??? */
 			break;
 		case 0x3:	/* MOV [s],[d] */
-			dsp_set_dest_mem_reg( (opcode & 0xF00) >> 8, dsp_get_source_mem_reg_value( opcode & 0xF ) );
+			dsp_set_dest_mem_reg( (opcode & 0xf00) >> 8, dsp_get_source_mem_reg_value( opcode & 0xf ) );
 			break;
 	}
 
@@ -588,13 +552,13 @@ static void dsp_dma( void )
 		switch( add )
 		{
 		  case 0: add = 0; break;  /* 0 */
-		  case 1: add = 1; break;  /* 1 */
-		  case 2: add = 2; break;  /* 2 */
-		  case 3: add = 4; break; /* 4 */
-		  case 4: add = 8; break; /* 8 */
-  		  case 5: add = 16; break; /* 16 */
-  		  case 6: add = 32; break; /* 32 */
-  		  case 7: add = 64; break; /* 64 */
+		  case 1: add = 4; break;  /* 1 */
+		  case 2: add = 8; break;  /* 2 */ /* verified on DSPEMU */
+		  case 3: add = 16; break; /* 4 */ /* verified on DSPEMU */
+		  case 4: add = 32; break;  /* 8 */
+  		  case 5: add = 64; break; /* 16 */
+  		  case 6: add = 128; break; /* 32 */
+  		  case 7: add = 256; break; /* 64 */
         }
 	}
 
@@ -602,6 +566,9 @@ static void dsp_dma( void )
 	{
 		/* DMA D0,[RAM] */
 		source = dsp_reg.ra0 << 2;
+		source &= 0x07ffffff;
+		dest &= 0x07ffffff;
+		transfer_cnt &= 0xff;
 #ifdef DEBUG_DSP
         fprintf( log_file, "/*DSP DMA D0,[RAM%d],%d add=%d*/\n", dsp_mem, transfer_cnt, add );
 #endif			
@@ -624,6 +591,9 @@ static void dsp_dma( void )
 	{
 		/* DMA [RAM],D0 */
 		dest = dsp_reg.wa0 << 2;
+		source &= 0x07ffffff;
+		dest &= 0x07ffffff;
+		transfer_cnt &= 0xff;
 #ifdef DEBUG_DSP
     fprintf( log_file, "/*DSP DMA [RAM%d],D0,%d\tadd=%d,source=%08X*/\n", dsp_mem, transfer_cnt, add, source );
 #endif					
@@ -792,7 +762,7 @@ void dsp_execute_program()
 		}
 		if ( update_mul == 1 )
 		{
-			dsp_reg.mul = ((UINT64)dsp_reg.rx) * ((UINT64)dsp_reg.ry);
+			dsp_reg.mul = (INT64)dsp_reg.rx.si * (INT64)dsp_reg.ry.si;
 			update_mul = 0;
 		}
 		

@@ -1473,7 +1473,7 @@ error:
 
 static void do_diff(int argc, char *argv[])
 {
-	const char *parentfile, *inputfile, *outputfile;
+	const char *parentfile = NULL, *inputfile = NULL, *outputfile = NULL;
 	struct chd_file *parentchd = NULL;
 	struct chd_file *inputchd = NULL;
 	struct chd_file *outputchd = NULL;

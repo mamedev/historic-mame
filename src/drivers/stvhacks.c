@@ -394,10 +394,86 @@ static READ32_HANDLER( groovef_hack2_r )
 	return stv_workram_h[0x0ca6cc/4];
 }
 
+static READ32_HANDLER( groovef_speedup_r )
+{
+//	logerror ("groove speedup \n");
+	if (activecpu_get_pc()==0x060a4972)
+	{
+		cpu_spinuntil_int(); // title logos
+//		logerror ("groove speedup skipping\n");
+
+	}
+
+	return stv_workram_h[0x0c64ec/4];
+}
+/*
+static READ32_HANDLER( groovef_second_cpu_off_r )
+{
+	if (activecpu_get_pc()==0x060060c2) 	cpu_set_halt_line(1,ASSERT_LINE);
+	return 0;
+}
+*/
+
+static READ32_HANDLER( groovef_second_skip_r )
+{
+	if (activecpu_get_pc()==0x060060ca) cpu_spinuntil_time(TIME_IN_USEC(200));
+
+
+	return stv_workram_h[0x0060e0/4];
+}
+
 DRIVER_INIT( groovef )
 {
+	/* prevent game from hanging on startup -- todo: remove these hacks */
 	install_mem_read32_handler(0, 0x60ca6cc, 0x60ca6cf, groovef_hack2_r );
 	install_mem_read32_handler(0, 0x60fffcc, 0x60fffcf, groovef_hack1_r );
 
+	install_mem_read32_handler(0, 0x60c64ec, 0x60c64ef, groovef_speedup_r );
+//	install_mem_read32_handler(1, 0x60060dc, 0x60060df, groovef_second_cpu_off_r ); // not a good idea, needs it for ai.
+	install_mem_read32_handler(1, 0x60060e0, 0x60060e3, groovef_second_skip_r ); // careful .. its not an interrupt wait loop
+
 	init_stv();
 }
+
+/* danchih hangs on the title screen without this hack .. */
+
+/*  info from Saturnin Author
+
+> seems to be fully playable, can you be more specific about the scu level 2
+> dma stuff? i'd prefer a real solution than this hack, it could affect
+other
+> games too for all i know.
+
+Unfortunalely I don't know much more about it : I got this info from a
+person
+who ran the SGL object files through objdump ...
+
+0x060ffcbc _DMASt_SCU1
+0x060ffcbd _DMASt_SCU2
+
+But when I got games looping on thoses locations, the problem was related to
+a
+SCU interrupt (in indirect mode) which was registered but never triggered, a
+bug in my SH2 core prevented the SR bits to be correctly filled in some
+cases ...
+When the interrupt is correctly triggered, I don't have these loops anymore,
+and Hanafuda works without hack now (unless the sound ram one)
+
+
+*/
+
+static READ32_HANDLER( danchih_hack_r )
+{
+	if (activecpu_get_pc()==0x06028b2a) return 0x0e0c0000;
+
+	return stv_workram_h[0x60ffcbc/4];
+}
+
+DRIVER_INIT( danchih )
+{
+	/* prevent game from hanging on title screen -- todo: remove these hacks */
+	install_mem_read32_handler(0, 0x60ffcbc, 0x60ffcbf, danchih_hack_r );
+
+	init_stv();
+}
+

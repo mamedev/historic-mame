@@ -114,8 +114,9 @@ void r5000le_get_info(UINT32 state, union cpuinfo *info);
 #define MIPS3DRC_STRICT_COP1		0x0004			/* validate all COP1 instructions */
 #define MIPS3DRC_STRICT_COP2		0x0008			/* validate all COP2 instructions */
 #define MIPS3DRC_DIRECT_RAM			0x0010			/* allow direct RAM access (no bankswitching!) */
+#define MIPS3DRC_FLUSH_PC			0x0020			/* flush the PC value before each memory access */
 
-#define MIPS3DRC_COMPATIBLE_OPTIONS	(MIPS3DRC_STRICT_VERIFY | MIPS3DRC_STRICT_COP0 | MIPS3DRC_STRICT_COP1 | MIPS3DRC_STRICT_COP2)
+#define MIPS3DRC_COMPATIBLE_OPTIONS	(MIPS3DRC_STRICT_VERIFY | MIPS3DRC_STRICT_COP0 | MIPS3DRC_STRICT_COP1 | MIPS3DRC_STRICT_COP2 | MIPS3DRC_FLUSH_PC)
 #define MIPS3DRC_FASTEST_OPTIONS	(MIPS3DRC_DIRECT_RAM)
 
 

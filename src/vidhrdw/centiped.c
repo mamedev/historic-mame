@@ -11,8 +11,8 @@
 
 static struct tilemap *tilemap;
 UINT8 centiped_flipscreen, *bullsdrt_tiles_bankram;
-
 static UINT8 bullsdrt_sprites_bank;
+static UINT8 penmask[64];
 
 
 
@@ -48,16 +48,11 @@ static void milliped_get_tile_info(int tile_index)
 
 static void bullsdrt_get_tile_info(int tile_index)
 {
-	int data, tilebank, tile;
-
-	data = videoram[tile_index];
-
-	tilebank = bullsdrt_tiles_bankram[tile_index & 0x1f] & 0x0f;
-
-	tile = (data & 0x3f) + 0x40 * tilebank;
-
-	SET_TILE_INFO(0, tile, 0, TILE_FLIPYX(data >> 6));
+	int data = videoram[tile_index];
+	int bank = bullsdrt_tiles_bankram[tile_index & 0x1f] & 0x0f;
+	SET_TILE_INFO(0, (data & 0x3f) + 0x40 * bank, 0, TILE_FLIPYX(data >> 6));
 }
+
 
 
 /*************************************
@@ -107,7 +102,6 @@ VIDEO_START( bullsdrt )
 		return 1;
 
 	centiped_flipscreen = 0;
-
 	return 0;
 }
 
@@ -139,6 +133,7 @@ WRITE_HANDLER( centiped_flip_screen_w )
 }
 
 
+
 /*************************************
  *
  *	Tiles bank
@@ -150,6 +145,7 @@ WRITE_HANDLER( bullsdrt_tilesbank_w )
 	bullsdrt_tiles_bankram[offset] = data;
 	tilemap_mark_all_tiles_dirty(tilemap);
 }
+
 
 
 /*************************************
@@ -170,6 +166,22 @@ WRITE_HANDLER( bullsdrt_sprites_bank_w )
  *	Palette init
  *
  *************************************/
+
+static void init_penmask(void)
+{
+	int i;
+	
+	for (i = 0; i < 64; i++)
+	{
+		UINT8 mask = 1;
+		if (((i >> 0) & 3) == 0) mask |= 2;
+		if (((i >> 2) & 3) == 0) mask |= 4;
+		if (((i >> 4) & 3) == 0) mask |= 8;
+		penmask[i] = mask;
+	}
+}
+
+
 
 /***************************************************************************
 
@@ -206,11 +218,14 @@ PALETTE_INIT( centiped )
 	/* pen 00 is transparent */
 	for (i = 0; i < TOTAL_COLORS(1); i += 4)
 	{
-		COLOR(1,i+0) = 4;
+		COLOR(1,i+0) = 0;
 		COLOR(1,i+1) = 4 + ((i >> 2) & 3);
 		COLOR(1,i+2) = 4 + ((i >> 4) & 3);
 		COLOR(1,i+3) = 4 + ((i >> 6) & 3);
 	}
+	
+	/* create a pen mask for sprite drawing */
+	init_penmask();
 }
 
 
@@ -232,10 +247,11 @@ WRITE_HANDLER( centiped_paletteram_w )
 		else if (g) g = 0xc0;
 	}
 
-	if (offset >= 4 && offset < 8)
-		palette_set_color(offset - 4, r, g, b);
-	else if (offset >= 12 && offset < 16)
-		palette_set_color(4 + (offset - 12), r, g, b);
+	/* bit 2 of the output palette RAM is always pulled high, so we ignore */
+	/* any palette changes unless the write is to a palette RAM address */
+	/* that is actually used */
+	if (offset & 4)
+		palette_set_color(((offset >> 1) & 4) | (offset & 3), r, g, b);
 }
 
 
@@ -317,11 +333,15 @@ PALETTE_INIT( milliped )
 	/* pen 00 is transparent */
 	for (i = 0; i < TOTAL_COLORS(1); i += 4)
 	{
-		COLOR(1,i+0) = 16 + 4*((i >> 8) & 3);
-		COLOR(1,i+1) = 16 + 4*((i >> 8) & 3) + ((i >> 2) & 3);
-		COLOR(1,i+2) = 16 + 4*((i >> 8) & 3) + ((i >> 4) & 3);
-		COLOR(1,i+3) = 16 + 4*((i >> 8) & 3) + ((i >> 6) & 3);
+		int base = 16 + 4 * ((i >> 8) & 3);
+		COLOR(1,i+0) = 0;
+		COLOR(1,i+1) = base + ((i >> 2) & 3);
+		COLOR(1,i+2) = base + ((i >> 4) & 3);
+		COLOR(1,i+3) = base + ((i >> 6) & 3);
 	}
+	
+	/* create a pen mask for sprite drawing */
+	init_penmask();
 }
 
 
@@ -380,12 +400,13 @@ VIDEO_UPDATE( centiped )
 	{
 		int code = ((spriteram[offs] & 0x3e) >> 1) | ((spriteram[offs] & 0x01) << 6);
 		int color = spriteram[offs + 0x30];
-		int flipy = spriteram[offs] & 0x80;
+		int flipx = (spriteram[offs] >> 6) & 1;
+		int flipy = (spriteram[offs] >> 7) & 1;
 		int x = spriteram[offs + 0x20];
 		int y = 240 - spriteram[offs + 0x10];
 
-		drawgfx(bitmap, Machine->gfx[1], code, color & 0x3f, centiped_flipscreen, flipy, x, y,
-				&spriteclip, TRANSPARENCY_PEN, 0);
+		drawgfx(bitmap, Machine->gfx[1], code, color, centiped_flipscreen ^ flipx, flipy, x, y,
+				&spriteclip, TRANSPARENCY_PENS, penmask[color & 0x3f]);
 	}
 }
 
@@ -410,8 +431,8 @@ VIDEO_UPDATE( warlords )
 	for (offs = 0; offs < 0x10; offs++)
 	{
 		int code = spriteram[offs] & 0x3f;
-		int flipx = spriteram[offs] & 0x40;
-		int flipy = spriteram[offs] & 0x80;
+		int flipx = (spriteram[offs] >> 6) & 1;
+		int flipy = (spriteram[offs] >> 7) & 1;
 		int x = spriteram[offs + 0x20];
 		int y = 248 - spriteram[offs + 0x10];
 
@@ -433,6 +454,7 @@ VIDEO_UPDATE( warlords )
 	}
 }
 
+
 VIDEO_UPDATE( bullsdrt )
 {
 	struct rectangle spriteclip = *cliprect;
@@ -453,12 +475,11 @@ VIDEO_UPDATE( bullsdrt )
 	{
 		int code = ((spriteram[offs] & 0x3e) >> 1) | ((spriteram[offs] & 0x01) << 6) | (bullsdrt_sprites_bank * 0x20);
 		int color = spriteram[offs + 0x30];
-		int flipy = spriteram[offs] & 0x80;
+		int flipy = (spriteram[offs] >> 7) & 1;
 		int x = spriteram[offs + 0x20];
 		int y = 240 - spriteram[offs + 0x10];
 
 		drawgfx(bitmap, Machine->gfx[1], code, color & 0x3f, 1, flipy, x, y,
 				&spriteclip, TRANSPARENCY_PEN, 0);
 	}
-
 }

@@ -78,15 +78,16 @@
 
 /* These are the CPU types understood by this disassembler */
 #define TYPE_68000 1
-#define TYPE_68010 2
-#define TYPE_68020 4
-#define TYPE_68030 8
-#define TYPE_68040 16
+#define TYPE_68008 2
+#define TYPE_68010 4
+#define TYPE_68020 8
+#define TYPE_68030 16
+#define TYPE_68040 32
 
-#define M68000_ONLY		TYPE_68000
+#define M68000_ONLY		TYPE_68000 | TYPE_68008
 
 #define M68010_ONLY		TYPE_68010
-#define M68010_LESS		(TYPE_68000 | TYPE_68010)
+#define M68010_LESS		(TYPE_68000 | TYPE_68008 | TYPE_68010)
 #define M68010_PLUS		(TYPE_68010 | TYPE_68020 | TYPE_68030 | TYPE_68040)
 
 #define M68020_ONLY 	TYPE_68020
@@ -3275,6 +3276,10 @@ unsigned int m68k_disassemble(char* str_buff, unsigned int pc, unsigned int cpu_
 			g_cpu_type = TYPE_68000;
 			g_address_mask = 0x00ffffff;
 			break;
+		case M68K_CPU_TYPE_68008:
+			g_cpu_type = TYPE_68008;
+			g_address_mask = 0x003fffff;
+			break;
 		case M68K_CPU_TYPE_68010:
 			g_cpu_type = TYPE_68010;
 			g_address_mask = 0x00ffffff;
@@ -3331,6 +3336,7 @@ unsigned int m68k_is_valid_instruction(unsigned int instruction, unsigned int cp
 	switch(cpu_type)
 	{
 		case M68K_CPU_TYPE_68000:
+		case M68K_CPU_TYPE_68008:
 			if(g_instruction_table[instruction] == d68010_bkpt)
 				return 0;
 			if(g_instruction_table[instruction] == d68010_move_fr_ccr)

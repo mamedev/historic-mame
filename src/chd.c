@@ -1922,7 +1922,6 @@ struct chd_exfile
 struct chd_exfile *chd_start_compress_ex(struct chd_file *chd)
 {
 	int err;
-	struct chd_exfile chdex;
 	struct chd_exfile *finalchdex;
 
 	/* punt if no interface */
@@ -1944,17 +1943,18 @@ struct chd_exfile *chd_start_compress_ex(struct chd_file *chd)
 	if (chd->parent)
 		init_crcmap(chd->parent, 1);
 
-	/* init the MD5/SHA1 computations */
-	MD5Init(&chdex.md5);
-	sha1_init(&chdex.sha);
-	
-	chdex.chd = chd;
-	chdex.sourceoffset = 0;
-
-	finalchdex = malloc(sizeof(chdex));
+	finalchdex = malloc(sizeof(struct chd_exfile));
 	if (!finalchdex)
 		SET_ERROR_AND_CLEANUP(CHDERR_OUT_OF_MEMORY);
-	*finalchdex = chdex;
+
+	/* init the MD5/SHA1 computations */
+	MD5Init(&finalchdex->md5);
+	sha1_init(&finalchdex->sha);
+
+	finalchdex->chd = chd;
+	finalchdex->sourceoffset = 0;
+	finalchdex->hunknum = 0;
+
 	return finalchdex;
 
 cleanup:

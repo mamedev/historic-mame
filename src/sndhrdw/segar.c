@@ -285,6 +285,7 @@ static unsigned int rom_offset = 0;
 
 const char *monsterb_sample_names[] =
 {
+		"*monsterb",
 		"zap.wav","jumpdown.wav",
 		0
 };

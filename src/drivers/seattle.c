@@ -10,24 +10,70 @@
 		* NFL Blitz [Midway, 150MHz]
 		* NFL Blitz 99 [Midway, 150MHz]
 		* NFL Blitz 2000 [Midway, 150MHz]
+
 		* California Speed [Atari, 150MHz]
 		* Mace: The Dark Age [Atari, 200MHz]
 		* San Francisco Rush [Atari]
-		* Wayne Gretzky's 3d Hockey [Atari]
+		* Vapor TRX [Atari, 192MHz, 8MB RAM, 1-TMU * 4MB]
+		* Wayne Gretzky's 3d Hockey [Atari, ~100MHz, 4MB RAM]
 
-	Potentially to be added:
+	Still missing hard disks for:
 		* Hyperdrive [Midway, 200MHz]
-		* Vapor TRX [Atari, 200MHz]
 		* San Francisco Rush Alcatraz Edition [Atari]
 
 	Known bugs:
-		* general: Atari games timing is not quite right
-		* CarnEvil: lets you set the flash brightness; need to emulate that
-		* Blitz99: random black frames
-		* Blitz99/2k: crash when running full powerup tests
-		* Blitz99/2k: sounds play at the wrong frequency unless we use 12MHz
-		* Wayne Gretzky: loses sound occasionally and has to reset it
+		* Blitz: hangs if POST is enabled due to TMU 1 attempted accesses
+		* Carnevil: lets you set the flash brightness; need to emulate that
 		* SF Rush: hangs when trying to start a game (security?)
+		* Vapor TRX: missing BG graphics in level select screen
+		* Vapor TRX: resets when trying to start a game
+
+***************************************************************************
+
+	Interrupt summary:
+
+	                    __________
+	UART clear-to-send |          |  
+	-------(0x2000)--->|          |
+	                   |          |
+	UART data ready    |          |
+	-------(0x1000)--->|          |                     __________
+	                   |          |   VSYNC            |          |
+	Main-to-sound empty|  IOASIC  |   ----(IRQ3/4/5)-->|          |
+	-------(0x0080)--->|          |                    |          |
+	                   |          |                    |          |
+	Sound-to-main full |          |   IDE Controller   |          |
+	-------(0x0040)--->|          |   -------(IRQ2)--->|          |
+	                   |          |                    |   CPU    |
+	Sound FIFO empty   |          |                    |          |
+	-------(0x0008)--->|          |   IOASIC Summary   |          |
+	                   |__________|----------(IRQ1)--->|          |
+	                                                   |          |
+	                    __________                     |          |
+	Timer 3            |          |   Galileo Summary  |          |
+	-------(0x0800)--->|          |----------(IRQ0)--->|          |
+	                   |          |                    |__________|
+	Timer 2            |          |
+	-------(0x0400)--->|          |
+	                   |          |
+	Timer 1            |          |
+	-------(0x0200)--->|          |
+	                   |          |
+	Timer 0            |          |
+	-------(0x0100)--->|          |
+	                   | Galileo  |
+	DMA channel 3      |          |
+	-------(0x0080)--->|          |
+	                   |          |
+	DMA channel 2      |          |
+	-------(0x0040)--->|          |
+	                   |          |
+	DMA channel 1      |          |
+	-------(0x0020)--->|          |
+	                   |          |
+	DMA channel 0      |          |
+	-------(0x0010)--->|          |
+	                   |__________|
 
 **************************************************************************/
 
@@ -57,24 +103,29 @@ static data32_t *galileo_regs;
 static data32_t pci_bridge_regs[0x40];
 static data32_t pci_3dfx_regs[0x40];
 
+static UINT8 dma_pending_on_vblank[4];
+
 static void *timer[4];
 static UINT32 timer_count[4];
 static UINT8 timer_active[4];
 
-static UINT8 vblank_signalled;
+static UINT8 vblank_latch;
 static UINT8 vblank_irq;
+static UINT8 vblank_state;
 static data32_t *vblank_config;
 static data32_t *vblank_enable;
 
 static data32_t *asic_reset;
 
 static data8_t pending_analog_read;
+static data8_t status_leds;
 
 static data32_t *generic_speedup;
 static data32_t *generic_speedup2;
 
 
 static void timer_callback(int param);
+static void perform_dma(int which);
 
 
 
@@ -88,10 +139,6 @@ static MACHINE_INIT( seattle )
 {
 	/* set the fastest DRC options, but strict verification */
 	cpunum_set_info_int(0, CPUINFO_INT_MIPS3_DRC_OPTIONS, MIPS3DRC_FASTEST_OPTIONS + MIPS3DRC_STRICT_VERIFY);
-
-//	cpu_setbank(1, rambase);
-//	cpu_setbank(2, rambase);
-//	cpu_setbank(3, rombase);
 
 	if (mame_find_cpu_index("dcs2") != -1)
 	{
@@ -155,58 +202,86 @@ static void ioasic_irq(int state)
  *
  *************************************/
 
-static void clear_vblank(int param)
+static void update_vblank_state(void)
 {
-	logerror("Clearing vblank_irq\n");
-	if (vblank_irq)
-		cpu_set_irq_line(0, vblank_irq, CLEAR_LINE);
-	vblank_signalled = 0;
+	if (vblank_irq != 0)
+	{
+		int state = CLEAR_LINE;
+
+		if (vblank_latch && (*vblank_enable & 0x80))
+			state = ASSERT_LINE;
+		cpu_set_irq_line(0, vblank_irq, state);
+	}
 }
 
 
-static READ32_HANDLER( vblank_signalled_r )
+static READ32_HANDLER( vblank_latch_r )
 {
-	logerror("%06X:vblank_signalled_r\n", activecpu_get_pc());
-	return vblank_signalled ? 0x80 : 0x00;
+	data32_t result = 0;
+	result |= vblank_latch << 7;
+	return result;
 }
 
 
-static WRITE32_HANDLER( vblank_enable_w )
+static READ32_HANDLER( vblank_latch2_r )
 {
-	logerror("%06X:vblank_enable_w = %08X\n", activecpu_get_pc(), data);
-	COMBINE_DATA(vblank_enable);
+	data32_t result = 0;
+	result |= vblank_latch << 7;
+	result |= vblank_state << 8;
+	return result;
 }
 
 
 static WRITE32_HANDLER( vblank_config_w )
 {
-	logerror("%06X:vblank_config_w = %08X\n", activecpu_get_pc(), data);
+	int irq;
+
 	COMBINE_DATA(vblank_config);
-	if (vblank_irq)
+
+	/* clear anything pending on the old IRQ */
+	if (vblank_irq != 0)
 		cpu_set_irq_line(0, vblank_irq, CLEAR_LINE);
-	vblank_irq = 2 + ((*vblank_config >> 14) & 3);
+
+	/* compute the new IRQ vector */
+	irq = (*vblank_config >> 14) & 3;
+	if (irq != 0)
+		vblank_irq = 2 + irq;
+	else
+		vblank_irq = 0;
+
+	/* update the state */
+	update_vblank_state();
 }
 
 
 static WRITE32_HANDLER( vblank_clear_w )
 {
-	logerror("%06X:vblank_clear_w = %08X\n", activecpu_get_pc(), data);
-	if (vblank_irq)
-		cpu_set_irq_line(0, vblank_irq, CLEAR_LINE);
-	vblank_signalled = 0;
+	vblank_latch = 0;
+	update_vblank_state();
 }
 
 
-static INTERRUPT_GEN( assert_vblank )
+static WRITE32_HANDLER( vblank_enable_w )
 {
-	logerror("Setting IRQ3\n");
-	if (*vblank_enable & 0x80)
+	COMBINE_DATA(vblank_enable);
+	update_vblank_state();
+}
+
+
+static void vblank_assert(int state)
+{
+	vblank_state = state;
+	if ((state && !(*vblank_enable & 0x100)) || (!state && (*vblank_enable & 0x100)))
 	{
-		if (vblank_irq)
-			cpu_set_irq_line(0, vblank_irq, ASSERT_LINE);
-		vblank_signalled = 1;
-		timer_set(cpu_getscanlinetime(cpu_getscanline() + 1), 0, clear_vblank);
+		vblank_latch = 1;
+		update_vblank_state();
 	}
+
+	/* if we have stalled DMA, restart */
+	if (dma_pending_on_vblank[0]) { cpuintrf_push_context(0); perform_dma(0); cpuintrf_pop_context(); }
+	if (dma_pending_on_vblank[1]) { cpuintrf_push_context(0); perform_dma(1); cpuintrf_pop_context(); }
+	if (dma_pending_on_vblank[2]) { cpuintrf_push_context(0); perform_dma(2); cpuintrf_pop_context(); }
+	if (dma_pending_on_vblank[3]) { cpuintrf_push_context(0); perform_dma(3); cpuintrf_pop_context(); }
 }
 
 
@@ -241,7 +316,7 @@ static READ32_HANDLER( cmos_r )
 static void pci_bridge_w(UINT8 reg, UINT8 type, data32_t data)
 {
 	pci_bridge_regs[reg] = data;
-	logerror("%06X:PCI bridge write: reg %d type %d = %08X\n", activecpu_get_pc(), reg, type, data);
+	logerror("%08X:PCI bridge write: reg %d type %d = %08X\n", activecpu_get_pc(), reg, type, data);
 }
 
 
@@ -261,7 +336,7 @@ static void pci_3dfx_w(UINT8 reg, UINT8 type, data32_t data)
 			voodoo_set_init_enable(data);
 			break;
 	}
-	logerror("%06X:PCI 3dfx write: reg %d type %d = %08X\n", activecpu_get_pc(), reg, type, data);
+	logerror("%08X:PCI 3dfx write: reg %d type %d = %08X\n", activecpu_get_pc(), reg, type, data);
 }
 
 
@@ -276,7 +351,18 @@ static data32_t pci_bridge_r(UINT8 reg, UINT8 type)
 {
 	data32_t result = pci_bridge_regs[reg];
 
-	logerror("%06X:PCI bridge read: reg %d type %d = %08X\n", activecpu_get_pc(), reg, type, result);
+	switch (reg)
+	{
+		case 0x00:		/* ID register: 0x0146 = GT64010, 0x11ab = Galileo */
+			result = 0x014611ab;
+			break;
+
+		case 0x02:		/* Base Class:Sub Class:Reserved:Revision */
+			result = 0x06000003;
+			break;
+	}
+
+	logerror("%08X:PCI bridge read: reg %d type %d = %08X\n", activecpu_get_pc(), reg, type, result);
 
 	return result;
 }
@@ -288,12 +374,16 @@ static data32_t pci_3dfx_r(UINT8 reg, UINT8 type)
 
 	switch (reg)
 	{
-		case 0:		/* ID register: 0x0001 = SST-1, 0x121a = 3dfx */
+		case 0x00:		/* ID register: 0x0001 = SST-1, 0x121a = 3dfx */
 			result = 0x0001121a;
+			break;
+
+		case 0x02:		/* Base Class:Sub Class:Reserved:Revision */
+			result = 0x00000001;
 			break;
 	}
 
-	logerror("%06X:PCI 3dfx read: reg %d type %d = %08X\n", activecpu_get_pc(), reg, type, result);
+	logerror("%08X:PCI 3dfx read: reg %d type %d = %08X\n", activecpu_get_pc(), reg, type, result);
 
 	return result;
 }
@@ -369,35 +459,24 @@ static int dma_fetch_next(int which)
 			galileo_regs[0xc18/4] |= 0x10 << which;
 			update_galileo_irqs();
 		}
+		galileo_regs[0x840/4 + which] &= ~0x5000;
 		return 0;
 	}
 
 	/* fetch the byte count */
-	data = cpunum_read_byte(0, address++);
-	data |= cpunum_read_byte(0, address++) << 8;
-	data |= cpunum_read_byte(0, address++) << 16;
-	data |= cpunum_read_byte(0, address++) << 24;
+	data = program_read_dword(address); address += 4;
 	galileo_regs[0x800/4 + which] = data;
 
 	/* fetch the source address */
-	data = cpunum_read_byte(0, address++);
-	data |= cpunum_read_byte(0, address++) << 8;
-	data |= cpunum_read_byte(0, address++) << 16;
-	data |= cpunum_read_byte(0, address++) << 24;
+	data = program_read_dword(address); address += 4;
 	galileo_regs[0x810/4 + which] = data;
 
 	/* fetch the dest address */
-	data = cpunum_read_byte(0, address++);
-	data |= cpunum_read_byte(0, address++) << 8;
-	data |= cpunum_read_byte(0, address++) << 16;
-	data |= cpunum_read_byte(0, address++) << 24;
+	data = program_read_dword(address); address += 4;
 	galileo_regs[0x820/4 + which] = data;
 
 	/* fetch the next record address */
-	data = cpunum_read_byte(0, address++);
-	data |= cpunum_read_byte(0, address++) << 8;
-	data |= cpunum_read_byte(0, address++) << 16;
-	data |= cpunum_read_byte(0, address++) << 24;
+	data = program_read_dword(address); address += 4;
 	galileo_regs[0x830/4 + which] = data;
 
 //	logerror("DMA Fetch Record: bytes=%08X src=%08X dst=%08X nextrec=%08X\n",
@@ -408,113 +487,110 @@ static int dma_fetch_next(int which)
 	return 1;
 }
 
-static void perform_dma(int which);
-
-static void dma_finished_callback(int which)
-{
-//	logerror("DMA%d finished\n", which);
-	galileo_regs[0x840/4 + which] &= ~0x4000;
-	galileo_regs[0x840/4 + which] &= ~0x1000;
-
-	/* interrupt? */
-	if (!(galileo_regs[0x840/4 + which] & 0x400))
-	{
-		galileo_regs[0xc18/4] |= 0x10 << which;
-		update_galileo_irqs();
-	}
-
-	/* chain? */
-	if (dma_fetch_next(which))
-		perform_dma(which);
-}
-
 
 static void perform_dma(int which)
 {
-	offs_t srcaddr = galileo_regs[0x810/4 + which];
-	offs_t dstaddr = galileo_regs[0x820/4 + which];
-	data32_t bytesleft = galileo_regs[0x800/4 + which] & 0xffff;
-	int srcinc, dstinc, i;
-
-	/* determine src/dst inc */
-	switch ((galileo_regs[0x840/4 + which] >> 2) & 3)
+	do
 	{
-		default:
-		case 0:		srcinc = 1;		break;
-		case 1:		srcinc = -1;	break;
-		case 2:		srcinc = 0;		break;
-	}
-	switch ((galileo_regs[0x840/4 + which] >> 4) & 3)
-	{
-		default:
-		case 0:		dstinc = 1;		break;
-		case 1:		dstinc = -1;	break;
-		case 2:		dstinc = 0;		break;
-	}
+		offs_t srcaddr = galileo_regs[0x810/4 + which];
+		offs_t dstaddr = galileo_regs[0x820/4 + which];
+		data32_t bytesleft = galileo_regs[0x800/4 + which] & 0xffff;
+		int srcinc, dstinc, i;
 
-	if (LOG_DMA)
-		logerror("Performing DMA%d: src=%08X dst=%08X bytes=%04X sinc=%d dinc=%d\n", which, srcaddr, dstaddr, bytesleft, srcinc, dstinc);
+		dma_pending_on_vblank[which] = 0;
+		galileo_regs[0x840/4 + which] |= 0x5000;
 
-	/* special case: transfer ram to voodoo */
-	if (bytesleft % 4 == 0 && srcaddr % 4 == 0 && srcaddr < 0x007fffff && dstaddr >= 0x08000000 && dstaddr < 0x09000000)
-	{
-		data32_t *src = &rambase[srcaddr/4];
-		bytesleft /= 4;
-
-		/* transfer to registers */
-		if (dstaddr < 0x8400000)
+		/* determine src/dst inc */
+		switch ((galileo_regs[0x840/4 + which] >> 2) & 3)
 		{
-			dstaddr = (dstaddr & 0x3fffff) / 4;
-			for (i = 0; i < bytesleft; i++)
+			default:
+			case 0:		srcinc = 1;		break;
+			case 1:		srcinc = -1;	break;
+			case 2:		srcinc = 0;		break;
+		}
+		switch ((galileo_regs[0x840/4 + which] >> 4) & 3)
+		{
+			default:
+			case 0:		dstinc = 1;		break;
+			case 1:		dstinc = -1;	break;
+			case 2:		dstinc = 0;		break;
+		}
+
+		if (LOG_DMA)
+			logerror("Performing DMA%d: src=%08X dst=%08X bytes=%04X sinc=%d dinc=%d\n", which, srcaddr, dstaddr, bytesleft, srcinc, dstinc);
+
+		/* special case: transfer ram to voodoo */
+		if (bytesleft % 4 == 0 && srcaddr % 4 == 0 && srcaddr < 0x007fffff && dstaddr >= 0x08000000 && dstaddr < 0x09000000)
+		{
+			data32_t *src = &rambase[srcaddr/4];
+			bytesleft /= 4;
+
+			/* if the voodoo is blocked, stall until the next VBLANK */
+			if (voodoo_fifo_words_left() < bytesleft)
 			{
-				voodoo_regs_w(dstaddr, *src, 0);
-				src += srcinc;
-				dstaddr += dstinc;
+				if (LOG_DMA)
+					logerror("DMA%d: blocked on voodoo\n", which);
+				dma_pending_on_vblank[which] = 1;
+				return;
+			}
+
+			/* transfer to registers */
+			if (dstaddr < 0x8400000)
+			{
+				dstaddr = (dstaddr & 0x3fffff) / 4;
+				for (i = 0; i < bytesleft; i++)
+				{
+					voodoo_regs_w(dstaddr, *src, 0);
+					src += srcinc;
+					dstaddr += dstinc;
+				}
+			}
+
+			/* transfer to framebuf */
+			else if (dstaddr < 0x8800000)
+			{
+				dstaddr = (dstaddr & 0x3fffff) / 4;
+				for (i = 0; i < bytesleft; i++)
+				{
+					voodoo_framebuf_w(dstaddr, *src, 0);
+					src += srcinc;
+					dstaddr += dstinc;
+				}
+			}
+
+			/* transfer to textureram */
+			else
+			{
+				dstaddr = (dstaddr & 0x7fffff) / 4;
+				for (i = 0; i < bytesleft; i++)
+				{
+					voodoo_textureram_w(dstaddr, *src, 0);
+					src += srcinc;
+					dstaddr += dstinc;
+				}
 			}
 		}
 
-		/* transfer to framebuf */
-		else if (dstaddr < 0x8800000)
-		{
-			dstaddr = (dstaddr & 0x3fffff) / 4;
-			for (i = 0; i < bytesleft; i++)
-			{
-				voodoo_framebuf_w(dstaddr, *src, 0);
-				src += srcinc;
-				dstaddr += dstinc;
-			}
-		}
-
-		/* transfer to textureram */
+		/* standard transfer */
 		else
 		{
-			dstaddr = (dstaddr & 0x7fffff) / 4;
 			for (i = 0; i < bytesleft; i++)
 			{
-				voodoo_textureram_w(dstaddr, *src, 0);
-				src += srcinc;
+				program_write_byte(dstaddr, program_read_byte(srcaddr));
+				srcaddr += srcinc;
 				dstaddr += dstinc;
 			}
 		}
-	}
 
-	/* standard transfer */
-	else
-	{
-		for (i = 0; i < bytesleft; i++)
+		/* interrupt? */
+		if (!(galileo_regs[0x840/4 + which] & 0x400))
 		{
-			cpunum_write_byte(0, dstaddr, cpunum_read_byte(0, srcaddr));
-			srcaddr += srcinc;
-			dstaddr += dstinc;
+			galileo_regs[0xc18/4] |= 0x10 << which;
+			update_galileo_irqs();
 		}
-	}
+	} while (dma_fetch_next(which));
 
-	/* set a timer for the end */
-	galileo_regs[0x840/4 + which] |= 0x4000;
-	if (bytesleft > 0x100)
-		timer_set(DMA_SECS_PER_BYTE * bytesleft, which, dma_finished_callback);
-	else
-		dma_finished_callback(which);
+	galileo_regs[0x840/4 + which] &= ~0x5000;
 }
 
 
@@ -641,7 +717,7 @@ static READ32_HANDLER( galileo_r )
 			activecpu_eat_cycles(100);
 
 			if (LOG_TIMERS)
-				logerror("%06X:hires_timer_r = %08X\n", activecpu_get_pc(), result);
+				logerror("%08X:hires_timer_r = %08X\n", activecpu_get_pc(), result);
 			break;
 		}
 
@@ -652,7 +728,7 @@ static READ32_HANDLER( galileo_r )
 
 		case 0xc18/4:		/* interrupt cause */
 			if (LOG_GALILEO)
-				logerror("%06X:Galileo read from offset %03X = %08X\n", activecpu_get_pc(), offset*4, result);
+				logerror("%08X:Galileo read from offset %03X = %08X\n", activecpu_get_pc(), offset*4, result);
 			break;
 
 		case 0xcfc/4:		/* configuration data */
@@ -665,7 +741,7 @@ static READ32_HANDLER( galileo_r )
 
 			/* unit 0 is the PCI bridge */
 			if (unit == 0 && func == 0)
-				result = pci_bridge_r(reg >> 2, type);
+				result = pci_bridge_r(reg, type);
 
 			/* unit 6 is the 3dfx card */
 			else if (unit == 6 && func == 0)
@@ -673,7 +749,10 @@ static READ32_HANDLER( galileo_r )
 
 			/* anything else, just log */
 			else
-				logerror("%06X:PCIBus read: bus %d unit %d func %d reg %d type %d = %08X\n", activecpu_get_pc(), bus, unit, func, reg, type, result);
+			{
+				result = ~0;
+				logerror("%08X:PCIBus read: bus %d unit %d func %d reg %d type %d = %08X\n", activecpu_get_pc(), bus, unit, func, reg, type, result);
+			}
 			break;
 		}
 
@@ -681,7 +760,7 @@ static READ32_HANDLER( galileo_r )
 			break;
 
 		default:
-			logerror("%06X:Galileo read from offset %03X = %08X\n", activecpu_get_pc(), offset*4, result);
+			logerror("%08X:Galileo read from offset %03X = %08X\n", activecpu_get_pc(), offset*4, result);
 			break;
 	}
 
@@ -703,6 +782,8 @@ static WRITE32_HANDLER( galileo_w )
 		case 0x84c/4:		/* DMA channel 3 control */
 		{
 			int which = offset % 4;
+
+			logerror("%08X:Galileo write to offset %03X = %08X & %08X\n", activecpu_get_pc(), offset*4, data, ~mem_mask);
 
 			/* keep the read only activity bit */
 			galileo_regs[offset] &= ~0x4000;
@@ -731,7 +812,7 @@ static WRITE32_HANDLER( galileo_w )
 			if (!timer_active[which])
 				timer_count[which] = data;
 			if (LOG_TIMERS)
-				logerror("%06X:timer/counter %d count = %08X [start=%08X]\n", activecpu_get_pc(), offset % 4, data, timer_count[which]);
+				logerror("%08X:timer/counter %d count = %08X [start=%08X]\n", activecpu_get_pc(), offset % 4, data, timer_count[which]);
 			break;
 		}
 
@@ -740,7 +821,7 @@ static WRITE32_HANDLER( galileo_w )
 			int which, mask;
 
 			if (LOG_TIMERS)
-				logerror("%06X:timer/counter control = %08X\n", activecpu_get_pc(), data);
+				logerror("%08X:timer/counter control = %08X\n", activecpu_get_pc(), data);
 			for (which = 0, mask = 0x01; which < 4; which++, mask <<= 2)
 			{
 				if (!timer_active[which] && (data & mask))
@@ -771,7 +852,7 @@ static WRITE32_HANDLER( galileo_w )
 
 		case 0xc18/4:		/* IRQ clear */
 			if (LOG_GALILEO)
-				logerror("%06X:Galileo write to IRQ clear = %08X & %08X\n", offset*4, data, ~mem_mask);
+				logerror("%08X:Galileo write to IRQ clear = %08X & %08X\n", offset*4, data, ~mem_mask);
 			galileo_regs[offset] = oldata & data;
 			update_galileo_irqs();
 			break;
@@ -789,7 +870,7 @@ static WRITE32_HANDLER( galileo_w )
 
 			/* unit 0 is the PCI bridge */
 			if (unit == 0 && func == 0)
-				pci_bridge_w(reg >> 2, type, data);
+				pci_bridge_w(reg, type, data);
 
 			/* unit 6 is the 3dfx card */
 			else if (unit == 6 && func == 0)
@@ -797,12 +878,12 @@ static WRITE32_HANDLER( galileo_w )
 
 			/* anything else, just log */
 			else
-				logerror("%06X:PCIBus write: bus %d unit %d func %d reg %d type %d = %08X\n", activecpu_get_pc(), bus, unit, func, reg, type, data);
+				logerror("%08X:PCIBus write: bus %d unit %d func %d reg %d type %d = %08X\n", activecpu_get_pc(), bus, unit, func, reg, type, data);
 			break;
 		}
 
 		default:
-			logerror("%06X:Galileo write to offset %03X = %08X & %08X\n", activecpu_get_pc(), offset*4, data, ~mem_mask);
+			logerror("%08X:Galileo write to offset %03X = %08X & %08X\n", activecpu_get_pc(), offset*4, data, ~mem_mask);
 			break;
 	}
 }
@@ -842,11 +923,16 @@ static WRITE32_HANDLER( asic_fifo_w )
  *
  *************************************/
 
-static READ32_HANDLER( unknown1_r )
+static READ32_HANDLER( status_leds_r )
 {
-logerror("%06X:unknown1_r\n", activecpu_get_pc());
-	// code at 1FC10248 loops until this returns non-zero in bit 6
-	return 0x0040;
+	return status_leds | 0xffffff00;
+}
+
+
+static WRITE32_HANDLER( status_leds_w )
+{
+	if (!(mem_mask & 0x000000ff))
+		status_leds = data;
 }
 
 
@@ -988,6 +1074,7 @@ static READ32_HANDLER( generic_speedup2_r )
  *************************************/
 
 static ADDRESS_MAP_START( seattle_map, ADDRESS_SPACE_PROGRAM, 32 )
+	ADDRESS_MAP_FLAGS( AMEF_UNMAP(1) )
 	AM_RANGE(0x00000000, 0x007fffff) AM_MIRROR(0xa0000000) AM_RAM AM_BASE(&rambase)	// wg3dh only has 4MB; sfrush, blitz99 8MB
 	AM_RANGE(0x88000000, 0x883fffff) AM_MIRROR(0x20000000) AM_READWRITE(voodoo_regs_r, voodoo_regs_w) AM_BASE(&voodoo_regs)
 	AM_RANGE(0x88400000, 0x887fffff) AM_MIRROR(0x20000000) AM_READWRITE(voodoo_framebuf_r, voodoo_framebuf_w)
@@ -1002,11 +1089,11 @@ static ADDRESS_MAP_START( seattle_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0xb7100000, 0xb7100003) AM_WRITE(seattle_watchdog_w)
 	AM_RANGE(0xb7300000, 0xb7300003) AM_READWRITE(MRA32_RAM, vblank_enable_w) AM_BASE(&vblank_enable)
 	AM_RANGE(0xb7400000, 0xb7400003) AM_READWRITE(MRA32_RAM, vblank_config_w) AM_BASE(&vblank_config)
-	AM_RANGE(0xb7500000, 0xb7500003) AM_READ(vblank_signalled_r)
-	AM_RANGE(0xb7600000, 0xb7600003) AM_READ(unknown1_r)
+	AM_RANGE(0xb7500000, 0xb7500003) AM_READ(vblank_latch_r)
+	AM_RANGE(0xb7600000, 0xb7600003) AM_READ(vblank_latch2_r)
 	AM_RANGE(0xb7700000, 0xb7700003) AM_WRITE(vblank_clear_w)
 	AM_RANGE(0xb7800000, 0xb7800003) AM_NOP
-	AM_RANGE(0xb7900000, 0xb7900003) AM_NOP						// very noisy -- status LEDs?
+	AM_RANGE(0xb7900000, 0xb7900003) AM_READWRITE(status_leds_r, status_leds_w)
 	AM_RANGE(0xb7f00000, 0xb7f00003) AM_READWRITE(MRA32_RAM, asic_reset_w) AM_BASE(&asic_reset)
 	AM_RANGE(0xbfc00000, 0xbfc7ffff) AM_MIRROR(0x20000000) AM_ROM AM_REGION(REGION_USER1, 0) AM_BASE(&rombase)
 ADDRESS_MAP_END
@@ -1446,12 +1533,117 @@ INPUT_PORTS_START( calspeed )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( biofreak )
+INPUT_PORTS_START( vaportrx )
 	PORT_START	    /* DIPs */
 	PORT_DIPNAME( 0x0001, 0x0001, "Unknown0001" )
 	PORT_DIPSETTING(      0x0001, DEF_STR( Off ))
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
 	PORT_DIPNAME( 0x0002, 0x0002, "Unknown0002" )
+	PORT_DIPSETTING(      0x0002, DEF_STR( Off ))
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
+	PORT_DIPNAME( 0x0004, 0x0004, "Unknown0004" )
+	PORT_DIPSETTING(      0x0004, DEF_STR( Off ))
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
+	PORT_DIPNAME( 0x0008, 0x0008, "Unknown0008" )
+	PORT_DIPSETTING(      0x0008, DEF_STR( Off ))
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
+	PORT_DIPNAME( 0x0010, 0x0010, "Unknown0010" )
+	PORT_DIPSETTING(      0x0010, DEF_STR( Off ))
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
+	PORT_DIPNAME( 0x0020, 0x0020, "Unknown0020" )
+	PORT_DIPSETTING(      0x0020, DEF_STR( Off ))
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
+	PORT_DIPNAME( 0x0040, 0x0040, "Boot ROM Test" )
+	PORT_DIPSETTING(      0x0040, DEF_STR( Off ))
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
+	PORT_BITX(0x0080, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE ) /* Test switch */
+	PORT_DIPNAME( 0x0100, 0x0100, "Unknown0100" )
+	PORT_DIPSETTING(      0x0100, DEF_STR( Off ))
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
+	PORT_DIPNAME( 0x0200, 0x0200, "Unknown0200" )
+	PORT_DIPSETTING(      0x0200, DEF_STR( Off ))
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
+	PORT_DIPNAME( 0x0400, 0x0400, "Unknown0400" )
+	PORT_DIPSETTING(      0x0400, DEF_STR( Off ))
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
+	PORT_DIPNAME( 0x0800, 0x0800, "Unknown0800" )
+	PORT_DIPSETTING(      0x0800, DEF_STR( Off ))
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
+	PORT_DIPNAME( 0x1000, 0x1000, "Unknown1000" )
+	PORT_DIPSETTING(      0x1000, DEF_STR( Off ))
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
+	PORT_DIPNAME( 0x2000, 0x2000, "Unknown2000" )
+	PORT_DIPSETTING(      0x2000, DEF_STR( Off ))
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
+	PORT_DIPNAME( 0x4000, 0x4000, "Unknown4000" )
+	PORT_DIPSETTING(      0x4000, DEF_STR( Off ))
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
+	PORT_DIPNAME( 0x8000, 0x8000, "Unknown8000" )
+	PORT_DIPSETTING(      0x8000, DEF_STR( Off ))
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
+
+	PORT_START
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_COIN1 )					/* coin 1 */
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_COIN2 )					/* coin 2 */
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )	/* left trigger */
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_TILT ) 					/* tilt */
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_SERVICE2 )					/* test */
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_SERVICE1 )					/* service coin */
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_COIN3 )					/* coin 3 */
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_COIN4 )					/* coin 4 */
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_START3 )
+	PORT_BITX(0x0800, IP_ACTIVE_LOW, 0, "Volume Down", KEYCODE_MINUS, IP_JOY_NONE )
+	PORT_BITX(0x1000, IP_ACTIVE_LOW, 0, "Volume Up", KEYCODE_EQUALS, IP_JOY_NONE )
+	PORT_BIT( 0xe000, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START
+	PORT_BIT( 0x000f, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )	/* right trigger */
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )	/* left thumb */
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )	/* right thumb */
+	PORT_BIT( 0x0180, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )	/* left view */
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )	/* right view */
+	PORT_BIT( 0xf000, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START
+	PORT_BIT( 0xffff, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START
+	PORT_BIT( 0xff, 0x80, IPT_SPECIAL )
+
+	PORT_START
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_Y | IPF_PLAYER1, 100, 10, 0, 255 )
+
+	PORT_START
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_X | IPF_PLAYER1, 100, 10, 0, 255 )
+
+	PORT_START
+	PORT_BIT( 0xff, 0x80, IPT_SPECIAL )
+
+	PORT_START
+	PORT_BIT( 0xff, 0x80, IPT_SPECIAL )
+
+	PORT_START
+	PORT_BIT( 0xff, 0x80, IPT_SPECIAL )
+
+	PORT_START
+	PORT_BIT( 0xff, 0x80, IPT_SPECIAL )
+
+	PORT_START
+	PORT_BIT( 0xff, 0x80, IPT_SPECIAL )
+INPUT_PORTS_END
+
+
+INPUT_PORTS_START( biofreak )
+	PORT_START	    /* DIPs */
+	PORT_DIPNAME( 0x0001, 0x0001, "Hilink download??" )
+	PORT_DIPSETTING(      0x0001, DEF_STR( Off ))
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
+	PORT_DIPNAME( 0x0002, 0x0002, "Boot ROM Test" )
 	PORT_DIPSETTING(      0x0002, DEF_STR( Off ))
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
 	PORT_DIPNAME( 0x0004, 0x0004, "Unknown0004" )
@@ -1519,36 +1711,28 @@ INPUT_PORTS_START( biofreak )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER1 | IPF_8WAY )
 	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER1 | IPF_8WAY )
 	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER1 | IPF_8WAY )
-	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
-	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
-	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )	/* LP = P1 left punch */
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )	/* F  = P1 ??? */
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )	/* RP = P1 right punch */
 	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER2 | IPF_8WAY )
 	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER2 | IPF_8WAY )
 	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER2 | IPF_8WAY )
 	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 | IPF_8WAY )
-	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
-	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
-	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )	/* LP = P1 left punch */
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )	/* F  = P1 ??? */
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )	/* RP = P1 right punch */
 	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START
-	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER3 | IPF_8WAY )
-	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER3 | IPF_8WAY )
-	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER3 | IPF_8WAY )
-	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER3 | IPF_8WAY )
-	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER3 )
-	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER3 )
-	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER3 )
-	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER4 | IPF_8WAY )
-	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER4 | IPF_8WAY )
-	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER4 | IPF_8WAY )
-	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER4 | IPF_8WAY )
-	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER4 )
-	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER4 )
-	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER4 )
-	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER1 )	/* LK = P1 left kick */
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_BUTTON5 | IPF_PLAYER1 )	/* RK = P1 right kick */
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_BUTTON6 | IPF_PLAYER1 )	/* T  = P1 ??? */
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER2 )	/* LK = P2 left kick */
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON5 | IPF_PLAYER2 )	/* RK = P2 right kick */
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_BUTTON6 | IPF_PLAYER2 )	/* T  = P2 ??? */
+	PORT_BIT( 0xff80, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
 
@@ -1904,7 +2088,6 @@ MACHINE_DRIVER_START( seattle_flagstaff_common )
 	MDRV_CPU_ADD_TAG("main", R5000LE, 50000000*3)
 	MDRV_CPU_CONFIG(config)
 	MDRV_CPU_PROGRAM_MAP(seattle_map,0)
-	MDRV_CPU_VBLANK_INT(assert_vblank,1)
 
 	MDRV_FRAMES_PER_SECOND(57)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
@@ -1934,6 +2117,12 @@ MACHINE_DRIVER_START( seattle150 )
 MACHINE_DRIVER_END
 
 
+MACHINE_DRIVER_START( seattle100 )
+	MDRV_IMPORT_FROM(seattle150)
+	MDRV_CPU_REPLACE("main", R5000LE, 50000000*2)
+MACHINE_DRIVER_END
+
+
 MACHINE_DRIVER_START( seattle200 )
 	MDRV_IMPORT_FROM(seattle150)
 	MDRV_CPU_REPLACE("main", R5000LE, 50000000*4)
@@ -1944,6 +2133,12 @@ MACHINE_DRIVER_START( carnevil )
 	MDRV_IMPORT_FROM(seattle150)
 	MDRV_FRAMES_PER_SECOND(54)
 	MDRV_VIDEO_UPDATE(carnevil)
+MACHINE_DRIVER_END
+
+
+MACHINE_DRIVER_START( vaportrx )
+	MDRV_IMPORT_FROM(seattle200)
+	MDRV_VIDEO_START(voodoo_1x4mb_swap_rb)
 MACHINE_DRIVER_END
 
 
@@ -1967,11 +2162,7 @@ MACHINE_DRIVER_END
  *************************************/
 
 ROM_START( wg3dh )
-	ROM_REGION( 0x400000, REGION_CPU1, 0 )		/* dummy R5000 region */
-
-	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* ADSP-2105 program */
-	
-	ROM_REGION( 0x408000, REGION_SOUND1, 0 )	/* sound data */
+	ROM_REGION( 0x408000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version L1.1 */
 	ROM_LOAD( "soundl11.u95", 0x000000, 0x8000, CRC(c589458c) SHA1(0cf970a35910a74cdcf3bd8119bfc0c693e19b00) )
 
 	ROM_REGION32_LE( 0x80000, REGION_USER1, 0 )	/* Boot Code Version L1.2 */
@@ -1983,11 +2174,7 @@ ROM_END
 
 
 ROM_START( mace )
-	ROM_REGION( 0x400000, REGION_CPU1, 0 )		/* dummy R5000 region */
-
-	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* ADSP-2105 program */
-	
-	ROM_REGION( 0x408000, REGION_SOUND1, 0 )	/* sound data */
+	ROM_REGION( 0x408000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version L1.1 */
 	ROM_LOAD( "soundl11.u95", 0x000000, 0x8000, CRC(c589458c) SHA1(0cf970a35910a74cdcf3bd8119bfc0c693e19b00) )
 
 	ROM_REGION32_LE( 0x80000, REGION_USER1, 0 )
@@ -1999,10 +2186,6 @@ ROM_END
 
 
 ROM_START( sfrush )
-	ROM_REGION( 0x800000, REGION_CPU1, 0 )		/* dummy R5000 region */
-
-	ROM_REGION( 0x040000, REGION_CPU2, 0 )		/* RAM for TMS320C31 */
-
 	ROM_REGION32_LE( 0x80000, REGION_USER1, 0 )	/* Boot Code Version L1.0 */
 	ROM_LOAD( "hdboot.u32", 0x000000, 0x80000, CRC(39a35f1b) SHA1(c46d83448399205d38e6e41dd56abbc362254254) )
 
@@ -2020,12 +2203,26 @@ ROM_START( sfrush )
 ROM_END
 
 
-ROM_START( calspeed )
-	ROM_REGION( 0x800000, REGION_CPU1, 0 )		/* dummy R5000 region */
+ROM_START( sfrushrk )
+	ROM_REGION32_LE( 0x80000, REGION_USER1, 0 )	/* Boot Code */
+	ROM_LOAD( "boot.bin",   0x000000, 0x080000, CRC(0555b3cf) SHA1(a48abd6d06a26f4f9b6c52d8c0af6095b6be57fd) )
 
-	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* ADSP-2105 program */
-	
-	ROM_REGION( 0x408000, REGION_SOUND1, 0 )	/* sound data */
+	ROM_REGION32_LE( 0x200000, REGION_USER2, 0 )	/* TMS320C31 boot ROM */
+	ROM_LOAD32_BYTE( "audboot.bin",    0x000000, 0x080000, CRC(c70c060d) SHA1(dd014bd13efdf5adc5450836bd4650351abefc46) )
+
+	ROM_REGION32_LE( 0x1000000, REGION_USER3, 0 )	/* TMS320C31 sound ROMs */
+	ROM_LOAD32_WORD( "audio.u62",  0x400000, 0x200000, CRC(eabcb398) SHA1(02c8405c0a740b2717b25bc7bb550f655f3bbd8a) )
+	ROM_LOAD32_WORD( "audio.u61",  0x400002, 0x200000, CRC(73765b2d) SHA1(cbedb9c425c87d088e0946914b4b65b544320d03) )
+	ROM_LOAD32_WORD( "audio.u53",  0x800000, 0x200000, CRC(a35106e7) SHA1(6919c5dfa92b42817950e9dac657f6fb724b1225) )
+	ROM_LOAD32_WORD( "audio.u49",  0x800002, 0x200000, CRC(5656d6de) SHA1(89eda110afc3a2ff6766c3a8750396861328b18f) )
+
+	DISK_REGION( REGION_DISKS )	/* Hard Drive */
+	DISK_IMAGE( "sfrushrk", 0, NO_DUMP )
+ROM_END
+
+
+ROM_START( calspeed )
+	ROM_REGION( 0x408000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version 1.02 */
 	ROM_LOAD( "sound102.u95", 0x000000, 0x8000, CRC(bec7d3ae) SHA1(db80aa4a645804a4574b07b9f34dec6b6b64190d) )
 
 	ROM_REGION32_LE( 0x80000, REGION_USER1, 0 )
@@ -2036,12 +2233,20 @@ ROM_START( calspeed )
 ROM_END
 
 
-ROM_START( biofreak )
-	ROM_REGION( 0x800000, REGION_CPU1, 0 )		/* dummy R5000 region */
+ROM_START( vaportrx )
+	ROM_REGION( 0x408000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version 1.02 */
+	ROM_LOAD( "vaportrx.snd", 0x000000, 0x8000, CRC(bec7d3ae) SHA1(db80aa4a645804a4574b07b9f34dec6b6b64190d) )
 
-	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* ADSP-2105 program */
-	
-	ROM_REGION( 0x408000, REGION_SOUND1, 0 )	/* sound data */
+	ROM_REGION32_LE( 0x80000, REGION_USER1, 0 )
+	ROM_LOAD( "vtrxboot.bin", 0x000000, 0x80000, CRC(ee487a6c) SHA1(fb9efda85047cf615f24f7276a9af9fd542f3354) )
+
+	DISK_REGION( REGION_DISKS )
+	DISK_IMAGE( "vaportrx", 0, MD5(eb8dcf83fe8b7122481d24ad8fbc8a9a) SHA1(f6ddb8eb66d979d49799e39fa4d749636693a1b0) )
+ROM_END
+
+
+ROM_START( biofreak )
+	ROM_REGION( 0x408000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version 1.02 */
 	ROM_LOAD( "sound102.u95", 0x000000, 0x8000, CRC(bec7d3ae) SHA1(db80aa4a645804a4574b07b9f34dec6b6b64190d) )
 
 	ROM_REGION32_LE( 0x80000, REGION_USER1, 0 )
@@ -2053,11 +2258,7 @@ ROM_END
 
 
 ROM_START( blitz )
-	ROM_REGION( 0x800000, REGION_CPU1, 0 )		/* dummy R5000 region */
-
-	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* ADSP-2105 program */
-	
-	ROM_REGION( 0x408000, REGION_SOUND1, 0 )	/* sound data */
+	ROM_REGION( 0x408000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version 1.02 */
 	ROM_LOAD( "sound102.u95", 0x000000, 0x8000, CRC(bec7d3ae) SHA1(db80aa4a645804a4574b07b9f34dec6b6b64190d) )
 
 	ROM_REGION32_LE( 0x80000, REGION_USER1, 0 )	/* Boot Code Version 1.2 */
@@ -2069,11 +2270,7 @@ ROM_END
 
 
 ROM_START( blitz99 )
-	ROM_REGION( 0x800000, REGION_CPU1, 0 )		/* dummy R5000 region */
-
-	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* ADSP-2105 program */
-	
-	ROM_REGION( 0x408000, REGION_SOUND1, 0 )	/* sound data */
+	ROM_REGION( 0x408000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version 1.02 */
 	ROM_LOAD( "sound102.u95", 0x000000, 0x8000, CRC(bec7d3ae) SHA1(db80aa4a645804a4574b07b9f34dec6b6b64190d) )
 
 	ROM_REGION32_LE( 0x80000, REGION_USER1, 0 )
@@ -2085,11 +2282,7 @@ ROM_END
 
 
 ROM_START( blitz2k )
-	ROM_REGION( 0x800000, REGION_CPU1, 0 )		/* dummy R5000 region */
-
-	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* ADSP-2105 program */
-	
-	ROM_REGION( 0x408000, REGION_SOUND1, 0 )	/* sound data */
+	ROM_REGION( 0x408000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version 1.02 */
 	ROM_LOAD( "sound102.u95", 0x000000, 0x8000, CRC(bec7d3ae) SHA1(db80aa4a645804a4574b07b9f34dec6b6b64190d) )
 
 	ROM_REGION32_LE( 0x80000, REGION_USER1, 0 )	/* Boot Code Version 1.4 */
@@ -2101,11 +2294,7 @@ ROM_END
 
 
 ROM_START( carnevil )
-	ROM_REGION( 0x800000, REGION_CPU1, 0 )		/* dummy R5000 region */
-
-	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* ADSP-2105 program */
-	
-	ROM_REGION( 0x408000, REGION_SOUND1, 0 )	/* sound data */
+	ROM_REGION( 0x408000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version 1.02 */
 	ROM_LOAD( "sound102.u95", 0x000000, 0x8000, CRC(bec7d3ae) SHA1(db80aa4a645804a4574b07b9f34dec6b6b64190d) )
 
 	ROM_REGION32_LE( 0x80000, REGION_USER1, 0 )
@@ -2113,6 +2302,18 @@ ROM_START( carnevil )
 
 	DISK_REGION( REGION_DISKS )
 	DISK_IMAGE( "carnevil", 0, BAD_DUMP MD5(6eafae86091c0a915cf8cfdc3d73adc2) SHA1(5e6524d4b97de141c38e301a17e8af15661cb5d6) )
+ROM_END
+
+
+ROM_START( hyprdriv )
+	ROM_REGION( 0x408000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version 1.02 */
+	ROM_LOAD( "seattle.snd", 0x000000, 0x8000, NO_DUMP CRC(bec7d3ae) SHA1(db80aa4a645804a4574b07b9f34dec6b6b64190d) )
+
+	ROM_REGION32_LE( 0x80000, REGION_USER1, 0 )
+	ROM_LOAD( "hyprdrve.u32", 0x000000, 0x80000, CRC(3e18cb80) SHA1(b18cc4253090ee1d65d72a7ec0c426ed08c4f238) )
+
+	DISK_REGION( REGION_DISKS )
+	DISK_IMAGE( "hyprdriv", 0, NO_DUMP )
 ROM_END
 
 
@@ -2128,6 +2329,9 @@ static void init_common(int ioasic, int serialnum, int yearoffs)
 	/* initialize the subsystems */
 	ide_controller_init(0, &ide_intf);
 	midway_ioasic_init(ioasic, serialnum, yearoffs, ioasic_irq);
+
+	/* set our VBLANK callback */
+	voodoo_set_vblank_callback(vblank_assert);
 }
 
 
@@ -2135,6 +2339,16 @@ static DRIVER_INIT( wg3dh )
 {
 	dcs2_init(0x3839);
 	init_common(MIDWAY_IOASIC_STANDARD, 310/* others? */, 80);
+
+	/* unlike the other games, we only have 4MB of RAM */
+	install_mem_read32_handler (0, 0x00400000, 0x007fffff, MRA32_NOP);
+	install_mem_write32_handler(0, 0x00400000, 0x007fffff, MWA32_NOP);
+	install_mem_read32_handler (0, 0x20400000, 0x207fffff, MRA32_NOP);
+	install_mem_write32_handler(0, 0x20400000, 0x207fffff, MWA32_NOP);
+	install_mem_read32_handler (0, 0x80400000, 0x807fffff, MRA32_NOP);
+	install_mem_write32_handler(0, 0x80400000, 0x807fffff, MWA32_NOP);
+	install_mem_read32_handler (0, 0xa0400000, 0xa07fffff, MRA32_NOP);
+	install_mem_write32_handler(0, 0xa0400000, 0xa07fffff, MWA32_NOP);
 
 	/* speedups */
 	install_mem_read32_handler(0, 0x80115e00, 0x80115e03, generic_speedup_r);
@@ -2168,6 +2382,23 @@ static DRIVER_INIT( sfrush )
 }
 
 
+static DRIVER_INIT( sfrushrk )
+{
+	cage_init(REGION_USER2, 0x5236);
+	init_common(MIDWAY_IOASIC_VAPORTRX, 315/* no alternates */, 100);
+
+	/* set up the analog inputs */
+	install_mem_read32_handler(0, 0xb4000000, 0xb4000003, analog_port_r);
+	install_mem_write32_handler(0, 0xb4000000, 0xb4000003, analog_port_w);
+
+	/* speedups */
+//	install_mem_read32_handler(0, 0x8012498c, 0x8012498f, generic_speedup_r);
+//	generic_speedup = &rambase[0x12498c/4];
+//	install_mem_read32_handler(0, 0x80120000, 0x80120003, generic_speedup2_r);
+//	generic_speedup2 = &rambase[0x120000/4];
+}
+
+
 static DRIVER_INIT( calspeed )
 {
 	dcs2_init(0x39c0);
@@ -2185,6 +2416,20 @@ static DRIVER_INIT( calspeed )
 }
 
 
+static DRIVER_INIT( vaportrx )
+{
+	dcs2_init(0);
+	init_common(MIDWAY_IOASIC_VAPORTRX, 324/* unknown */, 100);
+
+	/* set up the analog inputs */
+	install_mem_read32_handler(0, 0xb6c00010, 0xb6c00013, analog_port_r);
+	install_mem_write32_handler(0, 0xb6c00010, 0xb6c00013, analog_port_w);
+	install_mem_write32_handler(0, 0xb6c0000c, 0xb6c0000f, MWA32_NOP);
+
+	/* speedups */
+}
+
+
 static DRIVER_INIT( biofreak )
 {
 	dcs2_init(0x3835);
@@ -2199,7 +2444,7 @@ static DRIVER_INIT( biofreak )
 static DRIVER_INIT( blitz )
 {
 	dcs2_init(0x39c2);
-	init_common(MIDWAY_IOASIC_BLITZ99, 528/* or 444 */, 80);
+	init_common(MIDWAY_IOASIC_BLITZ99, 444/* or 528 */, 80);
 
 	/* for some reason, the code in the ROM appears buggy; this is a small patch to fix it */
 	rombase[0x934/4] += 4;
@@ -2213,7 +2458,7 @@ static DRIVER_INIT( blitz )
 static DRIVER_INIT( blitz99 )
 {
 	dcs2_init(0x0afb);
-	init_common(MIDWAY_IOASIC_BLITZ99, 520/* or 481 or 484 */, 80);
+	init_common(MIDWAY_IOASIC_BLITZ99, 481/* or 484 or 520 */, 80);
 
 	/* speedups */
 	install_mem_write32_handler(0, 0x802502bc, 0x802502bf, generic_speedup_w);
@@ -2224,7 +2469,7 @@ static DRIVER_INIT( blitz99 )
 static DRIVER_INIT( blitz2k )
 {
 	dcs2_init(0x0b5d);
-	init_common(MIDWAY_IOASIC_BLITZ99, 498/* or 494 */, 80);
+	init_common(MIDWAY_IOASIC_BLITZ99, 494/* or 498 */, 80);
 
 	/* speedups */
 	install_mem_write32_handler(0, 0x8024e8d8, 0x8024e8db, generic_speedup_w);
@@ -2235,7 +2480,7 @@ static DRIVER_INIT( blitz2k )
 static DRIVER_INIT( carnevil )
 {
 	dcs2_init(0x0af7);
-	init_common(MIDWAY_IOASIC_CARNEVIL, 528/* or 469 or 486 */, 80);
+	init_common(MIDWAY_IOASIC_CARNEVIL, 469/* 469 or 486 or 528 */, 80);
 
 	/* set up the gun */
 	install_mem_read32_handler(0, 0xb6800000, 0xb680001f, carnevil_gun_r);
@@ -2247,6 +2492,15 @@ static DRIVER_INIT( carnevil )
 }
 
 
+static DRIVER_INIT( hyprdriv )
+{
+	dcs2_init(0);
+	init_common(MIDWAY_IOASIC_STANDARD, 469/* unknown */, 80);
+
+	/* speedups */
+}
+
+
 
 /*************************************
  *
@@ -2255,10 +2509,12 @@ static DRIVER_INIT( carnevil )
  *************************************/
 
 /* Atari */
-GAME ( 1996, wg3dh,    0,        seattle150, wg3dh,    wg3dh,    ROT0, "Atari Games",  "Wayne Gretzky's 3D Hockey" )
+GAME ( 1996, wg3dh,    0,        seattle100, wg3dh,    wg3dh,    ROT0, "Atari Games",  "Wayne Gretzky's 3D Hockey" )
 GAME ( 1996, mace,     0,        seattle200, mace,     mace,     ROT0, "Atari Games",  "Mace: The Dark Age" )
 GAMEX( 1996, sfrush,   0,        flagstaff,  sfrush,   sfrush,   ROT0, "Atari Games",  "San Francisco Rush", GAME_NOT_WORKING )
+GAMEX( 1996, sfrushrk, 0,        flagstaff,  sfrush,   sfrushrk, ROT0, "Atari Games",  "San Francisco Rush: The Rock", GAME_NOT_WORKING )
 GAME ( 1998, calspeed, 0,        seattle150, calspeed, calspeed, ROT0, "Atari Games",  "California Speed" )
+GAMEX( 1998, vaportrx, 0,        vaportrx,   vaportrx, vaportrx, ROT0, "Atari Games",  "Vapor TRX", GAME_NOT_WORKING )
 
 /* Midway */
 GAME ( 1997, biofreak, 0,        seattle150, biofreak, biofreak, ROT0, "Midway Games", "BioFreaks (prototype)" )
@@ -2266,3 +2522,4 @@ GAME ( 1997, blitz,    0,        seattle150, blitz,    blitz,    ROT0, "Midway G
 GAME ( 1998, blitz99,  0,        seattle150, blitz99,  blitz99,  ROT0, "Midway Games", "NFL Blitz '99" )
 GAME ( 1999, blitz2k,  0,        seattle150, blitz99,  blitz2k,  ROT0, "Midway Games", "NFL Blitz 2000" )
 GAME ( 1998, carnevil, 0,        carnevil,   carnevil, carnevil, ROT0, "Midway Games", "CarnEvil" )
+GAMEX( 1998, hyprdriv, 0,        seattle200, carnevil, hyprdriv, ROT0, "Midway Games", "Hyperdrive", GAME_NOT_WORKING )

@@ -48,7 +48,6 @@ Sound :
 
 ***************************************************************************/
 
-#include <math.h>
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
@@ -151,9 +150,9 @@ INPUT_PORTS_END
 static struct GfxLayout charlayout =
 {
 	8,8,	/* 8*8 characters */
-	1024,	/* 1024 characters */
+	RGN_FRAC(1,3),	/* 1024 characters */
 	3,	/* 3 bits per pixel */
-	{ 0*1024*8*8, 2*1024*8*8, 1*1024*8*8 },	/* the bitplanes are separated */
+	{ RGN_FRAC(1,3), RGN_FRAC(2,3), RGN_FRAC(0,3) },	/* the bitplanes are separated */
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	8*8	/* every char takes 8 consecutive bytes */
@@ -214,7 +213,7 @@ ROM_START( 4enraya )
 	ROM_LOAD( "5.bin",   0x0000, 0x8000, CRC(cf1cd151) SHA1(3920b0a6ed5798859158871b578b01ec742b0d13) )
 	ROM_LOAD( "4.bin",   0x8000, 0x4000, CRC(f9ec1be7) SHA1(189159129ecbc4f6909c086867b0e02821f5b976) )
 
-	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_REGION( 0x6000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "1.bin",   0x0000, 0x2000, CRC(87f92552) SHA1(d16afd963c30f2e60951876b843e5c1dcbee1cfc) )
 	ROM_LOAD( "2.bin",   0x2000, 0x2000, CRC(2b0a3793) SHA1(2c3d224251557824bb9641dc2f98a000ab72c4a2) )
 	ROM_LOAD( "3.bin",   0x4000, 0x2000, CRC(f6940836) SHA1(afde21ffa0c141cf73243e50da62ecfd474aaac2) )

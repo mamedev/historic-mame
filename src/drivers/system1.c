@@ -184,8 +184,7 @@ ADDRESS_MAP_END
 static ADDRESS_MAP_START( brain_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
 	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK1)
-	AM_RANGE(0xc000, 0xf3ff) AM_READ(MRA8_RAM)
-	AM_RANGE(0xf800, 0xfbff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xc000, 0xffff) AM_READ(MRA8_RAM)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( wbml_readmem, ADDRESS_SPACE_PROGRAM, 8 )
@@ -244,7 +243,7 @@ static ADDRESS_MAP_START( nobo_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xd200, 0xd7ff) AM_WRITE(MWA8_RAM)
 	AM_RANGE(0xde00, 0xdfff) AM_WRITE(MWA8_RAM)
 	AM_RANGE(0xef00, 0xefbc) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0xefbf, 0xeffb) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xefbe, 0xeffb) AM_WRITE(MWA8_RAM)
 	AM_RANGE(0xeffe, 0xefff) AM_WRITE(MWA8_RAM)
 ADDRESS_MAP_END
 
@@ -2911,6 +2910,33 @@ ROM_START( nprincsb )
 	ROM_LOAD( "nprinces.123",	0x0200, 0x0020, CRC(ed5146e9) SHA1(7044035c07636e4029f4b746c1a92e15173869e9) ) /* decryption table (not used) */
 ROM_END
 
+ROM_START( ninja )
+	ROM_REGION( 2*0x10000, REGION_CPU1, 0 ) /* 64k for code + 64k for decrypted opcodes */	
+	ROM_LOAD( "epr6594.bin",    0x0000, 0x4000, CRC(3ef0e5fc) SHA1(ba2d832aa33759c21582e728ca7e4a0ca03cb937) )
+	ROM_LOAD( "epr6595.bin",    0x4000, 0x4000, CRC(b16f13cd) SHA1(e4649ce76393fdf8d2a1f53f1c25ee27ed35db45) )
+	ROM_LOAD( "epr-6552.96",	0x8000, 0x4000, CRC(f2eeb0d8) SHA1(1f0d1c73ba9eaa2887ffc596f0038b0af37ced49) ) /* epr-7151.96 */
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* 64k for sound cpu */
+	ROM_LOAD( "epr-6559.120",	0x0000, 0x2000, CRC(5a1570ee) SHA1(fd9215e007b6687d057ea7aee01f6d3dcbc8f894) )
+
+	ROM_REGION( 0xc000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "epr-6558.62",	0x0000, 0x2000, CRC(2af9eaeb) SHA1(a8a472e9f156c34f1cfcf6d6be808da4303a2276) )
+	ROM_LOAD( "epr6592.bin",    0x2000, 0x2000, CRC(88d0c7a1) SHA1(a649a56484f3cf466dbd4bc468d21220e638c5fe) )
+	ROM_LOAD( "epr-6556.64",	0x4000, 0x2000, CRC(79fd26f7) SHA1(a7de0f21ccbcfda495a5c93237569a9b3919d2d5) )
+	ROM_LOAD( "epr6590.bin",    0x6000, 0x2000, CRC(956e3b61) SHA1(47e797bcc39f3ef917848b64a3666e08f9498cc0) )
+	ROM_LOAD( "epr-6554.66",	0x8000, 0x2000, CRC(5ac9d205) SHA1(c3094d10d1d6226bf9ad174d2dd1631b8d6ca33a) )
+	ROM_LOAD( "epr6588.bin",    0xa000, 0x2000, CRC(023a14a3) SHA1(199bdf597ace496992f323c0eaa1e779920fb976) )
+
+	ROM_REGION( 0x10000, REGION_GFX2, 0 ) /* 64k for sprites data */
+	ROM_LOAD( "epr-6546.117",	0x0000, 0x4000, CRC(a4785692) SHA1(95ce23076dc86c5d6d3a65274873d4c48e91cc06) )
+	ROM_LOAD( "epr-6548.04",	0x4000, 0x4000, CRC(bdf278c1) SHA1(7ebe505f4f0434edb2cee17a6cbce6b900b29cc4) )
+	ROM_LOAD( "epr-6547.110",	0x8000, 0x4000, CRC(34451b08) SHA1(ee8708f6c886b63f138bcc10dc2a053bfad96c37) )
+	ROM_LOAD( "epr-6549.05",	0xc000, 0x4000, CRC(d2057668) SHA1(ded2a04f7555eb3b1e4da57901ca00635de2c043) )
+
+	ROM_REGION( 0x0100, REGION_USER1, 0 ) /* misc PROMs, but no color so don't use REGION_PROMS! */
+	ROM_LOAD( "pr-5317.76",		0x0000, 0x0100, CRC(648350b8) SHA1(c7986aa9127ef5b50b845434cb4e81dff9861cd2) ) /* timing? (not used) */
+ROM_END
+
 ROM_START( imsorry )
 	ROM_REGION( 2*0x10000, REGION_CPU1, 0 ) /* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "epr-6676.116",	0x0000, 0x4000, CRC(eb087d7f) SHA1(b9bcc76bbdfa597d252e7db60fa0f7529e884cce) ) /* encrypted */
@@ -4029,6 +4055,7 @@ GAME( 1985, pitfall2, 0,        pitfall2, pitfall2, pitfall2, ROT0,   "Sega", 		
 GAME( 1985, pitfallu, pitfall2, pitfall2, pitfallu, 0,        ROT0,   "Sega", 			 	   "Pitfall II (not encrypted)" )
 GAME( 1985, seganinj, 0,        system1,  seganinj, seganinj, ROT0,   "Sega", 			 	   "Sega Ninja" )
 GAME( 1985, seganinu, seganinj, system1,  seganinj, 0,        ROT0,   "Sega", 			 	   "Sega Ninja (not encrypted)" )
+GAME( 1985, ninja,    seganinj, system1,  seganinj, seganinj, ROT0,   "Sega", 				   "Ninja" )
 GAME( 1985, nprinces, seganinj, system1,  seganinj, flicky,   ROT0,   "bootleg?", 		 	   "Ninja Princess (64k Ver. bootleg?)" )
 GAME( 1985, nprincso, seganinj, system1,  seganinj, nprinces, ROT0,   "Sega", 			 	   "Ninja Princess (128k Ver.)" )
 GAME( 1985, nprincsu, seganinj, system1,  seganinj, 0,        ROT0,   "Sega", 			 	   "Ninja Princess (64k Ver. not encrypted)" )

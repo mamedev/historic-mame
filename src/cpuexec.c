@@ -13,7 +13,7 @@
 #include "mamedbg.h"
 #include "hiscore.h"
 
-#if (HAS_M68000 || HAS_M68010 || HAS_M68020 || HAS_M68EC020)
+#if (HAS_M68000 || HAS_M68008 || HAS_M68010 || HAS_M68020 || HAS_M68EC020)
 #include "cpu/m68000/m68000.h"
 #endif
 
@@ -819,6 +819,14 @@ static void cpu_timeslice(void)
 				profiler_mark(PROFILER_CPU1 + cpunum);
 				cycles_stolen = 0;
 				ran = cpunum_execute(cpunum, cycles_running);
+
+#ifdef MAME_DEBUG
+				if (ran < cycles_stolen)
+				{
+					osd_die("Negative CPU cycle count!");
+				}
+#endif /* MAME_DEBUG */
+
 				ran -= cycles_stolen;
 				profiler_mark(PROFILER_END);
 				
@@ -1285,7 +1293,7 @@ mame_time cpu_getscanlinetime_mt(int scanline)
 	mame_time scantime, abstime;
 	
 	/* compute the target time */
-	scantime = add_subseconds_to_mame_time(mame_timer_starttime(refresh_timer), scanline * scanline_period.subseconds);
+	scantime = add_subseconds_to_mame_time(mame_timer_starttime(refresh_timer), scanline * (scanline_period.subseconds + 1));
 	
 	/* get the current absolute time */
 	abstime = mame_timer_get_time();
@@ -1628,8 +1636,8 @@ static void cpu_vblankcallback(int param)
 {
 	int cpunum;
 
-   if (vblank_countdown == 1)
-      vblank = 1;
+	if (vblank_countdown == 1)
+		vblank = 1;
 
 	/* loop over CPUs */
 	for (cpunum = 0; cpunum < cpu_gettotalcpu(); cpunum++)
@@ -1944,5 +1952,8 @@ static void cpu_inittimers(void)
 		first_time = add_mame_times(first_time, vblank_period);
 	}
 	mame_timer_set(first_time, 0, cpu_firstvblankcallback);
+	
+	/* reset the refresh timer to get ourself back in sync */
+	mame_timer_adjust(refresh_timer, time_never, 0, time_never);
 }
 
