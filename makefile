@@ -8,7 +8,7 @@ ASM = nasm
 ASMFLAGS = -f coff
 
 # uncomment next line to use Assembler 6808 engine
-X86_ASM_6808 = 1
+#X86_ASM_6808 = 1
 # uncomment next line to use Assembler 68k engine
 #X86_ASM_68K = 1
 

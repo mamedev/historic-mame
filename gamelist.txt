@@ -357,7 +357,7 @@ The list doesn't include variants of the same game.
 |----------------------|--------|--------|--------|--------|--------|----------|
 | Last Duel            |Partial.|  Yes   |  Yes   |   No   |   No   | lastduel |
 |----------------------|--------|--------|--------|--------|--------|----------|
-| Lazer Command        |  Yes   |Overlay |  Yes   |   No   |   No   | lazercom |
+| Lazer Command        |  Yes   |Overlay |  Yes   |   No   |   No   | lazercmd |
 |----------------------|--------|--------|--------|--------|--------|----------|
 | Legendary Wings      |  Yes   |  Yes   | Yes(2) |  Yes   |   No   | lwings   |
 |----------------------|--------|--------|--------|--------|--------|----------|
@@ -631,7 +631,7 @@ The list doesn't include variants of the same game.
 |----------------------|--------|--------|--------|--------|--------|----------|
 | Spectar              |  Yes   |  Yes   | Yes(1) |  Yes   |   No   | spectar  |
 |----------------------|--------|--------|--------|--------|--------|----------|
-| Speed Rumbler        |  Yes   |  Yes   | Yes(2) |  Yes   |   No   | srumbler |
+| Speed Rumbler        |  Yes   |  Yes   | Yes(2) |   No   |   No   | srumbler |
 |----------------------|--------|--------|--------|--------|--------|----------|
 | Spiders              |  Yes   |  Yes   |   No   |   No   |   No   | spiders  |
 |----------------------|--------|--------|--------|--------|--------|----------|
@@ -773,7 +773,7 @@ The list doesn't include variants of the same game.
 |----------------------|--------|--------|--------|--------|--------|----------|
 | War of the Bugs      |  Yes   |  Yes   |  Yes   |  Yes   |   No   | warofbug |
 |----------------------|--------|--------|--------|--------|--------|----------|
-| Warlords             |  Yes   |  Yes   |  Yes   |   No   |   No   | warlord  |
+| Warlords             |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | warlord  |
 |----------------------|--------|--------|--------|--------|--------|----------|
 | Warp Warp            |  Yes   |  Yes   |   No   |  Yes   |   No   | warpwarp |
 |----------------------|--------|--------|--------|--------|--------|----------|
@@ -2311,7 +2311,7 @@ Clones supported:
   Faster, Harder, More Challenging Q*Bert ("sqbert")
     This is a sequel to Q*Bert which was never released to the public. You can
     find its story, as recalled by the author, Warren Davis, at
-    http://www.coinop.org/coinop/features/qbstory.html
+    http://www.coinop.org/features/qbstory.html
 
 
 
@@ -2972,6 +2972,14 @@ Known issues:
 
 
 
+Warlords ("warlords")
+=====================
+This game was designed to run either in a cocktail cabinet with color monitor,
+or in an upright cabinet with b/w monitor, mirror and painted background.
+By default, the driver runs in cocktail mode.
+
+
+
 Wild Western ("wwestern")
 =========================
 Known issues:
@@ -3061,10 +3069,3 @@ Clones supported:
 Known issues:
 - Every time you start the emulation, you get a free credit. This is the
   correct behavior and has been verified on a real machine.
-
-
-
-Zzyzzyxx ("zzyzzyxx")
-=====================
-Known issues:
-- You get infinite lives.

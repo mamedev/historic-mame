@@ -137,8 +137,6 @@ void tnzs_sound_command_w(int offset, int data)
 void tnzs_bankswitch_w(int offset, int data);
 
 /* prototypes for functions in ../vidhrdw/tnzs.c */
-unsigned char *tnzs_objectram;
-int tnzs_objectram_size;
 void tnzs_videoram_w(int offset,int data);
 void tnzs_objectram_w(int offset,int data);
 int tnzs_vh_start(void);

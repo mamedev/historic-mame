@@ -629,7 +629,7 @@ int Dasm68000 (unsigned char *pBase, char *buffer, int pc)
 			}
 			break;
 		case 0x4e40:
-			if ((lo & 30) == 0x00)
+			if ((lo & 0x30) == 0x00)
 				sprintf (buffer, "TRAP     #$%X", lo & 15);
 			else if ((lo & 0x38) == 0x10)
 			{

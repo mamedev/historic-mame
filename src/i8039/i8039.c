@@ -386,7 +386,7 @@ static void orld_p7_a(void)  { port_w(7, port_r(7) | R.A ); }
 static void outl_bus_a(void) { bus_w(R.A); }
 static void outl_p1_a(void)  { port_w(1, R.A ); }
 static void outl_p2_a(void)  { port_w(2, R.A ); }
-static void ret(void)        { R.PC.W = ((pull() & 0x0f) << 8) | pull(); /*change_pc(R.PC.W);*/ }
+static void ret(void)        { R.PC.W = ((pull() & 0x0f) << 8); R.PC.W |= pull(); /*change_pc(R.PC.W);*/ }
 static void retr(void)
 {
 	byte i=pull();

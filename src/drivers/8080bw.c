@@ -1586,7 +1586,7 @@ static struct MachineDriver invadpt2_machine_driver =
 	sizeof(palette)/3, 0,
 	0,
 
-	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY|VIDEO_MODIFIES_PALETTE,
 	0,
 	invaders_vh_start,
 	invaders_vh_stop,

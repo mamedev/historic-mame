@@ -196,6 +196,8 @@ void palette_stop(void)
 	palette_map = 0;
 	free(Machine->colortable);
 	Machine->colortable = 0;
+	free(shrinked_pens);
+	shrinked_pens = 0;
 	free(Machine->pens);
 	Machine->pens = 0;
 }

@@ -702,7 +702,7 @@ static struct POKEYinterface pokey_interface =
 	1789790,	/* ? */
 	128,
 	POKEY_DEFAULT_GAIN,
-	NO_CLIP,
+	USE_CLIP,
 	/* The 8 pot handlers */
 	{ 0 },
 	{ 0 },

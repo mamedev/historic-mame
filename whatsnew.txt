@@ -6,6 +6,7 @@ A lot of ROM renaming and moving around has been done. I know this is annoying
 New ROM sets supported (in no particular order):
 ------------------------------------------------
 
+Faster, Harder, More Challenging Q*Bert
 Pac-Land [Ernesto Corvi]
 Punk Shot [Nicola Salmoria]
 Teenage Mutant Ninja Turtles [Alex Pasadyn]
@@ -69,7 +70,7 @@ Jack Rabbit [Nicola Salmoria]
 Blasteroids [Aaron Giles]
 Xybots [Aaron Giles]
 Escape from the Planet of Robot Monsters [Aaron Giles]
-Xenophobe (preliminary) [Bryan McPhail]
+Xenophobe [Bryan McPhail]
 Super Space Invaders '91 (preliminary) [Howie Cohen]
 Crazy Balloon [Nicola Salmoria]
 Nemesis [Allard van der Bas]
@@ -169,19 +170,18 @@ These drivers have improved GRAPHICS:
   correct according to the schematics. Maybe now it's too dark?
   [Nicola Salmoria]
 
-- Accurate (?) colors in Fast Freddie/Fly-Boy. [Zsolt Vasvari]
-
-- Accurate colors in Jump Coaster. [Zsolt Vasvari]
-
 - Fixed colors in Road Runner. [Aaron Giles]
-
-- Accurate colors in Mega Attack and possibly the other Gameplan games. [Chris Moore]
 
 - Accurate colors:
   Zoar [Zsolt Vasvari]
   Warp Warp [Nicola Salmoria]
   Wonder Boy Deluxe, Up'n Down, Pitfall II [Nicola Salmoria]
   Eggs [Gerald Vanderick]
+  Fast Freddie/Fly-Boy (not sure about this one) [Zsolt Vasvari]
+  Jump Coaster [Zsolt Vasvari]
+  Warlords [Zsolt Vasvari]
+  Mega Attack and possibly the other Gameplan games [Chris Moore]
+  Road Fighter [Paul Swan]
 
 - Some fiddling with the Atari vector games frame rates. [Nicola Salmoria]
 
@@ -210,8 +210,6 @@ These drivers have improved GRAPHICS:
   for you now, increase the gamma correction value. [Bernd Wiebelt]
 
 - Fixed sprite priorities and tile flip in Pinball Action. [Nicola Salmoria]
-
-- Accurate colors in Road Fighter. [Paul Swan]
 
 - Fixed Motos High Score display. [Zsolt Vasvari]
 
@@ -393,10 +391,9 @@ Changes to the main program:
   it should. [Nicola Salmoria]
 
 - [DOS] New -listgames command, which lists all games along with production
-  year and manufacturer (data has not been entered yet so most of the fields
-  are ????)
-  Also -noclones option which removes clones from -list, -listfull etc. (clones
-  data has not been entered yet so this is not complete) [Nicola Salmoria]
+  year and manufacturer.
+  Also -noclones option which removes clones from -list, -listfull etc.
+  [Nicola Salmoria]
 
 - [DOS] Fixed the NTSC mode. For feedback on this mode, please contact
   sta@carinthia.com [Zerza]

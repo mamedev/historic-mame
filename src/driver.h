@@ -264,7 +264,7 @@ struct MachineDriver
 	struct rectangle visible_area;
 	struct GfxDecodeInfo *gfxdecodeinfo;
 	unsigned int total_colors;	/* palette is 3*total_colors bytes long */
-	unsigned int color_table_len;	/* length in bytes of the color lookup table */
+	unsigned int color_table_len;	/* length in shorts of the color lookup table */
 	void (*vh_convert_color_prom)(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 
 	int video_attributes;	/* ASG 081897 */

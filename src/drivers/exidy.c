@@ -292,9 +292,9 @@ INPUT_PORTS_START( mtrap_input_ports )
 	PORT_DIPSETTING(	0x01, "French" )
 	PORT_DIPSETTING(	0x02, "German" )
 	PORT_DIPSETTING(	0x03, "Spanish" )
-	PORT_DIPNAME( 0x08, 0x00, "Orientation", IP_KEY_NONE )
+	PORT_DIPNAME( 0x08, 0x00, "Cabinet", IP_KEY_NONE )
 	PORT_DIPSETTING(	0x00, "Upright" )
-	PORT_DIPSETTING(	0x08, "Table" )
+	PORT_DIPSETTING(	0x08, "Cocktail" )
 */
 
 	PORT_BIT( 0x1F, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -357,9 +357,9 @@ INPUT_PORTS_START( venture_input_ports )
 	PORT_DIPSETTING(	0x01, "French" )
 	PORT_DIPSETTING(	0x02, "German" )
 	PORT_DIPSETTING(	0x03, "Spanish" )
-	PORT_DIPNAME( 0x08, 0x00, "Orientation", IP_KEY_NONE )
+	PORT_DIPNAME( 0x08, 0x00, "Cabinet", IP_KEY_NONE )
 	PORT_DIPSETTING(	0x00, "Upright" )
-	PORT_DIPSETTING(	0x08, "Table" )
+	PORT_DIPSETTING(	0x08, "Cocktail" )
 */
 
 	PORT_BIT( 0x1F, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -415,9 +415,9 @@ INPUT_PORTS_START( pepper2_input_ports )
 	PORT_DIPSETTING(	0x01, "French" )
 	PORT_DIPSETTING(	0x02, "German" )
 	PORT_DIPSETTING(	0x03, "Spanish" )
-	PORT_DIPNAME( 0x08, 0x00, "Orientation", IP_KEY_NONE )
+	PORT_DIPNAME( 0x08, 0x00, "Cabinet", IP_KEY_NONE )
 	PORT_DIPSETTING(	0x00, "Upright" )
-	PORT_DIPSETTING(	0x08, "Table" )
+	PORT_DIPSETTING(	0x08, "Cocktail" )
 */
 
 	PORT_BIT( 0x1F, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -567,9 +567,9 @@ INPUT_PORTS_START( fax_input_ports )
 	PORT_DIPSETTING(	0x01, "French" )
 	PORT_DIPSETTING(	0x02, "German" )
 	PORT_DIPSETTING(	0x03, "Spanish" )
-	PORT_DIPNAME( 0x08, 0x00, "Orientation", IP_KEY_NONE )
+	PORT_DIPNAME( 0x08, 0x00, "Cabinet", IP_KEY_NONE )
 	PORT_DIPSETTING(	0x00, "Upright" )
-	PORT_DIPSETTING(	0x08, "Table" )
+	PORT_DIPSETTING(	0x08, "Cocktail" )
 */
 
 	PORT_BIT( 0x1B, IP_ACTIVE_HIGH, IPT_UNUSED )
@@ -1243,7 +1243,7 @@ static struct MachineDriver pepper2_machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 31*8-1, 0*8, 32*8-1 },
 	pepper2_gfxdecodeinfo,
-	sizeof(palette)/3,sizeof(pepper2_colortable),
+	sizeof(palette)/3,sizeof(pepper2_colortable)/sizeof(unsigned short),
 	0,
 
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY|VIDEO_MODIFIES_PALETTE,
@@ -1333,7 +1333,7 @@ static struct MachineDriver fax_machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 31*8-1, 0*8, 32*8-1 },
 	pepper2_gfxdecodeinfo,
-	sizeof(palette)/3,sizeof(pepper2_colortable),
+	sizeof(palette)/3,sizeof(pepper2_colortable)/sizeof(unsigned short),
 	0,
 
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY|VIDEO_MODIFIES_PALETTE,

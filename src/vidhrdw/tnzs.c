@@ -19,7 +19,6 @@ extern unsigned char *banked_ram_0, *banked_ram_1;
 
 
 unsigned char *tnzs_objectram;
-unsigned char *tnzs_workram;
 int tnzs_objectram_size;
 static struct osd_bitmap *tnzs_column[16];
 static int tnzs_dirty_map[32][16];

@@ -145,7 +145,7 @@ static struct MemoryWriteAddress pacnpal_writemem_cpu2[] =
 /* input from the outside world */
 INPUT_PORTS_START( superpac_input_ports )
 	PORT_START	/* DSW0 */
-	PORT_DIPNAME( 0x08, 0x00, "Difficulty", IP_KEY_NONE )
+	PORT_DIPNAME( 0x0f, 0x00, "Difficulty", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x00, "Rank 0-Normal" )
 	PORT_DIPSETTING(    0x01, "Rank 1-Easiest" )
 	PORT_DIPSETTING(    0x02, "Rank 2" )

@@ -113,29 +113,26 @@ int AuditRomSet (int game, tAuditRecord **audit)
 			}
 
 			if (!f)
-			{
 				aud->status = AUD_ROM_NOT_FOUND;
-				aud++;
-				romp++;
-				continue;
-			}
-
-			aud->length = romp->length & ~ROMFLAG_MASK;
-
-			if (!CalcCheckSum (f, romp, aud))
+			else
 			{
-				if (aud->checksum != aud->expchecksum)
-					aud->status = AUD_BAD_CHECKSUM;
-				else
-					aud->status = AUD_ROM_GOOD;
+				aud->length = romp->length & ~ROMFLAG_MASK;
+				if (!CalcCheckSum (f, romp, aud))
+				{
+					if (aud->checksum != aud->expchecksum)
+						aud->status = AUD_BAD_CHECKSUM;
+					else
+						aud->status = AUD_ROM_GOOD;
+				}
+
+				osd_fclose (f);
 			}
+
 			do
 			{
 				romp++;
 			}
 			while (romp->length && (romp->name == 0 || romp->name == (char *)-1));
-
-			osd_fclose (f);
 
 			aud++;
 		}

@@ -196,7 +196,7 @@ static int  dkong_sh_gett0(int offset)   { return t[0]; }
 static int  dkong_sh_gett1(int offset)   { return t[1]; }
 static int  dkong_sh_gettune(int offset)
 {
-	unsigned char *SND = Machine->memory_region[2];
+	unsigned char *SND = Machine->memory_region[Machine->drv->cpu[1].memory_region];
 	if (page & 0x40)
 	{
 		switch (offset)

@@ -21,6 +21,7 @@ Warlords Driver by Lee Taylor and John Clegg
 0C00       R    D                        Cocktail Cabinet  (0 = Cocktail)
            R       D                     VBLANK  (1 = VBlank)
            R          D                  SELF TEST
+		   R             D               DIAG STEP (Unused)
 0C01       R    D  D  D                  R,C,L Coin Switches (0 = On)
            R             D               Slam (0 = On)
            R                D            Player 4 Start Switch (0 = On)
@@ -35,19 +36,16 @@ Warlords Driver by Lee Taylor and John Clegg
 1003       R   D  D  D  D  D  D  D  D    Paddle 4 position
 100A       R   D  D  D  D  D  D  D  D    Random Number
 --------------------------------------------------------------------------------------
-1010-10FF  W    D  D  D  D  D  D  D  D   ????
---------------------------------------------------------------------------------------
 1800       W                             IRQ Acknowledge
 --------------------------------------------------------------------------------------
-1C00-1CFF  W    D  D  D  D  D  D  D  D   ????
+1C00-1C02  W    D  D  D  D  D  D  D  D   Coin Counters
 --------------------------------------------------------------------------------------
-4000       W                             WATCHDOG
+1C03-1C06  W    D  D  D  D  D  D  D  D   LEDs
+--------------------------------------------------------------------------------------
+4000       W                             Watchdog
 --------------------------------------------------------------------------------------
 5000-7FFF  R                             Program ROM
 --------------------------------------------------------------------------------------
-
-1c00-1c02 - coin counters
-1c03-1c06 - color
 
 Game Option Settings - J2 (DSW1)
 =========================
@@ -107,8 +105,7 @@ static void warlord_led_w(int offset,int data)
 
 static struct MemoryReadAddress readmem[] =
 {
-	{ 0x0000, 0x03ff, MRA_RAM },
-	{ 0x0400, 0x07ff, MRA_RAM },
+	{ 0x0000, 0x07ff, MRA_RAM },
 	{ 0x0800, 0x0800, input_port_2_r },	/* DSW1 */
 	{ 0x0801, 0x0801, input_port_3_r },	/* DSW2 */
 	{ 0x0c00, 0x0c00, input_port_0_r },	/* IN0 */
@@ -129,21 +126,23 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x1c00, 0x1c02, coin_counter_w },
 	{ 0x1c03, 0x1c06, warlord_led_w },	/* 4 start lights */
 	{ 0x4000, 0x4000, watchdog_reset_w },
-	{ 0x5000, 0x7fff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
 
 
 INPUT_PORTS_START( input_ports )
 	PORT_START	/* IN0 */
-	PORT_BIT ( 0x1f, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT ( 0x0f, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_DIPNAME (0x10, 0x00, "Diag Step", IP_KEY_NONE )  /* Not referenced */
+	PORT_DIPSETTING (   0x00, "Off" )
+	PORT_DIPSETTING (   0x10, "On" )
 	PORT_BITX(    0x20, 0x20, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
 	PORT_DIPSETTING(    0x20, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 	PORT_BIT ( 0x40, IP_ACTIVE_HIGH, IPT_VBLANK )
 	PORT_DIPNAME (0x80, 0x00, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING (   0x00, "Upright" )
-	PORT_DIPSETTING (   0x80, "Cocktail" )
+	PORT_DIPSETTING (   0x80, "Upright" )
+	PORT_DIPSETTING (   0x00, "Cocktail" )
 
 	PORT_START	/* IN1 */
 	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
@@ -164,11 +163,11 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPNAME (0x04, 0x00, "Music", IP_KEY_NONE )
 	PORT_DIPSETTING (   0x00, "End of game" )
 	PORT_DIPSETTING (   0x04, "High score only" )
-	PORT_BIT ( 0x08, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_DIPNAME (0x60, 0x00, "Credits", IP_KEY_NONE )
+	PORT_BIT ( 0xc8, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_DIPNAME (0x30, 0x00, "Credits", IP_KEY_NONE )
 	PORT_DIPSETTING (   0x00, "1p/2p = 1 credit" )
-	PORT_DIPSETTING (   0x20, "1p = 1, 2p = 2" )
-	PORT_DIPSETTING (   0x60, "1p/2p = 2 credits" )
+	PORT_DIPSETTING (   0x10, "1p = 1, 2p = 2" )
+	PORT_DIPSETTING (   0x20, "1p/2p = 2 credits" )
 
 	PORT_START	/* IN3 */
 	PORT_DIPNAME (0x03, 0x02, "Coinage", IP_KEY_NONE )
@@ -208,9 +207,10 @@ INPUT_PORTS_END
 
 static unsigned char warlord_color_prom[] =
 {
-	/* Only the first 0x80 bytes are used. A7 is grounded. */
-	/* Bytes 0x00-0x3f are used by the driver. Bytes 0x40-0x7f are probably */
-	/* for the version of the cabinet with a mirror and painted background. */
+	/* Only the first 0x80 bytes are used by the hardware. A7 is grounded. */
+	/* Bytes 0x00-0x3f are used for the color cocktail version. */
+	/* Bytes 0x40-0x7f are for the upright version of the cabinet with a */
+	/* mirror and painted background. */
 	0x00,0x03,0x02,0x07,0x04,0x04,0x04,0x04,0x03,0x03,0x03,0x03,0x06,0x06,0x06,0x06,
 	0x00,0x05,0x01,0x07,0x04,0x04,0x04,0x04,0x05,0x05,0x05,0x05,0x06,0x06,0x06,0x06,
 	0x00,0x02,0x05,0x07,0x04,0x04,0x04,0x04,0x02,0x02,0x02,0x02,0x06,0x06,0x06,0x06,
@@ -236,7 +236,7 @@ static struct GfxLayout charlayout =
 	64,	    /* 64  characters */
 	2,	    /* 2 bits per pixel */
 	{ 128*8*8, 0 },	/* bitplane separation */
-	{ 0, 1, 2, 3, 4, 5, 6, 7 },
+	{ 7, 6, 5, 4, 3, 2, 1, 0 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	8*8	/* every char takes 8 consecutive bytes */
 };
@@ -245,8 +245,8 @@ static struct GfxLayout charlayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,   0,   4 },
-	{ 1, 0x0200, &charlayout,   4*4, 4 },
+	{ 1, 0x0000, &charlayout,   0,   8 },
+	{ 1, 0x0200, &charlayout,   8*4, 8 },
 	{ -1 } /* end of array */
 };
 
@@ -293,7 +293,7 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 0*8, 30*8-1 },
 	gfxdecodeinfo,
-	128, 128,
+	128, 8*4+8*4,
 	warlord_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY|VIDEO_MODIFIES_PALETTE,
@@ -336,6 +336,43 @@ ROM_END
 
 
 
+static int hiload(void)
+{
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+	/* check if the hi score table has already been initialized */
+	if (memcmp(&RAM[0x0127],"\x75",1) == 0)
+	{
+		void *f;
+
+
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&RAM[0x00f3],9);
+			osd_fread(f,&RAM[0x011f],0x10);
+			osd_fclose(f);
+		}
+		return 1;
+	}
+	else return 0;   /* we can't load the hi scores yet */
+}
+
+static void hisave(void)
+{
+	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&RAM[0x00f3],9);
+		osd_fwrite(f,&RAM[0x011f],0x10);
+		osd_fclose(f);
+	}
+}
+
+
 struct GameDriver warlord_driver =
 {
 	__FILE__,
@@ -358,5 +395,5 @@ struct GameDriver warlord_driver =
 	warlord_color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
 
-	0, 0
+	hiload, hisave
 };

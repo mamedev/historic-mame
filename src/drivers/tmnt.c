@@ -151,7 +151,7 @@ int tmnt_decode_sample(const char *gamename)
 
 	samples->sample[0]->length = 0x40000*2;
 	samples->sample[0]->volume = 0xff;
-	samples->sample[0]->smpfreq = 22050;
+	samples->sample[0]->smpfreq = 20000;	/* 20 kHz */
 	samples->sample[0]->resolution = 16;
 	dest = (signed short *)samples->sample[0]->data;
 	samples->total = 1;

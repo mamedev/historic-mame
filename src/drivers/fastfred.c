@@ -643,7 +643,7 @@ static struct MachineDriver fastfred_machine_driver =
 	256,32*8,
 	fastfred_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
 	generic_vh_start,
 	generic_vh_stop,

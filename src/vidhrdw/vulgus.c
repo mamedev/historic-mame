@@ -224,7 +224,7 @@ void vulgus_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				drawgfx(tmpbitmap2,Machine->gfx[1],
 						vulgus_bgvideoram[offs] + 2 * (vulgus_bgcolorram[offs] & 0x80),
 						(vulgus_bgcolorram[offs] & 0x1f) + 32 * *vulgus_palette_bank,
-						vulgus_bgcolorram[offs] & 0x40,vulgus_bgcolorram[offs] & 0x20,
+						vulgus_bgcolorram[offs] & 0x20,vulgus_bgcolorram[offs] & 0x40,
 						16*sy,16*sx,
 						0,TRANSPARENCY_NONE,0);
 			}
@@ -244,8 +244,8 @@ void vulgus_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 		code = spriteram[offs];
 		col = spriteram[offs + 1] & 0x0f;
+		sx = spriteram[offs + 3];
 		sy = spriteram[offs + 2];
-		sx = spriteram[offs + 3] + 0x10 * (spriteram[offs + 1] & 0x10);
 
 		i = (spriteram[offs + 1] & 0xc0) >> 6;
 		if (i == 2) i = 3;
@@ -257,6 +257,14 @@ void vulgus_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					col,
 					0, 0,
 					sx, sy + 16 * i,
+					&Machine->drv->visible_area,TRANSPARENCY_PEN,15);
+
+			/* draw again with wraparound */
+			drawgfx(bitmap,Machine->gfx[2],
+					code + i,
+					col,
+					0, 0,
+					sx, sy + 16 * i - 256,
 					&Machine->drv->visible_area,TRANSPARENCY_PEN,15);
 			i--;
 		} while (i >= 0);
@@ -275,7 +283,8 @@ void vulgus_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		drawgfx(bitmap,Machine->gfx[0],
 				videoram[offs] + 2 * (colorram[offs] & 0x80),
 				colorram[offs] & 0x3f,
-				0,0,sx,sy,
+				0,0,
+				sx,sy,
 				&Machine->drv->visible_area,TRANSPARENCY_COLOR,47);
 	}
 }
