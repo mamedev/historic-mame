@@ -42,20 +42,23 @@ extern VIDEO_START( cps2 );
 extern int scanline1;
 extern int scanline2;
 extern int scancalls;
+void cps2_objram_latch(void);
+void cps2_set_sprite_priorities(void);
 
 
 static INTERRUPT_GEN( cps2_interrupt )
 {
 	static int scancount;
-	static int prev;
+
 	/* 2 is vblank, 4 is some sort of scanline interrupt, 6 is both at the same time. */
-	if(scancount >= 262)
+
+	if(scancount >= 261)
 	{
-		scancount = 0;
+		scancount = -1;
 		scancalls = 0;
-		prev = 0;
 	}
 	scancount++;
+
 	if(cps1_output[0x50/2] & 0x8000)
 		cps1_output[0x50/2] = cps1_output[0x50/2] & 0x1ff;
 	if(cps1_output[0x52/2] & 0x8000)
@@ -63,38 +66,39 @@ static INTERRUPT_GEN( cps2_interrupt )
 
 //	usrintf_showmessage("%04x %04x - %04x %04x",scanline1,scanline2,cps1_output[0x50/2],cps1_output[0x52/2]);
 
-	if(cps1_output[0x50/2] != 0x106 && cps1_output[0x50/2])  /* raster effects */
+	/* raster effects */
+	if(scanline1 == scancount || (scanline1 < scancount && !scancalls))
 	{
-		cps1_output[0x50/2]--;
-		if(!cps1_output[0x50/2])
-		{
-			cpu_set_irq_line(0, 4, HOLD_LINE);
-			force_partial_update(prev + scanline1);
-			prev += scanline1;
-			scancalls++;
-//				usrintf_showmessage("IRQ4 scancounter = %04i",scancount);
-		}
+		cps1_output[0x50/2] = 0;
+		if(scanline1) cpu_set_irq_line(0, 4, HOLD_LINE);
+		cps2_set_sprite_priorities();
+		force_partial_update(16 - 10 + scancount);	/* Machine->visible_area.min_y - [first visible line?] + scancount */
+		scancalls++;
+//			usrintf_showmessage("IRQ4 scancounter = %04i",scancount);
 	}
 
-	if(cps1_output[0x52/2] != 0x106 && cps1_output[0x52/2])  /* raster effects */
+	/* raster effects */
+	if(scanline2 == scancount || (scanline2 < scancount && !scancalls))
 	{
-		cps1_output[0x52/2]--;
-		if(!cps1_output[0x52/2])
-		{
-			cpu_set_irq_line(0, 4, HOLD_LINE);
-			force_partial_update(prev + scanline2);
-			prev += scanline2;
-			scancalls++;
-//				usrintf_showmessage("IRQ4 scancounter = %04i",scancount);
-		}
+		cps1_output[0x52/2] = 0;
+		if(scanline2) cpu_set_irq_line(0, 4, HOLD_LINE);
+		cps2_set_sprite_priorities();
+		force_partial_update(16 - 10 + scancount);	/* Machine->visible_area.min_y - [first visible line?] + scancount */
+		scancalls++;
+//			usrintf_showmessage("IRQ4 scancounter = %04i",scancount);
 	}
 
-	if(scancount == 248)  /* VBlank */
+	if(scancount == 240)  /* VBlank */
 	{
 		cps1_output[0x50/2] = scanline1;
 		cps1_output[0x52/2] = scanline2;
 		cpu_set_irq_line(0, 2, HOLD_LINE);
-		force_partial_update(247);
+		if(scancalls)
+		{
+			cps2_set_sprite_priorities();
+			force_partial_update(240);
+		}
+		cps2_objram_latch();
 	}
 	//usrintf_showmessage("Raster calls = %i",scancalls);
 }
@@ -132,46 +136,59 @@ WRITE16_HANDLER( cps2_eeprom_port_w )
 {
     if (ACCESSING_MSB)
     {
-		/* bit 0 - Unused */
-		/* bit 1 - Unused */
-        /* bit 2 - Unused */
-        /* bit 3 - Unused? */
-        /* bit 4 - Eeprom data  */
-        /* bit 5 - Eeprom clock */
-        /* bit 6 - */
-        /* bit 7 - */
+	/* bit 0 - Unused */
+	/* bit 1 - Unused */
+	/* bit 2 - Unused */
+	/* bit 3 - Unused? */
+	/* bit 4 - Eeprom data  */
+	/* bit 5 - Eeprom clock */
+	/* bit 6 - */
+	/* bit 7 - */
 
-        /* EEPROM */
-        EEPROM_write_bit(data & 0x1000);
-        EEPROM_set_clock_line((data & 0x2000) ? ASSERT_LINE : CLEAR_LINE);
-        EEPROM_set_cs_line((data & 0x4000) ? CLEAR_LINE : ASSERT_LINE);
+	/* EEPROM */
+	EEPROM_write_bit(data & 0x1000);
+	EEPROM_set_clock_line((data & 0x2000) ? ASSERT_LINE : CLEAR_LINE);
+	EEPROM_set_cs_line((data & 0x4000) ? CLEAR_LINE : ASSERT_LINE);
 	}
 
 	if (ACCESSING_LSB)
-    {
-        /* bit 0 - coin counter 1 */
-        /* bit 0 - coin counter 2 */
-        /* bit 2 - Unused */
-        /* bit 3 - Z80 reset */
-        /* bit 4 - lock 1  */
-        /* bit 5 - lock 2  */
-        /* bit 6 - */
-        /* bit 7 - */
+	{
+	/* bit 0 - coin counter 1 */
+	/* bit 0 - coin counter 2 */
+	/* bit 2 - Unused */
+	/* bit 3 - Allows access to Z80 address space (Z80 reset) */
+	/* bit 4 - lock 1  */
+	/* bit 5 - lock 2  */
+	/* bit 6 - */
+	/* bit 7 - */
 
         /* Z80 Reset */
 		cpu_set_reset_line(1,(data & 0x0008) ? CLEAR_LINE : ASSERT_LINE);
 
-        coin_counter_w(0, data & 0x0001);
-        coin_counter_w(1, data & 0x0002);
-        coin_lockout_w(0,~data & 0x0010);
-        coin_lockout_w(1,~data & 0x0020);
-        coin_lockout_w(2,~data & 0x0040);
-        coin_lockout_w(3,~data & 0x0080);
-        /*
-        set_led_status(0,data & 0x01);
-        set_led_status(1,data & 0x10);
-        set_led_status(2,data & 0x20);
-        */
+	coin_counter_w(0, data & 0x0001);
+	coin_counter_w(1, data & 0x0002);
+
+const char *gamename = Machine->gamedrv->name;
+	if(strncmp(gamename,"mmatrix",7)==0)		// Mars Matrix seems to require the coin lockout bit to be reversed
+	{
+		coin_lockout_w(0,data & 0x0010);
+		coin_lockout_w(1,data & 0x0020);
+		coin_lockout_w(2,data & 0x0040);
+		coin_lockout_w(3,data & 0x0080);
+	}
+	else
+	{
+		coin_lockout_w(0,~data & 0x0010);
+		coin_lockout_w(1,~data & 0x0020);
+		coin_lockout_w(2,~data & 0x0040);
+		coin_lockout_w(3,~data & 0x0080);
+	}
+
+	/*
+	set_led_status(0,data & 0x01);
+	set_led_status(1,data & 0x10);
+	set_led_status(2,data & 0x20);
+	*/
     }
 }
 
@@ -738,13 +755,13 @@ static MACHINE_DRIVER_START( cps2 )
 	MDRV_CPU_PERIODIC_INT(irq0_line_hold,252)	/* 252 is good (see 'mercy mercy mercy'section of sgemf attract mode for accurate sound sync */
 
 	MDRV_FRAMES_PER_SECOND(59.633333)
-	MDRV_VBLANK_DURATION(400)		//ks
+	MDRV_VBLANK_DURATION(0)
 //	MDRV_INTERLEAVE(262)  /* 262 scanlines, for raster effects */
 
 	MDRV_NVRAM_HANDLER(cps2)
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_AFTER_VBLANK)		//ks
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK)
 	MDRV_SCREEN_SIZE(64*8, 32*8)
 	MDRV_VISIBLE_AREA(8*8, (64-8)*8-1, 2*8, 30*8-1 )
 	MDRV_GFXDECODE(gfxdecodeinfo)
@@ -780,7 +797,7 @@ ROM_START( 1944 )
 	ROM_LOAD16_WORD_SWAP( "nffu.05", 0x100000, 0x80000, 0xea813eb7 )
 
 	ROM_REGION16_BE( CODE_SIZE, REGION_USER1, 0 )
-	ROM_LOAD16_WORD_SWAP( "nffux.03", 0x000000, 0x80000, 0x00000000 )
+//	ROM_LOAD16_WORD_SWAP( "nffux.03", 0x000000, 0x80000, 0x00000000 )
 
 	ROM_REGION( 0x2000000, REGION_GFX1, 0 )
 	ROMX_LOAD( "nff.13",   0x0000000, 0x400000, 0xc9fca741, ROM_GROUPWORD | ROM_SKIP(6) )
@@ -808,7 +825,7 @@ ROM_START( 1944j )
 	ROM_LOAD16_WORD_SWAP( "nffj.05", 0x100000, 0x80000, 0x7f20c2ef )
 
 	ROM_REGION16_BE( CODE_SIZE, REGION_USER1, 0 )
-	ROM_LOAD16_WORD_SWAP( "nffjx.03", 0x000000, 0x80000, 0x00000000 )
+//	ROM_LOAD16_WORD_SWAP( "nffjx.03", 0x000000, 0x80000, 0x00000000 )
 
 	ROM_REGION( 0x2000000, REGION_GFX1, 0 )
 	ROMX_LOAD( "nff.13",   0x0000000, 0x400000, 0xc9fca741, ROM_GROUPWORD | ROM_SKIP(6) )
@@ -1422,22 +1439,22 @@ ROM_START( choko )
 //	ROM_LOAD16_WORD_SWAP( "tkojx.04", 0x080000, 0x80000, 0x00000000 )
 
 	ROM_REGION( 0x2000000, REGION_GFX1, 0 )
-	ROMX_LOAD( "tko.13",   0x0000000, 0x400000, 0x00000000, ROM_GROUPWORD | ROM_SKIP(6) ) // Not dumped due to data being on a SIMM
-	ROMX_LOAD( "tko.15",   0x0000002, 0x400000, 0x00000000, ROM_GROUPWORD | ROM_SKIP(6) ) // Not dumped due to data being on a SIMM
-	ROMX_LOAD( "tko.17",   0x0000004, 0x400000, 0x00000000, ROM_GROUPWORD | ROM_SKIP(6) ) // Not dumped due to data being on a SIMM
-	ROMX_LOAD( "tko.19",   0x0000006, 0x400000, 0x00000000, ROM_GROUPWORD | ROM_SKIP(6) ) // Not dumped due to data being on a SIMM
-	ROMX_LOAD( "tko.14",   0x1000000, 0x400000, 0x00000000, ROM_GROUPWORD | ROM_SKIP(6) ) // Not dumped due to data being on a SIMM
-	ROMX_LOAD( "tko.16",   0x1000002, 0x400000, 0x00000000, ROM_GROUPWORD | ROM_SKIP(6) ) // Not dumped due to data being on a SIMM
-	ROMX_LOAD( "tko.18",   0x1000004, 0x400000, 0x00000000, ROM_GROUPWORD | ROM_SKIP(6) ) // Not dumped due to data being on a SIMM
-	ROMX_LOAD( "tko.20",   0x1000006, 0x400000, 0x00000000, ROM_GROUPWORD | ROM_SKIP(6) ) // Not dumped due to data being on a SIMM
+//	ROMX_LOAD( "tko.13",   0x0000000, 0x400000, 0x00000000, ROM_GROUPWORD | ROM_SKIP(6) ) // Not dumped due to data being on a SIMM
+//	ROMX_LOAD( "tko.15",   0x0000002, 0x400000, 0x00000000, ROM_GROUPWORD | ROM_SKIP(6) ) // Not dumped due to data being on a SIMM
+//	ROMX_LOAD( "tko.17",   0x0000004, 0x400000, 0x00000000, ROM_GROUPWORD | ROM_SKIP(6) ) // Not dumped due to data being on a SIMM
+//	ROMX_LOAD( "tko.19",   0x0000006, 0x400000, 0x00000000, ROM_GROUPWORD | ROM_SKIP(6) ) // Not dumped due to data being on a SIMM
+//	ROMX_LOAD( "tko.14",   0x1000000, 0x400000, 0x00000000, ROM_GROUPWORD | ROM_SKIP(6) ) // Not dumped due to data being on a SIMM
+//	ROMX_LOAD( "tko.16",   0x1000002, 0x400000, 0x00000000, ROM_GROUPWORD | ROM_SKIP(6) ) // Not dumped due to data being on a SIMM
+//	ROMX_LOAD( "tko.18",   0x1000004, 0x400000, 0x00000000, ROM_GROUPWORD | ROM_SKIP(6) ) // Not dumped due to data being on a SIMM
+//	ROMX_LOAD( "tko.20",   0x1000006, 0x400000, 0x00000000, ROM_GROUPWORD | ROM_SKIP(6) ) // Not dumped due to data being on a SIMM
 
 	ROM_REGION( QSOUND_SIZE, REGION_CPU2, 0 ) /* 64k for the audio CPU (+banks) */
 	ROM_LOAD( "tko.01",   0x00000, 0x08000, 0x6eda50c2 )
 	ROM_CONTINUE(         0x10000, 0x18000 )
 
 	ROM_REGION( 0x800000, REGION_SOUND1, 0 ) /* QSound samples */
-	ROM_LOAD16_WORD_SWAP( "tko.11",   0x000000, 0x400000, 0x00000000 ) // Not dumped
-	ROM_LOAD16_WORD_SWAP( "tko.12",   0x400000, 0x400000, 0x00000000 ) // Not dumped
+//	ROM_LOAD16_WORD_SWAP( "tko.11",   0x000000, 0x400000, 0x00000000 ) // Not dumped
+//	ROM_LOAD16_WORD_SWAP( "tko.12",   0x400000, 0x400000, 0x00000000 ) // Not dumped
 ROM_END
 
 ROM_START( cybots )
@@ -2331,14 +2348,14 @@ ROM_START( jgokushi )
 //	ROM_LOAD16_WORD_SWAP( "majjx.03", 0x000000, 0x80000, 0x00000000 )
 
 	ROM_REGION( 0x2000000, REGION_GFX1, 0 )
-	ROMX_LOAD( "maj.13",   0x0000000, 0x400000, 0x00000000, ROM_GROUPWORD | ROM_SKIP(6) ) // Not dumped due to data being on a SIMM
-	ROMX_LOAD( "maj.15",   0x0000002, 0x400000, 0x00000000, ROM_GROUPWORD | ROM_SKIP(6) ) // Not dumped due to data being on a SIMM
-	ROMX_LOAD( "maj.17",   0x0000004, 0x400000, 0x00000000, ROM_GROUPWORD | ROM_SKIP(6) ) // Not dumped due to data being on a SIMM
-	ROMX_LOAD( "maj.19",   0x0000006, 0x400000, 0x00000000, ROM_GROUPWORD | ROM_SKIP(6) ) // Not dumped due to data being on a SIMM
-	ROMX_LOAD( "maj.14",   0x1000000, 0x400000, 0x00000000, ROM_GROUPWORD | ROM_SKIP(6) ) // Not dumped due to data being on a SIMM
-	ROMX_LOAD( "maj.16",   0x1000002, 0x400000, 0x00000000, ROM_GROUPWORD | ROM_SKIP(6) ) // Not dumped due to data being on a SIMM
-	ROMX_LOAD( "maj.18",   0x1000004, 0x400000, 0x00000000, ROM_GROUPWORD | ROM_SKIP(6) ) // Not dumped due to data being on a SIMM
-	ROMX_LOAD( "maj.20",   0x1000006, 0x400000, 0x00000000, ROM_GROUPWORD | ROM_SKIP(6) ) // Not dumped due to data being on a SIMM
+//	ROMX_LOAD( "maj.13",   0x0000000, 0x400000, 0x00000000, ROM_GROUPWORD | ROM_SKIP(6) ) // Not dumped due to data being on a SIMM
+//	ROMX_LOAD( "maj.15",   0x0000002, 0x400000, 0x00000000, ROM_GROUPWORD | ROM_SKIP(6) ) // Not dumped due to data being on a SIMM
+//	ROMX_LOAD( "maj.17",   0x0000004, 0x400000, 0x00000000, ROM_GROUPWORD | ROM_SKIP(6) ) // Not dumped due to data being on a SIMM
+//	ROMX_LOAD( "maj.19",   0x0000006, 0x400000, 0x00000000, ROM_GROUPWORD | ROM_SKIP(6) ) // Not dumped due to data being on a SIMM
+//	ROMX_LOAD( "maj.14",   0x1000000, 0x400000, 0x00000000, ROM_GROUPWORD | ROM_SKIP(6) ) // Not dumped due to data being on a SIMM
+//	ROMX_LOAD( "maj.16",   0x1000002, 0x400000, 0x00000000, ROM_GROUPWORD | ROM_SKIP(6) ) // Not dumped due to data being on a SIMM
+//	ROMX_LOAD( "maj.18",   0x1000004, 0x400000, 0x00000000, ROM_GROUPWORD | ROM_SKIP(6) ) // Not dumped due to data being on a SIMM
+//	ROMX_LOAD( "maj.20",   0x1000006, 0x400000, 0x00000000, ROM_GROUPWORD | ROM_SKIP(6) ) // Not dumped due to data being on a SIMM
 
 	ROM_REGION( QSOUND_SIZE, REGION_CPU2, 0 ) /* 64k for the audio CPU (+banks) */
 	ROM_LOAD( "maj.01",   0x00000, 0x08000, 0x1fe8c213 )
@@ -2409,9 +2426,9 @@ ROM_START( mmatrix )
 	ROM_LOAD16_WORD_SWAP( "mmxu.05", 0x100000, 0x80000, 0xf1fd2b84 )
 
 	ROM_REGION16_BE( CODE_SIZE, REGION_USER1, 0 )
-	ROM_LOAD16_WORD_SWAP( "mmxux.03", 0x000000, 0x80000, 0x00000000 )
-	ROM_LOAD16_WORD_SWAP( "mmxux.04", 0x080000, 0x80000, 0x00000000 )
-	ROM_LOAD16_WORD_SWAP( "mmxux.05", 0x100000, 0x80000, 0x00000000 )
+	ROM_LOAD16_WORD_SWAP( "mmxux.03", 0x000000, 0x80000, 0x7868ae77 )
+	ROM_LOAD16_WORD_SWAP( "mmxux.04", 0x080000, 0x80000, 0xa5ee6d07 )
+	ROM_LOAD16_WORD_SWAP( "mmxux.05", 0x100000, 0x80000, 0xb07745ff )
 
 	ROM_REGION( 0x2000000, REGION_GFX1, 0 )
 	ROMX_LOAD( "mmx.13",   0x0000000, 0x400000, 0x04748718, ROM_GROUPWORD | ROM_SKIP(6) )
@@ -2439,9 +2456,9 @@ ROM_START( mmatrixj )
 	ROM_LOAD16_WORD_SWAP( "mmxj.05", 0x100000, 0x80000, 0x0c8b4abb )
 
 	ROM_REGION16_BE( CODE_SIZE, REGION_USER1, 0 )
-	ROM_LOAD16_WORD_SWAP( "mmxjx.03", 0x000000, 0x80000, 0x00000000 )
-	ROM_LOAD16_WORD_SWAP( "mmxjx.04", 0x080000, 0x80000, 0x00000000 )
-	ROM_LOAD16_WORD_SWAP( "mmxjx.05", 0x100000, 0x80000, 0x00000000 )
+	ROM_LOAD16_WORD_SWAP( "mmxjx.03", 0x000000, 0x80000, 0x4ca1424f )
+	ROM_LOAD16_WORD_SWAP( "mmxjx.04", 0x080000, 0x80000, 0x61b9b2a1 )
+	ROM_LOAD16_WORD_SWAP( "mmxjx.05", 0x100000, 0x80000, 0xbdd304cf )
 
 	ROM_REGION( 0x2000000, REGION_GFX1, 0 )
 	ROMX_LOAD( "mmx.13",   0x0000000, 0x400000, 0x04748718, ROM_GROUPWORD | ROM_SKIP(6) )
@@ -3032,22 +3049,22 @@ ROM_START( mpangj )
 //	ROM_LOAD16_WORD_SWAP( "mpnjx.04a", 0x080000, 0x80000, 0x00000000 )
 
 	ROM_REGION( 0x2000000, REGION_GFX1, 0 )
-	ROMX_LOAD( "mpn.13",   0x0000000, 0x400000, 0x00000000, ROM_GROUPWORD | ROM_SKIP(6) ) // Not dumped due to data being on a SIMM
-	ROMX_LOAD( "mpn.15",   0x0000002, 0x400000, 0x00000000, ROM_GROUPWORD | ROM_SKIP(6) ) // Not dumped due to data being on a SIMM
-	ROMX_LOAD( "mpn.17",   0x0000004, 0x400000, 0x00000000, ROM_GROUPWORD | ROM_SKIP(6) ) // Not dumped due to data being on a SIMM
-	ROMX_LOAD( "mpn.19",   0x0000006, 0x400000, 0x00000000, ROM_GROUPWORD | ROM_SKIP(6) ) // Not dumped due to data being on a SIMM
-	ROMX_LOAD( "mpn.14",   0x1000000, 0x400000, 0x00000000, ROM_GROUPWORD | ROM_SKIP(6) ) // Not dumped due to data being on a SIMM
-	ROMX_LOAD( "mpn.16",   0x1000002, 0x400000, 0x00000000, ROM_GROUPWORD | ROM_SKIP(6) ) // Not dumped due to data being on a SIMM
-	ROMX_LOAD( "mpn.18",   0x1000004, 0x400000, 0x00000000, ROM_GROUPWORD | ROM_SKIP(6) ) // Not dumped due to data being on a SIMM
-	ROMX_LOAD( "mpn.20",   0x1000006, 0x400000, 0x00000000, ROM_GROUPWORD | ROM_SKIP(6) ) // Not dumped due to data being on a SIMM
+//	ROMX_LOAD( "mpn.13",   0x0000000, 0x400000, 0x00000000, ROM_GROUPWORD | ROM_SKIP(6) ) // Not dumped due to data being on a SIMM
+//	ROMX_LOAD( "mpn.15",   0x0000002, 0x400000, 0x00000000, ROM_GROUPWORD | ROM_SKIP(6) ) // Not dumped due to data being on a SIMM
+//	ROMX_LOAD( "mpn.17",   0x0000004, 0x400000, 0x00000000, ROM_GROUPWORD | ROM_SKIP(6) ) // Not dumped due to data being on a SIMM
+//	ROMX_LOAD( "mpn.19",   0x0000006, 0x400000, 0x00000000, ROM_GROUPWORD | ROM_SKIP(6) ) // Not dumped due to data being on a SIMM
+//	ROMX_LOAD( "mpn.14",   0x1000000, 0x400000, 0x00000000, ROM_GROUPWORD | ROM_SKIP(6) ) // Not dumped due to data being on a SIMM
+//	ROMX_LOAD( "mpn.16",   0x1000002, 0x400000, 0x00000000, ROM_GROUPWORD | ROM_SKIP(6) ) // Not dumped due to data being on a SIMM
+//	ROMX_LOAD( "mpn.18",   0x1000004, 0x400000, 0x00000000, ROM_GROUPWORD | ROM_SKIP(6) ) // Not dumped due to data being on a SIMM
+//	ROMX_LOAD( "mpn.20",   0x1000006, 0x400000, 0x00000000, ROM_GROUPWORD | ROM_SKIP(6) ) // Not dumped due to data being on a SIMM
 
 	ROM_REGION( QSOUND_SIZE, REGION_CPU2, 0 ) /* 64k for the audio CPU (+banks) */
 	ROM_LOAD( "mpn.01",   0x00000, 0x08000, 0x90c7adb6 )
 	ROM_CONTINUE(         0x10000, 0x18000 )
 
 	ROM_REGION( 0x800000, REGION_SOUND1, 0 ) /* QSound samples */
-	ROM_LOAD16_WORD_SWAP( "mpn.11",   0x000000, 0x400000, 0x00000000 ) // Not dumped
-	ROM_LOAD16_WORD_SWAP( "mpn.12",   0x400000, 0x400000, 0x00000000 ) // Not dumped
+//	ROM_LOAD16_WORD_SWAP( "mpn.11",   0x000000, 0x400000, 0x00000000 ) // Not dumped
+//	ROM_LOAD16_WORD_SWAP( "mpn.12",   0x400000, 0x400000, 0x00000000 ) // Not dumped
 ROM_END
 
 ROM_START( nwarr )
@@ -3204,14 +3221,14 @@ ROM_START( progear )
 //	ROM_LOAD16_WORD_SWAP( "pgajx.04", 0x080000, 0x80000, 0x00000000 )
 
 	ROM_REGION( 0x2000000, REGION_GFX1, 0 )
-	ROMX_LOAD( "pga.13",   0x0000000, 0x400000, 0x00000000, ROM_GROUPWORD | ROM_SKIP(6) ) // Not dumped due to data being on a SIMM
-	ROMX_LOAD( "pga.15",   0x0000002, 0x400000, 0x00000000, ROM_GROUPWORD | ROM_SKIP(6) ) // Not dumped due to data being on a SIMM
-	ROMX_LOAD( "pga.17",   0x0000004, 0x400000, 0x00000000, ROM_GROUPWORD | ROM_SKIP(6) ) // Not dumped due to data being on a SIMM
-	ROMX_LOAD( "pga.19",   0x0000006, 0x400000, 0x00000000, ROM_GROUPWORD | ROM_SKIP(6) ) // Not dumped due to data being on a SIMM
-	ROMX_LOAD( "pga.14",   0x1000000, 0x400000, 0x00000000, ROM_GROUPWORD | ROM_SKIP(6) ) // Not dumped due to data being on a SIMM
-	ROMX_LOAD( "pga.16",   0x1000002, 0x400000, 0x00000000, ROM_GROUPWORD | ROM_SKIP(6) ) // Not dumped due to data being on a SIMM
-	ROMX_LOAD( "pga.18",   0x1000004, 0x400000, 0x00000000, ROM_GROUPWORD | ROM_SKIP(6) ) // Not dumped due to data being on a SIMM
-	ROMX_LOAD( "pga.20",   0x1000006, 0x400000, 0x00000000, ROM_GROUPWORD | ROM_SKIP(6) ) // Not dumped due to data being on a SIMM
+//	ROMX_LOAD( "pga.13",   0x0000000, 0x400000, 0x00000000, ROM_GROUPWORD | ROM_SKIP(6) ) // Not dumped due to data being on a SIMM
+//	ROMX_LOAD( "pga.15",   0x0000002, 0x400000, 0x00000000, ROM_GROUPWORD | ROM_SKIP(6) ) // Not dumped due to data being on a SIMM
+//	ROMX_LOAD( "pga.17",   0x0000004, 0x400000, 0x00000000, ROM_GROUPWORD | ROM_SKIP(6) ) // Not dumped due to data being on a SIMM
+//	ROMX_LOAD( "pga.19",   0x0000006, 0x400000, 0x00000000, ROM_GROUPWORD | ROM_SKIP(6) ) // Not dumped due to data being on a SIMM
+//	ROMX_LOAD( "pga.14",   0x1000000, 0x400000, 0x00000000, ROM_GROUPWORD | ROM_SKIP(6) ) // Not dumped due to data being on a SIMM
+//	ROMX_LOAD( "pga.16",   0x1000002, 0x400000, 0x00000000, ROM_GROUPWORD | ROM_SKIP(6) ) // Not dumped due to data being on a SIMM
+//	ROMX_LOAD( "pga.18",   0x1000004, 0x400000, 0x00000000, ROM_GROUPWORD | ROM_SKIP(6) ) // Not dumped due to data being on a SIMM
+//	ROMX_LOAD( "pga.20",   0x1000006, 0x400000, 0x00000000, ROM_GROUPWORD | ROM_SKIP(6) ) // Not dumped due to data being on a SIMM
 
 	ROM_REGION( QSOUND_SIZE, REGION_CPU2, 0 ) /* 64k for the audio CPU (+banks) */
 	ROM_LOAD( "pga.01",   0x00000, 0x08000, 0xbdbfa992 )
@@ -3234,14 +3251,14 @@ ROM_START( puzloop2 )
 //	ROM_LOAD16_WORD_SWAP( "pl2jx.04a", 0x080000, 0x80000, 0x00000000 )
 
 	ROM_REGION( 0x2000000, REGION_GFX1, 0 )
-	ROMX_LOAD( "pl2.13",   0x0000000, 0x400000, 0x00000000, ROM_GROUPWORD | ROM_SKIP(6) ) // Not dumped due to data being on a SIMM
-	ROMX_LOAD( "pl2.15",   0x0000002, 0x400000, 0x00000000, ROM_GROUPWORD | ROM_SKIP(6) ) // Not dumped due to data being on a SIMM
-	ROMX_LOAD( "pl2.17",   0x0000004, 0x400000, 0x00000000, ROM_GROUPWORD | ROM_SKIP(6) ) // Not dumped due to data being on a SIMM
-	ROMX_LOAD( "pl2.19",   0x0000006, 0x400000, 0x00000000, ROM_GROUPWORD | ROM_SKIP(6) ) // Not dumped due to data being on a SIMM
-	ROMX_LOAD( "pl2.14",   0x1000000, 0x400000, 0x00000000, ROM_GROUPWORD | ROM_SKIP(6) ) // Not dumped due to data being on a SIMM
-	ROMX_LOAD( "pl2.16",   0x1000002, 0x400000, 0x00000000, ROM_GROUPWORD | ROM_SKIP(6) ) // Not dumped due to data being on a SIMM
-	ROMX_LOAD( "pl2.18",   0x1000004, 0x400000, 0x00000000, ROM_GROUPWORD | ROM_SKIP(6) ) // Not dumped due to data being on a SIMM
-	ROMX_LOAD( "pl2.20",   0x1000006, 0x400000, 0x00000000, ROM_GROUPWORD | ROM_SKIP(6) ) // Not dumped due to data being on a SIMM
+//	ROMX_LOAD( "pl2.13",   0x0000000, 0x400000, 0x00000000, ROM_GROUPWORD | ROM_SKIP(6) ) // Not dumped due to data being on a SIMM
+//	ROMX_LOAD( "pl2.15",   0x0000002, 0x400000, 0x00000000, ROM_GROUPWORD | ROM_SKIP(6) ) // Not dumped due to data being on a SIMM
+//	ROMX_LOAD( "pl2.17",   0x0000004, 0x400000, 0x00000000, ROM_GROUPWORD | ROM_SKIP(6) ) // Not dumped due to data being on a SIMM
+//	ROMX_LOAD( "pl2.19",   0x0000006, 0x400000, 0x00000000, ROM_GROUPWORD | ROM_SKIP(6) ) // Not dumped due to data being on a SIMM
+//	ROMX_LOAD( "pl2.14",   0x1000000, 0x400000, 0x00000000, ROM_GROUPWORD | ROM_SKIP(6) ) // Not dumped due to data being on a SIMM
+//	ROMX_LOAD( "pl2.16",   0x1000002, 0x400000, 0x00000000, ROM_GROUPWORD | ROM_SKIP(6) ) // Not dumped due to data being on a SIMM
+//	ROMX_LOAD( "pl2.18",   0x1000004, 0x400000, 0x00000000, ROM_GROUPWORD | ROM_SKIP(6) ) // Not dumped due to data being on a SIMM
+//	ROMX_LOAD( "pl2.20",   0x1000006, 0x400000, 0x00000000, ROM_GROUPWORD | ROM_SKIP(6) ) // Not dumped due to data being on a SIMM
 
 	ROM_REGION( QSOUND_SIZE, REGION_CPU2, 0 ) /* 64k for the audio CPU (+banks) */
 	ROM_LOAD( "pl2.01",   0x00000, 0x08000, 0x35697569 )
@@ -5507,10 +5524,8 @@ GAME( 1998, sfz3a,    sfa3,    cps2, ssf2,    cps2, ROT0,   "Capcom", "Street Fi
 GAME( 1999, gigawing, 0,       cps2, 19xx,    cps2, ROT0,   "Capcom", "Giga Wing (US 990222)" )
 GAME( 1999, gwingj,   gigawing,cps2, 19xx,    cps2, ROT0,   "Capcom", "Giga Wing (Japan 990223)" )
 GAMEX(1999, jgokushi, 0,       cps2, cps2,    cps2, ROT0,   "Capcom", "Jyangokushi: Haoh no Saihai (Japan 990527)", GAME_NOT_WORKING )
-GAMEX(2000, mmatrix,  0,       cps2, cps2,    cps2, ROT0,   "Capcom", "Mars Matrix: Hyper Solid Shooting (US 000412)", GAME_NOT_WORKING )
-GAMEX(2000, mmatrixj, mmatrix, cps2, cps2,    cps2, ROT0,   "Capcom", "Mars Matrix: Hyper Solid Shooting (Japan 000412)", GAME_NOT_WORKING )
-GAMEX(2000, 1944,     0,       cps2, 19xx,    cps2, ROT0,   "Capcom", "1944: The Loop Master (US 000620)", GAME_NOT_WORKING )
-GAMEX(2000, 1944j,    1944,    cps2, 19xx,    cps2, ROT0,   "Capcom", "1944: The Loop Master (Japan 000620)", GAME_NOT_WORKING )
+GAME( 2000, mmatrix,  0,       cps2, 19xx,    cps2, ROT0,   "Capcom, supported by Takumi", "Mars Matrix: Hyper Solid Shooting (US 000412)" )
+GAME( 2000, mmatrixj, mmatrix, cps2, 19xx,    cps2, ROT0,   "Capcom, supported by Takumi", "Mars Matrix: Hyper Solid Shooting (Japan 000412)" )
 GAMEX(2001, progear,  0,       cps2, cps2,    cps2, ROT0,   "Capcom", "Progear no Arashi (Japan 010117)", GAME_NOT_WORKING )
 
 /* Games released on CPS-2 hardware by Mitchell */
@@ -5519,7 +5534,9 @@ GAMEX(2000, mpangj,   0,       cps2, ssf2,    cps2, ROT0,   "Mitchell", "Mighty!
 GAMEX(2001, choko,    0,       cps2, cps2,    cps2, ROT0,   "Mitchell", "Choko (Japan 010820)", GAME_NOT_WORKING )
 GAMEX(2001, puzloop2, 0,       cps2, cps2,    cps2, ROT0,   "Mitchell", "Puzz Loop 2 (Japan 010205)", GAME_NOT_WORKING )
 
-/* Games released on CPS-2 hardware by Raizing */
+/* Games released on CPS-2 hardware by Eighting/Raizing */
 
-GAME( 2000, dimahoo,  0,       dima, sgemf,   cps2, ROT270, "Eighting/Raizing", "Dimahoo (US 000121)" )
-GAME( 2000, gmahou,   dimahoo, dima, sgemf,   cps2, ROT270, "Eighting/Raizing", "Great Mahou Daisakusen (Japan 000121)" )
+GAME( 2000, dimahoo,  0,       dima, sgemf,   cps2, ROT270, "Eighting/Raizing, distributed by Capcom", "Dimahoo (US 000121)" )
+GAME( 2000, gmahou,   dimahoo, dima, sgemf,   cps2, ROT270, "Eighting/Raizing, distributed by Capcom", "Great Mahou Daisakusen (Japan 000121)" )
+GAMEX(2000, 1944,     0,       cps2, 19xx,    cps2, ROT0,   "Capcom, supported by Eighting/Raizing", "1944: The Loop Master (US 000620)", GAME_NOT_WORKING )
+GAMEX(2000, 1944j,    1944,    cps2, 19xx,    cps2, ROT0,   "Capcom, supported by Eighting/Raizing", "1944: The Loop Master (Japan 000620)", GAME_NOT_WORKING )

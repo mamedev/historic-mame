@@ -90,13 +90,13 @@ static READ_HANDLER( io_pastelgl_r )
 	switch (offset & 0xff00)
 	{
 		case	0x8100:	return AY8910_read_port_0_r(0);
-		case	0x9000:	return nb1413m3_inputport0_r();
-		case	0xa000:	return nb1413m3_inputport1_r();
-		case	0xb000:	return nb1413m3_inputport2_r();
+		case	0x9000:	return nb1413m3_inputport0_r(0);
+		case	0xa000:	return nb1413m3_inputport1_r(0);
+		case	0xb000:	return nb1413m3_inputport2_r(0);
 		case	0xc000:	return pastelgl_sndrom_r(0);
 		case	0xe000:	return input_port_2_r(0);
-		case	0xf000:	return nb1413m3_dipsw1_r();
-		case	0xf100:	return nb1413m3_dipsw2_r();
+		case	0xf000:	return nb1413m3_dipsw1_r(0);
+		case	0xf100:	return nb1413m3_dipsw2_r(0);
 		default:	return 0xff;
 	}
 }
@@ -130,9 +130,9 @@ static WRITE_HANDLER( io_pastelgl_w )
 		case	0x9500:	pastelgl_sizey_w(data); break;
 		case	0x9600:	pastelgl_dispflag_w(data); break;
 		case	0x9700:	break;
-		case	0xa000:	nb1413m3_inputportsel_w(data); break;
+		case	0xa000:	nb1413m3_inputportsel_w(0,data); break;
 		case	0xb000:	pastelgl_romsel_w(data);
-				nb1413m3_sndrombank1_w(data);
+				nb1413m3_sndrombank1_w(0,data);
 				break;
 #if SIGNED_DAC
 		case	0xd000:	DAC_0_signed_data_w(0, data); break;
@@ -154,7 +154,24 @@ INPUT_PORTS_START( pastelgl )
 	PORT_DIPSETTING(    0x02, "2" )
 	PORT_DIPSETTING(    0x01, "3" )
 	PORT_DIPSETTING(    0x00, "4 (Hard)" )
-	PORT_BIT( 0xfc, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START	/* (1) DIPSW-B */
 	PORT_DIPNAME( 0x03, 0x00, "Number of last chance" )
@@ -165,13 +182,20 @@ INPUT_PORTS_START( pastelgl )
 	PORT_DIPNAME( 0x04, 0x04, "No. of tiles on final match" )
 	PORT_DIPSETTING(    0x04, "20" )
 	PORT_DIPSETTING(    0x00, "10" )
-	PORT_BIT( 0x18, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x60, 0x00, "SANGEN Rush" )
 	PORT_DIPSETTING(    0x06, "0" )
 	PORT_DIPSETTING(    0x04, "1" )
 	PORT_DIPSETTING(    0x02, "5" )
 	PORT_DIPSETTING(    0x00, "infinite" )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START	/* (2) DIPSW-C */
 	PORT_DIPNAME( 0x03, 0x03, "Change Rate" )
@@ -182,7 +206,12 @@ INPUT_PORTS_START( pastelgl )
 	PORT_DIPNAME( 0x04, 0x00, "Open CPU's hand on Player's Reach" )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_BIT( 0x18, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x60, 0x60, "YAKUMAN cut" )
 	PORT_DIPSETTING(    0x60, "10%" )
 	PORT_DIPSETTING(    0x40, "30%" )
@@ -236,7 +265,7 @@ static MACHINE_DRIVER_START( pastelgl )
 	MDRV_CPU_FLAGS(CPU_16BIT_PORT)
 	MDRV_CPU_MEMORY(readmem_pastelgl, writemem_pastelgl)
 	MDRV_CPU_PORTS(readport_pastelgl, writeport_pastelgl)
-	MDRV_CPU_VBLANK_INT(nb1413m3_interrupt,96)
+	MDRV_CPU_VBLANK_INT(nb1413m3_interrupt,96)	// nmiclock not written, chip is 1411M1 instead of 1413M3
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)

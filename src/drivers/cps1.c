@@ -949,7 +949,7 @@ INPUT_PORTS_START( dw )
 	PORT_DIPSETTING(    0x30, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0x28, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( 1C_4C ) )
-	/* According to the manual, ALL bits 0 to 5 must be ON to have 
+	/* According to the manual, ALL bits 0 to 5 must be ON to have
 	   "2 Coins/1 Credit (1 to continue)" for both coin slots */
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
@@ -1060,7 +1060,7 @@ INPUT_PORTS_START( willow )
 	PORT_DIPSETTING(    0x30, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0x28, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( 1C_4C ) )
-	/* According to the manual, ALL bits 0 to 5 must be ON to have 
+	/* According to the manual, ALL bits 0 to 5 must be ON to have
 	   "2 Coins/1 Credit (1 to continue)" for both coin slots */
 	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0xc0, "Upright 1 Player" )
@@ -1177,7 +1177,7 @@ INPUT_PORTS_START( unsquad )
 	PORT_DIPSETTING(    0x30, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0x28, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( 1C_4C ) )
-	/* According to the manual, ALL bits 0 to 5 must be ON to have 
+	/* According to the manual, ALL bits 0 to 5 must be ON to have
 	   "2 Coins/1 Credit (1 to continue)" for both coin slots */
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
@@ -5093,12 +5093,12 @@ ROM_END
 
 ROM_START( sf2 )
 	ROM_REGION( CODE_SIZE, REGION_CPU1, 0 )      /* 68000 code */
-	ROM_LOAD16_BYTE( "sf2_30a.bin",   0x00000, 0x20000, 0x57bd7051 )
-	ROM_LOAD16_BYTE( "sf2e_37b.rom",  0x00001, 0x20000, 0x62691cdd )
-	ROM_LOAD16_BYTE( "sf2_31a.bin",   0x40000, 0x20000, 0xa673143d )
-	ROM_LOAD16_BYTE( "sf2_38a.bin",   0x40001, 0x20000, 0x4c2ccef7 )
-	ROM_LOAD16_BYTE( "sf2_28a.bin",   0x80000, 0x20000, 0x4009955e )
-	ROM_LOAD16_BYTE( "sf2_35a.bin",   0x80001, 0x20000, 0x8c1f3994 )
+	ROM_LOAD16_BYTE( "sf2e.30g",      0x00000, 0x20000, 0xfe39ee33 )	// matches sf2u.30i
+	ROM_LOAD16_BYTE( "sf2e.37g",      0x00001, 0x20000, 0xfb92cd74 )
+	ROM_LOAD16_BYTE( "sf2e.31g",      0x40000, 0x20000, 0x69a0a301 )	// matches sf2u.31i
+	ROM_LOAD16_BYTE( "sf2e.38g",      0x40001, 0x20000, 0x5e22db70 )
+	ROM_LOAD16_BYTE( "sf2e.28g",      0x80000, 0x20000, 0x8bf9f1e5 )
+	ROM_LOAD16_BYTE( "sf2e.35g",      0x80001, 0x20000, 0x626ef934 )
 	ROM_LOAD16_BYTE( "sf2_29a.bin",   0xc0000, 0x20000, 0xbb4af315 )
 	ROM_LOAD16_BYTE( "sf2_36a.bin",   0xc0001, 0x20000, 0xc02a13eb )
 
@@ -5128,14 +5128,14 @@ ROM_START( sf2 )
 	ROM_LOAD( "sf2_19.bin",       0x20000, 0x20000, 0xbeade53f )
 ROM_END
 
-ROM_START( sf2eg )
+ROM_START( sf2eb )
 	ROM_REGION( CODE_SIZE, REGION_CPU1, 0 )      /* 68000 code */
-	ROM_LOAD16_BYTE( "sf2e.30g",      0x00000, 0x20000, 0xfe39ee33 )	// matches sf2u.30i
-	ROM_LOAD16_BYTE( "sf2e.37g",      0x00001, 0x20000, 0xfb92cd74 )
-	ROM_LOAD16_BYTE( "sf2e.31g",      0x40000, 0x20000, 0x69a0a301 )	// matches sf2u.31i
-	ROM_LOAD16_BYTE( "sf2e.38g",      0x40001, 0x20000, 0x5e22db70 )
-	ROM_LOAD16_BYTE( "sf2e.28g",      0x80000, 0x20000, 0x8bf9f1e5 )
-	ROM_LOAD16_BYTE( "sf2e.35g",      0x80001, 0x20000, 0x626ef934 )
+	ROM_LOAD16_BYTE( "sf2_30a.bin",   0x00000, 0x20000, 0x57bd7051 )
+	ROM_LOAD16_BYTE( "sf2e_37b.rom",  0x00001, 0x20000, 0x62691cdd )
+	ROM_LOAD16_BYTE( "sf2_31a.bin",   0x40000, 0x20000, 0xa673143d )
+	ROM_LOAD16_BYTE( "sf2_38a.bin",   0x40001, 0x20000, 0x4c2ccef7 )
+	ROM_LOAD16_BYTE( "sf2_28a.bin",   0x80000, 0x20000, 0x4009955e )
+	ROM_LOAD16_BYTE( "sf2_35a.bin",   0x80001, 0x20000, 0x8c1f3994 )
 	ROM_LOAD16_BYTE( "sf2_29a.bin",   0xc0000, 0x20000, 0xbb4af315 )
 	ROM_LOAD16_BYTE( "sf2_36a.bin",   0xc0001, 0x20000, 0xc02a13eb )
 
@@ -5241,12 +5241,12 @@ ROM_END
 
 ROM_START( sf2ud )
 	ROM_REGION( CODE_SIZE, REGION_CPU1, 0 )      /* 68000 code */
-	ROM_LOAD16_BYTE( "sf2u.30d",      0x00000, 0x20000, 0x4bb2657c )
-	ROM_LOAD16_BYTE( "sf2u.37d",      0x00001, 0x20000, 0xb33b42f2 )
-	ROM_LOAD16_BYTE( "sf2u.31d",      0x40000, 0x20000, 0xd57b67d7 )
-	ROM_LOAD16_BYTE( "sf2u.38d",      0x40001, 0x20000, 0x9c8916ef )
-	ROM_LOAD16_BYTE( "sf2u.28d",      0x80000, 0x20000, 0x175819d1 )
-	ROM_LOAD16_BYTE( "sf2u.35d",      0x80001, 0x20000, 0x82060da4 )
+	ROM_LOAD16_BYTE( "sf2u.30d",   0x00000, 0x20000, 0x4bb2657c )
+	ROM_LOAD16_BYTE( "sf2u.37d",   0x00001, 0x20000, 0xb33b42f2 )
+	ROM_LOAD16_BYTE( "sf2u.31d",   0x40000, 0x20000, 0xd57b67d7 )
+	ROM_LOAD16_BYTE( "sf2u.38d",   0x40001, 0x20000, 0x9c8916ef )
+	ROM_LOAD16_BYTE( "sf2u.28d",   0x80000, 0x20000, 0x175819d1 )
+	ROM_LOAD16_BYTE( "sf2u.35d",   0x80001, 0x20000, 0x82060da4 )
 	ROM_LOAD16_BYTE( "sf2_29a.bin",   0xc0000, 0x20000, 0xbb4af315 )
 	ROM_LOAD16_BYTE( "sf2_36a.bin",   0xc0001, 0x20000, 0xc02a13eb )
 
@@ -5315,9 +5315,9 @@ ROM_END
 
 ROM_START( sf2uf )
 	ROM_REGION( CODE_SIZE, REGION_CPU1, 0 )      /* 68000 code */
-	ROM_LOAD16_BYTE( "sf2u.30i",      0x00000, 0x20000, 0xfe39ee33 )
+	ROM_LOAD16_BYTE( "sf2u.30f",      0x00000, 0x20000, 0xfe39ee33 )
 	ROM_LOAD16_BYTE( "sf2u.37f",      0x00001, 0x20000, 0x169e7388 )
-	ROM_LOAD16_BYTE( "sf2u.31i",      0x40000, 0x20000, 0x69a0a301 )
+	ROM_LOAD16_BYTE( "sf2u.31f",      0x40000, 0x20000, 0x69a0a301 )
 	ROM_LOAD16_BYTE( "sf2u.38f",      0x40001, 0x20000, 0x1510e4e2 )
 	ROM_LOAD16_BYTE( "sf2u.28f",      0x80000, 0x20000, 0xacd8175b )
 	ROM_LOAD16_BYTE( "sf2u.35f",      0x80001, 0x20000, 0xc0a80bd1 )
@@ -5352,9 +5352,9 @@ ROM_END
 
 ROM_START( sf2ui )
 	ROM_REGION( CODE_SIZE, REGION_CPU1, 0 )      /* 68000 code */
-	ROM_LOAD16_BYTE( "sf2u.30i",      0x00000, 0x20000, 0xfe39ee33 )
+	ROM_LOAD16_BYTE( "sf2u.30f",      0x00000, 0x20000, 0xfe39ee33 )
 	ROM_LOAD16_BYTE( "sf2u.37i",      0x00001, 0x20000, 0x9df707dd )
-	ROM_LOAD16_BYTE( "sf2u.31i",      0x40000, 0x20000, 0x69a0a301 )
+	ROM_LOAD16_BYTE( "sf2u.31f",      0x40000, 0x20000, 0x69a0a301 )
 	ROM_LOAD16_BYTE( "sf2u.38i",      0x40001, 0x20000, 0x4cb46daf )
 	ROM_LOAD16_BYTE( "sf2u.28i",      0x80000, 0x20000, 0x1580be4c )
 	ROM_LOAD16_BYTE( "sf2u.35i",      0x80001, 0x20000, 0x1468d185 )
@@ -7259,12 +7259,12 @@ GAME( 1990, mswordr1, msword,   cps1,     msword,   cps1,     ROT0,   "Capcom", 
 GAME( 1990, mswordu,  msword,   cps1,     msword,   cps1,     ROT0,   "Capcom", "Magic Sword - Heroic Fantasy (US 900725)" )			// 25.07.1990  "U.S.A."
 GAME( 1990, mswordj,  msword,   cps1,     msword,   cps1,     ROT0,   "Capcom", "Magic Sword (Japan 900623)" )					// 23.06.1990  "Japan"
 GAME( 1990, cawing,   0,        cps1,     cawing,   cps1,     ROT0,   "Capcom", "Carrier Air Wing (World 901012)" )				// "ETC"
-GAME( 1990, cawingu,  cawing,   cps1,     cawing,   cps1,     ROT0,   "Capcom", "Carrier Air Wing (US 901012)" )				
+GAME( 1990, cawingu,  cawing,   cps1,     cawing,   cps1,     ROT0,   "Capcom", "Carrier Air Wing (US 901012)" )
 GAME( 1990, cawingj,  cawing,   cps1,     cawing,   cps1,     ROT0,   "Capcom", "U.S. Navy (Japan 901012)" )
 GAME( 1990, nemo,     0,        cps1,     nemo,     cps1,     ROT0,   "Capcom", "Nemo (World 901130)" )						// "ETC"
 GAME( 1990, nemoj,    nemo,     cps1,     nemo,     cps1,     ROT0,   "Capcom", "Nemo (Japan 901120)" )
-GAME( 1991, sf2,      0,        sf2,      sf2,      cps1,     ROT0,   "Capcom", "Street Fighter II - The World Warrior (World 910214)" )	// "ETC"
-GAME( 1991, sf2eg,    sf2,      sf2,      sf2,      cps1,     ROT0,   "Capcom", "Street Fighter II - The World Warrior (World 910522)" )	// "ETC"
+GAME( 1991, sf2,      0,        sf2,      sf2,      cps1,     ROT0,   "Capcom", "Street Fighter II - The World Warrior (World 910522)" )	// "ETC"
+GAME( 1991, sf2eb,    sf2,      sf2,      sf2,      cps1,     ROT0,   "Capcom", "Street Fighter II - The World Warrior (World 910214)" )	// "ETC"
 GAME( 1991, sf2ua,    sf2,      sf2,      sf2,      cps1,     ROT0,   "Capcom", "Street Fighter II - The World Warrior (US 910206)" )
 GAME( 1991, sf2ub,    sf2,      sf2,      sf2,      cps1,     ROT0,   "Capcom", "Street Fighter II - The World Warrior (US 910214)" )
 GAME( 1991, sf2ud,    sf2,      sf2,      sf2,      cps1,     ROT0,   "Capcom", "Street Fighter II - The World Warrior (US 910318)" )

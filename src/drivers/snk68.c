@@ -14,6 +14,22 @@
 
 	Emulation by Bryan McPhail, mish@tendril.co.uk
 
+
+Change Log:
+
+FEB-2003 (AT)
+
+- bug fixes:
+
+    pow37b5yel: incorrect sprite priority
+  powj36rc2gre: scrambled Japanese text in cut scenes
+
+Notes:
+
+  Sprite flickerings and pop-up's not fixed. They look more like
+  sloppy programming than emulation issues. Also suggest redumping
+  sound ROM "dg7", it might be the cause of pow060gre.
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -135,6 +151,7 @@ static MEMORY_WRITE16_START( pow_writemem )
 	{ 0x0c0000, 0x0c0001, pow_flipscreen16_w },
 	{ 0x0f0008, 0x0f0009, MWA16_NOP },
 	{ 0x100000, 0x100fff, pow_video16_w, &videoram16 },
+	{ 0x101000, 0x101fff, MWA16_NOP }, // unknown register writes
 	{ 0x200000, 0x207fff, pow_spriteram16_w, &spriteram16 },
 	{ 0x400000, 0x400fff, pow_paletteram16_word_w, &paletteram16 },
 MEMORY_END

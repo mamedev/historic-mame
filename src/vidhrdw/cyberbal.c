@@ -99,6 +99,7 @@ static int video_start_cyberbal_common(int screens)
 		1,					/* does the neighbor bit affect the next object? */
 		1024,				/* pixels per SLIP entry (0 for no-slip) */
 		0,					/* pixel offset for SLIPs */
+		0,					/* maximum number of links to visit/scanline (0=all) */
 
 		0x600,				/* base palette entry */
 		0x100,				/* maximum number of colors */
@@ -135,6 +136,7 @@ static int video_start_cyberbal_common(int screens)
 		1,					/* does the neighbor bit affect the next object? */
 		1024,				/* pixels per SLIP entry (0 for no-slip) */
 		0,					/* pixel offset for SLIPs */
+		0,					/* maximum number of links to visit/scanline (0=all) */
 
 		0xe00,				/* base palette entry */
 		0x100,				/* maximum number of colors */
@@ -395,7 +397,7 @@ VIDEO_UPDATE( cyberbal )
 					/* not verified: logic is all controlled in a PAL
 					*/
 					pf[x] = mo[x];
-					
+
 					/* erase behind ourselves */
 					mo[x] = 0;
 				}

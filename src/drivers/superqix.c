@@ -150,26 +150,26 @@ INPUT_PORTS_END
 
 static struct GfxLayout charlayout =
 {
-	8,8,    /* 8*8 characters */
-	1024,    /* 1024 characters */
-	4,      /* 4 bits per pixel */
-	{ 0, 1, 2, 3 }, /* the bitplanes are packed in one nibble */
+	8,8,
+	1024,
+	4,
+	{ 0, 1, 2, 3 },
 	{ 0*4, 1*4, 2*4, 3*4, 4*4, 5*4, 6*4, 7*4 },
 	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32 },
-	32*8   /* every char takes 32 consecutive bytes */
+	32*8
 };
 
 static struct GfxLayout spritelayout =
 {
-	16,16,    /* 16*16 sprites */
-	512,    /* 512 sprites */
-	4,      /* 4 bits per pixel */
-	{ 0, 1, 2, 3 }, /* the bitplanes are packed in one nibble */
+	16,16,
+	RGN_FRAC(1,1),
+	4,
+	{ 0, 1, 2, 3 },
 	{ 0*4, 1*4, 2*4, 3*4, 4*4, 5*4, 6*4, 7*4,
 			32*8+0*4, 32*8+1*4, 32*8+2*4, 32*8+3*4, 32*8+4*4, 32*8+5*4, 32*8+6*4, 32*8+7*4 },
 	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32,
 			16*32, 17*32, 18*32, 19*32, 20*32, 21*32, 22*32, 23*32 },
-	128*8   /* every sprites takes 128 consecutive bytes */
+	128*8
 };
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
@@ -279,7 +279,85 @@ ROM_START( sqixbl )
 	ROM_LOAD( "sq05.1",       0x00000, 0x10000, 0xdf326540 )
 ROM_END
 
+ROM_START( perestro )
+	ROM_REGION( 0x20000, REGION_CPU1, 0 )	/* 64k for code */
+	/* 0x8000 - 0x10000 in the rom is empty anyway */
+	ROM_LOAD( "rom1.bin",        0x00000, 0x20000, 0x0cbf96c1 )
+
+	ROM_REGION( 0x10000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "rom4.bin",       0x00000, 0x10000, 0xc56122a8 ) /* both halves identical */
+
+	ROM_REGION( 0x20000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "rom2.bin",       0x00000, 0x20000, 0x36f93701 )
+
+	ROM_REGION( 0x10000, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_LOAD( "rom3.bin",       0x00000, 0x10000, 0x00c91d5a )
+ROM_END
 
 
-GAMEX( 1987, superqix, 0,        superqix, superqix, 0, ROT90, "Taito", "Super Qix", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
-GAMEX( 1987, sqixbl,   superqix, superqix, superqix, 0, ROT90, "bootleg", "Super Qix (bootleg)", GAME_NO_COCKTAIL )
+static DRIVER_INIT(perestro)
+{
+	data8_t *src;
+	int len;
+	data8_t temp[16];
+	int i,j;
+
+	/* decrypt program code; the address lines are shuffled around in a non-trivial way */
+	src = memory_region(REGION_CPU1);
+	len = memory_region_length(REGION_CPU1);
+	for (i = 0;i < len;i += 16)
+	{
+		memcpy(temp,&src[i],16);
+		for (j = 0;j < 16;j++)
+		{
+			static int convtable[16] =
+			{
+				0xc, 0x9, 0xb, 0xa,
+				0x8, 0xd, 0xf, 0xe,
+				0x4, 0x1, 0x3, 0x2,
+				0x0, 0x5, 0x7, 0x6
+			};
+
+			src[i+j] = temp[convtable[j]];
+		}
+	}
+
+	/* decrypt gfx ROMs; simple bit swap on the address lines */
+	src = memory_region(REGION_GFX1);
+	len = memory_region_length(REGION_GFX1);
+	for (i = 0;i < len;i += 16)
+	{
+		memcpy(temp,&src[i],16);
+		for (j = 0;j < 16;j++)
+		{
+			src[i+j] = temp[BITSWAP8(j,7,6,5,4,3,2,0,1)];
+		}
+	}
+
+	src = memory_region(REGION_GFX2);
+	len = memory_region_length(REGION_GFX2);
+	for (i = 0;i < len;i += 16)
+	{
+		memcpy(temp,&src[i],16);
+		for (j = 0;j < 16;j++)
+		{
+			src[i+j] = temp[BITSWAP8(j,7,6,5,4,0,1,2,3)];
+		}
+	}
+
+	src = memory_region(REGION_GFX3);
+	len = memory_region_length(REGION_GFX3);
+	for (i = 0;i < len;i += 16)
+	{
+		memcpy(temp,&src[i],16);
+		for (j = 0;j < 16;j++)
+		{
+			src[i+j] = temp[BITSWAP8(j,7,6,5,4,1,0,3,2)];
+		}
+	}
+}
+
+
+GAMEX( 1987, superqix, 0,        superqix, superqix, 0,        ROT90, "Taito", "Super Qix", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
+GAMEX( 1987, sqixbl,   superqix, superqix, superqix, 0,        ROT90, "bootleg", "Super Qix (bootleg)", GAME_NO_COCKTAIL )
+GAMEX( 1993, perestro, 0,        superqix, superqix, perestro, ROT90, "Promat / Fuuki", "Perestroika Girls", GAME_NO_COCKTAIL )

@@ -91,20 +91,16 @@ static void frame_callback(int dummy)
 		dial[i] += delta;
 	}
 
-	/* watchdog is disabled during service mode */
 
 	if (GAME_IS_FIRETRUCK)
 	{
+		/* watchdog is disabled during service mode */
 		if (readinputport(4) & 0x80)
 		{
 			watchdog_reset_w(0, 0);
 		}
-	}
 
-	/* map horn button onto discrete sound emulation */
-
-	if (GAME_IS_FIRETRUCK)
-	{
+		/* map horn button onto discrete sound emulation */
 		discrete_sound_w(1, readinputport(7));
 	}
 
@@ -143,8 +139,8 @@ static void write_output(UINT8 flags)
 
 		attract = flags & 0x10;
 
-		discrete_sound_w(5, (flags & 0x80) ? 0 : 1);
-		discrete_sound_w(6, (flags & 0x10) ? 0 : 1);
+		discrete_sound_w(5, (flags & 0x80) ? 0 : 1);	/* Bell Sound */
+		discrete_sound_w(6, (flags & 0x10) ? 0 : 1);	/* Attract */
 
 		coin_lockout_w(0, !attract);
 		coin_lockout_w(1, !attract);
@@ -164,7 +160,7 @@ static void write_output(UINT8 flags)
 		set_led_status(0, flags & 0x01);
 		set_led_status(1, flags & 0x08);
 
-		discrete_sound_w(6, (flags & 0x02) ? 0 : 1);
+		discrete_sound_w(6, (flags & 0x02) ? 0 : 1);	/* Attract */
 
 		coin_lockout_w(0, !attract);
 		coin_lockout_w(1, !attract);
@@ -185,6 +181,8 @@ static void write_output(UINT8 flags)
 
 		set_led_status(0, !(flags & 0x01));
 		set_led_status(1, !(flags & 0x02));
+
+		discrete_sound_w(6, (flags & 0x04) ? 1 : 0);	/* Attract */
 
 		coin_counter_w(0, flags & 0x80);
 		coin_counter_w(1, flags & 0x40);
@@ -484,12 +482,13 @@ static WRITE_HANDLER( firetrk_skid_snd_w )
 
 static WRITE_HANDLER( firetrk_motor_snd_w )
 {
-	if (GAME_IS_FIRETRUCK)
+	if (GAME_IS_FIRETRUCK || GAME_IS_MONTECARLO)
 	{
-		discrete_sound_w(2, data / 16);    /* siren frequency */
+		discrete_sound_w(2, data / 16);		/* Fire Truck - Siren frequency */
+							/* Monte Carlo - Drone Motor frequency */
 	}
 
-	discrete_sound_w(0, data % 16);    /* motor frequency */
+	discrete_sound_w(0, data & 0x0f);    /* motor frequency */
 }
 
 
@@ -515,12 +514,21 @@ static WRITE_HANDLER( firetrk_out_w )
 static WRITE_HANDLER( firetrk_out2_w )
 {
 	firetrk_set_flash(data & 0x80);
+
+	if (GAME_IS_MONTECARLO)
+	{
+		discrete_sound_w(7, !(data & 0x10));	/* Beep */
+		discrete_sound_w(5, data & 0x0f);	/* Drone Motor Volume */
+	}
 }
 
 
 static WRITE_HANDLER( firetrk_asr_w )
 {
-	/* something sound related */
+	if (GAME_IS_SUPERBUG)
+	{
+		discrete_sound_w(7, !data);	/* ASR */
+	}
 }
 
 
@@ -618,10 +626,10 @@ static MEMORY_WRITE_START( montecar_writemem )
 	{ 0x1080, 0x1080, firetrk_car_rot_w },
 	{ 0x10a0, 0x10a0, firetrk_steer_reset_w },
 	{ 0x10c0, 0x10c0, watchdog_reset_w },
-	{ 0x10e0, 0x10e0, MWA_NOP },
-	{ 0x1400, 0x1400, MWA_NOP },
-	{ 0x1420, 0x1420, MWA_NOP },
-	{ 0x1440, 0x1440, MWA_NOP },
+	{ 0x10e0, 0x10e0, firetrk_skid_reset_w },
+	{ 0x1400, 0x1400, firetrk_motor_snd_w },
+	{ 0x1420, 0x1420, firetrk_crash_snd_w },
+	{ 0x1440, 0x1440, firetrk_skid_snd_w },
 	{ 0x1460, 0x1460, firetrk_drone_hpos_w },
 	{ 0x1480, 0x1480, firetrk_drone_vpos_w },
 	{ 0x14a0, 0x14a0, firetrk_drone_rot_w },
@@ -1114,30 +1122,40 @@ static struct GfxDecodeInfo montecar_gfxdecodeinfo[] =
 /************************************************************************/
 /* firetrk Sound System Analog emulation by K.Wilkins Feb 2001          */
 /* Questions/Suggestions to mame@dysfunction.demon.co.uk                */
+/* Modified and added superbug/montecar sounds.  Jan 2003 D.R.          */
 /************************************************************************/
 
-#define FIRETRUCK_MOTORSND     NODE_01
-#define FIRETRUCK_HORNSND      NODE_02
-#define FIRETRUCK_SIRENSND     NODE_03
-#define FIRETRUCK_CRASHSND     NODE_04
-#define FIRETRUCK_SKIDSND      NODE_05
-#define FIRETRUCK_BELLSND      NODE_06
-#define FIRETRUCK_ATTRACT      NODE_07
-#define FIRETRUCK_XTNDPLY      NODE_08
+/* Nodes - Inputs */
+#define FIRETRUCK_MOTORSND_DATA		NODE_01
+#define FIRETRUCK_HORNSND_EN		NODE_02
+#define FIRETRUCK_SIRENSND_DATA		NODE_03
+#define FIRETRUCK_CRASHSND_DATA		NODE_04
+#define FIRETRUCK_SKIDSND_EN		NODE_05
+#define FIRETRUCK_BELLSND_EN		NODE_06
+#define FIRETRUCK_ATTRACT_EN		NODE_07
+#define FIRETRUCK_XTNDPLY_EN		NODE_08
+/* Nodes - Sounds */
+#define FIRETRUCK_MOTORSND     NODE_11
+#define FIRETRUCK_HORNSND      NODE_12
+#define FIRETRUCK_SIRENSND     NODE_13
+#define FIRETRUCK_CRASHSND     NODE_14
+#define FIRETRUCK_SKIDSND      NODE_15
+#define FIRETRUCK_BELLSND      NODE_16
+#define FIRETRUCK_XTNDPLY      NODE_17
 
 static DISCRETE_SOUND_START(firetrk_sound_interface)
 	/************************************************/
 	/* Firetruck sound system: 7 Sound Sources      */
 	/*                     Relative Volume          */
-	/*    1) Horn (Button)     10.02%               */
-	/*    2) Motor              8.17%               */
-	/*    3) Siren              1.47%               */
-	/*    4) Crash             22.05%               */
-	/*    5) Screech/Skid       6.68%               */
-	/*    6) Bell               4.69%               */
-	/*    7) Xtnd              46.91%               */
-	/* Relative volumes calculated from resitor     */
-	/* network in combiner circuit                  */
+	/*    1) Horn (Button)     21.36%               */
+	/*    2) Motor             12.70%               */
+	/*    3) Siren              3.13%               */
+	/*    4) Crash             45.22%               */
+	/*    5) Screech/Skid      14.24%               */
+	/*    6) Bell              21.36%               */
+	/*    7) Xtnd             100.00%               */
+	/* Relative volumes calculated from gain        */
+	/* formula for inverting amplifier.             */
 	/*                                              */
 	/*  FireTruck Discrete sound mapping via:       */
 	/*     discrete_sound_w($register,value)        */
@@ -1155,45 +1173,58 @@ static DISCRETE_SOUND_START(firetrk_sound_interface)
 	/************************************************/
 	/* Input register mapping for firetruck         */
 	/************************************************/
-	/*                   NODE             ADDR   MASK   GAIN    OFFSET  INIT */
-	DISCRETE_INPUTX(FIRETRUCK_MOTORSND    ,0x00,0x000f, -1.0   , 15.0,   0.0)
-	DISCRETE_INPUT (FIRETRUCK_HORNSND     ,0x01,0x000f,0)
-	DISCRETE_INPUTX(FIRETRUCK_SIRENSND    ,0x02,0x000f, -1.0   , 15.0,   0.0)
-	DISCRETE_INPUTX(FIRETRUCK_CRASHSND    ,0x03,0x000f, -1.0   , 15.0,   0.0)
-	DISCRETE_INPUT (FIRETRUCK_SKIDSND     ,0x04,0x000f,0)
-	DISCRETE_INPUT (FIRETRUCK_BELLSND     ,0x05,0x000f,0)
-	DISCRETE_INPUT (FIRETRUCK_ATTRACT     ,0x06,0x000f,0)
-	DISCRETE_INPUT (FIRETRUCK_XTNDPLY     ,0x07,0x000f,0)
+	/*                   NODE                 ADDR  MASK   GAIN    OFFSET  INIT */
+	DISCRETE_INPUTX(FIRETRUCK_MOTORSND_DATA  ,0x00,0x000f, -1.0   , 15.0,   0.0)
+	DISCRETE_INPUT (FIRETRUCK_HORNSND_EN     ,0x01,0x000f,                  0.0)
+	DISCRETE_INPUTX(FIRETRUCK_SIRENSND_DATA  ,0x02,0x000f, -1.0   , 15.0,   0.0)
+	DISCRETE_INPUTX(FIRETRUCK_CRASHSND_DATA  ,0x03,0x000f, -1.0   , 15.0,   0.0)
+	DISCRETE_INPUT (FIRETRUCK_SKIDSND_EN     ,0x04,0x000f,                  0.0)
+	DISCRETE_INPUT (FIRETRUCK_BELLSND_EN     ,0x05,0x000f,                  0.0)
+	DISCRETE_INPUT (FIRETRUCK_ATTRACT_EN     ,0x06,0x000f,                  0.0)
+	DISCRETE_INPUT (FIRETRUCK_XTNDPLY_EN     ,0x07,0x000f,                  0.0)
 
 	/************************************************/
 	/* Motor sound circuit is based on a 556 VCO    */
 	/* with the input frequency set by the MotorSND */
 	/* latch (4 bit). This freqency is then used to */
-	/* driver a modulo 12 counter, with div2 & div12*/
+	/* driver a modulo 12 counter, with div6 & div12*/
 	/* summed as the output of the circuit.         */
-	/* VCO Output is Sq wave = 370-454Hz            */
-	/*  F1 freq = 185Hz - 227Hz (Div2)              */
-	/*  F2 freq = 30Hz - 38Hz   (Div12)             */
-	/* Motorsnd => 0000=454Hz  1111=270Hz           */
-	/* (Input register does the inversion of sign)  */
+	/* VCO Output is Sq wave = 95-458Hz             */
+	/*  F1 freq - (Div6)                            */
+	/*  F2 freq = (Div12)                           */
+	/* To generate the frequency we take the freq.  */
+	/* diff. and /15 to get all the steps between   */
+	/* 0 - 15.  Then add the low frequency and send */
+	/* that value to a squarewave generator.        */
+	/* Also as the frequency changes, it ramps due  */
+	/* to a 10uf capacitor on the R-ladder.         */
+	/* Note the VCO freq. is controlled by a 250k   */
+	/* pot.  The freq. used here is for the pot set */
+	/* to 125k.  The low freq is allways the same.  */
+	/* This adjust the high end.                    */
+	/* 0k = 289Hz.   250k = 4500Hz                  */
 	/************************************************/
-	DISCRETE_GAIN(NODE_18,FIRETRUCK_MOTORSND,(227.0-185.0)/16.0)	/* F1 */
-	DISCRETE_ADDER2(NODE_17,1,NODE_18,185.0)
-	DISCRETE_SQUAREWAVE(NODE_16,1,NODE_17,(817.0/2.0),50.0,0)
+	DISCRETE_RCFILTER(NODE_80, 1, FIRETRUCK_MOTORSND_DATA, 123000, 10e-6)
 
-	DISCRETE_GAIN(NODE_14,FIRETRUCK_MOTORSND,(38.0-30.0)/16.0)		/* F2 */
-	DISCRETE_ADDER2(NODE_13,1,NODE_14,30.0)
-	DISCRETE_SQUAREWAVE(NODE_12,1,NODE_13,(817.0/2.0),50.0,0)
+	DISCRETE_GAIN(NODE_20, NODE_80, (458.0-95.0)/6/15)	/* F1 */
+	DISCRETE_ADDER2(NODE_21, 1, NODE_20, 95.0/6)
+	DISCRETE_SQUAREWAVE(NODE_22, 1, NODE_21, (127.0/2), 50.0, 0)
+	DISCRETE_RCFILTER(NODE_28, 1, NODE_22, 10000, 1e-7)
 
-	DISCRETE_ADDER2(NODE_10,FIRETRUCK_ATTRACT,NODE_12,NODE_16)
+	DISCRETE_GAIN(NODE_23, NODE_80, (458.0-95.0)/12/15)	/* F2 */
+	DISCRETE_ADDER2(NODE_24, 1, NODE_23, 95.0/12)
+	DISCRETE_SQUAREWAVE(NODE_25, 1, NODE_24, (127.0/2), 50.0, 0)
+	DISCRETE_RCFILTER(NODE_29, 1, NODE_25, 10000, 1e-7)
+
+	DISCRETE_ADDER2(FIRETRUCK_MOTORSND, FIRETRUCK_ATTRACT_EN, NODE_28, NODE_29)
 
 	/************************************************/
-	/* Horn, this is taken from the 64V signal that */
-	/* is a 750Hz sqruare wave. 1H = 3MHz with 32H  */
-	/* used to clock the V counter with 64V=3M/32/64*/
+	/* Horn, this is taken from the 64V signal.     */
+	/*  64V = HSYNC/128                             */
+	/*      = 15750/128                             */
 	/************************************************/
-	DISCRETE_SQUAREWAVE(NODE_29,FIRETRUCK_ATTRACT,750.0,1002.0,50.0,0)
-	DISCRETE_ONOFF(NODE_20,FIRETRUCK_HORNSND,NODE_29)
+	DISCRETE_SQUAREWAVE(NODE_30, FIRETRUCK_ATTRACT_EN, 15750/128, 213.6, 50.0, 0)
+	DISCRETE_ONOFF(FIRETRUCK_HORNSND, FIRETRUCK_HORNSND_EN, NODE_30)
 
 	/************************************************/
 	/* Siren is built around a 556 based VCO, the   */
@@ -1209,28 +1240,28 @@ static DISCRETE_SOUND_START(firetrk_sound_interface)
 	/* Duty cycle is inverted 100-x to make things  */
 	/* a little simpler and it doesnt affect sound. */
 	/************************************************/
-	DISCRETE_RCFILTER(NODE_38,1,FIRETRUCK_SIRENSND,250000,1e-6)		/* Input smoothing */
+	DISCRETE_RCFILTER(NODE_40, 1, FIRETRUCK_SIRENSND_DATA, 250000, 1e-6)	/* Input smoothing */
 
-	DISCRETE_GAIN(NODE_36,NODE_38,(666.0-526.0)/16.0)				/* Frequency modelling */
-	DISCRETE_ADDER2(NODE_35,1,NODE_36,526.0)
+	DISCRETE_GAIN(NODE_41, NODE_40, (666.0-526.0) /15)			/* Frequency modelling */
+	DISCRETE_ADDER2(NODE_42, 1, NODE_41, 526.0)
 
-	DISCRETE_GAIN(NODE_34,NODE_38,(65.0-37.0)/16.0)					/* Duty Cycle modelling */
-	DISCRETE_ADDER2(NODE_33,1,NODE_34,37.0)
+	DISCRETE_GAIN(NODE_43, NODE_40, (65.0-37.0)/15)				/* Duty Cycle modelling */
+	DISCRETE_ADDER2(NODE_44, 1, NODE_43, 37.0)
 
-	DISCRETE_SQUAREWAVE(NODE_30,FIRETRUCK_ATTRACT,NODE_35,147.0,NODE_33,0)	/* VCO */
+	DISCRETE_SQUAREWAVE(FIRETRUCK_SIRENSND, FIRETRUCK_ATTRACT_EN, NODE_42, 31.3, NODE_44, 0)	/* VCO */
 
 	/************************************************/
 	/* Crash circuit is built around a noise        */
 	/* generator built from 2 shift registers that  */
 	/* are clocked by the 2V signal.                */
-	/* 1H = 3MHz and 1V = 32H /2 = 3MHz/32/2/2      */
-	/*               2V = 3MHz/32/4 = 23483Hz       */
+	/* 2V = HSYNC/4                                 */
+	/*    = 15750/4                                 */
 	/* Output is binary weighted with 4 bits of     */
 	/* crash volume.                                */
 	/* Volume is inverted by input register mapping */
 	/************************************************/
-	DISCRETE_NOISE(NODE_49,FIRETRUCK_ATTRACT,23483.0,FIRETRUCK_CRASHSND)
-	DISCRETE_GAIN(NODE_40,NODE_49,2205.0/15.0)
+	DISCRETE_NOISE(NODE_50, FIRETRUCK_ATTRACT_EN, 15750/4, FIRETRUCK_CRASHSND_DATA)
+	DISCRETE_GAIN(FIRETRUCK_CRASHSND, NODE_50, 452.2/15)
 
 	/************************************************/
 	/* Skid circuit takes the noise output from     */
@@ -1240,49 +1271,341 @@ static DISCRETE_SOUND_START(firetrk_sound_interface)
 	/* RC is 2.2K & 2.2uF                           */
 	/* Feedback cct is modelled by using the RC out */
 	/* as the frequency input on a VCO, estimated   */
-	/* freq range as 1Khz to 6Khz (sounds OK)       */
+	/* freq range as 1145Hz to 1690Hz               */
 	/************************************************/
-	DISCRETE_NOISE(NODE_59,1,23483.0,5000.0)
-	DISCRETE_RCFILTER(NODE_58,1,NODE_59,2200,2.2e-6)
-	DISCRETE_ADDER2(NODE_57,1,NODE_58,1500.0)
-	DISCRETE_SQUAREWAVE(NODE_50,FIRETRUCK_SKIDSND,NODE_57,668.0,50.0,0.0)
+	DISCRETE_NOISE(NODE_60, 1, 15750/4, 1690.0-1145.0)
+	DISCRETE_RCFILTER(NODE_61, 1, NODE_60, 2200, 2.2e-6)
+	DISCRETE_ADDER2(NODE_62, 1, NODE_61, 1145.0)
+	DISCRETE_SQUAREWAVE(FIRETRUCK_SKIDSND, FIRETRUCK_SKIDSND_EN, NODE_62, 142.4, 25.0, 0.0)
 
 	/************************************************/
-	/* Bell circuit - The bellsound signal is a one */
-	/* shot signal, a low pulse enables the bell    */
-	/* sound for 600ms with a 6Khz tone, the 600ms  */
-	/* decays with an RC TC of around 100ms.        */
-	/* The Hsync signal is put into a div 4 counter */
-	/* to get the 6KHz.                             */
+	/* Bell circuit -                               */
+	/* The Hsync signal is put into a div 16        */
+	/* counter.                                     */
 	/************************************************/
-	DISCRETE_ONESHOTR(NODE_69,1,FIRETRUCK_BELLSND,1,0.6)
+	DISCRETE_GAIN(NODE_70, FIRETRUCK_BELLSND_EN, 213.6)
+	DISCRETE_RCDISC(NODE_71, NODE_70, 500, 33000, 1.0e-5)
 
-	DISCRETE_ADDER2(NODE_68,1,FIRETRUCK_BELLSND,-1.0)		/* Invert sense of bellsnd for RC decay */
-	DISCRETE_GAIN(NODE_67,NODE_68,-469.0)
-	DISCRETE_RCFILTER(NODE_66,1,NODE_67,10000,1.0e-6)
-
-	DISCRETE_SQUAREWAVE(NODE_60,NODE_69,5870.0,NODE_66,50.0,0.0)
+	DISCRETE_SQUAREWAVE(FIRETRUCK_BELLSND, 1, 15750.0/16, NODE_71, 50.0, 0.0)
 
 	/************************************************/
 	/* Extended play circuit is just the 8V signal  */
-	/* gated with registered output from a D-Type   */
-	/* mand mapped into memory. 5870Hz              */
+	/* 8V = HSYNC/16                                */
+	/*    = 15750/16                                */
 	/************************************************/
-	DISCRETE_SQUAREWAVE(NODE_70,FIRETRUCK_XTNDPLY,5870.0,4691.0,50.0,0.0)
+	DISCRETE_SQUAREWAVE(FIRETRUCK_XTNDPLY, FIRETRUCK_XTNDPLY_EN, 15750.0/16, 1000.0, 50.0, 0.0)
 
 	/************************************************/
-	/* Combine all 7 sound sources with a double    */
-	/* adder circuit                                */
-	/* (Note each cct contributes 1000 to the total */
-	/* and this needs to be scaled to give the      */
-	/* overall level to 65535 i.e *(65535/7000)     */
+	/* Combine all 7 sound sources.                 */
+	/* Add some final gain to get to a good sound   */
+	/* level.                                       */
 	/************************************************/
-	/* DISCRETE_ADDER4(NODE_91,1,NODE_10,NODE_20,NODE_30,NODE_40) */
-	DISCRETE_ADDER2(NODE_91,1,NODE_20,NODE_40)
-	DISCRETE_ADDER4(NODE_92,1,NODE_50,NODE_60,NODE_70,NODE_91)
-	DISCRETE_GAIN(NODE_90,NODE_92,(65535.0/10000.0))
+	DISCRETE_ADDER4(NODE_91, 1, FIRETRUCK_MOTORSND, FIRETRUCK_HORNSND, FIRETRUCK_SIRENSND, FIRETRUCK_CRASHSND)
+	DISCRETE_ADDER4(NODE_92, 1, NODE_91, FIRETRUCK_SKIDSND, FIRETRUCK_BELLSND, FIRETRUCK_XTNDPLY)
+	DISCRETE_GAIN(NODE_90, NODE_92, 12)
 
 	DISCRETE_OUTPUT(NODE_90)
+DISCRETE_SOUND_END
+
+
+/************************************************************************/
+/* superbug Sound System Analog emulation                               */
+/************************************************************************/
+
+/* Nodes - Inputs */
+#define SUPERBUG_MOTORSND_DATA		NODE_01
+#define SUPERBUG_CRASHSND_DATA		NODE_02
+#define SUPERBUG_SKIDSND_EN		NODE_03
+#define SUPERBUG_ATTRACT_EN		NODE_04
+#define SUPERBUG_ASRSND_EN		NODE_05
+/* Nodes - Sounds */
+#define SUPERBUG_MOTORSND		NODE_10
+#define SUPERBUG_CRASHSND		NODE_11
+#define SUPERBUG_SKIDSND		NODE_12
+#define SUPERBUG_ASRSND			NODE_13
+#define SUPERBUG_FINAL_MIX		NODE_14
+
+static DISCRETE_SOUND_START(superbug_sound_interface)
+	/************************************************/
+	/* Super Bug sound system: 4 Sound Sources      */
+	/*                     Relative Volume          */
+	/*    1) Motor             38.80%               */
+	/*    2) Crash             63.01%               */
+	/*    3) Screech/Skid      25.52%               */
+	/*    3) ASR              100.00%               */
+	/* Relative volumes calculated from resitor     */
+	/* network in combiner circuit                  */
+	/*                                              */
+	/*  Super Bug Discrete sound mapping via:       */
+	/*     discrete_sound_w($register,value)        */
+	/*  We use the same address # as firetrk        */
+	/*  $00 - Motorsound frequency                  */
+	/*  $03 - Crash volume                          */
+	/*  $04 - Skid enable                           */
+	/*  $06 - Attract mode                          */
+	/*  $07 - ASR                                   */
+	/*                                              */
+	/************************************************/
+
+	/************************************************/
+	/* Input register mapping for superbug          */
+	/************************************************/
+	/*                   NODE                 ADDR   MASK   GAIN    OFFSET  INIT */
+	DISCRETE_INPUT (SUPERBUG_MOTORSND_DATA  , 0x00, 0x000f,                  0.0)
+	DISCRETE_INPUTX(SUPERBUG_CRASHSND_DATA  , 0x03, 0x000f, -1.0   , 15.0,   0.0)
+	DISCRETE_INPUT (SUPERBUG_SKIDSND_EN     , 0x04, 0x000f,                  0.0)
+	DISCRETE_INPUT (SUPERBUG_ATTRACT_EN     , 0x06, 0x000f,                  0.0)
+	DISCRETE_INPUT (SUPERBUG_ASRSND_EN      , 0x07, 0x000f,                  0.0)
+
+	/************************************************/
+	/* Motor sound circuit is based on a 556 VCO    */
+	/* with the input frequency set by the MotorSND */
+	/* latch (4 bit). This freqency is then used to */
+	/* driver a modulo 12 counter, with div6 & div4 */
+	/* summed as the output of the circuit.         */
+	/* VCO Output is Sq wave = 27-382Hz             */
+	/*  F1 freq - (Div6)                            */
+	/*  F2 freq = (Div4)                            */
+	/* To generate the frequency we take the freq.  */
+	/* diff. and /15 to get all the steps between   */
+	/* 0 - 15.  Then add the low frequency and send */
+	/* that value to a squarewave generator.        */
+	/* Also as the frequency changes, it ramps due  */
+	/* to a 10uf capacitor on the R-ladder.         */
+	/* Note the VCO freq. is controlled by a 250k   */
+	/* pot.  The freq. used here is for the pot set */
+	/* to 125k.  The low freq is allways the same.  */
+	/* This adjust the high end.                    */
+	/* 0k = 214Hz.   250k = 4416Hz                  */
+	/************************************************/
+	DISCRETE_RCFILTER(NODE_70, 1, SUPERBUG_MOTORSND_DATA, 123000, 10e-6)
+
+	DISCRETE_GAIN(NODE_20, NODE_70, (382.0-27.0)/6/15)	/* F1 */
+	DISCRETE_ADDER2(NODE_21, 1, NODE_20, 27.0/6)
+	DISCRETE_SQUAREWAVE(NODE_28, 1, NODE_21, (388.0/2), 50.0, 0)
+	DISCRETE_RCFILTER(NODE_58, 1, NODE_28, 10000, 1e-7)
+
+	DISCRETE_GAIN(NODE_22, NODE_70, (382.0-27.0)/4/15)	/* F2 */
+	DISCRETE_ADDER2(NODE_23, 1, NODE_22, 27.0/4)
+	DISCRETE_SQUAREWAVE(NODE_29, 1, NODE_23, (388.0/2), 50.0, 0)
+	DISCRETE_RCFILTER(NODE_59, 1, NODE_29, 10000, 1e-7)
+
+	DISCRETE_ADDER2(SUPERBUG_MOTORSND, SUPERBUG_ATTRACT_EN, NODE_58, NODE_59)
+
+	/************************************************/
+	/* Crash circuit is built around a noise        */
+	/* generator built from 2 shift registers that  */
+	/* are clocked by the 2V signal.                */
+	/* 2V = HSYNC/4                                 */
+	/*    = 15750/4                                 */
+	/* Output is binary weighted with 4 bits of     */
+	/* crash volume.                                */
+	/* Volume is inverted by input register mapping */
+	/************************************************/
+	DISCRETE_NOISE(NODE_30, SUPERBUG_ATTRACT_EN, 15750/4, SUPERBUG_CRASHSND_DATA)
+	DISCRETE_GAIN(SUPERBUG_CRASHSND, NODE_30, 630.1/15)
+
+	/************************************************/
+	/* Skid circuit takes the noise output from     */
+	/* the crash circuit and applies +ve feedback   */
+	/* to cause oscillation. There is also an RC    */
+	/* filter on the input to the feedback cct.     */
+	/* RC is 2.2K & 2.2uF                           */
+	/* Feedback cct is modelled by using the RC out */
+	/* as the frequency input on a VCO, estimated   */
+	/* freq range as 1145Hz to 1690Hz               */
+	/************************************************/
+	DISCRETE_NOISE(NODE_40, SUPERBUG_ATTRACT_EN, 15750/4, 1690.0-1145.0)
+	DISCRETE_ADDER2(NODE_41, 1, NODE_40, 1145.0)
+	DISCRETE_RCFILTER(NODE_42, 1, NODE_41, 2200, 2.2e-6)
+	DISCRETE_SQUAREWAVE(SUPERBUG_SKIDSND, SUPERBUG_SKIDSND_EN, NODE_42, 255.2, 23.0, 0.0)
+
+	/************************************************/
+	/* ASR circuit is just the 8V signal            */
+	/* 8V = HSYNC/16                                */
+	/*    = 15750/16                                */
+	/************************************************/
+	DISCRETE_SQUAREWAVE(SUPERBUG_ASRSND, SUPERBUG_ASRSND_EN, 15750.0/16, 1000.0, 50.0, 0.0)
+
+	/************************************************/
+	/* Combine all 4 sound sources.                 */
+	/* Add some final gain to get to a good sound   */
+	/* level.                                       */
+	/************************************************/
+	DISCRETE_ADDER4(NODE_90, 1, SUPERBUG_MOTORSND, SUPERBUG_CRASHSND, SUPERBUG_SKIDSND, SUPERBUG_ASRSND)
+	DISCRETE_GAIN(SUPERBUG_FINAL_MIX, NODE_90, 12)
+
+	DISCRETE_OUTPUT(SUPERBUG_FINAL_MIX)
+DISCRETE_SOUND_END
+
+
+/************************************************************************/
+/* montecar Sound System Analog emulation                               */
+/************************************************************************/
+
+/* Nodes - Inputs */
+#define MONTECAR_MOTORSND_DATA		NODE_01
+#define MONTECAR_DRONE_MOTORSND_DATA	NODE_02
+#define MONTECAR_CRASHSND_DATA		NODE_03
+#define MONTECAR_SKIDSND_EN		NODE_04
+#define MONTECAR_DRONE_VOLUME_DATA	NODE_05
+#define MONTECAR_ATTRACT_EN		NODE_06
+#define MONTECAR_BEEPSND_EN		NODE_07
+/* Nodes - Sounds */
+#define MONTECAR_MOTORSND		NODE_10
+#define MONTECAR_BEEPSND		NODE_11
+#define MONTECAR_DRONESND		NODE_12
+#define MONTECAR_CRASHSND		NODE_13
+#define MONTECAR_SKIDSND		NODE_14
+#define MONTECAR_FINAL_MIX		NODE_15
+
+static DISCRETE_SOUND_START(montecar_sound_interface)
+	/************************************************/
+	/* Monte Carlo sound system: 5 Sound Sources    */
+	/*                     Relative Volume          */
+	/*    1) Motor             79.55%               */
+	/*    2) Crash            100.00%               */
+	/*    3) Screech/Skid      62.31%               */
+	/*    4) Drone Motor       71.08%               */
+	/*    5) Beep              89.02%               */
+	/* Relative volumes calculated from gain        */
+	/* formula for inverting amplifier.             */
+	/*                                              */
+	/*  Monte Carlo Discrete sound mapping via:     */
+	/*     discrete_sound_w($register,value)        */
+	/*  We use the same address # as firetrk        */
+	/*  $00 - Motorsound frequency                  */
+	/*  $02 - Drone Motorsound frequency            */
+	/*  $03 - Crash volume                          */
+	/*  $04 - Skid enable                           */
+	/*  $05 - Drone Motorsound volume               */
+	/*  $06 - Attract mode                          */
+	/*  $07 - Beep                                  */
+	/*                                              */
+	/************************************************/
+
+	/************************************************/
+	/* Input register mapping for montecar          */
+	/************************************************/
+	/*                   NODE                       ADDR   MASK   GAIN    OFFSET  INIT */
+	DISCRETE_INPUTX(MONTECAR_MOTORSND_DATA        , 0x00, 0x000f, -1.0   , 15.0,   0.0)
+	DISCRETE_INPUTX(MONTECAR_DRONE_MOTORSND_DATA  , 0x02, 0x000f, -1.0   , 15.0,   0.0)
+	DISCRETE_INPUTX(MONTECAR_CRASHSND_DATA        , 0x03, 0x000f, -1.0   , 15.0,   0.0)
+	DISCRETE_INPUT (MONTECAR_SKIDSND_EN           , 0x04, 0x000f,                  0.0)
+	DISCRETE_INPUT (MONTECAR_DRONE_VOLUME_DATA    , 0x05, 0x000f,                  0.0)
+	DISCRETE_INPUT (MONTECAR_ATTRACT_EN           , 0x06, 0x000f,                  0.0)
+	DISCRETE_INPUT (MONTECAR_BEEPSND_EN           , 0x07, 0x000f,                  0.0)
+
+	/************************************************/
+	/* Motor sound circuit is based on a 556 VCO    */
+	/* with the input frequency set by the MotorSND */
+	/* latch (4 bit). This freqency is then used to */
+	/* driver a modulo 12 counter, with div6, 4 & 3 */
+	/* summed as the output of the circuit.         */
+	/* VCO Output is Sq wave = 95-458Hz             */
+	/*  F1 freq - (Div6)                            */
+	/*  F2 freq = (Div4)                            */
+	/*  F3 freq = (Div3) 33.3% duty, 33.3 deg phase */
+	/* To generate the frequency we take the freq.  */
+	/* diff. and /15 to get all the steps between   */
+	/* 0 - 15.  Then add the low frequency and send */
+	/* that value to a squarewave generator.        */
+	/* Also as the frequency changes, it ramps due  */
+	/* to a 4.7uf capacitor on the R-ladder.        */
+	/* Note the VCO freq. is controlled by a 250k   */
+	/* pot.  The freq. used here is for the pot set */
+	/* to 125k.  The low freq is allways the same.  */
+	/* This adjust the high end.                    */
+	/* 0k = 289Hz.   250k = 4500Hz                  */
+	/************************************************/
+	DISCRETE_RCFILTER(NODE_70, 1, MONTECAR_MOTORSND_DATA, 123000, 4.7e-6)
+
+	DISCRETE_GAIN(NODE_20, NODE_70, (458.0-95.0)/6/15)		/* F1 = /6 */
+	DISCRETE_ADDER2(NODE_21, 1, NODE_20, 95.0/6)
+	DISCRETE_SQUAREWAVE(NODE_27, 1, NODE_21, (795.5/3), 50.0, 0)
+	DISCRETE_RCFILTER(NODE_67, 1, NODE_27, 10000, 1e-7)
+
+	DISCRETE_GAIN(NODE_22, NODE_70, (458.0-95.0)/4/15)		/* F2 = / 4*/
+	DISCRETE_ADDER2(NODE_23, 1, NODE_22, 95.0/4)
+	DISCRETE_SQUAREWAVE(NODE_28, 1, NODE_23, (795.5/3), 50.0, 0)
+	DISCRETE_RCFILTER(NODE_68, 1, NODE_28, 10000, 1e-7)
+
+	DISCRETE_GAIN(NODE_24, NODE_70, (458.0-95.0)/3/15)		/* F3 = / 3 */
+	DISCRETE_ADDER2(NODE_25, 1, NODE_24, 95.0/3)
+	DISCRETE_SQUAREWAVE(NODE_29, 1, NODE_25, (795.5/3), 100.0/3, 100.0/3)
+	DISCRETE_RCFILTER(NODE_69, 1, NODE_29, 10000, 1e-7)
+
+	DISCRETE_ADDER3(MONTECAR_MOTORSND, MONTECAR_ATTRACT_EN, NODE_67, NODE_68, NODE_69)
+
+	/************************************************/
+	/* Drone motor sound is basically the same as   */
+	/* the regular car but with a volume control.   */
+	/* Also I shifted the frequencies up for it to  */
+	/* sound different from the player's car.       */
+	/************************************************/
+	DISCRETE_GAIN(NODE_50, MONTECAR_DRONE_MOTORSND_DATA, (650.0 - 95.0)/6/15)		/* F1 = /6 */
+	DISCRETE_ADDER2(NODE_51, 1, NODE_50, 95.0/6)
+	DISCRETE_SQUAREWAVE(NODE_57, 1, NODE_51, (710.8/15/3), 50.0, 0)
+	DISCRETE_RCFILTER(NODE_77, 1, NODE_57, 10000, 1e-7)
+
+	DISCRETE_GAIN(NODE_52, MONTECAR_DRONE_MOTORSND_DATA, (650.0 - 95.0)/4/15)		/* F2 = /4 */
+	DISCRETE_ADDER2(NODE_53, 1, NODE_52, 95.0/4)
+	DISCRETE_SQUAREWAVE(NODE_58, 1, NODE_53, (710.8/15/3), 50.0, 0)
+	DISCRETE_RCFILTER(NODE_78, 1, NODE_58, 10000, 1e-7)
+
+	DISCRETE_GAIN(NODE_54, MONTECAR_DRONE_MOTORSND_DATA, (650.0 - 95.0)/3/15)		/* F3 = /3 */
+	DISCRETE_ADDER2(NODE_55, 1, NODE_54, 95.0/3)
+	DISCRETE_SQUAREWAVE(NODE_59, 1, NODE_55, (710.8/15/3), 100.0/3, 100.0/3)
+	DISCRETE_RCFILTER(NODE_79, 1, NODE_59, 10000, 1e-7)
+
+	DISCRETE_ADDER3(NODE_56, MONTECAR_ATTRACT_EN, NODE_77, NODE_78, NODE_79)
+	DISCRETE_GAIN(MONTECAR_DRONESND, NODE_56, MONTECAR_DRONE_VOLUME_DATA)
+
+	/************************************************/
+	/* Crash circuit is built around a noise        */
+	/* generator built from 2 shift registers that  */
+	/* are clocked by the 2V signal.                */
+	/* 2V = HSYNC/4                                 */
+	/*    = 15750/4                                 */
+	/* Output is binary weighted with 4 bits of     */
+	/* crash volume.                                */
+	/* Volume is inverted by input register mapping */
+	/************************************************/
+	DISCRETE_NOISE(NODE_30, MONTECAR_ATTRACT_EN, 15750/4, MONTECAR_CRASHSND_DATA)
+	DISCRETE_GAIN(MONTECAR_CRASHSND, NODE_30, 1000.0/15)
+
+	/************************************************/
+	/* Skid circuit takes the noise output from     */
+	/* the crash circuit and applies +ve feedback   */
+	/* to cause oscillation. There is also an RC    */
+	/* filter on the input to the feedback cct.     */
+	/* RC is 2.2K & 2.2uF                           */
+	/* Feedback cct is modelled by using the RC out */
+	/* as the frequency input on a VCO, estimated   */
+	/* freq range as 1145Hz to 1690Hz               */
+	/************************************************/
+	DISCRETE_NOISE(NODE_40, MONTECAR_ATTRACT_EN, 15750/4, 1690.0-1145.0)
+	DISCRETE_ADDER2(NODE_41, 1, NODE_40, 1145.0)
+	DISCRETE_RCFILTER(NODE_42, 1, NODE_41, 2200, 2.2e-6)
+	DISCRETE_SQUAREWAVE(MONTECAR_SKIDSND, MONTECAR_SKIDSND_EN, NODE_42, 623.1, 23.0, 0.0)
+
+	/************************************************/
+	/* Beep circuit is just the 8V signal           */
+	/* 8V = HSYNC/16                                */
+	/*    = 15750/16                                */
+	/************************************************/
+	DISCRETE_SQUAREWAVE(MONTECAR_BEEPSND, MONTECAR_BEEPSND_EN, 15750.0/16, 890.2, 50.0, 0.0)
+
+	/************************************************/
+	/* Combine all 5 sound sources.                 */
+	/* Add some final gain to get to a good sound   */
+	/* level.                                       */
+	/************************************************/
+	DISCRETE_ADDER3(NODE_90, 1, MONTECAR_MOTORSND, MONTECAR_CRASHSND, MONTECAR_SKIDSND)
+	DISCRETE_ADDER3(NODE_91, 1, NODE_90, MONTECAR_BEEPSND, MONTECAR_DRONESND)
+	DISCRETE_GAIN(MONTECAR_FINAL_MIX, NODE_91, 8)
+
+	DISCRETE_OUTPUT(MONTECAR_FINAL_MIX)
 DISCRETE_SOUND_END
 
 
@@ -1330,6 +1653,9 @@ static MACHINE_DRIVER_START( superbug )
 	MDRV_PALETTE_INIT(firetrk)
 	MDRV_PALETTE_LENGTH(4)
 	MDRV_COLORTABLE_LENGTH(28)
+
+	/* sound hardware */
+	MDRV_SOUND_REPLACE("discrete", DISCRETE, superbug_sound_interface)
 MACHINE_DRIVER_END
 
 
@@ -1348,7 +1674,7 @@ static MACHINE_DRIVER_START( montecar )
 	MDRV_COLORTABLE_LENGTH(46)
 
 	/* sound hardware */
-	MDRV_SOUND_REMOVE("discrete")
+	MDRV_SOUND_REPLACE("discrete", DISCRETE, montecar_sound_interface)
 MACHINE_DRIVER_END
 
 
@@ -1432,6 +1758,6 @@ ROM_START( montecar )
 ROM_END
 
 
-GAMEX( 1977, superbug, 0, superbug, superbug, superbug, ROT270, "Atari", "Super Bug",   GAME_IMPERFECT_SOUND )
-GAMEX( 1978, firetrk,  0, firetrk,  firetrk,  firetrk,  ROT270, "Atari", "Fire Truck",  GAME_IMPERFECT_SOUND )
-GAMEX( 1979, montecar, 0, montecar, montecar, montecar, ROT270, "Atari", "Monte Carlo", GAME_NO_SOUND )
+GAME( 1977, superbug, 0, superbug, superbug, superbug, ROT270, "Atari", "Super Bug" )
+GAME( 1978, firetrk,  0, firetrk,  firetrk,  firetrk,  ROT270, "Atari", "Fire Truck" )
+GAME( 1979, montecar, 0, montecar, montecar, montecar, ROT270, "Atari", "Monte Carlo" )

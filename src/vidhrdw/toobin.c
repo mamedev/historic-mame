@@ -66,6 +66,7 @@ VIDEO_START( toobin )
 		0,					/* does the neighbor bit affect the next object? */
 		1024,				/* pixels per SLIP entry (0 for no-slip) */
 		0,					/* pixel offset for SLIPs */
+		0,					/* maximum number of links to visit/scanline (0=all) */
 
 		0x100,				/* base palette entry */
 		0x100,				/* maximum number of colors */
@@ -169,7 +170,7 @@ WRITE16_HANDLER( toobin_xscroll_w )
 	data16_t oldscroll = *atarigen_xscroll;
 	data16_t newscroll = oldscroll;
 	COMBINE_DATA(&newscroll);
-	
+
 	/* if anything has changed, force a partial update */
 	if (newscroll != oldscroll)
 		force_partial_update(cpu_getscanline());
@@ -177,7 +178,7 @@ WRITE16_HANDLER( toobin_xscroll_w )
 	/* update the playfield scrolling - hscroll is clocked on the following scanline */
 	tilemap_set_scrollx(atarigen_playfield_tilemap, 0, newscroll >> 6);
 	atarimo_set_xscroll(0, newscroll >> 6);
-	
+
 	/* update the data */
 	*atarigen_xscroll = newscroll;
 }
@@ -218,7 +219,7 @@ WRITE16_HANDLER( toobin_slip_w )
 	/* if the SLIP is changing, force a partial update first */
 	if (oldslip != newslip)
 		force_partial_update(cpu_getscanline());
-	
+
 	/* update the data */
 	atarimo_0_slipram_w(offset, data, mem_mask);
 }
@@ -256,7 +257,7 @@ VIDEO_UPDATE( toobin )
 				if (mo[x])
 				{
 					/* not verified: logic is all controlled in a PAL
-					
+
 						factors: LBPRI1-0, LBPIX3, ANPIX1-0, PFPIX3, PFPRI1-0,
 						         (~LBPIX3 & ~LBPIX2 & ~LBPIX1 & ~LBPIX0)
 					*/
@@ -264,7 +265,7 @@ VIDEO_UPDATE( toobin )
 					/* only draw if not high priority PF */
 					if (!pri[x] || !(pf[x] & 8))
 						pf[x] = mo[x];
-					
+
 					/* erase behind ourselves */
 					mo[x] = 0;
 				}

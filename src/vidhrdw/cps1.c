@@ -240,7 +240,7 @@ struct CPS1config *cps1_game_config;
 #define CPS_B_04 0x60,0x0004, 0,0,0,0, /* n/a */   0x6e,{0x66,0x70,0x68,0x72},0x6a, {0x02,0x0c,0x0c,0x00,0x00}
 #define CPS_B_05 0x60,0x0005, 0,0,0,0, /* n/a */   0x68,{0x6a,0x6c,0x6e,0x70},0x72, {0x02,0x08,0x20,0x14,0x14}
 #define CPS_B_11 0x72,0x0401, 0,0,0,0, /* n/a */   0x66,{0x68,0x6a,0x6c,0x6e},0x70, {0x20,0x10,0x08,0x00,0x00}
-#define CPS_B_12 0x60,0x0402, 0,0,0,0, /* n/a */   0x6c,{0x00,0x00,0x00,0x00},0x62, {0x02,0x04,0x08,0x00,0x00}
+#define CPS_B_12 0x60,0x0402, 0,0,0,0, /* n/a */   0x6c,{0x6a,0x68,0x66,0x64},0x62, {0x02,0x04,0x08,0x00,0x00}
 #define CPS_B_13 0x6e,0x0403, 0,0,0,0, /* n/a */   0x62,{0x64,0x66,0x68,0x6a},0x6c, {0x20,0x04,0x02,0x00,0x00}
 #define CPS_B_14 0x5e,0x0404, 0,0,0,0, /* n/a */   0x52,{0x54,0x56,0x58,0x5a},0x5c, {0x08,0x30,0x30,0x00,0x00}
 #define CPS_B_15 0x4e,0x0405, 0,0,0,0, /* n/a */   0x42,{0x44,0x46,0x48,0x4a},0x4c, {0x04,0x22,0x22,0x00,0x00}
@@ -299,8 +299,8 @@ static struct CPS1config cps1_config_table[]=
 	{"cawing",  CPS_B_16, 0,0,0, 0x0000,0xffff,0x0000,0xffff },
 	{"cawingu", CPS_B_16, 0,0,0, 0x0000,0xffff,0x0000,0xffff },
 	{"cawingj", CPS_B_16, 0,0,0, 0x0000,0xffff,0x0000,0xffff },
-	{"sf2",     CPS_B_17, 2,2,2, 0x0000,0xffff,0x0000,0xffff },
-	{"sf2eg",   CPS_B_11, 2,2,2, 0x0000,0xffff,0x0000,0xffff },
+	{"sf2",     CPS_B_11, 2,2,2, 0x0000,0xffff,0x0000,0xffff },
+	{"sf2eb",   CPS_B_17, 2,2,2, 0x0000,0xffff,0x0000,0xffff },
 	{"sf2ua",   CPS_B_17, 2,2,2, 0x0000,0xffff,0x0000,0xffff },
 	{"sf2ub",   CPS_B_17, 2,2,2, 0x0000,0xffff,0x0000,0xffff },
 	{"sf2ud",   CPS_B_05, 2,2,2, 0x0000,0xffff,0x0000,0xffff },
@@ -338,8 +338,8 @@ static struct CPS1config cps1_config_table[]=
 	{"varthu",  CPS_B_04, 0,0,0, 0x0000,0xffff,0x0c00,0x0fff },	/* CPSB test has been patched out (60=0008) */
 	{"varthj",  BATTRY_5, 0,0,0, 0x0000,0xffff,0x0c00,0x0fff },	/* CPSB test has been patched out (72=0001) */
 	{"cworld2j",BATTRY_6, 0,0,0, 0x0000,0xffff,0x0000,0xffff },	/* The 0x76 priority values are incorrect values */
-	{"wof",     CPS_B_01, 0,0,0, 0x0000,0xffff,0x0000,0xffff },	/* bootleg? */
-	{"wofa",    CPS_B_01, 0,0,0, 0x0000,0xffff,0x0000,0xffff },	/* bootleg? */
+	{"wof",     NOBATTRY, 0,0,0, 0x0000,0xffff,0x0000,0xffff },	/* bootleg? */
+	{"wofa",    NOBATTRY, 0,0,0, 0x0000,0xffff,0x0000,0xffff },	/* bootleg? */
 	{"wofu",    QSOUND_1, 0,0,0, 0x0000,0xffff,0x0000,0xffff },
 	{"wofj",    QSOUND_1, 0,0,0, 0x0000,0xffff,0x0000,0xffff },
 	{"dino",    QSOUND_2, 0,0,0, 0x0000,0xffff,0x0000,0xffff },	/* layer enable never used */
@@ -358,13 +358,13 @@ static struct CPS1config cps1_config_table[]=
 	{"qad",     BATTRY_7, 0,0,0, 0x0000,0xffff,0x0000,0xffff },	/* TODO: layer enable */
 	{"qadj",    NOBATTRY, 0,0,0, 0x0000,0xffff,0x0000,0xffff },
 	{"qtono2",  NOBATTRY, 0,0,0, 0x0000,0xffff,0x0000,0xffff },
-	{"megaman", CPS_B_01, 0,0,0, 0x0000,0xffff,0x0000,0xffff },
-	{"rockmanj",CPS_B_01, 0,0,0, 0x0000,0xffff,0x0000,0xffff },
-	{"pnickj",  CPS_B_01, 0,0,0, 0x0000,0xffff,0x0000,0xffff },
-	{"pang3",   CPS_B_01, 0,0,0, 0x0000,0xffff,0x0000,0xffff, 5 },	/* EEPROM port is among the CPS registers */
-	{"pang3j",  CPS_B_01, 0,0,0, 0x0000,0xffff,0x0000,0xffff, 5 },	/* EEPROM port is among the CPS registers */
+	{"megaman", NOBATTRY, 0,0,0, 0x0000,0xffff,0x0000,0xffff },
+	{"rockmanj",NOBATTRY, 0,0,0, 0x0000,0xffff,0x0000,0xffff },
+	{"pnickj",  NOBATTRY, 0,0,0, 0x0000,0xffff,0x0000,0xffff },
+	{"pang3",   NOBATTRY, 0,0,0, 0x0000,0xffff,0x0000,0xffff, 5 },	/* EEPROM port is among the CPS registers */
+	{"pang3j",  NOBATTRY, 0,0,0, 0x0000,0xffff,0x0000,0xffff, 5 },	/* EEPROM port is among the CPS registers */
 	#ifdef MESS
-	{"sfzch",   CPS_B_01, 0,0,0, 0x0000,0xffff,0x0000,0xffff },
+	{"sfzch",   NOBATTRY, 0,0,0, 0x0000,0xffff,0x0000,0xffff },
 	#endif
 
     /* CPS2 games */
@@ -532,17 +532,11 @@ WRITE16_HANDLER( cps1_output_w )
 	/* To mark scanlines for raster effects */
 	if(offset == 0x52/2)
 	{
-		if (scancalls > 0)
-			scanline2 = (data & 0x1ff);
-		else
-			scanline2 = (data & 0x1ff) + 12;/* add 12 to account for first 12 scanlines */
-	}										/* which are not shown on screen.  Not sure */
-	if(offset == 0x50/2)					/* if it's absolutely the correct behaviour */
-	{										/* but it fixes the underground part of the */
-		if (scancalls > 0)					/* Manhattan stage in mshvsf and xmvsf      */
-			scanline1 = (data & 0x1ff);
-		else
-			scanline1 = (data & 0x1ff) + 12;
+		scanline2 = (data & 0x1ff);
+	}
+	if(offset == 0x50/2)
+	{
+		scanline1 = (data & 0x1ff);
 	}
 
 
@@ -645,10 +639,9 @@ data16_t *cps2_objram1,*cps2_objram2;
 data16_t *cps2_output;
 
 size_t cps2_output_size;
-//ks	static data16_t *cps2_buffered_obj;
+static data16_t *cps2_buffered_obj;
 static int pri_ctrl;				/* Sprite layer priorities */
 static int cps2_objram_bank;
-static int cps2_objram_bank_lagged;
 static int cps2_last_sprite_offset;     /* Offset of the last sprite */
 
 #define CPS2_OBJ_BASE	0x00	/* Unknown (not base address of objects). Could be bass address of bank used when object swap bit set? */
@@ -1121,17 +1114,12 @@ VIDEO_START( cps )
 		return 1;
     memset(cps1_buffered_obj, 0x00, cps1_obj_size);
 
-//ks s
-/*
     if (cps_version==2) {
-	cps2_buffered_obj = auto_malloc (2*cps2_obj_size);
+	cps2_buffered_obj = auto_malloc (cps2_obj_size);
 	if (!cps2_buffered_obj)
 	    return 1;
-	memset(cps2_buffered_obj, 0x00, 2*cps2_obj_size);
+	memset(cps2_buffered_obj, 0x00, cps2_obj_size);
     }
-*/
-//ks e
-
 
 	memset(cps1_gfxram, 0, cps1_gfxram_size);   /* Clear GFX RAM */
 	memset(cps1_output, 0, cps1_output_size);   /* Clear output ports */
@@ -1484,7 +1472,7 @@ static data16_t *cps2_objbase(void)
 	int baseptr;
 	baseptr = 0x7000;
 
-	if (cps2_objram_bank_lagged & 1) baseptr ^= 0x0080;
+	if (cps2_objram_bank & 1) baseptr ^= 0x0080;
 
 //usrintf_showmessage("%04x %d",cps2_port(CPS2_OBJ_BASE),cps2_objram_bank&1);
 
@@ -1498,7 +1486,7 @@ static data16_t *cps2_objbase(void)
 void cps2_find_last_sprite(void)    /* Find the offset of last sprite */
 {
 	int offset=0;
-	data16_t *base=cps2_objbase();
+	data16_t *base=cps2_buffered_obj;
 
 	/* Locate the end of table marker */
 	while (offset < cps2_obj_size/2)
@@ -1539,8 +1527,9 @@ void cps2_render_sprites(struct mame_bitmap *bitmap,const struct rectangle *clip
 }
 
 	int i;
-	data16_t *base=cps2_objbase();
+	data16_t *base=cps2_buffered_obj;
 	int xoffs = 64-cps2_port(CPS2_OBJ_XOFFS);
+	int yoffs = 16-cps2_port(CPS2_OBJ_YOFFS);
 
 #ifdef MAME_DEBUG
 	if (keyboard_pressed(KEYCODE_Z) && keyboard_pressed(KEYCODE_R))
@@ -1583,7 +1572,7 @@ void cps2_render_sprites(struct mame_bitmap *bitmap,const struct rectangle *clip
 						for (nxs=0; nxs<nx; nxs++)
 						{
 							sx = (x+nxs*16+xoffs) & 0x3ff;
-							sy = (y+nys*16) & 0x3ff;
+							sy = (y+nys*16+yoffs) & 0x3ff;
 							DRAWSPRITE(
 									code+(nx-1)-nxs+0x10*(ny-1-nys),
 									(col&0x1f) + palette_basecolor[0],
@@ -1599,7 +1588,7 @@ void cps2_render_sprites(struct mame_bitmap *bitmap,const struct rectangle *clip
 						for (nxs=0; nxs<nx; nxs++)
 						{
 							sx = (x+nxs*16+xoffs) & 0x3ff;
-							sy = (y+nys*16) & 0x3ff;
+							sy = (y+nys*16+yoffs) & 0x3ff;
 
 							DRAWSPRITE(
 									code+nxs+0x10*(ny-1-nys),
@@ -1619,7 +1608,7 @@ void cps2_render_sprites(struct mame_bitmap *bitmap,const struct rectangle *clip
 						for (nxs=0; nxs<nx; nxs++)
 						{
 							sx = (x+nxs*16+xoffs) & 0x3ff;
-							sy = (y+nys*16) & 0x3ff;
+							sy = (y+nys*16+yoffs) & 0x3ff;
 
 							DRAWSPRITE(
 									code+(nx-1)-nxs+0x10*nys,
@@ -1636,7 +1625,7 @@ void cps2_render_sprites(struct mame_bitmap *bitmap,const struct rectangle *clip
 						for (nxs=0; nxs<nx; nxs++)
 						{
 							sx = (x+nxs*16+xoffs) & 0x3ff;
-							sy = (y+nys*16) & 0x3ff;
+							sy = (y+nys*16+yoffs) & 0x3ff;
 
 							DRAWSPRITE(
 //										code+nxs+0x10*nys,
@@ -1656,7 +1645,7 @@ void cps2_render_sprites(struct mame_bitmap *bitmap,const struct rectangle *clip
 					code,
 					(col&0x1f) + palette_basecolor[0],
 					colour&0x20,colour&0x40,
-					(x+xoffs) & 0x3ff,y & 0x3ff);
+					(x+xoffs) & 0x3ff,(y+yoffs) & 0x3ff);
 		}
 	}
 }
@@ -1907,16 +1896,20 @@ VIDEO_EOF( cps1 )
 	/* Get video memory base registers */
 	cps1_get_video_base();
 
-//ks s
-	if (cps_version == 2)
-	{
-		pri_ctrl = cps2_port(CPS2_OBJ_PRI); 		/* delay sprite priorities also */
-		cps2_objram_bank_lagged = cps2_objram_bank; 	/* delay object bank by 1 frame */
-	}
-	else
+	if (cps_version == 1)
 	{
 		/* CPS1 sprites have to be delayed one frame */
 		memcpy(cps1_buffered_obj, cps1_obj, cps1_obj_size);
 	}
-//ks e
+}
+
+void cps2_set_sprite_priorities(void)
+{
+	pri_ctrl = cps2_port(CPS2_OBJ_PRI);
+}
+
+void cps2_objram_latch(void)
+{
+	cps2_set_sprite_priorities();
+	memcpy(cps2_buffered_obj, cps2_objbase(), cps2_obj_size);
 }

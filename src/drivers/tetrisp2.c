@@ -1592,11 +1592,11 @@ ROM_END
 
 ***************************************************************************/
 
-GAME( 1997, tetrisp2, 0,        tetrisp2, tetrisp2, 0, ROT0, "Jaleco / The Tetris Company", "Tetris Plus 2 (World?)" )
-GAME( 1997, teplus2j, tetrisp2, tetrisp2, teplus2j, 0, ROT0, "Jaleco / The Tetris Company", "Tetris Plus 2 (Japan)" )
+GAME( 1997, tetrisp2, 0,        tetrisp2, tetrisp2, 0,       ROT0,   "Jaleco / The Tetris Company", "Tetris Plus 2 (World?)" )
+GAME( 1997, teplus2j, tetrisp2, tetrisp2, teplus2j, 0,       ROT0,   "Jaleco / The Tetris Company", "Tetris Plus 2 (Japan)" )
 
-GAME( 1999,  rockn1, 0, rockn1,  rockn1,  rockn1, ROT270, "Jaleco", "Rock'n Tread 1 (Japan)" )
-GAME( 1999,  rockn2, 0, rockn2,  rockn1,  rockn2, ROT270, "Jaleco", "Rock'n Tread 2 (Japan)" )
-GAMEX(1999, rocknms, 0,rocknms, rocknms, rocknms, ROT270, "Jaleco", "Rock'n MegaSession (Japan)", GAME_IMPERFECT_GRAPHICS )
-GAME( 1999,  rockn3, 0, rockn2,  rockn1,  rockn3, ROT270, "Jaleco", "Rock'n 3 (Japan)" )
-GAME( 2000,  rockn4, 0, rockn2,  rockn1,  rockn3, ROT270, "Jaleco (PCCWJ)", "Rock'n 4 (Japan prototype version)" )
+GAME( 1999, rockn1,   0,        rockn1,   rockn1,   rockn1,  ROT270, "Jaleco", "Rock'n Tread 1 (Japan)" )
+GAME( 1999, rockn2,   0,        rockn2,   rockn1,   rockn2,  ROT270, "Jaleco", "Rock'n Tread 2 (Japan)" )
+GAMEX(1999, rocknms,  0,        rocknms,  rocknms,  rocknms, ROT270, "Jaleco", "Rock'n MegaSession (Japan)", GAME_IMPERFECT_GRAPHICS )
+GAME( 1999, rockn3,   0,        rockn2,   rockn1,   rockn3,  ROT270, "Jaleco", "Rock'n 3 (Japan)" )
+GAME( 2000, rockn4,   0,        rockn2,   rockn1,   rockn3,  ROT270, "Jaleco (PCCWJ)", "Rock'n 4 (Japan prototype version)" )

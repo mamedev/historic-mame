@@ -381,6 +381,9 @@ int BSMT2000_num(const struct MachineSound *msound) { return ((struct BSMT2000in
 int YMF278B_clock(const struct MachineSound *msound) { return ((struct YMF278B_interface*)msound->sound_interface)->clock[0]; }
 int YMF278B_num(const struct MachineSound *msound) { return ((struct YMF278B_interface*)msound->sound_interface)->num; }
 #endif
+#if (HAS_X1_010)
+int seta_clock(const struct MachineSound *msound) { return ((struct x1_010_interface*)msound->sound_interface)->clock; }
+#endif
 
 #ifdef MESS
 #if (HAS_BEEP)
@@ -1028,6 +1031,18 @@ struct snd_interface sndintf[] =
 		0,
 		gaelco_gae1_sh_start,
 		gaelcosnd_sh_stop,
+		0,
+		0
+	},
+#endif
+#if (HAS_X1_010)
+	{
+		SOUND_X1_010,
+		"X1-010",
+		0,
+		seta_clock,
+		seta_sh_start,
+		seta_sh_stop,
 		0,
 		0
 	},

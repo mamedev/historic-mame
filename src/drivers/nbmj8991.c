@@ -373,12 +373,12 @@ static READ_HANDLER( io_pstadium_r )
 
 	switch (offset & 0xff00)
 	{
-		case	0x9000:	return nb1413m3_inputport0_r();
-		case	0xa000:	return nb1413m3_inputport1_r();
-		case	0xb000:	return nb1413m3_inputport2_r();
-		case	0xc000:	return nb1413m3_inputport3_r();
-		case	0xf000:	return nb1413m3_dipsw1_r();
-		case	0xf800:	return nb1413m3_dipsw2_r();
+		case	0x9000:	return nb1413m3_inputport0_r(0);
+		case	0xa000:	return nb1413m3_inputport1_r(0);
+		case	0xb000:	return nb1413m3_inputport2_r(0);
+		case	0xc000:	return nb1413m3_inputport3_r(0);
+		case	0xf000:	return nb1413m3_dipsw1_r(0);
+		case	0xf800:	return nb1413m3_dipsw2_r(0);
 		default:	return 0xff;
 	}
 }
@@ -408,11 +408,11 @@ static WRITE_HANDLER( io_pstadium_w )
 		case	0x5000:	pstadium_gfxflag2_w(data); break;
 		case	0x6000:	pstadium_romsel_w(data); break;
 		case	0x7000:	pstadium_paltblnum_w(data); break;
-		case	0x8000:	pstadium_sound_w(0, data); break;
-		case	0xa000:	nb1413m3_inputportsel_w(data); break;
+		case	0x8000:	pstadium_sound_w(0,data); break;
+		case	0xa000:	nb1413m3_inputportsel_w(0,data); break;
 		case	0xb000:	break;
 		case	0xd000:	break;
-		case	0xf000:	nb1413m3_outcoin_w(data); break;
+		case	0xf000:	nb1413m3_outcoin_w(0,data); break;
 	}
 }
 
@@ -442,7 +442,7 @@ static WRITE_HANDLER( io_av2mj1bb_w )
 		case	0x6000:	pstadium_romsel_w(data); break;
 		case	0x7000:	pstadium_paltblnum_w(data); break;
 		case	0x8000:	pstadium_sound_w(0, data); break;
-		case	0xa000:	nb1413m3_inputportsel_w(data); break;
+		case	0xa000:	nb1413m3_inputportsel_w(0,data); break;
 		case	0xb000:	nb1413m3_vcrctrl_w(data); break;
 		case	0xd000:	break;
 		case	0xf000:	break;
@@ -461,12 +461,12 @@ static READ_HANDLER( io_galkoku_r )
 
 	switch (offset & 0xff00)
 	{
-		case	0x9000:	return nb1413m3_inputport0_r();
-		case	0xa000:	return nb1413m3_inputport1_r();
-		case	0xb000:	return nb1413m3_inputport2_r();
-		case	0xc000:	return nb1413m3_inputport3_r();
-		case	0xf000:	return nb1413m3_dipsw1_r();
-		case	0xf100:	return nb1413m3_dipsw2_r();
+		case	0x9000:	return nb1413m3_inputport0_r(0);
+		case	0xa000:	return nb1413m3_inputport1_r(0);
+		case	0xb000:	return nb1413m3_inputport2_r(0);
+		case	0xc000:	return nb1413m3_inputport3_r(0);
+		case	0xf000:	return nb1413m3_dipsw1_r(0);
+		case	0xf100:	return nb1413m3_dipsw2_r(0);
 		default:	return 0xff;
 	}
 }
@@ -498,16 +498,16 @@ static WRITE_HANDLER( io_galkoku_w )
 		case	0x7000:	pstadium_paltblnum_w(data); break;
 		case	0x8000:	YM3812_control_port_0_w(0, data); break;
 		case	0x8100:	YM3812_write_port_0_w(0, data); break;
-		case	0xa000:	nb1413m3_inputportsel_w(data); break;
-		case	0xb000:	nb1413m3_sndrombank1_w(data); break;
-		case	0xc000:	nb1413m3_nmi_clock_w(data); break;
+		case	0xa000:	nb1413m3_inputportsel_w(0,data); break;
+		case	0xb000:	nb1413m3_sndrombank1_w(0,data); break;
+		case	0xc000:	nb1413m3_nmi_clock_w(0,data); break;
 #if SIGNED_DAC
 		case	0xd000:	DAC_0_signed_data_w(0, data); break;
 #else
 		case	0xd000:	DAC_0_data_w(0, data); break;
 #endif
 		case	0xe000:	break;
-		case	0xf000:	nb1413m3_outcoin_w(data); break;
+		case	0xf000:	nb1413m3_outcoin_w(0,data); break;
 	}
 }
 
@@ -524,12 +524,12 @@ static READ_HANDLER( io_hyouban_r )
 	switch (offset & 0xff00)
 	{
 		case	0x8100:	return AY8910_read_port_0_r(0);
-		case	0x9000:	return nb1413m3_inputport0_r();
-		case	0xa000:	return nb1413m3_inputport1_r();
-		case	0xb000:	return nb1413m3_inputport2_r();
-		case	0xc000:	return nb1413m3_inputport3_r();
-		case	0xf000:	return nb1413m3_dipsw1_r();
-		case	0xf100:	return nb1413m3_dipsw2_r();
+		case	0x9000:	return nb1413m3_inputport0_r(0);
+		case	0xa000:	return nb1413m3_inputport1_r(0);
+		case	0xb000:	return nb1413m3_inputport2_r(0);
+		case	0xc000:	return nb1413m3_inputport3_r(0);
+		case	0xf000:	return nb1413m3_dipsw1_r(0);
+		case	0xf100:	return nb1413m3_dipsw2_r(0);
 		default:	return 0xff;
 	}
 }
@@ -561,16 +561,16 @@ static WRITE_HANDLER( io_hyouban_w )
 		case	0x7000:	pstadium_paltblnum_w(data); break;
 		case	0x8200:	AY8910_write_port_0_w(0, data); break;
 		case	0x8300:	AY8910_control_port_0_w(0, data); break;
-		case	0xa000:	nb1413m3_inputportsel_w(data); break;
-		case	0xb000:	nb1413m3_sndrombank1_w(data); break;
-		case	0xc000:	nb1413m3_nmi_clock_w(data); break;
+		case	0xa000:	nb1413m3_inputportsel_w(0,data); break;
+		case	0xb000:	nb1413m3_sndrombank1_w(0,data); break;
+		case	0xc000:	nb1413m3_nmi_clock_w(0,data); break;
 #if SIGNED_DAC
 		case	0xd000:	DAC_0_signed_data_w(0, data); break;
 #else
 		case	0xd000:	DAC_0_data_w(0, data); break;
 #endif
 		case	0xe000:	break;
-		case	0xf000:	nb1413m3_outcoin_w(data); break;
+		case	0xf000:	nb1413m3_outcoin_w(0,data); break;
 	}
 }
 
@@ -626,9 +626,9 @@ INPUT_PORTS_START( pstadium )
 	PORT_DIPNAME( 0x10, 0x10, "Game Sounds" )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x40, 0x40, "Character Display Test" )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -637,7 +637,30 @@ INPUT_PORTS_START( pstadium )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START	/* (1) DIPSW-B */
-	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START	/* (2) PORT 0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )		// DRAW BUSY
@@ -672,9 +695,9 @@ INPUT_PORTS_START( triplew1 )
 	PORT_DIPNAME( 0x10, 0x10, "Game Sounds" )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x40, 0x40, "Character Display Test" )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -683,7 +706,30 @@ INPUT_PORTS_START( triplew1 )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START	/* (1) DIPSW-B */
-	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START	/* (2) PORT 0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )		// DRAW BUSY
@@ -718,9 +764,9 @@ INPUT_PORTS_START( ntopstar )
 	PORT_DIPNAME( 0x10, 0x10, "Game Sounds" )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x40, 0x40, "Character Display Test" )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -729,7 +775,30 @@ INPUT_PORTS_START( ntopstar )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START	/* (1) DIPSW-B */
-	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START	/* (2) PORT 0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )		// DRAW BUSY
@@ -764,9 +833,9 @@ INPUT_PORTS_START( mjlstory )
 	PORT_DIPNAME( 0x10, 0x10, "Game Sounds" )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x40, 0x40, "Character Display Test" )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -775,7 +844,30 @@ INPUT_PORTS_START( mjlstory )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START	/* (1) DIPSW-B */
-	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START	/* (2) PORT 0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )		// DRAW BUSY
@@ -810,9 +902,9 @@ INPUT_PORTS_START( vanilla )
 	PORT_DIPNAME( 0x10, 0x10, "Game Sounds" )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x40, 0x40, "Character Display Test" )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -821,7 +913,30 @@ INPUT_PORTS_START( vanilla )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START	/* (1) DIPSW-B */
-	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START	/* (2) PORT 0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )		// DRAW BUSY
@@ -871,9 +986,9 @@ INPUT_PORTS_START( finalbny )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START	/* (1) DIPSW-B */
-	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x02, "Graphic ROM Test" )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -927,9 +1042,9 @@ INPUT_PORTS_START( qmhayaku )
 	PORT_DIPNAME( 0x10, 0x10, "Game Sounds" )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x40, 0x40, "Character Display Test" )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -938,7 +1053,30 @@ INPUT_PORTS_START( qmhayaku )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START	/* (1) DIPSW-B */
-	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START	/* (2) PORT 0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )		// DRAW BUSY
@@ -974,14 +1112,41 @@ INPUT_PORTS_START( galkoku )
 	PORT_DIPNAME( 0x10, 0x10, "Character Display Test" )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START	/* (1) DIPSW-B */
-	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START	/* (2) PORT 0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )		// DRAW BUSY
@@ -1026,9 +1191,9 @@ INPUT_PORTS_START( hyouban )
 	PORT_DIPNAME( 0x40, 0x40, "DIPSW 1-7" )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START	/* (1) DIPSW-B */
 	PORT_DIPNAME( 0x01, 0x01, "DIPSW 2-1" )
@@ -1093,9 +1258,9 @@ INPUT_PORTS_START( galkaika )
 	PORT_DIPNAME( 0x10, 0x10, "Character Display Test" )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x40, 0x40, "DIPSW 1-7" )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -1166,9 +1331,9 @@ INPUT_PORTS_START( tokyogal )
 	PORT_DIPNAME( 0x10, 0x10, "Character Display Test" )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x40, 0x40, "DIPSW 1-7" )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -1250,9 +1415,9 @@ INPUT_PORTS_START( tokimbsj )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START	/* (1) DIPSW-B */
-	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x02, "Character Display Test" )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -1312,9 +1477,9 @@ INPUT_PORTS_START( mcontest )
 	PORT_DIPNAME( 0x10, 0x10, "Character Display Test" )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x40, 0x40, "DIPSW 1-7" )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -1382,9 +1547,9 @@ INPUT_PORTS_START( uchuuai )
 	PORT_DIPNAME( 0x08, 0x08, "DIPSW 1-4" )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -1452,8 +1617,12 @@ INPUT_PORTS_START( av2mj1bb )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_2C ) )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0xc0, 0xc0, "Video Playback Time" )
 	PORT_DIPSETTING(    0xc0, "Type-A" )
 	PORT_DIPSETTING(    0x80, "Type-B" )
@@ -1466,14 +1635,24 @@ INPUT_PORTS_START( av2mj1bb )
 	PORT_DIPSETTING(    0x02, "Once per 10min." )
 	PORT_DIPSETTING(    0x01, "Once per 5min." )
 	PORT_DIPSETTING(    0x00, "Normal" )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x08, 0x08, "Graphic ROM Test" )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START	/* (2) PORT 0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )		// DRAW BUSY
@@ -1509,8 +1688,12 @@ INPUT_PORTS_START( av2mj2rg )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_2C ) )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0xc0, 0xc0, "Video Playback Time" )
 	PORT_DIPSETTING(    0xc0, "Type-A" )
 	PORT_DIPSETTING(    0x80, "Type-B" )
@@ -1523,14 +1706,24 @@ INPUT_PORTS_START( av2mj2rg )
 	PORT_DIPSETTING(    0x02, "Once per 10min." )
 	PORT_DIPSETTING(    0x01, "Once per 5min." )
 	PORT_DIPSETTING(    0x00, "Normal" )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x08, 0x08, "Graphic ROM Test" )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START	/* (2) PORT 0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )		// DRAW BUSY
@@ -2266,20 +2459,20 @@ ROM_START( av2mj2rg )
 ROM_END
 
 
-GAME( 1990, pstadium, 0,        pstadium, pstadium, pstadium, ROT0, "Nichibutsu", "Mahjong Panic Stadium (Japan)" )
-GAME( 1989, triplew1, 0,        triplew1, triplew1, triplew1, ROT0, "Nichibutsu", "Mahjong Triple Wars (Japan)" )
-GAME( 1990, triplew2, 0,        triplew2, triplew1, triplew2, ROT0, "Nichibutsu", "Mahjong Triple Wars 2 (Japan)" )
-GAME( 1990, ntopstar, 0,        ntopstar, ntopstar, ntopstar, ROT0, "Nichibutsu", "Mahjong Nerae! Top Star (Japan)" )
-GAME( 1991, mjlstory, 0,        mjlstory, mjlstory, mjlstory, ROT0, "Nichibutsu", "Mahjong Jikken Love Story (Japan)" )
-GAME( 1991, vanilla,  0,        vanilla,  vanilla,  vanilla,  ROT0, "Nichibutsu", "Mahjong Vanilla Syndrome (Japan)" )
-GAME( 1991, finalbny,  vanilla, finalbny, finalbny, finalbny, ROT0, "Nichibutsu", "Mahjong Final Bunny [BET] (Japan)" )
-GAME( 1991, qmhayaku, 0,        qmhayaku, qmhayaku, qmhayaku, ROT0, "Nichibutsu", "Quiz-Mahjong Hayaku Yatteyo! (Japan)" )
-GAME( 1989, galkoku,  0,        galkoku,  galkoku,  galkoku,  ROT0, "Nichibutsu/T.R.TEC", "Mahjong Gal no Kokuhaku (Japan)" )
-GAME( 1989, hyouban,  galkoku,  hyouban,  hyouban,  hyouban,  ROT0, "Nichibutsu/T.R.TEC", "Mahjong Hyouban Musume [BET] (Japan)" )
-GAME( 1989, galkaika, 0,        galkaika, galkaika, galkaika, ROT0, "Nichibutsu/T.R.TEC", "Mahjong Gal no Kaika (Japan)" )
-GAME( 1989, tokyogal, 0,        tokyogal, tokyogal, tokyogal, ROT0, "Nichibutsu", "Tokyo Gal Zukan (Japan)" )
-GAME( 1989, tokimbsj, tokyogal, tokimbsj, tokimbsj, tokimbsj, ROT0, "Nichibutsu", "Tokimeki Bishoujo [BET] (Japan)" )
-GAME( 1989, mcontest, 0,        mcontest, mcontest, mcontest, ROT0, "Nichibutsu", "Miss Mahjong Contest (Japan)" )
-GAME( 1989, uchuuai,  0,        uchuuai,  uchuuai,  uchuuai,  ROT0, "Nichibutsu", "Mahjong Uchuu yori Ai wo komete (Japan)" )
-GAMEX(1991, av2mj1bb, 0,        av2mj1bb, av2mj1bb, av2mj1bb, ROT0, "MIKI SYOUJI/AV JAPAN", "AV2Mahjong No.1 Bay Bridge no Seijo (Japan)", GAME_NOT_WORKING )
-GAMEX(1991, av2mj2rg, 0,        av2mj2rg, av2mj2rg, av2mj2rg, ROT0, "MIKI SYOUJI/AV JAPAN", "AV2Mahjong No.2 Rouge no Kaori (Japan)", GAME_NOT_WORKING )
+GAME( 1990, pstadium, 0,        pstadium, pstadium, pstadium, ROT180, "Nichibutsu", "Mahjong Panic Stadium (Japan)" )
+GAME( 1989, triplew1, 0,        triplew1, triplew1, triplew1, ROT180, "Nichibutsu", "Mahjong Triple Wars (Japan)" )
+GAME( 1990, triplew2, 0,        triplew2, triplew1, triplew2, ROT180, "Nichibutsu", "Mahjong Triple Wars 2 (Japan)" )
+GAME( 1990, ntopstar, 0,        ntopstar, ntopstar, ntopstar, ROT180, "Nichibutsu", "Mahjong Nerae! Top Star (Japan)" )
+GAME( 1991, mjlstory, 0,        mjlstory, mjlstory, mjlstory, ROT180, "Nichibutsu", "Mahjong Jikken Love Story (Japan)" )
+GAME( 1991, vanilla,  0,        vanilla,  vanilla,  vanilla,  ROT180, "Nichibutsu", "Mahjong Vanilla Syndrome (Japan)" )
+GAME( 1991, finalbny,  vanilla, finalbny, finalbny, finalbny, ROT180, "Nichibutsu", "Mahjong Final Bunny [BET] (Japan)" )
+GAME( 1991, qmhayaku, 0,        qmhayaku, qmhayaku, qmhayaku, ROT180, "Nichibutsu", "Quiz-Mahjong Hayaku Yatteyo! (Japan)" )
+GAME( 1989, galkoku,  0,        galkoku,  galkoku,  galkoku,  ROT180, "Nichibutsu/T.R.TEC", "Mahjong Gal no Kokuhaku (Japan)" )
+GAME( 1989, hyouban,  galkoku,  hyouban,  hyouban,  hyouban,  ROT180, "Nichibutsu/T.R.TEC", "Mahjong Hyouban Musume [BET] (Japan)" )
+GAME( 1989, galkaika, 0,        galkaika, galkaika, galkaika, ROT180, "Nichibutsu/T.R.TEC", "Mahjong Gal no Kaika (Japan)" )
+GAME( 1989, tokyogal, 0,        tokyogal, tokyogal, tokyogal, ROT180, "Nichibutsu", "Tokyo Gal Zukan (Japan)" )
+GAME( 1989, tokimbsj, tokyogal, tokimbsj, tokimbsj, tokimbsj, ROT180, "Nichibutsu", "Tokimeki Bishoujo [BET] (Japan)" )
+GAME( 1989, mcontest, 0,        mcontest, mcontest, mcontest, ROT180, "Nichibutsu", "Miss Mahjong Contest (Japan)" )
+GAME( 1989, uchuuai,  0,        uchuuai,  uchuuai,  uchuuai,  ROT180, "Nichibutsu", "Mahjong Uchuu yori Ai wo komete (Japan)" )
+GAMEX(1991, av2mj1bb, 0,        av2mj1bb, av2mj1bb, av2mj1bb, ROT0,   "MIKI SYOUJI/AV JAPAN", "AV2Mahjong No.1 Bay Bridge no Seijo (Japan)", GAME_NOT_WORKING )
+GAMEX(1991, av2mj2rg, 0,        av2mj2rg, av2mj2rg, av2mj2rg, ROT0,   "MIKI SYOUJI/AV JAPAN", "AV2Mahjong No.2 Rouge no Kaori (Japan)", GAME_NOT_WORKING )

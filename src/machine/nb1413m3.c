@@ -19,6 +19,7 @@ Memo:
 
 int nb1413m3_type;
 int nb1413m3_int_count;
+int nb1413m3_sndromregion;
 int nb1413m3_sndrombank1;
 int nb1413m3_sndrombank2;
 int nb1413m3_busyctr;
@@ -41,6 +42,7 @@ MACHINE_INIT( nb1413m3 )
 	nb1413m3_nmi_clock = 0;
 	nb1413m3_nmi_enable = 0;
 	nb1413m3_counter = 0;
+	nb1413m3_sndromregion = REGION_SOUND1;
 	nb1413m3_sndrombank1 = 0;
 	nb1413m3_sndrombank2 = 0;
 	nb1413m3_busyctr = 0;
@@ -52,7 +54,7 @@ MACHINE_INIT( nb1413m3 )
 	nb1413m3_outcoin_flag = 1;
 }
 
-void nb1413m3_nmi_clock_w(int data)
+WRITE_HANDLER( nb1413m3_nmi_clock_w )
 {
 	nb1413m3_nmi_clock = ((data & 0xf0) >> 4);
 }
@@ -87,10 +89,9 @@ NVRAM_HANDLER( nb1413m3 )
 
 int nb1413m3_sndrom_r(int offset)
 {
-	unsigned char *SNDROM = memory_region(REGION_SOUND1);
 	int rombank;
-	int ret;
 
+//usrintf_showmessage("%02x %02x",nb1413m3_sndrombank1,nb1413m3_sndrombank2);
 	switch (nb1413m3_type)
 	{
 		case	NB1413M3_IEMOTO:
@@ -98,22 +99,26 @@ int nb1413m3_sndrom_r(int offset)
 		case	NB1413M3_SEIHAM:
 		case	NB1413M3_OJOUSAN:
 		case	NB1413M3_MJSIKAKU:
-			rombank = ((nb1413m3_sndrombank2 << 1) + nb1413m3_sndrombank1);
+		case	NB1413M3_KORINAI:
+			rombank = (nb1413m3_sndrombank2 << 1) + (nb1413m3_sndrombank1 & 0x01);
 			break;
 		case	NB1413M3_HYHOO:
 		case	NB1413M3_HYHOO2:
 			rombank = (nb1413m3_sndrombank1 & 0x01);
 			break;
-		case	NB1413M3_APPAREL:
-		case	NB1413M3_SECOLOVE:
-		case	NB1413M3_CITYLOVE:
-		case	NB1413M3_HOUSEMNQ:
-		case	NB1413M3_HOUSEMN2:
-		case	NB1413M3_BIJOKKOY:
-		case	NB1413M3_BIJOKKOG:
-		case	NB1413M3_OTONANO:
-		case	NB1413M3_MJCAMERA:
-		case	NB1413M3_KAGUYA:
+		case	NB1413M3_APPAREL:	// no samples
+		case	NB1413M3_SECOLOVE:	// 0-1
+		case	NB1413M3_CITYLOVE:	// 0-1
+		case	NB1413M3_HOUSEMNQ:	// 0-1
+		case	NB1413M3_HOUSEMN2:	// 0-1
+		case	NB1413M3_ORANGEC:	// 0-1
+		case	NB1413M3_KAGUYA:	// 0-3
+		case	NB1413M3_BIJOKKOY:	// 0-7
+		case	NB1413M3_BIJOKKOG:	// 0-7
+		case	NB1413M3_OTONANO:	// 0-7
+		case	NB1413M3_MJCAMERA:	// 0 + 4-5 for protection
+		case	NB1413M3_IDHIMITU:	// 0 + 4-5 for protection
+		case	NB1413M3_KANATUEN:	// 0 + 6 for protection
 			rombank = nb1413m3_sndrombank1;
 			break;
 		case	NB1413M3_TAIWANMB:
@@ -130,7 +135,6 @@ int nb1413m3_sndrom_r(int offset)
 		case	NB1413M3_GIONBANA:
 		case	NB1413M3_MGMEN89:
 		case	NB1413M3_MJFOCUS:
-		case	NB1413M3_PEEPSHOW:
 		case	NB1413M3_GALKOKU:
 		case	NB1413M3_HYOUBAN:
 		case	NB1413M3_MJNANPAS:
@@ -144,24 +148,31 @@ int nb1413m3_sndrom_r(int offset)
 		case	NB1413M3_TOKYOGAL:
 		case	NB1413M3_MAIKO:
 		case	NB1413M3_HANAOJI:
+		case	NB1413M3_PAIRSTEN:
 		default:
 			rombank = (nb1413m3_sndrombank1 >> 1);
 			break;
 	}
 
-	ret = SNDROM[((0x08000 * rombank) + offset)];
+	offset += 0x08000 * rombank;
 
-	return ret;
+	if (offset < memory_region_length(nb1413m3_sndromregion))
+		return memory_region(nb1413m3_sndromregion)[offset];
+	else
+	{
+		usrintf_showmessage("read past sound ROM length (%05x)",offset);
+		return 0;
+	}
 }
 
-void nb1413m3_sndrombank1_w(int data)
+WRITE_HANDLER( nb1413m3_sndrombank1_w )
 {
 	// if (data & 0x02) coin counter ?
 	nb1413m3_nmi_enable = ((data & 0x20) >> 5);
 	nb1413m3_sndrombank1 = (((data & 0xc0) >> 5) | ((data & 0x10) >> 4));
 }
 
-void nb1413m3_sndrombank2_w(int data)
+WRITE_HANDLER( nb1413m3_sndrombank2_w )
 {
 	nb1413m3_sndrombank2 = (data & 0x03);
 }
@@ -188,12 +199,12 @@ void nb1413m3_gfxradr_h_w(int data)
 	nb1413m3_gfxradr_h = data;
 }
 
-void nb1413m3_inputportsel_w(int data)
+WRITE_HANDLER( nb1413m3_inputportsel_w )
 {
 	nb1413m3_inputport = data;
 }
 
-int nb1413m3_inputport0_r(void)
+READ_HANDLER( nb1413m3_inputport0_r )
 {
 	switch (nb1413m3_type)
 	{
@@ -209,7 +220,7 @@ int nb1413m3_inputport0_r(void)
 	}
 }
 
-int nb1413m3_inputport1_r(void)
+READ_HANDLER( nb1413m3_inputport1_r )
 {
 	switch (nb1413m3_type)
 	{
@@ -265,7 +276,7 @@ int nb1413m3_inputport1_r(void)
 	}
 }
 
-int nb1413m3_inputport2_r(void)
+READ_HANDLER( nb1413m3_inputport2_r )
 {
 	switch (nb1413m3_type)
 	{
@@ -321,7 +332,7 @@ int nb1413m3_inputport2_r(void)
 	}
 }
 
-int nb1413m3_inputport3_r(void)
+READ_HANDLER( nb1413m3_inputport3_r )
 {
 	switch (nb1413m3_type)
 	{
@@ -333,6 +344,8 @@ int nb1413m3_inputport3_r(void)
 		case	NB1413M3_SCANDALM:
 		case	NB1413M3_BANANADR:
 		case	NB1413M3_FINALBNY:
+case	NB1413M3_KORINAI:	// verify
+case	NB1413M3_PAIRSTEN:	// verify
 			return ((nb1413m3_outcoin_flag & 0x01) << 1);
 			break;
 		case	NB1413M3_MAIKO:
@@ -345,7 +358,7 @@ int nb1413m3_inputport3_r(void)
 	}
 }
 
-int nb1413m3_dipsw1_r(void)
+READ_HANDLER( nb1413m3_dipsw1_r )
 {
 	switch (nb1413m3_type)
 	{
@@ -355,6 +368,7 @@ int nb1413m3_dipsw1_r(void)
 		case	NB1413M3_OTONANO:
 		case	NB1413M3_MJCAMERA:
 		case	NB1413M3_KAGUYA:
+		case	NB1413M3_IDHIMITU:
 			return (((readinputport(0) & 0x0f) << 4) | (readinputport(1) & 0x0f));
 			break;
 		case	NB1413M3_SCANDAL:
@@ -388,7 +402,7 @@ int nb1413m3_dipsw1_r(void)
 	}
 }
 
-int nb1413m3_dipsw2_r(void)
+READ_HANDLER( nb1413m3_dipsw2_r )
 {
 	switch (nb1413m3_type)
 	{
@@ -398,6 +412,7 @@ int nb1413m3_dipsw2_r(void)
 		case	NB1413M3_OTONANO:
 		case	NB1413M3_MJCAMERA:
 		case	NB1413M3_KAGUYA:
+		case	NB1413M3_IDHIMITU:
 			return ((readinputport(0) & 0xf0) | ((readinputport(1) & 0xf0) >> 4));
 			break;
 		case	NB1413M3_SCANDAL:
@@ -441,7 +456,7 @@ int nb1413m3_dipsw3_h_r(void)
 	return ((readinputport(2) & 0x0f) >> 0);
 }
 
-void nb1413m3_outcoin_w(int data)
+WRITE_HANDLER( nb1413m3_outcoin_w )
 {
 	switch (nb1413m3_type)
 	{
@@ -454,6 +469,8 @@ void nb1413m3_outcoin_w(int data)
 		case	NB1413M3_BANANADR:
 		case	NB1413M3_HANAOJI:
 		case	NB1413M3_FINALBNY:
+case	NB1413M3_KORINAI:	// verify
+case	NB1413M3_PAIRSTEN:	// verify
 			if (data & 0x04) nb1413m3_outcoin_flag ^= 1;
 			else nb1413m3_outcoin_flag = 1;
 			break;

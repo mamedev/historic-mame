@@ -210,115 +210,118 @@ static void print_game_input(FILE* out, const struct GameDriver* game)
 
 	while ((input->type & ~IPF_MASK) != IPT_END)
 	{
-		switch (input->type & IPF_PLAYERMASK)
+		if ((input->type & ~IPF_MASK) != IPT_EXTENSION)		/* skip analog extension fields */
 		{
-			case IPF_PLAYER1:
-				if (nplayer<1) nplayer = 1;
-				break;
-			case IPF_PLAYER2:
-				if (nplayer<2) nplayer = 2;
-				break;
-			case IPF_PLAYER3:
-				if (nplayer<3) nplayer = 3;
-				break;
-			case IPF_PLAYER4:
-				if (nplayer<4) nplayer = 4;
-				break;
-		}
-		switch (input->type & ~IPF_MASK)
-		{
-			case IPT_JOYSTICK_UP:
-			case IPT_JOYSTICK_DOWN:
-			case IPT_JOYSTICK_LEFT:
-			case IPT_JOYSTICK_RIGHT:
-				if (input->type & IPF_2WAY)
-					control = "joy2way";
-				else if (input->type & IPF_4WAY)
-					control = "joy4way";
-				else
-					control = "joy8way";
-				break;
-			case IPT_JOYSTICKRIGHT_UP:
-			case IPT_JOYSTICKRIGHT_DOWN:
-			case IPT_JOYSTICKRIGHT_LEFT:
-			case IPT_JOYSTICKRIGHT_RIGHT:
-			case IPT_JOYSTICKLEFT_UP:
-			case IPT_JOYSTICKLEFT_DOWN:
-			case IPT_JOYSTICKLEFT_LEFT:
-			case IPT_JOYSTICKLEFT_RIGHT:
-				if (input->type & IPF_2WAY)
-					control = "doublejoy2way";
-				else if (input->type & IPF_4WAY)
-					control = "doublejoy4way";
-				else
-					control = "doublejoy8way";
-				break;
-			case IPT_BUTTON1:
-				if (nbutton<1) nbutton = 1;
-				break;
-			case IPT_BUTTON2:
-				if (nbutton<2) nbutton = 2;
-				break;
-			case IPT_BUTTON3:
-				if (nbutton<3) nbutton = 3;
-				break;
-			case IPT_BUTTON4:
-				if (nbutton<4) nbutton = 4;
-				break;
-			case IPT_BUTTON5:
-				if (nbutton<5) nbutton = 5;
-				break;
-			case IPT_BUTTON6:
-				if (nbutton<6) nbutton = 6;
-				break;
-			case IPT_BUTTON7:
-				if (nbutton<7) nbutton = 7;
-				break;
-			case IPT_BUTTON8:
-				if (nbutton<8) nbutton = 8;
-				break;
-			case IPT_BUTTON9:
-				if (nbutton<9) nbutton = 9;
-				break;
-			case IPT_BUTTON10:
-				if (nbutton<10) nbutton = 10;
-				break;
-			case IPT_PADDLE:
-				control = "paddle";
-				break;
-			case IPT_DIAL:
-				control = "dial";
-				break;
-			case IPT_TRACKBALL_X:
-			case IPT_TRACKBALL_Y:
-				control = "trackball";
-				break;
-			case IPT_AD_STICK_X:
-			case IPT_AD_STICK_Y:
-				control = "stick";
-				break;
-			case IPT_LIGHTGUN_X:
-			case IPT_LIGHTGUN_Y:
-				control = "lightgun";
-				break;
-			case IPT_COIN1:
-				if (ncoin < 1) ncoin = 1;
-				break;
-			case IPT_COIN2:
-				if (ncoin < 2) ncoin = 2;
-				break;
-			case IPT_COIN3:
-				if (ncoin < 3) ncoin = 3;
-				break;
-			case IPT_COIN4:
-				if (ncoin < 4) ncoin = 4;
-				break;
-			case IPT_SERVICE :
-				service = "yes";
-				break;
-			case IPT_TILT :
-				tilt = "yes";
-				break;
+			switch (input->type & IPF_PLAYERMASK)
+			{
+				case IPF_PLAYER1:
+					if (nplayer<1) nplayer = 1;
+					break;
+				case IPF_PLAYER2:
+					if (nplayer<2) nplayer = 2;
+					break;
+				case IPF_PLAYER3:
+					if (nplayer<3) nplayer = 3;
+					break;
+				case IPF_PLAYER4:
+					if (nplayer<4) nplayer = 4;
+					break;
+			}
+			switch (input->type & ~IPF_MASK)
+			{
+				case IPT_JOYSTICK_UP:
+				case IPT_JOYSTICK_DOWN:
+				case IPT_JOYSTICK_LEFT:
+				case IPT_JOYSTICK_RIGHT:
+					if (input->type & IPF_2WAY)
+						control = "joy2way";
+					else if (input->type & IPF_4WAY)
+						control = "joy4way";
+					else
+						control = "joy8way";
+					break;
+				case IPT_JOYSTICKRIGHT_UP:
+				case IPT_JOYSTICKRIGHT_DOWN:
+				case IPT_JOYSTICKRIGHT_LEFT:
+				case IPT_JOYSTICKRIGHT_RIGHT:
+				case IPT_JOYSTICKLEFT_UP:
+				case IPT_JOYSTICKLEFT_DOWN:
+				case IPT_JOYSTICKLEFT_LEFT:
+				case IPT_JOYSTICKLEFT_RIGHT:
+					if (input->type & IPF_2WAY)
+						control = "doublejoy2way";
+					else if (input->type & IPF_4WAY)
+						control = "doublejoy4way";
+					else
+						control = "doublejoy8way";
+					break;
+				case IPT_BUTTON1:
+					if (nbutton<1) nbutton = 1;
+					break;
+				case IPT_BUTTON2:
+					if (nbutton<2) nbutton = 2;
+					break;
+				case IPT_BUTTON3:
+					if (nbutton<3) nbutton = 3;
+					break;
+				case IPT_BUTTON4:
+					if (nbutton<4) nbutton = 4;
+					break;
+				case IPT_BUTTON5:
+					if (nbutton<5) nbutton = 5;
+					break;
+				case IPT_BUTTON6:
+					if (nbutton<6) nbutton = 6;
+					break;
+				case IPT_BUTTON7:
+					if (nbutton<7) nbutton = 7;
+					break;
+				case IPT_BUTTON8:
+					if (nbutton<8) nbutton = 8;
+					break;
+				case IPT_BUTTON9:
+					if (nbutton<9) nbutton = 9;
+					break;
+				case IPT_BUTTON10:
+					if (nbutton<10) nbutton = 10;
+					break;
+				case IPT_PADDLE:
+					control = "paddle";
+					break;
+				case IPT_DIAL:
+					control = "dial";
+					break;
+				case IPT_TRACKBALL_X:
+				case IPT_TRACKBALL_Y:
+					control = "trackball";
+					break;
+				case IPT_AD_STICK_X:
+				case IPT_AD_STICK_Y:
+					control = "stick";
+					break;
+				case IPT_LIGHTGUN_X:
+				case IPT_LIGHTGUN_Y:
+					control = "lightgun";
+					break;
+				case IPT_COIN1:
+					if (ncoin < 1) ncoin = 1;
+					break;
+				case IPT_COIN2:
+					if (ncoin < 2) ncoin = 2;
+					break;
+				case IPT_COIN3:
+					if (ncoin < 3) ncoin = 3;
+					break;
+				case IPT_COIN4:
+					if (ncoin < 4) ncoin = 4;
+					break;
+				case IPT_SERVICE :
+					service = "yes";
+					break;
+				case IPT_TILT :
+					tilt = "yes";
+					break;
+			}
 		}
 		++input;
 	}

@@ -19,13 +19,7 @@
 	Driver by David Haywood, Olivier Galibert and R. Belmont, based on the
 	"Modeler" emulator by Farfetch'd, R. Belmont, and Olivier Galibert.
 
-	why do rad* corrupt the ram based tile memory? (or can it select a bank?) *fixed bank select
-	figure out remaining palette issues, indirect modes etc. *done?
-	clipping registers for sprites (radr, f1en need this most) *partly done?
-	zooming *done
-	controls *some done, mainly analog ones need doing
-	add multi-32 games (v70 based)
-	tilemaps (inc. alpha blending, line zooming + scrolling etc.) *started preliminary
+	see notes in video hardware for what needs doing
 
 
 Stephh's notes (based on some tests) :
@@ -143,24 +137,9 @@ Stephh's notes (based on some tests) :
       * BUTTON3 : magic
 
 
+
+
  4a) 'spidey'
-
-  - default settings :
-
-      * 1 coin to start
-      * common coin slots
-      * Difficulty : 5/8
-      * Energy : 400
-      * 4 players cabinet
-
-  - buttons :
-
-      * BUTTON1 : attack
-      * BUTTON2 : jump
-      * You can use a "special attack" (which costs energy) by pressing BUTTON1 and BUTTON2
-
-
- 4b) 'spideyj'
 
   - default settings :
 
@@ -176,6 +155,21 @@ Stephh's notes (based on some tests) :
       * BUTTON2 : jump
       * You can use a "special attack" (which costs energy) by pressing BUTTON1 and BUTTON2
 
+4b) 'spideyj'
+
+  - default settings :
+
+      * 1 coin to start
+      * common coin slots
+      * Difficulty : 5/8
+      * Energy : 400
+      * 4 players cabinet
+
+  - buttons :
+
+      * BUTTON1 : attack
+      * BUTTON2 : jump
+      * You can use a "special attack" (which costs energy) by pressing BUTTON1 and BUTTON2
 
  5)  'arabfgt'
 
@@ -348,6 +342,7 @@ Stephh's notes (based on some tests) :
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "machine/eeprom.h"
+#include "machine/random.h"
 
 #define OSC_A	(32215900)	// System 32 master crystal is 32215900 Hz
 
@@ -358,11 +353,10 @@ static data16_t *system32_shared_ram;
 data16_t *system32_mixerregs;		// mixer registers
 static int s32_blo, s32_bhi;		// bank high and low values
 static int s32_f1_prot;			// port f1 is used to protect the sound program on some games
-static int s32_rand;
+//static int s32_rand;
 static data16_t *sys32_protram;
 static int tocab, fromcab;
 static data16_t *system32_workram;
-extern int system32_draw_bgs;
 data16_t *sys32_tilebank_external;
 
 /* Video Hardware */
@@ -371,6 +365,7 @@ data16_t *sys32_spriteram16;
 data16_t *sys32_txtilemap_ram;
 data16_t *sys32_ramtile_ram;
 data16_t *scrambled_paletteram16;
+extern int sys32_sprite_priority_kludge;
 
 int system32_palMask;
 int system32_mixerShift;
@@ -629,9 +624,9 @@ static READ16_HANDLER(sys32_read_ff)
 static READ16_HANDLER(sys32_read_random)
 {
 	// some totally bogus "random" algorithm
-	s32_rand += 0x10001;
+//	s32_rand += 0x10001;
 
-	return s32_rand;
+	return mame_rand(); // new random.c random number code, see clouds in ga2
 }
 
 extern int sys32_brightness[3];
@@ -1656,7 +1651,7 @@ INPUT_PORTS_START( jpark )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
@@ -1755,7 +1750,7 @@ static MACHINE_DRIVER_START( system32 )
 	MDRV_NVRAM_HANDLER(system32)
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_AFTER_VBLANK /* | VIDEO_RGB_DIRECT*/) // RGB_DIRECT will be needed for alpha
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_AFTER_VBLANK | VIDEO_RGB_DIRECT ) // RGB_DIRECT will be needed for alpha
 	MDRV_SCREEN_SIZE(40*8, 28*8)
 	MDRV_VISIBLE_AREA(0*8, 40*8-1, 0*8, 28*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
@@ -2571,7 +2566,7 @@ static DRIVER_INIT ( s32 )
 	system32_use_default_eeprom = EEPROM_SYS32_0;
 
 	system32_temp_kludge = 0;
-	system32_draw_bgs = 1;
+	sys32_sprite_priority_kludge = 0xf;
 
 	system32_palMask = 0xff;
 	system32_mixerShift = 4;
@@ -2584,10 +2579,10 @@ static DRIVER_INIT ( alien3 )
 	system32_use_default_eeprom = EEPROM_ALIEN3;
 
 	system32_temp_kludge = 0;
-	system32_draw_bgs = 1;
 
 	system32_palMask = 0xff;
 	system32_mixerShift = 4;
+	sys32_sprite_priority_kludge = 0xf;
 
 	install_mem_read16_handler(0, 0xc00050, 0xc00051, sys32_gun_p1_x_c00050_r);
 	install_mem_read16_handler(0, 0xc00052, 0xc00053, sys32_gun_p1_y_c00052_r);
@@ -2605,10 +2600,10 @@ static DRIVER_INIT ( brival )
 	system32_use_default_eeprom = EEPROM_SYS32_0;
 
 	system32_temp_kludge = 0;
-	system32_draw_bgs = 1;
 
 	system32_palMask = 0xff;
 	system32_mixerShift = 4;
+	sys32_sprite_priority_kludge = 0xf;
 
 	install_mem_read16_handler (0, 0x20ba00, 0x20ba07, brival_protection_r);
 	install_mem_write16_handler(0, 0xa000000, 0xa00fff, brival_protboard_w);
@@ -2619,13 +2614,14 @@ static DRIVER_INIT ( ga2 )
 	system32_use_default_eeprom = EEPROM_SYS32_0;
 
 	/* Protection - the game expects a string from a RAM area shared with the protection device */
+	/* still problems with enemies in level2, protection related? */
 	install_mem_read16_handler (0, 0xa00000, 0xa0001f, ga2_sprite_protection_r); /* main sprite colours */
 	install_mem_read16_handler (0, 0xa00100, 0xa0015f, ga2_wakeup_protection_r);
 
 	system32_temp_kludge = 0;
-	system32_draw_bgs = 1;
 	system32_palMask = 0x7f;
 	system32_mixerShift = 3;
+	sys32_sprite_priority_kludge = 0xf;
 
 }
 
@@ -2635,7 +2631,7 @@ static DRIVER_INIT ( spidey )
 
 	system32_palMask = 0x7f;
 	system32_mixerShift = 3;
-	system32_draw_bgs = 1;
+	sys32_sprite_priority_kludge = 0xf;
 }
 
 static DRIVER_INIT ( f1sl )
@@ -2644,7 +2640,7 @@ static DRIVER_INIT ( f1sl )
 
 	system32_palMask = 0x7f;
 	system32_mixerShift = 3;
-	system32_draw_bgs = 1;
+	sys32_sprite_priority_kludge = 0xf;
 }
 
 static DRIVER_INIT ( arf )
@@ -2657,11 +2653,10 @@ static DRIVER_INIT ( arf )
 
 	system32_palMask = 0xff;
 	system32_mixerShift = 4;
+	sys32_sprite_priority_kludge = 0xf;
 
 	system32_temp_kludge = 0;
 
-	system32_draw_bgs = 1;
-	/* Main Character Colours are also controlled by protection? */
 }
 
 static DRIVER_INIT ( holo )
@@ -2670,10 +2665,10 @@ static DRIVER_INIT ( holo )
 
 	/* holoseum requires the tx tilemap to be flipped, also doesn't seem to like my palette select yet */
 	system32_temp_kludge = 1;
+	sys32_sprite_priority_kludge = 0xf;
 
 	system32_palMask = 0xff;
 	system32_mixerShift = 4;
-	system32_draw_bgs = 0; // doesn't have backgrounds
 }
 
 static DRIVER_INIT ( sonic )
@@ -2682,7 +2677,7 @@ static DRIVER_INIT ( sonic )
 
 	system32_palMask = 0x1ff;
 	system32_mixerShift = 5;
-	system32_draw_bgs = 1;
+	sys32_sprite_priority_kludge = 0xf;
 
 	install_mem_write16_handler(0, 0xc00040, 0xc00055, sonic_track_reset_w);
 	install_mem_read16_handler (0, 0xc00040, 0xc00055, sonic_track_r);
@@ -2692,7 +2687,6 @@ static DRIVER_INIT ( driving )
 {
 	system32_palMask = 0x1ff;
 	system32_mixerShift = 5;
-	system32_draw_bgs = 1;
 
 	install_mem_read16_handler (0, 0xc00050, 0xc00051, sys32_driving_steer_c00050_r);
 	install_mem_read16_handler (0, 0xc00052, 0xc00053, sys32_driving_accel_c00052_r);
@@ -2706,13 +2700,14 @@ static DRIVER_INIT ( driving )
 static DRIVER_INIT ( radm )
 {
 	system32_use_default_eeprom = EEPROM_RADM;
-
+	sys32_sprite_priority_kludge = 0xa;
 	init_driving();
 }
 
 static DRIVER_INIT ( radr )
 {
 	system32_use_default_eeprom = EEPROM_RADR;
+	sys32_sprite_priority_kludge = 0xa;
 
 	init_driving();
 }
@@ -2720,6 +2715,7 @@ static DRIVER_INIT ( radr )
 static DRIVER_INIT ( f1en )
 {
 	system32_use_default_eeprom = EEPROM_SYS32_0;
+	sys32_sprite_priority_kludge = 0xf;
 
 	init_driving();
 }
@@ -2732,9 +2728,9 @@ static DRIVER_INIT ( jpark )
 	pROM[0xC15A8/2] = 0xCD70;
 	pROM[0xC15AA/2] = 0xD8CD;
 
-	system32_draw_bgs = 1;
 	system32_palMask = 0xff;
 	system32_mixerShift = 4;
+	sys32_sprite_priority_kludge = 0xa;
 
 	install_mem_read16_handler(0, 0xc00050, 0xc00051, sys32_gun_p1_x_c00050_r);
 	install_mem_read16_handler(0, 0xc00052, 0xc00053, sys32_gun_p1_y_c00052_r);
@@ -2752,22 +2748,22 @@ static DRIVER_INIT ( jpark )
 GAME( 1992, holo,     0,        system32, holo,     holo,     ROT0, "Sega", "Holosseum" ) /* fine */
 
 /* these have a range of issues, mainly with the backgrounds */
-GAMEX(1994, svf,      0,        system32, svf,      s32,      ROT0, "Sega", "Super Visual Football", GAME_IMPERFECT_GRAPHICS ) /* boots, bg's missing, playable */
-GAMEX(1994, svs,	  svf,		system32, svf,		s32,	  ROT0, "Sega", "Super Visual Soccer (US?)", GAME_IMPERFECT_GRAPHICS ) /* boots, bg's missing, playable */
-GAMEX(1994, jleague,  svf,      system32, svf,      s32,      ROT0, "Sega", "The J.League 94 (Japan)", GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION ) /* like svf but fails when you coin it up */
-GAMEX(1992, brival,   0,        sys32_hi, brival,   brival,   ROT0, "Sega", "Burning Rival (Japan)", GAME_IMPERFECT_GRAPHICS ) /* boots, coins up, missing bg's, playable */
-GAMEX(1990, radm,     0,        system32, radm,     radm,     ROT0, "Sega", "Rad Mobile", GAME_IMPERFECT_GRAPHICS ) /* boots, coins up, prelim bg, playable */
-GAMEX(1991, radr,     0,        sys32_hi, radr,     radr,     ROT0, "Sega", "Rad Rally", GAME_IMPERFECT_GRAPHICS ) /* boots, coins up, prelim bg, playable */
-GAMEX(199?, f1en,     0,        system32, f1en,     f1en,     ROT0, "Sega", "F1 Exhaust Note", GAME_IMPERFECT_GRAPHICS ) /* boots, coins up prelim bg, playable  */
-GAMEX(1993, alien3,   0,        system32, alien3,   alien3,   ROT0, "Sega", "Alien 3", GAME_IMPERFECT_GRAPHICS ) /* boots, coins up, missing bg layers also most gfx are done with sprites so present */
-GAMEX(1992, sonic,    0,        sys32_hi, sonic,    sonic,    ROT0, "Sega", "Sonic (Japan rev. C)", GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION ) /* boots, coins up, bg's missing, no control, protection */
-GAMEX(1992, sonicp,   sonic,    sys32_hi, sonic,    sonic,    ROT0, "Sega", "Sonic (Japan prototype)", GAME_IMPERFECT_GRAPHICS ) /* boots, coins up, missing bg gfx, no controls */
-GAMEX(1994, jpark,    0,        jpark,    jpark,    jpark,    ROT0, "Sega", "Jurassic Park", GAME_IMPERFECT_GRAPHICS )  /* drive board test patched, uses hi-res on a test screen */
-GAMEX(1992, ga2,      0,        system32, ga2,      ga2,      ROT0, "Sega", "Golden Axe - The Revenge of Death Adder (US)", GAME_IMPERFECT_GRAPHICS ) /* boots, bg's missing, sprite colour probs */
-GAMEX(1992, ga2j,     ga2,      system32, ga2j,     ga2,      ROT0, "Sega", "Golden Axe - The Revenge of Death Adder (Japan)", GAME_IMPERFECT_GRAPHICS ) /* boots, bg's missing, sprite colour probs  - can be set to 4 player but controls won't work as is, they conflict with the 2 player setup */
-GAMEX(1991, spidey,   0,        system32, spidey,   spidey,   ROT0, "Sega", "Spiderman (US)", GAME_IMPERFECT_GRAPHICS ) /* boots, bg's missing */
-GAMEX(1991, spideyj,  spidey,   system32, spideyj,  spidey,   ROT0, "Sega", "Spiderman (Japan)", GAME_IMPERFECT_GRAPHICS ) /* boots, bg's missing */
-GAMEX(1991, arabfgt,  0,        system32, spidey,   arf,      ROT0, "Sega", "Arabian Fight", GAME_IMPERFECT_GRAPHICS ) /* boots, bg's missing */
+GAMEX(1994, svf,      0,        system32, svf,      s32,      ROT0, "Sega", "Super Visual Football", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1994, svs,	  svf,		system32, svf,		s32,	  ROT0, "Sega", "Super Visual Soccer (US?)", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1994, jleague,  svf,      system32, svf,      s32,      ROT0, "Sega", "The J.League 94 (Japan)", GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION )
+GAMEX(1992, brival,   0,        sys32_hi, brival,   brival,   ROT0, "Sega", "Burning Rival (Japan)", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1990, radm,     0,        system32, radm,     radm,     ROT0, "Sega", "Rad Mobile", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1991, radr,     0,        sys32_hi, radr,     radr,     ROT0, "Sega", "Rad Rally", GAME_IMPERFECT_GRAPHICS )
+GAMEX(199?, f1en,     0,        system32, f1en,     f1en,     ROT0, "Sega", "F1 Exhaust Note", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1993, alien3,   0,        system32, alien3,   alien3,   ROT0, "Sega", "Alien 3", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1992, sonic,    0,        sys32_hi, sonic,    sonic,    ROT0, "Sega", "Sonic (Japan rev. C)", GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION )
+GAMEX(1992, sonicp,   sonic,    sys32_hi, sonic,    sonic,    ROT0, "Sega", "Sonic (Japan prototype)", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1994, jpark,    0,        jpark,    jpark,    jpark,    ROT0, "Sega", "Jurassic Park", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1992, ga2,      0,        system32, ga2,      ga2,      ROT0, "Sega", "Golden Axe - The Revenge of Death Adder (US)", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1992, ga2j,     ga2,      system32, ga2j,     ga2,      ROT0, "Sega", "Golden Axe - The Revenge of Death Adder (Japan)", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1991, spidey,   0,        system32, spidey,   spidey,   ROT0, "Sega", "Spiderman (US)", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1991, spideyj,  spidey,   system32, spideyj,  spidey,   ROT0, "Sega", "Spiderman (Japan)", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1991, arabfgt,  0,        system32, spidey,   arf,      ROT0, "Sega", "Arabian Fight", GAME_IMPERFECT_GRAPHICS )
 
 /* not really working */
 GAMEX(199?, f1lap,    0,        system32, system32, f1sl,     ROT0, "Sega", "F1 Super Lap", GAME_NOT_WORKING ) /* blank screen, also requires 2 linked sys32 boards to function */

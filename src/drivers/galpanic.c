@@ -760,8 +760,8 @@ MACHINE_DRIVER_END
 
 ROM_START( galpanic )
 	ROM_REGION( 0x400000, REGION_CPU1, 0 )	/* 68000 code */
-//	ROM_LOAD16_BYTE( "pm110.4m2",    0x000000, 0x80000, 0xae6b17a8 )
-//	ROM_LOAD16_BYTE( "pm109.4m1",    0x000001, 0x80000, 0xb85d792d )
+	ROM_LOAD16_BYTE( "pm110.4m2",    0x000000, 0x80000, 0xae6b17a8 )
+	ROM_LOAD16_BYTE( "pm109.4m1",    0x000001, 0x80000, 0xb85d792d )
 	/* The above two ROMs contain valid 68000 code, but the game doesn't */
 	/* work. I think there might be a protection (addressed at e00000). */
 	/* The two following ROMs replace the code with a working version. */

@@ -122,13 +122,8 @@ void gionbana_gfxflag_w(int data)
 
 	gionbana_flipx = (data & 0x01) ? 1 : 0;
 	gionbana_flipy = (data & 0x02) ? 1 : 0;
-	gionbana_flipscreen = (data & 0x04) ? 0 : 1;
+	gionbana_flipscreen = (data & 0x04) ? 1 : 0;
 	gionbana_dispflag = (data & 0x08) ? 0 : 1;
-
-	if (nb1413m3_type == NB1413M3_HANAMOMO)
-	{
-		gionbana_flipscreen ^= 1;
-	}
 
 	if (gionbana_flipscreen != gionbana_flipscreen_old)
 	{
@@ -160,6 +155,9 @@ void gionbana_scrolly_w(int data)
 
 void gionbana_vramsel_w(int data)
 {
+	/* protection - not sure about this */
+	nb1413m3_sndromregion = (data & 0x20) ? REGION_USER1 : REGION_SOUND1;
+
 	gionbana_vram = data;
 }
 

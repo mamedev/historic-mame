@@ -82,7 +82,7 @@ UINT8 if12;
 // writing to the second operand.
 void F12DecodeFirstOperand(UINT32 (*DecodeOp1)(void), UINT8 dim1)
 {
-	if12 = MemRead8(PC + 1);
+	if12 = OpRead8(PC + 1);
 
 	// Check if F1 or F2
 	if (if12 & 0x80)
@@ -183,7 +183,7 @@ void F12WriteSecondOperand(UINT8 dim2)
 // Decode both format 1/2 operands
 void F12DecodeOperands(UINT32 (*DecodeOp1)(void), UINT8 dim1, UINT32 (*DecodeOp2)(void), UINT8 dim2)
 {
-	UINT8 _if12 = MemRead8(PC + 1);
+	UINT8 _if12 = OpRead8(PC + 1);
 
 	// Check if F1 or F2
 	if (_if12 & 0x80)
@@ -414,6 +414,7 @@ UINT32 opCALL(void) /* TRUSTED */
 	SP -= 4;
 	MemWrite32(SP, PC + amLength1 + amLength2 + 2);
 	PC = f12Op1;
+	ChangePC(PC);
 
 	return 0;
 }
@@ -479,6 +480,7 @@ UINT32 opCHLVL(void)
 	MemWrite32(SP,PC + amLength1 + amLength2 + 2);
 
 	PC = GETINTVECT(24+f12Op1);
+	ChangePC(PC);
 
 	return 0;
 }

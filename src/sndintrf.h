@@ -152,6 +152,9 @@ struct MachineSound
 #if (HAS_GAELCO_CG1V || HAS_GAELCO_GAE1)
 #include "sound/gaelco.h"
 #endif
+#if (HAS_X1_010)
+#include "sound/x1_010.h"
+#endif
 
 #ifdef MESS
 #if (HAS_BEEP)
@@ -333,6 +336,9 @@ enum
 #endif
 #if (HAS_GAELCO_GAE1)
  SOUND_GAELCO_GAE1,
+#endif
+#if (HAS_X1_010)
+ SOUND_X1_010,
 #endif
 
 #ifdef MESS

@@ -13,6 +13,36 @@ To Do:
 -	clean up Avengers protection; it currently checks against hard-coded program
 	counter rather than behaving as a memory-mapped black box.
 
+
+Change Log:
+
+FEB-2003 (AT)
+
+- bug fixes:
+
+    avengers061gre: missing sound effects in Avengers
+  avengers37b16gre: screen artifacts in Avengers
+    lwingsc37b7gre: incorrect sprite clipping in all games
+
+Notes:
+
+  avengers061gre2: corrupted graphics in Avengers' ending not fixed.
+  This bug is not in the Japanese set "Buraiken".
+  It might just be a bug in the original: the tiles for the character
+  image are just not present in the US version, replaced by more tiles
+  for the title animation. The tile map ROM is the same between the two
+  versions.
+
+  trojan37b1gre: stage 2-1 boss x flip glitches not fixed.
+  This could be a side effect of sprite RAM buffering. Suggest buffering
+  on-screen content instead of sprite memory.
+
+  Previous clock settings were too low. Sometimes Avengers and Trojan
+  could not finish clearing VRAM before a new frame is drawn and left
+  behind screen artifacts. Avengers' second CPU was forced to pre-empt
+  during soundlatch operations, resulting in double or missing sound
+  effects.
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -29,7 +59,7 @@ To Do:
  */
 static data8_t avengers_param[4];
 static int avengers_palette_pen;
-
+static data8_t *avengers_soundlatch2, avengers_soundstate=0;
 static data8_t avengers_adpcm;
 
 WRITE_HANDLER( avengers_adpcm_w )
@@ -99,6 +129,7 @@ static WRITE_HANDLER( avengers_protection_w )
 	}
 	else if( pc == 0x0445 )
 	{
+		avengers_soundstate = 0x80;
 		soundlatch_w( 0, data );
 	}
 }
@@ -226,6 +257,13 @@ static READ_HANDLER( avengers_protection_r )
 	return best_dir<<5;
 }
 
+static READ_HANDLER( avengers_soundlatch2_r )
+{
+	data8_t data = *avengers_soundlatch2 | avengers_soundstate;
+	avengers_soundstate = 0;
+	return(data);
+}
+
 static WRITE_HANDLER( msm5205_w )
 {
 	MSM5205_reset_w(offset,(data>>7)&1);
@@ -257,8 +295,8 @@ static MEMORY_WRITE_START( avengers_writemem )
 	{ 0xf400, 0xf7ff, paletteram_RRRRGGGGBBBBxxxx_split1_w, &paletteram },
 	{ 0xf800, 0xf801, lwings_bg1_scrollx_w },
 	{ 0xf802, 0xf803, lwings_bg1_scrolly_w },
-	{ 0xf804, 0xf804, lwings_bg2_scrollx_w },
-	{ 0xf805, 0xf805, lwings_bg2_image_w },
+	{ 0xf804, 0xf804, trojan_bg2_scrollx_w },
+	{ 0xf805, 0xf805, trojan_bg2_image_w },
 	{ 0xf808, 0xf808, MWA_NOP }, /* ? */
 	{ 0xf809, 0xf809, avengers_protection_w },
 	{ 0xf80c, 0xf80c, avengers_prot_bank_w },
@@ -303,8 +341,8 @@ static MEMORY_WRITE_START( trojan_writemem )
 	{ 0xf400, 0xf7ff, paletteram_RRRRGGGGBBBBxxxx_split1_w, &paletteram },
 	{ 0xf800, 0xf801, lwings_bg1_scrollx_w },
 	{ 0xf802, 0xf803, lwings_bg1_scrolly_w },
-	{ 0xf804, 0xf804, lwings_bg2_scrollx_w },
-	{ 0xf805, 0xf805, lwings_bg2_image_w },
+	{ 0xf804, 0xf804, trojan_bg2_scrollx_w },
+	{ 0xf805, 0xf805, trojan_bg2_image_w },
 	{ 0xf80c, 0xf80c, soundlatch_w },
 	{ 0xf80d, 0xf80d, watchdog_reset_w },
 	{ 0xf80e, 0xf80e, lwings_bankswitch_w },
@@ -314,7 +352,7 @@ static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0xc000, 0xc7ff, MRA_RAM },
 	{ 0xc800, 0xc800, soundlatch_r },
-	{ 0xe006, 0xe006, MRA_RAM },    /* Avengers - ADPCM status?? */
+	{ 0xe006, 0xe006, avengers_soundlatch2_r }, //AT: (avengers061gre)
 MEMORY_END
 
 static MEMORY_WRITE_START( sound_writemem )
@@ -324,7 +362,7 @@ static MEMORY_WRITE_START( sound_writemem )
 	{ 0xe001, 0xe001, YM2203_write_port_0_w },
 	{ 0xe002, 0xe002, YM2203_control_port_1_w },
 	{ 0xe003, 0xe003, YM2203_write_port_1_w },
-	{ 0xe006, 0xe006, MWA_RAM },    /* Avengers - ADPCM output??? */
+	{ 0xe006, 0xe006, MWA_RAM, &avengers_soundlatch2 },
 MEMORY_END
 
 static MEMORY_READ_START( adpcm_readmem )
@@ -836,11 +874,11 @@ static struct MSM5205interface msm5205_interface =
 static MACHINE_DRIVER_START( lwings )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80, 4000000)        /* 4 MHz (?) */
+	MDRV_CPU_ADD(Z80, 6000000)        /* 4 MHz (?) */
 	MDRV_CPU_MEMORY(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(lwings_interrupt,1)
 
-	MDRV_CPU_ADD(Z80, 3000000)
+	MDRV_CPU_ADD(Z80, 4000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)        /* 3 MHz (?) */
 	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,4)
@@ -867,16 +905,16 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( trojan )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80, 4000000)        /* 4 MHz (?) */
+	MDRV_CPU_ADD(Z80, 6000000)        /* 4 MHz (?) */
 	MDRV_CPU_MEMORY(readmem,trojan_writemem)
 	MDRV_CPU_VBLANK_INT(lwings_interrupt,1)
 
-	MDRV_CPU_ADD(Z80, 3000000)
+	MDRV_CPU_ADD(Z80, 4000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)        /* 3 MHz (?) */
 	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,4)
 
-	MDRV_CPU_ADD(Z80, 3579545)
+	MDRV_CPU_ADD(Z80, 4000000) // 3.579545 Mhz (?)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ? */
 	MDRV_CPU_MEMORY(adpcm_readmem,adpcm_writemem)
 	MDRV_CPU_PORTS(adpcm_readport,adpcm_writeport)
@@ -905,16 +943,16 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( avengers )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80, 4000000)        /* 4 MHz (?) */
+	MDRV_CPU_ADD(Z80, 6000000) //AT: (avengers37b16gre)
 	MDRV_CPU_MEMORY(avengers_readmem,avengers_writemem)
-	MDRV_CPU_VBLANK_INT(avengers_interrupt,2)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1) // RST 38h triggered by software
 
-	MDRV_CPU_ADD(Z80, 3000000)
+	MDRV_CPU_ADD(Z80, 4000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)        /* 3 MHz (?) */
 	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,4)
 
-	MDRV_CPU_ADD(Z80, 3579545)
+	MDRV_CPU_ADD(Z80, 4000000) // 3.579545 Mhz (?)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ? */
 	MDRV_CPU_MEMORY(adpcm_readmem,adpcm_writemem)
 	MDRV_CPU_PORTS(avengers_adpcm_readport,adpcm_writeport)
@@ -1328,7 +1366,7 @@ ROM_START( avenger2 )
 	ROM_LOAD( "21.5n",        0x30000, 0x8000, 0x301059aa )
 	ROM_LOAD( "19.2n",        0x38000, 0x8000, 0xa00485ec )
 
-	ROM_REGION( 0x10000, REGION_GFX4, ROMREGION_DISPOSE )
+	ROM_REGION( 0x10000, REGION_GFX4, ROMREGION_DISPOSE ) /* bg tiles */
 	ROM_LOAD( "25.15n",       0x00000, 0x8000, 0x230d9e30 ) /* planes 0,1 */
 	ROM_LOAD( "24.13n",       0x08000, 0x8000, 0xa6354024 ) /* planes 2,3 */
 
@@ -1339,7 +1377,6 @@ ROM_START( avenger2 )
 	ROM_LOAD( "tbb_2bpr.7j",  0x0000,  0x0100, 0xd96bcc98 )	/* timing (not used) */
 	ROM_LOAD( "tbb_1bpr.1e",  0x0100,  0x0100, 0x5052fa9d )	/* priority (not used) */
 ROM_END
-
 
 ROM_START( buraiken )
 	ROM_REGION( 0x20000, REGION_CPU1, 0 )     /* 64k for code + 3*16k for the banked ROMs images */

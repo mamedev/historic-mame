@@ -65,7 +65,7 @@ Hardcoded Values:
 
 #define FREQ_BASE_BITS		  8					// Frequency fixed decimal shift bits
 #define ENV_BASE_BITS		 16					// wave form envelope fixed decimal shift bits
-#define	VOL_BASE	(32*256/30)					// Volume base
+#define	VOL_BASE	(2*32*256/30)					// Volume base
 
 /* this structure defines the parameters for a channel */
 typedef struct {
@@ -93,35 +93,34 @@ static UINT32 base_clock;
 /* mixer tables and internal buffers */
 //static short	*mixer_buffer = NULL;
 
-int	seta_samples_bank;
-
-
 
 /*--------------------------------------------------------------
  generate sound to the mix buffer
 --------------------------------------------------------------*/
-void seta_sh_update( int param, INT16 *buffer, int length )
+void seta_sh_update( int param, INT16 **buffer, int length )
 {
 	X1_010_CHANNEL	*reg;
-	short	*mix;
-	int		ch, i, vol, freq;
+	int		ch, i, volL, volR, freq;
 	register INT8	*start, *end, data;
 	register UINT8	*env;
 	register UINT32	smp_offs, smp_step, env_offs, env_step, delta;
 
 	// mixer buffer zero clear
-	memset( buffer, 0, length*sizeof(short) );
+	memset( buffer[0], 0, length*sizeof(short) );
+	memset( buffer[1], 0, length*sizeof(short) );
 
 //	if( sound_enable == 0 ) return;
 
 	for( ch = 0; ch < SETA_NUM_CHANNELS; ch++ ) {
 		reg = (X1_010_CHANNEL *)&(x1_010_reg[ch*sizeof(X1_010_CHANNEL)]);
 		if( (reg->status&1) != 0 ) {							// Key On
-			mix = buffer;
+			INT16 *bufL = buffer[0];
+			INT16 *bufR = buffer[1];
 			if( (reg->status&2) == 0 ) {						// PCM sampling
 				start    = (INT8 *)(reg->start      *0x1000+memory_region(REGION_SOUND1));
 				end      = (INT8 *)((0x100-reg->end)*0x1000+memory_region(REGION_SOUND1));
-				vol      = (((reg->volume>>4)&0xf)+(reg->volume&0xf))*VOL_BASE;
+				volL     = ((reg->volume>>4)&0xf)*VOL_BASE;
+				volR     = ((reg->volume>>0)&0xf)*VOL_BASE;
 				smp_offs = smp_offset[ch];
 				freq     = reg->frequency&0x1f;
 				// Meta Fox does not write the frequency register. Ever
@@ -142,7 +141,8 @@ void seta_sh_update( int param, INT16 *buffer, int length )
 						break;
 					}
 					data = *(start+delta);
-					*mix++ += (data*vol/256);
+					*bufL++ += (data*volL/256);
+					*bufR++ += (data*volR/256);
 					smp_offs += smp_step;
 				}
 				smp_offset[ch] = smp_offs;
@@ -163,6 +163,7 @@ void seta_sh_update( int param, INT16 *buffer, int length )
 				}
 #endif
 				for( i = 0; i < length; i++ ) {
+					int vol;
 					delta = env_offs>>ENV_BASE_BITS;
 	 				// Envelope one shot mode
 					if( (reg->status&4) != 0 && delta >= 0x80 ) {
@@ -170,9 +171,11 @@ void seta_sh_update( int param, INT16 *buffer, int length )
 						break;
 					}
 					vol = *(env+(delta&0x7f));
-					vol = ((vol>>4)&0xf)+(vol&0xf);
+					volL = ((vol>>4)&0xf)*VOL_BASE;
+					volR = ((vol>>0)&0xf)*VOL_BASE;
 					data  = *(start+((smp_offs>>FREQ_BASE_BITS)&0x7f));
-					*mix++ += (data*VOL_BASE*vol/256);
+					*bufL++ += (data*volL/256);
+					*bufR++ += (data*volR/256);
 					smp_offs += smp_step;
 					env_offs += env_step;
 				}
@@ -185,14 +188,17 @@ void seta_sh_update( int param, INT16 *buffer, int length )
 
 
 
-int seta_sh_start( const struct MachineSound *msound, UINT32 clock, int adr )
+int seta_sh_start( const struct MachineSound *msound )
 {
-	int i;
-	const char *snd_name = "X1-010";
+	int i,j;
+	struct x1_010_interface *intf = (struct x1_010_interface*)msound->sound_interface;
+	char buf[2][40];
+	const char *name[2];
+	int mixed_vol,vol[2];
 
-	base_clock	= clock;
+	base_clock	= intf->clock;
 	rate		= Machine->sample_rate;
-	address		= adr;
+	address		= intf->adr;
 
 	for( i = 0; i < SETA_NUM_CHANNELS; i++ ) {
 		smp_offset[i] = 0;
@@ -203,11 +209,24 @@ int seta_sh_start( const struct MachineSound *msound, UINT32 clock, int adr )
 	logerror("masterclock = %d rate = %d\n", master_clock, rate );
 #endif
 	/* get stream channels */
-	stream = stream_init( snd_name, 100, rate, 0, seta_sh_update );
+	mixed_vol = intf->volume;
+	/* stream setup */
+	for (j = 0 ; j < 2 ; j++)
+	{
+		name[j]=buf[j];
+		vol[j] = mixed_vol & 0xffff;
+		mixed_vol>>=16;
+		sprintf(buf[j],"%s Ch%d",sound_name(msound),j+1);
+	}
+	stream = stream_init_multi(2,name,vol,rate,0,seta_sh_update);
 
 	return 0;
 }
 
+
+void seta_sh_stop( void )
+{
+}
 
 
 void seta_sound_enable_w(int data)

@@ -256,7 +256,7 @@ VIDEO_UPDATE( superqix )
 			sx = offs % 32;
 			sy = offs / 32;
 
-			drawgfx(bitmap,Machine->gfx[(colorram[offs] & 0x04) ? 0 : 1],
+			drawgfx(bitmap,Machine->gfx[(colorram[offs] & 0x04) ? 0 : (1 + gfxbank)],
 					videoram[offs] + 256 * (colorram[offs] & 0x03),
 					(colorram[offs] & 0xf0) >> 4,
 					0,0,

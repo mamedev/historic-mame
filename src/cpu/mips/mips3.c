@@ -646,7 +646,7 @@ static void logtlbentry(void)
 
 INLINE void handle_cop0(UINT32 op)
 {
-	if ((SR & SR_KSU_MASK) != SR_KSU_KERNEL && !(SR & SR_COP1))
+	if ((SR & SR_KSU_MASK) != SR_KSU_KERNEL && !(SR & SR_COP0))
 		generate_exception(EXCEPTION_BADCOP);
 
 	switch (RSREG)

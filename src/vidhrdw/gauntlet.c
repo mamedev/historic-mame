@@ -76,6 +76,7 @@ VIDEO_START( gauntlet )
 		0,					/* does the neighbor bit affect the next object? */
 		8,					/* pixels per SLIP entry (0 for no-slip) */
 		1,					/* pixel offset for SLIPs */
+		0,					/* maximum number of links to visit/scanline (0=all) */
 
 		0x100,				/* base palette entry */
 		0x100,				/* maximum number of colors */
@@ -165,7 +166,7 @@ WRITE16_HANDLER( gauntlet_yscroll_w )
 {
 	UINT16 oldyscroll = *atarigen_yscroll;
 	COMBINE_DATA(atarigen_yscroll);
-	
+
 	/* if something changed, force a partial update */
 	if (*atarigen_yscroll != oldyscroll)
 	{
@@ -177,7 +178,7 @@ WRITE16_HANDLER( gauntlet_yscroll_w )
 			playfield_tile_bank = *atarigen_yscroll & 3;
 			tilemap_mark_all_tiles_dirty(atarigen_playfield_tilemap);
 		}
-		
+
 		/* adjust the scrolls */
 		tilemap_set_scrolly(atarigen_playfield_tilemap, 0, *atarigen_yscroll >> 7);
 		atarimo_set_yscroll(0, (*atarigen_yscroll >> 7) & 0x1ff);
@@ -200,7 +201,7 @@ VIDEO_UPDATE( gauntlet )
 
 	/* draw the playfield */
 	tilemap_draw(bitmap, cliprect, atarigen_playfield_tilemap, 0, 0);
-	
+
 	/* draw and merge the MO */
 	mobitmap = atarimo_render(0, cliprect, &rectlist);
 	for (r = 0; r < rectlist.numrects; r++, rectlist.rect++)
@@ -212,7 +213,7 @@ VIDEO_UPDATE( gauntlet )
 				if (mo[x])
 				{
 					/* verified via schematics:
-					
+
 						MO pen 1 clears PF color bit 0x80
 					*/
 					if ((mo[x] & 0x0f) == 1)
@@ -223,12 +224,12 @@ VIDEO_UPDATE( gauntlet )
 					}
 					else
 						pf[x] = mo[x];
-					
+
 					/* erase behind ourselves */
 					mo[x] = 0;
 				}
 		}
-	
+
 	/* add the alpha on top */
 	tilemap_draw(bitmap, cliprect, atarigen_alpha_tilemap, 0, 0);
 }

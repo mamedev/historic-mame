@@ -2,19 +2,22 @@
 
 	Sega System C/C2 Driver
 	-----------------------
-	Version 0.52 - 5 March 2001
+	Version 0.54 - 02 Feb 2003
 	(for changes see drivers\segac2.c)
 
 ***********************************************************************************************/
 
 #include "driver.h"
 #include "state.h"
+#include "segac2.h"
+
+
 
 /******************************************************************************
 	Macros
 ******************************************************************************/
 
-#define BITMAP_WIDTH		336
+#define BITMAP_WIDTH		320
 #define BITMAP_HEIGHT		240
 
 #define VRAM_SIZE			0x10000
@@ -28,9 +31,9 @@
 #define VDP_VSRAM_WORD(x)	((VDP_VSRAM_BYTE(x) << 8) | VDP_VSRAM_BYTE((x) + 1))
 
 #ifdef LSB_FIRST
-#define PIXEL_XOR_BE(x)		((x) ^ 6)
+#define EXTRACT_PIXEL(x,i)	(((x) >> (((i) ^ 1) * 4)) & 0x0f)
 #else
-#define PIXEL_XOR_BE(x)		(x)
+#define EXTRACT_PIXEL(x,i)	(((x) >> (((i) ^ 7) * 4)) & 0x0f)
 #endif
 
 
@@ -50,9 +53,9 @@ static void vdp_dma_fill(int);
 static void vdp_dma_copy(void);
 
 static void drawline(UINT16 *bitmap, int line);
-static void get_scroll_tiles(int line, int scrollnum, UINT32 scrollbase, UINT32 *tiles, UINT8 *offset);
-static void get_window_tiles(int line, UINT32 scrollbase, UINT32 *tiles, UINT8 *offset);
-static void drawline_tiles(UINT32 *tiles, UINT16 *bmap, int pri);
+static void get_scroll_tiles(int line, int scrollnum, UINT32 scrollbase, UINT32 *tiles, int *offset);
+static void get_window_tiles(int line, UINT32 scrollbase, UINT32 *tiles);
+static void drawline_tiles(UINT32 *tiles, UINT16 *bmap, int pri, int offset, int lclip, int rclip);
 static void drawline_sprite(int line, UINT16 *bmap, int priority, UINT8 *spritebase);
 
 
@@ -73,8 +76,6 @@ static UINT8 *		vdp_vsram;					/* VDP vertical scroll RAM */
 static UINT8		display_enable;				/* is the display enabled? */
 
 /* updates */
-static int			last_update_scanline;		/* last scanline we drew */
-static UINT16 *		cache_bitmap;				/* 16bpp bitmap with raw pen values */
 static UINT8		internal_vblank;			/* state of the VBLANK line */
 static UINT16 *		transparent_lookup;			/* fast transparent mapping table */
 
@@ -97,8 +98,10 @@ static UINT8		vdp_dmafill;				/* DMA filling flag */
 static UINT8		scrollheight;				/* height of the scroll area in tiles */
 static UINT8		scrollwidth;				/* width of the scroll area in tiles */
 static UINT8		bgcol;						/* current background color */
-static UINT8		window_down;				/* window direction */
+static UINT8		window_down;				/* window Y direction */
 static UINT32		window_vpos;				/* window Y position */
+static UINT8		window_right;				/* window X direction */
+static UINT32		window_hpos;				/* window X position */
 
 
 
@@ -130,10 +133,9 @@ VIDEO_START( segac2 )
 	vdp_vram			= auto_malloc(VRAM_SIZE);
 	vdp_vsram			= auto_malloc(VSRAM_SIZE);
 	transparent_lookup	= auto_malloc(0x1000 * sizeof(UINT16));
-	cache_bitmap		= auto_malloc(BITMAP_WIDTH * BITMAP_HEIGHT * sizeof(UINT16));
 
 	/* check for errors */
-	if (!vdp_vram || !vdp_vsram || !transparent_lookup || !cache_bitmap)
+	if (!vdp_vram || !vdp_vsram || !transparent_lookup)
 		return 1;
 
 	/* clear the VDP memory, prevents corrupt tile in Puyo Puyo 2 */
@@ -167,9 +169,6 @@ VIDEO_START( segac2 )
 	vdp_cmdpart = 0;
 	vdp_code    = 0;
 	vdp_address = 0;
-
-	/* reset buffer */
-	last_update_scanline = 0;
 
 	/* Save State Stuff we could probably do with an init values from vdp registers function or something (todo) */
 
@@ -217,9 +216,6 @@ VIDEO_START( segac2 )
 /* timer callback for the end of VBLANK */
 static void vblank_end(int param)
 {
-	/* reset update scanline */
-	last_update_scanline = 0;
-
 	/* reset VBLANK flag */
 	internal_vblank = 0;
 }
@@ -250,35 +246,11 @@ VIDEO_EOF( segac2 )
 
 ******************************************************************************/
 
-/* update the cached bitmap to the given scanline */
-void segac2_update_display(int scanline)
-{
-	int line;
-
-	/* don't bother if we're skipping */
-	if (osd_skip_this_frame())
-		return;
-
-	/* clamp to the screen */
-	if (scanline < 0)
-		scanline = 0;
-	if (scanline > 224)
-		scanline = 224;
-	if (last_update_scanline >= scanline)
-		return;
-
-	/* update all relevant lines */
-	for (line = last_update_scanline; line < scanline; line++)
-		drawline(&cache_bitmap[line * BITMAP_WIDTH], line);
-	last_update_scanline = scanline;
-}
-
-
 /* set the display enable bit */
 void segac2_enable_display(int enable)
 {
 	if (!internal_vblank)
-		segac2_update_display(cpu_getscanline());
+		force_partial_update(cpu_getscanline());
 	display_enable = enable;
 }
 
@@ -286,14 +258,23 @@ void segac2_enable_display(int enable)
 /* core refresh: computes the final screen */
 VIDEO_UPDATE( segac2 )
 {
+	int old_bg = segac2_bg_palbase, old_sp = segac2_sp_palbase;
 	int y;
 
-	/* finish updating the display */
-	segac2_update_display(224);
+if (keyboard_pressed(KEYCODE_Z)) segac2_bg_palbase ^= 0x40;
+if (keyboard_pressed(KEYCODE_X)) segac2_bg_palbase ^= 0x80;
+if (keyboard_pressed(KEYCODE_C)) segac2_bg_palbase ^= 0x100;
+
+if (keyboard_pressed(KEYCODE_A)) segac2_sp_palbase ^= 0x40;
+if (keyboard_pressed(KEYCODE_S)) segac2_sp_palbase ^= 0x80;
+if (keyboard_pressed(KEYCODE_D)) segac2_sp_palbase ^= 0x100;
 
 	/* generate the final screen */
-	for (y = 0; y < 224; y++)
-		draw_scanline16(bitmap, 8, y, 320, &cache_bitmap[y * BITMAP_WIDTH + 8], Machine->pens, -1);
+	for (y = cliprect->min_y; y <= cliprect->max_y; y++)
+		drawline((UINT16 *)bitmap->line[y], y);
+
+	segac2_bg_palbase = old_bg;
+	segac2_sp_palbase = old_sp;
 }
 
 
@@ -457,7 +438,7 @@ static void vdp_data_w(int data)
 			if (!internal_vblank &&
 				vdp_address >= vdp_hscrollbase &&
 				vdp_address < vdp_hscrollbase + vdp_hscrollsize)
-				segac2_update_display(cpu_getscanline());
+				force_partial_update(cpu_getscanline());
 
 			/* write to VRAM */
 			if (vdp_address & 1)
@@ -470,7 +451,7 @@ static void vdp_data_w(int data)
 
 			/* if the vscroll RAM is changing during screen refresh, force an update */
 			if (!internal_vblank)
-				segac2_update_display(cpu_getscanline());
+				force_partial_update(cpu_getscanline());
 
 			/* write to VSRAM */
 			if (vdp_address & 1)
@@ -585,7 +566,7 @@ static void vdp_register_w(int data)
 	/* these are mostly important writes; force an update if they */
 	/* are written during a screen refresh */
 	if (!internal_vblank && is_important[regnum])
-		segac2_update_display(cpu_getscanline());
+		force_partial_update(cpu_getscanline());
 
 	/* For quite a few of the registers its a good idea to set a couple of variable based
 	   upon the writes here */
@@ -627,8 +608,8 @@ static void vdp_register_w(int data)
 		}
 
 		case 0x0c: /* video modes */
-			if (!(regdat & 1))
-				usrintf_showmessage("Video width = 256!");
+/*			if (!(regdat & 1))
+				usrintf_showmessage("Video width = 256!"); */
 			break;
 
 		case 0x0d: /* HScroll Base */
@@ -644,6 +625,8 @@ static void vdp_register_w(int data)
 		}
 
 		case 0x11: /* Window H Position .. Doesn't Matter for any of the C2 Games */
+			window_right = regdat & 0x80;
+			window_hpos = (regdat & 0x1f) << 4;
 			break;
 
 		case 0x12: /* Window V Position */
@@ -802,23 +785,21 @@ static int vdp_getvscroll(int plane, int column)
 	NOTE: Low Sprites _can_ overlap High sprites, however none of the C2
 			games do this ever so its safe to draw them in this order.
 
-	NOTE2: C2 Games Only Ever Split the Screen Horizontally with the Window so
-			its safe to draw a line entirely of Scroll A or Window without any
-			graphical glitches.
-
 ******************************************************************************/
 
 static void drawline(UINT16 *bitmap, int line)
 {
 	int lowsprites, highsprites, link;
-	UINT32 scrolla_tiles[41], scrollb_tiles[41];
-	UINT8 scrolla_offset, scrollb_offset;
+	UINT32 scrolla_tiles[41], scrollb_tiles[41], window_tiles[41];
+	int scrolla_offset, scrollb_offset;
 	UINT8 *lowlist[81], *highlist[81];
-	int column, sprite;
 	int bgcolor = bgcol + segac2_palbank;
+	int window_lclip, window_rclip;
+	int scrolla_lclip, scrolla_rclip;
+	int column, sprite;
 
 	/* clear to the background color */
-	for (column = 8; column < 328; column++)
+	for (column = 0; column < BITMAP_WIDTH; column++)
 		bitmap[column] = bgcolor;
 
 	/* if display is disabled, stop */
@@ -847,26 +828,52 @@ static void drawline(UINT16 *bitmap, int line)
 	get_scroll_tiles(line, 2, vdp_scrollbbase, scrollb_tiles, &scrollb_offset);
 
 	/* get tiles for the A scroll layer */
-	if ((line < window_vpos && window_down == 0x80) || (line >= window_vpos && window_down == 0))
-		get_scroll_tiles(line, 0, vdp_scrollabase, scrolla_tiles, &scrolla_offset);
+	get_scroll_tiles(line, 0, vdp_scrollabase, scrolla_tiles, &scrolla_offset);
+
+	/* get tiles for the window layer */
+	get_window_tiles(line, vdp_windowbase, window_tiles);
+
+	/* compute the windowing for this line */
+	if ((window_down && line >= window_vpos) || (!window_down && line < window_vpos))
+		window_lclip = 0, window_rclip = BITMAP_WIDTH - 1;
+	else if (window_right)
+		window_lclip = window_hpos, window_rclip = BITMAP_WIDTH - 1;
 	else
-		get_window_tiles(line, vdp_windowbase, scrolla_tiles, &scrolla_offset);
+		window_lclip = 0, window_rclip = window_hpos - 1;
+
+	/* compute the clipping of the scroll A layer */
+	if (window_lclip == 0)
+	{
+		scrolla_lclip = window_rclip + 1;
+		scrolla_rclip = BITMAP_WIDTH - 1;
+	}
+	else
+	{
+		scrolla_lclip = 0;
+		scrolla_rclip = window_lclip - 1;
+	}
 
 	/* Scroll B Low */
-	drawline_tiles(scrollb_tiles, bitmap + scrollb_offset, 0);
+	drawline_tiles(scrollb_tiles, bitmap, 0, scrollb_offset, 0, BITMAP_WIDTH - 1);
 
 	/* Scroll A Low */
-	drawline_tiles(scrolla_tiles, bitmap + scrolla_offset, 0);
+	drawline_tiles(scrolla_tiles, bitmap, 0, scrolla_offset, scrolla_lclip, scrolla_rclip);
+
+	/* Window Low */
+	drawline_tiles(window_tiles, bitmap, 0, 0, window_lclip, window_rclip);
 
 	/* Sprites Low */
 	for (sprite = lowsprites; sprite > 0; sprite--)
 		drawline_sprite(line, bitmap, 0, lowlist[sprite]);
 
 	/* Scroll B High */
-	drawline_tiles(scrollb_tiles, bitmap + scrollb_offset, 1);
+	drawline_tiles(scrollb_tiles, bitmap, 1, scrollb_offset, 0, BITMAP_WIDTH - 1);
 
 	/* Scroll A High */
-	drawline_tiles(scrolla_tiles, bitmap + scrolla_offset, 1);
+	drawline_tiles(scrolla_tiles, bitmap, 1, scrolla_offset, scrolla_lclip, scrolla_rclip);
+
+	/* Window High */
+	drawline_tiles(window_tiles, bitmap, 1, 0, window_lclip, window_rclip);
 
 	/* Sprites High */
 	for (sprite = highsprites; sprite > 0; sprite--)
@@ -885,13 +892,13 @@ static void drawline(UINT16 *bitmap, int line)
 ******************************************************************************/
 
 /* determine the tiles we will draw on a scrolling layer */
-static void get_scroll_tiles(int line, int scrollnum, UINT32 scrollbase, UINT32 *tiles, UINT8 *offset)
+static void get_scroll_tiles(int line, int scrollnum, UINT32 scrollbase, UINT32 *tiles, int *offset)
 {
 	int linehscroll = vdp_gethscroll(scrollnum, line);
 	int column;
 
 	/* adjust for partial tiles and then pre-divide hscroll to get the tile offset */
-	*offset = 8 - (linehscroll % 8);
+	*offset = -(linehscroll % 8);
 	linehscroll /= 8;
 
 	/* loop over columns */
@@ -914,12 +921,9 @@ static void get_scroll_tiles(int line, int scrollnum, UINT32 scrollbase, UINT32 
 
 
 /* determine the tiles we will draw on a non-scrolling window layer */
-static void get_window_tiles(int line, UINT32 scrollbase, UINT32 *tiles, UINT8 *offset)
+static void get_window_tiles(int line, UINT32 scrollbase, UINT32 *tiles)
 {
 	int column;
-
-	/* set the offset */
-	*offset = 8;
 
 	/* loop over columns */
 	for (column = 0; column < 40; column++)
@@ -935,17 +939,20 @@ static void get_window_tiles(int line, UINT32 scrollbase, UINT32 *tiles, UINT8 *
 
 
 /* draw a line of tiles */
-static void drawline_tiles(UINT32 *tiles, UINT16 *bmap, int pri)
+static void drawline_tiles(UINT32 *tiles, UINT16 *bmap, int pri, int offset, int lclip, int rclip)
 {
-	int column;
+	/* adjust for the 8-pixel slop */
+	bmap += offset;
+	if (lclip > rclip)
+		return;
 
 	/* loop over columns */
-	for (column = 0; column < 41; column++, bmap += 8)
+	for ( ; offset < BITMAP_WIDTH; offset += 8, bmap += 8)
 	{
 		UINT32 tile = *tiles++;
 
 		/* if the tile is the correct priority, draw it */
-		if (((tile >> 15) & 1) == pri)
+		if (((tile >> 15) & 1) == pri && offset < BITMAP_WIDTH)
 		{
 			int colbase = 16 * ((tile & 0x6000) >> 13) + segac2_bg_palbase + segac2_palbank;
 			UINT32 *tp = (UINT32 *)&VDP_VRAM_BYTE((tile & 0x7ff) * 32);
@@ -962,30 +969,64 @@ static void drawline_tiles(UINT32 *tiles, UINT16 *bmap, int pri)
 			if (!mytile)
 				continue;
 
-			/* non-flipped */
-			if (!(tile & 0x0800))
+			/* non-clipped */
+			if (offset >= lclip && offset <= rclip - 7)
 			{
-				col = (mytile >> 28) & 0x0f; if (col) bmap[PIXEL_XOR_BE(0)] = colbase + col;
-				col = (mytile >> 24) & 0x0f; if (col) bmap[PIXEL_XOR_BE(1)] = colbase + col;
-				col = (mytile >> 20) & 0x0f; if (col) bmap[PIXEL_XOR_BE(2)] = colbase + col;
-				col = (mytile >> 16) & 0x0f; if (col) bmap[PIXEL_XOR_BE(3)] = colbase + col;
-				col = (mytile >> 12) & 0x0f; if (col) bmap[PIXEL_XOR_BE(4)] = colbase + col;
-				col = (mytile >> 8)  & 0x0f; if (col) bmap[PIXEL_XOR_BE(5)] = colbase + col;
-				col = (mytile >> 4)  & 0x0f; if (col) bmap[PIXEL_XOR_BE(6)] = colbase + col;
-				col = (mytile >> 0)  & 0x0f; if (col) bmap[PIXEL_XOR_BE(7)] = colbase + col;
+				/* non-flipped */
+				if (!(tile & 0x0800))
+				{
+					col = EXTRACT_PIXEL(mytile, 0); if (col) bmap[0] = colbase + col;
+					col = EXTRACT_PIXEL(mytile, 1); if (col) bmap[1] = colbase + col;
+					col = EXTRACT_PIXEL(mytile, 2); if (col) bmap[2] = colbase + col;
+					col = EXTRACT_PIXEL(mytile, 3); if (col) bmap[3] = colbase + col;
+					col = EXTRACT_PIXEL(mytile, 4); if (col) bmap[4] = colbase + col;
+					col = EXTRACT_PIXEL(mytile, 5); if (col) bmap[5] = colbase + col;
+					col = EXTRACT_PIXEL(mytile, 6); if (col) bmap[6] = colbase + col;
+					col = EXTRACT_PIXEL(mytile, 7); if (col) bmap[7] = colbase + col;
+				}
+
+				/* horizontal flip */
+				else
+				{
+					col = EXTRACT_PIXEL(mytile, 7); if (col) bmap[0] = colbase + col;
+					col = EXTRACT_PIXEL(mytile, 6); if (col) bmap[1] = colbase + col;
+					col = EXTRACT_PIXEL(mytile, 5); if (col) bmap[2] = colbase + col;
+					col = EXTRACT_PIXEL(mytile, 4); if (col) bmap[3] = colbase + col;
+					col = EXTRACT_PIXEL(mytile, 3); if (col) bmap[4] = colbase + col;
+					col = EXTRACT_PIXEL(mytile, 2); if (col) bmap[5] = colbase + col;
+					col = EXTRACT_PIXEL(mytile, 1); if (col) bmap[6] = colbase + col;
+					col = EXTRACT_PIXEL(mytile, 0); if (col) bmap[7] = colbase + col;
+				}
 			}
 
-			/* horizontal flip */
-			else
+			/* clipped */
+			else if (offset >= lclip - 8 && offset <= rclip)
 			{
-				col = (mytile >> 28) & 0x0f; if (col) bmap[PIXEL_XOR_BE(7)] = colbase + col;
-				col = (mytile >> 24) & 0x0f; if (col) bmap[PIXEL_XOR_BE(6)] = colbase + col;
-				col = (mytile >> 20) & 0x0f; if (col) bmap[PIXEL_XOR_BE(5)] = colbase + col;
-				col = (mytile >> 16) & 0x0f; if (col) bmap[PIXEL_XOR_BE(4)] = colbase + col;
-				col = (mytile >> 12) & 0x0f; if (col) bmap[PIXEL_XOR_BE(3)] = colbase + col;
-				col = (mytile >> 8)  & 0x0f; if (col) bmap[PIXEL_XOR_BE(2)] = colbase + col;
-				col = (mytile >> 4)  & 0x0f; if (col) bmap[PIXEL_XOR_BE(1)] = colbase + col;
-				col = (mytile >> 0)  & 0x0f; if (col) bmap[PIXEL_XOR_BE(0)] = colbase + col;
+				/* non-flipped */
+				if (!(tile & 0x0800))
+				{
+					col = EXTRACT_PIXEL(mytile, 0); if (col && (offset + 0) >= lclip && (offset + 0) <= rclip) bmap[0] = colbase + col;
+					col = EXTRACT_PIXEL(mytile, 1); if (col && (offset + 1) >= lclip && (offset + 1) <= rclip) bmap[1] = colbase + col;
+					col = EXTRACT_PIXEL(mytile, 2); if (col && (offset + 2) >= lclip && (offset + 2) <= rclip) bmap[2] = colbase + col;
+					col = EXTRACT_PIXEL(mytile, 3); if (col && (offset + 3) >= lclip && (offset + 3) <= rclip) bmap[3] = colbase + col;
+					col = EXTRACT_PIXEL(mytile, 4); if (col && (offset + 4) >= lclip && (offset + 4) <= rclip) bmap[4] = colbase + col;
+					col = EXTRACT_PIXEL(mytile, 5); if (col && (offset + 5) >= lclip && (offset + 5) <= rclip) bmap[5] = colbase + col;
+					col = EXTRACT_PIXEL(mytile, 6); if (col && (offset + 6) >= lclip && (offset + 6) <= rclip) bmap[6] = colbase + col;
+					col = EXTRACT_PIXEL(mytile, 7); if (col && (offset + 7) >= lclip && (offset + 7) <= rclip) bmap[7] = colbase + col;
+				}
+
+				/* horizontal flip */
+				else
+				{
+					col = EXTRACT_PIXEL(mytile, 7); if (col && (offset + 0) >= lclip && (offset + 0) <= rclip) bmap[0] = colbase + col;
+					col = EXTRACT_PIXEL(mytile, 6); if (col && (offset + 1) >= lclip && (offset + 1) <= rclip) bmap[1] = colbase + col;
+					col = EXTRACT_PIXEL(mytile, 5); if (col && (offset + 2) >= lclip && (offset + 2) <= rclip) bmap[2] = colbase + col;
+					col = EXTRACT_PIXEL(mytile, 4); if (col && (offset + 3) >= lclip && (offset + 3) <= rclip) bmap[3] = colbase + col;
+					col = EXTRACT_PIXEL(mytile, 3); if (col && (offset + 4) >= lclip && (offset + 4) <= rclip) bmap[4] = colbase + col;
+					col = EXTRACT_PIXEL(mytile, 2); if (col && (offset + 5) >= lclip && (offset + 5) <= rclip) bmap[5] = colbase + col;
+					col = EXTRACT_PIXEL(mytile, 1); if (col && (offset + 6) >= lclip && (offset + 6) <= rclip) bmap[6] = colbase + col;
+					col = EXTRACT_PIXEL(mytile, 0); if (col && (offset + 7) >= lclip && (offset + 7) <= rclip) bmap[7] = colbase + col;
+				}
 			}
 		}
 	}
@@ -1014,90 +1055,66 @@ INLINE void draw8pixs(UINT16 *bmap, int patno, int priority, int colbase, int pa
 	/* non-transparent */
 	if ((colbase & 0x30) != 0x30 || !(segac2_vdp_regs[12] & 0x08))
 	{
-		col = (tile >> 28) & 0x0f; if (col) bmap[PIXEL_XOR_BE(0)] = colbase + col;
-		col = (tile >> 24) & 0x0f; if (col) bmap[PIXEL_XOR_BE(1)] = colbase + col;
-		col = (tile >> 20) & 0x0f; if (col) bmap[PIXEL_XOR_BE(2)] = colbase + col;
-		col = (tile >> 16) & 0x0f; if (col) bmap[PIXEL_XOR_BE(3)] = colbase + col;
-		col = (tile >> 12) & 0x0f; if (col) bmap[PIXEL_XOR_BE(4)] = colbase + col;
-		col = (tile >> 8)  & 0x0f; if (col) bmap[PIXEL_XOR_BE(5)] = colbase + col;
-		col = (tile >> 4)  & 0x0f; if (col) bmap[PIXEL_XOR_BE(6)] = colbase + col;
-		col = (tile >> 0)  & 0x0f; if (col) bmap[PIXEL_XOR_BE(7)] = colbase + col;
+		col = EXTRACT_PIXEL(tile, 0); if (col) bmap[0] = colbase + col;
+		col = EXTRACT_PIXEL(tile, 1); if (col) bmap[1] = colbase + col;
+		col = EXTRACT_PIXEL(tile, 2); if (col) bmap[2] = colbase + col;
+		col = EXTRACT_PIXEL(tile, 3); if (col) bmap[3] = colbase + col;
+		col = EXTRACT_PIXEL(tile, 4); if (col) bmap[4] = colbase + col;
+		col = EXTRACT_PIXEL(tile, 5); if (col) bmap[5] = colbase + col;
+		col = EXTRACT_PIXEL(tile, 6); if (col) bmap[6] = colbase + col;
+		col = EXTRACT_PIXEL(tile, 7); if (col) bmap[7] = colbase + col;
 	}
 
 	/* transparent */
 	else
 	{
-		col = (tile >> 28) & 0x0f;
+		col = EXTRACT_PIXEL(tile, 0);
 		if (col)
 		{
-			if (col < 0x0e) bmap[PIXEL_XOR_BE(0)] = colbase + col;
-			else
-			{
-				bmap[PIXEL_XOR_BE(0)] = transparent_lookup[((col & 1) << 11) | (bmap[PIXEL_XOR_BE(0)] & 0x7ff)];
-			}
+			if (col < 0x0e) bmap[0] = colbase + col;
+			else bmap[0] = transparent_lookup[((col & 1) << 11) | (bmap[0] & 0x7ff)];
 		}
-		col = (tile >> 24) & 0x0f;
+		col = EXTRACT_PIXEL(tile, 1);
 		if (col)
 		{
-			if (col < 0x0e) bmap[PIXEL_XOR_BE(1)] = colbase + col;
-			else
-			{
-				bmap[PIXEL_XOR_BE(1)] = transparent_lookup[((col & 1) << 11) | (bmap[PIXEL_XOR_BE(1)] & 0x7ff)];
-			}
+			if (col < 0x0e) bmap[1] = colbase + col;
+			else bmap[1] = transparent_lookup[((col & 1) << 11) | (bmap[1] & 0x7ff)];
 		}
-		col = (tile >> 20) & 0x0f;
+		col = EXTRACT_PIXEL(tile, 2);
 		if (col)
 		{
-			if (col < 0x0e) bmap[PIXEL_XOR_BE(2)] = colbase + col;
-			else
-			{
-				bmap[PIXEL_XOR_BE(2)] = transparent_lookup[((col & 1) << 11) | (bmap[PIXEL_XOR_BE(2)] & 0x7ff)];
-			}
+			if (col < 0x0e) bmap[2] = colbase + col;
+			else bmap[2] = transparent_lookup[((col & 1) << 11) | (bmap[2] & 0x7ff)];
 		}
-		col = (tile >> 16) & 0x0f;
+		col = EXTRACT_PIXEL(tile, 3);
 		if (col)
 		{
-			if (col < 0x0e) bmap[PIXEL_XOR_BE(3)] = colbase + col;
-			else
-			{
-				bmap[PIXEL_XOR_BE(3)] = transparent_lookup[((col & 1) << 11) | (bmap[PIXEL_XOR_BE(3)] & 0x7ff)];
-			}
+			if (col < 0x0e) bmap[3] = colbase + col;
+			else bmap[3] = transparent_lookup[((col & 1) << 11) | (bmap[3] & 0x7ff)];
 		}
-		col = (tile >> 12) & 0x0f;
+		col = EXTRACT_PIXEL(tile, 4);
 		if (col)
 		{
-			if (col < 0x0e) bmap[PIXEL_XOR_BE(4)] = colbase + col;
-			else
-			{
-				bmap[PIXEL_XOR_BE(4)] = transparent_lookup[((col & 1) << 11) | (bmap[PIXEL_XOR_BE(4)] & 0x7ff)];
-			}
+			if (col < 0x0e) bmap[4] = colbase + col;
+			else bmap[4] = transparent_lookup[((col & 1) << 11) | (bmap[4] & 0x7ff)];
 		}
-		col = (tile >>  8) & 0x0f;
+		col = EXTRACT_PIXEL(tile, 5);
 		if (col)
 		{
-			if (col < 0x0e) bmap[PIXEL_XOR_BE(5)] = colbase + col;
-			else
-			{
-				bmap[PIXEL_XOR_BE(5)] = transparent_lookup[((col & 1) << 11) | (bmap[PIXEL_XOR_BE(5)] & 0x7ff)];
-			}
+			if (col < 0x0e) bmap[5] = colbase + col;
+			else bmap[5] = transparent_lookup[((col & 1) << 11) | (bmap[5] & 0x7ff)];
 		}
-		col = (tile >>  4) & 0x0f;
+		col = EXTRACT_PIXEL(tile, 6);
 		if (col)
 		{
-			if (col < 0x0e) bmap[PIXEL_XOR_BE(6)] = colbase + col;
-			else
-			{
-				bmap[PIXEL_XOR_BE(6)] = transparent_lookup[((col & 1) << 11) | (bmap[PIXEL_XOR_BE(6)] & 0x7ff)];
-			}
+			if (col < 0x0e) bmap[6] = colbase + col;
+			else bmap[6] = transparent_lookup[((col & 1) << 11) | (bmap[6] & 0x7ff)];
 		}
-		col = (tile >>  0) & 0x0f;
+		col = EXTRACT_PIXEL(tile, 7);
 		if (col)
 		{
-			if (col < 0x0e) bmap[PIXEL_XOR_BE(7)] = colbase + col;
-			else
-			{
-				bmap[PIXEL_XOR_BE(7)] = transparent_lookup[((col & 1) << 11) | (bmap[PIXEL_XOR_BE(7)] & 0x7ff)];
-			}
+			if (col < 0x0e) bmap[7] = colbase + col;
+			else bmap[7] = transparent_lookup[((col & 1) << 11) | (bmap[7] & 0x7ff)];
 		}
 	}
 }
@@ -1116,90 +1133,66 @@ INLINE void draw8pixs_hflip(UINT16 *bmap, int patno, int priority, int colbase, 
 	/* non-transparent */
 	if ((colbase & 0x30) != 0x30 || !(segac2_vdp_regs[12] & 0x08))
 	{
-		col = (tile >> 28) & 0x0f; if (col) bmap[PIXEL_XOR_BE(7)] = colbase + col;
-		col = (tile >> 24) & 0x0f; if (col) bmap[PIXEL_XOR_BE(6)] = colbase + col;
-		col = (tile >> 20) & 0x0f; if (col) bmap[PIXEL_XOR_BE(5)] = colbase + col;
-		col = (tile >> 16) & 0x0f; if (col) bmap[PIXEL_XOR_BE(4)] = colbase + col;
-		col = (tile >> 12) & 0x0f; if (col) bmap[PIXEL_XOR_BE(3)] = colbase + col;
-		col = (tile >> 8)  & 0x0f; if (col) bmap[PIXEL_XOR_BE(2)] = colbase + col;
-		col = (tile >> 4)  & 0x0f; if (col) bmap[PIXEL_XOR_BE(1)] = colbase + col;
-		col = (tile >> 0)  & 0x0f; if (col) bmap[PIXEL_XOR_BE(0)] = colbase + col;
+		col = EXTRACT_PIXEL(tile, 7); if (col) bmap[0] = colbase + col;
+		col = EXTRACT_PIXEL(tile, 6); if (col) bmap[1] = colbase + col;
+		col = EXTRACT_PIXEL(tile, 5); if (col) bmap[2] = colbase + col;
+		col = EXTRACT_PIXEL(tile, 4); if (col) bmap[3] = colbase + col;
+		col = EXTRACT_PIXEL(tile, 3); if (col) bmap[4] = colbase + col;
+		col = EXTRACT_PIXEL(tile, 2); if (col) bmap[5] = colbase + col;
+		col = EXTRACT_PIXEL(tile, 1); if (col) bmap[6] = colbase + col;
+		col = EXTRACT_PIXEL(tile, 0); if (col) bmap[7] = colbase + col;
 	}
 
 	/* transparent */
 	else
 	{
-		col = (tile >> 28) & 0x0f;
+		col = EXTRACT_PIXEL(tile, 7);
 		if (col)
 		{
-			if (col < 0x0e) bmap[PIXEL_XOR_BE(7)] = colbase + col;
-			else
-			{
-				bmap[PIXEL_XOR_BE(7)] = transparent_lookup[((col & 1) << 11) | (bmap[PIXEL_XOR_BE(7)] & 0x7ff)];
-			}
+			if (col < 0x0e) bmap[0] = colbase + col;
+			else bmap[0] = transparent_lookup[((col & 1) << 11) | (bmap[0] & 0x7ff)];
 		}
-		col = (tile >> 24) & 0x0f;
+		col = EXTRACT_PIXEL(tile, 6);
 		if (col)
 		{
-			if (col < 0x0e) bmap[PIXEL_XOR_BE(6)] = colbase + col;
-			else
-			{
-				bmap[PIXEL_XOR_BE(6)] = transparent_lookup[((col & 1) << 11) | (bmap[PIXEL_XOR_BE(6)] & 0x7ff)];
-			}
+			if (col < 0x0e) bmap[1] = colbase + col;
+			else bmap[1] = transparent_lookup[((col & 1) << 11) | (bmap[1] & 0x7ff)];
 		}
-		col = (tile >> 20) & 0x0f;
+		col = EXTRACT_PIXEL(tile, 5);
 		if (col)
 		{
-			if (col < 0x0e) bmap[PIXEL_XOR_BE(5)] = colbase + col;
-			else
-			{
-				bmap[PIXEL_XOR_BE(5)] = transparent_lookup[((col & 1) << 11) | (bmap[PIXEL_XOR_BE(5)] & 0x7ff)];
-			}
+			if (col < 0x0e) bmap[2] = colbase + col;
+			else bmap[2] = transparent_lookup[((col & 1) << 11) | (bmap[2] & 0x7ff)];
 		}
-		col = (tile >> 16) & 0x0f;
+		col = EXTRACT_PIXEL(tile, 4);
 		if (col)
 		{
-			if (col < 0x0e) bmap[PIXEL_XOR_BE(4)] = colbase + col;
-			else
-			{
-				bmap[PIXEL_XOR_BE(4)] = transparent_lookup[((col & 1) << 11) | (bmap[PIXEL_XOR_BE(4)] & 0x7ff)];
-			}
+			if (col < 0x0e) bmap[3] = colbase + col;
+			else bmap[3] = transparent_lookup[((col & 1) << 11) | (bmap[3] & 0x7ff)];
 		}
-		col = (tile >> 12) & 0x0f;
+		col = EXTRACT_PIXEL(tile, 3);
 		if (col)
 		{
-			if (col < 0x0e) bmap[PIXEL_XOR_BE(3)] = colbase + col;
-			else
-			{
-				bmap[PIXEL_XOR_BE(3)] = transparent_lookup[((col & 1) << 11) | (bmap[PIXEL_XOR_BE(3)] & 0x7ff)];
-			}
+			if (col < 0x0e) bmap[4] = colbase + col;
+			else bmap[4] = transparent_lookup[((col & 1) << 11) | (bmap[4] & 0x7ff)];
 		}
-		col = (tile >>  8) & 0x0f;
+		col = EXTRACT_PIXEL(tile, 2);
 		if (col)
 		{
-			if (col < 0x0e) bmap[PIXEL_XOR_BE(2)] = colbase + col;
-			else
-			{
-				bmap[PIXEL_XOR_BE(2)] = transparent_lookup[((col & 1) << 11) | (bmap[PIXEL_XOR_BE(2)] & 0x7ff)];
-			}
+			if (col < 0x0e) bmap[5] = colbase + col;
+			else bmap[5] = transparent_lookup[((col & 1) << 11) | (bmap[5] & 0x7ff)];
 		}
-		col = (tile >>  4) & 0x0f;
+		col = EXTRACT_PIXEL(tile, 1);
 		if (col)
 		{
-			if (col < 0x0e) bmap[PIXEL_XOR_BE(1)] = colbase + col;
-			else
-			{
-				bmap[PIXEL_XOR_BE(1)] = transparent_lookup[((col & 1) << 11) | (bmap[PIXEL_XOR_BE(1)] & 0x7ff)];
-			}
+			if (col < 0x0e) bmap[6] = colbase + col;
+			else bmap[6] = transparent_lookup[((col & 1) << 11) | (bmap[6] & 0x7ff)];
 		}
-		col = (tile >>  0) & 0x0f;
+		col = EXTRACT_PIXEL(tile, 0);
 		if (col)
 		{
-			if (col < 0x0e) bmap[PIXEL_XOR_BE(0)] = colbase + col;
-			else
-			{
-				bmap[PIXEL_XOR_BE(0)] = transparent_lookup[((col & 1) << 11) | (bmap[PIXEL_XOR_BE(0)] & 0x7ff)];
-			}
+			if (col < 0x0e) bmap[7] = colbase + col;
+			else bmap[7] = transparent_lookup[((col & 1) << 11) | (bmap[7] & 0x7ff)];
 		}
 	}
 }
@@ -1208,7 +1201,7 @@ INLINE void draw8pixs_hflip(UINT16 *bmap, int patno, int priority, int colbase, 
 static void drawline_sprite(int line, UINT16 *bmap, int priority, UINT8 *spritebase)
 {
 	int spriteypos   = (((spritebase[0] & 0x01) << 8) | spritebase[1]) - 0x80;
-	int spritexpos   = (((spritebase[6] & 0x01) << 8) | spritebase[7]) - 0x78;
+	int spritexpos   = (((spritebase[6] & 0x01) << 8) | spritebase[7]) - 0x80;
 	int spriteheight = ((spritebase[2] & 0x03) + 1) * 8;
 	int spritewidth  = (((spritebase[2] & 0x0c) >> 2) + 1) * 8;
 	int spriteattr, patno, patflip, patline, colbase, x;
@@ -1216,7 +1209,7 @@ static void drawline_sprite(int line, UINT16 *bmap, int priority, UINT8 *spriteb
 	/* skip if out of range */
 	if (line < spriteypos || line >= spriteypos + spriteheight)
 		return;
-	if (spritexpos + spritewidth < 8 || spritexpos >= 328)
+	if (spritexpos + spritewidth < 0 || spritexpos >= BITMAP_WIDTH)
 		return;
 
 	/* extract the remaining data */
@@ -1239,7 +1232,7 @@ static void drawline_sprite(int line, UINT16 *bmap, int priority, UINT8 *spriteb
 		case 0x00: /* No Flip */
 			for (x = 0; x < spritewidth; x++, bmap += 8)
 			{
-				if (spritexpos >= 0 && spritexpos < 328)
+				if (spritexpos >= -7 && spritexpos < BITMAP_WIDTH)
 					draw8pixs(bmap, patno, priority, colbase, patline);
 				spritexpos += 8;
 				patno += spriteheight;
@@ -1250,7 +1243,7 @@ static void drawline_sprite(int line, UINT16 *bmap, int priority, UINT8 *spriteb
 			patno += spriteheight * (spritewidth - 1);
 			for (x = 0; x < spritewidth; x++, bmap += 8)
 			{
-				if (spritexpos >= 0 && spritexpos < 328)
+				if (spritexpos >= -7 && spritexpos < BITMAP_WIDTH)
 					draw8pixs_hflip(bmap, patno, priority, colbase, patline);
 				spritexpos += 8;
 				patno -= spriteheight;
@@ -1261,7 +1254,7 @@ static void drawline_sprite(int line, UINT16 *bmap, int priority, UINT8 *spriteb
 			patline = 8 * spriteheight - patline - 1;
 			for (x = 0; x < spritewidth; x++, bmap += 8)
 			{
-				if (spritexpos >= 0 && spritexpos < 328)
+				if (spritexpos >= -7 && spritexpos < BITMAP_WIDTH)
 					draw8pixs(bmap, patno, priority, colbase, patline);
 				spritexpos += 8;
 				patno += spriteheight;
@@ -1273,7 +1266,7 @@ static void drawline_sprite(int line, UINT16 *bmap, int priority, UINT8 *spriteb
 			patline = 8 * spriteheight - patline - 1;
 			for (x = 0; x < spritewidth; x++, bmap += 8)
 			{
-				if (spritexpos >= 0 && spritexpos < 328)
+				if (spritexpos >= -7 && spritexpos < BITMAP_WIDTH)
 					draw8pixs_hflip(bmap, patno, priority, colbase, patline);
 				spritexpos += 8;
 				patno -= spriteheight;

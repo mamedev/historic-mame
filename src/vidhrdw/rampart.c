@@ -52,6 +52,7 @@ VIDEO_START( rampart )
 		0,					/* does the neighbor bit affect the next object? */
 		8,					/* pixels per SLIP entry (0 for no-slip) */
 		0,					/* pixel offset for SLIPs */
+		0,					/* maximum number of links to visit/scanline (0=all) */
 
 		0x100,				/* base palette entry */
 		0x100,				/* maximum number of colors */
@@ -120,7 +121,7 @@ VIDEO_UPDATE( rampart )
 					/* not yet verified
 					*/
 					pf[x] = mo[x];
-					
+
 					/* erase behind ourselves */
 					mo[x] = 0;
 				}

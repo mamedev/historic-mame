@@ -136,6 +136,7 @@ SOUNDS+=BSMT2000@
 SOUNDS+=YMF278B@
 SOUNDS+=GAELCO_CG1V@
 SOUNDS+=GAELCO_GAE1@
+SOUNDS+=X1_010@
 
 DRVLIBS = \
 	$(OBJ)/pacman.a $(OBJ)/epos.a $(OBJ)/nichibut.a \
@@ -183,14 +184,14 @@ $(OBJ)/nichibut.a: \
 	$(OBJ)/vidhrdw/terracre.o $(OBJ)/drivers/terracre.o \
 	$(OBJ)/vidhrdw/galivan.o $(OBJ)/drivers/galivan.o \
 	$(OBJ)/vidhrdw/armedf.o $(OBJ)/drivers/armedf.o \
-	$(OBJ)/machine/nb1413m3.o $(OBJ)/machine/m68kfmly.o \
+	$(OBJ)/machine/nb1413m3.o \
 	$(OBJ)/vidhrdw/hyhoo.o $(OBJ)/drivers/hyhoo.o \
-	$(OBJ)/vidhrdw/mjsikaku.o $(OBJ)/drivers/mjsikaku.o \
-	$(OBJ)/vidhrdw/gionbana.o $(OBJ)/drivers/gionbana.o \
-	$(OBJ)/vidhrdw/pstadium.o $(OBJ)/drivers/pstadium.o \
-	$(OBJ)/vidhrdw/niyanpai.o $(OBJ)/drivers/niyanpai.o \
 	$(OBJ)/vidhrdw/pastelgl.o $(OBJ)/drivers/pastelgl.o \
-	$(OBJ)/vidhrdw/sailorws.o $(OBJ)/drivers/sailorws.o \
+	$(OBJ)/vidhrdw/nbmj8688.o $(OBJ)/drivers/nbmj8688.o \
+	$(OBJ)/vidhrdw/nbmj8891.o $(OBJ)/drivers/nbmj8891.o \
+	$(OBJ)/vidhrdw/nbmj8991.o $(OBJ)/drivers/nbmj8991.o \
+	$(OBJ)/vidhrdw/nbmj9195.o $(OBJ)/drivers/nbmj9195.o \
+	$(OBJ)/vidhrdw/niyanpai.o $(OBJ)/drivers/niyanpai.o $(OBJ)/machine/m68kfmly.o \
 
 $(OBJ)/phoenix.a: \
 	$(OBJ)/drivers/safarir.o \
@@ -678,6 +679,7 @@ $(OBJ)/zaccaria.a: \
 	$(OBJ)/vidhrdw/zaccaria.o $(OBJ)/drivers/zaccaria.o \
 
 $(OBJ)/upl.a: \
+	$(OBJ)/vidhrdw/mouser.o $(OBJ)/drivers/mouser.o \
 	$(OBJ)/vidhrdw/nova2001.o $(OBJ)/drivers/nova2001.o \
 	$(OBJ)/vidhrdw/ninjakid.o $(OBJ)/drivers/ninjakid.o \
 	$(OBJ)/vidhrdw/raiders5.o $(OBJ)/drivers/raiders5.o \
@@ -756,6 +758,7 @@ $(OBJ)/vsystem.a: \
 	$(OBJ)/vidhrdw/aerofgt.o $(OBJ)/drivers/aerofgt.o \
 	$(OBJ)/vidhrdw/welltris.o $(OBJ)/drivers/welltris.o \
 	$(OBJ)/vidhrdw/f1gp.o $(OBJ)/drivers/f1gp.o \
+	$(OBJ)/vidhrdw/taotaido.o $(OBJ)/drivers/taotaido.o \
 	$(OBJ)/vidhrdw/crshrace.o $(OBJ)/drivers/crshrace.o \
 	$(OBJ)/vidhrdw/gstriker.o $(OBJ)/drivers/gstriker.o \
 	$(OBJ)/vidhrdw/suprslam.o $(OBJ)/drivers/suprslam.o \
@@ -799,7 +802,7 @@ $(OBJ)/neogeo.a: \
 $(OBJ)/seta.a: \
 	$(OBJ)/vidhrdw/hanaawas.o $(OBJ)/drivers/hanaawas.o \
 	$(OBJ)/vidhrdw/srmp2.o $(OBJ)/drivers/srmp2.o \
-	$(OBJ)/vidhrdw/seta.o $(OBJ)/sndhrdw/seta.o $(OBJ)/drivers/seta.o \
+	$(OBJ)/vidhrdw/seta.o $(OBJ)/drivers/seta.o \
 	$(OBJ)/vidhrdw/seta2.o $(OBJ)/drivers/seta2.o \
 	$(OBJ)/vidhrdw/ssv.o $(OBJ)/drivers/ssv.o \
 

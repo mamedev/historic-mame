@@ -87,8 +87,13 @@
 
 	- 2020bb version display, the program roms contains two version numbers, the one which always
 	  get displayed when running in Mame is that which would be displayed on a console.
-	  This depends on location 0x46 of nvram, which should be set in the arcade version. There
-	  doesn't seem to be a place in the BIOS where this location is initialized.
+	  This depends on location 0x46 of nvram. That location is the BIOS "Demo sound" bit ('00' for
+	  'set up in each game' and '01' for 'without'). If you set 0x46 to '01' ALL Demosound
+	  (Neo Splash screen and in game attract mode) is off, and version number is 1.32X. If you set
+	  0x46 to '00' and set 0x229 (Demosound bit for the game itself. '00' for 'ON' and '01' for
+	  'OFF') to '01' The Neo splashscreen has sound but the ingame attract mode does not and
+	  version is set to 1.32X. So it would seem that 1.32X gets displayed when demosund is off
+	  and 1.02C when Demosound is on.
 
 	NOTES ABOUT UNSUPPORTED GAMES :
 
@@ -5415,7 +5420,7 @@ GAME( 1992, fbfrenzy, neogeo,   neogeo, neogeo,  neogeo,   ROT0, "SNK", "Footbal
 GAME( 1992, kotm2,    neogeo,   neogeo, neogeo,  neogeo,   ROT0, "SNK", "King of the Monsters 2 - The Next Thing" )
 GAME( 1993, sengoku2, neogeo,   raster, neogeo,  neogeo,   ROT0, "SNK", "Sengoku 2 / Sengoku Denshou 2")
 GAME( 1992, bstars2,  neogeo,   neogeo, neogeo,  neogeo,   ROT0, "SNK", "Baseball Stars 2" )
-GAME( 1992, quizdai2, neogeo,   neogeo, neogeo,  neogeo,   ROT0, "SNK", "Quiz Meintantei Neo Geo - Quiz Daisousa Sen Part 2" )
+GAME( 1992, quizdai2, neogeo,   neogeo, neogeo,  neogeo,   ROT0, "SNK", "Quiz Meitantei Neo Geo - Quiz Daisousa Sen Part 2" )
 GAME( 1993, 3countb,  neogeo,   neogeo, neogeo,  neogeo,   ROT0, "SNK", "3 Count Bout / Fire Suplex" )
 GAME( 1992, aof,      neogeo,   raster, neogeo,  neogeo,   ROT0, "SNK", "Art of Fighting / Ryuuko no Ken" )
 GAME( 1993, samsho,   neogeo,   neogeo, neogeo,  neogeo,   ROT0, "SNK", "Samurai Shodown / Samurai Spirits" )

@@ -1354,3 +1354,11 @@ SOUNDOBJS += $(OBJ)/sound/gaelco.o
 else
 SOUNDDEFS += -DHAS_GAELCO_GAE1=0
 endif
+
+SOUND=$(strip $(findstring X1_010@,$(SOUNDS)))
+ifneq ($(SOUND),)
+SOUNDDEFS += -DHAS_X1_010=1
+SOUNDOBJS += $(OBJ)/sound/x1_010.o
+else
+SOUNDDEFS += -DHAS_X1_010=0
+endif

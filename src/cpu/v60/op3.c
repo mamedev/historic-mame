@@ -154,6 +154,7 @@ UINT32 opJMP(void) /* TRUSTED */
 
 	// Jump there
 	PC=amOut;
+	ChangePC(PC);
 
 	return 0;
 }
@@ -175,6 +176,7 @@ UINT32 opJSR(void) /* TRUSTED */
 
 	// Jump there
 	PC=amOut;
+	ChangePC(PC);
 
 	return 0;
 }
@@ -211,6 +213,7 @@ UINT32 opRET(void) /* TRUSTED */
 	// Read return address from stack
 	PC=MemRead32(SP);
 	SP+=4;
+	ChangePC(PC);
 
 	// Restore AP from stack
 	AP=MemRead32(SP);
@@ -296,6 +299,7 @@ UINT32 opTRAP(void)
 	MemWrite32(SP, PC + amLength1 + 1);
 
 	PC = GETINTVECT(48 + (amOut&0xF));
+	ChangePC(PC);
 
 	return 0;
 }
@@ -313,6 +317,7 @@ UINT32 opRETIU(void) /* TRUSTED */
 	// Restore PC and PSW from stack
 	PC = MemRead32(SP);
 	SP += 4;
+	ChangePC(PC);
 
 	v60WritePSW(MemRead32(SP));
 	SP += 4;
@@ -342,6 +347,7 @@ UINT32 opRETIS(void)
 	// Restore PC and PSW from stack
 	PC = MemRead32(SP);
 	SP += 4;
+	ChangePC(PC);
 
 	appw = MemRead32(SP);
 	SP += 4;

@@ -61,6 +61,7 @@
 #define IDE_COMMAND_WRITE_MULTIPLE	0x30
 #define IDE_COMMAND_SET_CONFIG		0x91
 #define IDE_COMMAND_GET_INFO		0xec
+#define IDE_COMMAND_UNKNOWN_F9		0xf9
 
 #define IDE_ERROR_NONE				0x00
 #define IDE_ERROR_DEFAULT			0x01
@@ -624,10 +625,26 @@ void handle_command(struct ide_state *ide, UINT8 command)
 			signal_interrupt(ide);
 			break;
 
+		case IDE_COMMAND_UNKNOWN_F9:
+			/* only used by Killer Instinct AFAICT */
+			LOG(("IDE unknown command (F9)\n"));
+#if PRINTF_IDE_COMMANDS
+			fprintf(stderr, "IDE unknown command (F9)\n");
+#endif
+			/* signal an interrupt */
+			signal_interrupt(ide);
+			break;
+
 		default:
 			logerror("IDE unknown command (%02X)\n", command);
 #if PRINTF_IDE_COMMANDS
 			fprintf(stderr, "IDE unknown command (%02X)\n", command);
+#endif
+#ifdef MAME_DEBUG
+{
+	extern int debug_key_pressed;
+	debug_key_pressed = 1;
+}
 #endif
 			break;
 	}
@@ -646,7 +663,7 @@ static UINT32 ide_controller_read(struct ide_state *ide, offs_t offset, int size
 	UINT32 result = 0;
 
 	/* logit */
-//	if (offset != IDE_ADDR_DATA)
+	if (offset != IDE_ADDR_DATA && offset != IDE_ADDR_STATUS_COMMAND && offset != IDE_ADDR_STATUS_CONTROL)
 		LOG(("%08X:IDE read at %03X, size=%d\n", activecpu_get_previouspc(), offset, size));
 
 	switch (offset)

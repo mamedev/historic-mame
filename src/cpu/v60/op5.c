@@ -15,6 +15,7 @@ UINT32 opBRK(void)
 	SP -=4;
 	MemWrite32(SP, PC + 1);
 	PC = GETINTVECT(13);
+	ChangePC(PC);
 */
 //	MessageBox(NULL,"BRK opcode: skipping","Warning",MB_OK);
 	messagebox("Skipping BRK opcode!");
@@ -35,6 +36,7 @@ UINT32 opBRKV(void)
 	SP -=4;
 	MemWrite32(SP, PC + 1);
 	PC = GETINTVECT(21);
+	ChangePC(PC);
 
 	return 0;
 }
@@ -71,6 +73,7 @@ UINT32 opRSR(void)
 {
 	PC = MemRead32(SP);
 	SP +=4;
+	ChangePC(PC);
 
 	return 0;
 }

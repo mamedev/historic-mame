@@ -15,17 +15,43 @@ TODO:
   set, it consists of only the second half of the one we have here.
 - Lots of unknown PROMs.
 
+
+Change Log:
+
+FEB-2003 (AT)
+
+- added preliminary starfield emulation. Regardless of my best effort in
+  transcribing Sidearms' star circuit according to the current schematics
+  scan it still doesn't behave exactly like the arcade. Emulation is
+  performed per-pixel at logic level.
+
+- rewrote video update and the following bugs seem to be fixed:
+
+  sidearms060red:  attract mode and stage six crashing
+  sidearms055gre:  strange background color
+  turtship37b5yel: various graphics glitches and priority problems
+
+Notes:
+
+  Unknown PROMs are mostly used for timing. Only the first four sprite
+  encoding parameters have been identified, the other 28(!) are
+  believed to be line-buffer controls. Cocktail mode needs work. It may
+  be easier to flip the final bitmap instead of individual components.
+
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-extern unsigned char *sidearms_bg_scrollx,*sidearms_bg_scrolly;
-extern unsigned char *sidearms_bg2_scrollx,*sidearms_bg2_scrolly;
+extern data8_t *sidearms_bg_scrollx,*sidearms_bg_scrolly;
+extern int sidearms_vidhrdw;
 
+WRITE_HANDLER( sidearms_star_scrollx_w );
+WRITE_HANDLER( sidearms_star_scrolly_w );
 WRITE_HANDLER( sidearms_c804_w );
 WRITE_HANDLER( sidearms_gfxctrl_w );
 VIDEO_START( sidearms );
+VIDEO_EOF( sidearms );
 PALETTE_INIT( sidearms );
 VIDEO_UPDATE( sidearms );
 
@@ -76,8 +102,8 @@ static MEMORY_WRITE_START( writemem )
 	{ 0xc801, 0xc801, sidearms_bankswitch_w },
 	{ 0xc802, 0xc802, watchdog_reset_w },
 	{ 0xc804, 0xc804, sidearms_c804_w },
-	{ 0xc805, 0xc805, MWA_RAM, &sidearms_bg2_scrollx },
-	{ 0xc806, 0xc806, MWA_RAM, &sidearms_bg2_scrolly },
+	{ 0xc805, 0xc805, sidearms_star_scrollx_w },
+	{ 0xc806, 0xc806, sidearms_star_scrolly_w },
 	{ 0xc808, 0xc809, MWA_RAM, &sidearms_bg_scrollx },
 	{ 0xc80a, 0xc80b, MWA_RAM, &sidearms_bg_scrolly },
 	{ 0xc80c, 0xc80c, sidearms_gfxctrl_w },	/* background and sprite enable */
@@ -86,35 +112,6 @@ static MEMORY_WRITE_START( writemem )
 	{ 0xe000, 0xefff, MWA_RAM },
 	{ 0xf000, 0xffff, MWA_RAM, &spriteram, &spriteram_size },
 MEMORY_END
-
-#ifdef THIRD_CPU
-static WRITE_HANDLER( pop )
-{
-RAM[0xa000] = 0xc3;
-RAM[0xa001] = 0x00;
-RAM[0xa002] = 0xa0;
-//      interrupt_enable_w(offset,data & 0x80);
-}
-
-static MEMORY_READ_START( readmem2 )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0xc000, 0xdfff, MRA_RAM },
-	{ 0xe000, 0xe3ff, MRA_RAM },
-	{ 0xe400, 0xe7ff, MRA_RAM },
-	{ 0xe800, 0xebff, MRA_RAM },
-	{ 0xec00, 0xefff, MRA_RAM },
-MEMORY_END
-
-static MEMORY_WRITE_START( writemem2 )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0xc000, 0xdfff, MWA_RAM },
-	{ 0xe000, 0xe3ff, MWA_RAM },
-	{ 0xe400, 0xe7ff, MWA_RAM },
-	{ 0xe800, 0xebff, MWA_RAM },
-	{ 0xec00, 0xefff, MWA_RAM },
-	{ 0xf80e, 0xf80e, pop },        /* ROM bank selector? (to appear at 8000) */
-MEMORY_END
-#endif
 
 
 static MEMORY_READ_START( turtship_readmem )
@@ -135,10 +132,9 @@ static MEMORY_WRITE_START( turtship_writemem )
 	{ 0xe801, 0xe801, sidearms_bankswitch_w },
 	{ 0xe802, 0xe802, watchdog_reset_w },
 	{ 0xe804, 0xe804, sidearms_c804_w },
-	{ 0xe805, 0xe805, MWA_RAM, &sidearms_bg2_scrollx },
-	{ 0xe806, 0xe806, MWA_RAM, &sidearms_bg2_scrolly },
+	{ 0xe805, 0xe805, sidearms_star_scrollx_w },
+	{ 0xe806, 0xe806, sidearms_star_scrolly_w },
 	{ 0xe808, 0xe809, MWA_RAM, &sidearms_bg_scrollx },
-	{ 0xe80a, 0xe80b, MWA_RAM, &sidearms_bg_scrolly },
 	{ 0xe80a, 0xe80b, MWA_RAM, &sidearms_bg_scrolly },
 	{ 0xe80c, 0xe80c, sidearms_gfxctrl_w },	/* background and sprite enable */
 	{ 0xf000, 0xf7ff, videoram_w, &videoram, &videoram_size },
@@ -198,11 +194,11 @@ INPUT_PORTS_START( sidearms )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* DSW0 */
-	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Difficulty ) )
+	PORT_DIPNAME( 0x07, 0x04, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x07, "0 (Easiest)" )
 	PORT_DIPSETTING(    0x06, "1" )
 	PORT_DIPSETTING(    0x05, "2" )
-	PORT_DIPSETTING(    0x04, "3" )
+	PORT_DIPSETTING(    0x04, "3 (Normal)" )
 	PORT_DIPSETTING(    0x03, "4" )
 	PORT_DIPSETTING(    0x02, "5" )
 	PORT_DIPSETTING(    0x01, "6" )
@@ -523,23 +519,18 @@ static MACHINE_DRIVER_START( sidearms )
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)        /* 4 MHz (?) */
 	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
 
-#ifdef THIRD_CPU
-	MDRV_CPU_ADD(Z80, 4000000)        /* 4 MHz (?) */
-	MDRV_CPU_MEMORY(readmem2,writemem2)
-	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
-#endif
-
 	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM)
 	MDRV_SCREEN_SIZE(64*8, 32*8)
 	MDRV_VISIBLE_AREA(8*8, (64-8)*8-1, 2*8, 30*8-1 )
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(1024)
 
 	MDRV_VIDEO_START(sidearms)
+	MDRV_VIDEO_EOF(sidearms)
 	MDRV_VIDEO_UPDATE(sidearms)
 
 	/* sound hardware */
@@ -559,16 +550,17 @@ static MACHINE_DRIVER_START( turtship )
 	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM)
 	MDRV_SCREEN_SIZE(64*8, 32*8)
 	MDRV_VISIBLE_AREA(8*8, (64-8)*8-1, 2*8, 30*8-1 )
 	MDRV_GFXDECODE(turtship_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(1024)
 
 	MDRV_VIDEO_START(sidearms)
+	MDRV_VIDEO_EOF(sidearms)
 	MDRV_VIDEO_UPDATE(sidearms)
 
 	/* sound hardware */
@@ -585,7 +577,7 @@ ROM_START( sidearms )
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for the audio CPU */
 	ROM_LOAD( "a_04k.rom",    0x0000, 0x8000, 0x34efe2d2 )
 
-	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* unknown, looks like Z80 code */
+	ROM_REGION( 0x08000, REGION_USER1, 0 )    /* starfield data */
 	ROM_LOAD( "b_11j.rom",    0x0000, 0x8000, 0x134dc35b )
 
 	ROM_REGION( 0x04000, REGION_GFX1, ROMREGION_DISPOSE )
@@ -615,10 +607,10 @@ ROM_START( sidearms )
 	ROM_LOAD( "b_03d.rom",    0x0000, 0x8000, 0x6f348008 )
 
 	ROM_REGION( 0x0320, REGION_PROMS, 0 )
-	ROM_LOAD( "63s141.16h",   0x0000, 0x0100, 0x75af3553 )	/* unknown */
-	ROM_LOAD( "63s141.11h",   0x0100, 0x0100, 0xa6e4d68f )	/* unknown */
-	ROM_LOAD( "63s141.15h",   0x0200, 0x0100, 0xc47c182a )	/* unknown */
-	ROM_LOAD( "63s081.3j",    0x0300, 0x0020, 0xc5817816 )	/* unknown */
+	ROM_LOAD( "63s141.16h",   0x0000, 0x0100, 0x75af3553 )	// timing
+	ROM_LOAD( "63s141.11h",   0x0100, 0x0100, 0xa6e4d68f )	// color mixing
+	ROM_LOAD( "63s141.15h",   0x0200, 0x0100, 0xc47c182a )	// timing
+	ROM_LOAD( "63s081.3j",    0x0300, 0x0020, 0xc5817816 )	// unknown
 ROM_END
 
 ROM_START( sidearmr )
@@ -630,7 +622,7 @@ ROM_START( sidearmr )
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for the audio CPU */
 	ROM_LOAD( "a_04k.rom",    0x0000, 0x8000, 0x34efe2d2 )
 
-	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* unknown, looks like Z80 code */
+	ROM_REGION( 0x08000, REGION_USER1, 0 )    /* starfield data */
 	ROM_LOAD( "b_11j.rom",    0x0000, 0x8000, 0x134dc35b )
 
 	ROM_REGION( 0x04000, REGION_GFX1, ROMREGION_DISPOSE )
@@ -660,10 +652,10 @@ ROM_START( sidearmr )
 	ROM_LOAD( "b_03d.rom",    0x0000, 0x8000, 0x6f348008 )
 
 	ROM_REGION( 0x0320, REGION_PROMS, 0 )
-	ROM_LOAD( "63s141.16h",   0x0000, 0x0100, 0x75af3553 )	/* unknown */
-	ROM_LOAD( "63s141.11h",   0x0100, 0x0100, 0xa6e4d68f )	/* unknown */
-	ROM_LOAD( "63s141.15h",   0x0200, 0x0100, 0xc47c182a )	/* unknown */
-	ROM_LOAD( "63s081.3j",    0x0300, 0x0020, 0xc5817816 )	/* unknown */
+	ROM_LOAD( "63s141.16h",   0x0000, 0x0100, 0x75af3553 )	// timing
+	ROM_LOAD( "63s141.11h",   0x0100, 0x0100, 0xa6e4d68f )	// color mixing
+	ROM_LOAD( "63s141.15h",   0x0200, 0x0100, 0xc47c182a )	// timing
+	ROM_LOAD( "63s081.3j",    0x0300, 0x0020, 0xc5817816 )	// unknown
 ROM_END
 
 ROM_START( sidearjp )
@@ -675,7 +667,7 @@ ROM_START( sidearjp )
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for the audio CPU */
 	ROM_LOAD( "a_04k.rom",    0x0000, 0x8000, 0x34efe2d2 )
 
-	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* unknown, looks like Z80 code */
+	ROM_REGION( 0x08000, REGION_USER1, 0 )    /* starfield data */
 	ROM_LOAD( "b_11j.rom",    0x0000, 0x8000, 0x134dc35b )
 
 	ROM_REGION( 0x04000, REGION_GFX1, ROMREGION_DISPOSE )
@@ -705,10 +697,10 @@ ROM_START( sidearjp )
 	ROM_LOAD( "b_03d.rom",    0x0000, 0x8000, 0x6f348008 )
 
 	ROM_REGION( 0x0320, REGION_PROMS, 0 )
-	ROM_LOAD( "63s141.16h",   0x0000, 0x0100, 0x75af3553 )	/* unknown */
-	ROM_LOAD( "63s141.11h",   0x0100, 0x0100, 0xa6e4d68f )	/* unknown */
-	ROM_LOAD( "63s141.15h",   0x0200, 0x0100, 0xc47c182a )	/* unknown */
-	ROM_LOAD( "63s081.3j",    0x0300, 0x0020, 0xc5817816 )	/* unknown */
+	ROM_LOAD( "63s141.16h",   0x0000, 0x0100, 0x75af3553 )	// timing
+	ROM_LOAD( "63s141.11h",   0x0100, 0x0100, 0xa6e4d68f )	// color mixing
+	ROM_LOAD( "63s141.15h",   0x0200, 0x0100, 0xc47c182a )	// timing
+	ROM_LOAD( "63s081.3j",    0x0300, 0x0020, 0xc5817816 )	// unknown
 ROM_END
 
 ROM_START( turtship )
@@ -804,10 +796,14 @@ ROM_START( dygera )
 ROM_END
 
 
+static DRIVER_INIT( sidearms ) { sidearms_vidhrdw = 0; }
+static DRIVER_INIT( turtship ) { sidearms_vidhrdw = 1; }
+static DRIVER_INIT( dyger    ) { sidearms_vidhrdw = 2; }
 
-GAMEX( 1986, sidearms, 0,        sidearms, sidearms, 0, ROT0,   "Capcom", "Side Arms - Hyper Dyne (World)", GAME_NO_COCKTAIL|GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1988, sidearmr, sidearms, sidearms, sidearms, 0, ROT0,   "Capcom (Romstar license)", "Side Arms - Hyper Dyne (US)", GAME_NO_COCKTAIL|GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1986, sidearjp, sidearms, sidearms, sidearms, 0, ROT0,   "Capcom", "Side Arms - Hyper Dyne (Japan)", GAME_NO_COCKTAIL|GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1988, turtship, 0,        turtship, turtship, 0, ROT0,   "Philko", "Turtle Ship", GAME_NO_COCKTAIL )
-GAMEX( 1989, dyger,    0,        turtship, dyger,    0, ROT270, "Philko", "Dyger (set 1)", GAME_NO_COCKTAIL )
-GAMEX( 1989, dygera,   dyger,    turtship, dyger,    0, ROT270, "Philko", "Dyger (set 2)", GAME_NO_COCKTAIL )
+
+GAMEX( 1986, sidearms, 0,        sidearms, sidearms, sidearms, ROT0,   "Capcom", "Side Arms - Hyper Dyne (World)", GAME_NO_COCKTAIL|GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1988, sidearmr, sidearms, sidearms, sidearms, sidearms, ROT0,   "Capcom (Romstar license)", "Side Arms - Hyper Dyne (US)", GAME_NO_COCKTAIL|GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1986, sidearjp, sidearms, sidearms, sidearms, sidearms, ROT0,   "Capcom", "Side Arms - Hyper Dyne (Japan)", GAME_NO_COCKTAIL|GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1988, turtship, 0,        turtship, turtship, turtship, ROT0,   "Philko", "Turtle Ship", GAME_NO_COCKTAIL )
+GAMEX( 1989, dyger,    0,        turtship, dyger,    dyger,    ROT270, "Philko", "Dyger (set 1)", GAME_NO_COCKTAIL )
+GAMEX( 1989, dygera,   dyger,    turtship, dyger,    dyger,    ROT270, "Philko", "Dyger (set 2)", GAME_NO_COCKTAIL )

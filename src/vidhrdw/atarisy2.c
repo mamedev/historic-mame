@@ -89,6 +89,7 @@ VIDEO_START( atarisy2 )
 		0,					/* does the neighbor bit affect the next object? */
 		0,					/* pixels per SLIP entry (0 for no-slip) */
 		0,					/* pixel offset for SLIPs */
+		0,					/* maximum number of links to visit/scanline (0=all) */
 
 		0x00,				/* base palette entry */
 		0x40,				/* maximum number of colors */
@@ -157,21 +158,21 @@ WRITE16_HANDLER( atarisy2_xscroll_w )
 	data16_t oldscroll = *atarigen_xscroll;
 	data16_t newscroll = oldscroll;
 	COMBINE_DATA(&newscroll);
-	
+
 	/* if anything has changed, force a partial update */
 	if (newscroll != oldscroll)
 		force_partial_update(cpu_getscanline());
 
 	/* update the playfield scrolling - hscroll is clocked on the following scanline */
 	tilemap_set_scrollx(atarigen_playfield_tilemap, 0, newscroll >> 6);
-	
+
 	/* update the playfield banking */
 	if (playfield_tile_bank[0] != (newscroll & 0x0f) * 0x400)
 	{
 		playfield_tile_bank[0] = (newscroll & 0x0f) * 0x400;
 		tilemap_mark_all_tiles_dirty(atarigen_playfield_tilemap);
 	}
-	
+
 	/* update the data */
 	*atarigen_xscroll = newscroll;
 }
@@ -205,7 +206,7 @@ WRITE16_HANDLER( atarisy2_yscroll_w )
 		playfield_tile_bank[1] = (newscroll & 0x0f) * 0x400;
 		tilemap_mark_all_tiles_dirty(atarigen_playfield_tilemap);
 	}
-	
+
 	/* update the data */
 	*atarigen_yscroll = newscroll;
 }
@@ -354,7 +355,7 @@ VIDEO_UPDATE( atarisy2 )
 				if (mo[x] != 0x0f)
 				{
 					int mopriority = mo[x] >> ATARIMO_PRIORITY_SHIFT;
-				
+
 					/* high priority PF? */
 					if ((mopriority + pri[x]) & 2)
 					{
@@ -362,11 +363,11 @@ VIDEO_UPDATE( atarisy2 )
 						if (!(pf[x] & 0x08))
 							pf[x] = mo[x] & ATARIMO_DATA_MASK;
 					}
-					
+
 					/* low priority */
 					else
 						pf[x] = mo[x] & ATARIMO_DATA_MASK;
-					
+
 					/* erase behind ourselves */
 					mo[x] = 0x0f;
 				}

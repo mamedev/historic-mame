@@ -4,18 +4,33 @@
 
 /* Plenty to do, see list in drivers/ms32.c */
 
+/*
+
+priority should be given to
+(a) dekluding the priorities, the kludge for kirarast made it easier to emulate the rest of it until then
+(b) working out the background registers correctly ...
+*/
+
+
 #include "driver.h"
 
-void ms32_dump_ram(void);
-extern data32_t* ms32_bg2ram;
-extern data32_t* ms32_bgram;
-extern data32_t* ms32_spram;
-extern data32_t* ms32_txram;
-extern data32_t* ms32_fce00000;
+data32_t *ms32_fce00000;
+data32_t *ms32_roz_ctrl;
+data32_t *ms32_tx_scroll;
+data32_t *ms32_bg_scroll;
+data32_t *ms32_priram;
+data32_t *ms32_palram;
+data32_t *ms32_bgram;
+data32_t *ms32_rozram;
+data32_t *ms32_lineram;
+data32_t *ms32_spram;
+data32_t *ms32_txram;
+data32_t *ms32_mainram;
 
 /********** Tilemaps **********/
 
-static struct tilemap *ms32_tx_tilemap, *ms32_bg_tilemap, *ms32_bg2_tilemap;
+static struct tilemap *ms32_tx_tilemap, *ms32_roz_tilemap, *ms32_bg_tilemap;
+static int flipscreen;
 
 
 static void get_ms32_tx_tile_info(int tile_index)
@@ -24,15 +39,18 @@ static void get_ms32_tx_tile_info(int tile_index)
 
 	tileno = ms32_txram[tile_index *2] & 0x0000ffff;
 	colour = ms32_txram[tile_index *2+1] & 0x000000f;
-	tile_info.priority=0;
 
 	SET_TILE_INFO(3,tileno,colour,0)
 }
 
-WRITE32_HANDLER( ms32_txram_w )
+static void get_ms32_roz_tile_info(int tile_index)
 {
-	COMBINE_DATA(&ms32_txram[offset]);
-	tilemap_mark_tile_dirty(ms32_tx_tilemap,offset/2);
+	int tileno,colour;
+
+	tileno = ms32_rozram[tile_index *2] & 0x0000ffff;
+	colour = ms32_rozram[tile_index *2+1] & 0x000000f;
+
+	SET_TILE_INFO(1,tileno,colour,0)
 }
 
 static void get_ms32_bg_tile_info(int tile_index)
@@ -42,7 +60,124 @@ static void get_ms32_bg_tile_info(int tile_index)
 	tileno = ms32_bgram[tile_index *2] & 0x0000ffff;
 	colour = ms32_bgram[tile_index *2+1] & 0x000000f;
 
-	SET_TILE_INFO(1,tileno,colour,0)
+	SET_TILE_INFO(2,tileno,colour,0)
+}
+
+
+VIDEO_START( ms32 )
+{
+	ms32_tx_tilemap = tilemap_create(get_ms32_tx_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8,64,64);
+	ms32_bg_tilemap = tilemap_create(get_ms32_bg_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,64,64);
+	ms32_roz_tilemap = tilemap_create(get_ms32_roz_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,128,128);
+
+	if (!ms32_tx_tilemap || !ms32_roz_tilemap || !ms32_bg_tilemap)
+		return 1;
+
+	tilemap_set_transparent_pen(ms32_tx_tilemap,0);
+	tilemap_set_transparent_pen(ms32_bg_tilemap,0);
+	tilemap_set_transparent_pen(ms32_roz_tilemap,0);
+
+	return 0;
+}
+
+
+
+/********** PALETTE WRITES **********/
+
+static data32_t brt[4];
+static int brt_r,brt_g,brt_b;
+
+static void update_color(int color)
+{
+	int r,g,b;
+
+	/* I'm not sure how the brightness should be applied, currently I'm only
+	   affecting bg & sprites, not fg.
+	   The second brightness control might apply to shadows, see gametngk.
+	 */
+	if (~color & 0x4000)
+	{
+		r = ((ms32_palram[color*2] & 0xff00) >>8 ) * brt_r / 0x100;
+		g = ((ms32_palram[color*2] & 0x00ff) >>0 ) * brt_g / 0x100;
+		b = ((ms32_palram[color*2+1] & 0x00ff) >>0 ) * brt_b / 0x100;
+	}
+	else
+	{
+		r = ((ms32_palram[color*2] & 0xff00) >>8 );
+		g = ((ms32_palram[color*2] & 0x00ff) >>0 );
+		b = ((ms32_palram[color*2+1] & 0x00ff) >>0 );
+	}
+
+	palette_set_color(color,r,g,b);
+}
+
+WRITE32_HANDLER( ms32_brightness_w )
+{
+	int oldword = brt[offset];
+	COMBINE_DATA(&brt[offset]);
+
+	if (brt[offset] != oldword)
+	{
+		int bank = ((offset & 2) >> 1) * 0x4000;
+		int i;
+
+		if (bank == 0)
+		{
+			brt_r = 0x100 - ((brt[0] & 0xff00) >> 8);
+			brt_g = 0x100 - ((brt[0] & 0x00ff) >> 0);
+			brt_b = 0x100 - ((brt[1] & 0x00ff) >> 0);
+
+			for (i = 0;i < 0x3000;i++)	// colors 0x3000-0x3fff are not used
+				update_color(i);
+		}
+	}
+//usrintf_showmessage("%04x %04x %04x %04x",brt[0],brt[1],brt[2],brt[3]);
+}
+
+WRITE32_HANDLER( ms32_palram_w )
+{
+	COMBINE_DATA(&ms32_palram[offset]);
+
+	update_color(offset/2);
+}
+
+
+
+READ32_HANDLER( ms32_txram_r )
+{
+	return ms32_txram[offset];
+}
+
+WRITE32_HANDLER( ms32_txram_w )
+{
+	COMBINE_DATA(&ms32_txram[offset]);
+	tilemap_mark_tile_dirty(ms32_tx_tilemap,offset/2);
+}
+
+READ32_HANDLER( ms32_rozram_r )
+{
+	return ms32_rozram[offset];
+}
+
+WRITE32_HANDLER( ms32_rozram_w )
+{
+	COMBINE_DATA(&ms32_rozram[offset]);
+	tilemap_mark_tile_dirty(ms32_roz_tilemap,offset/2);
+}
+
+READ32_HANDLER( ms32_lineram_r )
+{
+	return ms32_lineram[offset];
+}
+
+WRITE32_HANDLER( ms32_lineram_w )
+{
+	COMBINE_DATA(&ms32_lineram[offset]);
+}
+
+READ32_HANDLER( ms32_bgram_r )
+{
+	return ms32_bgram[offset];
 }
 
 WRITE32_HANDLER( ms32_bgram_w )
@@ -51,30 +186,48 @@ WRITE32_HANDLER( ms32_bgram_w )
 	tilemap_mark_tile_dirty(ms32_bg_tilemap,offset/2);
 }
 
-static void get_ms32_bg2_tile_info(int tile_index)
+READ32_HANDLER( ms32_spram_r )
 {
-	int tileno,colour;
-
-	tileno = ms32_bg2ram[tile_index *2] & 0x0000ffff;
-	colour = ms32_bg2ram[tile_index *2+1] & 0x000000f;
-
-//if (keyboard_pressed(KEYCODE_Q)) tileno ^= 0x2000;
-//if (keyboard_pressed(KEYCODE_W)) tileno ^= 0x1000;
-//if (keyboard_pressed(KEYCODE_E)) tileno ^= 0x0800;
-//if (keyboard_pressed(KEYCODE_R)) tileno ^= 0x0400;
-
-	SET_TILE_INFO(2,tileno,colour,0)
+	return ms32_spram[offset];
 }
 
-WRITE32_HANDLER( ms32_bg2ram_w )
+WRITE32_HANDLER( ms32_spram_w )
 {
-	COMBINE_DATA(&ms32_bg2ram[offset]);
-	tilemap_mark_tile_dirty(ms32_bg2_tilemap,offset/2);
+	COMBINE_DATA(&ms32_spram[offset]);
 }
+
+READ32_HANDLER( ms32_priram_r )
+{
+	return ms32_priram[offset];
+}
+
+WRITE32_HANDLER( ms32_priram_w )
+{
+	COMBINE_DATA(&ms32_priram[offset]);
+}
+
+WRITE32_HANDLER( ms32_gfxctrl_w )
+{
+	if (ACCESSING_LSB32)
+	{
+		/* bit 1 = flip screen */
+		flipscreen = data & 0x02;
+		tilemap_set_flip(ms32_tx_tilemap,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
+		tilemap_set_flip(ms32_bg_tilemap,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
+
+		/* bit 2 used by f1superb, unknown */
+
+		/* bit 3 used by several games, unknown */
+
+//usrintf_showmessage("%08x",data);
+	}
+}
+
+
 
 /* SPRITES based on tetrisp2 for now, readd priority bits later */
 
-static void ms32_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect, data32_t *sprram_top, size_t sprram_size, int gfxnum)
+static void ms32_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect, data32_t *sprram_top, size_t sprram_size)
 {
 /***************************************************************************
 
@@ -94,8 +247,7 @@ static void ms32_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle
 				---- ---- 7654 3210		Tile's X position in the tile page (*)
 
 	2.w			fedc ---- ---- ----		Color
-				---- ba98 7--- ----
-				---- ---- -654 3210		Tile Page (32x32 tiles = 256x256 pixels each)
+				---- ba98 7654 3210		Tile Page (32x32 tiles = 256x256 pixels each)
 
 	3.w			fedc ba98 ---- ----		Y Size - 1 (*)
 				---- ---- 7654 3210		X Size - 1 (*)
@@ -114,31 +266,30 @@ static void ms32_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle
 
 ***************************************************************************/
 
-	int x, y, tx, ty, sx, sy, flipx, flipy;
-	int xsize, ysize, xnum, ynum, xzoom, yzoom;
-	int xstart, ystart, xend, yend, xinc, yinc;
-	int code, attr, color, size, pri, trans;
-	int dx, dy, new_dx, new_dy;
-
-	int min_x = cliprect->min_x;
-	int max_x = cliprect->max_x;
-	int min_y = cliprect->min_y;
-	int max_y = cliprect->max_y;
+	int tx, ty, sx, sy, flipx, flipy;
+	int xsize, ysize, xzoom, yzoom;
+	int code, attr, color, size, pri, pri_mask, trans;
+	int reverse = 1;
+	struct GfxElement *gfx = Machine->gfx[0];
+	struct GfxElement mygfx = *gfx;
 
 	data32_t		*source	= sprram_top;
 	const data32_t	*finish	= sprram_top + (sprram_size - 0x10) / 4;
-	int spnum;
 
-	spnum = 0;
 
-	for (; source <= finish; source += 0x10/4 )
+	/* i hate per game patches...how should priority really work? tetrisp2.c ? i can't follow it */
+	if (!strcmp(Machine->gamedrv->name,"kirarast")) reverse ^= 1;
+
+	if (reverse == 1)
 	{
-		struct rectangle clip;
+		source	= sprram_top + (sprram_size - 0x10) / 4;
+		finish	= sprram_top;
+	}
 
 
+	for (;reverse ? (source>=finish) : (source<finish); reverse ? (source-=4) : (source+=4))
+	{
 		attr	=	source[ 0 ];
-
-		spnum++;
 
 		if ((attr & 0x0004) == 0)			continue;
 
@@ -153,9 +304,7 @@ static void ms32_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle
 		tx		=	(code >> 0) & 0xff;
 		ty		=	(code >> 8) & 0xff;
 
-		code	=	(tx / 8) +
-					(ty / 8) * (0x100/8) +
-					(color & 0x07ff) * (0x100/8) * (0x100/8);
+		code	=	(color & 0x0fff);
 
 		color	=	(color >> 12) & 0xf;
 
@@ -163,9 +312,6 @@ static void ms32_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle
 
 		xsize	=	((size >> 0) & 0xff) + 1;
 		ysize	=	((size >> 8) & 0xff) + 1;
-
-		xnum	=	( ((tx + xsize) & ~7) + (((tx + xsize) & 7) ? 8 : 0) - (tx & ~7) ) / 8;
-		ynum	=	( ((ty + ysize) & ~7) + (((ty + ysize) & 7) ? 8 : 0) - (ty & ~7) ) / 8;
 
 		sy		=	source[ 4 ];
 		sx		=	source[ 5 ];
@@ -183,109 +329,175 @@ static void ms32_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle
 
 		trans = TRANSPARENCY_PEN; // there are surely also shadows (see gametngk) but how they're enabled we don't know
 
-		/* Clip the sprite if its width or height is not an integer
-		   multiple of 8 pixels (1 tile) */
-
-		clip.min_x	=	sx;
-		clip.max_x	=	sx + ((xsize*xzoom)>>16) - 1;
-		clip.min_y	=	sy;
-		clip.max_y	=	sy + ((ysize*yzoom)>>16) - 1;
-
-		if (clip.min_x > max_x)	continue;
-		if (clip.max_x < min_x)	continue;
-
-		if (clip.min_y > max_y)	continue;
-		if (clip.max_y < min_y)	continue;
-
-		if (clip.min_x < min_x)	clip.min_x = min_x;
-		if (clip.max_x > max_x)	clip.max_x = max_x;
-
-		if (clip.min_y < min_y)	clip.min_y = min_y;
-		if (clip.max_y > max_y)	clip.max_y = max_y;
-
-		if (flipx)	{ xstart = xnum-1;  xend = -1;    xinc = -1;  sx -= xnum*8 - xsize - (tx & 7); }
-		else		{ xstart = 0;       xend = xnum;  xinc = +1;  sx -= tx & 7; }
-
-		if (flipy)	{ ystart = ynum-1;  yend = -1;    yinc = -1;  sy -= ynum*8 - ysize - (ty & 7); }
-		else		{ ystart = 0;       yend = ynum;  yinc = +1;  sy -= ty & 7; }
-
-		dy = sy + (((ystart*yzoom*8)+0x8000) >> 16);
-
-		for (y = ystart; y != yend; y += yinc)
+		if (flipscreen)
 		{
-			new_dy = sy + ((((y+yinc)*yzoom*8)+0x8000) >> 16);
-
-			dx = sx + (((xstart*xzoom*8)+0x8000) >> 16);
-			for (x = xstart; x != xend; x += xinc)
-			{
-				new_dx = sx + ((((x+xinc)*xzoom*8)+0x8000) >> 16);
-
-				mdrawgfxzoom(bitmap, Machine->gfx[gfxnum],
-						code++,
-						color,
-						flipx, flipy,
-						dx, dy,
-						&clip,
-						trans, 0,
-						abs(new_dx-dx)*0x2000, abs(new_dy-dy)*0x2000, 0); // Zoom to fill the gaps completely
-				dx = new_dx;
-			}
-
-			dy = new_dy;
-			code	+=	(0x100/8) - xnum;
+			sx = 320 - ((xsize*xzoom)>>16) - sx;
+			sy = 224 - ((ysize*yzoom)>>16) - sy;
+			flipx = !flipx;
+			flipy = !flipy;
 		}
+
+		/* change GfxElement parameters to draw only the needed part of the 256x256 tile */
+		mygfx.width = xsize;
+		mygfx.height = ysize;
+		mygfx.gfxdata = gfx->gfxdata + tx + ty * gfx->line_modulo;
+
+#if 0
+if (keyboard_pressed(KEYCODE_A) && (pri & 8)) color = rand();
+if (keyboard_pressed(KEYCODE_S) && (pri & 4)) color = rand();
+if (keyboard_pressed(KEYCODE_D) && (pri & 2)) color = rand();
+if (keyboard_pressed(KEYCODE_F) && (pri & 1)) color = rand();
+#endif
+
+		/* TODO: priority handling is completely wrong, but better than nothing */
+		if (pri == 0x0)
+			pri_mask = 0x00;
+		else if (pri <= 0xd)
+			pri_mask = 0xf0;
+		else if (pri <= 0xe)
+			pri_mask = 0xfc;
+		else
+			pri_mask = 0xfe;
+
+		pdrawgfxzoom(bitmap, &mygfx,
+				code,
+				color,
+				flipx, flipy,
+				sx,sy,
+				cliprect, trans, 0,
+				xzoom, yzoom, pri_mask);
 	}	/* end sprite loop */
 }
 
-/* Video Start / Update */
 
-VIDEO_START( ms32 )
+
+static void draw_roz(struct mame_bitmap *bitmap, const struct rectangle *cliprect,int priority)
 {
-	ms32_tx_tilemap = tilemap_create(get_ms32_tx_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8,64,64);
-	ms32_bg_tilemap = tilemap_create(get_ms32_bg_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT, 16, 16,128,128); // or 4 tilemaps?
-	ms32_bg2_tilemap = tilemap_create(get_ms32_bg2_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE, 16, 16,64,64);
+	/* TODO: registers 0x40/4 / 0x44/4 and 0x50/4 / 0x54/4 are used, meaning unknown */
 
-	if (!ms32_tx_tilemap || !ms32_bg_tilemap || !ms32_bg2_tilemap)
-		return 1;
+	if (ms32_roz_ctrl[0x5c/4] & 1)	/* "super" mode */
+	{
+		struct rectangle my_clip;
+		int y,maxy;
 
-	tilemap_set_transparent_pen(ms32_tx_tilemap,0);
-	tilemap_set_transparent_pen(ms32_bg_tilemap,0);
+		my_clip.min_x = cliprect->min_x;
+		my_clip.max_x = cliprect->max_x;
 
-	return 0;
+		y = cliprect->min_y;
+		maxy = cliprect->max_y;
+
+		while (y <= maxy)
+		{
+			data32_t *lineaddr = ms32_lineram + 8 * (y & 0xff);
+			my_clip.min_y = my_clip.max_y = y;
+
+			int start2x = (lineaddr[0x00/4] & 0xffff) | ((lineaddr[0x04/4] & 3) << 16);
+			int start2y = (lineaddr[0x08/4] & 0xffff) | ((lineaddr[0x0c/4] & 3) << 16);
+			int incxx  = (lineaddr[0x10/4] & 0xffff) | ((lineaddr[0x14/4] & 1) << 16);
+			int incxy  = (lineaddr[0x18/4] & 0xffff) | ((lineaddr[0x1c/4] & 1) << 16);
+			int startx = (ms32_roz_ctrl[0x00/4] & 0xffff) | ((ms32_roz_ctrl[0x04/4] & 3) << 16);
+			int starty = (ms32_roz_ctrl[0x08/4] & 0xffff) | ((ms32_roz_ctrl[0x0c/4] & 3) << 16);
+			int offsx  = ms32_roz_ctrl[0x30/4];
+			int offsy  = ms32_roz_ctrl[0x34/4];
+
+			offsx += (ms32_roz_ctrl[0x38/4] & 1) * 0x400;	// ??? gratia, hayaosi1...
+			offsy += (ms32_roz_ctrl[0x3c/4] & 1) * 0x400;	// ??? gratia, hayaosi1...
+
+			/* extend sign */
+			if (start2x & 0x20000) start2x |= ~0x3ffff;
+			if (start2y & 0x20000) start2y |= ~0x3ffff;
+			if (startx & 0x20000) startx |= ~0x3ffff;
+			if (starty & 0x20000) starty |= ~0x3ffff;
+			if (incxx & 0x10000) incxx |= ~0x1ffff;
+			if (incxy & 0x10000) incxy |= ~0x1ffff;
+
+			tilemap_draw_roz(bitmap, &my_clip, ms32_roz_tilemap,
+					(start2x+startx+offsx)<<16, (start2y+starty+offsy)<<16,
+					incxx<<8, incxy<<8, 0, 0,
+					1, // Wrap
+					0, priority);
+
+			y++;
+		}
+	}
+	else	/* "simple" mode */
+	{
+		int startx = (ms32_roz_ctrl[0x00/4] & 0xffff) | ((ms32_roz_ctrl[0x04/4] & 3) << 16);
+		int starty = (ms32_roz_ctrl[0x08/4] & 0xffff) | ((ms32_roz_ctrl[0x0c/4] & 3) << 16);
+		int incxx  = (ms32_roz_ctrl[0x10/4] & 0xffff) | ((ms32_roz_ctrl[0x14/4] & 1) << 16);
+		int incxy  = (ms32_roz_ctrl[0x18/4] & 0xffff) | ((ms32_roz_ctrl[0x1c/4] & 1) << 16);
+		int incyy  = (ms32_roz_ctrl[0x20/4] & 0xffff) | ((ms32_roz_ctrl[0x24/4] & 1) << 16);
+		int incyx  = (ms32_roz_ctrl[0x28/4] & 0xffff) | ((ms32_roz_ctrl[0x2c/4] & 1) << 16);
+		int offsx  = ms32_roz_ctrl[0x30/4];
+		int offsy  = ms32_roz_ctrl[0x34/4];
+
+		offsx += (ms32_roz_ctrl[0x38/4] & 1) * 0x400;	// ??? gratia, hayaosi1...
+		offsy += (ms32_roz_ctrl[0x3c/4] & 1) * 0x400;	// ??? gratia, hayaosi1...
+
+		/* extend sign */
+		if (startx & 0x20000) startx |= ~0x3ffff;
+		if (starty & 0x20000) starty |= ~0x3ffff;
+		if (incxx & 0x10000) incxx |= ~0x1ffff;
+		if (incxy & 0x10000) incxy |= ~0x1ffff;
+		if (incyy & 0x10000) incyy |= ~0x1ffff;
+		if (incyx & 0x10000) incyx |= ~0x1ffff;
+
+		tilemap_draw_roz(bitmap, cliprect, ms32_roz_tilemap,
+				(startx+offsx)<<16, (starty+offsy)<<16,
+				incxx<<8, incxy<<8, incyx<<8, incyy<<8,
+				1, // Wrap
+				0, priority);
+	}
 }
+
 
 
 VIDEO_UPDATE( ms32 )
 {
+	int scrollx,scrolly;
+
+	/* TODO: registers 0x04/4 and 0x10/4 are used too; the most interesting case
+	   is gametngk, where they are *usually*, but not always, copies of 0x00/4
+	   and 0x0c/4 (used for scrolling).
+	   0x10/4 is 0xdf in most games (apart from gametngk's special case), but
+	   it's 0x00 in hayaosi1 and kirarast, and 0xe2 (!) in gratia's tx layer.
+	   The two registers might be somewhat related to the width and height of the
+	   tilemaps, but there's something that just doesn't fit.
+	 */
+	scrollx = ms32_tx_scroll[0x00/4] + ms32_tx_scroll[0x08/4] + 0x18;
+	scrolly = ms32_tx_scroll[0x0c/4] + ms32_tx_scroll[0x14/4];
+	tilemap_set_scrollx(ms32_tx_tilemap, 0, scrollx);
+	tilemap_set_scrolly(ms32_tx_tilemap, 0, scrolly);
+
+	scrollx = ms32_bg_scroll[0x00/4] + ms32_bg_scroll[0x08/4] + 0x10;
+	scrolly = ms32_bg_scroll[0x0c/4] + ms32_bg_scroll[0x14/4];
+	tilemap_set_scrollx(ms32_bg_tilemap, 0, scrollx);
+	tilemap_set_scrolly(ms32_bg_tilemap, 0, scrolly);
+
+
+	fillbitmap(priority_bitmap,0,cliprect);
+
+	/* TODO: 0 is correct for gametngk, but break f1superb scrolling grid (text at
+	   top and bottom of the screen becomes black on black) */
+	fillbitmap(bitmap,Machine->pens[0],cliprect);	/* bg color */
 
 #ifdef MAME_DEBUG
-	if (keyboard_pressed(KEYCODE_O)) ms32_dump_ram();
+if (!keyboard_pressed(KEYCODE_Q))
 #endif
+	tilemap_draw(bitmap,cliprect,ms32_bg_tilemap,0,1);
 
-tilemap_mark_all_tiles_dirty(ms32_bg2_tilemap);
-	tilemap_set_scrollx(ms32_bg2_tilemap, 0, ms32_fce00000[0xa28/4]);
-	tilemap_set_scrolly(ms32_bg2_tilemap, 0, ms32_fce00000[0xa2c/4]);
-	tilemap_draw(bitmap,cliprect,ms32_bg2_tilemap,0,0);
+#ifdef MAME_DEBUG
+if (!keyboard_pressed(KEYCODE_W))
+#endif
+	draw_roz(bitmap,cliprect,2);
 
-	{
-		int xzoom = ms32_fce00000[0x610/4];
-		int yzoom = ms32_fce00000[0x620/4];
-		int scrollx = ms32_fce00000[0x630/4];
-		int scrolly = ms32_fce00000[0x634/4];
+#ifdef MAME_DEBUG
+if (!keyboard_pressed(KEYCODE_E))
+#endif
+	tilemap_draw(bitmap,cliprect,ms32_tx_tilemap,0,4);
 
-		if (!strcmp(Machine->gamedrv->name,"gratia")) /* go figure ... */
-		{
-			scrollx = ms32_fce00000[0x600/4]+1024;
-			scrolly = ms32_fce00000[0x604/4]+1024;// ?
-		}
-
-	tilemap_draw_roz(bitmap, cliprect, ms32_bg_tilemap,
-			scrollx<<16, scrolly<<16, xzoom<<8, 0, 0, yzoom<<8,
-			1, // Wrap
-			0, 0);
-	}
-
-	ms32_draw_sprites(bitmap,cliprect, ms32_spram, 0x40000, 0);
-
-	tilemap_draw(bitmap,cliprect,ms32_tx_tilemap,0,0);
+#ifdef MAME_DEBUG
+if (!keyboard_pressed(KEYCODE_R))
+#endif
+	ms32_draw_sprites(bitmap,cliprect, ms32_spram, 0x40000);
 }

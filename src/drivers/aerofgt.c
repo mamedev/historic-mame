@@ -12,8 +12,7 @@ Driver by Nicola Salmoria
 
 
 Notes:
-- Sound doesn't work in Spinal Breakers
-- Sprite zoom is probably not 100% accurate (check the table in vidhrdw).
+- Sprite zoom is probably not 100% accurate.
   In pspikes, the zooming text during attract mode is horrible.
 
 pspikes/turbofrc/aerofgtb write to two addresses which look like control

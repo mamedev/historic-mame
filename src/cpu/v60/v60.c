@@ -13,6 +13,10 @@
 #include <stdarg.h>
 #include "v60.h"
 
+// memory accessors
+#include "v60mem.c"
+
+
 // macros stolen from MAME for flags calc
 // note that these types are in x86 naming:
 // byte = 8 bit, word = 16 bit, long = 32 bit
@@ -89,25 +93,9 @@ typedef struct
 #undef PPC
 #endif
 
-struct cpu_info {
-	UINT8  (*mr8) (offs_t address);
-	void   (*mw8) (offs_t address, UINT8  data);
-	UINT16 (*mr16)(offs_t address);
-	void   (*mw16)(offs_t address, UINT16 data);
-	UINT32 (*mr32)(offs_t address);
-	void   (*mw32)(offs_t address, UINT32 data);
-	UINT8  (*pr8) (offs_t address);
-	void   (*pw8) (offs_t address, UINT8  data);
-	UINT16 (*pr16)(offs_t address);
-	void   (*pw16)(offs_t address, UINT16 data);
-	UINT32 (*pr32)(offs_t address);
-	void   (*pw32)(offs_t address, UINT32 data);
-	UINT32 start_pc;
-};
-
 // v60 Register Inside (Hm... It's not a pentium inside :-))) )
 struct v60info {
-	const struct cpu_info *info;
+	struct cpu_info info;
 	UINT32 reg[58];
 	Flags flags;
 	int irq_line;
@@ -232,274 +220,6 @@ const char *v60_reg_names[58] = {
 	_CY	= _CY ? 1 : 0; \
 }
 
-#define MemRead8_16		cpu_readmem24lew
-#define MemWrite8_16	cpu_writemem24lew
-
-static UINT16 MemRead16_16(offs_t address)
-{
-	if (!(address & 1))
-	{
-		return cpu_readmem24lew_word(address);
-	}
-	else
-	{
-		UINT16 result = cpu_readmem24lew(address);
-		return result | cpu_readmem24lew(address + 1) << 8;
-	}
-}
-
-static void MemWrite16_16(offs_t address, UINT16 data)
-{
-	if (!(address & 1))
-	{
-		cpu_writemem24lew_word(address, data);
-	}
-	else
-	{
-		cpu_writemem24lew(address, data);
-		cpu_writemem24lew(address + 1, data >> 8);
-	}
-}
-
-static UINT32 MemRead32_16(offs_t address)
-{
-	if (!(address & 1))
-	{
-		UINT32 result = cpu_readmem24lew_word(address);
-		return result | (cpu_readmem24lew_word(address + 2) << 16);
-	}
-	else
-	{
-		UINT32 result = cpu_readmem24lew(address);
-		result |= cpu_readmem24lew_word(address + 1) << 8;
-		return result | cpu_readmem24lew(address + 3) << 24;
-	}
-}
-
-static void MemWrite32_16(offs_t address, UINT32 data)
-{
-	if (!(address & 1))
-	{
-		cpu_writemem24lew_word(address, data);
-		cpu_writemem24lew_word(address + 2, data >> 16);
-	}
-	else
-	{
-		cpu_writemem24lew(address, data);
-		cpu_writemem24lew_word(address + 1, data >> 8);
-		cpu_writemem24lew(address + 3, data >> 24);
-	}
-}
-
-#define PortRead8_16		cpu_readport24lew
-#define PortWrite8_16		cpu_writeport24lew
-
-static UINT16 PortRead16_16(offs_t address)
-{
-	if (!(address & 1))
-	{
-		return cpu_readport24lew_word(address);
-	}
-	else
-	{
-		UINT16 result = cpu_readport24lew(address);
-		return result | cpu_readport24lew(address + 1) << 8;
-	}
-}
-
-static void PortWrite16_16(offs_t address, UINT16 data)
-{
-	if (!(address & 1))
-	{
-		cpu_writeport24lew_word(address, data);
-	}
-	else
-	{
-		cpu_writeport24lew(address, data);
-		cpu_writeport24lew(address + 1, data >> 8);
-	}
-}
-
-static UINT32 PortRead32_16(offs_t address)
-{
-	if (!(address & 1))
-	{
-		UINT32 result = cpu_readport24lew_word(address);
-		return result | (cpu_readport24lew_word(address + 2) << 16);
-	}
-	else
-	{
-		UINT32 result = cpu_readport24lew(address);
-		result |= cpu_readport24lew_word(address + 1) << 8;
-		return result | cpu_readport24lew(address + 3) << 24;
-	}
-}
-
-static void PortWrite32_16(offs_t address, UINT32 data)
-{
-	if (!(address & 1))
-	{
-		cpu_writeport24lew_word(address, data);
-		cpu_writeport24lew_word(address + 2, data >> 16);
-	}
-	else
-	{
-		cpu_writeport24lew(address, data);
-		cpu_writeport24lew_word(address + 1, data >> 8);
-		cpu_writeport24lew(address + 3, data >> 24);
-	}
-}
-#define MemRead8_32		cpu_readmem32ledw
-#define MemWrite8_32	cpu_writemem32ledw
-
-static UINT16 MemRead16_32(offs_t address)
-{
-	if (!(address & 1))
-	{
-		return cpu_readmem32ledw_word(address);
-	}
-	else
-	{
-		UINT16 result = cpu_readmem32ledw(address);
-		return result | cpu_readmem32ledw(address + 1) << 8;
-	}
-}
-
-static void MemWrite16_32(offs_t address, UINT16 data)
-{
-	if (!(address & 1))
-	{
-		cpu_writemem32ledw_word(address, data);
-	}
-	else
-	{
-		cpu_writemem32ledw(address, data);
-		cpu_writemem32ledw(address + 1, data >> 8);
-	}
-}
-
-static UINT32 MemRead32_32(offs_t address)
-{
-	if (!(address & 3))
-		return cpu_readmem32ledw_dword(address);
-	else if (!(address & 1))
-	{
-		UINT32 result = cpu_readmem32ledw_word(address);
-		return result | (cpu_readmem32ledw_word(address + 2) << 16);
-	}
-	else
-	{
-		UINT32 result = cpu_readmem32ledw(address);
-		result |= cpu_readmem32ledw_word(address + 1) << 8;
-		return result | cpu_readmem32ledw(address + 3) << 24;
-	}
-}
-
-static void MemWrite32_32(offs_t address, UINT32 data)
-{
-	if (!(address & 3))
-		cpu_writemem32ledw_dword(address, data);
-	else if (!(address & 1))
-	{
-		cpu_writemem32ledw_word(address, data);
-		cpu_writemem32ledw_word(address + 2, data >> 16);
-	}
-	else
-	{
-		cpu_writemem32ledw(address, data);
-		cpu_writemem32ledw_word(address + 1, data >> 8);
-		cpu_writemem32ledw(address + 3, data >> 24);
-	}
-}
-
-#define PortRead8_32		cpu_readport32ledw
-#define PortWrite8_32		cpu_writeport32ledw
-
-static UINT16 PortRead16_32(offs_t address)
-{
-	if (!(address & 1))
-	{
-		return cpu_readport32ledw_word(address);
-	}
-	else
-	{
-		UINT16 result = cpu_readport32ledw(address);
-		return result | cpu_readport32ledw(address + 1) << 8;
-	}
-}
-
-static void PortWrite16_32(offs_t address, UINT16 data)
-{
-	if (!(address & 1))
-	{
-		cpu_writeport32ledw_word(address, data);
-	}
-	else
-	{
-		cpu_writeport32ledw(address, data);
-		cpu_writeport32ledw(address + 1, data >> 8);
-	}
-}
-
-static UINT32 PortRead32_32(offs_t address)
-{
-	if (!(address & 3))
-		return cpu_readport32ledw_dword(address);
-	else if (!(address & 1))
-	{
-		UINT32 result = cpu_readport32ledw_word(address);
-		return result | (cpu_readport32ledw_word(address + 2) << 16);
-	}
-	else
-	{
-		UINT32 result = cpu_readport32ledw(address);
-		result |= cpu_readport32ledw_word(address + 1) << 8;
-		return result | cpu_readport32ledw(address + 3) << 24;
-	}
-}
-
-static void PortWrite32_32(offs_t address, UINT32 data)
-{
-	if (!(address & 3))
-		cpu_writeport32ledw_dword(address, data);
-	else if (!(address & 1))
-	{
-		cpu_writeport32ledw_word(address, data);
-		cpu_writeport32ledw_word(address + 2, data >> 16);
-	}
-	else
-	{
-		cpu_writeport32ledw(address, data);
-		cpu_writeport32ledw_word(address + 1, data >> 8);
-		cpu_writeport32ledw(address + 3, data >> 24);
-	}
-}
-
-static struct cpu_info v60_i = {
-	MemRead8_16,  MemWrite8_16,  MemRead16_16,  MemWrite16_16,  MemRead32_16,  MemWrite32_16,
-	PortRead8_16, PortWrite8_16, PortRead16_16, PortWrite16_16, PortRead32_16, PortWrite32_16,
-	0xfffff0
-};
-
-static struct cpu_info v70_i = {
-	MemRead8_32,  MemWrite8_32,  MemRead16_32,  MemWrite16_32,  MemRead32_32,  MemWrite32_32,
-	PortRead8_32, PortWrite8_32, PortRead16_32, PortWrite16_32, PortRead32_32, PortWrite32_32,
-	0xfffffff0
-};
-
-#define MemRead8    v60.info->mr8
-#define MemWrite8   v60.info->mw8
-#define MemRead16   v60.info->mr16
-#define MemWrite16  v60.info->mw16
-#define MemRead32   v60.info->mr32
-#define MemWrite32  v60.info->mw32
-#define PortRead8   v60.info->pr8
-#define PortWrite8  v60.info->pw8
-#define PortRead16  v60.info->pr16
-#define PortWrite16 v60.info->pw16
-#define PortRead32  v60.info->pr32
-#define PortWrite32 v60.info->pw32
-
 static void messagebox(const char *msg)
 {
 	logerror("%s", msg);
@@ -565,7 +285,7 @@ static void v60WritePSW(UINT32 newval)
 
 UINT32 opUNHANDLED(void)
 {
-	logerror("Unhandled OpCode found : %02x at %08x\n", MemRead16(PC), PC);
+	logerror("Unhandled OpCode found : %02x at %08x\n", OpRead16(PC), PC);
 	return 1;
 }
 
@@ -609,24 +329,25 @@ void v60_init(void)
 {
 	base_init("v60");
 	PIR = 0x00006000;
-	v60.info = &v60_i;
+	v60.info = v60_i;
 }
 
 void v70_init(void)
 {
 	base_init("v70");
 	PIR = 0x00007000;
-	v60.info = &v70_i;
+	v60.info = v70_i;
 }
 
 void v60_reset(void *param)
 {
 	PSW		= 0x10000000;
-	PC		= v60.info->start_pc;
+	PC		= v60.info.start_pc;
 	SBR		= 0x00000000;
 	SYCW	= 0x00000070;
 	TKCW	= 0x0000e000;
 	PSW2	= 0x0000f002;
+	ChangePC(PC);
 
 	_CY	= 0;
 	_OV	= 0;
@@ -718,7 +439,7 @@ int v60_execute(int cycles)
 		PPC = PC;
 		CALL_MAME_DEBUG;
 		v60_ICount--;
-		PC += OpCodeTable[MemRead8(PC)]();
+		PC += OpCodeTable[OpRead8(PC)]();
 		if(v60.irq_line != CLEAR_LINE)
 			v60_try_irq();
 	}
@@ -736,7 +457,10 @@ unsigned v60_get_context(void *dst)
 void v60_set_context(void *src)
 {
 	if(src)
+	{
 		v60 = *(struct v60info *)src;
+		ChangePC(PC);
+	}
 }
 
 static UINT8 v60_reg_layout[] = {
@@ -793,6 +517,7 @@ void v60_set_reg(int regnum, unsigned val)
 	switch(regnum) {
 	case REG_PC:
 		PC = val;
+		ChangePC(PC);
 		return;
 	case REG_SP:
 		SP = val;

@@ -54,6 +54,7 @@ VIDEO_START( xybots )
 		0,					/* does the neighbor bit affect the next object? */
 		0,					/* pixels per SLIP entry (0 for no-slip) */
 		0,					/* pixel offset for SLIPs */
+		0,					/* maximum number of links to visit/scanline (0=all) */
 
 		0x100,				/* base palette entry */
 		0x300,				/* maximum number of colors */
@@ -113,7 +114,7 @@ VIDEO_UPDATE( xybots )
 
 	/* draw the playfield */
 	tilemap_draw(bitmap, cliprect, atarigen_playfield_tilemap, 0, 0);
-	
+
 	/* draw and merge the MO */
 	mobitmap = atarimo_render(0, cliprect, &rectlist);
 	for (r = 0; r < rectlist.numrects; r++, rectlist.rect++)
@@ -125,14 +126,14 @@ VIDEO_UPDATE( xybots )
 				if (mo[x])
 				{
 					/* verified via schematics:
-					
+
 						PRIEN = ~(~MOPIX3 & ~MOPIX2 & ~MOPIX1) = (MOPIX3-0 > 1)
-						
+
 						if (PRIEN)
 							PF/MO = (~MOPRI3-0 > PFCOL3-0)
 						else
 							PF/MO = (~MOPRI3-0 >= PFCOL3-0)
-						
+
 						if (PF/MO | ~(PRIEN & MOCOL3))
 							GPC(P3-0) = PFPIX3-0
 						else
@@ -159,12 +160,12 @@ VIDEO_UPDATE( xybots )
 						if (mopriority < pfcolor)
 							pf[x] = mo[x] & ATARIMO_DATA_MASK;
 					}
-					
+
 					/* erase behind ourselves */
 					mo[x] = 0;
 				}
 		}
-	
+
 	/* add the alpha on top */
 	tilemap_draw(bitmap, cliprect, atarigen_alpha_tilemap, 0, 0);
 }

@@ -75,6 +75,8 @@
 
 data16_t *seta2_vregs;
 
+static int yoffset;
+
 
 /***************************************************************************
 
@@ -233,19 +235,19 @@ static void seta2_draw_sprites(struct mame_bitmap *bitmap,const struct rectangle
 				   fine in all the games we have for now. */
 				for (y = 0; y < (0x40 >> tilesize); y++)
 				{
-					int py = ((scrolly - (y+1) * (8 << tilesize) + 16) & 0x1ff) - 16;
+					int py = ((scrolly - (y+1) * (8 << tilesize) + 0x10) & 0x1ff) - 0x10 - yoffset;
 
-					if (py < clip.min_y - 16) continue;
+					if (py < clip.min_y - 0x10) continue;
 					if (py > clip.max_y) continue;
 
 					for (x = 0; x < 0x40;x++)
 					{
-						int px = ((dx + x * (8 << tilesize) + 16) & 0x3ff) - 16;
+						int px = ((dx + x * (8 << tilesize) + 0x10) & 0x3ff) - 0x10;
 						int tx, ty;
 						int attr, code, color;
 						data16_t *s3;
 
-						if (px < clip.min_x - 16) continue;
+						if (px < clip.min_x - 0x10) continue;
 						if (px > clip.max_x) continue;
 
 						s3	=	&spriteram16[2 * ((page * 0x2000/4) + ((y & 0x1f) << 6) + (x & 0x03f))];
@@ -292,6 +294,7 @@ static void seta2_draw_sprites(struct mame_bitmap *bitmap,const struct rectangle
 
 				sx = (sx & 0x1ff) - (sx & 0x200);
 				sy &= 0x1ff;
+				sy -= yoffset;
 
 				if (sizex) code &= ~1;
 				if (sizey) code &= ~2;
@@ -323,6 +326,18 @@ static void seta2_draw_sprites(struct mame_bitmap *bitmap,const struct rectangle
 
 
 ***************************************************************************/
+
+VIDEO_START( seta2 )
+{
+	yoffset = 0;
+	return 0;
+}
+
+VIDEO_START( seta2_offset )
+{
+	yoffset = 0x10;
+	return 0;
+}
 
 VIDEO_UPDATE( seta2 )
 {

@@ -1211,7 +1211,9 @@ static void showcharset(struct mame_bitmap *bitmap)
 				int crotwidth = (Machine->ui_orientation & ORIENTATION_SWAP_XY) ? Machine->gfx[bank]->height : Machine->gfx[bank]->width;
 				int crotheight = (Machine->ui_orientation & ORIENTATION_SWAP_XY) ? Machine->gfx[bank]->width : Machine->gfx[bank]->height;
 				cpx = uirotwidth / crotwidth;
+				if (cpx == 0) cpx = 1;
 				cpy = (uirotheight - uirotcharheight) / crotheight;
+				if (cpy == 0) cpy = 1;
 				skip_chars = cpx * cpy;
 				/*if (changed) -- temporary */
 				{

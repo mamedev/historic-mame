@@ -54,7 +54,6 @@ enum {
 	NB1413M3_TOUGENK,
 	NB1413M3_MJFOCUS,
 	NB1413M3_MJFOCUSM,
-	NB1413M3_PEEPSHOW,
 	NB1413M3_GALKOKU,
 	NB1413M3_MJNANPAS,
 	NB1413M3_BANANADR,
@@ -80,7 +79,11 @@ enum {
 	NB1413M3_AV2MJ1BB,
 	NB1413M3_FINALBNY,
 	NB1413M3_HYOUBAN,
-	NB1413M3_AV2MJ2RG
+	NB1413M3_AV2MJ2RG,
+	NB1413M3_ORANGEC,
+	NB1413M3_IDHIMITU,
+	NB1413M3_KANATUEN,
+	NB1413M3_PAIRSTEN,
 };
 
 #define NB1413M3_VCR_NOP	0x00
@@ -201,31 +204,32 @@ enum {
 	PORT_BIT ( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN ) \
 	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-extern MACHINE_INIT( nb1413m3 );
-extern void nb1413m3_nmi_clock_w(int data);
-extern INTERRUPT_GEN( nb1413m3_interrupt );
-extern NVRAM_HANDLER( nb1413m3 );
-extern int nb1413m3_sndrom_r(int offset);
-extern void nb1413m3_sndrombank1_w(int data);
-extern void nb1413m3_sndrombank2_w(int data);
-extern int nb1413m3_gfxrom_r(int offset);
-extern void nb1413m3_gfxrombank_w(int data);
-extern void nb1413m3_gfxradr_l_w(int data);
-extern void nb1413m3_gfxradr_h_w(int data);
-extern void nb1413m3_inputportsel_w(int data);
-extern int nb1413m3_inputport0_r(void);
-extern int nb1413m3_inputport1_r(void);
-extern int nb1413m3_inputport2_r(void);
-extern int nb1413m3_inputport3_r(void);
-extern int nb1413m3_dipsw1_r(void);
-extern int nb1413m3_dipsw2_r(void);
-extern int nb1413m3_dipsw3_l_r(void);
-extern int nb1413m3_dipsw3_h_r(void);
-extern void nb1413m3_outcoin_w(int data);
-extern void nb1413m3_vcrctrl_w(int data);
+MACHINE_INIT( nb1413m3 );
+WRITE_HANDLER( nb1413m3_nmi_clock_w );
+INTERRUPT_GEN( nb1413m3_interrupt );
+NVRAM_HANDLER( nb1413m3 );
+int nb1413m3_sndrom_r(int offset);
+WRITE_HANDLER( nb1413m3_sndrombank1_w );
+WRITE_HANDLER( nb1413m3_sndrombank2_w );
+int nb1413m3_gfxrom_r(int offset);
+void nb1413m3_gfxrombank_w(int data);
+void nb1413m3_gfxradr_l_w(int data);
+void nb1413m3_gfxradr_h_w(int data);
+WRITE_HANDLER( nb1413m3_inputportsel_w );
+READ_HANDLER( nb1413m3_inputport0_r );
+READ_HANDLER( nb1413m3_inputport1_r );
+READ_HANDLER( nb1413m3_inputport2_r );
+READ_HANDLER( nb1413m3_inputport3_r );
+READ_HANDLER( nb1413m3_dipsw1_r );
+READ_HANDLER( nb1413m3_dipsw2_r );
+int nb1413m3_dipsw3_l_r(void);
+int nb1413m3_dipsw3_h_r(void);
+WRITE_HANDLER( nb1413m3_outcoin_w );
+void nb1413m3_vcrctrl_w(int data);
 
 extern int nb1413m3_type;
 extern int nb1413m3_int_count;
+extern int nb1413m3_sndromregion;
 extern int nb1413m3_sndrombank1;
 extern int nb1413m3_sndrombank2;
 extern int nb1413m3_busyctr;

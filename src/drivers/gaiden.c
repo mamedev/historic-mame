@@ -256,7 +256,7 @@ MEMORY_END
 
 
 
-INPUT_PORTS_START( gaiden )
+INPUT_PORTS_START( shadoww )
 	PORT_START	/* System Inputs */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
@@ -272,7 +272,7 @@ INPUT_PORTS_START( gaiden )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER1 | IPF_8WAY )
 	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER1 | IPF_8WAY )
 	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER1 | IPF_8WAY )
-	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
 	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
 	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
 	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -280,7 +280,7 @@ INPUT_PORTS_START( gaiden )
 	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 | IPF_8WAY )
 	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER2 | IPF_8WAY )
 	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER2 | IPF_8WAY )
-	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
 	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
 	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
 	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -663,7 +663,7 @@ static struct OKIM6295interface okim6295_interface =
 };
 
 
-static MACHINE_DRIVER_START( gaiden )
+static MACHINE_DRIVER_START( shadoww )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 8000000)	/* 8 MHz */
@@ -699,43 +699,6 @@ MACHINE_DRIVER_END
   Game driver(s)
 
 ***************************************************************************/
-
-ROM_START( gaiden )
-	ROM_REGION( 0x40000, REGION_CPU1, 0 )	/* 2*128k for 68000 code */
-	ROM_LOAD16_BYTE( "gaiden.1",     0x00000, 0x20000, 0xe037ff7c )
-	ROM_LOAD16_BYTE( "gaiden.2",     0x00001, 0x20000, 0x454f7314 )
-
-	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
-	ROM_LOAD( "gaiden.3",     0x0000, 0x10000, 0x75fd3e6a )   /* Audio CPU is a Z80  */
-
-	ROM_REGION( 0x010000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "gaiden.5",     0x000000, 0x10000, 0x8d4035f7 )	/* 8x8 tiles */
-
-	ROM_REGION( 0x080000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "14.bin",       0x000000, 0x20000, 0x1ecfddaa )
-	ROM_LOAD( "15.bin",       0x020000, 0x20000, 0x1291a696 )
-	ROM_LOAD( "16.bin",       0x040000, 0x20000, 0x140b47ca )
-	ROM_LOAD( "17.bin",       0x060000, 0x20000, 0x7638cccb )
-
-	ROM_REGION( 0x080000, REGION_GFX3, ROMREGION_DISPOSE )
-	ROM_LOAD( "18.bin",       0x000000, 0x20000, 0x3fadafd6 )
-	ROM_LOAD( "19.bin",       0x020000, 0x20000, 0xddae9d5b )
-	ROM_LOAD( "20.bin",       0x040000, 0x20000, 0x08cf7a93 )
-	ROM_LOAD( "21.bin",       0x060000, 0x20000, 0x1ac892f5 )
-
-	ROM_REGION( 0x100000, REGION_GFX4, ROMREGION_DISPOSE )
-	ROM_LOAD( "gaiden.6",     0x000000, 0x20000, 0xe7ccdf9f )	/* sprites A1 */
-	ROM_LOAD( "gaiden.8",     0x020000, 0x20000, 0x7ef7f880 )	/* sprites B1 */
-	ROM_LOAD( "gaiden.10",    0x040000, 0x20000, 0xa6451dec )	/* sprites C1 */
-	ROM_LOAD( "gaiden.12",    0x060000, 0x20000, 0x90f1e13a )	/* sprites D1 */
-	ROM_LOAD( "gaiden.7",     0x080000, 0x20000, 0x016bec95 )	/* sprites A2 */
-	ROM_LOAD( "gaiden.9",     0x0a0000, 0x20000, 0x6e9b7fd3 )	/* sprites B2 */
-	ROM_LOAD( "gaiden.11",    0x0c0000, 0x20000, 0x7fbfdf5e )	/* sprites C2 */
-	ROM_LOAD( "gaiden.13",    0x0e0000, 0x20000, 0x7d9f5c5e )	/* sprites D2 */
-
-	ROM_REGION( 0x20000, REGION_SOUND1, 0 )	/* 128k for ADPCM samples - sound chip is OKIM6295 */
-	ROM_LOAD( "gaiden.4",     0x0000, 0x20000, 0xb0e0faf9 ) /* samples */
-ROM_END
 
 ROM_START( shadoww )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 )	/* 2*128k for 68000 code */
@@ -810,6 +773,43 @@ ROM_START( shadowwa )
 	ROM_LOAD( "gaiden.11",    0x0c0000, 0x20000, 0x7fbfdf5e )	/* sprites C2 */
 	ROM_LOAD( "shadoww.13a",  0x0e0000, 0x10000, 0x996d2fa5 )	/* sprites D2 */
 	ROM_LOAD( "shadoww.13b",  0x0f0000, 0x10000, 0xb8df8a34 )	/* sprites D2 */
+
+	ROM_REGION( 0x20000, REGION_SOUND1, 0 )	/* 128k for ADPCM samples - sound chip is OKIM6295 */
+	ROM_LOAD( "gaiden.4",     0x0000, 0x20000, 0xb0e0faf9 ) /* samples */
+ROM_END
+
+ROM_START( gaiden )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 )	/* 2*128k for 68000 code */
+	ROM_LOAD16_BYTE( "gaiden.1",     0x00000, 0x20000, 0xe037ff7c )
+	ROM_LOAD16_BYTE( "gaiden.2",     0x00001, 0x20000, 0x454f7314 )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
+	ROM_LOAD( "gaiden.3",     0x0000, 0x10000, 0x75fd3e6a )   /* Audio CPU is a Z80  */
+
+	ROM_REGION( 0x010000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "gaiden.5",     0x000000, 0x10000, 0x8d4035f7 )	/* 8x8 tiles */
+
+	ROM_REGION( 0x080000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "14.bin",       0x000000, 0x20000, 0x1ecfddaa )
+	ROM_LOAD( "15.bin",       0x020000, 0x20000, 0x1291a696 )
+	ROM_LOAD( "16.bin",       0x040000, 0x20000, 0x140b47ca )
+	ROM_LOAD( "17.bin",       0x060000, 0x20000, 0x7638cccb )
+
+	ROM_REGION( 0x080000, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_LOAD( "18.bin",       0x000000, 0x20000, 0x3fadafd6 )
+	ROM_LOAD( "19.bin",       0x020000, 0x20000, 0xddae9d5b )
+	ROM_LOAD( "20.bin",       0x040000, 0x20000, 0x08cf7a93 )
+	ROM_LOAD( "21.bin",       0x060000, 0x20000, 0x1ac892f5 )
+
+	ROM_REGION( 0x100000, REGION_GFX4, ROMREGION_DISPOSE )
+	ROM_LOAD( "gaiden.6",     0x000000, 0x20000, 0xe7ccdf9f )	/* sprites A1 */
+	ROM_LOAD( "gaiden.8",     0x020000, 0x20000, 0x7ef7f880 )	/* sprites B1 */
+	ROM_LOAD( "gaiden.10",    0x040000, 0x20000, 0xa6451dec )	/* sprites C1 */
+	ROM_LOAD( "gaiden.12",    0x060000, 0x20000, 0x90f1e13a )	/* sprites D1 */
+	ROM_LOAD( "gaiden.7",     0x080000, 0x20000, 0x016bec95 )	/* sprites A2 */
+	ROM_LOAD( "gaiden.9",     0x0a0000, 0x20000, 0x6e9b7fd3 )	/* sprites B2 */
+	ROM_LOAD( "gaiden.11",    0x0c0000, 0x20000, 0x7fbfdf5e )	/* sprites C2 */
+	ROM_LOAD( "gaiden.13",    0x0e0000, 0x20000, 0x7d9f5c5e )	/* sprites D2 */
 
 	ROM_REGION( 0x20000, REGION_SOUND1, 0 )	/* 128k for ADPCM samples - sound chip is OKIM6295 */
 	ROM_LOAD( "gaiden.4",     0x0000, 0x20000, 0xb0e0faf9 ) /* samples */
@@ -953,10 +953,10 @@ static DRIVER_INIT( raiga )
 
 
 
-GAME( 1988, gaiden,   0,        gaiden, gaiden,   0,        ROT0, "Tecmo", "Ninja Gaiden (World)" )
-GAME( 1988, shadoww,  gaiden,   gaiden, gaiden,   0,        ROT0, "Tecmo", "Shadow Warriors (US set 1)" )
-GAME( 1988, shadowwa, gaiden,   gaiden, gaiden,   0,        ROT0, "Tecmo", "Shadow Warriors (US set 2)" )
-GAME( 1989, ryukendn, gaiden,   gaiden, gaiden,   0,        ROT0, "Tecmo", "Ninja Ryukenden (Japan)" )
-GAME( 1989, wildfang, 0,        gaiden, wildfang, wildfang, ROT0, "Tecmo", "Wild Fang / Tecmo Knight" )
-GAME( 1989, tknight,  wildfang, gaiden, tknight,  wildfang, ROT0, "Tecmo", "Tecmo Knight" )
-GAMEX(1991, raiga,    0,        gaiden, raiga,    raiga,    ROT0, "Tecmo", "Raiga - Strato Fighter (Japan)", GAME_UNEMULATED_PROTECTION )
+GAME( 1988, shadoww,  0,        shadoww, shadoww,  0,        ROT0, "Tecmo", "Shadow Warriors (World set 1)" )
+GAME( 1988, shadowwa, shadoww,  shadoww, shadoww,  0,        ROT0, "Tecmo", "Shadow Warriors (World set 2)" )
+GAME( 1988, gaiden,   shadoww,  shadoww, shadoww,  0,        ROT0, "Tecmo", "Ninja Gaiden (US)" )
+GAME( 1989, ryukendn, shadoww,  shadoww, shadoww,  0,        ROT0, "Tecmo", "Ninja Ryukenden (Japan)" )
+GAME( 1989, wildfang, 0,        shadoww, wildfang, wildfang, ROT0, "Tecmo", "Wild Fang / Tecmo Knight" )
+GAME( 1989, tknight,  wildfang, shadoww, tknight,  wildfang, ROT0, "Tecmo", "Tecmo Knight" )
+GAMEX(1991, raiga,    0,        shadoww, raiga,    raiga,    ROT0, "Tecmo", "Raiga - Strato Fighter (Japan)", GAME_UNEMULATED_PROTECTION )

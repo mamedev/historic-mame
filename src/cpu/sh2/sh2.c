@@ -1143,7 +1143,7 @@ INLINE void MAC_L(UINT32 m, UINT32 n)
 			Res2 = 0x00008000;
 			Res0 = 0x00000000;
 		}
-		if (((INT32) Res2 > 0) && (Res2 > 0x00007fff))
+		else if (((INT32) Res2 > 0) && (Res2 > 0x00007fff))
 		{
 			Res2 = 0x00007fff;
 			Res0 = 0xffffffff;

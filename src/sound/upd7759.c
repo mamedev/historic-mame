@@ -99,6 +99,7 @@
    games (88games coinup in particular)
 
  *************************************************************/
+//* : debug-note tags(AT)
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -286,9 +287,9 @@ int UPD7759_sh_start(const struct MachineSound *msound)
 
 		ch->rom         = memory_region(intf->region[chip]);
 		ch->cur_rombank = ch->rom;
-		ch->reset       = 1;
-		ch->start       = 1;
-		ch->port        = 0x00;
+		ch->reset       = 0; //* active low, should be zero because we're initializing
+		ch->start       = 0; //* active high, initial state should be low - not started
+		ch->port        = 0;
 		ch->playing     = 0;
 		ch->buffer_ptr  = 0;
 		ch->rr_pos      = 0;
@@ -306,6 +307,8 @@ int UPD7759_sh_start(const struct MachineSound *msound)
 		sprintf(name, "uPD7759 #%d", chip);
 
 		ch->channel = stream_init(name, intf->volume[chip], Machine->sample_rate, chip, UPD7759_update);
+
+		UPD7759_reset_w(chip, ch->reset); //* more comprehensive init
 	}
 	return 0;
 }
@@ -361,7 +364,30 @@ static void UPD7759_cmd_w(int chip, UINT8 data)
 		switch(ch->param_mode) {
 		case PARAM_8x:
 			ch->param_mode = 0;
-			UPD7759_start_play(chip, data+3);
+
+			//* The "param_mode" is responsible for packets with variable length
+			//* and silence compression. While the length of a packet can be
+			//* estimated quite accurately from the first data byte, actual
+			//* length may vary between +/-2 nibbles. The inconsistency occurs
+			//* less frequently in master(stand alone) mode but very often in
+			//* slave mode.
+			//*
+			//* When length estimation overshoots it is likely to result in
+			//* memory violations and consequently crashes MAME. Until the true
+			//* calculation method is known all estimated packet lengths must
+			//* align themselves and recede two nibbles to a fail-safe boundary.
+			//*
+			//* There are two drawbacks with the proposed contingency.
+			//* First, the last data byte of a variable-length packet may be
+			//* wasted, but this byte is not known in the first place to be
+			//* sample data or some kind of control codes. Second, this byte
+			//* may fall into the command pipeline; nevertheless, it has never
+			//* been found triggering illegal playbacks in the games tested
+			//* so far.
+
+			//UPD7759_start_play(chip, data+3);
+			UPD7759_start_play(chip, (data & ~1) + 2);
+
 			return;
 		default:
 			logerror("UPD7759.%d Unknown parameter mode %d ?\n", chip, ch->param_mode);
@@ -371,25 +397,42 @@ static void UPD7759_cmd_w(int chip, UINT8 data)
 	}
 
 	switch(data & 0xc0) {
+	case 0x80: //* variable-length packets take higher precedence
+		UPD7759_set_frequency(ch, data & 0x1f);
+		ch->param_mode = PARAM_8x;
+		break;
 	case 0x40:
 		UPD7759_set_frequency(ch, data & 0x1f);
 		UPD7759_start_play(chip, 256);
 		break;
-	case 0x80:
-		UPD7759_set_frequency(ch, data & 0x1f);
-		ch->param_mode = PARAM_8x;
-		break;
 	default:
-		if(data == 0xff && UPD7759_chips.intf->mode == UPD7759_SLAVE_MODE) {
-			if(ch->started) {
-				stream_update(ch->channel, 0);
-				ch->cmd_mode = 0;
-				timer_adjust(ch->timer, TIME_NEVER, 0, 0);
-			} else {
-				ch->started = 1;
+
+		//* The 0xff command marks the end of a sample in slave mode.
+		//* Some SNK games also rely on it in master mode as Mish
+		//* has pointed out.
+		if (data == 0xff)
+		{
+			if (UPD7759_chips.intf->mode == UPD7759_SLAVE_MODE)
+			{
+				if(ch->started)
+				{
+					stream_update(ch->channel, 0);
+					ch->cmd_mode = 0;
+					timer_adjust(ch->timer, TIME_NEVER, 0, 0);
+				}
+				else
+					ch->started = 1;
 			}
-		} else
-			logerror("UPD7759.%d unknown command %02x\n", chip, data);
+			else
+			{
+				stream_update(ch->channel, 0);
+				ch->rr_pos = ch->rr_end;
+				ch->play_length = 0;
+				timer_adjust(ch->timer, TIME_NEVER, 0, 0);
+			}
+		}
+		//else logerror("UPD7759.%d unknown command %02x\n", chip, data);
+
 		break;
 	}
 }
@@ -428,10 +471,12 @@ void UPD7759_reset_w(int chip, UINT8 data)
 	if(!data) {
 		stream_update(ch->channel, 0);
 		ch->playing     = 0;
+		ch->cmd_mode    = 0;
 		ch->play_pos    = 0;
 		ch->play_length = 0;
 		ch->rr_pos      = 0;
 		ch->param_mode  = 0;
+		timer_adjust(ch->timer, TIME_NEVER, 0, 0); //* more comprehensive reset
 	}
 }
 
@@ -461,7 +506,10 @@ void UPD7759_start_w(int chip, UINT8 data)
 		scount = ch->cur_rombank[0];
 		if(ch->port >= scount) {
 			logerror("UPD7759.%d: Sample number %x is higher than rom sample number (%x)\n", chip, ch->port, scount);
-			return;
+
+			//* According to Mish the uPD7759 chip on a real P.O.W. board
+			//* seems to clamp out-of-range indices to the highest value.
+			if (scount>0) ch->port = scount-1; else return;
 		}
 
 		ch->rr_pos = ((ch->cur_rombank[5+ch->port*2]<<8)|ch->cur_rombank[6+ch->port*2])*2;

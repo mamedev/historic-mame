@@ -43,14 +43,14 @@ UINT8 modDim;
 UINT32 ReadAM(void)
 {
 	modM=modM?1:0;
-	modVal=MemRead8(modAdd);
+	modVal=OpRead8(modAdd);
 	return AMTable1[modM][modVal>>5]();
 }
 
 UINT32 BitReadAM(void)
 {
 	modM=modM?1:0;
-	modVal=MemRead8(modAdd);
+	modVal=OpRead8(modAdd);
 	return BAMTable1[modM][modVal>>5]();
 }
 
@@ -70,14 +70,14 @@ UINT32 BitReadAM(void)
 UINT32 ReadAMAddress(void)
 {
 	modM=modM?1:0;
-	modVal=MemRead8(modAdd);
+	modVal=OpRead8(modAdd);
 	return AMTable2[modM][modVal>>5]();
 }
 
 UINT32 BitReadAMAddress(void)
 {
 	modM=modM?1:0;
-	modVal=MemRead8(modAdd);
+	modVal=OpRead8(modAdd);
 	return BAMTable2[modM][modVal>>5]();
 }
 
@@ -95,7 +95,7 @@ UINT32 BitReadAMAddress(void)
 UINT32 WriteAM(void)
 {
 	modM=modM?1:0;
-	modVal=MemRead8(modAdd);
+	modVal=OpRead8(modAdd);
 	return AMTable3[modM][modVal>>5]();
 }
 

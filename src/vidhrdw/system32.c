@@ -1,34 +1,53 @@
 /* System 32 Video Hardware */
 
-/* tx tilemap was annoying so i'm not using the tilemap system for now, i'll probably convert it back later once all the details of the
-   vidhrdw are working and i know what i can do */
-/* bg tilemaps aren't done */
-/* are colours 100% in svf? crowds seem a bit odd, also colours in f1en, darkedge */
-/* there might be more to the sprite clipping than i emulate */
-/* shadow sprites etc. */
-/* support changing to the higher resolutions at runtime sonic warning screen, rad rally course select etc.*/
-/* optimize */
-/* some sprites on the 3rd attract level of ga2 still have bad colours .. my problem or more protection? */
+/* todo:
+
+fix alphablending enable, amount etc. (sonic almost certainly shouldn't have it enabled ?)
+add row-select, linescroll, linezoom, clipping window effects on bg tilemaps
+fix / improve alphablending
+fix priorities properly (will need vmixer)
+fix sprite clipping effect? (outside area clip)
+find rad rally title screen background
+remaining colour problems (sonic?)
+solid flag on tiles? (rad rally..)
+background colour
+any remaining glitches
+
+*/
 
 #include "driver.h"
 
 extern int system32_temp_kludge;
+int sys32_sprite_priority_kludge;
+
 extern data16_t *sys32_spriteram16;
 data8_t  *sys32_spriteram8; /* I maintain this to make drawing ram based sprites easier */
-data16_t *system32_mixerregs;		// mixer registers
+extern data16_t *system32_mixerregs;		// mixer registers
 data16_t *sys32_videoram;
 data8_t sys32_ramtile_dirty[0x1000];
 extern data16_t *sys32_displayenable;
 extern data16_t *sys32_tilebank_external;
+data16_t sys32_old_tilebank_external;
+
+int sys32_tilebank_internal;
+int sys32_old_tilebank_internal;
+
+int sys32_paletteshift[4];
+int sys32_palettebank[4];
+int sys32_old_paletteshift[4];
+int sys32_old_palettebank[4];
 
 extern int system32_palMask;
 extern int system32_mixerShift;
-int system32_draw_bgs;
 int system32_screen_mode;
 int system32_screen_old_mode;
 int system32_allow_high_resolution;
 static int sys32_old_brightness[3];
 int sys32_brightness[3];
+
+data8_t system32_dirty_window[0x100];
+data8_t system32_windows[4][4];
+data8_t system32_old_windows[4][4];
 
 /* these are the various attributes a sprite can have, will decide which need to be global later, maybe put them in a struct */
 
@@ -83,6 +102,9 @@ void system32_draw_sprite ( struct mame_bitmap *bitmap, const struct rectangle *
 	data8_t *sprite_gfxdata = memory_region ( REGION_GFX2 );
 	UINT32 xsrc,ysrc;
 	UINT32 xdst,ydst;
+	/* um .. probably a better way to do this */
+	struct GfxElement *gfx=Machine->gfx[0];
+	const pen_t *paldata = &gfx->colortable[0];
 
 	/* if the gfx data is coming from RAM instead of ROM change the pointer */
 	if ( sys32sprite_rambasedgfx )
@@ -111,7 +133,7 @@ void system32_draw_sprite ( struct mame_bitmap *bitmap, const struct rectangle *
 		}
 
 		if ((drawypos >= cliprect->min_y) && (drawypos <= cliprect->max_y)) {
-			UINT16 *destline = (bitmap->line[drawypos]);
+			UINT32 *destline = (bitmap->line[drawypos]);
 
 			while ( xsrc < (sys32sprite_rom_width<<16) ) {
 
@@ -143,11 +165,11 @@ void system32_draw_sprite ( struct mame_bitmap *bitmap, const struct rectangle *
 
 						if (!sys32sprite_indirect_palette)
 						{
-							if (gfxdata) destline[drawxpos] =  gfxdata + (sys32sprite_palette * 16);
+							if (gfxdata) destline[drawxpos] =  paldata[gfxdata + (sys32sprite_palette * 16)];
 						}
 						else
 						{
-							if (gfxdata) destline[drawxpos] =  sys32sprite_table[gfxdata] & 0x1fff;
+							if (gfxdata) destline[drawxpos] =  paldata[sys32sprite_table[gfxdata] & 0x1fff];
 						}
 
 					} else { // 8bpp
@@ -157,7 +179,7 @@ void system32_draw_sprite ( struct mame_bitmap *bitmap, const struct rectangle *
 						if ( (!sys32sprite_draw_colour_f) && (gfxdata == 0xff) ) gfxdata = 0;
 
 						/* can 8bpp sprites have indirect palettes? */
-						if (gfxdata) destline[drawxpos] =  gfxdata + (sys32sprite_palette * 16);
+						if (gfxdata) destline[drawxpos] =  paldata[gfxdata + (sys32sprite_palette * 16)];
 
 					} /* bpp */
 
@@ -623,110 +645,6 @@ which is mapped at 0xc0000e
 ....
 */
 
-/* background layers will be handled with tilemaps later, this is just a temporary measure for getting a rough idea of what will need to be implemented */
-
-/* yes i know its ugly and sub-optimal ;-) */
-
-void system32_draw_bg_layer ( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int layer )
-{
-	int x,y;
-	int base[4];
-	int basetouse = 0;
-
-	int tileno;
-	int scrollx, scrolly;
-	int drawx, drawy;
-	int yflip, xflip;
-	int sys32_tilebank_internal = sys32_videoram[0x01FF00/2] & 0x0400;
-	int s32palette;
-
-	int paletteshift = (system32_mixerregs[(0x22+layer*2)/2] & 0x0f00)>>8;
-	int palettebank = ((system32_mixerregs[(0x22+layer*2)/2] & 0x00f0)>>4)*0x40;
-	                                                // u--?
-
-//	int alphaenable[4] = {0,0,0,0};
-//	int alphaamount;
-//usrintf_showmessage	("pb %04x",sys32_videoram[0x1FF02/2]);
-
-
-	int trans;
-
-//	if ((system32_mixerregs[0x32/2] & 0x1010) == 0x1010) alphaenable[0] = 1;
-//	if ((system32_mixerregs[0x34/2] & 0x1010) == 0x1010) alphaenable[1] = 1;
-//	if ((system32_mixerregs[0x36/2] & 0x1010) == 0x1010) alphaenable[2] = 1;
-//	if ((system32_mixerregs[0x38/2] & 0x1010) == 0x1010) alphaenable[3] = 1;
-
-//	alphaamount = (((system32_mixerregs[0x4e/2])>>8) & 7) <<5; //umm maybe
-
-	base[1] = (sys32_videoram[(0x01FF40+4*layer)/2] & 0x7f00)>>8;
-	base[0] = (sys32_videoram[(0x01FF40+4*layer)/2] & 0x007f);
-	base[3] = (sys32_videoram[(0x01FF42+4*layer)/2] & 0x7f00)>>8;
-	base[2] = (sys32_videoram[(0x01FF42+4*layer)/2] & 0x007f);
-
-	scrollx = (sys32_videoram[(0x01FF12+8*layer)/2]) & 0x3ff;
-	scrolly = (sys32_videoram[(0x01FF16+8*layer)/2]) & 0x1ff;
-
-	for (y = 0; y < 32 ; y++)
-	{
-		drawy = y*16-scrolly;
-
-
-		for (x = 0; x < 64 ; x++)
-		{
-			drawx = x*16-scrollx;
-			basetouse = 0;
-			if (x > 31) basetouse++;
-			if (y > 15) basetouse+=2;
-
-			tileno = sys32_videoram[(base[basetouse]*0x200) +   (x & 31) + (y & 15) * 32];
-
-			yflip = tileno & 0x8000;
-			xflip = tileno & 0x4000;
-
-			trans = TRANSPARENCY_PEN;
-
-			/* guess based on rad rally course select, not trusted seems to break rad mobile on corners, arf backgrounds etc. so its probably wrong or selectable */
-	//		if (tileno & 0x2000) trans = TRANSPARENCY_NONE;
-
-
-		//	if (alphaenable[layer])
-		//	{
-		//		trans = TRANSPARENCY_ALPHA;
-		//		alpha_set_level(alphaamount);
-		//	}
-
-			s32palette = (tileno & 0x1ff0) >> (paletteshift+4);
-			tileno &= 0x1fff;
-
-
-			if (sys32_tilebank_internal) tileno |= 0x2000;
-			if (sys32_tilebank_external[0]&1) tileno |= 0x4000;
-
-			if ((drawy+16 > 0) && (drawy < 224))
-			{
-				if ((drawx+16 > 0) && (drawx < 448))
-					drawgfx(bitmap,Machine->gfx[0],tileno,palettebank+s32palette,xflip,yflip,drawx,drawy,cliprect,trans,0);
-
-				if ((drawx+16+0x400 > 0) && (drawx+0x400 < 448))
-					drawgfx(bitmap,Machine->gfx[0],tileno,palettebank+s32palette,xflip,yflip,drawx+0x400,drawy,cliprect,trans,0);
-			}
-
-			if ((drawy+16+0x200 > 0) && (drawy+0x200 < 224))
-			{
-
-			if ((drawx+16 > 0) && (drawx < 448))
-				drawgfx(bitmap,Machine->gfx[0],tileno,palettebank+s32palette,xflip,yflip,drawx,drawy+0x200,cliprect,trans,0);
-
-			if ((drawx+16+0x400 > 0) && (drawx+0x400 < 448))
-				drawgfx(bitmap,Machine->gfx[0],tileno,palettebank+s32palette,xflip,yflip,drawx+0x400,drawy+0x200,cliprect,trans,0);
-			}
-
-
-
-		}
-
-	}
-}
 
 void system32_draw_text_layer ( struct mame_bitmap *bitmap, const struct rectangle *cliprect ) /* using this for now to save me tilemap system related headaches */
 {
@@ -792,6 +710,7 @@ WRITE16_HANDLER ( sys32_videoram_w )
 
 	COMBINE_DATA(&sys32_videoram[offset]);
 
+
 	/* also write it to another region so its easier (imo) to work with the ram based tiles */
 	if (ACCESSING_MSB)
 	txtile_gfxregion[offset*2+1] = (data & 0xff00) >> 8;
@@ -801,6 +720,9 @@ WRITE16_HANDLER ( sys32_videoram_w )
 
 	/* each tile is 0x10 words */
 	sys32_ramtile_dirty[offset / 0x10] = 1;
+
+	system32_dirty_window[offset>>9]=1;
+
 }
 
 WRITE16_HANDLER ( sys32_spriteram_w )
@@ -816,16 +738,76 @@ WRITE16_HANDLER ( sys32_spriteram_w )
 	sys32_spriteram8[offset*2] = (data & 0x00ff );
 }
 
+/*
+
+Tilemaps are made of 4 windows
+
+each window is 32x16 in size
+
+*/
+
+UINT32 sys32_bg_map( UINT32 col, UINT32 row, UINT32 num_cols, UINT32 num_rows ){
+	int page = 0;
+	if( row<16 ){ /* top */
+		if( col<32 ) page = 0; else page = 1;
+	}
+	else { /* bottom */
+		if( col<32 ) page = 2; else page = 3;
+	}
+
+	return ((col & 31) + (row & 15) * 32) + page * 0x200;
+
+}
+
+
+static struct tilemap *system32_layer_tilemap[4];
+
+static void get_system32_tile_info ( int tile_index, int layer )
+{
+	int tileno, s32palette;
+	int page;
+	int yxflip;
+
+	page = tile_index >> 9;
+
+	tileno = sys32_videoram[(tile_index&0x1ff)+system32_windows[layer][page]*0x200];
+	s32palette = (tileno & 0x1ff0) >> (sys32_paletteshift[layer]+4);
+	yxflip = (tileno & 0xc000)>>14;
+
+	tileno &= 0x1fff;
+
+	if (sys32_tilebank_internal) tileno |= 0x2000;
+	if (sys32_tilebank_external[0]&1) tileno |= 0x4000;
+
+	SET_TILE_INFO(0,tileno,sys32_palettebank[layer]+s32palette,TILE_FLIPYX(yxflip))
+}
+
+static void get_system32_layer0_tile_info(int tile_index) {	get_system32_tile_info(tile_index,0); }
+static void get_system32_layer1_tile_info(int tile_index) {	get_system32_tile_info(tile_index,1); }
+static void get_system32_layer2_tile_info(int tile_index) {	get_system32_tile_info(tile_index,2); }
+static void get_system32_layer3_tile_info(int tile_index) {	get_system32_tile_info(tile_index,3); }
 
 VIDEO_START( system32 )
 {
+	int i;
+
+	system32_layer_tilemap[0] = tilemap_create(get_system32_layer0_tile_info,sys32_bg_map,TILEMAP_TRANSPARENT, 16, 16,64,32);
+	tilemap_set_transparent_pen(system32_layer_tilemap[0],0);
+	system32_layer_tilemap[1] = tilemap_create(get_system32_layer1_tile_info,sys32_bg_map,TILEMAP_TRANSPARENT, 16, 16,64,32);
+	tilemap_set_transparent_pen(system32_layer_tilemap[1],0);
+	system32_layer_tilemap[2] = tilemap_create(get_system32_layer2_tile_info,sys32_bg_map,TILEMAP_TRANSPARENT, 16, 16,64,32);
+	tilemap_set_transparent_pen(system32_layer_tilemap[2],0);
+	system32_layer_tilemap[3] = tilemap_create(get_system32_layer3_tile_info,sys32_bg_map,TILEMAP_TRANSPARENT, 16, 16,64,32);
+	tilemap_set_transparent_pen(system32_layer_tilemap[3],0);
+
 	sys32_spriteram8 = auto_malloc ( 0x20000 ); // for ram sprites
 	sys32_videoram = auto_malloc ( 0x20000 );
 	sys32_old_brightness[0] = 0; sys32_old_brightness[1]=0; sys32_old_brightness[2] = 0;
 	sys32_brightness[0] = 0xff;	sys32_brightness[1] = 0xff;
 	sys32_brightness[2] = 0xff;
 
-//	system32_draw_bgs = 0; /* disable for now until they work, just for development atm */
+	for (i = 0; i < 0x100; i++)
+		system32_dirty_window[i] = 1;
 
 	return 0;
 }
@@ -841,10 +823,27 @@ static void system32_recalc_palette( void )
 
 
 
+void system32_draw_bg_layer ( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int layer )
+{
+	int trans = 0;
+	int alphaamount = 0;
+
+	if ((system32_mixerregs[(0x32+2*layer)/2] & 0x1010) == 0x1010)
+	{
+		trans = TILEMAP_ALPHA;
+		alphaamount = 255-((((system32_mixerregs[0x4e/2])>>8) & 7) <<5); //umm this is almost certainly wrong
+		alpha_set_level(alphaamount);
+	}
+	tilemap_set_scrollx(system32_layer_tilemap[layer],0,(sys32_videoram[(0x01FF12+8*layer)/2]) & 0x3ff);
+	tilemap_set_scrolly(system32_layer_tilemap[layer],0,(sys32_videoram[(0x01FF16+8*layer)/2]) & 0x1ff);
+
+	tilemap_draw(bitmap,cliprect,system32_layer_tilemap[layer],trans,0);
+}
+
+
 VIDEO_UPDATE( system32 )
 {
 	int sys32_tmap_disabled = sys32_videoram[0x1FF02/2] & 0x000f;
-
 
 	int priority0 = (system32_mixerregs[0x22/2] & 0x000f);
 	int priority1 = (system32_mixerregs[0x24/2] & 0x000f);
@@ -853,6 +852,74 @@ VIDEO_UPDATE( system32 )
 	int priloop;
 	int sys32_palette_dirty = 0;
 
+	/* experimental wip code */
+	int tm,ii;
+
+	/* if the windows number used by a tilemap use change then that window of the tilemap needs to be considered dirty */
+	for (tm = 0; tm < 4; tm++)
+	{
+		system32_windows[tm][1] = (sys32_videoram[(0x01FF40+4*tm)/2] & 0x7f00)>>8;
+		system32_windows[tm][0] = (sys32_videoram[(0x01FF40+4*tm)/2] & 0x007f);
+		system32_windows[tm][3] = (sys32_videoram[(0x01FF42+4*tm)/2] & 0x7f00)>>8;
+		system32_windows[tm][2] = (sys32_videoram[(0x01FF42+4*tm)/2] & 0x007f);
+
+		if (system32_windows[tm][0] != system32_old_windows[tm][0]) { for (ii = 0x000 ; ii < 0x200 ; ii++) tilemap_mark_tile_dirty(system32_layer_tilemap[tm],ii); }
+		if (system32_windows[tm][1] != system32_old_windows[tm][1]) { for (ii = 0x200 ; ii < 0x400 ; ii++) tilemap_mark_tile_dirty(system32_layer_tilemap[tm],ii); }
+		if (system32_windows[tm][2] != system32_old_windows[tm][2]) { for (ii = 0x400 ; ii < 0x600 ; ii++) tilemap_mark_tile_dirty(system32_layer_tilemap[tm],ii); }
+		if (system32_windows[tm][3] != system32_old_windows[tm][3]) { for (ii = 0x600 ; ii < 0x800 ; ii++) tilemap_mark_tile_dirty(system32_layer_tilemap[tm],ii); }
+
+		/* if the actual windows are dirty we also need to mark them dirty in the tilemap */
+		if (system32_dirty_window [ system32_windows[tm][0] ]) { for (ii = 0x000 ; ii < 0x200 ; ii++) tilemap_mark_tile_dirty(system32_layer_tilemap[tm],ii); }
+		if (system32_dirty_window [ system32_windows[tm][1] ]) { for (ii = 0x200 ; ii < 0x400 ; ii++) tilemap_mark_tile_dirty(system32_layer_tilemap[tm],ii); }
+		if (system32_dirty_window [ system32_windows[tm][2] ]) { for (ii = 0x400 ; ii < 0x600 ; ii++) tilemap_mark_tile_dirty(system32_layer_tilemap[tm],ii); }
+		if (system32_dirty_window [ system32_windows[tm][3] ]) { for (ii = 0x600 ; ii < 0x800 ; ii++) tilemap_mark_tile_dirty(system32_layer_tilemap[tm],ii); }
+
+		system32_old_windows[tm][0] = system32_windows[tm][0];
+		system32_old_windows[tm][1] = system32_windows[tm][1];
+		system32_old_windows[tm][2] = system32_windows[tm][2];
+		system32_old_windows[tm][3] = system32_windows[tm][3];
+	}
+
+	/* we can clean the dirty window markers now */
+	for (ii = 0; ii < 0x100; ii++)
+		system32_dirty_window[ii] = 0;
+
+	/* if the internal tilebank changed everything is dirty */
+	sys32_tilebank_internal = sys32_videoram[0x01FF00/2] & 0x0400;
+	if (sys32_tilebank_internal != sys32_old_tilebank_internal)
+	{
+		tilemap_mark_all_tiles_dirty(system32_layer_tilemap[0]);
+		tilemap_mark_all_tiles_dirty(system32_layer_tilemap[1]);
+		tilemap_mark_all_tiles_dirty(system32_layer_tilemap[2]);
+		tilemap_mark_all_tiles_dirty(system32_layer_tilemap[3]);
+	}
+	sys32_old_tilebank_internal = sys32_tilebank_internal;
+
+	/* if the external tilebank changed everything is dirty */
+	if  ( (sys32_tilebank_external[0]&1) != sys32_old_tilebank_external )
+	{
+		tilemap_mark_all_tiles_dirty(system32_layer_tilemap[0]);
+		tilemap_mark_all_tiles_dirty(system32_layer_tilemap[1]);
+		tilemap_mark_all_tiles_dirty(system32_layer_tilemap[2]);
+		tilemap_mark_all_tiles_dirty(system32_layer_tilemap[3]);
+	}
+	sys32_old_tilebank_external = sys32_tilebank_external[0]&1;
+
+	/* if the palette shift /bank registers changed the tilemap is dirty, not sure these are regs 100% correct some odd colours in sonic / jpark */
+	for (tm = 0; tm < 4; tm++)
+	{
+		sys32_paletteshift[tm] = (system32_mixerregs[(0x22+tm*2)/2] & 0x0f00)>>8;
+		if (sys32_paletteshift[tm] != sys32_old_paletteshift[tm]) tilemap_mark_all_tiles_dirty(system32_layer_tilemap[tm]);
+		sys32_old_paletteshift[tm] = sys32_paletteshift[tm];
+
+		sys32_palettebank[tm] = ((system32_mixerregs[(0x22+tm*2)/2] & 0x00f0)>>4)*0x40;
+		if (sys32_palettebank[tm] != sys32_old_palettebank[tm]) tilemap_mark_all_tiles_dirty(system32_layer_tilemap[tm]);
+		sys32_old_palettebank[tm] = sys32_palettebank[tm];
+
+	}
+	/* end wip code */
+
+	/* palette dirty check */
 	sys32_brightness[0] = (system32_mixerregs[0x40/2]);
 	sys32_brightness[1] = (system32_mixerregs[0x42/2]);
 	sys32_brightness[2] = (system32_mixerregs[0x44/2]);
@@ -866,6 +933,17 @@ VIDEO_UPDATE( system32 )
 		sys32_palette_dirty = 0;
 		system32_recalc_palette();
 	}
+	/* end palette dirty */
+
+#if 0
+	if ( keyboard_pressed_memory(KEYCODE_E) )
+	{
+	tilemap_mark_all_tiles_dirty(system32_layer_tilemap[0]);
+	tilemap_mark_all_tiles_dirty(system32_layer_tilemap[1]);
+	tilemap_mark_all_tiles_dirty(system32_layer_tilemap[2]);
+	tilemap_mark_all_tiles_dirty(system32_layer_tilemap[3]);
+	}
+#endif
 
 	system32_screen_mode = sys32_videoram[0x01FF00/2] & 0xc000;  // this should be 0x8000 according to modeler but then brival is broken?  this way alien3 and arabfgt try to change when they shouldn't .. wrong register?
 
@@ -876,11 +954,16 @@ VIDEO_UPDATE( system32 )
 		system32_screen_old_mode = system32_screen_mode;
 		if (system32_screen_mode)
 		{
-			if (system32_allow_high_resolution) set_visible_area(0*8, 52*8-1, 0*8, 28*8-1);
+			if (system32_allow_high_resolution)
+			{
+				fillbitmap(bitmap, 0, 0);
+				set_visible_area(0*8, 52*8-1, 0*8, 28*8-1);
+			}
 		//	else usrintf_showmessage ("attempted to switch to hi-resolution mode!");
 		}
 		else
 		{
+			fillbitmap(bitmap, 0, 0);
 			set_visible_area(0*8, 40*8-1, 0*8, 28*8-1);
 		}
 	}
@@ -890,20 +973,18 @@ VIDEO_UPDATE( system32 )
 
 	if (sys32_displayenable[0] & 0x0002) {
 
-		if (system32_draw_bgs)
+		for (priloop = 0; priloop < 0x10; priloop++)
 		{
-			for (priloop = 0; priloop < 0x10; priloop++)
-			{
-				if (priloop == priority0) {if (!(sys32_tmap_disabled & 0x1)) system32_draw_bg_layer ( bitmap,cliprect, 0 );}
-				if (priloop == priority1) {if (!(sys32_tmap_disabled & 0x2)) system32_draw_bg_layer ( bitmap,cliprect, 1 );}
-				if (priloop == priority2) {if (!(sys32_tmap_disabled & 0x4)) system32_draw_bg_layer ( bitmap,cliprect, 2 );}
-				if (priloop == priority3) {if (!(sys32_tmap_disabled & 0x8)) system32_draw_bg_layer ( bitmap,cliprect, 3 );}
+			if (priloop == priority0) {	if (!(sys32_tmap_disabled & 0x1)) system32_draw_bg_layer (bitmap,cliprect,0); }
+			if (priloop == priority1) {	if (!(sys32_tmap_disabled & 0x2)) system32_draw_bg_layer (bitmap,cliprect,1); }
+			if (priloop == priority2) {	if (!(sys32_tmap_disabled & 0x4)) system32_draw_bg_layer (bitmap,cliprect,2); }
+			if (priloop == priority3) {	if (!(sys32_tmap_disabled & 0x8)) system32_draw_bg_layer (bitmap,cliprect,3); }
 
-			}
+			/* handle real sprite priorities once we have the vmixer, this is a kludge to make radm/radr/jpark ingame look a bit better until then */
+			if (priloop == sys32_sprite_priority_kludge) system32_process_spritelist (bitmap, cliprect);
 		}
-
-		system32_process_spritelist (bitmap, cliprect);
-		system32_draw_text_layer (bitmap, cliprect);
-
 	}
+
+	system32_draw_text_layer (bitmap, cliprect);
+
 }

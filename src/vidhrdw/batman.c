@@ -79,6 +79,7 @@ VIDEO_START( batman )
 		0,					/* does the neighbor bit affect the next object? */
 		8,					/* pixels per SLIP entry (0 for no-slip) */
 		0,					/* pixel offset for SLIPs */
+		0,					/* maximum number of links to visit/scanline (0=all) */
 
 		0x100,				/* base palette entry */
 		0x100,				/* maximum number of colors */
@@ -217,7 +218,7 @@ VIDEO_UPDATE( batman )
 	tilemap_draw(bitmap, cliprect, atarigen_playfield2_tilemap, 1, 0x84);
 	tilemap_draw(bitmap, cliprect, atarigen_playfield2_tilemap, 2, 0x88);
 	tilemap_draw(bitmap, cliprect, atarigen_playfield2_tilemap, 3, 0x8c);
-	
+
 	/* draw and merge the MO */
 	mobitmap = atarimo_render(0, cliprect, &rectlist);
 	for (r = 0; r < rectlist.numrects; r++, rectlist.rect++)
@@ -230,7 +231,7 @@ VIDEO_UPDATE( batman )
 				if (mo[x])
 				{
 					/* verified on real hardware:
-					
+
 						for all MO colors, MO priority 0:
 							obscured by low fg playfield pens priority 1-3
 							obscured by high fg playfield pens priority 3 only
@@ -247,7 +248,7 @@ VIDEO_UPDATE( batman )
 							obscured by bg playfield priority 3 only
 					*/
 					int mopriority = mo[x] >> ATARIMO_PRIORITY_SHIFT;
-					
+
 					/* upper bit of MO priority signals special rendering and doesn't draw anything */
 					if (mopriority & 4)
 						continue;
@@ -260,16 +261,16 @@ VIDEO_UPDATE( batman )
 						/* playfield priority 3 always wins */
 						if (pfpriority == 3)
 							;
-						
+
 						/* priority is consistent for upper pens in playfield */
 						else if (pf[x] & 0x08)
 							pf[x] = mo[x] & ATARIMO_DATA_MASK;
-						
+
 						/* otherwise, we need to compare */
 						else if (mopriority >= pfpriority)
 							pf[x] = mo[x] & ATARIMO_DATA_MASK;
 					}
-					
+
 					/* background playfield case */
 					else
 					{
@@ -278,16 +279,16 @@ VIDEO_UPDATE( batman )
 						/* playfield priority 3 always wins */
 						if (pfpriority == 3)
 							;
-						
+
 						/* otherwise, MOs get shown */
 						else
 							pf[x] = mo[x] & ATARIMO_DATA_MASK;
 					}
-					
+
 					/* don't erase yet -- we need to make another pass later */
 				}
 		}
-	
+
 	/* add the alpha on top */
 	tilemap_draw(bitmap, cliprect, atarigen_alpha_tilemap, 0, 0);
 
@@ -302,7 +303,7 @@ VIDEO_UPDATE( batman )
 				if (mo[x])
 				{
 					int mopriority = mo[x] >> ATARIMO_PRIORITY_SHIFT;
-					
+
 					/* upper bit of MO priority might mean palette kludges */
 					if (mopriority & 4)
 					{
@@ -310,7 +311,7 @@ VIDEO_UPDATE( batman )
 						if (mo[x] & 2)
 							thunderj_mark_high_palette(bitmap, pf, mo, x, y);
 					}
-					
+
 					/* erase behind ourselves */
 					mo[x] = 0;
 				}

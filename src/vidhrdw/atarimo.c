@@ -66,6 +66,8 @@ struct atarimo_data
 	int					xscroll;			/* current x scroll offset */
 	int					yscroll;			/* current y scroll offset */
 
+	int					maxperline;			/* maximum number of entries/line */
+
 	struct atarimo_mask	linkmask;			/* mask for the link */
 	struct atarimo_mask gfxmask;			/* mask for the graphics bank */
 	struct atarimo_mask	codemask;			/* mask for the code index */
@@ -333,6 +335,8 @@ int atarimo_init(int map, const struct atarimo_desc *desc)
 	mo->xscroll       = 0;
 	mo->yscroll       = 0;
 
+	mo->maxperline    = desc->maxlinks ? desc->maxlinks : 0x400;
+
 	convert_mask(&desc->specialmask, &mo->specialmask);
 	mo->specialvalue  = desc->specialvalue;
 	mo->specialcb     = desc->specialcb;
@@ -416,7 +420,7 @@ UINT16 *atarimo_get_code_lookup(int map, int *size)
 
 
 /*---------------------------------------------------------------
-	atarimo_get_code_lookup: Returns a pointer to the code
+	atarimo_get_color_lookup: Returns a pointer to the color
 	lookup table.
 ---------------------------------------------------------------*/
 
@@ -431,7 +435,7 @@ UINT8 *atarimo_get_color_lookup(int map, int *size)
 
 
 /*---------------------------------------------------------------
-	atarimo_get_code_lookup: Returns a pointer to the code
+	atarimo_get_gfx_lookup: Returns a pointer to the graphics
 	lookup table.
 ---------------------------------------------------------------*/
 
@@ -455,6 +459,7 @@ static void update_active_list(struct atarimo_data *mo, int link)
 	struct atarimo_entry *bankbase = &mo->spriteram[mo->bank << mo->entrybits];
 	UINT8 movisit[ATARIMO_MAXPERBANK];
 	struct atarimo_entry **current;
+	int i;
 
 	/* reset the visit map */
 	memset(movisit, 0, mo->entrycount);
@@ -463,7 +468,7 @@ static void update_active_list(struct atarimo_data *mo, int link)
 	mo->last_link = link;
 
 	/* visit all the motion objects and copy their data into the display list */
-	for (current = mo->activelist; !movisit[link]; )
+	for (i = 0, current = mo->activelist; i < mo->maxperline && !movisit[link]; i++)
 	{
 		struct atarimo_entry *modata = &bankbase[link];
 

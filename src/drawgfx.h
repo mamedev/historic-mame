@@ -37,7 +37,7 @@ struct GfxLayout
 	UINT32 planeoffset[MAX_GFX_PLANES]; /* start of every bitplane (in bits) */
 	UINT32 xoffset[MAX_GFX_SIZE]; /* position of the bit corresponding to the pixel */
 	UINT32 yoffset[MAX_GFX_SIZE]; /* of the given coordinates */
-	UINT16 charincrement; /* distance between two consecutive characters/sprites (in bits) */
+	UINT32 charincrement; /* distance between two consecutive characters/sprites (in bits) */
 };
 
 #define GFX_RAW 0x12345678
@@ -58,22 +58,22 @@ struct GfxLayout
 
 struct GfxElement
 {
-	int width,height;
+	UINT16 width,height;
 
-	unsigned int total_elements;	/* total number of characters/sprites */
-	int color_granularity;	/* number of colors for each color code */
+	UINT32 total_elements;	/* total number of characters/sprites */
+	UINT16 color_granularity;	/* number of colors for each color code */
 							/* (for example, 4 for 2 bitplanes gfx) */
+	UINT32 total_colors;
 	pen_t *colortable;	/* map color codes to screen pens */
-	int total_colors;
 	UINT32 *pen_usage;	/* an array of total_elements entries. */
 						/* It is a table of the pens each character uses */
 						/* (bit 0 = pen 0, and so on). This is used by */
 						/* drawgfgx() to do optimizations like skipping */
 						/* drawing of a totally transparent character */
 	UINT8 *gfxdata;		/* pixel data */
-	int line_modulo;	/* amount to add to get to the next line (usually = width) */
-	int char_modulo;	/* = line_modulo * height */
-	int flags;
+	UINT32 line_modulo;	/* amount to add to get to the next line (usually = width) */
+	UINT32 char_modulo;	/* = line_modulo * height */
+	UINT32 flags;
 };
 
 #define GFX_PACKED				1	/* two 4bpp pixels are packed in one byte of gfxdata */
@@ -85,10 +85,10 @@ struct GfxDecodeInfo
 {
 	int memory_region;	/* memory region where the data resides (usually 1) */
 						/* -1 marks the end of the array */
-	int start;	/* beginning of data to decode */
+	UINT32 start;	/* beginning of data to decode */
 	struct GfxLayout *gfxlayout;
-	int color_codes_start;	/* offset in the color lookup table where color codes start */
-	int total_color_codes;	/* total number of color codes */
+	UINT16 color_codes_start;	/* offset in the color lookup table where color codes start */
+	UINT16 total_color_codes;	/* total number of color codes */
 };
 
 

@@ -1743,7 +1743,7 @@ GAME( 1989, mjkojink, 0, pteacher, pteacher, 0,        ROT0, "Home Data", "Mahjo
 GAME( 1989, vitaminc, 0, pteacher, pteacher, 0,        ROT0, "Home Data", "Mahjong Vitamin C (Japan)" )
 GAME( 1989, mjyougo,  0, pteacher, pteacher, 0,        ROT0, "Home Data", "Mahjong-yougo no Kisotairyoku (Japan)" )
 GAME( 1991, mjkinjas, 0, mjkinjas, pteacher, 0,        ROT0, "Home Data", "Mahjong Kinjirareta Asobi (Japan)" )
-GAME( 19??, jogakuen, 0, pteacher, jogakuen, jogakuen, ROT0, "Windom",    "Mahjong Jogakuen (Japan)" )
+GAME( 1992?,jogakuen, 0, pteacher, jogakuen, jogakuen, ROT0, "Windom",    "Mahjong Jogakuen (Japan)" )
 
 GAME( 1990, lemnangl, 0, lemnangl, pteacher, 0,        ROT0, "Home Data", "Mahjong Lemon Angel (Japan)" )
 

@@ -54,6 +54,7 @@ VIDEO_START( badlands )
 		0,					/* does the neighbor bit affect the next object? */
 		0,					/* pixels per SLIP entry (0 for no-slip) */
 		0,					/* pixel offset for SLIPs */
+		0,					/* maximum number of links to visit/scanline (0=all) */
 
 		0x80,				/* base palette entry */
 		0x80,				/* maximum number of colors */
@@ -141,7 +142,7 @@ VIDEO_UPDATE( badlands )
 					*/
 					if ((mo[x] & ATARIMO_PRIORITY_MASK) || !(pf[x] & 8))
 						pf[x] = mo[x] & ATARIMO_DATA_MASK;
-					
+
 					/* erase behind ourselves */
 					mo[x] = 0;
 				}

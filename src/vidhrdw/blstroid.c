@@ -55,6 +55,7 @@ VIDEO_START( blstroid )
 		0,					/* does the neighbor bit affect the next object? */
 		0,					/* pixels per SLIP entry (0 for no-slip) */
 		0,					/* pixel offset for SLIPs */
+		0,					/* maximum number of links to visit/scanline (0=all) */
 
 		0x000,				/* base palette entry */
 		0x100,				/* maximum number of colors */
@@ -126,7 +127,7 @@ void blstroid_scanline_update(int scanline)
 			/* unfortunately, it does it too early for the given MOs! */
 			/* perhaps it is not actually hooked up on the real PCB... */
 			return;
-			
+
 			/* set a timer to turn the interrupt on at HBLANK of the 7th scanline */
 			/* and another to turn it off one scanline later */
 			timer_set(cpu_getscanlineperiod() * 7.9, 0, irq_on);
@@ -162,13 +163,13 @@ VIDEO_UPDATE( blstroid )
 				if (mo[x])
 				{
 					/* verified via schematics
-					
+
 						priority address = HPPPMMMM
 					*/
 					int priaddr = ((pf[x] & 8) << 4) | (pf[x] & 0x70) | ((mo[x] & 0xf0) >> 4);
 					if (blstroid_priorityram[priaddr] & 1)
 						pf[x] = mo[x];
-					
+
 					/* erase behind ourselves */
 					mo[x] = 0;
 				}

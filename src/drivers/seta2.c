@@ -11,19 +11,22 @@ Custom :	X1-010				Sound: 8 Bit PCM
 			DX-101				Sprites
 			DX-102 x3
 
+OSC:	50.0000MHz
+        32.5304MHz
+
 *	The Toshiba TMP68301 is a 68HC000 + serial I/O, parallel I/O,
 	3 timers, address decoder, wait generator, interrupt controller,
 	all integrated in a single chip.
 
----------------------------------------------------------------------------------------
-Ordered by Board	Year	Game									By
----------------------------------------------------------------------------------------
-P0-123A				1996	Wakakusamonogatari Mahjong Yonshimai	Maboroshi Ware
-P0-125A ; KE		1996	Kosodate Quiz My Angel					Namco
-P0-136A ; KL		1997	Kosodate Quiz My Angel 2				Namco
-P0-142A				1999	Puzzle De Bowling						Nihon System / Moss
-P0-142A				2000	Penguin Brothers						Subsino
----------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------
+Ordered by Board		Year	Game									By
+-------------------------------------------------------------------------------------------
+P0-123A					1996	Wakakusamonogatari Mahjong Yonshimai	Maboroshi Ware
+P0-125A ; KE (Namco)	1996	Kosodate Quiz My Angel					Namco
+P0-136A ; KL (Namco)	1997	Kosodate Quiz My Angel 2				Namco
+P0-142A					1999	Puzzle De Bowling						Nihon System / Moss
+P0-142A + extra parts	2000	Penguin Brothers						Subsino
+-------------------------------------------------------------------------------------------
 
 TODO:
 
@@ -31,6 +34,8 @@ TODO:
 - Flip screen support.
 - Fix some graphics imperfections (e.g. color depth selection,
   "tilemap" sprites) [all done? - NS]
+- I added a kludge involving a -0x10 yoffset, this fixes the lifeline in myangel.
+  I didn't find a better way to do it without breaking pzlbowl's title screen.
 
 mj4simai:
 - test mode doesn't work correctly, the grid is ok but when you press a key to go to the
@@ -41,6 +46,33 @@ myangel2:
   corrects itself when the level starts.
 
 ***************************************************************************/
+
+/***************************************************************************
+
+							Penguin Brothers (Japan)
+
+(c)2000 Subsino
+Board:	P0-142A
+CPU:	TMP68301 (68000 core)
+
+OSC:	50.0000MHz
+        32.5304MHz
+        28.0000MHz
+
+Chips.:	DX-101
+        DX-102 x3
+Sound:	X1-010
+
+Notes:	pzlbowl PCB with extra parts:
+        28MHz OSC
+        2x 62256 SRAM
+        74HC00
+
+***************************************************************************/
+
+
+
+
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
@@ -592,9 +624,7 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( myangel )
 	PORT_START	// IN0 - $700300.w
-	PORT_DIPNAME( 0x0001, 0x0001, DEF_STR( Service_Mode ) )
-	PORT_DIPSETTING(      0x0001, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_SERVICE( 0x0001, IP_ACTIVE_LOW )
 	PORT_DIPNAME( 0x0002, 0x0002, "Unknown 1-1" )
 	PORT_DIPSETTING(      0x0002, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
@@ -695,9 +725,7 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( myangel2 )
 	PORT_START	// IN0 - $600300.w
-	PORT_DIPNAME( 0x0001, 0x0001, DEF_STR( Service_Mode ) )
-	PORT_DIPSETTING(      0x0001, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_SERVICE( 0x0001, IP_ACTIVE_LOW )
 	PORT_DIPNAME( 0x0002, 0x0002, "Unknown 1-1" )
 	PORT_DIPSETTING(      0x0002, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
@@ -798,29 +826,27 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( pzlbowl )
 	PORT_START	// IN0 - $400300.w
-	PORT_DIPNAME( 0x0001, 0x0001, DEF_STR( Service_Mode ) )
-	PORT_DIPSETTING(      0x0001, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_SERVICE( 0x0001, IP_ACTIVE_LOW )
 	PORT_DIPNAME( 0x0002, 0x0002, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0002, DEF_STR( On ) )
 	PORT_DIPNAME( 0x0004, 0x0004, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(      0x0004, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0038, 0x0038, "Unknown 1-3&4&5*" )
-	PORT_DIPSETTING(      0x0038, "0" )
-	PORT_DIPSETTING(      0x0030, "1*" )
-	PORT_DIPSETTING(      0x0028, "2" )
-	PORT_DIPSETTING(      0x0020, "3" )
-	PORT_DIPSETTING(      0x0018, "4" )
-	PORT_DIPSETTING(      0x0010, "5" )
-	PORT_DIPSETTING(      0x0008, "6" )
-	PORT_DIPSETTING(      0x0000, "7*" )
-	PORT_DIPNAME( 0x00c0, 0x00c0, "Lives (Vs Mode)" )
+	PORT_DIPNAME( 0x0038, 0x0038, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(      0x0030, "Easy" )
+	PORT_DIPSETTING(      0x0038, "Normal" )
+//	PORT_DIPSETTING(      0x0028, "Normal" )
+//	PORT_DIPSETTING(      0x0020, "Normal" )
+//	PORT_DIPSETTING(      0x0018, "Normal" )
+//	PORT_DIPSETTING(      0x0010, "Normal" )
+//	PORT_DIPSETTING(      0x0008, "Normal" )
+	PORT_DIPSETTING(      0x0000, "Hard" )
+	PORT_DIPNAME( 0x00c0, 0x00c0, "Winning Rounds (Player VS Player)" )
 	PORT_DIPSETTING(      0x0040, "1" )
 	PORT_DIPSETTING(      0x00c0, "2" )
-	PORT_DIPSETTING(      0x0080, "3" )
 //	PORT_DIPSETTING(      0x0000, "2" )
+	PORT_DIPSETTING(      0x0080, "3" )
 
 	PORT_BIT(     0xff00, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
@@ -845,10 +871,10 @@ INPUT_PORTS_START( pzlbowl )
 	PORT_DIPNAME( 0x0010, 0x0010, "Allow Continue" )
 	PORT_DIPSETTING(      0x0000, DEF_STR( No ) )
 	PORT_DIPSETTING(      0x0010, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x0020, 0x0020, "Unknown 2-5*" )
-	PORT_DIPSETTING(      0x0020, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0040, 0x0040, "Unknown 2-6" )
+	PORT_DIPNAME( 0x0020, 0x0020, "Join In" )
+	PORT_DIPSETTING(      0x0000, DEF_STR( No ) )
+	PORT_DIPSETTING(      0x0020, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Unused ) )
 	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 	PORT_DIPNAME( 0x0080, 0x0000, "Language" )
@@ -885,7 +911,7 @@ INPUT_PORTS_START( pzlbowl )
 	PORT_BIT_IMPULSE( 0x0001, IP_ACTIVE_LOW, IPT_COIN1, 5 )
 	PORT_BIT_IMPULSE( 0x0002, IP_ACTIVE_LOW, IPT_COIN2, 5 )	// unused, test mode shows it
 	PORT_BIT(  0x0004, IP_ACTIVE_LOW,  IPT_SERVICE1 )
-	PORT_BITX( 0x0008, IP_ACTIVE_LOW,  IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
+	PORT_BITX( 0x0008, IP_ACTIVE_LOW,  IPT_SERVICE, "Test", KEYCODE_F1, IP_JOY_NONE )
 	PORT_BIT(  0x0010, IP_ACTIVE_LOW,  IPT_UNKNOWN )
 	PORT_BIT(  0x0020, IP_ACTIVE_LOW,  IPT_UNKNOWN )
 	PORT_BIT(  0x0040, IP_ACTIVE_LOW,  IPT_UNKNOWN )
@@ -901,13 +927,11 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( penbros )
 	PORT_START	// IN0 - $500300.w
-	PORT_DIPNAME( 0x0001, 0x0001, DEF_STR( Service_Mode ) )
-	PORT_DIPSETTING(      0x0001, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_SERVICE( 0x0001, IP_ACTIVE_LOW )
 	PORT_DIPNAME( 0x0002, 0x0002, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(      0x0002, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0004, 0x0004, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x0004, 0x0004, DEF_STR( Unused ) )
 	PORT_DIPSETTING(      0x0004, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 	PORT_DIPNAME( 0x0008, 0x0008, DEF_STR( Demo_Sounds ) )
@@ -938,11 +962,11 @@ INPUT_PORTS_START( penbros )
 	PORT_DIPSETTING(      0x0004, "4" )
 	PORT_DIPSETTING(      0x0008, "5" )
 	PORT_DIPNAME( 0x0030, 0x0030, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(      0x0010, "150000 500000" )
-	PORT_DIPSETTING(      0x0030, "200000 700000" )
-	PORT_DIPSETTING(      0x0000, "Every 250000" )
+	PORT_DIPSETTING(      0x0010, "150k and 500k" )
+	PORT_DIPSETTING(      0x0030, "200k and 700k" )
+	PORT_DIPSETTING(      0x0000, "Every 250k" )	// no extra life after the one at 1500k
 	PORT_DIPSETTING(      0x0020, "None" )
-	PORT_DIPNAME( 0x00c0, 0x00c0, "Match Count" )
+	PORT_DIPNAME( 0x00c0, 0x00c0, "Winning Rounds (Player VS Player)" )
 	PORT_DIPSETTING(      0x00c0, "2" )
 	PORT_DIPSETTING(      0x0040, "3" )
 	PORT_DIPSETTING(      0x0080, "4" )
@@ -957,7 +981,7 @@ INPUT_PORTS_START( penbros )
 	PORT_BIT(  0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER1 )
 	PORT_BIT(  0x0010, IP_ACTIVE_LOW, IPT_BUTTON1        | IPF_PLAYER1 )
 	PORT_BIT(  0x0020, IP_ACTIVE_LOW, IPT_BUTTON2        | IPF_PLAYER1 )
-	PORT_BIT(  0x0040, IP_ACTIVE_LOW, IPT_BUTTON3        | IPF_PLAYER1 )
+	PORT_BIT(  0x0040, IP_ACTIVE_LOW, IPT_BUTTON3        | IPF_PLAYER1 )	// unsure if used
 	PORT_BIT(  0x0080, IP_ACTIVE_LOW, IPT_START1 )
 
 	PORT_BIT(  0xff00, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -969,7 +993,7 @@ INPUT_PORTS_START( penbros )
 	PORT_BIT(  0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER2 )
 	PORT_BIT(  0x0010, IP_ACTIVE_LOW, IPT_BUTTON1        | IPF_PLAYER2 )
 	PORT_BIT(  0x0020, IP_ACTIVE_LOW, IPT_BUTTON2        | IPF_PLAYER2 )
-	PORT_BIT(  0x0040, IP_ACTIVE_LOW, IPT_BUTTON3        | IPF_PLAYER2 )
+	PORT_BIT(  0x0040, IP_ACTIVE_LOW, IPT_BUTTON3        | IPF_PLAYER2 )	// unsure if used
 	PORT_BIT(  0x0080, IP_ACTIVE_LOW, IPT_START2 )
 
 	PORT_BIT(  0xff00, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -978,7 +1002,7 @@ INPUT_PORTS_START( penbros )
 	PORT_BIT_IMPULSE( 0x0001, IP_ACTIVE_LOW, IPT_COIN1, 5 )
 	PORT_BIT_IMPULSE( 0x0002, IP_ACTIVE_LOW, IPT_COIN2, 5 )	// unused, test mode shows it
 	PORT_BIT(  0x0004, IP_ACTIVE_LOW,  IPT_SERVICE1 )
-	PORT_BITX( 0x0008, IP_ACTIVE_LOW,  IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
+	PORT_BITX( 0x0008, IP_ACTIVE_LOW,  IPT_SERVICE, "Test", KEYCODE_F1, IP_JOY_NONE )
 	PORT_BIT(  0x0010, IP_ACTIVE_LOW,  IPT_UNKNOWN )
 	PORT_BIT(  0x0020, IP_ACTIVE_LOW,  IPT_UNKNOWN )
 	PORT_BIT(  0x0040, IP_ACTIVE_LOW,  IPT_UNKNOWN )
@@ -1047,24 +1071,16 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /***************************************************************************
 
-
 								Machine Drivers
-
 
 ***************************************************************************/
 
-static int seta_sh_start_16MHz(const struct MachineSound *msound)
+static struct x1_010_interface x1_010_sound_intf_16MHz =
 {
-	return seta_sh_start( msound, 50000000/3, 0x0000 );
-}
-
-static struct CustomSound_interface seta_sound_intf_16MHz =
-{
-	seta_sh_start_16MHz,
-	0,
-	0,
+	50000000/3,	/* clock */
+	YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT),	/* volume */
+	0x0000,		/* address */
 };
-
 
 
 static MACHINE_DRIVER_START( mj4simai )
@@ -1088,11 +1104,12 @@ static MACHINE_DRIVER_START( mj4simai )
 	MDRV_COLORTABLE_LENGTH((0x8000/16)*16 + (0x8000/16)*256)
 
 	MDRV_PALETTE_INIT(seta2)
+	MDRV_VIDEO_START(seta2)
 	MDRV_VIDEO_UPDATE(seta2)
 
 	/* sound hardware */
 	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(CUSTOM, seta_sound_intf_16MHz)
+	MDRV_SOUND_ADD(X1_010, x1_010_sound_intf_16MHz)
 MACHINE_DRIVER_END
 
 
@@ -1104,7 +1121,9 @@ static MACHINE_DRIVER_START( myangel )
 	MDRV_CPU_MEMORY(myangel_readmem,myangel_writemem)
 
 	/* video hardware */
-	MDRV_VISIBLE_AREA(0, 0x178-1, 0x10, 0x100-1)
+	MDRV_VISIBLE_AREA(0, 0x178-1, 0x00, 0xf0-1)
+
+	MDRV_VIDEO_START(seta2_offset)
 MACHINE_DRIVER_END
 
 
@@ -1116,7 +1135,9 @@ static MACHINE_DRIVER_START( myangel2 )
 	MDRV_CPU_MEMORY(myangel2_readmem,myangel2_writemem)
 
 	/* video hardware */
-	MDRV_VISIBLE_AREA(0, 0x178-1, 0x10, 0x100-1)
+	MDRV_VISIBLE_AREA(0, 0x178-1, 0x00, 0xf0-1)
+
+	MDRV_VIDEO_START(seta2_offset)
 MACHINE_DRIVER_END
 
 
@@ -1151,21 +1172,6 @@ MACHINE_DRIVER_END
 ***************************************************************************/
 
 
-/***************************************************************************
-
-                   Wakakusamonogatari Mahjong Yonshimai (Japan)
-
-(c)1996 Maboroshi Ware
-Board:	P0-123A
-
-CPU:	TMP68301 (68000 core)
-OSC:	50.0000MHz
-        32.5304MHz
-
-Sound:	X1-010
-
-***************************************************************************/
-
 ROM_START( mj4simai )
 	ROM_REGION( 0x200000, REGION_CPU1, 0 )		/* TMP68301 Code */
 	ROM_LOAD16_BYTE( "ll.u2",       0x000000, 0x080000, 0x7be9c781 )
@@ -1186,22 +1192,6 @@ ROM_START( mj4simai )
 	/* Leave 1MB empty (addressable by the chip) */
 	ROM_LOAD( "cha-07.u32",  0x100000, 0x400000, 0x817519ee )
 ROM_END
-
-
-/***************************************************************************
-
-						Kosodate Quiz My Angel (Japan)
-
-(c)1996 Namco
-Board:	KE (Namco) ; P0-125A (Seta)
-
-CPU:	TMP68301 (68000 core)
-OSC:	50.0000MHz
-        32.5304MHz
-
-Sound:	X1-010
-
-***************************************************************************/
 
 ROM_START( myangel )
 	ROM_REGION( 0x200000, REGION_CPU1, 0 )		/* TMP68301 Code */
@@ -1225,22 +1215,6 @@ ROM_START( myangel )
 	ROM_LOAD( "kq1-snd.u32", 0x100000, 0x200000, 0x8ca1b449 )
 ROM_END
 
-
-/***************************************************************************
-
-						Kosodate Quiz My Angel 2 (Japan)
-
-(c)1997 Namco
-Board:	KL (Namco) ; P0-136A (Seta)
-
-CPU:	TMP68301 (68000 core)
-OSC:	50.0000MHz
-        32.5304MHz
-
-Sound:	X1-010
-
-***************************************************************************/
-
 ROM_START( myangel2 )
 	ROM_REGION( 0x200000, REGION_CPU1, 0 )		/* TMP68301 Code */
 	ROM_LOAD16_BYTE( "kqs1ezpr.u2", 0x000000, 0x080000, 0x2469aac2 )
@@ -1263,24 +1237,6 @@ ROM_START( myangel2 )
 	ROM_LOAD( "kqs1-snd.u32", 0x100000, 0x400000, 0x792a6b49 )
 ROM_END
 
-
-/***************************************************************************
-
-							Puzzle De Bowling (Japan)
-
-(c)1999 Nihon System / Moss
-Board:	P0-142A
-CPU:	TMP68301 (68000 core)
-
-OSC:	50.0000MHz
-        32.5304MHz
-
-Chips.:	DX-101
-        DX-102 x3
-Sound:	X1-010
-
-***************************************************************************/
-
 ROM_START( pzlbowl )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )		/* TMP68301 Code */
 	ROM_LOAD16_BYTE( "kup-u06.i03", 0x000000, 0x080000, 0x314e03ac )
@@ -1296,30 +1252,6 @@ ROM_START( pzlbowl )
 	/* Leave 1MB empty (addressable by the chip) */
 	ROM_LOAD( "kus-u18.i00", 0x100000, 0x400000, 0xe2b1dfcf )
 ROM_END
-
-
-/***************************************************************************
-
-							Penguin Brothers (Japan)
-
-(c)2000 Subsino
-Board:	P0-142A
-CPU:	TMP68301 (68000 core)
-
-OSC:	50.0000MHz
-        32.5304MHz
-        28.0000MHz
-
-Chips.:	DX-101
-        DX-102 x3
-Sound:	X1-010
-
-Notes:	pzlbowl PCB with extra parts:
-        28MHz OSC
-        2x 62256 SRAM
-        74HC00
-
-***************************************************************************/
 
 ROM_START( penbros )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )		/* TMP68301 Code */

@@ -15,7 +15,7 @@ Notes:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-static int sprite_flip;
+static int sprite_flip, pow_charbase=0; //*
 static struct tilemap *fix_tilemap;
 
 /***************************************************************************
@@ -29,7 +29,7 @@ static void get_pow_tile_info(int tile_index)
 	int tile=videoram16[2*tile_index]&0xff;
 	int color=videoram16[2*tile_index+1];
 
-	tile=((color&0xf0)<<4) | tile;
+	tile += pow_charbase; //AT: (powj36rc2gre)
 	color&=0xf;
 
 	SET_TILE_INFO(
@@ -122,8 +122,12 @@ VIDEO_START( ikari3 )
 
 WRITE16_HANDLER( pow_flipscreen16_w )
 {
-	flip_screen_set(data & 0x08);
-	sprite_flip=data&0x4;
+	if (ACCESSING_LSB)
+	{
+	    flip_screen_set(data & 0x08);
+	    sprite_flip=data&0x4;
+	    pow_charbase = (data & 0x70) << 4;
+	}
 }
 
 WRITE16_HANDLER( pow_paletteram16_word_w )
@@ -222,9 +226,9 @@ VIDEO_UPDATE( pow )
 	/* This appears to be correct priority */
 	draw_sprites(bitmap,cliprect,1,0x000);
 	draw_sprites(bitmap,cliprect,1,0x800);
-	draw_sprites(bitmap,cliprect,0,0x000);
 	draw_sprites(bitmap,cliprect,2,0x000);
 	draw_sprites(bitmap,cliprect,2,0x800);
+	draw_sprites(bitmap,cliprect,0,0x000); //AT: (pow37b5yel)
 	draw_sprites(bitmap,cliprect,0,0x800);
 
 	tilemap_draw(bitmap,cliprect,fix_tilemap,0,0);

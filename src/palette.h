@@ -133,8 +133,8 @@ int palette_get_total_colors_with_ui(void);
 
 void palette_update_display(struct mame_display *display);
 
-void palette_set_color(pen_t color, UINT8 r, UINT8 g, UINT8 b);
-void palette_get_color(pen_t color, UINT8 *r, UINT8 *g, UINT8 *b);
+void palette_set_color(pen_t pen, UINT8 r, UINT8 g, UINT8 b);
+void palette_get_color(pen_t pen, UINT8 *r, UINT8 *g, UINT8 *b);
 
 void palette_set_brightness(pen_t pen, double bright);
 void palette_set_shadow_factor(double factor);

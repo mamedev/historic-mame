@@ -381,9 +381,8 @@ static void turbofrc_drawsprites(struct mame_bitmap *bitmap,const struct rectang
 	{
 		int map_start;
 		int ox,oy,x,y,xsize,ysize,zoomx,zoomy,flipx,flipy,color,pri;
-		/* table hand made by looking at the ship explosion in attract mode */
-		/* it's almost a logarithmic scale but not exactly */
-		int zoomtable[16] = { 0,7,14,20,25,30,34,38,42,46,49,52,54,57,59,61 };
+// some other drivers still use this wrong table, they have to be upgraded
+//		int zoomtable[16] = { 0,7,14,20,25,30,34,38,42,46,49,52,54,57,59,61 };
 
 		if (!(aerofgt_spriteram3[attr_start + 2] & 0x0080)) continue;
 
@@ -399,22 +398,26 @@ static void turbofrc_drawsprites(struct mame_bitmap *bitmap,const struct rectang
 		pri = aerofgt_spriteram3[attr_start + 2] & 0x0010;
 		map_start = aerofgt_spriteram3[attr_start + 3];
 
-		zoomx = 16 - zoomtable[zoomx]/8;
-		zoomy = 16 - zoomtable[zoomy]/8;
+// aerofgt has this adjustment, but doing it here would break turbo force title screen
+//		ox += (xsize*zoomx+2)/4;
+//		oy += (ysize*zoomy+2)/4;
+
+		zoomx = 32 - zoomx;
+		zoomy = 32 - zoomy;
 
 		for (y = 0;y <= ysize;y++)
 		{
 			int sx,sy;
 
-			if (flipy) sy = ((oy + zoomy * (ysize - y) + 16) & 0x1ff) - 16;
-			else sy = ((oy + zoomy * y + 16) & 0x1ff) - 16;
+			if (flipy) sy = ((oy + zoomy * (ysize - y)/2 + 16) & 0x1ff) - 16;
+			else sy = ((oy + zoomy * y / 2 + 16) & 0x1ff) - 16;
 
 			for (x = 0;x <= xsize;x++)
 			{
 				int code;
 
-				if (flipx) sx = ((ox + zoomx * (xsize - x) + 16) & 0x1ff) - 16;
-				else sx = ((ox + zoomx * x + 16) & 0x1ff) - 16;
+				if (flipx) sx = ((ox + zoomx * (xsize - x) / 2 + 16) & 0x1ff) - 16;
+				else sx = ((ox + zoomx * x / 2 + 16) & 0x1ff) - 16;
 
 				if (chip == 0)
 					code = aerofgt_spriteram1[map_start % (aerofgt_spriteram1_size/2)];
@@ -427,7 +430,7 @@ static void turbofrc_drawsprites(struct mame_bitmap *bitmap,const struct rectang
 						flipx,flipy,
 						sx,sy,
 						cliprect,TRANSPARENCY_PEN,15,
-						0x1000 * zoomx,0x1000 * zoomy,
+						zoomx << 11,zoomy << 11,
 						pri ? 0 : 0x2);
 				map_start++;
 			}

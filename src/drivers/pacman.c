@@ -2055,12 +2055,12 @@ ROM_END
 
 ROM_START( pacheart )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
-	ROM_LOAD( "pacheart.pg1", 0x0000, 0x0800, 0xd844b679 )
+	ROM_LOAD( "1.6e",         0x0000, 0x0800, 0xd844b679 )
 	ROM_LOAD( "pacheart.pg2", 0x0800, 0x0800, 0xb9152a38 )
-	ROM_LOAD( "pacheart.pg3", 0x1000, 0x0800, 0x7d177853 )
+	ROM_LOAD( "2.6f",         0x1000, 0x0800, 0x7d177853 )
 	ROM_LOAD( "pacheart.pg4", 0x1800, 0x0800, 0x842d6574 )
-	ROM_LOAD( "pacheart.pg5", 0x2000, 0x0800, 0x9045a44c )
-	ROM_LOAD( "pacheart.pg6", 0x2800, 0x0800, 0x888f3c3e )
+	ROM_LOAD( "3.6h",         0x2000, 0x0800, 0x9045a44c )
+	ROM_LOAD( "7.6n",         0x2800, 0x0800, 0x888f3c3e )
 	ROM_LOAD( "pacheart.pg7", 0x3000, 0x0800, 0xf5265c10 )
 	ROM_LOAD( "pacheart.pg8", 0x3800, 0x0800, 0x1a21a381 )
 
@@ -2071,6 +2071,35 @@ ROM_START( pacheart )
 	ROM_REGION( 0x1000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "pacheart.ch3", 0x0000, 0x0800, 0xca8c184c )
 	ROM_LOAD( "pacheart.ch4", 0x0800, 0x0800, 0x1b1d9096 )
+
+	ROM_REGION( 0x0120, REGION_PROMS, 0 )
+	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
+	ROM_LOAD( "82s126.4a",    0x0020, 0x0100, 0x3eb3a8e4 )
+
+	ROM_REGION( 0x0200, REGION_SOUND1, 0 )	/* sound PROMs */
+	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
+	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )  /* timing - not used */
+ROM_END
+
+
+ROM_START( joyman )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
+	ROM_LOAD( "1.6e",         0x0000, 0x0800, 0xd844b679 )
+	ROM_LOAD( "5.6k",         0x0800, 0x0800, 0xab9c8f29 )
+	ROM_LOAD( "2.6f",         0x1000, 0x0800, 0x7d177853 )
+	ROM_LOAD( "6.6m",         0x1800, 0x0800, 0xb3c8d32e )
+	ROM_LOAD( "3.6h",         0x2000, 0x0800, 0x9045a44c )
+	ROM_LOAD( "7.6n",         0x2800, 0x0800, 0x888f3c3e )
+	ROM_LOAD( "4.6j",         0x3000, 0x0800, 0x00b553f8 )
+	ROM_LOAD( "8.6p",         0x3800, 0x0800, 0x5d5ce992 )
+
+	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "9.5e",  0x0000, 0x0800, 0x39b557bc )
+	ROM_LOAD( "11.5h", 0x0800, 0x0800, 0x33e0289e )
+
+	ROM_REGION( 0x1000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "10.5f", 0x0000, 0x0800, 0x338771a6 )
+	ROM_LOAD( "12.5j", 0x0800, 0x0800, 0xf4f0add5 )
 
 	ROM_REGION( 0x0120, REGION_PROMS, 0 )
 	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
@@ -2908,6 +2937,7 @@ GAME( 1981, hangly,   puckman,  pacman,   pacman,   0,        ROT90,  "hack", "H
 GAME( 1981, hangly2,  puckman,  pacman,   pacman,   0,        ROT90,  "hack", "Hangly-Man (set 2)" )
 GAME( 1980, newpuckx, puckman,  pacman,   pacman,   0,        ROT90,  "hack", "New Puck-X" )
 GAME( 1981, pacheart, puckman,  pacman,   pacman,   0,        ROT90,  "hack", "Pac-Man (Hearts)" )
+GAME( 1982, joyman,   puckman,  pacman,   pacman,   0,        ROT90,  "hack", "Joyman" )
 GAME( 1981, piranha,  puckman,  pacman,   mspacman, 0,        ROT90,  "hack", "Piranha" )
 GAME( 1982, pacplus,  0,        pacplus,  pacman,   pacplus,  ROT90,  "[Namco] (Midway license)", "Pac-Man Plus" )
 GAME( 1981, mspacman, 0,        mspacman, mspacman, 0,        ROT90,  "Midway", "Ms. Pac-Man" )

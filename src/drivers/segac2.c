@@ -3,10 +3,12 @@
 	Sega System C/C2 Driver
 	driver by David Haywood and Aaron Giles
 	---------------------------------------
-	Version 0.53 - 05 Mar 2001
+	Version 0.54 - 02 Feb 2003
 
 	Latest Changes :
 	-----+-------------------------------------------------------------------------------------
+	0.54 | Added Ribbit! support. Recoded some of the VDP to handle vertical windows. Removed
+	     | the bitmap cache and added partial updating support.
 	0.53 | Set the Protection Read / Write buffers to be cleared at reset in init_machine, this
 		 | fixes a problem with columns when you reset it and then attempted to play.
 		 |  (only drivers/segac2.c was changed)
@@ -75,6 +77,7 @@
 	1990  Columns II            Sega              Jpn              C      Playable      n
 	1990  Borench               Sega              Eng              C2     Playable      n
 	1990  ThunderForce AC       Sega / Technosoft Eng, Jpn, EngBL  C2     Playable      y (as ThunderForce 3?)
+	1992  Ribbit!               Sega              Eng?             C2     Playable      ?
 	1992  Tant-R                Sega              Jpn, JpnBL       C2     Playable      y
 	1992  Puyo Puyo             Sega / Compile    Jpn (2 Vers)     C2     Playable      y
 	1994  Ichidant-R            Sega              Jpn              C2     Playable      y
@@ -127,9 +130,10 @@
 #include "vidhrdw/generic.h"
 #include "cpu/m68000/m68000.h"
 #include "state.h"
+#include "segac2.h"
 
 
-#define LOG_PROTECTION		1
+#define LOG_PROTECTION		0
 #define LOG_PALETTE			0
 #define LOG_IOCHIP			0
 
@@ -139,28 +143,6 @@
 ******************************************************************************/
 
 #define MASTER_CLOCK		53693100
-
-
-/******************************************************************************
-	Externals
-******************************************************************************/
-
-/* in vidhrdw\segac2.c */
-extern UINT8		segac2_vdp_regs[];
-extern int			segac2_bg_palbase;
-extern int			segac2_sp_palbase;
-extern int			segac2_palbank;
-
-VIDEO_START( segac2 );
-VIDEO_EOF( segac2 );
-VIDEO_UPDATE( segac2 );
-
-void	segac2_update_display(int scanline);
-void	segac2_enable_display(int enable);
-
-READ16_HANDLER ( segac2_vdp_r );
-WRITE16_HANDLER( segac2_vdp_w );
-
 
 
 /******************************************************************************
@@ -179,6 +161,10 @@ static UINT8		iochip_reg[0x10];	/* holds values written to the I/O chip */
 static const UINT32 *prot_table;		/* table of protection values */
 static UINT16 		prot_write_buf;		/* remembers what was written */
 static UINT16		prot_read_buf;		/* remembers what was returned */
+
+/* Ribbit! palette swizzling */
+static data16_t *	ribbit_palette_select;	/* pointer to base of ROM we're interested in */
+static offs_t		swizzle_table_index;/* which kind of swizzling is active? */
 
 /* sound-related variables */
 static UINT8		sound_banks;		/* number of sound banks */
@@ -315,9 +301,11 @@ MACHINE_INIT( segac2 )
 	sound_banks = 0;
 	if (memory_region(REGION_SOUND1))
 		sound_banks = memory_region_length(REGION_SOUND1) / 0x20000;
+
 	/* reset the protection */
 	prot_write_buf = 0;
 	prot_read_buf = 0;
+	swizzle_table_index = 0;
 }
 
 
@@ -454,6 +442,83 @@ static WRITE16_HANDLER( palette_w )
 
 
 /******************************************************************************
+	Ribbit! Palette Swizzling
+*******************************************************************************
+
+	As additional protection, Ribbit! has some hardware that munges the
+	palette addresses. The exact mechanism that enables/disables this is not
+	really known, but can be reliably deduced by watching for certain ROM
+	accesses.
+
+******************************************************************************/
+
+static const UINT8 swizzle_table[][32] =
+{
+	{	/* case 0 */
+		0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0a,0x0b,0x0c,0x0d,0x0e,0x0f,
+		0x10,0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x18,0x19,0x1a,0x1b,0x1c,0x1d,0x1e,0x1f
+	},
+	{	/* case 1 */
+		0x04,0x05,0x0c,0x0d,0x06,0x07,0x0e,0x0f,0x14,0x15,0x1c,0x1d,0x16,0x17,0x1e,0x1f,
+		0x00,0x01,0x08,0x09,0x02,0x03,0x0a,0x0b,0x10,0x11,0x18,0x19,0x12,0x13,0x1a,0x1b
+	},
+	{	/* case 2 */
+		0x14,0x15,0x1c,0x1d,0x00,0x01,0x02,0x03,0x16,0x17,0x1e,0x1f,0x04,0x05,0x06,0x07,
+		0x10,0x11,0x18,0x19,0x08,0x09,0x0a,0x0b,0x12,0x13,0x1a,0x1b,0x0c,0x0d,0x0e,0x0f
+	},
+	{	/* case 3 */
+		0x00,0x01,0x04,0x05,0x02,0x03,0x06,0x07,0x08,0x09,0x0c,0x0d,0x0a,0x0b,0x0e,0x0f,
+		0x14,0x15,0x16,0x17,0x1c,0x1d,0x1e,0x1f,0x10,0x11,0x12,0x13,0x18,0x19,0x1a,0x1b
+	}
+};
+
+
+/* handle palette RAM reads */
+static READ16_HANDLER( ribbit_palette_r )
+{
+	int newoffs = (offset & 0x60f) | (swizzle_table[swizzle_table_index][(offset >> 4) & 0x1f] << 4);
+	return palette_r(newoffs, mem_mask);
+}
+
+
+/* handle palette RAM writes */
+static WRITE16_HANDLER( ribbit_palette_w )
+{
+	int newoffs = (offset & 0x60f) | (swizzle_table[swizzle_table_index][(offset >> 4) & 0x1f] << 4);
+	if (LOG_PALETTE)
+		if (offset % 16 == 0) logerror("%06X:palette_w @ %03X(%03X) = %04X [swizzle_table=%d]\n", activecpu_get_previouspc(), newoffs, offset, data, swizzle_table_index);
+	palette_w(newoffs, data, mem_mask);
+}
+
+
+/* detect palette RAM swizzle accesses */
+static READ16_HANDLER( ribbit_palette_select_r )
+{
+	/* if this is an access from the decryption code, check it out */
+	if (activecpu_get_previouspc() == 0x2b4c)
+	{
+		switch (0x2000 + 2 * offset)
+		{
+			case 0x2006:	/* logs */
+			case 0x2116:	/* gears, garden */
+			case 0x2236:	/* ocean, bonus 1 */
+			case 0x2356:	/* factory */
+				swizzle_table_index = (offset >> 7) & 3;
+				break;
+
+			case 0x2476:	/* intro screen L4 */
+			case 0x2576:	/* intro screen L1 */
+			case 0x2676:
+				swizzle_table_index = ((offset >> 7) & 3) + 1;
+				break;
+		}
+	}
+	return ribbit_palette_select[offset];
+}
+
+
+
+/******************************************************************************
 	Palette I/O Read & Write Handlers
 *******************************************************************************
 
@@ -516,7 +581,7 @@ static WRITE16_HANDLER( iochip_w )
 			newbank = (data & 3) * 0x200;
 			if (newbank != segac2_palbank)
 			{
-				segac2_update_display(cpu_getscanline() + 1);
+				force_partial_update(cpu_getscanline() + 1);
 				segac2_palbank = newbank;
 			}
 			if (sound_banks > 1)
@@ -567,8 +632,8 @@ static WRITE16_HANDLER( control_w )
 	segac2_enable_display(~data & 1);
 
 	/* log anything suspicious */
-	if (data != 6 && data != 7)
-		if (LOG_IOCHIP) logerror("%06x:control_w suspicious value = %02X (%d)\n", activecpu_get_previouspc(), data, cpu_getscanline());
+	if (LOG_IOCHIP)
+		if (data != 6 && data != 7) logerror("%06x:control_w suspicious value = %02X (%d)\n", activecpu_get_previouspc(), data, cpu_getscanline());
 }
 
 
@@ -619,7 +684,7 @@ static WRITE16_HANDLER( prot_w )
 	/* if the palette changed, force an update */
 	if (new_sp_palbase != segac2_sp_palbase || new_bg_palbase != segac2_bg_palbase)
 	{
-		segac2_update_display(cpu_getscanline() + 1);
+		force_partial_update(cpu_getscanline() + 1);
 		segac2_sp_palbase = new_sp_palbase;
 		segac2_bg_palbase = new_bg_palbase;
 		if (LOG_PALETTE) logerror("Set palbank: %d/%d (scan=%d)\n", segac2_bg_palbase, segac2_sp_palbase, cpu_getscanline());
@@ -638,6 +703,19 @@ static READ16_HANDLER( puyopuy2_prot_r )
 		prot_read_buf = (prot_table[table_index >> 3] << (4 * (table_index & 7))) >> 28;
 	if (LOG_PROTECTION) logerror("%06X:protection r=%02X\n", activecpu_get_previouspc(), prot_table ? prot_read_buf : 0xff);
 	return prot_read_buf | 0xf0;
+}
+
+
+/* kludge for Ribbit! */
+static READ16_HANDLER( ribbit_prot_hack_r )
+{
+	data16_t result = main_ram[0xc166/2];
+
+	/* Ribbit is kind of evil in that they store the table shifted one state out of sequence */
+	/* the following code just makes sure that the important comparison works */
+	if (activecpu_get_previouspc() >= 0xff0000)
+		result = (result & 0xff00) | (result >> 8);
+	return result;
 }
 
 
@@ -1053,6 +1131,50 @@ INPUT_PORTS_START( tfrceac ) /* ThunderForce AC Input Ports */
     PORT_DIPSETTING(    0xc0, "Medium" )
 	PORT_DIPSETTING(    0x40, "Hard" )
 	PORT_DIPSETTING(    0x00, "Hardest" )
+INPUT_PORTS_END
+
+
+INPUT_PORTS_START( ribbit ) /* Ribbit! Input Ports */
+	PORT_START		/* Coins, Start, Service etc, Same for All */
+    COINS
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START		/* Player 1 Controls */
+	PORT_BIT( 0x0f, IP_ACTIVE_LOW, IPT_UNKNOWN )
+    JOYSTICK_1
+
+	PORT_START		/* Player 2 Controls */
+	PORT_BIT( 0x0f, IP_ACTIVE_LOW, IPT_UNKNOWN )
+    JOYSTICK_2
+
+	PORT_START		/* Coinage */
+    COIN_A
+    COIN_B
+
+	PORT_START		 /* Game Options */
+	PORT_DIPNAME( 0x01, 0x01, "Credits to Start" )
+	PORT_DIPSETTING(    0x01, "1" )
+	PORT_DIPSETTING(    0x00, "2" )
+    PORT_DIPNAME( 0x02, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+    PORT_DIPNAME( 0x0c, 0x04, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x08, "1" )
+	PORT_DIPSETTING(    0x0c, "2" )
+	PORT_DIPSETTING(    0x04, "3" )
+	PORT_DIPSETTING(    0x00, "5" )
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Difficulty ) )
+    PORT_DIPSETTING(    0x20, "Easy" )
+    PORT_DIPSETTING(    0x30, "Normal" )
+    PORT_DIPSETTING(    0x10, "Hard" )
+    PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 INPUT_PORTS_END
 
 
@@ -1476,8 +1598,8 @@ static MACHINE_DRIVER_START( segac )
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS | VIDEO_HAS_HIGHLIGHTS)
-	MDRV_SCREEN_SIZE(336,224)
-	MDRV_VISIBLE_AREA(8, 327, 0, 223)
+	MDRV_SCREEN_SIZE(320,224)
+	MDRV_VISIBLE_AREA(0, 319, 0, 223)
 	MDRV_PALETTE_LENGTH(2048)
 
 	MDRV_VIDEO_START(segac2)
@@ -1504,8 +1626,8 @@ static MACHINE_DRIVER_START( segac2 )
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS | VIDEO_HAS_HIGHLIGHTS)
-	MDRV_SCREEN_SIZE(336,224)
-	MDRV_VISIBLE_AREA(8, 327, 0, 223)
+	MDRV_SCREEN_SIZE(320,224)
+	MDRV_VISIBLE_AREA(0, 319, 0, 223)
 	MDRV_PALETTE_LENGTH(2048)
 
 	MDRV_VIDEO_START(segac2)
@@ -1569,6 +1691,7 @@ ROM_START( columns2 ) /* Columns II - The Voyage Through Time (Jpn)  (c)1990 Seg
 	ROM_LOAD16_BYTE( "epr13360.rom", 0x000001, 0x020000, 0xa59b1d4f )
 ROM_END
 
+
 ROM_START( tantrbl2 ) /* Tant-R (Puzzle & Action) (Alt Bootleg Running on C Board?, No Samples) */
 	ROM_REGION( 0x200000, REGION_CPU1, 0 )
 	ROM_LOAD16_BYTE( "trb2_2.32",    0x000000, 0x080000, 0x8fc99c48 )
@@ -1576,6 +1699,7 @@ ROM_START( tantrbl2 ) /* Tant-R (Puzzle & Action) (Alt Bootleg Running on C Boar
 	ROM_LOAD16_BYTE( "mpr15616.34",  0x100000, 0x080000, 0x17b80202 )
 	ROM_LOAD16_BYTE( "mpr15615.33",  0x100001, 0x080000, 0x36a88bd4 )
 ROM_END
+
 
 /* ----- System C-2 Games ----- */
 
@@ -1625,6 +1749,19 @@ ROM_START( tfrceacb ) /* ThunderForce AC (Bootleg)  (c)1990 Technosoft / Sega */
 
 	ROM_REGION( 0x040000, REGION_SOUND1, 0 )
 	ROM_LOAD( "ic4.bin", 0x000000, 0x040000, 0xe09961f6 )
+ROM_END
+
+
+ROM_START( ribbit ) /* Ribbit  (c)1991 Sega */
+	ROM_REGION( 0x200000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "ep13833.32", 0x000000, 0x040000, 0x5347f8ce )
+	ROM_LOAD16_BYTE( "ep13832.31", 0x000001, 0x040000, 0x889c42c2 )
+	ROM_COPY( REGION_CPU1, 0x000000, 0x080000, 0x080000 )
+	ROM_LOAD16_BYTE( "ep13838.34", 0x100000, 0x080000, 0xa5d62ac3 )
+	ROM_LOAD16_BYTE( "ep13837.33", 0x100001, 0x080000, 0x434de159 )
+
+	ROM_REGION( 0x080000, REGION_SOUND1, 0 )
+	ROM_LOAD( "ep13834.4", 0x000000, 0x020000, 0xab0c1833 )
 ROM_END
 
 
@@ -1678,17 +1815,19 @@ ROM_START( puyopuya	) /* Puyo Puyo (Rev A)  (c)1992 Sega / Compile */
 	ROM_LOAD( "epr15034", 0x000000, 0x020000, 0x5688213b )
 ROM_END
 
-ROM_START( puyopuyb ) /* Puyo Puyo  (c)1992 Sega / Compile  Bootleg */
- ROM_REGION( 0x200000, REGION_CPU1, 0 )
- ROM_LOAD16_BYTE( "puyopuyb.4bo", 0x000000, 0x020000, 0x89ea4d33 )
- ROM_LOAD16_BYTE( "puyopuyb.3bo", 0x000001, 0x020000, 0xc002e545 )
- /* 0x040000 - 0x100000 Empty */
- ROM_LOAD16_BYTE( "puyopuyb.6bo", 0x100000, 0x020000, 0xa0692e5 )
- ROM_LOAD16_BYTE( "puyopuyb.5bo", 0x100001, 0x020000, 0x353109b8 )
 
- ROM_REGION( 0x020000, REGION_SOUND1, 0 )
- ROM_LOAD( "puyopuyb.abo", 0x000000, 0x020000, 0x79112b3b )
+ROM_START( puyopuyb ) /* Puyo Puyo  (c)1992 Sega / Compile  Bootleg */
+	ROM_REGION( 0x200000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "puyopuyb.4bo", 0x000000, 0x020000, 0x89ea4d33 )
+	ROM_LOAD16_BYTE( "puyopuyb.3bo", 0x000001, 0x020000, 0xc002e545 )
+	/* 0x040000 - 0x100000 Empty */
+	ROM_LOAD16_BYTE( "puyopuyb.6bo", 0x100000, 0x020000, 0xa0692e5 )
+	ROM_LOAD16_BYTE( "puyopuyb.5bo", 0x100001, 0x020000, 0x353109b8 )
+
+	ROM_REGION( 0x020000, REGION_SOUND1, 0 )
+	ROM_LOAD( "puyopuyb.abo", 0x000000, 0x020000, 0x79112b3b )
 ROM_END
+
 
 ROM_START( ichidant ) /* Ichident-R (Puzzle & Action 2)  (c)1994 Sega */
 	ROM_REGION( 0x200000, REGION_CPU1, 0 )
@@ -1871,8 +2010,34 @@ static DRIVER_INIT( tfrceac )
 
 static DRIVER_INIT( tfrceacb )
 {
-	/* disable the palette bank switching from the protecton chip */
+	/* disable the palette bank switching from the protection chip */
 	install_mem_write16_handler(0, 0x800000, 0x800001, MWA16_NOP);
+}
+
+static DRIVER_INIT( ribbit )
+{
+	static const UINT32 ribbit_table[256/8] =
+	{
+		0xffeeddcc, 0xffeeddcc, 0xfeeffeef, 0xfeeffeef,
+		0xbb8899aa, 0xffccddee, 0xba89ba89, 0xfecdfecd,
+		0x7f6e5d4c, 0x3b2a1908, 0x7e6f7e6f, 0x3a2b3a2b,
+		0x3b19193b, 0x3b19193b, 0xba98ba98, 0xba98ba98,
+		0xffff5555, 0xffff5555, 0xfefe7676, 0xfefe7676,
+		0xbb991133, 0xffdd5577, 0xfedc7654, 0xfedc7654,
+		0x7f7ff7f7, 0x3b3bb3b3, 0x7e7ef6f6, 0x3a3ab2b2,
+		0x3b19b391, 0x3b19b391, 0xfedc7654, 0xba983210
+	};
+	prot_table = ribbit_table;
+	bloxeed_sound = 0;
+	init_saves();
+
+	/* kludge for protection */
+	install_mem_read16_handler(0, 0xffc166, 0xffc167, ribbit_prot_hack_r);
+
+	/* additional palette swizzling */
+	install_mem_read16_handler(0, 0x8c0000, 0x8c0fff, ribbit_palette_r);
+	install_mem_write16_handler(0, 0x8c0000, 0x8c0fff, ribbit_palette_w);
+	ribbit_palette_select = install_mem_read16_handler(0, 0x2000, 0x27ff, ribbit_palette_select_r);
 }
 
 static DRIVER_INIT( tantr )
@@ -2068,6 +2233,7 @@ GAME ( 1990, borench,  0,        segac2, borench,  borench,  ROT0, "Sega",      
 GAME ( 1990, tfrceac,  0,        segac2, tfrceac,  tfrceac,  ROT0, "Sega / Technosoft",      "ThunderForce AC" )
 GAME ( 1990, tfrceacj, tfrceac,  segac2, tfrceac,  tfrceac,  ROT0, "Sega / Technosoft",      "ThunderForce AC (Japan)" )
 GAME ( 1990, tfrceacb, tfrceac,  segac2, tfrceac,  tfrceacb, ROT0, "bootleg",                "ThunderForce AC (bootleg)" )
+GAME ( 1991, ribbit,   0,        segac2, ribbit,   ribbit,   ROT0, "Sega",                   "Ribbit!" )
 GAME ( 1992, tantr,    0,        segac2, ichidant, tantr,    ROT0, "Sega",                   "Tant-R (Puzzle & Action) (Japan)" )
 GAME ( 1992, tantrbl,  tantr,    segac2, ichidant, segac2,   ROT0, "bootleg",                "Tant-R (Puzzle & Action) (Japan) (bootleg set 1)" )
 GAME ( 1994, tantrbl2, tantr,    segac,  ichidant, tantr,    ROT0, "bootleg",                "Tant-R (Puzzle & Action) (Japan) (bootleg set 2)" )

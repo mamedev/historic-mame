@@ -140,6 +140,7 @@ VIDEO_START( atarisy1 )
 		0,					/* does the neighbor bit affect the next object? */
 		0,					/* pixels per SLIP entry (0 for no-slip) */
 		0,					/* pixel offset for SLIPs */
+		0x38,				/* maximum number of links to visit/scanline (0=all) */
 
 		0x100,				/* base palette entry */
 		0x100,				/* maximum number of colors */
@@ -236,7 +237,7 @@ WRITE16_HANDLER( atarisy1_bankselect_w )
 		cpu_set_reset_line(1, (newselect & 0x0080) ? CLEAR_LINE : ASSERT_LINE);
 		if (!(newselect & 0x0080)) atarigen_sound_reset();
 	}
-	
+
 	/* if MO or playfield banks change, force a partial update */
 	if (diff & 0x003c)
 		force_partial_update(scanline);
@@ -251,7 +252,7 @@ WRITE16_HANDLER( atarisy1_bankselect_w )
 		playfield_tile_bank = (newselect >> 2) & 1;
 		tilemap_mark_all_tiles_dirty(atarigen_playfield_tilemap);
 	}
-	
+
 	/* stash the new value */
 	*atarisy1_bankselect = newselect;
 }
@@ -268,7 +269,7 @@ WRITE16_HANDLER( atarisy1_priority_w )
 {
 	data16_t oldpens = playfield_priority_pens;
 	data16_t newpens = oldpens;
-	
+
 	/* force a partial update in case this changes mid-screen */
 	COMBINE_DATA(&newpens);
 	if (oldpens != newpens)
@@ -288,7 +289,7 @@ WRITE16_HANDLER( atarisy1_xscroll_w )
 {
 	data16_t oldscroll = *atarigen_xscroll;
 	data16_t newscroll = oldscroll;
-	
+
 	/* force a partial update in case this changes mid-screen */
 	COMBINE_DATA(&newscroll);
 	if (oldscroll != newscroll)
@@ -332,7 +333,7 @@ WRITE16_HANDLER( atarisy1_yscroll_w )
 	if (scanline <= Machine->visible_area.max_y)
 		adjusted_scroll -= (scanline + 1);
 	tilemap_set_scrolly(atarigen_playfield_tilemap, 0, adjusted_scroll);
-	
+
 	/* but since we've adjusted it, we must reset it to the normal value
 	   once we hit scanline 0 again */
 	timer_adjust(yscroll_reset_timer, cpu_getscanlinetime(0), newscroll, 0);
@@ -512,7 +513,7 @@ VIDEO_UPDATE( atarisy1 )
 						if ((mo[x] & 0x0f) != 1)
 							pf[x] = 0x300 + ((pf[x] & 0x0f) << 4) + (mo[x] & 0x0f);
 					}
-					
+
 					/* low priority */
 					else
 					{
@@ -520,7 +521,7 @@ VIDEO_UPDATE( atarisy1 )
 						if ((pf[x] & 0xf0) != 0 || !(playfield_priority_pens & (1 << (pf[x] & 0x0f))))
 							pf[x] = mo[x];
 					}
-					
+
 					/* erase behind ourselves */
 					mo[x] = 0;
 				}

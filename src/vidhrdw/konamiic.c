@@ -4257,15 +4257,15 @@ static void K053936_zoom_draw(int chip,data16_t *ctrl,data16_t *linectrl,struct 
 			maxy = cliprect->max_y;
 		}
 
-if (!keyboard_pressed(KEYCODE_Z))
 		while (y <= maxy)
 		{
+			data16_t *lineaddr = linectrl + 4*((y - K053936_offset[chip][1]) & 0x1ff);
 			my_clip.min_y = my_clip.max_y = y;
 
-			startx = 256 * (INT16)(linectrl[4*((y - K053936_offset[chip][1]) & 0x1ff) + 0] + ctrl[0x00]);
-			starty = 256 * (INT16)(linectrl[4*((y - K053936_offset[chip][1]) & 0x1ff) + 1] + ctrl[0x01]);
-			incxx  =       (INT16)(linectrl[4*((y - K053936_offset[chip][1]) & 0x1ff) + 2]);
-			incxy  =       (INT16)(linectrl[4*((y - K053936_offset[chip][1]) & 0x1ff) + 3]);
+			startx = 256 * (INT16)(lineaddr[0] + ctrl[0x00]);
+			starty = 256 * (INT16)(lineaddr[1] + ctrl[0x01]);
+			incxx  =       (INT16)(lineaddr[2]);
+			incxy  =       (INT16)(lineaddr[3]);
 
 			if (ctrl[0x06] & 0x8000) incxx *= 256;
 			if (ctrl[0x06] & 0x0080) incxy *= 256;

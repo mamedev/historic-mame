@@ -320,13 +320,13 @@ int (*Op5CTable[32])(void) =
 
 UINT32 op5F(void)
 {
-	if2 = MemRead8(PC + 1);
+	if2 = OpRead8(PC + 1);
 	return Op5FTable[if2&0x1F]();
 }
 
 
 UINT32 op5C(void)
 {
-	if2 = MemRead8(PC + 1);
+	if2 = OpRead8(PC + 1);
 	return Op5CTable[if2&0x1F]();
 }

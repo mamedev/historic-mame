@@ -469,6 +469,24 @@ static void megasys1_sound_irq(int irq)
 		cpu_set_irq_line(1, 4, HOLD_LINE);
 }
 
+static READ16_HANDLER( oki_status_0_r )
+{
+#if SOUND_HACK
+	return 0;
+#else
+	return OKIM6295_status_0_lsb_r(offset,mem_mask);
+#endif
+}
+
+static READ16_HANDLER( oki_status_1_r )
+{
+#if SOUND_HACK
+	return 0;
+#else
+	return OKIM6295_status_1_lsb_r(offset,mem_mask);
+#endif
+}
+
 
 /***************************************************************************
 							[ Sound CPU - System A ]
@@ -479,13 +497,8 @@ static MEMORY_READ16_START( sound_readmem_A )
 	{ 0x000000, 0x01ffff, MRA16_ROM },
 	{ 0x040000, 0x040001, soundlatch_word_r },
 	{ 0x080002, 0x080003, YM2151_status_port_0_lsb_r },
-#if SOUND_HACK
-	{ 0x0a0000, 0x0a0001, MRA16_NOP },
-	{ 0x0c0000, 0x0c0001, MRA16_NOP },
-#else
-	{ 0x0a0000, 0x0a0001, OKIM6295_status_0_lsb_r },
-	{ 0x0c0000, 0x0c0001, OKIM6295_status_1_lsb_r },
-#endif
+	{ 0x0a0000, 0x0a0001, oki_status_0_r },
+	{ 0x0c0000, 0x0c0001, oki_status_1_r },
 	{ 0x0e0000, 0x0fffff, MRA16_RAM },
 MEMORY_END
 
@@ -514,13 +527,8 @@ static MEMORY_READ16_START( sound_readmem_B )
 	{ 0x040000, 0x040001, soundlatch_word_r },	/* from main cpu */
 	{ 0x060000, 0x060001, soundlatch_word_r },	/* from main cpu */
 	{ 0x080002, 0x080003, YM2151_status_port_0_lsb_r },
-#if SOUND_HACK
-	{ 0x0a0000, 0x0a0001, MRA16_NOP },
-	{ 0x0c0000, 0x0c0001, MRA16_NOP },
-#else
-	{ 0x0a0000, 0x0a0001, OKIM6295_status_0_lsb_r },
-	{ 0x0c0000, 0x0c0001, OKIM6295_status_1_lsb_r },
-#endif
+	{ 0x0a0000, 0x0a0001, oki_status_0_r },
+	{ 0x0c0000, 0x0c0001, oki_status_1_r },
 	{ 0x0e0000, 0x0effff, MRA16_RAM },
 MEMORY_END
 
@@ -1022,7 +1030,7 @@ ROM_START( astyanax )
 	ROM_LOAD( "astyan8.bin",  0x020000, 0x020000, 0x5e5d2a22 )
 
 	ROM_REGION( 0x0200, REGION_PROMS, 0 )		/* Priority PROM */
-	ROM_LOAD( "prom",         0x0000, 0x0200, 0x00000000 )
+	ROM_LOAD( "rd.bpr",       0x0000, 0x0200, 0x85b30ac4 )
 ROM_END
 
 ROM_START( lordofk )
@@ -1066,7 +1074,7 @@ ROM_START( lordofk )
 	ROM_LOAD( "astyan8.bin",  0x020000, 0x020000, 0x5e5d2a22 )
 
 	ROM_REGION( 0x0200, REGION_PROMS, 0 )		/* Priority PROM */
-	ROM_LOAD( "prom",         0x0000, 0x0200, 0x00000000 )
+	ROM_LOAD( "rd.bpr",       0x0000, 0x0200, 0x85b30ac4 )
 ROM_END
 
 
@@ -1721,7 +1729,7 @@ ROM_START( hachoo )
 	ROM_LOAD( "hacho08.rom", 0x020000, 0x020000, 0x888a6df1 )
 
 	ROM_REGION( 0x0200, REGION_PROMS, 0 )		/* Priority PROM */
-	ROM_LOAD( "prom",         0x0000, 0x0200, 0x00000000 )
+	ROM_LOAD( "ht.bin",      0x0000, 0x0200, 0x85302b15 )
 ROM_END
 
 
@@ -3090,7 +3098,7 @@ ROM_START( tshingen )
 	ROM_LOAD( "shing_08.rom",  0x020000, 0x020000, 0x36d56c8c )
 
 	ROM_REGION( 0x0200, REGION_PROMS, 0 )		/* Priority PROM */
-	ROM_LOAD( "prom",    0x0000, 0x0200, 0x00000000 )
+	ROM_LOAD( "ts.bpr",        0x0000, 0x0200, 0x85b30ac4 )
 ROM_END
 
 ROM_START( tshingna )
@@ -3129,7 +3137,7 @@ ROM_START( tshingna )
 	ROM_LOAD( "shing_08.rom",  0x020000, 0x020000, 0x36d56c8c )
 
 	ROM_REGION( 0x0200, REGION_PROMS, 0 )		/* Priority PROM */
-	ROM_LOAD( "prom",    0x0000, 0x0200, 0x00000000 )
+	ROM_LOAD( "ts.bpr",        0x0000, 0x0200, 0x85b30ac4 )
 ROM_END
 
 INPUT_PORTS_START( tshingen )

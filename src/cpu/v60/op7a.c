@@ -58,7 +58,7 @@ void F7aDecodeOperands(UINT32 (*DecodeOp1)(void), UINT8 dim1, UINT32 (*DecodeOp2
 	f7aOp1=amOut;
 
 	// Decode length
-	appb=MemRead8(PC+2+amLength1);
+	appb=OpRead8(PC+2+amLength1);
 	if (appb&0x80)
 		f7aLenOp1=v60.reg[appb&0x1F];
 	else
@@ -73,7 +73,7 @@ void F7aDecodeOperands(UINT32 (*DecodeOp1)(void), UINT8 dim1, UINT32 (*DecodeOp2
 	f7aOp2=amOut;
 
 	// Decode length
-	appb=MemRead8(PC+3+amLength1+amLength2);
+	appb=OpRead8(PC+3+amLength1+amLength2);
 	if (appb&0x80)
 		f7aLenOp2=v60.reg[appb&0x1F];
 	else
@@ -92,7 +92,7 @@ void F7bDecodeFirstOperand(UINT32 (*DecodeOp1)(void), UINT8 dim1)
 	f7bOp1=amOut;
 
 	// Decode ext
-	appb=MemRead8(PC+2+amLength1);
+	appb=OpRead8(PC+2+amLength1);
 	if (appb&0x80)
 		f7bLen=v60.reg[appb&0x1F];
 	else
@@ -145,7 +145,7 @@ void F7cDecodeOperands(UINT32 (*DecodeOp1)(void), UINT8 dim1, UINT32 (*DecodeOp2
 	f7cOp2=amOut;
 
 	// Decode ext
-	appb=MemRead8(PC+2+amLength1+amLength2);
+	appb=OpRead8(PC+2+amLength1+amLength2);
 	if (appb&0x80)
 		f7cLen=v60.reg[appb&0x1F];
 	else
@@ -1118,35 +1118,35 @@ UINT32 (*Op585ATable[32][2])(void) =
 
 UINT32 op58(void)
 {
-	subOp = MemRead8(PC + 1);
+	subOp = OpRead8(PC + 1);
 
 	return Op585ATable[subOp&0x1F][0]();
 }
 
 UINT32 op5A(void)
 {
-	subOp = MemRead8(PC + 1);
+	subOp = OpRead8(PC + 1);
 
 	return Op585ATable[subOp&0x1F][1]();
 }
 
 UINT32 op5B(void)
 {
-	subOp = MemRead8(PC + 1);
+	subOp = OpRead8(PC + 1);
 
 	return Op5BTable[subOp&0x1F]();
 }
 
 UINT32 op5D(void)
 {
-	subOp = MemRead8(PC + 1);
+	subOp = OpRead8(PC + 1);
 
 	return Op5DTable[subOp&0x1F]();
 }
 
 UINT32 op59(void)
 {
-	subOp = MemRead8(PC + 1);
+	subOp = OpRead8(PC + 1);
 
 	return Op59Table[subOp&0x1F]();
 }

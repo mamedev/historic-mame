@@ -68,6 +68,7 @@ VIDEO_START( vindictr )
 		0,					/* does the neighbor bit affect the next object? */
 		8,					/* pixels per SLIP entry (0 for no-slip) */
 		0,					/* pixel offset for SLIPs */
+		0,					/* maximum number of links to visit/scanline (0=all) */
 
 		0x100,				/* base palette entry */
 		0x100,				/* maximum number of colors */
@@ -97,7 +98,7 @@ VIDEO_START( vindictr )
 	atarigen_playfield_tilemap = tilemap_create(get_playfield_tile_info, tilemap_scan_cols, TILEMAP_OPAQUE, 8,8, 64,64);
 	if (!atarigen_playfield_tilemap)
 		return 1;
-		
+
 	/* initialize the motion objects */
 	if (!atarimo_init(0, &modesc))
 		return 1;
@@ -128,7 +129,7 @@ WRITE16_HANDLER( vindictr_paletteram_w )
 	/* first blend the data */
 	COMBINE_DATA(&paletteram16[offset]);
 	data = paletteram16[offset];
-	
+
 	/* now generate colors at all 16 intensities */
 	for (c = 0; c < 8; c++)
 	{
@@ -206,7 +207,7 @@ void vindictr_scanline_update(int scanline)
 				int offset = scanline;
 				if (offset > Machine->visible_area.max_y)
 					offset -= Machine->visible_area.max_y + 1;
-				
+
 				if (playfield_yscroll != ((data - offset) & 0x1ff))
 				{
 					force_partial_update(scanline - 1);
@@ -235,7 +236,7 @@ VIDEO_UPDATE( vindictr )
 
 	/* draw the playfield */
 	tilemap_draw(bitmap, cliprect, atarigen_playfield_tilemap, 0, 0);
-	
+
 	/* draw and merge the MO */
 	mobitmap = atarimo_render(0, cliprect, &rectlist);
 	for (r = 0; r < rectlist.numrects; r++, rectlist.rect++)
@@ -247,20 +248,20 @@ VIDEO_UPDATE( vindictr )
 				if (mo[x])
 				{
 					/* partially verified via schematics (there are a lot of PALs involved!):
-					
+
 						SHADE = PAL(MPR1-0, LB7-0, PFX6-5, PFX3-2, PF/M)
-						
+
 						if (SHADE)
 							CRA |= 0x100
-						
+
 						MOG3-1 = ~MAT3-1 if MAT6==1 and MSD3==1
 					*/
 					int mopriority = mo[x] >> ATARIMO_PRIORITY_SHIFT;
-					
+
 					/* upper bit of MO priority signals special rendering and doesn't draw anything */
 					if (mopriority & 4)
 						continue;
-					
+
 					/* MO pen 1 doesn't draw, but it sets the SHADE flag and bumps the palette offset */
 					if ((mo[x] & 0x0f) == 1)
 					{
@@ -269,11 +270,11 @@ VIDEO_UPDATE( vindictr )
 					}
 					else
 						pf[x] = mo[x] & ATARIMO_DATA_MASK;
-					
+
 					/* don't erase yet -- we need to make another pass later */
 				}
 		}
-	
+
 	/* add the alpha on top */
 	tilemap_draw(bitmap, cliprect, atarigen_alpha_tilemap, 0, 0);
 
@@ -288,19 +289,19 @@ VIDEO_UPDATE( vindictr )
 				if (mo[x])
 				{
 					int mopriority = mo[x] >> ATARIMO_PRIORITY_SHIFT;
-					
+
 					/* upper bit of MO priority might mean palette kludges */
 					if (mopriority & 4)
 					{
 						/* if bit 2 is set, start setting high palette bits */
 						if (mo[x] & 2)
 							thunderj_mark_high_palette(bitmap, pf, mo, x, y);
-						
+
 						/* if the upper bit of pen data is set, we adjust the final intensity */
 						if (mo[x] & 8)
 							pf[x] |= (~mo[x] & 0xe0) << 6;
 					}
-					
+
 					/* erase behind ourselves */
 					mo[x] = 0;
 				}

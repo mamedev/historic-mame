@@ -55,7 +55,6 @@ static void lwings_get_bg1_tile_info(int tile_index)
 
 static void trojan_get_bg1_tile_info(int tile_index)
 {
-	const unsigned char avengers_color_remap[8]	= {6,7,4,5,2,3,0,1};
 	int code, color;
 
 	code = lwings_bg1videoram[tile_index];
@@ -64,16 +63,19 @@ static void trojan_get_bg1_tile_info(int tile_index)
 	SET_TILE_INFO(
 			1,
 			code,
-			bAvengersHardware ? avengers_color_remap[color & 7] : (color & 7),
+			bAvengersHardware ? ((color & 7) ^ 6) : (color & 7),
 			TILE_SPLIT((color & 0x08) >> 3) | ((color & 0x10) ? TILE_FLIPX : 0))
 }
 
 static void get_bg2_tile_info(int tile_index)
 {
 	int code, color;
+	UINT8 *rom = memory_region(REGION_GFX5);
+	int mask = memory_region_length(REGION_GFX5) - 1;
 
-	code = memory_region(REGION_GFX5)[bg2_image * 0x20 + tile_index];
-	color = memory_region(REGION_GFX5)[bg2_image * 0x20 + tile_index + 1];
+	tile_index = (tile_index + bg2_image * 0x20) & mask;
+	code = rom[tile_index];
+	color = rom[tile_index + 1];
 	SET_TILE_INFO(
 			3,
 			code + ((color & 0x80) << 1),
@@ -160,12 +162,12 @@ WRITE_HANDLER( lwings_bg1_scrolly_w )
 	tilemap_set_scrolly(bg1_tilemap,0,scroll[0] | (scroll[1] << 8));
 }
 
-WRITE_HANDLER( lwings_bg2_scrollx_w )
+WRITE_HANDLER( trojan_bg2_scrollx_w )
 {
 	tilemap_set_scrollx(bg2_tilemap,0,data);
 }
 
-WRITE_HANDLER( lwings_bg2_image_w )
+WRITE_HANDLER( trojan_bg2_image_w )
 {
 	if (bg2_image != data)
 	{
@@ -189,7 +191,7 @@ INLINE int is_sprite_on(int offs)
 	sx = buffered_spriteram[offs + 3] - 0x100 * (buffered_spriteram[offs + 1] & 0x01);
 	sy = buffered_spriteram[offs + 2];
 
-	return sx && sy;
+	return sx || sy;
 }
 
 static void lwings_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
@@ -206,6 +208,7 @@ static void lwings_draw_sprites(struct mame_bitmap *bitmap, const struct rectang
 
 			sx = buffered_spriteram[offs + 3] - 0x100 * (buffered_spriteram[offs + 1] & 0x01);
 			sy = buffered_spriteram[offs + 2];
+			if (sy > 0xf8) sy-=0x100;
 			code = buffered_spriteram[offs] | (buffered_spriteram[offs + 1] & 0xc0) << 2;
 			color = (buffered_spriteram[offs + 1] & 0x38) >> 3;
 			flipx = buffered_spriteram[offs + 1] & 0x02;
@@ -242,6 +245,7 @@ static void trojan_draw_sprites(struct mame_bitmap *bitmap, const struct rectang
 
 			sx = buffered_spriteram[offs + 3] - 0x100 * (buffered_spriteram[offs + 1] & 0x01);
 			sy = buffered_spriteram[offs + 2];
+			if (sy > 0xf8) sy-=0x100;
 			code = buffered_spriteram[offs] |
 				   ((buffered_spriteram[offs + 1] & 0x20) << 4) |
 				   ((buffered_spriteram[offs + 1] & 0x40) << 2) |

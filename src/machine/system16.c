@@ -119,14 +119,15 @@ void system16_decode(data16_t *dest,data16_t *source,int size,unsigned short *de
 
 		switch(offset & 0x22a)
 		{
-			case 0x00:	mask=0;		break;
-			case 0x02:	mask=1;		break;
-			case 0x08:	mask=2;		break;
-			case 0x0a:	mask=3;		break;
-			case 0x20:	mask=4;		break;
-			case 0x22:	mask=5;		break;
-			case 0x28:	mask=6;		break;
-			case 0x2a:	mask=7;		break;
+			default:
+			case 0x000:	mask=0;		break;
+			case 0x002:	mask=1;		break;
+			case 0x008:	mask=2;		break;
+			case 0x00a:	mask=3;		break;
+			case 0x020:	mask=4;		break;
+			case 0x022:	mask=5;		break;
+			case 0x028:	mask=6;		break;
+			case 0x02a:	mask=7;		break;
 			case 0x200:	mask=8;		break;
 			case 0x202:	mask=9;		break;
 			case 0x208:	mask=10;	break;
@@ -135,7 +136,6 @@ void system16_decode(data16_t *dest,data16_t *source,int size,unsigned short *de
 			case 0x222:	mask=13;	break;
 			case 0x228:	mask=14;	break;
 			case 0x22a:	mask=15;	break;
-			default:	mask=0;		break;
 		}
 
 		decode_offset = ((data >> 8) & 0xfc ) | ((data >> 5) & 0x2 ) | ((data >> 3) & 0x1 );

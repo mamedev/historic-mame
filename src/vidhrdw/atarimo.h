@@ -52,7 +52,8 @@ struct atarimo_desc
 	UINT8				nextneighbor;		/* does the neighbor bit affect the next object? */
 	UINT16				slipheight;			/* pixels per SLIP entry (0 for no-slip) */
 	UINT8				slipoffset;			/* pixel offset for SLIPs */
-	
+	UINT16				maxlinks;			/* maximum number of links to visit/scanline (0=all) */
+
 	UINT16				palettebase;		/* base palette entry */
 	UINT16				maxcolors;			/* maximum number of colors */
 	UINT8				transpen;			/* transparent pen index */

@@ -77,11 +77,11 @@ static READ_HANDLER( io_hyhoo_r )
 	switch (offset & 0xff00)
 	{
 		case	0x8100:	return AY8910_read_port_0_r(0);
-		case	0x9000:	return nb1413m3_inputport0_r();
-		case	0xa000:	return nb1413m3_inputport1_r();
-		case	0xb000:	return nb1413m3_inputport2_r();
-		case	0xf000:	return nb1413m3_dipsw1_r();
-		case	0xf100:	return nb1413m3_dipsw2_r();
+		case	0x9000:	return nb1413m3_inputport0_r(0);
+		case	0xa000:	return nb1413m3_inputport1_r(0);
+		case	0xb000:	return nb1413m3_inputport2_r(0);
+		case	0xf000:	return nb1413m3_dipsw1_r(0);
+		case	0xf100:	return nb1413m3_dipsw2_r(0);
 		case	0xe000:	return nb1413m3_gfxrom_r((offset & 0x0100) >> 8);
 		case	0xe100:	return nb1413m3_gfxrom_r((offset & 0x0100) >> 8);
 		default:	return 0xff;
@@ -117,8 +117,8 @@ static WRITE_HANDLER( io_hyhoo_w )
 		case	0x9500:	hyhoo_sizey_w(data); break;
 		case	0x9600:	hyhoo_gfxflag1_w(data); break;
 		case	0x9700:	break;
-		case	0xa000:	nb1413m3_inputportsel_w(data); break;
-		case	0xb000:	nb1413m3_sndrombank1_w(data); break;
+		case	0xa000:	nb1413m3_inputportsel_w(0,data); break;
+		case	0xb000:	nb1413m3_sndrombank1_w(0,data); break;
 #if SIGNED_DAC
 		case	0xd000:	DAC_0_signed_data_w(0, data); break;
 #else

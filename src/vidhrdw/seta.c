@@ -11,7 +11,7 @@ Note:	if MAME_DEBUG is defined, pressing Z with:
 		W			shows layer 1
 		A			shows the sprites
 
-		Keys can be used togheter!
+		Keys can be used together!
 
 
 						[ 0, 1 Or 2 Scrolling Layers ]
@@ -148,13 +148,72 @@ static int tilemaps_flip;
 
 int seta_tiles_offset;
 
-data16_t *seta_vram_0, *seta_vram_1, *seta_vctrl_0;
+data16_t *seta_vram_0, *seta_vctrl_0;
 data16_t *seta_vram_2, *seta_vram_3, *seta_vctrl_2;
 data16_t *seta_vregs;
 
 data16_t *seta_workram; // Used for zombraid crosshair hack
 
-extern int seta_tiles_offset;
+static int twineagl_tilebank[4];
+static int	seta_samples_bank;
+
+struct x_offset
+{
+	/* 2 values, for normal and flipped */
+	const char *gamename;
+	int sprite_offs[2];
+	int tilemap_offs[2];
+};
+
+/* note that drgnunit, stg and qzkklogy run on the same board, yet they need different alignment */
+static struct x_offset game_offsets[] =
+{
+	/* only sprites */
+	{ "tndrcade", { -1,  0 } },				// correct (wall at beginning of game)
+	{ "tndrcadj", { -1,  0 } },				// correct (wall at beginning of game)
+	{ "wits",     {  0,  0 } },				// unknown
+	{ "thunderl", {  0,  0 } },				// unknown
+	{ "blockcar", {  0,  0 } },				// unknown
+	{ "umanclub", {  0,  0 } },				// unknown
+	{ "atehate",  {  0,  0 } },				// correct (test grid)
+	{ "kiwame",   {  0,-16 } },				// correct (test grid)
+	{ "krzybowl", {  0,  0 } },				// correct (test grid)
+
+	/* 1 layer */
+	{ "twineagl", {  0,  0 }, {  0, -3 } },	// unknown
+	{ "downtown", {  1,  0 }, { -1,  0 } },	// sprites correct (test grid), tilemap unknown but at least -1 non-flipped to fix glitches later in the game
+	{ "usclssic", {  1,  2 }, {  0, -1 } },	// correct (test grid and bg)
+	{ "calibr50", { -1,  2 }, { -3, -2 } },	// correct (test grid and roof in animation at beginning of game)
+	{ "arbalest", {  0,  1 }, { -2, -1 } },	// correct (test grid and landing pad at beginning of game)
+	{ "metafox",  {  0,  0 }, { 16,-19 } },	// sprites unknown, tilemap correct (test grid)
+	{ "drgnunit", {  2,  2 }, { -2, -2 } },	// correct (test grid and I/O test)
+	{ "stg",      {  0,  0 }, { -2, -2 } },	// sprites correct? (panel), tilemap correct (test grid)
+	{ "qzkklogy", {  1,  1 }, { -1, -1 } },	// correct (timer, test grid)
+	{ "qzkklgy2", {  0,  0 }, { -1, -3 } },	// sprites unknown, tilemaps correct (test grid)
+
+	/* 2 layers */
+	{ "rezon",    {  0,  0 }, { -2, -2 } },	// correct (test grid)
+	{ "blandia",  {  0,  8 }, { -2,  6 } },	// correct (test grid, startup bg)
+	{ "blandiap", {  0,  8 }, { -2,  6 } },	// correct (test grid, startup bg)
+	{ "zingzip",  {  0,  0 }, { -1, -2 } },	// sprites unknown, tilemaps correct (test grid)
+	{ "eightfrc", {  3,  4 }, {  0,  0 } },	// unknown
+	{ "daioh",    {  1,  1 }, { -1, -1 } },	// correct? (launch window and test grid are right, but planet is wrong)
+	{ "msgundam", {  0,  0 }, { -2, -2 } },	// correct (test grid, banpresto logo)
+	{ "msgunda1", {  0,  0 }, { -2, -2 } },	// correct (test grid, banpresto logo)
+	{ "oisipuzl", {  0,  0 }, { -1, -1 } },	// correct (test mode) flip screen not supported?
+	{ "triplfun", {  0,  0 }, { -1, -1 } },	// correct (test mode) flip screen not supported?
+	{ "wrofaero", {  0,  0 }, {  0,  0 } },	// unknown
+	{ "jjsquawk", {  1,  1 }, { -1, -1 } },	// correct (test mode)
+	{ "kamenrid", {  0,  0 }, { -2, -2 } },	// correct (map, banpresto logo)
+	{ "extdwnhl", {  0,  0 }, { -2, -2 } },	// correct (test grid, background images)
+	{ "sokonuke", {  0,  0 }, { -2, -2 } },	// correct (game selection, test grid)
+	{ "gundhara", {  0,  0 }, {  0,  0 } },	// unknown, flip screen not supported?
+	{ "zombraid", {  0,  0 }, { -2, -2 } },	// correct for normal, flip screen not working yet
+	{ NULL }
+};
+
+static struct x_offset *global_offsets;
+
 
 
 WRITE16_HANDLER( seta_vregs_w )
@@ -166,15 +225,18 @@ WRITE16_HANDLER( seta_vregs_w )
 
 /*		fedc ba98 76-- ----
 		---- ---- --5- ----		Sound Enable
-		---- ---- ---4 ----		?? 1 in oisipuzl, sokonuke (layers related)
+		---- ---- ---4 ----		toggled in IRQ1 by many games, irq acknowledge?
+								[original comment for the above: ?? 1 in oisipuzl, sokonuke (layers related)]
 		---- ---- ---- 3---		Coin #1 Lock Out
 		---- ---- ---- -2--		Coin #0 Lock Out
 		---- ---- ---- --1-		Coin #1 Counter
 		---- ---- ---- ---0		Coin #0 Counter		*/
 			if (ACCESSING_LSB)
 			{
-				seta_coin_lockout_w (data & 0x000f);
-				seta_sound_enable_w (data & 0x0020);
+				seta_coin_lockout_w (data & 0x0f);
+				seta_sound_enable_w (data & 0x20);
+				coin_counter_w(0,data & 0x01);
+				coin_counter_w(1,data & 0x02);
 			}
 			break;
 
@@ -263,33 +325,80 @@ Offset + 0x4:
 					---- ---- ---- ---0		?
 
 ***************************************************************************/
-#define DIM_NX		(64)
-#define DIM_NY		(32)
 
-#define SETA_TILEMAP(_n_) \
-static void get_tile_info_##_n_( int tile_index ) \
-{ \
-	data16_t code =	seta_vram_##_n_[ tile_index ]; \
-	data16_t attr =	seta_vram_##_n_[ tile_index + DIM_NX * DIM_NY ]; \
-	SET_TILE_INFO( 1 + _n_/2, seta_tiles_offset + (code & 0x3fff), attr & 0x1f, TILE_FLIPXY( code >> (16-2) )) \
-} \
-\
-WRITE16_HANDLER( seta_vram_##_n_##_w ) \
-{ \
-	data16_t oldword = seta_vram_##_n_[offset]; \
-	data16_t newword = COMBINE_DATA(&seta_vram_##_n_[offset]); \
-	if (oldword != newword) \
-	{ \
-		offset %= DIM_NX * DIM_NY; \
-		tilemap_mark_tile_dirty(tilemap_##_n_, offset); \
-	} \
+INLINE void twineagl_tile_info( int tile_index, data16_t *vram )
+{
+	data16_t code =	vram[ tile_index ];
+	data16_t attr =	vram[ tile_index + 0x800 ];
+	if ((code & 0x3e00) == 0x3e00)
+		code = (code & 0xc07f) | ((twineagl_tilebank[(code & 0x0180) >> 7] >> 1) << 7);
+	SET_TILE_INFO( 1, (code & 0x3fff), attr & 0x1f, TILE_FLIPXY((code & 0xc000) >> 14) )
 }
 
-SETA_TILEMAP(0)
-SETA_TILEMAP(1)
-SETA_TILEMAP(2)
-SETA_TILEMAP(3)
+static void twineagl_get_tile_info_0( int tile_index ) { twineagl_tile_info( tile_index, seta_vram_0 + 0x0000 ); }
+static void twineagl_get_tile_info_1( int tile_index ) { twineagl_tile_info( tile_index, seta_vram_0 + 0x1000 ); }
 
+
+INLINE void get_tile_info( int tile_index, int layer, data16_t *vram )
+{
+	data16_t code =	vram[ tile_index ];
+	data16_t attr =	vram[ tile_index + 0x800 ];
+	SET_TILE_INFO( 1 + layer, seta_tiles_offset + (code & 0x3fff), attr & 0x1f, TILE_FLIPXY((code & 0xc000) >> 14) )
+}
+
+static void get_tile_info_0( int tile_index ) { get_tile_info( tile_index, 0, seta_vram_0 + 0x0000 ); }
+static void get_tile_info_1( int tile_index ) { get_tile_info( tile_index, 0, seta_vram_0 + 0x1000 ); }
+static void get_tile_info_2( int tile_index ) { get_tile_info( tile_index, 1, seta_vram_2 + 0x0000 ); }
+static void get_tile_info_3( int tile_index ) { get_tile_info( tile_index, 1, seta_vram_2 + 0x1000 ); }
+
+
+WRITE16_HANDLER( seta_vram_0_w )
+{
+	data16_t oldword = seta_vram_0[offset];
+	data16_t newword = COMBINE_DATA(&seta_vram_0[offset]);
+	if (oldword != newword)
+	{
+		if (offset & 0x1000)
+			tilemap_mark_tile_dirty(tilemap_1, offset & 0x7ff);
+		else
+			tilemap_mark_tile_dirty(tilemap_0, offset & 0x7ff);
+	}
+}
+
+WRITE16_HANDLER( seta_vram_2_w )
+{
+	data16_t oldword = seta_vram_2[offset];
+	data16_t newword = COMBINE_DATA(&seta_vram_2[offset]);
+	if (oldword != newword)
+	{
+		if (offset & 0x1000)
+			tilemap_mark_tile_dirty(tilemap_3, offset & 0x7ff);
+		else
+			tilemap_mark_tile_dirty(tilemap_2, offset & 0x7ff);
+	}
+}
+
+WRITE16_HANDLER( twineagl_tilebank_w )
+{
+	if (ACCESSING_LSB)
+	{
+		data &= 0xff;
+		if (twineagl_tilebank[offset] != data)
+		{
+			twineagl_tilebank[offset] = data;
+			tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
+		}
+	}
+}
+
+
+
+static void find_offsets(void)
+{
+	global_offsets = game_offsets;
+	while (global_offsets->gamename && strcmp(Machine->gamedrv->name,global_offsets->gamename))
+		global_offsets++;
+}
 
 /* 2 layers */
 VIDEO_START( seta_2_layers )
@@ -299,48 +408,30 @@ VIDEO_START( seta_2_layers )
 
 	/* layer 0 */
 	tilemap_0 = tilemap_create(	get_tile_info_0, tilemap_scan_rows,
-								TILEMAP_TRANSPARENT, 16,16, DIM_NX,DIM_NY );
+								TILEMAP_TRANSPARENT, 16,16, 64,32 );
 
 	tilemap_1 = tilemap_create(	get_tile_info_1, tilemap_scan_rows,
-								TILEMAP_TRANSPARENT, 16,16, DIM_NX,DIM_NY );
+								TILEMAP_TRANSPARENT, 16,16, 64,32 );
 
 
 	/* layer 1 */
 	tilemap_2 = tilemap_create(	get_tile_info_2, tilemap_scan_rows,
-								TILEMAP_TRANSPARENT, 16,16, DIM_NX,DIM_NY );
+								TILEMAP_TRANSPARENT, 16,16, 64,32 );
 
 	tilemap_3 = tilemap_create(	get_tile_info_3, tilemap_scan_rows,
-								TILEMAP_TRANSPARENT, 16,16, DIM_NX,DIM_NY );
+								TILEMAP_TRANSPARENT, 16,16, 64,32 );
 
 	if (tilemap_0 && tilemap_1 && tilemap_2 && tilemap_3)
 	{
 		tilemaps_flip = 0;
 
-		tilemap_set_scroll_rows(tilemap_0,1);
-		tilemap_set_scroll_cols(tilemap_0,1);
 		tilemap_set_transparent_pen(tilemap_0,0);
-
-		tilemap_set_scroll_rows(tilemap_1,1);
-		tilemap_set_scroll_cols(tilemap_1,1);
 		tilemap_set_transparent_pen(tilemap_1,0);
-
-		tilemap_set_scroll_rows(tilemap_2,1);
-		tilemap_set_scroll_cols(tilemap_2,1);
 		tilemap_set_transparent_pen(tilemap_2,0);
-
-		tilemap_set_scroll_rows(tilemap_3,1);
-		tilemap_set_scroll_cols(tilemap_3,1);
 		tilemap_set_transparent_pen(tilemap_3,0);
 
-		tilemap_set_scrolldx(tilemap_0, -0x01, 0x00);	// see zingzip test mode
-		tilemap_set_scrolldx(tilemap_1, -0x01, 0x00);
-		tilemap_set_scrolldx(tilemap_2, -0x01, 0x00);
-		tilemap_set_scrolldx(tilemap_3, -0x01, 0x00);
-
-		tilemap_set_scrolldy(tilemap_0, 0x00, 0x00);
-		tilemap_set_scrolldy(tilemap_1, 0x00, 0x00);
-		tilemap_set_scrolldy(tilemap_2, 0x00, 0x00);
-		tilemap_set_scrolldy(tilemap_3, 0x00, 0x00);
+		find_offsets();
+		seta_samples_bank = -1;	// set the samples bank to an out of range value at start-up
 
 		return 0;
 	}
@@ -356,10 +447,10 @@ VIDEO_START( seta_1_layer )
 
 	/* layer 0 */
 	tilemap_0 = tilemap_create(	get_tile_info_0, tilemap_scan_rows,
-								TILEMAP_TRANSPARENT, 16,16, DIM_NX,DIM_NY );
+								TILEMAP_TRANSPARENT, 16,16, 64,32 );
 
 	tilemap_1 = tilemap_create(	get_tile_info_1, tilemap_scan_rows,
-								TILEMAP_TRANSPARENT, 16,16, DIM_NX,DIM_NY );
+								TILEMAP_TRANSPARENT, 16,16, 64,32 );
 
 
 	/* NO layer 1 */
@@ -370,19 +461,43 @@ VIDEO_START( seta_1_layer )
 	{
 		tilemaps_flip = 0;
 
-		tilemap_set_scroll_rows(tilemap_0,1);
-		tilemap_set_scroll_cols(tilemap_0,1);
 		tilemap_set_transparent_pen(tilemap_0,0);
-
-		tilemap_set_scroll_rows(tilemap_1,1);
-		tilemap_set_scroll_cols(tilemap_1,1);
 		tilemap_set_transparent_pen(tilemap_1,0);
 
-		tilemap_set_scrolldx(tilemap_0, 0x00, 0x00); // see metafox test mode
-		tilemap_set_scrolldx(tilemap_1, 0x00, 0x00);
+		find_offsets();
+		seta_samples_bank = -1;	// set the samples bank to an out of range value at start-up
 
-		tilemap_set_scrolldy(tilemap_0, 0x00, 0x00);
-		tilemap_set_scrolldy(tilemap_1, 0x00, 0x00);
+		return 0;
+	}
+	else return 1;
+}
+
+VIDEO_START( twineagl_1_layer )
+{
+	/* Each layer consists of 2 tilemaps: only one can be displayed
+	   at any given time */
+
+	/* layer 0 */
+	tilemap_0 = tilemap_create(	twineagl_get_tile_info_0, tilemap_scan_rows,
+								TILEMAP_TRANSPARENT, 16,16, 64,32 );
+
+	tilemap_1 = tilemap_create(	twineagl_get_tile_info_1, tilemap_scan_rows,
+								TILEMAP_TRANSPARENT, 16,16, 64,32 );
+
+
+	/* NO layer 1 */
+	tilemap_2 = 0;
+	tilemap_3 = 0;
+
+	if (tilemap_0 && tilemap_1)
+	{
+		tilemaps_flip = 0;
+
+		tilemap_set_transparent_pen(tilemap_0,0);
+		tilemap_set_transparent_pen(tilemap_1,0);
+
+		find_offsets();
+		seta_samples_bank = -1;	// set the samples bank to an out of range value at start-up
 
 		return 0;
 	}
@@ -397,61 +512,16 @@ VIDEO_START( seta_no_layers )
 	tilemap_1 = 0;
 	tilemap_2 = 0;
 	tilemap_3 = 0;
-	return 0;
-}
-
-VIDEO_START( seta_2_layers_y_offset_0x10 )
-{
-	if (video_start_seta_2_layers())
-		return 1;
-
-	tilemap_set_scrolldx(tilemap_0, 0x00, 0x00);
-	tilemap_set_scrolldx(tilemap_1, 0x00, 0x00);
-	tilemap_set_scrolldx(tilemap_2, 0x00, 0x00);
-	tilemap_set_scrolldx(tilemap_3, 0x00, 0x00);
-
-	tilemap_set_scrolldy(tilemap_0, 0x10, 0x00);
-	tilemap_set_scrolldy(tilemap_1, 0x10, 0x00);
-	tilemap_set_scrolldy(tilemap_2, 0x10, 0x00);
-	tilemap_set_scrolldy(tilemap_3, 0x10, 0x00);
-	return 0;
-}
-
-VIDEO_START( seta_2_layers_offset_0x02 )
-{
-	if (video_start_seta_2_layers())
-		return 1;
-
-	tilemap_set_scrolldx(tilemap_0, -0x02, 0x00);
-	tilemap_set_scrolldx(tilemap_1, -0x02, 0x00);
-	tilemap_set_scrolldx(tilemap_2, -0x02, 0x00);
-	tilemap_set_scrolldx(tilemap_3, -0x02, 0x00);
-
-	tilemap_set_scrolldy(tilemap_0, 0x00, 0x00);
-	tilemap_set_scrolldy(tilemap_1, 0x00, 0x00);
-	tilemap_set_scrolldy(tilemap_2, 0x00, 0x00);
-	tilemap_set_scrolldy(tilemap_3, 0x00, 0x00);
+	find_offsets();
+	seta_samples_bank = -1;	// set the samples bank to an out of range value at start-up
 	return 0;
 }
 
 VIDEO_START( oisipuzl_2_layers )
 {
-	if (video_start_seta_2_layers_offset_0x02())
+	if (video_start_seta_2_layers())
 		return 1;
 	tilemaps_flip = 1;
-	return 0;
-}
-
-VIDEO_START( seta_1_layer_offset_0x02 )
-{
-	if (video_start_seta_1_layer())	return 1;
-
-	tilemap_set_scrolldx(tilemap_0, -0x02, 0x00); // see calibr50's rescue
-	tilemap_set_scrolldx(tilemap_1, -0x02, 0x00);
-
-	tilemap_set_scrolldy(tilemap_0, 0x00, 0x00);
-	tilemap_set_scrolldy(tilemap_1, 0x00, 0x00);
-
 	return 0;
 }
 
@@ -579,8 +649,8 @@ static void seta_draw_sprites_map(struct mame_bitmap *bitmap,const struct rectan
 		default:	col0	=	0x0;
 	}
 
-	xoffs	=	flip ? 0x10 : 0x10;	// see wrofaero test mode: made of sprites map
-	yoffs	=	flip ? 0x09 : 0x07;
+	xoffs = 0;
+	yoffs = flip ? 1 : -1;
 
 	/* Number of columns to draw - the value 1 seems special, meaning:
 	   draw every column */
@@ -618,15 +688,13 @@ oisipuzl:	059 020 00 00	(game - yes, flip on!)
 */
 
 			int sx		=	  x + xoffs  + (offs & 1) * 16;
-//			int sy		=	-(y + yoffs) + (offs / 2) * 16;
-			int sy		=	-(y + yoffs) + (offs / 2) * 16 -
-							(Machine->drv->screen_height-(Machine->visible_area.max_y + 1));
+			int sy		=	-(y + yoffs) + (offs / 2) * 16;
 
 			if (upper & (1 << col))	sx += 256;
 
 			if (flip)
 			{
-				sy = max_y - 16 - sy - 0x100;
+				sy = max_y - sy;
 				flipx = !flipx;
 				flipy = !flipy;
 			}
@@ -634,19 +702,12 @@ oisipuzl:	059 020 00 00	(game - yes, flip on!)
 			color	=	( color >> (16-5) ) % total_color_codes;
 			code	=	(code & 0x3fff) + (bank * 0x4000);
 
-#define DRAWTILE(_x_,_y_)  \
-			drawgfx(bitmap,Machine->gfx[0], \
-					code, \
-					color, \
-					flipx, flipy, \
-					_x_,_y_, \
+			drawgfx(bitmap,Machine->gfx[0],
+					code,
+					color,
+					flipx, flipy,
+					((sx + 0x10) & 0x1ff) - 0x10,((sy + 8) & 0x0ff) - 8,
 					cliprect,TRANSPARENCY_PEN,0);
-
-			DRAWTILE(sx - 0x000, sy + 0x000)
-			DRAWTILE(sx - 0x200, sy + 0x000)
-			DRAWTILE(sx - 0x000, sy + 0x100)
-			DRAWTILE(sx - 0x200, sy + 0x100)
-
 		}
 	/* next column */
 	}
@@ -670,18 +731,14 @@ static void seta_draw_sprites(struct mame_bitmap *bitmap,const struct rectangle 
 	/* Sprites Banking and/or Sprites Buffering */
 	data16_t *src = spriteram16_2 + ( ((ctrl2 ^ (~ctrl2<<1)) & 0x40) ? 0x2000/2 : 0 );
 
-//	int max_y	=	Machine->visible_area.max_y+1;
-	int max_y	=	Machine->drv->screen_height;
-
+	int max_y	=	0xf0;
 
 
 	seta_draw_sprites_map(bitmap,cliprect);
 
 
-
-//	xoffs	=	flip ? 0x10 : 0x11;	// see downtown test mode: made of normal sprites
-	xoffs	=	flip ? 0x10 : 0x10;	// see blandia test mode: made of normal sprites
-	yoffs	=	flip ? 0x06 : 0x06;
+	xoffs = global_offsets->sprite_offs[flip ? 1 : 0];
+	yoffs = -2;
 
 	for ( offs = (0x400-2)/2 ; offs >= 0/2; offs -= 2/2 )
 	{
@@ -698,21 +755,20 @@ static void seta_draw_sprites(struct mame_bitmap *bitmap,const struct rectangle 
 
 		if (flip)
 		{
-//			y = max_y - y;
-			y = max_y - y
-				+(Machine->drv->screen_height-(Machine->visible_area.max_y + 1));
+			y = (0x100 - Machine->drv->screen_height) + max_y - y;
 			flipx = !flipx;
 			flipy = !flipy;
 		}
 
 		code = (code & 0x3fff) + (bank * 0x4000);
 
+		y = max_y - y;
+
 		drawgfx(bitmap,Machine->gfx[0],
 				code,
 				color,
 				flipx, flipy,
-				(x + xoffs) & 0x1ff,
-				max_y - ((y + yoffs) & 0x0ff),
+				((x + xoffs + 0x10) & 0x1ff) - 0x10,((y - yoffs + 8) & 0x0ff) - 8,
 				cliprect,TRANSPARENCY_PEN,0);
 	}
 
@@ -732,10 +788,10 @@ static void seta_draw_sprites(struct mame_bitmap *bitmap,const struct rectangle 
 
 static void zombraid_drawcrosshairs( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
 {
-	int p1_x = seta_workram[0xC4AA/2] + 0x10;
-	int p1_y = 0xff - seta_workram[0xC4AC/2];
-	int p2_x = seta_workram[0xC4AE/2] + 0x10;
-	int p2_y = 0xff - seta_workram[0xC4B0/2];
+	int p1_x = seta_workram[0xC4AA/2];
+	int p1_y = 0x08+0xff - seta_workram[0xC4AC/2];
+	int p2_x = seta_workram[0xC4AE/2];
+	int p2_y = 0x08+0xff - seta_workram[0xC4B0/2];
 
 	draw_crosshair(bitmap,p1_x,p1_y,cliprect);
 	draw_crosshair(bitmap,p2_x,p2_y,cliprect);
@@ -759,9 +815,6 @@ VIDEO_UPDATE( seta )
 	int order	= 	0;
 	int flip	=	(spriteram16[ 0x600/2 ] & 0x40) >> 6;
 
-//	int scr_dimx = Machine->drv->screen_width;
-	int scr_dimy = Machine->drv->screen_height;
-//	int vis_dimx = Machine->visible_area.max_x - Machine->visible_area.min_x + 1;
 	int vis_dimy = Machine->visible_area.max_y - Machine->visible_area.min_y + 1;
 
 	flip ^= tilemaps_flip;
@@ -784,8 +837,13 @@ VIDEO_UPDATE( seta )
 					fff0 0260 = -$10, $400-$190 -$10
 					ffe8 0272 = -$18, $400-$190 -$18 + $1a		*/
 
-	if (flip)	{	x_0 = -402 - x_0;
-					y_0 = y_0 - vis_dimy - (scr_dimy - vis_dimy); }
+	x_0 += 0x10 - global_offsets->tilemap_offs[flip ? 1 : 0];
+	y_0 -= (256 - vis_dimy)/2;
+	if (flip)
+	{
+		x_0 = -x_0 - 512;
+		y_0 = y_0 - vis_dimy;
+	}
 
 	tilemap_set_scrollx (tilemap_0, 0, x_0);
 	tilemap_set_scrollx (tilemap_1, 0, x_0);
@@ -801,8 +859,13 @@ VIDEO_UPDATE( seta )
 		tilemap_set_enable(tilemap_2, (!(enab_1 & 0x0008)) /*&& (enab_1 & 0x0001)*/ );
 		tilemap_set_enable(tilemap_3, ( (enab_1 & 0x0008)) /*&& (enab_1 & 0x0001)*/ );
 
-		if (flip)	{	x_1 = -402 - x_1;
-						y_1 = y_1 - vis_dimy - (scr_dimy - vis_dimy); }
+		x_1 += 0x10 - global_offsets->tilemap_offs[flip ? 1 : 0];
+		y_1 -= (256 - vis_dimy)/2;
+		if (flip)
+		{
+			x_1 = -x_1 - 512;
+			y_1 = y_1 - vis_dimy;
+		}
 
 		tilemap_set_scrollx (tilemap_2, 0, x_1);
 		tilemap_set_scrollx (tilemap_3, 0, x_1);

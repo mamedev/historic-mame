@@ -103,13 +103,13 @@ UINT32 am3Displacement8(void)
 	switch (modDim)
 	{
 	case 0:
-		MemWrite8(v60.reg[modVal&0x1F] + (INT8)MemRead8(modAdd+1), modWriteValB);
+		MemWrite8(v60.reg[modVal&0x1F] + (INT8)OpRead8(modAdd+1), modWriteValB);
 		break;
 	case 1:
-		MemWrite16(v60.reg[modVal&0x1F] + (INT8)MemRead8(modAdd+1), modWriteValH);
+		MemWrite16(v60.reg[modVal&0x1F] + (INT8)OpRead8(modAdd+1), modWriteValH);
 		break;
 	case 2:
-		MemWrite32(v60.reg[modVal&0x1F] + (INT8)MemRead8(modAdd+1), modWriteValW);
+		MemWrite32(v60.reg[modVal&0x1F] + (INT8)OpRead8(modAdd+1), modWriteValW);
 		break;
 	}
 
@@ -121,13 +121,13 @@ UINT32 am3Displacement16(void)
 	switch (modDim)
 	{
 	case 0:
-		MemWrite8(v60.reg[modVal&0x1F] + (INT16)MemRead16(modAdd+1), modWriteValB);
+		MemWrite8(v60.reg[modVal&0x1F] + (INT16)OpRead16(modAdd+1), modWriteValB);
 		break;
 	case 1:
-		MemWrite16(v60.reg[modVal&0x1F] + (INT16)MemRead16(modAdd+1), modWriteValH);
+		MemWrite16(v60.reg[modVal&0x1F] + (INT16)OpRead16(modAdd+1), modWriteValH);
 		break;
 	case 2:
-		MemWrite32(v60.reg[modVal&0x1F] + (INT16)MemRead16(modAdd+1), modWriteValW);
+		MemWrite32(v60.reg[modVal&0x1F] + (INT16)OpRead16(modAdd+1), modWriteValW);
 		break;
 	}
 
@@ -139,13 +139,13 @@ UINT32 am3Displacement32(void)
 	switch (modDim)
 	{
 	case 0:
-		MemWrite8(v60.reg[modVal&0x1F] + MemRead32(modAdd+1), modWriteValB);
+		MemWrite8(v60.reg[modVal&0x1F] + OpRead32(modAdd+1), modWriteValB);
 		break;
 	case 1:
-		MemWrite16(v60.reg[modVal&0x1F] + MemRead32(modAdd+1), modWriteValH);
+		MemWrite16(v60.reg[modVal&0x1F] + OpRead32(modAdd+1), modWriteValH);
 		break;
 	case 2:
-		MemWrite32(v60.reg[modVal&0x1F] + MemRead32(modAdd+1), modWriteValW);
+		MemWrite32(v60.reg[modVal&0x1F] + OpRead32(modAdd+1), modWriteValW);
 		break;
 	}
 
@@ -158,13 +158,13 @@ UINT32 am3DisplacementIndexed8(void)
 	switch (modDim)
 	{
 	case 0:
-		MemWrite8(v60.reg[modVal2&0x1F] + (INT8)MemRead8(modAdd+2) + v60.reg[modVal&0x1F], modWriteValB);
+		MemWrite8(v60.reg[modVal2&0x1F] + (INT8)OpRead8(modAdd+2) + v60.reg[modVal&0x1F], modWriteValB);
 		break;
 	case 1:
-		MemWrite16(v60.reg[modVal2&0x1F] + (INT8)MemRead8(modAdd+2) + v60.reg[modVal&0x1F] * 2, modWriteValH);
+		MemWrite16(v60.reg[modVal2&0x1F] + (INT8)OpRead8(modAdd+2) + v60.reg[modVal&0x1F] * 2, modWriteValH);
 		break;
 	case 2:
-		MemWrite32(v60.reg[modVal2&0x1F] + (INT8)MemRead8(modAdd+2) + v60.reg[modVal&0x1F] * 4, modWriteValW);
+		MemWrite32(v60.reg[modVal2&0x1F] + (INT8)OpRead8(modAdd+2) + v60.reg[modVal&0x1F] * 4, modWriteValW);
 		break;
 	}
 
@@ -176,13 +176,13 @@ UINT32 am3DisplacementIndexed16(void)
 	switch (modDim)
 	{
 	case 0:
-		MemWrite8(v60.reg[modVal2&0x1F] + (INT16)MemRead16(modAdd+2) + v60.reg[modVal&0x1F], modWriteValB);
+		MemWrite8(v60.reg[modVal2&0x1F] + (INT16)OpRead16(modAdd+2) + v60.reg[modVal&0x1F], modWriteValB);
 		break;
 	case 1:
-		MemWrite16(v60.reg[modVal2&0x1F] + (INT16)MemRead16(modAdd+2) + v60.reg[modVal&0x1F] * 2, modWriteValH);
+		MemWrite16(v60.reg[modVal2&0x1F] + (INT16)OpRead16(modAdd+2) + v60.reg[modVal&0x1F] * 2, modWriteValH);
 		break;
 	case 2:
-		MemWrite32(v60.reg[modVal2&0x1F] + (INT16)MemRead16(modAdd+2) + v60.reg[modVal&0x1F] * 4, modWriteValW);
+		MemWrite32(v60.reg[modVal2&0x1F] + (INT16)OpRead16(modAdd+2) + v60.reg[modVal&0x1F] * 4, modWriteValW);
 		break;
 	}
 
@@ -194,13 +194,13 @@ UINT32 am3DisplacementIndexed32(void)
 	switch (modDim)
 	{
 	case 0:
-		MemWrite8(v60.reg[modVal2&0x1F] + MemRead32(modAdd+2) + v60.reg[modVal&0x1F], modWriteValB);
+		MemWrite8(v60.reg[modVal2&0x1F] + OpRead32(modAdd+2) + v60.reg[modVal&0x1F], modWriteValB);
 		break;
 	case 1:
-		MemWrite16(v60.reg[modVal2&0x1F] + MemRead32(modAdd+2) + v60.reg[modVal&0x1F] * 2, modWriteValH);
+		MemWrite16(v60.reg[modVal2&0x1F] + OpRead32(modAdd+2) + v60.reg[modVal&0x1F] * 2, modWriteValH);
 		break;
 	case 2:
-		MemWrite32(v60.reg[modVal2&0x1F] + MemRead32(modAdd+2) + v60.reg[modVal&0x1F] * 4, modWriteValW);
+		MemWrite32(v60.reg[modVal2&0x1F] + OpRead32(modAdd+2) + v60.reg[modVal&0x1F] * 4, modWriteValW);
 		break;
 	}
 
@@ -213,13 +213,13 @@ UINT32 am3PCDisplacement8(void)
 	switch (modDim)
 	{
 	case 0:
-		MemWrite8(PC + (INT8)MemRead8(modAdd+1), modWriteValB);
+		MemWrite8(PC + (INT8)OpRead8(modAdd+1), modWriteValB);
 		break;
 	case 1:
-		MemWrite16(PC + (INT8)MemRead8(modAdd+1), modWriteValH);
+		MemWrite16(PC + (INT8)OpRead8(modAdd+1), modWriteValH);
 		break;
 	case 2:
-		MemWrite32(PC + (INT8)MemRead8(modAdd+1), modWriteValW);
+		MemWrite32(PC + (INT8)OpRead8(modAdd+1), modWriteValW);
 		break;
 	}
 
@@ -231,13 +231,13 @@ UINT32 am3PCDisplacement16(void)
 	switch (modDim)
 	{
 	case 0:
-		MemWrite8(PC + (INT16)MemRead16(modAdd+1), modWriteValB);
+		MemWrite8(PC + (INT16)OpRead16(modAdd+1), modWriteValB);
 		break;
 	case 1:
-		MemWrite16(PC + (INT16)MemRead16(modAdd+1), modWriteValH);
+		MemWrite16(PC + (INT16)OpRead16(modAdd+1), modWriteValH);
 		break;
 	case 2:
-		MemWrite32(PC + (INT16)MemRead16(modAdd+1), modWriteValW);
+		MemWrite32(PC + (INT16)OpRead16(modAdd+1), modWriteValW);
 		break;
 	}
 
@@ -249,13 +249,13 @@ UINT32 am3PCDisplacement32(void)
 	switch (modDim)
 	{
 	case 0:
-		MemWrite8(PC + MemRead32(modAdd+1), modWriteValB);
+		MemWrite8(PC + OpRead32(modAdd+1), modWriteValB);
 		break;
 	case 1:
-		MemWrite16(PC + MemRead32(modAdd+1), modWriteValH);
+		MemWrite16(PC + OpRead32(modAdd+1), modWriteValH);
 		break;
 	case 2:
-		MemWrite32(PC + MemRead32(modAdd+1), modWriteValW);
+		MemWrite32(PC + OpRead32(modAdd+1), modWriteValW);
 		break;
 	}
 
@@ -267,13 +267,13 @@ UINT32 am3PCDisplacementIndexed8(void)
 	switch (modDim)
 	{
 	case 0:
-		MemWrite8(PC + (INT8)MemRead8(modAdd+2) + v60.reg[modVal&0x1F], modWriteValB);
+		MemWrite8(PC + (INT8)OpRead8(modAdd+2) + v60.reg[modVal&0x1F], modWriteValB);
 		break;
 	case 1:
-		MemWrite16(PC + (INT8)MemRead8(modAdd+2) + v60.reg[modVal&0x1F] * 2, modWriteValH);
+		MemWrite16(PC + (INT8)OpRead8(modAdd+2) + v60.reg[modVal&0x1F] * 2, modWriteValH);
 		break;
 	case 2:
-		MemWrite32(PC + (INT8)MemRead8(modAdd+2) + v60.reg[modVal&0x1F] * 4, modWriteValW);
+		MemWrite32(PC + (INT8)OpRead8(modAdd+2) + v60.reg[modVal&0x1F] * 4, modWriteValW);
 		break;
 	}
 
@@ -285,13 +285,13 @@ UINT32 am3PCDisplacementIndexed16(void)
 	switch (modDim)
 	{
 	case 0:
-		MemWrite8(PC + (INT16)MemRead16(modAdd+2) + v60.reg[modVal&0x1F], modWriteValB);
+		MemWrite8(PC + (INT16)OpRead16(modAdd+2) + v60.reg[modVal&0x1F], modWriteValB);
 		break;
 	case 1:
-		MemWrite16(PC + (INT16)MemRead16(modAdd+2) + v60.reg[modVal&0x1F] * 2, modWriteValH);
+		MemWrite16(PC + (INT16)OpRead16(modAdd+2) + v60.reg[modVal&0x1F] * 2, modWriteValH);
 		break;
 	case 2:
-		MemWrite32(PC + (INT16)MemRead16(modAdd+2) + v60.reg[modVal&0x1F] * 4, modWriteValW);
+		MemWrite32(PC + (INT16)OpRead16(modAdd+2) + v60.reg[modVal&0x1F] * 4, modWriteValW);
 		break;
 	}
 
@@ -303,13 +303,13 @@ UINT32 am3PCDisplacementIndexed32(void)
 	switch (modDim)
 	{
 	case 0:
-		MemWrite8(PC + MemRead32(modAdd+2) + v60.reg[modVal&0x1F], modWriteValB);
+		MemWrite8(PC + OpRead32(modAdd+2) + v60.reg[modVal&0x1F], modWriteValB);
 		break;
 	case 1:
-		MemWrite16(PC + MemRead32(modAdd+2) + v60.reg[modVal&0x1F] * 2, modWriteValH);
+		MemWrite16(PC + OpRead32(modAdd+2) + v60.reg[modVal&0x1F] * 2, modWriteValH);
 		break;
 	case 2:
-		MemWrite32(PC + MemRead32(modAdd+2) + v60.reg[modVal&0x1F] * 4, modWriteValW);
+		MemWrite32(PC + OpRead32(modAdd+2) + v60.reg[modVal&0x1F] * 4, modWriteValW);
 		break;
 	}
 
@@ -321,13 +321,13 @@ UINT32 am3DisplacementIndirect8(void)
 	switch (modDim)
 	{
 	case 0:
-		MemWrite8(MemRead32(v60.reg[modVal&0x1F] + (INT8)MemRead8(modAdd+1)), modWriteValB);
+		MemWrite8(MemRead32(v60.reg[modVal&0x1F] + (INT8)OpRead8(modAdd+1)), modWriteValB);
 		break;
 	case 1:
-		MemWrite16(MemRead32(v60.reg[modVal&0x1F] + (INT8)MemRead8(modAdd+1)), modWriteValH);
+		MemWrite16(MemRead32(v60.reg[modVal&0x1F] + (INT8)OpRead8(modAdd+1)), modWriteValH);
 		break;
 	case 2:
-		MemWrite32(MemRead32(v60.reg[modVal&0x1F] + (INT8)MemRead8(modAdd+1)), modWriteValW);
+		MemWrite32(MemRead32(v60.reg[modVal&0x1F] + (INT8)OpRead8(modAdd+1)), modWriteValW);
 		break;
 	}
 
@@ -339,13 +339,13 @@ UINT32 am3DisplacementIndirect16(void)
 	switch (modDim)
 	{
 	case 0:
-		MemWrite8(MemRead32(v60.reg[modVal&0x1F] + (INT16)MemRead16(modAdd+1)), modWriteValB);
+		MemWrite8(MemRead32(v60.reg[modVal&0x1F] + (INT16)OpRead16(modAdd+1)), modWriteValB);
 		break;
 	case 1:
-		MemWrite16(MemRead32(v60.reg[modVal&0x1F] + (INT16)MemRead16(modAdd+1)), modWriteValH);
+		MemWrite16(MemRead32(v60.reg[modVal&0x1F] + (INT16)OpRead16(modAdd+1)), modWriteValH);
 		break;
 	case 2:
-		MemWrite32(MemRead32(v60.reg[modVal&0x1F] + (INT16)MemRead16(modAdd+1)), modWriteValW);
+		MemWrite32(MemRead32(v60.reg[modVal&0x1F] + (INT16)OpRead16(modAdd+1)), modWriteValW);
 		break;
 	}
 
@@ -357,13 +357,13 @@ UINT32 am3DisplacementIndirect32(void)
 	switch (modDim)
 	{
 	case 0:
-		MemWrite8(MemRead32(v60.reg[modVal&0x1F] + MemRead32(modAdd+1)), modWriteValB);
+		MemWrite8(MemRead32(v60.reg[modVal&0x1F] + OpRead32(modAdd+1)), modWriteValB);
 		break;
 	case 1:
-		MemWrite16(MemRead32(v60.reg[modVal&0x1F] + MemRead32(modAdd+1)), modWriteValH);
+		MemWrite16(MemRead32(v60.reg[modVal&0x1F] + OpRead32(modAdd+1)), modWriteValH);
 		break;
 	case 2:
-		MemWrite32(MemRead32(v60.reg[modVal&0x1F] + MemRead32(modAdd+1)), modWriteValW);
+		MemWrite32(MemRead32(v60.reg[modVal&0x1F] + OpRead32(modAdd+1)), modWriteValW);
 		break;
 	}
 
@@ -376,13 +376,13 @@ UINT32 am3DisplacementIndirectIndexed8(void)
 	switch (modDim)
 	{
 	case 0:
-		MemWrite8(MemRead32(v60.reg[modVal2&0x1F] + (INT8)MemRead8(modAdd+2)) + v60.reg[modVal&0x1F], modWriteValB);
+		MemWrite8(MemRead32(v60.reg[modVal2&0x1F] + (INT8)OpRead8(modAdd+2)) + v60.reg[modVal&0x1F], modWriteValB);
 		break;
 	case 1:
-		MemWrite16(MemRead32(v60.reg[modVal2&0x1F] + (INT8)MemRead8(modAdd+2)) + v60.reg[modVal&0x1F] * 2, modWriteValH);
+		MemWrite16(MemRead32(v60.reg[modVal2&0x1F] + (INT8)OpRead8(modAdd+2)) + v60.reg[modVal&0x1F] * 2, modWriteValH);
 		break;
 	case 2:
-		MemWrite32(MemRead32(v60.reg[modVal2&0x1F] + (INT8)MemRead8(modAdd+2)) + v60.reg[modVal&0x1F] * 4, modWriteValW);
+		MemWrite32(MemRead32(v60.reg[modVal2&0x1F] + (INT8)OpRead8(modAdd+2)) + v60.reg[modVal&0x1F] * 4, modWriteValW);
 		break;
 	}
 
@@ -394,13 +394,13 @@ UINT32 am3DisplacementIndirectIndexed16(void)
 	switch (modDim)
 	{
 	case 0:
-		MemWrite8(MemRead32(v60.reg[modVal2&0x1F] + (INT16)MemRead16(modAdd+2)) + v60.reg[modVal&0x1F], modWriteValB);
+		MemWrite8(MemRead32(v60.reg[modVal2&0x1F] + (INT16)OpRead16(modAdd+2)) + v60.reg[modVal&0x1F], modWriteValB);
 		break;
 	case 1:
-		MemWrite16(MemRead32(v60.reg[modVal2&0x1F] + (INT16)MemRead16(modAdd+2)) + v60.reg[modVal&0x1F] * 2, modWriteValH);
+		MemWrite16(MemRead32(v60.reg[modVal2&0x1F] + (INT16)OpRead16(modAdd+2)) + v60.reg[modVal&0x1F] * 2, modWriteValH);
 		break;
 	case 2:
-		MemWrite32(MemRead32(v60.reg[modVal2&0x1F] + (INT16)MemRead16(modAdd+2)) + v60.reg[modVal&0x1F] * 4, modWriteValW);
+		MemWrite32(MemRead32(v60.reg[modVal2&0x1F] + (INT16)OpRead16(modAdd+2)) + v60.reg[modVal&0x1F] * 4, modWriteValW);
 		break;
 	}
 
@@ -412,13 +412,13 @@ UINT32 am3DisplacementIndirectIndexed32(void)
 	switch (modDim)
 	{
 	case 0:
-		MemWrite8(MemRead32(v60.reg[modVal2&0x1F] + MemRead32(modAdd+2)) + v60.reg[modVal&0x1F], modWriteValB);
+		MemWrite8(MemRead32(v60.reg[modVal2&0x1F] + OpRead32(modAdd+2)) + v60.reg[modVal&0x1F], modWriteValB);
 		break;
 	case 1:
-		MemWrite16(MemRead32(v60.reg[modVal2&0x1F] + MemRead32(modAdd+2)) + v60.reg[modVal&0x1F] * 2, modWriteValH);
+		MemWrite16(MemRead32(v60.reg[modVal2&0x1F] + OpRead32(modAdd+2)) + v60.reg[modVal&0x1F] * 2, modWriteValH);
 		break;
 	case 2:
-		MemWrite32(MemRead32(v60.reg[modVal2&0x1F] + MemRead32(modAdd+2)) + v60.reg[modVal&0x1F] * 4, modWriteValW);
+		MemWrite32(MemRead32(v60.reg[modVal2&0x1F] + OpRead32(modAdd+2)) + v60.reg[modVal&0x1F] * 4, modWriteValW);
 		break;
 	}
 
@@ -430,13 +430,13 @@ UINT32 am3PCDisplacementIndirect8(void)
 	switch (modDim)
 	{
 	case 0:
-		MemWrite8(MemRead32(PC + (INT8)MemRead8(modAdd+1)), modWriteValB);
+		MemWrite8(MemRead32(PC + (INT8)OpRead8(modAdd+1)), modWriteValB);
 		break;
 	case 1:
-		MemWrite16(MemRead32(PC + (INT8)MemRead8(modAdd+1)), modWriteValH);
+		MemWrite16(MemRead32(PC + (INT8)OpRead8(modAdd+1)), modWriteValH);
 		break;
 	case 2:
-		MemWrite32(MemRead32(PC + (INT8)MemRead8(modAdd+1)), modWriteValW);
+		MemWrite32(MemRead32(PC + (INT8)OpRead8(modAdd+1)), modWriteValW);
 		break;
 	}
 
@@ -448,13 +448,13 @@ UINT32 am3PCDisplacementIndirect16(void)
 	switch (modDim)
 	{
 	case 0:
-		MemWrite8(MemRead32(PC + (INT16)MemRead16(modAdd+1)), modWriteValB);
+		MemWrite8(MemRead32(PC + (INT16)OpRead16(modAdd+1)), modWriteValB);
 		break;
 	case 1:
-		MemWrite16(MemRead32(PC + (INT16)MemRead16(modAdd+1)), modWriteValH);
+		MemWrite16(MemRead32(PC + (INT16)OpRead16(modAdd+1)), modWriteValH);
 		break;
 	case 2:
-		MemWrite32(MemRead32(PC + (INT16)MemRead16(modAdd+1)), modWriteValW);
+		MemWrite32(MemRead32(PC + (INT16)OpRead16(modAdd+1)), modWriteValW);
 		break;
 	}
 
@@ -466,13 +466,13 @@ UINT32 am3PCDisplacementIndirect32(void)
 	switch (modDim)
 	{
 	case 0:
-		MemWrite8(MemRead32(PC + MemRead32(modAdd+1)), modWriteValB);
+		MemWrite8(MemRead32(PC + OpRead32(modAdd+1)), modWriteValB);
 		break;
 	case 1:
-		MemWrite16(MemRead32(PC + MemRead32(modAdd+1)), modWriteValH);
+		MemWrite16(MemRead32(PC + OpRead32(modAdd+1)), modWriteValH);
 		break;
 	case 2:
-		MemWrite32(MemRead32(PC + MemRead32(modAdd+1)), modWriteValW);
+		MemWrite32(MemRead32(PC + OpRead32(modAdd+1)), modWriteValW);
 		break;
 	}
 
@@ -485,13 +485,13 @@ UINT32 am3PCDisplacementIndirectIndexed8(void)
 	switch (modDim)
 	{
 	case 0:
-		MemWrite8(MemRead32(PC + (INT8)MemRead8(modAdd+2)) + v60.reg[modVal&0x1F], modWriteValB);
+		MemWrite8(MemRead32(PC + (INT8)OpRead8(modAdd+2)) + v60.reg[modVal&0x1F], modWriteValB);
 		break;
 	case 1:
-		MemWrite16(MemRead32(PC + (INT8)MemRead8(modAdd+2)) + v60.reg[modVal&0x1F] * 2, modWriteValH);
+		MemWrite16(MemRead32(PC + (INT8)OpRead8(modAdd+2)) + v60.reg[modVal&0x1F] * 2, modWriteValH);
 		break;
 	case 2:
-		MemWrite32(MemRead32(PC + (INT8)MemRead8(modAdd+2)) + v60.reg[modVal&0x1F] * 4, modWriteValW);
+		MemWrite32(MemRead32(PC + (INT8)OpRead8(modAdd+2)) + v60.reg[modVal&0x1F] * 4, modWriteValW);
 		break;
 	}
 
@@ -503,13 +503,13 @@ UINT32 am3PCDisplacementIndirectIndexed16(void)
 	switch (modDim)
 	{
 	case 0:
-		MemWrite8(MemRead32(PC + (INT16)MemRead16(modAdd+2)) + v60.reg[modVal&0x1F], modWriteValB);
+		MemWrite8(MemRead32(PC + (INT16)OpRead16(modAdd+2)) + v60.reg[modVal&0x1F], modWriteValB);
 		break;
 	case 1:
-		MemWrite16(MemRead32(PC + (INT16)MemRead16(modAdd+2)) + v60.reg[modVal&0x1F] * 2, modWriteValH);
+		MemWrite16(MemRead32(PC + (INT16)OpRead16(modAdd+2)) + v60.reg[modVal&0x1F] * 2, modWriteValH);
 		break;
 	case 2:
-		MemWrite32(MemRead32(PC + (INT16)MemRead16(modAdd+2)) + v60.reg[modVal&0x1F] * 4, modWriteValW);
+		MemWrite32(MemRead32(PC + (INT16)OpRead16(modAdd+2)) + v60.reg[modVal&0x1F] * 4, modWriteValW);
 		break;
 	}
 
@@ -521,13 +521,13 @@ UINT32 am3PCDisplacementIndirectIndexed32(void)
 	switch (modDim)
 	{
 	case 0:
-		MemWrite8(MemRead32(PC + MemRead32(modAdd+2)) + v60.reg[modVal&0x1F], modWriteValB);
+		MemWrite8(MemRead32(PC + OpRead32(modAdd+2)) + v60.reg[modVal&0x1F], modWriteValB);
 		break;
 	case 1:
-		MemWrite16(MemRead32(PC + MemRead32(modAdd+2)) + v60.reg[modVal&0x1F] * 2, modWriteValH);
+		MemWrite16(MemRead32(PC + OpRead32(modAdd+2)) + v60.reg[modVal&0x1F] * 2, modWriteValH);
 		break;
 	case 2:
-		MemWrite32(MemRead32(PC + MemRead32(modAdd+2)) + v60.reg[modVal&0x1F] * 4, modWriteValW);
+		MemWrite32(MemRead32(PC + OpRead32(modAdd+2)) + v60.reg[modVal&0x1F] * 4, modWriteValW);
 		break;
 	}
 
@@ -540,13 +540,13 @@ UINT32 am3DoubleDisplacement8(void)
 	switch (modDim)
 	{
 	case 0:
-		MemWrite8(MemRead32(v60.reg[modVal&0x1F] + (INT8)MemRead8(modAdd+1)) + (INT8)MemRead8(modAdd+2), modWriteValB);
+		MemWrite8(MemRead32(v60.reg[modVal&0x1F] + (INT8)OpRead8(modAdd+1)) + (INT8)OpRead8(modAdd+2), modWriteValB);
 		break;
 	case 1:
-		MemWrite16(MemRead32(v60.reg[modVal&0x1F] + (INT8)MemRead8(modAdd+1)) + (INT8)MemRead8(modAdd+2), modWriteValH);
+		MemWrite16(MemRead32(v60.reg[modVal&0x1F] + (INT8)OpRead8(modAdd+1)) + (INT8)OpRead8(modAdd+2), modWriteValH);
 		break;
 	case 2:
-		MemWrite32(MemRead32(v60.reg[modVal&0x1F] + (INT8)MemRead8(modAdd+1)) + (INT8)MemRead8(modAdd+2), modWriteValW);
+		MemWrite32(MemRead32(v60.reg[modVal&0x1F] + (INT8)OpRead8(modAdd+1)) + (INT8)OpRead8(modAdd+2), modWriteValW);
 		break;
 	}
 
@@ -558,13 +558,13 @@ UINT32 am3DoubleDisplacement16(void)
 	switch (modDim)
 	{
 	case 0:
-		MemWrite8(MemRead32(v60.reg[modVal&0x1F] + (INT16)MemRead16(modAdd+1)) + (INT16)MemRead16(modAdd+3), modWriteValB);
+		MemWrite8(MemRead32(v60.reg[modVal&0x1F] + (INT16)OpRead16(modAdd+1)) + (INT16)OpRead16(modAdd+3), modWriteValB);
 		break;
 	case 1:
-		MemWrite16(MemRead32(v60.reg[modVal&0x1F] + (INT16)MemRead16(modAdd+1)) + (INT16)MemRead16(modAdd+3), modWriteValH);
+		MemWrite16(MemRead32(v60.reg[modVal&0x1F] + (INT16)OpRead16(modAdd+1)) + (INT16)OpRead16(modAdd+3), modWriteValH);
 		break;
 	case 2:
-		MemWrite32(MemRead32(v60.reg[modVal&0x1F] + (INT16)MemRead16(modAdd+1)) + (INT16)MemRead16(modAdd+3), modWriteValW);
+		MemWrite32(MemRead32(v60.reg[modVal&0x1F] + (INT16)OpRead16(modAdd+1)) + (INT16)OpRead16(modAdd+3), modWriteValW);
 		break;
 	}
 
@@ -576,13 +576,13 @@ UINT32 am3DoubleDisplacement32(void)
 	switch (modDim)
 	{
 	case 0:
-		MemWrite8(MemRead32(v60.reg[modVal&0x1F] + MemRead32(modAdd+1)) + MemRead32(modAdd+5), modWriteValB);
+		MemWrite8(MemRead32(v60.reg[modVal&0x1F] + OpRead32(modAdd+1)) + OpRead32(modAdd+5), modWriteValB);
 		break;
 	case 1:
-		MemWrite16(MemRead32(v60.reg[modVal&0x1F] + MemRead32(modAdd+1)) + MemRead32(modAdd+5), modWriteValH);
+		MemWrite16(MemRead32(v60.reg[modVal&0x1F] + OpRead32(modAdd+1)) + OpRead32(modAdd+5), modWriteValH);
 		break;
 	case 2:
-		MemWrite32(MemRead32(v60.reg[modVal&0x1F] + MemRead32(modAdd+1)) + MemRead32(modAdd+5), modWriteValW);
+		MemWrite32(MemRead32(v60.reg[modVal&0x1F] + OpRead32(modAdd+1)) + OpRead32(modAdd+5), modWriteValW);
 		break;
 	}
 
@@ -595,13 +595,13 @@ UINT32 am3PCDoubleDisplacement8(void)
 	switch (modDim)
 	{
 	case 0:
-		MemWrite8(MemRead32(PC + (INT8)MemRead8(modAdd+1)) + (INT8)MemRead8(modAdd+2), modWriteValB);
+		MemWrite8(MemRead32(PC + (INT8)OpRead8(modAdd+1)) + (INT8)OpRead8(modAdd+2), modWriteValB);
 		break;
 	case 1:
-		MemWrite16(MemRead32(PC + (INT8)MemRead8(modAdd+1)) + (INT8)MemRead8(modAdd+2), modWriteValH);
+		MemWrite16(MemRead32(PC + (INT8)OpRead8(modAdd+1)) + (INT8)OpRead8(modAdd+2), modWriteValH);
 		break;
 	case 2:
-		MemWrite32(MemRead32(PC + (INT8)MemRead8(modAdd+1)) + (INT8)MemRead8(modAdd+2), modWriteValW);
+		MemWrite32(MemRead32(PC + (INT8)OpRead8(modAdd+1)) + (INT8)OpRead8(modAdd+2), modWriteValW);
 		break;
 	}
 
@@ -613,13 +613,13 @@ UINT32 am3PCDoubleDisplacement16(void)
 	switch (modDim)
 	{
 	case 0:
-		MemWrite8(MemRead32(PC + (INT16)MemRead16(modAdd+1)) + (INT16)MemRead16(modAdd+3), modWriteValB);
+		MemWrite8(MemRead32(PC + (INT16)OpRead16(modAdd+1)) + (INT16)OpRead16(modAdd+3), modWriteValB);
 		break;
 	case 1:
-		MemWrite16(MemRead32(PC + (INT16)MemRead16(modAdd+1)) + (INT16)MemRead16(modAdd+3), modWriteValH);
+		MemWrite16(MemRead32(PC + (INT16)OpRead16(modAdd+1)) + (INT16)OpRead16(modAdd+3), modWriteValH);
 		break;
 	case 2:
-		MemWrite32(MemRead32(PC + (INT16)MemRead16(modAdd+1)) + (INT16)MemRead16(modAdd+3), modWriteValW);
+		MemWrite32(MemRead32(PC + (INT16)OpRead16(modAdd+1)) + (INT16)OpRead16(modAdd+3), modWriteValW);
 		break;
 	}
 
@@ -631,13 +631,13 @@ UINT32 am3PCDoubleDisplacement32(void)
 	switch (modDim)
 	{
 	case 0:
-		MemWrite8(MemRead32(PC + MemRead32(modAdd+1)) + MemRead32(modAdd+5), modWriteValB);
+		MemWrite8(MemRead32(PC + OpRead32(modAdd+1)) + OpRead32(modAdd+5), modWriteValB);
 		break;
 	case 1:
-		MemWrite16(MemRead32(PC + MemRead32(modAdd+1)) + MemRead32(modAdd+5), modWriteValH);
+		MemWrite16(MemRead32(PC + OpRead32(modAdd+1)) + OpRead32(modAdd+5), modWriteValH);
 		break;
 	case 2:
-		MemWrite32(MemRead32(PC + MemRead32(modAdd+1)) + MemRead32(modAdd+5), modWriteValW);
+		MemWrite32(MemRead32(PC + OpRead32(modAdd+1)) + OpRead32(modAdd+5), modWriteValW);
 		break;
 	}
 
@@ -649,13 +649,13 @@ UINT32 am3DirectAddress(void)
 	switch (modDim)
 	{
 	case 0:
-		MemWrite8(MemRead32(modAdd+1), modWriteValB);
+		MemWrite8(OpRead32(modAdd+1), modWriteValB);
 		break;
 	case 1:
-		MemWrite16(MemRead32(modAdd+1), modWriteValH);
+		MemWrite16(OpRead32(modAdd+1), modWriteValH);
 		break;
 	case 2:
-		MemWrite32(MemRead32(modAdd+1), modWriteValW);
+		MemWrite32(OpRead32(modAdd+1), modWriteValW);
 		break;
 	}
 
@@ -667,13 +667,13 @@ UINT32 am3DirectAddressIndexed(void)
 	switch (modDim)
 	{
 	case 0:
-		MemWrite8(MemRead32(modAdd+2) + v60.reg[modVal&0x1F], modWriteValB);
+		MemWrite8(OpRead32(modAdd+2) + v60.reg[modVal&0x1F], modWriteValB);
 		break;
 	case 1:
-		MemWrite16(MemRead32(modAdd+2) + v60.reg[modVal&0x1F] * 2, modWriteValH);
+		MemWrite16(OpRead32(modAdd+2) + v60.reg[modVal&0x1F] * 2, modWriteValH);
 		break;
 	case 2:
-		MemWrite32(MemRead32(modAdd+2) + v60.reg[modVal&0x1F] * 4, modWriteValW);
+		MemWrite32(OpRead32(modAdd+2) + v60.reg[modVal&0x1F] * 4, modWriteValW);
 		break;
 	}
 
@@ -685,13 +685,13 @@ UINT32 am3DirectAddressDeferred(void)
 	switch (modDim)
 	{
 	case 0:
-		MemWrite8(MemRead32(MemRead32(modAdd+1)), modWriteValB);
+		MemWrite8(MemRead32(OpRead32(modAdd+1)), modWriteValB);
 		break;
 	case 1:
-		MemWrite16(MemRead32(MemRead32(modAdd+1)), modWriteValH);
+		MemWrite16(MemRead32(OpRead32(modAdd+1)), modWriteValH);
 		break;
 	case 2:
-		MemWrite32(MemRead32(MemRead32(modAdd+1)), modWriteValW);
+		MemWrite32(MemRead32(OpRead32(modAdd+1)), modWriteValW);
 		break;
 	}
 
@@ -703,13 +703,13 @@ UINT32 am3DirectAddressDeferredIndexed(void)
 	switch (modDim)
 	{
 	case 0:
-		MemWrite8(MemRead32(MemRead32(modAdd+2)) + v60.reg[modVal&0x1F], modWriteValB);
+		MemWrite8(MemRead32(OpRead32(modAdd+2)) + v60.reg[modVal&0x1F], modWriteValB);
 		break;
 	case 1:
-		MemWrite16(MemRead32(MemRead32(modAdd+2)) + v60.reg[modVal&0x1F], modWriteValH);
+		MemWrite16(MemRead32(OpRead32(modAdd+2)) + v60.reg[modVal&0x1F], modWriteValH);
 		break;
 	case 2:
-		MemWrite32(MemRead32(MemRead32(modAdd+2)) + v60.reg[modVal&0x1F], modWriteValW);
+		MemWrite32(MemRead32(OpRead32(modAdd+2)) + v60.reg[modVal&0x1F], modWriteValW);
 		break;
 	}
 
@@ -844,7 +844,7 @@ UINT32 (*AMTable3_G6[8])(void) =
 
 UINT32 am3Group6(void)
 {
-	modVal2=MemRead8(modAdd+1);
+	modVal2=OpRead8(modAdd+1);
 	return AMTable3_G6[modVal2>>5]();
 }
 

@@ -1411,7 +1411,7 @@ INLINE void common_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxEle
 		if( gfx && gfx->colortable )
 		{
 			const pen_t *pal = &gfx->colortable[gfx->color_granularity * (color % gfx->total_colors)]; /* ASG 980209 */
-			int source_base = (code % gfx->total_elements) * gfx->height;
+			UINT8 *source_base = gfx->gfxdata + (code % gfx->total_elements) * gfx->char_modulo;
 
 			int sprite_screen_height = (scaley*gfx->height+0x8000)>>16;
 			int sprite_screen_width = (scalex*gfx->width+0x8000)>>16;
@@ -1488,7 +1488,7 @@ INLINE void common_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxEle
 							{
 								for( y=sy; y<ey; y++ )
 								{
-									UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+									UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
 									UINT8 *dest = dest_bmp->line[y];
 									UINT8 *pri = pri_buffer->line[y];
 
@@ -1508,7 +1508,7 @@ INLINE void common_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxEle
 							{
 								for( y=sy; y<ey; y++ )
 								{
-									UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+									UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
 									UINT8 *dest = dest_bmp->line[y];
 									UINT8 *pri = pri_buffer->line[y];
 
@@ -1530,7 +1530,7 @@ INLINE void common_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxEle
 							{
 								for( y=sy; y<ey; y++ )
 								{
-									UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+									UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
 									UINT8 *dest = dest_bmp->line[y];
 
 									int x, x_index = x_index_base;
@@ -1547,7 +1547,7 @@ INLINE void common_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxEle
 							{
 								for( y=sy; y<ey; y++ )
 								{
-									UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+									UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
 									UINT8 *dest = dest_bmp->line[y];
 
 									int x, x_index = x_index_base;
@@ -1572,7 +1572,7 @@ INLINE void common_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxEle
 							{
 								for( y=sy; y<ey; y++ )
 								{
-									UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+									UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
 									UINT8 *dest = dest_bmp->line[y];
 									UINT8 *pri = pri_buffer->line[y];
 
@@ -1596,7 +1596,7 @@ INLINE void common_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxEle
 							{
 								for( y=sy; y<ey; y++ )
 								{
-									UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+									UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
 									UINT8 *dest = dest_bmp->line[y];
 									UINT8 *pri = pri_buffer->line[y];
 
@@ -1623,7 +1623,7 @@ INLINE void common_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxEle
 							{
 								for( y=sy; y<ey; y++ )
 								{
-									UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+									UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
 									UINT8 *dest = dest_bmp->line[y];
 
 									int x, x_index = x_index_base;
@@ -1641,7 +1641,7 @@ INLINE void common_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxEle
 							{
 								for( y=sy; y<ey; y++ )
 								{
-									UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+									UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
 									UINT8 *dest = dest_bmp->line[y];
 
 									int x, x_index = x_index_base;
@@ -1665,7 +1665,7 @@ INLINE void common_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxEle
 						{
 							for( y=sy; y<ey; y++ )
 							{
-								UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
 								UINT8 *dest = dest_bmp->line[y];
 								UINT8 *pri = pri_buffer->line[y];
 
@@ -1689,7 +1689,7 @@ INLINE void common_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxEle
 						{
 							for( y=sy; y<ey; y++ )
 							{
-								UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
 								UINT8 *dest = dest_bmp->line[y];
 
 								int x, x_index = x_index_base;
@@ -1712,7 +1712,7 @@ INLINE void common_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxEle
 						{
 							for( y=sy; y<ey; y++ )
 							{
-								UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
 								UINT8 *dest = dest_bmp->line[y];
 								UINT8 *pri = pri_buffer->line[y];
 
@@ -1736,7 +1736,7 @@ INLINE void common_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxEle
 						{
 							for( y=sy; y<ey; y++ )
 							{
-								UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
 								UINT8 *dest = dest_bmp->line[y];
 
 								int x, x_index = x_index_base;
@@ -1759,7 +1759,7 @@ INLINE void common_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxEle
 						{
 							for( y=sy; y<ey; y++ )
 							{
-								UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
 								UINT8 *dest = dest_bmp->line[y];
 								UINT8 *pri = pri_buffer->line[y];
 
@@ -1783,7 +1783,7 @@ INLINE void common_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxEle
 						{
 							for( y=sy; y<ey; y++ )
 							{
-								UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
 								UINT8 *dest = dest_bmp->line[y];
 
 								int x, x_index = x_index_base;
@@ -1807,7 +1807,7 @@ INLINE void common_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxEle
 						{
 							for( y=sy; y<ey; y++ )
 							{
-								UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
 								UINT8 *dest = dest_bmp->line[y];
 								UINT8 *pri = pri_buffer->line[y];
 
@@ -1831,7 +1831,7 @@ INLINE void common_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxEle
 						{
 							for( y=sy; y<ey; y++ )
 							{
-								UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
 								UINT8 *dest = dest_bmp->line[y];
 
 								int x, x_index = x_index_base;
@@ -1854,7 +1854,7 @@ INLINE void common_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxEle
 						{
 							for( y=sy; y<ey; y++ )
 							{
-								UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
 								UINT8 *dest = dest_bmp->line[y];
 								UINT8 *pri = pri_buffer->line[y];
 
@@ -1893,7 +1893,7 @@ INLINE void common_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxEle
 						{
 							for( y=sy; y<ey; y++ )
 							{
-								UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
 								UINT8 *dest = dest_bmp->line[y];
 
 								int x, x_index = x_index_base;
@@ -1927,7 +1927,7 @@ INLINE void common_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxEle
 						{
 							for( y=sy; y<ey; y++ )
 							{
-								UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
 								UINT8 *dest = dest_bmp->line[y];
 								UINT8 *pri = pri_buffer->line[y];
 
@@ -1966,7 +1966,7 @@ INLINE void common_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxEle
 						{
 							for( y=sy; y<ey; y++ )
 							{
-								UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
 								UINT8 *dest = dest_bmp->line[y];
 
 								int x, x_index = x_index_base;
@@ -2003,7 +2003,7 @@ INLINE void common_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxEle
 		if( gfx && gfx->colortable )
 		{
 			const pen_t *pal = &gfx->colortable[gfx->color_granularity * (color % gfx->total_colors)]; /* ASG 980209 */
-			int source_base = (code % gfx->total_elements) * gfx->height;
+			UINT8 *source_base = gfx->gfxdata + (code % gfx->total_elements) * gfx->char_modulo;
 
 			int sprite_screen_height = (scaley*gfx->height+0x8000)>>16;
 			int sprite_screen_width = (scalex*gfx->width+0x8000)>>16;
@@ -2080,7 +2080,7 @@ INLINE void common_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxEle
 							{
 								for( y=sy; y<ey; y++ )
 								{
-									UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+									UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
 									UINT16 *dest = (UINT16 *)dest_bmp->line[y];
 									UINT8 *pri = pri_buffer->line[y];
 
@@ -2100,7 +2100,7 @@ INLINE void common_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxEle
 							{
 								for( y=sy; y<ey; y++ )
 								{
-									UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+									UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
 									UINT16 *dest = (UINT16 *)dest_bmp->line[y];
 									UINT8 *pri = pri_buffer->line[y];
 
@@ -2123,7 +2123,7 @@ INLINE void common_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxEle
 							{
 								for( y=sy; y<ey; y++ )
 								{
-									UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+									UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
 									UINT16 *dest = (UINT16 *)dest_bmp->line[y];
 
 									int x, x_index = x_index_base;
@@ -2140,7 +2140,7 @@ INLINE void common_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxEle
 							{
 								for( y=sy; y<ey; y++ )
 								{
-									UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+									UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
 									UINT16 *dest = (UINT16 *)dest_bmp->line[y];
 
 									int x, x_index = x_index_base;
@@ -2165,7 +2165,7 @@ INLINE void common_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxEle
 							{
 								for( y=sy; y<ey; y++ )
 								{
-									UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+									UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
 									UINT16 *dest = (UINT16 *)dest_bmp->line[y];
 									UINT8 *pri = pri_buffer->line[y];
 
@@ -2189,7 +2189,7 @@ INLINE void common_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxEle
 							{
 								for( y=sy; y<ey; y++ )
 								{
-									UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+									UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
 									UINT16 *dest = (UINT16 *)dest_bmp->line[y];
 									UINT8 *pri = pri_buffer->line[y];
 
@@ -2216,7 +2216,7 @@ INLINE void common_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxEle
 							{
 								for( y=sy; y<ey; y++ )
 								{
-									UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+									UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
 									UINT16 *dest = (UINT16 *)dest_bmp->line[y];
 
 									int x, x_index = x_index_base;
@@ -2234,7 +2234,7 @@ INLINE void common_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxEle
 							{
 								for( y=sy; y<ey; y++ )
 								{
-									UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+									UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
 									UINT16 *dest = (UINT16 *)dest_bmp->line[y];
 
 									int x, x_index = x_index_base;
@@ -2258,7 +2258,7 @@ INLINE void common_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxEle
 						{
 							for( y=sy; y<ey; y++ )
 							{
-								UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
 								UINT16 *dest = (UINT16 *)dest_bmp->line[y];
 								UINT8 *pri = pri_buffer->line[y];
 
@@ -2282,7 +2282,7 @@ INLINE void common_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxEle
 						{
 							for( y=sy; y<ey; y++ )
 							{
-								UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
 								UINT16 *dest = (UINT16 *)dest_bmp->line[y];
 
 								int x, x_index = x_index_base;
@@ -2305,7 +2305,7 @@ INLINE void common_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxEle
 						{
 							for( y=sy; y<ey; y++ )
 							{
-								UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
 								UINT16 *dest = (UINT16 *)dest_bmp->line[y];
 								UINT8 *pri = pri_buffer->line[y];
 
@@ -2329,7 +2329,7 @@ INLINE void common_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxEle
 						{
 							for( y=sy; y<ey; y++ )
 							{
-								UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
 								UINT16 *dest = (UINT16 *)dest_bmp->line[y];
 
 								int x, x_index = x_index_base;
@@ -2352,7 +2352,7 @@ INLINE void common_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxEle
 						{
 							for( y=sy; y<ey; y++ )
 							{
-								UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
 								UINT16 *dest = (UINT16 *)dest_bmp->line[y];
 								UINT8 *pri = pri_buffer->line[y];
 
@@ -2376,7 +2376,7 @@ INLINE void common_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxEle
 						{
 							for( y=sy; y<ey; y++ )
 							{
-								UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
 								UINT16 *dest = (UINT16 *)dest_bmp->line[y];
 
 								int x, x_index = x_index_base;
@@ -2400,7 +2400,7 @@ INLINE void common_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxEle
 						{
 							for( y=sy; y<ey; y++ )
 							{
-								UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
 								UINT16 *dest = (UINT16 *)dest_bmp->line[y];
 								UINT8 *pri = pri_buffer->line[y];
 
@@ -2424,7 +2424,7 @@ INLINE void common_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxEle
 						{
 							for( y=sy; y<ey; y++ )
 							{
-								UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
 								UINT16 *dest = (UINT16 *)dest_bmp->line[y];
 
 								int x, x_index = x_index_base;
@@ -2447,7 +2447,7 @@ INLINE void common_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxEle
 						{
 							for( y=sy; y<ey; y++ )
 							{
-								UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
 								UINT16 *dest = (UINT16 *)dest_bmp->line[y];
 								UINT8 *pri = pri_buffer->line[y];
 
@@ -2486,7 +2486,7 @@ INLINE void common_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxEle
 						{
 							for( y=sy; y<ey; y++ )
 							{
-								UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
 								UINT16 *dest = (UINT16 *)dest_bmp->line[y];
 
 								int x, x_index = x_index_base;
@@ -2520,7 +2520,7 @@ INLINE void common_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxEle
 						{
 							for( y=sy; y<ey; y++ )
 							{
-								UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
 								UINT16 *dest = (UINT16 *)dest_bmp->line[y];
 								UINT8 *pri = pri_buffer->line[y];
 
@@ -2559,7 +2559,7 @@ INLINE void common_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxEle
 						{
 							for( y=sy; y<ey; y++ )
 							{
-								UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
 								UINT16 *dest = (UINT16 *)dest_bmp->line[y];
 
 								int x, x_index = x_index_base;
@@ -2593,7 +2593,7 @@ INLINE void common_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxEle
 						{
 							for( y=sy; y<ey; y++ )
 							{
-								UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
 								UINT16 *dest = (UINT16 *)dest_bmp->line[y];
 								UINT8 *pri = pri_buffer->line[y];
 
@@ -2622,7 +2622,7 @@ INLINE void common_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxEle
 						{
 							for( y=sy; y<ey; y++ )
 							{
-								UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
 								UINT16 *dest = (UINT16 *)dest_bmp->line[y];
 
 								int x, x_index = x_index_base;
@@ -2651,7 +2651,7 @@ INLINE void common_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxEle
 						{
 							for( y=sy; y<ey; y++ )
 							{
-								UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
 								UINT16 *dest = (UINT16 *)dest_bmp->line[y];
 								UINT8 *pri = pri_buffer->line[y];
 
@@ -2675,7 +2675,7 @@ INLINE void common_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxEle
 						{
 							for( y=sy; y<ey; y++ )
 							{
-								UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
 								UINT16 *dest = (UINT16 *)dest_bmp->line[y];
 
 								int x, x_index = x_index_base;
@@ -2699,7 +2699,7 @@ INLINE void common_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxEle
 						{
 							for( y=sy; y<ey; y++ )
 							{
-								UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
 								UINT16 *dest = (UINT16 *)dest_bmp->line[y];
 								UINT8 *pri = pri_buffer->line[y];
 
@@ -2728,7 +2728,7 @@ INLINE void common_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxEle
 						{
 							for( y=sy; y<ey; y++ )
 							{
-								UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
 								UINT16 *dest = (UINT16 *)dest_bmp->line[y];
 
 								int x, x_index = x_index_base;
@@ -2758,7 +2758,7 @@ INLINE void common_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxEle
 		if( gfx && gfx->colortable )
 		{
 			const pen_t *pal = &gfx->colortable[gfx->color_granularity * (color % gfx->total_colors)]; /* ASG 980209 */
-			int source_base = (code % gfx->total_elements) * gfx->height;
+			UINT8 *source_base = gfx->gfxdata + (code % gfx->total_elements) * gfx->char_modulo;
 
 			int sprite_screen_height = (scaley*gfx->height+0x8000)>>16;
 			int sprite_screen_width = (scalex*gfx->width+0x8000)>>16;
@@ -2833,7 +2833,7 @@ INLINE void common_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxEle
 						{
 							for( y=sy; y<ey; y++ )
 							{
-								UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
 								UINT32 *dest = (UINT32 *)dest_bmp->line[y];
 								UINT8 *pri = pri_buffer->line[y];
 
@@ -2853,7 +2853,7 @@ INLINE void common_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxEle
 						{
 							for( y=sy; y<ey; y++ )
 							{
-								UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
 								UINT32 *dest = (UINT32 *)dest_bmp->line[y];
 
 								int x, x_index = x_index_base;
@@ -2875,7 +2875,7 @@ INLINE void common_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxEle
 						{
 							for( y=sy; y<ey; y++ )
 							{
-								UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
 								UINT32 *dest = (UINT32 *)dest_bmp->line[y];
 								UINT8 *pri = pri_buffer->line[y];
 
@@ -2899,7 +2899,7 @@ INLINE void common_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxEle
 						{
 							for( y=sy; y<ey; y++ )
 							{
-								UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
 								UINT32 *dest = (UINT32 *)dest_bmp->line[y];
 
 								int x, x_index = x_index_base;
@@ -2922,7 +2922,7 @@ INLINE void common_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxEle
 						{
 							for( y=sy; y<ey; y++ )
 							{
-								UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
 								UINT32 *dest = (UINT32 *)dest_bmp->line[y];
 								UINT8 *pri = pri_buffer->line[y];
 
@@ -2946,7 +2946,7 @@ INLINE void common_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxEle
 						{
 							for( y=sy; y<ey; y++ )
 							{
-								UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
 								UINT32 *dest = (UINT32 *)dest_bmp->line[y];
 
 								int x, x_index = x_index_base;
@@ -2969,7 +2969,7 @@ INLINE void common_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxEle
 						{
 							for( y=sy; y<ey; y++ )
 							{
-								UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
 								UINT32 *dest = (UINT32 *)dest_bmp->line[y];
 								UINT8 *pri = pri_buffer->line[y];
 
@@ -2993,7 +2993,7 @@ INLINE void common_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxEle
 						{
 							for( y=sy; y<ey; y++ )
 							{
-								UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
 								UINT32 *dest = (UINT32 *)dest_bmp->line[y];
 
 								int x, x_index = x_index_base;
@@ -3016,7 +3016,7 @@ INLINE void common_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxEle
 						{
 							for( y=sy; y<ey; y++ )
 							{
-								UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
 								UINT32 *dest = (UINT32 *)dest_bmp->line[y];
 								UINT8 *pri = pri_buffer->line[y];
 
@@ -3040,7 +3040,7 @@ INLINE void common_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxEle
 						{
 							for( y=sy; y<ey; y++ )
 							{
-								UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
 								UINT32 *dest = (UINT32 *)dest_bmp->line[y];
 
 								int x, x_index = x_index_base;
@@ -3064,7 +3064,7 @@ INLINE void common_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxEle
 						{
 							for( y=sy; y<ey; y++ )
 							{
-								UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
 								UINT32 *dest = (UINT32 *)dest_bmp->line[y];
 								UINT8 *pri = pri_buffer->line[y];
 
@@ -3088,7 +3088,7 @@ INLINE void common_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxEle
 						{
 							for( y=sy; y<ey; y++ )
 							{
-								UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
 								UINT32 *dest = (UINT32 *)dest_bmp->line[y];
 
 								int x, x_index = x_index_base;
@@ -3111,7 +3111,7 @@ INLINE void common_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxEle
 						{
 							for( y=sy; y<ey; y++ )
 							{
-								UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
 								UINT32 *dest = (UINT32 *)dest_bmp->line[y];
 								UINT8 *pri = pri_buffer->line[y];
 
@@ -3150,7 +3150,7 @@ INLINE void common_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxEle
 						{
 							for( y=sy; y<ey; y++ )
 							{
-								UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
 								UINT32 *dest = (UINT32 *)dest_bmp->line[y];
 
 								int x, x_index = x_index_base;
@@ -3184,7 +3184,7 @@ INLINE void common_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxEle
 						{
 							for( y=sy; y<ey; y++ )
 							{
-								UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
 								UINT32 *dest = (UINT32 *)dest_bmp->line[y];
 								UINT8 *pri = pri_buffer->line[y];
 
@@ -3223,7 +3223,7 @@ INLINE void common_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxEle
 						{
 							for( y=sy; y<ey; y++ )
 							{
-								UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
 								UINT32 *dest = (UINT32 *)dest_bmp->line[y];
 
 								int x, x_index = x_index_base;
@@ -3258,7 +3258,7 @@ INLINE void common_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxEle
 						{
 							for( y=sy; y<ey; y++ )
 							{
-								UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
 								UINT32 *dest = (UINT32 *)dest_bmp->line[y];
 								UINT8 *pri = pri_buffer->line[y];
 
@@ -3287,7 +3287,7 @@ INLINE void common_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxEle
 						{
 							for( y=sy; y<ey; y++ )
 							{
-								UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
 								UINT32 *dest = (UINT32 *)dest_bmp->line[y];
 
 								int x, x_index = x_index_base;
@@ -3316,7 +3316,7 @@ INLINE void common_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxEle
 						{
 							for( y=sy; y<ey; y++ )
 							{
-								UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
 								UINT32 *dest = (UINT32 *)dest_bmp->line[y];
 								UINT8 *pri = pri_buffer->line[y];
 
@@ -3340,7 +3340,7 @@ INLINE void common_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxEle
 						{
 							for( y=sy; y<ey; y++ )
 							{
-								UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
 								UINT32 *dest = (UINT32 *)dest_bmp->line[y];
 
 								int x, x_index = x_index_base;
@@ -3364,7 +3364,7 @@ INLINE void common_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxEle
 						{
 							for( y=sy; y<ey; y++ )
 							{
-								UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
 								UINT32 *dest = (UINT32 *)dest_bmp->line[y];
 								UINT8 *pri = pri_buffer->line[y];
 
@@ -3393,7 +3393,7 @@ INLINE void common_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxEle
 						{
 							for( y=sy; y<ey; y++ )
 							{
-								UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
 								UINT32 *dest = (UINT32 *)dest_bmp->line[y];
 
 								int x, x_index = x_index_base;
