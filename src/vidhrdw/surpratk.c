@@ -92,10 +92,6 @@ void surpratk_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	K052109_tilemap_update();
 
-	palette_init_used_colors();
-	K053245_mark_sprites_colors();
-	palette_recalc();
-
 	layer[0] = 0;
 	layerpri[0] = K053251_get_priority(K053251_CI2);
 	layer[1] = 1;

@@ -11,9 +11,8 @@ TODO:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "machine/segacrpt.h"
 
-/* in machine/segacrpt.c */
-void yamato_decode(void);
 
 
 extern unsigned char *cclimber_bsvideoram;

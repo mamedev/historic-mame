@@ -27,9 +27,6 @@ static int flipscreen;
 ***************************************************************************/
 int pbaction_vh_start(void)
 {
-	int i;
-
-
 	if (generic_vh_start() != 0)
 		return 1;
 
@@ -46,9 +43,6 @@ int pbaction_vh_start(void)
 		generic_vh_stop();
 		return 1;
 	}
-
-	/* leave everything at the default, but map all foreground 0 pens as transparent */
-	for (i = 0;i < 16;i++) palette_used_colors[8 * i] = PALETTE_COLOR_TRANSPARENT;
 
 	return 0;
 }
@@ -123,45 +117,8 @@ void pbaction_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	int offs;
 
 
-	/* recalc the palette if necessary */
-	if (palette_recalc())
-	{
-		memset(dirtybuffer,1,videoram_size);
-		memset(dirtybuffer2,1,videoram_size);
-	}
-
-
-	/* for every character in the Video RAM, check if it has been modified */
-	/* since last time and update it accordingly. */
 	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
-		if (dirtybuffer[offs])
-		{
-			int sx,sy,flipx,flipy;
-
-
-			dirtybuffer[offs] = 0;
-
-			sx = offs % 32;
-			sy = offs / 32;
-			flipx = colorram[offs] & 0x40;
-			flipy = colorram[offs] & 0x80;
-			if (flipscreen)
-			{
-				sx = 31 - sx;
-				sy = 31 - sy;
-				flipx = !flipx;
-				flipy = !flipy;
-			}
-
-			drawgfx(tmpbitmap,Machine->gfx[0],
-					videoram[offs] + 0x10 * (colorram[offs] & 0x30),
-					colorram[offs] & 0x0f,
-					flipx,flipy,
-					8*sx,8*sy,
-					&Machine->visible_area,TRANSPARENCY_NONE,0);
-		}
-
 		if (dirtybuffer2[offs])
 		{
 			int sx,sy,flipy;
@@ -235,5 +192,39 @@ void pbaction_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 
 	/* copy the foreground */
-	copyscrollbitmap(bitmap,tmpbitmap,1,&scroll,0,0,&Machine->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
+	for (offs = videoram_size - 1;offs >= 0;offs--)
+	{
+//		if (dirtybuffer[offs])
+		{
+			int sx,sy,flipx,flipy;
+
+
+			dirtybuffer[offs] = 0;
+
+			sx = offs % 32;
+			sy = offs / 32;
+			flipx = colorram[offs] & 0x40;
+			flipy = colorram[offs] & 0x80;
+			if (flipscreen)
+			{
+				sx = 31 - sx;
+				sy = 31 - sy;
+				flipx = !flipx;
+				flipy = !flipy;
+			}
+
+			drawgfx(bitmap,Machine->gfx[0],
+					videoram[offs] + 0x10 * (colorram[offs] & 0x30),
+					colorram[offs] & 0x0f,
+					flipx,flipy,
+					(8*sx + scroll) & 0xff,8*sy,
+					&Machine->visible_area,TRANSPARENCY_PEN,0);
+			drawgfx(bitmap,Machine->gfx[0],
+					videoram[offs] + 0x10 * (colorram[offs] & 0x30),
+					colorram[offs] & 0x0f,
+					flipx,flipy,
+					((8*sx + scroll) & 0xff)-256,8*sy,
+					&Machine->visible_area,TRANSPARENCY_PEN,0);
+		}
+	}
 }

@@ -722,8 +722,6 @@ void shanghai_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	int x,y,b;
 
 
-	palette_recalc();
-
 	b = 2 * (((HD63484_reg[0xcc/2] & 0x001f) << 16) + HD63484_reg[0xce/2]);
 	for (y = 0;y < 280;y++)
 	{
@@ -1062,7 +1060,7 @@ static const struct MachineDriver machine_driver_shangha2 =
 	256,0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	shanghai_vh_start,
 	shanghai_vh_stop,
@@ -1106,5 +1104,5 @@ ROM_END
 
 
 
-GAME( 1988, shanghai, 0, shanghai, shanghai, 0, ROT0,       "Sunsoft", "Shanghai (Japan)" )
-GAME( 1989, shangha2, 0, shangha2, shangha2, 0, ROT0_16BIT, "Sunsoft", "Shanghai II (Japan)" )
+GAME( 1988, shanghai, 0, shanghai, shanghai, 0, ROT0, "Sunsoft", "Shanghai (Japan)" )
+GAME( 1989, shangha2, 0, shangha2, shangha2, 0, ROT0, "Sunsoft", "Shanghai II (Japan)" )

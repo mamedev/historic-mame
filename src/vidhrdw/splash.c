@@ -199,10 +199,6 @@ void splash_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	tilemap_set_scrolly(screen[0], 0, splash_vregs[0]);
 	tilemap_set_scrolly(screen[1], 0, splash_vregs[1]);
 
-	tilemap_update(ALL_TILEMAPS);
-
-	palette_recalc();
-
 	copybitmap(bitmap,screen2,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 
 	tilemap_draw(bitmap,screen[1],0,0);

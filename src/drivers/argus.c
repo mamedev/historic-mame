@@ -836,7 +836,7 @@ static const struct MachineDriver machine_driver_argus =
 	56*16, 56*16,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	argus_vh_start,
 	argus_vh_stop,
@@ -880,7 +880,7 @@ static const struct MachineDriver machine_driver_valtric =
 	48*16, 48*16,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	valtric_vh_start,
 	0,
@@ -924,7 +924,7 @@ static const struct MachineDriver machine_driver_butasan =
 	48*16, 48*16,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	butasan_vh_start,
 	butasan_vh_stop,

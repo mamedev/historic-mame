@@ -6,6 +6,7 @@
 
 	Games supported:
 		* Escape From The Planet Of The Robot Monsters (1989) [2 sets]
+		* Klax prototypes [2 sets]
 
 	Known bugs:
 		* none at this time
@@ -167,7 +168,6 @@ static WRITE16_HANDLER( sync_w )
 static MEMORY_READ16_START( main_readmem )
 	{ 0x000000, 0x09ffff, MRA16_ROM },
 	{ 0x0e0000, 0x0e0fff, atarigen_eeprom_r },
-	{ 0x16cc00, 0x16cc01, sync_r },
 	{ 0x160000, 0x16ffff, MRA16_BANK1 },
 	{ 0x260000, 0x26000f, input_port_0_word_r },
 	{ 0x260010, 0x26001f, special_port1_r },
@@ -181,7 +181,6 @@ MEMORY_END
 static MEMORY_WRITE16_START( main_writemem )
 	{ 0x000000, 0x09ffff, MWA16_ROM },
 	{ 0x0e0000, 0x0e0fff, atarigen_eeprom_w, &atarigen_eeprom, &atarigen_eeprom_size },
-	{ 0x16cc00, 0x16cc01, sync_w, &sync_data },
 	{ 0x160000, 0x16ffff, MWA16_BANK1 },	/* shared */
 	{ 0x1f0000, 0x1fffff, atarigen_eeprom_enable_w },
 	{ 0x2e0000, 0x2e0001, watchdog_reset16_w },
@@ -279,6 +278,40 @@ INPUT_PORTS_START( eprom )
 INPUT_PORTS_END
 
 
+INPUT_PORTS_START( klaxp )
+	PORT_START		/* 26000 */
+	PORT_BIT( 0x00ff, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER1 )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER1 )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER1 )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER1 )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER1 )
+
+	PORT_START		/* 26010 */
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_VBLANK )
+	PORT_SERVICE( 0x0002, IP_ACTIVE_LOW )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_UNUSED )	/* Input buffer full (@260030) */
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_UNUSED ) /* Output buffer full (@360030) */
+	PORT_BIT( 0x0010, IP_ACTIVE_HIGH, IPT_UNUSED ) /* ADEOC, end of conversion */
+	PORT_BIT( 0x00e0, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER2 )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER2 )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER2 )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER2 )
+
+	JSA_II_PORT	/* audio board port */
+INPUT_PORTS_END
+
+
 
 /*************************************
  *
@@ -321,7 +354,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /*************************************
  *
- *	Machine driver
+ *	Machine drivers
  *
  *************************************/
 
@@ -350,10 +383,10 @@ static const struct MachineDriver machine_driver_eprom =
 	/* video hardware */
 	42*8, 30*8, { 0*8, 42*8-1, 0*8, 30*8-1 },
 	gfxdecodeinfo,
-	2048, 2048,
+	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER  | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
 	eprom_vh_start,
 	eprom_vh_stop,
@@ -361,6 +394,41 @@ static const struct MachineDriver machine_driver_eprom =
 
 	/* sound hardware */
 	JSA_I_MONO_WITH_SPEECH,
+
+	atarigen_nvram_handler
+};
+
+
+static const struct MachineDriver machine_driver_klaxp =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_M68000,
+			ATARI_CLOCK_14MHz/2,
+			main_readmem,main_writemem,0,0,
+			atarigen_video_int_gen,1
+		},
+		JSA_II_CPU
+	},
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	10,
+	init_machine,
+
+	/* video hardware */
+	42*8, 30*8, { 0*8, 42*8-1, 0*8, 30*8-1 },
+	gfxdecodeinfo,
+	2048, 0,
+	0,
+
+	VIDEO_TYPE_RASTER  | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK,
+	0,
+	eprom_vh_start,
+	eprom_vh_stop,
+	eprom_vh_screenrefresh,
+
+	/* sound hardware */
+	JSA_II_MONO(REGION_SOUND1),
 
 	atarigen_nvram_handler
 };
@@ -415,6 +483,7 @@ ROM_START( eprom )
 	ROM_LOAD( "1360691.25d",  0x00000, 0x04000, 0x409d818e )
 ROM_END
 
+
 ROM_START( eprom2 )
 	ROM_REGION( 0xa0000, REGION_CPU1, 0 )	/* 10*64k for 68000 code */
 	ROM_LOAD16_BYTE( "1025.50a",   0x00000, 0x10000, 0xb0c9a476 )
@@ -460,6 +529,54 @@ ROM_START( eprom2 )
 ROM_END
 
 
+ROM_START( klaxp1 )
+	ROM_REGION( 0xa0000, REGION_CPU1, 0 )	/* 10*64k for 68000 code */
+	ROM_LOAD16_BYTE( "klax_ft1.50a",   0x00000, 0x10000, 0x87ee72d1 )
+	ROM_LOAD16_BYTE( "klax_ft1.40a",   0x00001, 0x10000, 0xba139fdb )
+
+	ROM_REGION( 0x14000, REGION_CPU2, 0 )	/* 64k + 16k for 6502 code */
+	ROM_LOAD( "klaxsnd.10c",  0x10000, 0x4000, 0x744734cb )
+	ROM_CONTINUE(             0x04000, 0xc000 )
+
+	ROM_REGION( 0x40000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_INVERT )
+	ROM_LOAD( "klaxprot.43s",   0x00000, 0x10000, 0xa523c966 )
+	ROM_LOAD( "klaxprot.76s",   0x10000, 0x10000, 0xdbc678cd )
+	ROM_LOAD( "klaxprot.47u",   0x20000, 0x10000, 0xaf184754 )
+	ROM_LOAD( "klaxprot.76u",   0x30000, 0x10000, 0x7a56ffab )
+
+	ROM_REGION( 0x04000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "klax125d",  0x00000, 0x04000, 0x409d818e )
+
+	ROM_REGION( 0x20000, REGION_SOUND1, 0 )	/* ADPCM data */
+	ROM_LOAD( "klaxadp0.1f", 0x00000, 0x10000, 0xba1e864f )
+	ROM_LOAD( "klaxadp1.1e", 0x10000, 0x10000, 0xdec9a5ac )
+ROM_END
+
+
+ROM_START( klaxp2 )
+	ROM_REGION( 0xa0000, REGION_CPU1, 0 )	/* 10*64k for 68000 code */
+	ROM_LOAD16_BYTE( "klax_ft2.50a",   0x00000, 0x10000, 0x7d401937 )
+	ROM_LOAD16_BYTE( "klax_ft2.40a",   0x00001, 0x10000, 0xc5ca33a9 )
+
+	ROM_REGION( 0x14000, REGION_CPU2, 0 )	/* 64k + 16k for 6502 code */
+	ROM_LOAD( "klaxsnd.10c",  0x10000, 0x4000, 0x744734cb )
+	ROM_CONTINUE(             0x04000, 0xc000 )
+
+	ROM_REGION( 0x40000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_INVERT )
+	ROM_LOAD( "klaxprot.43s",   0x00000, 0x10000, 0xa523c966 )
+	ROM_LOAD( "klaxprot.76s",   0x10000, 0x10000, 0xdbc678cd )
+	ROM_LOAD( "klaxprot.47u",   0x20000, 0x10000, 0xaf184754 )
+	ROM_LOAD( "klaxprot.76u",   0x30000, 0x10000, 0x7a56ffab )
+
+	ROM_REGION( 0x04000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "klax125d",  0x00000, 0x04000, 0x409d818e )
+
+	ROM_REGION( 0x20000, REGION_SOUND1, 0 )	/* ADPCM data */
+	ROM_LOAD( "klaxadp0.1f", 0x00000, 0x10000, 0xba1e864f )
+	ROM_LOAD( "klaxadp1.1e", 0x10000, 0x10000, 0xdec9a5ac )
+ROM_END
+
+
 
 /*************************************
  *
@@ -472,6 +589,20 @@ static void init_eprom(void)
 	atarigen_eeprom_default = NULL;
 	atarijsa_init(2, 6, 1, 0x0002);
 	atarigen_init_6502_speedup(2, 0x4158, 0x4170);
+
+	/* install CPU synchronization handlers */
+	sync_data = install_mem_read16_handler(0, 0x16cc00, 0x16cc01, sync_r);
+	sync_data = install_mem_read16_handler(1, 0x16cc00, 0x16cc01, sync_r);
+	sync_data = install_mem_write16_handler(0, 0x16cc00, 0x16cc01, sync_w);
+	sync_data = install_mem_write16_handler(1, 0x16cc00, 0x16cc01, sync_w);
+}
+
+
+static void init_klaxp(void)
+{
+	atarigen_eeprom_default = NULL;
+	atarijsa_init(1, 2, 1, 0x0002);
+	atarigen_init_6502_speedup(1, 0x4159, 0x4171);
 }
 
 
@@ -484,3 +615,5 @@ static void init_eprom(void)
 
 GAME( 1989, eprom,  0,     eprom, eprom, eprom, ROT0, "Atari Games", "Escape from the Planet of the Robot Monsters (set 1)" )
 GAME( 1989, eprom2, eprom, eprom, eprom, eprom, ROT0, "Atari Games", "Escape from the Planet of the Robot Monsters (set 2)" )
+GAME( 1989, klaxp1, klax,  klaxp, klaxp, klaxp, ROT0, "Atari Games", "Klax (prototype set 1)" )
+GAME( 1989, klaxp2, klax,  klaxp, klaxp, klaxp, ROT0, "Atari Games", "Klax (prototype set 2)" )

@@ -345,7 +345,7 @@ void radarscp_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	palette_change_color(256,0xff,0x00,0x00);	/* stars */
 
-	if (palette_recalc() || full_refresh)
+	if (full_refresh)
 		memset(dirtybuffer,1,videoram_size);
 
 	draw_tiles(bitmap);

@@ -34,6 +34,35 @@ static struct rectangle spritevisiblearea =
   bit 0 blue
 
 ***************************************************************************/
+
+void milliped_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+{
+	int i;
+	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
+	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
+
+
+	/* characters use colors 0-15 */
+	for (i = 0;i < TOTAL_COLORS(0);i++)
+		COLOR(0,i) = i;
+
+	/* Millipede is unusual because the sprite color code specifies the */
+	/* colors to use one by one, instead of a combination code. */
+	/* bit 7-6 = palette bank (there are 4 groups of 4 colors) */
+	/* bit 5-4 = color to use for pen 11 */
+	/* bit 3-2 = color to use for pen 10 */
+	/* bit 1-0 = color to use for pen 01 */
+	/* pen 00 is transparent */
+	for (i = 0;i < TOTAL_COLORS(1);i+=4)
+	{
+		COLOR(1,i+0) = 16 + 4*((i >> 8) & 3);
+		COLOR(1,i+1) = 16 + 4*((i >> 8) & 3) + ((i >> 2) & 3);
+		COLOR(1,i+2) = 16 + 4*((i >> 8) & 3) + ((i >> 4) & 3);
+		COLOR(1,i+3) = 16 + 4*((i >> 8) & 3) + ((i >> 6) & 3);
+	}
+}
+
+
 WRITE_HANDLER( milliped_paletteram_w )
 {
 	int bit0,bit1,bit2;
@@ -77,7 +106,7 @@ void milliped_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	int offs;
 
 
-	if (palette_recalc() || full_refresh)
+	if (full_refresh)
 		memset (dirtybuffer, 1, videoram_size);
 
 	/* for every character in the Video RAM, check if it has been modified */
@@ -128,25 +157,11 @@ void milliped_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		spritenum = spriteram[offs] & 0x3f;
 		if (spritenum & 1) spritenum = spritenum / 2 + 64;
 		else spritenum = spritenum / 2;
-
-		/* Millipede is unusual because the sprite color code specifies the */
-		/* colors to use one by one, instead of a combination code. */
-		/* bit 7-6 = palette bank (there are 4 groups of 4 colors) */
-		/* bit 5-4 = color to use for pen 11 */
-		/* bit 3-2 = color to use for pen 10 */
-		/* bit 1-0 = color to use for pen 01 */
-		/* pen 00 is transparent */
 		color = spriteram[offs + 0x30];
-		Machine->gfx[1]->colortable[3] =
-				Machine->pens[16+((color >> 4) & 3)+4*((color >> 6) & 3)];
-		Machine->gfx[1]->colortable[2] =
-				Machine->pens[16+((color >> 2) & 3)+4*((color >> 6) & 3)];
-		Machine->gfx[1]->colortable[1] =
-				Machine->pens[16+((color >> 0) & 3)+4*((color >> 6) & 3)];
 
 		drawgfx(bitmap,Machine->gfx[1],
 				spritenum,
-				0,
+				color,
 				0,spriteram[offs] & 0x80,
 				x,y,
 				&spritevisiblearea,TRANSPARENCY_PEN,0);

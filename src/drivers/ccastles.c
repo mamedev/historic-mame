@@ -267,10 +267,10 @@ static const struct MachineDriver machine_driver_ccastles =
 	0,
 	256, 232, { 0, 255, 0, 231 },
 	gfxdecodeinfo,
-	32, 32,
+	32, 0,
 	0,
 
-	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER,
 	0,
 	ccastles_vh_start,
 	ccastles_vh_stop,

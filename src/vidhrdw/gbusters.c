@@ -67,10 +67,6 @@ void gbusters_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	K052109_tilemap_update();
 
-	palette_init_used_colors();
-	K051960_mark_sprites_colors();
-	palette_recalc();
-
 	/* sprite priority 3 = disable */
 	if (gbusters_priority)
 	{

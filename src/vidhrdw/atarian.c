@@ -1,7 +1,7 @@
 /*##########################################################################
 
 	atarian.c
-	
+
 	Common alphanumerics management functions for Atari raster games.
 
 ##########################################################################*/
@@ -23,7 +23,7 @@ struct atarian_data
 	int 				rowmask;			/* mask to use when wrapping Y coordinate in VRAM */
 	int					vrammask;			/* combined mask when accessing VRAM with raw addresses */
 	int					vramsize;			/* total size of VRAM, in entries */
-	
+
 	int					tilexshift;			/* bits to shift X coordinate when drawing */
 	int					tileyshift;			/* bits to shift Y coordinate when drawing */
 	int					tilewidth;			/* width of a single tile */
@@ -36,12 +36,12 @@ struct atarian_data
 	int					maxcolors;			/* maximum number of colors */
 
 	int					lookupmask;			/* mask for the lookup table */
-	
+
 	UINT32 *			lookup;				/* pointer to lookup table */
 	data16_t **			vram;				/* pointer to the VRAM pointer */
 
 	int					bankbits;			/* current extra banking bits */
-	
+
 	struct GfxElement 	gfxelement;			/* copy of the GfxElement we're using */
 };
 
@@ -84,7 +84,7 @@ static offs_t address_xor;
 ##########################################################################*/
 
 /*---------------------------------------------------------------
-	compute_log: Computes the number of bits necessary to 
+	compute_log: Computes the number of bits necessary to
 	hold a given value. The input must be an even power of
 	two.
 ---------------------------------------------------------------*/
@@ -92,7 +92,7 @@ static offs_t address_xor;
 INLINE int compute_log(int value)
 {
 	int log = 0;
-	
+
 	if (value == 0)
 		return -1;
 	while (!(value & 1))
@@ -112,7 +112,7 @@ INLINE int compute_log(int value)
 INLINE int round_to_powerof2(int value)
 {
 	int log = 0;
-	
+
 	if (value == 0)
 		return 1;
 	while ((value >>= 1) != 0)
@@ -131,7 +131,7 @@ INLINE int collapse_bits(int value, int mask)
 {
 	int testmask, ormask;
 	int result = 0;
-	
+
 	for (testmask = ormask = 1; testmask != 0; testmask <<= 1)
 		if (mask & testmask)
 		{
@@ -199,21 +199,21 @@ int atarian_init(int map, const struct atarian_desc *desc)
 		int color    = collapse_bits(value, desc->colormask);
 		int flip     = collapse_bits(value, desc->hflipmask);
 		int opaque   = collapse_bits(value, desc->opaquemask);
-		
+
 		if (desc->palettesplit)
 			color = (color & desc->palettesplit) | ((color & ~desc->palettesplit) << 1);
 		an->lookup[i] = ATARIAN_LOOKUP_ENTRY(desc->gfxindex, tile, color, flip, opaque);
 	}
-	
+
 	/* make a copy of the original GfxElement structure */
 	an->gfxelement = *Machine->gfx[desc->gfxindex];
-	
+
 	/* adjust the color base */
 	an->gfxelement.colortable = &Machine->remapped_colortable[an->palettebase];
-	
+
 	/* by default we don't need to swap */
 	address_xor = 0;
-	
+
 	/* copy the 32-bit base */
 	if (cpunum_databus_width(0) == 32)
 	{
@@ -225,7 +225,7 @@ int atarian_init(int map, const struct atarian_desc *desc)
 	logerror("  width=%d (shift=%d),  height=%d (shift=%d)\n", gfx->width, an->tilexshift, gfx->height, an->tileyshift);
 	logerror("  cols=%d  (mask=%X),   rows=%d   (mask=%X)\n", desc->cols, an->colmask, desc->rows, an->rowmask);
 	logerror("  VRAM mask=%X\n", an->vrammask);
-	
+
 	return 1;
 }
 
@@ -237,11 +237,11 @@ int atarian_init(int map, const struct atarian_desc *desc)
 void atarian_free(void)
 {
 	int i;
-	
+
 	for (i = 0; i < ATARIAN_MAX; i++)
 	{
 		struct atarian_data *an = &atarian[i];
-		
+
 		/* free the lookup */
 		if (an->lookup)
 			free(an->lookup);
@@ -258,7 +258,7 @@ void atarian_free(void)
 UINT32 *atarian_get_lookup(int map, int *size)
 {
 	struct atarian_data *an = &atarian[map];
-	
+
 	if (size)
 		*size = round_to_powerof2(an->lookupmask);
 	return an->lookup;
@@ -266,7 +266,7 @@ UINT32 *atarian_get_lookup(int map, int *size)
 
 
 /*---------------------------------------------------------------
-	atarian_render: Render the alphanumerics to the 
+	atarian_render: Render the alphanumerics to the
 	destination bitmap.
 ---------------------------------------------------------------*/
 
@@ -296,70 +296,11 @@ void atarian_render(int map, struct osd_bitmap *bitmap)
 				int color = ATARIAN_LOOKUP_COLOR(lookup);
 				int hflip = ATARIAN_LOOKUP_HFLIP(lookup);
 
-				drawgfx(bitmap, &an->gfxelement, code, color, hflip, 0, 
+				drawgfx(bitmap, &an->gfxelement, code, color, hflip, 0,
 						x << an->tilexshift, y << an->tileyshift, clip,
 						opaque ? TRANSPARENCY_NONE : TRANSPARENCY_PEN, 0);
 			}
 		}
-	}
-}
-
-
-/*---------------------------------------------------------------
-	atarian_mark_palette: Mark palette entries used in the
-	current alphanumerics.
----------------------------------------------------------------*/
-
-void atarian_mark_palette(int map)
-{
-	struct atarian_data *an = &atarian[map];
-	UINT8 *used_colors = &palette_used_colors[an->palettebase];
-	data16_t *base = *an->vram;
-	UINT32 marked_colors[256];
-	int i, j, x, y;
-	
-	/* reset the marked colors */
-	memset(marked_colors, 0, an->maxcolors * sizeof(marked_colors[0]));
-	
-	/* loop over rows */
-	for (y = 0; y < an->ytiles; y++)
-	{
-		int offs = y << an->colshift;
-
-		/* loop over columns */
-		for (x = 0; x < an->xtiles; x++, offs++)
-		{
-			int data = base[offs ^ address_xor] | an->bankbits;
-			UINT32 lookup = an->lookup[(data >> ATARIAN_LOOKUP_DATABITS) & an->lookupmask];
-			int code = ATARIAN_LOOKUP_CODE(lookup, data);
-			int opaque = ATARIAN_LOOKUP_OPAQUE(lookup);
-
-			/* only process opaque tiles or non-zero tiles */
-			if (code || opaque)
-			{
-				int color = ATARIAN_LOOKUP_COLOR(lookup);
-				
-				if (opaque)
-					marked_colors[color] |= an->gfxelement.pen_usage[code];
-				else
-					marked_colors[color] |= an->gfxelement.pen_usage[code] & ~1;
-			}
-		}
-	}
-
-	/* loop over colors */
-	for (i = 0; i < an->maxcolors; i++)
-	{
-		UINT32 usage = marked_colors[i];
-
-		/* if this entry was marked, loop over bits */
-		if (usage)
-			for (j = 0; j < 32; j++, usage >>= 1)
-				if (usage & 1)
-					used_colors[j] = PALETTE_COLOR_USED;
-			
-		/* advance by the color granularity of the gfx */
-		used_colors += an->gfxelement.color_granularity;
 	}
 }
 
@@ -374,7 +315,7 @@ void atarian_set_bankbits(int map, int bankbits)
 	struct atarian_data *an = &atarian[map];
 	an->bankbits = bankbits;
 }
-	
+
 
 /*---------------------------------------------------------------
 	atarian_get_bankbits: Returns the extra banking bits for

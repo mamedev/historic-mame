@@ -225,41 +225,8 @@ static void bionicc_draw_sprites( struct osd_bitmap *bitmap )
 	}
 }
 
-void mark_sprite_colors( void )
-{
-	int offs, code, color, i, pal_base;
-	int colmask[16];
-
-	pal_base = Machine->drv->gfxdecodeinfo[3].color_codes_start;
-	for(i=0;i<16;i++) colmask[i] = 0;
-
-	for (offs = (spriteram_size-8)/2;offs >= 0;offs -= 4)
-	{
-		code = buffered_spriteram16[offs] & 0x7ff;
-		color = (buffered_spriteram16[offs+1] & 0x3c) >> 2;
-		colmask[color] |= Machine->gfx[3]->pen_usage[code];
-	}
-
-	for (color = 0;color < 16;color++)
-	{
-		for (i = 0;i < 15;i++)
-		{
-			if (colmask[color] & (1 << i))
-				palette_used_colors[pal_base + 16 * color + i] = PALETTE_COLOR_USED;
-		}
-	}
-}
-
 void bionicc_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	tilemap_update(ALL_TILEMAPS);
-
-	palette_init_used_colors();
-	mark_sprite_colors();
-	palette_used_colors[0] |= PALETTE_COLOR_VISIBLE;
-
-	palette_recalc();
-
 	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 	tilemap_draw(bitmap,fg_tilemap,1|TILEMAP_BACK,0);	/* nothing in FRONT */
 	tilemap_draw(bitmap,bg_tilemap,0,0);

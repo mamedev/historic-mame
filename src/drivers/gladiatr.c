@@ -599,7 +599,7 @@ static const struct MachineDriver machine_driver_gladiatr =
 	512+2, 512+2,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	gladiatr_vh_start,
 	gladiatr_vh_stop,

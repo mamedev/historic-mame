@@ -137,8 +137,6 @@ void renegade_vh_screenrefresh(struct osd_bitmap *bitmap, int fullrefresh )
 	tilemap_set_scrolly( bg_tilemap, 0, 0 );
 	tilemap_set_scrolly( fg_tilemap, 0, 0 );
 
-	tilemap_update( ALL_TILEMAPS );
-	palette_recalc();
 	tilemap_draw( bitmap,bg_tilemap,0 ,0);
 	draw_sprites( bitmap );
 	tilemap_draw( bitmap,fg_tilemap,0 ,0);

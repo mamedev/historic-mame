@@ -615,7 +615,7 @@ static const struct MachineDriver machine_driver_syvalion =
 	33*16, 33*16,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	syvalion_vh_start,
 	syvalion_vh_stop,
@@ -657,7 +657,7 @@ static const struct MachineDriver machine_driver_recordbr =
 	32*16, 32*16,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	recordbr_vh_start,
 	syvalion_vh_stop,
@@ -699,7 +699,7 @@ static const struct MachineDriver machine_driver_dleague =
 	33*16, 33*16,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	dleague_vh_start,
 	syvalion_vh_stop,

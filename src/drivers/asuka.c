@@ -791,7 +791,7 @@ static struct MachineDriver machine_driver_bonzeadv =
 	4096, 4096,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	asuka_vh_start,
 	asuka_vh_stop,
@@ -834,7 +834,7 @@ static struct MachineDriver machine_driver_asuka =
 	4096, 4096,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	asuka_vh_start,
 	asuka_vh_stop,
@@ -881,7 +881,7 @@ static struct MachineDriver machine_driver_galmedes =
 	4096, 4096,	/* only Mofflott uses full palette space */
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	galmedes_vh_start,
 	asuka_vh_stop,
@@ -928,7 +928,7 @@ static struct MachineDriver machine_driver_eto =
 	4096, 4096,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	galmedes_vh_start,
 	asuka_vh_stop,

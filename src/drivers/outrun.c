@@ -1075,7 +1075,7 @@ static const struct MachineDriver GAMENAME = \
 	sys16_gfxdecodeinfo, \
 	4096*ShadowColorsMultiplier,4096*ShadowColorsMultiplier, \
 	0, \
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_AFTER_VBLANK, \
+	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_AFTER_VBLANK, \
 	0, \
 	sys16_outrun_vh_start, \
 	sys16_vh_stop, \
@@ -1317,7 +1317,7 @@ static const struct MachineDriver machine_driver_shangon =
 	sys16_gfxdecodeinfo,
 	2048*ShadowColorsMultiplier,2048*ShadowColorsMultiplier,
 	0,
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	sys16_hangon_vh_start,
 	sys16_vh_stop,

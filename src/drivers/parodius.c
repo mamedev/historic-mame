@@ -343,10 +343,10 @@ static const struct MachineDriver machine_driver_parodius =
 	/* video hardware */
 	64*8, 32*8, { 14*8, (64-14)*8-1, 2*8, 30*8-1 },
 	0,	/* gfx decoded by konamiic.c */
-	2048, 2048,
+	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER  | VIDEO_HAS_SHADOWS,
 	0,
 	parodius_vh_start,
 	parodius_vh_stop,

@@ -575,7 +575,7 @@ INPUT_PORTS_START( term2 )
 	PORT_BIT( 0xf000, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START
-	PORT_ANALOG( 0x00ff, 0x0000, IPT_AD_STICK_X | IPF_REVERSE | IPF_PLAYER1, 20, 10, 0, 0xff)
+	PORT_ANALOG( 0x00ff, 0x0080, IPT_AD_STICK_X | IPF_REVERSE | IPF_PLAYER1, 20, 10, 0, 0xff)
 	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START
@@ -631,15 +631,15 @@ INPUT_PORTS_START( term2 )
 	PORT_BIT( 0xffff, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START
-	PORT_ANALOG( 0xff, 0x00, IPT_AD_STICK_Y | IPF_PLAYER1, 20, 10, 0, 0xff)
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_Y | IPF_PLAYER1, 20, 10, 0, 0xff)
 	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START
-	PORT_ANALOG( 0xff, 0x00, IPT_AD_STICK_X | IPF_REVERSE | IPF_PLAYER2, 20, 10, 0, 0xff)
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_X | IPF_REVERSE | IPF_PLAYER2, 20, 10, 0, 0xff)
 	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START
-	PORT_ANALOG( 0xff, 0x00, IPT_AD_STICK_Y | IPF_PLAYER2, 20, 10, 0, 0xff)
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_Y | IPF_PLAYER2, 20, 10, 0, 0xff)
 	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
@@ -732,10 +732,10 @@ static const struct MachineDriver machine_driver_zunit =
     512, 432, { 0, 511, 27, 427 },
 
 	0,
-	65536,65536,
+	8192, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	wms_zunit_vh_eof,
 	wms_zunit_vh_start,
 	wms_yunit_vh_stop,
@@ -778,10 +778,10 @@ static const struct MachineDriver machine_driver_yunit_cvsd_4bit =
 	512, 288, { 0, 399, 20, 274 },
 
 	0,
-	256,256,
+	256, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	wms_yunit_vh_eof,
 	wms_yunit_4bit_vh_start,
 	wms_yunit_vh_stop,
@@ -817,10 +817,10 @@ static const struct MachineDriver machine_driver_yunit_cvsd_6bit =
 	512, 288, { 0, 399, 20, 274 },
 
 	0,
-	4096,4096,
+	4096, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	wms_yunit_vh_eof,
 	wms_yunit_6bit_vh_start,
 	wms_yunit_vh_stop,
@@ -856,10 +856,10 @@ static const struct MachineDriver machine_driver_yunit_adpcm =
 	512, 304, { 0, 399, 27, 282 },
 
 	0,
-	4096,4096,
+	4096, 0,
     0,
 
-    VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+    VIDEO_TYPE_RASTER ,
 	wms_yunit_vh_eof,
 	wms_yunit_6bit_vh_start,
 	wms_yunit_vh_stop,
@@ -1555,25 +1555,25 @@ ROM_END
  *
  *************************************/
 
-GAME( 1988, narc,     0,       zunit,           narc,    narc,     ROT0_16BIT, "Williams", "Narc (rev 7.00)" )
-GAME( 1988, narc3,    narc,    zunit,           narc,    narc3,    ROT0_16BIT, "Williams", "Narc (rev 3.20)" )
+GAME( 1988, narc,     0,       zunit,           narc,    narc,     ROT0, "Williams", "Narc (rev 7.00)" )
+GAME( 1988, narc3,    narc,    zunit,           narc,    narc3,    ROT0, "Williams", "Narc (rev 3.20)" )
 
-GAME( 1990, trog,     0,       yunit_cvsd_4bit, trog,    trog,     ROT0,       "Midway",   "Trog (rev LA4 03/11/91)" )
-GAME( 1990, trog3,    trog,    yunit_cvsd_4bit, trog,    trog3,    ROT0,       "Midway",   "Trog (rev LA3 02/14/91)" )
-GAME( 1990, trogp,    trog,    yunit_cvsd_4bit, trog,    trogp,    ROT0,       "Midway",   "Trog (prototype, rev 4.00 07/27/90)" )
-GAME( 1991, strkforc, 0,       yunit_cvsd_4bit, strkforc,strkforc, ROT0,       "Midway",   "Strike Force (rev 1 02/25/91)" )
+GAME( 1990, trog,     0,       yunit_cvsd_4bit, trog,    trog,     ROT0, "Midway",   "Trog (rev LA4 03/11/91)" )
+GAME( 1990, trog3,    trog,    yunit_cvsd_4bit, trog,    trog3,    ROT0, "Midway",   "Trog (rev LA3 02/14/91)" )
+GAME( 1990, trogp,    trog,    yunit_cvsd_4bit, trog,    trogp,    ROT0, "Midway",   "Trog (prototype, rev 4.00 07/27/90)" )
+GAME( 1991, strkforc, 0,       yunit_cvsd_4bit, strkforc,strkforc, ROT0, "Midway",   "Strike Force (rev 1 02/25/91)" )
 
-GAME( 1990, smashtv,  0,       yunit_cvsd_6bit, smashtv, smashtv,  ROT0_16BIT, "Williams", "Smash T.V. (rev 8.00)" )
-GAME( 1990, smashtv6, smashtv, yunit_cvsd_6bit, smashtv, smashtv,  ROT0_16BIT, "Williams", "Smash T.V. (rev 6.00)" )
-GAME( 1990, smashtv5, smashtv, yunit_cvsd_6bit, smashtv, smashtv,  ROT0_16BIT, "Williams", "Smash T.V. (rev 5.00)" )
-GAME( 1990, smashtv4, smashtv, yunit_cvsd_6bit, smashtv, smashtv4, ROT0_16BIT, "Williams", "Smash T.V. (rev 4.00)" )
-GAME( 1990, hiimpact, 0,       yunit_cvsd_6bit, trog,    hiimpact, ROT0_16BIT, "Williams", "High Impact Football (rev LA3 12/27/90)" )
-GAMEX(1991, shimpact, 0,       yunit_cvsd_6bit, trog,    shimpact, ROT0_16BIT, "Midway",   "Super High Impact (rev LA1 09/30/91)", GAME_NOT_WORKING )
+GAME( 1990, smashtv,  0,       yunit_cvsd_6bit, smashtv, smashtv,  ROT0, "Williams", "Smash T.V. (rev 8.00)" )
+GAME( 1990, smashtv6, smashtv, yunit_cvsd_6bit, smashtv, smashtv,  ROT0, "Williams", "Smash T.V. (rev 6.00)" )
+GAME( 1990, smashtv5, smashtv, yunit_cvsd_6bit, smashtv, smashtv,  ROT0, "Williams", "Smash T.V. (rev 5.00)" )
+GAME( 1990, smashtv4, smashtv, yunit_cvsd_6bit, smashtv, smashtv4, ROT0, "Williams", "Smash T.V. (rev 4.00)" )
+GAME( 1990, hiimpact, 0,       yunit_cvsd_6bit, trog,    hiimpact, ROT0, "Williams", "High Impact Football (rev LA3 12/27/90)" )
+GAMEX(1991, shimpact, 0,       yunit_cvsd_6bit, trog,    shimpact, ROT0, "Midway",   "Super High Impact (rev LA1 09/30/91)", GAME_NOT_WORKING )
 
-GAME( 1991, term2,    0,       yunit_adpcm,     term2,   term2,    ROT0_16BIT, "Midway",   "Terminator 2 - Judgment Day (rev LA3 03/27/92)" )
-GAME( 1992, mkla1,    mk,      yunit_adpcm,     mkla1,   mkla1,    ROT0_16BIT, "Midway",   "Mortal Kombat (rev 1.0 08/08/92)" )
-GAME( 1992, mkla2,    mk,      yunit_adpcm,     mkla1,   mkla2,    ROT0_16BIT, "Midway",   "Mortal Kombat (rev 2.0 08/18/92)" )
-GAME( 1992, mkla3,    mk,      yunit_adpcm,     mkla1,   mkla3,    ROT0_16BIT, "Midway",   "Mortal Kombat (rev 3.0 08/31/92)" )
-GAME( 1992, mkla4,    mk,      yunit_adpcm,     mkla1,   mkla4,    ROT0_16BIT, "Midway",   "Mortal Kombat (rev 4.0 09/28/92)" )
-GAME( 1992, totcarn,  0,       yunit_adpcm,     totcarn, totcarn,  ROT0_16BIT, "Midway",   "Total Carnage (rev LA1 03/10/92)" )
-GAME( 1992, totcarnp, totcarn, yunit_adpcm,     totcarn, totcarnp, ROT0_16BIT, "Midway",   "Total Carnage (prototype, rev 1.0 01/25/92)" )
+GAME( 1991, term2,    0,       yunit_adpcm,     term2,   term2,    ROT0, "Midway",   "Terminator 2 - Judgment Day (rev LA3 03/27/92)" )
+GAME( 1992, mkla1,    mk,      yunit_adpcm,     mkla1,   mkla1,    ROT0, "Midway",   "Mortal Kombat (rev 1.0 08/08/92)" )
+GAME( 1992, mkla2,    mk,      yunit_adpcm,     mkla1,   mkla2,    ROT0, "Midway",   "Mortal Kombat (rev 2.0 08/18/92)" )
+GAME( 1992, mkla3,    mk,      yunit_adpcm,     mkla1,   mkla3,    ROT0, "Midway",   "Mortal Kombat (rev 3.0 08/31/92)" )
+GAME( 1992, mkla4,    mk,      yunit_adpcm,     mkla1,   mkla4,    ROT0, "Midway",   "Mortal Kombat (rev 4.0 09/28/92)" )
+GAME( 1992, totcarn,  0,       yunit_adpcm,     totcarn, totcarn,  ROT0, "Midway",   "Total Carnage (rev LA1 03/10/92)" )
+GAME( 1992, totcarnp, totcarn, yunit_adpcm,     totcarn, totcarnp, ROT0, "Midway",   "Total Carnage (prototype, rev 1.0 01/25/92)" )

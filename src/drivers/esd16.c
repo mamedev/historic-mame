@@ -337,7 +337,7 @@ static const struct MachineDriver machine_driver_multchmp =
 	esd16_gfxdecodeinfo,
 	256*3, 256*3,
 	0,
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	esd16_vh_start,
 	0,
@@ -437,4 +437,4 @@ ROM_END
 
 ***************************************************************************/
 
-GAME( 1998, multchmp, 0, multchmp, multchmp, 0, ROT0_16BIT, "ESD", "Multi Champ (Korea)" )
+GAME( 1998, multchmp, 0, multchmp, multchmp, 0, ROT0, "ESD", "Multi Champ (Korea)" )

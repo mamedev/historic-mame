@@ -15,6 +15,11 @@
  *
  *    (Still lots of debugging info/options in here!)
  *
+ *    TODO: soon
+ *    create tilemaps at vh_start time and switch between at runtime
+ *    mark tiles dirty when VRAM is written to instead of dirtying entire
+ *       screen each frame
+ *
  *    T.B.D. (not critical to ND-1)
  *    ======
  *
@@ -33,9 +38,9 @@
 #define _ENABLE_SPRITES
 #define _ENABLE_SCROLLX
 #define _ENABLE_SCROLLY
-#define _ENABLE_SCREEN_RESIZE
-#define _nENABLE_ROTATE_ZOOM
-#define _nSHOW_VIDEO_DEBUG
+//#define _ENABLE_SCREEN_RESIZE
+//#define _ENABLE_ROTATE_ZOOM
+//#define _SHOW_VIDEO_DEBUG
 
 static YGV608 ygv608;
 
@@ -57,26 +62,28 @@ int ygv608_timed_interrupt( void )
       this more generic - or move it into the machine driver
 */
 
-    static int timer = 0;
+	static int timer = 0;
 
-    if( ++timer == 1000 )
-        timer = 0;
+	if( ++timer == 1000 )
+		timer = 0;
 
     /* once every 60Hz, set the vertical border interval start flag */
-    if( ( timer % (1000/60) ) == 0 ) {
-      ygv608.ports.s.fv = 1;
-      if( ygv608.regs.s.iev )
-        return( m68_level2_irq() );
-    }
+	if( ( timer % (1000/60) ) == 0 )
+    {
+		ygv608.ports.s.p6 |= p6_fv;;
+		if (ygv608.regs.s.r14 & r14_iev)
+			return( m68_level2_irq() );
+	}
 
-    /* once every 60Hz, set the position detection flag (somewhere) */
-    if( ( timer % (1000/60) ) == 7 ) {
-      ygv608.ports.s.fp = 1;
-      if( ygv608.regs.s.iep )
-        return( m68_level2_irq() );
-    }
+	/* once every 60Hz, set the position detection flag (somewhere) */
+	if( ( timer % (1000/60) ) == 7 )
+	{
+		ygv608.ports.s.p6 |= p6_fp;
+		if (ygv608.regs.s.r14 & r14_iep)
+			return( m68_level2_irq() );
+	}
 
-    return( 0 );
+	return( 0 );
 }
 
 
@@ -87,139 +94,162 @@ static UINT32 get_tile_offset( UINT32 col, UINT32 row,
     // since we really need row,col in the get_tile_info() routines
     // - so just pack them into a UINT32
 
-    return( ( col << 6 ) | row );
+	return( ( col << 6 ) | row );
 }
 
 static void get_tile_info_A_8( int offset )
 {
-  // extract row,col packed into offset
-  int             col = offset >> 6;
-  int             row = offset & 0x3f;
+	// extract row,col packed into offset
+	int             col = offset >> 6;
+	int             row = offset & 0x3f;
 
-  unsigned char   attr = 0;
-  int             pattern_name_base = 0;
-  int             set = ( ygv608.regs.s.md == MD_1PLANE_256COLOUR
-			        ? GFX_8X8_8BIT : GFX_8X8_4BIT );
-  int             base = row >> ygv608.base_y_shift;
+	unsigned char   attr = 0;
+	int             pattern_name_base = 0;
+	int             set = ((ygv608.regs.s.r7 & r7_md) == MD_1PLANE_256COLOUR
+			        	? GFX_8X8_8BIT : GFX_8X8_4BIT );
+	int             base = row >> ygv608.base_y_shift;
 
-  if( col >= ygv608.page_x ) {
-    SET_TILE_INFO( set, 0, 0, 0 );
-  }
-  else if( row >= ygv608.page_y ) {
-    SET_TILE_INFO( set, 0, 0, 0 );
-  }
-  else {
-    int sx, sy, page;
-    int i = pattern_name_base +
-      ( ( ( row << ygv608.pny_shift ) + col ) << ygv608.bits16 );
-    int j = ygv608.pattern_name_table[i];
-    if( ygv608.bits16 ) {
-      j += ((int)(ygv608.pattern_name_table[i+1] & ygv608.na8_mask )) << 8;
-      // attribute only valid in 16 color mode
-      if( set == GFX_8X8_4BIT )
-        attr = ygv608.pattern_name_table[i+1] >> 4;
-    }
+	if( col >= ygv608.page_x )
+	{
+		SET_TILE_INFO( set, 0, 0, 0 );
+	}
+	else if( row >= ygv608.page_y )
+	{
+		SET_TILE_INFO( set, 0, 0, 0 );
+	}
+	else
+	{
+		int sx, sy, page;
+		int i = pattern_name_base + (((row << ygv608.pny_shift) + col) << ygv608.bits16);
+		int j = ygv608.pattern_name_table[i];
 
-    /* calculate page according to scroll data */
-    /* - assuming full-screen scroll only for now... */
-    sy = (int)ygv608.scroll_data_table[0][0x00] +
-         (((int)ygv608.scroll_data_table[0][0x01] & 0x0f ) << 8);
-    sx = (int)ygv608.scroll_data_table[0][0x80] +
-         (((int)ygv608.scroll_data_table[0][0x81] & 0x0f ) << 8);
-    if( ygv608.regs.s.md == MD_2PLANE_16BIT ) {
-      page = ( ( sx + col * 8 ) % 1024 ) / 256;
-      page += ( ( ( sy + row * 8 ) % 2048 ) / 256 ) * 4;
-    }
-    else if( ygv608.regs.s.pgs ) {
-      page = ( ( sx + col * 8 ) % 2048 ) / 512;
-      page += ( ( ( sy + row * 8 ) % 2048 ) / 256 ) * 4;
-    }
-    else {
-      page = ( ( sx + col * 8 ) % 2048 ) / 256;
-      page += ( ( ( sy + row * 8 ) % 2048 ) / 512 ) * 8;
-    }
+		if( ygv608.bits16 )
+		{
+			j += ((int)(ygv608.pattern_name_table[i+1] & ygv608.na8_mask )) << 8;
+			// attribute only valid in 16 color mode
+			if (set == GFX_8X8_4BIT)
+				attr = ygv608.pattern_name_table[i+1] >> 4;
+		}
 
-    /* add page, base address to pattern name */
-    j += ( (int)ygv608.scroll_data_table[0][0xc0+page] << 10 );
-    j += ( ygv608.base_addr[0][base] << 8 );
+		/* calculate page according to scroll data */
+		/* - assuming full-screen scroll only for now... */
+		sy = (int)ygv608.scroll_data_table[0][0x00] +
+			(((int)ygv608.scroll_data_table[0][0x01] & 0x0f ) << 8);
+		sx = (int)ygv608.scroll_data_table[0][0x80] +
+			(((int)ygv608.scroll_data_table[0][0x81] & 0x0f ) << 8);
 
-    if( j >= Machine->drv->gfxdecodeinfo[set].gfxlayout->total ) {
-	logerror( "A_8X8: tilemap=%d\n", j );
-      j = 0;
-    }
-    if( ygv608.regs.s.apf != 0 ) {
-      // attribute only valid in 16 color mode
-      if( set == GFX_8X8_4BIT )
-        attr = ( j >> ( ( ygv608.regs.s.apf - 1 ) * 2 ) ) & 0x0f;
-    }
-    SET_TILE_INFO( set, j, attr & 0x0F, 0 );
-  }
+		if ((ygv608.regs.s.r7 & r7_md) == MD_2PLANE_16BIT)
+		{
+			page = ( ( sx + col * 8 ) % 1024 ) / 256;
+			page += ( ( ( sy + row * 8 ) % 2048 ) / 256 ) * 4;
+		}
+		else if (ygv608.regs.s.r8 & r8_pgs)
+		{
+			page = ( ( sx + col * 8 ) % 2048 ) / 512;
+			page += ( ( ( sy + row * 8 ) % 2048 ) / 256 ) * 4;
+		}
+		else
+		{
+			page = ( ( sx + col * 8 ) % 2048 ) / 256;
+			page += ( ( ( sy + row * 8 ) % 2048 ) / 512 ) * 8;
+		}
+
+		/* add page, base address to pattern name */
+		j += ( (int)ygv608.scroll_data_table[0][0xc0+page] << 10 );
+		j += ( ygv608.base_addr[0][base] << 8 );
+
+		if( j >= Machine->drv->gfxdecodeinfo[set].gfxlayout->total )
+		{
+			logerror( "A_8X8: tilemap=%d\n", j );
+			j = 0;
+		}
+		if ((ygv608.regs.s.r12 & r12_apf) != 0)
+		{
+			// attribute only valid in 16 color mode
+			if( set == GFX_8X8_4BIT )
+				attr = ( j >> ( ((ygv608.regs.s.r12 & r12_apf) - 1 ) * 2 ) ) & 0x0f;
+		}
+		SET_TILE_INFO( set, j, attr & 0x0F, 0 );
+	}
 }
 
 static void get_tile_info_B_8( int offset )
 {
-  // extract row,col packed into offset
-  int             col = offset >> 6;
-  int             row = offset & 0x3f;
+	// extract row,col packed into offset
+	int             col = offset >> 6;
+	int             row = offset & 0x3f;
 
-  unsigned char   attr = 0;
-  int             pattern_name_base = ( ( ygv608.page_y << ygv608.pny_shift )
-					<< ygv608.bits16 );
-  int             set = GFX_8X8_4BIT;
-  int             base = row >> ygv608.base_y_shift;
+	unsigned char   attr = 0;
+	int             pattern_name_base = ( ( ygv608.page_y << ygv608.pny_shift )
+						<< ygv608.bits16 );
+	int             set = GFX_8X8_4BIT;
+	int             base = row >> ygv608.base_y_shift;
 
-  if( ygv608.regs.s.md & MD_1PLANE ) {
-    SET_TILE_INFO( set, 0, 0, 0 );
-  }
-  else if( col >= ygv608.page_x ) {
-    SET_TILE_INFO( set, 0, 0, 0 );
-  }
-  else if( row >= ygv608.page_y ) {
-    SET_TILE_INFO( set, 0, 0, 0 );
-  }
-  else {
-    int sx, sy, page;
-    int i = pattern_name_base +
-      ( ( ( row << ygv608.pny_shift ) + col ) << ygv608.bits16 );
-    int j = ygv608.pattern_name_table[i];
-    if( ygv608.bits16 ) {
-      j += ((int)(ygv608.pattern_name_table[i+1] & ygv608.na8_mask )) << 8;
-      attr = ygv608.pattern_name_table[i+1] >> 4; /*& 0x00; 0xf0;*/
-    }
+	if ((ygv608.regs.s.r7 & r7_md) & MD_1PLANE )
+	{
+		SET_TILE_INFO( set, 0, 0, 0 );
+	}
+	else if (col >= ygv608.page_x)
+	{
+		SET_TILE_INFO( set, 0, 0, 0 );
+	}
+	else if (row >= ygv608.page_y)
+	{
+		SET_TILE_INFO( set, 0, 0, 0 );
+	}
+	else
+	{
+		int sx, sy, page;
+		int i = pattern_name_base + (((row << ygv608.pny_shift) + col) << ygv608.bits16);
+		int j = ygv608.pattern_name_table[i];
 
-    /* calculate page according to scroll data */
-    /* - assuming full-screen scroll only for now... */
-    sy = (int)ygv608.scroll_data_table[1][0x00] +
-         (((int)ygv608.scroll_data_table[1][0x01] & 0x0f ) << 8);
-    sx = (int)ygv608.scroll_data_table[1][0x80] +
-         (((int)ygv608.scroll_data_table[1][0x81] & 0x0f ) << 8);
-    if( ygv608.regs.s.md == MD_2PLANE_16BIT ) {
-      page = ( ( sx + col * 8 ) % 1024 ) / 256;
-      page += ( ( ( sy + row * 8 ) % 2048 ) / 256 ) * 4;
-    }
-    else if( ygv608.regs.s.pgs ) {
-      page = ( ( sx + col * 8 ) % 2048 ) / 512;
-      page += ( ( ( sy + row * 8 ) % 2048 ) / 256 ) * 4;
-    }
-    else {
-      page = ( ( sx + col * 8 ) % 2048 ) / 256;
-      page += ( ( ( sy + row * 8 ) % 2048 ) / 512 ) * 8;
-    }
+		if (ygv608.bits16)
+		{
+			j += ((int)(ygv608.pattern_name_table[i+1] & ygv608.na8_mask )) << 8;
+			attr = ygv608.pattern_name_table[i+1] >> 4; /*& 0x00; 0xf0;*/
+		}
 
-    /* add page, base address to pattern name */
-    j += ( (int)ygv608.scroll_data_table[1][0xc0+page] << 10 );
-    j += ( ygv608.base_addr[1][base] << 8 );
+		/* calculate page according to scroll data */
+		/* - assuming full-screen scroll only for now... */
+		sy = (int)ygv608.scroll_data_table[1][0x00] +
+			(((int)ygv608.scroll_data_table[1][0x01] & 0x0f ) << 8);
+		sx = (int)ygv608.scroll_data_table[1][0x80] +
+			(((int)ygv608.scroll_data_table[1][0x81] & 0x0f ) << 8);
 
-    if( j >= Machine->drv->gfxdecodeinfo[set].gfxlayout->total ) {
-	logerror( "B_8X8: tilemap=%d\n", j );
-      j = 0;
-    }
-    if( ygv608.regs.s.bpf != 0 ) {
-      /* assume 16 colour mode for now... */
-      attr = ( j >> ( ( ygv608.regs.s.bpf - 1 ) * 2 ) ) & 0x0f;
-    }
-    SET_TILE_INFO( set, j, attr, 0 );
-  }
+		if ((ygv608.regs.s.r7 & r7_md) == MD_2PLANE_16BIT )
+		{
+			page = ( ( sx + col * 8 ) % 1024 ) / 256;
+			page += ( ( ( sy + row * 8 ) % 2048 ) / 256 ) * 4;
+		}
+		else if (ygv608.regs.s.r8 & r8_pgs)
+		{
+			page = ( ( sx + col * 8 ) % 2048 ) / 512;
+			page += ( ( ( sy + row * 8 ) % 2048 ) / 256 ) * 4;
+		}
+		else
+		{
+			page = ( ( sx + col * 8 ) % 2048 ) / 256;
+			page += ( ( ( sy + row * 8 ) % 2048 ) / 512 ) * 8;
+		}
+
+		/* add page, base address to pattern name */
+		j += ( (int)ygv608.scroll_data_table[1][0xc0+page] << 10 );
+		j += ( ygv608.base_addr[1][base] << 8 );
+
+		if( j >= Machine->drv->gfxdecodeinfo[set].gfxlayout->total )
+		{
+			logerror( "B_8X8: tilemap=%d\n", j );
+			j = 0;
+		}
+		if ((ygv608.regs.s.r12 & r12_bpf) != 0)
+		{
+			UINT8 color = (ygv608.regs.s.r12 & r12_bpf) >> 3;
+
+			/* assume 16 colour mode for now... */
+			attr = ( j >> ( (color - 1 ) * 2 ) ) & 0x0f;
+		}
+		SET_TILE_INFO( set, j, attr, 0 );
+	}
 }
 
 static void get_tile_info_A_16( int offset )
@@ -230,7 +260,7 @@ static void get_tile_info_A_16( int offset )
 
   unsigned char   attr = 0;
   int             pattern_name_base = 0;
-  int             set = ( ygv608.regs.s.md == MD_1PLANE_256COLOUR
+  int             set = ((ygv608.regs.s.r7 & r7_md) == MD_1PLANE_256COLOUR
 			            ? GFX_16X16_8BIT : GFX_16X16_4BIT );
   int             base = row >> ygv608.base_y_shift;
 
@@ -260,11 +290,11 @@ static void get_tile_info_A_16( int offset )
          (((int)ygv608.scroll_data_table[0][0x01] & 0x0f ) << 8);
     sx = (int)ygv608.scroll_data_table[0][0x80] +
          (((int)ygv608.scroll_data_table[0][0x81] & 0x0f ) << 8);
-    if( ygv608.regs.s.md == MD_2PLANE_16BIT ) {
+    if((ygv608.regs.s.r7 & r7_md) == MD_2PLANE_16BIT ) {
       page = ( ( sx + col * 16 ) % 2048 ) / 512;
       page += ( ( sy + row * 16 ) / 512 ) * 4;
     }
-    else if( ygv608.regs.s.pgs ) {
+    else if (ygv608.regs.s.r8 & r8_pgs) {
       page = ( sx + col * 16 ) / 512;
       page += ( ( sy + row * 16 ) / 1024 ) * 8;
     }
@@ -281,13 +311,16 @@ static void get_tile_info_A_16( int offset )
 	logerror( "A_16X16: tilemap=%d\n", j );
       j = 0;
     }
-    if( ygv608.regs.s.apf != 0 ) {
-      // attribute only valid in 16 color mode
-      if( set == GFX_16X16_4BIT )
-        attr = ( j >> ( ygv608.regs.s.apf * 2 ) ) & 0x0f;
-    }
-    SET_TILE_INFO( set, j, attr, 0 );
-  }
+
+		if ((ygv608.regs.s.r12 & r12_apf) != 0)
+		{
+			// attribute only valid in 16 color mode
+			if( set == GFX_16X16_4BIT )
+				attr = ( j >> ( ((ygv608.regs.s.r12 & r12_apf)) * 2 ) ) & 0x0f;
+		}
+
+		SET_TILE_INFO( set, j, attr, 0 );
+	}
 }
 
 static void get_tile_info_B_16( int offset )
@@ -302,7 +335,7 @@ static void get_tile_info_B_16( int offset )
   int             set = GFX_16X16_4BIT;
   int             base = row >> ygv608.base_y_shift;
 
-  if( ygv608.regs.s.md & MD_1PLANE ) {
+  if((ygv608.regs.s.r7 & r7_md) & MD_1PLANE ) {
     SET_TILE_INFO( set, 0, 0, 0 );
   }
   if( col >= ygv608.page_x ) {
@@ -329,11 +362,11 @@ static void get_tile_info_B_16( int offset )
          (((int)ygv608.scroll_data_table[1][0x01] & 0x0f ) << 8);
     sx = (int)ygv608.scroll_data_table[1][0x80] +
          (((int)ygv608.scroll_data_table[1][0x81] & 0x0f ) << 8);
-    if( ygv608.regs.s.md == MD_2PLANE_16BIT ) {
+    if((ygv608.regs.s.r7 & r7_md) == MD_2PLANE_16BIT ) {
       page = ( ( sx + col * 16 ) % 2048 ) / 512;
       page += ( ( sy + row * 16 ) / 512 ) * 4;
     }
-    else if( ygv608.regs.s.pgs ) {
+    else if (ygv608.regs.s.r8 & r8_pgs) {
       page = ( sx + col * 16 ) / 512;
       page += ( ( sy + row * 16 ) / 1024 ) * 8;
     }
@@ -350,27 +383,35 @@ static void get_tile_info_B_16( int offset )
 	logerror( "B_16X16: tilemap=%d\n", j );
       j = 0;
     }
-    if( ygv608.regs.s.bpf != 0 ) {
-      /* assume 16 colour mode for now... */
-      attr = ( j >> ( ygv608.regs.s.bpf * 2 ) ) & 0x0f;
-    }
-    SET_TILE_INFO( set, j, attr, 0 );
-  }
+
+		if ((ygv608.regs.s.r12 & r12_bpf) != 0)
+		{
+			UINT8 color = (ygv608.regs.s.r12 & r12_bpf) >> 3;
+
+			/* assume 16 colour mode for now... */
+			attr = ( j >> (color * 2)) & 0x0f;
+		}
+		SET_TILE_INFO( set, j, attr, 0 );
+	}
 }
 
 int ygv608_vh_start(void)
 {
-    // flag rebuild of the tilemaps
-    ygv608.screen_resize = 1;
-    ygv608.tilemap_resize = 1;
+	memset( &ygv608, 0, sizeof(ygv608) );
 
-    return 0;
+	// flag rebuild of the tilemaps
+	ygv608.screen_resize = 1;
+	ygv608.tilemap_resize = 1;
+
+	return 0;
 }
 
 void ygv608_vh_stop(void)
 {
-    if( work_bitmap )
-        bitmap_free( work_bitmap );
+#ifdef _ENABLE_ROTATE_ZOOM
+	if( work_bitmap )
+		bitmap_free( work_bitmap );
+#endif
 }
 
 static void draw_sprites( struct osd_bitmap *bitmap )
@@ -386,35 +427,41 @@ static void draw_sprites( struct osd_bitmap *bitmap )
   int i;
 
   /* ensure that sprites are enabled */
-  if( ( ygv608.regs.s.dspe == 0 ) || ygv608.regs.s.sprd )
+  if( ((ygv608.regs.s.r7 & r7_dspe) == 0 ) || (ygv608.regs.s.r10 & r10_sprd))
     return;
 
   /* draw sprites */
   sa = &ygv608.sprite_attribute_table.s[YGV608_MAX_SPRITES-1];
-  for( i=0; i<YGV608_MAX_SPRITES; i++, sa-- ) {
-    int code, color, sx, sy, size;
+  for( i=0; i<YGV608_MAX_SPRITES; i++, sa-- )
+  {
+    int code, color, sx, sy, size, attr, g_attr, spf;
 
-    color = (int)sa->sc4;
-    sx = ( (int)sa->sx8 << 8 ) | (int)sa->sx;
-    sy = ( ( ( (int)sa->sy8 << 8 ) | (int)sa->sy ) + 1 ) & 0x1ff;
+    color = (sa->attr >> 4) & 0x0f;
+    sx = ( (int)(sa->attr & 0x02) << 7 ) | (int)sa->sx;
+    sy = ( ( ( (int)(sa->attr & 0x01) << 8 ) | (int)sa->sy ) + 1 ) & 0x1ff;
+    attr = (sa->attr & 0x0c) >> 2;
+    g_attr = (ygv608.regs.s.r10 & r10_spa) >> 6;
+    spf = (ygv608.regs.s.r12 & r12_spf) >> 6;
 
-    if( ygv608.regs.s.spas == SPAS_SPRITESIZE ) {
-      size = ygv608.regs.s.spa;
-      flipx = ( sa->sz & SZ_HORIZREVERSE ) != 0;
-      flipy = ( sa->sz & SZ_VERTREVERSE ) != 0;
+    if ((ygv608.regs.s.r10 & r10_spas) == SPAS_SPRITESIZE )
+    {
+      size = g_attr;
+      flipx = (attr & SZ_HORIZREVERSE) != 0;
+      flipy = (attr & SZ_VERTREVERSE) != 0;
     }
-    else {
-      size = sa->sz;
-      flipx = ( ygv608.regs.s.spa & SZ_HORIZREVERSE ) != 0;
-      flipy = ( ygv608.regs.s.spa & SZ_VERTREVERSE ) != 0;
+    else
+    {
+      size = attr;
+      flipx = (g_attr & SZ_HORIZREVERSE) != 0;
+      flipy = (g_attr & SZ_VERTREVERSE) != 0;
     }
 
     switch( size ) {
 
     case SZ_8X8 :
       code = ( (int)ygv608.regs.s.sba << 8 ) | (int)sa->sn;
-      if( ygv608.regs.s.spf != 0 )
-	    color = ( code >> ( ( ygv608.regs.s.spf - 1 ) * 2 ) ) & 0x0f;
+      if (spf != 0)
+	    color = ( code >> ( (spf - 1) * 2 ) ) & 0x0f;
       if( code >= Machine->drv->gfxdecodeinfo[GFX_8X8_4BIT].gfxlayout->total ) {
 	    logerror( "SZ_8X8: sprite=%d\n", code );
 	    code = 0;
@@ -446,8 +493,8 @@ static void draw_sprites( struct osd_bitmap *bitmap )
 
     case SZ_16X16 :
       code = ( ( (int)ygv608.regs.s.sba & 0xfc ) << 6 ) | (int)sa->sn;
-      if( ygv608.regs.s.spf != 0 )
-	    color = ( code >> ( ygv608.regs.s.spf * 2 ) ) & 0x0f;
+      if (spf != 0)
+	    color = ( code >> (spf * 2) ) & 0x0f;
       if( code >= Machine->drv->gfxdecodeinfo[GFX_16X16_4BIT].gfxlayout->total ) {
 	    logerror( "SZ_8X8: sprite=%d\n", code );
 	    code = 0;
@@ -479,8 +526,8 @@ static void draw_sprites( struct osd_bitmap *bitmap )
 
     case SZ_32X32 :
       code = ( ( (int)ygv608.regs.s.sba & 0xf0 ) << 4 ) | (int)sa->sn;
-      if( ygv608.regs.s.spf != 0 )
-	color = ( code >> ( ( ygv608.regs.s.spf + 1 ) * 2 ) ) & 0x0f;
+      if (spf != 0)
+	color = ( code >> ( (spf + 1) * 2 ) ) & 0x0f;
       if( code >= Machine->drv->gfxdecodeinfo[GFX_32X32_4BIT].gfxlayout->total ) {
 	  logerror( "SZ_32X32: sprite=%d\n", code );
 	code = 0;
@@ -510,8 +557,40 @@ static void draw_sprites( struct osd_bitmap *bitmap )
       // - ignore until someone thinks it's required
       break;
 
+    case SZ_64X64 :
+      code = ( ( (int)ygv608.regs.s.sba & 0xc0 ) << 2 ) | (int)sa->sn;
+      if (spf != 0)
+	    color = ( code >> ( (spf + 1) * 2 ) ) & 0x0f;
+      if( code >= Machine->drv->gfxdecodeinfo[GFX_64X64_4BIT].gfxlayout->total ) {
+	    logerror( "SZ_64X64: sprite=%d\n", code );
+	    code = 0;
+      }
+      drawgfx( bitmap, Machine->gfx[GFX_64X64_4BIT],
+	       code,
+	       color,
+	       flipx,flipy,
+	       sx,sy,
+	       &spriteClip,TRANSPARENCY_PEN,0x00);
+      // redraw with wrap-around
+      if( sx > 512-64 )
+        drawgfx( bitmap, Machine->gfx[GFX_64X64_4BIT],
+	        code,
+	        color,
+	        flipx,flipy,
+	        sx-512,sy,
+	        &spriteClip,TRANSPARENCY_PEN,0x00);
+      if( sy > 512-64 )
+        drawgfx( bitmap, Machine->gfx[GFX_64X64_4BIT],
+	        code,
+	        color,
+	        flipx,flipy,
+	        sx,sy-512,
+	        &spriteClip,TRANSPARENCY_PEN,0x00);
+      // really should draw again for both wrapped!
+      // - ignore until someone thinks it's required
+      break;
+
     default :
-        logerror( "unsupported sprite size %d\n", size );
       break;
     }
   }
@@ -534,85 +613,88 @@ void ygv608_vh_update( struct osd_bitmap *bitmap, int full_refresh )
     char buffer[64];
 #endif
     int col;
+#ifdef _ENABLE_ROTATE_ZOOM
+    int xc, yc;
+    double r, alpha, sin_theta, cos_theta;
+#endif
 
-  if( ygv608.screen_resize ) {
-
+	if( ygv608.screen_resize )
+	{
 #ifdef _ENABLE_SCREEN_RESIZE
-    // hdw should be scaled by 16, not 8
-    // - is it something to do with double dot-clocks???
-    set_visible_area( 0, ((int)(ygv608.regs.s.hdw)<<3/*4*/)-1,
-                      0, ((int)(ygv608.regs.s.vdw)<<3)-1 );
+		// hdw should be scaled by 16, not 8
+		// - is it something to do with double dot-clocks???
+		set_visible_area( 0, ((int)(ygv608.regs.s.hdw)<<3/*4*/)-1,
+						  0, ((int)(ygv608.regs.s.vdw)<<3)-1 );
 #endif
 
 #ifdef _ENABLE_ROTATE_ZOOM
-    if( work_bitmap )
-        bitmap_free( work_bitmap );
-    work_bitmap = bitmap_alloc_depth( Machine->drv->screen_width,
-                                      Machine->drv->screen_height,
-                                      Machine->color_depth );
+		if( work_bitmap )
+			bitmap_free( work_bitmap );
+		work_bitmap = bitmap_alloc_depth( Machine->drv->screen_width,
+										  Machine->drv->screen_height,
+										  Machine->color_depth );
 #else
-    work_bitmap = bitmap;
+		work_bitmap = bitmap;
 #endif
 
-    // reset resize flag
-    ygv608.screen_resize = 0;
-  }
+		// reset resize flag
+		ygv608.screen_resize = 0;
+	}
 
-  if( ygv608.tilemap_resize ) {
+	if( ygv608.tilemap_resize )
+	{
 
-    if( tilemap_A )
-    {
-        tilemap_dispose( tilemap_A );
-        tilemap_A = NULL;
-    }
+		if (tilemap_A)
+		{
+			tilemap_dispose( tilemap_A );
+			tilemap_A = NULL;
+		}
 
-    if( ygv608.regs.s.pts == PTS_8X8 )
-        tilemap_A = tilemap_create( get_tile_info_A_8,
-                                    get_tile_offset,
-				                    TILEMAP_TRANSPARENT,
-                                    8, 8,
-				                    ygv608.page_x, ygv608.page_y );
-    else
-        tilemap_A = tilemap_create( get_tile_info_A_16,
-                                    get_tile_offset,
-				                    TILEMAP_TRANSPARENT,
-				                    16, 16,
-				                    ygv608.page_x, ygv608.page_y );
+		if ((ygv608.regs.s.r9 & r9_pts) == PTS_8X8 )
+			tilemap_A = tilemap_create( get_tile_info_A_8,
+										get_tile_offset,
+										TILEMAP_TRANSPARENT,
+										8, 8,
+										ygv608.page_x, ygv608.page_y );
+		else
+			tilemap_A = tilemap_create( get_tile_info_A_16,
+										get_tile_offset,
+										TILEMAP_TRANSPARENT,
+										16, 16,
+										ygv608.page_x, ygv608.page_y );
 
-    tilemap_set_transparent_pen( tilemap_A, 0 );
-    // for NCV1 it's sufficient to scroll only columns
-    tilemap_set_scroll_cols( tilemap_A, ygv608.page_x );
+		tilemap_set_transparent_pen( tilemap_A, 0 );
+		// for NCV1 it's sufficient to scroll only columns
+		tilemap_set_scroll_cols( tilemap_A, ygv608.page_x );
 
-    if( tilemap_B )
-    {
-        tilemap_dispose( tilemap_B );
-        tilemap_B = NULL;
-    }
+		if( tilemap_B )
+		{
+			tilemap_dispose( tilemap_B );
+			tilemap_B = NULL;
+		}
 
-    if( ygv608.regs.s.pts == PTS_8X8 )
-        tilemap_B = tilemap_create( get_tile_info_B_8,
-                                    get_tile_offset,
-				                    TILEMAP_OPAQUE,
-                                    8, 8,
-				                    ygv608.page_x, ygv608.page_y );
-    else
-        tilemap_B = tilemap_create( get_tile_info_B_16,
-                                    get_tile_offset,
-				                    TILEMAP_OPAQUE,
-				                    16, 16,
-				                    ygv608.page_x, ygv608.page_y );
+		if ((ygv608.regs.s.r9 & r9_pts) == PTS_8X8 )
+			tilemap_B = tilemap_create( get_tile_info_B_8,
+										get_tile_offset,
+										TILEMAP_OPAQUE,
+										8, 8,
+										ygv608.page_x, ygv608.page_y );
+		else
+			tilemap_B = tilemap_create( get_tile_info_B_16,
+										get_tile_offset,
+										TILEMAP_OPAQUE,
+										16, 16,
+										ygv608.page_x, ygv608.page_y );
 
-    // for NCV1 it's sufficient to scroll only columns
-    tilemap_set_scroll_cols( tilemap_B, ygv608.page_x );
+		// for NCV1 it's sufficient to scroll only columns
+		tilemap_set_scroll_cols( tilemap_B, ygv608.page_x );
 
-    // now clear the screen in case we change to 1-plane mode
-    fillbitmap( work_bitmap,
-                Machine->pens[0],
-                &Machine->visible_area );
+		// now clear the screen in case we change to 1-plane mode
+		fillbitmap( work_bitmap, Machine->pens[0], &Machine->visible_area );
 
-    // reset resize flag
-    ygv608.tilemap_resize = 0;
-  }
+		// reset resize flag
+		ygv608.tilemap_resize = 0;
+	}
 
 #ifdef _ENABLE_SCROLLY
 
@@ -641,29 +723,54 @@ void ygv608_vh_update( struct osd_bitmap *bitmap, int full_refresh )
 
 #endif
 
-  tilemap_set_enable( tilemap_A, ygv608.regs.s.dspe );
-  if( ygv608.regs.s.md & MD_1PLANE )
-    tilemap_set_enable( tilemap_B, 0 );
-  else
-    tilemap_set_enable( tilemap_B, ygv608.regs.s.dspe );
-  tilemap_mark_all_tiles_dirty( tilemap_A );
-  tilemap_mark_all_tiles_dirty( tilemap_B );
-  tilemap_update( ALL_TILEMAPS );
+	tilemap_set_enable( tilemap_A, ygv608.regs.s.r7 & r7_dspe);
+	if((ygv608.regs.s.r7 & r7_md) & MD_1PLANE )
+		tilemap_set_enable( tilemap_B, 0 );
+	else
+		tilemap_set_enable( tilemap_B, ygv608.regs.s.r7 & r7_dspe);
 
-  palette_init_used_colors();
-  // mark colours used by sprites
-  palette_recalc();
+	tilemap_mark_all_tiles_dirty( tilemap_A );
+	tilemap_mark_all_tiles_dirty( tilemap_B );
+
+
+	/*
+	 *    now we can render the screen
+	 */
+
+#if 1
+	// LBO - need to implement proper pen marking for sprites as well as set aside a non-transparent
+	// pen to be used for background fills when plane B is disabled.
+	if ((ygv608.regs.s.r7 & r7_md) & MD_1PLANE)
+	{
+		// If the background tilemap is disabled, we need to clear the bitmap to black
+		fillbitmap (work_bitmap,Machine->pens[0],&Machine->visible_area);
+//		fillbitmap (work_bitmap,1,&Machine->visible_area);
+	}
+	else
+#endif
+		tilemap_draw( work_bitmap, tilemap_B, 0, 0 );
+
+#ifdef _ENABLE_ROTATE_ZOOM
 
   /*
-   *    now we can render the screen
+   *    fudge - translate ax,ay to startx, starty each time
    */
 
-  tilemap_draw( work_bitmap, tilemap_B, 0, 0 );
-#ifdef _ENABLE_ROTATE_ZOOM
+  xc = ygv608.ax >> 16;
+  yc = ygv608.ay >> 16;
+  r = sqrt( (double)( xc * xc + yc * yc ) );
+  alpha = atan( (double)xc / (double)yc );
+  sin_theta = (double)ygv608.dyx / (double)0x10000;
+  cos_theta = (double)ygv608.dx / (double)0x10000;
+
   if( ygv608.regs.s.zron )
     copyrozbitmap( bitmap, work_bitmap,
-                   ygv608.ax, // + ( Machine->visible_area.min_x << 16 ),
-                   ygv608.ay, // + ( Machine->visible_area.min_y << 16 ),
+                   ( Machine->visible_area.min_x << 16 ) +
+                    ygv608.ax + 0x10000 * r *
+                    ( -sin( alpha ) * cos_theta + cos( alpha ) * sin_theta ),
+                   ( Machine->visible_area.min_y << 16 ) +
+                    ygv608.ay + 0x10000 * r *
+                    ( cos( alpha ) * cos_theta + sin( alpha ) * sin_theta ),
                    ygv608.dx, ygv608.dxy, ygv608.dyx, ygv608.dy, 0,
                    &Machine->visible_area,
                    TRANSPARENCY_NONE, 0, 0 );
@@ -680,11 +787,12 @@ void ygv608_vh_update( struct osd_bitmap *bitmap, int full_refresh )
               &Machine->visible_area );
 #endif
 
-  if( ygv608.regs.s.prm == PRM_ASBDEX ||
-	  ygv608.regs.s.prm == PRM_ASEBDX )
-      draw_sprites( bitmap );
+	if ((ygv608.regs.s.r11 & r11_prm) == PRM_ASBDEX ||
+		(ygv608.regs.s.r11 & r11_prm) == PRM_ASEBDX )
+		draw_sprites( bitmap );
 
-  tilemap_draw( work_bitmap, tilemap_A, 0, 0 );
+	tilemap_draw( work_bitmap, tilemap_A, 0, 0 );
+
 #ifdef _ENABLE_ROTATE_ZOOM
   if( ygv608.regs.s.zron )
     copyrozbitmap( bitmap, work_bitmap,
@@ -699,18 +807,17 @@ void ygv608_vh_update( struct osd_bitmap *bitmap, int full_refresh )
                 TRANSPARENCY_PEN, Machine->pens[0] );
 #endif
 
-  if( ygv608.regs.s.prm == PRM_SABDEX ||
-      ygv608.regs.s.prm == PRM_SEABDX )
-      draw_sprites( bitmap );
+	if ((ygv608.regs.s.r11 & r11_prm) == PRM_SABDEX ||
+		(ygv608.regs.s.r11 & r11_prm) == PRM_SEABDX)
+		draw_sprites( bitmap );
 
 
 #ifdef _SHOW_VIDEO_DEBUG
-
   /* show screen control information */
-  ui_text( bitmap, mode[ygv608.regs.s.md], 0, 0 );
+  ui_text( bitmap, mode[(ygv608.regs.s.r7 & r7_md) >> 1], 0, 0 );
   sprintf( buffer, "%02ux%02u", ygv608.page_x, ygv608.page_y );
   ui_text( bitmap, buffer, 0, 16 );
-  ui_text( bitmap, psize[ygv608.regs.s.pts], 0, 32 );
+  ui_text( bitmap, psize[(ygv608.regs.s.r9 & r9_pts) >> 6], 0, 32 );
   sprintf( buffer, "A: SX:%d SY:%d",
 	   (int)ygv608.scroll_data_table[0][0x80] +
 	   ( ( (int)ygv608.scroll_data_table[0][0x81] & 0x0f ) << 8 ),
@@ -723,7 +830,6 @@ void ygv608_vh_update( struct osd_bitmap *bitmap, int full_refresh )
 	   (int)ygv608.scroll_data_table[1][0x00] +
 	   ( ( (int)ygv608.scroll_data_table[1][0x01] & 0x0f ) << 8 ) );
   ui_text( bitmap, buffer, 0, 64 );
-
 #endif
 }
 
@@ -734,308 +840,331 @@ static void SetPostShortcuts( int reg );
 
 READ16_HANDLER( ygv608_r )
 {
-  static int p0_state = 0;
-  static int p3_state = 0;
-  static int pattern_name_base = 0;  /* pattern name table base address */
-  int pn;
-  data16_t  data = 0;
+	static int p0_state = 0;
+	static int p3_state = 0;
+	static int pattern_name_base = 0;  /* pattern name table base address */
+	int pn=0;
+	data16_t  data = 0;
 
-  switch( offset ) {
+	switch (offset)
+	{
+		case 0x00: /* P#0 - pattern name table data port */
+		{
+			UINT8 xTile = ygv608.regs.s.r1 & r1_pnx;
+			UINT8 yTile = ygv608.regs.s.r0 & r0_pny;
 
-  case 0x00:
-    switch( p0_state ) {
+			switch (p0_state)
+			{
+				case 0:
+					/* Are we reading from plane B? */
+					if (!((ygv608.regs.s.r7 & r7_md) & MD_1PLANE) && (ygv608.regs.s.r0 & r0_b_a))
+						pattern_name_base = ((ygv608.page_y << ygv608.pny_shift) << ygv608.bits16);
 
-    case 0 :
+					/* read character from ram */
+					pn = pattern_name_base + (((yTile << ygv608.pny_shift) + xTile) << ygv608.bits16);
+					break;
 
-      /* Are we reading from plane B? */
-      if( !( ygv608.regs.s.md & MD_1PLANE ) )
-	  if( ygv608.regs.s.b_a )
-	    pattern_name_base = ( ( ygv608.page_y << ygv608.pny_shift )
-				                << ygv608.bits16 );
+				case 1:
+					/* read character from ram */
+					pn = pattern_name_base + (((yTile << ygv608.pny_shift) + xTile) << ygv608.bits16) + 1;
+					break;
+			}
 
-      /* read character from ram */
-      pn = pattern_name_base +
-	        ( ( ( ygv608.regs.s.pny << ygv608.pny_shift ) +
-	            ygv608.regs.s.pnx ) <<
-	            ygv608.bits16 );
-      if( pn > 4095 ) {
-	    logerror( "attempt (0) to read pattern name %d\n"
-		   "mode = %d, pgs = %d (%dx%d)\n"
-		   "pattern_name_base = %d\n"
-		   "pnx = %d, pny = %d, pny_shift = %d, bits16 = %d\n",
-		   pn, ygv608.regs.s.md, ygv608.regs.s.pgs,
-		   ygv608.page_x, ygv608.page_y,
-		   pattern_name_base,
-		   ygv608.regs.s.pnx, ygv608.regs.s.pny, ygv608.pny_shift,
-		   ygv608.bits16 );
-	    pn = 0;
-      }
-      data = ygv608.pattern_name_table[pn];
-      break;
+			if (pn > 4095)
+			{
+				logerror( "attempt (%d) to read pattern name %d\n"
+					"mode = %d, pgs = %d (%dx%d)\n"
+					"pattern_name_base = %d\n"
+					"pnx = %d, pny = %d, pny_shift = %d, bits16 = %d\n",
+					p0_state,
+					pn, ygv608.regs.s.r7 & r7_md, ygv608.regs.s.r8 & r8_pgs,
+					ygv608.page_x, ygv608.page_y,
+					pattern_name_base,
+					xTile, yTile, ygv608.pny_shift,
+					ygv608.bits16 );
+				pn = 0;
+			}
+			data = ygv608.pattern_name_table[pn];
 
-    case 1 :
+			p0_state++;
+			if ((ygv608.regs.s.r7 & r7_md) == MD_2PLANE_8BIT )
+				p0_state++;
 
-      /* read character from ram */
-      pn = pattern_name_base +
-	    ( ( ( ygv608.regs.s.pny << ygv608.pny_shift ) +
-	        ygv608.regs.s.pnx ) <<
-	        ygv608.bits16 ) + 1;
-      if( pn > 4095 ) {
-	    logerror( "attempt (1) to read pattern name %d\n"
-		   "mode = %d\n"
-		   "pattern_name_base = %d\n"
-		   "pnx = %d, pny = %d, pny_shift = %d, bits16 = %d\n",
-		   pn, ygv608.regs.s.md, pattern_name_base,
-		   ygv608.regs.s.pnx, ygv608.regs.s.pny, ygv608.pny_shift,
-		   ygv608.bits16 );
-	    pn = 0;
-      }
-      data = ygv608.pattern_name_table[pn];
-      break;
-    }
+			if (p0_state == 2)
+			{
+				if (ygv608.regs.s.r0 & r0_pnya)
+				{
+					if (yTile++ == (ygv608.page_y - 1))
+					{
+						yTile = 0;
+						if (xTile++ == (ygv608.page_x - 1))
+						{
+							xTile = 0;
+							// we're now off this tile plane, toggle planes
+							ygv608.regs.s.r0 ^= r0_b_a;
+						}
+					}
+					ygv608.regs.s.r0 &= ~r0_pny;
+					ygv608.regs.s.r0 |= yTile;
+					ygv608.regs.s.r1 &= ~r1_pnx;
+					ygv608.regs.s.r1 |= xTile;
+				}
+				else if (ygv608.regs.s.r1 & r1_pnxa)
+				{
+					if (xTile++ == (ygv608.page_x - 1))
+					{
+						xTile = 0;
+						if (yTile++ == (ygv608.page_y - 1))
+						{
+							yTile = 0;
+							// we're now off this tile plane, toggle planes
+							ygv608.regs.s.r0 ^= r0_b_a;
+						}
+					}
+					ygv608.regs.s.r0 &= ~r0_pny;
+					ygv608.regs.s.r0 |= yTile;
+					ygv608.regs.s.r1 &= ~r1_pnx;
+					ygv608.regs.s.r1 |= xTile;
+				}
+				p0_state = 0;
+				pattern_name_base = 0;
+			}
+			return (data << 8);
+		}
+		break;
 
-    p0_state++;
-    if( ygv608.regs.s.md == MD_2PLANE_8BIT )
-      p0_state++;
+		case 0x01: /* P#1 - sprite data port */
+			data = ygv608.sprite_attribute_table.b[ygv608.regs.s.saa];
+			if (ygv608.regs.s.r2 & r2_saar)
+				ygv608.regs.s.saa++;
+			return (data << 8);
+			break;
 
-    if( p0_state == 2 ) {
+		case 0x02: /* P#2 - scroll data port */
+			data = ygv608.scroll_data_table[(ygv608.regs.s.r2 & r2_b_a) >> 4][ygv608.regs.s.sca];
+			if (ygv608.regs.s.r2 & r2_scar)
+			{
+				ygv608.regs.s.sca++;
+				/* handle wrap to next plane */
+				if (ygv608.regs.s.sca == 0)
+					ygv608.regs.s.r2 ^= r2_b_a;
+			}
+			return( data << 8 );
+			break;
 
-      if( ygv608.regs.s.pnya ) {
-	    if( ygv608.regs.s.pny++ == ( ygv608.page_y - 1 ) ) {
-	      ygv608.regs.s.pny = 0;
-	      if( ygv608.regs.s.pnx++ == ( ygv608.page_x - 1 ) ) {
-	        ygv608.regs.s.pnx = 0;
-	        ygv608.regs.s.b_a = ~ygv608.regs.s.b_a;
-	      }
-	    }
-      }
-      else {
-	    if( ygv608.regs.s.pnxa ) {
-	      if( ygv608.regs.s.pnx++ == ( ygv608.page_x - 1 ) ) {
-	        ygv608.regs.s.pnx = 0;
-	        if( ygv608.regs.s.pny++ == ( ygv608.page_y - 1 ) ) {
-	          ygv608.regs.s.pny = 0;
-	          ygv608.regs.s.b_a = ~ygv608.regs.s.b_a;
-	        }
-	      }
-	    }
-      }
-      p0_state = 0;
-      pattern_name_base = 0;
-    };
-    return( data << 8 );
-    break;
+		case 0x03: /* P#3 - color palette data port */
+			data = ygv608.colour_palette[ygv608.regs.s.cc][p3_state];
+			if( ++p3_state == 3 )
+			{
+				p3_state = 0;
+				if( ygv608.regs.s.r2 & r2_cpar)
+					ygv608.regs.s.cc++;
+			}
+			return( data << 8 );
+			break;
 
-  case 0x01: /* P#1 - sprite data port */
-    data = ygv608.sprite_attribute_table.b[ygv608.regs.s.saa];
-    if( ygv608.regs.s.saar )
-      ygv608.regs.s.saa++;
-    return( data << 8 );
-    break;
+		case 0x04: /* P#4 - register data port */
+		{
+			UINT8 regNum = (ygv608.ports.s.p5) & p5_rn;
+    		data = ygv608.regs.b[regNum];
+			if (ygv608.ports.s.p5 & p5_rrai)
+			{
+				regNum ++;
+				if (regNum == 50)
+				{
+					regNum = 0;
+	   				logerror( "warning: rn=50 after read increment\n" );
+				}
+				ygv608.ports.s.p5 &= ~p5_rn;
+				ygv608.ports.s.p5 |= regNum;
+			}
+			return (data << 8);
+		}
+		break;
 
-  case 0x02: /* P#2 - scroll data port */
-    data = ygv608.scroll_data_table[ygv608.regs.s.p2_b_a][ygv608.regs.s.sca];
-    if( ygv608.regs.s.scar ) {
-      ygv608.regs.s.sca++;
-      /* handle wrap to next plane */
-      if( ygv608.regs.s.sca == 0 )
-      ygv608.regs.s.p2_b_a++;
-    }
-    return( data << 8 );
-    break;
+		case 0x05:
+			break;
 
-  case 0x03: /* P#3 - color palette data port */
-    data = ygv608.colour_palette[ygv608.regs.s.cc][p3_state];
-    if( ++p3_state == 3 ) {
-      p3_state = 0;
-      if( ygv608.regs.s.cpar )
-	    ygv608.regs.s.cc++;
-    }
-    return( data << 8 );
-    break;
+		case 0x06:
+		case 0x07:
+			return( (data16_t)(ygv608.ports.b[offset]) << 8 );
 
-  case 0x04: /* P#4 - register data port */
-    data = ygv608.regs.b[ygv608.ports.s.rn];
-    if( ygv608.ports.s.rrai )
-      ygv608.ports.s.rn++;
-    return( data << 8 );
-    break;
+		default :
+			logerror( "unknown ygv608 register (%d)\n", offset );
+			break;
+	}
 
-  case 0x05:
-    break;
-
-  case 0x06:
-  case 0x07:
-    return( (data16_t)(ygv608.ports.b[offset]) << 8 );
-
-  default :
-    logerror( "unknown ygv608 register (%d)\n", offset );
-    break;
-  }
-
-  return( 0 );
+	return( 0 );
 }
 
 WRITE16_HANDLER( ygv608_w )
 {
-  static int p0_state = 0;
-  static int p3_state = 0;
-  static int pattern_name_base = 0;  /* pattern name table base address */
-  int pn;
+	static int p0_state = 0;
+	static int p3_state = 0;
+	static int pattern_name_base = 0;  /* pattern name table base address */
+	int pn=0;
 
-  data = ( data >> 8 ) & 0xff;
+	data = ( data >> 8 ) & 0xff;
 
-  switch( offset ) {
+	switch (offset)
+	{
+		case 0x00: /* P#0 - pattern name table data port */
+		{
+			UINT8 xTile = ygv608.regs.s.r1 & r1_pnx;
+			UINT8 yTile = ygv608.regs.s.r0 & r0_pny;
 
-  case 0x00 : /* P#0 - pattern name table data port */
+			switch (p0_state)
+			{
+				case 0:
+					/* Are we reading from plane B? */
+					if (!((ygv608.regs.s.r7 & r7_md) & MD_1PLANE) && (ygv608.regs.s.r0 & r0_b_a))
+						pattern_name_base = ((ygv608.page_y << ygv608.pny_shift) << ygv608.bits16);
 
-    switch( p0_state ) {
+					/* read character from ram */
+					pn = pattern_name_base + (((yTile << ygv608.pny_shift) + xTile) << ygv608.bits16);
+					break;
 
-    case 0 :
+				case 1:
+					/* read character from ram */
+					pn = pattern_name_base + (((yTile << ygv608.pny_shift) + xTile) << ygv608.bits16) + 1;
+					break;
+			}
 
-      /* Are we writing into plane B? */
-      if( !( ygv608.regs.s.md & MD_1PLANE ) )
-	if( ygv608.regs.s.b_a )
-	  pattern_name_base = ( ( ygv608.page_y << ygv608.pny_shift )
-				<< ygv608.bits16 );
+			if (pn > 4095)
+			{
+				logerror( "attempt (%d) to read pattern name %d\n"
+					"mode = %d, pgs = %d (%dx%d)\n"
+					"pattern_name_base = %d\n"
+					"pnx = %d, pny = %d, pny_shift = %d, bits16 = %d\n",
+					p0_state,
+					pn, ygv608.regs.s.r7 & r7_md, ygv608.regs.s.r8 & r8_pgs,
+					ygv608.page_x, ygv608.page_y,
+					pattern_name_base,
+					xTile, yTile, ygv608.pny_shift,
+					ygv608.bits16 );
+				pn = 0;
+			}
+			ygv608.pattern_name_table[pn] = data;
 
-      /* write character to ram */
-      pn = pattern_name_base +
-	( ( ( ygv608.regs.s.pny << ygv608.pny_shift ) +
-	    ygv608.regs.s.pnx ) <<
-	  ygv608.bits16 );
-      if( pn > 4095 ) {
-	  logerror( "attempt (0) to write pattern name %d\n"
-		   "mode = %d, pgs = %d (%dx%d)\n"
-		   "pattern_name_base = %d\n"
-		   "pnx = %d, pny = %d, pny_shift = %d, bits16 = %d\n",
-		   pn, ygv608.regs.s.md, ygv608.regs.s.pgs,
-		   ygv608.page_x, ygv608.page_y,
-		   pattern_name_base,
-		   ygv608.regs.s.pnx, ygv608.regs.s.pny, ygv608.pny_shift,
-		   ygv608.bits16 );
-	pn = 0;
-      }
-      ygv608.pattern_name_table[pn] = data;
-      break;
+			p0_state++;
+			if ((ygv608.regs.s.r7 & r7_md) == MD_2PLANE_8BIT )
+				p0_state++;
 
-    case 1 :
+			if (p0_state == 2)
+			{
+				if (ygv608.regs.s.r0 & r0_pnya)
+				{
+					if (yTile++ == (ygv608.page_y - 1))
+					{
+						yTile = 0;
+						if (xTile++ == (ygv608.page_x - 1))
+						{
+							xTile = 0;
+							ygv608.regs.s.r0 ^= r0_b_a;
+						}
+					}
+					ygv608.regs.s.r0 &= ~r0_pny;
+					ygv608.regs.s.r0 |= yTile;
+					ygv608.regs.s.r1 &= ~r1_pnx;
+					ygv608.regs.s.r1 |= xTile;
+				}
+				else if (ygv608.regs.s.r1 & r1_pnxa)
+				{
+					if (xTile++ == (ygv608.page_x - 1))
+					{
+						xTile = 0;
+						if (yTile++ == (ygv608.page_y - 1))
+						{
+							yTile = 0;
+							ygv608.regs.s.r0 ^= r0_b_a;
+						}
+					}
+					ygv608.regs.s.r0 &= ~r0_pny;
+					ygv608.regs.s.r0 |= yTile;
+					ygv608.regs.s.r1 &= ~r1_pnx;
+					ygv608.regs.s.r1 |= xTile;
+				}
+				p0_state = 0;
+				pattern_name_base = 0;
+			}
+		}
+		break;
 
-      /* write character to ram */
-      pn = pattern_name_base +
-	( ( ( ygv608.regs.s.pny << ygv608.pny_shift ) +
-	    ygv608.regs.s.pnx ) <<
-	  ygv608.bits16 ) + 1;
-      if( pn > 4095 ) {
-	  logerror( "attempt (1) to write pattern name %d\n"
-		   "mode = %d\n"
-		   "pattern_name_base = %d\n"
-		   "pnx = %d, pny = %d, pny_shift = %d, bits16 = %d\n",
-		   pn, ygv608.regs.s.md, pattern_name_base,
-		   ygv608.regs.s.pnx, ygv608.regs.s.pny, ygv608.pny_shift,
-		   ygv608.bits16 );
-	pn = 0;
-      }
-      ygv608.pattern_name_table[pn] = data;
-      break;
-    }
+		case 0x01: /* P#1 - sprite data port */
+			ygv608.sprite_attribute_table.b[ygv608.regs.s.saa] = data;
+			if( ygv608.regs.s.r2 & r2_saaw)
+				ygv608.regs.s.saa++;
+			break;
 
-    p0_state++;
-    if( ygv608.regs.s.md == MD_2PLANE_8BIT )
-      p0_state++;
+		case 0x02: /* P#2 - scroll data port */
+			ygv608.scroll_data_table[(ygv608.regs.s.r2 & r2_b_a) >> 4][ygv608.regs.s.sca] = data;
+			if (ygv608.regs.s.r2 & r2_scaw)
+			{
+				ygv608.regs.s.sca++;
+				/* handle wrap to next plane */
+				if (ygv608.regs.s.sca == 0)
+					ygv608.regs.s.r2 ^= r2_b_a;
+			}
+			break;
 
-    if( p0_state == 2 ) {
+		case 0x03: /* P#3 - colour palette data port */
+			ygv608.colour_palette[ygv608.regs.s.cc][p3_state] = data;
+			if (++p3_state == 3)
+			{
+				p3_state = 0;
+				palette_change_color(ygv608.regs.s.cc,
+			    	ygv608.colour_palette[ygv608.regs.s.cc][0] << 2,
+			    	ygv608.colour_palette[ygv608.regs.s.cc][1] << 2,
+			    	ygv608.colour_palette[ygv608.regs.s.cc][2] << 2 );
+				if (ygv608.regs.s.r2 & r2_cpaw)
+					ygv608.regs.s.cc++;
+			}
+			break;
 
-      if( ygv608.regs.s.pnya ) {
-	    if( ygv608.regs.s.pny++ == ( ygv608.page_y - 1 ) ) {
-	      ygv608.regs.s.pny = 0;
-	      if( ygv608.regs.s.pnx++ == ( ygv608.page_x - 1 ) ) {
-	        ygv608.regs.s.pnx = 0;
-	        ygv608.regs.s.b_a = ~ygv608.regs.s.b_a;
-	      }
-	    }
-      }
-      else {
-	    if( ygv608.regs.s.pnxa ) {
-	      if( ygv608.regs.s.pnx++ == ( ygv608.page_x - 1 ) ) {
-	        ygv608.regs.s.pnx = 0;
-	        if( ygv608.regs.s.pny++ == ( ygv608.page_y - 1 ) ) {
-	          ygv608.regs.s.pny = 0;
-	          ygv608.regs.s.b_a = ~ygv608.regs.s.b_a;
-	        }
-	      }
-	    }
-      }
-      p0_state = 0;
-      pattern_name_base = 0;
-    };
-    break;
-
-  case 0x01 : /* P#1 - sprite data port */
-    ygv608.sprite_attribute_table.b[ygv608.regs.s.saa] = data;
-    if( ygv608.regs.s.saaw )
-      ygv608.regs.s.saa++;
-    break;
-
-  case 0x02 : /* P#2 - scroll data port */
-    ygv608.scroll_data_table[ygv608.regs.s.p2_b_a][ygv608.regs.s.sca] = data;
-    if( ygv608.regs.s.scaw ) {
-      ygv608.regs.s.sca++;
-      /* handle wrap to next plane */
-      if( ygv608.regs.s.sca == 0 )
-        ygv608.regs.s.p2_b_a++;
-    }
-    break;
-
-  case 0x03 : /* P#3 - colour palette data port */
-    ygv608.colour_palette[ygv608.regs.s.cc][p3_state] = data;
-    if( ++p3_state == 3 ) {
-      p3_state = 0;
-      palette_change_color( ygv608.regs.s.cc,
-			    ygv608.colour_palette[ygv608.regs.s.cc][0] << 2,
-			    ygv608.colour_palette[ygv608.regs.s.cc][1] << 2,
-			    ygv608.colour_palette[ygv608.regs.s.cc][2] << 2 );
-      if( ygv608.regs.s.cpaw )
-	    ygv608.regs.s.cc++;
-    }
-    break;
-
-  case 0x04 : /* P#4 - register data port */
+		case 0x04: /* P#4 - register data port */
+		{
+			UINT8 regNum = (ygv608.ports.s.p5) & p5_rn;
 #if 0
-      logerror( "R#%d = $%02X\n",
-	       ygv608.ports.s.rn, data );
+			logerror( "R#%d = $%02X\n", regNum, data );
 #endif
-    SetPreShortcuts( ygv608.ports.s.rn, data );
-    ygv608.regs.b[ygv608.ports.s.rn] = data;
-    SetPostShortcuts( ygv608.ports.s.rn );
-    if( ygv608.ports.s.rwai )
-      if( ++ygv608.ports.s.rn == 50 ) {
-	    ygv608.ports.s.rn = 0;
-	    logerror( "warning: rn=50\n" );
-      }
-    break;
+			SetPreShortcuts (regNum, data);
+			ygv608.regs.b[regNum] = data;
+			SetPostShortcuts (regNum);
+			if (ygv608.ports.s.p5 & p5_rwai)
+			{
+				regNum ++;
+				if (regNum == 50)
+				{
+					regNum = 0;
+	    			logerror( "warning: rn=50 after write increment\n" );
+				}
+				ygv608.ports.s.p5 &= ~p5_rn;
+				ygv608.ports.s.p5 |= regNum;
+			}
+		}
+		break;
 
-  case 0x05 : /* P#5 - register select port */
-    ygv608.ports.b[5] = data;
-    break;
+		case 0x05: /* P#5 - register select port */
+			ygv608.ports.b[5] = data;
+			break;
 
-  case 0x06 : /* P#6 - status port */
-    /* writing a '1' resets that bit */
-    ygv608.ports.b[6] &= ~data;
-    break;
+		case 0x06: /* P#6 - status port */
+			/* writing a '1' resets that bit */
+			ygv608.ports.b[6] &= ~data;
+			break;
 
-  case 0x07 : /* P#7 - system control port */
-    ygv608.ports.b[7] = data;
-    if( ygv608.ports.b[7] & 0x3e )
-      HandleRomTransfers();
-    if( ygv608.ports.b[7] & 0x01 )
-      HandleYGV608Reset();
-    break;
+		case 0x07: /* P#7 - system control port */
+			ygv608.ports.b[7] = data;
+			if (ygv608.ports.b[7] & 0x3e)
+				HandleRomTransfers();
+			if (ygv608.ports.b[7] & 0x01)
+				HandleYGV608Reset();
+			break;
 
-  default :
-    logerror( "unknown ygv608 register (%d)\n", offset );
-    break;
-  }
+		default:
+			logerror( "unknown ygv608 register (%d)\n", offset );
+			break;
+	}
 }
 
 void HandleYGV608Reset( void )
@@ -1054,7 +1183,7 @@ void HandleYGV608Reset( void )
     memset( ygv608.sprite_attribute_table.b, 0,
             YGV608_SPRITE_ATTR_TABLE_SIZE );
     memset( ygv608.scroll_data_table, 0, 2*256 );
-    memset( ygv608.colour_palette, 0, 25*3 );
+    memset( ygv608.colour_palette, 0, 256*3 );
 
     /* should set shortcuts here too */
     for( i=0; i<50; i++ ) {
@@ -1151,27 +1280,27 @@ void SetPreShortcuts( int reg, int data )
     switch( reg ) {
 
         case 7 :
-            if( ( data & MD_MASK ) != ygv608.regs.s.md )
+            if( ( ( data >> MD_SHIFT ) & MD_MASK ) != (ygv608.regs.s.r7 & r7_md))
                 ygv608.tilemap_resize = 1;
             break;
 
         case 8 :
-            if( ( data & PGS_MASK ) != ygv608.regs.s.pgs )
+            if( ( ( data >> PGS_SHIFT ) & PGS_MASK ) != (ygv608.regs.s.r8 & r8_pgs))
                 ygv608.tilemap_resize = 1;
             break;
 
         case 9 :
-            if( ( data & PTS_MASK ) != ygv608.regs.s.pts )
+            if( ( ( data >> PTS_SHIFT ) & PTS_MASK ) != (ygv608.regs.s.r9 & r9_pts))
                 ygv608.tilemap_resize= 1;
             break;
 
         case 40 :
-            if( ( data & HDW_MASK ) != ygv608.regs.s.hdw )
+            if( ( ( data >> HDW_SHIFT ) & HDW_MASK ) != (ygv608.regs.s.r40 & r40_hdw))
                 ygv608.screen_resize = 1;
             break;
 
         case 44 :
-            if( ( data & VDW_MASK ) != ygv608.regs.s.vdw )
+            if( ( ( data >> VDW_SHIFT ) & VDW_MASK ) != (ygv608.regs.s.r44 & r44_vdw))
                 ygv608.screen_resize = 1;
             break;
     }
@@ -1182,40 +1311,52 @@ void SetPreShortcuts( int reg, int data )
 
 void SetPostShortcuts( int reg )
 {
-  int plane, addr;
+	int plane, addr;
 
-  switch( reg ) {
+	switch (reg)
+	{
+		case 0:
+		{
+			UINT8 yTile = ygv608.regs.s.r0 & r0_pny;
 
-  case 0 :
-    if( ygv608.regs.s.pny >= ygv608.page_y )
-	logerror( "setting pny(%d) >= page_y(%d) @ $%X\n",
-		 ygv608.regs.s.pny, ygv608.page_y, cpu_get_pc() );
-    ygv608.regs.s.pny &= ( ygv608.page_y - 1 );
-    break;
+			if (yTile >= ygv608.page_y)
+				logerror ("setting pny(%d) >= page_y(%d) @ $%X\n",
+						yTile, ygv608.page_y, cpu_get_pc() );
+			yTile &= (ygv608.page_y - 1);
+			ygv608.regs.s.r0 &= ~r0_pny;
+			ygv608.regs.s.r0 |= yTile;
+		}
+		break;
 
-  case 1 :
-    if( ygv608.regs.s.pnx >= ygv608.page_x )
-	logerror( "setting pnx(%d) >= page_x(%d) @ $%X\n",
-		 ygv608.regs.s.pnx, ygv608.page_x, cpu_get_pc() );
-    ygv608.regs.s.pnx &= ( ygv608.page_x - 1 );
-    break;
+		case 1:
+		{
+			UINT8 xTile = ygv608.regs.s.r1 & r1_pnx;
 
-  case 6 :
+			if (xTile >= ygv608.page_x)
+				logerror ("setting pnx(%d) >= page_x(%d) @ $%X\n",
+						xTile, ygv608.page_x, cpu_get_pc() );
+			xTile &= (ygv608.page_x - 1);
+			ygv608.regs.s.r1 &= ~r1_pnx;
+			ygv608.regs.s.r1 |= xTile;
+		}
+		break;
+
+		case 6:
 #if 0
-      logerror( "SBA = $%08X\n", (int)ygv608.regs.s.sba << 13 );
+			logerror( "SBA = $%08X\n", (int)ygv608.regs.s.sba << 13 );
 #endif
-    break;
+			break;
 
-  case 7 :
-    ygv608.na8_mask = ( ygv608.regs.s.flip ? 0x03 : 0x0f );
-    /* fall thru */
+		case 7:
+			ygv608.na8_mask = ((ygv608.regs.s.r7 & r7_flip) ? 0x03 : 0x0f );
+			/* fall thru */
 
   case 8 :
-    ygv608.bits16 = ( ygv608.regs.s.md == MD_2PLANE_8BIT ? 0 : 1 );
-    if( ygv608.regs.s.md == MD_2PLANE_16BIT )
+    ygv608.bits16 = ((ygv608.regs.s.r7 & r7_md) == MD_2PLANE_8BIT ? 0 : 1 );
+    if((ygv608.regs.s.r7 & r7_md) == MD_2PLANE_16BIT )
       ygv608.page_x = ygv608.page_y = 32;
     else {
-      if( ygv608.regs.s.pgs == 0 ) {
+      if ((ygv608.regs.s.r8 & r8_pgs) == 0 ) {
 	ygv608.page_x = 64;
 	ygv608.page_y = 32;
       }
@@ -1232,24 +1373,22 @@ void SetPostShortcuts( int reg )
     break;
 
   case 9 :
-    if( ygv608.regs.s.slv != SLV_SCREEN )
-        logerror( "SLV = %1X\n", ygv608.regs.s.slv );
-    switch( ygv608.regs.s.slv )
+    switch (ygv608.regs.s.r9 & r9_slv)
     {
         case SLV_SCREEN :
             // always use scoll table entry #1
             ygv608.col_shift = 8;
             break;
         default :
-            if( ygv608.regs.s.pts == PTS_8X8 )
-                ygv608.col_shift = ygv608.regs.s.slv - 4;
+            if ((ygv608.regs.s.r9 & r9_pts) == PTS_8X8 )
+                ygv608.col_shift = (ygv608.regs.s.r9 & r9_slv) - 4;
             else
-                ygv608.col_shift = ygv608.regs.s.slv - 5;
+                ygv608.col_shift = (ygv608.regs.s.r9 & r9_slv) - 5;
             if( ygv608.col_shift < 0 )
             {
                 // we can't handle certain conditions
                 logerror( "Unhandled slv condition (pts=$%X,slv=$%X)\n",
-                          ygv608.regs.s.pts, ygv608.regs.s.slv );
+                          ygv608.regs.s.r9 & r9_pts, ygv608.regs.s.r9 & r9_slv);
                 ygv608.col_shift = 8;
             }
             break;
@@ -1272,41 +1411,43 @@ void SetPostShortcuts( int reg )
     break;
 
   case 25 : case 26 : case 27 :
-    ygv608.ax = (int)ygv608.regs.s.ax16 << 16 |
+    ygv608.ax = (int)(ygv608.regs.s.ax16 & 0x1f) << 16 |
                 (int)ygv608.regs.s.ax8 << 8 |
                 (int)ygv608.regs.s.ax0;
     ygv608.ax <<= 7;
     if( ygv608.ax & 0x08000000 ) ygv608.ax |= 0xf8000000;   // 2s complement
+    //logerror( "ygv608.ax = $%X\n", ygv608.ax );
     break;
 
   case 28 : case 29 :
-    ygv608.dx = (int)ygv608.regs.s.dx8 << 8 | (int)ygv608.regs.s.dx0;
+    ygv608.dx = (int)(ygv608.regs.s.dx8 & 0x1f) << 8 | (int)ygv608.regs.s.dx0;
     ygv608.dx <<= 7;
     if( ygv608.dx & 0x00080000 ) ygv608.dx |= 0xfff80000;   // 2s complement
     break;
 
   case 30 : case 31 :
-    ygv608.dxy = (int)ygv608.regs.s.dxy8 << 8 | (int)ygv608.regs.s.dxy0;
+    ygv608.dxy = (int)(ygv608.regs.s.dxy8 & 0x1f) << 8 | (int)ygv608.regs.s.dxy0;
     ygv608.dxy <<= 7;
     if( ygv608.dxy & 0x00080000 ) ygv608.dxy |= 0xfff80000; // 2s complement
     break;
 
   case 32 : case 33 : case 34 :
-    ygv608.ay = (int)ygv608.regs.s.ay16 << 16 |
+    ygv608.ay = (int)(ygv608.regs.s.ay16 & 0x1f) << 16 |
                 (int)ygv608.regs.s.ay8 << 8 |
                 (int)ygv608.regs.s.ay0;
     ygv608.ay <<= 7;
     if( ygv608.ay & 0x08000000 ) ygv608.ay |= 0xf8000000;   // 2s complement
+    //logerror( "ygv608.ay = $%X\n", ygv608.ay );
     break;
 
   case 35 : case 36 :
-    ygv608.dy = (int)ygv608.regs.s.dy8 << 8 | (int)ygv608.regs.s.dy0;
+    ygv608.dy = (int)(ygv608.regs.s.dy8 & 0x1f) << 8 | (int)ygv608.regs.s.dy0;
     ygv608.dy <<= 7;
     if( ygv608.dy & 0x00080000 ) ygv608.dy |= 0xfff80000;   // 2s complement
     break;
 
   case 37 : case 38 :
-    ygv608.dyx = (int)ygv608.regs.s.dyx8 << 8 | (int)ygv608.regs.s.dyx0;
+    ygv608.dyx = (int)(ygv608.regs.s.dyx8 & 0x1f) << 8 | (int)ygv608.regs.s.dyx0;
     ygv608.dyx <<= 7;
     if( ygv608.dyx & 0x00080000 ) ygv608.dyx |= 0xfff80000; // 2s complement
     break;
@@ -1425,26 +1566,26 @@ void ShowYGV608Registers( void )
   logerror(
        "\tR#00: $%02X : PNYA(%d),B/A(%c),PNY(%d)\n",
 	   ygv608.regs.b[0],
-	   ygv608.regs.s.pnya,
-	   ( ygv608.regs.s.b_a ? 'B' : 'A' ),
-	   ygv608.regs.s.pny );
+	   ygv608.regs.s.r0 & r0_pnya,
+	   ((ygv608.regs.s.r0 & r0_b_a) ? 'B' : 'A' ),
+	   ygv608.regs.s.r0 & r0_pny);
 
   logerror(
        "\tR#01: $%02X : PNXA(%d),PNX(%d)\n",
 	   ygv608.regs.b[1],
-	   ygv608.regs.s.pnxa,
-	   ygv608.regs.s.pnx );
+	   ygv608.regs.s.r1 & r1_pnxa,
+	   ygv608.regs.s.r1 & r1_pnx);
 
   logerror(
        "\tR#02: $%02X : CPAW(%d),CPAR(%d),B/A(%d),SCAW(%d),SCAR(%d),SAAW(%d),SAAR(%d)\n",
 	   ygv608.regs.b[2],
-	   ygv608.regs.s.cpaw,
-	   ygv608.regs.s.cpar,
-	   ygv608.regs.s.p2_b_a,
-	   ygv608.regs.s.scaw,
-	   ygv608.regs.s.scar,
-	   ygv608.regs.s.saaw,
-	   ygv608.regs.s.saar );
+	   ygv608.regs.s.r2 & r2_cpaw,
+	   ygv608.regs.s.r2 & r2_cpar,
+	   ygv608.regs.s.r2 & r2_b_a,
+	   ygv608.regs.s.r2 & r2_scaw,
+	   ygv608.regs.s.r2 & r2_scar,
+	   ygv608.regs.s.r2 & r2_saaw,
+	   ygv608.regs.s.r2 & r2_saar);
 
   logerror(
 	   "\tR#03: $%02X : SAA($%02X)\n",
@@ -1469,36 +1610,36 @@ void ShowYGV608Registers( void )
   logerror(
 	   "\tR#07: $%02X : DSPE(%d),MD(%d),ZRON(%d),FLIP(%d),DCKM(%d)\n",
 	   ygv608.regs.b[7],
-	   ygv608.regs.s.dspe,
-	   ygv608.regs.s.md,
-	   ygv608.regs.s.zron,
-	   ygv608.regs.s.flip,
-	   ygv608.regs.s.dckm );
+	   ygv608.regs.s.r7 & r7_dspe,
+	   ygv608.regs.s.r7 & r7_md,
+	   ygv608.regs.s.r7 & r7_zron,
+	   ygv608.regs.s.r7 & r7_flip,
+	   ygv608.regs.s.r7 & r7_dckm);
 
   logerror(
 	   "\tR#08: $%02X : HDS(%d),VDS(%d),RLRT(%d),RLSC(%d),PGS(%d)\n",
 	   ygv608.regs.b[8],
-	   ygv608.regs.s.hds,
-	   ygv608.regs.s.vds,
-	   ygv608.regs.s.rlrt,
-	   ygv608.regs.s.rlsc,
-	   ygv608.regs.s.pgs );
+	   ygv608.regs.s.r8 & r8_hds,
+	   ygv608.regs.s.r8 & r8_vds,
+	   ygv608.regs.s.r8 & r8_rlrt,
+	   ygv608.regs.s.r8 & r8_rlsc,
+	   ygv608.regs.s.r8 & r8_pgs);
 
   logerror(
 	   "\tR#11: $%02X : CTPA(%d),CTPB(%d),PRM(%d),CBDR(%d),YSE(%d),SCM(%d)\n",
 	   ygv608.regs.b[11],
-	   ygv608.regs.s.ctpa,
-	   ygv608.regs.s.ctpb,
-	   ygv608.regs.s.prm,
-	   ygv608.regs.s.cbdr,
-	   ygv608.regs.s.yse,
-	   ygv608.regs.s.scm );
+	   ygv608.regs.s.r11 & r11_ctpa,
+	   ygv608.regs.s.r11 & r11_ctpb,
+	   ygv608.regs.s.r11 & r11_prm,
+	   ygv608.regs.s.r11 & r11_cbdr,
+	   ygv608.regs.s.r11 & r11_yse,
+	   ygv608.regs.s.r11 & r11_scm);
 
   logerror(
 	   "\tR#40: $%02X : HTL9:8($%02X)=$%06X,HDW(%d)\n",
 	   ygv608.regs.b[40],
-	   ygv608.regs.s.htl89, (int)ygv608.regs.s.htl89 << 8,
-       ygv608.regs.s.hdw );
+	   ygv608.regs.s.r40 & r40_htl89, (int)(ygv608.regs.s.r40 & r40_htl89) << 8,
+       ygv608.regs.s.r40 & r40_hdw);
 
   logerror(
 	   "\tR#41: $%02X : HDSP($%02X)\n",
@@ -1512,7 +1653,7 @@ void ShowYGV608Registers( void )
 
   logerror(
 	   "\t              HTL=$%03X\n",
-	   ( (int)ygv608.regs.s.htl89 << 8 ) |
+	   ( (int)(ygv608.regs.s.r40 & r40_htl89) << 8 ) |
 	   ( (int)ygv608.regs.s.htl ) );
 
   logerror(

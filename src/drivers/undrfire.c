@@ -631,7 +631,7 @@ static struct MachineDriver machine_driver_undrfire =
 	16384, 16384,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_NEEDS_6BITS_PER_GUN,
+	VIDEO_TYPE_RASTER  | VIDEO_NEEDS_6BITS_PER_GUN,
 	0,
 	undrfire_vh_start,
 	undrfire_vh_stop,
@@ -741,4 +741,4 @@ void init_undrfire(void)
 }
 
 
-GAMEX( 1993, undrfire, 0, undrfire, undrfire, undrfire, ROT0_16BIT, "Taito Corporation Japan", "Under Fire (World)", GAME_IMPERFECT_COLORS )
+GAMEX( 1993, undrfire, 0, undrfire, undrfire, undrfire, ROT0, "Taito Corporation Japan", "Under Fire (World)", GAME_IMPERFECT_COLORS )

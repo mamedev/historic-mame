@@ -7,15 +7,22 @@
 #include "vidhrdw/generic.h"
 
 
-extern unsigned char *citycon_scroll;
-extern unsigned char *citycon_charlookup;
-WRITE_HANDLER( citycon_charlookup_w );
+extern data8_t *citycon_videoram;
+extern data8_t *citycon_scroll;
+extern data8_t *citycon_linecolor;
+WRITE_HANDLER( citycon_videoram_w );
+WRITE_HANDLER( citycon_linecolor_w );
 WRITE_HANDLER( citycon_background_w );
-READ_HANDLER( citycon_in_r );
 
 void citycon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 int  citycon_vh_start(void);
 void citycon_vh_stop(void);
+
+
+READ_HANDLER( citycon_in_r )
+{
+	return readinputport(flip_screen ? 1 : 0);
+}
 
 
 
@@ -30,8 +37,8 @@ MEMORY_END
 
 static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x0fff, MWA_RAM },
-	{ 0x1000, 0x1fff, videoram_w, &videoram, &videoram_size },
-	{ 0x2000, 0x20ff, citycon_charlookup_w, &citycon_charlookup },
+	{ 0x1000, 0x1fff, citycon_videoram_w, &citycon_videoram },
+	{ 0x2000, 0x20ff, citycon_linecolor_w, &citycon_linecolor },
 	{ 0x2800, 0x28ff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x3000, 0x3000, citycon_background_w },
 	{ 0x3001, 0x3001, soundlatch_w },
@@ -126,7 +133,7 @@ INPUT_PORTS_START( citycon )
 	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, "Flip Screen?" )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
@@ -135,13 +142,13 @@ INPUT_PORTS_END
 
 static struct GfxLayout charlayout =
 {
-	8,8,	/* 8*8 characters */
-	256,	/* 256 characters */
-	2,	/* 2 bits per pixel */
-	{ 4, 0 },
-	{ 0, 1, 2, 3, 256*8*8+0, 256*8*8+1, 256*8*8+2, 256*8*8+3 },
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	8*8	/* every char takes 8 consecutive bytes */
+	8,8,
+	RGN_FRAC(1,2),
+	5,
+	{ 16, 12, 8, 4, 0 },
+	{ 0, 1, 2, 3, RGN_FRAC(1,2)+0, RGN_FRAC(1,2)+1, RGN_FRAC(1,2)+2, RGN_FRAC(1,2)+3 },
+	{ 0*24, 1*24, 2*24, 3*24, 4*24, 5*24, 6*24, 7*24 },
+	24*8
 };
 
 static struct GfxLayout tilelayout =
@@ -170,7 +177,8 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0x00000, &charlayout, 512, 32 },	/* colors 512-639 */
+//	{ REGION_GFX1, 0x00000, &charlayout, 512, 32 },	/* colors 512-639 */
+	{ REGION_GFX1, 0x00000, &charlayout, 640, 32 },	/* colors 512-639 */
 	{ REGION_GFX2, 0x00000, &spritelayout, 0, 16 },	/* colors 0-255 */
 	{ REGION_GFX2, 0x01000, &spritelayout, 0, 16 },
 	{ REGION_GFX3, 0x00000, &tilelayout, 256, 16 },	/* colors 256-511 */
@@ -229,13 +237,13 @@ static const struct MachineDriver machine_driver_citycon =
 	/* video hardware */
 	32*8, 32*8, { 1*8, 31*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	640, 640,
+	640+1024, 640+1024,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	citycon_vh_start,
-	citycon_vh_stop,
+	0,
 	citycon_vh_screenrefresh,
 
 	/* sound hardware */
@@ -264,7 +272,7 @@ ROM_START( citycon )
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
 	ROM_LOAD( "c1",           0x8000, 0x8000, 0x1fad7589 )
 
-	ROM_REGION( 0x02000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_REGION( 0x03000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "c4",           0x00000, 0x2000, 0xa6b32fc6 )	/* Characters */
 
 	ROM_REGION( 0x04000, REGION_GFX2, ROMREGION_DISPOSE )
@@ -291,7 +299,7 @@ ROM_START( citycona )
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
 	ROM_LOAD( "c1",           0x8000, 0x8000, 0x1fad7589 )
 
-	ROM_REGION( 0x02000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_REGION( 0x03000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "c4",           0x00000, 0x2000, 0xa6b32fc6 )	/* Characters */
 
 	ROM_REGION( 0x04000, REGION_GFX2, ROMREGION_DISPOSE )
@@ -318,7 +326,7 @@ ROM_START( cruisin )
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
 	ROM_LOAD( "c1",           0x8000, 0x8000, 0x1fad7589 )
 
-	ROM_REGION( 0x02000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_REGION( 0x03000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "cr4",          0x00000, 0x2000, 0x8cd0308e )	/* Characters */
 
 	ROM_REGION( 0x04000, REGION_GFX2, ROMREGION_DISPOSE )
@@ -339,6 +347,34 @@ ROM_END
 
 
 
-GAME( 1985, citycon,  0,       citycon, citycon, 0, ROT0, "Jaleco", "City Connection (set 1)" )
-GAME( 1985, citycona, citycon, citycon, citycon, 0, ROT0, "Jaleco", "City Connection (set 2)" )
-GAME( 1985, cruisin,  citycon, citycon, citycon, 0, ROT0, "Jaleco (Kitkorp license)", "Cruisin" )
+static void init_citycon(void)
+{
+	UINT8 *rom = memory_region(REGION_GFX1);
+	int i;
+
+
+	/*
+	  City Connection controls the text color code for each _scanline_, not
+	  for each character as happens in most games. To handle that conveniently,
+	  I convert the 2bpp char data into 5bpp, and create a virtual palette so
+	  characters can still be drawn in one pass.
+	  */
+	for (i = 0x0fff;i >= 0;i--)
+	{
+		int mask;
+
+		rom[3*i] = rom[i];
+		rom[3*i+1] = 0;
+		rom[3*i+2] = 0;
+		mask = rom[i] | (rom[i] << 4) | (rom[i] >> 4);
+		if (i & 0x01) rom[3*i+1] |= mask & 0xf0;
+		if (i & 0x02) rom[3*i+1] |= mask & 0x0f;
+		if (i & 0x04) rom[3*i+2] |= mask & 0xf0;
+	}
+}
+
+
+
+GAME( 1985, citycon,  0,       citycon, citycon, citycon, ROT0, "Jaleco", "City Connection (set 1)" )
+GAME( 1985, citycona, citycon, citycon, citycon, citycon, ROT0, "Jaleco", "City Connection (set 2)" )
+GAME( 1985, cruisin,  citycon, citycon, citycon, citycon, ROT0, "Jaleco (Kitkorp license)", "Cruisin" )

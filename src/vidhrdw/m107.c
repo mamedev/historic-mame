@@ -270,39 +270,6 @@ void m107_vh_stop(void)
 
 /*****************************************************************************/
 
-static void mark_sprite_colours(void)
-{
-	int offs,color,i,pal_base,colmask[128];
-    unsigned int *pen_usage; /* Save some struct derefs */
-
-	pal_base = Machine->drv->gfxdecodeinfo[1].color_codes_start;
-	pen_usage=Machine->gfx[1]->pen_usage;
-	for (color = 0;color < 128;color++) colmask[color] = 0;
-
-	for (offs = 0x1000-8;offs >= 0;offs -= 8)
-	{
-		int sprite,x_multi,multi;
-
-	    sprite=m107_spriteram[offs+2] | (m107_spriteram[offs+3]<<8);
-		color=m107_spriteram[offs+4]&0x7f;
-		x_multi=(m107_spriteram[offs+1]>>3)&0x3;
-		x_multi=1 << x_multi; /* 1, 2, 4 or 8 */
-		multi=8*x_multi;
-
-		for (i=0; i<multi; i++)
-			colmask[color] |= pen_usage[(sprite + i)&0x7fff];
-	}
-
-	for (color = 0;color < 128;color++)
-	{
-		for (i = 1;i < 16;i++)
-		{
-			if (colmask[color] & (1 << i))
-				palette_used_colors[pal_base + 16 * color + i] = PALETTE_COLOR_USED;
-		}
-	}
-}
-
 static void m107_drawsprites(struct osd_bitmap *bitmap, const struct rectangle *clip, int pri)
 {
 	int offs;
@@ -423,16 +390,10 @@ static void m107_update_scroll_positions(void)
 
 void m107_screenrefresh(struct osd_bitmap *bitmap,const struct rectangle *clip)
 {
-	tilemap_update(ALL_TILEMAPS);
-
-	palette_init_used_colors();
-	mark_sprite_colours();
-	palette_recalc();
-
 	if (pf4_enable)
 		tilemap_draw(bitmap,pf4_layer,0,0);
 	else
-		fillbitmap(bitmap,palette_transparent_pen,clip);
+		fillbitmap(bitmap,Machine->pens[0],clip);
 
 	tilemap_draw(bitmap,pf3_layer,0,0);
 	tilemap_draw(bitmap,pf2_layer,0,0);

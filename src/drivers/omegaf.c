@@ -685,7 +685,7 @@ static const struct MachineDriver machine_driver_omegaf =
 	64*16, 64*16,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	omegaf_vh_start,
 	omegaf_vh_stop,
@@ -726,7 +726,7 @@ static const struct MachineDriver machine_driver_robokid =
 	64*16, 64*16,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	robokid_vh_start,
 	omegaf_vh_stop,

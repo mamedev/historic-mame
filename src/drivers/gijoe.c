@@ -213,7 +213,7 @@ INPUT_PORTS_START( gijoe )
 	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
 	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
 	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
-	PORT_DIPNAME( 0x0080, 0x0080, "Sound" )
+	PORT_DIPNAME( 0x0080, 0x0000, "Sound" )
 	PORT_DIPSETTING(      0x0080, "Mono" )
 	PORT_DIPSETTING(      0x0000, "Stereo" )
 	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
@@ -235,7 +235,7 @@ INPUT_PORTS_START( gijoe )
 	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER3 )
 	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER3 )
 	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER3 )
-	PORT_DIPNAME( 0x0080, 0x0080, "Players" )
+	PORT_DIPNAME( 0x0080, 0x0000, "Players" )
 	PORT_DIPSETTING(      0x0080, "2" )
 	PORT_DIPSETTING(      0x0000, "4" )
 	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER4 )
@@ -291,10 +291,10 @@ static struct MachineDriver machine_driver_gijoe =
 	/* video hardware */
 	64*8, 32*8, { 14*8, (64-14)*8-1, 2*8, 30*8-1 },
 	0,	/* gfx decoded by konamiic.c */
-	2048, 2048,
+	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_NEEDS_6BITS_PER_GUN,
+	VIDEO_TYPE_RASTER  | VIDEO_HAS_SHADOWS | VIDEO_NEEDS_6BITS_PER_GUN,
 	0,
 	gijoe_vh_start,
 	gijoe_vh_stop,
@@ -374,5 +374,5 @@ static void init_gijoe(void)
 	state_save_register_UINT16("main", 0, "control2", &cur_control2, 1);
 }
 
-GAME( 1992, gijoe,  0,     gijoe, gijoe, gijoe, ROT0_16BIT, "Konami", "GI Joe (World)")
-GAME( 1992, gijoeu, gijoe, gijoe, gijoe, gijoe, ROT0_16BIT, "Konami", "GI Joe (US)")
+GAME( 1992, gijoe,  0,     gijoe, gijoe, gijoe, ROT0, "Konami", "GI Joe (World)")
+GAME( 1992, gijoeu, gijoe, gijoe, gijoe, gijoe, ROT0, "Konami", "GI Joe (US)")

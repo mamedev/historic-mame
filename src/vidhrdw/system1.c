@@ -358,75 +358,6 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 
 
 
-static void system1_compute_palette (void)
-{
-	unsigned char bg_usage[64], tx_usage[64], sp_usage[32];
-	int i;
-
-	memset (bg_usage, 0, sizeof (bg_usage));
-	memset (tx_usage, 0, sizeof (tx_usage));
-	memset (sp_usage, 0, sizeof (sp_usage));
-
-	for (i = 0; i<system1_backgroundram_size; i+=2)
-	{
-		int code = (system1_backgroundram[i] + (system1_backgroundram[i+1] << 8)) & 0x07ff;
-		int palette = code >> 5;
-		bg_usage[palette & 0x3f] = 1;
-	}
-
-	for (i = 0; i<system1_videoram_size; i+=2)
-	{
-		int code = (system1_videoram[i] + (system1_videoram[i+1] << 8)) & 0x07ff;
-
-		if (code)
-		{
-			int palette = code>>5;
-			tx_usage[palette & 0x3f] = 1;
-		}
-	}
-
-	for (i=0; i<32; i++)
-	{
-		unsigned char *reg;
-		int top, bottom;
-
-		reg 	= spriteram + 0x10 * i;
-		top		= reg[SPR_Y_TOP];
-		bottom	= reg[SPR_Y_BOTTOM];
-		if (bottom && (bottom - top > 0))
-			sp_usage[i] = 1;
-	}
-
-	for (i = 0; i < 64; i++)
-	{
-		if (bg_usage[i])
-			memset (palette_used_colors + 1024 + i * 8, PALETTE_COLOR_USED, 8);
-		else
-			memset (palette_used_colors + 1024 + i * 8, PALETTE_COLOR_UNUSED, 8);
-
-		palette_used_colors[512 + i * 8] = PALETTE_COLOR_TRANSPARENT;
-		if (tx_usage[i])
-			memset (palette_used_colors + 512 + i * 8 + 1, PALETTE_COLOR_USED, 7);
-		else
-			memset (palette_used_colors + 512 + i * 8 + 1, PALETTE_COLOR_UNUSED, 7);
-	}
-
-	for (i = 0; i < 32; i++)
-	{
-		palette_used_colors[0 + i * 16] = PALETTE_COLOR_TRANSPARENT;
-		if (sp_usage[i])
-			memset (palette_used_colors + 0 + i * 16 + 1, PALETTE_COLOR_USED, 15);
-		else
-			memset (palette_used_colors + 0 + i * 16 + 1, PALETTE_COLOR_UNUSED, 15);
-	}
-
-	if (palette_recalc ())
-	{
-		memset(bg_dirtybuffer,1,1024);
-	}
-}
-
-
 WRITE_HANDLER( system1_backgroundram_w )
 {
 	system1_backgroundram[offset] = data;
@@ -597,8 +528,6 @@ void system1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	int drawn;
 
 
-	system1_compute_palette();
-
 	system1_draw_bg(bitmap,-1);
 	drawn = system1_draw_fg(bitmap,0);
 	/* redraw low priority bg tiles if necessary */
@@ -609,7 +538,7 @@ void system1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	/* even if screen is off, sprites must still be drawn to update the collision table */
 	if (system1_video_mode & 0x10)  /* screen off */
-		fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
+		fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 }
 
 
@@ -739,8 +668,6 @@ void choplifter_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	int drawn;
 
 
-	system1_compute_palette();
-
 	chplft_draw_bg(bitmap,-1);
 	drawn = system1_draw_fg(bitmap,0);
 	/* redraw low priority bg tiles if necessary */
@@ -751,7 +678,7 @@ void choplifter_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	/* even if screen is off, sprites must still be drawn to update the collision table */
 	if (system1_video_mode & 0x10)  /* screen off */
-		fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
+		fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 
 
 #ifdef MAME_DEBUG
@@ -875,9 +802,6 @@ static void wbml_draw_fg(struct osd_bitmap *bitmap)
 
 void wbml_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	palette_recalc();
-	/* no need to check the return code since we redraw everything each frame */
-
 	wbml_draw_bg(bitmap,0);
 	draw_sprites(bitmap);
 	wbml_draw_bg(bitmap,1);
@@ -885,5 +809,5 @@ void wbml_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	/* even if screen is off, sprites must still be drawn to update the collision table */
 	if (system1_video_mode & 0x10)  /* screen off */
-		fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
+		fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 }

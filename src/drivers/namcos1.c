@@ -833,7 +833,7 @@ static const struct MachineDriver machine_driver_ns1 =
 		128*16+6*256+1,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_NEEDS_6BITS_PER_GUN,
+	VIDEO_TYPE_RASTER  | VIDEO_NEEDS_6BITS_PER_GUN,
 	0,
 	namcos1_vh_start,
 	namcos1_vh_stop,
@@ -899,7 +899,7 @@ static const struct MachineDriver machine_driver_quester =
 		128*16+6*256+1,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	namcos1_vh_start,
 	namcos1_vh_stop,
@@ -965,7 +965,7 @@ static const struct MachineDriver machine_driver_faceoff =
 		128*16+6*256+1,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	namcos1_vh_start,
 	namcos1_vh_stop,
@@ -2383,36 +2383,35 @@ ROM_END
 
 
 
-//    YEAR, NAME,     PARENT,   MACHINE, INPUT,   INIT,     MONITOR,      COMPANY, FULLNAME
-GAME( 1987, shadowld, 0,        ns1,     ns1,     shadowld, ROT0_16BIT,   "Namco", "Shadow Land" )
-GAME( 1987, youkaidk, shadowld, ns1,     ns1,     shadowld, ROT0_16BIT,   "Namco", "Yokai Douchuuki (Japan new version)" )
-GAME( 1987, yokaidko, shadowld, ns1,     ns1,     shadowld, ROT0_16BIT,   "Namco", "Yokai Douchuuki (Japan old version)" )
-GAME( 1987, dspirit,  0,        ns1,     dspirit, dspirit,  ROT270_16BIT, "Namco", "Dragon Spirit (new version)" )
-GAME( 1987, dspirito, dspirit,  ns1,     dspirit, dspirit,  ROT270_16BIT, "Namco", "Dragon Spirit (old version)" )
-GAME( 1987, blazer,   0,        ns1,     ns1,     blazer,   ROT270,       "Namco", "Blazer (Japan)" )
-GAME( 1987, quester,  0,        quester, quester, quester,  ROT270_16BIT, "Namco", "Quester (Japan)" )
-GAME( 1987, pacmania, 0,        ns1,     ns1,     pacmania, ROT90_16BIT,  "Namco", "Pac-Mania" )
-GAME( 1987, pacmanij, pacmania, ns1,     ns1,     pacmania, ROT270_16BIT, "Namco", "Pac-Mania (Japan)" )
-GAME( 1987, galaga88, 0,        ns1,     ns1,     galaga88, ROT90_16BIT,  "Namco", "Galaga '88 (set 1)" )
-GAME( 1987, galag88b, galaga88, ns1,     ns1,     galaga88, ROT90_16BIT,  "Namco", "Galaga '88 (set 2)" )
-GAME( 1987, galag88j, galaga88, ns1,     ns1,     galaga88, ROT270_16BIT, "Namco", "Galaga '88 (Japan)" )
-GAME( 1988, ws,       0,        ns1,     ns1,     ws,       ROT0,         "Namco", "World Stadium (Japan)" )
-GAME( 1988, berabohm, 0,        ns1,     berabohm,berabohm, ROT0_16BIT,   "Namco", "Beraboh Man (Japan)" )
-//GAME( 1988, alice,    0,        ns1,     ns1,     alice,    ROT0_16BIT,   "Namco", "Alice In Wonderland" )
-GAME( 1988, mmaze,    0,        ns1,     ns1,     alice,    ROT0_16BIT,   "Namco", "Marchen Maze (Japan)" )
-GAMEX(1988, bakutotu, 0,        ns1,     ns1,     bakutotu, ROT0,         "Namco", "Bakutotsu Kijuutei", GAME_NOT_WORKING )
-GAME( 1988, wldcourt, 0,        ns1,     ns1,     wldcourt, ROT0,         "Namco", "World Court (Japan)" )
-GAME( 1988, splatter, 0,        ns1,     ns1,     splatter, ROT0_16BIT,   "Namco", "Splatter House (Japan)" )
-GAME( 1988, faceoff,  0,        faceoff, faceoff, faceoff,  ROT0,         "Namco", "Face Off (Japan)" )
-GAME( 1989, rompers,  0,        ns1,     ns1,     rompers,  ROT270_16BIT, "Namco", "Rompers (Japan)" )
-GAME( 1989, romperso, rompers,  ns1,     ns1,     rompers,  ROT270_16BIT, "Namco", "Rompers (Japan old version)" )
-GAME( 1989, blastoff, 0,        ns1,     ns1,     blastoff, ROT270,       "Namco", "Blast Off (Japan)" )
-GAME( 1989, ws89,     ws,       ns1,     ns1,     ws89,     ROT0,         "Namco", "World Stadium '89 (Japan)" )
-GAME( 1989, dangseed, 0,        ns1,     ns1,     dangseed, ROT270_16BIT, "Namco", "Dangerous Seed (Japan)" )
-GAME( 1990, ws90,     ws,       ns1,     ns1,     ws90,     ROT0,         "Namco", "World Stadium '90 (Japan)" )
-GAME( 1990, pistoldm, 0,        ns1,     ns1,     pistoldm, ROT180,       "Namco", "Pistol Daimyo no Bouken (Japan)" )
-GAME( 1990, boxyboy,  0,        ns1,     ns1,     soukobdx, ROT180_16BIT, "Namco", "Boxy Boy (US)" )
-GAME( 1990, soukobdx, boxyboy,  ns1,     ns1,     soukobdx, ROT180_16BIT, "Namco", "Souko Ban Deluxe (Japan)" )
-GAME( 1990, puzlclub, 0,        ns1,     ns1,     puzlclub, ROT270,       "Namco", "Puzzle Club (Japan prototype)" )
-GAME( 1991, tankfrce, 0,        ns1,     ns1,     tankfrce, ROT180,       "Namco", "Tank Force (US)" )
-GAME( 1991, tankfrcj, tankfrce, ns1,     ns1,     tankfrce, ROT180,       "Namco", "Tank Force (Japan)" )
+GAME( 1987, shadowld, 0,        ns1,     ns1,     shadowld, ROT0,   "Namco", "Shadow Land" )
+GAME( 1987, youkaidk, shadowld, ns1,     ns1,     shadowld, ROT0,   "Namco", "Yokai Douchuuki (Japan new version)" )
+GAME( 1987, yokaidko, shadowld, ns1,     ns1,     shadowld, ROT0,   "Namco", "Yokai Douchuuki (Japan old version)" )
+GAME( 1987, dspirit,  0,        ns1,     dspirit, dspirit,  ROT270, "Namco", "Dragon Spirit (new version)" )
+GAME( 1987, dspirito, dspirit,  ns1,     dspirit, dspirit,  ROT270, "Namco", "Dragon Spirit (old version)" )
+GAME( 1987, blazer,   0,        ns1,     ns1,     blazer,   ROT270, "Namco", "Blazer (Japan)" )
+GAME( 1987, quester,  0,        quester, quester, quester,  ROT270, "Namco", "Quester (Japan)" )
+GAME( 1987, pacmania, 0,        ns1,     ns1,     pacmania, ROT90,  "Namco", "Pac-Mania" )
+GAME( 1987, pacmanij, pacmania, ns1,     ns1,     pacmania, ROT270, "Namco", "Pac-Mania (Japan)" )
+GAME( 1987, galaga88, 0,        ns1,     ns1,     galaga88, ROT90,  "Namco", "Galaga '88 (set 1)" )
+GAME( 1987, galag88b, galaga88, ns1,     ns1,     galaga88, ROT90,  "Namco", "Galaga '88 (set 2)" )
+GAME( 1987, galag88j, galaga88, ns1,     ns1,     galaga88, ROT270, "Namco", "Galaga '88 (Japan)" )
+GAME( 1988, ws,       0,        ns1,     ns1,     ws,       ROT0,   "Namco", "World Stadium (Japan)" )
+GAME( 1988, berabohm, 0,        ns1,     berabohm,berabohm, ROT0,   "Namco", "Beraboh Man (Japan)" )
+//GAME( 1988, alice,    0,        ns1,     ns1,     alice,    ROT0,   "Namco", "Alice In Wonderland" )
+GAME( 1988, mmaze,    0,        ns1,     ns1,     alice,    ROT0,   "Namco", "Marchen Maze (Japan)" )
+GAMEX(1988, bakutotu, 0,        ns1,     ns1,     bakutotu, ROT0,   "Namco", "Bakutotsu Kijuutei", GAME_NOT_WORKING )
+GAME( 1988, wldcourt, 0,        ns1,     ns1,     wldcourt, ROT0,   "Namco", "World Court (Japan)" )
+GAME( 1988, splatter, 0,        ns1,     ns1,     splatter, ROT0,   "Namco", "Splatter House (Japan)" )
+GAME( 1988, faceoff,  0,        faceoff, faceoff, faceoff,  ROT0,   "Namco", "Face Off (Japan)" )
+GAME( 1989, rompers,  0,        ns1,     ns1,     rompers,  ROT270, "Namco", "Rompers (Japan)" )
+GAME( 1989, romperso, rompers,  ns1,     ns1,     rompers,  ROT270, "Namco", "Rompers (Japan old version)" )
+GAME( 1989, blastoff, 0,        ns1,     ns1,     blastoff, ROT270, "Namco", "Blast Off (Japan)" )
+GAME( 1989, ws89,     ws,       ns1,     ns1,     ws89,     ROT0,   "Namco", "World Stadium '89 (Japan)" )
+GAME( 1989, dangseed, 0,        ns1,     ns1,     dangseed, ROT270, "Namco", "Dangerous Seed (Japan)" )
+GAME( 1990, ws90,     ws,       ns1,     ns1,     ws90,     ROT0,   "Namco", "World Stadium '90 (Japan)" )
+GAME( 1990, pistoldm, 0,        ns1,     ns1,     pistoldm, ROT180, "Namco", "Pistol Daimyo no Bouken (Japan)" )
+GAME( 1990, boxyboy,  0,        ns1,     ns1,     soukobdx, ROT180, "Namco", "Boxy Boy (US)" )
+GAME( 1990, soukobdx, boxyboy,  ns1,     ns1,     soukobdx, ROT180, "Namco", "Souko Ban Deluxe (Japan)" )
+GAME( 1990, puzlclub, 0,        ns1,     ns1,     puzlclub, ROT270, "Namco", "Puzzle Club (Japan prototype)" )
+GAME( 1991, tankfrce, 0,        ns1,     ns1,     tankfrce, ROT180, "Namco", "Tank Force (US)" )
+GAME( 1991, tankfrcj, tankfrce, ns1,     ns1,     tankfrce, ROT180, "Namco", "Tank Force (Japan)" )

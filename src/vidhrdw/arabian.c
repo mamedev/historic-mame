@@ -33,16 +33,17 @@ UINT8 arabian_flip_screen;
  *
  *************************************/
 
-void arabian_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom)
+void arabian_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom)
 {
 	int i;
 
 	/* there are effectively 6 bits of color: 2 red, 2 green, 2 blue */
 	for (i = 0; i < 64; i++)
 	{
-		*palette++ = ((i >> 5) & 1) * (153*192/255) + ((i >> 4) & 1) * (102*192/255) + ((i & 0x30) ? 63 : 0);
-		*palette++ = ((i >> 3) & 1) * (156*192/255) + ((i >> 2) & 1) * (99*192/255) + ((i & 0x0c) ? 63 : 0);
-		*palette++ = ((i >> 1) & 1) * 192 + ((i >> 0) & 1) * 63;
+		palette_change_color(i,
+			((i >> 5) & 1) * (153*192/255) + ((i >> 4) & 1) * (102*192/255) + ((i & 0x30) ? 63 : 0),
+			((i >> 3) & 1) * (156*192/255) + ((i >> 2) & 1) * (99*192/255) + ((i & 0x0c) ? 63 : 0),
+			((i >> 1) & 1) * 192 + ((i >> 0) & 1) * 63);
 	}
 
 	/* there are 13 color table bits */

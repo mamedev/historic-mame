@@ -283,7 +283,7 @@ static const struct MachineDriver machine_driver_dynduke =
 	2048+1024, 2048+1024,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_BUFFERS_SPRITERAM,
+	VIDEO_TYPE_RASTER  | VIDEO_BUFFERS_SPRITERAM,
 	dynduke_eof_callback,
 	dynduke_vh_start,
 	0,

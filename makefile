@@ -28,7 +28,7 @@ X86_ASM_68000 = 1
 # MAMEOS = msdos
 # MAMEOS = windows
 ifeq ($(MAMEOS),)
-MAMEOS = msdos
+MAMEOS = windows
 endif
 
 # extension for executables
@@ -49,24 +49,24 @@ RM = @rm -f
 #PERL = @perl -w
 
 
-ifeq ($(MAMEOS),windows)
-SUFFIX = w
+ifeq ($(MAMEOS),msdos)
+PREFIX = d
 else
-SUFFIX =
+PREFIX =
 endif
 
 ifdef DEBUG
-NAME = $(TARGET)$(SUFFIX)d
+NAME = $(PREFIX)$(TARGET)$(SUFFIX)d
 else
 ifdef K6
-NAME = $(TARGET)$(SUFFIX)k6
+NAME = $(PREFIX)$(TARGET)$(SUFFIX)k6
 ARCH = -march=k6
 else
 ifdef I686
-NAME = $(TARGET)$(SUFFIX)pp
+NAME = $(PREFIX)$(TARGET)$(SUFFIX)pp
 ARCH = -march=pentiumpro
 else
-NAME = $(TARGET)$(SUFFIX)
+NAME = $(PREFIX)$(TARGET)$(SUFFIX)
 ARCH = -march=pentium
 endif
 endif

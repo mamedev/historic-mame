@@ -609,7 +609,7 @@ static const struct MachineDriver machine_driver_jedi =
 				/* reserve color 1024 for black (disabled display) */
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	jedi_vh_start,
 	jedi_vh_stop,

@@ -285,7 +285,7 @@ static const struct MachineDriver machine_driver_amspdwy =
 	amspdwy_gfxdecodeinfo,
 	32, 32,
 	0,
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	amspdwy_vh_start,
 	0,

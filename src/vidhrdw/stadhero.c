@@ -88,55 +88,11 @@ static void stadhero_drawsprites(struct osd_bitmap *bitmap,int pri_mask,int pri_
 
 void stadhero_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	int offs;
-	int color,i;
-	int colmask[16];
-	int pal_base;
-
 	flipscreen=stadhero_pf2_control_0[0]&0x80;
 	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
 	tilemap_set_scrollx( pf2_tilemap,0, stadhero_pf2_control_1[0] );
 	tilemap_set_scrolly( pf2_tilemap,0, stadhero_pf2_control_1[1] );
 
-	tilemap_update(pf2_tilemap);
-	tilemap_update(pf1_tilemap);
-	palette_init_used_colors();
-
-	pal_base = Machine->drv->gfxdecodeinfo[2].color_codes_start;
-	for (color = 0;color < 16;color++) colmask[color] = 0;
-	for (offs = 0;offs < 0x400;offs += 4)
-	{
-		int x,y,sprite,multi;
-
-		y = spriteram16[offs];
-		if ((y&0x8000) == 0) continue;
-
-		x = spriteram16[offs+2];
-		color = (x & 0xf000) >> 12;
-
-		multi = (1 << ((y & 0x1800) >> 11)) - 1;	/* 1x, 2x, 4x, 8x height */
-											/* multi = 0   1   3   7 */
-
-		sprite = spriteram16[offs+1] & 0x0fff;
-		sprite &= ~multi;
-
-		while (multi >= 0)
-		{
-			colmask[color] |= Machine->gfx[2]->pen_usage[sprite + multi];
-			multi--;
-		}
-	}
-
-	for (color = 0;color < 16;color++)
-	{
-		for (i = 1;i < 16;i++)
-		{
-			if (colmask[color] & (1 << i))
-				palette_used_colors[pal_base + 16 * color + i] = PALETTE_COLOR_USED;
-		}
-	}
-
-	palette_recalc();
 	tilemap_draw(bitmap,pf2_tilemap,0,0);
 	stadhero_drawsprites(bitmap,0x00,0x00);
 	tilemap_draw(bitmap,pf1_tilemap,0,0);

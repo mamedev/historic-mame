@@ -251,10 +251,10 @@ static const struct MachineDriver machine_driver_bigkarnk =
 	/* video hardware */
 	32*16, 32*16, { 0, 320-1, 16, 256-1 },
 	gfxdecodeinfo_0x100000,
-	1024, 1024,
+	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	bigkarnk_vh_start,
 	gaelco_vh_stop,
@@ -514,10 +514,10 @@ static const struct MachineDriver machine_driver_maniacsq =
 	/* video hardware */
 	32*16, 32*16, { 0, 320-1, 16, 256-1 },
 	gfxdecodeinfo_0x100000,
-	1024, 1024,
+	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	maniacsq_vh_start,
 	gaelco_vh_stop,
@@ -594,6 +594,6 @@ ROM_END
 
 
 
-GAME( 1991, bigkarnk, 0, bigkarnk, bigkarnk, 0, ROT0_16BIT, "Gaelco", "Big Karnak" )
-GAME( 1995, biomtoy,  0, maniacsq, biomtoy,  0, ROT0_16BIT, "Gaelco", "Biomechanical Toy (unprotected)" )
-GAME( 1996, maniacsq, 0, maniacsq, maniacsq, 0, ROT0_16BIT, "Gaelco", "Maniac Square (prototype)" )
+GAME( 1991, bigkarnk, 0, bigkarnk, bigkarnk, 0, ROT0, "Gaelco", "Big Karnak" )
+GAME( 1995, biomtoy,  0, maniacsq, biomtoy,  0, ROT0, "Gaelco", "Biomechanical Toy (unprotected)" )
+GAME( 1996, maniacsq, 0, maniacsq, maniacsq, 0, ROT0, "Gaelco", "Maniac Square (prototype)" )

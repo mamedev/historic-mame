@@ -9,10 +9,10 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-extern data16_t *fg0_videoram, *bg0_videoram, *bg1_videoram;
-extern int pri;
-extern int bg0_scrollx, bg0_scrolly, bg1_scrollx, bg1_scrolly;
 static struct tilemap *fg0_tilemap, *bg0_tilemap, *bg1_tilemap;
+int wwfwfest_pri;
+int wwfwfest_bg0_scrollx, wwfwfest_bg0_scrolly, wwfwfest_bg1_scrollx, wwfwfest_bg1_scrolly;
+data16_t *wwfwfest_fg0_videoram, *wwfwfest_bg0_videoram, *wwfwfest_bg1_videoram;
 
 /*******************************************************************************
  Write Handlers
@@ -22,25 +22,34 @@ static struct tilemap *fg0_tilemap, *bg0_tilemap, *bg1_tilemap;
 
 WRITE16_HANDLER( wwfwfest_fg0_videoram_w )
 {
-	int oldword = fg0_videoram[offset];
-	COMBINE_DATA(&fg0_videoram[offset]);
-	if (oldword != fg0_videoram[offset])
+	int oldword = wwfwfest_fg0_videoram[offset];
+
+	/* Videoram is 8 bit, upper & lower byte writes end up in the same place */
+	if (ACCESSING_MSB && ACCESSING_LSB) {
+		COMBINE_DATA(&wwfwfest_fg0_videoram[offset]);
+	} else if (ACCESSING_MSB) {
+		wwfwfest_fg0_videoram[offset]=(data>>8)&0xff;
+	} else {
+		wwfwfest_fg0_videoram[offset]=data&0xff;
+	}
+
+	if (oldword != wwfwfest_fg0_videoram[offset])
 		tilemap_mark_tile_dirty(fg0_tilemap,offset/2);
 }
 
 WRITE16_HANDLER( wwfwfest_bg0_videoram_w )
 {
-	int oldword = bg0_videoram[offset];
-	COMBINE_DATA(&bg0_videoram[offset]);
-	if (oldword != bg0_videoram[offset])
+	int oldword = wwfwfest_bg0_videoram[offset];
+	COMBINE_DATA(&wwfwfest_bg0_videoram[offset]);
+	if (oldword != wwfwfest_bg0_videoram[offset])
 		tilemap_mark_tile_dirty(bg0_tilemap,offset/2);
 }
 
 WRITE16_HANDLER( wwfwfest_bg1_videoram_w )
 {
-	int oldword = bg1_videoram[offset];
-	COMBINE_DATA(&bg1_videoram[offset]);
-	if (oldword != bg1_videoram[offset])
+	int oldword = wwfwfest_bg1_videoram[offset];
+	COMBINE_DATA(&wwfwfest_bg1_videoram[offset]);
+	if (oldword != wwfwfest_bg1_videoram[offset])
 		tilemap_mark_tile_dirty(bg1_tilemap,offset);
 }
 
@@ -68,7 +77,7 @@ static void get_fg0_tile_info(int tile_index)
 	data16_t *tilebase;
 	int tileno;
 	int colbank;
-	tilebase =  &fg0_videoram[tile_index*2];
+	tilebase =  &wwfwfest_fg0_videoram[tile_index*2];
 	tileno =  (tilebase[0] & 0x00ff) | ((tilebase[1] & 0x000f) << 8);
 	colbank = (tilebase[1] & 0x00f0) >> 4;
 	SET_TILE_INFO(
@@ -98,7 +107,7 @@ static void get_bg0_tile_info(int tile_index)
 	data16_t *tilebase;
 	int tileno,colbank;
 
-	tilebase =  &bg0_videoram[tile_index*2];
+	tilebase =  &wwfwfest_bg0_videoram[tile_index*2];
 	tileno =  (tilebase[1] & 0x0fff);
 	colbank = (tilebase[0] & 0x000f);
 	SET_TILE_INFO(
@@ -124,7 +133,7 @@ static void get_bg1_tile_info(int tile_index)
 	data16_t *tilebase;
 	int tileno;
 	int colbank;
-	tilebase =  &bg1_videoram[tile_index];
+	tilebase =  &wwfwfest_bg1_videoram[tile_index];
 	tileno =  (tilebase[0] & 0x0fff);
 	colbank = (tilebase[0] & 0xf000) >> 12;
 	SET_TILE_INFO(
@@ -139,27 +148,6 @@ static void get_bg1_tile_info(int tile_index)
 ********************************************************************************
  sprite drawing could probably be improved a bit
 *******************************************************************************/
-static void wwfwfest_sprites_mark_colors(void)
-{
-	/* see wwfwfest_drawsprites for bits being used */
-	int i;
-	data16_t *source = spriteram16;
-	data16_t *finish = source + 0x2000/2;
-
-	while( source<finish )
-	{
-		int colourbank;
-		char enable;
-
-		enable = (source[1] & 0x0001);
-		if (enable)	{
-			colourbank = (source[4] & 0x000f);
-			for (i = 0;i < 16;i++)
-				palette_used_colors[0x400 + 16 * colourbank + i] = PALETTE_COLOR_USED;
-		}
-		source += 5;
-	}
-}
 
 static void wwfwfest_drawsprites( struct osd_bitmap *bitmap )
 {
@@ -185,7 +173,7 @@ static void wwfwfest_drawsprites( struct osd_bitmap *bitmap )
 
 	const struct rectangle *clip = &Machine->visible_area;
 	const struct GfxElement *gfx = Machine->gfx[1];
-	data16_t *source = spriteram16;
+	data16_t *source = buffered_spriteram16;
 	data16_t *finish = source + 0x2000/2;
 
 	while( source<finish )
@@ -207,11 +195,26 @@ static void wwfwfest_drawsprites( struct osd_bitmap *bitmap )
 			number = (source[2] & 0x00ff) | (source[3] & 0x00ff) << 8;
 			colourbank = (source[4] & 0x000f);
 
+			if (flip_screen) {
+				if (flipy) flipy=0; else flipy=1;
+				if (flipx) flipx=0; else flipx=1;
+				ypos=240-ypos;
+				xpos=304-xpos;
+			}
+
 			for (count=0;count<chain;count++) {
-				if (flipy) {
-					drawgfx(bitmap,gfx,number+count,colourbank,flipx,flipy,xpos,ypos-(16*(chain-1))+(16*count),clip,TRANSPARENCY_PEN,0);
+				if (flip_screen) {
+					if (!flipy) {
+						drawgfx(bitmap,gfx,number+count,colourbank,flipx,flipy,xpos,ypos+(16*(chain-1))-(16*count),clip,TRANSPARENCY_PEN,0);
+					} else {
+						drawgfx(bitmap,gfx,number+count,colourbank,flipx,flipy,xpos,ypos+16*count,clip,TRANSPARENCY_PEN,0);
+					}
 				} else {
-					drawgfx(bitmap,gfx,number+count,colourbank,flipx,flipy,xpos,ypos-16*count,clip,TRANSPARENCY_PEN,0);
+						if (flipy) {
+						drawgfx(bitmap,gfx,number+count,colourbank,flipx,flipy,xpos,ypos-(16*(chain-1))+(16*count),clip,TRANSPARENCY_PEN,0);
+					} else {
+						drawgfx(bitmap,gfx,number+count,colourbank,flipx,flipy,xpos,ypos-16*count,clip,TRANSPARENCY_PEN,0);
+					}
 				}
 			}
 		}
@@ -243,44 +246,36 @@ int wwfwfest_vh_start(void)
 
 void wwfwfest_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
-	if (pri == 0x0078) {
-		tilemap_set_scrolly( bg0_tilemap, 0, bg0_scrolly  );
-		tilemap_set_scrollx( bg0_tilemap, 0, bg0_scrollx  );
-		tilemap_set_scrolly( bg1_tilemap, 0, bg1_scrolly  );
-		tilemap_set_scrollx( bg1_tilemap, 0, bg1_scrollx  );
+	if (wwfwfest_pri == 0x0078) {
+		tilemap_set_scrolly( bg0_tilemap, 0, wwfwfest_bg0_scrolly  );
+		tilemap_set_scrollx( bg0_tilemap, 0, wwfwfest_bg0_scrollx  );
+		tilemap_set_scrolly( bg1_tilemap, 0, wwfwfest_bg1_scrolly  );
+		tilemap_set_scrollx( bg1_tilemap, 0, wwfwfest_bg1_scrollx  );
 	} else {
-		tilemap_set_scrolly( bg1_tilemap, 0, bg0_scrolly  );
-		tilemap_set_scrollx( bg1_tilemap, 0, bg0_scrollx  );
-		tilemap_set_scrolly( bg0_tilemap, 0, bg1_scrolly  );
-		tilemap_set_scrollx( bg0_tilemap, 0, bg1_scrollx  );
+		tilemap_set_scrolly( bg1_tilemap, 0, wwfwfest_bg0_scrolly  );
+		tilemap_set_scrollx( bg1_tilemap, 0, wwfwfest_bg0_scrollx  );
+		tilemap_set_scrolly( bg0_tilemap, 0, wwfwfest_bg1_scrolly  );
+		tilemap_set_scrollx( bg0_tilemap, 0, wwfwfest_bg1_scrollx  );
 	}
-
-	tilemap_update(ALL_TILEMAPS);
-
-	palette_init_used_colors();
-	wwfwfest_sprites_mark_colors();
-	palette_recalc();
-
-	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area); /* as order can change all layers have to be transparent so we have to blank bg */
 
 	/* todo : which bits of pri are significant to the order */
 
-	if (pri == 0x007b) {
-		tilemap_draw(bitmap,bg0_tilemap,0,0);
+	if (wwfwfest_pri == 0x007b) {
+		tilemap_draw(bitmap,bg0_tilemap,TILEMAP_IGNORE_TRANSPARENCY,0);
 		tilemap_draw(bitmap,bg1_tilemap,0,0);
 		wwfwfest_drawsprites(bitmap);
 		tilemap_draw(bitmap,fg0_tilemap,0,0);
 	}
 
-	if (pri == 0x007c) {
-		tilemap_draw(bitmap,bg0_tilemap,0,0);
+	if (wwfwfest_pri == 0x007c) {
+		tilemap_draw(bitmap,bg0_tilemap,TILEMAP_IGNORE_TRANSPARENCY,0);
 		wwfwfest_drawsprites(bitmap);
 		tilemap_draw(bitmap,bg1_tilemap,0,0);
 		tilemap_draw(bitmap,fg0_tilemap,0,0);
 	}
 
-	if (pri == 0x0078) {
-		tilemap_draw(bitmap,bg1_tilemap,0,0);
+	if (wwfwfest_pri == 0x0078) {
+		tilemap_draw(bitmap,bg1_tilemap,TILEMAP_IGNORE_TRANSPARENCY,0);
 		tilemap_draw(bitmap,bg0_tilemap,0,0);
 		wwfwfest_drawsprites(bitmap);
 		tilemap_draw(bitmap,fg0_tilemap,0,0);

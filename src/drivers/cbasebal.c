@@ -296,9 +296,9 @@ static const struct MachineDriver machine_driver_cbasebal =
 
 	64*8, 32*8, { 8*8, (64-8)*8-1, 2*8, 30*8-1 },
 	cbasebal_gfxdecodeinfo,
-	1024, 1024,
+	1024, 0,
 	0,
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
 	cbasebal_vh_start,
 	cbasebal_vh_stop,

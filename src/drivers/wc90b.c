@@ -54,7 +54,7 @@ are the ones the original machine uses. This will differ when trying
 to use some of this code to write a driver for a similar tecmo bootleg.
 
 Sprites are also very different. Theres a code snippet in the ROM
-that converts the original sprites to the new format, wich only allows
+that converts the original sprites to the new format, which only allows
 16x16 sprites. That snippet also does some ( nasty ) clipping.
 
 Colors are accurate. The graphics ROMs have been modified severely
@@ -77,32 +77,33 @@ World Cup 90 bootleg.
 
 #define TEST_DIPS false /* enable to test unmapped dip switches */
 
-extern unsigned char *wc90b_shared;
+extern data8_t *wc90b_fgvideoram,*wc90b_bgvideoram,*wc90b_txvideoram;
 
-extern unsigned char *wc90b_tile_colorram, *wc90b_tile_videoram;
-extern unsigned char *wc90b_tile_colorram2, *wc90b_tile_videoram2;
-extern unsigned char *wc90b_scroll1xlo, *wc90b_scroll1xhi;
-extern unsigned char *wc90b_scroll2xlo, *wc90b_scroll2xhi;
-extern unsigned char *wc90b_scroll1ylo, *wc90b_scroll1yhi;
-extern unsigned char *wc90b_scroll2ylo, *wc90b_scroll2yhi;
+extern data8_t *wc90b_scroll1x;
+extern data8_t *wc90b_scroll2x;
 
-extern size_t wc90b_tile_videoram_size;
-extern size_t wc90b_tile_videoram_size2;
+extern data8_t *wc90b_scroll1y;
+extern data8_t *wc90b_scroll2y;
 
 int wc90b_vh_start( void );
-void wc90b_vh_stop ( void );
-READ_HANDLER( wc90b_tile_videoram_r );
-WRITE_HANDLER( wc90b_tile_videoram_w );
-READ_HANDLER( wc90b_tile_colorram_r );
-WRITE_HANDLER( wc90b_tile_colorram_w );
-READ_HANDLER( wc90b_tile_videoram2_r );
-WRITE_HANDLER( wc90b_tile_videoram2_w );
-READ_HANDLER( wc90b_tile_colorram2_r );
-WRITE_HANDLER( wc90b_tile_colorram2_w );
-READ_HANDLER( wc90b_shared_r );
-WRITE_HANDLER( wc90b_shared_w );
+WRITE_HANDLER( wc90b_bgvideoram_w );
+WRITE_HANDLER( wc90b_fgvideoram_w );
+WRITE_HANDLER( wc90b_txvideoram_w );
 void wc90b_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
+
+
+static data8_t *wc90b_shared;
+
+static READ_HANDLER( wc90b_shared_r )
+{
+	return wc90b_shared[offset];
+}
+
+static WRITE_HANDLER( wc90b_shared_w )
+{
+	wc90b_shared[offset] = data;
+}
 
 static WRITE_HANDLER( wc90b_bankswitch_w )
 {
@@ -130,15 +131,13 @@ static WRITE_HANDLER( wc90b_sound_command_w )
 	cpu_cause_interrupt(2,/*Z80_NMI_INT*/-1000);
 }
 
+
 static MEMORY_READ_START( wc90b_readmem1 )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x9fff, MRA_RAM }, /* Main RAM */
-	{ 0xa000, 0xa7ff, wc90b_tile_colorram_r }, /* bg 1 color ram */
-	{ 0xa800, 0xafff, wc90b_tile_videoram_r }, /* bg 1 tile ram */
-	{ 0xc000, 0xc7ff, wc90b_tile_colorram2_r }, /* bg 2 color ram */
-	{ 0xc800, 0xcfff, wc90b_tile_videoram2_r }, /* bg 2 tile ram */
-	{ 0xe000, 0xe7ff, colorram_r }, /* fg color ram */
-	{ 0xe800, 0xefff, videoram_r }, /* fg tile ram */
+	{ 0xa000, 0xafff, MRA_RAM }, /* fg video ram */
+	{ 0xc000, 0xcfff, MRA_RAM }, /* bg video ram */
+	{ 0xe000, 0xefff, MRA_RAM }, /* tx video ram */
 	{ 0xf000, 0xf7ff, MRA_BANK1 },
 	{ 0xf800, 0xfbff, wc90b_shared_r },
 	{ 0xfd00, 0xfd00, input_port_0_r }, /* Stick 1, Coin 1 & Start 1 */
@@ -153,6 +152,7 @@ static MEMORY_READ_START( wc90b_readmem2 )
 	{ 0xc000, 0xc1ff, MRA_RAM },
 	{ 0xc200, 0xe1ff, MRA_RAM },
 	{ 0xe000, 0xe7ff, MRA_RAM },
+	{ 0xe800, 0xefff, MRA_ROM },
 	{ 0xf000, 0xf7ff, MRA_BANK2 },
 	{ 0xf800, 0xfbff, wc90b_shared_r },
 MEMORY_END
@@ -160,26 +160,18 @@ MEMORY_END
 static MEMORY_WRITE_START( wc90b_writemem1 )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x8075, MWA_RAM },
-	{ 0x8076, 0x8076, MWA_RAM, &wc90b_scroll1xlo },
-	{ 0x8077, 0x8077, MWA_RAM, &wc90b_scroll1xhi },
-	{ 0x8078, 0x8078, MWA_RAM, &wc90b_scroll1ylo },
-	{ 0x8079, 0x8079, MWA_RAM, &wc90b_scroll1yhi },
-	{ 0x807a, 0x807a, MWA_RAM, &wc90b_scroll2xlo },
-	{ 0x807b, 0x807b, MWA_RAM, &wc90b_scroll2xhi },
-	{ 0x807c, 0x807c, MWA_RAM, &wc90b_scroll2ylo },
-	{ 0x807d, 0x807d, MWA_RAM, &wc90b_scroll2yhi },
 	{ 0x807e, 0x9fff, MWA_RAM },
-	{ 0xa000, 0xa7ff, wc90b_tile_colorram_w, &wc90b_tile_colorram },
-	{ 0xa800, 0xafff, wc90b_tile_videoram_w, &wc90b_tile_videoram, &wc90b_tile_videoram_size },
-	{ 0xc000, 0xc7ff, wc90b_tile_colorram2_w, &wc90b_tile_colorram2 },
-	{ 0xc800, 0xcfff, wc90b_tile_videoram2_w, &wc90b_tile_videoram2, &wc90b_tile_videoram_size2 },
-	{ 0xe000, 0xe7ff, colorram_w, &colorram },
-	{ 0xe800, 0xefff, videoram_w, &videoram, &videoram_size },
+	{ 0xa000, 0xafff, wc90b_fgvideoram_w, &wc90b_fgvideoram },
+	{ 0xc000, 0xcfff, wc90b_bgvideoram_w, &wc90b_bgvideoram },
+	{ 0xe000, 0xefff, wc90b_txvideoram_w, &wc90b_txvideoram },
 	{ 0xf000, 0xf7ff, MWA_ROM },
 	{ 0xf800, 0xfbff, wc90b_shared_w, &wc90b_shared },
 	{ 0xfc00, 0xfc00, wc90b_bankswitch_w },
 	{ 0xfd00, 0xfd00, wc90b_sound_command_w },
-	/*  */
+	{ 0xfd04, 0xfd04, MWA_RAM, &wc90b_scroll1y },
+	{ 0xfd06, 0xfd06, MWA_RAM, &wc90b_scroll1x },
+	{ 0xfd08, 0xfd08, MWA_RAM, &wc90b_scroll2y },
+	{ 0xfd0a, 0xfd0a, MWA_RAM, &wc90b_scroll2x },
 MEMORY_END
 
 static MEMORY_WRITE_START( wc90b_writemem2 )
@@ -187,6 +179,7 @@ static MEMORY_WRITE_START( wc90b_writemem2 )
 	{ 0xc000, 0xcfff, MWA_RAM },
 	{ 0xd000, 0xd7ff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xe000, 0xe7ff, paletteram_xxxxBBBBGGGGRRRR_swap_w, &paletteram },
+	{ 0xe800, 0xefff, MWA_ROM },
 	{ 0xf000, 0xf7ff, MWA_ROM },
 	{ 0xf800, 0xfbff, wc90b_shared_w },
 	{ 0xfc00, 0xfc00, wc90b_bankswitch1_w },
@@ -403,10 +396,10 @@ static const struct MachineDriver machine_driver_wc90b =
 	4*16*16, 4*16*16,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	wc90b_vh_start,
-	wc90b_vh_stop,
+	0,
 	wc90b_vh_screenrefresh,
 
 	/* sound hardware */

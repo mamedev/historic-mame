@@ -47,53 +47,6 @@ void topspeed_vh_stop(void)
 }
 
 
-void topspeed_update_palette(void)
-{
-	int offs,map_offset,sprite_chunk,i,j;
-	data16_t *spritemap = topspeed_spritemap;
-	UINT16 tile_mask = (Machine->gfx[0]->total_elements) - 1;
-	UINT16 data,tilenum,code,color;
-	UINT16 palette_map[256];
-	memset (palette_map, 0, sizeof (palette_map));
-
-	for (offs = (spriteram_size/2)-4;offs >=0;offs -= 4)
-	{
-		data = spriteram16[offs+3];
-		color = (data &0xff00) >> 8;
-		tilenum = data &0xff;
-
-		if (tilenum)
-		{
-			map_offset = tilenum << 7;
-
-			for (sprite_chunk=0;sprite_chunk<128;sprite_chunk++)
-			{
-				i = sprite_chunk % 8;   /* 8 sprite chunks across */
-				j = sprite_chunk / 8;   /* 16 sprite chunks down */
-
-				code = spritemap[map_offset + (j<<3) + i ] &tile_mask;
-				palette_map[color] |= Machine->gfx[0]->pen_usage[code];
-			}
-		}
-	}
-
-	/* Tell MAME about the color usage */
-	for (i = 0;i < 256;i++)
-	{
-		int usage = palette_map[i];
-
-		if (usage)
-		{
-			if (palette_map[i] & (1 << 0))
-				palette_used_colors[i * 16 + 0] = PALETTE_COLOR_USED;
-			for (j = 1; j < 16; j++)
-				if (palette_map[i] & (1 << j))
-					palette_used_colors[i * 16 + j] = PALETTE_COLOR_USED;
-		}
-	}
-}
-
-
 void topspeed_draw_sprites(struct osd_bitmap *bitmap,int *primasks,int y_offs)
 {
 	int offs,map_offset,x,y,curx,cury,sprite_chunk;
@@ -272,11 +225,6 @@ void topspeed_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	PC080SN_tilemap_update();
 
-	palette_init_used_colors();
-	topspeed_update_palette();
-	palette_used_colors[0] |= PALETTE_COLOR_VISIBLE;
-	palette_recalc();
-
 	/* Tilemap layer priority seems hardwired (the order is odd, too) */
 	layer[0] = 1;
 	layer[1] = 0;
@@ -284,7 +232,7 @@ void topspeed_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	layer[3] = 0;
 
 	fillbitmap(priority_bitmap,0,NULL);
-	fillbitmap(bitmap, palette_transparent_pen, &Machine -> visible_area);
+	fillbitmap(bitmap, Machine->pens[0], &Machine -> visible_area);
 
 #ifdef MAME_DEBUG
 	if (dislayer[3]==0)

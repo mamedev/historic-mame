@@ -3109,10 +3109,10 @@ static const struct MachineDriver machine_driver_tekipaki =
 	/* video hardware */
 	32*16, 32*16, { 0, 319, 0, 239 },
 	gfxdecodeinfo,
-	(64*16)+(64*16), (64*16)+(64*16),
+	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK, /* Sprites are buffered too */
+	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK, /* Sprites are buffered too */
 	toaplan2_0_eof_callback,
 	toaplan2_0_vh_start,
 	toaplan2_0_vh_stop,
@@ -3154,10 +3154,10 @@ static const struct MachineDriver machine_driver_ghox =
 	/* video hardware */
 	32*16, 32*16, { 0, 319, 0, 239 },
 	gfxdecodeinfo,
-	(64*16)+(64*16), (64*16)+(64*16),
+	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK, /* Sprites are buffered too */
+	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK, /* Sprites are buffered too */
 	toaplan2_0_eof_callback,
 	toaplan2_0_vh_start,
 	toaplan2_0_vh_stop,
@@ -3199,10 +3199,10 @@ static const struct MachineDriver machine_driver_dogyuun =
 	/* video hardware */
 	32*16, 32*16, { 0, 319, 0, 239 },
 	gfxdecodeinfo_2,
-	(64*16)+(64*16), (64*16)+(64*16),
+	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK, /* Sprites are buffered too */
+	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK, /* Sprites are buffered too */
 	toaplan2_1_eof_callback,
 	toaplan2_1_vh_start,
 	toaplan2_1_vh_stop,
@@ -3248,10 +3248,10 @@ static const struct MachineDriver machine_driver_kbash =
 	/* video hardware */
 	32*16, 32*16, { 0, 319, 0, 239 },
 	gfxdecodeinfo,
-	(64*16)+(64*16), (64*16)+(64*16),
+	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK, /* Sprites are buffered too */
+	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK, /* Sprites are buffered too */
 	toaplan2_0_eof_callback,
 	toaplan2_0_vh_start,
 	toaplan2_0_vh_stop,
@@ -3289,10 +3289,10 @@ static const struct MachineDriver machine_driver_truxton2 =
 	/* video hardware */
 	32*16, 32*16, { 0, 319, 0, 239 },
 	truxton2_gfxdecodeinfo,
-	(64*16)+(64*16), (64*16)+(64*16),
+	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK, /* Sprites are buffered too */
+	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK, /* Sprites are buffered too */
 	toaplan2_0_eof_callback,
 	truxton2_0_vh_start,
 	toaplan2_0_vh_stop,
@@ -3336,10 +3336,10 @@ static const struct MachineDriver machine_driver_pipibibs =
 	/* video hardware */
 	32*16, 32*16, { 0, 319, 0, 239 },
 	gfxdecodeinfo,
-	(128*16), (128*16),
+	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK, /* Sprites are buffered too */
+	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK, /* Sprites are buffered too */
 	toaplan2_0_eof_callback,
 	toaplan2_0_vh_start,
 	toaplan2_0_vh_stop,
@@ -3379,10 +3379,10 @@ static const struct MachineDriver machine_driver_whoopee =
 	/* video hardware */
 	32*16, 32*16, { 0, 319, 0, 239 },
 	gfxdecodeinfo,
-	(128*16), (128*16),
+	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK, /* Sprites are buffered too */
+	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK, /* Sprites are buffered too */
 	toaplan2_0_eof_callback,
 	toaplan2_0_vh_start,
 	toaplan2_0_vh_stop,
@@ -3422,10 +3422,10 @@ static const struct MachineDriver machine_driver_pipibibi =
 	/* video hardware */
 	32*16, 32*16, { 0, 319, 0, 239 },
 	gfxdecodeinfo,
-	(128*16), (128*16),
+	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK, /* Sprites are buffered too */
+	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK, /* Sprites are buffered too */
 	toaplan2_0_eof_callback,
 	toaplan2_0_vh_start,
 	toaplan2_0_vh_stop,
@@ -3467,10 +3467,10 @@ static const struct MachineDriver machine_driver_fixeight =
 	/* video hardware */
 	32*16, 32*16, { 0, 319, 0, 239 },
 	truxton2_gfxdecodeinfo,
-	(64*16)+(64*16), (64*16)+(64*16),
+	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK, /* Sprites are buffered too */
+	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK, /* Sprites are buffered too */
 	toaplan2_0_eof_callback,
 	truxton2_0_vh_start,
 	toaplan2_0_vh_stop,
@@ -3517,10 +3517,10 @@ static const struct MachineDriver machine_driver_vfive =
 	/* video hardware */
 	32*16, 32*16, { 0, 319, 0, 239 },
 	gfxdecodeinfo,
-	(64*16)+(64*16), (64*16)+(64*16),
+	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK, /* Sprites are buffered too */
+	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK, /* Sprites are buffered too */
 	toaplan2_0_eof_callback,
 	toaplan2_0_vh_start,
 	toaplan2_0_vh_stop,
@@ -3562,10 +3562,10 @@ static const struct MachineDriver machine_driver_batsugun =
 	/* video hardware */
 	32*16, 32*16, { 0, 319, 0, 239 },
 	gfxdecodeinfo_2,
-	(64*16)+(64*16), (64*16)+(64*16),
+	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK, /* Sprites are buffered too */
+	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK, /* Sprites are buffered too */
 	toaplan2_1_eof_callback,
 	toaplan2_1_vh_start,
 	toaplan2_1_vh_stop,
@@ -3603,10 +3603,10 @@ static const struct MachineDriver machine_driver_snowbro2 =
 	/* video hardware */
 	32*16, 32*16, { 0, 319, 0, 239 },
 	gfxdecodeinfo,
-	(64*16)+(64*16), (64*16)+(64*16),
+	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK, /* Sprites are buffered too */
+	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK, /* Sprites are buffered too */
 	toaplan2_0_eof_callback,
 	toaplan2_0_vh_start,
 	toaplan2_0_vh_stop,
@@ -3650,10 +3650,10 @@ static const struct MachineDriver machine_driver_mahoudai =
 	/* video hardware */
 	32*16, 32*16, { 0, 319, 0, 239 },
 	raizing_gfxdecodeinfo,
-	(64*16)+(64*16), (64*16)+(64*16),
+	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK, /* Sprites are buffered too */
+	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK, /* Sprites are buffered too */
 	toaplan2_0_eof_callback,
 	truxton2_0_vh_start,
 	toaplan2_0_vh_stop,
@@ -3697,10 +3697,10 @@ static const struct MachineDriver machine_driver_shippumd =
 	/* video hardware */
 	32*16, 32*16, { 0, 319, 0, 239 },
 	raizing_gfxdecodeinfo,
-	(64*16)+(64*16), (64*16)+(64*16),
+	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK, /* Sprites are buffered too */
+	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK, /* Sprites are buffered too */
 	toaplan2_0_eof_callback,
 	truxton2_0_vh_start,
 	toaplan2_0_vh_stop,
@@ -3744,10 +3744,10 @@ static const struct MachineDriver machine_driver_battleg =
 	/* video hardware */
 	32*16, 32*16, { 0, 319, 0, 239 },
 	raizing_gfxdecodeinfo,
-	(64*16)+(64*16), (64*16)+(64*16),
+	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK, /* Sprites are buffered too */
+	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK, /* Sprites are buffered too */
 	toaplan2_0_eof_callback,
 	truxton2_0_vh_start,
 	toaplan2_0_vh_stop,
@@ -3791,10 +3791,10 @@ static const struct MachineDriver machine_driver_batrider =
 	/* video hardware */
 	32*16, 32*16, { 0, 319, 0, 239 },
 	batrider_gfxdecodeinfo,
-	(64*16)+(64*16), (64*16)+(64*16),
+	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK, /* Sprites are buffered too */
+	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK, /* Sprites are buffered too */
 	batrider_0_eof_callback,
 	batrider_0_vh_start,
 	toaplan2_0_vh_stop,
@@ -4193,22 +4193,22 @@ ROM_END
 /* Whoopee machine to be changed to Teki Paki when (if) HD647180 is dumped */
 
 /*   ( YEAR  NAME      PARENT    MACHINE   INPUT     INIT      MONITOR       COMPANY    FULLNAME     FLAGS ) */
-GAMEX( 1991, tekipaki, 0,        tekipaki, tekipaki, toaplan2, ROT0,         "Toaplan", "Teki Paki", GAME_NO_SOUND )
-GAMEX( 1991, ghox,     0,        ghox,     ghox,     toaplan2, ROT270,       "Toaplan", "Ghox", GAME_NO_SOUND )
-GAMEX( 1991, dogyuun,  0,        dogyuun,  dogyuun,  toaplan3, ROT270,       "Toaplan", "Dogyuun", GAME_NO_SOUND )
-GAMEX( 1993, kbash,    0,        kbash,    kbash,    toaplan2, ROT0_16BIT,   "Toaplan", "Knuckle Bash", GAME_NO_SOUND )
-GAME ( 1992, truxton2, 0,        truxton2, truxton2, truxton2, ROT270,       "Toaplan", "Truxton II / Tatsujin II / Tatsujin Oh (Japan)" )
-GAME ( 1991, pipibibs, 0,        pipibibs, pipibibs, pipibibs, ROT0,         "Toaplan", "Pipi & Bibis / Whoopee (Japan)" )
-GAME ( 1991, whoopee,  pipibibs, whoopee,  whoopee,  pipibibs, ROT0,         "Toaplan", "Whoopee (Japan) / Pipi & Bibis (World)" )
-GAME ( 1991, pipibibi, pipibibs, pipibibi, pipibibi, pipibibi, ROT0,         "[Toaplan] Ryouta Kikaku", "Pipi & Bibis / Whoopee (Japan) [bootleg ?]" )
-GAMEX( 1992, fixeight, 0,        fixeight, fixeight, fixeight, ROT270,       "Toaplan", "FixEight", GAME_NOT_WORKING )
-GAMEX( 1992, grindstm, vfive,    vfive,    grindstm, toaplan3, ROT270,       "Toaplan", "Grind Stormer", GAME_NO_SOUND )
-GAMEX( 1993, vfive,    0,        vfive,    vfive,    toaplan3, ROT270,       "Toaplan", "V-Five (Japan)", GAME_NO_SOUND )
-GAMEX( 1993, batsugun, 0,        batsugun, batsugun, toaplan3, ROT270_16BIT, "Toaplan", "Batsugun", GAME_NO_SOUND )
-GAMEX( 1993, batugnsp, batsugun, batsugun, batsugun, toaplan3, ROT270_16BIT, "Toaplan", "Batsugun Special Ver.", GAME_NO_SOUND )
-GAME ( 1994, snowbro2, 0,        snowbro2, snowbro2, snowbro2, ROT0_16BIT,   "[Toaplan] Hanafram", "Snow Bros. 2 - With New Elves" )
-GAME ( 1993, mahoudai, 0,        mahoudai, mahoudai, raizing,  ROT270_16BIT, "Raizing (Able license)", "Mahou Daisakusen (Japan)" )
-GAME ( 1994, shippumd, 0,        shippumd, shippumd, raizing,  ROT270_16BIT, "Raizing/8ing", "Shippu Mahou Daisakusen (Japan)" )
-GAME ( 1996, battleg,  0,        battleg,  battleg,  battleg,  ROT270_16BIT, "Raizing/8ing", "Battle Garegga" )
-GAME ( 1998, batrider, 0,        batrider, batrider, battleg,  ROT270_16BIT, "Raizing/8ing", "Armed Police Batrider (Japan, version B)" )
-GAME ( 1998, batridra, batrider, batrider, batrider, battleg,  ROT270_16BIT, "Raizing/8ing", "Armed Police Batrider (Japan, version A)" )
+GAMEX( 1991, tekipaki, 0,        tekipaki, tekipaki, toaplan2, ROT0,   "Toaplan", "Teki Paki", GAME_NO_SOUND )
+GAMEX( 1991, ghox,     0,        ghox,     ghox,     toaplan2, ROT270, "Toaplan", "Ghox", GAME_NO_SOUND )
+GAMEX( 1991, dogyuun,  0,        dogyuun,  dogyuun,  toaplan3, ROT270, "Toaplan", "Dogyuun", GAME_NO_SOUND )
+GAMEX( 1993, kbash,    0,        kbash,    kbash,    toaplan2, ROT0,   "Toaplan", "Knuckle Bash", GAME_NO_SOUND )
+GAME ( 1992, truxton2, 0,        truxton2, truxton2, truxton2, ROT270, "Toaplan", "Truxton II / Tatsujin II / Tatsujin Oh (Japan)" )
+GAME ( 1991, pipibibs, 0,        pipibibs, pipibibs, pipibibs, ROT0,   "Toaplan", "Pipi & Bibis / Whoopee (Japan)" )
+GAME ( 1991, whoopee,  pipibibs, whoopee,  whoopee,  pipibibs, ROT0,   "Toaplan", "Whoopee (Japan) / Pipi & Bibis (World)" )
+GAME ( 1991, pipibibi, pipibibs, pipibibi, pipibibi, pipibibi, ROT0,   "[Toaplan] Ryouta Kikaku", "Pipi & Bibis / Whoopee (Japan) [bootleg ?]" )
+GAMEX( 1992, fixeight, 0,        fixeight, fixeight, fixeight, ROT270, "Toaplan", "FixEight", GAME_NOT_WORKING )
+GAMEX( 1992, grindstm, vfive,    vfive,    grindstm, toaplan3, ROT270, "Toaplan", "Grind Stormer", GAME_NO_SOUND )
+GAMEX( 1993, vfive,    0,        vfive,    vfive,    toaplan3, ROT270, "Toaplan", "V-Five (Japan)", GAME_NO_SOUND )
+GAMEX( 1993, batsugun, 0,        batsugun, batsugun, toaplan3, ROT270, "Toaplan", "Batsugun", GAME_NO_SOUND )
+GAMEX( 1993, batugnsp, batsugun, batsugun, batsugun, toaplan3, ROT270, "Toaplan", "Batsugun Special Ver.", GAME_NO_SOUND )
+GAME ( 1994, snowbro2, 0,        snowbro2, snowbro2, snowbro2, ROT0,   "[Toaplan] Hanafram", "Snow Bros. 2 - With New Elves" )
+GAME ( 1993, mahoudai, 0,        mahoudai, mahoudai, raizing,  ROT270, "Raizing (Able license)", "Mahou Daisakusen (Japan)" )
+GAME ( 1994, shippumd, 0,        shippumd, shippumd, raizing,  ROT270, "Raizing/8ing", "Shippu Mahou Daisakusen (Japan)" )
+GAME ( 1996, battleg,  0,        battleg,  battleg,  battleg,  ROT270, "Raizing/8ing", "Battle Garegga" )
+GAME ( 1998, batrider, 0,        batrider, batrider, battleg,  ROT270, "Raizing/8ing", "Armed Police Batrider (Japan, version B)" )
+GAME ( 1998, batridra, batrider, batrider, batrider, battleg,  ROT270, "Raizing/8ing", "Armed Police Batrider (Japan, version A)" )

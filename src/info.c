@@ -625,16 +625,6 @@ static void print_game_driver(FILE* out, const struct GameDriver* game)
 
 	fprintf(out, L2P "palettesize %d" L2N, driver->total_colors);
 
-	if (driver->video_attributes & VIDEO_MODIFIES_PALETTE)
-		fprintf(out, L2P "palettemode dynamic" L2N);
-	else
-		fprintf(out, L2P "palettemode static" L2N);
-
-	if (game->flags & GAME_REQUIRES_16BIT)
-		fprintf(out, L2P "palettedepth 16" L2N);
-	else
-		fprintf(out, L2P "palettedepth 8" L2N);
-
 	if (driver->video_attributes & VIDEO_SUPPORTS_DIRTY)
 		fprintf(out, L2P "blit dirty" L2N);
 	else

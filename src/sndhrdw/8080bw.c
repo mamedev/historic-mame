@@ -183,6 +183,25 @@ void init_machine_invaders(void)
 	SN76477_vco_w(0, 1);
 }
 
+void init_machine_sstrngr2(void)
+{
+	install_port_write_handler(0, 0x42, 0x42, invaders_sh_port3_w);
+	install_port_write_handler(0, 0x44, 0x44, invaders_sh_port5_w);
+
+	SN76477_envelope_1_w(0, 1);
+	SN76477_envelope_2_w(0, 0);
+	SN76477_mixer_a_w(0, 0);
+	SN76477_mixer_b_w(0, 0);
+	SN76477_mixer_c_w(0, 0);
+	SN76477_vco_w(0, 1);
+
+	/* patch ROM.  This is not a bad dump, because the ROM test passes
+	   with the way it is, but the game doesn't work.  Maybe there
+	   are bit inverters enabled by the ROM test DSW */
+
+//	memory_region(REGION_CPU1)[0x0010] = 0xf5;	/* push af */
+}
+
 void init_machine_invad2ct(void)
 {
 	init_machine_invaders();

@@ -92,6 +92,7 @@ U77 U78 U79                                U90 U91 U92 U93
 ****************************************************************************/
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "machine/segacrpt.h"
 
 
 
@@ -111,11 +112,6 @@ void ixion_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 extern int zaxxon_vid_type;
 
 WRITE_HANDLER( zaxxon_sound_w );
-
-/* in machine/segacrpt.c */
-void szaxxon_decode(void);
-void nprinces_decode(void);
-void futspy_decode(void);
 
 
 

@@ -236,10 +236,10 @@ static const struct MachineDriver machine_driver_dcon =
 	40*8, 32*8, { 0*8, 40*8-1, 0*8, 28*8-1 },
 
 	dcon_gfxdecodeinfo,
-	2048, 2048,
+	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	dcon_vh_start,
 	0,

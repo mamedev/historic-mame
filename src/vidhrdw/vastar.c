@@ -246,8 +246,6 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 
 void vastar_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	tilemap_update(ALL_TILEMAPS);
-
 	switch (*vastar_sprite_priority)
 	{
 	case 0:

@@ -596,10 +596,10 @@ static const struct MachineDriver machine_driver_##NAME =				\
 	/* video hardware */										\
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },					\
 	gfxdecodeinfo,												\
-	1024, 1024,													\
+	1024, 0,													\
 	0,															\
 																\
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,					\
+	VIDEO_TYPE_RASTER ,					\
 	0,															\
 	tecmo_vh_start,												\
 	0,															\

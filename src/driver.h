@@ -122,9 +122,6 @@ struct MachineDriver
 #define	VIDEO_TYPE_RASTER			0x0000
 #define	VIDEO_TYPE_VECTOR			0x0001
 
-/* bit 2 of the video attributes indicates whether or not the driver modifies the palette */
-#define	VIDEO_MODIFIES_PALETTE	0x0004
-
 /* bit 3 of the video attributes indicates that the game's palette has 6 or more bits */
 /*       per gun, and would therefore require a 24-bit display. This is entirely up to */
 /*       the OS dependant layer, the bitmap will still be 16-bit. */
@@ -149,7 +146,13 @@ struct MachineDriver
 #define VIDEO_BUFFERS_SPRITERAM 0x0100
 
 /* game wants to use a hicolor or truecolor bitmap (e.g. for alpha blending) */
-#define VIDEO_RGB_DIRECT 0x0200
+#define VIDEO_RGB_DIRECT 			0x0200
+
+/* automatically extend the palette creating a darker copy for shadows */
+#define VIDEO_HAS_SHADOWS			0x0400
+
+/* automatically extend the palette creating a brighter copy for highlights */
+#define VIDEO_HAS_HIGHLIGHTS		0x0800
 
 /* generic aspect ratios */
 #define VIDEO_ASPECT_RATIO_MASK		0xffff0000
@@ -195,14 +198,13 @@ struct GameDriver
 #define ORIENTATION_SWAP_XY			0x0004	/* mirror along the top-left/bottom-right diagonal */
 
 #define GAME_NOT_WORKING			0x0008
-#define GAME_WRONG_COLORS			0x0010	/* colors are totally wrong */
-#define GAME_IMPERFECT_COLORS		0x0020	/* colors are not 100% accurate, but close */
-#define GAME_NO_SOUND				0x0040	/* sound is missing */
-#define GAME_IMPERFECT_SOUND		0x0080	/* sound is known to be wrong */
-#define	GAME_REQUIRES_16BIT			0x0100	/* cannot fit in 256 colors */
-#define GAME_NO_COCKTAIL			0x0200	/* screen flip support is missing */
-#define GAME_UNEMULATED_PROTECTION	0x0400	/* game's protection not fully emulated */
-#define GAME_IMPERFECT_GRAPHICS		0x0800	/* graphics are wrong/incomplete */
+#define GAME_UNEMULATED_PROTECTION	0x0010	/* game's protection not fully emulated */
+#define GAME_WRONG_COLORS			0x0020	/* colors are totally wrong */
+#define GAME_IMPERFECT_COLORS		0x0040	/* colors are not 100% accurate, but close */
+#define GAME_IMPERFECT_GRAPHICS		0x0080	/* graphics are wrong/incomplete */
+#define GAME_NO_COCKTAIL			0x0100	/* screen flip support is missing */
+#define GAME_NO_SOUND				0x0200	/* sound is missing */
+#define GAME_IMPERFECT_SOUND		0x0400	/* sound is known to be wrong */
 #define NOT_A_DRIVER				0x4000	/* set by the fake "root" driver_0 and by "containers" */
 											/* e.g. driver_neogeo. */
 #ifdef MESS
@@ -226,7 +228,7 @@ const struct GameDriver driver_##NAME =		\
 	input_ports_##INPUT,					\
 	init_##INIT,							\
 	rom_##NAME,								\
-	MONITOR,								\
+	MONITOR									\
 };
 
 #define GAMEX(YEAR,NAME,PARENT,MACHINE,INPUT,INIT,MONITOR,COMPANY,FULLNAME,FLAGS)	\
@@ -243,19 +245,15 @@ const struct GameDriver driver_##NAME =		\
 	input_ports_##INPUT,					\
 	init_##INIT,							\
 	rom_##NAME,								\
-	(MONITOR)|(FLAGS),						\
+	(MONITOR)|(FLAGS)						\
 };
 
 
 /* monitor parameters to be used with the GAME() macro */
-#define	ROT0	0x0000
+#define	ROT0	0
 #define	ROT90	(ORIENTATION_SWAP_XY|ORIENTATION_FLIP_X)	/* rotate clockwise 90 degrees */
 #define	ROT180	(ORIENTATION_FLIP_X|ORIENTATION_FLIP_Y)		/* rotate 180 degrees */
 #define	ROT270	(ORIENTATION_SWAP_XY|ORIENTATION_FLIP_Y)	/* rotate counter-clockwise 90 degrees */
-#define	ROT0_16BIT		(ROT0|GAME_REQUIRES_16BIT)
-#define	ROT90_16BIT		(ROT90|GAME_REQUIRES_16BIT)
-#define	ROT180_16BIT	(ROT180|GAME_REQUIRES_16BIT)
-#define	ROT270_16BIT	(ROT270|GAME_REQUIRES_16BIT)
 
 /* this allows to leave the INIT field empty in the GAME() macro call */
 #define init_0 0

@@ -34,12 +34,6 @@ void lsasquad_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 
 		color_prom++;
 	}
-
-
-	/* no color PROMs here, only RAM, but the gfx data is inverted so we */
-	/* cannot use the default lookup table */
-	for (i = 0;i < Machine->drv->color_table_len;i++)
-		colortable[i] = i ^ 0x0f;
 }
 
 
@@ -78,14 +72,14 @@ static void draw_layer(struct osd_bitmap *bitmap,unsigned char *scrollram)
 					color,
 					flip_screen,flip_screen,
 					sx,sy,
-					&Machine->visible_area,TRANSPARENCY_PEN,0);
+					&Machine->visible_area,TRANSPARENCY_PEN,15);
 			if (sx > 248)	/* wraparound */
 				drawgfx(bitmap,Machine->gfx[0],
 						code,
 						color,
 						flip_screen,flip_screen,
 						sx-256,sy,
-						&Machine->visible_area,TRANSPARENCY_PEN,0);
+						&Machine->visible_area,TRANSPARENCY_PEN,15);
 		}
 	}
 }
@@ -119,14 +113,14 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 				color,
 				flipx,flipy,
 				sx,sy,
-				&Machine->visible_area,TRANSPARENCY_PEN,0);
+				&Machine->visible_area,TRANSPARENCY_PEN,15);
 		/* wraparound */
 		drawgfx(bitmap,Machine->gfx[1],
 				code,
 				color,
 				flipx,flipy,
 				sx-256,sy,
-				&Machine->visible_area,TRANSPARENCY_PEN,0);
+				&Machine->visible_area,TRANSPARENCY_PEN,15);
 	}
 }
 

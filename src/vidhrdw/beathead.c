@@ -222,18 +222,7 @@ void beathead_scanline_update(int scanline)
 
 void beathead_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
-	UINT8 palette_used[128];
 	int x, y;
-
-	/* recalc the palette */
-	palette_init_used_colors();
-	memset(palette_used, 0, sizeof(palette_used));
-	for (y = 0; y < 240; y++)
-		palette_used[scanline_palette[y]] = 1;
-	for (x = 0; x < 128; x++)
-		if (palette_used[x])
-			memset(&palette_used_colors[x * 256], PALETTE_COLOR_USED, 256);
-	palette_recalc();
 
 	/* generate the final screen */
 	for (y = 0; y < 240; y++)

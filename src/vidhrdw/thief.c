@@ -166,8 +166,6 @@ void thief_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
 		page = thief_page0;
 	}
 
-	palette_recalc();
-
 	for( offs=0; offs<0x2000; offs++ ){
 		if( dirty[offs] ){
 			int ypos = offs/32;

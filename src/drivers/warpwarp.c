@@ -50,7 +50,7 @@ C037	  flip screen (currently ignored)
 
 
 extern unsigned char *warpwarp_bulletsram;
-void warpwarp_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+void warpwarp_init_palette(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom);
 void warpwarp_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 /* from sndhrdw/warpwarp.c */
@@ -383,7 +383,7 @@ static const struct MachineDriver machine_driver_##NAME = \
 	34*8, 32*8, { 0*8, 34*8-1, 2*8, 30*8-1 },		\
 	gfxdecodeinfo,									\
 	256, 2*256, 									\
-	warpwarp_vh_convert_color_prom, 				\
+	warpwarp_init_palette, 							\
 													\
 	VIDEO_TYPE_RASTER,								\
 	0,												\

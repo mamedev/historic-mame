@@ -728,7 +728,7 @@ static const struct MachineDriver machine_driver_airbustr =
 	gfxdecodeinfo,
 	256 * 3, 256 * 3,
 	0,
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	airbustr_vh_start,
 	0,

@@ -217,9 +217,6 @@ int i, offs;
 
 void airbustr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-unsigned char *ram;
-int i, offs;
-
 #if 0
 /*
 	Let's show some of the unknown bits:
@@ -233,41 +230,6 @@ int i, offs;
 		usrintf_showmessage(buf);
 	}
 #endif
-
-	tilemap_update(ALL_TILEMAPS);
-
-/* Palette Stuff */
-
-	palette_init_used_colors();
-
-#if 0
-	/* Scrolling Layers */
-	ram = &airbustr_bgram[0x000 + 0x400];	// color code
-	for ( offs = 0 ; offs < 0x100 ; offs++)
-	{
-		int color =	256 * 0 + (ram[offs] & 0xf0);
-		memset(&palette_used_colors[color],PALETTE_COLOR_USED,16);
-	}
-	ram = &airbustr_fgram[0x800 + 0x400];	// color code
-	for ( offs = 0 ; offs < 0x100 ; offs++)
-	{
-		int color =	256 * 1 + (ram[offs] & 0xf0);
-		memset(&palette_used_colors[color+1],PALETTE_COLOR_USED,16-1);
-	}
-#endif
-
-	/* Sprites */
-	for (i = 0 ; i < 2 ; i++)
-	{
-		ram = &spriteram[i * 0x800 + 0x300];	// color code
-		for ( offs = 0 ; offs < 0x100 ; offs++)
-		{
-			int color = 256 * 2 + (ram[offs] & 0xf0);
-			memset(&palette_used_colors[color+1],PALETTE_COLOR_USED,16-1);
-		}
-	}
-
-	palette_recalc();
 
 	tilemap_draw(bitmap,bg_tilemap,0,0);
 	tilemap_draw(bitmap,fg_tilemap,0,0);

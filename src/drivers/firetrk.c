@@ -420,8 +420,8 @@ static void draw_sprites( struct osd_bitmap *bitmap )
 		{
 			for( x=0; x<bitmap->width; x++ )
 			{
-				pen = buf->line[y][x];
-				if( pen != bitmap->line[y][x] )
+				pen = ((UINT8 *)buf->line[y])[x];
+				if( pen != ((UINT8 *)bitmap->line[y])[x] )
 				{
 					if( pen == track_color )
 					{
@@ -843,4 +843,4 @@ INPUT_PORTS_START( firetruck )
 INPUT_PORTS_END
 
 /*           rom      parent    machine		inp			init */
-GAME( 1978, firetrk, 0,        firetruck,	firetruck,	firetruck,	ROT270, "Atari", "Fire Truck")
+GAME( 1978, firetrk, 0,        firetruck,	firetruck,	firetruck,	ROT270, "Atari", "Fire Truck" )

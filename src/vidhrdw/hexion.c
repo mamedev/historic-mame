@@ -195,8 +195,6 @@ WRITE_HANDLER( hexion_gfxrom_select_w )
 
 void hexion_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	tilemap_update(ALL_TILEMAPS);
-
 	tilemap_draw(bitmap,tilemap[1],0,0);
 	tilemap_draw(bitmap,tilemap[0],0,0);
 }

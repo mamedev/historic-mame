@@ -34,12 +34,6 @@ static UINT8 crtc_register;
 static void *crtc_timer;
 static UINT8 bins, gins;
 
-static const data16_t *callback_videoram;
-static UINT8 callback_gfxbank;
-static UINT8 callback_colorbase;
-static UINT16 callback_imagebase;
-static UINT16 callback_imagemask;
-
 
 /*************************************
  *
@@ -57,16 +51,33 @@ void rpunch_vh_stop(void);
  *
  *************************************/
 
-static void get_bg_tile_info(int tile_index)
+static void get_bg0_tile_info(int tile_index)
 {
-	int data = callback_videoram[tile_index];
+	int data = videoram16[tile_index];
+	int code;
+	if (videoflags & 0x0400)	code = (data & 0x0fff) | 0x2000;
+	else						code = (data & 0x1fff);
+
 	SET_TILE_INFO(
-			callback_gfxbank,
-			callback_imagebase | (data & callback_imagemask),
-			callback_colorbase | ((data >> 13) & 7),
+			0,
+			code,
+			((videoflags & 0x0010) >> 1) | ((data >> 13) & 7),
 			0)
 }
 
+static void get_bg1_tile_info(int tile_index)
+{
+	int data = videoram16[videoram_size / 4 + tile_index];
+	int code;
+	if (videoflags & 0x0800)	code = (data & 0x0fff) | 0x2000;
+	else						code = (data & 0x1fff);
+
+	SET_TILE_INFO(
+			1,
+			code,
+			((videoflags & 0x0020) >> 2) | ((data >> 13) & 7),
+			0)
+}
 
 
 /*************************************
@@ -88,8 +99,8 @@ int rpunch_vh_start(void)
 	int i;
 
 	/* allocate tilemaps for the backgrounds and a bitmap for the direct-mapped bitmap */
-	background[0] = tilemap_create(get_bg_tile_info,tilemap_scan_cols,TILEMAP_OPAQUE,     8,8,64,64);
-	background[1] = tilemap_create(get_bg_tile_info,tilemap_scan_cols,TILEMAP_TRANSPARENT,8,8,64,64);
+	background[0] = tilemap_create(get_bg0_tile_info,tilemap_scan_cols,TILEMAP_OPAQUE,     8,8,64,64);
+	background[1] = tilemap_create(get_bg1_tile_info,tilemap_scan_cols,TILEMAP_TRANSPARENT,8,8,64,64);
 
 	/* allocate a bitmap sum */
 	rpunch_bitmapsum = malloc(BITMAP_HEIGHT * sizeof(UINT32));
@@ -269,50 +280,6 @@ WRITE16_HANDLER( rpunch_ins_w )
  *
  *************************************/
 
-static void mark_sprite_palette(int start, int stop)
-{
-	UINT16 used_colors[16];
-	int offs, i, j;
-
-	start *= 4;
-	stop *= 4;
-
-	memset(used_colors, 0, sizeof(used_colors));
-	for (offs = start; offs < stop; offs += 4)
-	{
-		int data1 = spriteram16[offs + 1];
-		int code = data1 & 0x7ff;
-
-		if (code < 0x600)
-		{
-			int data0 = spriteram16[offs + 0];
-			int data2 = spriteram16[offs + 2];
-			int x = (data2 & 0x1ff) + 8;
-			int y = 513 - (data0 & 0x1ff);
-			int color = ((data1 >> 13) & 7) | ((videoflags & 0x0040) >> 3);
-
-			if (x >= BITMAP_WIDTH) x -= 512;
-			if (y >= BITMAP_HEIGHT) y -= 512;
-
-			if (x > -16 && y > -32)
-				used_colors[color] |= Machine->gfx[2]->pen_usage[code];
-		}
-	}
-
-	for (i = 0; i < 16; i++)
-	{
-		UINT16 used = used_colors[i];
-		if (used)
-		{
-			for (j = 0; j < 15; j++)
-				if (used & (1 << j))
-					palette_used_colors[rpunch_sprite_palette + i * 16 + j] = PALETTE_COLOR_USED;
-			palette_used_colors[rpunch_sprite_palette + i * 16 + 15] = PALETTE_COLOR_TRANSPARENT;
-		}
-	}
-}
-
-
 static void draw_sprites(struct osd_bitmap *bitmap, int start, int stop)
 {
 	int offs;
@@ -388,42 +355,12 @@ static void draw_bitmap(struct osd_bitmap *bitmap)
 
 void rpunch_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
-	int x, penbase, effbins;
-
-	/* update background 0 */
-	callback_gfxbank = 0;
-	callback_videoram = &videoram16[0];
-	callback_colorbase = (videoflags & 0x0010) >> 1;
-	callback_imagebase = (videoflags & 0x0400) << 3;
-	callback_imagemask = callback_imagebase ? 0x0fff : 0x1fff;
-	tilemap_update(background[0]);
-
-	/* update background 1 */
-	callback_gfxbank = 1;
-	callback_videoram = &videoram16[videoram_size / 4];
-	callback_colorbase = (videoflags & 0x0020) >> 2;
-	callback_imagebase = (videoflags & 0x0800) << 2;
-	callback_imagemask = callback_imagebase ? 0x0fff : 0x1fff;
-	tilemap_update(background[1]);
-
-	/* update the palette usage */
-	palette_init_used_colors();
-	mark_sprite_palette(0, gins);
-	if (rpunch_bitmapram)
-	{
-		penbase = 512 + (videoflags & 15);
-		for (x = 0; x < 15; x++)
-			palette_used_colors[penbase + x] = PALETTE_COLOR_USED;
-		palette_used_colors[penbase + 15] = PALETTE_COLOR_TRANSPARENT;
-	}
-	palette_recalc();
-
-	/* draw the background layer */
-	tilemap_draw(bitmap, background[0], 0,0);
+	int effbins;
 
 	/* this seems like the most plausible explanation */
 	effbins = (bins > gins) ? gins : bins;
 
+	tilemap_draw(bitmap, background[0], 0,0);
 	draw_sprites(bitmap, 0, effbins);
 	tilemap_draw(bitmap, background[1], 0,0);
 	draw_sprites(bitmap, effbins, gins);

@@ -383,7 +383,7 @@ static const struct MachineDriver machine_driver_##NAME =		\
 	32, 0,												\
 	0,													\
 														\
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,			\
+	VIDEO_TYPE_RASTER ,			\
 	0,													\
 	liberatr_vh_start,									\
 	liberatr_vh_stop,									\

@@ -480,7 +480,7 @@ static struct MachineDriver machine_driver_atarigt =
 	8192,8192,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER  | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
 	atarigt_vh_start,
 	atarig42_vh_stop,
@@ -733,7 +733,7 @@ ROM_END
  *
  *************************************/
 
-GAMEX( 1994, tmek,     0,        atarigt,  tmek,     tmek,     ROT0_16BIT, "Atari Games", "T-MEK", GAME_UNEMULATED_PROTECTION )
-GAMEX( 1994, tmekprot, tmek,     atarigt,  tmek,     tmek,     ROT0_16BIT, "Atari Games", "T-MEK (prototype)", GAME_UNEMULATED_PROTECTION )
-GAMEX( 1994, primrage, 0,        atarigt,  tmek,     primrage, ROT0_16BIT, "Atari Games", "Primal Rage (version 2.3)", GAME_UNEMULATED_PROTECTION )
-GAMEX( 1994, primrag2, primrage, atarigt,  tmek,     primrage, ROT0_16BIT, "Atari Games", "Primal Rage (version 2.0)", GAME_UNEMULATED_PROTECTION )
+GAMEX( 1994, tmek,     0,        atarigt,  tmek,     tmek,     ROT0, "Atari Games", "T-MEK", GAME_UNEMULATED_PROTECTION )
+GAMEX( 1994, tmekprot, tmek,     atarigt,  tmek,     tmek,     ROT0, "Atari Games", "T-MEK (prototype)", GAME_UNEMULATED_PROTECTION )
+GAMEX( 1994, primrage, 0,        atarigt,  tmek,     primrage, ROT0, "Atari Games", "Primal Rage (version 2.3)", GAME_UNEMULATED_PROTECTION )
+GAMEX( 1994, primrag2, primrage, atarigt,  tmek,     primrage, ROT0, "Atari Games", "Primal Rage (version 2.0)", GAME_UNEMULATED_PROTECTION )

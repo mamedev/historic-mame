@@ -722,10 +722,10 @@ static struct MachineDriver machine_driver_topspeed =
 	40*8, 32*8, { 0*8, 40*8-1, 2*8, 32*8-1 },
 
 	topspeed_gfxdecodeinfo,
-	8192, 8192,
+	8192, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	topspeed_vh_start,
 	topspeed_vh_stop,

@@ -49,7 +49,7 @@ void zerozone_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 
-	if (palette_recalc() || full_refresh)
+	if (full_refresh)
 		memset(video_dirty,1,videoram_size/2);
 
 	for (offs = 0;offs < videoram_size/2;offs++)

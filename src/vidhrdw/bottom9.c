@@ -72,7 +72,7 @@ int bottom9_vh_start(void)
 		K052109_vh_stop();
 		return 1;
 	}
-	if (K051316_vh_start_0(REGION_GFX3,4,zoom_callback))
+	if (K051316_vh_start_0(REGION_GFX3,4,TILEMAP_TRANSPARENT,0,zoom_callback))
 	{
 		K052109_vh_stop();
 		K051960_vh_stop();
@@ -99,25 +99,14 @@ void bottom9_vh_stop(void)
 
 void bottom9_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	int i;
-
-
 	K052109_tilemap_update();
-	K051316_tilemap_update_0();
-
-	palette_init_used_colors();
-	K051960_mark_sprites_colors();
-	/* set back pen for the zoom layer */
-	for (i = 0;i < 16;i++)
-		palette_used_colors[(zoom_colorbase + i) * 16] = PALETTE_COLOR_TRANSPARENT;
-	palette_recalc();
 
 	/* note: FIX layer is not used */
 	fillbitmap(bitmap,Machine->pens[layer_colorbase[1]],&Machine->visible_area);
 //	if (bottom9_video_enable)
 	{
 		K051960_sprites_draw(bitmap,1,1);
-		K051316_zoom_draw_0(bitmap,0);
+		K051316_zoom_draw_0(bitmap,0,0);
 		K051960_sprites_draw(bitmap,0,0);
 		K052109_tilemap_draw(bitmap,2,0,0);
 		/* note that priority 3 is opposite to the basic layer priority! */

@@ -37,7 +37,7 @@ unsigned char *warpwarp_bulletsram;
   Moreover, the bullet is pure white, obtained with three 220 ohm resistors.
 
 ***************************************************************************/
-void warpwarp_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+void warpwarp_init_palette(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom)
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -46,24 +46,26 @@ void warpwarp_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 
 	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
-		int bit0,bit1,bit2;
+		int bit0,bit1,bit2,r,g,b;
 
 
 		/* red component */
 		bit0 = (i >> 0) & 0x01;
 		bit1 = (i >> 1) & 0x01;
 		bit2 = (i >> 2) & 0x01;
-		*(palette++) = 0x1f * bit0 + 0x3c * bit1 + 0xa4 * bit2;
+		r = 0x1f * bit0 + 0x3c * bit1 + 0xa4 * bit2;
 		/* green component */
 		bit0 = (i >> 3) & 0x01;
 		bit1 = (i >> 4) & 0x01;
 		bit2 = (i >> 5) & 0x01;
-		*(palette++) = 0x1f * bit0 + 0x3c * bit1 + 0xa4 * bit2;
+		g = 0x1f * bit0 + 0x3c * bit1 + 0xa4 * bit2;
 		/* blue component */
 		bit0 = 0;
 		bit1 = (i >> 6) & 0x01;
 		bit2 = (i >> 7) & 0x01;
-		*(palette++) = 0x1f * bit0 + 0x3c * bit1 + 0xa4 * bit2;
+		b = 0x1f * bit0 + 0x3c * bit1 + 0xa4 * bit2;
+
+		palette_change_color(i,r,g,b);
 	}
 
 	for (i = 0;i < TOTAL_COLORS(0);i += 2)

@@ -294,10 +294,10 @@ static const struct MachineDriver machine_driver_lastduel =
 	64*8, 32*8, { 8*8, (64-8)*8-1, 1*8, 31*8-1 },
 
 	lastduel_gfxdecodeinfo,
-	1024, 1024,
+	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_BUFFERS_SPRITERAM,
+	VIDEO_TYPE_RASTER  | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_BUFFERS_SPRITERAM,
 	lastduel_eof_callback,
 	lastduel_vh_start,
 	0,
@@ -338,10 +338,10 @@ static const struct MachineDriver machine_driver_madgear =
 	64*8, 32*8, { 8*8, (64-8)*8-1, 1*8, 31*8-1 },
 
 	madgear_gfxdecodeinfo,
-	1024, 1024,
+	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_BUFFERS_SPRITERAM,
+	VIDEO_TYPE_RASTER  | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_BUFFERS_SPRITERAM,
 	lastduel_eof_callback,
 	madgear_vh_start,
 	0,

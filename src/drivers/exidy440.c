@@ -1113,10 +1113,10 @@ static const struct MachineDriver machine_driver_exidy440 =
 	/* video hardware */
 	320, 240, { 0, 319, 0, 239 },
 	0,
-	257, 512,
+	256,0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	exidy440_vh_start,
 	exidy440_vh_stop,

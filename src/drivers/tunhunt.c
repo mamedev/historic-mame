@@ -497,7 +497,6 @@ void tunhunt_vh_screenrefresh( struct osd_bitmap *bitmap, int full_refresh )
 	const UINT8 *pMem = memory_region( REGION_CPU1 );
 
 	update_palette();
-	palette_recalc();
 
 	draw_box( bitmap );
 
@@ -672,7 +671,7 @@ static struct MachineDriver machine_driver_tunhunt =
 	gfxdecodeinfo,
 	16,16, /* number of colors, colortable size */
 	tunhunt_vh_convert_color_prom,
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	tunhunt_vh_start,
 	tunhunt_vh_stop,

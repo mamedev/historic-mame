@@ -1,362 +1,411 @@
 /******************************************************************************
 
-	Video Hardware for Video System Mahjong series.
+	Video Hardware for Video System Mahjong series and Pipe Dream.
 
 	Driver by Takahiro Nogi <nogi@kt.rim.or.jp> 2001/02/04 -
+	and Bryan McPhail, Nicola Salmoria, Aaron Giles
 
 ******************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "fromance.h"
 
 
-static struct osd_bitmap *fromance_tmpbitmap[2];
-static unsigned char *fromance_videoram[2];
-static unsigned char *fromance_dirty[2];
-static unsigned char *fromance_paletteram;
-static int fromance_scrollx[2], fromance_scrolly[2];
-static int fromance_gfxreg;
-static int fromance_flipscreen;
+static UINT8 selected_videoram;
+static data8_t *local_videoram[2];
+
+static UINT8 selected_paletteram;
+static data8_t *local_paletteram;
+
+static int scrollx[2], scrolly[2];
+static UINT8 gfxreg;
+static UINT8 flipscreen;
+
+static UINT8 crtc_register;
+static void *crtc_timer;
+
+static struct tilemap *bg_tilemap, *fg_tilemap;
 
 
-void fromance_vh_stop(void);
 
+/*************************************
+ *
+ *	Tilemap callbacks
+ *
+ *************************************/
 
-/******************************************************************************
-
-
-******************************************************************************/
-READ_HANDLER( fromance_paletteram_r )
+INLINE void get_tile_info(int tile_index,int layer)
 {
-	int palram = (fromance_gfxreg & 0x40) ? 1 : 0;
+	int tile = ((local_videoram[layer][0x0000 + tile_index] & 0x80) << 9) |
+				(local_videoram[layer][0x1000 + tile_index] << 8) |
+				local_videoram[layer][0x2000 + tile_index];
+	int color = local_videoram[layer][tile_index] & 0x7f;
 
-	if (palram)
-	{
-		return fromance_paletteram[(offset + 0x800)];
-	}
-	else
-	{
-		return fromance_paletteram[offset];
-	}
+	SET_TILE_INFO(layer, tile, color, 0);
 }
 
-WRITE_HANDLER( fromance_paletteram_w )
-{
-	int palram = (fromance_gfxreg & 0x40) ? 1 : 0;
-	int r, g, b;
-
-	if (palram)
-	{
-		fromance_paletteram[(offset + 0x800)] = data;
-
-		offset &= 0x7fe;
-
-		// xRRR_RRGG_GGGB_BBBB
-		r = ((fromance_paletteram[(offset + 0x800) + 1] & 0x7c) >> 2);
-		g = (((fromance_paletteram[(offset + 0x800) + 1] & 0x03) << 3) | ((fromance_paletteram[(offset + 0x800) + 0] & 0xe0) >> 5));
-		b = ((fromance_paletteram[(offset + 0x800) + 0] & 0x1f) >> 0);
-
-		r = ((r << 3) | (r >> 2));
-		g = ((g << 3) | (g >> 2));
-		b = ((b << 3) | (b >> 2));
-
-		palette_change_color(((offset >> 1) + 0x400), r, g, b);
-	}
-	else
-	{
-		fromance_paletteram[offset] = data;
-
-		offset &= 0x7fe;
-
-		// xRRR_RRGG_GGGB_BBBB
-		r = ((fromance_paletteram[(offset + 0x000) + 1] & 0x7c) >> 2);
-		g = (((fromance_paletteram[(offset + 0x000) + 1] & 0x03) << 3) | ((fromance_paletteram[(offset + 0x000) + 0] & 0xe0) >> 5));
-		b = ((fromance_paletteram[(offset + 0x000) + 0] & 0x1f) >> 0);
-
-		r = ((r << 3) | (r >> 2));
-		g = ((g << 3) | (g >> 2));
-		b = ((b << 3) | (b >> 2));
-
-		palette_change_color(((offset >> 1) + 0x000), r, g, b);
-	}
-}
-
-/******************************************************************************
+static void get_bg_tile_info(int tile_index) { get_tile_info(tile_index, 0); }
+static void get_fg_tile_info(int tile_index) { get_tile_info(tile_index, 1); }
 
 
-******************************************************************************/
-READ_HANDLER( fromance_videoram_r )
-{
-	int vram = (fromance_gfxreg & 0x02) ? 0 : 1;
 
-	return fromance_videoram[vram][offset];
-}
+/*************************************
+ *
+ *	Video system start
+ *
+ *************************************/
 
-WRITE_HANDLER( fromance_videoram_w )
-{
-	int vram = (fromance_gfxreg & 0x02) ? 0 : 1;
-
-	if (fromance_videoram[vram][offset] != data)
-	{
-		fromance_videoram[vram][offset] = data;
-		fromance_dirty[vram][offset & 0x0fff] = 1;
-	}
-}
-
-WRITE_HANDLER( fromance_gfxreg_w )
-{
-	if (fromance_gfxreg != data)
-	{
-		fromance_gfxreg = data;
-		fromance_flipscreen = (data & 0x01);
-		memset(fromance_dirty[0], 1, 0x1000);
-		memset(fromance_dirty[1], 1, 0x1000);
-	}
-}
-
-WRITE_HANDLER( fromance_scroll_w )
-{
-	if (fromance_flipscreen)
-	{
-		switch (offset)
-		{
-			case	0:
-				fromance_scrollx[1] = (data + (((fromance_gfxreg & 0x08) >> 3) * 0x100) - 0x159);
-				break;
-			case	1:
-				fromance_scrolly[1] = (data + (((fromance_gfxreg & 0x04) >> 2) * 0x100) - 0x10);
-				break;
-			case	2:
-				fromance_scrollx[0] = (data + (((fromance_gfxreg & 0x20) >> 5) * 0x100) - 0x159);
-				break;
-			case	3:
-				fromance_scrolly[0] = (data + (((fromance_gfxreg & 0x10) >> 4) * 0x100) - 0x10);
-				break;
-		}
-	}
-	else
-	{
-		switch (offset)
-		{
-			case	0:
-				fromance_scrollx[1] = -(data + (((fromance_gfxreg & 0x08) >> 3) * 0x100) - 0x1f7);
-				break;
-			case	1:
-				fromance_scrolly[1] = -(data + (((fromance_gfxreg & 0x04) >> 2) * 0x100) - 0xfa);
-				break;
-			case	2:
-				fromance_scrollx[0] = -(data + (((fromance_gfxreg & 0x20) >> 5) * 0x100) - 0x1f7);
-				break;
-			case	3:
-				fromance_scrolly[0] = -(data + (((fromance_gfxreg & 0x10) >> 4) * 0x100) - 0xfa);
-				break;
-		}
-	}
-}
-
-/******************************************************************************
-
-
-******************************************************************************/
 int fromance_vh_start(void)
 {
-	fromance_videoram[0] = malloc(0x1000 * 3);
-	fromance_videoram[1] = malloc(0x1000 * 3);
+	/* allocate tilemaps */
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE,      8,4, 64,64);
+	fg_tilemap = tilemap_create(get_fg_tile_info, tilemap_scan_rows, TILEMAP_TRANSPARENT, 8,4, 64,64);
 
-	fromance_tmpbitmap[0] = bitmap_alloc(512, 256);
-	fromance_tmpbitmap[1] = bitmap_alloc(512, 256);
+	/* allocate local videoram */
+	local_videoram[0] = malloc(0x1000 * 3);
+	local_videoram[1] = malloc(0x1000 * 3);
 
-	fromance_dirty[0] = malloc(0x1000);
-	fromance_dirty[1] = malloc(0x1000);
+	/* allocate local palette RAM */
+	local_paletteram = malloc(0x800 * 2);
 
-	fromance_paletteram = malloc(0x800 * 2);
-
-	if ((!fromance_videoram[0]) || (!fromance_videoram[1]) || (!fromance_tmpbitmap[0]) || (!fromance_tmpbitmap[1]) || (!fromance_dirty[0]) || (!fromance_dirty[1]) || (!fromance_paletteram))
+	/* handle failure */
+	if (!bg_tilemap || !fg_tilemap || !local_videoram[0] || !local_videoram[1] || !local_paletteram)
 	{
 		fromance_vh_stop();
 		return 1;
 	}
 
-	memset(fromance_videoram[0], 0x00, 0x3000);
-	memset(fromance_videoram[1], 0x00, 0x3000);
+	/* configure tilemaps */
+	tilemap_set_transparent_pen(fg_tilemap,15);
 
-	memset(fromance_dirty[0], 1, 0x1000);
-	memset(fromance_dirty[1], 1, 0x1000);
-
+	/* reset the timer */
+	crtc_timer = NULL;
 	return 0;
 }
 
+
+
+/*************************************
+ *
+ *	Video system stop
+ *
+ *************************************/
+
 void fromance_vh_stop(void)
 {
-	if (fromance_paletteram) free(fromance_paletteram);
-	fromance_paletteram = 0;
-
-	if (fromance_dirty[1]) free(fromance_dirty[1]);
-	fromance_dirty[1] = 0;
-	if (fromance_dirty[0]) free(fromance_dirty[0]);
-	fromance_dirty[0] = 0;
-
-	if (fromance_tmpbitmap[1]) bitmap_free(fromance_tmpbitmap[1]);
-	fromance_tmpbitmap[1] = 0;
-	if (fromance_tmpbitmap[0]) bitmap_free(fromance_tmpbitmap[0]);
-	fromance_tmpbitmap[0] = 0;
-
-	if (fromance_videoram[1]) free(fromance_videoram[1]);
-	fromance_videoram[1] = 0;
-	if (fromance_videoram[0]) free(fromance_videoram[0]);
-	fromance_videoram[0] = 0;
+	/* free all RAM */
+	free(local_paletteram);
+	local_paletteram = 0;
+	free(local_videoram[1]);
+	local_videoram[1] = 0;
+	free(local_videoram[0]);
+	local_videoram[0] = 0;
 }
 
-/******************************************************************************
 
 
-******************************************************************************/
-static void mark_background_colors(void)
+/*************************************
+ *
+ *	Graphics control register
+ *
+ *************************************/
+
+WRITE_HANDLER( fromance_gfxreg_w )
 {
-	int mask1 = Machine->gfx[0]->total_elements - 1;
-	int mask2 = Machine->gfx[1]->total_elements - 1;
-	int colormask = Machine->gfx[0]->total_colors - 1;
-	UINT16 used_colors[128];
-	int code, color, offs;
+	static int flipscreen_old = -1;
 
-	/* reset all color codes */
-	memset(used_colors, 0, sizeof(used_colors));
+	gfxreg = data;
+	flipscreen = (data & 0x01);
+	selected_videoram = (~data >> 1) & 1;
+	selected_paletteram = (data >> 6) & 1;
 
-	/* loop over tiles */
-	for (offs = 0; offs < 64*64; offs++)
+	if (flipscreen != flipscreen_old)
 	{
-		/* consider background 0 */
-		color = fromance_videoram[0][offs] & colormask;
-		code = (fromance_videoram[0][offs + 0x1000] << 8) | fromance_videoram[0][offs + 0x2000];
-		code |= ((fromance_videoram[0][offs] & 0x80) >> 7) * 0x10000;
-		used_colors[color] |= Machine->gfx[0]->pen_usage[code & mask1];
-
-		/* consider background 1 */
-		color = fromance_videoram[1][offs] & colormask;
-		code = (fromance_videoram[1][offs + 0x1000] << 8) | fromance_videoram[1][offs + 0x2000];
-		code |= ((fromance_videoram[1][offs] & 0x80) >> 7) * 0x10000;
-		used_colors[color] |= Machine->gfx[1]->pen_usage[code & mask2] & 0x7fff;
+		flipscreen_old = flipscreen;
+		tilemap_set_flip(ALL_TILEMAPS, flipscreen ? (TILEMAP_FLIPX | TILEMAP_FLIPY) : 0);
 	}
+}
 
-	/* fill in the final table */
-	for (offs = 0; offs <= colormask; offs++)
+
+
+/*************************************
+ *
+ *	Banked palette RAM
+ *
+ *************************************/
+
+READ_HANDLER( fromance_paletteram_r )
+{
+	/* adjust for banking and read */
+	offset |= selected_paletteram << 11;
+	return local_paletteram[offset];
+}
+
+
+WRITE_HANDLER( fromance_paletteram_w )
+{
+	int palword;
+	int r, g, b;
+
+	/* adjust for banking and modify */
+	offset |= selected_paletteram << 11;
+	local_paletteram[offset] = data;
+
+	/* compute R,G,B */
+	palword = (local_paletteram[offset | 1] << 8) | local_paletteram[offset & ~1];
+	r = (palword >> 10) & 0x1f;
+	g = (palword >>  5) & 0x1f;
+	b = (palword >>  0) & 0x1f;
+
+	/* up to 8 bits */
+	r = (r << 3) | (r >> 2);
+	g = (g << 3) | (g >> 2);
+	b = (b << 3) | (b >> 2);
+	palette_change_color(offset / 2, r, g, b);
+}
+
+
+
+/*************************************
+ *
+ *	Video RAM read/write
+ *
+ *************************************/
+
+READ_HANDLER( fromance_videoram_r )
+{
+	return local_videoram[selected_videoram][offset];
+}
+
+
+WRITE_HANDLER( fromance_videoram_w )
+{
+	local_videoram[selected_videoram][offset] = data;
+	tilemap_mark_tile_dirty(selected_videoram ? fg_tilemap : bg_tilemap, offset & 0x0fff);
+}
+
+
+
+/*************************************
+ *
+ *	Scroll registers
+ *
+ *************************************/
+
+WRITE_HANDLER( fromance_scroll_w )
+{
+	if (flipscreen)
 	{
-		UINT16 used = used_colors[offs];
-		if (used)
+		switch (offset)
 		{
-			for (color = 0; color < 15; color++)
-				if (used & (1 << color))
-					palette_used_colors[offs * 16 + color] = PALETTE_COLOR_USED;
-			if (used & 0x8000)
-				palette_used_colors[offs * 16 + 15] = PALETTE_COLOR_USED;
-			else
-				palette_used_colors[offs * 16 + 15] = PALETTE_COLOR_TRANSPARENT;
+			case 0:
+				scrollx[1] = (data + (((gfxreg & 0x08) >> 3) * 0x100) - 0x159);
+				break;
+			case 1:
+				scrolly[1] = (data + (((gfxreg & 0x04) >> 2) * 0x100) - 0x10);
+				break;
+			case 2:
+				scrollx[0] = (data + (((gfxreg & 0x20) >> 5) * 0x100) - 0x159);
+				break;
+			case 3:
+				scrolly[0] = (data + (((gfxreg & 0x10) >> 4) * 0x100) - 0x10);
+				break;
+		}
+	}
+	else
+	{
+		switch (offset)
+		{
+			case 0:
+				scrollx[1] = (data + (((gfxreg & 0x08) >> 3) * 0x100) - 0x1f7);
+				break;
+			case 1:
+				scrolly[1] = (data + (((gfxreg & 0x04) >> 2) * 0x100) - 0xfa);
+				break;
+			case 2:
+				scrollx[0] = (data + (((gfxreg & 0x20) >> 5) * 0x100) - 0x1f7);
+				break;
+			case 3:
+				scrolly[0] = (data + (((gfxreg & 0x10) >> 4) * 0x100) - 0xfa);
+				break;
 		}
 	}
 }
+
+
+
+/*************************************
+ *
+ *	Fake video controller
+ *
+ *************************************/
+
+static void crtc_interrupt_gen(int param)
+{
+	cpu_cause_interrupt(1, 1);
+	if (param != 0)
+		crtc_timer = timer_pulse(TIME_IN_HZ(Machine->drv->frames_per_second * param), 0, crtc_interrupt_gen);
+}
+
+
+WRITE_HANDLER( fromance_crtc_data_w )
+{
+	switch (crtc_register)
+	{
+		/* only register we know about.... */
+		case 0x0b:
+			if (crtc_timer)
+				timer_remove(crtc_timer);
+			crtc_timer = timer_set(cpu_getscanlinetime(Machine->visible_area.max_y + 1), (data > 0x80) ? 2 : 1, crtc_interrupt_gen);
+			break;
+
+		default:
+			logerror("CRTC register %02X = %02X\n", crtc_register, data & 0xff);
+			break;
+	}
+}
+
+
+WRITE_HANDLER( fromance_crtc_register_w )
+{
+	crtc_register = data;
+}
+
+
+
+/*************************************
+ *
+ *	Sprite routines (Pipe Dream)
+ *
+ *************************************/
+
+static void draw_sprites(struct osd_bitmap *bitmap, int draw_priority)
+{
+	UINT8 zoomtable[16] = { 0,7,14,20,25,30,34,38,42,46,49,52,54,57,59,61 };
+	int offs;
+
+	/* draw the sprites */
+	for (offs = 0; offs < spriteram_size; offs += 8)
+	{
+		int data2 = spriteram[offs + 4] | (spriteram[offs + 5] << 8);
+		int priority = (data2 >> 4) & 1;
+
+		/* turns out the sprites are the same as in aerofgt.c */
+		if ((data2 & 0x80) && priority == draw_priority)
+		{
+			int data0 = spriteram[offs + 0] | (spriteram[offs + 1] << 8);
+			int data1 = spriteram[offs + 2] | (spriteram[offs + 3] << 8);
+			int data3 = spriteram[offs + 6] | (spriteram[offs + 7] << 8);
+			int code = data3 & 0xfff;
+			int color = data2 & 0x0f;
+			int y = (data0 & 0x1ff) - 6;
+			int x = (data1 & 0x1ff) - 13;
+			int yzoom = (data0 >> 12) & 15;
+			int xzoom = (data1 >> 12) & 15;
+			int zoomed = (xzoom | yzoom);
+			int ytiles = ((data2 >> 12) & 7) + 1;
+			int xtiles = ((data2 >> 8) & 7) + 1;
+			int yflip = (data2 >> 15) & 1;
+			int xflip = (data2 >> 11) & 1;
+			int xt, yt;
+
+			/* compute the zoom factor -- stolen from aerofgt.c */
+			xzoom = 16 - zoomtable[xzoom] / 8;
+			yzoom = 16 - zoomtable[yzoom] / 8;
+
+			/* wrap around */
+			if (x > Machine->visible_area.max_x) x -= 0x200;
+			if (y > Machine->visible_area.max_y) y -= 0x200;
+
+			/* normal case */
+			if (!xflip && !yflip)
+			{
+				for (yt = 0; yt < ytiles; yt++)
+					for (xt = 0; xt < xtiles; xt++, code++)
+						if (!zoomed)
+							drawgfx(bitmap, Machine->gfx[2], code, color, 0, 0,
+									x + xt * 16, y + yt * 16, 0, TRANSPARENCY_PEN, 15);
+						else
+							drawgfxzoom(bitmap, Machine->gfx[2], code, color, 0, 0,
+									x + xt * xzoom, y + yt * yzoom, 0, TRANSPARENCY_PEN, 15,
+									0x1000 * xzoom, 0x1000 * yzoom);
+			}
+
+			/* xflipped case */
+			else if (xflip && !yflip)
+			{
+				for (yt = 0; yt < ytiles; yt++)
+					for (xt = 0; xt < xtiles; xt++, code++)
+						if (!zoomed)
+							drawgfx(bitmap, Machine->gfx[2], code, color, 1, 0,
+									x + (xtiles - 1 - xt) * 16, y + yt * 16, 0, TRANSPARENCY_PEN, 15);
+						else
+							drawgfxzoom(bitmap, Machine->gfx[2], code, color, 1, 0,
+									x + (xtiles - 1 - xt) * xzoom, y + yt * yzoom, 0, TRANSPARENCY_PEN, 15,
+									0x1000 * xzoom, 0x1000 * yzoom);
+			}
+
+			/* yflipped case */
+			else if (!xflip && yflip)
+			{
+				for (yt = 0; yt < ytiles; yt++)
+					for (xt = 0; xt < xtiles; xt++, code++)
+						if (!zoomed)
+							drawgfx(bitmap, Machine->gfx[2], code, color, 0, 1,
+									x + xt * 16, y + (ytiles - 1 - yt) * 16, 0, TRANSPARENCY_PEN, 15);
+						else
+							drawgfxzoom(bitmap, Machine->gfx[2], code, color, 0, 1,
+									x + xt * xzoom, y + (ytiles - 1 - yt) * yzoom, 0, TRANSPARENCY_PEN, 15,
+									0x1000 * xzoom, 0x1000 * yzoom);
+			}
+
+			/* x & yflipped case */
+			else
+			{
+				for (yt = 0; yt < ytiles; yt++)
+					for (xt = 0; xt < xtiles; xt++, code++)
+						if (!zoomed)
+							drawgfx(bitmap, Machine->gfx[2], code, color, 1, 1,
+									x + (xtiles - 1 - xt) * 16, y + (ytiles - 1 - yt) * 16, 0, TRANSPARENCY_PEN, 15);
+						else
+							drawgfxzoom(bitmap, Machine->gfx[2], code, color, 1, 1,
+									x + (xtiles - 1 - xt) * xzoom, y + (ytiles - 1 - yt) * yzoom, 0, TRANSPARENCY_PEN, 15,
+									0x1000 * xzoom, 0x1000 * yzoom);
+			}
+		}
+	}
+}
+
+
+
+/*************************************
+ *
+ *	Main screen refresh
+ *
+ *************************************/
 
 void fromance_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
-	unsigned short saved_pens[128];
-	int offs;
+	tilemap_set_scrollx(bg_tilemap, 0, scrollx[0]);
+	tilemap_set_scrolly(bg_tilemap, 0, scrolly[0]);
+	tilemap_set_scrollx(fg_tilemap, 0, scrollx[1]);
+	tilemap_set_scrolly(fg_tilemap, 0, scrolly[1]);
 
-	/* update the palette usage */
-	palette_init_used_colors();
-	mark_background_colors();
+	tilemap_draw(bitmap, bg_tilemap, 0, 0);
+	tilemap_draw(bitmap, fg_tilemap, 0, 0);
+}
 
-	if (palette_recalc() || full_refresh)
-	{
-		memset(fromance_dirty[0], 1, 0x1000);
-		memset(fromance_dirty[1], 1, 0x1000);
-	}
 
-	for (offs = 0; offs < 0x1000; offs++)
-	{
-		// bg layer
-		if (fromance_dirty[0][offs])
-		{
-			int tile;
-			int color;
-			int sx, sy;
-			int flipx, flipy;
+void pipedrm_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+{
+	/* there seems to be no logical mapping for the X scroll register -- maybe it's gone */
+	tilemap_set_scrolly(bg_tilemap, 0, scrolly[1]);
+	tilemap_set_scrolly(fg_tilemap, 0, scrolly[0]);
 
-			fromance_dirty[0][offs] = 0;
+	tilemap_draw(bitmap, bg_tilemap, 0, 0);
+	tilemap_draw(bitmap, fg_tilemap, 0, 0);
 
-			tile  = ((fromance_videoram[0][0x1000 + offs] << 8) | fromance_videoram[0][0x2000 + offs]);
-			tile |= ((fromance_videoram[0][offs] & 0x80) >> 7) * 0x10000;
-			color = (fromance_videoram[0][offs] & 0x7f);
-			flipx = 0;
-			flipy = 0;
-			sx = (offs % 64);
-			sy = (offs / 64);
-
-			if (fromance_flipscreen)
-			{
-				flipx = !flipx;
-				flipy = !flipy;
-				sx = 63 - sx;
-				sy = 63 - sy;
-			}
-
-			drawgfx(fromance_tmpbitmap[0], Machine->gfx[0],
-					tile,
-					color,
-					flipx, flipy,
-					(8 * sx), (4 * sy),
-					0, TRANSPARENCY_NONE, 0);
-		}
-	}
-
-	/* mark the transparent pens transparent before drawing to background 2 */
-	for (offs = 0; offs < 128; offs++)
-	{
-		saved_pens[offs] = Machine->gfx[0]->colortable[offs * 16 + 15];
-		Machine->gfx[0]->colortable[offs * 16 + 15] = palette_transparent_pen;
-	}
-
-	for (offs = 0; offs < 0x1000; offs++)
-	{
-		// fg layer
-		if (fromance_dirty[1][offs])
-		{
-			int tile;
-			int color;
-			int sx, sy;
-			int flipx, flipy;
-
-			fromance_dirty[1][offs] = 0;
-
-			tile  = ((fromance_videoram[1][0x1000 + offs] << 8) | fromance_videoram[1][0x2000 + offs]);
-			tile |= ((fromance_videoram[1][offs] & 0x80) >> 7) * 0x10000;
-			color = (fromance_videoram[1][offs] & 0x7f);
-			flipx = 0;
-			flipy = 0;
-			sx = (offs % 64);
-			sy = (offs / 64);
-
-			if (fromance_flipscreen)
-			{
-				flipx = !flipx;
-				flipy = !flipy;
-				sx = 63 - sx;
-				sy = 63 - sy;
-			}
-
-			drawgfx(fromance_tmpbitmap[1], Machine->gfx[1],
-					tile,
-					color,
-					flipx, flipy,
-					(8 * sx), (4 * sy),
-					0, TRANSPARENCY_NONE, 0);
-		}
-	}
-
-	/* restore the saved pens */
-	for (offs = 0; offs < 128; offs++)
-	{
-		Machine->gfx[0]->colortable[offs * 16 + 15] = saved_pens[offs];
-	}
-
-	copyscrollbitmap(bitmap, fromance_tmpbitmap[0], 1, &fromance_scrollx[0],  1, &fromance_scrolly[0], &Machine->visible_area, TRANSPARENCY_NONE, 0);
-	copyscrollbitmap(bitmap, fromance_tmpbitmap[1], 1, &fromance_scrollx[1],  1, &fromance_scrolly[1], &Machine->visible_area, TRANSPARENCY_PEN, palette_transparent_pen);
+	draw_sprites(bitmap, 0);
+	draw_sprites(bitmap, 1);
 }

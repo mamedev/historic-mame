@@ -3,9 +3,19 @@
 /***************************************************************************
 
 TODO:
-- Implement shadows properly. Moreover, in chqflag and ssriders they are
-  highlights, not shadows.
+- It seems shadows can both affect underlying sprites and not. This is currently
+  hardcoded in the drivers; there might be a control bit somewhere.
+  Games requiring shadows to affect sprites behind them:
+  - Surprise Attack the former (dark glass walls in level 3)
+  - 88 Games (angle indicator in the long jump event).
+  - Susnet Riders (bull's eye in the saloon cutscene)
+  Games requiring shadows to NOT affect sprites behind them:
+  - Asterix (Asterix's shadow would be over his feet otherwise)
+  - X-Men is dubious, see enemies halfway through level 1 coming from above with
+    boulders over their heads.
+
 - scrollcontrol = 30 in Golfing Greats (leader board)
+
 - detatwin: sprites are left on screen during attract mode
 
 
@@ -113,6 +123,11 @@ Run and Gun         GX247+1993   68000               055673 053246              
 Quiz Gakumon no     GX248*1993   68000 052109 051962 053245 053244 053251        053990 051550 - same board as TMNT2
   Susume
 Polygonet CommandersGX305+1993   68020                                           056230?063936?054539?054986?
+
+Tail to Nose             *1989   68000          V-System                         051316 (zoom/rotation)
+Blazing Tornado          *1991   68000            Metro                          053936 (3D)
+Dragonball Z             +1994   68000 054157 054156 053247 053246 053251(x2)    053936(x2) (3D) 053252(*)
+
 
 
 Notes:
@@ -1250,63 +1265,6 @@ if (keyboard_pressed(KEYCODE_D))
 	}
 }
 
-void K007121_mark_sprites_colors(int chip,
-		const unsigned char *source,int base_color,int bank_base)
-{
-	int i,num,inc,offs[5];
-	int is_flakatck = K007121_ctrlram[chip][0x06] & 0x04;	/* WRONG!!!! */
-
-	unsigned short palette_map[512];
-
-	if (is_flakatck)
-	{
-		num = 0x40;
-		inc = -0x20;
-		source += 0x3f*0x20;
-		offs[0] = 0x0e;
-		offs[1] = 0x0f;
-		offs[2] = 0x06;
-		offs[3] = 0x04;
-		offs[4] = 0x08;
-	}
-	else	/* all others */
-	{
-		num = (K007121_ctrlram[chip][0x03] & 0x40) ? 0x80 : 0x40;
-		inc = 5;
-		offs[0] = 0x00;
-		offs[1] = 0x01;
-		offs[2] = 0x02;
-		offs[3] = 0x03;
-		offs[4] = 0x04;
-	}
-
-	memset (palette_map, 0, sizeof (palette_map));
-
-	/* sprites */
-	for (i = 0;i < num;i++)
-	{
-		int color;
-
-		color = base_color + ((source[offs[1]] & 0xf0) >> 4);
-		palette_map[color] |= 0xffff;
-
-		source += inc;
-	}
-
-	/* now build the final table */
-	for (i = 0; i < 512; i++)
-	{
-		int usage = palette_map[i], j;
-		if (usage)
-		{
-			for (j = 0; j < 16; j++)
-				if (usage & (1 << j))
-					palette_used_colors[i * 16 + j] |= PALETTE_COLOR_VISIBLE;
-		}
-	}
-}
-
-
 
 
 
@@ -1340,40 +1298,23 @@ static struct tilemap *K007342_tilemap[2];
   color RAM     ----xxxx    depends on external connections (usually color and banking)
 */
 
-static unsigned char *colorram,*videoram1,*videoram2;
-static int active_layer;
-
-static void tilemap_0_preupdate(void)
-{
-	colorram = K007342_colorram_0;
-	videoram1 = K007342_videoram_0;
-	active_layer = 0;
-}
-
-static void tilemap_1_preupdate(void)
-{
-	colorram = K007342_colorram_1;
-	videoram1 = K007342_videoram_1;
-	active_layer = 1;
-}
-
 static UINT32 K007342_scan(UINT32 col,UINT32 row,UINT32 num_cols,UINT32 num_rows)
 {
 	/* logical (col,row) -> memory offset */
 	return (col & 0x1f) + ((row & 0x1f) << 5) + ((col & 0x20) << 5);
 }
 
-static void K007342_get_tile_info(int tile_index)
+INLINE void K007342_get_tile_info(int tile_index,int layer,data8_t *cram,data8_t *vram)
 {
 	int color, code;
 
-	color = colorram[tile_index];
-	code = videoram1[tile_index];
+	color = cram[tile_index];
+	code = vram[tile_index];
 
 	tile_info.flags = TILE_FLIPYX((color & 0x30) >> 4);
 	tile_info.priority = (color & 0x80) >> 7;
 
-	(*K007342_callback)(active_layer, K007342_regs[1], &code, &color);
+	(*K007342_callback)(layer, K007342_regs[1], &code, &color);
 
 	SET_TILE_INFO(
 			K007342_gfxnum,
@@ -1382,13 +1323,18 @@ static void K007342_get_tile_info(int tile_index)
 			tile_info.flags)
 }
 
+static void K007342_get_tile_info0(int tile_index) { K007342_get_tile_info(tile_index,0,K007342_colorram_0,K007342_videoram_0); }
+static void K007342_get_tile_info1(int tile_index) { K007342_get_tile_info(tile_index,1,K007342_colorram_1,K007342_videoram_1); }
+
+
+
 int K007342_vh_start(int gfx_index, void (*callback)(int tilemap, int bank, int *code, int *color))
 {
 	K007342_gfxnum = gfx_index;
 	K007342_callback = callback;
 
-	K007342_tilemap[0] = tilemap_create(K007342_get_tile_info,K007342_scan,TILEMAP_TRANSPARENT,8,8,64,32);
-	K007342_tilemap[1] = tilemap_create(K007342_get_tile_info,K007342_scan,TILEMAP_TRANSPARENT,8,8,64,32);
+	K007342_tilemap[0] = tilemap_create(K007342_get_tile_info0,K007342_scan,TILEMAP_TRANSPARENT,8,8,64,32);
+	K007342_tilemap[1] = tilemap_create(K007342_get_tile_info1,K007342_scan,TILEMAP_TRANSPARENT,8,8,64,32);
 
 	K007342_ram = malloc(0x2000);
 	K007342_scroll_ram = malloc(0x0200);
@@ -1531,10 +1477,6 @@ usrintf_showmessage("unknown scroll ctrl %02x",K007342_regs[2] & 0x1c);
 
 	tilemap_set_scrollx(K007342_tilemap[1],0,K007342_scrollx[1]);
 	tilemap_set_scrolly(K007342_tilemap[1],0,K007342_scrolly[1]);
-
-	/* update all layers */
-	tilemap_0_preupdate(); tilemap_update(K007342_tilemap[0]);
-	tilemap_1_preupdate(); tilemap_update(K007342_tilemap[1]);
 
 #if 0
 	{
@@ -1796,35 +1738,11 @@ static struct tilemap *K052109_tilemap[3];
   color RAM    ------xx  depends on external connections (usually banking, flip)
 */
 
-static void tilemap0_preupdate(void)
-{
-	colorram = K052109_colorram_F;
-	videoram1 = K052109_videoram_F;
-	videoram2 = K052109_videoram2_F;
-	active_layer = 0;
-}
-
-static void tilemap1_preupdate(void)
-{
-	colorram = K052109_colorram_A;
-	videoram1 = K052109_videoram_A;
-	videoram2 = K052109_videoram2_A;
-	active_layer = 1;
-}
-
-static void tilemap2_preupdate(void)
-{
-	colorram = K052109_colorram_B;
-	videoram1 = K052109_videoram_B;
-	videoram2 = K052109_videoram2_B;
-	active_layer = 2;
-}
-
-static void K052109_get_tile_info(int tile_index)
+INLINE void K052109_get_tile_info(int tile_index,int layer,data8_t *cram,data8_t *vram1,data8_t *vram2)
 {
 	int flipy = 0;
-	int code = videoram1[tile_index] + 256 * videoram2[tile_index];
-	int color = colorram[tile_index];
+	int code = vram1[tile_index] + 256 * vram2[tile_index];
+	int color = cram[tile_index];
 	int bank = K052109_charrombank[(color & 0x0c) >> 2];
 if (has_extra_video_ram) bank = (color & 0x0c) >> 2;	/* kludge for X-Men */
 	color = (color & 0xf3) | ((bank & 0x03) << 2);
@@ -1834,12 +1752,13 @@ if (has_extra_video_ram) bank = (color & 0x0c) >> 2;	/* kludge for X-Men */
 
 	tile_info.flags = 0;
 
-	(*K052109_callback)(active_layer,bank,&code,&color);
+	(*K052109_callback)(layer,bank,&code,&color);
 
 	SET_TILE_INFO(
 			K052109_gfxnum,
 			code,
-			color,tile_info.flags);
+			color,
+			tile_info.flags);
 
 	/* if the callback set flip X but it is not enabled, turn it off */
 	if (!(K052109_tileflip_enable & 1)) tile_info.flags &= ~TILE_FLIPX;
@@ -1847,6 +1766,11 @@ if (has_extra_video_ram) bank = (color & 0x0c) >> 2;	/* kludge for X-Men */
 	/* if flip Y is enabled and the attribute but is set, turn it on */
 	if (flipy && (K052109_tileflip_enable & 2)) tile_info.flags |= TILE_FLIPY;
 }
+
+static void K052109_get_tile_info0(int tile_index) { K052109_get_tile_info(tile_index,0,K052109_colorram_F,K052109_videoram_F,K052109_videoram2_F); }
+static void K052109_get_tile_info1(int tile_index) { K052109_get_tile_info(tile_index,1,K052109_colorram_A,K052109_videoram_A,K052109_videoram2_A); }
+static void K052109_get_tile_info2(int tile_index) { K052109_get_tile_info(tile_index,2,K052109_colorram_B,K052109_videoram_B,K052109_videoram2_B); }
+
 
 static void K052109_tileflip_reset(void)
 {
@@ -1856,6 +1780,7 @@ static void K052109_tileflip_reset(void)
 	tilemap_set_flip(K052109_tilemap[2],(data & 1) ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
 	K052109_tileflip_enable = ((data & 0x06) >> 1);
 }
+
 
 int K052109_vh_start(int gfx_memory_region,int plane0,int plane1,int plane2,int plane3,
 		void (*callback)(int tilemap,int bank,int *code,int *color))
@@ -1893,8 +1818,16 @@ int K052109_vh_start(int gfx_memory_region,int plane0,int plane1,int plane2,int 
 		return 1;
 
 	/* set the color information */
-	Machine->gfx[gfx_index]->colortable = Machine->remapped_colortable;
-	Machine->gfx[gfx_index]->total_colors = Machine->drv->color_table_len / 16;
+	if (Machine->drv->color_table_len)
+	{
+		Machine->gfx[gfx_index]->colortable = Machine->remapped_colortable;
+		Machine->gfx[gfx_index]->total_colors = Machine->drv->color_table_len / 16;
+	}
+	else
+	{
+		Machine->gfx[gfx_index]->colortable = Machine->pens;
+		Machine->gfx[gfx_index]->total_colors = Machine->drv->total_colors / 16;
+	}
 
 	K052109_memory_region = gfx_memory_region;
 	K052109_gfxnum = gfx_index;
@@ -1903,9 +1836,9 @@ int K052109_vh_start(int gfx_memory_region,int plane0,int plane1,int plane2,int 
 
 	has_extra_video_ram = 0;
 
-	K052109_tilemap[0] = tilemap_create(K052109_get_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,32);
-	K052109_tilemap[1] = tilemap_create(K052109_get_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,32);
-	K052109_tilemap[2] = tilemap_create(K052109_get_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,32);
+	K052109_tilemap[0] = tilemap_create(K052109_get_tile_info0,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,32);
+	K052109_tilemap[1] = tilemap_create(K052109_get_tile_info1,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,32);
+	K052109_tilemap[2] = tilemap_create(K052109_get_tile_info2,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,32);
 
 	K052109_ram = malloc(0x6000);
 
@@ -2280,10 +2213,6 @@ usrintf_showmessage("%x %x %x %x",
 		tilemap_set_scrolly(K052109_tilemap[2],0,yscroll);
 	}
 
-	tilemap0_preupdate(); tilemap_update(K052109_tilemap[0]);
-	tilemap1_preupdate(); tilemap_update(K052109_tilemap[1]);
-	tilemap2_preupdate(); tilemap_update(K052109_tilemap[2]);
-
 #ifdef MAME_DEBUG
 if ((K052109_scrollctrl & 0x03) == 0x01 ||
 		(K052109_scrollctrl & 0x18) == 0x08 ||
@@ -2337,7 +2266,7 @@ static int K051960_irq_enabled, K051960_nmi_enabled;
 int K051960_vh_start(int gfx_memory_region,int plane0,int plane1,int plane2,int plane3,
 		void (*callback)(int *code,int *color,int *priority,int *shadow))
 {
-	int gfx_index;
+	int gfx_index,i;
 	static struct GfxLayout spritelayout =
 	{
 		16,16,
@@ -2372,8 +2301,25 @@ int K051960_vh_start(int gfx_memory_region,int plane0,int plane1,int plane2,int 
 		return 1;
 
 	/* set the color information */
-	Machine->gfx[gfx_index]->colortable = Machine->remapped_colortable;
-	Machine->gfx[gfx_index]->total_colors = Machine->drv->color_table_len / 16;
+	if (Machine->drv->color_table_len)
+	{
+		Machine->gfx[gfx_index]->colortable = Machine->remapped_colortable;
+		Machine->gfx[gfx_index]->total_colors = Machine->drv->color_table_len / 16;
+	}
+	else
+	{
+		Machine->gfx[gfx_index]->colortable = Machine->pens;
+		Machine->gfx[gfx_index]->total_colors = Machine->drv->total_colors / 16;
+	}
+
+if (!(Machine->drv->video_attributes & VIDEO_HAS_SHADOWS))
+	usrintf_showmessage("driver should use VIDEO_HAS_SHADOWS");
+
+	/* prepare shadow draw table */
+	gfx_drawmode_table[0] = DRAWMODE_NONE;
+	for (i = 1;i < 15;i++)
+		gfx_drawmode_table[i] = DRAWMODE_SOURCE;
+	gfx_drawmode_table[15] = DRAWMODE_SHADOW;
 
 	K051960_memory_region = gfx_memory_region;
 	K051960_gfx = Machine->gfx[gfx_index];
@@ -2657,44 +2603,20 @@ void K051960_sprites_draw(struct osd_bitmap *bitmap,int min_priority,int max_pri
 					if (flipy) c += yoffset[(h-1-y)];
 					else c += yoffset[y];
 
-					/* hack to simulate shadow */
-					if (shadow)
-					{
-						int o = K051960_gfx->colortable[16*color+15];
-						K051960_gfx->colortable[16*color+15] = palette_transparent_pen;
-						if (max_priority == -1)
-							pdrawgfx(bitmap,K051960_gfx,
-									c,
-									color,
-									flipx,flipy,
-									sx & 0x1ff,sy,
-									&Machine->visible_area,TRANSPARENCY_PENS,(cpu_getcurrentframe() & 1) ? 0x8001 : 0x0001,pri);
-						else
-							drawgfx(bitmap,K051960_gfx,
-									c,
-									color,
-									flipx,flipy,
-									sx & 0x1ff,sy,
-									&Machine->visible_area,TRANSPARENCY_PENS,(cpu_getcurrentframe() & 1) ? 0x8001 : 0x0001);
-						K051960_gfx->colortable[16*color+15] = o;
-					}
+					if (max_priority == -1)
+						pdrawgfx(bitmap,K051960_gfx,
+								c,
+								color,
+								flipx,flipy,
+								sx & 0x1ff,sy,
+								&Machine->visible_area,shadow ? TRANSPARENCY_PEN_TABLE : TRANSPARENCY_PEN,0,pri);
 					else
-					{
-						if (max_priority == -1)
-							pdrawgfx(bitmap,K051960_gfx,
-									c,
-									color,
-									flipx,flipy,
-									sx & 0x1ff,sy,
-									&Machine->visible_area,TRANSPARENCY_PEN,0,pri);
-						else
-							drawgfx(bitmap,K051960_gfx,
-									c,
-									color,
-									flipx,flipy,
-									sx & 0x1ff,sy,
-									&Machine->visible_area,TRANSPARENCY_PEN,0);
-					}
+						drawgfx(bitmap,K051960_gfx,
+								c,
+								color,
+								flipx,flipy,
+								sx & 0x1ff,sy,
+								&Machine->visible_area,shadow ? TRANSPARENCY_PEN_TABLE : TRANSPARENCY_PEN,0);
 				}
 			}
 		}
@@ -2718,48 +2640,22 @@ void K051960_sprites_draw(struct osd_bitmap *bitmap,int min_priority,int max_pri
 					if (flipy) c += yoffset[(h-1-y)];
 					else c += yoffset[y];
 
-					/* hack to simulate shadow */
-					if (shadow)
-					{
-						int o = K051960_gfx->colortable[16*color+15];
-						K051960_gfx->colortable[16*color+15] = palette_transparent_pen;
-						if (max_priority == -1)
-							pdrawgfxzoom(bitmap,K051960_gfx,
-									c,
-									color,
-									flipx,flipy,
-									sx & 0x1ff,sy,
-									&Machine->visible_area,TRANSPARENCY_PENS,(cpu_getcurrentframe() & 1) ? 0x8001 : 0x0001,
-									(zw << 16) / 16,(zh << 16) / 16,pri);
-						else
-							drawgfxzoom(bitmap,K051960_gfx,
-									c,
-									color,
-									flipx,flipy,
-									sx & 0x1ff,sy,
-									&Machine->visible_area,TRANSPARENCY_PENS,(cpu_getcurrentframe() & 1) ? 0x8001 : 0x0001,
-									(zw << 16) / 16,(zh << 16) / 16);
-						K051960_gfx->colortable[16*color+15] = o;
-					}
+					if (max_priority == -1)
+						pdrawgfxzoom(bitmap,K051960_gfx,
+								c,
+								color,
+								flipx,flipy,
+								sx & 0x1ff,sy,
+								&Machine->visible_area,shadow ? TRANSPARENCY_PEN_TABLE : TRANSPARENCY_PEN,0,
+								(zw << 16) / 16,(zh << 16) / 16,pri);
 					else
-					{
-						if (max_priority == -1)
-							pdrawgfxzoom(bitmap,K051960_gfx,
-									c,
-									color,
-									flipx,flipy,
-									sx & 0x1ff,sy,
-									&Machine->visible_area,TRANSPARENCY_PEN,0,
-									(zw << 16) / 16,(zh << 16) / 16,pri);
-						else
-							drawgfxzoom(bitmap,K051960_gfx,
-									c,
-									color,
-									flipx,flipy,
-									sx & 0x1ff,sy,
-									&Machine->visible_area,TRANSPARENCY_PEN,0,
-									(zw << 16) / 16,(zh << 16) / 16);
-					}
+						drawgfxzoom(bitmap,K051960_gfx,
+								c,
+								color,
+								flipx,flipy,
+								sx & 0x1ff,sy,
+								&Machine->visible_area,shadow ? TRANSPARENCY_PEN_TABLE : TRANSPARENCY_PEN,0,
+								(zw << 16) / 16,(zh << 16) / 16);
 				}
 			}
 		}
@@ -2778,43 +2674,6 @@ if (keyboard_pressed(KEYCODE_D))
 }
 #endif
 #undef NUM_SPRITES
-}
-
-void K051960_mark_sprites_colors(void)
-{
-	int offs,i;
-
-	unsigned short palette_map[512];
-
-	memset (palette_map, 0, sizeof (palette_map));
-
-	/* sprites */
-	for (offs = 0x400-8;offs >= 0;offs -= 8)
-	{
-		if (K051960_ram[offs] & 0x80)
-		{
-			int code,color,pri,shadow;
-
-			code = K051960_ram[offs+2] + ((K051960_ram[offs+1] & 0x1f) << 8);
-			color = (K051960_ram[offs+3] & 0xff);
-			pri = 0;
-			shadow = color & 0x80;
-			(*K051960_callback)(&code,&color,&pri,&shadow);
-			palette_map[color] |= 0xffff;
-		}
-	}
-
-	/* now build the final table */
-	for (i = 0; i < 512; i++)
-	{
-		int usage = palette_map[i], j;
-		if (usage)
-		{
-			for (j = 1; j < 16; j++)
-				if (usage & (1 << j))
-					palette_used_colors[i * 16 + j] |= PALETTE_COLOR_VISIBLE;
-		}
-	}
 }
 
 int K051960_is_IRQ_enabled(void)
@@ -2869,7 +2728,7 @@ static data8_t K053244_regs[0x10];
 int K053245_vh_start(int gfx_memory_region,int plane0,int plane1,int plane2,int plane3,
 		void (*callback)(int *code,int *color,int *priority))
 {
-	int gfx_index;
+	int gfx_index,i;
 	static struct GfxLayout spritelayout =
 	{
 		16,16,
@@ -2904,8 +2763,25 @@ int K053245_vh_start(int gfx_memory_region,int plane0,int plane1,int plane2,int 
 		return 1;
 
 	/* set the color information */
-	Machine->gfx[gfx_index]->colortable = Machine->remapped_colortable;
-	Machine->gfx[gfx_index]->total_colors = Machine->drv->color_table_len / 16;
+	if (Machine->drv->color_table_len)
+	{
+		Machine->gfx[gfx_index]->colortable = Machine->remapped_colortable;
+		Machine->gfx[gfx_index]->total_colors = Machine->drv->color_table_len / 16;
+	}
+	else
+	{
+		Machine->gfx[gfx_index]->colortable = Machine->pens;
+		Machine->gfx[gfx_index]->total_colors = Machine->drv->total_colors / 16;
+	}
+
+if (!(Machine->drv->video_attributes & VIDEO_HAS_SHADOWS))
+	usrintf_showmessage("driver should use VIDEO_HAS_SHADOWS");
+
+	/* prepare shadow draw table */
+	gfx_drawmode_table[0] = DRAWMODE_NONE;
+	for (i = 1;i < 15;i++)
+		gfx_drawmode_table[i] = DRAWMODE_SOURCE;
+	gfx_drawmode_table[15] = DRAWMODE_SHADOW;
 
 	K053245_memory_region = gfx_memory_region;
 	K053245_gfx = Machine->gfx[gfx_index];
@@ -3102,7 +2978,7 @@ void K053245_sprites_draw(struct osd_bitmap *bitmap)
 
 	for (pri_code = NUM_SPRITES-1;pri_code >= 0;pri_code--)
 	{
-		int ox,oy,color,code,size,w,h,x,y,flipx,flipy,mirrorx,mirrory,zoomx,zoomy,pri;
+		int ox,oy,color,code,size,w,h,x,y,flipx,flipy,mirrorx,mirrory,shadow,zoomx,zoomy,pri;
 
 
 		offs = sortedlist[pri_code];
@@ -3174,6 +3050,7 @@ else zoomx = zoomy; /* workaround for TMNT2 */
 		flipy = K053245_buffer[offs] & 0x2000;
 		mirrorx = K053245_buffer[offs+6] & 0x0100;
 		mirrory = K053245_buffer[offs+6] & 0x0200;
+		shadow = K053245_buffer[offs+6] & 0x0080;
 
 		if (flipscreenX)
 		{
@@ -3257,55 +3134,22 @@ else zoomx = zoomy; /* workaround for TMNT2 */
 
 				if (zoomx == 0x10000 && zoomy == 0x10000)
 				{
-					/* hack to simulate shadow */
-					if (K053245_buffer[offs+6] & 0x0080)
-					{
-						int o = K053245_gfx->colortable[16*color+15];
-						K053245_gfx->colortable[16*color+15] = palette_transparent_pen;
-						pdrawgfx(bitmap,K053245_gfx,
-								c,
-								color,
-								fx,fy,
-								sx,sy,
-								&Machine->visible_area,TRANSPARENCY_PENS,(cpu_getcurrentframe() & 1) ? 0x8001 : 0x0001,pri);
-						K053245_gfx->colortable[16*color+15] = o;
-					}
-					else
-					{
-						pdrawgfx(bitmap,K053245_gfx,
-								c,
-								color,
-								fx,fy,
-								sx,sy,
-								&Machine->visible_area,TRANSPARENCY_PEN,0,pri);
-					}
+					pdrawgfx(bitmap,K053245_gfx,
+							c,
+							color,
+							fx,fy,
+							sx,sy,
+							&Machine->visible_area,shadow ? TRANSPARENCY_PEN_TABLE : TRANSPARENCY_PEN,0,pri);
 				}
 				else
 				{
-					/* hack to simulate shadow */
-					if (K053245_buffer[offs+6] & 0x0080)
-					{
-						int o = K053245_gfx->colortable[16*color+15];
-						K053245_gfx->colortable[16*color+15] = palette_transparent_pen;
-						pdrawgfxzoom(bitmap,K053245_gfx,
-								c,
-								color,
-								fx,fy,
-								sx,sy,
-								&Machine->visible_area,TRANSPARENCY_PENS,(cpu_getcurrentframe() & 1) ? 0x8001 : 0x0001,
-								(zw << 16) / 16,(zh << 16) / 16,pri);
-						K053245_gfx->colortable[16*color+15] = o;
-					}
-					else
-					{
-						pdrawgfxzoom(bitmap,K053245_gfx,
-								c,
-								color,
-								fx,fy,
-								sx,sy,
-								&Machine->visible_area,TRANSPARENCY_PEN,0,
-								(zw << 16) / 16,(zh << 16) / 16,pri);
-					}
+					pdrawgfxzoom(bitmap,K053245_gfx,
+							c,
+							color,
+							fx,fy,
+							sx,sy,
+							&Machine->visible_area,shadow ? TRANSPARENCY_PEN_TABLE : TRANSPARENCY_PEN,0,
+							(zw << 16) / 16,(zh << 16) / 16,pri);
 				}
 			}
 		}
@@ -3326,44 +3170,6 @@ if (keyboard_pressed(KEYCODE_D))
 #undef NUM_SPRITES
 }
 
-void K053245_mark_sprites_colors(void)
-{
-	int offs,i;
-
-	unsigned short palette_map[512];
-
-	memset (palette_map, 0, sizeof (palette_map));
-
-	/* sprites */
-	for (offs = 0x400-8;offs >= 0;offs -= 8)
-	{
-		if (K053245_buffer[offs] & 0x8000)
-		{
-			int code,color,pri;
-
-			code = K053245_buffer[offs+1];
-			code = ((code & 0xffe1) + ((code & 0x0010) >> 2) + ((code & 0x0008) << 1)
-					 + ((code & 0x0004) >> 1) + ((code & 0x0002) << 2));
-			color = K053245_buffer[offs+6] & 0x00ff;
-			pri = 0;
-			(*K053245_callback)(&code,&color,&pri);
-			palette_map[color] |= 0xffff;
-		}
-	}
-
-	/* now build the final table */
-	for (i = 0; i < 512; i++)
-	{
-		int usage = palette_map[i], j;
-		if (usage)
-		{
-			for (j = 1; j < 16; j++)
-				if (usage & (1 << j))
-					palette_used_colors[i * 16 + j] |= PALETTE_COLOR_VISIBLE;
-		}
-	}
-}
-
 
 
 
@@ -3378,7 +3184,7 @@ static int K053246_OBJCHA_line;
 int K053247_vh_start(int gfx_memory_region, int dx, int dy, int plane0,int plane1,int plane2,int plane3,
 					 void (*callback)(int *code,int *color,int *priority))
 {
-	int gfx_index;
+	int gfx_index,i;
 	static struct GfxLayout spritelayout =
 	{
 		16,16,
@@ -3413,8 +3219,25 @@ int K053247_vh_start(int gfx_memory_region, int dx, int dy, int plane0,int plane
 		return 1;
 
 	/* set the color information */
-	Machine->gfx[gfx_index]->colortable = Machine->remapped_colortable;
-	Machine->gfx[gfx_index]->total_colors = Machine->drv->color_table_len / 16;
+	if (Machine->drv->color_table_len)
+	{
+		Machine->gfx[gfx_index]->colortable = Machine->remapped_colortable;
+		Machine->gfx[gfx_index]->total_colors = Machine->drv->color_table_len / 16;
+	}
+	else
+	{
+		Machine->gfx[gfx_index]->colortable = Machine->pens;
+		Machine->gfx[gfx_index]->total_colors = Machine->drv->total_colors / 16;
+	}
+
+if (!(Machine->drv->video_attributes & VIDEO_HAS_SHADOWS))
+	usrintf_showmessage("driver should use VIDEO_HAS_SHADOWS");
+
+	/* prepare shadow draw table */
+	gfx_drawmode_table[0] = DRAWMODE_NONE;
+	for (i = 1;i < 15;i++)
+		gfx_drawmode_table[i] = DRAWMODE_SOURCE;
+	gfx_drawmode_table[15] = DRAWMODE_SHADOW;
 
 	K053247_dx = dx;
 	K053247_dy = dy;
@@ -3599,7 +3422,7 @@ void K053247_sprites_draw(struct osd_bitmap *bitmap)
 
 	for (pri_code = 0;pri_code < NUM_SPRITES;pri_code++)
 	{
-		int ox,oy,color,code,size,w,h,x,y,xa,ya,flipx,flipy,mirrorx,mirrory,zoomx,zoomy,pri;
+		int ox,oy,color,code,size,w,h,x,y,xa,ya,flipx,flipy,mirrorx,mirrory,shadow,zoomx,zoomy,pri;
 		/* sprites can be grouped up to 8x8. The draw order is
 			 0  1  4  5 16 17 20 21
 			 2  3  6  7 18 19 22 23
@@ -3668,6 +3491,7 @@ void K053247_sprites_draw(struct osd_bitmap *bitmap)
 		flipy = K053247_ram[offs] & 0x2000;
 		mirrorx = K053247_ram[offs+6] & 0x4000;
 		mirrory = K053247_ram[offs+6] & 0x8000;
+		shadow = K053247_ram[offs+6] & 0x0400;
 
 		if (flipscreenx)
 		{
@@ -3753,110 +3577,44 @@ void K053247_sprites_draw(struct osd_bitmap *bitmap)
 
 				if (zoomx == 0x10000 && zoomy == 0x10000)
 				{
-					/* hack to simulate shadow */
-					if (K053247_ram[offs+6] & 0x0400)
-					{
-						int o = K053247_gfx->colortable[16*color+15];
-						K053247_gfx->colortable[16*color+15] = palette_transparent_pen;
-						pdrawgfx(bitmap,K053247_gfx,
-								c,
-								color,
-								fx,fy,
-								sx,sy,
-								&Machine->visible_area,TRANSPARENCY_PENS,(cpu_getcurrentframe() & 1) ? 0x8001 : 0x0001,pri);
-						K053247_gfx->colortable[16*color+15] = o;
-					}
-					else
-					{
-						pdrawgfx(bitmap,K053247_gfx,
-								c,
-								color,
-								fx,fy,
-								sx,sy,
-								&Machine->visible_area,TRANSPARENCY_PEN,0,pri);
-					}
+					pdrawgfx(bitmap,K053247_gfx,
+							c,
+							color,
+							fx,fy,
+							sx,sy,
+							&Machine->visible_area,shadow ? TRANSPARENCY_PEN_TABLE : TRANSPARENCY_PEN,0,pri);
 				}
 				else
 				{
-					/* hack to simulate shadow */
-					if (K053247_ram[offs+6] & 0x0400)
-					{
-						int o = K053247_gfx->colortable[16*color+15];
-						K053247_gfx->colortable[16*color+15] = palette_transparent_pen;
-						pdrawgfxzoom(bitmap,K053247_gfx,
-								c,
-								color,
-								fx,fy,
-								sx,sy,
-								&Machine->visible_area,TRANSPARENCY_PENS,(cpu_getcurrentframe() & 1) ? 0x8001 : 0x0001,
-								(zw << 16) / 16,(zh << 16) / 16,pri);
-						K053247_gfx->colortable[16*color+15] = o;
-					}
-					else
-					{
-						pdrawgfxzoom(bitmap,K053247_gfx,
-								c,
-								color,
-								fx,fy,
-								sx,sy,
-								&Machine->visible_area,TRANSPARENCY_PEN,0,
-								(zw << 16) / 16,(zh << 16) / 16,pri);
-					}
+					pdrawgfxzoom(bitmap,K053247_gfx,
+							c,
+							color,
+							fx,fy,
+							sx,sy,
+							&Machine->visible_area,shadow ? TRANSPARENCY_PEN_TABLE : TRANSPARENCY_PEN,0,
+							(zw << 16) / 16,(zh << 16) / 16,pri);
 				}
 
 				if (mirrory && h == 1)  /* Simpsons shadows */
 				{
 					if (zoomx == 0x10000 && zoomy == 0x10000)
 					{
-						/* hack to simulate shadow */
-						if (K053247_ram[offs+6] & 0x0400)
-						{
-							int o = K053247_gfx->colortable[16*color+15];
-							K053247_gfx->colortable[16*color+15] = palette_transparent_pen;
-							pdrawgfx(bitmap,K053247_gfx,
-									c,
-									color,
-									fx,!fy,
-									sx,sy,
-									&Machine->visible_area,TRANSPARENCY_PENS,(cpu_getcurrentframe() & 1) ? 0x8001 : 0x0001,pri);
-							K053247_gfx->colortable[16*color+15] = o;
-						}
-						else
-						{
-							pdrawgfx(bitmap,K053247_gfx,
-									c,
-									color,
-									fx,!fy,
-									sx,sy,
-									&Machine->visible_area,TRANSPARENCY_PEN,0,pri);
-						}
+						pdrawgfx(bitmap,K053247_gfx,
+								c,
+								color,
+								fx,!fy,
+								sx,sy,
+								&Machine->visible_area,shadow ? TRANSPARENCY_PEN_TABLE : TRANSPARENCY_PEN,0,pri);
 					}
 					else
 					{
-						/* hack to simulate shadow */
-						if (K053247_ram[offs+6] & 0x0400)
-						{
-							int o = K053247_gfx->colortable[16*color+15];
-							K053247_gfx->colortable[16*color+15] = palette_transparent_pen;
-							pdrawgfxzoom(bitmap,K053247_gfx,
-									c,
-									color,
-									fx,!fy,
-									sx,sy,
-									&Machine->visible_area,TRANSPARENCY_PENS,(cpu_getcurrentframe() & 1) ? 0x8001 : 0x0001,
-									(zw << 16) / 16,(zh << 16) / 16,pri);
-							K053247_gfx->colortable[16*color+15] = o;
-						}
-						else
-						{
-							pdrawgfxzoom(bitmap,K053247_gfx,
-									c,
-									color,
-									fx,!fy,
-									sx,sy,
-									&Machine->visible_area,TRANSPARENCY_PEN,0,
-									(zw << 16) / 16,(zh << 16) / 16,pri);
-						}
+						pdrawgfxzoom(bitmap,K053247_gfx,
+								c,
+								color,
+								fx,!fy,
+								sx,sy,
+								&Machine->visible_area,shadow ? TRANSPARENCY_PEN_TABLE : TRANSPARENCY_PEN,0,
+								(zw << 16) / 16,(zh << 16) / 16,pri);
 					}
 				}
 			}
@@ -3878,44 +3636,6 @@ if (keyboard_pressed(KEYCODE_D))
 #undef NUM_SPRITES
 }
 
-void K053247_mark_sprites_colors(void)
-{
-	if( palette_used_colors )
-	{
-		int offs,i;
-
-		unsigned short palette_map[512];
-
-		memset (palette_map, 0, sizeof (palette_map));
-
-		/* sprites */
-		for (offs = 0x800-8;offs >= 0;offs -= 8)
-		{
-			if (K053247_ram[offs] & 0x8000)
-			{
-				int code,color,pri;
-
-				code = K053247_ram[offs+1];
-				color = K053247_ram[offs+6];
-				pri = 0;
-				(*K053247_callback)(&code,&color,&pri);
-				palette_map[color] |= 0xffff;
-			}
-		}
-
-		/* now build the final table */
-		for (i = 0; i < 512; i++)
-		{
-			int usage = palette_map[i], j;
-			if (usage)
-			{
-				for (j = 1; j < 16; j++)
-					if (usage & (1 << j))
-						palette_used_colors[i * 16 + j] |= PALETTE_COLOR_VISIBLE;
-			}
-		}
-	}
-}
 
 #define MAX_K051316 3
 
@@ -3928,7 +3648,6 @@ static void (*K051316_callback[MAX_K051316])(int *code,int *color);
 static unsigned char *K051316_ram[MAX_K051316];
 static unsigned char K051316_ctrlram[MAX_K051316][16];
 static struct tilemap *K051316_tilemap[MAX_K051316];
-static int K051316_chip_selected;
 
 void K051316_vh_stop(int chip);
 
@@ -3938,31 +3657,33 @@ void K051316_vh_stop(int chip);
 
 ***************************************************************************/
 
-static void K051316_preupdate(int chip)
+INLINE void K051316_get_tile_info(int tile_index,int chip)
 {
-	K051316_chip_selected = chip;
-}
+	int code = K051316_ram[chip][tile_index];
+	int color = K051316_ram[chip][tile_index + 0x400];
 
-static void K051316_get_tile_info(int tile_index)
-{
-	int code = K051316_ram[K051316_chip_selected][tile_index];
-	int color = K051316_ram[K051316_chip_selected][tile_index + 0x400];
+	tile_info.flags = 0;
 
-	(*K051316_callback[K051316_chip_selected])(&code,&color);
+	(*K051316_callback[chip])(&code,&color);
 
 	SET_TILE_INFO(
-			K051316_gfxnum[K051316_chip_selected],
+			K051316_gfxnum[chip],
 			code,
 			color,
 			tile_info.flags)
 }
 
+static void K051316_get_tile_info0(int tile_index) { K051316_get_tile_info(tile_index,0); }
+static void K051316_get_tile_info1(int tile_index) { K051316_get_tile_info(tile_index,1); }
+static void K051316_get_tile_info2(int tile_index) { K051316_get_tile_info(tile_index,2); }
+
 
 int K051316_vh_start(int chip, int gfx_memory_region,int bpp,
+		int tilemap_type,int transparent_pen,
 		void (*callback)(int *code,int *color))
 {
 	int gfx_index;
-
+	static void (*get_tile_info[3])(int tile_index) = { K051316_get_tile_info0,K051316_get_tile_info1,K051316_get_tile_info2 };
 
 	/* find first empty slot to decode gfx */
 	for (gfx_index = 0; gfx_index < MAX_GFX_ELEMENTS; gfx_index++)
@@ -4029,15 +3750,23 @@ logerror("K051316_vh_start supports only 4, 7 and 8 bpp\n");
 		return 1;
 
 	/* set the color information */
-	Machine->gfx[gfx_index]->colortable = Machine->remapped_colortable;
-	Machine->gfx[gfx_index]->total_colors = Machine->drv->color_table_len / (1 << bpp);
+	if (Machine->drv->color_table_len)
+	{
+		Machine->gfx[gfx_index]->colortable = Machine->remapped_colortable;
+		Machine->gfx[gfx_index]->total_colors = Machine->drv->color_table_len / (1 << bpp);
+	}
+	else
+	{
+		Machine->gfx[gfx_index]->colortable = Machine->pens;
+		Machine->gfx[gfx_index]->total_colors = Machine->drv->total_colors / (1 << bpp);
+	}
 
 	K051316_memory_region[chip] = gfx_memory_region;
 	K051316_gfxnum[chip] = gfx_index;
 	K051316_bpp[chip] = bpp;
 	K051316_callback[chip] = callback;
 
-	K051316_tilemap[chip] = tilemap_create(K051316_get_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,16,16,32,32);
+	K051316_tilemap[chip] = tilemap_create(get_tile_info[chip],tilemap_scan_rows,tilemap_type,16,16,32,32);
 
 	K051316_ram[chip] = malloc(0x800);
 
@@ -4047,8 +3776,7 @@ logerror("K051316_vh_start supports only 4, 7 and 8 bpp\n");
 		return 1;
 	}
 
-	tilemap_set_depth(K051316_tilemap[chip], bpp, bpp);
-	tilemap_set_clip(K051316_tilemap[chip],NULL);
+	tilemap_set_transparent_pen(K051316_tilemap[chip],transparent_pen);
 
 	K051316_wraparound[chip] = 0;	/* default = no wraparound */
 	K051316_offset[chip][0] = K051316_offset[chip][1] = 0;
@@ -4057,21 +3785,24 @@ logerror("K051316_vh_start supports only 4, 7 and 8 bpp\n");
 }
 
 int K051316_vh_start_0(int gfx_memory_region,int bpp,
+		int tilemap_type,int transparent_pen,
 		void (*callback)(int *code,int *color))
 {
-	return K051316_vh_start(0,gfx_memory_region,bpp,callback);
+	return K051316_vh_start(0,gfx_memory_region,bpp,tilemap_type,transparent_pen,callback);
 }
 
 int K051316_vh_start_1(int gfx_memory_region,int bpp,
+		int tilemap_type,int transparent_pen,
 		void (*callback)(int *code,int *color))
 {
-	return K051316_vh_start(1,gfx_memory_region,bpp,callback);
+	return K051316_vh_start(1,gfx_memory_region,bpp,tilemap_type,transparent_pen,callback);
 }
 
 int K051316_vh_start_2(int gfx_memory_region,int bpp,
+		int tilemap_type,int transparent_pen,
 		void (*callback)(int *code,int *color))
 {
-	return K051316_vh_start(2,gfx_memory_region,bpp,callback);
+	return K051316_vh_start(2,gfx_memory_region,bpp,tilemap_type,transparent_pen,callback);
 }
 
 
@@ -4214,33 +3945,11 @@ void K051316_set_offset(int chip, int xoffs, int yoffs)
 	K051316_offset[chip][1] = yoffs;
 }
 
-void K051316_tilemap_update(int chip)
-{
-	K051316_preupdate(chip);
-	tilemap_update(K051316_tilemap[chip]);
-}
 
-void K051316_tilemap_update_0(void)
-{
-	K051316_tilemap_update(0);
-}
-
-void K051316_tilemap_update_1(void)
-{
-	K051316_tilemap_update(1);
-}
-
-void K051316_tilemap_update_2(void)
-{
-	K051316_tilemap_update(2);
-}
-
-
-void K051316_zoom_draw(int chip, struct osd_bitmap *bitmap,UINT32 priority)
+void K051316_zoom_draw(int chip, struct osd_bitmap *bitmap,int flags,UINT32 priority)
 {
 	UINT32 startx,starty;
 	int incxx,incxy,incyx,incyy;
-	struct osd_bitmap *srcbitmap = tilemap_get_pixmap(K051316_tilemap[chip]);
 
 	startx = 256 * ((INT16)(256 * K051316_ctrlram[chip][0x00] + K051316_ctrlram[chip][0x01]));
 	incxx  =        (INT16)(256 * K051316_ctrlram[chip][0x02] + K051316_ctrlram[chip][0x03]);
@@ -4255,9 +3964,11 @@ void K051316_zoom_draw(int chip, struct osd_bitmap *bitmap,UINT32 priority)
 	startx -= (89 + K051316_offset[chip][0]) * incxx;
 	starty -= (89 + K051316_offset[chip][0]) * incxy;
 
-	copyrozbitmap(bitmap,srcbitmap,startx << 5,starty << 5,
-			incxx << 5,incxy << 5,incyx << 5,incyy << 5,K051316_wraparound[chip],
-			&Machine->visible_area,TRANSPARENCY_PEN,palette_transparent_pen,priority);
+	tilemap_draw_roz(bitmap,K051316_tilemap[chip],startx << 5,starty << 5,
+			incxx << 5,incxy << 5,incyx << 5,incyy << 5,
+			K051316_wraparound[chip],
+			flags,priority);
+
 #if 0
 	usrintf_showmessage("%02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x",
 			K051316_ctrlram[chip][0x00],
@@ -4279,19 +3990,19 @@ void K051316_zoom_draw(int chip, struct osd_bitmap *bitmap,UINT32 priority)
 #endif
 }
 
-void K051316_zoom_draw_0(struct osd_bitmap *bitmap,UINT32 priority)
+void K051316_zoom_draw_0(struct osd_bitmap *bitmap,int flags,UINT32 priority)
 {
-	K051316_zoom_draw(0,bitmap,priority);
+	K051316_zoom_draw(0,bitmap,flags,priority);
 }
 
-void K051316_zoom_draw_1(struct osd_bitmap *bitmap,UINT32 priority)
+void K051316_zoom_draw_1(struct osd_bitmap *bitmap,int flags,UINT32 priority)
 {
-	K051316_zoom_draw(1,bitmap,priority);
+	K051316_zoom_draw(1,bitmap,flags,priority);
 }
 
-void K051316_zoom_draw_2(struct osd_bitmap *bitmap,UINT32 priority)
+void K051316_zoom_draw_2(struct osd_bitmap *bitmap,int flags,UINT32 priority)
 {
-	K051316_zoom_draw(2,bitmap,priority);
+	K051316_zoom_draw(2,bitmap,flags,priority);
 }
 
 
@@ -4531,34 +4242,41 @@ static void (*K054157_linescroll_updater[4])(int layer);
 
 static int K054157_cur_rombank, K054157_romnbbanks;
 static int K054157_uses_tile_banks, K054157_cur_tile_bank;
-static int K054157_cur_layer, K054157_gfxnum, K054157_memory_region;
+static int K054157_gfxnum, K054157_memory_region;
 static int K054157_cur_offset;
-static data16_t *K054157_rambase, *K054157_cur_spbase, *K054157_cur_lbase, *K054157_cur_rambase;
+static data16_t *K054157_rambase, *K054157_cur_spbase, *K054157_cur_rambase;
 static data8_t *K054157_rombase;
 static data16_t *K054157_rambasel[8];
 static int K054157_tilemapl[8], K054157_offsetl[8];
 
 static void (*K054157_callback)(int, int *, int *);
 
-static void K054157_get_tile_info(int tile_index)
+INLINE void K054157_get_tile_info(int tile_index,int layer)
 {
 	data16_t *addr;
 	int attr, code;
+	data16_t *lbase = K054157_rambase + 0x2000*layer;
 	if(tile_index < 64*32)
-		addr = K054157_cur_lbase + (tile_index<<1);
+		addr = lbase + (tile_index<<1);
 	else
-		addr = K054157_cur_lbase + (tile_index<<1) + 0x1000 - 64*32*2;
+		addr = lbase + (tile_index<<1) + 0x1000 - 64*32*2;
 
 	attr = addr[0];
 	code = addr[1];
 	tile_info.flags = 0;
 
-	(*K054157_callback)(K054157_cur_layer, &code, &attr);
+	(*K054157_callback)(layer, &code, &attr);
 	SET_TILE_INFO(K054157_gfxnum,
 			code,
 			attr,
 			tile_info.flags)
 }
+
+static void K054157_get_tile_info0(int tile_index) { K054157_get_tile_info(tile_index,0); }
+static void K054157_get_tile_info1(int tile_index) { K054157_get_tile_info(tile_index,1); }
+static void K054157_get_tile_info2(int tile_index) { K054157_get_tile_info(tile_index,2); }
+static void K054157_get_tile_info3(int tile_index) { K054157_get_tile_info(tile_index,3); }
+
 
 void K054157_vh_stop(void)
 {
@@ -4769,8 +4487,16 @@ int K054157_vh_start(int gfx_memory_region, int big, int (*scrolld)[4][2], int p
 		return 1;
 
 	/* set the color information */
-	Machine->gfx[gfx_index]->colortable = Machine->remapped_colortable;
-	Machine->gfx[gfx_index]->total_colors = Machine->drv->color_table_len / 16;
+	if (Machine->drv->color_table_len)
+	{
+		Machine->gfx[gfx_index]->colortable = Machine->remapped_colortable;
+		Machine->gfx[gfx_index]->total_colors = Machine->drv->color_table_len / 16;
+	}
+	else
+	{
+		Machine->gfx[gfx_index]->colortable = Machine->pens;
+		Machine->gfx[gfx_index]->total_colors = Machine->drv->total_colors / 16;
+	}
 
 	K054157_memory_region = gfx_memory_region;
 	K054157_gfxnum = gfx_index;
@@ -4781,21 +4507,21 @@ int K054157_vh_start(int gfx_memory_region, int big, int (*scrolld)[4][2], int p
 	K054157_cur_rombank = 0;
 	K054157_uses_tile_banks = 0;
 
-	K054157_tilemapb[0] = tilemap_create(K054157_get_tile_info, tilemap_scan_rows,
+	K054157_tilemapb[0] = tilemap_create(K054157_get_tile_info0, tilemap_scan_rows,
 										 TILEMAP_TRANSPARENT, 8, 8, 64, 64);
-	K054157_tilemapb[1] = tilemap_create(K054157_get_tile_info, tilemap_scan_rows,
+	K054157_tilemapb[1] = tilemap_create(K054157_get_tile_info1, tilemap_scan_rows,
 										 TILEMAP_TRANSPARENT, 8, 8, 64, 64);
-	K054157_tilemapb[2] = tilemap_create(K054157_get_tile_info, tilemap_scan_rows,
+	K054157_tilemapb[2] = tilemap_create(K054157_get_tile_info2, tilemap_scan_rows,
 										 TILEMAP_TRANSPARENT, 8, 8, 64, 64);
-	K054157_tilemapb[3] = tilemap_create(K054157_get_tile_info, tilemap_scan_rows,
+	K054157_tilemapb[3] = tilemap_create(K054157_get_tile_info3, tilemap_scan_rows,
 										 TILEMAP_TRANSPARENT, 8, 8, 64, 64);
-	K054157_tilemaps[0] = tilemap_create(K054157_get_tile_info, tilemap_scan_rows,
+	K054157_tilemaps[0] = tilemap_create(K054157_get_tile_info0, tilemap_scan_rows,
 										 TILEMAP_TRANSPARENT, 8, 8, 64, 32);
-	K054157_tilemaps[1] = tilemap_create(K054157_get_tile_info, tilemap_scan_rows,
+	K054157_tilemaps[1] = tilemap_create(K054157_get_tile_info1, tilemap_scan_rows,
 										 TILEMAP_TRANSPARENT, 8, 8, 64, 32);
-	K054157_tilemaps[2] = tilemap_create(K054157_get_tile_info, tilemap_scan_rows,
+	K054157_tilemaps[2] = tilemap_create(K054157_get_tile_info2, tilemap_scan_rows,
 										 TILEMAP_TRANSPARENT, 8, 8, 64, 32);
-	K054157_tilemaps[3] = tilemap_create(K054157_get_tile_info, tilemap_scan_rows,
+	K054157_tilemaps[3] = tilemap_create(K054157_get_tile_info3, tilemap_scan_rows,
 										 TILEMAP_TRANSPARENT, 8, 8, 64, 32);
 
 	K054157_rambase = malloc(0x14000);
@@ -4844,12 +4570,10 @@ int K054157_vh_start(int gfx_memory_region, int big, int (*scrolld)[4][2], int p
 
 	for(i=0; i<4; i++) {
 		tilemap_set_transparent_pen(K054157_tilemapb[i],0);
-		tilemap_set_depth(K054157_tilemapb[i], 4, 4);
 		tilemap_set_scrolldx(K054157_tilemapb[i], -scrolld[0][i][0], -scrolld[1][i][0]);
 		tilemap_set_scrolldy(K054157_tilemapb[i], -scrolld[0][i][1], -scrolld[1][i][1]);
 
 		tilemap_set_transparent_pen(K054157_tilemaps[i],0);
-		tilemap_set_depth(K054157_tilemaps[i], 4, 4);
 		tilemap_set_scrolldx(K054157_tilemaps[i], -scrolld[0][i][0], -scrolld[1][i][0]);
 		tilemap_set_scrolldy(K054157_tilemaps[i], -scrolld[0][i][1], -scrolld[1][i][1]);
 	}
@@ -4965,12 +4689,12 @@ WRITE16_HANDLER( K054157_b_word_w )
 
 void K054157_tilemap_update(void)
 {
-	for(K054157_cur_layer=0; K054157_cur_layer<4; K054157_cur_layer++) {
-		K054157_linescroll_updater[K054157_cur_layer](K054157_cur_layer);
-		tilemap_set_scrolly(K054157_tilemap[K054157_cur_layer], 0, K054157_regs[0x10|K054157_cur_layer]);
+	int layer;
 
-		K054157_cur_lbase = K054157_rambase + 0x2000*K054157_cur_layer;
-		tilemap_update(K054157_tilemap[K054157_cur_layer]);
+	for(layer=0; layer<4; layer++)
+	{
+		K054157_linescroll_updater[layer](layer);
+		tilemap_set_scrolly(K054157_tilemap[layer], 0, K054157_regs[0x10|layer]);
 	}
 }
 

@@ -125,7 +125,7 @@ static int scramble_sh_irq_callback(int irqline)
 	TTL7474_set_inputs(0, 1, -1, -1, -1);
 	TTL7474_set_inputs(0, 0, -1, -1, -1);
 
-	return 0x00;
+	return 0xff;
 }
 
 static void scramble_sh_7474_callback(void)

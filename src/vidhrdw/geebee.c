@@ -186,7 +186,7 @@ void geebee_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
     }
 #endif
 
-	if (palette_recalc() || full_refresh )
+	if (full_refresh)
         memset(dirtybuffer, 1, videoram_size);
 
 	for( offs = 0; offs < videoram_size; offs++ )

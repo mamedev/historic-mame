@@ -305,7 +305,7 @@ static void init_machine(void)
 	poly17_init();
 
 	/* reset counters; counter 2's gate is tied high */
-	memset(counter, 0, sizeof(counter));
+	memset(counter, 0, sizeof(counter) );
 	counter[2].gate = 1;
 
 	/* reset the manual counter 0 clock */
@@ -326,7 +326,7 @@ static void init_machine(void)
 	m6850_sound_w(0, 3);
 
 	/* reset the noise generator */
-	memset(noise_position, 0, sizeof(noise_position));
+	memset(noise_position, 0, sizeof(noise_position) );
 
 	/* point the banks to bank 0 */
 	cpu_setbank(1, &memory_region(REGION_CPU1)[0x10000]);
@@ -364,7 +364,7 @@ static void poly17_init(void)
 	poly17 = rand17 = NULL;
 
 	/* allocate memory */
-	p = poly17 = malloc(2 * (POLY17_SIZE + 1));
+	p = poly17 = malloc(2 * (POLY17_SIZE + 1) );
 	if (!poly17)
 		return;
 	r = rand17 = poly17 + POLY17_SIZE + 1;
@@ -517,7 +517,7 @@ static void m6850_update_io(void)
 	UINT8 new_state;
 
 	/* sound -> main CPU communications */
-	if (!(m6850_sound_status & 0x02))
+	if (!(m6850_sound_status & 0x02) )
 	{
 		/* set the overrun bit if the data in the destination hasn't been read yet */
 		if (m6850_status & 0x01)
@@ -562,16 +562,16 @@ static void m6850_update_io(void)
 
 	/* check for transmit/receive IRQs on the main CPU */
 	new_state = 0;
-	if ((m6850_control & 0x80) && (m6850_status & 0x21)) new_state = 1;
-	if ((m6850_control & 0x60) == 0x20 && (m6850_status & 0x02)) new_state = 1;
+	if ((m6850_control & 0x80) && (m6850_status & 0x21) ) new_state = 1;
+	if ((m6850_control & 0x60) == 0x20 && (m6850_status & 0x02) ) new_state = 1;
 
 	/* apply the change */
-	if (new_state && !(m6850_status & 0x80))
+	if (new_state && !(m6850_status & 0x80) )
 	{
 		cpu_set_irq_line(0, M6809_FIRQ_LINE, ASSERT_LINE);
 		m6850_status |= 0x80;
 	}
-	else if (!new_state && (m6850_status & 0x80))
+	else if (!new_state && (m6850_status & 0x80) )
 	{
 		cpu_set_irq_line(0, M6809_FIRQ_LINE, CLEAR_LINE);
 		m6850_status &= ~0x80;
@@ -579,17 +579,17 @@ static void m6850_update_io(void)
 
 	/* check for transmit/receive IRQs on the sound CPU */
 	new_state = 0;
-	if ((m6850_sound_control & 0x80) && (m6850_sound_status & 0x21)) new_state = 1;
-	if ((m6850_sound_control & 0x60) == 0x20 && (m6850_sound_status & 0x02)) new_state = 1;
-	if (!(counter_control & 0x20)) new_state = 0;
+	if ((m6850_sound_control & 0x80) && (m6850_sound_status & 0x21) ) new_state = 1;
+	if ((m6850_sound_control & 0x60) == 0x20 && (m6850_sound_status & 0x02) ) new_state = 1;
+	if (!(counter_control & 0x20) ) new_state = 0;
 
 	/* apply the change */
-	if (new_state && !(m6850_sound_status & 0x80))
+	if (new_state && !(m6850_sound_status & 0x80) )
 	{
 		cpu_set_nmi_line(1, ASSERT_LINE);
 		m6850_sound_status |= 0x80;
 	}
-	else if (!new_state && (m6850_sound_status & 0x80))
+	else if (!new_state && (m6850_sound_status & 0x80) )
 	{
 		cpu_set_nmi_line(1, CLEAR_LINE);
 		m6850_sound_status &= ~0x80;
@@ -761,7 +761,7 @@ static void adc_finished(int which)
 	else if (val > 0xff) val = 0xff;
 
 	/* return the sign */
-	if (!(which & 1))
+	if (!(which & 1) )
 		adc_value = (val < 0) ? 0xff : 0x00;
 
 	/* return the magnitude */
@@ -821,7 +821,7 @@ INLINE void counter_update_count(int which)
 	if (counter[which].timer)
 	{
 		/* determine how many 2MHz cycles are remaining */
-		int count = (int)(timer_timeleft(counter[which].timer) / TIME_IN_HZ(2000000));
+		int count = (int)(timer_timeleft(counter[which].timer) / TIME_IN_HZ(2000000) );
 		counter[which].count = (count < 0) ? 0 : count;
 	}
 }
@@ -1109,7 +1109,7 @@ static WRITE_HANDLER( counter_control_w )
 		for (ch = 0; ch < MIXER_MAX_CHANNELS; ch++)
 		{
 			const char *name = mixer_get_name(ch);
-			if (name && strstr(name, "3394"))
+			if (name && strstr(name, "3394") )
 				mixer_set_volume(ch, (data & 0x01) ? 100 : 0);
 		}
 	}
@@ -1132,8 +1132,8 @@ static WRITE_HANDLER( counter_control_w )
 	counter_set_gate(0, (data >> 1) & 1);
 
 	/* bits D2 and D4 control the clear/reset flags on the flip-flop that feeds counter 0 */
-	if (!(data & 0x04)) set_counter_0_ff(1);
-	if (!(data & 0x10)) set_counter_0_ff(0);
+	if (!(data & 0x04) ) set_counter_0_ff(1);
+	if (!(data & 0x10) ) set_counter_0_ff(0);
 
 	/* bit 5 clears the NMI interrupt; recompute the I/O state now */
 	m6850_update_io();
@@ -1218,7 +1218,7 @@ static WRITE_HANDLER( chip_select_w )
 
 	/* check all six chip enables */
 	for (i = 0; i < 6; i++)
-		if ((diffchip & (1 << i)) && (data & (1 << i)))
+		if ((diffchip & (1 << i) ) && (data & (1 << i) ) )
 		{
 			double temp = 0;
 
@@ -1230,7 +1230,7 @@ static WRITE_HANDLER( chip_select_w )
 
 			/* only log changes */
 #if LOG_CEM_WRITES
-			if (temp != cem3394_get_parameter(i, reg))
+			if (temp != cem3394_get_parameter(i, reg) )
 			{
 				static const char *names[] =
 				{
@@ -1417,34 +1417,34 @@ PORT_END
 
 INPUT_PORTS_START( sentetst )
 	PORT_START	/* IN0 */
-	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coinage ))
-	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ))
-	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ))
-	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ))
-	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ))
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
 	PORT_BIT( 0x7c, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_DIPNAME( 0x80, 0x80, "High Scores" )
 	PORT_DIPSETTING(    0x80, "Keep Top 5" )
 	PORT_DIPSETTING(    0x00, "Keep All" )
 
 	PORT_START	/* IN1 */
-	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Bonus_Life ))
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x00, "Every 10,000" )
 	PORT_DIPSETTING(    0x01, "Every 15,000" )
 	PORT_DIPSETTING(    0x02, "Every 20,000" )
 	PORT_DIPSETTING(    0x03, "Every 25,000" )
-	PORT_DIPNAME( 0x0c, 0x04, DEF_STR( Lives ))
+	PORT_DIPNAME( 0x0c, 0x04, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "2" )
 	PORT_DIPSETTING(    0x04, "3" )
 	PORT_DIPSETTING(    0x08, "4" )
 	PORT_DIPSETTING(    0x0c, "5" )
 	PORT_BIT( 0x30, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Difficulty ))
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x40, "Easy" )
 	PORT_DIPSETTING(    0x00, "Hard" )
-	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ))
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ))
-	PORT_DIPSETTING(    0x00, DEF_STR( On ))
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START	/* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_UP    | IPF_PLAYER1 )
@@ -1471,11 +1471,11 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( cshift )
 	PORT_START	/* IN0 */
-	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coinage ))
-	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ))
-	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ))
-	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ))
-	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ))
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
 	PORT_BIT( 0x7c, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_DIPNAME( 0x80, 0x80, "High Scores" )
 	PORT_DIPSETTING(    0x80, "Keep Top 5" )
@@ -1483,13 +1483,13 @@ INPUT_PORTS_START( cshift )
 
 	PORT_START	/* IN1 */
 	PORT_BIT( 0x03, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Lives ))
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "2" )
 	PORT_DIPSETTING(    0x04, "3" )
 	PORT_BIT( 0x70, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ))
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ))
-	PORT_DIPSETTING(    0x00, DEF_STR( On ))
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START	/* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
@@ -1512,11 +1512,11 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( gghost )
 	PORT_START	/* IN0 */
-	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coinage ))
-	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ))
-	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ))
-	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ))
-	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ))
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
 	PORT_DIPNAME( 0x04, 0x04, "Players per Credit" )
 	PORT_DIPSETTING(    0x00, "1" )
 	PORT_DIPSETTING(    0x04, "1 or 2" )
@@ -1533,9 +1533,9 @@ INPUT_PORTS_START( gghost )
 	PORT_DIPSETTING(    0x05, "timed, 2:00" )
 	PORT_DIPSETTING(    0x07, "timed, 2:30" )
 	PORT_BIT( 0x78, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ))
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ))
-	PORT_DIPSETTING(    0x00, DEF_STR( On ))
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START	/* IN2 */
 	PORT_BIT( 0x0f, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -1561,11 +1561,11 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( hattrick )
 	PORT_START	/* IN0 */
-	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coinage ))
-	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ))
-	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ))
-	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ))
-	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ))
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
 	PORT_DIPNAME( 0x04, 0x04, "Players Per Credit" )
 	PORT_DIPSETTING(    0x00, "1" )
 	PORT_DIPSETTING(    0x04, "1 or 2" )
@@ -1582,9 +1582,9 @@ INPUT_PORTS_START( hattrick )
 	PORT_DIPSETTING(    0x06, "2:45" )
 	PORT_DIPSETTING(    0x07, "3:00" )
 	PORT_BIT( 0x78, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ))
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ))
-	PORT_DIPSETTING(    0x00, DEF_STR( On ))
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START	/* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER1 )
@@ -1613,11 +1613,11 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( otwalls )
 	PORT_START	/* IN0 */
-	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coinage ))
-	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ))
-	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ))
-	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ))
-	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ))
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
 	PORT_DIPNAME( 0x04, 0x04, "Players Per Credit" )
 	PORT_DIPSETTING(    0x00, "1" )
 	PORT_DIPSETTING(    0x04, "1 or 2" )
@@ -1625,9 +1625,9 @@ INPUT_PORTS_START( otwalls )
 
 	PORT_START	/* IN1 */
 	PORT_BIT( 0x7f, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ))
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ))
-	PORT_DIPSETTING(    0x00, DEF_STR( On ))
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START	/* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_LEFT  | IPF_PLAYER2 )
@@ -1654,34 +1654,34 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( snakepit )
 	PORT_START	/* IN0 */
-	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coinage ))
-	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ))
-	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ))
-	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ))
-	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ))
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
 	PORT_BIT( 0x7c, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_DIPNAME( 0x80, 0x80, "High Scores" )
 	PORT_DIPSETTING(    0x80, "Keep Top 5" )
 	PORT_DIPSETTING(    0x00, "Keep All" )
 
 	PORT_START	/* IN1 */
-	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Bonus_Life ))
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x00, "Every 10,000" )
 	PORT_DIPSETTING(    0x01, "Every 15,000" )
 	PORT_DIPSETTING(    0x02, "Every 20,000" )
 	PORT_DIPSETTING(    0x03, "Every 25,000" )
-	PORT_DIPNAME( 0x0c, 0x04, DEF_STR( Lives ))
+	PORT_DIPNAME( 0x0c, 0x04, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "2" )
 	PORT_DIPSETTING(    0x04, "3" )
 	PORT_DIPSETTING(    0x08, "4" )
 	PORT_DIPSETTING(    0x0c, "5" )
 	PORT_BIT( 0x30, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Difficulty ))
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x40, "Easy" )
 	PORT_DIPSETTING(    0x00, "Hard" )
-	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ))
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ))
-	PORT_DIPSETTING(    0x00, DEF_STR( On ))
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START	/* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_UP    | IPF_PLAYER1 )
@@ -1708,31 +1708,31 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( snakjack )
 	PORT_START	/* IN0 */
-	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coinage ))
-	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ))
-	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ))
-	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ))
-	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ))
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
 	PORT_BIT( 0x7c, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_DIPNAME( 0x80, 0x80, "High Scores" )
 	PORT_DIPSETTING(    0x80, "Keep Top 5" )
 	PORT_DIPSETTING(    0x00, "Keep All" )
 
 	PORT_START	/* IN1 */
-	PORT_DIPNAME( 0x03, 0x01, DEF_STR( Bonus_Life ))
+	PORT_DIPNAME( 0x03, 0x01, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x00, "Every 15,000" )
 	PORT_DIPSETTING(    0x01, "Every 20,000" )
 	PORT_DIPSETTING(    0x02, "Every 25,000" )
 	PORT_DIPSETTING(    0x03, "Every 30,000" )
-	PORT_DIPNAME( 0x0c, 0x04, DEF_STR( Lives ))
+	PORT_DIPNAME( 0x0c, 0x04, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "2" )
 	PORT_DIPSETTING(    0x04, "3" )
 	PORT_DIPSETTING(    0x08, "4" )
 	PORT_DIPSETTING(    0x0c, "5" )
 	PORT_BIT( 0x70, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ))
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ))
-	PORT_DIPSETTING(    0x00, DEF_STR( On ))
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START	/* IN2 */
 	PORT_BIT( 0x3f, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -1755,11 +1755,11 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( stocker )
 	PORT_START	/* IN0 */
-	PORT_DIPNAME( 0x03, 0x01, DEF_STR( Coinage ))
-	PORT_DIPSETTING(    0x03, DEF_STR( 2C_1C ))
-	PORT_DIPSETTING(    0x01, DEF_STR( 1C_1C ))
-	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ))
-	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ))
+	PORT_DIPNAME( 0x03, 0x01, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
 	PORT_DIPNAME( 0x1c, 0x00, "Bonus Coins" )
 	PORT_DIPSETTING(    0x00, "None" )
 	PORT_DIPSETTING(    0x04, "2 Coins = 1 Bonus" )
@@ -1783,9 +1783,9 @@ INPUT_PORTS_START( stocker )
 	PORT_DIPNAME( 0x40, 0x40, "End of Game" )
 	PORT_DIPSETTING(    0x40, "Normal" )
 	PORT_DIPSETTING(    0x00, "3 Tickets" )
-	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ))
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ))
-	PORT_DIPSETTING(    0x00, DEF_STR( On ))
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START	/* IN2 */
 	PORT_BIT( 0x3f, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -1807,18 +1807,18 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( triviag1 )
 	PORT_START	/* IN0 */
-	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coinage ))
-	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ))
-	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ))
-	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ))
-	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ))
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
 	PORT_BIT( 0x1c, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_DIPNAME( 0x20, 0x00, "Sound" )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ))
-	PORT_DIPSETTING(    0x00, DEF_STR( On ))
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x40, 0x00, "Sound Test" )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ))
-	PORT_DIPSETTING(    0x00, DEF_STR( On ))
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x80, "High Scores" )
 	PORT_DIPSETTING(    0x00, "Keep Top 5" )
 	PORT_DIPSETTING(    0x80, "Keep Top 10" )
@@ -1831,9 +1831,9 @@ INPUT_PORTS_START( triviag1 )
 	PORT_DIPSETTING(    0x08, "5" )
 	PORT_DIPSETTING(    0x0c, "6" )
 	PORT_BIT( 0x70, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ))
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ))
-	PORT_DIPSETTING(    0x00, DEF_STR( On ))
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START	/* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER1 )
@@ -1868,11 +1868,11 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( gimeabrk )
 	PORT_START	/* IN0 */
-	PORT_DIPNAME( 0x03, 0x01, DEF_STR( Coinage ))
-	PORT_DIPSETTING(    0x03, DEF_STR( 2C_1C ))
-	PORT_DIPSETTING(    0x01, DEF_STR( 1C_1C ))
-	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ))
-	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ))
+	PORT_DIPNAME( 0x03, 0x01, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
 	PORT_DIPNAME( 0x1c, 0x00, "Bonus Coins" )
 	PORT_DIPSETTING(    0x00, "None" )
 	PORT_DIPSETTING(    0x04, "2 Coins = 1 Bonus" )
@@ -1905,15 +1905,15 @@ INPUT_PORTS_START( gimeabrk )
 	PORT_DIPNAME( 0x10, 0x00, "Players Per Credit" )
 	PORT_DIPSETTING(    0x00, "1" )
 	PORT_DIPSETTING(    0x10, "1 or 2" )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Cabinet ))
-	PORT_DIPSETTING(    0x20, DEF_STR( Upright ))
-	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ))
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
 	PORT_DIPNAME( 0x40, 0x40, "High Scores" )
 	PORT_DIPSETTING(    0x40, "Keep Top 5" )
 	PORT_DIPSETTING(    0x00, "Keep All" )
-	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ))
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ))
-	PORT_DIPSETTING(    0x00, DEF_STR( On ))
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START	/* IN2 */
 	PORT_BIT( 0x3f, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -1937,11 +1937,11 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( minigolf )
 	PORT_START	/* IN0 */
-	PORT_DIPNAME( 0x03, 0x01, DEF_STR( Coinage ))
-	PORT_DIPSETTING(    0x03, DEF_STR( 2C_1C ))
-	PORT_DIPSETTING(    0x01, DEF_STR( 1C_1C ))
-	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ))
-	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ))
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ) )
 	PORT_DIPNAME( 0x1c, 0x00, "Bonus Coins" )
 	PORT_DIPSETTING(    0x00, "None" )
 	PORT_DIPSETTING(    0x04, "2 Coins = 1 Bonus" )
@@ -1962,12 +1962,29 @@ INPUT_PORTS_START( minigolf )
 
 	PORT_START	/* IN1 */
 	PORT_DIPNAME( 0x01, 0x01, "Add-A-Coin" )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ))
-	PORT_DIPSETTING(    0x00, DEF_STR( On ))
-	PORT_BIT( 0x7e, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ))
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ))
-	PORT_DIPSETTING(    0x00, DEF_STR( On ))
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, "Display Kids" )
+	PORT_DIPSETTING(    0x02, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x04, 0x04, "Kid on Left Located" )
+	PORT_DIPSETTING(    0x04, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x08, 0x08, "Kid on Right Located" )
+	PORT_DIPSETTING(    0x08, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START	/* IN2 */
 	PORT_BIT( 0x3f, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -1991,11 +2008,11 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( minigol2 )
 	PORT_START	/* IN0 */
-	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coinage ))
-	PORT_DIPSETTING(    0x03, DEF_STR( 3C_1C ))
-	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ))
-	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ))
-	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ))
+	PORT_DIPNAME( 0x03, 0x01, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
 	PORT_DIPNAME( 0x1c, 0x00, "Bonus Coins" )
 	PORT_DIPSETTING(    0x00, "None" )
 	PORT_DIPSETTING(    0x04, "2 Coins = 1 Bonus" )
@@ -2016,12 +2033,29 @@ INPUT_PORTS_START( minigol2 )
 
 	PORT_START	/* IN1 */
 	PORT_DIPNAME( 0x01, 0x01, "Add-A-Coin" )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ))
-	PORT_DIPSETTING(    0x00, DEF_STR( On ))
-	PORT_BIT( 0x7e, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ))
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ))
-	PORT_DIPSETTING(    0x00, DEF_STR( On ))
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START	/* IN2 */
 	PORT_BIT( 0x3f, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -2045,11 +2079,11 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( toggle )
 	PORT_START	/* IN0 */
-	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coinage ))
-	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ))
-	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ))
-	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ))
-	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ))
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
 	PORT_BIT( 0x7c, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_DIPNAME( 0x80, 0x80, "High Scores" )
 	PORT_DIPSETTING(    0x80, "Keep Top 5" )
@@ -2057,13 +2091,13 @@ INPUT_PORTS_START( toggle )
 
 	PORT_START	/* IN1 */
 	PORT_BIT( 0x03, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Lives ))
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "2" )
 	PORT_DIPSETTING(    0x04, "3" )
 	PORT_BIT( 0x78, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ))
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ))
-	PORT_DIPSETTING(    0x00, DEF_STR( On ))
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START	/* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER1 )
@@ -2092,11 +2126,11 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( nametune )
 	PORT_START	/* IN0 */
-	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coinage ))
-	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ))
-	PORT_DIPSETTING(    0x03, DEF_STR( 3C_2C ))
-	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ))
-	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ))
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ) )
 	PORT_DIPNAME( 0x1c, 0x00, "Bonus Coins" )
 	PORT_DIPSETTING(    0x00, "None" )
 	PORT_DIPSETTING(    0x04, "2 Coins = 1 Bonus" )
@@ -2116,10 +2150,30 @@ INPUT_PORTS_START( nametune )
 	PORT_DIPSETTING(    0xc0, "x6" )
 
 	PORT_START	/* IN1 */
-	PORT_BIT( 0x7f, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ))
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ))
-	PORT_DIPSETTING(    0x00, DEF_STR( On ))
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START	/* IN2 */
 	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER1, "P1 Blue Button", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
@@ -2147,11 +2201,11 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( nstocker )
 	PORT_START	/* IN0 */
-	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coinage ))
-	PORT_DIPSETTING(    0x03, DEF_STR( 3C_1C ))
-	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ))
-	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ))
-	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ))
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ) )
 	PORT_DIPNAME( 0x1c, 0x00, "Bonus Coins" )
 	PORT_DIPSETTING(    0x00, "None" )
 	PORT_DIPSETTING(    0x04, "2 Coins = 1 Bonus" )
@@ -2171,13 +2225,13 @@ INPUT_PORTS_START( nstocker )
 	PORT_DIPSETTING(    0xc0, "x6" )
 
 	PORT_START	/* IN1 */
-	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Difficulty ))
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x01, "Easy" )
 	PORT_DIPSETTING(    0x00, "Hard" )
 	PORT_BIT( 0x7e, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ))
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ))
-	PORT_DIPSETTING(    0x00, DEF_STR( On ))
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START	/* IN2 */
 	PORT_BIT( 0x3f, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -2206,11 +2260,11 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( sfootbal )
 	PORT_START	/* IN0 */
-	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coinage ))
-	PORT_DIPSETTING(    0x03, DEF_STR( 3C_1C ))
-	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ))
-	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ))
-	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ))
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ) )
 	PORT_DIPNAME( 0x1c, 0x00, "Bonus Coins" )
 	PORT_DIPSETTING(    0x00, "None" )
 	PORT_DIPSETTING(    0x04, "2 Coins = 1 Bonus" )
@@ -2243,9 +2297,9 @@ INPUT_PORTS_START( sfootbal )
 	PORT_DIPSETTING(    0x00, "1" )
 	PORT_DIPSETTING(    0x08, "1 or 2" )
 	PORT_BIT( 0x70, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ))
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ))
-	PORT_DIPSETTING(    0x00, DEF_STR( On ))
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START	/* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
@@ -2269,11 +2323,11 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( spiker )
 	PORT_START	/* IN0 */
-	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coinage ))
-	PORT_DIPSETTING(    0x03, DEF_STR( 3C_1C ))
-	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ))
-	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ))
-	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ))
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ) )
 	PORT_DIPNAME( 0x1c, 0x00, "Bonus Coins" )
 	PORT_DIPSETTING(    0x00, "None" )
 	PORT_DIPSETTING(    0x04, "2 Coins = 1 Bonus" )
@@ -2296,10 +2350,27 @@ INPUT_PORTS_START( spiker )
 	PORT_DIPNAME( 0x01, 0x00, "Game Duration" )
 	PORT_DIPSETTING(    0x00, "11 points" )
 	PORT_DIPSETTING(    0x01, "15 points" )
-	PORT_BIT( 0x7e, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ))
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ))
-	PORT_DIPSETTING(    0x00, DEF_STR( On ))
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START	/* IN2 */
 	PORT_BIT( 0x0f, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -2324,11 +2395,11 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( stompin )
 	PORT_START	/* IN0 */
-	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coinage ))
-	PORT_DIPSETTING(    0x03, DEF_STR( 3C_1C ))
-	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ))
-	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ))
-	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ))
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ) )
 	PORT_DIPNAME( 0x1c, 0x00, "Bonus Coins" )
 	PORT_DIPSETTING(    0x00, "None" )
 	PORT_DIPSETTING(    0x04, "2 Coins = 1 Bonus" )
@@ -2348,25 +2419,30 @@ INPUT_PORTS_START( stompin )
 	PORT_DIPSETTING(    0xc0, "x6" )
 
 	PORT_START	/* IN1 */
+	PORT_DIPNAME( 0x01, 0x00, "Display Kids" )
+	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x02, 0x02, "Kid on Right Located" )
+	PORT_DIPSETTING(    0x02, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x04, 0x04, "Kid on Left Located" )
+	PORT_DIPSETTING(    0x04, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x00, "Bee In Game" )
+	PORT_DIPSETTING(    0x40, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x80, 0x00, "Bug Generation" )
 	PORT_DIPSETTING(    0x00, "Regular" )
 	PORT_DIPSETTING(    0x80, "None" )
-	PORT_DIPNAME( 0x40, 0x00, "Bee In Game?" )
-	PORT_DIPSETTING(    0x40, DEF_STR( No ))
-	PORT_DIPSETTING(    0x00, DEF_STR( Yes ))
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Demo_Sounds ))
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ))
-	PORT_DIPSETTING(    0x20, DEF_STR( On ))
-	PORT_BIT( 0x18, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_DIPNAME( 0x04, 0x04, "Kid on Left Located?" )
-	PORT_DIPSETTING(    0x04, DEF_STR( No ))
-	PORT_DIPSETTING(    0x00, DEF_STR( Yes ))
-	PORT_DIPNAME( 0x02, 0x02, "Kid on Right Located?" )
-	PORT_DIPSETTING(    0x02, DEF_STR( No ))
-	PORT_DIPSETTING(    0x00, DEF_STR( Yes ))
-	PORT_DIPNAME( 0x01, 0x01, "Display Kids?" )
-	PORT_DIPSETTING(    0x00, DEF_STR( No ))
-	PORT_DIPSETTING(    0x01, DEF_STR( Yes ))
 
 	PORT_START	/* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_UP    | IPF_PLAYER1 )
@@ -2413,11 +2489,11 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( rescraid )
 	PORT_START	/* IN0 */
-	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coinage ))
-	PORT_DIPSETTING(    0x03, DEF_STR( 3C_1C ))
-	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ))
-	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ))
-	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ))
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ) )
 	PORT_DIPNAME( 0x1c, 0x00, "Bonus Coins" )
 	PORT_DIPSETTING(    0x00, "None" )
 	PORT_DIPSETTING(    0x04, "2 Coins = 1 Bonus" )
@@ -2437,7 +2513,7 @@ INPUT_PORTS_START( rescraid )
 	PORT_DIPSETTING(    0xc0, "x6" )
 
 	PORT_START	/* IN1 */
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Lives ))
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "4" )
 	PORT_DIPSETTING(    0x01, "5" )
 	PORT_DIPNAME( 0x0c, 0x04, "Minimum Game Time" )
@@ -2445,13 +2521,18 @@ INPUT_PORTS_START( rescraid )
 	PORT_DIPSETTING(    0x04, "60" )
 	PORT_DIPSETTING(    0x00, "90" )
 	PORT_DIPSETTING(    0x0c, "120" )
-	PORT_BIT( 0x30, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x40, 0x40, "Keep High Scores" )
-	PORT_DIPSETTING(    0x40, DEF_STR( No ))
-	PORT_DIPSETTING(    0x00, DEF_STR( Yes ))
-	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ))
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ))
-	PORT_DIPSETTING(    0x00, DEF_STR( On ))
+	PORT_DIPSETTING(    0x40, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START	/* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_UP    | IPF_PLAYER1 )
@@ -2526,10 +2607,10 @@ static const struct MachineDriver machine_driver_balsente =
 	/* video hardware */
 	256, 240, { 0, 255, 0, 239 },
 	0,
-	1025,1025,
+	1024,0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
 	balsente_vh_start,
 	balsente_vh_stop,
@@ -2638,8 +2719,8 @@ static void init_triviag2(void)
 	expand_roms(EXPAND_NONE); balsente_shooter = 0; /* noanalog */
 }
 static void init_gimeabrk(void) { expand_roms(EXPAND_ALL);  balsente_shooter = 0; adc_shift = 1; }
-static void init_minigolf(void) { expand_roms(0x0c);        balsente_shooter = 0; adc_shift = 2; }
-static void init_minigol2(void) { expand_roms(EXPAND_NONE); balsente_shooter = 0; adc_shift = 2; }
+static void init_minigolf(void) { expand_roms(EXPAND_NONE); balsente_shooter = 0; adc_shift = 2; }
+static void init_minigol2(void) { expand_roms(0x0c);        balsente_shooter = 0; adc_shift = 2; }
 static void init_toggle(void)   { expand_roms(EXPAND_ALL);  balsente_shooter = 0; /* noanalog */ }
 static void init_nametune(void) { expand_roms(EXPAND_NONE | SWAP_HALVES); balsente_shooter = 0; /* noanalog */ }
 static void init_nstocker(void)
@@ -2955,8 +3036,7 @@ ROM_START( minigolf )
 	ROM_LOAD( "ab23.u7a",  0x14000, 0x4000, 0x19a6ff47 )
 	ROM_LOAD( "ab45.u6a",  0x18000, 0x4000, 0x925d76eb )
 	ROM_LOAD( "ab67.u5a",  0x1c000, 0x4000, 0x6a311c9a )
-	ROM_LOAD( "cd23.u3a",  0x24000, 0x4000, 0x52279801 )
-	ROM_LOAD( "cd6ef.u1a", 0x2c000, 0x4000, 0x34c64f4c )
+	ROM_LOAD( "1a-ver2",   0x20000, 0x10000, 0x60b6cd58 )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )		/* 64k for Z80 */
 	ROM_LOAD( "sentesnd",  0x00000, 0x2000, 0x4dd0a525 )
@@ -2970,15 +3050,20 @@ ROM_END
 
 ROM_START( minigol2 )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 )     /* 64k for code for the first CPU, plus 128k of banked ROMs */
-	ROM_LOAD( "4a-ver2",  0x10000, 0x10000, 0x97d50493 )
-	ROM_LOAD( "1a-ver2",  0x20000, 0x10000, 0x60b6cd58 )
+	ROM_LOAD( "ab01.u8a",  0x10000, 0x4000, 0x348f827f )
+	ROM_LOAD( "ab23.u7a",  0x14000, 0x4000, 0x19a6ff47 )
+	ROM_LOAD( "ab45.u6a",  0x18000, 0x4000, 0x925d76eb )
+	ROM_LOAD( "ab67.u5a",  0x1c000, 0x4000, 0x6a311c9a )
+	ROM_LOAD( "cd23.u3a",  0x24000, 0x4000, 0x52279801 )
+	ROM_LOAD( "cd6ef.u1a", 0x2c000, 0x4000, 0x34c64f4c )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )		/* 64k for Z80 */
 	ROM_LOAD( "sentesnd",  0x00000, 0x2000, 0x4dd0a525 )
 
 	ROM_REGION( 0x10000, REGION_GFX1, 0 )		/* up to 64k of sprites */
-	ROM_LOAD( "6b-ver2",  0x00000, 0x8000, 0x5988f4ba )
-	ROM_LOAD( "4b-ver2",  0x08000, 0x8000, 0x78a30e23 )
+	ROM_LOAD( "gr01.u6b", 0x00000, 0x4000, 0x8e24d594 )
+	ROM_LOAD( "gr23.u5b", 0x04000, 0x4000, 0x3bf355ef )
+	ROM_LOAD( "gr45.u4b", 0x08000, 0x4000, 0x8eb14921 )
 ROM_END
 
 

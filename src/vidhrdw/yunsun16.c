@@ -205,52 +205,6 @@ static void yunsun16_draw_sprites(struct osd_bitmap *bitmap)
 	}
 }
 
-static void yunsun16_mark_sprites_colors(void)
-{
-	int count = 0;
-	int offs,i,col,colmask[0x20];
-
-	unsigned int *pen_usage	=	Machine->gfx[1]->pen_usage;
-	int total_elements		=	Machine->gfx[1]->total_elements;
-	int color_codes_start	=	Machine->drv->gfxdecodeinfo[1].color_codes_start;
-	int total_color_codes	=	Machine->drv->gfxdecodeinfo[1].total_color_codes;
-
-	int xmin = Machine->visible_area.min_x;
-	int xmax = Machine->visible_area.max_x;
-	int ymin = Machine->visible_area.min_y;
-	int ymax = Machine->visible_area.max_y;
-
-	memset(colmask, 0, sizeof(colmask));
-
-	for ( offs = 0 ; offs < (spriteram_size/2); offs += 8/2 )
-	{
-		int x		=	spriteram16[offs + 0];
-		int y		=	spriteram16[offs + 1];
-		int code	=	spriteram16[offs + 2] % total_elements;
-		int color	=	spriteram16[offs + 3] % total_color_codes;
-
-		x	+=	sprites_scrolldx;
-		y	+=	sprites_scrolldy;
-
-		if (((x+15) >= xmin) && (x <= xmax) &&
-			((y+15) >= ymin) && (y <= ymax))
-			colmask[color] |= pen_usage[code];
-	}
-
-	for (col = 0; col < total_color_codes; col++)
-	 for (i = 0; i < 15; i++)	// pen 15 is transparent
-	  if (colmask[col] & (1 << i))
-	  {	palette_used_colors[16 * col + i + color_codes_start] = PALETTE_COLOR_USED;
-		count++;	}
-
-#if 0
-{	char buf[80];
-	sprintf(buf,"%d",count);
-	usrintf_showmessage(buf);	}
-#endif
-}
-
-
 
 /***************************************************************************
 
@@ -289,19 +243,11 @@ if (keyboard_pressed(KEYCODE_Z))
 }
 #endif
 
-	tilemap_update(ALL_TILEMAPS);
-
-	palette_init_used_colors();
-
-	yunsun16_mark_sprites_colors();
-
-	palette_recalc();
+	fillbitmap(priority_bitmap,0,NULL);
 
 	/* The color of the this layer's transparent pen goes below everything */
 	if (layers_ctrl & 1)	tilemap_draw(bitmap,tilemap_0, TILEMAP_IGNORE_TRANSPARENCY, 0);
-	else
-	{						fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
-							fillbitmap(priority_bitmap,0,NULL);		}
+	else					fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 
 	if (layers_ctrl & 1)	tilemap_draw(bitmap,tilemap_0, 0, 1);
 
@@ -317,6 +263,6 @@ if (keyboard_pressed(KEYCODE_Z))
 		clip.max_x = Machine->drv->screen_width-1;
 		clip.min_y = Machine->visible_area.min_y;
 		clip.max_y = Machine->visible_area.max_y;
-		fillbitmap(bitmap,palette_transparent_pen,&clip);
+		fillbitmap(bitmap,Machine->pens[0],&clip);
 	}
 }

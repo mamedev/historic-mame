@@ -21,6 +21,8 @@
 int  cli_frontend_init (int argc, char **argv);
 void cli_frontend_exit (void);
 
+
+
 //============================================================
 //	GLOBAL VARIABLES
 //============================================================
@@ -29,6 +31,7 @@ int verbose;
 
 // this line prevents globbing on the command line
 int _CRT_glob = 0;
+
 
 
 //============================================================
@@ -74,7 +77,7 @@ int main(int argc, char **argv)
 	original_leds = osd_get_leds();
 
 	// parse config and cmdline options
-	game_index = cli_frontend_init (argc, argv);
+	game_index = cli_frontend_init(argc, argv);
 
 	// have we decided on a game?
 	if (game_index != -1)
@@ -82,6 +85,11 @@ int main(int argc, char **argv)
 
 	// restore the original LED state
 	osd_set_leds(original_leds);
+	win_process_events();
+
+	// close errorlog, input and playback
+	cli_frontend_exit();
+
 	exit(res);
 }
 
@@ -93,12 +101,12 @@ int main(int argc, char **argv)
 
 int osd_init(void)
 {
-	extern int win32_init_input(void);
+	extern int win_init_input(void);
 	int result;
 
-	result = win32_init_window();
+	result = win_init_window();
 	if (result == 0)
-		result = win32_init_input();
+		result = win_init_input();
 	return result;
 }
 
@@ -110,8 +118,8 @@ int osd_init(void)
 
 void osd_exit(void)
 {
-	extern void win32_shutdown_input(void);
-	win32_shutdown_input();
+	extern void win_shutdown_input(void);
+	win_shutdown_input();
 	osd_set_leds(0);
 }
 

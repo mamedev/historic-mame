@@ -116,8 +116,6 @@ void mainevt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	K052109_tilemap_update();
 
-	palette_recalc();
-
 	fillbitmap(priority_bitmap,0,NULL);
 	K052109_tilemap_draw(bitmap,1,TILEMAP_IGNORE_TRANSPARENCY,1);
 	K052109_tilemap_draw(bitmap,2,1,2);	/* low priority part of layer */
@@ -130,8 +128,6 @@ void mainevt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 void dv_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	K052109_tilemap_update();
-
-	palette_recalc();
 
 	K052109_tilemap_draw(bitmap,1,TILEMAP_IGNORE_TRANSPARENCY,0);
 	K052109_tilemap_draw(bitmap,2,0,0);

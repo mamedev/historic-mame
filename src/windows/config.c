@@ -3,16 +3,17 @@
  * Configuration routines.
  *
  * 20010424 BW uses Hans de Goede's rc subsystem
+ * last changed 20010727 BW
  *
  * TODO:
- * - reintroduce override_rompath
+ * - make errorlog a ringbuffer
  *
  * Suggestions
  * - norotate? funny, leads to option -nonorotate ...
  *   fix when rotation options take turnable LCD's in account
- * - switchres --> switch_resolution, swres
- * - switchbpp --> switch_bpp, swbpp
- * - give up distinction between vector_width and gfx_width
+ * - win_switch_res --> switch_resolution, swres
+ * - win_switch_bpp --> switch_bpp, swbpp
+ * - give up distinction between vector_width and win_gfx_width
  *   eventually introduce options.width, options.height
  * - new core options:
  *   gamma (is already osd_)
@@ -64,6 +65,8 @@ static char *debugres;
 static char *playbackname;
 static char *recordname;
 static char *gamename;
+
+char *rompath_extra;
 
 static float f_beam;
 static float f_flicker;
@@ -124,6 +127,23 @@ static int video_verify_bpp(struct rc_option *option, const char *arg, int prior
 	return 0;
 }
 
+static int init_errorlog(struct rc_option *option, const char *arg, int priority)
+{
+	/* provide errorlog from here on */
+	if (errorlog && !logfile)
+	{
+		logfile = fopen("error.log","wa");
+		if (!logfile)
+		{
+			perror("unable to open log file\n");
+			exit (1);
+		}
+	}
+	option->priority = priority;
+	return 0;
+}
+
+
 /* struct definitions */
 static struct rc_option opts[] = {
 	/* name, shortname, type, dest, deflt, min, max, func, help */
@@ -163,12 +183,12 @@ static struct rc_option opts[] = {
 
 	/* misc */
 	{ "Mame CORE misc options", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
-	{ "artwork", "art", rc_bool, &options.use_artwork, "0", 0, 0, NULL, "use additional game artwork" },
+	{ "artwork", "art", rc_bool, &options.use_artwork, "1", 0, 0, NULL, "use additional game artwork" },
 	{ "cheat", "c", rc_bool, &options.cheat, "0", 0, 0, NULL, "enable/disable cheat subsystem" },
 	{ "debug", "d", rc_bool, &options.mame_debug, "0", 0, 0, NULL, "enable/disable debugger (only if available)" },
 	{ "playback", "pb", rc_string, &playbackname, NULL, 0, 0, NULL, "playback an input file" },
 	{ "record", "rec", rc_string, &recordname, NULL, 0, 0, NULL, "record an input file" },
-	{ "log", NULL, rc_bool, &errorlog, "0", 0, 0, NULL, "generate error.log" },
+	{ "log", NULL, rc_bool, &errorlog, "0", 0, 0, init_errorlog, "generate error.log" },
 
 	/* config options */
 	{ "Configuration options", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
@@ -281,6 +301,8 @@ int parse_config (const char* filename, const struct GameDriver *gamedrv)
 	char buffer[128];
 	int retval = 0;
 
+	if (!readconfig) return 0;
+
 	if (gamedrv)
 	{
 		if (gamedrv->clone_of && strlen(gamedrv->clone_of->name))
@@ -319,6 +341,7 @@ int parse_config (const char* filename, const struct GameDriver *gamedrv)
 int cli_frontend_init (int argc, char **argv)
 {
 	char buffer[128];
+	char *cmd_name;
 	int game_index;
 	int i;
 
@@ -360,54 +383,52 @@ int cli_frontend_init (int argc, char **argv)
 		exit(1);
 	}
 
-	/* provide errorlog from here on */
-	if (errorlog)
+	/* determine global configfile name */
+	cmd_name = osd_strip_extension(osd_basename(argv[0]));
+	if (!cmd_name)
 	{
-		logfile = fopen("error.log","wa");
-		if (!logfile)
-		{
-			perror("unable to open log file\n");
-			exit (1);
-		}
+		fprintf (stderr, "who am I? cannot determine the name I was called with\n");
+		exit(1);
 	}
 
+	sprintf (buffer, "%s.ini", cmd_name);
+
 	/* parse the global configfile */
-	if (readconfig)
-#ifdef MESS
-		if (parse_config ("mess.ini", NULL))
-			exit(1);
-#else
-		if (parse_config ("mame.ini", NULL))
-			exit(1);
+	if (parse_config (buffer, NULL))
+		exit(1);
+
+#ifdef MAME_DEBUG
+	if (parse_config( "debug.ini", NULL))
+		exit(1);
 #endif
 
 	if (createconfig)
 	{
-#ifdef MESS
-		rc_save(rc, "mess.ini", 0);
-#else
-		rc_save(rc, "mame.ini", 0);
-#endif
+		rc_save(rc, buffer, 0);
 		exit(0);
 	}
 
 	if (showconfig)
 	{
-		rc_write(rc, stdout, " Mame running parameters");
+		sprintf (buffer, " %s running parameters", cmd_name);
+		rc_write(rc, stdout, buffer);
 		exit(0);
 	}
 
 	if (showusage)
 	{
-		fprintf(stdout, "Usage: mame [game] [options]\n" "Options:\n");
+		fprintf(stdout, "Usage: %s [game] [options]\n" "Options:\n", cmd_name);
 
 		/* actual help message */
 		rc_print_help(rc, stdout);
 		exit(0);
 	}
 
+	/* no longer needed */
+	free(cmd_name);
+
 	/* handle playback */
-    if (playbackname != NULL)
+	if (playbackname != NULL)
 	{
         options.playback = osd_fopen(playbackname,0,OSD_FILETYPE_INPUTLOG,0);
 		if (!options.playback)
@@ -417,36 +438,39 @@ int cli_frontend_init (int argc, char **argv)
 		}
 	}
 
-    /* check for game name embedded in .inp header */
-    if (options.playback)
-    {
-        INP_HEADER inp_header;
+	/* check for game name embedded in .inp header */
+	if (options.playback)
+	{
+		INP_HEADER inp_header;
 
-        /* read playback header */
-        osd_fread(options.playback, &inp_header, sizeof(INP_HEADER));
+		/* read playback header */
+		osd_fread(options.playback, &inp_header, sizeof(INP_HEADER));
 
-        if (!isalnum(inp_header.name[0])) /* If first byte is not alpha-numeric */
-            osd_fseek(options.playback, 0, SEEK_SET); /* old .inp file - no header */
-        else
-        {
-            for (i = 0; (drivers[i] != 0); i++) /* find game and play it */
+		if (!isalnum(inp_header.name[0])) /* If first byte is not alpha-numeric */
+			osd_fseek(options.playback, 0, SEEK_SET); /* old .inp file - no header */
+		else
+		{
+			for (i = 0; (drivers[i] != 0); i++) /* find game and play it */
 			{
-                if (strcmp(drivers[i]->name, inp_header.name) == 0)
-                {
-                    game_index = i;
+				if (strcmp(drivers[i]->name, inp_header.name) == 0)
+				{
+					game_index = i;
 					gamename = (char *)drivers[i]->name;
-                    printf("Playing back previously recorded game %s (%s) [press return]\n",
-                        drivers[game_index]->name,drivers[game_index]->description);
-                    getchar();
-                    break;
-                }
-            }
-        }
-    }
+					printf("Playing back previously recorded game %s (%s) [press return]\n",
+							drivers[game_index]->name,drivers[game_index]->description);
+					getchar();
+					break;
+				}
+			}
+		}
+	}
 
 	/* check for frontend options, horrible 1234 hack */
 	if (frontend_help(gamename) != 1234)
 		exit(0);
+
+	gamename = osd_basename(gamename);
+	gamename = osd_strip_extension(gamename);
 
 	/* if not given by .inp file yet */
 	if (game_index == -1)
@@ -472,7 +496,7 @@ int cli_frontend_init (int argc, char **argv)
 			srand(time(0));
 			game_index = rand() % i;
 
-			fprintf(stderr, "Running %s (%s) [press return]\n",drivers[game_index]->name,drivers[game_index]->description);
+			fprintf(stderr, "running %s (%s) [press return]\n",drivers[game_index]->name,drivers[game_index]->description);
 			getchar();
 		}
 	}
@@ -498,15 +522,13 @@ int cli_frontend_init (int argc, char **argv)
 	sprintf(buffer, "%s", drivers[game_index]->source_file+12);
 	buffer[strlen(buffer) - 2] = 0;
 	strcat(buffer, ".ini");
-	if (readconfig)
-		if (parse_config (buffer, NULL))
-			exit(1);
+	if (parse_config (buffer, NULL))
+		exit(1);
 
 	/* now load gamename.ini */
 	/* this possibly checks for clonename.ini recursively! */
-	if (readconfig)
-		if (parse_config (NULL, drivers[game_index]))
-			exit(1);
+	if (parse_config (NULL, drivers[game_index]))
+		exit(1);
 
 	/* handle record option */
 	if (recordname)
@@ -519,23 +541,23 @@ int cli_frontend_init (int argc, char **argv)
 		}
 	}
 
-    if (options.record)
-    {
-        INP_HEADER inp_header;
+	if (options.record)
+	{
+		INP_HEADER inp_header;
 
-        memset(&inp_header, '\0', sizeof(INP_HEADER));
-        strcpy(inp_header.name, drivers[game_index]->name);
-        /* MAME32 stores the MAME version numbers at bytes 9 - 11
-         * MAME DOS keeps this information in a string, the
-         * Windows code defines them in the Makefile.
-         */
-        /*
-        inp_header.version[0] = 0;
-        inp_header.version[1] = VERSION;
-        inp_header.version[2] = BETA_VERSION;
-        */
-        osd_fwrite(options.record, &inp_header, sizeof(INP_HEADER));
-    }
+		memset(&inp_header, '\0', sizeof(INP_HEADER));
+		strcpy(inp_header.name, drivers[game_index]->name);
+		/* MAME32 stores the MAME version numbers at bytes 9 - 11
+		 * MAME DOS keeps this information in a string, the
+		 * Windows code defines them in the Makefile.
+		 */
+		/*
+		   inp_header.version[0] = 0;
+		   inp_header.version[1] = VERSION;
+		   inp_header.version[2] = BETA_VERSION;
+		 */
+		osd_fwrite(options.record, &inp_header, sizeof(INP_HEADER));
+	}
 
 	/* need a decent default for debug width/height */
 	if (options.debug_width == 0)
@@ -564,17 +586,30 @@ static int config_handle_arg(char *arg)
 {
 	static int got_gamename = 0;
 
-	if (!got_gamename) /* notice: for MESS game means system */
-	{
-		gamename     = arg;
-		got_gamename = 1;
-	}
-	else
+	/* notice: for MESS game means system */
+	if (got_gamename)
 	{
 		fprintf(stderr,"error: duplicate gamename: %s\n", arg);
 		return -1;
 	}
 
+	rompath_extra = osd_dirname(arg);
+
+	if (rompath_extra && !strlen(rompath_extra))
+	{
+		free (rompath_extra);
+		rompath_extra = NULL;
+	}
+
+	gamename = arg;
+
+	if (!gamename || !strlen(gamename))
+	{
+		fprintf(stderr,"error: no gamename given in %s\n", arg);
+		return -1;
+	}
+
+	got_gamename = 1;
 	return 0;
 }
 
@@ -589,7 +624,8 @@ void CLIB_DECL logerror(const char *text,...)
 
 	/* standard vfprintf stuff here */
 	va_start(arg, text);
-	if (errorlog)
+
+	if (errorlog && logfile)
 		vfprintf(logfile, text, arg);
 	va_end(arg);
 }

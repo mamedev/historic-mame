@@ -25,9 +25,6 @@ static void solomon_dirty_all(void)
 ***************************************************************************/
 int solomon_vh_start(void)
 {
-	int i;
-
-
 	if (generic_vh_start() != 0)
 		return 1;
 
@@ -44,9 +41,6 @@ int solomon_vh_start(void)
 		return 1;
 	}
 	memset(dirtybuffer2,1,videoram_size);
-
-	/* leave everything at the default, but map all foreground 0 pens as transparent */
-	for (i = 0;i < 8;i++) palette_used_colors[16 * i] = PALETTE_COLOR_TRANSPARENT;
 
 	state_save_register_int ("video", 0, "flipscreen", &flipscreen);
 	state_save_register_func_postload (solomon_dirty_all);
@@ -115,14 +109,6 @@ void solomon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	int offs;
 
 
-	/* recalc the palette if necessary */
-	if (palette_recalc())
-	{
-		memset(dirtybuffer,1,videoram_size);
-		memset(dirtybuffer2,1,videoram_size);
-	}
-
-
 	for (offs = 0;offs < videoram_size;offs++)
 	{
 		if (dirtybuffer2[offs])
@@ -158,7 +144,7 @@ void solomon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	/* draw the frontmost playfield */
 	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
-		if (dirtybuffer[offs])
+//		if (dirtybuffer[offs])
 		{
 			int sx,sy;
 
@@ -172,16 +158,14 @@ void solomon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				sy = 31 - sy;
 			}
 
-			drawgfx(tmpbitmap,Machine->gfx[0],
+			drawgfx(bitmap,Machine->gfx[0],
 					videoram[offs] + 256 * (colorram[offs] & 0x07),
 					(colorram[offs] & 0x70) >> 4,
 					flipscreen,flipscreen,
 					8*sx,8*sy,
-					&Machine->visible_area,TRANSPARENCY_NONE,0);
+					&Machine->visible_area,TRANSPARENCY_PEN,0);
 		}
 	}
-
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
 
 
 	/* draw sprites */

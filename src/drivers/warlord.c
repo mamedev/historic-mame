@@ -261,7 +261,7 @@ static const struct MachineDriver machine_driver_warlord =
 	128, 8*4+8*4,
 	warlord_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	generic_vh_start,
 	generic_vh_stop,

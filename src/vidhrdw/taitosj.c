@@ -766,14 +766,6 @@ void taitosj_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	int offs,i;
 
 
-	/* update palette */
-	if (palette_recalc())
-	{
-		memset(dirtybuffer, 1, videoram_size);
-		memset(dirtybuffer2, 1, videoram_size);
-		memset(dirtybuffer3, 1, videoram_size);
-	}
-
 	/* decode modified characters */
 	for (offs = 0;offs < 256;offs++)
 	{
@@ -874,7 +866,7 @@ void taitosj_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	calculate_sprites_areas();
 
 	/* first of all, fill the screen with the background color */
-	fillbitmap(bitmap,Machine->gfx[0]->colortable[8 * (taitosj_colorbank[1] & 0x07)],
+	fillbitmap(bitmap,Machine->pens[8 * (taitosj_colorbank[1] & 0x07)],
 			&Machine->visible_area);
 
 	for (i = 0;i < 4;i++)

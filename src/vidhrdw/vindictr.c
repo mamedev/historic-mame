@@ -22,13 +22,13 @@ int vindictr_vh_start(void)
 		0,			/* index to which gfx system */
 		64,64,		/* size of the playfield in tiles (x,y) */
 		64,1,		/* tile_index = x * xmult + y * ymult (xmult,ymult) */
-	
+
 		0x200,		/* index of palette base */
 		0x100,		/* maximum number of colors */
 		1,			/* color XOR for shadow effect (if any) */
 		0,			/* latch mask */
 		0,			/* transparent pen mask */
-	
+
 		0x70fff,	/* tile data index mask */
 		0x07000,	/* tile data color mask */
 		0x08000,	/* tile data hflip mask */
@@ -66,7 +66,7 @@ int vindictr_vh_start(void)
 		{{ 0 }},			/* mask for the priority */
 		{{ 0 }},			/* mask for the neighbor */
 		{{ 0 }},			/* mask for absolute coordinates */
-		
+
 		{{ 0 }},			/* mask for the ignore value */
 		0,					/* resulting value to indicate "ignore" */
 		0,					/* callback routine for ignored entries */
@@ -76,7 +76,7 @@ int vindictr_vh_start(void)
 	{
 		1,			/* index to which gfx system */
 		64,32,		/* size of the alpha RAM in tiles (x,y) */
-	
+
 		0x000,		/* index of palette base */
 		0x100,		/* maximum number of colors */
 		0x00f,		/* mask of the palette split */
@@ -89,11 +89,11 @@ int vindictr_vh_start(void)
 
 	UINT32 *pflookup;
 	int i, size;
-	
+
 	/* initialize the playfield */
 	if (!ataripf_init(0, &pfdesc))
 		goto cant_create_pf;
-	
+
 	/* initialize the motion objects */
 	if (!atarimo_init(0, &modesc))
 		goto cant_create_mo;
@@ -101,7 +101,7 @@ int vindictr_vh_start(void)
 	/* initialize the alphanumerics */
 	if (!atarian_init(0, &andesc))
 		goto cant_create_an;
-	
+
 	/* modify the playfield lookup table to account for the shifted color bits */
 	pflookup = ataripf_get_lookup(0, &size);
 	for (i = 0; i < size; i++)
@@ -164,22 +164,22 @@ void vindictr_scanline_update(int scanline)
 			case 2:		/* /PFB */
 				ataripf_set_bankbits(0, (data & 7) << 16, scanline);
 				break;
-			
+
 			case 3:		/* /PFHSLD */
 				ataripf_set_xscroll(0, data & 0x1ff, scanline);
 				break;
-			
+
 			case 4:		/* /MOHS */
 				atarimo_set_xscroll(0, data & 0x1ff, scanline);
 				break;
-				
+
 			case 5:		/* /PFSPC */
 				break;
-			
+
 			case 6:		/* /VIRQ */
 				atarigen_scanline_int_gen();
 				break;
-				
+
 			case 7:		/* /PFVS */
 			{
 				/* a new vscroll latches the offset into a counter; we must adjust for this */
@@ -215,11 +215,11 @@ static int overrender_callback(struct ataripf_overrender_data *data, int state)
 		data->drawmode = TRANSPARENCY_NONE;
 		data->drawpens = 0;
 		data->maskpens = ~0x0002;
-		
+
 		/* only need to query if we are modifying the color */
 		return (data->mocolor != 0) ? OVERRENDER_SOME : OVERRENDER_ALL;
 	}
-	
+
 	/* handle a query */
 	else if (state == OVERRENDER_QUERY)
 	{
@@ -240,16 +240,6 @@ static int overrender_callback(struct ataripf_overrender_data *data, int state)
 
 void vindictr_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
-	/* mark the used colors */
-	palette_init_used_colors();
-	ataripf_mark_palette(0);
-	atarimo_mark_palette(0);
-	atarian_mark_palette(0);
-
-	/* update the palette, and mark things dirty if we need to */
-	if (palette_recalc())
-		ataripf_invalidate(0);
-
 	/* draw the layers */
 	ataripf_render(0, bitmap);
 	atarimo_render(0, bitmap, overrender_callback, NULL);

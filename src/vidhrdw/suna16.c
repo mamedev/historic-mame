@@ -210,110 +210,6 @@ static void suna16_draw_sprites(struct osd_bitmap *bitmap)
 }
 
 
-static void suna16_mark_sprite_colors(void)
-{
-	int offs,i,col,colmask[0x100];
-	int count = 0;
-
-	unsigned int *pen_usage =	Machine->gfx[0]->pen_usage;
-	int total_elements		=	Machine->gfx[0]->total_elements;
-	int color_codes_start	=	Machine->drv->gfxdecodeinfo[0].color_codes_start;
-	int total_color_codes	=	Machine->drv->gfxdecodeinfo[0].total_color_codes;
-
-	int xmin = Machine->visible_area.min_x;
-	int xmax = Machine->visible_area.max_x;
-	int ymin = Machine->visible_area.min_y;
-	int ymax = Machine->visible_area.max_y;
-
-	memset(colmask, 0, sizeof(colmask));
-
-	for ( offs = 0xfc00/2; offs < 0x10000/2 ; offs += 4/2 )
-	{
-		int srcpg, srcx,srcy, dimx,dimy;
-		int tile_x, tile_xinc, tile_xstart;
-		int tile_y, tile_yinc;
-		int dx, dy;
-		int flipx, y0;
-
-		int y		=	spriteram16[ offs + 0 + 0x00000 / 2 ];
-		int x		=	spriteram16[ offs + 1 + 0x00000 / 2 ];
-		int dim 	=	spriteram16[ offs + 0 + 0x10000 / 2 ];
-
-		int bank	=	(x >> 12) & 0xf;
-
-		srcpg	=	((y & 0xf000) >> 12) + ((x & 0x0200) >> 5); // src page
-		srcx	=	((y   >> 8) & 0xf) * 2; 					// src col
-		srcy	=	((dim >> 0) & 0xf) * 2; 					// src row
-
-		switch ( (dim >> 4) & 0xc )
-		{
-			case 0x0:	dimx = 2;	dimy =	2;	y0 = 0x100; break;
-			case 0x4:	dimx = 4;	dimy =	4;	y0 = 0x100; break;
-			case 0x8:	dimx = 2;	dimy = 32;	y0 = 0x130; break;
-			default:
-			case 0xc:	dimx = 4;	dimy = 32;	y0 = 0x120; break;
-		}
-
-		if (dimx==4)	{ flipx = srcx & 2; 	srcx &= ~2; }
-		else			{ flipx = 0; }
-
-		x = (x & 0xff) - (x & 0x100);
-		y = (y0 - (y & 0xff) - dimy*8 ) & 0xff;
-
-		if (flipx)	{ tile_xstart = dimx-1; tile_xinc = -1; }
-		else		{ tile_xstart = 0;		tile_xinc = +1; }
-
-		tile_y = 0; 	tile_yinc = +1;
-
-		/* Mark the pens used by the visible portion of this sprite */
-
-		for (dy = 0; dy < dimy * 8; dy += 8)
-		{
-			tile_x = tile_xstart;
-
-			for (dx = 0; dx < dimx * 8; dx += 8)
-			{
-				int addr	=	(srcpg * 0x20 * 0x20) +
-								((srcx + tile_x) & 0x1f) * 0x20 +
-								((srcy + tile_y) & 0x1f);
-
-				int tile	=	spriteram16[ addr + 0x00000 / 2 ];
-				int attr	=	spriteram16[ addr + 0x10000 / 2 ];
-
-				int color	=	(attr + (color_bank ? 0x10 : 0)) % total_color_codes;
-
-				int sx		=	x + dx;
-				int sy		=	(y + dy) & 0xff;
-
-				tile = (tile & 0x3fff) + bank*0x4000;
-
-				if (((sx+7) >= xmin) && (sx <= xmax) &&
-					((sy+7) >= ymin) && (sy <= ymax))
-					colmask[color] |= pen_usage[tile % total_elements];
-
-				tile_x += tile_xinc;
-			}
-
-			tile_y += tile_yinc;
-		}
-
-	}
-
-	for (col = 0; col < total_color_codes; col++)
-		for (i = 0; i < 15; i++)   // pen 15 is transparent
-			if (colmask[col] & (1 << i))
-			{
-				palette_used_colors[16 * col + i + color_codes_start] = PALETTE_COLOR_USED;
-				count++;
-			}
-#if 0
-{	char buf[80];
-	sprintf(buf,"%d",count);
-	usrintf_showmessage(buf);	}
-#endif
-}
-
-
 /***************************************************************************
 
 
@@ -324,12 +220,7 @@ static void suna16_mark_sprite_colors(void)
 
 void suna16_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	/* Mark the sprites' colors */
-	palette_init_used_colors();
-	suna16_mark_sprite_colors();
-	palette_recalc();
-
 	/* I believe background is black */
-	fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
+	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 	suna16_draw_sprites(bitmap);
 }

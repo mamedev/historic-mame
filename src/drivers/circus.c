@@ -313,7 +313,7 @@ static const struct MachineDriver machine_driver_circus =
 	ARTWORK_COLORS,ARTWORK_COLORS,		/* Leave extra colors for the overlay */
 	init_palette,
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY ,
 	0,
 	circus_vh_start,
 	generic_vh_stop,

@@ -283,7 +283,7 @@ static const struct MachineDriver machine_driver_contra =
 	128, 2*8*16*16,
 	contra_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	contra_vh_start,
 	contra_vh_stop,

@@ -70,20 +70,20 @@ int ultraman_vh_start(void)
 		return 1;
 	}
 
-	if (K051316_vh_start_0(ZOOMROM0_MEM_REGION,4,zoom_callback_0))
+	if (K051316_vh_start_0(ZOOMROM0_MEM_REGION,4,TILEMAP_TRANSPARENT,0,zoom_callback_0))
 	{
 		K051960_vh_stop();
 		return 1;
 	}
 
-	if (K051316_vh_start_1(ZOOMROM1_MEM_REGION,4,zoom_callback_1))
+	if (K051316_vh_start_1(ZOOMROM1_MEM_REGION,4,TILEMAP_TRANSPARENT,0,zoom_callback_1))
 	{
 		K051960_vh_stop();
 		K051316_vh_stop_0();
 		return 1;
 	}
 
-	if (K051316_vh_start_2(ZOOMROM2_MEM_REGION,4,zoom_callback_2))
+	if (K051316_vh_start_2(ZOOMROM2_MEM_REGION,4,TILEMAP_OPAQUE,0,zoom_callback_2))
 	{
 		K051960_vh_stop();
 		K051316_vh_stop_0();
@@ -159,26 +159,9 @@ WRITE16_HANDLER( ultraman_gfxctrl_w )
 
 void ultraman_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	int i;
-
-	K051316_tilemap_update_0();
-	K051316_tilemap_update_1();
-	K051316_tilemap_update_2();
-
-	palette_init_used_colors();
-	K051960_mark_sprites_colors();
-
-	/* set transparent pens for the K051316 */
-	for (i = 0;i < 64;i++){
-		palette_used_colors[(zoom_colorbase[0] + i) * 16] = PALETTE_COLOR_TRANSPARENT;
-		palette_used_colors[(zoom_colorbase[1] + i) * 16] = PALETTE_COLOR_TRANSPARENT;
-	}
-
-	palette_recalc();
-
-	K051316_zoom_draw_2(bitmap,0);
-	K051316_zoom_draw_1(bitmap,0);
+	K051316_zoom_draw_2(bitmap,0,0);
+	K051316_zoom_draw_1(bitmap,0,0);
 	K051960_sprites_draw(bitmap,0,0);
-	K051316_zoom_draw_0(bitmap,0);
+	K051316_zoom_draw_0(bitmap,0,0);
 	K051960_sprites_draw(bitmap,1,1);
 }

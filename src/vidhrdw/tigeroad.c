@@ -173,9 +173,6 @@ static void render_text( struct osd_bitmap *bitmap )
 
 void tigeroad_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	palette_recalc();
-	/* no need to check the return code since we redraw everything each frame */
-
 	render_background( bitmap,0 );
 	render_sprites( bitmap );
 	render_background( bitmap,1 );

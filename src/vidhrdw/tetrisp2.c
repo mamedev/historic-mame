@@ -337,7 +337,7 @@ void tetrisp2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	int i,layers_ctrl = -1;
 
 	/* Black background color ? */
-	fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
+	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 
 	tilemap_set_flip(tilemap_0, (tetrisp2_vregs[0] & 1) ? (TILEMAP_FLIPX | TILEMAP_FLIPY) : 0 );
 	tilemap_set_flip(tilemap_1, (tetrisp2_vregs[0] & 1) ? (TILEMAP_FLIPX | TILEMAP_FLIPY) : 0 );
@@ -379,14 +379,6 @@ if (keyboard_pressed(KEYCODE_Z))
 #endif
 }
 #endif
-
-	tilemap_update(ALL_TILEMAPS);
-
-	palette_init_used_colors();
-
-	memset(palette_used_colors,PALETTE_COLOR_USED,Machine->drv->total_colors);
-
-	palette_recalc();
 
 	if (layers_ctrl & 1)	tilemap_draw(bitmap,tilemap_0, 0, 0);
 	if (layers_ctrl & 8)	for (i=0xf;i>=0;i--)	tetrisp2_draw_sprites(bitmap,i);

@@ -149,9 +149,6 @@ static UINT16 *videoplane[2];
 static UINT32 vram_mask;
 static UINT32 vram_xmask, vram_ymask;
 
-static UINT8 intensity;
-static UINT8 update_intensity;
-
 
 
 /*************************************
@@ -232,9 +229,6 @@ int itech32_vh_start(void)
 
 	scanline_timer = 0;
 
-	intensity = 0x60;
-	update_intensity = 0;
-
 	return 0;
 }
 
@@ -280,11 +274,12 @@ WRITE16_HANDLER( timekill_colorbc_w )
 WRITE16_HANDLER( timekill_intensity_w )
 {
 	if (ACCESSING_LSB)
-		if ((data & 0xff) != intensity)
-		{
-			intensity = data & 0xff;
-			update_intensity = 1;
-		}
+	{
+		double intensity = (double)(data & 0xff) / (double)0x60;
+		int i;
+		for (i = 0; i < 8192; i++)
+			palette_set_brightness(i, intensity);
+	}
 }
 
 
@@ -344,28 +339,6 @@ WRITE32_HANDLER( itech020_plane_w )
  *
  *************************************/
 
-static void timekill_update_intensity(void)
-{
-	int i;
-
-	for (i = 0; i < Machine->drv->total_colors; i++)
-	{
-		int offset = i * 2;
-		int r, g, b;
-
-		r = paletteram16[offset] & 0xff;
-		g = paletteram16[offset] >> 8;
-		b = paletteram16[offset + 1] >> 8;
-
-		r = r * intensity / 0x60;
-		g = g * intensity / 0x60;
-		b = b * intensity / 0x60;
-
-		palette_change_color(i, r, g, b);
-	}
-}
-
-
 WRITE16_HANDLER( timekill_paletteram_w )
 {
 	int r, g, b;
@@ -375,10 +348,6 @@ WRITE16_HANDLER( timekill_paletteram_w )
 	r = paletteram16[offset & ~1] & 0xff;
 	g = paletteram16[offset & ~1] >> 8;
 	b = paletteram16[offset |  1] >> 8;
-
-	r = r * intensity / 0x60;
-	g = g * intensity / 0x60;
-	b = b * intensity / 0x60;
 
 	palette_change_color(offset / 2, r, g, b);
 }
@@ -1151,14 +1120,6 @@ READ32_HANDLER( itech020_video_r )
 void itech32_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
 	int y;
-
-	/* handle changes to the overall intensity (Time Killers) */
-	if (update_intensity && itech32_planes > 1)
-		timekill_update_intensity();
-	update_intensity = 0;
-
-	/* recompute the palette */
-	palette_recalc();
 
 	/* loop over height */
 	for (y = Machine->visible_area.min_y; y <= Machine->visible_area.max_y; y++)

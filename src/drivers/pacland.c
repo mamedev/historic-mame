@@ -328,7 +328,7 @@ static const struct MachineDriver machine_driver_pacland =
 	256,256*4+256*4+3*64*16,
 	pacland_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_AFTER_VBLANK,
+	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_AFTER_VBLANK,
 	0,
 	pacland_vh_start,
 	pacland_vh_stop,

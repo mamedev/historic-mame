@@ -248,49 +248,10 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 	}
 }
 
-static void mark_sprites_colors(void)
-{
-	int offs,i;
-	UINT16 palette_map[16];
-
-
-	memset(palette_map,0,sizeof(palette_map));
-
-	for (offs = 0; offs < spriteram_size/2; offs += 8)
-	{
-		if (spriteram16[offs] & 0x04)	/* visible */
-		{
-			int color;
-
-			color = (spriteram16[offs+2] & 0xf0) >> 4;
-			palette_map[color] |= 0xffff;
-		}
-	}
-
-	/* now build the final table */
-	for (i = 0; i < 16;i++)
-	{
-		int usage = palette_map[i], j;
-		if (usage)
-		{
-			for (j = 1; j < 16; j++)
-				if (usage & (1 << j))
-					palette_used_colors[i * 16 + j] |= PALETTE_COLOR_VISIBLE;
-		}
-	}
-}
-
 /******************************************************************************/
 
 void tecmo16_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	tilemap_update(ALL_TILEMAPS);
-
-	palette_init_used_colors();
-	mark_sprites_colors();
-	palette_used_colors[0x300] = PALETTE_COLOR_USED;
-	palette_recalc();
-
 	fillbitmap(priority_bitmap,0,NULL);
 	fillbitmap(bitmap,Machine->pens[0x300],&Machine->visible_area);
 	tilemap_draw(bitmap,bg_tilemap,0,1);

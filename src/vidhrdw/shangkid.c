@@ -216,8 +216,7 @@ void shangkid_screenrefresh( struct osd_bitmap *bitmap, int fullfresh )
 	tilemap_set_flip( background, flipscreen?(TILEMAP_FLIPX|TILEMAP_FLIPY):0 );
 	tilemap_set_scrollx( background,0,shangkid_videoreg[0]-40 );
 	tilemap_set_scrolly( background,0,shangkid_videoreg[2]+0x10 );
-	tilemap_update( ALL_TILEMAPS );
-	palette_recalc();
+
 	tilemap_draw( bitmap,background,0,0 );
 	draw_sprites( bitmap );
 	tilemap_draw( bitmap,background,1,0 ); /* high priority tiles */

@@ -22,13 +22,13 @@ int klax_vh_start(void)
 		0,			/* index to which gfx system */
 		64,32,		/* size of the playfield in tiles (x,y) */
 		32,1,		/* tile_index = x * xmult + y * ymult (xmult,ymult) */
-	
+
 		0x100,		/* index of palette base */
 		0x100,		/* maximum number of colors */
 		0,			/* color XOR for shadow effect (if any) */
 		0,			/* latch mask */
 		0,			/* transparent pen mask */
-	
+
 		0x01fff,	/* tile data index mask */
 		0xf0000,	/* tile data color mask */
 		0x08000,	/* tile data hflip mask */
@@ -66,7 +66,7 @@ int klax_vh_start(void)
 		{{ 0 }},			/* mask for the priority */
 		{{ 0 }},			/* mask for the neighbor */
 		{{ 0 }},			/* mask for absolute coordinates */
-		
+
 		{{ 0 }},			/* mask for the ignore value */
 		0,					/* resulting value to indicate "ignore" */
 		0					/* callback routine for ignored entries */
@@ -75,7 +75,7 @@ int klax_vh_start(void)
 	/* initialize the playfield */
 	if (!ataripf_init(0, &pfdesc))
 		goto cant_create_pf;
-	
+
 	/* initialize the motion objects */
 	if (!atarimo_init(0, &modesc))
 		goto cant_create_mo;
@@ -130,11 +130,11 @@ static int overrender_callback(struct ataripf_overrender_data *data, int state)
 		data->drawmode = TRANSPARENCY_NONE;
 		data->drawpens = 0;
 		data->maskpens = 0x0001;
-		
+
 		/* only need to query if we are modifying the color */
 		return OVERRENDER_SOME;
 	}
-	
+
 	/* handle a query */
 	else if (state == OVERRENDER_QUERY)
 		return (data->pfcolor == 15) ? OVERRENDER_YES : OVERRENDER_NO;
@@ -151,15 +151,6 @@ static int overrender_callback(struct ataripf_overrender_data *data, int state)
 
 void klax_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	/* mark the used colors */
-	palette_init_used_colors();
-	ataripf_mark_palette(0);
-	atarimo_mark_palette(0);
-
-	/* update the palette, and mark things dirty if we need to */
-	if (palette_recalc())
-		ataripf_invalidate(0);
-
 	/* draw the layers */
 	ataripf_render(0, bitmap);
 	atarimo_render(0, bitmap, overrender_callback, NULL);

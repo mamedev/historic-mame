@@ -48,11 +48,13 @@ is the default), MAMEW reads the following config files in order:
 		  - DRIVER.INI (based on the source filename of the driver)
           - PARENT.INI (for clones only)
           - GAMENAME.INI
-
 the settings in the later files override those in the earlier files. So, for
 example, if you wanted to disable hardware stretch in the vector games, you
 can create a VECTOR.INI with the "hwstretch 0" line in it, and it will
 override whatever hwstretch value you have in your MAME.INI.
+
+Note: If you rename your executable to e.g. M37B17.exe, MAME will parse
+      M37B17.INI instead of MAME.INI.
 
 * -[no]verbose / -[no]v (default: off)
 Displays some diagnostic information at startup. IMPORTANT: when reporting
@@ -356,6 +358,15 @@ pause the game, or quit. The default is OFF (-nomouse).
 Controls whether or not MAMEW looks for joystick/gamepad controllers. When
 this is enabled, MAMEW will ask DirectInput about which controllers are
 connected. The default is OFF (-nojoystick).
+
+* -[no]steadykey / -[no]steady
+Some games require two or more buttons to be pressed at exactly the same time
+to make special moves. Due to limitations in the PC keyboard hardware, it can
+be difficult or even impossible to accomplish that using the standard keyboard
+handling. This option selects a different handling that makes it easier to
+register simultaneous button presses, but has the disadvantage of making
+controls less responsive. The default is OFF (-nosteadykey)
+
 
 MAME core sound options
 -----------------------

@@ -297,108 +297,6 @@ WRITE16_HANDLER( pspikes_palette_bank_w )
 
 ***************************************************************************/
 
-static void aerofgt_spr_dopalette(void)
-{
-	int offs;
-	int color,i;
-	int colmask[32];
-	int pal_base;
-
-
-	for (color = 0;color < 32;color++) colmask[color] = 0;
-
-	offs = 0;
-	while (offs < 0x0400 && (aerofgt_spriteram3[offs] & 0x8000) == 0)
-	{
-		int attr_start,map_start;
-
-		attr_start = 4 * (aerofgt_spriteram3[offs] & 0x03ff);
-
-		color = (aerofgt_spriteram3[attr_start + 2] & 0x0f00) >> 8;
-		map_start = 2 * (aerofgt_spriteram3[attr_start + 3] & 0x3fff);
-		if (map_start >= 0x4000) color += 16;
-
-		colmask[color] |= 0xffff;
-
-		offs++;
-	}
-
-	pal_base = Machine->drv->gfxdecodeinfo[sprite_gfx].color_codes_start;
-	for (color = 0;color < 16;color++)
-	{
-		for (i = 0;i < 15;i++)
-		{
-			if (colmask[color] & (1 << i))
-				palette_used_colors[pal_base + 16 * color + i] = PALETTE_COLOR_USED;
-		}
-	}
-	pal_base = Machine->drv->gfxdecodeinfo[sprite_gfx+1].color_codes_start;
-	for (color = 0;color < 16;color++)
-	{
-		for (i = 0;i < 15;i++)
-		{
-			if (colmask[color+16] & (1 << i))
-				palette_used_colors[pal_base + 16 * color + i] = PALETTE_COLOR_USED;
-		}
-	}
-}
-
-static void turbofrc_spr_dopalette(void)
-{
-	int color,i;
-	int colmask[16];
-	int pal_base;
-	int attr_start,base,first;
-
-
-	for (color = 0;color < 16;color++) colmask[color] = 0;
-
-	pal_base = Machine->drv->gfxdecodeinfo[sprite_gfx].color_codes_start;
-
-	base = 0;
-	first = 4 * aerofgt_spriteram3[0x1fe + base];
-	for (attr_start = first + base;attr_start < base + 0x0200-4;attr_start += 4)
-	{
-		color = (aerofgt_spriteram3[attr_start + 2] & 0x000f) + 16 * spritepalettebank;
-		colmask[color] |= 0xffff;
-	}
-
-	for (color = 0;color < 16;color++)
-	{
-		for (i = 0;i < 15;i++)
-		{
-			if (colmask[color] & (1 << i))
-				palette_used_colors[pal_base + 16 * color + i] = PALETTE_COLOR_USED;
-		}
-	}
-
-
-	if (aerofgt_spriteram3_size > 0x400)	/* turbofrc, not pspikes */
-	{
-		for (color = 0;color < 16;color++) colmask[color] = 0;
-
-		pal_base = Machine->drv->gfxdecodeinfo[sprite_gfx+1].color_codes_start;
-
-		base = 0x0200;
-		first = 4 * aerofgt_spriteram3[0x1fe + base];
-		for (attr_start = first + base;attr_start < base + 0x0200-4;attr_start += 4)
-		{
-			color = (aerofgt_spriteram3[attr_start + 2] & 0x000f) + 16 * spritepalettebank;
-			colmask[color] |= 0xffff;
-		}
-
-		for (color = 0;color < 16;color++)
-		{
-			for (i = 0;i < 15;i++)
-			{
-				if (colmask[color] & (1 << i))
-					palette_used_colors[pal_base + 16 * color + i] = PALETTE_COLOR_USED;
-			}
-		}
-	}
-}
-
-
 static void aerofgt_drawsprites(struct osd_bitmap *bitmap,int priority)
 {
 	int offs;
@@ -553,12 +451,6 @@ void pspikes_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		tilemap_set_scrollx(bg1_tilemap,(i + scrolly) & 0xff,aerofgt_rasterram[i]);
 	tilemap_set_scrolly(bg1_tilemap,0,scrolly);
 
-	tilemap_update(ALL_TILEMAPS);
-
-	palette_init_used_colors();
-	turbofrc_spr_dopalette();
-	palette_recalc();
-
 	fillbitmap(priority_bitmap,0,NULL);
 
 	tilemap_draw(bitmap,bg1_tilemap,0,0);
@@ -571,12 +463,6 @@ void karatblz_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	tilemap_set_scrolly(bg1_tilemap,0,bg1scrolly);
 	tilemap_set_scrollx(bg2_tilemap,0,bg2scrollx-4);
 	tilemap_set_scrolly(bg2_tilemap,0,bg2scrolly);
-
-	tilemap_update(ALL_TILEMAPS);
-
-	palette_init_used_colors();
-	turbofrc_spr_dopalette();
-	palette_recalc();
 
 	fillbitmap(priority_bitmap,0,NULL);
 
@@ -599,12 +485,6 @@ void spinlbrk_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 //	tilemap_set_scrolly(bg1_tilemap,0,bg1scrolly);
 	tilemap_set_scrollx(bg2_tilemap,0,bg2scrollx-4);
 //	tilemap_set_scrolly(bg2_tilemap,0,bg2scrolly);
-
-	tilemap_update(ALL_TILEMAPS);
-
-	palette_init_used_colors();
-	turbofrc_spr_dopalette();
-	palette_recalc();
 
 	fillbitmap(priority_bitmap,0,NULL);
 
@@ -629,12 +509,6 @@ void turbofrc_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	tilemap_set_scrollx(bg2_tilemap,0,bg2scrollx-7);
 	tilemap_set_scrolly(bg2_tilemap,0,bg2scrolly+2);
 
-	tilemap_update(ALL_TILEMAPS);
-
-	palette_init_used_colors();
-	turbofrc_spr_dopalette();
-	palette_recalc();
-
 	fillbitmap(priority_bitmap,0,NULL);
 
 	tilemap_draw(bitmap,bg1_tilemap,0,0);
@@ -651,12 +525,6 @@ void aerofgt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	tilemap_set_scrolly(bg1_tilemap,0,bg1scrolly);
 	tilemap_set_scrollx(bg2_tilemap,0,aerofgt_rasterram[0x0200]-20);
 	tilemap_set_scrolly(bg2_tilemap,0,bg2scrolly);
-
-	tilemap_update(ALL_TILEMAPS);
-
-	palette_init_used_colors();
-	aerofgt_spr_dopalette();
-	palette_recalc();
 
 	fillbitmap(priority_bitmap,0,NULL);
 

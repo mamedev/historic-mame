@@ -152,11 +152,6 @@ WRITE_HANDLER( gundealr_flipscreen_w )
 
 void gundealr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	tilemap_update(ALL_TILEMAPS);
-
-	palette_init_used_colors();
-	palette_recalc();
-
 	tilemap_draw(bitmap,bg_tilemap,0,0);
 	tilemap_draw(bitmap,fg_tilemap,0,0);
 }

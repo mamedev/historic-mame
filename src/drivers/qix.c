@@ -668,10 +668,10 @@ static const struct MachineDriver machine_driver_qix =
 	/* video hardware */
 	256, 256, { 0, 255, 8, 247 },
 	0,
-	1024,1024,
+	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	qix_vh_start,
 	qix_vh_stop,
@@ -726,10 +726,10 @@ static const struct MachineDriver machine_driver_mcu =
 	/* video hardware */
 	256, 256, { 0, 255, 8, 247 },
 	0,
-	1024,1024,
+	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	qix_vh_start,
 	qix_vh_stop,
@@ -784,10 +784,10 @@ static const struct MachineDriver machine_driver_zookeep =
 	/* video hardware */
 	256, 256, { 0, 255, 8, 247 },
 	0,
-	1024,1024,
+	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	qix_vh_start,
 	qix_vh_stop,
@@ -830,10 +830,10 @@ static const struct MachineDriver machine_driver_slither =
 	/* video hardware */
 	256, 256, { 0, 255, 0, 255 },
 	0,
-	1024,1024,
+	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	qix_vh_start,
 	qix_vh_stop,

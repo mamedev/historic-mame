@@ -1,44 +1,66 @@
 /***************************************************************************
-Cops 01
-Nichibutsu - 1985
 
-calb@gsyc.inf.uc3m.es
+Cops 01      (c) 1985 Nichibutsu
+Mighty Guy   (c) 1986 Nichibutsu
+
+driver by Carlos A. Lozano <calb@gsyc.inf.uc3m.es>
 
 TODO:
 ----
-- Fix colors. (it isn't using the lookup proms)
-- Fix sprites bank. (ahhhghg!)
-- Fix sprites clip.
+mightguy:
+- crashes during the confrontation with the final boss (only tested with Invincibility on)
+- missing emulation of the 1412M2 protection chip, used by the sound CPU.
 
 
-MEMORY MAP
-----------
-0000-BFFF  ROM
-C000-C7FF  RAM
-D000-DFFF  VRAM (Background)
-E000-E0FF  VRAM (Sprites)
-F000-F3FF  VRAM (Foreground)
+Mighty Guy board layout:
+-----------------------
 
-AUDIO MEMORY MAP (Advise: Real audio chip used, UNKNOWN)
-----------------
-0000-7FFF  ROM
-8000-8000  UNKNOWN
-C000-C700  RAM
+  cpu
+
+12MHz     SW1
+          SW2                 clr.13D clr.14D clr.15D      clr.19D
+
+      Nichibutsu
+      NBB 60-06                        4     5
+
+  1 2 3  6116 6116                    6116   6116
+
+-------
+
+ video
+
+ 6116   11  Nichibutsu
+            NBA 60-07    13B                               20MHz
+                                2148                2148
+                                2148                2148
+
+              6116             9                        8  2E
+ 20G          10               7                        6
+ -------
+
+ audio sub-board MT-S3
+ plugs into 40 pin socket at 20G
+
+                     10.IC2
+
+                     Nichibutsu
+                     1412M2 (Yamaha 3810?)
+                               8MHz
+                     YM3526
 
 ***************************************************************************/
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
+
+extern data8_t *cop01_bgvideoram,*cop01_fgvideoram;
+
 void cop01_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void cop01_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-WRITE_HANDLER( cop01_scrollx_w );
-WRITE_HANDLER( cop01_gfxbank_w );
 int cop01_vh_start(void);
-void cop01_vh_stop(void);
-
-extern unsigned char *cop01_videoram;
-extern size_t cop01_videoram_size;
-
+void cop01_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+WRITE_HANDLER( cop01_background_w );
+WRITE_HANDLER( cop01_foreground_w );
+WRITE_HANDLER( cop01_vreg_w );
 
 
 static WRITE_HANDLER( cop01_sound_command_w )
@@ -70,18 +92,16 @@ static READ_HANDLER( cop01_sound_command_r )
 
 static MEMORY_READ_START( readmem )
 	{ 0x0000, 0xbfff, MRA_ROM },
-	{ 0xc000, 0xc7ff, MRA_RAM },
+	{ 0xc000, 0xcfff, MRA_RAM },	/* c000-c7ff in cop01 */
 	{ 0xd000, 0xdfff, MRA_RAM },
-	{ 0xe000, 0xe0ff, MRA_RAM },
 MEMORY_END
 
 static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xc7ff, MWA_RAM },
-	{ 0xd000, 0xd7ff, videoram_w, &videoram, &videoram_size },
-	{ 0xd800, 0xdfff, colorram_w, &colorram },
+	{ 0xc000, 0xcfff, MWA_RAM },	/* c000-c7ff in cop01 */
+	{ 0xd000, 0xdfff, cop01_background_w, &cop01_bgvideoram },
 	{ 0xe000, 0xe0ff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0xf000, 0xf3ff, MWA_RAM, &cop01_videoram, &cop01_videoram_size },
+	{ 0xf000, 0xf3ff, cop01_foreground_w, &cop01_fgvideoram },
 MEMORY_END
 
 static PORT_READ_START( readport )
@@ -93,13 +113,14 @@ static PORT_READ_START( readport )
 PORT_END
 
 static PORT_WRITE_START( writeport )
-	{ 0x40, 0x40, cop01_gfxbank_w },
-	{ 0x41, 0x42, cop01_scrollx_w },
+	{ 0x40, 0x43, cop01_vreg_w },
 	{ 0x44, 0x44, cop01_sound_command_w },
+	{ 0x45, 0x45, watchdog_reset_w }, /* ? */
 PORT_END
 
 static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
+	{ 0x8000, 0x8000, MRA_NOP },	/* irq ack? */
 	{ 0xc000, 0xc7ff, MRA_RAM },
 MEMORY_END
 
@@ -121,13 +142,28 @@ static PORT_WRITE_START( sound_writeport )
 	{ 0x05, 0x05, AY8910_write_port_2_w },
 PORT_END
 
+/* this just gets some garbage out of the YM3526 */
+static READ_HANDLER( kludge ) { static int timer; return timer++; }
+
+static PORT_READ_START( mightguy_sound_readport )
+	{ 0x03, 0x03, kludge },		/* 1412M2? */
+	{ 0x06, 0x06, cop01_sound_command_r },
+PORT_END
+
+static PORT_WRITE_START( mightguy_sound_writeport )
+	{ 0x00, 0x00, YM3526_control_port_0_w },
+	{ 0x01, 0x01, YM3526_write_port_0_w },
+	{ 0x02, 0x02, MWA_NOP },	/* 1412M2? */
+	{ 0x03, 0x03, MWA_NOP },	/* 1412M2? */
+PORT_END
+
 
 
 INPUT_PORTS_START( cop01 )
 	PORT_START      /* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
@@ -135,12 +171,12 @@ INPUT_PORTS_START( cop01 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* IN1 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL  )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL  )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL  )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL  )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL  )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
@@ -149,7 +185,7 @@ INPUT_PORTS_START( cop01 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_SERVICE( 0x20, IP_ACTIVE_LOW )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -202,48 +238,132 @@ INPUT_PORTS_START( cop01 )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( mightguy )
+	PORT_START /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START /* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_SERVICE )	/* same as the service dip switch */
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* DSW1 */
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
+	PORT_DIPSETTING(	0x03, "3" )
+	PORT_DIPSETTING(	0x02, "4" )
+	PORT_DIPSETTING(	0x01, "5" )
+	PORT_DIPSETTING(	0x00, "6" )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(	0x04, "every 200000" )
+	PORT_DIPSETTING(	0x00, "only 500000" )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x08, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(	0x10, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(	0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+	PORT_SERVICE( 0x40, IP_ACTIVE_LOW )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(	0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+
+	PORT_START	/* DSW2 */
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(	0x01, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(	0x03, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(	0x02, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Free_Play ) )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(	0x04, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(	0x0c, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(	0x08, DEF_STR( 1C_6C ) )
+	PORT_DIPNAME( 0x30, 0x20, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(	0x30, "Easy" )
+	PORT_DIPSETTING(	0x20, "Normal" )
+	PORT_DIPSETTING(	0x10, "Hard" )
+	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Invincibility", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(	0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(	0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+INPUT_PORTS_END
+
 
 
 static struct GfxLayout charlayout =
 {
-	8,8,	/* 8*8 characters */
-	256,	/* 256 characters */
-	4,	/* 4 bits per pixel */
+	8,8,
+	RGN_FRAC(1,1),
+	4,
 	{ 0, 1, 2, 3 },
-	{ 4, 0, 12, 8, 20, 16, 28, 24 },
+	{ 1*4, 0*4, 3*4, 2*4, 5*4, 4*4, 7*4, 6*4 },
 	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32 },
-	32*8	/* every char takes 32 consecutive bytes */
+	32*8
 };
 
 static struct GfxLayout tilelayout =
 {
-	8,8,	/* 8*8 characters */
-	1024,	/* 1024 characters */
-	4,	/* 4 bits per pixel */
+	8,8,
+	RGN_FRAC(1,1),
+	4,
 	{ 0, 1, 2, 3 },
-	{ 4, 0, 12, 8, 20, 16, 28, 24 },
+	{ 4+8*0, 0+8*0, 4+8*1, 0+8*1, 4+8*2, 0+8*2, 4+8*3, 0+8*3 },
 	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32 },
-	32*8	/* every char takes 32 consecutive bytes */
+	32*8
 };
 
 static struct GfxLayout spritelayout =
 {
-	16,16,	/* 16*16 sprites */
-	512,	/* 512 sprites */
-	4,	/* 4 bits per pixel */
-	{ 0, 1, 2, 3 }, /* plane offset */
-	{ 4, 0, 4+512*64*8, 0+512*64*8, 12, 8, 12+512*64*8, 8+512*64*8,
-			20, 16, 20+512*64*8, 16+512*64*8, 28, 24, 28+512*64*8, 24+512*64*8 },
-	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32,
-			8*32, 9*32, 10*32, 11*32, 12*32, 13*32, 14*32, 15*32 },
+	16,16,
+	RGN_FRAC(1,2),
+	4,
+	{ 0, 1, 2, 3 },
+	{
+		RGN_FRAC(1,2)+4, RGN_FRAC(1,2)+0,   4, 0,
+		RGN_FRAC(1,2)+12, RGN_FRAC(1,2)+8,  12, 8,
+		RGN_FRAC(1,2)+20, RGN_FRAC(1,2)+16, 20, 16,
+		RGN_FRAC(1,2)+28, RGN_FRAC(1,2)+24, 28, 24,
+	},
+	{
+		0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32,
+		8*32, 9*32, 10*32, 11*32, 12*32, 13*32, 14*32, 15*32
+	},
 	64*8
 };
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &charlayout,            0, 16 },	/* ?? */
-	{ REGION_GFX2, 0, &tilelayout,        16*16,  4 },
-	{ REGION_GFX3, 0, &spritelayout, 16*16+4*16, 16 },
+	{ REGION_GFX1, 0, &charlayout,         0,  1 },
+	{ REGION_GFX2, 0, &tilelayout,        16,  8 },
+	{ REGION_GFX3, 0, &spritelayout, 16+8*16, 16 },
 	{ -1 }
 };
 
@@ -260,21 +380,27 @@ static struct AY8910interface ay8910_interface =
 	{ 0 }
 };
 
+static struct YM3526interface YM3526_interface =
+{
+	1,
+	4000000,	/* 4 MHz??? */
+	{ 100 }
+};
+
 
 
 static const struct MachineDriver machine_driver_cop01 =
 {
-	/* basic machine hardware */
 	{
 		{
 			CPU_Z80,
-			3500000,        /* 3.5 MHz (?) */
+			4000000,	/* ???? */
 			readmem,writemem,readport,writeport,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			3000000,        /* 3.0 MHz (?) */
+			3000000,	/* ???? */
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
 			ignore_interrupt,0	/* IRQs are caused by the main CPU */
 		},
@@ -284,15 +410,15 @@ static const struct MachineDriver machine_driver_cop01 =
 	0, /* init machine */
 
 	/* video hardware */
-	32*8, 32*8, { 0, 32*8-1, 2*8, 30*8-1 },
+	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	256, 16*16+4*16+16*16,
+	256, 16+8*16+16*16,
 	cop01_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
 	0,
 	cop01_vh_start,
-	cop01_vh_stop,
+	0,
 	cop01_vh_screenrefresh,
 
 	/* sound hardware */
@@ -305,12 +431,48 @@ static const struct MachineDriver machine_driver_cop01 =
 	}
 };
 
+static const struct MachineDriver machine_driver_mightguy =
+{
+	{
+		{
+			CPU_Z80,
+			4000000,	/* ???? */
+			readmem,writemem,readport,writeport,
+			interrupt,1
+		},
+		{
+			CPU_Z80 | CPU_AUDIO_CPU,
+			3000000,	/* ???? */
+			sound_readmem,sound_writemem,mightguy_sound_readport,mightguy_sound_writeport,
+			ignore_interrupt,0	/* IRQs are caused by the main CPU */
+		},
+	},
+	60,DEFAULT_60HZ_VBLANK_DURATION,
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
+	0, /* init machine */
 
-/***************************************************************************
+	/* video hardware */
+	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
+	gfxdecodeinfo,
+	256, 16+8*16+16*16,
+	cop01_vh_convert_color_prom,
 
-  Game driver(s)
+	VIDEO_TYPE_RASTER,
+	0,
+	cop01_vh_start,
+	0,
+	cop01_vh_screenrefresh,
 
-***************************************************************************/
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_YM3526,
+			&YM3526_interface
+		}
+	}
+};
+
 
 
 ROM_START( cop01 )
@@ -331,20 +493,20 @@ ROM_START( cop01 )
 	ROM_LOAD( "cop05.16c",    0x04000, 0x4000, 0xc6ac5a35 )
 
 	ROM_REGION( 0x10000, REGION_GFX3, ROMREGION_DISPOSE )
-	ROM_LOAD( "cop10.3e",     0x00000, 0x2000, 0x444cb19d )	/* sprites */
-	ROM_LOAD( "cop11.5e",     0x02000, 0x2000, 0x9078bc04 )
-	ROM_LOAD( "cop12.6e",     0x04000, 0x2000, 0x257a6706 )
-	ROM_LOAD( "cop13.8e",     0x06000, 0x2000, 0x07c4ea66 )
-	ROM_LOAD( "cop06.3g",     0x08000, 0x2000, 0xf1c1f4a5 )
-	ROM_LOAD( "cop07.5g",     0x0a000, 0x2000, 0x11db7b72 )
-	ROM_LOAD( "cop08.6g",     0x0c000, 0x2000, 0xa63ddda6 )
-	ROM_LOAD( "cop09.8g",     0x0e000, 0x2000, 0x855a2ec3 )
+	ROM_LOAD( "cop06.3g",     0x00000, 0x2000, 0xf1c1f4a5 )	/* sprites */
+	ROM_LOAD( "cop07.5g",     0x02000, 0x2000, 0x11db7b72 )
+	ROM_LOAD( "cop08.6g",     0x04000, 0x2000, 0xa63ddda6 )
+	ROM_LOAD( "cop09.8g",     0x06000, 0x2000, 0x855a2ec3 )
+	ROM_LOAD( "cop10.3e",     0x08000, 0x2000, 0x444cb19d )
+	ROM_LOAD( "cop11.5e",     0x0a000, 0x2000, 0x9078bc04 )
+	ROM_LOAD( "cop12.6e",     0x0c000, 0x2000, 0x257a6706 )
+	ROM_LOAD( "cop13.8e",     0x0e000, 0x2000, 0x07c4ea66 )
 
 	ROM_REGION( 0x0500, REGION_PROMS, 0 )
 	ROM_LOAD( "copproma.13d", 0x0000, 0x0100, 0x97f68a7a )	/* red */
 	ROM_LOAD( "coppromb.14d", 0x0100, 0x0100, 0x39a40b4c )	/* green */
 	ROM_LOAD( "coppromc.15d", 0x0200, 0x0100, 0x8181748b )	/* blue */
-	ROM_LOAD( "coppromd.19d", 0x0300, 0x0100, 0x6a63dbb8 )	/* lookup table? (not implemented) */
+	ROM_LOAD( "coppromd.19d", 0x0300, 0x0100, 0x6a63dbb8 )	/* tile lookup table */
 	ROM_LOAD( "copprome.2e",  0x0400, 0x0100, 0x214392fa )	/* sprite lookup table */
 ROM_END
 
@@ -366,24 +528,60 @@ ROM_START( cop01a )
 	ROM_LOAD( "cop05.16c",    0x04000, 0x4000, 0xc6ac5a35 )
 
 	ROM_REGION( 0x10000, REGION_GFX3, ROMREGION_DISPOSE )
-	ROM_LOAD( "cop01alt.010", 0x00000, 0x2000, 0x94aee9d6 )	/* sprites */
-	ROM_LOAD( "cop11.5e",     0x02000, 0x2000, 0x9078bc04 )
-	ROM_LOAD( "cop12.6e",     0x04000, 0x2000, 0x257a6706 )
-	ROM_LOAD( "cop13.8e",     0x06000, 0x2000, 0x07c4ea66 )
-	ROM_LOAD( "cop01alt.006", 0x08000, 0x2000, 0xcac7dac8 )
-	ROM_LOAD( "cop07.5g",     0x0a000, 0x2000, 0x11db7b72 )
-	ROM_LOAD( "cop08.6g",     0x0c000, 0x2000, 0xa63ddda6 )
-	ROM_LOAD( "cop09.8g",     0x0e000, 0x2000, 0x855a2ec3 )
+	ROM_LOAD( "cop01alt.006", 0x00000, 0x2000, 0xcac7dac8 )	/* sprites */
+	ROM_LOAD( "cop07.5g",     0x02000, 0x2000, 0x11db7b72 )
+	ROM_LOAD( "cop08.6g",     0x04000, 0x2000, 0xa63ddda6 )
+	ROM_LOAD( "cop09.8g",     0x06000, 0x2000, 0x855a2ec3 )
+	ROM_LOAD( "cop01alt.010", 0x08000, 0x2000, 0x94aee9d6 )
+	ROM_LOAD( "cop11.5e",     0x0a000, 0x2000, 0x9078bc04 )
+	ROM_LOAD( "cop12.6e",     0x0c000, 0x2000, 0x257a6706 )
+	ROM_LOAD( "cop13.8e",     0x0e000, 0x2000, 0x07c4ea66 )
 
 	ROM_REGION( 0x0500, REGION_PROMS, 0 )
 	ROM_LOAD( "copproma.13d", 0x0000, 0x0100, 0x97f68a7a )	/* red */
 	ROM_LOAD( "coppromb.14d", 0x0100, 0x0100, 0x39a40b4c )	/* green */
 	ROM_LOAD( "coppromc.15d", 0x0200, 0x0100, 0x8181748b )	/* blue */
-	ROM_LOAD( "coppromd.19d", 0x0300, 0x0100, 0x6a63dbb8 )	/* lookup table? (not implemented) */
+	ROM_LOAD( "coppromd.19d", 0x0300, 0x0100, 0x6a63dbb8 )	/* tile lookup table */
 	ROM_LOAD( "copprome.2e",  0x0400, 0x0100, 0x214392fa )	/* sprite lookup table */
+	/* a timing PROM (13B?) is probably missing */
+ROM_END
+
+ROM_START( mightguy )
+	ROM_REGION( 0x60000, REGION_CPU1, 0 ) /* Z80 code (main cpu) */
+	ROM_LOAD( "1.2b",       0x0000, 0x4000,0xbc8e4557 )
+	ROM_LOAD( "2.4b",       0x4000, 0x4000,0xfb73d684 )
+	ROM_LOAD( "3.5b",       0x8000, 0x4000,0xb14b6ab8 )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* Z80 code (sound cpu) */
+	ROM_LOAD( "11.15b",     0x0000, 0x4000, 0x576183ea)
+
+	ROM_REGION( 0x8000, REGION_USER1, 0 ) /* 1412M2 protection data */
+	ROM_LOAD( "10.ic2",     0x0000, 0x8000, 0x1a5d2bb1 )
+
+	ROM_REGION( 0x02000, REGION_GFX1, ROMREGION_DISPOSE ) /* alpha */
+	ROM_LOAD( "10.15g",     0x0000, 0x2000, 0x17874300)
+
+	ROM_REGION( 0x08000, REGION_GFX2, ROMREGION_DISPOSE ) /* tiles */
+	ROM_LOAD( "4.15c",      0x0000, 0x4000,0x84d29e76 )
+	ROM_LOAD( "5.16c",      0x4000, 0x4000,0xf7bb8d82 )
+
+	ROM_REGION( 0x14000, REGION_GFX3, ROMREGION_DISPOSE ) /* sprites */
+	ROM_LOAD( "6.3g",       0x00000, 0x2000, 0x6ff88615)
+	ROM_LOAD( "7.8g",       0x02000, 0x8000, 0xe79ea66f)
+	ROM_LOAD( "8.3e",       0x0a000, 0x2000, 0x29f6eb44)
+	ROM_LOAD( "9.8e",       0x0c000, 0x8000, 0xb9f64c6f)
+
+	ROM_REGION( 0x600, REGION_PROMS, 0 )
+	ROM_LOAD( "clr.13d",    0x000, 0x100, 0xc4cf0bdd ) /* red */
+	ROM_LOAD( "clr.14d",    0x100, 0x100, 0x5b3b8a9b ) /* green */
+	ROM_LOAD( "clr.15d",    0x200, 0x100, 0x6c072a64 ) /* blue */
+	ROM_LOAD( "clr.19d",    0x300, 0x100, 0x19b66ac6 ) /* tile lookup table */
+	ROM_LOAD( "2e",         0x400, 0x100, 0xd9c45126 ) /* sprite lookup table */
+	ROM_LOAD( "13b",        0x500, 0x100, 0x4a6f9a6d ) /* state machine data used for video signals generation (not used in emulation)*/
 ROM_END
 
 
 
-GAMEX( 1985, cop01,  0,     cop01, cop01, 0, ROT0, "Nichibutsu", "Cop 01 (set 1)", GAME_IMPERFECT_COLORS )
-GAMEX( 1985, cop01a, cop01, cop01, cop01, 0, ROT0, "Nichibutsu", "Cop 01 (set 2)", GAME_IMPERFECT_COLORS )
+GAME( 1985, cop01,    0,     cop01,    cop01,    0, ROT0,   "Nichibutsu", "Cop 01 (set 1)" )
+GAME( 1985, cop01a,   cop01, cop01,    cop01,    0, ROT0,   "Nichibutsu", "Cop 01 (set 2)" )
+GAMEX(1986, mightguy, 0,     mightguy, mightguy, 0, ROT270, "Nichibutsu", "Mighty Guy", GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_SOUND )

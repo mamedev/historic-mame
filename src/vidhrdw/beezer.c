@@ -21,7 +21,7 @@ void beezer_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	int x, y;
 	const UINT8 *ram = memory_region(REGION_CPU1);
 
-	if (palette_recalc() || full_refresh)
+	if (full_refresh)
 		for (y = Machine->visible_area.min_y; y <= Machine->visible_area.max_y; y+=2)
 		{
 			for (x = Machine->visible_area.min_x; x <= Machine->visible_area.max_x; x++)

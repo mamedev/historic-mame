@@ -668,7 +668,7 @@ static const struct MachineDriver machine_driver_tehkanwc =
 	768, 768,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	tehkanwc_vh_start,
 	tehkanwc_vh_stop,

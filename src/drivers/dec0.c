@@ -29,8 +29,8 @@ Boulderdash use the same graphics chips but are different pcbs.
 
 	There are Secret Agent (bootleg) and Robocop (bootleg) sets to add.
 
-  Thanks to Gouky & Richard Bush for information along the way, especially
-  Gouky's patch for Bad Dudes & YM3812 information!
+	Thanks to Gouky & Richard Bush for information along the way, especially
+	Gouky's patch for Bad Dudes & YM3812 information!
 	Thanks to JC Alexander for fix to Robocop ending!
 
 ***************************************************************************/
@@ -39,77 +39,10 @@ Boulderdash use the same graphics chips but are different pcbs.
 #include "vidhrdw/generic.h"
 #include "cpu/m6502/m6502.h"
 #include "cpu/h6280/h6280.h"
-
-/* Video emulation definitions */
-int  dec0_vh_start(void);
-void dec0_vh_stop(void);
-int  dec0_nodma_vh_start(void);
-void dec0_nodma_vh_stop(void);
-void hbarrel_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void baddudes_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void birdtry_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void robocop_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void hippodrm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void slyspy_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void midres_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-
-extern data16_t *dec0_pf1_rowscroll,*dec0_pf2_rowscroll,*dec0_pf3_rowscroll;
-extern data16_t *dec0_pf1_colscroll,*dec0_pf2_colscroll,*dec0_pf3_colscroll;
-extern data16_t *dec0_pf1_data,*dec0_pf2_data,*dec0_pf3_data;
-
-WRITE16_HANDLER( dec0_pf1_control_0_w );
-WRITE16_HANDLER( dec0_pf1_control_1_w );
-WRITE16_HANDLER( dec0_pf1_data_w );
-READ16_HANDLER( dec0_pf1_data_r );
-WRITE16_HANDLER( dec0_pf2_control_0_w );
-WRITE16_HANDLER( dec0_pf2_control_1_w );
-WRITE16_HANDLER( dec0_pf2_data_w );
-READ16_HANDLER( dec0_pf2_data_r );
-WRITE16_HANDLER( dec0_pf3_control_0_w );
-WRITE16_HANDLER( dec0_pf3_control_1_w );
-WRITE16_HANDLER( dec0_pf3_data_w );
-READ16_HANDLER( dec0_pf3_data_r );
-WRITE16_HANDLER( dec0_priority_w );
-WRITE16_HANDLER( dec0_update_sprites_w );
-
-WRITE16_HANDLER( dec0_paletteram_rg_w );
-WRITE16_HANDLER( dec0_paletteram_b_w );
-
-READ_HANDLER( dec0_pf3_data_8bit_r );
-WRITE_HANDLER( dec0_pf3_data_8bit_w );
-WRITE_HANDLER( dec0_pf3_control_8bit_w );
-
-/* System prototypes - from machine/dec0.c */
-READ16_HANDLER( dec0_controls_r );
-READ16_HANDLER( dec0_rotary_r );
-READ16_HANDLER( midres_controls_r );
-READ16_HANDLER( slyspy_controls_r );
-READ16_HANDLER( slyspy_protection_r );
-WRITE16_HANDLER( slyspy_state_w );
-READ16_HANDLER( slyspy_state_r );
-WRITE16_HANDLER( slyspy_240000_w );
-WRITE16_HANDLER( slyspy_242000_w );
-WRITE16_HANDLER( slyspy_246000_w );
-WRITE16_HANDLER( slyspy_248000_w );
-WRITE16_HANDLER( slyspy_24c000_w );
-WRITE16_HANDLER( slyspy_24e000_w );
-
-void init_slyspy(void);
-void init_hippodrm(void);
-void init_robocop(void);
-void init_baddudes(void);
-void init_hbarrel(void);
-void init_hbarrelw(void);
-void init_birdtry(void);
-
-extern void dec0_i8751_write(int data);
-extern void dec0_i8751_reset(void);
-READ_HANDLER( hippodrm_prot_r );
-WRITE_HANDLER( hippodrm_prot_w );
-READ_HANDLER( hippodrm_shared_r );
-WRITE_HANDLER( hippodrm_shared_w );
+#include "dec0.h"
 
 data16_t *dec0_ram;
+data8_t *robocop_shared_ram;
 
 /******************************************************************************/
 
@@ -140,12 +73,12 @@ static WRITE16_HANDLER( dec0_control_w )
 		case 8: /* Interrupt ack (VBL - IRQ 6) */
 			break;
 
-		case 0xa: /* Mix Psel(?) */
+		case 0xa: /* Mix Psel(?). */
  			logerror("CPU #0 PC %06x: warning - write %02x to unmapped memory address %06x\n",cpu_get_pc(),data,0x30c010+(offset<<1));
 			break;
 
-//		case 0xc: /* Cblk - coin blockout?  Seems to be unused by the games */
-//			break;
+		case 0xc: /* Cblk - coin blockout.  Seems to be unused by the games */
+			break;
 
 		case 0xe: /* Reset Intel 8751? - not sure, all the games write here at startup */
 			dec0_i8751_reset();
@@ -188,10 +121,10 @@ static WRITE16_HANDLER( midres_sound_w )
 static MEMORY_READ16_START( dec0_readmem )
 	{ 0x000000, 0x05ffff, MRA16_ROM },
 	{ 0x242800, 0x243fff, MRA16_RAM }, /* Robocop only */
-	{ 0x244000, 0x245fff, dec0_pf1_data_r },
-	{ 0x24a000, 0x24a7ff, dec0_pf2_data_r },
+	{ 0x244000, 0x245fff, MRA16_RAM },
+	{ 0x24a000, 0x24a7ff, MRA16_RAM },
 	{ 0x24c800, 0x24c87f, MRA16_RAM },
-	{ 0x24d000, 0x24d7ff, dec0_pf3_data_r },
+	{ 0x24d000, 0x24d7ff, MRA16_RAM },
 	{ 0x300000, 0x30001f, dec0_rotary_r },
 	{ 0x30c000, 0x30c00b, dec0_controls_r },
 	{ 0x310000, 0x3107ff, MRA16_RAM },
@@ -230,12 +163,15 @@ MEMORY_END
 
 static MEMORY_READ_START( robocop_sub_readmem )
 	{ 0x000000, 0x00ffff, MRA_ROM },
-	{ 0x1f0000, 0x1f1fff, MRA_BANK8 }, /* Main ram */
+	{ 0x1f0000, 0x1f1fff, MRA_RAM }, /* Main ram */
+	{ 0x1f2000, 0x1f3fff, MRA_RAM }, /* Shared ram */
 MEMORY_END
 
 static MEMORY_WRITE_START( robocop_sub_writemem )
 	{ 0x000000, 0x00ffff, MWA_ROM },
-	{ 0x1f0000, 0x1f1fff, MWA_BANK8 }, /* Main ram */
+	{ 0x1f0000, 0x1f1fff, MWA_RAM }, /* Main ram */
+	{ 0x1f2000, 0x1f3fff, MWA_RAM, &robocop_shared_ram }, /* Shared ram */
+	{ 0x1ff402, 0x1ff403, H6280_irq_status_w },
 MEMORY_END
 
 static MEMORY_READ_START( hippodrm_sub_readmem )
@@ -309,7 +245,13 @@ static MEMORY_READ16_START( midres_readmem )
 	{ 0x100000, 0x103fff, MRA16_RAM },
 	{ 0x120000, 0x1207ff, MRA16_RAM },
 	{ 0x180000, 0x18000f, midres_controls_r },
-	{ 0x320000, 0x321fff, dec0_pf1_data_r },
+	{ 0x240000, 0x24007f, MRA16_RAM },
+	{ 0x240400, 0x2407ff, MRA16_RAM },
+	{ 0x2c0000, 0x2c007f, MRA16_RAM },
+	{ 0x2c0400, 0x2c07ff, MRA16_RAM },
+	{ 0x340000, 0x34007f, MRA16_RAM },
+	{ 0x340400, 0x3407ff, MRA16_RAM },
+	{ 0x320000, 0x321fff, MRA16_RAM },
 MEMORY_END
 
 static MEMORY_WRITE16_START( midres_writemem )
@@ -951,7 +893,7 @@ static const struct MachineDriver machine_driver_hbarrel =
 			ignore_interrupt,0
 		}
 	},
-	58, 529, /* 58 Hz, 529ms Vblank */
+	57.41, 529, /* 57.41 Hz, 529us Vblank */
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 
@@ -959,10 +901,10 @@ static const struct MachineDriver machine_driver_hbarrel =
  	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
 
 	gfxdecodeinfo,
-	1024, 1024,
+	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER  | VIDEO_NEEDS_6BITS_PER_GUN,
 	0,
 	dec0_vh_start,
 	dec0_vh_stop,
@@ -1003,18 +945,18 @@ static const struct MachineDriver machine_driver_baddudes =
 			ignore_interrupt,0
 		}
 	},
-	58, 529, /* 58 Hz, 529ms Vblank */
+	57.41, 529, /* 57.41 Hz, 529us Vblank */
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 
 	/* video hardware */
- 	32*8, 64*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
+ 	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
 
 	gfxdecodeinfo,
-	1024, 1024,
+	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER  | VIDEO_NEEDS_6BITS_PER_GUN,
 	0,
 	dec0_vh_start,
 	dec0_vh_stop,
@@ -1055,7 +997,7 @@ static const struct MachineDriver machine_driver_birdtry =
 			ignore_interrupt,0
 		}
 	},
-	58, 529, /* 58 Hz, 529ms Vblank */
+	57.41, 529, /* 57.41 Hz, 529us Vblank */
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 
@@ -1063,10 +1005,10 @@ static const struct MachineDriver machine_driver_birdtry =
  	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
 
 	gfxdecodeinfo,
-	1024, 1024,
+	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER  | VIDEO_NEEDS_6BITS_PER_GUN,
 	0,
 	dec0_vh_start,
 	dec0_vh_stop,
@@ -1113,18 +1055,18 @@ static const struct MachineDriver machine_driver_robocop =
 			ignore_interrupt,0
 		},
 	},
-	58, 529, /* 58 Hz, 529ms Vblank */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
+	57.41, 529, /* 57.41 Hz, 529us Vblank */
+	50,	/* Interleave between HuC6280 & 68000 */
 	0,
 
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
 
 	gfxdecodeinfo,
-	1024, 1024,
+	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER  | VIDEO_NEEDS_6BITS_PER_GUN,
 	0,
 	dec0_vh_start,
 	dec0_vh_stop,
@@ -1165,7 +1107,7 @@ static const struct MachineDriver machine_driver_robocopb =
 			ignore_interrupt,0
 		}
 	},
-	58, 529, /* 58 Hz, 529ms Vblank */
+	57.41, 529, /* 57.41 Hz, 529us Vblank */
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 
@@ -1173,10 +1115,10 @@ static const struct MachineDriver machine_driver_robocopb =
 	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
 
 	gfxdecodeinfo,
-	1024, 1024,
+	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER  | VIDEO_NEEDS_6BITS_PER_GUN,
 	0,
 	dec0_vh_start,
 	dec0_vh_stop,
@@ -1223,18 +1165,18 @@ static const struct MachineDriver machine_driver_hippodrm =
 			ignore_interrupt,0
 		}
 	},
-	58, 529, /* 58 Hz, 529ms Vblank */
+	57.41, 529, /* 57.41 Hz, 529us Vblank */
 	5,	/* Interleave between H6280 & 68000 */
 	0,
 
 	/* video hardware */
- 	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
+  	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
 
 	gfxdecodeinfo,
-	1024, 1024,
+	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER  | VIDEO_NEEDS_6BITS_PER_GUN,
 	0,
 	dec0_vh_start,
 	dec0_vh_stop,
@@ -1275,7 +1217,7 @@ static const struct MachineDriver machine_driver_slyspy =
 			ignore_interrupt,0
 		}
 	},
-	58, 529, /* 58 Hz, 529ms Vblank */
+	57.41, 529, /* 57.41 Hz, 529us Vblank */
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 
@@ -1283,10 +1225,10 @@ static const struct MachineDriver machine_driver_slyspy =
  	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
 
 	gfxdecodeinfo,
-	1024, 1024,
+	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER ,
 	0,
 	dec0_nodma_vh_start,
 	dec0_nodma_vh_stop,
@@ -1327,7 +1269,7 @@ static const struct MachineDriver machine_driver_midres =
 			ignore_interrupt,0
 		}
 	},
-	58, 529, /* 58 Hz, 529ms Vblank */
+	57.41, 529, /* 57.41 Hz, 529us Vblank */
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 
@@ -1335,10 +1277,10 @@ static const struct MachineDriver machine_driver_midres =
 	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
 
 	midres_gfxdecodeinfo,
-	1024, 1024,
+	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER ,
 	0,
 	dec0_nodma_vh_start,
 	dec0_nodma_vh_stop,
@@ -1581,6 +1523,49 @@ ROM_END
 
 ROM_START( robocop )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 ) /* 68000 code */
+	ROM_LOAD16_BYTE( "ep05-4.11c", 0x00000, 0x10000, 0x29c35379 )
+	ROM_LOAD16_BYTE( "ep01-4.11b", 0x00001, 0x10000, 0x77507c69 )
+	ROM_LOAD16_BYTE( "ep04-3", 0x20000, 0x10000, 0x39181778 )
+	ROM_LOAD16_BYTE( "ep00-3", 0x20001, 0x10000, 0xe128541f )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 6502 Sound */
+	ROM_LOAD( "ep03-3", 0x08000, 0x08000, 0x5b164b24 )
+
+	ROM_REGION( 0x200000, REGION_CPU3, 0 )	/* HuC6280 CPU */
+	ROM_LOAD( "en_24.a2", 0x01e00, 0x0200, 0xb8e2ca98 )
+
+	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE ) /* chars */
+	ROM_LOAD( "ep23", 0x00000, 0x10000, 0xa77e4ab1 )
+	ROM_LOAD( "ep22", 0x10000, 0x10000, 0x9fbd6903 )
+
+	ROM_REGION( 0x40000, REGION_GFX2, ROMREGION_DISPOSE ) /* tiles */
+	ROM_LOAD( "ep20", 0x00000, 0x10000, 0x1d8d38b8 )
+	ROM_LOAD( "ep21", 0x10000, 0x10000, 0x187929b2 )
+	ROM_LOAD( "ep18", 0x20000, 0x10000, 0xb6580b5e )
+	ROM_LOAD( "ep19", 0x30000, 0x10000, 0x9bad01c7 )
+
+	ROM_REGION( 0x20000, REGION_GFX3, ROMREGION_DISPOSE ) /* tiles */
+	ROM_LOAD( "ep14", 0x00000, 0x08000, 0xca56ceda )
+	ROM_LOAD( "ep15", 0x08000, 0x08000, 0xa945269c )
+	ROM_LOAD( "ep16", 0x10000, 0x08000, 0xe7fa4d58 )
+	ROM_LOAD( "ep17", 0x18000, 0x08000, 0x84aae89d )
+
+	ROM_REGION( 0x80000, REGION_GFX4, ROMREGION_DISPOSE ) /* sprites */
+	ROM_LOAD( "ep07", 0x00000, 0x10000, 0x495d75cf )
+	ROM_LOAD( "ep06", 0x10000, 0x08000, 0xa2ae32e2 )
+	ROM_LOAD( "ep11", 0x20000, 0x10000, 0x62fa425a )
+	ROM_LOAD( "ep10", 0x30000, 0x08000, 0xcce3bd95 )
+	ROM_LOAD( "ep09", 0x40000, 0x10000, 0x11bed656 )
+	ROM_LOAD( "ep08", 0x50000, 0x08000, 0xc45c7b4c )
+	ROM_LOAD( "ep13", 0x60000, 0x10000, 0x8fca9f28 )
+	ROM_LOAD( "ep12", 0x70000, 0x08000, 0x3cd1d0c3 )
+
+	ROM_REGION( 0x10000, REGION_SOUND1, 0 )	/* ADPCM samples */
+	ROM_LOAD( "ep02", 0x00000, 0x10000, 0x711ce46f )
+ROM_END
+
+ROM_START( robocopw )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 ) /* 68000 code */
 	ROM_LOAD16_BYTE( "ep05-3", 0x00000, 0x10000, 0xba69bf84 )
 	ROM_LOAD16_BYTE( "ep01-3", 0x00001, 0x10000, 0x2a9f6e2c )
 	ROM_LOAD16_BYTE( "ep04-3", 0x20000, 0x10000, 0x39181778 )
@@ -1589,8 +1574,51 @@ ROM_START( robocop )
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 6502 Sound */
 	ROM_LOAD( "ep03-3", 0x08000, 0x08000, 0x5b164b24 )
 
-	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* HuC6280 CPU */
-	/* Filled in later */
+	ROM_REGION( 0x200000, REGION_CPU3, 0 )	/* HuC6280 CPU */
+	ROM_LOAD( "en_24.a2", 0x01e00, 0x0200, 0xb8e2ca98 )
+
+	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE ) /* chars */
+	ROM_LOAD( "ep23", 0x00000, 0x10000, 0xa77e4ab1 )
+	ROM_LOAD( "ep22", 0x10000, 0x10000, 0x9fbd6903 )
+
+	ROM_REGION( 0x40000, REGION_GFX2, ROMREGION_DISPOSE ) /* tiles */
+	ROM_LOAD( "ep20", 0x00000, 0x10000, 0x1d8d38b8 )
+	ROM_LOAD( "ep21", 0x10000, 0x10000, 0x187929b2 )
+	ROM_LOAD( "ep18", 0x20000, 0x10000, 0xb6580b5e )
+	ROM_LOAD( "ep19", 0x30000, 0x10000, 0x9bad01c7 )
+
+	ROM_REGION( 0x20000, REGION_GFX3, ROMREGION_DISPOSE ) /* tiles */
+	ROM_LOAD( "ep14", 0x00000, 0x08000, 0xca56ceda )
+	ROM_LOAD( "ep15", 0x08000, 0x08000, 0xa945269c )
+	ROM_LOAD( "ep16", 0x10000, 0x08000, 0xe7fa4d58 )
+	ROM_LOAD( "ep17", 0x18000, 0x08000, 0x84aae89d )
+
+	ROM_REGION( 0x80000, REGION_GFX4, ROMREGION_DISPOSE ) /* sprites */
+	ROM_LOAD( "ep07", 0x00000, 0x10000, 0x495d75cf )
+	ROM_LOAD( "ep06", 0x10000, 0x08000, 0xa2ae32e2 )
+	ROM_LOAD( "ep11", 0x20000, 0x10000, 0x62fa425a )
+	ROM_LOAD( "ep10", 0x30000, 0x08000, 0xcce3bd95 )
+	ROM_LOAD( "ep09", 0x40000, 0x10000, 0x11bed656 )
+	ROM_LOAD( "ep08", 0x50000, 0x08000, 0xc45c7b4c )
+	ROM_LOAD( "ep13", 0x60000, 0x10000, 0x8fca9f28 )
+	ROM_LOAD( "ep12", 0x70000, 0x08000, 0x3cd1d0c3 )
+
+	ROM_REGION( 0x10000, REGION_SOUND1, 0 )	/* ADPCM samples */
+	ROM_LOAD( "ep02", 0x00000, 0x10000, 0x711ce46f )
+ROM_END
+
+ROM_START( robocopj )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 ) /* 68000 code */
+	ROM_LOAD16_BYTE( "em05-1.c11", 0x00000, 0x10000, 0x954ea8f4 )
+	ROM_LOAD16_BYTE( "em01-1.b12", 0x00001, 0x10000, 0x1b87b622 )
+	ROM_LOAD16_BYTE( "ep04-3", 0x20000, 0x10000, 0x39181778 )
+	ROM_LOAD16_BYTE( "ep00-3", 0x20001, 0x10000, 0xe128541f )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 6502 Sound */
+	ROM_LOAD( "ep03-3", 0x08000, 0x08000, 0x5b164b24 )
+
+	ROM_REGION( 0x200000, REGION_CPU3, 0 )	/* HuC6280 CPU */
+	ROM_LOAD( "en_24.a2", 0x01e00, 0x0200, 0xb8e2ca98 )
 
 	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE ) /* chars */
 	ROM_LOAD( "ep23", 0x00000, 0x10000, 0xa77e4ab1 )
@@ -1632,8 +1660,8 @@ ROM_START( robocopu )
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 6502 Sound */
 	ROM_LOAD( "ep03", 0x08000, 0x08000, 0x1089eab8 )
 
-	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* HuC6280 CPU */
-	/* Filled in later */
+	ROM_REGION( 0x200000, REGION_CPU3, 0 )	/* HuC6280 CPU */
+	ROM_LOAD( "en_24.a2", 0x01e00, 0x0200, 0xb8e2ca98 )
 
 	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE ) /* chars */
 	ROM_LOAD( "ep23", 0x00000, 0x10000, 0xa77e4ab1 )
@@ -1675,8 +1703,8 @@ ROM_START( robocpu0 )
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 6502 Sound */
 	ROM_LOAD( "ep03", 0x08000, 0x08000, 0x1089eab8 )
 
-	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* HuC6280 CPU */
-	/* Filled in later */
+	ROM_REGION( 0x200000, REGION_CPU3, 0 )	/* HuC6280 CPU */
+	ROM_LOAD( "en_24.a2", 0x01e00, 0x0200, 0xb8e2ca98 )
 
 	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE ) /* chars */
 	ROM_LOAD( "ep23", 0x00000, 0x10000, 0xa77e4ab1 )
@@ -1911,7 +1939,7 @@ ROM_START( slyspy )
 	ROM_LOAD( "fa11.11k",     0x00000, 0x20000, 0x4e547bad )
 
 	ROM_REGION( 0x0100, REGION_PROMS, 0 )
-	ROM_LOAD( "mb7114h.21k",  0x0000, 0x0100, 0xad26e8d4 )	/* timing? (not used) */
+	ROM_LOAD( "mb7114h.21k",  0x0000, 0x0100, 0xad26e8d4 )	/* Priority (not used) */
 ROM_END
 
 ROM_START( slyspy2 )
@@ -1948,7 +1976,7 @@ ROM_START( slyspy2 )
 	ROM_LOAD( "fa11.11k",     0x00000, 0x20000, 0x4e547bad )
 
 	ROM_REGION( 0x0100, REGION_PROMS, 0 )
-	ROM_LOAD( "mb7114h.21k",  0x0000, 0x0100, 0xad26e8d4 )	/* timing? (not used) */
+	ROM_LOAD( "mb7114h.21k",  0x0000, 0x0100, 0xad26e8d4 )	/* Priority (not used) */
 ROM_END
 
 ROM_START( secretag )
@@ -1985,7 +2013,7 @@ ROM_START( secretag )
 	ROM_LOAD( "fa11.11k",     0x00000, 0x20000, 0x4e547bad )
 
 	ROM_REGION( 0x0100, REGION_PROMS, 0 )
-	ROM_LOAD( "mb7114h.21k",  0x0000, 0x0100, 0xad26e8d4 )	/* timing? (not used) */
+	ROM_LOAD( "mb7114h.21k",  0x0000, 0x0100, 0xad26e8d4 )	/* Priority (not used) */
 ROM_END
 
 ROM_START( secretab )
@@ -2058,7 +2086,7 @@ ROM_START( midres )
 	ROM_LOAD( "fl17",              0x00000, 0x20000, 0x9029965d )
 
 	ROM_REGION( 0x0100, REGION_PROMS, 0 )
-	ROM_LOAD( "7114.prm",          0x0000, 0x0100, 0xeb539ffb )	/* timing? (not used) */
+	ROM_LOAD( "7114.prm",          0x0000, 0x0100, 0xeb539ffb )	/* Priority (not used) */
 ROM_END
 
 ROM_START( midresu )
@@ -2097,7 +2125,7 @@ ROM_START( midresu )
 	ROM_LOAD( "fl17",              0x00000, 0x20000, 0x9029965d )
 
 	ROM_REGION( 0x0100, REGION_PROMS, 0 )
-	ROM_LOAD( "7114.prm",          0x0000, 0x0100, 0xeb539ffb )	/* timing? (not used) */
+	ROM_LOAD( "7114.prm",          0x0000, 0x0100, 0xeb539ffb )	/* Priority (not used) */
 ROM_END
 
 ROM_START( midresj )
@@ -2136,7 +2164,7 @@ ROM_START( midresj )
 	ROM_LOAD( "fh17",              0x00000, 0x20000, 0xc7b0a24e )
 
 	ROM_REGION( 0x0100, REGION_PROMS, 0 )
-	ROM_LOAD( "7114.prm",          0x0000, 0x0100, 0xeb539ffb )	/* timing? (not used) */
+	ROM_LOAD( "7114.prm",          0x0000, 0x0100, 0xeb539ffb )	/* Priority (not used) */
 ROM_END
 
 ROM_START( bouldash )
@@ -2173,27 +2201,72 @@ ROM_START( bouldash )
 
 	ROM_REGION( 0x20000, REGION_SOUND1, 0 )	/* ADPCM samples */
 	ROM_LOAD( "fn-11",      0x00000, 0x10000, 0x990fd8d9 )
+
+	ROM_REGION( 0x0100, REGION_PROMS, 0 )
+	ROM_LOAD( "ta-16.21k",          0x0000, 0x0100, 0xad26e8d4 )	/* Priority (not used) */
+ROM_END
+
+ROM_START( bouldshj )
+	ROM_REGION( 0x60000, REGION_CPU1, 0 ) /* 68000 code */
+	ROM_LOAD16_BYTE( "fn-15-1.17l",  0x00000, 0x10000, 0xd3ef20f8 )
+	ROM_LOAD16_BYTE( "fn-12-1.9l",   0x00001, 0x10000, 0xf4a10b45 )
+	ROM_LOAD16_BYTE( "fn-16-.19l",   0x20000, 0x10000, 0xfd1806a5 )
+	ROM_LOAD16_BYTE( "fn-13-.11l",   0x20001, 0x10000, 0xd24d3681 )
+	ROM_LOAD16_BYTE( "fn-17-.20l",   0x40000, 0x10000, 0x28d48a37 )
+	ROM_LOAD16_BYTE( "fn-14-.13l",   0x40001, 0x10000, 0x8c61c682 )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* Sound CPU */
+	ROM_LOAD( "fn-10",      0x00000, 0x10000, 0xc74106e7 )
+
+	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE ) /* chars */
+	ROM_LOAD( "fn-04",        0x08000, 0x08000, 0x40f5a760 )
+	ROM_CONTINUE(             0x00000, 0x08000 )	/* the two halves are swapped */
+	ROM_LOAD( "fn-05",        0x18000, 0x08000, 0x824f2168 )
+	ROM_CONTINUE(             0x10000, 0x08000 )
+
+	ROM_REGION( 0x20000, REGION_GFX2, ROMREGION_DISPOSE ) /* tiles */
+	ROM_LOAD( "fn-07",        0x00000, 0x10000, 0xeac6a3b3 )
+	ROM_LOAD( "fn-06",        0x10000, 0x10000, 0x3feee292 )
+
+	ROM_REGION( 0x40000, REGION_GFX3, ROMREGION_DISPOSE ) /* tiles */
+	ROM_LOAD( "fn-09",        0x00000, 0x20000, 0xc2b27bd2 )
+	ROM_LOAD( "fn-08",        0x20000, 0x20000, 0x5ac97178 )
+
+	ROM_REGION( 0x40000, REGION_GFX4, ROMREGION_DISPOSE ) /* sprites */
+	ROM_LOAD( "fn-01",        0x00000, 0x10000, 0x9333121b )
+	ROM_LOAD( "fn-03",        0x10000, 0x10000, 0x254ba60f )
+	ROM_LOAD( "fn-00",        0x20000, 0x10000, 0xec18d098 )
+	ROM_LOAD( "fn-02",        0x30000, 0x10000, 0x4f060cba )
+
+	ROM_REGION( 0x20000, REGION_SOUND1, 0 )	/* ADPCM samples */
+	ROM_LOAD( "fn-11",      0x00000, 0x10000, 0x990fd8d9 )
+
+	ROM_REGION( 0x0100, REGION_PROMS, 0 )
+	ROM_LOAD( "ta-16.21k",          0x0000, 0x0100, 0xad26e8d4 )	/* Priority (not used) */
 ROM_END
 
 /******************************************************************************/
 
-GAMEX( 1987, hbarrel,  0,        hbarrel,  hbarrel,  hbarrel,  ROT270, "Data East USA",         "Heavy Barrel (US)", GAME_NO_COCKTAIL )
-GAMEX( 1987, hbarrelw, hbarrel,  hbarrel,  hbarrel,  hbarrelw, ROT270, "Data East Corporation", "Heavy Barrel (World)", GAME_NO_COCKTAIL )
-GAMEX( 1988, baddudes, 0,        baddudes, baddudes, baddudes, ROT0,   "Data East USA",         "Bad Dudes vs. Dragonninja (US)", GAME_NO_COCKTAIL )
-GAMEX( 1988, drgninja, baddudes, baddudes, baddudes, baddudes, ROT0,   "Data East Corporation", "Dragonninja (Japan)", GAME_NO_COCKTAIL )
-GAMEX( 1988, birdtry,  0,        birdtry,  hbarrel,  birdtry,  ROT270, "Data East Corporation", "Birdie Try (Japan)", GAME_NOT_WORKING | GAME_NO_COCKTAIL)
-GAMEX( 1988, robocop,  0,        robocop,  robocop,  robocop,  ROT0,   "Data East Corporation", "Robocop (World revision 3)", GAME_UNEMULATED_PROTECTION | GAME_NO_COCKTAIL )
-GAMEX( 1988, robocopu, robocop,  robocop,  robocop,  robocop,  ROT0,   "Data East USA",         "Robocop (US revision 1)", GAME_UNEMULATED_PROTECTION | GAME_NO_COCKTAIL )
-GAMEX( 1988, robocpu0, robocop,  robocop,  robocop,  robocop,  ROT0,   "Data East USA",         "Robocop (US revision 0)", GAME_UNEMULATED_PROTECTION | GAME_NO_COCKTAIL )
-GAMEX( 1988, robocopb, robocop,  robocopb, robocop,  robocop,  ROT0,   "bootleg",               "Robocop (World bootleg)", GAME_NO_COCKTAIL )
-GAMEX( 1989, hippodrm, 0,        hippodrm, hippodrm, hippodrm, ROT0,   "Data East USA",         "Hippodrome (US)", GAME_NO_COCKTAIL )
-GAMEX( 1989, ffantasy, hippodrm, hippodrm, hippodrm, hippodrm, ROT0,   "Data East Corporation", "Fighting Fantasy (Japan revision 2)", GAME_NO_COCKTAIL )
-GAMEX( 1989, ffantasa, hippodrm, hippodrm, hippodrm, hippodrm, ROT0,   "Data East Corporation", "Fighting Fantasy (Japan)", GAME_NO_COCKTAIL )
-GAMEX( 1989, slyspy,   0,        slyspy,   slyspy,   slyspy,   ROT0,   "Data East USA",         "Sly Spy (US revision 3)", GAME_NO_COCKTAIL )
-GAMEX( 1989, slyspy2,  slyspy,   slyspy,   slyspy,   slyspy,   ROT0,   "Data East USA",         "Sly Spy (US revision 2)", GAME_NO_COCKTAIL )
-GAMEX( 1989, secretag, slyspy,   slyspy,   slyspy,   slyspy,   ROT0,   "Data East Corporation", "Secret Agent (World)", GAME_NO_COCKTAIL )
-GAMEX( 1989, secretab, slyspy,   slyspy,   slyspy,   slyspy,   ROT0,   "bootleg",               "Secret Agent (bootleg)", GAME_NO_COCKTAIL | GAME_NOT_WORKING )
-GAMEX( 1989, midres,   0,        midres,   midres,   0,        ROT0,   "Data East Corporation", "Midnight Resistance (World)", GAME_NO_COCKTAIL )
-GAMEX( 1989, midresu,  midres,   midres,   midres,   0,        ROT0,   "Data East USA",         "Midnight Resistance (US)", GAME_NO_COCKTAIL )
-GAMEX( 1989, midresj,  midres,   midres,   midres,   0,        ROT0,   "Data East Corporation", "Midnight Resistance (Japan)", GAME_NO_COCKTAIL )
-GAMEX( 1990, bouldash, 0,        slyspy,   bouldash, slyspy,   ROT0,   "Data East Corporation (licensed from First Star)", "Boulder Dash / Boulder Dash Part 2 (World)", GAME_NO_COCKTAIL )
+GAME( 1987, hbarrel,  0,        hbarrel,  hbarrel,  hbarrel,  ROT270, "Data East USA",         "Heavy Barrel (US)" )
+GAME( 1987, hbarrelw, hbarrel,  hbarrel,  hbarrel,  hbarrelw, ROT270, "Data East Corporation", "Heavy Barrel (World)" )
+GAME( 1988, baddudes, 0,        baddudes, baddudes, baddudes, ROT0,   "Data East USA",         "Bad Dudes vs. Dragonninja (US)" )
+GAME( 1988, drgninja, baddudes, baddudes, baddudes, baddudes, ROT0,   "Data East Corporation", "Dragonninja (Japan)" )
+GAMEX(1988, birdtry,  0,        birdtry,  hbarrel,  birdtry,  ROT270, "Data East Corporation", "Birdie Try (Japan)", GAME_NOT_WORKING )
+GAME( 1988, robocop,  0,        robocop,  robocop,  robocop,  ROT0,   "Data East Corporation", "Robocop (World revision 4)" )
+GAME( 1988, robocopw, robocop,  robocop,  robocop,  robocop,  ROT0,   "Data East Corporation", "Robocop (World revision 3)" )
+GAME( 1988, robocopj, robocop,  robocop,  robocop,  robocop,  ROT0,   "Data East Corporation", "Robocop (Japan)" )
+GAME( 1988, robocopu, robocop,  robocop,  robocop,  robocop,  ROT0,   "Data East USA",         "Robocop (US revision 1)" )
+GAME( 1988, robocpu0, robocop,  robocop,  robocop,  robocop,  ROT0,   "Data East USA",         "Robocop (US revision 0)" )
+GAME( 1988, robocopb, robocop,  robocopb, robocop,  robocop,  ROT0,   "bootleg",               "Robocop (World bootleg)")
+GAME( 1989, hippodrm, 0,        hippodrm, hippodrm, hippodrm, ROT0,   "Data East USA",         "Hippodrome (US)" )
+GAME( 1989, ffantasy, hippodrm, hippodrm, hippodrm, hippodrm, ROT0,   "Data East Corporation", "Fighting Fantasy (Japan revision 2)" )
+GAME( 1989, ffantasa, hippodrm, hippodrm, hippodrm, hippodrm, ROT0,   "Data East Corporation", "Fighting Fantasy (Japan)" )
+GAME( 1989, slyspy,   0,        slyspy,   slyspy,   slyspy,   ROT0,   "Data East USA",         "Sly Spy (US revision 3)" )
+GAME( 1989, slyspy2,  slyspy,   slyspy,   slyspy,   slyspy,   ROT0,   "Data East USA",         "Sly Spy (US revision 2)" )
+GAME( 1989, secretag, slyspy,   slyspy,   slyspy,   slyspy,   ROT0,   "Data East Corporation", "Secret Agent (World)" )
+GAMEX(1989, secretab, slyspy,   slyspy,   slyspy,   slyspy,   ROT0,   "bootleg",               "Secret Agent (bootleg)", GAME_NOT_WORKING )
+GAME( 1989, midres,   0,        midres,   midres,   0,        ROT0,   "Data East Corporation", "Midnight Resistance (World)" )
+GAME( 1989, midresu,  midres,   midres,   midres,   0,        ROT0,   "Data East USA",         "Midnight Resistance (US)" )
+GAME( 1989, midresj,  midres,   midres,   midres,   0,        ROT0,   "Data East Corporation", "Midnight Resistance (Japan)" )
+GAME( 1990, bouldash, 0,        slyspy,   bouldash, slyspy,   ROT0,   "Data East Corporation (licensed from First Star)", "Boulder Dash / Boulder Dash Part 2 (World)" )
+GAME( 1990, bouldshj, bouldash, slyspy,   bouldash, slyspy,   ROT0,   "Data East Corporation (licensed from First Star)", "Boulder Dash / Boulder Dash Part 2 (Japan)" )

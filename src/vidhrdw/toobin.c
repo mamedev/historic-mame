@@ -15,17 +15,7 @@
  *
  *************************************/
 
-data16_t *toobin_intensity;
-
-
-
-/*************************************
- *
- *	Statics
- *
- *************************************/
-
-static UINT8 last_intensity;
+static double brightness;
 
 
 
@@ -118,9 +108,6 @@ int toobin_vh_start(void)
 	/* initialize the alphanumerics */
 	if (!atarian_init(0, &andesc))
 		goto cant_create_an;
-
-	/* reset the statics */
-	last_intensity = 0;
 	return 0;
 
 	/* error cases */
@@ -171,14 +158,26 @@ WRITE16_HANDLER( toobin_paletteram_w )
 		if (green) green += 38;
 		if (blue) blue += 38;
 
-		if (!(newword & 0x8000))
-		{
-			red = (red * last_intensity) >> 5;
-			green = (green * last_intensity) >> 5;
-			blue = (blue * last_intensity) >> 5;
-		}
-
 		palette_change_color(offset & 0x3ff, red, green, blue);
+		if (!(newword & 0x8000))
+			palette_set_brightness(offset & 0x3ff, brightness);
+		else
+			palette_set_brightness(offset & 0x3ff, 1.0);
+	}
+}
+
+
+WRITE16_HANDLER( toobin_intensity_w )
+{
+	int i;
+
+	if (ACCESSING_LSB)
+	{
+		brightness = (double)(~data & 0x1f) / 31.0;
+
+		for (i = 0; i < 0x400; i++)
+			if (!(paletteram16[i] & 0x8000))
+				palette_set_brightness(i, brightness);
 	}
 }
 
@@ -249,43 +248,6 @@ static int overrender_callback(struct ataripf_overrender_data *data, int state)
 
 void toobin_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	/* compute the intensity and modify the palette if it's different */
-	int i, intensity = ~toobin_intensity[0] & 0x1f;
-	if (intensity != last_intensity)
-	{
-		last_intensity = intensity;
-		for (i = 0; i < 256+256+64; i++)
-		{
-			int newword = paletteram16[i];
-			int red =   (((newword >> 10) & 31) * 224) >> 5;
-			int green = (((newword >>  5) & 31) * 224) >> 5;
-			int blue =  (((newword      ) & 31) * 224) >> 5;
-
-			if (red) red += 38;
-			if (green) green += 38;
-			if (blue) blue += 38;
-
-			if (!(newword & 0x8000))
-			{
-				red = (red * last_intensity) >> 5;
-				green = (green * last_intensity) >> 5;
-				blue = (blue * last_intensity) >> 5;
-			}
-
-			palette_change_color(i, red, green, blue);
-		}
-	}
-
-	/* mark the used colors */
-	palette_init_used_colors();
-	ataripf_mark_palette(0);
-	atarimo_mark_palette(0);
-	atarian_mark_palette(0);
-
-	/* update the palette, and mark things dirty if we need to */
-	if (palette_recalc())
-		ataripf_invalidate(0);
-
 	/* draw the layers */
 	ataripf_render(0, bitmap);
 	atarimo_render(0, bitmap, overrender_callback, NULL);

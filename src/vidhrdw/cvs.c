@@ -509,19 +509,17 @@ INLINE void plot_star(struct osd_bitmap *bitmap, int x, int y)
 
 void cvs_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	int offs,redraw,character;
+	int offs,character;
 	int sx,sy;
 
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
 
-    redraw = (palette_recalc() || full_refresh);
-
 	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
         character = videoram[offs];
 
-		if((dirtybuffer[offs]) || (redraw) || dirty_character[character])
+		if(dirtybuffer[offs] || full_refresh || dirty_character[character])
 		{
             int character_bank;
             int forecolor;

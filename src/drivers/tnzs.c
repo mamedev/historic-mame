@@ -202,10 +202,7 @@ WRITE_HANDLER( tnzs_bankswitch1_w );
 
 
 /* prototypes for functions in ../vidhrdw/tnzs.c */
-int tnzs_vh_start(void);
-void tnzs_vh_stop(void);
 void arkanoi2_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void arkanoi2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void tnzs_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
@@ -1427,14 +1424,14 @@ static const struct MachineDriver machine_driver_arkanoi2 =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	arkanoi2_gfxdecodeinfo,
-	512, 512,
-	arkanoi2_vh_convert_color_prom,		/* convert color p-roms */
+	512, 0,
+	arkanoi2_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
 	0,
-	tnzs_vh_start,
-	tnzs_vh_stop,
-	arkanoi2_vh_screenrefresh,
+	0,
+	0,
+	tnzs_vh_screenrefresh,
 
 	/* sound hardware */
 	0,0,0,0,
@@ -1470,14 +1467,14 @@ static const struct MachineDriver machine_driver_drtoppel =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	tnzs_gfxdecodeinfo,
-	512, 512,
-	arkanoi2_vh_convert_color_prom,		/* convert color bproms */
+	512, 0,
+	arkanoi2_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
 	0,
-	tnzs_vh_start,
-	tnzs_vh_stop,
-	arkanoi2_vh_screenrefresh,
+	0,
+	0,
+	tnzs_vh_screenrefresh,
 
 	/* sound hardware */
 	0,0,0,0,
@@ -1514,13 +1511,13 @@ static const struct MachineDriver machine_driver_tnzs =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	tnzs_gfxdecodeinfo,
-	512, 512,
+	512, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
-	tnzs_vh_start,
-	tnzs_vh_stop,
+	0,
+	0,
 	tnzs_vh_screenrefresh,
 
 	/* sound hardware */
@@ -1564,13 +1561,13 @@ static const struct MachineDriver machine_driver_tnzsb =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	tnzs_gfxdecodeinfo,
-	512, 512,
+	512, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
-	tnzs_vh_start,
-	tnzs_vh_stop,
+	0,
+	0,
 	tnzs_vh_screenrefresh,
 
 	/* sound hardware */
@@ -1608,13 +1605,13 @@ static const struct MachineDriver machine_driver_insectx =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	insectx_gfxdecodeinfo,
-	512, 512,
+	512, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
-	tnzs_vh_start,
-	tnzs_vh_stop,
+	0,
+	0,
 	tnzs_vh_screenrefresh,
 
 	/* sound hardware */
@@ -1651,13 +1648,13 @@ static const struct MachineDriver machine_driver_kageki =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	tnzs_gfxdecodeinfo,
-	512, 512,
+	512, 0,
 	0,
 
-	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER,
 	0,
-	tnzs_vh_start,
-	tnzs_vh_stop,
+	0,
+	0,
 	tnzs_vh_screenrefresh,
 
 	/* sound hardware */

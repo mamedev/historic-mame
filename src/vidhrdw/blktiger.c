@@ -237,45 +237,9 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 	}
 }
 
-static void mark_sprites_colors(void)
-{
-	int offs;
-
-	for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
-	{
-		int attr = buffered_spriteram[offs+1];
-		int sx = buffered_spriteram[offs + 3] - ((attr & 0x10) << 4);
-		int sy = buffered_spriteram[offs + 2];
-
-		/* only count visible sprites */
-		if (sx+15 >= Machine->visible_area.min_x &&
-				sx <= Machine->visible_area.max_x &&
-				sy+15 >= Machine->visible_area.min_y &&
-				sy <= Machine->visible_area.max_y)
-		{
-			int i;
-
-			int color = attr & 0x07;
-			int code = buffered_spriteram[offs] | ((attr & 0xe0) << 3);
-
-			for (i = 0;i < 15;i++)
-			{
-				if (Machine->gfx[2]->pen_usage[code] & (1 << i))
-					palette_used_colors[512 + 16 * color + i] = PALETTE_COLOR_USED;
-			}
-		}
-	}
-}
-
 void blktiger_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	tilemap_update(ALL_TILEMAPS);
-
-	palette_init_used_colors();
-	mark_sprites_colors();
-	palette_recalc();
-
-	fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
+	fillbitmap(bitmap,Machine->pens[1023],&Machine->visible_area);
 
 	if (bgon)
 		tilemap_draw(bitmap,screen_layout ? bg_tilemap8x4 : bg_tilemap4x8,TILEMAP_BACK,0);

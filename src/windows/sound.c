@@ -487,7 +487,7 @@ static int dsound_init(void)
 	}
 
 	// set the cooperative level
-	result = IDirectSound_SetCooperativeLevel(dsound, video_window, DSSCL_PRIORITY);
+	result = IDirectSound_SetCooperativeLevel(dsound, win_video_window, DSSCL_PRIORITY);
 	if (result != DS_OK)
 	{
 		fprintf(stderr, "Error setting cooperative level: %08x\n", (UINT32)result);

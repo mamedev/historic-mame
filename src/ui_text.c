@@ -153,6 +153,7 @@ const char * default_text[] =
 	"Configure Watchpoints",
 	"General Help",
 	"Options",
+	"Reload Database",
 	"Watchpoint",
 	"Disabled",
 	"Cheats",
@@ -165,16 +166,21 @@ const char * default_text[] =
 	"Code",
 	"Max",
 	"Set",
-	"Cheat conflict found: disable",
+	"Cheat conflict found: disabling",
 	"Help not available yet",
 
 	/* watchpoints */
 	"Number of bytes",
-	"Label type",
+	"Display Type",
+	"Label Type",
 	"Label",
-	"X position",
-	"Y position",
+	"X Position",
+	"Y Position",
 	"Watch",
+
+	"Hex",
+	"Decimal",
+	"Binary",
 
 	/* searching */
 	"Lives (or another value)",
@@ -187,6 +193,7 @@ const char * default_text[] =
 	"Medium",
 	"Slow",
 	"Very Slow",
+	"All Memory",
 	"Select Memory Areas",
 	"Matches found",
 	"Search not initialized",

@@ -116,61 +116,6 @@ WRITE16_HANDLER( volfied_sprite_flip_w )
 }
 
 
-/*********************************************************
-				PALETTE
-*********************************************************/
-
-static void mark_sprite_colors(void)
-{
-	int color, offs;
-
-	int color_bank = (sprite_ctrl & 0x3c) << 2;
-
-	UINT16 pen_usage[16];
-
-	memset(pen_usage, 0, sizeof pen_usage);
-
-	for (offs = spriteram_size / 2 - 4; offs >= 0; offs -= 4)
-	{
-		int tilenum = spriteram16[offs + 2] & 0x1fff;
-
-		if (tilenum != 0)
-		{
-			color = spriteram16[offs] & 0xf;
-
-			pen_usage[color] |= Machine->gfx[0]->pen_usage[tilenum];
-		}
-	}
-
-	palette_used_colors += Machine->drv->gfxdecodeinfo[0].color_codes_start;
-
-	for (color = 0; color < 16; color++)
-	{
-		int i;
-
-		for (i = 0; i < 16; i++)
-		{
-			if (pen_usage[color] & (1 << i))
-			{
-				palette_used_colors[16 * (color | color_bank) + i] = PALETTE_COLOR_VISIBLE;
-			}
-		}
-	}
-
-	palette_used_colors -= Machine->drv->gfxdecodeinfo[0].color_codes_start;
-}
-
-static void mark_pixel_colors(void)
-{
-	int color;
-
-	for (color = 0; color < 4096; color += 256)
-	{
-		memset(palette_used_colors + color, PALETTE_COLOR_USED, 16);
-	}
-}
-
-
 /*******************************************************
 				SCREEN REFRESH
 *******************************************************/
@@ -273,14 +218,6 @@ static void refresh_pixel_layer(void)
 
 void volfied_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	palette_init_used_colors();
-
-	mark_sprite_colors();
-	mark_pixel_colors();
-
-	if (palette_recalc())
-		mark_all_dirty();
-
 	refresh_pixel_layer();
 
 	copybitmap(bitmap, pixel_layer, 0, 0, 0, 0, &Machine->visible_area, TRANSPARENCY_NONE, 0);

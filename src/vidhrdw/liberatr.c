@@ -457,7 +457,7 @@ static void liberatr_draw_planet(void)
 
 void liberatr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	if (palette_recalc() || full_refresh)
+	if (full_refresh)
 	{
 		UINT8 liberatr_y_save = *liberatr_y;
 		UINT8 liberatr_x_save = *liberatr_x;

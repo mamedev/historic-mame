@@ -460,10 +460,10 @@ static struct MachineDriver machine_driver_gunbustr =
 	40*8, 32*8, { 0, 40*8-1, 2*8, 32*8-1 },
 
 	gunbustr_gfxdecodeinfo,
-	8192, 8192,
+	8192, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_NEEDS_6BITS_PER_GUN,
+	VIDEO_TYPE_RASTER  | VIDEO_NEEDS_6BITS_PER_GUN,
 	0,
 	gunbustr_vh_start,
 	gunbustr_vh_stop,
@@ -528,4 +528,4 @@ static void init_gunbustr(void)
 	install_mem_read32_handler(0, 0x203acc, 0x203acf, main_cycle_r);
 }
 
-GAME( 1992, gunbustr, 0,      gunbustr, gunbustr, gunbustr, ROT0_16BIT | ORIENTATION_FLIP_X, "Taito Corporation", "Gunbuster (Japan)" )
+GAME( 1992, gunbustr, 0,      gunbustr, gunbustr, gunbustr, ORIENTATION_FLIP_X, "Taito Corporation", "Gunbuster (Japan)" )

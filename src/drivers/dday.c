@@ -5,16 +5,16 @@ D-Day
 driver by Zsolt Vasvari
 
 
+Convention: "sl" stands for "searchlight"
+
 Note: This game doesn't seem to support cocktail mode, which is not too
       suprising for a gun game.
 
 0000-3fff ROM
-5000-53ff Foreground RAM 1
-5400-57ff Foreground RAM 2
-5800-5bff Background RAM (Only the first 28 lines are visible,
-						  the last 0x80 bytes probably contain color
-						  information)
-5c00-5fff Attributes RAM for Foreground 2
+5000-53ff Text layer videoram
+5400-57ff Foreground (vehicle) layer videoram
+5800-5bff Background videoram
+5c00-5fff Attributes RAM for vehicle layer
           A0-A4 seem to be ignored.
           D0 - X Flip
           D2 - Used by the software to separate area that the short shots
@@ -50,50 +50,25 @@ write:
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
-extern unsigned char *dday_videoram2;
-extern unsigned char *dday_videoram3;
+extern unsigned char *dday_bgvideoram;
+extern unsigned char *dday_fgvideoram;
+extern unsigned char *dday_textvideoram;
+extern unsigned char *dday_colorram;
 
-void dday_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+void dday_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom);
+int dday_vh_start(void);
+void dday_vh_stop(void);
 void dday_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+WRITE_HANDLER( dday_bgvideoram_w );
+WRITE_HANDLER( dday_fgvideoram_w );
+WRITE_HANDLER( dday_textvideoram_w );
 WRITE_HANDLER( dday_colorram_w );
 READ_HANDLER( dday_colorram_r );
 WRITE_HANDLER( dday_control_w );
-WRITE_HANDLER( dday_searchlight_w );
-void dday_decode(void);
+WRITE_HANDLER( dday_sl_control_w );
+READ_HANDLER( dday_countdown_timer_r );
 
-
-// Note: There seems to be no way to reset this timer via hardware.
-//       The game uses a difference method to reset it to 99.
-//
-// Thanks Zwaxy for the timer info.
-
-#define START_TIMER 99
-static int timerVal = START_TIMER;
-
-static READ_HANDLER( dday_timer_r )
-{
-    return ((timerVal / 10) << 4) | (timerVal % 10);
-}
-
-// This is not a real interrupt routine. It is just used to decrement the
-// counter.
-static int dday_interrupt (void)
-{
-    #define START_TIMER_SMALL 60
-    static int timerValSmall = START_TIMER_SMALL;
-    /* if the timer hits zero, start over at START_TIMER */
-    timerValSmall--;
-    if (timerValSmall == 0)
-    {
-		timerValSmall = START_TIMER_SMALL;
-		timerVal--;
-		if (timerVal == -1) timerVal = START_TIMER;
-    }
-
-    return ignore_interrupt();
-}
 
 static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x3fff, MRA_ROM },
@@ -103,17 +78,17 @@ static MEMORY_READ_START( readmem )
 	{ 0x6c00, 0x6c00, input_port_0_r },
 	{ 0x7000, 0x7000, input_port_1_r },
 	{ 0x7400, 0x7400, input_port_2_r },
-	{ 0x7800, 0x7800, dday_timer_r },
+	{ 0x7800, 0x7800, dday_countdown_timer_r },
 	{ 0x7c00, 0x7c00, input_port_3_r },
 MEMORY_END
 
 static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x3fff, MWA_ROM },
-	{ 0x4000, 0x4000, dday_searchlight_w },
-	{ 0x5000, 0x53ff, MWA_RAM, &dday_videoram2 },
-	{ 0x5400, 0x57ff, MWA_RAM, &dday_videoram3 },
-	{ 0x5800, 0x5bff, MWA_RAM, &videoram, &videoram_size },
-	{ 0x5c00, 0x5fff, dday_colorram_w, &colorram },
+	{ 0x4000, 0x4000, dday_sl_control_w },
+	{ 0x5000, 0x53ff, dday_textvideoram_w, &dday_textvideoram },
+	{ 0x5400, 0x57ff, dday_fgvideoram_w, &dday_fgvideoram },
+	{ 0x5800, 0x5bff, dday_bgvideoram_w, &dday_bgvideoram },
+	{ 0x5c00, 0x5fff, dday_colorram_w, &dday_colorram },
 	{ 0x6000, 0x63ff, MWA_RAM },
 	{ 0x6400, 0x6400, AY8910_control_port_0_w },
 	{ 0x6401, 0x6401, AY8910_write_port_0_w },
@@ -140,12 +115,12 @@ INPUT_PORTS_START( dday )
 	PORT_START      /* IN 0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON1 ) // Fire Button
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON1 ) /* fire button */
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START1 )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_START2 )
-	PORT_BIT( 0xc0, IP_ACTIVE_HIGH, IPT_UNKNOWN ) // Doesn't seem to be
-                                                  // accessed
+	PORT_BIT( 0xc0, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* doesn't seem to be */
+                                                  /* accessed */
 	PORT_START      /* DSW 0 */
 	PORT_DIPNAME( 0x03, 0x01, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "2" )
@@ -285,34 +260,45 @@ INPUT_PORTS_END
 
 
 
-static struct GfxLayout charlayout =
+static struct GfxLayout layout_1bpp =
 {
-	8,8,    /* 8*8 characters */
-	256,    /* 256 characters */
-	2,      /* 2 bits per pixel */
-	{ 0, 0x0800*8 }, /* the two bitplanes are separated */
+	8,8,    		/* 8*8 characters */
+	RGN_FRAC(1,2),	/* 256 characters */
+	1,      		/* 1 bit per pixel */
+	{ RGN_FRAC(0,1) },
 	{ 7, 6, 5, 4, 3, 2, 1, 0 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	8*8     /* every char takes 8 consecutive bytes */
 };
 
-static struct GfxLayout charlayout_flipx =
+static struct GfxLayout layout_2bpp =
 {
-	8,8,    /* 8*8 characters */
-	256,    /* 256 characters */
-	2,      /* 2 bits per pixel */
-	{ 0, 0x0800*8 }, /* the two bitplanes are separated */
-	{ 0, 1, 2, 3, 4, 5, 6, 7 },
+	8,8,    		/* 8*8 characters */
+	RGN_FRAC(1,2),	/* 256 characters */
+	2,      		/* 2 bits per pixel */
+	{ RGN_FRAC(0,2), RGN_FRAC(1,2) }, /* the bitplanes are separated */
+	{ 7, 6, 5, 4, 3, 2, 1, 0 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
+	8*8     /* every char takes 8 consecutive bytes */
+};
+
+static struct GfxLayout layout_3bpp =
+{
+	8,8,    		/* 8*8 characters */
+	RGN_FRAC(1,3),	/* 256 characters */
+	3,      		/* 3 bits per pixel */
+	{ RGN_FRAC(0,3), RGN_FRAC(1,3), RGN_FRAC(2,3) }, /* the bitplanes are separated */
+	{ 7, 6, 5, 4, 3, 2, 1, 0 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	8*8     /* every char takes 8 consecutive bytes */
 };
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &charlayout,        0, 8 },
-	{ REGION_GFX2, 0, &charlayout,       32, 8 },
-	{ REGION_GFX3, 0, &charlayout,       64, 8 },
-	{ REGION_GFX3, 0, &charlayout_flipx, 64, 8 },
+	{ REGION_GFX1, 0, &layout_3bpp, 0,       256/8 },	/* background */
+	{ REGION_GFX2, 0, &layout_2bpp, 8*4,     8 },		/* foreground */
+	{ REGION_GFX3, 0, &layout_2bpp, 8*4+8*4, 8 },		/* text */
+	{ REGION_GFX4, 0, &layout_1bpp, 254,     1 },		/* searchlight */
 	{ -1 } /* end of array */
 };
 
@@ -338,7 +324,7 @@ static const struct MachineDriver machine_driver_dday =
 			CPU_Z80,
 			2000000,     /* 2 MHz ? */
 			readmem,writemem,0,0,
-			dday_interrupt,1
+			ignore_interrupt,0
 		}
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION, /* frames per second, vblank duration */
@@ -348,13 +334,13 @@ static const struct MachineDriver machine_driver_dday =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
 	gfxdecodeinfo,
-	512,512,
+	256,256,//8*8+8*4+8*4,
 	dday_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER,
+	VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS,
 	0,
-	generic_vh_start,
-	generic_vh_stop,
+	dday_vh_start,
+	dday_vh_stop,
 	dday_vh_screenrefresh,
 
 	/* sound hardware */
@@ -382,9 +368,10 @@ ROM_START( dday )
 	ROM_LOAD( "e6_65co.bin",  0x2000, 0x1000, 0xfe414a83 )
 	ROM_LOAD( "e5_66co.bin",  0x3000, 0x1000, 0xfc9f7774 )
 
-	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "k2_71.bin",    0x0000, 0x0800, 0xf85461de )
-	ROM_LOAD( "k3_72.bin",    0x0800, 0x0800, 0xfdfe88b6 )
+	ROM_REGION( 0x1800, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "k4_73.bin",    0x0000, 0x0800, 0xfa6237e4 )
+	ROM_LOAD( "k2_71.bin",    0x0800, 0x0800, 0xf85461de )
+	ROM_LOAD( "k3_72.bin",    0x1000, 0x0800, 0xfdfe88b6 )
 
 	ROM_REGION( 0x1000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "j8_70co.bin",  0x0000, 0x0800, 0x0c60e94c )
@@ -394,13 +381,11 @@ ROM_START( dday )
 	ROM_LOAD( "k6_74o.bin",   0x0000, 0x0800, 0x66719aea )
 	ROM_LOAD( "k7_75o.bin",   0x0800, 0x0800, 0x5f8772e2 )
 
-	ROM_REGION( 0x2000, REGION_GFX4, 0 )      /* search light */
-	ROM_LOAD( "d2_67.bin",    0x0000, 0x1000, 0x2b693e42 )  /* layout */
-	ROM_LOAD( "d4_68.bin",    0x1000, 0x0800, 0xf3649264 )  /* mask */
-							/*0x1800 -0x1fff will be filled in dynamically */
+	ROM_REGION( 0x0800, REGION_GFX4, ROMREGION_DISPOSE )
+	ROM_LOAD( "d4_68.bin",    0x0000, 0x0800, 0xf3649264 )
 
-	ROM_REGION( 0x0800, REGION_GFX5, 0 )      /* layer mask */
-	ROM_LOAD( "k4_73.bin",    0x0000, 0x0800, 0xfa6237e4 )
+	ROM_REGION( 0x1000, REGION_USER1, 0 )
+	ROM_LOAD( "d2_67.bin",    0x0000, 0x1000, 0x2b693e42 )  /* search light map */
 
 	ROM_REGION( 0x0300, REGION_PROMS, 0 )
 	ROM_LOAD( "dday.m11",     0x0000, 0x0100, 0xaef6bbfc )  /* red component */
@@ -415,9 +400,10 @@ ROM_START( ddayc )
 	ROM_LOAD( "e6_65-c.bin",  0x2000, 0x1000, 0x4c210686 )
 	ROM_LOAD( "e5_66-c.bin",  0x3000, 0x1000, 0xe7e832f9 )
 
-	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "k2_71.bin",    0x0000, 0x0800, 0xf85461de )
-	ROM_LOAD( "k3_72.bin",    0x0800, 0x0800, 0xfdfe88b6 )
+	ROM_REGION( 0x1800, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "k4_73.bin",    0x0000, 0x0800, 0xfa6237e4 )
+	ROM_LOAD( "k2_71.bin",    0x0800, 0x0800, 0xf85461de )
+	ROM_LOAD( "k3_72.bin",    0x1000, 0x0800, 0xfdfe88b6 )
 
 	ROM_REGION( 0x1000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "j8_70-c.bin",  0x0000, 0x0800, 0xa0c6b86b )
@@ -427,13 +413,11 @@ ROM_START( ddayc )
 	ROM_LOAD( "k6_74.bin",    0x0000, 0x0800, 0xd21a3e22 )
 	ROM_LOAD( "k7_75.bin",    0x0800, 0x0800, 0xa5e5058c )
 
-	ROM_REGION( 0x2000, REGION_GFX4, 0 )      /* search light */
-	ROM_LOAD( "d2_67.bin",    0x0000, 0x1000, 0x2b693e42 )  /* layout */
-	ROM_LOAD( "d4_68.bin",    0x1000, 0x0800, 0xf3649264 )  /* mask */
-							/*0x1800 -0x1fff will be filled in dynamically */
+	ROM_REGION( 0x0800, REGION_GFX4, ROMREGION_DISPOSE )
+	ROM_LOAD( "d4_68.bin",    0x0000, 0x0800, 0xf3649264 )
 
-	ROM_REGION( 0x0800, REGION_GFX5, 0 )      /* layer mask */
-	ROM_LOAD( "k4_73.bin",    0x0000, 0x0800, 0xfa6237e4 )
+	ROM_REGION( 0x1000, REGION_USER1, 0 )
+	ROM_LOAD( "d2_67.bin",    0x0000, 0x1000, 0x2b693e42 )  /* search light map */
 
 	ROM_REGION( 0x0300, REGION_PROMS, 0 )
 	ROM_LOAD( "dday.m11",     0x0000, 0x0100, 0xaef6bbfc )  /* red component */
@@ -442,11 +426,5 @@ ROM_START( ddayc )
 ROM_END
 
 
-static void init_dday(void)
-{
-	dday_decode();
-}
-
-
-GAMEX( 1982, dday,  0,    dday, dday,  dday, ROT0, "Olympia", "D-Day", GAME_IMPERFECT_COLORS )
-GAMEX( 1982, ddayc, dday, dday, ddayc, dday, ROT0, "Olympia (Centuri license)", "D-Day (Centuri)", GAME_IMPERFECT_COLORS )
+GAMEX( 1982, dday,  0,    dday, dday,  0, ROT0, "Olympia", "D-Day", GAME_IMPERFECT_COLORS )
+GAMEX( 1982, ddayc, dday, dday, ddayc, 0, ROT0, "Olympia (Centuri license)", "D-Day (Centuri)", GAME_IMPERFECT_COLORS )

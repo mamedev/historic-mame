@@ -429,7 +429,7 @@ static const struct MachineDriver machine_driver_grdnstrm =
 	grdnstrm_gfxdecodeinfo,
 	256 * 3, 256 * 3 + 16*256,
 	grdnstrm_vh_init_palette,
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	afega_vh_start,
 	0,
@@ -468,7 +468,7 @@ static const struct MachineDriver machine_driver_stagger1 =
 	stagger1_gfxdecodeinfo,
 	256 * 3, 256 * 3,
 	0,
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	afega_vh_start,
 	0,
@@ -642,5 +642,5 @@ void init_grdnstrm(void)
 
 ***************************************************************************/
 
-GAMEX( 1998, stagger1, 0, stagger1, stagger1, stagger1, ROT270_16BIT, "Afega", "Stagger I (Japan)",                GAME_NOT_WORKING )
-GAMEX( 1998, grdnstrm, 0, grdnstrm, grdnstrm, grdnstrm, ROT270_16BIT, "Afega", "Sen Jin - Guardian Storm (Korea)", GAME_NOT_WORKING )
+GAMEX( 1998, stagger1, 0, stagger1, stagger1, stagger1, ROT270, "Afega", "Stagger I (Japan)",                GAME_NOT_WORKING )
+GAMEX( 1998, grdnstrm, 0, grdnstrm, grdnstrm, grdnstrm, ROT270, "Afega", "Sen Jin - Guardian Storm (Korea)", GAME_NOT_WORKING )

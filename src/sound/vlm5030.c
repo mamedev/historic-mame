@@ -6,7 +6,7 @@
 	Written by Tatsuyuki Satoh
 
   note:
-	memory read cycle(sampling rate ?) = 122.9u(440clock)
+	memory read cycle(==sampling rate) = 122.9u(440clock)
 	interpolator (LC8109 = 2.5ms)      = 20 * samples(125us)
 	frame time (20ms)                  =  8 * interpolator
 
@@ -25,23 +25,33 @@ LL : number of silent frames
    11 = 8 frame
 
 3)play one frame (48bit/frame)
-: 1st    :   2nd  :   3rd  :   4th  :  5th   :   6th  :
-:EEPPPPP0:99AAAEEE:67778889:44455566:22233334:11111112:
+function:   6th  :  5th   :   4th  :   3rd  :   2nd  : 1st    :
+end     :   ---  :  ---   :   ---  :   ---  :   ---  :00000011:
+silent  :   ---  :  ---   :   ---  :   ---  :   ---  :0000SS01:
+speech  :11111122:22233334:44455566:67778889:99AAAEEE:EEPPPPP0:
 
-energy and pitch bits are MSB first.
+-silent frame
 
-EEEEE  : energy ( volume 0=off,0x1f=max)
-PPPPP  : pitch  (0=noize?, 1=fast,0x1f=slow)
-1111111: stage 1?
-2222   : stage 2?
-3333   : stage 3?
-4444   : stage 4?
-555    : stage 5?
-666    : stage 6?
-777    : stage 7?
-888    : stage 8?
-999    : stage 9?
-AAA    : stage 10?
+SS : number of silent frames
+   00 = 2 frame
+   01 = 4 frame
+   10 = 6 frame
+   11 = 8 frame
+
+-speech frame
+
+EEEEE  : energy : volume 0=off,0x1f=max
+PPPPP  : pitch  : 0=noize , 1=fast,0x1f=slow
+111111 : K1     : 0=off,1=+min,0x1f=+max,0x20=-max,0x3f=-min
+22222  : K2     : 0=off,1=+min,0x0f=+max,0x10=off,0x11=+max,0x1f=-min
+3333   : K3     : 0=off,1=+min,0x07=+max,0x08=-max,0x0f=-min
+4444   : K4     :
+555    : K5     : 0=off,1=+min,0x03=+max,0x04=-max,0x07=-min
+666    : K6     :
+777    : K7     :
+888    : K8     :
+999    : K9     :
+AAA    : K10    :
 
  ---------- chirp table information ----------
 
@@ -70,8 +80,14 @@ chirp 12-..: vokume   0   : silent
 #include "vlm5030.h"
 #include <math.h>
 
-#define IP_SIZE 20		/* samples per interpolator */
-#define FR_SIZE 8		/* interpolator per frame   */
+/* samples per interpolator */
+#define IP_SIZE_SLOWER   30  /* 2400 */
+#define IP_SIZE_SLOW    25  /* 2000 */
+#define IP_SIZE_NORMAL  20  /* 1600 */
+#define IP_SIZE_FAST    15  /*  820 */
+#define IP_SIZE_FASTER  10  /*  540 */
+/* interpolator per frame   */
+#define FR_SIZE 8
 
 static const struct VLM5030interface *intf;
 
@@ -86,20 +102,36 @@ static int pin_ST;
 static int pin_VCU;
 static int pin_RST;
 static int latch_data;
-static int VLM5030_param4800;
-static int VLM5030_param9600;
+
+#define VLM5030_BPS_2400  0x00
+#define VLM5030_BPS_4800  0x01
+#define VLM5030_BPS_9600  0x02
+static int VLM5030_param_bps;
 /*
   speed parameter
 SPC SPB SPA
- 1   0   1  more slow (05h)
- 1   1   x  slow      (06h,07h)
- x   0   0  normal    (00h,04h)
- 0   0   1  fast      (01h)
- 0   1   x  more fast (02h,03h)
+ 1   0   1  more slow (05h)     : 42ms   (150%) : 30sample
+ 1   1   x  slow      (06h,07h) : 34ms   (125%) : 25sample
+ x   0   0  normal    (00h,04h) : 25.6ms (100%) : 20samplme
+ 0   0   1  fast      (01h)     : 20.2ms  (75%) : 15sample
+ 0   1   x  more fast (02h,03h) : 12.2ms  (50%) : 10sample
 */
-static int VLM5030_paramSPeed;
-static int VLM5030_paramLowPitch;
-static int VLM5030_paramHighPitch;
+static const int VLM5030_speed_table[8] =
+{
+ IP_SIZE_NORMAL,
+ IP_SIZE_FASTER,
+ IP_SIZE_FAST,
+ IP_SIZE_FAST,
+ IP_SIZE_FASTER,
+ IP_SIZE_SLOWER,
+ IP_SIZE_SLOW,
+ IP_SIZE_SLOW
+};
+static int VLM5030_frame_size;
+
+#define VLM5030_PITCH_LOW  0x40
+#define VLM5030_PITCH_HIGH 0x80
+static int VLM5030_paramPitch;
 
 static int sampling_mode;
 static int vcu_addr_h;
@@ -140,7 +172,6 @@ static int x[10] = {0,0,0,0,0,0,0,0,0,0};
 
 /* ROM Tables */
 
-
 /* This is the energy lookup table */
 /* !!!!!!!!!! preliminary !!!!!!!!!! */
 static unsigned short energytable[0x20];
@@ -163,21 +194,21 @@ static const unsigned char pitchtable [0x20]=
 /* !!!!!!!!!! preliminary !!!!!!!!!! */
 
 /* 7bit */
-#define K1_RANGE  0x6000
+#define K1_RANGE  0x8000
 /* 4bit */
-#define K2_RANGE  0x4000
-#define K3_RANGE  0x6000
-#define K4_RANGE  0x4000
+#define K2_RANGE  0x7000
+#define K3_RANGE  0x7000
+#define K4_RANGE  0x7000
 /* 3bit */
-#define K5_RANGE  0x6000
-#define K6_RANGE  0x6000
-#define K7_RANGE  0x5000
-#define K8_RANGE  0x4000
-#define K9_RANGE  0x5000
-#define K10_RANGE 0x4000
+#define K5_RANGE  0x8000
+#define K6_RANGE  0x8000
+#define K7_RANGE  0x8000
+#define K8_RANGE  0x8000
+#define K9_RANGE  0x8000
+#define K10_RANGE 0x8000
 
-static int k1table[0x80];
-static int k2table[0x10];
+static int k1table[0x40];
+static int k2table[0x20];
 static int k3table[0x10];
 static int k4table[0x10];
 static int k5table[0x08];
@@ -193,7 +224,7 @@ static unsigned char chirptable[12]=
   0xff*9/10,
   0xff*7/10,
   0xff*5/10,
-  0xff*4/10, /* non digital filter ? */
+  0xff*4/10,
   0xff*3/10,
   0xff*3/10,
   0xff*1/10,
@@ -207,7 +238,7 @@ static unsigned char chirptable[12]=
 /* interpolation coefficients */
 static int interp_coeff[8] = {
 //8, 8, 8, 4, 4, 2, 2, 1
-8, 8, 8, 4, 4, 2, 2, 1
+4, 4, 4, 4, 2, 2, 1, 1
 };
 
 /* //////////////////////////////////////////////////////// */
@@ -229,7 +260,7 @@ static int get_bits(int sbit,int bits)
 
 	data = VLM5030_rom[offset&VLM5030_address_mask] |
 	       (((int)VLM5030_rom[(offset+1)&VLM5030_address_mask])<<8);
-	data >>= sbit;
+	data >>= (sbit&7);
 	data &= (0xff>>(8-bits));
 
 	return data;
@@ -266,19 +297,28 @@ static int parse_frame (void)
 	/* normal frame */
 
 	new_pitch  = pitchtable[get_bits( 1,5)];
+	switch( VLM5030_paramPitch )
+	{
+	case VLM5030_PITCH_LOW:
+		new_pitch = new_pitch * 4 / 3;
+		break;
+	case VLM5030_PITCH_HIGH:
+		new_pitch = new_pitch * 2 / 3;
+		break;
+	}
 	new_energy = energytable[get_bits( 6,5)];
 
 	/* 10 K's */
-	new_k[9] = k10table[get_bits(11,3)];
-	new_k[8] = k9table[get_bits(14,3)];
-	new_k[7] = k8table[get_bits(17,3)];
-	new_k[6] = k7table[get_bits(20,3)];
-	new_k[5] = k6table[get_bits(23,3)];
-	new_k[4] = k5table[get_bits(26,3)];
-	new_k[3] = k4table[get_bits(29,4)];
-	new_k[2] = k3table[get_bits(33,4)];
-	new_k[1] = k2table[get_bits(37,4)];
-	new_k[0] = k1table[get_bits(41,7)];
+	new_k[9] = -k10table[get_bits(11,3)];
+	new_k[8] = -k9table[get_bits(14,3)];
+	new_k[7] = -k8table[get_bits(17,3)];
+	new_k[6] = -k7table[get_bits(20,3)];
+	new_k[5] = -k6table[get_bits(23,3)];
+	new_k[4] = -k5table[get_bits(26,3)];
+	new_k[3] = -k4table[get_bits(29,4)];
+	new_k[2] = -k3table[get_bits(33,4)];
+	new_k[1] = -k2table[get_bits(37,5)];
+	new_k[0] = -k1table[get_bits(42,6)];
 
 	VLM5030_address+=6;
 	logerror("VLM5030 %04X voice \n",VLM5030_address );
@@ -302,7 +342,11 @@ static void vlm5030_update_callback(int num,INT16 *buffer, int length)
 			/* check new interpolator or  new frame */
 			if( sample_count == 0 )
 			{
-				sample_count = IP_SIZE;
+#if 0
+				sample_count = VLM5030_frame_size;
+#else
+				sample_count = IP_SIZE_NORMAL;
+#endif
 				/* interpolator changes */
 				if ( interp_count == 0 )
 				{
@@ -497,11 +541,10 @@ void VLM5030_RST (int pin )
 		if( !pin )
 		{	/* H -> L : latch parameters */
 			pin_RST = 0;
-			VLM5030_param4800 = latch_data & 1;
-			VLM5030_param9600 = (latch_data>>1) &1;
-			VLM5030_paramSPeed = (latch_data>>2) &7;
-			VLM5030_paramLowPitch = (latch_data>>6) &1;
-			VLM5030_paramHighPitch = (latch_data>>7) &1;
+			VLM5030_param_bps = latch_data & 3;
+			VLM5030_frame_size = VLM5030_speed_table[(latch_data>>3) &7];
+			VLM5030_paramPitch = (latch_data>>6) &3;
+/* usrintf_showmessage("VLM PARAM %02X : %08x",latch_data,cpu_get_pc() ); */
 		}
 	}
 	else
@@ -624,11 +667,9 @@ int VLM5030_sh_start(const struct MachineSound *msound)
 	VLM5030_address = 0;
 	latch_data = 0;
 	/* reset parameters */
-	VLM5030_param4800 =
-	VLM5030_param9600 =
-	VLM5030_paramSPeed =
-	VLM5030_paramLowPitch =
-	VLM5030_paramHighPitch = 0;
+	VLM5030_param_bps =
+	VLM5030_paramPitch = 0;
+	VLM5030_frame_size = IP_SIZE_NORMAL;
 
 	vcu_addr_h = 0;
 	phase = PH_IDLE;
@@ -647,11 +688,12 @@ int VLM5030_sh_start(const struct MachineSound *msound)
 	schannel = mixer_allocate_channel(intf->volume);
 
 	/* initialize energy table , 0.75dB step? */
-#define ENERGY_MAX 0x0fff
+	/* chip max +-2Vpp -> energy 0-0.5Vpp */
+#define ENERGY_MAX 0x03ff
 	for(i=1;i<0x20;i++)
 		energytable[i] = ENERGY_MAX/pow(10,0.75*(0x1f-i)/20);
+//		energytable[i] = ENERGY_MAX/pow(10,0.375*(0x1f-i)/20);
 	energytable[0] = 0;
-
 
 #if 1
 	/* initialize filter table */
@@ -659,16 +701,19 @@ int VLM5030_sh_start(const struct MachineSound *msound)
 	{
 		k1table[(i>=0) ? i : 0x40-i] = i*K1_RANGE/0x20;
 	}
+
 	for(i=-0x10 ; i<0x10 ; i++)
 	{
 		k2table[(i>=0) ? i : 0x20-i] = i*K2_RANGE/0x10;
 	}
+	k2table[0x10] = 0;
 
 	for(i=-0x08 ; i<0x08 ; i++)
 	{
 		k3table[(i>=0) ? i : 0x10-i] = i*K3_RANGE/0x08;
 		k4table[(i>=0) ? i : 0x10-i] = i*K4_RANGE/0x08;
 	}
+
 	for(i=-0x04 ; i<0x04 ; i++)
 	{
 		k5table[(i>=0) ? i : 0x08-i] = i*K5_RANGE/0x04;

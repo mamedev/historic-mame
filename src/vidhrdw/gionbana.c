@@ -454,7 +454,7 @@ void gionbana_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	int x, y;
 	unsigned char color;
 
-	if (palette_recalc() || full_refresh || gionbana_screen_refresh)
+	if (full_refresh || gionbana_screen_refresh)
 	{
 		gionbana_screen_refresh = 0;
 		for (y = 0; y < Machine->drv->screen_height; y++)

@@ -304,12 +304,6 @@ if (keyboard_pressed(KEYCODE_Z))
 }
 #endif
 
-	tilemap_update(ALL_TILEMAPS);
-
-	palette_init_used_colors();
-//	memset(palette_used_colors,PALETTE_COLOR_USED,Machine->drv->total_colors);
-	palette_recalc();
-
 	if (layers_ctrl & 1)	tilemap_draw(bitmap,tilemap_0a,0,0);	// Opaque
 	else					fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 

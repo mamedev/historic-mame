@@ -531,10 +531,10 @@ static const struct MachineDriver machine_driver_shangha3 =
 	/* video hardware */
 	24*16, 16*16, { 0*16, 24*16-1, 1*16, 15*16-1 },
 	gfxdecodeinfo,
-	2048, 2048,
+	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	shangha3_vh_start,
 	shangha3_vh_stop,
@@ -579,10 +579,10 @@ static const struct MachineDriver machine_driver_heberpop =
 	/* video hardware */
 	24*16, 16*16, { 0*16, 24*16-1, 1*16, 15*16-1 },
 	gfxdecodeinfo,
-	2048, 2048,
+	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	shangha3_vh_start,
 	shangha3_vh_stop,
@@ -627,10 +627,10 @@ static const struct MachineDriver machine_driver_blocken =
 	/* video hardware */
 	24*16, 16*16, { 0*16, 24*16-1, 1*16, 15*16-1 },
 	gfxdecodeinfo,
-	2048, 2048,
+	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	shangha3_vh_start,
 	shangha3_vh_stop,
@@ -721,6 +721,6 @@ static void init_heberpop(void)
 	shangha3_do_shadows = 0;
 }
 
-GAME( 1993, shangha3, 0, shangha3, shangha3, shangha3, ROT0_16BIT, "Sunsoft", "Shanghai III (Japan)" )
-GAME( 1994, heberpop, 0, heberpop, heberpop, heberpop, ROT0_16BIT, "Sunsoft / Atlus", "Hebereke no Popoon (Japan)" )
-GAME( 1994, blocken,  0, blocken,  blocken,  heberpop, ROT0_16BIT, "KID / Visco", "Blocken (Japan)" )
+GAME( 1993, shangha3, 0, shangha3, shangha3, shangha3, ROT0, "Sunsoft", "Shanghai III (Japan)" )
+GAME( 1994, heberpop, 0, heberpop, heberpop, heberpop, ROT0, "Sunsoft / Atlus", "Hebereke no Popoon (Japan)" )
+GAME( 1994, blocken,  0, blocken,  blocken,  heberpop, ROT0, "KID / Visco", "Blocken (Japan)" )

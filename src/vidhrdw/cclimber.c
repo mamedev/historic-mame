@@ -201,9 +201,15 @@ void swimmer_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 	*(palette++) = 0;
 	*(palette++) = 0;
 	/* side panel background color */
+#if 0
+	// values calculated from the resistors don't seem to match the real board
 	*(palette++) = 0x24;
 	*(palette++) = 0x5d;
 	*(palette++) = 0x4e;
+#endif
+	*(palette++) = 0x20;
+	*(palette++) = 0x98;
+	*(palette++) = 0x79;
 }
 
 
@@ -378,7 +384,7 @@ void cclimber_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	int offs;
 
 
-	if (palette_recalc() || full_refresh)
+	if (full_refresh)
 	{
 		memset(dirtybuffer,1,videoram_size);
 	}
@@ -496,7 +502,7 @@ void swimmer_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	int offs;
 
 
-	if (palette_recalc() || full_refresh)
+	if (full_refresh)
 	{
 		memset(dirtybuffer,1,videoram_size);
 	}

@@ -229,7 +229,7 @@ void speedbal_draw_background (struct osd_bitmap *bitmap)
 			sx = 15 - (offset / 2) / 16;
 			sy = (offset / 2) % 16;
 
-			drawgfx (bitmap,Machine->gfx[1],
+			drawgfx (bitmap_bg,Machine->gfx[1],
 					tile,
 					color,
 					0,0,
@@ -237,6 +237,8 @@ void speedbal_draw_background (struct osd_bitmap *bitmap)
 					0,TRANSPARENCY_NONE,0);
 		}
 	}
+
+	copybitmap (bitmap,bitmap_bg,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 }
 
 
@@ -252,7 +254,7 @@ void speedbal_draw_foreground1 (struct osd_bitmap *bitmap)
 
 	for (offset = 0;offset < speedbal_foreground_videoram_size ;offset+=2)
 	{
-	    if (ch_dirtybuffer[offset])
+//	    if (ch_dirtybuffer[offset])
 		{
 			caracter = speedbal_foreground_videoram[offset];
 			code     = speedbal_foreground_videoram[offset+1];
@@ -268,7 +270,7 @@ void speedbal_draw_foreground1 (struct osd_bitmap *bitmap)
 					color,
 					0,0,
 					8*sx,8*sy,
-					0,TRANSPARENCY_NONE,0);
+					&Machine->visible_area,TRANSPARENCY_PEN,0);
 
 			ch_dirtybuffer[offset] = 0;
 		}
@@ -285,110 +287,11 @@ void speedbal_draw_foreground1 (struct osd_bitmap *bitmap)
 
 void speedbal_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	int offs;
-
-
-palette_init_used_colors();
-
-{
-	int color,code,i;
-	int colmask[16];
-	int pal_base;
-
-
-	pal_base = Machine->drv->gfxdecodeinfo[1].color_codes_start;
-
-	for (color = 0;color < 16;color++) colmask[color] = 0;
-
-	for (offs = 0;offs < speedbal_background_videoram_size ;offs += 2)
-	{
-		code = speedbal_background_videoram[offs];
-		color = speedbal_background_videoram[offs+1];
-		code += (color & 0x30) << 4;
-		color = (color & 0x0f);
-		colmask[color] |= Machine->gfx[1]->pen_usage[code];
-	}
-
-	for (color = 0;color < 16;color++)
-	{
-		for (i = 0;i < 16;i++)
-		{
-			if (colmask[color] & (1 << i))
-				palette_used_colors[pal_base + 16 * color + i] = PALETTE_COLOR_USED;
-		}
-	}
-
-
-	pal_base = Machine->drv->gfxdecodeinfo[2].color_codes_start;
-
-	for (color = 0;color < 16;color++) colmask[color] = 0;
-
-	for (offs = 0;offs < speedbal_sprites_dataram_size;offs += 4)
-	{
-		unsigned char *SPTRegs;
-		int carac,f;
-
-		SPTRegs = &speedbal_sprites_dataram[offs];
-
-		carac  =  SPTRegs[SPRITE_NUMBER ];
-		code = 0;
-		for (f=0;f<8;f++) code += ((carac >>f)&1)<<(7-f);
-		color = (SPTRegs[SPRITE_PALETTE]&0x0f);
-
-		if (!(SPTRegs[SPRITE_PALETTE]&0x40)) code+=256;
-		colmask[color] |= Machine->gfx[2]->pen_usage[code];
-	}
-
-	for (color = 0;color < 16;color++)
-	{
-		if (colmask[color] & (1 << 0))
-			palette_used_colors[pal_base + 16 * color] = PALETTE_COLOR_TRANSPARENT;
-		for (i = 1;i < 16;i++)
-		{
-			if (colmask[color] & (1 << i))
-				palette_used_colors[pal_base + 16 * color + i] = PALETTE_COLOR_USED;
-		}
-	}
-
-
-	pal_base = Machine->drv->gfxdecodeinfo[0].color_codes_start;
-
-	for (color = 0;color < 16;color++) colmask[color] = 0;
-
-	for (offs = 0;offs < speedbal_foreground_videoram_size ;offs+=2)
-	{
-		code = speedbal_foreground_videoram[offs];
-		color = speedbal_foreground_videoram[offs+1];
-		code += (color & 0x30) << 4;
-		color = (color & 0x0f);
-		colmask[color] |= Machine->gfx[0]->pen_usage[code];
-	}
-
-	for (color = 0;color < 16;color++)
-	{
-		if (colmask[color] & (1 << 0))
-			palette_used_colors[pal_base + 16 * color] = PALETTE_COLOR_TRANSPARENT;
-		for (i = 1;i < 16;i++)
-		{
-			if (colmask[color] & (1 << i))
-				palette_used_colors[pal_base + 16 * color + i] = PALETTE_COLOR_USED;
-		}
-	}
-
-	if (palette_recalc())
-	{
-		memset (ch_dirtybuffer,1,speedbal_foreground_videoram_size / 2);
-		memset (bg_dirtybuffer,1,speedbal_background_videoram_size / 2);
-	}
-}
-
 	// first background
-	speedbal_draw_background (bitmap_bg);
-	copybitmap (bitmap,bitmap_bg,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
+	speedbal_draw_background (bitmap);
 
 	// second characters (general)
-	speedbal_draw_foreground1 (bitmap_ch);
-	copybitmap (bitmap,bitmap_ch,0,0,0,0,&Machine->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
+	speedbal_draw_foreground1 (bitmap);
 
 	// thirth sprites
 	speedbal_draw_sprites (bitmap);

@@ -410,10 +410,10 @@ static const struct MachineDriver machine_driver_crimfght =
 	/* video hardware */
 	64*8, 32*8, { 13*8, (64-13)*8-1, 2*8, 30*8-1 },
 	0,	/* gfx decoded by konamiic.c */
-	512, 512,
+	512, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER  | VIDEO_HAS_SHADOWS,
 	0,
 	crimfght_vh_start,
 	crimfght_vh_stop,

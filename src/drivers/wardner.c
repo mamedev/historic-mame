@@ -605,7 +605,7 @@ static const struct MachineDriver machine_driver_wardner =
 	1792, 1792,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_BUFFERS_SPRITERAM,
+	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_BUFFERS_SPRITERAM,
 	toaplan0_eof_callback,
 	toaplan0_vh_start,
 	toaplan0_vh_stop,

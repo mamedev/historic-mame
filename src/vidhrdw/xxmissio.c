@@ -87,8 +87,6 @@ void xxmissio_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	if (xxmissio_bg_redraw==1)
 		memset(dirtybuffer,1,size);
 
-	palette_recalc();
-
 /* draw BG layer */
 
 	for (y=0; y<32; y++)

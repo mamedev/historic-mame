@@ -9,14 +9,12 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-unsigned char *cop01_videoram;
-size_t cop01_videoram_size;
 
-static unsigned char cop01_scrollx[1];
-static unsigned char spritebank = 0;
-static int flipscreen;
 
-static struct osd_bitmap *tmpbitmap2;
+data8_t *cop01_bgvideoram,*cop01_fgvideoram;
+
+static unsigned char mightguy_vreg[4];
+static struct tilemap *bg_tilemap,*fg_tilemap;
 
 
 
@@ -52,17 +50,55 @@ void cop01_vh_convert_color_prom(unsigned char *palette, unsigned short *colorta
 	color_prom += 2*Machine->drv->total_colors;
 	/* color_prom now points to the beginning of the lookup tables */
 
-	/* characters use colors 0-15 */
+	/* characters use colors 0-15 (or 0-127, but the eight rows are identical) */
 	for (i = 0;i < TOTAL_COLORS(0);i++)
-		COLOR(0,i) = (*(color_prom++) & 0x0f);	/* ?? */
+		COLOR(0,i) = i;
 
 	/* background tiles use colors 192-255 */
+	/* I don't know how much of the lookup table PROM is hooked up, */
+	/* I'm only using the first 32 bytes because the rest is empty. */
 	for (i = 0;i < TOTAL_COLORS(1);i++)
-		COLOR(1,i) = i + 192;
+		COLOR(1,i) = 0xc0 + (i & 0x30) + (color_prom[((i & 0x40) >> 2) + (i & 0x0f)] & 0x0f);
+	color_prom += 256;
 
-	/* sprites use colors 128-143 */
+	/* sprites use colors 128-143 (or 128-191, but the four rows are identical) */
 	for (i = 0;i < TOTAL_COLORS(2);i++)
-		COLOR(2,i) = (*(color_prom++) & 0x0f) + 128;
+		COLOR(2,i) = 0x80 + (*(color_prom++) & 0x0f);
+}
+
+
+
+/***************************************************************************
+
+  Callbacks for the TileMap code
+
+***************************************************************************/
+
+static void get_bg_tile_info(int tile_index)
+{
+	int tile = cop01_bgvideoram[tile_index];
+	int attr = cop01_bgvideoram[tile_index+0x800];
+	int pri  = (attr & 0x80) >> 7;
+
+	/* kludge: priority is not actually pen based, but color based. Since the
+	 * game uses a lookup table, the two are not the same thing.
+	 * Palette entries with bits 2&3 set have priority over sprites.
+	 * tilemap.c can't handle that yet, so I'm cheating, because I know that
+	 * color codes using the second row of the lookup table don't use palette
+	 * entries 12-15.
+	 * The only place where this has any effect is the beach at the bottom of
+	 * the screen right at the beginning of mightguy. cop01 doesn't seem to
+	 * use priority at all.
+	 */
+	if (attr & 0x10) pri = 0;
+
+	SET_TILE_INFO(1,tile + ((attr & 0x03) << 8),(attr & 0x1c) >> 2,TILE_SPLIT(pri));
+}
+
+static void get_fg_tile_info(int tile_index)
+{
+	int tile = cop01_fgvideoram[tile_index];
+	SET_TILE_INFO(0,tile,0,0);
 }
 
 
@@ -72,16 +108,20 @@ void cop01_vh_convert_color_prom(unsigned char *palette, unsigned short *colorta
   Start the video hardware emulation.
 
 ***************************************************************************/
-int cop01_vh_start(void)
+
+int cop01_vh_start( void )
 {
-	if (generic_vh_start() != 0)
+	bg_tilemap = tilemap_create(get_bg_tile_info,tilemap_scan_rows,TILEMAP_SPLIT,      8,8,64,32);
+	fg_tilemap = tilemap_create(get_fg_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
+
+	if (!bg_tilemap || !fg_tilemap)
 		return 1;
 
-	if ((tmpbitmap2 = bitmap_alloc(2*Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
-	{
-		generic_vh_stop();
-		return 1;
-	}
+	tilemap_set_transparent_pen(fg_tilemap,15);
+
+	/* priority doesn't exactly work this way, see above */
+	tilemap_set_transmask(bg_tilemap,0,0xffff,0x0000); /* split type 0 is totally transparent in front half */
+	tilemap_set_transmask(bg_tilemap,1,0x0fff,0xf000); /* split type 1 has pens 0-11 transparent in front half */
 
 	return 0;
 }
@@ -90,149 +130,106 @@ int cop01_vh_start(void)
 
 /***************************************************************************
 
-  Stop the video hardware emulation.
+  Memory handlers
 
 ***************************************************************************/
 
-void cop01_vh_stop(void)
+WRITE_HANDLER( cop01_background_w )
 {
-	bitmap_free(tmpbitmap2);
-	generic_vh_stop();
-}
-
-
-
-WRITE_HANDLER( cop01_scrollx_w )
-{
-	cop01_scrollx[offset] = data;
-}
-
-
-WRITE_HANDLER( cop01_gfxbank_w )
-{
-	/* bits 0 and 1 coin counters */
-	coin_counter_w(0,data & 1);
-	coin_counter_w(1,data & 2);
-
-	/* bit 2 flip screen */
-	if (flipscreen != (data & 0x04))
+	if (cop01_bgvideoram[offset] != data)
 	{
-		flipscreen = data & 0x04;
-        memset(dirtybuffer,1,videoram_size);
+		cop01_bgvideoram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap,offset & 0x7ff);
 	}
-
-	/* bits 4 and 5 select sprite bank */
-	spritebank = (data & 0x30) >> 4;
-
-logerror("gfxbank = %02x\n",data);
 }
 
+WRITE_HANDLER( cop01_foreground_w )
+{
+	if (cop01_fgvideoram[offset] != data)
+	{
+		cop01_fgvideoram[offset] = data;
+		tilemap_mark_tile_dirty(fg_tilemap,offset);
+	}
+}
+
+WRITE_HANDLER( cop01_vreg_w )
+{
+	/*	0x40: --xx---- sprite bank, coin counters, flip screen
+	 *	      -----x-- flip screen
+	 *	      ------xx coin counters
+	 *	0x41: xxxxxxxx xscroll
+	 *	0x42: ---xx--- ? matches the bg tile color most of the time, but not
+	 *                 during level transitions. Maybe sprite palette bank?
+	 *                 (the four banks in the PROM are identical)
+	 *	      ------x- unused (xscroll overflow)
+	 *	      -------x msb xscroll
+	 *	0x43: xxxxxxxx yscroll
+	 */
+	mightguy_vreg[offset] = data;
+
+	if (offset == 0)
+	{
+		coin_counter_w(0,data & 1);
+		coin_counter_w(1,data & 2);
+		flip_screen_set(data & 4);
+	}
+}
 
 
 
 /***************************************************************************
 
-  Draw the game screen in the given osd_bitmap.
-  Do NOT call osd_update_display() from this function, it will be called by
-  the main emulation engine.
+  Display refresh
 
 ***************************************************************************/
-void cop01_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+
+static void draw_sprites( struct osd_bitmap *bitmap )
 {
-	int offs;
+	int offs,code,attr,sx,sy,flipx,flipy,color;
 
-
-	/* draw the background */
-	for (offs = videoram_size - 1;offs >= 0;offs--)
-	{
-		if (dirtybuffer[offs])
-		{
-			int sx,sy;
-
-			dirtybuffer[offs] = 0;
-
-			sx = offs % 64;
-			sy = offs / 64;
-			if (flipscreen)
-			{
-				sx = 63 - sx;
-				sy = 31 - sy;
-			}
-
-			drawgfx(tmpbitmap2,Machine->gfx[1],
-					videoram[offs] + ((colorram[offs] & 0x03) << 8),
-					(colorram[offs] & 0x0c) >> 2,
-					flipscreen,flipscreen,
-					8*sx,8*sy,
-					0,TRANSPARENCY_NONE,0);
-		}
-	}
-
-	/* copy the background graphics */
-	{
-		int scrollx;
-
-
-		if (flipscreen)
-			scrollx = (cop01_scrollx[0] + 256 * cop01_scrollx[1]) - 256;
-		else
-			scrollx = -(cop01_scrollx[0] + 256 * cop01_scrollx[1]);
-
-		copyscrollbitmap(bitmap,tmpbitmap2,1,&scrollx,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
-	}
-
-
-	/* draw the sprites */
 	for (offs = 0;offs < spriteram_size;offs += 4)
 	{
-		int attr = spriteram[offs+2];
-		int numtile = spriteram[offs+1];
-		int flipx = attr & 4;
-		int sx,sy;
+		code = spriteram[offs+1];
+		attr = spriteram[offs+2];
+		/* xxxx----	color
+		 * ----xx--	flipy,flipx
+		 * -------x msbx
+		 */
+		color = attr>>4;
+		flipx = attr & 0x04;
+		flipy = attr & 0x08;
 
-		if (numtile & 0x80)	/* high tiles are bankswitched */
-		{
-			if (spritebank & 1) numtile += 128;
-			else if (spritebank & 2) numtile += 256;
-		}
-
+		sx = (spriteram[offs+3] - 0x80) + 256 * (attr & 0x01);
 		sy = 240 - spriteram[offs];
-		sx = (spriteram[offs+3] - 0x80) + 256 * (attr & 1);
-		if (flipscreen)
+
+		if (flip_screen)
 		{
 			sx = 240 - sx;
 			sy = 240 - sy;
 			flipx = !flipx;
+			flipy = !flipy;
 		}
+
+		if (code&0x80)
+			code += (mightguy_vreg[0]&0x30)<<3;
 
 		drawgfx(bitmap,Machine->gfx[2],
-				numtile,
-				(attr & 0xf0) >> 4,
-				flipx,flipscreen,
-				sx,sy,
-				&Machine->visible_area,TRANSPARENCY_PEN,0);
+			code,
+			color,
+			flipx,flipy,
+			sx,sy,
+			&Machine->visible_area,TRANSPARENCY_PEN,0 );
 	}
+}
 
 
-	/* draw the foreground characters */
-	for (offs = cop01_videoram_size - 1;offs >= 0;offs--)
-	{
-		int sx,sy;
+void cop01_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
+	tilemap_set_scrollx(bg_tilemap,0,mightguy_vreg[1] + 256 * (mightguy_vreg[2] & 1));
+	tilemap_set_scrolly(bg_tilemap,0,mightguy_vreg[3]);
 
-
-		sx = offs % 32;
-		sy = offs / 32;
-		if (flipscreen)
-		{
-			sx = 31 - sx;
-			sy = 31 - sy;
-		}
-
-		drawgfx(bitmap,Machine->gfx[0],
-				cop01_videoram[offs],
-				0,	/* is there a color selector missing? */
-				flipscreen,flipscreen,
-				8*sx,8*sy,
-				&Machine->visible_area,TRANSPARENCY_PEN,15);
-	}
+	tilemap_draw(bitmap,bg_tilemap,TILEMAP_BACK,0);
+	draw_sprites(bitmap);
+	tilemap_draw(bitmap,bg_tilemap,TILEMAP_FRONT,0);
+	tilemap_draw(bitmap,fg_tilemap,0,0 );
 }

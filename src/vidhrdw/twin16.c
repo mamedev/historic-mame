@@ -563,66 +563,9 @@ static void draw_layer( struct osd_bitmap *bitmap, int opaque ){
 	}
 }
 
-static void mark_used_colors( void ){
-	const data16_t *source, *finish;
-	unsigned char used[0x40], *used_ptr;
-	memset( used, 0, 0x40 );
-
-	/* text layer */
-	used_ptr = &used[0x00];
-	source = twin16_fixram;
-	finish = source + 0x1000;
-	while( source<finish ){
-		int code = *source++;
-		used_ptr[(code>>9)&0xf] = 1;
-	}
-
-	/* sprites */
-	used_ptr = &used[0x10];
-	source = 0x1800+spriteram16;
-	finish = source + 0x800;
-	while( source<finish ){
-		data16_t attributes = source[3];
-		data16_t code = source[0];
-		if( code!=0xffff && (attributes&0x8000) ) used_ptr[attributes&0xf] = 1;
-		source++;
-	}
-
-	/* plane#0 */
-	used_ptr = &used[0x20];
-	source = videoram16;
-	finish = source+0x1000;
-	while( source<finish ){
-		int code = *source++;
-		used_ptr[code>>13] = 1;
-	}
-
-	/* plane#1 */
-	used_ptr = &used[0x28];
-	source = 0x1000+videoram16;
-	finish = source+0x1000;
-	while( source<finish ){
-		int code = *source++;
-		used_ptr[code>>13] = 1;
-	}
-
-	{
-		int i;
-		memset( palette_used_colors, PALETTE_COLOR_UNUSED, 0x400 );
-		for( i=0; i<0x40; i++ ){
-			if( used[i] ){
-				memset( &palette_used_colors[i*16], PALETTE_COLOR_VISIBLE, 0x10 );
-			}
-		}
-	}
-}
-
 void twin16_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh ){
 	if( twin16_spriteram_process_enable() && need_process_spriteram ) twin16_spriteram_process();
 	need_process_spriteram = 1;
-
-	mark_used_colors();
-	palette_recalc();
 
 	draw_layer( bitmap,1 );
 	draw_sprites( bitmap, 1 );

@@ -80,7 +80,7 @@ int vbl;
  some unknown writes in the 0x180000 region
 *******************************************************************************/
 
-data16_t *fg0_videoram, *bg0_videoram;
+extern data16_t *wwfsstar_fg0_videoram, *wwfsstar_bg0_videoram;
 
 static MEMORY_READ16_START( readmem )
 	{ 0x000000, 0x03ffff, MRA16_ROM },	/* Rom */
@@ -97,8 +97,8 @@ MEMORY_END
 
 static MEMORY_WRITE16_START( writemem )
 	{ 0x000000, 0x03ffff, MWA16_ROM },	/* Rom */
-	{ 0x080000, 0x080fff, wwfsstar_fg0_videoram_w, &fg0_videoram },	/* FG0 Ram */
-	{ 0x0c0000, 0x0c0fff, wwfsstar_bg0_videoram_w, &bg0_videoram },	/* BG0 Ram */
+	{ 0x080000, 0x080fff, wwfsstar_fg0_videoram_w, &wwfsstar_fg0_videoram },	/* FG0 Ram */
+	{ 0x0c0000, 0x0c0fff, wwfsstar_bg0_videoram_w, &wwfsstar_bg0_videoram },	/* BG0 Ram */
 	{ 0x100000, 0x1003ff, MWA16_RAM, &spriteram16 },	/* SPR Ram */
 	{ 0x140000, 0x140fff, paletteram16_xxxxBBBBGGGGRRRR_word_w, &paletteram16 },
 	{ 0x180004, 0x180007, wwfsstar_scrollwrite },
@@ -373,7 +373,7 @@ static const struct MachineDriver machine_driver_wwfsstar =
 	24*16, 24*16,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	wwfsstar_vh_start,
 	0,

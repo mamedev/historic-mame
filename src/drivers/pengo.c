@@ -50,6 +50,7 @@ VBlank duration: 1/VSYNC * (20/132) = 2500 us
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "machine/segacrpt.h"
 
 
 
@@ -62,9 +63,6 @@ void pengo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 extern unsigned char *pengo_soundregs;
 WRITE_HANDLER( pengo_sound_enable_w );
 WRITE_HANDLER( pengo_sound_w );
-
-/* in machine/segacrpt.c */
-void pengo_decode(void);
 
 
 

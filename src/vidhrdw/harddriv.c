@@ -562,20 +562,8 @@ void harddriv_vh_eof(void)
 void harddriv_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
 	struct gfx_update_entry *draw_state;
-	UINT8 palettes_used[8];
 	UINT32 curr_offset = 0;
 	int i;
-
-	/* mark any pens used and recalc the palette */
-	palette_init_used_colors();
-	palettes_used[0] = palettes_used[1] = palettes_used[2] = palettes_used[3] = 0;
-	palettes_used[4] = palettes_used[5] = palettes_used[6] = palettes_used[7] = 0;
-	for (i = 0; i < gfx_update_index; i++)
-		palettes_used[gfx_update_list[i].palettebank] = 1;
-	for (i = 0; i < 8; i++)
-		if (palettes_used[i])
-			memset(&palette_used_colors[i * 256], PALETTE_COLOR_USED, 256);
-	palette_recalc();
 
 	/* make a final entry in the list */
 	init_gfx_update(Machine->visible_area.max_y);

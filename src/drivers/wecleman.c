@@ -1184,23 +1184,19 @@ static struct GfxDecodeInfo wecleman_gfxdecodeinfo[] =
 
 
 /* We draw the road, made of 512 pixel lines, using 64x1 tiles */
+/* tiles are doubled horizontally */
 static struct GfxLayout hotchase_road_layout =
 {
 	64,1,
-	8*0x20000/(64*1*4),
+	RGN_FRAC(1,1),
 	4,
 	{ 0, 1, 2, 3 },
-	{0*4,1*4,2*4,3*4,4*4,5*4,6*4,7*4,
-	 8*4,9*4,10*4,11*4,12*4,13*4,14*4,15*4,
-	 16*4,17*4,18*4,19*4,20*4,21*4,22*4,23*4,
-	 24*4,25*4,26*4,27*4,28*4,29*4,30*4,31*4,
-
-	 32*4,33*4,34*4,35*4,36*4,37*4,38*4,39*4,
-	 40*4,41*4,42*4,43*4,44*4,45*4,46*4,47*4,
-	 48*4,49*4,50*4,51*4,52*4,53*4,54*4,55*4,
-	 56*4,57*4,58*4,59*4,60*4,61*4,62*4,63*4},
+	{ 0*4,0*4,1*4,1*4,2*4,2*4,3*4,3*4,4*4,4*4,5*4,5*4,6*4,6*4,7*4,7*4,
+	  8*4,8*4,9*4,9*4,10*4,10*4,11*4,11*4,12*4,12*4,13*4,13*4,14*4,14*4,15*4,15*4,
+	 16*4,16*4,17*4,17*4,18*4,18*4,19*4,19*4,20*4,20*4,21*4,21*4,22*4,22*4,23*4,23*4,
+	 24*4,24*4,25*4,25*4,26*4,26*4,27*4,27*4,28*4,28*4,29*4,29*4,30*4,30*4,31*4,31*4 },
 	{0},
-	64*1*4
+	32*4
 };
 
 
@@ -1287,10 +1283,10 @@ static const struct MachineDriver machine_driver_wecleman =
 	320, 224, { 0, 320-1, 0, 224-1 },
 
 	wecleman_gfxdecodeinfo,
-	2048, 2048,
+	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	wecleman_vh_start,
 	wecleman_vh_stop,
@@ -1355,10 +1351,10 @@ static const struct MachineDriver machine_driver_hotchase =
 	320, 224, { 0, 320-1, 0, 224-1 },
 
 	hotchase_gfxdecodeinfo,
-	2048, 2048,
+	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	hotchase_vh_start,
 	hotchase_vh_stop,
@@ -1498,12 +1494,10 @@ void init_wecleman(void)
 	RAM = memory_region(REGION_GFX1);
 	for (i = 0; i < memory_region_length(REGION_GFX1); i ++)
 	{
-		int x = RAM[i];
 		/* TODO: could be wrong, colors have to be fixed.       */
 		/* The only certain thing is that 87 must convert to f0 */
 		/* otherwise stray lines appear, made of pens 7 & 8     */
-		x = ((x & 0x07) << 5) | ((x & 0xf8) >> 3);
-		RAM[i] = x;
+		RAM[i] = BITSWAP8(RAM[i],7,0,1,2,3,4,5,6);
 	}
 
 	bitswap(memory_region(REGION_GFX1), memory_region_length(REGION_GFX1),
@@ -1549,12 +1543,12 @@ ROM_START( hotchase )
 	ROM_LOAD( "763f01", 0x8000, 0x8000, 0x4fddd061 )
 
 	ROM_REGION( 0x300000 * 2, REGION_GFX1, 0 )	/* x2, do not dispose */
-	ROM_LOAD( "763e17", 0x000000, 0x080000, 0x8db4e0aa )	// zooming sprites
-	ROM_LOAD( "763e20", 0x080000, 0x080000, 0xa22c6fce )
-	ROM_LOAD( "763e18", 0x100000, 0x080000, 0x50920d01 )
-	ROM_LOAD( "763e21", 0x180000, 0x080000, 0x77e0e93e )
-	ROM_LOAD( "763e19", 0x200000, 0x080000, 0xa2622e56 )
-	ROM_LOAD( "763e22", 0x280000, 0x080000, 0x967c49d1 )
+	ROM_LOAD16_WORD_SWAP( "763e17", 0x000000, 0x080000, 0x8db4e0aa )	// zooming sprites
+	ROM_LOAD16_WORD_SWAP( "763e20", 0x080000, 0x080000, 0xa22c6fce )
+	ROM_LOAD16_WORD_SWAP( "763e18", 0x100000, 0x080000, 0x50920d01 )
+	ROM_LOAD16_WORD_SWAP( "763e21", 0x180000, 0x080000, 0x77e0e93e )
+	ROM_LOAD16_WORD_SWAP( "763e19", 0x200000, 0x080000, 0xa2622e56 )
+	ROM_LOAD16_WORD_SWAP( "763e22", 0x280000, 0x080000, 0x967c49d1 )
 
 	ROM_REGION( 0x20000, REGION_GFX2, 0 )
 	ROM_LOAD( "763e14", 0x000000, 0x020000, 0x60392aa1 )	// bg
@@ -1640,7 +1634,6 @@ void hotchase_sprite_decode( int num16_banks, int bank_size )
 /* Unpack sprites data and do some patching */
 void init_hotchase(void)
 {
-	int i;
 //	data16_t *RAM1 = (data16_t) memory_region(REGION_CPU1);	/* Main CPU patches */
 //	RAM[0x1140/2] = 0x0015;	RAM[0x195c/2] = 0x601A;	// faster self test
 
@@ -1650,12 +1643,6 @@ void init_hotchase(void)
 
 	/* Let's swap even and odd bytes of the sprites gfx roms */
 	RAM = memory_region(REGION_GFX1);
-	for (i = 0; i < memory_region_length(REGION_GFX1); i += 2)
-	{
-		int x = RAM[i];
-		RAM[i] = RAM[i+1];
-		RAM[i+1] = x;
-	}
 
 	/* Now we can unpack each nibble of the sprites into a pixel (one byte) */
 	hotchase_sprite_decode(3,0x80000*2);	// num banks, bank len

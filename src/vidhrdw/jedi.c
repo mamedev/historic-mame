@@ -41,7 +41,7 @@ int jedi_vh_start(void)
 	memset(fgdirty, 1, videoram_size);
 
 	/* allocate an 8bpp bitmap for the raw foreground characters */
-	fgbitmap = bitmap_alloc_depth(Machine->drv->screen_width, Machine->drv->screen_height, 8);
+	fgbitmap = bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height);
 	if (!fgbitmap)
 	{
 		free(fgdirty);
@@ -49,7 +49,7 @@ int jedi_vh_start(void)
 	}
 
 	/* allocate an 8bpp bitmap for the motion objects */
-	mobitmap = bitmap_alloc_depth(Machine->drv->screen_width, Machine->drv->screen_height, 8);
+	mobitmap = bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height);
 	if (!mobitmap)
 	{
 		bitmap_free(fgbitmap);
@@ -70,7 +70,7 @@ int jedi_vh_start(void)
 	memset(bgdirty, 1, jedi_backgroundram_size);
 
 	/* the background area is 256x256, doubled by the hardware*/
-	bgbitmap = bitmap_alloc_depth(256, 256, 8);
+	bgbitmap = bitmap_alloc(256, 256);
 	if (!bgbitmap)
 	{
 		bitmap_free(fgbitmap);
@@ -81,7 +81,7 @@ int jedi_vh_start(void)
 	}
 
 	/* the expanded background area is 512x512 */
-	bgexbitmap = bitmap_alloc_depth(512, 512, 8);
+	bgexbitmap = bitmap_alloc(512, 512);
 	if (!bgexbitmap)
 	{
 		bitmap_free(fgbitmap);
@@ -315,9 +315,6 @@ void jedi_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	int bgexdirty[32][2];
 	int offs;
 
-	/* update the palette; we don't need to dirty anything as a result, because */
-	/* we keep it all in raw pens */
-	palette_recalc();
 
 	/* if no video, clear it all to black */
 	if (video_off)
@@ -380,8 +377,7 @@ void jedi_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		if (bgexdirty[offs][1] != -1)
 			update_smoothing(offs, bgexdirty[offs][0], bgexdirty[offs][1]);
 
-	/* draw the motion objects -- note that it is important to draw them exactly in this */
-	/* order, to have the correct priorities */
+	/* draw the motion objects */
     for (offs = 0; offs < 0x30; offs++)
 	{
 		/* coordinates adjustments made to match screenshot */

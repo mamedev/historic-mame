@@ -294,4 +294,5 @@ ROM_START( markham )
 	ROM_LOAD( "14-2.115", 0x0500,  0x0200, 0x12a4f1ff ) /* bg */
 ROM_END
 
-GAME( 1983, markham, 0, markham, markham, 0, ROT0_16BIT, "Sun Electronics", "Markham" )
+
+GAME( 1983, markham, 0, markham, markham, 0, ROT0, "Sun Electronics", "Markham" )

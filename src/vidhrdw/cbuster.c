@@ -10,8 +10,7 @@
 data16_t *twocrude_pf1_data,*twocrude_pf2_data,*twocrude_pf3_data,*twocrude_pf4_data;
 
 static struct tilemap *pf1_tilemap,*pf2_tilemap,*pf3_tilemap,*pf4_tilemap;
-static data16_t *gfx_base;
-static int gfx_bank,twocrude_pri,flipscreen;
+static int twocrude_pri,flipscreen;
 
 static data16_t twocrude_control_0[8];
 static data16_t twocrude_control_1[8];
@@ -26,7 +25,7 @@ static UINT32 back_scan(UINT32 col,UINT32 row,UINT32 num_cols,UINT32 num_rows)
 	return (col & 0x1f) + ((row & 0x1f) << 5) + ((col & 0x20) << 5);
 }
 
-static void get_back_tile_info(int tile_index)
+INLINE void get_back_tile_info(int tile_index,int gfx_bank,data16_t *gfx_base)
 {
 	int tile,color;
 
@@ -40,6 +39,11 @@ static void get_back_tile_info(int tile_index)
 			color,
 			0)
 }
+
+static void get_back_tile_info2(int tile_index) { get_back_tile_info(tile_index,1,twocrude_pf2_data); }
+static void get_back_tile_info3(int tile_index) { get_back_tile_info(tile_index,2,twocrude_pf3_data); }
+static void get_back_tile_info4(int tile_index) { get_back_tile_info(tile_index,3,twocrude_pf4_data); }
+
 
 /* 8x8 top layer */
 static void get_fore_tile_info(int tile_index)
@@ -60,10 +64,10 @@ static void get_fore_tile_info(int tile_index)
 
 int twocrude_vh_start(void)
 {
-	pf2_tilemap = tilemap_create(get_back_tile_info,back_scan,        TILEMAP_OPAQUE,16,16,64,32);
-	pf3_tilemap = tilemap_create(get_back_tile_info,back_scan,        TILEMAP_TRANSPARENT,16,16,64,32);
-	pf4_tilemap = tilemap_create(get_back_tile_info,back_scan,        TILEMAP_TRANSPARENT,16,16,64,32);
-	pf1_tilemap = tilemap_create(get_fore_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,32);
+	pf2_tilemap = tilemap_create(get_back_tile_info2,back_scan,        TILEMAP_OPAQUE,16,16,64,32);
+	pf3_tilemap = tilemap_create(get_back_tile_info3,back_scan,        TILEMAP_TRANSPARENT,16,16,64,32);
+	pf4_tilemap = tilemap_create(get_back_tile_info4,back_scan,        TILEMAP_TRANSPARENT,16,16,64,32);
+	pf1_tilemap = tilemap_create(get_fore_tile_info, tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,32);
 
 	if (!pf1_tilemap || !pf2_tilemap || !pf3_tilemap || !pf4_tilemap)
 		return 1;
@@ -150,58 +154,6 @@ WRITE16_HANDLER( twocrude_control_1_w )
 }
 
 /******************************************************************************/
-
-static void twocrude_update_palette(void)
-{
-	int offs,color,i,pal_base;
-	int colmask[32];
-
-	palette_init_used_colors();
-
-	/* Sprites */
-	pal_base = Machine->drv->gfxdecodeinfo[4].color_codes_start;
-	for (color = 0;color < 32;color++) colmask[color] = 0;
-	for (offs = 0;offs < 0x400;offs += 4)
-	{
-		int x,y,sprite,multi;
-
-		sprite = buffered_spriteram16[offs+1] & 0x7fff;
-		if (!sprite) continue;
-
-		y = buffered_spriteram16[offs];
-		x = buffered_spriteram16[offs+2];
-		color = (x >> 9) &0x1f;
-
-		multi = (1 << ((y & 0x0600) >> 9)) - 1;	/* 1x, 2x, 4x, 8x height */
-		sprite &= ~multi;
-
-		while (multi >= 0)
-		{
-			colmask[color] |= Machine->gfx[4]->pen_usage[sprite + multi];
-			multi--;
-		}
-	}
-
-	for (color = 0;color < 16;color++)
-	{
-		for (i = 1;i < 16;i++)
-		{
-			if (colmask[color] & (1 << i))
-				palette_used_colors[pal_base + 16 * color + i] = PALETTE_COLOR_USED;
-		}
-	}
-
-	for (color = 16;color < 32;color++)
-	{
-		for (i = 1;i < 16;i++)
-		{
-			if (colmask[color] & (1 << i))
-				palette_used_colors[256 + 1024 + 16 * (color-16) + i] = PALETTE_COLOR_USED;
-		}
-	}
-
-	palette_recalc();
-}
 
 static void twocrude_drawsprites(struct osd_bitmap *bitmap, int pri)
 {
@@ -429,21 +381,6 @@ void twocrude_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		tilemap_set_scrollx( pf1_tilemap,0, twocrude_control_1[1] );
 		tilemap_set_scrolly( pf1_tilemap,0, twocrude_control_1[2] );
 	}
-
-	/* Update playfields */
-	gfx_bank=1;
-	gfx_base=twocrude_pf2_data;
-	tilemap_update(pf2_tilemap);
-
-	gfx_bank=2;
-	gfx_base=twocrude_pf3_data;
-	tilemap_update(pf3_tilemap);
-
-	gfx_bank=3;
-	gfx_base=twocrude_pf4_data;
-	tilemap_update(pf4_tilemap);
-	tilemap_update(pf1_tilemap);
-	twocrude_update_palette();
 
 	/* Draw playfields & sprites */
 	tilemap_draw(bitmap,pf2_tilemap,0,0);

@@ -24,8 +24,6 @@ static int       sp_overdraw = 0;
 
 int mnight_vh_start(void)
 {
-	int i;
-
 	if ((bg_dirtybuffer = malloc(1024)) == 0)
 	{
 		return 1;
@@ -43,14 +41,6 @@ int mnight_vh_start(void)
 	}
 	memset(bg_dirtybuffer,1,1024);
 
-	/* chars, background tiles, sprites */
-	memset(palette_used_colors,PALETTE_COLOR_USED,Machine->drv->total_colors * sizeof(unsigned char));
-
-	for (i = 0;i < GFX_COLOR_CODES(1);i++)
-	{
-		palette_used_colors[COLORTABLE_START(1,i)+15] = PALETTE_COLOR_TRANSPARENT;
-		palette_used_colors[COLORTABLE_START(2,i)+15] = PALETTE_COLOR_TRANSPARENT;
-	}
 	return 0;
 }
 
@@ -86,7 +76,7 @@ WRITE_HANDLER( mnight_background_enable_w )
 		if (bg_enable)
 			memset(bg_dirtybuffer, 1, mnight_backgroundram_size / 2);
 		else
-			fillbitmap(bitmap_bg, palette_transparent_pen,0);
+			fillbitmap(bitmap_bg, Machine->pens[0],0);
 	}
 }
 
@@ -216,9 +206,6 @@ void mnight_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int scrollx,scrolly;
 
-	/* TODO: handle palette properly, it overflows */
-	if (palette_recalc ())
-		memset(bg_dirtybuffer, 1, mnight_backgroundram_size / 2);
 
 	if (bg_enable)
 		mnight_draw_background(bitmap_bg);

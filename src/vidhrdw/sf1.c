@@ -61,10 +61,8 @@ static void get_tx_tile_info(int tile_index)
 
 int sf1_vh_start(void)
 {
-	int i;
-
-	bg_tilemap =  tilemap_create(get_bg_tile_info, tilemap_scan_cols,TILEMAP_OPAQUE,     16,16,2048,16);
-	fg_tilemap =  tilemap_create(get_fg_tile_info, tilemap_scan_cols,TILEMAP_TRANSPARENT,16,16,2048,16);
+	bg_tilemap = tilemap_create(get_bg_tile_info,tilemap_scan_cols,TILEMAP_OPAQUE,     16,16,2048,16);
+	fg_tilemap = tilemap_create(get_fg_tile_info,tilemap_scan_cols,TILEMAP_TRANSPARENT,16,16,2048,16);
 	tx_tilemap = tilemap_create(get_tx_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8,  64,32);
 
 	if (!bg_tilemap || !fg_tilemap || !tx_tilemap)
@@ -72,9 +70,6 @@ int sf1_vh_start(void)
 
 	tilemap_set_transparent_pen(fg_tilemap,15);
 	tilemap_set_transparent_pen(tx_tilemap,3);
-
-	for(i = 832; i<1024; i++)
-		palette_used_colors[i] = PALETTE_COLOR_UNUSED;
 
 	return 0;
 }
@@ -136,31 +131,6 @@ WRITE16_HANDLER( sf1_gfxctrl_w )
   Display refresh
 
 ***************************************************************************/
-
-static void mark_sprite_colors(void)
-{
-	unsigned int cmap = 0;
-	int offs,i,j;
-
-	for (offs = 0x1000-0x20;offs >= 0;offs -= 0x20)
-	{
-		int color = sf1_objectram[offs+1] & 0x0f;
-
-		cmap |= 1 << color;
-	}
-
-	for (i = 0;i < 16;i++)
-	{
-		if (cmap & (1 << i))
-		{
-			unsigned char *umap =
-					&palette_used_colors[Machine->drv->gfxdecodeinfo[2].color_codes_start + 16*i];
-
-			for (j = 0;j < 15;j++)
-				*umap++ = PALETTE_COLOR_USED;
-		}
-	}
-}
 
 INLINE int sf1_invert(int nb)
 {
@@ -263,17 +233,10 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 
 void sf1_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
-	tilemap_update(ALL_TILEMAPS);
-
-	palette_init_used_colors();
-	if (sf1_active & 0x80)
-		mark_sprite_colors();
-	palette_recalc();
-
 	if (sf1_active & 0x20)
 		tilemap_draw(bitmap,bg_tilemap,0,0);
 	else
-		fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
+		fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 
 	tilemap_draw(bitmap,fg_tilemap,0,0);
 

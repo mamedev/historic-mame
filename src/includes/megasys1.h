@@ -1,21 +1,18 @@
 /***************************************************************************
 
-						-= Jaleco Mega System 1 =-
+							-= Jaleco Mega System 1 =-
 
-				driver by	Luca Elia (l.elia@tin.it)
+					driver by	Luca Elia (l.elia@tin.it)
 
 
 	This file contains definitions used across multiple megasys1
 	and non megasys1 Jaleco games:
 
-	* Gfx layouts
 	* Input ports
-	* Read and write errors logging
 	* Scrolling layers handling
+	* Code decryption handling
 
 ***************************************************************************/
-
-
 
 
 /***************************************************************************
@@ -168,11 +165,13 @@
 
 /***************************************************************************
 
-						Scrolling Layers Handling
+							Scrolling Layers Handling
 
 ***************************************************************************/
 
 /* Variables */
+extern struct tilemap *megasys1_tmap[3];
+
 extern data16_t *megasys1_scrollram_0, *megasys1_scrollram_1, *megasys1_scrollram_2;
 extern data16_t *megasys1_objectram, *megasys1_vregs, *megasys1_ram;
 
@@ -195,3 +194,7 @@ WRITE16_HANDLER( megasys1_scrollram_2_w );
 void megasys1_scroll_0_flag_w(int data);
 void megasys1_scroll_1_flag_w(int data);
 void megasys1_scroll_2_flag_w(int data);
+
+void astyanax_rom_decode(int cpu);
+void phantasm_rom_decode(int cpu);
+void rodland_rom_decode (int cpu);

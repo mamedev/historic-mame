@@ -19,55 +19,9 @@ to switch between 8*8 tiles and 16*16 tiles.
 static data16_t tumblep_control_0[8];
 data16_t *tumblep_pf1_data,*tumblep_pf2_data;
 static struct tilemap *pf1_tilemap,*pf1_alt_tilemap,*pf2_tilemap;
-static data16_t *gfx_base;
-static int gfx_bank,flipscreen;
+static int flipscreen;
 
 /******************************************************************************/
-
-static void tumblep_mark_sprite_colours(void)
-{
-	int offs,color,i,pal_base,colmask[16];
-    unsigned int *pen_usage;
-
-	palette_init_used_colors();
-
-	pen_usage=Machine->gfx[3]->pen_usage;
-	pal_base = Machine->drv->gfxdecodeinfo[3].color_codes_start;
-	for (color = 0;color < 16;color++) colmask[color] = 0;
-
-	for (offs = 0;offs < 0x400;offs += 4)
-	{
-		int x,y,sprite,multi;
-
-		sprite = spriteram16[offs+1] & 0x3fff;
-		if (!sprite) continue;
-
-		y = spriteram16[offs];
-		x = spriteram16[offs+2];
-		color = (x >>9) &0xf;
-
-		multi = (1 << ((y & 0x0600) >> 9)) - 1;	/* 1x, 2x, 4x, 8x height */
-
-		sprite &= ~multi;
-
-		while (multi >= 0)
-		{
-			colmask[color] |= pen_usage[sprite + multi];
-			multi--;
-		}
-	}
-
-	for (color = 0;color < 16;color++)
-	{
-		for (i = 1;i < 16;i++)
-		{
-			if (colmask[color] & (1 << i))
-				palette_used_colors[pal_base + 16 * color + i] = PALETTE_COLOR_USED;
-		}
-	}
-
-	palette_recalc();
-}
 
 static void tumblep_drawsprites(struct osd_bitmap *bitmap)
 {
@@ -165,39 +119,36 @@ static UINT32 tumblep_scan(UINT32 col,UINT32 row,UINT32 num_cols,UINT32 num_rows
 	return (col & 0x1f) + ((row & 0x1f) << 5) + ((col & 0x20) << 5);
 }
 
-static void get_bg_tile_info(int tile_index)
+INLINE void get_bg_tile_info(int tile_index,int gfx_bank,data16_t *gfx_base)
 {
-	int tile,color;
-
-	tile=gfx_base[tile_index];
-	color=tile >> 12;
-	tile=tile&0xfff;
+	int data = gfx_base[tile_index];
 
 	SET_TILE_INFO(
 			gfx_bank,
-			tile,
-			color,
+			data & 0x0fff,
+			data >> 12,
 			0)
 }
 
+static void get_bg1_tile_info(int tile_index) { get_bg_tile_info(tile_index,2,tumblep_pf1_data); }
+static void get_bg2_tile_info(int tile_index) { get_bg_tile_info(tile_index,1,tumblep_pf2_data); }
+
 static void get_fg_tile_info(int tile_index)
 {
-	int tile=tumblep_pf1_data[tile_index];
-	int color=tile >> 12;
+	int data = tumblep_pf1_data[tile_index];
 
-	tile=tile&0xfff;
 	SET_TILE_INFO(
 			0,
-			tile,
-			color,
+			data & 0x0fff,
+			data >> 12,
 			0)
 }
 
 int tumblep_vh_start(void)
 {
-	pf1_tilemap =     tilemap_create(get_fg_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8,64,32);
-	pf1_alt_tilemap = tilemap_create(get_bg_tile_info,tumblep_scan,TILEMAP_TRANSPARENT,16,16,64,32);
-	pf2_tilemap =     tilemap_create(get_bg_tile_info,tumblep_scan,TILEMAP_OPAQUE,     16,16,64,32);
+	pf1_tilemap =     tilemap_create(get_fg_tile_info, tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8,64,32);
+	pf1_alt_tilemap = tilemap_create(get_bg1_tile_info,tumblep_scan,TILEMAP_TRANSPARENT,16,16,64,32);
+	pf2_tilemap =     tilemap_create(get_bg2_tile_info,tumblep_scan,TILEMAP_OPAQUE,     16,16,64,32);
 
 	if (!pf1_tilemap || !pf1_alt_tilemap || !pf2_tilemap)
 		return 1;
@@ -225,16 +176,6 @@ void tumblep_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	tilemap_set_scrollx( pf2_tilemap,0, tumblep_control_0[3]+offs );
 	tilemap_set_scrolly( pf2_tilemap,0, tumblep_control_0[4] );
 
-	gfx_bank=1;
-	gfx_base=tumblep_pf2_data;
-	tilemap_update(pf2_tilemap);
-	gfx_bank=2;
-	gfx_base=tumblep_pf1_data;
-	tilemap_update(pf1_alt_tilemap);
-	tilemap_update(pf1_tilemap);
-
-	tumblep_mark_sprite_colours();
-
 	tilemap_draw(bitmap,pf2_tilemap,0,0);
 	if (tumblep_control_0[6]&0x80)
 		tilemap_draw(bitmap,pf1_tilemap,0,0);
@@ -258,16 +199,6 @@ void tumblepb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	tilemap_set_scrolly( pf1_alt_tilemap,0, tumblep_control_0[2] );
 	tilemap_set_scrollx( pf2_tilemap,0, tumblep_control_0[3]+offs );
 	tilemap_set_scrolly( pf2_tilemap,0, tumblep_control_0[4] );
-
-	gfx_bank=1;
-	gfx_base=tumblep_pf2_data;
-	tilemap_update(pf2_tilemap);
-	gfx_bank=2;
-	gfx_base=tumblep_pf1_data;
-	tilemap_update(pf1_tilemap);
-	tilemap_update(pf1_alt_tilemap);
-
-	tumblep_mark_sprite_colours();
 
 	tilemap_draw(bitmap,pf2_tilemap,0,0);
 	if (tumblep_control_0[6]&0x80)

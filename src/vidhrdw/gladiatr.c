@@ -268,9 +268,6 @@ void gladiatr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	if (video_attributes & 0x20)	/* screen refresh enable? */
 	{
-		if (palette_recalc())
-			memset(dirtybuffer,1,64*32);
-
 		render_background( bitmap );
 		render_sprites( bitmap );
 		render_text( bitmap );

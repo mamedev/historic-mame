@@ -7,23 +7,10 @@ Data East machine functions - Bryan McPhail, mish@tendril.co.uk
 *******************************************************************************/
 
 #include "driver.h"
+#include "dec0.h"
+#include "cpu/h6280/h6280.h"
 
-extern data16_t *dec0_ram;
 static int GAME,i8751_return,slyspy_state;
-
-WRITE16_HANDLER( dec0_pf1_control_0_w );
-WRITE16_HANDLER( dec0_pf1_control_1_w );
-WRITE16_HANDLER( dec0_pf1_data_w );
-READ16_HANDLER( dec0_pf1_data_r );
-WRITE16_HANDLER( dec0_pf2_control_0_w );
-WRITE16_HANDLER( dec0_pf2_control_1_w );
-WRITE16_HANDLER( dec0_pf2_data_w );
-READ16_HANDLER( dec0_pf2_data_r );
-WRITE16_HANDLER( dec0_pf3_control_1_w );
-WRITE16_HANDLER( dec0_pf3_control_0_w );
-WRITE16_HANDLER( dec0_pf3_data_w );
-extern data16_t *dec0_pf1_rowscroll,*dec0_pf2_rowscroll,*dec0_pf3_rowscroll;
-extern data16_t *dec0_pf1_colscroll,*dec0_pf2_colscroll,*dec0_pf3_colscroll;
 
 /******************************************************************************/
 
@@ -308,7 +295,7 @@ static void hbarrel_i8751_write(int data)
 {
 	static int level,state;
 
-	int title[]={  1, 2, 5, 6, 9,10,13,14,17,18,21,22,25,26,29,30,33,34,37,38,41,42,0,
+	const int title[]={  1, 2, 5, 6, 9,10,13,14,17,18,21,22,25,26,29,30,33,34,37,38,41,42,0,
                  3, 4, 7, 8,11,12,15,16,19,20,23,24,27,28,31,32,35,36,39,40,43,44,0,
                 45,46,49,50,53,54,57,58,61,62,65,66,69,70,73,74,77,78,81,82,0,
                 47,48,51,52,55,56,59,60,63,64,67,68,71,72,75,76,79,80,83,84,0,
@@ -320,7 +307,7 @@ static void hbarrel_i8751_write(int data)
 	};
 
 	/* This table is from the USA version - others could be different.. */
-	int weapons_table[][0x20]={
+	const int weapons_table[][0x20]={
 		{ 0x558,0x520,0x5c0,0x600,0x520,0x540,0x560,0x5c0,0x688,0x688,0x7a8,0x850,0x880,0x880,0x990,0x9b0,0x9b0,0x9e0,0xffff }, /* Level 1 */
 		{ 0x330,0x370,0x3d8,0x580,0x5b0,0x640,0x6a0,0x8e0,0x8e0,0x940,0x9f0,0xa20,0xa50,0xa80,0xffff }, /* Level 2 */
 		{ 0xb20,0xbd0,0xb20,0xb20,0xbd8,0xb50,0xbd8,0xb20,0xbe0,0xb40,0xb80,0xa18,0xa08,0xa08,0x980,0x8e0,0x780,0x790,0x650,0x600,0x5d0,0x5a0,0x570,0x590,0x5e0,0xffff }, /* Level 3 */
@@ -496,6 +483,25 @@ static WRITE16_HANDLER( sprite_mirror_w )
 
 /******************************************************************************/
 
+static READ16_HANDLER( robocop_68000_share_r )
+{
+//logerror("%08x: Share read %04x\n",cpu_get_pc(),offset);
+
+	return robocop_shared_ram[offset];
+}
+
+static WRITE16_HANDLER( robocop_68000_share_w )
+{
+//	logerror("%08x: Share write %04x %04x\n",cpu_get_pc(),offset,data);
+
+	robocop_shared_ram[offset]=data&0xff;
+
+	if (offset==0x7ff) /* A control address - not standard ram */
+		cpu_cause_interrupt(2,H6280_INT_IRQ1);
+}
+
+/******************************************************************************/
+
 static void h6280_decrypt(int memory_area)
 {
 	int i;
@@ -536,6 +542,8 @@ void init_slyspy(void)
 
 void init_robocop(void)
 {
+	install_mem_read16_handler( 0, 0x180000, 0x180fff, robocop_68000_share_r);
+	install_mem_write16_handler(0, 0x180000, 0x180fff, robocop_68000_share_w);
 }
 
 void init_baddudes(void)

@@ -128,7 +128,6 @@ void holeland_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs,code,sx,sy,color,flipx, flipy;
 
-	tilemap_update(ALL_TILEMAPS);
 	tilemap_draw(bitmap,bg_tilemap,TILEMAP_BACK,0);
 
 	/* Draw the sprites. */

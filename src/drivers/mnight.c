@@ -378,7 +378,7 @@ static const struct MachineDriver machine_driver_mnight =
 	48*16,48*16,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	mnight_vh_start,
 	mnight_vh_stop,

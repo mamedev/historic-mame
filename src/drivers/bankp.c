@@ -39,7 +39,7 @@ write:
 
 extern unsigned char *bankp_videoram2;
 extern unsigned char *bankp_colorram2;
-void bankp_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+void bankp_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom);
 WRITE_HANDLER( bankp_videoram2_w );
 WRITE_HANDLER( bankp_colorram2_w );
 WRITE_HANDLER( bankp_scroll_w );

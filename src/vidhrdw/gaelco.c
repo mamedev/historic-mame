@@ -265,10 +265,7 @@ void maniacsq_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	tilemap_set_scrolly(pant[1], 0, gaelco_vregs[2]);
 	tilemap_set_scrollx(pant[1], 0, gaelco_vregs[3]);
 
-	tilemap_update(ALL_TILEMAPS);
 	gaelco_sort_sprites();
-
-	palette_recalc();
 
 
 	fillbitmap( bitmap, Machine->pens[0], &Machine->visible_area );
@@ -298,10 +295,7 @@ void bigkarnk_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	tilemap_set_scrolly(pant[1], 0, gaelco_vregs[2]);
 	tilemap_set_scrollx(pant[1], 0, gaelco_vregs[3]);
 
-	tilemap_update(ALL_TILEMAPS);
 	gaelco_sort_sprites();
-
-	palette_recalc();
 
 
 	fillbitmap( bitmap, Machine->pens[0], &Machine->visible_area );

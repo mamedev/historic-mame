@@ -1,291 +1,127 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-/* prototype */
-static void wc90_draw_sprites( struct osd_bitmap *bitmap, int priority );
 
-unsigned char *wc90_shared;
-unsigned char *wc90_tile_colorram, *wc90_tile_videoram;
-unsigned char *wc90_tile_colorram2, *wc90_tile_videoram2;
-unsigned char *wc90_scroll0xlo, *wc90_scroll0xhi;
-unsigned char *wc90_scroll1xlo, *wc90_scroll1xhi;
-unsigned char *wc90_scroll2xlo, *wc90_scroll2xhi;
-unsigned char *wc90_scroll0ylo, *wc90_scroll0yhi;
-unsigned char *wc90_scroll1ylo, *wc90_scroll1yhi;
-unsigned char *wc90_scroll2ylo, *wc90_scroll2yhi;
+data8_t *wc90_fgvideoram,*wc90_bgvideoram,*wc90_txvideoram;
 
-size_t wc90_tile_videoram_size;
-size_t wc90_tile_videoram_size2;
 
-static unsigned char *dirtybuffer1 = 0, *dirtybuffer2 = 0;
-static struct osd_bitmap *tmpbitmap1 = 0,*tmpbitmap2 = 0;
+data8_t *wc90_scroll0xlo, *wc90_scroll0xhi;
+data8_t *wc90_scroll1xlo, *wc90_scroll1xhi;
+data8_t *wc90_scroll2xlo, *wc90_scroll2xhi;
 
-int wc90_vh_start( void ) {
+data8_t *wc90_scroll0ylo, *wc90_scroll0yhi;
+data8_t *wc90_scroll1ylo, *wc90_scroll1yhi;
+data8_t *wc90_scroll2ylo, *wc90_scroll2yhi;
 
-	if ( generic_vh_start() )
+
+static struct tilemap *tx_tilemap,*fg_tilemap,*bg_tilemap;
+
+
+
+/***************************************************************************
+
+  Callbacks for the TileMap code
+
+***************************************************************************/
+
+static void get_bg_tile_info(int tile_index)
+{
+	int attr = wc90_bgvideoram[tile_index];
+	int tile = wc90_bgvideoram[tile_index + 0x800] +
+					256 * ((attr & 3) + ((attr >> 1) & 4));
+	SET_TILE_INFO(
+			2,
+			tile,
+			attr >> 4,
+			0)
+}
+
+static void get_fg_tile_info(int tile_index)
+{
+	int attr = wc90_fgvideoram[tile_index];
+	int tile = wc90_fgvideoram[tile_index + 0x800] +
+					256 * ((attr & 3) + ((attr >> 1) & 4));
+	SET_TILE_INFO(
+			1,
+			tile,
+			attr >> 4,
+			0)
+}
+
+static void get_tx_tile_info(int tile_index)
+{
+	SET_TILE_INFO(
+			0,
+			wc90_txvideoram[tile_index + 0x800] + ((wc90_txvideoram[tile_index] & 0x07) << 8),
+			wc90_txvideoram[tile_index] >> 4,
+			0)
+}
+
+
+
+/***************************************************************************
+
+  Start the video hardware emulation.
+
+***************************************************************************/
+
+int wc90_vh_start(void)
+{
+	bg_tilemap = tilemap_create(get_bg_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,     16,16,64,32);
+	fg_tilemap = tilemap_create(get_fg_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,64,32);
+	tx_tilemap = tilemap_create(get_tx_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8,64,32);
+
+	if (!bg_tilemap || !fg_tilemap || !tx_tilemap)
 		return 1;
 
-	if ( ( dirtybuffer1 = malloc( wc90_tile_videoram_size ) ) == 0 ) {
-		return 1;
-	}
-
-	memset( dirtybuffer1, 1, wc90_tile_videoram_size );
-
-	if ( ( tmpbitmap1 = bitmap_alloc(4*Machine->drv->screen_width,2*Machine->drv->screen_height) ) == 0 ){
-		free( dirtybuffer1 );
-		generic_vh_stop();
-		return 1;
-	}
-
-	if ( ( dirtybuffer2 = malloc( wc90_tile_videoram_size2 ) ) == 0 ) {
-		bitmap_free(tmpbitmap1);
-		free(dirtybuffer1);
-		generic_vh_stop();
-		return 1;
-	}
-
-	memset( dirtybuffer2, 1, wc90_tile_videoram_size2 );
-
-	if ( ( tmpbitmap2 = bitmap_alloc(4*Machine->drv->screen_width,2*Machine->drv->screen_height) ) == 0 ){
-		bitmap_free(tmpbitmap1);
-		free(dirtybuffer1);
-		free(dirtybuffer2);
-		generic_vh_stop();
-		return 1;
-	}
-
-	// Free the generic bitmap and allocate one twice as wide
-	free( tmpbitmap );
-
-	if ( ( tmpbitmap = bitmap_alloc(2*Machine->drv->screen_width,Machine->drv->screen_height) ) == 0 ){
-		bitmap_free(tmpbitmap1);
-		bitmap_free(tmpbitmap2);
-		free(dirtybuffer);
-		free(dirtybuffer1);
-		free(dirtybuffer2);
-		generic_vh_stop();
-		return 1;
-	}
+	tilemap_set_transparent_pen(fg_tilemap,0);
+	tilemap_set_transparent_pen(tx_tilemap,0);
 
 	return 0;
 }
 
-void wc90_vh_stop( void ) {
-	free( dirtybuffer1 );
-	free( dirtybuffer2 );
-	bitmap_free( tmpbitmap1 );
-	bitmap_free( tmpbitmap2 );
-	generic_vh_stop();
-}
 
-READ_HANDLER( wc90_tile_videoram_r ) {
-	return wc90_tile_videoram[offset];
-}
 
-WRITE_HANDLER( wc90_tile_videoram_w ) {
-	if ( wc90_tile_videoram[offset] != data ) {
-		dirtybuffer1[offset] = 1;
-		wc90_tile_videoram[offset] = data;
-	}
-}
+/***************************************************************************
 
-READ_HANDLER( wc90_tile_colorram_r ) {
-	return wc90_tile_colorram[offset];
-}
+  Memory handlers
 
-WRITE_HANDLER( wc90_tile_colorram_w ) {
-	if ( wc90_tile_colorram[offset] != data ) {
-		dirtybuffer1[offset] = 1;
-		wc90_tile_colorram[offset] = data;
-	}
-}
+***************************************************************************/
 
-READ_HANDLER( wc90_tile_videoram2_r ) {
-	return wc90_tile_videoram2[offset];
-}
-
-WRITE_HANDLER( wc90_tile_videoram2_w ) {
-	if ( wc90_tile_videoram2[offset] != data ) {
-		dirtybuffer2[offset] = 1;
-		wc90_tile_videoram2[offset] = data;
-	}
-}
-
-READ_HANDLER( wc90_tile_colorram2_r ) {
-	return wc90_tile_colorram2[offset];
-}
-
-WRITE_HANDLER( wc90_tile_colorram2_w ) {
-	if ( wc90_tile_colorram2[offset] != data ) {
-		dirtybuffer2[offset] = 1;
-		wc90_tile_colorram2[offset] = data;
-	}
-}
-
-READ_HANDLER( wc90_shared_r ) {
-	return wc90_shared[offset];
-}
-
-WRITE_HANDLER( wc90_shared_w ) {
-	wc90_shared[offset] = data;
-}
-
-void wc90_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+WRITE_HANDLER( wc90_bgvideoram_w )
 {
-	int offs, i;
-	int scrollx, scrolly;
-
-
-	/* compute palette usage */
+	if (wc90_bgvideoram[offset] != data)
 	{
-		unsigned short palette_map[4 * 16];
-		int tile, cram;
-
-		memset (palette_map, 0, sizeof (palette_map));
-
-		for ( offs = wc90_tile_videoram_size2 - 1; offs >= 0; offs-- )
-		{
-			cram = wc90_tile_colorram2[offs];
-			tile = wc90_tile_videoram2[offs] + 256 * (( cram & 3 ) + ( ( cram >> 1 ) & 4 ));
-			palette_map[3*16 + (cram >> 4)] |= Machine->gfx[2]->pen_usage[tile];
-		}
-		for ( offs = wc90_tile_videoram_size - 1; offs >= 0; offs-- )
-		{
-			cram = wc90_tile_colorram[offs];
-			tile = wc90_tile_videoram[offs] + 256 * (( cram & 3 ) + ( ( cram >> 1 ) & 4 ));
-			palette_map[2*16 + (cram >> 4)] |= Machine->gfx[1]->pen_usage[tile];
-		}
-		for ( offs = videoram_size - 1; offs >= 0; offs-- )
-		{
-			cram = colorram[offs];
-			tile = videoram[offs] + ( ( cram & 0x07 ) << 8 );
-			palette_map[1*16 + (cram >> 4)] |= Machine->gfx[0]->pen_usage[tile];
-		}
-		for (offs = 0;offs < spriteram_size;offs += 16){
-			int bank = spriteram[offs+0];
-
-			if ( bank & 4 ) { /* visible */
-				int flags = spriteram[offs+4];
-				palette_map[0*16 + (flags >> 4)] |= 0xfffe;
-			}
-		}
-
-		/* expand the results */
-		for (i = 0; i < 4*16; i++)
-		{
-			int usage = palette_map[i], j;
-			if (usage)
-			{
-				palette_used_colors[i * 16 + 0] = PALETTE_COLOR_TRANSPARENT;
-				for (j = 1; j < 16; j++)
-					if (usage & (1 << j))
-						palette_used_colors[i * 16 + j] = PALETTE_COLOR_USED;
-					else
-						palette_used_colors[i * 16 + j] = PALETTE_COLOR_UNUSED;
-			}
-			else
-				memset (&palette_used_colors[i * 16 + 0], PALETTE_COLOR_UNUSED, 16);
-		}
-
-		if (palette_recalc ())
-		{
-			memset( dirtybuffer,  1, videoram_size );
-			memset( dirtybuffer1, 1, wc90_tile_videoram_size );
-			memset( dirtybuffer2, 1, wc90_tile_videoram_size2 );
-		}
+		wc90_bgvideoram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap,offset & 0x7ff);
 	}
-
-
-
-
-/* commented out -- if we copyscrollbitmap below with TRANSPARENCY_NONE, we shouldn't waste our
-   time here:
-	wc90_draw_sprites( bitmap, 3 );
-*/
-
-	for ( offs = wc90_tile_videoram_size2-1; offs >= 0; offs-- ) {
-		int sx, sy, tile;
-
-		if ( dirtybuffer2[offs] ) {
-
-			dirtybuffer2[offs] = 0;
-
-			sx = ( offs % 64 );
-			sy = ( offs / 64 );
-
-			tile = wc90_tile_videoram2[offs] +
-					256 * (( wc90_tile_colorram2[offs] & 3 ) + ( ( wc90_tile_colorram2[offs] >> 1 ) & 4 ));
-
-			drawgfx(tmpbitmap2,Machine->gfx[2],
-					tile,
-					wc90_tile_colorram2[offs] >> 4,
-					0,0,
-					sx*16,sy*16,
-					0,TRANSPARENCY_NONE,0);
-		}
-	}
-
-	scrollx = -wc90_scroll2xlo[0] - 256 * ( wc90_scroll2xhi[0] & 3 );
-	scrolly = -wc90_scroll2ylo[0] - 256 * ( wc90_scroll2yhi[0] & 1 );
-
-	copyscrollbitmap(bitmap,tmpbitmap2,1,&scrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);
-
-	wc90_draw_sprites( bitmap, 2 );
-
-	for ( offs = wc90_tile_videoram_size-1; offs >= 0; offs-- ) {
-		int sx, sy, tile;
-
-		if ( dirtybuffer1[offs] ) {
-
-			dirtybuffer1[offs] = 0;
-
-			sx = ( offs % 64 );
-			sy = ( offs / 64 );
-
-			tile = wc90_tile_videoram[offs] +
-					256 * (( wc90_tile_colorram[offs] & 3 ) + ( ( wc90_tile_colorram[offs] >> 1 ) & 4 ));
-
-			drawgfx(tmpbitmap1,Machine->gfx[1],
-					tile,
-					wc90_tile_colorram[offs] >> 4,
-					0,0,
-					sx*16,sy*16,
-					0,TRANSPARENCY_NONE,0);
-		}
-	}
-
-	scrollx = -wc90_scroll1xlo[0] - 256 * ( wc90_scroll1xhi[0] & 3 );
-	scrolly = -wc90_scroll1ylo[0] - 256 * ( wc90_scroll1yhi[0] & 1 );
-
-	copyscrollbitmap(bitmap,tmpbitmap1,1,&scrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
-
-	wc90_draw_sprites( bitmap, 1 );
-
-	for ( offs = videoram_size - 1; offs >= 0; offs-- ) {
-		if ( dirtybuffer[offs] ) {
-			int sx, sy;
-
-			dirtybuffer[offs] = 0;
-
-			sx = (offs % 64);
-			sy = (offs / 64);
-
-			drawgfx(tmpbitmap,Machine->gfx[0],
-					videoram[offs] + ( ( colorram[offs] & 0x07 ) << 8 ),
-					colorram[offs] >> 4,
-					0,0,
-					sx*8,sy*8,
-					0,TRANSPARENCY_NONE,0);
-		}
-	}
-
-	scrollx = -wc90_scroll0xlo[0] - 256 * ( wc90_scroll0xhi[0] & 1 );
-	scrolly = -wc90_scroll0ylo[0] - 256 * ( wc90_scroll0yhi[0] & 1 );
-
-	copyscrollbitmap(bitmap,tmpbitmap,1,&scrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
-
-	wc90_draw_sprites( bitmap, 0 );
 }
+
+WRITE_HANDLER( wc90_fgvideoram_w )
+{
+	if (wc90_fgvideoram[offset] != data)
+	{
+		wc90_fgvideoram[offset] = data;
+		tilemap_mark_tile_dirty(fg_tilemap,offset & 0x7ff);
+	}
+}
+
+WRITE_HANDLER( wc90_txvideoram_w )
+{
+	if (wc90_txvideoram[offset] != data)
+	{
+		wc90_txvideoram[offset] = data;
+		tilemap_mark_tile_dirty(tx_tilemap,offset & 0x7ff);
+	}
+}
+
+
+
+/***************************************************************************
+
+  Display refresh
+
+***************************************************************************/
 
 #define WC90_DRAW_SPRITE( code, sx, sy ) \
 					drawgfx( bitmap, Machine->gfx[3], code, flags >> 4, \
@@ -487,7 +323,8 @@ static drawsprites_procdef drawsprites_proc[16] = {
 	drawsprite_64x64		/* 1111 = 64x64 */
 };
 
-static void wc90_draw_sprites( struct osd_bitmap *bitmap, int priority ){
+static void draw_sprites( struct osd_bitmap *bitmap, int priority )
+{
 	int offs, sx,sy, flags, which;
 
 	/* draw all visible sprites of specified priority */
@@ -510,3 +347,22 @@ static void wc90_draw_sprites( struct osd_bitmap *bitmap, int priority ){
 }
 
 #undef WC90_DRAW_SPRITE
+
+
+void wc90_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
+	tilemap_set_scrollx(bg_tilemap,0,wc90_scroll2xlo[0] + 256 * wc90_scroll2xhi[0]);
+	tilemap_set_scrolly(bg_tilemap,0,wc90_scroll2ylo[0] + 256 * wc90_scroll2yhi[0]);
+	tilemap_set_scrollx(fg_tilemap,0,wc90_scroll1xlo[0] + 256 * wc90_scroll1xhi[0]);
+	tilemap_set_scrolly(fg_tilemap,0,wc90_scroll1ylo[0] + 256 * wc90_scroll1yhi[0]);
+	tilemap_set_scrollx(tx_tilemap,0,wc90_scroll0xlo[0] + 256 * wc90_scroll0xhi[0]);
+	tilemap_set_scrolly(tx_tilemap,0,wc90_scroll0ylo[0] + 256 * wc90_scroll0yhi[0]);
+
+//	draw_sprites( bitmap, 3 );
+	tilemap_draw(bitmap,bg_tilemap,0,0);
+	draw_sprites( bitmap, 2 );
+	tilemap_draw(bitmap,fg_tilemap,0,0);
+	draw_sprites( bitmap, 1 );
+	tilemap_draw(bitmap,tx_tilemap,0,0);
+	draw_sprites( bitmap, 0 );
+}

@@ -89,8 +89,8 @@ int mrflea_vh_start( void ){
 	return 0;
 }
 
-void mrflea_vh_screenrefresh( struct osd_bitmap *bitmap, int full_refresh ){
-	palette_recalc();
+void mrflea_vh_screenrefresh( struct osd_bitmap *bitmap, int full_refresh )
+{
 	draw_background( bitmap );
 	draw_sprites( bitmap );
 }

@@ -6,7 +6,6 @@
 #define TC0480SCP_GFX_NUM 1
 
 UINT16 undrfire_rotate_ctrl[8];
-extern int TC0480SCP_pri_reg;
 
 struct tempsprite
 {
@@ -320,10 +319,7 @@ void undrfire_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	pivlayer[1] = pivlayer[0]^1;
 	pivlayer[2] = 2;
 
-	palette_init_used_colors();
-	memset(palette_used_colors,PALETTE_COLOR_VISIBLE,Machine->drv->total_colors);
 	TC0480SCP_mark_transparent_colors(layer[0]);
-	palette_recalc();
 
 	fillbitmap(priority_bitmap,0,NULL);
 	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);	/* wrong color? */

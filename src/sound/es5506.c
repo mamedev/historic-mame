@@ -23,6 +23,12 @@
 
 #define BACKEND_INTERPOLATE		1
 #define LOG_COMMANDS			0
+#define RAINE_CHECK				0
+#define MAKE_WAVS				0
+
+#if MAKE_WAVS
+#include "wavwrite.h"
+#endif
 
 
 #define MAX_SAMPLE_CHUNK		10000
@@ -121,6 +127,11 @@ struct ES5506Chip
 	INT32		curr_rsample;			/* current sample target */
 
 	struct 		ES5506Voice voice[32];	/* the 32 voices */
+
+#if MAKE_WAVS
+	void *		wavraw;					/* raw waveform */
+	void *		wavresample;			/* resampled waveform */
+#endif
 };
 
 
@@ -397,18 +408,18 @@ do																					\
 																					\
 			/* uni-directional looping */											\
 			case CONTROL_LPE:														\
-				accum = (voice->start + (accum - voice->end))&accum_mask;			\
+				accum = (voice->start + (accum - voice->end)) & accum_mask;			\
 				break;																\
 																					\
 			/* trans-wave looping */												\
 			case CONTROL_BLE:														\
-				accum = (voice->start + (accum - voice->end))&accum_mask;			\
+				accum = (voice->start + (accum - voice->end)) & accum_mask;			\
 				voice->control = (voice->control & ~CONTROL_LOOPMASK) | CONTROL_LEI;\
 				break;																\
 																					\
 			/* bi-directional looping */											\
 			case CONTROL_LPE | CONTROL_BLE:											\
-				accum = (voice->end - (accum - voice->end))&accum_mask;				\
+				accum = (voice->end - (accum - voice->end)) & accum_mask;			\
 				voice->control ^= CONTROL_DIR;										\
 				goto reverse;														\
 		}																			\
@@ -435,18 +446,18 @@ do																					\
 																					\
 			/* uni-directional looping */											\
 			case CONTROL_LPE:														\
-				accum = (voice->end - (voice->start - accum))&accum_mask;			\
+				accum = (voice->end - (voice->start - accum)) & accum_mask;			\
 				break;																\
 																					\
 			/* trans-wave looping */												\
 			case CONTROL_BLE:														\
-				accum = (voice->end - (voice->start - accum))&accum_mask;			\
+				accum = (voice->end - (voice->start - accum)) & accum_mask;			\
 				voice->control = (voice->control & ~CONTROL_LOOPMASK) | CONTROL_LEI;\
 				break;																\
 																					\
 			/* bi-directional looping */											\
 			case CONTROL_LPE | CONTROL_BLE:											\
-				accum = (voice->start + (voice->start - accum))&accum_mask;			\
+				accum = (voice->start + (voice->start - accum)) & accum_mask;		\
 				voice->control ^= CONTROL_DIR;										\
 				goto reverse;														\
 		}																			\
@@ -464,7 +475,7 @@ do																					\
 static void generate_dummy(struct ES5506Voice *voice, UINT16 *base, INT32 *lbuffer, INT32 *rbuffer, int samples)
 {
 	UINT32 freqcount = voice->freqcount;
-	UINT32 accum = voice->accum;
+	UINT32 accum = voice->accum & accum_mask;
 
 	/* outer loop, in case we switch directions */
 	while (samples > 0 && !(voice->control & CONTROL_STOPMASK))
@@ -477,7 +488,7 @@ reverse:
 			while (samples--)
 			{
 				/* fetch two samples */
-				accum = (accum+freqcount)&accum_mask;
+				accum = (accum + freqcount) & accum_mask;
 
 				/* update filters/volumes */
 				if (voice->ecount != 0)
@@ -495,7 +506,7 @@ reverse:
 			while (samples--)
 			{
 				/* fetch two samples */
-				accum = (accum-freqcount)&accum_mask;
+				accum = (accum - freqcount) & accum_mask;
 
 				/* update filters/volumes */
 				if (voice->ecount != 0)
@@ -525,7 +536,7 @@ alldone:
 static void generate_ulaw(struct ES5506Voice *voice, UINT16 *base, INT32 *lbuffer, INT32 *rbuffer, int samples)
 {
 	UINT32 freqcount = voice->freqcount;
-	UINT32 accum = voice->accum;
+	UINT32 accum = voice->accum & accum_mask;
 	INT32 lvol = volume_lookup[voice->lvol >> 4];
 	INT32 rvol = volume_lookup[voice->rvol >> 4];
 
@@ -545,7 +556,7 @@ reverse:
 				/* fetch two samples */
 				INT32 val1 = base[accum >> 11];
 				INT32 val2 = base[(accum >> 11) + 1];
-				accum += freqcount;
+				accum = (accum + freqcount) & accum_mask;
 
 				/* decompress u-law */
 				val1 = ulaw_lookup[val1 >> (16 - ULAW_MAXBITS)];
@@ -583,7 +594,7 @@ reverse:
 				/* fetch two samples */
 				INT32 val1 = base[accum >> 11];
 				INT32 val2 = base[(accum >> 11) + 1];
-				accum -= freqcount;
+				accum = (accum - freqcount) & accum_mask;
 
 				/* decompress u-law */
 				val1 = ulaw_lookup[val1 >> (16 - ULAW_MAXBITS)];
@@ -631,7 +642,7 @@ alldone:
 static void generate_pcm(struct ES5506Voice *voice, UINT16 *base, INT32 *lbuffer, INT32 *rbuffer, int samples)
 {
 	UINT32 freqcount = voice->freqcount;
-	UINT32 accum = voice->accum;
+	UINT32 accum = voice->accum & accum_mask;
 	INT32 lvol = volume_lookup[voice->lvol >> 4];
 	INT32 rvol = volume_lookup[voice->rvol >> 4];
 
@@ -651,7 +662,7 @@ reverse:
 				/* fetch two samples */
 				INT32 val1 = (INT16)base[accum >> 11];
 				INT32 val2 = (INT16)base[(accum >> 11) + 1];
-				accum = (accum+freqcount)&accum_mask;
+				accum = (accum + freqcount) & accum_mask;
 
 				/* interpolate */
 				val1 = interpolate(val1, val2, accum);
@@ -685,7 +696,7 @@ reverse:
 				/* fetch two samples */
 				INT32 val1 = (INT16)base[accum >> 11];
 				INT32 val2 = (INT16)base[(accum >> 11) + 1];
-				accum = (accum-freqcount)&accum_mask;
+				accum = (accum - freqcount) & accum_mask;
 
 				/* interpolate */
 				val1 = interpolate(val1, val2, accum);
@@ -722,6 +733,42 @@ alldone:
 
 /**********************************************************************************************
 
+     generate_samples -- tell each voice to generate samples
+
+***********************************************************************************************/
+
+static void generate_samples(struct ES5506Chip *chip, INT32 *left, INT32 *right, int samples)
+{
+	int v;
+
+	/* skip if nothing to do */
+	if (!samples)
+		return;
+
+	/* clear out the accumulator */
+	memset(left, 0, samples * sizeof(left[0]));
+	memset(right, 0, samples * sizeof(right[0]));
+
+	/* loop over voices */
+	for (v = 0; v <= chip->active_voices; v++)
+	{
+		struct ES5506Voice *voice = &chip->voice[v];
+		UINT16 *base = chip->region_base[voice->control >> 14];
+
+		/* generate from the appropriate source */
+		if (!base)
+			generate_dummy(voice, base, left, right, samples);
+		else if (voice->control & 0x2000)
+			generate_ulaw(voice, base, left, right, samples);
+		else
+			generate_pcm(voice, base, left, right, samples);
+	}
+}
+
+
+
+/**********************************************************************************************
+
      es5506_update -- update the sound chip so that it is in sync with CPU execution
 
 ***********************************************************************************************/
@@ -729,85 +776,70 @@ alldone:
 static void es5506_update(int num, INT16 **buffer, int length)
 {
 	struct ES5506Chip *chip = &es5506[num];
+	INT32 *lsrc = scratch, *rsrc = scratch;
 	INT32 lprev = chip->last_lsample;
 	INT32 rprev = chip->last_rsample;
 	INT32 lcurr = chip->curr_lsample;
 	INT32 rcurr = chip->curr_rsample;
 	INT16 *ldest = buffer[0];
 	INT16 *rdest = buffer[1];
-	INT32 *lsrc, *rsrc;
 	INT32 interp;
-	UINT32 new_samples, samples_left;
-	UINT32 final_pos;
 	int remaining = length;
-	int v;
+	int samples_left = 0;
 
-	/* finish off the current sample */
-	if (chip->output_pos > 0)
+#if MAKE_WAVS
+	/* start the logging once we have a sample rate */
+	if (chip->output_step)
 	{
-		/* interpolate */
-		while (remaining > 0 && chip->output_pos < FRAC_ONE)
+		if (!chip->wavraw)
 		{
-			/* left channel */
-			interp = backend_interpolate(lprev, lcurr, chip->output_pos);
-			*ldest++ = (interp < -32768) ? -32768 : (interp > 32767) ? 32767 : interp;
-
-			/* right channel */
-			interp = backend_interpolate(rprev, rcurr, chip->output_pos);
-			*rdest++ = (interp < -32768) ? -32768 : (interp > 32767) ? 32767 : interp;
-
-			/* advance */
-			chip->output_pos += chip->output_step;
-			remaining--;
+			int sample_rate = (int)((double)Machine->sample_rate / (double)(1 << FRAC_BITS) * (double)chip->output_step);
+			chip->wavraw = wav_open("raw.wav", sample_rate, 2);
 		}
-
-		/* if we're over, continue; otherwise, we're done */
-		if (chip->output_pos >= FRAC_ONE)
-			chip->output_pos -= FRAC_ONE;
+		if (!chip->wavresample)
+			chip->wavresample = wav_open("resamp.wav", Machine->sample_rate, 2);
 	}
-
-	/* compute how many new samples we need */
-	final_pos = chip->output_pos + remaining * chip->output_step;
-	new_samples = (final_pos + FRAC_ONE - 1) >> FRAC_BITS;
-	if (new_samples > MAX_SAMPLE_CHUNK)
-		new_samples = MAX_SAMPLE_CHUNK;
-	samples_left = new_samples;
-
-	/* determine left/right source data */
-	lsrc = scratch;
-	rsrc = scratch + new_samples;
-
-	/* generate them into our buffer */
-	if (new_samples)
-	{
-		/* clear out the accumulator */
-		memset(scratch, 0, new_samples * 2 * sizeof(scratch[0]));
-
-		/* loop over voices */
-		for (v = 0; v <= chip->active_voices; v++)
-		{
-			struct ES5506Voice *voice = &chip->voice[v];
-			UINT16 *base = chip->region_base[voice->control >> 14];
-
-			if (!base)
-				generate_dummy(voice, base, lsrc, rsrc, new_samples);
-			else if (voice->control & 0x2000)
-				generate_ulaw(voice, base, lsrc, rsrc, new_samples);
-			else
-				generate_pcm(voice, base, lsrc, rsrc, new_samples);
-		}
-	}
-
-	/* advance forward one sample */
-	lprev = lcurr;
-	rprev = rcurr;
-	lcurr = *lsrc++ >> 4;
-	rcurr = *rsrc++ >> 4;
+#endif
 
 	/* then sample-rate convert with linear interpolation */
 	while (remaining > 0)
 	{
-		/* interpolate */
+		/* if we're over, grab the next samples */
+		while (chip->output_pos >= FRAC_ONE)
+		{
+			/* do we have any samples available? */
+			if (samples_left == 0)
+			{
+				/* compute how many new samples we need */
+				UINT32 final_pos = chip->output_pos + (remaining - 1) * chip->output_step;
+				samples_left = final_pos >> FRAC_BITS;
+				if (samples_left > MAX_SAMPLE_CHUNK)
+					samples_left = MAX_SAMPLE_CHUNK;
+
+				/* determine left/right source data */
+				lsrc = scratch;
+				rsrc = scratch + samples_left;
+				generate_samples(chip, lsrc, rsrc, samples_left);
+
+#if MAKE_WAVS
+				/* log the raw data */
+				if (chip->wavraw)
+					wav_add_data_32lr(chip->wavraw, lsrc, rsrc, samples_left, 4);
+#endif
+			}
+
+			/* adjust the positions */
+			chip->output_pos -= FRAC_ONE;
+			lprev = lcurr;
+			rprev = rcurr;
+
+			/* fetch new samples */
+			lcurr = *lsrc++ >> 4;
+			rcurr = *rsrc++ >> 4;
+			samples_left--;
+		}
+
+		/* interpolate between the two current samples */
 		while (remaining > 0 && chip->output_pos < FRAC_ONE)
 		{
 			/* left channel */
@@ -821,16 +853,6 @@ static void es5506_update(int num, INT16 **buffer, int length)
 			/* advance */
 			chip->output_pos += chip->output_step;
 			remaining--;
-		}
-
-		/* if we're over, grab the next samples */
-		if (chip->output_pos >= FRAC_ONE)
-		{
-			chip->output_pos -= FRAC_ONE;
-			lprev = lcurr;
-			rprev = rcurr;
-			lcurr = *lsrc++ >> 4;
-			rcurr = *rsrc++ >> 4;
 		}
 	}
 
@@ -839,6 +861,12 @@ static void es5506_update(int num, INT16 **buffer, int length)
 	chip->last_rsample = rprev;
 	chip->curr_lsample = lcurr;
 	chip->curr_rsample = rcurr;
+
+#if MAKE_WAVS
+	/* log the resampled data */
+	if (chip->wavresample)
+		wav_add_data_16lr(chip->wavresample, buffer[0], buffer[1], length);
+#endif
 }
 
 
@@ -904,7 +932,7 @@ int ES5506_sh_start(const struct MachineSound *msound)
 			es5506[i].voice[j].exbank = 0;
 		}
 	}
-	accum_mask=0xffffffff;
+	accum_mask = 0xffffffff;
 
 	/* allocate memory */
 	accumulator = malloc(sizeof(accumulator[0]) * 2 * MAX_SAMPLE_CHUNK);
@@ -941,6 +969,20 @@ void ES5506_sh_stop(void)
 		fclose(eslog);
 		eslog = NULL;
 	}
+
+#if MAKE_WAVS
+{
+	int i;
+
+	for (i = 0; i < MAX_ES5506; i++)
+	{
+		if (es5506[i].wavraw)
+			wav_close(es5506[i].wavraw);
+		if (es5506[i].wavresample)
+			wav_close(es5506[i].wavresample);
+	}
+}
+#endif
 }
 
 
@@ -1404,6 +1446,7 @@ int ES5505_sh_start(const struct MachineSound *msound)
 	const struct ES5505interface *intf = msound->sound_interface;
 	struct ES5506interface es5506intf;
 	struct MachineSound es5506msound;
+	int result;
 
 	memset(&es5506intf, 0, sizeof(es5506intf));
 
@@ -1416,9 +1459,11 @@ int ES5505_sh_start(const struct MachineSound *msound)
 	memcpy(es5506intf.read_port, intf->read_port, sizeof(es5506intf.read_port));
 
 	es5506msound.sound_interface = &es5506intf;
-	es5506msound.sound_type=msound->sound_type;
+	es5506msound.sound_type = msound->sound_type;
 
-	return ES5506_sh_start(&es5506msound);
+	result = ES5506_sh_start(&es5506msound);
+	accum_mask = 0x7fffffff;
+	return result;
 }
 
 
@@ -1449,7 +1494,11 @@ INLINE void es5505_reg_write_low(struct ES5506Chip *chip, struct ES5506Voice *vo
 		case 0x00:	/* CR */
 			if (ACCESSING_LSB)
 			{
+#if RAINE_CHECK
+				voice->control &= ~(CONTROL_STOPMASK | CONTROL_LOOPMASK | CONTROL_DIR);
+#else
 				voice->control &= ~(CONTROL_STOPMASK | CONTROL_BS0 | CONTROL_LOOPMASK | CONTROL_IRQE | CONTROL_DIR | CONTROL_IRQ);
+#endif
 				voice->control |= (data & (CONTROL_STOPMASK | CONTROL_LOOPMASK | CONTROL_IRQE | CONTROL_DIR | CONTROL_IRQ)) |
 								  ((data << 12) & CONTROL_BS0);
 			}
@@ -1460,8 +1509,10 @@ INLINE void es5505_reg_write_low(struct ES5506Chip *chip, struct ES5506Voice *vo
 								  ((data << 2) & (CONTROL_CA0 | CONTROL_CA1));
 			}
 
-if (voice->control&CONTROL_IRQE) logerror("IRQE enabled on voice %d\n",chip->current_page & 0x1f);
-if (voice->control&CONTROL_IRQ) logerror("IRQ enabled on voice %d\n",chip->current_page & 0x1f);
+			if (voice->control & CONTROL_IRQE)
+				logerror("IRQE enabled on voice %d\n",chip->current_page & 0x1f);
+			if (voice->control & CONTROL_IRQ)
+				logerror("IRQ enabled on voice %d\n",chip->current_page & 0x1f);
 
 			update_irq_state(chip);
 			if (LOG_COMMANDS && eslog)
@@ -1501,6 +1552,9 @@ logerror("voice %d, freq is %08x\n",chip->current_page & 0x1f,data);
 				voice->end = (voice->end & ~0x03fc0000) | ((data & 0x00ff) << 18);
 			if (ACCESSING_MSB)
 				voice->end = (voice->end & ~0x7c000000) | ((data & 0x1f00) << 18);
+#if RAINE_CHECK
+			voice->control |= CONTROL_STOP0;
+#endif
 			if (LOG_COMMANDS && eslog)
 				fprintf(eslog, "%06x:voice %d, loop end=%08x\n", cpu_getpreviouspc(), chip->current_page & 0x1f, voice->end);
 			break;
@@ -1510,6 +1564,9 @@ logerror("voice %d, freq is %08x\n",chip->current_page & 0x1f,data);
 				voice->end = (voice->end & ~0x00000380) | ((data & 0x00e0) << 2);
 			if (ACCESSING_MSB)
 				voice->end = (voice->end & ~0x0003fc00) | ((data & 0xff00) << 2);
+#if RAINE_CHECK
+			voice->control |= CONTROL_STOP0;
+#endif
 			if (LOG_COMMANDS && eslog)
 				fprintf(eslog, "%06x:voice %d, loop end=%08x\n", cpu_getpreviouspc(), chip->current_page & 0x1f, voice->end);
 			break;
@@ -1894,7 +1951,6 @@ INLINE UINT16 es5505_reg_read_high(struct ES5506Chip *chip, struct ES5506Voice *
 			/* accumulator */
 			if ((voice->control & CONTROL_STOPMASK) && chip->region_base[voice->control >> 14])
 				voice->o1n1 = chip->region_base[voice->control >> 14][voice->exbank + (voice->accum >> 11)];
-			accum_mask=0x7fffffff; /* Silly, needs to go in init */
 			result = voice->o1n1;
 			break;
 
@@ -2017,10 +2073,16 @@ WRITE16_HANDLER( ES5505_data_1_w )
 
 void ES5506_voice_bank_0_w(int voice, int bank)
 {
+#if RAINE_CHECK
+	es5506[0].voice[voice].control = CONTROL_STOPMASK;
+#endif
 	es5506[0].voice[voice].exbank=bank;
 }
 
 void ES5506_voice_bank_1_w(int voice, int bank)
 {
+#if RAINE_CHECK
+	es5506[1].voice[voice].control = CONTROL_STOPMASK;
+#endif
 	es5506[1].voice[voice].exbank=bank;
 }

@@ -1,7 +1,7 @@
 /*
  * 2asm: Convert binary files to 80*86 assembler. Version 1.00
  * Adapted by Andrea Mazzoleni for use with MAME
- * HJB 990321: 
+ * HJB 990321:
  * Changed output of hex values from 0xxxxh to $xxxx format
  * Removed "ptr" from "byte ptr", "word ptr" and "dword ptr"
  * OB 990721:
@@ -15,7 +15,7 @@ add aw,%Iv
 add aw,%Iv
 
 */
- 
+
 /* 2asm comments
 
 License:
@@ -157,11 +157,6 @@ static int addrsize;
 
 /* watch out for aad && aam with odd operands */
 
-
-
-/* MISH BELOW!!! */
-
-
 /*static*/ char *opmap1[256] = {
 /* 0 */
   "add %Eb,%Gb",      "add %Ev,%Gv",     "add %Gb,%Eb",    "add %Gv,%Ev",
@@ -194,8 +189,8 @@ static int addrsize;
   "pop aw",           "pop cw",          "pop dw",         "pop bw",
   "pop sp",           "pop bp",          "pop ix",         "pop iy",
 /* 6 */
-  "pusha%d ",         "popa%d ",         "bound %Gv,%Ma",  "brkn %Ib",
-  "repnc %p",         "repc %p",         "%so",            "%sa",				/* OB 990721 */
+  "pusha",            "popa",            "chkind %Gv,%Ma", 0,
+  "repnc %p",         "repc %p",         0,                0, /* FPO isn't supported */
   "push %Iw",         "imul %Gw,%Ew,%Iw","push %Ix",       "imul %Gw,%Ew,%Ib",
   "insb",             "insw",            "outsb",          "outsw",
 /* 7 */
@@ -210,17 +205,17 @@ static int addrsize;
   "mov %Eb,%Gb",      "mov %Ev,%Gw",     "mov %Gb,%Eb",    "mov %Gw,%Ew",
   "mov %Ew,%Sw",      "ldea %Gw,%M ",    "mov %Sw,%Ew",    "pop %Ev",
 /* 9 */
-//above LDEA is wrong!  
+//above LDEA is wrong!
 
   "nop",              "xch cw,aw",       "xch dw,aw",      "xch bw,aw",
-  "xch sp,aw",        "xch bp,aw",       "xch ix,aw",      "xch ix,aw",
+  "xch sp,aw",        "xch bp,aw",       "xch ix,aw",      "xch iy,aw",
   "cvtbw",            "cvtwl",           "call %Ap",       "fwait",
   "pushf%d ",         "popf%d ",         "sahf",           "lahf",
 /* a */
   "mov al,%Oc",       "mov aw,%Ov",      "mov %Oc,al",     "mov %Ov,aw",
-  "%P movbk",         "%P movs%w",       "%P cmpbk",       "%P cmpbk ",
-  "test al,%Ib",      "test aw,%Iv",     "%P stosb",       "%P stos%w ",
-  "%P lodsb",         "%P lods%w ",      "%P scasb",       "%P scas%w ",
+  "%P movsb",         "%P movsw",        "%P cmpsb",       "%P cmpsw ",
+  "test al,%Ib",      "test aw,%Iv",     "%P stosb",       "%P stosw ",
+  "%P lodsb",         "%P lodsw ",       "%P scasb",       "%P scasw ",
 /* b */
   "mov al,%Ib",       "mov cl,%Ib",      "mov dl,%Ib",     "mov bl,%Ib",
   "mov ah,%Ib",       "mov ch,%Ib",      "mov dh,%Ib",     "mov bh,%Ib",
@@ -233,7 +228,7 @@ static int addrsize;
   "int 03",           "int %Ib",         "into",           "iret",
 /* d */
   "%g1 %Eb,1",        "%g1 %Ev,1",       "%g1 %Eb,cl",     "%g1 %Ev,cl",
-  "aam ; %Ib",        "aad ; %Ib",       "setalc",         "trans",
+  "aam ; %Ib",        "aad ; %Ib",       0,                "trans",
   "%f0",              "%f1",             "%f2",            "%f3",
   "%f4",              "%f5",             "%f6",            "%f7",
 /* e */
@@ -243,8 +238,8 @@ static int addrsize;
   "in al,dw",         "in aw,dw",        "out dw,al",      "out dx,aw",
 /* f */
   "lock %p ",         0,                 "repne %p ",      "repe %p ",
-  "hlt",              "not1 CY(cmc)",    "%g2",            "%g2",
-  "clc",              "set1 CY(stc)",    "di",            "ei",
+  "hlt",              "not1 CY(cmc)",    "%g2",            "%g8",
+  "clc",              "stc",             "di",             "ei",
   "cld",              "std",             "%g3",            "%g4"
 };
 
@@ -324,8 +319,8 @@ static char *groups[][8] = {   /* group 0 is group 3 for %Ev set */
 /* 1 */
   { "rol",            "ror",             "rcl",            "rcr",
     "shl",            "shr",             "shl",            "sar"           },
-/* 2 */  /* v   v*/
-  { "test %Eq,%Iq",   "test %Eq,%Iq",    "not %Ev",        "neg %Ev",
+/* 2 - NEC 'group 2' byte */
+  { "test %Eq,%Iq",   "db f6 Illegal",   "not %Eb",        "neg %Eb",
     "mul %Ec",        "imul %Ec",        "div %Ec",        "idiv %Ec" },
 /* 3 */
   { "inc %Eb",        "dec %Eb",         0,                0,
@@ -341,7 +336,10 @@ static char *groups[][8] = {   /* group 0 is group 3 for %Ev set */
     "smsw %Ew",       0,                 "lmsw %Ew",       0               },
 /* 7 */
   { 0,                0,                 0,                0,
-    "bt",             "bts",             "btr",            "btc"           }
+    "bt",             "bts",             "btr",            "btc"           },
+/* 8 - NEC 'group 2' word */
+  { "test %Eq,%Iq",   "db f6 Illegal",   "not %Ev",        "neg %Ev",
+    "mul %Ec",        "imul %Ec",        "div %Ec",        "idiv %Ec" },
 };
 
 
@@ -796,7 +794,7 @@ static void percent(char type, char subtype)
             ua_str(opmap1[c]);
             break;
        case 'o':
-            opsize = 48 - opsize;	
+            opsize = 48 - opsize;
 			c = getopcode();
             wordop = c & 1;
             ua_str(opmap1[c]);

@@ -23,13 +23,13 @@ int eprom_vh_start(void)
 		0,			/* index to which gfx system */
 		64,64,		/* size of the playfield in tiles (x,y) */
 		64,1,		/* tile_index = x * xmult + y * ymult (xmult,ymult) */
-	
+
 		0x200,		/* index of palette base */
 		0x100,		/* maximum number of colors */
 		0,			/* color XOR for shadow effect (if any) */
 		0,			/* latch mask */
 		0,			/* transparent pen mask */
-	
+
 		0x07fff,	/* tile data index mask */
 		0xf0000,	/* tile data color mask */
 		0x08000,	/* tile data hflip mask */
@@ -67,7 +67,7 @@ int eprom_vh_start(void)
 		{{ 0,0,0x0030,0 }},	/* mask for the priority */
 		{{ 0 }},			/* mask for the neighbor */
 		{{ 0 }},			/* mask for absolute coordinates */
-		
+
 		{{ 0 }},			/* mask for the ignore value */
 		0,					/* resulting value to indicate "ignore" */
 		0					/* callback routine for ignored entries */
@@ -77,7 +77,7 @@ int eprom_vh_start(void)
 	{
 		1,			/* index to which gfx system */
 		64,32,		/* size of the alpha RAM in tiles (x,y) */
-	
+
 		0x000,		/* index of palette base */
 		0x100,		/* maximum number of colors */
 		0x00f,		/* mask of the palette split */
@@ -91,7 +91,7 @@ int eprom_vh_start(void)
 	/* initialize the playfield */
 	if (!ataripf_init(0, &pfdesc))
 		goto cant_create_pf;
-	
+
 	/* initialize the motion objects */
 	if (!atarimo_init(0, &modesc))
 		goto cant_create_mo;
@@ -168,11 +168,11 @@ static int overrender_callback(struct ataripf_overrender_data *data, int state)
 		data->drawmode = TRANSPARENCY_PENS;
 		data->drawpens = 0xff00;
 		data->maskpens = 0x0001;
-		
+
 		/* we need to query on each tile the color */
 		return OVERRENDER_SOME;
 	}
-	
+
 	/* handle a query */
 	else if (state == OVERRENDER_QUERY)
 		return (data->pfcolor >= 13 + data->mopriority) ? OVERRENDER_YES : OVERRENDER_NO;
@@ -189,16 +189,6 @@ static int overrender_callback(struct ataripf_overrender_data *data, int state)
 
 void eprom_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	/* mark the used colors */
-	palette_init_used_colors();
-	ataripf_mark_palette(0);
-	atarimo_mark_palette(0);
-	atarian_mark_palette(0);
-
-	/* update the palette, and mark things dirty if we need to */
-	if (palette_recalc())
-		ataripf_invalidate(0);
-
 	/* draw the layers */
 	ataripf_render(0, bitmap);
 	atarimo_render(0, bitmap, overrender_callback, NULL);

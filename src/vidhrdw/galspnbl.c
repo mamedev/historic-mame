@@ -125,11 +125,7 @@ void galspnbl_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	int offs;
 
 
-	palette_recalc();
-
 	/* copy the temporary bitmap to the screen */
-	/* it's raw RGB, so it doesn't have to be recalculated even if palette_recalc() */
-	/* returns true */
 	copyscrollbitmap(bitmap,tmpbitmap,1,&screenscroll,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 
 	draw_sprites(bitmap,0);

@@ -39,6 +39,34 @@ static struct rectangle spritevisiblearea_flip =
   effect might not be perfectly accurate, but is reasonably close.
 
 ***************************************************************************/
+
+void centiped_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+{
+	int i;
+	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
+	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
+
+
+	/* characters use colors 0-3, that become 0-15 due to raster effects */
+	for (i = 0;i < TOTAL_COLORS(0);i++)
+		COLOR(0,i) = i;
+
+	/* Centipede is unusual because the sprite color code specifies the */
+	/* colors to use one by one, instead of a combination code. */
+	/* bit 5-4 = color to use for pen 11 */
+	/* bit 3-2 = color to use for pen 10 */
+	/* bit 1-0 = color to use for pen 01 */
+	/* pen 00 is transparent */
+	for (i = 0;i < TOTAL_COLORS(1);i+=4)
+	{
+		COLOR(1,i+0) = 16;
+		COLOR(1,i+1) = 16 + ((i >> 2) & 3);
+		COLOR(1,i+2) = 16 + ((i >> 4) & 3);
+		COLOR(1,i+3) = 16 + ((i >> 6) & 3);
+	}
+}
+
+
 static void setcolor(int pen,int data)
 {
 	int r,g,b;
@@ -67,9 +95,7 @@ WRITE_HANDLER( centiped_paletteram_w )
 
 	if (offset >= 12 && offset < 16)	/* sprites palette */
 	{
-		int start = Machine->drv->gfxdecodeinfo[1].color_codes_start;
-
-		setcolor(start + (offset - 12),data);
+		setcolor(16 + (offset - 12),data);
 	}
 }
 
@@ -84,13 +110,12 @@ int centiped_interrupt(void)
 {
 	int offset;
 	int slice = 3 - cpu_getiloops();
-	int start = Machine->drv->gfxdecodeinfo[0].color_codes_start;
 
 
 	/* set the palette for the previous screen slice to properly support */
 	/* midframe palette changes in test mode */
 	for (offset = 4;offset < 8;offset++)
-		setcolor(4 * slice + start + (offset - 4),paletteram[offset]);
+		setcolor(4 * slice + (offset - 4),paletteram[offset]);
 
 	/* Centipede doesn't like to receive interrupts just after a reset. */
 	/* The only workaround I've found is to wait a little before starting */
@@ -117,7 +142,7 @@ void centiped_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 
-	if (palette_recalc() || full_refresh)
+	if (full_refresh)
 		memset (dirtybuffer, 1, videoram_size);
 
 	for (offs = videoram_size - 1;offs >= 0;offs--)
@@ -160,6 +185,7 @@ void centiped_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 
 		code = ((spriteram[offs] & 0x3e) >> 1) | ((spriteram[offs] & 0x01) << 6);
+		color = spriteram[offs+0x30];
 		flipx = (spriteram[offs] & 0x80);
 		x = spriteram[offs + 0x20];
 		y = 240 - spriteram[offs + 0x10];
@@ -169,22 +195,9 @@ void centiped_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			y += 16;
 		}
 
-		/* Centipede is unusual because the sprite color code specifies the */
-		/* colors to use one by one, instead of a combination code. */
-		/* bit 5-4 = color to use for pen 11 */
-		/* bit 3-2 = color to use for pen 10 */
-		/* bit 1-0 = color to use for pen 01 */
-		/* pen 00 is transparent */
-		color = spriteram[offs+0x30];
-		Machine->gfx[1]->colortable[3] =
-				Machine->pens[Machine->drv->gfxdecodeinfo[1].color_codes_start + ((color >> 4) & 3)];
-		Machine->gfx[1]->colortable[2] =
-				Machine->pens[Machine->drv->gfxdecodeinfo[1].color_codes_start + ((color >> 2) & 3)];
-		Machine->gfx[1]->colortable[1] =
-				Machine->pens[Machine->drv->gfxdecodeinfo[1].color_codes_start + ((color >> 0) & 3)];
-
 		drawgfx(bitmap,Machine->gfx[1],
-				code,0,
+				code,
+				color & 0x3f,
 				flip_screen,flipx,
 				x,y,
 				flip_screen ? &spritevisiblearea_flip : &spritevisiblearea,

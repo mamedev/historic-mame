@@ -1526,7 +1526,7 @@ INPUT_PORTS_START( contcirc )
 	PORT_START      /* IN2, unused */
 
 	PORT_START      /* IN3, "handle" used for steering */
-	PORT_ANALOG( 0xffff, 0x00, IPT_AD_STICK_X | IPF_REVERSE | IPF_PLAYER1, 50, 15, 0xff9f, 0x60)
+	PORT_ANALOG( 0xffff, 0x8000, IPT_AD_STICK_X | IPF_REVERSE | IPF_PLAYER1, 50, 15, 0xff9f, 0x60)
 
 	PORT_START      /* IN4, fake allowing digital steer */
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY | IPF_PLAYER1 )
@@ -1645,7 +1645,7 @@ INPUT_PORTS_START( chasehq )	// IN3-6 perhaps used with cockpit setup? //
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* IN7, steering */
-	PORT_ANALOG( 0xffff, 0x00, IPT_AD_STICK_X | IPF_PLAYER1, 50, 25, 0xff80, 0x7f )
+	PORT_ANALOG( 0xffff, 0x8000, IPT_AD_STICK_X | IPF_PLAYER1, 50, 25, 0xff80, 0x7f )
 
 	PORT_START      /* IN8, fake allowing digital steer */
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY | IPF_PLAYER1 )
@@ -1726,13 +1726,13 @@ INPUT_PORTS_START( bshark )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON6 | IPF_PLAYER1 )	/* same as "Fire" */
 
 	PORT_START	/* values chosen to match allowed crosshair area */
-	PORT_ANALOG( 0xff, 0x00, IPT_AD_STICK_X | IPF_REVERSE | IPF_PLAYER1, 20, 4, 0xcc, 0x35)
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_X | IPF_REVERSE | IPF_PLAYER1, 20, 4, 0xcc, 0x35)
 
 	PORT_START	/* "X adjust" */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* values chosen to match allowed crosshair area */
-	PORT_ANALOG( 0xff, 0x00, IPT_AD_STICK_Y | IPF_PLAYER1, 20, 4, 0xd5, 0x32)
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_Y | IPF_PLAYER1, 20, 4, 0xd5, 0x32)
 
 	PORT_START	/* "Y adjust" */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -1889,10 +1889,10 @@ INPUT_PORTS_START( nightstr )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
 
 	PORT_START	/* boundary values seem about right, bit too wide perhaps */
-	PORT_ANALOG( 0xff, 0x00, IPT_AD_STICK_X | IPF_PLAYER1, 20, 10, 0xb8, 0x49)
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_X | IPF_PLAYER1, 20, 10, 0xb8, 0x49)
 
 	PORT_START	/* boundary values seem about right, bit too wide perhaps */
-	PORT_ANALOG( 0xff, 0x00, IPT_AD_STICK_Y | IPF_REVERSE | IPF_PLAYER1, 20, 10, 0xb8, 0x49)
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_Y | IPF_REVERSE | IPF_PLAYER1, 20, 10, 0xb8, 0x49)
 
 	PORT_START	/* X offset */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -2130,7 +2130,7 @@ INPUT_PORTS_START( dblaxle )
 	PORT_START      /* IN2, unused */
 
 	PORT_START      /* IN3, steering: unsure of range */
-	PORT_ANALOG( 0xffff, 0x00, IPT_AD_STICK_X | IPF_PLAYER1, 20, 10, 0xffc0, 0x3f )
+	PORT_ANALOG( 0xffff, 0x8000, IPT_AD_STICK_X | IPF_PLAYER1, 20, 10, 0xffc0, 0x3f )
 
 	PORT_START      /* IN4, fake allowing digital steer */
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY | IPF_PLAYER1 )
@@ -2381,10 +2381,10 @@ static struct MachineDriver machine_driver_contcirc =
 	40*8, 32*8, { 0*8, 40*8-1, 2*8, 32*8-1 },
 
 	contcirc_gfxdecodeinfo,
-	4096, 4096,
+	4096, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	taitoz_vh_start,
 	taitoz_vh_stop,
@@ -2434,10 +2434,10 @@ static struct MachineDriver machine_driver_chasehq =
 	40*8, 32*8, { 0*8, 40*8-1, 2*8, 32*8-1 },
 
 	chasehq_gfxdecodeinfo,
-	4096, 4096,
+	4096, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	taitoz_vh_start,
 	taitoz_vh_stop,
@@ -2477,10 +2477,10 @@ static struct MachineDriver machine_driver_bshark =
 	40*8, 32*8, { 0*8, 40*8-1, 2*8, 32*8-1 },
 
 	sci_gfxdecodeinfo,
-	4096, 4096,
+	4096, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	taitoz_vh_start,
 	taitoz_vh_stop,
@@ -2526,10 +2526,10 @@ static struct MachineDriver machine_driver_sci =
 	40*8, 32*8, { 0*8, 40*8-1, 2*8, 32*8-1 },
 
 	sci_gfxdecodeinfo,
-	4096, 4096,
+	4096, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	taitoz_vh_start,
 	taitoz_vh_stop,
@@ -2575,10 +2575,10 @@ static struct MachineDriver machine_driver_nightstr =
 	40*8, 32*8, { 0*8, 40*8-1, 2*8, 32*8-1 },
 
 	chasehq_gfxdecodeinfo,
-	4096, 4096,
+	4096, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	taitoz_vh_start,
 	taitoz_vh_stop,
@@ -2624,10 +2624,10 @@ static struct MachineDriver machine_driver_aquajack =
 	40*8, 32*8, { 0*8, 40*8-1, 2*8, 32*8-1 },
 
 	sci_gfxdecodeinfo,
-	4096, 4096,
+	4096, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	taitoz_vh_start,
 	taitoz_vh_stop,
@@ -2667,10 +2667,10 @@ static struct MachineDriver machine_driver_spacegun =
 	40*8, 32*8, { 0*8, 40*8-1, 2*8, 32*8-1 },
 
 	spacegun_gfxdecodeinfo,
-	4096, 4096,
+	4096, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	spacegun_vh_start,
 	taitoz_vh_stop,
@@ -2719,10 +2719,10 @@ static struct MachineDriver machine_driver_dblaxle =
 	40*8, 32*8, { 0*8, 40*8-1, 2*8, 32*8-1 },
 
 	dblaxle_gfxdecodeinfo,
-	4096, 4096,
+	4096, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	taitoz_vh_start,
 	taitoz_vh_stop,
@@ -3334,8 +3334,9 @@ ROM_START( dblaxle )
 	ROM_LOAD32_BYTE( "c78-08.25", 0x000000, 0x100000, 0x6c725211 )	/* OBJ 16x8 */
 	ROM_LOAD32_BYTE( "c78-07.33", 0x000001, 0x100000, 0x9da00d5b )
 	ROM_LOAD32_BYTE( "c78-06.23", 0x000002, 0x100000, 0x8309e91b )
-	ROMX_LOAD      ( "c78-05l.1", 0x000003, 0x080000, 0xf24bf972, ROM_SKIP(7) )
-	ROMX_LOAD      ( "c78-05h.2", 0x000007, 0x080000, 0xc01039b5, ROM_SKIP(7) )
+	ROM_LOAD32_BYTE( "c78-05.31", 0x000003, 0x100000, 0x90001f68 )
+//	ROMX_LOAD      ( "c78-05l.1", 0x000003, 0x080000, 0xf24bf972, ROM_SKIP(7) )
+//	ROMX_LOAD      ( "c78-05h.2", 0x000007, 0x080000, 0xc01039b5, ROM_SKIP(7) )
 
 	ROM_REGION( 0x80000, REGION_GFX3, 0 )	/* don't dispose */
 	ROM_LOAD( "c78-09.12", 0x000000, 0x80000, 0x0dbde6f5 )	/* ROD, road lines */

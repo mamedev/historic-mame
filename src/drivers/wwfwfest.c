@@ -14,7 +14,7 @@
 
  Primary CPU : 68000 - 12mhz
 
- Sound CPUs : Z80 - ?mhz
+ Sound CPUs : Z80 - 3.579mhz
 
  Sound Chips : YM2151, M6295
 
@@ -35,30 +35,13 @@
 			 | and the Double Dragon 3 Driver, got most of the basics done,
 			 | the game will boot showing some graphics.
 
-********************************************************************************
-
- Notes:
-
-- Sound Volumes, probably not right
-- DSW's are mapped weirdly, i'll verify my code here, and try to work out some
-  of the others, Raine's DSW's don't seem to be correct
-- Improve Sprite Code, I think it may clip at the bottom sometimes when it
-  shouldn't
-- Improve way priority is handled, which bits of the control register are
-  significant etc.
-- Demolition don't seem to have a logo in Tag mode? is this normal? its just a
-  block of Junk but i don't see any other way it could be.
-- Palette Code could probably be improved, lot of unused colours at the moment
-  because of the odd way palette ram is used
-
 *******************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/m68000/m68000.h"
 #include "cpu/z80/z80.h"
-
-data16_t *fg0_videoram, *bg0_videoram, *bg1_videoram;
+#include "wwfwfest.h"
 
 /*- in this file -*/
 static READ16_HANDLER( wwfwfest_paletteram16_xxxxBBBBGGGGRRRR_word_r );
@@ -69,12 +52,10 @@ static READ16_HANDLER( wwfwfest_inputs_read );
 static WRITE_HANDLER( oki_bankswitch_w );
 static WRITE16_HANDLER ( wwfwfest_soundwrite );
 
-/*- vidhrdw/wwfwfest.c -*/
-int wwfwfest_vh_start(void);
-void wwfwfest_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-WRITE16_HANDLER( wwfwfest_fg0_videoram_w );
-WRITE16_HANDLER( wwfwfest_bg0_videoram_w );
-WRITE16_HANDLER( wwfwfest_bg1_videoram_w );
+static WRITE16_HANDLER( wwfwfest_flipscreen_w )
+{
+	flip_screen_set(data&1);
+}
 
 /*******************************************************************************
  Memory Maps
@@ -97,11 +78,14 @@ MEMORY_END
 
 static MEMORY_WRITE16_START( writemem )
 	{ 0x000000, 0x07ffff, MWA16_ROM },	/* Rom */
-	{ 0x0c0000, 0x0c1fff, wwfwfest_fg0_videoram_w, &fg0_videoram },	/* FG0 Ram - 4 bytes per tile */
-	{ 0x0c2000, 0x0c3fff, MWA16_RAM, &spriteram16 },				/* SPR Ram */
-	{ 0x080000, 0x080fff, wwfwfest_bg0_videoram_w, &bg0_videoram },	/* BG0 Ram - 4 bytes per tile */
-	{ 0x082000, 0x082fff, wwfwfest_bg1_videoram_w, &bg1_videoram },	/* BG1 Ram - 2 bytes per tile */
+	{ 0x0c0000, 0x0c1fff, wwfwfest_fg0_videoram_w, &wwfwfest_fg0_videoram },	/* FG0 Ram - 4 bytes per tile */
+	{ 0x0c2000, 0x0c3fff, MWA16_RAM, &spriteram16, &spriteram_size },	/* SPR Ram */
+	{ 0x080000, 0x080fff, wwfwfest_bg0_videoram_w, &wwfwfest_bg0_videoram },	/* BG0 Ram - 4 bytes per tile */
+	{ 0x082000, 0x082fff, wwfwfest_bg1_videoram_w, &wwfwfest_bg1_videoram },	/* BG1 Ram - 2 bytes per tile */
 	{ 0x100000, 0x100007, wwfwfest_scroll_write },
+	{ 0x10000a, 0x10000b, wwfwfest_flipscreen_w },
+	{ 0x140000, 0x140001, MWA16_NOP }, /* Irq 3 ack */
+	{ 0x140002, 0x140003, MWA16_NOP }, /* Irq 2 ack */
 	{ 0x14000C, 0x14000D, wwfwfest_soundwrite },
 	{ 0x140010, 0x140011, wwfwfest_1410_write },
 	{ 0x180000, 0x18ffff, wwfwfest_paletteram16_xxxxBBBBGGGGRRRR_word_w, &paletteram16 },
@@ -147,37 +131,31 @@ static WRITE16_HANDLER( wwfwfest_paletteram16_xxxxBBBBGGGGRRRR_word_w )
 
 /*- Priority Control -*/
 
-int pri;
 
 static WRITE16_HANDLER( wwfwfest_1410_write )
 {
-	pri = data;
+	wwfwfest_pri = data;
 }
 
 /*- Scroll Control -*/
-
-int bg0_scrollx, bg0_scrolly, bg1_scrollx, bg1_scrolly;
 
 static WRITE16_HANDLER( wwfwfest_scroll_write )
 {
 	switch (offset) {
 		case 0x00:
-			bg0_scrollx = data;
+			wwfwfest_bg0_scrollx = data;
 			break;
 		case 0x01:
-			bg0_scrolly = data;
+			wwfwfest_bg0_scrolly = data;
 			break;
 		case 0x02:
-			bg1_scrollx = data;
+			wwfwfest_bg1_scrollx = data;
 			break;
 		case 0x03:
-			bg1_scrolly = data;
+			wwfwfest_bg1_scrolly = data;
 			break;
 	}
 }
-
-/*- Inputs -*/
-/* todo: verify this */
 
 static READ16_HANDLER( wwfwfest_inputs_read )
 {
@@ -237,7 +215,7 @@ INPUT_PORTS_START( wwfwfest )
 	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN )
 	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON2 )
-	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_START1 )
 
 	PORT_START /* Player 2 */
@@ -247,7 +225,7 @@ INPUT_PORTS_START( wwfwfest )
 	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER2 )
 	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
 	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
-	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_START2 )
 
 	PORT_START /* Player 3 */
@@ -257,7 +235,7 @@ INPUT_PORTS_START( wwfwfest )
 	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER3 )
 	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER3 )
 	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER3 )
-	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_START3 )
 
 	PORT_START /* Player 4 */
@@ -267,12 +245,12 @@ INPUT_PORTS_START( wwfwfest )
 	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER4 )
 	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER4 )
 	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER4 )
-	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_START4 )
 
 	PORT_START /* Misc 1 */
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -290,54 +268,53 @@ INPUT_PORTS_START( wwfwfest )
 	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
+	/* Nb:  There are actually 3 dips on the board, 2 * 8, and 1 *4 */
+
 	PORT_START /* Dips 1 */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING(	0x00,  DEF_STR( 3C_1C )  )
-	PORT_DIPSETTING(	0x01,  DEF_STR( 2C_1C )  )
-	PORT_DIPSETTING(	0x03,  DEF_STR( 1C_1C )  )
-	PORT_DIPSETTING(	0x02,  DEF_STR( 1C_2C )  )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x04, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x08, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown )  )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( 3C_1C )  )
+	PORT_DIPSETTING(	0x01, DEF_STR( 2C_1C )  )
+	PORT_DIPSETTING(	0x03, DEF_STR( 1C_1C )  )
+	PORT_DIPSETTING(	0x02, DEF_STR( 1C_2C )  )
+	PORT_DIPNAME( 0x04, 0x04, "Buy In Price"  )
+	PORT_DIPSETTING(    0x04, "1 Coin" )
+	PORT_DIPSETTING(    0x00, "As start price" )
+	PORT_DIPNAME( 0x08, 0x08, "Regain Power Price"  )
+	PORT_DIPSETTING(    0x08, "1 Coin" )
+	PORT_DIPSETTING(    0x00, "As start price" )
+	PORT_DIPNAME( 0x10, 0x10, "Continue Price"  )
+	PORT_DIPSETTING(    0x10, "1 Coin" )
+	PORT_DIPSETTING(    0x00, "As start price" )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, "FBI Logo" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown )  )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Flip_Screen )  )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, "FBI Logo" )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 
 	PORT_START /* Dips 2 */
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x01, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x02, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x04, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x08, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x02, "Easy" )
+	PORT_DIPSETTING(    0x03, "Normal" )
+	PORT_DIPSETTING(    0x01, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPNAME( 0x0c, 0x0c, "Players" )
+	PORT_DIPSETTING(	0x04, "2" )
+	PORT_DIPSETTING(	0x00, "2" )
+	PORT_DIPSETTING(	0x08, "3" )
+	PORT_DIPSETTING(	0x0c, "4" )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) ) /* Unused according to manual */
 	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x10, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x20, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x40, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, "Championship Game" )
+	PORT_DIPNAME( 0x60, 0x60, "Health For Winning" )
+	PORT_DIPSETTING(	0x00, "0" )
+	PORT_DIPSETTING(	0x20, "12" )
+	PORT_DIPSETTING(	0x60, "24" )
+	PORT_DIPSETTING(	0x40, "32" )
+	PORT_DIPNAME( 0x80, 0x80, "Championship Match" )
 	PORT_DIPSETTING(	0x00, "4th" )
 	PORT_DIPSETTING(	0x80, "5th" )
 INPUT_PORTS_END
@@ -415,18 +392,23 @@ static void dd3_ymirq_handler(int irq)
 static struct YM2151interface ym2151_interface =
 {
 	1,			/* 1 chip */
-	3579545,	/* Guess */
-	{ YM3012_VOL(10,MIXER_PAN_LEFT,10,MIXER_PAN_RIGHT) },
+	3579545,
+	{ YM3012_VOL(45,MIXER_PAN_LEFT,45,MIXER_PAN_RIGHT) },
 	{ dd3_ymirq_handler }
 };
 
 static struct OKIM6295interface okim6295_interface =
 {
 	1,				/* 1 chip */
-	{ 8500 },		/* frequency (Hz) */
+	{ 7759 },		/* frequency (Hz) */
 	{ REGION_SOUND1 },	/* memory region */
 	{ 90 }
 };
+
+void wwfwfest_eof_callback(void)
+{
+	buffer_spriteram16_w(0,0,0);
+}
 
 /*******************************************************************************
  Machine Driver(s)
@@ -445,7 +427,7 @@ static const struct MachineDriver machine_driver_wwfwfest =
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			3579545,	/* Guess */
+			3579545,
 			readmem_sound,writemem_sound,0,0,
 			ignore_interrupt,0
 		},
@@ -455,19 +437,19 @@ static const struct MachineDriver machine_driver_wwfwfest =
 	0,
 
 	/* video hardware */
-	320, 256, { 0, 319, 0, 255 },
+	320, 256, { 0, 319, 1*8, 31*8-1 },
 	gfxdecodeinfo,
-	0x2000, 0x2000,
+	8192, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
-	0,
+	VIDEO_TYPE_RASTER  | VIDEO_BUFFERS_SPRITERAM,
+	wwfwfest_eof_callback,
 	wwfwfest_vh_start,
 	0,
 	wwfwfest_vh_screenrefresh,
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
+	0,0,0,0, /* Mono */
 	{
 		{
 			SOUND_YM2151,
@@ -488,20 +470,6 @@ static const struct MachineDriver machine_driver_wwfwfest =
  wwfwfstj - Japan? Set
 
  readme / info files below
-
---------------------------------------------------------------------------------
- wwfwfest: readthis.doc
---------------------------------------------------------------------------------
- Here are the proms for Technos Wrestlefest
- It runs on a MC 68000. It also has one Z80 CPU
- And one YM 2151 for the sound!
- IC-73 on the board which I dumped as WF_73a + b, could
- be a 4 Mbit or a 2 Mbit prom so I dumped it 2 times.
-
- If you need more info or if this package doesn't
- Work, mail me.
-
- ..............CaBBe!.............Romlist@hotmail.com
 
 --------------------------------------------------------------------------------
  wwfwfstj: README.TXT
@@ -615,7 +583,6 @@ ROM_START( wwfwfstj )
 	ROM_LOAD( "wf_01.rom",    0x40000, 0x40000, 0x8a12b450 ) /* 0,1 */
 	ROM_LOAD( "wf_02.rom",    0x00000, 0x40000, 0x82ed7155 ) /* 2,3 */
 ROM_END
-
 
 GAME( 1991, wwfwfest, 0,        wwfwfest, wwfwfest, 0, ROT0, "Technos Japan", "WWF WrestleFest (US)" )
 GAME( 1991, wwfwfsta, wwfwfest, wwfwfest, wwfwfest, 0, ROT0, "Technos Japan (Tecmo license)", "WWF WrestleFest (US Tecmo)" )

@@ -251,39 +251,8 @@ static void draw_sprites(struct osd_bitmap *bitmap, int pri)
 	}
 }
 
-static void mark_sprite_colors(void)
-{
-	int i,offs,code,color;
-	int colmask[16];
-	unsigned int *pen_usage = Machine->gfx[0]->pen_usage;
-
-	for (color = 0;color < 16;color++) colmask[color] = 0;
-	for (offs = 0x400-4;offs >= 0;offs -= 4)
-	{
-		code = buffered_spriteram16[offs] & 0xfff;
-		color = buffered_spriteram16[offs+1] & 0x000f;
-
-		colmask[color] |= pen_usage[code];
-	}
-	for (color = 0;color < 16;color++)
-	{
-		for (i = 0;i < 15;i++)
-		{
-			if (colmask[color] & (1 << i))
-				palette_used_colors[32*16 + 16 * color + i] |= PALETTE_COLOR_VISIBLE;
-		}
-	}
-}
-
-
 void lastduel_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	tilemap_update(ALL_TILEMAPS);
-
-	palette_init_used_colors();
-	mark_sprite_colors();
-	palette_recalc();
-
 	tilemap_draw(bitmap,bg_tilemap,0,0);
 	tilemap_draw(bitmap,fg_tilemap,TILEMAP_BACK,0);
 	draw_sprites(bitmap,0);

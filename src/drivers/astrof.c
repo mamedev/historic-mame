@@ -231,7 +231,7 @@ static const struct MachineDriver machine_driver_##GAMENAME =						   \
 	NUMCOLORS, 0,															   \
 	astrof_vh_convert_color_prom,											   \
 																			   \
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,								   \
+	VIDEO_TYPE_RASTER ,								   \
 	0,																		   \
 	astrof_vh_start,														   \
 	astrof_vh_stop,															   \

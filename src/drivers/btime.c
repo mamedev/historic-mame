@@ -1338,7 +1338,7 @@ static const struct MachineDriver machine_driver_##GAMENAME =             \
 	COLOR,COLOR,                                                	\
 	GAMENAME##_vh_convert_color_prom,                           	\
 																	\
-	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,                   	\
+	VIDEO_TYPE_RASTER,                   	\
 	0,                                                          	\
 	GAMENAME##_vh_start,                                        	\
 	GAMENAME##_vh_stop,                                         	\

@@ -86,7 +86,7 @@ static const struct MachineDriver machine_driver_dotrikun =
 	2, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY ,
 	0,
 	0,
 	0,

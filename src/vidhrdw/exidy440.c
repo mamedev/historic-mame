@@ -516,10 +516,6 @@ static void update_screen(struct osd_bitmap *bitmap, int scroll_offset)
 	int y, sy;
 	int beamx, beamy;
 
-	/* recompute the palette, and mark all scanlines dirty if we need to redraw */
-	if (palette_recalc())
-		memset(scanline_dirty, 1, 256);
-
 	/* draw any dirty scanlines from the VRAM directly */
 	sy = scroll_offset;
 	for (y = 0; y < 240; y++, sy++)
@@ -549,7 +545,7 @@ static void update_screen(struct osd_bitmap *bitmap, int scroll_offset)
 
 		/* dirty scanlines */
 		/* we can ignore scroll (topsecret is the only game which uses scroll)  */
-		for(y = beamy - 5; y <= beamy + 5; y++)
+		for(y = beamy - 6; y <= beamy + 6; y++)
 			if((y >= 0) && (y < 256))
 				scanline_dirty[y] = 1;
 	}
@@ -574,9 +570,6 @@ void exidy440_update_callback(int param)
 	int i;
 	double time, increment;
 	int beamx, beamy;
-
-	/* make sure color 256 is white for our crosshair */
-	palette_change_color(256, 0xff, 0xff, 0xff);
 
 	/* redraw the screen */
 	update_screen(bitmap, 0);

@@ -44,13 +44,13 @@ int atarig1_vh_start(void)
 		0,			/* index to which gfx system */
 		64,64,		/* size of the playfield in tiles (x,y) */
 		1,64,		/* tile_index = x * xmult + y * ymult (xmult,ymult) */
-	
+
 		0x300,		/* index of palette base */
 		0x100,		/* maximum number of colors */
 		0,			/* color XOR for shadow effect (if any) */
 		0,			/* latch mask */
 		0,			/* transparent pen mask */
-	
+
 		0x70fff,	/* tile data index mask */
 		0x07000,	/* tile data color mask */
 		0x08000,	/* tile data hflip mask */
@@ -64,10 +64,10 @@ int atarig1_vh_start(void)
 		256,		/* number of entries in sprite RAM */
 		0,			/* left clip coordinate */
 		255,		/* right clip coordinate */
-		
+
 		0x200,		/* base palette entry */
 		0x100,		/* maximum number of colors */
-	
+
 		{{ 0x7fff,0,0,0,0,0,0,0 }},	/* mask for the code index */
 		{{ 0,0x00f0,0,0,0,0,0,0 }},	/* mask for the color */
 		{{ 0,0,0xffc0,0,0,0,0,0 }},	/* mask for the X position */
@@ -84,10 +84,10 @@ int atarig1_vh_start(void)
 		256,		/* number of entries in sprite RAM */
 		40,			/* left clip coordinate */
 		295,		/* right clip coordinate */
-		
+
 		0x200,		/* base palette entry */
 		0x100,		/* maximum number of colors */
-	
+
 		{{ 0x7fff,0,0,0,0,0,0,0 }},	/* mask for the code index */
 		{{ 0,0x00f0,0,0,0,0,0,0 }},	/* mask for the color */
 		{{ 0,0,0xffc0,0,0,0,0,0 }},	/* mask for the X position */
@@ -102,7 +102,7 @@ int atarig1_vh_start(void)
 	{
 		1,			/* index to which gfx system */
 		64,32,		/* size of the alpha RAM in tiles (x,y) */
-	
+
 		0x100,		/* index of palette base */
 		0x100,		/* maximum number of colors */
 		0,			/* mask of the palette split */
@@ -119,7 +119,7 @@ int atarig1_vh_start(void)
 	/* initialize the playfield */
 	if (!ataripf_init(0, &pfdesc))
 		goto cant_create_pf;
-	
+
 	/* initialize the motion objects */
 	if (!atarirle_init(0, atarig1_pitfight ? &modesc_pitfight : &modesc_hydra))
 		goto cant_create_mo;
@@ -127,7 +127,7 @@ int atarig1_vh_start(void)
 	/* initialize the alphanumerics */
 	if (!atarian_init(0, &andesc))
 		goto cant_create_an;
-	
+
 	/* reset statics */
 	current_control = 0;
 	pfscroll_xoffset = atarig1_pitfight ? 2 : 0;
@@ -213,16 +213,6 @@ void atarig1_scanline_update(int scanline)
 
 void atarig1_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
-	/* mark the used colors */
-	palette_init_used_colors();
-	ataripf_mark_palette(0);
-	atarirle_mark_palette(0);
-	atarian_mark_palette(0);
-
-	/* update the palette, and mark things dirty if we need to */
-	if (palette_recalc())
-		ataripf_invalidate(0);
-
 	/* draw the layers */
 	ataripf_render(0, bitmap);
 	atarirle_render(0, bitmap, NULL);

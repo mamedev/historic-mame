@@ -194,9 +194,6 @@ static void draw_sprites(struct osd_bitmap *bitmap,int pri)
 
 void dynduke_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	int color,offs,sprite;
-	int colmask[32],i,pal_base;
-
 	/* Setup the tilemaps */
 	tilemap_set_scrolly( bg_layer,0, ((dynduke_scroll_ram[0x02]&0x30)<<4)+((dynduke_scroll_ram[0x04]&0x7f)<<1)+((dynduke_scroll_ram[0x04]&0x80)>>7) );
 	tilemap_set_scrollx( bg_layer,0, ((dynduke_scroll_ram[0x12]&0x30)<<4)+((dynduke_scroll_ram[0x14]&0x7f)<<1)+((dynduke_scroll_ram[0x14]&0x80)>>7) );
@@ -204,36 +201,11 @@ void dynduke_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	tilemap_set_scrollx( fg_layer,0, ((dynduke_scroll_ram[0x32]&0x30)<<4)+((dynduke_scroll_ram[0x34]&0x7f)<<1)+((dynduke_scroll_ram[0x34]&0x80)>>7) );
 	tilemap_set_enable( bg_layer,back_enable);
 	tilemap_set_enable( fg_layer,fore_enable);
-	tilemap_update(ALL_TILEMAPS);
-
-	/* Build the dynamic palette */
-	palette_init_used_colors();
-
-	/* Sprites */
-	pal_base = Machine->drv->gfxdecodeinfo[3].color_codes_start;
-	for (color = 0;color < 32;color++) colmask[color] = 0;
-	for (offs = 0;offs <0x1000;offs += 8)
-	{
-		color = spriteram[offs+1]&0x1f;
-		sprite = buffered_spriteram[offs+2]+(buffered_spriteram[offs+3]<<8);
-		sprite &= 0x3fff;
-		colmask[color] |= Machine->gfx[3]->pen_usage[sprite];
-	}
-	for (color = 0;color < 32;color++)
-	{
-		for (i = 0;i < 15;i++)
-		{
-			if (colmask[color] & (1 << i))
-				palette_used_colors[pal_base + 16 * color + i] = PALETTE_COLOR_USED;
-		}
-	}
-
-	palette_recalc();
 
 	if (back_enable)
 		tilemap_draw(bitmap,bg_layer,TILEMAP_BACK,0);
 	else
-		fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
+		fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 
 	draw_sprites(bitmap,0); /* Untested: does anything use it? Could be behind background */
 	draw_sprites(bitmap,1);

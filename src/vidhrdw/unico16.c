@@ -239,11 +239,6 @@ if (keyboard_pressed(KEYCODE_X))
 	}
 }
 
-static void unico16_mark_sprites_colors(void)
-{
-	memset(palette_used_colors,PALETTE_COLOR_USED,Machine->drv->total_colors);
-}
-
 
 
 /***************************************************************************
@@ -297,14 +292,6 @@ if ( keyboard_pressed(KEYCODE_Z) || keyboard_pressed(KEYCODE_X) )
 	if (msk != 0) layers_ctrl &= msk;
 }
 #endif
-
-	tilemap_update(ALL_TILEMAPS);
-
-	palette_init_used_colors();
-
-	unico16_mark_sprites_colors();
-
-	palette_recalc();
 
 	/* The background color is the first of the last palette */
 	fillbitmap(bitmap,Machine->pens[0x1f00],&Machine->visible_area);

@@ -2,8 +2,7 @@
 
 	cheat.c
 
-	This is a massively rewritten version of the cheat engine. There
-	are still quite a few features that are broken or not reimplemented.
+	This is a massively rewritten version of the cheat engine.
 
 	Busted (probably permanently) is the ability to use the UI_CONFIGURE
 	key to pop the menu system on and off while retaining the current
@@ -29,6 +28,8 @@
 	* show maximum number of characters available for cheat descriptions without overflow
 	* better text editing
 	* searching for values longer than one byte
+	* remove duplicate cheats
+	* variable length arrays
 
   	04092001	Ian Patterson	cheat searching by value
 								cheat searching by comparison (energy search)
@@ -104,6 +105,43 @@
 								added activation key support
 								general bugfixing
 	06162001	Ian Patterson	changed activation key input function to code_pressed to avoid eating keydowns
+	06182001	Ian Patterson	ANSI again
+								bugfixes
+								shift+return for value search searches for exact value
+								watch saving bugfix
+								added cheat types 102, 103, 110, 111, 112, and 113
+								edit cheat menu labels fixed
+								endian issues solved? (heh...)
+	06192001	Ian Patterson	watching a cheat with subcheats watches _all_ addresses
+								edit cheat menu labels fixed more
+								added watch/save cheat support to the cheat edit window
+								fixed redraw for vector games
+								added extra info viewing for one-shot cheats (shift+return)
+	06222001	Ian Patterson	removed "more info..." message
+								fixed extra info viewing
+								fixed max/min display
+	06242001	Ian Patterson	added hex/dec/binary display for watches
+								fixed user select with poke plus one
+								added add/delete/save to edit watchpoint menu
+								removed useless submenu_choice variables
+	06252001	Ian Patterson	fixed activation keys
+								fixed watch redraw
+								removed 'magic numbers'
+								added '+' prefix to title display for commented cheats
+	06272001	Ian Patterson	fixed user select cheats
+								ROM modification cheats now revert to their original value when disabled
+								MESS compatibility?
+								removed debug stuff
+	06282001	Ian Patterson	removed useless decimal viewing for BCD user select
+								fixed activation keys (and memory thrashing)
+	07022001	Ian Patterson	fixed ROM cheat value reversion
+								converting watches to cheats now makes normal cheats
+								fixed for CPSMAME
+	07092001	Ian Patterson	added 'all memory' search speed
+	07122001	Ian Patterson	when cheat conflicts are found, the conflicting cheat is disabled
+	07132001	Ian Patterson	removed CW-specific macro
+								fixed conflict disabling
+	07182001	Ian Patterson	added cheat types 15-17
 
 (Description from Pugsy's cheat.dat)
 
@@ -135,6 +173,12 @@
 ;          3 each frame and the cheat remains in active list.
 ;   -011 : the byte is poked unless the original value in being decremented by
 ;          4 each frame and the cheat remains in active list.
+;   -015 : the byte is poked one second after the original value has changed
+;          and the cheat is removed from the active list.
+;   -016 : the byte is poked two seconds after the original value has changed
+;          and the cheat is removed from the active list.
+;   -017 : the byte is poked five seconds after the original value has changed
+;          and the cheat is removed from the active list.
 ;   -020 : the bits are set every time and the cheat remains in active list.
 ;   -021 : the bits are set once and the cheat is removed from active list.
 ;	-022 : the bits are set every second and the cheat remains in active list.
@@ -186,9 +230,17 @@
 ;   -075 : the user selects a decimal value from 1 to byte
 ;          (display : 1 to byte) - the value is poked once and the cheat is
 ;          removed from the active list.
-;	-100 : constantly pokes the value to the selected CPU's ROM region
+;	-100 : constantly pokes the value to the selected CPU's ROM region, adjusting for endian issues
 ;	-101 : pokes the value to the selected CPU's ROM region and the cheat is
+;	       removed from the active list, adjusting for endian issues
+;	-102 : constantly pokes the value to the selected CPU's ROM region
+;	-103 : pokes the value to the selected CPU's ROM region and the cheat is
 ;	       removed from the active list
+;	-110 : pokes the value to the memory mapped to the memory handler, adjusting for endian issues
+;	-111 : pokes the value to the memory mapped to the memory handler, adjusting for endian issues, and
+;	       the cheat is removed
+;	-112 : pokes the value to the memory mapped to the memory handler
+;	-113 : pokes the value to the memory mapped to the memory handler, and the cheat is removed
 ;   -500 to 575: These cheat types are identical to types 000 to 075 except
 ;                they are used in linked cheats (i.e. of 1/8 type). The first
 ;                cheat in the link list will be the normal type (eg type 000)
@@ -218,7 +270,7 @@ extern struct GameDriver driver_neogeo;
 
 #define CHEAT_PAUSE			0
 
-// check for MAMEW, install kludge if needed
+/* check for MAMEW, install kludge if needed */
 #ifdef _WINDOWS_H
 #define OSD_READKEY_KLUDGE	1
 #else
@@ -245,6 +297,7 @@ enum
 	kCheatFlagBCDPrompt =				1 << 4,
 	kCheatFlagOneShot =					1 << 5,
 	kCheatFlagActivationKeyPressed =	1 << 6,
+	kCheatFlagDispPlusOne =				1 << 7,
 
 	kCheatFlagPromptMask =	kCheatFlagDecPrompt |
 							kCheatFlagBCDPrompt,
@@ -253,7 +306,8 @@ enum
 	kCheatFlagModeMask =	kCheatFlagWatch |
 							kCheatFlagComment |
 							kCheatFlagPromptMask |
-							kCheatFlagOneShot
+							kCheatFlagOneShot |
+							kCheatFlagDispPlusOne
 };
 
 enum
@@ -263,6 +317,8 @@ enum
 	kSubcheatFlagBitModify =	1 << 2,
 	kSubcheatFlagByteModify =	1 << 3,
 	kSubcheatFlagCustomRegion =	1 << 4,
+	kSubcheatFlagPrompt =		1 << 5,
+	kSubcheatFlagWatch =		1 << 6,
 
 	kSubcheatFlagModifyMask =	kSubcheatFlagBitModify |
 								kSubcheatFlagByteModify,
@@ -270,7 +326,10 @@ enum
 								kSubcheatFlagTimed,
 	kSubcheatFlagModeMask =		kSubcheatFlagBitModify |
 								kSubcheatFlagByteModify |
-								kSubcheatFlagCustomRegion
+								kSubcheatFlagCustomRegion |
+								kSubcheatFlagPrompt |
+								kSubcheatFlagWatch |
+								kSubcheatFlagPrompt
 };
 
 struct subcheat_struct
@@ -278,9 +337,7 @@ struct subcheat_struct
 	int		cpu;
 	offs_t	address;
 	data8_t	data;
-#ifdef MESS
 	data8_t	olddata;			/* old data for code patch when cheat is turned OFF */
-#endif
 	data8_t	backup;				/* The original value of the memory location, checked against the current */
 	UINT32	code;
 	UINT16	flags;
@@ -294,7 +351,6 @@ struct cheat_struct
 {
 #ifdef MESS
 	unsigned int			crc;		/* CRC of the game */
-	char					patch;		/* 'C' : code patch - 'D' : data patch */
 #endif
 	char					* name;
 	char					* comment;
@@ -313,60 +369,111 @@ struct memory_struct
 
 enum
 {
-	kCheatSpecial_Poke =			0,
-	kCheatSpecial_PokeRemove =		1,
-	kCheatSpecial_Poke1 =			2,
-	kCheatSpecial_Poke2 =			3,
-	kCheatSpecial_Poke5 =			4,
-	kCheatSpecial_Delay1 =			5,
-	kCheatSpecial_Delay2 =			6,
-	kCheatSpecial_Delay5 =			7,
-	kCheatSpecial_Backup1 =			8,
-	kCheatSpecial_Backup2 =			9,
-	kCheatSpecial_Backup3 =			10,
-	kCheatSpecial_Backup4 =			11,
-	kCheatSpecial_SetBit =			20,
-	kCheatSpecial_SetBitRemove =	21,
-	kCheatSpecial_SetBit1 =			22,
-	kCheatSpecial_SetBit2 =			23,
-	kCheatSpecial_SetBit5 =			24,
-	kCheatSpecial_ResetBit =		40,
-	kCheatSpecial_ResetBitRemove =	41,
-	kCheatSpecial_ResetBit1 =		42,
-	kCheatSpecial_ResetBit2 =		43,
-	kCheatSpecial_ResetBit5 =		44,
-	kCheatSpecial_UserFirst =		60,
-	kCheatSpecial_m0d0c =			60,		/* minimum value 0, display range 0 to byte, poke when changed */
-	kCheatSpecial_m0d1c =			61,		/* minimum value 0, display range 1 to byte+1, poke when changed */
-	kCheatSpecial_m1d1c =			62,		/* minimum value 1, display range 1 to byte, poke when changed */
-	kCheatSpecial_m0d0bcdc =		63,		/* BCD, minimum value 0, display range 0 to byte, poke when changed */
-	kCheatSpecial_m0d1bcdc =		64,		/* BCD, minimum value 0, display range 1 to byte+1, poke when changed */
-	kCheatSpecial_m1d1bcdc =		65,		/* BCD, minimum value 1, display range 1 to byte, poke when changed */
-	kCheatSpecial_m0d0 =			70,		/* minimum value 0, display range 0 to byte */
-	kCheatSpecial_m0d1 =			71,		/* minimum value 0, display range 1 to byte+1 */
-	kCheatSpecial_m1d1 =			72,		/* minimum value 1, display range 1 to byte */
-	kCheatSpecial_m0d0bcd =			73,		/* BCD, minimum value 0, display range 0 to byte */
-	kCheatSpecial_m0d1bcd =			74,		/* BCD, minimum value 0, display range 1 to byte+1 */
-	kCheatSpecial_m1d1bcd =			75,		/* BCD, minimum value 1, display range 1 to byte */
-	kCheatSpecial_UserLast =		75,
-	/* Steph 2001.05.04 - added 'PokeROM' and 'PokeROMRemove', and changed 'Last' and 'LinkEnd' */
-	kCheatSpecial_PokeROM =			100,
-	kCheatSpecial_PokeROMRemove =	101,
-	kCheatSpecial_Last =			199,
-	kCheatSpecial_LinkStart =		500,	/* only used when loading the database */
-	kCheatSpecial_LinkEnd =			699,	/* only used when loading the database */
-	kCheatSpecial_Watch =			998,
-	kCheatSpecial_Comment =			999,
-	kCheatSpecial_Timed =			1000
+	kCheatSpecial_Poke =						0,
+	kCheatSpecial_PokeRemove =					1,
+	kCheatSpecial_Poke1 =						2,
+	kCheatSpecial_Poke2 =						3,
+	kCheatSpecial_Poke5 =						4,
+	kCheatSpecial_Delay1 =						5,
+	kCheatSpecial_Delay2 =						6,
+	kCheatSpecial_Delay5 =						7,
+	kCheatSpecial_Backup1 =						8,
+	kCheatSpecial_Backup2 =						9,
+	kCheatSpecial_Backup3 =						10,
+	kCheatSpecial_Backup4 =						11,
+	kCheatSpecial_Delay1Remove =				15,
+	kCheatSpecial_Delay2Remove =				16,
+	kCheatSpecial_Delay5Remove =				17,
+	kCheatSpecial_SetBit =						20,
+	kCheatSpecial_SetBitRemove =				21,
+	kCheatSpecial_SetBit1 =						22,
+	kCheatSpecial_SetBit2 =						23,
+	kCheatSpecial_SetBit5 =						24,
+	kCheatSpecial_ResetBit =					40,
+	kCheatSpecial_ResetBitRemove =				41,
+	kCheatSpecial_ResetBit1 =					42,
+	kCheatSpecial_ResetBit2 =					43,
+	kCheatSpecial_ResetBit5 =					44,
+	kCheatSpecial_UserFirst =					60,
+	kCheatSpecial_m0d0c =						60,		/* minimum value 0, display range 0 to byte, poke when changed */
+	kCheatSpecial_m0d1c =						61,		/* minimum value 0, display range 1 to byte+1, poke when changed */
+	kCheatSpecial_m1d1c =						62,		/* minimum value 1, display range 1 to byte, poke when changed */
+	kCheatSpecial_m0d0bcdc =					63,		/* BCD, minimum value 0, display range 0 to byte, poke when changed */
+	kCheatSpecial_m0d1bcdc =					64,		/* BCD, minimum value 0, display range 1 to byte+1, poke when changed */
+	kCheatSpecial_m1d1bcdc =					65,		/* BCD, minimum value 1, display range 1 to byte, poke when changed */
+	kCheatSpecial_m0d0 =						70,		/* minimum value 0, display range 0 to byte */
+	kCheatSpecial_m0d1 =						71,		/* minimum value 0, display range 1 to byte+1 */
+	kCheatSpecial_m1d1 =						72,		/* minimum value 1, display range 1 to byte */
+	kCheatSpecial_m0d0bcd =						73,		/* BCD, minimum value 0, display range 0 to byte */
+	kCheatSpecial_m0d1bcd =						74,		/* BCD, minimum value 0, display range 1 to byte+1 */
+	kCheatSpecial_m1d1bcd =						75,		/* BCD, minimum value 1, display range 1 to byte */
+	kCheatSpecial_UserLast =					75,
+	kCheatSpecial_PokeROM =						100,
+	kCheatSpecial_PokeROMRemove =				101,
+	kCheatSpecial_PokeROMRaw =					102,
+	kCheatSpecial_PokeROMRemoveRaw =			103,
+	kCheatSpecial_ForcePokeRegion =				110,
+	kCheatSpecial_ForcePokeRegionRemove =		111,
+	kCheatSpecial_ForcePokeRegionRaw =			112,
+	kCheatSpecial_ForcePokeRegionRemoveRaw =	113,
+	kCheatSpecial_Last =						199,
+	kCheatSpecial_LinkStart =					500,	/* only used when loading the database */
+	kCheatSpecial_LinkEnd =						699,	/* only used when loading the database */
+	kCheatSpecial_Watch =						998,
+	kCheatSpecial_Comment =						999,
+	kCheatSpecial_Timed =						1000
 };
 
 /* Steph 2001.05.04 - added types 100 and 101 */
 const int kSupportedCheatTypes[] =
 {
-	0,		1,		2,		3,		4,		5,		6,		7,		8,		9,
-	10,		11,		20,		21,		40,		41,		60,		61,		62,		63,
-	64,		65,		70,		71,		72,		73,		74,		75,		100,
-	101,	998,	999,
+	kCheatSpecial_Poke,
+	kCheatSpecial_PokeRemove,
+	kCheatSpecial_Poke1,
+	kCheatSpecial_Poke2,
+	kCheatSpecial_Poke5,
+	kCheatSpecial_Delay1,
+	kCheatSpecial_Delay2,
+	kCheatSpecial_Delay5,
+	kCheatSpecial_Backup1,
+	kCheatSpecial_Backup2,
+	kCheatSpecial_Backup3,
+	kCheatSpecial_Backup4,
+	kCheatSpecial_Delay1Remove,
+	kCheatSpecial_Delay2Remove,
+	kCheatSpecial_Delay5Remove,
+	kCheatSpecial_SetBit,
+	kCheatSpecial_SetBitRemove,
+	kCheatSpecial_SetBit1,
+	kCheatSpecial_SetBit2,
+	kCheatSpecial_SetBit5,
+	kCheatSpecial_ResetBit,
+	kCheatSpecial_ResetBitRemove,
+	kCheatSpecial_ResetBit1,
+	kCheatSpecial_ResetBit2,
+	kCheatSpecial_ResetBit5,
+	kCheatSpecial_m0d0c,
+	kCheatSpecial_m0d1c,
+	kCheatSpecial_m1d1c,
+	kCheatSpecial_m0d0bcdc,
+	kCheatSpecial_m0d1bcdc,
+	kCheatSpecial_m1d1bcdc,
+	kCheatSpecial_m0d0,
+	kCheatSpecial_m0d1,
+	kCheatSpecial_m1d1,
+	kCheatSpecial_m0d0bcd,
+	kCheatSpecial_m0d1bcd,
+	kCheatSpecial_m1d1bcd,
+	kCheatSpecial_PokeROM,
+	kCheatSpecial_PokeROMRemove,
+	kCheatSpecial_PokeROMRaw,
+	kCheatSpecial_PokeROMRemoveRaw,
+	kCheatSpecial_ForcePokeRegion,
+	kCheatSpecial_ForcePokeRegionRemove,
+	kCheatSpecial_ForcePokeRegionRaw,
+	kCheatSpecial_ForcePokeRegionRemoveRaw,
+	kCheatSpecial_Watch,
+	kCheatSpecial_Comment,
 	-1
 };
 
@@ -426,7 +533,7 @@ char * kCheatNameTemplates[] =
 
 enum
 {
-	kRestore_NoInit,
+	kRestore_NoInit = 0,
 	kRestore_NoSave,
 	kRestore_Done,
 	kRestore_OK
@@ -434,17 +541,29 @@ enum
 
 enum
 {
-	kSpeed_Fast = 0,	// RAM + some banks
-	kSpeed_Medium,		// RAM + BANKx
-	kSpeed_Slow,		// all memory areas except ROM, NOP, and custom handlers w/o mapped memory
-	kSpeed_VerySlow		// all memory areas except ROM and NOP
+	kSpeed_Fast = 0,	/* RAM + some banks */
+	kSpeed_Medium,		/* RAM + BANKx */
+	kSpeed_Slow,		/* all memory areas except ROM, NOP, and custom handlers w/o mapped memory */
+	kSpeed_VerySlow,	/* all memory areas except ROM and NOP */
+	kSpeed_AllMemory	/* search the entire address space (for Z80 based games with bad drivers) */
+};
+
+enum
+{
+	kEnergy_Equals = 0,
+	kEnergy_Less,
+	kEnergy_Greater,
+	kEnergy_LessOrEquals,
+	kEnergy_GreaterOrEquals,
+	kEnergy_NotEquals,
+	kEnergy_FuzzyEquals
 };
 
 /* Local variables */
 static int	searchCPU =		0;
 static int	searchValue =	0;
 static int	searchTime =	0;
-static int	searchEnergy =	0;
+static int	searchEnergy =	kEnergy_Equals;
 static int	searchBit =		0;
 static int	searchSlow =	0;
 static int	searchSpeed =	kSpeed_Medium;
@@ -465,15 +584,36 @@ static struct ExtMemory	OldFlagTable[MAX_EXT_MEMORY];
 
 #define MAX_WATCHES 20
 
+const int	kMaxWatchBytes = 16;
+
+enum
+{
+	kWatchLabel_None = 0,
+	kWatchLabel_Address,
+	kWatchLabel_String,
+
+	kWatchLabel_MaxPlusOne
+};
+
+enum
+{
+	kWatchDisplayType_Hex = 0,
+	kWatchDisplayType_Decimal,
+	kWatchDisplayType_Binary,
+
+	kWatchDisplayType_MaxPlusOne
+};
+
 struct watch_struct
 {
-	int		cheat_num;	/* if this watchpoint is tied to a cheat, this is the index into the cheat array. -1 if none */
+	int		cheat_num;		/* if this watchpoint is tied to a cheat, this is the index into the cheat array. -1 if none */
 	UINT32	address;
 	INT16	cpu;
-	UINT8	num_bytes;	/* number of consecutive bytes to display */
-	UINT8	label_type;	/* none, address, text */
-	char	label[255];	/* optional text label */
-	UINT16	x;			/* position of watchpoint on screen */
+	UINT8	num_bytes;		/* number of consecutive bytes to display */
+	UINT8	display_type;	/* hex, dec, bin */
+	UINT8	label_type;		/* none, address, text */
+	char	label[255];		/* optional text label */
+	UINT16	x;				/* position of watchpoint on screen */
 	UINT16	y;
 };
 
@@ -491,11 +631,6 @@ void computer_writemem_byte(int cpu, int addr, int value);
 #define COMPARE_CHEAT			(computer_readmem_byte(subcheat->cpu, subcheat->address) != subcheat->data)
 #define CPU_AUDIO_OFF(index)	((Machine->drv->cpu[index].cpu_type & CPU_AUDIO_CPU) && (Machine->sample_rate == 0))
 
-/* Steph */
-#ifdef MESS
-#define WRITE_OLD_CHEAT			computer_writemem_byte(subcheat->cpu, subcheat->address, subcheat->olddata)
-#endif
-
 /* Local prototypes */
 static INT32	DisplayHelpFile(struct osd_bitmap * bitmap, INT32 selected);
 static INT32	EditCheatMenu(struct osd_bitmap * bitmap, INT32 selected, UINT8 cheatnum);
@@ -506,13 +641,14 @@ static void		reset_table(struct ExtMemory * table);
 static void		AddResultToListByIdx(int idx);
 static void		AddCheatToList(offs_t address, UINT8 data, int cpu);
 static void		SetupDefaultMemoryAreas(int cpu);
+static void		UnloadCheatDatabase(void);
 
 /* Local variables */
 static int					ActiveCheatTotal;				/* number of cheats currently active */
 static int					LoadedCheatTotal;				/* total number of cheats */
-static struct cheat_struct	CheatTable[MAX_LOADEDCHEATS+1];
+static struct cheat_struct	CheatTable[MAX_LOADEDCHEATS];
 
-static int					CheatEnabled;
+static int					CheatEnabled = 1;
 static int					cheatEngineWasActive;
 
 static UINT8				memoryRegionEnabled[MAX_MEMORY_REGIONS];
@@ -521,8 +657,8 @@ const int					kVerticalKeyRepeatRate =		8;
 const int					kHorizontalFastKeyRepeatRate =	5;
 const int					kHorizontalSlowKeyRepeatRate =	8;
 
-//	returns the number of nibbles required to represent the target CPU's
-//	address range
+/*	returns the number of nibbles required to represent the target CPU's
+	address range */
 static int CPUAddressWidth(int cpu)
 {
 	int bits = cpunum_address_bits(cpu);
@@ -533,19 +669,19 @@ static int CPUAddressWidth(int cpu)
 		return bits >> 2;
 }
 
-//	returns if either shift key is pressed
+/*	returns if either shift key is pressed */
 static int ShiftKeyPressed(void)
 {
 	return (code_pressed(KEYCODE_LSHIFT) || code_pressed(KEYCODE_RSHIFT));
 }
 
-//	returns if either control key is pressed
+/*	returns if either control key is pressed */
 static int ControlKeyPressed(void)
 {
 	return (code_pressed(KEYCODE_LCONTROL) || code_pressed(KEYCODE_RCONTROL));
 }
 
-//	returns if either alt/option key is pressed
+/*	returns if either alt/option key is pressed */
 static int AltKeyPressed(void)
 {
 	return (code_pressed(KEYCODE_LALT) || code_pressed(KEYCODE_RALT));
@@ -553,8 +689,8 @@ static int AltKeyPressed(void)
 
 #if OSD_READKEY_KLUDGE
 
-//	dirty hack until osd_readkey_unicode is supported in MAMEW
-//	re-implementation of osd_readkey_unicode
+/*	dirty hack until osd_readkey_unicode is supported in MAMEW
+	re-implementation of osd_readkey_unicode */
 static int ReadKeyAsync(int flush)
 {
 	int	code;
@@ -589,7 +725,7 @@ static int ReadKeyAsync(int flush)
 		{
 			if(ShiftKeyPressed())
 			{
-				return ")!@#$%^&*()"[code - KEYCODE_0];
+				return ")!@#$%^&*("[code - KEYCODE_0];
 			}
 			else
 			{
@@ -598,7 +734,7 @@ static int ReadKeyAsync(int flush)
 		}
 		else if((code >= KEYCODE_0_PAD) && (code <= KEYCODE_0_PAD))
 		{
-			return '0' + (code - KEYCODE_0);
+			return '0' + (code - KEYCODE_0_PAD);
 		}
 		else if(code == KEYCODE_TILDE)
 		{
@@ -752,8 +888,8 @@ static int ReadKeyAsync(int flush)
 
 #endif
 
-//	a version of input_ui_pressed_repeat which increases speed as the key is
-//	held down
+/*	a version of input_ui_pressed_repeat which increases speed as the key is
+	held down */
 static int UIPressedRepeatThrottle(int code, int baseSpeed)
 {
 	static int	lastCode = -1;
@@ -786,8 +922,6 @@ static int UIPressedRepeatThrottle(int code, int baseSpeed)
 				pressed = 1;
 			}
 		}
-
-		//usrintf_showmessage_secs(1, "%d %d", lastSpeed, incrementTimer);
 	}
 	else
 	{
@@ -800,7 +934,7 @@ static int UIPressedRepeatThrottle(int code, int baseSpeed)
 	return input_ui_pressed_repeat(code, lastSpeed);
 }
 
-//	returns if a cheat type is valid
+/*	returns if a cheat type is valid */
 static int IsCheatTypeSupported(int type)
 {
 	const int	* traverse;
@@ -814,7 +948,7 @@ static int IsCheatTypeSupported(int type)
 
 #ifdef MESS
 
-//	returns if a device with a specified CRC exists
+/*	returns if a device with a specified CRC exists */
 static int MatchCRC(unsigned int crc)
 {
 	int type, id;
@@ -831,71 +965,141 @@ static int MatchCRC(unsigned int crc)
 }
 #endif
 
-//	returns if a byte is BCD
+/*	returns if a byte is BCD */
 static int IsBCD(int value)
 {
 	return	((value & 0x0F) <= 0x09) &&
 			((value & 0xF0) <= 0x90);
 }
 
-/***************************************************************************
+/*
+typedef union {
+	#if LSB_FIRST
+		struct	{ UINT8		l, h, h2, h3; } b;
+		struct	{ UINT16	l, h; } w;
+	#else
+		struct	{ UINT8		h3, h2, h, l; } b;
+		struct	{ UINT16	h, l; } w;
+	#endif
+	UINT32	l;
+}	PAIR_32;
 
-  patch_rom		Steph			2001.05.04
-				Tourniquet		2001.05.10
-				Ian Patterson	2001.06.06
-								2001.06.12
+typedef union {
+	#if LSB_FIRST
+		struct	{ UINT8		l, h; } b;
+	#else
+		struct	{ UINT8		h, l; } b;
+	#endif
+	UINT16	w;
+}	PAIR_16;
 
-  This patches ROM area by using a direct write to memory_region
-  instead of using the write handlers
+typedef union {
+	struct	{ UINT8		h3, h2, h, l; } b;
+	struct	{ UINT16	h, l; } w;
+	UINT32	l;
+}	PAIR_32_BE;
 
-***************************************************************************/
-void patch_rom(struct subcheat_struct * subcheat)
+typedef union {
+	struct	{ UINT8		h, l; } b;
+	UINT16	w;
+}	PAIR_16_BE;
+*/
+
+typedef union {
+	struct	{ UINT8		h3, h2, h, l; } b;
+	struct	{ UINT16	h, l; } w;
+	UINT32	l;
+}	PAIR_32;
+
+typedef union {
+	struct	{ UINT8		h, l; } b;
+	UINT16	w;
+}	PAIR_16;
+
+void poke_endian_fix(struct subcheat_struct * subcheat, UINT8 * basePtr, UINT8 inData)
 {
-	data32_t	* ROM32 =	(UINT32 *)memory_region(REGION_CPU1+subcheat->cpu);
-	data16_t	* ROM16 =	(UINT16 *)memory_region(REGION_CPU1+subcheat->cpu);
-	UINT8		* ROM8 =	memory_region(REGION_CPU1+subcheat->cpu);
+	UINT32	offset;
+	UINT32	dataWidth;
+	UINT32	data;
+
+	offset =	subcheat->address;
+	dataWidth =	cpunum_databus_width(subcheat->cpu);
+	data =		inData & 0xFF;
+
+	switch(dataWidth)
+	{
+		case 8:
+			offset = subcheat->address;
+			break;
+
+		case 16:
+			offset = subcheat->address & ~1;
+			break;
+
+		case 32:
+			offset = subcheat->address & ~3;
+			break;
+
+		default:
+			logerror("poke_endian_fix: cpu %d databus width (%d) unsupported\n", subcheat->cpu, dataWidth);
+			return;
+	}
+
+	basePtr = &basePtr[offset];
+
+	switch(dataWidth)
+	{
+		case 8:
+		{
+			*basePtr = data;
+
+			/* logerror("poke_endian_fix: 8 bit write (%.8X)\n", *basePtr); */
+		}
+		break;
+
+		case 16:
+		{
+			PAIR_16	* target = (PAIR_16 *)basePtr;
+
+			switch(subcheat->address & 1)
+			{
+				case 0:	target->b.h = data;	break;
+				case 1:	target->b.l = data; break;
+			}
+
+			/* logerror("poke_endian_fix: 16 bit write (%.4X)\n", target->w); */
+		}
+		break;
+
+		case 32:
+		{
+			PAIR_32	* target = (PAIR_32 *)basePtr;
+
+			switch(subcheat->address & 3)
+			{
+				case 0:	target->b.h3 = data;	break;
+				case 1:	target->b.h2 = data;	break;
+				case 2:	target->b.h = data;		break;
+				case 3:	target->b.l = data;		break;
+			}
+
+			/* logerror("poke_endian_fix: 32 bit write (%.8X)\n", target->l); */
+		}
+		break;
+	}
+
+	/*
+	data32_t	* ROM32 =	(UINT32 *)basePtr;
+	data16_t	* ROM16 =	(UINT16 *)basePtr;
+	UINT8		* ROM8 =	(UINT8 *)basePtr;
 
 	UINT32 adr_modulo4 = subcheat->address & 0x3;
 	UINT32 adr_modulo2 = subcheat->address & 0x1;
 
 	UINT32 cheat_data = subcheat->data;
 
-	//logerror("Endianess: %d Data: %d\n", cputype_endianess(cpu_type), computer_readmem_byte(subcheat->cpu,subcheat->address));
-
-	if(cpunum_endianess(subcheat->cpu) == CPU_IS_BE)
+	#if LSB_FIRST
 	{
-		// Big Endian
-		switch(cpunum_databus_width(subcheat->cpu))
-		{
-			case 32:
-				switch(adr_modulo4)
-				{
-					case 0:	ROM32[subcheat->address/4] = (ROM32[subcheat->address/4] & 0x00FFFFFF) | ((cheat_data << 24) & 0xFF000000);	break;
-					case 1:	ROM32[subcheat->address/4] = (ROM32[subcheat->address/4] & 0xFF00FFFF) | ((cheat_data << 16) & 0x00FF0000);	break;
-					case 2:	ROM32[subcheat->address/4] = (ROM32[subcheat->address/4] & 0xFFFF00FF) | ((cheat_data <<  8) & 0x0000FF00);	break;
-					case 3:	ROM32[subcheat->address/4] = (ROM32[subcheat->address/4] & 0xFFFFFF00) | ((cheat_data <<  0) & 0x000000FF);	break;
-				}
-				break;
-
-			case 16:
-				switch(adr_modulo2)
-				{
-					case 0:	ROM16[subcheat->address/2] = (ROM16[subcheat->address/2] & 0x00FF) | ((cheat_data << 8) & 0xFF00);			break;
-					case 1:	ROM16[subcheat->address/2] = (ROM16[subcheat->address/2] & 0xFF00) | ((cheat_data << 0) & 0x00FF);			break;
-				}
-				break;
-
-			case 8:
-				ROM8[subcheat->address] = cheat_data & 0xFF;
-				break;
-
-			default:
-				break;
-		}
-	}
-	else
-	{
-		// Little Endian
 		switch(cpunum_databus_width(subcheat->cpu))
 		{
 			case 32:
@@ -924,9 +1128,308 @@ void patch_rom(struct subcheat_struct * subcheat)
 				break;
 		}
 	}
+	#else
+	{
+		switch(cpunum_databus_width(subcheat->cpu))
+		{
+			case 32:
+				switch(adr_modulo4)
+				{
+					case 0:	ROM32[subcheat->address/4] = (ROM32[subcheat->address/4] & 0x00FFFFFF) | ((cheat_data << 24) & 0xFF000000);	break;
+					case 1:	ROM32[subcheat->address/4] = (ROM32[subcheat->address/4] & 0xFF00FFFF) | ((cheat_data << 16) & 0x00FF0000);	break;
+					case 2:	ROM32[subcheat->address/4] = (ROM32[subcheat->address/4] & 0xFFFF00FF) | ((cheat_data <<  8) & 0x0000FF00);	break;
+					case 3:	ROM32[subcheat->address/4] = (ROM32[subcheat->address/4] & 0xFFFFFF00) | ((cheat_data <<  0) & 0x000000FF);	break;
+				}
+				break;
 
-	//cpu_set_reset_line(subcheat->cpu, PULSE_LINE);	// reset cpu
-	//machine_reset();									// reset _entire_ system
+			case 16:
+				switch(adr_modulo2)
+				{
+					case 0:	ROM16[subcheat->address/2] = (ROM16[subcheat->address/2] & 0x00FF) | ((cheat_data << 8) & 0xFF00);			break;
+					case 1:	ROM16[subcheat->address/2] = (ROM16[subcheat->address/2] & 0xFF00) | ((cheat_data << 0) & 0x00FF);			break;
+				}
+				break;
+
+			case 8:
+				ROM8[subcheat->address] = cheat_data & 0xFF;
+				break;
+
+			default:
+				break;
+		}
+	}
+	#endif
+	*/
+}
+
+UINT8 read_endian_fix(struct subcheat_struct * subcheat, UINT8 * basePtr)
+{
+	UINT32	offset;
+	UINT32	dataWidth;
+
+	offset =	subcheat->address;
+	dataWidth =	cpunum_databus_width(subcheat->cpu);
+
+	switch(dataWidth)
+	{
+		case 8:
+			offset = subcheat->address;
+			break;
+
+		case 16:
+			offset = subcheat->address & ~1;
+			break;
+
+		case 32:
+			offset = subcheat->address & ~3;
+			break;
+
+		default:
+			logerror("poke_endian_fix: cpu %d databus width (%d) unsupported\n", subcheat->cpu, dataWidth);
+			return 0;
+	}
+
+	basePtr = &basePtr[offset];
+
+	switch(dataWidth)
+	{
+		case 8:
+		{
+			return *basePtr;
+		}
+		break;
+
+		case 16:
+		{
+			PAIR_16	* target = (PAIR_16 *)basePtr;
+
+			switch(subcheat->address & 1)
+			{
+				case 0:	return target->b.h;
+				case 1:	return target->b.l;
+			}
+		}
+		break;
+
+		case 32:
+		{
+			PAIR_32	* target = (PAIR_32 *)basePtr;
+
+			switch(subcheat->address & 3)
+			{
+				case 0:	return target->b.h3;
+				case 1:	return target->b.h2;
+				case 2:	return target->b.h;
+				case 3:	return target->b.l;
+			}
+		}
+		break;
+	}
+
+	return 0;
+
+	/*
+	data32_t	* ROM32 =	(UINT32 *)basePtr;
+	data16_t	* ROM16 =	(UINT16 *)basePtr;
+	UINT8		* ROM8 =	(UINT8 *)basePtr;
+
+	UINT32 adr_modulo4 = subcheat->address & 0x3;
+	UINT32 adr_modulo2 = subcheat->address & 0x1;
+
+	UINT32 cheat_data = subcheat->data;
+
+	#if LSB_FIRST
+	{
+		switch(cpunum_databus_width(subcheat->cpu))
+		{
+			case 32:
+				switch(adr_modulo4)
+				{
+					case 0:	ROM32[subcheat->address/4] = (ROM32[subcheat->address/4] & 0xFFFFFF00) | ((cheat_data <<  0) & 0x000000FF);	break;
+					case 1:	ROM32[subcheat->address/4] = (ROM32[subcheat->address/4] & 0xFFFF00FF) | ((cheat_data <<  8) & 0x0000FF00);	break;
+					case 2:	ROM32[subcheat->address/4] = (ROM32[subcheat->address/4] & 0xFF00FFFF) | ((cheat_data << 16) & 0x00FF0000);	break;
+					case 3:	ROM32[subcheat->address/4] = (ROM32[subcheat->address/4] & 0x00FFFFFF) | ((cheat_data << 24) & 0xFF000000);	break;
+				}
+				break;
+
+			case 16:
+				switch(adr_modulo2)
+				{
+					case 0:	ROM16[subcheat->address/2] = (ROM16[subcheat->address/2] & 0xFF00) | ((cheat_data << 0) & 0x00FF);			break;
+					case 1:	ROM16[subcheat->address/2] = (ROM16[subcheat->address/2] & 0x00FF) | ((cheat_data << 8) & 0xFF00);			break;
+				}
+				break;
+
+			case 8:
+				ROM8[subcheat->address] = cheat_data & 0xFF;
+				break;
+
+			default:
+				break;
+		}
+	}
+	#else
+	{
+		switch(cpunum_databus_width(subcheat->cpu))
+		{
+			case 32:
+				switch(adr_modulo4)
+				{
+					case 0:	ROM32[subcheat->address/4] = (ROM32[subcheat->address/4] & 0x00FFFFFF) | ((cheat_data << 24) & 0xFF000000);	break;
+					case 1:	ROM32[subcheat->address/4] = (ROM32[subcheat->address/4] & 0xFF00FFFF) | ((cheat_data << 16) & 0x00FF0000);	break;
+					case 2:	ROM32[subcheat->address/4] = (ROM32[subcheat->address/4] & 0xFFFF00FF) | ((cheat_data <<  8) & 0x0000FF00);	break;
+					case 3:	ROM32[subcheat->address/4] = (ROM32[subcheat->address/4] & 0xFFFFFF00) | ((cheat_data <<  0) & 0x000000FF);	break;
+				}
+				break;
+
+			case 16:
+				switch(adr_modulo2)
+				{
+					case 0:	ROM16[subcheat->address/2] = (ROM16[subcheat->address/2] & 0x00FF) | ((cheat_data << 8) & 0xFF00);			break;
+					case 1:	ROM16[subcheat->address/2] = (ROM16[subcheat->address/2] & 0xFF00) | ((cheat_data << 0) & 0x00FF);			break;
+				}
+				break;
+
+			case 8:
+				ROM8[subcheat->address] = cheat_data & 0xFF;
+				break;
+
+			default:
+				break;
+		}
+	}
+	#endif
+	*/
+}
+
+/***************************************************************************
+
+  patch_rom		Steph			2001.05.04
+				Tourniquet		2001.05.10
+				Ian Patterson	2001.06.06
+								2001.06.12
+
+  This patches ROM area by using a direct write to memory_region
+  instead of using the write handlers
+
+***************************************************************************/
+void patch_rom(struct subcheat_struct * subcheat, UINT8 data)
+{
+	poke_endian_fix(subcheat, memory_region(REGION_CPU1+subcheat->cpu), data);
+}
+
+UINT8 read_patch_rom(struct subcheat_struct * subcheat)
+{
+	return read_endian_fix(subcheat, memory_region(REGION_CPU1+subcheat->cpu));
+}
+
+void patch_rom_raw(struct subcheat_struct * subcheat, UINT8 data)
+{
+	UINT8	* rom = memory_region(REGION_CPU1+subcheat->cpu);
+
+	rom[subcheat->address] = data;
+}
+
+UINT8 read_rom_raw(struct subcheat_struct * subcheat)
+{
+	UINT8	* rom = memory_region(REGION_CPU1+subcheat->cpu);
+
+	return rom[subcheat->address];
+}
+
+void force_poke_region(struct subcheat_struct * subcheat, UINT8 data)
+{
+	const struct Memory_WriteAddress	* mwa = Machine->drv->cpu[subcheat->cpu].memory_write;
+
+	while(!IS_MEMPORT_END(mwa))
+	{
+		if(!IS_MEMPORT_MARKER(mwa))
+		{
+			if(	(subcheat->address >= mwa->start) &&
+				(subcheat->address <= mwa->end))
+			{
+				subcheat->address -= mwa->start;
+
+				poke_endian_fix(subcheat, *mwa->base, data);
+
+				subcheat->address += mwa->start;
+
+				return;
+			}
+		}
+
+		mwa++;
+	}
+}
+
+UINT8 force_read_region(struct subcheat_struct * subcheat)
+{
+	const struct Memory_WriteAddress	* mwa = Machine->drv->cpu[subcheat->cpu].memory_write;
+	UINT8								data;
+
+	while(!IS_MEMPORT_END(mwa))
+	{
+		if(!IS_MEMPORT_MARKER(mwa))
+		{
+			if(	(subcheat->address >= mwa->start) &&
+				(subcheat->address <= mwa->end))
+			{
+				subcheat->address -= mwa->start;
+
+				data = read_endian_fix(subcheat, *mwa->base);
+
+				subcheat->address += mwa->start;
+
+				return data;
+			}
+		}
+
+		mwa++;
+	}
+
+	return 0;
+}
+
+void force_poke_region_raw(struct subcheat_struct * subcheat, UINT8 data)
+{
+	const struct Memory_WriteAddress	* mwa = Machine->drv->cpu[subcheat->cpu].memory_write;
+
+	while(!IS_MEMPORT_END(mwa))
+	{
+		if(!IS_MEMPORT_MARKER(mwa))
+		{
+			if(	(subcheat->address >= mwa->start) &&
+				(subcheat->address <= mwa->end))
+			{
+				(*mwa->base)[subcheat->address - mwa->start] = data;
+
+				return;
+			}
+		}
+
+		mwa++;
+	}
+}
+
+UINT8 force_read_region_raw(struct subcheat_struct * subcheat)
+{
+	const struct Memory_WriteAddress	* mwa = Machine->drv->cpu[subcheat->cpu].memory_write;
+
+	while(!IS_MEMPORT_END(mwa))
+	{
+		if(!IS_MEMPORT_MARKER(mwa))
+		{
+			if(	(subcheat->address >= mwa->start) &&
+				(subcheat->address <= mwa->end))
+			{
+				return (*mwa->base)[subcheat->address - mwa->start];
+			}
+		}
+
+		mwa++;
+	}
+
+	return 0;
 }
 
 /***************************************************************************
@@ -949,6 +1452,7 @@ void cheat_set_code(struct subcheat_struct * subcheat, int code, int cheat_num)
 	{
 		case kCheatSpecial_Poke1:
 		case kCheatSpecial_Delay1:
+		case kCheatSpecial_Delay1Remove:
 		case kCheatSpecial_SetBit1:
 		case kCheatSpecial_ResetBit1:
 			subcheat->frames_til_trigger = 1 * Machine->drv->frames_per_second;
@@ -956,6 +1460,7 @@ void cheat_set_code(struct subcheat_struct * subcheat, int code, int cheat_num)
 
 		case kCheatSpecial_Poke2:
 		case kCheatSpecial_Delay2:
+		case kCheatSpecial_Delay2Remove:
 		case kCheatSpecial_SetBit2:
 		case kCheatSpecial_ResetBit2:
 			subcheat->frames_til_trigger = 2 * Machine->drv->frames_per_second;
@@ -963,6 +1468,7 @@ void cheat_set_code(struct subcheat_struct * subcheat, int code, int cheat_num)
 
 		case kCheatSpecial_Poke5:
 		case kCheatSpecial_Delay5:
+		case kCheatSpecial_Delay5Remove:
 		case kCheatSpecial_SetBit5:
 		case kCheatSpecial_ResetBit5:
 			subcheat->frames_til_trigger = 5 * Machine->drv->frames_per_second;
@@ -979,6 +1485,7 @@ void cheat_set_code(struct subcheat_struct * subcheat, int code, int cheat_num)
 			subcheat->frames_til_trigger =	0;
 			subcheat->data =				0;
 			CheatTable[cheat_num].flags |=	kCheatFlagWatch;
+			subcheat->flags |=				kSubcheatFlagWatch;
 			break;
 
 		default:
@@ -987,9 +1494,13 @@ void cheat_set_code(struct subcheat_struct * subcheat, int code, int cheat_num)
 	}
 
 	if(	(code == kCheatSpecial_PokeRemove) ||
+		(	(code >= kCheatSpecial_Delay1Remove) &&
+			(code <= kCheatSpecial_Delay5Remove)) ||
 		(code == kCheatSpecial_SetBitRemove) ||
 		(code == kCheatSpecial_ResetBitRemove) ||
 		(code == kCheatSpecial_PokeROMRemove) ||		/* Steph 2001.05.04 */
+		(code == kCheatSpecial_ForcePokeRegionRemove) ||
+		(code == kCheatSpecial_ForcePokeRegionRemoveRaw) ||
 		(	(code >= kCheatSpecial_UserFirst) &&
 			(code <= kCheatSpecial_UserLast)))
 	{
@@ -1027,14 +1538,24 @@ void cheat_set_code(struct subcheat_struct * subcheat, int code, int cheat_num)
 		(	(code >= kCheatSpecial_m0d0) &&
 			(code <= kCheatSpecial_m1d1)))
 	{
-		CheatTable[cheat_num].flags |= kCheatFlagDecPrompt;
+		CheatTable[cheat_num].flags |=	kCheatFlagDecPrompt;
+		subcheat->flags |=				kSubcheatFlagPrompt;
 	}
 	else if(	(	(code >= kCheatSpecial_m0d0bcdc) &&
 					(code <= kCheatSpecial_m1d1bcdc)) ||
 				(	(code >= kCheatSpecial_m0d0bcd) &&
 					(code <= kCheatSpecial_m1d1bcd)))
 	{
-		CheatTable[cheat_num].flags |= kCheatFlagBCDPrompt;
+		CheatTable[cheat_num].flags |=	kCheatFlagBCDPrompt;
+		subcheat->flags |=				kSubcheatFlagPrompt;
+	}
+
+	if(	(code == kCheatSpecial_m0d1c) ||
+		(code == kCheatSpecial_m0d1bcdc) ||
+		(code == kCheatSpecial_m0d1) ||
+		(code == kCheatSpecial_m0d1bcd))
+	{
+		CheatTable[cheat_num].flags |= kCheatFlagDispPlusOne;
 	}
 
 	if(	(	(code >= kCheatSpecial_SetBit) &&
@@ -1048,13 +1569,27 @@ void cheat_set_code(struct subcheat_struct * subcheat, int code, int cheat_num)
 	if(	(	(code >= kCheatSpecial_Poke) &&
 			(code <= kCheatSpecial_Backup4)) ||
 			(code == kCheatSpecial_PokeROM) ||		/* Steph 2001.05.04 */
+			(code == kCheatSpecial_PokeROMRemove) ||
+			(code == kCheatSpecial_PokeROMRaw) ||
+			(code == kCheatSpecial_PokeROMRemoveRaw) ||
+			(code == kCheatSpecial_ForcePokeRegion) ||
+			(code == kCheatSpecial_ForcePokeRegionRemove) ||
+			(code == kCheatSpecial_ForcePokeRegionRaw) ||
+			(code == kCheatSpecial_ForcePokeRegionRemoveRaw) ||
 		(	(code >= kCheatSpecial_m0d0c) &&
 			(code <= kCheatSpecial_m1d1bcd)))
 	{
 		subcheat->flags |= kSubcheatFlagByteModify;
 	}
 
-	if(code == kCheatSpecial_PokeROM)
+	if(	(code == kCheatSpecial_PokeROM) ||
+		(code == kCheatSpecial_PokeROMRemove) ||
+		(code == kCheatSpecial_PokeROMRaw) ||
+		(code == kCheatSpecial_PokeROMRemoveRaw) ||
+		(code == kCheatSpecial_ForcePokeRegion) ||
+		(code == kCheatSpecial_ForcePokeRegionRemove) ||
+		(code == kCheatSpecial_ForcePokeRegionRaw) ||
+		(code == kCheatSpecial_ForcePokeRegionRemoveRaw))
 	{
 		subcheat->flags |= kSubcheatFlagCustomRegion;
 	}
@@ -1074,8 +1609,14 @@ void cheat_set_status(int cheat_num, int active)
 {
 	int i, j, k;
 
+	if(cheat_num >= LoadedCheatTotal)
+		return;
+
 	if(active) /* enable the cheat */
 	{
+		if(CheatTable[cheat_num].flags & kCheatFlagActive)
+			return;
+
 		/* check for conflict */
 		for(i = 0; i <= CheatTable[cheat_num].num_sub; i++)
 		{
@@ -1125,6 +1666,9 @@ void cheat_set_status(int cheat_num, int active)
 
 							if(conflict)
 							{
+								/* no possible recursion for disabling */
+								cheat_set_status(j, 0);
+
 								if(CheatTable[j].name && CheatTable[j].name[0])
 								{
 									usrintf_showmessage_secs(1, "%s %s", ui_getstring(UI_conflict_found), CheatTable[j].name);
@@ -1133,9 +1677,9 @@ void cheat_set_status(int cheat_num, int active)
 								{
 									usrintf_showmessage_secs(1, "%s %s", ui_getstring(UI_conflict_found), ui_getstring(UI_none));
 								}
-
-								return;
 							}
+
+							conflict = 0;
 						}
 					}
 				}
@@ -1144,13 +1688,15 @@ void cheat_set_status(int cheat_num, int active)
 
 		for(i = 0; i <= CheatTable[cheat_num].num_sub; i++)
 		{
+			struct subcheat_struct	* subcheat = &CheatTable[cheat_num].subcheat[i];
+
 			/* Reset the active variables */
-			CheatTable[cheat_num].subcheat[i].frame_count =	0;
-			CheatTable[cheat_num].subcheat[i].backup =		0;
-			CheatTable[cheat_num].subcheat[i].flags &=		~kSubcheatFlagStatusMask;
+			subcheat->frame_count =	0;
+			subcheat->backup =		0;
+			subcheat->flags &=		~kSubcheatFlagStatusMask;
 
 			/* add to the watch list (if needed) */
-			if(CheatTable[cheat_num].flags & kCheatFlagWatch)
+			if(subcheat->flags & kSubcheatFlagWatch)
 			{
 				int	freeWatch;
 
@@ -1158,24 +1704,44 @@ void cheat_set_status(int cheat_num, int active)
 
 				if(freeWatch != -1)
 				{
-					watches[freeWatch].cheat_num =	cheat_num;
-					watches[freeWatch].address =	CheatTable[cheat_num].subcheat[i].address;
-					watches[freeWatch].cpu =		CheatTable[cheat_num].subcheat[i].cpu;
-					watches[freeWatch].num_bytes =	1;
-					watches[freeWatch].label_type =	0;
-					watches[freeWatch].label[0] =	0;
+					watches[freeWatch].cheat_num =		cheat_num;
+					watches[freeWatch].address =		subcheat->address;
+					watches[freeWatch].cpu =			subcheat->cpu;
+					watches[freeWatch].num_bytes =		1;
+					watches[freeWatch].display_type =	kWatchDisplayType_Hex;
+					watches[freeWatch].label_type =		kWatchLabel_None;
+					watches[freeWatch].label[0] =		0;
 
 					is_watch_active = 1;
 				}
 			}
+
+			switch(subcheat->code)
+			{
+				case kCheatSpecial_PokeROM:
+				case kCheatSpecial_PokeROMRemove:
+					subcheat->olddata = read_patch_rom(subcheat);
+					break;
+
+				case kCheatSpecial_PokeROMRaw:
+				case kCheatSpecial_PokeROMRemoveRaw:
+					subcheat->olddata = read_rom_raw(subcheat);
+					break;
+
+				case kCheatSpecial_ForcePokeRegion:
+				case kCheatSpecial_ForcePokeRegionRemove:
+					subcheat->olddata = force_read_region(subcheat);
+					break;
+
+				case kCheatSpecial_ForcePokeRegionRaw:
+				case kCheatSpecial_ForcePokeRegionRemoveRaw:
+					subcheat->olddata = force_read_region_raw(subcheat);
+					break;
+			}
 		}
 
-		/* only add if there's a cheat active already */
-		if(!(CheatTable[cheat_num].flags & kCheatFlagActive))
-		{
-			CheatTable[cheat_num].flags |= kCheatFlagActive;
-			ActiveCheatTotal++;
-		}
+		CheatTable[cheat_num].flags |= kCheatFlagActive;
+		ActiveCheatTotal++;
 
 		/* tell the MAME core that we're cheaters! */
 		he_did_cheat = 1;
@@ -1184,42 +1750,60 @@ void cheat_set_status(int cheat_num, int active)
 	{
 		for(i = 0; i <= CheatTable[cheat_num].num_sub; i++)
 		{
-			/* Reset the active variables */
-			CheatTable[cheat_num].subcheat[i].frame_count = 0;
-			CheatTable[cheat_num].subcheat[i].backup = 0;
+			struct subcheat_struct	* subcheat = &CheatTable[cheat_num].subcheat[i];
 
-#ifdef MESS
-			/* Put the original code if it is a code patch */
-			if (CheatTable[cheat_num].patch == 'C')
-				WRITE_OLD_CHEAT;
-#endif
+			/* Reset the active variables */
+			subcheat->frame_count = 0;
+			subcheat->backup = 0;
+
+			switch(subcheat->code)
+			{
+				case kCheatSpecial_PokeROM:
+					patch_rom(subcheat, subcheat->olddata);
+					break;
+
+				case kCheatSpecial_PokeROMRaw:
+					patch_rom_raw(subcheat, subcheat->olddata);
+					break;
+
+				case kCheatSpecial_ForcePokeRegion:
+					force_poke_region(subcheat, subcheat->olddata);
+					break;
+
+				case kCheatSpecial_ForcePokeRegionRaw:
+					force_poke_region_raw(subcheat, subcheat->olddata);
+					break;
+			}
 		}
 
 		/* only add if there's a cheat active already */
 		if(CheatTable[cheat_num].flags & kCheatFlagActive)
 		{
-			CheatTable[cheat_num].flags &= ~kCheatFlagActive;
-
 			ActiveCheatTotal--;
 		}
+
+		CheatTable[cheat_num].flags &= ~kCheatFlagActive;
 
 		/* disable watches associated with cheats */
 		for(i = 0; i < MAX_WATCHES; i++)
 		{
 			if(watches[i].cheat_num == cheat_num)
 			{
-				watches[i].cheat_num =	0;
-				watches[i].address =	0;
-				watches[i].cpu =		0;
-				watches[i].num_bytes =	0;
-				watches[i].label_type =	0;
-				watches[i].label[0] =	0;
+				watches[i].cheat_num =		-1;
+				watches[i].address =		0;
+				watches[i].cpu =			0;
+				watches[i].num_bytes =		0;
+				watches[i].display_type =	kWatchDisplayType_Hex;
+				watches[i].label_type =		kWatchLabel_None;
+				watches[i].label[0] =		0;
+
+				schedule_full_refresh();
 			}
 		}
 	}
 }
 
-//	adds a cheat to the list at the specified index
+/*	adds a cheat to the list at the specified index */
 void cheat_insert_new(int cheat_num)
 {
 	/* if list is full, bail */
@@ -1250,9 +1834,11 @@ void cheat_insert_new(int cheat_num)
 
 	/*add one to the total */
 	LoadedCheatTotal++;
+
+	cheat_set_code(CheatTable[cheat_num].subcheat, 0, cheat_num);
 }
 
-//	removes the cheat at the specified index
+/*	removes the cheat at the specified index */
 void cheat_delete(int cheat_num)
 {
 	/* if the index is off the end, make it the last one */
@@ -1278,7 +1864,7 @@ void cheat_delete(int cheat_num)
 	LoadedCheatTotal--;
 }
 
-//	saves the specified cheat to the first database file in the list
+/*	saves the specified cheat to the first database file in the list */
 void cheat_save(int cheat_num)
 {
 	void	* theFile;
@@ -1286,6 +1872,9 @@ void cheat_save(int cheat_num)
 	int		i;
 	int		code;
 	int		data;
+
+	if(cheat_num >= LoadedCheatTotal)
+		return;
 
 	theFile = osd_fopen(NULL, database, OSD_FILETYPE_CHEAT, 1);
 
@@ -1313,15 +1902,13 @@ void cheat_save(int cheat_num)
 		if(CheatTable[cheat_num].comment && CheatTable[cheat_num].comment[0])
 		{
 			sprintf(	buf,
-						"%s:%08X:%c:%d:%.*X:%02X:%02X:%03d:%s:%s\n",
+						"%s:%08X:%d:%.*X:%02X:%03d:%s:%s\n",
 						Machine->gamedrv->name,
 						CheatTable[cheat_num].crc,
-						CheatTable[cheat_num].patch,
 						CheatTable[cheat_num].subcheat[i].cpu,
 						CPUAddressWidth(CheatTable[cheat_num].subcheat[i].cpu),
 						CheatTable[cheat_num].subcheat[i].address,
 						data,
-						CheatTable[cheat_num].subcheat[i].olddata,
 						code,
 						CheatTable[cheat_num].name,
 						CheatTable[cheat_num].comment);
@@ -1329,15 +1916,13 @@ void cheat_save(int cheat_num)
 		else
 		{
 			sprintf(	buf,
-						"%s:%08X:%c:%d:%.*X:%02X:%02X:%03d:%s\n",
+						"%s:%08X:%d:%.*X:%02X:%03d:%s\n",
 						Machine->gamedrv->name,
 						CheatTable[cheat_num].crc,
-						CheatTable[cheat_num].patch,
 						CheatTable[cheat_num].subcheat[i].cpu,
 						CPUAddressWidth(CheatTable[cheat_num].subcheat[i].cpu),
 						CheatTable[cheat_num].subcheat[i].address,
 						data,
-						CheatTable[cheat_num].subcheat[i].olddata,
 						code,
 						CheatTable[cheat_num].name);
 		}
@@ -1378,9 +1963,12 @@ void cheat_save(int cheat_num)
 	osd_fclose(theFile);
 }
 
-//	adds a new subcheat to the specified cheat at the specified index
+/*	adds a new subcheat to the specified cheat at the specified index */
 void subcheat_insert_new(int cheat_num, int subcheat_num)
 {
+	if(cheat_num >= LoadedCheatTotal)
+		return;
+
 	/* don't exceed MAX_SUBCHEATS */
 	if((CheatTable[cheat_num].num_sub + 1) >= MAX_SUBCHEATS)
 		return;
@@ -1392,7 +1980,11 @@ void subcheat_insert_new(int cheat_num, int subcheat_num)
 	/* grow the subcheat table allocation */
 	CheatTable[cheat_num].subcheat = realloc(CheatTable[cheat_num].subcheat, sizeof(struct subcheat_struct) * (CheatTable[cheat_num].num_sub + 2));
 	if(CheatTable[cheat_num].subcheat == NULL)
+	{
+		logerror("subcheat_insert_new: null pointer\n");
+
 		return;
+	}
 
 	/* insert space in the middle of the table if needed */
 	if(subcheat_num <= CheatTable[cheat_num].num_sub)
@@ -1409,9 +2001,12 @@ void subcheat_insert_new(int cheat_num, int subcheat_num)
 	CheatTable[cheat_num].num_sub++;
 }
 
-//	removes a specified subcheat from the specified cheat
+/*	removes a specified subcheat from the specified cheat */
 void subcheat_delete(int cheat_num, int subcheat_num)
 {
+	if(cheat_num >= LoadedCheatTotal)
+		return;
+
 	if(CheatTable[cheat_num].num_sub < 1)
 		return;
 
@@ -1432,7 +2027,37 @@ void subcheat_delete(int cheat_num, int subcheat_num)
 	CheatTable[cheat_num].num_sub--;
 }
 
-//	loads cheats from a specified file, optionally replacing all current cheats
+void WatchCheat(int cheat_num)
+{
+	int	freeWatch;
+	int	i;
+
+	if(cheat_num >= LoadedCheatTotal)
+		return;
+
+	for(i = 0; i <= CheatTable[cheat_num].num_sub; i++)
+	{
+		if(CheatTable[cheat_num].subcheat[i].flags & kSubcheatFlagModifyMask)
+		{
+			freeWatch = FindFreeWatch();
+
+			if(freeWatch != -1)
+			{
+				watches[freeWatch].cheat_num =		-1;
+				watches[freeWatch].address =		CheatTable[cheat_num].subcheat[i].address;
+				watches[freeWatch].cpu =			CheatTable[cheat_num].subcheat[i].cpu;
+				watches[freeWatch].num_bytes =		1;
+				watches[freeWatch].display_type =	kWatchDisplayType_Hex;
+				watches[freeWatch].label_type =		kWatchLabel_None;
+				watches[freeWatch].label[0] =		0;
+
+				is_watch_active = 1;
+			}
+		}
+	}
+}
+
+/*	loads cheats from a specified file, optionally replacing all current cheats */
 void LoadCheatFile(int merge, char * filename)
 {
 	void					* f;
@@ -1463,13 +2088,9 @@ void LoadCheatFile(int merge, char * filename)
 		int				temp_cpu;
 #ifdef MESS
 		unsigned int	temp_crc;
-		char			temp_patch;
 #endif
 		offs_t			temp_address;
 		data8_t			temp_data;
-#ifdef MESS
-		data8_t			temp_olddata;
-#endif
 		INT32			temp_code;
 
 		/* Take a few easy-out cases to speed things up */
@@ -1508,16 +2129,6 @@ void LoadCheatFile(int merge, char * filename)
 		sscanf(ptr, "%x", &temp_crc);
 		if(!MatchCRC(temp_crc))
 			continue;
-
-		/* Patch */
-		ptr = strtok(NULL, ":");
-		if(!ptr)
-			continue;
-
-		sscanf(ptr, "%c", &temp_patch);
-		if(temp_patch != 'C')
-			temp_patch = 'D';
-
 #endif
 
 		/* CPU number */
@@ -1527,13 +2138,11 @@ void LoadCheatFile(int merge, char * filename)
 
 		sscanf(ptr, "%d", &temp_cpu);
 
-//		/* skip if it's a sound cpu and the audio is off */
-//		if (CPU_AUDIO_OFF(temp_cpu))
-//			continue;
-
-		/* skip if this is a bogus CPU */
-		if(temp_cpu >= cpu_gettotalcpu())
+		/* skip if it's a sound cpu and the audio is off */
+		/*
+		if (CPU_AUDIO_OFF(temp_cpu))
 			continue;
+		*/
 
 		/* Address */
 		ptr = strtok(NULL, ":");
@@ -1553,22 +2162,20 @@ void LoadCheatFile(int merge, char * filename)
 
 		temp_data &= 0xff;
 
-#ifdef MESS
-		/* old data byte */
-		ptr = strtok(NULL, ":");
-		if(!ptr)
-			continue;
-
-		sscanf(ptr, "%x", &temp_olddata);
-		temp_olddata &= 0xff;
-#endif
-
 		/* special code */
 		ptr = strtok(NULL, ":");
 		if(!ptr)
 			continue;
 
 		sscanf(ptr, "%d", &temp_code);
+
+		/* skip if this is a bogus CPU */
+		if(	(temp_code != kCheatSpecial_PokeROM) &&
+			(temp_code != kCheatSpecial_PokeROMRemove) &&
+			(temp_cpu >= cpu_gettotalcpu()))
+		{
+			continue;
+		}
 
 		/* Is this a subcheat? */
 		if(	(temp_code >= kCheatSpecial_LinkStart) &&
@@ -1613,10 +2220,6 @@ void LoadCheatFile(int merge, char * filename)
 		subcheat->address =				temp_address;
 		subcheat->data =				temp_data;
 
-#ifdef MESS
-		subcheat->olddata =				temp_olddata;
-#endif
-
 		cheat_set_code(subcheat, temp_code, LoadedCheatTotal);
 
 		/* don't bother with the names & comments for subcheats */
@@ -1626,8 +2229,6 @@ void LoadCheatFile(int merge, char * filename)
 #ifdef MESS
 		/* CRC */
 		CheatTable[LoadedCheatTotal].crc =		temp_crc;
-		/* Patch */
-		CheatTable[LoadedCheatTotal].patch =	temp_patch;
 #endif
 
 		/* Disable the cheat */
@@ -1674,7 +2275,7 @@ void LoadCheatFile(int merge, char * filename)
 	osd_fclose(f);
 }
 
-//	loads cheats from all database files
+/*	loads cheats from all database files */
 void LoadCheatFiles(void)
 {
 	char	* ptr;
@@ -1715,7 +2316,31 @@ void LoadCheatFiles(void)
 	}
 }
 
-//	inits the cheat engine
+static void UnloadCheatDatabase(void)
+{
+	int i;
+
+	for(i = 0; i < LoadedCheatTotal; i++)
+	{
+		/* free storage for the strings */
+		if(CheatTable[i].name)
+		{
+			free(CheatTable[i].name);
+			CheatTable[i].name = NULL;
+		}
+		if(CheatTable[i].comment)
+		{
+			free(CheatTable[i].comment);
+			CheatTable[i].comment = NULL;
+		}
+	}
+
+	memset(CheatTable, 0, sizeof(struct cheat_struct) * MAX_LOADEDCHEATS);
+
+	LoadedCheatTotal = 0;
+}
+
+/*	inits the cheat engine */
 void InitCheat(void)
 {
 	int i;
@@ -1723,6 +2348,8 @@ void InitCheat(void)
 	he_did_cheat = 0;
 	CheatEnabled = 1;
 	searchCPU = 0;
+
+	memset(CheatTable, 0, sizeof(struct cheat_struct) * MAX_LOADEDCHEATS);
 
 	/* set up the search tables */
 	reset_table(StartRam);
@@ -1740,18 +2367,19 @@ void InitCheat(void)
 	for(i = 0; i < MAX_WATCHES; i++)
 	{
 		/* disable this watchpoint */
-		watches[i].num_bytes =	0;
+		watches[i].num_bytes =		0;
 
-		watches[i].cheat_num =	-1;
+		watches[i].cheat_num =		-1;
 
-		watches[i].cpu =		0;
-		watches[i].label[0] =	0;
-		watches[i].label_type =	0;
-		watches[i].address =	0;
+		watches[i].cpu =			0;
+		watches[i].label[0] =		0;
+		watches[i].display_type =	kWatchDisplayType_Hex;
+		watches[i].label_type =		kWatchLabel_None;
+		watches[i].address =		0;
 
 		/* set the screen position */
-		watches[i].x =			0;
-		watches[i].y =			i * Machine->uifontheight;
+		watches[i].x =				0;
+		watches[i].y =				i * Machine->uifontheight;
 	}
 
 	LoadCheatFiles();
@@ -1762,15 +2390,14 @@ void InitCheat(void)
 #pragma mark -
 #endif
 
-//	shows the "Enable/Disable a Cheat" menu
+/*	shows the "Enable/Disable a Cheat" menu */
 INT32 EnableDisableCheatMenu(struct osd_bitmap *bitmap, INT32 selected)
 {
 	INT32			sel;
 	static INT32	submenu_choice;
 	const char		* menu_item[MAX_LOADEDCHEATS + 4];
 	const char		* menu_subitem[MAX_LOADEDCHEATS + 4];
-	char			buf[MAX_LOADEDCHEATS][80];
-	char			buf2[MAX_LOADEDCHEATS][10];
+	static char		buf[MAX_LOADEDCHEATS][80];	/* static to take load off stack */
 	INT32			i;
 	INT32			total = 0;
 
@@ -1802,11 +2429,9 @@ INT32 EnableDisableCheatMenu(struct osd_bitmap *bitmap, INT32 selected)
 	/* No submenu active, do the watchpoint menu */
 	for(i = 0; i < LoadedCheatTotal; i++)
 	{
-		int string_num;
-
 		if(CheatTable[i].comment && CheatTable[i].comment[0])
 		{
-			sprintf(buf[total], "%s (%s...)", CheatTable[i].name, ui_getstring (UI_moreinfo));
+			sprintf(buf[total], "+%s", CheatTable[i].name);
 		}
 		else
 		{
@@ -1815,33 +2440,27 @@ INT32 EnableDisableCheatMenu(struct osd_bitmap *bitmap, INT32 selected)
 
 		menu_item[total] = buf[total];
 
+		menu_subitem[total] = NULL;
+
 		/* add submenu options for all cheats that are not comments */
 		if(!(CheatTable[i].flags & kCheatFlagComment))
 		{
 			if(CheatTable[i].flags & kCheatFlagOneShot)
 			{
-				string_num = UI_set;
+				menu_subitem[total] = ui_getstring(UI_set);
 			}
 			else
 			{
 				if(CheatTable[i].flags & kCheatFlagActive)
 				{
-					string_num = UI_on;
+					menu_subitem[total] = ui_getstring(UI_on);
 				}
 				else
 				{
-					string_num = UI_off;
+					menu_subitem[total] = ui_getstring(UI_off);
 				}
 			}
-
-			sprintf(buf2[total], "%s", ui_getstring(string_num));
 		}
-		else
-		{
-			buf2[total][0] = 0;
-		}
-
-		menu_subitem[total] = buf2[total];
 
 		total++;
 	}
@@ -1851,6 +2470,7 @@ INT32 EnableDisableCheatMenu(struct osd_bitmap *bitmap, INT32 selected)
 	total++;
 
 	menu_item[total] = 0;	/* terminate array */
+	menu_subitem[total] = 0;
 
 	if(sel < 0)
 		sel = 0;
@@ -1970,10 +2590,17 @@ INT32 EnableDisableCheatMenu(struct osd_bitmap *bitmap, INT32 selected)
 			submenu_choice = 0;
 			sel = -1;
 		}
-		else
+		else if(sel < (total - 1))
 		{
-			/* enable if it's a one-shot */
-			if(CheatTable[sel].flags & kCheatFlagOneShot)
+			if(ShiftKeyPressed())
+			{
+				if(CheatTable[sel].comment && (CheatTable[sel].comment[0] != 0x00))
+				{
+					submenu_choice = 1;
+					schedule_full_refresh();
+				}
+			}
+			else
 			{
 				if(CheatTable[sel].flags & kCheatFlagPromptMask)
 				{
@@ -1985,15 +2612,6 @@ INT32 EnableDisableCheatMenu(struct osd_bitmap *bitmap, INT32 selected)
 					cheat_set_status(sel, 1);
 
 					CheatEnabled = 1;
-				}
-			}
-			else
-			{
-				/* read comment if it's not */
-				if(CheatTable[sel].comment && (CheatTable[sel].comment[0] != 0x00))
-				{
-					submenu_choice = 1;
-					schedule_full_refresh();
 				}
 			}
 		}
@@ -2012,21 +2630,7 @@ INT32 EnableDisableCheatMenu(struct osd_bitmap *bitmap, INT32 selected)
 	{
 		if(sel < total - 1)
 		{
-			int	freeWatch;
-
-			freeWatch = FindFreeWatch();
-
-			if(freeWatch != -1)
-			{
-				watches[freeWatch].cheat_num =	-1;
-				watches[freeWatch].address =	CheatTable[sel].subcheat[0].address;
-				watches[freeWatch].cpu =		CheatTable[sel].subcheat[0].cpu;
-				watches[freeWatch].num_bytes =	1;
-				watches[freeWatch].label_type =	0;
-				watches[freeWatch].label[0] =	0;
-
-				is_watch_active = 1;
-			}
+			WatchCheat(sel);
 		}
 	}
 
@@ -2046,7 +2650,7 @@ INT32 EnableDisableCheatMenu(struct osd_bitmap *bitmap, INT32 selected)
 	return sel + 1;
 }
 
-//	lets the user select a value for selection cheats
+/*	lets the user select a value for selection cheats */
 static INT32 UserSelectValueMenu(struct osd_bitmap * bitmap, int selection, int cheat_num)
 {
 	char					buf[2048];
@@ -2055,6 +2659,14 @@ static INT32 UserSelectValueMenu(struct osd_bitmap * bitmap, int selection, int 
 	struct subcheat_struct	* subcheat;
 	static int				value = -1;
 	int						delta = 0;
+	int						displayValue;
+
+	if(cheat_num >= LoadedCheatTotal)
+	{
+		schedule_full_refresh();
+
+		return 0;
+	}
 
 	sel =		selection - 1;
 
@@ -2064,7 +2676,29 @@ static INT32 UserSelectValueMenu(struct osd_bitmap * bitmap, int selection, int 
 	if(value == -1)
 		value = subcheat->data;
 
-	sprintf(buf, "\t%s\n\t%.2X (%d)\n", ui_getstring(UI_search_select_value), value, value);
+	displayValue = value;
+
+	if(cheat->flags & kCheatFlagDispPlusOne)
+	{
+		displayValue++;
+
+		if(cheat->flags & kCheatFlagBCDPrompt)
+		{
+			while(!IsBCD(displayValue))
+			{
+				displayValue++;
+			}
+		}
+	}
+
+	if(cheat->flags & kCheatFlagBCDPrompt)
+	{
+		sprintf(buf, "\t%s\n\t%.2X\n", ui_getstring(UI_search_select_value), displayValue);
+	}
+	else
+	{
+		sprintf(buf, "\t%s\n\t%.2X (%d)\n", ui_getstring(UI_search_select_value), displayValue, displayValue);
+	}
 
 	/* menu system, use the normal menu keys */
 	strcat(buf, "\t");
@@ -2088,11 +2722,13 @@ static INT32 UserSelectValueMenu(struct osd_bitmap * bitmap, int selection, int 
 	if(input_ui_pressed(IPT_UI_SELECT))
 	{
 		if(value != -1)
+		{
 			subcheat->data = value;
 
-		cheat_set_status(cheat_num, 1);
+			cheat_set_status(cheat_num, 1);
 
-		CheatEnabled = 1;
+			CheatEnabled = 1;
+		}
 
 		value = -1;
 		sel = -1;
@@ -2113,7 +2749,6 @@ static INT32 UserSelectValueMenu(struct osd_bitmap * bitmap, int selection, int 
 		schedule_full_refresh();
 	}
 
-	if(delta)
 	{
 		int	count = 0;
 
@@ -2132,8 +2767,10 @@ static INT32 UserSelectValueMenu(struct osd_bitmap * bitmap, int selection, int 
 
 			if(delta > 0)
 				delta = 1;
-			else
+			else if(delta < 0)
 				delta = -1;
+			else if(delta == 0)
+				delta = 1;
 
 			count++;
 		}
@@ -2145,11 +2782,18 @@ static INT32 UserSelectValueMenu(struct osd_bitmap * bitmap, int selection, int 
 	return sel + 1;
 }
 
-//	shows a cheat's comment
+/*	shows a cheat's comment */
 static INT32 CommentMenu(struct osd_bitmap * bitmap, INT32 selected, int cheat_index)
 {
 	char	buf[2048];
 	int		sel;
+
+	if(cheat_index >= LoadedCheatTotal)
+	{
+		schedule_full_refresh();
+
+		return 0;
+	}
 
 	sel = selected - 1;
 
@@ -2194,22 +2838,16 @@ static INT32 CommentMenu(struct osd_bitmap * bitmap, INT32 selected, int cheat_i
 	return sel + 1;
 }
 
-//	shows the "Add/Edit a Cheat" menu
+/*	shows the "Add/Edit a Cheat" menu */
 INT32 AddEditCheatMenu(struct osd_bitmap * bitmap, INT32 selected)
 {
 	int				sel;
 	static INT32	submenu_choice;
 	const char		* menu_item[MAX_LOADEDCHEATS + 4];
 	int				i;
-	int				total;
+	int				total = 0;
 
-	total = 0;
 	sel = selected - 1;
-
-	for(i = 0; i < LoadedCheatTotal; i++)
-	{
-		menu_item[total++] = CheatTable[i].name;
-	}
 
 	/* If a submenu has been selected, go there */
 	if(submenu_choice)
@@ -2225,9 +2863,22 @@ INT32 AddEditCheatMenu(struct osd_bitmap * bitmap, INT32 selected)
 		return sel + 1;
 	}
 
+	for(i = 0; i < LoadedCheatTotal; i++)
+	{
+		if(CheatTable[i].name)
+		{
+			menu_item[total] = CheatTable[i].name;
+		}
+		else
+		{
+			menu_item[total] = ui_getstring(UI_none);
+		}
+
+		total++;
+	}
+
 	/* No submenu active, do the watchpoint menu */
 	menu_item[total++] =	ui_getstring (UI_returntoprior);
-	//menu_item[total] =		NULL;	/* TODO: add help string */
 	menu_item[total] =	0;		/* terminate array */
 
 	ui_displaymenu(bitmap, menu_item, 0, 0, sel, 0);
@@ -2247,13 +2898,10 @@ INT32 AddEditCheatMenu(struct osd_bitmap * bitmap, INT32 selected)
 
 	if(UIPressedRepeatThrottle(IPT_UI_DELETE_CHEAT, 4))
 	{
-		if(LoadedCheatTotal)
+		/* delete the selected cheat (or the last one) */
+		if(sel < total - 1)
 		{
-			/* delete the selected cheat (or the last one) */
-			if(sel < total - 1)
-			{
-				cheat_delete(sel);
-			}
+			cheat_delete(sel);
 		}
 	}
 
@@ -2270,21 +2918,7 @@ INT32 AddEditCheatMenu(struct osd_bitmap * bitmap, INT32 selected)
 	{
 		if(sel < total - 1)
 		{
-			int	freeWatch;
-
-			freeWatch = FindFreeWatch();
-
-			if(freeWatch != -1)
-			{
-				watches[freeWatch].cheat_num =	-1;
-				watches[freeWatch].address =	CheatTable[sel].subcheat[0].address;
-				watches[freeWatch].cpu =		CheatTable[sel].subcheat[0].cpu;
-				watches[freeWatch].num_bytes =	1;
-				watches[freeWatch].label_type =	0;
-				watches[freeWatch].label[0] =	0;
-
-				is_watch_active = 1;
-			}
+			WatchCheat(sel);
 		}
 	}
 
@@ -2332,7 +2966,7 @@ INT32 AddEditCheatMenu(struct osd_bitmap * bitmap, INT32 selected)
 			submenu_choice = 0;
 			sel = -1;
 		}
-		else
+		else if(sel < total - 1)
 		{
 			submenu_choice = 1;
 			schedule_full_refresh();
@@ -2355,7 +2989,7 @@ INT32 AddEditCheatMenu(struct osd_bitmap * bitmap, INT32 selected)
 	return sel + 1;
 }
 
-//	shows the cheat editing menu
+/*	shows the cheat editing menu */
 static INT32 EditCheatMenu(struct osd_bitmap * bitmap, INT32 selected, UINT8 cheat_num)
 {
 	enum
@@ -2398,19 +3032,22 @@ static INT32 EditCheatMenu(struct osd_bitmap * bitmap, INT32 selected, UINT8 che
 		"LWIN",		"RWIN",		"MENU"
 	};
 
-	#define kMaxMenuItems (kMenu_Subcheat_Base + (kMenu_Offset_Max * MAX_SUBCHEATS) + 2)
-							// includes terminating zero
+	const int				kMaxMenuItems = kMenu_Subcheat_Base + (kMenu_Offset_Max * MAX_SUBCHEATS) + 2;
+							/* includes terminating zero */
+
+	#define STUPID_ANSI_MAX_ITEMS	325
+							/*	3 + (4 * 80) + 2
+								should be equal to kMaxMenuItems */
 
 	int						sel;
 	int						total;
 	int						total2;
 	struct subcheat_struct	* subcheat;
-	static INT32			submenu_choice;
 	static UINT8			textedit_active;
-	const char				* menu_item[kMaxMenuItems];
-	const char				* menu_subitem[kMaxMenuItems];
-	char					setting[kMaxMenuItems][30];
-	char					flag[kMaxMenuItems];
+	const char				* menu_item[STUPID_ANSI_MAX_ITEMS];
+	const char				* menu_subitem[STUPID_ANSI_MAX_ITEMS];
+	char					setting[STUPID_ANSI_MAX_ITEMS][30];
+	char					flag[STUPID_ANSI_MAX_ITEMS];
 	int						arrowize;
 	int						subcheat_num;
 	int						i;
@@ -2420,6 +3057,13 @@ static INT32 EditCheatMenu(struct osd_bitmap * bitmap, INT32 selected, UINT8 che
 	int						selectedSubcheat;
 	int						cancelKeyPressed = 0;
 	int						activateKeyPressed = 0;
+
+	if(cheat_num >= LoadedCheatTotal)
+	{
+		schedule_full_refresh();
+
+		return 0;
+	}
 
 	sel =					selected - 1;
 	total =					0;
@@ -2436,7 +3080,7 @@ static INT32 EditCheatMenu(struct osd_bitmap * bitmap, INT32 selected, UINT8 che
 		menu_item[total++] = ui_getstring(UI_cpu);
 		menu_item[total++] = ui_getstring(UI_address);
 
-		if(CheatTable[cheat_num].flags & kCheatFlagPromptMask)
+		if(CheatTable[cheat_num].subcheat[i].flags & kSubcheatFlagPrompt)
 		{
 			menu_item[total++] = ui_getstring(UI_max);
 		}
@@ -2466,7 +3110,7 @@ static INT32 EditCheatMenu(struct osd_bitmap * bitmap, INT32 selected, UINT8 che
 	/* name */
 	if(CheatTable[cheat_num].name && CheatTable[cheat_num].name[0])
 	{
-		sprintf(setting[total2], "%s", CheatTable[cheat_num].name);
+		strcpy(setting[total2], CheatTable[cheat_num].name);
 	}
 	else
 	{
@@ -2518,7 +3162,7 @@ static INT32 EditCheatMenu(struct osd_bitmap * bitmap, INT32 selected, UINT8 che
 		menu_subitem[total2] = setting[total2];
 		total2++;
 
-		if(CheatTable[cheat_num].flags & kCheatFlagPromptMask)
+		if(CheatTable[cheat_num].subcheat[i].flags & kSubcheatFlagPrompt)
 		{
 			/* max */
 			sprintf(setting[total2], "%.2X (%d)", subcheat->max, subcheat->max);
@@ -2576,6 +3220,16 @@ static INT32 EditCheatMenu(struct osd_bitmap * bitmap, INT32 selected, UINT8 che
 		{
 			subcheat_delete(cheat_num, subcheat_num);
 		}
+	}
+
+	if(input_ui_pressed(IPT_UI_WATCH_VALUE))
+	{
+		WatchCheat(cheat_num);
+	}
+
+	if(input_ui_pressed(IPT_UI_SAVE_CHEAT))
+	{
+		cheat_save(cheat_num);
 	}
 
 	if(UIPressedRepeatThrottle(IPT_UI_DOWN, kVerticalKeyRepeatRate))
@@ -2782,7 +3436,6 @@ static INT32 EditCheatMenu(struct osd_bitmap * bitmap, INT32 selected, UINT8 che
 		if(sel == (lastSubcheatItem + 1))
 		{
 			/* return to main menu */
-			submenu_choice = 0;
 			sel = -1;
 		}
 		else if(	(selectedSubcheatItem == kMenu_Offset_Address) ||
@@ -2796,11 +3449,6 @@ static INT32 EditCheatMenu(struct osd_bitmap * bitmap, INT32 selected, UINT8 che
 			/* flush the text buffer */
 			osd_readkey_unicode (1);
 			textedit_active ^= 1;
-		}
-		else
-		{
-			submenu_choice = 1;
-			schedule_full_refresh();
 		}
 
 		activateKeyPressed = 1;
@@ -2998,6 +3646,81 @@ static int build_tables(int cpu)
 		reset_table(OldFlagTable);
 	}
 
+	if(searchSpeed == kSpeed_AllMemory)
+	{
+		int	addressSpace = cpunum_address_bits(cpu);
+		int	size = 1 << (addressSpace - 1);
+
+		ext_sr->data =	malloc(size);
+		ext_br->data =	malloc(size);
+		ext_ft->data =	malloc(size);
+
+		ext_obr->data =	malloc(size);
+		ext_oft->data =	malloc(size);
+
+		if(ext_sr->data == NULL)
+		{
+			bail = 1;
+
+			MemoryNeeded += size;
+		}
+
+		if(ext_br->data == NULL)
+		{
+			bail = 1;
+
+			MemoryNeeded += size;
+		}
+
+		if(ext_ft->data == NULL)
+		{
+			bail = 1;
+
+			MemoryNeeded += size;
+		}
+
+		if(ext_obr->data == NULL)
+		{
+			bail = 1;
+
+			MemoryNeeded += size;
+		}
+
+		if(ext_oft->data == NULL)
+		{
+			bail = 1;
+
+			MemoryNeeded += size;
+		}
+
+		if(!bail)
+		{
+			ext_sr->start =		ext_br->start =		ext_ft->start =		0;
+			ext_sr->end =		ext_br->end =		ext_ft->end =		size - 1;
+			ext_sr->region =	ext_br->region =	ext_ft->region =	region;
+			ext_sr++;
+			ext_br++;
+			ext_ft++;
+
+			ext_obr->start =	ext_oft->start =	0;
+			ext_obr->end =		ext_oft->end =		size - 1;
+			ext_obr->region =	ext_oft->region =	region;
+			ext_obr++;
+			ext_oft++;
+		}
+		else
+		{
+			reset_table(StartRam);
+			reset_table(BackupRam);
+			reset_table(FlagTable);
+
+			reset_table(OldBackupRam);
+			reset_table(OldFlagTable);
+		}
+
+		return bail;
+	}
+
 	bail = 0;
 
 	while(!IS_MEMPORT_END(mwa))
@@ -3135,36 +3858,18 @@ INT32 StartSearch(struct osd_bitmap *bitmap, INT32 selected)
 	char			setting[Menu_Total][30];
 	INT32			sel;
 	UINT8			total = 0;
-	static INT32	submenu_choice;
 	int				i;
 
 	sel = selected - 1;
 
-	/* If a submenu has been selected, go there */
-	if (submenu_choice)
-	{
-		switch (sel)
-		{
-			case Menu_Return:
-				submenu_choice = 0;
-				sel = -1;
-				break;
-		}
-
-		if (submenu_choice == -1)
-			submenu_choice = 0;
-
-		return sel + 1;
-	}
-
 	/* No submenu active, display the main cheat menu */
-	menu_item[total++] = ui_getstring (UI_cpu);
-	menu_item[total++] = ui_getstring (UI_search_lives);
-	menu_item[total++] = ui_getstring (UI_search_timers);
-	menu_item[total++] = ui_getstring (UI_search_energy);
-	menu_item[total++] = ui_getstring (UI_search_status);
-	menu_item[total++] = ui_getstring (UI_search_slow);
-	menu_item[total++] = ui_getstring (UI_returntoprior);
+	menu_item[total++] = ui_getstring(UI_cpu);
+	menu_item[total++] = ui_getstring(UI_search_lives);
+	menu_item[total++] = ui_getstring(UI_search_timers);
+	menu_item[total++] = ui_getstring(UI_search_energy);
+	menu_item[total++] = ui_getstring(UI_search_status);
+	menu_item[total++] = ui_getstring(UI_search_slow);
+	menu_item[total++] = ui_getstring(UI_returntoprior);
 	menu_item[total] = 0;
 
 	/* clear out the subitem menu */
@@ -3250,7 +3955,6 @@ INT32 StartSearch(struct osd_bitmap *bitmap, INT32 selected)
 	{
 		if(sel == Menu_Return)
 		{
-			submenu_choice = 0;
 			sel = -1;
 		}
 		else
@@ -3279,17 +3983,36 @@ INT32 StartSearch(struct osd_bitmap *bitmap, INT32 selected)
 					int					j;
 					int					count = 0;
 
-					for(ext = FlagTable; ext->data; ext++)
+					if(ShiftKeyPressed())
 					{
-						for(j = 0; j <= ext->end - ext->start; j++)
+						for(ext = FlagTable; ext->data; ext++)
 						{
-							if(ext->data[j] != 0)
+							for(j = 0; j <= ext->end - ext->start; j++)
 							{
-								if(	(computer_readmem_byte(searchCPU, j+ext->start) != searchValue) &&
-									(computer_readmem_byte(searchCPU, j+ext->start) != (searchValue - 1)))
-									ext->data[j] = 0;
-								else
-									count++;
+								if(ext->data[j] != 0)
+								{
+									if(computer_readmem_byte(searchCPU, j+ext->start) != searchValue)
+										ext->data[j] = 0;
+									else
+										count++;
+								}
+							}
+						}
+					}
+					else
+					{
+						for(ext = FlagTable; ext->data; ext++)
+						{
+							for(j = 0; j <= ext->end - ext->start; j++)
+							{
+								if(ext->data[j] != 0)
+								{
+									if(	(computer_readmem_byte(searchCPU, j+ext->start) != searchValue) &&
+										(computer_readmem_byte(searchCPU, j+ext->start) != (searchValue - 1)))
+										ext->data[j] = 0;
+									else
+										count++;
+								}
 							}
 						}
 					}
@@ -3331,7 +4054,7 @@ INT32 StartSearch(struct osd_bitmap *bitmap, INT32 selected)
 	return sel + 1;
 }
 
-//	shows the "Continue Search" menu
+/*	shows the "Continue Search" menu */
 INT32 ContinueSearch(struct osd_bitmap *bitmap, INT32 selected)
 {
 	char * energyStrings[] =
@@ -3368,27 +4091,9 @@ INT32 ContinueSearch(struct osd_bitmap *bitmap, INT32 selected)
 	char			setting[Menu_Total][30];
 	INT32			sel;
 	UINT8			total = 0;
-	static INT32	submenu_choice;
 	int				i;
 
 	sel = selected - 1;
-
-	/* If a submenu has been selected, go there */
-	if (submenu_choice)
-	{
-		switch (sel)
-		{
-			case Menu_Return:
-				submenu_choice = 0;
-				sel = -1;
-				break;
-		}
-
-		if (submenu_choice == -1)
-			submenu_choice = 0;
-
-		return sel + 1;
-	}
 
 	/* No submenu active, display the main cheat menu */
 	menu_item[total++] = ui_getstring(UI_cpu);
@@ -3498,7 +4203,6 @@ INT32 ContinueSearch(struct osd_bitmap *bitmap, INT32 selected)
 	{
 		if(sel == Menu_Return)
 		{
-			submenu_choice = 0;
 			sel = -1;
 		}
 		else
@@ -3515,17 +4219,44 @@ INT32 ContinueSearch(struct osd_bitmap *bitmap, INT32 selected)
 					struct ExtMemory	* ext;
 					int					j;
 
-					for(ext = FlagTable; ext->data; ext++)
+					if(ShiftKeyPressed())
 					{
-						for(j = 0; j <= ext->end - ext->start; j++)
+						for(ext = FlagTable; ext->data; ext++)
 						{
-							if(ext->data[j] != 0)
+							for(j = 0; j <= ext->end - ext->start; j++)
 							{
-								if(	(computer_readmem_byte(searchCPU, j+ext->start) != searchValue) &&
-									(computer_readmem_byte(searchCPU, j+ext->start) != (searchValue - 1)))
-									ext->data[j] = 0;
-								else
-									count++;
+								if(ext->data[j] != 0)
+								{
+									if(computer_readmem_byte(searchCPU, j+ext->start) != searchValue)
+									{
+										ext->data[j] = 0;
+									}
+									else
+									{
+										count++;
+									}
+								}
+							}
+						}
+					}
+					else
+					{
+						for(ext = FlagTable; ext->data; ext++)
+						{
+							for(j = 0; j <= ext->end - ext->start; j++)
+							{
+								if(ext->data[j] != 0)
+								{
+									if(	(computer_readmem_byte(searchCPU, j+ext->start) != searchValue) &&
+										(computer_readmem_byte(searchCPU, j+ext->start) != (searchValue - 1)))
+									{
+										ext->data[j] = 0;
+									}
+									else
+									{
+										count++;
+									}
+								}
 							}
 						}
 					}
@@ -3538,7 +4269,7 @@ INT32 ContinueSearch(struct osd_bitmap *bitmap, INT32 selected)
 
 					switch(searchEnergy)
 					{
-						case 0:	// equals
+						case kEnergy_Equals:
 							for(ext = FlagTable, save = BackupRam; ext->data && save->data; ext++, save++)
 							{
 								for(j = 0; j <= ext->end - ext->start; j++)
@@ -3554,7 +4285,7 @@ INT32 ContinueSearch(struct osd_bitmap *bitmap, INT32 selected)
 							}
 							break;
 
-						case 1:	// less
+						case kEnergy_Less:
 							for(ext = FlagTable, save = BackupRam; ext->data && save->data; ext++, save++)
 							{
 								for(j = 0; j <= ext->end - ext->start; j++)
@@ -3570,7 +4301,7 @@ INT32 ContinueSearch(struct osd_bitmap *bitmap, INT32 selected)
 							}
 							break;
 
-						case 2:	// greater
+						case kEnergy_Greater:
 							for(ext = FlagTable, save = BackupRam; ext->data && save->data; ext++, save++)
 							{
 								for(j = 0; j <= ext->end - ext->start; j++)
@@ -3586,7 +4317,7 @@ INT32 ContinueSearch(struct osd_bitmap *bitmap, INT32 selected)
 							}
 							break;
 
-						case 3:	// less or equals
+						case kEnergy_LessOrEquals:
 							for(ext = FlagTable, save = BackupRam; ext->data && save->data; ext++, save++)
 							{
 								for(j = 0; j <= ext->end - ext->start; j++)
@@ -3602,7 +4333,7 @@ INT32 ContinueSearch(struct osd_bitmap *bitmap, INT32 selected)
 							}
 							break;
 
-						case 4:	// greater or equals
+						case kEnergy_GreaterOrEquals:
 							for(ext = FlagTable, save = BackupRam; ext->data && save->data; ext++, save++)
 							{
 								for(j = 0; j <= ext->end - ext->start; j++)
@@ -3618,7 +4349,7 @@ INT32 ContinueSearch(struct osd_bitmap *bitmap, INT32 selected)
 							}
 							break;
 
-						case 5:	// not equals
+						case kEnergy_NotEquals:
 							for(ext = FlagTable, save = BackupRam; ext->data && save->data; ext++, save++)
 							{
 								for(j = 0; j <= ext->end - ext->start; j++)
@@ -3634,7 +4365,7 @@ INT32 ContinueSearch(struct osd_bitmap *bitmap, INT32 selected)
 							}
 							break;
 
-						case 6:	// 'fuzzy' equals
+						case kEnergy_FuzzyEquals:
 							for(ext = FlagTable, save = BackupRam; ext->data && save->data; ext++, save++)
 							{
 								for(j = 0; j <= ext->end - ext->start; j++)
@@ -3708,7 +4439,7 @@ INT32 ContinueSearch(struct osd_bitmap *bitmap, INT32 selected)
 
 					if(searchSlow == 0)
 					{
-						// equals
+						/* equals */
 						for(ext = FlagTable, save = StartRam; ext->data && save->data; ext++, save++)
 						{
 							for(j = 0; j <= ext->end - ext->start; j++)
@@ -3725,7 +4456,7 @@ INT32 ContinueSearch(struct osd_bitmap *bitmap, INT32 selected)
 					}
 					else
 					{
-						// not equals
+						/* not equals */
 						for(ext = FlagTable, save = StartRam; ext->data && save->data; ext++, save++)
 						{
 							for(j = 0; j <= ext->end - ext->start; j++)
@@ -3777,11 +4508,10 @@ INT32 ContinueSearch(struct osd_bitmap *bitmap, INT32 selected)
 	return sel + 1;
 }
 
-//	shows the "View Last Results" menu
+/*	shows the "View Last Results" menu */
 INT32 ViewSearchResults(struct osd_bitmap * bitmap, INT32 selected)
 {
 	int					sel;
-	static INT32		submenu_choice;
 	const char			* menu_item[MAX_SEARCHES + 2];
 	offs_t				menu_addresses[MAX_SEARCHES];
 	UINT8				menu_data[MAX_SEARCHES];
@@ -3864,12 +4594,13 @@ INT32 ViewSearchResults(struct osd_bitmap * bitmap, INT32 selected)
 
 			if(freeWatch != -1)
 			{
-				watches[freeWatch].cheat_num =	-1;
-				watches[freeWatch].address =	menu_addresses[sel];
-				watches[freeWatch].cpu =		searchCPU;
-				watches[freeWatch].num_bytes =	1;
-				watches[freeWatch].label_type =	0;
-				watches[freeWatch].label[0] =	0;
+				watches[freeWatch].cheat_num =		-1;
+				watches[freeWatch].address =		menu_addresses[sel];
+				watches[freeWatch].cpu =			searchCPU;
+				watches[freeWatch].num_bytes =		1;
+				watches[freeWatch].display_type =	kWatchDisplayType_Hex;
+				watches[freeWatch].label_type =		kWatchLabel_None;
+				watches[freeWatch].label[0] =		0;
 
 				is_watch_active = 1;
 			}
@@ -3907,13 +4638,7 @@ INT32 ViewSearchResults(struct osd_bitmap * bitmap, INT32 selected)
 	{
 		if(sel == total - 1)
 		{
-			submenu_choice = 0;
 			sel = -1;
-		}
-		else
-		{
-			submenu_choice = 1;
-			schedule_full_refresh();
 		}
 	}
 
@@ -3933,44 +4658,34 @@ INT32 ViewSearchResults(struct osd_bitmap * bitmap, INT32 selected)
 	return sel + 1;
 }
 
-//	shows the "Restore Previous Results" menu
+/*	shows the "Restore Previous Results" menu */
 void RestoreSearch(void)
 {
-	int restoreString = 0;	/* Steph */
-
-	switch(restoreStatus)
+	const int	kStringLookupTable[] =
 	{
-		case kRestore_NoInit:
-			restoreString = UI_search_noinit;
-			break;
+		UI_search_noinit,
+		UI_search_nosave,
+		UI_search_done,
+		UI_search_OK
+	};
 
-		case kRestore_NoSave:
-			restoreString = UI_search_nosave;
-			break;
-
-		case kRestore_Done:
-			restoreString = UI_search_done;
-			break;
-
-		case kRestore_OK:
-			restoreString = UI_search_OK;
-			break;
-	}
-
-	usrintf_showmessage_secs(1, "%s", ui_getstring(restoreString));
-
-	/* Now restore the tables if possible */
-	if(restoreStatus == kRestore_OK)
+	if((restoreStatus >= kRestore_NoInit) && (restoreStatus <= kRestore_OK))
 	{
-		copy_ram(BackupRam, OldBackupRam);
-		copy_ram(FlagTable, OldFlagTable);
+		usrintf_showmessage_secs(1, "%s", ui_getstring(kStringLookupTable[restoreStatus]));
 
-		/* flag it as restored so we don't do it again */
-		restoreStatus = kRestore_Done;
+		/* Now restore the tables if possible */
+		if(restoreStatus == kRestore_OK)
+		{
+			copy_ram(BackupRam, OldBackupRam);
+			copy_ram(FlagTable, OldFlagTable);
+
+			/* flag it as restored so we don't do it again */
+			restoreStatus = kRestore_Done;
+		}
 	}
 }
 
-//	creates a new cheat from the results list
+/*	creates a new cheat from the results list */
 static void AddResultToListByIdx(int idx)
 {
 	int						count = 0;
@@ -3998,7 +4713,7 @@ static void AddResultToListByIdx(int idx)
 	}
 }
 
-//	adds a cheat to the end of the cheat list
+/*	adds a cheat to the end of the cheat list */
 static void AddCheatToList(offs_t address, UINT8 data, int cpu)
 {
 	if(LoadedCheatTotal < MAX_LOADEDCHEATS)
@@ -4021,7 +4736,8 @@ static void AddCheatToList(offs_t address, UINT8 data, int cpu)
 		theSubCheat->cpu =		cpu;
 		theSubCheat->address =	address;
 		theSubCheat->data =		data;
-		theSubCheat->code =		0;
+
+		cheat_set_code(theSubCheat, kCheatSpecial_Poke, LoadedCheatTotal - 1);
 	}
 }
 
@@ -4029,7 +4745,7 @@ static void AddCheatToList(offs_t address, UINT8 data, int cpu)
 #pragma mark -
 #endif
 
-//	adds a watch to the cheat list
+/*	adds a watch to the cheat list */
 static void ConvertWatchToCheat(int idx)
 {
 	char					newName[128];
@@ -4037,18 +4753,23 @@ static void ConvertWatchToCheat(int idx)
 	struct subcheat_struct	* theSubCheat;
 	int						address;
 	int						cpu;
+	int						data;
+
+	if(idx >= MAX_WATCHES)
+		return;
 
 	if(LoadedCheatTotal < MAX_LOADEDCHEATS)
 	{
 		address =	watches[idx].address;
 		cpu =		watches[idx].cpu;
+		data =		computer_readmem_byte(cpu, address);
 
 		cheat_insert_new(LoadedCheatTotal);
 
 		theCheat =		&CheatTable[LoadedCheatTotal - 1];
 		theSubCheat =	theCheat->subcheat;
 
-		sprintf(newName, "%s: %.*X (%d)", ui_getstring(UI_watch), CPUAddressWidth(cpu), address, cpu);
+		sprintf(newName, "%s - %.*X (%d)", ui_getstring(UI_watch), CPUAddressWidth(cpu), address, cpu);
 
 		theCheat->name = realloc(theCheat->name, strlen(newName) + 1);
 		if(theCheat->name)
@@ -4056,38 +4777,40 @@ static void ConvertWatchToCheat(int idx)
 
 		theSubCheat->cpu =		cpu;
 		theSubCheat->address =	address;
-		theSubCheat->data =		0;
-		theSubCheat->code =		kCheatSpecial_Watch;
+		theSubCheat->data =		data;
+
+		cheat_set_code(theSubCheat, kCheatSpecial_Poke, LoadedCheatTotal - 1);
 	}
 }
 
-//	saves a watch (as a cheat) to the end of the cheat list
+/*	saves a watch (as a cheat) to the end of the cheat list */
 static void SaveWatch(int idx)
 {
 	void	* theFile;
 	char	buf[4096];
 	char	name[128];
 
+	if(idx >= MAX_WATCHES)
+		return;
+
 	theFile = osd_fopen(NULL, cheatfile, OSD_FILETYPE_CHEAT, 1);
 
 	if(!theFile)
 		return;
 
-	sprintf(name, "%s: %.*X (%d)", ui_getstring(UI_watch), CPUAddressWidth(watches[idx].cpu), watches[idx].address, watches[idx].cpu);
+	sprintf(name, "%s - %.*X (%d)", ui_getstring(UI_watch), CPUAddressWidth(watches[idx].cpu), watches[idx].address, watches[idx].cpu);
 
 	#ifdef MESS
 
 	sprintf(	buf,
-				"%s:%08X:%c:%d:%.*X:%02X:%02X:%03d:%s\n",
+				"%s:%08X:%d:%.*X:%02X:%03d:%s\n",
 				Machine->gamedrv->name,
-				0,
 				0,
 				watches[idx].cpu,
 				CPUAddressWidth(watches[idx].cpu),
 				watches[idx].address,
 				0,
-				0,
-				kCheatSpecial_Watch,
+				kCheatSpecial_Poke,
 				name);
 
 	#else
@@ -4109,7 +4832,7 @@ static void SaveWatch(int idx)
 	osd_fclose(theFile);
 }
 
-//	returns the index of a free watch (-1 if none is found)
+/*	returns the index of a free watch (-1 if none is found) */
 static int FindFreeWatch(void)
 {
 	int i;
@@ -4122,8 +4845,23 @@ static int FindFreeWatch(void)
 	return -1;
 }
 
-//	displays all watches
-static void DisplayWatches(struct osd_bitmap * bitmap)
+/*	prints a value in binary notation */
+static void PrintBinary(char * buf, int value)
+{
+	/*	*cough* */
+	buf[0] = (value & 0x80) ? '1' : '0';
+	buf[1] = (value & 0x40) ? '1' : '0';
+	buf[2] = (value & 0x20) ? '1' : '0';
+	buf[3] = (value & 0x10) ? '1' : '0';
+	buf[4] = (value & 0x08) ? '1' : '0';
+	buf[5] = (value & 0x04) ? '1' : '0';
+	buf[6] = (value & 0x02) ? '1' : '0';
+	buf[7] = (value & 0x01) ? '1' : '0';
+	buf[8] = 0;
+}
+
+/*	displays all watches */
+void DisplayWatches(struct osd_bitmap * bitmap)
 {
 	int		i, j;
 	char	buf[256];
@@ -4138,29 +4876,61 @@ static void DisplayWatches(struct osd_bitmap * bitmap)
 		{
 			char buf2[80];
 
-			/* Display the first byte */
-			sprintf(buf, "%.2X", computer_readmem_byte(watches[i].cpu, watches[i].address));
-
-			/* If this is for more than one byte, display the rest */
-			for(j = 1; j < watches[i].num_bytes; j++)
+			switch(watches[i].display_type)
 			{
-				sprintf(buf2, " %02X", computer_readmem_byte(watches[i].cpu, watches[i].address + j));
-				strcat(buf, buf2);
+				default:
+				case kWatchDisplayType_Hex:
+					/* Display the first byte */
+					sprintf(buf, "%.2X", computer_readmem_byte(watches[i].cpu, watches[i].address));
+
+					/* If this is for more than one byte, display the rest */
+					for(j = 1; j < watches[i].num_bytes; j++)
+					{
+						sprintf(buf2, " %.2X", computer_readmem_byte(watches[i].cpu, watches[i].address + j));
+						strcat(buf, buf2);
+					}
+					break;
+
+				case kWatchDisplayType_Decimal:
+					/* Display the first byte */
+					sprintf(buf, "%.3d", computer_readmem_byte(watches[i].cpu, watches[i].address));
+
+					/* If this is for more than one byte, display the rest */
+					for(j = 1; j < watches[i].num_bytes; j++)
+					{
+						sprintf(buf2, " %.3d", computer_readmem_byte(watches[i].cpu, watches[i].address + j));
+						strcat(buf, buf2);
+					}
+					break;
+
+				case kWatchDisplayType_Binary:
+					/* Display the first byte */
+					PrintBinary(buf, computer_readmem_byte(watches[i].cpu, watches[i].address));
+
+					/* If this is for more than one byte, display the rest */
+					for(j = 1; j < watches[i].num_bytes; j++)
+					{
+						PrintBinary(buf2, computer_readmem_byte(watches[i].cpu, watches[i].address + j));
+
+						strcat(buf, " ");
+						strcat(buf, buf2);
+					}
+					break;
 			}
 
 			/* Handle any labels */
 			switch(watches[i].label_type)
 			{
-				case 0:
+				case kWatchLabel_None:
 				default:
 					break;
 
-				case 1:
+				case kWatchLabel_Address:
 					sprintf(buf2, " (%.*X)", CPUAddressWidth(watches[i].cpu), watches[i].address);
 					strcat(buf, buf2);
 					break;
 
-				case 2:
+				case kWatchLabel_String:
 					sprintf(buf2, " (%s)", watches[i].label);
 					strcat(buf, buf2);
 					break;
@@ -4171,7 +4941,7 @@ static void DisplayWatches(struct osd_bitmap * bitmap)
 	}
 }
 
-//	shows watch configuration menu
+/*	shows watch configuration menu */
 static INT32 ConfigureWatch(struct osd_bitmap * bitmap, INT32 selected, UINT8 watchnum)
 {
 	enum
@@ -4179,6 +4949,7 @@ static INT32 ConfigureWatch(struct osd_bitmap * bitmap, INT32 selected, UINT8 wa
 		Menu_CPU = 0,
 		Menu_Address,
 		Menu_WatchLength,
+		Menu_WatchDisplayType,
 		Menu_WatchLabelType,
 		Menu_WatchLabel,
 		Menu_WatchX,
@@ -4188,16 +4959,22 @@ static INT32 ConfigureWatch(struct osd_bitmap * bitmap, INT32 selected, UINT8 wa
 		Menu_Max
 	};
 
-	int	kLabelTextTable[] =
+	const int	kLabelTextTable[] =
 	{
 		UI_none,
 		UI_address,
 		UI_text
 	};
 
+	const int	kDisplayTypeTextTable[] =
+	{
+		UI_hex,
+		UI_decimal,
+		UI_binary
+	};
+
 	int				sel;
 	int				total = 0;
-	static INT32	submenu_choice;
 	static UINT8	textedit_active;
 	const char		* menu_item[Menu_Max + 1];
 	const char		* menu_subitem[Menu_Max + 1];
@@ -4205,6 +4982,14 @@ static INT32 ConfigureWatch(struct osd_bitmap * bitmap, INT32 selected, UINT8 wa
 	char			flag[Menu_Max] = { 0 };
 	int				arrowize = 0;
 	int				i;
+	int				dirty = 0;
+
+	if(watchnum >= MAX_WATCHES)
+	{
+		schedule_full_refresh();
+
+		return 0;
+	}
 
 	sel = selected - 1;
 
@@ -4228,6 +5013,10 @@ static INT32 ConfigureWatch(struct osd_bitmap * bitmap, INT32 selected, UINT8 wa
 
 	menu_item[total] =		ui_getstring(UI_watchlength);
 	menu_subitem[total] =	setting[total];
+	total++;
+
+	menu_item[total] =		ui_getstring(UI_watchdisplaytype);
+	menu_subitem[total] =	ui_getstring(kDisplayTypeTextTable[watches[watchnum].display_type]);
 	total++;
 
 	menu_item[total] =		ui_getstring(UI_watchlabeltype);
@@ -4303,14 +5092,27 @@ static INT32 ConfigureWatch(struct osd_bitmap * bitmap, INT32 selected, UINT8 wa
 				if(watches[watchnum].num_bytes > 0)
 					watches[watchnum].num_bytes--;
 				else
-					watches[watchnum].num_bytes = 16;
+					watches[watchnum].num_bytes = kMaxWatchBytes;
+
+				dirty = 1;
+				break;
+
+			case Menu_WatchDisplayType:
+				if(watches[watchnum].display_type > kWatchDisplayType_Hex)
+					watches[watchnum].display_type--;
+				else
+					watches[watchnum].display_type = kWatchDisplayType_MaxPlusOne - 1;
+
+				dirty = 1;
 				break;
 
 			case Menu_WatchLabelType:
-				if(watches[watchnum].label_type > 0)
+				if(watches[watchnum].label_type > kWatchDisplayType_Hex)
 					watches[watchnum].label_type--;
 				else
-					watches[watchnum].label_type = 2;
+					watches[watchnum].label_type = kWatchLabel_MaxPlusOne - 1;
+
+				dirty = 1;
 				break;
 
 			case Menu_WatchLabel:
@@ -4322,6 +5124,8 @@ static INT32 ConfigureWatch(struct osd_bitmap * bitmap, INT32 selected, UINT8 wa
 					watches[watchnum].x--;
 				else
 					watches[watchnum].x = Machine->uiwidth - 1;
+
+				dirty = 1;
 				break;
 
 			case Menu_WatchY:
@@ -4329,6 +5133,8 @@ static INT32 ConfigureWatch(struct osd_bitmap * bitmap, INT32 selected, UINT8 wa
 					watches[watchnum].y--;
 				else
 					watches[watchnum].y = Machine->uiheight - 1;
+
+				dirty = 1;
 				break;
 		}
 	}
@@ -4361,15 +5167,28 @@ static INT32 ConfigureWatch(struct osd_bitmap * bitmap, INT32 selected, UINT8 wa
 			case Menu_WatchLength:
 				watches[watchnum].num_bytes++;
 
-				if(watches[watchnum].num_bytes > 16)
+				if(watches[watchnum].num_bytes > kMaxWatchBytes)
 					watches[watchnum].num_bytes = 0;
+
+				dirty = 1;
+				break;
+
+			case Menu_WatchDisplayType:
+				watches[watchnum].display_type++;
+
+				if(watches[watchnum].display_type >= kWatchDisplayType_MaxPlusOne)
+					watches[watchnum].display_type = kWatchDisplayType_Hex;
+
+				dirty = 1;
 				break;
 
 			case Menu_WatchLabelType:
 				watches[watchnum].label_type++;
 
-				if(watches[watchnum].label_type > 2)
-					watches[watchnum].label_type = 0;
+				if(watches[watchnum].label_type >= kWatchLabel_MaxPlusOne)
+					watches[watchnum].label_type = kWatchLabel_None;
+
+				dirty = 1;
 				break;
 
 			case Menu_WatchLabel:
@@ -4381,6 +5200,8 @@ static INT32 ConfigureWatch(struct osd_bitmap * bitmap, INT32 selected, UINT8 wa
 
 				if(watches[watchnum].x >= Machine->uiwidth)
 					watches[watchnum].x = 0;
+
+				dirty = 1;
 				break;
 
 			case Menu_WatchY:
@@ -4388,6 +5209,8 @@ static INT32 ConfigureWatch(struct osd_bitmap * bitmap, INT32 selected, UINT8 wa
 
 				if(watches[watchnum].y >= Machine->uiheight)
 					watches[watchnum].y = 0;
+
+				dirty = 1;
 				break;
 		}
 	}
@@ -4408,7 +5231,6 @@ static INT32 ConfigureWatch(struct osd_bitmap * bitmap, INT32 selected, UINT8 wa
 		if(sel == Menu_Return)
 		{
 			/* return to main menu */
-			submenu_choice = 0;
 			sel = -1;
 		}
 		else if((sel == Menu_Address) || (sel == Menu_WatchLabel))
@@ -4420,11 +5242,23 @@ static INT32 ConfigureWatch(struct osd_bitmap * bitmap, INT32 selected, UINT8 wa
 			osd_readkey_unicode(1);
 			textedit_active ^= 1;
 		}
-		else
-		{
-			submenu_choice = 1;
-			schedule_full_refresh();
-		}
+	}
+
+	if(input_ui_pressed(IPT_UI_SAVE_CHEAT))
+	{
+		SaveWatch(watchnum);
+	}
+
+	if(input_ui_pressed(IPT_UI_ADD_CHEAT))
+	{
+		ConvertWatchToCheat(watchnum);
+	}
+
+	if(input_ui_pressed(IPT_UI_DELETE_CHEAT))
+	{
+		watches[watchnum].num_bytes = 0;
+
+		dirty = 1;
 	}
 
 	/* Cancel pops us up a menu level */
@@ -4477,6 +5311,8 @@ static INT32 ConfigureWatch(struct osd_bitmap * bitmap, INT32 selected, UINT8 wa
 					if(length > 0)
 					{
 						watches[watchnum].label[length - 1] = 0;
+
+						dirty = 1;
 					}
 				}
 				else if(isprint(code))
@@ -4484,15 +5320,22 @@ static INT32 ConfigureWatch(struct osd_bitmap * bitmap, INT32 selected, UINT8 wa
 					/* append the character */
 					watches[watchnum].label[length] =	code;
 					watches[watchnum].label[length+1] =	0;
+
+					dirty = 1;
 				}
 			}
 		}
 	}
 
+	if(dirty)
+	{
+		schedule_full_refresh();
+	}
+
 	return sel + 1;
 }
 
-//	shows the "Configure Watchpoint" menu
+/*	shows the "Configure Watchpoint" menu */
 static INT32 ChooseWatch(struct osd_bitmap * bitmap, INT32 selected)
 {
 	int				sel;
@@ -4526,7 +5369,7 @@ static INT32 ChooseWatch(struct osd_bitmap * bitmap, INT32 selected)
 		sprintf(buf[i], "%s %d: ", watchpoint_str, i);
 
 		/* If the watchpoint is active (1 or more bytes long), show it */
-		if(watches[i].num_bytes)
+		if(watches[i].num_bytes > 0)
 		{
 			char buf2[80];
 
@@ -4558,17 +5401,24 @@ static INT32 ChooseWatch(struct osd_bitmap * bitmap, INT32 selected)
 		}
 		else
 		{
-			if((sel >= 0) && (sel < total))
+			if((sel >= 0) && (sel < MAX_WATCHES))
 				watches[sel].num_bytes = 0;
 		}
+
+		schedule_full_refresh();
 	}
 
-	if(input_ui_pressed(IPT_UI_ADD_CHEAT) && (LoadedCheatTotal < MAX_LOADEDCHEATS) && (sel >= 0) && (sel < total))
+	if(	input_ui_pressed(IPT_UI_ADD_CHEAT) &&
+		(LoadedCheatTotal < MAX_LOADEDCHEATS) &&
+		(sel >= 0) &&
+		(sel < MAX_WATCHES))
 	{
 		ConvertWatchToCheat(sel);
 	}
 
-	if(input_ui_pressed(IPT_UI_SAVE_CHEAT) && (sel >= 0) && (sel < total))
+	if(	input_ui_pressed(IPT_UI_SAVE_CHEAT) &&
+		(sel >= 0) &&
+		(sel < MAX_WATCHES))
 	{
 		SaveWatch(sel);
 	}
@@ -4610,7 +5460,7 @@ static INT32 ChooseWatch(struct osd_bitmap * bitmap, INT32 selected)
 			submenu_choice = 0;
 			sel = -1;
 		}
-		else
+		else if(sel < MAX_WATCHES)
 		{
 			submenu_choice = 1;
 			schedule_full_refresh();
@@ -4638,7 +5488,7 @@ static INT32 ChooseWatch(struct osd_bitmap * bitmap, INT32 selected)
 #pragma mark -
 #endif
 
-//	shows the "General Help" menu
+/*	shows the "General Help" menu */
 static INT32 DisplayHelpFile(struct osd_bitmap * bitmap, INT32 selected)
 {
 	char	buf[2048];
@@ -4679,13 +5529,16 @@ static INT32 DisplayHelpFile(struct osd_bitmap * bitmap, INT32 selected)
 #pragma mark -
 #endif
 
-//	sets up which memory areas should be searched
+/*	sets up which memory areas should be searched */
 static void SetupDefaultMemoryAreas(int cpu)
 {
 	const struct Memory_WriteAddress	* mwa = Machine->drv->cpu[searchCPU].memory_write;
 	int									count = 0;
 
 	memset(memoryRegionEnabled, 1, MAX_MEMORY_REGIONS);
+
+	if(searchSpeed == kSpeed_AllMemory)
+		return;
 
 	while(!IS_MEMPORT_END(mwa))
 	{
@@ -4699,27 +5552,31 @@ static void SetupDefaultMemoryAreas(int cpu)
 				case kSpeed_Fast:
 					enable = 0;
 
-					// search RAM
+					/* search RAM */
 					if(handler == MWA_RAM)
 						enable = 1;
 
+					#ifndef MESS
 					#ifndef NEOFREE
 					#ifndef TINY_COMPILE
+					#ifndef CPSMAME
 
-					// for neogeo, search bank one
+					/* for neogeo, search bank one */
 					if((Machine->gamedrv->clone_of == &driver_neogeo) && (cpu == 0) && (handler == MWA_BANK1))
 						enable = 1;
 
 					#endif
 					#endif
+					#endif
+					#endif
 
 					#if HAS_TMS34010
 
-					// for exterminator, search bank one
+					/* for exterminator, search bank one */
 					if(((Machine->drv->cpu[1].cpu_type & ~CPU_FLAGS_MASK) == CPU_TMS34010) && (cpu == 0) && (handler == MWA_BANK1))
 						enable = 1;
 
-					// for smashtv, search bank two
+					/* for smashtv, search bank two */
 					if(((Machine->drv->cpu[0].cpu_type & ~CPU_FLAGS_MASK) == CPU_TMS34010) && (cpu == 0) && (handler == MWA_BANK2))
 						enable = 1;
 
@@ -4728,31 +5585,31 @@ static void SetupDefaultMemoryAreas(int cpu)
 					break;
 
 				case kSpeed_Medium:
-					// only search banks + RAM
+					/* only search banks + RAM */
 					enable = (((((UINT32)handler) >= ((UINT32)MWA_BANK1)) && (((UINT32)handler) <= ((UINT32)MWA_BANK24))) || (((UINT32)handler) == ((UINT32)MWA_RAM)));
 					break;
 
 				case kSpeed_Slow:
-					// ignore NOP sections
+					/* ignore NOP sections */
 					if(handler == MWA_NOP)
 						enable = 0;
 
-					// ignore ROM sections
+					/* ignore ROM sections */
 					if(handler == MWA_ROM)
 						enable = 0;
 
-					// ignore custom handlers which do not have memory mapped to them
+					/* ignore custom handlers which do not have memory mapped to them */
 					if(((UINT32)handler) > ((UINT32)(mem_write_handler)STATIC_COUNT))
 						if(!mwa->base)
 							enable = 0;
 					break;
 
 				case kSpeed_VerySlow:
-					// ignore NOP sections
+					/* ignore NOP sections */
 					if(handler == MWA_NOP)
 						enable = 0;
 
-					// ignore ROM sections
+					/* ignore ROM sections */
 					if(handler == MWA_ROM)
 						enable = 0;
 					break;
@@ -4767,11 +5624,10 @@ static void SetupDefaultMemoryAreas(int cpu)
 	}
 }
 
-//	shows the "Options:SelectMemoryAreas" menu
+/*	shows the "Options:SelectMemoryAreas" menu */
 static INT32 SelectMemoryAreas(struct osd_bitmap * bitmap, INT32 selected)
 {
 	int									sel;
-	static INT32						submenu_choice;
 	char								buf[MAX_MEMORY_AREAS][80];
 	const char							* menu_item[MAX_MEMORY_AREAS + 1];
 	const char							* menu_subitem[MAX_MEMORY_AREAS + 1];
@@ -4846,7 +5702,6 @@ static INT32 SelectMemoryAreas(struct osd_bitmap * bitmap, INT32 selected)
 	{
 		if(sel == total - 1)
 		{
-			submenu_choice = 0;
 			sel = -1;
 		}
 	}
@@ -4865,13 +5720,14 @@ static INT32 SelectMemoryAreas(struct osd_bitmap * bitmap, INT32 selected)
 	return sel + 1;
 }
 
-//	shows the "Options" menu
+/*	shows the "Options" menu */
 static INT32 SelectOptions(struct osd_bitmap * bitmap, INT32 selected)
 {
 	enum
 	{
 		Menu_SelectMemoryAreas = 0,
 		Menu_SearchSpeed,
+		Menu_ReloadDatabase,
 		Menu_Return,
 
 		Menu_Max
@@ -4882,7 +5738,8 @@ static INT32 SelectOptions(struct osd_bitmap * bitmap, INT32 selected)
 		UI_search_speed_fast,
 		UI_search_speed_medium,
 		UI_search_speed_slow,
-		UI_search_speed_veryslow
+		UI_search_speed_veryslow,
+		UI_search_speed_allmemory
 	};
 
 	int				sel;
@@ -4917,6 +5774,10 @@ static INT32 SelectOptions(struct osd_bitmap * bitmap, INT32 selected)
 	menu_subitem[total] =	ui_getstring(searchSpeedStrings[searchSpeed]);
 	total++;
 
+	menu_item[total] =		ui_getstring(UI_reloaddatabase);
+	menu_subitem[total] =	0;
+	total++;
+
 	menu_item[total] =		ui_getstring(UI_returntoprior);
 	menu_subitem[total] =	0;
 	total++;
@@ -4943,8 +5804,8 @@ static INT32 SelectOptions(struct osd_bitmap * bitmap, INT32 selected)
 			case Menu_SearchSpeed:
 				searchSpeed--;
 
-				if((searchSpeed < kSpeed_Fast) || (searchSpeed > kSpeed_VerySlow))
-					searchSpeed = kSpeed_VerySlow;
+				if((searchSpeed < kSpeed_Fast) || (searchSpeed > kSpeed_AllMemory))
+					searchSpeed = kSpeed_AllMemory;
 
 				SetupDefaultMemoryAreas(searchCPU);
 				break;
@@ -4958,7 +5819,7 @@ static INT32 SelectOptions(struct osd_bitmap * bitmap, INT32 selected)
 			case Menu_SearchSpeed:
 				searchSpeed++;
 
-				if((searchSpeed < kSpeed_Fast) || (searchSpeed > kSpeed_VerySlow))
+				if((searchSpeed < kSpeed_Fast) || (searchSpeed > kSpeed_AllMemory))
 					searchSpeed = kSpeed_Fast;
 
 				SetupDefaultMemoryAreas(searchCPU);
@@ -4977,6 +5838,11 @@ static INT32 SelectOptions(struct osd_bitmap * bitmap, INT32 selected)
 		{
 			submenu_choice = 1;
 			schedule_full_refresh();
+		}
+		else if(sel == Menu_ReloadDatabase)
+		{
+			UnloadCheatDatabase();
+			LoadCheatFiles();
 		}
 	}
 
@@ -4998,7 +5864,7 @@ static INT32 SelectOptions(struct osd_bitmap * bitmap, INT32 selected)
 #pragma mark -
 #endif
 
-//	shows the main cheat menu
+/*	shows the main cheat menu */
 INT32 cheat_menu(struct osd_bitmap *bitmap, INT32 selected)
 {
 	enum
@@ -5137,6 +6003,11 @@ INT32 cheat_menu(struct osd_bitmap *bitmap, INT32 selected)
 	if(input_ui_pressed(IPT_UI_CONFIGURE))
 		sel = -2;
 
+	if((sel == -1) || (sel == -2))
+	{
+		schedule_full_refresh();
+	}
+
 	#if CHEAT_PAUSE
 
 	if(needs_pause)
@@ -5197,25 +6068,10 @@ INT32 cheat_menu(struct osd_bitmap *bitmap, INT32 selected)
 	return sel + 1;
 }
 
-//	shuts down the cheat engine
+/*	shuts down the cheat engine */
 void StopCheat(void)
 {
-	int i;
-
-	for(i = 0; i < LoadedCheatTotal; i++)
-	{
-		/* free storage for the strings */
-		if(CheatTable[i].name)
-		{
-			free(CheatTable[i].name);
-			CheatTable[i].name = NULL;
-		}
-		if(CheatTable[i].comment)
-		{
-			free(CheatTable[i].comment);
-			CheatTable[i].comment = NULL;
-		}
-	}
+	UnloadCheatDatabase();
 
 	reset_table(StartRam);
 	reset_table(BackupRam);
@@ -5225,7 +6081,7 @@ void StopCheat(void)
 	reset_table(OldFlagTable);
 }
 
-//	performs all cheat actions, called once per frame
+/*	performs all cheat actions, called once per frame */
 void DoCheat(struct osd_bitmap *bitmap)
 {
 	DisplayWatches(bitmap);
@@ -5235,7 +6091,6 @@ void DoCheat(struct osd_bitmap *bitmap)
 		int i, j;
 		int done;
 
-		/* At least one cheat is active, handle them */
 		for(i = 0; i < LoadedCheatTotal; i++)
 		{
 			if(	(CheatTable[i].activate_key != -1) &&
@@ -5265,7 +6120,7 @@ void DoCheat(struct osd_bitmap *bitmap)
 				}
 				else
 				{
-					CheatTable[i].flags ^= kCheatFlagActivationKeyPressed;
+					CheatTable[i].flags &= ~kCheatFlagActivationKeyPressed;
 				}
 			}
 
@@ -5291,23 +6146,23 @@ void DoCheat(struct osd_bitmap *bitmap)
 				{
 					switch(subcheat->code)
 					{
-						case 1:
+						case kCheatSpecial_PokeRemove:
 							WRITE_CHEAT;
 							subcheat->flags |= kSubcheatFlagDone;
 							break;
 
-						case 2:
-						case 3:
-						case 4:
+						case kCheatSpecial_Poke1:
+						case kCheatSpecial_Poke2:
+						case kCheatSpecial_Poke5:
 							WRITE_CHEAT;
 							subcheat->frame_count = subcheat->frames_til_trigger;
 							break;
 
 						/* 5,6,7 check if the value has changed, if yes, start a timer. */
 						/* When the timer ends, change the location */
-						case 5:
-						case 6:
-						case 7:
+						case kCheatSpecial_Delay1:
+						case kCheatSpecial_Delay2:
+						case kCheatSpecial_Delay5:
 							if(subcheat->flags & kSubcheatFlagTimed)
 							{
 								WRITE_CHEAT;
@@ -5324,10 +6179,10 @@ void DoCheat(struct osd_bitmap *bitmap)
 						  This is to try to not change the value of an energy bar
 				 		  when a bonus is awarded to it at the end of a level
 				 		  See Kung Fu Master */
-						case 8:
-						case 9:
-						case 10:
-						case 11:
+						case kCheatSpecial_Backup1:
+						case kCheatSpecial_Backup2:
+						case kCheatSpecial_Backup3:
+						case kCheatSpecial_Backup4:
 							if(subcheat->flags & kSubcheatFlagTimed)
 							{
 								/* Check the value to see if it has increased over the original value by 1 or more */
@@ -5344,47 +6199,64 @@ void DoCheat(struct osd_bitmap *bitmap)
 							}
 							break;
 
+						case kCheatSpecial_Delay1Remove:
+						case kCheatSpecial_Delay2Remove:
+						case kCheatSpecial_Delay5Remove:
+							if(subcheat->flags & kSubcheatFlagTimed)
+							{
+								WRITE_CHEAT;
+								subcheat->flags &= ~kSubcheatFlagTimed;
+
+								subcheat->flags |= kSubcheatFlagDone;
+							}
+							else if(COMPARE_CHEAT)
+							{
+								subcheat->frame_count = subcheat->frames_til_trigger;
+								subcheat->flags |= kSubcheatFlagTimed;
+							}
+							break;
+
 						/* 20-24: set bits */
-						case 20:
+						case kCheatSpecial_SetBit:
 							computer_writemem_byte(subcheat->cpu, subcheat->address, READ_CHEAT | subcheat->data);
 							break;
 
-						case 21:
+						case kCheatSpecial_SetBitRemove:
 							computer_writemem_byte(subcheat->cpu, subcheat->address, READ_CHEAT | subcheat->data);
 							subcheat->flags |= kSubcheatFlagDone;
 							break;
 
-						case 22:
-						case 23:
-						case 24:
+						case kCheatSpecial_SetBit1:
+						case kCheatSpecial_SetBit2:
+						case kCheatSpecial_SetBit5:
 							computer_writemem_byte(subcheat->cpu, subcheat->address, READ_CHEAT | subcheat->data);
 							subcheat->frame_count = subcheat->frames_til_trigger;
 							break;
 
 						/* 40-44: reset bits */
-						case 40:
+						case kCheatSpecial_ResetBit:
 							computer_writemem_byte(subcheat->cpu, subcheat->address, READ_CHEAT & ~subcheat->data);
 							break;
 
-						case 41:
+						case kCheatSpecial_ResetBitRemove:
 							computer_writemem_byte(subcheat->cpu, subcheat->address, READ_CHEAT & ~subcheat->data);
 							subcheat->flags |= kSubcheatFlagDone;
 							break;
 
-						case 42:
-						case 43:
-						case 44:
+						case kCheatSpecial_ResetBit1:
+						case kCheatSpecial_ResetBit2:
+						case kCheatSpecial_ResetBit5:
 							computer_writemem_byte(subcheat->cpu, subcheat->address, READ_CHEAT & ~subcheat->data);
 							subcheat->frame_count = subcheat->frames_til_trigger;
 							break;
 
 						/* 60-65: user select, poke when changes */
-						case 60:
-						case 61:
-						case 62:
-						case 63:
-						case 64:
-						case 65:
+						case kCheatSpecial_m0d0c:
+						case kCheatSpecial_m0d1c:
+						case kCheatSpecial_m1d1c:
+						case kCheatSpecial_m0d0bcdc:
+						case kCheatSpecial_m0d1bcdc:
+						case kCheatSpecial_m1d1bcdc:
 							if(subcheat->flags & kSubcheatFlagTimed)
 							{
 								if(READ_CHEAT != subcheat->backup)
@@ -5402,26 +6274,51 @@ void DoCheat(struct osd_bitmap *bitmap)
 							break;
 
 						/* 70-75: user select, poke once */
-						case 70:
-						case 71:
-						case 72:
-						case 73:
-						case 74:
-						case 75:
+						case kCheatSpecial_m0d0:
+						case kCheatSpecial_m0d1:
+						case kCheatSpecial_m1d1:
+						case kCheatSpecial_m0d0bcd:
+						case kCheatSpecial_m0d1bcd:
+						case kCheatSpecial_m1d1bcd:
 							WRITE_CHEAT;
 							subcheat->flags |= kSubcheatFlagDone;
 							break;
 
-						/* Steph 2001.05.04 - The following types patch ROM areas */
-						case 100:
-							patch_rom(subcheat);
+						case kCheatSpecial_PokeROM:
+							patch_rom(subcheat, subcheat->data);
 							break;
 
-						case 101:
-							patch_rom(subcheat);
+						case kCheatSpecial_PokeROMRemove:
+							patch_rom(subcheat, subcheat->data);
 							subcheat->flags |= kSubcheatFlagDone;
 							break;
 
+						case kCheatSpecial_PokeROMRaw:
+							patch_rom_raw(subcheat, subcheat->data);
+							break;
+
+						case kCheatSpecial_PokeROMRemoveRaw:
+							patch_rom_raw(subcheat, subcheat->data);
+							subcheat->flags |= kSubcheatFlagDone;
+							break;
+
+						case kCheatSpecial_ForcePokeRegion:
+							force_poke_region(subcheat, subcheat->data);
+							break;
+
+						case kCheatSpecial_ForcePokeRegionRemove:
+							force_poke_region(subcheat, subcheat->data);
+							subcheat->flags |= kSubcheatFlagDone;
+							break;
+
+						case kCheatSpecial_ForcePokeRegionRaw:
+							force_poke_region_raw(subcheat, subcheat->data);
+							break;
+
+						case kCheatSpecial_ForcePokeRegionRemoveRaw:
+							force_poke_region_raw(subcheat, subcheat->data);
+							subcheat->flags |= kSubcheatFlagDone;
+							break;
 					}
 				}
 				else
@@ -5468,3 +6365,4 @@ void DoCheat(struct osd_bitmap *bitmap)
 
 	cheatEngineWasActive = 0;
 }
+

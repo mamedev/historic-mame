@@ -224,7 +224,7 @@ static const struct MachineDriver machine_driver_tinvader =
 			ignore_interrupt,1,
 		}
 	},
-	60, 1041,
+	55, 1041,
 	1, /* CPU slices */
 	0, /* init machine */
 
@@ -310,7 +310,7 @@ static struct MachineDriver machine_driver_embargo = {
 			ignore_interrupt,1
 		}
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	55, DEFAULT_REAL_60HZ_VBLANK_DURATION,
 	1, /* CPU slices */
 	0, /* init machine */
 

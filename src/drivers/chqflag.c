@@ -3,10 +3,8 @@
 Chequered Flag / Checkered Flag (GX717) (c) Konami 1988
 
 Notes:
-	* The enemies might not appear correctly because of the K051733 protection.
-	* Bg/sprite priority not implemented (probably bit 7 of the tile gfx data
-	  controls priority over sprites)
-	* 007232 volume & panning control is almost certainly wrong
+- The enemies might not appear correctly because of the K051733 protection.
+- 007232 volume & panning control is almost certainly wrong
 
 ***************************************************************************/
 
@@ -69,6 +67,8 @@ static WRITE_HANDLER( chqflag_bankswitch_w )
 
 static WRITE_HANDLER( chqflag_vreg_w )
 {
+	static int last;
+
 	/* bits 0 & 1 = coin counters */
 	coin_counter_w(1,data & 0x01);
 	coin_counter_w(0,data & 0x02);
@@ -81,7 +81,33 @@ static WRITE_HANDLER( chqflag_vreg_w )
 		memory_set_bankhandler_r (3, 0, K051316_1_r);		/* 051316 */
 	}
 
-	/* other bits unknown/unused */
+	/* Bits 3-7 probably control palette dimming in a similar way to TMNT2/Saunset Riders, */
+	/* however I don't have enough evidence to determine the exact behaviour. */
+	/* Bits 3 and 7 are set in night stages, where the background should get darker and */
+	/* the headlight (which have the shadow bit set) become highlights */
+	/* Maybe one of the bits inverts the SHAD line while the other darkens the background. */
+	if (data & 0x08)
+		palette_set_shadow_factor(1/PALETTE_DEFAULT_SHADOW_FACTOR);
+	else
+		palette_set_shadow_factor(PALETTE_DEFAULT_SHADOW_FACTOR);
+
+	if ((data & 0x80) != last)
+	{
+		double brt = (data & 0x80) ? PALETTE_DEFAULT_SHADOW_FACTOR : 1.0;
+		int i;
+
+		last = data & 0x80;
+
+		/* only affect the background */
+		for (i = 512;i < 1024;i++)
+			palette_set_brightness(i,brt);
+	}
+
+//if ((data & 0xf8) && (data & 0xf8) != 0x88)
+//	usrintf_showmessage("chqflag_vreg_w %02x",data);
+
+
+	/* other bits unknown. bit 5 is used. */
 }
 
 static int analog_ctrl;
@@ -357,9 +383,9 @@ static const struct MachineDriver machine_driver_chqflag =
 	/* video hardware */
 	64*8, 32*8, { 12*8, (64-14)*8-1, 2*8, 30*8-1 },
 	0,	/* gfx decoded by konamiic.c */
-	1024, 1024,
+	1024, 0,
 	0,
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER  | VIDEO_HAS_SHADOWS,
 	0,
 	chqflag_vh_start,
 	chqflag_vh_stop,
@@ -378,6 +404,8 @@ static const struct MachineDriver machine_driver_chqflag =
 		}
 	}
 };
+
+
 
 ROM_START( chqflag )
 	ROM_REGION( 0x58800, REGION_CPU1, 0 )	/* 052001 code */
@@ -449,5 +477,5 @@ static void init_chqflag(void)
 	paletteram = &RAM[0x58000];
 }
 
-GAMEX( 1988, chqflag,        0, chqflag, chqflag, chqflag, ROT90, "Konami", "Chequered Flag", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
-GAMEX( 1988, chqflagj, chqflag, chqflag, chqflag, chqflag, ROT90, "Konami", "Chequered Flag (Japan)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1988, chqflag,        0, chqflag, chqflag, chqflag, ROT90, "Konami", "Chequered Flag", GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_SOUND )
+GAMEX( 1988, chqflagj, chqflag, chqflag, chqflag, chqflag, ROT90, "Konami", "Chequered Flag (Japan)", GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_SOUND )

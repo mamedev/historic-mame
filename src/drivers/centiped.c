@@ -147,6 +147,7 @@ Known issues:
 
 
 WRITE_HANDLER( centiped_paletteram_w );
+void centiped_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void centiped_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 void centiped_init_machine(void);	/* in vidhrdw */
@@ -455,9 +456,9 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &charlayout,   4, 4 },	/* 4 color codes to support midframe */
+	{ REGION_GFX1, 0, &charlayout,     0, 4 },	/* 4 color codes to support midframe */
 												/* palette changes in test mode */
-	{ REGION_GFX1, 0, &spritelayout, 0, 1 },
+	{ REGION_GFX1, 0, &spritelayout, 4*4, 4*4*4 },
 	{ -1 } /* end of array */
 };
 
@@ -506,7 +507,7 @@ static struct AY8910interface centipb2_ay8910_interface =
 
 #define DRIVER(GAMENAME, SOUND_TYPE, SOUND_INTERFACE)							\
 																				\
-static const struct MachineDriver machine_driver_##GAMENAME =							\
+static const struct MachineDriver machine_driver_##GAMENAME =					\
 {																				\
 	/* basic machine hardware */												\
 	{																			\
@@ -524,10 +525,10 @@ static const struct MachineDriver machine_driver_##GAMENAME =							\
 	/* video hardware */														\
 	32*8, 32*8, { 0*8, 32*8-1, 0*8, 30*8-1 },									\
 	gfxdecodeinfo,																\
-	4+4*4, 4+4*4,																\
-	0,																			\
+	4+4*4, 4*4+4*4*4*4,															\
+	centiped_init_palette,														\
 																				\
-	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,									\
+	VIDEO_TYPE_RASTER,									\
 	0,																			\
 	generic_vh_start,															\
 	generic_vh_stop,															\

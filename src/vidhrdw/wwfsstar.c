@@ -9,7 +9,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-extern data16_t *fg0_videoram, *bg0_videoram;
+data16_t *wwfsstar_fg0_videoram, *wwfsstar_bg0_videoram;
 extern int wwfsstar_scrollx, wwfsstar_scrolly;
 static struct tilemap *fg0_tilemap, *bg0_tilemap;
 
@@ -21,17 +21,17 @@ static struct tilemap *fg0_tilemap, *bg0_tilemap;
 
 WRITE16_HANDLER( wwfsstar_fg0_videoram_w )
 {
-	int oldword = fg0_videoram[offset];
-	COMBINE_DATA(&fg0_videoram[offset]);
-	if (oldword != fg0_videoram[offset])
+	int oldword = wwfsstar_fg0_videoram[offset];
+	COMBINE_DATA(&wwfsstar_fg0_videoram[offset]);
+	if (oldword != wwfsstar_fg0_videoram[offset])
 		tilemap_mark_tile_dirty(fg0_tilemap,offset/2);
 }
 
 WRITE16_HANDLER( wwfsstar_bg0_videoram_w )
 {
-	int oldword =bg0_videoram[offset];
-	COMBINE_DATA(&bg0_videoram[offset]);
-	if (oldword != bg0_videoram[offset])
+	int oldword =wwfsstar_bg0_videoram[offset];
+	COMBINE_DATA(&wwfsstar_bg0_videoram[offset]);
+	if (oldword != wwfsstar_bg0_videoram[offset])
 		tilemap_mark_tile_dirty(bg0_tilemap,offset/2);
 }
 
@@ -59,7 +59,7 @@ static void get_fg0_tile_info(int tile_index)
 	data16_t *tilebase;
 	int tileno;
 	int colbank;
-	tilebase =  &fg0_videoram[tile_index*2];
+	tilebase =  &wwfsstar_fg0_videoram[tile_index*2];
 	tileno =  (tilebase[1] & 0x00ff) | ((tilebase[0] & 0x000f) << 8);
 	colbank = (tilebase[0] & 0x00f0) >> 4;
 	SET_TILE_INFO(
@@ -94,7 +94,7 @@ static void get_bg0_tile_info(int tile_index)
 
 	data16_t *tilebase;
 	int tileno, colbank, flipx;
-	tilebase =  &bg0_videoram[tile_index*2];
+	tilebase =  &wwfsstar_bg0_videoram[tile_index*2];
 	tileno =  (tilebase[1] & 0x00ff) | ((tilebase[0] & 0x000f) << 8);
 	colbank = (tilebase[0] & 0x0070) >> 4;
 	flipx   = (tilebase[0] & 0x0080) >> 7;
@@ -110,24 +110,6 @@ static void get_bg0_tile_info(int tile_index)
 ********************************************************************************
  sprite colour marking could probably be improved..
 *******************************************************************************/
-
-static void wwfsstar_sprites_mark_colors(void)
-{
-	/* this is very crude */
-	int i;
-	data16_t *source = spriteram16;
-	data16_t *finish = source + 0x3ff/2;
-
-	while( source<finish )
-	{
-		int colourbank;
-		colourbank = (source [1] & 0x00f0) >> 4;
-		for (i = 0;i < 16;i++)
-			palette_used_colors[128 + 16 * colourbank + i] = PALETTE_COLOR_USED;
-
-		source += 5;
-	}
-}
 
 static void wwfsstar_drawsprites( struct osd_bitmap *bitmap )
 {
@@ -213,13 +195,6 @@ void wwfsstar_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	tilemap_set_scrolly( bg0_tilemap, 0, wwfsstar_scrolly  );
 	tilemap_set_scrollx( bg0_tilemap, 0, wwfsstar_scrollx  );
-
-	tilemap_update(ALL_TILEMAPS);
-
-	palette_init_used_colors();
-
-	wwfsstar_sprites_mark_colors();
-	palette_recalc();
 
 	tilemap_draw(bitmap,bg0_tilemap,0,0);
 	wwfsstar_drawsprites( bitmap );

@@ -106,60 +106,26 @@ void namcos86_vh_convert_color_prom( unsigned char *palette,unsigned short *colo
 
 ***************************************************************************/
 
-static unsigned char *videoram;
-static int gfx_num;
-static int tile_offs[4];
-
-static void tilemap0_preupdate(void)
+INLINE void get_tile_info(int tile_index,int layer,data8_t *vram)
 {
-	videoram = &rthunder_videoram1[0x0000];
-	gfx_num = GFX_TILES1;
-	tile_offs[0] = ((tile_address_prom[0x00] & 0x0e) >> 1) * 0x100 + tilebank * 0x800;
-	tile_offs[1] = ((tile_address_prom[0x04] & 0x0e) >> 1) * 0x100 + tilebank * 0x800;
-	tile_offs[2] = ((tile_address_prom[0x08] & 0x0e) >> 1) * 0x100 + tilebank * 0x800;
-	tile_offs[3] = ((tile_address_prom[0x0c] & 0x0e) >> 1) * 0x100 + tilebank * 0x800;
-}
+	unsigned char attr = vram[2*tile_index + 1];
+	int tile_offs;
+	if (layer & 2)
+		tile_offs = ((tile_address_prom[((layer & 1) << 4) + (attr & 0x03)] & 0xe0) >> 5) * 0x100;
+	else
+		tile_offs = ((tile_address_prom[((layer & 1) << 4) + ((attr & 0x03) << 2)] & 0x0e) >> 1) * 0x100 + tilebank * 0x800;
 
-static void tilemap1_preupdate(void)
-{
-	videoram = &rthunder_videoram1[0x1000];
-	gfx_num = GFX_TILES1;
-	tile_offs[0] = ((tile_address_prom[0x10] & 0x0e) >> 1) * 0x100 + tilebank * 0x800;
-	tile_offs[1] = ((tile_address_prom[0x14] & 0x0e) >> 1) * 0x100 + tilebank * 0x800;
-	tile_offs[2] = ((tile_address_prom[0x18] & 0x0e) >> 1) * 0x100 + tilebank * 0x800;
-	tile_offs[3] = ((tile_address_prom[0x1c] & 0x0e) >> 1) * 0x100 + tilebank * 0x800;
-}
-
-static void tilemap2_preupdate(void)
-{
-	videoram = &rthunder_videoram2[0x0000];
-	gfx_num = GFX_TILES2;
-	tile_offs[0] = ((tile_address_prom[0x00] & 0xe0) >> 5) * 0x100;
-	tile_offs[1] = ((tile_address_prom[0x01] & 0xe0) >> 5) * 0x100;
-	tile_offs[2] = ((tile_address_prom[0x02] & 0xe0) >> 5) * 0x100;
-	tile_offs[3] = ((tile_address_prom[0x03] & 0xe0) >> 5) * 0x100;
-}
-
-static void tilemap3_preupdate(void)
-{
-	videoram = &rthunder_videoram2[0x1000];
-	gfx_num = GFX_TILES2;
-	tile_offs[0] = ((tile_address_prom[0x10] & 0xe0) >> 5) * 0x100;
-	tile_offs[1] = ((tile_address_prom[0x11] & 0xe0) >> 5) * 0x100;
-	tile_offs[2] = ((tile_address_prom[0x12] & 0xe0) >> 5) * 0x100;
-	tile_offs[3] = ((tile_address_prom[0x13] & 0xe0) >> 5) * 0x100;
-}
-
-static void get_tile_info(int tile_index)
-{
-	unsigned char attr = videoram[2*tile_index + 1];
 	SET_TILE_INFO(
-			gfx_num,
-			videoram[2*tile_index] + tile_offs[attr & 0x03],
+			(layer & 2) ? GFX_TILES2 : GFX_TILES1,
+			vram[2*tile_index] + tile_offs,
 			attr,
 			0)
 }
 
+static void get_tile_info0(int tile_index) { get_tile_info(tile_index,0,&rthunder_videoram1[0x0000]); }
+static void get_tile_info1(int tile_index) { get_tile_info(tile_index,1,&rthunder_videoram1[0x1000]); }
+static void get_tile_info2(int tile_index) { get_tile_info(tile_index,2,&rthunder_videoram2[0x0000]); }
+static void get_tile_info3(int tile_index) { get_tile_info(tile_index,3,&rthunder_videoram2[0x1000]); }
 
 
 /***************************************************************************
@@ -170,10 +136,10 @@ static void get_tile_info(int tile_index)
 
 int namcos86_vh_start(void)
 {
-	tilemap[0] = tilemap_create(get_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,32);
-	tilemap[1] = tilemap_create(get_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,32);
-	tilemap[2] = tilemap_create(get_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,32);
-	tilemap[3] = tilemap_create(get_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,32);
+	tilemap[0] = tilemap_create(get_tile_info0,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,32);
+	tilemap[1] = tilemap_create(get_tile_info1,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,32);
+	tilemap[2] = tilemap_create(get_tile_info2,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,32);
+	tilemap[3] = tilemap_create(get_tile_info3,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,32);
 
 	if (!tilemap[0] || !tilemap[1] || !tilemap[2] || !tilemap[3])
 		return 1;
@@ -396,11 +362,6 @@ void namcos86_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	flipscreen = spriteram[0x1bf6] & 1;
 
 	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
-
-	tilemap0_preupdate(); tilemap_update(tilemap[0]);
-	tilemap1_preupdate(); tilemap_update(tilemap[1]);
-	tilemap2_preupdate(); tilemap_update(tilemap[2]);
-	tilemap3_preupdate(); tilemap_update(tilemap[3]);
 
 	fillbitmap(bitmap,Machine->gfx[0]->colortable[8*backcolor+7],&Machine->visible_area);
 

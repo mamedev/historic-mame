@@ -210,7 +210,7 @@ static const struct MachineDriver machine_driver_ttmahjng =
 	8, 0,
 	ttmahjng_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY ,
 	0,
 	ttmahjng_vh_start,
 	ttmahjng_vh_stop,

@@ -460,10 +460,10 @@ static struct MachineDriver machine_driver_cadash =
 	/* video hardware */
 	40*8, 32*8, { 0*8, 40*8-1, 2*8, 32*8-1 },
 	gfxdecodeinfo,
-	4096, 4096,
+	4096, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_BUFFERS_SPRITERAM,
+	VIDEO_TYPE_RASTER  | VIDEO_BUFFERS_SPRITERAM,
 	cadash_eof_callback,
 	cadash_vh_start,
 	cadash_vh_stop,

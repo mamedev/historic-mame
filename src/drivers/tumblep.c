@@ -15,6 +15,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/h6280/h6280.h"
+#include "decocrpt.h"
 
 int  tumblep_vh_start(void);
 void tumblep_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
@@ -247,13 +248,13 @@ INPUT_PORTS_END
 
 static struct GfxLayout tcharlayout =
 {
-	8,8,	/* 8*8 chars */
-	4096,
-	4,		/* 4 bits per pixel  */
-	{ 0x40000*8 , 0x00000*8, 0x60000*8 , 0x20000*8 },
+	8,8,
+	RGN_FRAC(1,2),
+	4,
+	{ RGN_FRAC(1,2)+8, RGN_FRAC(1,2)+0, 8, 0 },
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	8*8	/* every char takes 8 consecutive bytes */
+	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16 },
+	16*8
 };
 
 static struct GfxLayout tlayout =
@@ -261,7 +262,7 @@ static struct GfxLayout tlayout =
 	16,16,
 	RGN_FRAC(1,2),
 	4,
-	{ 8, 0, RGN_FRAC(1,2)+8, RGN_FRAC(1,2)+0 },
+	{ RGN_FRAC(1,2)+8, RGN_FRAC(1,2)+0, 8, 0 },
 	{ 32*8+0, 32*8+1, 32*8+2, 32*8+3, 32*8+4, 32*8+5, 32*8+6, 32*8+7,
 			0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
@@ -269,26 +270,12 @@ static struct GfxLayout tlayout =
 	64*8
 };
 
-static struct GfxLayout tlayout3 =
-{
-	16,16,
-	4096,
-	4,
-	{  0x40000*8 , 0x00000*8, 0x60000*8 , 0x20000*8 },
-	{
-			0, 1, 2, 3, 4, 5, 6, 7,
-           16*8+0, 16*8+1, 16*8+2, 16*8+3, 16*8+4, 16*8+5, 16*8+6, 16*8+7 },
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
-			8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },
-	32*8	/* every sprite takes 32 consecutive bytes */
-};
-
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &tcharlayout,  256, 16 },	/* Characters 8x8 */
-	{ REGION_GFX1, 0, &tlayout3,     512, 16 },	/* Tiles 16x16 */
-	{ REGION_GFX1, 0, &tlayout3,     256, 16 },	/* Tiles 16x16 */
-	{ REGION_GFX2, 0, &tlayout,        0, 16 },	/* Sprites 16x16 */
+	{ REGION_GFX1, 0, &tcharlayout, 256, 16 },	/* Characters 8x8 */
+	{ REGION_GFX1, 0, &tlayout,     512, 16 },	/* Tiles 16x16 */
+	{ REGION_GFX1, 0, &tlayout,     256, 16 },	/* Tiles 16x16 */
+	{ REGION_GFX2, 0, &tlayout,       0, 16 },	/* Sprites 16x16 */
 	{ -1 } /* end of array */
 };
 
@@ -348,10 +335,10 @@ static const struct MachineDriver machine_driver_tumblepop =
 	40*8, 32*8, { 0*8, 40*8-1, 1*8, 31*8-1 },
 
 	gfxdecodeinfo,
-	1024, 1024,
+	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	tumblep_vh_start,
 	0,
@@ -390,10 +377,10 @@ static const struct MachineDriver machine_driver_tumblepb =
 	40*8, 32*8, { 0*8, 40*8-1, 1*8, 31*8-1 },
 
 	gfxdecodeinfo,
-	1024, 1024,
+	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	tumblep_vh_start,
 	0,
@@ -421,12 +408,10 @@ ROM_START( tumblep )
 
 	ROM_REGION( 0x080000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "map-02.rom",   0x00000, 0x80000, 0xdfceaa26 )	// encrypted
-	ROM_LOAD( "thumbpop.19",  0x00000, 0x40000, 0x0795aab4 )	// let's use the bootleg ones instead
-	ROM_LOAD( "thumbpop.18",  0x40000, 0x40000, 0xad58df43 )
 
 	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "map-00.rom",   0x00000, 0x80000, 0x8c879cfe )
-	ROM_LOAD( "map-01.rom",   0x80000, 0x80000, 0xe81ffa09 )
+	ROM_LOAD( "map-01.rom",   0x00000, 0x80000, 0xe81ffa09 )
+	ROM_LOAD( "map-00.rom",   0x80000, 0x80000, 0x8c879cfe )
 
 	ROM_REGION( 0x20000, REGION_SOUND1, 0 ) /* Oki samples */
 	ROM_LOAD( "hl03-.j15",    0x00000, 0x20000, 0x01b81da0 )
@@ -442,12 +427,10 @@ ROM_START( tumblepj )
 
 	ROM_REGION( 0x080000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "map-02.rom",   0x00000, 0x80000, 0xdfceaa26 )	// encrypted
-	ROM_LOAD( "thumbpop.19",  0x00000, 0x40000, 0x0795aab4 )	// let's use the bootleg ones instead
-	ROM_LOAD( "thumbpop.18",  0x40000, 0x40000, 0xad58df43 )
 
 	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "map-00.rom",   0x00000, 0x80000, 0x8c879cfe )
-	ROM_LOAD( "map-01.rom",   0x80000, 0x80000, 0xe81ffa09 )
+	ROM_LOAD( "map-01.rom",   0x00000, 0x80000, 0xe81ffa09 )
+	ROM_LOAD( "map-00.rom",   0x80000, 0x80000, 0x8c879cfe )
 
 	ROM_REGION( 0x20000, REGION_SOUND1, 0 ) /* Oki samples */
 	ROM_LOAD( "hl03-.j15",    0x00000, 0x20000, 0x01b81da0 )
@@ -459,12 +442,12 @@ ROM_START( tumblepb )
 	ROM_LOAD16_BYTE( "thumbpop.13", 0x00001, 0x40000, 0x864c4053 )
 
 	ROM_REGION( 0x080000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "thumbpop.19",  0x00000, 0x40000, 0x0795aab4 )
-	ROM_LOAD( "thumbpop.18",  0x40000, 0x40000, 0xad58df43 )
+	ROM_LOAD16_BYTE( "thumbpop.19",  0x00000, 0x40000, 0x0795aab4 )
+	ROM_LOAD16_BYTE( "thumbpop.18",  0x00001, 0x40000, 0xad58df43 )
 
 	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "map-00.rom",   0x00000, 0x80000, 0x8c879cfe )
-	ROM_LOAD( "map-01.rom",   0x80000, 0x80000, 0xe81ffa09 )
+	ROM_LOAD( "map-01.rom",   0x00000, 0x80000, 0xe81ffa09 )
+	ROM_LOAD( "map-00.rom",   0x80000, 0x80000, 0x8c879cfe )
 
 	ROM_REGION( 0x80000, REGION_SOUND1, 0 ) /* Oki samples */
 	ROM_LOAD( "thumbpop.snd", 0x00000, 0x80000, 0xfabbf15d )
@@ -476,44 +459,51 @@ ROM_START( tumblep2 )
 	ROM_LOAD16_BYTE( "thumbpop.3", 0x00001, 0x40000, 0x89501c71 )
 
 	ROM_REGION( 0x080000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "thumbpop.19",  0x00000, 0x40000, 0x0795aab4 )
-	ROM_LOAD( "thumbpop.18",  0x40000, 0x40000, 0xad58df43 )
+	ROM_LOAD16_BYTE( "thumbpop.19",  0x00000, 0x40000, 0x0795aab4 )
+	ROM_LOAD16_BYTE( "thumbpop.18",  0x00001, 0x40000, 0xad58df43 )
 
  	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "map-00.rom",   0x00000, 0x80000, 0x8c879cfe )
-	ROM_LOAD( "map-01.rom",   0x80000, 0x80000, 0xe81ffa09 )
+	ROM_LOAD( "map-01.rom",   0x00000, 0x80000, 0xe81ffa09 )
+	ROM_LOAD( "map-00.rom",   0x80000, 0x80000, 0x8c879cfe )
 
 	ROM_REGION( 0x80000, REGION_SOUND1, 0 ) /* Oki samples */
 	ROM_LOAD( "thumbpop.snd", 0x00000, 0x80000, 0xfabbf15d )
 ROM_END
 
+
 /******************************************************************************/
+
 
 static void init_tumblep(void)
 {
-	unsigned char *RAM;
-	int i,x,a;
-    char z[64];
-
-	/* Hmm, characters are stored in wrong word endian-ness for sequential graphics
-		decode!  Very bad...  */
-	RAM = memory_region(REGION_GFX1);
-
-	for (a=0; a<4; a++) {
-		for (i=32; i<0x2000; i+=32) {
-            for (x=0; x<16; x++)
-            	z[x]=RAM[i + x + (a*0x20000)];
-            for (x=0; x<16; x++)
-                RAM[i + x + (a*0x20000)]=RAM[i + x + 16 + (a*0x20000)];
-            for (x=0; x<16; x++)
-				RAM[i + x + 16 + (a*0x20000)]=z[x];
-    	}
-    }
+	deco56_decrypt();
 }
+
+static void init_tumblepb(void)
+{
+	data8_t *rom = memory_region(REGION_GFX1);
+	int len = memory_region_length(REGION_GFX1);
+	int i;
+
+	/* gfx data is in the wrong order */
+	for (i = 0;i < len;i++)
+	{
+		if ((i & 0x20) == 0)
+		{
+			int t = rom[i]; rom[i] = rom[i + 0x20]; rom[i + 0x20] = t;
+		}
+	}
+	/* low/high half are also swapped */
+	for (i = 0;i < len/2;i++)
+	{
+		int t = rom[i]; rom[i] = rom[i + len/2]; rom[i + len/2] = t;
+	}
+}
+
 
 /******************************************************************************/
 
-GAME( 1991, tumblep,  0,       tumblepop, tumblep, tumblep, ROT0, "Data East Corporation", "Tumble Pop (World)" )
-GAME( 1991, tumblepj, tumblep, tumblepop, tumblep, tumblep, ROT0, "Data East Corporation", "Tumble Pop (Japan)" )
-GAMEX(1991, tumblepb, tumblep, tumblepb,  tumblep, tumblep, ROT0, "bootleg", "Tumble Pop (bootleg set 1)", GAME_IMPERFECT_SOUND )
-GAMEX(1991, tumblep2, tumblep, tumblepb,  tumblep, tumblep, ROT0, "bootleg", "Tumble Pop (bootleg set 2)", GAME_IMPERFECT_SOUND )
+GAME( 1991, tumblep,  0,       tumblepop, tumblep, tumblep,  ROT0, "Data East Corporation", "Tumble Pop (World)" )
+GAME( 1991, tumblepj, tumblep, tumblepop, tumblep, tumblep,  ROT0, "Data East Corporation", "Tumble Pop (Japan)" )
+GAMEX(1991, tumblepb, tumblep, tumblepb,  tumblep, tumblepb, ROT0, "bootleg", "Tumble Pop (bootleg set 1)", GAME_IMPERFECT_SOUND )
+GAMEX(1991, tumblep2, tumblep, tumblepb,  tumblep, tumblepb, ROT0, "bootleg", "Tumble Pop (bootleg set 2)", GAME_IMPERFECT_SOUND )

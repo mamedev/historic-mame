@@ -122,7 +122,7 @@ static const struct MachineDriver machine_driver_beezer =
 	16,16,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	0,
 	0,

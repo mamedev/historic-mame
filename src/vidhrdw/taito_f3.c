@@ -175,7 +175,8 @@ Line ram memory map:
 #define TRY_ALPHA 0
 
 static struct tilemap *pf1_tilemap,*pf2_tilemap,*pf3_tilemap,*pf4_tilemap;
-static data32_t *gfx_base,*spriteram32_buffered;
+static struct tilemap *pixel_layer;
+static data32_t *spriteram32_buffered;
 static int vram_dirty[256];
 static int pivot_changed,vram_changed,scroll_kludge_y,scroll_kludge_x;
 static data32_t f3_control_0[8];
@@ -184,14 +185,13 @@ static int flipscreen;
 static int primasks[4];
 static UINT16 *scanline;
 static UINT8 *pivot_dirty;
-static int pf23_y_kludge,clip_pri_kludge,pivot_active;
+static int pf23_y_kludge,clip_pri_kludge;
 
 data32_t *f3_vram,*f3_line_ram;
 data32_t *f3_pf_data,*f3_pivot_ram;
 
 extern int f3_game;
 static int sprite_pri_word;
-static struct osd_bitmap *pixel_layer;
 
 /* Game specific data, some of this can be
 removed when the software values are figured out */
@@ -376,6 +376,274 @@ static void print_debug_info(int t0, int t1, int t2, int t3, int c0, int c1, int
 
 /******************************************************************************/
 
+INLINE void get_tile_info(int tile_index,data32_t *gfx_base)
+{
+	int tile,color;
+
+	color=gfx_base[tile_index]>>16;
+	tile=gfx_base[tile_index];
+
+	SET_TILE_INFO(
+			1,
+			tile&0xffff,
+			color&0x1ff,
+			TILE_FLIPYX( color >>14 ))
+}
+
+static void get_tile_info1(int tile_index)
+{
+	get_tile_info(tile_index,f3_pf_data);
+}
+
+static void get_tile_info2(int tile_index)
+{
+	if (f3_game_config->extend)
+		get_tile_info(tile_index,f3_pf_data + 0x800);
+	else
+		get_tile_info(tile_index,f3_pf_data + 0x400);
+}
+
+static void get_tile_info3(int tile_index)
+{
+	if (f3_game_config->extend)
+		get_tile_info(tile_index,f3_pf_data + 2*0x800);
+	else
+		get_tile_info(tile_index,f3_pf_data + 2*0x400);
+}
+
+static void get_tile_info4(int tile_index)
+{
+	if (f3_game_config->extend)
+		get_tile_info(tile_index,f3_pf_data + 3*0x800);
+	else
+		get_tile_info(tile_index,f3_pf_data + 3*0x400);
+}
+
+static void get_tile_info_pixel(int tile_index)
+{
+	int color,col_off;
+	int y_offs=(f3_control_1[2]&0x1ff)+scroll_kludge_y;
+
+	if (flipscreen) y_offs+=0x100;
+
+	/* Colour is shared with VRAM layer */
+	if ((((tile_index%32)*8 + y_offs)&0x1ff)>0xff)
+		col_off=0x800+((tile_index%32)*0x40)+((tile_index&0xfe0)>>5);
+	else
+		col_off=((tile_index%32)*0x40)+((tile_index&0xfe0)>>5);
+
+	if (col_off&1)
+	   	color = ((videoram32[col_off>>1]&0xffff)>>9)&0x3f;
+	else
+		color = ((videoram32[col_off>>1]>>16)>>9)&0x3f;
+
+	SET_TILE_INFO(
+			3,
+			tile_index,
+			color&0x3f,
+			0)
+	tile_info.flags = f3_game_config->pivot ? TILE_FLIPX : 0;
+}
+
+/******************************************************************************/
+
+void f3_eof_callback(void)
+{
+	memcpy(spriteram32_buffered,spriteram32,spriteram_size);
+}
+
+void f3_vh_stop (void)
+{
+	if (DEBUG_F3) {
+		FILE *fp;
+
+		fp=fopen("line.dmp","wb");
+		if (fp) {
+			fwrite(f3_line_ram,0x10000/4, 4 ,fp);
+			fclose(fp);
+		}
+		fp=fopen("sprite.dmp","wb");
+		if (fp) {
+			fwrite(spriteram32,0x10000/4, 4 ,fp);
+			fclose(fp);
+		}
+		fp=fopen("vram.dmp","wb");
+		if (fp) {
+			fwrite(f3_pf_data,0xc000, 1 ,fp);
+			fclose(fp);
+		}
+	}
+
+	if (scanline) {
+		free(scanline);
+		scanline=0;
+	}
+	if (spritelist) {
+		free(spritelist);
+		spritelist=0;
+	}
+	if (spriteram32_buffered) {
+		free(spriteram32_buffered);
+		spriteram32_buffered=0;
+	}
+	if (pivot_dirty) {
+		free(pivot_dirty);
+		pivot_dirty=0;
+	}
+}
+
+int f3_vh_start(void)
+{
+	struct F3config *pCFG=&f3_config_table[0];
+	int tile;
+
+	scanline=0;
+	spritelist=0;
+	spriteram32_buffered=0;
+	pivot_dirty=0;
+
+	/* Setup individual game */
+	do {
+		if (pCFG->name==f3_game)
+		{
+			break;
+		}
+		pCFG++;
+	} while(pCFG->name);
+
+	f3_game_config=pCFG;
+
+	if (f3_game_config->extend) {
+		pf1_tilemap = tilemap_create(get_tile_info1,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,64,32);
+		pf2_tilemap = tilemap_create(get_tile_info2,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,64,32);
+		pf3_tilemap = tilemap_create(get_tile_info3,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,64,32);
+		pf4_tilemap = tilemap_create(get_tile_info4,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,64,32);
+	} else {
+		pf1_tilemap = tilemap_create(get_tile_info1,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
+		pf2_tilemap = tilemap_create(get_tile_info2,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
+		pf3_tilemap = tilemap_create(get_tile_info3,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
+		pf4_tilemap = tilemap_create(get_tile_info4,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
+	}
+
+	scanline = (UINT16 *)malloc(1024);
+	spriteram32_buffered = (UINT32 *)malloc(0x10000);
+	spritelist = malloc(0x400 * sizeof(*spritelist));
+	pixel_layer = tilemap_create(get_tile_info_pixel,tilemap_scan_cols,TILEMAP_TRANSPARENT,8,8,64,32);
+	pivot_dirty = (UINT8 *)malloc(2048);
+
+	if (!pf1_tilemap || !pf2_tilemap || !pf3_tilemap || !pf4_tilemap
+		 || !spritelist || !pixel_layer || !spriteram32_buffered || !scanline || !pivot_dirty)
+		return 1;
+
+	tilemap_set_transparent_pen(pf1_tilemap,0);
+	tilemap_set_transparent_pen(pf2_tilemap,0);
+	tilemap_set_transparent_pen(pf3_tilemap,0);
+	tilemap_set_transparent_pen(pf4_tilemap,0);
+	tilemap_set_transparent_pen(pixel_layer,0);
+
+	tilemap_set_scroll_rows(pf1_tilemap,512);
+	tilemap_set_scroll_rows(pf2_tilemap,512);
+	tilemap_set_scroll_rows(pf3_tilemap,512);
+	tilemap_set_scroll_rows(pf4_tilemap,512);
+
+	/* Y Offset is related to the first visible line in line ram in some way */
+	scroll_kludge_y=f3_game_config->sy;
+	scroll_kludge_x=f3_game_config->sx;
+
+	/* Palettes have 4 bpp indexes despite up to 6 bpp data */
+	Machine->gfx[1]->color_granularity=16;
+	Machine->gfx[2]->color_granularity=16;
+
+	flipscreen = 0;
+	memset(spriteram32_buffered,0,spriteram_size);
+	memset(spriteram32,0,spriteram_size);
+
+	state_save_register_UINT32("f3", 0, "vcontrol0", f3_control_0, 8);
+	state_save_register_UINT32("f3", 0, "vcontrol1", f3_control_1, 8);
+
+	/* Why?!??  These games have different offsets for the two middle playfields only */
+	if (f3_game==LANDMAKR || f3_game==EACTION2 || f3_game==DARIUSG || f3_game==GEKIRIDO)
+		pf23_y_kludge=23;
+	else
+		pf23_y_kludge=0;
+
+	/* These games leave garbage pri values in the unused lines at the top - skip them */
+	if (f3_game==PBOBBLE4 || f3_game==PBOBBLE2 || f3_game==LANDMAKR || f3_game==GEKIRIDO)
+		clip_pri_kludge=0x30;
+	else if (f3_game==BUBBLEM)
+		clip_pri_kludge=0x60;
+	else
+		clip_pri_kludge=0;
+
+	for (tile = 0;tile < 256;tile++)
+		vram_dirty[tile]=1;
+	for (tile = 0;tile < 2048;tile++)
+		pivot_dirty[tile]=1;
+
+#if TRY_ALPHA
+	alpha_set_level(0x80);
+#endif
+
+	return 0;
+}
+
+/******************************************************************************/
+
+WRITE32_HANDLER( f3_pf_data_w )
+{
+	COMBINE_DATA(&f3_pf_data[offset]);
+
+	if (f3_game_config->extend) {
+		if (offset<0x800) tilemap_mark_tile_dirty(pf1_tilemap,offset-0x0000);
+		else if (offset<0x1000) tilemap_mark_tile_dirty(pf2_tilemap,offset-0x0800);
+		else if (offset<0x1800) tilemap_mark_tile_dirty(pf3_tilemap,offset-0x1000);
+		else if (offset<0x2000) tilemap_mark_tile_dirty(pf4_tilemap,offset-0x1800);
+	} else {
+		if (offset<0x400) tilemap_mark_tile_dirty(pf1_tilemap,offset-0x0000);
+		else if (offset<0x800) tilemap_mark_tile_dirty(pf2_tilemap,offset-0x0400);
+		else if (offset<0xc00) tilemap_mark_tile_dirty(pf3_tilemap,offset-0x0800);
+		else if (offset<0x1000) tilemap_mark_tile_dirty(pf4_tilemap,offset-0xc00);
+	}
+}
+
+WRITE32_HANDLER( f3_control_0_w )
+{
+	COMBINE_DATA(&f3_control_0[offset]);
+}
+
+WRITE32_HANDLER( f3_control_1_w )
+{
+	COMBINE_DATA(&f3_control_1[offset]);
+}
+
+WRITE32_HANDLER( f3_videoram_w )
+{
+	int tile,col_off;
+	COMBINE_DATA(&videoram32[offset]);
+
+	if (offset>0x3ff) offset-=0x400;
+
+	tile=offset<<1;
+	col_off=((tile&0x3f)*32)+((tile&0xfc0)>>6);
+
+	tilemap_mark_tile_dirty(pixel_layer,col_off);
+	tilemap_mark_tile_dirty(pixel_layer,col_off+32);
+}
+
+WRITE32_HANDLER( f3_vram_w )
+{
+	COMBINE_DATA(&f3_vram[offset]);
+	vram_dirty[offset/8]=1;
+	vram_changed=1;
+}
+
+WRITE32_HANDLER( f3_pivot_w )
+{
+	COMBINE_DATA(&f3_pivot_ram[offset]);
+	pivot_dirty[offset/8]=1;
+	pivot_changed=1;
+}
+
 WRITE32_HANDLER( f3_palette_24bit_w )
 {
 	int r,g,b;
@@ -427,10 +695,67 @@ WRITE32_HANDLER( f3_palette_24bit_w )
 
 /******************************************************************************/
 
+#undef ADJUST_FOR_ORIENTATION
+#define ADJUST_FOR_ORIENTATION(type, orientation, bitmapi, bitmapp, x, y)	\
+	type *dsti = &((type *)bitmapi->line[y])[x];							\
+	UINT8 *dstp = &((UINT8 *)bitmapp->line[y])[x];							\
+	int xadv = 1;															\
+	if (orientation)														\
+	{																		\
+		int dy = (type *)bitmap->line[1] - (type *)bitmap->line[0];			\
+		int tx = x, ty = y, temp;											\
+		if ((orientation) & ORIENTATION_SWAP_XY)							\
+		{																	\
+			temp = tx; tx = ty; ty = temp;									\
+			xadv = dy / sizeof(type);										\
+		}																	\
+		if ((orientation) & ORIENTATION_FLIP_X)								\
+		{																	\
+			tx = bitmap->width - 1 - tx;									\
+			if (!((orientation) & ORIENTATION_SWAP_XY)) xadv = -xadv;		\
+		}																	\
+		if ((orientation) & ORIENTATION_FLIP_Y)								\
+		{																	\
+			ty = bitmap->height - 1 - ty;									\
+			if ((orientation) & ORIENTATION_SWAP_XY) xadv = -xadv;			\
+		}																	\
+		/* can't lookup line because it may be negative! */					\
+		dsti = (type *)((type *)bitmapi->line[0] + dy * ty) + tx;			\
+		dstp = (UINT8 *)((UINT8 *)bitmapp->line[0] + dy * ty / sizeof(type)) + tx;	\
+	}
+
+INLINE void f3_drawscanline(
+		struct osd_bitmap *bitmap,int x,int y,int length,
+		const UINT16 *src,int transparent,UINT32 orient,int pri)
+{
+	ADJUST_FOR_ORIENTATION(UINT16, Machine->orientation ^ orient, bitmap, priority_bitmap, x, y);
+	if (transparent) {
+		while (length--) {
+			UINT32 spixel = *src++;
+			if (spixel<0x7fff) {
+				*dsti = spixel;
+				*dstp = pri;
+			}
+			dsti += xadv;
+			dstp += xadv;
+		}
+	} else { /* Not transparent case */
+		while (length--) {
+			*dsti = *src++;
+			*dstp = pri;
+			dsti += xadv;
+			dstp += xadv;
+		}
+	}
+}
+#undef ADJUST_FOR_ORIENTATION
+
 static void f3_tilemap_draw(struct osd_bitmap *bitmap,struct tilemap *tilemap,UINT32 trans,int pos,int sx,int sy, int dpri)
 {
 	struct osd_bitmap *srcbitmap = tilemap_get_pixmap(tilemap);
+	struct osd_bitmap *transbitmap = tilemap_get_transparency_bitmap(tilemap);
 	UINT16 *dst,*src;
+	UINT8 *tsrc;
 	int x,y,inc;
 	int x_index,y_index;
 	int width_mask=0x1ff;
@@ -517,22 +842,43 @@ static void f3_tilemap_draw(struct osd_bitmap *bitmap,struct tilemap *tilemap,UI
 			dst=scanline;
 			if (Machine->orientation == ROT0) {
 				src=(unsigned short *)srcbitmap->line[((y_index>>16)+colscroll)&0x1ff];
-				while (x_index<x) {
-					*dst++ = src[(x_index>>16)&width_mask];
-					x_index += x_zoom;
+				tsrc=(unsigned char *)transbitmap->line[((y_index>>16)+colscroll)&0x1ff];
+
+				if (trans!=TILEMAP_IGNORE_TRANSPARENCY) {
+					while (x_index<x) {
+						if (tsrc[(x_index>>16)&width_mask])
+							*dst++ = src[(x_index>>16)&width_mask];
+						else
+							*dst++ = 0x8000;
+						x_index += x_zoom;
+					}
+				} else {
+					while (x_index<x) {
+						*dst++ = src[(x_index>>16)&width_mask];
+						x_index += x_zoom;
+					}
 				}
+
 			} else {
 				while (x_index<x) { /* 270 degree rotation - Slow, slow, slow */
 					src=(unsigned short *)srcbitmap->line[(width_mask-(x_index>>16))&width_mask];
-					*dst++ = src[((y_index>>16)+1+colscroll)&0x1ff];
+					tsrc=(unsigned char *)transbitmap->line[(width_mask-(x_index>>16))&width_mask];
+					if (trans!=TILEMAP_IGNORE_TRANSPARENCY) {
+						if (tsrc[((y_index>>16)+1+colscroll)&0x1ff])
+							*dst++ = src[((y_index>>16)+1+colscroll)&0x1ff];
+						else
+							*dst++ = 0x8000;
+					} else {
+						*dst++ = src[((y_index>>16)+1+colscroll)&0x1ff];
+					}
 					x_index += x_zoom;
 				}
 			}
 
 			if (trans==TILEMAP_IGNORE_TRANSPARENCY)
-				pdraw_scanline16(bitmap,46,y,320,scanline,0,-1,rot,dpri);
+				f3_drawscanline(bitmap,46,y,320,scanline,0,rot,dpri);
 			else
-				pdraw_scanline16(bitmap,46,y,320,scanline,0,palette_transparent_pen,rot,dpri);
+				f3_drawscanline(bitmap,46,y,320,scanline,1,rot,dpri);
 		}
 
 		y_index += y_zoom;
@@ -605,10 +951,9 @@ static void f3_clip_bottom_border(struct osd_bitmap *bitmap)
 
 /******************************************************************************/
 
-static void f3_draw_pivot_layer(struct osd_bitmap *bitmap)
+static void f3_update_pivot_layer(void)
 {
-	int mx,my,tile,sx,sy,col,fx=f3_game_config->pivot,i;
-	int pivot_base,col_off,y_offs;
+	int tile,i,pivot_base;
 	struct rectangle pivot_clip;
 
 	/* A poor way to guess if the pivot layer is enabled, but quicker than
@@ -620,25 +965,22 @@ static void f3_draw_pivot_layer(struct osd_bitmap *bitmap)
 
 	/* Quickly decide whether to process the rest of the pivot layer */
 	if (!(ctrl || ctrl2 || ctrl3 || ctrl4)) {
-		pivot_active=0;
+		tilemap_set_enable(pixel_layer,0);
 		return;
 	}
-	pivot_active=1;
+	tilemap_set_enable(pixel_layer,1);
 
 	if (flipscreen) {
-		sx=-(f3_control_1[2]>>16)+12;
-		sy=-(f3_control_1[2]&0xff);
-		if (fx) fx=0; else fx=1;
-		y_offs=0x100-(f3_control_1[2]&0x1ff)+scroll_kludge_y; //todo - not quite correct
+		tilemap_set_scrollx( pixel_layer,0,(f3_control_1[2]>>16)-(512-320)-16);
+		tilemap_set_scrolly( pixel_layer,0,-(f3_control_1[2]&0xff));
 	} else {
-		sx=(f3_control_1[2]>>16)+5;
-		sy=f3_control_1[2]&0xff;
-		y_offs=(f3_control_1[2]&0x1ff)+scroll_kludge_y;
+		tilemap_set_scrollx( pixel_layer,0,-(f3_control_1[2]>>16)-5);
+		tilemap_set_scrolly( pixel_layer,0,-(f3_control_1[2]&0xff));
 	}
 
 	/* Clip top scanlines according to line ram - Bubble Memories makes use of this */
-	pivot_clip.min_x=Machine->visible_area.min_x;
-	pivot_clip.max_x=Machine->visible_area.max_x;
+	pivot_clip.min_x=0;//Machine->visible_area.min_x;
+	pivot_clip.max_x=512;//Machine->visible_area.max_x;
 	pivot_clip.min_y=Machine->visible_area.min_y;
 	pivot_clip.max_y=Machine->visible_area.max_y;
 	if (flipscreen)
@@ -662,70 +1004,21 @@ static void f3_draw_pivot_layer(struct osd_bitmap *bitmap)
 		if (flipscreen) pivot_base-=2; else pivot_base+=2;
 	}
 
-	/* Update bitmap */
+	if (!flipscreen)
+		tilemap_set_clip(pixel_layer,&pivot_clip);
+
+	/* Decode chars & mark tilemap dirty */
 	if (pivot_changed)
 		for (tile = 0;tile < 2048;tile++)
 			if (pivot_dirty[tile]) {
 				decodechar(Machine->gfx[3],tile,(UINT8 *)f3_pivot_ram,Machine->drv->gfxdecodeinfo[3].gfxlayout);
-				if (flipscreen) {
-					my=31-(tile%32);
-					mx=63-(tile/32);
-				} else {
-					my=tile%32;
-					mx=tile/32;
-				}
-
-				/* Colour is shared with VRAM layer */
-				if ((((tile%32)*8 + y_offs)&0x1ff)>0xff)
-					col_off=0x800+((tile%32)*0x40)+((tile&0xfe0)>>5);
-				else
-					col_off=((tile%32)*0x40)+((tile&0xfe0)>>5);
-
-				if (col_off&1)
-		        	col = ((videoram32[col_off>>1]&0xffff)>>9)&0x3f;
-				else
-					col = ((videoram32[col_off>>1]>>16)>>9)&0x3f;
-
-				palette_used_colors[16 * col]=PALETTE_COLOR_TRANSPARENT;
-
-				drawgfx(pixel_layer,Machine->gfx[3],
-					tile,
-					col,
-					fx,flipscreen,
-					mx*8,my*8,
-					0,TRANSPARENCY_NONE,0);
+				tilemap_mark_tile_dirty(pixel_layer,tile);
 				pivot_dirty[tile]=0;
 			}
 	pivot_changed=0;
-
-	copyscrollbitmap(bitmap,pixel_layer,1,&sx,1,&sy,&pivot_clip,TRANSPARENCY_PEN,palette_transparent_pen);
 }
 
 /******************************************************************************/
-
-static void f3_fix_transparent_colours(int p0, int p1, int p2, int p3)
-{
- 	int color, i, pos=0, index, max;
-
-	/* Find layer with lowest priority - no transparency for this layer */
-	for (i=0; i<0x10; i++) {
-		if (p0==i) { if (f3_game_config->extend) pos=0x0000; else pos=0x0000; i=0x10; }
-		if (p1==i) { if (f3_game_config->extend) pos=0x0800; else pos=0x0400; i=0x10; }
-		if (p2==i) { if (f3_game_config->extend) pos=0x1000; else pos=0x0800; i=0x10; }
-		if (p3==i) { if (f3_game_config->extend) pos=0x1800; else pos=0x0c00; i=0x10; }
-	}
-
-	/* Ensure any transparent 4bpp palettes don't interfere with opaque 5bpp or 6bpp layers */
-	max=pos+0x400+(f3_game_config->extend*0x400);
-	for (i=pos; i<max; i++) {
-		color=f3_pf_data[i]>>16;
-		index=16 * (color&0x1ff);
-//		palette_used_colors[index+ 0] = PALETTE_COLOR_USED;
-		palette_used_colors[index+16] = PALETTE_COLOR_USED;
-//		palette_used_colors[index+32] = PALETTE_COLOR_USED;
-//		palette_used_colors[index+48] = PALETTE_COLOR_USED;
-	}
-}
 
 static void f3_draw_vram_layer(struct osd_bitmap *bitmap)
 {
@@ -1127,17 +1420,6 @@ void f3_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		tilemap_set_scrolly( pf4_tilemap,0, sy[3] );
 	}
 
-	/* Update tilemaps */
-	if (f3_game_config->extend) inc=0x800; else inc=0x400;
-	gfx_base=f3_pf_data;
-	tilemap_update(pf1_tilemap);
-	gfx_base=f3_pf_data+inc;
-	tilemap_update(pf2_tilemap);
-	gfx_base=f3_pf_data+inc+inc;
-	tilemap_update(pf3_tilemap);
-	gfx_base=f3_pf_data+inc+inc+inc;
-	tilemap_update(pf4_tilemap);
-
 	/* Calculate relative playfield priorities - the real hardware can assign
 		a different value to each scanline in each playfield but some games
 		(Kaiser Knuckle, TRStars) only set the first scanline and expect it to
@@ -1185,6 +1467,9 @@ void f3_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		}
 	}
 
+	/* Update pivot layer */
+	f3_update_pivot_layer();
+
 	/* Use custom renderer? Cheat & check commonly used locations for speed */
 	if (zoom[0]!=0x80) use_custom[0]=1;
 	else if ((f3_line_ram[0x8164/4]&0xffff)!=0x80 && (f3_line_ram[0x8164/4]&0xffff)) use_custom[0]=1;
@@ -1223,20 +1508,12 @@ void f3_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	alpha[0]=alpha[1]=alpha[2]=alpha[3]=0;
 #endif
 
+//use_custom[0]=use_custom[1]=use_custom[2]=use_custom[3]=1;
+
 	/* These games have a solid white alpha layer which is of course opaque until we support it - disable for now */
 	if ((tpri[3]&0x8000) && (f3_game==TWINQIX || f3_game==POPNPOP || f3_game==ARKRETRN)) enable[3]=0;
 	if ((tpri[2]&0x8000) && f3_game==QUIZHUHU) enable[2]=0;
 	if ((tpri[3]&0x100) && f3_game==BUBBLEM) enable[3]=0; /* Bosses have an alpha layer on top of everything */
-
-	/* We don't need to mark pens in 16 or 24 bit modes, only transparent colours */
-	f3_fix_transparent_colours(tpri[0]&0xf,tpri[1]&0xf,tpri[2]&0xf,tpri[3]&0xf);
-
-	/* Dirty cached pivot layer on palette changes */
-	if (palette_recalc()) {
-		for (i=0; i<2048; i++)
-			pivot_dirty[i]=1;
-		pivot_changed=1;
-	}
 
 	if (DEBUG_F3 && keyboard_pressed(KEYCODE_Q))
 		use_custom[0]=use_custom[1]=use_custom[2]=use_custom[3]=1;
@@ -1347,13 +1624,13 @@ void f3_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	/* Pixel layer is drawn as 8x8 chars */
 	if (DEBUG_F3) {
 		if (!keyboard_pressed(KEYCODE_N))
-			f3_draw_pivot_layer(bitmap);
+			tilemap_draw(bitmap,pixel_layer,0,0);
 		if (!keyboard_pressed(KEYCODE_B))
 			f3_drawsprites(bitmap);
 		if (!keyboard_pressed(KEYCODE_M))
 			f3_draw_vram_layer(bitmap);
 	} else {
-		f3_draw_pivot_layer(bitmap);
+		tilemap_draw(bitmap,pixel_layer,0,0);
 		f3_drawsprites(bitmap);
 		f3_draw_vram_layer(bitmap);
 	}
@@ -1404,231 +1681,4 @@ void f3_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	if (DEBUG_F3 && keyboard_pressed(KEYCODE_0))
 		print_debug_info(tpri[0],tpri[1],tpri[2],tpri[3],use_custom[0],use_custom[1],use_custom[2],use_custom[3]);
-}
-
-/******************************************************************************/
-
-static void get_tile_info(int tile_index)
-{
-	int tile,color;
-
-	color=gfx_base[tile_index]>>16;
-	tile=gfx_base[tile_index];
-
-	SET_TILE_INFO(
-			1,
-			tile&0xffff,
-			color&0x1ff,
-			TILE_FLIPYX( color >>14 ))
-}
-
-WRITE32_HANDLER( f3_pf_data_w )
-{
-	COMBINE_DATA(&f3_pf_data[offset]);
-
-#if TRY_ALPHA==0
-	/* This is a bit silly, but is needed to make the zoom layers transparency work */
-	palette_used_colors[16 * ((data>>16)&0x1ff)] = PALETTE_COLOR_TRANSPARENT;
-#endif
-
-	if (f3_game_config->extend) {
-		if (offset<0x800) tilemap_mark_tile_dirty(pf1_tilemap,offset-0x0000);
-		else if (offset<0x1000) tilemap_mark_tile_dirty(pf2_tilemap,offset-0x0800);
-		else if (offset<0x1800) tilemap_mark_tile_dirty(pf3_tilemap,offset-0x1000);
-		else if (offset<0x2000) tilemap_mark_tile_dirty(pf4_tilemap,offset-0x1800);
-	} else {
-		if (offset<0x400) tilemap_mark_tile_dirty(pf1_tilemap,offset-0x0000);
-		else if (offset<0x800) tilemap_mark_tile_dirty(pf2_tilemap,offset-0x0400);
-		else if (offset<0xc00) tilemap_mark_tile_dirty(pf3_tilemap,offset-0x0800);
-		else if (offset<0x1000) tilemap_mark_tile_dirty(pf4_tilemap,offset-0xc00);
-	}
-}
-
-WRITE32_HANDLER( f3_control_0_w )
-{
-	COMBINE_DATA(&f3_control_0[offset]);
-}
-
-WRITE32_HANDLER( f3_control_1_w )
-{
-	COMBINE_DATA(&f3_control_1[offset]);
-}
-
-WRITE32_HANDLER( f3_videoram_w )
-{
-	int tile,col_off;
-	COMBINE_DATA(&videoram32[offset]);
-
-	if (offset>0x3ff) offset-=0x400;
-
-	tile=offset<<1;
-	col_off=((tile%32)*0x40)+((tile&0xfe0)>>5);
-
-	pivot_dirty[col_off]=1;
-	pivot_dirty[col_off+1]=1;
-	if (pivot_active) {
-		palette_used_colors[16 * (((videoram32[offset]>>16)>>9)&0x3f)] = PALETTE_COLOR_TRANSPARENT;
-		palette_used_colors[16 * (((videoram32[offset]>>0)>>9)&0x3f)] = PALETTE_COLOR_TRANSPARENT;
-	}
-	pivot_changed=1;
-}
-
-WRITE32_HANDLER( f3_vram_w )
-{
-	COMBINE_DATA(&f3_vram[offset]);
-	vram_dirty[offset/8]=1;
-	vram_changed=1;
-}
-
-WRITE32_HANDLER( f3_pivot_w )
-{
-	COMBINE_DATA(&f3_pivot_ram[offset]);
-	pivot_dirty[offset/8]=1;
-	pivot_changed=1;
-}
-
-/******************************************************************************/
-
-void f3_eof_callback(void)
-{
-	memcpy(spriteram32_buffered,spriteram32,spriteram_size);
-}
-
-void f3_vh_stop (void)
-{
-	if (DEBUG_F3) {
-		FILE *fp;
-
-		fp=fopen("line.dmp","wb");
-		if (fp) {
-			fwrite(f3_line_ram,0x10000/4, 4 ,fp);
-			fclose(fp);
-		}
-		fp=fopen("sprite.dmp","wb");
-		if (fp) {
-			fwrite(spriteram32,0x10000/4, 4 ,fp);
-			fclose(fp);
-		}
-		fp=fopen("vram.dmp","wb");
-		if (fp) {
-			fwrite(f3_pf_data,0xc000, 1 ,fp);
-			fclose(fp);
-		}
-	}
-
-	if (scanline) {
-		free(scanline);
-		scanline=0;
-	}
-	if (pixel_layer) {
-		bitmap_free(pixel_layer);
-		pixel_layer=0;
-	}
-	if (spritelist) {
-		free(spritelist);
-		spritelist=0;
-	}
-	if (spriteram32_buffered) {
-		free(spriteram32_buffered);
-		spriteram32_buffered=0;
-	}
-	if (pivot_dirty) {
-		free(pivot_dirty);
-		pivot_dirty=0;
-	}
-}
-
-int f3_vh_start(void)
-{
-	struct F3config *pCFG=&f3_config_table[0];
-	int tile;
-
-	scanline=0;
-	pixel_layer=0;
-	spritelist=0;
-	spriteram32_buffered=0;
-	pivot_dirty=0;
-
-	/* Setup individual game */
-	do {
-		if (pCFG->name==f3_game)
-		{
-			break;
-		}
-		pCFG++;
-	} while(pCFG->name);
-
-	f3_game_config=pCFG;
-
-	if (f3_game_config->extend) {
-		pf1_tilemap = tilemap_create(get_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,64,32);
-		pf2_tilemap = tilemap_create(get_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,64,32);
-		pf3_tilemap = tilemap_create(get_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,64,32);
-		pf4_tilemap = tilemap_create(get_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,64,32);
-	} else {
-		pf1_tilemap = tilemap_create(get_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
-		pf2_tilemap = tilemap_create(get_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
-		pf3_tilemap = tilemap_create(get_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
-		pf4_tilemap = tilemap_create(get_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
-	}
-
-	scanline = (UINT16 *)malloc(1024);
-	spriteram32_buffered = (UINT32 *)malloc(0x10000);
-	spritelist = malloc(0x400 * sizeof(*spritelist));
-	pixel_layer = bitmap_alloc (512, 256);
-	pivot_dirty = (UINT8 *)malloc(2048);
-
-	if (!pf1_tilemap || !pf2_tilemap || !pf3_tilemap || !pf4_tilemap
-		 || !spritelist || !pixel_layer || !spriteram32_buffered || !scanline || !pivot_dirty)
-		return 1;
-
-	tilemap_set_transparent_pen(pf1_tilemap,0);
-	tilemap_set_transparent_pen(pf2_tilemap,0);
-	tilemap_set_transparent_pen(pf3_tilemap,0);
-	tilemap_set_transparent_pen(pf4_tilemap,0);
-
-	tilemap_set_scroll_rows(pf1_tilemap,512);
-	tilemap_set_scroll_rows(pf2_tilemap,512);
-	tilemap_set_scroll_rows(pf3_tilemap,512);
-	tilemap_set_scroll_rows(pf4_tilemap,512);
-
-	/* Y Offset is related to the first visible line in line ram in some way */
-	scroll_kludge_y=f3_game_config->sy;
-	scroll_kludge_x=f3_game_config->sx;
-
-	/* Palettes have 4 bpp indexes despite up to 6 bpp data */
-	Machine->gfx[1]->color_granularity=16;
-	Machine->gfx[2]->color_granularity=16;
-
-	flipscreen = 0;
-	memset(spriteram32_buffered,0,spriteram_size);
-	memset(spriteram32,0,spriteram_size);
-
-	state_save_register_UINT32("f3", 0, "vcontrol0", f3_control_0, 8);
-	state_save_register_UINT32("f3", 0, "vcontrol1", f3_control_1, 8);
-
-	/* Why?!??  These games have different offsets for the two middle playfields only */
-	if (f3_game==LANDMAKR || f3_game==EACTION2 || f3_game==DARIUSG || f3_game==GEKIRIDO)
-		pf23_y_kludge=23;
-	else
-		pf23_y_kludge=0;
-
-	/* These games leave garbage pri values in the unused lines at the top - skip them */
-	if (f3_game==PBOBBLE4 || f3_game==PBOBBLE2 || f3_game==LANDMAKR || f3_game==GEKIRIDO)
-		clip_pri_kludge=0x30;
-	else if (f3_game==BUBBLEM)
-		clip_pri_kludge=0x60;
-	else
-		clip_pri_kludge=0;
-
-	for (tile = 0;tile < 256;tile++)
-		vram_dirty[tile]=1;
-	for (tile = 0;tile < 2048;tile++)
-		pivot_dirty[tile]=1;
-
-#if TRY_ALPHA
-	alpha_set_level(0x80);
-#endif
-
-	return 0;
 }

@@ -677,6 +677,6 @@ void galaxian_sh_update(void)
 	 */
 
 	mixer_set_sample_frequency(channellfo+0, sizeof(backgroundwave)*freq*(100+2*470)/(100+2*470) );
-	mixer_set_sample_frequency(channellfo+1, sizeof(backgroundwave)*freq*(100+2*300)/(100+2*470) );
+	mixer_set_sample_frequency(channellfo+1, sizeof(backgroundwave)*freq*(100+2*330)/(100+2*470) );
 	mixer_set_sample_frequency(channellfo+2, sizeof(backgroundwave)*freq*(100+2*220)/(100+2*470) );
 }

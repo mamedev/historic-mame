@@ -1273,7 +1273,7 @@ int ppu2c03b_get_pixel( int num, int x, int y )
 	if ( y >= VISIBLE_SCREEN_HEIGHT )
 		y = VISIBLE_SCREEN_HEIGHT - 1;
 
-	return chips[num].bitmap->line[y][x];
+	return ((UINT8 *)chips[num].bitmap->line[y])[x];
 }
 
 int ppu2c03b_get_colorbase( int num )

@@ -15,13 +15,13 @@ enum { LIST_SHORT = 1, LIST_INFO, LIST_FULL, LIST_SAMDIR, LIST_ROMS, LIST_SAMPLE
 		LIST_LMR, LIST_DETAILS, LIST_GAMELIST,
 		LIST_GAMES, LIST_CLONES,
 		LIST_WRONGORIENTATION, LIST_WRONGFPS, LIST_CRC, LIST_DUPCRC, LIST_WRONGMERGE,
-		LIST_ROMSIZE, LIST_CPU, LIST_SOURCEFILE };
+		LIST_ROMSIZE, LIST_PALETTESIZE, LIST_CPU, LIST_SOURCEFILE };
 #else
 enum { LIST_SHORT = 1, LIST_INFO, LIST_FULL, LIST_SAMDIR, LIST_ROMS, LIST_SAMPLES,
 		LIST_LMR, LIST_DETAILS, LIST_GAMELIST,
 		LIST_GAMES, LIST_CLONES,
 		LIST_WRONGORIENTATION, LIST_WRONGFPS, LIST_CRC, LIST_DUPCRC, LIST_WRONGMERGE,
-		LIST_ROMSIZE, LIST_CPU, LIST_SOURCEFILE, LIST_MESSINFO };
+		LIST_ROMSIZE, LIST_PALETTESIZE, LIST_CPU, LIST_SOURCEFILE, LIST_MESSINFO };
 #endif
 
 #define VERIFY_ROMS		0x00000001
@@ -35,7 +35,7 @@ enum { LIST_SHORT = 1, LIST_INFO, LIST_FULL, LIST_SAMDIR, LIST_ROMS, LIST_SAMPLE
 #define KNOWN_SOME  3
 
 static int list = 0;
-static int listclones = 1;	
+static int listclones = 1;
 static int verify = 0;
 static int ident = 0;
 static int help = 0;
@@ -61,6 +61,7 @@ struct rc_option frontend_opts[] = {
 	{ "listdupcrc", NULL, rc_set_int, &list, NULL, LIST_DUPCRC, 0, NULL, "duplicate crc's" },
 	{ "listwrongmerge", "lwm", rc_set_int, &list, NULL, LIST_WRONGMERGE, 0, NULL, "wrong merge attempts" },
 	{ "listromsize", "lrs", rc_set_int, &list, NULL, LIST_ROMSIZE, 0, NULL, "rom size" },
+	{ "listpalettesize", "lps", rc_set_int, &list, NULL, LIST_PALETTESIZE, 0, NULL, "palette size" },
 	{ "listcpu", NULL, rc_set_int, &list, NULL, LIST_CPU, 0, NULL, "cpu's used" },
 #ifdef MAME_DEBUG /* do not put this into a public release! */
 	{ "lmr", NULL, rc_set_int, &list, NULL, LIST_LMR, 0, NULL, "missing roms" },
@@ -462,15 +463,15 @@ int frontend_help (char *gamename)
 	/* HACK: some options REQUIRE gamename field to work: default to "*" */
 	if (!gamename || (strlen(gamename) == 0))
 		gamename = all_games;
-	
+
 	/* sort the list if requested */
 	if (sortby)
 	{
 		int count = 0;
-		
+
 		/* first count the drivers */
 		while (drivers[count]) count++;
-		
+
 		/* qsort as appropriate */
 		if (sortby == 1)
 			qsort(drivers, count, sizeof(drivers[0]), compare_names);
@@ -1167,6 +1168,15 @@ int frontend_help (char *gamename)
 								j += ROM_GETLENGTH(chunk);
 
 					printf("%-8s\t%-5s\t%u\n",drivers[i]->name,drivers[i]->year,j);
+				}
+			return 0;
+			break;
+
+		case LIST_PALETTESIZE: /* I used this for statistical analysis */
+			for (i = 0; drivers[i]; i++)
+				if (drivers[i]->clone_of == 0 || (drivers[i]->clone_of->flags & NOT_A_DRIVER))
+				{
+					printf("%-8s\t%-5s\t%u\n",drivers[i]->name,drivers[i]->year,drivers[i]->drv->total_colors);
 				}
 			return 0;
 			break;

@@ -209,9 +209,6 @@ void lkage_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	tilemap_set_scrollx(bg_tilemap,0,lkage_scroll[4]);
 	tilemap_set_scrolly(bg_tilemap,0,lkage_scroll[5]);
 
-	tilemap_update( ALL_TILEMAPS );
-	palette_recalc();
-
 	if ((lkage_vreg[2] & 0xf0) == 0xf0)
 	{
 		tilemap_draw( bitmap,bg_tilemap,0 ,0);

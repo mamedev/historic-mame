@@ -17,26 +17,7 @@ TODO: - background is misplaced in wbmlju
 #include "driver.h"
 #include "vidhrdw/system1.h"
 #include "cpu/z80/z80.h"
-
-
-
-/* in machine/segacrpt.c */
-void regulus_decode(void);
-void mrviking_decode(void);
-void swat_decode(void);
-void flicky_decode(void);
-void bullfgtj_decode(void);
-void pitfall2_decode(void);
-void nprinces_decode(void);
-void seganinj_decode(void);
-void imsorry_decode(void);
-void teddybb_decode(void);
-void hvymetal_decode(void);
-void myheroj_decode(void);
-void fdwarrio_decode(void);
-void wboy_decode(void);
-void wboy2_decode(void);
-void gardia_decode(void);
+#include "machine/segacrpt.h"
 
 
 
@@ -1605,10 +1586,10 @@ INPUT_PORTS_END
 
 static struct GfxLayout charlayout =
 {
-	8,8,    /* 8 by 8 */
+	8,8,
 	RGN_FRAC(1,3),
-	3,      /* 3 bits per pixel */
-	{ RGN_FRAC(0,3), RGN_FRAC(1,3), RGN_FRAC(2,3) }, /* seperate planes */
+	3,
+	{ RGN_FRAC(0,3), RGN_FRAC(1,3), RGN_FRAC(2,3) },
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	8*8
@@ -1660,7 +1641,7 @@ static const struct MachineDriver machine_driver_system1 =
 	1536, 1536,
 	system1_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	system1_vh_start,
 	system1_vh_stop,
@@ -1705,7 +1686,7 @@ static const struct MachineDriver machine_driver_small =
 	1536, 1536,
 	system1_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	system1_vh_start,
 	system1_vh_stop,
@@ -1749,7 +1730,7 @@ static const struct MachineDriver machine_driver_hvymetal =
 	1536, 1536,
 	system1_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	system1_vh_start,
 	system1_vh_stop,
@@ -1793,7 +1774,7 @@ static const struct MachineDriver machine_driver_chplft =
 	1536, 1536,
 	system1_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	system1_vh_start,
 	system1_vh_stop,
@@ -1837,7 +1818,7 @@ static const struct MachineDriver machine_driver_brain =
 	1536, 1536,
 	system1_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	system1_vh_start,
 	system1_vh_stop,
@@ -1881,7 +1862,7 @@ static const struct MachineDriver machine_driver_wbml =
 	1536, 1536,
 	system1_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	system1_vh_start,
 	system1_vh_stop,
@@ -2023,28 +2004,56 @@ ROM_START( regulusu )
 ROM_END
 
 ROM_START( upndown )
+	ROM_REGION( 2*0x10000, REGION_CPU1, 0 ) /* 64k for code */
+	ROM_LOAD( "ep5516a.129",  0x0000, 0x2000, 0x038c82da )  /* encrypted */
+	ROM_LOAD( "ep5517a.130",  0x2000, 0x2000, 0x6930e1de )  /* encrypted */
+	ROM_LOAD( "ep5518.131",   0x4000, 0x2000, 0x2a370c99 )  /* encrypted */
+	ROM_LOAD( "ep5519.132",   0x6000, 0x2000, 0x9d664a58 )  /* encrypted */
+	ROM_LOAD( "ep5520.133",   0x8000, 0x2000, 0x208dfbdf )
+	ROM_LOAD( "ep5521.134",   0xa000, 0x2000, 0xe7b8d87a )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* 64k for sound cpu */
+	ROM_LOAD( "ep5535.003",   0x0000, 0x2000, 0xcf4e4c45 )
+
+	ROM_REGION( 0xc000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "ep5527.082",   0x0000, 0x2000, 0xb2d616f1 )
+	ROM_LOAD( "ep5526.065",   0x2000, 0x2000, 0x8a8b33c2 )
+	ROM_LOAD( "ep5525.081",   0x4000, 0x2000, 0xe749c5ef )
+	ROM_LOAD( "ep5524.064",   0x6000, 0x2000, 0x8b886952 )
+	ROM_LOAD( "ep5523.080",   0x8000, 0x2000, 0xdede35d9 )
+	ROM_LOAD( "ep5522.063",   0xa000, 0x2000, 0x5e6d9dff )
+
+	ROM_REGION( 0x8000, REGION_GFX2, 0 )	/* 32k for sprites data */
+	ROM_LOAD( "ep5514.086",   0x0000, 0x4000, 0xfcc0a88b )
+	ROM_LOAD( "ep5515.093",   0x4000, 0x4000, 0x60908838 )
+
+	ROM_REGION( 0x0100, REGION_USER1, 0 )	/* misc PROMs, but no color so don't use REGION_PROMS! */
+	ROM_LOAD( "5317",         0x0000, 0x0100, 0x648350b8 )	/* timing? (not used) */
+ROM_END
+
+ROM_START( upndownu )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* 64k for code */
 	ROM_LOAD( "upnd5679.bin", 0x0000, 0x2000, 0xc4f2f9c2 )
 	ROM_LOAD( "upnd5680.bin", 0x2000, 0x2000, 0x837f021c )
 	ROM_LOAD( "upnd5681.bin", 0x4000, 0x2000, 0xe1c7ff7e )
 	ROM_LOAD( "upnd5682.bin", 0x6000, 0x2000, 0x4a5edc1e )
-	ROM_LOAD( "upnd5683.bin", 0x8000, 0x2000, 0x208dfbdf )
+	ROM_LOAD( "ep5520.133",   0x8000, 0x2000, 0x208dfbdf )	// upnd5683.bin
 	ROM_LOAD( "upnd5684.bin", 0xa000, 0x2000, 0x32fa95da )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* 64k for sound cpu */
 	ROM_LOAD( "upnd5528.bin", 0x0000, 0x2000, 0x00cd44ab )
 
 	ROM_REGION( 0xc000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "upnd5527.bin", 0x0000, 0x2000, 0xb2d616f1 )
-	ROM_LOAD( "upnd5526.bin", 0x2000, 0x2000, 0x8a8b33c2 )
-	ROM_LOAD( "upnd5525.bin", 0x4000, 0x2000, 0xe749c5ef )
-	ROM_LOAD( "upnd5524.bin", 0x6000, 0x2000, 0x8b886952 )
-	ROM_LOAD( "upnd5523.bin", 0x8000, 0x2000, 0xdede35d9 )
-	ROM_LOAD( "upnd5522.bin", 0xa000, 0x2000, 0x5e6d9dff )
+	ROM_LOAD( "ep5527.082",   0x0000, 0x2000, 0xb2d616f1 )
+	ROM_LOAD( "ep5526.065",   0x2000, 0x2000, 0x8a8b33c2 )
+	ROM_LOAD( "ep5525.081",   0x4000, 0x2000, 0xe749c5ef )
+	ROM_LOAD( "ep5524.064",   0x6000, 0x2000, 0x8b886952 )
+	ROM_LOAD( "ep5523.080",   0x8000, 0x2000, 0xdede35d9 )
+	ROM_LOAD( "ep5522.063",   0xa000, 0x2000, 0x5e6d9dff )
 
 	ROM_REGION( 0x8000, REGION_GFX2, 0 )	/* 32k for sprites data */
-	ROM_LOAD( "upnd5514.bin", 0x0000, 0x4000, 0xfcc0a88b )
-	ROM_LOAD( "upnd5515.bin", 0x4000, 0x4000, 0x60908838 )
+	ROM_LOAD( "ep5514.086",   0x0000, 0x4000, 0xfcc0a88b )
+	ROM_LOAD( "ep5515.093",   0x4000, 0x4000, 0x60908838 )
 
 	ROM_REGION( 0x0100, REGION_USER1, 0 )	/* misc PROMs, but no color so don't use REGION_PROMS! */
 	ROM_LOAD( "5317",         0x0000, 0x0100, 0x648350b8 )	/* timing? (not used) */
@@ -2976,7 +2985,7 @@ ROM_END
 
 ROM_START( gardia )
 	ROM_REGION( 2*0x20000, REGION_CPU1, 0 ) /* 128k for code + 128k for decrypted opcodes */
-	ROM_LOAD( "epr10255.1",   0x00000, 0x8000, 0x89282a6b )
+	ROM_LOAD( "epr10255.1",   0x00000, 0x8000, 0x89282a6b )  /* encrypted */
 	ROM_LOAD( "epr10254.2",   0x10000, 0x8000, 0x2826b6d8 )
 	ROM_LOAD( "epr10253.3",   0x18000, 0x8000, 0x7911260f )
 
@@ -3003,7 +3012,7 @@ ROM_END
 
 ROM_START( gardiab )
 	ROM_REGION( 2*0x20000, REGION_CPU1, 0 ) /* 128k for code + 128k for decrypted opcodes */
-	ROM_LOAD( "gardiabl.5",   0x00000, 0x8000, 0x207f9cbb )
+	ROM_LOAD( "gardiabl.5",   0x00000, 0x8000, 0x207f9cbb )  /* encrypted */
 	ROM_LOAD( "gardiabl.6",   0x10000, 0x8000, 0xb2ed05dc )
 	ROM_LOAD( "gardiabl.7",   0x18000, 0x8000, 0x0a490588 )
 
@@ -3111,7 +3120,7 @@ ROM_END
 ROM_START( wbml )
 	ROM_REGION( 2*0x20000, REGION_CPU1, 0 ) /* 256k for code + 256k for decrypted opcodes */
 	ROM_LOAD( "wbml.01",      0x20000, 0x8000, 0x66482638 ) /* Unencrypted opcodes */
-	ROM_CONTINUE(             0x00000, 0x8000 )			  /* Now load the operands in RAM */
+	ROM_CONTINUE(             0x00000, 0x8000 )             /* Now load the operands in RAM */
 	ROM_LOAD( "wbml.02",      0x30000, 0x8000, 0x48746bb6 ) /* Unencrypted opcodes */
 	ROM_CONTINUE(             0x10000, 0x8000 )
 	ROM_LOAD( "wbml.03",      0x38000, 0x8000, 0xd57ba8aa ) /* Unencrypted opcodes */
@@ -3195,11 +3204,11 @@ ROM_END
 ROM_START( wbmlju )
 	ROM_REGION( 2*0x20000, REGION_CPU1, 0 ) /* 256k for code + 256k for decrypted opcodes */
 	ROM_LOAD( "wbml.01",      0x20000, 0x8000, 0x66482638 ) /* Unencrypted opcodes */
-	ROM_CONTINUE(			 0x00000, 0x8000 )			  /* Now load the operands in RAM */
+	ROM_CONTINUE(             0x00000, 0x8000 )             /* Now load the operands in RAM */
 	ROM_LOAD( "m-6.bin",      0x30000, 0x8000, 0x8c08cd11 ) /* Unencrypted opcodes */
-	ROM_CONTINUE(			 0x10000, 0x8000 )
+	ROM_CONTINUE(             0x10000, 0x8000 )
 	ROM_LOAD( "m-7.bin",      0x38000, 0x8000, 0x11881703 ) /* Unencrypted opcodes */
-	ROM_CONTINUE(			 0x18000, 0x8000 )
+	ROM_CONTINUE(             0x18000, 0x8000 )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* 64k for sound cpu */
 	ROM_LOAD( "epr11037.126", 0x0000, 0x8000, 0x7a4ee585 )
@@ -3290,7 +3299,7 @@ static void init_teddybb(void)	{ teddybb_decode(); }
 static void init_hvymetal(void)	{ hvymetal_decode(); }
 static void init_myheroj(void)	{ myheroj_decode(); }
 static void init_4dwarrio(void)	{ fdwarrio_decode(); }
-static void init_wboy(void)		{ wboy_decode(); }
+static void init_wboy(void)		{ astrofl_decode(); }
 static void init_wboy2(void)	{ wboy2_decode(); }
 static void init_gardia(void)	{ gardia_decode(); }
 
@@ -3352,7 +3361,8 @@ GAME( 1983, starjack, 0,        small,    starjack, 0,        ROT270, "Sega", "S
 GAME( 1983, starjacs, starjack, small,    starjacs, 0,        ROT270, "Stern", "Star Jacker (Stern)" )
 GAME( 1983, regulus,  0,        system1,  regulus,  regulus,  ROT270, "Sega", "Regulus" )
 GAME( 1983, regulusu, regulus,  system1,  regulus,  0,        ROT270, "Sega", "Regulus (not encrypted)" )
-GAME( 1983, upndown,  0,        system1,  upndown,  0,        ROT270, "Sega", "Up'n Down" )
+GAME( 1983, upndown,  0,        system1,  upndown,  nprinces, ROT270, "Sega", "Up'n Down" )
+GAME( 1983, upndownu, upndown,  system1,  upndown,  0,        ROT270, "Sega", "Up'n Down (not encrypted)" )
 GAME( 1984, mrviking, 0,        small,    mrviking, mrviking, ROT270, "Sega", "Mister Viking" )
 GAME( 1984, mrvikinj, mrviking, small,    mrviking, mrviking, ROT270, "Sega", "Mister Viking (Japan)" )
 GAME( 1984, swat,     0,        system1,  swat,     swat,     ROT270, "Coreland / Sega", "SWAT" )
@@ -3374,8 +3384,8 @@ GAME( 1985, hvymetal, 0,        hvymetal, hvymetal, hvymetal, ROT0,   "Sega", "H
 GAME( 1985, myhero,   0,        system1,  myhero,   0,        ROT0,   "Sega", "My Hero (US)" )
 GAME( 1985, myheroj,  myhero,   system1,  myhero,   myheroj,  ROT0,   "Coreland / Sega", "Seishun Scandal (Japan)" )
 GAME( 1985, myherok,  myhero,   system1,  myhero,   myherok,  ROT0,   "Coreland / Sega", "My Hero (Korea)" )
-GAMEX(1985, shtngmst, 0,        chplft,   chplft,   0,        ROT0,   "Sega", "Shooting Master", GAME_NOT_WORKING )	/* 8751 protection */
-GAMEX(1985, chplft,   0,        chplft,   chplft,   0,        ROT0,   "Sega", "Choplifter", GAME_NOT_WORKING )	/* 8751 protection */
+GAMEX(1985, shtngmst, 0,        chplft,   chplft,   0,        ROT0,   "Sega", "Shooting Master", GAME_UNEMULATED_PROTECTION )	/* 8751 protection, mcu = 315-5159 */
+GAMEX(1985, chplft,   0,        chplft,   chplft,   0,        ROT0,   "Sega", "Choplifter", GAME_UNEMULATED_PROTECTION )	/* 8751 protection */
 GAME( 1985, chplftb,  chplft,   chplft,   chplft,   0,        ROT0,   "Sega", "Choplifter (alternate)" )
 GAME( 1985, chplftbl, chplft,   chplft,   chplft,   0,        ROT0,   "bootleg", "Choplifter (bootleg)" )
 GAME( 1985, 4dwarrio, 0,        system1,  4dwarrio, 4dwarrio, ROT0,   "Coreland / Sega", "4-D Warriors" )

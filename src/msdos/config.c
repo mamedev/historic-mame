@@ -1,10 +1,10 @@
-
 /*
  * Configuration routines.
  *
  * 19971219 support for mame.cfg by Valerio Verrando
  * 19980402 moved out of msdos.c (N.S.), generalized routines (BW)
  * 19980917 added a "-cheatfile" option (misc) in MAME.CFG      JCK
+ * 20010803 added support for DB9 and TGX digital joysticks (Aley)
  */
 
 #include "mamalleg.h"
@@ -131,6 +131,12 @@ struct { char *name; int id; } joy_table[] =
 	{ "wingwarrior",    JOY_TYPE_WINGWARRIOR },
 	{ "segaisa",        JOY_TYPE_IFSEGA_ISA },
 	{ "segapci",        JOY_TYPE_IFSEGA_PCI },
+	{ "db9lpt1",        JOY_TYPE_DB9_LPT1 },
+	{ "db9lpt2",        JOY_TYPE_DB9_LPT2 },
+	{ "db9lpt3",        JOY_TYPE_DB9_LPT3 },
+	{ "tgxlpt1",        JOY_TYPE_TURBOGRAFX_LPT1 },
+	{ "tgxlpt2",        JOY_TYPE_TURBOGRAFX_LPT2 },
+	{ "tgxlpt3",        JOY_TYPE_TURBOGRAFX_LPT3 },
 	{ 0, 0 }
 } ;
 

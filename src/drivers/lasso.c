@@ -274,7 +274,7 @@ static const struct MachineDriver machine_driver_lasso =
 	0x40,0x40,
 	lasso_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	lasso_vh_start,
 	0,

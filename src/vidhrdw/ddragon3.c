@@ -179,43 +179,6 @@ static void draw_sprites( struct osd_bitmap *bitmap )
 	}
 }
 
-static void mark_sprite_colors( void )
-{
-	int offs,color,i,pal_base,sprite,multi,attr;
-	int colmask[16];
-	unsigned int *pen_usage; /* Save some struct derefs */
-
-	/* Sprites */
-	pal_base = Machine->drv->gfxdecodeinfo[1].color_codes_start;
-	pen_usage=Machine->gfx[1]->pen_usage;
-	for (color = 0;color < 16;color++) colmask[color] = 0;
-	for (offs = 0; offs < (0x1000 >> 1); offs += 8)
-	{
-		attr = spriteram16[offs+1];
-		if (!(attr&1)) continue;
-
-		multi = (attr>>5)&0x7;
-		sprite = spriteram16[offs+2] & 0xff;
-		sprite += (spriteram16[offs+3] & 0xff) << 8;
-		color = spriteram16[offs+4] & 0xf;
-
-		while (multi >= 0)
-		{
-			colmask[color] |= pen_usage[sprite + multi];
-			multi--;
-		}
-	}
-
-	for (color = 0;color < 16;color++)
-	{
-		for (i = 1;i < 16;i++)
-		{
-			if (colmask[color] & (1 << i))
-				palette_used_colors[pal_base + 16 * color + i] = PALETTE_COLOR_USED;
-		}
-	}
-}
-
 void ddragon3_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	if( ddragon3_bg_tilebase != old_ddragon3_bg_tilebase )
@@ -229,12 +192,6 @@ void ddragon3_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	tilemap_set_scrolly( foreground, 0, ddragon3_fg_scrolly );
 	tilemap_set_scrollx( foreground, 0, ddragon3_fg_scrollx );
-
-	tilemap_update( ALL_TILEMAPS );
-
-	palette_init_used_colors();
-	mark_sprite_colors();
-	palette_recalc();
 
 	if (ddragon3_vreg & 0x40)
 	{
@@ -262,12 +219,6 @@ void ctribe_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	tilemap_set_scrollx( background, 0, ddragon3_bg_scrollx );
 	tilemap_set_scrolly( foreground, 0, ddragon3_fg_scrolly );
 	tilemap_set_scrollx( foreground, 0, ddragon3_fg_scrollx );
-
-	tilemap_update( ALL_TILEMAPS );
-
-	palette_init_used_colors();
-	mark_sprite_colors();
-	palette_recalc();
 
 	tilemap_draw( bitmap, background, 0 ,0);
 	tilemap_draw( bitmap, foreground, 0 ,0);

@@ -404,10 +404,10 @@ static const struct MachineDriver machine_driver_bloodbro =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	bloodbro_gfxdecodeinfo,
-	2048,2048,
+	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	bloodbro_vh_start,
 	0,
@@ -440,10 +440,10 @@ static const struct MachineDriver machine_driver_weststry =
 	/* video hardware */
 	256, 256, { 0, 255, 16, 239 },
 	weststry_gfxdecodeinfo,
-	1024,1024,
+	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	bloodbro_vh_start,
 	0,

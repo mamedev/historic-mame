@@ -15,23 +15,34 @@ static UINT8 ikki_flipscreen, ikki_scroll[2];
 void ikki_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
 	int i;
+	int colors = Machine->drv->total_colors-1;
 
-	for (i = 0;i < Machine->drv->total_colors;i++)
+	for (i = 0; i<colors; i++)
 	{
 		*(palette++) = color_prom[0]*0x11;
-		*(palette++) = color_prom[Machine->drv->total_colors]*0x11;
-		*(palette++) = color_prom[2*Machine->drv->total_colors]*0x11;
+		*(palette++) = color_prom[colors]*0x11;
+		*(palette++) = color_prom[2*colors]*0x11;
 
 		color_prom++;
 	}
 
-	color_prom += 2*Machine->drv->total_colors;
+		*(palette++) = 0; /* 256th color is not drawn on screen */
+		*(palette++) = 0; /* this is used for special transparent function */
+		*(palette++) = 1;
+
+	color_prom += 2*colors;
 
 	/* color_prom now points to the beginning of the lookup table */
 
 	/* sprites lookup table */
 	for (i=0; i<512; i++)
-		*(colortable++) = 255-*(color_prom++);
+	{
+		int d = 255-*(color_prom++);
+		if ( ((i % 8) == 7) && (d == 0) )
+			*(colortable++) = 256; /* special transparent */
+		else
+			*(colortable++) = d; /* normal color */
+	}
 
 	/* bg lookup table */
 	for (i=0; i<512; i++)
@@ -116,6 +127,8 @@ void ikki_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 /* draw sprites */
 
+	fillbitmap(tmpbitmap, Machine->pens[256], 0);
+
 	/* c060 - c0ff */
 	for (offs=0x00; offs<0x800; offs +=4)
 	{
@@ -141,15 +154,18 @@ void ikki_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		if (py>240)
 			py = py-256;
 
-		drawgfx(bitmap,Machine->gfx[1],
+		drawgfx(tmpbitmap,Machine->gfx[1],
 			chr,
 			col,
 			f,f,
 			px,py,
 			&Machine->visible_area,TRANSPARENCY_COLOR,0);
-
 	}
 
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_COLOR,256);
+
+
+	/* mask sprites */
 
 	for (offs=0; offs<(videoram_size/2); offs++)
 	{

@@ -53,12 +53,12 @@ int overdriv_vh_start(void)
 {
 	K053251_vh_start();
 
-	if (K051316_vh_start_0(REGION_GFX2,4,zoom_callback_0))
+	if (K051316_vh_start_0(REGION_GFX2,4,TILEMAP_OPAQUE,0,zoom_callback_0))
 	{
 		return 1;
 	}
 
-	if (K051316_vh_start_1(REGION_GFX3,4,zoom_callback_1))
+	if (K051316_vh_start_1(REGION_GFX3,4,TILEMAP_TRANSPARENT,0,zoom_callback_1))
 	{
 		K051316_vh_stop_0();
 		return 1;
@@ -94,31 +94,16 @@ void overdriv_vh_stop(void)
 
 void overdriv_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	int i;
-
-
 	sprite_colorbase  = K053251_get_palette_index(K053251_CI0);
 	road_colorbase[1] = K053251_get_palette_index(K053251_CI1);
 	road_colorbase[0] = K053251_get_palette_index(K053251_CI2);
 	zoom_colorbase[1] = K053251_get_palette_index(K053251_CI3);
 	zoom_colorbase[0] = K053251_get_palette_index(K053251_CI4);
 
-	K051316_tilemap_update_0();
-	K051316_tilemap_update_1();
-
-	palette_init_used_colors();
-	K053247_mark_sprites_colors();
-
-	/* set transparent pens for the K051316 */
-	for (i = 0;i < 64;i++)
-		palette_used_colors[(zoom_colorbase[1] + i) * 16] = PALETTE_COLOR_TRANSPARENT;
-
-	palette_recalc();
-
 	fillbitmap(priority_bitmap,0,NULL);
 
-	K051316_zoom_draw_0(bitmap,0);
-	K051316_zoom_draw_1(bitmap,1);
+	K051316_zoom_draw_0(bitmap,0,0);
+	K051316_zoom_draw_1(bitmap,0,1);
 
 	K053247_sprites_draw(bitmap);
 }

@@ -459,7 +459,7 @@ static struct MachineDriver machine_driver_cvs =
 	16,4096,
 	cvs_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	cvs_vh_start,
 	cvs_vh_stop,

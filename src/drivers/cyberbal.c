@@ -608,7 +608,7 @@ static const struct MachineDriver machine_driver_cyberbal =
 	4096, 4096,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK |
+	VIDEO_TYPE_RASTER  | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK |
 			VIDEO_PIXEL_ASPECT_RATIO_1_2,
 	0,
 	cyberbal_vh_start,
@@ -651,10 +651,10 @@ static const struct MachineDriver machine_driver_cyberb2p =
 	/* video hardware */
 	42*16, 30*8, { 0*16, 42*16-1, 0*8, 30*8-1 },
 	gfxdecodeinfo,
-	2048, 2048,
+	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK |
+	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK |
 			VIDEO_PIXEL_ASPECT_RATIO_1_2,
 	0,
 	cyberb2p_vh_start,
@@ -945,7 +945,7 @@ static void init_cyberb2p(void)
  *
  *************************************/
 
-GAME( 1988, cyberbal, 0,        cyberbal, cyberbal, cyberbal, ROT0_16BIT, "Atari Games", "Cyberball (Version 4)" )
-GAME( 1988, cyberba2, cyberbal, cyberbal, cyberbal, cyberbal, ROT0_16BIT, "Atari Games", "Cyberball (Version 2)" )
-GAME( 1989, cyberbt,  cyberbal, cyberbal, cyberbal, cyberbt,  ROT0_16BIT, "Atari Games", "Tournament Cyberball 2072" )
-GAME( 1989, cyberb2p, cyberbal, cyberb2p, cyberb2p, cyberb2p, ROT0_16BIT, "Atari Games", "Cyberball 2072 (2 player)" )
+GAME( 1988, cyberbal, 0,        cyberbal, cyberbal, cyberbal, ROT0, "Atari Games", "Cyberball (Version 4)" )
+GAME( 1988, cyberba2, cyberbal, cyberbal, cyberbal, cyberbal, ROT0, "Atari Games", "Cyberball (Version 2)" )
+GAME( 1989, cyberbt,  cyberbal, cyberbal, cyberbal, cyberbt,  ROT0, "Atari Games", "Tournament Cyberball 2072" )
+GAME( 1989, cyberb2p, cyberbal, cyberb2p, cyberb2p, cyberb2p, ROT0, "Atari Games", "Cyberball 2072 (2 player)" )

@@ -353,9 +353,6 @@ void marvins_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh )
 	tilemap_set_scrollx( tx_tilemap,  0, 0 );
 	tilemap_set_scrolly( tx_tilemap,  0, 0 );
 
-	tilemap_update( ALL_TILEMAPS );
-	palette_recalc();
-
 	tilemap_draw( bitmap,fg_tilemap,TILEMAP_IGNORE_TRANSPARENCY ,0);
 	draw_sprites( bitmap, sprite_scrollx+29+1, sprite_scrolly, 0, sprite_partition );
 	tilemap_draw( bitmap,bg_tilemap,0 ,0);
@@ -396,9 +393,6 @@ void madcrash_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh )
 	tilemap_set_scrolly( fg_tilemap, 0, fg_scrolly );
 	tilemap_set_scrollx( tx_tilemap,  0, 0 );
 	tilemap_set_scrolly( tx_tilemap,  0, 0 );
-
-	tilemap_update( ALL_TILEMAPS );
-	palette_recalc();
 
 	tilemap_draw( bitmap,bg_tilemap,TILEMAP_IGNORE_TRANSPARENCY ,0);
 	tilemap_draw( bitmap,fg_tilemap,0 ,0);

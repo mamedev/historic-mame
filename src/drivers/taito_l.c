@@ -2083,10 +2083,10 @@ static const struct MachineDriver machine_driver_##name =		\
 															\
 	40*8, 32*8, { 0*8, 40*8-1, 2*8, 30*8-1 },				\
 	gfxdecodeinfo2,											\
-	256, 256,												\
+	256, 0,													\
 	0,														\
 															\
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,				\
+	VIDEO_TYPE_RASTER ,				\
 	taitol_eof_callback,									\
 	taitol_vh_start,										\
 	0,														\
@@ -2130,10 +2130,10 @@ static const struct MachineDriver machine_driver_##name =		\
 															\
 	40*8, 32*8, { 0*8, 40*8-1, 2*8, 30*8-1 },				\
 	gfxdecodeinfo2,											\
-	256, 256,												\
+	256, 0,													\
 	0,														\
 															\
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,				\
+	VIDEO_TYPE_RASTER ,				\
 	taitol_eof_callback,									\
 	taitol_vh_start,										\
 	0,														\
@@ -2181,10 +2181,10 @@ static const struct MachineDriver machine_driver_##name =		\
 															\
 	40*8, 32*8, { 0*8, 40*8-1, 2*8, 30*8-1 },				\
 	gfxdecodeinfo2,											\
-	256, 256,												\
+	256, 0,													\
 	0,														\
 															\
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,				\
+	VIDEO_TYPE_RASTER ,				\
 	taitol_eof_callback,									\
 	taitol_vh_start,										\
 	0,														\
@@ -2222,10 +2222,10 @@ static const struct MachineDriver machine_driver_##name =		\
 															\
 	40*8, 32*8, { 0*8, 40*8-1, 2*8, 30*8-1 },				\
 	gfxdecodeinfo1,											\
-	256, 256,												\
+	256, 0,													\
 	0,														\
 															\
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,				\
+	VIDEO_TYPE_RASTER ,				\
 	taitol_eof_callback,									\
 	taitol_vh_start,										\
 	0,														\
@@ -2257,10 +2257,10 @@ static const struct MachineDriver machine_driver_##name =	\
 														\
 	40*8, 32*8, { 0*8, 40*8-1, 2*8, 30*8-1 },			\
 	gfxdecodeinfo1,										\
-	256, 256,											\
+	256, 0,												\
 	0,													\
 														\
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,			\
+	VIDEO_TYPE_RASTER ,			\
 	taitol_eof_callback,								\
 	taitol_vh_start,									\
 	0,													\

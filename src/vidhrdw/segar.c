@@ -287,7 +287,7 @@ static void segar_common_screenrefresh(struct osd_bitmap *bitmap, int sprite_tra
 ***************************************************************************/
 void segar_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	if (palette_recalc() || full_refresh)
+	if (full_refresh)
 		sv.refresh = 1;
 
 	segar_common_screenrefresh(bitmap, TRANSPARENCY_NONE, TRANSPARENCY_NONE);
@@ -434,7 +434,7 @@ void spaceod_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	unsigned char *back_charmap = memory_region(REGION_USER1);
 
-	if (palette_recalc() || full_refresh)
+	if (full_refresh)
 		sv.refresh = 1;
 
 	// scenes 0,1 are horiz.  scenes 2,3 are vert.
@@ -595,7 +595,7 @@ void monsterb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	unsigned char *back_charmap = memory_region(REGION_USER1);
 
-	if (palette_recalc() || full_refresh)
+	if (full_refresh)
 		sv.refresh = 1;
 
 	sprite_transparency=TRANSPARENCY_NONE;
@@ -771,7 +771,7 @@ void sindbadm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	unsigned char *back_charmap = memory_region(REGION_USER1);
 
-	if (palette_recalc() || full_refresh)
+	if (full_refresh)
 		sv.refresh = 1;
 
 	sprite_transparency=TRANSPARENCY_NONE;

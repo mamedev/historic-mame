@@ -13,8 +13,10 @@
 
 void scramble_sh_init(void);
 WRITE_HANDLER( scramble_sh_irqtrigger_w );
+WRITE_HANDLER( scramble_background_enable_w );
 WRITE_HANDLER( scramble_background_red_w );
 WRITE_HANDLER( scramble_background_green_w );
+WRITE_HANDLER( scramble_background_blue_w );
 WRITE_HANDLER( darkplnt_bullet_color_w );
 
 
@@ -182,7 +184,7 @@ static READ_HANDLER( mariner_protection_2_r )
 
 READ_HANDLER( triplep_pip_r )
 {
-	logerror("PC %04x: read port 2\n",cpu_get_pc());
+	logerror("PC %04x: triplep read port 2\n",cpu_get_pc());
 	if (cpu_get_pc() == 0x015a) return 0xff;
 	else if (cpu_get_pc() == 0x0886) return 0x05;
 	else return 0;
@@ -190,7 +192,7 @@ READ_HANDLER( triplep_pip_r )
 
 READ_HANDLER( triplep_pap_r )
 {
-	logerror("PC %04x: read port 3\n",cpu_get_pc());
+	logerror("PC %04x: triplep read port 3\n",cpu_get_pc());
 	if (cpu_get_pc() == 0x015d) return 0x04;
 	else return 0;
 }
@@ -358,14 +360,28 @@ static ppi8255_interface ppi8255_intf =
 };
 
 
-void init_scobra(void)
+void init_scramble_ppi(void)
 {
 	ppi8255_init(&ppi8255_intf);
 }
 
+void init_scobra(void)
+{
+	init_scramble_ppi();
+
+	install_mem_write_handler(0, 0xa803, 0xa803, scramble_background_enable_w);
+}
+
+void init_atlantis(void)
+{
+	init_scramble_ppi();
+
+	install_mem_write_handler(0, 0x6803, 0x6803, scramble_background_enable_w);
+}
+
 void init_scramble(void)
 {
-	init_scobra();
+	init_atlantis();
 
 	ppi8255_set_portCread (1, scramble_protection_r);
 	ppi8255_set_portCwrite(1, scramble_protection_w);
@@ -373,7 +389,7 @@ void init_scramble(void)
 
 void init_scrambls(void)
 {
-	init_scobra();
+	init_atlantis();
 
 	ppi8255_set_portCread(0, scrambls_input_port_2_r);
 	ppi8255_set_portCread(1, scrambls_protection_r);
@@ -382,25 +398,33 @@ void init_scrambls(void)
 
 void init_theend(void)
 {
-	init_scobra();
+	init_scramble_ppi();
 
 	ppi8255_set_portCwrite(0, theend_coin_counter_w);
 }
 
 void init_stratgyx(void)
 {
-	init_scobra();
+	init_scramble_ppi();
 
 	install_mem_write_handler(0, 0xb000, 0xb000, scramble_background_green_w);
+	install_mem_write_handler(0, 0xb002, 0xb002, scramble_background_blue_w);
 	install_mem_write_handler(0, 0xb00a, 0xb00a, scramble_background_red_w);
 
 	ppi8255_set_portCread(0, stratgyx_input_port_2_r);
 	ppi8255_set_portCread(1, stratgyx_input_port_3_r);
 }
 
+void init_tazmani2(void)
+{
+	init_scramble_ppi();
+
+	install_mem_write_handler(0, 0xb002, 0xb002, scramble_background_enable_w);
+}
+
 void init_amidar(void)
 {
-	init_scobra();
+	init_scramble_ppi();
 
 	/* Amidar has a the DIP switches connected to port C of the 2nd 8255 */
 	ppi8255_set_portCread(1, input_port_3_r);
@@ -408,7 +432,7 @@ void init_amidar(void)
 
 void init_ckongs(void)
 {
-	init_scobra();
+	init_scramble_ppi();
 
 	ppi8255_set_portBread(0, ckongs_input_port_1_r);
 	ppi8255_set_portCread(0, ckongs_input_port_2_r);
@@ -416,7 +440,7 @@ void init_ckongs(void)
 
 void init_mariner(void)
 {
-	init_scobra();
+	init_scramble_ppi();
 
 	/* extra ROM */
 	install_mem_read_handler (0, 0x5800, 0x67ff, MRA_ROM);
@@ -426,7 +450,7 @@ void init_mariner(void)
 	install_mem_read_handler(0, 0xb401, 0xb401, mariner_protection_1_r);
 
 	/* ??? (it's NOT a background enable) */
-	install_mem_write_handler(0, 0x6803, 0x6803, MWA_NOP);
+	/*install_mem_write_handler(0, 0x6803, 0x6803, MWA_NOP);*/
 }
 
 void init_frogger(void)
@@ -435,7 +459,7 @@ void init_frogger(void)
 	unsigned char *rom;
 
 
-	init_scobra();
+	init_scramble_ppi();
 
 
 	/* the first ROM of the second CPU has data lines D0 and D1 swapped. Decode it. */
@@ -455,7 +479,7 @@ void init_froggers(void)
 	unsigned char *rom;
 
 
-	init_scobra();
+	init_scramble_ppi();
 
 	/* the first ROM of the second CPU has data lines D0 and D1 swapped. Decode it. */
 	rom = memory_region(REGION_CPU2);
@@ -469,7 +493,7 @@ void init_mars(void)
 	unsigned char *RAM;
 
 
-	init_scobra();
+	init_scramble_ppi();
 
 
 	ppi8255_set_portCread(1, input_port_3_r);
@@ -506,7 +530,7 @@ void init_hotshock(void)
 
 void init_cavelon(void)
 {
-	init_scobra();
+	init_scramble_ppi();
 
 	/* banked ROM */
 	install_mem_read_handler(0, 0x0000, 0x3fff, MRA_BANK1);
@@ -522,7 +546,7 @@ void init_cavelon(void)
 
 void init_moonwar(void)
 {
-	init_scobra();
+	init_scramble_ppi();
 
 	/* special handler for the spinner */
 	ppi8255_set_portAread (0, moonwar_input_port_0_r);
@@ -531,7 +555,7 @@ void init_moonwar(void)
 
 void init_darkplnt(void)
 {
-	ppi8255_init(&ppi8255_intf);
+	init_scramble_ppi();
 
 	/* special handler for the spinner */
 	ppi8255_set_portBread(0, darkplnt_input_port_1_r);
@@ -670,7 +694,7 @@ void init_losttomb(void)
 	unsigned char *scratch;
 
 
-	init_scobra();
+	init_scramble();
 
 	/*
 	*   Code To Decode Lost Tomb by Mirko Buffoni
@@ -708,7 +732,7 @@ void init_superbon(void)
 	unsigned char *RAM;
 
 
-	init_scobra();
+	init_scramble();
 
 	/*
 	*   Code rom deryption worked out by hand by Chris Hardy.
@@ -743,7 +767,7 @@ void init_hustler(void)
 	int A;
 
 
-	init_scobra();
+	init_scramble_ppi();
 
 
 	for (A = 0;A < 0x4000;A++)
@@ -785,7 +809,7 @@ void init_billiard(void)
 	int A;
 
 
-	init_scobra();
+	init_scramble_ppi();
 
 
 	for (A = 0;A < 0x4000;A++)

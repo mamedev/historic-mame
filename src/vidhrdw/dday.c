@@ -4,188 +4,60 @@
 
   Functions to emulate the video hardware of the machine.
 
+  Convention: "sl" stands for "searchlight"
+
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
-
-unsigned char *dday_videoram2;
-unsigned char *dday_videoram3;
-static int control = 0;
-
-static unsigned char *searchlight_image;
-static int searchlight_flipx;
-static int searchlight_enable = 0;
 
 
-/* LBO */
-#ifdef LSB_FIRST
-#define BL0 0
-#define BL1 1
-#define BL2 2
-#define BL3 3
-#else
-#define BL0 3
-#define BL1 2
-#define BL2 1
-#define BL3 0
-#endif
+unsigned char *dday_bgvideoram;
+unsigned char *dday_fgvideoram;
+unsigned char *dday_textvideoram;
+unsigned char *dday_colorram;
 
-#ifdef ALIGN_INTS /* GSL 980108 read/write nonaligned dword routine for ARM processor etc */
+static struct tilemap *fg_tilemap, *bg_tilemap, *text_tilemap, *sl_tilemap;
+struct osd_bitmap *main_bitmap;
+static int control;
+static int sl_image;
+static int sl_enable;
+static void *countdown_timer;
+static int timer_value;
 
-INLINE UINT32 read_dword(void *address)
+void dday_vh_stop(void);
+
+
+/* Note: There seems to be no way to reset this timer via hardware.
+         The game uses a difference method to reset it to 99.
+
+  Thanks Zwaxy for the timer info. */
+
+READ_HANDLER( dday_countdown_timer_r )
 {
-	if ((long)address & 3)
-	{
-  		return (*((UINT8 *)address+BL0) +
-			   (*((UINT8 *)address+BL1) << 8)  +
-			   (*((UINT8 *)address+BL2) << 16) +
-			   (*((UINT8 *)address+BL3) << 24) );
-	}
-	else
-		return *(UINT32 *)address;
+    return ((timer_value / 10) << 4) | (timer_value % 10);
 }
 
-
-#else
-#define read_dword(address) *(UINT32 *)address
-#endif
-
-
-static void drawgfx_shadow(struct osd_bitmap *dest,const struct GfxElement *gfx,
-		unsigned int code,unsigned int color,int sx,int sy,
-		const struct rectangle *clip,int transparency,
-		UINT8* shadow_mask, UINT8* layer_mask, int layer)
+static void countdown_timer_callback(int param)
 {
-	int ox,oy,ex,ey,y,start;
-	const UINT8 *sd;
-	UINT8 *bm,*bme;
-	UINT8 col;
-	int *sd4;
-	int col4;
-	int f,shadow=0,l;
+	timer_value--;
 
-
-	code %= gfx->total_elements;
-	color %= gfx->total_colors;
-
-
-	/* check bounds */
-	ox = sx;
-	oy = sy;
-	ex = sx + gfx->width-1;
-	if (sx < 0) sx = 0;
-	if (clip && sx < clip->min_x) sx = clip->min_x;
-	if (ex >= dest->width) ex = dest->width-1;
-	if (clip && ex > clip->max_x) ex = clip->max_x;
-	if (sx > ex) return;
-	ey = sy + gfx->height-1;
-	if (sy < 0) sy = 0;
-	if (clip && sy < clip->min_y) sy = clip->min_y;
-	if (ey >= dest->height) ey = dest->height-1;
-	if (clip && ey > clip->max_y) ey = clip->max_y;
-	if (sy > ey) return;
-
-
-	start = code * gfx->height + (sy-oy);
-
-	if (gfx->colortable)	/* remap colors */
+	if (timer_value < 0)
 	{
-		const UINT32 *paldata;	/* ASG 980209 */
-
-		paldata = &gfx->colortable[gfx->color_granularity * color];
-
-		switch (transparency)
-		{
-		case TRANSPARENCY_NONE:
-			if (layer_mask)
-			{
-				for (y = sy;y <= ey;y++)
-				{
-					bm  = dest->line[y];
-					bme = bm + ex;
-					sd = gfx->gfxdata + start * gfx->line_modulo + (sx-ox);
-					for( bm += sx ; bm <= bme-7 ; bm+=8)
-					{
-						shadow = *(shadow_mask++);
-						l = *(layer_mask++);
-
-						if (((l & 0x01) >> 0) == layer)  bm[0] = paldata[sd[0]+((shadow & 0x01) << 8)];
-						if (((l & 0x02) >> 1) == layer)  bm[1] = paldata[sd[1]+((shadow & 0x02) << 7)];
-						if (((l & 0x04) >> 2) == layer)  bm[2] = paldata[sd[2]+((shadow & 0x04) << 6)];
-						if (((l & 0x08) >> 3) == layer)  bm[3] = paldata[sd[3]+((shadow & 0x08) << 5)];
-						if (((l & 0x10) >> 4) == layer)  bm[4] = paldata[sd[4]+((shadow & 0x10) << 4)];
-						if (((l & 0x20) >> 5) == layer)  bm[5] = paldata[sd[5]+((shadow & 0x20) << 3)];
-						if (((l & 0x40) >> 6) == layer)  bm[6] = paldata[sd[6]+((shadow & 0x40) << 2)];
-						if (((l & 0x80) >> 7) == layer)  bm[7] = paldata[sd[7]+((shadow & 0x80) << 1)];
-						sd+=8;
-					}
-					start+=1;
-				}
-			}
-			else
-			{
-				for (y = sy;y <= ey;y++)
-				{
-					bm  = dest->line[y];
-					bme = bm + ex;
-					sd = gfx->gfxdata + start * gfx->line_modulo + (sx-ox);
-					for( bm += sx ; bm <= bme-7 ; bm+=8)
-					{
-						shadow = *(shadow_mask++);
-
-						bm[0] = paldata[sd[0]+((shadow & 0x01) << 8)];
-						bm[1] = paldata[sd[1]+((shadow & 0x02) << 7)];
-						bm[2] = paldata[sd[2]+((shadow & 0x04) << 6)];
-						bm[3] = paldata[sd[3]+((shadow & 0x08) << 5)];
-						bm[4] = paldata[sd[4]+((shadow & 0x10) << 4)];
-						bm[5] = paldata[sd[5]+((shadow & 0x20) << 3)];
-						bm[6] = paldata[sd[6]+((shadow & 0x40) << 2)];
-						bm[7] = paldata[sd[7]+((shadow & 0x80) << 1)];
-						sd+=8;
-					}
-					start+=1;
-				}
-			}
-			break;
-
-		case TRANSPARENCY_PEN:
-
-			for (y = sy;y <= ey;y++)
-			{
-				bm  = dest->line[y];
-				bme = bm + ex;
-				sd4 = (int *)(gfx->gfxdata + start * gfx->line_modulo + (sx-ox));
-				f = 0;
-				for( bm += sx ; bm <= bme-3 ; bm+=4, f^=1 )
-				{
-					if (f)
-					{
-						shadow >>= 4;
-					}
-					else
-					{
-						shadow = *(shadow_mask++);
-					}
-					col4 = read_dword(sd4);
-					if (col4)
-					{
-						col = col4;
-						if (col)  bm[BL0] = paldata[col+((shadow & 0x01) << 8)];
-						col = col4>>8;
-						if (col)  bm[BL1] = paldata[col+((shadow & 0x02) << 7)];
-						col = col4>>16;
-						if (col)  bm[BL2] = paldata[col+((shadow & 0x04) << 6)];
-						col = col4>>24;
-						if (col)  bm[BL3] = paldata[col+((shadow & 0x08) << 5)];
-					}
-					sd4++;
-				}
-				start+=1;
-			}
-			break;
-		}
+		timer_value = 99;
 	}
+}
+
+static void start_countdown_timer(void)
+{
+	timer_value = 0;
+
+	countdown_timer = timer_pulse(TIME_IN_SEC(1), 0, countdown_timer_callback);
+}
+
+static void stop_countdown_timer(void)
+{
+	if (countdown_timer)  timer_remove(countdown_timer);
+	countdown_timer = 0;
 }
 
 
@@ -194,148 +66,284 @@ static void drawgfx_shadow(struct osd_bitmap *dest,const struct GfxElement *gfx,
   Convert the color PROMs into a more useable format.
 
 ***************************************************************************/
-void dday_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+
+void dday_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom)
 {
-	int i,total;
+	int i;
 
-	total = Machine->drv->total_colors/2;
 
-	for (i = 0;i < total;i++)
+	palette_set_shadow_factor(1.0/8);	/* this matches the previos version of the driver (>>3) */
+
+	for (i = 0; i < Machine->drv->total_colors; i++)
 	{
 		int bit0,bit1,bit2,bit3,r,g,b;
 
 
 		/* red component */
-		bit0 = (color_prom[0] >> 0) & 0x01;
-		bit1 = (color_prom[0] >> 1) & 0x01;
-		bit2 = (color_prom[0] >> 2) & 0x01;
-		bit3 = (color_prom[0] >> 3) & 0x01;
+		bit0 = (color_prom[i] >> 0) & 0x01;
+		bit1 = (color_prom[i] >> 1) & 0x01;
+		bit2 = (color_prom[i] >> 2) & 0x01;
+		bit3 = (color_prom[i] >> 3) & 0x01;
 		r = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 		/* green component */
-		bit0 = (color_prom[total] >> 0) & 0x01;
-		bit1 = (color_prom[total] >> 1) & 0x01;
-		bit2 = (color_prom[total] >> 2) & 0x01;
-		bit3 = (color_prom[total] >> 3) & 0x01;
+		bit0 = (color_prom[i + Machine->drv->total_colors] >> 0) & 0x01;
+		bit1 = (color_prom[i + Machine->drv->total_colors] >> 1) & 0x01;
+		bit2 = (color_prom[i + Machine->drv->total_colors] >> 2) & 0x01;
+		bit3 = (color_prom[i + Machine->drv->total_colors] >> 3) & 0x01;
 		g = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 		/* blue component */
-		bit0 = (color_prom[2*total] >> 0) & 0x01;
-		bit1 = (color_prom[2*total] >> 1) & 0x01;
-		bit2 = (color_prom[2*total] >> 2) & 0x01;
-		bit3 = (color_prom[2*total] >> 3) & 0x01;
+		bit0 = (color_prom[i + 2*Machine->drv->total_colors] >> 0) & 0x01;
+		bit1 = (color_prom[i + 2*Machine->drv->total_colors] >> 1) & 0x01;
+		bit2 = (color_prom[i + 2*Machine->drv->total_colors] >> 2) & 0x01;
+		bit3 = (color_prom[i + 2*Machine->drv->total_colors] >> 3) & 0x01;
 		b = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 
-		palette[0] = r;
-		palette[1] = g;
-		palette[2] = b;
-
-		/* darker version for searchlight */
-		palette[3*256  ] = r >> 3;
-		palette[3*256+1] = g >> 3;
-		palette[3*256+2] = b >> 3;
-
-		palette += 3;
-
-		color_prom++;
+		palette_change_color(i,r,g,b);
 	}
 
 
 	/* HACK!!! This table is handgenerated, but it matches the screenshot.
 	   I have no clue how it really works */
 
-	colortable[0*4+0] = 0;
-	colortable[0*4+1] = 1;
-	colortable[0*4+2] = 21;
-	colortable[0*4+3] = 2;
+	colortable[0*8+0] = 0;
+	colortable[0*8+1] = 1;
+	colortable[0*8+2] = 21;
+	colortable[0*8+3] = 2;
+	colortable[0*8+4+0] = 0;
+	colortable[0*8+4+1] = 1;
+	colortable[0*8+4+2] = 21;
+	colortable[0*8+4+3] = 2;
 
-	colortable[1*4+0] = 4;
-	colortable[1*4+1] = 5;
-	colortable[1*4+2] = 3;
-	colortable[1*4+3] = 7;
+	colortable[1*8+0] = 4;
+	colortable[1*8+1] = 5;
+	colortable[1*8+2] = 3;
+	colortable[1*8+3] = 7;
+	colortable[1*8+4+0] = 4;
+	colortable[1*8+4+1] = 5;
+	colortable[1*8+4+2] = 3;
+	colortable[1*8+4+3] = 7;
 
-	colortable[2*4+0] = 8;
-	colortable[2*4+1] = 21;
-	colortable[2*4+2] = 10;
-	colortable[2*4+3] = 3;
+	colortable[2*8+0] = 8;
+	colortable[2*8+1] = 21;
+	colortable[2*8+2] = 10;
+	colortable[2*8+3] = 3;
+	colortable[2*8+4+0] = 8;
+	colortable[2*8+4+1] = 21;
+	colortable[2*8+4+2] = 10;
+	colortable[2*8+4+3] = 3;
 
-	colortable[3*4+0] = 8;
-	colortable[3*4+1] = 21;
-	colortable[3*4+2] = 10;
-	colortable[3*4+3] = 3;
+	colortable[3*8+0] = 8;
+	colortable[3*8+1] = 21;
+	colortable[3*8+2] = 10;
+	colortable[3*8+3] = 3;
+	colortable[3*8+4+0] = 8;
+	colortable[3*8+4+1] = 21;
+	colortable[3*8+4+2] = 10;
+	colortable[3*8+4+3] = 3;
 
-	colortable[4*4+0] = 16;
-	colortable[4*4+1] = 17;
-	colortable[4*4+2] = 18;
-	colortable[4*4+3] = 7;
+	colortable[4*8+0] = 16;
+	colortable[4*8+1] = 17;
+	colortable[4*8+2] = 18;
+	colortable[4*8+3] = 7;
+	colortable[4*8+4+0] = 16;
+	colortable[4*8+4+1] = 17;
+	colortable[4*8+4+2] = 18;
+	colortable[4*8+4+3] = 7;
 
-	colortable[5*4+0] = 29;
-	colortable[5*4+1] = 21;
-	colortable[5*4+2] = 22;
-	colortable[5*4+3] = 27;
+	colortable[5*8+0] = 29;
+	colortable[5*8+1] = 21;
+	colortable[5*8+2] = 22;
+	colortable[5*8+3] = 27;
+	colortable[5*8+4+0] = 29;
+	colortable[5*8+4+1] = 21;
+	colortable[5*8+4+2] = 22;
+	colortable[5*8+4+3] = 27;
 
-	colortable[6*4+0] = 29;
-	colortable[6*4+1] = 21;
-	colortable[6*4+2] = 26;
-	colortable[6*4+3] = 27;
+	colortable[6*8+0] = 29;
+	colortable[6*8+1] = 21;
+	colortable[6*8+2] = 26;
+	colortable[6*8+3] = 27;
+	colortable[6*8+4+0] = 29;
+	colortable[6*8+4+1] = 21;
+	colortable[6*8+4+2] = 26;
+	colortable[6*8+4+3] = 27;
 
-	colortable[7*4+0] = 29;
-	colortable[7*4+1] = 2;
-	colortable[7*4+2] = 4;
-	colortable[7*4+3] = 27;
-
-	for (i = 0; i < 8*4; i++)
-	{
-		colortable[i+256] = colortable[i] + 256;
-	}
+	colortable[7*8+0] = 29;
+	colortable[7*8+1] = 2;
+	colortable[7*8+2] = 4;
+	colortable[7*8+3] = 27;
+	colortable[7*8+4+0] = 29;
+	colortable[7*8+4+1] = 2;
+	colortable[7*8+4+2] = 4;
+	colortable[7*8+4+3] = 27;
 }
 
 
-void dday_decode(void)
+/***************************************************************************
+
+  Callbacks for the TileMap code
+
+***************************************************************************/
+
+static void get_bg_tile_info(int tile_index)
 {
-	int i;
-	UINT8 *mask = memory_region(REGION_GFX4);
-	UINT8 data;
+	int code;
 
-
-	/* create x-flipped search light mask */
-	for (i = 0x1000; i < 0x1800; i++)
-	{
-		data = mask[i];
-
-		mask[i + 0x800] = ((data >> 7) & 0x01) | ((data >> 5) & 0x02) |
-			 			  ((data >> 3) & 0x04) | ((data >> 1) & 0x08) |
-                          ((data << 1) & 0x10) | ((data << 3) & 0x20) |
-                          ((data << 5) & 0x40) | ((data << 7) & 0x80);
-	}
+	code = dday_bgvideoram[tile_index];
+	SET_TILE_INFO(0, code, code >> 5, 0);
 }
 
+static void get_fg_tile_info(int tile_index)
+{
+	int code, flipx;
+
+	flipx = dday_colorram[tile_index & 0x03e0] & 0x01;
+	code = dday_fgvideoram[flipx ? tile_index ^ 0x1f : tile_index];
+	SET_TILE_INFO(2, code, code >> 5, flipx ? TILE_FLIPX : 0);
+}
+
+static void get_text_tile_info(int tile_index)
+{
+	int code;
+
+	code = dday_textvideoram[tile_index];
+	SET_TILE_INFO(1, code, code >> 5, 0)
+}
+
+static void get_sl_tile_info(int tile_index)
+{
+	int code, sl_flipx, flipx;
+	UINT8* sl_map;
+
+	sl_map = &memory_region(REGION_USER1)[(sl_image & 0x07) * 0x0200];
+
+	flipx = (tile_index >> 4) & 0x01;
+	sl_flipx = (sl_image >> 3) & 0x01;
+
+	/* bit 4 is really a flip indicator.  Need to shift bits 5-9 to the right by 1 */
+	tile_index = ((tile_index & 0x03e0) >> 1) | (tile_index & 0x0f);
+
+	code = sl_map[flipx ? tile_index ^ 0x0f : tile_index];
+
+	if (sl_flipx != flipx)
+	{
+		if (code & 0x80)
+		{
+			/* no mirroring, draw dark spot */
+			code = 1;
+		}
+	}
+
+	SET_TILE_INFO(3, code & 0x3f, 0, flipx ? TILE_FLIPX : 0)
+}
+
+
+/***************************************************************************
+
+  Start the video hardware emulation.
+
+***************************************************************************/
+
+int dday_vh_start(void)
+{
+	bg_tilemap   = tilemap_create(get_bg_tile_info,  tilemap_scan_rows,TILEMAP_SPLIT,8,8,32,32);
+	fg_tilemap   = tilemap_create(get_fg_tile_info,  tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
+	text_tilemap = tilemap_create(get_text_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
+	sl_tilemap   = tilemap_create(get_sl_tile_info,  tilemap_scan_rows,TILEMAP_OPAQUE,8,8,32,32);
+
+	main_bitmap = bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height);
+
+	if (!bg_tilemap || !fg_tilemap || !text_tilemap || !sl_tilemap || !main_bitmap)
+	{
+		dday_vh_stop();
+		return 1;
+	}
+
+	tilemap_set_transmask(bg_tilemap,0,0x00f0,0xff0f); /* pens 0-3 have priority over the foreground layer */
+
+	tilemap_set_transparent_pen(fg_tilemap, 0);
+
+	tilemap_set_transparent_pen(text_tilemap, 0);
+
+	control = 0;
+	sl_enable = 0;
+	sl_image = 0;
+
+	start_countdown_timer();
+
+	return 0;
+}
+
+void dday_vh_stop(void)
+{
+	if (main_bitmap)  bitmap_free(main_bitmap);
+
+	stop_countdown_timer();
+}
+
+
+WRITE_HANDLER( dday_bgvideoram_w )
+{
+	dday_bgvideoram[offset] = data;
+	tilemap_mark_tile_dirty(bg_tilemap, offset);
+}
+
+WRITE_HANDLER( dday_fgvideoram_w )
+{
+	dday_fgvideoram[offset] = data;
+	tilemap_mark_tile_dirty(fg_tilemap, offset);
+	tilemap_mark_tile_dirty(fg_tilemap, offset ^ 0x1f);  /* for flipx case */
+}
+
+WRITE_HANDLER( dday_textvideoram_w )
+{
+	dday_textvideoram[offset] = data;
+	tilemap_mark_tile_dirty(text_tilemap, offset);
+}
 
 WRITE_HANDLER( dday_colorram_w )
 {
-    colorram[offset & 0x3e0] = data;
+	int i;
+
+
+	offset &= 0x03e0;
+
+    dday_colorram[offset & 0x3e0] = data;
+
+    for (i = 0; i < 0x20; i++)
+    {
+		tilemap_mark_tile_dirty(fg_tilemap, offset + i);
+	}
 }
 
 READ_HANDLER( dday_colorram_r )
 {
-    return colorram[offset & 0x3e0];
+    return dday_colorram[offset & 0x03e0];
 }
 
-WRITE_HANDLER( dday_searchlight_w )
+
+WRITE_HANDLER( dday_sl_control_w )
 {
-	searchlight_image = &memory_region(REGION_GFX4)[0x200*(data & 0x07)];
-	searchlight_flipx = (data >> 3) & 0x01;
+	if (sl_image != data)
+	{
+		sl_image = data;
+
+		tilemap_mark_all_tiles_dirty(sl_tilemap);
+	}
 }
+
 
 WRITE_HANDLER( dday_control_w )
 {
-	//logerror("Control = %02X\n", data);
+	//if (data & 0xac)  logerror("Control = %02X\n", data & 0xac);
 
-	/* Bit 0 is coin counter 1 */
+	/* bit 0 is coin counter 1 */
 	coin_counter_w(0, data & 0x01);
 
-	/* Bit 1 is coin counter 2 */
+	/* bit 1 is coin counter 2 */
 	coin_counter_w(1, data & 0x02);
 
-	/* Bit 4 is sound enable */
+	/* bit 4 is sound enable */
 	if (!(data & 0x10) && (control & 0x10))
 	{
 		AY8910_reset(0);
@@ -344,137 +352,55 @@ WRITE_HANDLER( dday_control_w )
 
 	mixer_sound_enable_global_w(data & 0x10);
 
-	/* Bit 6 is search light enable */
-	searchlight_enable = data & 0x40;
+	/* bit 6 is search light enable */
+	sl_enable = data & 0x40;
 
 	control = data;
 }
 
 /***************************************************************************
 
-  Draw the game screen in the given osd_bitmap.
-  Do NOT call osd_update_display() from this function, it will be called by
-  the main emulation engine.
+  Display refresh
 
 ***************************************************************************/
+
 void dday_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	int offs;
+	tilemap_draw(main_bitmap,bg_tilemap,TILEMAP_BACK,0);
+	tilemap_draw(main_bitmap,fg_tilemap,0,0);
+	tilemap_draw(main_bitmap,bg_tilemap,TILEMAP_FRONT,0);
+	tilemap_draw(main_bitmap,text_tilemap,0,0);
 
-
-	for (offs = videoram_size - 1;offs >= 0;offs--)
+	if (sl_enable)
 	{
-		int code, code_background, sx, sy, flipx;
-		UINT8* searchlight_bitmap;
+		/* apply shadow */
+
+		struct osd_bitmap *sl_bitmap;
+		int x, y;
 
 
-		sy = (offs / 32);
-		sx = (offs % 32);
+		sl_bitmap = tilemap_get_pixmap(sl_tilemap);
 
-		flipx = 0;
-		code = 0;
-
-		/* draw the search light, if enabled */
-		if (searchlight_enable)
+		for (x = Machine->visible_area.min_x; x <= Machine->visible_area.max_x; x++)
 		{
-			flipx = (sx >> 4) & 0x01;
-			code = searchlight_image[(sy << 4) | (flipx ? sx ^ 0x1f: sx)];
-
-			if (searchlight_flipx != flipx)
+			for (y = Machine->visible_area.min_y; y <= Machine->visible_area.max_y; y++)
 			{
-				if (code & 0x80)
+				UINT32 src_pixel;
+
+
+				src_pixel = read_pixel(main_bitmap, x, y);
+
+				if (read_pixel(sl_bitmap, x, y) == 255)
 				{
-					/* No mirroring, draw dark spot */
-					code = 1;
+					src_pixel += Machine->drv->total_colors;
 				}
-			}
 
-			code &= 0x3f;
-		}
-
-		searchlight_bitmap = &memory_region(REGION_GFX4)[(flipx ? 0x1800 : 0x1000) | (code << 3)];
-
-		sx *= 8;
-		sy *= 8;
-
-
-		code_background = videoram[offs];
-
-		flipx  = colorram[sy << 2] & 0x01;
-		code = dday_videoram3[flipx ? offs ^ 0x1f : offs];
-
-		/* is the vehicle layer character non-blank? */
-		if (code)
-		{
-			UINT8* layer_bitmap;
-
-
-			layer_bitmap = &memory_region(REGION_GFX5)[code_background << 3];
-
-			/* draw part of background appearing behind the vehicles
-			   skipping characters totally in the foreground */
-			if (layer_bitmap[0] || layer_bitmap[1] || layer_bitmap[2] || layer_bitmap[3] ||
-				layer_bitmap[4] || layer_bitmap[5] || layer_bitmap[6] || layer_bitmap[7])
-			{
-				drawgfx_shadow(bitmap,Machine->gfx[0],
-							   code_background,
-							   code_background >> 5,
-							   sx,sy,
-							   &Machine->visible_area,TRANSPARENCY_NONE,
-							   searchlight_bitmap,
-							   layer_bitmap, 1);
-			}
-
-
-			/* draw vehicles */
-			drawgfx_shadow(bitmap,Machine->gfx[flipx ? 3 : 2],
-						   code,
-						   code >> 5,
-						   sx,sy,
-						   &Machine->visible_area,TRANSPARENCY_PEN,
-						   searchlight_bitmap,
-						   0, 0);
-
-
-			/* draw part of background appearing in front of the vehicles
-			   skipping characters totally in the background */
-			if (~layer_bitmap[0] || ~layer_bitmap[1] || ~layer_bitmap[2] || ~layer_bitmap[3] ||
-				~layer_bitmap[4] || ~layer_bitmap[5] || ~layer_bitmap[6] || ~layer_bitmap[7])
-			{
-				drawgfx_shadow(bitmap,Machine->gfx[0],
-							   code_background,
-							   code_background >> 5,
-							   sx,sy,
-							   &Machine->visible_area,TRANSPARENCY_NONE,
-							   searchlight_bitmap,
-							   layer_bitmap, 0);
+				plot_pixel(bitmap, x, y, src_pixel);
 			}
 		}
-		else
-		{
-			/* draw background, we don't have to worry about the layering */
-			drawgfx_shadow(bitmap,Machine->gfx[0],
-						   code_background,
-						   code_background >> 5,
-						   sx,sy,
-						   &Machine->visible_area,TRANSPARENCY_NONE,
-						   searchlight_bitmap,
-						   0, 0);
-		}
-
-
-		/* draw text layer */
-		code = dday_videoram2[offs];
-
-		if (code)
-		{
-			drawgfx_shadow(bitmap,Machine->gfx[1],
-						   code,
-						   code >> 5,
-						   sx,sy,
-						   &Machine->visible_area,TRANSPARENCY_PEN,
-						   searchlight_bitmap,
-						   0, 0);
-		}
+	}
+	else
+	{
+		copybitmap(bitmap,main_bitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 	}
 }

@@ -24,7 +24,7 @@ static blit_horiz_pixel_line_proc blit_horiz_pixel_line;
 
 static void bhpl_8_nd(struct osd_bitmap *b,int x,int y,int w, UINT32* pens)
 {
-	UINT8* lineadr = &((b->line[y])[x]);
+	UINT8* lineadr = &(((UINT8*)b->line[y])[x]);
 	while(w-->0)
 	{
 		*lineadr++ = (UINT8)(*pens);
@@ -33,7 +33,7 @@ static void bhpl_8_nd(struct osd_bitmap *b,int x,int y,int w, UINT32* pens)
 }
 static void bhpl_8_nd_fx(struct osd_bitmap *b,int x,int y,int w, UINT32* pens)
 {
-	UINT8* lineadr = &((b->line[y])[b->width-1-x]);
+	UINT8* lineadr = &(((UINT8*)b->line[y])[b->width-1-x]);
 	while(w-->0)
 	{
 		*lineadr-- = (UINT8)(*pens);
@@ -42,7 +42,7 @@ static void bhpl_8_nd_fx(struct osd_bitmap *b,int x,int y,int w, UINT32* pens)
 }
 static void bhpl_8_nd_fy(struct osd_bitmap *b,int x,int y,int w, UINT32* pens)
 {
-	UINT8* lineadr = &((b->line[b->height-1-y])[x]);
+	UINT8* lineadr = &(((UINT8*)b->line[b->height-1-y])[x]);
 	while(w-->0)
 	{
 		*lineadr++ = (UINT8)(*pens);
@@ -51,7 +51,7 @@ static void bhpl_8_nd_fy(struct osd_bitmap *b,int x,int y,int w, UINT32* pens)
 }
 static void bhpl_8_nd_fxy(struct osd_bitmap *b,int x,int y,int w, UINT32* pens)
 {
-	UINT8* lineadr = &((b->line[b->height-1-y])[b->width-1-x]);
+	UINT8* lineadr = &(((UINT8*)b->line[b->height-1-y])[b->width-1-x]);
 	while(w-->0)
 	{
 		*lineadr-- = (UINT8)(*pens);
@@ -62,7 +62,7 @@ static void bhpl_8_nd_s(struct osd_bitmap *b,int x,int y,int w, UINT32* pens)
 {
 	while(w-->0)
 	{
-		b->line[x++][y] = (UINT8)(*pens);
+		((UINT8 *)b->line[x++])[y] = (UINT8)(*pens);
 		pens++;
 	}
 }
@@ -71,7 +71,7 @@ static void bhpl_8_nd_fx_s(struct osd_bitmap *b,int x,int y,int w, UINT32* pens)
 	y = b->width-1-y;
 	while(w-->0)
 	{
-		b->line[x++][y] = (UINT8)(*pens);
+		((UINT8 *)b->line[x++])[y] = (UINT8)(*pens);
 		pens++;
 	}
 }
@@ -80,7 +80,7 @@ static void bhpl_8_nd_fy_s(struct osd_bitmap *b,int x,int y,int w, UINT32* pens)
 	x = b->height-1-x;
 	while(w-->0)
 	{
-		b->line[x--][y] = (UINT8)(*pens);
+		((UINT8 *)b->line[x--])[y] = (UINT8)(*pens);
 		pens++;
 	}
 }
@@ -90,7 +90,7 @@ static void bhpl_8_nd_fxy_s(struct osd_bitmap *b,int x,int y,int w, UINT32* pens
 	y = b->width-1-y;
 	while(w-->0)
 	{
-		b->line[x--][y] = (UINT8)(*pens);
+		((UINT8 *)b->line[x--])[y] = (UINT8)(*pens);
 		pens++;
 	}
 }

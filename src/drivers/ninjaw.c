@@ -713,7 +713,7 @@ static struct MachineDriver machine_driver_ninjaw =
 	4096*3, 4096*3,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_DUAL_MONITOR | VIDEO_ASPECT_RATIO(12,3),
+	VIDEO_TYPE_RASTER  | VIDEO_DUAL_MONITOR | VIDEO_ASPECT_RATIO(12,3),
 	0,
 	ninjaw_vh_start,
 	ninjaw_vh_stop,
@@ -768,7 +768,7 @@ static struct MachineDriver machine_driver_darius2 =
 	4096*3, 4096*3,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_DUAL_MONITOR | VIDEO_ASPECT_RATIO(12,3),
+	VIDEO_TYPE_RASTER  | VIDEO_DUAL_MONITOR | VIDEO_ASPECT_RATIO(12,3),
 	0,
 	ninjaw_vh_start,
 	ninjaw_vh_stop,

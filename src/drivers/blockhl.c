@@ -252,10 +252,10 @@ static const struct MachineDriver machine_driver_blockhl =
 	/* video hardware */
 	64*8, 32*8, { 14*8, (64-14)*8-1, 2*8, 30*8-1 },
 	0,	/* gfx decoded by konamiic.c */
-	1024, 1024,
+	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER  | VIDEO_HAS_SHADOWS,
 	0,
 	blockhl_vh_start,
 	blockhl_vh_stop,

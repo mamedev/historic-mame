@@ -22,13 +22,13 @@ int xybots_vh_start(void)
 		0,			/* index to which gfx system */
 		64,32,		/* size of the playfield in tiles (x,y) */
 		1,64,		/* tile_index = x * xmult + y * ymult (xmult,ymult) */
-	
+
 		0x200,		/* index of palette base */
 		0x100,		/* maximum number of colors */
 		0,			/* color XOR for shadow effect (if any) */
 		0,			/* latch mask */
 		0,			/* transparent pen mask */
-	
+
 		0x1fff,		/* tile data index mask */
 		0x7800,		/* tile data color mask */
 		0x8000,		/* tile data hflip mask */
@@ -66,7 +66,7 @@ int xybots_vh_start(void)
 		{{ 0,0x000f,0,0 }},	/* mask for the priority */
 		{{ 0 }},			/* mask for the neighbor */
 		{{ 0 }},			/* mask for absolute coordinates */
-		
+
 		{{ 0 }},			/* mask for the ignore value */
 		0,					/* resulting value to indicate "ignore" */
 		0,					/* callback routine for ignored entries */
@@ -76,7 +76,7 @@ int xybots_vh_start(void)
 	{
 		2,			/* index to which gfx system */
 		64,32,		/* size of the alpha RAM in tiles (x,y) */
-	
+
 		0x000,		/* index of palette base */
 		0x080,		/* maximum number of colors */
 		0,			/* mask of the palette split */
@@ -109,7 +109,7 @@ int xybots_vh_start(void)
 			colorlookup[i] ^= 0x2f;
 
 	return 0;
-	
+
 cant_create_an:
 	atarimo_free();
 cant_create_mo:
@@ -158,7 +158,7 @@ static int overrender_callback(struct ataripf_overrender_data *data, int state)
 	{
 		int mopriority = data->mopriority ^ 15;
 		int pfcolor = (data->pfcolor & 0x20) ? (data->pfcolor ^ 0x2f) : data->pfcolor;
-	
+
 		/* overrender if the MO priority is greater than the PF color */
 		return (mopriority > pfcolor) ? OVERRENDER_YES : OVERRENDER_NO;
 	}
@@ -175,16 +175,6 @@ static int overrender_callback(struct ataripf_overrender_data *data, int state)
 
 void xybots_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
-	/* mark the used colors */
-	palette_init_used_colors();
-	ataripf_mark_palette(0);
-	atarimo_mark_palette(0);
-	atarian_mark_palette(0);
-
-	/* update the palette, and mark things dirty if we need to */
-	if (palette_recalc())
-		ataripf_invalidate(0);
-
 	/* draw the layers */
 	ataripf_render(0, bitmap);
 	atarimo_render(0, bitmap, overrender_callback, NULL);

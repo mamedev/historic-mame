@@ -337,7 +337,7 @@ static const struct MachineDriver machine_driver_cloak =
 	0,
 
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	cloak_vh_start,
 	cloak_vh_stop,

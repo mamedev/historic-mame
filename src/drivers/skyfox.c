@@ -454,5 +454,5 @@ void init_skyfox(void)
 
 
 
-GAME( 1987, skyfox,   0,      skyfox, skyfox, skyfox, ROT90_16BIT, "Jaleco (Nichibutsu USA License)", "Sky Fox"  )
-GAME( 1987, exerizrb, skyfox, skyfox, skyfox, skyfox, ROT90_16BIT, "Jaleco", "Exerizer (Japan) (bootleg)" )
+GAME( 1987, skyfox,   0,      skyfox, skyfox, skyfox, ROT90, "Jaleco (Nichibutsu USA License)", "Sky Fox"  )
+GAME( 1987, exerizrb, skyfox, skyfox, skyfox, skyfox, ROT90, "Jaleco", "Exerizer (Japan) (bootleg)" )

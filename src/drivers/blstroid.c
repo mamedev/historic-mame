@@ -230,10 +230,10 @@ static const struct MachineDriver machine_driver_blstroid =
 	/* video hardware */
 	40*16, 30*8, { 0*8, 40*16-1, 0*8, 30*8-1 },
 	gfxdecodeinfo,
-	512,512,
+	512, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK |
+	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK |
 			VIDEO_PIXEL_ASPECT_RATIO_1_2,
 	0,
 	blstroid_vh_start,

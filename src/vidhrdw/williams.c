@@ -279,7 +279,7 @@ void williams_vh_update(int scanline)
 void williams_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
 	/* full refresh forces us to redraw everything */
-	if (palette_recalc() || full_refresh)
+	if (full_refresh)
 		memset(scanline_dirty, 2, 256);
 
 	/* copy the pixels into the final result */
@@ -373,7 +373,7 @@ void williams2_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	int color, col, y;
 
 	/* full refresh forces us to redraw everything */
-	if (palette_recalc() || full_refresh)
+	if (full_refresh)
 		memset(scanline_dirty, 2, 256);
 
 	/* assemble the bits that describe the X scroll offset */
@@ -572,25 +572,6 @@ int blaster_vh_start(void)
 			for (j = 0; j < 256; j++)
 				blaster_remap_lookup[i * 256 + j] = (table[j >> 4] << 4) | table[j & 0x0f];
 		}
-
-	/* mark color 0 as transparent. we will draw the rainbow background behind it */
-	palette_used_colors[0] = PALETTE_COLOR_TRANSPARENT;
-	for (i = 0; i < 256; i++)
-	{
-		/* mark as used only the colors used for the visible background lines */
-		if (i < Machine->visible_area.min_y || i > Machine->visible_area.max_y)
-			palette_used_colors[16 + i] = PALETTE_COLOR_UNUSED;
-
-		/* TODO: this leaves us with a total of 255+1 colors used, which is just */
-		/* a bit too much for the palette system to handle them efficiently. */
-		/* As a quick workaround, I set the top three lines to be always black. */
-		/* To do it correctly, vh_screenrefresh() should group the background */
-		/* lines of the same color and mark the others as COLOR_UNUSED. */
-		/* The background is very redundant so this can be done easily. */
-		palette_used_colors[16 + 0 + Machine->visible_area.min_y] = PALETTE_COLOR_TRANSPARENT;
-		palette_used_colors[16 + 1 + Machine->visible_area.min_y] = PALETTE_COLOR_TRANSPARENT;
-		palette_used_colors[16 + 2 + Machine->visible_area.min_y] = PALETTE_COLOR_TRANSPARENT;
-	}
 
 	return 0;
 }

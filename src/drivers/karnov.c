@@ -50,7 +50,7 @@ int karnov_vh_start (void);
 int wndrplnt_vh_start (void);
 void karnov_vh_stop (void);
 
-enum { KARNOV=0, KARNOVJ, CHELNOV, CHELNOVJ, WNDRPLNT };
+enum { KARNOV=0, KARNOVJ, CHELNOV, CHELNOVJ, CHELNOVW, WNDRPLNT };
 
 static data16_t i8751_return;
 static data16_t *karnov_ram;
@@ -137,8 +137,11 @@ static void chelnov_i8751_w(int data)
 	i8751_return=0;
 	if (data==0x200 && microcontroller_id==CHELNOVJ) i8751_return=0x7734; /* Japan version */
 	if (data==0x200 && microcontroller_id==CHELNOV)  i8751_return=0x783e; /* USA version */
+	if (data==0x200 && microcontroller_id==CHELNOVW)  i8751_return=0x7736; /* World version */
 	if (data==0x100 && microcontroller_id==CHELNOVJ) i8751_return=0x71a; /* Japan version */
 	if (data==0x100 && microcontroller_id==CHELNOV)  i8751_return=0x71b; /* USA version */
+	if (data==0x100 && microcontroller_id==CHELNOVW)  i8751_return=0x71c; /* World version */
+
 	if (data>=0x6000 && data<0x8000) i8751_return=1;  /* patched */
 	if ((data&0xf000)==0x1000) level=1; /* Level 1 */
 	if ((data&0xf000)==0x2000) level++; /* Level Increment */
@@ -153,7 +156,7 @@ static void chelnov_i8751_w(int data)
 					else if (b<0xf) i8751_return=3;
 					else if (b<0x13) i8751_return=4;
 					else i8751_return=5;
-				} else { /* Japan */
+				} else { /* Japan, World */
 					if (b<3) i8751_return=0;
 					else if (b<8) i8751_return=1;
 					else if (b<0xc) i8751_return=2;
@@ -225,7 +228,7 @@ static void chelnov_i8751_w(int data)
 		}
 	}
 
-//	if (!i8751_return) logerror("CPU %04x - Unknown Write %02x intel\n",cpu_get_pc(),data);
+//	logerror("CPU %04x - Unknown Write %02x intel\n",cpu_get_pc(),data);
 
 	cpu_cause_interrupt(0,6); /* Signal main cpu task is complete */
 }
@@ -250,7 +253,7 @@ static WRITE16_HANDLER( karnov_control_w )
 
 		case 6: /* SECREQ (Interrupt & Data to i8751) */
 			if (microcontroller_id==KARNOV || microcontroller_id==KARNOVJ) karnov_i8751_w(data);
-			if (microcontroller_id==CHELNOV || microcontroller_id==CHELNOVJ) chelnov_i8751_w(data);
+			if (microcontroller_id==CHELNOV || microcontroller_id==CHELNOVJ || microcontroller_id==CHELNOVW) chelnov_i8751_w(data);
 			if (microcontroller_id==WNDRPLNT) wndrplnt_i8751_w(data);
 			break;
 
@@ -888,10 +891,43 @@ ROM_START( wndrplnt )
 	ROM_LOAD( "ea20.prm",      0x0400, 0x0400, 0x619f9d1e )
 ROM_END
 
-ROM_START( chelnov )
+ROM_START( chelnovu )
 	ROM_REGION( 0x60000, REGION_CPU1, 0 )	/* 6*64k for 68000 code */
 	ROM_LOAD16_BYTE( "ee08-a.j15",   0x00000, 0x10000, 0x2f2fb37b )
 	ROM_LOAD16_BYTE( "ee11-a.j20",   0x00001, 0x10000, 0xf306d05f )
+	ROM_LOAD16_BYTE( "ee07-a.j14",   0x20000, 0x10000, 0x9c69ed56 )
+	ROM_LOAD16_BYTE( "ee10-a.j18",   0x20001, 0x10000, 0xd5c5fe4b )
+	ROM_LOAD16_BYTE( "ee06-e.j13",   0x40000, 0x10000, 0x55acafdb )
+	ROM_LOAD16_BYTE( "ee09-e.j17",   0x40001, 0x10000, 0x303e252c )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 6502 Sound CPU */
+	ROM_LOAD( "ee05-.f3",     0x8000, 0x8000, 0x6a8936b4 )
+
+	ROM_REGION( 0x08000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "ee00-e.c5",    0x00000, 0x08000, 0xe06e5c6b )	/* Characters */
+
+	ROM_REGION( 0x40000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "ee04-.d18",    0x00000, 0x10000, 0x96884f95 )	/* Backgrounds */
+	ROM_LOAD( "ee01-.c15",    0x10000, 0x10000, 0xf4b54057 )
+	ROM_LOAD( "ee03-.d15",    0x20000, 0x10000, 0x7178e182 )
+	ROM_LOAD( "ee02-.c18",    0x30000, 0x10000, 0x9d7c45ae )
+
+	ROM_REGION( 0x80000, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_LOAD( "ee12-.f8",     0x00000, 0x10000, 0x9b1c53a5 )	/* Sprites */
+	ROM_LOAD( "ee13-.f9",     0x20000, 0x10000, 0x72b8ae3e )
+	ROM_LOAD( "ee14-.f13",    0x40000, 0x10000, 0xd8f4bbde )
+	ROM_LOAD( "ee15-.f15",    0x60000, 0x10000, 0x81e3e68b )
+
+	ROM_REGION( 0x0800, REGION_PROMS, 0 )
+	ROM_LOAD( "ee21.k8",      0x0000, 0x0400, 0xb1db6586 )	/* different from the other set; */
+															/* might be bad */
+	ROM_LOAD( "ee20.l6",      0x0400, 0x0400, 0x41816132 )
+ROM_END
+
+ROM_START( chelnov )
+	ROM_REGION( 0x60000, REGION_CPU1, 0 )	/* 6*64k for 68000 code */
+	ROM_LOAD16_BYTE( "ee08-e.j16",   0x00000, 0x10000, 0x8275cc3a )
+	ROM_LOAD16_BYTE( "ee11-e.j19",   0x00001, 0x10000, 0x889e40a0 )
 	ROM_LOAD16_BYTE( "ee07-a.j14",   0x20000, 0x10000, 0x9c69ed56 )
 	ROM_LOAD16_BYTE( "ee10-a.j18",   0x20001, 0x10000, 0xd5c5fe4b )
 	ROM_LOAD16_BYTE( "ee06-e.j13",   0x40000, 0x10000, 0x55acafdb )
@@ -984,6 +1020,16 @@ static void init_chelnov(void)
 	RAM[0x062a/2]=0x4E71;  /* hangs waiting on i8751 int */
 }
 
+static void init_chelnovw(void)
+{
+	data16_t *RAM = (UINT16 *)memory_region(REGION_CPU1);
+
+	microcontroller_id=CHELNOVW;
+	coin_mask=0xe0;
+	RAM[0x0A26/2]=0x4E71;  /* removes a protection lookup table */
+	RAM[0x062a/2]=0x4E71;  /* hangs waiting on i8751 int */
+}
+
 static void init_chelnovj(void)
 {
 	data16_t *RAM = (UINT16 *)memory_region(REGION_CPU1);
@@ -996,8 +1042,9 @@ static void init_chelnovj(void)
 
 /******************************************************************************/
 
-GAME( 1987, karnov,   0,       karnov,   karnov,  karnov,   ROT0,   "Data East USA", "Karnov (US)" )
+GAME( 1987, karnov,   0,       karnov,   karnov,  karnov,   ROT0,   "Data East USA",         "Karnov (US)" )
 GAME( 1987, karnovj,  karnov,  karnov,   karnov,  karnovj,  ROT0,   "Data East Corporation", "Karnov (Japan)" )
 GAME( 1987, wndrplnt, 0,       wndrplnt, wndrplnt,wndrplnt, ROT270, "Data East Corporation", "Wonder Planet (Japan)" )
-GAME( 1988, chelnov,  0,       karnov,   chelnov, chelnov,  ROT0,   "Data East USA", "Chelnov - Atomic Runner (US)" )
+GAMEX(1988, chelnov,  0,       karnov,   chelnov, chelnovw, ROT0,   "Data East Corporation", "Chelnov - Atomic Runner (World)", GAME_UNEMULATED_PROTECTION )
+GAME( 1988, chelnovu, chelnov, karnov,   chelnov, chelnov,  ROT0,   "Data East USA",         "Chelnov - Atomic Runner (US)" )
 GAME( 1988, chelnovj, chelnov, karnov,   chelnov, chelnovj, ROT0,   "Data East Corporation", "Chelnov - Atomic Runner (Japan)" )

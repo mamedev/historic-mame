@@ -149,10 +149,10 @@ INLINE int vec_div(int parm1, int parm2)
 }
 #endif
 
-static void vector_pp_8(struct osd_bitmap *b,int x,int y,int p)  { b->line[y][x] = p; }
-static void vector_pp_16(struct osd_bitmap *b,int x,int y,int p)  { ((unsigned short *)b->line[y])[x] = p; }
-static int vector_rp_8(struct osd_bitmap *b,int x,int y)  { return b->line[y][x]; }
-static int vector_rp_16(struct osd_bitmap *b,int x,int y)  { return ((unsigned short *)b->line[y])[x]; }
+static void vector_pp_8(struct osd_bitmap *b,int x,int y,int p)  { ((UINT8 *)b->line[y])[x] = p; }
+static void vector_pp_16(struct osd_bitmap *b,int x,int y,int p)  { ((UINT16 *)b->line[y])[x] = p; }
+static int vector_rp_8(struct osd_bitmap *b,int x,int y)  { return ((UINT8 *)b->line[y])[x]; }
+static int vector_rp_16(struct osd_bitmap *b,int x,int y)  { return ((UINT16 *)b->line[y])[x]; }
 
 /*
  * finds closest color and returns the index (for 256 color)

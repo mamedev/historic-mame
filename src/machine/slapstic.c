@@ -1,143 +1,183 @@
 /*************************************************************************
 
-  Atari Slapstic decoding helper
+	Atari Slapstic decoding helper
 
-*************************************************************************
+**************************************************************************
 
-Slapstic FAQ - ver 0.2
-Frank Palazzolo
-03/13/98
+	Atari Slapstic FAQ
+	Version 1.1
+	by Aaron Giles and Frank Palazzolo
+	08/06/2001
 
-(Please send comments or corrections
- to me at palazzol@home.com)
-----------------------------------
 
-0) Credits:
+	What is a slapstic?
 
-I would like to thank the Motorola 68HC11 Evaluation
-Board.  Anything is possible with one of these :)
+	The slapstic was a security chip made by Atari, which was used for
+	bank switching and security in several coin-operated video games from
+	1984 through 1990.
 
-Special Thanks to:
-Aaron Giles, Mike Balfour, and Tim Lindquist, and the rest of
-the MAME Team
 
-1) What is a slapstic?
+	What is a SLOOP?
 
-The slapstic was a chip made by Atari, which was used for
-bank-switching and security in some coin-operated video games.
+	The SLOOP (or "SLOOPstic") is a follow-on chip to the slapstic. It
+	provides a similar type of security, but is programmed onto a GAL6001,
+	rather than a custom part. It was created because Atari was running
+	out of slapstics to use in their games, and the original masks for the
+	slapstic had been lost by the company that manufactured them. A separate
+	FAQ for this chip is planned for the future.
 
-2) What games used one?
 
-Empire Strikes Back
-Tetris
-Gauntlet
-Gauntlet II
-Marble Madness
-Peter Packrat
-Indiana Jones & the Temple of Doom
-Road Runner
-Road Blasters
-Paperboy
-APB
-720 Degrees
-Super Sprint
-Championship Sprint
-Rampart
-Vindicators Part II
-Xybots
-Race Drivin'
+	How do I identify a slapstic chip on my board?
 
-3) What is the pinout?
+	Look for a small, socketed 20-pin DIP on the board. The number on
+	the chip will be 137412-1xx.
 
-(It is a small 20 pin DIP package)
 
-Pin #	Function
-----------------------
-1	A10 (I)
-2	A11 (I)
-3	A12 (I)
-4	A13 (I)
-5	A14 (I)
-6	~CS (I)
-7	CLK (I)
-8	+5V
-9	BS1 (O)
-10	BS0 (O)
-11	Gnd
-12	A1 (I)
-13	A2 (I)
-14	A3 (I)
-15	A4 (I)
-16	A5 (I)
-17	A6 (I)
-18	A7 (I)
-19	A8 (I)
-20	A9 (I)
+	Are slapstic chips interchangeable?
 
-4) What did it do / How did it work?
+	Sadly, no. They were designed to prevent operators from burning
+	new EPROMs and "upgrading" their PCBs to a new game without buying
+	the necessary kits from Atari. For example, the five System 1 games
+	each used a different slapstic, so that you couldn't take, say,
+	a <b>Marble Madness</b> machine, burn new EPROMs, and convert it into
+	an <b>Indiana Jones</b>.
 
-This chip would sit on the address bus of a game CPU, and control which one
-of 4 possible banks of ROM would be selected into a given memory area based on
-a combination of accesses to that memory region.
+	That said, however, there are two pairs of the slapstics that appear
+	to be functionally identical, despite the fact that they have
+	different part numbers:
 
-Note1: All addresses are relative to the Slapstic's memory space, not necessarily the game's
-Note2: Reset Address = $0000 for all chips
-Note3: Addresses with a * next to them have been deduced, but not verified on real hardware
+		137412-103 (<b>Marble Madness</b>) appears to be functionally identical
+			to 137412-110 (<b>Road Blasters</b> & <b>APB</b>)
 
-Chip #     Game                Bank Select Addresses      Disable Mask Ignore Mask   Secondary    Secondary Bank Select
-                                (0)    (1)    (2)    (3)  (MS 10 bits) (LS 7 bits)    Enable    (0)    (1)    (2)    (3)
-----------------------------------------------------------------------------------------------------------------------------
-137412-101 ESB/Tetris          $0080, $0090, $00a0, $00b0    $1540        $00??       *$1dfe  *$1b5c *$1b5d *$1b5e *$1b5f
-137412-103 Marble Madness      $0040, $0050, $0060, $0070    $34c0        $002d        $3d14   $3d24, $3d25, $3d26, $3d27
-137412-104 Gauntlet            $0020, $0028, $0030, $0038    $3d90        $0069       *$3735  *$3764,*$3765,*$3766,*$3767
-137412-105 Indiana Jones &     $0010, $0014, $0018, $001c    $35b0        $003d        $0092,  $00a4, $00a5, $00a6, $00a7
-           Paperboy
-137412-106 Gauntlet II         $0008, $000a, $000c, $000e    $3da0        $002b       *$0052  *$0064,*$0065,*$0066,*$0067
-137412-107 Peter Packrat &     $0018, $001a, $001c, $001e    $00a0        $006b        $3d52,  $3d64, $3d65, $3d66, $3d67
-           Xybots &
-           2-player Gauntlet &
-           720 Degrees
-137412-108 Road Runner &       $0028, $002a, $002c, $002e    $0060        $001f        $????   $????, $????, $????, $????
-           Super Sprint
-137412-109 Championship Sprint $0008, $000a, $000c, $000e    $3da0        $002b        $0052   $0064, $0065, $0066, $0067
-137412-110 Road Blasters &     $0040, $0050, $0060, $0070    $34c0        $002d        $3d14   $3d24, $3d25, $3d26, $3d27
-           APB
-137412-111 Pit Fighter         $0042, $0052, $0062, $0072    $???0        $000a
-137412-116 Hydra &             $0044, $004c, $0054, $005c    $???0        $0069
-           Cyberball 2072 Tournament
-137412-117 Race Drivin'
-137412-118 Vindicators Part II $0014, $0034, $0054, $0074    $???0        $0002       *$1950  *$1958,*$1960,*$1968,*$1970
-           & Rampart
+		137412-106 (<b>Gauntlet II</b>) appears to be functionally identical
+			to 137412-109 (<b>Championship Sprint</b>)
 
-Surprisingly, the slapstic appears to have used DRAM cells to store
-the current bank.  After 5 or 6 seconds without a clock, the chip reverts
-to bank 3, with the chip reset (bank select addresses are enabled)
-Typically, the slapstic region is accessed often enough to cause a
-problem.
+	Note, however, that I have not tried these swaps to confirm that they
+	work. Your mileage may vary.
 
-"Normal" operating mode of this chip is something like this:
 
-Access $0000 (bank switching is now enabled for one switch)
-Access $xxxx ... (n times)
-Access $0008 (switch to bank 0 command)
-Access $1234 (During the access to location $1234,
-              the bank will be switched to 0, on the
-              rising edge of the clock pulse.
+	How many different slapstics are there?
 
-Note1: It appears that the access during the bank switch
-       comes from the new bank, but this may depend on
-       the processor inteface in question.
-Note2: The "reset" state of the part is equivalent to the part having
-       been accessed at location $0
+	All told, a total of 13 actual slapstics have been found. However,
+	there are gaps in the numbering which indicate that more may exist.
 
-The details of the state machine representing the chip are
-documented in the MAME code.
 
-*/
+	Do all slapstics work the same?
 
+	In general, yes. However, matters are complicated by the existence
+	of multiple revisions of the chip design:
+
+		SLAPSTIC	Part #137412-101 through 137412-110
+		SLAPSTIC-2	Part #137412-111 through 137412-118
+
+	In the simplest case, both revs act the same. However, they differ
+	in how the more complex modes of operation are used.
+
+
+	How is the slapstic connected to the game?
+
+	The slapstic generally sits between the CPU's address bus and one
+	of the program ROMs. Here's a pinout:
+
+			A9   1 +-v-+ 20  A8
+			A10  2 |   | 19  A7
+			A11  3 |   | 18  A6
+			A12  4 |   | 17  A5
+			A13  5 |   | 16  A4
+			/CS  6 |   | 15  A3
+			CLK  7 |   | 14  A2
+			VCC  8 |   | 13  A1
+			BS1  9 |   | 12  A0
+			BS0 10 +---+ 11 GND
+
+	A0-A13 are the address lines from the CPU. CLK and /CS together
+	trigger a state change. BS0 and BS1 are the bank select outputs,
+	which usually connect to the protected program ROM in place of
+	two address lines (traditionally A12 and A13).
+
+	Most slapstics were used on 68000 or T-11 based games, which had
+	a 16-bit address bus. This meant that A0-A13 on the slapstic were
+	generally connected to A1-A14 on the CPU. However, two 8-bit
+	games (Tetris and Empire Strikes Back) used the slapstic as well.
+	This slapstic (#101) has a slightly different pinout, though it
+	operates similarly to the others in its class.
+
+			A8   1 +-v-+ 20  A7
+			A9   2 |   | 19  A6
+			A10  3 |   | 18  A5
+			A11  4 |   | 17  A4
+			A12  5 |   | 16  A3
+			/CS  6 |   | 15  A2
+			CLK  7 |   | 14  A1
+			VCC  8 |   | 13  A0
+			/BS1 9 |   | 12 GND
+			BS1 10 +---+ 11 BS0
+
+
+	Which games used slapstics?
+
+		137412-101	Empire Strikes Back
+		137412-101	Tetris
+		137412-103	Marble Madness
+		137412-104	Gauntlet
+		137412-105	Paperboy
+		137412-105	Indiana Jones & the Temple of Doom
+		137412-106	Gauntlet II
+		137412-107	2-Player Gauntlet
+		137412-107	Peter Packrat
+		137412-107	720 Degrees
+		137412-107	Xybots
+		137412-108	Road Runner
+		137412-108	Super Sprint
+		137412-109	Championship Sprint
+		137412-110	Road Blasters
+		137412-110	APB
+		137412-111	Pit Fighter
+		137412-116	Hydra
+		137412-116	Tournament Cyberball 2072
+		137412-117	Race Drivin'
+		137412-118	Rampart
+		137412-118	Vindicators Part II
+
+
+	How does the slapstic work?
+
+	On power-up, the slapstic starts by pointing to bank 0 or bank 3.
+	After that, certain sequences of addresses will trigger a bankswitch.
+	Each sequence begins with an access to location $0000, followed by one
+	or more special addresses.
+
+	Each slapstic has a 'simple' mode of bankswitching, consisting of an
+	access to $0000 followed by an access to one of four bank addresses.
+	Other accesses are allowed in between these two accesses without
+	affecting the outcome.
+
+	Additionally, each slapstic has a trickier variant of the
+	bankswitching, which requires an access to $0000, followed by accesses
+	to two specific addresses, followed by one of four alternate bank
+	addresses. All three accesses following the $0000 must occur in
+	sequence with no interruptions, or else the sequence is invalidated.
+
+	Finally, each slapstic has a mechanism for modifying the value of the
+	current bank. Earlier chips (101-110) allowed you to twiddle the
+	specific bits of the bank number, clearing or setting bits 0 and 1
+	independently. Later chips (111-118) provided a mechanism of adding
+	1, 2, or 3 to the number of the current bank.
+
+	Surprisingly, the slapstic appears to have used DRAM cells to store
+	the current bank. After 5 or 6 seconds without a clock, the chip
+	reverts to the default bank, with the chip reset (bank select
+	addresses are enabled). Typically, the slapstic region is accessed
+	often enough to cause a problem.
+
+	For full details, see the MAME source code.
+
+*************************************************************************/
 
 #include <stdio.h>
 #include "driver.h"
+#include "slapstic.h"
+#include "cpu/m68000/m68000.h"
 
 
 /*************************************
@@ -146,16 +186,60 @@ documented in the MAME code.
  *
  *************************************/
 
-struct slapstic_params
+struct mask_value
 {
-	int reset;
-	int bank0, bank1, bank2, bank3;
-	int disable;
-	int ignore;
-	int senable;
-	int sbank0, sbank1, sbank2, sbank3;
+	int mask, value;
 };
 
+
+struct slapstic_data
+{
+	int bankstart;
+	int bank[4];
+
+	struct mask_value alt1;
+	struct mask_value alt2;
+	struct mask_value alt3;
+	int altshift;
+
+	struct mask_value bit1;
+	struct mask_value bit2c0;
+	struct mask_value bit2s0;
+	struct mask_value bit2c1;
+	struct mask_value bit2s1;
+	struct mask_value bit3;
+
+	struct mask_value add1;
+	struct mask_value add2;
+	struct mask_value addplus1;
+	struct mask_value addplus2;
+	struct mask_value addplus3;
+	struct mask_value add3;
+};
+
+
+
+/*************************************
+ *
+ *	Shorthand
+ *
+ *************************************/
+
+#define UNKNOWN 0xffff
+#define NO_BITWISE			\
+	{ UNKNOWN,UNKNOWN },	\
+	{ UNKNOWN,UNKNOWN },	\
+	{ UNKNOWN,UNKNOWN },	\
+	{ UNKNOWN,UNKNOWN },	\
+	{ UNKNOWN,UNKNOWN },	\
+	{ UNKNOWN,UNKNOWN }
+#define NO_ADDITIVE			\
+	{ UNKNOWN,UNKNOWN },	\
+	{ UNKNOWN,UNKNOWN },	\
+	{ UNKNOWN,UNKNOWN },	\
+	{ UNKNOWN,UNKNOWN },	\
+	{ UNKNOWN,UNKNOWN },	\
+	{ UNKNOWN,UNKNOWN }
 
 
 /*************************************
@@ -164,72 +248,404 @@ struct slapstic_params
  *
  *************************************/
 
-#define DISABLE_MASK 0x3ff0
-#define IGNORE_MASK  0x007f
-#define UNKNOWN      0xffff
+enum state_type
+{
+	DISABLED,
+	ENABLED,
+	ALTERNATE1,
+	ALTERNATE2,
+	ALTERNATE3,
+	BITWISE1,
+	BITWISE2,
+	BITWISE3,
+	ADDITIVE1,
+	ADDITIVE2,
+	ADDITIVE3
+};
 
-enum state_type { ENABLED, DISABLED, IGNORE, SPECIAL };
-
-#define LOG_SLAPSTIC 0
+#define LOG_SLAPSTIC	0
 
 
 
 /*************************************
  *
- *	The master table
+ *	Slapstic definitions
  *
  *************************************/
 
-static struct slapstic_params slapstic_table[18] =
+/* slapstic 137412-101: Empire Strikes Back/Tetris (NOT confirmed) */
+static struct slapstic_data slapstic101 =
 {
-	/* 137412-101 ESB/Tetris */
-	{ 0x0000, 0x0080, 0x0090, 0x00a0, 0x00b0, 0x1540,UNKNOWN, 0x1dfe, 0x1b5c, 0x1b5d, 0x1b5e, 0x1b5f },
-	/* 137412-102 ???? */
-	{ 0x0000,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN },
-	/* 137412-103 Marble Madness */
-	{ 0x0000, 0x0040, 0x0050, 0x0060, 0x0070, 0x34c0, 0x002d, 0x3d14, 0x3d24, 0x3d25, 0x3d26, 0x3d27 },
-	/* 137412-104 Gauntlet */
-/*	{ 0x0000, 0x0020, 0x0028, 0x0030, 0x0038, 0x3d90, 0x0069, 0x3735, 0x3764, 0x3765, 0x3766, 0x3767 },*/
-/* EC990621 Gauntlet fix */
-	{ 0x0000, 0x0020, 0x0028, 0x0030, 0x0038, 0x3da0, 0x0069, 0x3735, 0x3764, 0x3765, 0x3766, 0x3767 },
-/* EC990621 end of Gauntlet fix */
-	/* 137412-105 Indiana Jones/Paperboy */
-	{ 0x0000, 0x0010, 0x0014, 0x0018, 0x001c, 0x35b0, 0x003d, 0x0092, 0x00a4, 0x00a5, 0x00a6, 0x00a7 },
-	/* 137412-106 Gauntlet II */
-/*	{ 0x0000, 0x0008, 0x000a, 0x000c, 0x000e, 0x3da0, 0x002b, 0x0052, 0x0064, 0x0065, 0x0066, 0x0067 },*/
-/* NS990620 Gauntlet II fix */
-	{ 0x0000, 0x0008, 0x000a, 0x000c, 0x000e, 0x3db0, 0x002b, 0x0052, 0x0064, 0x0065, 0x0066, 0x0067 },
-/* NS990620 end of Gauntlet II fix */
-	/* 137412-107 Peter Packrat/Xybots/2-player Gauntlet/720 Degrees */
-/*	{ 0x0000, 0x0018, 0x001a, 0x001c, 0x001e, 0x00a0, 0x006b, 0x3d52, 0x3d64, 0x3d65, 0x3d66, 0x3d67 },*/
-/* NS990622 Xybots fix */
-	{ 0x0000, 0x0018, 0x001a, 0x001c, 0x001e, 0x00b0, 0x006b, 0x3d52, 0x3d64, 0x3d65, 0x3d66, 0x3d67 },
-/* NS990622 end of Xybots fix */
-	/* 137412-108 Road Runner/Super Sprint */
-	{ 0x0000, 0x0028, 0x002a, 0x002c, 0x002e, 0x0060, 0x001f,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN },
-	/* 137412-109 Championship Sprint */
-	{ 0x0000, 0x0008, 0x000a, 0x000c, 0x000e, 0x3da0, 0x002b, 0x0052, 0x0064, 0x0065, 0x0066, 0x0067 },
-	/* 137412-110 Road Blasters/APB */
-	{ 0x0000, 0x0040, 0x0050, 0x0060, 0x0070, 0x34c0, 0x002d, 0x3d14, 0x3d24, 0x3d25, 0x3d26, 0x3d27 },
-	/* 137412-111 Pit Fighter */
-	{ 0x0000, 0x0042, 0x0052, 0x0062, 0x0072,UNKNOWN, 0x000a,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN },
-	/* 137412-112 ???? */
-	{ 0x0000,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN },
-	/* 137412-113 ???? */
-	{ 0x0000,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN },
-	/* 137412-114 ???? */
-	{ 0x0000,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN },
-	/* 137412-115 ???? */
-	{ 0x0000,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN },
-	/* 137412-116 Hydra/Cyberball 2072 Tournament */
-	{ 0x0000, 0x0044, 0x004c, 0x0054, 0x005c,UNKNOWN, 0x0069,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN },
-	/* 137412-117 Race Drivin' */
-	{ 0x0000, 0x0008, 0x001a, 0x002c, 0x003e, 0x30e0/*????*/,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN },
-	/* 137412-118 Vindicators II/Rampart */
-/*	{ 0x0000, 0x0014, 0x0034, 0x0054, 0x0074,UNKNOWN, 0x0002, 0x1950, 0x1958, 0x1960, 0x1968, 0x1970 },*/
-/* EC990622 Rampart fix */
-	{ 0x0000, 0x0014, 0x0034, 0x0054, 0x0074, 0x30e0, 0x0002, 0x1958, 0x1959, 0x195a, 0x195b, 0x195c },
-/* EC990622 end of Rampart fix */
+	/* basic banking */
+	3,								/* starting bank */
+	{ 0x0080,0x0090,0x00a0,0x00b0 },/* bank select values */
+
+	/* alternate banking */
+	{ 0x007f,UNKNOWN },				/* 1st mask/value in sequence */
+	{ 0x1fff,0x1dfe },				/* 2nd mask/value in sequence */
+	{ 0x1ffc,0x1b5c },				/* 3rd mask/value in sequence */
+	0,								/* shift to get bank from 3rd */
+
+	/* bitwise banking */
+	{ 0x1ff0,0x1540 },				/* 1st mask/value in sequence */
+	{ 0x1ff3,0x1540 },				/* clear bit 0 value */
+	{ 0x1ff3,0x1541 },				/*   set bit 0 value */
+	{ 0x1ff3,0x1542 },				/* clear bit 1 value */
+	{ 0x1ff3,0x1543 },				/*   set bit 1 value */
+	{ 0x1ff8,0x1550 },				/* final mask/value in sequence */
+
+	/* additive banking */
+	NO_ADDITIVE
+};
+
+
+/* slapstic 137412-103: Marble Madness (confirmed) */
+static struct slapstic_data slapstic103 =
+{
+	/* basic banking */
+	3,								/* starting bank */
+	{ 0x0040,0x0050,0x0060,0x0070 },/* bank select values */
+
+	/* alternate banking */
+	{ 0x007f,0x002d },				/* 1st mask/value in sequence */
+	{ 0x3fff,0x3d14 },				/* 2nd mask/value in sequence */
+	{ 0x3ffc,0x3d24 },				/* 3rd mask/value in sequence */
+	0,								/* shift to get bank from 3rd */
+
+	/* bitwise banking */
+	{ 0x3ff0,0x34c0 },				/* 1st mask/value in sequence */
+	{ 0x3ff3,0x34c0 },				/* clear bit 0 value */
+	{ 0x3ff3,0x34c1 },				/*   set bit 0 value */
+	{ 0x3ff3,0x34c2 },				/* clear bit 1 value */
+	{ 0x3ff3,0x34c3 },				/*   set bit 1 value */
+	{ 0x3ff8,0x34d0 },				/* final mask/value in sequence */
+
+	/* additive banking */
+	NO_ADDITIVE
+};
+
+
+/* slapstic 137412-104: Gauntlet (confirmed) */
+static struct slapstic_data slapstic104 =
+{
+	/* basic banking */
+	3,								/* starting bank */
+	{ 0x0020,0x0028,0x0030,0x0038 },/* bank select values */
+
+	/* alternate banking */
+	{ 0x007f,0x0069 },				/* 1st mask/value in sequence */
+	{ 0x3fff,0x3735 },				/* 2nd mask/value in sequence */
+	{ 0x3ffc,0x3764 },				/* 3rd mask/value in sequence */
+	0,								/* shift to get bank from 3rd */
+
+	/* bitwise banking */
+	{ 0x3ff0,0x3d90 },				/* 1st mask/value in sequence */
+	{ 0x3ff3,0x3d90 },				/* clear bit 0 value */
+	{ 0x3ff3,0x3d91 },				/*   set bit 0 value */
+	{ 0x3ff3,0x3d92 },				/* clear bit 1 value */
+	{ 0x3ff3,0x3d93 },				/*   set bit 1 value */
+	{ 0x3ff8,0x3da0 },				/* final mask/value in sequence */
+
+	/* additive banking */
+	NO_ADDITIVE
+};
+
+
+/* slapstic 137412-105: Indiana Jones/Paperboy (confirmed) */
+static struct slapstic_data slapstic105 =
+{
+	/* basic banking */
+	3,								/* starting bank */
+	{ 0x0010,0x0014,0x0018,0x001c },/* bank select values */
+
+	/* alternate banking */
+	{ 0x007f,0x003d },				/* 1st mask/value in sequence */
+	{ 0x3fff,0x0092 },				/* 2nd mask/value in sequence */
+	{ 0x3ffc,0x00a4 },				/* 3rd mask/value in sequence */
+	0,								/* shift to get bank from 3rd */
+
+	/* bitwise banking */
+	{ 0x3ff0,0x35b0 },				/* 1st mask/value in sequence */
+	{ 0x3ff3,0x35b0 },				/* clear bit 0 value */
+	{ 0x3ff3,0x35b1 },				/*   set bit 0 value */
+	{ 0x3ff3,0x35b2 },				/* clear bit 1 value */
+	{ 0x3ff3,0x35b3 },				/*   set bit 1 value */
+	{ 0x3ff8,0x35c0 },				/* final mask/value in sequence */
+
+	/* additive banking */
+	NO_ADDITIVE
+};
+
+
+/* slapstic 137412-106: Gauntlet II (NOT confirmed) */
+static struct slapstic_data slapstic106 =
+{
+	/* basic banking */
+	3,								/* starting bank */
+	{ 0x0008,0x000a,0x000c,0x000e },/* bank select values */
+
+	/* alternate banking */
+	{ 0x007f,0x002b },				/* 1st mask/value in sequence */
+	{ 0x3fff,0x0052 },				/* 2nd mask/value in sequence */
+	{ 0x3ffc,0x0064 },				/* 3rd mask/value in sequence */
+	0,								/* shift to get bank from 3rd */
+
+	/* bitwise banking */
+	{ 0x3ff0,0x3da0 },				/* 1st mask/value in sequence */
+	{ 0x3ff3,0x3da0 },				/* clear bit 0 value */
+	{ 0x3ff3,0x3da1 },				/*   set bit 0 value */
+	{ 0x3ff3,0x3da2 },				/* clear bit 1 value */
+	{ 0x3ff3,0x3da3 },				/*   set bit 1 value */
+	{ 0x3ff8,0x3db0 },				/* final mask/value in sequence */
+
+	/* additive banking */
+	NO_ADDITIVE
+};
+
+
+/* slapstic 137412-107: Peter Packrat/Xybots/2p Gauntlet/720 (confirmed) */
+static struct slapstic_data slapstic107 =
+{
+	/* basic banking */
+	3,								/* starting bank */
+	{ 0x0018,0x001a,0x001c,0x001e },/* bank select values */
+
+	/* alternate banking */
+	{ 0x007f,0x006b },				/* 1st mask/value in sequence */
+	{ 0x3fff,0x3d52 },				/* 2nd mask/value in sequence */
+	{ 0x3ffc,0x3d64 },				/* 3rd mask/value in sequence */
+	0,								/* shift to get bank from 3rd */
+
+	/* bitwise banking */
+	{ 0x3ff0,0x00a0 },				/* 1st mask/value in sequence */
+	{ 0x3ff3,0x00a0 },				/* clear bit 0 value */
+	{ 0x3ff3,0x00a1 },				/*   set bit 0 value */
+	{ 0x3ff3,0x00a2 },				/* clear bit 1 value */
+	{ 0x3ff3,0x00a3 },				/*   set bit 1 value */
+	{ 0x3ff8,0x00b0 },				/* final mask/value in sequence */
+
+	/* additive banking */
+	NO_ADDITIVE
+};
+
+
+/* slapstic 137412-108: Road Runner/Super Sprint (confirmed) */
+static struct slapstic_data slapstic108 =
+{
+	/* basic banking */
+	3,								/* starting bank */
+	{ 0x0028,0x002a,0x002c,0x002e },/* bank select values */
+
+	/* alternate banking */
+	{ 0x007f,0x001f },				/* 1st mask/value in sequence */
+	{ 0x3fff,0x3772 },				/* 2nd mask/value in sequence */
+	{ 0x3ffc,0x3764 },				/* 3rd mask/value in sequence */
+	0,								/* shift to get bank from 3rd */
+
+	/* bitwise banking */
+	{ 0x3ff0,0x0060 },				/* 1st mask/value in sequence */
+	{ 0x3ff3,0x0060 },				/* clear bit 0 value */
+	{ 0x3ff3,0x0061 },				/*   set bit 0 value */
+	{ 0x3ff3,0x0062 },				/* clear bit 1 value */
+	{ 0x3ff3,0x0063 },				/*   set bit 1 value */
+	{ 0x3ff8,0x0070 },				/* final mask/value in sequence */
+
+	/* additive banking */
+	NO_ADDITIVE
+};
+
+
+/* slapstic 137412-109: Championship Sprint (confirmed) */
+static struct slapstic_data slapstic109 =
+{
+	/* basic banking */
+	3,								/* starting bank */
+	{ 0x0008,0x000a,0x000c,0x000e },/* bank select values */
+
+	/* alternate banking */
+	{ 0x007f,0x002b },				/* 1st mask/value in sequence */
+	{ 0x3fff,0x0052 },				/* 2nd mask/value in sequence */
+	{ 0x3ffc,0x0064 },				/* 3rd mask/value in sequence */
+	0,								/* shift to get bank from 3rd */
+
+	/* bitwise banking */
+	{ 0x3ff0,0x3da0 },				/* 1st mask/value in sequence */
+	{ 0x3ff3,0x3da0 },				/* clear bit 0 value */
+	{ 0x3ff3,0x3da1 },				/*   set bit 0 value */
+	{ 0x3ff3,0x3da2 },				/* clear bit 1 value */
+	{ 0x3ff3,0x3da3 },				/*   set bit 1 value */
+	{ 0x3ff8,0x3db0 },				/* final mask/value in sequence */
+
+	/* additive banking */
+	NO_ADDITIVE
+};
+
+
+/* slapstic 137412-110: Road Blasters/APB (confirmed) */
+static struct slapstic_data slapstic110 =
+{
+	/* basic banking */
+	3,								/* starting bank */
+	{ 0x0040,0x0050,0x0060,0x0070 },/* bank select values */
+
+	/* alternate banking */
+	{ 0x007f,0x002d },				/* 1st mask/value in sequence */
+	{ 0x3fff,0x3d14 },				/* 2nd mask/value in sequence */
+	{ 0x3ffc,0x3d24 },				/* 3rd mask/value in sequence */
+	0,								/* shift to get bank from 3rd */
+
+	/* bitwise banking */
+	{ 0x3ff0,0x34c0 },				/* 1st mask/value in sequence */
+	{ 0x3ff3,0x34c0 },				/* clear bit 0 value */
+	{ 0x3ff3,0x34c1 },				/*   set bit 0 value */
+	{ 0x3ff3,0x34c2 },				/* clear bit 1 value */
+	{ 0x3ff3,0x34c3 },				/*   set bit 1 value */
+	{ 0x3ff8,0x34d0 },				/* final mask/value in sequence */
+
+	/* additive banking */
+	NO_ADDITIVE
+};
+
+
+
+/*************************************
+ *
+ *	Slapstic-2 definitions
+ *
+ *************************************/
+
+/* slapstic 137412-111: Pit Fighter (confirmed) */
+static struct slapstic_data slapstic111 =
+{
+	/* basic banking */
+	0,								/* starting bank */
+	{ 0x0042,0x0052,0x0062,0x0072 },/* bank select values */
+
+	/* alternate banking */
+	{ 0x007f,0x000a },				/* 1st mask/value in sequence */
+	{ 0x3fff,0x28a4 },				/* 2nd mask/value in sequence */
+	{ 0x0784,0x0080 },				/* 3rd mask/value in sequence */
+	0,								/* shift to get bank from 3rd */
+
+	/* bitwise banking */
+	NO_BITWISE,
+
+	/* additive banking */
+	{ 0x3fff,0x00a1 },				/* 1st mask/value in sequence */
+	{ 0x3fff,0x00a2 },				/* 2nd mask/value in sequence */
+	{ 0x3c5f,0x284d },				/* +1 mask/value */
+	{ 0x3e5f,0x2c5d },				/* +2 mask/value */
+	{ 0x3e5f,0x285d },				/* +3 mask/value */
+	{ 0x3ff8,0x2800 }				/* final mask/value in sequence */
+};
+
+
+/* slapstic 137412-116: Hydra (confirmed) */
+static struct slapstic_data slapstic116 =
+{
+	/* basic banking */
+	0,								/* starting bank */
+	{ 0x0044,0x004c,0x0054,0x005c },/* bank select values */
+
+	/* alternate banking */
+	{ 0x007f,0x0069 },				/* 1st mask/value in sequence */
+	{ 0x3fff,0x2bab },				/* 2nd mask/value in sequence */
+	{ 0x387c,0x0808 },				/* 3rd mask/value in sequence */
+	0,								/* shift to get bank from 3rd */
+
+	/* bitwise banking */
+	NO_BITWISE,
+
+	/* additive banking */
+	{ 0x3fff,0x3f7c },				/* 1st mask/value in sequence */
+	{ 0x3fff,0x3f7d },				/* 2nd mask/value in sequence */
+	{ 0x3db2,0x3c12 },				/* +1 mask/value */
+	{ 0x3ff3,0x3e43 },				/* +2 mask/value */
+	{ 0x3ff3,0x3e53 },				/* +3 mask/value */
+	{ 0x3fff,0x2ba8 }				/* final mask/value in sequence */
+};
+
+
+/* slapstic 137412-117: Race Drivin' (confirmed) */
+static struct slapstic_data slapstic117 =
+{
+	/* basic banking */
+	0,								/* starting bank */
+	{ 0x0008,0x001a,0x002c,0x003e },/* bank select values */
+
+	/* alternate banking */
+	{ UNKNOWN,UNKNOWN },			/* 1st mask/value in sequence */
+	{ UNKNOWN,UNKNOWN },			/* 2nd mask/value in sequence */
+	{ UNKNOWN,UNKNOWN },			/* 3rd mask/value in sequence */
+	0,								/* shift to get bank from 3rd */
+
+	/* bitwise banking */
+	NO_BITWISE,
+
+	/* additive banking */
+	{ UNKNOWN,UNKNOWN },			/* 1st mask/value in sequence */
+	{ UNKNOWN,UNKNOWN },			/* 2nd mask/value in sequence */
+	{ UNKNOWN,UNKNOWN },			/* +1 mask/value */
+	{ UNKNOWN,UNKNOWN },			/* +2 mask/value */
+	{ UNKNOWN,UNKNOWN },			/* +3 mask/value */
+	{ UNKNOWN,UNKNOWN }				/* final mask/value in sequence */
+};
+
+
+/* slapstic 137412-118: Rampart/Vindicators II (confirmed) */
+static struct slapstic_data slapstic118 =
+{
+	/* basic banking */
+	0,								/* starting bank */
+	{ 0x0014,0x0034,0x0054,0x0074 },/* bank select values */
+
+	/* alternate banking */
+	{ 0x007f,0x0002 },				/* 1st mask/value in sequence */
+	{ 0x3fff,0x1950 },				/* 2nd mask/value in sequence */
+	{ 0x0067,0x0020 },				/* 3rd mask/value in sequence */
+	3,								/* shift to get bank from 3rd */
+
+	/* bitwise banking */
+	NO_BITWISE,
+
+	/* additive banking */
+	{ 0x3fff,0x1958 },				/* 1st mask/value in sequence */
+	{ 0x3fff,0x1959 },				/* 2nd mask/value in sequence */
+	{ 0x3f77,0x3056 },				/* +1 mask/value */
+	{ 0x3f77,0x3042 },				/* +2 mask/value */
+	{ 0x3f77,0x3052 },				/* +3 mask/value */
+	{ 0x3ff8,0x30e0 }				/* final mask/value in sequence */
+};
+
+
+
+/*************************************
+ *
+ *	Master slapstic table
+ *
+ *************************************/
+
+/* master table */
+static struct slapstic_data *slapstic_table[] =
+{
+	&slapstic101,	/* NOT confirmed! */
+	NULL,			/* never seen */
+	&slapstic103,
+	&slapstic104,
+	&slapstic105,
+	&slapstic106,	/* NOT confirmed! */
+	&slapstic107,
+	&slapstic108,
+	&slapstic109,
+	&slapstic110,
+	&slapstic111,
+	NULL,			/* never seen */
+	NULL,			/* never seen */
+	NULL,			/* never seen */
+	NULL,			/* never seen */
+	&slapstic116,
+	&slapstic117,
+	&slapstic118
 };
 
 
@@ -240,13 +656,17 @@ static struct slapstic_params slapstic_table[18] =
  *
  *************************************/
 
-static struct slapstic_params *slapstic;
-
 static enum state_type state;
-static INT8 next_bank;
-static INT8 extra_bank;
 static INT8 current_bank;
-static UINT8 version;
+static int access_68k;
+
+static INT8 alt_bank;
+static INT8 bit_bank;
+static INT8 add_bank;
+static UINT8 bit_xor;
+
+static struct slapstic_data slapstic;
+
 
 #if LOG_SLAPSTIC
 	static void slapstic_log(offs_t offset);
@@ -269,25 +689,27 @@ void slapstic_init(int chip)
 	if (chip < 101 || chip > 118)
 		return;
 
-	/* set up a pointer to the parameters */
-	version = chip;
-	slapstic = slapstic_table + (chip - 101);
+	/* set up the parameters */
+	if (!slapstic_table[chip - 101])
+		return;
+	slapstic = *slapstic_table[chip - 101];
 
 	/* reset the chip */
-	state = ENABLED;
-	next_bank = extra_bank = -1;
+	slapstic_reset();
 
-	/* the 111 and later chips seem to reset to bank 0 */
-	if (chip < 111)
-		current_bank = 3;
-	else
-		current_bank = 0;
+	/* see if we're 68k or 6502/6809 based */
+	access_68k = ((Machine->drv->cpu[0].cpu_type & ~CPU_FLAGS_MASK) != CPU_M6809 &&
+				  (Machine->drv->cpu[0].cpu_type & ~CPU_FLAGS_MASK) != CPU_M6502);
 }
 
 
 void slapstic_reset(void)
 {
-	slapstic_init(version);
+	/* reset the chip */
+	state = DISABLED;
+
+	/* the 111 and later chips seem to reset to bank 0 */
+	current_bank = slapstic.bankstart;
 }
 
 
@@ -307,137 +729,262 @@ int slapstic_bank(void)
 
 /*************************************
  *
- *	Call this before every access
+ *	Kludge to catch alt seqeuences
+ *
+ *************************************/
+
+static int alt2_kludge(offs_t offset)
+{
+	UINT32 pc = cpu_getpreviouspc();
+
+	/* 68k case is fairly complex: we need to look for special triplets */
+	if (access_68k)
+	{
+		/* first verify that the prefetched PC matches the first alternate */
+		if ((((pc + 2) >> 1) & slapstic.alt1.mask) == slapstic.alt1.value)
+		{
+			/* now look for a move.w (An),(An) or cmpm.w (An)+,(An)+ */
+			UINT16 opcode = cpu_readop16(pc & 0xffffff);
+			if ((opcode & 0xf1f8) == 0x3090 || (opcode & 0xf1f8) == 0xb148)
+			{
+				/* fetch the value of the register for the second operand, and see */
+				/* if it matches the third alternate */
+				UINT32 regval = cpu_get_reg(M68K_A0 + ((opcode >> 9) & 7)) >> 1;
+				if ((regval & slapstic.alt3.mask) == slapstic.alt3.value)
+				{
+					alt_bank = (regval >> slapstic.altshift) & 3;
+					return ALTERNATE3;
+				}
+			}
+			return ALTERNATE2;
+		}
+	}
+
+	/* kludge for ESB */
+	return ALTERNATE2;
+}
+
+
+
+/*************************************
+ *
+ *	Call this *after* every access
  *
  *************************************/
 
 int slapstic_tweak(offs_t offset)
 {
-	/* switch banks now if one is pending */
-	if (next_bank != -1)
+	/* reset is universal */
+	if (offset == 0x0000)
 	{
-		current_bank = next_bank;
-		next_bank = -1;
-		extra_bank = -1;
+		state = ENABLED;
 	}
 
-	/* state machine */
-	switch (state)
+	/* otherwise, use the state machine */
+	else
 	{
-		/* ENABLED state: the chip has been activated and is ready for a bankswitch */
-		case ENABLED:
-			if ((offset & DISABLE_MASK) == slapstic->disable)
-			{
-				state = DISABLED;
-				/* NS990620 Gauntlet II fix */
-				if (extra_bank != -1)
-					next_bank = extra_bank;
-				/* NS990620 end of Gauntlet II fix */
-			}
-			else if ((offset & IGNORE_MASK) == slapstic->ignore)
-			{
-				state = IGNORE;
-			}
-			else if (offset == slapstic->bank0)
-			{
-				state = DISABLED;
-				if (extra_bank == -1)
-					next_bank = 0;
-				else
-					next_bank = extra_bank;
-			}
-			else if (offset == slapstic->bank1)
-			{
-				state = DISABLED;
-				if (extra_bank == -1)
-					next_bank = 1;
-				else
-					next_bank = extra_bank;
-			}
-			else if (offset == slapstic->bank2)
-			{
-				state = DISABLED;
-				if (extra_bank == -1)
-					next_bank = 2;
-				else
-					next_bank = extra_bank;
-			}
-			else if (offset == slapstic->bank3)
-			{
-				state = DISABLED;
-				if (extra_bank == -1)
-					next_bank = 3;
-				else
-					next_bank = extra_bank;
-			}
-			else if (offset == slapstic->reset)
-			{
-				next_bank = -1;
-				extra_bank = -1;
-			}
-			/* This is the transition which has */
-			/* not been verified on the HW yet */
-			else if (offset == slapstic->senable)
-			{
-				state = SPECIAL;
-			}
-			break;
+		switch (state)
+		{
+			/* DISABLED state: everything is ignored except a reset */
+			case DISABLED:
+				break;
 
-		/* DISABLED state: everything is ignored except a reset */
-		case DISABLED:
-			if (offset == slapstic->reset)
-			{
-				state = ENABLED;
-				next_bank = -1;
-				extra_bank = -1;
-			}
-			break;
+			/* ENABLED state: the chip has been activated and is ready for a bankswitch */
+			case ENABLED:
 
-		/* IGNORE state: next access is interpreted differently */
-		case IGNORE:
-			if (offset == slapstic->senable)
-			{
-				state = SPECIAL;
-			}
-			else
-			{
-				state = ENABLED;
-			}
-			break;
+				/* check for request to enter bitwise state */
+				if ((offset & slapstic.bit1.mask) == slapstic.bit1.value)
+				{
+					state = BITWISE1;
+				}
 
-		/* SPECIAL state: the special alternate bank switch override method is being used */
-		case SPECIAL:
-			if (offset == slapstic->sbank0)
-			{
-				state = ENABLED;
-				extra_bank = 0;
-			}
-			else if (offset == slapstic->sbank1)
-			{
-				state = ENABLED;
-				extra_bank = 1;
-			}
-			else if (offset == slapstic->sbank2)
-			{
-				state = ENABLED;
-				extra_bank = 2;
-			}
-			else if (offset == slapstic->sbank3)
-			{
-				state = ENABLED;
-				extra_bank = 3;
-			}
-			else if (offset == slapstic->reset)
-			{
-				state = ENABLED;
-				next_bank = -1;
-				extra_bank = -1;
-			}
-			else
-			{
-				state = ENABLED;
-			}
-			break;
+				/* check for request to enter additive state */
+				else if ((offset & slapstic.add1.mask) == slapstic.add1.value)
+				{
+					state = ADDITIVE1;
+				}
+
+				/* check for request to enter alternate state */
+				else if ((offset & slapstic.alt1.mask) == slapstic.alt1.value)
+				{
+					state = ALTERNATE1;
+				}
+
+				/* special kludge for catching the second alternate address if */
+				/* the first one was missed (since it's usually an opcode fetch) */
+				else if ((offset & slapstic.alt2.mask) == slapstic.alt2.value)
+				{
+					state = alt2_kludge(offset);
+				}
+
+				/* check for standard bankswitches */
+				else if (offset == slapstic.bank[0])
+				{
+					state = DISABLED;
+					current_bank = 0;
+				}
+				else if (offset == slapstic.bank[1])
+				{
+					state = DISABLED;
+					current_bank = 1;
+				}
+				else if (offset == slapstic.bank[2])
+				{
+					state = DISABLED;
+					current_bank = 2;
+				}
+				else if (offset == slapstic.bank[3])
+				{
+					state = DISABLED;
+					current_bank = 3;
+				}
+				break;
+
+			/* ALTERNATE1 state: look for alternate2 offset, or else fall back to ENABLED */
+			case ALTERNATE1:
+				if ((offset & slapstic.alt2.mask) == slapstic.alt2.value)
+				{
+					state = ALTERNATE2;
+				}
+				else
+				{
+					state = ENABLED;
+				}
+				break;
+
+			/* ALTERNATE2 state: look for altbank offset, or else fall back to ENABLED */
+			case ALTERNATE2:
+				if ((offset & slapstic.alt3.mask) == slapstic.alt3.value)
+				{
+					state = ALTERNATE3;
+					alt_bank = (offset >> slapstic.altshift) & 3;
+				}
+				else
+				{
+					state = ENABLED;
+				}
+				break;
+
+			/* ALTERNATE3 state: wait for a standard bank value to finish the transaction */
+			case ALTERNATE3:
+				if (offset == slapstic.bank[0] || offset == slapstic.bank[1] ||
+					offset == slapstic.bank[2] || offset == slapstic.bank[3])
+				{
+					state = DISABLED;
+					current_bank = alt_bank;
+				}
+				break;
+
+			/* BITWISE1 state: waiting for a bank to enter the BITWISE state */
+			case BITWISE1:
+				if (offset == slapstic.bank[0] || offset == slapstic.bank[1] ||
+					offset == slapstic.bank[2] || offset == slapstic.bank[3])
+				{
+					state = BITWISE2;
+					bit_bank = current_bank;
+					bit_xor = 0;
+				}
+				break;
+
+			/* BITWISE2 state: watch for twiddling and the escape mechanism */
+			case BITWISE2:
+
+				/* check for clear bit 0 case */
+				if (((offset ^ bit_xor) & slapstic.bit2c0.mask) == slapstic.bit2c0.value)
+				{
+					bit_bank &= ~1;
+					bit_xor ^= 3;
+				}
+
+				/* check for set bit 0 case */
+				else if (((offset ^ bit_xor) & slapstic.bit2s0.mask) == slapstic.bit2s0.value)
+				{
+					bit_bank |= 1;
+					bit_xor ^= 3;
+				}
+
+				/* check for clear bit 1 case */
+				else if (((offset ^ bit_xor) & slapstic.bit2c1.mask) == slapstic.bit2c1.value)
+				{
+					bit_bank &= ~2;
+					bit_xor ^= 3;
+				}
+
+				/* check for set bit 1 case */
+				else if (((offset ^ bit_xor) & slapstic.bit2s1.mask) == slapstic.bit2s1.value)
+				{
+					bit_bank |= 2;
+					bit_xor ^= 3;
+				}
+
+				/* check for escape case */
+				else if ((offset & slapstic.bit3.mask) == slapstic.bit3.value)
+				{
+					state = BITWISE3;
+				}
+				break;
+
+			/* BITWISE3 state: waiting for a bank to seal the deal */
+			case BITWISE3:
+				if (offset == slapstic.bank[0] || offset == slapstic.bank[1] ||
+					offset == slapstic.bank[2] || offset == slapstic.bank[3])
+				{
+					state = DISABLED;
+					current_bank = bit_bank;
+				}
+				break;
+
+			/* ADDITIVE1 state: look for add2 offset, or else fall back to ENABLED */
+			case ADDITIVE1:
+				if ((offset & slapstic.add2.mask) == slapstic.add2.value)
+				{
+					state = ADDITIVE2;
+					add_bank = current_bank;
+				}
+				else
+				{
+					state = ENABLED;
+				}
+				break;
+
+			/* ADDITIVE2 state: watch for twiddling and the escape mechanism */
+			case ADDITIVE2:
+
+				/* check for clear bit 0 case */
+				if ((offset & slapstic.addplus1.mask) == slapstic.addplus1.value)
+				{
+					add_bank = (add_bank + 1) & 3;
+				}
+
+				/* check for set bit 0 case */
+				else if ((offset & slapstic.addplus2.mask) == slapstic.addplus2.value)
+				{
+					add_bank = (add_bank + 2) & 3;
+				}
+
+				/* check for clear bit 0 case */
+				else if ((offset & slapstic.addplus3.mask) == slapstic.addplus3.value)
+				{
+					add_bank = (add_bank + 3) & 3;
+				}
+
+				/* check for escape case */
+				else if ((offset & slapstic.add3.mask) == slapstic.add3.value)
+				{
+					state = ADDITIVE3;
+				}
+				break;
+
+			/* ADDITIVE3 state: waiting for a bank to seal the deal */
+			case ADDITIVE3:
+				if (offset == slapstic.bank[0] || offset == slapstic.bank[1] ||
+					offset == slapstic.bank[2] || offset == slapstic.bank[3])
+				{
+					state = DISABLED;
+					current_bank = add_bank;
+				}
+				break;
+		}
 	}
 
 	/* log this access */
@@ -458,26 +1005,56 @@ int slapstic_tweak(offs_t offset)
 #if LOG_SLAPSTIC
 static void slapstic_log(offs_t offset)
 {
+	static double last_time;
+
 	if (!slapsticlog)
 		slapsticlog = fopen("slapstic.log", "w");
 	if (slapsticlog)
 	{
+		double time = timer_get_time();
+
+		if (time - last_time > 1.0)
+			fprintf(slapsticlog, "------------------------------------\n");
+		last_time = time;
+
 		fprintf(slapsticlog, "%06X: %04X B=%d ", cpu_getpreviouspc(), offset, current_bank);
 		switch (state)
 		{
-			case ENABLED:
-				fprintf(slapsticlog, "ENABLED\n");
-				break;
 			case DISABLED:
 				fprintf(slapsticlog, "DISABLED\n");
 				break;
-			case SPECIAL:
-				fprintf(slapsticlog, "SPECIAL\n");
+			case ENABLED:
+				fprintf(slapsticlog, "ENABLED\n");
 				break;
-			case IGNORE:
-				fprintf(slapsticlog, "IGNORE\n");
+			case ALTERNATE1:
+				fprintf(slapsticlog, "ALTERNATE1\n");
+				break;
+			case ALTERNATE2:
+				fprintf(slapsticlog, "ALTERNATE2\n");
+				break;
+			case ALTERNATE3:
+				fprintf(slapsticlog, "ALTERNATE3\n");
+				break;
+			case BITWISE1:
+				fprintf(slapsticlog, "BITWISE1\n");
+				break;
+			case BITWISE2:
+				fprintf(slapsticlog, "BITWISE2\n");
+				break;
+			case BITWISE3:
+				fprintf(slapsticlog, "BITWISE3\n");
+				break;
+			case ADDITIVE1:
+				fprintf(slapsticlog, "ADDITIVE1\n");
+				break;
+			case ADDITIVE2:
+				fprintf(slapsticlog, "ADDITIVE2\n");
+				break;
+			case ADDITIVE3:
+				fprintf(slapsticlog, "ADDITIVE3\n");
 				break;
 		}
+		fflush(slapsticlog);
 	}
 }
 #endif

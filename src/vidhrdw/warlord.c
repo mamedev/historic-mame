@@ -78,9 +78,6 @@ void warlord_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	int offs, upright_mode, palette;
 
 
-	if (palette_recalc())
-		memset(dirtybuffer,1,videoram_size);
-
 	/* Cocktail mode uses colors 0-3, upright 4-7 */
 
 	upright_mode = input_port_0_r(0) & 0x80;

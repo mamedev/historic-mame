@@ -208,16 +208,8 @@ if (keyboard_pressed(KEYCODE_Z))
 }
 #endif
 
-	tilemap_update(ALL_TILEMAPS);
-
-	palette_init_used_colors();
-
-	/* No Sprites ... */
-
-	palette_recalc();
-
 	if (layers_ctrl&1)	tilemap_draw(bitmap, tilemap_0, 0,0);
-	else				fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
+	else				fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 
 	if (layers_ctrl&2)	tilemap_draw(bitmap, tilemap_1, 0,0);
 }

@@ -52,42 +52,40 @@ CPU #3
 #include "cpu/z80/z80.h"
 
 
-extern unsigned char *wc90_shared;
-
-extern unsigned char *wc90_tile_colorram, *wc90_tile_videoram;
-extern unsigned char *wc90_tile_colorram2, *wc90_tile_videoram2;
+extern data8_t *wc90_fgvideoram,*wc90_bgvideoram,*wc90_txvideoram;
 
 
-extern unsigned char *wc90_scroll0xlo, *wc90_scroll0xhi;
-extern unsigned char *wc90_scroll1xlo, *wc90_scroll1xhi;
-extern unsigned char *wc90_scroll2xlo, *wc90_scroll2xhi;
+extern data8_t *wc90_scroll0xlo, *wc90_scroll0xhi;
+extern data8_t *wc90_scroll1xlo, *wc90_scroll1xhi;
+extern data8_t *wc90_scroll2xlo, *wc90_scroll2xhi;
 
-extern unsigned char *wc90_scroll0ylo, *wc90_scroll0yhi;
-extern unsigned char *wc90_scroll1ylo, *wc90_scroll1yhi;
-extern unsigned char *wc90_scroll2ylo, *wc90_scroll2yhi;
-
-extern size_t wc90_tile_videoram_size;
-extern size_t wc90_tile_videoram_size2;
+extern data8_t *wc90_scroll0ylo, *wc90_scroll0yhi;
+extern data8_t *wc90_scroll1ylo, *wc90_scroll1yhi;
+extern data8_t *wc90_scroll2ylo, *wc90_scroll2yhi;
 
 int wc90_vh_start( void );
-void wc90_vh_stop( void );
-READ_HANDLER( wc90_tile_videoram_r );
-WRITE_HANDLER( wc90_tile_videoram_w );
-READ_HANDLER( wc90_tile_colorram_r );
-WRITE_HANDLER( wc90_tile_colorram_w );
-READ_HANDLER( wc90_tile_videoram2_r );
-WRITE_HANDLER( wc90_tile_videoram2_w );
-READ_HANDLER( wc90_tile_colorram2_r );
-WRITE_HANDLER( wc90_tile_colorram2_w );
-READ_HANDLER( wc90_shared_r );
-WRITE_HANDLER( wc90_shared_w );
+WRITE_HANDLER( wc90_fgvideoram_w );
+WRITE_HANDLER( wc90_bgvideoram_w );
+WRITE_HANDLER( wc90_txvideoram_w );
 void wc90_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
+
+static data8_t *wc90_shared;
+
+static READ_HANDLER( wc90_shared_r )
+{
+	return wc90_shared[offset];
+}
+
+static WRITE_HANDLER( wc90_shared_w )
+{
+	wc90_shared[offset] = data;
+}
 
 static WRITE_HANDLER( wc90_bankswitch_w )
 {
 	int bankaddress;
-	unsigned char *RAM = memory_region(REGION_CPU1);
+	data8_t *RAM = memory_region(REGION_CPU1);
 
 
 	bankaddress = 0x10000 + ( ( data & 0xf8 ) << 8 );
@@ -97,7 +95,7 @@ static WRITE_HANDLER( wc90_bankswitch_w )
 static WRITE_HANDLER( wc90_bankswitch1_w )
 {
 	int bankaddress;
-	unsigned char *RAM = memory_region(REGION_CPU2);
+	data8_t *RAM = memory_region(REGION_CPU2);
 
 
 	bankaddress = 0x10000 + ( ( data & 0xf8 ) << 8 );
@@ -113,14 +111,11 @@ static WRITE_HANDLER( wc90_sound_command_w )
 static MEMORY_READ_START( wc90_readmem1 )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x9fff, MRA_RAM }, /* Main RAM */
-	{ 0xa000, 0xa7ff, wc90_tile_colorram_r }, /* bg 1 color ram */
-	{ 0xa800, 0xafff, wc90_tile_videoram_r }, /* bg 1 tile ram */
+	{ 0xa000, 0xafff, MRA_RAM }, /* fg video ram */
 	{ 0xb000, 0xbfff, MRA_RAM },
-	{ 0xc000, 0xc7ff, wc90_tile_colorram2_r }, /* bg 2 color ram */
-	{ 0xc800, 0xcfff, wc90_tile_videoram2_r }, /* bg 2 tile ram */
+	{ 0xc000, 0xcfff, MRA_RAM }, /* bg video ram */
 	{ 0xd000, 0xdfff, MRA_RAM },
-	{ 0xe000, 0xe7ff, colorram_r }, /* fg color ram */
-	{ 0xe800, 0xefff, videoram_r }, /* fg tile ram */
+	{ 0xe000, 0xefff, MRA_RAM }, /* tx video ram */
 	{ 0xf000, 0xf7ff, MRA_BANK1 },
 	{ 0xf800, 0xfbff, wc90_shared_r },
 	{ 0xfc00, 0xfc00, input_port_0_r }, /* Stick 1 */
@@ -143,14 +138,11 @@ MEMORY_END
 static MEMORY_WRITE_START( wc90_writemem1 )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x9fff, MWA_RAM },
-	{ 0xa000, 0xa7ff, wc90_tile_colorram_w, &wc90_tile_colorram },
-	{ 0xa800, 0xafff, wc90_tile_videoram_w, &wc90_tile_videoram, &wc90_tile_videoram_size },
+	{ 0xa000, 0xafff, wc90_fgvideoram_w, &wc90_fgvideoram },
 	{ 0xb000, 0xbfff, MWA_RAM },
-	{ 0xc000, 0xc7ff, wc90_tile_colorram2_w, &wc90_tile_colorram2 },
-	{ 0xc800, 0xcfff, wc90_tile_videoram2_w, &wc90_tile_videoram2, &wc90_tile_videoram_size2 },
+	{ 0xc000, 0xcfff, wc90_bgvideoram_w, &wc90_bgvideoram },
 	{ 0xd000, 0xdfff, MWA_RAM },
-	{ 0xe000, 0xe7ff, colorram_w, &colorram },
-	{ 0xe800, 0xefff, videoram_w, &videoram, &videoram_size },
+	{ 0xe000, 0xefff, wc90_txvideoram_w, &wc90_txvideoram },
 	{ 0xf000, 0xf7ff, MWA_ROM },
 	{ 0xf800, 0xfbff, wc90_shared_w, &wc90_shared },
 	{ 0xfc02, 0xfc02, MWA_RAM, &wc90_scroll0ylo },
@@ -387,10 +379,10 @@ static const struct MachineDriver machine_driver_wc90 =
 	4*16*16, 4*16*16,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	wc90_vh_start,
-	wc90_vh_stop,
+	0,
 	wc90_vh_screenrefresh,
 
 	/* sound hardware */

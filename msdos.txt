@@ -219,6 +219,12 @@ Options:
               n64lpt1      - N64 pad on LPT1 (needs special hardware)
               n64lpt2      - N64 pad on LPT2 (needs special hardware)
               n64lpt3      - N64 pad on LPT3 (needs special hardware)
+              db9lpt1      - C64/Atari/Sinclair joy via DB9 interface on LPT1
+              db9lpt2      - C64/Atari/Sinclair joy via DB9 interface on LPT2
+              db9lpt3      - C64/Atari/Sinclair joy via DB9 interface on LPT3
+              tgxlpt1      - digital joystick via Turbografix if on LPT1
+              tgxlpt2      - digital joystick via Turbografix if on LPT2
+              tgxlpt3      - digital joystick via Turbografix if on LPT3
 
               Notes:
               1) Use the TAB menu to calibrate analog joysticks. Calibration
@@ -230,6 +236,10 @@ Options:
               http://snespad.emulationworld.com
               4) http://www.debaser.force9.co.uk/ccmame has info on how to
               connect PSX and N64 pads.
+              5) http://www.burg-halle.de/~schwenke/parport.html for details on
+              how to build Turbografix interface for 1-7 joysticks. Also go
+              there for information on DB9 interface, the cheapest
+              (wires-only) joystick interface ever.
 
 -hotrod       Sets a default keyboard configuration suitable for the HotRod
               joystick by HanaHo Games.

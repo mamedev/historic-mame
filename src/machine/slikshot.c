@@ -548,7 +548,6 @@ void slikshot_extra_draw(struct osd_bitmap *bitmap)
 
 	/* make sure color 256 is white for our crosshair */
 	palette_change_color(256, 0xff, 0xff, 0xff);
-	palette_used_colors[256] = PALETTE_COLOR_USED;
 
 	/* compute the updated values */
 	curvx = vx;
@@ -601,7 +600,7 @@ void slikshot_extra_draw(struct osd_bitmap *bitmap)
 			py >= 0 && py < bitmap->height)
 		{
 			if (bitmap->depth == 8)
-				bitmap->line[py][px] = Machine->pens[256];
+				((UINT8 *)bitmap->line[py])[px] = Machine->pens[256];
 			else
 				((UINT16 *)bitmap->line[py])[px] = Machine->pens[256];
 		}

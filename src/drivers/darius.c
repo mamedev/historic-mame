@@ -873,7 +873,7 @@ static const struct MachineDriver machine_driver_darius =
 	4096*2, 4096*2,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_DUAL_MONITOR | VIDEO_ASPECT_RATIO(12,3),
+	VIDEO_TYPE_RASTER  | VIDEO_DUAL_MONITOR | VIDEO_ASPECT_RATIO(12,3),
 	0,
 	darius_vh_start,
 	darius_vh_stop,

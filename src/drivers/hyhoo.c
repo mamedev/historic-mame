@@ -411,6 +411,5 @@ ROM_START( hyhoo2 )
 ROM_END
 
 
-//     YEAR,     NAME,   PARENT,  MACHINE,    INPUT,     INIT,      MONITOR, COMPANY, FULLNAME, FLAGS
-GAMEX( 1987,    hyhoo,        0,    hyhoo,    hyhoo,    hyhoo,  ROT90_16BIT, "Nichibutsu", "Taisen Quiz HYHOO (Japan)", 0 )
-GAMEX( 1987,   hyhoo2,        0,   hyhoo2,   hyhoo2,   hyhoo2,  ROT90_16BIT, "Nichibutsu", "Taisen Quiz HYHOO 2 (Japan)", 0 )
+GAME( 1987, hyhoo,  0, hyhoo,  hyhoo,  hyhoo,  ROT90, "Nichibutsu", "Taisen Quiz HYHOO (Japan)" )
+GAME( 1987, hyhoo2, 0, hyhoo2, hyhoo2, hyhoo2, ROT90, "Nichibutsu", "Taisen Quiz HYHOO 2 (Japan)" )

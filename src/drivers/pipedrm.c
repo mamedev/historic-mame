@@ -106,28 +106,12 @@
 #include "driver.h"
 #include "cpu/z80/z80.h"
 #include "vidhrdw/generic.h"
+#include "fromance.h"
 #include <math.h>
 
 
-UINT8 pipedrm_video_control;
-
 static UINT8 pending_command;
 static UINT8 sound_command;
-
-
-/* video driver data & functions */
-int pipedrm_vh_start(void);
-void pipedrm_vh_stop(void);
-void pipedrm_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
-void hatris_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
-
-
-READ_HANDLER( pipedrm_videoram_r );
-WRITE_HANDLER( pipedrm_videoram_w );
-WRITE_HANDLER( pipedrm_scroll_regs_w );
-
-READ_HANDLER( hatris_videoram_r );
-WRITE_HANDLER( hatris_videoram_w );
 
 
 
@@ -141,9 +125,11 @@ static void init_machine(void)
 {
 	UINT8 *ram;
 
+	/* initialize main Z80 bank */
 	ram = memory_region(REGION_CPU1);
 	cpu_setbank(1, &ram[0x10000]);
 
+	/* initialize sound bank */
 	ram = memory_region(REGION_CPU2);
 	cpu_setbank(2, &ram[0x10000]);
 }
@@ -161,13 +147,14 @@ static WRITE_HANDLER( pipedrm_bankswitch_w )
 		D3 = background videoram select
 		D2-D0 = program ROM bank select
 	*/
-	UINT8 *ram = memory_region(REGION_CPU1);
 
 	/* set the memory bank on the Z80 using the low 3 bits */
+	UINT8 *ram = memory_region(REGION_CPU1);
 	cpu_setbank(1, &ram[0x10000 + (data & 0x7) * 0x2000]);
 
-	/* save this globally because the remaining bits affect the video */
-	pipedrm_video_control = data;
+	/* map to the fromance gfx register */
+	fromance_gfxreg_w(offset, ((data >> 6) & 0x01) | 	/* flipscreen */
+							  ((~data >> 2) & 0x02));	/* videoram select */
 }
 
 
@@ -240,9 +227,8 @@ static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x9fff, MRA_RAM },
 	{ 0xa000, 0xbfff, MRA_BANK1 },
-	{ 0xc000, 0xcbff, paletteram_r },
-	{ 0xcc00, 0xcfff, MRA_RAM },
-	{ 0xd000, 0xffff, pipedrm_videoram_r },
+	{ 0xc000, 0xcfff, MRA_RAM },
+	{ 0xd000, 0xffff, fromance_videoram_r },
 MEMORY_END
 
 
@@ -250,27 +236,8 @@ static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x9fff, MWA_RAM },
 	{ 0xa000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xcbff, paletteram_xRRRRRGGGGGBBBBB_w, &paletteram },
-	{ 0xcc00, 0xcfff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0xd000, 0xffff, pipedrm_videoram_w, &videoram, &videoram_size },
-MEMORY_END
-
-
-static MEMORY_READ_START( hatris_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0x9fff, MRA_RAM },
-	{ 0xa000, 0xbfff, MRA_BANK1 },
-	{ 0xc000, 0xcfff, paletteram_r },
-	{ 0xd000, 0xffff, hatris_videoram_r },
-MEMORY_END
-
-
-static MEMORY_WRITE_START( hatris_writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x9fff, MWA_RAM },
-	{ 0xa000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xcfff, paletteram_xRRRRRGGGGGBBBBB_w, &paletteram },
-	{ 0xd000, 0xffff, hatris_videoram_w, &videoram, &videoram_size },
+	{ 0xd000, 0xffff, fromance_videoram_w, &videoram, &videoram_size },
 MEMORY_END
 
 
@@ -287,7 +254,7 @@ PORT_END
 static PORT_WRITE_START( writeport )
 	{ 0x20, 0x20, sound_command_w },
 	{ 0x21, 0x21, pipedrm_bankswitch_w },
-	{ 0x22, 0x25, pipedrm_scroll_regs_w },
+	{ 0x22, 0x25, fromance_scroll_w },
 PORT_END
 
 
@@ -659,13 +626,13 @@ static const struct MachineDriver machine_driver_pipedrm =
 	/* video hardware */
   	44*8, 30*8, { 0*8, 44*8-1, 0*8, 30*8-1 },
 	gfxdecodeinfo,
-	1536,1536,
+	1536, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER,
 	0,
-	pipedrm_vh_start,
-	pipedrm_vh_stop,
+	fromance_vh_start,
+	fromance_vh_stop,
 	pipedrm_vh_screenrefresh,
 
 	/* sound hardware */
@@ -683,7 +650,7 @@ static const struct MachineDriver machine_driver_hatris =
 		{
 			CPU_Z80,
 			12000000/2,
-			hatris_readmem,hatris_writemem,readport,writeport,
+			readmem,writemem,readport,writeport,
 			interrupt,1
 		},
 		{
@@ -700,14 +667,14 @@ static const struct MachineDriver machine_driver_hatris =
 	/* video hardware */
   	44*8, 30*8, { 0*8, 44*8-1, 0*8, 30*8-1 },
 	gfxdecodeinfo_hatris,
-	2048,2048,
+	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER,
 	0,
-	pipedrm_vh_start,
-	pipedrm_vh_stop,
-	hatris_vh_screenrefresh,
+	fromance_vh_start,
+	fromance_vh_stop,
+	fromance_vh_screenrefresh,
 
 	/* sound hardware */
 	0,0,0,0,
@@ -739,7 +706,7 @@ ROM_START( pipedrm )
 
 	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "s71",    0x000000, 0x80000, 0x431485ee )
-	/* s72 will be copied here */
+	ROM_COPY( REGION_GFX1, 0x080000, 0x080000, 0x80000 )
 
 	ROM_REGION( 0x080000, REGION_GFX3, ROMREGION_DISPOSE )
 	ROM_LOAD16_BYTE( "a30", 0x00000, 0x40000, 0x50bc5e98 )
@@ -751,6 +718,7 @@ ROM_START( pipedrm )
 	ROM_REGION( 0x80000, REGION_SOUND2, 0 )
 	ROM_LOAD( "g71",     0x00000, 0x80000, 0x488e2fd1 )
 ROM_END
+
 
 ROM_START( pipedrmj )
 	ROM_REGION( 0x20000, REGION_CPU1, 0 )
@@ -767,7 +735,7 @@ ROM_START( pipedrmj )
 
 	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "s71",    0x000000, 0x80000, 0x431485ee )
-	/* s72 will be copied here */
+	ROM_COPY( REGION_GFX1, 0x080000, 0x080000, 0x80000 )
 
 	ROM_REGION( 0x080000, REGION_GFX3, ROMREGION_DISPOSE )
 	ROM_LOAD16_BYTE( "a30", 0x00000, 0x40000, 0x50bc5e98 )
@@ -779,6 +747,7 @@ ROM_START( pipedrmj )
 	ROM_REGION( 0x80000, REGION_SOUND2, 0 )
 	ROM_LOAD( "g71",     0x00000, 0x80000, 0x488e2fd1 )
 ROM_END
+
 
 ROM_START( hatris )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )
@@ -811,14 +780,17 @@ ROM_END
 
 static void init_pipedrm(void)
 {
-	/* copy the shared ROM from GFX1 to GFX2 */
-	memcpy(memory_region(REGION_GFX2) + 0x80000, memory_region(REGION_GFX1) + 0x80000, 0x80000);
+	/* sprite RAM lives at the end of palette RAM */
+	spriteram = install_mem_read_handler(0, 0xcc00, 0xcfff, MRA_RAM);
+	spriteram = install_mem_write_handler(0, 0xcc00, 0xcfff, MWA_RAM);
+	spriteram_size = 0x400;
 }
 
 
 static void init_hatris(void)
 {
 	install_port_write_handler(0, 0x20, 0x20, sound_command_nonmi_w);
+	install_port_write_handler(0, 0x21, 0x21, fromance_gfxreg_w);
 }
 
 

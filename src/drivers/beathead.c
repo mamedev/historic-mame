@@ -500,7 +500,7 @@ static const struct MachineDriver machine_driver_beathead =
 	0x8000,0x8000,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER  | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
 	beathead_vh_start,
 	beathead_vh_stop,
@@ -612,4 +612,4 @@ static void init_beathead(void)
  *
  *************************************/
 
-GAME( 1993, beathead, 0, beathead, beathead, beathead, ROT0_16BIT, "Atari Games", "BeatHead (prototype)" )
+GAME( 1993, beathead, 0, beathead, beathead, beathead, ROT0, "Atari Games", "BeatHead (prototype)" )

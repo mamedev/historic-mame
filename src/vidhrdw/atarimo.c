@@ -158,7 +158,6 @@ static struct atarimo_data atarimo[ATARIMO_MAX];
 
 static void mo_process(struct atarimo_data *mo, mo_callback callback, void *param, const struct rectangle *clip);
 static void mo_update(struct atarimo_data *mo, int scanline);
-static void mo_usage_callback(struct atarimo_data *mo, const struct atarimo_entry *entry);
 static void mo_render_callback(struct atarimo_data *mo, const struct atarimo_entry *entry);
 static void mo_scanline_callback(int scanline);
 
@@ -498,44 +497,6 @@ void atarimo_render(int map, struct osd_bitmap *bitmap, ataripf_overrender_cb ca
 	{
 		timer_set(cpu_getscanlinetime(0), 0 | (map << 16), mo_scanline_callback);
 		mo->timerallocated = 1;
-	}
-}
-
-
-/*---------------------------------------------------------------
-	atarimo_mark_palette: Mark palette entries used in the
-	current set of motion objects.
----------------------------------------------------------------*/
-
-void atarimo_mark_palette(int map)
-{
-	struct atarimo_data *mo = &atarimo[map];
-	UINT8 *used_colors = &palette_used_colors[mo->palettebase];
-	UINT32 marked_colors[256];
-	int i, j;
-
-	/* reset the marked colors */
-	memset(marked_colors, 0, mo->maxcolors * sizeof(UINT32));
-
-	/* mark the colors used */
-	mo_process(mo, mo_usage_callback, marked_colors, NULL);
-
-	/* loop over colors */
-	for (i = 0; i < mo->maxcolors; i++)
-	{
-		int usage = marked_colors[i];
-
-		/* if this entry was marked, loop over bits */
-		if (usage)
-		{
-			for (j = 0; j < 32; j++, usage >>= 1)
-				if (usage & 1)
-					used_colors[j] = PALETTE_COLOR_USED;
-			used_colors[mo->transpen] = PALETTE_COLOR_TRANSPARENT;
-		}
-
-		/* advance by the color granularity of the gfx */
-		used_colors += mo->gfxelement[mo->gfxlookup[0]].color_granularity;
 	}
 }
 
@@ -943,34 +904,6 @@ static void mo_update(struct atarimo_data *mo, int scanline)
 		mo->prevcache = new_previous;
 		mo->curcache = current;
 	}
-}
-
-
-/*---------------------------------------------------------------
-	mo_usage_callback: Internal processing callback that
-	marks pens used.
----------------------------------------------------------------*/
-
-static void mo_usage_callback(struct atarimo_data *mo, const struct atarimo_entry *entry)
-{
-	int gfxindex = mo->gfxlookup[EXTRACT_DATA(entry, mo->gfxmask)];
-	const unsigned int *usage = mo->gfxelement[gfxindex].pen_usage;
-	UINT32 *colormap = mo->process_param;
-	int code = mo->codelookup[EXTRACT_DATA(entry, mo->codemask)] | (EXTRACT_DATA(entry, mo->codehighmask) << mo->codehighshift);
-	int width = EXTRACT_DATA(entry, mo->widthmask) + 1;
-	int height = EXTRACT_DATA(entry, mo->heightmask) + 1;
-	int color = mo->colorlookup[EXTRACT_DATA(entry, mo->colormask)];
-	int tiles = width * height;
-	UINT32 temp = 0;
-	int i;
-
-	/* is this one to ignore? */
-	if (mo->ignoremask.mask != 0 && EXTRACT_DATA(entry, mo->ignoremask) == mo->ignorevalue)
-		return;
-
-	for (i = 0; i < tiles; i++)
-		temp |= usage[code++];
-	colormap[color] |= temp;
 }
 
 

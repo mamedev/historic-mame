@@ -408,60 +408,6 @@ WRITE16_HANDLER( toaplan1_layers_offset_w )
 ***************************************************************************/
 
 
-static void toaplan1_update_palette (void)
-{
-	int i;
-	int priority;
-	int color;
-	unsigned short palette_map[64*2];
-
-	memset (palette_map, 0, sizeof (palette_map));
-
-	/* extract color info from priority layers in order */
-	for (priority = 0; priority < 17; priority++ )
-	{
-		tile_struct *tinfo;
-
-		tinfo = (tile_struct *)&(tile_list[priority][0]);
-		/* draw only tiles in list */
-		for ( i = 0; i < tile_count[priority]; i++ )
-		{
-			int bank;
-
-			bank  = (tinfo->color >> 7) & 1;
-			color = (tinfo->color & 0x3f);
-			palette_map[color + bank*64] |= Machine->gfx[bank]->pen_usage[tinfo->tile_num & (Machine->gfx[bank]->total_elements-1)];
-
-			tinfo++;
-		}
-	}
-
-	/* Tell MAME about the color usage */
-	for (i = 0; i < 64*2; i++)
-	{
-		int usage = palette_map[i];
-		int j;
-
-		if (usage)
-		{
-			palette_used_colors[i * 16 + 0] = PALETTE_COLOR_TRANSPARENT;
-			for (j = 0; j < 16; j++)
-			{
-				if (usage & (1 << j))
-					palette_used_colors[i * 16 + j] = PALETTE_COLOR_USED;
-				else
-					palette_used_colors[i * 16 + j] = PALETTE_COLOR_UNUSED;
-			}
-		}
-		else
-			memset(&palette_used_colors[i * 16],PALETTE_COLOR_UNUSED,16);
-	}
-
-	palette_recalc ();
-}
-
-
-
 static void toaplan1_find_tiles(int xoffs,int yoffs)
 {
 	int priority;
@@ -908,7 +854,7 @@ static void toaplan1_render (struct osd_bitmap *bitmap)
 	tile_struct *tinfo2;
 	struct rectangle sp_rect;
 
-	fillbitmap (bitmap, palette_transparent_pen, &Machine->visible_area);
+	fillbitmap (bitmap, Machine->pens[0], &Machine->visible_area);
 
 #ifdef BGDBG
 
@@ -1010,7 +956,7 @@ if( toaplan_dbg_priority != 0 ){
 		sp_rect.max_x = tinfo2->xpos + 7;
 		sp_rect.max_y = tinfo2->ypos + 7;
 
-		fillbitmap (tmpbitmap2, palette_transparent_pen, &sp_rect);
+		fillbitmap (tmpbitmap2, Machine->pens[0], &sp_rect);
 
 		flipx = (tinfo2->color & 0x0100);
 		flipy = (tinfo2->color & 0x0200);
@@ -1031,7 +977,7 @@ if( toaplan_dbg_priority != 0 ){
 		int dirty;
 
 		dirty = 0;
-		fillbitmap (tmpbitmap3, palette_transparent_pen, &sp_rect);
+		fillbitmap (tmpbitmap3, Machine->pens[0], &sp_rect);
 		for ( j = 0; j < 4; j++ )
 		{
 			int x,y;
@@ -1108,10 +1054,10 @@ if( toaplan_dbg_priority != 0 ){
 				tmpbitmap2,				// dist
 				tmpbitmap3,				// mask
 				&sp_rect,
-				palette_transparent_pen
+				0xffff
 			);
 		}
-		copybitmap(bitmap, tmpbitmap2, 0, 0, 0, 0, &sp_rect, TRANSPARENCY_PEN, palette_transparent_pen);
+		copybitmap(bitmap, tmpbitmap2, 0, 0, 0, 0, &sp_rect, TRANSPARENCY_PEN, 0xffff);
 		tinfo2++;
 		}
 	}
@@ -1129,7 +1075,7 @@ static void rallybik_render (struct osd_bitmap *bitmap)
 	int priority,pen;
 	tile_struct *tinfo;
 
-	fillbitmap (bitmap, palette_transparent_pen, &Machine->visible_area);
+	fillbitmap (bitmap, Machine->pens[0], &Machine->visible_area);
 
 	for ( priority = 0; priority < 16; priority++ )	/* draw priority layers in order */
 	{
@@ -1164,7 +1110,6 @@ void toaplan1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	toaplan1_find_sprites();
 	toaplan1_find_tiles(tiles_offsetx,tiles_offsety);
 
-	toaplan1_update_palette();
 	toaplan1_render(bitmap);
 }
 
@@ -1174,7 +1119,6 @@ void rallybik_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	rallybik_find_tiles();
 	rallybik_find_sprites();
 
-	toaplan1_update_palette();
 	rallybik_render(bitmap);
 }
 

@@ -1142,9 +1142,9 @@ static const struct MachineDriver machine_driver_default =
 	/* video hardware */
 	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },
 	gfxdecodeinfo,
-	VIRTUAL_PALETTE_BANKS*256, VIRTUAL_PALETTE_BANKS*256,	/* virtual palette (phisical palette has 8192 colors) */
+	VIRTUAL_PALETTE_BANKS*256, VIRTUAL_PALETTE_BANKS*256,	/* virtual palette (physical palette has 8192 colors) */
 	0,
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_NEEDS_6BITS_PER_GUN,
+	VIDEO_TYPE_RASTER  | VIDEO_NEEDS_6BITS_PER_GUN,
 
 	0,
 	namcos2_vh_start,
@@ -1210,9 +1210,9 @@ static const struct MachineDriver machine_driver_driving =
 	/* video hardware */
 	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },
 	gfxdecodeinfo,
-	VIRTUAL_PALETTE_BANKS*256, VIRTUAL_PALETTE_BANKS*256,	/* virtual palette (phisical palette has 8192 colors) */
+	VIRTUAL_PALETTE_BANKS*256, VIRTUAL_PALETTE_BANKS*256,	/* virtual palette (physical palette has 8192 colors) */
 	0,
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_NEEDS_6BITS_PER_GUN,
+	VIDEO_TYPE_RASTER  | VIDEO_NEEDS_6BITS_PER_GUN,
 
 	0,
 	namcos2_vh_start,
@@ -1278,9 +1278,9 @@ static const struct MachineDriver machine_driver_metlhawk =
 	/* video hardware */
 	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },
 	gfxdecodeinfo,
-	VIRTUAL_PALETTE_BANKS*256, VIRTUAL_PALETTE_BANKS*256,	/* virtual palette (phisical palette has 8192 colors) */
+	VIRTUAL_PALETTE_BANKS*256, VIRTUAL_PALETTE_BANKS*256,	/* virtual palette (physical palette has 8192 colors) */
 	0,
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_NEEDS_6BITS_PER_GUN,
+	VIDEO_TYPE_RASTER  | VIDEO_NEEDS_6BITS_PER_GUN,
 
 	0,
 	namcos2_vh_start,
@@ -3648,42 +3648,39 @@ void init_valkyrie(void)
 
 
 
-/* In order of appearance...... */
-
-//    YEAR, NAME,     PARENT  , MACHINE,  INPUT  ,  INIT,     MONITOR     , COMPANY, FULLNAME,						 FLAGS
-GAMEX(1987, finallap, 0,        driving,  driving,  finallap, ROT0,         "Namco", "Final Lap (Rev E)", GAME_NOT_WORKING)
-GAMEX(1987, finalapd, finallap, driving,  driving,  finallap, ROT0,         "Namco", "Final Lap (Rev D)", GAME_NOT_WORKING)
-GAMEX(1987, finalapc, finallap, driving,  driving,  finallap, ROT0,         "Namco", "Final Lap (Rev C)", GAME_NOT_WORKING)
-GAMEX(1987, finlapjc, finallap, driving,  driving,  finallap, ROT0,         "Namco", "Final Lap (Japan - Rev C)", GAME_NOT_WORKING)
-GAMEX(1987, finlapjb, finallap, driving,  driving,  finallap, ROT0,         "Namco", "Final Lap (Japan - Rev B)", GAME_NOT_WORKING)
-GAME( 1988, assault,  0,        default,  assault,  assault , ROT90_16BIT,  "Namco", "Assault" )
-GAME( 1988, assaultj, assault,  default,  assault,  assaultj, ROT90_16BIT,  "Namco", "Assault (Japan)" )
-GAME( 1988, assaultp, assault,  default,  assault,  assaultp, ROT90_16BIT,  "Namco", "Assault Plus (Japan)" )
-GAMEX(1988, metlhawk, 0,        metlhawk, metlhawk, metlhawk, ROT90_16BIT,  "Namco", "Metal Hawk (Japan)", GAME_NOT_WORKING)
-GAME( 1988, ordyne,   0,        default,  default,  ordyne,   ROT180_16BIT, "Namco", "Ordyne (Japan)" )
-GAME( 1988, mirninja, 0,        default,  default,  mirninja, ROT0_16BIT,   "Namco", "Mirai Ninja (Japan)" )
-GAME( 1988, phelios,  0,        default,  default,  phelios , ROT90_16BIT,  "Namco", "Phelios (Japan)" )
-GAME( 1989, dirtfoxj, 0,        default,  dirtfox,  dirtfoxj, ROT90_16BIT,  "Namco", "Dirt Fox (Japan)" )
-GAMEX(1989, fourtrax, 0,        driving,  driving,  fourtrax, ROT0,         "Namco", "Four Trax", GAME_NOT_WORKING)
-GAME( 1989, valkyrie, 0,        default,  default,  valkyrie, ROT90_16BIT,  "Namco", "Valkyrie No Densetsu (Japan)" )
-GAME( 1989, finehour, 0,        default,  default,  finehour, ROT0_16BIT,   "Namco", "Finest Hour (Japan)" )
-GAME( 1989, burnforc, 0,        default,  default,  burnforc, ROT0_16BIT,   "Namco", "Burning Force (Japan)" )
-GAME( 1989, marvland, 0,        default,  default,  marvland, ROT0_16BIT,   "Namco", "Marvel Land (US)" )
-GAME( 1989, marvlanj, marvland, default,  default,  marvlanj, ROT0_16BIT,   "Namco", "Marvel Land (Japan)" )
-GAME( 1990, kyukaidk, 0,        default,  default,  kyukaidk, ROT0_16BIT,   "Namco", "Kyuukai Douchuuki (Japan new version)" )
-GAME( 1990, kyukaido, kyukaidk, default,  default,  kyukaidk, ROT0_16BIT,   "Namco", "Kyuukai Douchuuki (Japan old version)" )
-GAME( 1990, dsaber,   0,        default,  default,  dsaber,   ROT90_16BIT,  "Namco", "Dragon Saber" )
-GAME( 1990, dsaberj,  dsaber,   default,  default,  dsaberj,  ROT90_16BIT,  "Namco", "Dragon Saber (Japan)" )
-GAMEX(1990, finalap2, 0,        driving,  driving,  finalap2, ROT0,         "Namco", "Final Lap 2", GAME_NOT_WORKING )
-GAMEX(1990, finalp2j, finalap2, driving,  driving,  finalp2j, ROT0,         "Namco", "Final Lap 2 (Japan)", GAME_NOT_WORKING )
-GAME( 1990, rthun2,   0,        default,  default,  rthun2,   ROT0_16BIT,   "Namco", "Rolling Thunder 2" )
-GAME( 1990, rthun2j,  rthun2,   default,  default,  rthun2j,  ROT0_16BIT,   "Namco", "Rolling Thunder 2 (Japan)" )
-GAMEX(1991, sgunner2, 0,        driving,  default,  sgunner2, ROT0_16BIT,   "Namco", "Steel Gunner 2 (Japan)", GAME_NOT_WORKING )
-GAME( 1991, cosmogng, 0,        default,  default,  cosmogng, ROT90_16BIT,  "Namco", "Cosmo Gang the Video (US)" )
-GAME( 1991, cosmognj, cosmogng, default,  default,  cosmogng, ROT90_16BIT,  "Namco", "Cosmo Gang the Video (Japan)" )
-GAMEX(1992, finalap3, 0,        driving,  driving,  finalap3, ROT0,         "Namco", "Final Lap 3 (Japan)", GAME_NOT_WORKING )
-GAMEX(1992, suzuka8h, 0,        driving,  driving,  suzuka8h, ROT0,         "Namco", "Suzuka 8 Hours (Japan)", GAME_NOT_WORKING )
-GAME( 1992, sws92,    0,        default,  default,  sws92,    ROT0_16BIT,   "Namco", "Super World Stadium '92 (Japan)" )
-GAME( 1992, sws92g,   sws92,    default,  default,  sws92g,   ROT0_16BIT,   "Namco", "Super World Stadium '92 Gekitouban (Japan)" )
-GAMEX(1993, suzuk8h2, 0,        driving,  driving,  suzuk8h2, ROT0,         "Namco", "Suzuka 8 Hours 2 (Japan)", GAME_NOT_WORKING )
-GAME( 1993, sws93,    sws92,    default,  default,  sws93,    ROT0_16BIT,   "Namco", "Super World Stadium '93 (Japan)" )
+GAMEX(1987, finallap, 0,        driving,  driving,  finallap, ROT0,   "Namco", "Final Lap (Rev E)", GAME_NOT_WORKING)
+GAMEX(1987, finalapd, finallap, driving,  driving,  finallap, ROT0,   "Namco", "Final Lap (Rev D)", GAME_NOT_WORKING)
+GAMEX(1987, finalapc, finallap, driving,  driving,  finallap, ROT0,   "Namco", "Final Lap (Rev C)", GAME_NOT_WORKING)
+GAMEX(1987, finlapjc, finallap, driving,  driving,  finallap, ROT0,   "Namco", "Final Lap (Japan - Rev C)", GAME_NOT_WORKING)
+GAMEX(1987, finlapjb, finallap, driving,  driving,  finallap, ROT0,   "Namco", "Final Lap (Japan - Rev B)", GAME_NOT_WORKING)
+GAME( 1988, assault,  0,        default,  assault,  assault , ROT90,  "Namco", "Assault" )
+GAME( 1988, assaultj, assault,  default,  assault,  assaultj, ROT90,  "Namco", "Assault (Japan)" )
+GAME( 1988, assaultp, assault,  default,  assault,  assaultp, ROT90,  "Namco", "Assault Plus (Japan)" )
+GAMEX(1988, metlhawk, 0,        metlhawk, metlhawk, metlhawk, ROT90,  "Namco", "Metal Hawk (Japan)", GAME_NOT_WORKING)
+GAME( 1988, ordyne,   0,        default,  default,  ordyne,   ROT180, "Namco", "Ordyne (Japan)" )
+GAME( 1988, mirninja, 0,        default,  default,  mirninja, ROT0,   "Namco", "Mirai Ninja (Japan)" )
+GAME( 1988, phelios,  0,        default,  default,  phelios , ROT90,  "Namco", "Phelios (Japan)" )
+GAME( 1989, dirtfoxj, 0,        default,  dirtfox,  dirtfoxj, ROT90,  "Namco", "Dirt Fox (Japan)" )
+GAMEX(1989, fourtrax, 0,        driving,  driving,  fourtrax, ROT0,   "Namco", "Four Trax", GAME_NOT_WORKING)
+GAME( 1989, valkyrie, 0,        default,  default,  valkyrie, ROT90,  "Namco", "Valkyrie No Densetsu (Japan)" )
+GAME( 1989, finehour, 0,        default,  default,  finehour, ROT0,   "Namco", "Finest Hour (Japan)" )
+GAME( 1989, burnforc, 0,        default,  default,  burnforc, ROT0,   "Namco", "Burning Force (Japan)" )
+GAME( 1989, marvland, 0,        default,  default,  marvland, ROT0,   "Namco", "Marvel Land (US)" )
+GAME( 1989, marvlanj, marvland, default,  default,  marvlanj, ROT0,   "Namco", "Marvel Land (Japan)" )
+GAME( 1990, kyukaidk, 0,        default,  default,  kyukaidk, ROT0,   "Namco", "Kyuukai Douchuuki (Japan new version)" )
+GAME( 1990, kyukaido, kyukaidk, default,  default,  kyukaidk, ROT0,   "Namco", "Kyuukai Douchuuki (Japan old version)" )
+GAME( 1990, dsaber,   0,        default,  default,  dsaber,   ROT90,  "Namco", "Dragon Saber" )
+GAME( 1990, dsaberj,  dsaber,   default,  default,  dsaberj,  ROT90,  "Namco", "Dragon Saber (Japan)" )
+GAMEX(1990, finalap2, 0,        driving,  driving,  finalap2, ROT0,   "Namco", "Final Lap 2", GAME_NOT_WORKING )
+GAMEX(1990, finalp2j, finalap2, driving,  driving,  finalp2j, ROT0,   "Namco", "Final Lap 2 (Japan)", GAME_NOT_WORKING )
+GAME( 1990, rthun2,   0,        default,  default,  rthun2,   ROT0,   "Namco", "Rolling Thunder 2" )
+GAME( 1990, rthun2j,  rthun2,   default,  default,  rthun2j,  ROT0,   "Namco", "Rolling Thunder 2 (Japan)" )
+GAMEX(1991, sgunner2, 0,        driving,  default,  sgunner2, ROT0,   "Namco", "Steel Gunner 2 (Japan)", GAME_NOT_WORKING )
+GAME( 1991, cosmogng, 0,        default,  default,  cosmogng, ROT90,  "Namco", "Cosmo Gang the Video (US)" )
+GAME( 1991, cosmognj, cosmogng, default,  default,  cosmogng, ROT90,  "Namco", "Cosmo Gang the Video (Japan)" )
+GAMEX(1992, finalap3, 0,        driving,  driving,  finalap3, ROT0,   "Namco", "Final Lap 3 (Japan)", GAME_NOT_WORKING )
+GAMEX(1992, suzuka8h, 0,        driving,  driving,  suzuka8h, ROT0,   "Namco", "Suzuka 8 Hours (Japan)", GAME_NOT_WORKING )
+GAME( 1992, sws92,    0,        default,  default,  sws92,    ROT0,   "Namco", "Super World Stadium '92 (Japan)" )
+GAME( 1992, sws92g,   sws92,    default,  default,  sws92g,   ROT0,   "Namco", "Super World Stadium '92 Gekitouban (Japan)" )
+GAMEX(1993, suzuk8h2, 0,        driving,  driving,  suzuk8h2, ROT0,   "Namco", "Suzuka 8 Hours 2 (Japan)", GAME_NOT_WORKING )
+GAME( 1993, sws93,    sws92,    default,  default,  sws93,    ROT0,   "Namco", "Super World Stadium '93 (Japan)" )

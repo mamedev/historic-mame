@@ -123,21 +123,6 @@ WRITE16_HANDLER( blockout_videoram_w )
 
 void blockout_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	if (palette_recalc())
-	{
-		/* if we ran out of palette entries, rebuild the whole screen */
-		int x,y;
-
-
-		for (y = 0;y < 256;y++)
-		{
-			for (x = 0;x < 320;x+=2)
-			{
-				updatepixels(x,y);
-			}
-		}
-	}
-
 	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 
 	{

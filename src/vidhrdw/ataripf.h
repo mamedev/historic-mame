@@ -66,14 +66,6 @@ struct ataripf_desc
 };
 
 
-/* description of pen usage for up to 256 pens */
-#define ATARIPF_USAGE_WORDS		8			/* 8*32 bits = 256 bits total */
-struct ataripf_usage
-{
-	UINT32				bits[ATARIPF_USAGE_WORDS];
-};
-
-
 /* data used for overrendering */
 struct ataripf_overrender_data
 {
@@ -85,7 +77,6 @@ struct ataripf_overrender_data
 	UINT32				mopriority;			/* motion object priority */
 
 	/* these are filled in for the callback's usage */
-	struct ataripf_usage *pfusage;			/* playfield tile pen usage */
 	UINT32				pfcolor;			/* playfield tile color */
 	UINT32				pfpriority;			/* playfield tile priority */
 
@@ -147,8 +138,6 @@ void ataripf_free(void);
 UINT32 *ataripf_get_lookup(int map, int *size);
 
 /* core processing */
-void ataripf_invalidate(int map);
-void ataripf_mark_palette(int map);
 void ataripf_render(int map, struct osd_bitmap *bitmap);
 void ataripf_overrender(int map, ataripf_overrender_cb callback, struct ataripf_overrender_data *data);
 

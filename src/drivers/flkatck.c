@@ -306,9 +306,9 @@ static const struct MachineDriver machine_driver_flkatck =
 	/* video hardware */
 	37*8, 32*8, { 0*8, 35*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	512, 512,
+	512, 0,
 	0,
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	flkatck_vh_start,
 	0,

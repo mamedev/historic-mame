@@ -132,6 +132,10 @@ enum
 	DRAWMODE_SHADOW
 };
 
+/* By default, when drawing sprites with pdrawgfx, shadows affect the sprites below them. */
+/* Set this flag to 1 to make shadows only affect the background, leaving sprites at full brightness. */
+extern int pdrawgfx_shadow_lowpri;
+
 
 typedef void (*plot_pixel_proc)(struct osd_bitmap *bitmap,int x,int y,UINT32 pen);
 typedef int  (*read_pixel_proc)(struct osd_bitmap *bitmap,int x,int y);

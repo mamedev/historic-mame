@@ -46,24 +46,10 @@ Credits:
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
-
-extern unsigned char *appoooh_videoram2;
-extern unsigned char *appoooh_colorram2;
-extern unsigned char *appoooh_spriteram2;
-
-void appoooh_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-WRITE_HANDLER( appoooh_scroll_w );
-WRITE_HANDLER( appoooh_videoram2_w );
-WRITE_HANDLER( appoooh_colorram2_w );
-WRITE_HANDLER( appoooh_out_w );
-int appoooh_vh_start(void);
-void appoooh_vh_stop(void);
-void appoooh_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+#include "appoooh.h"
 
 static unsigned char *adpcmptr = 0;
 static int appoooh_adpcm_data;
-
 
 static void appoooh_adpcm_int (int num)
 {
@@ -107,12 +93,12 @@ static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0xdfff, MWA_ROM },
 	{ 0xe000, 0xe7ff, MWA_RAM },
 	{ 0xe800, 0xefff, MWA_RAM }, /* RAM ? */
-	{ 0xf000, 0xf01f, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0xf020, 0xf3ff, videoram_w, &videoram, &videoram_size },
-	{ 0xf420, 0xf7ff, colorram_w, &colorram },
-	{ 0xf800, 0xf81f, MWA_RAM, &appoooh_spriteram2 },
-	{ 0xf820, 0xfbff, appoooh_videoram2_w, &appoooh_videoram2 },
-	{ 0xfc20, 0xffff, appoooh_colorram2_w, &appoooh_colorram2 },
+	{ 0xf000, 0xf01f, MWA_RAM, &spriteram  },
+	{ 0xf020, 0xf3ff, appoooh_fg_videoram_w, &appoooh_fg_videoram },
+	{ 0xf420, 0xf7ff, appoooh_fg_colorram_w, &appoooh_fg_colorram },
+	{ 0xf800, 0xf81f, MWA_RAM, &spriteram_2 },
+	{ 0xf820, 0xfbff, appoooh_bg_videoram_w, &appoooh_bg_videoram },
+	{ 0xfc20, 0xffff, appoooh_bg_colorram_w, &appoooh_bg_colorram },
 MEMORY_END
 
 static PORT_READ_START( readport )
@@ -257,15 +243,15 @@ static const struct MachineDriver machine_driver_appoooh =
 	0,
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 1*8, 29*8-1 },
+	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	32, 32*8+32*8, /* total colors,color_table_len */
+	32, 32*8+32*8,
 	appoooh_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
 	0,
 	appoooh_vh_start,
-	appoooh_vh_stop,
+	0,
 	appoooh_vh_screenrefresh,
 
 	/* sound hardware */

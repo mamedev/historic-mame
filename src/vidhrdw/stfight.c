@@ -298,11 +298,6 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 
 void stfight_vh_screenrefresh( struct osd_bitmap *bitmap,int full_refresh )
 {
-	tilemap_update(ALL_TILEMAPS);
-
-	palette_recalc();
-
-
 	fillbitmap(priority_bitmap,0,NULL);
 
 	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);	/* in case bg_tilemap is disabled */

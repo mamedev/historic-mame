@@ -123,44 +123,28 @@ static void get_pf2_tile_info(int tile_index)
 {
 	int tile=cninja_pf2_data[tile_index];
 
-	SET_TILE_INFO(
-			1,
-			(tile&0xfff)|cninja_pf2_bank,
-			(tile>>12)+48,
-			0)
+	SET_TILE_INFO(1,(tile&0xfff)|cninja_pf2_bank,(tile>>12)+48,0)
 }
 
 static void get_pf3_tile_info(int tile_index)
 {
 	int tile=cninja_pf3_data[tile_index];
 
-	SET_TILE_INFO(
-			1,
-			(tile&0xfff)|cninja_pf3_bank,
-			tile>>12,
-			0)
+	SET_TILE_INFO(1,(tile&0xfff)|cninja_pf3_bank,tile>>12,0)
 }
 
 static void get_pf4_tile_info(int tile_index)
 {
 	int tile=cninja_pf4_data[tile_index];
 
-	SET_TILE_INFO(
-			2,
-			(tile&0xfff)|cninja_pf4_bank,
-			tile>>12,
-			0)
+	SET_TILE_INFO(2,(tile&0xfff)|cninja_pf4_bank,tile>>12,0)
 }
 
 static void get_pf1_tile_info(int tile_index)
 {
 	int tile=cninja_pf1_data[tile_index];
 
-	SET_TILE_INFO(
-			0,
-			tile&0xfff,
-			tile>>12,
-			0)
+	SET_TILE_INFO(0,tile&0xfff,tile>>12,0)
 }
 
 /******************************************************************************/
@@ -177,6 +161,7 @@ static int common_vh_start(void)
 
 	tilemap_set_transparent_pen(pf1_tilemap,0);
 	tilemap_set_transparent_pen(pf3_tilemap,0);
+	tilemap_set_transparent_pen(pf4_tilemap,0);
 	tilemap_set_transmask(pf4_tilemap,0,0x00ff,0xff01);
 
 	return 0;
@@ -313,99 +298,6 @@ WRITE16_HANDLER( cninja_palette_24bit_w )
 
 /******************************************************************************/
 
-static void mark_sprites_colors(void)
-{
-	int offs,color,i,pal_base;
-	int colmask[16];
-    unsigned int *pen_usage; /* Save some struct derefs */
-//	int spritemask=(Machine->drv->gfxdecodeinfo[3].gfxlayout->total)-1;
-
-	/* Sprites */
-	pal_base = Machine->drv->gfxdecodeinfo[3].color_codes_start;
-	pen_usage=Machine->gfx[3]->pen_usage;
-	for (color = 0;color < 16;color++) colmask[color] = 0;
-
-	for (offs = 0;offs < 0x400;offs += 4)
-	{
-		int x,y,sprite,multi;
-
-		sprite = buffered_spriteram16[offs+1];
-		if (!sprite/* || sprite>spritemask*/) continue;
-
-		x = buffered_spriteram16[offs+2];
-		y = buffered_spriteram16[offs];
-
-		color = (x >> 9) &0xf;
-		multi = (1 << ((y & 0x0600) >> 9)) - 1;
-		sprite &= ~multi;
-
-		/* Save palette by missing offscreen sprites */
-		x = x & 0x01ff;
-		y = y & 0x01ff;
-		if (x >= 256) x -= 512;
-		x = 240 - x;
-		if (x>256) continue;
-
-		while (multi >= 0)
-		{
-			colmask[color] |= pen_usage[sprite + multi];
-			multi--;
-		}
-	}
-
-	for (color = 0;color < 16;color++)
-	{
-		for (i = 1;i < 16;i++)
-		{
-			if (colmask[color] & (1 << i))
-				palette_used_colors[pal_base + 16 * color + i] = PALETTE_COLOR_USED;
-		}
-	}
-}
-
-static void robocop2_mark_sprites_colors(void)
-{
-	int offs,color,i,pal_base;
-	int colmask[32];
-    unsigned int *pen_usage; /* Save some struct derefs */
-//	int spritemask=(Machine->drv->gfxdecodeinfo[3].gfxlayout->total)-1;
-
-	/* Sprites */
-	pal_base = Machine->drv->gfxdecodeinfo[3].color_codes_start;
-	pen_usage=Machine->gfx[3]->pen_usage;
-	for (color = 0;color < 32;color++) colmask[color] = 0;
-
-	for (offs = 0;offs < 0x400;offs += 4)
-	{
-		int x,y,sprite,multi;
-
-		sprite = buffered_spriteram16[offs+1];
-		if (!sprite /*|| sprite>spritemask*/) continue;
-
-		x = buffered_spriteram16[offs+2];
-		y = buffered_spriteram16[offs];
-
-		color = (x >> 9) &0x1f;
-		multi = (1 << ((y & 0x0600) >> 9)) - 1;
-		sprite &= ~multi;
-
-		while (multi >= 0)
-		{
-			colmask[color] |= pen_usage[sprite + multi];
-			multi--;
-		}
-	}
-
-	for (color = 0;color < 32;color++)
-	{
-		for (i = 1;i < 16;i++)
-		{
-			if (colmask[color] & (1 << i))
-				palette_used_colors[pal_base + 16 * color + i] = PALETTE_COLOR_USED;
-		}
-	}
-}
-
 static void cninja_drawsprites(struct osd_bitmap *bitmap, int pri)
 {
 	int offs;
@@ -541,11 +433,11 @@ static void robocop2_drawsprites(struct osd_bitmap *bitmap, int pri)
 
 static void setup_scrolling(void)
 {
-	int pf23_control,pf1_control,offs;
+	int pf23_control,pf14_control,offs;
 
 	/* Setup scrolling */
 	pf23_control=cninja_control_0[6];
-	pf1_control=cninja_control_1[6];
+	pf14_control=cninja_control_1[6];
 
 	/* Background - Rowscroll enable */
 	if (pf23_control&0x4000) {
@@ -618,7 +510,7 @@ static void setup_scrolling(void)
 	}
 
 	/* Top foreground */
-	if (pf1_control&0x4000) {
+	if (pf14_control&0x4000) {
 		int scrollx=cninja_control_1[3],rows;
 		tilemap_set_scroll_cols(pf4_tilemap,1);
 		tilemap_set_scrolly( pf4_tilemap,0, cninja_control_1[4] );
@@ -640,15 +532,26 @@ static void setup_scrolling(void)
 		for (offs = 0;offs < rows;offs++)
 			tilemap_set_scrollx( pf4_tilemap,offs, scrollx + cninja_pf4_rowscroll[offs] );
 	}
-	else if (pf1_control&0x2000) { /* Colscroll */
-		int scrolly=cninja_control_1[4];
-		tilemap_set_scroll_rows(pf4_tilemap,1);
-		tilemap_set_scroll_cols(pf4_tilemap,64);
-		tilemap_set_scrollx( pf4_tilemap,0, cninja_control_0[1] );
+	else if (pf14_control&0x2000) { /* Colscroll */
+		if (((cninja_control_1[5]>>8)&7)==4) {
+			int scrolly=cninja_control_1[4];
+			tilemap_set_scroll_rows(pf4_tilemap,1);
+			tilemap_set_scroll_cols(pf4_tilemap,3);
+			tilemap_set_scrollx( pf4_tilemap,0, cninja_control_0[1] );
 
-		/* Used in first lava level */
-		for (offs=0 ; offs < 64;offs++)
-			tilemap_set_scrolly( pf4_tilemap,offs, scrolly + cninja_pf4_rowscroll[offs+0x200] );
+			/* Used in Robocop 2 Japan intro */
+			for (offs=0 ; offs < 3;offs++)
+				tilemap_set_scrolly( pf4_tilemap,offs, scrolly + cninja_pf4_rowscroll[offs+0x200] );
+		} else {
+			int scrolly=cninja_control_1[4];
+			tilemap_set_scroll_rows(pf4_tilemap,1);
+			tilemap_set_scroll_cols(pf4_tilemap,64);
+			tilemap_set_scrollx( pf4_tilemap,0, cninja_control_0[1] );
+
+			/* Used in first lava level */
+			for (offs=0 ; offs < 64;offs++)
+				tilemap_set_scrolly( pf4_tilemap,offs, scrolly + cninja_pf4_rowscroll[offs+0x200] );
+		}
 	}
 	else {
 		tilemap_set_scroll_rows(pf4_tilemap,1);
@@ -658,7 +561,7 @@ static void setup_scrolling(void)
 	}
 
 	/* Playfield 1 - 8 * 8 Text */
-	if (pf1_control&0x40) { /* Rowscroll */
+	if (pf14_control&0x40) { /* Rowscroll */
 		int scrollx=cninja_control_1[1],rows;
 		tilemap_set_scroll_cols(pf1_tilemap,1);
 		tilemap_set_scrolly( pf1_tilemap,0, cninja_control_1[2] );
@@ -716,16 +619,6 @@ void cninja_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	cninja_pf4_bank=0;
 	setup_scrolling();
 
-	/* Update playfields */
-	tilemap_update(pf1_tilemap);
-	tilemap_update(pf2_tilemap);
-	tilemap_update(pf3_tilemap);
-	tilemap_update(pf4_tilemap);
-
-	palette_init_used_colors();
-	mark_sprites_colors();
-	palette_recalc();
-
 	/* Draw playfields */
 	tilemap_draw(bitmap,pf2_tilemap,0,0);
 	tilemap_draw(bitmap,pf3_tilemap,0,0);
@@ -759,16 +652,6 @@ void edrandy_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	cninja_pf4_bank=0;
 	setup_scrolling();
 
-	/* Update playfields */
-	tilemap_update(pf1_tilemap);
-	tilemap_update(pf2_tilemap);
-	tilemap_update(pf3_tilemap);
-	tilemap_update(pf4_tilemap);
-
-	palette_init_used_colors();
-	mark_sprites_colors();
-	palette_recalc();
-
 	/* Draw playfields */
 	tilemap_draw(bitmap,pf2_tilemap,0,0);
 	tilemap_draw(bitmap,pf3_tilemap,0,0);
@@ -781,7 +664,7 @@ void edrandy_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 void robocop2_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
 	static int last_pf2_bank,last_pf3_bank,last_pf4_bank;
-	int pf23_control,pf1_control;
+	int pf23_control,pf14_control;
 
 	/* Update flipscreen */
 	flipscreen = !(cninja_control_1[0]&0x80);
@@ -789,7 +672,7 @@ void robocop2_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 
 	/* Handle gfx rom switching */
 	pf23_control=cninja_control_0[7];
-	pf1_control=cninja_control_1[7];
+	pf14_control=cninja_control_1[7];
 	switch (pf23_control&0xff) {
 		case 0x00: cninja_pf3_bank=0x0000; break;
 		case 0x11: cninja_pf3_bank=0x1000; break;
@@ -802,7 +685,7 @@ void robocop2_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 		case 0x29: cninja_pf2_bank=0x2000; break;
 		default:   cninja_pf2_bank=0x0000; break;
 	}
-	if ((pf1_control&0xff00)==0x00)
+	if ((pf14_control&0xff00)==0x00)
 		cninja_pf4_bank=0;
 	else
 		cninja_pf4_bank=0x1000;
@@ -815,16 +698,6 @@ void robocop2_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	last_pf4_bank=cninja_pf4_bank;
 
 	setup_scrolling();
-
-	/* Update playfields */
-	tilemap_update(pf1_tilemap);
-	tilemap_update(pf2_tilemap);
-	tilemap_update(pf3_tilemap);
-	tilemap_update(pf4_tilemap);
-
-	palette_init_used_colors();
-	robocop2_mark_sprites_colors();
-	palette_recalc();
 
 	/* Draw playfields */
 	tilemap_draw(bitmap,pf2_tilemap,0,0);

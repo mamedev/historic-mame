@@ -55,7 +55,7 @@ int rollerg_vh_start(void)
 
 	if (K053245_vh_start(REGION_GFX1,NORMAL_PLANE_ORDER,sprite_callback))
 		return 1;
-	if (K051316_vh_start_0(REGION_GFX2,4,zoom_callback))
+	if (K051316_vh_start_0(REGION_GFX2,4,TILEMAP_TRANSPARENT,0,zoom_callback))
 	{
 		K053245_vh_stop();
 		return 1;
@@ -81,22 +81,8 @@ void rollerg_vh_stop(void)
 
 void rollerg_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	int i;
-
-
-	K051316_tilemap_update_0();
-
-	palette_init_used_colors();
-	K053245_mark_sprites_colors();
-	/* set back pen for the zoom layer */
-	for (i = 0;i < 16;i++)
-		palette_used_colors[(zoom_colorbase + i) * 16] = PALETTE_COLOR_TRANSPARENT;
-	palette_used_colors[16 * bg_colorbase] |= PALETTE_COLOR_VISIBLE;
-	palette_recalc();
-
 	fillbitmap(priority_bitmap,0,NULL);
 	fillbitmap(bitmap,Machine->pens[16 * bg_colorbase],&Machine->visible_area);
-	K051316_zoom_draw_0(bitmap,1);
-
+	K051316_zoom_draw_0(bitmap,0,1);
 	K053245_sprites_draw(bitmap);
 }

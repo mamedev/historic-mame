@@ -1,9 +1,8 @@
-#ifndef DECLARE
 /***************************************************************************
 
 							  -= Cave Games =-
 
-				driver by	Luca Elia (l.elia@tin.it)
+					driver by	Luca Elia (l.elia@tin.it)
 
 
 Note:	if MAME_DEBUG is defined, pressing:
@@ -13,25 +12,34 @@ Note:	if MAME_DEBUG is defined, pressing:
 		X/C/V/B/Z  with  E   shows layer 2 (tiles with priority 0/1/2/3/All)
 		X/C/V/B/Z  with  A   shows sprites (tiles with priority 0/1/2/3/All)
 
-		Keys can be used togheter!
+		Keys can be used together!
 
-		[ 1, 2 or 3 Scrolling Layers ]
+	[ 1, 2 or 3 Scrolling Layers ]
 
 		Layer Size:				512 x 512
-		Tiles:					16x16x8 (16x16x4 in some games)
+		Tiles:					16 x 16 x 8 (16 x 16 x 4 in some games)
 
-		[ 1024 Zooming Sprites ]
+		A per layer row / "column" scroll effect can be enabled:
 
-		There are 2 spriterams. A hardware register's bit selects
+		a different scroll value is fetched (from tile RAM) for each
+		scan line, and a different tilemap line for each scan line
+
+	[ 1024 Zooming Sprites ]
+
+		There are 2 sprite RAMs. A hardware register's bit selects
 		the one to display (sprites double buffering).
 
-		The sprites are NOT tile based: the "tile" size and start
-		address is selectable for each sprite with a 16 pixel granularity.
+		The sprites are NOT tile based: the "tile" size and start address
+		is selectable for each sprite with a 16 pixel granularity.
 
+		Also note that the zoom is of a peculiar type: pixels are never
+		drawn more than once. So shrinking works as usual (some pixels are
+		just not drawn) while enlarging adds some transparent pixels to
+		the image, uniformly, to reach the final size.
 
 **************************************************************************/
-#include "vidhrdw/generic.h"
 
+#include "vidhrdw/generic.h"
 
 /* Variables that driver has access to: */
 
@@ -41,11 +49,10 @@ data16_t *cave_vram_0, *cave_vctrl_0;
 data16_t *cave_vram_1, *cave_vctrl_1;
 data16_t *cave_vram_2, *cave_vctrl_2;
 
-data16_t *cave_wkram;
-
 /* Variables only used here: */
 
 static struct tilemap *tilemap_0, *tilemap_1, *tilemap_2;
+static int             tiledim_0,  tiledim_1,  tiledim_2;
 
 /* Variables defined in driver: */
 
@@ -101,410 +108,15 @@ static void sprite_draw_donpachi( int priority );
 static void sprite_draw_donpachi_zbuf( int priority );
 void cave_vh_stop(void);
 
-static UINT16 *cave_prgrom;
 
 /***************************************************************************
 
-						Callbacks for the TileMap code
+							Palette Init Routines
 
-							  [ Tiles Format ]
-
-Offset:
-
-0.w			fe-- ---- ---- ---		Priority
-			--dc ba98 ---- ----		Color
-			---- ---- 7654 3210
-
-2.w									Code
-
-
+	Function needed for games with 4 bit sprites, rather than 8 bit,
+	or games with an odd colors mapping for the layers.
 
 ***************************************************************************/
-
-#define DIM_NX		(0x20)
-#define DIM_NY		(0x20)
-
-#define CAVE_TILEMAP(_n_) \
-static void get_tile_info_##_n_( int tile_index ) \
-{ \
-	UINT32 code		=	(cave_vram_##_n_[ tile_index * 2 + 0] << 16 )+ \
-						 cave_vram_##_n_[ tile_index * 2 + 1]; \
-	SET_TILE_INFO( _n_ ,  code & 0x00ffffff , (code & 0x3f000000) >> (32-8), 0 ); \
-	tile_info.priority = (code & 0xc0000000)>> (32-2); \
-} \
-\
-WRITE16_HANDLER( cave_vram_##_n_##_w ) \
-{ \
-	if((cave_vram_##_n_[offset] & ~mem_mask)==(data & ~mem_mask)) return; \
-	COMBINE_DATA(&cave_vram_##_n_[offset]); \
-	if ( (offset/2) < DIM_NX * DIM_NY ) \
-		tilemap_mark_tile_dirty(tilemap_##_n_, offset/2 ); \
-} \
-\
-WRITE16_HANDLER( cave_vram_##_n_##_8x8_w ) \
-{ \
-	offset %= ( (DIM_NX * 2) * (DIM_NY * 2) * 2); /* mirrored RAM */ \
-	if((cave_vram_##_n_[offset] & ~mem_mask)==(data & ~mem_mask)) return; \
-	COMBINE_DATA(&cave_vram_##_n_[offset]); \
-	tilemap_mark_tile_dirty(tilemap_##_n_, offset/2 ); \
-}
-
-CAVE_TILEMAP(0)
-CAVE_TILEMAP(1)
-CAVE_TILEMAP(2)
-
-
-
-
-
-
-/***************************************************************************
-
-								Vh_Start
-
-***************************************************************************/
-
-
-/* 3 Layers (layer 3 is made of 8x8 tiles!) */
-int ddonpach_vh_start(void)
-{
-	tilemap_0 = tilemap_create(	get_tile_info_0,
-								tilemap_scan_rows,
-								TILEMAP_TRANSPARENT,
-								16,16,
-								DIM_NX,DIM_NY );
-
-	tilemap_1 = tilemap_create(	get_tile_info_1,
-								tilemap_scan_rows,
-								TILEMAP_TRANSPARENT,
-								16,16,
-								DIM_NX,DIM_NY );
-
-	/* 8x8 tiles here! */
-	tilemap_2 = tilemap_create(	get_tile_info_2,
-								tilemap_scan_rows,
-								TILEMAP_TRANSPARENT,
-								8,8,
-								DIM_NX*2,DIM_NY*2 );
-
-
-	if (tilemap_0 && tilemap_1 && tilemap_2 && !sprite_init_cave())
-	{
-		tilemap_set_scroll_rows(tilemap_0,1);
-		tilemap_set_scroll_cols(tilemap_0,1);
-		tilemap_set_transparent_pen(tilemap_0,0);
-
-		tilemap_set_scroll_rows(tilemap_1,1);
-		tilemap_set_scroll_cols(tilemap_1,1);
-		tilemap_set_transparent_pen(tilemap_1,0);
-
-		tilemap_set_scroll_rows(tilemap_2,1);
-		tilemap_set_scroll_cols(tilemap_2,1);
-		tilemap_set_transparent_pen(tilemap_2,0);
-
-		if (strcmp(Machine->gamedrv->name,"donpachi"))
-		{	/* ddonpach */
-			tilemap_set_scrolldx( tilemap_0, -0x6c +1, -0x57    );
-			tilemap_set_scrolldx( tilemap_1, -0x6d +1, -0x56    );
-			tilemap_set_scrolldx( tilemap_2, -0x6e -7, -0x55 +8 );
-		}
-		else
-		{	/* donpachi */
-			tilemap_set_scrolldx( tilemap_0, -0x6c +3, -0x57    );
-			tilemap_set_scrolldx( tilemap_1, -0x6d +3, -0x56    );
-			tilemap_set_scrolldx( tilemap_2, -0x6e -5, -0x55 +8 );
-		}
-
-		tilemap_set_scrolldy( tilemap_0, -0x11, -0x100 );
-		tilemap_set_scrolldy( tilemap_1, -0x11, -0x100 );
-		tilemap_set_scrolldy( tilemap_2, -0x11, -0x100 );
-
-		return 0;
-	}
-	else {cave_vh_stop(); return 1;}
-}
-
-
-/* 3 Layers (like esprade but with different scroll delta's) */
-int guwange_vh_start(void)
-{
-	tilemap_0 = tilemap_create(	get_tile_info_0,
-								tilemap_scan_rows,
-								TILEMAP_TRANSPARENT,
-								16,16,
-								DIM_NX,DIM_NY );
-
-	tilemap_1 = tilemap_create(	get_tile_info_1,
-								tilemap_scan_rows,
-								TILEMAP_TRANSPARENT,
-								16,16,
-								DIM_NX,DIM_NY );
-
-	tilemap_2 = tilemap_create(	get_tile_info_2,
-								tilemap_scan_rows,
-								TILEMAP_TRANSPARENT,
-								16,16,
-								DIM_NX,DIM_NY );
-
-
-	if (tilemap_0 && tilemap_1 && tilemap_2 && !sprite_init_cave())
-	{
-		tilemap_set_scroll_rows(tilemap_0,1);
-		tilemap_set_scroll_cols(tilemap_0,1);
-		tilemap_set_transparent_pen(tilemap_0,0);
-
-		tilemap_set_scroll_rows(tilemap_1,1);
-		tilemap_set_scroll_cols(tilemap_1,1);
-		tilemap_set_transparent_pen(tilemap_1,0);
-
-		tilemap_set_scroll_rows(tilemap_2,1);
-		tilemap_set_scroll_cols(tilemap_2,1);
-		tilemap_set_transparent_pen(tilemap_2,0);
-
-		tilemap_set_scrolldx( tilemap_0, -0x6c +2, -0x57 );
-		tilemap_set_scrolldx( tilemap_1, -0x6d +2, -0x56 );
-		tilemap_set_scrolldx( tilemap_2, -0x6e +2, -0x55 );
-
-		tilemap_set_scrolldy( tilemap_0, -0x11, -0x100 );
-		tilemap_set_scrolldy( tilemap_1, -0x11, -0x100 );
-		tilemap_set_scrolldy( tilemap_2, -0x11, -0x100 );
-
-		return 0;
-	}
-	else {cave_vh_stop(); return 1;}
-}
-
-
-
-/* 3 Layers */
-int esprade_vh_start(void)
-{
-	tilemap_0 = tilemap_create(	get_tile_info_0,
-								tilemap_scan_rows,
-								TILEMAP_TRANSPARENT,
-								16,16,
-								DIM_NX,DIM_NY );
-
-	tilemap_1 = tilemap_create(	get_tile_info_1,
-								tilemap_scan_rows,
-								TILEMAP_TRANSPARENT,
-								16,16,
-								DIM_NX,DIM_NY );
-
-	tilemap_2 = tilemap_create(	get_tile_info_2,
-								tilemap_scan_rows,
-								TILEMAP_TRANSPARENT,
-								16,16,
-								DIM_NX,DIM_NY );
-
-
-	if (tilemap_0 && tilemap_1 && tilemap_2 && !sprite_init_cave())
-	{
-		tilemap_set_scroll_rows(tilemap_0,1);
-		tilemap_set_scroll_cols(tilemap_0,1);
-		tilemap_set_transparent_pen(tilemap_0,0);
-
-		tilemap_set_scroll_rows(tilemap_1,1);
-		tilemap_set_scroll_cols(tilemap_1,1);
-		tilemap_set_transparent_pen(tilemap_1,0);
-
-		tilemap_set_scroll_rows(tilemap_2,1);
-		tilemap_set_scroll_cols(tilemap_2,1);
-		tilemap_set_transparent_pen(tilemap_2,0);
-
-		tilemap_set_scrolldx( tilemap_0, -0x6c, -0x57 );
-		tilemap_set_scrolldx( tilemap_1, -0x6d, -0x56 );
-		tilemap_set_scrolldx( tilemap_2, -0x6e, -0x55 );
-
-		tilemap_set_scrolldy( tilemap_0, -0x11, -0x100 );
-		tilemap_set_scrolldy( tilemap_1, -0x11, -0x100 );
-		tilemap_set_scrolldy( tilemap_2, -0x11, -0x100 );
-
-		return 0;
-	}
-	else {cave_vh_stop(); return 1;}
-}
-
-
-
-/* 2 Layers */
-int dfeveron_vh_start(void)
-{
-	tilemap_0 = tilemap_create(	get_tile_info_0,
-								tilemap_scan_rows,
-								TILEMAP_TRANSPARENT,
-								16,16,
-								DIM_NX,DIM_NY );
-
-	tilemap_1 = tilemap_create(	get_tile_info_1,
-								tilemap_scan_rows,
-								TILEMAP_TRANSPARENT,
-								16,16,
-								DIM_NX,DIM_NY );
-
-	tilemap_2 = 0;
-
-
-	if (tilemap_0 && tilemap_1 && !sprite_init_cave())
-	{
-		tilemap_set_scroll_rows(tilemap_0,1);
-		tilemap_set_scroll_cols(tilemap_0,1);
-		tilemap_set_transparent_pen(tilemap_0,0);
-
-		tilemap_set_scroll_rows(tilemap_1,1);
-		tilemap_set_scroll_cols(tilemap_1,1);
-		tilemap_set_transparent_pen(tilemap_1,0);
-
-/*
-	Scroll registers (on dfeveron logo screen):
-		8195	a1f7 (both)	=	200-6b	200-9	(flip off)
-		01ac	2108 (both)	=	200-54	100+8	(flip on)
-	Video registers:
-		0183	0001		=	200-7d	001		(flip off)
-		81bf	80f0		=	200-41	100-10	(flip on)
-*/
-
-		tilemap_set_scrolldx( tilemap_0, -0x6c +1, -0x57 +2 );
-		tilemap_set_scrolldx( tilemap_1, -0x6d +1, -0x56 +2 );
-
-		tilemap_set_scrolldy( tilemap_0, -0x11, -0x100 );
-		tilemap_set_scrolldy( tilemap_1, -0x11, -0x100 );
-
-		return 0;
-	}
-	else {cave_vh_stop(); return 1;}
-}
-
-
-
-/* 1 Layer */
-int uopoko_vh_start(void)
-{
-	tilemap_0 = tilemap_create(	get_tile_info_0,
-								tilemap_scan_rows,
-								TILEMAP_TRANSPARENT,
-								16,16,
-								DIM_NX,DIM_NY );
-
-	tilemap_1 = 0;
-
-	tilemap_2 = 0;
-
-
-	if (tilemap_0 && !sprite_init_cave())
-	{
-		tilemap_set_scroll_rows(tilemap_0,1);
-		tilemap_set_scroll_cols(tilemap_0,1);
-		tilemap_set_transparent_pen(tilemap_0,0);
-
-		tilemap_set_scrolldx( tilemap_0, -0x6d, -0x54 );
-
-		tilemap_set_scrolldy( tilemap_0, -0x11, -0x100 );
-
-		return 0;
-	}
-	else {cave_vh_stop(); return 1;}
-}
-
-
-
-/* 3 Layers */
-int hotdogst_vh_start(void)
-{
-	tilemap_0 = tilemap_create(	get_tile_info_0,
-								tilemap_scan_rows,
-								TILEMAP_TRANSPARENT,
-								16,16,
-								DIM_NX,DIM_NY );
-
-	tilemap_1 = tilemap_create(	get_tile_info_1,
-								tilemap_scan_rows,
-								TILEMAP_TRANSPARENT,
-								16,16,
-								DIM_NX,DIM_NY );
-
-	tilemap_2 = tilemap_create(	get_tile_info_2,
-								tilemap_scan_rows,
-								TILEMAP_TRANSPARENT,
-								16,16,
-								DIM_NX,DIM_NY );
-
-
-	if (tilemap_0 && tilemap_1 && tilemap_2 && !sprite_init_cave())
-	{
-		tilemap_set_scroll_rows(tilemap_0,1);
-		tilemap_set_scroll_cols(tilemap_0,1);
-		tilemap_set_transparent_pen(tilemap_0,0);
-
-		tilemap_set_scroll_rows(tilemap_1,1);
-		tilemap_set_scroll_cols(tilemap_1,1);
-		tilemap_set_transparent_pen(tilemap_1,0);
-
-		tilemap_set_scroll_rows(tilemap_2,1);
-		tilemap_set_scroll_cols(tilemap_2,1);
-		tilemap_set_transparent_pen(tilemap_2,0);
-
-		tilemap_set_scrolldx( tilemap_0, -0x6c, -0x57 + 0x40 );
-		tilemap_set_scrolldx( tilemap_1, -0x6d, -0x56 + 0x40 );
-		tilemap_set_scrolldx( tilemap_2, -0x6e, -0x55 + 0x40 );
-
-		tilemap_set_scrolldy( tilemap_0, -0x11, -0x100 );
-		tilemap_set_scrolldy( tilemap_1, -0x11, -0x100 );
-		tilemap_set_scrolldy( tilemap_2, -0x11, -0x100 );
-
-		return 0;
-	}
-	else {cave_vh_stop(); return 1;}
-}
-
-/* 2 Layers */
-int mazinger_vh_start(void)
-{
-	tilemap_0 = tilemap_create(	get_tile_info_0,
-								tilemap_scan_rows,
-								TILEMAP_TRANSPARENT,
-								8,8,
-								DIM_NX,DIM_NY );
-
-	tilemap_1 = tilemap_create(	get_tile_info_1,
-								tilemap_scan_rows,
-								TILEMAP_TRANSPARENT,
-								8,8,
-								DIM_NX,DIM_NY );
-
-	tilemap_2 = 0;
-
-
-	if (tilemap_0 && tilemap_1 && !sprite_init_cave())
-	{
-		tilemap_set_scroll_rows(tilemap_0,1);
-		tilemap_set_scroll_cols(tilemap_0,1);
-		tilemap_set_transparent_pen(tilemap_0,0);
-
-		tilemap_set_scroll_rows(tilemap_1,1);
-		tilemap_set_scroll_cols(tilemap_1,1);
-		tilemap_set_transparent_pen(tilemap_1,0);
-
-		tilemap_set_scrolldx( tilemap_0, -0x6c +1, -0x57 +2 );
-		tilemap_set_scrolldx( tilemap_1, -0x6d +1, -0x56 +2 );
-
-		tilemap_set_scrolldy( tilemap_0, -0x11, -0x100 );
-		tilemap_set_scrolldy( tilemap_1, -0x11, -0x100 );
-
-		return 0;
-	}
-	else {cave_vh_stop(); return 1;}
-}
-
-
-/***************************************************************************
-
-							Vh_Init_Palette
-
-***************************************************************************/
-
-/* Function needed for games with 4 bit sprites, rather than 8 bit */
-
 
 void dfeveron_vh_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
@@ -520,15 +132,13 @@ void dfeveron_vh_init_palette(unsigned char *palette, unsigned short *colortable
 			colortable[color * 256 + pen] = color * 16 + pen;
 }
 
-
-
 void ddonpach_vh_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
 	int color, pen;
 
 	/* Fill the 8000-83ff range ($40 color codes * $10 pens) for
-	   layers 1 & 2 which are 4 bits deep rather than 8 bits deep
-	   like layer 3, but use the first 16 color of every 256 for
+	   layers 0 & 1 which are 4 bits deep rather than 8 bits deep
+	   like layer 2, but use the first 16 color of every 256 for
 	   any given color code. */
 
 	for( color = 0; color < 0x40; color++ )
@@ -536,45 +146,221 @@ void ddonpach_vh_init_palette(unsigned char *palette, unsigned short *colortable
 			colortable[color * 16 + pen + 0x8000] = 0x4000 + color * 256 + pen;
 }
 
+void mazinger_vh_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+{
+	int color, pen;
+
+	/* Sprites (encrypted) are 4 bit deep */
+	for( color = 0; color < 0x40; color++ )
+		for( pen = 0; pen < 256; pen++ )
+			colortable[color * 256 + pen] = color * 16 + pen;
+
+	/* Layer 0 is 6 bit deep, there are 64 color codes but only $400
+	   colors are actually addressable */
+	for( color = 0; color < 0x40; color++ )
+		for( pen = 0; pen < 64; pen++ )
+			colortable[color * 64 + pen + 0x4400] = 0x400 + (color % (64/4)) * 64 + pen;
+}
+
+/***************************************************************************
+
+								  Tiles Format
+
+	Offset:		Bits:					Value:
+
+	0.w			fe-- ---- ---- ---		Priority
+				--dc ba98 ---- ----		Color
+				---- ---- 7654 3210
+
+	2.w									Code
 
 
+	When a row / "column" scroll effect is enabled, the scroll values are
+	fetched starting from tile RAM + $1000, 4 bytes per scan line:
+
+	Offset:		Value:
+
+	0.w			Tilemap line to display
+	2.w			X Scroll value
+
+***************************************************************************/
+
+INLINE void get_tile_info(int GFX, data16_t *VRAM, int tile_index)
+{
+	UINT32 code	=	(VRAM[ tile_index * 2 + 0] << 16) +
+					 VRAM[ tile_index * 2 + 1];
+	SET_TILE_INFO(GFX, code & 0x00ffffff, (code & 0x3f000000) >> (32-8), 0 );
+	tile_info.priority = (code & 0xc0000000)>> (32-2);
+}
+
+/*	Sailormn: the lower 2 Megabytes are banked, plus line scroll
+	data is to be fetched outside of the $4000 bytes of tile RAM.	*/
+
+int sailormn_tile_bank;
+
+void sailormn_tilebank_w( int bank )
+{
+	if (sailormn_tile_bank != bank)
+	{
+		sailormn_tile_bank = bank;
+		tilemap_mark_all_tiles_dirty(tilemap_2);
+	}
+}
+
+void sailormn_get_tile_info_2(int tile_index)
+{
+	UINT32 code	=	(cave_vram_2[ 0x4000/2 + tile_index * 2 + 0] << 16) +
+					 cave_vram_2[ 0x4000/2 + tile_index * 2 + 1];
+	UINT32 tile = code & 0x00ffffff;
+	if ((tile < 0x10000) && (sailormn_tile_bank))	tile += 0x40000;
+	SET_TILE_INFO(2, tile, (code & 0x3f000000) >> (32-8), 0 );
+	tile_info.priority = (code & 0xc0000000)>> (32-2);
+}
+
+
+INLINE void vram_w(data16_t *VRAM, struct tilemap *TILEMAP,UNUSEDARG offs_t offset, UNUSEDARG data16_t data, UNUSEDARG data16_t mem_mask)
+{
+	if ((VRAM[offset] & ~mem_mask)==(data & ~mem_mask)) return;
+	COMBINE_DATA(&VRAM[offset]);
+	if ( (offset/2) < 0x400 )
+		tilemap_mark_tile_dirty(TILEMAP,offset/2);
+}
+
+INLINE void vram_8x8_w(data16_t *VRAM, struct tilemap *TILEMAP,UNUSEDARG offs_t offset, UNUSEDARG data16_t data, UNUSEDARG data16_t mem_mask)
+{
+	if ((VRAM[offset] & ~mem_mask)==(data & ~mem_mask)) return;
+	COMBINE_DATA(&VRAM[offset]);
+	/* Sailormn has cave_vram_2 at $900000 and tiles at $904000,
+	   so that line scroll data at $901000 do not overlap with tiles.
+	   Hence we have to take the modulo of the tile index here.  */
+	tilemap_mark_tile_dirty(TILEMAP,(offset/2) % (0x400*4));
+}
+
+static void get_tile_info_0(int tile_index)	{ get_tile_info(0, cave_vram_0, tile_index); }
+static void get_tile_info_1(int tile_index)	{ get_tile_info(1, cave_vram_1, tile_index); }
+static void get_tile_info_2(int tile_index)	{ get_tile_info(2, cave_vram_2, tile_index); }
+
+WRITE16_HANDLER( cave_vram_0_w )		{ vram_w    (cave_vram_0, tilemap_0, offset, data, mem_mask); }
+WRITE16_HANDLER( cave_vram_0_8x8_w )	{ vram_8x8_w(cave_vram_0, tilemap_0, offset, data, mem_mask); }
+
+WRITE16_HANDLER( cave_vram_1_w )		{ vram_w    (cave_vram_1, tilemap_1, offset, data, mem_mask); }
+WRITE16_HANDLER( cave_vram_1_8x8_w )	{ vram_8x8_w(cave_vram_1, tilemap_1, offset, data, mem_mask); }
+
+WRITE16_HANDLER( cave_vram_2_w )		{ vram_w    (cave_vram_2, tilemap_2, offset, data, mem_mask); }
+WRITE16_HANDLER( cave_vram_2_8x8_w )	{ vram_8x8_w(cave_vram_2, tilemap_2, offset, data, mem_mask); }
 
 
 /***************************************************************************
 
-							Sprites Drawing
+							Video Init Routines
+
+	Depending on the game, there can be from 1 to 3 layers and the
+	tile sizes can be 8x8 or 16x16.
 
 ***************************************************************************/
 
+int cave_layers_offs_x, cave_layers_offs_y;
 
-/* --------------------------[ Sprites Format ]----------------------------
+int cave_vh_start( int dim0, int dim1, int dim2 )
+{
+	if (dim0){	tilemap_0 = tilemap_create(	get_tile_info_0, tilemap_scan_rows,
+											TILEMAP_TRANSPARENT, dim0,dim0, 512/dim0,512/dim0 );
+				if (!tilemap_0)	return 1;
+				tilemap_set_transparent_pen(tilemap_0, 0);
+				tilemap_set_scroll_rows(tilemap_0, 1);
+				tilemap_set_scroll_cols(tilemap_0, 1);	}
+	else		tilemap_0 = 0;
 
-Offset:		Format:					Value:
+	if (dim1){	tilemap_1 = tilemap_create(	get_tile_info_1, tilemap_scan_rows,
+											TILEMAP_TRANSPARENT, dim1,dim1, 512/dim1,512/dim1 );
+				if (!tilemap_1)	return 1;
+				tilemap_set_transparent_pen(tilemap_1, 0);
+				tilemap_set_scroll_rows(tilemap_1, 1);
+				tilemap_set_scroll_cols(tilemap_1, 1);	}
+	else		tilemap_1 = 0;
 
-00.w		fedc ba98 76-- ----		X Position
-			---- ---- --54 3210
+	if (dim2){	tilemap_2 = tilemap_create(	get_tile_info_2, tilemap_scan_rows,
+											TILEMAP_TRANSPARENT, dim2,dim2, 512/dim2,512/dim2 );
+				if (!tilemap_2)	return 1;
+				tilemap_set_transparent_pen(tilemap_2, 0);
+				tilemap_set_scroll_rows(tilemap_2, 1);
+				tilemap_set_scroll_cols(tilemap_2, 1);	}
+	else		tilemap_2 = 0;
 
-02.w		fedc ba98 76-- ----		Y Position
-			---- ---- --54 3210
+	if (sprite_init_cave())	{	cave_vh_stop();	return 1;	}
 
-04.w		fe-- ---- ---- ----
-			--dc ba98 ---- ----		Color
-			---- ---- 76-- ----
-			---- ---- --54 ----		Priority
-			---- ---- ---- 3---		Flip X
-			---- ---- ---- -2--		Flip Y
-			---- ---- ---- --10		Code High Bit(s?)
+	tiledim_0 = dim0;
+	tiledim_1 = dim1;
+	tiledim_2 = dim2;
 
-06.w								Code Low Bits
+	return 0;
+}
 
-08/0A.w								Zoom X / Y
+int cave_vh_start_16_16_16(void)	{	return cave_vh_start(16,16,16);	}
+int cave_vh_start_16_16_8(void)		{	return cave_vh_start(16,16, 8);	}
+int cave_vh_start_16_16_0(void)		{	return cave_vh_start(16,16, 0);	}
+int cave_vh_start_16_0_0(void)		{	return cave_vh_start(16, 0, 0);	}
+int cave_vh_start_8_8_0(void)		{	return cave_vh_start( 8, 8, 0);	}
 
-0C.w		fedc ba98 ---- ----		Tile Size X
-			---- ---- 7654 3210		Tile Size Y
 
-0E.w								Unused
+int sailormn_vh_start_16_16_8(void)
+{
+	if (cave_vh_start(16,16,0))
+		return 1;
 
------------------------------------------------------------------------- */
+	/* Layer 2 (8x8) needs to be handled differently */
+	tilemap_2 = tilemap_create(	sailormn_get_tile_info_2, tilemap_scan_rows,
+								TILEMAP_TRANSPARENT, 8,8, 512/8,512/8 );
+	if (!tilemap_2)	return 1;
+	tilemap_set_transparent_pen(tilemap_2, 0);
+	tilemap_set_scroll_rows(tilemap_2, 1);
+	tilemap_set_scroll_cols(tilemap_2, 1);
+
+	tiledim_2 = 8;
+	return 0;
+}
+
+
+void cave_vh_stop(void)
+{
+	if (sprite_cave)	free(sprite_cave);
+	sprite_cave = NULL;
+	if (sprite_zbuf)	free(sprite_zbuf);
+	sprite_zbuf = NULL;
+}
+
+
+/***************************************************************************
+
+								Sprites Drawing
+
+	Offset:		Bits:					Value:
+
+	00.w		fedc ba98 76-- ----		X Position
+				---- ---- --54 3210
+
+	02.w		fedc ba98 76-- ----		Y Position
+				---- ---- --54 3210
+
+	04.w		fe-- ---- ---- ----
+				--dc ba98 ---- ----		Color
+				---- ---- 76-- ----
+				---- ---- --54 ----		Priority
+				---- ---- ---- 3---		Flip X
+				---- ---- ---- -2--		Flip Y
+				---- ---- ---- --10		Code High Bit(s?)
+
+	06.w								Code Low Bits
+
+	08/0A.w								Zoom X / Y
+
+	0C.w		fedc ba98 ---- ----		Tile Size X
+				---- ---- 7654 3210		Tile Size Y
+
+	0E.w								Unused
+
+
+***************************************************************************/
 
 static void get_sprite_info_cave(void)
 {
@@ -789,7 +575,7 @@ static int sprite_init_cave(void)
 	blit.origin_x = 0;
 	blit.origin_y = 0;
 	blit.baseaddr = bitmap->line[0];
-	blit.line_offset = bitmap->line[1]-bitmap->line[0];
+	blit.line_offset = ((UINT8 *)bitmap->line[1])-((UINT8 *)bitmap->line[0]);
 	sprite_set_clip(&Machine->visible_area);
 
 	if (cave_spritetype == 0 || cave_spritetype == 2)	// most of the games
@@ -808,8 +594,6 @@ static int sprite_init_cave(void)
 
 	num_sprites = spriteram_size / 0x10 / 2;
 	if(!(sprite_cave = calloc( num_sprites, sizeof(struct sprite_cave) ))) return 1;
-
-	cave_prgrom = (UINT16 *)memory_region(REGION_CPU1);
 
 	return 0;
 }
@@ -877,23 +661,6 @@ static void sprite_update_cave( void ){
 */
 			{
 				sprite_table[sprite->priority][i[sprite->priority]++] = sprite;
-
-				if(Machine->color_depth == 8)	/* mark sprite colors */
-				{
-					int j,offs = sprite->pal_data - Machine->remapped_colortable;
-					if(Machine->drv->total_colors == 0x8000)	/* 8 Bit Sprites */
-					{
-						if(palette_used_colors[offs+1] != PALETTE_COLOR_USED)
-							for(j=1;j<256;j++)
-								palette_used_colors[offs+j] = PALETTE_COLOR_USED;
-					}
-					else										/* 4 Bit Sprites */
-					{
-						if(palette_used_colors[(offs>>4)+1] != PALETTE_COLOR_USED)
-							for(j=1;j<16;j++)
-								palette_used_colors[(offs>>4)+j] = PALETTE_COLOR_USED;
-					}
-				}
 
 				if(!(spritetype&CAVE_SPRITETYPE_ZBUF))
 				{
@@ -1922,390 +1689,191 @@ else
 
 								Screen Drawing
 
+
+				Layers Control Registers (cave_vctrl_0..2)
+
+
+		Offset:		Bits:					Value:
+
+		0.w			f--- ---- ---- ----		? Usually 1
+					-e-- ---- ---- ----		Activate Row Scroll
+					--d- ---- ---- ----		?
+					---c ba9- ---- ----
+					---- ---8 7654 3210		Scroll X
+
+		2.w			f--- ---- ---- ----		? Usually 1
+					-e-- ---- ---- ----		Activate "Column" Scroll
+					--d- ---- ---- ----		?
+					---c ba9- ---- ----
+					---- ---8 7654 3210		Scroll Y
+
+		4.w			fedc ba98 765- ----
+					---- ---- ---4 ----		Layer Disable
+					---- ---- ---- 32--
+					---- ---- ---- --10		Layer Priority (decides the order
+											of the layers for tiles with the
+											same tile priority)
+
+
+
+		Row / "Column" Scroll data is fetched from tile RAM + $1000.
+
+		"Column" Scroll:	a tilemap line is specified for each scan line.
+		Row Scroll:			a different scroll value is specified for each scan line.
+
+
+					Video Registers (cave_videoregs)
+
+
+	Offset:		Bits:					Value:
+
+		0.w		f--- ---- ---- ----		Global Flip X
+				-edc ba98 7654 3210		Global Layers Offset X
+
+		2.w		f--- ---- ---- ----		Global Flip Y
+				-edc ba98 7654 3210		Global Layers Offset Y
+
+		..
+
+		8.w		fedc ba98 7654 321-
+				---- ---- ---- ---0		Sprite RAM Bank
+
+		..
+
 ***************************************************************************/
 
-struct tilemap_mask {
-	struct osd_bitmap *bitmask;
-	int line_offset;
-	UINT8 *data;
-	UINT8 **data_row;
-};
+INLINE void cave_tilemap_draw(
+	struct osd_bitmap *bitmap,
+	struct tilemap *TILEMAP, data16_t *VRAM, data16_t *VCTRL,
+	UINT32 flags, UINT32 priority, UINT32 priority2 )
+{
+	int sx, sy, flipx, flipy;
 
-struct tilemap {
-	UINT32 (*get_memory_offset)( UINT32 col, UINT32 row, UINT32 num_cols, UINT32 num_rows );
-	int *memory_offset_to_cached_indx;
-	UINT32 *cached_indx_to_memory_offset;
-	int logical_flip_to_cached_flip[4];
+	/* Bail out if ... */
 
-	/* callback to interpret video VRAM for the tilemap */
-	void (*tile_get_info)( int memory_offset );
+	if	( (!TILEMAP) ||							/* no tilemap; */
+		  ((VCTRL[2] & 0x0003) != priority2) ||	/* tilemap's global priority not the requested one; */
+		  ((VCTRL[2] & 0x0010))	)				/* tilemap's disabled. */
+		return;
 
-	UINT32 max_memory_offset;
-	UINT32 num_tiles;
-	UINT32 num_logical_rows, num_logical_cols;
-	UINT32 num_cached_rows, num_cached_cols;
-	UINT32 cached_tile_width, cached_tile_height;
-	UINT32 cached_width, cached_height;
+	flipx = ( (cave_videoregs[0] & 0x8000) /*== (VCTRL[0] & 0x8000)*/ );
+	flipy = ( (cave_videoregs[1] & 0x8000) /*== (VCTRL[1] & 0x8000)*/ );
+	tilemap_set_flip(TILEMAP, (flipx ? TILEMAP_FLIPX : 0) | (flipy ? TILEMAP_FLIPY : 0) );
 
-	struct cached_tile_info *cached_tile_info;
+	cave_layers_offs_x = 0x13;
+	cave_layers_offs_y = -0x12;
 
-	int dx, dx_if_flipped;
-	int dy, dy_if_flipped;
-	int scrollx_delta, scrolly_delta;
+	/* An additional 8 pixel offset for layers with 8x8 tiles. Plus
+	   Layer 0 is displaced by 1 pixel wrt Layer 1, so is Layer 2 wrt
+	   Layer 1 */
+	if		(TILEMAP == tilemap_0)	cave_layers_offs_x -= ((tiledim_0 == 16) ? 1 : (1+8));
+	else if	(TILEMAP == tilemap_1)	cave_layers_offs_x -= ((tiledim_1 == 16) ? 2 : (2+8));
+	else if	(TILEMAP == tilemap_2)	cave_layers_offs_x -= ((tiledim_2 == 16) ? 3 : (3+8));
 
-	int enable;
-	int attributes;
+	sx = VCTRL[0] - cave_videoregs[0] + (flipx ? cave_layers_offs_x : -cave_layers_offs_x);
+	sy = VCTRL[1] - cave_videoregs[1] + (flipy ? cave_layers_offs_y : -cave_layers_offs_y);
 
-	int type;
-	int transparent_pen;
-	unsigned int transmask[4];
+	if (VCTRL[1] & 0x4000)	// "column" scroll
+	{
+		struct rectangle clip;
+		int startline, endline, vramdata0, vramdata1;
 
-	int bNeedRender;
+		/*
+			"Column" Scroll:
 
-	void (*draw)( int, int );
-	void (*draw_opaque)( int, int );
-	void (*draw_alpha)( int, int );
+			A tilemap line is specified for each scan line. This is handled
+			using many horizontal clipping regions (slices) and calling
+			tilemap_draw multiple times.
 
-	UINT8 *priority,	/* priority for each tile */
-		**priority_row;
+			Note:	tilemap.c has a limitation on the size of a clipping
+					region, which can only be a multiple of 8 pixels.
+					Thus in vertical games (where our horizontal slices
+					become vertical) there may be graphical glitches.
+		*/
 
-	UINT8 *visible; /* boolean flag for each tile */
+		clip.min_x = Machine->visible_area.min_x;
+		clip.max_x = Machine->visible_area.max_x;
 
-	UINT8 *dirty_vram; /* boolean flag for each tile */
+		for(startline = Machine->visible_area.min_y; startline < Machine->visible_area.max_y;)
+		{
+			/* Find the largest slice */
+			vramdata0 = (vramdata1 = VRAM[(0x1000+((2+startline*4)&0x7ff))/2]);
+			for(endline = startline + 1; endline < Machine->visible_area.max_y; endline++)
+				if((++vramdata1) != VRAM[(0x1000+((2+endline*4)&0x7ff))/2]) break;
 
-	UINT8 *dirty_pixels;
+			tilemap_set_scrolly(TILEMAP, 0, sy + vramdata0 - startline);
 
-	int scroll_rows, scroll_cols;
-	int *rowscroll, *colscroll;
+			if (VCTRL[0] & 0x4000)	// row scroll
+			{
+				int line;
 
-	int orientation;
-	int clip_left,clip_right,clip_top,clip_bottom;
+				/*
+					Row Scroll:
 
-	UINT16 tile_depth, tile_granularity;
-	UINT8 *tile_dirty_map;
+					A different scroll value is specified for each scan line.
+					This is handled using tilemap_set_scroll_rows and calling
+					tilemap_draw just once.
+				*/
 
-	/* cached color data */
-	struct osd_bitmap *pixmap;
-	int pixmap_line_offset;
+				tilemap_set_scroll_rows(TILEMAP,512);
+				for(line = startline; line < endline; line++)
+					tilemap_set_scrollx(	TILEMAP,
+											(line + sy) & 511,
+											sx + VRAM[(0x1000+((line*4)&0x7ff))/2] );
+			}
 
-	struct tilemap_mask *foreground;
-	/* for transparent layers, or the front half of a split layer */
+			clip.min_y = startline;
+			clip.max_y = endline - 1;
 
-	struct tilemap_mask *background;
-	/* for the back half of a split layer */
+			tilemap_set_clip(TILEMAP,&clip);
+			/*tilemap_update(TILEMAP);*/
+			tilemap_draw(bitmap, TILEMAP, flags, priority);
 
-	struct tilemap *next; /* resource tracking */
-};
-
-enum {
-	TILE_TRANSPARENT,
-	TILE_MASKED,
-	TILE_OPAQUE
-};
-
-
-
-/***********************************************************************************/
-static struct {
-	int clip_left, clip_top, clip_right, clip_bottom;
-	int source_width, source_height;
-	int dest_line_offset,source_line_offset,mask_line_offset;
-	int dest_row_offset,source_row_offset,mask_row_offset;
-	struct osd_bitmap *screen, *pixmap, *bitmask;
-	UINT8 **mask_data_row;
-	UINT8 **priority_data_row;
-	int tile_priority;
-//d	int tilemap_priority_code;
-} tmblt;
-
-
-#define DEPTH 8
-#define TILE_WIDTH	8
-#define TILE_HEIGHT	8
-#define DATA_TYPE UINT8
-#define DECLARE(function,args,body) static void function##8x8x8BPP args body
-#include "vidhrdw/cave.c"
-
-#define TILE_WIDTH	16
-#define TILE_HEIGHT	16
-#define DATA_TYPE UINT8
-#define DECLARE(function,args,body) static void function##16x16x8BPP args body
-#include "vidhrdw/cave.c"
-
-#undef DEPTH
-
-#define DEPTH 16
-#define TILE_WIDTH	8
-#define TILE_HEIGHT	8
-#define DATA_TYPE UINT16
-#define blend blend16
-#define blendbitmask blendbitmask16
-#define DECLARE(function,args,body) static void function##8x8x16BPP args body
-#include "vidhrdw/cave.c"
-
-#define TILE_WIDTH	16
-#define TILE_HEIGHT	16
-#define DATA_TYPE UINT16
-#define DECLARE(function,args,body) static void function##16x16x16BPP args body
-#include "vidhrdw/cave.c"
-
-#undef DEPTH
-
-/*********************************************************************************/
-
-static void cave_tilemap_set_scrollx( struct tilemap *tilemap, int which, int value, int valuedy ){
-	value = tilemap->scrollx_delta-value;
-
-	if( tilemap->orientation & ORIENTATION_SWAP_XY ){
-		if( tilemap->orientation & ORIENTATION_FLIP_X ){
-			which = tilemap->scroll_cols-1 - which;
-			valuedy = -valuedy;
+			startline = endline;
 		}
-		if( tilemap->orientation & ORIENTATION_FLIP_Y ) value = screen_height-tilemap->cached_height-value;
-		tilemap->colscroll[which] = (value&0xffff)|(valuedy<<16);
 	}
-	else {
-		if( tilemap->orientation & ORIENTATION_FLIP_Y ){
-			which = tilemap->scroll_rows-1 - which;
-			valuedy = -valuedy;
-		}
-		if( tilemap->orientation & ORIENTATION_FLIP_X ) value = screen_width-tilemap->cached_width-value;
-		tilemap->rowscroll[which] = (value&0xffff)|(valuedy<<16);
+	else if (VCTRL[0] & 0x4000)	// row scroll, no column scroll
+	{
+		int line;
+		tilemap_set_scroll_rows(TILEMAP,512);
+		for(line = Machine->visible_area.min_y; line <= Machine->visible_area.max_y; line++)
+			tilemap_set_scrollx(	TILEMAP,
+									(line + sy) & 511,
+									sx + VRAM[(0x1000+((line*4)&0x7ff))/2] );
+		tilemap_set_scrolly(TILEMAP, 0, sy );
+		tilemap_draw(bitmap, TILEMAP, flags, priority);
+	}
+	else
+	{
+		/* "Normal" scrolling */
+		tilemap_set_clip(TILEMAP,&Machine->visible_area);
+		tilemap_set_scroll_rows(TILEMAP, 1);
+		tilemap_set_scroll_cols(TILEMAP, 1);
+		tilemap_set_scrollx(TILEMAP, 0, sx );
+		tilemap_set_scrolly(TILEMAP, 0, sy );
+		tilemap_draw(bitmap, TILEMAP, flags, priority);
 	}
 }
 
-/*********************************************************************************/
+void cave_tilemap_0_draw( struct osd_bitmap *bitmap, UINT32 flags, UINT32 priority, UINT32 priority2 )
+{	 cave_tilemap_draw( bitmap, tilemap_0, cave_vram_0, cave_vctrl_0, flags, priority, priority2 );	}
+void cave_tilemap_1_draw( struct osd_bitmap *bitmap, UINT32 flags, UINT32 priority, UINT32 priority2 )
+{	 cave_tilemap_draw( bitmap, tilemap_1, cave_vram_1, cave_vctrl_1, flags, priority, priority2 );	}
+void cave_tilemap_2_draw( struct osd_bitmap *bitmap, UINT32 flags, UINT32 priority, UINT32 priority2 )
+{	 cave_tilemap_draw( bitmap, tilemap_2, cave_vram_2, cave_vctrl_2, flags, priority, priority2 );	}
 
-static void tilemap_draw_x( struct osd_bitmap *dest, struct tilemap *tilemap, UINT32 flags, UINT32 priority ){
-	int xpos,ypos;
-profiler_mark(PROFILER_TILEMAP_DRAW);
-	tilemap_get_pixmap( tilemap );
 
-	if( tilemap->enable ){
-		void (*draw)( int, int );
-
-		int rows = tilemap->scroll_rows;
-		const int *rowscroll = tilemap->rowscroll;
-		int cols = tilemap->scroll_cols;
-		const int *colscroll = tilemap->colscroll;
-
-		int left = tilemap->clip_left;
-		int right = tilemap->clip_right;
-		int top = tilemap->clip_top;
-		int bottom = tilemap->clip_bottom;
-
-		int tile_height = tilemap->cached_tile_height;
-
-		tmblt.screen = dest;
-		tmblt.dest_line_offset = dest->line[1] - dest->line[0];
-		tmblt.pixmap = tilemap->pixmap;
-		tmblt.source_line_offset = tilemap->pixmap_line_offset;
-		tmblt.bitmask = tilemap->foreground->bitmask;
-		tmblt.mask_line_offset = tilemap->foreground->line_offset;
-		tmblt.mask_data_row = tilemap->foreground->data_row;
-		tmblt.mask_row_offset = tile_height*tmblt.mask_line_offset;
-
-		if( dest->depth==16 || dest->depth==15 ){
-			tmblt.dest_line_offset /= 2;
-			tmblt.source_line_offset /= 2;
-			if(tilemap->cached_tile_width==8){draw=draw8x8x16BPP;}
-			else{draw=draw16x16x16BPP;}
-		}
-		else{
-			if(tilemap->cached_tile_width==8){draw=draw8x8x8BPP;}
-			else{draw=draw16x16x8BPP;}
-		}
-
-		tmblt.source_row_offset = tile_height*tmblt.source_line_offset;
-		tmblt.dest_row_offset = tile_height*tmblt.dest_line_offset;
-
-		tmblt.priority_data_row = tilemap->priority_row;
-		tmblt.source_width = tilemap->cached_width;
-		tmblt.source_height = tilemap->cached_height;
-		tmblt.tile_priority = flags&0xf;
-
-		if( rows == 1 && cols == 1 ){ /* XY scrolling playfield */
-			int scrollx = rowscroll[0] % tmblt.source_width;
-			int scrolly = colscroll[0] % tmblt.source_height;
-	 		tmblt.clip_left = left;
-	 		tmblt.clip_top = top;
-	 		tmblt.clip_right = right;
-	 		tmblt.clip_bottom = bottom;
-			for(
-				ypos = scrolly - tmblt.source_height;
-				ypos < tmblt.clip_bottom;
-				ypos += tmblt.source_height
-			){
-				for(
-					xpos = scrollx - tmblt.source_width;
-					xpos < tmblt.clip_right;
-					xpos += tmblt.source_width
-				){
-					draw( xpos,ypos );
-				}
-			}
-		}
-		else if( rows == 1 ){ /* scrolling columns + horizontal scroll */
-			int col = 0;
-			int colwidth = (right-left) / cols;
-			tmblt.clip_top = top;
-			tmblt.clip_bottom = bottom;
-			while( col < cols ){
-				int cons = 1;
-				int scrolly = colscroll[col];
-				int scrollx = (rowscroll[0] + (scrolly>>16)) % tilemap->cached_width;
-				while( col + cons < cols &&	colscroll[col + cons] == scrolly ) cons++;
-				scrolly %= tmblt.source_height;
-				tmblt.clip_left = left + col * colwidth;
-				tmblt.clip_right = tmblt.clip_left + cons * colwidth;
-				if (tmblt.clip_right > right) tmblt.clip_right = right;
-				for(
-					ypos = scrolly - tmblt.source_height;
-					ypos < tmblt.clip_bottom;
-					ypos += tmblt.source_height
-				){
-					draw( scrollx,ypos );
-				}
-				for(
-					ypos = scrolly - tmblt.source_height;
-					ypos < tmblt.clip_bottom;
-					ypos += tmblt.source_height
-				){
-					draw( scrollx - tmblt.source_width,ypos );
-				}
-				col += cons;
-			}
-		}
-		else if( cols == 1 ){ /* scrolling rows + vertical scroll */
-			int row = 0;
-			int rowheight = (bottom - top) / rows;
-			tmblt.clip_left = left;
-			tmblt.clip_right = right;
-			while( row < rows ){
-				int cons = 1;
-				int scrollx = rowscroll[row];
-				int scrolly = (colscroll[0] + (scrollx>>16)) % tilemap->cached_height;
-				while( row + cons < rows &&	rowscroll[row + cons] == scrollx ) cons++;
-				scrollx %= tmblt.source_width;
-				tmblt.clip_top = top + row * rowheight;
-				tmblt.clip_bottom = tmblt.clip_top + cons * rowheight;
-				if (tmblt.clip_bottom > bottom) tmblt.clip_bottom = bottom;
-				for(
-					xpos = scrollx - tmblt.source_width;
-					xpos < tmblt.clip_right;
-					xpos += tmblt.source_width
-				){
-					draw( xpos,scrolly );
-				}
-				for(
-					xpos = scrollx - tmblt.source_width;
-					xpos < tmblt.clip_right;
-					xpos += tmblt.source_width
-				){
-					draw( xpos,scrolly - tmblt.source_height );
-				}
-				row += cons;
-			}
-		}
-	}
-profiler_mark(PROFILER_END);
-}
-/*********************************************************************************/
-
-static UINT16 scrollx_0,scrolly_0,scrollx_1,scrolly_1,scrollx_2,scrolly_2;
-
-#define CAVE_TILEMAP_SET_SCROLLX(_n_) \
-{ \
-	const int num_lines = Machine->drv->screen_height; \
-	int line; \
-	switch (((cave_vctrl_##_n_[0] & 0x4000)>>14) + ((cave_vctrl_##_n_[1] & 0x4000)>>13)) \
-	{ \
-		case 1:		/* x */ \
-			tilemap_set_scroll_rows(tilemap_##_n_,num_lines); \
-			for(line = 0; line < num_lines; line++) \
-				cave_tilemap_set_scrollx(tilemap_##_n_, line, \
-								scrollx_##_n_ + cave_vram_##_n_[(0x1000+((line*4)&0x7ff))/2], \
-								0 ); \
-			break; \
-		case 2:		/* y */ \
-			tilemap_set_scroll_rows(tilemap_##_n_,num_lines); \
-			for(line = 0; line < num_lines; line++) \
-				cave_tilemap_set_scrollx(tilemap_##_n_, line, \
-								scrollx_##_n_, \
-								line - cave_vram_##_n_[(0x1000+(((2+((line+delta)*4))&0x7ff)))/2] ); \
-			break; \
-		case 3:		/* x,y */ \
-			tilemap_set_scroll_rows(tilemap_##_n_,num_lines); \
-			for(line = 0; line < num_lines; line++) \
-				cave_tilemap_set_scrollx(tilemap_##_n_, line, \
-								scrollx_##_n_ + cave_vram_##_n_[(0x1000+((line*4)&0x7ff))/2], \
-								line - cave_vram_##_n_[(0x1000+(((2+((line+delta)*4))&0x7ff)))/2] ); \
-			break; \
-		default: \
-		case 0: \
-			tilemap_set_scroll_rows(tilemap_##_n_,1); \
-			tilemap_set_scrollx(tilemap_##_n_, 0, scrollx_##_n_ ); \
-	} \
-}
-
+void cave_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
+	int pri, pri2;
+	int layers_ctrl = -1;
+	int background_color;
 
 #ifdef MAME_DEBUG
-INLINE void screenrefresh_debug(struct osd_bitmap *bitmap, int delta)
 {
-	int pri;
-	int layers_ctrl = -1;
-
-	{//ksdeb
-		static int rasflag0 = 0;
-		int rasflag = 0;
-
-		if (cave_vctrl_0[0] & 0x4000) rasflag = 1;
-		if (cave_vctrl_0[1] & 0x4000) rasflag += 10;
-		if(keyboard_pressed(KEYCODE_J))
-		{
-			char buf[80];
-			sprintf(buf,"x:%04X y:%04X",cave_vctrl_0[0],cave_vctrl_0[1]);
-			usrintf_showmessage(buf);
-		}
-		if (tilemap_1)
-		{
-			if (cave_vctrl_1[0] & 0x4000) rasflag += 100;
-			if (cave_vctrl_1[1] & 0x4000) rasflag += 1000;
-			if(keyboard_pressed(KEYCODE_K))
-			{
-				char buf[80];
-				sprintf(buf,"x:%04X y:%04X",cave_vctrl_1[0],cave_vctrl_1[1]);
-				usrintf_showmessage(buf);
-			}
-		}
-		if (tilemap_2)
-		{
-			if (cave_vctrl_2[0] & 0x4000) rasflag += 10000;
-			if (cave_vctrl_2[1] & 0x4000) rasflag += 100000;
-			if(keyboard_pressed(KEYCODE_L))
-			{
-				char buf[80];
-				sprintf(buf,"x:%04X y:%04X",cave_vctrl_2[0],cave_vctrl_2[1]);
-				usrintf_showmessage(buf);
-			}
-		}
-
-
-		if(rasflag)
-		{
-			char buf[80];
-			sprintf(buf,"line effect : %06u",rasflag);
-			usrintf_showmessage(buf);
-			if(rasflag!=rasflag0)
-			{
-				logerror("line effect : %06u\n",rasflag);
-				rasflag0 = rasflag;
-			}
-		}
-	}//ksdeb
-
+	static int rasflag, old_rasflag;
 	if ( keyboard_pressed(KEYCODE_Z) || keyboard_pressed(KEYCODE_X) || keyboard_pressed(KEYCODE_C) ||
-	     keyboard_pressed(KEYCODE_V) || keyboard_pressed(KEYCODE_B) )
+    	 keyboard_pressed(KEYCODE_V) || keyboard_pressed(KEYCODE_B) )
 	{
 		int msk = 0, val = 0;
 
@@ -2322,742 +1890,68 @@ INLINE void screenrefresh_debug(struct osd_bitmap *bitmap, int delta)
 		if (keyboard_pressed(KEYCODE_A))	msk |= val << 12;	// for sprites
 		if (msk != 0) layers_ctrl &= msk;
 
-		{
-			char buf[80];
-			sprintf(buf,"%04X %04X %04X %04X %04X %04X %04X %04X",
-					cave_videoregs[0], cave_videoregs[1],
-					cave_videoregs[2], cave_videoregs[3],
-					cave_videoregs[4], cave_videoregs[5],
-					cave_videoregs[6], cave_videoregs[7] );
-			usrintf_showmessage(buf);
-		}
+#if 1
+		/* Show the video registers (cave_videoregs) */
+		usrintf_showmessage("%04X %04X %04X %04X %04X %04X %04X %04X",
+			cave_videoregs[0], cave_videoregs[1], cave_videoregs[2], cave_videoregs[3],
+			cave_videoregs[4], cave_videoregs[5], cave_videoregs[6], cave_videoregs[7] );
+#endif
+		/* Show the scroll / flags registers of the selected layer */
+		if ((tilemap_0)&&(msk&0x000f))	usrintf_showmessage("x:%04X y:%04X f:%04X",cave_vctrl_0[0],cave_vctrl_0[1],cave_vctrl_0[2]);
+		if ((tilemap_1)&&(msk&0x00f0))	usrintf_showmessage("x:%04X y:%04X f:%04X",cave_vctrl_1[0],cave_vctrl_1[1],cave_vctrl_1[2]);
+		if ((tilemap_2)&&(msk&0x0f00))	usrintf_showmessage("x:%04X y:%04X f:%04X",cave_vctrl_2[0],cave_vctrl_2[1],cave_vctrl_2[2]);
 	}
 
-	for ( pri = 0; pri < 4; pri++ )
+	/* Show the row / "column" scroll enable flags, when they change state */
+	rasflag = 0;
+	if (tilemap_0)	{	rasflag |= (cave_vctrl_0[0] & 0x4000) ? 0x0001 : 0;
+						rasflag |= (cave_vctrl_0[1] & 0x4000) ? 0x0002 : 0;	}
+	if (tilemap_1)	{	rasflag |= (cave_vctrl_1[0] & 0x4000) ? 0x0010 : 0;
+						rasflag |= (cave_vctrl_1[1] & 0x4000) ? 0x0020 : 0;	}
+	if (tilemap_2)	{	rasflag |= (cave_vctrl_2[0] & 0x4000) ? 0x0100 : 0;
+						rasflag |= (cave_vctrl_2[1] & 0x4000) ? 0x0200 : 0;	}
+	if (rasflag != old_rasflag)
 	{
-		if ((layers_ctrl&(1<<(pri+12))))			(*cave_sprite_draw)( pri );
-		if ((layers_ctrl&(1<<(pri+0))))				tilemap_draw_x(bitmap, tilemap_0, pri,0);
-		if ((layers_ctrl&(1<<(pri+4)))&&tilemap_1)	tilemap_draw_x(bitmap, tilemap_1, pri,0);
-		if ((layers_ctrl&(1<<(pri+8)))&&tilemap_2)	tilemap_draw_x(bitmap, tilemap_2, pri,0);
+		usrintf_showmessage("Line Effect: 0:%c%c 1:%c%c 2:%c%c",
+			(rasflag&0x0001)?'x':' ', (rasflag&0x0002)?'y':' ',
+			(rasflag&0x0010)?'x':' ', (rasflag&0x0020)?'y':' ',
+			(rasflag&0x0100)?'x':' ', (rasflag&0x0200)?'y':' '	);
+		old_rasflag = rasflag;
 	}
 }
 #endif
-
-
-/**************************************************************************/
-
-void donpachi_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
-{
-	int delta = 0;
-
-	{		/* scroll hack */
-		UINT32 addr = (cave_wkram[0x13CC/2]<<15)+(cave_wkram[0x13CE/2]>>1);
-		UINT16 *scroll_delta;
-
-		if(addr&(0xfff80000/2))
-		{
-			scroll_delta = &cave_wkram[addr&(0xffff/2)];
-		}
-		else
-			scroll_delta = &cave_prgrom[addr];
-
-		if(!((scrollx_0=cave_vctrl_0[0]) & 0x4000)) scrollx_0 = cave_wkram[0x13A8/2] + scroll_delta[0];
-													scrolly_0 = cave_wkram[0x13AA/2] + scroll_delta[1];
-													scrollx_1 = cave_wkram[0x13AC/2] + scroll_delta[2];
-		if(!((scrolly_1=cave_vctrl_1[1]) & 0x4000)) scrolly_1 = cave_wkram[0x13AE/2] + scroll_delta[3];
-													scrollx_2 = cave_wkram[0x13B0/2] + scroll_delta[4];
-													scrolly_2 = cave_wkram[0x13B2/2] + scroll_delta[5];
-	}
-
-	tilemap_set_flip(ALL_TILEMAPS, ((cave_videoregs[ 0 ] & 0x8000) ? TILEMAP_FLIPX : 0) | ((cave_videoregs[ 1 ] & 0x8000) ? TILEMAP_FLIPY : 0) );
-
-	tilemap_set_enable( tilemap_0,    cave_vctrl_0[2] & 1 );
-	tilemap_set_scrolly(tilemap_0, 0, scrolly_0 );
-	CAVE_TILEMAP_SET_SCROLLX(0)
-
-	tilemap_set_enable( tilemap_1,    cave_vctrl_1[2] & 1 );
-	tilemap_set_scrolly(tilemap_1, 0, scrolly_1 );
-	CAVE_TILEMAP_SET_SCROLLX(1)
-
-	tilemap_set_enable( tilemap_2,    cave_vctrl_2[2] & 1 );
-	tilemap_set_scrollx(tilemap_2, 0, scrollx_2 );
-	tilemap_set_scrolly(tilemap_2, 0, scrolly_2 );
-
-
-	tilemap_update(ALL_TILEMAPS);
-
-	if(Machine->color_depth == 8) palette_init_used_colors();
 
 	(*get_sprite_info)();
 
 	sprite_update_cave();
 
-//#ifdef MAME_DEBUG
-	if(Machine->color_depth == 8) palette_recalc();
-//#endif
+	/*	To be verified: the background color is the first
+						of the last palette of layer 0		*/
+	background_color =	 Machine->drv->gfxdecodeinfo[0].color_codes_start +
+						(Machine->drv->gfxdecodeinfo[0].total_color_codes-1) *
+						 Machine->gfx[0]->color_granularity;
+	fillbitmap(bitmap,Machine->remapped_colortable[background_color],&Machine->visible_area);
 
-	fillbitmap(bitmap,Machine->remapped_colortable[0x0f00],&Machine->visible_area);
+	/*
+		Tiles and sprites are ordered by priority (0 back, 3 front) with
+		sprites going below tiles of their same priority.
 
-#ifdef MAME_DEBUG
-	screenrefresh_debug(bitmap, 0);
-#else
-	(*cave_sprite_draw)( 0 );
-	tilemap_draw_x(bitmap, tilemap_0, 0,0);
-	tilemap_draw_x(bitmap, tilemap_1, 0,0);
-	tilemap_draw_x(bitmap, tilemap_2, 0,0);
-	(*cave_sprite_draw)( 1 );
-	tilemap_draw_x(bitmap, tilemap_0, 1,0);
-	tilemap_draw_x(bitmap, tilemap_1, 1,0);
-	tilemap_draw_x(bitmap, tilemap_2, 1,0);
-	(*cave_sprite_draw)( 2 );
-	tilemap_draw_x(bitmap, tilemap_0, 2,0);
-	tilemap_draw_x(bitmap, tilemap_1, 2,0);
-	tilemap_draw_x(bitmap, tilemap_2, 2,0);
-	(*cave_sprite_draw)( 3 );
-	tilemap_draw_x(bitmap, tilemap_0, 3,0);
-	tilemap_draw_x(bitmap, tilemap_1, 3,0);
-	tilemap_draw_x(bitmap, tilemap_2, 3,0);
-#endif
-}
+		Sprites with the same priority are ordered by their place in
+		sprite RAM (last sprite is the frontmost).
 
+		Tiles with the same priority are ordered by the priority of their layer.
 
-void ddonpach_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
-{
-	{		/* scroll hack */
-		UINT32 addr = (cave_wkram[0x13DC/2]<<15)+(cave_wkram[0x13DE/2]>>1);
-		UINT16 *scroll_delta;
-
-		if(addr&(0xfff00000/2))
-		{
-			scroll_delta = &cave_wkram[addr&(0xffff/2)];
-		}
-		else
-			scroll_delta = &cave_prgrom[addr];
-
-		scrollx_0 = cave_wkram[0x13B8/2] + scroll_delta[0];
-		scrolly_0 = cave_wkram[0x13BA/2] + scroll_delta[1];
-		scrollx_1 = cave_wkram[0x13BC/2] + scroll_delta[2];
-		scrolly_1 = cave_wkram[0x13BE/2] + scroll_delta[3];
-		scrollx_2 = cave_wkram[0x13C0/2] + scroll_delta[4];
-		scrolly_2 = cave_wkram[0x13C2/2] + scroll_delta[5];
-	}
-
-	tilemap_set_flip(ALL_TILEMAPS, ((cave_videoregs[ 0 ] & 0x8000) ? TILEMAP_FLIPX : 0) | ((cave_videoregs[ 1 ] & 0x8000) ? TILEMAP_FLIPY : 0) );
-
-	tilemap_set_enable( tilemap_0,    cave_vctrl_0[2] & 1 );
-	tilemap_set_scrollx(tilemap_0, 0, scrollx_0 );
-	tilemap_set_scrolly(tilemap_0, 0, scrolly_0 );
-
-	tilemap_set_enable( tilemap_1,    cave_vctrl_1[2] & 1 );
-	tilemap_set_scrollx(tilemap_1, 0, scrollx_1 );
-	tilemap_set_scrolly(tilemap_1, 0, scrolly_1 );
-
-	tilemap_set_enable( tilemap_2,    cave_vctrl_2[2] & 1 );
-	tilemap_set_scrollx(tilemap_2, 0, scrollx_2 );
-	tilemap_set_scrolly(tilemap_2, 0, scrolly_2 );
-
-	tilemap_update(ALL_TILEMAPS);
-
-	if(Machine->color_depth == 8) palette_init_used_colors();
-
-	(*get_sprite_info)();
-
-	sprite_update_cave();
-
-//#ifdef MAME_DEBUG
-	if(Machine->color_depth == 8) palette_recalc();
-//#endif
-
-	fillbitmap(bitmap,Machine->remapped_colortable[0x4000 + 0x0f00],&Machine->visible_area);
-
-#ifdef MAME_DEBUG
-	screenrefresh_debug(bitmap, 0);
-#else
-	(*cave_sprite_draw)( 0 );
-	tilemap_draw_x(bitmap, tilemap_0, 0,0);
-	tilemap_draw_x(bitmap, tilemap_1, 0,0);
-	tilemap_draw_x(bitmap, tilemap_2, 0,0);
-	(*cave_sprite_draw)( 1 );
-	tilemap_draw_x(bitmap, tilemap_0, 1,0);
-	tilemap_draw_x(bitmap, tilemap_1, 1,0);
-	tilemap_draw_x(bitmap, tilemap_2, 1,0);
-	(*cave_sprite_draw)( 2 );
-	tilemap_draw_x(bitmap, tilemap_0, 2,0);
-	tilemap_draw_x(bitmap, tilemap_1, 2,0);
-	tilemap_draw_x(bitmap, tilemap_2, 2,0);
-	(*cave_sprite_draw)( 3 );
-	tilemap_draw_x(bitmap, tilemap_0, 3,0);
-	tilemap_draw_x(bitmap, tilemap_1, 3,0);
-	tilemap_draw_x(bitmap, tilemap_2, 3,0);
-#endif
-}
-
-
-void esprade_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
-{
-	{		/* scroll hack */
-		UINT32 addr = (cave_wkram[0x13D6/2]<<15)+(cave_wkram[0x13D8/2]>>1);
-		UINT16 *scroll_delta;
-
-		if(addr&(0xfff00000/2))
-		{
-			scroll_delta = &cave_wkram[addr&(0xffff/2)];
-		}
-		else
-			scroll_delta = &cave_prgrom[addr];
-
-		scrollx_0 = cave_wkram[0x13B2/2] + scroll_delta[0];
-		scrolly_0 = cave_wkram[0x13B4/2] + scroll_delta[1];
-		scrollx_1 = cave_wkram[0x13B6/2] + scroll_delta[2];
-		scrolly_1 = cave_wkram[0x13B8/2] + scroll_delta[3];
-		scrollx_2 = cave_wkram[0x13BA/2] + scroll_delta[4];
-		scrolly_2 = cave_wkram[0x13BC/2] + scroll_delta[5];
-	}
-
-	tilemap_set_flip(ALL_TILEMAPS, ((cave_videoregs[ 0 ] & 0x8000) ? TILEMAP_FLIPX : 0) | ((cave_videoregs[ 1 ] & 0x8000) ? TILEMAP_FLIPY : 0) );
-
-	tilemap_set_enable( tilemap_0,    cave_vctrl_0[2] & 1 );
-	tilemap_set_scrollx(tilemap_0, 0, scrollx_0 );
-	tilemap_set_scrolly(tilemap_0, 0, scrolly_0 );
-
-	tilemap_set_enable( tilemap_1,    cave_vctrl_1[2] & 1 );
-	tilemap_set_scrollx(tilemap_1, 0, scrollx_1 );
-	tilemap_set_scrolly(tilemap_1, 0, scrolly_1 );
-
-	tilemap_set_enable( tilemap_2,    cave_vctrl_2[2] & 1 );
-	tilemap_set_scrollx(tilemap_2, 0, scrollx_2 );
-	tilemap_set_scrolly(tilemap_2, 0, scrolly_2 );
-
-	tilemap_update(ALL_TILEMAPS);
-
-	if(Machine->color_depth == 8) palette_init_used_colors();
-
-	(*get_sprite_info)();
-
-	sprite_update_cave();
-
-//#ifdef MAME_DEBUG
-	if(Machine->color_depth == 8) palette_recalc();
-//#endif
-
-	fillbitmap(bitmap,Machine->remapped_colortable[0x3f00],&Machine->visible_area);
-
-#ifdef MAME_DEBUG
-	screenrefresh_debug(bitmap, 0);
-#else
-	(*cave_sprite_draw)( 0 );
-	tilemap_draw_x(bitmap, tilemap_0, 0,0);
-	tilemap_draw_x(bitmap, tilemap_1, 0,0);
-	tilemap_draw_x(bitmap, tilemap_2, 0,0);
-	(*cave_sprite_draw)( 1 );
-	tilemap_draw_x(bitmap, tilemap_0, 1,0);
-	tilemap_draw_x(bitmap, tilemap_1, 1,0);
-	tilemap_draw_x(bitmap, tilemap_2, 1,0);
-	(*cave_sprite_draw)( 2 );
-	tilemap_draw_x(bitmap, tilemap_0, 2,0);
-	tilemap_draw_x(bitmap, tilemap_1, 2,0);
-	tilemap_draw_x(bitmap, tilemap_2, 2,0);
-	(*cave_sprite_draw)( 3 );
-	tilemap_draw_x(bitmap, tilemap_0, 3,0);
-	tilemap_draw_x(bitmap, tilemap_1, 3,0);
-	tilemap_draw_x(bitmap, tilemap_2, 3,0);
-#endif
-}
-
-
-void guwange_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
-{
-	int delta;
-
-	{		/* scroll hack */
-		UINT32 addr = (cave_wkram[0x1584/2]<<15)+(cave_wkram[0x1586/2]>>1);
-		UINT16 *scroll_delta;
-
-		if(addr&(0xfff00000/2))
-		{
-			scroll_delta = &cave_wkram[addr&(0xffff/2)];
-		}
-		else
-			scroll_delta = &cave_prgrom[addr];
-
-													scrollx_0 = cave_wkram[0x1560/2] + scroll_delta[0];
-													scrolly_0 = cave_wkram[0x1562/2] + scroll_delta[1];
-													scrollx_1 = cave_wkram[0x1564/2] + scroll_delta[2];
-		if(!((scrolly_1=cave_vctrl_1[1]) & 0x4000))	scrolly_1 = cave_wkram[0x1566/2] + scroll_delta[3];
-													scrollx_2 = cave_wkram[0x1568/2] + scroll_delta[4];
-		if(!((scrolly_2=cave_vctrl_2[1]) & 0x4000))	scrolly_2 = cave_wkram[0x156A/2] + scroll_delta[5];
-	}
-
-	if(cave_videoregs[ 1 ] & 0x8000)
+		Tiles with the same priority *and* the same priority of their layer
+		are ordered by layer (0 back, 2 front)
+	*/
+	for (pri=0;pri<=3;pri++)	// tile / sprite priority
 	{
-		delta = 1;
-		tilemap_set_flip(ALL_TILEMAPS, ((cave_videoregs[ 0 ] & 0x8000) ? TILEMAP_FLIPX : 0) | TILEMAP_FLIPY );
-	}
-	else
-	{
-		delta = -1;
-		tilemap_set_flip(ALL_TILEMAPS, ((cave_videoregs[ 0 ] & 0x8000) ? TILEMAP_FLIPX : 0) );
-	}
-
-	tilemap_set_enable( tilemap_0,    cave_vctrl_0[2] & 1 );
-	tilemap_set_scrollx(tilemap_0, 0, scrollx_0 );
-	tilemap_set_scrolly(tilemap_0, 0, scrolly_0 );
-
-	tilemap_set_enable( tilemap_1,    cave_vctrl_1[2] & 1 );
-	tilemap_set_scrolly(tilemap_1, 0, scrolly_1 );
-	CAVE_TILEMAP_SET_SCROLLX(1)
-
-	tilemap_set_enable( tilemap_2,    cave_vctrl_2[2] & 1 );
-	tilemap_set_scrolly(tilemap_2, 0, scrolly_2 );
-	CAVE_TILEMAP_SET_SCROLLX(2)
-
-	tilemap_update(ALL_TILEMAPS);
-
-	if(Machine->color_depth == 8) palette_init_used_colors();
-
-	(*get_sprite_info)();
-
-	sprite_update_cave();
-
-//#ifdef MAME_DEBUG
-	if(Machine->color_depth == 8) palette_recalc();
-//#endif
-
-	fillbitmap(bitmap,Machine->remapped_colortable[0x3f00],&Machine->visible_area);
-
-#ifdef MAME_DEBUG
-	screenrefresh_debug(bitmap, delta);
-#else
-	(*cave_sprite_draw)( 0 );
-	tilemap_draw_x(bitmap, tilemap_0, 0,0);
-	tilemap_draw_x(bitmap, tilemap_1, 0,0);
-	tilemap_draw_x(bitmap, tilemap_2, 0,0);
-	(*cave_sprite_draw)( 1 );
-	tilemap_draw_x(bitmap, tilemap_0, 1,0);
-	tilemap_draw_x(bitmap, tilemap_1, 1,0);
-	tilemap_draw_x(bitmap, tilemap_2, 1,0);
-	(*cave_sprite_draw)( 2 );
-	tilemap_draw_x(bitmap, tilemap_0, 2,0);
-	tilemap_draw_x(bitmap, tilemap_1, 2,0);
-	tilemap_draw_x(bitmap, tilemap_2, 2,0);
-	(*cave_sprite_draw)( 3 );
-	tilemap_draw_x(bitmap, tilemap_0, 3,0);
-	tilemap_draw_x(bitmap, tilemap_1, 3,0);
-	tilemap_draw_x(bitmap, tilemap_2, 3,0);
-#endif
-}
-
-
-void dfeveron_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
-{
-	int delta = 0;
-
-	{		/* scroll hack */
-		UINT32 addr = (cave_wkram[0x1762/2]<<15)+(cave_wkram[0x1764/2]>>1);
-		UINT16 *scroll_delta;
-
-		if(addr&(0xfff00000/2))
+		if (layers_ctrl&(1<<(pri+12)))	(*cave_sprite_draw)( pri );
+		for (pri2=0;pri2<=3;pri2++)	// priority of the whole layer
 		{
-			scroll_delta = &cave_wkram[addr&(0xffff/2)];
+			if (layers_ctrl&(1<<(pri+0)))	cave_tilemap_0_draw(bitmap, pri, 0, pri2);
+			if (layers_ctrl&(1<<(pri+4)))	cave_tilemap_1_draw(bitmap, pri, 0, pri2);
+			if (layers_ctrl&(1<<(pri+8)))	cave_tilemap_2_draw(bitmap, pri, 0, pri2);
 		}
-		else
-			scroll_delta = &cave_prgrom[addr];
-
-		if(!((scrollx_0=cave_vctrl_0[0]) & 0x4000)) scrollx_0 = cave_wkram[0x173E/2] + scroll_delta[0] + ((cave_wkram[0xECE2/2]>>6)&0x1FF);
-		if(!((scrolly_0=cave_vctrl_0[1]) & 0x4000)) scrolly_0 = cave_wkram[0x1740/2] + scroll_delta[1] + ((cave_wkram[0xECE4/2]>>6)&0x1FF);
-		if(!((scrollx_1=cave_vctrl_1[0]) & 0x4000)) scrollx_1 = cave_wkram[0x1742/2] + scroll_delta[2] + ((cave_wkram[0xECE2/2]>>6)&0x1FF);
-		if(!((scrolly_1=cave_vctrl_1[1]) & 0x4000)) scrolly_1 = cave_wkram[0x1744/2] + scroll_delta[3] + ((cave_wkram[0xECE4/2]>>6)&0x1FF);
 	}
-
-	tilemap_set_flip(ALL_TILEMAPS, ((cave_videoregs[ 0 ] & 0x8000) ? TILEMAP_FLIPX : 0) | ((cave_videoregs[ 1 ] & 0x8000) ? TILEMAP_FLIPY : 0) );
-
-	tilemap_set_enable( tilemap_0,    cave_vctrl_0[2] & 1 );
-	tilemap_set_scrolly(tilemap_0, 0, scrolly_0 );
-	CAVE_TILEMAP_SET_SCROLLX(0)
-
-	tilemap_set_enable( tilemap_1,    cave_vctrl_1[2] & 1 );
-	tilemap_set_scrolly(tilemap_1, 0, scrolly_1 );
-	CAVE_TILEMAP_SET_SCROLLX(1)
-
-	tilemap_update(ALL_TILEMAPS);
-
-	if(Machine->color_depth == 8) palette_init_used_colors();
-
-	(*get_sprite_info)();
-
-	sprite_update_cave();
-
-//#ifdef MAME_DEBUG
-	if(Machine->color_depth == 8) palette_recalc();
-//#endif
-
-	fillbitmap(bitmap,Machine->remapped_colortable[0x3f00],&Machine->visible_area);
-
-#ifdef MAME_DEBUG
-	screenrefresh_debug(bitmap, 0);
-#else
-	(*cave_sprite_draw)( 0 );
-	tilemap_draw_x(bitmap, tilemap_0, 0,0);
-	tilemap_draw_x(bitmap, tilemap_1, 0,0);
-	(*cave_sprite_draw)( 1 );
-	tilemap_draw_x(bitmap, tilemap_0, 1,0);
-	tilemap_draw_x(bitmap, tilemap_1, 1,0);
-	(*cave_sprite_draw)( 2 );
-	tilemap_draw_x(bitmap, tilemap_0, 2,0);
-	tilemap_draw_x(bitmap, tilemap_1, 2,0);
-	(*cave_sprite_draw)( 3 );
-	tilemap_draw_x(bitmap, tilemap_0, 3,0);
-	tilemap_draw_x(bitmap, tilemap_1, 3,0);
-#endif
 }
-
-
-void uopoko_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
-{
-	int delta = 0;
-
-	scrollx_0=cave_vctrl_0[0];
-	scrolly_0=cave_vctrl_0[1];
-
-	tilemap_set_flip(ALL_TILEMAPS, ((cave_videoregs[ 0 ] & 0x8000) ? TILEMAP_FLIPX : 0) | ((cave_videoregs[ 1 ] & 0x8000) ? TILEMAP_FLIPY : 0) );
-
-	tilemap_set_enable( tilemap_0,    cave_vctrl_0[2] & 1 );
-	tilemap_set_scrolly(tilemap_0, 0, scrolly_0 );
-	CAVE_TILEMAP_SET_SCROLLX(0)
-
-	tilemap_update(ALL_TILEMAPS);
-
-	if(Machine->color_depth == 8) palette_init_used_colors();
-
-	(*get_sprite_info)();
-
-	sprite_update_cave();
-
-//#ifdef MAME_DEBUG
-	if(Machine->color_depth == 8) palette_recalc();
-//#endif
-
-	fillbitmap(bitmap,Machine->remapped_colortable[0x3f00],&Machine->visible_area);
-
-#ifdef MAME_DEBUG
-	screenrefresh_debug(bitmap, 0);
-#else
-	(*cave_sprite_draw)( 0 );
-	tilemap_draw_x(bitmap, tilemap_0, 0,0);
-	(*cave_sprite_draw)( 1 );
-	tilemap_draw_x(bitmap, tilemap_0, 1,0);
-	(*cave_sprite_draw)( 2 );
-	tilemap_draw_x(bitmap, tilemap_0, 2,0);
-	(*cave_sprite_draw)( 3 );
-	tilemap_draw_x(bitmap, tilemap_0, 3,0);
-#endif
-}
-
-
-void hotdogst_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
-{
-	scrollx_0=cave_vctrl_0[0];
-	scrolly_0=cave_vctrl_0[1];
-	scrollx_1=cave_vctrl_1[0];
-	scrolly_1=cave_vctrl_1[1];
-	scrollx_2=cave_vctrl_2[0];
-	scrolly_2=cave_vctrl_2[1];
-
-	tilemap_set_flip(ALL_TILEMAPS, ((cave_videoregs[ 0 ] & 0x8000) ? TILEMAP_FLIPX : 0) | ((cave_videoregs[ 1 ] & 0x8000) ? TILEMAP_FLIPY : 0) );
-
-//	tilemap_set_enable( tilemap_0,    cave_vctrl_0[2] & 1 );
-	tilemap_set_scrollx(tilemap_0, 0, scrollx_0 );
-	tilemap_set_scrolly(tilemap_0, 0, scrolly_0 );
-
-//	tilemap_set_enable( tilemap_1,    cave_vctrl_1[2] & 1 );
-	tilemap_set_scrollx(tilemap_1, 0, scrollx_1 );
-	tilemap_set_scrolly(tilemap_1, 0, scrolly_1 );
-
-//	tilemap_set_enable( tilemap_2,    cave_vctrl_2[2] & 1 );
-	tilemap_set_scrollx(tilemap_2, 0, scrollx_2 );
-	tilemap_set_scrolly(tilemap_2, 0, scrolly_2 );
-
-	tilemap_update(ALL_TILEMAPS);
-
-	if(Machine->color_depth == 8) palette_init_used_colors();
-
-	(*get_sprite_info)();
-
-	sprite_update_cave();
-
-//#ifdef MAME_DEBUG
-	if(Machine->color_depth == 8) palette_recalc();
-//#endif
-
-	fillbitmap(bitmap,Machine->remapped_colortable[0x3f00],&Machine->visible_area);
-
-#ifdef MAME_DEBUG
-	screenrefresh_debug(bitmap, 0);
-#else
-	(*cave_sprite_draw)( 0 );
-	tilemap_draw_x(bitmap, tilemap_0, 0,0);
-	tilemap_draw_x(bitmap, tilemap_1, 0,0);
-	tilemap_draw_x(bitmap, tilemap_2, 0,0);
-	(*cave_sprite_draw)( 1 );
-	tilemap_draw_x(bitmap, tilemap_0, 1,0);
-	tilemap_draw_x(bitmap, tilemap_1, 1,0);
-	tilemap_draw_x(bitmap, tilemap_2, 1,0);
-	(*cave_sprite_draw)( 2 );
-	tilemap_draw_x(bitmap, tilemap_0, 2,0);
-	tilemap_draw_x(bitmap, tilemap_1, 2,0);
-	tilemap_draw_x(bitmap, tilemap_2, 2,0);
-	(*cave_sprite_draw)( 3 );
-	tilemap_draw_x(bitmap, tilemap_0, 3,0);
-	tilemap_draw_x(bitmap, tilemap_1, 3,0);
-	tilemap_draw_x(bitmap, tilemap_2, 3,0);
-#endif
-}
-
-void mazinger_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
-{
-	tilemap_set_flip(ALL_TILEMAPS, ((cave_videoregs[ 0 ] & 0x8000) ? TILEMAP_FLIPX : 0) | ((cave_videoregs[ 1 ] & 0x8000) ? TILEMAP_FLIPY : 0) );
-
-//	tilemap_set_enable( tilemap_0,    cave_vctrl_0[2] & 1 );
-	tilemap_set_scrollx(tilemap_0, 0, cave_vctrl_0[0] );
-	tilemap_set_scrolly(tilemap_0, 0, cave_vctrl_0[1] );
-
-//	tilemap_set_enable( tilemap_1,    cave_vctrl_1[2] & 1 );
-	tilemap_set_scrollx(tilemap_1, 0, cave_vctrl_1[0] );
-	tilemap_set_scrolly(tilemap_1, 0, cave_vctrl_1[1] );
-
-	tilemap_update(ALL_TILEMAPS);
-
-	//palette_init_used_colors();
-
-	(*get_sprite_info)();
-
-	sprite_update_cave();
-
-#ifdef MAME_DEBUG
-	palette_recalc();
-#endif
-
-	fillbitmap(bitmap,Machine->remapped_colortable[0x3f00],&Machine->visible_area);
-
-#ifdef MAME_DEBUG
-	screenrefresh_debug(bitmap, 0);
-#else
-	(*cave_sprite_draw)( 0 );
-	tilemap_draw_x(bitmap, tilemap_0, 0,0);
-	tilemap_draw_x(bitmap, tilemap_1, 0,0);
-	(*cave_sprite_draw)( 1 );
-	tilemap_draw_x(bitmap, tilemap_0, 1,0);
-	tilemap_draw_x(bitmap, tilemap_1, 1,0);
-	(*cave_sprite_draw)( 2 );
-	tilemap_draw_x(bitmap, tilemap_0, 2,0);
-	tilemap_draw_x(bitmap, tilemap_1, 2,0);
-	(*cave_sprite_draw)( 3 );
-	tilemap_draw_x(bitmap, tilemap_0, 3,0);
-	tilemap_draw_x(bitmap, tilemap_1, 3,0);
-#endif
-}
-
-
-
-/***************************************************************************
-
-								Vh_Stop
-
-***************************************************************************/
-void cave_vh_stop(void)
-{
-	free(sprite_cave);
-	sprite_cave = NULL;
-	free(sprite_zbuf);
-	sprite_zbuf = NULL;
-}
-
-
-/*********************************************************************************/
-#else // DECLARE
-
-DECLARE( draw, (int xpos, int ypos),
-{
-	int x1 = xpos;
-	int y1 = ypos;
-	int x2 = xpos+tmblt.source_width;
-	int y2 = ypos+tmblt.source_height;
-
-	/* clip source coordinates */
-	if( x1<tmblt.clip_left ) x1 = tmblt.clip_left;
-	if( x2>tmblt.clip_right ) x2 = tmblt.clip_right;
-	if( y1<tmblt.clip_top ) y1 = tmblt.clip_top;
-	if( y2>tmblt.clip_bottom ) y2 = tmblt.clip_bottom;
-
-	if( x1<x2 && y1<y2 ){ /* do nothing if totally clipped */
-		DATA_TYPE *dest_baseaddr = xpos + (DATA_TYPE *)tmblt.screen->line[y1];
-		DATA_TYPE *dest_next;
-
-		int priority = tmblt.tile_priority;
-		const DATA_TYPE *source_baseaddr;
-		const DATA_TYPE *source_next;
-		const UINT8 *mask_baseaddr;
-		const UINT8 *mask_next;
-
-		int c1;
-		int c2; /* leftmost and rightmost visible columns in source tilemap */
-		int y; /* current screen line to render */
-		int y_next;
-
-		/* convert screen coordinates to source tilemap coordinates */
-		x1 -= xpos;
-		y1 -= ypos;
-		x2 -= xpos;
-		y2 -= ypos;
-
-		source_baseaddr = (DATA_TYPE *)tmblt.pixmap->line[y1];
-		mask_baseaddr = tmblt.bitmask->line[y1];
-
-		c1 = x1/TILE_WIDTH; /* round down */
-		c2 = (x2+TILE_WIDTH-1)/TILE_WIDTH; /* round up */
-
-		y = y1;
-		y_next = TILE_HEIGHT*(y1/TILE_HEIGHT) + TILE_HEIGHT;
-		if( y_next>y2 ) y_next = y2;
-
-		{
-			int dy = y_next-y;
-			dest_next = dest_baseaddr + dy*tmblt.dest_line_offset;
-			source_next = source_baseaddr + dy*tmblt.source_line_offset;
-			mask_next = mask_baseaddr + dy*tmblt.mask_line_offset;
-		}
-
-		for(;;){
-			int row = y/TILE_HEIGHT;
-			UINT8 *mask_data = tmblt.mask_data_row[row];
-			UINT8 *priority_data = tmblt.priority_data_row[row];
-
-			int tile_type;
-			int prev_tile_type = TILE_TRANSPARENT;
-
-			int x_start = x1;
-			int x_end;
-
-			int column;
-			for( column=c1; column<=c2; column++ ){
-				if( column==c2 || priority_data[column]!=priority )
-					tile_type = TILE_TRANSPARENT;
-				else
-					tile_type = mask_data[column];
-
-				if( tile_type!=prev_tile_type ){
-					x_end = column*TILE_WIDTH;
-					if( x_end<x1 ) x_end = x1;
-					if( x_end>x2 ) x_end = x2;
-
-					if( prev_tile_type != TILE_TRANSPARENT ){
-						if( prev_tile_type == TILE_MASKED ){
-							const UINT8 *mask0 = mask_baseaddr;
-							const DATA_TYPE *source0 = source_baseaddr;
-							DATA_TYPE *dest0 = dest_baseaddr;
-							const UINT8 *mask1;
-							const DATA_TYPE *source1;
-							DATA_TYPE *dest1;
-							int i = y;
-							int j;
-							int cnt = x_end-x_start;
-							int cnt1 = (-x_start)&7;
-							int cnt2;
-							int cnt3;
-							if(cnt1>=cnt){
-								cnt1=cnt;cnt2=0;cnt3=0;
-							}
-							else{
-								cnt3 = x_end&7;
-								if(cnt1+cnt3==cnt){
-									cnt2=0;
-								}
-								else{
-									cnt2=(cnt-cnt1)/8;
-								}
-							}
-							for(;;){
-								int xp=x_start;
-
-								for(j=cnt1;j>0;j--){
-									if( mask0[xp/8]&(0x80>>(xp&7)) ) dest0[xp] = source0[xp];
-									xp++;
-								}
-
-								if(cnt2){
-									source1 = &source0[xp];
-									dest1 = &dest0[xp];
-									mask1 = &mask0[xp/8];
-									for(j=cnt2;j>0;j--){
-										UINT8 data = *mask1++;
-										if( data&0x80 ) dest1[0] = source1[0];
-										if( data&0x40 ) dest1[1] = source1[1];
-										if( data&0x20 ) dest1[2] = source1[2];
-										if( data&0x10 ) dest1[3] = source1[3];
-										if( data&0x08 ) dest1[4] = source1[4];
-										if( data&0x04 ) dest1[5] = source1[5];
-										if( data&0x02 ) dest1[6] = source1[6];
-										if( data&0x01 ) dest1[7] = source1[7];
-										source1+=8;
-										dest1+=8;
-									}
-									xp+=cnt2*8;
-								}
-
-								for(j=cnt3;j>0;j--){
-									if( mask0[xp/8]&(0x80>>(xp&7)) ) dest0[xp] = source0[xp];
-									xp++;
-								}
-
-								if( ++i == y_next ) break;
-								dest0 += tmblt.dest_line_offset;
-								source0 += tmblt.source_line_offset;
-								mask0 += tmblt.mask_line_offset;
-							}
-						}
-						else { /* TILE_OPAQUE */
-							int num_pixels = x_end - x_start;
-							DATA_TYPE *dest0 = dest_baseaddr+x_start;
-							const DATA_TYPE *source0 = source_baseaddr+x_start;
-							int i = y;
-							for(;;){
-								memcpy( dest0, source0, num_pixels*sizeof(DATA_TYPE) );
-								if( ++i == y_next ) break;
-								dest0 += tmblt.dest_line_offset;
-								source0 += tmblt.source_line_offset;
-							}
-						}
-					}
-					x_start = x_end;
-				}
-				prev_tile_type = tile_type;
-			}
-
-			if( y_next==y2 ) break; /* we are done! */
-
-			dest_baseaddr = dest_next;
-			source_baseaddr = source_next;
-			mask_baseaddr = mask_next;
-
-			y = y_next;
-			y_next += TILE_HEIGHT;
-
-			if( y_next>=y2 ){
-				y_next = y2;
-			}
-			else {
-				dest_next += tmblt.dest_row_offset;
-				source_next += tmblt.source_row_offset;
-				mask_next += tmblt.mask_row_offset;
-			}
-		} /* process next row */
-	} /* not totally clipped */
-})
-
-
-#undef TILE_WIDTH
-#undef TILE_HEIGHT
-#undef DATA_TYPE
-#undef DECLARE
-
-#endif /* DECLARE */

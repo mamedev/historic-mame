@@ -46,9 +46,6 @@ void copsnrob_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	int offs, x, y;
 
 
-	palette_recalc();
-
-
     /* redrawing the entire display is faster in this case */
 
     for (offs = videoram_size;offs >= 0;offs--)

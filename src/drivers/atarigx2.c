@@ -1296,7 +1296,7 @@ static struct MachineDriver machine_driver_atarigx2 =
 	2048,2048,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER  | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
 	atarig42_vh_start,
 	atarig42_vh_stop,
@@ -1517,7 +1517,7 @@ ROM_END
  *
  *************************************/
 
-GAMEX( 1992, spclords, 0,        atarigx2, spclords, spclords, ROT0_16BIT, "Atari Games", "Space Lords", GAME_UNEMULATED_PROTECTION )
-GAMEX( 1992, spclorda, spclords, atarigx2, spclords, spclords, ROT0_16BIT, "Atari Games", "Space Lords (alternate)", GAME_UNEMULATED_PROTECTION )
-GAMEX( 1992, motofren, 0,        atarigx2, spclords, motofren, ROT0_16BIT, "Atari Games", "Moto Frenzy", GAME_UNEMULATED_PROTECTION )
-GAMEX( 1993, revrally, 0,        atarigx2, spclords, revrally, ROT0_16BIT, "Atari Games", "Road Riot Revenge Rally (Prototype)", GAME_UNEMULATED_PROTECTION )
+GAMEX( 1992, spclords, 0,        atarigx2, spclords, spclords, ROT0, "Atari Games", "Space Lords", GAME_UNEMULATED_PROTECTION )
+GAMEX( 1992, spclorda, spclords, atarigx2, spclords, spclords, ROT0, "Atari Games", "Space Lords (alternate)", GAME_UNEMULATED_PROTECTION )
+GAMEX( 1992, motofren, 0,        atarigx2, spclords, motofren, ROT0, "Atari Games", "Moto Frenzy", GAME_UNEMULATED_PROTECTION )
+GAMEX( 1993, revrally, 0,        atarigx2, spclords, revrally, ROT0, "Atari Games", "Road Riot Revenge Rally (Prototype)", GAME_UNEMULATED_PROTECTION )

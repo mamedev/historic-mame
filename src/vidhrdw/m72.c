@@ -44,8 +44,7 @@ int m72_interrupt(void)
 	if (line == 255)	/* vblank */
 	{
 		rastersplit = 0;
-		interrupt_vector_w(0,irq1);
-		return interrupt();
+		return irq1;
 	}
 	else
 	{
@@ -60,8 +59,7 @@ int m72_interrupt(void)
 		   multiple times, by changing the interrupt line register in the
 		   interrupt handler).
 		 */
-		interrupt_vector_w(0,irq2);
-		return interrupt();
+		return irq2;
 	}
 }
 
@@ -607,33 +605,6 @@ static void majtitle_draw_sprites(struct osd_bitmap *bitmap)
 	}
 }
 
-static void mark_sprite_colors(unsigned char *ram)
-{
-	int offs,color,i;
-	int colmask[32];
-	int pal_base;
-
-
-	pal_base = Machine->drv->gfxdecodeinfo[0].color_codes_start;
-
-	for (color = 0;color < 32;color++) colmask[color] = 0;
-
-	for (offs = 0;offs < spriteram_size;offs += 8)
-	{
-		color = ram[offs+4] & 0x0f;
-		colmask[color] |= 0xffff;
-	}
-
-	for (color = 0;color < 32;color++)
-	{
-		for (i = 1;i < 16;i++)
-		{
-			if (colmask[color] & (1 << i))
-				palette_used_colors[pal_base + 16 * color + i] |= PALETTE_COLOR_VISIBLE;
-		}
-	}
-}
-
 static void draw_layer(struct osd_bitmap *bitmap,
 		struct tilemap *tilemap,int *scrollx,int *scrolly,int priority)
 {
@@ -677,19 +648,12 @@ void m72_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	if (video_off)
 	{
-		fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
+		fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 		return;
 	}
 
 	tilemap_set_clip(fg_tilemap,NULL);
 	tilemap_set_clip(bg_tilemap,NULL);
-
-	tilemap_update(bg_tilemap);
-	tilemap_update(fg_tilemap);
-
-	palette_init_used_colors();
-	mark_sprite_colors(m72_spriteram);
-	palette_recalc();
 
 	draw_bg(bitmap,TILEMAP_BACK);
 	draw_fg(bitmap,TILEMAP_BACK);
@@ -705,7 +669,7 @@ void majtitle_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	if (video_off)
 	{
-		fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
+		fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 		return;
 	}
 
@@ -724,13 +688,6 @@ void majtitle_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		tilemap_set_scrollx(bg_tilemap,0,256 + scrollx2[0] + xadjust);
 	}
 	tilemap_set_scrolly(bg_tilemap,0,scrolly2[0]);
-	tilemap_update(bg_tilemap);
-	tilemap_update(fg_tilemap);
-
-	palette_init_used_colors();
-	mark_sprite_colors(m72_spriteram);
-	mark_sprite_colors(spriteram_2);
-	palette_recalc();
 
 	tilemap_draw(bitmap,bg_tilemap,TILEMAP_BACK,0);
 	draw_fg(bitmap,TILEMAP_BACK);

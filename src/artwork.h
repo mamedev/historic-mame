@@ -36,8 +36,7 @@ struct artwork_info
 	int num_pens_trans;
 	int start_pen;
 	UINT8 *brightness;                 /* brightness of each palette entry */
-	UINT64 *rgb;
-	UINT8 *pTable;                     /* Conversion table usually used for mixing colors */
+	UINT32 *rgb;
 };
 
 
@@ -73,22 +72,13 @@ extern struct osd_bitmap *artwork_real_scrbitmap;
 void overlay_load(const char *filename, unsigned int start_pen, unsigned int max_pens);
 void overlay_create(const struct artwork_element *ae, unsigned int start_pen, unsigned int max_pens);
 void backdrop_load(const char *filename, unsigned int start_pen, unsigned int max_pens);
+void backdrop_refresh(struct artwork_info *a);
 void artwork_load(struct artwork_info **a,const char *filename, unsigned int start_pen, unsigned int max_pens);
 void artwork_load_size(struct artwork_info **a,const char *filename, unsigned int start_pen, unsigned int max_pens, int width, int height);
 void artwork_elements_scale(struct artwork_element *ae, int width, int height);
 void artwork_free(struct artwork_info **a);
 int artwork_get_size_info(const char *file_name, struct artwork_size_info *a);
-
-/*********************************************************************
-  functions that are backdrop-specific
-*********************************************************************/
-void backdrop_refresh(struct artwork_info *a);
-
-/*********************************************************************
-  functions that are overlay-specific
-*********************************************************************/
-int overlay_set_palette (unsigned char *palette, int num_shades);
-
+void artwork_copy_palette (UINT8 *palette, struct artwork_info *a);
 
 /* called by mame.c */
 void artwork_kill(void);

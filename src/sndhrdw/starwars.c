@@ -1,13 +1,9 @@
 /***************************************************************************
-sndhrdw\starwars.c
 
-STARWARS MACHINE FILE
+	Atari Star Wars hardware
 
-This file created by Frank Palazzolo. (palazzol@home.com)
-
-Release 2.0 (6 August 1997)
-
-See drivers\starwars.c for notes
+	This file is Copyright 1997, Steve Baines.
+	Modified by Frank Palazzolo for sound support
 
 ***************************************************************************/
 
@@ -41,15 +37,30 @@ static int port_B_ddr = 0; /* 6532 Data Direction Register B */
 
 static int PA7_irq = 0;  /* IRQ-on-write flag (sound CPU) */
 
-/********************************************************/
+static int sound_data;	/* data for the sound cpu */
+static int main_data;   /* data for the main  cpu */
+
+
+
+/*************************************
+ *
+ *	Sound interrupt generation
+ *
+ *************************************/
 
 static void snd_interrupt(int foo)
 {
 	irq_flag |= 0x80; /* set timer interrupt flag */
-	cpu_cause_interrupt (1, M6809_INT_IRQ);
+	cpu_cause_interrupt(1, M6809_INT_IRQ);
 }
 
-/********************************************************/
+
+
+/*************************************
+ *
+ *	M6532 I/O read
+ *
+ *************************************/
 
 READ_HANDLER( starwars_m6532_r )
 {
@@ -83,7 +94,14 @@ READ_HANDLER( starwars_m6532_r )
 
 	return 0; /* will never execute this */
 }
-/********************************************************/
+
+
+
+/*************************************
+ *
+ *	M6532 I/O write
+ *
+ *************************************/
 
 WRITE_HANDLER( starwars_m6532_w )
 {
@@ -147,13 +165,13 @@ WRITE_HANDLER( starwars_m6532_w )
 
 }
 
-static int sound_data;	/* data for the sound cpu */
-static int main_data;   /* data for the main  cpu */
 
-/********************************************************/
-/* These routines are called by the Sound CPU to        */
-/* communicate with the Main CPU                        */
-/********************************************************/
+
+/*************************************
+ *
+ *	Sound CPU to/from main CPU
+ *
+ *************************************/
 
 READ_HANDLER( starwars_sin_r )
 {
@@ -165,6 +183,7 @@ READ_HANDLER( starwars_sin_r )
 	return res;
 }
 
+
 WRITE_HANDLER( starwars_sout_w )
 {
 	port_A |= 0x40; /* result from sound cpu pending */
@@ -172,12 +191,13 @@ WRITE_HANDLER( starwars_sout_w )
 	return;
 }
 
-/********************************************************/
-/* The following routines are called from the Main CPU, */
-/* not the Sound CPU.                                   */
-/* They are here because they are all related to sound  */
-/* CPU communications                                   */
-/********************************************************/
+
+
+/*************************************
+ *
+ *	Main CPU to/from source CPU
+ *
+ *************************************/
 
 READ_HANDLER( starwars_main_read_r )
 {
@@ -191,7 +211,6 @@ READ_HANDLER( starwars_main_read_r )
 	return res;
 }
 
-/********************************************************/
 
 READ_HANDLER( starwars_main_ready_flag_r )
 {
@@ -202,23 +221,21 @@ READ_HANDLER( starwars_main_ready_flag_r )
 #endif
 }
 
-/********************************************************/
 
 WRITE_HANDLER( starwars_main_wr_w )
 {
 	port_A |= 0x80;  /* command from main cpu pending */
 	sound_data = data;
 	if (PA7_irq)
-		cpu_cause_interrupt (1, M6809_INT_IRQ);
+		cpu_cause_interrupt(1, M6809_INT_IRQ);
 }
 
-/********************************************************/
 
 WRITE_HANDLER( starwars_soundrst_w )
 {
 	port_A &= 0x3f;
 
 	/* reset sound CPU here  */
-	cpu_set_reset_line(1,PULSE_LINE);
+	cpu_set_reset_line(1, PULSE_LINE);
 }
 

@@ -399,10 +399,10 @@ static const struct MachineDriver machine_driver_arcadecl =
 	/* video hardware */
 	43*8, 30*8, { 0*8+4, 43*8-1-4, 0*8, 30*8-1 },
 	gfxdecodeinfo,
-	512,512,
+	512, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER  | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
 	arcadecl_vh_start,
 	arcadecl_vh_stop,
@@ -482,5 +482,5 @@ static void init_sparkz(void)
  *
  *************************************/
 
-GAME( 1992, arcadecl, 0, arcadecl, arcadecl, arcadecl, ROT0_16BIT, "Atari Games", "Arcade Classics (prototype)" )
-GAME( 1992, sparkz,   0, arcadecl, sparkz,   sparkz,   ROT0,       "Atari Games", "Sparkz (prototype)" )
+GAME( 1992, arcadecl, 0, arcadecl, arcadecl, arcadecl, ROT0, "Atari Games", "Arcade Classics (prototype)" )
+GAME( 1992, sparkz,   0, arcadecl, sparkz,   sparkz,   ROT0, "Atari Games", "Sparkz (prototype)" )

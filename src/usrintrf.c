@@ -965,10 +965,10 @@ void ui_displaymessagewindow(struct osd_bitmap *bitmap,const char *text)
 #ifndef TINY_COMPILE
 #ifndef CPSMAME
 extern int no_of_tiles;
-void NeoMVSDrawGfx(unsigned char **line,const struct GfxElement *gfx,
+void NeoMVSDrawGfx(UINT8 **line,const struct GfxElement *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
 		int zx,int zy,const struct rectangle *clip);
-void NeoMVSDrawGfx16(unsigned char **line,const struct GfxElement *gfx,
+void NeoMVSDrawGfx16(UINT16 **line,const struct GfxElement *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
 		int zx,int zy,const struct rectangle *clip);
 extern struct GameDriver driver_neogeo;
@@ -984,16 +984,9 @@ static void showcharset(struct osd_bitmap *bitmap)
 	int palpage;
 	int changed;
 	int game_is_neogeo=0;
-	unsigned char *orig_used_colors=0;
+	int total_colors = 0;
+	UINT32 *colortable = NULL;
 
-
-	if (palette_used_colors)
-	{
-		orig_used_colors = malloc(Machine->drv->total_colors * sizeof(unsigned char));
-		if (!orig_used_colors) return;
-
-		memcpy(orig_used_colors,palette_used_colors,Machine->drv->total_colors * sizeof(unsigned char));
-	}
 
 #ifndef MESS
 #ifndef TINY_COMPILE
@@ -1006,7 +999,7 @@ static void showcharset(struct osd_bitmap *bitmap)
 #endif
 #endif
 
-	bank = -1;
+	bank = -2;
 	color = 0;
 	firstdrawn = 0;
 	palpage = 0;
@@ -1023,7 +1016,21 @@ static void showcharset(struct osd_bitmap *bitmap)
 			cpy = (Machine->uiheight - Machine->uifontheight) / Machine->gfx[bank]->height;
 			skip_chars = cpx * cpy;
 		}
-		else cpx = cpy = skip_chars = 0;
+		else
+		{
+			cpx = cpy = skip_chars = 0;
+
+			if (bank == -2)	/* palette */
+			{
+				total_colors = Machine->drv->total_colors;
+				colortable = Machine->pens;
+			}
+			else if (bank == -1)	/* clut */
+			{
+				total_colors = Machine->drv->color_table_len;
+				colortable = Machine->remapped_colortable;
+			}
+		}
 
 		if (changed)
 		{
@@ -1047,19 +1054,7 @@ static void showcharset(struct osd_bitmap *bitmap)
 
 				if (bank >= 0)
 				{
-					int table_offs;
 					int flipx,flipy;
-
-					if (palette_used_colors && Machine->gfx[bank]->colortable)
-					{
-						memset(palette_used_colors,PALETTE_COLOR_TRANSPARENT,Machine->drv->total_colors * sizeof(unsigned char));
-						table_offs = Machine->gfx[bank]->colortable - Machine->remapped_colortable
-								+ Machine->gfx[bank]->color_granularity * color;
-						for (i = 0;i < Machine->gfx[bank]->color_granularity;i++)
-							palette_used_colors[Machine->game_colortable[table_offs + i]] = PALETTE_COLOR_USED;
-						palette_recalc();	/* do it twice in case of previous overflow */
-						palette_recalc();	/*(we redraw the screen only when it changes) */
-					}
 
 #ifndef PREROTATE_GFX
 					flipx = (Machine->orientation ^ trueorientation) & ORIENTATION_FLIP_X;
@@ -1089,39 +1084,37 @@ static void showcharset(struct osd_bitmap *bitmap)
 				}
 				else
 				{
-					int sx,sy,colors;
-
-					colors = Machine->drv->total_colors - 256 * palpage;
-					if (colors > 256) colors = 256;
-					if (palette_used_colors)
+					if (total_colors)
 					{
-						memset(palette_used_colors,PALETTE_COLOR_UNUSED,Machine->drv->total_colors * sizeof(unsigned char));
-						memset(palette_used_colors+256*palpage,PALETTE_COLOR_USED,colors * sizeof(unsigned char));
-						palette_recalc();	/* do it twice in case of previous overflow */
-						palette_recalc();	/*(we redraw the screen only when it changes) */
-					}
+						int sx,sy,colors;
 
-					for (i = 0;i < 16;i++)
-					{
-						char bf[40];
+						colors = total_colors - 256 * palpage;
+						if (colors > 256) colors = 256;
 
-						sx = 3*Machine->uifontwidth + (Machine->uifontwidth*4/3)*(i % 16);
-						sprintf(bf,"%X",i);
-						ui_text(bitmap,bf,sx,2*Machine->uifontheight);
-						if (16*i < colors)
+						for (i = 0;i < 16;i++)
 						{
-							sy = 3*Machine->uifontheight + (Machine->uifontheight)*(i % 16);
-							sprintf(bf,"%3X",i+16*palpage);
-							ui_text(bitmap,bf,0,sy);
+							char bf[40];
+
+							sx = 3*Machine->uifontwidth + (Machine->uifontwidth*4/3)*(i % 16);
+							sprintf(bf,"%X",i);
+							ui_text(bitmap,bf,sx,2*Machine->uifontheight);
+							if (16*i < colors)
+							{
+								sy = 3*Machine->uifontheight + (Machine->uifontheight)*(i % 16);
+								sprintf(bf,"%3X",i+16*palpage);
+								ui_text(bitmap,bf,0,sy);
+							}
+						}
+
+						for (i = 0;i < colors;i++)
+						{
+							sx = Machine->uixmin + 3*Machine->uifontwidth + (Machine->uifontwidth*4/3)*(i % 16);
+							sy = Machine->uiymin + 2*Machine->uifontheight + (Machine->uifontheight)*(i / 16) + Machine->uifontheight;
+							plot_box(bitmap,sx,sy,Machine->uifontwidth*4/3,Machine->uifontheight,colortable[i + 256*palpage]);
 						}
 					}
-
-					for (i = 0;i < colors;i++)
-					{
-						sx = Machine->uixmin + 3*Machine->uifontwidth + (Machine->uifontwidth*4/3)*(i % 16);
-						sy = Machine->uiymin + 2*Machine->uifontheight + (Machine->uifontheight)*(i / 16) + Machine->uifontheight;
-						plot_box(bitmap,sx,sy,Machine->uifontwidth*4/3,Machine->uifontheight,Machine->pens[i + 256*palpage]);
-					}
+					else
+						ui_text(bitmap,"N/A",3*Machine->uifontwidth,2*Machine->uifontheight);
 				}
 
 				switch_true_orientation();
@@ -1138,25 +1131,17 @@ static void showcharset(struct osd_bitmap *bitmap)
 				clip.min_y = Machine->uiymin;
 				clip.max_y = Machine->uiymin + Machine->uiheight - 1;
 
-				if (palette_used_colors)
-				{
-					memset(palette_used_colors,PALETTE_COLOR_TRANSPARENT,Machine->drv->total_colors * sizeof(unsigned char));
-					memset(palette_used_colors+Machine->gfx[bank]->color_granularity*color,PALETTE_COLOR_USED,Machine->gfx[bank]->color_granularity * sizeof(unsigned char));
-					palette_recalc();	/* do it twice in case of previous overflow */
-					palette_recalc();	/*(we redraw the screen only when it changes) */
-				}
-
 				for (i = 0; i+firstdrawn < no_of_tiles && i<cpx*cpy; i++)
 				{
 					if (bitmap->depth == 16)
-						NeoMVSDrawGfx16(bitmap->line,Machine->gfx[bank],
+						NeoMVSDrawGfx16((UINT16 **)bitmap->line,Machine->gfx[bank],
 							i+firstdrawn,color,  /*sprite num, color*/
 							0,0,
 							(i % cpx) * Machine->gfx[bank]->width + Machine->uixmin,
 							Machine->uifontheight+1 + (i / cpx) * Machine->gfx[bank]->height + Machine->uiymin,
 							16,16,&clip);
 					else
-						NeoMVSDrawGfx(bitmap->line,Machine->gfx[bank],
+						NeoMVSDrawGfx((UINT8 **)bitmap->line,Machine->gfx[bank],
 							i+firstdrawn,color,  /*sprite num, color*/
 							0,0,
 							(i % cpx) * Machine->gfx[bank]->width + Machine->uixmin,
@@ -1172,8 +1157,10 @@ static void showcharset(struct osd_bitmap *bitmap)
 
 			if (bank >= 0)
 				sprintf(buf,"GFXSET %d COLOR %2X CODE %X-%X",bank,color,firstdrawn,lastdrawn);
-			else
+			else if (bank == -2)
 				strcpy(buf,"PALETTE");
+			else if (bank == -1)
+				strcpy(buf,"CLUT");
 			ui_text(bitmap,buf,0,0);
 
 			changed = 0;
@@ -1193,9 +1180,15 @@ static void showcharset(struct osd_bitmap *bitmap)
 
 		if (input_ui_pressed_repeat(IPT_UI_RIGHT,8))
 		{
-			if (bank+1 < MAX_GFX_ELEMENTS && Machine->gfx[bank + 1])
+			int next;
+
+			next = bank+1;
+			if (next == -1 && Machine->drv->color_table_len == 0)
+				next++;
+
+			if (next < 0 || (next < MAX_GFX_ELEMENTS && Machine->gfx[next]))
 			{
-				bank++;
+				bank = next;
 //				firstdrawn = 0;
 				changed = 1;
 			}
@@ -1203,9 +1196,11 @@ static void showcharset(struct osd_bitmap *bitmap)
 
 		if (input_ui_pressed_repeat(IPT_UI_LEFT,8))
 		{
-			if (bank > -1)
+			if (bank > -2)
 			{
 				bank--;
+				if (bank == -1 && Machine->drv->color_table_len == 0)
+					bank--;
 //				firstdrawn = 0;
 				changed = 1;
 			}
@@ -1223,7 +1218,7 @@ static void showcharset(struct osd_bitmap *bitmap)
 			}
 			else
 			{
-				if (256 * (palpage + 1) < Machine->drv->total_colors)
+				if (256 * (palpage + 1) < total_colors)
 				{
 					palpage++;
 					changed = 1;
@@ -1263,10 +1258,13 @@ static void showcharset(struct osd_bitmap *bitmap)
 
 		if (input_ui_pressed_repeat(IPT_UI_DOWN,6))
 		{
-			if (color > 0)
+			if (bank >= 0)
 			{
-				color--;
-				changed = 1;
+				if (color > 0)
+				{
+					color--;
+					changed = 1;
+				}
 			}
 		}
 
@@ -1274,16 +1272,6 @@ static void showcharset(struct osd_bitmap *bitmap)
 			osd_save_snapshot(bitmap);
 	} while (!input_ui_pressed(IPT_UI_SHOW_GFX) &&
 			!input_ui_pressed(IPT_UI_CANCEL));
-
-	if (palette_used_colors)
-	{
-		/* this should force a full refresh by the video driver */
-		memset(palette_used_colors,PALETTE_COLOR_TRANSPARENT,Machine->drv->total_colors * sizeof(unsigned char));
-		palette_recalc();
-		/* restore the game used colors array */
-		memcpy(palette_used_colors,orig_used_colors,Machine->drv->total_colors * sizeof(unsigned char));
-		free(orig_used_colors);
-	}
 
 	schedule_full_refresh();
 }
@@ -2200,32 +2188,6 @@ static int displaygameinfo(struct osd_bitmap *bitmap,int selected)
 		sprintf(&buf[strlen(buf)],"\n%s\n", ui_getstring (UI_vectorgame));
 	else
 	{
-		int pixelx,pixely,tmax,tmin,rem;
-
-		pixelx = 4 * (Machine->visible_area.max_y - Machine->visible_area.min_y + 1);
-		pixely = 3 * (Machine->visible_area.max_x - Machine->visible_area.min_x + 1);
-
-		/* calculate MCD */
-		if (pixelx >= pixely)
-		{
-			tmax = pixelx;
-			tmin = pixely;
-		}
-		else
-		{
-			tmax = pixely;
-			tmin = pixelx;
-		}
-		while ( (rem = tmax % tmin) )
-		{
-			tmax = tmin;
-			tmin = rem;
-		}
-		/* tmin is now the MCD */
-
-		pixelx /= tmin;
-		pixely /= tmin;
-
 		sprintf(&buf[strlen(buf)],"\n%s:\n", ui_getstring (UI_screenres));
 		sprintf(&buf[strlen(buf)],"%d x %d (%s) %f Hz\n",
 				Machine->visible_area.max_x - Machine->visible_area.min_x + 1,
@@ -2233,14 +2195,37 @@ static int displaygameinfo(struct osd_bitmap *bitmap,int selected)
 				(Machine->gamedrv->flags & ORIENTATION_SWAP_XY) ? "V" : "H",
 				Machine->drv->frames_per_second);
 #if 0
-		sprintf(&buf[strlen(buf)],"pixel aspect ratio %d:%d\n",
-				pixelx,pixely);
+		{
+			int pixelx,pixely,tmax,tmin,rem;
+
+			pixelx = 4 * (Machine->visible_area.max_y - Machine->visible_area.min_y + 1);
+			pixely = 3 * (Machine->visible_area.max_x - Machine->visible_area.min_x + 1);
+
+			/* calculate MCD */
+			if (pixelx >= pixely)
+			{
+				tmax = pixelx;
+				tmin = pixely;
+			}
+			else
+			{
+				tmax = pixely;
+				tmin = pixelx;
+			}
+			while ( (rem = tmax % tmin) )
+			{
+				tmax = tmin;
+				tmin = rem;
+			}
+			/* tmin is now the MCD */
+
+			pixelx /= tmin;
+			pixely /= tmin;
+
+			sprintf(&buf[strlen(buf)],"pixel aspect ratio %d:%d\n",
+					pixelx,pixely);
+		}
 		sprintf(&buf[strlen(buf)],"%d colors ",Machine->drv->total_colors);
-		if (Machine->gamedrv->flags & GAME_REQUIRES_16BIT)
-			strcat(buf,"(16-bit required)\n");
-		else if (Machine->drv->video_attributes & VIDEO_MODIFIES_PALETTE)
-			strcat(buf,"(dynamic)\n");
-		else strcat(buf,"(static)\n");
 #endif
 	}
 
@@ -3740,6 +3725,8 @@ if (Machine->gamedrv->flags & GAME_COMPUTER)
 				}
 			}
 			if (osd_selected != 0) osd_selected = on_screen_display(bitmap, osd_selected);
+
+			if (options.cheat) DisplayWatches(bitmap);
 
 			/* show popup message if any */
 			if (messagecounter > 0) displaymessage(bitmap, messagetext);

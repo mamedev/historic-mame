@@ -16,19 +16,6 @@ size_t bublbobl_objectram_size;
 int bublbobl_video_enable;
 
 
-void bublbobl_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
-{
-	int i;
-
-
-	/* no color PROMs here, only RAM, but the gfx data is inverted so we */
-	/* cannot use the default lookup table */
-	for (i = 0;i < Machine->drv->color_table_len;i++)
-		colortable[i] = i ^ 0x0f;
-}
-
-
-
 /***************************************************************************
 
   Draw the game screen in the given osd_bitmap.
@@ -42,10 +29,6 @@ void bublbobl_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	int sx,sy,xc,yc;
 	int gfx_num,gfx_attr,gfx_offs;
 	const UINT8 *prom_line;
-
-
-	palette_recalc();
-	/* no need to check the return code since we redraw everything each frame */
 
 
 	/* Bubble Bobble doesn't have a real video RAM. All graphics (characters */
@@ -113,7 +96,7 @@ void bublbobl_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 						color,
 						flipx,flipy,
 						x,y,
-						&Machine->visible_area,TRANSPARENCY_PEN,0);
+						&Machine->visible_area,TRANSPARENCY_PEN,15);
 			}
 		}
 

@@ -14,6 +14,7 @@ TODO:
 #include "driver.h"
 #include "vidhrdw/system1.h"
 #include "cpu/z80/z80.h"
+#include "machine/segacrpt.h"
 
 extern unsigned char *suprloco_videoram;
 
@@ -25,10 +26,6 @@ WRITE_HANDLER( suprloco_scrollram_w );
 READ_HANDLER( suprloco_scrollram_r );
 WRITE_HANDLER( suprloco_control_w );
 READ_HANDLER( suprloco_control_r );
-
-
-/* in machine/segacrpt.c */
-void suprloco_decode(void);
 
 
 static WRITE_HANDLER( suprloco_soundport_w )

@@ -215,7 +215,7 @@ MEMORY_END
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 ) \
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN ) \
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 ) \
-  PORT_START \
+	PORT_START \
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 ) \
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 ) \
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 ) \
@@ -224,7 +224,7 @@ MEMORY_END
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 ) \
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN ) \
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 ) \
-  PORT_START \
+	PORT_START \
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 ) \
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 ) \
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 ) \
@@ -261,12 +261,11 @@ MEMORY_END
 	PORT_DIPSETTING(    0x80, DEF_STR( On )) \
 
 INPUT_PORTS_START (vball)
+	COMMON_PORTS_BEFORE
+	/* The dipswitch instructions in naz's dump (vball) don't quite sync here) */
+	/* Looks like the pins from the dips to the board were mixed up a little. */
 
-COMMON_PORTS_BEFORE
-/* The dipswitch instructions in naz's dump (vball) don't quite sync here) */
-/* Looks like the pins from the dips to the board were mixed up a little. */
-
-  PORT_START
+	PORT_START
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Difficulty ))
 // This ordering is assumed. Someone has to play it a lot and find out.
 	PORT_DIPSETTING(    0x01, "Easy")
@@ -290,9 +289,9 @@ COMMON_PORTS_BEFORE
 	PORT_DIPSETTING(    0x80, "2")
 	PORT_DIPSETTING(    0x00, "4")
 
-COMMON_PORTS_COINS
+	COMMON_PORTS_COINS
 
-  PORT_START
+	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER3 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER3 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER3 )
@@ -301,7 +300,7 @@ COMMON_PORTS_COINS
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER3 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START3 )
-  PORT_START
+	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER4 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER4 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER4 )
@@ -313,13 +312,12 @@ COMMON_PORTS_COINS
 INPUT_PORTS_END
 
 INPUT_PORTS_START (vball2pj)
-
-COMMON_PORTS_BEFORE
+	COMMON_PORTS_BEFORE
 
 /* The 2-player roms have the game-time in the difficulty spot, and
    I've assumed vice-versa. (VS the instructions scanned in Naz's dump)
 */
-  PORT_START
+	PORT_START
 	PORT_DIPNAME( 0x03, 0x00, "Single Player Game Time")
 	PORT_DIPSETTING(    0x00, "1:30")
 	PORT_DIPSETTING(    0x01, "1:45")
@@ -332,45 +330,40 @@ COMMON_PORTS_BEFORE
 	PORT_DIPSETTING(    0x08, "Hard")
 	PORT_DIPSETTING(    0x0c, "Very Hard")
 
-COMMON_PORTS_COINS
+	COMMON_PORTS_COINS
 INPUT_PORTS_END
 
 
-#define CHAR_LAYOUT( name, num ) \
-	static struct GfxLayout name = \
-	{ \
-		8,8, /* 8*8 chars */ \
-		num, /* 'num' characters */ \
-		4, /* 4 bits per pixel */ \
-		{ 0, 2, 4, 6 }, /* plane offset */ \
-		{ 1, 0, 65, 64, 129, 128, 193, 192 }, \
-		{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },	\
-		32*8 /* every char takes 32 consecutive bytes */ \
-	};
+static struct GfxLayout charlayout =
+{
+	8,8,
+	RGN_FRAC(1,1),
+	4,
+	{ 0, 2, 4, 6 },
+	{ 0*8*8+1, 0*8*8+0, 1*8*8+1, 1*8*8+0, 2*8*8+1, 2*8*8+0, 3*8*8+1, 3*8*8+0 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
+	32*8
+};
 
-#define TILE_LAYOUT( name, num, planeoffset ) \
-	static struct GfxLayout name = \
-	{ \
-		16,16, /* 16x16 chars */ \
-		num, /* 'num' characters */ \
-		4, /* 4 bits per pixel */ \
-		{ planeoffset*8+0, planeoffset*8+4, 0,4 }, /* plane offset */ \
-		{ 3, 2, 1, 0, 16*8+3, 16*8+2, 16*8+1, 16*8+0, \
-	          32*8+3,32*8+2 ,32*8+1 ,32*8+0 ,48*8+3 ,48*8+2 ,48*8+1 ,48*8+0 }, \
-		{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8, \
-	          8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 }, \
-		64*8 /* every char takes 64 consecutive bytes */ \
-	};
+static struct GfxLayout spritelayout =
+{
+	16,16,
+	RGN_FRAC(1,2),
+	4,
+	{ RGN_FRAC(1,2)+0, RGN_FRAC(1,2)+4, 0, 4 },
+	{ 3, 2, 1, 0, 16*8+3, 16*8+2, 16*8+1, 16*8+0,
+		  32*8+3, 32*8+2, 32*8+1, 32*8+0, 48*8+3, 48*8+2, 48*8+1, 48*8+0 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
+		  8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },
+	64*8
+};
 
-
-CHAR_LAYOUT( vb_char_layout, 16384 ) /* foreground chars */
-TILE_LAYOUT( vb_sprite_layout, 2048, 0x20000 ) /* sprites */
 
 static struct GfxDecodeInfo vb_gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &vb_char_layout,	  0, 8 },	/* 8x8 chars */
-	{ REGION_GFX2, 0, &vb_sprite_layout,	128, 8 },	/* 16x16 sprites */
-	{ -1 } // end of array
+	{ REGION_GFX1, 0, &charlayout,     0, 8 },	/* 8x8 chars */
+	{ REGION_GFX2, 0, &spritelayout, 128, 8 },	/* 16x16 sprites */
+	{ -1 } /* end of array */
 };
 
 static void vball_irq_handler(int irq) {
@@ -442,9 +435,9 @@ static struct MachineDriver machine_driver_vball =
 	/* video hardware */
 	32*8, 32*8,{ 0*8, 32*8-1, 0*8, 32*8-1 },
 	vb_gfxdecodeinfo,
-	256, 256,
+	256, 0,
 	0,
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	vb_vh_start,
 	vb_vh_stop,
@@ -489,9 +482,9 @@ static struct MachineDriver machine_driver_vball2pj =
 	/* video hardware */
 	32*8, 32*8,{ 0*8, 32*8-1, 0*8, 32*8-1 },
 	vb_gfxdecodeinfo,
-	256, 256,
+	256, 0,
 	0,
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	vb_vh_start,
 	vb_vh_stop,

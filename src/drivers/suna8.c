@@ -1636,9 +1636,9 @@ static const struct MachineDriver machine_driver_hardhead =
 	/* video hardware */
 	256, 256, { 0, 256-1, 0+16, 256-16-1 },
 	suna8_gfxdecodeinfo,
-	256, 256,
+	256, 0,
 	0,
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	suna8_vh_start_textdim12,
 	0,
@@ -1698,9 +1698,9 @@ static const struct MachineDriver machine_driver_rranger =
 	/* video hardware */
 	256, 256, { 0, 256-1, 0+16, 256-16-1 },
 	suna8_gfxdecodeinfo,
-	256, 256,
+	256, 0,
 	0,
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	suna8_vh_start_textdim8,
 	0,
@@ -1787,7 +1787,7 @@ interrupt, 1	// nmi breaks ramtest but is needed!
 	suna8_gfxdecodeinfo,
 256*2, 256*2,
 	0,
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	suna8_vh_start_textdim0,
 	0,
@@ -1854,7 +1854,7 @@ static const struct MachineDriver machine_driver_hardhea2 =
 	suna8_gfxdecodeinfo,
 	256, 256,
 	0,
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	suna8_vh_start_textdim0,
 	0,
@@ -1921,9 +1921,9 @@ static const struct MachineDriver machine_driver_starfigh =
 	/* video hardware */
 	256, 256, { 0, 256-1, 0+16, 256-16-1 },
 	suna8_gfxdecodeinfo,
-	256, 256,
+	256, 0,
 	0,
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	suna8_vh_start_textdim0,
 	0,
@@ -2417,15 +2417,15 @@ ROM_END
 ***************************************************************************/
 
 /* Working Games */
-GAMEX( 1988, rranger,  0,        rranger,  rranger,  0,        ROT0_16BIT,  "SunA", "Rough Ranger (v2.0, Sharp Image license)", GAME_IMPERFECT_SOUND )
-GAMEX( 1988, hardhead, 0,        hardhead, hardhead, hardhead, ROT0_16BIT,  "SunA", "Hard Head",           GAME_IMPERFECT_SOUND )
-GAMEX( 1988, hardhedb, hardhead, hardhead, hardhead, hardhedb, ROT0_16BIT,  "SunA", "Hard Head (Bootleg)", GAME_IMPERFECT_SOUND )
+GAMEX( 1988, rranger,  0,        rranger,  rranger,  0,        ROT0,  "SunA", "Rough Ranger (v2.0, Sharp Image license)", GAME_IMPERFECT_SOUND )
+GAMEX( 1988, hardhead, 0,        hardhead, hardhead, hardhead, ROT0,  "SunA", "Hard Head",           GAME_IMPERFECT_SOUND )
+GAMEX( 1988, hardhedb, hardhead, hardhead, hardhead, hardhedb, ROT0,  "SunA", "Hard Head (Bootleg)", GAME_IMPERFECT_SOUND )
 
 /* Non Working Games */
-GAMEX( 1988, sranger,  rranger,  rranger,  rranger,	0,         ROT0_16BIT,  "SunA", "Super Ranger (v2.0)",         GAME_NOT_WORKING )
-GAMEX( 1988, srangerb, rranger,  rranger,  rranger,	0,         ROT0_16BIT,  "SunA", "Super Ranger (NIWA Bootleg)", GAME_NOT_WORKING )
-GAMEX( 1988, srangerw, rranger,  rranger,  rranger,	0,         ROT0_16BIT,  "SunA", "Super Ranger (WDK License)",  GAME_NOT_WORKING )
-GAMEX( 1990, starfigh, 0,        starfigh, hardhea2, starfigh, ROT90_16BIT, "SunA", "Star Fighter (v1)",   GAME_NOT_WORKING )
-GAMEX( 1991, hardhea2, 0,        hardhea2, hardhea2, hardhea2, ROT0_16BIT,  "SunA", "Hard Head 2 (v2.0)",  GAME_NOT_WORKING )
-GAMEX( 1992, brickzn,  0,        brickzn,  brickzn,  brickzn3, ROT90_16BIT, "SunA", "Brick Zone (v5.0)",   GAME_NOT_WORKING )
-GAMEX( 1992, brickzn3, brickzn,  brickzn,  brickzn,  brickzn3, ROT90_16BIT, "SunA", "Brick Zone (v3.0)",   GAME_NOT_WORKING )
+GAMEX( 1988, sranger,  rranger,  rranger,  rranger,	0,         ROT0,  "SunA", "Super Ranger (v2.0)",         GAME_NOT_WORKING )
+GAMEX( 1988, srangerb, rranger,  rranger,  rranger,	0,         ROT0,  "SunA", "Super Ranger (NIWA Bootleg)", GAME_NOT_WORKING )
+GAMEX( 1988, srangerw, rranger,  rranger,  rranger,	0,         ROT0,  "SunA", "Super Ranger (WDK License)",  GAME_NOT_WORKING )
+GAMEX( 1990, starfigh, 0,        starfigh, hardhea2, starfigh, ROT90, "SunA", "Star Fighter (v1)",   GAME_NOT_WORKING )
+GAMEX( 1991, hardhea2, 0,        hardhea2, hardhea2, hardhea2, ROT0,  "SunA", "Hard Head 2 (v2.0)",  GAME_NOT_WORKING )
+GAMEX( 1992, brickzn,  0,        brickzn,  brickzn,  brickzn3, ROT90, "SunA", "Brick Zone (v5.0)",   GAME_NOT_WORKING )
+GAMEX( 1992, brickzn3, brickzn,  brickzn,  brickzn,  brickzn3, ROT90, "SunA", "Brick Zone (v3.0)",   GAME_NOT_WORKING )

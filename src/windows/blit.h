@@ -4,8 +4,8 @@
 //
 //============================================================
 
-#ifndef __WIN32_BLIT__
-#define __WIN32_BLIT__
+#ifndef __WIN_BLIT__
+#define __WIN_BLIT__
 
 
 //============================================================
@@ -38,7 +38,7 @@
 //	TYPE DEFINITIONS
 //============================================================
 
-struct blit_params
+struct win_blit_params
 {
 	void *		dstdata;
 	int			dstpitch;
@@ -69,6 +69,6 @@ struct blit_params
 //	PROTOTYPES
 //============================================================
 
-int perform_blit(const struct blit_params *blit, int update);
+int win_perform_blit(const struct win_blit_params *blit, int update);
 
 #endif

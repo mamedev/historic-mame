@@ -293,7 +293,9 @@ static const int SL_TABLE[16]={
 /* TotalLevel : 48 24 12  6  3 1.5 0.75 (dB) */
 /* TL_TABLE[ 0      to TL_MAX          ] : plus  section */
 /* TL_TABLE[ TL_MAX to TL_MAX+TL_MAX-1 ] : minus section */
+#if BUILD_LFO
 static INT32 *TL_TABLE;
+#endif
 
 /* pointers to TL_TABLE with sinwave output offset */
 static INT32 *SIN_TABLE[SIN_ENT];
@@ -307,8 +309,11 @@ static INT32 ENV_CURVE[3*EG_ENT+1];
 static INT32 ENV_CURVE[2*EG_ENT+1];
 #endif
 /* envelope counter conversion table when change Decay to Attack phase */
+#if BUILD_LFO
 static int DRAR_TABLE[EG_ENT];
+#endif
 
+#if BUILD_LFO
 #define OPM_DTTABLE OPN_DTTABLE
 static UINT8 OPN_DTTABLE[4 * 32]={
 /* this table is YM2151 and YM2612 data */
@@ -325,6 +330,7 @@ static UINT8 OPN_DTTABLE[4 * 32]={
   2, 2, 2, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 6, 6, 7,
   8 , 8, 9,10,11,12,13,14,16,17,19,20,22,22,22,22
 };
+#endif
 
 /* multiple table */
 #define ML(n) (int)(n*2)
@@ -372,9 +378,11 @@ static const INT32 RATE_0[32]=
 #define TYPE_YM2612 (TYPE_6CH |TYPE_LFOPAN |TYPE_DAC)
 
 /* current chip state */
+#if (BUILD_YM2203||BUILD_YM2608||BUILD_YM2610||BUILD_YM2612||BUILD_YM2151)
 static void *cur_chip = 0;		/* pointer of current chip struct */
 static FM_ST  *State;			/* basic status */
 static FM_CH  *cch[8];			/* pointer of FM channels */
+#endif
 #if (BUILD_LFO)
 #if FM_LFO_SUPPORT
 static UINT32 LFOCnt,LFOIncr;	/* LFO PhaseGenerator */
@@ -903,6 +911,7 @@ INLINE void OPN_CALC_FCOUNT(FM_CH *CH )
 	}
 }
 
+#if BUILD_LFO
 /* ----------- initialize time tabls ----------- */
 static void init_timetables( FM_ST *ST , UINT8 *DTTABLE , int ARRATE , int DRRATE )
 {
@@ -1044,6 +1053,9 @@ static void FMCloseTable( void )
 	if( TL_TABLE ) free( TL_TABLE );
 	return;
 }
+
+#endif	/* BUILD_LFO */
+
 
 /* OPN/OPM Mode  Register Write */
 INLINE void FMSetMode( FM_ST *ST ,int n,int v )
@@ -1194,6 +1206,7 @@ static void FM_channel_postload(FM_CH *CH,int num_ch)
 	}
 }
 
+#if BUILD_LFO
 /* FM channel save , internal state only */
 static void FMsave_state_channel(const char *name,int num,FM_CH *CH,int num_ch)
 {
@@ -1238,6 +1251,8 @@ static void FMsave_state_st(const char *state_name,int num,FM_ST *ST)
 	state_save_register_UINT8 (state_name, num, "TIMER B"   , &ST->TB   , 1);
 	state_save_register_int   (state_name, num, "TIMER Bcnt", &ST->TBC  );
 }
+#endif	/* BUILD_LFO */
+
 #endif /* _STATE_H */
 
 #if BUILD_OPN

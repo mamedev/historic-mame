@@ -169,7 +169,7 @@ WRITE16_HANDLER( seta_vregs_w )
 
 /*		fedc ba98 76-- ----
 		---- ---- --5- ----		Sound Enable
-		---- ---- ---4 ----		Layers Flip Xor ?? (see oisipuzl)
+		---- ---- ---4 ----		?? 1 in oisipuzl, sokonuke (layers related)
 		---- ---- ---- 3---		Coin #1 Lock Out
 		---- ---- ---- -2--		Coin #0 Lock Out
 		---- ---- ---- --1-		Coin #1 Counter
@@ -177,7 +177,6 @@ WRITE16_HANDLER( seta_vregs_w )
 			if (ACCESSING_LSB)
 			{
 				seta_coin_lockout_w (data & 0x000f);
-				tilemaps_flip    =  (data & 0x0010) >> 4;
 				seta_sound_enable_w (data & 0x0020);
 			}
 			break;
@@ -382,6 +381,31 @@ int seta_vh_start_1_layer(void)
 	else return 1;
 }
 
+
+int seta_vh_start_2_layers_offset_0x02(void)
+{
+	if (seta_vh_start_2_layers())
+		return 1;
+
+	tilemap_set_scrolldx(tilemap_0, -0x02, 0x00);
+	tilemap_set_scrolldx(tilemap_1, -0x02, 0x00);
+	tilemap_set_scrolldx(tilemap_2, -0x02, 0x00);
+	tilemap_set_scrolldx(tilemap_3, -0x02, 0x00);
+
+	tilemap_set_scrolldy(tilemap_0, 0x00, 0x00);
+	tilemap_set_scrolldy(tilemap_1, 0x00, 0x00);
+	tilemap_set_scrolldy(tilemap_2, 0x00, 0x00);
+	tilemap_set_scrolldy(tilemap_3, 0x00, 0x00);
+	return 0;
+}
+
+int oisipuzl_vh_start_2_layers(void)
+{
+	if (seta_vh_start_2_layers_offset_0x02())
+		return 1;
+	tilemaps_flip = 1;
+	return 0;
+}
 
 int seta_vh_start_1_layer_offset_0x02(void)
 {
@@ -666,97 +690,6 @@ static void seta_draw_sprites(struct osd_bitmap *bitmap)
 /***************************************************************************
 
 
-							Sprites Color Marking
-
-
-***************************************************************************/
-
-void seta_mark_sprite_color(void)
-{
-	int offs, col;
-	int xoffs, yoffs;
-
-	int color_granularity	=	Machine->gfx[0]->color_granularity;
-	int color_codes_start	=	Machine->drv->gfxdecodeinfo[0].color_codes_start;
-	int total_color_codes	=	Machine->drv->gfxdecodeinfo[0].total_color_codes;
-
-	int xmin = Machine->visible_area.min_x - (16 - 1);
-	int xmax = Machine->visible_area.max_x;
-	int ymin = Machine->visible_area.min_y - (16 - 1);
-	int ymax = Machine->visible_area.max_y;
-
-	int max_y;
-
-	/* Floating tilemap made of sprites */
-
-	int ctrl	=	spriteram16[ 0x600/2 ];
-	int ctrl2	=	spriteram16[ 0x602/2 ];
-
-	int flip	=	ctrl & 0x40;
-	int numcol	=	ctrl2 & 0x000f;
-
-	/* Sprites Banking and/or Sprites Buffering */
-	data16_t *src = spriteram16_2 + ( ((ctrl2 ^ (~ctrl2<<1)) & 0x40) ? 0x2000/2 : 0 );
-
-	/* Number of columns to draw - the value 1 seems special, meaning:
-	   draw every column */
-	if (numcol == 1)	numcol = 16;
-
-
-	for ( col = 0 ; col < numcol; col ++ )
-	{
-		for ( offs = 0/2 ; offs < 0x40/2; offs += 2/2 )
-		{
-			int	color	=	src[ col * 0x40/2 + offs + 0xc00/2 ];
-			color		=	( color >> (16-5) ) % total_color_codes;
-			memset(&palette_used_colors[color_granularity * color + color_codes_start + 1],PALETTE_COLOR_USED,color_granularity - 1);
-		}
-	}
-
-
-	/* Normal sprites */
-
-//	max_y	=	Machine->visible_area.max_y+1;
-	max_y	=	Machine->drv->screen_height;
-
-//	xoffs	=	flip ? 0x10 : 0x11;	// see downtown test mode: made of normal sprites
-	xoffs	=	flip ? 0x10 : 0x10;	// see blandia test mode: made of normal sprites
-	yoffs	=	flip ? 0x06 : 0x06;
-
-	for ( offs = (0x400-2)/2 ; offs >= 0/2; offs -= 2/2 )
-	{
-//		int	code	=	src[offs + 0x000/2];
-		int	x		=	src[offs + 0x400/2];
-
-		int	y		=	spriteram16[offs + 0x000/2] & 0xff;
-
-		int color	=	( x >> (16-5) ) % total_color_codes;
-
-		if (flip)
-		{
-//			y = max_y - y;
-			y = max_y - y
-				+(Machine->drv->screen_height-(Machine->visible_area.max_y+1));
-		}
-
-		x = (x + xoffs) & 0x1ff;
-		y = max_y - ((y + yoffs) & 0x0ff);
-
-		/* Visibility check. No need to account for sprites flipping */
-		if ((x < xmin) || (x > xmax))	continue;
-		if ((y < ymin) || (y > ymax))	continue;
-
-		memset(&palette_used_colors[color_granularity * color + color_codes_start + 1],PALETTE_COLOR_USED,color_granularity - 1);
-	}
-}
-
-
-
-
-
-/***************************************************************************
-
-
 								Screen Drawing
 
 
@@ -765,10 +698,7 @@ void seta_mark_sprite_color(void)
 /* For games without tilemaps */
 void seta_vh_screenrefresh_no_layers(struct osd_bitmap *bitmap,int full_refresh)
 {
-	palette_init_used_colors();
-	seta_mark_sprite_color();
-	palette_recalc();
-	fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
+	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 	seta_draw_sprites(bitmap);
 }
 
@@ -839,39 +769,21 @@ void seta_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 #ifdef MAME_DEBUG
 if (keyboard_pressed(KEYCODE_Z))
-{
-	int msk = 0;
-	char buf[80];
+{	int msk = 0;
 	if (keyboard_pressed(KEYCODE_Q))	msk |= 1;
 	if (keyboard_pressed(KEYCODE_W))	msk |= 2;
 	if (keyboard_pressed(KEYCODE_A))	msk |= 8;
 	if (msk != 0) layers_ctrl &= msk;
 
 	if (tilemap_2)
-		sprintf(buf,"%04X-%04X-%04X %04X-%04X",
-					seta_vregs[ 0/2 ],
-					seta_vregs[ 2/2 ],
-					seta_vregs[ 4/2 ],
-
-					seta_vctrl_0[ 4/2 ],
-					seta_vctrl_2[ 4/2 ]
-				);
+		usrintf_showmessage("%04X-%04X-%04X %04X-%04X",
+							seta_vregs[ 0/2 ], seta_vregs[ 2/2 ], seta_vregs[ 4/2 ],
+							seta_vctrl_0[ 4/2 ],seta_vctrl_2[ 4/2 ]	);
 	else
-		sprintf(buf,"%04X",	seta_vctrl_0[ 4/2 ]	);
-
-	usrintf_showmessage(buf);
-}
+		usrintf_showmessage("%04X",	seta_vctrl_0[ 4/2 ]);		}
 #endif
 
-	tilemap_update(ALL_TILEMAPS);
-
-	palette_init_used_colors();
-
-	seta_mark_sprite_color();
-
-	palette_recalc();
-
-	fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
+	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 
 	if (order & 1)	// swap the layers?
 	{

@@ -300,7 +300,7 @@ static const struct MachineDriver machine_driver_irobot =
     64 + 32,64 + 32, /* 64 for polygons, 32 for text */
     irobot_vh_convert_color_prom,
 
-    VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+    VIDEO_TYPE_RASTER ,
 	0,
     irobot_vh_start,
     irobot_vh_stop,

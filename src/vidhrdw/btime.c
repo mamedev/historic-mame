@@ -550,7 +550,7 @@ static void decode_modified(unsigned char *sprite_ram, int interleave)
 
 void btime_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-    if (palette_recalc() || full_refresh)
+    if (full_refresh)
         memset(dirtybuffer,1,videoram_size);
 
     if (bnj_scroll1 & 0x10)
@@ -589,7 +589,7 @@ void btime_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 void eggs_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-    if (palette_recalc() || full_refresh)
+    if (full_refresh)
         memset(dirtybuffer,1,videoram_size);
 
     drawchars(tmpbitmap, TRANSPARENCY_NONE, 0, -1);
@@ -603,7 +603,7 @@ void eggs_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 void lnc_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-    if (palette_recalc() || full_refresh)
+    if (full_refresh)
         memset(dirtybuffer,1,videoram_size);
 
     drawchars(tmpbitmap, TRANSPARENCY_NONE, 0, -1);
@@ -617,7 +617,7 @@ void lnc_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 void zoar_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-    if (palette_recalc() || full_refresh)
+    if (full_refresh)
         memset(dirtybuffer,1,videoram_size);
 
     if (bnj_scroll1 & 0x04)
@@ -642,7 +642,7 @@ void zoar_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 void bnj_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-    if (palette_recalc() || full_refresh)
+    if (full_refresh)
     {
         memset(dirtybuffer,1,videoram_size);
         memset(dirtybuffer2,1,bnj_backgroundram_size);
@@ -711,7 +711,7 @@ void cookrace_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
     int offs;
 
 
-    if (palette_recalc() || full_refresh)
+    if (full_refresh)
         memset(dirtybuffer,1,videoram_size);
 
     /*
@@ -747,7 +747,7 @@ void cookrace_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 void disco_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-    if (palette_recalc() || full_refresh)
+    if (full_refresh)
         memset(dirtybuffer,1,videoram_size);
 
     decode_modified(spriteram, 1);

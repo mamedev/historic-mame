@@ -401,7 +401,7 @@ static const struct MachineDriver machine_driver_ginganin =
 	gfxdecodeinfo,
 	256 * 4, 256 * 4,
 	0,
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	ginganin_vh_start,
 	0,

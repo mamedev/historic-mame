@@ -15,7 +15,6 @@ TODO:
 
 int flstory_vh_start(void);
 void flstory_vh_stop(void);
-void flstory_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void flstory_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 WRITE_HANDLER( flstory_palette_w );
@@ -333,10 +332,10 @@ static const struct MachineDriver machine_driver_flstory =
     /* video hardware */
     32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
     gfxdecodeinfo,
-    512, 512,
-	flstory_vh_convert_color_prom,
+    512, 0,
+	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
     0,
 	flstory_vh_start,
 	flstory_vh_stop,
@@ -373,7 +372,7 @@ ROM_START( flstory )
 	ROM_REGION( 0x0800, REGION_CPU3, 0 )	/* 2k for the microcontroller */
 	ROM_LOAD( "a45.mcu",      0x0000, 0x0800, 0x5378253c )
 
-	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_INVERT )
 	ROM_LOAD( "vid-a45.18",   0x00000, 0x4000, 0x6f08f69e )
 	ROM_LOAD( "vid-a45.06",   0x04000, 0x4000, 0xdc856a75 )
 	ROM_LOAD( "vid-a45.08",   0x08000, 0x4000, 0xd0b028ca )
@@ -397,7 +396,7 @@ ROM_START( flstoryj )
 	ROM_REGION( 0x0800, REGION_CPU3, 0 )	/* 2k for the microcontroller */
 	ROM_LOAD( "a45.mcu",      0x0000, 0x0800, 0x5378253c )
 
-	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_INVERT )
 	ROM_LOAD( "vid-a45.18",   0x00000, 0x4000, 0x6f08f69e )
 	ROM_LOAD( "vid-a45.06",   0x04000, 0x4000, 0xdc856a75 )
 	ROM_LOAD( "vid-a45.08",   0x08000, 0x4000, 0xd0b028ca )
@@ -424,7 +423,7 @@ ROM_START( onna34ro )
 	ROM_REGION( 0x0800, REGION_CPU3, 0 )	/* 2k for the microcontroller */
 	ROM_LOAD( "a52-17.54c",   0x0000, 0x0800, 0x00000000 )
 
-	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_INVERT )
 	ROM_LOAD( "a52-04.11v",   0x00000, 0x4000, 0x5b126294 )
 	ROM_LOAD( "a52-06.10v",   0x04000, 0x4000, 0x78114721 )
 	ROM_LOAD( "a52-08.09v",   0x08000, 0x4000, 0x4a293745 )

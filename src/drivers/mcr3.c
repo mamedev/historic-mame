@@ -1096,7 +1096,7 @@ static struct GfxDecodeInfo spyhunt_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &spyhunt_charlayout,  1*16, 1 },
 	{ REGION_GFX2, 0, &mcr_sprite_layout,   0*16, 4 },
-	{ REGION_GFX3, 0, &spyhunt_alphalayout, 8*16, 1 },
+	{ REGION_GFX3, 0, &spyhunt_alphalayout, 4*16, 1 },
 	{ -1 } /* end of array */
 };
 
@@ -1152,10 +1152,10 @@ static const struct MachineDriver machine_driver_mcr3 =
 	/* video hardware */
 	32*16, 30*16, { 0*16, 32*16-1, 0*16, 30*16-1 },
 	gfxdecodeinfo,
-	8*16, 8*16,
+	64, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
 	generic_vh_start,
 	generic_vh_stop,
@@ -1184,12 +1184,12 @@ static const struct MachineDriver machine_driver_dotron =
 	mcr_init_machine,
 
 	/* video hardware */
-	800, 600, { 0, 800-1, 0, 600-1 },
+	640, 600, { 0, 640-1, 0, 600-1 },
 	gfxdecodeinfo,
-	4*16+32768, 4*16,		/* The extra colors are for the backdrop */
+	64+32768, 64,		/* The extra colors are for the backdrop */
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
 	dotron_vh_start,
 	dotron_vh_stop,
@@ -1220,10 +1220,10 @@ static const struct MachineDriver machine_driver_destderb =
 	/* video hardware */
 	32*16, 30*16, { 0*16, 32*16-1, 0*16, 30*16-1 },
 	gfxdecodeinfo,
-	8*16, 8*16,
+	64, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
 	generic_vh_start,
 	generic_vh_stop,
@@ -1254,10 +1254,10 @@ static const struct MachineDriver machine_driver_sarge =
 	/* video hardware */
 	32*16, 30*16, { 0*16, 32*16-1, 0*16, 30*16-1 },
 	gfxdecodeinfo,
-	8*16, 8*16,
+	64, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
 	generic_vh_start,
 	generic_vh_stop,
@@ -1287,10 +1287,10 @@ static const struct MachineDriver machine_driver_rampage =
 	/* video hardware */
 	32*16, 30*16, { 0*16, 32*16-1, 0*16, 30*16-1 },
 	gfxdecodeinfo,
-	8*16, 8*16,
+	64, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
 	generic_vh_start,
 	generic_vh_stop,
@@ -1326,10 +1326,10 @@ static const struct MachineDriver machine_driver_powerdrv =
 	/* video hardware */
 	32*16, 30*16, { 0*16, 32*16-1, 0*16, 30*16-1 },
 	gfxdecodeinfo,
-	8*16, 8*16,
+	64, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
 	generic_vh_start,
 	generic_vh_stop,
@@ -1360,10 +1360,10 @@ static const struct MachineDriver machine_driver_spyhunt =
 	/* video hardware */
 	31*16, 30*16, { 0, 31*16-1, 0, 30*16-1 },
 	spyhunt_gfxdecodeinfo,
-	8*16+4, 8*16+4,
+	64+4, 0,
 	spyhunt_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_ASPECT_RATIO(62,45),
+	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_ASPECT_RATIO(62,45),
 	0,
 	spyhunt_vh_start,
 	spyhunt_vh_stop,
@@ -1394,10 +1394,10 @@ static const struct MachineDriver machine_driver_turbotag =
 	/* video hardware */
 	30*16, 30*16, { 0, 30*16-1, 0, 30*16-1 },
 	spyhunt_gfxdecodeinfo,
-	8*16+4, 8*16+4,
+	64+4, 0,
 	spyhunt_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
 	spyhunt_vh_start,
 	spyhunt_vh_stop,
@@ -1427,10 +1427,10 @@ static const struct MachineDriver machine_driver_crater =
 	/* video hardware */
 	30*16, 30*16, { 0, 30*16-1, 0, 30*16-1 },
 	spyhunt_gfxdecodeinfo,
-	8*16+4, 8*16+4,
+	64+4, 0,
 	spyhunt_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
 	spyhunt_vh_start,
 	spyhunt_vh_stop,

@@ -132,125 +132,6 @@ void slapshot_vh_stop (void)
 }
 
 
-/*********************************************************
-				PALETTE
-*********************************************************/
-
-void slapshot_update_palette (void)
-{
-	int i, area;
-	int off,extoffs,code,color;
-	int spritecont,big_sprite=0,last_continuation_tile=0;
-	UINT16 tile_mask = (Machine->gfx[0]->total_elements) - 1;
-	unsigned short palette_map[256];
-
-	memset (palette_map, 0, sizeof (palette_map));
-
-	color = 0;
-	area = sprites_active_area;
-
-	/* Sprites */
-	for (off = 0;off < 0x4000;off += 16)
-	{
-		/* sprites_active_area may change during processing */
-		int offs = off + area;
-
-		if (spriteram_buffered[(offs+6)/2] & 0x8000)
-		{
-			area = 0x8000 * (spriteram_buffered[(offs+10)/2] & 0x0001);
-			continue;
-		}
-
-		spritecont = (spriteram_buffered[(offs+8)/2] & 0xff00) >> 8;
-
-		if (spritecont & 0x8)
-		{
-			big_sprite = 1;
-		}
-		else if (big_sprite)
-		{
-			last_continuation_tile = 1;
-		}
-
-		code = 0;
-		extoffs = offs;
-		if (extoffs >= 0x8000) extoffs -= 0x4000;   /* spriteram[0x4000-7fff] has no corresponding extension area */
-
-		if (taito_sprite_type == 0)
-		{
-			code = spriteram_buffered[offs/2] & 0x1fff;
-			{
-				int bank;
-
-				bank = (code & 0x1c00) >> 10;
-				code = spritebank[bank] + (code & 0x3ff);
-			}
-		}
-
-		if (taito_sprite_type == 1)   /* Yuyugogo */
-		{
-			code = spriteram_buffered[offs/2] & 0x3ff;
-			i = (taito_sprite_ext[(extoffs >> 4)] & 0x3f ) << 10;
-			code = (i | code);
-		}
-
-		if (taito_sprite_type == 2)   /* Pulirula, Slapshot */
-		{
-			code = spriteram_buffered[offs/2] & 0xff;
-			i = (taito_sprite_ext[(extoffs >> 4)] & 0xff00 );
-			code = (i | code);
-		}
-
-		if (taito_sprite_type == 3)   /* Dinorex and a few F2 quizzes */
-		{
-			code = spriteram_buffered[offs/2] & 0xff;
-			i = (taito_sprite_ext[(extoffs >> 4)] & 0xff ) << 8;
-			code = (i | code);
-		}
-
-		if ((spritecont & 0x04) == 0)
-			color = spriteram_buffered[(offs+8)/2] & 0x00ff;
-
-		if (last_continuation_tile)
-		{
-			big_sprite=0;
-			last_continuation_tile=0;
-		}
-
-		if (!code) continue;   /* tilenum is 0, so ignore it */
-
-		if (Machine->gfx[0]->color_granularity == 64)	/* Final Blow, Slapshot are 6bpp */
-		{
-			color &= ~3;
-			palette_map[color+0] |= 0xffff;
-			palette_map[color+1] |= 0xffff;
-			palette_map[color+2] |= 0xffff;
-			palette_map[color+3] |= 0xffff;
-		}
-		else
-		{
-			code &= tile_mask;
-			palette_map[color] |= Machine->gfx[0]->pen_usage[code];
-		}
-	}
-
-
-	/* Tell MAME about the color usage */
-	for (i = 0;i < 256;i++)
-	{
-		int usage = palette_map[i];
-		int j;
-
-		if (usage)
-		{
-			for (j = 0; j < 16; j++)
-				if (palette_map[i] & (1 << j))
-					palette_used_colors[i * 16 + j] = PALETTE_COLOR_USED;
-		}
-	}
-}
-
-
 /************************************************************
 			SPRITE DRAW ROUTINES
 ************************************************************/
@@ -746,18 +627,13 @@ void slapshot_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	TC0480SCP_tilemap_update();
 
-	palette_init_used_colors();
-	slapshot_update_palette();
-
-	palette_used_colors[0] |= PALETTE_COLOR_VISIBLE;
 	{
-		int i;
+//		int i;
 
 		/* fix TC0480SCP transparency, but this could compromise the background color */
-		for (i = 0;i < Machine->drv->total_colors;i += 16)
-			palette_used_colors[i] = PALETTE_COLOR_TRANSPARENT;
+//		for (i = 0;i < Machine->drv->total_colors;i += 16)
+//			palette_used_colors[i] = PALETTE_COLOR_TRANSPARENT;
 	}
-	palette_recalc();
 
 	priority = TC0480SCP_get_bg_priority();
 

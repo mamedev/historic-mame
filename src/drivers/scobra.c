@@ -68,6 +68,9 @@ TODO:
 
 - Explosion sound in Scramble/Super Cobra repeats
 
+- Armored Car probably has some other effect(s) during an explosion.
+  It uses both POUT1 and POUT2.
+
 
 Notes/Tidbits:
 -------------
@@ -79,6 +82,10 @@ Notes/Tidbits:
   corrected in the newer set, but, to maintain hardware compatibility with
   older PCB's, they had to reverse to active status of the select bit.  So in the
   newer set, Bit4=1 selects the 1P spinner and Bit4=0 selects the 2P spinner.
+
+- Armored Car sets Port C as well, but it's input only and the games uses other
+  bits for the 2nd player controls.  Maybe the games was meant to use 2 joysticks
+  at one time.
 
 - Calipso was apperantly redesigned for two player simultanious play.
   There is code at $298a to flip the screen, but location $8669 has to be
@@ -105,6 +112,7 @@ extern unsigned char *galaxian_bulletsram;
 extern size_t galaxian_spriteram_size;
 extern size_t galaxian_bulletsram_size;
 
+void galaxian_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void scramble_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void moonwar_vh_convert_color_prom (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void darkplnt_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
@@ -112,10 +120,12 @@ void rescue_vh_convert_color_prom  (unsigned char *palette, unsigned short *colo
 void minefld_vh_convert_color_prom (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void stratgyx_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 
+void init_scramble_ppi(void);
 void init_scobra(void);
 void init_stratgyx(void);
 void init_moonwar(void);
 void init_darkplnt(void);
+void init_tazmani2(void);
 void init_anteater(void);
 void init_rescue(void);
 void init_minefld(void);
@@ -138,7 +148,6 @@ void galaxian_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 WRITE_HANDLER( galaxian_videoram_w );
 READ_HANDLER ( galaxian_videoram_r );
 WRITE_HANDLER( galaxian_stars_enable_w );
-WRITE_HANDLER( scramble_background_blue_w );
 WRITE_HANDLER( galaxian_flip_screen_x_w );
 WRITE_HANDLER( galaxian_flip_screen_y_w );
 WRITE_HANDLER( scramble_filter_w );
@@ -199,7 +208,6 @@ static MEMORY_WRITE_START( type1_writemem )
 	{ 0xa000, 0xa003, ppi8255_1_w },
 	{ 0xa801, 0xa801, interrupt_enable_w },
 	{ 0xa802, 0xa802, type1_coin_counter_w },
-	{ 0xa803, 0xa803, scramble_background_blue_w },
 	{ 0xa804, 0xa804, galaxian_stars_enable_w },
 	{ 0xa806, 0xa806, galaxian_flip_screen_x_w },
 	{ 0xa807, 0xa807, galaxian_flip_screen_y_w },
@@ -228,7 +236,6 @@ static MEMORY_WRITE_START( type2_writemem )
 	{ 0xa000, 0xa00f, scobra_type2_ppi8255_0_w },
 	{ 0xa800, 0xa80f, scobra_type2_ppi8255_1_w },
 	{ 0xb000, 0xb000, galaxian_stars_enable_w },
-	{ 0xb002, 0xb002, scramble_background_blue_w },
 	{ 0xb004, 0xb004, interrupt_enable_w },
 	{ 0xb006, 0xb008, type2_coin_counter_w },
 	{ 0xb00c, 0xb00c, galaxian_flip_screen_y_w },
@@ -317,6 +324,7 @@ static MEMORY_WRITE_START( hustlerb_sound_writemem )
 	{ 0x0000, 0x1fff, MWA_ROM },
 	{ 0x6000, 0x6fff, frogger_filter_w },
 	{ 0x8000, 0x83ff, MWA_RAM },
+	{ 0x8000, 0x83ff, MWA_NOP, &scobra_soundram },  /* only here to initialize pointer */
 MEMORY_END
 
 
@@ -1146,7 +1154,7 @@ static const struct MachineDriver machine_driver_type1 =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	galaxian_gfxdecodeinfo,
-	32+64+2+2,8*4,	/* 32 for characters, 64 for stars, 2 for bullets, 2 for background */	\
+	32+64+2+1,8*4,	/* 32 for characters, 64 for stars, 2 for bullets, 1 for background */	\
 	scramble_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
@@ -1190,8 +1198,8 @@ static const struct MachineDriver machine_driver_armorcar =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	galaxian_gfxdecodeinfo,
-	32+64+2+2,8*4,	/* 32 for characters, 64 for stars, 2 for bullets, 2 for background */	\
-	scramble_vh_convert_color_prom,
+	32+64+2,8*4,	/* 32 for characters, 64 for stars, 2 for bullets */
+	galaxian_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
 	0,
@@ -1234,7 +1242,7 @@ static const struct MachineDriver machine_driver_moonwar =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	galaxian_gfxdecodeinfo,
-	32+64+2+2,8*4,	/* 32 for characters, 64 for stars, 2 for bullets, 2 for background */	\
+	32+64+2,8*4,	/* 32 for characters, 64 for stars, 2 for bullets */
 	moonwar_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
@@ -1279,10 +1287,10 @@ static const struct MachineDriver machine_driver_rescue =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	galaxian_gfxdecodeinfo,
-	32+64+2+64,8*4,	/* 32 for characters, 64 for stars, 2 for bullets, 64 for background */	\
+	32+64+2+128,8*4,	/* 32 for characters, 64 for stars, 2 for bullets, 128 for background */
 	rescue_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER,
+	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN,	/* needs fine color resolution for the gradient background */
 	0,
 	rescue_vh_start,
 	0,
@@ -1322,10 +1330,10 @@ static const struct MachineDriver machine_driver_minefld =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	galaxian_gfxdecodeinfo,
-	32+64+2+128,8*4,	/* 32 for characters, 64 for stars, 2 for bullets, 128 for background */	\
+	32+64+2+256,8*4,	/* 32 for characters, 64 for stars, 2 for bullets, 256 for background */
 	minefld_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER,
+	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN,	/* needs fine color resolution for the gradient background */
 	0,
 	minefld_vh_start,
 	0,
@@ -1365,7 +1373,7 @@ static const struct MachineDriver machine_driver_stratgyx =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	galaxian_gfxdecodeinfo,
-	32+64+2+8,8*4,	/* 32 for characters, 64 for stars, 2 for bullets, 8 for background */	\
+	32+64+2+8,8*4,	/* 32 for characters, 64 for stars, 2 for bullets, 8 for background */
 	stratgyx_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
@@ -1408,7 +1416,7 @@ static const struct MachineDriver machine_driver_type2 =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	galaxian_gfxdecodeinfo,
-	32+64+2+2,8*4,	/* 32 for characters, 64 for stars, 2 for bullets, 2 for background */	\
+	32+64+2+1,8*4,	/* 32 for characters, 64 for stars, 2 for bullets, 1 for background */
 	scramble_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
@@ -1451,7 +1459,7 @@ static const struct MachineDriver machine_driver_darkplnt =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	galaxian_gfxdecodeinfo,
-	32+2+1,8*4+128*1,
+	32+2,8*4+128*1, /* 32 for characters, 2 for bullets */
 	darkplnt_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
@@ -1494,8 +1502,8 @@ static const struct MachineDriver machine_driver_hustler =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	galaxian_gfxdecodeinfo,
-	32+64+2+2,8*4,	/* 32 for characters, 64 for stars, 2 for bullets, 2 for background */	\
-	scramble_vh_convert_color_prom,
+	32+64+2,8*4,	/* 32 for characters, 64 for stars, 2 for bullets */
+	galaxian_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
 	0,
@@ -1537,8 +1545,8 @@ static const struct MachineDriver machine_driver_hustlerb =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	galaxian_gfxdecodeinfo,
-	32+64+2+2,8*4,	/* 32 for characters, 64 for stars, 2 for bullets, 2 for background */	\
-	scramble_vh_convert_color_prom,
+	32+64+2,8*4,	/* 32 for characters, 64 for stars, 2 for bullets */
+	galaxian_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
 	0,
@@ -1582,7 +1590,7 @@ static const struct MachineDriver machine_driver_calipso =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	galaxian_gfxdecodeinfo,
-	32+64+2+2,8*4,	/* 32 for characters, 64 for stars, 2 for bullets, 2 for background */	\
+	32+64+2+1,8*4,	/* 32 for characters, 64 for stars, 2 for bullets, 1 for background */
 	scramble_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
@@ -2086,26 +2094,26 @@ ROM_END
 
 
 
-GAME( 1981, scobra,   0,        type1,    scobra,   scobra,	  ROT90,  "Konami", "Super Cobra" )
-GAME( 1981, scobras,  scobra,   type1,    scobras,  scobra,	  ROT90,  "[Konami] (Stern license)", "Super Cobra (Stern)" )
-GAME( 1981, scobrab,  scobra,   type1,    scobras,  scobra,	  ROT90,  "bootleg", "Super Cobra (bootleg)" )
-GAME( 1981, stratgyx, 0,        stratgyx, stratgyx, stratgyx, ROT0,   "Konami", "Strategy X" )
-GAME( 1981, stratgys, stratgyx, stratgyx, stratgyx, stratgyx, ROT0,   "[Konami] (Stern license)", "Strategy X (Stern)" )
-GAME( 1981, armorcar, 0,        stratgyx, armorcar, scobra,	  ROT90,  "Stern", "Armored Car (set 1)" )
-GAME( 1981, armorca2, armorcar, armorcar, armorcar, scobra,	  ROT90,  "Stern", "Armored Car (set 2)" )
-GAME( 1981, moonwar,  0,        moonwar,  moonwar,  moonwar,  ROT90,  "Stern", "Moonwar" )
-GAME( 1981, moonwara, moonwar,  moonwar,  moonwara, moonwar,  ROT90,  "Stern", "Moonwar (older)" )
-GAME( 1984, spdcoin,  0,        type1,    spdcoin,  scobra,	  ROT90,  "Stern", "Speed Coin (prototype)" )
-GAME( 1982, darkplnt, 0,        darkplnt, darkplnt, darkplnt, ROT180, "Stern", "Dark Planet" )
-GAME( 1982, tazmania, 0,        type1,    tazmania, scobra,	  ROT90,  "Stern", "Tazz-Mania" )
-GAME( 1982, tazmani2, tazmania, type2,    tazmania, scobra,	  ROT90,  "Stern", "Tazz-Mania (set 2)" )
-GAME( 1982, calipso,  0,        calipso,  calipso,  scobra,	  ROT90,  "[Stern] (Tago license)", "Calipso" )
-GAME( 1982, anteater, 0,        type1,    anteater, anteater, ROT90,  "[Stern] (Tago license)", "Anteater" )
-GAME( 1982, rescue,   0,        rescue,   rescue,   rescue,	  ROT90,  "Stern", "Rescue" )
-GAME( 1983, minefld,  0,        minefld,  minefld,  minefld,  ROT90,  "Stern", "Minefield" )
-GAME( 1982, losttomb, 0,        type1,    losttomb, losttomb, ROT90,  "Stern", "Lost Tomb (easy)" )
-GAME( 1982, losttmbh, losttomb, type1,    losttomb, losttomb, ROT90,  "Stern", "Lost Tomb (hard)" )
-GAMEX(1982?,superbon, 0,        type1,    superbon, superbon, ROT90,  "bootleg", "Super Bond", GAME_WRONG_COLORS )
-GAME( 1981, hustler,  0,        hustler,  hustler,  hustler,  ROT90,  "Konami", "Video Hustler" )
-GAME( 1981, billiard, hustler,  hustler,  hustler,  billiard, ROT90,  "bootleg", "The Billiards" )
-GAME( 1981, hustlerb, hustler,  hustlerb, hustler,  scobra,   ROT90,  "bootleg", "Video Hustler (bootleg)" )
+GAME( 1981, scobra,   0,        type1,    scobra,   scobra,       ROT90,  "Konami", "Super Cobra" )
+GAME( 1981, scobras,  scobra,   type1,    scobras,  scobra,       ROT90,  "[Konami] (Stern license)", "Super Cobra (Stern)" )
+GAME( 1981, scobrab,  scobra,   type1,    scobras,  scobra,       ROT90,  "bootleg", "Super Cobra (bootleg)" )
+GAME( 1981, stratgyx, 0,        stratgyx, stratgyx, stratgyx,     ROT0,   "Konami", "Strategy X" )
+GAME( 1981, stratgys, stratgyx, stratgyx, stratgyx, stratgyx,     ROT0,   "[Konami] (Stern license)", "Strategy X (Stern)" )
+GAME( 1981, armorcar, 0,        armorcar, armorcar, scramble_ppi, ROT90,  "Stern", "Armored Car (set 1)" )
+GAME( 1981, armorca2, armorcar, armorcar, armorcar, scramble_ppi, ROT90,  "Stern", "Armored Car (set 2)" )
+GAME( 1981, moonwar,  0,        moonwar,  moonwar,  moonwar,      ROT90,  "Stern", "Moonwar" )
+GAME( 1981, moonwara, moonwar,  moonwar,  moonwara, moonwar,      ROT90,  "Stern", "Moonwar (older)" )
+GAME( 1984, spdcoin,  0,        type1,    spdcoin,  scramble_ppi, ROT90,  "Stern", "Speed Coin (prototype)" )
+GAME( 1982, darkplnt, 0,        darkplnt, darkplnt, darkplnt,     ROT180, "Stern", "Dark Planet" )
+GAME( 1982, tazmania, 0,        type1,    tazmania, scobra,       ROT90,  "Stern", "Tazz-Mania" )
+GAME( 1982, tazmani2, tazmania, type2,    tazmania, tazmani2,     ROT90,  "Stern", "Tazz-Mania (set 2)" )
+GAME( 1982, calipso,  0,        calipso,  calipso,  scobra,       ROT90,  "[Stern] (Tago license)", "Calipso" )
+GAME( 1982, anteater, 0,        type1,    anteater, anteater,     ROT90,  "[Stern] (Tago license)", "Anteater" )
+GAME( 1982, rescue,   0,        rescue,   rescue,   rescue,       ROT90,  "Stern", "Rescue" )
+GAME( 1983, minefld,  0,        minefld,  minefld,  minefld,      ROT90,  "Stern", "Minefield" )
+GAME( 1982, losttomb, 0,        type1,    losttomb, losttomb,     ROT90,  "Stern", "Lost Tomb (easy)" )
+GAME( 1982, losttmbh, losttomb, type1,    losttomb, losttomb,     ROT90,  "Stern", "Lost Tomb (hard)" )
+GAMEX(198?, superbon, 0,        type1,    superbon, superbon,     ROT90,  "bootleg", "Super Bond", GAME_WRONG_COLORS )
+GAME( 1981, hustler,  0,        hustler,  hustler,  hustler,      ROT90,  "Konami", "Video Hustler" )
+GAME( 1981, billiard, hustler,  hustler,  hustler,  billiard,     ROT90,  "bootleg", "The Billiards" )
+GAME( 1981, hustlerb, hustler,  hustlerb, hustler,  scramble_ppi, ROT90,  "bootleg", "Video Hustler (bootleg)" )

@@ -406,8 +406,6 @@ void galivan_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	tilemap_set_scrollx(bg_tilemap,0,scrollx[0] + 256 * (scrollx[1] & 0x07));
 	tilemap_set_scrolly(bg_tilemap,0,scrolly[0] + 256 * (scrolly[1] & 0x07));
 
-	tilemap_update (ALL_TILEMAPS);
-
 	if (layers & 0x40)
 		fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 	else
@@ -425,8 +423,6 @@ void ninjemak_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	/* (scrollx[1] & 0x40) does something */
 	tilemap_set_scrollx(bg_tilemap,0,scrollx[0] + 256 * (scrollx[1] & 0x1f));
 	tilemap_set_scrolly(bg_tilemap,0,scrolly[0] + 256 * (scrolly[1] & 0xff));
-
-	tilemap_update(ALL_TILEMAPS);
 
 	if (ninjemak_dispdisable)
 		fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);

@@ -104,13 +104,6 @@ void xmen_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	K052109_tilemap_update();
 
-	palette_init_used_colors();
-	K053247_mark_sprites_colors();
-
-	if(palette_used_colors)
-		palette_used_colors[16 * bg_colorbase+1] |= PALETTE_COLOR_VISIBLE;
-	palette_recalc();
-
 	layer[0] = 0;
 	layerpri[0] = K053251_get_priority(K053251_CI3);
 	layer[1] = 1;
@@ -127,5 +120,6 @@ void xmen_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	K052109_tilemap_draw(bitmap,layer[1],0,2);
 	K052109_tilemap_draw(bitmap,layer[2],0,4);
 
+	pdrawgfx_shadow_lowpri = 1;	/* fix shadows of boulders in front of feet */
 	K053247_sprites_draw(bitmap);
 }

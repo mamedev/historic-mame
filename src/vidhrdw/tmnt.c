@@ -1,4 +1,5 @@
 #include "driver.h"
+#include "machine/eeprom.h"
 #include "vidhrdw/konamiic.h"
 
 
@@ -6,6 +7,8 @@ static int layer_colorbase[3],sprite_colorbase,bg_colorbase;
 static int priorityflag;
 static int layerpri[3];
 static int prmrsocr_sprite_bank;
+static int sorted_layer[3];
+static int dim_c,dim_v;	/* ssriders, tmnt2 */
 
 
 /***************************************************************************
@@ -421,6 +424,28 @@ WRITE16_HANDLER( glfgreat_122000_w )
 	}
 }
 
+
+WRITE16_HANDLER( ssriders_eeprom_w )
+{
+	if (ACCESSING_LSB)
+	{
+		/* bit 0 is data */
+		/* bit 1 is cs (active low) */
+		/* bit 2 is clock (active high) */
+		EEPROM_write_bit(data & 0x01);
+		EEPROM_set_cs_line((data & 0x02) ? CLEAR_LINE : ASSERT_LINE);
+		EEPROM_set_clock_line((data & 0x04) ? ASSERT_LINE : CLEAR_LINE);
+
+		/* bits 3-4 control palette dimming */
+		/* 4 = DIMPOL = when set, negate SHAD */
+		/* 3 = DIMMOD = when set, or BRIT with [negated] SHAD */
+		dim_c = data & 0x18;
+
+		/* bit 5 selects sprite ROM for testing in TMNT2 (bits 5-7, actually, according to the schematics) */
+		K053244_bankselect(((data & 0x20) >> 5) << 2);
+	}
+}
+
 WRITE16_HANDLER( ssriders_1c0300_w )
 {
 	if (ACCESSING_LSB)
@@ -432,7 +457,8 @@ WRITE16_HANDLER( ssriders_1c0300_w )
 		/* bit 3 = enable char ROM reading through the video RAM */
 		K052109_set_RMRD_line((data & 0x08) ? ASSERT_LINE : CLEAR_LINE);
 
-		/* other bits unknown (bits 4-6 used in TMNT2) */
+		/* bits 4-6 control palette dimming (DIM0-DIM2) */
+		dim_v = (data & 0x70) >> 4;
 	}
 }
 
@@ -499,7 +525,7 @@ static void sortlayers(int *layer,int *pri)
 	{ \
 		int t; \
 		t = pri[a]; pri[a] = pri[b]; pri[b] = t; \
-		t = layer[a]; layer[a] = layer[b]; layer[b] = t; \
+		t = sorted_layer[a]; sorted_layer[a] = sorted_layer[b]; sorted_layer[b] = t; \
 	}
 
 	SWAP(0,1)
@@ -510,10 +536,6 @@ static void sortlayers(int *layer,int *pri)
 void mia_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	K052109_tilemap_update();
-
-	palette_init_used_colors();
-	K051960_mark_sprites_colors();
-	palette_recalc();
 
 	K052109_tilemap_draw(bitmap,2,TILEMAP_IGNORE_TRANSPARENCY,0);
 	if ((priorityflag & 1) == 1) K051960_sprites_draw(bitmap,0,0);
@@ -526,10 +548,6 @@ void tmnt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	K052109_tilemap_update();
 
-	palette_init_used_colors();
-	K051960_mark_sprites_colors();
-	palette_recalc();
-
 	K052109_tilemap_draw(bitmap,2,TILEMAP_IGNORE_TRANSPARENCY,0);
 	if ((priorityflag & 1) == 1) K051960_sprites_draw(bitmap,0,0);
 	K052109_tilemap_draw(bitmap,1,0,0);
@@ -540,9 +558,6 @@ void tmnt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 void punkshot_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	int layer[3];
-
-
 	bg_colorbase       = K053251_get_palette_index(K053251_CI0);
 	sprite_colorbase   = K053251_get_palette_index(K053251_CI1);
 	layer_colorbase[0] = K053251_get_palette_index(K053251_CI2);
@@ -551,23 +566,19 @@ void punkshot_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	K052109_tilemap_update();
 
-	palette_init_used_colors();
-	K051960_mark_sprites_colors();
-	palette_recalc();
-
-	layer[0] = 0;
+	sorted_layer[0] = 0;
 	layerpri[0] = K053251_get_priority(K053251_CI2);
-	layer[1] = 1;
+	sorted_layer[1] = 1;
 	layerpri[1] = K053251_get_priority(K053251_CI4);
-	layer[2] = 2;
+	sorted_layer[2] = 2;
 	layerpri[2] = K053251_get_priority(K053251_CI3);
 
-	sortlayers(layer,layerpri);
+	sortlayers(sorted_layer,layerpri);
 
 	fillbitmap(priority_bitmap,0,NULL);
-	K052109_tilemap_draw(bitmap,layer[0],TILEMAP_IGNORE_TRANSPARENCY,1);
-	K052109_tilemap_draw(bitmap,layer[1],0,2);
-	K052109_tilemap_draw(bitmap,layer[2],0,4);
+	K052109_tilemap_draw(bitmap,sorted_layer[0],TILEMAP_IGNORE_TRANSPARENCY,1);
+	K052109_tilemap_draw(bitmap,sorted_layer[1],0,2);
+	K052109_tilemap_draw(bitmap,sorted_layer[2],0,4);
 
 	K051960_sprites_draw(bitmap,-1,-1);
 }
@@ -575,9 +586,6 @@ void punkshot_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 void lgtnfght_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	int layer[3];
-
-
 	bg_colorbase       = K053251_get_palette_index(K053251_CI0);
 	sprite_colorbase   = K053251_get_palette_index(K053251_CI1);
 	layer_colorbase[0] = K053251_get_palette_index(K053251_CI2);
@@ -586,34 +594,26 @@ void lgtnfght_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	K052109_tilemap_update();
 
-	palette_init_used_colors();
-	K053245_mark_sprites_colors();
-	palette_used_colors[16 * bg_colorbase] |= PALETTE_COLOR_VISIBLE;
-	palette_recalc();
-
-	layer[0] = 0;
+	sorted_layer[0] = 0;
 	layerpri[0] = K053251_get_priority(K053251_CI2);
-	layer[1] = 1;
+	sorted_layer[1] = 1;
 	layerpri[1] = K053251_get_priority(K053251_CI4);
-	layer[2] = 2;
+	sorted_layer[2] = 2;
 	layerpri[2] = K053251_get_priority(K053251_CI3);
 
-	sortlayers(layer,layerpri);
+	sortlayers(sorted_layer,layerpri);
 
 	fillbitmap(priority_bitmap,0,NULL);
 	fillbitmap(bitmap,Machine->pens[16 * bg_colorbase],&Machine->visible_area);
-	K052109_tilemap_draw(bitmap,layer[0],0,1);
-	K052109_tilemap_draw(bitmap,layer[1],0,2);
-	K052109_tilemap_draw(bitmap,layer[2],0,4);
+	K052109_tilemap_draw(bitmap,sorted_layer[0],0,1);
+	K052109_tilemap_draw(bitmap,sorted_layer[1],0,2);
+	K052109_tilemap_draw(bitmap,sorted_layer[2],0,4);
 
 	K053245_sprites_draw(bitmap);
 }
 
 void glfgreat_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	int layer[3];
-
-
 	bg_colorbase       = K053251_get_palette_index(K053251_CI0);
 	sprite_colorbase   = K053251_get_palette_index(K053251_CI1);
 	layer_colorbase[0] = K053251_get_palette_index(K053251_CI2);
@@ -622,47 +622,60 @@ void glfgreat_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	K052109_tilemap_update();
 
-	palette_init_used_colors();
-	K053245_mark_sprites_colors();
-	palette_used_colors[16 * bg_colorbase] |= PALETTE_COLOR_VISIBLE;
-	palette_recalc();
-
-	layer[0] = 0;
+	sorted_layer[0] = 0;
 	layerpri[0] = K053251_get_priority(K053251_CI2);
-	layer[1] = 1;
+	sorted_layer[1] = 1;
 	layerpri[1] = K053251_get_priority(K053251_CI3);
-	layer[2] = 2;
+	sorted_layer[2] = 2;
 	layerpri[2] = K053251_get_priority(K053251_CI4);
 
-	sortlayers(layer,layerpri);
+	sortlayers(sorted_layer,layerpri);
 
 	fillbitmap(priority_bitmap,0,NULL);
 	fillbitmap(bitmap,Machine->pens[16 * bg_colorbase],&Machine->visible_area);
-	K052109_tilemap_draw(bitmap,layer[0],0,1);
-	K052109_tilemap_draw(bitmap,layer[1],0,2);
-	K052109_tilemap_draw(bitmap,layer[2],0,4);
+	K052109_tilemap_draw(bitmap,sorted_layer[0],0,1);
+	K052109_tilemap_draw(bitmap,sorted_layer[1],0,2);
+	K052109_tilemap_draw(bitmap,sorted_layer[2],0,4);
 
 	K053245_sprites_draw(bitmap);
 }
 
-void ssriders_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void tmnt2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	int i;
-
-	for (i = 0;i < 128;i++)
-		if ((K053245_word_r(8*i,0) & 0x8000) && !(K053245_word_r(8*i+1,0) & 0x8000)) {
-			K053245_word_w(8*i,i,0xff00);	/* workaround for protection */
-		}
+	static int lastdim;
+	int i,newdim;
 
 	lgtnfght_vh_screenrefresh(bitmap,full_refresh);
+
+	newdim = dim_v | ((~dim_c & 0x10) >> 1);
+	if (newdim != lastdim)
+	{
+		double brt = 1.0 - (1.0-PALETTE_DEFAULT_SHADOW_FACTOR)*newdim/8;
+		int cb;
+
+		lastdim = newdim;
+
+		/* only affect the background and sprites, not text layer */
+		cb = layer_colorbase[sorted_layer[0]] * 16;
+		for (i = cb;i < cb + 128;i++)
+			palette_set_brightness(i,brt);
+		cb = layer_colorbase[sorted_layer[1]] * 16;
+		for (i = cb;i < cb + 128;i++)
+			palette_set_brightness(i,brt);
+		cb = sprite_colorbase * 16;
+		for (i = cb;i < cb + 512;i++)
+			palette_set_brightness(i,brt);
+
+		if (~dim_c & 0x10)
+			palette_set_shadow_factor(1/PALETTE_DEFAULT_SHADOW_FACTOR);
+		else
+			palette_set_shadow_factor(PALETTE_DEFAULT_SHADOW_FACTOR);
+	}
 }
 
 
 void thndrx2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	int layer[3];
-
-
 	bg_colorbase       = K053251_get_palette_index(K053251_CI0);
 	sprite_colorbase   = K053251_get_palette_index(K053251_CI1);
 	layer_colorbase[0] = K053251_get_palette_index(K053251_CI2);
@@ -671,25 +684,20 @@ void thndrx2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	K052109_tilemap_update();
 
-	palette_init_used_colors();
-	K051960_mark_sprites_colors();
-	palette_used_colors[16 * bg_colorbase] |= PALETTE_COLOR_VISIBLE;
-	palette_recalc();
-
-	layer[0] = 0;
+	sorted_layer[0] = 0;
 	layerpri[0] = K053251_get_priority(K053251_CI2);
-	layer[1] = 1;
+	sorted_layer[1] = 1;
 	layerpri[1] = K053251_get_priority(K053251_CI4);
-	layer[2] = 2;
+	sorted_layer[2] = 2;
 	layerpri[2] = K053251_get_priority(K053251_CI3);
 
-	sortlayers(layer,layerpri);
+	sortlayers(sorted_layer,layerpri);
 
 	fillbitmap(priority_bitmap,0,NULL);
 	fillbitmap(bitmap,Machine->pens[16 * bg_colorbase],&Machine->visible_area);
-	K052109_tilemap_draw(bitmap,layer[0],0,1);
-	K052109_tilemap_draw(bitmap,layer[1],0,2);
-	K052109_tilemap_draw(bitmap,layer[2],0,4);
+	K052109_tilemap_draw(bitmap,sorted_layer[0],0,1);
+	K052109_tilemap_draw(bitmap,sorted_layer[1],0,2);
+	K052109_tilemap_draw(bitmap,sorted_layer[2],0,4);
 
 	K051960_sprites_draw(bitmap,-1,-1);
 }

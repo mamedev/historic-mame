@@ -21,8 +21,6 @@
 
 int rampart_bitmap_init(int _xdim, int _ydim);
 void rampart_bitmap_free(void);
-void rampart_bitmap_invalidate(void);
-void rampart_bitmap_mark_palette(int base);
 void rampart_bitmap_render(struct osd_bitmap *bitmap);
 
 
@@ -75,7 +73,7 @@ int arcadecl_vh_start(void)
 		{{ 0 }},			/* mask for the priority */
 		{{ 0 }},			/* mask for the neighbor */
 		{{ 0 }},			/* mask for absolute coordinates */
-		
+
 		{{ 0 }},			/* mask for the ignore value */
 		0,					/* resulting value to indicate "ignore" */
 		0,					/* callback routine for ignored entries */
@@ -126,16 +124,6 @@ void arcadecl_vh_stop(void)
 
 void arcadecl_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	/* mark the used colors */
-	palette_init_used_colors();
-	rampart_bitmap_mark_palette(0);
-	if (has_mo)
-		atarimo_mark_palette(0);
-
-	/* update the palette, and mark things dirty if we need to */
-	if (palette_recalc())
-		rampart_bitmap_invalidate();
-
 	/* draw the layers */
 	rampart_bitmap_render(bitmap);
 	if (has_mo)

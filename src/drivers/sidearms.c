@@ -545,10 +545,10 @@ static const struct MachineDriver machine_driver_sidearms =
 	/* video hardware */
 	64*8, 32*8, { 8*8, (64-8)*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	1024, 1024,
+	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	sidearms_vh_start,
 	sidearms_vh_stop,
@@ -588,10 +588,10 @@ static const struct MachineDriver machine_driver_turtship =
 	/* video hardware */
 	64*8, 32*8, { 8*8, (64-8)*8-1, 2*8, 30*8-1 },
 	turtship_gfxdecodeinfo,
-	1024, 1024,
+	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	sidearms_vh_start,
 	sidearms_vh_stop,

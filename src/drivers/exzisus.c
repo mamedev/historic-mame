@@ -385,7 +385,7 @@ static const struct MachineDriver machine_driver_exzisus =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	exzisus_gfxdecodeinfo,
-	1024, 1024,
+	1024, 0,
 	exzisus_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
@@ -429,7 +429,7 @@ ROM_START( exzisus )
 	ROM_CONTINUE(           0x10000, 0x08000 )
 	ROM_LOAD( "b23-12.bin", 0x18000, 0x10000, 0x13637f54 )
 
-	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )	/* BG 0 */
+	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_INVERT )	/* BG 0 */
 	ROM_LOAD( "b12-16.bin",  0x00000, 0x10000, 0x6fec6acb )
 	ROM_LOAD( "b12-18.bin",  0x10000, 0x10000, 0x64e358aa )
 	ROM_LOAD( "b12-20.bin",  0x20000, 0x10000, 0x87f52e89 )
@@ -437,7 +437,7 @@ ROM_START( exzisus )
 	ROM_LOAD( "b12-17.bin",  0x50000, 0x10000, 0xdb1d5a6c )
 	ROM_LOAD( "b12-19.bin",  0x60000, 0x10000, 0x772b2641 )
 
-	ROM_REGION( 0x80000, REGION_GFX2, ROMREGION_DISPOSE )	/* BG 1 */
+	ROM_REGION( 0x80000, REGION_GFX2, ROMREGION_DISPOSE | ROMREGION_INVERT )	/* BG 1 */
 	ROM_LOAD( "b23-06.bin",  0x00000, 0x10000, 0x44f8f661 )
 	ROM_LOAD( "b23-08.bin",  0x10000, 0x10000, 0x1ce498c1 )
 	ROM_LOAD( "b23-07.bin",  0x40000, 0x10000, 0xd7f6ec89 )

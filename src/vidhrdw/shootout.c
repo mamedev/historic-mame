@@ -110,14 +110,8 @@ static void draw_sprites( struct osd_bitmap *bitmap, int bank_bits ){
 	}
 }
 
-static void draw_sprites2( struct osd_bitmap *bitmap ){
-}
-
-void shootout_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
-	tilemap_update(ALL_TILEMAPS);
-	palette_init_used_colors();
-//	mark_sprite_colors();
-	palette_recalc();
+void shootout_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
 	fillbitmap(priority_bitmap,0,NULL);
 
 	tilemap_draw(bitmap,background,0,0);
@@ -125,11 +119,8 @@ void shootout_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
 	draw_sprites( bitmap,3/*bank bits */ );
 }
 
-void shootouj_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
-	tilemap_update(ALL_TILEMAPS);
-	palette_init_used_colors();
-//	mark_sprite_colors();
-	palette_recalc();
+void shootouj_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
 	fillbitmap(priority_bitmap,0,NULL);
 
 	tilemap_draw(bitmap,background,0,1);

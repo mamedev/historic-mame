@@ -624,10 +624,10 @@ static const struct MachineDriver machine_driver_mcr2 =
 	/* video hardware */
 	32*16, 30*16, { 0*16, 32*16-1, 0*16, 30*16-1 },
 	gfxdecodeinfo,
-	64,64,
+	64, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
 	mcr12_vh_start,
 	mcr12_vh_stop,
@@ -662,10 +662,10 @@ static const struct MachineDriver machine_driver_journey =
 	/* video hardware */
 	32*16, 30*16, { 0*16, 32*16-1, 0*16, 30*16-1 },
 	gfxdecodeinfo,
-	64,64,
+	64, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
 	generic_vh_start,
 	generic_vh_stop,

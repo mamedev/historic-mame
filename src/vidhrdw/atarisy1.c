@@ -611,8 +611,8 @@ static int overrender_callback(struct ataripf_overrender_data *data, int state)
 		dummygfx.colortable = &Machine->remapped_colortable[0x300];
 		dummygfx.total_colors = 1;
 		dummygfx.pen_usage = NULL;
-		dummygfx.gfxdata = &trans_bitmap_mo->line[data->clip.min_y][data->clip.min_x];
-		dummygfx.line_modulo = trans_bitmap_mo->line[1] - trans_bitmap_mo->line[0];
+		dummygfx.gfxdata = ((UINT8 *)trans_bitmap_mo->line[data->clip.min_y])+data->clip.min_x;
+		dummygfx.line_modulo = ((UINT8 *)trans_bitmap_mo->line[1]) - ((UINT8 *)trans_bitmap_mo->line[0]);
 		dummygfx.char_modulo = 0;
 		dummygfx.flags = 0;
 		mdrawgfx(real_dest, &dummygfx, 0, 0, 0, 0,
@@ -623,8 +623,8 @@ static int overrender_callback(struct ataripf_overrender_data *data, int state)
 		{
 			copybitmap(priority_bitmap, priority_copy, 0, 0, 0, 0, &data->clip, TRANSPARENCY_NONE, 0);
 			dummygfx.colortable = &Machine->remapped_colortable[0x200];
-			dummygfx.gfxdata = &trans_bitmap_pf->line[data->clip.min_y][data->clip.min_x];
-			dummygfx.line_modulo = trans_bitmap_pf->line[1] - trans_bitmap_pf->line[0];
+			dummygfx.gfxdata = ((UINT8 *)trans_bitmap_pf->line[data->clip.min_y])+data->clip.min_x;
+			dummygfx.line_modulo = ((UINT8 *)trans_bitmap_pf->line[1]) - ((UINT8 *)trans_bitmap_pf->line[0]);
 			mdrawgfx(real_dest, &dummygfx, 0, 0, 0, 0,
 					data->clip.min_x, data->clip.min_y, &data->clip, TRANSPARENCY_NONE, 0, ~0x0002);
 		}
@@ -642,20 +642,6 @@ static int overrender_callback(struct ataripf_overrender_data *data, int state)
 
 void atarisys1_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
-	int i;
-
-	/* mark the used colors */
-	palette_init_used_colors();
-	ataripf_mark_palette(0);
-	atarimo_mark_palette(0);
-	atarian_mark_palette(0);
-	for (i = 0; i < 16; i++)
-		memset(&palette_used_colors[0x302 + i * 16], PALETTE_COLOR_USED, 0x0e);
-
-	/* update the palette, and mark things dirty if we need to */
-	if (palette_recalc())
-		ataripf_invalidate(0);
-
 	/* draw the layers */
 	ataripf_render(0, bitmap);
 	atarimo_render(0, bitmap, overrender_callback, NULL);

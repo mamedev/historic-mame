@@ -125,7 +125,6 @@ void nec_reset (void *param)
     }
 
 	I.ZeroVal = I.ParityVal = 1;
-	I.DF = 1;
 	SetMD(1);						/* set the mode-flag = native mode */
 
     for (i = 0; i < 256; i++)
@@ -438,8 +437,8 @@ OP( 0x6a, i_push_d8  ) { UINT32 tmp = (WORD)((INT16)((INT8)FETCH)); 	PUSH(tmp);	
 OP( 0x6b, i_imul_d8  ) { UINT32 src2; DEF_r16w; src2= (WORD)((INT16)((INT8)FETCH)); dst = (INT32)((INT16)src)*(INT32)((INT16)src2); I.CarryVal = I.OverVal = (((INT32)dst) >> 15 != 0) && (((INT32)dst) >> 15 != -1); RegWord(ModRM)=(WORD)dst; nec_ICount-=(ModRM >=0xc0 )?31:39; }
 OP( 0x6c, i_insb     ) { PutMemB(ES,I.regs.w[IY],read_port(I.regs.w[DW])); I.regs.w[IY]+= -2 * I.DF + 1; CLK(8); }
 OP( 0x6d, i_insw     ) { PutMemB(ES,I.regs.w[IY],read_port(I.regs.w[DW])); PutMemB(ES,(I.regs.w[IY]+1)&0xffff,read_port((I.regs.w[DW]+1)&0xffff)); I.regs.w[IY]+= -4 * I.DF + 2; CLKS(18,10,8); }
-OP( 0x6e, i_outsb    ) { write_port(I.regs.w[DW],GetMemB(DS,I.regs.w[IX])); I.regs.w[IY]+= -2 * I.DF + 1; CLK(8); }
-OP( 0x6f, i_outsw    ) { write_port(I.regs.w[DW],GetMemB(DS,I.regs.w[IX])); write_port((I.regs.w[DW]+1)&0xffff,GetMemB(DS,(I.regs.w[IX]+1))&0xffff); I.regs.w[IY]+= -4 * I.DF + 2; CLKS(18,10,8); }
+OP( 0x6e, i_outsb    ) { write_port(I.regs.w[DW],GetMemB(DS,I.regs.w[IX])); I.regs.w[IX]+= -2 * I.DF + 1; CLK(8); }
+OP( 0x6f, i_outsw    ) { write_port(I.regs.w[DW],GetMemB(DS,I.regs.w[IX])); write_port((I.regs.w[DW]+1)&0xffff,GetMemB(DS,(I.regs.w[IX]+1)&0xffff)); I.regs.w[IX]+= -4 * I.DF + 2; CLKS(18,10,8); }
 
 OP( 0x70, i_jo      ) { JMP( OF);				CLKS(4,4,3); }
 OP( 0x71, i_jno     ) { JMP(!OF);				CLKS(4,4,3); }
@@ -538,8 +537,8 @@ OP( 0x8e, i_mov_sregw ) { UINT16 src; GetModRM; src = GetRMWord(ModRM); CLKR(15,
 OP( 0x8f, i_popw ) { UINT16 tmp; GetModRM; POP(tmp); PutRMWord(ModRM,tmp); nec_ICount-=21; }
 OP( 0x90, i_nop  ) { CLK(3);
 	/* Cycle skip for idle loops (0: NOP  1:  JMP 0) */
-	if ((PEEKOP((I.sregs[CS]<<4)+I.ip))==0xeb && (PEEK((I.sregs[CS]<<4)+I.ip+1))==0xfd)
-		nec_ICount=0;
+	if (no_interrupt==0 && nec_ICount>0 && (PEEKOP((I.sregs[CS]<<4)+I.ip))==0xeb && (PEEK((I.sregs[CS]<<4)+I.ip+1))==0xfd)
+		nec_ICount%=15;
 }
 OP( 0x91, i_xchg_axcx ) { XchgAWReg(CW); CLK(3); }
 OP( 0x92, i_xchg_axdx ) { XchgAWReg(DW); CLK(3); }
@@ -564,8 +563,8 @@ OP( 0xa2, i_mov_dispal ) { UINT32 addr; FETCHWORD(addr); PutMemB(DS, addr, I.reg
 OP( 0xa3, i_mov_dispax ) { UINT32 addr; FETCHWORD(addr); PutMemB(DS, addr, I.regs.b[AL]);  PutMemB(DS, (addr+1)&0xffff, I.regs.b[AH]); CLKW(13,13,5,13,9,3); }
 OP( 0xa4, i_movsb      ) { UINT32 tmp = GetMemB(DS,I.regs.w[IX]); PutMemB(ES,I.regs.w[IY], tmp); I.regs.w[IY] += -2 * I.DF + 1; I.regs.w[IX] += -2 * I.DF + 1; CLKS(8,8,6); }
 OP( 0xa5, i_movsw      ) { UINT32 tmp = GetMemW(DS,I.regs.w[IX]); PutMemW(ES,I.regs.w[IY], tmp); I.regs.w[IY] += -4 * I.DF + 2; I.regs.w[IX] += -4 * I.DF + 2; CLKS(16,16,10); }
-OP( 0xa6, i_cmpsb      ) { UINT32 src = GetMemB(ES, I.regs.w[IY]); UINT32 dst = GetMemB(DS, I.regs.w[IX]); SUBB; I.regs.w[IY] += -2 * I.DF + 1; I.regs.w[IX] += -2 * I.DF + 1; nec_ICount-=14; }
-OP( 0xa7, i_cmpsw      ) { UINT32 src = GetMemB(ES, I.regs.w[IY]); UINT32 dst = GetMemB(DS, I.regs.w[IX]); SUBW; I.regs.w[IY] += -4 * I.DF + 2; I.regs.w[IX] += -4 * I.DF + 2; nec_ICount-=14; }
+OP( 0xa6, i_cmpsb      ) { UINT32 src = GetMemB(ES, I.regs.w[IY]); UINT32 dst = GetMemB(DS, I.regs.w[IX]); SUBB; I.regs.w[IY] += -2 * I.DF + 1; I.regs.w[IX] += -2 * I.DF + 1; CLKS(14,14,14); }
+OP( 0xa7, i_cmpsw      ) { UINT32 src = GetMemW(ES, I.regs.w[IY]); UINT32 dst = GetMemW(DS, I.regs.w[IX]); SUBW; I.regs.w[IY] += -4 * I.DF + 2; I.regs.w[IX] += -4 * I.DF + 2; CLKS(14,14,14); }
 
 OP( 0xa8, i_test_ald8  ) { DEF_ald8;  ANDB; CLKS(10,10,6); }
 OP( 0xa9, i_test_axd16 ) { DEF_axd16; ANDW; CLKW(14,14,8,14,10,6); }
@@ -744,7 +743,7 @@ OP( 0xe8, i_call_d16 ) { UINT32 tmp; FETCHWORD(tmp); PUSH(I.ip); I.ip = (WORD)(I
 OP( 0xe9, i_jmp_d16  ) { UINT32 tmp; FETCHWORD(tmp); I.ip = (WORD)(I.ip+(INT16)tmp); CHANGE_PC; nec_ICount-=15; }
 OP( 0xea, i_jmp_far  ) { UINT32 tmp,tmp1; FETCHWORD(tmp); FETCHWORD(tmp1); I.sregs[CS] = (WORD)tmp1; 	I.ip = (WORD)tmp; CHANGE_PC; nec_ICount-=27;  }
 OP( 0xeb, i_jmp_d8   ) { int tmp = (int)((INT8)FETCH); nec_ICount-=12;
-	if (tmp==-2) nec_ICount=0; /* cycle skip */
+	if (tmp==-2 && no_interrupt==0 && nec_ICount>0) nec_ICount%=12; /* cycle skip */
 	I.ip = (WORD)(I.ip+tmp);
 }
 OP( 0xec, i_inaldx   ) { I.regs.b[AL] = read_port(I.regs.w[DW]); CLKS(8,8,5);}
@@ -866,7 +865,6 @@ OP( 0xff, i_ffpre ) { UINT32 tmp, tmp1; GetModRM; tmp=GetRMWord(ModRM);
 static void i_invalid(void)
 {
 	nec_ICount-=10;
-//	if (cpu_get_pc()!=0x1067 && cpu_get_pc()!=0x12dc && cpu_get_pc()!=0x12dd && cpu_get_pc()!=0x12f2 && cpu_get_pc()!=0x12f3 && cpu_get_pc()!=0x1110 && cpu_get_pc()!=0x110f && cpu_get_pc()!=0x87650)
 	logerror("%06x: Invalid Opcode\n",cpu_get_pc());
 }
 
@@ -1007,12 +1005,12 @@ void nec_set_irq_line(int irqline, int state)
 	I.irq_state = state;
 	if (state == CLEAR_LINE)
 	{
-		if (!I.IF)
+//		if (!I.IF)	NS010718 fix interrupt request loss
 			I.pending_irq &= ~INT_IRQ;
 	}
 	else
 	{
-		if (I.IF)
+//		if (I.IF)	NS010718 fix interrupt request loss
 			I.pending_irq |= INT_IRQ;
 	}
 }
@@ -1042,12 +1040,16 @@ int v20_execute(int cycles)
 	cpu_type=V20;
 
 	while(nec_ICount>0) {
-		if (I.pending_irq) {
+//		if (I.pending_irq) {
+		if (I.IF && I.pending_irq) {	// NS010718 fix interrupt request loss
 			/* No interrupt allowed between last instruction and this one */
-			if (no_interrupt)
-				no_interrupt=0;
+			if (no_interrupt==1)
+				no_interrupt=-1;	// NS010726 use intermediate flag to properly handle cycle skip optimizations
 			else
+			{
+				no_interrupt=0;
 				external_int();
+			}
 		}
 
 		CALL_MAME_DEBUG;
@@ -1137,12 +1139,16 @@ int v30_execute(int cycles) {
 	cpu_type=V30;
 
 	while(nec_ICount>0) {
-		if (I.pending_irq) {
+//		if (I.pending_irq) {
+		if (I.IF && I.pending_irq) {	// NS010718 fix interrupt request loss
 			/* No interrupt allowed between last instruction and this one */
-			if (no_interrupt)
-				no_interrupt=0;
+			if (no_interrupt==1)
+				no_interrupt=-1;	// NS010726 use intermediate flag to properly handle cycle skip optimizations
 			else
+			{
+				no_interrupt=0;
 				external_int();
+			}
 		}
 
 		CALL_MAME_DEBUG;
@@ -1189,12 +1195,16 @@ int v33_execute(int cycles)
 	cpu_type=V33;
 
 	while(nec_ICount>0) {
-		if (I.pending_irq) {
+//		if (I.pending_irq) {
+		if (I.IF && I.pending_irq) {	// NS010718 fix interrupt request loss
 			/* No interrupt allowed between last instruction and this one */
-			if (no_interrupt)
-				no_interrupt=0;
+			if (no_interrupt==1)
+				no_interrupt=-1;	// NS010726 use intermediate flag to properly handle cycle skip optimizations
 			else
+			{
+				no_interrupt=0;
 				external_int();
+			}
 		}
 
 		CALL_MAME_DEBUG;

@@ -11,7 +11,7 @@ static data16_t *spriteram_old,*spriteram_old2;
 static int bgbank;
 static int videoshift;
 static int bioship_background_bank;
-static int bioship_scroll[4];
+static UINT8 bioship_scroll[4];
 
 static struct tilemap *bg_tilemap,*fg_tilemap,*tx_tilemap;
 static struct osd_bitmap *background_bitmap;
@@ -92,7 +92,7 @@ int bioship_vh_start(void)
 	tx_tilemap = tilemap_create(macross_get_tx_tile_info,tilemap_scan_cols,TILEMAP_TRANSPARENT,8,8,32,32);
 	spriteram_old = malloc(spriteram_size);
 	spriteram_old2 = malloc(spriteram_size);
-	background_bitmap = bitmap_alloc(4096,256);
+	background_bitmap = bitmap_alloc(8192,512);
 
 	if (!bg_tilemap || !spriteram_old || !spriteram_old2 || !background_bitmap)
 		return 1;
@@ -100,6 +100,7 @@ int bioship_vh_start(void)
 	tilemap_set_transparent_pen(bg_tilemap,15);
 	tilemap_set_transparent_pen(tx_tilemap,15);
 	bioship_background_bank=0;
+	redraw_bitmap = 1;
 
 	memset(spriteram_old,0,spriteram_size);
 	memset(spriteram_old2,0,spriteram_size);
@@ -276,27 +277,6 @@ WRITE16_HANDLER( nmk_txvideoram_w )
 	}
 }
 
-WRITE16_HANDLER( nmk_paletteram_w )
-{
-	int newword, r,g,b;
-
-	COMBINE_DATA(&paletteram16[offset]);
-	newword = paletteram16[offset];
-
-	r = ((newword >> 11) & 0x1e) | ((newword >> 3) & 0x01);
-	g = ((newword >>  7) & 0x1e) | ((newword >> 2) & 0x01);
-	b = ((newword >>  3) & 0x1e) | ((newword >> 1) & 0x01);
-
-	r = (r << 3) | (r >> 2);
-	g = (g << 3) | (g >> 2);
-	b = (b << 3) | (b >> 2);
-
-	palette_change_color(offset,r,g,b);
-
-	/* This is very bad, ensure Bioships tilemap is redrawn if palette changes */
-    if (offset<256) redraw_bitmap=1;
-}
-
 WRITE16_HANDLER( mustang_scroll_w )
 {
 	static UINT8 scroll[4];
@@ -380,9 +360,11 @@ WRITE16_HANDLER( bioship_bank_w )
 {
 	if (ACCESSING_LSB)
 	{
-		if (bioship_background_bank!=((data&7)*0x1000))
+		if (bioship_background_bank != data)
+		{
+			bioship_background_bank = data;
 			redraw_bitmap=1;
-		bioship_background_bank=(data&7)*0x1000;
+		}
 	}
 }
 
@@ -453,64 +435,9 @@ static void draw_sprites(struct osd_bitmap *bitmap, int priority, int pri_mask)
 	}
 }
 
-static void mark_sprites_colors(void)
-{
-	int offs,pal_base,color_mask;
-
-	pal_base = Machine->drv->gfxdecodeinfo[2].color_codes_start;
-	color_mask = Machine->gfx[2]->total_colors - 1;
-
-	for (offs = 0;offs < spriteram_size/2;offs += 8)
-	{
-		if (spriteram_old2[offs])
-		{
-			int color = spriteram_old2[offs+7] & color_mask;
-			memset(&palette_used_colors[pal_base + 16*color],PALETTE_COLOR_USED,16);
-		}
-	}
-}
-
-static void mark_user_tilemap_colors(void)
-{
-	int offs,pal_base,colmask[16],color,code,i;
-	data16_t *tilerom = (data16_t *)memory_region(REGION_USER1);
-
-	pal_base = Machine->drv->gfxdecodeinfo[3].color_codes_start;
-
-	for (color = 0;color < 16;color++) colmask[color] = 0;
-	for (offs = 0; offs < 0x1000;offs++)
-	{
-		code = tilerom[offs+bioship_background_bank];
-		color = (code & 0xf000) >> 12;
-		code &= 0x0fff;
-		colmask[color] |= Machine->gfx[3]->pen_usage[code];
-	}
-
-	for (color = 0;color < 16;color++)
-	{
-		if (colmask[color] & (1 << 0))
-			palette_used_colors[pal_base + 16 * color] = PALETTE_COLOR_TRANSPARENT;
-		for (i = 1;i < 16;i++)
-		{
-			if (colmask[color] & (1 << i))
-				palette_used_colors[pal_base + 16 * color + i] = PALETTE_COLOR_USED;
-		}
-	}
-}
-
 void macross_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	tilemap_set_scrollx(tx_tilemap,0,-videoshift);
-
-	tilemap_update(ALL_TILEMAPS);
-
-	palette_init_used_colors();
-	mark_sprites_colors();
-
-	if (palette_recalc())
-		tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
-
-	tilemap_update(ALL_TILEMAPS);
 
 	tilemap_draw(bitmap,bg_tilemap,0,0);
 	draw_sprites(bitmap,0,0);
@@ -530,54 +457,46 @@ void gunnail_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 void bioship_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	data16_t *tilerom = (data16_t *)memory_region(REGION_USER1);
-	int scrollx=-((bioship_scroll[1]&0xff) + (bioship_scroll[0]&0xff)*256);
-	int scrolly=-((bioship_scroll[3]&0xff) + (bioship_scroll[2]&0xff)*256);
+	data16_t *tilerom = (data16_t *)memory_region(REGION_GFX5);
+	int scrollx=-(bioship_scroll[1] + bioship_scroll[0]*256);
+	int scrolly=-(bioship_scroll[3] + bioship_scroll[2]*256);
 
 	tilemap_set_scrollx(tx_tilemap,0,-videoshift);
-	tilemap_update(ALL_TILEMAPS);
 
-	palette_init_used_colors();
-	mark_sprites_colors();
-	mark_user_tilemap_colors();
-
-	if (palette_recalc()) {
-		tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
-		redraw_bitmap=1;
-	}
-
-	if (redraw_bitmap) {
-		int sx=0, sy=-1, offs;
+	if (redraw_bitmap)
+	{
+		int bank = bioship_background_bank * 0x2000;
+		int sx=0, sy=0, offs;
 		redraw_bitmap=0;
 
-        /* Draw background from tile rom */
-        for (offs = 0;offs <0x1000;offs++) {
-                data16_t data = tilerom[offs+bioship_background_bank];
-                int numtile = data&0xfff;
-                int color = (data&0xf000)>>12;
-                sy++;
-				if (sy==16) {sy=0; sx++;}
+		/* Draw background from tile rom */
+		for (offs = 0;offs <0x1000;offs++) {
+				data16_t data = tilerom[offs+bank];
+				int numtile = data&0xfff;
+				int color = (data&0xf000)>>12;
 
-                drawgfx(background_bitmap,Machine->gfx[3],
-                        numtile,
-                        color,
-                        0,0,   /* no flip */
-                        16*sx,16*sy,
-                        0,TRANSPARENCY_NONE,0);
+				drawgfx(background_bitmap,Machine->gfx[3],
+						numtile,
+						color,
+						0,0,   /* no flip */
+						16*sx,16*sy,
+						0,TRANSPARENCY_NONE,0);
 
-				data = tilerom[offs+0x800+bioship_background_bank];
+				data = tilerom[offs+0x1000+bank];
 				numtile = data&0xfff;
 				color = (data&0xf000)>>12;
-		        drawgfx(background_bitmap,Machine->gfx[3],
-                      	numtile,
-                        color,
-                        0,0,   /* no flip */
-                        16*sx,(16*sy)+256,
-                        0,TRANSPARENCY_NONE,0);
-        }
+				drawgfx(background_bitmap,Machine->gfx[3],
+						numtile,
+						color,
+						0,0,   /* no flip */
+						16*sx,(16*sy)+256,
+						0,TRANSPARENCY_NONE,0);
+
+				sy++;
+				if (sy==16) {sy=0; sx++;}
+		}
 	}
 
-	tilemap_update(ALL_TILEMAPS);
 	copyscrollbitmap(bitmap,background_bitmap,1,&scrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);
 //	draw_sprites(bitmap,5,~5); /* Is this right? */
 	tilemap_draw(bitmap,bg_tilemap,0,0);
@@ -589,16 +508,6 @@ void strahl_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	tilemap_set_scrollx(tx_tilemap,0,-videoshift);
 
-	tilemap_update(ALL_TILEMAPS);
-
-	palette_init_used_colors();
-	mark_sprites_colors();
-
-	if (palette_recalc())
-		tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
-
-	tilemap_update(ALL_TILEMAPS);
-
 	tilemap_draw(bitmap,bg_tilemap,0,0);
 	tilemap_draw(bitmap,fg_tilemap,0,0);
 	draw_sprites(bitmap,0,0);
@@ -608,16 +517,6 @@ void strahl_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 void bjtwin_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	tilemap_set_scrollx(bg_tilemap,0,-videoshift);
-
-	tilemap_update(ALL_TILEMAPS);
-
-	palette_init_used_colors();
-	mark_sprites_colors();
-
-	if (palette_recalc())
-		tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
-
-	tilemap_update(ALL_TILEMAPS);
 
 	tilemap_draw(bitmap,bg_tilemap,0,0);
 	draw_sprites(bitmap,0,0);

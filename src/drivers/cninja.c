@@ -6,6 +6,8 @@
   Caveman Ninja     (c) 1991 Data East Corporation (USA version)
   Joe & Mac         (c) 1991 Data East Corporation (Japanese version)
   Robocop 2         (c) 1991 Data East Corporation (USA version)
+  Robocop 2         (c) 1991 Data East Corporation (Japanese version)
+  Robocop 2         (c) 1991 Data East Corporation (World version)
   Stone Age         (Italian bootleg)
 
   Edward Randy runs on the same board as Caveman Ninja but the protection
@@ -27,33 +29,10 @@ Caveman Ninja Issues:
 ***************************************************************************/
 
 #include "driver.h"
+#include "cninja.h"
 #include "vidhrdw/generic.h"
 #include "cpu/h6280/h6280.h"
 #include "cpu/z80/z80.h"
-
-/* Video emulation definitions */
-extern data16_t *cninja_pf1_rowscroll,*cninja_pf2_rowscroll;
-extern data16_t *cninja_pf3_rowscroll,*cninja_pf4_rowscroll;
-extern data16_t *cninja_pf1_data,*cninja_pf2_data;
-extern data16_t *cninja_pf3_data,*cninja_pf4_data;
-
-int  cninja_vh_start(void);
-int  edrandy_vh_start(void);
-int  robocop2_vh_start(void);
-int  stoneage_vh_start(void);
-void cninja_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void edrandy_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void robocop2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-
-WRITE16_HANDLER( cninja_pf1_data_w );
-WRITE16_HANDLER( cninja_pf2_data_w );
-WRITE16_HANDLER( cninja_pf3_data_w );
-WRITE16_HANDLER( cninja_pf4_data_w );
-WRITE16_HANDLER( cninja_control_0_w );
-WRITE16_HANDLER( cninja_control_1_w );
-
-WRITE16_HANDLER( cninja_palette_24bit_w );
-WRITE16_HANDLER( robocop2_pri_w );
 
 static data16_t loopback[0x80];
 static data16_t *cninja_ram;
@@ -136,44 +115,44 @@ static READ16_HANDLER( edrandy_prot_r )
  	switch (offset<<1) {
 		/* Video registers */
 		case 0x32a: /* Moved to 0x140006 on int */
-			return READ_WORD(&loopback[0x80]);
+			return loopback[0x40];
 		case 0x380: /* Moved to 0x140008 on int */
-			return READ_WORD(&loopback[0x84]);
+			return loopback[0x42];
 		case 0x63a: /* Moved to 0x150002 on int */
-			return READ_WORD(&loopback[0x88]);
+			return loopback[0x44];
 		case 0x42a: /* Moved to 0x150004 on int */
-			return READ_WORD(&loopback[0x8c]);
+			return loopback[0x46];
 		case 0x030: /* Moved to 0x150006 on int */
-			return READ_WORD(&loopback[0x90]);
+			return loopback[0x48];
 		case 0x6b2: /* Moved to 0x150008 on int */
-			return READ_WORD(&loopback[0x94]);
+			return loopback[0x4a];
 
 
 
 
 case 0x6c4: /* dma enable, bit 7 set, below bit 5 */
-case 0x33e: return READ_WORD(&loopback[0x2c]); /* allows video registers */
+case 0x33e: return loopback[0x16]; /* allows video registers */
 
 
 
 
 		/* memcpy selectors, transfer occurs in interrupt */
-		case 0x32e: return READ_WORD(&loopback[0x8]); /* src msb */
-		case 0x6d8: return READ_WORD(&loopback[0xa]); /* src lsb */
-		case 0x010: return READ_WORD(&loopback[0xc]); /* dst msb */
-		case 0x07a: return READ_WORD(&loopback[0xe]); /* src lsb */
+		case 0x32e: return loopback[4]; /* src msb */
+		case 0x6d8: return loopback[5]; /* src lsb */
+		case 0x010: return loopback[6]; /* dst msb */
+		case 0x07a: return loopback[7]; /* src lsb */
 
-		case 0x37c: return READ_WORD(&loopback[0x10]); /* src msb */
-		case 0x250: return READ_WORD(&loopback[0x12]);
-		case 0x04e: return READ_WORD(&loopback[0x14]);
-		case 0x5ba: return READ_WORD(&loopback[0x16]);
-		case 0x5f4: return READ_WORD(&loopback[0x18]); /* length */
+		case 0x37c: return loopback[8]; /* src msb */
+		case 0x250: return loopback[9];
+		case 0x04e: return loopback[10];
+		case 0x5ba: return loopback[11];
+		case 0x5f4: return loopback[12]; /* length */
 
-		case 0x38c: return READ_WORD(&loopback[0x1a]); /* src msb */
-		case 0x02c: return READ_WORD(&loopback[0x1c]);
-		case 0x1e6: return READ_WORD(&loopback[0x1e]);
-		case 0x3e4: return READ_WORD(&loopback[0x20]);
-		case 0x174: return READ_WORD(&loopback[0x22]); /* length */
+		case 0x38c: return loopback[13]; /* src msb */
+		case 0x02c: return loopback[14];
+		case 0x1e6: return loopback[15];
+		case 0x3e4: return loopback[16];
+		case 0x174: return loopback[17]; /* length */
 
 		/* Player 1 & 2 controls, read in IRQ then written *back* to protection device */
 		case 0x50: /* written to 9e byte */
@@ -182,21 +161,21 @@ case 0x33e: return READ_WORD(&loopback[0x2c]); /* allows video registers */
 			return readinputport(1);
 		/* Controls are *really* read here! */
 		case 0x6fa:
-			return (READ_WORD(&loopback[0x9e])&0xff00) | ((READ_WORD(&loopback[0x76])>>8)&0xff);
+			return (loopback[0x4f]&0xff00) | ((loopback[0x3b]>>8)&0xff);
 		/* These two go to the low bytes of 9e and 76.. */
 		case 0xc6: return 0;
 		case 0x7bc: return 0;
 		case 0x5c: /* After coin insert, high 0x8000 bit set starts game */
-			return READ_WORD(&loopback[0x76]);
+			return loopback[0x3b];
 		case 0x3a6: /* Top byte OR'd with above, masked to 7 */
-			return READ_WORD(&loopback[0x9e]);
+			return loopback[0x4f];
 
 //		case 0xac: /* Dip switches */
 
 		case 0xc2: /* Dip switches */
 			return (readinputport(3) + (readinputport(4) << 8));
 		case 0x5d4: /* The state of the dips _last_ frame */
-			return READ_WORD(&loopback[0x34]);
+			return loopback[0x1a];
 
 		case 0x76a: /* Coins */
 			return readinputport(2);
@@ -205,13 +184,13 @@ case 0x33e: return READ_WORD(&loopback[0x2c]); /* allows video registers */
 
 case 0x156: /* Interrupt regulate */
 
-logerror("Int stop %04x\n",READ_WORD(&loopback[0x1a]));
+logerror("Int stop %04x\n",loopback[0xd]);
 
 cpu_spinuntil_int();
 //return readinputport(2);
 
 	/* 4058 or 4056? */
-	return READ_WORD(&loopback[0x36])>>8;
+	return loopback[0x1b]>>8;
 
 
 
@@ -226,7 +205,7 @@ case 0x284: return 0;
 
 
 case 0x2f6: /* btst 2, jsr 11a if set */
-if (READ_WORD(&loopback[0x40])) return 0xffff;
+if (loopback[0x20]) return 0xffff;
 return 0;//READ_WORD(&loopback[0x40]);//0;
 
 
@@ -265,20 +244,20 @@ return 0;//READ_WORD(&loopback[0x40]);//0;
 
 
 /* in game prot */
-case 0x102: return READ_WORD(&loopback[0xa0]);
-case 0x15a: return READ_WORD(&loopback[0xa2]);
-case 0x566: return READ_WORD(&loopback[0xa4]);
-case 0xd2: return READ_WORD(&loopback[0xa6]);
-case 0x4a6: return READ_WORD(&loopback[0xa8]);
-case 0x3dc: return READ_WORD(&loopback[0xb0]);
-case 0x2a0: return READ_WORD(&loopback[0xb2]);
-//case 0x392: return READ_WORD(&loopback[0xa0]);
+case 0x102: return loopback[0x50];
+case 0x15a: return loopback[0x51];
+case 0x566: return loopback[0x52];
+case 0xd2: return loopback[0x53];
+case 0x4a6: return loopback[0x54];
+case 0x3dc: return loopback[0x55];
+case 0x2a0: return loopback[0x56];
+//case 0x392: return loopback[0x50];
 
 
-		case 0x3b2: return READ_WORD(&loopback[0xd0]);
+		case 0x3b2: return loopback[0x68];
 
 /* Enemy power related HIGH WORD*/
-		case 0x440: return READ_WORD(&loopback[0xd2]);/* Enemy power related LOW WORD*/
+		case 0x440: return loopback[0x69];/* Enemy power related LOW WORD*/
 			return 0;
 
 //case 0x6fa:
@@ -399,8 +378,12 @@ static MEMORY_READ16_START( robocop2_readmem )
 	{ 0x1b8000, 0x1bbfff, MRA16_RAM },
 	{ 0x144000, 0x144fff, MRA16_RAM },
 	{ 0x146000, 0x146fff, MRA16_RAM },
+	{ 0x14c000, 0x14c7ff, MRA16_RAM },
+	{ 0x14e000, 0x14e7ff, MRA16_RAM },
 	{ 0x154000, 0x154fff, MRA16_RAM },
 	{ 0x156000, 0x156fff, MRA16_RAM },
+	{ 0x15c000, 0x15c7ff, MRA16_RAM },
+	{ 0x15e000, 0x15e7ff, MRA16_RAM },
 MEMORY_END
 
 static MEMORY_WRITE16_START( robocop2_writemem )
@@ -414,9 +397,9 @@ static MEMORY_WRITE16_START( robocop2_writemem )
 	{ 0x150000, 0x15000f, cninja_control_0_w },
 	{ 0x154000, 0x154fff, cninja_pf3_data_w, &cninja_pf3_data },
 	{ 0x156000, 0x156fff, cninja_pf2_data_w, &cninja_pf2_data },
-	{ 0x15c000, 0x15c7ff, MWA16_RAM, &cninja_pf3_rowscroll },
-	{ 0x15e000, 0x15e7ff, MWA16_RAM, &cninja_pf2_rowscroll },
-//check background layer - wrong row offset??!?
+	{ 0x15c000, 0x15c7ff, MWA16_RAM, &cninja_pf2_rowscroll },
+	{ 0x15e000, 0x15e7ff, MWA16_RAM, &cninja_pf3_rowscroll },
+
 	{ 0x180000, 0x1807ff, MWA16_RAM, &spriteram16, &spriteram_size },
 	{ 0x18c064, 0x18c065, cninja_sound_w },
 //	{ 0x18c000, 0x18c0ff, cninja_loopback_w }, /* Protection writes */
@@ -837,10 +820,10 @@ static const struct MachineDriver machine_driver_cninja =
 	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
 
 	gfxdecodeinfo,
-	2048, 2048,
+	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_BUFFERS_SPRITERAM,
+	VIDEO_TYPE_RASTER  | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_BUFFERS_SPRITERAM,
 	0,
 	cninja_vh_start,
 	0,
@@ -889,10 +872,10 @@ static const struct MachineDriver machine_driver_stoneage =
 	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
 
 	gfxdecodeinfo,
-	2048, 2048,
+	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_BUFFERS_SPRITERAM,
+	VIDEO_TYPE_RASTER  | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_BUFFERS_SPRITERAM,
 	0,
 	stoneage_vh_start,
 	0,
@@ -937,10 +920,10 @@ static const struct MachineDriver machine_driver_edrandy =
 	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
 
 	gfxdecodeinfo,
-	2048, 2048,
+	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_BUFFERS_SPRITERAM,
+	VIDEO_TYPE_RASTER  | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_BUFFERS_SPRITERAM,
 	0,
 	edrandy_vh_start,
 	0,
@@ -989,10 +972,10 @@ static struct MachineDriver machine_driver_robocop2 =
 	40*8, 32*8, { 0*8, 40*8-1, 1*8, 31*8-1 },
 
 	gfxdecodeinfo,
-	2048, 2048,
+	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_BUFFERS_SPRITERAM,
+	VIDEO_TYPE_RASTER  | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_BUFFERS_SPRITERAM,
 	0,
 	robocop2_vh_start,
 	0,
@@ -1054,6 +1037,9 @@ ROM_START( cninja )
 
 	ROM_REGION( 0x80000, REGION_SOUND2, 0 ) /* Extra Oki samples */
 	ROM_LOAD( "mag-07.rom", 0x00000,  0x80000,  0x08eb5264 )	/* banked */
+
+	ROM_REGION( 1024, REGION_PROMS, 0 )
+	ROM_LOAD( "mb7122h.7v", 0x00000,  0x400,  0xa1267336 )	/* Priority  Unused */
 ROM_END
 
 ROM_START( cninja0 )
@@ -1092,6 +1078,9 @@ ROM_START( cninja0 )
 
 	ROM_REGION( 0x80000, REGION_SOUND2, 0 ) /* Extra Oki samples */
 	ROM_LOAD( "mag-07.rom", 0x00000,  0x80000,  0x08eb5264 )	/* banked */
+
+	ROM_REGION( 1024, REGION_PROMS, 0 )
+	ROM_LOAD( "mb7122h.7v", 0x00000,  0x400,  0xa1267336 )	/* Priority  Unused */
 ROM_END
 
 ROM_START( cninjau )
@@ -1130,6 +1119,9 @@ ROM_START( cninjau )
 
 	ROM_REGION( 0x80000, REGION_SOUND2, 0 ) /* Extra Oki samples */
 	ROM_LOAD( "mag-07.rom", 0x00000,  0x80000,  0x08eb5264 )	/* banked */
+
+	ROM_REGION( 1024, REGION_PROMS, 0 )
+	ROM_LOAD( "mb7122h.7v", 0x00000,  0x400,  0xa1267336 )	/* Priority  Unused */
 ROM_END
 
 ROM_START( joemac )
@@ -1168,6 +1160,9 @@ ROM_START( joemac )
 
 	ROM_REGION( 0x80000, REGION_SOUND2, 0 ) /* Extra Oki samples */
 	ROM_LOAD( "mag-07.rom", 0x00000,  0x80000,  0x08eb5264 )	/* banked */
+
+	ROM_REGION( 1024, REGION_PROMS, 0 )
+	ROM_LOAD( "mb7122h.7v", 0x00000,  0x400,  0xa1267336 )	/* Priority  Unused */
 ROM_END
 
 ROM_START( stoneage )
@@ -1254,6 +1249,9 @@ ROM_START( edrandy )
 
 	ROM_REGION( 0x80000, REGION_SOUND2, 0 ) /* Extra Oki samples */
 	ROM_LOAD( "mad-13", 0x00000, 0x80000, 0x6ab28eba )	/* banked */
+
+	ROM_REGION( 1024, REGION_PROMS, 0 )
+	ROM_LOAD( "ge-12", 0x00000,  0x400,  0x278f674f )	/* Priority  Unused, same as Robocop 2 */
 ROM_END
 
 ROM_START( edrandyj )
@@ -1300,9 +1298,62 @@ ROM_START( edrandyj )
 
 	ROM_REGION( 0x80000, REGION_SOUND2, 0 ) /* Extra Oki samples */
 	ROM_LOAD( "mad-13", 0x00000, 0x80000, 0x6ab28eba )	/* banked */
+
+	ROM_REGION( 1024, REGION_PROMS, 0 )
+	ROM_LOAD( "ge-12", 0x00000,  0x400,  0x278f674f )	/* Priority Unused, same as Robocop 2 */
 ROM_END
 
 ROM_START( robocop2 )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* 68000 code */
+	ROM_LOAD16_BYTE( "gq-03.1k",   0x00000, 0x20000, 0xa7e90c28 )
+	ROM_LOAD16_BYTE( "gq-07.3k",   0x00001, 0x20000, 0xd2287ec1 )
+	ROM_LOAD16_BYTE( "gq-02.1j",   0x40000, 0x20000, 0x6777b8a0 )
+	ROM_LOAD16_BYTE( "gq-06.3j",   0x40001, 0x20000, 0xe11e27b5 )
+	ROM_LOAD16_BYTE( "robo01.h1",  0x80000, 0x20000, 0xab5356c0 )
+	ROM_LOAD16_BYTE( "robo05.h3",  0x80001, 0x20000, 0xce21bda5 )
+	ROM_LOAD16_BYTE( "robo00.f1",  0xc0000, 0x20000, 0xa93369ea )
+	ROM_LOAD16_BYTE( "robo04.f3",  0xc0001, 0x20000, 0xee2f6ad9 )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* Sound CPU */
+	ROM_LOAD( "gp-09.k13",  0x00000,  0x10000,  0x4a4e0f8d )
+
+	ROM_REGION( 0x020000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "gp10-1.y6",  0x00000,  0x10000,  0xd25d719c )	/* chars */
+	ROM_LOAD( "gp11-1.z6",  0x10000,  0x10000,  0x030ded47 )
+
+	ROM_REGION( 0x180000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "mah-01.z1", 0x000000, 0x40000,  0x26e0dfff )
+	ROM_CONTINUE(          0x0c0000, 0x40000 )
+	ROM_LOAD( "mah-00.y1", 0x040000, 0x40000,  0x7bd69e41 )
+	ROM_CONTINUE(          0x100000, 0x40000 )
+	ROM_LOAD( "mah-02.a1", 0x080000, 0x40000,  0x328a247d )
+	ROM_CONTINUE(          0x140000, 0x40000 )
+
+	ROM_REGION( 0x100000, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_LOAD( "mah-04.z4", 0x000000, 0x40000,  0x9b6ca18c )
+	ROM_CONTINUE(          0x080000, 0x40000 )
+	ROM_LOAD( "mah-03.y4", 0x040000, 0x40000,  0x37894ddc )
+	ROM_CONTINUE(          0x0c0000, 0x40000 )
+
+	ROM_REGION( 0x300000, REGION_GFX4, ROMREGION_DISPOSE )
+	ROM_LOAD16_BYTE( "mah-05.y9",  0x000000, 0x80000,  0x6773e613 )
+	ROM_LOAD16_BYTE( "mah-08.y12", 0x000001, 0x80000,  0x88d310a5 )
+	ROM_LOAD16_BYTE( "mah-06.z9",  0x100000, 0x80000,  0x27a8808a )
+	ROM_LOAD16_BYTE( "mah-09.z12", 0x100001, 0x80000,  0xa58c43a7 )
+	ROM_LOAD16_BYTE( "mah-07.a9",  0x200000, 0x80000,  0x526f4190 )
+	ROM_LOAD16_BYTE( "mah-10.a12", 0x200001, 0x80000,  0x14b770da )
+
+	ROM_REGION( 0x20000, REGION_SOUND1, 0 ) /* Oki samples */
+	ROM_LOAD( "gp-08.j13",  0x00000,  0x20000,  0x365183b1 )
+
+	ROM_REGION( 0x80000, REGION_SOUND2, 0 ) /* Extra Oki samples */
+	ROM_LOAD( "mah-11.f13", 0x00000,  0x80000,  0x642bc692 )	/* banked */
+
+	ROM_REGION( 1024, REGION_PROMS, 0 )
+	ROM_LOAD( "go-12.v7", 0x00000,  0x400,  0x278f674f )	/* Priority  Unused */
+ROM_END
+
+ROM_START( robocp2u )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* 68000 code */
 	ROM_LOAD16_BYTE( "robo03.k1", 0x00000, 0x20000, 0xf4c96cc9 )
 	ROM_LOAD16_BYTE( "robo07.k3", 0x00001, 0x20000, 0x11e53a7c )
@@ -1347,6 +1398,59 @@ ROM_START( robocop2 )
 
 	ROM_REGION( 0x80000, REGION_SOUND2, 0 ) /* Extra Oki samples */
 	ROM_LOAD( "mah-11.f13", 0x00000,  0x80000,  0x642bc692 )	/* banked */
+
+	ROM_REGION( 1024, REGION_PROMS, 0 )
+	ROM_LOAD( "go-12.v7", 0x00000,  0x400,  0x278f674f )	/* Priority  Unused */
+ROM_END
+
+ROM_START( robocp2j )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* 68000 code */
+	ROM_LOAD16_BYTE( "go_03-1.k1", 0x00000, 0x20000, 0x52506608 )
+	ROM_LOAD16_BYTE( "go_07-1.k3", 0x00001, 0x20000, 0x739cda17 )
+	ROM_LOAD16_BYTE( "go_02-1.j1", 0x40000, 0x20000, 0x48c0ace9 )
+	ROM_LOAD16_BYTE( "go_06-1.j3", 0x40001, 0x20000, 0x41abec87 )
+	ROM_LOAD16_BYTE( "robo01.h1",  0x80000, 0x20000, 0xab5356c0 )
+	ROM_LOAD16_BYTE( "robo05.h3",  0x80001, 0x20000, 0xce21bda5 )
+	ROM_LOAD16_BYTE( "robo00.f1",  0xc0000, 0x20000, 0xa93369ea )
+	ROM_LOAD16_BYTE( "robo04.f3",  0xc0001, 0x20000, 0xee2f6ad9 )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* Sound CPU */
+	ROM_LOAD( "gp-09.k13",  0x00000,  0x10000,  0x4a4e0f8d )
+
+	ROM_REGION( 0x020000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "gp10-1.y6",  0x00000,  0x10000,  0xd25d719c )	/* chars */
+	ROM_LOAD( "gp11-1.z6",  0x10000,  0x10000,  0x030ded47 )
+
+	ROM_REGION( 0x180000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "mah-01.z1", 0x000000, 0x40000,  0x26e0dfff )
+	ROM_CONTINUE(          0x0c0000, 0x40000 )
+	ROM_LOAD( "mah-00.y1", 0x040000, 0x40000,  0x7bd69e41 )
+	ROM_CONTINUE(          0x100000, 0x40000 )
+	ROM_LOAD( "mah-02.a1", 0x080000, 0x40000,  0x328a247d )
+	ROM_CONTINUE(          0x140000, 0x40000 )
+
+	ROM_REGION( 0x100000, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_LOAD( "mah-04.z4", 0x000000, 0x40000,  0x9b6ca18c )
+	ROM_CONTINUE(          0x080000, 0x40000 )
+	ROM_LOAD( "mah-03.y4", 0x040000, 0x40000,  0x37894ddc )
+	ROM_CONTINUE(          0x0c0000, 0x40000 )
+
+	ROM_REGION( 0x300000, REGION_GFX4, ROMREGION_DISPOSE )
+	ROM_LOAD16_BYTE( "mah-05.y9",  0x000000, 0x80000,  0x6773e613 )
+	ROM_LOAD16_BYTE( "mah-08.y12", 0x000001, 0x80000,  0x88d310a5 )
+	ROM_LOAD16_BYTE( "mah-06.z9",  0x100000, 0x80000,  0x27a8808a )
+	ROM_LOAD16_BYTE( "mah-09.z12", 0x100001, 0x80000,  0xa58c43a7 )
+	ROM_LOAD16_BYTE( "mah-07.a9",  0x200000, 0x80000,  0x526f4190 )
+	ROM_LOAD16_BYTE( "mah-10.a12", 0x200001, 0x80000,  0x14b770da )
+
+	ROM_REGION( 0x20000, REGION_SOUND1, 0 ) /* Oki samples */
+	ROM_LOAD( "gp-08.j13",  0x00000,  0x20000,  0x365183b1 )
+
+	ROM_REGION( 0x80000, REGION_SOUND2, 0 ) /* Extra Oki samples */
+	ROM_LOAD( "mah-11.f13", 0x00000,  0x80000,  0x642bc692 )	/* banked */
+
+	ROM_REGION( 1024, REGION_PROMS, 0 )
+	ROM_LOAD( "go-12.v7", 0x00000,  0x400,  0x278f674f )	/* Priority  Unused */
 ROM_END
 
 /**********************************************************************************/
@@ -1400,11 +1504,13 @@ static void init_stoneage(void)
 
 /**********************************************************************************/
 
-GAMEX(1990, edrandy,  0,       edrandy,  cninja,  0,        ROT0_16BIT, "Data East Corporation", "Edward Randy (World)", GAME_UNEMULATED_PROTECTION )
-GAMEX(1990, edrandyj, edrandy, edrandy,  cninja,  0,        ROT0_16BIT, "Data East Corporation", "Edward Randy (Japan)", GAME_UNEMULATED_PROTECTION )
-GAME( 1991, cninja,   0,       cninja,   cninja,  cninja,   ROT0,       "Data East Corporation", "Caveman Ninja (World revision 3)" )
-GAME( 1991, cninja0,  cninja,  cninja,   cninja,  cninja,   ROT0,       "Data East Corporation", "Caveman Ninja (World revision 0)" )
-GAME( 1991, cninjau,  cninja,  cninja,   cninjau, cninja,   ROT0,       "Data East Corporation", "Caveman Ninja (US)" )
-GAME( 1991, joemac,   cninja,  cninja,   cninja,  cninja,   ROT0,       "Data East Corporation", "Joe & Mac (Japan)" )
-GAME( 1991, stoneage, cninja,  stoneage, cninja,  stoneage, ROT0,       "bootleg", "Stoneage" )
-GAMEX(1991, robocop2, 0,       robocop2, robocop2,0,        ROT0_16BIT, "Data East Corporation", "Robocop 2 (US)", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1990, edrandy,  0,       edrandy,  cninja,  0,        ROT0, "Data East Corporation", "Edward Randy (World)", GAME_UNEMULATED_PROTECTION )
+GAMEX(1990, edrandyj, edrandy, edrandy,  cninja,  0,        ROT0, "Data East Corporation", "Edward Randy (Japan)", GAME_UNEMULATED_PROTECTION )
+GAME( 1991, cninja,   0,       cninja,   cninja,  cninja,   ROT0, "Data East Corporation", "Caveman Ninja (World revision 3)" )
+GAME( 1991, cninja0,  cninja,  cninja,   cninja,  cninja,   ROT0, "Data East Corporation", "Caveman Ninja (World revision 0)" )
+GAME( 1991, cninjau,  cninja,  cninja,   cninjau, cninja,   ROT0, "Data East Corporation", "Caveman Ninja (US)" )
+GAME( 1991, joemac,   cninja,  cninja,   cninja,  cninja,   ROT0, "Data East Corporation", "Joe & Mac (Japan)" )
+GAME( 1991, stoneage, cninja,  stoneage, cninja,  stoneage, ROT0, "bootleg", "Stoneage" )
+GAMEX(1991, robocop2, 0,       robocop2, robocop2,0,        ROT0, "Data East Corporation", "Robocop 2 (World)", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1991, robocp2u, robocop2,robocop2, robocop2,0,        ROT0, "Data East Corporation", "Robocop 2 (US)", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1991, robocp2j, robocop2,robocop2, robocop2,0,        ROT0, "Data East Corporation", "Robocop 2 (Japan)", GAME_IMPERFECT_GRAPHICS )

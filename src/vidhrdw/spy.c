@@ -78,11 +78,6 @@ void spy_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	K052109_tilemap_update();
 
-	palette_init_used_colors();
-	K051960_mark_sprites_colors();
-	palette_used_colors[16 * layer_colorbase[0]] |= PALETTE_COLOR_VISIBLE;
-	palette_recalc();
-
 	fillbitmap(bitmap,Machine->pens[16 * layer_colorbase[0]],&Machine->visible_area);
 	K051960_sprites_draw(bitmap,1,1);	/* are these used? */
 	K052109_tilemap_draw(bitmap,1,0,0);

@@ -676,7 +676,7 @@ static const struct MachineDriver GAMENAME = \
 	sys16_gfxdecodeinfo, \
 	2048*ShadowColorsMultiplier,2048*ShadowColorsMultiplier, \
 	0, \
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE, \
+	VIDEO_TYPE_RASTER , \
 	0, \
 	sys18_vh_start, \
 	sys16_vh_stop, \
@@ -1305,18 +1305,18 @@ ROM_END
 
 /*****************************************************************************/
 
-GAMEX(1990, astorm,   0,        astorm,   astorm,   astorm,   ROT0_16BIT,   "Sega",    "Alien Storm", GAME_NOT_WORKING )
-GAMEX(1990, astorm2p, astorm,   astorm,   astorm,   astorm,   ROT0_16BIT,   "Sega",    "Alien Storm (2 Player)", GAME_NOT_WORKING )
-GAME( 1990, astormbl, astorm,   astorm,   astorm,   astorm,   ROT0_16BIT,   "bootleg", "Alien Storm (bootleg)" )
-GAMEX(1990, moonwalk, 0,        moonwalk, moonwalk, moonwalk, ROT0,         "Sega",    "Moon Walker (Set 1)", GAME_NOT_WORKING )
-GAMEX(1990, moonwlka, moonwalk, moonwalk, moonwalk, moonwalk, ROT0,         "Sega",    "Moon Walker (Set 2)", GAME_NOT_WORKING )
-GAME( 1990, moonwlkb, moonwalk, moonwalk, moonwalk, moonwalk, ROT0,         "bootleg", "Moon Walker (bootleg)" )
-GAME( 1989, shdancer, 0,        shdancer, shdancer, shdancer, ROT0,         "Sega",    "Shadow Dancer (US)" )
-GAMEX(1989, shdancbl, shdancer, shdancbl, shdancer, shdancbl, ROT0,         "bootleg", "Shadow Dancer (bootleg)", GAME_NOT_WORKING )
-GAME( 1989, shdancrj, shdancer, shdancrj, shdancer, shdancrj, ROT0,         "Sega",    "Shadow Dancer (Japan)" )
+GAMEX(1990, astorm,   0,        astorm,   astorm,   astorm,   ROT0, "Sega",    "Alien Storm", GAME_NOT_WORKING )
+GAMEX(1990, astorm2p, astorm,   astorm,   astorm,   astorm,   ROT0, "Sega",    "Alien Storm (2 Player)", GAME_NOT_WORKING )
+GAME( 1990, astormbl, astorm,   astorm,   astorm,   astorm,   ROT0, "bootleg", "Alien Storm (bootleg)" )
+GAMEX(1990, moonwalk, 0,        moonwalk, moonwalk, moonwalk, ROT0, "Sega",    "Moon Walker (Set 1)", GAME_NOT_WORKING )
+GAMEX(1990, moonwlka, moonwalk, moonwalk, moonwalk, moonwalk, ROT0, "Sega",    "Moon Walker (Set 2)", GAME_NOT_WORKING )
+GAME( 1990, moonwlkb, moonwalk, moonwalk, moonwalk, moonwalk, ROT0, "bootleg", "Moon Walker (bootleg)" )
+GAME( 1989, shdancer, 0,        shdancer, shdancer, shdancer, ROT0, "Sega",    "Shadow Dancer (US)" )
+GAMEX(1989, shdancbl, shdancer, shdancbl, shdancer, shdancbl, ROT0, "bootleg", "Shadow Dancer (bootleg)", GAME_NOT_WORKING )
+GAME( 1989, shdancrj, shdancer, shdancrj, shdancer, shdancrj, ROT0, "Sega",    "Shadow Dancer (Japan)" )
 
-GAMEX(????, aceattac, 0,        shdancer, shdancer, shdancer, ROT0,         "Sega", "Ace Attacker", GAME_NOT_WORKING )
-GAMEX(????, bloxeed,  0,        shdancer, shdancer, shdancer, ROT0,         "Sega", "Bloxeed", GAME_NOT_WORKING )
-GAMEX(????, cltchitr, 0,        shdancer, shdancer, shdancer, ROT0,         "Sega", "Clutch Hitter", GAME_NOT_WORKING )
-GAMEX(????, ddcrew,   0,        shdancer, shdancer, shdancer, ROT0,         "Sega", "DD Crew", GAME_NOT_WORKING )
-GAMEX(????, lghost,   0,        shdancer, shdancer, shdancer, ROT0,         "Sega", "Laser Ghost", GAME_NOT_WORKING )
+GAMEX(????, aceattac, 0,        shdancer, shdancer, shdancer, ROT0, "Sega", "Ace Attacker", GAME_NOT_WORKING )
+GAMEX(????, bloxeed,  0,        shdancer, shdancer, shdancer, ROT0, "Sega", "Bloxeed", GAME_NOT_WORKING )
+GAMEX(????, cltchitr, 0,        shdancer, shdancer, shdancer, ROT0, "Sega", "Clutch Hitter", GAME_NOT_WORKING )
+GAMEX(????, ddcrew,   0,        shdancer, shdancer, shdancer, ROT0, "Sega", "DD Crew", GAME_NOT_WORKING )
+GAMEX(????, lghost,   0,        shdancer, shdancer, shdancer, ROT0, "Sega", "Laser Ghost", GAME_NOT_WORKING )

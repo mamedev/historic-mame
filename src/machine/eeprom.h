@@ -27,7 +27,7 @@ void EEPROM_save(void *file);
 void EEPROM_set_data(UINT8 *data, int length);
 
 /* 93C46 */
-struct EEPROM_interface eeprom_interface_93C46;
+extern struct EEPROM_interface eeprom_interface_93C46;
 void nvram_handler_93C46(void *file,int read_or_write);
 
 #endif

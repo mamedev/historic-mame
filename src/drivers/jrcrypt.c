@@ -270,14 +270,8 @@ int jrpacman_romdecode(int offset)
 
 	int ns3 =  ( !md7 );
 
-//	DebugPrint("%04x: %02x & %02x | %02x =
-%02x",addressBus,RAM[addressBus],~(1<<0) & ~(1<<2) & ~(1<<7), (d0) |
-(d2<<2) | (d7<<7),(RAM[addressBus] & ~(1<<0) & ~(1<<2) & ~(1<<7)) | (d0) |
-(d2<<2) | (d7<<7));
-/*	printf("%04x: %02x & %02x | %02x =
-%02x\n",addressBus,RAM[addressBus],~(1<<0) & ~(1<<2) & ~(1<<7), (d0) |
-(d2<<2) | (d7<<7),(RAM[addressBus] & ~(1<<0) & ~(1<<2) & ~(1<<7)) | (d0) |
-(d2<<2) | (d7<<7));
+//	DebugPrint("%04x: %02x & %02x | %02x = %02x",addressBus,RAM[addressBus],~(1<<0) & ~(1<<2) & ~(1<<7), (d0) | (d2<<2) | (d7<<7),(RAM[addressBus] & ~(1<<0) & ~(1<<2) & ~(1<<7)) | (d0) | (d2<<2) | (d7<<7));
+/*	printf("%04x: %02x & %02x | %02x = %02x\n",addressBus,RAM[addressBus],~(1<<0) & ~(1<<2) & ~(1<<7), (d0) | (d2<<2) | (d7<<7),(RAM[addressBus] & ~(1<<0) & ~(1<<2) & ~(1<<7)) | (d0) | (d2<<2) | (d7<<7));
 	{static int i=0;
 	if (i++>100)
 	{
@@ -285,8 +279,7 @@ int jrpacman_romdecode(int offset)
 			{}
 	}}*/
 	{
-		int temp= ((int)RAM[addressBus] & 0x7A) | ((d7<<7) |
-(d2<<2) | (d0));
+		int temp= ((int)RAM[addressBus] & 0x7A) | ((d7<<7) | (d2<<2) | (d0));
 
 //		if (Z80_Trace==1)
 			if (!used[addressBus])
@@ -298,30 +291,21 @@ int jrpacman_romdecode(int offset)
 			else
 			{
 				if (shadowROM[addressBus] != temp)
-					DebugPrint("Address: %04x
-translates to 2 different values!!!! (%02x and
-%02x)",addressBus,shadowROM[addressBus],temp);
+					DebugPrint("Address: %04x translates to 2 different values!!!! (%02x and %02x)",addressBus,shadowROM[addressBus],temp);
 			}
 
 
 		if (Z80_Trace==1)
 		{
 			static last = 0;
-			if (last + 30 <= TickCount()) /* print bnanner if
-we havent been called in half a second */
-				printf("m1   sop0 sop1 sop2 pcbe  md7  md2
-md0   d7   d2   d0    pb1   s0   s1   s2   s3    ns0  ns1  ns2  ns3\n");
+			if (last + 30 <= TickCount()) /* print bnanner if we havent been called in half a second */
+				printf("m1   sop0 sop1 sop2 pcbe  md7  md2 md0   d7   d2   d0    pb1   s0   s1   s2   s3    ns0  ns1  ns2  ns3\n");
 			last = TickCount();
-			printf("%-4d %-4d %-4d %-4d %-4d  %-4d %-4d %-4d
-%-4d %-4d %-4d  %-4d  %-4d %-4d %-4d %-4d  %-4d %-4d %-4d %-4d     ",
+			printf("%-4d %-4d %-4d %-4d %-4d  %-4d %-4d %-4d %-4d %-4d %-4d  %-4d  %-4d %-4d %-4d %-4d  %-4d %-4d %-4d %-4d     ",
 			        m1,  sop0,sop1,sop2,pcbe, md7, md2, md0,
 d7,  d2,  d0,   pb1,  s0,  s1,  s2,  s3,   ns0, ns1, ns2, ns3);
-			printf("%04x: %02x & %02x | %02x =
-%02x\n",addressBus,RAM[addressBus],~(1<<0) & ~(1<<2) & ~(1<<7), (d0) |
-(d2<<2) | (d7<<7),(RAM[addressBus] & ~(1<<0) & ~(1<<2) & ~(1<<7)) | (d0) |
-(d2<<2) | (d7<<7));
-			Z80_Trace = 1; /* stop it if it was running for a
-count */
+			printf("%04x: %02x & %02x | %02x = %02x\n",addressBus,RAM[addressBus],~(1<<0) & ~(1<<2) & ~(1<<7), (d0) | (d2<<2) | (d7<<7),(RAM[addressBus] & ~(1<<0) & ~(1<<2) & ~(1<<7)) | (d0) | (d2<<2) | (d7<<7));
+			Z80_Trace = 1; /* stop it if it was running for a count */
 		}
 
 		/* latch new flip flops on rising edge of pcbe */

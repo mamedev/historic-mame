@@ -15,6 +15,7 @@
 
 /* Perform basic machine initialisation */
 
+static UINT8 namcond1_h8_irq5_enabled;
 static UINT8 coin_state;
 static UINT8 coin_count[4];
 
@@ -39,6 +40,7 @@ void namcond1_init_machine(void)
 #endif
 
     // initialise MCU states
+    namcond1_h8_irq5_enabled = 0;
     coin_state = 0;
     coin_count[0] = coin_count[1] =
     coin_count[2] = coin_count[3] = 0;
@@ -59,6 +61,10 @@ READ16_HANDLER( namcond1_shared_ram_r )
     data16_t data;
 	UINT8 poll_coins;
     UINT8   current, pressed;
+
+    // the H8 IRQ5 does polling of inputs and writes to shared RAM
+    if( !namcond1_h8_irq5_enabled )
+        return( namcond1_shared_ram[offset] );
 
     switch( offset )
     {
@@ -147,26 +153,47 @@ WRITE16_HANDLER( namcond1_shared_ram_w )
     switch( offset )
     {
         default :
+        #if 0
+            if( namcond1_shared_ram[offset] == 0x0000 &&
+                data == 0x0001 )
+              logerror( "changing 0$->$1 to $%x @$%x\n",
+                        offset<<1, cpu_get_pc() );
+        #endif
             COMBINE_DATA( namcond1_shared_ram + offset );
             break;
     }
 }
 
+WRITE16_HANDLER( namcond1_cuskey_w )
+{
+    switch( offset )
+    {
+        case (0x0a>>1):
+            // this is a kludge until we emulate the h8
+            namcond1_h8_irq5_enabled = ( data != 0x0000 );
+            break;
+
+        default :
+            break;
+    }
+}
+
+#define NAMCOND1_EEPROM_SIZE    0x200
+data16_t *namcond1_eeprom;
+
 /* not used at this point */
 void namcond1_nvramhandler( void *f, int state )
 {
-  unsigned char *eeprom = memory_region(REGION_CPU1);
-
   if( f == 0 )
     return;
 
   if( state == 0 ) {
     /* read eeprom contents */
-    osd_fread( f, &eeprom[0x400600], 0x90 );
+    osd_fread( f, namcond1_eeprom, NAMCOND1_EEPROM_SIZE );
   }
   else {
     /* write eeprom contents */
-    osd_fwrite( f, &eeprom[0x400600], 0x90 );
+    osd_fwrite( f, namcond1_eeprom, NAMCOND1_EEPROM_SIZE );
   }
 }
 

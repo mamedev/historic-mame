@@ -171,8 +171,6 @@ static void draw_sprites( struct osd_bitmap *bitmap )
 
 void looping_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh )
 {
-	tilemap_update( ALL_TILEMAPS );
-	palette_recalc();
 	tilemap_draw( bitmap,tilemap,0,0 );
 	draw_sprites( bitmap );
 }

@@ -44,10 +44,8 @@ extern UINT32	wms_cmos_page;
 static UINT8	autoerase_enable;
 
 /* palette-related variables */
-static UINT8	pixel_mask;
-static UINT16	palette_mask;
-static UINT16 *	palette_lookup;
-static UINT8 *	palette_reverse_lookup;
+static UINT32	palette_mask;
+static UINT32 *	pen_map;
 
 /* videoram-related variables */
 static UINT16 *	local_videoram;
@@ -97,11 +95,10 @@ static int vh_start_common(void)
 	wms_cmos_ram = malloc(0x2000 * 4);
 	local_videoram = malloc(0x80000);
 	local_videoram_copy = malloc(0x80000);
-	palette_lookup = malloc(256 * sizeof(palette_lookup[0]));
-	palette_reverse_lookup = malloc(65536 * sizeof(palette_reverse_lookup[0]));
+	pen_map = malloc(65536 * sizeof(pen_map[0]));
 
 	/* handle failure */
-	if (!wms_cmos_ram || !local_videoram || !local_videoram_copy || !palette_lookup || !palette_reverse_lookup)
+	if (!wms_cmos_ram || !local_videoram || !local_videoram_copy || !pen_map)
 	{
 		wms_yunit_vh_stop();
 		return 1;
@@ -138,12 +135,9 @@ int wms_yunit_4bit_vh_start(void)
 		return result;
 
 	/* init for 4-bit */
-	for (i = 0; i < 256; i++)
-		palette_lookup[i] = i & 0xf0;
 	for (i = 0; i < 65536; i++)
-		palette_reverse_lookup[i] = i & 0xf0;
-	pixel_mask = 0x000f;
-	palette_mask = 0x00f0;
+		pen_map[i] = ((i & 0xf000) >> 8) | (i & 0x000f);
+	palette_mask = 0x00ff;
 
 	return 0;
 }
@@ -158,12 +152,9 @@ int wms_yunit_6bit_vh_start(void)
 		return result;
 
 	/* init for 6-bit */
-	for (i = 0; i < 256; i++)
-		palette_lookup[i] = (i & 0xc0) | ((i & 0x0f) << 8);
 	for (i = 0; i < 65536; i++)
-		palette_reverse_lookup[i] = ((i >> 8) & 0x0f) | (i & 0xc0);
-	pixel_mask = 0x003f;
-	palette_mask = 0x0fc0;
+		pen_map[i] = ((i & 0xc000) >> 8) | (i & 0x0f3f);
+	palette_mask = 0x0fff;
 
 	return 0;
 }
@@ -178,12 +169,9 @@ int wms_zunit_vh_start(void)
 		return result;
 
 	/* init for 8-bit */
-	for (i = 0; i < 256; i++)
-		palette_lookup[i] = (i << 8) & 0xff00;
 	for (i = 0; i < 65536; i++)
-		palette_reverse_lookup[i] = (i >> 8) & 0xff;
-	pixel_mask = 0x00ff;
-	palette_mask = 0xff00;
+		pen_map[i] = i & 0x1fff;
+	palette_mask = 0x1fff;
 
 	return 0;
 }
@@ -210,13 +198,9 @@ void wms_yunit_vh_stop(void)
 		free(local_videoram_copy);
 	local_videoram_copy = NULL;
 
-	if (palette_lookup)
-		free(palette_lookup);
-	palette_lookup = NULL;
-
-	if (palette_reverse_lookup)
-		free(palette_reverse_lookup);
-	palette_reverse_lookup = NULL;
+	if (pen_map)
+		free(pen_map);
+	pen_map = NULL;
 }
 
 
@@ -230,7 +214,7 @@ void wms_yunit_vh_stop(void)
 READ16_HANDLER( wms_yunit_gfxrom_r )
 {
 	offset *= 2;
-	if (pixel_mask == 0x0f)
+	if (palette_mask == 0x00ff)
 		return wms_gfx_rom[offset] | (wms_gfx_rom[offset] << 4) |
 				(wms_gfx_rom[offset + 1] << 8) | (wms_gfx_rom[offset + 1] << 12);
 	else
@@ -251,16 +235,16 @@ WRITE16_HANDLER( wms_yunit_vram_w )
 	if (videobank_select)
 	{
 		if (ACCESSING_LSB)
-			local_videoram[offset] = (data & pixel_mask) | palette_lookup[dma_register[DMA_PALETTE] & 0xff];
+			local_videoram[offset] = (data & 0x00ff) | (dma_register[DMA_PALETTE] << 8);
 		if (ACCESSING_MSB)
-			local_videoram[offset + 1] = ((data >> 8) & pixel_mask) | palette_lookup[dma_register[DMA_PALETTE] >> 8];
+			local_videoram[offset + 1] = (data >> 8) | (dma_register[DMA_PALETTE] & 0xff00);
 	}
 	else
 	{
 		if (ACCESSING_LSB)
-			local_videoram[offset] = (local_videoram[offset] & pixel_mask) | palette_lookup[data & 0xff];
+			local_videoram[offset] = (local_videoram[offset] & 0x00ff) | (data << 8);
 		if (ACCESSING_MSB)
-			local_videoram[offset + 1] = (local_videoram[offset + 1] & pixel_mask) | palette_lookup[(data >> 8) & 0xff];
+			local_videoram[offset + 1] = (local_videoram[offset + 1] & 0x00ff) | (data & 0xff00);
 	}
 }
 
@@ -269,9 +253,9 @@ READ16_HANDLER( wms_yunit_vram_r )
 {
 	offset *= 2;
 	if (videobank_select)
-		return (local_videoram[offset] & pixel_mask) | ((local_videoram[offset + 1] & pixel_mask) << 8);
+		return (local_videoram[offset] & 0x00ff) | (local_videoram[offset + 1] << 8);
 	else
-		return (palette_reverse_lookup[local_videoram[offset]]) | (palette_reverse_lookup[local_videoram[offset + 1]] << 8);
+		return (local_videoram[offset] >> 8) | (local_videoram[offset + 1] & 0xff00);
 }
 
 
@@ -366,7 +350,7 @@ WRITE16_HANDLER( wms_yunit_paletteram_w )
 	g = (g << 3) | (g >> 2);
 	b = (b << 3) | (b >> 2);
 
-	palette_change_color(offset & (pixel_mask | palette_mask), r, g, b);
+	palette_change_color(offset & palette_mask, r, g, b);
 }
 
 
@@ -656,8 +640,8 @@ WRITE16_HANDLER( wms_yunit_dma_w )
 	dma_state.ypos = dma_register[DMA_YSTART] & 0x1ff;
 	dma_state.width = dma_register[DMA_WIDTH];
 	dma_state.height = dma_register[DMA_HEIGHT];
-	dma_state.palette = palette_lookup[dma_register[DMA_PALETTE] & 0xff];
-	dma_state.color = dma_register[DMA_COLOR] & pixel_mask;
+	dma_state.palette = dma_register[DMA_PALETTE] << 8;
+	dma_state.color = dma_register[DMA_COLOR] & 0xff;
 
 	/* determine the offset and adjust the rowbytes */
 	gfxoffset = dma_register[DMA_OFFSETLO] | (dma_register[DMA_OFFSETHI] << 16);
@@ -858,9 +842,6 @@ void wms_yunit_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	/* finish updating */
 	update_partial(Machine->visible_area.max_y);
 
-	/* update the palette */
-	palette_recalc();
-
 	/* determine the base of the videoram */
 	if (page_flipping)
 	{
@@ -881,7 +862,7 @@ void wms_yunit_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	/* loop over rows */
 	for (v = Machine->visible_area.min_y; v <= Machine->visible_area.max_y; v++)
 	{
-		draw_scanline16(bitmap, xoffs, v, width, &buffer[offset], Machine->pens, -1);
+		draw_scanline16(bitmap, xoffs, v, width, &buffer[offset], pen_map, -1);
 		offset = (offset + 512) & 0x3ffff;
 	}
 }

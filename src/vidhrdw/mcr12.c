@@ -419,7 +419,7 @@ static void mcr12_update_sprites(int scale)
 void mcr1_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
 	/* mark everything dirty on a full refresh or cocktail flip change */
-	if (palette_recalc() || full_refresh || last_cocktail_flip != mcr_cocktail_flip)
+	if (full_refresh || last_cocktail_flip != mcr_cocktail_flip)
 		memset(dirtybuffer, 1, videoram_size);
 	last_cocktail_flip = mcr_cocktail_flip;
 
@@ -434,7 +434,7 @@ void mcr1_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 void mcr2_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
 	/* mark everything dirty on a full refresh or cocktail flip change */
-	if (palette_recalc() || full_refresh || last_cocktail_flip != mcr_cocktail_flip)
+	if (full_refresh || last_cocktail_flip != mcr_cocktail_flip)
 		memset(dirtybuffer, 1, videoram_size);
 	last_cocktail_flip = mcr_cocktail_flip;
 
@@ -460,7 +460,7 @@ extern void mcr3_update_sprites(struct osd_bitmap *bitmap, int color_mask, int c
 void journey_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	/* mark everything dirty on a cocktail flip change */
-	if (palette_recalc() || last_cocktail_flip != mcr_cocktail_flip)
+	if (last_cocktail_flip != mcr_cocktail_flip)
 		memset(dirtybuffer, 1, videoram_size);
 	last_cocktail_flip = mcr_cocktail_flip;
 

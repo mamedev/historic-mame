@@ -404,7 +404,7 @@ static const struct MachineDriver machine_driver_jackal =
 	512, 256*16+16*16+16*16,
 	jackal_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	jackal_vh_start,
 	jackal_vh_stop,

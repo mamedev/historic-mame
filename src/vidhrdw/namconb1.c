@@ -4,12 +4,6 @@
 #include "vidhrdw/generic.h"
 #include "namconb1.h"
 
-/* tilemap_videoram and tilemap_color are set just prior to calling
- * tilemap_update, individually for each tilemap.  This allows each tilemap
- * to share the same tilemap_get_info callback.
- */
-static const data32_t *tilemap_videoram;
-static int tilemap_color;
 
 /* tilemap_palette_bank is used to cache tilemap color, so that we can
  * mark whole tilemaps dirty only when necessary.
@@ -21,7 +15,7 @@ static struct tilemap *background[6];
 /* nth_word is a general-purpose utility function, which allows us to
  * read from 32-bit aligned memory as if it were an array of 16 bit words.
  */
-static data16_t nth_word( const data32_t *source, int which )
+INLINE data16_t nth_word( const data32_t *source, int which )
 {
 	source += which/2;
 	if( which&1 )
@@ -34,7 +28,7 @@ static data16_t nth_word( const data32_t *source, int which )
 	}
 }
 
-static void tilemap_get_info( int tile_index )
+INLINE void tilemap_get_info(int tile_index,int tilemap_color,const data32_t *tilemap_videoram)
 {
 	data16_t tile = nth_word( tilemap_videoram, tile_index );
 	SET_TILE_INFO(
@@ -44,6 +38,15 @@ static void tilemap_get_info( int tile_index )
 			0)
 	tile_info.mask_data = namconb1_maskrom+tile_info.tile_number*8;
 }
+
+static void tilemap_get_info0(int tile_index) { tilemap_get_info(tile_index,tilemap_palette_bank[0],&videoram32[0x0000]); }
+static void tilemap_get_info1(int tile_index) { tilemap_get_info(tile_index,tilemap_palette_bank[1],&videoram32[0x0800]); }
+static void tilemap_get_info2(int tile_index) { tilemap_get_info(tile_index,tilemap_palette_bank[2],&videoram32[0x1000]); }
+static void tilemap_get_info3(int tile_index) { tilemap_get_info(tile_index,tilemap_palette_bank[3],&videoram32[0x1800]); }
+static void tilemap_get_info4(int tile_index) { tilemap_get_info(tile_index,tilemap_palette_bank[4],&videoram32[NAMCONB1_FG1BASE/2]); }
+static void tilemap_get_info5(int tile_index) { tilemap_get_info(tile_index,tilemap_palette_bank[5],&videoram32[NAMCONB1_FG2BASE/2]); }
+
+
 
 WRITE32_HANDLER( namconb1_videoram_w )
 {
@@ -288,14 +291,13 @@ void namconb1_vh_screenrefresh( struct osd_bitmap *bitmap,int full_refresh )
 	handle_mcu();
 
 	nab1_install_palette();
-	palette_recalc();
 
 	fillbitmap(priority_bitmap,0,NULL);
 	fillbitmap( bitmap, 0, 0 ); /* what should background color be? */
 
 	for( i=0; i<6; i++ )
 	{
-		tilemap_color = nth_word( &namconb1_scrollram32[0x30/4], i )&7;
+		int tilemap_color = nth_word( &namconb1_scrollram32[0x30/4], i )&7;
 		if( tilemap_palette_bank[i]!= tilemap_color )
 		{
 			tilemap_mark_all_tiles_dirty( background[i] );
@@ -304,13 +306,9 @@ void namconb1_vh_screenrefresh( struct osd_bitmap *bitmap,int full_refresh )
 		switch( i )
 		{
 		case 4:
-			tilemap_videoram = &videoram32[NAMCONB1_FG1BASE/2];
-			break;
 		case 5:
-			tilemap_videoram = &videoram32[NAMCONB1_FG2BASE/2];
 			break;
 		default:
-			tilemap_videoram = &videoram32[0x800*i];
 			flip = 0;
 			scrollx = namconb1_scrollram32[i*2+0]+48-xadjust[i];
 			if( scrollx&0x8000 )
@@ -329,7 +327,6 @@ void namconb1_vh_screenrefresh( struct osd_bitmap *bitmap,int full_refresh )
 			tilemap_set_scrolly( background[i], 0, scrolly );
 			break;
 		}
-		tilemap_update( background[i] );
 	}
 
 	pri = 0;
@@ -365,6 +362,9 @@ void namconb1_vh_screenrefresh( struct osd_bitmap *bitmap,int full_refresh )
 int namconb1_vh_start( void )
 {
 	int i;
+	static void (*get_info[6])(int tile_index) =
+	{ tilemap_get_info0, tilemap_get_info1, tilemap_get_info2, tilemap_get_info3, tilemap_get_info4, tilemap_get_info5 };
+
 	namconb1_maskrom = memory_region( REGION_GFX3 );
 
 	for( i=0; i<6; i++ )
@@ -372,14 +372,14 @@ int namconb1_vh_start( void )
 		if( i<4 )
 		{
 			background[i] = tilemap_create(
-				tilemap_get_info,
+				get_info[i],
 				tilemap_scan_rows,
 				TILEMAP_BITMASK,8,8,64,64 );
 		}
 		else
 		{
 			background[i] = tilemap_create(
-				tilemap_get_info,
+				get_info[i],
 				tilemap_scan_rows,
 				TILEMAP_BITMASK,8,8,NAMCONB1_COLS,NAMCONB1_ROWS );
 		}

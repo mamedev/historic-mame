@@ -86,6 +86,13 @@ VBlank duration: 1/VSYNC * (20/132) = 2500 us
 TODO:
 ----
 
+- Problems with Galaxian based on the observation of a real machine:
+
+  - Starfield is incorrect.  The speed and flashing frequency is fine, but the
+    stars appear in different positions.
+  - Background humming is incorrect.  It's faster on a real machine
+  - Explosion sound is much softer.  Filter involved?
+
 - $4800-4bff in Streaking/Ghost Muncher
 
 - Need valid color prom for Fantazia. Current one is slightly damaged.
@@ -150,25 +157,29 @@ extern size_t galaxian_spriteram_size;
 extern size_t galaxian_bulletsram_size;
 
 void galaxian_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+void scramble_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 WRITE_HANDLER( galaxian_videoram_w );
 READ_HANDLER( galaxian_videoram_r );
 WRITE_HANDLER( galaxian_stars_enable_w );
-WRITE_HANDLER( scramble_background_blue_w );
+WRITE_HANDLER( scramble_background_enable_w );
 WRITE_HANDLER( mooncrst_gfxextend_w );
 WRITE_HANDLER( mooncrgx_gfxextend_w );
-int  galaxian_plain_vh_start(void);
-int  galaxian_vh_start(void);
-int  mooncrst_vh_start(void);
-int   moonqsr_vh_start(void);
-int    pisces_vh_start(void);
-int   batman2_vh_start(void);
-int  scramble_vh_start(void);
-int   jumpbug_vh_start(void);
+int galaxian_plain_vh_start(void);
+int galaxian_vh_start(void);
+int mooncrst_vh_start(void);
+int  moonqsr_vh_start(void);
+int   pisces_vh_start(void);
+int gteikob2_vh_start(void);
+int  batman2_vh_start(void);
+int scramble_vh_start(void);
+int  jumpbug_vh_start(void);
 void galaxian_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 WRITE_HANDLER( jumpbug_gfxbank_w );
 WRITE_HANDLER( pisces_gfxbank_w );
 WRITE_HANDLER( galaxian_flip_screen_x_w );
 WRITE_HANDLER( galaxian_flip_screen_y_w );
+WRITE_HANDLER( gteikob2_flip_screen_x_w );
+WRITE_HANDLER( gteikob2_flip_screen_y_w );
 
 WRITE_HANDLER( galaxian_pitch_w );
 WRITE_HANDLER( galaxian_vol_w );
@@ -380,7 +391,7 @@ static MEMORY_WRITE_START( scramblb_writemem )
 	{ 0x6806, 0x6807, galaxian_vol_w },
 	{ 0x7001, 0x7001, interrupt_enable_w },
 	{ 0x7002, 0x7002, galaxian_coin_counter_w },
-	{ 0x7003, 0x7003, scramble_background_blue_w },
+	{ 0x7003, 0x7003, scramble_background_enable_w },
 	{ 0x7004, 0x7004, galaxian_stars_enable_w },
 	{ 0x7006, 0x7006, galaxian_flip_screen_x_w },
 	{ 0x7007, 0x7007, galaxian_flip_screen_y_w },
@@ -520,7 +531,7 @@ static MEMORY_WRITE_START( kingball_writemem )
 	{ 0xb001, 0xb001, interrupt_enable_w },
 	{ 0xb002, 0xb002, kingball_sound2_w },
 	{ 0xb003, 0xb003, kingball_speech_dip_w },
-    { 0xb004, 0xb004, MWA_NOP },					/* noise generator enable */
+	{ 0xb004, 0xb004, MWA_NOP },					/* noise generator enable */
 	{ 0xb006, 0xb006, galaxian_flip_screen_x_w },
 	{ 0xb007, 0xb007, galaxian_flip_screen_y_w },
 	{ 0xb800, 0xb800, galaxian_pitch_w },
@@ -732,6 +743,46 @@ INPUT_PORTS_START( gteikokb )
 	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Cocktail ) )
+	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
+INPUT_PORTS_END
+
+/* same as gteikokb with cabinet reversed */
+INPUT_PORTS_START( gteikob2 )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0xe0, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* probably unused */
+
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* probably unused */
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_2C ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_5C ) )
+
+	PORT_START      /* DSW0 */
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x00, "7000" )
+	PORT_DIPSETTING(    0x01, "None" )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x04, "5" )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
 INPUT_PORTS_END
 
@@ -1146,6 +1197,45 @@ INPUT_PORTS_START( mooncrgx )
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNKNOWN )   /* probably unused */
 INPUT_PORTS_END
 
+INPUT_PORTS_START( omega )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0xe0, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* probably unused */
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* probably unused */
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 1C_1C ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_5C ) )
+
+	PORT_START	/* DSW */
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x00, "10000" )
+	PORT_DIPSETTING(    0x01, "20000" )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x04, "5" )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Cocktail ) )
+	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNKNOWN )   /* probably unused */
+INPUT_PORTS_END
+
 INPUT_PORTS_START( scramblb )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
@@ -1321,9 +1411,9 @@ INPUT_PORTS_START( azurian )
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
-    PORT_DIPNAME( 0x02, 0x00, DEF_STR( Bonus_Life ) )
-    PORT_DIPSETTING(    0x00, "5000" )
-    PORT_DIPSETTING(    0x02, "7000" )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x00, "5000" )
+	PORT_DIPSETTING(    0x02, "7000" )
 	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) )		/* used */
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -1564,12 +1654,12 @@ INPUT_PORTS_START( mooncrst )
 	PORT_DIPSETTING(    0x00, "Japanese" )
 
 	PORT_START	/* DSW */
- 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coin_A ) )
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x03, DEF_STR( 4C_1C ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( 3C_1C ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
- 	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Coin_B ) )
+	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Coin_B ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( 1C_3C ) )
@@ -1726,7 +1816,7 @@ INPUT_PORTS_START( checkman )
 	PORT_DIPSETTING(    0x80, DEF_STR( Cocktail ) )
 
 	PORT_START	/* DSW */
- 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x01, "4" )
 	PORT_DIPSETTING(    0x02, "5" )
@@ -1951,7 +2041,7 @@ static const struct MachineDriver machine_driver_##NAME =						\
 	/* video hardware */														\
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },									\
 	GFX##_gfxdecodeinfo,														\
-	32+2+64+1,8*4,	/* 32 for the characters, 2 for the bullets, 64 for the stars, 1 for background */	\
+	32+2+64,8*4,	/* 32 for the characters, 2 for the bullets, 64 for the stars */	\
 	galaxian_vh_convert_color_prom,												\
 																				\
 	VIDEO_TYPE_RASTER,															\
@@ -1973,14 +2063,51 @@ static const struct MachineDriver machine_driver_##NAME =						\
 /*			   NAME      MEM  	   INTERRUPT  	  GFXDECODE VH_START */
 MACHINE_DRIVER(galaxian, galaxian, nmi_interrupt, galaxian, galaxian)
 MACHINE_DRIVER(pisces,   galaxian, nmi_interrupt, galaxian, pisces)
+MACHINE_DRIVER(gteikob2, galaxian, nmi_interrupt, galaxian, gteikob2)
 MACHINE_DRIVER(batman2,  galaxian, nmi_interrupt, galaxian, batman2)
 MACHINE_DRIVER(mooncrgx, galaxian, nmi_interrupt, galaxian, mooncrst)
 MACHINE_DRIVER(pacmanbl, galaxian, nmi_interrupt, pacmanbl, galaxian)
 MACHINE_DRIVER(devilfsg, galaxian, interrupt,  	  pacmanbl, galaxian)
-MACHINE_DRIVER(scramblb, scramblb, nmi_interrupt, galaxian, scramble)
 MACHINE_DRIVER(mooncrst, mooncrst, nmi_interrupt, galaxian, mooncrst)
 MACHINE_DRIVER(moonqsr,  mooncrst, nmi_interrupt, galaxian, moonqsr)
 
+
+static const struct MachineDriver machine_driver_scramblb =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_Z80,
+			18432000/6,	/* 3.072 MHz */
+			scramblb_readmem,scramblb_writemem,0,0,
+			nmi_interrupt,1
+		}
+	},
+	16000.0/132/2, 2500,	/* frames per second, vblank duration */
+	1,	/* single CPU, no need for interleaving */
+	0,
+
+	/* video hardware */
+	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
+	galaxian_gfxdecodeinfo,
+	32+2+64+1,8*4,	/* 32 for the characters, 2 for the bullets, 64 for the stars, 1 for background */
+	scramble_vh_convert_color_prom,
+
+	VIDEO_TYPE_RASTER,
+	0,
+	scramble_vh_start,
+	0,
+	galaxian_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_CUSTOM,
+			&custom_interface
+		}
+	}
+};
 
 static const struct MachineDriver machine_driver_zigzag =
 {
@@ -2000,7 +2127,7 @@ static const struct MachineDriver machine_driver_zigzag =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	pacmanbl_gfxdecodeinfo,
-	32+2+64+1,8*4,	/* 32 for the characters, 2 for the bullets, 64 for the stars, 1 for background */
+	32+2+64,8*4,	/* 32 for the characters, 2 for the bullets, 64 for the stars */
 	galaxian_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
@@ -2037,7 +2164,7 @@ static const struct MachineDriver machine_driver_jumpbug =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	galaxian_gfxdecodeinfo,
-	32+2+64+1,8*4,	/* 32 for the characters, 2 for the bullets, 64 for the stars, 1 for background */
+	32+2+64,8*4,	/* 32 for the characters, 2 for the bullets, 64 for the stars */
 	galaxian_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
@@ -2081,7 +2208,7 @@ static const struct MachineDriver machine_driver_checkman =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	galaxian_gfxdecodeinfo,
-	32+2+64+1,8*4,	/* 32 for the characters, 2 for the bullets, 64 for the stars, 1 for background */
+	32+2+64,8*4,	/* 32 for the characters, 2 for the bullets, 64 for the stars */
 	galaxian_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
@@ -2128,7 +2255,7 @@ static const struct MachineDriver machine_driver_checkmaj =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	galaxian_gfxdecodeinfo,
-	32+2+64+1,8*4,	/* 32 for the characters, 2 for the bullets, 64 for the stars, 1 for background */
+	32+2+64,8*4,	/* 32 for the characters, 2 for the bullets, 64 for the stars */
 	galaxian_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
@@ -2173,7 +2300,7 @@ static const struct MachineDriver machine_driver_kingball =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	galaxian_gfxdecodeinfo,
-	32+2+64+1,8*4,	/* 32 for the characters, 2 for the bullets, 64 for the stars, 1 for background */
+	32+2+64,8*4,	/* 32 for the characters, 2 for the bullets, 64 for the stars */
 	galaxian_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
@@ -2439,6 +2566,27 @@ ROM_START( gteikokb )
 	ROM_LOAD( "l06_prom.bin", 0x0000, 0x0020, 0x6a0c7d87 )
 ROM_END
 
+ROM_START( gteikob2 )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "94gnog.bin",   0x0000, 0x0800, 0x67ec3235 )
+	ROM_LOAD( "92gnog.bin",   0x0800, 0x0800, 0x813c41f2 )
+	ROM_LOAD( "k07_3a.bin",   0x1000, 0x0800, 0x945f4160 )
+	ROM_LOAD( "1gnog.bin",    0x1800, 0x0800, 0x49ff9658 )
+	ROM_LOAD( "5.bin",  	  0x2000, 0x0800, 0x36fe6e67 )
+	ROM_LOAD( "e08p_6a.bin",  0x2800, 0x0800, 0xd915a389 )
+	ROM_LOAD( "m08p_7a.bin",  0x3000, 0x0800, 0xc9245346 )
+	ROM_LOAD( "98gnog.bin",   0x3800, 0x0800, 0xe9d4ad3c )
+
+	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "h01_1.bin",    0x0000, 0x0800, 0x8313c959 )
+	ROM_LOAD( "h01_2.bin",    0x0800, 0x0800, 0xc26132af )
+	ROM_LOAD( "k01_1.bin",    0x1000, 0x0800, 0xc9d4537e )
+	ROM_LOAD( "k01_2.bin",    0x1800, 0x0800, 0xdcc2b33b )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "l06_prom.bin", 0x0000, 0x0020, 0x6a0c7d87 )
+ROM_END
+
 ROM_START( spacbatt )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "f07_1a.bin",   0x0000, 0x0800, 0xd975af10 )
@@ -2658,6 +2806,23 @@ ROM_START( mooncrgx )
 
 	ROM_REGION( 0x0020, REGION_PROMS, 0 )
 	ROM_LOAD( "l06_prom.bin", 0x0000, 0x0020, 0x6a0c7d87 )
+ROM_END
+
+ROM_START( omega )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "omega1.bin",   0x0000, 0x0800, 0xfc2a096b )
+	ROM_LOAD( "omega2.bin",   0x0800, 0x0800, 0xad100357 )
+	ROM_LOAD( "omega3.bin",   0x1000, 0x0800, 0xd7e3be79 )
+	ROM_LOAD( "omega4.bin",   0x1800, 0x0800, 0x42068171 )
+	ROM_LOAD( "omega5.bin",   0x2000, 0x0800, 0xd8a93383 )
+	ROM_LOAD( "omega6.bin",   0x2800, 0x0800, 0x32a42f44 )
+
+	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "omega1h.bin",  0x0000, 0x0800, 0x527fd384 )
+	ROM_LOAD( "omega1k.bin",  0x0800, 0x0800, 0x36de42c6 )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "6331-1j.86",   0x0000, 0x0020, 0x00000000 )	/* missing */
 ROM_END
 
 ROM_START( scramblb )
@@ -3163,13 +3328,13 @@ ROM_END
 
 static void init_pisces(void)
 {
-    /* the coin lockout was replaced */
+	/* the coin lockout was replaced */
 	install_mem_write_handler(0, 0x6002, 0x6002, pisces_gfxbank_w);
 }
 
 static void init_checkmaj(void)
 {
-    /* for the title screen */
+	/* for the title screen */
 	install_mem_read_handler(0, 0x3800, 0x3800, checkmaj_protection_r);
 }
 
@@ -3286,6 +3451,14 @@ Pin layout is such that links can replace the PAL if encryption is not used.
 	}
 }
 
+static void init_gteikob2(void)
+{
+	init_pisces();
+
+	install_mem_write_handler(0, 0x7006, 0x7006, gteikob2_flip_screen_x_w);
+	install_mem_write_handler(0, 0x7007, 0x7007, gteikob2_flip_screen_y_w);
+}
+
 
 GAME( 1979, galaxian, 0,        galaxian, galaxian, 0,        ROT90,  "Namco", "Galaxian (Namco set 1)" )
 GAME( 1979, galaxiaj, galaxian, galaxian, superg,   0,        ROT90,  "Namco", "Galaxian (Namco set 2)" )
@@ -3301,14 +3474,15 @@ GAME( 19??, pisces,   0,        pisces,   pisces,   pisces,	  ROT90,  "<unknown>
 GAME( 1980, uniwars,  0,        pisces,   superg,   pisces,   ROT90,  "Irem", "UniWar S" )
 GAME( 1980, gteikoku, uniwars,  pisces,   superg,   pisces,   ROT90,  "Irem", "Gingateikoku No Gyakushu" )
 GAME( 1980, gteikokb, uniwars,  pisces,   gteikokb, pisces,   ROT270, "bootleg", "Gingateikoku No Gyakushu (bootleg)" )
+GAME( 1980, gteikob2, uniwars,  gteikob2, gteikob2, gteikob2, ROT270, "bootleg", "Gingateikoku No Gyakushu (bootleg, set 2)" )
 GAME( 1980, spacbatt, uniwars,  pisces,   superg,   pisces,   ROT90,  "bootleg", "Space Battle" )
 GAME( 1980, batman2,  phoenix,  batman2,  batman2,  pisces,	  ROT270, "bootleg", "Batman Part 2" )
 GAME( 1981, warofbug, 0,        galaxian, warofbug, pisces,   ROT90,  "Armenia", "War of the Bugs or Monsterous Manouvers in a Mushroom Maze" )
 GAME( 19??, redufo,   0,        galaxian, redufo,   pisces,   ROT90,  "bootleg", "Defend the Terra Attack on the Red UFO (bootleg)" )
 GAME( 19??, exodus,   redufo,   galaxian, exodus,   pisces,   ROT90,  "Subelectro", "Exodus (bootleg?)" )
 GAMEX(1980, streakng, 0,        pacmanbl, streakng, 0,        ROT90,  "Shoei", "Streaking", GAME_IMPERFECT_COLORS )
-GAMEX(1981, ghostmun, pacman,   pacmanbl, streakng, 0,   	  ROT90,  "bootleg", "Ghost Muncher", GAME_IMPERFECT_COLORS )
-GAME( 1981, pacmanbl, pacman,   pacmanbl, pacmanbl, pisces,   ROT270, "bootleg", "Pac-Man (bootleg on Galaxian hardware)" )
+GAMEX(1981, ghostmun, puckman,  pacmanbl, streakng, 0,   	  ROT90,  "bootleg", "Ghost Muncher", GAME_IMPERFECT_COLORS )
+GAME( 1981, pacmanbl, puckman,  pacmanbl, pacmanbl, pisces,   ROT270, "bootleg", "Pac-Man (bootleg on Galaxian hardware)" )
 GAME( 1984, devilfsg, devilfsh, devilfsg, devilfsg, 0,        ROT270, "Vision / Artic", "Devil Fish (Galaxian hardware, bootleg?)" )
 GAME( 1982, zigzag,   0,        zigzag,   zigzag,   0,        ROT90,  "LAX", "Zig Zag (Galaxian hardware, set 1)" )
 GAME( 1982, zigzag2,  zigzag,   zigzag,   zigzag,   0,        ROT90,  "LAX", "Zig Zag (Galaxian hardware, set 2)" )
@@ -3330,6 +3504,7 @@ GAMEX(1980, fantazia, mooncrst, mooncrst, mooncrst, 0,        ROT90,  "bootleg",
 GAME( 1980, eagle,    mooncrst, mooncrst, eagle,    0,        ROT90,  "Centuri", "Eagle (set 1)" )
 GAME( 1980, eagle2,   mooncrst, mooncrst, eagle2,   0,        ROT90,  "Centuri", "Eagle (set 2)" )
 GAME( 1980, mooncrgx, mooncrst, mooncrgx, mooncrgx, mooncrgx, ROT270, "bootleg", "Moon Cresta (bootleg on Galaxian hardware)" )
+GAME( 19??, omega,    theend,   galaxian, omega,    0,        ROT270, "bootleg?", "Omega" )
 GAME( 1980, moonqsr,  0,        moonqsr,  moonqsr,  moonqsr,  ROT90,  "Nichibutsu", "Moon Quasar" )
 GAME( 1980, moonal2,  0,        mooncrst, moonal2,  moonal2,  ROT90,  "Nichibutsu", "Moon Alien Part 2" )
 GAME( 1980, moonal2b, moonal2,  mooncrst, moonal2,  moonal2,  ROT90,  "Nichibutsu", "Moon Alien Part 2 (older version)" )

@@ -14,9 +14,9 @@ Notes:
 - Super Pang has a protection which involves copying code stored in the
   EEPROM to RAM and execute it from there. The first time the game is run,
   you have to keep the player 1 start button pressed until the title screen
-  appears to force the game to initialize the EEPROM, otherwise it will not
-  work.
-  This is simultaed with a kluge in input_r.
+  appears. This forces the game to initialize the EEPROM, otherwise it will
+  not work.
+  This is simulated with a kluge in input_r.
 
 TODO:
 - understand what bits 0 and 3 of input port 0x05 are
@@ -987,9 +987,9 @@ static const struct MachineDriver machine_driver_mgakuen =
 
 	64*8, 32*8, { 8*8, (64-8)*8-1, 1*8, 31*8-1 },
 	mgakuen_gfxdecodeinfo,
-	1024, 1024,	/* less colors than the others */
+	1024, 0,	/* less colors than the others */
 	0,
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	pang_vh_start,
 	pang_vh_stop,
@@ -1025,9 +1025,9 @@ static const struct MachineDriver machine_driver_pang =
 
 	64*8, 32*8, { 8*8, (64-8)*8-1, 1*8, 31*8-1 },
 	gfxdecodeinfo,
-	2048, 2048,
+	2048, 0,
 	0,
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	pang_vh_start,
 	pang_vh_stop,
@@ -1063,9 +1063,9 @@ static const struct MachineDriver machine_driver_marukin =
 
 	64*8, 32*8, { 8*8, (64-8)*8-1, 1*8, 31*8-1 },
 	marukin_gfxdecodeinfo,
-	2048, 2048,
+	2048, 0,
 	0,
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	pang_vh_start,
 	pang_vh_stop,

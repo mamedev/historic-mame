@@ -1375,10 +1375,10 @@ static const struct MachineDriver machine_driver_rallybik =
 	/* video hardware */
 	320, 240, { 0, 319, 0, 239 },
 	rallybik_gfxdecodeinfo,
-	64*16+64*16, 64*16+64*16,
+	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_BUFFERS_SPRITERAM,
+	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_BUFFERS_SPRITERAM,
 	rallybik_eof_callback,
 	rallybik_vh_start,
 	rallybik_vh_stop,
@@ -1418,10 +1418,10 @@ static const struct MachineDriver machine_driver_truxton =
 	/* video hardware */
 	320, 240, { 0, 319, 0, 239 },
 	gfxdecodeinfo,
-	64*16+64*16, 64*16+64*16,
+	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK,
 	toaplan1_eof_callback,
 	toaplan1_vh_start,
 	toaplan1_vh_stop,
@@ -1461,10 +1461,10 @@ static const struct MachineDriver machine_driver_hellfire =
 	/* video hardware */
 	320, 256, { 0, 319, 16, 255 },
 	gfxdecodeinfo,
-	64*16+64*16, 64*16+64*16,
+	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK,
 	toaplan1_eof_callback,
 	toaplan1_vh_start,
 	toaplan1_vh_stop,
@@ -1504,10 +1504,10 @@ static const struct MachineDriver machine_driver_zerowing =
 	/* video hardware */
 	320, 256, { 0, 319, 16, 255 },
 	gfxdecodeinfo,
-	64*16+64*16, 64*16+64*16,
+	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK,
 	toaplan1_eof_callback,
 	toaplan1_vh_start,
 	toaplan1_vh_stop,
@@ -1553,10 +1553,10 @@ static const struct MachineDriver machine_driver_demonwld =
 	/* video hardware */
 	320, 256, { 0, 319, 16, 255 },
 	gfxdecodeinfo,
-	64*16+64*16, 64*16+64*16,
+	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK,
 	toaplan1_eof_callback,
 	toaplan1_vh_start,
 	toaplan1_vh_stop,
@@ -1590,10 +1590,10 @@ static const struct MachineDriver machine_driver_samesame =
 	/* video hardware */
 	320, 240, { 0, 319, 0, 239 },
 	gfxdecodeinfo,
-	64*16+64*16, 64*16+64*16,
+	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK,
 	samesame_eof_callback,
 	toaplan1_vh_start,
 	toaplan1_vh_stop,
@@ -1633,10 +1633,10 @@ static const struct MachineDriver machine_driver_outzone =
 	/* video hardware */
 	320, 240, {0, 319, 0, 239 },
 	outzone_gfxdecodeinfo,
-	64*16+64*16, 64*16+64*16,
+	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK,
 	toaplan1_eof_callback,
 	toaplan1_vh_start,
 	toaplan1_vh_stop,
@@ -1670,10 +1670,10 @@ static const struct MachineDriver machine_driver_vimana =
 	/* video hardware */
 	320, 240, { 0, 319, 0, 239 },
 	vm_gfxdecodeinfo,
-	64*16+64*16, 64*16+64*16,
+	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK,
 	toaplan1_eof_callback,
 	toaplan1_vh_start,
 	toaplan1_vh_stop,

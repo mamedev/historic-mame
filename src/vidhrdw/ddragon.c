@@ -256,10 +256,6 @@ void ddragon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	tilemap_set_scrollx(bg_tilemap,0,scrollx);
 	tilemap_set_scrolly(bg_tilemap,0,scrolly);
 
-	tilemap_update(ALL_TILEMAPS);
-
-	palette_recalc();
-
 	tilemap_draw(bitmap,bg_tilemap,0,0);
 	draw_sprites(bitmap);
 	tilemap_draw(bitmap,fg_tilemap,0,0);

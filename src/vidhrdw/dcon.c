@@ -177,32 +177,6 @@ static void draw_sprites(struct osd_bitmap *bitmap,int pri)
 	}
 }
 
-static void mark_sprite_colours(void)
-{
-	int colmask[64],i,pal_base,color,offs,sprite,multi;
-
-	pal_base = Machine->drv->gfxdecodeinfo[4].color_codes_start;
-	for (color = 0;color < 64;color++) colmask[color] = 0;
-	for (offs = 0;offs < 0x400;offs += 4)
-	{
-		color = spriteram16[offs+0]&0x3f;
-		sprite = spriteram16[offs+1];
-		sprite &= 0x3fff;
-		multi=(((spriteram16[offs+0]&0x0380)>>7)+1)*(((spriteram16[offs+0]&0x1c00)>>10)+1);
-
-		for (i=0; i<multi; i++)
-			colmask[color] |= Machine->gfx[4]->pen_usage[(sprite+i)&0x3fff];
-	}
-	for (color = 0;color < 64;color++)
-	{
-		for (i = 0;i < 15;i++)
-		{
-			if (colmask[color] & (1 << i))
-				palette_used_colors[pal_base + 16 * color + i] = PALETTE_COLOR_USED;
-		}
-	}
-}
-
 void dcon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	/* Setup the tilemaps */
@@ -213,18 +187,10 @@ void dcon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	tilemap_set_scrollx( foreground_layer,0, dcon_scroll_ram[4] );
 	tilemap_set_scrolly( foreground_layer,0, dcon_scroll_ram[5] );
 
-	tilemap_update(ALL_TILEMAPS);
-
-	/* Build the dynamic palette */
-	palette_init_used_colors();
-	mark_sprite_colours();
-
-	palette_recalc();
-
 	if ((dcon_enable&1)!=1)
 		tilemap_draw(bitmap,background_layer,0,0);
 	else
-		fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
+		fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 
 	draw_sprites(bitmap,2);
 	tilemap_draw(bitmap,midground_layer,0,0);

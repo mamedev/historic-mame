@@ -61,19 +61,6 @@ struct rgb_descriptor
 //	IMPORTS
 //============================================================
 
-extern void asmblit1_8_to_8_x1(void);
-extern void asmblit1_8_to_8_x2(void);
-extern void asmblit1_8_to_8_x3(void);
-extern void asmblit1_8_to_16_x1(void);
-extern void asmblit1_8_to_16_x2(void);
-extern void asmblit1_8_to_16_x3(void);
-extern void asmblit1_8_to_24_x1(void);
-extern void asmblit1_8_to_24_x2(void);
-extern void asmblit1_8_to_24_x3(void);
-extern void asmblit1_8_to_32_x1(void);
-extern void asmblit1_8_to_32_x2(void);
-extern void asmblit1_8_to_32_x3(void);
-
 extern void asmblit1_16_to_16_x1(void);
 extern void asmblit1_16_to_16_x2(void);
 extern void asmblit1_16_to_16_x3(void);
@@ -103,26 +90,6 @@ extern void asmblit1_32_to_24_x3(void);
 extern void asmblit1_32_to_32_x1(void);
 extern void asmblit1_32_to_32_x2(void);
 extern void asmblit1_32_to_32_x3(void);
-
-extern void asmblit16_8_to_8_x1(void);
-extern void asmblit16_8_to_8_x1_mmx(void);
-extern void asmblit16_8_to_8_x2(void);
-extern void asmblit16_8_to_8_x3(void);
-extern void asmblit16_8_to_16_x1(void);
-extern void asmblit16_8_to_16_x1_mmx(void);
-extern void asmblit16_8_to_16_x2(void);
-extern void asmblit16_8_to_16_x2_mmx(void);
-extern void asmblit16_8_to_16_x3(void);
-extern void asmblit16_8_to_16_x3_mmx(void);
-extern void asmblit16_8_to_24_x1(void);
-extern void asmblit16_8_to_24_x2(void);
-extern void asmblit16_8_to_24_x3(void);
-extern void asmblit16_8_to_32_x1(void);
-extern void asmblit16_8_to_32_x1_mmx(void);
-extern void asmblit16_8_to_32_x2(void);
-extern void asmblit16_8_to_32_x2_mmx(void);
-extern void asmblit16_8_to_32_x3(void);
-extern void asmblit16_8_to_32_x3_mmx(void);
 
 extern void asmblit16_16_to_16_x1(void);
 extern void asmblit16_16_to_16_x1_mmx(void);
@@ -160,12 +127,8 @@ extern void asmblit16_32_to_32_x1(void);
 extern void asmblit16_32_to_32_x2(void);
 extern void asmblit16_32_to_32_x3(void);
 
-extern void asmblit1_8_to_16_rgb(void);
-extern void asmblit16_8_to_16_rgb(void);
 extern void asmblit1_16_to_16_rgb(void);
 extern void asmblit16_16_to_16_rgb(void);
-extern void asmblit1_8_to_32_rgb(void);
-extern void asmblit16_8_to_32_rgb(void);
 extern void asmblit1_16_to_32_rgb(void);
 extern void asmblit16_16_to_32_rgb(void);
 
@@ -222,7 +185,7 @@ static UINT8				active_fast_blitter[MAX_BLITTER_SIZE];
 static UINT8				active_update_blitter[MAX_BLITTER_SIZE];
 
 // current parameters
-static struct blit_params	active_blitter_params;
+static struct win_blit_params	active_blitter_params;
 
 // MMX/XMM supported?
 static int					use_mmx = -1;
@@ -330,7 +293,7 @@ static struct rgb_descriptor rgb4v_desc =
 	}
 };
 
-// table for 75% vertical scanlines RGB pattern
+// table for 75% vertical win_old_scanlines RGB pattern
 static struct rgb_descriptor scan75v_desc =
 {
 	1,
@@ -344,7 +307,7 @@ static struct rgb_descriptor scan75v_desc =
 //	PROTOTYPES
 //============================================================
 
-static void generate_blitter(const struct blit_params *blit);
+static void generate_blitter(const struct win_blit_params *blit);
 
 
 
@@ -355,10 +318,10 @@ static void generate_blitter(const struct blit_params *blit);
 static void (*blit1_core[4][4][3])(void) =
 {
 	{
-		{ asmblit1_8_to_8_x1,   asmblit1_8_to_8_x2,   asmblit1_8_to_8_x3 },
-		{ asmblit1_8_to_16_x1,  asmblit1_8_to_16_x2,  asmblit1_8_to_16_x3 },
-		{ asmblit1_8_to_24_x1,  asmblit1_8_to_24_x2,  asmblit1_8_to_24_x3 },
-		{ asmblit1_8_to_32_x1,  asmblit1_8_to_32_x2,  asmblit1_8_to_32_x3 }
+		{ NULL,                 NULL,                 NULL },
+		{ NULL,                 NULL,                 NULL },
+		{ NULL,                 NULL,                 NULL },
+		{ NULL,                 NULL,                 NULL },
 	},
 	{
 		{ NULL,                 NULL,                 NULL },
@@ -383,10 +346,10 @@ static void (*blit1_core[4][4][3])(void) =
 static void (*blit16_core[4][4][3])(void) =
 {
 	{
-		{ asmblit16_8_to_8_x1,   asmblit16_8_to_8_x2,   asmblit16_8_to_8_x3 },
-		{ asmblit16_8_to_16_x1,  asmblit16_8_to_16_x2,  asmblit16_8_to_16_x3 },
-		{ asmblit16_8_to_24_x1,  asmblit16_8_to_24_x2,  asmblit16_8_to_24_x3 },
-		{ asmblit16_8_to_32_x1,  asmblit16_8_to_32_x2,  asmblit16_8_to_32_x3 }
+		{ NULL,                 NULL,                 NULL },
+		{ NULL,                 NULL,                 NULL },
+		{ NULL,                 NULL,                 NULL },
+		{ NULL,                 NULL,                 NULL },
 	},
 	{
 		{ NULL,                  NULL,                  NULL },
@@ -411,10 +374,10 @@ static void (*blit16_core[4][4][3])(void) =
 static void (*blit16_core_mmx[4][4][3])(void) =
 {
 	{
-		{ asmblit16_8_to_8_x1_mmx,   NULL,                      NULL },
-		{ asmblit16_8_to_16_x1_mmx,  asmblit16_8_to_16_x2_mmx,  asmblit16_8_to_16_x3_mmx },
-		{ NULL,                      NULL,                      NULL },
-		{ asmblit16_8_to_32_x1_mmx,  asmblit16_8_to_32_x2_mmx,  asmblit16_8_to_32_x3_mmx },
+		{ NULL,                 NULL,                 NULL },
+		{ NULL,                 NULL,                 NULL },
+		{ NULL,                 NULL,                 NULL },
+		{ NULL,                 NULL,                 NULL },
 	},
 	{
 		{ NULL,                      NULL,                      NULL },
@@ -438,7 +401,7 @@ static void (*blit16_core_mmx[4][4][3])(void) =
 
 static void (*blit1_core_rgb[4][4])(void) =
 {
-	{ NULL, asmblit1_8_to_16_rgb,  NULL, asmblit1_8_to_32_rgb },
+	{ NULL, NULL, NULL, NULL },
 	{ NULL, asmblit1_16_to_16_rgb, NULL, asmblit1_16_to_32_rgb },
 	{ NULL, NULL, NULL, NULL },
 	{ NULL, NULL, NULL, NULL }
@@ -446,7 +409,7 @@ static void (*blit1_core_rgb[4][4])(void) =
 
 static void (*blit16_core_rgb[4][4])(void) =
 {
-	{ NULL, asmblit16_8_to_16_rgb,  NULL, asmblit16_8_to_32_rgb },
+	{ NULL, NULL, NULL, NULL },
 	{ NULL, asmblit16_16_to_16_rgb, NULL, asmblit16_16_to_32_rgb },
 	{ NULL, NULL, NULL, NULL },
 	{ NULL, NULL, NULL, NULL }
@@ -455,10 +418,10 @@ static void (*blit16_core_rgb[4][4])(void) =
 
 
 //============================================================
-//	perform_blit
+//	win_perform_blit
 //============================================================
 
-int perform_blit(const struct blit_params *blit, int update)
+int win_perform_blit(const struct win_blit_params *blit, int update)
 {
 	int srcdepth = (blit->srcdepth + 7) / 8;
 	int dstdepth = (blit->dstdepth + 7) / 8;
@@ -621,7 +584,7 @@ static void emit_mov_edi_0(int reg, int offs, UINT8 **dest)
 //	emit_reduce_brightness
 //============================================================
 
-static void emit_reduce_brightness(int count, const UINT8 *reglist, const struct blit_params *blit, UINT8 **dest)
+static void emit_reduce_brightness(int count, const UINT8 *reglist, const struct win_blit_params *blit, UINT8 **dest)
 {
 	int regsize[4] = { 0 };
 	UINT32 mask;
@@ -684,16 +647,16 @@ static void emit_reduce_brightness(int count, const UINT8 *reglist, const struct
 	// now determine the mask to use
 	if (blit->dstdepth == 16)
 	{
-		mask = (0xff >> (color16_rsrc_shift + shift)) << color16_rdst_shift;
-		mask |= (0xff >> (color16_gsrc_shift + shift)) << color16_gdst_shift;
-		mask |= (0xff >> (color16_bsrc_shift + shift)) << color16_bdst_shift;
+		mask = (0xff >> (win_color16_rsrc_shift + shift)) << win_color16_rdst_shift;
+		mask |= (0xff >> (win_color16_gsrc_shift + shift)) << win_color16_gdst_shift;
+		mask |= (0xff >> (win_color16_bsrc_shift + shift)) << win_color16_bdst_shift;
 		mask |= mask << 16;
 	}
 	else
 	{
-		mask = (0xff >> shift) << color32_rdst_shift;
-		mask |= (0xff >> shift) << color32_gdst_shift;
-		mask |= (0xff >> shift) << color32_bdst_shift;
+		mask = (0xff >> shift) << win_color32_rdst_shift;
+		mask |= (0xff >> shift) << win_color32_gdst_shift;
+		mask |= (0xff >> shift) << win_color32_bdst_shift;
 	}
 
 	// generate an AND with that mask
@@ -745,7 +708,7 @@ static void emit_reduce_brightness(int count, const UINT8 *reglist, const struct
 //	emit_reduce_brightness_mmx
 //============================================================
 
-static void emit_reduce_brightness_mmx(int count, const UINT8 *reglist, const struct blit_params *blit, UINT8 **dest)
+static void emit_reduce_brightness_mmx(int count, const UINT8 *reglist, const struct win_blit_params *blit, UINT8 **dest)
 {
 	int freelist[16], tempfree[16];
 	int regsize[16] = { 0 };
@@ -854,16 +817,16 @@ static void emit_reduce_brightness_mmx(int count, const UINT8 *reglist, const st
 	// now determine the masks to use
 	if (blit->dstdepth == 16)
 	{
-		mask = (0xff >> (color16_rsrc_shift + shift)) << color16_rdst_shift;
-		mask |= (0xff >> (color16_gsrc_shift + shift)) << color16_gdst_shift;
-		mask |= (0xff >> (color16_bsrc_shift + shift)) << color16_bdst_shift;
+		mask = (0xff >> (win_color16_rsrc_shift + shift)) << win_color16_rdst_shift;
+		mask |= (0xff >> (win_color16_gsrc_shift + shift)) << win_color16_gdst_shift;
+		mask |= (0xff >> (win_color16_bsrc_shift + shift)) << win_color16_bdst_shift;
 		mask |= mask << 16;
 	}
 	else
 	{
-		mask = (0xff >> shift) << color32_rdst_shift;
-		mask |= (0xff >> shift) << color32_gdst_shift;
-		mask |= (0xff >> shift) << color32_bdst_shift;
+		mask = (0xff >> shift) << win_color32_rdst_shift;
+		mask |= (0xff >> shift) << win_color32_gdst_shift;
+		mask |= (0xff >> shift) << win_color32_bdst_shift;
 	}
 	asmblit_mmxmask[0] = asmblit_mmxmask[1] = asmblit_mmxmask[2] = asmblit_mmxmask[3] = mask;
 
@@ -928,7 +891,7 @@ static void emit_reduce_brightness_mmx(int count, const UINT8 *reglist, const st
 //	generate_rgb_masks
 //============================================================
 
-static void generate_rgb_masks(const struct rgb_descriptor *desc, const struct blit_params *blit)
+static void generate_rgb_masks(const struct rgb_descriptor *desc, const struct win_blit_params *blit)
 {
 	int i;
 
@@ -950,17 +913,17 @@ static void generate_rgb_masks(const struct rgb_descriptor *desc, const struct b
 			// now determine the masks to use
 			if (blit->dstdepth == 16)
 			{
-				mask = (rmask >> color16_rsrc_shift) << color16_rdst_shift;
-				mask |= (gmask >> color16_gsrc_shift) << color16_gdst_shift;
-				mask |= (bmask >> color16_bsrc_shift) << color16_bdst_shift;
+				mask = (rmask >> win_color16_rsrc_shift) << win_color16_rdst_shift;
+				mask |= (gmask >> win_color16_gsrc_shift) << win_color16_gdst_shift;
+				mask |= (bmask >> win_color16_bsrc_shift) << win_color16_bdst_shift;
 				*(UINT16 *)dst = mask;
 				dst = (UINT32 *)((UINT16 *)dst + 1);
 			}
 			else
 			{
-				mask = rmask << color32_rdst_shift;
-				mask |= gmask << color32_gdst_shift;
-				mask |= bmask << color32_bdst_shift;
+				mask = rmask << win_color32_rdst_shift;
+				mask |= gmask << win_color32_gdst_shift;
+				mask |= bmask << win_color32_bdst_shift;
 				*dst++ = mask;
 			}
 		}
@@ -972,7 +935,7 @@ static void generate_rgb_masks(const struct rgb_descriptor *desc, const struct b
 //	emit_expansion
 //============================================================
 
-static void emit_expansion(int count, const UINT8 *reglist, const UINT32 *offslist, const struct blit_params *blit, UINT8 **dest, int update)
+static void emit_expansion(int count, const UINT8 *reglist, const UINT32 *offslist, const struct win_blit_params *blit, UINT8 **dest, int update)
 {
 	int row, i, rowoffs = 0;
 	int has_mmx = 0;
@@ -985,7 +948,7 @@ static void emit_expansion(int count, const UINT8 *reglist, const UINT32 *offsli
 	// loop over copied lines and blit them
 	for (row = 0; row < blit->dstyscale; row++)
 	{
-		// handle dimmed scanlines
+		// handle dimmed win_old_scanlines
 		if (blit->dsteffect >= EFFECT_SCANLINE_25 && blit->dsteffect <= EFFECT_SCANLINE_75 && row != 0 && row == blit->dstyscale - 1)
 		{
 			if (has_mmx)
@@ -1000,7 +963,7 @@ static void emit_expansion(int count, const UINT8 *reglist, const UINT32 *offsli
 		rowoffs += blit->dstpitch;
 	}
 
-	// if updating, and generating scanlines, store a 0
+	// if updating, and generating win_old_scanlines, store a 0
 	if (update && blit->dstyskip)
 	{
 		// if we have any MMX, generate a PXOR MM7,MM7
@@ -1044,7 +1007,7 @@ static void check_for_mmx(void)
 //	expand_blitter
 //============================================================
 
-static void expand_blitter(int which, const struct blit_params *blit, UINT8 **dest, int update)
+static void expand_blitter(int which, const struct win_blit_params *blit, UINT8 **dest, int update)
 {
 	int srcdepth_index = (blit->srcdepth + 7) / 8 - 1;
 	int dstdepth_index = (blit->dstdepth + 7) / 8 - 1;
@@ -1128,9 +1091,9 @@ static void expand_blitter(int which, const struct blit_params *blit, UINT8 **de
 			// determine parameters
 			switch (shifttype & 3)
 			{
-				case 0:	rshift1 = color32_rdst_shift; rshift2 = color16_rsrc_shift; lshift = color16_rdst_shift; break;
-				case 1:	rshift1 = color32_gdst_shift; rshift2 = color16_gsrc_shift; lshift = color16_gdst_shift; break;
-				case 2:	rshift1 = color32_bdst_shift; rshift2 = color16_bsrc_shift; lshift = color16_bdst_shift; break;
+				case 0:	rshift1 = win_color32_rdst_shift; rshift2 = win_color16_rsrc_shift; lshift = win_color16_rdst_shift; break;
+				case 1:	rshift1 = win_color32_gdst_shift; rshift2 = win_color16_gsrc_shift; lshift = win_color16_gdst_shift; break;
+				case 2:	rshift1 = win_color32_bdst_shift; rshift2 = win_color16_bsrc_shift; lshift = win_color16_bdst_shift; break;
 			}
 
 			// determine registers
@@ -1253,7 +1216,7 @@ static void fixup_values(UINT32 *fixups, UINT8 *start, UINT8 *end)
 	addrfixups[0][index] = fastptr; \
 	addrfixups[1][index] = updateptr;
 
-static void generate_blitter(const struct blit_params *blit)
+static void generate_blitter(const struct win_blit_params *blit)
 {
 	UINT8 *fastptr = active_fast_blitter;
 	UINT8 *updateptr = active_update_blitter;

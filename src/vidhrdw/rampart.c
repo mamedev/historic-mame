@@ -26,15 +26,12 @@ data16_t *rampart_bitmap;
  *
  *************************************/
 
-static int *pfusage;
 static UINT8 *pfdirty;
 static struct osd_bitmap *pfbitmap;
 static int xdim, ydim;
 
 int rampart_bitmap_init(int _xdim, int _ydim);
 void rampart_bitmap_free(void);
-void rampart_bitmap_invalidate(void);
-void rampart_bitmap_mark_palette(int base);
 void rampart_bitmap_render(struct osd_bitmap *bitmap);
 
 
@@ -77,7 +74,7 @@ int rampart_vh_start(void)
 		{{ 0 }},			/* mask for the priority */
 		{{ 0 }},			/* mask for the neighbor */
 		{{ 0 }},			/* mask for absolute coordinates */
-		
+
 		{{ 0 }},			/* mask for the ignore value */
 		0,					/* resulting value to indicate "ignore" */
 		0,					/* callback routine for ignored entries */
@@ -126,15 +123,6 @@ void rampart_vh_stop(void)
 
 void rampart_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	/* mark the used colors */
-	palette_init_used_colors();
-	rampart_bitmap_mark_palette(0);
-	atarimo_mark_palette(0);
-
-	/* update the palette, and mark things dirty if we need to */
-	if (palette_recalc())
-		rampart_bitmap_invalidate();
-
 	/* draw the layers */
 	rampart_bitmap_render(bitmap);
 	atarimo_render(0, bitmap, NULL, NULL);
@@ -154,18 +142,12 @@ int rampart_bitmap_init(int _xdim, int _ydim)
 	xdim = _xdim;
 	ydim = _ydim;
 
-	/* allocate color usage */
-	pfusage = malloc(sizeof(pfusage[0]) * 256);
-	if (!pfusage)
-		goto cant_alloc_usage;
-	pfusage[0] = xdim * ydim;
-	
 	/* allocate dirty map */
 	pfdirty = malloc(sizeof(pfdirty[0]) * ydim);
 	if (!pfdirty)
 		goto cant_alloc_dirty;
 	memset(pfdirty, 1, sizeof(pfdirty[0]) * ydim);
-	
+
 	/* allocate playfield bitmap */
 	pfbitmap = bitmap_alloc(xdim, ydim);
 	if (!pfbitmap)
@@ -176,8 +158,6 @@ int rampart_bitmap_init(int _xdim, int _ydim)
 cant_alloc_pf:
 	free(pfdirty);
 cant_alloc_dirty:
-	free(pfusage);
-cant_alloc_usage:
 	return 0;
 }
 
@@ -193,20 +173,6 @@ void rampart_bitmap_free(void)
 {
 	bitmap_free(pfbitmap);
 	free(pfdirty);
-	free(pfusage);
-}
-
-
-
-/*************************************
- *
- *	Bitmap invalidating
- *
- *************************************/
-
-void rampart_bitmap_invalidate(void)
-{
-	memset(pfdirty, 1, ydim * sizeof(pfdirty[0]));
 }
 
 
@@ -232,31 +198,8 @@ WRITE16_HANDLER( rampart_bitmap_w )
 		x = offset % 256;
 		y = offset / 256;
 		if (x < xdim && y < ydim)
-		{
-			pfusage[(oldword >> 8) & 0xff]--;
-			pfusage[oldword & 0xff]--;
-			pfusage[(newword >> 8) & 0xff]++;
-			pfusage[newword & 0xff]++;
 			pfdirty[y] = 1;
-		}
 	}
-}
-
-
-
-/*************************************
- *
- *	Bitmap palette marking
- *
- *************************************/
-
-void rampart_bitmap_mark_palette(int base)
-{
-	int i;
-	
-	for (i = 0; i < 256; i++)
-		if (pfusage[i])
-			palette_used_colors[base + i] = PALETTE_COLOR_USED;
 }
 
 
@@ -276,15 +219,20 @@ void rampart_bitmap_render(struct osd_bitmap *bitmap)
 		if (pfdirty[y])
 		{
 			const data16_t *src = &rampart_bitmap[256 * y];
+			UINT8 scanline[512];
+			UINT8 *dst = scanline;
 
 			/* regenerate the line */
 			for (x = 0; x < xdim / 2; x++)
 			{
 				int bits = *src++;
-				plot_pixel(pfbitmap, x*2+0, y, Machine->pens[bits >> 8]);
-				plot_pixel(pfbitmap, x*2+1, y, Machine->pens[bits & 0xff]);
+				*dst++ = bits >> 8;
+				*dst++ = bits;
 			}
 			pfdirty[y] = 0;
+
+			/* draw it */
+			draw_scanline8(pfbitmap, 0, y, xdim, scanline, Machine->pens, -1);
 		}
 
 	/* copy the cached bitmap */

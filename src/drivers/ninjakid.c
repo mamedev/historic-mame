@@ -209,7 +209,7 @@ static const struct MachineDriver machine_driver_ninjakid =
     512+256,512+256,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
     0,
 	ninjakid_vh_start,
 	0,
@@ -348,4 +348,4 @@ static void init_ninjakid(void)
  Game Drivers
 *******************************************************************************/
 
-GAME( 1984, ninjakun, 0, ninjakid, ninjakid, ninjakid, ROT0_16BIT, "[UPL] (Taito license)", "Ninjakun Majou no Bouken" )
+GAME( 1984, ninjakun, 0, ninjakid, ninjakid, ninjakid, ROT0, "[UPL] (Taito license)", "Ninjakun Majou no Bouken" )

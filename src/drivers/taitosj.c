@@ -1694,7 +1694,7 @@ static const struct MachineDriver machine_driver_nomcu =
 	64, 16*8,
 	taitosj_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER,
 	0,
 	taitosj_vh_start,
 	taitosj_vh_stop,
@@ -1754,7 +1754,7 @@ static const struct MachineDriver machine_driver_mcu =
 	64, 16*8,
 	taitosj_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER,
 	0,
 	taitosj_vh_start,
 	taitosj_vh_stop,

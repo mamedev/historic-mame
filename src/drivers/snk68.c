@@ -819,10 +819,10 @@ static const struct MachineDriver machine_driver_ikari3 =
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 
 	ikari3_gfxdecodeinfo,
-	2048, 2048,
+	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	ikari3_vh_start,
 	0,
@@ -868,10 +868,10 @@ static const struct MachineDriver machine_driver_pow =
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 
 	pow_gfxdecodeinfo,
-	2048, 2048,
+	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	pow_vh_start,
 	0,
@@ -917,10 +917,10 @@ static const struct MachineDriver machine_driver_searchar =
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 
 	searchar_gfxdecodeinfo,
-	2048, 2048,
+	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	searchar_vh_start,
 	0,
@@ -966,10 +966,10 @@ static const struct MachineDriver machine_driver_streetsm =
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 
 	searchar_gfxdecodeinfo,
-	2048, 2048,
+	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	pow_vh_start,
 	0,

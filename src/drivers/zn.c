@@ -243,7 +243,7 @@ static const struct MachineDriver machine_driver_znqs =
 	4096,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	znqs_vh_start,
 	znqs_vh_stop,
@@ -622,7 +622,7 @@ static void zn_vh_screenrefresh( struct osd_bitmap *bitmap, int full_refresh )
 	UINT16 n_y;
 	UINT32 *pens = Machine->pens;
 
-	if( palette_recalc() || full_refresh )
+	if( full_refresh )
 	{
 		if( bitmap->depth == 16 )
 		{
@@ -954,6 +954,6 @@ GAME( 1998, kikaioh,  0,		znqs, zn, 0, ROT0, "Capcom", "Kikaioh (JAPAN 980914)" 
 GAME( 1999, sfex2p,   0,		znqs, zn, 0, ROT0, "Capcom/Arika", "Street Fighter EX 2 Plus (JAPAN 990611)" )
 GAME( 1999, shiryu2,  0,		znqs, zn, 0, ROT0, "Capcom", "Strider Hiryu 2 (JAPAN 991213)" )
 
-GAME( 1996, sncwgltd,	0,	  zn, zn, 0, ROT0_16BIT, "Video System Co.", "Sonic Wings Limited (JAPAN)" )
-GAME( 1997, glpracr2,	0,	  zn, zn, 0, ROT0_16BIT, "Tecmo", "Gallop Racer 2 (JAPAN)" )
-GAME( 1998, doapp,		0,	  zn, zn, 0, ROT0_16BIT, "Tecmo", "Dead Or Alive ++ (JAPAN)" )
+GAME( 1996, sncwgltd,	0,	  zn, zn, 0, ROT0, "Video System Co.", "Sonic Wings Limited (JAPAN)" )
+GAME( 1997, glpracr2,	0,	  zn, zn, 0, ROT0, "Tecmo", "Gallop Racer 2 (JAPAN)" )
+GAME( 1998, doapp,		0,	  zn, zn, 0, ROT0, "Tecmo", "Dead Or Alive ++ (JAPAN)" )

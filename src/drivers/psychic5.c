@@ -563,7 +563,7 @@ static const struct MachineDriver machine_driver_psychic5 =
 	gfxdecodeinfo,
 	48*16,48*16,
 	0,
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	psychic5_vh_start,
 	psychic5_vh_stop,

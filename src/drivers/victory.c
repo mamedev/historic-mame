@@ -417,7 +417,7 @@ static const struct MachineDriver machine_driver_victory =
 	64,64,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK,
 	victory_vh_eof,
 	victory_vh_start,
 	victory_vh_stop,

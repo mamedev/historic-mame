@@ -148,59 +148,6 @@ void warriorb_vh_stop (void)
 }
 
 
-/********************************************************
-          SPRITE READ AND WRITE HANDLERS
-********************************************************/
-
-// None //
-
-
-/*********************************************************
-				PALETTE
-*********************************************************/
-
-static void warriorb_update_palette (void)
-{
-	int i,j;
-	int offs,data,tilenum,color;
-	UINT16 tile_mask = (Machine->gfx[0]->total_elements) - 1;
-	UINT16 palette_map[256];
-	memset (palette_map, 0, sizeof (palette_map));
-
-	for (offs = (spriteram_size/2)-4;offs >=0;offs -= 4)
-	{
-		data = spriteram16[offs+1];
-		tilenum = data &0x7fff;
-
-		data = spriteram16[offs+2];
-		color = (data & 0x7f);
-
-		tilenum &= tile_mask;
-		if (tilenum)
-		{
-			palette_map[color] |= Machine->gfx[0]->pen_usage[tilenum];
-		}
-	}
-
-	/* Tell MAME about the color usage */
-	for (i = 0;i < 256;i++)
-	{
-		int usage = palette_map[i];
-
-		if (usage)
-		{
-			if (palette_map[i] & (1 << 0))
-				palette_used_colors[i * 16 + 0] = PALETTE_COLOR_USED;
-			for (j = 1; j < 16; j++)
-				if (palette_map[i] & (1 << j))
-					palette_used_colors[i * 16 + j] = PALETTE_COLOR_USED;
-		}
-	}
-}
-
-
-
-
 /************************************************************
 			SPRITE DRAW ROUTINE
 ************************************************************/
@@ -312,11 +259,6 @@ void warriorb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	TC0100SCN_tilemap_update();
 
-	palette_init_used_colors();
-	warriorb_update_palette();
-	palette_used_colors[0] |= PALETTE_COLOR_VISIBLE;
-	palette_recalc();
-
 	layer[0] = TC0100SCN_bottomlayer(0);
 	layer[1] = layer[0]^1;
 	layer[2] = 2;
@@ -324,7 +266,7 @@ void warriorb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	fillbitmap(priority_bitmap,0,NULL);
 
 	/* Ensure screen blanked even when bottom layers not drawn due to disable bit */
-	fillbitmap(bitmap, palette_transparent_pen, &Machine -> visible_area);
+	fillbitmap(bitmap, Machine->pens[0], &Machine -> visible_area);
 
 	/* chip 0 does tilemaps on the left, chip 1 does the ones on the right */
 	TC0100SCN_tilemap_draw(bitmap,0,layer[0],TILEMAP_IGNORE_TRANSPARENCY,1);	/* left */

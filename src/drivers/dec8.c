@@ -169,7 +169,8 @@ static WRITE_HANDLER( srdarwin_i8751_w )
 	}
 
 	if (i8751_value==0x0000) {i8751_return=0;coins=0;}
-	if (i8751_value==0x3063) i8751_return=0x9c; /* Protection */
+	if (i8751_value==0x3063) i8751_return=0x9c; /* Protection - Japanese version */
+	if (i8751_value==0x306b) i8751_return=0x94; /* Protection - World version */
 	if ((i8751_value&0xff00)==0x4000) i8751_return=i8751_value; /* Coinage settings */
  	if (i8751_value==0x5000) i8751_return=((coins / 10) << 4) | (coins % 10); /* Coin request */
  	if (i8751_value==0x6000) {i8751_value=-1; coins--; } /* Coin clear */
@@ -1861,8 +1862,8 @@ static struct GfxDecodeInfo cobracom_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout_32k, 0, 8 },
 	{ REGION_GFX2, 0, &tiles,         64, 4 },
-	{ REGION_GFX3, 0, &tiles,        192, 4 },
 	{ REGION_GFX4, 0, &tiles,        128, 4 },
+	{ REGION_GFX3, 0, &tiles,        192, 4 },
 	{ -1 } /* end of array */
 };
 
@@ -2042,7 +2043,7 @@ static const struct MachineDriver machine_driver_cobracom =
 	256,256,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_BUFFERS_SPRITERAM,
+	VIDEO_TYPE_RASTER  | VIDEO_BUFFERS_SPRITERAM,
 	0,
 	cobracom_vh_start,
 	0,
@@ -2140,7 +2141,7 @@ static const struct MachineDriver machine_driver_srdarwin =
 	144,144,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_BUFFERS_SPRITERAM,
+	VIDEO_TYPE_RASTER  | VIDEO_BUFFERS_SPRITERAM,
 	0,
 	srdarwin_vh_start,
 	0,
@@ -2189,7 +2190,7 @@ static const struct MachineDriver machine_driver_gondo =
 	1024,1024,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_BUFFERS_SPRITERAM,
+	VIDEO_TYPE_RASTER  | VIDEO_BUFFERS_SPRITERAM,
 	dec8_eof_callback,
 	gondo_vh_start,
 	0,
@@ -2241,10 +2242,10 @@ static const struct MachineDriver machine_driver_oscar =
   	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
 
 	oscar_gfxdecodeinfo,
-	512,512,
+	512, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_BUFFERS_SPRITERAM,
+	VIDEO_TYPE_RASTER  | VIDEO_BUFFERS_SPRITERAM,
 	0,
 	oscar_vh_start,
 	0,
@@ -2299,7 +2300,7 @@ static const struct MachineDriver machine_driver_lastmiss =
 	1024,1024,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_BUFFERS_SPRITERAM,
+	VIDEO_TYPE_RASTER  | VIDEO_BUFFERS_SPRITERAM,
 	0,
 	lastmiss_vh_start,
 	0,
@@ -2354,7 +2355,7 @@ static const struct MachineDriver machine_driver_shackled =
 	1024,1024,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_BUFFERS_SPRITERAM,
+	VIDEO_TYPE_RASTER  | VIDEO_BUFFERS_SPRITERAM,
 	0,
 	shackled_vh_start,
 	0,
@@ -2409,7 +2410,7 @@ static const struct MachineDriver machine_driver_csilver =
 	1024,1024,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_BUFFERS_SPRITERAM,
+	VIDEO_TYPE_RASTER  | VIDEO_BUFFERS_SPRITERAM,
 	0,
 	lastmiss_vh_start,
 	0,
@@ -2462,7 +2463,7 @@ static const struct MachineDriver machine_driver_garyoret =
 	1024,1024,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_BUFFERS_SPRITERAM,
+	VIDEO_TYPE_RASTER  | VIDEO_BUFFERS_SPRITERAM,
 	dec8_eof_callback,
 	garyoret_vh_start,
 	0,
@@ -2652,33 +2653,70 @@ ROM_END
 
 ROM_START( srdarwin )
 	ROM_REGION( 0x28000, REGION_CPU1, 0 )
-	ROM_LOAD( "dy_01.rom", 0x20000, 0x08000, 0x1eeee4ff )
-	ROM_CONTINUE(          0x08000, 0x08000 )
-	ROM_LOAD( "dy_00.rom", 0x10000, 0x10000, 0x2bf6b461 )
+	ROM_LOAD( "dy01-e.b14", 0x20000, 0x08000, 0x176e9299 )
+	ROM_CONTINUE(           0x08000, 0x08000 )
+	ROM_LOAD( "dy00.b16", 0x10000, 0x10000, 0x2bf6b461 )
 
 	ROM_REGION( 2*0x10000, REGION_CPU2, 0 )	/* 64K for sound CPU + 64k for decrypted opcodes */
-	ROM_LOAD( "dy_04.rom", 0x8000, 0x8000, 0x2ae3591c )
+	ROM_LOAD( "dy04.d7", 0x8000, 0x8000, 0x2ae3591c )
 
 	ROM_REGION( 0x08000, REGION_GFX1, ROMREGION_DISPOSE )	/* characters */
-	ROM_LOAD( "dy_05.rom", 0x00000, 0x4000, 0x8780e8a3 )
+	ROM_LOAD( "dy05.b6", 0x00000, 0x4000, 0x8780e8a3 )
 
 	ROM_REGION( 0x30000, REGION_GFX2, ROMREGION_DISPOSE )	/* sprites */
-	ROM_LOAD( "dy_07.rom", 0x00000, 0x8000, 0x97eaba60 )
-	ROM_LOAD( "dy_06.rom", 0x08000, 0x8000, 0xc279541b )
-	ROM_LOAD( "dy_09.rom", 0x10000, 0x8000, 0xd30d1745 )
-	ROM_LOAD( "dy_08.rom", 0x18000, 0x8000, 0x71d645fd )
-	ROM_LOAD( "dy_11.rom", 0x20000, 0x8000, 0xfd9ccc5b )
-	ROM_LOAD( "dy_10.rom", 0x28000, 0x8000, 0x88770ab8 )
+	ROM_LOAD( "dy07.h16", 0x00000, 0x8000, 0x97eaba60 )
+	ROM_LOAD( "dy06.h14", 0x08000, 0x8000, 0xc279541b )
+	ROM_LOAD( "dy09.k13", 0x10000, 0x8000, 0xd30d1745 )
+	ROM_LOAD( "dy08.k11", 0x18000, 0x8000, 0x71d645fd )
+	ROM_LOAD( "dy11.k16", 0x20000, 0x8000, 0xfd9ccc5b )
+	ROM_LOAD( "dy10.k14", 0x28000, 0x8000, 0x88770ab8 )
 
 	ROM_REGION( 0x40000, REGION_GFX3, ROMREGION_DISPOSE )	/* tiles */
-	ROM_LOAD( "dy_03.rom", 0x00000, 0x4000, 0x44f2a4f9 )
-	ROM_CONTINUE(          0x10000, 0x4000 )
-	ROM_CONTINUE(          0x20000, 0x4000 )
-	ROM_CONTINUE(          0x30000, 0x4000 )
-	ROM_LOAD( "dy_02.rom", 0x08000, 0x4000, 0x522d9a9e )
-	ROM_CONTINUE(          0x18000, 0x4000 )
-	ROM_CONTINUE(          0x28000, 0x4000 )
-	ROM_CONTINUE(          0x38000, 0x4000 )
+	ROM_LOAD( "dy03.b4",  0x00000, 0x4000, 0x44f2a4f9 )
+	ROM_CONTINUE(         0x10000, 0x4000 )
+	ROM_CONTINUE(         0x20000, 0x4000 )
+	ROM_CONTINUE(         0x30000, 0x4000 )
+	ROM_LOAD( "dy02.b5",  0x08000, 0x4000, 0x522d9a9e )
+	ROM_CONTINUE(         0x18000, 0x4000 )
+	ROM_CONTINUE(         0x28000, 0x4000 )
+	ROM_CONTINUE(         0x38000, 0x4000 )
+
+	ROM_REGION( 256, REGION_PROMS, 0 )
+	ROM_LOAD( "dy12.bin", 0x00000,  0x100,  0xebfaaed9 )	/* Priority (Not yet used) */
+ROM_END
+
+ROM_START( srdarwnj )
+	ROM_REGION( 0x28000, REGION_CPU1, 0 )
+	ROM_LOAD( "dy_01.rom", 0x20000, 0x08000, 0x1eeee4ff )
+	ROM_CONTINUE(          0x08000, 0x08000 )
+	ROM_LOAD( "dy00.b16", 0x10000, 0x10000, 0x2bf6b461 )
+
+	ROM_REGION( 2*0x10000, REGION_CPU2, 0 )	/* 64K for sound CPU + 64k for decrypted opcodes */
+	ROM_LOAD( "dy04.d7", 0x8000, 0x8000, 0x2ae3591c )
+
+	ROM_REGION( 0x08000, REGION_GFX1, ROMREGION_DISPOSE )	/* characters */
+	ROM_LOAD( "dy05.b6", 0x00000, 0x4000, 0x8780e8a3 )
+
+	ROM_REGION( 0x30000, REGION_GFX2, ROMREGION_DISPOSE )	/* sprites */
+	ROM_LOAD( "dy07.h16", 0x00000, 0x8000, 0x97eaba60 )
+	ROM_LOAD( "dy06.h14", 0x08000, 0x8000, 0xc279541b )
+	ROM_LOAD( "dy09.k13", 0x10000, 0x8000, 0xd30d1745 )
+	ROM_LOAD( "dy08.k11", 0x18000, 0x8000, 0x71d645fd )
+	ROM_LOAD( "dy11.k16", 0x20000, 0x8000, 0xfd9ccc5b )
+	ROM_LOAD( "dy10.k14", 0x28000, 0x8000, 0x88770ab8 )
+
+	ROM_REGION( 0x40000, REGION_GFX3, ROMREGION_DISPOSE )	/* tiles */
+	ROM_LOAD( "dy03.b4",  0x00000, 0x4000, 0x44f2a4f9 )
+	ROM_CONTINUE(         0x10000, 0x4000 )
+	ROM_CONTINUE(         0x20000, 0x4000 )
+	ROM_CONTINUE(         0x30000, 0x4000 )
+	ROM_LOAD( "dy02.b5",  0x08000, 0x4000, 0x522d9a9e )
+	ROM_CONTINUE(         0x18000, 0x4000 )
+	ROM_CONTINUE(         0x28000, 0x4000 )
+	ROM_CONTINUE(         0x38000, 0x4000 )
+
+	ROM_REGION( 256, REGION_PROMS, 0 )
+	ROM_LOAD( "dy12.bin", 0x00000,  0x100,  0xebfaaed9 )	/* Priority (Not yet used) */
 ROM_END
 
 ROM_START( gondo )
@@ -2717,6 +2755,9 @@ ROM_START( gondo )
 	ROM_LOAD( "dt-10.512", 0x60000, 0x08000, 0xcfcfc9ed )
 	ROM_CONTINUE(          0x70000, 0x08000 )
 	ROM_LOAD( "dt-11.256", 0x68000, 0x08000, 0x53e9cf17 )
+
+	ROM_REGION( 1024, REGION_PROMS, 0 )
+	ROM_LOAD( "mb7122e.10b", 0x00000,  0x400,  0xdcbfec4e )	/* Priority (Not yet used) */
 ROM_END
 
 ROM_START( makyosen )
@@ -2755,6 +2796,9 @@ ROM_START( makyosen )
 	ROM_LOAD( "dt-10.512", 0x60000, 0x08000, 0xcfcfc9ed )
 	ROM_CONTINUE(          0x70000, 0x08000 )
 	ROM_LOAD( "dt-11.256", 0x68000, 0x08000, 0x53e9cf17 )
+
+	ROM_REGION( 1024, REGION_PROMS, 0 )
+	ROM_LOAD( "mb7122e.10b", 0x00000,  0x400,  0xdcbfec4e )	/* Priority (Not yet used) */
 ROM_END
 
 ROM_START( oscar )
@@ -2893,6 +2937,9 @@ ROM_START( lastmiss )
 	ROM_LOAD( "lm_dl08.rom", 0x20000, 0x10000, 0x3b38cfce )
 	ROM_LOAD( "lm_dl07.rom", 0x40000, 0x10000, 0x1b60604d )
 	ROM_LOAD( "lm_dl06.rom", 0x60000, 0x10000, 0xc43c26a7 )
+
+	ROM_REGION( 256, REGION_PROMS, 0 )
+	ROM_LOAD( "mb7052.9c", 0x00000,  0x100,  0x2e55aa12 )	/* Priority (Not yet used) */
 ROM_END
 
 ROM_START( lastmss2 )
@@ -2923,6 +2970,9 @@ ROM_START( lastmss2 )
 	ROM_LOAD( "lm_dl08.rom", 0x20000, 0x10000, 0x3b38cfce )
 	ROM_LOAD( "lm_dl07.rom", 0x40000, 0x10000, 0x1b60604d )
 	ROM_LOAD( "lm_dl06.rom", 0x60000, 0x10000, 0xc43c26a7 )
+
+	ROM_REGION( 256, REGION_PROMS, 0 )
+	ROM_LOAD( "mb7052.9c", 0x00000,  0x100,  0x2e55aa12 )	/* Priority (Not yet used) */
 ROM_END
 
 ROM_START( shackled )
@@ -3115,7 +3165,8 @@ GAME(1988, cobracmj, cobracom, cobracom, cobracom, 0,       ROT0,   "Data East C
 GAME(1987, ghostb,   0,        ghostb,   ghostb,   ghostb,  ROT0,   "Data East USA", "The Real Ghostbusters (US 2 Players)" )
 GAME(1987, ghostb3,  ghostb,   ghostb,   ghostb,   ghostb,  ROT0,   "Data East USA", "The Real Ghostbusters (US 3 Players)" )
 GAME(1987, meikyuh,  ghostb,   ghostb,   meikyuh,  meikyuh, ROT0,   "Data East Corporation", "Meikyuu Hunter G (Japan)" )
-GAME(1987, srdarwin, 0,        srdarwin, srdarwin, deco222, ROT270, "Data East Corporation", "Super Real Darwin (Japan)" )
+GAME(1987, srdarwin, 0,        srdarwin, srdarwin, deco222, ROT270, "Data East Corporation", "Super Real Darwin (World)" )
+GAME(1987, srdarwnj, srdarwin, srdarwin, srdarwin, deco222, ROT270, "Data East Corporation", "Super Real Darwin (Japan)" )
 GAME(1987, gondo,    0,        gondo,    gondo,    0,       ROT270, "Data East USA", "Gondomania (US)" )
 GAME(1987, makyosen, gondo,    gondo,    gondo,    0,       ROT270, "Data East Corporation", "Makyou Senshi (Japan)" )
 GAME(1988, oscar,    0,        oscar,    oscar,    deco222, ROT0,   "Data East USA", "Psycho-Nics Oscar (US)" )

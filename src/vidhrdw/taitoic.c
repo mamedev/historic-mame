@@ -9,6 +9,11 @@ emulation of TC0480SCP row and column effects possible.
 TODO
 ----
 
+Tidy ups of new transparency-related code in TC0080VCO and TC0480SCP.
+Merge bryan_draw_scanline with its F3 equivalent?
+
+TC0080VCO seems bugged, various sigsevs after games have been reset.
+
 sizeof() s in the TC0110PCR section are probably unnecessary?
 
 				---
@@ -241,7 +246,8 @@ These generate a zooming/rotating tilemap. The TC0280GRD has to be used in
 pairs, while the TC0430GRW is a newer, single-chip solution.
 Regardless of the hardware differences, the two are functionally identical
 except for incxx and incxy, which need to be multiplied by 2 in the TC0280GRD
-to bring them to the same scale of the other parameters.
+to bring them to the same scale of the other parameters (maybe the chip has
+half-pixel resolution?).
 
 control registers:
 000-003 start x
@@ -476,6 +482,75 @@ Newer version of the I/O chip ?
 #include "driver.h"
 #include "state.h"
 #include "taitoic.h"
+
+
+/* These scanline drawing routines lifted from Taito F3: optimise / merge ? */
+
+#undef ADJUST_FOR_ORIENTATION
+#define ADJUST_FOR_ORIENTATION(type, orientation, bitmapi, bitmapp, x, y)	\
+	type *dsti = &((type *)bitmapi->line[y])[x];							\
+	UINT8 *dstp = &((UINT8 *)bitmapp->line[y])[x];							\
+	int xadv = 1;															\
+	if (orientation)														\
+	{																		\
+		int dy = (type *)bitmap->line[1] - (type *)bitmap->line[0];			\
+		int tx = x, ty = y, temp;											\
+		if ((orientation) & ORIENTATION_SWAP_XY)							\
+		{																	\
+			temp = tx; tx = ty; ty = temp;									\
+			xadv = dy / sizeof(type);										\
+		}																	\
+		if ((orientation) & ORIENTATION_FLIP_X)								\
+		{																	\
+			tx = bitmap->width - 1 - tx;									\
+			if (!((orientation) & ORIENTATION_SWAP_XY)) xadv = -xadv;		\
+		}																	\
+		if ((orientation) & ORIENTATION_FLIP_Y)								\
+		{																	\
+			ty = bitmap->height - 1 - ty;									\
+			if ((orientation) & ORIENTATION_SWAP_XY) xadv = -xadv;			\
+		}																	\
+		/* can't lookup line because it may be negative! */					\
+		dsti = (type *)((type *)bitmapi->line[0] + dy * ty) + tx;			\
+		dstp = (UINT8 *)((UINT8 *)bitmapp->line[0] + dy * ty / sizeof(type)) + tx;	\
+	}
+
+INLINE void bryan_drawscanline(
+		struct osd_bitmap *bitmap,int x,int y,int length,
+		const UINT16 *src,int transparent,UINT32 orient,int pri)
+{
+	ADJUST_FOR_ORIENTATION(UINT16, Machine->orientation ^ orient, bitmap, priority_bitmap, x, y);
+	if (transparent) {
+		while (length--) {
+			UINT32 spixel = *src++;
+			if (spixel<0x7fff) {
+				*dsti = spixel;
+				*dstp = pri;
+			}
+			dsti += xadv;
+			dstp += xadv;
+		}
+	} else { /* Not transparent case */
+		while (length--) {
+			*dsti = *src++;
+			*dstp = pri;
+			dsti += xadv;
+			dstp += xadv;
+		}
+	}
+}
+#undef ADJUST_FOR_ORIENTATION
+
+
+
+
+
+
+
+
+
+
+
 
 
 #define PC080SN_RAM_SIZE 0x10000
@@ -871,9 +946,6 @@ void PC080SN_tilemap_update(void)
 			tilemap_set_scrollx(PC080SN_tilemap[chip][0],0,PC080SN_bgscrollx[chip]);
 			tilemap_set_scrollx(PC080SN_tilemap[chip][1],0,PC080SN_fgscrollx[chip]);
 		}
-
-		tilemap_update(PC080SN_tilemap[chip][0]);
-		tilemap_update(PC080SN_tilemap[chip][1]);
 	}
 }
 
@@ -1345,10 +1417,6 @@ void TC0080VCO_tilemap_update(void)
 		}
 		TC0080VCO_chars_dirty = 0;
 	}
-
-	tilemap_update(TC0080VCO_tilemap[0]);
-	tilemap_update(TC0080VCO_tilemap[1]);
-	tilemap_update(TC0080VCO_tilemap[2]);
 }
 
 
@@ -1368,16 +1436,16 @@ static void TC0080VCO_bg0_tilemap_draw(struct osd_bitmap *bitmap,int flags,UINT3
 	}
 	else		/* zoom + rowscroll = custom draw routine */
 	{
-		UINT8  *dst8, *src8;
 		UINT16 *dst16,*src16;
-//		UINT32 *dst32,*src32;		/* in future add 24/32 bit color support */
-		UINT8  scanline8[512];
-		UINT16 scanline16[512];
+		UINT8 *tsrc;
+		UINT16 scanline[512];
+		struct osd_bitmap *srcbitmap = tilemap_get_pixmap(TC0080VCO_tilemap[0]);
+		struct osd_bitmap *transbitmap = tilemap_get_transparency_bitmap(TC0080VCO_tilemap[0]);
 
 		int sx,zoomx,zoomy;
 		int dx,ex,dy,ey;
-		int y,y_index,src_y_index,row_index;
-		int x_index,x_step,x_max;
+		int i,y,y_index,src_y_index,row_index;
+		int x_index,x_step;
 
 		int flip = TC0080VCO_flipscreen;
 		int rot=Machine->orientation;
@@ -1390,7 +1458,6 @@ static void TC0080VCO_bg0_tilemap_draw(struct osd_bitmap *bitmap,int flags,UINT3
 		int screen_width = max_x - min_x + 1;
 		int width_mask=0x3ff;	/* underlying tilemap */
 
-		struct osd_bitmap *srcbitmap = tilemap_get_pixmap(TC0080VCO_tilemap[0]);
 
 #if 0
 {
@@ -1447,94 +1514,76 @@ static void TC0080VCO_bg0_tilemap_draw(struct osd_bitmap *bitmap,int flags,UINT3
 
 		if (!machine_flip) y = min_y; else y = max_y;
 
-		if (Machine->scrbitmap->depth == 8)
+		do
 		{
-			do
+			src_y_index = (y_index>>16) &0x3ff;	/* tilemaps are 1024 px up/down */
+
+			/* row areas are the same in flipscreen, so we must read in reverse */
+			row_index = (src_y_index &0x1ff);
+			if (flip)	row_index = 0x1ff - row_index;
+
+			if ((rot &ORIENTATION_FLIP_X)==0)
 			{
-				src_y_index = (y_index>>16) &0x3ff;	/* tilemaps are 1024 px up/down */
-
-				/* row areas are the same in flipscreen, so we must read in reverse */
-				row_index = (y_index >> 16) &0x1ff;
-				if (flip)	row_index = 0x1ff - row_index;
-
-				if ((rot &ORIENTATION_FLIP_X)==0)
-				{
-					x_index = sx - ((TC0080VCO_bgscroll_ram[row_index] << 16));
-				}
-				else	/* Orientation flip X */
-				{
-					x_index = sx + ((TC0080VCO_bgscroll_ram[row_index] << 16));
-				}
-
-				src8 = (UINT8 *)srcbitmap->line[src_y_index];
-				dst8 = scanline8;
-
-				x_step = zoomx;
-
-				x_max = x_index + screen_width * x_step;
-
-				while (x_index<x_max)
-				{
-					*dst8++ = src8[(x_index >> 16) &width_mask];
-					x_index += x_step;
-				}
-
-				if ((rot &ORIENTATION_FLIP_X)!=0)
-					pdraw_scanline8(bitmap,512-(screen_width/2),y,screen_width,
-						scanline8,0,palette_transparent_pen,rot,priority);
-				else
-					pdraw_scanline8(bitmap,0,y,screen_width,
-						scanline8,0,palette_transparent_pen,rot,priority);
-
-				y_index += zoomy;
-				if (!machine_flip) y++; else y--;
+				x_index = sx - ((TC0080VCO_bgscroll_ram[row_index] << 16));
 			}
-			while ( (!machine_flip && y <= max_y) || (machine_flip && y >= min_y) );
-		}
-		else if (Machine->scrbitmap->depth == 16)
-		{
-			do
+			else	/* Orientation flip X */
 			{
-				src_y_index = (y_index>>16) &0x3ff;	/* tilemaps are 1024 px up/down */
+				x_index = sx + ((TC0080VCO_bgscroll_ram[row_index] << 16));
+			}
 
-				/* row areas are the same in flipscreen, so we must read in reverse */
-				row_index = (src_y_index &0x1ff);
-				if (flip)	row_index = 0x1ff - row_index;
+			src16 = (UINT16 *)srcbitmap->line[src_y_index];
+			tsrc  = (UINT8 *)transbitmap->line[src_y_index];
+			dst16 = scanline;
 
-				if ((rot &ORIENTATION_FLIP_X)==0)
-				{
-					x_index = sx - ((TC0080VCO_bgscroll_ram[row_index] << 16));
-				}
-				else	/* Orientation flip X */
-				{
-					x_index = sx + ((TC0080VCO_bgscroll_ram[row_index] << 16));
-				}
+			x_step = zoomx;
 
-				src16 = (UINT16 *)srcbitmap->line[src_y_index];
-				dst16 = scanline16;
-
-				x_step = zoomx;
-
-				x_max = x_index + screen_width * x_step;
-
-				while (x_index<x_max)
+/*** NEW ***/
+			if (flags & TILEMAP_IGNORE_TRANSPARENCY)
+			{
+				for (i=0; i<screen_width; i++)
 				{
 					*dst16++ = src16[(x_index >> 16) &width_mask];
 					x_index += x_step;
 				}
-
-				if ((rot &ORIENTATION_FLIP_X)!=0)
-					pdraw_scanline16(bitmap,512-(screen_width/2),y,screen_width,
-						scanline16,0,palette_transparent_pen,rot,priority);
-				else
-					pdraw_scanline16(bitmap,0,y,screen_width,
-						scanline16,0,palette_transparent_pen,rot,priority);
-
-				y_index += zoomy;
-				if (!machine_flip) y++; else y--;
 			}
-			while ( (!machine_flip && y <= max_y) || (machine_flip && y >= min_y) );
+			else
+			{
+				for (i=0; i<screen_width; i++)
+				{
+					if (tsrc[(x_index >> 16) &width_mask])
+						*dst16++ = src16[(x_index >> 16) &width_mask];
+					else
+						*dst16++ = 0x8000;
+					x_index += x_step;
+				}
+			}
+/***********/
+
+//			while (x_index<x_max)
+//			{
+//				*dst16++ = src16[(x_index >> 16) &width_mask];
+//				x_index += x_step;
+//			}
+//
+//				if ((rot &ORIENTATION_FLIP_X)!=0)
+//					pdraw_scanline16(bitmap,512-(screen_width/2),y,screen_width,
+//						scanline,0,0,rot,priority);
+//				else
+//					pdraw_scanline16(bitmap,0,y,screen_width,
+//						scanline,0,0,rot,priority);
+
+/*** NEW ***/
+			if (flags & TILEMAP_IGNORE_TRANSPARENCY)
+				bryan_drawscanline(bitmap,0,y,screen_width,scanline,0,rot,priority);
+			else
+				bryan_drawscanline(bitmap,0,y,screen_width,scanline,1,rot,priority);
+/***********/
+
+			y_index += zoomy;
+			if (!machine_flip) y++; else y--;
 		}
+		while ( (!machine_flip && y <= max_y) || (machine_flip && y >= min_y) );
+
 	}
 }
 
@@ -2106,17 +2155,17 @@ int TC0100SCN_vh_start(int chips,int gfxnum,int x_offset,int y_offset,int flip_x
 		xd = (i == 0) ?  (-x_offset) : (-x_offset-2);
 		yd = (i == 0) ? (8-y_offset) : (1-y_offset);
 
-		tilemap_set_scrolldx(TC0100SCN_tilemap[i][0][0], xd-16, -xd-16);
-		tilemap_set_scrolldy(TC0100SCN_tilemap[i][0][0], yd,    -yd);
-		tilemap_set_scrolldx(TC0100SCN_tilemap[i][1][0], xd-16, -xd-16);
-		tilemap_set_scrolldy(TC0100SCN_tilemap[i][1][0], yd,    -yd);
-		tilemap_set_scrolldx(TC0100SCN_tilemap[i][2][0], xd-16, -xd-16-7);
-		tilemap_set_scrolldy(TC0100SCN_tilemap[i][2][0], yd,    -yd);
+		tilemap_set_scrolldx(TC0100SCN_tilemap[i][0][0], xd-16, -flip_xoffs -xd-16);
+		tilemap_set_scrolldy(TC0100SCN_tilemap[i][0][0], yd,    -flip_yoffs -yd);
+		tilemap_set_scrolldx(TC0100SCN_tilemap[i][1][0], xd-16, -flip_xoffs -xd-16);
+		tilemap_set_scrolldy(TC0100SCN_tilemap[i][1][0], yd,    -flip_yoffs -yd);
+		tilemap_set_scrolldx(TC0100SCN_tilemap[i][2][0], xd-16, -flip_text_xoffs -xd-16-7);
+		tilemap_set_scrolldy(TC0100SCN_tilemap[i][2][0], yd,    -flip_text_yoffs -yd);
 
 		/* Double width tilemaps. We must correct offsets for
 		   extra chips, as MAME sees offsets from LHS of whole
 		   display not from the edges of individual screens.
-		   NB flipscreen tilemap offsets are speculative. */
+		   NB flipscreen tilemap offsets are based on Cameltry */
 
 		xd = -x_offset;
 		yd = 8-y_offset;
@@ -2130,12 +2179,12 @@ int TC0100SCN_vh_start(int chips,int gfxnum,int x_offset,int y_offset,int flip_x
 			if (i==1)  xd += (286-multiscrn_xoffs);
 			if (i==2)  xd += (572-multiscrn_xoffs*2);
 		}
-		tilemap_set_scrolldx(TC0100SCN_tilemap[i][0][1], xd-16, -xd-16);
-		tilemap_set_scrolldy(TC0100SCN_tilemap[i][0][1], yd,    -yd);
-		tilemap_set_scrolldx(TC0100SCN_tilemap[i][1][1], xd-16, -xd-16);
-		tilemap_set_scrolldy(TC0100SCN_tilemap[i][1][1], yd,    -yd);
-		tilemap_set_scrolldx(TC0100SCN_tilemap[i][2][1], xd-16, -xd-16-7);
-		tilemap_set_scrolldy(TC0100SCN_tilemap[i][2][1], yd,    -yd);
+		tilemap_set_scrolldx(TC0100SCN_tilemap[i][0][1], xd-16, -flip_xoffs -xd-16);
+		tilemap_set_scrolldy(TC0100SCN_tilemap[i][0][1], yd,    -flip_yoffs -yd);
+		tilemap_set_scrolldx(TC0100SCN_tilemap[i][1][1], xd-16, -flip_xoffs -xd-16);
+		tilemap_set_scrolldy(TC0100SCN_tilemap[i][1][1], yd,    -flip_yoffs -yd);
+		tilemap_set_scrolldx(TC0100SCN_tilemap[i][2][1], xd-16, -flip_text_xoffs -xd-16-7);
+		tilemap_set_scrolldy(TC0100SCN_tilemap[i][2][1], yd,    -flip_text_yoffs -yd);
 
 		tilemap_set_scroll_rows(TC0100SCN_tilemap[i][0][0],512);
 		tilemap_set_scroll_rows(TC0100SCN_tilemap[i][1][0],512);
@@ -2444,10 +2493,6 @@ void TC0100SCN_tilemap_update(void)
 			}
 			TC0100SCN_chars_dirty[chip] = 0;
 		}
-
-		tilemap_update(TC0100SCN_tilemap[chip][0][TC0100SCN_dblwidth[chip]]);
-		tilemap_update(TC0100SCN_tilemap[chip][1][TC0100SCN_dblwidth[chip]]);
-		tilemap_update(TC0100SCN_tilemap[chip][2][TC0100SCN_dblwidth[chip]]);
 	}
 }
 
@@ -2506,7 +2551,7 @@ static void TC0280GRD_get_tile_info(int tile_index)
 int TC0280GRD_vh_start(int gfxnum)
 {
 	TC0280GRD_ram = malloc(TC0280GRD_RAM_SIZE);
-	TC0280GRD_tilemap = tilemap_create(TC0280GRD_get_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,64,64);
+	TC0280GRD_tilemap = tilemap_create(TC0280GRD_get_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,64);
 
 	if (!TC0280GRD_ram || !TC0280GRD_tilemap)
 	{
@@ -2517,7 +2562,7 @@ int TC0280GRD_vh_start(int gfxnum)
 	state_save_register_UINT16("TC0280GRDa", 0, "memory", TC0280GRD_ram, TC0280GRD_RAM_SIZE/2);
 	state_save_register_UINT16("TC0280GRDb", 0, "registers", TC0280GRD_ctrl, 8);
 
-	tilemap_set_clip(TC0280GRD_tilemap,0);
+	tilemap_set_transparent_pen(TC0280GRD_tilemap,0);
 
 	TC0280GRD_gfxnum = gfxnum;
 
@@ -2583,8 +2628,6 @@ void TC0280GRD_tilemap_update(int base_color)
 		TC0280GRD_base_color = base_color;
 		tilemap_mark_all_tiles_dirty(TC0280GRD_tilemap);
 	}
-
-	tilemap_update(TC0280GRD_tilemap);
 }
 
 void TC0430GRW_tilemap_update(int base_color)
@@ -2596,7 +2639,6 @@ static void zoom_draw(struct osd_bitmap *bitmap,int xoffset,int yoffset,UINT32 p
 {
 	UINT32 startx,starty;
 	int incxx,incxy,incyx,incyy;
-	struct osd_bitmap *srcbitmap = tilemap_get_pixmap(TC0280GRD_tilemap);
 
 	/* 24-bit signed */
 	startx = ((TC0280GRD_ctrl[0] & 0xff) << 16) + TC0280GRD_ctrl[1];
@@ -2614,10 +2656,10 @@ static void zoom_draw(struct osd_bitmap *bitmap,int xoffset,int yoffset,UINT32 p
 	startx -= xoffset * incxx + yoffset * incyx;
 	starty -= xoffset * incxy + yoffset * incyy;
 
-	copyrozbitmap(bitmap,srcbitmap,startx << 4,starty << 4,
+	tilemap_draw_roz(bitmap,TC0280GRD_tilemap,startx << 4,starty << 4,
 			incxx << 4,incxy << 4,incyx << 4,incyy << 4,
 			1,	/* copy with wraparound */
-			&Machine->visible_area,TRANSPARENCY_PEN,palette_transparent_pen,priority);
+			0,priority);
 }
 
 void TC0280GRD_zoom_draw(struct osd_bitmap *bitmap,int xoffset,int yoffset,UINT32 priority)
@@ -2700,6 +2742,7 @@ static data16_t *TC0480SCP_ram,
 		*TC0480SCP_bgcolumn_ram[4];
 static int TC0480SCP_bgscrollx[4];
 static int TC0480SCP_bgscrolly[4];
+int TC0480SCP_pri_reg;
 
 /* We keep two tilemaps for each of the 5 actual tilemaps: one at standard width, one double */
 static struct tilemap *TC0480SCP_tilemap[5][2];
@@ -3268,23 +3311,12 @@ static void TC0480SCP_ctrl_word_write(offs_t offset,data16_t data,UINT32 mem_mas
 	}
 }
 
+/* This routine is no longer needed, it should be DELETED together with the 2/3 calls to it */
+
 void TC0480SCP_mark_transparent_colors(int opaque_layer)
 {
-	int i,layer;
-
-	/* We really only need to mark the two custom layers */
-	for (layer=0; layer<4; layer++)
-	{
-		if (layer==opaque_layer) continue; /* Don't mark opaque layer colors */
-
-		for (i=0x800*(TC0480SCP_dblwidth+1)*layer; i<(0x800*(TC0480SCP_dblwidth+1)*layer) +
-			(TC0480SCP_dblwidth+1)*0x800; i+=2)
-		{
-			data16_t color = TC0480SCP_ram[i] & 0xff;
-			palette_used_colors[color*16] = PALETTE_COLOR_TRANSPARENT;
-		}
-	}
 }
+
 
 WRITE16_HANDLER( TC0480SCP_ctrl_word_w )
 {
@@ -3345,12 +3377,6 @@ void TC0480SCP_tilemap_update(void)
 		}
 		TC0480SCP_chars_dirty = 0;
 	}
-
-	tilemap_update(TC0480SCP_tilemap[0][TC0480SCP_dblwidth]);
-	tilemap_update(TC0480SCP_tilemap[1][TC0480SCP_dblwidth]);
-	tilemap_update(TC0480SCP_tilemap[2][TC0480SCP_dblwidth]);
-	tilemap_update(TC0480SCP_tilemap[3][TC0480SCP_dblwidth]);
-	tilemap_update(TC0480SCP_tilemap[4][TC0480SCP_dblwidth]);
 }
 
 
@@ -3408,16 +3434,16 @@ static void TC0480SCP_bg01_draw(struct osd_bitmap *bitmap,int layer,int flags,UI
 	}
 	else	/* zoom */
 	{
-		UINT8  *dst8, *src8;
 		UINT16 *dst16,*src16;
-//		UINT32 *dst32,*src32;		/* in future add 24/32 bit color support */
-		UINT8  scanline8[512];
-		UINT16 scanline16[512];
+		UINT8 *tsrc;
+		UINT16 scanline[512];
 		UINT32 sx;
 		struct osd_bitmap *srcbitmap = tilemap_get_pixmap(TC0480SCP_tilemap[layer][TC0480SCP_dblwidth]);
+		struct osd_bitmap *transbitmap = tilemap_get_transparency_bitmap
+							(TC0480SCP_tilemap[layer][TC0480SCP_dblwidth]);
 		int flip = TC0480SCP_pri_reg & 0x40;
-		int y,y_index,src_y_index,row_index;
-		int x_index,x_step,x_max;
+		int i,y,y_index,src_y_index,row_index;
+		int x_index,x_step;
 		int rot=Machine->orientation;
 		int machine_flip = 0;	/* for  ROT 180 ? */
 
@@ -3462,98 +3488,78 @@ static void TC0480SCP_bg01_draw(struct osd_bitmap *bitmap,int layer,int flags,UI
 
 		if (!machine_flip) y=0; else y=255;
 
-		if (Machine->scrbitmap->depth == 8)
+		do
 		{
-			do
+			src_y_index = (y_index>>16) &0x1ff;
+
+			/* row areas are the same in flipscreen, so we must read in reverse */
+			row_index = src_y_index;
+			if (flip)	row_index = 0x1ff - row_index;
+
+			if ((rot &ORIENTATION_FLIP_X)==0)
 			{
-				src_y_index = (y_index>>16) &0x1ff;
-
-				/* row areas are the same in flipscreen, so we must read in reverse */
-				row_index = src_y_index;
-				if (flip)	row_index = 0x1ff - row_index;
-
-				if ((rot &ORIENTATION_FLIP_X)==0)
-				{
-					x_index = sx - ((TC0480SCP_bgscroll_ram[layer][row_index] << 16))
-						- ((TC0480SCP_bgscroll_ram[layer][row_index+0x800] << 8) &0xffff);
-				}
-				else	/* Orientation flip X (Gunbustr) */
-				{
-					x_index = sx + ((TC0480SCP_bgscroll_ram[layer][row_index] << 16))
-						+ ((TC0480SCP_bgscroll_ram[layer][row_index+0x800] << 8) &0xffff);
-				}
-
-				src8 = (UINT8 *)srcbitmap->line[src_y_index];
-				dst8 = scanline8;
-
-				x_step = zoomx;
-
-				x_max = x_index + screen_width * x_step;
-
-				while (x_index<x_max)
-				{
-					*dst8++ = src8[(x_index >> 16) &width_mask];
-					x_index += x_step;
-				}
-
-				if ((rot &ORIENTATION_FLIP_X)!=0)
-					pdraw_scanline8(bitmap,512 - screen_width/2,y,screen_width,
-						scanline8,0,palette_transparent_pen,rot,priority);
-				else
-					pdraw_scanline8(bitmap,0,y,screen_width,
-						scanline8,0,palette_transparent_pen,rot,priority);
-
-				y_index += zoomy;
-				if (!machine_flip) y++; else y--;
+				x_index = sx - ((TC0480SCP_bgscroll_ram[layer][row_index] << 16))
+					- ((TC0480SCP_bgscroll_ram[layer][row_index+0x800] << 8) &0xffff);
 			}
-			while ( (!machine_flip && y<256) || (machine_flip && y>=0) );
-		}
-		else if (Machine->scrbitmap->depth == 16)
-		{
-			do
+			else	/* Orientation flip X (Gunbustr) */
 			{
-				src_y_index = (y_index>>16) &0x1ff;
+				x_index = sx + ((TC0480SCP_bgscroll_ram[layer][row_index] << 16))
+					+ ((TC0480SCP_bgscroll_ram[layer][row_index+0x800] << 8) &0xffff);
+			}
 
-				/* row areas are the same in flipscreen, so we must read in reverse */
-				row_index = src_y_index;
-				if (flip)	row_index = 0x1ff - row_index;
+			src16 = (UINT16 *)srcbitmap->line[src_y_index];
+			tsrc  = (UINT8 *)transbitmap->line[src_y_index];
+			dst16 = scanline;
 
-				if ((rot &ORIENTATION_FLIP_X)==0)
-				{
-					x_index = sx - ((TC0480SCP_bgscroll_ram[layer][row_index] << 16))
-						- ((TC0480SCP_bgscroll_ram[layer][row_index+0x800] << 8) &0xffff);
-				}
-				else	/* Orientation flip X (Gunbustr) */
-				{
-					x_index = sx + ((TC0480SCP_bgscroll_ram[layer][row_index] << 16))
-						+ ((TC0480SCP_bgscroll_ram[layer][row_index+0x800] << 8) &0xffff);
-				}
+			x_step = zoomx;
 
-				src16 = (UINT16 *)srcbitmap->line[src_y_index];
-				dst16 = scanline16;
-
-				x_step = zoomx;
-
-				x_max = x_index + screen_width * x_step;
-
-				while (x_index<x_max)
+/*** NEW ***/
+			if (flags & TILEMAP_IGNORE_TRANSPARENCY)
+			{
+				for (i=0; i<screen_width; i++)
 				{
 					*dst16++ = src16[(x_index >> 16) &width_mask];
 					x_index += x_step;
 				}
-
-				if ((rot &ORIENTATION_FLIP_X)!=0)
-					pdraw_scanline16(bitmap,512 - screen_width/2,y,screen_width,
-						scanline16,0,palette_transparent_pen,rot,priority);
-				else
-					pdraw_scanline16(bitmap,0,y,screen_width,
-						scanline16,0,palette_transparent_pen,rot,priority);
-
-				y_index += zoomy;
-				if (!machine_flip) y++; else y--;
 			}
-			while ( (!machine_flip && y<256) || (machine_flip && y>=0) );
+			else
+			{
+				for (i=0; i<screen_width; i++)
+				{
+					if (tsrc[(x_index >> 16) &width_mask])
+						*dst16++ = src16[(x_index >> 16) &width_mask];
+					else
+						*dst16++ = 0x8000;
+					x_index += x_step;
+				}
+			}
+/***********/
+
+//				while (x_index<x_max)
+//				{
+//					*dst16++ = src16[(x_index >> 16) &width_mask];
+//					x_index += x_step;
+//				}
+//
+//				if ((rot &ORIENTATION_FLIP_X)!=0)
+//					pdraw_scanline16(bitmap,512 - screen_width/2,y,screen_width,
+//						scanline,0,0,rot,priority);
+//				else
+//					pdraw_scanline16(bitmap,0,y,screen_width,
+//						scanline,0,0,rot,priority);
+
+/*** NEW ***/
+				if (flags & TILEMAP_IGNORE_TRANSPARENCY)
+					bryan_drawscanline(bitmap,0,y,screen_width,scanline,0,rot,priority);
+				else
+					bryan_drawscanline(bitmap,0,y,screen_width,scanline,1,rot,priority);
+/***********/
+
+			y_index += zoomy;
+			if (!machine_flip) y++; else y--;
 		}
+		while ( (!machine_flip && y<256) || (machine_flip && y>=0) );
+
 	}
 }
 
@@ -3601,13 +3607,14 @@ flipscreen.
 static void TC0480SCP_bg23_draw(struct osd_bitmap *bitmap,int layer,int flags,UINT32 priority)
 {
 	struct osd_bitmap *srcbitmap = tilemap_get_pixmap(TC0480SCP_tilemap[layer][TC0480SCP_dblwidth]);
-	UINT8  *dst8, *src8;
+	struct osd_bitmap *transbitmap = tilemap_get_transparency_bitmap
+						(TC0480SCP_tilemap[layer][TC0480SCP_dblwidth]);
+
 	UINT16 *dst16,*src16;
-//	UINT32 *dst32,*src32;		/* in future add 24/32 bit color support */
-	int y,y_index,src_y_index,row_index,row_zoom;
-	int sx,x_index,x_step,x_max;
+	UINT8 *tsrc;
+	int i,y,y_index,src_y_index,row_index,row_zoom;
+	int sx,x_index,x_step;
 	UINT32 zoomx,zoomy,rot=Machine->orientation;
-	UINT8 scanline8[512];
 	UINT16 scanline[512];
 	int flipscreen = TC0480SCP_pri_reg & 0x40;
 	int machine_flip = 0;	/* for  ROT 180 ? */
@@ -3657,156 +3664,109 @@ static void TC0480SCP_bg23_draw(struct osd_bitmap *bitmap,int layer,int flags,UI
 
 	if (!machine_flip) y=0; else y=255;
 
-	if (Machine->scrbitmap->depth == 8)
+	do
 	{
-		do
+		if (!flipscreen)
+			src_y_index = ((y_index>>16) + TC0480SCP_bgcolumn_ram[layer][(y -
+						TC0480SCP_y_offs) &0x1ff]) &0x1ff;
+		else	/* colscroll area is back to front in flipscreen */
+			src_y_index = ((y_index>>16) + TC0480SCP_bgcolumn_ram[layer][0x1ff -
+						((y - TC0480SCP_y_offs) &0x1ff)]) &0x1ff;
+
+		/* row areas are the same in flipscreen, so we must read in reverse */
+		row_index = src_y_index;
+		if (flipscreen)	row_index = 0x1ff - row_index;
+
+		if (TC0480SCP_pri_reg & (layer-1))	/* bit0 enables for BG2, bit1 for BG3 */
+			row_zoom = TC0480SCP_rowzoom_ram[layer][row_index];
+		else
+			row_zoom = 0;
+
+		if ((rot &ORIENTATION_FLIP_X)==0)
 		{
-			if (!flipscreen)
-				src_y_index = ((y_index>>16) + TC0480SCP_bgcolumn_ram[layer][(y -
-							TC0480SCP_y_offs) &0x1ff]) &0x1ff;
-			else	/* colscroll area is back to front in flipscreen */
-				src_y_index = ((y_index>>16) + TC0480SCP_bgcolumn_ram[layer][0x1ff -
-							((y - TC0480SCP_y_offs) &0x1ff)]) &0x1ff;
+			x_index = sx - ((TC0480SCP_bgscroll_ram[layer][row_index] << 16))
+				- ((TC0480SCP_bgscroll_ram[layer][row_index+0x800] << 8) &0xffff);
 
-			/* row areas are the same in flipscreen, so we must read in reverse */
-			row_index = src_y_index;
-			if (flipscreen)	row_index = 0x1ff - row_index;
-
-			if (TC0480SCP_pri_reg & (layer-1))	/* bit0 enables for BG2, bit1 for BG3 */
-				row_zoom = TC0480SCP_rowzoom_ram[layer][row_index];
-			else
-				row_zoom = 0;
-
-			if ((rot &ORIENTATION_FLIP_X)==0)
-			{
-				x_index = sx - ((TC0480SCP_bgscroll_ram[layer][row_index] << 16))
-					- ((TC0480SCP_bgscroll_ram[layer][row_index+0x800] << 8) &0xffff);
-
-				/* flawed calc ?? */
-				x_index -= (TC0480SCP_x_offs - 0x1f + layer*4) * ((row_zoom &0xff) << 8);
-			}
-			else	/* Orientation flip X (Gunbustr) */
-			{
-				x_index = sx + ((TC0480SCP_bgscroll_ram[layer][row_index] << 16))
-					+ ((TC0480SCP_bgscroll_ram[layer][row_index+0x800] << 8) &0xffff);
-
-				/* flawed calc ?? */
-				x_index += (TC0480SCP_x_offs - 0x1f + layer*4) * ((row_zoom &0xff) << 8);
-			}
-
-			x_step = zoomx;
-			if (row_zoom)	/* need to reduce x_step */
-			{
-				if (!(row_zoom &0xff00))
-					x_step -= ((row_zoom * 256) &0xffff);
-				else	/* Undrfire uses the hi byte, why? */
-					x_step -= (((row_zoom &0xff) * 256) &0xffff);
-
-				if ((rot &ORIENTATION_FLIP_X)!=0)
-				{
-					x_index += (screen_width + TC0480SCP_flip_xoffs) *
-						((row_zoom * 256) &0xffff);
-				}
-			}
-
-			x_max = x_index + screen_width * x_step;
-			src8 = (UINT8 *)srcbitmap->line[src_y_index];
-			dst8 = scanline8;
-
-			while (x_index<x_max)
-			{
-				*dst8++ = src8[(x_index >> 16) &width_mask];
-				x_index += x_step;
-			}
-
-			if ((rot &ORIENTATION_FLIP_X)!=0)
-				pdraw_scanline8(bitmap,512 - screen_width/2,y,screen_width,
-					scanline8,0,palette_transparent_pen,rot,priority);
-			else
-				pdraw_scanline8(bitmap,0,y,screen_width,
-					scanline8,0,palette_transparent_pen,rot,priority);
-
-			y_index += zoomy;
-			if (!machine_flip) y++; else y--;
+			/* flawed calc ?? */
+			x_index -= (TC0480SCP_x_offs - 0x1f + layer*4) * ((row_zoom &0xff) << 8);
 		}
-		while ( (!machine_flip && y<256) || (machine_flip && y>=0) );
-	}
-	else if (Machine->scrbitmap->depth == 16)
-	{
-		do
+		else	/* Orientation flip X (Gunbustr) */
 		{
-			if (!flipscreen)
-				src_y_index = ((y_index>>16) + TC0480SCP_bgcolumn_ram[layer][(y -
-							TC0480SCP_y_offs) &0x1ff]) &0x1ff;
-			else	/* colscroll area is back to front in flipscreen */
-				src_y_index = ((y_index>>16) + TC0480SCP_bgcolumn_ram[layer][0x1ff -
-							((y - TC0480SCP_y_offs) &0x1ff)]) &0x1ff;
+			x_index = sx + ((TC0480SCP_bgscroll_ram[layer][row_index] << 16))
+				+ ((TC0480SCP_bgscroll_ram[layer][row_index+0x800] << 8) &0xffff);
 
-			/* row areas are the same in flipscreen, so we must read in reverse */
-			row_index = src_y_index;
-			if (flipscreen)	row_index = 0x1ff - row_index;
-
-			if (TC0480SCP_pri_reg & (layer-1))	/* bit0 enables for BG2, bit1 for BG3 */
-				row_zoom = TC0480SCP_rowzoom_ram[layer][row_index];
-			else
-				row_zoom = 0;
-
-			if ((rot &ORIENTATION_FLIP_X)==0)
-			{
-				x_index = sx - ((TC0480SCP_bgscroll_ram[layer][row_index] << 16))
-					- ((TC0480SCP_bgscroll_ram[layer][row_index+0x800] << 8) &0xffff);
-
-				/* flawed calc ?? */
-				x_index -= (TC0480SCP_x_offs - 0x1f + layer*4) * ((row_zoom &0xff) << 8);
-			}
-			else	/* Orientation flip X (Gunbustr) */
-			{
-				x_index = sx + ((TC0480SCP_bgscroll_ram[layer][row_index] << 16))
-					+ ((TC0480SCP_bgscroll_ram[layer][row_index+0x800] << 8) &0xffff);
-
-				/* flawed calc ?? */
-				x_index += (TC0480SCP_x_offs - 0x1f + layer*4) * ((row_zoom &0xff) << 8);
-			}
+			/* flawed calc ?? */
+			x_index += (TC0480SCP_x_offs - 0x1f + layer*4) * ((row_zoom &0xff) << 8);
+		}
 
 /* We used to kludge 270 multiply factor, before adjusting x_index instead */
 
-			x_step = zoomx;
-			if (row_zoom)	/* need to reduce x_step */
+		x_step = zoomx;
+		if (row_zoom)	/* need to reduce x_step */
+		{
+			if (!(row_zoom &0xff00))
+				x_step -= ((row_zoom * 256) &0xffff);
+			else	/* Undrfire uses the hi byte, why? */
+				x_step -= (((row_zoom &0xff) * 256) &0xffff);
+
+			if ((rot &ORIENTATION_FLIP_X)!=0)
 			{
-				if (!(row_zoom &0xff00))
-					x_step -= ((row_zoom * 256) &0xffff);
-				else	/* Undrfire uses the hi byte, why? */
-					x_step -= (((row_zoom &0xff) * 256) &0xffff);
-
-				if ((rot &ORIENTATION_FLIP_X)!=0)
-				{
-					x_index += (screen_width + TC0480SCP_flip_xoffs) *
-						((row_zoom * 256) &0xffff);
-				}
+				x_index += (screen_width + TC0480SCP_flip_xoffs) *
+					((row_zoom * 256) &0xffff);
 			}
+		}
 
-			x_max = x_index + screen_width * x_step;
-			src16 = (UINT16 *)srcbitmap->line[src_y_index];
-			dst16 = scanline;
+		src16 = (UINT16 *)srcbitmap->line[src_y_index];
+		tsrc  = (UINT8 *)transbitmap->line[src_y_index];
+		dst16 = scanline;
 
-			while (x_index<x_max)
+/*** NEW ***/
+		if (flags & TILEMAP_IGNORE_TRANSPARENCY)
+		{
+			for (i=0; i<screen_width; i++)
 			{
 				*dst16++ = src16[(x_index >> 16) &width_mask];
 				x_index += x_step;
 			}
-
-			if ((rot &ORIENTATION_FLIP_X)!=0)
-				pdraw_scanline16(bitmap,512 - screen_width/2,y,screen_width,
-					scanline,0,palette_transparent_pen,rot,priority);
-			else
-				pdraw_scanline16(bitmap,0,y,screen_width,
-					scanline,0,palette_transparent_pen,rot,priority);
-
-			y_index += zoomy;
-			if (!machine_flip) y++; else y--;
 		}
-		while ( (!machine_flip && y<256) || (machine_flip && y>=0) );
+		else
+		{
+			for (i=0; i<screen_width; i++)
+			{
+				if (tsrc[(x_index >> 16) &width_mask])
+					*dst16++ = src16[(x_index >> 16) &width_mask];
+				else
+					*dst16++ = 0x8000;
+				x_index += x_step;
+			}
+		}
+/***********/
+
+//			while (x_index<x_max)
+//			{
+//				*dst16++ = src16[(x_index >> 16) &width_mask];
+//				x_index += x_step;
+//			}
+//
+//			if ((rot &ORIENTATION_FLIP_X)!=0)
+//				pdraw_scanline16(bitmap,512 - screen_width/2,y,screen_width,
+//					scanline,0,0,rot,priority);
+//			else
+//				pdraw_scanline16(bitmap,0,y,screen_width,
+//					scanline,0,0,rot,priority);
+
+/*** NEW ***/
+			if (flags & TILEMAP_IGNORE_TRANSPARENCY)
+				bryan_drawscanline(bitmap,0,y,screen_width,scanline,0,rot,priority);
+			else
+				bryan_drawscanline(bitmap,0,y,screen_width,scanline,1,rot,priority);
+/***********/
+
+		y_index += zoomy;
+		if (!machine_flip) y++; else y--;
 	}
+	while ( (!machine_flip && y<256) || (machine_flip && y>=0) );
+
 }
 
 

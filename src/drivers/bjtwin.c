@@ -49,16 +49,16 @@ TODO:
   reset vector with the "real" one.
 - Cocktail mode is supported, but tilemap.c has problems with asymmetrical
   visible areas.
-- Macross2 is overflowing the palette, but this might be just a problem
-  with tilemap.c.
-- GunNail has dramatic slowdowns in 8-bit mode, due to tilemap.c. We have to use
-  16-bit even if it's probably not necessary.
 - Macross2 dip switches (the ones currently listed match macross)
 - Macross2 background is wrong in level 2 at the end of the vertical scroll.
   The tilemap layout is probably different from the one I used, the dimensions
   should be correct but the page order is likely different.
 - Music timing in nouryoku is a little off.
 - DSW's in Tdragon2
+- In Bioship, there's an occasional flicker of one of the sprites composing big
+  ships. Increasing CPU speed from 12 to 16 MHz improved it, but it's still not
+  100% fixed.
+
 ----
 
 IRQ1 controls audio output and coin/joysticks reads
@@ -112,7 +112,6 @@ READ16_HANDLER( nmk_fgvideoram_r );
 WRITE16_HANDLER( nmk_fgvideoram_w );
 READ16_HANDLER( nmk_txvideoram_r );
 WRITE16_HANDLER( nmk_txvideoram_w );
-WRITE16_HANDLER( nmk_paletteram_w );
 WRITE16_HANDLER( nmk_scroll_w );
 WRITE16_HANDLER( nmk_scroll_2_w );
 WRITE16_HANDLER( gunnail_scrollx_w );
@@ -396,7 +395,7 @@ static MEMORY_WRITE16_START( urashima_writemem )
 	{ 0x080014, 0x080015, nmk_flipscreen_w },
 	{ 0x080016, 0x080017, MWA16_NOP },	/* IRQ enable? */
 	{ 0x080018, 0x080019, nmk_tilebank_w },
-	{ 0x088000, 0x0887ff, nmk_paletteram_w, &paletteram16 },
+	{ 0x088000, 0x0887ff, paletteram16_RRRRGGGGBBBBRGBx_word_w, &paletteram16 },
 	{ 0x08c000, 0x08c007, nmk_scroll_w },
 	{ 0x09e000, 0x0a1fff, nmk_bgvideoram_w, &nmk_bgvideoram },
 #endif
@@ -423,7 +422,7 @@ static MEMORY_WRITE16_START( vandyke_writemem )
 	{ 0x080016, 0x080017, MWA16_NOP },	/* IRQ enable? */
 	{ 0x080018, 0x080019, nmk_tilebank_w },
 	{ 0x08001e, 0x08001f, macross_mcu_w },
-	{ 0x088000, 0x0887ff, nmk_paletteram_w, &paletteram16 },
+	{ 0x088000, 0x0887ff, paletteram16_RRRRGGGGBBBBRGBx_word_w, &paletteram16 },
 	{ 0x08c000, 0x08c007, vandyke_scroll_w },
 	{ 0x090000, 0x093fff, nmk_bgvideoram_w, &nmk_bgvideoram },
 //	{ 0x094000, 0x097fff, MWA16_RAM }, /* what is this */
@@ -459,7 +458,7 @@ static MEMORY_WRITE16_START( tharrier_writemem )
 	{ 0x080012, 0x080013, macross_mcu_w },
 //	{ 0x080014, 0x080015, nmk_flipscreen_w },
 //	{ 0x080018, 0x080019, nmk_tilebank_w },
-	{ 0x088000, 0x0883ff, nmk_paletteram_w, &paletteram16 },
+	{ 0x088000, 0x0883ff, paletteram16_RRRRGGGGBBBBRGBx_word_w, &paletteram16 },
 	{ 0x08c000, 0x08c007, nmk_scroll_w },
 	{ 0x090000, 0x093fff, nmk_bgvideoram_w, &nmk_bgvideoram },
 	{ 0x09c000, 0x09c7ff, MWA16_NOP }, /* Unused txvideoram area? */
@@ -533,7 +532,7 @@ static MEMORY_WRITE16_START( mustang_writemem )
 { 0x080016, 0x080017, MWA16_NOP },
 	{ 0x08001e, 0x08001f, macross_mcu_w },
 //	{ 0x08001e, 0x08001f, mustang_sound_command_w },	/* to Z80 bootleg only? */
-	{ 0x088000, 0x0887ff, nmk_paletteram_w, &paletteram16 },
+	{ 0x088000, 0x0887ff, paletteram16_RRRRGGGGBBBBRGBx_word_w, &paletteram16 },
 //	{ 0x08c000, 0x08c007, mustang_scroll_w },
 { 0x08c000, 0x08c001, MWA16_NOP },
 	{ 0x090000, 0x093fff, nmk_bgvideoram_w, &nmk_bgvideoram },
@@ -605,7 +604,7 @@ static MEMORY_WRITE16_START( hachamf_writemem )
 	{ 0x000000, 0x03ffff, MWA16_ROM },
 	{ 0x080014, 0x080015, nmk_flipscreen_w },
 	{ 0x080018, 0x080019, nmk_tilebank_w },
-	{ 0x088000, 0x0887ff, nmk_paletteram_w, &paletteram16 },
+	{ 0x088000, 0x0887ff, paletteram16_RRRRGGGGBBBBRGBx_word_w, &paletteram16 },
 	{ 0x08c000, 0x08c007, nmk_scroll_w },
 	{ 0x090000, 0x093fff, nmk_bgvideoram_w, &nmk_bgvideoram },
 	{ 0x09c000, 0x09c7ff, nmk_txvideoram_w, &nmk_txvideoram },
@@ -632,7 +631,7 @@ static MEMORY_WRITE16_START( bioship_writemem )
 	{ 0x000000, 0x03ffff, MWA16_ROM },
 //	{ 0x080014, 0x080015, nmk_flipscreen_w },
 	{ 0x084000, 0x084001, bioship_bank_w },
-	{ 0x088000, 0x0887ff, nmk_paletteram_w, &paletteram16 },
+	{ 0x088000, 0x0887ff, paletteram16_RRRRGGGGBBBBRGBx_word_w, &paletteram16 },
 	{ 0x08c000, 0x08c007, mustang_scroll_w },
 	{ 0x08c010, 0x08c017, bioship_scroll_w },
 	{ 0x090000, 0x093fff, nmk_bgvideoram_w, &nmk_bgvideoram },
@@ -666,7 +665,7 @@ static MEMORY_WRITE16_START( tdragon_writemem )
 	{ 0x0c0018, 0x0c0019, nmk_tilebank_w }, /* Tile Bank ? */
 	{ 0x0c001e, 0x0c001f, MWA16_NOP },
 	{ 0x0c4000, 0x0c4007, nmk_scroll_w },
-	{ 0x0c8000, 0x0c87ff, nmk_paletteram_w, &paletteram16 },
+	{ 0x0c8000, 0x0c87ff, paletteram16_RRRRGGGGBBBBRGBx_word_w, &paletteram16 },
 	{ 0x0cc000, 0x0cffff, nmk_bgvideoram_w, &nmk_bgvideoram },
 	{ 0x0d0000, 0x0d07ff, nmk_txvideoram_w, &nmk_txvideoram },
 MEMORY_END
@@ -722,7 +721,7 @@ static MEMORY_WRITE16_START( macross_writemem )
 	{ 0x080016, 0x080017, MWA16_NOP },	/* IRQ enable? */
 	{ 0x080018, 0x080019, nmk_tilebank_w },
 	{ 0x08001e, 0x08001f, macross_mcu_w },
-	{ 0x088000, 0x0887ff, nmk_paletteram_w, &paletteram16 },
+	{ 0x088000, 0x0887ff, paletteram16_RRRRGGGGBBBBRGBx_word_w, &paletteram16 },
 	{ 0x08c000, 0x08c007, nmk_scroll_w },
 	{ 0x090000, 0x093fff, nmk_bgvideoram_w, &nmk_bgvideoram },
 	{ 0x09c000, 0x09c7ff, nmk_txvideoram_w, &nmk_txvideoram },
@@ -753,7 +752,7 @@ static MEMORY_WRITE16_START( gunnail_writemem )
 	{ 0x080014, 0x080015, nmk_flipscreen_w },
 	{ 0x080016, 0x080017, MWA16_NOP },	/* IRQ enable? */
 	{ 0x080018, 0x080019, nmk_tilebank_w },
-	{ 0x088000, 0x0887ff, nmk_paletteram_w, &paletteram16 },
+	{ 0x088000, 0x0887ff, paletteram16_RRRRGGGGBBBBRGBx_word_w, &paletteram16 },
 	{ 0x08c000, 0x08c1ff, gunnail_scrollx_w, &gunnail_scrollram },
 	{ 0x08c200, 0x08c201, gunnail_scrolly_w },
 //	{ 0x08c202, 0x08c7ff, MWA16_RAM },	// unknown
@@ -787,7 +786,7 @@ static MEMORY_WRITE16_START( macross2_writemem )
 	{ 0x100016, 0x100017, MWA16_NOP },	/* IRQ eanble? */
 	{ 0x100018, 0x100019, nmk_tilebank_w },
 	{ 0x10001e, 0x10001f, macross2_sound_command_w },	/* to Z80 */
-	{ 0x120000, 0x1207ff, nmk_paletteram_w, &paletteram16 },
+	{ 0x120000, 0x1207ff, paletteram16_RRRRGGGGBBBBRGBx_word_w, &paletteram16 },
 	{ 0x130000, 0x130007, nmk_scroll_w },
 	{ 0x130008, 0x1307ff, MWA16_NOP },	/* 0 only? */
 	{ 0x140000, 0x14ffff, nmk_bgvideoram_w, &nmk_bgvideoram },
@@ -851,7 +850,7 @@ static MEMORY_WRITE16_START( bjtwin_writemem )
 	{ 0x084000, 0x084001, OKIM6295_data_0_lsb_w },
 	{ 0x084010, 0x084011, OKIM6295_data_1_lsb_w },
 	{ 0x084020, 0x08402f, bjtwin_oki6295_bankswitch_w },
-	{ 0x088000, 0x0887ff, nmk_paletteram_w, &paletteram16 },
+	{ 0x088000, 0x0887ff, paletteram16_RRRRGGGGBBBBRGBx_word_w, &paletteram16 },
 	{ 0x094000, 0x094001, nmk_tilebank_w },
 	{ 0x094002, 0x094003, MWA16_NOP },	/* IRQ enable? */
 	{ 0x09c000, 0x09cfff, nmk_bgvideoram_w, &nmk_bgvideoram },
@@ -2206,10 +2205,10 @@ static const struct MachineDriver machine_driver_urashima =
 	/* video hardware */
 	256, 256, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	macross_gfxdecodeinfo,
-	1024, 1024,
+	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	nmk_eof_callback,
 	macross_vh_start,
 	nmk_vh_stop,
@@ -2243,10 +2242,10 @@ static const struct MachineDriver machine_driver_vandyke =
 	/* video hardware */
 	256, 256, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	macross_gfxdecodeinfo,
-	1024, 1024,
+	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	nmk_eof_callback,
 	macross_vh_start,
 	nmk_vh_stop,
@@ -2287,10 +2286,10 @@ static const struct MachineDriver machine_driver_tharrier =
 	/* video hardware */
 	256, 256, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	tharrier_gfxdecodeinfo,
-	512, 512,
+	512, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	nmk_eof_callback,
 	macross_vh_start,
 	nmk_vh_stop,
@@ -2334,10 +2333,10 @@ static const struct MachineDriver machine_driver_mustang =
 	/* video hardware */
 	256, 256, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	macross_gfxdecodeinfo,
-	1024, 1024,
+	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	nmk_eof_callback,
 	macross_vh_start,
 	nmk_vh_stop,
@@ -2375,10 +2374,10 @@ static const struct MachineDriver machine_driver_acrobatm =
 	/* video hardware */
 	256, 256, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	macross_gfxdecodeinfo,
-	1024, 1024,
+	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	nmk_eof_callback,
 	macross_vh_start,
 	nmk_vh_stop,
@@ -2400,7 +2399,7 @@ static const struct MachineDriver machine_driver_bioship =
 	{
 		{
 			CPU_M68000,
-			12000000, /* 12 MHz ? */
+			16000000, /* 16 MHz ? */
 			bioship_readmem,bioship_writemem,0,0,
 			nmk_interrupt,2,
 			m68_level1_irq,112	/* ???????? */
@@ -2413,10 +2412,10 @@ static const struct MachineDriver machine_driver_bioship =
 	/* video hardware */
 	256, 256, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	bioship_gfxdecodeinfo,
-	1024, 1024,
+	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	nmk_eof_callback,
 	bioship_vh_start,
 	nmk_vh_stop,
@@ -2451,10 +2450,10 @@ static const struct MachineDriver machine_driver_tdragon =
 	/* video hardware */
 	256, 256, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	macross_gfxdecodeinfo,
-	1024, 1024,
+	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	nmk_eof_callback,
 	macross_vh_start,
 	nmk_vh_stop,
@@ -2488,10 +2487,10 @@ static const struct MachineDriver machine_driver_strahl =
 	/* video hardware */
 	256, 256, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	strahl_gfxdecodeinfo,
-	1024, 1024,
+	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	nmk_eof_callback,
 	strahl_vh_start,
 	nmk_vh_stop,
@@ -2526,10 +2525,10 @@ static const struct MachineDriver machine_driver_hachamf =
 	/* video hardware */
 	256, 256, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	macross_gfxdecodeinfo,
-	1024, 1024,
+	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	nmk_eof_callback,
 	macross_vh_start,
 	nmk_vh_stop,
@@ -2564,10 +2563,10 @@ static const struct MachineDriver machine_driver_macross =
 	/* video hardware */
 	256, 256, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	macross_gfxdecodeinfo,
-	1024, 1024,
+	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	nmk_eof_callback,
 	macross_vh_start,
 	nmk_vh_stop,
@@ -2602,10 +2601,10 @@ static const struct MachineDriver machine_driver_gunnail =
 	/* video hardware */
 	512, 256, { 0*8, 48*8-1, 2*8, 30*8-1 },
 	macross_gfxdecodeinfo,
-	1024, 1024,
+	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	nmk_eof_callback,
 	gunnail_vh_start,
 	nmk_vh_stop,
@@ -2645,10 +2644,10 @@ static const struct MachineDriver machine_driver_macross2 =
 	/* video hardware */
 	512, 256, { 0*8, 48*8-1, 2*8, 30*8-1 },
 	macross2_gfxdecodeinfo,
-	1024, 1024,
+	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	nmk_eof_callback,
 	macross2_vh_start,
 	nmk_vh_stop,
@@ -2686,10 +2685,10 @@ static const struct MachineDriver machine_driver_bjtwin =
 	/* video hardware */
 	512, 256, { 0*8, 48*8-1, 2*8, 30*8-1 },
 	bjtwin_gfxdecodeinfo,
-	1024, 1024,
+	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	nmk_eof_callback,
 	bjtwin_vh_start,
 	nmk_vh_stop,
@@ -2909,6 +2908,10 @@ ROM_START( bioship )
 	ROM_REGION( 0x80000, REGION_GFX4, ROMREGION_DISPOSE )
 	ROM_LOAD( "sbs-g.02",  0x000000, 0x80000, 0xf31eb668 ) /* Background */
 
+	ROM_REGION16_BE(0x20000, REGION_GFX5, 0 )	/* Background tilemaps (used at runtime) */
+	ROM_LOAD16_BYTE( "8",    0x00000, 0x10000, 0x75a46fea )
+	ROM_LOAD16_BYTE( "9",    0x00001, 0x10000, 0xd91448ee )
+
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )
 	ROM_LOAD( "6",    0x00000, 0x10000, 0x5f39a980 )
 
@@ -2917,10 +2920,6 @@ ROM_START( bioship )
 
 	ROM_REGION(0x80000, REGION_SOUND2, 0 )	/* Oki sample data */
 	ROM_LOAD( "sbs-g.05",    0x00000, 0x80000, 0xf0a782e3 )
-
-	ROM_REGION16_BE(0x20000, REGION_USER1, 0 )	/* Background tilemap */
-	ROM_LOAD16_BYTE( "8",    0x00000, 0x10000, 0x75a46fea )
-	ROM_LOAD16_BYTE( "9",    0x00001, 0x10000, 0xd91448ee )
 ROM_END
 
 ROM_START( blkheart )
@@ -3511,25 +3510,25 @@ static void init_bjtwin(void)
 
 
 
-GAMEX( 1989, urashima, 0,       urashima, macross,  0,        ROT0,         "UPL",							"Urashima Mahjong", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING ) /* Similar Hardware? */
-GAMEX( 1989, tharrier, 0,       tharrier, tharrier, 0,        ROT270,       "UPL (American Sammy license)",	"Task Force Harrier", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND )
-GAMEX( 1990, mustang,  0,       mustang,  mustang,  0,        ROT0,         "UPL",							"US AAF Mustang (Japan)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND )
-GAMEX( 1990, mustangs, mustang, mustang,  mustang,  0,        ROT0,         "UPL (Seoul Trading license)",	"US AAF Mustang (Seoul Trading)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND )
-GAMEX( 1990, mustangb, mustang, mustang,  mustang,  0,        ROT0,         "bootleg",						"US AAF Mustang (bootleg)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND )
-GAMEX( 1990, bioship,  0,       bioship,  bioship,  bioship,  ROT0,         "UPL (American Sammy license)",	"Bio-ship Paladin", GAME_NO_SOUND )
-GAMEX( 1990, vandyke,  0,       vandyke,  vandyke,  0,        ROT270,       "UPL",							"Vandyke (Japan)",  GAME_NO_SOUND )
-GAMEX( 1991, blkheart, 0,       macross,  vandyke,  0,        ROT0,         "UPL",							"Black Heart", GAME_NO_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 1991, blkhearj, blkheart,macross,  vandyke,  0,        ROT0,         "UPL",							"Black Heart (Japan)", GAME_NO_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 1991, acrobatm, 0,       acrobatm, strahl,   acrobatm, ROT270,       "UPL (Taito license)",			"Acrobat Mission", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEX( 1992, strahl,   0,       strahl,   strahl,   strahl,   ROT0,         "UPL",							"Strahl (Japan set 1)", GAME_NO_SOUND )
-GAMEX( 1992, strahla,  strahl,  strahl,   strahl,   strahl,   ROT0,         "UPL",							"Strahl (Japan set 2)", GAME_NO_SOUND )
-GAMEX( 1991, tdragon,  0,       tdragon,  tdragon,  tdragon,  ROT270,       "NMK / Tecmo",					"Thunder Dragon", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 1991, tdragonb, tdragon, tdragon,  tdragon,  tdragonb, ROT270,       "NMK / Tecmo",					"Thunder Dragon (Bootleg)", GAME_NO_SOUND )
-GAMEX( 1991, hachamf,  0,       hachamf,  hachamf,  hachamf,  ROT0,         "NMK",							"Hacha Mecha Fighter", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND )
-GAMEX( 1992, macross,  0,       macross,  macross,  nmk,      ROT270,       "Banpresto",					"Macross", GAME_NO_SOUND )
-GAMEX( 1993, gunnail,  0,       gunnail,  gunnail,  nmk,      ROT270_16BIT, "NMK / Tecmo",					"GunNail", GAME_NO_SOUND )
-GAMEX( 1993, macross2, 0,       macross2, macross2,  0,        ROT0_16BIT,   "Banpresto",					"Macross II", GAME_NO_COCKTAIL )
-GAMEX( 1993, tdragon2, 0,       macross2, tdragon2,  0,        ROT270_16BIT, "NMK",				         	"Thunder Dragon 2", GAME_NO_COCKTAIL )
-GAMEX( 1992, sabotenb, 0,       bjtwin,   sabotenb, nmk,      ROT0,         "NMK / Tecmo",					"Saboten Bombers", GAME_NO_COCKTAIL )
-GAMEX( 1993, bjtwin,   0,       bjtwin,   bjtwin,   bjtwin,   ROT270,       "NMK",							"Bombjack Twin", GAME_NO_COCKTAIL )
-GAMEX( 1995, nouryoku, 0,       bjtwin,   nouryoku, nmk,      ROT0,         "Tecmo",						"Nouryoku Koujou Iinkai", GAME_NO_COCKTAIL )
+GAMEX( 1989, urashima, 0,       urashima, macross,  0,        ROT0,   "UPL",							"Urashima Mahjong", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING ) /* Similar Hardware? */
+GAMEX( 1989, tharrier, 0,       tharrier, tharrier, 0,        ROT270, "UPL (American Sammy license)",	"Task Force Harrier", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND )
+GAMEX( 1990, mustang,  0,       mustang,  mustang,  0,        ROT0,   "UPL",							"US AAF Mustang (Japan)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND )
+GAMEX( 1990, mustangs, mustang, mustang,  mustang,  0,        ROT0,   "UPL (Seoul Trading license)",	"US AAF Mustang (Seoul Trading)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND )
+GAMEX( 1990, mustangb, mustang, mustang,  mustang,  0,        ROT0,   "bootleg",						"US AAF Mustang (bootleg)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND )
+GAMEX( 1990, bioship,  0,       bioship,  bioship,  bioship,  ROT0,   "UPL (American Sammy license)",	"Bio-ship Paladin", GAME_NO_SOUND )
+GAMEX( 1990, vandyke,  0,       vandyke,  vandyke,  0,        ROT270, "UPL",							"Vandyke (Japan)",  GAME_NO_SOUND )
+GAMEX( 1991, blkheart, 0,       macross,  vandyke,  0,        ROT0,   "UPL",							"Black Heart", GAME_NO_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAMEX( 1991, blkhearj, blkheart,macross,  vandyke,  0,        ROT0,   "UPL",							"Black Heart (Japan)", GAME_NO_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAMEX( 1991, acrobatm, 0,       acrobatm, strahl,   acrobatm, ROT270, "UPL (Taito license)",			"Acrobat Mission", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1992, strahl,   0,       strahl,   strahl,   strahl,   ROT0,   "UPL",							"Strahl (Japan set 1)", GAME_NO_SOUND )
+GAMEX( 1992, strahla,  strahl,  strahl,   strahl,   strahl,   ROT0,   "UPL",							"Strahl (Japan set 2)", GAME_NO_SOUND )
+GAMEX( 1991, tdragon,  0,       tdragon,  tdragon,  tdragon,  ROT270, "NMK / Tecmo",					"Thunder Dragon", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAMEX( 1991, tdragonb, tdragon, tdragon,  tdragon,  tdragonb, ROT270, "NMK / Tecmo",					"Thunder Dragon (Bootleg)", GAME_NO_SOUND )
+GAMEX( 1991, hachamf,  0,       hachamf,  hachamf,  hachamf,  ROT0,   "NMK",							"Hacha Mecha Fighter", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND )
+GAMEX( 1992, macross,  0,       macross,  macross,  nmk,      ROT270, "Banpresto",					"Macross", GAME_NO_SOUND )
+GAMEX( 1993, gunnail,  0,       gunnail,  gunnail,  nmk,      ROT270, "NMK / Tecmo",					"GunNail", GAME_NO_SOUND )
+GAMEX( 1993, macross2, 0,       macross2, macross2, 0,        ROT0,   "Banpresto",					"Macross II", GAME_NO_COCKTAIL )
+GAMEX( 1993, tdragon2, 0,       macross2, tdragon2, 0,        ROT270, "NMK",				         	"Thunder Dragon 2", GAME_NO_COCKTAIL )
+GAMEX( 1992, sabotenb, 0,       bjtwin,   sabotenb, nmk,      ROT0,   "NMK / Tecmo",					"Saboten Bombers", GAME_NO_COCKTAIL )
+GAMEX( 1993, bjtwin,   0,       bjtwin,   bjtwin,   bjtwin,   ROT270, "NMK",							"Bombjack Twin", GAME_NO_COCKTAIL )
+GAMEX( 1995, nouryoku, 0,       bjtwin,   nouryoku, nmk,      ROT0,   "Tecmo",						"Nouryoku Koujou Iinkai", GAME_NO_COCKTAIL )

@@ -30,6 +30,8 @@
 #define __extension__
 #endif
 
+int index;	/* avoid a common "shadows global declaration" warning in the DOS build */
+
 
 typedef unsigned char						UINT8;
 typedef unsigned short						UINT16;

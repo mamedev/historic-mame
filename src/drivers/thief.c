@@ -485,7 +485,7 @@ static const struct MachineDriver machine_driver_sharkatt =
 	0,      /* no gfxdecodeinfo - bitmapped display */
 	16, 16,
 	0,
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	thief_vh_start,
 	thief_vh_stop,
@@ -526,7 +526,7 @@ static const struct MachineDriver machine_driver_thief =
 	16, 16,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	thief_vh_start,
 	thief_vh_stop,
@@ -567,7 +567,7 @@ static const struct MachineDriver machine_driver_natodef =
 	16, 16,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	thief_vh_start,
 	thief_vh_stop,

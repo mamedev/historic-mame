@@ -35,8 +35,14 @@
 	   NMI generated once/frame
 	========================================================================
 
-***************************************************************************/
+***************************************************************************
 
+Notes:
+
+starfira has one less rom in total than starfire but everything passes as
+ ok in the rom test so its probably just an earlier revision or something
+
+***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
@@ -325,7 +331,7 @@ static const struct MachineDriver machine_driver_starfire =
     0,
     64,64,0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
     starfire_vh_start,
     starfire_vh_stop,
@@ -356,6 +362,20 @@ ROM_START( starfire )
 	ROM_LOAD( "sfire.1e",     0x4000, 0x0800, 0x01994ec8 )
 	ROM_LOAD( "sfire.2e",     0x4800, 0x0800, 0xef3d1b71 )
 	ROM_LOAD( "sfire.1f",     0x5000, 0x0800, 0xaf31dc39 )
+ROM_END
+
+ROM_START( starfira )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
+	ROM_LOAD( "starfire.1a",  0x0000, 0x0800, 0x6adcd7e7 )
+	ROM_LOAD( "starfire.2a",  0x0800, 0x0800, 0x835c70ea )
+	ROM_LOAD( "starfire.1b",  0x1000, 0x0800, 0x377afbef )
+	ROM_LOAD( "starfire.2b",  0x1800, 0x0800, 0xf3a833cb )
+	ROM_LOAD( "starfire.1c",  0x2000, 0x0800, 0xdb625c1d )
+	ROM_LOAD( "starfire.2c",  0x2800, 0x0800, 0x68fa2ce6 )
+	ROM_LOAD( "starfire.1d",  0x3000, 0x0800, 0xc6b5f1d1 )
+	ROM_LOAD( "starfire.2d",  0x3800, 0x0800, 0xab2a36a5 )
+	ROM_LOAD( "starfire.1e",  0x4000, 0x0800, 0x1ac8ba8c )
+	ROM_LOAD( "starfire.2e",  0x4800, 0x0800, 0xba8434c5 )
 ROM_END
 
 ROM_START( fireone )
@@ -402,5 +422,6 @@ static void init_fireone(void)
  *
  *************************************/
 
-GAMEX( 1979, starfire, 0, starfire, starfire, starfire, ROT0, "Exidy", "Star Fire", GAME_NO_SOUND )
-GAMEX( 1979, fireone,  0, starfire, fireone,  fireone,  ROT0, "Exidy", "Fire One", GAME_NO_SOUND )
+GAMEX( 1979, starfire, 0,        starfire, starfire, starfire, ROT0, "Exidy", "Star Fire", GAME_NO_SOUND )
+GAMEX( 1979, starfira, starfire, starfire, starfire, starfire, ROT0, "Exidy", "Star Fire (set 2)", GAME_NO_SOUND )
+GAMEX( 1979, fireone,  0,        starfire, fireone,  fireone,  ROT0, "Exidy", "Fire One", GAME_NO_SOUND )

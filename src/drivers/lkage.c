@@ -387,7 +387,7 @@ static const struct MachineDriver machine_driver_lkage =
 			reduced "virtual palette" to achieve some optimizations in the video driver.
 		*/
 	0,
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	lkage_vh_start,
 	0,
@@ -433,7 +433,7 @@ static const struct MachineDriver machine_driver_lkageb =
 			reduced "virtual palette" to achieve some optimizations in the video driver.
 		*/
 	0,
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	lkage_vh_start,
 	0,

@@ -7,6 +7,11 @@ driver by Nicola Salmoria, Mike Coates, Frank Palazzolo
 TODO:
 - support stereo sound in Gorf (and maybe others, Wow has 3 speakers)
 
+Notes:
+- In seawolf2, service mode dip switch turns on memory test. Reset with 2 pressed
+  to get to an input check screen, reset with 1+2 pressed to get to a convergence
+  test screen.
+
 
 memory map (preliminary)
 
@@ -114,15 +119,31 @@ WRITE_HANDLER( ebases_trackball_select_w );
 READ_HANDLER( ebases_trackball_r );
 
 
+static WRITE_HANDLER( seawolf2_lamps_w )
+{
+	/* 0x42 = player 2 (left), 0x43 = player 1 (right) */
+	/* --x----- explosion */
+	/* ---x---- RELOAD (active low) */
+	/* ----x--- torpedo 1 available */
+	/* -----x-- torpedo 2 available */
+	/* ------x- torpedo 3 available */
+	/* -------x torpedo 4 available */
+
+	/* I'm only supporting the "RELOAD" lamp since we don't have enough leds ;-) */
+	set_led_status(offset^1,data & 0x10);
+}
+
+
 static MEMORY_READ_START( seawolf2_readmem )
 	{ 0x0000, 0x1fff, MRA_ROM },
 	{ 0x4000, 0x7fff, MRA_RAM },
-	{ 0xc000, 0xcfff, MRA_RAM },
+	{ 0xc000, 0xc3ff, MRA_RAM },
 MEMORY_END
+
 static MEMORY_WRITE_START( seawolf2_writemem )
 	{ 0x0000, 0x3fff, wow_magicram_w },
 	{ 0x4000, 0x7fff, wow_videoram_w, &wow_videoram, &videoram_size },
-	{ 0xc000, 0xcfff, MWA_RAM },
+	{ 0xc000, 0xc3ff, MWA_RAM },
 MEMORY_END
 
 static MEMORY_READ_START( readmem )
@@ -131,6 +152,7 @@ static MEMORY_READ_START( readmem )
 	{ 0x8000, 0xcfff, MRA_ROM },
 	{ 0xd000, 0xdfff, MRA_RAM },
 MEMORY_END
+
 static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x3fff, wow_magicram_w },
 	{ 0x4000, 0x7fff, wow_videoram_w, &wow_videoram, &videoram_size },	/* ASG */
@@ -144,6 +166,7 @@ static MEMORY_READ_START( robby_readmem )
 	{ 0x8000, 0xdfff, MRA_ROM },
 	{ 0xe000, 0xffff, MRA_RAM },
 MEMORY_END
+
 static MEMORY_WRITE_START( robby_writemem )
 	{ 0x0000, 0x3fff, wow_magicram_w },
 	{ 0x4000, 0x7fff, wow_videoram_w, &wow_videoram, &videoram_size },
@@ -156,6 +179,7 @@ static MEMORY_READ_START( profpac_readmem )
 	{ 0x8000, 0xdfff, MRA_ROM },
 	{ 0xe000, 0xffff, MRA_RAM },
 MEMORY_END
+
 static MEMORY_WRITE_START( profpac_writemem )
 	{ 0x0000, 0x3fff, wow_magicram_w },
 	{ 0x4000, 0x7fff, wow_videoram_w, &wow_videoram, &videoram_size },
@@ -183,7 +207,10 @@ static PORT_WRITE_START( seawolf2_writeport )
 	{ 0x0e, 0x0e, astrocde_interrupt_enable_w },
 	{ 0x0f, 0x0f, astrocde_interrupt_w },
 	{ 0x19, 0x19, astrocde_magic_expand_color_w },
+	{ 0x40, 0x41, MWA_NOP }, /* analog sound */
+	{ 0x42, 0x43, seawolf2_lamps_w },	/* cabinet lamps */
 PORT_END
+
 static PORT_WRITE_START( writeport )
 	{ 0x00, 0x07, astrocde_colour_register_w },
 	{ 0x08, 0x08, astrocde_mode_w },

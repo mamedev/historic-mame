@@ -1,22 +1,21 @@
 /***************************************************************************
 
-				Cisco Heat & F1 GrandPrix Star, Scud Hammer
-						(c) 1990 & 1991, 1994 Jaleco
+							-= Jaleco Driving Games =-
+
+					driver by	Luca Elia (l.elia@tin.it)
 
 
-				    driver by Luca Elia (l.elia@tin.it)
-
-
-Note:	if MAME_DEBUG is defined, pressing Z with:
+Note:	if MAME_DEBUG is defined, pressing Z or X with:
 
 		Q,W,E		shows scroll 0,1,2
 		R,T			shows road 0,1
 		A,S,D,F		shows sprites with priority 0,1,2,3
+		X			shows some info on each sprite
 		M			disables sprites zooming
 		U			toggles the display of some hardware registers'
 					values ($80000/2/4/6)
 
-		Keys can be used togheter!
+		Keys can be used together!
 		Additionally, layers can be disabled, writing to $82400
 		(fake video register):
 
@@ -26,15 +25,11 @@ Note:	if MAME_DEBUG is defined, pressing Z with:
 
 		0 is the same as 0x3f
 
-
-----------------------------------------------------------------------
-Video Section Summary		[ Cisco Heat ]			[ F1 GP Star ]
-----------------------------------------------------------------------
-
 [ 3 Scrolling Layers ]
+
 	see Megasys1.c
 
-		Tile Format:
+		Tile Format:			Cisco Heat				F1 GP Star
 
 				Colour		fedc b--- ---- ----		fedc ---- ---- ----
 				Code		---- -a98 7654 3210		---- ba98 7654 3210
@@ -42,50 +37,49 @@ Video Section Summary		[ Cisco Heat ]			[ F1 GP Star ]
 		Layer Size:			May be different from Megasys1?
 
 [ 2 Road Layers ]
+
 	Each of the 256 (not all visible) lines of the screen
 	can display any of the lines of gfx in ROM, which are
 	larger than the sceen and can therefore be scrolled
 
+									Cisco Heat				F1 GP Star
 				Line Width			1024					1024
 				Zoom				No						Yes
 
 [ 256 Sprites ]
-	Each Sprite is up to 256x256 pixels (!) and can be zoomed in and out.
-	See below.
 
+	Sprites are made of several 16x16 tiles (up to 256x256 pixels)
+	and can be zoomed in and out. See below for sprite RAM format.
 
 ***************************************************************************/
 
 #include "driver.h"
-#include "drivers/megasys1.h"
+#include "megasys1.h"
 #include "vidhrdw/generic.h"
 
 /* Variables only used here: */
-static struct tilemap *cischeat_tmap[3];
+
+static char buf[80];
 
 static int cischeat_ip_select;
+
 #ifdef MAME_DEBUG
 static int debugsprites;	// For debug purposes
 #endif
 
 /* Variables that driver has access to: */
+
 data16_t *cischeat_roadram[2];
-
-/* Variables defined in driver: */
-
 
 #ifdef MAME_DEBUG
 #define SHOW_READ_ERROR(_format_,_offset_)\
 {\
-	char buf[80];\
 	sprintf(buf,_format_,_offset_);\
 	usrintf_showmessage(buf);\
 	logerror("CPU #0 PC %06X : Warning, %s\n",cpu_get_pc(), buf); \
 }
-
 #define SHOW_WRITE_ERROR(_format_,_offset_,_data_)\
 {\
-	char buf[80];\
 	sprintf(buf,_format_,_offset_,_data_);\
 	usrintf_showmessage(buf);\
 	logerror("CPU #0 PC %06X : Warning, %s\n",cpu_get_pc(), buf); \
@@ -95,14 +89,11 @@ data16_t *cischeat_roadram[2];
 
 #define SHOW_READ_ERROR(_format_,_offset_)\
 {\
-	char buf[80];\
 	sprintf(buf,_format_,_offset_);\
 	logerror("CPU #0 PC %06X : Warning, %s\n",cpu_get_pc(), buf);\
 }
-
 #define SHOW_WRITE_ERROR(_format_,_offset_,_data_)\
 {\
-	char buf[80];\
 	sprintf(buf,_format_,_offset_,_data_); \
 	logerror("CPU #0 PC %06X : Warning, %s\n",cpu_get_pc(), buf); \
 }
@@ -111,73 +102,86 @@ data16_t *cischeat_roadram[2];
 
 #define MEGASYS1_VREG_FLAG(_n_) \
 		megasys1_scroll_##_n_##_flag_w(new_data); \
-		if (cischeat_tmap[_n_] == 0) SHOW_WRITE_ERROR("vreg %04X <- %04X NO MEMORY FOR SCREEN",offset*2,data);
+		if (megasys1_tmap[_n_] == 0) SHOW_WRITE_ERROR("vreg %04X <- %04X NO MEMORY FOR SCREEN",offset*2,data);
 
 #define MEGASYS1_VREG_SCROLL(_n_, _dir_)	megasys1_scroll##_dir_[_n_] = new_data;
 
 
 #define cischeat_tmap_SET_SCROLL(_n_) \
-	if (cischeat_tmap[_n_]) \
+	if (megasys1_tmap[_n_]) \
 	{ \
-		tilemap_set_scrollx(cischeat_tmap[_n_], 0, megasys1_scrollx[_n_]); \
-		tilemap_set_scrolly(cischeat_tmap[_n_], 0, megasys1_scrolly[_n_]); \
+		tilemap_set_scrollx(megasys1_tmap[_n_], 0, megasys1_scrollx[_n_]); \
+		tilemap_set_scrolly(megasys1_tmap[_n_], 0, megasys1_scrolly[_n_]); \
 	}
 
-#define cischeat_tmap_UPDATE(_n_) \
-	if ( (cischeat_tmap[_n_]) && (megasys1_active_layers & (1 << _n_) ) ) \
-		tilemap_update(cischeat_tmap[_n_]);
-
-
 #define cischeat_tmap_DRAW(_n_) \
-	if ( (cischeat_tmap[_n_]) && (megasys1_active_layers & (1 << _n_) ) ) \
+	if ( (megasys1_tmap[_n_]) && (megasys1_active_layers & (1 << _n_) ) ) \
 	{ \
-		tilemap_draw(bitmap, cischeat_tmap[_n_], flag, 0 ); \
+		tilemap_draw(bitmap, megasys1_tmap[_n_], flag, 0 ); \
 		flag = 0; \
 	}
 
+
 /***************************************************************************
 
-								vh_start
+
+							Video Hardware Init
+
 
 ***************************************************************************/
 
+void prepare_shadows(void)
+{
+	int i;
+	for (i = 0;i < 16;i++)
+		gfx_drawmode_table[i] = DRAWMODE_SOURCE;
+
+	gfx_drawmode_table[ 0] = DRAWMODE_SHADOW;
+	gfx_drawmode_table[15] = DRAWMODE_NONE;
+}
+
 /**************************************************************************
-								[ Cisco Heat ]
+								Cisco Heat
 **************************************************************************/
 
 /* 32 colour codes for the tiles */
 int cischeat_vh_start(void)
 {
-	if (megasys1_vh_start() == 0)
-	{
-	 	megasys1_bits_per_color_code = 5;
-	 	return 0;
-	}
-	else	return 1;
+	if (megasys1_vh_start())	return 1;
+
+ 	megasys1_bits_per_color_code = 5;
+
+	prepare_shadows();
+
+ 	return 0;
 }
 
-
-
 /**************************************************************************
-							[ F1 GrandPrix Star ]
+							F1 GrandPrix Star
 **************************************************************************/
 
 /* 16 colour codes for the tiles */
 int f1gpstar_vh_start(void)
 {
-	if (megasys1_vh_start() == 0)
-	{
-	 	megasys1_bits_per_color_code = 4;
-	 	return 0;
-	}
-	else	return 1;
+	if (cischeat_vh_start())	return 1;
+
+ 	megasys1_bits_per_color_code = 4;
+
+ 	return 0;
+}
+
+int bigrun_vh_start(void)
+{
+	return f1gpstar_vh_start();
 }
 
 
 
 /***************************************************************************
 
+
 						Hardware registers access
+
 
 ***************************************************************************/
 
@@ -215,8 +219,106 @@ static int read_accelerator(void)
 	else						return 0xff;
 }
 
+
 /**************************************************************************
-								[ Cisco Heat ]
+								Big Run
+**************************************************************************/
+
+READ16_HANDLER( bigrun_vregs_r )
+{
+	switch (offset)
+	{
+		case 0x0000/2 : return readinputport(1);	// Coins
+		case 0x0002/2 : return readinputport(2) +
+						(read_shift()<<1);			// Buttons
+		case 0x0004/2 : return readinputport(3);	// Motor Limit Switches
+		case 0x0006/2 : return readinputport(4);	// DSW 1 & 2
+
+		case 0x0008/2 :	return soundlatch2_word_r(0,0);	// From sound cpu
+
+		case 0x0010/2 :
+			switch (cischeat_ip_select & 0x3)
+			{
+				case 0 : return readinputport(6);		// Driving Wheel
+				case 1 : return 0xffff;					// Cockpit: Up / Down Position
+				case 2 : return 0xffff;					// Cockpit: Left / Right Position?
+				case 3 : return ~read_accelerator();	// Accelerator (Pedal)
+				default: return 0xffff;
+			}
+
+
+		case 0x2200/2 : return readinputport(5);	// DSW 3 (4 bits)
+
+		default:	SHOW_READ_ERROR("vreg %04X read!",offset*2);
+					return megasys1_vregs[offset];
+	}
+}
+
+WRITE16_HANDLER( bigrun_vregs_w )
+{
+	data16_t old_data = megasys1_vregs[offset];
+	data16_t new_data = COMBINE_DATA(&megasys1_vregs[offset]);
+
+	switch (offset)
+	{
+ 		case 0x0000/2   :	// leds
+			if (ACCESSING_LSB)
+			{
+	 			coin_counter_w(0,new_data & 0x01);
+	 			coin_counter_w(1,new_data & 0x02);
+	 			set_led_status(0,new_data & 0x10);	// start button
+				set_led_status(1,new_data & 0x20);	// ?
+			}
+			break;
+
+		case 0x0002/2   :	// ?? 91/1/91/1 ...
+			break;
+
+ 		case 0x0004/2   :	// motor (seat?)
+			if (ACCESSING_LSB)
+				set_led_status(2, (new_data != old_data) ? 1 : 0);
+ 			break;
+
+ 		case 0x0006/2   :	// motor (wheel?)
+			break;
+
+		case 0x000a/2   :	// to sound cpu
+			soundlatch_word_w(0,new_data,0);
+			break;
+
+		case 0x000c/2   :	break;	// ??
+
+		case 0x0010/2   : cischeat_ip_select = new_data;	break;
+		case 0x0012/2   : cischeat_ip_select = new_data+1;	break; // value above + 1
+
+		case 0x2000/2+0 : MEGASYS1_VREG_SCROLL(0,x)		break;
+		case 0x2000/2+1 : MEGASYS1_VREG_SCROLL(0,y)		break;
+		case 0x2000/2+2 : MEGASYS1_VREG_FLAG(0)			break;
+
+		case 0x2008/2+0 : MEGASYS1_VREG_SCROLL(1,x)		break;
+		case 0x2008/2+1 : MEGASYS1_VREG_SCROLL(1,y)		break;
+		case 0x2008/2+2 : MEGASYS1_VREG_FLAG(1)			break;
+
+		case 0x2100/2+0 : MEGASYS1_VREG_SCROLL(2,x)		break;
+		case 0x2100/2+1 : MEGASYS1_VREG_SCROLL(2,y)		break;
+		case 0x2100/2+2 : MEGASYS1_VREG_FLAG(2)			break;
+
+		case 0x2108/2   : break;	// ? written with 0 only
+		case 0x2208/2   : break;	// watchdog reset
+
+		/* Not sure about this one.. */
+		case 0x2308/2   :	cpu_set_reset_line(1, (new_data & 2) ? ASSERT_LINE : CLEAR_LINE );
+							cpu_set_reset_line(2, (new_data & 2) ? ASSERT_LINE : CLEAR_LINE );
+							cpu_set_reset_line(3, (new_data & 1) ? ASSERT_LINE : CLEAR_LINE );
+							break;
+
+		default: SHOW_WRITE_ERROR("vreg %04X <- %04X",offset*2,data);
+	}
+}
+
+
+/**************************************************************************
+								Cisco Heat
 **************************************************************************/
 
 READ16_HANDLER( cischeat_vregs_r )
@@ -246,44 +348,6 @@ READ16_HANDLER( cischeat_vregs_r )
 	}
 }
 
-/**************************************************************************
-							[ F1 GrandPrix Star ]
-**************************************************************************/
-
-
-READ16_HANDLER( f1gpstar_vregs_r )
-{
-
-	switch (offset)
-	{
-		case 0x0000/2 :	// DSW 1&2: coinage changes with Country
-		{
-			int val = readinputport(1);
-			if (val & 0x0200)	return readinputport(6) | val; 	// JP, US
-			else				return readinputport(7) | val; 	// UK, FR
-		}
-
-//		case 0x0002/2 :	return 0xFFFF;
-		case 0x0004/2 :	return readinputport(2) +
-						       (read_shift()<<5);	// Buttons
-
-		case 0x0006/2 :	return readinputport(3);	// ? Read at boot only
-		case 0x0008/2 :	return soundlatch2_r(0);	// From sound cpu
-
-		case 0x000c/2 :	return readinputport(4);	// DSW 3
-
-		case 0x0010/2 :	// Accel + Driving Wheel
-			return (read_accelerator()&0xff) + ((readinputport(5)&0xff)<<8);
-
-		default:		SHOW_READ_ERROR("vreg %04X read!",offset*2);
-						return megasys1_vregs[offset];
-	}
-}
-
-/**************************************************************************
-								[ Cisco Heat ]
-**************************************************************************/
-
 WRITE16_HANDLER( cischeat_vregs_w )
 {
 	data16_t old_data = megasys1_vregs[offset];
@@ -294,8 +358,10 @@ WRITE16_HANDLER( cischeat_vregs_w )
  		case 0x0000/2   :	// leds
 			if (ACCESSING_LSB)
 			{
-	 			set_led_status(0,new_data & 0x10);
-				set_led_status(1,new_data & 0x20);
+	 			coin_counter_w(0,new_data & 0x01);
+	 			coin_counter_w(1,new_data & 0x02);
+	 			set_led_status(0,new_data & 0x10);	// start button
+				set_led_status(1,new_data & 0x20);	// ?
 			}
 			break;
 
@@ -344,9 +410,38 @@ WRITE16_HANDLER( cischeat_vregs_w )
 }
 
 
+
 /**************************************************************************
-							[ F1 GrandPrix Star ]
+							F1 GrandPrix Star
 **************************************************************************/
+
+READ16_HANDLER( f1gpstar_vregs_r )
+{
+	switch (offset)
+	{
+		case 0x0000/2 :	// DSW 1&2: coinage changes with Country
+		{
+			int val = readinputport(1);
+			if (val & 0x0200)	return readinputport(6) | val; 	// JP, US
+			else				return readinputport(7) | val; 	// UK, FR
+		}
+
+//		case 0x0002/2 :	return 0xFFFF;
+		case 0x0004/2 :	return readinputport(2) +
+						       (read_shift()<<5);	// Buttons
+
+		case 0x0006/2 :	return readinputport(3);	// ? Read at boot only
+		case 0x0008/2 :	return soundlatch2_r(0);	// From sound cpu
+
+		case 0x000c/2 :	return readinputport(4);	// DSW 3
+
+		case 0x0010/2 :	// Accel + Driving Wheel
+			return (read_accelerator()&0xff) + ((readinputport(5)&0xff)<<8);
+
+		default:		SHOW_READ_ERROR("vreg %04X read!",offset*2);
+						return megasys1_vregs[offset];
+	}
+}
 
 WRITE16_HANDLER( f1gpstar_vregs_w )
 {
@@ -365,8 +460,10 @@ CPU #0 PC 00235C : Warning, vreg 0006 <- 0000
 		case 0x0014/2   :
 			if (ACCESSING_LSB)
 			{
-				set_led_status(0,new_data & 0x04);	// 1p start lamp
-				set_led_status(1,new_data & 0x20);	// 2p start lamp?
+	 			coin_counter_w(0,new_data & 0x01);
+	 			coin_counter_w(1,new_data & 0x02);
+				set_led_status(0,new_data & 0x04);	// start button
+				set_led_status(1,new_data & 0x20);	// ?
 				// wheel | seat motor
 				set_led_status(2, ((new_data >> 3) | (new_data >> 4)) & 1 );
 			}
@@ -405,7 +502,7 @@ CPU #0 PC 00235C : Warning, vreg 0006 <- 0000
 
 
 /**************************************************************************
-								[ Scud Hammer ]
+								Scud Hammer
 **************************************************************************/
 
 WRITE16_HANDLER( scudhamm_vregs_w )
@@ -435,12 +532,15 @@ WRITE16_HANDLER( scudhamm_vregs_w )
 }
 
 
-/***************************************************************************
-								Road Drawing
-***************************************************************************/
 
-#define ROAD_COLOR_CODES	64
-#define ROAD_COLOR(_x_)	((_x_) & (ROAD_COLOR_CODES-1))
+
+/***************************************************************************
+
+
+								Road Drawing
+
+
+***************************************************************************/
 
 /* horizontal size of 1 line and 1 tile of the road */
 #define X_SIZE (1024)
@@ -448,26 +548,24 @@ WRITE16_HANDLER( scudhamm_vregs_w )
 
 
 /**************************************************************************
-								[ Cisco Heat ]
-**************************************************************************/
 
-/*
-	Road format:
+						Cisco Heat road format
 
-	Offset		Data
 
-	00.w		Code
+	Offset:		Bits:					Value:
 
-	02.w		X Scroll
+	00.w								Code
+
+	02.w								X Scroll
 
 	04.w		fedc ---- ---- ----		unused?
 				---- ba98 ---- ----		Priority
 				---- ---- 76-- ----		unused?
 				---- ---- --54 3210		Color
 
-	06.w		Unused
+	06.w								Unused
 
-*/
+**************************************************************************/
 
 /*	Draw the road in the given bitmap. The priority1 and priority2 parameters
 	specify the range of lines to draw	*/
@@ -515,7 +613,7 @@ void cischeat_draw_road(struct osd_bitmap *bitmap, int road_num, int priority1, 
 		{
 			drawgfx(bitmap,gfx,
 					curr_code++,
-					ROAD_COLOR(attr),
+					attr,
 					0,0,
 					sx,sy,
 					&rect,
@@ -528,55 +626,13 @@ void cischeat_draw_road(struct osd_bitmap *bitmap, int road_num, int priority1, 
 
 }
 
-void cischeat_mark_road_colors(int road_num)
-{
-	int i, color, colmask[ROAD_COLOR_CODES], sy;
-
-	int gfx_num					=	(road_num & 1) ? 5 : 4;
-	struct GfxDecodeInfo gfx	=	Machine->drv->gfxdecodeinfo[gfx_num];
-	int total_elements			=	Machine->gfx[gfx_num]->total_elements;
-	unsigned int *pen_usage		=	Machine->gfx[gfx_num]->pen_usage;
-//	int total_color_codes		=	gfx.total_color_codes;
-	int color_codes_start		=	gfx.color_codes_start;
-
-	data16_t *roadram			=	cischeat_roadram[road_num & 1];
-
-	int min_y = Machine->visible_area. min_y;
-	int max_y = Machine->visible_area. max_y;
-
-	for (color = 0 ; color < ROAD_COLOR_CODES ; color++) colmask[color] = 0;
-
-	/* Let's walk from the top to the bottom of the visible screen */
-	for (sy = min_y ; sy <= max_y ; sy ++)
-	{
-		int code	= roadram[sy * 4 + 0];
-		int attr	= roadram[sy * 4 + 2];
-
-		color = ROAD_COLOR(attr);
-
-		/* line number converted to tile number (each tile is TILE_SIZE x 1) */
-		code = code * (X_SIZE/TILE_SIZE);
-
-		for (i = 0; i < (X_SIZE/TILE_SIZE); i++)
-			colmask[color] |= pen_usage[(code + i) % total_elements];
-	}
-
-	for (color = 0; color < ROAD_COLOR_CODES; color++)
-	 for (i = 0; i < 16; i++)
-	  if (colmask[color] & (1 << i)) palette_used_colors[16 * color + i + color_codes_start] = PALETTE_COLOR_USED;
-}
-
 
 
 /**************************************************************************
-							[ F1 GrandPrix Star ]
-**************************************************************************/
 
+						F1 GrandPrix Star road format
 
-/*
-	Road format:
-
-	Offset		Data
+	Offset:		Bits:					Value:
 
 	00.w		fedc ---- ---- ----		Priority
 				---- ba98 7654 3210		X Scroll (After Zoom)
@@ -588,7 +644,7 @@ void cischeat_mark_road_colors(int road_num)
 				--dc ba98 ---- ----		Color
 				---- ---- 7654 3210		?
 
-	06.w		Code
+	06.w								Code
 
 
 	Imagine an "empty" line, 2 * X_SIZE wide, with the gfx from
@@ -598,8 +654,8 @@ void cischeat_mark_road_colors(int road_num)
 	widen it to 2 * X_SIZE, while *keeping it centered* in the
 	empty line.	Scrolling acts on the resulting line.
 
-*/
 
+**************************************************************************/
 
 /*	Draw the road in the given bitmap. The priority1 and priority2 parameters
 	specify the range of lines to draw	*/
@@ -664,7 +720,7 @@ void f1gpstar_draw_road(struct osd_bitmap *bitmap, int road_num, int priority1, 
 		{
 			drawgfxzoom(bitmap,gfx,
 						code++,
-						ROAD_COLOR(attr>>8),
+						attr >> 8,
 						0,0,
 						sx / 0x10000, sy,
 						&rect,
@@ -676,57 +732,14 @@ void f1gpstar_draw_road(struct osd_bitmap *bitmap, int road_num, int priority1, 
 		}
 
 	}
-
 }
-
-
-void f1gpstar_mark_road_colors(int road_num)
-{
-	int i, color, colmask[ROAD_COLOR_CODES], sy;
-
-	int gfx_num					=	(road_num & 1) ? 5 : 4;
-	struct GfxDecodeInfo gfx	=	Machine->drv->gfxdecodeinfo[gfx_num];
-	int total_elements			=	Machine->gfx[gfx_num]->total_elements;
-	unsigned int *pen_usage		=	Machine->gfx[gfx_num]->pen_usage;
-//	int total_color_codes		=	gfx.total_color_codes;
-	int color_codes_start		=	gfx.color_codes_start;
-
-	data16_t *roadram			=	cischeat_roadram[road_num & 1];
-
-	int min_y = Machine->visible_area.min_y;
-	int max_y = Machine->visible_area.max_y;
-
-	for (color = 0 ; color < ROAD_COLOR_CODES ; color++) colmask[color] = 0;
-
-	/* Let's walk from the top to the bottom of the visible screen */
-	for (sy = min_y ; sy <= max_y ; sy ++)
-	{
-		int attr	=	roadram[ sy * 4 + 2 ];
-		int code	=	roadram[ sy * 4 + 3 ];
-
-		color	= ROAD_COLOR(attr>>8);
-
-		/* line number converted to tile number (each tile is TILE_SIZE x 1) */
-		code	= code * (X_SIZE/TILE_SIZE);
-
-		for (i = 0; i < (X_SIZE/TILE_SIZE); i++)
-			colmask[color] |= pen_usage[(code + i) % total_elements];
-	}
-
-	for (color = 0; color < ROAD_COLOR_CODES; color++)
-	 for (i = 0; i < 16; i++)
-	  if (colmask[color] & (1 << i)) palette_used_colors[16 * color + i + color_codes_start] = PALETTE_COLOR_USED;
-}
-
-
-
 
 
 /***************************************************************************
 
-	Sprite Data:
+				Cisco Heat & F1 GP Star Sprites Drawing
 
-	Offset		Data
+	Offset:	Bits:					Value:
 
 	00 		fed- ---- ---- ----		unused?
 	 		---c ---- ---- ----		Don't display this sprite
@@ -742,22 +755,18 @@ void f1gpstar_mark_road_colors(int road_num)
 	06/08	fedc ba-- ---- ----		? X/Y position ?
 			---- --98 7654 3210		X/Y position
 
-	0A		0 ?
+	0A								0 ?
 
-	0C		Code
+	0C								Code
 
-	0E
-			fed- ---- ---- ----		unused?
-			---c ---- ---- ----		used!
+	0E		fed- ---- ---- ----		unused?
+			---c ---- ---- ----		Use pen 0 as shadow
 			---- ba98 ---- ----		Priority
 			---- ---- 7--- ----		unused?
 			---- ---- -654 3210		Color
 
 ***************************************************************************/
 
-#define SIGN_EXTEND_POS(_var_)	{_var_ &= 0x3ff; if (_var_ > 0x1ff) _var_ -= 0x400;}
-#define SPRITE_COLOR_CODES	(0x80)
-#define SPRITE_COLOR(_x_)	((_x_) & (SPRITE_COLOR_CODES - 1))
 #define SHRINK(_org_,_fact_) ( ( ( (_org_) << 16 ) * (_fact_ & 0x01ff) ) / 0x80 )
 
 /*	Draw sprites, in the given priority range, to a bitmap.
@@ -769,11 +778,9 @@ void f1gpstar_mark_road_colors(int road_num)
 
 static void cischeat_draw_sprites(struct osd_bitmap *bitmap , int priority1, int priority2)
 {
-	int x, y, sx, sy;
-	int xzoom, yzoom, xscale, yscale, flipx, flipy;
-	int xdim, ydim, xnum, ynum;
-	int xstart, ystart, xend, yend, xinc, yinc;
-	int code, attr, color, size;
+	int x, sx, flipx, xzoom, xscale, xdim, xnum, xstart, xend, xinc;
+	int y, sy, flipy, yzoom, yscale, ydim, ynum, ystart, yend, yinc;
+	int code, attr, color, size, shadow;
 
 	int min_priority, max_priority, high_sprites;
 
@@ -805,8 +812,8 @@ static void cischeat_draw_sprites(struct osd_bitmap *bitmap , int priority1, int
 
 		sx		=	source[ 3 ];
 		sy		=	source[ 4 ];
-		SIGN_EXTEND_POS(sx)
-		SIGN_EXTEND_POS(sy)
+		sx		=	(sx & 0x1ff) - (sx & 0x200);
+		sy		=	(sy & 0x1ff) - (sy & 0x200);
 
 		/* use fixed point values (16.16), for accuracy */
 		sx <<= 16;
@@ -834,13 +841,14 @@ static void cischeat_draw_sprites(struct osd_bitmap *bitmap , int priority1, int
 
 		code	=	source[ 6 ];
 		attr	=	source[ 7 ];
-		color	=	SPRITE_COLOR(attr);
+		color	=	attr & 0x007f;
+		shadow	=	attr & 0x1000;
 
 		/* high byte is a priority information */
 		if ( ((attr & 0x700) < min_priority) || ((attr & 0x700) > max_priority) )
 			continue;
 
-		if ( high_sprites && (!(color & (SPRITE_COLOR_CODES/2))) )
+		if ( high_sprites && !(color & 0x80) )
 			continue;
 
 #ifdef MAME_DEBUG
@@ -873,103 +881,205 @@ if ( (debugsprites) && ( ((attr & 0x0300)>>8) != (debugsprites-1) ) ) 	{ continu
 							flipx,flipy,
 							(sx + x * xdim) / 0x10000, (sy + y * ydim) / 0x10000,
 							&Machine->visible_area,
-							TRANSPARENCY_PEN,15,
+							shadow ? TRANSPARENCY_PEN_TABLE : TRANSPARENCY_PEN,15,
 							xscale, yscale );
 			}
 		}
+#ifdef MAME_DEBUG
+#if 1
+if (keyboard_pressed(KEYCODE_X))
+{	/* Display some info on each sprite */
+	struct DisplayText dt[2];
+	sprintf(buf, "%04x",attr);
+	dt[0].text = buf;	dt[0].color = UI_COLOR_NORMAL;
+	dt[0].x = sx>>16;	dt[0].y = sy>>16;
+	dt[1].text = 0;	/* terminate array */
+	displaytext(Machine->scrbitmap,dt);		}
+#endif
+#endif
 	}	/* end sprite loop */
 }
 
 
+/***************************************************************************
 
+							Big Run Sprites Drawing
 
-/* Mark colors used by visible sprites */
+	Offset:	Bits:					Value:
 
-static void cischeat_mark_sprite_colors(void)
+	00 		fed- ---- ---- ----		unused?
+	 		---c ---- ---- ----		Don't display this sprite
+			---- ba98 ---- ----		unused?
+			---- ---- 7654 ----		Number of tiles along Y, minus 1 (1-16)
+			---- ---- ---- 3210		Number of tiles along X, minus 1 (1-16)
+
+	02	 	fedc ba98 ---- ----		Y zoom
+			---- ---- 7654 3210		X zoom
+
+	04/06	fed- ---- ---- ----
+	 		---c ---- ---- ----		X/Y flip
+			---- ba9- ---- ----
+			---- ---8 7654 3210		X/Y position (signed)
+
+	08								?
+	0A								?
+
+	0C								Code
+
+	0E		fed- ---- ---- ----		unused?
+			---c ---- ---- ----		Use pen 0 as shadow
+			---- ba98 ---- ----		Priority
+			---- ---- 76-- ----		unused?
+			---- ---- --54 3210		Color
+
+***************************************************************************/
+
+static void bigrun_draw_sprites(struct osd_bitmap *bitmap , int priority1, int priority2)
 {
-	int i, color, colmask[SPRITE_COLOR_CODES];
-	unsigned int *pen_usage	=	Machine->gfx[3]->pen_usage;
-	int total_elements		=	Machine->gfx[3]->total_elements;
-	int color_codes_start	=	Machine->drv->gfxdecodeinfo[3].color_codes_start;
+	int x, sx, flipx, xzoom, xscale, xdim, xnum, xstart, xend, xinc;
+	int y, sy, flipy, yzoom, yscale, ydim, ynum, ystart, yend, yinc;
+	int code, attr, color, size, shadow;
 
-	int xmin = Machine->visible_area.min_x;
-	int xmax = Machine->visible_area.max_x;
-	int ymin = Machine->visible_area.min_y;
-	int ymax = Machine->visible_area.max_y;
+	int min_priority, max_priority, high_sprites;
 
 	data16_t		*source	=	spriteram16;
 	const data16_t	*finish	=	source + 0x1000/2;
 
-	for (color = 0 ; color < SPRITE_COLOR_CODES ; color++) colmask[color] = 0;
+	/* Move the priority values in place */
+	high_sprites = (priority1 >= 16) | (priority2 >= 16);
+	priority1 = (priority1 & 0x0f) * 0x100;
+	priority2 = (priority2 & 0x0f) * 0x100;
+
+	if (priority1 < priority2)	{	min_priority = priority1;	max_priority = priority2; }
+	else						{	min_priority = priority2;	max_priority = priority1; }
 
 	for (; source < finish; source += 0x10/2 )
 	{
-		int sx, sy, xzoom, yzoom;
-		int xdim, ydim, xnum, ynum;
-		int code, attr, size;
-
- 		size	=	source[ 0 ];
+		size	=	source[ 0 ];
 		if (size & 0x1000)	continue;
 
 		/* number of tiles */
 		xnum	=	( (size & 0x0f) >> 0 ) + 1;
 		ynum	=	( (size & 0xf0) >> 4 ) + 1;
 
-		xzoom	=	source[ 1 ];
-		yzoom	=	source[ 2 ];
+		yzoom	=	(source[ 1 ] >> 8) & 0xff;
+		xzoom	=	(source[ 1 ] >> 0) & 0xff;
 
-		sx		=	source[ 3 ];
-		sy		=	source[ 4 ];
-		SIGN_EXTEND_POS(sx)
-		SIGN_EXTEND_POS(sy)
+		sx		=	source[ 2 ];
+		sy		=	source[ 3 ];
+		flipx	=	sx & 0x1000;
+		flipy	=	sy & 0x1000;
+//		sx		=	(sx & 0x1ff) - (sx & 0x200);
+//		sy		=	(sy & 0x1ff) - (sy & 0x200);
+		sx		=	(sx & 0x0ff) - (sx & 0x100);
+		sy		=	(sy & 0x0ff) - (sy & 0x100);
 
-		/* dimension of the sprite after zoom */
-		xdim	=	( xnum * SHRINK(16,xzoom) ) >> 16;
-		ydim	=	( ynum * SHRINK(16,yzoom) ) >> 16;
+		/* use fixed point values (16.16), for accuracy */
+		sx <<= 16;
+		sy <<= 16;
 
-		/* the y pos passed to the hardware is the that of the last line,
-		   we need the y pos of the first line  */
-		sy -= ydim;
+		/* dimension of a tile after zoom */
+#ifdef MAME_DEBUG
+		if ( keyboard_pressed(KEYCODE_Z) && keyboard_pressed(KEYCODE_M) )
+		{
+			xdim	=	16 << 16;
+			ydim	=	16 << 16;
+		}
+		else
+#endif
+		{
+			xdim	=	SHRINK(16,xzoom);
+			ydim	=	SHRINK(16,yzoom);
+		}
 
-		if (	((sx+xdim-1) < xmin) || (sx > xmax) ||
-				((sy+ydim-1) < ymin) || (sy > ymax)		)	continue;
+		if ( ( (xdim / 0x10000) == 0 ) || ( (ydim / 0x10000) == 0) )	continue;
+
+//		sy -= (ydim * ynum);
 
 		code	=	source[ 6 ];
 		attr	=	source[ 7 ];
-		color	=	SPRITE_COLOR(attr);
+		color	=	attr & 0x007f;
+		shadow	=	attr & 0x1000;
 
-		for (i = 0; i < xnum * ynum; i++)
-			colmask[color] |= pen_usage[(code + i) % total_elements];
-	}
+		/* high byte is a priority information */
+		if ( ((attr & 0x700) < min_priority) || ((attr & 0x700) > max_priority) )
+			continue;
 
-	for (color = 0; color < SPRITE_COLOR_CODES; color++)
-	 for (i = 0; i < (16-1); i++)	// pen 15 is transparent
-	  if (colmask[color] & (1 << i)) palette_used_colors[16 * color + i + color_codes_start] = PALETTE_COLOR_USED;
+		if ( high_sprites && !(color & 0x80) )
+			continue;
+
+#ifdef MAME_DEBUG
+if ( (debugsprites) && ( ((attr & 0x0300)>>8) != (debugsprites-1) ) ) 	{ continue; };
+#endif
+
+		xscale = xdim / 16;
+		yscale = ydim / 16;
+
+
+		/* let's approximate to the nearest greater integer value
+		   to avoid holes in between tiles */
+		if (xscale & 0xffff)	xscale += (1<<16)/16;
+		if (yscale & 0xffff)	yscale += (1<<16)/16;
+
+
+		if (flipx)	{ xstart = xnum-1;  xend = -1;    xinc = -1; }
+		else		{ xstart = 0;       xend = xnum;  xinc = +1; }
+
+		if (flipy)	{ ystart = ynum-1;  yend = -1;    yinc = -1; }
+		else		{ ystart = 0;       yend = ynum;  yinc = +1; }
+
+		for (y = ystart; y != yend; y += yinc)
+		{
+			for (x = xstart; x != xend; x += xinc)
+			{
+				drawgfxzoom(bitmap,Machine->gfx[3],
+							code++,
+							color,
+							flipx,flipy,
+							(sx + x * xdim) / 0x10000, (sy + y * ydim) / 0x10000,
+							&Machine->visible_area,
+							shadow ? TRANSPARENCY_PEN_TABLE : TRANSPARENCY_PEN,15,
+							xscale, yscale );
+			}
+		}
+#ifdef MAME_DEBUG
+#if 1
+if (keyboard_pressed(KEYCODE_X))
+{	/* Display some info on each sprite */
+	struct DisplayText dt[2];
+	sprintf(buf, "%04x",attr);
+	dt[0].text = buf;	dt[0].color = UI_COLOR_NORMAL;
+	dt[0].x = sx>>16;	dt[0].y = sy>>16;
+	dt[1].text = 0;	/* terminate array */
+	displaytext(Machine->scrbitmap,dt);		}
+#endif
+#endif
+	}	/* end sprite loop */
 }
-
-
 
 
 /***************************************************************************
 
+
 								Screen Drawing
+
 
 ***************************************************************************/
 
 #define CISCHEAT_LAYERSCTRL \
 debugsprites = 0; \
-if (keyboard_pressed(KEYCODE_Z)) \
+if ( keyboard_pressed(KEYCODE_Z) || keyboard_pressed(KEYCODE_X) ) \
 { \
 	int msk = 0; \
-	if (keyboard_pressed(KEYCODE_Q))	{ msk |= 0xffc1;} \
-	if (keyboard_pressed(KEYCODE_W))	{ msk |= 0xffc2;} \
-	if (keyboard_pressed(KEYCODE_E))	{ msk |= 0xffc4;} \
-	if (keyboard_pressed(KEYCODE_A))	{ msk |= 0xffc8; debugsprites = 1;} \
-	if (keyboard_pressed(KEYCODE_S))	{ msk |= 0xffc8; debugsprites = 2;} \
-	if (keyboard_pressed(KEYCODE_D))	{ msk |= 0xffc8; debugsprites = 3;} \
-	if (keyboard_pressed(KEYCODE_F))	{ msk |= 0xffc8; debugsprites = 4;} \
-	if (keyboard_pressed(KEYCODE_R))	{ msk |= 0xffd0;} \
-	if (keyboard_pressed(KEYCODE_T))	{ msk |= 0xffe0;} \
+	if (keyboard_pressed(KEYCODE_Q))	{ msk |= 0x01;} \
+	if (keyboard_pressed(KEYCODE_W))	{ msk |= 0x02;} \
+	if (keyboard_pressed(KEYCODE_E))	{ msk |= 0x04;} \
+	if (keyboard_pressed(KEYCODE_A))	{ msk |= 0x08; debugsprites = 1;} \
+	if (keyboard_pressed(KEYCODE_S))	{ msk |= 0x08; debugsprites = 2;} \
+	if (keyboard_pressed(KEYCODE_D))	{ msk |= 0x08; debugsprites = 3;} \
+	if (keyboard_pressed(KEYCODE_F))	{ msk |= 0x08; debugsprites = 4;} \
+	if (keyboard_pressed(KEYCODE_R))	{ msk |= 0x10;} \
+	if (keyboard_pressed(KEYCODE_T))	{ msk |= 0x20;} \
  \
 	if (msk != 0) megasys1_active_layers &= msk; \
 } \
@@ -978,20 +1088,67 @@ if (keyboard_pressed(KEYCODE_Z)) \
 	static int show_unknown; \
 	if ( keyboard_pressed(KEYCODE_Z) && keyboard_pressed_memory(KEYCODE_U) ) \
 		show_unknown ^= 1; \
- \
 	if (show_unknown) \
-	{ \
-		char buf[80]; \
-		sprintf(buf, "0:%04X 2:%04X 4:%04X 6:%04X", \
-					megasys1_vregs[0],megasys1_vregs[1], \
-					megasys1_vregs[2],megasys1_vregs[3] ); \
-		usrintf_showmessage(buf); \
-	} \
+		usrintf_showmessage("0:%04X 2:%04X 4:%04X 6:%04X c:%04X", \
+			megasys1_vregs[0],megasys1_vregs[1],megasys1_vregs[2],megasys1_vregs[3],megasys1_vregs[0xc/2] ); \
 }
 
 
 /**************************************************************************
-								[ Cisco Heat ]
+								Big Run
+**************************************************************************/
+
+void bigrun_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
+	int i;
+	int megasys1_active_layers1, flag;
+
+#ifdef MAME_DEBUG
+	/* FAKE Videoreg */
+	megasys1_active_layers = megasys1_vregs[0x2400/2];
+	if (megasys1_active_layers == 0)	megasys1_active_layers = 0x3f;
+#else
+	megasys1_active_layers = 0x3f;
+#endif
+
+	megasys1_active_layers1 = megasys1_active_layers;
+
+#ifdef MAME_DEBUG
+	CISCHEAT_LAYERSCTRL
+#endif
+
+	cischeat_tmap_SET_SCROLL(0)
+	cischeat_tmap_SET_SCROLL(1)
+	cischeat_tmap_SET_SCROLL(2)
+
+	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
+
+	for (i = 7; i >= 4; i--)
+	{											/* bitmap, road, min_priority, max_priority, transparency */
+		if (megasys1_active_layers & 0x10)	cischeat_draw_road(bitmap,0,i,i,TRANSPARENCY_NONE);
+		if (megasys1_active_layers & 0x20)	cischeat_draw_road(bitmap,1,i,i,TRANSPARENCY_PEN);
+	}
+
+	flag = 0;
+	cischeat_tmap_DRAW(0)
+	cischeat_tmap_DRAW(1)
+
+	for (i = 3; i >= 0; i--)
+	{											/* bitmap, road, min_priority, max_priority, transparency */
+		if (megasys1_active_layers & 0x10)	cischeat_draw_road(bitmap,0,i,i,TRANSPARENCY_PEN);
+		if (megasys1_active_layers & 0x20)	cischeat_draw_road(bitmap,1,i,i,TRANSPARENCY_PEN);
+	}
+
+	if (megasys1_active_layers & 0x08)	bigrun_draw_sprites(bitmap,15,0);
+
+	cischeat_tmap_DRAW(2)
+
+	megasys1_active_layers = megasys1_active_layers1;
+}
+
+
+/**************************************************************************
+								Cisco Heat
 **************************************************************************/
 
 void cischeat_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
@@ -1016,19 +1173,7 @@ void cischeat_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	cischeat_tmap_SET_SCROLL(1)
 	cischeat_tmap_SET_SCROLL(2)
 
-	cischeat_tmap_UPDATE(0)
-	cischeat_tmap_UPDATE(1)
-	cischeat_tmap_UPDATE(2)
-
-	palette_init_used_colors();
-
-	if (megasys1_active_layers & 0x08)	cischeat_mark_sprite_colors();
-	if (megasys1_active_layers & 0x10)	cischeat_mark_road_colors(0);	// road 0
-	if (megasys1_active_layers & 0x20)	cischeat_mark_road_colors(1);	// road 1
-
-	palette_recalc();
-
-	fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
+	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 
 										/* bitmap, road, priority, transparency */
 	if (megasys1_active_layers & 0x10)	cischeat_draw_road(bitmap,0,7,5,TRANSPARENCY_NONE);
@@ -1036,7 +1181,7 @@ void cischeat_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	flag = 0;
 	cischeat_tmap_DRAW(0)
-//	else fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
+//	else fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 	cischeat_tmap_DRAW(1)
 
 	if (megasys1_active_layers & 0x08)	cischeat_draw_sprites(bitmap,15,3);
@@ -1057,12 +1202,9 @@ void cischeat_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 
 
-
-
 /**************************************************************************
-							[ F1 GrandPrix Star ]
+							F1 GrandPrix Star
 **************************************************************************/
-
 
 void f1gpstar_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
@@ -1086,24 +1228,9 @@ void f1gpstar_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	cischeat_tmap_SET_SCROLL(1)
 	cischeat_tmap_SET_SCROLL(2)
 
-	cischeat_tmap_UPDATE(0)
-	cischeat_tmap_UPDATE(1)
-	cischeat_tmap_UPDATE(2)
-
-	palette_init_used_colors();
-
-	if (megasys1_active_layers & 0x08)	cischeat_mark_sprite_colors();
-	if (megasys1_active_layers & 0x10)	f1gpstar_mark_road_colors(0);	// road 0
-	if (megasys1_active_layers & 0x20)	f1gpstar_mark_road_colors(1);	// road 1
-
-	palette_recalc();
-
-	fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
+	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 
 /*	1: clouds 5, grad 7, road 0		2: clouds 5, grad 7, road 0, tunnel roof 0 */
-
-	/* NOTE: TRANSPARENCY_NONE isn't supported by drawgfxzoom    */
-	/* (the function used in f1gpstar_drawroad to draw the road) */
 
 	/* road 1!! 0!! */					/* bitmap, road, min_priority, max_priority, transparency */
 	if (megasys1_active_layers & 0x20)	f1gpstar_draw_road(bitmap,1,6,7,TRANSPARENCY_PEN);
@@ -1111,7 +1238,7 @@ void f1gpstar_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	flag = 0;
 	cischeat_tmap_DRAW(0)
-//	else fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
+//	else fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 	cischeat_tmap_DRAW(1)
 
 	/* road 1!! 0!! */					/* bitmap, road, min_priority, max_priority, transparency */
@@ -1134,14 +1261,9 @@ void f1gpstar_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 
 
-
-
-
-
 /**************************************************************************
-								[ Scud Hammer ]
+								Scud Hammer
 **************************************************************************/
-
 
 extern data16_t scudhamm_motor_command;
 
@@ -1157,7 +1279,7 @@ void scudhamm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 #ifdef MAME_DEBUG
 debugsprites = 0;
-if (keyboard_pressed(KEYCODE_Z))
+if ( keyboard_pressed(KEYCODE_Z) || keyboard_pressed(KEYCODE_X) )
 {
 	int msk = 0;
 	if (keyboard_pressed(KEYCODE_Q))	{ msk |= 0x1;}
@@ -1170,14 +1292,13 @@ if (keyboard_pressed(KEYCODE_Z))
 
 	if (msk != 0) megasys1_active_layers &= msk;
 #if 1
-{	char buf[80];
-	sprintf(buf, "Cmd: %04X Pos:%04X Lim:%04X Inp:%04X",
-				scudhamm_motor_command,
-				scudhamm_motor_pos_r(0,0),
-				scudhamm_motor_status_r(0,0),
-				scudhamm_analog_r(0,0) );
-	usrintf_showmessage(buf);	}
+	usrintf_showmessage("Cmd: %04X Pos:%04X Lim:%04X Inp:%04X",
+						scudhamm_motor_command,
+						scudhamm_motor_pos_r(0,0),
+						scudhamm_motor_status_r(0,0),
+						scudhamm_analog_r(0,0) );
 #endif
+
 }
 #endif
 
@@ -1185,21 +1306,11 @@ if (keyboard_pressed(KEYCODE_Z))
 //	cischeat_tmap_SET_SCROLL(1)
 	cischeat_tmap_SET_SCROLL(2)
 
-	cischeat_tmap_UPDATE(0)
-//	cischeat_tmap_UPDATE(1)
-	cischeat_tmap_UPDATE(2)
-
-	palette_init_used_colors();
-
-	if (megasys1_active_layers & 0x08)	cischeat_mark_sprite_colors();
-
-	palette_recalc();
-
-	fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
+	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 
 	flag = 0;
 	cischeat_tmap_DRAW(0)
-//	else fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
+//	else fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 //	cischeat_tmap_DRAW(1)
 	if (megasys1_active_layers & 0x08)	cischeat_draw_sprites(bitmap,0,15);
 	cischeat_tmap_DRAW(2)

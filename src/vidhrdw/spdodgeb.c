@@ -231,15 +231,6 @@ void spdodgeb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			tilemap_set_scrollx(bg_tilemap,i+1,scrollx[i]+5);
 	}
 
-	tilemap_update(ALL_TILEMAPS);
-
-	palette_init_used_colors();
-	/* mark sprites colors */
-	for (i = 0;i < 128;i++)
-		palette_used_colors[sprite_palbank*0x80 + i + 0x200] |= PALETTE_COLOR_VISIBLE;
-
-	palette_recalc();
-
 	tilemap_draw(bitmap,bg_tilemap,0,0);
 	draw_sprites(bitmap);
 }

@@ -394,7 +394,7 @@ void pstadium_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	int x, y;
 	int color;
 
-	if (palette_recalc() || full_refresh || pstadium_screen_refresh)
+	if (full_refresh || pstadium_screen_refresh)
 	{
 		pstadium_screen_refresh = 0;
 		for (y = 0; y < Machine->drv->screen_height; y++)
@@ -425,7 +425,7 @@ void galkoku_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	int x, y;
 	int color;
 
-	if (palette_recalc() || full_refresh || pstadium_screen_refresh)
+	if (full_refresh || pstadium_screen_refresh)
 	{
 		pstadium_screen_refresh = 0;
 		for (y = 0; y < Machine->drv->screen_height; y++)

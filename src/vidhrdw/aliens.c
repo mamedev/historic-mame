@@ -94,11 +94,6 @@ void aliens_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	K052109_tilemap_update();
 
-	palette_init_used_colors();
-	K051960_mark_sprites_colors();
-	palette_used_colors[layer_colorbase[1] * 16] |= PALETTE_COLOR_VISIBLE;
-	palette_recalc();
-
 	fillbitmap(priority_bitmap,0,NULL);
 	fillbitmap(bitmap,Machine->pens[layer_colorbase[1] * 16],&Machine->visible_area);
 	K052109_tilemap_draw(bitmap,1,0,1);

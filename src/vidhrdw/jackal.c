@@ -207,11 +207,6 @@ void jackal_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	unsigned char *RAM = (memory_region(REGION_CPU1));
 
 
-	if (palette_recalc())
-	{
-		memset(dirtybuffer,1,videoram_size);
-	}
-
 	jackal_scrollram = &RAM[0x0020];
 	colorram = &RAM[0x2000];
 	videoram = &RAM[0x2400];

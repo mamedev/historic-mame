@@ -398,7 +398,7 @@ static void sprite_init( void ){
 
 	struct osd_bitmap *bitmap = Machine->scrbitmap;
 	screen_baseaddr = bitmap->line[0];
-	screen_line_offset = bitmap->line[1]-bitmap->line[0];
+	screen_line_offset = ((UINT8 *)bitmap->line[1])-((UINT8 *)bitmap->line[0]);
 
 	orientation = Machine->orientation;
 	screen_width = Machine->scrbitmap->width;
@@ -987,9 +987,6 @@ static void zoom_callback_1(int *code,int *color)
 						[ Video Hardware Start ]
 ------------------------------------------------------------------------*/
 
-/* for the zoomed layers we support: road and fg */
-static struct osd_bitmap *temp_bitmap, *temp_bitmap2;
-
 int hotchase_vh_start(void)
 {
 /*
@@ -1005,21 +1002,18 @@ int hotchase_vh_start(void)
 
 	sprite_init();
 
-	if (K051316_vh_start_0(ZOOMROM0_MEM_REGION,4,zoom_callback_0))
+	if (K051316_vh_start_0(ZOOMROM0_MEM_REGION,4,TILEMAP_TRANSPARENT,0,zoom_callback_0))
 		return 1;
 
-	if (K051316_vh_start_1(ZOOMROM1_MEM_REGION,4,zoom_callback_1))
+	if (K051316_vh_start_1(ZOOMROM1_MEM_REGION,4,TILEMAP_TRANSPARENT,0,zoom_callback_1))
 	{
 		K051316_vh_stop_0();
 		return 1;
 	}
 
-	temp_bitmap  = bitmap_alloc(512,512);
-	temp_bitmap2 = bitmap_alloc(512,256);
-
 	sprite_list = sprite_list_create( NUM_SPRITES );
 
-	if (temp_bitmap && temp_bitmap2 && sprite_list)
+	if (sprite_list)
 	{
 		K051316_wraparound_enable(0,1);
 //		K051316_wraparound_enable(1,1);
@@ -1035,8 +1029,6 @@ int hotchase_vh_start(void)
 
 void hotchase_vh_stop(void)
 {
-	if (temp_bitmap)	bitmap_free(temp_bitmap);
-	if (temp_bitmap2)	bitmap_free(temp_bitmap2);
 	K051316_vh_stop_0();
 	K051316_vh_stop_1();
 
@@ -1061,19 +1053,6 @@ void hotchase_vh_stop(void)
 ***************************************************************************/
 
 #define ROAD_COLOR(x)	(0x00 + ((x)&0xff))
-
-void wecleman_mark_road_colors(void)
-{
-	int y					=	Machine->visible_area.min_y;
-	int ymax				=	Machine->visible_area.max_y;
-	int color_codes_start	=	Machine->drv->gfxdecodeinfo[1].color_codes_start;
-
-	for (; y <= ymax; y++)
-	{
-		int color = ROAD_COLOR( wecleman_roadram[0x400/2 + y * 2/2] );
-		memset(&palette_used_colors[color_codes_start + color*8],PALETTE_COLOR_USED,8);	// no transparency
-	}
-}
 
 
 /*
@@ -1155,24 +1134,6 @@ void wecleman_draw_road(struct osd_bitmap *bitmap,int priority)
 
 
 
-void hotchase_mark_road_colors(void)
-{
-	int y					=	Machine->visible_area.min_y;
-	int ymax				=	Machine->visible_area.max_y;
-	int color_codes_start	=	Machine->drv->gfxdecodeinfo[0].color_codes_start;
-
-	for (; y <= ymax; y++)
-	{
-		int color = (wecleman_roadram[y * 4/2] >> 4) & 0xf;
-		palette_used_colors[color_codes_start + color*16 + 0] = PALETTE_COLOR_TRANSPARENT;	// pen 0 transparent
-		memset(&palette_used_colors[color_codes_start + color*16 + 1],PALETTE_COLOR_USED,16-1);
-	}
-
-}
-
-
-
-
 /*
 	This layer is composed of horizontal lines gfx elements
 	There are 512 lines in ROM, each is 512 pixels wide
@@ -1196,9 +1157,8 @@ void hotchase_mark_road_colors(void)
 
 */
 
-void hotchase_draw_road(struct osd_bitmap *bitmap,int priority, struct rectangle *clip)
+void hotchase_draw_road(struct osd_bitmap *bitmap)
 {
-	struct rectangle rect = *clip;
 	int sy;
 
 
@@ -1208,38 +1168,28 @@ void hotchase_draw_road(struct osd_bitmap *bitmap,int priority, struct rectangle
 
 
 	/* Let's draw from the top to the bottom of the visible screen */
-	for (sy = rect.min_y ; sy <= rect.max_y ; sy ++)
+	for (sy = Machine->visible_area.min_y;sy <= Machine->visible_area.max_y;sy++)
 	{
-		int curr_code,sx;
+		int sx;
 		int code	=	  wecleman_roadram[ sy *4/2 + 2/2 ] +
 						( wecleman_roadram[ sy *4/2 + 0/2 ] << 16 );
-		int color	=	(( code & 0x00f00000 ) >> 20 ) + 0x70;
-		int scrollx =	 ( code & 0x000ffc00 ) >> 10;
-		code		=	 ( code & 0x000003ff ) >>  0;
+		int color	=	(( code & 0x00f00000 ) >> 20) + 0x70;
+		int scrollx = 2*(( code & 0x0007fc00 ) >> 10);
+		code		=	 ( code & 0x000001ff ) >>  0;
+
 
 		/* convert line number in gfx element number: */
 		/* code is the tile code of the start of this line */
-		code	= ( code % YSIZE ) * ( XSIZE / 64 );
+		code	= code * ( XSIZE / 32 );
 
-//		if (scrollx < 0) scrollx += XSIZE * 2 ;
-		scrollx %= XSIZE * 2;
-
-		if (scrollx < XSIZE)	{curr_code = code + scrollx/64;	code = 0;}
-		else					{curr_code = 0    + scrollx/64;}
-
-		for (sx = -(scrollx % 64) ; sx <= rect.max_x ; sx += 64)
+		for (sx = 0;sx < 2*XSIZE;sx += 64)
 		{
 			drawgfx(bitmap,Machine->gfx[0],
-				curr_code++,
-				color,
-				0,0,
-				sx,sy,
-				&rect,
-				TRANSPARENCY_PEN,0);
-
-			/* Maybe after the end of a line of gfx we shouldn't
-			   wrap around, but pad with a value */
-			if ((curr_code % (XSIZE/64)) == 0)	curr_code = code;
+					code++,
+					color,
+					0,0,
+					((sx-scrollx)&0x3ff)-(384-32),sy,
+					&Machine->visible_area,TRANSPARENCY_PEN,0);
 		}
 	}
 
@@ -1257,31 +1207,6 @@ void hotchase_draw_road(struct osd_bitmap *bitmap,int priority, struct rectangle
 ***************************************************************************/
 
 /* Hot Chase: shadow of trees is pen 0x0a - Should it be black like it is now */
-
-static void mark_sprites_colors(void)
-{
-	int offs;
-
-	for (offs = 0/2; offs < (NUM_SPRITES * 0x10)/2; offs += 0x10/2)
-	{
-		int dest_y, dest_h, color;
-
-		dest_y = spriteram16[offs + 0x00/2];
-		if (dest_y == 0xFFFF)	break;
-
-		dest_h = (dest_y >> 8) - (dest_y & 0x00FF);
-		if (dest_h < 1) continue;
-
-		color = (spriteram16[offs + 0x04/2] >> 8) & 0x7f;
-		memset(&palette_used_colors[color*16 + 1], PALETTE_COLOR_USED, 16 - 2 );
-
-		// pens 0 & 15 are transparent
-		palette_used_colors[color*16 + 0] = palette_used_colors[color*16 + 15] = PALETTE_COLOR_TRANSPARENT;
-	}
-}
-
-
-
 
 /*
 
@@ -1487,7 +1412,7 @@ static void browser(struct osd_bitmap *bitmap)
 	KEY(B, browse ^= 1;) \
 	if (browse) \
 	{ \
-		fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area); \
+		fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area); \
 		browser(bitmap); \
 		return; \
 	} \
@@ -1548,20 +1473,11 @@ void wecleman_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 }
 
 
-	tilemap_update(ALL_TILEMAPS);
 	get_sprite_info();
-
-	palette_init_used_colors();
-
-	wecleman_mark_road_colors();
-	mark_sprites_colors();
-
 	sprite_update();
 
-	palette_recalc();
 
-
-	fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
+	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 
 	/* Draw the road (lines which have "priority" 0x02) */
 	if (layers_ctrl & 16)	wecleman_draw_road(bitmap,0x02);
@@ -1598,7 +1514,6 @@ void wecleman_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 void hotchase_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	int i;
 	int layers_ctrl = -1;
 
 	WECLEMAN_LAMPS
@@ -1609,51 +1524,24 @@ void hotchase_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	WECLEMAN_LAYERSCTRL
 #endif
 
-	K051316_tilemap_update_0();
-	K051316_tilemap_update_1();
 	get_sprite_info();
-
-	palette_init_used_colors();
-
-	hotchase_mark_road_colors();
-	mark_sprites_colors();
 	sprite_update();
 
-	/* set transparent pens for the K051316 */
-	for (i = 0;i < 128;i++)
-	{
-		palette_used_colors[i * 16] = PALETTE_COLOR_TRANSPARENT;
-		palette_used_colors[i * 16] = PALETTE_COLOR_TRANSPARENT;
-		palette_used_colors[i * 16] = PALETTE_COLOR_TRANSPARENT;
-	}
 
-	palette_recalc();
-
-	fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
+	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 
 	/* Draw the background */
 	if (layers_ctrl & 1)
-		K051316_zoom_draw_0(bitmap,0);
+		K051316_zoom_draw_0(bitmap,0,0);
 
 	/* Draw the road */
 	if (layers_ctrl & 16)
-	{
-		struct rectangle clip = {0, 512-1, 0, 256-1};
-
-		fillbitmap(temp_bitmap2,palette_transparent_pen,0);
-		hotchase_draw_road(temp_bitmap2,0,&clip);
-
-		copyrozbitmap( bitmap, temp_bitmap2,
-				0xB0 << 16,0,			/* start coordinates */
-				0x08000,0,0,0x10000,	/* double horizontally */
-				0,						/* no wraparound */
-				&Machine->visible_area,TRANSPARENCY_PEN,palette_transparent_pen,0);
-	}
+		hotchase_draw_road(bitmap);
 
 	/* Draw the sprites */
 	if (layers_ctrl & 8)	sprite_draw(sprite_list,0);
 
 	/* Draw the foreground (text) */
 	if (layers_ctrl & 4)
-		K051316_zoom_draw_1(bitmap,0);
+		K051316_zoom_draw_1(bitmap,0,0);
 }

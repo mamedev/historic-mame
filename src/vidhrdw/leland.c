@@ -60,8 +60,6 @@ static UINT8 gfxbank;
 static UINT8 scroll_index;
 static struct scroll_position scroll_pos[VIDEO_HEIGHT];
 
-static UINT32 *ataxx_pen_usage;
-
 
 /* sound routines */
 extern UINT8 leland_dac_control;
@@ -106,42 +104,18 @@ int ataxx_vh_start(void)
 {
 	void ataxx_vh_stop(void);
 
-	const struct GfxElement *gfx = Machine->gfx[0];
-	UINT32 usage[2];
-	int i, x, y;
-
 	/* first do the standard stuff */
 	if (leland_vh_start())
 		return 1;
 
 	/* allocate memory */
 	ataxx_qram = malloc(QRAM_SIZE);
-	ataxx_pen_usage = malloc(gfx->total_elements * 2 * sizeof(UINT32));
 
 	/* error cases */
-    if (!ataxx_qram || !ataxx_pen_usage)
+    if (!ataxx_qram)
     {
     	ataxx_vh_stop();
 		return 1;
-	}
-
-	/* build up color usage */
-	for (i = 0; i < gfx->total_elements; i++)
-	{
-		UINT8 *src = gfx->gfxdata + i * gfx->char_modulo;
-
-		usage[0] = usage[1] = 0;
-		for (y = 0; y < gfx->height; y++)
-		{
-			for (x = 0; x < gfx->width; x++)
-			{
-				int color = src[x];
-				usage[color >> 5] |= 1 << (color & 31);
-			}
-			src += gfx->line_modulo;
-		}
-		ataxx_pen_usage[i * 2 + 0] = usage[0];
-		ataxx_pen_usage[i * 2 + 1] = usage[1];
 	}
 
 	/* reset QRAM */
@@ -176,10 +150,6 @@ void ataxx_vh_stop(void)
 	if (ataxx_qram)
 		free(ataxx_qram);
 	ataxx_qram = NULL;
-
-	if (ataxx_pen_usage)
-		free(ataxx_pen_usage);
-	ataxx_pen_usage = NULL;
 }
 
 
@@ -594,8 +564,6 @@ void leland_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
 	const UINT8 *background_prom = memory_region(REGION_USER1);
 	const struct GfxElement *gfx = Machine->gfx[0];
-	int total_elements = gfx->total_elements;
-	UINT8 background_usage[8];
 	int x, y, chunk;
 
 	/* update anything remaining */
@@ -604,7 +572,6 @@ void leland_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	/* loop over scrolling chunks */
 	/* it's okay to do this before the palette calc because */
 	/* these values are raw indexes, not pens */
-	memset(background_usage, 0, sizeof(background_usage));
 	for (chunk = 0; chunk <= scroll_index; chunk++)
 	{
 		int char_bank = ((scroll_pos[chunk].gfxbank >> 4) & 0x03) * 0x0400;
@@ -645,27 +612,9 @@ void leland_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 						code, 8 * color, 0, 0,
 						8 * x - xfine, 8 * y - yfine,
 						&clip, TRANSPARENCY_NONE_RAW, 0);
-
-				/* update color usage */
-				background_usage[color] |= gfx->pen_usage[code & (total_elements - 1)];
 			}
 		}
 	}
-
-	/* build the palette */
-	palette_init_used_colors();
-	for (y = 0; y < 8; y++)
-	{
-		UINT8 usage = background_usage[y];
-		for (x = 0; x < 8; x++)
-			if (usage & (1 << x))
-			{
-				int p;
-				for (p = 0; p < 16; p++)
-					palette_used_colors[p * 64 + y * 8 + x] = PALETTE_COLOR_USED;
-			}
-	}
-	palette_recalc();
 
 	/* Merge the two bitmaps together */
 	copybitmap(bitmap, fgbitmap, 0, 0, 0, 0, &Machine->visible_area, TRANSPARENCY_BLEND, 6);
@@ -682,8 +631,6 @@ void leland_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 void ataxx_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	const struct GfxElement *gfx = Machine->gfx[0];
-	int total_elements = gfx->total_elements;
-	UINT32 background_usage[2];
 	int x, y, chunk;
 
 	/* update anything remaining */
@@ -692,7 +639,6 @@ void ataxx_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	/* loop over scrolling chunks */
 	/* it's okay to do this before the palette calc because */
 	/* these values are raw indexes, not pens */
-	memset(background_usage, 0, sizeof(background_usage));
 	for (chunk = 0; chunk <= scroll_index; chunk++)
 	{
 		/* determine scrolling parameters */
@@ -724,28 +670,9 @@ void ataxx_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 						code, 0, 0, 0,
 						8 * x - xfine, 8 * y - yfine,
 						&clip, TRANSPARENCY_NONE_RAW, 0);
-
-				/* update color usage */
-				background_usage[0] |= ataxx_pen_usage[(code & (total_elements - 1)) * 2 + 0];
-				background_usage[1] |= ataxx_pen_usage[(code & (total_elements - 1)) * 2 + 1];
 			}
 		}
 	}
-
-	/* build the palette */
-	palette_init_used_colors();
-	for (y = 0; y < 2; y++)
-	{
-		UINT32 usage = background_usage[y];
-		for (x = 0; x < 32; x++)
-			if (usage & (1 << x))
-			{
-				int p;
-				for (p = 0; p < 16; p++)
-					palette_used_colors[p * 64 + y * 32 + x] = PALETTE_COLOR_USED;
-			}
-	}
-	palette_recalc();
 
 	/* Merge the two bitmaps together */
 	copybitmap(bitmap, fgbitmap, 0, 0, 0, 0, &Machine->visible_area, TRANSPARENCY_BLEND, 6);

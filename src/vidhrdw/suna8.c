@@ -434,8 +434,6 @@ void suna8_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	tilemap_set_scrollx( tilemap, 0, 0x100 * page);
 	tilemap_set_scrolly( tilemap, 0, 0);
 
-	tilemap_update(ALL_TILEMAPS);
-
 #if 1
 	sprintf(buf,	"%02X %02X %02X %02X - p%2X g%02X r%02X",
 					suna8_rombank, suna8_palettebank, suna8_spritebank, suna8_unknown,
@@ -446,10 +444,6 @@ void suna8_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 }
 #endif
 #endif
-
-	palette_init_used_colors();
-	memset(palette_used_colors, PALETTE_COLOR_USED, Machine->drv->total_colors);
-	palette_recalc();
 
 	/* see hardhead, hardhea2 test mode (press button 2 for both players) */
 	fillbitmap(bitmap,Machine->pens[0xff],&Machine->visible_area);

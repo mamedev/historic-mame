@@ -122,68 +122,6 @@ void syvalion_vh_stop(void)
   Screen refresh
 ***************************************************************************/
 
-static void mark_sprite_colors(void)
-{
-	UINT16 palette_map[32];
-
-	int size[] = { 1, 2, 4, 4 };
-	int rx, ry;
-	int offs;					/* sprite RAM offset */
-	int tile_offs;				/* sprite chain offset */
-	int i;
-
-	memset (palette_map, 0x00, sizeof (palette_map));
-
-	/* Find colors used in the sprites */
-	for (offs = 0x03f8 / 2 ; offs >= 0 ; offs -= 0x008 / 2)
-	{
-		tile_offs = (TC0080VCO_spriteram[offs + 3] & 0x1fff) << 2;
-
-		if (tile_offs)	/* Null offset => no sprite */
-		{
-			for (ry = 0 ; ry < size[ ( TC0080VCO_spriteram[ offs ] & 0x0c00 ) >> 10 ] ; ry ++)
-			{
-				for (rx = 0 ; rx < 4 ; rx ++)
-				{
-					if ((tile_offs >= 0x1000) && (tile_offs < 0x6000))
-					{
-						int tile  = TC0080VCO_chain_ram_0[tile_offs] & 0x7fff;
-						int color = TC0080VCO_chain_ram_1[tile_offs] & 0x001f;
-
-						palette_map[color] |= Machine -> gfx[0] -> pen_usage[tile];
-					}
-#ifdef MAME_DEBUG
-					else
-logerror("TC0080VCO sprite tile offset over: %04x spriteram offset: %04x\n",tile_offs,offs);
-#endif
-
-					tile_offs ++;
-				}
-			}
-		}
-	}
-
-	/* Tell the palette system about used colors */
-	for (i = 0 ; i < 32 ; i ++)
-	{
-		int j;
-
-		palette_used_colors[i * 16] = PALETTE_COLOR_USED;
-		if (palette_map[i])
-		{
-			for (j = 1 ; j < 16 ; j ++)
-			{
-				if (palette_map[i] & (1 << j))
-					palette_used_colors[i * 16 + j] = PALETTE_COLOR_USED;
-			}
-		}
-
-	}
-}
-
-/**************************************************************************/
-
-
 static void syvalion_draw_sprites(struct osd_bitmap *bitmap)
 {
 	/* Y chain size is 16/32?/64/64? pixels. X chain size
@@ -514,11 +452,7 @@ void syvalion_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	taitoh_log_vram();
 #endif
 
-	palette_init_used_colors();
-	mark_sprite_colors();
-	palette_recalc();
-
-	fillbitmap(bitmap, palette_transparent_pen, &Machine -> visible_area);
+	fillbitmap(bitmap, Machine->pens[0], &Machine -> visible_area);
 
 	TC0080VCO_tilemap_draw(bitmap,0,TILEMAP_IGNORE_TRANSPARENCY,0);
 	TC0080VCO_tilemap_draw(bitmap,1,0,0);
@@ -535,11 +469,7 @@ void recordbr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	taitoh_log_vram();
 #endif
 
-	palette_init_used_colors();
-	mark_sprite_colors();
-	palette_recalc();
-
-	fillbitmap(bitmap, palette_transparent_pen, &Machine -> visible_area);
+	fillbitmap(bitmap, Machine->pens[0], &Machine -> visible_area);
 
 #ifdef MAME_DEBUG
 	if ( !keyboard_pressed(KEYCODE_A) )
@@ -569,11 +499,7 @@ void dleague_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	taitoh_log_vram();
 #endif
 
-	palette_init_used_colors();
-	mark_sprite_colors();
-	palette_recalc();
-
-	fillbitmap(bitmap, palette_transparent_pen, &Machine -> visible_area);
+	fillbitmap(bitmap, Machine->pens[0], &Machine -> visible_area);
 
 #ifdef MAME_DEBUG
 	if ( !keyboard_pressed(KEYCODE_A) )

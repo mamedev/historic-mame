@@ -1,6 +1,6 @@
 /***************************************************************************
 
-						-= Jaleco Mega System 1 =-
+							-= Jaleco Mega System 1 =-
 
 					driver by	Luca Elia (l.elia@tin.it)
 
@@ -121,7 +121,7 @@ RAM				RW	0f0000-0f3fff	0e0000-0effff?	<
 #define SOUND_HACK 1
 
 #include "driver.h"
-#include "drivers/megasys1.h"
+#include "megasys1.h"
 #include "vidhrdw/generic.h"
 
 
@@ -566,10 +566,10 @@ static struct GfxLayout tilelayout =
 	8,8,
 	RGN_FRAC(1,1),
 	4,
-	{ 0, 1, 2, 3 },
-	{ 0*4, 1*4, 2*4, 3*4, 4*4, 5*4, 6*4, 7*4 },
-	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32 },
-	32*8
+	{ STEP4(0,1)   },
+	{ STEP8(0,4)   },
+	{ STEP8(0,4*8) },
+	8*8*4
 };
 
 static struct GfxLayout spritelayout =
@@ -577,12 +577,10 @@ static struct GfxLayout spritelayout =
 	16,16,
 	RGN_FRAC(1,1),
 	4,
-	{ 0, 1, 2, 3 },
-	{ 0*4, 1*4, 2*4, 3*4, 4*4, 5*4, 6*4, 7*4,
-		0*4+32*16, 1*4+32*16, 2*4+32*16, 3*4+32*16, 4*4+32*16, 5*4+32*16, 6*4+32*16, 7*4+32*16},
-	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32,
-		8*32, 9*32, 10*32, 11*32, 12*32, 13*32, 14*32, 15*32},
-	32*16*2
+	{ STEP4(0,1)   },
+	{ STEP8(8*8*4*0,4), STEP8(8*8*4*2,4) },
+	{ STEP16(0,4*8) },
+	16*16*4
 };
 
 static struct GfxDecodeInfo gfxdecodeinfo_Z[] =
@@ -660,7 +658,7 @@ static const struct MachineDriver machine_driver_system_##_type_ = \
 	gfxdecodeinfo_ABC, \
 	1024, 1024, \
 	megasys1_convert_prom, \
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE, \
+	VIDEO_TYPE_RASTER , \
 	0, \
 	megasys1_vh_start, \
 	0, \
@@ -708,7 +706,7 @@ static const struct MachineDriver machine_driver_jitsupro =
 	gfxdecodeinfo_ABC,
 	1024, 1024,
 	megasys1_convert_prom,
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	megasys1_vh_start,
 	0,
@@ -759,7 +757,7 @@ static const struct MachineDriver machine_driver_system_D =
 	gfxdecodeinfo_ABC,
 	1024, 1024,
 	megasys1_convert_prom,
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	megasys1_vh_start,
 	0,
@@ -827,7 +825,7 @@ static const struct MachineDriver machine_driver_system_Z =
 	gfxdecodeinfo_Z,
 	256*3, 256*3,
 	0,
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	megasys1_vh_start,
 	0,
@@ -3198,7 +3196,7 @@ INPUT_PORTS_END
 
 ***************************************************************************/
 
-static void phantasm_rom_decode(int cpu)
+void phantasm_rom_decode(int cpu)
 {
 	data16_t	*RAM	=	(data16_t *) memory_region(REGION_CPU1+cpu);
 	int i,		size	=	memory_region_length(REGION_CPU1+cpu);
@@ -3266,7 +3264,7 @@ void astyanax_rom_decode(int cpu)
 	}
 }
 
-static void rodland_rom_decode(int cpu)
+void rodland_rom_decode(int cpu)
 {
 	data16_t	*RAM	=	(data16_t *) memory_region(REGION_CPU1+cpu);
 	int i,		size	=	memory_region_length(REGION_CPU1+cpu);
@@ -3545,30 +3543,30 @@ static void init_stdragon(void)
 
 
 
-GAME( 1988, lomakai,  0,        system_Z, lomakai,  0,        ROT0,       "Jaleco", "Legend of Makai (World)" )
-GAME( 1988, makaiden, lomakai,  system_Z, lomakai,  0,        ROT0,       "Jaleco", "Makai Densetsu (Japan)" )
-GAME( 1988, p47,      0,        system_A, p47,      0,        ROT0,       "Jaleco", "P-47 - The Phantom Fighter (World)" )
-GAME( 1988, p47j,     p47,      system_A, p47,      0,        ROT0,       "Jaleco", "P-47 - The Freedom Fighter (Japan)" )
-GAME( 1988, kickoff,  0,        system_A, kickoff,  0,        ROT0,       "Jaleco", "Kick Off (Japan)" )
-GAME( 1988, tshingen, 0,        system_A, tshingen, phantasm, ROT0,       "Jaleco", "Takeda Shingen (Japan, Japanese)" )
-GAME( 1988, tshingna, tshingen, system_A, tshingen, phantasm, ROT0,       "Jaleco", "Shingen Samurai-Fighter (Japan, English)" )
-GAME( 1988, iganinju, 0,        system_A, iganinju, iganinju, ROT0,       "Jaleco", "Iga Ninjyutsuden (Japan)" )
-GAME( 1989, astyanax, 0,        system_A, astyanax, astyanax, ROT0_16BIT, "Jaleco", "The Astyanax" )
-GAME( 1989, lordofk,  astyanax, system_A, astyanax, astyanax, ROT0_16BIT, "Jaleco", "The Lord of King (Japan)" )
-GAMEX(1989, hachoo,   0,        system_A, hachoo,   hachoo,   ROT0,       "Jaleco", "Hachoo!", GAME_IMPERFECT_SOUND )
-GAME( 1989, jitsupro, 0,        jitsupro, jitsupro, jitsupro, ROT0,       "Jaleco", "Jitsuryoku!! Pro Yakyuu (Japan)" )
-GAME( 1989, plusalph, 0,        system_A, plusalph, plusalph, ROT270,     "Jaleco", "Plus Alpha" )
-GAME( 1989, stdragon, 0,        system_A, stdragon, stdragon, ROT0,       "Jaleco", "Saint Dragon" )
-GAME( 1990, rodland,  0,        system_A, rodland,  rodland,  ROT0,       "Jaleco", "Rod-Land (World)" )
-GAME( 1990, rodlandj, rodland,  system_A, rodland,  rodlandj, ROT0,       "Jaleco", "Rod-Land (Japan)" )
-GAME( 1990, rodlndjb, rodland,  system_A, rodland,  0,        ROT0,       "Jaleco", "Rod-Land (Japan bootleg)" )
-GAME( 1991, avspirit, 0,        system_B, avspirit, avspirit, ROT0,       "Jaleco", "Avenging Spirit" )
-GAME( 1990, phantasm, avspirit, system_A, avspirit, phantasm, ROT0,       "Jaleco", "Phantasm (Japan)" )
-GAME( 1991, edf,      0,        system_B, edf,      edf,      ROT0,       "Jaleco", "Earth Defense Force" )
-GAME( 1991, 64street, 0,        system_C, 64street, 64street, ROT0,       "Jaleco", "64th. Street - A Detective Story (World)" )
-GAME( 1991, 64streej, 64street, system_C, 64street, 64street, ROT0,       "Jaleco", "64th. Street - A Detective Story (Japan)" )
-GAME( 1992, soldamj,  0,        system_A, soldamj,  soldam,   ROT0,       "Jaleco", "Soldam (Japan)" )
-GAME( 1992, bigstrik, 0,        system_C, bigstrik, bigstrik, ROT0,       "Jaleco", "Big Striker" )
-GAME( 1993, chimerab, 0,        system_C, chimerab, chimerab, ROT0,       "Jaleco", "Chimera Beast" )
-GAME( 1993, cybattlr, 0,        system_C, cybattlr, cybattlr, ROT90,      "Jaleco", "Cybattler" )
-GAME( 1993, peekaboo, 0,        system_D, peekaboo, peekaboo, ROT0,       "Jaleco", "Peek-a-Boo!" )
+GAME( 1988, lomakai,  0,        system_Z, lomakai,  0,        ROT0,   "Jaleco", "Legend of Makai (World)" )
+GAME( 1988, makaiden, lomakai,  system_Z, lomakai,  0,        ROT0,   "Jaleco", "Makai Densetsu (Japan)" )
+GAME( 1988, p47,      0,        system_A, p47,      0,        ROT0,   "Jaleco", "P-47 - The Phantom Fighter (World)" )
+GAME( 1988, p47j,     p47,      system_A, p47,      0,        ROT0,   "Jaleco", "P-47 - The Freedom Fighter (Japan)" )
+GAME( 1988, kickoff,  0,        system_A, kickoff,  0,        ROT0,   "Jaleco", "Kick Off (Japan)" )
+GAME( 1988, tshingen, 0,        system_A, tshingen, phantasm, ROT0,   "Jaleco", "Takeda Shingen (Japan, Japanese)" )
+GAME( 1988, tshingna, tshingen, system_A, tshingen, phantasm, ROT0,   "Jaleco", "Shingen Samurai-Fighter (Japan, English)" )
+GAME( 1988, iganinju, 0,        system_A, iganinju, iganinju, ROT0,   "Jaleco", "Iga Ninjyutsuden (Japan)" )
+GAME( 1989, astyanax, 0,        system_A, astyanax, astyanax, ROT0,   "Jaleco", "The Astyanax" )
+GAME( 1989, lordofk,  astyanax, system_A, astyanax, astyanax, ROT0,   "Jaleco", "The Lord of King (Japan)" )
+GAMEX(1989, hachoo,   0,        system_A, hachoo,   hachoo,   ROT0,   "Jaleco", "Hachoo!", GAME_IMPERFECT_SOUND )
+GAME( 1989, jitsupro, 0,        jitsupro, jitsupro, jitsupro, ROT0,   "Jaleco", "Jitsuryoku!! Pro Yakyuu (Japan)" )
+GAME( 1989, plusalph, 0,        system_A, plusalph, plusalph, ROT270, "Jaleco", "Plus Alpha" )
+GAME( 1989, stdragon, 0,        system_A, stdragon, stdragon, ROT0,   "Jaleco", "Saint Dragon" )
+GAME( 1990, rodland,  0,        system_A, rodland,  rodland,  ROT0,   "Jaleco", "Rod-Land (World)" )
+GAME( 1990, rodlandj, rodland,  system_A, rodland,  rodlandj, ROT0,   "Jaleco", "Rod-Land (Japan)" )
+GAME( 1990, rodlndjb, rodland,  system_A, rodland,  0,        ROT0,   "Jaleco", "Rod-Land (Japan bootleg)" )
+GAME( 1991, avspirit, 0,        system_B, avspirit, avspirit, ROT0,   "Jaleco", "Avenging Spirit" )
+GAME( 1990, phantasm, avspirit, system_A, avspirit, phantasm, ROT0,   "Jaleco", "Phantasm (Japan)" )
+GAME( 1991, edf,      0,        system_B, edf,      edf,      ROT0,   "Jaleco", "Earth Defense Force" )
+GAME( 1991, 64street, 0,        system_C, 64street, 64street, ROT0,   "Jaleco", "64th. Street - A Detective Story (World)" )
+GAME( 1991, 64streej, 64street, system_C, 64street, 64street, ROT0,   "Jaleco", "64th. Street - A Detective Story (Japan)" )
+GAME( 1992, soldamj,  0,        system_A, soldamj,  soldam,   ROT0,   "Jaleco", "Soldam (Japan)" )
+GAME( 1992, bigstrik, 0,        system_C, bigstrik, bigstrik, ROT0,   "Jaleco", "Big Striker" )
+GAME( 1993, chimerab, 0,        system_C, chimerab, chimerab, ROT0,   "Jaleco", "Chimera Beast" )
+GAME( 1993, cybattlr, 0,        system_C, cybattlr, cybattlr, ROT90,  "Jaleco", "Cybattler" )
+GAME( 1993, peekaboo, 0,        system_D, peekaboo, peekaboo, ROT0,   "Jaleco", "Peek-a-Boo!" )

@@ -31,7 +31,7 @@ extern const struct IO_WritePort scobra_sound_writeport[];
 
 extern struct GfxDecodeInfo galaxian_gfxdecodeinfo[];
 
-void init_scobra(void);
+void init_scramble_ppi(void);
 void init_amidar(void);
 
 void scramble_init_machine(void);
@@ -615,10 +615,10 @@ ROM_END
 
 
 
-GAME( 1981, amidar,  0,       amidar, amidar,  amidar, ROT90, "Konami", "Amidar" )
-GAME( 1982, amidaru, amidar,  amidar, amidaru, amidar, ROT90, "Konami (Stern license)", "Amidar (Stern)" )
-GAME( 1982, amidaro, amidar,  amidar, amidaro, amidar, ROT90, "Konami (Olympia license)", "Amidar (Olympia)" )
-GAME( 1982, amigo,   amidar,  amidar, amidaru, amidar, ROT90, "bootleg", "Amigo" )
-GAME( 1981, turtles, 0,       amidar, turtles, scobra, ROT90, "[Konami] (Stern license)", "Turtles" )
-GAME( 1981, turpin,  turtles, amidar, turpin,  scobra, ROT90, "[Konami] (Sega license)", "Turpin" )
-GAME( 1981, 600,     turtles, amidar, turtles, scobra, ROT90, "Konami", "600" )
+GAME( 1981, amidar,  0,       amidar, amidar,  amidar,       ROT90, "Konami", "Amidar" )
+GAME( 1982, amidaru, amidar,  amidar, amidaru, amidar,       ROT90, "Konami (Stern license)", "Amidar (Stern)" )
+GAME( 1982, amidaro, amidar,  amidar, amidaro, amidar,       ROT90, "Konami (Olympia license)", "Amidar (Olympia)" )
+GAME( 1982, amigo,   amidar,  amidar, amidaru, amidar,       ROT90, "bootleg", "Amigo" )
+GAME( 1981, turtles, 0,       amidar, turtles, scramble_ppi, ROT90, "[Konami] (Stern license)", "Turtles" )
+GAME( 1981, turpin,  turtles, amidar, turpin,  scramble_ppi, ROT90, "[Konami] (Sega license)", "Turpin" )
+GAME( 1981, 600,     turtles, amidar, turtles, scramble_ppi, ROT90, "Konami", "600" )

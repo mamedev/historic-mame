@@ -1772,10 +1772,10 @@ static const struct MachineDriver machine_driver_leland =
 	/* video hardware */
 	40*8, 30*8, { 0*8, 40*8-1, 0*8, 30*8-1 },
 	gfxdecodeinfo,
-	1024,1024,
+	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	leland_vh_eof,
 	leland_vh_start,
 	leland_vh_stop,
@@ -1824,10 +1824,10 @@ static const struct MachineDriver machine_driver_redline =
 	/* video hardware */
 	40*8, 30*8, { 0*8, 40*8-1, 0*8, 30*8-1 },
 	gfxdecodeinfo,
-	1024,1024,
+	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	leland_vh_eof,
 	leland_vh_start,
 	leland_vh_stop,
@@ -1876,10 +1876,10 @@ static const struct MachineDriver machine_driver_quarterb =
 	/* video hardware */
 	40*8, 30*8, { 0*8, 40*8-1, 0*8, 30*8-1 },
 	gfxdecodeinfo,
-	1024,1024,
+	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	leland_vh_eof,
 	leland_vh_start,
 	leland_vh_stop,
@@ -1928,10 +1928,10 @@ static const struct MachineDriver machine_driver_lelandi =
 	/* video hardware */
 	40*8, 30*8, { 0*8, 40*8-1, 0*8, 30*8-1 },
 	gfxdecodeinfo,
-	1024,1024,
+	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	leland_vh_eof,
 	leland_vh_start,
 	leland_vh_stop,

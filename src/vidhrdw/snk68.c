@@ -217,35 +217,6 @@ static void draw_sprites(struct osd_bitmap *bitmap, int j,int pos)
 
 void pow_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
-	int offs,color,i;
-	int colmask[0x80],code,pal_base;
-
-	/* Update fix chars */
-	tilemap_update(fix_tilemap);
-
-	/* Build the dynamic palette */
-	palette_init_used_colors();
-
-	/* Tiles */
-	pal_base = Machine->drv->gfxdecodeinfo[1].color_codes_start;
-	for (color = 0;color < 128;color++) colmask[color] = 0;
-	for (offs = 0x1000;offs <0x4000;offs += 4 )
-	{
-		code = spriteram16[(offs+2)>>1]&0x3fff;
-		color= spriteram16[offs>>1]&0x7f;
-		colmask[color] |= Machine->gfx[1]->pen_usage[code];
-	}
-	for (color = 1;color < 128;color++)
-	{
-		for (i = 1;i < 16;i++)
-		{
-			if (colmask[color] & (1 << i))
-				palette_used_colors[pal_base + 16 * color + i] = PALETTE_COLOR_USED;
-		}
-	}
-
-	palette_used_colors[2047] = PALETTE_COLOR_USED;
-	palette_recalc();
 	fillbitmap(bitmap,Machine->pens[2047],&Machine->visible_area);
 
 	/* This appears to be correct priority */
@@ -327,38 +298,6 @@ static void draw_sprites2(struct osd_bitmap *bitmap, int j, int z, int pos)
 
 void searchar_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
-	int offs,color,i;
-	int colmask[0x80],code,pal_base;
-
-	/* Update fix chars */
-	tilemap_update(fix_tilemap);
-
-	/* Build the dynamic palette */
-	palette_init_used_colors();
-
-	/* Tiles */
-	pal_base = Machine->drv->gfxdecodeinfo[1].color_codes_start;
-	for (color = 0;color < 128;color++) colmask[color] = 0;
-	for (offs = 0x1000;offs <0x4000;offs += 4 )
-	{
-		code = spriteram16[(offs+2)>>1]&0x7fff;
-		color= spriteram16[offs>>1]&0x7f;
-		if (code>0x5fff) code=0;
-		if (color)
-			colmask[color] |= Machine->gfx[1]->pen_usage[code];
-	}
-	/* Palette 0 is "don't display" */
-	for (color = 1;color < 128;color++)
-	{
-		for (i = 1;i < 16;i++)
-		{
-			if (colmask[color] & (1 << i))
-				palette_used_colors[pal_base + 16 * color + i] = PALETTE_COLOR_USED;
-		}
-	}
-
-	palette_used_colors[2047] = PALETTE_COLOR_USED;
-	palette_recalc();
 	fillbitmap(bitmap,Machine->pens[2047],&Machine->visible_area);
 
 	/* This appears to be correct priority */

@@ -278,9 +278,6 @@ void vb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	vb_spprombank_w(i/15);
 */
-	if (palette_recalc())
-		memset(dirtybuffer,1, 0x800);
-
 	vb_draw_background( bitmap );
 	draw_sprites( bitmap );
 //	vb_draw_foreground( bitmap ); /* So far just hides half the game screen... */

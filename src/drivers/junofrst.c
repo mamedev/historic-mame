@@ -394,7 +394,7 @@ static const struct MachineDriver machine_driver_junofrst =
 	0,                                      /* color table length */
 	0,			/* convert color prom routine */
 
-	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER,
 	0,						/* vh_init routine */
 	generic_vh_start,					/* vh_start routine */
 	generic_vh_stop,					/* vh_stop routine */

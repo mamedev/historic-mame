@@ -76,7 +76,7 @@ extern data16_t *neogeo_ram16;
 extern unsigned int neogeo_frame_counter;
 extern int neogeo_game_fix;
 
-void NeoMVSDrawGfx(unsigned char **line,const struct GfxElement *gfx,
+void NeoMVSDrawGfx(UINT8 **line,const struct GfxElement *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
 		int zx,int zy,const struct rectangle *clip);
 
@@ -292,202 +292,6 @@ WRITE16_HANDLER( neogeo_paletteram16_w )
 
 /******************************************************************************/
 
-static const UINT8 *neogeo_palette(const struct rectangle *clip)
-{
-	int color,code,pal_base,y,my=0,count,offs,i;
-	int colmask[256];
-	unsigned int *pen_usage; /* Save some struct derefs */
-
-	int sx =0,sy =0,oy =0,zx = 1, rzy = 1;
-	int tileno,tileatr,t1,t2,t3;
-	char fullmode=0;
-	int ddax=0,dday=0,rzx=15,yskip=0;
-
-	if (Machine->scrbitmap->depth == 16 || !palette_used_colors)
-	{
-		return palette_recalc();
-	}
-
-	palette_init_used_colors();
-
-	/* character foreground */
-	pen_usage = Machine->gfx[fix_bank]->pen_usage;
-	pal_base = Machine->drv->gfxdecodeinfo[fix_bank].color_codes_start;
-	for (color = 0; color < 16; color++)
-		colmask[color] = 0;
-	for (offs = 0xe000 >> 1; offs < 0xea00 >> 1; offs++)
-	{
-		code = neogeo_vidram16[offs];
-		color = code >> 12;
-		colmask[color] |= pen_usage[code&0xfff];
-	}
-	for (color = 0; color < 16; color++)
-	{
-		for (i = 1;i < 16;i++)
-		{
-			if (colmask[color] & (1 << i))
-				palette_used_colors[pal_base + 16 * color + i] = PALETTE_COLOR_VISIBLE;
-		}
-	}
-
-	/* Tiles */
-	pen_usage= Machine->gfx[2]->pen_usage;
-	pal_base = Machine->drv->gfxdecodeinfo[2].color_codes_start;
-	for (color = 0; color < 256; color++)
-		colmask[color] = 0;
-	for (count = 0; count < 0x300 >> 1; count++)
-	{
-		t3 = neogeo_vidram16[(0x10000 >> 1) + count];
-		t1 = neogeo_vidram16[(0x10400 >> 1) + count];
-		t2 = neogeo_vidram16[(0x10800 >> 1) + count];
-
-		/* If this bit is set this new column is placed next to last one */
-		if (t1 & 0x40)
-		{
-			sx += rzx;
-			if ( sx >= 0x1F0 )
-				sx -= 0x200;
-
-			/* Get new zoom for this column */
-			zx = (t3 >> 8) & 0x0f;
-			sy = oy;
-		}
-		else	/* nope it is a new block */
-		{
-			/* Sprite scaling */
-			zx = (t3 >> 8) & 0x0f;
-			rzy = t3 & 0xff;
-
-			sx = (t2 >> 7);
-			if ( sx >= 0x1F0 )
-				sx -= 0x200;
-
-			/* Number of tiles in this strip */
-			my = t1 & 0x3f;
-			if (my == 0x20) fullmode = 1;
-			else if (my >= 0x21) fullmode = 2;	/* most games use 0x21, but */
-												/* Alpha Mission II uses 0x3f */
-			else fullmode = 0;
-
-			sy = 0x200 - (t1 >> 7);
-			if (clip->max_y - clip->min_y > 8 ||	/* kludge to improve the ssideki games */
-					clip->min_y == Machine->visible_area.min_y)
-			{
-				if (sy > 0x110) sy -= 0x200;
-				if (fullmode == 2 || (fullmode == 1 && rzy == 0xff))
-				{
-					while (sy < 0) sy += 2 * (rzy + 1);
-				}
-			}
-			oy = sy;
-
-			if (rzy < 0xff && my < 0x10 && my)
-			{
-				my = ((my*16*256)/(rzy+1)+15)/16;
-				if (my > 0x10) my = 0x10;
-			}
-			if (my > 0x20) my=0x20;
-
-			ddax=0; /* =16; NS990110 neodrift fix */		/* setup x zoom */
-		}
-
-		/* No point doing anything if tile strip is 0 */
-		if (my==0) continue;
-
-		/* Process x zoom */
-		if (zx != 15)
-		{
-			rzx = 0;
-			for (i = 0; i < 16; i++)
-			{
-				ddax -= zx+1;
-				if (ddax <= 0)
-				{
-					ddax += 15+1;
-					rzx++;
-				}
-			}
-		}
-		else rzx=16;
-
-		if (sx >= 320)
-			continue;
-
-		/* Setup y zoom */
-		if (rzy == 255)
-			yskip=16;
-		else
-			dday=0; 	/* =256; NS990105 mslug fix */
-
-		offs = count << 6;
-
-		/* my holds the number of tiles in each vertical multisprite block */
-		for (y=0; y < my ;y++)
-		{
-			tileno	= neogeo_vidram16[offs++];
-			tileatr = neogeo_vidram16[offs++];
-
-			if (high_tile && tileatr&0x10) tileno+=0x10000;
-			if (vhigh_tile && tileatr&0x20) tileno+=0x20000;
-			if (vvhigh_tile && tileatr&0x40) tileno+=0x40000;
-
-			if (tileatr&0x8) tileno=(tileno&~7)+((tileno+neogeo_frame_counter)&7);
-			else if (tileatr&0x4) tileno=(tileno&~3)+((tileno+neogeo_frame_counter)&3);
-
-			if (fullmode == 2 || (fullmode == 1 && rzy == 0xff))
-			{
-				if (sy >= 248) sy -= 2 * (rzy + 1);
-			}
-			else if (fullmode == 1)
-			{
-				if (y == 0x10) sy -= 2 * (rzy + 1);
-			}
-			else if (sy > 0x110) sy -= 0x200;	/* NS990105 mslug2 fix */
-
-			if (rzy != 255)
-			{
-				yskip = 0;
-				for (i = 0; i < 16; i++)
-				{
-					dday -= rzy+1;
-					if (dday <= 0)
-					{
-						dday += 256;
-						yskip++;
-					}
-				}
-			}
-
-			if (sy+yskip-1 >= clip->min_y && sy <= clip->max_y)
-			{
-				tileatr = tileatr >> 8;
-				tileno %= no_of_tiles;
-				if (pen_usage[tileno] == 0) /* decode tile if it hasn't been yet */
-					decodetile(tileno);
-				colmask[tileatr] |= pen_usage[tileno];
-			}
-
-			sy +=yskip;
-
-		}  /* for y */
-	}  /* for count */
-
-	for (color = 0; color < 256; color++)
-	{
-		for (i = 1;i < 16;i++)
-		{
-			if (colmask[color] & (1 << i))
-				palette_used_colors[pal_base + 16 * color + i] = PALETTE_COLOR_VISIBLE;
-		}
-	}
-
-	palette_used_colors[4095] = PALETTE_COLOR_VISIBLE;
-
-	return palette_recalc();
-}
-
-/******************************************************************************/
-
 WRITE16_HANDLER( neogeo_vidram16_offset_w )
 {
 	COMBINE_DATA(&neogeo_vidram16_offset);
@@ -531,7 +335,7 @@ WRITE16_HANDLER( neo_game_fix_16_w )
 /******************************************************************************/
 
 
-void NeoMVSDrawGfx(unsigned char **line,const struct GfxElement *gfx, /* AJP */
+void NeoMVSDrawGfx(UINT8 **line,const struct GfxElement *gfx, /* AJP */
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
 		int zx,int zy,const struct rectangle *clip)
 {
@@ -716,7 +520,7 @@ void NeoMVSDrawGfx(unsigned char **line,const struct GfxElement *gfx, /* AJP */
 	}
 }
 
-void NeoMVSDrawGfx16(unsigned char **line,const struct GfxElement *gfx, /* AJP */
+void NeoMVSDrawGfx16(UINT16 **line,const struct GfxElement *gfx, /* AJP */
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
 		int zx,int zy,const struct rectangle *clip)
 {
@@ -776,7 +580,7 @@ void NeoMVSDrawGfx16(unsigned char **line,const struct GfxElement *gfx, /* AJP *
 			{
 				for (y = sy;y <= ey;y++)
 				{
-					bm	= ((unsigned short *)line[y])+sx;
+					bm	= line[y]+sx;
 
 					fspr+=l_y_skip[l]*dy;
 
@@ -807,7 +611,7 @@ void NeoMVSDrawGfx16(unsigned char **line,const struct GfxElement *gfx, /* AJP *
 			{
 				for (y = sy;y <= ey;y++)
 				{
-					bm	= ((unsigned short *)line[y])+sx;
+					bm	= line[y]+sx;
 					fspr+=l_y_skip[l]*dy;
 
 					mydword = fspr[1];
@@ -841,7 +645,7 @@ void NeoMVSDrawGfx16(unsigned char **line,const struct GfxElement *gfx, /* AJP *
 			{
 				for (y = sy ;y <= ey;y++)
 				{
-					bm	= ((unsigned short *)line[y]) + sx;
+					bm	= line[y] + sx;
 					fspr+=l_y_skip[l]*dy;
 
 					mydword = fspr[0];
@@ -871,7 +675,7 @@ void NeoMVSDrawGfx16(unsigned char **line,const struct GfxElement *gfx, /* AJP *
 			{
 				for (y = sy ;y <= ey;y++)
 				{
-					bm	= ((unsigned short *)line[y]) + sx;
+					bm	= line[y] + sx;
 					fspr+=l_y_skip[l]*dy;
 
 					mydword = fspr[0];
@@ -912,10 +716,11 @@ static void screenrefresh(struct osd_bitmap *bitmap,const struct rectangle *clip
 	int tileno,tileatr,t1,t2,t3;
 	char fullmode=0;
 	int ddax=0,dday=0,rzx=15,yskip=0;
-	unsigned char **line=bitmap->line;
+	void **line=bitmap->line;
 	unsigned int *pen_usage;
 	struct GfxElement *gfx=Machine->gfx[2]; /* Save constant struct dereference */
 
+profiler_mark(PROFILER_VIDEO);
 	#ifdef NEO_DEBUG
 	char buf[80];
 
@@ -949,10 +754,6 @@ static void screenrefresh(struct osd_bitmap *bitmap,const struct rectangle *clip
 
 	/* Palette swap occured after last frame but before this one */
 	if (palette_swap_pending) swap_palettes();
-
-	/* Do compressed palette stuff */
-	neogeo_palette(clip);
-	/* no need to check the return code since we redraw everything each frame */
 
 	fillbitmap(bitmap,Machine->pens[4095],clip);
 
@@ -1093,7 +894,7 @@ if (!dotiles) { 					/* debug */
 			if (sy+15 >= clip->min_y && sy <= clip->max_y)
 			{
 				if (Machine->scrbitmap->depth != 8)
-					NeoMVSDrawGfx16(line,
+					NeoMVSDrawGfx16((UINT16 **)line,
 						gfx,
 						tileno,
 						tileatr >> 8,
@@ -1102,7 +903,7 @@ if (!dotiles) { 					/* debug */
 						clip
 					);
 				else
-					NeoMVSDrawGfx(line,
+					NeoMVSDrawGfx((UINT8 **)line,
 						gfx,
 						tileno,
 						tileatr >> 8,
@@ -1164,7 +965,7 @@ if (!dotiles) { 					/* debug */
 				if (tileatr&0x8) tileno=(tileno&~7)+((tileno+neogeo_frame_counter)&7);
 				else if (tileatr&0x4) tileno=(tileno&~3)+((tileno+neogeo_frame_counter)&3);
 
-				NeoMVSDrawGfx(line,
+				NeoMVSDrawGfx((UINT8 **)line,
 					Machine->gfx[2],
 					tileno,
 					tileatr >> 8,
@@ -1239,6 +1040,7 @@ for (i = 0;i < 8 >> 1; i+++)
 }
 #endif
 
+profiler_mark(PROFILER_END);
 }
 
 void neogeo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)

@@ -57,29 +57,29 @@ UINT8 sidetrac_palette[] =
 /* Targ has different colors */
 UINT8 targ_palette[] =
 {
-					/* color   use                            */
-	0x00,0x00,0xff, /* blue    background             */
+					/* color   use                */
+	0x00,0x00,0xff, /* blue    background         */
 	0x00,0xff,0xff, /* cyan    characters 192-255 */
 	0xff,0xff,0x00, /* yellow  characters 128-191 */
 	0xff,0xff,0xff, /* white   characters  64-127 */
 	0xff,0x00,0x00, /* red     characters   0- 63 */
-	0x00,0xff,0xff, /* cyan    not used               */
-	0xff,0xff,0xff, /* white   bullet sprite          */
-	0x00,0xff,0x00, /* green   wummel sprite          */
+	0x00,0xff,0xff, /* cyan    not used           */
+	0xff,0xff,0xff, /* white   bullet sprite      */
+	0x00,0xff,0x00, /* green   wummel sprite      */
 };
 
 /* Spectar has different colors */
 UINT8 spectar_palette[] =
 {
-					/* color   use                            */
-	0x00,0x00,0xff, /* blue    background             */
+					/* color   use                */
+	0x00,0x00,0xff, /* blue    background         */
 	0x00,0xff,0x00, /* green   characters 192-255 */
 	0x00,0xff,0x00, /* green   characters 128-191 */
 	0xff,0xff,0xff, /* white   characters  64-127 */
 	0xff,0x00,0x00, /* red     characters   0- 63 */
-	0x00,0xff,0x00, /* green   not used               */
-	0xff,0xff,0x00, /* yellow  bullet sprite          */
-	0x00,0xff,0x00, /* green   wummel sprite          */
+	0x00,0xff,0x00, /* green   not used           */
+	0xff,0xff,0x00, /* yellow  bullet sprite      */
+	0x00,0xff,0x00, /* green   wummel sprite      */
 };
 
 
@@ -137,7 +137,7 @@ UINT16 exidy_2bpp_colortable[] =
 
 void exidy_vh_init_palette(UINT8 *palette, UINT16 *colortable, const UINT8 *color_prom)
 {
-	if (!(Machine->drv->video_attributes & VIDEO_MODIFIES_PALETTE))
+	if (exidy_palette)
 		memcpy(palette, exidy_palette, 3 * PALETTE_LEN);
 	memcpy(colortable, exidy_colortable, COLORTABLE_LEN * sizeof(colortable[0]));
 }
@@ -424,10 +424,6 @@ void exidy_vh_eof(void)
 void exidy_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
 	int sx, sy;
-
-	/* recalc the palette */
-	if (palette_recalc())
-		memset(dirtybuffer, 1, videoram_size);
 
 	/* update the background and draw it */
 	update_background();

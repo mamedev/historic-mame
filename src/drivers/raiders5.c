@@ -280,7 +280,7 @@ static const struct MachineDriver machine_driver_raiders5 =
 	512+256,512+256,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	generic_vh_start,
 	generic_vh_stop,
@@ -310,7 +310,6 @@ ROM_START( raiders5 )
 	ROM_LOAD( "raiders3.11f", 0x0000,  0x4000, 0x30041d58 )
 	ROM_LOAD( "raiders4.11g", 0x4000,  0x4000, 0xe441931c )
 	ROM_LOAD( "raiders5.11n", 0x8000,  0x4000, 0xc0895090 )
-
 ROM_END
 
 ROM_START( raidrs5t )
@@ -325,8 +324,8 @@ ROM_START( raidrs5t )
 	ROM_LOAD( "raiders3.11f", 0x0000,  0x4000, 0x30041d58 )
 	ROM_LOAD( "raiders4.11g", 0x4000,  0x4000, 0xe441931c )
 	ROM_LOAD( "raiders5.11n", 0x8000,  0x4000, 0xc0895090 )
-
 ROM_END
 
-GAME( 1985, raiders5, 0,        raiders5, raiders5, 0, ROT0_16BIT, "UPL", "Raiders5" )
-GAME( 1985, raidrs5t, raiders5, raiders5, raiders5, 0, ROT0_16BIT, "UPL (Taito license)", "Raiders5 (Japan)" )
+
+GAME( 1985, raiders5, 0,        raiders5, raiders5, 0, ROT0, "UPL", "Raiders5" )
+GAME( 1985, raidrs5t, raiders5, raiders5, raiders5, 0, ROT0, "UPL (Taito license)", "Raiders5 (Japan)" )

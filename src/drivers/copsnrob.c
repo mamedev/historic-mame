@@ -225,7 +225,7 @@ static const struct MachineDriver machine_driver_copsnrob =
 	2+32768, 2,
 	init_palette,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	copsnrob_vh_start,
 	0,

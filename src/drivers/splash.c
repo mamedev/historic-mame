@@ -252,10 +252,10 @@ static const struct MachineDriver machine_driver_splash =
 	/* video hardware */
 	64*8, 64*8, { 2*8, 49*8-1, 2*8, 32*8-1 },
 	gfxdecodeinfo,
-	2048, 2048,
+	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	splash_vh_start,
 	0,
@@ -298,4 +298,4 @@ ROM_START( splash )
 ROM_END
 
 
-GAME( 1992, splash,   0, splash,   splash,   0, ROT0_16BIT, "Gaelco", "Splash!" )
+GAME( 1992, splash, 0, splash, splash, 0, ROT0, "Gaelco", "Splash!" )

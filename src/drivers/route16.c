@@ -277,7 +277,7 @@ static const struct MachineDriver machine_driver_##GAMENAME =		\
 	8, 0,													\
 	route16_vh_convert_color_prom,							\
 															\
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY | VIDEO_MODIFIES_PALETTE, \
+	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY , \
 	0,														\
 	route16_vh_start,										\
 	route16_vh_stop,										\
@@ -380,25 +380,6 @@ ROM_START( stratvox )
 	ROM_LOAD( "pr10",         0x0100, 0x0100, 0x08793ef7 ) /* bottom bitmap */
 ROM_END
 
-ROM_START( stratvxb )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
-	ROM_LOAD( "ls01.bin",     0x0000, 0x0800, 0xbf4d582e )
-	ROM_LOAD( "ls02.bin",     0x0800, 0x0800, 0x16739dd4 )
-	ROM_LOAD( "ls03.bin",     0x1000, 0x0800, 0x083c28de )
-	ROM_LOAD( "ls04.bin",     0x1800, 0x0800, 0xb0927e3b )
-	ROM_LOAD( "ls05.bin",     0x2000, 0x0800, 0xccd25c4e )
-	ROM_LOAD( "a5-1",         0x2800, 0x0800, 0x70c4ef8e )
-
-	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for the second CPU */
-	ROM_LOAD( "ls07.bin",     0x0000, 0x0800, 0x4d333985 )
-	ROM_LOAD( "ls08.bin",     0x0800, 0x0800, 0x35b753fc )
-
-	ROM_REGION( 0x0200, REGION_PROMS, 0 )
-	/* The upper 128 bytes are 0's, used by the hardware to blank the display */
-	ROM_LOAD( "pr09",         0x0000, 0x0100, 0x08793ef7 ) /* top bitmap */
-	ROM_LOAD( "pr10",         0x0100, 0x0100, 0x08793ef7 ) /* bottom bitmap */
-ROM_END
-
 ROM_START( speakres )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
 	ROM_LOAD( "speakres.1",   0x0000, 0x0800, 0x6026e4ea )
@@ -422,6 +403,5 @@ ROM_END
 
 GAME( 1981, route16,  0,        route16,  route16,  route16,  ROT270, "Tehkan/Sun (Centuri license)", "Route 16" )
 GAME( 1981, route16b, route16,  route16,  route16,  route16b, ROT270, "bootleg", "Route 16 (bootleg)" )
-GAME( 1980, stratvox, 0,        stratvox, stratvox, stratvox, ROT270, "Taito", "Stratovox" )
-GAME( 1980, stratvxb, stratvox, stratvox, stratvox, stratvox, ROT270, "bootleg", "Stratovox (bootleg)" )
-GAME( 19??, speakres, stratvox, stratvox, stratvox, stratvox, ROT270, "<unknown>", "Speak & Rescue" )
+GAME( 1980, speakres, 0,        stratvox, stratvox, stratvox, ROT270, "Sun Electronics", "Speak & Rescue" )
+GAME( 1980, stratvox, speakres, stratvox, stratvox, stratvox, ROT270, "[Sun Electronics] (Taito license)", "Stratovox" )

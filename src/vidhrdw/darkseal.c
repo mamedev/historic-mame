@@ -95,8 +95,7 @@ static data16_t darkseal_control_0[8];
 static data16_t darkseal_control_1[8];
 
 static struct tilemap *pf1_tilemap,*pf2_tilemap,*pf3_tilemap;
-static data16_t *gfx_base;
-static int gfx_bank,flipscreen;
+static int flipscreen;
 
 /***************************************************************************/
 
@@ -107,7 +106,7 @@ static UINT32 darkseal_scan(UINT32 col,UINT32 row,UINT32 num_cols,UINT32 num_row
 	return (col & 0x1f) + ((row & 0x1f) << 5) + ((col & 0x20) << 5) + ((row & 0x20) << 6);
 }
 
-static void get_bg_tile_info(int tile_index)
+INLINE void get_bg_tile_info(int tile_index,int gfx_bank,data16_t *gfx_base)
 {
 	int tile,color;
 
@@ -121,6 +120,9 @@ static void get_bg_tile_info(int tile_index)
 			color,
 			0)
 }
+
+static void get_bg_tile_info2(int tile_index) { get_bg_tile_info(tile_index,1,darkseal_pf2_data); }
+static void get_bg_tile_info3(int tile_index) { get_bg_tile_info(tile_index,2,darkseal_pf3_data); }
 
 static void get_fg_tile_info(int tile_index)
 {
@@ -161,53 +163,6 @@ WRITE16_HANDLER( darkseal_palette_24bit_b_w )
 }
 
 /******************************************************************************/
-
-static void darkseal_mark_sprite_colours(void)
-{
-	int offs,color,i,pal_base,colmask[32];
-
-	palette_init_used_colors();
-
-	pal_base = Machine->drv->gfxdecodeinfo[3].color_codes_start;
-	for (color = 0;color < 32;color++) colmask[color] = 0;
-	for (offs = 0;offs < 0x400;offs += 4)
-	{
-		int x,y,sprite,multi;
-
-		sprite = buffered_spriteram16[offs+1] & 0x1fff;
-		if (!sprite) continue;
-
-		y = buffered_spriteram16[offs];
-		x = buffered_spriteram16[offs+2];
-		color = (x >> 9) &0x1f;
-
-		x = x & 0x01ff;
-		if (x >= 256) x -= 512;
-		x = 240 - x;
-		if (x>256) continue; /* Speedup */
-
-		multi = (1 << ((y & 0x0600) >> 9)) - 1;	/* 1x, 2x, 4x, 8x height */
-
-		sprite &= ~multi;
-
-		while (multi >= 0)
-		{
-			colmask[color] |= Machine->gfx[3]->pen_usage[sprite + multi];
-			multi--;
-		}
-	}
-
-	for (color = 0;color < 32;color++)
-	{
-		for (i = 1;i < 16;i++)
-		{
-			if (colmask[color] & (1 << i))
-				palette_used_colors[pal_base + 16 * color + i] = PALETTE_COLOR_USED;
-		}
-	}
-
-	palette_recalc();
-}
 
 static void darkseal_drawsprites(struct osd_bitmap *bitmap)
 {
@@ -319,9 +274,9 @@ WRITE16_HANDLER( darkseal_control_1_w )
 
 int darkseal_vh_start(void)
 {
-	pf1_tilemap = tilemap_create(get_fg_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8,64,64);
-	pf2_tilemap = tilemap_create(get_bg_tile_info,darkseal_scan,    TILEMAP_TRANSPARENT,16,16,64,64);
-	pf3_tilemap = tilemap_create(get_bg_tile_info,darkseal_scan,    TILEMAP_OPAQUE,     16,16,64,64);
+	pf1_tilemap = tilemap_create(get_fg_tile_info, tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8,64,64);
+	pf2_tilemap = tilemap_create(get_bg_tile_info2,darkseal_scan,    TILEMAP_TRANSPARENT,16,16,64,64);
+	pf3_tilemap = tilemap_create(get_bg_tile_info3,darkseal_scan,    TILEMAP_OPAQUE,     16,16,64,64);
 
 	if (!pf1_tilemap || !pf2_tilemap || !pf3_tilemap)
 		return 1;
@@ -357,15 +312,6 @@ void darkseal_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		tilemap_set_scrollx( pf3_tilemap,0, darkseal_control_0[3] );
 	}
 	tilemap_set_scrolly( pf3_tilemap,0, darkseal_control_0[4] );
-
-	gfx_bank=1;
-	gfx_base=darkseal_pf2_data;
-	tilemap_update(pf2_tilemap);
-	gfx_bank=2;
-	gfx_base=darkseal_pf3_data;
-	tilemap_update(pf3_tilemap);
-	tilemap_update(pf1_tilemap);
-	darkseal_mark_sprite_colours();
 
 	tilemap_draw(bitmap,pf3_tilemap,0,0);
 	tilemap_draw(bitmap,pf2_tilemap,0,0);

@@ -527,7 +527,7 @@ static const struct MachineDriver machine_driver_stfight =
 	256+1, 16*4+16*16+16*16+16*16,
 	stfight_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 
 	stfight_vh_start,

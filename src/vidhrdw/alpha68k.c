@@ -141,38 +141,12 @@ static void draw_sprites(struct osd_bitmap *bitmap, int j, int pos)
 void alpha68k_II_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
 	static int last_bank=0;
-	int offs,color,i;
-	int colmask[0x80],code,pal_base;
 
 	if (last_bank!=bank_base)
 		tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
 	last_bank=bank_base;
 	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
-	tilemap_update(fix_tilemap);
 
-	/* Build the dynamic palette */
-	palette_init_used_colors();
-	pal_base = Machine->drv->gfxdecodeinfo[1].color_codes_start;
-	for (color = 0;color < 128;color++) colmask[color] = 0;
-	for (offs = 0x800;offs <0x2000;offs += 2 )
-	{
-		color= spriteram16[offs] & 0x7f;
-		if (!color) continue;
-		code = spriteram16[offs+1] &0x3fff;
-		colmask[color] |= Machine->gfx[1]->pen_usage[code];
-	}
-
-	for (color = 1;color < 128;color++)
-	{
-		for (i = 1;i < 16;i++)
-		{
-			if (colmask[color] & (1 << i))
-				palette_used_colors[pal_base + 16 * color + i] = PALETTE_COLOR_USED;
-		}
-	}
-
-	palette_used_colors[2047] = PALETTE_COLOR_USED;
-	palette_recalc();
 	fillbitmap(bitmap,Machine->pens[2047],&Machine->visible_area);
 
 	draw_sprites(bitmap,1,0x000);
@@ -308,38 +282,12 @@ static void draw_sprites_V(struct osd_bitmap *bitmap, int j, int s, int e, int f
 void alpha68k_V_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
 	static int last_bank=0;
-	int offs,color,i;
-	int colmask[256],code,pal_base;
 
 	if (last_bank!=bank_base)
 		tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
 	last_bank=bank_base;
 	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
-	tilemap_update(fix_tilemap);
 
-	/* Build the dynamic palette */
-	palette_init_used_colors();
-	pal_base = Machine->drv->gfxdecodeinfo[1].color_codes_start;
-	for (color = 0;color < 256;color++) colmask[color] = 0;
-	for (offs = 0x0800;offs <0x2000;offs += 2 )
-	{
-		color= spriteram16[offs]&0xff;
-		if (!color) continue;
-		code = spriteram16[offs+1]&0x7fff;
-		colmask[color] |= Machine->gfx[1]->pen_usage[code];
-	}
-
-	for (color = 1;color < 256;color++)
-	{
-		for (i = 1;i < 16;i++)
-		{
-			if (colmask[color] & (1 << i))
-				palette_used_colors[pal_base + 16 * color + i] = PALETTE_COLOR_USED;
-		}
-	}
-
-	palette_used_colors[4095] = PALETTE_COLOR_USED;
-	palette_recalc();
 	fillbitmap(bitmap,Machine->pens[4095],&Machine->visible_area);
 
 	/* This appears to be correct priority */
@@ -364,41 +312,12 @@ void alpha68k_V_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 void alpha68k_V_sb_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
 	static int last_bank=0;
-	int offs,color,i;
-	int colmask[256],code,pal_base;
 
 	if (last_bank!=bank_base)
  		tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
 	last_bank=bank_base;
 	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
 
-	tilemap_update(fix_tilemap);
-
-	/* Build the dynamic palette */
-	palette_init_used_colors();
-
-	/* Tiles */
-	pal_base = Machine->drv->gfxdecodeinfo[1].color_codes_start;
-	for (color = 0;color < 256;color++) colmask[color] = 0;
-	for (offs = 0x0800;offs <0x2000;offs += 2 )
-	{
-		color= spriteram16[offs]&0xff;
-		if (!color) continue;
-		code = spriteram16[offs+1]&0x7fff;
-		colmask[color] |= Machine->gfx[1]->pen_usage[code];
-	}
-
-	for (color = 1;color < 256;color++)
-	{
-		for (i = 1;i < 16;i++)
-		{
-			if (colmask[color] & (1 << i))
-				palette_used_colors[pal_base + 16 * color + i] = PALETTE_COLOR_USED;
-		}
-	}
-
-	palette_used_colors[4095] = PALETTE_COLOR_USED;
-	palette_recalc();
 	fillbitmap(bitmap,Machine->pens[4095],&Machine->visible_area);
 
 	/* This appears to be correct priority */
@@ -646,6 +565,5 @@ sstingry_draw_sprites(bitmap,2,0x0800);
 sstingry_draw_sprites(bitmap,3,0x0c00);
 sstingry_draw_sprites(bitmap,1,0x0400);
 
-	tilemap_update(ALL_TILEMAPS);
 	tilemap_draw(bitmap,fix_tilemap,0,0);
 }

@@ -440,10 +440,10 @@ static const struct MachineDriver machine_driver_overdriv =
 	/* video hardware */
 	64*8, 32*8, { 13*8, (64-13)*8-1, 0*8, 32*8-1 },
 	gfxdecodeinfo,	/* gfx decoded by konamiic.c */
-	2048, 2048,
+	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER  | VIDEO_HAS_SHADOWS,
 	0,
 	overdriv_vh_start,
 	overdriv_vh_stop,
@@ -520,4 +520,4 @@ static void init_overdriv(void)
 
 
 
-GAMEX( 1990, overdriv, 0, overdriv, overdriv, overdriv, ROT90_16BIT, "Konami", "Over Drive", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1990, overdriv, 0, overdriv, overdriv, overdriv, ROT90, "Konami", "Over Drive", GAME_IMPERFECT_GRAPHICS )

@@ -225,10 +225,6 @@ static void draw_sprites( struct osd_bitmap *bitmap )
 
 void kncljoe_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	tilemap_update(ALL_TILEMAPS);
-
-	palette_recalc();
-
 	tilemap_draw(bitmap,bg_tilemap,0,0);
 	draw_sprites(bitmap);
 }

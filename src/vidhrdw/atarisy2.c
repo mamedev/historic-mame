@@ -6,6 +6,7 @@
 
 #include "driver.h"
 #include "machine/atarigen.h"
+#include "slapstic.h"
 
 
 
@@ -145,16 +146,6 @@ int atarisys2_vh_start(void)
 		ATARIPF_LOOKUP_SET_CODE(pflookup[i], code);
 	}
 
-	/* initialize the (fixed) palette usage table */
-	if (palette_used_colors)
-	{
-		memset(palette_used_colors, PALETTE_COLOR_USED, Machine->drv->total_colors * sizeof(UINT8));
-		for (i = 0; i < 4; i++)
-			palette_used_colors[15 + i * 16] = PALETTE_COLOR_TRANSPARENT;
-		for (i = 0; i < 8; i++)
-			palette_used_colors[64 + i * 4] = PALETTE_COLOR_TRANSPARENT;
-	}
-
 	/* reset the statics */
 	bankbits = 0;
 	videobank = 0;
@@ -268,11 +259,12 @@ WRITE16_HANDLER( atarisys2_paletteram_w )
 
 READ16_HANDLER( atarisys2_slapstic_r )
 {
+	int result = atarisys2_slapstic[offset];
 	slapstic_tweak(offset);
 
 	/* an extra tweak for the next opcode fetch */
 	videobank = slapstic_tweak(0x1234) * 0x1000;
-	return atarisys2_slapstic[offset];
+	return result;
 }
 
 
@@ -384,10 +376,6 @@ static int overrender_callback(struct ataripf_overrender_data *data, int state)
 
 void atarisys2_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
-	/* recalc the palette if necessary */
-	if (palette_recalc())
-		ataripf_invalidate(0);
-
 	/* draw the layers */
 	ataripf_render(0, bitmap);
 	atarimo_render(0, bitmap, overrender_callback, NULL);

@@ -255,7 +255,6 @@ void perfrman_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		tilemap_set_scrollx( pf1_tilemap ,0 , -16 );
 	}
 
-	tilemap_update(pf1_tilemap);
 	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 
 	perfrman_draw_sprites(bitmap,0);
@@ -286,7 +285,6 @@ void slapfight_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		tilemap_set_scrolly( fix_tilemap,0, -1 ); /* Glitch in Tiger Heli otherwise */
 	}
 
-	tilemap_update(ALL_TILEMAPS);
 	tilemap_draw(bitmap,pf1_tilemap,0,0);
 
 	/* Draw the sprites */

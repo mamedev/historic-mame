@@ -592,7 +592,7 @@ static const struct MachineDriver machine_driver_senjyo =
 	402, 402,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	senjyo_vh_start,
 	senjyo_vh_stop,

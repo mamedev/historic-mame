@@ -30,14 +30,13 @@
  *************************************/
 
 WRITE16_HANDLER( toobin_paletteram_w );
+WRITE16_HANDLER( toobin_intensity_w );
 WRITE16_HANDLER( toobin_hscroll_w );
 WRITE16_HANDLER( toobin_vscroll_w );
 
 int toobin_vh_start(void);
 void toobin_vh_stop(void);
 void toobin_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
-
-extern data16_t *toobin_intensity;
 
 
 
@@ -147,7 +146,7 @@ static MEMORY_WRITE16_START( main_writemem )
 	{ 0xc10000, 0xc107ff, toobin_paletteram_w, &paletteram16 },
 	{ 0xff8000, 0xff8001, watchdog_reset16_w },
 	{ 0xff8100, 0xff8101, atarigen_sound_w },
-	{ 0xff8300, 0xff8301, MWA16_RAM, &toobin_intensity },
+	{ 0xff8300, 0xff8301, toobin_intensity_w },
 	{ 0xff8340, 0xff8341, interrupt_scan_w, &interrupt_scan },
 	{ 0xff8380, 0xff8381, atarimo_0_slipram_w, &atarimo_0_slipram },
 	{ 0xff83c0, 0xff83c1, atarigen_scanline_int_ack_w },
@@ -274,10 +273,10 @@ static const struct MachineDriver machine_driver_toobin =
 	/* video hardware */
 	64*8, 48*8, { 0*8, 64*8-1, 0*8, 48*8-1 },
 	gfxdecodeinfo,
-	1024,1024,
+	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
 	toobin_vh_start,
 	toobin_vh_stop,

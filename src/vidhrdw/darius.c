@@ -105,34 +105,6 @@ WRITE16_HANDLER( darius_fg_layer_w )
 
 /***************************************************************************/
 
-void darius_update_palette(void)
-{
-	int offs,color,i;
-	UINT16 tile_modulo = Machine->gfx[0]->total_elements;
-	UINT16 colmask[256];
-
-	memset(colmask, 0, sizeof(colmask));
-
-	for (offs = spriteram_size/2-4; offs >= 0; offs -= 4)
-	{
-		int code = spriteram16[offs+2] &0x1fff;
-
-		if (code)
-		{
-		  color = (spriteram16[offs+3] & 0x7f);
-		  colmask[color] |= Machine->gfx[0]->pen_usage[code % tile_modulo];
-		}
-	}
-
-	for (color = 0;color < 256;color++)
-	{
-		for (i = 0; i < 16; i++)
-			if (colmask[color] & (1 << i))
-				palette_used_colors[color * 16 + i] = PALETTE_COLOR_USED;
-	}
-}
-
-
 void darius_draw_sprites(struct osd_bitmap *bitmap,int *primasks, int y_offs)
 {
 	int offs,curx,cury;
@@ -219,18 +191,12 @@ void darius_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	/* top layer is in fixed position */
 	tilemap_set_scrollx(fg_tilemap,0,0);
 	tilemap_set_scrolly(fg_tilemap,0,-8);
-	tilemap_update(fg_tilemap);
-
-	palette_init_used_colors();
-	darius_update_palette();
-	palette_used_colors[0] |= PALETTE_COLOR_VISIBLE;
-	palette_recalc();
 
 	layer[0] = 0;
 	layer[1] = 1;
 
 	fillbitmap(priority_bitmap,0,NULL);
-	fillbitmap(bitmap, palette_transparent_pen, &Machine -> visible_area);
+	fillbitmap(bitmap, Machine->pens[0], &Machine -> visible_area);
 
  	PC080SN_tilemap_draw(bitmap,0,layer[0],TILEMAP_IGNORE_TRANSPARENCY,1);
 	PC080SN_tilemap_draw(bitmap,0,layer[1],0,2);

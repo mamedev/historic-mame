@@ -1,23 +1,28 @@
 /***************************************************************************
 
-				Cisco Heat & F1 GrandPrix Star, Scud Hammer
-						(c) 1990 & 1991, 1994 Jaleco
+							-= Jaleco Driving Games =-
 
-
-				    driver by Luca Elia (l.elia@tin.it)
+					driver by	Luca Elia (l.elia@tin.it)
 
 - Note: press F2 to enter service mode -
 
-----------------------------------------------------------------------
-Hardware		Main 	Sub#1	Sub#2	Sound	Sound Chips
-----------------------------------------------------------------------
-[Cisco Heat]	68000	68000	68000	68000	YM2151 2xM6295
+---------------------------------------------------------------------------
+Year + Game		Hardware:	Main 	Sub#1	Sub#2	Sound	Sound Chips
+---------------------------------------------------------------------------
+[89	Big Run]				68000	68000	68000	68000	YM2151 2xM6295
+
+	BOARD #1	BR8950c
+	BOARD #2	8951
+	BOARD #3	8952A
+	BOARD #4	8953
+
+[90	Cisco Heat]				68000	68000	68000	68000	YM2151 2xM6295
 
 	BOARD #1 CH-9072 EB90001-20024
 	BOARD #2 CH-9071 EB90001-20023
 	BOARD #3 CH-9073 EB90001-20025
 
-[F1 GP Star]	68000	68000	68000	68000	YM2151 2xM6295
+[91	F1 GP Star]				68000	68000	68000	68000	YM2151 2xM6295
 
 	TB - Top board     (audio & I/O)       GP-9190A EB90015-20039-1
 	MB - Middle board  (GFX)               GP-9189  EB90015-20038
@@ -25,7 +30,7 @@ Hardware		Main 	Sub#1	Sub#2	Sound	Sound Chips
 
 	Chips:
 
-		GS90015-02 (100 pin PQFP)	x 3		- Tilemaps
+		GS90015-02 (100 pin PQFP)	x 3		[Tilemaps]
 		GS-9000406 (80 pin PQFP)	x 3
 
 		GS900151   (44 pin PQFP) (too small for the full part No.)
@@ -38,18 +43,18 @@ Hardware		Main 	Sub#1	Sub#2	Sound	Sound Chips
 		GS90015-12 (80 pin PQFP)  + 2x MCM2018AN45 (2kx8 SRAM)
 		GS90015-11 (100 pin PQFP)
 
-		CS90015-04 x 2 (64 pin PQFP)		- Road
+		CS90015-04 x 2 (64 pin PQFP)		[Road]
 		GS90015-05 x 2 (100 pin PQFP)
 
-[Scud Hammer]	68000	-		-		-		2xM6295
+[94	Scud Hammer]			68000	-		-		-		2xM6295
 
 	Board CF-92128B Chips:
 		GS9001501
-		GS90015-02 x 2	GS600406   x 2		- Tilemaps
+		GS90015-02 x 2	GS600406   x 2		[Tilemaps]
 		GS90015-03
 
 	Board GP-9189 Chips:
-		GS90015-03 x 2						- Sprites
+		GS90015-03 x 2						[Sprites]
 		GS90015-06 x 2
 		GS90015-07
 		GS90015-08
@@ -57,8 +62,7 @@ Hardware		Main 	Sub#1	Sub#2	Sound	Sound Chips
 		GS90015-10
 		GS90015-11
 		MR90015-35 x 2
-----------------------------------------------------------------------
-
+---------------------------------------------------------------------------
 
 ----------------------------------------------------------------------------------
 Main CPU					[Cisco Heat]		[F1 GP Star]		[Scud Hammer]
@@ -82,7 +86,6 @@ Palette RAM			RW		0b8000-0bffff		<					<
 	Palette Scroll 2		0bec00-0befff0		0bee00-0befff		0bce00-0bcfff
 ----------------------------------------------------------------------------------
 
-
 ----------------------------------------------------------------
 Sub CPU's					[Cisco Heat]		[F1 GP Star]
 ----------------------------------------------------------------
@@ -93,7 +96,6 @@ Shared RAM			RW		040000-047fff		080000-087fff
 Road RAM			RW		080000-0807ff		100000-1007ff
 Whatchdog					100000-100001		200000-200001
 ----------------------------------------------------------------
-
 
 ----------------------------------------------------------------
 Sound CPU					[Cisco Heat]		[F1 GP Star]
@@ -113,95 +115,80 @@ M6295 #2 Status		R		0c0001-0c0001		<
 M6295 #2 Data		 W		0c0000-0c0003		<
 ----------------------------------------------------------------
 
+Cheats:
 
----------------------------------------------------------------------------
-								  Game code
-								[ Cisco Heat ]
----------------------------------------------------------------------------
+[cischeat]
+-	f011a.w		*** stage - 1 ***
+-	f0190.l		*** score / 10 (BCD) ***
+-	f0280.w		*** time * 10 (seconds) ***
+-	f61Xa.w		car X data
 
-f011a.w		*** stage - 1 ***
-f0190.l		*** score / 10 (BCD) ***
-f0280.w		*** time * 10 (seconds) ***
+[f1gpstar]
+-	Note: This game has some leftover code from Cisco Heat, it seems.
+-	f9088.w		*** lap - 1 ***
+-	fa008.w		($fa000 + $08) *** time (seconds) ***
+-	fa2aa.l		($fa200 + $aa) speed << 16
 
-f61Xa.w		car X data
+Common Issues:
 
----------------------------------------------------------------------------
-								  Game code
-							[ F1 GrandPrix Star ]
----------------------------------------------------------------------------
-
-Note: This game has some leftover code from Cisco Heat, it seems.
-
-f9088.w		*** lap - 1 ***
-fa008.w		($fa000 + $08) *** time (seconds) ***
-fa2aa.l		($fa200 + $aa) speed << 16
-
-
----------------------------------------------------------------------------
-							   Common Issues
----------------------------------------------------------------------------
-
-- Some ROMs aren't used. I don't see big problems though.
-
+- Some ROMs aren't used (priorities?)
 - Screen control register (priorities, layers enabling etc.) - Where is it?
-
-- In cischeat, at the start of some levels, you can see the empty scrolling
-  layers as they are filled. In f1gpstar, I'm unsure whether they are
-  correct in a few places: in the attract mode where the cars move
-  horizontally, for example, the wheels don't follow for this reason, I
-  think
-
+- In cischeat & bigrun, at the start of some levels, you can see the empty
+  scrolling layers as they are filled. In f1gpstar, I'm unsure whether they
+  are correct in a few places (e.g. in the attract mode, where cars move
+  horizontally, the wheels don't follow for this reason, I think
 - Sound communication not quite right: see Test Mode
 
----------------------------------------------------------------------------
-								   To Do
----------------------------------------------------------------------------
+To Do:
 
-- Use the Sprite Manager (when SPRITE_TYPE_UNPACK and SPRITE_TYPE_ZOOM
-  will be usable together) for better looking rendering, better priority
-  support and shadow sprites
-
+- Priorities!
 - Use the Tilemap Manager for the road layers (when this kind of layers
   will be supported) for perfomance and better priority support.
   A line based zooming is additionally needed for f1gpstar.
-
 - Force feedback :)
 
 ***************************************************************************/
 
 #include "driver.h"
-#include "drivers/megasys1.h"
+#include "megasys1.h"
 
 /* Variables only used here: */
+
 static data16_t *rom_1, *rom_2, *rom_3;
 static data16_t *sharedram1, *sharedram2;
 
-/* Variables that vidhrdw has access to: */
-
 /* Variables defined in vidhrdw: */
+
 extern data16_t *cischeat_roadram[2];
 
 /* Functions defined in vidhrdw: */
+
+READ16_HANDLER( bigrun_vregs_r );
 READ16_HANDLER( cischeat_vregs_r );
 READ16_HANDLER( f1gpstar_vregs_r );
 
+WRITE16_HANDLER( bigrun_vregs_w );
 WRITE16_HANDLER( cischeat_vregs_w );
 WRITE16_HANDLER( f1gpstar_vregs_w );
 WRITE16_HANDLER( scudhamm_vregs_w );
 
+int bigrun_vh_start(void);
 int cischeat_vh_start(void);
 int f1gpstar_vh_start(void);
 
+void bigrun_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void cischeat_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void f1gpstar_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void scudhamm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
-/*
-**
-**				CPU # 1 (Main)
-**
-*/
+/**************************************************************************
+
+
+						Memory Maps - Main CPU (#1)
+
+
+**************************************************************************/
 
 READ16_HANDLER( sharedram1_r )  {return sharedram1[offset];}
 READ16_HANDLER( sharedram2_r )  {return sharedram2[offset];}
@@ -215,9 +202,71 @@ static READ16_HANDLER( rom_3_r ) {return rom_3[offset];}
 
 
 /**************************************************************************
-								[ Cisco Heat ]
+								Big Run
 **************************************************************************/
 
+WRITE16_HANDLER( bigrun_paletteram16_w )
+{
+	data16_t word = COMBINE_DATA(&paletteram16[offset]);
+	int r = ((word >> 8) & 0xF0 ) | ((word << 0) & 0x08);
+	int g = ((word >> 4) & 0xF0 ) | ((word << 1) & 0x08);
+	int b = ((word >> 0) & 0xF0 ) | ((word << 2) & 0x08);
+
+	// Scroll 0
+	if ( (offset >= 0x0e00/2) && (offset <= 0x0fff/2) ) { palette_change_color(0x000 + offset - 0x0e00/2, r,g,b ); return;}
+	// Scroll 1
+	if ( (offset >= 0x1600/2) && (offset <= 0x17ff/2) ) { palette_change_color(0x100 + offset - 0x1600/2, r,g,b ); return;}
+	// Road 0
+	if ( (offset >= 0x1800/2) && (offset <= 0x1fff/2) ) { palette_change_color(0x200 + offset - 0x1800/2, r,g,b ); return;}
+	// Road 1
+	if ( (offset >= 0x2000/2) && (offset <= 0x27ff/2) ) { palette_change_color(0x600 + offset - 0x2000/2, r,g,b ); return;}
+	// Sprites
+	if ( (offset >= 0x2800/2) && (offset <= 0x2fff/2) ) { palette_change_color(0xa00 + offset - 0x2800/2, r,g,b ); return;}
+	// Scroll 2
+	if ( (offset >= 0x3600/2) && (offset <= 0x37ff/2) ) { palette_change_color(0xe00 + offset - 0x3600/2, r,g,b ); return;}
+}
+
+static MEMORY_READ16_START( bigrun_readmem )
+	{ 0x000000, 0x07ffff, MRA16_ROM			},	// ROM
+	{ 0x100000, 0x13ffff, rom_1_r			},	// ROM
+	{ 0x0f0000, 0x0fffff, MRA16_RAM			},	// RAM
+	{ 0x080000, 0x083fff, bigrun_vregs_r	},	// Vregs
+	{ 0x084000, 0x087fff, MRA16_RAM			},	// Linking with other units
+
+	/* this is the right order of sharedram's */
+	{ 0x088000, 0x08bfff, sharedram2_r		},	// Sharedram with sub CPU#2
+	{ 0x08c000, 0x08ffff, sharedram1_r		},	// Sharedram with sub CPU#1
+
+	{ 0x090000, 0x093fff, MRA16_RAM			},	// Scroll ram 0
+	{ 0x094000, 0x097fff, MRA16_RAM			},	// Scroll ram 1
+	{ 0x098000, 0x09bfff, MRA16_RAM			},	// Scroll ram 2
+
+	{ 0x09c000, 0x09ffff, MRA16_RAM			},	// Palettes
+MEMORY_END
+
+static MEMORY_WRITE16_START( bigrun_writemem )
+	{ 0x000000, 0x07ffff, MWA16_ROM							},	// ROM
+	{ 0x100000, 0x13ffff, MWA16_ROM							},	// ROM
+	{ 0x0f0000, 0x0fffff, MWA16_RAM, &megasys1_ram			},	// RAM
+	{ 0x080000, 0x083fff, bigrun_vregs_w, &megasys1_vregs	},	// Vregs
+	{ 0x084000, 0x087fff, MWA16_RAM							},	// Linking with other units
+
+	{ 0x088000, 0x08bfff, sharedram2_w, &sharedram2			},	// Sharedram with sub CPU#2
+	{ 0x08c000, 0x08ffff, sharedram1_w, &sharedram1			},	// Sharedram with sub CPU#1
+
+	/* Only writes to the first 0x40000 bytes affect the tilemaps:             */
+	/* either these games support larger tilemaps or have more ram than needed */
+	{ 0x090000, 0x093fff, megasys1_scrollram_0_w, &megasys1_scrollram_0	},	// Scroll ram 0
+	{ 0x094000, 0x097fff, megasys1_scrollram_1_w, &megasys1_scrollram_1	},	// Scroll ram 1
+	{ 0x098000, 0x09bfff, megasys1_scrollram_2_w, &megasys1_scrollram_2	},	// Scroll ram 2
+
+	{ 0x09c000, 0x09ffff, bigrun_paletteram16_w, &paletteram16	},	// Palettes
+MEMORY_END
+
+
+/**************************************************************************
+								Cisco Heat
+**************************************************************************/
 
 /*	CISCO HEAT
 	[  Test  ]		[  Real  ]
@@ -248,8 +297,6 @@ WRITE16_HANDLER( cischeat_paletteram16_w )
 	// Sprites
 	if ( (offset >= 0x5000/2) && (offset <= 0x5fff/2) ) { palette_change_color(0xe00 + offset - 0x5000/2, r,g,b ); return;}
 }
-
-
 
 static MEMORY_READ16_START( cischeat_readmem )
 	{ 0x000000, 0x07ffff, MRA16_ROM			},	// ROM
@@ -294,13 +341,9 @@ static MEMORY_WRITE16_START( cischeat_writemem )
 MEMORY_END
 
 
-
-
-
 /**************************************************************************
-							[ F1 GrandPrix Star ]
+							F1 GrandPrix Star
 **************************************************************************/
-
 
 WRITE16_HANDLER( f1gpstar_paletteram16_w )
 {
@@ -368,11 +411,8 @@ static MEMORY_WRITE16_START( f1gpstar_writemem )
 MEMORY_END
 
 
-
-
-
 /**************************************************************************
-								[ Scud Hammer ]
+							Scud Hammer
 **************************************************************************/
 
 WRITE16_HANDLER( scudhamm_paletteram16_w )
@@ -390,7 +430,6 @@ WRITE16_HANDLER( scudhamm_paletteram16_w )
 	// Sprites
 	if ( (offset >= 0x3000/2) && (offset <= 0x3fff/2) ) { palette_change_color(0x200 + offset - 0x3000/2, r,g,b ); return;}
 }
-
 
 
 data16_t scudhamm_motor_command;
@@ -476,7 +515,6 @@ WRITE16_HANDLER( scudhamm_oki_bank_w )
 	}
 }
 
-
 static MEMORY_READ16_START( readmem_scudhamm )
 	{ 0x000000, 0x07ffff, MRA16_ROM					},	// ROM
 	{ 0x0f0000, 0x0fffff, MRA16_RAM					},	// Work RAM + Spriteram
@@ -510,16 +548,49 @@ static MEMORY_WRITE16_START( writemem_scudhamm )
 MEMORY_END
 
 
+/**************************************************************************
 
 
-/*
-**
-**				CPU # 2 (Road)
-**
-*/
+					Memory Maps - Road CPUs (#2 & #3)
+
+
+**************************************************************************/
 
 /**************************************************************************
-								[ Cisco Heat ]
+								Big Run
+**************************************************************************/
+
+static MEMORY_READ16_START( bigrun_readmem2 )
+	{ 0x000000, 0x03ffff, MRA16_ROM		},	// ROM
+	{ 0x0c0000, 0x0c3fff, MRA16_RAM		},	// RAM
+	{ 0x040000, 0x047fff, sharedram1_r	},	// Shared RAM (with Main CPU)
+	{ 0x080000, 0x0807ff, MRA16_RAM		},	// Road RAM
+MEMORY_END
+static MEMORY_WRITE16_START( bigrun_writemem2 )
+	{ 0x000000, 0x03ffff, MWA16_ROM							},	// ROM
+	{ 0x0c0000, 0x0c3fff, MWA16_RAM							},	// RAM
+	/* 800 bytes tested: */
+	{ 0x040000, 0x047fff, sharedram1_w						},	// Shared RAM (with Main CPU)
+	{ 0x080000, 0x0807ff, MWA16_RAM, &cischeat_roadram[0]	},	// Road RAM
+MEMORY_END
+
+
+static MEMORY_READ16_START( bigrun_readmem3 )
+	{ 0x000000, 0x03ffff, MRA16_ROM		},	// ROM
+	{ 0x0c0000, 0x0c3fff, MRA16_RAM		},	// RAM
+	{ 0x040000, 0x047fff, sharedram2_r	},	// Shared RAM (with Main CPU)
+	{ 0x080000, 0x0807ff, MRA16_RAM		},	// Road RAM
+MEMORY_END
+static MEMORY_WRITE16_START( bigrun_writemem3 )
+	{ 0x000000, 0x03ffff, MWA16_ROM							},	// ROM
+	{ 0x0c0000, 0x0c3fff, MWA16_RAM							},	// RAM
+	{ 0x040000, 0x047fff, sharedram2_w						},	// Shared RAM (with Main CPU)
+	{ 0x080000, 0x0807ff, MWA16_RAM, &cischeat_roadram[1]	},	// Road RAM
+MEMORY_END
+
+
+/**************************************************************************
+								Cisco Heat
 **************************************************************************/
 
 static MEMORY_READ16_START( cischeat_readmem2 )
@@ -537,38 +608,6 @@ static MEMORY_WRITE16_START( cischeat_writemem2 )
 	{ 0x080000, 0x0807ff, MWA16_RAM, &cischeat_roadram[0]	},	// Road RAM
 	{ 0x100000, 0x100001, MWA16_NOP							},	// watchdog
 MEMORY_END
-
-
-
-
-/**************************************************************************
-							[ F1 GrandPrix Star ]
-**************************************************************************/
-
-static MEMORY_READ16_START( f1gpstar_readmem2 )
-	{ 0x000000, 0x03ffff, MRA16_ROM		},	// ROM
-	{ 0x180000, 0x183fff, MRA16_RAM		},	// RAM
-	{ 0x080000, 0x0807ff, sharedram1_r	},	// Shared RAM (with Main CPU)
-	{ 0x100000, 0x1007ff, MRA16_RAM		},	// Road RAM
-MEMORY_END
-static MEMORY_WRITE16_START( f1gpstar_writemem2 )
-	{ 0x000000, 0x03ffff, MWA16_ROM							},	// ROM
-	{ 0x180000, 0x183fff, MWA16_RAM							},	// RAM
-	{ 0x080000, 0x0807ff, sharedram1_w						},	// Shared RAM (with Main CPU)
-	{ 0x100000, 0x1007ff, MWA16_RAM, &cischeat_roadram[0]	},	// Road RAM
-	{ 0x200000, 0x200001, MWA16_NOP							},	// watchdog
-MEMORY_END
-
-
-/*
-**
-**				CPU # 3 (Road)
-**
-*/
-
-/**************************************************************************
-								[ Cisco Heat ]
-**************************************************************************/
 
 static MEMORY_READ16_START( cischeat_readmem3 )
 	{ 0x000000, 0x03ffff, MRA16_ROM		},	// ROM
@@ -588,11 +627,23 @@ MEMORY_END
 
 
 
-
-
 /**************************************************************************
-							[ F1 GrandPrix Star ]
+							F1 GrandPrix Star
 **************************************************************************/
+
+static MEMORY_READ16_START( f1gpstar_readmem2 )
+	{ 0x000000, 0x03ffff, MRA16_ROM		},	// ROM
+	{ 0x180000, 0x183fff, MRA16_RAM		},	// RAM
+	{ 0x080000, 0x0807ff, sharedram1_r	},	// Shared RAM (with Main CPU)
+	{ 0x100000, 0x1007ff, MRA16_RAM		},	// Road RAM
+MEMORY_END
+static MEMORY_WRITE16_START( f1gpstar_writemem2 )
+	{ 0x000000, 0x03ffff, MWA16_ROM							},	// ROM
+	{ 0x180000, 0x183fff, MWA16_RAM							},	// RAM
+	{ 0x080000, 0x0807ff, sharedram1_w						},	// Shared RAM (with Main CPU)
+	{ 0x100000, 0x1007ff, MWA16_RAM, &cischeat_roadram[0]	},	// Road RAM
+	{ 0x200000, 0x200001, MWA16_NOP							},	// watchdog
+MEMORY_END
 
 static MEMORY_READ16_START( f1gpstar_readmem3 )
 	{ 0x000000, 0x03ffff, MRA16_ROM		},	// ROM
@@ -609,28 +660,63 @@ static MEMORY_WRITE16_START( f1gpstar_writemem3 )
 MEMORY_END
 
 
+/**************************************************************************
 
-/*
-**
-**				CPU # 4 (Sound)
-**
-*/
 
-/* Both Games: music tempo driven by the YM2151 timers (status reg polled) */
+						Memory Maps - Sound CPU (#4)
+
+
+**************************************************************************/
+
+/* Music tempo driven by the YM2151 timers (status reg polled) */
 
 
 /**************************************************************************
-								[ Cisco Heat ]
+								Big Run
 **************************************************************************/
 
-#define SOUNDBANK_W(_n_) \
-WRITE16_HANDLER( cischeat_soundbank_##_n_##_w ) \
-{ \
-	if (ACCESSING_LSB)	OKIM6295_set_bank_base(_n_, 0x40000 * (data & 1) ); \
+WRITE16_HANDLER( bigrun_soundbank_w )
+{
+	if (ACCESSING_LSB)
+	{
+		OKIM6295_set_bank_base(0, 0x40000 * ((data >> 0) & 1) );
+		OKIM6295_set_bank_base(1, 0x40000 * ((data >> 4) & 1) );
+	}
 }
 
-SOUNDBANK_W(0)
-SOUNDBANK_W(1)
+static MEMORY_READ16_START( bigrun_sound_readmem )
+	{ 0x000000, 0x03ffff, MRA16_ROM						},	// ROM
+	{ 0x0f0000, 0x0fffff, MRA16_RAM						},	// RAM
+	{ 0x040000, 0x040001, soundlatch_word_r				},	// From Main CPU
+	{ 0x080002, 0x080003, YM2151_status_port_0_lsb_r	},
+	{ 0x0a0000, 0x0a0001, OKIM6295_status_0_lsb_r		},
+	{ 0x0c0000, 0x0c0001, OKIM6295_status_1_lsb_r		},
+MEMORY_END
+
+static MEMORY_WRITE16_START( bigrun_sound_writemem )
+	{ 0x000000, 0x03ffff, MWA16_ROM						},	// ROM
+	{ 0x0f0000, 0x0fffff, MWA16_RAM						},	// RAM
+	{ 0x040000, 0x040001, bigrun_soundbank_w			},	// Sample Banking
+	{ 0x060000, 0x060001, soundlatch2_word_w			},	// To Main CPU
+	{ 0x080000, 0x080001, YM2151_register_port_0_lsb_w	},
+	{ 0x080002, 0x080003, YM2151_data_port_0_lsb_w		},
+	{ 0x0a0000, 0x0a0003, OKIM6295_data_0_lsb_w			},
+	{ 0x0c0000, 0x0c0003, OKIM6295_data_1_lsb_w			},
+MEMORY_END
+
+
+/**************************************************************************
+								Cisco Heat
+**************************************************************************/
+
+WRITE16_HANDLER( cischeat_soundbank_0_w )
+{
+	if (ACCESSING_LSB)	OKIM6295_set_bank_base(0, 0x40000 * (data & 1) );
+}
+WRITE16_HANDLER( cischeat_soundbank_1_w )
+{
+	if (ACCESSING_LSB)	OKIM6295_set_bank_base(1, 0x40000 * (data & 1) );
+}
 
 static MEMORY_READ16_START( cischeat_sound_readmem )
 	{ 0x000000, 0x03ffff, MRA16_ROM						},	// ROM
@@ -640,6 +726,7 @@ static MEMORY_READ16_START( cischeat_sound_readmem )
 	{ 0x0a0000, 0x0a0001, OKIM6295_status_0_lsb_r		},
 	{ 0x0c0000, 0x0c0001, OKIM6295_status_1_lsb_r		},
 MEMORY_END
+
 static MEMORY_WRITE16_START( cischeat_sound_writemem )
 	{ 0x000000, 0x03ffff, MWA16_ROM						},	// ROM
 	{ 0x0f0000, 0x0fffff, MWA16_RAM						},	// RAM
@@ -653,11 +740,8 @@ static MEMORY_WRITE16_START( cischeat_sound_writemem )
 MEMORY_END
 
 
-
-
-
 /**************************************************************************
-							[ F1 GrandPrix Star ]
+							F1 GrandPrix Star
 **************************************************************************/
 
 static MEMORY_READ16_START( f1gpstar_sound_readmem )
@@ -668,6 +752,7 @@ static MEMORY_READ16_START( f1gpstar_sound_readmem )
 	{ 0x0a0000, 0x0a0001, OKIM6295_status_0_lsb_r		},
 	{ 0x0c0000, 0x0c0001, OKIM6295_status_1_lsb_r		},
 MEMORY_END
+
 static MEMORY_WRITE16_START( f1gpstar_sound_writemem )
 	{ 0x000000, 0x03ffff, MWA16_ROM						},	// ROM
 	{ 0x0e0000, 0x0fffff, MWA16_RAM						},	// RAM				(cischeat: f0000-fffff)
@@ -682,17 +767,13 @@ MEMORY_END
 
 
 
-
-
-
 /***************************************************************************
+
 
 								Input Ports
 
-***************************************************************************/
 
-#define DRIVING_WHEEL \
-	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_X | IPF_CENTER, 30, 30, 0, 0xff)
+***************************************************************************/
 
 /* Fake input port to read the status of five buttons: used to
    implement the shift using 2 buttons, and the accelerator in
@@ -703,22 +784,19 @@ MEMORY_END
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON2 ) \
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON3 ) \
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON4 ) \
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON5 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON5 )
 
 /**************************************************************************
-								[ Cisco Heat ]
+								Big Run
 **************************************************************************/
-
 
 //	Input Ports:	[0] Fake: Buttons Status
 //					[1] Coins		[2] Controls	[3] Unknown
 //					[4]	DSW 1 & 2	[5] DSW 3		[6] Driving Wheel
 
-INPUT_PORTS_START( cischeat )
-
+INPUT_PORTS_START( bigrun )
 	PORT_START	// IN0 - Fake input port - Buttons status
 	BUTTONS_STATUS
-
 
 	PORT_START	// IN1 - Coins - $80000.w
 	PORT_BIT(  0x01, IP_ACTIVE_LOW, IPT_COIN1    )
@@ -730,6 +808,126 @@ INPUT_PORTS_START( cischeat )
 	PORT_BIT(  0x40, IP_ACTIVE_LOW, IPT_UNKNOWN  )
 	PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_UNKNOWN  )
 
+	PORT_START	// IN2 - Controls - $80002.w
+	PORT_BIT(  0x01, IP_ACTIVE_LOW, IPT_BUTTON2 )	// Brake
+//	PORT_BIT(  0x02, IP_ACTIVE_LOW, IPT_BUTTON4 )	// Shift - We handle it using buttons 3&4
+	PORT_BIT(  0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_BUTTON5 )	// Horn
+
+	PORT_START	// IN3 - Motor Control? - $80004.w
+	PORT_DIPNAME( 0x01, 0x01, "Up Limit SW"  	)	// Limit the Cockpit movements?
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On )  )
+	PORT_DIPNAME( 0x02, 0x02, "Down Limit SW"	)
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On )  )
+	PORT_BIT(  0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+//	PORT_DIPNAME( 0x10, 0x10, "Right Limit SW"	)
+//	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+//	PORT_DIPSETTING(    0x00, DEF_STR( On )  )
+//	PORT_DIPNAME( 0x20, 0x20, "Left Limit SW"	)
+//	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+//	PORT_DIPSETTING(    0x00, DEF_STR( On )  )
+	PORT_BIT(  0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	// IN4 - DSW 2 & 3 - $80006.w
+	// DSW 3
+	PORT_DIPNAME( 0x0003, 0x0003, "Unknown 3-0&1*" )
+	PORT_DIPSETTING(      0x0003, "3" )
+	PORT_DIPSETTING(      0x0002, "2" )
+	PORT_DIPSETTING(      0x0001, "1" )
+	PORT_DIPSETTING(      0x0000, "0" )
+	PORT_DIPNAME( 0x0004, 0x0004, "Allow Continue" )
+	PORT_DIPSETTING(      0x0004, DEF_STR( No )  )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x0008, 0x0008, "Unknown 3-3" )
+	PORT_DIPSETTING(      0x0008, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On )  )
+	PORT_DIPNAME( 0x0010, 0x0010, "Move Cabinet" )
+	PORT_DIPSETTING(      0x0000, DEF_STR( No )  )
+	PORT_DIPSETTING(      0x0010, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x0060, 0x0060, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(      0x0000, "Easy" )
+	PORT_DIPSETTING(      0x0060, "Normal" )
+	PORT_DIPSETTING(      0x0020, "Hard" )
+	PORT_DIPSETTING(      0x0040, "Hardest" )
+	PORT_DIPNAME( 0x0080, 0x0080, "Automatic Game Start" )
+	PORT_DIPSETTING(      0x0000, DEF_STR( No ) )
+	PORT_DIPSETTING(      0x0080, "After 15 Seconds" )
+
+	// DSW 2
+	PORT_DIPNAME( 0x0100, 0x0100, DEF_STR( Free_Play ) )
+	PORT_DIPSETTING(      0x0100, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On )  )
+	PORT_DIPNAME( 0x0200, 0x0200, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0200, DEF_STR( On )  )
+	PORT_DIPNAME( 0x1c00, 0x1c00, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(      0x1000, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(      0x0800, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x1800, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x1c00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x0c00, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x1400, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x0400, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Free_Play ) )
+	PORT_DIPNAME( 0xe000, 0xe000, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(      0x8000, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(      0x4000, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0xc000, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0xe000, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x6000, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0xa000, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x2000, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Free_Play ) )
+
+	PORT_START	// IN5 - DSW 3 (4 bits, Cabinet Linking) - $82200.w
+	PORT_BIT(  0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_DIPNAME( 0x06, 0x00, "Unit ID"             )
+	PORT_DIPSETTING(    0x00, "1 (Blue-White Car)"  )
+	PORT_DIPSETTING(    0x02, "2 (Green-White Car)" )
+	PORT_DIPSETTING(    0x04, "3 (Red-White Car)"   )
+	PORT_DIPSETTING(    0x06, "4 (Yellow Car)"      )
+	PORT_BIT(  0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	// IN6 - Driving Wheel - $80010.w(0)
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_X | IPF_CENTER, 30, 30, 0, 0xff)
+INPUT_PORTS_END
+
+
+/**************************************************************************
+								Cisco Heat
+**************************************************************************/
+
+//	Input Ports:	[0] Fake: Buttons Status
+//					[1] Coins		[2] Controls	[3] Unknown
+//					[4]	DSW 1 & 2	[5] DSW 3		[6] Driving Wheel
+
+INPUT_PORTS_START( cischeat )
+	PORT_START	// IN0 - Fake input port - Buttons status
+	BUTTONS_STATUS
+
+	PORT_START	// IN1 - Coins - $80000.w
+	PORT_BIT(  0x01, IP_ACTIVE_LOW, IPT_COIN1    )
+	PORT_BIT(  0x02, IP_ACTIVE_LOW, IPT_COIN2    )
+	PORT_BIT(  0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BITX( 0x08, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE ) 	// called "Test"
+	PORT_BIT(  0x10, IP_ACTIVE_LOW, IPT_START1   )
+	PORT_BIT(  0x20, IP_ACTIVE_LOW, IPT_START2   )
+	PORT_BIT(  0x40, IP_ACTIVE_LOW, IPT_UNKNOWN  )
+	PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_UNKNOWN  )
 
 	PORT_START	// IN2 - Controls - $80002.w
 	PORT_BIT(  0x01, IP_ACTIVE_LOW, IPT_BUTTON2 )	// Brake
@@ -740,7 +938,6 @@ INPUT_PORTS_START( cischeat )
 	PORT_BIT(  0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT(  0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_BUTTON5 )	// Horn
-
 
 	PORT_START	// IN3 - Motor Control? - $80004.w
 	PORT_DIPNAME( 0x01, 0x01, "Up Limit SW"  	)	// Limit the Cockpit movements?
@@ -759,7 +956,6 @@ INPUT_PORTS_START( cischeat )
 	PORT_DIPSETTING(    0x00, DEF_STR( On )  )
 	PORT_BIT(  0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
-
 
 	PORT_START	// IN4 - DSW 1 & 2 - $80006.w -> !f000a.w(hi byte) !f0008.w(low byte)
 	COINAGE_6BITS_2
@@ -793,7 +989,6 @@ INPUT_PORTS_START( cischeat )
 	PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On )  )
 
-
 	PORT_START	// IN5 - DSW 3 (4 bits, Cabinet Linking) - $82200.w
 	PORT_BIT(  0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_DIPNAME( 0x06, 0x06, "Unit ID (2)" )	// -> f0020 (like DSW2 !!)
@@ -808,18 +1003,12 @@ INPUT_PORTS_START( cischeat )
 	PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START	// IN6 - Driving Wheel - $80010.w(0)
-	DRIVING_WHEEL
-
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_X | IPF_CENTER, 30, 30, 0, 0xff)
 INPUT_PORTS_END
 
 
-
-
-
-
-
 /**************************************************************************
-							[ F1 GrandPrix Star ]
+								F1 GrandPrix Star
 **************************************************************************/
 
 //	Input Ports:	[0] Fake: Buttons Status
@@ -828,8 +1017,6 @@ INPUT_PORTS_END
 //					[6]	Coinage JP&USA	[7] Coinage UK&FR
 
 INPUT_PORTS_START( f1gpstar )
-
-
 	PORT_START	// IN0 - Fake input port - Buttons status
 	BUTTONS_STATUS
 
@@ -872,7 +1059,6 @@ INPUT_PORTS_START( f1gpstar )
 	PORT_DIPSETTING(      0x8000, "High?" )
 	PORT_DIPSETTING(      0x0000, "Low?"  )
 
-
 	PORT_START	// IN2 - Controls - $80004.w -> !f9016
 	PORT_BIT(  0x0001, IP_ACTIVE_LOW, IPT_COIN1    )
 	PORT_BIT(  0x0002, IP_ACTIVE_LOW, IPT_COIN2    )
@@ -882,7 +1068,6 @@ INPUT_PORTS_START( f1gpstar )
 //	PORT_BIT(  0x0020, IP_ACTIVE_LOW, IPT_BUTTON4  ) // Shift -> !f900e - We handle it with 2 buttons
 	PORT_BIT(  0x0040, IP_ACTIVE_LOW, IPT_BUTTON2  ) // Brake -> !f9010
 	PORT_BIT(  0x0080, IP_ACTIVE_LOW, IPT_START2   ) // "Race Together"
-
 
 	PORT_START	// IN3 - ? Read at boot only - $80006.w
 	PORT_BIT(  0x0001, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -923,10 +1108,9 @@ INPUT_PORTS_START( f1gpstar )
 	PORT_BIT(  0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-
 				// 		 Accelerator   - $80010.b ->  !f9004.w
 	PORT_START	// IN5 - Driving Wheel - $80011.b ->  !f9008.w
-	DRIVING_WHEEL
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_X | IPF_CENTER, 30, 30, 0, 0xff)
 
 	PORT_START	// IN6 - Coinage Japan & USA (it changes with Country)
 	PORT_DIPNAME( 0x0007, 0x0007, "Coin A (JP US)" )
@@ -966,18 +1150,14 @@ INPUT_PORTS_START( f1gpstar )
 	PORT_DIPSETTING(      0x0030, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(      0x0028, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING(      0x0020, DEF_STR( 1C_4C ) )
-
 INPUT_PORTS_END
 
 
-
-
 /**************************************************************************
-								[ Scud Hammer ]
+								Scud Hammer
 **************************************************************************/
 
 INPUT_PORTS_START( scudhamm )
-
 	PORT_START	// IN0 - Buttons
 	PORT_BIT_IMPULSE( 0x0001, IP_ACTIVE_LOW, IPT_COIN1, 1 )
 	PORT_BIT(  0x0002, IP_ACTIVE_LOW, IPT_UNKNOWN  ) // GAME OVER if pressed on the selection screen
@@ -1048,149 +1228,125 @@ INPUT_PORTS_START( scudhamm )
 	PORT_DIPNAME( 0x8000, 0x8000, "Unknown 2-7" )
 	PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-
 INPUT_PORTS_END
 
 
 
+/**************************************************************************
 
-/*
-**
-** 			Gfx data
-**
-*/
 
-/* 8x8x4 layout - straightforward arrangement */
-#define MEGASYS1_LAYOUT_8x8(_name_,_romsize_)\
-static struct GfxLayout _name_ =\
-{\
-	8,8,\
-	(_romsize_)*8/(8*8*4),\
-	4,\
-	{0, 1, 2, 3},\
-	{0*4,1*4,2*4,3*4,4*4,5*4,6*4,7*4},\
-	{0*32,1*32,2*32,3*32,4*32,5*32,6*32,7*32},\
-	8*8*4\
+								Gfx Layouts
+
+
+**************************************************************************/
+
+/* 8x8x4, straightforward layout */
+static struct GfxLayout tiles_8x8 =
+{
+	8,8,
+	RGN_FRAC(1,1),
+	4,
+	{ STEP4(0,1) },
+	{ STEP8(0,4) },
+	{ STEP8(0,4*8) },
+	8*8*4
 };
 
-
-/* 16x16x4 layout - straightforward arrangement */
-#define MEGASYS1_LAYOUT_16x16(_name_,_romsize_) \
-static struct GfxLayout _name_ =\
-{\
-	16,16,\
-	(_romsize_)*8/(16*16*4),\
-	4,\
-	{0, 1, 2, 3},\
-	{0*4,1*4,2*4,3*4,4*4,5*4,6*4,7*4, \
-	 8*4,9*4,10*4,11*4,12*4,13*4,14*4,15*4}, \
-	{0*64,1*64,2*64,3*64,4*64,5*64,6*64,7*64,\
-	 8*64,9*64,10*64,11*64,12*64,13*64,14*64,15*64},\
-	16*16*4\
+/* 16x16x4, straightforward layout */
+static struct GfxLayout tiles_16x16 =
+{
+	16,16,
+	RGN_FRAC(1,1),
+	4,
+	{ STEP4(0,1) },
+	{ STEP16(0,4) },
+	{ STEP16(0,4*16) },
+	16*16*4
 };
 
-
-/* 16x16x4 layout - formed by four 8x8x4 tiles  */
-#define MEGASYS1_LAYOUT_16x16_QUAD(_name_,_romsize_)\
-static struct GfxLayout _name_ =\
-{\
-	16,16,\
-	(_romsize_)*8/(16*16*4),\
-	4,\
-	{0, 1, 2, 3},\
-	{0*4,1*4,2*4,3*4,4*4,5*4,6*4,7*4,\
-	 0*4+32*16,1*4+32*16,2*4+32*16,3*4+32*16,4*4+32*16,5*4+32*16,6*4+32*16,7*4+32*16},\
-	{0*32,1*32,2*32,3*32,4*32,5*32,6*32,7*32,\
-	 8*32,9*32,10*32,11*32,12*32,13*32,14*32,15*32},\
-	16*16*4\
+/* 16x16x4, made of four 8x8 tiles */
+static struct GfxLayout tiles_16x16_quad =
+{
+	16,16,
+	RGN_FRAC(1,1),
+	4,
+	{ STEP4(0,1) },
+	{ STEP8(8*8*4*0,4), STEP8(8*8*4*2,4) },
+	{ STEP16(0,4*8) },
+	16*16*4
 };
-
-/* Tiles are 8x8 */
-MEGASYS1_LAYOUT_8x8(tiles_8x8_01,  0x010000)
-MEGASYS1_LAYOUT_8x8(tiles_8x8_02,  0x020000)
-MEGASYS1_LAYOUT_8x8(tiles_8x8_04,  0x040000)
-MEGASYS1_LAYOUT_8x8(tiles_8x8_08,  0x080000)
-
-/* Sprites are 16x16 */
-MEGASYS1_LAYOUT_16x16(tiles_16x16_4M,  0x400000)
-MEGASYS1_LAYOUT_16x16(tiles_16x16_5M,  0x500000)
-
 
 /* Road: 64 x 1 x 4 */
-#define ROAD_LAYOUT( _name_, _romsize_ ) \
-static struct GfxLayout _name_ = \
-{ \
-	64,1, \
-	8*(_romsize_)/(64*1*4), \
-	4, \
-	{0,1,2,3}, \
-	{0*4,1*4,2*4,3*4,4*4,5*4,6*4,7*4, \
-	 8*4,9*4,10*4,11*4,12*4,13*4,14*4,15*4, \
-	 16*4,17*4,18*4,19*4,20*4,21*4,22*4,23*4, \
-	 24*4,25*4,26*4,27*4,28*4,29*4,30*4,31*4, \
-\
-	 32*4,33*4,34*4,35*4,36*4,37*4,38*4,39*4, \
-	 40*4,41*4,42*4,43*4,44*4,45*4,46*4,47*4, \
-	 48*4,49*4,50*4,51*4,52*4,53*4,54*4,55*4, \
-	 56*4,57*4,58*4,59*4,60*4,61*4,62*4,63*4}, \
-	{0}, \
-	64*1*4 \
+static struct GfxLayout road_layout =
+{
+	64,1,
+	RGN_FRAC(1,1),
+	4,
+	{ STEP4(0,1) },
+	{ STEP16(16*4*0,4),STEP16(16*4*1,4),
+	  STEP16(16*4*2,4),STEP16(16*4*3,4) },
+	{ 0 },
+	64*1*4
 };
 
-ROAD_LAYOUT( road_layout_1M, 0x100000 )
-ROAD_LAYOUT( road_layout_2M, 0x200000 )
+/**************************************************************************
+								Big Run
+**************************************************************************/
 
+static struct GfxDecodeInfo bigrun_gfxdecodeinfo[] =
+{
+	{ REGION_GFX1, 0, &tiles_8x8,	0x0000, 16 }, // [0] Scroll 0
+	{ REGION_GFX2, 0, &tiles_8x8,	0x0100, 16 }, // [1] Scroll 1
+	{ REGION_GFX3, 0, &tiles_8x8,	0x0e00, 16 }, // [2] Scroll 2
+	{ REGION_GFX4, 0, &tiles_16x16,	0x0a00, 64 }, // [3] Sprites
+	{ REGION_GFX5, 0, &road_layout,	0x0600, 64 }, // [4] Road 0
+	{ REGION_GFX6, 0, &road_layout,	0x0200, 64 }, // [5] Road 1
+	{ -1 }
+};
 
 /**************************************************************************
-								[ Cisco Heat ]
+								Cisco Heat
 **************************************************************************/
 
 static struct GfxDecodeInfo cischeat_gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &tiles_8x8_04,	32*16*0, 32  }, // [0] Scroll 0
-	{ REGION_GFX2, 0, &tiles_8x8_04,	32*16*1, 32  }, // [1] Scroll 1
-	{ REGION_GFX3, 0, &tiles_8x8_01,	32*16*2, 32  }, // [2] Scroll 2
-	{ REGION_GFX4, 0, &tiles_16x16_4M,	32*16*7, 128 }, // [3] Sprites
-	{ REGION_GFX5, 0, &road_layout_1M,	32*16*3, 64  }, // [4] Road 0
-	{ REGION_GFX5, 0, &road_layout_1M,	32*16*5, 64  }, // [5] Road 1
+	{ REGION_GFX1, 0, &tiles_8x8,	0x0000, 32  }, // [0] Scroll 0
+	{ REGION_GFX2, 0, &tiles_8x8,	0x0200, 32  }, // [1] Scroll 1
+	{ REGION_GFX3, 0, &tiles_8x8,	0x0400, 32  }, // [2] Scroll 2
+	{ REGION_GFX4, 0, &tiles_16x16,	0x0e00, 128 }, // [3] Sprites
+	{ REGION_GFX5, 0, &road_layout,	0x0600, 64  }, // [4] Road 0
+	{ REGION_GFX6, 0, &road_layout,	0x0a00, 64  }, // [5] Road 1
 	{ -1 }
 };
 
-
 /**************************************************************************
-							[ F1 GrandPrix Star ]
+							F1 GrandPrix Star
 **************************************************************************/
 
 static struct GfxDecodeInfo f1gpstar_gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &tiles_8x8_08,	0x0000, 16  }, // [0] Scroll 0
-	{ REGION_GFX2, 0, &tiles_8x8_08,	0x0100, 16  }, // [1] Scroll 1
-	{ REGION_GFX3, 0, &tiles_8x8_02,	0x0200, 16  }, // [2] Scroll 2
-	{ REGION_GFX4, 0, &tiles_16x16_5M,	0x0b00, 128 }, // [3] Sprites
-	{ REGION_GFX5, 0, &road_layout_2M,	0x0300, 64  }, // [4] Road 0
-	{ REGION_GFX6, 0, &road_layout_1M,	0x0700, 64  }, // [5] Road 1
+	{ REGION_GFX1, 0, &tiles_8x8,	0x0000, 16  }, // [0] Scroll 0
+	{ REGION_GFX2, 0, &tiles_8x8,	0x0100, 16  }, // [1] Scroll 1
+	{ REGION_GFX3, 0, &tiles_8x8,	0x0200, 16  }, // [2] Scroll 2
+	{ REGION_GFX4, 0, &tiles_16x16,	0x0b00, 128 }, // [3] Sprites
+	{ REGION_GFX5, 0, &road_layout,	0x0300, 64  }, // [4] Road 0
+	{ REGION_GFX6, 0, &road_layout,	0x0700, 64  }, // [5] Road 1
 	{ -1 }
 };
 
-
 /**************************************************************************
-								[ Scud Hammer ]
+								Scud Hammer
 **************************************************************************/
-
-MEGASYS1_LAYOUT_16x16_QUAD(tiles_16x16_quad_5M, 0x500000)
 
 static struct GfxDecodeInfo gfxdecodeinfo_scudhamm[] =
 {
-	{ REGION_GFX1, 0, &tiles_8x8_08,		256*0, 16  },	// [0] Scroll 0
-	{ REGION_GFX1, 0, &tiles_8x8_08,		256*0, 16  },	// [1] UNUSED
-	{ REGION_GFX3, 0, &tiles_8x8_02,		256*1, 16  },	// [2] Scroll 2
-	{ REGION_GFX4, 0, &tiles_16x16_quad_5M,	256*2, 128 },	// [3] sprites
+	{ REGION_GFX1, 0, &tiles_8x8,			0x0000, 16  },	// [0] Scroll 0
+	{ REGION_GFX1, 0, &tiles_8x8,			0x0000, 16  },	// [1] UNUSED
+	{ REGION_GFX3, 0, &tiles_8x8,			0x0100, 16  },	// [2] Scroll 2
+	{ REGION_GFX4, 0, &tiles_16x16_quad,	0x0200, 128 },	// [3] sprites
 	// No Road Layers
 	{ -1 }
 };
-
-
-
 
 
 /***************************************************************************
@@ -1202,11 +1358,11 @@ static struct GfxDecodeInfo gfxdecodeinfo_scudhamm[] =
 **************************************************************************/
 
 /**************************************************************************
-						[ Cisco Heat & F1 GrandPrix Star ]
+					Big Run, Cisco Heat, F1 GrandPrix Star
 **************************************************************************/
+
 /* CPU # 1 */
 #define CISCHEAT_INTERRUPT_NUM	3
-
 int cischeat_interrupt(void)
 {
 	if (cpu_getiloops()==0)	return 4; /* Once */
@@ -1218,16 +1374,12 @@ int cischeat_interrupt(void)
 }
 
 
-
-
 /* CPU # 2 & 3 */
 #define CISCHEAT_SUB_INTERRUPT_NUM	1
 int cischeat_sub_interrupt(void)
 {
 	return 4;
 }
-
-
 
 /* CPU # 4 */
 #define CISCHEAT_SOUND_INTERRUPT_NUM	16
@@ -1245,20 +1397,20 @@ int cischeat_sound_interrupt(void)
 					_fm_clock_,_oki1_clock_,_oki2_clock_, \
 					_visible_area_, _colors_num_ ) \
 \
-static struct YM2151interface _shortname_##_ym2151_interface = \
+static struct YM2151interface _shortname_##_ym2151_intf = \
 { \
 	1, \
 	_fm_clock_, \
-	{ YM3012_VOL(33,MIXER_PAN_LEFT,33,MIXER_PAN_RIGHT) }, \
+	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) }, \
 	{ 0 } \
 }; \
 \
-static struct OKIM6295interface _shortname_##_okim6295_interface = \
+static struct OKIM6295interface _shortname_##_okim6295_intf = \
 { \
 	2, \
 	{_oki1_clock_, _oki2_clock_},\
 	{REGION_SOUND1,REGION_SOUND2}, \
-	{ MIXER(33,MIXER_PAN_LEFT), MIXER(33,MIXER_PAN_RIGHT) } \
+	{ MIXER(100,MIXER_PAN_LEFT), MIXER(100,MIXER_PAN_RIGHT) } \
 }; \
 \
 static const struct MachineDriver machine_driver_##_shortname_ = \
@@ -1291,7 +1443,7 @@ static const struct MachineDriver machine_driver_##_shortname_ = \
 	}, \
 	/*	60,DEFAULT_REAL_60HZ_VBLANK_DURATION,*/ \
 30,DEFAULT_REAL_30HZ_VBLANK_DURATION, \
-	100, \
+20, \
 	0, /* Init Machine */ \
 \
 	/* video hardware */ \
@@ -1301,7 +1453,8 @@ static const struct MachineDriver machine_driver_##_shortname_ = \
 	_colors_num_,_colors_num_, \
 	0, \
 \
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_AFTER_VBLANK, \
+	VIDEO_TYPE_RASTER          | \
+	VIDEO_UPDATE_AFTER_VBLANK | VIDEO_HAS_SHADOWS,       \
 	0, \
 	_shortname_##_vh_start, \
 	0, \
@@ -1310,24 +1463,39 @@ static const struct MachineDriver machine_driver_##_shortname_ = \
 	/* sound hardware */ \
 	SOUND_SUPPORTS_STEREO,0,0,0, /* Stereo Output */\
 	{ \
-		{ \
-			SOUND_YM2151, \
-			&_shortname_##_ym2151_interface \
-		},\
-		{\
-			SOUND_OKIM6295, \
-			&_shortname_##_okim6295_interface \
-		} \
+		{	SOUND_YM2151,	&_shortname_##_ym2151_intf		},\
+		{	SOUND_OKIM6295,	&_shortname_##_okim6295_intf	} \
 	} \
 };
 
 
+#define BIGRUN_VISIBLE_AREA		{0, 256-1,	0+16, 256-16-1  }
+#define CISCHEAT_VISIBLE_AREA	{0, 256-1,	0+16, 256-16-8-1}
+
+GAME_DRIVER(	bigrun,
+				10000000,10000000,10000000,6000000,
+				STD_FM_CLOCK,STD_OKI_CLOCK,STD_OKI_CLOCK,
+				BIGRUN_VISIBLE_AREA,
+				16*16 * 3 + 64*16 * 2 + 64*16)	/* scroll 0,1,2; road 0,1; sprites */
+
+GAME_DRIVER(	cischeat,
+				10000000,10000000,10000000,6000000,
+				STD_FM_CLOCK,STD_OKI_CLOCK,STD_OKI_CLOCK,
+				CISCHEAT_VISIBLE_AREA,
+				32*16 * 3 + 64*16 * 2 + 128*16)	/* scroll 0,1,2; road 0,1; sprites */
+
+GAME_DRIVER(	f1gpstar,	// The date is 1992 whenever the country (DSW) isn't set to Japan
+				12000000,12000000,12000000,6000000,
+				STD_FM_CLOCK,STD_OKI_CLOCK,STD_OKI_CLOCK,
+				BIGRUN_VISIBLE_AREA,
+				16*16 * 3 + 64*16 * 2 + 128*16)	/* scroll 0,1,2; road 0,1; sprites */
+
 
 /**************************************************************************
-								[ Scud Hammer ]
+								Scud Hammer
 **************************************************************************/
 
-static struct OKIM6295interface okim6295_interface_scudhamm =
+static struct OKIM6295interface scudhamm_okim6295_intf =
 {
 	2,
 	{ 16000,16000 },
@@ -1376,27 +1544,19 @@ static const struct MachineDriver machine_driver_scudhamm =
 	gfxdecodeinfo_scudhamm,
 	16*16+16*16+128*16, 16*16+16*16+128*16,
 	0,
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_AFTER_VBLANK,
+	VIDEO_TYPE_RASTER          |
+	VIDEO_UPDATE_AFTER_VBLANK | VIDEO_HAS_SHADOWS,
 	0,
-	megasys1_vh_start,
+	f1gpstar_vh_start,	// 16 color codes, shadows
 	0,
 	scudhamm_vh_screenrefresh,
 
 	/* sound hardware */
 	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
-		{
-			SOUND_OKIM6295,
-			&okim6295_interface_scudhamm
-		}
+		{	SOUND_OKIM6295,	&scudhamm_okim6295_intf	}
 	}
 };
-
-
-
-
-
-
 
 
 /***************************************************************************
@@ -1442,7 +1602,148 @@ void cischeat_untangle_sprites(int region)
 
 /***************************************************************************
 
-								[ Cisco Heat ]
+									Big Run
+
+Jaleco 1989
+
+BR8950c
+-------
+
+ 20MHz
+                                    6264 6264
+68000-10  E1 3 58257        SCPT              VCTR    5   6
+          E2 4 58257
+                                    6264 6264
+                            SCPT              VCTR    7   8
+
+                                    6264 6264
+                            SCPT              VCTR    9
+
+
+        PR88004D
+                                    2088  2088
+
+
+    2018
+                                   PR88004P
+
+
+8951
+------
+                          22
+                          21     23
+                    19    T48    T49   20
+
+                    15    T42    T44   16
+
+                     7    T41    T43   8
+
+8952A
+-----
+
+                              18  T46   T45  14
+
+68000
+
+
+68000
+
+
+                              18  T46   T45  4
+
+
+8953
+----
+
+	68000                  YM2151
+    D65006C
+	BR8953C.1 58257
+	BR8953C.2 58257
+								6295    5  T50
+       							6295    8  T51
+
+***************************************************************************/
+
+ROM_START( bigrun )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "br8950b.e1",  0x000000, 0x040000, 0xbfb54a62 )
+	ROM_LOAD16_BYTE( "br8950b.e2",  0x000001, 0x040000, 0xc0483e81 )
+
+	ROM_REGION( 0x40000, REGION_CPU2, 0 )
+	ROM_LOAD16_BYTE( "br8952a.19", 0x000000, 0x020000, 0xfcf6b70c ) // 1xxxxxxxxxxxxxxxx = 0xFF
+	ROM_LOAD16_BYTE( "br8952a.20", 0x000001, 0x020000, 0xc43d367b ) // 1xxxxxxxxxxxxxxxx = 0xFF
+
+	ROM_REGION( 0x40000, REGION_CPU3, 0 )
+	ROM_LOAD16_BYTE( "br8952a.9",  0x000000, 0x020000, 0xf803f0d9 ) // 1xxxxxxxxxxxxxxxx = 0xFF
+	ROM_LOAD16_BYTE( "br8952a.10", 0x000001, 0x020000, 0x8c0df287 ) // 1xxxxxxxxxxxxxxxx = 0xFF
+
+	ROM_REGION( 0x40000, REGION_CPU4, 0 )
+	ROM_LOAD16_BYTE( "br8953c.2", 0x000000, 0x020000, 0xb690d8d9 )
+	ROM_LOAD16_BYTE( "br8953c.1", 0x000001, 0x020000, 0x79fc7bc0 )
+
+	ROM_REGION16_BE( 0x40000, REGION_USER1, 0 )	/* second halves of program ROMs */
+	ROM_LOAD16_BYTE( "br8950b.3",   0x000000, 0x020000, 0x864cebf7 )
+	ROM_LOAD16_BYTE( "br8950b.4",   0x000001, 0x020000, 0x702c2a6e )
+
+	ROM_REGION( 0x040000, REGION_GFX1, ROMREGION_DISPOSE ) // scroll 0
+	ROM_LOAD( "br8950b.5",  0x000000, 0x020000, 0x0530764e )
+	ROM_LOAD( "br8950b.6",  0x020000, 0x020000, 0xcf40ecfa )
+
+	ROM_REGION( 0x040000, REGION_GFX2, ROMREGION_DISPOSE ) // scroll 1
+	ROM_LOAD( "br8950b.7",  0x000000, 0x020000, 0xbd5fd061 )
+	ROM_LOAD( "br8950b.8",  0x020000, 0x020000, 0x7d66f418 )
+
+	ROM_REGION( 0x020000, REGION_GFX3, ROMREGION_DISPOSE ) // scroll 2
+	ROM_LOAD( "br8950b.9",  0x000000, 0x020000, 0xbe0864c4 )
+
+	ROM_REGION( 0x280000, REGION_GFX4, ROMREGION_DISPOSE )	/* sprites */
+	ROM_LOAD16_BYTE( "mr88004a.t41",  0x000000, 0x080000, 0xc781d8c5 )
+	ROM_LOAD16_BYTE( "mr88004d.t43",  0x000001, 0x080000, 0xe4041208 )
+	ROM_LOAD16_BYTE( "mr88004b.t42",  0x100000, 0x080000, 0x2df2e7b9 )
+	ROM_LOAD16_BYTE( "mr88004e.t44",  0x100001, 0x080000, 0x7af7fbf6 )
+	ROM_LOAD16_BYTE( "mb88004c.t48",  0x200000, 0x040000, 0x02e2931d )
+	ROM_LOAD16_BYTE( "mb88004f.t49",  0x200001, 0x040000, 0x4f012dab )
+
+	ROM_REGION( 0x100000, REGION_GFX5, ROMREGION_DISPOSE ) // Road 0
+	ROM_LOAD( "mr88004g.t45",  0x000000, 0x080000, 0xbb397bae )
+	ROM_LOAD( "mb88004h.t46",  0x080000, 0x080000, 0x6b31a1ba )
+
+	ROM_REGION( 0x100000, REGION_GFX6, ROMREGION_DISPOSE ) // Road 1
+	ROM_LOAD( "mr88004g.t45",  0x000000, 0x080000, 0xbb397bae )
+	ROM_LOAD( "mb88004h.t46",  0x080000, 0x080000, 0x6b31a1ba )
+
+	/* t50 & t51: 40000-5ffff = 60000-7ffff */
+	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* samples */
+	ROM_LOAD( "mb88004l.t50", 0x000000, 0x020000, 0x6b11fb10 )
+	ROM_CONTINUE(             0x040000, 0x020000             )
+	ROM_CONTINUE(             0x020000, 0x020000             )
+	ROM_CONTINUE(             0x060000, 0x020000             )
+
+	ROM_REGION( 0x80000, REGION_SOUND2, 0 )	/* samples */
+	ROM_LOAD( "mb88004m.t51", 0x000000, 0x020000, 0xee52f04d )
+	ROM_CONTINUE(             0x040000, 0x020000             )
+	ROM_CONTINUE(             0x020000, 0x020000             )
+	ROM_CONTINUE(             0x060000, 0x020000             )
+
+	ROM_REGION( 0x20000, REGION_USER2, 0 )		/* ? Unused ROMs ? */
+	ROM_LOAD( "br8951b.21",  0x000000, 0x020000, 0x59b9c26b )	// x00xxxxxxxxxxxxx, mask=0001e0
+	ROM_LOAD( "br8951b.22",  0x000000, 0x020000, 0xc112a803 )	// x00xxxxxxxxxxxxx
+	ROM_LOAD( "br8951b.23",  0x000000, 0x010000, 0xb9474fec )	// 000xxxxxxxxxxxxx
+ROM_END
+
+void init_bigrun(void)
+{
+	/* Split ROMs */
+	rom_1 = (data16_t *) memory_region(REGION_USER1);
+
+	cischeat_untangle_sprites(REGION_GFX4);	// Untangle sprites
+	phantasm_rom_decode(3);					// Decrypt sound cpu code
+}
+
+
+/***************************************************************************
+
+								Cisco Heat
 
 From "ARCADE ROMS FROM JAPAN (ARFJ)"'s readme:
 
@@ -1488,7 +1789,6 @@ Controls:	Steering: Wheel - A 'judder' motor is attached to the wheel.
 			Pedals: 2 - Both foot controls are simple switches.
 Sound:		Amplified Stereo (two channel)
 
-
 ***************************************************************************/
 
 ROM_START( cischeat )
@@ -1524,16 +1824,20 @@ ROM_START( cischeat )
 	ROM_LOAD( "ch9071.07",   0x000000, 0x010000, 0x3724ccc3 ) // scroll 2
 
 	ROM_REGION( 0x400000, REGION_GFX4, ROMREGION_DISPOSE )	/* sprites */
-	ROM_LOAD16_BYTE( "ch9072.r15",  0x000000, 0x080000, 0x38af4aea )
-	ROM_LOAD16_BYTE(  "ch9072.r16", 0x000001, 0x080000, 0x71388dad )
-	ROM_LOAD16_BYTE( "ch9072.r17",  0x100000, 0x080000, 0x9d052cf3 )
-	ROM_LOAD16_BYTE(  "ch9072.r18", 0x100001, 0x080000, 0xfe402a56 )
-	ROM_LOAD16_BYTE( "ch9072.r25",  0x200000, 0x080000, 0xbe8cca47 )
-	ROM_LOAD16_BYTE(  "ch9072.r26", 0x200001, 0x080000, 0x2f96f47b )
-	ROM_LOAD16_BYTE( "ch9072.r19",  0x300000, 0x080000, 0x4e996fa8 )
-	ROM_LOAD16_BYTE(  "ch9072.r20", 0x300001, 0x080000, 0xfa70b92d )
+	ROM_LOAD16_BYTE( "ch9072.r15", 0x000000, 0x080000, 0x38af4aea )
+	ROM_LOAD16_BYTE( "ch9072.r16", 0x000001, 0x080000, 0x71388dad )
+	ROM_LOAD16_BYTE( "ch9072.r17", 0x100000, 0x080000, 0x9d052cf3 )
+	ROM_LOAD16_BYTE( "ch9072.r18", 0x100001, 0x080000, 0xfe402a56 )
+	ROM_LOAD16_BYTE( "ch9072.r25", 0x200000, 0x080000, 0xbe8cca47 )
+	ROM_LOAD16_BYTE( "ch9072.r26", 0x200001, 0x080000, 0x2f96f47b )
+	ROM_LOAD16_BYTE( "ch9072.r19", 0x300000, 0x080000, 0x4e996fa8 )
+	ROM_LOAD16_BYTE( "ch9072.r20", 0x300001, 0x080000, 0xfa70b92d )
 
 	ROM_REGION( 0x100000, REGION_GFX5, ROMREGION_DISPOSE )
+	ROM_LOAD( "ch9073.r21",  0x000000, 0x080000, 0x2943d2f6 ) // Road
+	ROM_LOAD( "ch9073.r22",  0x080000, 0x080000, 0x2dd44f85 )
+
+	ROM_REGION( 0x100000, REGION_GFX6, ROMREGION_DISPOSE )
 	ROM_LOAD( "ch9073.r21",  0x000000, 0x080000, 0x2943d2f6 ) // Road
 	ROM_LOAD( "ch9073.r22",  0x080000, 0x080000, 0x2dd44f85 )
 
@@ -1549,13 +1853,9 @@ ROM_START( cischeat )
 	ROM_LOAD( "ch9072.03",  0x000000, 0x040000, 0x7e79151a )
 ROM_END
 
-
-
-void astyanax_rom_decode(int cpu);	/* in megasys1.c */
-
 void init_cischeat(void)
 {
-/* Split ROMs */
+	/* Split ROMs */
 	rom_1 = (data16_t *) (memory_region(REGION_USER1) + 0x00000);
 	rom_2 = (data16_t *) (memory_region(REGION_CPU2)  + 0x40000);
 	rom_3 = (data16_t *) (memory_region(REGION_CPU3)  + 0x40000);
@@ -1573,19 +1873,9 @@ void init_cischeat(void)
 }
 
 
-#define CISCHEAT_VISIBLE_AREA	{0,255,16,231}
-
-GAME_DRIVER(	cischeat,
-				10000000,10000000,10000000,7000000,
-				STD_FM_CLOCK,STD_OKI_CLOCK,STD_OKI_CLOCK,
-				CISCHEAT_VISIBLE_AREA,
-				32*16 * 3 + 64*16 * 2 + 128*16)	/* scroll 0,1,2; road 0,1; sprites */
-
-
-
 /***************************************************************************
 
-							[ F1 GrandPrix Star ]
+							F1 GrandPrix Star
 
 From malcor's readme:
 
@@ -1704,7 +1994,6 @@ GFX & Misc       - GS90015-02 (100 pin PQFP),  uses ROM 90015-31-R56
                              90015-28-R53, 90015-21-R46, 90015-27-R52
                              90015-26-R51
 
-
 ***************************************************************************/
 
 ROM_START( f1gpstar )
@@ -1791,32 +2080,18 @@ ROM_START( f1gpstar )
 	ROM_LOAD( "pr90015b",  0x000000, 0x000100, 0xbe240dac )	// FIXED BITS (000xxxxx000xxxx1)
 ROM_END
 
-
-
 void init_f1gpstar(void)
 {
-/* Split ROMs */
+	/* Split ROMs */
 	rom_1 = (data16_t *) memory_region(REGION_USER1);
 
 	cischeat_untangle_sprites(REGION_GFX4);
 }
 
 
-
-#define F1GPSTAR_VISIBLE_AREA	{0,255,16,239}
-
-// The date is 1992 whenever the country (DSW) isn't set to Japan
-GAME_DRIVER(	f1gpstar,
-				12000000,12000000,12000000,7000000,
-				STD_FM_CLOCK,STD_OKI_CLOCK,STD_OKI_CLOCK,
-				F1GPSTAR_VISIBLE_AREA,
-				16*16 * 3 + 64*16 * 2 + 128*16)	/* scroll 0,1,2; road 0,1; sprites */
-
-
-
 /***************************************************************************
 
-								[ Scud Hammer ]
+								Scud Hammer
 
 CF-92128B:
 
@@ -1848,7 +2123,6 @@ GP-9189:
 ***************************************************************************/
 
 ROM_START( scudhamm )
-
 	ROM_REGION( 0x080000, REGION_CPU1, 0 )		/* Main CPU Code */
 	ROM_LOAD16_BYTE( "3", 0x000000, 0x040000, 0xa908e7bd )
 	ROM_LOAD16_BYTE( "4", 0x000001, 0x040000, 0x981c8b02 )
@@ -1881,12 +2155,18 @@ ROM_START( scudhamm )
 	ROM_REGION( 0x100000, REGION_SOUND2, 0 )		/* Samples (4x40000) */
 	ROM_LOAD( "1.l",  0x000000, 0x080000, 0x3c94aa90 )
 	ROM_LOAD( "1.h",  0x080000, 0x080000, 0x5caee787 )	// 1xxxxxxxxxxxxxxxxxx = 0xFF
-
 ROM_END
 
 
+/***************************************************************************
 
 
-GAME( 1990, cischeat, 0, cischeat, cischeat, cischeat, ROT0_16BIT, "Jaleco", "Cisco Heat"         )
-GAME( 1991, f1gpstar, 0, f1gpstar, f1gpstar, f1gpstar, ROT0_16BIT, "Jaleco", "F1 Grand Prix Star" )
-GAME( 1994, scudhamm, 0, scudhamm, scudhamm, 0,        ROT270,     "Jaleco", "Scud Hammer"        )
+								Game Drivers
+
+
+***************************************************************************/
+
+GAMEX( 1989, bigrun,   0, bigrun,   bigrun,   bigrun,   ROT0,   "Jaleco", "Big Run (11th Rallye version)", GAME_IMPERFECT_GRAPHICS )	// there's a 13th Rallye version (1991)
+GAMEX( 1990, cischeat, 0, cischeat, cischeat, cischeat, ROT0,   "Jaleco", "Cisco Heat",         GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1991, f1gpstar, 0, f1gpstar, f1gpstar, f1gpstar, ROT0,   "Jaleco", "F1 Grand Prix Star", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1994, scudhamm, 0, scudhamm, scudhamm, 0,        ROT270, "Jaleco", "Scud Hammer",        GAME_IMPERFECT_GRAPHICS )

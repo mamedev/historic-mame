@@ -216,8 +216,8 @@ INPUT_PORTS_START( ohmygod )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x2000, DEF_STR( On ) )
 	PORT_DIPNAME( 0x4000, 0x4000, "Balls Have Eyes" )
-	PORT_DIPSETTING(      0x4000, DEF_STR( No ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( Yes ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( No ) )
+	PORT_DIPSETTING(      0x4000, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x8000, 0x8000, "Test Mode" )
 	PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
@@ -386,10 +386,10 @@ static const struct MachineDriver machine_driver_ohmygod =
 	/* video hardware */
 	64*8, 32*8, { 12*8, (64-12)*8-1, 0*8, 30*8-1 },
 	gfxdecodeinfo,
-	1024, 1024,
+	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	ohmygod_vh_start,
 	0,

@@ -1011,162 +1011,6 @@ static void argus_bg0_scroll_handle( void )
 
 }
 
-static void argus_mark_sprite_colors(void)
-{
-	unsigned short palette_map[16];
-
-	int offs;
-	int i;
-
-	memset ( palette_map, 0x00, sizeof(palette_map) );
-
-	/* Find colors used in the sprites */
-	for (offs = 11; offs < spriteram_size; offs += 16)
-	{
-		if ( !(spriteram[offs+4] == 0 && spriteram[offs] == 0xf0) )
-		{
-			int tile, color;
-			tile  = spriteram[offs+3] + ((spriteram[offs+2] & 0xc0) << 2);
-			color = spriteram[offs+4] & 0x07;
-			palette_map[color] |= Machine -> gfx[0] -> pen_usage[tile];
-		}
-	}
-
-	for (i = 0; i < 16; i ++)
-	{
-		int j;
-
-		if (palette_map[i])
-		{
-			for (j = 0 ; j < 15 ; j++)
-				if (palette_map[i] & (1 << j))
-					palette_used_colors[i * 16 + j] = PALETTE_COLOR_USED;
-				else
-					palette_used_colors[i * 16 + j] = PALETTE_COLOR_UNUSED;
-			palette_used_colors[16 * i + 15] = PALETTE_COLOR_TRANSPARENT;
-		}
-	}
-}
-
-static void valtric_mark_sprite_colors(void)
-{
-	unsigned short palette_map[16];
-
-	int offs;
-	int i;
-
-	memset ( palette_map, 0x00, sizeof(palette_map) );
-
-	/* Find colors used in the sprites */
-	for (offs = 11; offs < spriteram_size; offs += 16)
-	{
-		if ( !(spriteram[offs+4] == 0 && spriteram[offs] == 0xf0) )
-		{
-			int tile, color;
-			tile  = spriteram[offs+3] + ((spriteram[offs+2] & 0xc0) << 2);
-			color = spriteram[offs+4] & 0x0f;
-			palette_map[color] |= Machine -> gfx[0] -> pen_usage[tile];
-		}
-	}
-
-	for (i = 0; i < 16; i ++)
-	{
-		int j;
-
-		if (palette_map[i])
-		{
-			for (j = 0 ; j < 15 ; j++)
-			{
-				if (palette_map[i] & (1 << j))
-					palette_used_colors[i * 16 + j] = PALETTE_COLOR_USED;
-				else
-					palette_used_colors[i * 16 + j] = PALETTE_COLOR_UNUSED;
-			}
-			palette_used_colors[16 * i + 15] = PALETTE_COLOR_TRANSPARENT;
-		}
-	}
-}
-
-static void butasan_mark_sprite_colors(void)
-{
-	unsigned short palette_map[16];
-
-	int offs;
-	int i, j;
-
-	memset ( palette_map, 0x00, sizeof(palette_map) );
-
-	/* Find colors used in the sprites */
-	for (offs = 8 ; offs < spriteram_size ; offs += 16)
-	{
-		int tile, color;
-
-		tile	 = spriteram[offs + 6] + ((spriteram[offs + 7] & 0x0f) << 8);
-		color	 = spriteram[offs + 1] & 0x0f;
-
-		if ( (offs >= 0x100 && offs < 0x300) || (offs >= 0x400 && offs < 0x580) )
-		{
-			palette_map[color] |= Machine -> gfx[0] -> pen_usage[tile];
-		}
-		else if ( (offs >= 0x000 && offs < 0x100) || (offs >= 0x300 && offs < 0x400) )
-		{
-			for ( i = 0 ; i <= 1 ; i ++ )
-			{
-				palette_map[color] |= Machine -> gfx[0] -> pen_usage[tile + i];
-			}
-		}
-		else if ( offs >= 0x580 && offs < 0x620 )
-		{
-			for ( i = 0 ; i <= 1 ; i ++ )
-			{
-				for ( j = 0 ; j <= 1 ; j ++ )
-				{
-					palette_map[color] |= Machine -> gfx[0] -> pen_usage[tile + i * 2 + j];
-				}
-			}
-		}
-		else if ( offs >= 0x620 && offs < 0x680 )
-		{
-			for ( i = 0 ; i <= 3 ; i ++ )
-			{
-				for ( j = 0 ; j <= 3 ; j ++ )
-				{
-					palette_map[color] |= Machine -> gfx[0] -> pen_usage[tile + i * 4 + j];
-				}
-			}
-		}
-	}
-
-	for (i = 0; i < 12; i ++)
-	{
-		if (palette_map[i])
-		{
-			for (j = 0 ; j < 7 ; j++)
-			{
-				if (palette_map[i] & (1 << j))
-					palette_used_colors[i * 16 + j] = PALETTE_COLOR_USED;
-				else
-					palette_used_colors[i * 16 + j] = PALETTE_COLOR_UNUSED;
-			}
-			palette_used_colors[i * 16 + 7] = PALETTE_COLOR_TRANSPARENT;
-			for (j = 8 ; j < 16 ; j++)
-			{
-				if (palette_map[i] & (1 << j))
-					palette_used_colors[i * 16 + j] = PALETTE_COLOR_USED;
-				else
-					palette_used_colors[i * 16 + j] = PALETTE_COLOR_UNUSED;
-			}
-		}
-		else
-		{
-			for (j = 0 ; j < 16 ; j++)
-			{
-				palette_used_colors[i * 16 + j] = PALETTE_COLOR_UNUSED;
-			}
-		}
-	}
-}
-
 static void argus_draw_sprites(struct osd_bitmap *bitmap, int priority)
 {
 	int offs;
@@ -1211,12 +1055,12 @@ static void argus_draw_sprites(struct osd_bitmap *bitmap, int priority)
 			}
 
 			if (priority != pri)
-				drawgfx(bitmap,Machine -> gfx[0],
+				drawgfx(bitmap,Machine->gfx[0],
 							tile,
 							color,
 							flipx, flipy,
 							sx, sy,
-							&Machine -> visible_area,
+							&Machine->visible_area,
 							TRANSPARENCY_PEN, 15
 				);
 		}
@@ -1265,12 +1109,12 @@ static void valtric_draw_sprites(struct osd_bitmap *bitmap)
 				flipy ^= 0x20;
 			}
 
-			drawgfx(bitmap,Machine -> gfx[0],
+			drawgfx(bitmap,Machine->gfx[0],
 						tile,
 						color,
 						flipx, flipy,
 						sx, sy,
-						&Machine -> visible_area,
+						&Machine->visible_area,
 						TRANSPARENCY_PEN, 15);
 		}
 	}
@@ -1300,12 +1144,12 @@ void butasan_draw_sprites(struct osd_bitmap *bitmap)
 		{
 			if ( (offs >= 0x100 && offs < 0x300) || (offs >= 0x400 && offs < 0x580) )
 			{
-				drawgfx(bitmap,Machine -> gfx[0],
+				drawgfx(bitmap,Machine->gfx[0],
 							tile,
 							color,
 							flipx, flipy,
 							sx, sy,
-							&Machine -> visible_area,
+							&Machine->visible_area,
 							TRANSPARENCY_PEN, 7);
 			}
 			else if ( (offs >= 0x000 && offs < 0x100) || (offs >= 0x300 && offs < 0x400) )
@@ -1318,12 +1162,12 @@ void butasan_draw_sprites(struct osd_bitmap *bitmap)
 
 					td = (flipx) ? (1 - i) : i;
 
-					drawgfx(bitmap,Machine -> gfx[0],
+					drawgfx(bitmap,Machine->gfx[0],
 								tile + td,
 								color,
 								flipx, flipy,
 								sx + i * 16, sy,
-								&Machine -> visible_area,
+								&Machine->visible_area,
 								TRANSPARENCY_PEN, 7);
 				}
 			}
@@ -1342,12 +1186,12 @@ void butasan_draw_sprites(struct osd_bitmap *bitmap)
 						else
 							td = (flipx) ? ( (1 - i) * 2 ) + 1 - j : (1 - i) * 2 + j;
 
-						drawgfx(bitmap,Machine -> gfx[0],
+						drawgfx(bitmap,Machine->gfx[0],
 									tile + td,
 									color,
 									flipx, flipy,
 									sx + j * 16, sy - i * 16,
-									&Machine -> visible_area,
+									&Machine->visible_area,
 									TRANSPARENCY_PEN, 7);
 					}
 				}
@@ -1367,11 +1211,11 @@ void butasan_draw_sprites(struct osd_bitmap *bitmap)
 						else
 							td = (flipx) ? ( (3 - i) * 4 ) + 3 - j : (3 - i) * 4 + j;
 
-						drawgfx(bitmap,Machine -> gfx[0],
+						drawgfx(bitmap,Machine->gfx[0],
 									tile + td,
 									color,
 									flipx, flipy,
-									sx + j * 16, sy - i * 16,									&Machine -> visible_area,
+									sx + j * 16, sy - i * 16,									&Machine->visible_area,
 									TRANSPARENCY_PEN, 7);
 					}
 				}
@@ -1386,12 +1230,12 @@ void butasan_draw_sprites(struct osd_bitmap *bitmap)
 
 			if ( (offs >= 0x100 && offs < 0x300) || (offs >= 0x400 && offs < 0x580) )
 			{
-				drawgfx(bitmap,Machine -> gfx[0],
+				drawgfx(bitmap,Machine->gfx[0],
 							tile,
 							color,
 							flipx, flipy,
 							sx, sy,
-							&Machine -> visible_area,
+							&Machine->visible_area,
 							TRANSPARENCY_PEN, 7);
 			}
 			else if ( (offs >= 0x000 && offs < 0x100) || (offs >= 0x300 && offs < 0x400) )
@@ -1404,12 +1248,12 @@ void butasan_draw_sprites(struct osd_bitmap *bitmap)
 
 					td = (flipx) ? i : (1 - i);
 
-					drawgfx(bitmap,Machine -> gfx[0],
+					drawgfx(bitmap,Machine->gfx[0],
 								tile + td,
 								color,
 								flipx, flipy,
 								sx - i * 16, sy,
-								&Machine -> visible_area,
+								&Machine->visible_area,
 								TRANSPARENCY_PEN, 7);
 				}
 			}
@@ -1428,12 +1272,12 @@ void butasan_draw_sprites(struct osd_bitmap *bitmap)
 						else
 							td = (flipx) ? i * 2 + j : (i * 2) + 1 - j;
 
-						drawgfx(bitmap,Machine -> gfx[0],
+						drawgfx(bitmap,Machine->gfx[0],
 									tile + td,
 									color,
 									flipx, flipy,
 									sx - j * 16, sy + i * 16,
-									&Machine -> visible_area,
+									&Machine->visible_area,
 									TRANSPARENCY_PEN, 7);
 					}
 				}
@@ -1453,11 +1297,11 @@ void butasan_draw_sprites(struct osd_bitmap *bitmap)
 						else
 							td = (flipx) ? i * 4 + j : (i * 4) + 3 - j;
 
-						drawgfx(bitmap,Machine -> gfx[0],
+						drawgfx(bitmap,Machine->gfx[0],
 									tile + td,
 									color,
 									flipx, flipy,
-									sx - j * 16, sy + i * 16,									&Machine -> visible_area,
+									sx - j * 16, sy + i * 16,									&Machine->visible_area,
 									TRANSPARENCY_PEN, 7);
 					}
 				}
@@ -1524,13 +1368,7 @@ void argus_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	/* scroll BG0 and render tile at proper position */
 	argus_bg0_scroll_handle();
 
-	tilemap_update(ALL_TILEMAPS);
-
-	palette_init_used_colors();
-	argus_mark_sprite_colors();
-	palette_recalc();
-
-	fillbitmap(bitmap, palette_transparent_pen, &Machine -> visible_area);
+	fillbitmap(bitmap, Machine->pens[0], &Machine->visible_area);
 
 	tilemap_draw(bitmap, bg0_tilemap, 0, 0);
 	argus_draw_sprites(bitmap, 0);
@@ -1541,13 +1379,7 @@ void argus_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 void valtric_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	tilemap_update(ALL_TILEMAPS);
-
-	palette_init_used_colors();
-	valtric_mark_sprite_colors();
-	palette_recalc();
-
-	fillbitmap(bitmap, palette_transparent_pen, &Machine -> visible_area);
+	fillbitmap(bitmap, Machine->pens[0], &Machine->visible_area);
 
 	tilemap_draw(bitmap, bg1_tilemap, 0, 0);
 	valtric_draw_sprites(bitmap);
@@ -1556,13 +1388,7 @@ void valtric_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 void butasan_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	tilemap_update(ALL_TILEMAPS);
-
-	palette_init_used_colors();
-	butasan_mark_sprite_colors();
-	palette_recalc();
-
-	fillbitmap(bitmap, palette_transparent_pen, &Machine -> visible_area);
+	fillbitmap(bitmap, Machine->pens[0], &Machine->visible_area);
 
 	tilemap_draw(bitmap, bg1_tilemap, 0, 0);
 	tilemap_draw(bitmap, bg0_tilemap, 0, 0);

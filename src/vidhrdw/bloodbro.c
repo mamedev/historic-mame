@@ -157,30 +157,6 @@ static void bloodbro_draw_sprites( struct osd_bitmap *bitmap)
 	}
 }
 
-static void bloodbro_mark_sprite_colors(void)
-{
-	int offs,i;
-	int color, colmask[0x80];
-	int pal_base = Machine->drv->gfxdecodeinfo[0].color_codes_start;
-
-	/* Sprites */
-	pal_base = Machine->drv->gfxdecodeinfo[3].color_codes_start;
-	for (color = 0;color < 16;color++) colmask[color] = 0;
-	for (offs = 0;offs <spriteram_size/2;offs += 4 )
-	{
-		color = spriteram16[offs+0] & 0x000f;
-		colmask[color] |= 0xffff;
-	}
-	for (color = 0;color < 16;color++)
-	{
-		for (i = 0;i < 15;i++)
-		{
-			if (colmask[color] & (1 << i))
-				palette_used_colors[pal_base + 16 * color + i] |= PALETTE_COLOR_VISIBLE;
-		}
-	}
-}
-
 /* SPRITE INFO (8 bytes)
 
    D------- YYYYYYYY
@@ -223,30 +199,6 @@ static void weststry_draw_sprites( struct osd_bitmap *bitmap, int priority)
 	}
 }
 
-static void weststry_mark_sprite_colors(void)
-{
-	int offs,i;
-	int colmask[0x80],pal_base,color;
-
-	/* Sprites */
-	pal_base = Machine->drv->gfxdecodeinfo[3].color_codes_start;
-	for (color = 0;color < 16;color++) colmask[color] = 0;
-	/* TODO: the last two entries are not sprites - control registers? */
-	for (offs = 0;offs <spriteram_size/2 - 8;offs += 4 )
-	{
-		color = spriteram16[offs+2]>>12;
-		colmask[color] |= 0xffff;
-	}
-	for (color = 0;color < 16;color++)
-	{
-		for (i = 0;i < 15;i++)
-		{
-			if (colmask[color] & (1 << i))
-				palette_used_colors[pal_base + 16 * color + i] |= PALETTE_COLOR_VISIBLE;
-		}
-	}
-}
-
 
 
 void bloodbro_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh )
@@ -255,12 +207,6 @@ void bloodbro_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh )
 	tilemap_set_scrolly(bg_tilemap,0,bloodbro_scroll[0x11]);	/* ? */
 	tilemap_set_scrollx(fg_tilemap,0,bloodbro_scroll[0x12]);
 	tilemap_set_scrolly(fg_tilemap,0,bloodbro_scroll[0x13]);
-
-	tilemap_update(ALL_TILEMAPS);
-
-	palette_init_used_colors();
-	bloodbro_mark_sprite_colors();
-	palette_recalc();
 
 	tilemap_draw(bitmap,bg_tilemap,0,0);
 	tilemap_draw(bitmap,fg_tilemap,0,1);
@@ -274,12 +220,6 @@ void weststry_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh )
 //	tilemap_set_scrolly(bg_tilemap,0,bloodbro_scroll[0x11]);	/* ? */
 //	tilemap_set_scrollx(fg_tilemap,0,bloodbro_scroll[0x12]);
 //	tilemap_set_scrolly(fg_tilemap,0,bloodbro_scroll[0x13]);
-
-	tilemap_update(ALL_TILEMAPS);
-
-	palette_init_used_colors();
-	weststry_mark_sprite_colors();
-	palette_recalc();
 
 	tilemap_draw(bitmap,bg_tilemap,0,0);
 	tilemap_draw(bitmap,fg_tilemap,0,1);

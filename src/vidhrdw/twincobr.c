@@ -280,278 +280,147 @@ static void twincobr_draw_sprites(struct osd_bitmap *bitmap, int priority)
 
 void toaplan0_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	static int offs,code,tile,i,pal_base,sprite,color;
-	static int colmask[64];
+	static int offs,code,tile,color;
 
 
-	if (twincobr_display_on) {
-		memset(palette_used_colors,PALETTE_COLOR_UNUSED,Machine->drv->total_colors * sizeof(unsigned char));
-		pal_base = Machine->drv->gfxdecodeinfo[2].color_codes_start;
-
-		for (color = 0;color < 16;color++) colmask[color] = 0;
-
-		for (offs = twincobr_bgvideoram_size - 1;offs >= 0;offs--)
-		{
-			code  = twincobr_bgvideoram16[offs+twincobr_bg_ram_bank];
-			tile  = (code & 0x0fff);
-			color = (code & 0xf000) >> 12;
-			colmask[color] |= Machine->gfx[2]->pen_usage[tile];
-		}
-
-		for (color = 0;color < 16;color++)
-		{
-			for (i = 0;i < 16;i++)
-			{
-				if (colmask[color] & (1 << i))
-					palette_used_colors[pal_base + 16 * color + i] = PALETTE_COLOR_USED;
-			}
-		}
-
-
-		pal_base = Machine->drv->gfxdecodeinfo[1].color_codes_start;
-
-		for (color = 0;color < 16;color++) colmask[color] = 0;
-
-		scroll_x = (twincobr_flip_x_base + fgscrollx) & 0x01ff;
-		scroll_y = (twincobr_flip_y_base + fgscrolly) & 0x01ff;
-		vidbaseaddr = ((scroll_y>>3)*64) + (scroll_x>>3);
-		scroll_realign_x = scroll_x >> 3;
-		for (offs = (31*41)-1; offs >= 0; offs-- )
-		{
-			unsigned char sx,sy;
-			unsigned short int vidramaddr = 0;
-
-			sx = offs % 41;
-			sy = offs / 41;
-			vidramaddr = vidbaseaddr + (sy*64) + sx;
-
-			if ((scroll_realign_x + sx) > 63) vidramaddr -= 64;
-
-			code  = twincobr_fgvideoram16[vidramaddr & 0xfff];
-			tile  = (code & 0x0fff) | twincobr_fg_rom_bank;
-			color = (code & 0xf000) >> 12;
-			colmask[color] |= Machine->gfx[1]->pen_usage[tile];
-		}
-
-		for (color = 0;color < 16;color++)
-		{
-			if (colmask[color] & (1 << 0))
-				palette_used_colors[pal_base + 16 * color] = PALETTE_COLOR_TRANSPARENT;
-			for (i = 1;i < 16;i++)
-			{
-				if (colmask[color] & (1 << i))
-					palette_used_colors[pal_base + 16 * color + i] = PALETTE_COLOR_USED;
-			}
-		}
-
-
-		pal_base = Machine->drv->gfxdecodeinfo[3].color_codes_start;
-
-		for (color = 0;color < 64;color++) colmask[color] = 0;
-
-		for (offs = 0;offs < spriteram_size/2;offs += 4)
-		{
-			int sy;
-			sy = buffered_spriteram16[offs + 3];
-			if (sy != 0x8000) {					/* Is sprite is turned off ? */
-				sprite = buffered_spriteram16[offs] & 0x7ff;
-				color = buffered_spriteram16[offs + 1] & 0x3f;
-				colmask[color] |= Machine->gfx[3]->pen_usage[sprite];
-			}
-		}
-
-		for (color = 0;color < 64;color++)
-		{
-			if (colmask[color] & (1 << 0))
-				palette_used_colors[pal_base + 16 * color] = PALETTE_COLOR_TRANSPARENT;
-			for (i = 1;i < 16;i++)
-			{
-				if (colmask[color] & (1 << i))
-					palette_used_colors[pal_base + 16 * color + i] = PALETTE_COLOR_USED;
-			}
-		}
-
-
-		pal_base = Machine->drv->gfxdecodeinfo[0].color_codes_start;
-
-		for (color = 0;color < 32;color++) colmask[color] = 0;
-
-
-		scroll_x = (twincobr_flip_x_base + txscrollx) & 0x01ff;
-		scroll_y = (twincobr_flip_y_base + txscrolly) & 0x00ff;
-		vidbaseaddr = ((scroll_y>>3)*64) + (scroll_x>>3);
-		scroll_realign_x = scroll_x>>3;
-		for (offs = (31*41)-1; offs >= 0; offs-- )
-		{
-			unsigned char sx,sy;
-			unsigned short int vidramaddr = 0;
-
-			sx = offs % 41;
-			sy = offs / 41;
-
-			vidramaddr = vidbaseaddr + (sy*64) + sx;
-			if ((scroll_realign_x + sx) > 63) vidramaddr -= 64;
-			code = videoram16[vidramaddr & 0x7ff];
-			tile  = (code & 0x07ff);
-			color = (code & 0xf800) >> 11;
-			colmask[color] |= Machine->gfx[0]->pen_usage[tile];
-		}
-
-
-		for (color = 0;color < 32;color++)
-		{
-			if (colmask[color] & (1 << 0))
-				palette_used_colors[pal_base + 8 * color] = PALETTE_COLOR_TRANSPARENT;
-			for (i = 1;i < 8;i++)
-			{
-				if (colmask[color] & (1 << i))
-					palette_used_colors[pal_base + 8 * color + i] = PALETTE_COLOR_USED;
-			}
-		}
-
-
-		if (palette_recalc())
-		{
-			memset(dirtybuffer,1,twincobr_bgvideoram_size);
-		}
-
-
-		/* draw the background */
-		for (offs = twincobr_bgvideoram_size - 1;offs >= 0;offs--)
-		{
-			if (dirtybuffer[offs])
-			{
-				int sx,sy;
-
-				dirtybuffer[offs] = 0;
-
-				sx = offs % 64;
-				sy = offs / 64;
-
-				code = twincobr_bgvideoram16[offs+twincobr_bg_ram_bank];
-				tile  = (code & 0x0fff);
-				color = (code & 0xf000) >> 12;
-				if (twincobr_flip_screen) { sx=63-sx; sy=63-sy; }
-				drawgfx(tmpbitmap,Machine->gfx[2],
-					tile,
-					color,
-					twincobr_flip_screen,twincobr_flip_screen,
-					8*sx,8*sy,
-					0,TRANSPARENCY_NONE,0);
-			}
-		}
-
-		/* copy the background graphics */
-		{
-			if (twincobr_flip_screen) {
-				scroll_x = (twincobr_flip_x_base + bgscrollx + 0x141) & 0x1ff;
-				scroll_y = (twincobr_flip_y_base + bgscrolly + 0xf1) & 0x1ff;
-			}
-			else {
-				scroll_x = (0x1c9 - bgscrollx) & 0x1ff;
-				scroll_y = (- 0x1e - bgscrolly) & 0x1ff;
-			}
-			copyscrollbitmap(bitmap,tmpbitmap,1,&scroll_x,1,&scroll_y,&Machine->visible_area,TRANSPARENCY_NONE,0);
-		}
-
-
-		/* draw the sprites in low priority (Twin Cobra tanks under roofs) */
-		twincobr_draw_sprites (bitmap, 0x0400);
-
-		/* draw the foreground */
-		scroll_x = (twincobr_flip_x_base + fgscrollx) & 0x01ff;
-		scroll_y = (twincobr_flip_y_base + fgscrolly) & 0x01ff;
-		vidbaseaddr = ((scroll_y>>3)*64) + (scroll_x>>3);
-		scroll_realign_x = scroll_x >> 3;		/* realign video ram pointer */
-		for (offs = (31*41)-1; offs >= 0; offs-- )
-		{
-			int xpos,ypos;
-			unsigned char sx,sy;
-			unsigned short int vidramaddr = 0;
-
-			sx = offs % 41;
-			sy = offs / 41;
-
-			vidramaddr = vidbaseaddr + (sy*64) + sx;
-			if ((scroll_realign_x + sx) > 63) vidramaddr -= 64;
-
-			code  = twincobr_fgvideoram16[vidramaddr & 0xfff];
-			tile  = (code & 0x0fff) | twincobr_fg_rom_bank;
-			color = (code & 0xf000) >> 12;
-			if (twincobr_flip_screen) { sx=40-sx; sy=30-sy; xpos=(sx*8) - (7-(scroll_x&7)); ypos=(sy*8) - (7-(scroll_y&7)); }
-			else { xpos=(sx*8) - (scroll_x&7); ypos=(sy*8) - (scroll_y&7); }
-			drawgfx(bitmap,Machine->gfx[1],
-				tile,
-				color,
-				twincobr_flip_screen,twincobr_flip_screen,
-				xpos,ypos,
-				&Machine->visible_area,TRANSPARENCY_PEN,0);
-		}
-
-/*********  Begin ugly sprite hack for Wardner when hero is in shop *********/
-		if ((wardner_sprite_hack) && (fgscrollx != bgscrollx)) {	/* Wardner ? */
-			if ((fgscrollx==0x1c9) || (twincobr_flip_screen && (fgscrollx==0x17a))) {	/* in the shop ? */
-				int wardner_hack = buffered_spriteram16[0x0b04/2];
-			/* sprite position 0x6300 to 0x8700 -- hero on shop keeper (normal) */
-			/* sprite position 0x3900 to 0x5e00 -- hero on shop keeper (flip) */
-				if ((wardner_hack > 0x3900) && (wardner_hack < 0x8700)) {	/* hero at shop keeper ? */
-					wardner_hack = buffered_spriteram16[0x0b02/2];
-					wardner_hack |= 0x0400;			/* make hero top priority */
-					buffered_spriteram16[0x0b02/2] = wardner_hack;
-					wardner_hack = buffered_spriteram16[0x0b0a/2];
-					wardner_hack |= 0x0400;
-					buffered_spriteram16[0x0b0a/2] = wardner_hack;
-					wardner_hack = buffered_spriteram16[0x0b12/2];
-					wardner_hack |= 0x0400;
-					buffered_spriteram16[0x0b12/2] = wardner_hack;
-					wardner_hack = buffered_spriteram16[0x0b1a/2];
-					wardner_hack |= 0x0400;
-					buffered_spriteram16[0x0b1a/2] = wardner_hack;
-				}
-			}
-		}
-/**********  End ugly sprite hack for Wardner when hero is in shop **********/
-
-		/* draw the sprites in normal priority */
-		twincobr_draw_sprites (bitmap, 0x0800);
-
-		/* draw the top layer */
-		scroll_x = (twincobr_flip_x_base + txscrollx) & 0x01ff;
-		scroll_y = (twincobr_flip_y_base + txscrolly) & 0x00ff;
-		vidbaseaddr = ((scroll_y>>3)*64) + (scroll_x>>3);
-		scroll_realign_x = scroll_x >> 3;
-		for (offs = (31*41)-1; offs >= 0; offs-- )
-		{
-			int xpos,ypos;
-			unsigned char sx,sy;
-			unsigned short int vidramaddr = 0;
-
-			sx = offs % 41;
-			sy = offs / 41;
-
-			vidramaddr = vidbaseaddr + (sy*64) + sx;
-			if ((scroll_realign_x + sx) > 63) vidramaddr -= 64;
-
-			code  = videoram16[vidramaddr & 0x7ff];
-			tile  = (code & 0x07ff);
-			color = (code & 0xf800) >> 11;
-			if (twincobr_flip_screen) { sx=40-sx; sy=30-sy; xpos=(sx*8) - (7-(scroll_x&7)); ypos=(sy*8) - (7-(scroll_y&7)); }
-			else { xpos=(sx*8) - (scroll_x&7); ypos=(sy*8) - (scroll_y&7); }
-			drawgfx(bitmap,Machine->gfx[0],
-				tile,
-				color,
-				twincobr_flip_screen,twincobr_flip_screen,
-				xpos,ypos,
-				&Machine->visible_area,TRANSPARENCY_PEN,0);
-		}
-
-		/* draw the sprites in high priority */
-		twincobr_draw_sprites (bitmap, 0x0c00);
-	}
-	else
+	if (!twincobr_display_on)
 	{
 		fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
+		return;
 	}
+
+
+	/* draw the background */
+	for (offs = twincobr_bgvideoram_size - 1;offs >= 0;offs--)
+	{
+		if (dirtybuffer[offs])
+		{
+			int sx,sy;
+
+			dirtybuffer[offs] = 0;
+
+			sx = offs % 64;
+			sy = offs / 64;
+
+			code = twincobr_bgvideoram16[offs+twincobr_bg_ram_bank];
+			tile  = (code & 0x0fff);
+			color = (code & 0xf000) >> 12;
+			if (twincobr_flip_screen) { sx=63-sx; sy=63-sy; }
+			drawgfx(tmpbitmap,Machine->gfx[2],
+				tile,
+				color,
+				twincobr_flip_screen,twincobr_flip_screen,
+				8*sx,8*sy,
+				0,TRANSPARENCY_NONE,0);
+		}
+	}
+
+	/* copy the background graphics */
+	{
+		if (twincobr_flip_screen) {
+			scroll_x = (twincobr_flip_x_base + bgscrollx + 0x141) & 0x1ff;
+			scroll_y = (twincobr_flip_y_base + bgscrolly + 0xf1) & 0x1ff;
+		}
+		else {
+			scroll_x = (0x1c9 - bgscrollx) & 0x1ff;
+			scroll_y = (- 0x1e - bgscrolly) & 0x1ff;
+		}
+		copyscrollbitmap(bitmap,tmpbitmap,1,&scroll_x,1,&scroll_y,&Machine->visible_area,TRANSPARENCY_NONE,0);
+	}
+
+
+	/* draw the sprites in low priority (Twin Cobra tanks under roofs) */
+	twincobr_draw_sprites (bitmap, 0x0400);
+
+	/* draw the foreground */
+	scroll_x = (twincobr_flip_x_base + fgscrollx) & 0x01ff;
+	scroll_y = (twincobr_flip_y_base + fgscrolly) & 0x01ff;
+	vidbaseaddr = ((scroll_y>>3)*64) + (scroll_x>>3);
+	scroll_realign_x = scroll_x >> 3;		/* realign video ram pointer */
+	for (offs = (31*41)-1; offs >= 0; offs-- )
+	{
+		int xpos,ypos;
+		unsigned char sx,sy;
+		unsigned short int vidramaddr = 0;
+
+		sx = offs % 41;
+		sy = offs / 41;
+
+		vidramaddr = vidbaseaddr + (sy*64) + sx;
+		if ((scroll_realign_x + sx) > 63) vidramaddr -= 64;
+
+		code  = twincobr_fgvideoram16[vidramaddr & 0xfff];
+		tile  = (code & 0x0fff) | twincobr_fg_rom_bank;
+		color = (code & 0xf000) >> 12;
+		if (twincobr_flip_screen) { sx=40-sx; sy=30-sy; xpos=(sx*8) - (7-(scroll_x&7)); ypos=(sy*8) - (7-(scroll_y&7)); }
+		else { xpos=(sx*8) - (scroll_x&7); ypos=(sy*8) - (scroll_y&7); }
+		drawgfx(bitmap,Machine->gfx[1],
+			tile,
+			color,
+			twincobr_flip_screen,twincobr_flip_screen,
+			xpos,ypos,
+			&Machine->visible_area,TRANSPARENCY_PEN,0);
+	}
+
+/*********  Begin ugly sprite hack for Wardner when hero is in shop *********/
+	if ((wardner_sprite_hack) && (fgscrollx != bgscrollx)) {	/* Wardner ? */
+		if ((fgscrollx==0x1c9) || (twincobr_flip_screen && (fgscrollx==0x17a))) {	/* in the shop ? */
+			int wardner_hack = buffered_spriteram16[0x0b04/2];
+		/* sprite position 0x6300 to 0x8700 -- hero on shop keeper (normal) */
+		/* sprite position 0x3900 to 0x5e00 -- hero on shop keeper (flip) */
+			if ((wardner_hack > 0x3900) && (wardner_hack < 0x8700)) {	/* hero at shop keeper ? */
+				wardner_hack = buffered_spriteram16[0x0b02/2];
+				wardner_hack |= 0x0400;			/* make hero top priority */
+				buffered_spriteram16[0x0b02/2] = wardner_hack;
+				wardner_hack = buffered_spriteram16[0x0b0a/2];
+				wardner_hack |= 0x0400;
+				buffered_spriteram16[0x0b0a/2] = wardner_hack;
+				wardner_hack = buffered_spriteram16[0x0b12/2];
+				wardner_hack |= 0x0400;
+				buffered_spriteram16[0x0b12/2] = wardner_hack;
+				wardner_hack = buffered_spriteram16[0x0b1a/2];
+				wardner_hack |= 0x0400;
+				buffered_spriteram16[0x0b1a/2] = wardner_hack;
+			}
+		}
+	}
+/**********  End ugly sprite hack for Wardner when hero is in shop **********/
+
+	/* draw the sprites in normal priority */
+	twincobr_draw_sprites (bitmap, 0x0800);
+
+	/* draw the top layer */
+	scroll_x = (twincobr_flip_x_base + txscrollx) & 0x01ff;
+	scroll_y = (twincobr_flip_y_base + txscrolly) & 0x00ff;
+	vidbaseaddr = ((scroll_y>>3)*64) + (scroll_x>>3);
+	scroll_realign_x = scroll_x >> 3;
+	for (offs = (31*41)-1; offs >= 0; offs-- )
+	{
+		int xpos,ypos;
+		unsigned char sx,sy;
+		unsigned short int vidramaddr = 0;
+
+		sx = offs % 41;
+		sy = offs / 41;
+
+		vidramaddr = vidbaseaddr + (sy*64) + sx;
+		if ((scroll_realign_x + sx) > 63) vidramaddr -= 64;
+
+		code  = videoram16[vidramaddr & 0x7ff];
+		tile  = (code & 0x07ff);
+		color = (code & 0xf800) >> 11;
+		if (twincobr_flip_screen) { sx=40-sx; sy=30-sy; xpos=(sx*8) - (7-(scroll_x&7)); ypos=(sy*8) - (7-(scroll_y&7)); }
+		else { xpos=(sx*8) - (scroll_x&7); ypos=(sy*8) - (scroll_y&7); }
+		drawgfx(bitmap,Machine->gfx[0],
+			tile,
+			color,
+			twincobr_flip_screen,twincobr_flip_screen,
+			xpos,ypos,
+			&Machine->visible_area,TRANSPARENCY_PEN,0);
+	}
+
+	/* draw the sprites in high priority */
+	twincobr_draw_sprites (bitmap, 0x0c00);
 }
 
 void toaplan0_eof_callback(void)

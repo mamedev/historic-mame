@@ -251,9 +251,9 @@ static struct GfxLayout sprites =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0x00000, &tiles,       0,  16 }, /* Dynamically modified */
-	{ REGION_GFX1, 0x00000, &sprites,   256,  16 }, /* Dynamically modified */
-	{ REGION_GFX1, 0x00000, &tiles  ,     0,  16 }, /* Blank tile */
+	{ REGION_GFX1, 0, &tiles,       0,  16 }, /* Dynamically modified */
+	{ REGION_GFX1, 0, &sprites,   256,  16 }, /* Dynamically modified */
+	{ REGION_GFX1, 0, &tiles  ,   256,  16 }, /* Blank tile */
 	{ -1 } /* end of array */
 };
 
@@ -307,10 +307,10 @@ static const struct MachineDriver machine_driver_battlera =
 	32*8, 32*8, { 0*8, 32*8-1, 1*8, 30*8-1 },
 
 	gfxdecodeinfo,
-	512, 512,
+	512, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	battlera_vh_start,
 	battlera_vh_stop,
@@ -376,5 +376,5 @@ ROM_END
 
 /******************************************************************************/
 
-GAMEX( 1988, battlera, 0,        battlera, battlera,  0,   ROT0, "Data East Corporation", "Battle Rangers (World)", GAME_IMPERFECT_SOUND )
-GAMEX( 1988, bldwolf,  battlera, battlera, battlera,  0,   ROT0, "Data East USA", "Bloody Wolf (US)", GAME_IMPERFECT_SOUND )
+GAMEX( 1988, battlera, 0,        battlera, battlera,  0,   ROT0, "Data East Corporation", "Battle Rangers (World)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1988, bldwolf,  battlera, battlera, battlera,  0,   ROT0, "Data East USA", "Bloody Wolf (US)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )

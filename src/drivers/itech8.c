@@ -1474,7 +1474,7 @@ static struct MachineDriver machine_driver_##NAME =								\
 	256,256,																	\
 	0,																			\
 																				\
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,	\
+	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK,	\
 	0,																			\
 	itech8_vh_start,															\
 	itech8_vh_stop,																\
@@ -1535,7 +1535,7 @@ static struct MachineDriver machine_driver_slikshot =
 	257,257,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
 	slikshot_vh_start,
 	itech8_vh_stop,
@@ -1585,7 +1585,7 @@ static struct MachineDriver machine_driver_sstrike =
 	257,257,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
 	slikshot_vh_start,
 	itech8_vh_stop,

@@ -527,9 +527,6 @@ void combasc_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh )
 	tilemap_set_scrolly(tilemap[0],0,K007121_ctrlram[0][0x02]);
 	tilemap_set_scrolly(tilemap[1],0,K007121_ctrlram[1][0x02]);
 
-	tilemap_update(ALL_TILEMAPS);
-	palette_recalc();
-
 	fillbitmap(priority_bitmap,0,NULL);
 
 	if (priority == 0)
@@ -665,9 +662,6 @@ void combascb_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh )
 	}
 	tilemap_set_scrolly( tilemap[0],0, combasc_io_ram[0x000] );
 	tilemap_set_scrolly( tilemap[1],0, combasc_io_ram[0x020] );
-
-	tilemap_update( ALL_TILEMAPS );
-	palette_recalc();
 
 	if (priority == 0)
 	{

@@ -60,7 +60,7 @@ void mrdo_vh_convert_color_prom(unsigned char *palette, unsigned short *colortab
 	const int pull = 200;
 	float pot[16];
 	int weight[16];
-	const float potadjust = 0.2;	/* hack to reduce brightness */
+	const float potadjust = 0.2;	/* diode voltage drop */
 
 	for (i = 15;i >= 0;i--)
 	{
@@ -240,8 +240,6 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 
 void mrdo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	tilemap_update(ALL_TILEMAPS);
-
 	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 	tilemap_draw(bitmap,bg_tilemap,0,0);
 	tilemap_draw(bitmap,fg_tilemap,0,0);

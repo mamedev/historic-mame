@@ -1470,10 +1470,10 @@ static struct MachineDriver machine_driver_##_name_ = \
 	/* video hardware */ \
 	1024, 512, { 0, 638-1, 255, 495-1 }, \
 	0, \
-	256, 256, \
+	256, 0, \
 	0, \
 \
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_PIXEL_ASPECT_RATIO_1_2, \
+	VIDEO_TYPE_RASTER  | VIDEO_PIXEL_ASPECT_RATIO_1_2, \
 	0, \
 	pstadium_vh_start, \
 	pstadium_vh_stop, \
@@ -1512,10 +1512,10 @@ static struct MachineDriver machine_driver_##_name_ = \
 	/* video hardware */ \
 	1024, 512, { 0, 638-1, 255, 495-1 }, \
 	0, \
-	256, 256, \
+	256, 0, \
 	0, \
 \
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_PIXEL_ASPECT_RATIO_1_2, \
+	VIDEO_TYPE_RASTER  | VIDEO_PIXEL_ASPECT_RATIO_1_2, \
 	0, \
 	pstadium_vh_start, \
 	pstadium_vh_stop, \
@@ -1554,10 +1554,10 @@ static struct MachineDriver machine_driver_##_name_ = \
 	/* video hardware */ \
 	1024, 512, { 0, 638-1, 255, 495-1 }, \
 	0, \
-	256, 256, \
+	256, 0, \
 	0, \
 \
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_PIXEL_ASPECT_RATIO_1_2, \
+	VIDEO_TYPE_RASTER  | VIDEO_PIXEL_ASPECT_RATIO_1_2, \
 	0, \
 	pstadium_vh_start, \
 	pstadium_vh_stop, \
@@ -2008,18 +2008,18 @@ ROM_END
 
 
 //     YEAR,     NAME,   PARENT,  MACHINE,    INPUT,     INIT, MONITOR, COMPANY, FULLNAME, FLAGS
-GAMEX( 1990, pstadium,        0, pstadium, pstadium, pstadium,    ROT0, "Nichibutsu", "Mahjong Panic Stadium (Japan)", 0 )
-GAMEX( 1989, triplew1,        0, triplew1, triplew1, triplew1,    ROT0, "Nichibutsu", "Mahjong Triple Wars (Japan)", 0 )
-GAMEX( 1990, triplew2,        0, triplew2, triplew1, triplew2,    ROT0, "Nichibutsu", "Mahjong Triple Wars 2 (Japan)", 0 )
-GAMEX( 1990, ntopstar,        0, ntopstar, ntopstar, ntopstar,    ROT0, "Nichibutsu", "Mahjong Nerae! Top Star (Japan)", 0 )
-GAMEX( 1991, mjlstory,        0, mjlstory, mjlstory, mjlstory,    ROT0, "Nichibutsu", "Mahjong Jikken Love Story (Japan)", 0 )
-GAMEX( 1991,  vanilla,        0,  vanilla,  vanilla,  vanilla,    ROT0, "Nichibutsu", "Mahjong Vanilla Syndrome (Japan)", 0 )
-GAMEX( 1991, finalbny,  vanilla, finalbny, finalbny, finalbny,    ROT0, "Nichibutsu", "Mahjong Final Bunny [BET] (Japan)", 0 )
-GAMEX( 1991, qmhayaku,        0, qmhayaku, qmhayaku, qmhayaku,    ROT0, "Nichibutsu", "Quiz-Mahjong Hayaku Yatteyo! (Japan)", 0 )
-GAMEX( 1989,  galkoku,        0,  galkoku,  galkoku,  galkoku,    ROT0, "Nichibutsu/T.R.TEC", "Mahjong Gal no Kokuhaku (Japan)", 0 )
-GAMEX( 1989,  hyouban,  galkoku,  hyouban,  hyouban,  hyouban,    ROT0, "Nichibutsu/T.R.TEC", "Mahjong Hyouban Musume [BET] (Japan)", 0 )
-GAMEX( 1989, galkaika,        0, galkaika, galkaika, galkaika,    ROT0, "Nichibutsu/T.R.TEC", "Mahjong Gal no Kaika (Japan)", 0 )
-GAMEX( 1989, tokyogal,        0, tokyogal, tokyogal, tokyogal,    ROT0, "Nichibutsu", "Tokyo Gal Zukan (Japan)", 0 )
-GAMEX( 1989, tokimbsj, tokyogal, tokimbsj, tokimbsj, tokimbsj,    ROT0, "Nichibutsu", "Tokimeki Bishoujo [BET] (Japan)", 0 )
-GAMEX( 1989, mcontest,        0, mcontest, mcontest, mcontest,    ROT0, "Nichibutsu", "Miss Mahjong Contest (Japan)", 0 )
-GAMEX( 1991,   av2mj1,        0,   av2mj1,   av2mj1,   av2mj1,    ROT0, "MIKI SYOUJI/AV JAPAN", "AV2Mahjong No.1 Bay Bridge no Seijo", GAME_NOT_WORKING )
+GAME( 1990, pstadium,        0, pstadium, pstadium, pstadium,    ROT0, "Nichibutsu", "Mahjong Panic Stadium (Japan)" )
+GAME( 1989, triplew1,        0, triplew1, triplew1, triplew1,    ROT0, "Nichibutsu", "Mahjong Triple Wars (Japan)" )
+GAME( 1990, triplew2,        0, triplew2, triplew1, triplew2,    ROT0, "Nichibutsu", "Mahjong Triple Wars 2 (Japan)" )
+GAME( 1990, ntopstar,        0, ntopstar, ntopstar, ntopstar,    ROT0, "Nichibutsu", "Mahjong Nerae! Top Star (Japan)" )
+GAME( 1991, mjlstory,        0, mjlstory, mjlstory, mjlstory,    ROT0, "Nichibutsu", "Mahjong Jikken Love Story (Japan)" )
+GAME( 1991,  vanilla,        0,  vanilla,  vanilla,  vanilla,    ROT0, "Nichibutsu", "Mahjong Vanilla Syndrome (Japan)" )
+GAME( 1991, finalbny,  vanilla, finalbny, finalbny, finalbny,    ROT0, "Nichibutsu", "Mahjong Final Bunny [BET] (Japan)" )
+GAME( 1991, qmhayaku,        0, qmhayaku, qmhayaku, qmhayaku,    ROT0, "Nichibutsu", "Quiz-Mahjong Hayaku Yatteyo! (Japan)" )
+GAME( 1989,  galkoku,        0,  galkoku,  galkoku,  galkoku,    ROT0, "Nichibutsu/T.R.TEC", "Mahjong Gal no Kokuhaku (Japan)" )
+GAME( 1989,  hyouban,  galkoku,  hyouban,  hyouban,  hyouban,    ROT0, "Nichibutsu/T.R.TEC", "Mahjong Hyouban Musume [BET] (Japan)" )
+GAME( 1989, galkaika,        0, galkaika, galkaika, galkaika,    ROT0, "Nichibutsu/T.R.TEC", "Mahjong Gal no Kaika (Japan)" )
+GAME( 1989, tokyogal,        0, tokyogal, tokyogal, tokyogal,    ROT0, "Nichibutsu", "Tokyo Gal Zukan (Japan)" )
+GAME( 1989, tokimbsj, tokyogal, tokimbsj, tokimbsj, tokimbsj,    ROT0, "Nichibutsu", "Tokimeki Bishoujo [BET] (Japan)" )
+GAME( 1989, mcontest,        0, mcontest, mcontest, mcontest,    ROT0, "Nichibutsu", "Miss Mahjong Contest (Japan)" )
+GAMEX(1991,   av2mj1,        0,   av2mj1,   av2mj1,   av2mj1,    ROT0, "MIKI SYOUJI/AV JAPAN", "AV2Mahjong No.1 Bay Bridge no Seijo", GAME_NOT_WORKING )

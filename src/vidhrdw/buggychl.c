@@ -171,7 +171,7 @@ static void draw_bg(struct osd_bitmap *bitmap)
 	for (offs = 0;offs < 256;offs++)
 		scroll[offs] = -buggychl_scrollh[offs];
 
-	copyscrollbitmap(bitmap,tmpbitmap2,256,scroll,0,0,&Machine->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
+	copyscrollbitmap(bitmap,tmpbitmap2,256,scroll,0,0,&Machine->visible_area,TRANSPARENCY_COLOR,32);
 }
 
 
@@ -278,15 +278,10 @@ void buggychl_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	int code;
 
 
-	palette_used_colors[2*16] = PALETTE_COLOR_TRANSPARENT;
-
-	if (palette_recalc())
-		memset(dirtybuffer,1,videoram_size);
-
 	if (sky_on)
 		draw_sky(bitmap);
 	else
-		fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
+		fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 
 	/* decode modified characters */
 	for (code = 0;code < 256;code++)

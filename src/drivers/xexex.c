@@ -377,10 +377,10 @@ static const struct MachineDriver machine_driver_xexex =
 	64*8, 32*8, { 8*8, (64-8)*8-1, 0*8, 32*8-1 },
 	//	64*8, 64*8, { 0*8, (64-0)*8-1, 0*8, 64*8-1 },
 	0,	/* gfx decoded by konamiic.c */
-	2048, 2048,
+	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_RGB_DIRECT,
+	VIDEO_TYPE_RASTER  | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_RGB_DIRECT,
 	0,
 	xexex_vh_start,
 	xexex_vh_stop,

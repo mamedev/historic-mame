@@ -64,7 +64,8 @@ Credits (in alphabetical order)
 
 extern void snk_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 extern void aso_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-extern void ikari_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+extern void snk_3bpp_shadow_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+extern void snk_4bpp_shadow_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 
 extern int snk_vh_start( void );
 extern void snk_vh_stop( void );
@@ -74,7 +75,7 @@ extern void ikari_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 extern void tdfever_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 extern void ftsoccer_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 extern void gwar_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-extern void psychos_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+// extern void psychos_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh); /* not needed? */
 
 /*********************************************************************/
 
@@ -915,9 +916,9 @@ static const struct MachineDriver machine_driver_ikari =
 
 	ikari_gfxdecodeinfo,
 	1024,1024,
-	ikari_vh_convert_color_prom,
+	snk_3bpp_shadow_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER,
+	VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS,
 	0,
 	snk_vh_start,
 	snk_vh_stop,
@@ -965,9 +966,9 @@ static const struct MachineDriver machine_driver_victroad =
 
 	ikari_gfxdecodeinfo,
 	1024,1024,
-	ikari_vh_convert_color_prom,
+	snk_3bpp_shadow_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER,
+	VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS,
 	0,
 	snk_vh_start,
 	snk_vh_stop,
@@ -1212,9 +1213,9 @@ static const struct MachineDriver machine_driver_tdfever =
 	384,240, { 0, 383, 0, 239-16 },
 	tdfever_gfxdecodeinfo,
 	1024,1024,
-	snk_vh_convert_color_prom,
+	snk_4bpp_shadow_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER,
+	VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS,
 	0,
 	snk_vh_start,
 	snk_vh_stop,
@@ -1265,9 +1266,9 @@ static const struct MachineDriver machine_driver_ftsoccer =
 	384,240, { 0, 383, 0, 239-16 },
 	tdfever_gfxdecodeinfo,
 	1024,1024,
-	snk_vh_convert_color_prom,
+	snk_4bpp_shadow_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER,
+	VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS,
 	0,
 	snk_vh_start,
 	snk_vh_stop,
@@ -3540,27 +3541,27 @@ static void init_psychos( void ){
 }
 
 /*          rom       parent    machine   inp       init */
-GAMEX( 1985, tnk3,     0,        tnk3,     tnk3,     tnk3,     ROT270,       "SNK", "TNK III (US?)", GAME_NO_COCKTAIL )
-GAMEX( 1985, tnk3j,    tnk3,     tnk3,     tnk3,     tnk3,     ROT270,       "SNK", "Tank (Japan)", GAME_NO_COCKTAIL )
-GAMEX( 1986, athena,   0,        athena,   athena,   athena,   ROT0_16BIT,   "SNK", "Athena", GAME_NO_COCKTAIL )
-GAMEX( 1988, fitegolf, 0,        athena,   fitegolf, fitegolf, ROT0,         "SNK", "Fighting Golf", GAME_NO_COCKTAIL )
-GAMEX( 1986, ikari,    0,        ikari,    ikari,    ikari,    ROT270,       "SNK", "Ikari Warriors (US)", GAME_NO_COCKTAIL )
-GAMEX( 1986, ikarijp,  ikari,    ikari,    ikarijp,  ikarijp,  ROT270,       "SNK", "Ikari Warriors (Japan)", GAME_NO_COCKTAIL )
-GAMEX( 1986, ikarijpb, ikari,    ikari,    ikarijp,  ikarijpb, ROT270,       "bootleg", "Ikari Warriors (Japan bootleg)", GAME_NO_COCKTAIL )
-GAMEX( 1986, victroad, 0,        victroad, victroad, victroad, ROT270,       "SNK", "Victory Road", GAME_NO_COCKTAIL )
-GAMEX( 1986, dogosoke, victroad, victroad, victroad, dogosoke, ROT270,       "SNK", "Dogou Souken", GAME_NO_COCKTAIL )
-GAMEX( 1987, gwar,     0,        gwar,     gwar,     gwar,     ROT270,       "SNK", "Guerrilla War (US)", GAME_NO_COCKTAIL )
-GAMEX( 1987, gwarj,    gwar,     gwar,     gwar,     gwar,     ROT270,       "SNK", "Guevara (Japan)", GAME_NO_COCKTAIL )
-GAMEX( 1987, gwara,    gwar,     gwar,     gwar,     gwara,    ROT270,       "SNK", "Guerrilla War (Version 1)", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
-GAMEX( 1987, gwarb,    gwar,     gwar,     gwar,     gwar,     ROT270,       "bootleg", "Guerrilla War (bootleg)", GAME_NO_COCKTAIL )
-GAMEX( 1987, bermudat, 0,        bermudat, bermudat, bermudat, ROT270_16BIT, "SNK", "Bermuda Triangle (US)", GAME_NO_COCKTAIL )
-GAMEX( 1987, bermudaj, bermudat, bermudat, bermudat, bermudat, ROT270_16BIT, "SNK", "Bermuda Triangle (Japan)", GAME_NO_COCKTAIL )
-GAMEX( 1987, bermudaa, bermudat, bermudat, bermudaa, worldwar, ROT270_16BIT, "SNK", "Bermuda Triangle (US early version)", GAME_NO_COCKTAIL )
-GAMEX( 1987, worldwar, bermudat, bermudat, worldwar, worldwar, ROT270_16BIT, "SNK", "World Wars (Japan)", GAME_NO_COCKTAIL )
-GAMEX( 1987, psychos,  0,        psychos,  psychos,  psychos,  ROT0_16BIT,   "SNK", "Psycho Soldier (US)", GAME_IMPERFECT_SOUND | GAME_NO_COCKTAIL )
-GAMEX( 1987, psychosj, psychos,  psychos,  psychos,  psychos,  ROT0_16BIT,   "SNK", "Psycho Soldier (Japan)", GAME_IMPERFECT_SOUND | GAME_NO_COCKTAIL )
-GAMEX( 1988, chopper,  0,        chopper1, legofair, chopper,  ROT270_16BIT, "SNK", "Chopper I", GAME_IMPERFECT_SOUND | GAME_NO_COCKTAIL )
-GAMEX( 1988, legofair, chopper,  chopper1, legofair, chopper,  ROT270_16BIT, "SNK", "Koukuu Kihei Monogatari - The Legend of Air Cavalry", GAME_IMPERFECT_SOUND | GAME_NO_COCKTAIL )
-GAMEX( 1987, tdfever,  0,        tdfever,  tdfever,  tdfever,  ROT270,       "SNK", "TouchDown Fever", GAME_NO_COCKTAIL )
-GAMEX( 1987, tdfeverj, tdfever,  tdfever,  tdfever,  tdfever,  ROT270,       "SNK", "TouchDown Fever (Japan)", GAME_NO_COCKTAIL )
-GAMEX( 1988, ftsoccer, 0,        ftsoccer, ftsoccer, ftsoccer, ROT0_16BIT,   "SNK", "Fighting Soccer", GAME_NO_COCKTAIL )
+GAMEX( 1985, tnk3,     0,        tnk3,     tnk3,     tnk3,     ROT270, "SNK", "TNK III (US?)", GAME_NO_COCKTAIL )
+GAMEX( 1985, tnk3j,    tnk3,     tnk3,     tnk3,     tnk3,     ROT270, "SNK", "Tank (Japan)", GAME_NO_COCKTAIL )
+GAMEX( 1986, athena,   0,        athena,   athena,   athena,   ROT0,   "SNK", "Athena", GAME_NO_COCKTAIL )
+GAMEX( 1988, fitegolf, 0,        athena,   fitegolf, fitegolf, ROT0,   "SNK", "Fighting Golf", GAME_NO_COCKTAIL )
+GAMEX( 1986, ikari,    0,        ikari,    ikari,    ikari,    ROT270, "SNK", "Ikari Warriors (US)", GAME_NO_COCKTAIL )
+GAMEX( 1986, ikarijp,  ikari,    ikari,    ikarijp,  ikarijp,  ROT270, "SNK", "Ikari Warriors (Japan)", GAME_NO_COCKTAIL )
+GAMEX( 1986, ikarijpb, ikari,    ikari,    ikarijp,  ikarijpb, ROT270, "bootleg", "Ikari Warriors (Japan bootleg)", GAME_NO_COCKTAIL )
+GAMEX( 1986, victroad, 0,        victroad, victroad, victroad, ROT270, "SNK", "Victory Road", GAME_NO_COCKTAIL )
+GAMEX( 1986, dogosoke, victroad, victroad, victroad, dogosoke, ROT270, "SNK", "Dogou Souken", GAME_NO_COCKTAIL )
+GAMEX( 1987, gwar,     0,        gwar,     gwar,     gwar,     ROT270, "SNK", "Guerrilla War (US)", GAME_NO_COCKTAIL )
+GAMEX( 1987, gwarj,    gwar,     gwar,     gwar,     gwar,     ROT270, "SNK", "Guevara (Japan)", GAME_NO_COCKTAIL )
+GAMEX( 1987, gwara,    gwar,     gwar,     gwar,     gwara,    ROT270, "SNK", "Guerrilla War (Version 1)", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
+GAMEX( 1987, gwarb,    gwar,     gwar,     gwar,     gwar,     ROT270, "bootleg", "Guerrilla War (bootleg)", GAME_NO_COCKTAIL )
+GAMEX( 1987, bermudat, 0,        bermudat, bermudat, bermudat, ROT270, "SNK", "Bermuda Triangle (US)", GAME_NO_COCKTAIL )
+GAMEX( 1987, bermudaj, bermudat, bermudat, bermudat, bermudat, ROT270, "SNK", "Bermuda Triangle (Japan)", GAME_NO_COCKTAIL )
+GAMEX( 1987, bermudaa, bermudat, bermudat, bermudaa, worldwar, ROT270, "SNK", "Bermuda Triangle (US early version)", GAME_NO_COCKTAIL )
+GAMEX( 1987, worldwar, bermudat, bermudat, worldwar, worldwar, ROT270, "SNK", "World Wars (Japan)", GAME_NO_COCKTAIL )
+GAMEX( 1987, psychos,  0,        psychos,  psychos,  psychos,  ROT0,   "SNK", "Psycho Soldier (US)", GAME_IMPERFECT_SOUND | GAME_NO_COCKTAIL )
+GAMEX( 1987, psychosj, psychos,  psychos,  psychos,  psychos,  ROT0,   "SNK", "Psycho Soldier (Japan)", GAME_IMPERFECT_SOUND | GAME_NO_COCKTAIL )
+GAMEX( 1988, chopper,  0,        chopper1, legofair, chopper,  ROT270, "SNK", "Chopper I", GAME_IMPERFECT_SOUND | GAME_NO_COCKTAIL )
+GAMEX( 1988, legofair, chopper,  chopper1, legofair, chopper,  ROT270, "SNK", "Koukuu Kihei Monogatari - The Legend of Air Cavalry", GAME_IMPERFECT_SOUND | GAME_NO_COCKTAIL )
+GAMEX( 1987, tdfever,  0,        tdfever,  tdfever,  tdfever,  ROT270, "SNK", "TouchDown Fever", GAME_NO_COCKTAIL )
+GAMEX( 1987, tdfeverj, tdfever,  tdfever,  tdfever,  tdfever,  ROT270, "SNK", "TouchDown Fever (Japan)", GAME_NO_COCKTAIL )
+GAMEX( 1988, ftsoccer, 0,        ftsoccer, ftsoccer, ftsoccer, ROT0,   "SNK", "Fighting Soccer", GAME_NO_COCKTAIL )

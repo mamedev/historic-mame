@@ -565,10 +565,10 @@ static const struct MachineDriver machine_driver_cabal =
 	256, 256, { 0*8, 32*8-1, 2*8, 30*8-1 },
 
 	cabal_gfxdecodeinfo,
-	1024,1024,
+	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	cabal_vh_start,
 	0,
@@ -608,10 +608,10 @@ static const struct MachineDriver machine_driver_cabalbl =
 	256, 256, { 0*8, 32*8-1, 2*8, 30*8-1 },
 
 	cabal_gfxdecodeinfo,
-	1024,1024,
+	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	cabal_vh_start,
 	0,

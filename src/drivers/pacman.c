@@ -142,14 +142,8 @@ extern void shootbul_decode(void);
 void theglobp_init_machine(void);
 READ_HANDLER( theglobp_decrypt_rom );
 
-extern void mspacman_decode(void);
+void mspacman_init_machine(void);
 WRITE_HANDLER( mspacman_activate_rom );
-READ_HANDLER( mspacman_deactivate_rom1 );
-READ_HANDLER( mspacman_deactivate_rom2 );
-READ_HANDLER( mspacman_deactivate_rom3 );
-READ_HANDLER( mspacman_deactivate_rom4 );
-READ_HANDLER( mspacman_deactivate_rom5 );
-READ_HANDLER( mspacman_deactivate_rom6 );
 
 
 static int speedcheat = 0;	/* a well known hack allows to make Pac Man run at four times */
@@ -194,6 +188,29 @@ static int pacman_interrupt(void)
 	return interrupt();
 }
 
+static int mspacman_interrupt(void)
+{
+	unsigned char *RAM = memory_region(REGION_CPU1);
+
+	/* speed up cheat */
+	if (speedcheat)
+	{
+		if (readinputport(4) & 1)	/* check status of the fake dip switch */
+		{
+			/* activate the cheat */
+			RAM[0x1180b] = 0x01;
+			RAM[0x11ffd] = 0xbd;
+		}
+		else
+		{
+			/* remove the cheat */
+			RAM[0x1180b] = 0xbe;
+			RAM[0x11ffd] = 0x00;
+		}
+	}
+
+	return interrupt();
+}
 
 static WRITE_HANDLER( pacman_leds_w )
 {
@@ -279,11 +296,6 @@ MEMORY_END
 
 
 static MEMORY_READ_START( mspacman_readmem )
-	{ 0x0038, 0x003f, mspacman_deactivate_rom1 },
-	{ 0x03b0, 0x03b7, mspacman_deactivate_rom2 },
-	{ 0x1600, 0x1607, mspacman_deactivate_rom3 },
-	{ 0x2120, 0x2127, mspacman_deactivate_rom4 },
-	{ 0x3ff0, 0x3ff7, mspacman_deactivate_rom5 },
 	{ 0x0000, 0x3fff, MRA_BANK1 },
 	{ 0x4000, 0x47ff, MRA_RAM },	/* video and color RAM */
 	{ 0x4c00, 0x4fff, MRA_RAM },	/* including sprite codes at 4ff0-4fff */
@@ -291,8 +303,7 @@ static MEMORY_READ_START( mspacman_readmem )
 	{ 0x5040, 0x507f, input_port_1_r },	/* IN1 */
 	{ 0x5080, 0x50bf, input_port_2_r },	/* DSW1 */
 	{ 0x50c0, 0x50ff, input_port_3_r },	/* DSW2 */
-	{ 0x8000, 0x8007, mspacman_deactivate_rom6 },
-	{ 0x8000, 0xbfff, MRA_BANK1 },	/* Ms. Pac-Man / Ponpoko only */
+	{ 0x8000, 0xbfff, MRA_BANK1 },
 MEMORY_END
 
 static MEMORY_WRITE_START( mspacman_writemem )
@@ -302,7 +313,6 @@ static MEMORY_WRITE_START( mspacman_writemem )
 	{ 0x4c00, 0x4fef, MWA_RAM },
 	{ 0x4ff0, 0x4fff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x5000, 0x5000, interrupt_enable_w },
-
 	{ 0x5001, 0x5001, pengo_sound_enable_w },
 	{ 0x5002, 0x5002, MWA_NOP },
 	{ 0x5003, 0x5003, pengo_flipscreen_w },
@@ -1372,12 +1382,12 @@ static const struct MachineDriver machine_driver_mspacman =
 			CPU_Z80,
 			18432000/6,	/* 3.072 Mhz */
 			mspacman_readmem,mspacman_writemem,0,writeport,
-			pacman_interrupt,1
+			mspacman_interrupt,1
 		}
 	},
 	60.606060, 2500,	/* frames per second, vblank duration */
 	1,	/* single CPU, no need for interleaving */
-	pacman_init_machine,
+	mspacman_init_machine,
 
 	/* video hardware */
 	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },
@@ -1555,7 +1565,7 @@ static const struct MachineDriver machine_driver_alibaba =
 
 ***************************************************************************/
 
-ROM_START( pacman )
+ROM_START( puckman )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "namcopac.6e",  0x0000, 0x1000, 0xfee263b3 )
 	ROM_LOAD( "namcopac.6f",  0x1000, 0x1000, 0x39d1fc83 )
@@ -1577,7 +1587,7 @@ ROM_START( pacman )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
-ROM_START( npacmod )
+ROM_START( puckmod )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "namcopac.6e",  0x0000, 0x1000, 0xfee263b3 )
 	ROM_LOAD( "namcopac.6f",  0x1000, 0x1000, 0x39d1fc83 )
@@ -1599,7 +1609,7 @@ ROM_START( npacmod )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
-ROM_START( pacmanjp )
+ROM_START( puckmana )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "pacman.6e",    0x0000, 0x1000, 0xc1e6ab10 )
 	ROM_LOAD( "pacman.6f",    0x1000, 0x1000, 0x1a6fb2d4 )
@@ -1623,7 +1633,7 @@ ROM_START( pacmanjp )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
-ROM_START( pacmanm )
+ROM_START( pacman )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "pacman.6e",    0x0000, 0x1000, 0xc1e6ab10 )
 	ROM_LOAD( "pacman.6f",    0x1000, 0x1000, 0x1a6fb2d4 )
@@ -1713,7 +1723,7 @@ ROM_START( hangly2 )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
-ROM_START( puckman )
+ROM_START( newpuckx )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "puckman.6e",   0x0000, 0x1000, 0xa8ae23c5 )
 	ROM_LOAD( "pacman.6f",    0x1000, 0x1000, 0x1a6fb2d4 )
@@ -2563,11 +2573,6 @@ static void init_pacplus(void)
 	pacplus_decode();
 }
 
-static void init_mspacman(void)
-{
-	mspacman_decode();
-}
-
 static void init_jumpshot(void)
 {
 	jumpshot_decode();
@@ -2581,20 +2586,20 @@ static void init_shootbul(void)
 
 
 /*          rom       parent    machine   inp       init */
-GAME( 1980, pacman,   0,        pacman,   pacman,   0,        ROT90,  "Namco", "PuckMan (Japan set 1)" )
-GAME( 1980, pacmanjp, pacman,   pacman,   pacman,   0,        ROT90,  "Namco", "PuckMan (Japan set 2)" )
-GAME( 1980, pacmanm,  pacman,   pacman,   pacman,   0,        ROT90,  "[Namco] (Midway license)", "Pac-Man (Midway)" )
-GAME( 1981, npacmod,  pacman,   pacman,   pacman,   0,        ROT90,  "Namco", "PuckMan (harder?)" )
-GAME( 1981, pacmod,   pacman,   pacman,   pacman,   0,        ROT90,  "[Namco] (Midway license)", "Pac-Man (Midway, harder)" )
-GAME( 1981, hangly,   pacman,   pacman,   pacman,   0,        ROT90,  "hack", "Hangly-Man (set 1)" )
-GAME( 1981, hangly2,  pacman,   pacman,   pacman,   0,        ROT90,  "hack", "Hangly-Man (set 2)" )
-GAME( 1980, puckman,  pacman,   pacman,   pacman,   0,        ROT90,  "hack", "New Puck-X" )
-GAME( 1981, pacheart, pacman,   pacman,   pacman,   0,        ROT90,  "hack", "Pac-Man (Hearts)" )
-GAME( 1981, piranha,  pacman,   pacman,   mspacman, 0,        ROT90,  "hack", "Piranha" )
+GAME( 1980, puckman,  0,        pacman,   pacman,   0,        ROT90,  "Namco", "PuckMan (Japan set 1)" )
+GAME( 1980, puckmana, puckman,  pacman,   pacman,   0,        ROT90,  "Namco", "PuckMan (Japan set 2)" )
+GAME( 1980, pacman,   puckman,  pacman,   pacman,   0,        ROT90,  "[Namco] (Midway license)", "Pac-Man (Midway)" )
+GAME( 1981, puckmod,  puckman,  pacman,   pacman,   0,        ROT90,  "Namco", "PuckMan (harder?)" )
+GAME( 1981, pacmod,   puckman,  pacman,   pacman,   0,        ROT90,  "[Namco] (Midway license)", "Pac-Man (Midway, harder)" )
+GAME( 1981, hangly,   puckman,  pacman,   pacman,   0,        ROT90,  "hack", "Hangly-Man (set 1)" )
+GAME( 1981, hangly2,  puckman,  pacman,   pacman,   0,        ROT90,  "hack", "Hangly-Man (set 2)" )
+GAME( 1980, newpuckx, puckman,  pacman,   pacman,   0,        ROT90,  "hack", "New Puck-X" )
+GAME( 1981, pacheart, puckman,  pacman,   pacman,   0,        ROT90,  "hack", "Pac-Man (Hearts)" )
+GAME( 1981, piranha,  puckman,  pacman,   mspacman, 0,        ROT90,  "hack", "Piranha" )
 GAME( 1982, pacplus,  0,        pacman,   pacman,   pacplus,  ROT90,  "[Namco] (Midway license)", "Pac-Man Plus" )
-GAME( 1981, mspacman, 0,        mspacman, mspacman, mspacman, ROT90,  "Midway", "Ms. Pac-Man" )
+GAME( 1981, mspacman, 0,        mspacman, mspacman, 0,        ROT90,  "Midway", "Ms. Pac-Man" )
 GAME( 1981, mspacmab, mspacman, pacman,   mspacman, 0,        ROT90,  "bootleg", "Ms. Pac-Man (bootleg)" )
-GAME( 1981, mspacmat, mspacman, mspacman, mspacman, mspacman, ROT90,  "hack", "Ms. Pac Attack" )
+GAME( 1981, mspacmat, mspacman, mspacman, mspacman, 0,        ROT90,  "hack", "Ms. Pac Attack" )
 GAME( 1981, mspacpls, mspacman, pacman,   mspacman, 0,        ROT90,  "hack", "Ms. Pac-Man Plus" )
 GAME( 1981, pacgal,   mspacman, pacman,   mspacman, 0,        ROT90,  "hack", "Pac-Gal" )
 GAME( 1981, crush,    0,        pacman,   maketrax, maketrax, ROT90,  "Kural Samno Electric", "Crush Roller (Kural Samno)" )

@@ -30,8 +30,6 @@ struct ataripf_gfxelement
 {
 	struct GfxElement		element;
 	int						initialized;
-	struct ataripf_usage *	usage;
-	int						usage_words;
 	int						colorshift;
 };
 
@@ -86,7 +84,6 @@ struct ataripf_data
 	void *				process_param;		/* (during processing) the callback parameter */
 
 	struct ataripf_gfxelement gfxelement[MAX_GFX_ELEMENTS]; /* graphics element copies */
-	int 				max_usage_words;	/* maximum words of usage */
 };
 
 
@@ -146,8 +143,6 @@ static struct ataripf_overrender_data overrender_data;
 ##########################################################################*/
 
 static void pf_process(struct ataripf_data *pf, pf_callback callback, void *param, const struct rectangle *clip);
-static void pf_usage_callback_1(struct ataripf_data *pf, const struct ataripf_state *state);
-static void pf_usage_callback_2(struct ataripf_data *pf, const struct ataripf_state *state);
 static void pf_render_callback(struct ataripf_data *pf, const struct ataripf_state *state);
 static void pf_overrender_callback(struct ataripf_data *pf, const struct ataripf_state *state);
 static void pf_eof_callback(int map);
@@ -404,7 +399,6 @@ int ataripf_init(int map, const struct ataripf_desc *desc)
 
 	/* compute the extended usage map */
 	pf_init_gfx(pf, desc->gfxindex);
-	VERIFYRETFREE(pf->gfxelement[desc->gfxindex].initialized, "ataripf_init: out of memory for extra usage map", 0)
 
 	/* allocate the state list */
 	pf->statelist = malloc(pf->bitmapheight * sizeof(pf->statelist[0]));
@@ -473,12 +467,7 @@ void ataripf_free(void)
 
 		/* free the extended usage maps */
 		for (i = 0; i < MAX_GFX_ELEMENTS; i++)
-			if (pf->gfxelement[i].usage)
-			{
-				free(pf->gfxelement[i].usage);
-				pf->gfxelement[i].usage = NULL;
-				pf->gfxelement[i].initialized = 0;
-			}
+			pf->gfxelement[i].initialized = 0;
 
 		pf->initialized = 0;
 	}
@@ -496,19 +485,6 @@ UINT32 *ataripf_get_lookup(int map, int *size)
 	if (size)
 		*size = round_to_powerof2(ataripf[map].lookupmask);
 	return ataripf[map].lookup;
-}
-
-
-/*---------------------------------------------------------------
-	ataripf_invalidate: Marks all tiles in the playfield
-	dirty. This must be called when the palette changes.
----------------------------------------------------------------*/
-
-void ataripf_invalidate(int map)
-{
-	struct ataripf_data *pf = &ataripf[map];
-	if (pf->initialized)
-		memset(pf->dirtymap, -1, sizeof(pf->dirtymap[0]) * pf->vramsize);
 }
 
 
@@ -553,55 +529,6 @@ void ataripf_overrender(int map, ataripf_overrender_cb callback, struct ataripf_
 
 		/* render via the standard render callback */
 		pf_process(pf, pf_overrender_callback, data->bitmap, &data->clip);
-	}
-}
-
-
-/*---------------------------------------------------------------
-	ataripf_mark_palette: Mark palette entries used in the
-	current playfield.
----------------------------------------------------------------*/
-
-void ataripf_mark_palette(int map)
-{
-	struct ataripf_data *pf = &ataripf[map];
-
-	if (pf->initialized)
-	{
-		UINT8 *used_colors = &palette_used_colors[pf->palettebase];
-		struct ataripf_usage marked_colors[256];
-		int i, j, k;
-
-		/* reset the marked colors */
-		memset(marked_colors, 0, pf->maxcolors * sizeof(marked_colors[0]));
-
-		/* mark the colors used */
-		if (pf->max_usage_words <= 1)
-			pf_process(pf, pf_usage_callback_1, marked_colors, NULL);
-		else if (pf->max_usage_words == 2)
-			pf_process(pf, pf_usage_callback_2, marked_colors, NULL);
-		else
-			logerror("ataripf_mark_palette: unsupported max_usage_words = %d\n", pf->max_usage_words);
-
-		/* loop over colors */
-		for (i = 0; i < pf->maxcolors; i++)
-		{
-			for (j = 0; j < pf->max_usage_words; j++)
-			{
-				UINT32 usage = marked_colors[i].bits[j];
-
-				/* if this entry was marked, loop over bits */
-				for (k = 0; usage; k++, usage >>= 1)
-					if (usage & 1)
-						used_colors[j * 32 + k] = (pf->transpens & (1 << k)) ? PALETTE_COLOR_TRANSPARENT : PALETTE_COLOR_USED;
-			}
-
-			/* advance by the color granularity of the gfx */
-			used_colors += ATARIPF_BASE_GRANULARITY;
-		}
-
-		/* reset the visitation map now that we're done */
-		memset(pf->visitmap, 0, sizeof(pf->visitmap[0]) * pf->vramsize);
 	}
 }
 
@@ -1074,11 +1001,6 @@ static void pf_process(struct ataripf_data *pf, pf_callback callback, void *para
 			if (!pf->gfxelement[gfxindex].initialized)
 			{
 				pf_init_gfx(pf, gfxindex);
-				if (!pf->gfxelement[gfxindex].initialized)
-				{
-					logerror("ataripf_init: out of memory for extra usage map\n");
-					exit(1);
-				}
 			}
 		}
 	}
@@ -1121,76 +1043,6 @@ static void pf_process(struct ataripf_data *pf, pf_callback callback, void *para
 
 
 /*---------------------------------------------------------------
-	pf_usage_callback_1: Internal processing callback that
-	marks pens used if the maximum word count is 1.
----------------------------------------------------------------*/
-
-static void pf_usage_callback_1(struct ataripf_data *pf, const struct ataripf_state *state)
-{
-	struct ataripf_usage *colormap = pf->process_param;
-	int x, y, bankbits = state->bankbits;
-
-	/* standard loop over tiles */
-	for (y = pf->process_tiles.min_y; y != pf->process_tiles.max_y; y = (y + 1) & pf->rowmask)
-		for (x = pf->process_tiles.min_x; x != pf->process_tiles.max_x; x = (x + 1) & pf->colmask)
-		{
-			int offs = (y << pf->rowshift) + (x << pf->colshift);
-			UINT32 data = pf->vram[offs] | bankbits;
-			int lookup = pf->lookup[(data >> ATARIPF_LOOKUP_DATABITS) & pf->lookupmask];
-			const struct ataripf_gfxelement *gfx = &pf->gfxelement[ATARIPF_LOOKUP_GFX(lookup)];
-			int code = ATARIPF_LOOKUP_CODE(lookup, data);
-			int color = ATARIPF_LOOKUP_COLOR(lookup);
-
-			/* mark the pens for this color entry */
-			colormap[color << gfx->colorshift].bits[0] |= gfx->usage[code].bits[0];
-
-			/* mark the pens for the corresponding shadow */
-			colormap[(color ^ pf->shadowxor) << gfx->colorshift].bits[0] |= gfx->usage[code].bits[0];
-
-			/* also mark unvisited tiles dirty */
-			if (!pf->visitmap[offs])
-				pf->dirtymap[offs] = -1;
-		}
-}
-
-
-/*---------------------------------------------------------------
-	pf_usage_callback_2: Internal processing callback that
-	marks pens used if the maximum word count is 2.
----------------------------------------------------------------*/
-
-static void pf_usage_callback_2(struct ataripf_data *pf, const struct ataripf_state *state)
-{
-	struct ataripf_usage *colormap = pf->process_param;
-	int x, y, bankbits = state->bankbits;
-
-	/* standard loop over tiles */
-	for (y = pf->process_tiles.min_y; y != pf->process_tiles.max_y; y = (y + 1) & pf->rowmask)
-		for (x = pf->process_tiles.min_x; x != pf->process_tiles.max_x; x = (x + 1) & pf->colmask)
-		{
-			int offs = (y << pf->rowshift) + (x << pf->colshift);
-			UINT32 data = pf->vram[offs] | bankbits;
-			int lookup = pf->lookup[(data >> ATARIPF_LOOKUP_DATABITS) & pf->lookupmask];
-			const struct ataripf_gfxelement *gfx = &pf->gfxelement[ATARIPF_LOOKUP_GFX(lookup)];
-			int code = ATARIPF_LOOKUP_CODE(lookup, data);
-			int color = ATARIPF_LOOKUP_COLOR(lookup);
-
-			/* mark the pens for this color entry */
-			colormap[color << gfx->colorshift].bits[0] |= gfx->usage[code].bits[0];
-			colormap[color << gfx->colorshift].bits[1] |= gfx->usage[code].bits[1];
-
-			/* mark the pens for the corresponding shadow */
-			colormap[(color ^ pf->shadowxor) << gfx->colorshift].bits[0] |= gfx->usage[code].bits[0];
-			colormap[(color ^ pf->shadowxor) << gfx->colorshift].bits[1] |= gfx->usage[code].bits[1];
-
-			/* also mark unvisited tiles dirty */
-			if (!pf->visitmap[offs])
-				pf->dirtymap[offs] = -1;
-		}
-}
-
-
-/*---------------------------------------------------------------
 	pf_render_callback: Internal processing callback that
 	renders to the backing bitmap and then copies the result
 	to the destination.
@@ -1217,12 +1069,27 @@ static void pf_render_callback(struct ataripf_data *pf, const struct ataripf_sta
 				int color = ATARIPF_LOOKUP_COLOR(lookup);
 				int hflip = ATARIPF_LOOKUP_HFLIP(lookup);
 				int vflip = ATARIPF_LOOKUP_VFLIP(lookup);
+				int saved_color_index = 0;
+				int saved_color = 0;
+
+				/* kludge alert: until we convert to tilemaps, we use pen 0xffff to indicate the transparent */
+				/* color; temporarily change the colortable entry so that the bitmap gets updated appropriately */
+				if (pf->transpens)
+				{
+					saved_color_index = pf->transpen + (color << (gfx->colorshift + ATARIPF_BASE_GRANULARITY_SHIFT));
+					saved_color = gfx->element.colortable[saved_color_index];
+					gfx->element.colortable[saved_color_index] = 0xffff;
+				}
 
 				/* draw and reset the dirty value */
 				drawgfx(pf->bitmap, &gfx->element, code, color << gfx->colorshift, hflip, vflip,
 						x << pf->tilexshift, y << pf->tileyshift,
 						0, TRANSPARENCY_NONE, 0);
 				pf->dirtymap[offs] = data;
+
+				/* restore the temporarily changed color */
+				if (pf->transpens)
+					gfx->element.colortable[saved_color_index] = saved_color;
 			}
 
 			/* track the tiles we've visited */
@@ -1235,7 +1102,7 @@ static void pf_render_callback(struct ataripf_data *pf, const struct ataripf_sta
 	if (!pf->transpens)
 		copyscrollbitmap(bitmap, pf->bitmap, 1, &x, 1, &y, &pf->process_clip, TRANSPARENCY_NONE, 0);
 	else
-		copyscrollbitmap(bitmap, pf->bitmap, 1, &x, 1, &y, &pf->process_clip, TRANSPARENCY_PEN, palette_transparent_pen);
+		copyscrollbitmap(bitmap, pf->bitmap, 1, &x, 1, &y, &pf->process_clip, TRANSPARENCY_PEN, 0xffff);
 }
 
 
@@ -1270,7 +1137,6 @@ static void pf_overrender_callback(struct ataripf_data *pf, const struct ataripf
 			int code = ATARIPF_LOOKUP_CODE(lookup, data);
 
 			/* fill in the overrender data that might be needed */
-			overrender_data.pfusage = &gfx->usage[code];
 			overrender_data.pfcolor = ATARIPF_LOOKUP_COLOR(lookup);
 			overrender_data.pfpriority = ATARIPF_LOOKUP_PRIORITY(lookup);
 
@@ -1326,8 +1192,6 @@ static void pf_eof_callback(int map)
 static void pf_init_gfx(struct ataripf_data *pf, int gfxindex)
 {
 	struct ataripf_gfxelement *gfx = &pf->gfxelement[gfxindex];
-	struct ataripf_usage *usage;
-	int i;
 
 	/* make a copy of the original GfxElement structure */
 	gfx->element = *Machine->gfx[gfxindex];
@@ -1338,55 +1202,5 @@ static void pf_init_gfx(struct ataripf_data *pf, int gfxindex)
 	gfx->element.total_colors = pf->maxcolors;
 	gfx->element.colortable = &Machine->remapped_colortable[pf->palettebase];
 
-	/* allocate the extended usage map */
-	usage = malloc(gfx->element.total_elements * sizeof(usage[0]));
-	if (!usage)
-		return;
-
-	/* set the pointer and clear the word count */
-	gfx->usage = usage;
-	gfx->usage_words = 0;
-
-	/* fill in the extended usage map */
-	memset(usage, 0, gfx->element.total_elements * sizeof(usage[0]));
-	for (i = 0; i < gfx->element.total_elements; i++, usage++)
-	{
-		UINT8 *src = gfx->element.gfxdata + gfx->element.char_modulo * i;
-		int x, y, words;
-
-		/* loop over all pixels, marking pens */
-		for (y = 0; y < gfx->element.height; y++)
-		{
-			/* if the graphics are 4bpp packed, do it one way */
-			if (gfx->element.flags & GFX_PACKED)
-				for (x = 0; x < gfx->element.width / 2; x++)
-				{
-					usage->bits[0] |= 1 << (src[x] & 15);
-					usage->bits[0] |= 1 << (src[x] >> 4);
-				}
-
-			/* otherwise, do it the original way */
-			else
-				for (x = 0; x < gfx->element.width; x++)
-					usage->bits[src[x] >> 5] |= 1 << (src[x] & 31);
-
-			src += gfx->element.line_modulo;
-		}
-
-		/* count how many words maximum we needed to combine */
-		for (words = ATARIPF_USAGE_WORDS; words > 0; words--)
-			if (usage->bits[words - 1] != 0)
-				break;
-		if (words > gfx->usage_words)
-			gfx->usage_words = words;
-	}
-
-	/* if we're the biggest so far, track it */
-	if (gfx->usage_words > pf->max_usage_words)
-		pf->max_usage_words = gfx->usage_words;
 	gfx->initialized = 1;
-
-	logerror("Finished build external usage map for gfx[%d]: words = %d\n", gfxindex, gfx->usage_words);
-	logerror("Color shift = %d (granularity=%d)\n", gfx->colorshift, gfx->element.color_granularity);
-	logerror("Current maximum = %d\n", pf->max_usage_words);
 }

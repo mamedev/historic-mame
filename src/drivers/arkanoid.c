@@ -342,7 +342,7 @@ static const struct MachineDriver machine_driver_arkanoid =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	512, 512,
+	512, 0,
 	arkanoid_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
@@ -379,7 +379,7 @@ static const struct MachineDriver machine_driver_bootleg =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	512, 512,
+	512, 0,
 	arkanoid_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,

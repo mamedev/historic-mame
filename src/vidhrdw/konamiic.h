@@ -13,8 +13,6 @@ WRITE_HANDLER( K007121_ctrl_1_w );
 void K007121_sprites_draw(int chip,struct osd_bitmap *bitmap,
 		const unsigned char *source,int base_color,int global_x_offset,int bank_base,
 		UINT32 pri_mask);
-void K007121_mark_sprites_colors(int chip,
-		const unsigned char *source,int base_color,int bank_base);
 
 
 int K007342_vh_start(int gfx_index, void (*callback)(int layer,int bank,int *code,int *color));
@@ -105,7 +103,6 @@ WRITE_HANDLER( K051937_w );
 READ16_HANDLER( K051937_word_r );
 WRITE16_HANDLER( K051937_word_w );
 void K051960_sprites_draw(struct osd_bitmap *bitmap,int min_priority,int max_priority);
-void K051960_mark_sprites_colors(void);
 int K051960_is_IRQ_enabled(void);
 int K051960_is_NMI_enabled(void);
 
@@ -129,7 +126,6 @@ READ16_HANDLER( K053244_word_r );
 WRITE16_HANDLER( K053244_word_w );
 void K053244_bankselect(int bank);	/* used by TMNT2, Asterix and Premier Soccer for ROM testing */
 void K053245_sprites_draw(struct osd_bitmap *bitmap);
-void K053245_mark_sprites_colors(void);
 
 
 int K053247_vh_start(int gfx_memory_region,int dx,int dy,int plane0,int plane1,int plane2,int plane3,
@@ -140,7 +136,6 @@ WRITE16_HANDLER( K053247_word_w );
 READ_HANDLER( K053247_r );
 WRITE_HANDLER( K053247_w );
 void K053247_sprites_draw(struct osd_bitmap *bitmap);
-void K053247_mark_sprites_colors(void);
 
 READ_HANDLER( K053246_r );
 WRITE_HANDLER( K053246_w );
@@ -162,10 +157,13 @@ The callback must put:
   structure (e.g. TILE_FLIPX)
 */
 int K051316_vh_start_0(int gfx_memory_region,int bpp,
+		int tilemap_type,int transparent_pen,
 		void (*callback)(int *code,int *color));
 int K051316_vh_start_1(int gfx_memory_region,int bpp,
+		int tilemap_type,int transparent_pen,
 		void (*callback)(int *code,int *color));
 int K051316_vh_start_2(int gfx_memory_region,int bpp,
+		int tilemap_type,int transparent_pen,
 		void (*callback)(int *code,int *color));
 void K051316_vh_stop_0(void);
 void K051316_vh_stop_1(void);
@@ -182,12 +180,9 @@ READ_HANDLER( K051316_rom_2_r );
 WRITE_HANDLER( K051316_ctrl_0_w );
 WRITE_HANDLER( K051316_ctrl_1_w );
 WRITE_HANDLER( K051316_ctrl_2_w );
-void K051316_tilemap_update_0(void);
-void K051316_tilemap_update_1(void);
-void K051316_tilemap_update_2(void);
-void K051316_zoom_draw_0(struct osd_bitmap *bitmap,UINT32 priority);
-void K051316_zoom_draw_1(struct osd_bitmap *bitmap,UINT32 priority);
-void K051316_zoom_draw_2(struct osd_bitmap *bitmap,UINT32 priority);
+void K051316_zoom_draw_0(struct osd_bitmap *bitmap,int flags,UINT32 priority);
+void K051316_zoom_draw_1(struct osd_bitmap *bitmap,int flags,UINT32 priority);
+void K051316_zoom_draw_2(struct osd_bitmap *bitmap,int flags,UINT32 priority);
 void K051316_wraparound_enable(int chip, int status);
 void K051316_set_offset(int chip, int xoffs, int yoffs);
 

@@ -83,10 +83,6 @@ void scontra_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	K052109_tilemap_update();
 
-	palette_init_used_colors();
-	K051960_mark_sprites_colors();
-	palette_recalc();
-
 	fillbitmap(priority_bitmap,0,NULL);
 
 	/* The background color is always from layer 1 - but it's always black anyway */

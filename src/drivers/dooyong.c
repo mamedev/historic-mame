@@ -834,10 +834,10 @@ static const struct MachineDriver machine_driver_lastday =
 	/* video hardware */
 	64*8, 32*8, { 8*8, (64-8)*8-1, 1*8, 31*8-1 },
 	lastday_gfxdecodeinfo,
-	1024, 1024,
+	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_BUFFERS_SPRITERAM,
+	VIDEO_TYPE_RASTER  | VIDEO_BUFFERS_SPRITERAM,
 	dooyong_eof_callback,
 	0,
 	0,
@@ -877,10 +877,10 @@ static const struct MachineDriver machine_driver_pollux =
 	/* video hardware */
 	64*8, 32*8, { 8*8, (64-8)*8-1, 1*8, 31*8-1 },
 	lastday_gfxdecodeinfo,
-	1024, 1024,
+	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_BUFFERS_SPRITERAM,
+	VIDEO_TYPE_RASTER  | VIDEO_BUFFERS_SPRITERAM,
 	dooyong_eof_callback,
 	0,
 	0,
@@ -920,10 +920,10 @@ static const struct MachineDriver machine_driver_bluehawk =
 	/* video hardware */
 	64*8, 32*8, { 8*8, (64-8)*8-1, 1*8, 31*8-1 },
 	bluehawk_gfxdecodeinfo,
-	1024, 1024,
+	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_BUFFERS_SPRITERAM,
+	VIDEO_TYPE_RASTER  | VIDEO_BUFFERS_SPRITERAM,
 	dooyong_eof_callback,
 	0,
 	0,
@@ -967,10 +967,10 @@ static const struct MachineDriver machine_driver_primella =
 	/* video hardware */
 	64*8, 32*8, { 8*8, (64-8)*8-1, 0*8, 32*8-1 },
 	primella_gfxdecodeinfo,
-	1024, 1024,
+	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_BUFFERS_SPRITERAM,
+	VIDEO_TYPE_RASTER  | VIDEO_BUFFERS_SPRITERAM,
 	dooyong_eof_callback,
 	0,
 	0,
@@ -1020,10 +1020,10 @@ static const struct MachineDriver machine_driver_rshark =
 	/* video hardware */
 	64*8, 32*8, { 8*8, (64-8)*8-1, 1*8, 31*8-1 },
 	rshark_gfxdecodeinfo,
-	2048, 2048,
+	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_BUFFERS_SPRITERAM,
+	VIDEO_TYPE_RASTER  | VIDEO_BUFFERS_SPRITERAM,
 	rshark_eof_callback,
 	0,
 	0,
@@ -1278,10 +1278,10 @@ ROM_END
 
 /* The differences between the two lastday sets are only in the sound program
    and graphics. The main program is the same. */
-GAME( 1990, lastday,  0,       lastday,  lastday,  0, ROT270_16BIT, "Dooyong", "The Last Day (set 1)" )
-GAME( 1990, lastdaya, lastday, lastday,  lastday,  0, ROT270_16BIT, "Dooyong", "The Last Day (set 2)" )
-GAME( 1991, pollux,   0,       pollux,   pollux,   0, ROT270_16BIT, "Dooyong", "Pollux" )
-GAME( 1993, bluehawk, 0,       bluehawk, bluehawk, 0, ROT270_16BIT, "Dooyong", "Blue Hawk" )
-GAME( 1993, sadari,   0,       primella, primella, 0, ROT0_16BIT,   "[Dooyong] (NTC license)", "Sadari" )
-GAME( 1994, primella, 0,       primella, primella, 0, ROT0_16BIT,   "[Dooyong] (NTC license)", "Primella" )
-GAME( 1995, rshark,   0,       rshark,   rshark,   0, ROT270_16BIT, "Dooyong", "R-Shark" )
+GAME( 1990, lastday,  0,       lastday,  lastday,  0, ROT270, "Dooyong", "The Last Day (set 1)" )
+GAME( 1990, lastdaya, lastday, lastday,  lastday,  0, ROT270, "Dooyong", "The Last Day (set 2)" )
+GAME( 1991, pollux,   0,       pollux,   pollux,   0, ROT270, "Dooyong", "Pollux" )
+GAME( 1993, bluehawk, 0,       bluehawk, bluehawk, 0, ROT270, "Dooyong", "Blue Hawk" )
+GAME( 1993, sadari,   0,       primella, primella, 0, ROT0,   "[Dooyong] (NTC license)", "Sadari" )
+GAME( 1994, primella, 0,       primella, primella, 0, ROT0,   "[Dooyong] (NTC license)", "Primella" )
+GAME( 1995, rshark,   0,       rshark,   rshark,   0, ROT270, "Dooyong", "R-Shark" )

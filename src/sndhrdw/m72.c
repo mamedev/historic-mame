@@ -9,34 +9,34 @@ In the following table, the NMI column indicates with a No the games whose
 NMI handler only consists of RETN. R-Type is an exception, it doesn't have
 a valid NMI handler at all.
 
-Game                          Year  ID string     NMI
-----------------------------  ----  ------------  ---
-R-Type                        1987  - (earlier version, no samples)
-Battle Chopper / Mr. Heli     1987  Rev 2.20      Yes
-Vigilante                     1988  Rev 2.20      Yes
-Ninja Spirit                  1988  Rev 2.20      Yes
-Image Fight                   1988  Rev 2.20      Yes
-Legend of Hero Tonma          1989  Rev 2.20      Yes
-X Multiply                    1989  Rev 2.20      Yes
-Dragon Breed                  1989  Rev 2.20      Yes
-Kickle Cubicle                1988  Rev 2.21      Yes
-Shisensho                     1989  Rev 2.21      Yes
-R-Type II                     1989  Rev 2.21      Yes
-Major Title                   1990  Rev 2.21      Yes
-Air Duel                      1990  Rev 3.14 M72   No
-Daiku no Gensan               1990  Rev 3.14 M81  Yes
-Daiku no Gensan (M72)         1990  Rev 3.15 M72   No
-Hammerin' Harry               1990  Rev 3.15 M81  Yes
-Ken-Go	                      1991  Rev 3.15 M81  Yes
-Pound for Pound               1990  Rev 3.15 M83   No
-Gallop - Armed Police Unit    1991  Rev 3.15 M72   No
-Hasamu                        1991  Rev 3.15 M81  Yes
-Bomber Man                    1991  Rev 3.15 M81  Yes
-Bomber Man World              1992  Rev 3.31 M81   No
-Atomic Punk                   1992  Rev 3.31 M99   No
-Quiz F-1 1,2finish            1992  Rev 3.33 M81  Yes
-Risky Challenge               1993  Rev 3.34 M81  Yes
-Shisensho II                  1993  Rev 3.34 M81  Yes
+Game                                    Year  ID string     NMI
+--------------------------------------  ----  ------------  ---
+R-Type                                  1987  - (earlier version, no samples)
+Battle Chopper / Mr. Heli               1987  Rev 2.20      Yes
+Vigilante                               1988  Rev 2.20      Yes
+Ninja Spirit                            1988  Rev 2.20      Yes
+Image Fight                             1988  Rev 2.20      Yes
+Legend of Hero Tonma                    1989  Rev 2.20      Yes
+X Multiply                              1989  Rev 2.20      Yes
+Dragon Breed                            1989  Rev 2.20      Yes
+Kickle Cubicle                          1988  Rev 2.21      Yes
+Shisensho                               1989  Rev 2.21      Yes
+R-Type II                               1989  Rev 2.21      Yes
+Major Title                             1990  Rev 2.21      Yes
+Air Duel                                1990  Rev 3.14 M72   No
+Daiku no Gensan                         1990  Rev 3.14 M81  Yes
+Daiku no Gensan (M72)                   1990  Rev 3.15 M72   No
+Hammerin' Harry                         1990  Rev 3.15 M81  Yes
+Ken-Go	                                1991  Rev 3.15 M81  Yes
+Pound for Pound                         1990  Rev 3.15 M83   No
+Gallop - Armed Police Unit              1991  Rev 3.15 M72   No
+Hasamu                                  1991  Rev 3.15 M81  Yes
+Bomber Man                              1991  Rev 3.15 M81  Yes
+Bomber Man World (Japan)                1992  Rev 3.31 M81  Yes
+Bomber Man World (World) / Atomic Punk  1992  Rev 3.31 M99   No
+Quiz F-1 1,2finish                      1992  Rev 3.33 M81  Yes
+Risky Challenge                         1993  Rev 3.34 M81  Yes
+Shisensho II                            1993  Rev 3.34 M81  Yes
 
 ***************************************************************************/
 

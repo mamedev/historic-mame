@@ -421,6 +421,8 @@ static WRITE_HANDLER( pia_portb_out )
 
 static WRITE_HANDLER( sound_output_w )
 {
+	logerror("sound output write = %02x\n", data);
+
 	coin_counter_w(0, (~data & 0x20) >> 5);
 }
 
@@ -1208,7 +1210,7 @@ static struct MachineDriver machine_driver_##NAME =								\
 	COLORS,COLORS,																\
 	0,																			\
 																				\
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,	\
+	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK,	\
 	0,																			\
 	itech32_vh_start,															\
 	itech32_vh_stop,															\
@@ -1503,7 +1505,7 @@ ROM_START( pairs )
 	ROM_LOAD32_BYTE( "grom16", 0x200003, 0x80000, 0x3be7031b )
 
 	ROM_REGION16_BE( 0x400000, REGION_SOUND1, ROMREGION_ERASE00 )
-//	ROM_LOAD16_BYTE( "fbrom0.bin", 0x000000, 0x200000, 0x9fdc4825 )
+	ROM_LOAD16_BYTE( "fbrom0.bin", 0x000000, 0x200000, 0x9fdc4825 )
 
 	ROM_REGION16_BE( 0x400000, REGION_SOUND3, ROMREGION_ERASE00 )
 	ROM_LOAD16_BYTE( "srom0", 0x000000, 0x80000, 0x1d96c581 )
@@ -1741,15 +1743,15 @@ static void init_shufshot(void)
  *
  *************************************/
 
-GAME( 1992, timekill, 0,        timekill, timekill, timekill, ROT0_16BIT,  "Strata/Incredible Technologies", "Time Killers (v1.32)" )
-GAME( 1992, timek131, timekill, timekill, timekill, timekill, ROT0_16BIT,  "Strata/Incredible Technologies", "Time Killers (v1.31)" )
-GAME( 1993, hardyard, 0,        bloodstm, hardyard, hardyard, ROT0_16BIT,  "Strata/Incredible Technologies", "Hard Yardage (v1.20)" )
-GAME( 1993, hardyd10, hardyard, bloodstm, hardyard, hardyard, ROT0_16BIT,  "Strata/Incredible Technologies", "Hard Yardage (v1.00)" )
-GAME( 1994, bloodstm, 0,        bloodstm, bloodstm, bloodstm, ROT0_16BIT,  "Strata/Incredible Technologies", "Blood Storm (v2.22)" )
-GAME( 1994, bloods22, bloodstm, bloodstm, bloodstm, bloodstm, ROT0_16BIT,  "Strata/Incredible Technologies", "Blood Storm (v2.20)" )
-GAME( 1994, bloods21, bloodstm, bloodstm, bloodstm, bloodstm, ROT0_16BIT,  "Strata/Incredible Technologies", "Blood Storm (v2.10)" )
-GAME( 1994, pairs,    0,        pairs,    pairs,    bloodstm, ROT0_16BIT,  "Strata/Incredible Technologies", "Pairs" )
-GAME( 1995, sftm,     0,        sftm,     sftm,     sftm,     ROT0_16BIT,  "Capcom/Incredible Technologies", "Street Fighter: The Movie (v1.12)" )
-GAME( 1995, sftm110,  sftm,     sftm,     sftm,     sftm110,  ROT0_16BIT,  "Capcom/Incredible Technologies", "Street Fighter: The Movie (v1.10)" )
-GAME( 1995, sftmj,    sftm,     sftm,     sftm,     sftm,     ROT0_16BIT,  "Capcom/Incredible Technologies", "Street Fighter: The Movie (v1.12N, Japan)" )
-GAME( 1997, shufshot, 0,        sftm,     shufshot, shufshot, ROT0_16BIT,  "Strata/Incredible Technologies", "Shuffleshot" )
+GAME( 1992, timekill, 0,        timekill, timekill, timekill, ROT0, "Strata/Incredible Technologies", "Time Killers (v1.32)" )
+GAME( 1992, timek131, timekill, timekill, timekill, timekill, ROT0, "Strata/Incredible Technologies", "Time Killers (v1.31)" )
+GAME( 1993, hardyard, 0,        bloodstm, hardyard, hardyard, ROT0, "Strata/Incredible Technologies", "Hard Yardage (v1.20)" )
+GAME( 1993, hardyd10, hardyard, bloodstm, hardyard, hardyard, ROT0, "Strata/Incredible Technologies", "Hard Yardage (v1.00)" )
+GAME( 1994, bloodstm, 0,        bloodstm, bloodstm, bloodstm, ROT0, "Strata/Incredible Technologies", "Blood Storm (v2.22)" )
+GAME( 1994, bloods22, bloodstm, bloodstm, bloodstm, bloodstm, ROT0, "Strata/Incredible Technologies", "Blood Storm (v2.20)" )
+GAME( 1994, bloods21, bloodstm, bloodstm, bloodstm, bloodstm, ROT0, "Strata/Incredible Technologies", "Blood Storm (v2.10)" )
+GAME( 1994, pairs,    0,        pairs,    pairs,    bloodstm, ROT0, "Strata/Incredible Technologies", "Pairs" )
+GAME( 1995, sftm,     0,        sftm,     sftm,     sftm,     ROT0, "Capcom/Incredible Technologies", "Street Fighter: The Movie (v1.12)" )
+GAME( 1995, sftm110,  sftm,     sftm,     sftm,     sftm110,  ROT0, "Capcom/Incredible Technologies", "Street Fighter: The Movie (v1.10)" )
+GAME( 1995, sftmj,    sftm,     sftm,     sftm,     sftm,     ROT0, "Capcom/Incredible Technologies", "Street Fighter: The Movie (v1.12N, Japan)" )
+GAME( 1997, shufshot, 0,        sftm,     shufshot, shufshot, ROT0, "Strata/Incredible Technologies", "Shuffleshot" )

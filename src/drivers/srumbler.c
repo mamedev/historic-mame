@@ -295,10 +295,10 @@ static const struct MachineDriver machine_driver_srumbler =
 	64*8, 32*8, { 10*8, (64-10)*8-1, 1*8, 31*8-1 },
 
 	gfxdecodeinfo,
-	512, 512,
+	512, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_BUFFERS_SPRITERAM,
+	VIDEO_TYPE_RASTER  | VIDEO_BUFFERS_SPRITERAM,
 	srumbler_eof_callback,
 	srumbler_vh_start,
 	0,

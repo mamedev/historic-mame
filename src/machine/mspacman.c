@@ -3,33 +3,41 @@
 #include "vidhrdw/generic.h"
 
 
-/*  	It turns out the bootleg is the decrypted version with the checksum check removed
-		and interupt mode changed to 1.
+/*
+  It turns out the bootleg is the decrypted version with the checksum check
+  removed and interrupt	mode changed to 1.
 
-	u7= boot 4($3000-$3fff) other than 4 bytes(checksum check and interupt mode)
-	u6= boot 6($9000-$9fff).  The second half of u6 gets mirrored to the second half
-		of boot5($8800-$8fff) where it is used.
-	u5= first half of boot5($8000-$87ff)
+  u7= boot 4($3000-$3fff) other than 4 bytes(checksum check and interupt mode)
+  u6= boot 6($9000-$9fff). The second half of u6 gets mirrored to the second
+      half of boot5($8800-$8fff) where it is used.
+  u5= first half of boot5($8000-$87ff)
 
-	$8000-$81ef contain 8 byte patches that are overlayed on locations in $0000-$2fff
+  $8000-$81ef contain 8 byte patches that are overlayed on locations in $0000-$2fff
 
-   The Ms Pacman daughter board is not activated with the mainboard.  As near as I can tell
-   it requires a sequence of bytes starting at around 3176 and ending with 3196.  The location
-   of the bytes doesn't seem to matter, just that those bytes are executed.  That sequence
-   of bytes includes a write to 5006 so I'm using that to bankswitch, but that is not accurate.
-   The actual change is I beleive at 317D.
-   The daughterboard can also be deactivated.  A read to any of the several 8 byte chunks
-   listed will cause the Ms Pac roms to disapear and Pacman show up.  As a result I couldn't
-   verify what they contained. They should be the same as the pacman roms, but I don't see how
-   it could matter.
+  The Ms Pacman daughter board is not activated with the mainboard.  As near as I
+  can tell it requires a sequence of bytes starting at around 3176 and ending with
+  3196. The location of the bytes doesn't seem to matter, just that those bytes
+  are executed. That sequence of bytes includes a write to 5006 so I'm using that
+  to bankswitch, but that is not accurate. The actual change is I believe at $317D.
+  The daughterboard can also be deactivated. A read to any of the several 8 byte
+  chunks listed will cause the Ms Pac roms to disappear and Pacman to show up.
+  As a result I couldn't verify what they contained. They should be the same as the
+  pacman roms, but I don't see how it could matter. These areas can be accessed by
+  the random number generator at $2a23 and the board is deactivated but is
+  immediately reactivated. So the net result is no change. The exact trigger for
+  this is not yet known.
 
-deactivation
-$38,$3b0,$1600,$2120,$3ff0,$8000
+  deactivation, 8 bytes starting at:
+  $38,$3b0,$1600,$2120,$3ff0,$8000
 
-David Widel
-dwidel@homestead.com
-
+  David Widel
+  d_widel@hotmail.com
 */
+
+
+void pacman_init_machine(void);
+
+
 
 static unsigned char decryptd(unsigned char e)
 {
@@ -104,6 +112,7 @@ void mspacman_decode(void)
 	RAM[0x10000+i] = RAM[0x0000+i];
 	RAM[0x11000+i] = RAM[0x1000+i];
 	RAM[0x12000+i] = RAM[0x2000+i];
+	RAM[0x1a000+i] = RAM[0x2000+i];  /*not needed but it's there*/
 	RAM[0x1b000+i] = RAM[0x3000+i];  /*not needed but it's there*/
 
 	}
@@ -168,61 +177,18 @@ void mspacman_decode(void)
 		RAM[0x12CF0+i] = RAM[0x181E0+i];
 		RAM[0x12D60+i] = RAM[0x18160+i];
 	}
-
-
-
-
 }
 
-/*These won't be used in normal operation*/
-READ_HANDLER( mspacman_deactivate_rom1 )
+
+void mspacman_init_machine(void)
 {
+
 	unsigned char *RAM = memory_region(REGION_CPU1);
-
+	mspacman_decode();
 	cpu_setbank (1, &RAM[0x00000]);
-	return RAM[offset + 0x0038];
+
+	pacman_init_machine();
 }
-
-READ_HANDLER( mspacman_deactivate_rom2 )
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	cpu_setbank (1, &RAM[0x00000]);
-	return RAM[offset + 0x03b0];
-}
-
-READ_HANDLER( mspacman_deactivate_rom3 )
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	cpu_setbank (1, &RAM[0x00000]);
-	return RAM[offset + 0x1600];
-}
-
-READ_HANDLER( mspacman_deactivate_rom4 )
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	cpu_setbank (1, &RAM[0x00000]);
-	return RAM[offset + 0x2120];
-}
-
-READ_HANDLER( mspacman_deactivate_rom5 )
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	cpu_setbank (1, &RAM[0x00000]);
-	return RAM[offset + 0x3ff0];
-}
-
-READ_HANDLER( mspacman_deactivate_rom6 )
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	cpu_setbank (1, &RAM[0x00000]);
-	return RAM[offset + 0x8000];
-}
-
 
 
 WRITE_HANDLER( mspacman_activate_rom )

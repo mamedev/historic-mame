@@ -85,41 +85,6 @@ WRITE16_HANDLER( cabal_text_videoram16_w )
 }
 
 
-/**************************************************************************/
-
-void cabal_mark_sprite_colours(void)
-{
-	UINT16 palette_map[16*4],usage;
-	int i,code,color,offs;
-
-	memset (palette_map, 0, sizeof (palette_map));
-
-	for (offs = 0;offs < (spriteram_size/2);offs += 4)
-	{
-		if (spriteram16[offs] &0x100)
-		{
-			code  = (spriteram16[offs+1] &0xfff);
-			color = (spriteram16[offs+2] &0x7800 ) >> 11;
-			palette_map[color + 0x10] |= Machine->gfx[2]->pen_usage[code];
-		}
-	}
-
-	/* expand it */
-	for (color = 0; color < 16 * 4; color++)
-	{
-		usage = palette_map[color];
-
-		if (usage)
-		{
-			for (i = 0; i < 15; i++)
-				if (usage & (1 << i))
-					palette_used_colors[color * 16 + i] = PALETTE_COLOR_USED;
-			palette_used_colors[color * 16 + 15] = PALETTE_COLOR_TRANSPARENT;
-		}
-	}
-}
-
-
 /********************************************************************
 
 	Cabal Spriteram
@@ -183,11 +148,6 @@ static void cabal_draw_sprites( struct osd_bitmap *bitmap )
 
 void cabal_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh )
 {
-	tilemap_update(ALL_TILEMAPS);
-	palette_init_used_colors();
-	cabal_mark_sprite_colours();
-	palette_recalc();
-
 	tilemap_draw(bitmap,background_layer,TILEMAP_IGNORE_TRANSPARENCY,0);
 	cabal_draw_sprites(bitmap);
 	tilemap_draw(bitmap,text_layer,0,0);

@@ -58,7 +58,7 @@ int tail2nos_vh_start(void)
 	if (!bg_tilemap)
 		return 1;
 
-	if (K051316_vh_start_0(REGION_GFX3,4,zoom_callback))
+	if (K051316_vh_start_0(REGION_GFX3,4,TILEMAP_OPAQUE,0,zoom_callback))
 		return 1;
 
 	if (!(dirtychar = malloc(TOTAL_CHARS)))
@@ -222,14 +222,9 @@ void tail2nos_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	}
 
 
-	K051316_tilemap_update_0();
-	tilemap_update(bg_tilemap);
-
-	palette_recalc();
-
 	if (video_enable)
 	{
-		K051316_zoom_draw_0(bitmap,0);
+		K051316_zoom_draw_0(bitmap,0,0);
 		drawsprites(bitmap);
 		tilemap_draw(bitmap,bg_tilemap,0,0);
 	}

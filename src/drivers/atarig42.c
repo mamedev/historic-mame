@@ -511,7 +511,7 @@ static struct MachineDriver machine_driver_atarig42 =
 	2048,2048,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER  | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
 	atarig42_vh_start,
 	atarig42_vh_stop,
@@ -750,6 +750,6 @@ static void init_guardian(void)
  *
  *************************************/
 
-GAMEX( 1991, roadriot, 0,        atarig42, roadriot, roadriot, ROT0_16BIT, "Atari Games", "Road Riot 4WD", GAME_UNEMULATED_PROTECTION )
-GAMEX( 1991, roadriop, roadriot, atarig42, roadriot, roadriot, ROT0_16BIT, "Atari Games", "Road Riot 4WD (prototype)", GAME_UNEMULATED_PROTECTION )
-GAMEX( 1992, guardian, 0,        atarig42, guardian, guardian, ROT0_16BIT, "Atari Games", "Guardians of the Hood", GAME_UNEMULATED_PROTECTION )
+GAMEX( 1991, roadriot, 0,        atarig42, roadriot, roadriot, ROT0, "Atari Games", "Road Riot 4WD", GAME_UNEMULATED_PROTECTION )
+GAMEX( 1991, roadriop, roadriot, atarig42, roadriot, roadriot, ROT0, "Atari Games", "Road Riot 4WD (prototype)", GAME_UNEMULATED_PROTECTION )
+GAMEX( 1992, guardian, 0,        atarig42, guardian, guardian, ROT0, "Atari Games", "Guardians of the Hood", GAME_UNEMULATED_PROTECTION )

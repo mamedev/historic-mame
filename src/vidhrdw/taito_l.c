@@ -313,9 +313,6 @@ void taitol_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	int dx,dy;
 
 
-	/* tilemap bug? If I do this just in vh_start(), it won't work */
-	tilemap_set_scrollx(ch1a_tilemap,0,0);	/* won't change at run time */
-
 	dx = taitol_rambanks[0x73f4]|(taitol_rambanks[0x73f5]<<8);
 	if (flipscreen)
 		dx = ((dx & 0xfffc) | ((dx - 3) & 0x0003)) ^ 0xf;
@@ -330,10 +327,6 @@ void taitol_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	tilemap_set_scrollx(bg19_tilemap,0,-dx);
 	tilemap_set_scrolly(bg19_tilemap,0,-dy);
 
-
-	tilemap_update(ALL_TILEMAPS);
-
-	palette_recalc();
 
 	if (cur_ctrl & 0x20)	/* display enable */
 	{

@@ -336,7 +336,7 @@ static const struct MachineDriver machine_driver_bombjack =
 	128, 128,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	bombjack_vh_start,
 	generic_vh_stop,

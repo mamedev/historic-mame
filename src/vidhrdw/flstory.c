@@ -12,19 +12,6 @@
 static int char_bank,palette_bank;
 
 
-void flstory_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
-{
-	int i;
-
-
-	/* no color PROMs here, only RAM, but the gfx data is inverted so we */
-	/* cannot use the default lookup table */
-	for (i = 0;i < Machine->drv->color_table_len;i++)
-		colortable[i] = i ^ 0x0f;
-}
-
-
-
 int flstory_vh_start(void)
 {
 	paletteram = malloc(0x200);
@@ -72,9 +59,6 @@ void flstory_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	int offs;
 
 
-	if (palette_recalc())
-		memset(dirtybuffer,1,videoram_size);
-
 	for (offs = videoram_size - 2;offs >= 0;offs -= 2)
 	{
 		if (dirtybuffer[offs] || dirtybuffer[offs+1])
@@ -115,7 +99,7 @@ void flstory_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				spriteram[offs+1] & 0x0f,
 				flipx,flipy,
 				sx,sy,
-				&Machine->visible_area,TRANSPARENCY_PEN,0);
+				&Machine->visible_area,TRANSPARENCY_PEN,15);
 		/* wrap around */
 		if (sx > 240)
 			drawgfx(bitmap,Machine->gfx[1],
@@ -123,7 +107,7 @@ void flstory_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					spriteram[offs+1] & 0x0f,
 					flipx,flipy,
 					sx-256,sy,
-					&Machine->visible_area,TRANSPARENCY_PEN,0);
+					&Machine->visible_area,TRANSPARENCY_PEN,15);
 	}
 
 	/* redraw chars with priority over sprites */
@@ -142,7 +126,7 @@ void flstory_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					videoram[offs + 1] & 0x07,
 					videoram[offs + 1] & 0x08, videoram[offs + 1] & 0x10,
 					8*sx,8*sy,
-					&Machine->visible_area,TRANSPARENCY_PEN,0);
+					&Machine->visible_area,TRANSPARENCY_PEN,15);
 		}
 	}
 }

@@ -159,7 +159,7 @@ void cinemat_init_colors (unsigned char *palette, unsigned short *colortable,con
 				}
 
 				if (artwork_overlay != NULL)
-					overlay_set_palette (palette, (Machine->drv->total_colors > 256 ? 256 : Machine->drv->total_colors) - nextcol);
+					artwork_copy_palette (palette, artwork_overlay);
 			}
 			break;
 

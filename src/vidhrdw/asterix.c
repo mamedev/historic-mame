@@ -119,11 +119,6 @@ void asterix_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 
 	K054157_tilemap_update();
 
-	palette_init_used_colors();
-	K053245_mark_sprites_colors();
-
-	palette_recalc();
-
 	layer[0] = 0;
 	layerpri[0] = K053251_get_priority(K053251_CI0);
 	layer[1] = 1;
@@ -140,6 +135,7 @@ void asterix_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	K054157_tilemap_draw(bitmap, layer[1], 0, 2);
 	K054157_tilemap_draw(bitmap, layer[2], 0, 4);
 
+	pdrawgfx_shadow_lowpri = 1;	/* fix shadows in front of feet */
 	K053245_sprites_draw(bitmap);
 
 	K054157_tilemap_draw(bitmap, 2, 0, 0);

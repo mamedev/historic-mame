@@ -202,16 +202,6 @@ void superqix_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	unsigned char pens[16];
 
 
-	/* recalc the palette if necessary */
-	if (palette_recalc())
-	{
-		memset(dirtybuffer,1,videoram_size);
-		memset(superqix_bitmapram_dirty,1,0x7000);
-		memset(superqix_bitmapram2_dirty,1,0x7000);
-		sqix_minx=0;sqix_maxx=127;sqix_miny=0;sqix_maxy=223;
-	}
-
-
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
 	for (offs = videoram_size - 1;offs >= 0;offs--)
@@ -241,7 +231,7 @@ void superqix_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	for(i=1;i<16;i++)
 		pens[i]=Machine->pens[i];
-	pens[0]=palette_transparent_pen;
+	pens[0]=0;
 
 	if(sqix_current_bitmap==0)		/* Bitmap 1 */
 	{
@@ -291,7 +281,7 @@ void superqix_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			}
 		}
 	}
-	copybitmap(bitmap,tmpbitmap2,0,0,0,0,&Machine->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
+	copybitmap(bitmap,tmpbitmap2,0,0,0,0,&Machine->visible_area,TRANSPARENCY_PEN,0);
 
 	/* Draw the sprites. Note that it is important to draw them exactly in this */
 	/* order, to have the correct priorities. */

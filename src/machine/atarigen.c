@@ -9,6 +9,7 @@
 
 #include "driver.h"
 #include "atarigen.h"
+#include "slapstic.h"
 #include "cpu/m6502/m6502.h"
 
 
@@ -54,6 +55,8 @@ static UINT8 		eeprom_unlocked;
 
 static UINT8 		atarigen_slapstic_num;
 static data16_t *	atarigen_slapstic;
+static int			atarigen_slapstic_bank;
+static void *		atarigen_slapstic_bank0;
 
 static UINT8 		sound_cpu_num;
 static UINT8 		atarigen_cpu_to_sound;
@@ -408,6 +411,23 @@ void decompress_eeprom_byte(const data16_t *data)
 	SLAPSTIC HANDLING
 ##########################################################################*/
 
+INLINE void update_bank(int bank)
+{
+	/* if the bank has changed, copy the memory; Pit Fighter needs this */
+	if (bank != atarigen_slapstic_bank)
+	{
+		/* bank 0 comes from the copy we made earlier */
+		if (bank == 0)
+			memcpy(atarigen_slapstic, atarigen_slapstic_bank0, 0x2000);
+		else
+			memcpy(atarigen_slapstic, &atarigen_slapstic[bank * 0x1000], 0x2000);
+
+		/* remember the current bank */
+		atarigen_slapstic_bank = bank;
+	}
+}
+
+
 /*---------------------------------------------------------------
 	atarigen_slapstic_init: Installs memory handlers for the
 	slapstic and sets the chip number.
@@ -417,11 +437,21 @@ void atarigen_slapstic_init(int cpunum, int base, int chipnum)
 {
 	atarigen_slapstic_num = chipnum;
 	atarigen_slapstic = NULL;
+
+	/* if we have a chip, install it */
 	if (chipnum)
 	{
+		/* initialize the slapstic */
 		slapstic_init(chipnum);
+
+		/* install the memory handlers */
 		atarigen_slapstic = install_mem_read16_handler(cpunum, base, base + 0x7fff, atarigen_slapstic_r);
 		atarigen_slapstic = install_mem_write16_handler(cpunum, base, base + 0x7fff, atarigen_slapstic_w);
+
+		/* allocate memory for a copy of bank 0 */
+		atarigen_slapstic_bank0 = auto_malloc(0x2000);
+		if (atarigen_slapstic_bank0)
+			memcpy(atarigen_slapstic_bank0, atarigen_slapstic, 0x2000);
 	}
 }
 
@@ -434,7 +464,10 @@ void atarigen_slapstic_init(int cpunum, int base, int chipnum)
 void atarigen_slapstic_reset(void)
 {
 	if (atarigen_slapstic_num)
+	{
 		slapstic_reset();
+		update_bank(slapstic_bank());
+	}
 }
 
 
@@ -446,7 +479,7 @@ void atarigen_slapstic_reset(void)
 
 WRITE16_HANDLER( atarigen_slapstic_w )
 {
-	slapstic_tweak(offset);
+	update_bank(slapstic_tweak(offset));
 }
 
 
@@ -457,8 +490,12 @@ WRITE16_HANDLER( atarigen_slapstic_w )
 
 READ16_HANDLER( atarigen_slapstic_r )
 {
-	int bank = slapstic_tweak(offset) * 0x1000;
-	return atarigen_slapstic[bank + (offset & 0xfff)];
+	/* fetch the result from the current bank first */
+	int result = atarigen_slapstic[offset & 0xfff];
+
+	/* then determine the new one */
+	update_bank(slapstic_tweak(offset));
+	return result;
 }
 
 
@@ -1206,34 +1243,34 @@ WRITE32_HANDLER( atarigen_666_paletteram32_w )
 	int newword, r, g, b;
 
 	COMBINE_DATA(&paletteram32[offset]);
-	
+
 	if (ACCESSING_MSW32)
 	{
 		newword = paletteram32[offset] >> 16;
-	
+
 		r = ((newword >> 9) & 0x3e) | ((newword >> 15) & 1);
 		g = ((newword >> 4) & 0x3e) | ((newword >> 15) & 1);
 		b = ((newword << 1) & 0x3e) | ((newword >> 15) & 1);
-	
+
 		r = (r << 2) | (r >> 4);
 		g = (g << 2) | (g >> 4);
 		b = (b << 2) | (b >> 4);
-	
+
 		palette_change_color(offset * 2, r, g, b);
 	}
 
 	if (ACCESSING_LSW32)
 	{
 		newword = paletteram32[offset] & 0xffff;
-	
+
 		r = ((newword >> 9) & 0x3e) | ((newword >> 15) & 1);
 		g = ((newword >> 4) & 0x3e) | ((newword >> 15) & 1);
 		b = ((newword << 1) & 0x3e) | ((newword >> 15) & 1);
-	
+
 		r = (r << 2) | (r >> 4);
 		g = (g << 2) | (g >> 4);
 		b = (b << 2) | (b >> 4);
-	
+
 		palette_change_color(offset * 2 + 1, r, g, b);
 	}
 }

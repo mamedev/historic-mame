@@ -250,10 +250,6 @@ if (keyboard_pressed(KEYCODE_X))
 
 }
 
-static void fuuki16_mark_sprites_colors(void)
-{
-	memset(palette_used_colors,PALETTE_COLOR_USED,Machine->drv->total_colors);
-}
 
 
 
@@ -308,7 +304,7 @@ static void fuuki16_draw_layer(struct osd_bitmap *bitmap, int ctrl, int i, int f
 	}
 	if (flag == TILEMAP_IGNORE_TRANSPARENCY)
 	{
-		fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
+		fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 		fillbitmap(priority_bitmap,0,NULL);
 	}
 }
@@ -368,14 +364,6 @@ if ( keyboard_pressed(KEYCODE_Z) || keyboard_pressed(KEYCODE_X) )
 #endif
 }
 #endif
-
-	tilemap_update(ALL_TILEMAPS);
-
-	palette_init_used_colors();
-
-	fuuki16_mark_sprites_colors();
-
-	palette_recalc();
 
 	background   = 0;
 	foreground   = 1;

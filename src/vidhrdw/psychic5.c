@@ -555,92 +555,6 @@ void psychic5_draw_sprites2(struct osd_bitmap *bitmap)
 
 
 
-void set_visible_colors(int bg_scrollx,int bg_scrolly)
-{
-	int x,y,color,offs,lo,hi,tile,size32;
-	unsigned short colors_used[16];
-
-	palette_init_used_colors();
-
-	/* visible background palette */
-	memset (colors_used, 0, sizeof (colors_used));
-	for (x = 23; x >=0; x--)
-	{
-		for (y = 0 ; y < 24; y++)
-		{
-			offs = (((bg_scrollx+y-3) & 63)*64)+(((bg_scrolly+x-3) & 31)*2);
-			lo = ps5_background_videoram[offs];
-			hi = ps5_background_videoram[offs+1];
-			tile = ((hi & 0xc0) << 2) | lo;
-			color = hi & 0x0f;
-			colors_used[color] |= Machine->gfx[1]->pen_usage[tile];
-			if (y<4 || y>19 || x<4 || x>19)
-				bg_dirtybuffer[offs >> 1] = 1;
-		}
-	}
-	for (x = 0; x < 16; x++)
-	{
-		unsigned short temp = colors_used[x];
-		if (temp)
-			for (y = 0; y < 16; y++)
-				if (temp & (1 << y)) palette_used_colors[256 + 16 * x + y] = PALETTE_COLOR_USED;
-	}
-
-	/* visible foreground palette */
-	memset (colors_used, 0, sizeof (colors_used));
-	for (offs = 0; offs < 0x800; offs+=2)
-	{
-		if (ps5_foreground_videoram[offs+1]!=0xFF)
-		{
-			lo = ps5_foreground_videoram[offs];
-			hi = ps5_foreground_videoram[offs+1];
-			tile = ((hi & 0xc0) << 2) | lo;
-			color = hi & 0x0f;
-			colors_used[color] |= Machine->gfx[2]->pen_usage[tile];
-		}
-	}
-	for (x = 0; x < 16; x++)
-	{
-		unsigned short temp = colors_used[x];
-		if (temp)
-		{
-			for (y = 0; y < 15; y++)
-				if (temp & (1 << y)) palette_used_colors[512 + 16 * x + y] = PALETTE_COLOR_USED;
-			palette_used_colors[512 + 16 * x + 15] = PALETTE_COLOR_TRANSPARENT;
-		}
-	}
-
-	/* visible sprites palette */
-	memset (colors_used, 0, sizeof (colors_used));
-	for (offs = 11; offs < spriteram_size; offs += 16)
-	{
-		if (!(spriteram[offs+4]==0 && spriteram[offs]==0xf0))
-		{
-			tile	 = spriteram[offs+3]+((spriteram[offs+2] & 0xc0)<<2);
-			color	 = spriteram[offs+4] & 0x0f;
-			size32	 = spriteram[offs+2] & 0x08;
-			if (size32)
-				colors_used[color] |=
-					Machine->gfx[0]->pen_usage[tile+0] |
-					Machine->gfx[0]->pen_usage[tile+1] |
-					Machine->gfx[0]->pen_usage[tile+2] |
-					Machine->gfx[0]->pen_usage[tile+3];
-			else
-				colors_used[color] |= Machine->gfx[0]->pen_usage[tile];
-		}
-	}
-	for (x = 0; x < 16; x++)
-	{
-		unsigned short temp = colors_used[x];
-		if (temp)
-		{
-			for (y = 0; y < 15; y++)
-				if (temp & (1 << y)) palette_used_colors[0 + 16 * x + y] = PALETTE_COLOR_USED;
-			palette_used_colors[0 + 16 * x + 15] = PALETTE_COLOR_TRANSPARENT;
-		}
-	}
-}
-
 void psychic5_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int bg_scrollx,bg_scrolly;
@@ -648,22 +562,7 @@ void psychic5_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	bg_scrollx = ((ps5_io_ram[BG_SCROLLX_LSB]+((ps5_io_ram[BG_SCROLLX_MSB] & 3)*256)) & 0x3FF) >> 4;
 	bg_scrolly = ((ps5_io_ram[BG_SCROLLY_LSB]+((ps5_io_ram[BG_SCROLLY_MSB] & 1)*256)) & 0x1FF) >> 4;
 
-	set_visible_colors(bg_scrollx,bg_scrolly);
 	set_background_palette_intensity();
-
-	if (palette_recalc())
-	{
-		/* set bg dirty buffer only on visible area + border */
-		int offs,x,y;
-		for (x = 23; x >=0; x--)
-		{
-			for (y = 0 ; y < 24; y++)
-			{
-				offs = (((bg_scrollx+y-3) & 63)*64)+(((bg_scrolly+x-3) & 31)*2);
-				bg_dirtybuffer[offs >> 1] = 1;
-			}
-		}
-	}
 
 	bg_scrollx = -((ps5_io_ram[BG_SCROLLX_LSB]+((ps5_io_ram[BG_SCROLLX_MSB] & 3)*256)) & 0x3FF);
 	bg_scrolly = -((ps5_io_ram[BG_SCROLLY_LSB]+((ps5_io_ram[BG_SCROLLY_MSB] & 1)*256)) & 0x1FF);
@@ -745,7 +644,7 @@ void psychic5_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					clip.max_x = 0;
 					clip.max_y = 0;
 				}
-				fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
+				fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 				copyscrollbitmap(bitmap,bitmap_bg,1,&bg_scrollx,1,&bg_scrolly,&clip,TRANSPARENCY_NONE,0);
 			} else
 				copyscrollbitmap(bitmap,bitmap_bg,1,&bg_scrollx,1,&bg_scrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);
@@ -754,7 +653,7 @@ void psychic5_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			copyscrollbitmap(bitmap,bitmap_bg,1,&bg_scrollx,1,&bg_scrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);
 	} else
 	{
-		fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
+		fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 		memset(bg_dirtybuffer,1,64*32);
 	}
 

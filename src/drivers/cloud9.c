@@ -254,7 +254,7 @@ static const struct MachineDriver machine_driver_cloud9 =
 	64, 64,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	generic_bitmapped_vh_start,
 	generic_bitmapped_vh_stop,

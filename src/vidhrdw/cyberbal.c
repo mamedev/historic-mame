@@ -392,20 +392,6 @@ void cyberbal_scanline_update(int scanline)
 
 void cyberbal_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
-	/* mark the used colors */
-	palette_init_used_colors();
-	ataripf_mark_palette(current_screen);
-	atarimo_mark_palette(current_screen);
-	atarian_mark_palette(current_screen);
-
-	/* update the palette, and mark things dirty if we need to */
-	if (palette_recalc())
-	{
-		ataripf_invalidate(0);
-		if (total_screens == 2)
-			ataripf_invalidate(1);
-	}
-
 	/* draw the layers */
 	ataripf_render(current_screen, bitmap);
 	atarimo_render(current_screen, bitmap, NULL, NULL);

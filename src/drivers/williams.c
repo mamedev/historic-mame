@@ -1329,10 +1329,10 @@ static const struct MachineDriver machine_driver_defender =
 	304, 256,
 	{ 6, 298-1, 7, 247-1 },
 	0,
-	16,16,
+	16, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_RASTER  | VIDEO_SUPPORTS_DIRTY,
 	0,
 	williams_vh_start,
 	williams_vh_stop,
@@ -1376,10 +1376,10 @@ static const struct MachineDriver machine_driver_williams =
 	304, 256,
 	{ 6, 298-1, 7, 247-1 },
 	0,
-	16,16,
+	16, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_RASTER  | VIDEO_SUPPORTS_DIRTY,
 	0,
 	williams_vh_start,
 	williams_vh_stop,
@@ -1423,10 +1423,10 @@ static const struct MachineDriver machine_driver_sinistar =
 	304, 256,
 	{ 6, 298-1, 7, 247-1 },
 	0,
-	16,16,
+	16, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_RASTER  | VIDEO_SUPPORTS_DIRTY,
 	0,
 	williams_vh_start,
 	williams_vh_stop,
@@ -1474,10 +1474,10 @@ static const struct MachineDriver machine_driver_blaster =
 	304, 256,
 	{ 6, 298-1, 7, 247-1 },
 	0,
-	16+240,16+240,
+	16+240, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	blaster_vh_start,
 	williams_vh_stop,
@@ -1521,10 +1521,10 @@ static const struct MachineDriver machine_driver_williams2 =
 	288, 256,
 	{ 4, 288-1, 8, 248-1 },
 	williams2_gfxdecodeinfo,
-	16+8*16,16+8*16,
+	16+8*16, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	williams2_vh_start,
 	williams2_vh_stop,
@@ -1569,10 +1569,10 @@ static const struct MachineDriver machine_driver_joust2 =
 	288, 256,
 	{ 4, 288-1, 8, 248-1 },
 	williams2_gfxdecodeinfo,
-	16+8*16,16+8*16,
+	16+8*16, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	williams2_vh_start,
 	williams2_vh_stop,
@@ -2235,6 +2235,24 @@ ROM_START( bubblesr )
 	ROM_LOAD( "bubbles.snd",  0xf000, 0x1000, 0x689ce2aa )
 ROM_END
 
+ROM_START( bubblesp )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
+	ROM_LOAD( "bub_prot.1b",  0x0000, 0x1000, 0x6466a746 )
+	ROM_LOAD( "bub_prot.2b",  0x1000, 0x1000, 0xcca04357 )
+	ROM_LOAD( "bub_prot.3b",  0x2000, 0x1000, 0x7aaff9e5 )
+	ROM_LOAD( "bub_prot.4b",  0x3000, 0x1000, 0x4e264f01 )
+	ROM_LOAD( "bub_prot.5b",  0x4000, 0x1000, 0x121b0be6 )
+	ROM_LOAD( "bub_prot.6b",  0x5000, 0x1000, 0x80e90b25 )
+	ROM_LOAD( "bubbles.7b",   0x6000, 0x1000, 0xe0a26ec0 )
+	ROM_LOAD( "bub_prot.8b",  0x7000, 0x1000, 0x96fb19c8 )
+	ROM_LOAD( "bub_prot.9b",  0x8000, 0x1000, 0xbe7e1028 )
+	ROM_LOAD( "bub_prot.10b", 0xd000, 0x1000, 0x89a565df )
+	ROM_LOAD( "bub_prot.11b", 0xe000, 0x1000, 0x5a0c36a7 )
+	ROM_LOAD( "bub_prot.12b", 0xf000, 0x1000, 0x2bfd3438 )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for the sound CPU */
+	ROM_LOAD( "bubbles.snd",  0xf000, 0x1000, 0x689ce2aa )
+ROM_END
 
 ROM_START( splat )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
@@ -2548,6 +2566,7 @@ GAME( 1982, joustwr,  joust,    williams, joust,    joust,    ROT0,   "Williams"
 
 GAME( 1982, bubbles,  0,        williams, bubbles,  bubbles,  ROT0,   "Williams", "Bubbles" )
 GAME( 1982, bubblesr, bubbles,  williams, bubbles,  bubbles,  ROT0,   "Williams", "Bubbles (Solid Red label)" )
+GAME( 1982, bubblesp, bubbles,  williams, bubbles,  bubbles,  ROT0,   "Williams", "Bubbles (prototype version)" )
 
 GAME( 1982, splat,    0,        williams, splat,    splat,    ROT0,   "Williams", "Splat!" )
 

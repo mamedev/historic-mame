@@ -566,7 +566,7 @@ static const struct MachineDriver machine_driver_airsys =
 	512*16, 512*16,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	recordbr_vh_start,
 	syvalion_vh_stop,

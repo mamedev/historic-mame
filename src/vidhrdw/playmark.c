@@ -271,16 +271,7 @@ static void draw_sprites(struct osd_bitmap *bitmap,int codeshift)
 
 void bigtwin_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	tilemap_update(ALL_TILEMAPS);
-
-	palette_used_colors[256] = PALETTE_COLOR_TRANSPARENT;	/* keep the background black */
-	if (palette_recalc())
-	{
-		int offs;
-
-		for (offs = 0;offs < bigtwin_bgvideoram_size/2;offs++)
-			bigtwin_bgvideoram_w(offs,bigtwin_bgvideoram[offs],0);
-	}
+	palette_change_color(256,0,0,0);	/* keep the background black */
 
 	copyscrollbitmap(bitmap,bgbitmap,1,&bgscrollx,1,&bgscrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);
 	tilemap_draw(bitmap,fg_tilemap,0,0);
@@ -290,10 +281,6 @@ void bigtwin_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 void wbeachvl_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	tilemap_update(ALL_TILEMAPS);
-
-	palette_recalc();
-
 	tilemap_draw(bitmap,bg_tilemap,0,0);
 	tilemap_draw(bitmap,fg_tilemap,0,0);
 	draw_sprites(bitmap,0);

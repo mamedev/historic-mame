@@ -272,7 +272,7 @@ static const struct MachineDriver machine_driver_ssozumo =
 	64 + 16, 64 + 16,
 	ssozumo_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER,
 	0,
 	ssozumo_vh_start,
 	ssozumo_vh_stop,

@@ -22,50 +22,6 @@ static int flipscreen;
 
 /******************************************************************************/
 
-static void supbtime_mark_sprite_colours(void)
-{
-	int offs,color,i,pal_base;
-	int colmask[16];
-    unsigned int *pen_usage;
-
-	palette_init_used_colors();
-
-	pen_usage=Machine->gfx[2]->pen_usage;
-	pal_base = Machine->drv->gfxdecodeinfo[2].color_codes_start;
-	for (color = 0;color < 16;color++) colmask[color] = 0;
-
-	for (offs = 0;offs < 0x400;offs += 4)
-	{
-		int x,y,sprite,multi;
-
-		sprite = spriteram16[offs+1] & 0x3fff;
-		if (!sprite) continue;
-
-		y = spriteram16[offs];
-		x = spriteram16[offs+2];
-		color = (x >>9) &0xf;
-
-		multi = (1 << ((y & 0x0600) >> 9)) - 1;	/* 1x, 2x, 4x, 8x height */
-
-		sprite &= ~multi;
-
-		while (multi >= 0)
-		{
-			colmask[color] |= pen_usage[sprite + multi];
-			multi--;
-		}
-	}
-
-	for (color = 0;color < 16;color++)
-	{
-		for (i = 1;i < 16;i++)
-		{
-			if (colmask[color] & (1 << i))
-				palette_used_colors[pal_base + 16 * color + i] = PALETTE_COLOR_USED;
-		}
-	}
-}
-
 static void supbtime_drawsprites(struct osd_bitmap *bitmap)
 {
 	int offs;
@@ -219,13 +175,6 @@ void supbtime_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	if (supbtime_control_0[6]==0xc0)
 		tilemap_set_scrollx( pf1_tilemap,0, supbtime_control_0[1] + supbtime_pf1_row[4] );
 
-	tilemap_update(pf2_tilemap);
-	tilemap_update(pf1_tilemap);
-
-	supbtime_mark_sprite_colours();
-	palette_used_colors[768] = PALETTE_COLOR_USED;
-	palette_recalc();
-
 	/* The filled bitmap is unusual for Data East, but without this the title screen
 	background colour is incorrect.  This also explains why the game initialises
 	the previously unused palette ram to zero */
@@ -247,13 +196,6 @@ void chinatwn_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	else
 		tilemap_set_scrollx( pf2_tilemap,0, supbtime_control_0[3]-1 );
 	tilemap_set_scrolly( pf2_tilemap,0, supbtime_control_0[4] );
-
-	tilemap_update(pf2_tilemap);
-	tilemap_update(pf1_tilemap);
-
-	supbtime_mark_sprite_colours();
-	palette_used_colors[768] = PALETTE_COLOR_USED;
-	palette_recalc();
 
 	/* The filled bitmap is unusual for Data East, but without this the title screen
 	background colour is incorrect.  This also explains why the game initialises

@@ -203,12 +203,6 @@ void matmania_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	int offs;
 
 
-	if (palette_recalc())
-	{
-		memset(dirtybuffer,1,videoram_size);
-		memset(dirtybuffer2,1,matmania_videoram3_size);
-	}
-
 	/* Update the tiles in the left tile ram bank */
 	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
@@ -304,12 +298,6 @@ void maniach_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 
-
-	if (palette_recalc())
-	{
-		memset(dirtybuffer,1,videoram_size);
-		memset(dirtybuffer2,1,matmania_videoram3_size);
-	}
 
 	/* Update the tiles in the left tile ram bank */
 	for (offs = videoram_size - 1;offs >= 0;offs--)

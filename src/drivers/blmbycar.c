@@ -296,7 +296,7 @@ static const struct MachineDriver machine_driver_blmbycar =
 	blmbycar_gfxdecodeinfo,
 	0x300, 0x300,
 	0,
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	blmbycar_vh_start,
 	0,

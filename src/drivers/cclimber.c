@@ -964,8 +964,8 @@ ROM_START( rpatrolb )
 	/* 3800-3fff empty */
 
 	ROM_REGION( 0x1000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "rp11.6c",      0x0000, 0x0800, 0x065651a5 )
-	ROM_LOAD( "rp10.6a",      0x0800, 0x0800, 0x59747c31 )
+	ROM_LOAD( "rp10.6a",      0x0000, 0x0800, 0x59747c31 )
+	ROM_LOAD( "rp11.6c",      0x0800, 0x0800, 0x065651a5 )
 
 	ROM_REGION( 0x0060, REGION_PROMS, 0 )
 	ROM_LOAD( "bprom1.9n",    0x0000, 0x0020, 0xf9a2383b )
@@ -1300,7 +1300,7 @@ static const struct MachineDriver machine_driver_swimmer =
 	256+32+2,64*8+4*8,
 	swimmer_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER,
 	0,
 	generic_vh_start,
 	generic_vh_stop,
@@ -1330,25 +1330,25 @@ ROM_START( swimmer )
 	ROM_LOAD( "sw8",          0x7000, 0x1000, 0x33d6001e )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for sound board */
-	ROM_LOAD( "sw12",         0x0000, 0x1000, 0x2eee9bcb )
+	ROM_LOAD( "sw12.4k",      0x0000, 0x1000, 0x2eee9bcb )
 
 	ROM_REGION( 0x3000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "sw15",         0x0000, 0x1000, 0x4f3608cb )  /* chars */
-	ROM_LOAD( "sw14",         0x1000, 0x1000, 0x7181c8b4 )
-	ROM_LOAD( "sw13",         0x2000, 0x1000, 0x2eb1af5c )
+	ROM_LOAD( "sw15.18k",     0x0000, 0x1000, 0x4f3608cb )  /* chars */
+	ROM_LOAD( "sw14.18l",     0x1000, 0x1000, 0x7181c8b4 )
+	ROM_LOAD( "sw13.18m",     0x2000, 0x1000, 0x2eb1af5c )
 
 	ROM_REGION( 0x3000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "sw23",         0x0000, 0x0800, 0x9ca67e24 )  /* bigsprite data */
+	ROM_LOAD( "sw23.6c",      0x0000, 0x0800, 0x9ca67e24 )  /* bigsprite data */
 	ROM_RELOAD(               0x0800, 0x0800 )	/* Guzzler has larger ROMs */
-	ROM_LOAD( "sw22",         0x1000, 0x0800, 0x02c10992 )
+	ROM_LOAD( "sw22.5c",      0x1000, 0x0800, 0x02c10992 )
 	ROM_RELOAD(               0x1800, 0x0800 )	/* Guzzler has larger ROMs */
-	ROM_LOAD( "sw21",         0x2000, 0x0800, 0x7f4993c1 )
+	ROM_LOAD( "sw21.4c",      0x2000, 0x0800, 0x7f4993c1 )
 	ROM_RELOAD(               0x2800, 0x0800 )	/* Guzzler has larger ROMs */
 
 	ROM_REGION( 0x0220, REGION_PROMS, 0 )
-	ROM_LOAD( "8220.clr",     0x0000, 0x100, 0x72c487ed )
-	ROM_LOAD( "8212.clr",     0x0100, 0x100, 0x39037799 )
-	ROM_LOAD( "8221.clr",     0x0200, 0x020, 0x3b2deb3a )
+	ROM_LOAD( "24s10.13b",    0x0000, 0x100, 0x8e35b97d )
+	ROM_LOAD( "24s10.13a",    0x0100, 0x100, 0xc5f24909 )
+	ROM_LOAD( "18s030.12c",   0x0200, 0x020, 0x3b2deb3a )
 ROM_END
 
 ROM_START( swimmera )
@@ -1363,25 +1363,58 @@ ROM_START( swimmera )
 	ROM_LOAD( "swa8",         0x7000, 0x1000, 0xab86efa9 )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for sound board */
-	ROM_LOAD( "sw12",         0x0000, 0x1000, 0x2eee9bcb )
+	ROM_LOAD( "sw12.4k",      0x0000, 0x1000, 0x2eee9bcb )
 
 	ROM_REGION( 0x3000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "sw15",         0x0000, 0x1000, 0x4f3608cb )  /* chars */
-	ROM_LOAD( "sw14",         0x1000, 0x1000, 0x7181c8b4 )
-	ROM_LOAD( "sw13",         0x2000, 0x1000, 0x2eb1af5c )
+	ROM_LOAD( "sw15.18k",     0x0000, 0x1000, 0x4f3608cb )  /* chars */
+	ROM_LOAD( "sw14.18l",     0x1000, 0x1000, 0x7181c8b4 )
+	ROM_LOAD( "sw13.18m",     0x2000, 0x1000, 0x2eb1af5c )
 
 	ROM_REGION( 0x3000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "sw23",         0x0000, 0x0800, 0x9ca67e24 )  /* bigsprite data */
+	ROM_LOAD( "sw23.6c",      0x0000, 0x0800, 0x9ca67e24 )  /* bigsprite data */
 	ROM_RELOAD(               0x0800, 0x0800 )	/* Guzzler has larger ROMs */
-	ROM_LOAD( "sw22",         0x1000, 0x0800, 0x02c10992 )
+	ROM_LOAD( "sw22.5c",      0x1000, 0x0800, 0x02c10992 )
 	ROM_RELOAD(               0x1800, 0x0800 )	/* Guzzler has larger ROMs */
-	ROM_LOAD( "sw21",         0x2000, 0x0800, 0x7f4993c1 )
+	ROM_LOAD( "sw21.4c",      0x2000, 0x0800, 0x7f4993c1 )
 	ROM_RELOAD(               0x2800, 0x0800 )	/* Guzzler has larger ROMs */
 
 	ROM_REGION( 0x0220, REGION_PROMS, 0 )
-	ROM_LOAD( "8220.clr",     0x0000, 0x100, 0x72c487ed )
-	ROM_LOAD( "8212.clr",     0x0100, 0x100, 0x39037799 )
-	ROM_LOAD( "8221.clr",     0x0200, 0x020, 0x3b2deb3a )
+	ROM_LOAD( "24s10.13b",    0x0000, 0x100, 0x8e35b97d )
+	ROM_LOAD( "24s10.13a",    0x0100, 0x100, 0xc5f24909 )
+	ROM_LOAD( "18s030.12c",   0x0200, 0x020, 0x3b2deb3a )
+ROM_END
+
+ROM_START( swimmerb )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
+	ROM_LOAD( "sw1.9l",       0x0000, 0x1000, 0xb045be08 )
+	ROM_LOAD( "sw2.9k",       0x1000, 0x1000, 0x163d65e5 )
+	ROM_LOAD( "sw3.9j",       0x2000, 0x1000, 0x631d74e9 )
+	ROM_LOAD( "sw4.9f",       0x3000, 0x1000, 0xd62634db )
+	ROM_LOAD( "sw5.9e",       0x4000, 0x1000, 0x922d5d87 )
+	ROM_LOAD( "sw6.9d",       0x5000, 0x1000, 0x85478209 )
+	ROM_LOAD( "sw7.9c",       0x6000, 0x1000, 0x88266f2e )
+	ROM_LOAD( "sw8.9a",       0x7000, 0x1000, 0x191a16e4 )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for sound board */
+	ROM_LOAD( "sw12.4k",      0x0000, 0x1000, 0x2eee9bcb )
+
+	ROM_REGION( 0x3000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "sw15.18k",     0x0000, 0x1000, 0x4f3608cb )  /* chars */
+	ROM_LOAD( "sw14.18l",     0x1000, 0x1000, 0x7181c8b4 )
+	ROM_LOAD( "sw13.18m",     0x2000, 0x1000, 0x2eb1af5c )
+
+	ROM_REGION( 0x3000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "sw23.6c",      0x0000, 0x0800, 0x9ca67e24 )  /* bigsprite data */
+	ROM_RELOAD(               0x0800, 0x0800 )	/* Guzzler has larger ROMs */
+	ROM_LOAD( "sw22.5c",      0x1000, 0x0800, 0x02c10992 )
+	ROM_RELOAD(               0x1800, 0x0800 )	/* Guzzler has larger ROMs */
+	ROM_LOAD( "sw21.4c",      0x2000, 0x0800, 0x7f4993c1 )
+	ROM_RELOAD(               0x2800, 0x0800 )	/* Guzzler has larger ROMs */
+
+	ROM_REGION( 0x0220, REGION_PROMS, 0 )
+	ROM_LOAD( "24s10.13b",    0x0000, 0x100, 0x8e35b97d )
+	ROM_LOAD( "24s10.13a",    0x0100, 0x100, 0xc5f24909 )
+	ROM_LOAD( "18s030.12c",   0x0200, 0x020, 0x3b2deb3a )
 ROM_END
 
 ROM_START( guzzler )
@@ -1428,4 +1461,5 @@ GAME( 19??, silvland, rpatrolb, cclimber, rpatrolb, 0,        ROT0,   "Falcon", 
 
 GAME( 1982, swimmer,  0,       swimmer, swimmer, 0, ROT0,  "Tehkan", "Swimmer (set 1)" )
 GAME( 1982, swimmera, swimmer, swimmer, swimmer, 0, ROT0,  "Tehkan", "Swimmer (set 2)" )
+GAME( 1982, swimmerb, swimmer, swimmer, swimmer, 0, ROT0,  "Tehkan", "Swimmer (set 3)" )
 GAME( 1983, guzzler,  0,       swimmer, guzzler, 0, ROT90, "Tehkan", "Guzzler" )

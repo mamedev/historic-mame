@@ -135,7 +135,7 @@ READ_HANDLER( actfancr_pf2_data_r )
 
 void actfancr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	int my,mx,offs,color,tile,pal_base,colmask[16],i,mult;
+	int my,mx,offs,color,tile,mult;
 	int scrollx=(actfancr_control_1[0x10]+(actfancr_control_1[0x11]<<8));
 	int scrolly=(actfancr_control_1[0x12]+(actfancr_control_1[0x13]<<8));
 
@@ -147,49 +147,6 @@ void actfancr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	tilemap_set_scrolly( pf1_tilemap,0, scrolly );
 	tilemap_set_scrollx( pf1_alt_tilemap,0, scrollx );
 	tilemap_set_scrolly( pf1_alt_tilemap,0, scrolly );
-
-	tilemap_update(pf1_tilemap);
-	tilemap_update(pf1_alt_tilemap);
-
-	palette_init_used_colors();
-	pal_base = Machine->drv->gfxdecodeinfo[0].color_codes_start;
-	for (color = 0;color < 16;color++) colmask[color] = 0;
-	for (offs = 0; offs < 0x800; offs += 2)
-	{
-		tile = actfancr_pf2_data[offs]+(actfancr_pf2_data[offs+1]<<8);
-		colmask[tile>>12] |= Machine->gfx[0]->pen_usage[tile&0xfff];
-	}
-	for (color = 0;color < 16;color++)
-	{
-		if (colmask[color] & (1 << 0))
-			palette_used_colors[pal_base + 16 * color] = PALETTE_COLOR_TRANSPARENT;
-		for (i = 1;i < 16;i++)
-		{
-			if (colmask[color] & (1 << i))
-				palette_used_colors[pal_base + 16 * color + i] = PALETTE_COLOR_USED;
-		}
-	}
-
-	pal_base = Machine->drv->gfxdecodeinfo[1].color_codes_start;
-	for (color = 0;color < 16;color++) colmask[color] = 0;
-	for (offs = 0; offs < 0x800; offs += 2)
-	{
-		tile = buffered_spriteram[offs+2]+(buffered_spriteram[offs+3]<<8);
-		color=buffered_spriteram[offs+5]>>4;
-		colmask[color] |= Machine->gfx[1]->pen_usage[tile&0xfff];
-	}
-	for (color = 0;color < 16;color++)
-	{
-		if (colmask[color] & (1 << 0))
-			palette_used_colors[pal_base + 16 * color] = PALETTE_COLOR_TRANSPARENT;
-		for (i = 1;i < 16;i++)
-		{
-			if (colmask[color] & (1 << i))
-				palette_used_colors[pal_base + 16 * color + i] = PALETTE_COLOR_USED;
-		}
-	}
-
-	palette_recalc();
 
 	if (actfancr_control_1[6]==1)
 		tilemap_draw(bitmap,pf1_alt_tilemap,0,0);
@@ -270,7 +227,7 @@ void actfancr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 void triothep_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	int my,mx,offs,color,tile,pal_base,colmask[16],i,mult;
+	int my,mx,offs,color,tile,i,mult;
 	int scrollx=(actfancr_control_1[0x10]+(actfancr_control_1[0x11]<<8));
 	int scrolly=(actfancr_control_1[0x12]+(actfancr_control_1[0x13]<<8));
 
@@ -289,48 +246,6 @@ void triothep_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		tilemap_set_scrollx( pf1_tilemap,0, scrollx );
 		tilemap_set_scrolly( pf1_tilemap,0, scrolly );
 	}
-
-	tilemap_update(pf1_tilemap);
-
-	palette_init_used_colors();
-	pal_base = Machine->drv->gfxdecodeinfo[0].color_codes_start;
-	for (color = 0;color < 16;color++) colmask[color] = 0;
-	for (offs = 0; offs < 0x800; offs += 2)
-	{
-		tile = actfancr_pf2_data[offs]+(actfancr_pf2_data[offs+1]<<8);
-		colmask[tile>>12] |= Machine->gfx[0]->pen_usage[tile&0xfff];
-	}
-	for (color = 0;color < 16;color++)
-	{
-		if (colmask[color] & (1 << 0))
-			palette_used_colors[pal_base + 16 * color] = PALETTE_COLOR_TRANSPARENT;
-		for (i = 1;i < 16;i++)
-		{
-			if (colmask[color] & (1 << i))
-				palette_used_colors[pal_base + 16 * color + i] = PALETTE_COLOR_USED;
-		}
-	}
-
-	pal_base = Machine->drv->gfxdecodeinfo[1].color_codes_start;
-	for (color = 0;color < 16;color++) colmask[color] = 0;
-	for (offs = 0; offs < 0x800; offs += 2)
-	{
-		tile = buffered_spriteram[offs+2]+(buffered_spriteram[offs+3]<<8);
-		color= buffered_spriteram[offs+5]>>4;
-		colmask[color] |= Machine->gfx[1]->pen_usage[tile&0xfff];
-	}
-	for (color = 0;color < 16;color++)
-	{
-		if (colmask[color] & (1 << 0))
-			palette_used_colors[pal_base + 16 * color] = PALETTE_COLOR_TRANSPARENT;
-		for (i = 1;i < 16;i++)
-		{
-			if (colmask[color] & (1 << i))
-				palette_used_colors[pal_base + 16 * color + i] = PALETTE_COLOR_USED;
-		}
-	}
-
-	palette_recalc();
 
 	tilemap_draw(bitmap,pf1_tilemap,0,0);
 

@@ -255,8 +255,6 @@ void tsamurai_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh )
 	}
 /* end of column scroll code */
 
-	tilemap_update( ALL_TILEMAPS );
-
 	/*
 		This following isn't particularly efficient.  We'd be better off to
 		dynamically change every 8th palette to the background color, so we
@@ -317,7 +315,6 @@ void vsgongf_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh )
 		tilemap_mark_all_tiles_dirty( foreground );
 	}
 
-	tilemap_update( ALL_TILEMAPS );
 	tilemap_draw(bitmap,foreground,0,0);
 	draw_sprites(bitmap);
 }

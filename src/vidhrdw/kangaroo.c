@@ -314,7 +314,7 @@ void kangaroo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	int scrollx, scrolly;
 
 
-	if (palette_recalc() || screen_flipped)
+	if (screen_flipped)
 	{
 		int x, y;
 

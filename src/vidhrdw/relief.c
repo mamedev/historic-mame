@@ -22,13 +22,13 @@ int relief_vh_start(void)
 		0,			/* index to which gfx system */
 		64,64,		/* size of the playfield in tiles (x,y) */
 		64,1,		/* tile_index = x * xmult + y * ymult (xmult,ymult) */
-	
+
 		0x200,		/* index of palette base */
 		0x100,		/* maximum number of colors */
 		0,			/* color XOR for shadow effect (if any) */
 		0x003f,		/* latch mask */
 		0,			/* transparent pen mask */
-	
+
 		0x007fff,	/* tile data index mask */
 		0x4f0000,	/* tile data color mask */
 		0x008000,	/* tile data hflip mask */
@@ -41,13 +41,13 @@ int relief_vh_start(void)
 		0,			/* index to which gfx system */
 		64,64,		/* size of the playfield in tiles (x,y) */
 		64,1,		/* tile_index = x * xmult + y * ymult (xmult,ymult) */
-	
+
 		0x000,		/* index of palette base */
 		0x100,		/* maximum number of colors */
 		0,			/* color XOR for shadow effect (if any) */
 		0x3f00,		/* latch mask */
 		0x0001,		/* transparent pen mask */
-	
+
 		0x007fff,	/* tile data index mask */
 		0x4f0000,	/* tile data color mask */
 		0x008000,	/* tile data hflip mask */
@@ -85,23 +85,23 @@ int relief_vh_start(void)
 		{{ 0,0,0x0008,0 }},	/* mask for the priority */
 		{{ 0 }},			/* mask for the neighbor */
 		{{ 0 }},			/* mask for absolute coordinates */
-		
+
 		{{ 0 }},			/* mask for the ignore value */
 		0,					/* resulting value to indicate "ignore" */
 		0					/* callback routine for ignored entries */
 	};
-	
+
 	/* blend the MO graphics */
 	ataripf_blend_gfx(1, 2, 0x0f, 0x10);
 
 	/* initialize the playfield */
 	if (!ataripf_init(0, &pf0desc))
 		goto cant_create_pf0;
-	
+
 	/* initialize the second playfield */
 	if (!ataripf_init(1, &pf1desc))
 		goto cant_create_pf1;
-	
+
 	/* initialize the motion objects */
 	if (!atarimo_init(0, &modesc))
 		goto cant_create_mo;
@@ -148,7 +148,7 @@ static int overrender1_callback(struct ataripf_overrender_data *data, int state)
 		data->maskpens = 0x0001;
 		return OVERRENDER_SOME;
 	}
-	
+
 	/* handle a query */
 	else if (state == OVERRENDER_QUERY)
 		return (data->pfcolor >= data->mopriority) ? OVERRENDER_YES : OVERRENDER_NO;
@@ -165,19 +165,6 @@ static int overrender1_callback(struct ataripf_overrender_data *data, int state)
 
 void relief_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	/* mark the used colors */
-	palette_init_used_colors();
-	ataripf_mark_palette(0);
-	ataripf_mark_palette(1);
-	atarimo_mark_palette(0);
-
-	/* update the palette, and mark things dirty if we need to */
-	if (palette_recalc())
-	{
-		ataripf_invalidate(0);
-		ataripf_invalidate(1);
-	}
-
 	/* draw the layers */
 	ataripf_render(0, bitmap);
 	ataripf_render(1, bitmap);

@@ -276,55 +276,8 @@ static void trojan_draw_sprites(struct osd_bitmap *bitmap)
 	}
 }
 
-static void lwings_mark_sprite_colors(void)
-{
-	int offs;
-	unsigned char *sprite_colors;
-
-
-	sprite_colors = palette_used_colors + Machine->drv->gfxdecodeinfo[2].color_codes_start;
-
-	for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
-	{
-		if (is_sprite_on(offs))
-		{
-			int color;
-
-			color = (buffered_spriteram[offs + 1] & 0x38) >> 3;
-			memset(sprite_colors + color * 16, PALETTE_COLOR_USED, 15);
-		}
-	}
-}
-
-static void trojan_mark_sprite_colors(void)
-{
-	int offs;
-	unsigned char *sprite_colors;
-
-
-	sprite_colors = palette_used_colors + Machine->drv->gfxdecodeinfo[2].color_codes_start;
-
-	for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
-	{
-		if (is_sprite_on(offs))
-		{
-			int color;
-
-			color = (buffered_spriteram[offs + 1] & 0x0e) >> 1;
-			memset(sprite_colors + color * 16, PALETTE_COLOR_USED, 15);
-		}
-	}
-}
-
 void lwings_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	tilemap_update(ALL_TILEMAPS);
-
-	palette_init_used_colors();
-	lwings_mark_sprite_colors();
-
-	palette_recalc();
-
 	tilemap_draw(bitmap,bg1_tilemap,0,0);
 	lwings_draw_sprites(bitmap);
 	tilemap_draw(bitmap,fg_tilemap,0,0);
@@ -332,13 +285,6 @@ void lwings_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 void trojan_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	tilemap_update(ALL_TILEMAPS);
-
-	palette_init_used_colors();
-	trojan_mark_sprite_colors();
-
-	palette_recalc();
-
 	tilemap_draw(bitmap,bg2_tilemap,0,0);
 	tilemap_draw(bitmap,bg1_tilemap,TILEMAP_BACK,0);
 	trojan_draw_sprites(bitmap);

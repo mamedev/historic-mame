@@ -852,7 +852,7 @@ static struct MachineDriver machine_driver_harddriv =
 	256*4,256*4,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER  | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK,
 	harddriv_vh_eof,
 	harddriv_vh_start,
 	harddriv_vh_stop,
@@ -929,7 +929,7 @@ static struct MachineDriver machine_driver_racedriv =
 	256*4,256*4,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK,
 	harddriv_vh_eof,
 	harddriv_vh_start,
 	harddriv_vh_stop,
@@ -980,7 +980,7 @@ static struct MachineDriver machine_driver_stunrun =
 	256*4,256*4,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK,
 	harddriv_vh_eof,
 	harddriv_vh_start,
 	harddriv_vh_stop,
@@ -1036,7 +1036,7 @@ static struct MachineDriver machine_driver_steeltal =
 	256*4,256*4,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK,
 	harddriv_vh_eof,
 	harddriv_vh_start,
 	harddriv_vh_stop,
@@ -1838,13 +1838,13 @@ ROM_END
  *
  *************************************/
 
-GAMEX( 1988, harddriv, 0,        harddriv, harddriv, harddriv, ROT0_16BIT, "Atari Games", "Hard Drivin'", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEX( 1990, harddrvc, harddriv, racedriv, racedriv, harddrvc, ROT0_16BIT, "Atari Games", "Hard Drivin' (compact)", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAME ( 1989, stunrun,  0,        stunrun,  stunrun,  stunrun,  ROT0_16BIT, "Atari Games", "S.T.U.N. Runner" )
-GAME ( 1989, stunrnp,  stunrun,  stunrun,  stunrun,  stunrun,  ROT0_16BIT, "Atari Games", "S.T.U.N. Runner (prototype)" )
-GAMEX( 1990, racedriv, 0,        harddriv, racedriv, racedriv, ROT0_16BIT, "Atari Games", "Race Drivin' (upgrade)", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEX( 1990, racedrvc, racedriv, racedriv, racedriv, racedrvc, ROT0_16BIT, "Atari Games", "Race Drivin' (compact)", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEX( 1990, steeltal, 0,        steeltal, steeltal, steeltal, ROT0_16BIT, "Atari Games", "Steel Talons", GAME_NOT_WORKING )
-GAMEX( 1990, steeltdb, steeltal, steeltal, steeltal, steeltal, ROT0_16BIT, "Atari Games", "Steel Talons (debug)", GAME_NOT_WORKING )
-GAMEX( 1993, hdrivair, 0,        steeltal, hdrivair, hdrivair, ROT0_16BIT, "Atari Games", "Hard Drivin's Airborne (prototype)", GAME_NOT_WORKING )
-GAMEX( 1993, hdrivaip, hdrivair, steeltal, hdrivair, hdrivair, ROT0_16BIT, "Atari Games", "Hard Drivin's Airborne (prototype, early rev)", GAME_NOT_WORKING )
+GAMEX( 1988, harddriv, 0,        harddriv, harddriv, harddriv, ROT0, "Atari Games", "Hard Drivin'", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1990, harddrvc, harddriv, racedriv, racedriv, harddrvc, ROT0, "Atari Games", "Hard Drivin' (compact)", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAME ( 1989, stunrun,  0,        stunrun,  stunrun,  stunrun,  ROT0, "Atari Games", "S.T.U.N. Runner" )
+GAME ( 1989, stunrnp,  stunrun,  stunrun,  stunrun,  stunrun,  ROT0, "Atari Games", "S.T.U.N. Runner (prototype)" )
+GAMEX( 1990, racedriv, 0,        harddriv, racedriv, racedriv, ROT0, "Atari Games", "Race Drivin' (upgrade)", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1990, racedrvc, racedriv, racedriv, racedriv, racedrvc, ROT0, "Atari Games", "Race Drivin' (compact)", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1990, steeltal, 0,        steeltal, steeltal, steeltal, ROT0, "Atari Games", "Steel Talons", GAME_NOT_WORKING )
+GAMEX( 1990, steeltdb, steeltal, steeltal, steeltal, steeltal, ROT0, "Atari Games", "Steel Talons (debug)", GAME_NOT_WORKING )
+GAMEX( 1993, hdrivair, 0,        steeltal, hdrivair, hdrivair, ROT0, "Atari Games", "Hard Drivin's Airborne (prototype)", GAME_NOT_WORKING )
+GAMEX( 1993, hdrivaip, hdrivair, steeltal, hdrivair, hdrivair, ROT0, "Atari Games", "Hard Drivin's Airborne (prototype, early rev)", GAME_NOT_WORKING )

@@ -60,18 +60,13 @@ Video Map
 TODO
 ====
 
+Offer fake-dip selectable analogue steer
+
 Is piv/sprite layers rotation control at 0x600000 ?
 
-Color banking system for piv tilemaps is wrong.
-
-(I'm using color bank offsets from part of the piv ram area,
-making 1 word control 4 16x16 piv tiles. Expect each color bank
-word *should* control 1 pixel row of that piv tilemap. This row
-color bank control should give better impression that road
-lines are moving down the screen.)
-
-There are three piv control words (zoom?) that we ignore: they're
-apparently fixed (except in Wgp2).
+Verify y-zoom is correct on the stages that use it (including Wgp2
+default course). Row zoom may be hard to verify, but Wgp2 course
+selection screen is probably a good test.
 
 Implement proper positioning/zoom/rotation for sprites.
 
@@ -97,11 +92,8 @@ $ac3e sub (called off int4) at $ac78 does three calcs to the six
 Wgp2
 ----
 
-PIV layer vertical position gets badly out of alignment with sprites.
-Appears to happen whenever piv zoom (which we don't implement)
-changes from default 0x7f.
-
-Piv zoom also required for course selection screen.
+Piv y zoom may be imperfect. Check the up/down hill part of the
+default course. The road looks a little odd.
 
 Sprite colors seem ok except smoke after you crash. (And one sign on
 first bend of default course doesn't go yellow for a few frames.)
@@ -909,10 +901,10 @@ static struct MachineDriver machine_driver_wgp =
 	40*8, 32*8, { 0*8, 40*8-1, 2*8, 32*8-1 },
 
 	wgp_gfxdecodeinfo,
-	4096, 4096,
+	4096, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	wgp_vh_start,
 	wgp_vh_stop,
@@ -958,10 +950,10 @@ static struct MachineDriver machine_driver_wgp2 =
 	40*8, 32*8, { 0*8, 40*8-1, 2*8, 32*8-1 },
 
 	wgp_gfxdecodeinfo,
-	4096, 4096,
+	4096, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	wgp2_vh_start,
 	wgp_vh_stop,
@@ -1171,13 +1163,10 @@ void init_wgp2(void)
 	init_wgp();
 }
 
-/* Working Games with graphics problems */
+/* Working Games with a few graphics problems - missing rotation */
 
 GAMEX( 1989, wgp,    0,      wgp,    wgp,    wgp,    ROT0, "Taito America Corporation", "World Grand Prix (US)", GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1989, wgpj,   wgp,    wgp,    wgp,    wgp,    ROT0, "Taito Corporation", "World Grand Prix (Japan)", GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1989, wgpjoy, wgp,    wgp,    wgpjoy, wgp,    ROT0, "Taito Corporation", "World Grand Prix (joystick version) (Japan)", GAME_IMPERFECT_GRAPHICS )
-
-/* Game with worse graphics problems */
-
-GAMEX( 1990, wgp2,   wgp,    wgp2,   wgp,    wgp2,   ROT0, "Taito Corporation", "World Grand Prix 2 (Japan)", GAME_NOT_WORKING |GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1990, wgp2,   wgp,    wgp2,   wgp,    wgp2,   ROT0, "Taito Corporation", "World Grand Prix 2 (Japan)", GAME_IMPERFECT_GRAPHICS )
 

@@ -1,8 +1,8 @@
 /***************************************************************************
 
-						-= Jaleco Mega System 1 =-
+							-= Jaleco Mega System 1 =-
 
-				driver by	Luca Elia (l.elia@tin.it)
+					driver by	Luca Elia (l.elia@tin.it)
 
 
 
@@ -192,11 +192,13 @@ actual code sent to the hardware.
 ***************************************************************************/
 
 #include "driver.h"
+#include "megasys1.h"
 #include "vidhrdw/generic.h"
-#include "drivers/megasys1.h"
+
+static char buf[80];
 
 /* Variables defined here, that have to be shared: */
-static struct tilemap *megasys1_tmap[3];
+struct tilemap *megasys1_tmap[3];
 
 data16_t *megasys1_scrollram_0, *megasys1_scrollram_1, *megasys1_scrollram_2;
 data16_t *megasys1_objectram, *megasys1_vregs, *megasys1_ram;
@@ -217,8 +219,7 @@ static int hardware_type_z;
 #ifdef MAME_DEBUG
 
 #define SHOW_WRITE_ERROR(_format_,_offset_,_data_)\
-{\
-	char buf[80];\
+{ \
 	sprintf(buf,_format_,_offset_,_data_);\
 	usrintf_showmessage(buf);\
 	logerror("CPU #0 PC %06X : Warning, %s\n",cpu_get_pc(), buf); \
@@ -228,7 +229,6 @@ static int hardware_type_z;
 
 #define SHOW_WRITE_ERROR(_format_,_offset_,_data_)\
 {\
-	char buf[80];\
 	sprintf(buf,_format_,_offset_,_data_); \
 	logerror("CPU #0 PC %06X : Warning, %s\n",cpu_get_pc(), buf); \
 }
@@ -382,6 +382,17 @@ MEGASYS1_SCROLLRAM_W(2)
 							Video registers access
 
 ***************************************************************************/
+
+
+/*		Tilemap Size (PagesX x PagesY)
+
+		Reg. Value			16			8		<- Tile Size
+
+			0				16 x  2		8 x 1
+			1	 			 8 x  4		4 x 2
+			2	 			 4 x  8		4 x 2
+			3	 			 2 x 16		2 x 4
+*/
 
 #define MEGASYS1_SCROLL_FLAG_W(_n_) \
 void megasys1_scroll_##_n_##_flag_w(int data) \
@@ -671,89 +682,6 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 
 
 
-
-
-
-/* Mark colors used by visible sprites */
-
-static void mark_sprite_colors(void)
-{
-	int color_codes_start, color, penmask[16];
-	int offs, sx, sy, code, attr, i;
-	int color_mask;
-
-	int xmin = Machine->visible_area.min_x - (16 - 1);
-	int xmax = Machine->visible_area.max_x;
-	int ymin = Machine->visible_area.min_y - (16 - 1);
-	int ymax = Machine->visible_area.max_y;
-
-	for (color = 0 ; color < 16 ; color++) penmask[color] = 0;
-
-	color_mask = (megasys1_sprite_flag & 0x100) ? 0x07 : 0x0f;
-
-	if (hardware_type_z == 0)		/* standard sprite hardware */
-	{
-		unsigned int *pen_usage	=	Machine->gfx[3]->pen_usage;
-		int total_elements		=	Machine->gfx[3]->total_elements;
-		color_codes_start		=	Machine->drv->gfxdecodeinfo[3].color_codes_start;
-
-		for (offs = 0; offs < 0x2000/2 ; offs += 8/2)
-		{
-			data16_t sprite			=	megasys1_objectram[offs+0x00];
-			data16_t *spritedata	=	&spriteram16[ (sprite&0x7F) * 16/2];
-
-			attr = spritedata[ 8/2 ];
-			if ( (attr & 0xc0) != ((offs/(0x800/2))<<6) ) continue;
-
-			sx = ( spritedata[0x0A/2] + megasys1_objectram[0x02/2] ) % 512;
-			sy = ( spritedata[0x0C/2] + megasys1_objectram[0x04/2] ) % 512;
-
-			if (sx > 256-1) sx -= 512;
-			if (sy > 256-1) sy -= 512;
-
-			if ((sx > xmax) ||(sy > ymax) ||(sx < xmin) ||(sy < ymin)) continue;
-
-			code  = spritedata[0x0E/2] + megasys1_objectram[offs+0x06/2];
-			code  =	(code & 0xfff );
-			color = (attr & color_mask);
-
-			penmask[color] |= pen_usage[code % total_elements];
-		}
-	}
-	else
-	{
-		int sprite;
-		unsigned int *pen_usage	=	Machine->gfx[2]->pen_usage;
-		int total_elements		=	Machine->gfx[2]->total_elements;
-		color_codes_start		=	Machine->drv->gfxdecodeinfo[2].color_codes_start;
-
-		for (sprite = 0; sprite < 0x80 ; sprite++)
-		{
-			data16_t *spritedata = &spriteram16[ sprite * 16/2 ];
-
-			sx		=	spritedata[0x0A/2] % 512;
-			sy		=	spritedata[0x0C/2] % 512;
-			code	=	spritedata[0x0E/2];
-			color	=	spritedata[0x08/2] & 0x0F;
-
-			if (sx > 256-1) sx -= 512;
-			if (sy > 256-1) sy -= 512;
-
-			if ((sx > xmax) ||(sy > ymax) ||(sx < xmin) ||(sy < ymin)) continue;
-
-			penmask[color] |= pen_usage[code % total_elements];
-		}
-	}
-
-
-	for (color = 0; color < 16; color++)
-	 for (i = 0; i < 16; i++)
-	  if (penmask[color] & (1 << i)) palette_used_colors[16 * color + i + color_codes_start] = PALETTE_COLOR_USED;
-}
-
-
-
-
 /***************************************************************************
 						Convert the Priority Prom
 ***************************************************************************/
@@ -844,11 +772,11 @@ static struct priority priorities[] =
 		are split when the "split sprites" bit is set)
 
 	addr =	( (low pri sprite & split sprites ) << 0 ) +
-			( (pixel 0 is enabled and opaque ) << 1 ) +
-			( (pixel 1 is enabled and opaque ) << 2 ) +
-			( (pixel 2 is enabled and opaque ) << 3 ) +
-			( (pixel 3 is enabled and opaque ) << 4 ) +
-			( (layers_enable bits 11-8  ) << 5 )
+			( (pixel 0 is enabled and opaque )  << 1 ) +
+			( (pixel 1 is enabled and opaque )  << 2 ) +
+			( (pixel 2 is enabled and opaque )  << 3 ) +
+			( (pixel 3 is enabled and opaque )  << 4 ) +
+			( (layers_enable bits 11-8  )       << 5 )
 
 	OUTPUT (to video):
 		1 pixel, the one from layer: PROM[addr] (layer can be 0-3)
@@ -1093,14 +1021,6 @@ void megasys1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		}
 	}
 
-	tilemap_update(ALL_TILEMAPS);
-
-	palette_init_used_colors();
-
-	mark_sprite_colors();
-
-	palette_recalc();
-
 	fillbitmap(priority_bitmap,0,NULL);
 
 	flag = TILEMAP_IGNORE_TRANSPARENCY;
@@ -1127,7 +1047,7 @@ void megasys1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				if (flag != 0)
 				{
 					flag = 0;
-					fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
+					fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 				}
 
 				if (megasys1_sprite_flag & 0x100)	/* sprites are split */

@@ -396,7 +396,7 @@ static struct MachineDriver machine_driver_spdodgeb =
 	1024, 1024,
 	spdodgeb_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,	/* palette is static, but doesn't fit in 256 colors */
+	VIDEO_TYPE_RASTER ,	/* palette is static, but doesn't fit in 256 colors */
 	0,
 	spdodgeb_vh_start,
 	0,

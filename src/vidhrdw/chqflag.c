@@ -25,7 +25,7 @@ int sprite_colorbase,zoom_colorbase[2];
 
 static void sprite_callback(int *code,int *color,int *priority,int *shadow)
 {
-//	*code |= (*color & 0x80) << 6;
+	*priority = (*color & 0x10) >> 4;
 	*color = sprite_colorbase + (*color & 0x0f);
 }
 
@@ -66,13 +66,13 @@ int chqflag_vh_start( void )
 		return 1;
 	}
 
-	if (K051316_vh_start_0(ZOOMROM0_MEM_REGION,4,zoom_callback_0))
+	if (K051316_vh_start_0(ZOOMROM0_MEM_REGION,4,TILEMAP_TRANSPARENT,0,zoom_callback_0))
 	{
 		K051960_vh_stop();
 		return 1;
 	}
 
-	if (K051316_vh_start_1(ZOOMROM1_MEM_REGION,8,zoom_callback_1))
+	if (K051316_vh_start_1(ZOOMROM1_MEM_REGION,8,TILEMAP_SPLIT_PENBIT,0xc0,zoom_callback_1))
 	{
 		K051960_vh_stop();
 		K051316_vh_stop_0();
@@ -100,24 +100,11 @@ void chqflag_vh_stop( void )
 
 void chqflag_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh )
 {
-	int i;
-
-	K051316_tilemap_update_0();
-	K051316_tilemap_update_1();
-
-	palette_init_used_colors();
-	K051960_mark_sprites_colors();
-
-	/* set back pen for the zoom layer */
-	for (i = 0; i < 16; i++){
-		palette_used_colors[(zoom_colorbase[0] + i) * 16] = PALETTE_COLOR_TRANSPARENT;
-	}
-
-	palette_recalc();
-
 	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 
-	K051316_zoom_draw_1(bitmap,0);
-	K051960_sprites_draw(bitmap,0,128);
-	K051316_zoom_draw_0(bitmap,0);
+	K051316_zoom_draw_1(bitmap,TILEMAP_BACK,0);
+	K051960_sprites_draw(bitmap,0,0);
+	K051316_zoom_draw_1(bitmap,TILEMAP_FRONT,0);
+	K051960_sprites_draw(bitmap,1,1);
+	K051316_zoom_draw_0(bitmap,0,0);
 }

@@ -904,7 +904,7 @@ static const struct MachineDriver machine_driver_mtrap =
 	PALETTE_LEN, COLORTABLE_LEN,
 	exidy_vh_init_palette,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	exidy_vh_eof,
 	exidy_vh_start,
 	exidy_vh_stop,
@@ -946,7 +946,7 @@ static const struct MachineDriver machine_driver_venture =
 	PALETTE_LEN, COLORTABLE_LEN,
 	exidy_vh_init_palette,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	exidy_vh_eof,
 	exidy_vh_start,
 	exidy_vh_stop,
@@ -987,7 +987,7 @@ static const struct MachineDriver machine_driver_pepper2 =
 	PALETTE_LEN, COLORTABLE_LEN,
 	exidy_vh_init_palette,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	exidy_vh_eof,
 	exidy_vh_start,
 	exidy_vh_stop,
@@ -1029,7 +1029,7 @@ static const struct MachineDriver machine_driver_fax =
 	PALETTE_LEN, COLORTABLE_LEN,
 	exidy_vh_init_palette,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	exidy_vh_eof,
 	exidy_vh_start,
 	exidy_vh_stop,
@@ -1399,6 +1399,7 @@ void init_spectar(void)
 
 void init_mtrap(void)
 {
+	exidy_palette 			= NULL;
 	exidy_colortable 		= exidy_1bpp_colortable;
 	exidy_collision_mask 	= 0x14;
 	exidy_collision_invert	= 0x00;
@@ -1406,6 +1407,7 @@ void init_mtrap(void)
 
 void init_venture(void)
 {
+	exidy_palette 			= NULL;
 	exidy_colortable 		= exidy_1bpp_colortable;
 	exidy_collision_mask 	= 0x04;
 	exidy_collision_invert	= 0x04;
@@ -1413,6 +1415,7 @@ void init_venture(void)
 
 void init_pepper2(void)
 {
+	exidy_palette 			= NULL;
 	exidy_colortable 		= exidy_2bpp_colortable;
 	exidy_collision_mask 	= 0x14;
 	exidy_collision_invert	= 0x04;
@@ -1424,6 +1427,7 @@ void init_pepper2(void)
 
 void init_fax(void)
 {
+	exidy_palette 			= NULL;
 	exidy_colortable 		= exidy_2bpp_colortable;
 	exidy_collision_mask 	= 0x04;
 	exidy_collision_invert	= 0x04;

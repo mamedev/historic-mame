@@ -10,6 +10,9 @@
 
 #define VEC_SHIFT 16
 
+#define AVECTOR(x, y, color, intensity) \
+vector_add_point (xcenter + ((x) << VEC_SHIFT), ycenter - ((y) << VEC_SHIFT), color, intensity)
+
 data16_t *aztarac_vectorram;
 
 static int xcenter, ycenter;
@@ -23,18 +26,12 @@ INLINE void read_vectorram (int addr, int *x, int *y, int *c)
     if (*y & 0x200) *y |= 0xfffffc00;
 }
 
-INLINE void aztarac_vector (int x, int y, int color, int intensity)
-{
-    if (translucency) intensity *= 0.8;
-    vector_add_point (xcenter + (x << VEC_SHIFT), ycenter - (y << VEC_SHIFT), color, intensity);
-}
-
 WRITE16_HANDLER( aztarac_ubr_w )
 {
     int x, y, c, intensity, xoffset, yoffset, color;
     int defaddr, objaddr=0, ndefs;
 
-    if (data & 1)
+    if (data) // data is the global intensity (always 0xff in Aztarac).
     {
         vector_clear_list();
 
@@ -49,24 +46,25 @@ WRITE16_HANDLER( aztarac_ubr_w )
             if ((c & 0x2000) == 0)
             {
                 defaddr = (c >> 1) & 0x7ff;
-                aztarac_vector (xoffset, yoffset, 0, 0);
+                AVECTOR (xoffset, yoffset, 0, 0);
 
                 read_vectorram (defaddr, &x, &ndefs, &c);
-                ndefs++;
+				ndefs++;
 
-                if (c)
+                if (c & 0xff00)
                 {
                     /* latch color only once */
-                    intensity = c >> 8;
+                    intensity = (c >> 8);
                     color = c & 0x3f;
+
                     while (ndefs--)
                     {
                         defaddr++;
                         read_vectorram (defaddr, &x, &y, &c);
                         if ((c & 0xff00) == 0)
-                            aztarac_vector (x + xoffset, y + yoffset, 0, 0);
+                            AVECTOR (x + xoffset, y + yoffset, 0, 0);
                         else
-                            aztarac_vector (x + xoffset, y + yoffset, color, intensity);
+                            AVECTOR (x + xoffset, y + yoffset, color, intensity);
                     }
                 }
                 else
@@ -76,7 +74,7 @@ WRITE16_HANDLER( aztarac_ubr_w )
                     {
                         defaddr++;
                         read_vectorram (defaddr, &x, &y, &c);
-                        aztarac_vector (x + xoffset, y + yoffset, c & 0x3f, c >> 8);
+                        AVECTOR (x + xoffset, y + yoffset, c & 0x3f, c >> 8);
                     }
                 }
             }

@@ -292,7 +292,7 @@ static const struct MachineDriver machine_driver_fastlane =
 	1024, 1024*16,
 	fastlane_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	fastlane_vh_start,
 	0,

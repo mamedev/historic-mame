@@ -78,19 +78,12 @@ void segae_vh_stop(void)
 
 void segae_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
-	UINT16 temp;
-
-	palette_init_used_colors();
-
-	for (temp=0;temp<64;temp++)
-		palette_used_colors[temp] = PALETTE_COLOR_USED;
-
-	palette_recalc();
+	int i;
 
 	/*- Draw from cache_bitmap to screen -*/
 
-	for (temp = 0; temp < 192; temp++)
-		draw_scanline8(bitmap, 0, temp, 256, &cache_bitmap[temp * (16+256+16) +16], Machine->pens, -1);
+	for (i = 0;i < 192;i++)
+		draw_scanline8(bitmap,0,i,256,&cache_bitmap[i * (16+256+16) +16],Machine->pens,-1);
 }
 
 

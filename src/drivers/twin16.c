@@ -1116,7 +1116,7 @@ static const struct MachineDriver machine_driver_##NAME =	\
 	0x400,0x400,	\
 	0,	\
 	\
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,	\
+	VIDEO_TYPE_RASTER ,	\
 	0,	\
 	twin16_vh_start,	\
 	twin16_vh_stop,	\
@@ -1176,7 +1176,7 @@ static const struct MachineDriver machine_driver_heavysync =
 	0x400,0x400,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,// | VIDEO_SUPPORTS_16BIT,
+	VIDEO_TYPE_RASTER ,
 	0,
 	twin16_vh_start,
 	twin16_vh_stop,
@@ -1226,7 +1226,7 @@ static const struct MachineDriver machine_driver_fround =
 	0x400,0x400,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,// | VIDEO_SUPPORTS_16BIT,
+	VIDEO_TYPE_RASTER ,
 	0,
 	twin16_vh_start,
 	twin16_vh_stop,

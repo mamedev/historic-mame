@@ -87,8 +87,6 @@ void raiders5_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	int size = videoram_size/2;
 
-	palette_recalc();
-
 /* draw BG layer */
 
 	for (y=0; y<32; y++)

@@ -240,14 +240,6 @@ void cloak_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	int offs;
 
 
-	palette_used_colors[16] = PALETTE_COLOR_TRANSPARENT;
-	if (palette_recalc())
-	{
-		memset(dirtybuffer, 1, videoram_size);
-
-		refresh_bitmaps();
-	}
-
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
 	for (offs = videoram_size - 1;offs >= 0;offs--)
@@ -272,7 +264,7 @@ void cloak_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	/* copy the temporary bitmap to the screen */
     copybitmap(bitmap,charbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
-	copybitmap(bitmap, bmap ? tmpbitmap2 : tmpbitmap, 0,0,0,0,&Machine->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
+	copybitmap(bitmap, bmap ? tmpbitmap2 : tmpbitmap, 0,0,0,0,&Machine->visible_area,TRANSPARENCY_COLOR,16);
 
 
 	/* Draw the sprites */

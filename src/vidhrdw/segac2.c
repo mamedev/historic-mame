@@ -76,7 +76,6 @@ static UINT8		display_enable;				/* is the display enabled? */
 static int			last_update_scanline;		/* last scanline we drew */
 static UINT16 *		cache_bitmap;				/* 16bpp bitmap with raw pen values */
 static UINT8		internal_vblank;			/* state of the VBLANK line */
-static UINT8		color_usage[0x80];			/* color usage marking (16 colors/entry) */
 static UINT16 *		transparent_lookup;			/* fast transparent mapping table */
 
 /* vram bases */
@@ -172,10 +171,6 @@ int segac2_vh_start(void)
 	/* reset buffer */
 	last_update_scanline = 0;
 
-	/* reset palette tracking */
-	palette_init_used_colors();
-	memset(color_usage, 0, sizeof(color_usage));
-
 	/* Save State Stuff we could probably do with an init values from vdp registers function or something (todo) */
 
 	state_save_register_UINT8 ("C2_VDP", 0, "VDP Registers", segac2_vdp_regs, 32);
@@ -231,10 +226,6 @@ void segac2_vh_stop(void)
 /* timer callback for the end of VBLANK */
 static void vblank_end(int param)
 {
-	/* reinit used colors */
-	palette_init_used_colors();
-	memset(color_usage, 0, sizeof(color_usage));
-
 	/* reset update scanline */
 	last_update_scanline = 0;
 
@@ -304,23 +295,10 @@ void segac2_enable_display(int enable)
 /* core refresh: computes the final screen */
 void segac2_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
-	int y, color;
+	int y;
 
 	/* finish updating the display */
 	segac2_update_display(224);
-
-	/* finish computing the palette usage */
-	for (color = 0; color < 0x80; color++)
-		if (color_usage[color])
-		{
-			/* the bg color may have marked this used; we need to be careful! */
-			if (palette_used_colors[color * 16 + 0] != PALETTE_COLOR_USED)
-				palette_used_colors[color * 16 + 0] = PALETTE_COLOR_TRANSPARENT;
-			memset(&palette_used_colors[color * 16 + 1], PALETTE_COLOR_USED, 15);
-		}
-
-	/* recalc the palette */
-	palette_recalc();
 
 	/* generate the final screen */
 	for (y = 0; y < 224; y++)
@@ -849,7 +827,6 @@ static void drawline(UINT16 *bitmap, int line)
 	int bgcolor = bgcol + segac2_palbank;
 
 	/* clear to the background color */
-	palette_used_colors[bgcolor] = PALETTE_COLOR_USED;
 	for (column = 8; column < 328; column++)
 		bitmap[column] = bgcolor;
 
@@ -994,9 +971,6 @@ static void drawline_tiles(UINT32 *tiles, UINT16 *bmap, int pri)
 			if (!mytile)
 				continue;
 
-			/* mark colors */
-			color_usage[colbase / 16] = 1;
-
 			/* non-flipped */
 			if (!(tile & 0x0800))
 			{
@@ -1068,8 +1042,7 @@ INLINE void draw8pixs(UINT16 *bmap, int patno, int priority, int colbase, int pa
 			if (col < 0x0e) bmap[PIXEL_XOR_BE(0)] = colbase + col;
 			else
 			{
-				bmap[PIXEL_XOR_BE(0)] = col = transparent_lookup[((col & 1) << 11) | (bmap[PIXEL_XOR_BE(0)] & 0x7ff)];
-				palette_used_colors[col] = PALETTE_COLOR_USED;
+				bmap[PIXEL_XOR_BE(0)] = transparent_lookup[((col & 1) << 11) | (bmap[PIXEL_XOR_BE(0)] & 0x7ff)];
 			}
 		}
 		col = (tile >> 24) & 0x0f;
@@ -1078,8 +1051,7 @@ INLINE void draw8pixs(UINT16 *bmap, int patno, int priority, int colbase, int pa
 			if (col < 0x0e) bmap[PIXEL_XOR_BE(1)] = colbase + col;
 			else
 			{
-				bmap[PIXEL_XOR_BE(1)] = col = transparent_lookup[((col & 1) << 11) | (bmap[PIXEL_XOR_BE(1)] & 0x7ff)];
-				palette_used_colors[col] = PALETTE_COLOR_USED;
+				bmap[PIXEL_XOR_BE(1)] = transparent_lookup[((col & 1) << 11) | (bmap[PIXEL_XOR_BE(1)] & 0x7ff)];
 			}
 		}
 		col = (tile >> 20) & 0x0f;
@@ -1088,8 +1060,7 @@ INLINE void draw8pixs(UINT16 *bmap, int patno, int priority, int colbase, int pa
 			if (col < 0x0e) bmap[PIXEL_XOR_BE(2)] = colbase + col;
 			else
 			{
-				bmap[PIXEL_XOR_BE(2)] = col = transparent_lookup[((col & 1) << 11) | (bmap[PIXEL_XOR_BE(2)] & 0x7ff)];
-				palette_used_colors[col] = PALETTE_COLOR_USED;
+				bmap[PIXEL_XOR_BE(2)] = transparent_lookup[((col & 1) << 11) | (bmap[PIXEL_XOR_BE(2)] & 0x7ff)];
 			}
 		}
 		col = (tile >> 16) & 0x0f;
@@ -1098,8 +1069,7 @@ INLINE void draw8pixs(UINT16 *bmap, int patno, int priority, int colbase, int pa
 			if (col < 0x0e) bmap[PIXEL_XOR_BE(3)] = colbase + col;
 			else
 			{
-				bmap[PIXEL_XOR_BE(3)] = col = transparent_lookup[((col & 1) << 11) | (bmap[PIXEL_XOR_BE(3)] & 0x7ff)];
-				palette_used_colors[col] = PALETTE_COLOR_USED;
+				bmap[PIXEL_XOR_BE(3)] = transparent_lookup[((col & 1) << 11) | (bmap[PIXEL_XOR_BE(3)] & 0x7ff)];
 			}
 		}
 		col = (tile >> 12) & 0x0f;
@@ -1108,8 +1078,7 @@ INLINE void draw8pixs(UINT16 *bmap, int patno, int priority, int colbase, int pa
 			if (col < 0x0e) bmap[PIXEL_XOR_BE(4)] = colbase + col;
 			else
 			{
-				bmap[PIXEL_XOR_BE(4)] = col = transparent_lookup[((col & 1) << 11) | (bmap[PIXEL_XOR_BE(4)] & 0x7ff)];
-				palette_used_colors[col] = PALETTE_COLOR_USED;
+				bmap[PIXEL_XOR_BE(4)] = transparent_lookup[((col & 1) << 11) | (bmap[PIXEL_XOR_BE(4)] & 0x7ff)];
 			}
 		}
 		col = (tile >>  8) & 0x0f;
@@ -1118,8 +1087,7 @@ INLINE void draw8pixs(UINT16 *bmap, int patno, int priority, int colbase, int pa
 			if (col < 0x0e) bmap[PIXEL_XOR_BE(5)] = colbase + col;
 			else
 			{
-				bmap[PIXEL_XOR_BE(5)] = col = transparent_lookup[((col & 1) << 11) | (bmap[PIXEL_XOR_BE(5)] & 0x7ff)];
-				palette_used_colors[col] = PALETTE_COLOR_USED;
+				bmap[PIXEL_XOR_BE(5)] = transparent_lookup[((col & 1) << 11) | (bmap[PIXEL_XOR_BE(5)] & 0x7ff)];
 			}
 		}
 		col = (tile >>  4) & 0x0f;
@@ -1128,8 +1096,7 @@ INLINE void draw8pixs(UINT16 *bmap, int patno, int priority, int colbase, int pa
 			if (col < 0x0e) bmap[PIXEL_XOR_BE(6)] = colbase + col;
 			else
 			{
-				bmap[PIXEL_XOR_BE(6)] = col = transparent_lookup[((col & 1) << 11) | (bmap[PIXEL_XOR_BE(6)] & 0x7ff)];
-				palette_used_colors[col] = PALETTE_COLOR_USED;
+				bmap[PIXEL_XOR_BE(6)] = transparent_lookup[((col & 1) << 11) | (bmap[PIXEL_XOR_BE(6)] & 0x7ff)];
 			}
 		}
 		col = (tile >>  0) & 0x0f;
@@ -1138,8 +1105,7 @@ INLINE void draw8pixs(UINT16 *bmap, int patno, int priority, int colbase, int pa
 			if (col < 0x0e) bmap[PIXEL_XOR_BE(7)] = colbase + col;
 			else
 			{
-				bmap[PIXEL_XOR_BE(7)] = col = transparent_lookup[((col & 1) << 11) | (bmap[PIXEL_XOR_BE(7)] & 0x7ff)];
-				palette_used_colors[col] = PALETTE_COLOR_USED;
+				bmap[PIXEL_XOR_BE(7)] = transparent_lookup[((col & 1) << 11) | (bmap[PIXEL_XOR_BE(7)] & 0x7ff)];
 			}
 		}
 	}
@@ -1178,8 +1144,7 @@ INLINE void draw8pixs_hflip(UINT16 *bmap, int patno, int priority, int colbase, 
 			if (col < 0x0e) bmap[PIXEL_XOR_BE(7)] = colbase + col;
 			else
 			{
-				bmap[PIXEL_XOR_BE(7)] = col = transparent_lookup[((col & 1) << 11) | (bmap[PIXEL_XOR_BE(7)] & 0x7ff)];
-				palette_used_colors[col] = PALETTE_COLOR_USED;
+				bmap[PIXEL_XOR_BE(7)] = transparent_lookup[((col & 1) << 11) | (bmap[PIXEL_XOR_BE(7)] & 0x7ff)];
 			}
 		}
 		col = (tile >> 24) & 0x0f;
@@ -1188,8 +1153,7 @@ INLINE void draw8pixs_hflip(UINT16 *bmap, int patno, int priority, int colbase, 
 			if (col < 0x0e) bmap[PIXEL_XOR_BE(6)] = colbase + col;
 			else
 			{
-				bmap[PIXEL_XOR_BE(6)] = col = transparent_lookup[((col & 1) << 11) | (bmap[PIXEL_XOR_BE(6)] & 0x7ff)];
-				palette_used_colors[col] = PALETTE_COLOR_USED;
+				bmap[PIXEL_XOR_BE(6)] = transparent_lookup[((col & 1) << 11) | (bmap[PIXEL_XOR_BE(6)] & 0x7ff)];
 			}
 		}
 		col = (tile >> 20) & 0x0f;
@@ -1198,8 +1162,7 @@ INLINE void draw8pixs_hflip(UINT16 *bmap, int patno, int priority, int colbase, 
 			if (col < 0x0e) bmap[PIXEL_XOR_BE(5)] = colbase + col;
 			else
 			{
-				bmap[PIXEL_XOR_BE(5)] = col = transparent_lookup[((col & 1) << 11) | (bmap[PIXEL_XOR_BE(5)] & 0x7ff)];
-				palette_used_colors[col] = PALETTE_COLOR_USED;
+				bmap[PIXEL_XOR_BE(5)] = transparent_lookup[((col & 1) << 11) | (bmap[PIXEL_XOR_BE(5)] & 0x7ff)];
 			}
 		}
 		col = (tile >> 16) & 0x0f;
@@ -1208,8 +1171,7 @@ INLINE void draw8pixs_hflip(UINT16 *bmap, int patno, int priority, int colbase, 
 			if (col < 0x0e) bmap[PIXEL_XOR_BE(4)] = colbase + col;
 			else
 			{
-				bmap[PIXEL_XOR_BE(4)] = col = transparent_lookup[((col & 1) << 11) | (bmap[PIXEL_XOR_BE(4)] & 0x7ff)];
-				palette_used_colors[col] = PALETTE_COLOR_USED;
+				bmap[PIXEL_XOR_BE(4)] = transparent_lookup[((col & 1) << 11) | (bmap[PIXEL_XOR_BE(4)] & 0x7ff)];
 			}
 		}
 		col = (tile >> 12) & 0x0f;
@@ -1218,8 +1180,7 @@ INLINE void draw8pixs_hflip(UINT16 *bmap, int patno, int priority, int colbase, 
 			if (col < 0x0e) bmap[PIXEL_XOR_BE(3)] = colbase + col;
 			else
 			{
-				bmap[PIXEL_XOR_BE(3)] = col = transparent_lookup[((col & 1) << 11) | (bmap[PIXEL_XOR_BE(3)] & 0x7ff)];
-				palette_used_colors[col] = PALETTE_COLOR_USED;
+				bmap[PIXEL_XOR_BE(3)] = transparent_lookup[((col & 1) << 11) | (bmap[PIXEL_XOR_BE(3)] & 0x7ff)];
 			}
 		}
 		col = (tile >>  8) & 0x0f;
@@ -1228,8 +1189,7 @@ INLINE void draw8pixs_hflip(UINT16 *bmap, int patno, int priority, int colbase, 
 			if (col < 0x0e) bmap[PIXEL_XOR_BE(2)] = colbase + col;
 			else
 			{
-				bmap[PIXEL_XOR_BE(2)] = col = transparent_lookup[((col & 1) << 11) | (bmap[PIXEL_XOR_BE(2)] & 0x7ff)];
-				palette_used_colors[col] = PALETTE_COLOR_USED;
+				bmap[PIXEL_XOR_BE(2)] = transparent_lookup[((col & 1) << 11) | (bmap[PIXEL_XOR_BE(2)] & 0x7ff)];
 			}
 		}
 		col = (tile >>  4) & 0x0f;
@@ -1238,8 +1198,7 @@ INLINE void draw8pixs_hflip(UINT16 *bmap, int patno, int priority, int colbase, 
 			if (col < 0x0e) bmap[PIXEL_XOR_BE(1)] = colbase + col;
 			else
 			{
-				bmap[PIXEL_XOR_BE(1)] = col = transparent_lookup[((col & 1) << 11) | (bmap[PIXEL_XOR_BE(1)] & 0x7ff)];
-				palette_used_colors[col] = PALETTE_COLOR_USED;
+				bmap[PIXEL_XOR_BE(1)] = transparent_lookup[((col & 1) << 11) | (bmap[PIXEL_XOR_BE(1)] & 0x7ff)];
 			}
 		}
 		col = (tile >>  0) & 0x0f;
@@ -1248,8 +1207,7 @@ INLINE void draw8pixs_hflip(UINT16 *bmap, int patno, int priority, int colbase, 
 			if (col < 0x0e) bmap[PIXEL_XOR_BE(0)] = colbase + col;
 			else
 			{
-				bmap[PIXEL_XOR_BE(0)] = col = transparent_lookup[((col & 1) << 11) | (bmap[PIXEL_XOR_BE(0)] & 0x7ff)];
-				palette_used_colors[col] = PALETTE_COLOR_USED;
+				bmap[PIXEL_XOR_BE(0)] = transparent_lookup[((col & 1) << 11) | (bmap[PIXEL_XOR_BE(0)] & 0x7ff)];
 			}
 		}
 	}
@@ -1278,7 +1236,6 @@ static void drawline_sprite(int line, UINT16 *bmap, int priority, UINT8 *spriteb
 
 	/* determine the color base */
 	colbase = 16 * ((spriteattr & 0x6000) >> 13) + segac2_sp_palbase + segac2_palbank;
-	color_usage[colbase / 16] = 1;
 
 	/* adjust for the X position */
 	spritewidth >>= 3;

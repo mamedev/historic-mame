@@ -6,42 +6,64 @@
 /*  Lee Taylor, Valerio Verrando, Marco Cassili, Zsolt Vasvari and others   */
 /*                                                                          */
 /*                                                                          */
-/*  Notes:																	*/
-/*  -----																	*/
+/*  Notes:                                                                  */
+/*  -----                                                                   */
 /*                                                                          */
-/*  - "The Amazing Maze Game" on title screen, but manual, flyer,			*/
-/*    cabinet side art all call it just "Amazing Maze"						*/
-/* 																			*/
-/*  - Desert Gun is also known as Road Runner								*/
-/* 																			*/
-/*  - Space Invaders Deluxe still says Space Invaders Part II, 				*/
-/*    because according to KLOV, Midway was only allowed to make minor 		*/
-/*	  modifications of the Taito code.  Read all about it here: 			*/
-/*    http://www.klov.com/S/Space_Invaders_Deluxe.html						*/
+/*  - "The Amazing Maze Game" on title screen, but manual, flyer,           */
+/*    cabinet side art all call it just "Amazing Maze"                      */
 /*                                                                          */
-/*																			*/
-/*  To Do:																	*/
-/*  -----																	*/
-/* 																			*/
-/*  - 4 Player Bowling has an offscreen display that show how many points 	*/
-/*	  the player will be rewarded for hitting the dot in the Flash game.	*/
-/* 																			*/
-/*  - Space Invaders Deluxe: overlay										*/
-/*																			*/
-/*  - Space Encounters: 'trench' circuit		                     		*/
-/*																			*/
-/*  - Phantom II: verify clouds						 						*/
-/*																			*/
-/*  - Helifire: wave and star background									*/
-/*																			*/
-/*  - Sheriff: overlay/color PROM											*/
+/*  - Desert Gun is also known as Road Runner                               */
+/*                                                                          */
+/*  - Space Invaders Deluxe still says Space Invaders Part II,              */
+/*    because according to KLOV, Midway was only allowed to make minor      */
+/*        modifications of the Taito code.  Read all about it here:         */
+/*    http://www.klov.com/S/Space_Invaders_Deluxe.html                      */
 /*                                                                          */
 /*                                                                          */
-/*  Games confirmed not use an overlay (pure black and white):				*/
-/*  ---------------------------------------------------------				*/
+/*  To Do:                                                                  */
+/*  -----                                                                   */
 /*                                                                          */
-/*  - 4 Player Bowling														*/
+/*  - 4 Player Bowling has an offscreen display that show how many points   */
+/*        the player will be rewarded for hitting the dot in the Flash game.*/
 /*                                                                          */
+/*  - Space Invaders Deluxe: overlay                                        */
+/*                                                                          */
+/*  - Space Encounters: 'trench' circuit                                    */
+/*                                                                          */
+/*  - Phantom II: verify clouds                                             */
+/*                                                                          */
+/*  - Helifire: wave and star background                                    */
+/*                                                                          */
+/*  - Sheriff: overlay/color PROM                                           */
+/*                                                                          */
+/*                                                                          */
+/*  Games confirmed not use an overlay (pure black and white):              */
+/*  ---------------------------------------------------------               */
+/*                                                                          */
+/*  - 4 Player Bowling                                                      */
+/*                                                                          */
+/****************************************************************************/
+/*                                                                          */
+/* Change Log                                                               */
+/*                                                                          */
+/* 26 May 2001 - Following were renamed                                     */
+/* galxwars -> galxwart - Galaxy Wars (c)1979 Taito, possible bootleg       */
+/* spaceatt -> spaceat2 - Space Attack Part II                              */
+/*                                                                          */
+/* 26 May 2001 - Following were added                                       */
+/* galxwars - Galaxy Wars (set 1) (c)1979 Universal                         */
+/* galxwar2 - Galaxy Wars (set 2) (c)1979 Universal                         */
+/* jspectr2 - Jatre Specter (set 2) (c)1979 Jatre                           */
+/* ozmawar2 - Ozma Wars (set 2) (c)1979 SNK, on Taito 3 Colour Invaders BD  */
+/* spaceatt - Space Attack (c)1978 Video Game GMBH                          */
+/* sstrangr - Space Stranger (c)1978 Yachiyo Electronics, Ltd.              */
+/*                                                                          */
+/* 26 May 2001 - galxwars input port changed slightly so the new sets work  */
+/*                                                                          */
+/* ------------------------------------------------------------------------ */
+/*                                                                          */
+/* 30 July 2001 - sstrngr2 Added (c)1979 Yachiyo, Colour version of Space   */
+/*                Stranger, board has Stranger 2 written on it              */
 /****************************************************************************/
 
 #include "driver.h"
@@ -66,6 +88,7 @@ READ_HANDLER( spcenctr_port_1_r );
 /* in sndhrdw/8080bw.c */
 
 void init_machine_invaders(void);
+void init_machine_sstrngr2(void);
 void init_machine_invad2ct(void);
 void init_machine_sheriff(void);
 void init_machine_gunfight(void);
@@ -102,6 +125,7 @@ void invaders_vh_stop(void);
 void init_8080bw(void);
 void init_invaders(void);
 void init_invadpt2(void);
+void init_sstrngr2(void);
 void init_invaddlx(void);
 void init_invrvnge(void);
 void init_invad2ct(void);
@@ -130,8 +154,8 @@ void helifire_vh_convert_color_prom(unsigned char *pallete, unsigned short *colo
 
 static unsigned char invaders_palette[] =
 {
-	0x00,0x00,0x00, /* BLACK */
-	0xff,0xff,0xff, /* WHITE */
+	0x00,0x00,0x00, /* black */
+	0xff,0xff,0xff, /* white */
 };
 
 static void init_palette(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom)
@@ -149,14 +173,14 @@ static void init_palette(unsigned char *game_palette, unsigned short *game_color
 static MEMORY_READ_START( invaders_readmem )
 	{ 0x0000, 0x1fff, MRA_ROM },
 	{ 0x2000, 0x3fff, MRA_RAM },
-	{ 0x4000, 0x5fff, MRA_ROM },
+	{ 0x4000, 0x63ff, MRA_ROM },
 MEMORY_END
 
 static MEMORY_WRITE_START( invaders_writemem )
 	{ 0x0000, 0x1fff, MWA_ROM },
 	{ 0x2000, 0x23ff, MWA_RAM },
 	{ 0x2400, 0x3fff, invaders_videoram_w, &videoram, &videoram_size },
-	{ 0x4000, 0x5fff, MWA_ROM },
+	{ 0x4000, 0x63ff, MWA_ROM },
 MEMORY_END
 
 static PORT_READ_START( invaders_readport )
@@ -258,7 +282,7 @@ static const struct MachineDriver machine_driver_invaders =
 	32768+2, 0,		/* leave extra colors for the overlay */
 	init_palette,
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY ,
 	0,
 	invaders_vh_start,
 	invaders_vh_stop,
@@ -408,7 +432,7 @@ static const struct MachineDriver machine_driver_invadpt2 =
 	8, 0,
 	invadpt2_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY ,
 	0,
 	invaders_vh_start,
 	invaders_vh_stop,
@@ -657,7 +681,7 @@ static const struct MachineDriver machine_driver_invad2ct =
 	32768+2, 0,		/* leave extra colors for the overlay */
 	init_palette,
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY ,
 	0,
 	invaders_vh_start,
 	invaders_vh_stop,
@@ -673,6 +697,207 @@ static const struct MachineDriver machine_driver_invad2ct =
 		{
 			SOUND_SN76477,
 			&invad2ct_sn76477_interface
+		}
+	}
+};
+
+
+/*******************************************************/
+/*                                                     */
+/* Yachiro "Space Strangers 2"                         */
+/*                                                     */
+/*******************************************************/
+
+static PORT_READ_START( sstrngr2_readport )
+	{ 0x41, 0x41, input_port_2_r },
+	{ 0x42, 0x42, input_port_1_r },
+	{ 0x44, 0x44, input_port_4_r },
+PORT_END
+
+static PORT_WRITE_START( sstrngr2_writeport )
+	/* no shifter circuit */
+PORT_END
+
+INPUT_PORTS_START( sstrangr )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW,  IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_SERVICE( 0x08, IP_ACTIVE_HIGH )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
+
+	PORT_START      /* DSW0 */
+	PORT_DIPNAME( 0x03, 0x01, "Extra Play" )
+	PORT_DIPSETTING(    0x00, "Never" )
+	PORT_DIPSETTING(    0x01, "3000" )
+	PORT_DIPSETTING(    0x02, "4000" )
+	PORT_DIPSETTING(    0x03, "5000" )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x04, "4" )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x08, "1000" )
+	PORT_DIPSETTING(    0x00, "2000" )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* Must be ACTIVE_LOW for game to boot */
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_PLAYER2 )
+
+	PORT_START		/* Dummy port for cocktail mode */
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
+
+	PORT_START      /* External switches */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_VBLANK ) /* Well It Must Toggle */
+	PORT_DIPNAME( 0x02, 0x00, "Player's Bullet Speed" )
+	PORT_DIPSETTING(    0x00, "Slow" )
+	PORT_BITX(0,  0x02, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Fast", IP_KEY_NONE, IP_JOY_NONE )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( sstrngr2 )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW,  IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_SERVICE( 0x08, IP_ACTIVE_HIGH )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
+
+	PORT_START      /* DSW0 */
+	PORT_DIPNAME( 0x03, 0x01, "Extra Play" )
+	PORT_DIPSETTING(    0x00, "Never" )
+	PORT_DIPSETTING(    0x01, "3000" )
+	PORT_DIPSETTING(    0x02, "4000" )
+	PORT_DIPSETTING(    0x03, "5000" )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x04, "4" )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x08, "1000" )
+	PORT_DIPSETTING(    0x00, "2000" )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR(Coinage) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_2C ) )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_PLAYER2 )
+
+	PORT_START		/* Dummy port for cocktail mode */
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
+
+	PORT_START      /* External switches */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_VBLANK ) /* Well It Must Toggle */
+	PORT_DIPNAME( 0x02, 0x00, "Player's Bullet Speed" )
+	PORT_DIPSETTING(    0x00, "Slow" )
+	PORT_BITX(0,  0x02, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Fast", IP_KEY_NONE, IP_JOY_NONE )
+INPUT_PORTS_END
+
+static const struct MachineDriver machine_driver_sstrangr =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_8080,
+			2000000,        /* 2 MHz? */
+			invaders_readmem,invaders_writemem,sstrngr2_readport,sstrngr2_writeport,
+			interrupt,2    /* two interrupts per frame */
+		}
+	},
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
+	1,      /* single CPU, no need for interleaving */
+	init_machine_sstrngr2,
+
+	/* video hardware */
+	32*8, 32*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
+	0,      /* no gfxdecodeinfo - bitmapped display */
+	32768+2, 0,		/* leave extra colors for the overlay */
+	init_palette,
+
+	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY ,
+	0,
+	invaders_vh_start,
+	invaders_vh_stop,
+	invaders_vh_screenrefresh,
+
+	/* sound hardware */
+	0, 0, 0, 0,
+	{
+		{
+			SOUND_SAMPLES,
+			&invaders_samples_interface
+		},
+		{
+			SOUND_SN76477,
+			&invaders_sn76477_interface
+		}
+	}
+};
+
+static const struct MachineDriver machine_driver_sstrngr2 =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_8080,
+			2000000,        /* 2 MHz? */
+			invaders_readmem,invaders_writemem,sstrngr2_readport,sstrngr2_writeport,
+			interrupt,2    /* two interrupts per frame */
+		}
+	},
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
+	1,      /* single CPU, no need for interleaving */
+	init_machine_sstrngr2,
+
+	/* video hardware */
+	32*8, 32*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
+	0,      /* no gfxdecodeinfo - bitmapped display */
+	8, 0,
+	invadpt2_vh_convert_color_prom,
+
+	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY ,
+	0,
+	invaders_vh_start,
+	invaders_vh_stop,
+	invaders_vh_screenrefresh,
+
+	/* sound hardware */
+	0, 0, 0, 0,
+	{
+		{
+			SOUND_SAMPLES,
+			&invaders_samples_interface
+		},
+		{
+			SOUND_SN76477,
+			&invaders_sn76477_interface
 		}
 	}
 };
@@ -736,6 +961,7 @@ INPUT_PORTS_END
 /*                                                     */
 /* Added 21/11/1999 By LT                              */
 /* Thanks to Peter Fyfe for machine info               */
+/*                                                     */
 /*******************************************************/
 
 INPUT_PORTS_START( spacewr3 )
@@ -798,7 +1024,7 @@ INPUT_PORTS_START( galxwars )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* must be IP_ACTIVE_LOW for Universal Sets */
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	PORT_START      /* IN1 */
@@ -1033,7 +1259,7 @@ static const struct MachineDriver machine_driver_rollingc =
 	8, 0,
 	invadpt2_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY ,
 	0,
 	invaders_vh_start,
 	invaders_vh_stop,
@@ -1240,7 +1466,7 @@ static const struct MachineDriver machine_driver_sheriff =
 	32768+2, 0,		/* leave extra colors for the overlay */
 	init_palette,
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY ,
 	0,
 	invaders_vh_start,
 	invaders_vh_stop,
@@ -1264,7 +1490,6 @@ static const struct MachineDriver machine_driver_sheriff =
 /*******************************************************/
 /*                                                     */
 /* Midway "Space Encounters"                           */
-/*                                                     */
 /*                                                     */
 /*******************************************************/
 
@@ -1330,7 +1555,7 @@ static const struct MachineDriver machine_driver_spcenctr =
 	32768+2, 0,		/* leave extra colors for the overlay */
 	init_palette,
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY ,
 	0,
 	invaders_vh_start,
 	invaders_vh_stop,
@@ -1438,7 +1663,7 @@ static const struct MachineDriver machine_driver_gunfight =
 	32768+2, 0,		/* leave extra colors for the overlay */
 	init_palette,
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY ,
 	0,
 	invaders_vh_start,
 	invaders_vh_stop,
@@ -1514,7 +1739,7 @@ static const struct MachineDriver machine_driver_m4 =
 	32768+2, 0,		/* leave extra colors for the overlay */
 	init_palette,
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY ,
 	0,
 	invaders_vh_start,
 	invaders_vh_stop,
@@ -1592,7 +1817,7 @@ static const struct MachineDriver machine_driver_boothill =
 	32768+2, 0,		/* leave extra colors for the overlay */
 	init_palette,
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY ,
 	0,
 	invaders_vh_start,
 	invaders_vh_stop,
@@ -1702,7 +1927,7 @@ static const struct MachineDriver machine_driver_schaser =
 	8, 0,
 	invadpt2_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY ,
 	0,
 	invaders_vh_start,
 	invaders_vh_stop,
@@ -1845,7 +2070,7 @@ static const struct MachineDriver machine_driver_clowns =
 	32768+2, 0,		/* leave extra colors for the overlay */
 	init_palette,
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY ,
 	0,
 	invaders_vh_start,
 	invaders_vh_stop,
@@ -1965,7 +2190,7 @@ static const struct MachineDriver machine_driver_280zzzap =
 	32768+2, 0,		/* leave extra colors for the overlay */
 	init_palette,
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY ,
 	0,
 	invaders_vh_start,
 	invaders_vh_stop,
@@ -2047,7 +2272,7 @@ static const struct MachineDriver machine_driver_lupin3 =
 	8, 0,
 	invadpt2_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY ,
 	0,
 	invaders_vh_start,
 	invaders_vh_stop,
@@ -2149,7 +2374,7 @@ static const struct MachineDriver machine_driver_helifire =
 	8, 0,
 	helifire_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY ,
 	0,
 	invaders_vh_start,
 	invaders_vh_stop,
@@ -2273,7 +2498,7 @@ static const struct MachineDriver machine_driver_polaris =
 	8, 0,
 	invadpt2_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY ,
 	0,
 	invaders_vh_start,
 	invaders_vh_stop,
@@ -2485,7 +2710,7 @@ static const struct MachineDriver machine_driver_bowler =
 	32768+2, 0,		/* leave extra colors for the overlay */
 	init_palette,
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY ,
 	0,
 	invaders_vh_start,
 	invaders_vh_stop,
@@ -2570,7 +2795,7 @@ static const struct MachineDriver machine_driver_shuffle =
 	32768+2, 0,		/* leave extra colors for the overlay */
 	init_palette,
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY ,
 	0,
 	invaders_vh_start,
 	invaders_vh_stop,
@@ -2645,7 +2870,7 @@ static const struct MachineDriver machine_driver_seawolf =
 	32768+2, 0,		/* leave extra colors for the overlay */
 	init_palette,
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY ,
 	0,
 	invaders_vh_start,
 	invaders_vh_stop,
@@ -2701,7 +2926,7 @@ static const struct MachineDriver machine_driver_blueshrk =
 	32768+2, 0,		/* leave extra colors for the overlay */
 	init_palette,
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY ,
 	0,
 	invaders_vh_start,
 	invaders_vh_stop,
@@ -2767,7 +2992,7 @@ static const struct MachineDriver machine_driver_desertgu =
 	32768+2, 0,		/* leave extra colors for the overlay */
 	init_palette,
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY ,
 	0,
 	invaders_vh_start,
 	invaders_vh_stop,
@@ -2953,7 +3178,7 @@ static const struct MachineDriver machine_driver_tornbase =
 	32768+2, 0,		/* leave extra colors for the overlay */
 	init_palette,
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY ,
 	0,
 	invaders_vh_start,
 	invaders_vh_stop,
@@ -3053,7 +3278,7 @@ static const struct MachineDriver machine_driver_checkmat =
 	32768+2, 0,		/* leave extra colors for the overlay */
 	init_palette,
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY ,
 	0,
 	invaders_vh_start,
 	invaders_vh_stop,
@@ -3339,7 +3564,7 @@ static const struct MachineDriver machine_driver_ballbomb =
 	8, 0,
 	invadpt2_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY ,
 	0,
 	invaders_vh_start,
 	invaders_vh_stop,
@@ -3399,7 +3624,6 @@ INPUT_PORTS_END
 
 
 
-
 ROM_START( invaders )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
 	ROM_LOAD( "invaders.h",   0x0000, 0x0800, 0x734f5ad8 )
@@ -3417,6 +3641,16 @@ ROM_START( earthinv )
 ROM_END
 
 ROM_START( spaceatt )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
+	ROM_LOAD( "h",        0x0000, 0x0400, 0xd0c32d72 )
+	ROM_LOAD( "sv02.bin", 0x0400, 0x0400, 0x0e159534 )
+	ROM_LOAD( "f",        0x0800, 0x0400, 0x483e651e )
+	ROM_LOAD( "c",        0x1400, 0x0400, 0x1293b826 )
+	ROM_LOAD( "b",        0x1800, 0x0400, 0x6fc782aa )
+	ROM_LOAD( "a",        0x1c00, 0x0400, 0x211ac4a3 )
+ROM_END
+
+ROM_START( spaceat2 )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
 	ROM_LOAD( "spaceatt.h",   0x0000, 0x0800, 0xa31d0756 )
 	ROM_LOAD( "spaceatt.g",   0x0800, 0x0800, 0xf41241f7 )
@@ -3547,6 +3781,12 @@ ROM_START( jspecter )
 	ROM_LOAD( "3306.u7",      0x1400, 0x1000, 0x0df142a7 )
 ROM_END
 
+ROM_START( jspectr2 )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
+	ROM_LOAD( "unksi.b2",      0x0000, 0x1000, 0x0584b6c4 )
+	ROM_LOAD( "unksi.a2",      0x1400, 0x1000, 0x58095955 )
+ROM_END
+
 ROM_START( invadpt2 )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
 	ROM_LOAD( "pv.01",        0x0000, 0x0800, 0x7288a511 )
@@ -3632,6 +3872,22 @@ ROM_START( spcewarl )
 ROM_END
 
 ROM_START( galxwars )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
+	ROM_LOAD( "univgw3.0",   0x0000, 0x0400, 0x937796f4 )
+	ROM_LOAD( "univgw4.1",   0x0400, 0x0400, 0x4b86e7a6 )
+	ROM_LOAD( "univgw5.2",   0x0800, 0x0400, 0x47a187cd )
+	ROM_LOAD( "univgw6.3",   0x0c00, 0x0400, 0x7b7d22ff )
+	ROM_LOAD( "univgw1.4",   0x4000, 0x0400, 0x0871156e )
+	ROM_LOAD( "univgw2.5",   0x4400, 0x0400, 0x6036d7bf )
+ROM_END
+
+ROM_START( galxwar2 )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
+	ROM_LOAD( "3192.h6",      0x0000, 0x1000, 0xbde6860b )
+	ROM_LOAD( "3193.h7",      0x4000, 0x1000, 0xa17cd507 ) /* 2nd half unused */
+ROM_END
+
+ROM_START( galxwart )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
 	ROM_LOAD( "galxwars.0",   0x0000, 0x0400, 0x608bfe7f )
 	ROM_LOAD( "galxwars.1",   0x0400, 0x0400, 0xa810b258 )
@@ -3989,6 +4245,19 @@ ROM_START( ozmawars )
 	ROM_LOAD( "mw06",         0x4800, 0x0800, 0x99ca2eae )
 ROM_END
 
+ROM_START( ozmawar2 )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
+	ROM_LOAD( "mw01",         0x0000, 0x0800, 0x31f4397d )
+	ROM_LOAD( "mw02",         0x0800, 0x0800, 0xd8e77c62 )
+	ROM_LOAD( "oz5",          0x1000, 0x0400, 0x5597bf52 )
+	ROM_LOAD( "oz6",          0x1400, 0x0400, 0x19b43578 )
+	ROM_LOAD( "oz7",          0x1800, 0x0400, 0xa285bfde )
+	ROM_LOAD( "oz8",          0x1c00, 0x0400, 0xae59a629 )
+	ROM_LOAD( "mw05",         0x4000, 0x0800, 0x3bc7d4c7 )
+	ROM_LOAD( "oz11",         0x4800, 0x0400, 0x660e934c )
+	ROM_LOAD( "oz12",         0x4c00, 0x0400, 0x8b969f61 )
+ROM_END
+
 ROM_START( solfight )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
 	ROM_LOAD( "solfight.m",   0x0000, 0x0800, 0xa4f2814e )
@@ -4138,87 +4407,115 @@ ROM_START( sfeverbw )
 	ROM_LOAD( "ss3.ic2",      0x0000, 0x0400, 0x95c2c1ee )
 ROM_END
 
+ROM_START( sstrangr )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
+	ROM_LOAD( "hss-01.58",     0x0000, 0x0400, 0xfeec7600 )
+	ROM_LOAD( "hss-02.59",     0x0400, 0x0400, 0x7281ff0b )
+	ROM_LOAD( "hss-03.60",     0x0800, 0x0400, 0xa09ec572 )
+	ROM_LOAD( "hss-04.61",     0x0c00, 0x0400, 0xec411aca )
+	ROM_LOAD( "hss-05.62",     0x1000, 0x0400, 0x7b1b81dd )
+	ROM_LOAD( "hss-06.63",     0x1400, 0x0400, 0xde383625 )
+	ROM_LOAD( "hss-07.64",     0x1800, 0x0400, 0x2e41d0f0 )
+	ROM_LOAD( "hss-08.65",     0x1c00, 0x0400, 0xbd14d0b0 )
+ROM_END
+
+ROM_START( sstrngr2 )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
+	ROM_LOAD( "4764.09",      0x0000, 0x2000, 0xd88f86cc )
+	ROM_LOAD( "2708.10",      0x6000, 0x0400, 0xeba304c1 )
+
+	ROM_REGION( 0x0400, REGION_PROMS, 0 )		/* color maps player 1/player 2 */
+	ROM_LOAD( "2708.15",      0x0000, 0x0400, 0xc176a89d )
+ROM_END
+
 
 /* Midway games */
 
 /* board #            rom       parent    machine   inp       init (overlay/color hardware setup) */
 
-/* 596 */ GAMEX(1976, seawolf,  0,        seawolf,  seawolf,  seawolf,  ROT0,   	"Midway", "Sea Wolf", GAME_NO_SOUND )
-/* 597 */ GAMEX(1975, gunfight, 0,        gunfight, gunfight, 8080bw,   ROT0,   	"Midway", "Gun Fight", GAME_NO_SOUND )
-/* 605 */ GAMEX(1976, tornbase, 0,        tornbase, tornbase, 8080bw,	ROT0,   	"Midway", "Tornado Baseball", GAME_NO_SOUND )
-/* 610 */ GAMEX(1976, 280zzzap, 0,        280zzzap, 280zzzap, 8080bw,	ROT0,   	"Midway", "Datsun 280 Zzzap", GAME_NO_SOUND )
-/* 611 */ GAMEX(1976, maze,     0,        tornbase, maze,     8080bw,	ROT0,   	"Midway", "Amazing Maze", GAME_NO_SOUND )
-/* 612 */ GAME( 1977, boothill, 0,        boothill, boothill, boothill, ROT0,   	"Midway", "Boot Hill" )
-/* 615 */ GAMEX(1977, checkmat, 0,        checkmat, checkmat, 8080bw,	ROT0,   	"Midway", "Checkmate", GAME_NO_SOUND )
-/* 618 */ GAMEX(1977, desertgu, 0,        desertgu, desertgu, desertgu,	ROT0,   	"Midway", "Desert Gun", GAME_NO_SOUND )
-/* 619 */ GAMEX(1977, dplay,    einnings, m4,       einnings, 8080bw,	ROT0,   	"Midway", "Double Play", GAME_NO_SOUND )
-/* 622 */ GAMEX(1977, lagunar,  0,        280zzzap, lagunar,  8080bw,   ROT90,  	"Midway", "Laguna Racer", GAME_NO_SOUND )
-/* 623 */ GAMEX(1977, gmissile, 0,        m4,       gmissile, 8080bw,   ROT0,   	"Midway", "Guided Missile", GAME_NO_SOUND )
-/* 626 */ GAMEX(1977, m4,       0,        m4,       m4,       8080bw,   ROT0,   	"Midway", "M-4", GAME_NO_SOUND )
-/* 630 */ GAMEX(1978, clowns,   0,        clowns,   clowns,   8080bw,   ROT0,   	"Midway", "Clowns", GAME_NO_SOUND )
-/* 640    																			"Midway", "Space Walk" */
-/* 642 */ GAMEX(1978, einnings, 0,        m4,       einnings, 8080bw,	ROT0,   	"Midway", "Extra Inning", GAME_NO_SOUND )
-/* 643 */ GAMEX(1978, shuffle,  0,        shuffle,  shuffle,  8080bw,	ROT90,  	"Midway", "Shuffleboard", GAME_NO_SOUND )
-/* 644 */ GAMEX(1977, dogpatch, 0,        clowns,   dogpatch, 8080bw,   ROT0,   	"Midway", "Dog Patch", GAME_NO_SOUND )
-/* 645 */ GAMEX(1980, spcenctr, 0,        spcenctr, spcenctr, spcenctr,	ROT0_16BIT,	"Midway", "Space Encounters", GAME_NO_SOUND )
-/* 652 */ GAMEX(1979, phantom2, 0,        m4,       phantom2, phantom2, ROT0,   	"Midway", "Phantom II", GAME_NO_SOUND )
-/* 730 */ GAMEX(1978, bowler,   0,        bowler,   bowler,   8080bw,	ROT90,  	"Midway", "4 Player Bowling Alley", GAME_NO_SOUND )
-/* 739 */ GAME( 1978, invaders, 0,        invaders, invaders, invaders, ROT270, 	"Midway", "Space Invaders" )
-/* 742 */ GAMEX(1978, blueshrk, 0,        blueshrk, blueshrk, blueshrk, ROT0,   	"Midway", "Blue Shark", GAME_NO_SOUND )
-/* 851 */ GAME( 1980, invad2ct, 0,        invad2ct, invad2ct, invad2ct, ROT90,  	"Midway", "Space Invaders II (Midway, cocktail)" )
-/* 852 */ GAME( 1980, invaddlx, invadpt2, invaders, invadpt2, invaddlx, ROT270, 	"Midway", "Space Invaders Deluxe" )
-/* 870    																			"Midway", "Space Invaders Deluxe (cocktail) "*/
+/* 596 */ GAMEX(1976, seawolf,  0,        seawolf,  seawolf,  seawolf,  ROT0,   "Midway", "Sea Wolf", GAME_NO_SOUND )
+/* 597 */ GAMEX(1975, gunfight, 0,        gunfight, gunfight, 8080bw,   ROT0,   "Midway", "Gun Fight", GAME_NO_SOUND )
+/* 605 */ GAMEX(1976, tornbase, 0,        tornbase, tornbase, 8080bw,	ROT0,   "Midway", "Tornado Baseball", GAME_NO_SOUND )
+/* 610 */ GAMEX(1976, 280zzzap, 0,        280zzzap, 280zzzap, 8080bw,	ROT0,   "Midway", "Datsun 280 Zzzap", GAME_NO_SOUND )
+/* 611 */ GAMEX(1976, maze,     0,        tornbase, maze,     8080bw,	ROT0,   "Midway", "Amazing Maze", GAME_NO_SOUND )
+/* 612 */ GAME( 1977, boothill, 0,        boothill, boothill, boothill, ROT0,   "Midway", "Boot Hill" )
+/* 615 */ GAMEX(1977, checkmat, 0,        checkmat, checkmat, 8080bw,	ROT0,   "Midway", "Checkmate", GAME_NO_SOUND )
+/* 618 */ GAMEX(1977, desertgu, 0,        desertgu, desertgu, desertgu,	ROT0,   "Midway", "Desert Gun", GAME_NO_SOUND )
+/* 619 */ GAMEX(1977, dplay,    einnings, m4,       einnings, 8080bw,	ROT0,   "Midway", "Double Play", GAME_NO_SOUND )
+/* 622 */ GAMEX(1977, lagunar,  0,        280zzzap, lagunar,  8080bw,   ROT90,  "Midway", "Laguna Racer", GAME_NO_SOUND )
+/* 623 */ GAMEX(1977, gmissile, 0,        m4,       gmissile, 8080bw,   ROT0,   "Midway", "Guided Missile", GAME_NO_SOUND )
+/* 626 */ GAMEX(1977, m4,       0,        m4,       m4,       8080bw,   ROT0,   "Midway", "M-4", GAME_NO_SOUND )
+/* 630 */ GAMEX(1978, clowns,   0,        clowns,   clowns,   8080bw,   ROT0,   "Midway", "Clowns", GAME_NO_SOUND )
+/* 640    																		"Midway", "Space Walk" */
+/* 642 */ GAMEX(1978, einnings, 0,        m4,       einnings, 8080bw,	ROT0,   "Midway", "Extra Inning", GAME_NO_SOUND )
+/* 643 */ GAMEX(1978, shuffle,  0,        shuffle,  shuffle,  8080bw,	ROT90,  "Midway", "Shuffleboard", GAME_NO_SOUND )
+/* 644 */ GAMEX(1977, dogpatch, 0,        clowns,   dogpatch, 8080bw,   ROT0,   "Midway", "Dog Patch", GAME_NO_SOUND )
+/* 645 */ GAMEX(1980, spcenctr, 0,        spcenctr, spcenctr, spcenctr,	ROT0,   "Midway", "Space Encounters", GAME_NO_SOUND )
+/* 652 */ GAMEX(1979, phantom2, 0,        m4,       phantom2, phantom2, ROT0,   "Midway", "Phantom II", GAME_NO_SOUND )
+/* 730 */ GAMEX(1978, bowler,   0,        bowler,   bowler,   8080bw,	ROT90,  "Midway", "4 Player Bowling Alley", GAME_NO_SOUND )
+/* 739 */ GAME( 1978, invaders, 0,        invaders, invaders, invaders, ROT270, "Midway", "Space Invaders" )
+/* 742 */ GAMEX(1978, blueshrk, 0,        blueshrk, blueshrk, blueshrk, ROT0,   "Midway", "Blue Shark", GAME_NO_SOUND )
+/* 851 */ GAME( 1980, invad2ct, 0,        invad2ct, invad2ct, invad2ct, ROT90,  "Midway", "Space Invaders II (Midway, cocktail)" )
+/* 852 */ GAME( 1980, invaddlx, invadpt2, invaders, invadpt2, invaddlx, ROT270, "Midway", "Space Invaders Deluxe" )
+/* 870    																		"Midway", "Space Invaders Deluxe (cocktail) "*/
 
 /* Taito games */
 
-		  GAME( 1978, sitv,     invaders, invaders, sitv,     invaders, ROT270, 	"Taito", "Space Invaders (TV Version)" )
-		  GAME( 1979, sicv,     invaders, invadpt2, invaders, invadpt2, ROT270, 	"Taito", "Space Invaders (CV Version)" )
-		  GAME( 1978, sisv,     invaders, invadpt2, invaders, invadpt2, ROT270, 	"Taito", "Space Invaders (SV Version)" )
-		  GAME( 1978, sisv2,    invaders, invadpt2, invaders, invadpt2, ROT270, 	"Taito", "Space Invaders (SV Version 2)" )
-		  GAME( 1979, galxwars, 0,        invaders, galxwars, invaders, ROT270, 	"Taito", "Galaxy Wars" )
-		  GAME( 1979, starw,    galxwars, invaders, galxwars, invaders, ROT270, 	"bootleg", "Star Wars" )
-		  GAME( 1979, lrescue,  0,        invadpt2, lrescue,  invadpt2, ROT270, 	"Taito", "Lunar Rescue" )
-		  GAME( 1979, grescue,  lrescue,  invadpt2, lrescue,  invadpt2, ROT270, 	"Taito (Universal license?)", "Galaxy Rescue" )
-		  GAME( 1979, desterth, lrescue,  invadpt2, invrvnge, invadpt2, ROT270, 	"bootleg", "Destination Earth" )
-		  GAME( 1980, invadpt2, 0,        invadpt2, invadpt2, invadpt2, ROT270, 	"Taito", "Space Invaders Part II (Taito)" )
-		  GAMEX(1980, schaser,  0,        schaser,  schaser,  schaser,  ROT270, 	"Taito", "Space Chaser", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_COLORS )
-		  GAMEX(1979, schasrcv, schaser,  lupin3,   schasrcv, schaser,  ROT270, 	"Taito", "Space Chaser (CV version)", GAME_NO_SOUND | GAME_IMPERFECT_COLORS | GAME_NO_COCKTAIL )
-		  GAMEX(1980, lupin3,   0,        lupin3,   lupin3,   lupin3,   ROT270, 	"Taito", "Lupin III", GAME_NO_SOUND | GAME_NO_COCKTAIL )
-		  GAMEX(1980, polaris,  0,        polaris,  polaris,  polaris,  ROT270, 	"Taito", "Polaris (set 1)", GAME_NO_SOUND )
-		  GAMEX(1980, polarisa, polaris,  polaris,  polaris,  polaris,  ROT270, 	"Taito", "Polaris (set 2)", GAME_NO_SOUND )
-		  GAME( 1980, ballbomb, 0,        ballbomb, ballbomb, invadpt2, ROT270, 	"Taito", "Balloon Bomber" )
+		  GAME( 1978, sitv,     invaders, invaders, sitv,     invaders, ROT270, "Taito", "Space Invaders (TV Version)" )
+		  GAME( 1979, sicv,     invaders, invadpt2, invaders, invadpt2, ROT270, "Taito", "Space Invaders (CV Version)" )
+		  GAME( 1978, sisv,     invaders, invadpt2, invaders, invadpt2, ROT270, "Taito", "Space Invaders (SV Version)" )
+		  GAME( 1978, sisv2,    invaders, invadpt2, invaders, invadpt2, ROT270, "Taito", "Space Invaders (SV Version 2)" )
+          GAME( 1979, galxwars, 0,        invaders, galxwars, invaders, ROT270, "Universal", "Galaxy Wars (Universal set 1)" )
+		  GAME( 1979, galxwar2, galxwars, invaders, galxwars, invaders, ROT270, "Universal", "Galaxy Wars (Universal set 2)" )
+		  GAME( 1979, galxwart, galxwars, invaders, galxwars, invaders, ROT270,	"Taito?", "Galaxy Wars (Taito?)" ) /* Copyright Not Displayed */
+		  GAME( 1979, starw,    galxwars, invaders, galxwars, invaders, ROT270, "bootleg", "Star Wars" )
+		  GAME( 1979, lrescue,  0,        invadpt2, lrescue,  invadpt2, ROT270, "Taito", "Lunar Rescue" )
+		  GAME( 1979, grescue,  lrescue,  invadpt2, lrescue,  invadpt2, ROT270, "Taito (Universal license?)", "Galaxy Rescue" )
+		  GAME( 1979, desterth, lrescue,  invadpt2, invrvnge, invadpt2, ROT270, "bootleg", "Destination Earth" )
+		  GAME( 1980, invadpt2, 0,        invadpt2, invadpt2, invadpt2, ROT270, "Taito", "Space Invaders Part II (Taito)" )
+		  GAMEX(1980, schaser,  0,        schaser,  schaser,  schaser,  ROT270, "Taito", "Space Chaser", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_COLORS )
+		  GAMEX(1979, schasrcv, schaser,  lupin3,   schasrcv, schaser,  ROT270, "Taito", "Space Chaser (CV version)", GAME_NO_SOUND | GAME_IMPERFECT_COLORS | GAME_NO_COCKTAIL )
+		  GAMEX(1980, lupin3,   0,        lupin3,   lupin3,   lupin3,   ROT270, "Taito", "Lupin III", GAME_NO_SOUND | GAME_NO_COCKTAIL )
+		  GAMEX(1980, polaris,  0,        polaris,  polaris,  polaris,  ROT270, "Taito", "Polaris (set 1)", GAME_NO_SOUND )
+		  GAMEX(1980, polarisa, polaris,  polaris,  polaris,  polaris,  ROT270, "Taito", "Polaris (set 2)", GAME_NO_SOUND )
+		  GAME( 1980, ballbomb, 0,        ballbomb, ballbomb, invadpt2, ROT270, "Taito", "Balloon Bomber" )
 
 /* Nintendo games */
 
-		  GAMEX(1980, sheriff,  0,        sheriff,  sheriff,  8080bw,	ROT270, 	"Nintendo", "Sheriff", GAME_IMPERFECT_SOUND )
-		  GAMEX(1980, bandido,  sheriff,  sheriff,  bandido,  8080bw,	ROT270, 	"Exidy", "Bandido", GAME_IMPERFECT_SOUND )
-		  GAMEX(1980, helifire, 0,        helifire, helifire, helifire,	ROT270, 	"Nintendo", "HeliFire (revision B)", GAME_NO_SOUND )
-		  GAMEX(1980, helifira, helifire, helifire, helifire, helifire,	ROT270, 	"Nintendo", "HeliFire (revision A)", GAME_NO_SOUND )
-		  GAMEX(1980, spacefev, 0,        sheriff,  spacefev, 8080bw,	ROT270, 	"Nintendo", "Space Fever (color)", GAME_IMPERFECT_SOUND )
-		  GAMEX(1980, sfeverbw, spacefev, sheriff,  spacefev, 8080bw,	ROT270, 	"Nintendo", "Space Fever (black and white)", GAME_IMPERFECT_SOUND )
+		  GAMEX(1980, sheriff,  0,        sheriff,  sheriff,  8080bw,	ROT270, "Nintendo", "Sheriff", GAME_IMPERFECT_SOUND )
+		  GAMEX(1980, bandido,  sheriff,  sheriff,  bandido,  8080bw,	ROT270, "Exidy", "Bandido", GAME_IMPERFECT_SOUND )
+		  GAMEX(1980, helifire, 0,        helifire, helifire, helifire,	ROT270, "Nintendo", "HeliFire (revision B)", GAME_NO_SOUND )
+		  GAMEX(1980, helifira, helifire, helifire, helifire, helifire,	ROT270, "Nintendo", "HeliFire (revision A)", GAME_NO_SOUND )
+		  GAMEX(1980, spacefev, 0,        sheriff,  spacefev, 8080bw,	ROT270, "Nintendo", "Space Fever (color)", GAME_IMPERFECT_SOUND )
+		  GAMEX(1980, sfeverbw, spacefev, sheriff,  spacefev, 8080bw,	ROT270, "Nintendo", "Space Fever (black and white)", GAME_IMPERFECT_SOUND )
 
 /* Misc. manufacturers */
 
-		  GAME( 1980, earthinv, invaders, invaders, earthinv, invaders, ROT270, 	"bootleg", "Super Earth Invasion" )
-		  GAME( 1980, spaceatt, invaders, invaders, spaceatt, invaders, ROT270, 	"Zenitone-Microsec Ltd", "Space Attack II" )
-		  GAME( 19??, sinvzen,  invaders, invaders, spaceatt, invaders, ROT270, 	"Zenitone-Microsec Ltd", "Super Invaders (Zenitone-Microsec)" )
-		  GAME( 19??, sinvemag, invaders, invaders, sinvemag, invaders, ROT270, 	"bootleg", "Super Invaders (EMAG)" )
-		  GAME( 19??, alieninv, invaders, invaders, earthinv, invaders, ROT270, 	"bootleg", "Alien Invasion Part II" )
-		  GAME( 1978, spceking, invaders, invaders, spceking, invaders, ROT270, 	"Leijac (Konami)","Space King" )
-		  GAME( 1978, spcewars, invaders, invaders, invadpt2, invaders, ROT270, 	"Sanritsu", "Space War (Sanritsu)" )
-		  GAME( 1978, spacewr3, invaders, invaders, spacewr3, invaders, ROT270, 	"bootleg", "Space War Part 3" )
-		  GAME( 1978, invaderl, invaders, invaders, invaders, invaders, ROT270, 	"bootleg", "Space Invaders (Logitec)" )
-		  GAME( 1979, jspecter, invaders, invaders, jspecter, invaders, ROT270, 	"Jatre", "Jatre Specter" )
-		  GAME( 1979, cosmicmo, invaders, invaders, cosmicmo, invaders, ROT270, 	"Universal", "Cosmic Monsters" )
-		  GAME( 19??, superinv, invaders, invaders, invaders, invaders, ROT270, 	"bootleg", "Super Invaders" )
-		  GAME( 19??, moonbase, invadpt2, invaders, invadpt2, invaddlx, ROT270, 	"Nichibutsu", "Moon Base" )
-		  GAMEX(19??, invrvnge, 0,        tornbase, invrvnge, invrvnge, ROT270, 	"Zenitone Microsec", "Invader's Revenge",  GAME_NO_SOUND )
-		  GAMEX(19??, invrvnga, invrvnge, tornbase, invrvnge, invrvnge, ROT270, 	"Zenitone Microsec (Dutchford license)", "Invader's Revenge (Dutchford)", GAME_NO_SOUND )
-		  GAME( 1980, spclaser, 0,        invaders, spclaser, invaddlx, ROT270, 	"Game Plan, Inc. (Taito)", "Space Laser" )
-		  GAME( 1980, laser,    spclaser, invaders, spclaser, invaddlx, ROT270, 	"<unknown>", "Laser" )
-		  GAME( 1979, spcewarl, spclaser, invaders, spclaser, invaddlx, ROT270, 	"Leijac (Konami)","Space War (Leijac)" )
-		  GAMEX(1979, rollingc, 0,        rollingc, rollingc, rollingc, ROT270, 	"Nichibutsu", "Rolling Crash / Moon Base", GAME_NO_SOUND )
-		  GAME( 1979, ozmawars, 0,        invaders, ozmawars, 8080bw,   ROT270, 	"SNK", "Ozma Wars" )
-		  GAME( 1979, solfight, ozmawars, invaders, ozmawars, 8080bw,   ROT270, 	"bootleg", "Solar Fight" )
-		  GAME( 1979, spaceph,  ozmawars, invaders, spaceph,  8080bw,   ROT270, 	"Zilec Games", "Space Phantoms" )
-		  GAMEX(1979, yosakdon, 0,        tornbase, lrescue,  8080bw,   ROT270, 	"bootleg", "Yosaku To Donbee (bootleg)", GAME_NO_SOUND )
+		  GAME( 1980, earthinv, invaders, invaders, earthinv, invaders, ROT270, "bootleg", "Super Earth Invasion" )
+  		  GAME( 1978, spaceatt, invaders, invaders, invaders, invaders, ROT270, "Video Games GMBH", "Space Attack" )
+		  GAME( 1980, spaceat2, invaders, invaders, spaceatt, invaders, ROT270, "Zenitone-Microsec Ltd", "Space Attack II" )
+		  GAME( 19??, sinvzen,  invaders, invaders, spaceatt, invaders, ROT270, "Zenitone-Microsec Ltd", "Super Invaders (Zenitone-Microsec)" )
+		  GAME( 19??, sinvemag, invaders, invaders, sinvemag, invaders, ROT270, "bootleg", "Super Invaders (EMAG)" )
+		  GAME( 19??, alieninv, invaders, invaders, earthinv, invaders, ROT270, "bootleg", "Alien Invasion Part II" )
+		  GAME( 1978, spceking, invaders, invaders, spceking, invaders, ROT270, "Leijac (Konami)","Space King" )
+		  GAME( 1978, spcewars, invaders, invaders, invadpt2, invaders, ROT270, "Sanritsu", "Space War (Sanritsu)" )
+		  GAME( 1978, spacewr3, invaders, invaders, spacewr3, invaders, ROT270, "bootleg", "Space War Part 3" )
+		  GAME( 1978, invaderl, invaders, invaders, invaders, invaders, ROT270, "bootleg", "Space Invaders (Logitec)" )
+		  GAME( 1979, jspecter, invaders, invaders, jspecter, invaders, ROT270, "Jatre", "Jatre Specter (set 1)" )
+		  GAME( 1979, jspectr2, invaders, invaders, jspecter, invaders, ROT270, "Jatre", "Jatre Specter (set 2)" )
+		  GAME( 1979, cosmicmo, invaders, invaders, cosmicmo, invaders, ROT270, "Universal", "Cosmic Monsters" )
+		  GAME( 19??, superinv, invaders, invaders, invaders, invaders, ROT270, "bootleg", "Super Invaders" )
+		  GAME (1978, sstrangr, 0,		  sstrangr, sstrangr, 8080bw,   ROT270,	"Yachiyo Electronics, Ltd.", "Space Stranger" )
+		  GAME( 1979, sstrngr2, 0,        sstrngr2, sstrngr2, sstrngr2, ROT270, "Yachiyo Electronics, Ltd.", "Space Stranger 2" )
+		  GAME( 19??, moonbase, invadpt2, invaders, invadpt2, invaddlx, ROT270, "Nichibutsu", "Moon Base" )
+		  GAMEX(19??, invrvnge, 0,        tornbase, invrvnge, invrvnge, ROT270, "Zenitone Microsec", "Invader's Revenge",  GAME_NO_SOUND )
+		  GAMEX(19??, invrvnga, invrvnge, tornbase, invrvnge, invrvnge, ROT270, "Zenitone Microsec (Dutchford license)", "Invader's Revenge (Dutchford)", GAME_NO_SOUND )
+		  GAME( 1980, spclaser, 0,        invaders, spclaser, invaddlx, ROT270, "Game Plan, Inc. (Taito)", "Space Laser" )
+		  GAME( 1980, laser,    spclaser, invaders, spclaser, invaddlx, ROT270, "<unknown>", "Laser" )
+		  GAME( 1979, spcewarl, spclaser, invaders, spclaser, invaddlx, ROT270, "Leijac (Konami)","Space War (Leijac)" )
+		  GAMEX(1979, rollingc, 0,        rollingc, rollingc, rollingc, ROT270, "Nichibutsu", "Rolling Crash / Moon Base", GAME_NO_SOUND )
+		  GAME( 1979, ozmawars, 0,        invaders, ozmawars, 8080bw,   ROT270, "SNK", "Ozma Wars (set 1)" )
+		  GAME( 1979, ozmawar2, ozmawars, invaders, ozmawars, 8080bw,   ROT270, "SNK", "Ozma Wars (set 2)" ) /* Uses Taito's three board colour version of Space Invaders PCB */
+		  GAME( 1979, solfight, ozmawars, invaders, ozmawars, 8080bw,   ROT270, "bootleg", "Solar Fight" )
+		  GAME( 1979, spaceph,  ozmawars, invaders, spaceph,  8080bw,   ROT270, "Zilec Games", "Space Phantoms" )
+		  GAMEX(1979, yosakdon, 0,        tornbase, lrescue,  8080bw,   ROT270, "bootleg", "Yosaku To Donbee (bootleg)", GAME_NO_SOUND )

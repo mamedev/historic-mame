@@ -138,11 +138,11 @@ WRITE_HANDLER( battlane_bitmap_w )
 	{
 		if (data & 1<<i)
 		{
-		    screen_bitmap->line[offset % 0x100][(offset / 0x100) * 8+i] |= orval;
+			((UINT8 *)screen_bitmap->line[offset % 0x100])[(offset / 0x100) * 8+i] |= orval;
 		}
 		else
 		{
-		    screen_bitmap->line[offset % 0x100][(offset / 0x100) * 8+i] &= ~orval;
+			((UINT8 *)screen_bitmap->line[offset % 0x100])[(offset / 0x100) * 8+i] &= ~orval;
 		}
 	}
 	battlane_bitmap[offset]=data;
@@ -227,11 +227,6 @@ void battlane_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
     scrolly=256*(battlane_video_ctrl&0x01)+battlane_scrolly;
     scrollx=256*(battlane_cpu_control&0x01)+battlane_scrollx;
 
-
-	if (palette_recalc ())
-    {
-         // Mark cached layer as dirty
-    }
 
     /* Draw tile map. TODO: Cache it */
     for (offs=0; offs <0x400;  offs++)
@@ -334,7 +329,7 @@ void battlane_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		{
 			for (x=0; x<0x20*8; x++)
 			{
-				int data=screen_bitmap->line[y][x];
+				int data=((UINT8 *)screen_bitmap->line[y])[x];
 				if (data)
 				{
 					plot_pixel(bitmap,255-x,255-y,Machine->pens[data]);
@@ -348,7 +343,7 @@ void battlane_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		{
 			for (x=0; x<0x20*8; x++)
 			{
-				int data=screen_bitmap->line[y][x];
+				int data=((UINT8 *)screen_bitmap->line[y])[x];
 				if (data)
 				{
 					plot_pixel(bitmap,x,y,Machine->pens[data]);

@@ -457,7 +457,7 @@ static const struct MachineDriver machine_driver_##GAMENAME = \
 	32,32+2*8+2*4, \
 	decocass_init_palette, \
 \
-	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE, \
+	VIDEO_TYPE_RASTER, \
 	0, \
 	decocass_vh_start, \
 	decocass_vh_stop, \
@@ -524,11 +524,14 @@ ROM_START( decocass )
 
 ROM_END
 
+/* The Following use Dongle Type 1 (DE-0061)
+    (dongle data same for each game)		 */
+
 ROM_START( ctsttape )
 	DECOCASS_COMMON_ROMS
 
 	ROM_REGION( 0x00020, REGION_USER1, 0 )	  /* dongle data */
-	ROM_LOAD( "testtape.pro", 0x0000, 0x0020, 0xe09ae5de )
+	ROM_LOAD( "de-0061.pro", 0x0000, 0x0020, 0xe09ae5de )
 
 	ROM_REGION( 0x10000, REGION_USER2, 0 )	  /* (max) 64k for cassette image */
 	ROM_LOAD( "testtape.cas", 0x0000, 0x2000, 0x4f9d8efb )
@@ -538,7 +541,7 @@ ROM_START( clocknch )
 	DECOCASS_COMMON_ROMS
 
 	ROM_REGION( 0x00020, REGION_USER1, 0 )	  /* dongle data */
-	ROM_LOAD( "clocknch.pro", 0x0000, 0x0020, 0xe09ae5de )
+	ROM_LOAD( "de-0061.pro", 0x0000, 0x0020, 0xe09ae5de )
 
 	ROM_REGION( 0x10000, REGION_USER2, 0 )	  /* (max) 64k for cassette image */
 	ROM_LOAD( "clocknch.cas", 0x0000, 0x8000, 0xc9d163a4 )
@@ -548,17 +551,37 @@ ROM_START( ctisland )
 	DECOCASS_COMMON_ROMS
 
 	ROM_REGION( 0x00020, REGION_USER1, 0 )	  /* dongle data */
-	ROM_LOAD( "ctisland.pro", 0x0000, 0x0020, 0xe09ae5de )
+	ROM_LOAD( "de-0061.pro", 0x0000, 0x0020, 0xe09ae5de )
 
 	ROM_REGION( 0x10000, REGION_USER2, 0 )	  /* (max) 64k for cassette image */
 	ROM_LOAD( "ctisland.cas", 0x0000, 0x8000, 0x3f63b8f8 )
+ROM_END
+
+ROM_START( ctislnd2 )
+	DECOCASS_COMMON_ROMS
+
+	ROM_REGION( 0x00020, REGION_USER1, 0 )	  /* dongle data */
+	ROM_LOAD( "de-0061.pro", 0x0000, 0x0020, 0xe09ae5de )
+
+	ROM_REGION( 0x10000, REGION_USER2, 0 )	  /* (max) 64k for cassette image */
+	ROM_LOAD( "ctislnd3.cas", 0x0000, 0x8000, 0x2854b4c0 )
+ROM_END
+
+ROM_START( ctislnd3 )
+	DECOCASS_COMMON_ROMS
+
+	ROM_REGION( 0x00020, REGION_USER1, 0 )	  /* dongle data */
+	ROM_LOAD( "de-0061.pro", 0x0000, 0x0020, 0xe09ae5de )
+
+	ROM_REGION( 0x10000, REGION_USER2, 0 )	  /* (max) 64k for cassette image */
+	ROM_LOAD( "ctislnd2.cas", 0x0000, 0x8000, 0x45464e1e )
 ROM_END
 
 ROM_START( csuperas )
 	DECOCASS_COMMON_ROMS
 
 	ROM_REGION( 0x00020, REGION_USER1, 0 )	  /* dongle data */
-	ROM_LOAD( "csuperas.pro", 0x0000, 0x0020, 0xe09ae5de )
+	ROM_LOAD( "de-0061.pro", 0x0000, 0x0020, 0xe09ae5de )
 
 	ROM_REGION( 0x10000, REGION_USER2, 0 )	  /* (max) 64k for cassette image */
 	ROM_LOAD( "csuperas.cas", 0x0000, 0x8000, 0xfabcd07f )
@@ -568,7 +591,7 @@ ROM_START( castfant )
 	DECOCASS_COMMON_ROMS
 
 	ROM_REGION( 0x00020, REGION_USER1, 0 )	  /* dongle data */
-	ROM_LOAD( "castfant.pro", 0x0000, 0x0020, 0xe09ae5de )
+	ROM_LOAD( "de-0061.pro", 0x0000, 0x0020, 0xe09ae5de )
 
 	ROM_REGION( 0x10000, REGION_USER2, 0 )	  /* (max) 64k for cassette image */
 	ROM_LOAD( "castfant.cas", 0x0000, 0x8000, 0x6d77d1b5 )
@@ -578,7 +601,7 @@ ROM_START( cluckypo )
 	DECOCASS_COMMON_ROMS
 
 	ROM_REGION( 0x00020, REGION_USER1, 0 )	  /* dongle data */
-	ROM_LOAD( "cluckypo.pro", 0x0000, 0x0020, 0xe09ae5de )
+	ROM_LOAD( "de-0061.pro", 0x0000, 0x0020, 0xe09ae5de )
 
 	ROM_REGION( 0x10000, REGION_USER2, 0 )	  /* (max) 64k for cassette image */
 	ROM_LOAD( "cluckypo.cas", 0x0000, 0x8000, 0x2070c243 )
@@ -588,7 +611,7 @@ ROM_START( cterrani )
 	DECOCASS_COMMON_ROMS
 
 	ROM_REGION( 0x00020, REGION_USER1, 0 )	  /* dongle data */
-	ROM_LOAD( "cterrani.pro", 0x0000, 0x0020, 0xe09ae5de )
+	ROM_LOAD( "de-0061.pro", 0x0000, 0x0020, 0xe09ae5de )
 
 	ROM_REGION( 0x10000, REGION_USER2, 0 )	  /* (max) 64k for cassette image */
 	ROM_LOAD( "cterrani.cas", 0x0000, 0x8000, 0xeb71adbc )
@@ -598,7 +621,7 @@ ROM_START( cexplore )
 	DECOCASS_COMMON_ROMS
 
 	ROM_REGION( 0x00020, REGION_USER1, 0 )	  /* dongle data */
-	ROM_LOAD( "cexplore.pro", 0x0000, 0x0020, 0xe09ae5de )
+	ROM_LOAD( "de-0061.pro", 0x0000, 0x0020, 0xe09ae5de )
 
 	ROM_REGION( 0x10000, REGION_USER2, 0 )	  /* (max) 64k for cassette image */
 	ROM_LOAD( "cexplore.cas", 0x0000, 0x8000, 0xfae49c66 )
@@ -608,11 +631,14 @@ ROM_START( cprogolf )
 	DECOCASS_COMMON_ROMS
 
 	ROM_REGION( 0x00020, REGION_USER1, 0 )	  /* dongle data */
-	ROM_LOAD( "cprogolf.pro", 0x0000, 0x0020, 0xe09ae5de )
+	ROM_LOAD( "de-0061.pro", 0x0000, 0x0020, 0xe09ae5de )
 
 	ROM_REGION( 0x10000, REGION_USER2, 0 )	  /* (max) 64k for cassette image */
 	ROM_LOAD( "cprogolf.cas", 0x0000, 0x8000, 0x02123cd1 )
 ROM_END
+
+/* The Following use Dongle Type 2 (CS82-007)
+    (dongle data differs for each game)		 */
 
 ROM_START( cmissnx )
 	DECOCASS_COMMON_ROMS
@@ -632,6 +658,16 @@ ROM_START( cdiscon1 )
 
 	ROM_REGION( 0x10000, REGION_USER2, 0 )	  /* (max) 64k for cassette image */
 	ROM_LOAD( "cdiscon1.cas", 0x0000, 0x8000, 0x1429a397 )
+ROM_END
+
+ROM_START( csweetht )
+ DECOCASS_COMMON_ROMS
+
+ ROM_REGION( 0x00800, REGION_USER1, 0 )   /* dongle data */
+ ROM_LOAD( "cdiscon1.pro", 0x0000, 0x0800, 0x0f793fab )
+
+ ROM_REGION( 0x10000, REGION_USER2, 0 )   /* (max) 64k for cassette image */
+ ROM_LOAD( "csweetht.cas", 0x0000, 0x8000, 0x175ef706 )
 ROM_END
 
 ROM_START( cptennis )
@@ -654,15 +690,8 @@ ROM_START( ctornado )
 	ROM_LOAD( "ctornado.cas", 0x0000, 0x8000, 0xe4e36ce0 )
 ROM_END
 
-ROM_START( cbnj )
-	DECOCASS_COMMON_ROMS
-
-	ROM_REGION( 0x01000, REGION_USER1, 0 )	  /* dongle data */
-	ROM_LOAD( "cbnj.pro",       0x0000, 0x1000, 0x9f396832 )
-
-	ROM_REGION( 0x10000, REGION_USER2, 0 )	  /* (max) 64k for cassette image */
-	ROM_LOAD( "cbnj.cas",       0x0000, 0x8000, 0xeed41560 )
-ROM_END
+/* The Following use Dongle Type 3 (unknown part number?)
+    (dongle data differs for each game)		 */
 
 ROM_START( cburnrub )
 	DECOCASS_COMMON_ROMS
@@ -672,6 +701,26 @@ ROM_START( cburnrub )
 
 	ROM_REGION( 0x10000, REGION_USER2, 0 )	  /* (max) 64k for cassette image */
 	ROM_LOAD( "cburnrub.cas",   0x0000, 0x8000, 0x4528ac22 )
+ROM_END
+
+ROM_START( cburnrb2 )
+	DECOCASS_COMMON_ROMS
+
+	ROM_REGION( 0x01000, REGION_USER1, 0 )	  /* dongle data */
+	ROM_LOAD( "cburnrub.pro",   0x0000, 0x1000, 0x9f396832 )
+
+	ROM_REGION( 0x10000, REGION_USER2, 0 )	  /* (max) 64k for cassette image */
+	ROM_LOAD( "cburnrb2.cas",   0x0000, 0x8000, 0x84a9ed66 )
+ROM_END
+
+ROM_START( cbnj )
+	DECOCASS_COMMON_ROMS
+
+	ROM_REGION( 0x01000, REGION_USER1, 0 )	  /* dongle data */
+	ROM_LOAD( "cburnrub.pro",   0x0000, 0x1000, 0x9f396832 )
+
+	ROM_REGION( 0x10000, REGION_USER2, 0 )	  /* (max) 64k for cassette image */
+	ROM_LOAD( "cbnj.cas",       0x0000, 0x8000, 0xeed41560 )
 ROM_END
 
 ROM_START( cbtime )
@@ -694,6 +743,16 @@ ROM_START( cgraplop )
 	ROM_LOAD( "cgraplop.cas", 0x0000, 0x8000, 0xd2c1c1bb )
 ROM_END
 
+ROM_START( cgraplp2 )
+	DECOCASS_COMMON_ROMS
+
+	ROM_REGION( 0x01000, REGION_USER1, 0 )	  /* dongle data */
+	ROM_LOAD( "cgraplop.pro", 0x0000, 0x1000, 0xee93787d ) /* is this right for this set? */
+
+	ROM_REGION( 0x10000, REGION_USER2, 0 )	  /* (max) 64k for cassette image */
+	ROM_LOAD( "cgraplp2.cas", 0x0000, 0x8000, 0x2e728981 )
+ROM_END
+
 ROM_START( clapapa )
 	DECOCASS_COMMON_ROMS
 
@@ -702,6 +761,16 @@ ROM_START( clapapa )
 
 	ROM_REGION( 0x10000, REGION_USER2, 0 )	  /* (max) 64k for cassette image */
 	ROM_LOAD( "clapapa.cas",  0x0000, 0x8000, 0x4ffbac24 )
+ROM_END
+
+ROM_START( clapapa2 )
+ DECOCASS_COMMON_ROMS
+
+ ROM_REGION( 0x01000, REGION_USER1, 0 )   /* dongle data */
+ ROM_LOAD( "clapapa.pro",  0x0000, 0x1000, 0xe172819a )
+
+ ROM_REGION( 0x10000, REGION_USER2, 0 )   /* (max) 64k for cassette image */
+ ROM_LOAD( "clapapa2.cas",  0x0000, 0x8000, 0x69dd3c4 )
 ROM_END
 
 ROM_START( cfghtice )
@@ -734,6 +803,16 @@ ROM_START( cnightst )
 	ROM_LOAD( "cnightst.cas", 0x0000, 0x8000, 0xc6f844cb )
 ROM_END
 
+ROM_START( cnights2 )
+ DECOCASS_COMMON_ROMS
+
+ ROM_REGION( 0x01000, REGION_USER1, 0 )   /* dongle data */
+ ROM_LOAD( "cnightst.pro", 0x0000, 0x1000, 0x553b0fbc )
+
+ ROM_REGION( 0x10000, REGION_USER2, 0 )   /* (max) 64k for cassette image */
+ ROM_LOAD( "cnights2.cas", 0x0000, 0x8000, 0x1a28128c )
+ROM_END
+
 ROM_START( cprosocc )
 	DECOCASS_COMMON_ROMS
 
@@ -754,6 +833,19 @@ ROM_START( cppicf )
 	ROM_LOAD( "cppicf.cas",   0x0000, 0x8000, 0x8c02f160 )
 ROM_END
 
+ROM_START( cppicf2 )
+ DECOCASS_COMMON_ROMS
+
+ ROM_REGION( 0x01000, REGION_USER1, 0 )   /* dongle data */
+ ROM_LOAD( "cppicf.pro",   0x0000, 0x1000, 0x0b1a1ecb )
+
+ ROM_REGION( 0x10000, REGION_USER2, 0 )   /* (max) 64k for cassette image */
+ ROM_LOAD( "cppicf2.cas",   0x0000, 0x8000, 0x78ffa1bc )
+ROM_END
+
+/* The Following use Dongle Type 4 (unknown part number?)
+    (dongle data probably differs for each game, but only one is known using it atm) */
+
 ROM_START( cscrtry )
 	DECOCASS_COMMON_ROMS
 
@@ -764,6 +856,19 @@ ROM_START( cscrtry )
 	ROM_LOAD( "cscrtry.cas",  0x0000, 0x8000, 0x5625f0ca )
 ROM_END
 
+ROM_START( cscrtry2 )
+ DECOCASS_COMMON_ROMS
+
+ ROM_REGION( 0x08000, REGION_USER1, 0 )   /* dongle data */
+ ROM_LOAD( "cscrtry.pro",  0x0000, 0x8000, 0x7bc3460b )
+
+ ROM_REGION( 0x10000, REGION_USER2, 0 )   /* (max) 64k for cassette image */
+ ROM_LOAD( "cscrtry2.cas",  0x0000, 0x8000, 0x4597842 )
+ROM_END
+
+/* The Following use Dongle Type 5 (unknown part number?)
+    (dongle data not read)		 */
+
 ROM_START( cbdash )
 	DECOCASS_COMMON_ROMS
 
@@ -773,6 +878,37 @@ ROM_START( cbdash )
 	ROM_REGION( 0x10000, REGION_USER2, 0 )	  /* (max) 64k for cassette image */
 	ROM_LOAD( "cbdash.cas",   0x0000, 0x8000, 0xcba4c1af )
 ROM_END
+
+/* The Following have unknown Dongles
+    (dongle data not read)		 */
+
+ROM_START( chwy )
+	DECOCASS_COMMON_ROMS
+
+	/* no dumped dongle data, type1? its an early game if its highway chase */
+
+	ROM_REGION( 0x10000, REGION_USER2, 0 )	  /* (max) 64k for cassette image */
+	ROM_LOAD( "chwy.cas",   0x0000, 0x8000, 0x68a48064 )
+ROM_END
+
+ROM_START( cflyball )
+	DECOCASS_COMMON_ROMS
+
+	/* no dumped dongle data */
+
+	ROM_REGION( 0x10000, REGION_USER2, 0 )	  /* (max) 64k for cassette image */
+	ROM_LOAD( "cflyball.cas",   0x0000, 0x10000, 0xcb40d043 )
+ROM_END
+
+ROM_START( czeroize )
+	DECOCASS_COMMON_ROMS
+
+	/* no dumped dongle data */
+
+	ROM_REGION( 0x10000, REGION_USER2, 0 )	  /* (max) 64k for cassette image */
+	ROM_LOAD( "czeroize.cas",   0x0000, 0x10000, 0x3ef0a406 )
+ROM_END
+
 
 static void init_decocass(void)
 {
@@ -790,7 +926,9 @@ static void init_decocass(void)
 GAMEX( 1981, decocass, 0,		 decocass, decocass, decocass, ROT270, "DECO", "Cassette System", NOT_A_DRIVER )
 GAME ( 1981, ctsttape, decocass, ctsttape, decocass, decocass, ROT270, "DECO", "Cassette: Test Tape" )
 GAME ( 1981, clocknch, decocass, clocknch, decocass, decocass, ROT270, "DECO", "Cassette: Lock'n'Chase" )
-GAMEX( 1981, ctisland, decocass, ctisland, decocass, decocass, ROT270, "DECO", "Cassette: Treasure Island", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1981, ctisland, decocass, ctisland, decocass, decocass, ROT270, "DECO", "Cassette: Treasure Island (set 1)", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1981, ctislnd2, ctisland, ctisland, decocass, decocass, ROT270, "DECO", "Cassette: Treasure Island (set 2)", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1981, ctislnd3, ctisland, ctisland, decocass, decocass, ROT270, "DECO", "Cassette: Treasure Island (set 3)", GAME_IMPERFECT_GRAPHICS | GAME_NOT_WORKING ) /* Different Bitswap? */
 GAME ( 1981, csuperas, decocass, csuperas, decocass, decocass, ROT270, "DECO", "Cassette: Super Astro Fighter" )
 GAME ( 1981, castfant, decocass, castfant, decocass, decocass, ROT270, "DECO", "Cassette: Astro Fantasia" )
 GAME ( 1981, cluckypo, decocass, cluckypo, decocass, decocass, ROT270, "DECO", "Cassette: Lucky Poker" )
@@ -799,18 +937,29 @@ GAMEX( 1982, cexplore, decocass, cexplore, decocass, decocass, ROT270, "DECO", "
 GAME ( 1981, cprogolf, decocass, cprogolf, decocass, decocass, ROT270, "DECO", "Cassette: Pro Golf" )
 GAME ( 1982, cmissnx,  decocass, cmissnx,  decocass, decocass, ROT270, "DECO", "Cassette: Mission-X" )
 GAME ( 1982, cdiscon1, decocass, cdiscon1, decocass, decocass, ROT270, "DECO", "Cassette: Disco No 1" )
+GAME ( 1982, csweetht, cdiscon1, cdiscon1, decocass, decocass, ROT270, "DECO", "Cassette: Sweet Heart" )
 GAME ( 1982, cptennis, decocass, cptennis, decocass, decocass, ROT270, "DECO", "Cassette: Pro Tennis" )
 GAME ( 1982, ctornado, decocass, ctornado, decocass, decocass, ROT270, "DECO", "Cassette: Tornado" )
-GAME ( 1982, cbnj,	   decocass, cbnj,	   decocass, decocass, ROT270, "DECO", "Cassette: Bump N Jump" )
+GAME ( 1982, cburnrub, decocass, cburnrub, decocass, decocass, ROT270, "DECO", "Cassette: Burnin' Rubber (set 1)" )
+GAME ( 1982, cburnrb2, cburnrub, cburnrub, decocass, decocass, ROT270, "DECO", "Cassette: Burnin' Rubber (set 2)" )
+GAME ( 1982, cbnj,	   cburnrub, cbnj,	   decocass, decocass, ROT270, "DECO", "Cassette: Bump N Jump" )
 GAME ( 1983, cbtime,   decocass, cbtime,   decocass, decocass, ROT270, "DECO", "Cassette: Burger Time" )
-GAME ( 1982, cburnrub, decocass, cburnrub, decocass, decocass, ROT270, "DECO", "Cassette: Burnin' Rubber" )
-GAME ( 1983, cgraplop, decocass, cgraplop, decocass, decocass, ROT270, "DECO", "Cassette: Graplop (aka Cluster Buster)" )
-GAME ( 1983, clapapa,  decocass, clapapa,  decocass, decocass, ROT270, "DECO", "Cassette: La.Pa.Pa (aka Rootin' Tootin')" )
+GAME ( 1983, cgraplop, decocass, cgraplop, decocass, decocass, ROT270, "DECO", "Cassette: Graplop (aka Cluster Buster) (set 1)" )
+GAMEX( 1983, cgraplp2, cgraplop, cgraplop, decocass, decocass, ROT270, "DECO", "Cassette: Graplop (aka Cluster Buster) (set 2)", GAME_NOT_WORKING ) /* Different Protection / Bitswap? */
+GAME ( 1983, clapapa,  decocass, clapapa,  decocass, decocass, ROT270, "DECO", "Cassette: Rootin' Tootin' (aka La.Pa.Pa)" ) /* Displays 'LaPaPa during attract */
+GAME ( 1983, clapapa2, clapapa,  clapapa,  decocass, decocass, ROT270, "DECO", "Cassette: Rootin' Tootin'" )				/* Displays 'Rootin' Tootin' during attract */
 GAME ( 1984, cfghtice, decocass, cfghtice, decocass, decocass, ROT270, "DECO", "Cassette: Fighting Ice Hockey" )
 GAME ( 1983, cprobowl, decocass, cprobowl, decocass, decocass, ROT270, "DECO", "Cassette: Pro Bowling" )
-GAME ( 1983, cnightst, decocass, cnightst, decocass, decocass, ROT270, "DECO", "Cassette: Night Star" )
+GAME ( 1983, cnightst, decocass, cnightst, decocass, decocass, ROT270, "DECO", "Cassette: Night Star (set 1)" )
+GAME ( 1983, cnights2, cnightst, cnightst, decocass, decocass, ROT270, "DECO", "Cassette: Night Star (set 2)" )
 GAME ( 1983, cprosocc, decocass, cprosocc, decocass, decocass, ROT270, "DECO", "Cassette: Pro Soccer" )
-GAME ( 1984, cppicf,   decocass, cppicf,   decocass, decocass, ROT270, "DECO", "Cassette: Peter Pepper's Ice Cream Factory" )
-GAME ( 1984, cscrtry,  decocass, cscrtry,  decocass, decocass, ROT270, "DECO", "Cassette: Scrum Try" )
+GAME ( 1984, cppicf,   decocass, cppicf,   decocass, decocass, ROT270, "DECO", "Cassette: Peter Pepper's Ice Cream Factory (set 1)" )
+GAME ( 1984, cppicf2,  cppicf,   cppicf,   decocass, decocass, ROT270, "DECO", "Cassette: Peter Pepper's Ice Cream Factory (set 2)" )
+GAME ( 1984, cscrtry,  decocass, cscrtry,  decocass, decocass, ROT270, "DECO", "Cassette: Scrum Try (set 1)" )
+GAME ( 1984, cscrtry2, cscrtry,  cscrtry,  decocass, decocass, ROT270, "DECO", "Cassette: Scrum Try (set 2)" )
 GAME ( 1985, cbdash,   decocass, cbdash,   decocass, decocass, ROT270, "DECO", "Cassette: Boulder Dash" )
 
+/* The following may be missing dongle data if they're not Type 1 */
+GAMEX( 1985, chwy,     decocass, decocass,   decocass, decocass, ROT270, "DECO", "Cassette: Highway Chase?", GAME_NOT_WORKING )
+GAMEX( 1985, cflyball, decocass, decocass,   decocass, decocass, ROT270, "DECO", "Cassette: Flying Ball?", GAME_NOT_WORKING )
+GAMEX( 1985, czeroize, decocass, decocass,   decocass, decocass, ROT270, "DECO", "Cassette: Zeroize?", GAME_NOT_WORKING )

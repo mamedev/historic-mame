@@ -666,7 +666,7 @@ static const struct MachineDriver machine_driver_aso =
 	36*8, 28*8, { 0*8, 36*8-1, 1*8, 28*8-1 },
 
 	aso_gfxdecodeinfo,
-	1024,1024,
+	1024, 0,
 	aso_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
@@ -713,7 +713,7 @@ static const struct MachineDriver machine_driver_hal21 = {
 	/* video hardware */
 	36*8, 28*8, { 0*8, 36*8-1, 1*8, 28*8-1 },
 	aso_gfxdecodeinfo,
-	1024,1024,
+	1024, 0,
 	aso_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
@@ -840,6 +840,6 @@ ROM_END
 
 
 
-GAMEX( 1985, aso,    0,     aso,   aso,   0, ROT270_16BIT, "SNK", "ASO - Armored Scrum Object", GAME_IMPERFECT_SOUND )
-GAMEX( 1985, hal21,  0,     hal21, hal21, 0, ROT270_16BIT, "SNK", "HAL21", GAME_NO_SOUND | GAME_WRONG_COLORS )
-GAMEX( 1985, hal21j, hal21, hal21, hal21, 0, ROT270_16BIT, "SNK", "HAL21 (Japan)", GAME_NO_SOUND | GAME_WRONG_COLORS )
+GAMEX( 1985, aso,    0,     aso,   aso,   0, ROT270, "SNK", "ASO - Armored Scrum Object", GAME_IMPERFECT_SOUND )
+GAMEX( 1985, hal21,  0,     hal21, hal21, 0, ROT270, "SNK", "HAL21", GAME_NO_SOUND | GAME_WRONG_COLORS )
+GAMEX( 1985, hal21j, hal21, hal21, hal21, 0, ROT270, "SNK", "HAL21 (Japan)", GAME_NO_SOUND | GAME_WRONG_COLORS )

@@ -245,16 +245,16 @@ static void init_sws97( void )
 
 static void init_gunbulet( void )
 {
-	data32_t *pMem = (data32_t *)memory_region(REGION_CPU1);
+//	data32_t *pMem = (data32_t *)memory_region(REGION_CPU1);
 	namconb1_type = key_gunbulet;
 
 	//p1 gun patch; without it you cannot shoot in the left 24 pixels
-	pMem[0xA798/4] = 0x4E714E71;
-	pMem[0xA7B4/4] = 0x4E714E71;
+//	pMem[0xA798/4] = 0x4E714E71;
+//	pMem[0xA7B4/4] = 0x4E714E71;
 
 	//p2 gun patch; without it you cannot shoot in the left 24 pixels
-	pMem[0xA87C/4] = 0x4E714E71;
-	pMem[0xA898/4] = 0x4E714E71;
+//	pMem[0xA87C/4] = 0x4E714E71;
+//	pMem[0xA898/4] = 0x4E714E71;
 }
 
 static READ32_HANDLER( custom_key_r )
@@ -444,7 +444,7 @@ static struct MachineDriver machine_driver_namconb1 =
 	gfxdecodeinfo,
 	0x2000, 0x2000,
 	0,
-	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER,
 	0,
 	namconb1_vh_start,
 	namconb1_vh_stop,
@@ -463,6 +463,33 @@ static struct MachineDriver machine_driver_namconb1 =
 
 /***************************************************************/
 
+ROM_START( ptblank )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* main program */
+	ROM_LOAD32_WORD( "gn2mprlb.15b", 0x00002, 0x80000, 0xfe2d9425 )
+	ROM_LOAD32_WORD( "gn2mprub.13b", 0x00000, 0x80000, 0x3bf4985a )
+
+	ROM_REGION( 0x20000, REGION_CPU2, 0 ) /* sound program */
+	ROM_LOAD( "gn1-spr0.bin", 0, 0x20000, 0x6836ba38 )
+
+	ROM_REGION( 0x200000, REGION_SOUND1, 0 )
+	ROM_LOAD( "gn1-voi0.bin", 0, 0x200000, 0x05477eb7 )
+
+	ROM_REGION( 0x800000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD16_BYTE( "gn1obj0l.bin", 0x000001, 0x200000, 0x06722dc8 )
+	ROM_LOAD16_BYTE( "gn1obj0u.bin", 0x000000, 0x200000, 0xfcefc909 )
+	ROM_LOAD16_BYTE( "gn1obj1u.bin", 0x400000, 0x200000, 0x3109a071 )
+	ROM_LOAD16_BYTE( "gn1obj1l.bin", 0x400001, 0x200000, 0x48468df7 )
+
+	ROM_REGION( 0x400000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "gn1-chr0.bin", 0x000000, 0x100000, 0xa5c61246 )
+	ROM_LOAD( "gn1-chr1.bin", 0x100000, 0x100000, 0xc8c59772 )
+	ROM_LOAD( "gn1-chr2.bin", 0x200000, 0x100000, 0xdc96d999 )
+	ROM_LOAD( "gn1-chr3.bin", 0x300000, 0x100000, 0x4352c308 )
+
+	ROM_REGION( 0x80000, REGION_GFX3, 0 )
+	ROM_LOAD( "gn1-sha0.bin", 0, 0x80000, 0x86d4ff85 )
+ROM_END
+
 ROM_START( gunbulet )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* main program */
 	ROM_LOAD32_WORD( "gn1-mprl.bin", 0x00002, 0x80000, 0xf99e309e )
@@ -475,8 +502,8 @@ ROM_START( gunbulet )
 	ROM_LOAD( "gn1-voi0.bin", 0, 0x200000, 0x05477eb7 )
 
 	ROM_REGION( 0x800000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD16_BYTE( "gn1obj0l.bin", 0x000001, 0x200000, 0 ) // 0x06722dc8: corrupt
-	ROM_LOAD16_BYTE( "gn1obj0u.bin", 0x000000, 0x200000, 0 ) // 0x549c1ef5: corrupt
+	ROM_LOAD16_BYTE( "gn1obj0l.bin", 0x000001, 0x200000, 0x06722dc8 )
+	ROM_LOAD16_BYTE( "gn1obj0u.bin", 0x000000, 0x200000, 0xfcefc909 )
 	ROM_LOAD16_BYTE( "gn1obj1u.bin", 0x400000, 0x200000, 0x3109a071 )
 	ROM_LOAD16_BYTE( "gn1obj1l.bin", 0x400001, 0x200000, 0x48468df7 )
 
@@ -685,9 +712,10 @@ INPUT_PORTS_START( namconb1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
 INPUT_PORTS_END
 
-/*          ROM   parent  machine   inp    		init */
-GAMEX( 1994,nebulray,  0, namconb1, namconb1,	nebulray,	ROT90_16BIT, "Namco", "Nebulas Ray (Japan)", GAME_NO_SOUND )
-GAMEX( 1994,gunbulet,  0, namconb1, gunbulet,	gunbulet,	ROT0_16BIT,  "Namco", "Gun Bullet (Japan)", GAME_NO_SOUND )
-GAMEX( 1994,gslgr94u,  0, namconb1, namconb1,	gslgr94u,	ROT0_16BIT,  "Namco", "Great Sluggers '94", GAME_NO_SOUND )
-GAMEX( 1996,sws96,	   0, namconb1, namconb1,	sws96,		ROT0_16BIT,  "Namco", "Super World Stadium '96 (Japan)", GAME_NO_SOUND )
-GAMEX( 1997,sws97,	   0, namconb1, namconb1,	sws97,		ROT0_16BIT,  "Namco", "Super World Stadium '97 (Japan)", GAME_NO_SOUND )
+
+GAMEX( 1994, nebulray, 0,       namconb1, namconb1, nebulray, ROT90, "Namco", "Nebulas Ray (Japan)", GAME_NO_SOUND )
+GAMEX( 1994, ptblank,  0,       namconb1, gunbulet, gunbulet, ROT0,  "Namco", "Point Blank", GAME_NO_SOUND )
+GAMEX( 1994, gunbulet, ptblank, namconb1, gunbulet, gunbulet, ROT0,  "Namco", "Gun Bullet (Japan)", GAME_NO_SOUND )
+GAMEX( 1994, gslgr94u, 0,       namconb1, namconb1, gslgr94u, ROT0,  "Namco", "Great Sluggers '94", GAME_NO_SOUND )
+GAMEX( 1996, sws96,    0,       namconb1, namconb1, sws96,    ROT0,  "Namco", "Super World Stadium '96 (Japan)", GAME_NO_SOUND )
+GAMEX( 1997, sws97,    0,       namconb1, namconb1, sws97,    ROT0,  "Namco", "Super World Stadium '97 (Japan)", GAME_NO_SOUND )

@@ -632,7 +632,7 @@ static const struct MachineDriver machine_driver_marvins = {
 	(16+2)*16,(16+2)*16,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	marvins_vh_start,
 	0,
@@ -683,7 +683,7 @@ static const struct MachineDriver machine_driver_madcrash = {
 	(16+2)*16,(16+2)*16,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	marvins_vh_start,
 	0,

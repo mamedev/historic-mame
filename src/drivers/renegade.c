@@ -677,7 +677,7 @@ static const struct MachineDriver machine_driver_renegade =
 	256,256,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	renegade_vh_start,0,
 	renegade_vh_screenrefresh,

@@ -112,42 +112,11 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 	}
 }
 
-static void mark_sprite_colors(void)
-{
-	int color,offs,sprite;
-	int colmask[16],i,pal_base;
-
-
-	pal_base = Machine->drv->gfxdecodeinfo[1].color_codes_start;
-	for (color = 0;color < 16;color++) colmask[color] = 0;
-	for (offs = 0;offs < 0x0800;offs += 4)
-	{
-		color = ((spriteram16[offs+1]>>2)&0xf);
-		sprite = spriteram16[offs]&0x7ff;
-		colmask[color] |= Machine->gfx[1]->pen_usage[sprite];
-	}
-	for (color = 0;color < 16;color++)
-	{
-		for (i = 0;i < 16;i++)
-		{
-			if (colmask[color] & (1 << i))
-				palette_used_colors[pal_base + 16 * color + i] = PALETTE_COLOR_USED;
-		}
-	}
-}
-
 void pushman_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	/* Setup the tilemaps */
 	tilemap_set_scrollx( bg_tilemap,0, control[0] );
 	tilemap_set_scrolly( bg_tilemap,0, 0xf00-control[1] );
-	tilemap_update(ALL_TILEMAPS);
-
-	/* Build the dynamic palette */
-	palette_init_used_colors();
-	mark_sprite_colors();
-
-	palette_recalc();
 
 	tilemap_draw(bitmap,bg_tilemap,0,0);
 	draw_sprites(bitmap);

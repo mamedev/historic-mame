@@ -567,7 +567,7 @@ static const struct MachineDriver machine_driver_fuuki16 =
 	fuuki16_gfxdecodeinfo,
 	0x400*4, 0x400*4 + 0x40*256,	/* For the 8 bit layer */
 	fuuki16_vh_init_palette,
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	fuuki16_vh_start,
 	0,
@@ -759,6 +759,6 @@ ROM_END
 
 ***************************************************************************/
 
-GAMEX( 1995, gogomile, 0,        fuuki16, gogomile, 0, ROT0_16BIT, "Fuuki", "Go Go! Mile Smile",                GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
-GAMEX( 1995, gogomilj, gogomile, fuuki16, gogomilj, 0, ROT0_16BIT, "Fuuki", "Susume! Mile Smile (Japan)",       GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
-GAMEX( 1996, pbancho,  0,        fuuki16, pbancho,  0, ROT0_16BIT, "Fuuki", "Gyakuten!! Puzzle Bancho (Japan)", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1995, gogomile, 0,        fuuki16, gogomile, 0, ROT0, "Fuuki", "Go Go! Mile Smile",                GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1995, gogomilj, gogomile, fuuki16, gogomilj, 0, ROT0, "Fuuki", "Susume! Mile Smile (Japan)",       GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1996, pbancho,  0,        fuuki16, pbancho,  0, ROT0, "Fuuki", "Gyakuten!! Puzzle Bancho (Japan)", GAME_IMPERFECT_GRAPHICS )

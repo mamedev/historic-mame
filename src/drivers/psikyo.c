@@ -783,7 +783,7 @@ static const struct MachineDriver machine_driver_gunbird =
 	sngkace_gfxdecodeinfo,
 	0x1000, 0x1000,
 	0,
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	psikyo_vh_start,
 	0,
@@ -849,7 +849,7 @@ static const struct MachineDriver machine_driver_sngkace =
 	sngkace_gfxdecodeinfo,
 	0x1000, 0x1000,
 	0,
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	psikyo_vh_start,
 	0,
@@ -915,7 +915,7 @@ static const struct MachineDriver machine_driver_s1945 =
 	sngkace_gfxdecodeinfo,
 	0x1000, 0x1000,
 	0,
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	psikyo_vh_start,
 	0,
@@ -1261,10 +1261,10 @@ void init_s1945(void)
 ***************************************************************************/
 
 /* Working Games */
-GAME ( 1993, sngkace,  0, sngkace,  sngkace,  sngkace,  ROT270,     "Psikyo", "Sengoku Ace (Japan)"   ) // Banpresto?
-GAME ( 1994, gunbird,  0, gunbird,  gunbird,  gunbird,  ROT270,     "Psikyo", "Gun Bird (Japan)"      )
-GAME ( 1994, btlkrodj, 0, gunbird,  btlkrodj, gunbird,  ROT0_16BIT, "Psikyo", "Battle K-Road (Japan)" )
+GAME ( 1993, sngkace,  0, sngkace,  sngkace,  sngkace,  ROT270, "Psikyo", "Sengoku Ace (Japan)"   ) // Banpresto?
+GAME ( 1994, gunbird,  0, gunbird,  gunbird,  gunbird,  ROT270, "Psikyo", "Gun Bird (Japan)"      )
+GAME ( 1994, btlkrodj, 0, gunbird,  btlkrodj, gunbird,  ROT0,   "Psikyo", "Battle K-Road (Japan)" )
 
 /* Non Working Games: Protected (the PIC16C57 code isn't dumped) */
-GAMEX( 1995, s1945,    0, s1945,    gunbird,  s1945,    ROT270,     "Psikyo", "Strikers 1945 (Japan)", GAME_NOT_WORKING )
-GAMEX( 1996, sngkblad, 0, s1945,    gunbird,  sngkblad, ROT0,       "Psikyo", "Sengoku Blade (Japan)", GAME_NOT_WORKING )
+GAMEX( 1995, s1945,    0, s1945,    gunbird,  s1945,    ROT270, "Psikyo", "Strikers 1945 (Japan)", GAME_NOT_WORKING )
+GAMEX( 1996, sngkblad, 0, s1945,    gunbird,  sngkblad, ROT0,   "Psikyo", "Sengoku Blade (Japan)", GAME_NOT_WORKING )

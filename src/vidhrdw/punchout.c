@@ -585,7 +585,7 @@ void punchout_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			if (punchout_bigsprite1[7] & 2)	/* display in bottom monitor */
 			{
 				copyrozbitmap(bitmap,bs1tmpbitmap,
-					startx,starty - 0x200*(TOP_MONITOR_ROWS+2) * zoom,
+					startx,starty - 0x200*TOP_MONITOR_ROWS * zoom,
 					incxx,0,0,incyy,	/* zoom, no rotation */
 					0,	/* no wraparound */
 					&bottomvisiblearea,TRANSPARENCY_COLOR,1024,0);
@@ -752,7 +752,7 @@ void armwrest_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			if (punchout_bigsprite1[7] & 2)	/* display in bottom monitor */
 			{
 				copyrozbitmap(bitmap,bs1tmpbitmap,
-					startx,starty - 0x200*(TOP_MONITOR_ROWS+2) * zoom,
+					startx,starty - 0x200*TOP_MONITOR_ROWS * zoom,
 					incxx,0,0,incyy,	/* zoom, no rotation */
 					0,	/* no wraparound */
 					&bottomvisiblearea,TRANSPARENCY_COLOR,1024,0);

@@ -35,7 +35,7 @@ struct osd_bitmap
 	int width,height;	/* width and height of the bitmap */
 	int depth;			/* bits per pixel */
 	void *_private;		/* don't touch! - reserved for osdepend use */
-	UINT8 **line;		/* pointers to the start of each line */
+	void **line;		/* pointers to the start of each line - can be UINT8 **, UINT16 ** or UINT32 ** */
 };
 
 /* VERY IMPORTANT: the function must allocate also a "safety area" 16 pixels wide all */
@@ -79,7 +79,7 @@ void osd_close_display(void);
   because they might contain garbage.
   The function must call set_ui_visarea() to tell the core the portion of the
   bitmap actually visible (which might be smaller than requested), so the user
-  interface can be drawn accordingly. If the visible area is ssmaller than
+  interface can be drawn accordingly. If the visible area is smaller than
   requested, set_ui_visarea() must also be called whenever the user moves the
   visibility window, so the user interface will remain at a fixed position on
   screen while the game display moves around.
@@ -92,18 +92,14 @@ void osd_set_visible_area(int min_x,int max_x,int min_y,int max_y);
   osd_allocate_colors() is called after osd_create_display(), to create and
   initialize the palette.
 
-  palette is an array of 'totalcolors' R,G,B triplets. The function returns
-  in *pens the pen values corresponding to the requested colors.
-  When modifiable is not 0, the palette will be modified later via calls to
-  osd_modify_pen(). Otherwise, the code can assume that the palette will not
-  change, and activate special optimizations (e.g. direct copy for a 16-bit
-  display).
+  palette is an array of 'totalcolors' R,G,B triplets.
 
   For direct mapped modes, the palette contains just three entries, a pure red,
   pure green and pure blue. Of course this is not the game palette, it is only
   used by the core to determine the layout (RGB, BGR etc.) so the OS code can
   do a straight copy of the bitmap without having to remap it. RGB 565 modes
-  are NOT supported yet by the core, only 555.
+  are NOT supported yet by the core, only 555. The function must return in
+  *rgb_components the values corresponding to the requested colors.
 
   The function must also initialize Machine->uifont->colortable[] to get proper
   white-on-black and black-on-white text.
@@ -115,7 +111,7 @@ void osd_set_visible_area(int min_x,int max_x,int min_y,int max_y);
   Return 0 for success.
 */
 int osd_allocate_colors(unsigned int totalcolors,
-		const UINT8 *palette,UINT32 *pens,int modifiable,
+		const UINT8 *palette,UINT32 *rgb_components,
 		const UINT8 *debug_palette,UINT32 *debug_pens);
 void osd_modify_pen(int pen,unsigned char red, unsigned char green, unsigned char blue);
 void osd_get_pen(int pen,unsigned char *red, unsigned char *green, unsigned char *blue);
@@ -372,6 +368,12 @@ char *osd_fgets(char *s, int n, void *file);
 int osd_feof(void *file);
 int osd_ftell(void *file);
 /* LBO 040400 - end */
+/* strip directory part from a filename, does _not_ malloc */
+char *osd_basename(char *filename);
+/* get directory part of a filename in malloced buffer */
+char *osd_dirname(char *filename);
+/* strip extension from a filename, copy to malloced buffer */
+char *osd_strip_extension(char *filename);
 
 /******************************************************************************
 

@@ -112,7 +112,6 @@ PORT_END
 
 /******************************************************************************/
 
-#if 0
 static MEMORY_READ_START( sound_readmem )
 	{ 0x00000, 0x1ffff, MRA_ROM },
 	{ 0xffff0, 0xfffff, MRA_ROM },
@@ -122,7 +121,6 @@ static MEMORY_WRITE_START( sound_writemem )
 	{ 0x00000, 0x1ffff, MWA_ROM },
 	{ 0xffff0, 0xfffff, MWA_ROM },
 MEMORY_END
-#endif
 
 /******************************************************************************/
 
@@ -358,14 +356,12 @@ static const struct MachineDriver machine_driver_firebarr =
 			readmem,writemem,readport,writeport,
 			m107_raster_interrupt,256 /* 8 prelines, 240 visible lines, 8 for vblank? */
 		},
-#if 0
 		{
-			CPU_V33 | CPU_AUDIO_CPU,
+			CPU_V30 | CPU_AUDIO_CPU,
 			14318000,	/* 14.318 MHz */
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,0
 		}
-#endif
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
@@ -375,10 +371,10 @@ static const struct MachineDriver machine_driver_firebarr =
 	512, 512, { 80, 511-112, 128+8, 511-128-8 }, /* 320 x 240 */
 
 	firebarr_gfxdecodeinfo,
-	2048,2048,
+	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	m107_vh_start,
 	m107_vh_stop,
@@ -398,14 +394,12 @@ static const struct MachineDriver machine_driver_dsoccr94 =
 			readmem,writemem,readport,writeport,
 			m107_interrupt,1
 		},
-#if 0
 		{
-			CPU_V33 | CPU_AUDIO_CPU,
+			CPU_V30 | CPU_AUDIO_CPU,
 			14318000,	/* 14.318 MHz */
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,0
 		}
-#endif
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
@@ -415,10 +409,10 @@ static const struct MachineDriver machine_driver_dsoccr94 =
 	512, 512, { 80, 511-112, 128+8, 511-128-8 }, /* 320 x 240 */
 
 	gfxdecodeinfo,
-	2048,2048,
+	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	m107_vh_start,
 	m107_vh_stop,
@@ -527,4 +521,4 @@ static void init_dsoccr94(void)
 /***************************************************************************/
 
 GAMEX( 1993, firebarr, 0, firebarr, firebarr, m107,     ROT270, "Irem", "Fire Barrel (Japan)", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEX( 1994, dsoccr94, 0, dsoccr94, dsoccr94, dsoccr94, ROT0_16BIT, "Irem (Data East Corporation license)", "Dream Soccer '94", GAME_NO_SOUND )
+GAMEX( 1994, dsoccr94, 0, dsoccr94, dsoccr94, dsoccr94, ROT0,   "Irem (Data East Corporation license)", "Dream Soccer '94", GAME_NO_SOUND )

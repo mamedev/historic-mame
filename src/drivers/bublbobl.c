@@ -140,7 +140,6 @@ CPU 3
 /* vidhrdw/bublbobl.c */
 extern unsigned char *bublbobl_objectram;
 extern size_t bublbobl_objectram_size;
-void bublbobl_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void bublbobl_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 /* machine/bublbobl.c */
@@ -719,10 +718,10 @@ static const struct MachineDriver machine_driver_bublbobl =
 	/* video hardware */
 	32*8, 32*8,	{ 0, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	256, 256,
-	bublbobl_vh_convert_color_prom,
+	256, 0,
+	0,
 
-	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER,
 	0,
 	0,
 	0,
@@ -774,10 +773,10 @@ static const struct MachineDriver machine_driver_boblbobl =
 	/* video hardware */
 	32*8, 32*8,	{ 0, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	256, 256,
-	bublbobl_vh_convert_color_prom,
+	256, 0,
+	0,
 
-	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER,
 	0,
 	0,
 	0,
@@ -830,10 +829,10 @@ static const struct MachineDriver machine_driver_tokio =
 	/* video hardware */
 	32*8, 32*8,	{ 0, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	256, 256,
-	bublbobl_vh_convert_color_prom,
+	256, 0,
+	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	0,
 	0,
@@ -872,7 +871,7 @@ ROM_START( bublbobl )
 	ROM_REGION( 0x0800, REGION_CPU4, 0 )	/* 2k for the microcontroller */
 	ROM_LOAD( "68705.bin",    0x0000, 0x0800, 0x78caa635 )	/* from a pirate board */
 
-	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_INVERT )
 	ROM_LOAD( "a78-09.12",    0x00000, 0x8000, 0x20358c22 )    /* 1st plane */
 	ROM_LOAD( "a78-10.13",    0x08000, 0x8000, 0x930168a9 )
 	ROM_LOAD( "a78-11.14",    0x10000, 0x8000, 0x9773e512 )
@@ -908,7 +907,7 @@ ROM_START( bublbobr )
 	ROM_REGION( 0x0800, REGION_CPU4, 0 )	/* 2k for the microcontroller */
 	ROM_LOAD( "68705.bin",    0x0000, 0x0800, 0x78caa635 )	/* from a pirate board */
 
-	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_INVERT )
 	ROM_LOAD( "a78-09.12",    0x00000, 0x8000, 0x20358c22 )    /* 1st plane */
 	ROM_LOAD( "a78-10.13",    0x08000, 0x8000, 0x930168a9 )
 	ROM_LOAD( "a78-11.14",    0x10000, 0x8000, 0x9773e512 )
@@ -944,7 +943,7 @@ ROM_START( bubbobr1 )
 	ROM_REGION( 0x0800, REGION_CPU4, 0 )	/* 2k for the microcontroller */
 	ROM_LOAD( "68705.bin",    0x0000, 0x0800, 0x78caa635 )	/* from a pirate board */
 
-	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_INVERT )
 	ROM_LOAD( "a78-09.12",    0x00000, 0x8000, 0x20358c22 )    /* 1st plane */
 	ROM_LOAD( "a78-10.13",    0x08000, 0x8000, 0x930168a9 )
 	ROM_LOAD( "a78-11.14",    0x10000, 0x8000, 0x9773e512 )
@@ -978,7 +977,7 @@ ROM_START( boblbobl )
 	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* 64k for the third CPU */
 	ROM_LOAD( "a78-07.46",    0x0000, 0x08000, 0x4f9a26e8 )
 
-	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_INVERT )
 	ROM_LOAD( "a78-09.12",    0x00000, 0x8000, 0x20358c22 )    /* 1st plane */
 	ROM_LOAD( "a78-10.13",    0x08000, 0x8000, 0x930168a9 )
 	ROM_LOAD( "a78-11.14",    0x10000, 0x8000, 0x9773e512 )
@@ -1012,7 +1011,7 @@ ROM_START( sboblbob )
 	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* 64k for the third CPU */
 	ROM_LOAD( "a78-07.46",    0x0000, 0x08000, 0x4f9a26e8 )
 
-	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_INVERT )
 	ROM_LOAD( "a78-09.12",    0x00000, 0x8000, 0x20358c22 )    /* 1st plane */
 	ROM_LOAD( "a78-10.13",    0x08000, 0x8000, 0x930168a9 )
 	ROM_LOAD( "a78-11.14",    0x10000, 0x8000, 0x9773e512 )
@@ -1047,7 +1046,7 @@ ROM_START( tokio )
 	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* audio CPU */
 	ROM_LOAD( "a71-07.256",   0x0000, 0x08000, 0xf298cc7b )
 
-	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_INVERT )
 	ROM_LOAD( "a71-08.256",   0x00000, 0x8000, 0x0439ab13 )    /* 1st plane */
 	ROM_LOAD( "a71-09.256",   0x08000, 0x8000, 0xedb3d2ff )
 	ROM_LOAD( "a71-10.256",   0x10000, 0x8000, 0x69f0888c )
@@ -1084,7 +1083,7 @@ ROM_START( tokiob )
 	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* audio CPU */
 	ROM_LOAD( "a71-07.256",   0x0000, 0x08000, 0xf298cc7b )
 
-	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_INVERT )
 	ROM_LOAD( "a71-08.256",   0x00000, 0x8000, 0x0439ab13 )    /* 1st plane */
 	ROM_LOAD( "a71-09.256",   0x08000, 0x8000, 0xedb3d2ff )
 	ROM_LOAD( "a71-10.256",   0x10000, 0x8000, 0x69f0888c )

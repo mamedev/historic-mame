@@ -267,7 +267,7 @@ static const struct MachineDriver machine_driver_bogeyman =
 	16+256, 16+256,
 	bogeyman_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK ,
 	0,
 	bogeyman_vh_start,
 	bogeyman_vh_stop,

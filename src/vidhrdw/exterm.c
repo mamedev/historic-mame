@@ -80,7 +80,6 @@ void exterm_from_shiftreg_slave(unsigned int address, UINT16* shiftreg)
 
 int exterm_vh_start(void)
 {
-	palette_used_colors[0] = PALETTE_COLOR_TRANSPARENT;
 	return 0;
 }
 
@@ -104,12 +103,9 @@ void exterm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	/* if the display is blanked, fill with black */
 	if (tms34010_io_display_blanked(0))
 	{
-		fillbitmap(bitmap, palette_transparent_pen, &Machine->visible_area);
+		fillbitmap(bitmap, Machine->pens[0], &Machine->visible_area);
 		return;
 	}
-
-	/* recalc the palette */
-	palette_recalc();
 
 	/* redraw screen */
 	bgsrc = &exterm_master_videoram[0];

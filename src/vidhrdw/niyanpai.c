@@ -506,7 +506,7 @@ void niyanpai_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	int x, y;
 	unsigned short color;
 
-	if (palette_recalc() || full_refresh || niyanpai_screen_refresh)
+	if (full_refresh || niyanpai_screen_refresh)
 	{
 		niyanpai_screen_refresh = 0;
 		for (y = 0; y < Machine->drv->screen_height; y++)

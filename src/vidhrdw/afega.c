@@ -267,10 +267,6 @@ if (keyboard_pressed(KEYCODE_X))
 	}
 }
 
-static void afega_mark_sprites_colors(void)
-{
-	memset(palette_used_colors,PALETTE_COLOR_USED,Machine->drv->total_colors);
-}
 
 
 /***************************************************************************
@@ -304,16 +300,8 @@ if ( keyboard_pressed(KEYCODE_Z) || keyboard_pressed(KEYCODE_X) )
 	if (msk != 0) layers_ctrl &= msk;	}
 #endif
 
-	tilemap_update(ALL_TILEMAPS);
-
-	palette_init_used_colors();
-
-	afega_mark_sprites_colors();
-
-	palette_recalc();
-
 	if (layers_ctrl & 1)	tilemap_draw(bitmap,tilemap_0,0,0);
-	else					fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
+	else					fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 
 	if (layers_ctrl & 2) 	afega_draw_sprites(bitmap);
 

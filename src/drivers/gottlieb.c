@@ -2,7 +2,7 @@
 
 Gottlieb driver : dedicated to Warren Davis, Jeff Lee, Tim Skelly & David Thiel
 
-driver by Fabrice Frances
+driver by Fabrice Frances & Nicola Salmoria
 
 Notes:
 There was a bug in the hardware of the GG1 and GG2 boards, which is not
@@ -177,11 +177,14 @@ WRITE_HANDLER( gottlieb_nmi_rate_w );
 WRITE_HANDLER( gottlieb_cause_dac_nmi_w );
 
 
+static UINT8 *audiobuffer_region;
+
 static void init_machine(void)
 {
 	UINT8 *ram = memory_region(REGION_CPU1);
 	cpu_setbank(1, &ram[0x8000]);
 	cpu_setbank(2, &ram[0x0000]);
+	audiobuffer_region = memory_region(REGION_SOUND1);
 }
 
 
@@ -243,31 +246,67 @@ WRITE_HANDLER( stooges_output_w )
 }
 
 
-static int current_frame = 0x00001;
+static int current_frame = 1;
 static int laserdisc_playing;
 static int lasermpx;
+static int audioptr;
+static int audioready=1;
+static int skipfirstbyte;
+static int discready;
+static int lastcmd;
+static int odd_field;
+static int access_time;
+
+
+/* The only sure thing I know about the Philips 24-bit frame number code is that the
+ * 4 most significant bits are 1's and these four 1's are used to detect a valid frame
+ * number when shifting bits from right to left...
+ * From the audio code it seems it's a simple BCD numbering...
+ * (what happens when four consecutive 1's are inside the number, eg 00078 ?)
+ * Only 19 bits are returned to the game machine, this gives a max frame number of 79999.
+ * The size of the audio buffer is 1024 bytes. When it is full, the "audio buffer ready"
+ * flag is raised, and the frame decoder tries again to synchronize with a 0x67 pattern
+ * Each 1024-byte buffer contains target data for 53 frames;
+ * target data for each frame is 19-bytes long including one byte of checksum
+ * and the frame number code of the first of these 53 frames is stored at the beginning
+ * This gives a total of 1+3+3+19*53=1014 bytes, the 10 last bytes are ignored
+ */
 
 READ_HANDLER( gottlieb_laserdisc_status_r )
 {
+	int tmp;
 	switch (offset)
 	{
 		case 0:
-			return (current_frame >> 0) & 0xff;
+			tmp = current_frame % 100;
+			logerror("LSB frame read: %d\n",tmp);
+			return ((tmp / 10) << 4) | (tmp % 10);
 			break;
 		case 1:
-			return (current_frame >> 8) & 0xff;
+			tmp = (current_frame / 100) % 100;
+			logerror("MSB frame read: %d\n",tmp);
+			return ((tmp / 10) << 4) | (tmp % 10);
 			break;
 		case 2:
-			if (lasermpx == 1)
+			if (lasermpx == 1) {
 				/* bits 0-2 frame number MSN */
 				/* bit 3 audio buffer ready */
 				/* bit 4 ready to send new laserdisc command? */
 				/* bit 5 disc ready */
 				/* bit 6 break in audio trasmission */
 				/* bit 7 missing audio clock */
-				return ((current_frame >> 16) & 0x07) | 0x10 | (rand() & 0x28);
-			else	/* read audio buffer */
-				return rand();
+				return ((current_frame / 10000) & 0x7) | (audioready << 3) | 0x10 | (discready << 5);
+			} else {	/* read audio buffer */
+				if (skipfirstbyte) audioptr++;
+				skipfirstbyte = 0;
+				if (audiobuffer_region) {
+					logerror("audio bufread: %02x\n",audiobuffer_region[audioptr]);
+					return audiobuffer_region[audioptr++];
+				} else {
+					logerror("audiobuffer is null !!");
+					return 0xFF; /* don't know what to do in this case ;-) */
+				}
+			}
 			break;
 	}
 
@@ -277,14 +316,13 @@ READ_HANDLER( gottlieb_laserdisc_status_r )
 WRITE_HANDLER( gottlieb_laserdisc_mpx_w )
 {
 	lasermpx = data & 1;
+	if (lasermpx==0) skipfirstbyte=1;	/* first byte of the 1K buffer (0x67) is not returned... */
 }
 
 WRITE_HANDLER( gottlieb_laserdisc_command_w )
 {
 	static int loop;
 	int cmd;
-	static int lastcmd;
-
 
 	/* commands are written in three steps, the first two the command is */
 	/* written (maybe one to load the latch, the other to start the send), */
@@ -307,26 +345,62 @@ logerror("error: laserdisc command %02x\n",data);
 logerror("laserdisc command %02x -> %02x\n",data,cmd);
 	if (lastcmd == 0x0b && (cmd & 0x10))	/* seek frame # */
 	{
-		current_frame = (current_frame << 4) | (cmd & 0x0f);
+		current_frame = current_frame * 10 + (cmd & 0x0f);
+		while (current_frame >= 100000)
+			current_frame -= 100000;
+		audioptr = -1;
 	}
 	else
 	{
-		if (cmd == 0x04)	/* step forward */
+		if (cmd == 0x04)					/* step forward */
 		{
 			laserdisc_playing = 0;
 			current_frame++;
 		}
-		if (cmd == 0x05) laserdisc_playing = 1;	/* play */
-		if (cmd == 0x0f) laserdisc_playing = 0;	/* stop */
-		if (cmd == 0x0b) laserdisc_playing = 0;	/* seek frame */
+		if (cmd == 0x05) 					/* play */
+		{
+			laserdisc_playing = 1;
+			discready = 1;
+		}
+		if (cmd == 0x0b)					/* seek frame */
+		{
+			laserdisc_playing = 0;
+			discready = 0;
+			access_time = 60;		/* 1s access time */
+		}
+		if (cmd == 0x0f)	 				/* stop */
+		{
+			laserdisc_playing = 0;
+			discready = 0;
+		}
 		lastcmd = cmd;
 	}
 }
 
 int gottlieb_interrupt(void)
 {
-	if (laserdisc_playing) current_frame++;
+	if (access_time > 0) {
+		access_time--;
+		if (access_time == 0)
+			discready = 1;
+	} else if (laserdisc_playing) {
+		odd_field ^= 1;
+		if (odd_field)		/* the manual says the video frame number is only present in the odd field) */
+		{
+			current_frame++;
+logerror("current frame : %d\n",current_frame);
 
+			if (current_frame%53==0)
+			{
+				int seq = current_frame / 53;
+				if (seq >= 44) {	/* 44*53 frames without target data at the beginning of the disc */
+					audioptr = (seq - 44)*1024;
+					audioready = 1;
+				}
+			}
+			else audioready = 0;
+		}
+	}
 	return nmi_interrupt();
 }
 
@@ -1376,7 +1450,7 @@ static const struct MachineDriver machine_driver_##GAMENAME =             \
 	16, 16,		                                                	\
 	0,									                           	\
 																	\
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,						\
+	VIDEO_TYPE_RASTER,												\
 	0,                                                          	\
 	gottlieb_vh_start,												\
 	gottlieb_vh_stop,												\
@@ -1434,7 +1508,7 @@ static const struct MachineDriver machine_driver_##GAMENAME =				\
 	16, 16,															\
 	0,																\
 																	\
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,						\
+	VIDEO_TYPE_RASTER,												\
 	0,																\
 	gottlieb_vh_start,												\
 	gottlieb_vh_stop,												\
@@ -1716,6 +1790,9 @@ ROM_START( mach3 )
 	ROM_LOAD( "mach3fg2.bin", 0x2000, 0x2000, 0x2a59e99e )
 	ROM_LOAD( "mach3fg1.bin", 0x4000, 0x2000, 0x9b88767b )
 	ROM_LOAD( "mach3fg0.bin", 0x6000, 0x2000, 0x0bae12a5 )
+
+	ROM_REGION( 1024*1024, REGION_SOUND1, 0)	/* about 30 min of target data */
+	ROM_LOAD( "m3target.bin", 0, 1024*1024, 0x6e779a6f )
 ROM_END
 
 ROM_START( usvsthem )

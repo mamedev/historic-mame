@@ -158,7 +158,8 @@
 
 #include "driver.h"
 #include "state.h"
-#include "cpu\z80\z80.h"
+#include "cpu/z80/z80.h"
+#include "machine/segacrpt.h"
 
 /*-- Variables --*/
 
@@ -513,7 +514,7 @@ INPUT_PORTS_START( transfrm ) /* Used By Transformer */
 	PORT_DIPSETTING(    0x20, "10k, 30k, 50k and 70k" )
 	PORT_DIPSETTING(    0x30, "20k, 60k, 100k and 140k"  )
 	PORT_DIPSETTING(    0x10, "30k, 80k, 130k and 180k" )
-	PORT_DIPSETTING(    0x00, "50k, 150k, 250k and 350k" )
+	PORT_DIPSETTING(    0x00, "50k, 150k and 250k" )
 	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x40, "Easy" )
 	PORT_DIPSETTING(    0xc0, "Medium" )
@@ -550,19 +551,17 @@ INPUT_PORTS_START( hangonjr ) /* Used By Hang On Jr */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, "Extended Time" )
-	PORT_DIPSETTING(    0x00, "53 seconds" )
-	PORT_DIPSETTING(    0x08, "56 seconds" )
-	PORT_DIPNAME( 0x10, 0x10, "Time" )
-	PORT_DIPSETTING(    0x00, "60 seconds" )
-	PORT_DIPSETTING(    0x10, "65 seconds" )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x06, 0x06, "Enemies" )
+	PORT_DIPSETTING(    0x06, "Easy" )
+	PORT_DIPSETTING(    0x04, "Medium" )
+	PORT_DIPSETTING(    0x02, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPNAME( 0x18, 0x18, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x18, "Easy" )
+	PORT_DIPSETTING(    0x10, "Medium" )
+	PORT_DIPSETTING(    0x08, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )  // These three dips seems to be unused
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
@@ -755,7 +754,7 @@ static const struct MachineDriver machine_driver_segae =
 	0,
 	64,64,
 	NULL,
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	segae_vh_start,
 	segae_vh_stop,
@@ -809,6 +808,13 @@ static void init_ridleofp(void)
 	init_segasyse();
 }
 
+static void init_astrofl(void)
+{
+	astrofl_decode();
+
+	init_segasyse();
+}
+
 /*******************************************************************************
  Rom Loaders / Game Drivers
 ********************************************************************************
@@ -856,8 +862,8 @@ ROM_START( transfrm )
 ROM_END
 
 ROM_START( astrofl )
-	ROM_REGION( 0x30000, REGION_CPU1, 0 )
-	ROM_LOAD( "epr-7723.ic7",	0x00000, 0x08000, 0x66061137 ) /* Fixed Code */
+	ROM_REGION( 2*0x30000, REGION_CPU1, 0 )
+	ROM_LOAD( "epr-7723.ic7",	0x00000, 0x08000, 0x66061137 ) /* encrypted */
 
 	/* The following are 8 0x4000 banks that get mapped to reads from 0x8000 - 0xbfff */
 	ROM_LOAD( "epr-7347.ic5",	0x10000, 0x08000, 0xdf0f639f )
@@ -890,7 +896,7 @@ ROM_END
 
 GAME( 1985, hangonjr, 0,        segae, hangonjr, hangonjr, ROT0,  "Sega", "Hang-On Jr." )
 GAME( 1986, transfrm, 0,        segae, transfrm, segasyse, ROT0,  "Sega", "Transformer" )
-GAMEX(1986, astrofl,  transfrm, segae, dummy,    segasyse, ROT0,  "Sega", "Astro Flash (Japan)", GAME_NOT_WORKING ) /* encrypted */
+GAME( 1986, astrofl,  transfrm, segae, transfrm, astrofl,  ROT0,  "Sega", "Astro Flash (Japan)" )
 GAME( 1986, ridleofp, 0,        segae, ridleofp, ridleofp, ROT90, "Sega / Nasco", "Riddle of Pythagoras (Japan)" )
 GAMEX(198?, fantzn2,  0,        segae, dummy,    segasyse, ROT0,  "????", "Fantasy Zone 2", GAME_NOT_WORKING )	/* encrypted */
 GAMEX(198?, opaopa,   0,        segae, dummy,    segasyse, ROT0,  "????", "Opa Opa", GAME_NOT_WORKING )	/* either encrypted or bad */

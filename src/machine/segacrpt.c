@@ -138,7 +138,8 @@
   ???-???? M120 Razzmatazz             same key as Ninja Princess
   315-5018      Yamato
   315-5028      Sindbad Mystery
-  315-5033      Regulus
+  315-5030      Up'n Down              unencrypted version available
+  315-5033      Regulus                unencrypted version available
   315-5041 M140 Mister Viking
   315-5048      SWAT                   used Bull Fight for k.p.a.
   315-5051      Flicky &
@@ -148,38 +149,39 @@
   315-5065      Bull Fight
   315-5069      Star Force             game by Tehkan; same key as Super Locomotive
   315-5093      Pitfall II
-  315-5098      Ninja Princess         unencrypted version available
+  315-5098      Ninja Princess         unencrypted version available; same key as Up'n Down
   315-5102      Sega Ninja             unencrypted version available
   315-5110      I'm Sorry              used My Hero for k.p.a.
   315-5114      ?? pcb 834-5492        not decoded yet
   315-5115      TeddyBoy Blues
+  315-5132      My Hero
   315-5135      Heavy Metal &
                 Wonder Boy (set 1a & 3; bootlegs?)
-  ???-????      My Hero
 
 
   The following games use a different encryption algorithm:
 
-  315-5162 4D Warriors            used I'm Sorry for k.p.a.
-  315-5177 Wonder Boy (set 1)
-  315-5178 Wonder Boy (set 2)     unencrypted version available
-  315-5179 Robo-Wrestle 2001      not decoded yet
-  ???-???? Gardia                 not decoded yet
-  ???-???? Astro Flash            not decoded yet
+  315-5162      4D Warriors &          used I'm Sorry for k.p.a.
+                Rafflesia              not available yet
+  315-5177      Astro Flash &
+                Wonder Boy (set 1)
+  315-5178      Wonder Boy (set 2)     unencrypted version available
+  315-5179      Robo-Wrestle 2001      not decoded yet
+  317-0006/7    Gardia                 not decoded yet
 
 
   The following games use another different encryption algorithm, much more
   secure than the previous ones, which has not been broken yet. It might be
   similar to the one used in System 16 games.
 
-  317-5014?DakkoChan Jansoh
-  317-0029 Block Gal              NEC MC8123B 651 packaged like System16's 68000
-  317-0030 Perfect Billiards
-  317-0043 Wonder Boy Monster Land
-  317-0054 Shinobi (sound CPU)    NEC MC8123B 651
-  317-0064 Ufo Senshi Yohko Chan
-  ???-???? Fantasy Zone 2
-  ???-???? Opa Opa                not sure
+  317-0014      DakkoChan Jansoh
+  317-0029      Block Gal              NEC MC8123B 651 packaged like System16's 68000
+  317-0030      Perfect Billiards
+  317-0042      Opa Opa
+  317-0043      Wonder Boy Monster Land
+  317-0054      Shinobi (sound CPU)    NEC MC8123B 651
+  317-0057      Fantasy Zone 2
+  317-0064      Ufo Senshi Yohko Chan
 
 
   Some text found in the ROMs:
@@ -187,6 +189,7 @@
   Super Locomotive SEGA FUKUMURA MIZUNAGA
   Yamato           SECULITY BY M,MIZUNAGA
   Regulus          SECULITY BY SYUICHI,KATAGI
+  Up'n Down        19/SEP 1983   MASATOSHI,MIZUNAGA
   Mister Viking    SECURITY BY S.KATAGI  CONTROL CHIP M140
   SWAT             SECURITY BY S.KATAGI
   Flicky           SECURITY BY S.KATAGI
@@ -919,7 +922,7 @@ void fdwarrio_decode(void)
 
 /******************************************************************************
 
-  Wonder Boy
+  Astro Flash / Wonder Boy
 
   This is different again. It is similar to 4D Warriors - it affects the same
   data bits and is selected by the same address lines, but I haven't been able
@@ -928,8 +931,12 @@ void fdwarrio_decode(void)
 
 ******************************************************************************/
 
-void wboy_decode(void)
+void astrofl_decode(void)
 {
+	/* note how the first lines are highly repetitive, while the */
+	/* following ones get more and more unique. */
+	/* the only regularity I can see in the table is the first column, repeating */
+	/* a 12-values pattern. */
 	static const unsigned char opcode_xortable[64][8] =
 	{
 		{ 0x04,0x04,0x04,0x04,0x04,0x04,0x04,0x04 },	/* .0.0 ..0. .0.. 0..0 */
@@ -984,24 +991,23 @@ void wboy_decode(void)
 		{ 0x51,0x10,0x54,0x15,0x51,0x10,0x54,0x15 },	/* .1.0 ..1. .1.. 0..1 */
 		{ 0x40,0x45,0x54,0x51,0x51,0x54,0x45,0x40 },	/* .1.0 ..1. .1.. 1..0 */
 		{ 0x01,0x04,0x15,0x10,0x10,0x15,0x04,0x01 },	/* .1.0 ..1. .1.. 1..1 */
+		{ 0x55,0x50,0x41,0x44,0x44,0x41,0x50,0x55 },	/* .1.1 ..0. .0.. 0..0 */
+		{ 0x44,0x41,0x00,0x05,0x55,0x50,0x11,0x14 },	/* .1.1 ..0. .0.. 0..1 */
+		{ 0x05,0x00,0x41,0x44,0x14,0x11,0x50,0x55 },	/* .1.1 ..0. .0.. 1..0 */
+		{ 0x50,0x11,0x50,0x11,0x41,0x00,0x41,0x00 },	/* .1.1 ..0. .0.. 1..1 */
+		{ 0x41,0x00,0x41,0x00,0x50,0x11,0x50,0x11 },	/* .1.1 ..0. .1.. 0..0 */
+		{ 0x00,0x11,0x44,0x55,0x11,0x00,0x55,0x44 },	/* .1.1 ..0. .1.. 0..1 */
+		{ 0x54,0x45,0x10,0x01,0x45,0x54,0x01,0x10 },	/* .1.1 ..0. .1.. 1..0 */
+		{ 0x45,0x54,0x01,0x10,0x54,0x45,0x10,0x01 },	/* .1.1 ..0. .1.. 1..1 */
 
-		/* the following are all FF because there is no code to decode */
-		{ 0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff },	/* .1.1 ..0. .0.. 0..0 */
-		{ 0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff },	/* .1.1 ..0. .0.. 0..1 */
-		{ 0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff },	/* .1.1 ..0. .0.. 1..0 */
-		{ 0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff },	/* .1.1 ..0. .0.. 1..1 */
-		{ 0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff },	/* .1.1 ..0. .1.. 0..0 */
-		{ 0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff },	/* .1.1 ..0. .1.. 0..1 */
-		{ 0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff },	/* .1.1 ..0. .1.. 1..0 */
-		{ 0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff },	/* .1.1 ..0. .1.. 1..1 */
-		{ 0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff },	/* .1.1 ..1. .0.. 0..0 */
-		{ 0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff },	/* .1.1 ..1. .0.. 0..1 */
-		{ 0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff },	/* .1.1 ..1. .0.. 1..0 */
-		{ 0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff },	/* .1.1 ..1. .0.. 1..1 */
-		{ 0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff },	/* .1.1 ..1. .1.. 0..0 */
-		{ 0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff },	/* .1.1 ..1. .1.. 0..1 */
-		{ 0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff },	/* .1.1 ..1. .1.. 1..0 */
-		{ 0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff },	/* .1.1 ..1. .1.. 1..1 */
+		{ 0x04,0x45,0x10,0x51,0x15,0x54,0x01,0x40 },	/* .1.1 ..1. .0.. 0..0 */
+		{ 0x51,0x10,0x45,0x04,0x40,0x01,0x54,0x15 },	/* .1.1 ..1. .0.. 0..1 */
+		{ 0x40,0x45,0x54,0x51,0x10,0x15,0x04,0x01 },	/* .1.1 ..1. .0.. 1..0 */
+		{ 0x01,0x04,0x15,0x10,0x51,0x54,0x45,0x40 },	/* .1.1 ..1. .0.. 1..1 */
+		{ 0x55,0x50,0x41,0x44,0x05,0x00,0x11,0x14 },	/* .1.1 ..1. .1.. 0..0 */
+		{ 0x44,0x41,0x00,0x05,0x44,0x41,0x00,0x05 },	/* .1.1 ..1. .1.. 0..1 */
+		{ 0x05,0x00,0x41,0x44,0x05,0x00,0x41,0x44 },	/* .1.1 ..1. .1.. 1..0 */
+		{ 0x50,0x41,0x50,0x41,0x00,0x11,0x00,0x11 },	/* .1.1 ..1. .1.. 1..1 */
 	};
 	static const unsigned char data_xortable[64][8] =
 	{
@@ -1101,6 +1107,7 @@ void wboy_decode(void)
 
 		/* decode the opcodes */
 		rom[A + diff] = src ^ opcode_xortable[row][col];
+if (opcode_xortable[row][col] == 0xff) rom[A + diff] = 0;
 
 		/* decode the data */
 		rom[A] = src ^ data_xortable[row][col];
@@ -1114,6 +1121,8 @@ void wboy_decode(void)
 
 void wboy2_decode(void)
 {
+	/* note how the first lines are highly repetitive, while the */
+	/* following ones get more and more unique. */
 	static const unsigned char opcode_xortable[64][8] =
 	{
 		{ 0x00,0x00,0x44,0x44,0x00,0x00,0x44,0x44 },	/* .0.0 ..0. .0.. 0..0 */

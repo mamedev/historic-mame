@@ -214,9 +214,6 @@ static void draw_background( struct osd_bitmap *bitmap )
 	tilemap_set_scrolly( tilemap[1], 0, dy - grchamp_vreg1[0x7] );
 	tilemap_set_scrollx( tilemap[2], 0, dx-(grchamp_vreg1[0x9]+ ((attributes&0x20)?256:(grchamp_vreg1[0xa]*256))));
 	tilemap_set_scrolly( tilemap[2], 0, dy - grchamp_vreg1[0xb] );
-	tilemap_update(ALL_TILEMAPS);
-
-	palette_recalc();
 
 	tilemap_draw(bitmap,tilemap[0],0,0);
 	tilemap_draw(bitmap,tilemap[1],0,0);

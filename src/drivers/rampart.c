@@ -8,7 +8,7 @@
 		* Rampart (1990) [3 sets]
 
 	Known bugs:
-		* slapstic emulation currently imcomplete
+		* none
 
 ****************************************************************************
 
@@ -35,17 +35,6 @@ void rampart_vh_stop(void);
 void rampart_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 
 extern data16_t *rampart_bitmap;
-
-
-
-/*************************************
- *
- *	Externals
- *
- *************************************/
-
-static data16_t *slapstic_base;
-static UINT32 current_bank;
 
 
 
@@ -80,78 +69,6 @@ static void scanline_update(int scanline)
 
 /*************************************
  *
- *	Slapstic fun & joy
- *
- *************************************/
-
-static UINT32 bank_list[] = { 0x2000, 0x3000, 0x0000, 0x1000 };
-
-static READ16_HANDLER( slapstic_bank_r )
-{
-	int opcode_pc = cpu_getpreviouspc();
-	int result;
-
-	/* if the previous PC was 1400E6, then we will be passing through 1400E8 as
-	   we decode this instruction. 1400E8 -> 0074 which represents a significant
-	   location on the Rampart slapstic; best to tweak it here */
-	if (opcode_pc == 0x1400e6)
-	{
-		current_bank = bank_list[slapstic_tweak(0x00e6 / 2)];
-		current_bank = bank_list[slapstic_tweak(0x00e8 / 2)];
-		current_bank = bank_list[slapstic_tweak(0x00ea / 2)];
-	}
-
-	/* tweak the slapstic and adjust the bank */
-	current_bank = bank_list[slapstic_tweak(offset)];
-	result = slapstic_base[current_bank + (offset & 0xfff)];
-
-	/* if we did the special hack above, then also tweak for the following
-	   instruction fetch, which will force the bank switch to occur */
-	if (opcode_pc == 0x1400e6)
-		current_bank = bank_list[slapstic_tweak(0x00ec / 2)];
-
-	/* adjust the bank and return the result */
-	return result;
-}
-
-
-static WRITE16_HANDLER( slapstic_bank_w )
-{
-}
-
-
-static OPBASE_HANDLER( opbase_override )
-{
-	int oldpc = cpu_getpreviouspc();
-
-	/* tweak the slapstic at the source PC */
-	if (oldpc >= 0x140000 && oldpc < 0x148000)
-		slapstic_bank_r(oldpc - 0x140000,0);
-
-	/* tweak the slapstic at the destination PC */
-	if (address >= 0x140000 && address < 0x148000)
-	{
-		current_bank = bank_list[slapstic_tweak((address - 0x140000) / 2)];
-
-		/* use a bogus ophw so that we will be called again on the next jump/ret */
-		catch_nextBranch();
-
-		/* compute the new ROM base */
-		OP_RAM = OP_ROM = (UINT8 *)&slapstic_base[current_bank] - 0x140000;
-
-		/* return -1 so that the standard routine doesn't do anything more */
-		address = -1;
-
-		logerror("Slapstic op override at %06X\n", address);
-	}
-
-	return address;
-}
-
-
-
-/*************************************
- *
  *	Initialization
  *
  *************************************/
@@ -159,7 +76,7 @@ static OPBASE_HANDLER( opbase_override )
 static void init_machine(void)
 {
 	atarigen_eeprom_reset();
-	slapstic_reset();
+	atarigen_slapstic_reset();
 	atarigen_interrupt_reset(update_interrupts);
 	atarigen_scanline_timer_reset(scanline_update, 32);
 }
@@ -252,7 +169,7 @@ static WRITE16_HANDLER( latch_w )
 
 static MEMORY_READ16_START( main_readmem )
 	{ 0x000000, 0x0fffff, MRA16_ROM },
-	{ 0x140000, 0x147fff, slapstic_bank_r },
+	{ 0x140000, 0x147fff, MRA16_ROM },
 	{ 0x200000, 0x21ffff, MRA16_RAM },
 	{ 0x3c0000, 0x3c07ff, MRA16_RAM },
 	{ 0x3e0000, 0x3effff, MRA16_RAM },
@@ -271,7 +188,7 @@ MEMORY_END
 
 static MEMORY_WRITE16_START( main_writemem )
 	{ 0x000000, 0x0fffff, MWA16_ROM },
-	{ 0x140000, 0x147fff, slapstic_bank_w, &slapstic_base },	/* here only to initialize the pointer */
+	{ 0x140000, 0x147fff, MWA16_ROM },
 	{ 0x200000, 0x21ffff, rampart_bitmap_w, &rampart_bitmap },
 	{ 0x220000, 0x3bffff, MWA16_NOP },	/* the code blasts right through this when initializing */
 	{ 0x3c0000, 0x3c07ff, atarigen_expanded_666_paletteram_w, &paletteram16 },
@@ -482,10 +399,10 @@ static const struct MachineDriver machine_driver_rampart =
 	/* video hardware */
 	43*8, 30*8, { 0*8+4, 43*8-1-4, 0*8, 30*8-1 },
 	gfxdecodeinfo,
-	512,512,
+	512, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER  | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
 	rampart_vh_start,
 	rampart_vh_stop,
@@ -604,10 +521,7 @@ static void init_rampart(void)
 	atarigen_eeprom_default = compressed_default_eeprom;
 	memcpy(&memory_region(REGION_CPU1)[0x140000], &memory_region(REGION_CPU1)[0x40000], 0x8000);
 	atarigen_invert_region(REGION_GFX1);
-	slapstic_init(118);
-
-	/* set up some hacks to handle the slapstic accesses */
-	memory_set_opbase_handler(0, opbase_override);
+	atarigen_slapstic_init(0, 0x140000, 118);
 }
 
 
@@ -618,6 +532,6 @@ static void init_rampart(void)
  *
  *************************************/
 
-GAMEX( 1990, rampart,  0,       rampart, rampart,  rampart, ROT0, "Atari Games", "Rampart (3-player Trackball)", GAME_UNEMULATED_PROTECTION )
-GAMEX( 1990, ramprt2p, rampart, rampart, ramprt2p, rampart, ROT0, "Atari Games", "Rampart (2-player Joystick)", GAME_UNEMULATED_PROTECTION )
-GAMEX( 1990, rampartj, rampart, rampart, ramprt2p, rampart, ROT0, "Atari Games", "Rampart (Japan, 2-player Joystick)", GAME_UNEMULATED_PROTECTION )
+GAME( 1990, rampart,  0,       rampart, rampart,  rampart, ROT0, "Atari Games", "Rampart (3-player Trackball)" )
+GAME( 1990, ramprt2p, rampart, rampart, ramprt2p, rampart, ROT0, "Atari Games", "Rampart (2-player Joystick)" )
+GAME( 1990, rampartj, rampart, rampart, ramprt2p, rampart, ROT0, "Atari Games", "Rampart (Japan, 2-player Joystick)" )

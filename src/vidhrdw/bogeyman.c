@@ -72,9 +72,6 @@ void bogeyman_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
 	int mx,my,offs,color,tile,bank,sx,sy,flipx,flipy,multi;
 
-	if (palette_recalc())
-		memset(dirtybuffer,1,videoram_size);
-
 	flipscreen=0; /* For now */
 
 	for (offs = 0; offs<0x100; offs++)

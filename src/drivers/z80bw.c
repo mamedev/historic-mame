@@ -184,7 +184,7 @@ static const struct MachineDriver machine_driver_astinvad =
 	8, 0,
 	invadpt2_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY ,
 	0,
 	invaders_vh_start,
 	invaders_vh_stop,
@@ -318,7 +318,7 @@ static const struct MachineDriver machine_driver_spaceint =
 	8, 0,
 	invadpt2_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY ,
 	0,
 	invaders_vh_start,
 	invaders_vh_stop,

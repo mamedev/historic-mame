@@ -63,9 +63,8 @@ WRITE_HANDLER( moleattack_tilesetselector_w ){
 void moleattack_vh_screenrefresh( struct osd_bitmap *bitmap, int full_refresh ){
 	int offs;
 
-	if( full_refresh || palette_recalc() ){
+	if( full_refresh )
 		memset( dirtybuffer, 1, NUM_TILES );
-	}
 
 	for( offs=0; offs<NUM_TILES; offs++ ){
 		if( dirtybuffer[offs] ){

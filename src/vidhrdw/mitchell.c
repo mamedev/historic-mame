@@ -240,38 +240,6 @@ READ_HANDLER( mgakuen_paletteram_r )
 
 ***************************************************************************/
 
-static void mark_sprites_palette(void)
-{
-	int offs,color,code,attr,i;
-	int colmask[16];
-	int pal_base;
-
-
-	pal_base = Machine->drv->gfxdecodeinfo[1].color_codes_start;
-
-	for (color = 0;color < 16;color++) colmask[color] = 0;
-
-	/* the last entry is not a sprite, we skip it otherwise spang shows a bubble */
-	/* moving diagonally across the screen */
-	for (offs = 0x1000-0x40;offs >= 0;offs -= 0x20)
-	{
-		attr = pang_objram[offs+1];
-		code = pang_objram[offs] + ((attr & 0xe0) << 3);
-		color = attr & 0x0f;
-
-		colmask[color] |= Machine->gfx[1]->pen_usage[code];
-	}
-
-	for (color = 0;color < 16;color++)
-	{
-		for (i = 0;i < 15;i++)
-		{
-			if (colmask[color] & (1 << i))
-				palette_used_colors[pal_base + 16 * color + i] |= PALETTE_COLOR_VISIBLE;
-		}
-	}
-}
-
 static void draw_sprites(struct osd_bitmap *bitmap)
 {
 	int offs,sx,sy;
@@ -302,14 +270,6 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 
 void pang_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	tilemap_update(ALL_TILEMAPS);
-
-	palette_init_used_colors();
-	mark_sprites_palette();
-	palette_used_colors[0] = PALETTE_COLOR_VISIBLE;
-
-	palette_recalc();
-
 	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 	tilemap_draw(bitmap,bg_tilemap,0,0);
 	draw_sprites(bitmap);

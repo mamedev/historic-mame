@@ -294,22 +294,7 @@ WRITE_HANDLER( qix_palettebank_w )
 
 void qix_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
-	int y, palette_used[4];
-
-	/* determine which palette banks have been used this frame */
-	for (y = 0; y < 4; y++)
-		palette_used[y] = 0;
-	for (y = 0; y < 256; y++)
-		palette_used[palette_cache[y] & 3] = 1;
-
-	/* mark the palettes */
-	palette_init_used_colors();
-	for (y = 0; y < 4; y++)
-		if (palette_used[y])
-			memset(&palette_used_colors[y * 256], PALETTE_COLOR_USED, 256);
-
-	/* recalc */
-	palette_recalc();
+	int y;
 
 	/* draw the bitmap */
 	for (y = 0; y < 256; y++)

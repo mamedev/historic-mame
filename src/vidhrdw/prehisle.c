@@ -9,7 +9,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-static struct osd_bitmap *pf1_bitmap, *pf2_bitmap;
+static struct osd_bitmap *pf1_bitmap;
 data16_t *prehisle_video16;
 static data16_t vid_control16[7];
 static int dirty_back;
@@ -19,88 +19,12 @@ static int dirty_front;
 
 void prehisle_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
-	int offs, mx, my, color, tile, i;
-	int colmask[0x80], code, pal_base, tile_base;
+	int offs, mx, my, color, tile;
+	int tile_base;
 	int scrollx, scrolly;
 	UINT8 *tilemap = memory_region(REGION_GFX5);
 	static int old_base = 0xfffff, old_front = 0xfffff;
 
-	/* Build the dynamic palette */
-	palette_init_used_colors();
-
-	/* Text layer */
-	pal_base = Machine->drv->gfxdecodeinfo[0].color_codes_start;
-	for (color = 0; color < 16; color++) colmask[color] = 0;
-	for (offs = 0; offs < (0x800 >> 1); offs++)
-	{
-		code = videoram16[offs];
-		color = code >> 12;
-		if (code == 0xff20)
-			continue;
-		colmask[color] |= Machine->gfx[0]->pen_usage[code & 0xfff];
-	}
-
-	for (color = 0;color < 16;color++)
-	{
-		for (i = 0; i < 15; i++)
-		{
-			if (colmask[color] & (1 << i))
-				palette_used_colors[pal_base + 16 * color + i] = PALETTE_COLOR_USED;
-		}
-	}
-
-	/* Tiles - bottom layer */
-	pal_base = Machine->drv->gfxdecodeinfo[1].color_codes_start;
-	for (offs = 0; offs < 256; offs++)
-		palette_used_colors[pal_base + offs] = PALETTE_COLOR_USED;
-
-	/* Tiles - top layer */
-	pal_base = Machine->drv->gfxdecodeinfo[2].color_codes_start;
-	for (color = 0; color < 16; color++) colmask[color] = 0;
-	for (offs = 0x0000; offs < (0x4000 >> 1); offs++ )
-	{
-		code = prehisle_video16[offs];
-		color = code >> 12;
-		colmask[color] |= Machine->gfx[2]->pen_usage[code & 0x7ff];
-	}
-	for (color = 0; color < 16; color++)
-	{
-		for (i = 0; i < 15; i++)
-		{
-			if (colmask[color] & (1 << i))
-				palette_used_colors[pal_base + 16 * color + i] = PALETTE_COLOR_USED;
-		}
-
-/* kludge */
-palette_used_colors[pal_base + 16 * color +15] = PALETTE_COLOR_TRANSPARENT;
-palette_change_color(pal_base + 16 * color +15 ,0,0,0);
-
-	}
-
-	/* Sprites */
-	pal_base = Machine->drv->gfxdecodeinfo[3].color_codes_start;
-	for (color = 0; color < 16; color++) colmask[color] = 0;
-	for (offs = 0; offs < (0x400 >> 1); offs += 4)
-	{
-		code = spriteram16[offs+2] & 0x1fff;
-		color = spriteram16[offs+3] >> 12;
-		if (code > 0x13ff) code=0x13ff;
-		colmask[color] |= Machine->gfx[3]->pen_usage[code];
-	}
-	for (color = 0;color < 16;color++)
-	{
-		for (i = 0;i < 15;i++)
-		{
-			if (colmask[color] & (1 << i))
-				palette_used_colors[pal_base + 16 * color + i] = PALETTE_COLOR_USED;
-		}
-	}
-
-	if (palette_recalc())
-	{
-		dirty_back = 1;
-		dirty_front = 1;
-	}
 
 	/* Calculate tilebase for background, 32 words per column */
 	tile_base = ((vid_control16[3] >> 4) & 0x3ff) * 32;
@@ -143,7 +67,7 @@ palette_change_color(pal_base + 16 * color +15 ,0,0,0);
 	old_front = tile_base;
 
 	/* Back layer, taken from tilemap rom */
-	if (dirty_front)
+//	if (dirty_front)
 	{
 		tile_base &= 0x1fff; /* Safety */
 		dirty_front = 0;
@@ -154,21 +78,17 @@ palette_change_color(pal_base + 16 * color +15 ,0,0,0);
 			{
 				tile = prehisle_video16[tile_base];
 				color = tile >> 12;
-				drawgfx(pf2_bitmap,Machine->gfx[2],
+				drawgfx(bitmap,Machine->gfx[2],
 							tile & 0x7ff,
 							color,
 							0,tile&0x800,
-							16*mx,16*my,
-							0,TRANSPARENCY_NONE,0);
+							16*mx-(vid_control16[1] & 15),(16*my-vid_control16[0]) & 0x1ff,
+							&Machine->visible_area,TRANSPARENCY_PEN,15);
 				if (++tile_base == 0x2000)
 					tile_base = 0; /* Wraparound */
 			}
 		}
 	}
-
-	scrollx = -(vid_control16[1] & 15);
-	scrolly = -vid_control16[0];
-	copyscrollbitmap(bitmap,pf2_bitmap,1,&scrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
 
 	/* Sprites */
 	for (offs = 0; offs < (0x800 >> 1); offs += 4)
@@ -229,9 +149,8 @@ palette_change_color(pal_base + 16 * color +15 ,0,0,0);
 int prehisle_vh_start (void)
 {
 	pf1_bitmap = bitmap_alloc(256+16,512);
-	pf2_bitmap = bitmap_alloc(256+16,512);
 
-	if (!pf1_bitmap || !pf2_bitmap)
+	if (!pf1_bitmap)
 		return 1;
 
 	return 0;
@@ -240,7 +159,6 @@ int prehisle_vh_start (void)
 void prehisle_vh_stop (void)
 {
 	bitmap_free(pf1_bitmap);
-	bitmap_free(pf2_bitmap);
 }
 
 WRITE16_HANDLER( prehisle_video16_w )

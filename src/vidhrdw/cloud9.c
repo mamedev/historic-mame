@@ -250,38 +250,9 @@ WRITE_HANDLER( cloud9_bitmap_w )
   the main emulation engine.
 
 ***************************************************************************/
-static void redraw_bitmap(void)
-{
-	int offs;
-
-	int cloud9_both_banks_save = *cloud9_both_banks;
-	int cloud9_vram_bank_save  = *cloud9_vram_bank;
-
-	*cloud9_both_banks = 0;
-
-	for (offs = 0; offs < videoram_size; offs++)
-	{
-		*cloud9_vram_bank = 0;
-		cloud9_bitmap_w(offs, videoram[offs]);
-
-		*cloud9_vram_bank = 0x80;
-		cloud9_bitmap_w(offs, cloud9_vram2[offs]);
-	}
-
-	*cloud9_both_banks = cloud9_both_banks_save;
-	*cloud9_vram_bank  = cloud9_vram_bank_save;
-}
-
-
 void cloud9_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
-
-
-	if (palette_recalc())
-	{
-		redraw_bitmap();
-	}
 
 
 	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);

@@ -22,13 +22,13 @@ int skullxbo_vh_start(void)
 		1,			/* index to which gfx system */
 		64,64,		/* size of the playfield in tiles (x,y) */
 		64,1,		/* tile_index = x * xmult + y * ymult (xmult,ymult) */
-	
+
 		0x200,		/* index of palette base */
 		0x100,		/* maximum number of colors */
 		0,			/* color XOR for shadow effect (if any) */
 		0x00ff,		/* latch mask */
 		0,			/* transparent pen mask */
-	
+
 		0x07fff,	/* tile data index mask */
 		0xf0000,	/* tile data color mask */
 		0x08000,	/* tile data hflip mask */
@@ -66,7 +66,7 @@ int skullxbo_vh_start(void)
 		{{ 0,0,0x0030,0 }},	/* mask for the priority */
 		{{ 0 }},			/* mask for the neighbor */
 		{{ 0 }},			/* mask for absolute coordinates */
-		
+
 		{{ 0 }},			/* mask for the ignore value */
 		0,					/* resulting value to indicate "ignore" */
 		0,					/* callback routine for ignored entries */
@@ -76,7 +76,7 @@ int skullxbo_vh_start(void)
 	{
 		2,			/* index to which gfx system */
 		64,32,		/* size of the alpha RAM in tiles (x,y) */
-	
+
 		0x300,		/* index of palette base */
 		0x100,		/* maximum number of colors */
 		0,			/* mask of the palette split */
@@ -86,14 +86,14 @@ int skullxbo_vh_start(void)
 		0,			/* tile data hflip mask */
 		0x8000		/* tile data opacity mask */
 	};
-	
+
 	UINT32 *anlookup;
 	int i, size;
 
 	/* initialize the playfield */
 	if (!ataripf_init(0, &pfdesc))
 		goto cant_create_pf;
-	
+
 	/* initialize the motion objects */
 	if (!atarimo_init(0, &modesc))
 		goto cant_create_mo;
@@ -101,7 +101,7 @@ int skullxbo_vh_start(void)
 	/* initialize the alphanumerics */
 	if (!atarian_init(0, &andesc))
 		goto cant_create_an;
-		
+
 	/* add in the code XOR for the alphas */
 	anlookup = atarian_get_lookup(0, &size);
 	for (i = 0; i < size; i++)
@@ -147,7 +147,7 @@ WRITE16_HANDLER( skullxbo_hscroll_w )
 {
 	int scanline = cpu_getscanline();
 	int newscroll = (ataripf_get_xscroll(0) / 2) << 7;
-	
+
 	COMBINE_DATA(&newscroll);
 	newscroll = 2 * (newscroll >> 7);
 	ataripf_set_xscroll(0, newscroll, scanline);
@@ -159,7 +159,7 @@ WRITE16_HANDLER( skullxbo_vscroll_w )
 {
 	int scanline = cpu_getscanline();
 	int newscroll = ataripf_get_yscroll(0) << 7;
-	
+
 	COMBINE_DATA(&newscroll);
 	newscroll = ((newscroll >> 7) - scanline) & 0x1ff;
 	ataripf_set_yscroll(0, newscroll, scanline);
@@ -243,7 +243,7 @@ static int overrender_callback(struct ataripf_overrender_data *data, int state)
 		0x0ff0,
 		0x00f0
 	};
-	
+
 	/* we need to check tile-by-tile, so always return OVERRENDER_SOME */
 	if (state == OVERRENDER_BEGIN)
 	{
@@ -253,7 +253,7 @@ static int overrender_callback(struct ataripf_overrender_data *data, int state)
 		data->maskpens = 0x0001;
 		return OVERRENDER_SOME;
 	}
-	
+
 	/* handle a query */
 	else if (state == OVERRENDER_QUERY)
 		return (overrender_matrix[data->mopriority] & (1 << data->pfcolor)) ? OVERRENDER_YES : OVERRENDER_NO;
@@ -270,16 +270,6 @@ static int overrender_callback(struct ataripf_overrender_data *data, int state)
 
 void skullxbo_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
-	/* mark the used colors */
-	palette_init_used_colors();
-	ataripf_mark_palette(0);
-	atarimo_mark_palette(0);
-	atarian_mark_palette(0);
-
-	/* update the palette, and mark things dirty if we need to */
-	if (palette_recalc())
-		ataripf_invalidate(0);
-
 	/* draw the layers */
 	ataripf_render(0, bitmap);
 	atarimo_render(0, bitmap, overrender_callback, NULL);

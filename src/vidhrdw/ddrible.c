@@ -251,10 +251,6 @@ void ddrible_vh_screenrefresh( struct osd_bitmap *bitmap, int full_refresh )
 	tilemap_set_scrolly(fg_tilemap,0,ddribble_vregs[0][0]);
 	tilemap_set_scrolly(bg_tilemap,0,ddribble_vregs[1][0]);
 
-	tilemap_update( ALL_TILEMAPS );
-
-	palette_recalc();
-
 	tilemap_draw(bitmap,bg_tilemap,0,0);
 	ddribble_draw_sprites(bitmap,ddrible_spriteram_1,0x07d,2,ddribble_vregs[0][4] & 0x08);
 	ddribble_draw_sprites(bitmap,ddrible_spriteram_2,0x140,3,ddribble_vregs[1][4] & 0x08);

@@ -294,8 +294,6 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 
 void firetrap_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	tilemap_update(ALL_TILEMAPS);
-
 	tilemap_draw(bitmap,bg2_tilemap,0,0);
 	tilemap_draw(bitmap,bg1_tilemap,0,0);
 	draw_sprites(bitmap);

@@ -71,7 +71,7 @@ WRITE_HANDLER( dotrikun_videoram_w )
 
 void dotrikun_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
-	if (palette_recalc() || full_refresh)
+	if (full_refresh)
 	{
 		int offs;
 

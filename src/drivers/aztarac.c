@@ -10,11 +10,6 @@
 #include "driver.h"
 #include "vidhrdw/vector.h"
 
-/* from machine/foodf.c */
-READ16_HANDLER( foodf_nvram_r );
-WRITE16_HANDLER( foodf_nvram_w );
-void foodf_nvram_handler(void *file,int read_or_write);
-
 /* from vidhrdw/aztarac.c */
 void aztarac_init_colors (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int aztarac_vh_start (void);
@@ -31,36 +26,30 @@ READ_HANDLER( aztarac_snd_status_r );
 WRITE_HANDLER( aztarac_snd_status_w );
 int aztarac_snd_timed_irq (void);
 
-static unsigned char nvram[128];
+static data16_t *nvram;
 
-static READ16_HANDLER( aztarac_nvram_r )
-{
-	return ((nvram[(offset / 4) ^ 0x03] >> 2*(offset % 4))) & 0x0f;
-}
+/*************************************
+ *
+ *	NVRAM handler
+ *
+ *************************************/
 
-static WRITE16_HANDLER( aztarac_nvram_w )
-{
-	if (ACCESSING_LSB)
-	{
-		nvram[(offset / 4) ^ 0x03] &= ~(0x0f << 2*(offset % 4));
-		nvram[(offset / 4) ^ 0x03] |= (data & 0x0f) << 2*(offset % 4);
-	}
-}
-
-static void aztarac_nvram_handler(void *file,int read_or_write)
+static void nvram_handler(void *file, int read_or_write)
 {
 	if (read_or_write)
-		osd_fwrite(file,nvram,128);
+		osd_fwrite(file, nvram, 512);
+	else if (file)
+		osd_fread(file, nvram, 512);
 	else
-	{
-		if (file)
-			osd_fread(file,nvram,128);
-		else
-			memset(nvram,0xff,128);
-	}
+		memset(nvram, 0xff, 512);
 }
 
-static READ16_HANDLER( aztarac_joystick_r )
+static READ16_HANDLER( nvram_r )
+{
+	return nvram[offset] | 0xfff0;
+}
+
+static READ16_HANDLER( joystick_r )
 {
     return (((input_port_0_r (offset) - 0xf) << 8) |
             ((input_port_1_r (offset) - 0xf) & 0xff));
@@ -68,8 +57,8 @@ static READ16_HANDLER( aztarac_joystick_r )
 
 static MEMORY_READ16_START( readmem )
 	{ 0x000000, 0x00bfff, MRA16_ROM },
-	{ 0x022000, 0x022fff, aztarac_nvram_r },
-	{ 0x027000, 0x027001, aztarac_joystick_r },
+	{ 0x022000, 0x022fff, nvram_r },
+	{ 0x027000, 0x027001, joystick_r },
 	{ 0x027004, 0x027005, input_port_3_word_r },
 	{ 0x027008, 0x027009, aztarac_sound_r },
 	{ 0x02700c, 0x02700d, input_port_2_word_r },
@@ -80,7 +69,7 @@ MEMORY_END
 
 static MEMORY_WRITE16_START( writemem )
 	{ 0x000000, 0x00bfff, MWA16_ROM },
-	{ 0x022000, 0x022fff, aztarac_nvram_w },
+	{ 0x022000, 0x0220ff, MWA16_RAM, &nvram },
 	{ 0x027008, 0x027009, aztarac_sound_w },
 	{ 0xff8000, 0xffafff, MWA16_RAM, &aztarac_vectorram },
 	{ 0xffb000, 0xffb001, aztarac_ubr_w },
@@ -150,10 +139,7 @@ static struct AY8910interface ay8910_interface =
 
 static int aztarac_irq_callback (int irqline)
 {
-//	if (irqline == MC68000_IRQ_4)
-		return 0xc;
-//	else
-//		return MC68000_INT_ACK_AUTOVECTOR;
+	return 0xc;
 }
 
 static void aztarac_init_machine(void)
@@ -203,8 +189,7 @@ static const struct MachineDriver machine_driver_aztarac =
 			&ay8910_interface
 		}
     },
-
-	aztarac_nvram_handler
+	nvram_handler
 };
 
 /***************************************************************************

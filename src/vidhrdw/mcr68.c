@@ -191,10 +191,6 @@ static void mcr68_update_sprites(struct osd_bitmap *bitmap, int priority)
 
 void mcr68_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
-	/* update palette */
-	if (palette_recalc())
-		memset(dirtybuffer, 1, videoram_size / 2);
-
 	/* draw the background */
 	mcr68_update_background(tmpbitmap, 0);
 
@@ -338,30 +334,6 @@ void zwackery_convert_color_prom(unsigned char *palette, unsigned short *colorta
  *
  *************************************/
 
-static void zwackery_mark_background(void)
-{
-	const UINT8 *colordatabase = (const UINT8 *)memory_region(REGION_GFX3);
-	int offs;
-
-	/* for every character in the Video RAM, mark the colors */
-	for (offs = (videoram_size / 2) - 1; offs >= 0; offs--)
-	{
-		int data = videoram16[offs];
-		int color = (data >> 13) & 7;
-		int code = data & 0x3ff;
-		int i;
-
-		/* get color data pointers */
-		const UINT8 *coldata = colordatabase + code * 32;
-		UINT8 *used_colors = &palette_used_colors[color << 8];
-
-		/* each character uses up to 32 unique colors */
-		for (i = 0; i < 32; i++)
-			used_colors[*coldata++] = PALETTE_COLOR_VISIBLE;
-	}
-}
-
-
 static void zwackery_update_background(struct osd_bitmap *bitmap, int overrender)
 {
 	int offs;
@@ -405,47 +377,6 @@ static void zwackery_update_background(struct osd_bitmap *bitmap, int overrender
  *	Sprite update
  *
  *************************************/
-
-static void zwackery_mark_sprites(void)
-{
-	UINT16 used[32];
-	int offs, i;
-
-	/* clear the usage array */
-	memset(&used, 0, sizeof(used));
-
-	/* loop over spriteram */
-	for (offs = 0; offs < spriteram_size / 2; offs += 4)
-	{
-		int code, color, flags;
-
-		/* get the code and skip if zero */
-		code = LOW_BYTE(spriteram16[offs + 2]);
-		if (code == 0)
-			continue;
-
-		/* extract the flag bits and determine the color */
-		flags = LOW_BYTE(spriteram16[offs + 1]);
-		color = ((~flags >> 2) & 0x0f) | ((flags & 0x02) << 3);
-
-		/* mark the appropriate pens */
-		used[color] |= Machine->gfx[1]->pen_usage[code];
-	}
-
-	/* use the usage array to mark the global palette_used_colors */
-	for (offs = 0; offs < 32; offs++)
-	{
-		UINT16 u = used[offs];
-		if (u)
-		{
-			palette_used_colors[0x800 + offs * 16 + 0] = PALETTE_COLOR_TRANSPARENT;
-			for (i = 1; i < 16; i++)
-				if (u & (1 << i))
-					palette_used_colors[0x800 + offs * 16 + i] = PALETTE_COLOR_USED;
-		}
-	}
-}
-
 
 static void zwackery_update_sprites(struct osd_bitmap *bitmap, int priority)
 {
@@ -526,15 +457,6 @@ static void zwackery_update_sprites(struct osd_bitmap *bitmap, int priority)
 
 void zwackery_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
-	/* mark the palette */
-	palette_init_used_colors();
-	zwackery_mark_background();
-	zwackery_mark_sprites();
-
-	/* update palette */
-	if (palette_recalc())
-		memset(dirtybuffer, 1, videoram_size / 2);
-
 	/* draw the background */
 	zwackery_update_background(tmpbitmap, 0);
 

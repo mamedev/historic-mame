@@ -888,9 +888,6 @@ void wms_tunit_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	int v, width, xoffs;
 	UINT32 offset;
 
-	// recompute the palette
-	palette_recalc();
-
 	/* determine the base of the videoram */
 	if (wms_using_34020)
 		offset = (tms34020_get_DPYSTRT(0) >> 5) & 0x3ffff;

@@ -60,11 +60,12 @@ static int sprites_flipscreen = 0;
    sprites. To erase this we use f2_hide_pixels (0 to +3). */
 
 static int f2_hide_pixels;
+static int f2_flip_hide_pixels;	/* Different in some games */
 
-static int f2_pivot_xdisp = 0;   /* Needed in games with a pivot layer */
+static int f2_pivot_xdisp = 0;	/* Needed in games with a pivot layer */
 static int f2_pivot_ydisp = 0;
 
-static int f2_tilemap_xoffs = 0;   /* Needed in TC0480SCP games */
+static int f2_tilemap_xoffs = 0;	/* Needed in TC0480SCP games */
 static int f2_tilemap_yoffs = 0;
 static int f2_text_xoffs = 0;
 
@@ -214,12 +215,13 @@ static int has_TC0430GRW(void)
 
 /***********************************************************************************/
 
-int taitof2_core_vh_start (int sprite_type,int hide,int x_offs,int y_offs,
+int taitof2_core_vh_start (int sprite_type,int hide,int flip_hide,int x_offs,int y_offs,
 		int flip_xoffs,int flip_yoffs,int flip_text_x_offs,int flip_text_yoffs)
 {
 	int i;
 	f2_sprite_type = sprite_type;
 	f2_hide_pixels = hide;
+	f2_flip_hide_pixels = flip_hide;
 
 	spriteram_delayed = malloc(spriteram_size);
 	spriteram_buffered = malloc(spriteram_size);
@@ -294,68 +296,73 @@ int taitof2_core_vh_start (int sprite_type,int hide,int x_offs,int y_offs,
 }
 
 
-/***********************************************************************************/
+/**************************************************************************************/
+/*    ( spritetype, hide, hideflip, xoffs, yoffs, flipx, flipy, textflipx, textflipy) */
+/**************************************************************************************/
 
 int taitof2_default_vh_start (void)
 {
-	return (taitof2_core_vh_start(0,0,0,0,0,0,0,0));
+	return (taitof2_core_vh_start(0,0,0,0,0,0,0,0,0));
+}
+
+int taitof2_megab_vh_start (void)   /* Megab, Liquidk */
+{
+	return (taitof2_core_vh_start(0,3,3,0,0,0,0,0,0));
+}
+
+int taitof2_quiz_vh_start (void)   /* Quiz Crayons, Quiz Jinsei */
+{
+	return (taitof2_core_vh_start(3,3,3,0,0,0,0,0,0));
 }
 
 int taitof2_finalb_vh_start (void)
 {
-	return (taitof2_core_vh_start(0,1,0,0,0,0,0,0));
-}
-
-int taitof2_3p_vh_start (void)   /* Megab, Liquidk */
-{
-	return (taitof2_core_vh_start(0,3,0,0,0,0,0,0));
-}
-
-int taitof2_3p_buf_vh_start (void)   /* Solfigtr, Koshien */
-{
-	return (taitof2_core_vh_start(0,3,0,0,0,0,0,0));
-}
-
-int taitof2_driftout_vh_start (void)
-{
-	f2_pivot_xdisp = -16;
-	f2_pivot_ydisp = 16;
-	return (taitof2_core_vh_start(0,3,0,0,0,0,0,0));
-}
-
-int taitof2_c_vh_start (void)   /* Quiz Crayons, Quiz Jinsei */
-{
-	return (taitof2_core_vh_start(3,3,0,0,0,0,0,0));
+	return (taitof2_core_vh_start(0,1,1,0,0,0,0,0,0));
 }
 
 int taitof2_ssi_vh_start (void)
 {
-	return (taitof2_core_vh_start(0,3,0,0,0,0,0,0));
+	return (taitof2_core_vh_start(0,3,3,0,0,0,0,0,0));
 }
 
 int taitof2_growl_vh_start (void)
 {
-	return (taitof2_core_vh_start(0,3,0,0,0,0,0,0));
+	return (taitof2_core_vh_start(0,3,3,0,0,0,0,0,0));
 }
 
 int taitof2_ninjak_vh_start (void)
 {
-	return (taitof2_core_vh_start(0,0,0,0,0,0,0,0));
+	return (taitof2_core_vh_start(0,0,0,0,0,0,0,1,2));
+}
+
+int taitof2_qzchikyu_vh_start (void)
+{
+	return (taitof2_core_vh_start(0,0,4,0,0,-4,0,-11,0));
+}
+
+int taitof2_solfigtr_vh_start (void)
+{
+	return (taitof2_core_vh_start(0,3,-3,0,0,6,0,6,0));
+}
+
+int taitof2_koshien_vh_start (void)
+{
+	return (taitof2_core_vh_start(0,1,-1,0,0,2,0,0,0));
 }
 
 int taitof2_gunfront_vh_start (void)
 {
-	return (taitof2_core_vh_start(0,3,0,0,0,0,0,0));
+	return (taitof2_core_vh_start(0,3,3,0,0,0,0,0,0));
 }
 
 int taitof2_thundfox_vh_start (void)
 {
-	return (taitof2_core_vh_start(0,3,0,0,0,0,0,0));
+	return (taitof2_core_vh_start(0,3,-3,0,0,5,0,4,1));
 }
 
 int taitof2_mjnquest_vh_start (void)
 {
-	int failed = (taitof2_core_vh_start(0,0,0,0,0,0,0,0));	/* non-zero = failure */
+	int failed = (taitof2_core_vh_start(0,0,0,0,0,0,0,0,0));	/* non-zero = failure */
 	if (!failed)  TC0100SCN_set_bg_tilemask(0x7fff);
 
 	return failed;
@@ -368,7 +375,7 @@ int taitof2_footchmp_vh_start (void)
 	f2_tilemap_yoffs = 0x08;
 	f2_text_xoffs = -1;
 	f2_tilemap_col_base = 0;
-	failed = (taitof2_core_vh_start(0,3,0,0,0,0,0,0));
+	failed = (taitof2_core_vh_start(0,3,3,0,0,0,0,0,0));
 
 	f2_game = FOOTCHMP;
 	return failed;
@@ -381,7 +388,7 @@ int taitof2_hthero_vh_start (void)
 	f2_tilemap_yoffs = - 0x04;
 	f2_text_xoffs = -1;
 	f2_tilemap_col_base = 0;
-	failed = (taitof2_core_vh_start(0,3,0,0,0,0,0,0));
+	failed = (taitof2_core_vh_start(0,3,3,0,0,0,0,0,0));
 
 	f2_game = FOOTCHMP;
 	return failed;
@@ -393,7 +400,7 @@ int taitof2_deadconx_vh_start (void)
 	f2_tilemap_yoffs = 0x08;
 	f2_text_xoffs = -1;
 	f2_tilemap_col_base = 0;
-	return (taitof2_core_vh_start(0,3,0,0,0,0,0,0));
+	return (taitof2_core_vh_start(0,3,3,0,0,0,0,0,0));
 }
 
 int taitof2_deadconj_vh_start (void)
@@ -402,7 +409,7 @@ int taitof2_deadconj_vh_start (void)
 	f2_tilemap_yoffs = - 0x05;
 	f2_text_xoffs = -1;
 	f2_tilemap_col_base = 0;
-	return (taitof2_core_vh_start(0,3,0,0,0,0,0,0));
+	return (taitof2_core_vh_start(0,3,3,0,0,0,0,0,0));
 }
 
 int taitof2_metalb_vh_start (void)
@@ -411,36 +418,43 @@ int taitof2_metalb_vh_start (void)
 	f2_tilemap_yoffs = - 0x04;
 	f2_text_xoffs = 1;	/* not the usual -1 */
 	f2_tilemap_col_base = 256;   /* separate palette area for tilemaps */
-	return (taitof2_core_vh_start(0,3,0,0,0,0,0,0));
+	return (taitof2_core_vh_start(0,3,3,0,0,0,0,0,0));
 }
 
 int taitof2_yuyugogo_vh_start (void)
 {
-	return (taitof2_core_vh_start(1,3,0,0,0,0,0,0));
+	return (taitof2_core_vh_start(1,3,3,0,0,0,0,0,0));
 }
 
 int taitof2_yesnoj_vh_start (void)
 {
-	return (taitof2_core_vh_start(0,3,0,0,0,0,0,0));
+	return (taitof2_core_vh_start(0,3,3,0,0,0,0,0,0));
 }
 
 int taitof2_dinorex_vh_start (void)
 {
-	return (taitof2_core_vh_start(3,3,0,0,0,0,0,0));
+	return (taitof2_core_vh_start(3,3,3,0,0,0,0,0,0));
 }
 
 int taitof2_dondokod_vh_start (void)	/* dondokod, cameltry */
 {
 	f2_pivot_xdisp = -16;
 	f2_pivot_ydisp = 0;
-	return (taitof2_core_vh_start(0,3,0,0,0,0,0,0));
+	return (taitof2_core_vh_start(0,3,3,0,0,0,0,0,0));
 }
 
 int taitof2_pulirula_vh_start (void)
 {
 	f2_pivot_xdisp = -10;	/* alignment seems correct (see level 2, falling */
 	f2_pivot_ydisp = 16;	/* block of ice after armour man) */
-	return (taitof2_core_vh_start(2,3,0,0,0,0,0,0));
+	return (taitof2_core_vh_start(2,3,3,0,0,0,0,0,0));
+}
+
+int taitof2_driftout_vh_start (void)
+{
+	f2_pivot_xdisp = -16;
+	f2_pivot_ydisp = 16;
+	return (taitof2_core_vh_start(0,3,3,0,0,0,0,0,0));
 }
 
 void taitof2_vh_stop (void)
@@ -544,131 +558,6 @@ WRITE16_HANDLER( koshien_spritebank_w )
 
 
 
-/*******************************************
-			PALETTE
-*******************************************/
-
-void taitof2_update_palette(void)
-{
-	int i, area;
-	int off,extoffs,code,color;
-	int spritecont,big_sprite=0,last_continuation_tile=0;
-	UINT16 tile_modulo = Machine->gfx[0]->total_elements;
-	UINT16 palette_map[256];
-
-	memset (palette_map, 0, sizeof (palette_map));
-
-/* We aren't applying sprite marker tests here (???), but doesn't seem
-   to cause palette overflows, so I don't think we should worry. */
-
-	color = 0;
-	area = sprites_active_area;
-
-	/* Sprites */
-	for (off = 0;off < 0x4000;off += 16)
-	{
-		/* sprites_active_area may change during processing */
-		int offs = off + area;
-
-		if (spriteram_buffered[(offs+6)/2] & 0x8000)
-		{
-			if (f2_game == FOOTCHMP)
-				area = 0x8000 * (spriteram_buffered[(offs+6)/2] & 0x0001);
-			else
-				area = 0x8000 * (spriteram_buffered[(offs+10)/2] & 0x0001);
-			continue;
-		}
-
-		spritecont = (spriteram_buffered[(offs+8)/2] & 0xff00) >> 8;
-
-		if (spritecont & 0x8)
-		{
-			big_sprite = 1;
-		}
-		else if (big_sprite)
-		{
-			last_continuation_tile = 1;
-		}
-
-		code = 0;
-		extoffs = offs;
-		/* spriteram[0x4000-7fff] has no corresponding extension area */
-		if (extoffs >= 0x8000) extoffs -= 0x4000;
-
-		if (f2_sprite_type == 0)
-		{
-			code = spriteram_buffered[offs/2] & 0x1fff;
-			{
-				int bank;
-
-				bank = (code & 0x1c00) >> 10;
-				code = spritebank[bank] + (code & 0x3ff);
-			}
-		}
-
-		if (f2_sprite_type == 1)   /* Yuyugogo */
-		{
-			code = spriteram_buffered[offs/2] & 0x3ff;
-			i = (f2_sprite_extension[(extoffs >> 4)] & 0x3f ) << 10;
-			code = (i | code);
-		}
-
-		if (f2_sprite_type == 2)   /* Pulirula */
-		{
-			code = spriteram_buffered[offs/2] & 0xff;
-			i = (f2_sprite_extension[(extoffs >> 4)] & 0xff00 );
-			code = (i | code);
-		}
-
-		if (f2_sprite_type == 3)   /* Dinorex and a few quizzes */
-		{
-			code = spriteram_buffered[offs/2] & 0xff;
-			i = (f2_sprite_extension[(extoffs >> 4)] & 0xff ) << 8;
-			code = (i | code);
-		}
-
-		if ((spritecont & 0x04) == 0)
-			color = spriteram_buffered[(offs+8)/2] & 0x00ff;
-
-		if (last_continuation_tile)
-		{
-			big_sprite=0;
-			last_continuation_tile=0;
-		}
-
-		if (!code) continue;   /* tilenum is 0, so ignore it */
-
-		if (Machine->gfx[0]->color_granularity == 64)	/* Final Blow is 6-bit deep */
-		{
-			color &= ~3;
-			palette_map[color+0] |= 0xffff;
-			palette_map[color+1] |= 0xffff;
-			palette_map[color+2] |= 0xffff;
-			palette_map[color+3] |= 0xffff;
-		}
-		else
-			/* prevent sporadic page faults by using a tile modulo */
-			palette_map[color] |= Machine->gfx[0]->pen_usage[code % tile_modulo];
-	}
-
-
-	/* Tell MAME about the color usage */
-	for (i = 0;i < 256;i++)
-	{
-		int usage = palette_map[i];
-		int j;
-
-		if (usage)
-		{
-			for (j = 0; j < 16; j++)
-				if (palette_map[i] & (1 << j))
-					palette_used_colors[i * 16 + j] = PALETTE_COLOR_USED;
-		}
-	}
-}
-
-
-
 static void draw_sprites(struct osd_bitmap *bitmap,int *primasks)
 {
 	/*
@@ -761,7 +650,7 @@ static void draw_sprites(struct osd_bitmap *bitmap,int *primasks)
 	color = 0;
 
 	f2_x_offset = f2_hide_pixels;   /* Get rid of 0-3 unwanted pixels on edge of screen. */
-	if (sprites_flipscreen) f2_x_offset = -f2_x_offset;
+	if (sprites_flipscreen) f2_x_offset = -f2_flip_hide_pixels;		// was -f2_x_offset
 
 	/* safety check to avoid getting stuck in bank 2 for games using only one bank */
 	if (area == 0x8000 &&
@@ -782,7 +671,7 @@ static void draw_sprites(struct osd_bitmap *bitmap,int *primasks)
 
 			/* Get rid of 0-3 unwanted pixels on edge of screen. */
 			f2_x_offset = f2_hide_pixels;
-			if (sprites_flipscreen) f2_x_offset = -f2_x_offset;
+			if (sprites_flipscreen) f2_x_offset = -f2_flip_hide_pixels;		// was -f2_x_offset
 
 			if (f2_game == FOOTCHMP)
 				area = 0x8000 * (spriteram_buffered[(offs+6)/2] & 0x0001);
@@ -1193,11 +1082,6 @@ void ssi_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	taitof2_handle_sprite_buffering();
 
-	palette_init_used_colors();
-	taitof2_update_palette();
-	palette_used_colors[0] |= PALETTE_COLOR_VISIBLE;
-	palette_recalc();
-
 	/* SSI only uses sprites, the tilemap registers are not even initialized.
 	   (they are in Majestic 12, but the tilemaps are not used anyway) */
 	fillbitmap(priority_bitmap,0,NULL);
@@ -1211,11 +1095,6 @@ void yesnoj_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	taitof2_handle_sprite_buffering();
 
 	TC0100SCN_tilemap_update();
-
-	palette_init_used_colors();
-	taitof2_update_palette();
-	palette_used_colors[0] |= PALETTE_COLOR_VISIBLE;
-	palette_recalc();
 
 	fillbitmap(priority_bitmap,0,NULL);
 	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);	/* wrong color? */
@@ -1231,11 +1110,6 @@ void taitof2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	taitof2_handle_sprite_buffering();
 
 	TC0100SCN_tilemap_update();
-
-	palette_init_used_colors();
-	taitof2_update_palette();
-	palette_used_colors[0] |= PALETTE_COLOR_VISIBLE;
-	palette_recalc();
 
 	fillbitmap(priority_bitmap,0,NULL);
 	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);	/* wrong color? */
@@ -1256,11 +1130,6 @@ void taitof2_pri_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	taitof2_handle_sprite_buffering();
 
 	TC0100SCN_tilemap_update();
-
-	palette_init_used_colors();
-	taitof2_update_palette();
-	palette_used_colors[0] |= PALETTE_COLOR_VISIBLE;
-	palette_recalc();
 
 	layer[0] = TC0100SCN_bottomlayer(0);
 	layer[1] = layer[0]^1;
@@ -1338,18 +1207,6 @@ void taitof2_pri_roz_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh
 
 	TC0100SCN_tilemap_update();
 
-	palette_init_used_colors();
-	taitof2_update_palette();
-	palette_used_colors[0] |= PALETTE_COLOR_VISIBLE;
-	{
-		int i;
-
-		/* fix roz transparency, but this could compromise the background color */
-		for (i = 0;i < 4;i++)
-			palette_used_colors[16 * (roz_base_color+i)] = PALETTE_COLOR_TRANSPARENT;
-	}
-	palette_recalc();
-
 	layer[0] = TC0100SCN_bottomlayer(0);
 	layer[1] = layer[0]^1;
 	layer[2] = 2;
@@ -1414,12 +1271,6 @@ void thundfox_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	taitof2_handle_sprite_buffering();
 
 	TC0100SCN_tilemap_update();
-
-	palette_init_used_colors();
-	taitof2_update_palette();
-	palette_used_colors[0] |= PALETTE_COLOR_VISIBLE;
-	palette_recalc();
-
 
 	layer[0][0] = TC0100SCN_bottomlayer(0);
 	layer[0][1] = layer[0][0]^1;
@@ -1549,17 +1400,13 @@ void metalb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	TC0480SCP_tilemap_update();
 
-	palette_init_used_colors();
-	taitof2_update_palette();
-	palette_used_colors[0] |= PALETTE_COLOR_VISIBLE;
 	{
-		int i;
+//		int i;
 
 		/* fix TC0480SCP transparency, but this could compromise the background color */
-		for (i = 0;i < Machine->drv->total_colors;i += 16)
-			palette_used_colors[i] = PALETTE_COLOR_TRANSPARENT;
+//		for (i = 0;i < Machine->drv->total_colors;i += 16)
+//			palette_used_colors[i] = PALETTE_COLOR_TRANSPARENT;
 	}
-	palette_recalc();
 
 	priority = TC0480SCP_get_bg_priority();
 
@@ -1627,17 +1474,13 @@ void deadconx_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	TC0480SCP_tilemap_update();
 
-	palette_init_used_colors();
-	taitof2_update_palette();
-	palette_used_colors[0] |= PALETTE_COLOR_VISIBLE;
 	{
-		int i;
+//		int i;
 
 		/* fix TC0480SCP transparency, but this could compromise the background color */
-		for (i = 0;i < Machine->drv->total_colors;i += 16)
-			palette_used_colors[i] = PALETTE_COLOR_TRANSPARENT;
+//		for (i = 0;i < Machine->drv->total_colors;i += 16)
+//			palette_used_colors[i] = PALETTE_COLOR_TRANSPARENT;
 	}
-	palette_recalc();
 
 	priority = TC0480SCP_get_bg_priority();
 

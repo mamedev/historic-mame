@@ -653,21 +653,6 @@ void decocass_vh_stop (void)
 	sprite_dirty = NULL;
 }
 
-static void setup_palette(int full_refresh)
-{
-#if 0
-	int color;
-
-	palette_init_used_colors();
-	palette_used_colors[0] = PALETTE_COLOR_TRANSPARENT;
-	for (color = 1; color < 32; color++)
-		palette_used_colors[color] = PALETTE_COLOR_USED;
-#endif
-
-	if (palette_recalc() || full_refresh)
-		tilemap_mark_all_tiles_dirty( ALL_TILEMAPS );
-}
-
 void decocass_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int scrollx, scrolly_l, scrolly_r;
@@ -715,7 +700,6 @@ void decocass_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				center_v_shift);
 	}
 #endif
-	setup_palette( full_refresh );
 
 	fillbitmap( bitmap, Machine->pens[0], &Machine->visible_area );
 
@@ -744,8 +728,6 @@ void decocass_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	tilemap_set_scrollx( bg_tilemap_r, 0, scrollx );
 	tilemap_set_scrolly( bg_tilemap_r, 0, scrolly_r );
-
-	tilemap_update( ALL_TILEMAPS );
 
 	if (mode_set & 0x20)
 	{

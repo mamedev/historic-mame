@@ -524,8 +524,8 @@ static struct GfxLayout charlayout =
 
 static struct GfxDecodeInfo othunder_gfxdecodeinfo[] =
 {
-	{ REGION_GFX2, 0, &tile16x8_layout,  0, 256 },	/* sprite parts */
-	{ REGION_GFX1, 0, &charlayout,  0, 256 },	/* sprites & playfield */
+	{ REGION_GFX2, 0, &tile16x8_layout, 0, 256 },	/* sprite parts */
+	{ REGION_GFX1, 0, &charlayout,      0, 256 },	/* sprites & playfield */
 	{ -1 } /* end of array */
 };
 
@@ -584,10 +584,10 @@ static struct MachineDriver machine_driver_othunder =
 	40*8, 32*8, { 0*8, 40*8-1, 2*8, 32*8-1 },
 
 	othunder_gfxdecodeinfo,
-	4096, 4096,
+	4096, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	othunder_vh_start,
 	othunder_vh_stop,

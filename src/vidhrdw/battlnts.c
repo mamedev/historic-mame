@@ -79,8 +79,6 @@ void battlnts_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
 
 	K007342_tilemap_update();
 
-	palette_recalc();
-
 	K007342_tilemap_draw( bitmap, 0, TILEMAP_IGNORE_TRANSPARENCY ,0);
 	K007420_sprites_draw( bitmap );
 	K007342_tilemap_draw( bitmap, 0, 1 | TILEMAP_IGNORE_TRANSPARENCY ,0);

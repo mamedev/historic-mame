@@ -14,9 +14,8 @@
 void hcastle_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void hcastle_vh_screenrefresh (struct osd_bitmap *bitmap,int full_refresh);
 int hcastle_vh_start (void);
-void hcastle_vh_stop (void);
 
-extern unsigned char *hcastle_pf1_videoram,*hcastle_pf2_videoram;
+extern data8_t *hcastle_pf1_videoram,*hcastle_pf2_videoram;
 
 WRITE_HANDLER( hcastle_pf1_video_w );
 WRITE_HANDLER( hcastle_pf2_video_w );
@@ -312,7 +311,7 @@ static const struct MachineDriver machine_driver_hcastle =
 			ignore_interrupt,0
 		}
 	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	59, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second verified by comparison with real board */
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 
@@ -320,14 +319,13 @@ static const struct MachineDriver machine_driver_hcastle =
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 
 	gfxdecodeinfo,
-//	128, 2*8*16*16,	/* the palette only has 128 colors, but need to use 256 to */
-	256, 2*8*16*16,	/* use PALETTE_COLOR_TRANSPARENT from the dynamic palette. */
+	128, 2*8*16*16,
 	hcastle_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_BUFFERS_SPRITERAM,
+	VIDEO_TYPE_RASTER  | VIDEO_BUFFERS_SPRITERAM,
 	0,
 	hcastle_vh_start,
-	hcastle_vh_stop,
+	0,
 	hcastle_vh_screenrefresh,
 
 	/* sound hardware */

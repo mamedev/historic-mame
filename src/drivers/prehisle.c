@@ -263,10 +263,10 @@ static const struct MachineDriver machine_driver_prehisle =
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 
 	gfxdecodeinfo,
-	1024, 1024,
+	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	prehisle_vh_start,
 	prehisle_vh_stop,

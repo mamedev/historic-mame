@@ -302,5 +302,4 @@ ROM_START( pastelgl )
 ROM_END
 
 
-//     YEAR,     NAME,   PARENT,  MACHINE,    INPUT,     INIT,    MONITOR, COMPANY, FULLNAME, FLAGS
-GAMEX( 1985, pastelgl,        0, pastelgl, pastelgl, pastelgl,       ROT0, "Nichibutsu", "Pastel Gal (Japan)", 0 )
+GAME( 1985, pastelgl, 0, pastelgl, pastelgl, pastelgl, ROT0, "Nichibutsu", "Pastel Gal (Japan)" )

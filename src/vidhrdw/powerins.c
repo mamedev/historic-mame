@@ -340,67 +340,6 @@ static void powerins_draw_sprites(struct osd_bitmap *bitmap)
 
 
 
-static void powerins_mark_sprite_colors(void)
-{
-	int i,col,colmask[0x100];
-
-	unsigned int *pen_usage	=	Machine->gfx[2]->pen_usage;
-	int total_elements		=	Machine->gfx[2]->total_elements;
-	int color_codes_start	=	Machine->drv->gfxdecodeinfo[2].color_codes_start;
-	int total_color_codes	=	Machine->drv->gfxdecodeinfo[2].total_color_codes;
-
-	data16_t *source = spriteram16 + 0x8000/2;
-	data16_t *finish = spriteram16 + 0x9000/2;
-
-	int xmin = Machine->visible_area.min_x;
-	int xmax = Machine->visible_area.max_x;
-	int ymin = Machine->visible_area.min_y;
-	int ymax = Machine->visible_area.max_y;
-
-	memset(colmask, 0, sizeof(colmask));
-
-	for ( ; source < finish; source += 16 )
-	{
-		int x, y;
-
-		int	attr	=	source[ 0x0/2 ];
-		int	size	=	source[ 0x2/2 ];
-		int	code	=	source[ 0x6/2 ];
-		int	sx		=	source[ 0x8/2 ];
-		int	sy		=	source[ 0xc/2 ];
-		int	color	=	source[ 0xe/2 ] % total_color_codes;
-
-		int	dimx	=	((size >> 0) & 0xf ) + 1;
-		int	dimy	=	((size >> 4) & 0xf ) + 1;
-
-		if (!(attr&1)) continue;
-
-		SIGN_EXTEND_POS(sx)
-		SIGN_EXTEND_POS(sy)
-
-		sx += 32;
-
-		code = (code & 0x7fff) + ( (size & 0x0100) << 7 );
-
-		for (x = 0 ; x < dimx*16 ; x+=16)
-		{
-			for (y = 0 ; y < dimy*16 ; y+=16)
-			{
-				if (((sx+x+15) < xmin) || ((sx+x) > xmax) ||
-					((sy+y+15) < ymin) || ((sy+y) > ymax))	continue;
-
-				colmask[color] |= pen_usage[(code++) % total_elements];
-			}
-		}
-	}
-
-	for (col = 0; col < total_color_codes; col++)
-	 for (i = 0; i < 15; i++)	// pen 15 is transparent
-	  if (colmask[col] & (1 << i)) palette_used_colors[16 * col + i + color_codes_start] = PALETTE_COLOR_USED;
-}
-
-
-
 /***************************************************************************
 
 
@@ -436,16 +375,8 @@ if (keyboard_pressed(KEYCODE_Z))
 }
 #endif
 
-	tilemap_update(ALL_TILEMAPS);
-
-	palette_init_used_colors();
-
-	powerins_mark_sprite_colors();
-
-	palette_recalc();
-
 	if (layers_ctrl&1)		tilemap_draw(bitmap, tilemap_0, 0, 0);
-	else					fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
+	else					fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 	if (layers_ctrl&8)		powerins_draw_sprites(bitmap);
 	if (layers_ctrl&2)		tilemap_draw(bitmap, tilemap_1, 0, 0);
 }

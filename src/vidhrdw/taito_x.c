@@ -34,62 +34,6 @@ void superman_vh_stop (void)
 
 /**************************************************************************/
 
-static void superman_update_palette(int bankbase)
-{
-	UINT16 palette_map[32]; /* range of color table is 0-31 */
-	int i,j,tile,color;
-
-	memset (palette_map, 0, sizeof (palette_map));
-
-	/* Find colors used in the background tile plane */
-	for (i=0; i<0x400/2; i+=0x40/2)
-	{
-		for (j=i; j<(i+0x40/2); j++)
-		{
-			color = 0;
-
-			tile = supes_videoram[0x800/2 + bankbase + j] & tilemask;
-			if (tile)
-				color = supes_videoram[0xc00/2 + bankbase + j] >> 11;
-
-			palette_map[color] |= Machine->gfx[0]->pen_usage[tile];
-		}
-	}
-
-	/* Find colors used in the sprite plane */
-	for (i=(0x3fe/2); i>=0; i--)
-	{
-		color = 0;
-
-		tile = supes_videoram[i + bankbase] & tilemask;
-		if (tile)
-			color = supes_videoram[0x400/2 + bankbase + i] >> 11;
-
-		palette_map[color] |= Machine->gfx[0]->pen_usage[tile];
-	}
-
-	palette_init_used_colors();
-
-	/* Now tell the palette system about those colors */
-	for (i=0; i<32; i++)
-	{
-		int usage = palette_map[i];
-
-		if (usage)
-		{
-			for (j=1; j<16; j++)
-				if (palette_map[i] & (1 << j))
-					palette_used_colors[i * 16 + j] = PALETTE_COLOR_VISIBLE;
-		}
-	}
-
-	/* background */
-	palette_used_colors[0x1f0] = PALETTE_COLOR_VISIBLE;
-
-	palette_recalc();
-}
-
-
 static void superman_draw_tilemap (struct osd_bitmap *bitmap,int bankbase,int attribfix,int cocktail)
 {
 	int i,j;
@@ -227,9 +171,6 @@ void superman_vh_screenrefresh (struct osd_bitmap *bitmap,int full_refresh)
 
 	/* cocktail mode */
 	cocktail = supes_attribram[ 0x600/2 ] &0x40;
-
-	/* update palette */
-	superman_update_palette (bankbase);
 
 	fillbitmap (bitmap,Machine->pens[0x1f0],&Machine->visible_area);
 

@@ -119,10 +119,8 @@ void meadows_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int 	i;
 
-	if (palette_recalc() || full_refresh)
-	{
+	if (full_refresh)
 		memset(dirtybuffer,1,SCR_VERT * SCR_HORZ);
-	}
 
     /* the first two rows are invisible */
 	for (i = 0; i < SCR_VERT * SCR_HORZ; i++)

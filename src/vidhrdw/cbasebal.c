@@ -54,9 +54,6 @@ void cbasebal_vh_stop(void)
 
 int cbasebal_vh_start(void)
 {
-	int i;
-
-
 	cbasebal_textram = malloc(0x1000);
 	cbasebal_scrollram = malloc(0x1000);
 
@@ -75,29 +72,6 @@ int cbasebal_vh_start(void)
 				color_code * Machine->gfx[gfxn]->color_granularity
 #define GFX_COLOR_CODES(gfxn) Machine->gfx[gfxn]->total_colors
 #define GFX_ELEM_COLORS(gfxn) Machine->gfx[gfxn]->color_granularity
-
-	palette_init_used_colors();
-	/* chars */
-	for (i = 0;i < GFX_COLOR_CODES(0);i++)
-	{
-		memset(&palette_used_colors[COLORTABLE_START(0,i)],
-				PALETTE_COLOR_USED,
-				GFX_ELEM_COLORS(0)-1);
-	}
-	/* bg tiles */
-	for (i = 0;i < GFX_COLOR_CODES(1);i++)
-	{
-		memset(&palette_used_colors[COLORTABLE_START(1,i)],
-				PALETTE_COLOR_USED,
-				GFX_ELEM_COLORS(1));
-	}
-	/* sprites */
-	for (i = 0;i < GFX_COLOR_CODES(2);i++)
-	{
-		memset(&palette_used_colors[COLORTABLE_START(2,i)],
-				PALETTE_COLOR_VISIBLE,
-				GFX_ELEM_COLORS(2)-1);
-	}
 
 	return 0;
 }
@@ -227,10 +201,6 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 
 void cbasebal_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	tilemap_update(ALL_TILEMAPS);
-
-	palette_recalc();
-
 	if (bg_on)
 		tilemap_draw(bitmap,bg_tilemap,0,0);
 	else

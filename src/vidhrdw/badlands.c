@@ -22,13 +22,13 @@ int badlands_vh_start(void)
 		0,			/* index to which gfx system */
 		64,32,		/* size of the playfield in tiles (x,y) */
 		1,64,		/* tile_index = x * xmult + y * ymult (xmult,ymult) */
-	
+
 		0x00,		/* index of palette base */
 		0x80,		/* maximum number of colors */
 		0,			/* color XOR for shadow effect (if any) */
 		0,			/* latch mask */
 		0,			/* transparent pen mask */
-	
+
 		0x11fff,	/* tile data index mask */
 		0x0e000,	/* tile data color mask */
 		0,			/* tile data hflip mask */
@@ -66,12 +66,12 @@ int badlands_vh_start(void)
 		{{ 0,0,0,0x0008 }},	/* mask for the priority */
 		{{ 0 }},			/* mask for the neighbor */
 		{{ 0 }},			/* mask for absolute coordinates */
-		
+
 		{{ 0 }},			/* mask for the ignore value */
 		0,					/* resulting value to indicate "ignore" */
 		0					/* callback routine for ignored entries */
 	};
-	
+
 	UINT32 *pflookup;
 	int i, size;
 
@@ -82,7 +82,7 @@ int badlands_vh_start(void)
 	/* initialize the motion objects */
 	if (!atarimo_init(0, &modesc))
 		goto cant_create_mo;
-	
+
 	/* modify the code bits in the playfield lookup to handle our banking */
 	pflookup = ataripf_get_lookup(0, &size);
 	for (i = 0; i < size; i++)
@@ -94,15 +94,6 @@ int badlands_vh_start(void)
 		ATARIPF_LOOKUP_SET_CODE(pflookup[i], code);
 	}
 
-	/* if we are palette reducing, do the simple thing by marking everything used except for
-	 * the transparent sprite and alpha colors; this should give some leeway for machines
-	 * that can't give up all 256 colors */
-	if (palette_used_colors)
-	{
-		memset(palette_used_colors, PALETTE_COLOR_USED, Machine->drv->total_colors * sizeof(UINT8));
-		for (i = 0; i < 8; i++)
-			palette_used_colors[0x80 + i * 16] = PALETTE_COLOR_TRANSPARENT;
-	}
 	return 0;
 
 	/* error cases */
@@ -156,7 +147,7 @@ static int overrender_callback(struct ataripf_overrender_data *data, int state)
 		/* if the priority is 1, we don't need to overrender */
 		if (data->mopriority == 1)
 			return OVERRENDER_NONE;
-		
+
 		/* by default, draw anywhere the MO is non-zero */
 		data->drawmode = TRANSPARENCY_PENS;
 		data->drawpens = 0x00ff;
@@ -176,10 +167,6 @@ static int overrender_callback(struct ataripf_overrender_data *data, int state)
 
 void badlands_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
-	/* update the palette, and mark things dirty if we need to */
-	if (palette_recalc())
-		ataripf_invalidate(0);
-
 	/* draw the layers */
 	ataripf_render(0, bitmap);
 	atarimo_render(0, bitmap, overrender_callback, NULL);

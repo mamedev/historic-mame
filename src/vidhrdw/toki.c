@@ -161,81 +161,6 @@ WRITE16_HANDLER( toki_background2_videoram16_w )
 		tilemap_mark_tile_dirty(foreground_layer,offset);
 }
 
-/**************************************************************************/
-
-void toki_mark_sprite_colours(void)
-{
-	UINT16 palette_map[16*4],usage;
-	data16_t *sprite_word;
-	int i,code,color,offs;
-
-	memset (palette_map, 0, sizeof (palette_map));
-
-	/* sprites */
-	for (offs = 0;offs < spriteram_size / 2;offs += 4)
-	{
-		sprite_word = &buffered_spriteram16[offs];
-
-		if ((sprite_word[2] != 0xf000) && (sprite_word[0] != 0xffff))
-		{
-			color = sprite_word[1] >> 12;
-			code  = (sprite_word[1] & 0xfff) + ((sprite_word[2] & 0x8000) >> 3);
-			palette_map[color] |= Machine->gfx[1]->pen_usage[code];
-		}
-	}
-
-	/* expand it */
-	for (color = 0; color < 16 * 4; color++)
-	{
-		usage = palette_map[color];
-
-		if (usage)
-		{
-			for (i = 0; i < 15; i++)
-				if (usage & (1 << i))
-					palette_used_colors[color * 16 + i] = PALETTE_COLOR_USED;
-			palette_used_colors[color * 16 + 15] = PALETTE_COLOR_TRANSPARENT;
-		}
-	}
-}
-
-void tokib_mark_sprite_colours (void)
-{
-	UINT16 palette_map[16*4],usage;
-	data16_t *sprite_word;
-	int i,code,color,offs;
-
-	memset (palette_map, 0, sizeof (palette_map));
-
-	/* sprites */
-	for (offs = 0;offs < spriteram_size / 2;offs += 4)
-	{
-		sprite_word = &buffered_spriteram16[offs];
-
-		if (sprite_word[0] == 0xf100)
-			break;
-
-		color = sprite_word[2] >> 12;
-		code  = sprite_word[1] & 0x1fff;
-		palette_map[color] |= Machine->gfx[1]->pen_usage[code];
-	}
-
-	/* expand it */
-	for (color = 0; color < 16 * 4; color++)
-	{
-		usage = palette_map[color];
-
-		if (usage)
-		{
-			for (i = 0; i < 15; i++)
-				if (usage & (1 << i))
-					palette_used_colors[color * 16 + i] = PALETTE_COLOR_USED;
-			palette_used_colors[color * 16 + 15] = PALETTE_COLOR_TRANSPARENT;
-		}
-	}
-}
-
-
 /***************************************************************************
 					SPRITES
 
@@ -396,11 +321,6 @@ void toki_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	flip_screen_set((toki_scrollram16[0x28]&0x8000)==0);
 
-	tilemap_update(ALL_TILEMAPS);
-	palette_init_used_colors();
-	toki_mark_sprite_colours();
-	palette_recalc();
-
 	if (toki_scrollram16[0x28]&0x100) {
 		tilemap_draw(bitmap,background_layer,TILEMAP_IGNORE_TRANSPARENCY,0);
 		tilemap_draw(bitmap,foreground_layer,0,0);
@@ -420,11 +340,6 @@ void tokib_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	tilemap_set_scrollx( background_layer, 0, toki_scrollram16[1]-0x103 );
 	tilemap_set_scrolly( foreground_layer, 0, toki_scrollram16[2]+1 );
 	tilemap_set_scrollx( foreground_layer, 0, toki_scrollram16[3]-0x101 );
-
-	tilemap_update(ALL_TILEMAPS);
-	palette_init_used_colors();
-	tokib_mark_sprite_colours();
-	palette_recalc();
 
 	if (toki_scrollram16[3]&0x2000) {
 		tilemap_draw(bitmap,background_layer,TILEMAP_IGNORE_TRANSPARENCY,0);

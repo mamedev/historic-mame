@@ -367,7 +367,7 @@ static const struct MachineDriver machine_driver_battlnts =
 	128, 128,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	battlnts_vh_start,
 	battlnts_vh_stop,

@@ -7,9 +7,8 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "machine/segacrpt.h"
 
-/* in machine/segacrpt.c */
-void suprloco_decode(void);
 
 
 extern unsigned char *spriteram;
@@ -400,24 +399,6 @@ void senjyo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		tilemap_set_scrollx(bg3_tilemap,0,scrollx);
 		tilemap_set_scrolly(bg3_tilemap,0,scrolly);
 	}
-
-	tilemap_update(ALL_TILEMAPS);
-
-	palette_init_used_colors();
-//	mark_sprite_colors();
-	for (i = 320; i < 384; i++)
-	{
-		if (i % 8 != 0)
-			palette_used_colors[i] = PALETTE_COLOR_USED;
-	}
-	for (i = 384; i < 400; i++)
-	{
-		palette_used_colors[i] = PALETTE_COLOR_USED;
-	}
-	palette_used_colors[400] = PALETTE_COLOR_USED;
-	palette_used_colors[401] = PALETTE_COLOR_USED;
-
-	palette_recalc();
 
 	draw_bgbitmap(bitmap, full_refresh);
 	draw_sprites(bitmap,0);

@@ -1272,9 +1272,6 @@ void victory_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	int count = 0;
 	int x, y;
 
-	/* recalc the palette */
-	palette_recalc();
-
 	/* update the foreground & background */
 	update_foreground();
 	update_background();

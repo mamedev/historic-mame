@@ -94,15 +94,16 @@ extern const struct IO_WritePort frogger_sound_writeport[];
 
 extern struct GfxDecodeInfo galaxian_gfxdecodeinfo[];
 
+void galaxian_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void scramble_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void mariner_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void frogger_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 WRITE_HANDLER( galaxian_videoram_w );
 READ_HANDLER( galaxian_videoram_r );
 WRITE_HANDLER( galaxian_stars_enable_w );
-WRITE_HANDLER( scramble_background_blue_w );
 
-void init_scobra(void);
+void init_scramble_ppi(void);
+void init_atlantis(void);
 void init_scramble(void);
 void init_scrambls(void);
 void init_theend(void);
@@ -197,7 +198,6 @@ static MEMORY_WRITE_START( scramble_writemem )
 	{ 0x5080, 0x50ff, MWA_RAM },
 	{ 0x6801, 0x6801, interrupt_enable_w },
 	{ 0x6802, 0x6802, scramble_coin_counter_1_w },
-	{ 0x6803, 0x6803, scramble_background_blue_w },
 	{ 0x6804, 0x6804, galaxian_stars_enable_w },
 	{ 0x6806, 0x6806, galaxian_flip_screen_x_w },
 	{ 0x6807, 0x6807, galaxian_flip_screen_y_w },
@@ -1059,7 +1059,7 @@ static struct AY8910interface triplep_ay8910_interface =
 #define hotshock_ay8910_interface	scobra_ay8910_interface
 
 
-#define DRIVER_2CPU(NAME, GFXDECODE, MAINMEM, SOUND, VHSTART, COLORPROM)	\
+#define DRIVER_2CPU(NAME, GFXDECODE, MAINMEM, SOUND, VHSTART, BACKCOLOR, COLORPROM)	\
 static const struct MachineDriver machine_driver_##NAME =		\
 {																\
 	/* basic machine hardware */								\
@@ -1084,7 +1084,7 @@ static const struct MachineDriver machine_driver_##NAME =		\
 	/* video hardware */										\
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },					\
 	GFXDECODE##_gfxdecodeinfo,									\
-	32+64+2+2,8*4,	/* 32 for characters, 64 for stars, 2 for bullets, 2 for background */	\
+	32+64+2+BACKCOLOR,8*4,	/* 32 for characters, 64 for stars, 2 for bullets, 0/1 for background */	\
 	COLORPROM##_vh_convert_color_prom,							\
 																\
 	VIDEO_TYPE_RASTER,											\
@@ -1103,16 +1103,16 @@ static const struct MachineDriver machine_driver_##NAME =		\
 	}															\
 }
 
-/*			NAME      GFXDECODE  MAINMEM   SOUND     VHSTART   CONV_COLORPROM */
-DRIVER_2CPU(scramble, galaxian,  scramble, scobra,   scramble, scramble);
-DRIVER_2CPU(theend,   galaxian,  scramble, scobra,   theend,   scramble);
-DRIVER_2CPU(froggers, galaxian,  scramble, frogger,  froggers, frogger);
-DRIVER_2CPU(mars,     galaxian,  mars,     scobra,   scramble, scramble);
-DRIVER_2CPU(devilfsh, devilfsh,  mars,     scobra,   scramble, scramble);
-DRIVER_2CPU(newsin7,  newsin7,   newsin7,  scobra,   scramble, scramble);
-DRIVER_2CPU(ckongs,   galaxian,  ckongs,   scobra,   ckongs,   scramble);
-DRIVER_2CPU(hotshock, galaxian,  hotshock, hotshock, pisces,   scramble);
-DRIVER_2CPU(cavelon,  galaxian,  scramble, scobra,   ckongs,   scramble);
+/*			NAME      GFXDECODE  MAINMEM   SOUND     VHSTART   BACKCOLOR, CONV_COLORPROM */
+DRIVER_2CPU(scramble, galaxian,  scramble, scobra,   scramble, 1,         scramble);
+DRIVER_2CPU(theend,   galaxian,  scramble, scobra,   theend,   0,         galaxian);
+DRIVER_2CPU(froggers, galaxian,  scramble, frogger,  froggers, 1,         frogger);
+DRIVER_2CPU(mars,     galaxian,  mars,     scobra,   scramble, 0,         galaxian);
+DRIVER_2CPU(devilfsh, devilfsh,  mars,     scobra,   scramble, 0,         galaxian);
+DRIVER_2CPU(newsin7,  newsin7,   newsin7,  scobra,   scramble, 0,         galaxian);
+DRIVER_2CPU(ckongs,   galaxian,  ckongs,   scobra,   ckongs,   0,         galaxian);
+DRIVER_2CPU(hotshock, galaxian,  hotshock, hotshock, pisces,   0,         galaxian);
+DRIVER_2CPU(cavelon,  galaxian,  scramble, scobra,   ckongs,   0,         galaxian);
 
 /* Triple Punch and Mariner are different - only one CPU, one 8910 */
 static const struct MachineDriver machine_driver_triplep =
@@ -1133,8 +1133,8 @@ static const struct MachineDriver machine_driver_triplep =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	galaxian_gfxdecodeinfo,
-	32+64+2+2,8*4,	/* 32 for characters, 64 for stars, 2 for bullets, 2 for background */	\
-	scramble_vh_convert_color_prom,
+	32+64+2,8*4,	/* 32 for characters, 64 for stars, 2 for bullets */
+	galaxian_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
 	0,
@@ -1218,8 +1218,8 @@ static const struct MachineDriver machine_driver_hunchbks =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	galaxian_gfxdecodeinfo,
-	32+64+2+2,8*4,	/* 32 for characters, 64 for stars, 2 for bullets, 2 for background */	\
-	scramble_vh_convert_color_prom,
+	32+64+2,8*4,	/* 32 for characters, 64 for stars, 2 for bullets */
+	galaxian_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
 	0,
@@ -1649,22 +1649,22 @@ ROM_START( cavelon )
 ROM_END
 
 
-GAME( 1981, scramble, 0,        scramble, scramble, scramble, ROT90, "Konami", "Scramble" )
-GAME( 1981, scrambls, scramble, scramble, scramble, scrambls, ROT90, "[Konami] (Stern license)", "Scramble (Stern)" )
-GAME( 1981, atlantis, 0,        scramble, atlantis, scobra,   ROT90, "Comsoft", "Battle of Atlantis (set 1)" )
-GAME( 1981, atlants2, atlantis, scramble, atlantis, scobra,   ROT90, "Comsoft", "Battle of Atlantis (set 2)" )
-GAME( 1980, theend,   0,        theend,   theend,   theend,   ROT90, "Konami", "The End" )
-GAME( 1980, theends,  theend,   theend,   theend,   theend,   ROT90, "[Konami] (Stern license)", "The End (Stern)" )
-GAME( 1981, froggers, frogger,  froggers, froggers, froggers, ROT90, "bootleg", "Frog" )
-GAME( 1982, amidars,  amidar,   scramble, amidars,  scobra,   ROT90, "Konami", "Amidar (Scramble hardware)" )
-GAME( 1982, triplep,  0,        triplep,  triplep,  scobra,   ROT90, "KKI", "Triple Punch" )
-GAME( 1982, knockout, triplep,  triplep,  triplep,  scobra,   ROT90, "KKK", "Knock Out!!" )
-GAME( 1981, mariner,  0,        mariner,  scramble, mariner,  ROT90, "Amenip", "Mariner" )
-GAME( 1981, 800fath,  mariner,  mariner,  scramble, mariner,  ROT90, "Amenip (US Billiards Inc. license)", "800 Fathoms" )
-GAME( 1981, ckongs,   ckong,    ckongs,   ckongs,   ckongs,   ROT90, "bootleg", "Crazy Kong (Scramble hardware)" )
-GAME( 1981, mars,     0,        mars,     mars,     mars,     ROT90, "Artic", "Mars" )
-GAME( 1982, devilfsh, 0,        devilfsh, devilfsh, mars,     ROT90, "Artic", "Devil Fish" )
-GAMEX(1983, newsin7,  0,        newsin7,  newsin7,  mars,     ROT90, "ATW USA, Inc.", "New Sinbad 7", GAME_IMPERFECT_COLORS )
-GAME( 1982, hotshock, 0,        hotshock, hotshock, hotshock, ROT90, "E.G. Felaco", "Hot Shocker" )
-GAME( 1983, hunchbks, hunchbak, hunchbks, hunchbks, scobra,   ROT90, "Century", "Hunchback (Scramble hardware)" )
-GAME( 1983, cavelon,  0,        cavelon,  cavelon,  cavelon,  ROT90, "Jetsoft", "Cavelon" )
+GAME( 1981, scramble, 0,        scramble, scramble, scramble,     ROT90, "Konami", "Scramble" )
+GAME( 1981, scrambls, scramble, scramble, scramble, scrambls,     ROT90, "[Konami] (Stern license)", "Scramble (Stern)" )
+GAME( 1981, atlantis, 0,        scramble, atlantis, atlantis,     ROT90, "Comsoft", "Battle of Atlantis (set 1)" )
+GAME( 1981, atlants2, atlantis, scramble, atlantis, atlantis,     ROT90, "Comsoft", "Battle of Atlantis (set 2)" )
+GAME( 1980, theend,   0,        theend,   theend,   theend,       ROT90, "Konami", "The End" )
+GAME( 1980, theends,  theend,   theend,   theend,   theend,       ROT90, "[Konami] (Stern license)", "The End (Stern)" )
+GAME( 1981, froggers, frogger,  froggers, froggers, froggers,     ROT90, "bootleg", "Frog" )
+GAME( 1982, amidars,  amidar,   scramble, amidars,  atlantis,     ROT90, "Konami", "Amidar (Scramble hardware)" )
+GAME( 1982, triplep,  0,        triplep,  triplep,  scramble_ppi, ROT90, "KKI", "Triple Punch" )
+GAME( 1982, knockout, triplep,  triplep,  triplep,  scramble_ppi, ROT90, "KKK", "Knock Out!!" )
+GAME( 1981, mariner,  0,        mariner,  scramble, mariner,      ROT90, "Amenip", "Mariner" )
+GAME( 1981, 800fath,  mariner,  mariner,  scramble, mariner,      ROT90, "Amenip (US Billiards Inc. license)", "800 Fathoms" )
+GAME( 1981, ckongs,   ckong,    ckongs,   ckongs,   ckongs,       ROT90, "bootleg", "Crazy Kong (Scramble hardware)" )
+GAME( 1981, mars,     0,        mars,     mars,     mars,         ROT90, "Artic", "Mars" )
+GAME( 1982, devilfsh, 0,        devilfsh, devilfsh, mars,         ROT90, "Artic", "Devil Fish" )
+GAMEX(1983, newsin7,  0,        newsin7,  newsin7,  mars,         ROT90, "ATW USA, Inc.", "New Sinbad 7", GAME_IMPERFECT_COLORS )
+GAME( 1982, hotshock, 0,        hotshock, hotshock, hotshock,     ROT90, "E.G. Felaco", "Hot Shocker" )
+GAME( 1983, hunchbks, hunchbak, hunchbks, hunchbks, scramble_ppi, ROT90, "Century", "Hunchback (Scramble hardware)" )
+GAME( 1983, cavelon,  0,        cavelon,  cavelon,  cavelon,      ROT90, "Jetsoft", "Cavelon" )

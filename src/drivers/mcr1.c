@@ -371,10 +371,10 @@ static const struct MachineDriver machine_driver_mcr1 =
 	/* video hardware */
 	32*16, 30*16, { 0*16, 32*16-1, 0*16, 30*16-1 },
 	gfxdecodeinfo,
-	32,32,
+	32, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
 	mcr12_vh_start,
 	mcr12_vh_stop,

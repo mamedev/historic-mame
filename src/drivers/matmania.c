@@ -382,7 +382,7 @@ static const struct MachineDriver machine_driver_matmania =
 	64+16, 64+16,
 	matmania_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER,
 	0,
 	matmania_vh_start,
 	matmania_vh_stop,
@@ -454,7 +454,7 @@ static const struct MachineDriver machine_driver_maniach =
 	64+16, 64+16,
 	matmania_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER,
 	0,
 	matmania_vh_start,
 	matmania_vh_stop,

@@ -5,22 +5,22 @@ IREM M72 board
 driver by Nicola Salmoria
 protection information by Nao
 
-                                   Board    Working? Protected?
-R-Type                              M72        Y         N
-Battle Chopper / Mr. Heli           M72        Y         Y
-Ninja Spirit                        M72        Y         Y
-Image Fight                         M72        Y         Y
-Legend of Hero Tonma                M72        Y         Y
-X Multiply                          M72(1)     Y         Y
-Dragon Breed                        M81        Y         Y
-R-Type II                           M82/M84(2) Y         N
-Major Title                         M84        Y         N
-Hammerin' Harry	/ Daiku no Gensan   M82(3)     Y         N
-                  Daiku no Gensan   M72(4)     Y         Y
-Ken-Go                              ?          N      Encrypted
-Pound for Pound                     M85        Y         N
-Air Duel                            M72?       Y         Y
-Gallop - Armed Police Unit          M73?(5)    Y         N
+                                   Year Board        Protected?
+R-Type                             1987  M72             N
+Battle Chopper / Mr. Heli          1987  M72             Y
+Ninja Spirit                       1988  M72             Y
+Image Fight                        1988  M72             Y
+Legend of Hero Tonma               1989  M72             Y
+X Multiply                         1989  M72(1)          Y
+Dragon Breed                       1989  M81             Y
+R-Type II                          1989  M82/M84(2)      N
+Major Title                        1990  M84             N
+Hammerin' Harry	/ Daiku no Gensan  1990  M82(3)          N
+                  Daiku no Gensan  1990  M72(4)          Y
+Pound for Pound                    1990  M85             N
+Air Duel                           1990  M72?            Y
+Gallop - Armed Police Unit         1991  M73?(5)         N
+Ken-Go                             1991  ?           Encrypted
 
 (1) different addressing PALs, so different memory map
 (2) rtype2j has M84 written on the board, but it's the same hardware as rtype2
@@ -49,6 +49,7 @@ TODO:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "machine/irem_cpu.h"
 #include "sndhrdw/m72.h"
 
 
@@ -506,7 +507,6 @@ static READ_HANDLER( poundfor_trackball_r )
 }
 
 
-
 #define CPU1_MEMORY(NAME,ROMSIZE,WORKRAM) 						\
 static MEMORY_READ_START( NAME##_readmem )						\
 	{ 0x00000, ROMSIZE-1, MRA_ROM },							\
@@ -631,6 +631,29 @@ static MEMORY_WRITE_START( hharryu_writemem )
 	{ 0xe0000, 0xe3fff, MWA_RAM },	/* work RAM */
 MEMORY_END
 
+static MEMORY_READ_START( kengo_readmem )
+	{ 0x00000, 0x7ffff, MRA_ROM },
+	{ 0xa0000, 0xa0bff, m72_palette1_r },
+	{ 0xa8000, 0xa8bff, m72_palette2_r },
+	{ 0xc0000, 0xc03ff, MRA_RAM },
+	{ 0x80000, 0x83fff, m72_videoram1_r },
+	{ 0x84000, 0x87fff, m72_videoram2_r },
+	{ 0xe0000, 0xe3fff, MRA_RAM },
+MEMORY_END
+
+static MEMORY_WRITE_START( kengo_writemem )
+	{ 0x00000, 0x7ffff, MWA_ROM },
+	{ 0xa0000, 0xa0bff, m72_palette1_w, &paletteram },
+	{ 0xa8000, 0xa8bff, m72_palette2_w, &paletteram_2 },
+	{ 0xb0000, 0xb0001, m72_irq_line_w },
+{ 0xb4000, 0xb4001, MWA_NOP },	/* ??? */
+	{ 0xbc000, 0xbc001, hharryu_spritectrl_w },
+	{ 0xc0000, 0xc03ff, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0x80000, 0x83fff, m72_videoram1_w, &m72_videoram1 },
+	{ 0x84000, 0x87fff, m72_videoram2_w, &m72_videoram2 },
+	{ 0xe0000, 0xe3fff, MWA_RAM },	/* work RAM */
+MEMORY_END
+
 static PORT_READ_START( readport )
 	{ 0x00, 0x00, input_port_0_r },
 	{ 0x01, 0x01, input_port_1_r },
@@ -701,6 +724,16 @@ static PORT_WRITE_START( hharry_writeport )
 	{ 0x82, 0x83, m72_scrollx1_w },
 	{ 0x84, 0x85, m72_scrolly2_w },
 	{ 0x86, 0x87, m72_scrollx2_w },
+PORT_END
+
+static PORT_WRITE_START( kengo_writeport )
+	{ 0x00, 0x01, m72_sound_command_w },
+	{ 0x02, 0x03, rtype2_port02_w },
+	{ 0x80, 0x81, m72_scrolly1_w },
+	{ 0x82, 0x83, m72_scrollx1_w },
+	{ 0x84, 0x85, m72_scrolly2_w },
+	{ 0x86, 0x87, m72_scrollx2_w },
+{ 0x8c, 0x8f, MWA_NOP },	/* ??? */
 PORT_END
 
 
@@ -1785,6 +1818,91 @@ INPUT_PORTS_START( gallop )
     // COIN_MODE_2
 INPUT_PORTS_END
 
+INPUT_PORTS_START( kengo )
+	PORT_START
+	JOYSTICK_1
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON4 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON3 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 )
+
+	PORT_START
+	JOYSTICK_2
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_SERVICE ) /* 0x20 is another test mode */
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x02, "2" )
+	PORT_DIPSETTING(    0x03, "3" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_DIPSETTING(    0x00, "5" )
+	PORT_DIPNAME( 0x0c, 0x0c, "Difficulty?" )
+	PORT_DIPSETTING(    0x08, "Easy" )
+	PORT_DIPSETTING(    0x0c, "Normal" )
+	PORT_DIPSETTING(    0x04, "Hard" )
+	PORT_DIPSETTING(    0x00, "Very Hard" )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, "Allow Continue" )
+	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
+
+	PORT_START
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, "Coin Mode" )
+	PORT_DIPSETTING(    0x08, "Mode 1" )
+	PORT_DIPSETTING(    0x00, "Mode 2" )
+	/* Coin Mode 1 */
+	PORT_DIPNAME( 0xf0, 0xf0, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0xa0, DEF_STR( 6C_1C ) )
+	PORT_DIPSETTING(    0xb0, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0xd0, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x10, "2 to start, 1 to continue" )
+	PORT_DIPSETTING(    0xe0, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 4C_3C ) )
+	PORT_DIPSETTING(    0xf0, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x90, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x70, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x60, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x50, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
+	/* Coin mode 2, not supported yet */
+    // COIN_MODE_2
+INPUT_PORTS_END
+
 
 
 static struct GfxLayout tilelayout =
@@ -1878,10 +1996,10 @@ static const struct MachineDriver machine_driver_rtype =
 	/* video hardware */
 	512, 512, { 8*8, (64-8)*8-1, 16*8, (64-16)*8-1 },
 	m72_gfxdecodeinfo,
-	1024, 1024,
+	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	m72_eof_callback,
 	m72_vh_start,
 	m72_vh_stop,
@@ -1922,10 +2040,10 @@ static const struct MachineDriver machine_driver_m72 =
 	/* video hardware */
 	512, 512, { 8*8, (64-8)*8-1, 16*8, (64-16)*8-1 },
 	m72_gfxdecodeinfo,
-	1024, 1024,
+	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	m72_eof_callback,
 	m72_vh_start,
 	m72_vh_stop,
@@ -1970,10 +2088,10 @@ static const struct MachineDriver machine_driver_dkgenm72 =
 	/* video hardware */
 	512, 512, { 8*8, (64-8)*8-1, 16*8, (64-16)*8-1 },
 	m72_gfxdecodeinfo,
-	1024, 1024,
+	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	m72_eof_callback,
 	m72_vh_start,
 	m72_vh_stop,
@@ -2018,10 +2136,10 @@ static const struct MachineDriver machine_driver_xmultipl =
 	/* video hardware */
 	512, 512, { 8*8, (64-8)*8-1, 16*8, (64-16)*8-1 },
 	m72_gfxdecodeinfo,
-	1024, 1024,
+	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	m72_eof_callback,
 	m72_vh_start,
 	m72_vh_stop,
@@ -2066,10 +2184,10 @@ static const struct MachineDriver machine_driver_dbreed =
 	/* video hardware */
 	512, 512, { 8*8, (64-8)*8-1, 16*8, (64-16)*8-1 },
 	m72_gfxdecodeinfo,
-	1024, 1024,
+	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	m72_eof_callback,
 	m72_vh_start,
 	m72_vh_stop,
@@ -2114,10 +2232,10 @@ static const struct MachineDriver machine_driver_rtype2 =
 	/* video hardware */
 	512, 512, { 8*8, (64-8)*8-1, 16*8, (64-16)*8-1 },
 	rtype2_gfxdecodeinfo,
-	1024, 1024,
+	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	m72_eof_callback,
 	rtype2_vh_start,
 	m72_vh_stop,
@@ -2162,10 +2280,10 @@ static const struct MachineDriver machine_driver_majtitle =
 	/* video hardware */
 	512, 512, { 8*8, (64-8)*8-1, 16*8, (64-16)*8-1 },
 	majtitle_gfxdecodeinfo,
-	1024, 1024,
+	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	m72_eof_callback,
 	majtitle_vh_start,
 	m72_vh_stop,
@@ -2210,10 +2328,10 @@ static const struct MachineDriver machine_driver_hharry =
 	/* video hardware */
 	512, 512, { 8*8, (64-8)*8-1, 16*8, (64-16)*8-1 },
 	rtype2_gfxdecodeinfo,
-	1024, 1024,
+	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	m72_eof_callback,
 	hharry_vh_start,
 	m72_vh_stop,
@@ -2258,10 +2376,10 @@ static const struct MachineDriver machine_driver_hharryu =
 	/* video hardware */
 	512, 512, { 8*8, (64-8)*8-1, 16*8, (64-16)*8-1 },
 	rtype2_gfxdecodeinfo,
-	1024, 1024,
+	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	m72_eof_callback,
 	rtype2_vh_start,
 	m72_vh_stop,
@@ -2306,10 +2424,58 @@ static const struct MachineDriver machine_driver_poundfor =
 	/* video hardware */
 	512, 512, { 8*8, (64-8)*8-1, 16*8, (64-16)*8-1 },
 	rtype2_gfxdecodeinfo,
-	1024, 1024,
+	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
+	m72_eof_callback,
+	rtype2_vh_start,
+	m72_vh_stop,
+	m72_vh_screenrefresh,
+
+	/* sound hardware */
+	SOUND_SUPPORTS_STEREO,0,0,0,
+	{
+		{
+			SOUND_YM2151,
+			&ym2151_interface
+		},
+		{
+			SOUND_DAC,
+			&dac_interface
+		}
+	}
+};
+
+static const struct MachineDriver machine_driver_kengo =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_V30,
+			16000000,	/* ?? */
+			kengo_readmem,kengo_writemem,readport,kengo_writeport,
+			m72_interrupt,256
+		},
+		{
+			CPU_Z80 | CPU_AUDIO_CPU,
+			3579545,	/* 3.579545 MHz */
+			sound_readmem,sound_writemem,rtype2_sound_readport,rtype2_sound_writeport,
+			nmi_interrupt,128	/* clocked by V1? (Vigilante) */
+								/* IRQs are generated by main Z80 and YM2151 */
+		}
+	},
+	55, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
+	poundfor_init_machine,
+
+	/* video hardware */
+	512, 512, { 8*8, (64-8)*8-1, 16*8, (64-16)*8-1 },
+	rtype2_gfxdecodeinfo,
+	1024, 0,
+	0,
+
+	VIDEO_TYPE_RASTER ,
 	m72_eof_callback,
 	rtype2_vh_start,
 	m72_vh_stop,
@@ -2951,32 +3117,6 @@ ROM_START( dkgenm72 )
 	ROM_LOAD( "gen-vo.bin",   0x00000, 0x20000, 0xd8595c66 )
 ROM_END
 
-ROM_START( kengo )
-	ROM_REGION( 0x100000, REGION_CPU1, 0 )
-	ROM_LOAD16_BYTE( "ken_d-h0.rom", 0x00001, 0x20000, 0xf4ddeea5 )
-	ROM_RELOAD(                      0xc0001, 0x20000 )
-	ROM_LOAD16_BYTE( "ken_d-l0.rom", 0x00000, 0x20000, 0x04dc0f81 )
-	ROM_RELOAD(                      0xc0000, 0x20000 )
-
-	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
-	ROM_LOAD( "ken_d-sp.rom", 0x0000, 0x10000, 0x233ca1cf )
-
-	ROM_REGION( 0x080000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "ken_m21.rom",  0x00000, 0x20000, 0xd7722f87 )	/* sprites */
-	ROM_LOAD( "ken_m22.rom",  0x20000, 0x20000, 0xa00dac85 )
-	ROM_LOAD( "ken_m31.rom",  0x40000, 0x20000, 0xe00b95a6 )
-	ROM_LOAD( "ken_m32.rom",  0x60000, 0x20000, 0x30a844c4 )
-
-	ROM_REGION( 0x080000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "ken_m51.rom",  0x00000, 0x20000, 0x1646cf4f )	/* tiles */
-	ROM_LOAD( "ken_m57.rom",  0x20000, 0x20000, 0xa9f88d90 )
-	ROM_LOAD( "ken_m66.rom",  0x40000, 0x20000, 0xe9d17645 )
-	ROM_LOAD( "ken_m64.rom",  0x60000, 0x20000, 0xdf46709b )
-
-	ROM_REGION( 0x20000, REGION_SOUND1, 0 )	/* samples */
-	ROM_LOAD( "ken_m14.rom",  0x00000, 0x20000, 0x6651e9b7 )
-ROM_END
-
 ROM_START( poundfor )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )
 	ROM_LOAD16_BYTE( "ppa-h0-b.bin", 0x00001, 0x20000, 0x50d4a2d8 )
@@ -3101,6 +3241,39 @@ ROM_START( gallop )
 	ROM_LOAD( "cc-c-v0.bin",  0x00000, 0x20000, 0x6247bade )
 ROM_END
 
+ROM_START( kengo )
+	ROM_REGION( 0x100000 * 2, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "ken_d-h0.rom", 0x00001, 0x20000, 0xf4ddeea5 )
+	ROM_RELOAD(                      0xc0001, 0x20000 )
+	ROM_LOAD16_BYTE( "ken_d-l0.rom", 0x00000, 0x20000, 0x04dc0f81 )
+	ROM_RELOAD(                      0xc0000, 0x20000 )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
+	ROM_LOAD( "ken_d-sp.rom", 0x0000, 0x10000, 0x233ca1cf )
+
+	ROM_REGION( 0x080000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "ken_m31.rom",  0x00000, 0x20000, 0xe00b95a6 )	/* sprites */
+	ROM_LOAD( "ken_m21.rom",  0x20000, 0x20000, 0xd7722f87 )
+	ROM_LOAD( "ken_m32.rom",  0x40000, 0x20000, 0x30a844c4 )
+	ROM_LOAD( "ken_m22.rom",  0x60000, 0x20000, 0xa00dac85 )
+
+	ROM_REGION( 0x080000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "ken_m51.rom",  0x00000, 0x20000, 0x1646cf4f )	/* tiles */
+	ROM_LOAD( "ken_m57.rom",  0x20000, 0x20000, 0xa9f88d90 )
+	ROM_LOAD( "ken_m66.rom",  0x40000, 0x20000, 0xe9d17645 )
+	ROM_LOAD( "ken_m64.rom",  0x60000, 0x20000, 0xdf46709b )
+
+	ROM_REGION( 0x20000, REGION_SOUND1, 0 )	/* samples */
+	ROM_LOAD( "ken_m14.rom",  0x00000, 0x20000, 0x6651e9b7 )
+ROM_END
+
+
+
+static void init_kengo(void)
+{
+	irem_cpu_decrypt(0,gunforce_decryption_table);
+}
+
 
 
 GAMEX( 1987, rtype,    0,        rtype,    rtype,    0,        ROT0,   "Irem", "R-Type (Japan)", GAME_NO_COCKTAIL )
@@ -3121,8 +3294,8 @@ GAMEX( 1990, hharry,   0,        hharry,   hharry,   0,        ROT0,   "Irem", "
 GAMEX( 1990, hharryu,  hharry,   hharryu,  hharry,   0,        ROT0,   "Irem America", "Hammerin' Harry (US)", GAME_NO_COCKTAIL )
 GAMEX( 1990, dkgensan, hharry,   hharryu,  hharry,   0,        ROT0,   "Irem", "Daiku no Gensan (Japan)", GAME_NO_COCKTAIL )
 GAMEX( 1990, dkgenm72, hharry,   dkgenm72, hharry,   dkgenm72, ROT0,   "Irem", "Daiku no Gensan (Japan, M72)", GAME_IMPERFECT_SOUND | GAME_NO_COCKTAIL )
-GAMEX( 1991, kengo,    0,        hharry,   hharry,   0,        ROT0,   "Irem", "Ken-Go", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
 GAMEX( 1990, poundfor, 0,        poundfor, poundfor, 0,        ROT270, "Irem", "Pound for Pound (World)", GAME_IMPERFECT_SOUND | GAME_NO_COCKTAIL )
 GAMEX( 1990, poundfou, poundfor, poundfor, poundfor, 0,        ROT270, "Irem America", "Pound for Pound (US)", GAME_IMPERFECT_SOUND | GAME_NO_COCKTAIL )
 GAMEX( 1990, airduel,  0,        m72,      airduel,  airduel,  ROT270, "Irem", "Air Duel (Japan)", GAME_IMPERFECT_SOUND | GAME_NO_COCKTAIL )
 GAMEX( 1991, gallop,   0,        m72,      gallop,   gallop,   ROT0,   "Irem", "Gallop - Armed police Unit (Japan)", GAME_IMPERFECT_SOUND | GAME_NO_COCKTAIL )
+GAMEX( 1991, kengo,    0,        kengo,    kengo,    kengo,    ROT0,   "Irem", "Ken-Go", GAME_NO_COCKTAIL )

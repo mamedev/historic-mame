@@ -482,7 +482,7 @@ static const struct MachineDriver machine_driver_tetrisp2 =
 	tetrisp2_gfxdecodeinfo,
 	0x8000, 0x8000,
 	0,
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	tetrisp2_vh_start,
 	0,
@@ -614,6 +614,5 @@ ROM_END
 
 ***************************************************************************/
 
-/* Better leave the Japanese set as parent as long as it's the only good dump */
-GAMEX( 1997, tetrisp2, 0,        tetrisp2, tetrisp2, 0, ROT0_16BIT, "Jaleco / The Tetris Company", "Tetris Plus 2 (World?)", GAME_NOT_WORKING | GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1997, teplus2j, tetrisp2, tetrisp2, teplus2j, 0, ROT0_16BIT, "Jaleco / The Tetris Company", "Tetris Plus 2 (Japan)", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1997, tetrisp2, 0,        tetrisp2, tetrisp2, 0, ROT0, "Jaleco / The Tetris Company", "Tetris Plus 2 (World?)", GAME_NOT_WORKING | GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1997, teplus2j, tetrisp2, tetrisp2, teplus2j, 0, ROT0, "Jaleco / The Tetris Company", "Tetris Plus 2 (Japan)", GAME_IMPERFECT_GRAPHICS )

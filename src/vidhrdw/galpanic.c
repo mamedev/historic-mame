@@ -156,11 +156,7 @@ static void draw_fgbitmap(struct osd_bitmap *bitmap)
 
 void galpanic_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	palette_recalc();
-
 	/* copy the temporary bitmap to the screen */
-	/* it's raw RGB, so it doesn't have to be recalculated even if palette_recalc() */
-	/* returns true */
 	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 
 	draw_fgbitmap(bitmap);
@@ -170,11 +166,7 @@ void galpanic_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 void comad_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	palette_recalc();
-
 	/* copy the temporary bitmap to the screen */
-	/* it's raw RGB, so it doesn't have to be recalculated even if palette_recalc() */
-	/* returns true */
 	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 
 	draw_fgbitmap(bitmap);

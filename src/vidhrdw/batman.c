@@ -22,13 +22,13 @@ int batman_vh_start(void)
 		0,			/* index to which gfx system */
 		64,64,		/* size of the playfield in tiles (x,y) */
 		64,1,		/* tile_index = x * xmult + y * ymult (xmult,ymult) */
-	
+
 		0x300,		/* index of palette base */
 		0x500,		/* maximum number of colors */
 		0,			/* color XOR for shadow effect (if any) */
 		0x003f,		/* latch mask */
 		0,			/* transparent pen mask */
-	
+
 		0x007fff,	/* tile data index mask */
 		0x4f0000,	/* tile data color mask */
 		0x008000,	/* tile data hflip mask */
@@ -41,13 +41,13 @@ int batman_vh_start(void)
 		0,			/* index to which gfx system */
 		64,64,		/* size of the playfield in tiles (x,y) */
 		64,1,		/* tile_index = x * xmult + y * ymult (xmult,ymult) */
-	
+
 		0x200,		/* index of palette base */
 		0x500,		/* maximum number of colors */
 		0,			/* color XOR for shadow effect (if any) */
 		0x3f00,		/* latch mask */
 		0x0001,		/* transparent pen mask */
-	
+
 		0x007fff,	/* tile data index mask */
 		0x4f0000,	/* tile data color mask */
 		0x008000,	/* tile data hflip mask */
@@ -85,7 +85,7 @@ int batman_vh_start(void)
 		{{ 0,0,0x0030,0 }},	/* mask for the priority */
 		{{ 0 }},			/* mask for the neighbor */
 		{{ 0 }},			/* mask for absolute coordinates */
-		
+
 		{{ 0 }},			/* mask for the ignore value */
 		0,					/* resulting value to indicate "ignore" */
 		0					/* callback routine for ignored entries */
@@ -95,7 +95,7 @@ int batman_vh_start(void)
 	{
 		2,			/* index to which gfx system */
 		64,32,		/* size of the alpha RAM in tiles (x,y) */
-	
+
 		0x000,		/* index of palette base */
 		0x100,		/* maximum number of colors */
 		0,			/* mask of the palette split */
@@ -108,15 +108,15 @@ int batman_vh_start(void)
 
 	UINT32 *pflookup, *anlookup;
 	int i, size;
-	
+
 	/* initialize the playfield */
 	if (!ataripf_init(0, &pf0desc))
 		goto cant_create_pf0;
-	
+
 	/* initialize the second playfield */
 	if (!ataripf_init(1, &pf1desc))
 		goto cant_create_pf1;
-	
+
 	/* initialize the motion objects */
 	if (!atarimo_init(0, &modesc))
 		goto cant_create_mo;
@@ -124,7 +124,7 @@ int batman_vh_start(void)
 	/* initialize the alphanumerics */
 	if (!atarian_init(0, &andesc))
 		goto cant_create_an;
-	
+
 	/* modify the playfield 0 lookup table to handle the palette bank */
 	pflookup = ataripf_get_lookup(0, &size);
 	for (i = 0; i < size; i++)
@@ -249,10 +249,10 @@ void batman_scanline_update(int scanline)
 
 static const UINT16 transparency_mask[4] =
 {
-	0xffff, 
-	0xff01, 
+	0xffff,
 	0xff01,
-	0x0001 
+	0xff01,
+	0x0001
 };
 
 static int overrender0_callback(struct ataripf_overrender_data *data, int state)
@@ -263,7 +263,7 @@ static int overrender0_callback(struct ataripf_overrender_data *data, int state)
 		/* do nothing if the MO priority is 3 */
 		if (data->mopriority == 3)
 			return OVERRENDER_NONE;
-		
+
 		/* if the MO priority is 0 and the color is 0, overrender pen 1 */
 		if (data->mopriority == 0 && (data->mocolor & 0x0f) == 0)
 		{
@@ -278,14 +278,14 @@ static int overrender0_callback(struct ataripf_overrender_data *data, int state)
 		data->maskpens = 0x0001;
 		return OVERRENDER_SOME;
 	}
-	
+
 	/* handle a query */
 	else if (state == OVERRENDER_QUERY)
 	{
 		/* if the priority is too low, don't bother */
 		if (data->pfpriority <= data->mopriority)
 			return OVERRENDER_NO;
-			
+
 		/* otherwise, look it up */
 		data->drawpens = transparency_mask[data->pfpriority];
 		return (data->drawpens != 0xffff) ? OVERRENDER_YES : OVERRENDER_NO;
@@ -302,7 +302,7 @@ static int overrender1_callback(struct ataripf_overrender_data *data, int state)
 		/* do nothing if the MO priority is 3 */
 		if (data->mopriority == 3)
 			return OVERRENDER_NONE;
-		
+
 		/* if the MO priority is 0 and the color is 0, overrender pen 1 */
 		if (data->mopriority == 0 && (data->mocolor & 0x0f) == 0)
 		{
@@ -317,14 +317,14 @@ static int overrender1_callback(struct ataripf_overrender_data *data, int state)
 		data->maskpens = 0x0001;
 		return OVERRENDER_SOME;
 	}
-	
+
 	/* handle a query */
 	else if (state == OVERRENDER_QUERY)
 	{
 		/* if the priority is too low, don't bother */
 		if (data->pfpriority <= data->mopriority)
 			return OVERRENDER_NO;
-			
+
 		/* otherwise, look it up */
 		data->drawpens = transparency_mask[data->pfpriority] | 0x0001;
 		return (data->drawpens != 0xffff) ? OVERRENDER_YES : OVERRENDER_NO;
@@ -342,20 +342,6 @@ static int overrender1_callback(struct ataripf_overrender_data *data, int state)
 
 void batman_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	/* mark the used colors */
-	palette_init_used_colors();
-	ataripf_mark_palette(0);
-	ataripf_mark_palette(1);
-	atarimo_mark_palette(0);
-	atarian_mark_palette(0);
-
-	/* update the palette, and mark things dirty if we need to */
-	if (palette_recalc())
-	{
-		ataripf_invalidate(0);
-		ataripf_invalidate(1);
-	}
-
 	/* draw the layers */
 	ataripf_render(0, bitmap);
 	ataripf_render(1, bitmap);

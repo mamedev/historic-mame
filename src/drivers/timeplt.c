@@ -53,7 +53,7 @@ WRITE_HANDLER( timeplt_colorram_w );
 WRITE_HANDLER( timeplt_flipscreen_w );
 int  timeplt_vh_start(void);
 void timeplt_vh_stop(void);
-void timeplt_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+void timeplt_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom);
 void timeplt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 int  timeplt_interrupt(void);
 

@@ -579,7 +579,7 @@ static struct MachineDriver machine_driver_chinagat =
 	gfxdecodeinfo,
 	384, 384,
 	0,
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	chinagat_vh_start,
 	0,
@@ -636,7 +636,7 @@ static struct MachineDriver machine_driver_saiyugb1 =
 	gfxdecodeinfo,
 	384, 384,
 	0,
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	chinagat_vh_start,
 	0,
@@ -687,7 +687,7 @@ static struct MachineDriver machine_driver_saiyugb2 =
 	gfxdecodeinfo,
 	384, 384,
 	0,
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	chinagat_vh_start,
 	0,
@@ -917,6 +917,6 @@ ROM_END
 
 /*   ( YEAR  NAME      PARENT    MACHINE   INPUT     INIT    MONITOR COMPANY    FULLNAME     FLAGS ) */
 GAME ( 1988, chinagat, 0,        chinagat, chinagat, 0     , ROT0, "[Technos] (Taito Romstar license)", "China Gate (US)" )
-GAME ( 1988, saiyugou, chinagat, chinagat, chinagat, 0     , ROT0, "Technos", "Sai Yo Gou Ma Roku (Japan)" )
-GAMEX( 1988, saiyugb1, chinagat, saiyugb1, chinagat, 0     , ROT0, "bootleg", "Sai Yo Gou Ma Roku (bootleg 1)", GAME_IMPERFECT_SOUND )
-GAME ( 1988, saiyugb2, chinagat, saiyugb2, chinagat, 0     , ROT0, "bootleg", "Sai Yo Gou Ma Roku (bootleg 2)" )
+GAME ( 1988, saiyugou, chinagat, chinagat, chinagat, 0     , ROT0, "Technos", "Sai Yu Gou Ma Roku (Japan)" )
+GAMEX( 1988, saiyugb1, chinagat, saiyugb1, chinagat, 0     , ROT0, "bootleg", "Sai Yu Gou Ma Roku (bootleg 1)", GAME_IMPERFECT_SOUND )
+GAME ( 1988, saiyugb2, chinagat, saiyugb2, chinagat, 0     , ROT0, "bootleg", "Sai Yu Gou Ma Roku (bootleg 2)" )

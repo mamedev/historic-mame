@@ -9,7 +9,7 @@
 		* Pit Fighter (1990)
 
 	Known bugs:
-		* slapstic not 100%
+		* none
 
 ****************************************************************************
 
@@ -49,6 +49,11 @@ extern UINT8 atarig1_pitfight;
  *************************************/
 
 static UINT8 which_input;
+
+static data16_t *bslapstic_base;
+static void *bslapstic_bank0;
+static UINT8 bslapstic_bank;
+static UINT8 bslapstic_primed;
 
 
 
@@ -117,6 +122,72 @@ static READ16_HANDLER( a2d_data_r )
 		return readinputport(1 + which_input) << 8;
 
 	return 0;
+}
+
+
+
+/*************************************
+ *
+ *	Bootleg "slapstic" handler
+ *
+ *************************************/
+
+INLINE void update_bank(int bank)
+{
+	/* if the bank has changed, copy the memory; Pit Fighter needs this */
+	if (bank != bslapstic_bank)
+	{
+		/* bank 0 comes from the copy we made earlier */
+		if (bank == 0)
+			memcpy(bslapstic_base, bslapstic_bank0, 0x2000);
+		else
+			memcpy(bslapstic_base, &bslapstic_base[bank * 0x1000], 0x2000);
+
+		/* remember the current bank */
+		bslapstic_bank = bank;
+	}
+}
+
+
+static READ16_HANDLER( pitfighb_cheap_slapstic_r )
+{
+	int result = bslapstic_base[offset & 0xfff];
+
+	/* the cheap replacement slapstic just triggers on the simple banking */
+	/* addresses; a software patch ensure that this is good enough */
+
+	/* offset 0 primes the chip */
+	if (offset == 0)
+		bslapstic_primed = 1;
+
+	/* one of 4 bankswitchers produces the result */
+	else if (bslapstic_primed)
+	{
+		if (offset == 0x42)
+			update_bank(0), bslapstic_primed = 0;
+		else if (offset == 0x52)
+			update_bank(1), bslapstic_primed = 0;
+		else if (offset == 0x62)
+			update_bank(2), bslapstic_primed = 0;
+		else if (offset == 0x72)
+			update_bank(3), bslapstic_primed = 0;
+	}
+	return result;
+}
+
+
+static void pitfighb_cheap_slapstic_init(void)
+{
+	/* install a read handler */
+	bslapstic_base = install_mem_read16_handler(0, 0x038000, 0x03ffff, pitfighb_cheap_slapstic_r);
+
+	/* allocate memory for a copy of bank 0 */
+	bslapstic_bank0 = auto_malloc(0x2000);
+	if (bslapstic_bank0)
+		memcpy(bslapstic_bank0, bslapstic_base, 0x2000);
+
+	/* not primed by default */
+	bslapstic_primed = 0;
 }
 
 
@@ -318,7 +389,7 @@ static const struct MachineDriver machine_driver_atarig1 =
 	1280,1280,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER  | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
 	atarig1_vh_start,
 	atarig1_vh_stop,
@@ -363,6 +434,17 @@ static void init_pitfight(void)
 {
 	atarigen_eeprom_default = NULL;
 	atarigen_slapstic_init(0, 0x038000, 111);
+	atarijsa_init(1, 4, 0, 0x8000);
+	atarigen_init_6502_speedup(1, 0x4159, 0x4171);
+
+	atarig1_pitfight = 1;
+}
+
+
+static void init_pitfighb(void)
+{
+	atarigen_eeprom_default = NULL;
+	pitfighb_cheap_slapstic_init();
 	atarijsa_init(1, 4, 0, 0x8000);
 	atarigen_init_6502_speedup(1, 0x4159, 0x4171);
 
@@ -581,6 +663,53 @@ ROM_START( pitfigh3 )
 ROM_END
 
 
+ROM_START( pitfighb )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 )	/* 8*64k for 68000 code */
+	ROM_LOAD16_BYTE( "pit9.bin", 0x00000, 0x10000, 0x946fb15b )
+	ROM_LOAD16_BYTE( "pit7.bin", 0x00001, 0x10000, 0xa9e7163a )
+	ROM_LOAD16_BYTE( "pit8.bin", 0x20000, 0x10000, 0xb74a8258 )
+	ROM_LOAD16_BYTE( "pit6.bin", 0x20001, 0x10000, 0x40204ecd )
+
+	ROM_REGION( 0x14000, REGION_CPU2, 0 )	/* 64k for 6502 code */
+	ROM_LOAD( "1060", 0x10000, 0x4000, 0x231d71d7 )
+	ROM_CONTINUE(     0x04000, 0xc000 )
+
+	ROM_REGION( 0x0a0000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "1017",  0x000000, 0x10000, 0xad3cfea5 ) /* playfield, planes 0-3 odd */
+	ROM_LOAD( "1018",  0x010000, 0x10000, 0x1a0f8bcf )
+	ROM_LOAD( "1021",  0x040000, 0x10000, 0x777efee3 ) /* playfield, planes 0-3 even */
+	ROM_LOAD( "1022",  0x050000, 0x10000, 0x524319d0 )
+	ROM_LOAD( "1025",  0x080000, 0x10000, 0xfc41691a ) /* playfield plane 4 */
+
+	ROM_REGION( 0x020000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "1027",  0x000000, 0x10000, 0xa59f381d ) /* alphanumerics */
+
+	ROM_REGION16_BE( 0x200000, REGION_GFX3, 0 )
+	ROM_LOAD16_BYTE( "1001", 0x000001, 0x20000, 0x3af31444 )
+	ROM_LOAD16_BYTE( "1002", 0x000000, 0x20000, 0xf1d76a4c )
+	ROM_LOAD16_BYTE( "1003", 0x040001, 0x20000, 0x28c41c2a )
+	ROM_LOAD16_BYTE( "1004", 0x040000, 0x20000, 0x977744da )
+	ROM_LOAD16_BYTE( "1005", 0x080001, 0x20000, 0xae59aef2 )
+	ROM_LOAD16_BYTE( "1006", 0x080000, 0x20000, 0xb6ccd77e )
+	ROM_LOAD16_BYTE( "1007", 0x0c0001, 0x20000, 0xba33b0c0 )
+	ROM_LOAD16_BYTE( "1008", 0x0c0000, 0x20000, 0x09bd047c )
+	ROM_LOAD16_BYTE( "1009", 0x100001, 0x20000, 0xab85b00b )
+	ROM_LOAD16_BYTE( "1010", 0x100000, 0x20000, 0xeca94bdc )
+	ROM_LOAD16_BYTE( "1011", 0x140001, 0x20000, 0xa86582fd )
+	ROM_LOAD16_BYTE( "1012", 0x140000, 0x20000, 0xefd1152d )
+	ROM_LOAD16_BYTE( "1013", 0x180001, 0x20000, 0xa141379e )
+	ROM_LOAD16_BYTE( "1014", 0x180000, 0x20000, 0x93bfcc15 )
+	ROM_LOAD16_BYTE( "1015", 0x1c0001, 0x20000, 0x9378ad0b )
+	ROM_LOAD16_BYTE( "1016", 0x1c0000, 0x20000, 0x19c3fbe0 )
+
+	ROM_REGION( 0x40000, REGION_SOUND1, 0 )	/* 256k for ADPCM samples */
+	ROM_LOAD( "1061",  0x00000, 0x10000, 0x5b0468c6 )
+	ROM_LOAD( "1062",  0x10000, 0x10000, 0xf73fe3cb )
+	ROM_LOAD( "1063",  0x20000, 0x10000, 0xaa93421d )
+	ROM_LOAD( "1064",  0x30000, 0x10000, 0x33f045d5 )
+ROM_END
+
+
 
 /*************************************
  *
@@ -588,7 +717,8 @@ ROM_END
  *
  *************************************/
 
-GAME ( 1990, hydra,    0,        atarig1, hydra,    hydra,    ROT0, "Atari Games", "Hydra" )
-GAME ( 1990, hydrap,   hydra,    atarig1, hydra,    hydrap,   ROT0, "Atari Games", "Hydra (prototype)" )
-GAMEX( 1990, pitfight, 0,        atarig1, pitfight, pitfight, ROT0, "Atari Games", "Pit Fighter (version 4)", GAME_UNEMULATED_PROTECTION )
-GAMEX( 1990, pitfigh3, pitfight, atarig1, pitfight, pitfight, ROT0, "Atari Games", "Pit Fighter (version 3)", GAME_UNEMULATED_PROTECTION )
+GAME( 1990, hydra,    0,        atarig1, hydra,    hydra,    ROT0, "Atari Games", "Hydra" )
+GAME( 1990, hydrap,   hydra,    atarig1, hydra,    hydrap,   ROT0, "Atari Games", "Hydra (prototype)" )
+GAME( 1990, pitfight, 0,        atarig1, pitfight, pitfight, ROT0, "Atari Games", "Pit Fighter (version 4)" )
+GAME( 1990, pitfigh3, pitfight, atarig1, pitfight, pitfight, ROT0, "Atari Games", "Pit Fighter (version 3)" )
+GAME( 1990, pitfighb, pitfight, atarig1, pitfight, pitfighb, ROT0, "Atari Games", "Pit Fighter (bootleg)" )

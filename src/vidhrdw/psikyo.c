@@ -298,110 +298,6 @@ static void psikyo_draw_sprites(struct osd_bitmap *bitmap/*,int priority*/)
 }
 
 
-static void psikyo_mark_sprite_colors(void)
-{
-	int count = 0;
-	int offs,i,col,colmask[0x100];
-
-	data16_t *spritelist	=	(data16_t *)spriteram32_2;
-
-	unsigned char *TILES	=	memory_region(REGION_USER1);	// Sprites LUT
-	int TILES_LEN			=	memory_region_length(REGION_USER1);
-
-	unsigned int *pen_usage	=	Machine->gfx[0]->pen_usage;
-	int total_elements		=	Machine->gfx[0]->total_elements;
-	int color_codes_start	=	Machine->drv->gfxdecodeinfo[0].color_codes_start;
-	int total_color_codes	=	Machine->drv->gfxdecodeinfo[0].total_color_codes;
-
-	int xmin = Machine->visible_area.min_x;
-	int xmax = Machine->visible_area.max_x;
-	int ymin = Machine->visible_area.min_y;
-	int ymax = Machine->visible_area.max_y;
-
-	/* Exit if sprites are disabled */
-	if ( spritelist[ BYTE_XOR_BE((0x800-2)/2) ] & 1 )	return;
-
-	memset(colmask, 0, sizeof(colmask));
-
-	for ( offs = 0/2; offs < (0x800-2)/2 ; offs += 2/2 )
-	{
-		data32_t *source;
-		int	sprite;
-
-		int	x,y,attr,code,flipx,flipy,nx,ny;
-
-		int xstart, ystart, xend, yend;
-		int xinc, yinc, dx, dy;
-		int color;
-
-		/* Get next entry in the list */
-		sprite	=	spritelist[ BYTE_XOR_BE(offs) ];
-
-		/* End of sprites list */
-		if (sprite == 0xffff)	break;
-
-		sprite	%=	0x300;
-		source	=	&spriteram32[ sprite*8/4 ];
-
-		/* Mark the pens used by the visible portion of this sprite */
-
-		y		=	source[ 0/4 ] >> 16;
-		x		=	source[ 0/4 ] & 0xffff;
-		attr	=	source[ 4/4 ] >> 16;
-		code	=	source[ 4/4 ] & 0x1ffff;
-
-		flipx	=	attr & 0x4000;
-		flipy	=	attr & 0x8000;
-
-		color	=	(attr >> 8) % total_color_codes;
-
-		nx	=	((x >> 9) & 0x7) + 1;
-		ny	=	((y >> 9) & 0x7) + 1;
-
-		x = (x & 0x1ff);
-		y = (y & 0x0ff) - (y & 0x100);
-
-		if (x >= 0x180)	x -= 0x200;
-
-		/* No need to account for screen flipping, but we have
-		   to consider sprite flipping though: */
-
-		if (flipx)	{ xstart = nx-1;  xend = -1;  xinc = -1; }
-		else		{ xstart = 0;     xend = nx;  xinc = +1; }
-
-		if (flipy)	{ ystart = ny-1;  yend = -1;   yinc = -1; }
-		else		{ ystart = 0;     yend = ny;   yinc = +1; }
-
-		for (dy = ystart; dy != yend; dy += yinc)
-		{
-			for (dx = xstart; dx != xend; dx += xinc)
-			{
-				int addr	=	(code*2) & (TILES_LEN-1);
-				int tile	=	TILES[addr+1] * 256 + TILES[addr];
-
-				if (((x+dx*16+15) >= xmin) && ((x+dx*16) <= xmax) &&
-					((y+dy*16+15) >= ymin) && ((y+dy*16) <= ymax))
-					colmask[color] |= pen_usage[tile % total_elements];
-
-				code++;
-			}
-		}
-	}
-
-	for (col = 0; col < total_color_codes; col++)
-	 for (i = 0; i < 15; i++)	// pen 15 is transparent
-	  if (colmask[col] & (1 << i))
-	  {	palette_used_colors[16 * col + i + color_codes_start] = PALETTE_COLOR_USED;
-		count++;	}
-
-#if 0
-{	char buf[80];
-	sprintf(buf,"%d",count);
-	usrintf_showmessage(buf);	}
-#endif
-}
-
-
 
 
 /***************************************************************************
@@ -506,17 +402,7 @@ if (keyboard_pressed(KEYCODE_Z))
 	}
 
 
-
-	tilemap_update(ALL_TILEMAPS);
-
-	palette_init_used_colors();
-
-	psikyo_mark_sprite_colors();
-
-	palette_recalc();
-
-
-	fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
+	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 
 	fillbitmap(priority_bitmap,0,NULL);
 

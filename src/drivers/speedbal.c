@@ -281,7 +281,7 @@ static const struct MachineDriver machine_driver_speedbal =
 	768, 768,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	speedbal_vh_start,
 	speedbal_vh_stop,

@@ -586,7 +586,7 @@ static const struct MachineDriver machine_driver_ddragon3 =
 	768,768,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	ddragon3_vh_start,
 	0,
@@ -633,7 +633,7 @@ static const struct MachineDriver machine_driver_ddrago3b =
 	768,768,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	ddragon3_vh_start,
 	0,
@@ -680,7 +680,7 @@ static const struct MachineDriver machine_driver_ctribe =
 	768,768,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	ddragon3_vh_start,
 	0,

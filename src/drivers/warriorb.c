@@ -531,7 +531,7 @@ static struct MachineDriver machine_driver_darius2d =
 	4096*2, 4096*2,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_DUAL_MONITOR | VIDEO_ASPECT_RATIO(8,3),
+	VIDEO_TYPE_RASTER  | VIDEO_DUAL_MONITOR | VIDEO_ASPECT_RATIO(8,3),
 	0,
 	darius2d_vh_start,
 	warriorb_vh_stop,
@@ -578,7 +578,7 @@ static struct MachineDriver machine_driver_warriorb =
 	4096*2, 4096*2,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_DUAL_MONITOR,
+	VIDEO_TYPE_RASTER  | VIDEO_DUAL_MONITOR | VIDEO_ASPECT_RATIO(8,3),
 	0,
 	warriorb_vh_start,
 	warriorb_vh_stop,

@@ -302,9 +302,6 @@ void starfire_video_update(int scanline, int count)
 
 void starfire_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	/* update the palette */
-	palette_recalc();
-
 	/* copy the bitmap, remapping the colors */
 	copybitmap_remap(bitmap, tmpbitmap, 0, 0, 0, 0, &Machine->visible_area, TRANSPARENCY_NONE, 0);
 }

@@ -1059,10 +1059,10 @@ static const struct MachineDriver machine_driver_pspikes =
 	/* video hardware */
 	64*8, 32*8, { 0*8+4, 44*8+4-1, 0*8, 30*8-1 },
 	pspikes_gfxdecodeinfo,
-	2048, 2048,
+	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	pspikes_vh_start,
 	0,
@@ -1103,10 +1103,10 @@ static const struct MachineDriver machine_driver_karatblz =
 	/* video hardware */
 	64*8, 32*8, { 1*8, 45*8-1, 0*8, 30*8-1 },
 	turbofrc_gfxdecodeinfo,
-	1024, 1024,
+	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	karatblz_vh_start,
 	0,
@@ -1147,10 +1147,10 @@ static const struct MachineDriver machine_driver_spinlbrk =
 	/* video hardware */
 	64*8, 32*8, { 1*8, 45*8-1, 0*8, 30*8-1 },
 	turbofrc_gfxdecodeinfo,
-	1024, 1024,
+	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	spinlbrk_vh_start,
 	0,
@@ -1191,10 +1191,10 @@ static const struct MachineDriver machine_driver_turbofrc =
 	/* video hardware */
 	64*8, 32*8, { 0*8, 44*8-1, 0*8, 30*8-1 },
 	turbofrc_gfxdecodeinfo,
-	1024, 1024,
+	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	turbofrc_vh_start,
 	0,
@@ -1236,10 +1236,10 @@ static const struct MachineDriver machine_driver_aerofgtb =
 	/* video hardware */
 	64*8, 32*8, { 0*8+12, 40*8-1+12, 0*8, 28*8-1 },
 	aerofgtb_gfxdecodeinfo,
-	1024, 1024,
+	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	turbofrc_vh_start,
 	0,
@@ -1281,10 +1281,10 @@ static const struct MachineDriver machine_driver_aerofgt =
 	/* video hardware */
 	64*8, 32*8, { 0*8, 40*8-1, 0*8, 28*8-1 },
 	aerofgt_gfxdecodeinfo,
-	1024, 1024,
+	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	turbofrc_vh_start,
 	0,

@@ -4,38 +4,21 @@
   Sotsugyo Shousho	                      (c) 1995 Mitchell Corporation
 
   But actually a Data East pcb...  Hardware is pretty close to Super Burger
-  Time but with a different graphics chip.  And I can't work out the graphics
-  format of this chip - it's used in all Data East games from 1991 onwards.
-  If you want to help decode it, look at Rohga for an easy example as the fix
-  char roms (64k) are in this format.
-
-  The game also uses a protection chip which isn't fully worked out yet.
+  Time but with a different graphics chip.
 
   Emulation by Bryan McPhail, mish@tendril.co.uk
+
+TODO:
+- The protection chip which isn't fully worked out yet, stage selection in funkyjet
+  doesn't work.
 
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/h6280/h6280.h"
-
-int  funkyjet_vh_start(void);
-void funkyjet_vh_stop(void);
-void funkyjet_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-
-WRITE16_HANDLER( funkyjet_pf2_data16_w );
-WRITE16_HANDLER( funkyjet_pf1_data16_w );
-READ16_HANDLER( funkyjet_pf1_data16_r );
-READ16_HANDLER( funkyjet_pf2_data16_r );
-
-WRITE16_HANDLER( funkyjet_control16_0_w );
-
-extern data16_t *funkyjet_pf1_data16;
-extern data16_t *funkyjet_pf2_data16;
-extern data16_t *funkyjet_pf1_row16;
-extern size_t funkyjet_pf1_data16_size;
-extern size_t funkyjet_pf2_data16_size;
-static data16_t *funkyjet_ram16;
+#include "funkyjet.h"
+#include "decocrpt.h"
 
 /******************************************************************************/
 
@@ -45,26 +28,19 @@ static WRITE16_HANDLER( funkyjet_protection16_w )
 {
 	COMBINE_DATA(&loopback[offset]);
 
-	/*if (offset != (0x502 >> 1) &&
-		offset != (0x700 >> 1) &&
-		offset != (0x70e >> 1) &&
-		offset != (0x78e >> 1))*/
+	if (offset != (0x500 >> 1) && offset != (0x70e >> 1) && offset != (0x70e >> 1) &&
+		offset != (0x100 >> 1) && offset != (0x102 >> 1) && offset != (0x502 >> 1) &&
+		offset != (0x702 >> 1) && offset != (0x50c >> 1) && offset != (0x700 >> 1) &&
+		offset != (0x10a >> 1) && offset != (0x300 >> 1) && offset != (0x304 >> 1) &&
+		offset != (0x58c >> 1) && offset != (0x18e >> 1) && offset != (0x304 >> 1) &&
+		offset != (0x78e >> 1))
 
 		logerror("CPU #0 PC %06x: warning - write unmapped control address %06x %04x\n",cpu_get_pc(),offset<<1,data);
 
-	if (offset == (0x10a >> 1))
-	{
+	if (offset == (0x10a >> 1)) {
 		soundlatch_w(0,data&0xff);
 		cpu_cause_interrupt(1,H6280_INT_IRQ1);
 	}
-
-	/*
-
-		offset==0x502 - written after joystick read
-		offset==0x700 - mirror of flipscreen byte
-		offset==0x70e - written after credits read
-		offset==0x78e - written after credits read
-	*/
 }
 
 /* Protection/IO chip 74 */
@@ -72,40 +48,60 @@ static READ16_HANDLER( funkyjet_protection16_r )
 {
 	switch (offset)
 	{
+		case 0x11e >> 1:
+			return loopback[0x500>>1];
+
 		case 0x148 >> 1: /* EOR mask for joysticks */
-			return 0;
-		case 0x00c >> 1: /* Player 1 & Player 2 joysticks & fire buttons */
+			return loopback[0x70e>>1];
+
+		case 0x1da >> 1:
+			return loopback[0x100>>1];
+		case 0x226 >> 1:
+			return loopback[0x58c>>1];
 		case 0x24c >> 1:
-			return ~(readinputport(0) + (readinputport(1) << 8));
+			return loopback[0x78e>>1];
+		case 0x250 >> 1:
+			return loopback[0x304>>1];
+		case 0x2d4 >> 1:
+			return loopback[0x102>>1];
 
 		case 0x2d8 >> 1: /* EOR mask for credits */
-			return 0;
+			return loopback[0x502>>1];
+
+		case 0x4e4 >> 1:
+			return loopback[0x702>>1];
+		case 0x562 >> 1:
+			return loopback[0x18e>>1];
+		case 0x56c >> 1:
+			return loopback[0x50c>>1];
+
+		case 0x688 >> 1: //corrupt?
+			return loopback[0x300>>1];
+		case 0x788 >> 1:
+			return loopback[0x700>>1];
+		case 0x7d4 >> 1: //unchecked?? nop in bootleg
+			return loopback[0x7da>>1];
+
+
+//		case 0x5be >> 1: //guess
+//			return loopback[0x506>>1];
+//		case 0x5ca >> 1://guess
+//			return loopback[0x302>>1];
+		case 0x5be >> 1: //guess
+		case 0x5ca >> 1://guess
+			return 1;
+
+		case 0x00c >> 1: /* Player 1 & Player 2 joysticks & fire buttons */
+			return (readinputport(0) + (readinputport(1) << 8));
 		case 0x778 >> 1: /* Credits */
 			return readinputport(2);
-
 		case 0x382 >> 1: /* DIPS */
 			return (readinputport(3) + (readinputport(4) << 8));
-
-		case 0x56c >> 1:
-			return 0;
-
 	}
- 		logerror("CPU #0 PC %06x: warning - read unmapped control address %06x\n",cpu_get_pc(),offset<<1);
 
-//	if (offset != (0x778 >> 1))
+//	if (cpu_get_pc()!=0xc0ea)	logerror("CPU #0 PC %06x: warning - read unmapped control address %06x\n",cpu_get_pc(),offset<<1);
 
-/*
-
-Protection device:
-
-	382 is the flag for whether controls are read (bne 0x800)
-
-	778 is read and written back to 502
-
-
-*/
-
-	return ~0;
+	return 0;
 }
 
 /******************************************************************************/
@@ -116,28 +112,25 @@ static MEMORY_READ16_START( funkyjet_readmem )
 	{ 0x140000, 0x143fff, MRA16_RAM },
 	{ 0x160000, 0x1607ff, MRA16_RAM },
 	{ 0x180000, 0x1807ff, funkyjet_protection16_r },
-
-	{ 0x320000, 0x321fff, funkyjet_pf1_data16_r },
-	{ 0x322000, 0x323fff, funkyjet_pf2_data16_r },
+	{ 0x320000, 0x321fff, MRA16_RAM },
+	{ 0x322000, 0x323fff, MRA16_RAM },
 	{ 0x340000, 0x340bff, MRA16_RAM },
-	{ 0x342000, 0x342bff, MRA16_RAM }, /* pf2 rowscroll */
+	{ 0x342000, 0x342bff, MRA16_RAM },
 MEMORY_END
 
 static MEMORY_WRITE16_START( funkyjet_writemem )
 	{ 0x000000, 0x07ffff, MWA16_ROM },
 	{ 0x120000, 0x1207ff, paletteram16_xxxxBBBBGGGGRRRR_word_w, &paletteram16 },
-	{ 0x140000, 0x143fff, MWA16_RAM, &funkyjet_ram16 },
+	{ 0x140000, 0x143fff, MWA16_RAM },
 	{ 0x160000, 0x1607ff, MWA16_RAM, &spriteram16 },
 	{ 0x180000, 0x1807ff, funkyjet_protection16_w },
-
 	{ 0x184000, 0x184001, MWA16_NOP },
 	{ 0x188000, 0x188001, MWA16_NOP },
-
-	{ 0x300000, 0x30000f, funkyjet_control16_0_w },
-	{ 0x320000, 0x321fff, funkyjet_pf1_data16_w, &funkyjet_pf1_data16, &funkyjet_pf1_data16_size },
-	{ 0x322000, 0x323fff, funkyjet_pf2_data16_w, &funkyjet_pf2_data16, &funkyjet_pf2_data16_size },
-	{ 0x340000, 0x340bff, MWA16_RAM, &funkyjet_pf1_row16 },
-	{ 0x342000, 0x342bff, MWA16_RAM }, /* pf2 rowscroll */
+	{ 0x300000, 0x30000f, funkyjet_control_0_w },
+	{ 0x320000, 0x321fff, funkyjet_pf1_data_w, &funkyjet_pf1_data },
+	{ 0x322000, 0x323fff, funkyjet_pf2_data_w, &funkyjet_pf2_data },
+	{ 0x340000, 0x340bff, MWA16_RAM, &funkyjet_pf1_row },
+	{ 0x342000, 0x342bff, MWA16_RAM }, /* pf2 rowscroll - unused? */
 MEMORY_END
 
 /******************************************************************************/
@@ -349,36 +342,23 @@ INPUT_PORTS_END
 
 static struct GfxLayout charlayout =
 {
-	8,8,	/* 8*8 chars */
-	4096,
-	4,		/* 4 bits per pixel  */
-	{ 0x40000*8+8, 0x40000*8, 8, 0 },
+	8,8,
+	RGN_FRAC(1,2),
+	4,
+	{ RGN_FRAC(1,2)+8, RGN_FRAC(1,2)+0, 8, 0 },
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16 },
-	16*8	/* every char takes 8 consecutive bytes */
+	16*8
 };
 
 static struct GfxLayout tile_layout =
 {
 	16,16,
-	4096,
+	RGN_FRAC(1,2),
 	4,
-	{ 0x40000*8+8, 0x40000*8, 8, 0 },
+	{ RGN_FRAC(1,2)+8, RGN_FRAC(1,2)+0, 8, 0 },
 	{ 32*8+0, 32*8+1, 32*8+2, 32*8+3, 32*8+4, 32*8+5, 32*8+6, 32*8+7,
-		0, 1, 2, 3, 4, 5, 6, 7 },
-	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
-			8*16, 9*16, 10*16, 11*16, 12*16, 13*16, 14*16, 15*16 },
-	64*8
-};
-
-static struct GfxLayout sprite_layout =
-{
-	16,16,
-	4096*2,
-	4,
-	{ 8, 0, 0x80000*8+8, 0x80000*8 },
-	{ 32*8+0, 32*8+1, 32*8+2, 32*8+3, 32*8+4, 32*8+5, 32*8+6, 32*8+7,
-		0, 1, 2, 3, 4, 5, 6, 7 },
+			0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
 			8*16, 9*16, 10*16, 11*16, 12*16, 13*16, 14*16, 15*16 },
 	64*8
@@ -386,9 +366,9 @@ static struct GfxLayout sprite_layout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &charlayout,   256, 16 },	/* Characters 8x8 */
-	{ REGION_GFX1, 0, &tile_layout,  512, 16 }, /* Tiles 16x16 */
-	{ REGION_GFX2, 0, &sprite_layout,  0, 16 },	/* Sprites 16x16 */
+	{ REGION_GFX1, 0, &charlayout,  256, 16 },	/* Characters 8x8 */
+	{ REGION_GFX1, 0, &tile_layout, 512, 16 },	/* Tiles 16x16 */
+	{ REGION_GFX2, 0, &tile_layout,   0, 16 },	/* Sprites 16x16 */
 	{ -1 } /* end of array */
 };
 
@@ -432,7 +412,7 @@ static const struct MachineDriver machine_driver_funkyjet =
 			ignore_interrupt,0
 		}
 	},
-	58, 529,
+	60, 529,
 	1,
 	0,
 
@@ -440,13 +420,13 @@ static const struct MachineDriver machine_driver_funkyjet =
 	40*8, 32*8, { 0*8, 40*8-1, 1*8, 31*8-1 },
 
 	gfxdecodeinfo,
-	1024, 1024,
+	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER ,
 	0,
 	funkyjet_vh_start,
-	funkyjet_vh_stop,
+	0,
 	funkyjet_vh_screenrefresh,
 
 	/* sound hardware */
@@ -456,6 +436,44 @@ static const struct MachineDriver machine_driver_funkyjet =
 			SOUND_YM2151,
 			&ym2151_interface
 		},
+		{
+			SOUND_OKIM6295,
+			&okim6295_interface
+		}
+	}
+};
+
+static const struct MachineDriver machine_driver_funkyjtb =
+{
+	/* basic machine hardware */
+	{
+	 	{
+			CPU_M68000,
+			14000000, /* 28 MHz crystal */
+			funkyjet_readmem,funkyjet_writemem,0,0,
+			m68_level6_irq,1
+		}
+	},
+	60, 529,
+	1,
+	0,
+
+	/* video hardware */
+	40*8, 32*8, { 0*8, 40*8-1, 1*8, 31*8-1 },
+
+	gfxdecodeinfo,
+	1024, 0,
+	0,
+
+	VIDEO_TYPE_RASTER ,
+	0,
+	funkyjet_vh_start,
+	0,
+	funkyjet_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+  	{
 		{
 			SOUND_OKIM6295,
 			&okim6295_interface
@@ -474,11 +492,11 @@ ROM_START( funkyjet )
 	ROM_LOAD( "jk02.16f",    0x00000, 0x10000, 0x748c0bd8 )
 
 	ROM_REGION( 0x080000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "mat02", 0x000000, 0x80000, 0xe4b94c7e ) /* chars */
+	ROM_LOAD( "mat02", 0x000000, 0x80000, 0xe4b94c7e ) /* Encrypted chars */
 
 	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )
-  	ROM_LOAD( "mat00", 0x000000, 0x80000, 0xfbda0228 ) /* sprites */
-	ROM_LOAD( "mat01", 0x080000, 0x80000, 0x24093a8d )
+	ROM_LOAD( "mat01", 0x000000, 0x80000, 0x24093a8d ) /* sprites */
+  	ROM_LOAD( "mat00", 0x080000, 0x80000, 0xfbda0228 )
 
 	ROM_REGION( 0x20000, REGION_SOUND1, 0 )	/* ADPCM samples */
   	ROM_LOAD( "jk03.15h",    0x00000, 0x20000, 0x69a0eaf7 )
@@ -496,14 +514,20 @@ ROM_START( sotsugyo )
 	ROM_LOAD( "02.2f", 0x000000, 0x80000, 0x337b1451 ) /* chars */
 
 	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )
-  	ROM_LOAD( "00.2a", 0x000000, 0x80000, 0xd35a14ef ) /* sprites */
-	ROM_LOAD( "01.4a", 0x080000, 0x80000, 0xfa10dd54 )
+	ROM_LOAD( "01.4a", 0x000000, 0x80000, 0xfa10dd54 ) /* sprites */
+  	ROM_LOAD( "00.2a", 0x080000, 0x80000, 0xd35a14ef )
 
 	ROM_REGION( 0x20000, REGION_SOUND1, 0 )	/* ADPCM samples */
   	ROM_LOAD( "sb030.15h",    0x00000, 0x20000, 0x1ea43f48 )
 ROM_END
 
+
+static void init_funkyjet(void)
+{
+	deco74_decrypt();
+}
+
 /******************************************************************************/
 
-GAMEX( 1992, funkyjet, 0, funkyjet, funkyjet, 0, ROT0, "[Data East] (Mitchell license)", "Funky Jet", GAME_NOT_WORKING )
-GAMEX( 1995, sotsugyo, 0, funkyjet, sotsugyo, 0, ROT0, "Mitchell Corporation (Atlus license)", "Sotsugyo Shousho", GAME_NOT_WORKING )
+GAMEX(1992, funkyjet, 0, funkyjet, funkyjet, funkyjet, ROT0, "[Data East] (Mitchell license)", "Funky Jet", GAME_UNEMULATED_PROTECTION )
+GAMEX(1995, sotsugyo, 0, funkyjet, sotsugyo, funkyjet, ROT0, "Mitchell Corporation (Atlus license)", "Sotsugyo Shousho", GAME_IMPERFECT_GRAPHICS )

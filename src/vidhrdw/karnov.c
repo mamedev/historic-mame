@@ -200,7 +200,6 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 
 void karnov_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	tilemap_update(ALL_TILEMAPS);
 	draw_background(bitmap);
 	draw_sprites(bitmap);
 	tilemap_draw(bitmap,fix_tilemap,0,0);

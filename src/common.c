@@ -674,7 +674,7 @@ void save_screen_snapshot_as(void *fp,struct osd_bitmap *bitmap)
 				{
 					for (x = 0;x < copy->width;x++)
 					{
-						copy->line[y][x] = bitmap->line[sy+(y/scaley)][sx +(x/scalex)];
+						((UINT8 *)copy->line[y])[x] = ((UINT8 *)bitmap->line[sy+(y/scaley)])[sx +(x/scalex)];
 					}
 				}
 				break;

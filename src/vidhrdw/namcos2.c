@@ -74,12 +74,12 @@ int namcos2_vh_start(void)
 	tilemap[3] = tilemap_create(get_tile_info3,tilemap_scan_rows,TILEMAP_BITMASK,8,8,64,64);
 	tilemap[4] = tilemap_create(get_tile_info4,tilemap_scan_rows,TILEMAP_BITMASK,8,8,36,28);
 	tilemap[5] = tilemap_create(get_tile_info5,tilemap_scan_rows,TILEMAP_BITMASK,8,8,36,28);
-	tilemap_roz = tilemap_create(get_tile_info_roz,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,256,256);
+	tilemap_roz = tilemap_create(get_tile_info_roz,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,256,256);
 
 	if (!tilemap[0] || !tilemap[1] || !tilemap[2] || !tilemap[3] || !tilemap[4] || !tilemap[5] || !tilemap_roz)
 		return 1;
 
-	tilemap_set_clip(tilemap_roz,NULL);
+	tilemap_set_transparent_pen(tilemap_roz,0xff);
 
 
 	/* set table for sprite color == 0x0f */
@@ -384,81 +384,10 @@ WRITE16_HANDLER( namcos2_68k_roz_ram_w )
 
 ***************************************************************************/
 
-static void namcos2_calc_used_pens(int gfx_zone,int tile,char *penused)
-{
-	int height		= Machine->gfx[gfx_zone]->height;
-	int width		= Machine->gfx[gfx_zone]->width;
-	int pix_y		= 0;
-	int pix_x		= 0;
-	for( pix_y=0; pix_y<height; pix_y++ ){
-		const UINT8 *gfxdata = get_gfx_pointer( Machine->gfx[gfx_zone],tile,pix_y );
-		for(pix_x=0;pix_x<width;pix_x++){
-			penused[(gfxdata[pix_x])>>3] |= 1<<(gfxdata[pix_x]&0x07);
-		}
-	}
-}
-
-static void namcos2_mark_used_sprite_colours(void)
-{
-	int offset,loop,coloop;
-	/* Array to mark when a particular tile has had its colours marked  */
-	/* so we dont scan it again if its marked in here                   */
-	static char done_array[0x1000/8];
-	static char pen_array[256/8];
-
-	/* Blat the used array */
-	memset(done_array,0,0x1000/8);
-
-	/* Mark off all of the colour codes used by the sprites */
-	offset = (namcos2_gfx_ctrl & 0x000f) * (128*4);
-	for(loop=0;loop<128;loop++)
-	{
-		int sizey = (namcos2_sprite_ram[(offset+(loop*8))/2]>>10)&0x3f;
-
-		/* Sprites are only active if they have a size>0 */
-		if( sizey ){
-			int offset2 = namcos2_sprite_ram[(offset+(loop*8)+2)/2];
-			int offset6 = namcos2_sprite_ram[(offset+(loop*8)+6)/2];
-			int sprn,sprn_done,spr_region,colour_code;
-
-			/* Calulate spr number, region, colour code & the done sprite number */
-			sprn=(offset2>>2)&0x7ff;
-			sprn_done=sprn;
-			sprn_done+=(offset2&0x2000)?0x800:0;
-			spr_region=(offset2&0x2000)?GFX_OBJ2:GFX_OBJ1;
-			colour_code=256*((offset6>>4)&0x000f);
-
-			if( (done_array[sprn_done>>3]&(1<<(sprn_done&0x07)))==0 )
-			{
-				/* Clear the temporary pen usage array */
-				memset(pen_array,0,256/8);
-				/* Generate pen usage array for this tile on the fly */
-				namcos2_calc_used_pens(spr_region,sprn,pen_array);
-
-				/* Process tile used colours */
-				for(coloop=0;coloop<256;coloop++)
-				{
-					/* Is this pen marked by the tile as being used ? */
-					if( pen_array[coloop>>3]&(1<<(coloop&0x07)) )
-					{
-						/* Yes so mark it for the palette manager */
-						palette_used_colors[colour_code+coloop] |= PALETTE_COLOR_VISIBLE;
-					}
-				}
-
-				/* Mark the tile as having been done */
-				done_array[sprn_done>>3]|=1<<(sprn_done&0x07);
-			}
-		}
-	}
-}
-
-
 static void draw_layerROZ(struct osd_bitmap *bitmap)
 {
 	UINT32 startx,starty;
 	int incxx,incxy,incyx,incyy;
-	struct osd_bitmap *srcbitmap = tilemap_get_pixmap(tilemap_roz);
 	const int xoffset = 38,yoffset = 0;
 
 	incxx =  (INT16)namcos2_68k_roz_ctrl[0];
@@ -475,10 +404,10 @@ static void draw_layerROZ(struct osd_bitmap *bitmap)
 	startx += xoffset * incxx + yoffset * incyx;
 	starty += xoffset * incxy + yoffset * incyy;
 
-	copyrozbitmap(bitmap,srcbitmap,startx << 8,starty << 8,
+	tilemap_draw_roz(bitmap,tilemap_roz,startx << 8,starty << 8,
 			incxx << 8,incxy << 8,incyx << 8,incyy << 8,
 			1,	/* copy with wraparound */
-			&Machine->visible_area,TRANSPARENCY_PEN,palette_transparent_pen,0);
+			0,0);
 }
 
 
@@ -533,11 +462,6 @@ static void draw_sprites_default( struct osd_bitmap *bitmap, int priority )
 		if((sizey-1) && sizex && (offset6&0x0007)==priority)
 		{
 			int color = (offset6>>4)&0x000f;
-
-#if 1
-			if (color == 0x0f && !(Machine->gamedrv->flags & GAME_REQUIRES_16BIT))
-				usrintf_showmessage("This driver requires GAME_REQUIRES_16BIT flag");
-#endif
 
 			rect=Machine->visible_area;
 
@@ -764,15 +688,6 @@ profiler_mark(PROFILER_END);
 	/* enable ROZ layer only if it has priority > 0 */
 	tilemap_set_enable(tilemap_roz,(namcos2_gfx_ctrl & 0x7000) ? 1 : 0);
 
-	tilemap_update(ALL_TILEMAPS);
-
-	palette_init_used_colors();
-	namcos2_mark_used_sprite_colours();
-	/* mark transparent color for the ROZ layer */
-	palette_used_colors[Machine->drv->gfxdecodeinfo[GFX_ROZ].color_codes_start + 0xff] = PALETTE_COLOR_TRANSPARENT;
-
-	palette_recalc();
-
 	/* Scrub the bitmap clean */
 	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 
@@ -817,21 +732,6 @@ profiler_mark(PROFILER_USER1);
 		fill_palette_bank(virtual+1,physical+8);	/* shadows */
 	}
 profiler_mark(PROFILER_END);
-
-
-	tilemap_update( ALL_TILEMAPS );
-
-	/* Only piss around with the palette if we are in 8 bit mode as 16 bit */
-	/* mode has a direct mapping and doesnt need palette management        */
-	{
-		/* Initialise palette_used_colors array */
-		palette_init_used_colors();
-
-		/* Mark any colours in the palette_used_colors array */
-		namcos2_mark_used_sprite_colours();
-
-		palette_recalc();
-	}
 
 
 	/* Scrub the bitmap clean */

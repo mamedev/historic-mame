@@ -8,8 +8,10 @@
 
     Currently Supported Games:
         Namco Classics Vol #1
-    Other known ND-1 games:
         Namco Classics Vol #2
+
+    T.B.D.
+        Sound
 
  *************************************************************/
 
@@ -19,13 +21,16 @@
 #include "vidhrdw/ygv608.h"
 #include "namcond1.h"
 
+// thought this would be in b16???
+#define NODUMPKNOWN  0
+
 /*************************************************************/
 
 static MEMORY_READ16_START( readmem )
 	{ 0x000000, 0x0fffff, MRA16_ROM },
-	{ 0x400000, 0x40ffff, namcond1_shared_ram_r },  // shared ram?
+	{ 0x400000, 0x40ffff, namcond1_shared_ram_r },  // shared ram
 	{ 0x800000, 0x80000f, ygv608_r },
-	{ 0xA00000, 0xA03FFF, MRA16_RAM },        // EEPROM???
+	{ 0xA00000, 0xA03FFF, MRA16_RAM },              // EEPROM
 #ifdef MAME_DEBUG
 	{ 0xB00000, 0xB00001, debug_trigger },
 #endif
@@ -33,12 +38,11 @@ static MEMORY_READ16_START( readmem )
 MEMORY_END
 
 static MEMORY_WRITE16_START( writemem )
-	{ 0x000000, 0x07ffff, MWA16_NOP },
-	{ 0x080000, 0x0fffff, MWA16_NOP },
+	{ 0x000000, 0x0fffff, MWA16_NOP },
 	{ 0x400000, 0x40ffff, namcond1_shared_ram_w, &namcond1_shared_ram },        // shared ram?
 	{ 0x800000, 0x80000f, ygv608_w },
-	{ 0xA00000, 0xA03FFF, MWA16_RAM },        // EEPROM???
-	{ 0xc3ff00, 0xc3ffff, MWA16_NOP },
+	{ 0xA00000, 0xA03FFF, MWA16_RAM, &namcond1_eeprom },
+	{ 0xc3ff00, 0xc3ff0f, namcond1_cuskey_w },
 MEMORY_END
 
 /*************************************************************/
@@ -88,12 +92,12 @@ INPUT_PORTS_END
 
 static struct GfxLayout pts_8x8_4bits_layout =
 {
-	8,8,	        /* 8*8 pixels */
+	8,8,	      /* 8*8 pixels */
 	65536,        /* 65536 patterns */
-	4,	        /* 4 bits per pixel */
+	4,	          /* 4 bits per pixel */
 	{ 0, 1, 2, 3 },
-	{ 0*4, 1*4, 2*4, 3*4, 4*4, 5*4, 6*4, 7*4 },
-	{ 0*8*4, 1*8*4, 2*8*4, 3*8*4, 4*8*4, 5*8*4, 6*8*4, 7*8*4 },
+    { STEP8( 0*256, 4 ) },
+    { STEP8( 0*256, 8*4 ) },
 	8*8*4
 };
 
@@ -101,12 +105,10 @@ static struct GfxLayout pts_16x16_4bits_layout =
 {
 	16,16,        /* 16*16 pixels */
 	16384,        /* 16384 patterns */
-	4,	        /* 4 bits per pixel */
+	4,	          /* 4 bits per pixel */
 	{ 0, 1, 2, 3 },
-	{ 0*4, 1*4, 2*4, 3*4, 4*4, 5*4, 6*4, 7*4,
-	256+0*4, 256+1*4, 256+2*4, 256+3*4, 256+4*4, 256+5*4, 256+6*4, 256+7*4 },
-	{ 0*8*4, 1*8*4, 2*8*4, 3*8*4, 4*8*4, 5*8*4, 6*8*4, 7*8*4,
-	512+0*8*4, 512+1*8*4, 512+2*8*4, 512+3*8*4, 512+4*8*4, 512+5*8*4, 512+6*8*4, 512+7*8*4 },
+    { STEP8( 0*256, 4 ), STEP8( 1*256, 4 ) },
+    { STEP8( 0*256, 8*4 ), STEP8( 2*256, 8*4 ) },
 	16*16*4
 };
 
@@ -114,27 +116,34 @@ static struct GfxLayout pts_32x32_4bits_layout =
 {
 	32,32,        /* 32*32 pixels */
 	4096,         /* 4096 patterns */
-	4,	        /* 4 bits per pixel */
+	4,	          /* 4 bits per pixel */
 	{ 0, 1, 2, 3 },
-	{ 0*4, 1*4, 2*4, 3*4, 4*4, 5*4, 6*4, 7*4,
-		256+0*4, 256+1*4, 256+2*4, 256+3*4, 256+4*4, 256+5*4, 256+6*4, 256+7*4,
-		1024+0*4, 1024+1*4, 1024+2*4, 1024+3*4, 1024+4*4, 1024+5*4, 1024+6*4, 1024+7*4,
-		1280+0*4, 1280+1*4, 1280+2*4, 1280+3*4, 1280+4*4, 1280+5*4, 1280+6*4, 1280+7*4 },
-	{ 0*8*4, 1*8*4, 2*8*4, 3*8*4, 4*8*4, 5*8*4, 6*8*4, 7*8*4,
-		512+0*8*4, 512+1*8*4, 512+2*8*4, 512+3*8*4, 512+4*8*4, 512+5*8*4, 512+6*8*4, 512+7*8*4,
-		2048+0*8*4, 2048+1*8*4, 2048+2*8*4, 2048+3*8*4, 2048+4*8*4, 2048+5*8*4, 2048+6*8*4, 2048+7*8*4,
-		2560+0*8*4, 2560+1*8*4, 2560+2*8*4, 2560+3*8*4, 2560+4*8*4, 2560+5*8*4, 2560+6*8*4, 2560+7*8*4 },
+    { STEP8( 0*256, 4 ), STEP8( 1*256, 4 ), STEP8( 4*256, 4 ), STEP8( 5*256, 4 ) },
+    { STEP8( 0*256, 8*4 ), STEP8( 2*256, 8*4 ), STEP8( 8*256, 8*4 ), STEP8( 10*256, 8*4 ) },
 	32*32*4
+};
+
+static struct GfxLayout pts_64x64_4bits_layout =
+{
+	64,64,        /* 32*32 pixels */
+	1024,         /* 1024 patterns */
+	4,	          /* 4 bits per pixel */
+	{ 0, 1, 2, 3 },
+    { STEP8( 0*256, 4 ), STEP8( 1*256, 4 ), STEP8( 4*256, 4 ), STEP8( 5*256, 4 ),
+      STEP8( 16*256, 4 ), STEP8( 17*256, 4 ), STEP8( 20*256, 4 ), STEP8( 21*256, 4 ) },
+    { STEP8( 0*256, 8*4 ), STEP8( 2*256, 8*4 ), STEP8( 8*256, 8*4 ), STEP8( 10*256, 8*4 ),
+      STEP8( 32*256, 8*4 ), STEP8( 34*256, 8*4 ), STEP8( 40*256, 8*4 ), STEP8( 42*256, 8*4 ) },
+	64*64*4
 };
 
 static struct GfxLayout pts_8x8_8bits_layout =
 {
-	8,8,	        /* 8*8 pixels */
+	8,8,	      /* 8*8 pixels */
 	32768,        /* 32768 patterns */
-	8,	        /* 8 bits per pixel */
+	8,	          /* 8 bits per pixel */
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	{ 0*8*8, 1*8*8, 2*8*8, 3*8*8, 4*8*8, 5*8*8, 6*8*8, 7*8*8 },
+    { STEP8( 0*512, 8 ) },
+    { STEP8( 0*512, 8*8 ) },
 	8*8*8
 };
 
@@ -142,12 +151,10 @@ static struct GfxLayout pts_16x16_8bits_layout =
 {
 	16,16,        /* 16*16 pixels */
 	8192,         /* 8192 patterns */
-	8,	        /* 8 bits per pixel */
+	8,	          /* 8 bits per pixel */
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
-		512+0*8, 512+1*8, 512+2*8, 512+3*8, 512+4*8, 512+5*8, 512+6*8, 512+7*8 },
-	{ 0*8*8, 1*8*8, 2*8*8, 3*8*8, 4*8*8, 5*8*8, 6*8*8, 7*8*8,
-		1024+0*8*8, 1024+1*8*8, 1024+2*8*8, 1024+3*8*8, 1024+4*8*8, 1024+5*8*8, 1024+6*8*8, 1024+7*8*8 },
+    { STEP8( 0*512, 8 ), STEP8( 1*512, 8 ) },
+    { STEP8( 0*512, 8*8 ), STEP8( 2*512, 8*8 ) },
 	16*16*8
 };
 
@@ -156,6 +163,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ REGION_GFX1, 0x00000000, &pts_8x8_4bits_layout,    0,  16 },
 	{ REGION_GFX1, 0x00000000, &pts_16x16_4bits_layout,  0,  16 },
 	{ REGION_GFX1, 0x00000000, &pts_32x32_4bits_layout,  0,  16 },
+	{ REGION_GFX1, 0x00000000, &pts_64x64_4bits_layout,  0,  16 },
 	{ REGION_GFX1, 0x00000000, &pts_8x8_8bits_layout,    0, 256 },
 	{ REGION_GFX1, 0x00000000, &pts_16x16_8bits_layout,  0, 256 },
 	{ -1 }
@@ -187,12 +195,12 @@ static struct MachineDriver machine_driver_namcond1 =
 	namcond1_init_machine,
 
 	/* video hardware */
-	512, 512,             // maximum display resolution
-	{ 0, 511, 0, 511 },   // default visible area
+	288, 224,             // maximum display resolution (512x512 in theory)
+	{ 0, 287, 0, 223 },   // default visible area
 	gfxdecodeinfo,
 	256,256,
 	0,
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_NEEDS_6BITS_PER_GUN,
+	VIDEO_TYPE_RASTER  | VIDEO_NEEDS_6BITS_PER_GUN,
 	0,			                /* Video initialisation    */
 	ygv608_vh_start,	            /* Video start             */
 	ygv608_vh_stop,	            /* Video stop              */
@@ -219,6 +227,9 @@ ROM_START( ncv1 )
 
 	ROM_REGION( 0x200000,REGION_GFX1, ROMREGION_DISPOSE )	/* 2MB character generator */
 	ROM_LOAD( "cg0.10c",         0x000000, 0x200000, 0x355e7f29 )
+
+	ROM_REGION( 0x200000,REGION_SOUND1, 0 ) 	/* 2MB sound data */
+    ROM_LOAD( "nc1-voic.7b",     0x000000, 0x200000, NODUMPKNOWN )
 ROM_END
 
 ROM_START( ncv1j )
@@ -231,6 +242,9 @@ ROM_START( ncv1j )
 
 	ROM_REGION( 0x200000,REGION_GFX1, ROMREGION_DISPOSE )	/* 2MB character generator */
 	ROM_LOAD( "cg0.10c",         0x000000, 0x200000, 0x355e7f29 )
+
+	ROM_REGION( 0x200000,REGION_SOUND1, 0 ) 	/* 2MB sound data */
+    ROM_LOAD( "nc1-voic.7b",     0x000000, 0x200000, NODUMPKNOWN )
 ROM_END
 
 ROM_START( ncv1j2 )
@@ -243,92 +257,73 @@ ROM_START( ncv1j2 )
 
 	ROM_REGION( 0x200000,REGION_GFX1, ROMREGION_DISPOSE )	/* 2MB character generator */
 	ROM_LOAD( "cg0.10c",         0x000000, 0x200000, 0x355e7f29 )
+
+	ROM_REGION( 0x200000,REGION_SOUND1, 0 ) 	/* 2MB sound data */
+    ROM_LOAD( "nc1-voic.7b",     0x000000, 0x200000, NODUMPKNOWN )
+ROM_END
+
+ROM_START( ncv2 )
+	ROM_REGION( 0x100000,REGION_CPU1, 0 )		/* 16MB for Main CPU */
+	ROM_LOAD16_WORD( "nc2-eng.14e", 0x00000, 0x80000, 0xfb8a4123 )
+	ROM_LOAD16_WORD( "nc2-eng.13e", 0x80000, 0x80000, 0x7a5ef23b )
+
+	ROM_REGION( 0x80000,REGION_CPU2, 0 )		/* sub CPU */
+	ROM_LOAD( "nc2.1d",          0x00000, 0x80000, 0x365cadbf )
+
+	ROM_REGION( 0x400000,REGION_GFX1, ROMREGION_DISPOSE )	/* 4MB character generator */
+	ROM_LOAD( "cg0.10e",         0x000000, 0x200000, 0xfdd24dbe )
+	ROM_LOAD( "cg1.10e",         0x200000, 0x200000, 0x007b19de )
+
+	ROM_REGION( 0x200000,REGION_SOUND1, 0 ) 	/* 2MB sound data */
+    ROM_LOAD( "nc2-voic.7c",     0x000000, 0x200000, 0xed05fd88 )
 ROM_END
 
 ROM_START( ncv2j )
 	ROM_REGION( 0x100000,REGION_CPU1, 0 )		/* 16MB for Main CPU */
-	ROM_LOAD16_WORD( "nc2-jpn.13d", 0x00000, 0x80000, 0x99991192 )
-	ROM_LOAD16_WORD( "nc2-jpn.14d", 0x80000, 0x80000, 0xaf4ba4f6 )
+	ROM_LOAD16_WORD( "nc2-jpn.14e", 0x00000, 0x80000, 0x99991192 )
+	ROM_LOAD16_WORD( "nc2-jpn.13e", 0x80000, 0x80000, 0xaf4ba4f6 )
 
 	ROM_REGION( 0x80000,REGION_CPU2, 0 )		/* sub CPU */
-	ROM_LOAD( "nc1.1c",          0x00000, 0x80000, 0x48ea0de2 )
+	ROM_LOAD( "nc2.1d",          0x00000, 0x80000, 0x365cadbf )
 
-	ROM_REGION( 0x200000,REGION_GFX1, ROMREGION_DISPOSE )	/* 2MB character generator */
-	ROM_LOAD( "cg0.10c",         0x000000, 0x200000, 0x355e7f29 )
+	ROM_REGION( 0x400000,REGION_GFX1, ROMREGION_DISPOSE )	/* 4MB character generator */
+	ROM_LOAD( "cg0.10e",         0x000000, 0x200000, 0xfdd24dbe )
+	ROM_LOAD( "cg1.10e",         0x200000, 0x200000, 0x007b19de )
+
+	ROM_REGION( 0x200000,REGION_SOUND1, 0 ) 	/* 2MB sound data */
+    ROM_LOAD( "nc2-voic.7c",     0x000000, 0x200000, 0xed05fd88 )
 ROM_END
 
+#if 0
 
-
-static void init_ncv1( void )
+static void namcond1_patch( int *addr )
 {
-    static int patch[] =
-    {
-      0x15038,                      // check cold boot
-
-      0
-    };
-
     unsigned char *ROM = memory_region(REGION_CPU1);
     int             i;
 
-    for( i=0; patch[i]; i++ )
+    for( i=0; addr[i]; i++ )
       // insert a NOP instruction
-      WRITE_WORD( &ROM[patch[i]], 0x4e71 );
+      WRITE_WORD( &ROM[addr[i]], 0x4e71 );
 }
 
-static void init_ncv1j( void )
-{
-    static int patch[] =
-    {
-      0x151c0,                      // check cold boot
+/*
+ *  These are the patch locations to skip coldboot check
+ *  - they were required before the MCU simulation was
+ *    sufficiently advanced.
+ *  - please do not delete these comments *just in case*!
+ *
+ *  ncv1    0x15038
+ *  ncv1j   0x151c0
+ *  ncv1j2  0x152e4
+ *  ncv2    0x17974
+ *  ncv2j   0x17afc
+ */
 
-      0
-    };
-
-    unsigned char *ROM = memory_region(REGION_CPU1);
-    int             i;
-
-    for( i=0; patch[i]; i++ )
-      // insert a NOP instruction
-      WRITE_WORD( &ROM[patch[i]], 0x4e71 );
-}
-
-static void init_ncv1j2( void )
-{
-    static int patch[] =
-    {
-      0x152e4,                      // check cold boot
-
-      0
-    };
-
-    unsigned char *ROM = memory_region(REGION_CPU1);
-    int             i;
-
-    for( i=0; patch[i]; i++ )
-      // insert a NOP instruction
-      WRITE_WORD( &ROM[patch[i]], 0x4e71 );
-}
-
-static void init_ncv2j( void )
-{
-    static int patch[] =
-    {
-      0x17afc,                      // check cold boot
-
-      0
-    };
-
-    unsigned char *ROM = memory_region(REGION_CPU1);
-    int             i;
-
-    for( i=0; patch[i]; i++ )
-      // insert a NOP instruction
-      WRITE_WORD( &ROM[patch[i]], 0x4e71 );
-}
+#endif
 
 
-GAMEX( 1995, ncv1,      0, namcond1, namcond1, ncv1,   ROT90_16BIT, "Namco", "Namco Classics Vol.1", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1995, ncv1j,  ncv1, namcond1, namcond1, ncv1j,  ROT90_16BIT, "Namco", "Namco Classics Vol.1 (Japan set 1)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1995, ncv1j2, ncv1, namcond1, namcond1, ncv1j2, ROT90_16BIT, "Namco", "Namco Classics Vol.1 (Japan set 2)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1995, ncv2j,     0, namcond1, namcond1, ncv2j,  ROT90_16BIT, "Namco", "Namco Classics Vol.2 (Japan)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1995, ncv1,      0, namcond1, namcond1, 0, ROT90, "Namco", "Namco Classics Vol.1", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1995, ncv1j,  ncv1, namcond1, namcond1, 0, ROT90, "Namco", "Namco Classics Vol.1 (Japan set 1)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1995, ncv1j2, ncv1, namcond1, namcond1, 0, ROT90, "Namco", "Namco Classics Vol.1 (Japan set 2)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1996, ncv2,      0, namcond1, namcond1, 0, ROT90, "Namco", "Namco Classics Vol.2", GAME_NOT_WORKING | GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1996, ncv2j,  ncv2, namcond1, namcond1, 0, ROT90, "Namco", "Namco Classics Vol.2 (Japan)", GAME_NOT_WORKING | GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )

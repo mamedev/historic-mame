@@ -1,7 +1,7 @@
 /*##########################################################################
 
 	atarimo.h
-	
+
 	Common motion object management functions for Atari raster games.
 
 ##########################################################################*/
@@ -49,7 +49,7 @@ struct atarimo_desc
 	UINT8				nextneighbor;		/* does the neighbor bit affect the next object? */
 	UINT16				slipheight;			/* pixels per SLIP entry (0 for no-slip) */
 	UINT16				updatescans;		/* number of scanlines between MO updates */
-	
+
 	UINT16				palettebase;		/* base palette entry */
 	UINT16				maxcolors;			/* maximum number of colors */
 	UINT8				transpen;			/* transparent pen index */
@@ -88,7 +88,6 @@ UINT8 *atarimo_get_color_lookup(int map, int *size);
 UINT8 *atarimo_get_gfx_lookup(int map, int *size);
 
 /* core processing */
-void atarimo_mark_palette(int map);
 void atarimo_render(int map, struct osd_bitmap *bitmap, ataripf_overrender_cb callback1, ataripf_overrender_cb callback2);
 void atarimo_force_update(int map, int scanline);
 

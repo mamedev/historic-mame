@@ -683,7 +683,7 @@ static const struct MachineDriver machine_driver_lazercmd =
 	3+32768, 2*2,		/* extra color for the overlay */
 	init_palette,
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY ,
 	0,
 	lazercmd_vh_start,
 	generic_vh_stop,
@@ -728,7 +728,7 @@ static const struct MachineDriver machine_driver_medlanes =
 	3+32768, 2*2,		/* extra color for the overlay */
 	init_palette,
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY ,
 	0,
 	lazercmd_vh_start,
 	generic_vh_stop,
@@ -773,7 +773,7 @@ static const struct MachineDriver machine_driver_bbonk =
 	3+32768, 2*2,		/* extra color for the overlay */
 	init_palette,
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY ,
 	0,
 	lazercmd_vh_start,
 	generic_vh_stop,

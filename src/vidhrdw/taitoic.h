@@ -139,7 +139,7 @@ void TC0480SCP_tilemap_draw(struct osd_bitmap *bitmap,int layer,int flags,UINT32
 int TC0480SCP_get_bg_priority(void);
 
 /* Undrfire needs to read this for a sprite/tile priority hack */
-int TC0480SCP_pri_reg;
+extern int TC0480SCP_pri_reg;
 
 
 /***************************************************************************/

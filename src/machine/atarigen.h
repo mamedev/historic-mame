@@ -1,7 +1,7 @@
 /*##########################################################################
 
 	atarigen.h
-	
+
 	General functions for Atari raster games.
 
 ##########################################################################*/
@@ -127,11 +127,6 @@ void atarigen_slapstic_reset(void);
 
 WRITE16_HANDLER( atarigen_slapstic_w );
 READ16_HANDLER( atarigen_slapstic_r );
-
-void slapstic_init(int chip);
-void slapstic_reset(void);
-int slapstic_bank(void);
-int slapstic_tweak(offs_t offset);
 
 
 /*---------------------------------------------------------------

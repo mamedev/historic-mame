@@ -670,10 +670,10 @@ static const struct MachineDriver machine_driver_terraf =
 	/* video hardware */
 	64*8, 32*8, { 12*8, (64-12)*8-1, 1*8, 31*8-1 },
 	gfxdecodeinfo,
-	2048,2048,
+	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_BUFFERS_SPRITERAM,
+	VIDEO_TYPE_RASTER  | VIDEO_BUFFERS_SPRITERAM,
 	armedf_eof_callback,
 	terraf_vh_start,
 	0,
@@ -716,10 +716,10 @@ static const struct MachineDriver machine_driver_kodure =
 	/* video hardware */
 	64*8, 32*8, { 14*8, (64-14)*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	2048,2048,
+	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_BUFFERS_SPRITERAM,
+	VIDEO_TYPE_RASTER  | VIDEO_BUFFERS_SPRITERAM,
 	armedf_eof_callback,
 	kodure_vh_start,
 	0,
@@ -762,10 +762,10 @@ static const struct MachineDriver machine_driver_armedf =
 	/* video hardware */
 	64*8, 32*8, { 12*8, (64-12)*8-1, 1*8, 31*8-1 },
 	gfxdecodeinfo,
-	2048,2048,
+	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_BUFFERS_SPRITERAM,
+	VIDEO_TYPE_RASTER  | VIDEO_BUFFERS_SPRITERAM,
 	armedf_eof_callback,
 	armedf_vh_start,
 	0,
@@ -808,10 +808,10 @@ static const struct MachineDriver machine_driver_cclimbr2 =
 	/* video hardware */
 	64*8, 32*8, { 14*8, (64-14)*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	2048,2048,
+	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_BUFFERS_SPRITERAM,
+	VIDEO_TYPE_RASTER  | VIDEO_BUFFERS_SPRITERAM,
 	armedf_eof_callback,
 	cclimbr2_vh_start,
 	0,

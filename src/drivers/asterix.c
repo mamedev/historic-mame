@@ -297,10 +297,10 @@ static struct MachineDriver machine_driver_asterix =
 	/* video hardware */
 	64*8, 32*8, { 14*8, (64-14)*8-1, 2*8, 30*8-1 },
 	0,	/* gfx decoded by konamiic.c */
-	2048, 2048,
+	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_NEEDS_6BITS_PER_GUN,
+	VIDEO_TYPE_RASTER  | VIDEO_HAS_SHADOWS | VIDEO_NEEDS_6BITS_PER_GUN,
 	0,
 	asterix_vh_start,
 	asterix_vh_stop,
@@ -402,6 +402,6 @@ static void init_asterix(void)
 }
 
 
-GAME( 1992, asterix,  0,       asterix, asterix, asterix, ROT0_16BIT, "Konami", "Asterix (World ver. EAD)" )
-GAME( 1992, astrxeac, asterix, asterix, asterix, asterix, ROT0_16BIT, "Konami", "Asterix (World ver. EAC)" )
-GAME( 1992, astrxeaa, asterix, asterix, asterix, asterix, ROT0_16BIT, "Konami", "Asterix (World ver. EAA)" )
+GAME( 1992, asterix,  0,       asterix, asterix, asterix, ROT0, "Konami", "Asterix (World ver. EAD)" )
+GAME( 1992, astrxeac, asterix, asterix, asterix, asterix, ROT0, "Konami", "Asterix (World ver. EAC)" )
+GAME( 1992, astrxeaa, asterix, asterix, asterix, asterix, ROT0, "Konami", "Asterix (World ver. EAA)" )

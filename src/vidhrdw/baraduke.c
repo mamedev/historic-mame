@@ -251,60 +251,6 @@ static void draw_sprites(struct osd_bitmap *bitmap, int priority)
 	}
 }
 
-static void mark_textlayer_colors(void)
-{
-	int i, offs;
-	unsigned short palette_map[512];
-
-	memset (palette_map, 0, sizeof (palette_map));
-
-	for (offs = 0; offs < 0x400; offs++)
-	{
-		palette_map[(baraduke_textram[offs+0x400] << 2) & 0x1ff] |= 0xffff;
-	}
-
-	/* now build the final table */
-	for (i = 0; i < 512; i++)
-	{
-		int usage = palette_map[i], j;
-		if (usage)
-		{
-			for (j = 0; j < 4; j++)
-				if (usage & (1 << j))
-					palette_used_colors[i * 4 + j] |= PALETTE_COLOR_VISIBLE;
-		}
-	}
-}
-
-static void mark_sprites_colors(void)
-{
-	int i;
-	const unsigned char *source = &spriteram[0];
-	const unsigned char *finish = &spriteram[0x0800-16];/* the last is NOT a sprite */
-
-	unsigned short palette_map[128];
-
-	memset (palette_map, 0, sizeof (palette_map));
-
-	while( source<finish )
-	{
-		palette_map[source[6] >> 1] |= 0xffff;
-		source+=16;
-	}
-
-	/* now build the final table */
-	for (i = 0; i < 128; i++)
-	{
-		int usage = palette_map[i], j;
-		if (usage)
-		{
-			for (j = 0; j < 16; j++)
-				if (usage & (1 << j))
-					palette_used_colors[i * 16 + j] |= PALETTE_COLOR_VISIBLE;
-		}
-	}
-}
-
 void baraduke_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
@@ -312,13 +258,6 @@ void baraduke_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	/* this is the global sprite Y offset, actually */
 	flipscreen = spriteram[0x07f6] & 0x01;
 	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
-
-	tilemap_update(ALL_TILEMAPS);
-
-	palette_init_used_colors();
-	mark_textlayer_colors();
-	mark_sprites_colors();
-	palette_recalc();
 
 	tilemap_draw(bitmap,tilemap[1],TILEMAP_IGNORE_TRANSPARENCY,0);
 	draw_sprites(bitmap,0);
@@ -365,10 +304,6 @@ void metrocrs_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	/* this is the global sprite Y offset, actually */
 	flipscreen = spriteram[0x07f6] & 0x01;
 	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
-
-	tilemap_update(ALL_TILEMAPS);
-
-	palette_recalc();
 
 	tilemap_draw(bitmap,tilemap[0],TILEMAP_IGNORE_TRANSPARENCY,0);
 	draw_sprites(bitmap,0);

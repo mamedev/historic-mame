@@ -48,6 +48,7 @@ driver by Ivan Mackintosh
 
 
 WRITE_HANDLER( milliped_paletteram_w );
+void milliped_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void milliped_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 /*
@@ -287,8 +288,8 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &charlayout,		0, 4 }, /* use colors 0-15 */
-	{ REGION_GFX1, 0, &spritelayout,   16, 1 }, /* use colors 16-19 */
+	{ REGION_GFX1, 0, &charlayout,     0, 4 },
+	{ REGION_GFX1, 0, &spritelayout, 4*4, 4*4*4*4 },
 	{ -1 } /* end of array */
 };
 
@@ -332,10 +333,10 @@ static const struct MachineDriver machine_driver_milliped =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 0*8, 30*8-1 },
 	gfxdecodeinfo,
-	32, 32,
-	0,
+	32, 4*4+4*4*4*4*4,
+	milliped_init_palette,
 
-	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY|VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
 	0,
 	generic_vh_start,
 	generic_vh_stop,

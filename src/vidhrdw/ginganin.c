@@ -253,16 +253,7 @@ int offs;
 
 void ginganin_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	int i, offs;
 	int layers_ctrl1;
-	int color, colmask[16];
-	int xmin = Machine->visible_area.min_x - 16 - 1;
-	int xmax = Machine->visible_area.max_x;
-	int ymin = Machine->visible_area.min_y - 16 - 1;
-	int ymax = Machine->visible_area.max_y;
-	int nmax = Machine->gfx[3]->total_elements;
-	unsigned int *pen_usage = Machine->gfx[3]->pen_usage;
-	int color_codes_start = Machine->drv->gfxdecodeinfo[3].color_codes_start;
 
 	layers_ctrl1 = layers_ctrl;
 
@@ -297,50 +288,8 @@ if (keyboard_pressed(KEYCODE_Z))
 #endif
 
 
-	tilemap_update(ALL_TILEMAPS);
-
-	palette_init_used_colors();
-
-
-	/* Palette stuff: visible sprites */
-
-
-	for (color = 0 ; color < 16 ; color++) colmask[color] = 0;
-
-	for (offs = 0 ; offs < (spriteram_size >> 1) ; offs += 4)
-	{
-		int x,y,code;
-
-		y	=	spriteram16[offs + 0];
-		y	=	(y & 0xff) - (y & 0x100);
-		if ((y < ymin) || (y > ymax))	continue;
-
-		x	=	spriteram16[offs + 1];
-		x	=	(x & 0xff) - (x & 0x100);
-		if ((x < xmin) || (x > xmax))	continue;
-
-		code	=	(spriteram16[offs + 2] & 0x3fff) % nmax;
-		color	=	spriteram16[offs + 3] >> 12;
-
-		colmask[color] |= pen_usage[code];
-	}
-
-	for (color = 0; color < 16; color++)
-	{
-		if (colmask[color])
-		{
-			for (i = 0; i < 16; i++)
-				if (colmask[color] & (1 << i))
-					palette_used_colors[16 * color + i + color_codes_start] = PALETTE_COLOR_USED;
-		}
-	}
-
-
-
-	palette_recalc();
-
 	if (layers_ctrl1 & 1)	tilemap_draw(bitmap, bg_tilemap,  0,0);
-	else					fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
+	else					fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 
 	if (layers_ctrl1 & 2)	tilemap_draw(bitmap, fg_tilemap,  0,0);
 	if (layers_ctrl1 & 8)	draw_sprites(bitmap);

@@ -399,7 +399,7 @@ static void (*updaters32[MAX_X_MULTIPLY][MAX_Y_MULTIPLY][2][2])(struct osd_bitma
 };
 
 static int video_depth,video_fps,video_attributes,video_orientation;
-static int modifiable_palette;
+static int rgb_direct;
 static int screen_colors;
 static UINT8 *current_palette;
 static const UINT8 *dbg_palette;
@@ -1813,7 +1813,7 @@ void osd_debugger_focus(int debugger_has_focus)
 
 
 static int init_direct_mapped(unsigned int totalcolors,
-		const UINT8 *palette,UINT32 *pens,int modifiable,
+		const UINT8 *palette,UINT32 *rgb_components,
 		const UINT8 *debug_palette,UINT32 *debug_pens)
 {
 	if (video_depth == 16)
@@ -1854,12 +1854,12 @@ static int init_direct_mapped(unsigned int totalcolors,
 			r = 255 * brightness * pow(palette[3*i+0] / 255.0, 1 / osd_gamma_correction) / 100;
 			g = 255 * brightness * pow(palette[3*i+1] / 255.0, 1 / osd_gamma_correction) / 100;
 			b = 255 * brightness * pow(palette[3*i+2] / 255.0, 1 / osd_gamma_correction) / 100;
-			*pens++ = makecol(r,g,b);
+			*rgb_components++ = makecol(r,g,b);
 		}
 #endif
-		pens[0] = 0x7c00;
-		pens[1] = 0x03e0;
-		pens[2] = 0x001f;
+		rgb_components[0] = 0x7c00;
+		rgb_components[1] = 0x03e0;
+		rgb_components[2] = 0x001f;
 
 		Machine->uifont->colortable[0] = 0x0000;
 		Machine->uifont->colortable[1] = 0x7fff;
@@ -1885,7 +1885,7 @@ static int init_direct_mapped(unsigned int totalcolors,
 				r = debug_palette[3*i+0];
 				g = debug_palette[3*i+1];
 				b = debug_palette[3*i+2];
-				*debug_pens++ = r * pens[0] / 0xff + g * pens[1] / 0xff + b * pens[2] / 0xff;
+				*debug_pens++ = r * rgb_components[0] / 0xff + g * rgb_components[1] / 0xff + b * rgb_components[2] / 0xff;
 			}
 		}
 
@@ -1931,7 +1931,7 @@ static int init_direct_mapped(unsigned int totalcolors,
 			r = 255 * brightness * pow(palette[3*i+0] / 255.0, 1 / osd_gamma_correction) / 100;
 			g = 255 * brightness * pow(palette[3*i+1] / 255.0, 1 / osd_gamma_correction) / 100;
 			b = 255 * brightness * pow(palette[3*i+2] / 255.0, 1 / osd_gamma_correction) / 100;
-			*pens++ = makecol(r,g,b);
+			*rgb_components++ = makecol(r,g,b);
 		}
 
 		Machine->uifont->colortable[0] = makecol(0x00,0x00,0x00);
@@ -1975,15 +1975,18 @@ static int init_direct_mapped(unsigned int totalcolors,
 
 
 int osd_allocate_colors(unsigned int totalcolors,
-		const UINT8 *palette,UINT32 *pens,int modifiable,
+		const UINT8 *palette,UINT32 *rgb_components,
 		const UINT8 *debug_palette,UINT32 *debug_pens)
 {
 	int i;
 
-	modifiable_palette = modifiable;
-
 	if (video_attributes & VIDEO_RGB_DIRECT)
-		return init_direct_mapped(totalcolors,palette,pens,modifiable,debug_palette,debug_pens);
+	{
+		rgb_direct = 1;
+		return init_direct_mapped(totalcolors,palette,rgb_components,debug_palette,debug_pens);
+	}
+
+	rgb_direct = 0;
 
 	screen_colors = totalcolors;
 	if (video_depth != 8)
@@ -2002,106 +2005,24 @@ int osd_allocate_colors(unsigned int totalcolors,
 	for (i = 0;i < screen_colors;i++)
 		current_palette[3*i+0] = current_palette[3*i+1] = current_palette[3*i+2] = 0;
 
-	if (video_depth != 8 && modifiable == 0)
+	// reserve color totalcolors+1 for the user interface text */
+	current_palette[(totalcolors+1)*3+0] = current_palette[(totalcolors+1)*3+1] = current_palette[(totalcolors+1)*3+2] = 0xff;
+	Machine->uifont->colortable[0] = totalcolors;
+	Machine->uifont->colortable[1] = totalcolors + 1;
+	Machine->uifont->colortable[2] = totalcolors + 1;
+	Machine->uifont->colortable[3] = totalcolors;
+
+	for (i = 0;i < totalcolors;i++)
 	{
-		int r,g,b;
+		current_palette[3*i+0] = palette[3*i];
+		current_palette[3*i+1] = palette[3*i+1];
+		current_palette[3*i+2] = palette[3*i+2];
+	}
 
-
-		for (i = 0;i < totalcolors;i++)
-		{
-			r = 255 * brightness * pow(palette[3*i+0] / 255.0, 1 / osd_gamma_correction) / 100;
-			g = 255 * brightness * pow(palette[3*i+1] / 255.0, 1 / osd_gamma_correction) / 100;
-			b = 255 * brightness * pow(palette[3*i+2] / 255.0, 1 / osd_gamma_correction) / 100;
-			*pens++ = makecol(r,g,b);
-		}
-
-		Machine->uifont->colortable[0] = makecol(0x00,0x00,0x00);
-		Machine->uifont->colortable[1] = makecol(0xff,0xff,0xff);
-		Machine->uifont->colortable[2] = makecol(0xff,0xff,0xff);
-		Machine->uifont->colortable[3] = makecol(0x00,0x00,0x00);
-
-		if (debug_pens)
-		{
-			for (i = 0;i < DEBUGGER_TOTAL_COLORS;i++)
-			{
-				r = debug_palette[3*i+0];
-				g = debug_palette[3*i+1];
-				b = debug_palette[3*i+2];
-				*debug_pens++ = makecol(r,g,b);
-			}
-		}
-    }
-	else
+	if (debug_pens)
 	{
-		if (video_depth == 8 && totalcolors >= 255)
-		{
-			int bestblack,bestwhite;
-			int bestblackscore,bestwhitescore;
-
-
-			bestblack = bestwhite = 0;
-			bestblackscore = 3*255*255;
-			bestwhitescore = 0;
-			for (i = 0;i < totalcolors;i++)
-			{
-				int r,g,b,score;
-
-				r = palette[3*i+0];
-				g = palette[3*i+1];
-				b = palette[3*i+2];
-				score = r*r + g*g + b*b;
-
-				if (score < bestblackscore)
-				{
-					bestblack = i;
-					bestblackscore = score;
-				}
-				if (score > bestwhitescore)
-				{
-					bestwhite = i;
-					bestwhitescore = score;
-				}
-			}
-
-			for (i = 0;i < totalcolors;i++)
-				pens[i] = i;
-
-			/* map black to pen 0, otherwise the screen border will not be black */
-			pens[bestblack] = 0;
-			pens[0] = bestblack;
-
-			Machine->uifont->colortable[0] = pens[bestblack];
-			Machine->uifont->colortable[1] = pens[bestwhite];
-			Machine->uifont->colortable[2] = pens[bestwhite];
-			Machine->uifont->colortable[3] = pens[bestblack];
-		}
-		else
-		{
-			/* reserve color 1 for the user interface text */
-			current_palette[3*1+0] = current_palette[3*1+1] = current_palette[3*1+2] = 0xff;
-			Machine->uifont->colortable[0] = 0;
-			Machine->uifont->colortable[1] = 1;
-			Machine->uifont->colortable[2] = 1;
-			Machine->uifont->colortable[3] = 0;
-
-			/* fill the palette starting from the end, so we mess up badly written */
-			/* drivers which don't go through Machine->pens[] */
-			for (i = 0;i < totalcolors;i++)
-				pens[i] = (screen_colors-1)-i;
-		}
-
-		for (i = 0;i < totalcolors;i++)
-		{
-			current_palette[3*pens[i]+0] = palette[3*i];
-			current_palette[3*pens[i]+1] = palette[3*i+1];
-			current_palette[3*pens[i]+2] = palette[3*i+2];
-		}
-
-		if (debug_pens)
-		{
-			for (i = 0;i < DEBUGGER_TOTAL_COLORS;i++)
-				debug_pens[i] = i;
-		}
+		for (i = 0;i < DEBUGGER_TOTAL_COLORS;i++)
+			debug_pens[i] = i;
 	}
 
 	dbg_palette = debug_palette;
@@ -2157,15 +2078,15 @@ int osd_allocate_colors(unsigned int totalcolors,
 
 		if (video_depth == 16)
 		{
-			if (modifiable_palette)
-			{
-				update_screen = updaters16_palettized[xmultiply-1][ymultiply-1][scanlines?1:0][use_dirty?1:0];
-				update_screen_debugger = updaters16_palettized[0][0][0][0];
-			}
-			else
+			if (rgb_direct)
 			{
 				update_screen = updaters16[xmultiply-1][ymultiply-1][scanlines?1:0][use_dirty?1:0];
 				update_screen_debugger = updaters16[0][0][0][0];
+			}
+			else
+			{
+				update_screen = updaters16_palettized[xmultiply-1][ymultiply-1][scanlines?1:0][use_dirty?1:0];
+				update_screen_debugger = updaters16_palettized[0][0][0][0];
 			}
 		}
 		else
@@ -2182,9 +2103,9 @@ int osd_allocate_colors(unsigned int totalcolors,
 
 void osd_modify_pen(int pen,unsigned char red, unsigned char green, unsigned char blue)
 {
-	if (modifiable_palette == 0)
+	if (rgb_direct)
 	{
-		logerror("error: osd_modify_pen() called with modifiable_palette == 0\n");
+		logerror("error: osd_modify_pen() called with rgb direct mode\n");
 		return;
 	}
 
@@ -2206,17 +2127,17 @@ void osd_modify_pen(int pen,unsigned char red, unsigned char green, unsigned cha
 
 void osd_get_pen(int pen,unsigned char *red, unsigned char *green, unsigned char *blue)
 {
-	if (video_depth != 8 && modifiable_palette == 0)
-	{
-		*red =   getr(pen);
-		*green = getg(pen);
-		*blue =  getb(pen);
-	}
-	else
+	if (current_palette)
 	{
 		*red =	 current_palette[3*pen+0];
 		*green = current_palette[3*pen+1];
 		*blue =  current_palette[3*pen+2];
+	}
+	else
+	{
+		*red =   getr(pen);
+		*green = getg(pen);
+		*blue =  getb(pen);
 	}
 }
 

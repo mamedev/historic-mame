@@ -131,7 +131,7 @@ READ_HANDLER( galaga_customio_data_r )
 							}
 						}
 					}
-					else credits = 2;
+					else credits = 100;	/* free play */
 
 
 					/* check for 1 player start button */

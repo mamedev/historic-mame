@@ -3641,10 +3641,10 @@ static struct MachineDriver machine_driver_##_name_ = \
 	/* video hardware */ \
 	1024, 512, { 0, 640-1, 0, 240-1 }, \
 	0, \
-	256, 256, \
+	256, 0, \
 	0, \
 \
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_AFTER_VBLANK | VIDEO_PIXEL_ASPECT_RATIO_1_2, \
+	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_AFTER_VBLANK | VIDEO_PIXEL_ASPECT_RATIO_1_2, \
 	0, \
 	sailorws_vh_start, \
 	sailorws_vh_stop, \
@@ -3694,10 +3694,10 @@ static struct MachineDriver machine_driver_##_name_ = \
 	/* video hardware */ \
 	1024, 512, { 0, 640-1, 0, 240-1 }, \
 	0, \
-	256, 256, \
+	256, 0, \
 	0, \
 \
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_PIXEL_ASPECT_RATIO_1_2, \
+	VIDEO_TYPE_RASTER  | VIDEO_PIXEL_ASPECT_RATIO_1_2, \
 	0, \
 	mjkoiura_vh_start, \
 	mjkoiura_vh_stop, \
@@ -3747,10 +3747,10 @@ static struct MachineDriver machine_driver_##_name_ = \
 	/* video hardware */ \
 	1024, 512, { 0, 640-1, 0, 240-1 }, \
 	0, \
-	512, 512, \
+	512, 0, \
 	0, \
 \
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_PIXEL_ASPECT_RATIO_1_2, \
+	VIDEO_TYPE_RASTER  | VIDEO_PIXEL_ASPECT_RATIO_1_2, \
 	0, \
 	mscoutm_vh_start, \
 	mscoutm_vh_stop, \
@@ -4225,27 +4225,27 @@ ROM_END
 
 
 //     YEAR,     NAME,   PARENT,  MACHINE,    INPUT,     INIT,    MONITOR, COMPANY, FULLNAME, FLAGS
-GAMEX( 1992, mjuraden,        0, mjuraden, mjuraden, mjuraden,       ROT0, "Nichibutsu/Yubis", "Mahjong Uranai Densetsu (Japan)", 0 )
-GAMEX( 1992,  koinomp,        0,  koinomp,  koinomp,  koinomp,       ROT0, "Nichibutsu", "Mahjong Koi no Magic Potion (Japan)", 0 )
-GAMEX( 1992, patimono,        0, patimono, patimono, patimono,       ROT0, "Nichibutsu", "Mahjong Pachinko Monogatari (Japan)", 0 )
-GAMEX( 1992, mjanbari,        0, mjanbari, mjanbari, mjanbari,       ROT0, "Nichibutsu/Yubis/AV JAPAN", "Medal Mahjong Janjan Baribari [BET] (Japan)", 0 )
-GAMEX( 1992,  mmehyou,        0,  mmehyou,  mmehyou,  mmehyou,       ROT0, "Nichibutsu/Kawakusu", "Medal Mahjong Circuit no Mehyou [BET] (Japan)", 0 )
-GAMEX( 1993, gal10ren,        0, gal10ren, gal10ren, gal10ren,       ROT0, "FUJIC", "Mahjong Gal 10-renpatsu (Japan)", 0 )
-GAMEX( 1993,  mjlaman,        0,  mjlaman,  mjlaman,  mjlaman,       ROT0, "Nichibutsu/AV JAPAN", "Mahjong La Man (Japan)", 0 )
-GAMEX( 1993, mkeibaou,        0, mkeibaou, mkeibaou, mkeibaou,       ROT0, "Nichibutsu", "Mahjong Keibaou (Japan)", 0 )
-GAMEX( 1993, pachiten,        0, pachiten, pachiten, pachiten,       ROT0, "Nichibutsu/MIKI SYOUJI/AV JAPAN", "Medal Mahjong Pachi-Slot Tengoku [BET] (Japan)", 0 )
-GAMEX( 1993, sailorws,        0, sailorws, sailorws, sailorws,       ROT0, "Nichibutsu", "Mahjong Sailor Wars (Japan)", 0 )
-GAMEX( 1993, sailorwr, sailorws, sailorwr, sailorwr, sailorwr,       ROT0, "Nichibutsu", "Mahjong Sailor Wars-R [BET] (Japan)", 0 )
-GAMEX( 1994, psailor1,        0, psailor1, psailor1, psailor1,       ROT0, "SPHINX", "Bishoujo Janshi Pretty Sailor 18-kin (Japan)", 0 )
-GAMEX( 1994, psailor2,        0, psailor2, psailor2, psailor2,       ROT0, "SPHINX", "Bishoujo Janshi Pretty Sailor 2 (Japan)", 0 )
-GAMEX( 1995, otatidai,        0, otatidai, otatidai, otatidai,       ROT0, "SPHINX", "Disco Mahjong Otachidai no Okite (Japan)", 0 )
+GAME( 1992, mjuraden, 0,        mjuraden, mjuraden, mjuraden, ROT0, "Nichibutsu/Yubis", "Mahjong Uranai Densetsu (Japan)" )
+GAME( 1992,  koinomp, 0,         koinomp,  koinomp,  koinomp, ROT0, "Nichibutsu", "Mahjong Koi no Magic Potion (Japan)" )
+GAME( 1992, patimono, 0,        patimono, patimono, patimono, ROT0, "Nichibutsu", "Mahjong Pachinko Monogatari (Japan)" )
+GAME( 1992, mjanbari, 0,        mjanbari, mjanbari, mjanbari, ROT0, "Nichibutsu/Yubis/AV JAPAN", "Medal Mahjong Janjan Baribari [BET] (Japan)" )
+GAME( 1992,  mmehyou, 0,         mmehyou,  mmehyou,  mmehyou, ROT0, "Nichibutsu/Kawakusu", "Medal Mahjong Circuit no Mehyou [BET] (Japan)" )
+GAME( 1993, gal10ren, 0,        gal10ren, gal10ren, gal10ren, ROT0, "FUJIC", "Mahjong Gal 10-renpatsu (Japan)" )
+GAME( 1993,  mjlaman, 0,         mjlaman,  mjlaman,  mjlaman, ROT0, "Nichibutsu/AV JAPAN", "Mahjong La Man (Japan)" )
+GAME( 1993, mkeibaou, 0,        mkeibaou, mkeibaou, mkeibaou, ROT0, "Nichibutsu", "Mahjong Keibaou (Japan)" )
+GAME( 1993, pachiten, 0,        pachiten, pachiten, pachiten, ROT0, "Nichibutsu/MIKI SYOUJI/AV JAPAN", "Medal Mahjong Pachi-Slot Tengoku [BET] (Japan)" )
+GAME( 1993, sailorws, 0,        sailorws, sailorws, sailorws, ROT0, "Nichibutsu", "Mahjong Sailor Wars (Japan)" )
+GAME( 1993, sailorwr, sailorws, sailorwr, sailorwr, sailorwr, ROT0, "Nichibutsu", "Mahjong Sailor Wars-R [BET] (Japan)" )
+GAME( 1994, psailor1, 0,        psailor1, psailor1, psailor1, ROT0, "SPHINX", "Bishoujo Janshi Pretty Sailor 18-kin (Japan)" )
+GAME( 1994, psailor2, 0,        psailor2, psailor2, psailor2, ROT0, "SPHINX", "Bishoujo Janshi Pretty Sailor 2 (Japan)" )
+GAME( 1995, otatidai, 0,        otatidai, otatidai, otatidai, ROT0, "SPHINX", "Disco Mahjong Otachidai no Okite (Japan)" )
 
-GAMEX( 1991,   ngpgal,        0,   ngpgal,   ngpgal,   ngpgal,       ROT0, "Nichibutsu", "Nekketsu Grand-Prix Gal (Japan)", 0 )
-GAMEX( 1991, mjgottsu,        0, mjgottsu, mjgottsu, mjgottsu,       ROT0, "Nichibutsu", "Mahjong Gottsu ee-kanji (Japan)", 0 )
-GAMEX( 1991, bakuhatu, mjgottsu, bakuhatu, bakuhatu, bakuhatu,       ROT0, "Nichibutsu", "Mahjong Bakuhatsu Junjouden (Japan)", 0 )
-GAMEX( 1992,  cmehyou,        0,  cmehyou,  cmehyou,  cmehyou,       ROT0, "Nichibutsu/Kawakusu", "Mahjong Circuit no Mehyou (Japan)", 0 )
-GAMEX( 1992, mjkoiura,        0, mjkoiura, mjkoiura, mjkoiura,       ROT0, "Nichibutsu", "Mahjong Koi Uranai (Japan)", 0 )
+GAME( 1991,   ngpgal, 0,          ngpgal,   ngpgal,   ngpgal, ROT0, "Nichibutsu", "Nekketsu Grand-Prix Gal (Japan)" )
+GAME( 1991, mjgottsu, 0,        mjgottsu, mjgottsu, mjgottsu, ROT0, "Nichibutsu", "Mahjong Gottsu ee-kanji (Japan)" )
+GAME( 1991, bakuhatu, mjgottsu, bakuhatu, bakuhatu, bakuhatu, ROT0, "Nichibutsu", "Mahjong Bakuhatsu Junjouden (Japan)" )
+GAME( 1992,  cmehyou, 0,         cmehyou,  cmehyou,  cmehyou, ROT0, "Nichibutsu/Kawakusu", "Mahjong Circuit no Mehyou (Japan)" )
+GAME( 1992, mjkoiura, 0,        mjkoiura, mjkoiura, mjkoiura, ROT0, "Nichibutsu", "Mahjong Koi Uranai (Japan)" )
 
-GAMEX( 1994,  mscoutm,        0,  mscoutm,  mscoutm,  mscoutm, ROT0_16BIT, "SPHINX/AV JAPAN", "Mahjong Scout Man (Japan)", 0 )
-GAMEX( 1994,  imekura,        0,  imekura,  imekura,  imekura, ROT0_16BIT, "SPHINX/AV JAPAN", "Imekura Mahjong (Japan)", 0 )
-GAMEX( 1994,  mjegolf,        0,  mjegolf,  mjegolf,  mjegolf, ROT0_16BIT, "FUJIC/AV JAPAN", "Mahjong Erotica Golf (Japan)", 0 )
+GAME( 1994,  mscoutm, 0,         mscoutm,  mscoutm,  mscoutm, ROT0, "SPHINX/AV JAPAN", "Mahjong Scout Man (Japan)" )
+GAME( 1994,  imekura, 0,         imekura,  imekura,  imekura, ROT0, "SPHINX/AV JAPAN", "Imekura Mahjong (Japan)" )
+GAME( 1994,  mjegolf, 0,         mjegolf,  mjegolf,  mjegolf, ROT0, "FUJIC/AV JAPAN", "Mahjong Erotica Golf (Japan)" )

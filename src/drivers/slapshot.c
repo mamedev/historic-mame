@@ -433,10 +433,10 @@ static struct MachineDriver machine_driver_slapshot =
 	40*8, 32*8, { 0*8, 40*8-1, 2*8, 30*8-1 },
 
 	slapshot_gfxdecodeinfo,
-	8192, 8192,
+	8192, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_NEEDS_6BITS_PER_GUN,
+	VIDEO_TYPE_RASTER  | VIDEO_NEEDS_6BITS_PER_GUN,
 	taito_no_buffer_eof_callback,
 	slapshot_vh_start,
 	slapshot_vh_stop,
@@ -522,4 +522,4 @@ static void init_slapshot(void)
 	state_save_register_func_postload(reset_sound_region);
 }
 
-GAME( 1994, slapshot, 0, slapshot, slapshot, slapshot, ROT0_16BIT,  "Taito Corporation", "Slap Shot (Japan)" )
+GAME( 1994, slapshot, 0, slapshot, slapshot, slapshot, ROT0, "Taito Corporation", "Slap Shot (Japan)" )

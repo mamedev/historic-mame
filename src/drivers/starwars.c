@@ -1,229 +1,234 @@
 /***************************************************************************
-File: drivers\starwars.c
 
-STARWARS HARDWARE FILE
+	Atari Star Wars hardware
 
-This file is Copyright 1997, Steve Baines.
-Modified by Frank Palazzolo for sound support
+	driver by Steve Baines (sulaco@ntlworld.com) and Frank Palazzolo
 
-Current e-mail contact address:  sulaco@ntlworld.com
+	This file is Copyright 1997, Steve Baines.
+	Modified by Frank Palazzolo for sound support
 
-Release 2.0 (6 August 1997)
+	Games supported:
+		* Star Wars
+		* The Empire Strikes Back
+
+	Known bugs:
+		* none at this time
+
+****************************************************************************
+
+	Memory map (TBA)
 
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
+#include "cpu/m6809/m6809.h"
+//#include "machine/atari_vg.h"
+//#include "vidhrdw/generic.h"
 #include "vidhrdw/vector.h"
 #include "vidhrdw/avgdvg.h"
-#include "machine/swmathbx.h"
-#include "machine/atari_vg.h"
-
-/* formerly sndhrdw/starwars.h */
-READ_HANDLER( starwars_main_read_r );
-READ_HANDLER( starwars_main_ready_flag_r );
-WRITE_HANDLER( starwars_main_wr_w );
-WRITE_HANDLER( starwars_soundrst_w );
-
-READ_HANDLER( starwars_sin_r );
-READ_HANDLER( starwars_m6532_r );
-
-WRITE_HANDLER( starwars_sout_w );
-WRITE_HANDLER( starwars_m6532_w );
-
-/* formerly machine/starwars.h */
-READ_HANDLER( starwars_input_bank_1_r );
-void starwars_wdclr(int, int);
-
-READ_HANDLER( starwars_control_r );
-WRITE_HANDLER( starwars_control_w );
-int  starwars_interrupt (void);
+#include "starwars.h"
+#include "slapstic.h"
 
 
-static unsigned char *nvram;
+/* Local variables */
+static UINT8 *nvram;
 static size_t nvram_size;
+static UINT8 *slapstic_source;
+static UINT8 *slapstic_base;
+static UINT8 current_bank;
+static UINT8 is_esb;
+
+
+
+/*************************************
+ *
+ *	NVRAM handler
+ *
+ *************************************/
 
 static void nvram_handler(void *file, int read_or_write)
 {
 	if (read_or_write)
-		osd_fwrite(file,nvram,nvram_size);
+		osd_fwrite(file, nvram, nvram_size);
+	else if (file)
+		osd_fread(file, nvram, nvram_size);
 	else
-	{
-		if (file)
-			osd_fread(file,nvram,nvram_size);
-		else
-			memset(nvram,0,nvram_size);
-	}
+		memset(nvram, 0, nvram_size);
 }
 
 
-
-WRITE_HANDLER( starwars_out_w )
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	switch (offset)
-	{
-		case 0:		/* Coin counter 1 */
-			coin_counter_w (0, data);
-			break;
-		case 1:		/* Coin counter 2 */
-			coin_counter_w (1, data);
-			break;
-		case 2:		/* LED 3 */
-			set_led_status (2, ~data & 0x80);
-			break;
-		case 3:		/* LED 2 */
-			set_led_status (1, ~data & 0x80);
-			break;
-		case 4:
-//			logerror("bank_switch_w, %02x\n", data);
-			if (data & 0x80)
-			{
-				cpu_setbank(1,&RAM[0x10000]);
-				cpu_setbank(2,&RAM[0x1c000]);
-			}
-			else
-			{
-				cpu_setbank(1,&RAM[0x06000]);
-				cpu_setbank(2,&RAM[0x0a000]);
-			}
-			break;
-		case 5:
-			prngclr_w (offset, data);
-			break;
-		case 6:
-			set_led_status (0, ~data & 0x80);
-			break;	/* LED 1 */
-		case 7:
-			logerror("recall\n"); /* what's that? */
-			break;
-	}
-}
-
-/* machine/slapstic.c */
-void slapstic_init (int chip);
-int slapstic_bank (void);
-int slapstic_tweak (offs_t offset);
-
-static unsigned char *slapstic_base;	/* ASG - made static */
-static unsigned char *slapstic_area;
-
-/* ASG - added this (including the function) */
-static int last_bank;
-static int esb_slapstic_tweak(offs_t offset)
-{
-	int bank = slapstic_tweak(offset);
-	if (bank != last_bank)
-	{
-		memcpy(slapstic_area, &slapstic_base[bank * 0x2000], 0x2000);
-		last_bank = bank;
-	}
-	return bank;
-}
-
-static OPBASE_HANDLER( esb_setopbase )
-{
-	int prevpc = cpu_getpreviouspc ();
-	int bank;
-
-	/*
-	 *		This is a slightly ugly kludge for Indiana Jones & the Temple of Doom because it jumps
-	 *		directly to code in the slapstic.  The general order of things is this:
-	 *
-	 *			jump to $3A, which turns off interrupts and jumps to $00 (the reset address)
-	 *			look up the request in a table and jump there
-	 *			(under some circumstances, tweak the special addresses)
-	 *			return via an RTS at the real bankswitch address
-	 *
-	 *		To simulate this, we tweak the slapstic reset address on entry into slapstic code; then
-	 *		we let the system tweak whatever other addresses it wishes.  On exit, we tweak the
-	 *		address of the previous PC, which is the RTS instruction, thereby completing the
-	 *		bankswitch sequence.
-	 *
-	 *		Fortunately for us, all 4 banks have exactly the same code at this point in their
-	 *		ROM, so it doesn't matter which version we're actually executing.
-	 */
-
-	if ((address & 0xe000) == 0x8000)
-	{
-//		logerror("      new pc inside of slapstic region: %04x (prev = %04x)\n", pc, prevpc);
-		bank = esb_slapstic_tweak ((address) & 0x1fff);	/* ASG - switched to ESB version */
-		/* catching every branch during slapstic area */
-		catch_nextBranch();
-		return -1;
-	}
-	else if ((prevpc & 0xe000) == 0x8000)
- {
-//  logerror("      old pc inside of slapstic region: %04x (new = %04x)\n", prevpc, pc);
-if (prevpc != 0x8080 && prevpc != 0x8090 && prevpc != 0x80a0 && prevpc !=0x80b0)
-  bank = esb_slapstic_tweak ((prevpc) & 0x1fff);	/* ASG - switched to ESB version */
- }
-
-	return address;
-}
-
-void esb_init_machine (void)
-{
-	/* Set up the slapstic */
-	slapstic_init (101);
-	memory_set_opbase_handler (0,esb_setopbase);
-	/* ASG - added the following: */
-	memcpy(slapstic_area, &slapstic_base[slapstic_bank() * 0x2000], 0x2000);
-
-	/* Reset all the banks */
-	starwars_out_w (4, 0);
-
-	init_swmathbox ();
-}
 
 /*************************************
  *
- *		Slapstic ROM read/write.
+ *	Machine init
+ *
+ *************************************/
+
+static void init_machine(void)
+{
+	/* ESB-specific */
+	if (is_esb)
+	{
+		/* reset the slapstic */
+		slapstic_reset();
+		current_bank = slapstic_bank();
+		memcpy(slapstic_base, &slapstic_source[current_bank * 0x2000], 0x2000);
+
+		/* reset all the banks */
+		starwars_out_w(4, 0);
+	}
+
+	/* reset the mathbox */
+	swmathbox_reset();
+}
+
+
+
+/*************************************
+ *
+ *	Interrupt generation
+ *
+ *************************************/
+
+static int generate_irq(void)
+{
+	cpu_set_irq_line(0, M6809_IRQ_LINE, ASSERT_LINE);
+	return ignore_interrupt();
+}
+
+
+static WRITE_HANDLER( irq_ack_w )
+{
+	cpu_set_irq_line(0, M6809_IRQ_LINE, CLEAR_LINE);
+}
+
+
+
+/*************************************
+ *
+ *	ESB Slapstic handler
  *
  *************************************/
 
 READ_HANDLER( esb_slapstic_r )
 {
-	int val;
+	int result = slapstic_base[offset];
+	int new_bank = slapstic_tweak(offset);
 
-	int bank = (esb_slapstic_tweak (offset) * 0x2000);	/* ASG - switched to ESB version */
-	val = slapstic_base[bank + (offset & 0x1fff)];
-//	logerror("slapstic_r, %04x: %02x\n", 0x8000 + offset, val);
-	return val;
+	/* update for the new bank */
+	if (new_bank != current_bank)
+	{
+		current_bank = new_bank;
+		memcpy(slapstic_base, &slapstic_source[current_bank * 0x2000], 0x2000);
+	}
+	return result;
 }
 
 
 WRITE_HANDLER( esb_slapstic_w )
 {
-//	logerror("esb slapstic tweak via write\n");
-	esb_slapstic_tweak (offset);	/* ASG - switched to ESB version */
+	int new_bank = slapstic_tweak(offset);
+
+	/* update for the new bank */
+	if (new_bank != current_bank)
+	{
+		current_bank = new_bank;
+		memcpy(slapstic_base, &slapstic_source[current_bank * 0x2000], 0x2000);
+	}
 }
 
-/* Star Wars READ memory map */
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x2fff, MRA_RAM },   /* vector_ram */
-	{ 0x3000, 0x3fff, MRA_ROM },		/* vector_rom */
-	{ 0x4300, 0x431f, input_port_0_r }, /* Memory mapped input port 0 */
-	{ 0x4320, 0x433f, starwars_input_bank_1_r }, /* Memory mapped input port 1 */
-	{ 0x4340, 0x435f, input_port_2_r },	/* DIP switches bank 0 */
-	{ 0x4360, 0x437f, input_port_3_r },	/* DIP switches bank 1 */
-	{ 0x4380, 0x439f, starwars_control_r }, /* a-d control result */
+
+
+/*************************************
+ *
+ *	ESB Opcode base handler
+ *
+ *************************************/
+
+OPBASE_HANDLER( esb_setopbase )
+{
+	int prevpc = cpu_getpreviouspc();
+
+	/*
+	 *	This is a slightly ugly kludge for Empire Strikes Back because it jumps
+	 *	directly to code in the slapstic.
+	 */
+
+	/* if we're jumping into the slapstic region, tweak the new PC */
+	if ((address & 0xe000) == 0x8000)
+	{
+		esb_slapstic_r(address & 0x1fff);
+
+		/* make sure we catch the next branch as well */
+		catch_nextBranch();
+		return -1;
+	}
+
+	/* if we're jumping out of the slapstic region, tweak the previous PC */
+	else if ((prevpc & 0xe000) == 0x8000)
+	{
+		if (prevpc != 0x8080 && prevpc != 0x8090 && prevpc != 0x80a0 && prevpc != 0x80b0)
+			esb_slapstic_r(prevpc & 0x1fff);
+	}
+
+	return address;
+}
+
+
+
+/*************************************
+ *
+ *	Main CPU memory handlers
+ *
+ *************************************/
+
+static MEMORY_READ_START( main_readmem )
+	{ 0x0000, 0x2fff, MRA_RAM },			/* vector_ram */
+	{ 0x3000, 0x3fff, MRA_ROM },			/* vector_rom */
+	{ 0x4300, 0x431f, input_port_0_r },		/* Memory mapped input port 0 */
+	{ 0x4320, 0x433f, starwars_input_1_r },	/* Memory mapped input port 1 */
+	{ 0x4340, 0x435f, input_port_2_r },		/* DIP switches bank 0 */
+	{ 0x4360, 0x437f, input_port_3_r },		/* DIP switches bank 1 */
+	{ 0x4380, 0x439f, starwars_adc_r },		/* a-d control result */
 	{ 0x4400, 0x4400, starwars_main_read_r },
 	{ 0x4401, 0x4401, starwars_main_ready_flag_r },
-	{ 0x4500, 0x45ff, MRA_RAM },		/* nov_ram */
-	{ 0x4700, 0x4700, reh_r },
-	{ 0x4701, 0x4701, rel_r },
-	{ 0x4703, 0x4703, prng_r },			/* pseudo random number generator */
-/*	{ 0x4800, 0x4fff, MRA_RAM }, */		/* cpu_ram */
-/*	{ 0x5000, 0x5fff, MRA_RAM }, */		/* (math_ram_r) math_ram */
-	{ 0x4800, 0x5fff, MRA_RAM },		/* CPU and Math RAM */
-	{ 0x6000, 0x7fff, MRA_BANK1 },	    /* banked ROM */
-	{ 0x8000, 0xffff, MRA_ROM },		/* rest of main_rom */
+	{ 0x4500, 0x45ff, MRA_RAM },			/* nov_ram */
+	{ 0x4700, 0x4700, swmathbx_reh_r },
+	{ 0x4701, 0x4701, swmathbx_rel_r },
+	{ 0x4703, 0x4703, swmathbx_prng_r },	/* pseudo random number generator */
+	{ 0x4800, 0x5fff, MRA_RAM },			/* CPU and Math RAM */
+	{ 0x6000, 0x7fff, MRA_BANK1 },			/* banked ROM */
+	{ 0x8000, 0xffff, MRA_ROM },			/* rest of main_rom */
 MEMORY_END
 
-/* Star Wars Sound READ memory map */
-static MEMORY_READ_START( readmem2 )
+
+static MEMORY_WRITE_START( main_writemem )
+	{ 0x0000, 0x2fff, MWA_RAM, &vectorram, &vectorram_size },
+	{ 0x3000, 0x3fff, MWA_ROM },								/* vector_rom */
+	{ 0x4400, 0x4400, starwars_main_wr_w },
+	{ 0x4500, 0x45ff, MWA_RAM, &nvram, &nvram_size },
+	{ 0x4600, 0x461f, avgdvg_go_w },
+	{ 0x4620, 0x463f, avgdvg_reset_w },
+	{ 0x4640, 0x465f, watchdog_reset_w },
+	{ 0x4660, 0x467f, irq_ack_w },
+	{ 0x4680, 0x4687, starwars_out_w },
+	{ 0x46a0, 0x46bf, MWA_NOP },								/* nstore */
+	{ 0x46c0, 0x46c2, starwars_adc_select_w },
+	{ 0x46e0, 0x46e0, starwars_soundrst_w },
+	{ 0x4700, 0x4707, swmathbx_w },
+	{ 0x4800, 0x5fff, MWA_RAM },		/* CPU and Math RAM */
+	{ 0x6000, 0xffff, MWA_ROM },		/* main_rom */
+MEMORY_END
+
+
+
+/*************************************
+ *
+ *	Sound CPU memory handlers
+ *
+ *************************************/
+
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0800, 0x0fff, starwars_sin_r },		/* SIN Read */
 	{ 0x1000, 0x107f, MRA_RAM },	/* 6532 RAM */
 	{ 0x1080, 0x109f, starwars_m6532_r },
@@ -233,29 +238,8 @@ static MEMORY_READ_START( readmem2 )
 									/* for proper int vec operation */
 MEMORY_END
 
-/* Star Wars WRITE memory map */
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x2fff, MWA_RAM, &vectorram, &vectorram_size }, /* vector_ram */
-	{ 0x3000, 0x3fff, MWA_ROM },		/* vector_rom */
-	{ 0x4400, 0x4400, starwars_main_wr_w },
-	{ 0x4500, 0x45ff, MWA_RAM, &nvram, &nvram_size },		/* nov_ram */
-	{ 0x4600, 0x461f, avgdvg_go_w },
-	{ 0x4620, 0x463f, avgdvg_reset_w },
-	{ 0x4640, 0x465f, MWA_NOP },		/* (wdclr) Watchdog clear */
-	{ 0x4660, 0x467f, MWA_NOP },        /* irqclr: clear periodic interrupt */
-	{ 0x4680, 0x4687, starwars_out_w },
-	{ 0x46a0, 0x46bf, MWA_NOP },		/* nstore */
-	{ 0x46c0, 0x46c2, starwars_control_w },	/* Selects which a-d control port (0-3) will be read */
-	{ 0x46e0, 0x46e0, starwars_soundrst_w },
-	{ 0x4700, 0x4707, swmathbx_w },
-/*	{ 0x4800, 0x4fff, MWA_RAM }, */		/* cpu_ram */
-/*	{ 0x5000, 0x5fff, MWA_RAM }, */		/* (math_ram_w) math_ram */
-	{ 0x4800, 0x5fff, MWA_RAM },		/* CPU and Math RAM */
-	{ 0x6000, 0xffff, MWA_ROM },		/* main_rom */
-MEMORY_END
 
-/* Star Wars sound WRITE memory map */
-static MEMORY_WRITE_START( writemem2 )
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0x07ff, starwars_sout_w },
 	{ 0x1000, 0x107f, MWA_RAM }, /* 6532 ram */
 	{ 0x1080, 0x109f, starwars_m6532_w },
@@ -265,51 +249,13 @@ static MEMORY_WRITE_START( writemem2 )
 	{ 0xc000, 0xffff, MWA_ROM }, /* sound rom again, for intvecs */
 MEMORY_END
 
-static MEMORY_READ_START( esb_readmem )
-	{ 0x0000, 0x2fff, MRA_RAM },   /* vector_ram */
-	{ 0x3000, 0x3fff, MRA_ROM },		/* vector_rom */
-	{ 0x4300, 0x431f, input_port_0_r }, /* Memory mapped input port 0 */
-	{ 0x4320, 0x433f, starwars_input_bank_1_r }, /* Memory mapped input port 1 */
-	{ 0x4340, 0x435f, input_port_2_r },	/* DIP switches bank 0 */
-	{ 0x4360, 0x437f, input_port_3_r },	/* DIP switches bank 1 */
-	{ 0x4380, 0x439f, starwars_control_r }, /* a-d control result */
-	{ 0x4400, 0x4400, starwars_main_read_r },
-	{ 0x4401, 0x4401, starwars_main_ready_flag_r },
-	{ 0x4500, 0x45ff, MRA_RAM },		/* nov_ram */
-	{ 0x4700, 0x4700, reh_r },
-	{ 0x4701, 0x4701, rel_r },
-	{ 0x4703, 0x4703, prng_r },			/* pseudo random number generator */
-/*	{ 0x4800, 0x4fff, MRA_RAM }, */		/* cpu_ram */
-/*	{ 0x5000, 0x5fff, MRA_RAM }, */		/* (math_ram_r) math_ram */
-	{ 0x4800, 0x5fff, MRA_RAM },		/* CPU and Math RAM */
-	{ 0x6000, 0x7fff, MRA_BANK1 },	    /* banked ROM */
-	{ 0x8000, 0x9fff, esb_slapstic_r },
-	{ 0xa000, 0xffff, MRA_BANK2 },		/* banked ROM */
-MEMORY_END
 
-static MEMORY_WRITE_START( esb_writemem )
-	{ 0x0000, 0x2fff, MWA_RAM, &vectorram, &vectorram_size }, /* vector_ram */
-	{ 0x3000, 0x3fff, MWA_ROM },		/* vector_rom */
-	{ 0x4400, 0x4400, starwars_main_wr_w },
-	{ 0x4500, 0x45ff, MWA_RAM },		/* nov_ram */
-	{ 0x4600, 0x461f, avgdvg_go_w },
-	{ 0x4620, 0x463f, avgdvg_reset_w },
-	{ 0x4640, 0x465f, MWA_NOP },		/* (wdclr) Watchdog clear */
-	{ 0x4660, 0x467f, MWA_NOP },        /* irqclr: clear periodic interrupt */
-	{ 0x4680, 0x4687, starwars_out_w },
-	{ 0x46a0, 0x46bf, MWA_NOP },		/* nstore */
-	{ 0x46c0, 0x46c2, starwars_control_w },	/* Selects which a-d control port (0-3) will be read */
-	{ 0x46e0, 0x46e0, starwars_soundrst_w },
-	{ 0x4700, 0x4707, swmathbx_w },
-/*	{ 0x4800, 0x4fff, MWA_RAM }, */		/* cpu_ram */
-/*	{ 0x5000, 0x5fff, MWA_RAM }, */		/* (math_ram_w) math_ram */
-	{ 0x4800, 0x5fff, MWA_RAM },		/* CPU and Math RAM */
-	{ 0x8000, 0x9fff, esb_slapstic_w, &slapstic_area },		/* slapstic write */
-	{ 0x6000, 0xffff, MWA_ROM },		/* main_rom */
 
-	/* Dummy entry to set up the slapstic */
-	{ 0x14000, 0x1bfff, MWA_NOP, &slapstic_base },
-MEMORY_END
+/*************************************
+ *
+ *	Port definitions
+ *
+ *************************************/
 
 INPUT_PORTS_START( starwars )
 	PORT_START	/* IN0 */
@@ -466,6 +412,12 @@ INPUT_PORTS_END
 
 
 
+/*************************************
+ *
+ *	Sound definitions
+ *
+ *************************************/
+
 static struct POKEYinterface pokey_interface =
 {
 	4,			/* 4 chips */
@@ -484,6 +436,7 @@ static struct POKEYinterface pokey_interface =
 	{ 0, 0, 0, 0 },
 };
 
+
 static struct TMS5220interface tms5220_interface =
 {
 	640000,     /* clock speed (80*samplerate) */
@@ -493,119 +446,62 @@ static struct TMS5220interface tms5220_interface =
 
 
 
+/*************************************
+ *
+ *	Machine driver
+ *
+ *************************************/
+
 static const struct MachineDriver machine_driver_starwars =
 {
 	/* basic machine hardware */
 	{
-		/* Main CPU */
 		{
 			CPU_M6809,
-			1500000,					/* 1.5 MHz CPU clock (Don't know what speed it should be) */
-			readmem,writemem,0,0,
-			interrupt,6 /* 183Hz ? */
-			/* Increasing number of interrupts per frame speeds game up */
+			1500000,
+			main_readmem,main_writemem,0,0,
+			generate_irq,6 /* 183Hz ? */
 		},
-		/* Sound CPU */
 		{
 			CPU_M6809 | CPU_AUDIO_CPU,
-			1500000,					/* 1.5 MHz CPU clock (Don't know what speed it should be) */
-			readmem2,writemem2,0,0,
-			0, 0,
-			0, 0	/* no regular interrupts, see sndhrdw/starwars.c */
+			1500000,
+			sound_readmem,sound_writemem,0,0,
+			ignore_interrupt,0
 		}
-
 	},
-	30, 0,	/* frames per second, vblank duration (vector game, so no vblank) */
-	1,		/* 1 CPU slice per frame. */
-	init_swmathbox,  /* Name of initialisation handler */
+	30, 0,
+	1,
+	init_machine,
 
 	/* video hardware */
 	400, 300, { 0, 250, 0, 280 },
 	0,
-	256,0, /* Number of colours, length of colour lookup table */
+	256,0,
 	avg_init_palette_swars,
 
 	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY,
-	0,							/* Handler to initialise video handware */
-	avg_start_starwars,			/* Start video hardware */
-	avg_stop,					/* Stop video hardware */
-	vector_vh_screenrefresh,	/* Do a screen refresh */
+	0,
+	avg_start_starwars,
+	avg_stop,
+	vector_vh_screenrefresh,
 
 	/* sound hardware */
 	0,0,0,0,
 	{
-		{
-			SOUND_POKEY,
-			&pokey_interface
-		},
-		{
-			SOUND_TMS5220,
-			&tms5220_interface
-		}
+		{ SOUND_POKEY, &pokey_interface },
+		{ SOUND_TMS5220, &tms5220_interface }
 	},
 
 	nvram_handler
 };
 
-static const struct MachineDriver machine_driver_esb =
-{
-	/* basic machine hardware */
-	{
-		/* Main CPU */
-		{
-			CPU_M6809,
-			1500000,					/* 1.5 MHz CPU clock (Don't know what speed it should be) */
-			esb_readmem, esb_writemem,0,0,
-			interrupt,6 /* 183Hz ? */
-			/* Increasing number of interrupts per frame speeds game up */
-		},
-		/* Sound CPU */
-		{
-			CPU_M6809 | CPU_AUDIO_CPU,
-			1500000,					/* 1.5 MHz CPU clock (Don't know what speed it should be) */
-			readmem2,writemem2,0,0,
-			0, 0,
-			0, 0	/* no regular interrupts, see sndhrdw/starwars.c */
-		}
-
-	},
-	30, 0,	/* frames per second, vblank duration (vector game, so no vblank) */
-	1,		/* 1 CPU slice per frame. */
-	esb_init_machine,  /* Name of initialization handler */
-
-	/* video hardware */
-	400, 300, { 0, 250, 0, 280 },
-	0,
-	256,0, /* Number of colours, length of colour lookup table */
-	avg_init_palette_swars,
-
-	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY,
-	0,							/* Handler to initialise video handware */
-	avg_start_starwars,			/* Start video hardware */
-	avg_stop,					/* Stop video hardware */
-	vector_vh_screenrefresh,	/* Do a screen refresh */
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_POKEY,
-			&pokey_interface
-		},
-		{
-			SOUND_TMS5220,
-			&tms5220_interface
-		}
-	}
-};
 
 
-
-/***************************************************************************
-
-  Game driver
-
-***************************************************************************/
+/*************************************
+ *
+ *	ROM definitions
+ *
+ *************************************/
 
 ROM_START( starwar1 )
 	ROM_REGION( 0x12000, REGION_CPU1, 0 )     /* 2 64k ROM spaces */
@@ -617,21 +513,21 @@ ROM_START( starwar1 )
 	ROM_LOAD( "136021.104",   0xc000, 0x2000, 0x7e406703 ) /*  8k ROM 3 bank */
 	ROM_LOAD( "136021.206",   0xe000, 0x2000, 0xc7e51237 ) /*  8k ROM 4 bank */
 
-	/* Load the Mathbox PROM's temporarily into the Vector RAM area */
-	/* During initialisation they will be converted into useable form */
-	/* and stored elsewhere. */
-	ROM_LOAD( "136021.110",   0x0000, 0x0400, 0x01061762 ) /* PROM 0 */
-	ROM_LOAD( "136021.111",   0x0400, 0x0400, 0x2e619b70 ) /* PROM 1 */
-	ROM_LOAD( "136021.112",   0x0800, 0x0400, 0x6cfa3544 ) /* PROM 2 */
-	ROM_LOAD( "136021.113",   0x0c00, 0x0400, 0x03f6acb2 ) /* PROM 3 */
-
 	/* Sound ROMS */
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* Really only 32k, but it looks like 64K */
 	ROM_LOAD( "136021.107",   0x4000, 0x2000, 0xdbf3aea2 ) /* Sound ROM 0 */
 	ROM_RELOAD(               0xc000, 0x2000 ) /* Copied again for */
 	ROM_LOAD( "136021.208",   0x6000, 0x2000, 0xe38070a8 ) /* Sound ROM 0 */
 	ROM_RELOAD(               0xe000, 0x2000 ) /* proper int vecs */
+
+	/* Mathbox PROMs */
+	ROM_REGION( 0x1000, REGION_PROMS, ROMREGION_DISPOSE )
+	ROM_LOAD( "136021.110",   0x0000, 0x0400, 0x01061762 ) /* PROM 0 */
+	ROM_LOAD( "136021.111",   0x0400, 0x0400, 0x2e619b70 ) /* PROM 1 */
+	ROM_LOAD( "136021.112",   0x0800, 0x0400, 0x6cfa3544 ) /* PROM 2 */
+	ROM_LOAD( "136021.113",   0x0c00, 0x0400, 0x03f6acb2 ) /* PROM 3 */
 ROM_END
+
 
 ROM_START( starwars )
 	ROM_REGION( 0x12000, REGION_CPU1, 0 )     /* 2 64k ROM spaces */
@@ -643,21 +539,21 @@ ROM_START( starwars )
 	ROM_LOAD( "136021.104",   0xc000, 0x2000, 0x7e406703 ) /*  8k ROM 3 bank */
 	ROM_LOAD( "136021.206",   0xe000, 0x2000, 0xc7e51237 ) /*  8k ROM 4 bank */
 
-	/* Load the Mathbox PROM's temporarily into the Vector RAM area */
-	/* During initialisation they will be converted into useable form */
-	/* and stored elsewhere. */
-	ROM_LOAD( "136021.110",   0x0000, 0x0400, 0x01061762 ) /* PROM 0 */
-	ROM_LOAD( "136021.111",   0x0400, 0x0400, 0x2e619b70 ) /* PROM 1 */
-	ROM_LOAD( "136021.112",   0x0800, 0x0400, 0x6cfa3544 ) /* PROM 2 */
-	ROM_LOAD( "136021.113",   0x0c00, 0x0400, 0x03f6acb2 ) /* PROM 3 */
-
 	/* Sound ROMS */
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* Really only 32k, but it looks like 64K */
 	ROM_LOAD( "136021.107",   0x4000, 0x2000, 0xdbf3aea2 ) /* Sound ROM 0 */
 	ROM_RELOAD(               0xc000, 0x2000 ) /* Copied again for */
 	ROM_LOAD( "136021.208",   0x6000, 0x2000, 0xe38070a8 ) /* Sound ROM 0 */
 	ROM_RELOAD(               0xe000, 0x2000 ) /* proper int vecs */
+
+	/* Mathbox PROMs */
+	ROM_REGION( 0x1000, REGION_PROMS, ROMREGION_DISPOSE )
+	ROM_LOAD( "136021.110",   0x0000, 0x0400, 0x01061762 ) /* PROM 0 */
+	ROM_LOAD( "136021.111",   0x0400, 0x0400, 0x2e619b70 ) /* PROM 1 */
+	ROM_LOAD( "136021.112",   0x0800, 0x0400, 0x6cfa3544 ) /* PROM 2 */
+	ROM_LOAD( "136021.113",   0x0c00, 0x0400, 0x03f6acb2 ) /* PROM 3 */
 ROM_END
+
 
 ROM_START( esb )
 	ROM_REGION( 0x22000, REGION_CPU1, 0 )     /* 64k for code and a buttload for the banked ROMs */
@@ -675,24 +571,67 @@ ROM_START( esb )
 	ROM_LOAD( "136031.105",   0x14000, 0x4000, 0xea9e4dce ) /* slapstic 0, 1 */
 	ROM_LOAD( "136031.106",   0x18000, 0x4000, 0x76d07f59 ) /* slapstic 2, 3 */
 
-	/* Load the Mathbox PROM's temporarily into the Vector RAM area */
-	/* During initialisation they will be converted into useable form */
-	/* and stored elsewhere. These are 4-bit PROMs; the high nibble is ignored. */
-	ROM_LOAD( "136031.110",   0x0000, 0x0400, 0xb8d0f69d ) /* PROM 0 */
-	ROM_LOAD( "136031.109",   0x0400, 0x0400, 0x6a2a4d98 ) /* PROM 1 */
-	ROM_LOAD( "136031.108",   0x0800, 0x0400, 0x6a76138f ) /* PROM 2 */
-	ROM_LOAD( "136031.107",   0x0c00, 0x0400, 0xafbf6e01 ) /* PROM 3 */
-
 	/* Sound ROMS */
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )
 	ROM_LOAD( "136031.113",   0x4000, 0x2000, 0x24ae3815 ) /* Sound ROM 0 */
 	ROM_CONTINUE(             0xc000, 0x2000 ) /* Copied again for */
 	ROM_LOAD( "136031.112",   0x6000, 0x2000, 0xca72d341 ) /* Sound ROM 1 */
 	ROM_CONTINUE(             0xe000, 0x2000 ) /* proper int vecs */
+
+	/* Mathbox PROMs */
+	ROM_REGION( 0x1000, REGION_PROMS, ROMREGION_DISPOSE )
+	ROM_LOAD( "136031.110",   0x0000, 0x0400, 0xb8d0f69d ) /* PROM 0 */
+	ROM_LOAD( "136031.109",   0x0400, 0x0400, 0x6a2a4d98 ) /* PROM 1 */
+	ROM_LOAD( "136031.108",   0x0800, 0x0400, 0x6a76138f ) /* PROM 2 */
+	ROM_LOAD( "136031.107",   0x0c00, 0x0400, 0xafbf6e01 ) /* PROM 3 */
 ROM_END
 
 
 
+/*************************************
+ *
+ *	Driver init
+ *
+ *************************************/
+
+static void init_starwars(void)
+{
+	/* prepare the mathbox */
+	is_esb = 0;
+	swmathbox_init();
+}
+
+
+static void init_esb(void)
+{
+	/* init the slapstic */
+	slapstic_init(101);
+	slapstic_source = &memory_region(REGION_CPU1)[0x14000];
+	slapstic_base = &memory_region(REGION_CPU1)[0x08000];
+
+	/* install an opcode base handler */
+	memory_set_opbase_handler(0, esb_setopbase);
+
+	/* install read/write handlers for it */
+	install_mem_read_handler(0, 0x8000, 0x9fff, esb_slapstic_r);
+	install_mem_write_handler(0, 0x8000, 0x9fff, esb_slapstic_w);
+
+	/* install additional banking */
+	install_mem_read_handler(0, 0xa000, 0xffff, MRA_BANK2);
+
+	/* prepare the mathbox */
+	is_esb = 1;
+	swmathbox_init();
+}
+
+
+
+/*************************************
+ *
+ *	Game drivers
+ *
+ *************************************/
+
 GAME( 1983, starwars, 0,        starwars, starwars, starwars, ROT0, "Atari", "Star Wars (rev 2)" )
 GAME( 1983, starwar1, starwars, starwars, starwars, starwars, ROT0, "Atari", "Star Wars (rev 1)" )
-GAME( 1985, esb,      0,        esb,      esb,      starwars, ROT0, "Atari Games", "The Empire Strikes Back" )
+GAME( 1985, esb,      0,        starwars, esb,      esb,      ROT0, "Atari Games", "The Empire Strikes Back" )
